@@ -1,13 +1,7 @@
-// ORIGINAL: 0x00514050 FILE
-// RULED-OUT: direct transcription using Console's already-declared field_23BDC_ etc
-//            members (no raw casts needed, no embedded objects here - simple frameless
-//            prologue); cross-checked against raw asm for the neg/sbb/inc bool-negate
-//            idiom, the xor-swapped focus() arg orders, and the veh_ready/veh_selectable
-//            branch. Compiles, sim 0.55 frameless; not retried given size (1930 bytes).
+// ORIGINAL: 0x00514050 ?human_turn@Console@@QAEXXZ 0x00514050-0x005147DA FILE
+// RULED-OUT: direct transcription using Console's already-declared field_23BDC_ etc members (no raw casts needed, no embedded objects here - simple frameless prologue); cross-checked against raw asm for the neg/sbb/inc bool-negate idiom, the xor-swapped focus() arg orders, and the veh_ready/veh_selectable branch. Compiles, sim 0.55 frameless; not retried given size (1930 bytes).
 // working copy - scaffold materialised by --work
-// name      ?human_turn@Console@@QAEXXZ
 // size      1930 bytes
-// spans     0x00514050-0x005147DA
 // prototype void (__thiscall ?human_turn@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   32
 // kind      game

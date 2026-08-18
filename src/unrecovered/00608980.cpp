@@ -1,17 +1,7 @@
-// ORIGINAL: 0x00608980 FILE
-// RULED-OUT: raw SEH prologue (push -1/scope-addr, fs:[0] chain) is not
-//            reproduced by a plain `Text txt(0x200);` local - MSVC only
-//            emits the __except_handler3 frame for a scope the compiler
-//            itself decides needs it. Structural transcription (destroy
-//            loop, Text::open/get/close/shutdown, the '^' escape parser,
-//            the double-indirect secondary-vtable destroy call inferred
-//            from the raw disp = vt[1]; obj+disp; *that = secondary vtable
-//            pattern) reaches MISMATCH, 98/157 mnemonics shared, first
-//            divergence at instr #0 (the SEH prologue itself).
+// ORIGINAL: 0x00608980 ?load@StringList@@QAEHPADPADHP6AXPAD@Z@Z 0x00608980-0x00608B9B;0x00662EA0-0x00662EB5 FILE
+// RULED-OUT: raw SEH prologue (push -1/scope-addr, fs:[0] chain) is not reproduced by a plain `Text txt(0x200);` local - MSVC only emits the __except_handler3 frame for a scope the compiler itself decides needs it. Structural transcription (destroy loop, Text::open/get/close/shutdown, the '^' escape parser, the double-indirect secondary-vtable destroy call inferred from the raw disp = vt[1]; obj+disp; *that = secondary vtable pattern) reaches MISMATCH, 98/157 mnemonics shared, first divergence at instr #0 (the SEH prologue itself).
 // working copy - scaffold materialised by --work
-// name      ?load@StringList@@QAEHPADPADHP6AXPAD@Z@Z
 // size      560 bytes
-// spans     0x00608980-0x00608B9B;0x00662EA0-0x00662EB5
 // prototype int (__thiscall ?load@StringList@@QAEHPADPADHP6AXPAD@Z@Z)(StringList* this, int8*, int8*, int, void (__cdecl *)(int8* this))
 // callers   21   call targets   7
 // kind      game

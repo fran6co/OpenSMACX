@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064726A EXCLUDED S1
-// name      _fgets
+// ORIGINAL: 0x0064726A _fgets 0x0064726A-0x006472CC EXCLUDED S1
 // size      98 bytes
-// spans     0x0064726A-0x006472CC
 // prototype 
 // callers   5   call targets   3
 // kind      library

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00644ECF EXCLUDED S1
-// name      __unlockexit
+// ORIGINAL: 0x00644ECF __unlockexit 0x00644ECF-0x00644ED8 EXCLUDED S1
 // size      9 bytes
-// spans     0x00644ECF-0x00644ED8
 // prototype 
 // callers   2   call targets   1
 // kind      library

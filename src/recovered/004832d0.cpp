@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004832D0 BYTE_EXACT
-// name      ?string_callback@NetWin@@QAAXHH@Z
+// ORIGINAL: 0x004832D0 ?string_callback@NetWin@@QAAXHH@Z 0x004832D0-0x00483302 BYTE_EXACT
 // size      50 bytes
-// spans     0x004832D0-0x00483302
 // prototype 
 // callers   0   call targets   2
 // kind      game

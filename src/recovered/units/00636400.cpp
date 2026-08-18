@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00636400 FILE
-// name      ??0Video@@QAE@XZ
+// ORIGINAL: 0x00636400 ??0Video@@QAE@XZ 0x00636400-0x0063652E;0x00663890-0x006638C9 FILE
 // size      359 bytes
-// spans     0x00636400-0x0063652E;0x00663890-0x006638C9
 // prototype void (__thiscall ??0Video@@QAE@XZ)(Video* this)
 // callers   0   call targets   6
 // kind      game

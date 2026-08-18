@@ -1,18 +1,12 @@
-// ORIGINAL: 0x00629E50 FILE
+// ORIGINAL: 0x00629E50 ?init@Flic@@QAEHPAUBuffer@@PADHHH@Z 0x00629E50-0x0062A068 FILE
+// RULED-OUT: MISMATCH #1 'push' vs 'mov' at function entry - tried hoisting the file-handle read before the zero-stores to match the original's early `mov eax,[esi+0x5b8]`/`cmp eax,ebx` scheduling; no change to the divergence, so the register-allocation choice at entry isn't driven by that reordering.
 // working copy - scaffold materialised by --work
-// name      ?init@Flic@@QAEHPAUBuffer@@PADHHH@Z
 // size      536 bytes
-// spans     0x00629E50-0x0062A068
 // prototype int (__thiscall ?init@Flic@@QAEHPAUBuffer@@PADHHH@Z)(Flic* this, Buffer*, int8*, int, int, int)
 // callers   8   call targets   8
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D7670 0x005DE8F0 0x005DFF00 0x005FE330 0x00634BB0 0x00645598 0x00646178 0x00647330
-// RULED-OUT: MISMATCH #1 'push' vs 'mov' at function entry - tried hoisting the
-//            file-handle read before the zero-stores to match the original's
-//            early `mov eax,[esi+0x5b8]`/`cmp eax,ebx` scheduling; no change to
-//            the divergence, so the register-allocation choice at entry isn't
-//            driven by that reordering.
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?init@Flic@@QAEHPAUBuffer@@PADHHH@Z  at 0x00629E50  (536 bytes)

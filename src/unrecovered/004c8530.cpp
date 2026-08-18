@@ -1,14 +1,7 @@
-// ORIGINAL: 0x004C8530 FILE
-// RULED-OUT: reused-parameter-slot byte/garbage-upper-bits trick for
-//            the sub_4c7cc0 arg (UB, not attempted); passed the plain
-//            flag bit instead. Ambience reinterpreted as Sound* for
-//            the trailing Sound::load call (single-inheritance-at-0
-//            evidence: ecx=edi unchanged across the call). First
-//            divergence #3 mov/push.
+// ORIGINAL: 0x004C8530 ?load@Ambience@@QAEHPBD@Z 0x004C8530-0x004C85EF FILE
+// RULED-OUT: reused-parameter-slot byte/garbage-upper-bits trick for the sub_4c7cc0 arg (UB, not attempted); passed the plain flag bit instead. Ambience reinterpreted as Sound* for the trailing Sound::load call (single-inheritance-at-0 evidence: ecx=edi unchanged across the call). First divergence #3 mov/push.
 // working copy - scaffold materialised by --work
-// name      ?load@Ambience@@QAEHPBD@Z
 // size      191 bytes
-// spans     0x004C8530-0x004C85EF
 // prototype int (__thiscall ?load@Ambience@@QAEHPBD@Z)(Ambience* this, int8*)
 // callers   0   call targets   4
 // kind      game

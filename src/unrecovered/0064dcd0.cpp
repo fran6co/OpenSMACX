@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064DCD0 EXCLUDED S1
-// name      __aulldiv
+// ORIGINAL: 0x0064DCD0 __aulldiv 0x0064DCD0-0x0064DD38 EXCLUDED S1
 // size      104 bytes
-// spans     0x0064DCD0-0x0064DD38
 // prototype 
 // callers   1   call targets   0
 // kind      library

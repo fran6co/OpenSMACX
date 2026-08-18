@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00592E70 FILE
-// name      ?message_base@@YAXHHPADH@Z
+// ORIGINAL: 0x00592E70 ?message_base@@YAXHHPADH@Z 0x00592E70-0x00592EDA FILE
 // size      106 bytes
-// spans     0x00592E70-0x00592EDA
 // prototype 
 // callers   2   call targets   2
 // kind      game

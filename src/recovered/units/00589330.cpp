@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00589330 FILE
-// name      ?time_controls_dialog@@YAXPAUPopup@@@Z
+// ORIGINAL: 0x00589330 ?time_controls_dialog@@YAXPAUPopup@@@Z 0x00589330-0x0058954A FILE
 // size      538 bytes
-// spans     0x00589330-0x0058954A
 // prototype 
 // callers   3   call targets   5
 // kind      game

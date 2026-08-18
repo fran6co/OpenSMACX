@@ -25,10 +25,8 @@
 
 /*
 Purpose: Initialize the class instance.
-ORIGINAL: 0x005FD8D0
-// name      ?init@Text@@QAEHH@Z
+// ORIGINAL: 0x005FD8D0 ?init@Text@@QAEHH@Z 0x005FD8D0-0x005FD969
 // size      153 bytes
-// spans     0x005FD8D0-0x005FD969
 // prototype int (__thiscall ?init@Text@@QAEHH@Z)(_Text* this, int)
 // callers   0   call targets   3
 // kind      game
@@ -52,10 +50,8 @@ int Text::init(size_t size) {
 
 /*
 Purpose: Shutdown the class instance.
-ORIGINAL: 0x005FD970
-// name      ?shutdown@Text@@QAEXXZ
+// ORIGINAL: 0x005FD970 ?shutdown@Text@@QAEXXZ 0x005FD970-0x005FD9CC
 // size      92 bytes
-// spans     0x005FD970-0x005FD9CC
 // prototype void (__thiscall ?shutdown@Text@@QAEXXZ)(_Text* this)
 // callers   1   call targets   2
 // kind      game
@@ -78,10 +74,8 @@ void Text::shutdown() {
 
 /*
 Purpose: If open, close the text file.
-ORIGINAL: 0x005FD9D0 BYTE_EXACT
-// name      ?close@Text@@QAEXXZ
+// ORIGINAL: 0x005FD9D0 ?close@Text@@QAEXXZ 0x005FD9D0-0x005FD9F2 BYTE_EXACT
 // size      34 bytes
-// spans     0x005FD9D0-0x005FD9F2
 // prototype void (__thiscall ?close@Text@@QAEXXZ)(_Text* this)
 // callers   1   call targets   1
 // kind      game
@@ -99,10 +93,8 @@ void Text::close() {
 
 /*
 Purpose: Open the specified text file and copy the section into the buffer for parsing.
-ORIGINAL: 0x005FDA00
-// name      ?open@Text@@QAEHPADPAD@Z
+// ORIGINAL: 0x005FDA00 ?open@Text@@QAEHPADPAD@Z 0x005FDA00-0x005FDC04
 // size      516 bytes
-// spans     0x005FDA00-0x005FDC04
 // prototype int (__thiscall ?open@Text@@QAEHPADPAD@Z)(_Text* this, int8* srcFileID, int8* sectionID)
 // callers   2   call targets   13
 // kind      game
@@ -167,10 +159,8 @@ BOOL Text::open(LPCSTR src_file_id, LPCSTR section_id) {
 
 /*
 Purpose: Parse text from the opened file until a newline is reached. Copy this text into the buffer.
-ORIGINAL: 0x005FDC10
-// name      ?get@Text@@QAEHXZ
+// ORIGINAL: 0x005FDC10 ?get@Text@@QAEHXZ 0x005FDC10-0x005FDC7E
 // size      110 bytes
-// spans     0x005FDC10-0x005FDC7E
 // prototype int (__thiscall ?get@Text@@QAEHXZ)(_Text* this)
 // callers   1   call targets   3
 // kind      game
@@ -196,10 +186,8 @@ LPSTR Text::get() {
 
 /*
 Purpose: Get the string and put it into the string table.
-ORIGINAL: 0x005FDC80
-// name      ?string@Text@@QAEXXZ
+// ORIGINAL: 0x005FDC80 ?string@Text@@QAEXXZ 0x005FDC80-0x005FDD0F
 // size      143 bytes
-// spans     0x005FDC80-0x005FDD0F
 // prototype void (__thiscall ?string@Text@@QAEXXZ)(_Text* this)
 // callers   0   call targets   4
 // kind      game
@@ -214,10 +202,8 @@ LPSTR Text::string() {
 
 /*
 Purpose: Parse the current item into the string buffer.
-ORIGINAL: 0x005FDD10 BYTE_EXACT
-// name      ?item@Text@@QAEXXZ
+// ORIGINAL: 0x005FDD10 ?item@Text@@QAEXXZ 0x005FDD10-0x005FDD72 BYTE_EXACT
 // size      98 bytes
-// spans     0x005FDD10-0x005FDD72
 // prototype void (__thiscall ?item@Text@@QAEXXZ)(_Text* this)
 // callers   0   call targets   1
 // kind      game
@@ -241,10 +227,8 @@ LPSTR Text::item() {
 
 /*
 Purpose: Parse the current string item into the buffer and add it to the string table.
-ORIGINAL: 0x005FDD80
-// name      ?item_string@Text@@QAEXXZ
+// ORIGINAL: 0x005FDD80 ?item_string@Text@@QAEXXZ 0x005FDD80-0x005FDDED
 // size      109 bytes
-// spans     0x005FDD80-0x005FDDED
 // prototype void (__thiscall ?item_string@Text@@QAEXXZ)(_Text* this)
 // callers   0   call targets   2
 // kind      game
@@ -259,10 +243,8 @@ LPSTR Text::item_string() {
 
 /*
 Purpose: Parse the current number item.
-ORIGINAL: 0x005FDDF0
-// name      ?item_number@Text@@QAEXXZ
+// ORIGINAL: 0x005FDDF0 ?item_number@Text@@QAEXXZ 0x005FDDF0-0x005FDE58
 // size      104 bytes
-// spans     0x005FDDF0-0x005FDE58
 // prototype void (__thiscall ?item_number@Text@@QAEXXZ)(_Text* this)
 // callers   0   call targets   2
 // kind      game
@@ -277,10 +259,8 @@ int Text::item_number() {
 
 /*
 Purpose: Parse the current binary item.
-ORIGINAL: 0x005FDE60
-// name      ?item_binary@Text@@QAEXXZ
+// ORIGINAL: 0x005FDE60 ?item_binary@Text@@QAEXXZ 0x005FDE60-0x005FDEC8
 // size      104 bytes
-// spans     0x005FDE60-0x005FDEC8
 // prototype void (__thiscall ?item_binary@Text@@QAEXXZ)(_Text* this)
 // callers   0   call targets   2
 // kind      game
@@ -295,10 +275,8 @@ int Text::item_binary() {
 
 /*
 Purpose: Parse the current hex item.
-ORIGINAL: 0x005FDED0
-// name      ?item_hex@Text@@QAEXXZ
+// ORIGINAL: 0x005FDED0 ?item_hex@Text@@QAEXXZ 0x005FDED0-0x005FDF38
 // size      104 bytes
-// spans     0x005FDED0-0x005FDF38
 // prototype void (__thiscall ?item_hex@Text@@QAEXXZ)(_Text* this)
 // callers   0   call targets   2
 // kind      game
@@ -314,19 +292,15 @@ int Text::item_hex() {
 /*
 Purpose: The reader every `.txt` the game parses goes through, and the two
          initialisers MSVC emits for it.
-ORIGINAL: 0x005FD400
-// name      ??__ETxt@@YAXXZ
+// ORIGINAL: 0x005FD400 ??__ETxt@@YAXXZ 0x005FD400-0x005FD456
 // size      86 bytes
-// spans     0x005FD400-0x005FD456
 // prototype 
 // callers   0   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D4510 0x00645398
-ORIGINAL: 0x005FD460
-// name      ??__FTxt@@YAXXZ
+// ORIGINAL: 0x005FD460 ??__FTxt@@YAXXZ 0x005FD460-0x005FD4B5
 // size      85 bytes
-// spans     0x005FD460-0x005FD4B5
 // prototype 
 // callers   0   call targets   2
 // kind      game
@@ -360,10 +334,8 @@ Text Txt(512);  // 0x009B7BA0
 LPSTR TextBufferGetPtr;   // 0x009B7D00
 LPSTR TextBufferItemPtr;  // 0x009B7D04
 
-// ORIGINAL: 0x005FD4C0
-// name      ?text_set_get_ptr@@YAXXZ
+// ORIGINAL: 0x005FD4C0 ?text_set_get_ptr@@YAXXZ 0x005FD4C0-0x005FD4CB
 // size      11 bytes
-// spans     0x005FD4C0-0x005FD4CB
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -374,10 +346,8 @@ void __cdecl text_set_get_ptr() {
     text_set_get_ptr_source(&Txt, &TextBufferGetPtr);
 }
 
-// ORIGINAL: 0x005FD4D0
-// name      ?text_set_item_ptr@@YAXXZ
+// ORIGINAL: 0x005FD4D0 ?text_set_item_ptr@@YAXXZ 0x005FD4D0-0x005FD4DB
 // size      11 bytes
-// spans     0x005FD4D0-0x005FD4DB
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -388,10 +358,8 @@ void __cdecl text_set_item_ptr() {
     text_set_item_ptr_source(&Txt, &TextBufferItemPtr);
 }
 
-// ORIGINAL: 0x005FD530
-// name      ?text_close@@YAXXZ
+// ORIGINAL: 0x005FD530 ?text_close@@YAXXZ 0x005FD530-0x005FD54D
 // size      29 bytes
-// spans     0x005FD530-0x005FD54D
 // prototype 
 // callers   22   call targets   1
 // kind      game
@@ -400,10 +368,8 @@ void __cdecl text_set_item_ptr() {
 // notes     Staged hybrid export redirect calls the source-owned wrapper
 void __cdecl text_close() { text_close_source(&Txt); }
 
-// ORIGINAL: 0x005FD570
-// name      ?text_get@@YAPADXZ
+// ORIGINAL: 0x005FD570 ?text_get@@YAPADXZ 0x005FD570-0x005FD5D2
 // size      98 bytes
-// spans     0x005FD570-0x005FD5D2
 // prototype 
 // callers   54   call targets   3
 // kind      game
@@ -412,10 +378,8 @@ void __cdecl text_close() { text_close_source(&Txt); }
 // notes     Staged hybrid export redirect calls the source-owned wrapper
 LPSTR __cdecl text_get() { return text_get_source(&Txt); }
 
-// ORIGINAL: 0x005FD5E0
-// name      ?text_string@@YAPADXZ
+// ORIGINAL: 0x005FD5E0 ?text_string@@YAPADXZ 0x005FD5E0-0x005FD663
 // size      131 bytes
-// spans     0x005FD5E0-0x005FD663
 // prototype 
 // callers   1   call targets   4
 // kind      game
@@ -424,10 +388,8 @@ LPSTR __cdecl text_get() { return text_get_source(&Txt); }
 // notes     Staged hybrid export redirect calls the source-owned wrapper
 LPSTR __cdecl text_string() { return text_string_source(&Txt, StringTable); }
 
-// ORIGINAL: 0x005FD670
-// name      ?text_item@@YAPADXZ
+// ORIGINAL: 0x005FD670 ?text_item@@YAPADXZ 0x005FD670-0x005FD6C7
 // size      87 bytes
-// spans     0x005FD670-0x005FD6C7
 // prototype 
 // callers   20   call targets   1
 // kind      game
@@ -436,10 +398,8 @@ LPSTR __cdecl text_string() { return text_string_source(&Txt, StringTable); }
 // notes     Staged hybrid export redirect calls the source-owned wrapper
 LPSTR __cdecl text_item() { return text_item_source(&Txt); }
 
-// ORIGINAL: 0x005FD6D0
-// name      ?text_item_string@@YAPADXZ
+// ORIGINAL: 0x005FD6D0 ?text_item_string@@YAPADXZ 0x005FD6D0-0x005FD732
 // size      98 bytes
-// spans     0x005FD6D0-0x005FD732
 // prototype 
 // callers   2   call targets   2
 // kind      game
@@ -450,10 +410,8 @@ LPSTR __cdecl text_item_string() {
     return text_item_string_source(&Txt, StringTable);
 }
 
-// ORIGINAL: 0x005FD740
-// name      ?text_item_number@@YAHXZ
+// ORIGINAL: 0x005FD740 ?text_item_number@@YAHXZ 0x005FD740-0x005FD79D
 // size      93 bytes
-// spans     0x005FD740-0x005FD79D
 // prototype 
 // callers   18   call targets   2
 // kind      game
@@ -462,10 +420,8 @@ LPSTR __cdecl text_item_string() {
 // notes     Staged hybrid export redirect calls the source-owned wrapper
 int __cdecl text_item_number() { return text_item_number_source(&Txt); }
 
-// ORIGINAL: 0x005FD7A0
-// name      ?text_item_binary@@YAHXZ
+// ORIGINAL: 0x005FD7A0 ?text_item_binary@@YAHXZ 0x005FD7A0-0x005FD7FD
 // size      93 bytes
-// spans     0x005FD7A0-0x005FD7FD
 // prototype 
 // callers   4   call targets   2
 // kind      game
@@ -474,10 +430,8 @@ int __cdecl text_item_number() { return text_item_number_source(&Txt); }
 // notes     Staged hybrid export redirect calls the source-owned wrapper
 int __cdecl text_item_binary() { return text_item_binary_source(&Txt); }
 
-// ORIGINAL: 0x005FD800
-// name      ?text_item_hex@@YAHXZ
+// ORIGINAL: 0x005FD800 ?text_item_hex@@YAHXZ 0x005FD800-0x005FD85D
 // size      93 bytes
-// spans     0x005FD800-0x005FD85D
 // prototype 
 // callers   0   call targets   2
 // kind      game
@@ -486,10 +440,8 @@ int __cdecl text_item_binary() { return text_item_binary_source(&Txt); }
 // notes     Staged hybrid export redirect calls the source-owned wrapper
 int __cdecl text_item_hex() { return text_item_hex_source(&Txt); }
 
-// ORIGINAL: 0x00585120
-// name      ?text_get_number@@YAHHH@Z
+// ORIGINAL: 0x00585120 ?text_get_number@@YAHHH@Z 0x00585120-0x00585150
 // size      48 bytes
-// spans     0x00585120-0x00585150
 // prototype int (__cdecl ?text_get_number@@YAHHH@Z)(int min, int max)
 // callers   0   call targets   2
 // kind      game
@@ -518,10 +470,8 @@ Text::Text()
 // file_name_[0], where the image writes the byte FIRST.
 
 
-// ORIGINAL: 0x005FD550 BYTE_EXACT
-// name      ?text_open@@YAHPADPAD@Z
+// ORIGINAL: 0x005FD550 ?text_open@@YAHPADPAD@Z 0x005FD550-0x005FD565 BYTE_EXACT
 // size      21 bytes
-// spans     0x005FD550-0x005FD565
 // prototype int (__cdecl ?text_open@@YAHPADPAD@Z)(int8* srcFileID, int8* sectionID)
 // callers   34   call targets   1
 // kind      game

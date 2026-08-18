@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00455E80 BYTE_EXACT
-// name      ?load_fixed_sprites@@YAXXZ
+// ORIGINAL: 0x00455E80 ?load_fixed_sprites@@YAXXZ 0x00455E80-0x00455EA8 BYTE_EXACT
 // size      40 bytes
-// spans     0x00455E80-0x00455EA8
 // prototype 
 // callers   1   call targets   6
 // kind      game

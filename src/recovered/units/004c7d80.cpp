@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004C7D80 FILE
-// name      ?load@Midi@@QAEHPBD@Z
+// ORIGINAL: 0x004C7D80 ?load@Midi@@QAEHPBD@Z 0x004C7D80-0x004C7DCD FILE
 // size      77 bytes
-// spans     0x004C7D80-0x004C7DCD
 // prototype int (__thiscall ?load@Midi@@QAEHPBD@Z)(Midi* this, int8*)
 // callers   0   call targets   1
 // kind      game

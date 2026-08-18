@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0047F5F0 FILE
-// name      ?pick_clouds@NetWin@@QAEXXZ
+// ORIGINAL: 0x0047F5F0 ?pick_clouds@NetWin@@QAEXXZ 0x0047F5F0-0x0047F91C;0x00657385-0x0065745D FILE
 // size      1028 bytes
-// spans     0x0047F5F0-0x0047F91C;0x00657385-0x0065745D
 // prototype void (__thiscall ?pick_clouds@NetWin@@QAEXXZ)(NetWin* this)
 // callers   1   call targets   26
 // kind      game

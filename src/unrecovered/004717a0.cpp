@@ -1,22 +1,7 @@
-// ORIGINAL: 0x004717A0 FILE
-// RULED-OUT: MISMATCH, closest at 194/196 bytes (mnemonic_similarity 0.99,
-//            1 edit). Same embedded-manager close-and-relink shape as
-//            SetupWin::close/Dialog::init, but reached through a vbtable:
-//            `listBox_.vbtable_pointer_` (self+0x64) is a pointer to a
-//            displacement table, slot 2 (`[vtbl+8]`) is the byte
-//            displacement to the virtual base holding the manager -
-//            `char *base = self + vbtable[2] + 0x120;` reproduces the
-//            `[edx+ebx+0x128]`/`lea esi,[edx+ebx+0x120]` addressing
-//            exactly. Only the SECOND vtable-adjustment "deleting dtor"
-//            call (vtbl[1] read as a displacement, this-adjusted, that
-//            pointer's own vtbl[0] called with arg 1) still diverges by
-//            a handful of instructions - the same register-allocator
-//            nuance as the second call site in 0x004AD9C0 and
-//            0x00609730, not chased further.
+// ORIGINAL: 0x004717A0 ?clear@MessageWin@@QAEXXZ 0x004717A0-0x00471864 FILE
+// RULED-OUT: MISMATCH, closest at 194/196 bytes (mnemonic_similarity 0.99, 1 edit). Same embedded-manager close-and-relink shape as SetupWin::close/Dialog::init, but reached through a vbtable: `listBox_.vbtable_pointer_` (self+0x64) is a pointer to a displacement table, slot 2 (`[vtbl+8]`) is the byte displacement to the virtual base holding the manager - `char *base = self + vbtable[2] + 0x120;` reproduces the `[edx+ebx+0x128]`/`lea esi,[edx+ebx+0x120]` addressing exactly. Only the SECOND vtable-adjustment "deleting dtor" call (vtbl[1] read as a displacement, this-adjusted, that pointer's own vtbl[0] called with arg 1) still diverges by a handful of instructions - the same register-allocator nuance as the second call site in 0x004AD9C0 and 0x00609730, not chased further.
 // working copy - scaffold materialised by --work
-// name      ?clear@MessageWin@@QAEXXZ
 // size      196 bytes
-// spans     0x004717A0-0x00471864
 // prototype void (__thiscall ?clear@MessageWin@@QAEXXZ)(MessageWin* this)
 // callers   3   call targets   1
 // kind      game

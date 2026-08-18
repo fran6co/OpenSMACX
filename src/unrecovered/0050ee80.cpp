@@ -1,8 +1,6 @@
-// ORIGINAL: 0x0050EE80 BYTE_EXACT FILE
+// ORIGINAL: 0x0050EE80 ?line_timer@@YAXH@Z 0x0050EE80-0x0050EF01 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?line_timer@@YAXH@Z
 // size      129 bytes
-// spans     0x0050EE80-0x0050EF01
 // prototype 
 // callers   0   call targets   3
 // kind      game

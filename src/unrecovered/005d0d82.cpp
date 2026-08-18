@@ -1,58 +1,7 @@
-// ORIGINAL: 0x005D0D82 FILE
-// UNRECOVERABLE: judged on its own disassembly (a prior batch-10 note on
-//                this file was removed as recorded-on-a-placeholder; this
-//                supersedes it with fresh evidence). This is genuinely
-//                register-passing on BOTH sides - entry and its two
-//                callees - not just parameter count:
-//                  - entry: `push ecx; push edx; sub esp,0x300` then the
-//                    body reads `esi` (`mov edx,[esi]` at 0x5D0D8C, later
-//                    `unaff_ESI[idx]`), `edi` (`unaff_EDI>>5` /
-//                    `unaff_EDI&0x1f` as a bitstream bit-cursor from the
-//                    first instruction that touches it, 0x5D0DB4), `ebp`
-//                    (`[ebp+(edi>>5)*4]` at 0x5D0DBB, a bitstream data
-//                    base) and `eax` (`imul edx` at 0x5D0D91 multiplies
-//                    THE INCOMING eax, never loaded from anywhere) -
-//                    Ghidra's own decompile names all four
-//                    unaff_EBP/unaff_ESI/unaff_EDI/in_EAX, i.e. its
-//                    dataflow analysis independently found no definition
-//                    for them inside this function either. ecx/edx ARE
-//                    ordinary __fastcall params (pushed to [esp] then
-//                    reloaded near the tail at 0x5D10D8/0x5D1196), so the
-//                    two-argument part alone would be expressible - it is
-//                    the extra four registers that are not.
-//                  - callees: the eight `call 0x5d29e1` sites
-//                    (0x5D1057..0x5D10D3) and eight `call 0x5d2c0a` sites
-//                    (0x5D10E6..0x5D117E) each set up ONLY `esi`/`edi`
-//                    immediately before the call (`lea esi,[esp+N]; lea
-//                    edi,[esp+M]; call`) - no ecx/edx/stack push at all.
-//                    No MSVC convention (cdecl/stdcall/fastcall/thiscall)
-//                    passes arguments in esi/edi, so even a correct
-//                    internal transcription of sub_5d0d82 could not
-//                    legally CALL its own two helpers from standard C++.
-//                This is two independent, compounding blockers (the
-//                entry contract and the call sites inside it), and both
-//                require `__asm`/`_emit` to express, which the rules bar
-//                outright regardless of effort spent. Left the compiling
-//                placeholder in place (MISMATCH #0, same divergence point
-//                any body would hit given the prologue itself can't
-//                match) rather than writing an untestable ~150-line
-//                transcription whose only achievable tier is identical to
-//                what is already there. Tables read: g_009c9698 (a
-//                Huffman "escape length/value" table indexed by a 15-bit
-//                code >>0xd), g_009c95ac (a small index-remap table
-//                indexed by a decoded code length, feeding the weights[]
-//                array), and six more short lookup tables selected by
-//                leading-zero-count-style range checks (0x800/0x400/
-//                0x200/0x100/0x80/0x40/0x20) - the whole function is a
-//                Huffman/range-coded bitstream decoder over a 64-entry
-//                int weight table, most likely the Smacker/Bink-style
-//                audio or DCT-coefficient decoder used by the game's
-//                intro video codec, given the table shapes and the 64-int
-//                output.
+// ORIGINAL: 0x005D0D82 sub_5d0d82 0x005D0D82-0x005D1278 FILE
+// UNRECOVERABLE: judged on its own disassembly (a prior batch-10 note on this file was removed as recorded-on-a-placeholder; this supersedes it with fresh evidence). This is genuinely register-passing on BOTH sides - entry and its two callees - not just parameter count: - entry: `push ecx; push edx; sub esp,0x300` then the body reads `esi` (`mov edx,[esi]` at 0x5D0D8C, later `unaff_ESI[idx]`), `edi` (`unaff_EDI>>5` / `unaff_EDI&0x1f` as a bitstream bit-cursor from the first instruction that touches it, 0x5D0DB4), `ebp` (`[ebp+(edi>>5)*4]` at 0x5D0DBB, a bitstream data base) and `eax` (`imul edx` at 0x5D0D91 multiplies THE INCOMING eax, never loaded from anywhere) - Ghidra's own decompile names all four unaff_EBP/unaff_ESI/unaff_EDI/in_EAX, i.e. its dataflow analysis independently found no definition for them inside this function either. ecx/edx ARE ordinary __fastcall params (pushed to [esp] then reloaded near the tail at 0x5D10D8/0x5D1196), so the two-argument part alone would be expressible - it is the extra four registers that are not. - callees: the eight `call 0x5d29e1` sites (0x5D1057..0x5D10D3) and eight `call 0x5d2c0a` sites (0x5D10E6..0x5D117E) each set up ONLY `esi`/`edi` immediately before the call (`lea esi,[esp+N]; lea edi,[esp+M]; call`) - no ecx/edx/stack push at all. No MSVC convention (cdecl/stdcall/fastcall/thiscall) passes arguments in esi/edi, so even a correct internal transcription of sub_5d0d82 could not legally CALL its own two helpers from standard C++. This is two independent, compounding blockers (the entry contract and the call sites inside it), and both require `__asm`/`_emit` to express, which the rules bar outright regardless of effort spent. Left the compiling placeholder in place (MISMATCH #0, same divergence point any body would hit given the prologue itself can't match) rather than writing an untestable ~150-line transcription whose only achievable tier is identical to what is already there. Tables read: g_009c9698 (a Huffman "escape length/value" table indexed by a 15-bit code >>0xd), g_009c95ac (a small index-remap table indexed by a decoded code length, feeding the weights[] array), and six more short lookup tables selected by leading-zero-count-style range checks (0x800/0x400/ 0x200/0x100/0x80/0x40/0x20) - the whole function is a Huffman/range-coded bitstream decoder over a 64-entry int weight table, most likely the Smacker/Bink-style audio or DCT-coefficient decoder used by the game's intro video codec, given the table shapes and the 64-int output.
 // working copy - scaffold materialised by --work
-// name      sub_5d0d82
 // size      1270 bytes
-// spans     0x005D0D82-0x005D1278
 // prototype 
 // callers   1   call targets   2
 // kind      game

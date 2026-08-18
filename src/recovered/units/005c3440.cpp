@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005C3440 FILE
-// name      ?world_fungus@@YAXXZ
+// ORIGINAL: 0x005C3440 ?world_fungus@@YAXXZ 0x005C3440-0x005C3678 FILE
 // size      568 bytes
-// spans     0x005C3440-0x005C3678
 // prototype 
 // callers   2   call targets   5
 // kind      game

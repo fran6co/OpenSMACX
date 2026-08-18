@@ -1,9 +1,7 @@
-// ORIGINAL: 0x005D5B70 BYTE_EXACT FILE
+// ORIGINAL: 0x005D5B70 sub_5d5b70 0x005D5B70-0x005D5B75 FILE BYTE_EXACT
 // LEVER: plain tailcall to a declared nullary callee; last-statement return
 // working copy - scaffold materialised by --work
-// name      sub_5d5b70
 // size      5 bytes
-// spans     0x005D5B70-0x005D5B75
 // prototype 
 // callers   0   call targets   0
 // kind      thunk

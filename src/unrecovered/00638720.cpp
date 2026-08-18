@@ -1,18 +1,12 @@
-// ORIGINAL: 0x00638720
-// name      sub_638720
+// ORIGINAL: 0x00638720 sub_638720 0x00638720-0x006388B2
+// RULED-OUT: chunked-record reader (tag/length header, three named chunk tags 0x1010000/0x1020000/0x1030000 plus a default skip through the indirect callback at g_009c0b90) - diverges at #3 with the loop-entry `lea` vs `push`, register/stack layout differs from here on; landed at 0.73 similarity.
 // size      402 bytes
-// spans     0x00638720-0x006388B2
 // prototype
 // callers   1   call targets   4
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00638620 0x00638650 0x006391F0 0x00639390
 // indirect  0x0063878D
-// RULED-OUT: chunked-record reader (tag/length header, three named chunk
-//            tags 0x1010000/0x1020000/0x1030000 plus a default skip through
-//            the indirect callback at g_009c0b90) - diverges at #3 with the
-//            loop-entry `lea` vs `push`, register/stack layout differs from
-//            here on; landed at 0.73 similarity.
 
 typedef int (__cdecl *Sub638650Fn)(int, void *, int);
 typedef int (__cdecl *Sub638620Fn)(int, void *);

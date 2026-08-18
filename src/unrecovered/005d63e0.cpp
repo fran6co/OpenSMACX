@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005D63E0 BYTE_EXACT FILE
+// ORIGINAL: 0x005D63E0 ?set_rects@GraphicWin@@QAEXXZ 0x005D63E0-0x005D63E5 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?set_rects@GraphicWin@@QAEXXZ
 // size      5 bytes
-// spans     0x005D63E0-0x005D63E5
 // prototype void (__thiscall ?set_rects@GraphicWin@@QAEXXZ)(GraphicWin* this)
 // callers   0   call targets   0
 // kind      thunk

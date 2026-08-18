@@ -1,11 +1,7 @@
-// ORIGINAL: 0x0052DE70 FILE
-// RULED-OUT: raw byte-offset arithmetic over `this` for the 0x3c-byte
-//            record array (deliberately-empty class, no named fields).
-//            First divergence #31 jl/jge, 203 vs 190 B.
+// ORIGINAL: 0x0052DE70 ?add_deletion@DeletionList@@QAEHH@Z 0x0052DE70-0x0052DF2E FILE
+// RULED-OUT: raw byte-offset arithmetic over `this` for the 0x3c-byte record array (deliberately-empty class, no named fields). First divergence #31 jl/jge, 203 vs 190 B.
 // working copy - scaffold materialised by --work
-// name      ?add_deletion@DeletionList@@QAEHH@Z
 // size      190 bytes
-// spans     0x0052DE70-0x0052DF2E
 // prototype int (__thiscall ?add_deletion@DeletionList@@QAEHH@Z)(DeletionList* this, int vehID)
 // callers   1   call targets   1
 // kind      game

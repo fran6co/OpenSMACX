@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00491400 FILE
-// name      ?on_button_clicked@PrefWin@@QAEXH@Z
+// ORIGINAL: 0x00491400 ?on_button_clicked@PrefWin@@QAEXH@Z 0x00491400-0x00491794;0x00658AC0-0x00658B6C FILE
 // size      1088 bytes
-// spans     0x00491400-0x00491794;0x00658AC0-0x00658B6C
 // prototype void (__thiscall ?on_button_clicked@PrefWin@@QAEXH@Z)(PrefWin* this, int)
 // callers   0   call targets   26
 // kind      game

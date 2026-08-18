@@ -1,12 +1,7 @@
-// ORIGINAL: 0x00614F30 BYTE_EXACT FILE
-// LEVER: raw offset stores in disassembly order (declaration order would
-//        put field_b48_ last, but it is written mid-sequence), then
-//        Time::close() on `self+0xb4c` and GraphicWin::close() on `self` -
-//        first try, byte exact.
+// ORIGINAL: 0x00614F30 ?close@EditBox@@QAEXXZ 0x00614F30-0x00614FD1 FILE BYTE_EXACT
+// LEVER: raw offset stores in disassembly order (declaration order would put field_b48_ last, but it is written mid-sequence), then Time::close() on `self+0xb4c` and GraphicWin::close() on `self` - first try, byte exact.
 // working copy - scaffold materialised by --work
-// name      ?close@EditBox@@QAEXXZ
 // size      161 bytes
-// spans     0x00614F30-0x00614FD1
 // prototype void (__thiscall ?close@EditBox@@QAEXXZ)(EditBox* this)
 // callers   16   call targets   2
 // kind      game

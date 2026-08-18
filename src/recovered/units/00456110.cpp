@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00456110 FILE
-// name      ??1Gamma@@QAE@XZ
+// ORIGINAL: 0x00456110 ??1Gamma@@QAE@XZ 0x00456110-0x00456275;0x00655190-0x00655240 FILE
 // size      533 bytes
-// spans     0x00456110-0x00456275;0x00655190-0x00655240
 // prototype void (__thiscall ??1Gamma@@QAE@XZ)(Gamma* this)
 // callers   1   call targets   10
 // kind      game

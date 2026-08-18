@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004B6530 BYTE_EXACT
-// name      ?reset_active@StatusWin@@QAEXXZ
+// ORIGINAL: 0x004B6530 ?reset_active@StatusWin@@QAEXXZ 0x004B6530-0x004B6569 BYTE_EXACT
 // size      57 bytes
-// spans     0x004B6530-0x004B6569
 // prototype void (__thiscall ?reset_active@StatusWin@@QAEXXZ)(StatusWin* this)
 // callers   2   call targets   1
 // kind      game

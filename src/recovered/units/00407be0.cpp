@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00407BE0 BYTE_EXACT FILE
-// name      ?show@AlphaSave@@QAEXH@Z
+// ORIGINAL: 0x00407BE0 ?show@AlphaSave@@QAEXH@Z 0x00407BE0-0x00407C57 FILE BYTE_EXACT
 // size      119 bytes
-// spans     0x00407BE0-0x00407C57
 // prototype void (__thiscall ?show@AlphaSave@@QAEXH@Z)(AlphaSave* this, int)
 // callers   0   call targets   4
 // kind      game

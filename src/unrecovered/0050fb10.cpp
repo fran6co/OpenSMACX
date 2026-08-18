@@ -1,16 +1,7 @@
-// ORIGINAL: 0x0050FB10 FILE
-// RULED-OUT: minimize/maximize hit-tests then two edge-distance blocks (right
-//            vs left/right splitter, sign-tested via a discarded add whose
-//            flags a later `js` reuses - CARRY/SIGN-reuse idiom, not
-//            re-derived as a fresh compare) reusing the same
-//            client_rect_/outer_rect_/caption_height_/border_thickness_
-//            offsets confirmed on 0x00510110 (sim 0.74). First divergence at
-//            #11 is instruction scheduling in the in_box RECT setup, not
-//            chased further. Not byte-exact.
+// ORIGINAL: 0x0050FB10 ?on_nc_left_down@Console@@QAEXHH@Z 0x0050FB10-0x0050FE69 FILE
+// RULED-OUT: minimize/maximize hit-tests then two edge-distance blocks (right vs left/right splitter, sign-tested via a discarded add whose flags a later `js` reuses - CARRY/SIGN-reuse idiom, not re-derived as a fresh compare) reusing the same client_rect_/outer_rect_/caption_height_/border_thickness_ offsets confirmed on 0x00510110 (sim 0.74). First divergence at #11 is instruction scheduling in the in_box RECT setup, not chased further. Not byte-exact.
 // working copy - scaffold materialised by --work
-// name      ?on_nc_left_down@Console@@QAEXHH@Z
 // size      857 bytes
-// spans     0x0050FB10-0x0050FE69
 // prototype void (__thiscall ?on_nc_left_down@Console@@QAEXHH@Z)(Console* this, int, int)
 // callers   0   call targets   3
 // kind      game

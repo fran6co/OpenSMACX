@@ -1,17 +1,7 @@
-// ORIGINAL: 0x005275B0 FILE
-// RULED-OUT: mismatch #11 near prologue (xor vs push) - popup/end_game_pop
-//            declared as real C++ locals rather than the original's
-//            staggered same-slot vtable-poke construction; the "big
-//            dialog" tail (Dialogs/Spot/ListBox/CheckBox/EditGroup/
-//            SpriteBox/StringStruct x2/Sprite) is reached by raw offset
-//            casts into BasePop's own dialogs_/spot_/sprite_ members,
-//            not by a modelled derived class - faithful call order/args,
-//            not byte fidelity. Main loop, faction dispatch, diplomacy/
-//            tech/council logic transcribed directly from the disasm.
+// ORIGINAL: 0x005275B0 ?control_turn@@YAXXZ 0x005275B0-0x00528E94;0x0065D6DD-0x0065DB67 FILE
+// RULED-OUT: mismatch #11 near prologue (xor vs push) - popup/end_game_pop declared as real C++ locals rather than the original's staggered same-slot vtable-poke construction; the "big dialog" tail (Dialogs/Spot/ListBox/CheckBox/EditGroup/ SpriteBox/StringStruct x2/Sprite) is reached by raw offset casts into BasePop's own dialogs_/spot_/sprite_ members, not by a modelled derived class - faithful call order/args, not byte fidelity. Main loop, faction dispatch, diplomacy/ tech/council logic transcribed directly from the disasm.
 // working copy - scaffold materialised by --work
-// name      ?control_turn@@YAXXZ
 // size      7534 bytes
-// spans     0x005275B0-0x00528E94;0x0065D6DD-0x0065DB67
 // prototype 
 // callers   1   call targets   71
 // kind      game

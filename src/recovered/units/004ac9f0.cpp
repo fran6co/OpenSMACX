@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004AC9F0 FILE
-// name      ?report_energy@@YAXXZ
+// ORIGINAL: 0x004AC9F0 ?report_energy@@YAXXZ 0x004AC9F0-0x004ACA3C FILE
 // size      76 bytes
-// spans     0x004AC9F0-0x004ACA3C
 // prototype 
 // callers   2   call targets   1
 // kind      game

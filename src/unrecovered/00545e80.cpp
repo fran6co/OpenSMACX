@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00545E80 FILE
+// ORIGINAL: 0x00545E80 ?propose_attack@@YAHHH@Z 0x00545E80-0x00547C08;0x0065F1B4-0x0065F4C4 FILE
 // working copy - scaffold materialised by --work
-// name      ?propose_attack@@YAHHH@Z
 // size      8344 bytes
-// spans     0x00545E80-0x00547C08;0x0065F1B4-0x0065F4C4
 // prototype 
 // callers   1   call targets   54
 // kind      game

@@ -1,18 +1,7 @@
-// ORIGINAL: 0x004B9010 FILE
-// RULED-OUT: the item-id -> aiStackY_558[] indirect lookup after
-//            PullDown::show was replaced with a direct
-//            PullDown::get_selected() reading the stored item id; the
-//            trailing StringStruct::remove_all / sub_406820 / sub_406af0
-//            cleanup calls were stubbed as opaque externs rather than
-//            derived, and several unidentified callees (case 5/6/0x33-0x38
-//            helpers) are placeholder-named fn_ADDR externs. The RAII
-//            object set (PullDown x2, Popup x2, Scroll, FlatButton x4,
-//            Spot, Dialogs, Sprite, Heap) matches the disassembly's
-//            constructor/destructor sequence but not its stack-slot reuse.
+// ORIGINAL: 0x004B9010 ?on_right_click@StatusWin@@QAEXHHH@Z 0x004B9010-0x004B9DF8;0x00659AA0-0x00659BCA FILE
+// RULED-OUT: the item-id -> aiStackY_558[] indirect lookup after PullDown::show was replaced with a direct PullDown::get_selected() reading the stored item id; the trailing StringStruct::remove_all / sub_406820 / sub_406af0 cleanup calls were stubbed as opaque externs rather than derived, and several unidentified callees (case 5/6/0x33-0x38 helpers) are placeholder-named fn_ADDR externs. The RAII object set (PullDown x2, Popup x2, Scroll, FlatButton x4, Spot, Dialogs, Sprite, Heap) matches the disassembly's constructor/destructor sequence but not its stack-slot reuse.
 // working copy - scaffold materialised by --work
-// name      ?on_right_click@StatusWin@@QAEXHHH@Z
 // size      3858 bytes
-// spans     0x004B9010-0x004B9DF8;0x00659AA0-0x00659BCA
 // prototype void (__thiscall ?on_right_click@StatusWin@@QAEXHHH@Z)(StatusWin* this, int xCoord, int yCoord, int)
 // callers   1   call targets   51
 // kind      game

@@ -36,10 +36,8 @@ Palette **BufferPalette = reinterpret_cast<Palette **>(0x009B8174);
 /*
 Purpose: Construct an empty Buffer, including its Spot subobject, text state,
          and either the process palette or the legacy grayscale fallback.
-ORIGINAL: 0x005D7210
-// name      ??0Buffer@@QAE@XZ
+// ORIGINAL: 0x005D7210 ??0Buffer@@QAE@XZ 0x005D7210-0x005D740A;0x00662B50-0x00662B68
 // size      530 bytes
-// spans     0x005D7210-0x005D740A;0x00662B50-0x00662B68
 // prototype void (__thiscall ??0Buffer@@QAE@XZ)(Buffer* this)
 // callers   80   call targets   2
 // kind      game
@@ -178,10 +176,8 @@ Buffer *__fastcall buffer_construct_redirect(Buffer *self, void *) {
 
 /*
 Purpose: Set the four fonts used by the buffer.
-ORIGINAL: 0x005DAC70 BYTE_EXACT
-// name      ?set_font@Buffer@@QAEHPAVFont@@PAVFont@@PAVFont@@PAVFont@@@Z
+// ORIGINAL: 0x005DAC70 ?set_font@Buffer@@QAEHPAVFont@@PAVFont@@PAVFont@@PAVFont@@@Z 0x005DAC70-0x005DACB0 BYTE_EXACT
 // size      64 bytes
-// spans     0x005DAC70-0x005DACB0
 // prototype int (__thiscall ?set_font@Buffer@@QAEHPAVFont@@PAVFont@@PAVFont@@PAVFont@@@Z)(Buffer* this, Font*, Font*, Font*, Font*)
 // callers   189   call targets   0
 // kind      game
@@ -206,10 +202,8 @@ int Buffer::set_font(Font *font1, Font *font2, Font *font3, Font *font4) {
 
 /*
 Purpose: Set the primary text colors for the four color slots.
-ORIGINAL: 0x005DACB0 BYTE_EXACT
-// name      ?set_text_color@Buffer@@QAEXHHHH@Z
+// ORIGINAL: 0x005DACB0 ?set_text_color@Buffer@@QAEXHHHH@Z 0x005DACB0-0x005DACDB BYTE_EXACT
 // size      43 bytes
-// spans     0x005DACB0-0x005DACDB
 // prototype void (__thiscall ?set_text_color@Buffer@@QAEXHHHH@Z)(Buffer* this, int, int, int, int)
 // callers   188   call targets   0
 // kind      game
@@ -228,10 +222,8 @@ void Buffer::set_text_color(int color1, int color2, int color3, int color4) {
 
 /*
 Purpose: Set the secondary text colors for the four color slots.
-ORIGINAL: 0x005DACE0 BYTE_EXACT
-// name      ?set_text_color2@Buffer@@QAEXHHHH@Z
+// ORIGINAL: 0x005DACE0 ?set_text_color2@Buffer@@QAEXHHHH@Z 0x005DACE0-0x005DAD0B BYTE_EXACT
 // size      43 bytes
-// spans     0x005DACE0-0x005DAD0B
 // prototype void (__thiscall ?set_text_color2@Buffer@@QAEXHHHH@Z)(Buffer* this, int, int, int, int)
 // callers   46   call targets   0
 // kind      game
@@ -250,10 +242,8 @@ void Buffer::set_text_color2(int color1, int color2, int color3, int color4) {
 
 /*
 Purpose: Set the tertiary text colors for the four color slots.
-ORIGINAL: 0x005DAD10 BYTE_EXACT
-// name      ?set_text_color3@Buffer@@QAEXHHHH@Z
+// ORIGINAL: 0x005DAD10 ?set_text_color3@Buffer@@QAEXHHHH@Z 0x005DAD10-0x005DAD3B BYTE_EXACT
 // size      43 bytes
-// spans     0x005DAD10-0x005DAD3B
 // prototype void (__thiscall ?set_text_color3@Buffer@@QAEXHHHH@Z)(Buffer* this, int, int, int, int)
 // callers   30   call targets   0
 // kind      game
@@ -272,10 +262,8 @@ void Buffer::set_text_color3(int color1, int color2, int color3, int color4) {
 
 /*
 Purpose: Set the hyperlink text colors for the four color slots.
-ORIGINAL: 0x005DAD40 BYTE_EXACT
-// name      ?set_text_color_hyper@Buffer@@QAEXHHHH@Z
+// ORIGINAL: 0x005DAD40 ?set_text_color_hyper@Buffer@@QAEXHHHH@Z 0x005DAD40-0x005DAD6B BYTE_EXACT
 // size      43 bytes
-// spans     0x005DAD40-0x005DAD6B
 // prototype void (__thiscall ?set_text_color_hyper@Buffer@@QAEXHHHH@Z)(Buffer* this, int, int, int, int)
 // callers   20   call targets   0
 // kind      game
@@ -294,10 +282,8 @@ void Buffer::set_text_color_hyper(int color1, int color2, int color3, int color4
 
 /*
 Purpose: Initialize shared Buffer state; the legacy implementation has no state to initialize.
-ORIGINAL: 0x005DF570 BYTE_EXACT
-// name      ?init_class@Buffer@@QAAHXZ
+// ORIGINAL: 0x005DF570 ?init_class@Buffer@@QAAHXZ 0x005DF570-0x005DF573 BYTE_EXACT
 // size      3 bytes
-// spans     0x005DF570-0x005DF573
 // prototype 
 // callers   1   call targets   0
 // kind      game
@@ -313,10 +299,8 @@ int Buffer::init_class() {
 
 /*
 Purpose: Close shared Buffer state; the legacy implementation is intentionally empty.
-ORIGINAL: 0x005DF580 BYTE_EXACT
-// name      ?close_class@Buffer@@QAAXXZ
+// ORIGINAL: 0x005DF580 ?close_class@Buffer@@QAAXXZ 0x005DF580-0x005DF581 BYTE_EXACT
 // size      1 bytes
-// spans     0x005DF580-0x005DF581
 // prototype 
 // callers   1   call targets   0
 // kind      game
@@ -385,10 +369,8 @@ static const size_t SurfaceDescriptorData = 0x24;
 /*
 Purpose: Acquire the buffer's pixel data, locking the DirectDraw surface on the
          first reference and counting every acquisition.
-ORIGINAL: 0x005E3373
-// name      ?get_data@Buffer@@QAEHXZ
+// ORIGINAL: 0x005E3373 ?get_data@Buffer@@QAEHXZ 0x005E3373-0x005E33EA
 // size      119 bytes
-// spans     0x005E3373-0x005E33EA
 // prototype int (__thiscall ?get_data@Buffer@@QAEHXZ)(Buffer* this)
 // callers   48   call targets   0
 // kind      game
@@ -440,10 +422,8 @@ int Buffer::get_data() {
 /*
 Purpose: Release acquired references to the buffer's pixel data, unlocking the
          DirectDraw surface once the last reference is dropped.
-ORIGINAL: 0x005E34A3
-// name      ?free_data@Buffer@@QAEXH@Z
+// ORIGINAL: 0x005E34A3 ?free_data@Buffer@@QAEXH@Z 0x005E34A3-0x005E34FB
 // size      88 bytes
-// spans     0x005E34A3-0x005E34FB
 // prototype void (__thiscall ?free_data@Buffer@@QAEXH@Z)(Buffer* this, int)
 // callers   43   call targets   0
 // kind      game
@@ -488,10 +468,8 @@ void __fastcall buffer_free_data_redirect(Buffer *self, void *, int count) {
 /*
 Purpose: Report the line height of the buffer's primary font, falling back to
          the global default font when none is set.
-ORIGINAL: 0x005DCAB0
-// name      ?text_line_height@Buffer@@QAEHXZ
+// ORIGINAL: 0x005DCAB0 ?text_line_height@Buffer@@QAEHXZ 0x005DCAB0-0x005DCADB
 // size      43 bytes
-// spans     0x005DCAB0-0x005DCADB
 // prototype int (__thiscall ?text_line_height@Buffer@@QAEHXZ)(Buffer* this)
 // callers   21   call targets   0
 // kind      game
@@ -553,10 +531,8 @@ func_buffer_copy_full BufferCopyFull = original_method<func_buffer_copy_full>(0x
 
 /*
 Purpose: Copy a region of another buffer into the same position in this one.
-ORIGINAL: 0x005D95B0
-// name      ?copy@Buffer@@QAEHPAVBuffer@@HHHH@Z
+// ORIGINAL: 0x005D95B0 ?copy@Buffer@@QAEHPAVBuffer@@HHHH@Z 0x005D95B0-0x005D95D3
 // size      35 bytes
-// spans     0x005D95B0-0x005D95D3
 // prototype int (__thiscall ?copy@Buffer@@QAEHPAVBuffer@@HHHH@Z)(Buffer* this, Buffer*, int, int, int, int)
 // callers   8   call targets   1
 // kind      game
@@ -584,10 +560,8 @@ int __fastcall buffer_copy_redirect(Buffer *self, void *, Buffer *buffer,
 /*
 Purpose: Copy the region a rectangle describes out of another buffer into the
          same position in this one.
-ORIGINAL: 0x005D95E0
-// name      ?copy@Buffer@@QAEHPAVBuffer@@PAURECT@@@Z
+// ORIGINAL: 0x005D95E0 ?copy@Buffer@@QAEHPAVBuffer@@PAURECT@@@Z 0x005D95E0-0x005D960A
 // size      42 bytes
-// spans     0x005D95E0-0x005D960A
 // prototype int (__thiscall ?copy@Buffer@@QAEHPAVBuffer@@PAURECT@@@Z)(Buffer* this, Buffer*, RECT*)
 // callers   8   call targets   1
 // kind      game
@@ -627,10 +601,8 @@ static func_buffer_load_pcx BufferLoadPcxOriginal = original_method<func_buffer_
 Purpose: Give the buffer a size and the storage behind it - a DirectDraw
          surface when the process has DirectDraw, a DIB section otherwise -
          and leave a device context selected onto it.
-ORIGINAL: 0x005D7670
-// name      ?init@Buffer@@QAEHHHHPAUExtDirectDraw@@@Z
+// ORIGINAL: 0x005D7670 ?init@Buffer@@QAEHHHHPAUExtDirectDraw@@@Z 0x005D7670-0x005D79BF
 // size      847 bytes
-// spans     0x005D7670-0x005D79BF
 // prototype int (__thiscall ?init@Buffer@@QAEHHHHPAUExtDirectDraw@@@Z)(Buffer* this, int, int, int, ExtDirectDraw*)
 // callers   40   call targets   5
 // kind      game
@@ -789,10 +761,8 @@ int Buffer::init(int width, int height, int tgl, ExtDirectDraw *direct_draw) {
 Purpose: Flood the whole buffer with one colour - through DirectDraw when
          there is a surface, and by writing the mapped bits when there is
          not.
-ORIGINAL: 0x005DFB50
-// name      ?fill@Buffer@@QAEHH@Z
+// ORIGINAL: 0x005DFB50 ?fill@Buffer@@QAEHH@Z 0x005DFB50-0x005DFCCD
 // size      381 bytes
-// spans     0x005DFB50-0x005DFCCD
 // prototype int (__thiscall ?fill@Buffer@@QAEHH@Z)(Buffer* this, int)
 // callers   40   call targets   1
 // kind      game
@@ -943,10 +913,8 @@ int Buffer::fill(int color) {
 Purpose: Fill a rectangle of this buffer with a single colour, through
          DirectDraw when there is a surface and by writing the mapped bits
          when there is not.
-ORIGINAL: 0x005DFCD0
-// name      ?fill@Buffer@@QAEHPAURECT@@H@Z
+// ORIGINAL: 0x005DFCD0 ?fill@Buffer@@QAEHPAURECT@@H@Z 0x005DFCD0-0x005DFEFC
 // size      556 bytes
-// spans     0x005DFCD0-0x005DFEFC
 // prototype int (__thiscall ?fill@Buffer@@QAEHPAURECT@@H@Z)(Buffer* this, RECT* rect, int)
 // callers   8   call targets   0
 // kind      game
@@ -1128,10 +1096,8 @@ int Buffer::fill(RECT *area, int color) {
 /*
 Purpose: Load a PCX file by name into this buffer, supplying a default
          extension and memory-mapping the file for the decoder.
-ORIGINAL: 0x005D7DE0 BYTE_EXACT
-// name      ?load_pcx@Buffer@@QAEHPBDPAVPalette@@HH@Z
+// ORIGINAL: 0x005D7DE0 ?load_pcx@Buffer@@QAEHPBDPAVPalette@@HH@Z 0x005D7DE0-0x005D7F1D;0x00662BBC-0x00662BD1 BYTE_EXACT
 // size      338 bytes
-// spans     0x005D7DE0-0x005D7F1D;0x00662BBC-0x00662BD1
 // prototype int (__thiscall ?load_pcx@Buffer@@QAEHPBDPAVPalette@@HH@Z)(Buffer* this, int8* fileName, Palette*, int, int size)
 // callers   44   call targets   6
 // kind      game
@@ -1207,10 +1173,8 @@ int Buffer::copy(Buffer *buffer, int xCoord, int yCoord, int width, int height,
 /*
 Purpose: Release every resource the buffer owns and reset it to its
          constructed state.
-ORIGINAL: 0x005D7470
-// name      ?close@Buffer@@QAEXXZ
+// ORIGINAL: 0x005D7470 ?close@Buffer@@QAEXXZ 0x005D7470-0x005D7665
 // size      501 bytes
-// spans     0x005D7470-0x005D7665
 // prototype void (__thiscall ?close@Buffer@@QAEXXZ)(Buffer* this)
 // callers   44   call targets   1
 // kind      game
@@ -1338,10 +1302,8 @@ const uint32_t BufferVtable = 0x0066FDBC;
 /*
 Purpose: Destroy a Buffer by installing its virtual table, releasing every
          owned resource, and destroying the trailing Spot subobject.
-ORIGINAL: 0x005D7410
-// name      ??1Buffer@@QAE@XZ
+// ORIGINAL: 0x005D7410 ??1Buffer@@QAE@XZ 0x005D7410-0x005D7463;0x00662B68-0x00662B80
 // size      107 bytes
-// spans     0x005D7410-0x005D7463;0x00662B68-0x00662B80
 // prototype void (__thiscall ??1Buffer@@QAE@XZ)(Buffer* this)
 // callers   87   call targets   2
 // kind      game
@@ -1366,10 +1328,8 @@ void __fastcall buffer_destructor_redirect(Buffer *self, void *) {
 
 /*
 Purpose: Acquire the device context, taking one reference on the shared handle.
-ORIGINAL: 0x005E3503
-// name      ?get_hdc@Buffer@@QAEHXZ
+// ORIGINAL: 0x005E3503 ?get_hdc@Buffer@@QAEHXZ 0x005E3503-0x005E355C
 // size      89 bytes
-// spans     0x005E3503-0x005E355C
 // prototype int (__thiscall ?get_hdc@Buffer@@QAEHXZ)(Buffer* this)
 // callers   9   call targets   0
 // kind      game
@@ -1405,10 +1365,8 @@ HDC Buffer::get_hdc() {
 /*
 Purpose: Drop the given number of device-context references, releasing the
          handle once the last one is gone.
-ORIGINAL: 0x005E3563
-// name      ?release_hdc@Buffer@@QAEXH@Z
+// ORIGINAL: 0x005E3563 ?release_hdc@Buffer@@QAEXH@Z 0x005E3563-0x005E35C3
 // size      96 bytes
-// spans     0x005E3563-0x005E35C3
 // prototype void (__thiscall ?release_hdc@Buffer@@QAEXH@Z)(Buffer* this, int)
 // callers   8   call targets   0
 // kind      game
@@ -1451,10 +1409,8 @@ void __fastcall buffer_release_hdc_redirect(Buffer *self, void *, int count) {
 /*
 Purpose: Republish a palette into the buffer's colour table and device context,
          skipping the work when the palette has not changed.
-ORIGINAL: 0x005DE8F0
-// name      ?sync_to_palette@Buffer@@QAEHPAVPalette@@@Z
+// ORIGINAL: 0x005DE8F0 ?sync_to_palette@Buffer@@QAEHPAVPalette@@@Z 0x005DE8F0-0x005DEA12
 // size      290 bytes
-// spans     0x005DE8F0-0x005DEA12
 // prototype int (__thiscall ?sync_to_palette@Buffer@@QAEHPAVPalette@@@Z)(Buffer* this, Palette*)
 // callers   24   call targets   1
 // kind      game
@@ -1503,10 +1459,8 @@ int __fastcall buffer_sync_to_palette_redirect(
 /*
 Purpose: Report the height of the buffer's text font, resolving the process
          default the first time it is needed.
-ORIGINAL: 0x005DCA80
-// name      ?text_height@Buffer@@QAEHXZ
+// ORIGINAL: 0x005DCA80 ?text_height@Buffer@@QAEHXZ 0x005DCA80-0x005DCAA5
 // size      37 bytes
-// spans     0x005DCA80-0x005DCAA5
 // prototype int (__thiscall ?text_height@Buffer@@QAEHXZ)(Buffer* this)
 // callers   5   call targets   0
 // kind      game
@@ -1533,10 +1487,8 @@ int __fastcall buffer_text_height_redirect(Buffer *self, void *) {
 /*
 Purpose: Clip the buffer to a rectangle, updating the GDI clip region and the
          DirectDraw clipper to match.
-ORIGINAL: 0x005D8000
-// name      ?set_clip@Buffer@@QAEHPAURECT@@@Z
+// ORIGINAL: 0x005D8000 ?set_clip@Buffer@@QAEHPAURECT@@@Z 0x005D8000-0x005D81F3
 // size      499 bytes
-// spans     0x005D8000-0x005D81F3
 // prototype int (__thiscall ?set_clip@Buffer@@QAEHPAURECT@@@Z)(Buffer* this, RECT* rect)
 // callers   114   call targets   0
 // kind      game
@@ -1636,10 +1588,8 @@ func_buffer_text_width_measured BufferTextWidthMeasured =
 
 /*
 Purpose: Measure a null-terminated string with the buffer's text font.
-ORIGINAL: 0x005DC790
-// name      ?text_width@Buffer@@QAEHPAD@Z
+// ORIGINAL: 0x005DC790 ?text_width@Buffer@@QAEHPAD@Z 0x005DC790-0x005DC7BA
 // size      42 bytes
-// spans     0x005DC790-0x005DC7BA
 // prototype int (__thiscall ?text_width@Buffer@@QAEHPAD@Z)(Buffer* this, int8*)
 // callers   17   call targets   2
 // kind      game
@@ -1692,10 +1642,8 @@ Purpose: Outline a rectangle as a two-color bevel: the top and left edges in
          edge spans [left+1, right-1], the bottom [left, right-2] one row up
          from the bottom, the left column [top, bottom-2], and the right
          column [top+1, bottom-1] one column in from the right.
-ORIGINAL: 0x005E3203
-// name      ?box@Buffer@@QAEHPAURECT@@HH@Z
+// ORIGINAL: 0x005E3203 ?box@Buffer@@QAEHPAURECT@@HH@Z 0x005E3203-0x005E3280
 // size      125 bytes
-// spans     0x005E3203-0x005E3280
 // prototype int (__thiscall ?box@Buffer@@QAEHPAURECT@@HH@Z)(Buffer* this, RECT*, int, int)
 // callers   25   call targets   2
 // kind      game
@@ -1737,10 +1685,8 @@ int __fastcall buffer_box_redirect(Buffer *self, void *, RECT *rect,
 Purpose: Reset the buffer's link table - reinitialise the spot list to 40
          entries, clear the count, and free the twenty owned link pointers,
          each through the executable's CRT boundary.
-ORIGINAL: 0x005DEF90
-// name      ?clear_links@Buffer@@QAEXXZ
+// ORIGINAL: 0x005DEF90 ?clear_links@Buffer@@QAEXXZ 0x005DEF90-0x005DEFD4
 // size      68 bytes
-// spans     0x005DEF90-0x005DEFD4
 // prototype void (__thiscall ?clear_links@Buffer@@QAEXXZ)(Buffer* this)
 // callers   5   call targets   2
 // kind      game
@@ -1770,10 +1716,8 @@ func_buffer_write_multi_font_raw_l BufferWriteMultiFontRawL =
 /*
 Purpose: Draw at most `len` characters of a string at an explicit pen
          position, clamping the count to the string's own length first.
-ORIGINAL: 0x005DCEA0
-// name      ?write_l@Buffer@@QAEHPADHHH@Z
+// ORIGINAL: 0x005DCEA0 ?write_l@Buffer@@QAEHPADHHH@Z 0x005DCEA0-0x005DCF34
 // size      148 bytes
-// spans     0x005DCEA0-0x005DCF34
 // prototype int (__thiscall ?write_l@Buffer@@QAEHPADHHH@Z)(Buffer* this, int8*, int, int, int)
 // callers   29   call targets   2
 // kind      game
@@ -1822,10 +1766,8 @@ int __fastcall buffer_write_l_redirect(Buffer *self, void *, LPSTR text,
 /*
 Purpose: Draw at most `len` characters of a string flush against a
          rectangle's left edge and vertically centred on the text font.
-ORIGINAL: 0x005DCF40
-// name      ?write_l@Buffer@@QAEHPADPAURECT@@H@Z
+// ORIGINAL: 0x005DCF40 ?write_l@Buffer@@QAEHPADPAURECT@@H@Z 0x005DCF40-0x005DD016
 // size      214 bytes
-// spans     0x005DCF40-0x005DD016
 // prototype int (__thiscall ?write_l@Buffer@@QAEHPADPAURECT@@H@Z)(Buffer* this, int8*, RECT*, int)
 // callers   35   call targets   2
 // kind      game
@@ -1890,10 +1832,8 @@ int __fastcall buffer_write_l_rect_redirect(Buffer *self, void *, LPSTR text,
 /*
 Purpose: Draw at most `len` characters of a string horizontally centred in a
          span of `width` pixels starting at an explicit pen position.
-ORIGINAL: 0x005DD020
-// name      ?write_cent_l@Buffer@@QAEHPADHHHH@Z
+// ORIGINAL: 0x005DD020 ?write_cent_l@Buffer@@QAEHPADHHHH@Z 0x005DD020-0x005DD0D2
 // size      178 bytes
-// spans     0x005DD020-0x005DD0D2
 // prototype int (__thiscall ?write_cent_l@Buffer@@QAEHPADHHHH@Z)(Buffer* this, int8*, int, int, int, int)
 // callers   30   call targets   3
 // kind      game
@@ -1948,10 +1888,8 @@ int __fastcall buffer_write_cent_l_redirect(Buffer *self, void *, LPSTR text,
 /*
 Purpose: Draw at most `len` characters of a string centred both horizontally
          and vertically inside a rectangle.
-ORIGINAL: 0x005DD130
-// name      ?write_cent_l@Buffer@@QAEHPADPAURECT@@H@Z
+// ORIGINAL: 0x005DD130 ?write_cent_l@Buffer@@QAEHPADPAURECT@@H@Z 0x005DD130-0x005DD24A
 // size      282 bytes
-// spans     0x005DD130-0x005DD24A
 // prototype int (__thiscall ?write_cent_l@Buffer@@QAEHPADPAURECT@@H@Z)(Buffer* this, int8*, RECT*, int)
 // callers   108   call targets   3
 // kind      game
@@ -2023,10 +1961,8 @@ int __fastcall buffer_write_cent_l_rect_redirect(Buffer *self, void *,
 }
 
 /*
-ORIGINAL: 0x005DA680 BYTE_EXACT
-// name      ?poly@Buffer@@QAEHPAUVert@@HH@Z
+// ORIGINAL: 0x005DA680 ?poly@Buffer@@QAEHPAUVert@@HH@Z 0x005DA680-0x005DA69B BYTE_EXACT
 // size      27 bytes
-// spans     0x005DA680-0x005DA69B
 // prototype 
 // callers   1   call targets   1
 // kind      game

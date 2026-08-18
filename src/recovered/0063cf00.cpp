@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0063CF00 BYTE_EXACT
-// name      deflateInit_
+// ORIGINAL: 0x0063CF00 deflateInit_ 0x0063CF00-0x0063CF25 BYTE_EXACT
 // size      37 bytes
-// spans     0x0063CF00-0x0063CF25
 // prototype 
 // callers   1   call targets   1
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005ECDC0 FILE
-// name      ?UNK2@Win@@QAEHH@Z
+// ORIGINAL: 0x005ECDC0 ?UNK2@Win@@QAEHH@Z 0x005ECDC0-0x005ECE15 FILE
 // size      85 bytes
-// spans     0x005ECDC0-0x005ECE15
 // prototype int (__thiscall ?UNK2@Win@@QAEHH@Z)(Win* this, int)
 // callers   2   call targets   1
 // kind      game

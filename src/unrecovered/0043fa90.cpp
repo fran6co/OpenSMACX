@@ -1,23 +1,7 @@
-// ORIGINAL: 0x0043FA90 FILE
-// RULED-OUT: transcription mixing Ghidra's control-flow structure with a
-//            raw-asm re-derivation of the RECT field-to-stack-slot mapping
-//            for the box_sprite/draw_mono/draw calls, since Ghidra's own
-//            local_XX names there did not correspond to their literal ebp
-//            offsets (proven by cross-checking the Y-formula against the
-//            confirmed slot layout: RECT starts at ebp-0x10, not ebp-0x14
-//            as the naming implied) - trusted raw asm for that part, and
-//            Ghidra's formulas/call order for the later (mechanical)
-//            string-building/wrap/write_l portion. The
-//            `Sprite* portrait = g_0078ee74 + leaderIdx*0x65c` stride and
-//            its iWidth_/iHeight_/cTransparentIndex_ field reads were
-//            confirmed against Sprite's catalogued layout. Reaches
-//            MISMATCH #4 ('push' vs 'mov'); did not chase the exact
-//            prologue/register-allocation shape further given the
-//            function's size.
+// ORIGINAL: 0x0043FA90 ?draw_info@DiploPop@@QAEXXZ 0x0043FA90-0x0044007F FILE
+// RULED-OUT: transcription mixing Ghidra's control-flow structure with a raw-asm re-derivation of the RECT field-to-stack-slot mapping for the box_sprite/draw_mono/draw calls, since Ghidra's own local_XX names there did not correspond to their literal ebp offsets (proven by cross-checking the Y-formula against the confirmed slot layout: RECT starts at ebp-0x10, not ebp-0x14 as the naming implied) - trusted raw asm for that part, and Ghidra's formulas/call order for the later (mechanical) string-building/wrap/write_l portion. The `Sprite* portrait = g_0078ee74 + leaderIdx*0x65c` stride and its iWidth_/iHeight_/cTransparentIndex_ field reads were confirmed against Sprite's catalogued layout. Reaches MISMATCH #4 ('push' vs 'mov'); did not chase the exact prologue/register-allocation shape further given the function's size.
 // working copy - scaffold materialised by --work
-// name      ?draw_info@DiploPop@@QAEXXZ
 // size      1519 bytes
-// spans     0x0043FA90-0x0044007F
 // prototype void (__thiscall ?draw_info@DiploPop@@QAEXXZ)(DiploPop* this)
 // callers   3   call targets   14
 // kind      game

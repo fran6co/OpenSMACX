@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064A868 EXCLUDED S1
-// name      __checkTOS_withFB
+// ORIGINAL: 0x0064A868 __checkTOS_withFB 0x0064A868-0x0064A87E EXCLUDED S1
 // size      22 bytes
-// spans     0x0064A868-0x0064A87E
 // prototype 
 // callers   5   call targets   0
 // kind      library

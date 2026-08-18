@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064C59A EXCLUDED S1
-// name      __handle_exc
+// ORIGINAL: 0x0064C59A __handle_exc 0x0064C59A-0x0064C7B1 EXCLUDED S1
 // size      535 bytes
-// spans     0x0064C59A-0x0064C7B1
 // prototype 
 // callers   3   call targets   2
 // kind      library

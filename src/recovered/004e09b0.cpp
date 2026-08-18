@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004E09B0 BYTE_EXACT
-// name      ?editor_kill_vehicles@Console@@QAEXXZ
+// ORIGINAL: 0x004E09B0 ?editor_kill_vehicles@Console@@QAEXXZ 0x004E09B0-0x004E09D9 BYTE_EXACT
 // size      41 bytes
-// spans     0x004E09B0-0x004E09D9
 // prototype void (__thiscall ?editor_kill_vehicles@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   3
 // kind      game

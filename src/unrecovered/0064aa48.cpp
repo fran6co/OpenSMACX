@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064AA48 EXCLUDED S1
-// name      __output
+// ORIGINAL: 0x0064AA48 __output 0x0064AA48-0x0064B169 EXCLUDED S1
 // size      1825 bytes
-// spans     0x0064AA48-0x0064B169
 // prototype 
 // callers   2   call targets   10
 // kind      library

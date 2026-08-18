@@ -17,11 +17,10 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from .grammar import (CONTINUABLE, CONTINUED, EXCLUSION_TOKEN, FACT_LINE,
-                      LESSON_CONTINUED, LESSON_DEFERRED, LESSON_LEVER,
-                      LESSON_RULED_OUT, LESSON_UNRECOVERABLE, MARKER,
-                      MARKER_KEYWORD, MARKER_MATCHED, NEXT_MARKER, SENTINEL,
-                      _MANGLED_BASE, _NAME_FIELD)
+from .grammar import (EXCLUSION_TOKEN, LESSON_CONTINUED, LESSON_DEFERRED,
+                      LESSON_LEVER, LESSON_RULED_OUT, LESSON_UNRECOVERABLE,
+                      MARKER, MARKER_KEYWORD, MARKER_MATCHED, MARKER_TAIL,
+                      NEXT_MARKER, SENTINEL, _MANGLED_BASE)
 from .model import DecompilationState, Mode, State
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -73,7 +72,14 @@ def _block_state_after(line: str, in_block: bool) -> bool:
 
 
 def _parse_marker(line: str, in_block: bool) -> tuple | None:
-    """(address, keyword, rest, matched) for a marker IN A COMMENT."""
+    """(address, keyword, rest, matched, name, spans) for a marker IN A
+    COMMENT.
+
+    The marker names the piece before saying how to read it: name and
+    image spans ride the tail ahead of the keywords. A tail without them
+    is the pre-migration spelling; it yields empty name and spans, and
+    the construction falls back to the fact block.
+    """
     match = MARKER.search(line)
     if not match:
         return None
@@ -84,11 +90,18 @@ def _parse_marker(line: str, in_block: bool) -> tuple | None:
     if not in_block and "//" not in prefix and "/*" not in prefix:
         return None
     tail = match.group("tail") or ""
+    tail_match = MARKER_TAIL.match(tail)
+    if tail_match:
+        name = tail_match.group("name")
+        spans = _spans_of(tail_match.group("spans"))
+        tail = tail_match.group("rest")
+    else:
+        name, spans = "", ()
     matched = bool(MARKER_MATCHED.search(tail))
     keyword_hit = MARKER_KEYWORD.match(MARKER_MATCHED.sub("", tail))
     keyword = keyword_hit.group("kw") if keyword_hit else None
     rest = keyword_hit.group("rest") if keyword_hit else ""
-    return int(match.group("addr"), 16), keyword, rest, matched
+    return int(match.group("addr"), 16), keyword, rest, matched, name, spans
 
 
 def _lessons(lines: list[str], index: int) -> tuple:
@@ -242,28 +255,15 @@ def _brace_delta(line: str, in_block: bool) -> tuple[int, bool, bool, str]:
     return out, in_block, saw_open, "".join(code)
 
 
-def _subject_identifier(lines: list[str], start: int) -> str | None:
-    """The identifier the marker at `start` names, or None if it has none.
-
-    Read out of the annotation's own `// name` field, which every catalogued
-    row carries, so `region_end` needs no new argument and every caller of it
-    gets the benefit. The header is scanned only up to the first brace: past
-    that the region is code, and a `name` in code is not this field.
-    """
-    for line in lines[start:]:
-        if "{" in line:
-            break
-        matched = _NAME_FIELD.match(line)
-        if matched is None:
-            continue
-        parts = _MANGLED_BASE.match(matched.group(1))
-        if parts is None:
-            return None
-        return next(group for group in parts.groups() if group)
-    return None
+def _subject_of(name: str) -> str | None:
+    """The identifier a mangled name is built around, or None."""
+    parts = _MANGLED_BASE.match(name)
+    if parts is None:
+        return None
+    return next(group for group in parts.groups() if group)
 
 
-def _region_end(lines: list[str], start: int) -> int | None:
+def _region_end(lines: list[str], start: int, name: str = "") -> int | None:
     """Index of the line that ends the region opened at `start`, or None.
 
     THE LAST TOP-LEVEL CLOSE BEFORE THE NEXT MARKER, not the first. A body
@@ -298,7 +298,7 @@ def _region_end(lines: list[str], start: int) -> int | None:
     # calling it defined too late extends the region over a neighbour. So a
     # bare mention in code counts, and `punctuated` keeps the old answer as
     # the floor for a subject that never appears at all.
-    subject = _subject_identifier(lines, start)
+    subject = _subject_of(name) if name else None
     defined = subject is None
     wanted = None if defined else re.compile(rf"\b{re.escape(subject)}\b")
     punctuated = None
@@ -338,7 +338,8 @@ def _region_end(lines: list[str], start: int) -> int | None:
     return end if defined else punctuated
 
 
-def _extract_forward_text(lines: list[str], marker_line: int) -> str:
+def _extract_forward_text(lines: list[str], marker_line: int,
+                          name: str = "") -> str:
     """The region claimed by a marker at `marker_line` (1-based), in LINES.
 
     The brace counter, the inclusive closing-brace line, and the `/*`
@@ -350,7 +351,7 @@ def _extract_forward_text(lines: list[str], marker_line: int) -> str:
     extractor it mirrors.
     """
     start = marker_line - 1
-    end = _region_end(lines, start)
+    end = _region_end(lines, start, name)
     if end is None:
         raise ValueError("no closing brace within the file")
     text = "\n".join(lines[start:end + 1]) + "\n"
@@ -532,12 +533,9 @@ def _read_text(text: str, path: Path | str) -> list[DecompilationState]:
         in_block = _block_state_after(line, in_block)
         if parsed is None:
             continue
-        address, keyword, rest, matched = parsed
+        address, keyword, rest, matched, name, spans = parsed
         found_levers, found_ruled, found_dead, found_later = \
             _lessons(lines, index)
-        facts = _fact_block(lines, index)
-        name = facts.get("name", "")
-        spans = _spans_of(facts.get("spans", ""))
         if keyword == "FILE":
             region = text
             found.append(DecompilationState(
@@ -563,7 +561,7 @@ def _read_text(text: str, path: Path | str) -> list[DecompilationState]:
                 region, error = _proved_body(lines), ""
             else:
                 try:
-                    region = _extract_forward_text(lines, index + 1)
+                    region = _extract_forward_text(lines, index + 1, name)
                     error = ""
                 except ValueError as problem:
                     region, error = "", str(problem)
@@ -576,36 +574,6 @@ def _read_text(text: str, path: Path | str) -> list[DecompilationState]:
                 levers=found_levers, ruled_out=found_ruled,
                 unrecoverable=found_dead, deferred=found_later))
 
-    return found
-
-
-def _fact_block(lines: list[str], index: int) -> dict:
-    """{fact: value} recorded in the comment run after the marker at
-    `index`.
-
-    The first spelling of a fact wins - the block is written once, and a
-    second match is prose that happened to parse - and a wrapped value
-    continues on lines indented to the value's own column.
-    """
-    found: dict = {}
-    open_key, column = None, None
-    for line in lines[index + 1:]:
-        stripped = line.strip()
-        if not (stripped.startswith("//") or stripped.startswith("*")):
-            break
-        match = FACT_LINE.match(line)
-        if match:
-            key, value = match.group(1), match.group(2) or ""
-            fresh = key not in found
-            found.setdefault(key, value)
-            open_key = key if fresh and key in CONTINUABLE and value else None
-            column = line.index(value) if open_key else None
-            continue
-        carried = CONTINUED.match(line)
-        if open_key and carried and len(carried.group(1)) + 2 == column:
-            found[open_key] = f"{found[open_key]} {carried.group(2).strip()}"
-            continue
-        open_key, column = None, None
     return found
 
 

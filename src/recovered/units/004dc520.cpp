@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004DC520 FILE
-// name      ?editor_scen_rules@Console@@QAEXXZ
+// ORIGINAL: 0x004DC520 ?editor_scen_rules@Console@@QAEXXZ 0x004DC520-0x004DC852;0x0065B55F-0x0065B5CC FILE
 // size      927 bytes
-// spans     0x004DC520-0x004DC852;0x0065B55F-0x0065B5CC
 // prototype void (__thiscall ?editor_scen_rules@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   12
 // kind      game

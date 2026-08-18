@@ -1,19 +1,12 @@
-// ORIGINAL: 0x00638430
-// name      sub_638430
+// ORIGINAL: 0x00638430 sub_638430 0x00638430-0x006385CD
+// RULED-OUT: teardown - frees five plain pointer fields (0xc/0x10/0x14/ 0x18/0x1c), three arrays of small structs at 0x28/0x2c/0x30/ 0x34 sized by a shared count field at 0x24, then the object itself through the free callback at g_009c0b84. Diverges at #6 - the original re-reads each array-base field inside the loop rather than caching it once; landed at 0.64 similarity.
 // size      413 bytes
-// spans     0x00638430-0x006385CD
 // prototype
 // callers   2   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
 // indirect  0x00638447 0x00638458 0x00638469 0x0063847A 0x0063848B 0x006384AB 0x006384C0 0x006384E6 0x006384FB 0x00638510 0x00638528 0x0063854D 0x00638562 0x00638589 0x0063859E 0x006385B6 0x006385C0
-// RULED-OUT: teardown - frees five plain pointer fields (0xc/0x10/0x14/
-//            0x18/0x1c), three arrays of small structs at 0x28/0x2c/0x30/
-//            0x34 sized by a shared count field at 0x24, then the object
-//            itself through the free callback at g_009c0b84. Diverges at
-//            #6 - the original re-reads each array-base field inside the
-//            loop rather than caching it once; landed at 0.64 similarity.
 
 typedef void (__cdecl *FreeFn)(void *);
 

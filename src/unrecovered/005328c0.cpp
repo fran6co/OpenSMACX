@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005328C0 FILE
+// ORIGINAL: 0x005328C0 ?end_of_event@NetDaemon@@QAEHHH@Z 0x005328C0-0x00532934 FILE
 // working copy - scaffold materialised by --work
-// name      ?end_of_event@NetDaemon@@QAEHHH@Z
 // size      116 bytes
-// spans     0x005328C0-0x00532934
 // prototype int (__thiscall ?end_of_event@NetDaemon@@QAEHHH@Z)(NetDaemon* this, int, int)
 // callers   0   call targets   2
 // kind      game

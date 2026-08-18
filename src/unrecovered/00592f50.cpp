@@ -1,11 +1,7 @@
-// ORIGINAL: 0x00592F50 FILE
-// RULED-OUT: 10-arg __cdecl packing a 0x90-byte NetDaemon message on the
-//            stack; MISMATCH #29, byte buffer vs epilogue push/lea/push
-//            around the send_message call - not iterated further.
+// ORIGINAL: 0x00592F50 sub_592f50 0x00592F50-0x00592FE9 FILE
+// RULED-OUT: 10-arg __cdecl packing a 0x90-byte NetDaemon message on the stack; MISMATCH #29, byte buffer vs epilogue push/lea/push around the send_message call - not iterated further.
 // working copy - scaffold materialised by --work
-// name      sub_592f50
 // size      153 bytes
-// spans     0x00592F50-0x00592FE9
 // prototype 
 // callers   0   call targets   1
 // kind      game

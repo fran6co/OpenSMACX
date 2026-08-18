@@ -1,11 +1,6 @@
-// ORIGINAL: 0x005D1278 FILE
-// RULED-OUT: sub_5d2536/sub_5d0aab take no C-expressible params (register-
-//   implicit edi/esi/ebp with no prologue); the esi/edi/ebp setup before each
-//   bare call cannot be threaded through a normal argument list without
-//   __asm, so the calls below are faithful in COUNT and ORDER, not operands.
-// name      sub_5d1278
+// ORIGINAL: 0x005D1278 sub_5d1278 0x005D1278-0x005D1466 FILE
+// RULED-OUT: sub_5d2536/sub_5d0aab take no C-expressible params (register- implicit edi/esi/ebp with no prologue); the esi/edi/ebp setup before each bare call cannot be threaded through a normal argument list without __asm, so the calls below are faithful in COUNT and ORDER, not operands.
 // size      494 bytes
-// spans     0x005D1278-0x005D1466
 // prototype 
 // callers   1   call targets   2
 // kind      game

@@ -27,10 +27,8 @@ LPCSTR DefaultFontFace = "Arial";  // 0x00691B2C -> 0x00691BD4
 
 /*
 Purpose: Initialize the class using the font name, height and style.
-ORIGINAL: 0x00618F40
-// name      ?init@Font@@QAEHPADHH@Z
+// ORIGINAL: 0x00618F40 ?init@Font@@QAEHPADHH@Z 0x00618F40-0x006190C6
 // size      390 bytes
-// spans     0x00618F40-0x006190C6
 // prototype int (__thiscall ?init@Font@@QAEHPADHH@Z)(Font* this, int8* fontName, int height, int style)
 // callers   49   call targets   2
 // kind      game
@@ -89,10 +87,8 @@ int Font::init(LPCSTR font_name, int height, int style) {
 
 /*
 Purpose: Initialize the class using the file, font name, height and style.
-ORIGINAL: 0x006190D0
-// name      ?init@Font@@QAEHPADPADHH@Z
+// ORIGINAL: 0x006190D0 ?init@Font@@QAEHPADPADHH@Z 0x006190D0-0x0061922C
 // size      348 bytes
-// spans     0x006190D0-0x0061922C
 // prototype int (__thiscall ?init@Font@@QAEHPADPADHH@Z)(Font* this, int8* lpszFile, int8* fontName, int height, int style)
 // callers   1   call targets   5
 // kind      game
@@ -129,10 +125,8 @@ int Font::init(LPCSTR file, LPCSTR font_name, int height, int style) {
 
 /*
 Purpose: Close an instance of the class.
-ORIGINAL: 0x00619230
-// name      ?close@Font@@QAEXXZ
+// ORIGINAL: 0x00619230 ?close@Font@@QAEXXZ 0x00619230-0x0061927D
 // size      77 bytes
-// spans     0x00619230-0x0061927D
 // prototype void (__thiscall ?close@Font@@QAEXXZ)(Font* this)
 // callers   5   call targets   1
 // kind      game
@@ -161,10 +155,8 @@ void Font::close() {
 
 /*
 Purpose: Get the width for the input text.
-ORIGINAL: 0x00619280 BYTE_EXACT
-// name      ?width@Font@@QAEHPAD@Z
+// ORIGINAL: 0x00619280 ?width@Font@@QAEHPAD@Z 0x00619280-0x006192E3 BYTE_EXACT
 // size      99 bytes
-// spans     0x00619280-0x006192E3
 // prototype int (__thiscall ?width@Font@@QAEHPAD@Z)(Font* this, int8*)
 // callers   15   call targets   1
 // kind      game
@@ -187,10 +179,8 @@ int Font::width(LPSTR input) {
 
 /*
 Purpose: Get the width for the input text with a maximum length.
-ORIGINAL: 0x006192F0
-// name      ?width@Font@@QAEHPADH@Z
+// ORIGINAL: 0x006192F0 ?width@Font@@QAEHPADH@Z 0x006192F0-0x0061936B
 // size      123 bytes
-// spans     0x006192F0-0x0061936B
 // prototype int (__thiscall ?width@Font@@QAEHPADH@Z)(Font* this, int8* lpString, int max)
 // callers   3   call targets   1
 // kind      game
@@ -217,10 +207,8 @@ int Font::width(LPSTR input, size_t max_len) {
 
 /*
 Purpose: Find a space in the input string that can be used as a natural line break.
-ORIGINAL: 0x00619370
-// name      ?find_line_break_l@Font@@QAEHPADPAHH@Z
+// ORIGINAL: 0x00619370 ?find_line_break_l@Font@@QAEHPADPAHH@Z 0x00619370-0x006195A7
 // size      567 bytes
-// spans     0x00619370-0x006195A7
 // prototype int (__thiscall ?find_line_break_l@Font@@QAEHPADPAHH@Z)(Font* this, int8* input, int* breakLen, int len)
 // callers   1   call targets   2
 // kind      game
@@ -267,10 +255,8 @@ LPSTR Font::find_line_break_l(LPSTR input, int *break_len, size_t len) {
 
 /*
 Purpose: Initialize the class static variables.
-ORIGINAL: 0x006195B0
-// name      ?init_font_class@Font@@QAAHPAUFont@@@Z
+// ORIGINAL: 0x006195B0 ?init_font_class@Font@@QAAHPAUFont@@@Z 0x006195B0-0x0061960D
 // size      93 bytes
-// spans     0x006195B0-0x0061960D
 // prototype 
 // callers   1   call targets   1
 // kind      game
@@ -300,10 +286,8 @@ int __cdecl Font::init_font_class(Font *font) {
 
 /*
 Purpose: Shutdown the class static variables.
-ORIGINAL: 0x00619610
-// name      ?close_font_class@Font@@QAAXXZ
+// ORIGINAL: 0x00619610 ?close_font_class@Font@@QAAXXZ 0x00619610-0x00619644
 // size      52 bytes
-// spans     0x00619610-0x00619644
 // prototype 
 // callers   1   call targets   0
 // kind      game

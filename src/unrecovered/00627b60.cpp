@@ -1,17 +1,7 @@
-// ORIGINAL: 0x00627B60 FILE
-// RULED-OUT: byte-exact - 91.2% mnemonic similarity; the `_itoa`/`_strcat`
-//            nullary-alias + function-pointer-cast trick reproduces real
-//            calls instead of the intrinsic expansion. a2 (a function
-//            pointer, pinned by the real mangled name P6AHXZ) is passed to
-//            BasePop::start's `const char*` slot via reinterpret_cast, and
-//            to BasePop::exec unchanged. Remaining divergence is a ternary
-//            (is_visible() ? *g_009bc078 : *g_009bc074) reading
-//            *g_009bc074 a second time in the false arm instead of reusing
-//            the value already loaded into ecx for the is_visible() call.
+// ORIGINAL: 0x00627B60 ?pop_ask_number@@YAHPADP6AHXZ@Z 0x00627B60-0x00627C28 FILE
+// RULED-OUT: byte-exact - 91.2% mnemonic similarity; the `_itoa`/`_strcat` nullary-alias + function-pointer-cast trick reproduces real calls instead of the intrinsic expansion. a2 (a function pointer, pinned by the real mangled name P6AHXZ) is passed to BasePop::start's `const char*` slot via reinterpret_cast, and to BasePop::exec unchanged. Remaining divergence is a ternary (is_visible() ? *g_009bc078 : *g_009bc074) reading *g_009bc074 a second time in the false arm instead of reusing the value already loaded into ecx for the is_visible() call.
 // working copy - scaffold materialised by --work
-// name      ?pop_ask_number@@YAHPADP6AHXZ@Z
 // size      200 bytes
-// spans     0x00627B60-0x00627C28
 // prototype int (__cdecl ?pop_ask_number@@YAHPADP6AHXZ@Z)(int8* sectionID, int (__cdecl *)())
 // callers   0   call targets   9
 // kind      game

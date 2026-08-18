@@ -1,14 +1,7 @@
-// ORIGINAL: 0x00549270 FILE
-// RULED-OUT: MISMATCH #4 'push' vs 'mov' (framed build). Full 1715-byte
-//            transcription of the treaty-offer/double-cross/territory-demand/
-//            withdrawal state machine faithfully following the disassembly's
-//            argument orders (several calls swap (a1,a2) vs (a2,a1) between
-//            branches - transcribed as observed, not assumed symmetric).
-//            Register-scheduling divergence only; did not chase further.
+// ORIGINAL: 0x00549270 ?demand_withdrawal@@YAHHH@Z 0x00549270-0x00549923 FILE
+// RULED-OUT: MISMATCH #4 'push' vs 'mov' (framed build). Full 1715-byte transcription of the treaty-offer/double-cross/territory-demand/ withdrawal state machine faithfully following the disassembly's argument orders (several calls swap (a1,a2) vs (a2,a1) between branches - transcribed as observed, not assumed symmetric). Register-scheduling divergence only; did not chase further.
 // working copy - scaffold materialised by --work
-// name      ?demand_withdrawal@@YAHHH@Z
 // size      1715 bytes
-// spans     0x00549270-0x00549923
 // prototype 
 // callers   2   call targets   13
 // kind      game

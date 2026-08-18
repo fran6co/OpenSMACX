@@ -1,14 +1,7 @@
-// ORIGINAL: 0x004E14D0 FILE
-// RULED-OUT: `Popup popup;` RAII local with explicit business logic (world_* feature
-//            placement switch for a1!=0; landmark search/removal for a1==0, edx==7 vs the
-//            second switch->bit-index path) converging on popup.close(); diverges at instr
-//            #0 (alloca-probe prologue). RETURN TYPE: the 1/2/3/4/5 values set by the second
-//            jump table (0x4E18D2) are consumed immediately as an array index into
-//            0x66F8C4 (never reach `ret` in EAX) - void stands, not a status return.
+// ORIGINAL: 0x004E14D0 ?editor_natural@Console@@QAEXH@Z 0x004E14D0-0x004E1E99;0x0065C38C-0x0065C564 FILE
+// RULED-OUT: `Popup popup;` RAII local with explicit business logic (world_* feature placement switch for a1!=0; landmark search/removal for a1==0, edx==7 vs the second switch->bit-index path) converging on popup.close(); diverges at instr #0 (alloca-probe prologue). RETURN TYPE: the 1/2/3/4/5 values set by the second jump table (0x4E18D2) are consumed immediately as an array index into 0x66F8C4 (never reach `ret` in EAX) - void stands, not a status return.
 // working copy - scaffold materialised by --work
-// name      ?editor_natural@Console@@QAEXH@Z
 // size      2977 bytes
-// spans     0x004E14D0-0x004E1E99;0x0065C38C-0x0065C564
 // prototype void (__thiscall ?editor_natural@Console@@QAEXH@Z)(Console* this, int)
 // callers   1   call targets   46
 // kind      game

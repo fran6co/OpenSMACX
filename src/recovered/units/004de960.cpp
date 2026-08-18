@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004DE960 FILE
-// name      ?editor_kill_veh@Console@@QAEXH@Z
+// ORIGINAL: 0x004DE960 ?editor_kill_veh@Console@@QAEXH@Z 0x004DE960-0x004DECF7;0x0065BC13-0x0065BD30 FILE
 // size      1204 bytes
-// spans     0x004DE960-0x004DECF7;0x0065BC13-0x0065BD30
 // prototype void (__thiscall ?editor_kill_veh@Console@@QAEXH@Z)(Console* this, int vehID)
 // callers   1   call targets   15
 // kind      game

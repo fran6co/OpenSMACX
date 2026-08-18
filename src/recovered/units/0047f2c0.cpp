@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0047F2C0 FILE
-// name      ?pick_native@NetWin@@QAEXXZ
+// ORIGINAL: 0x0047F2C0 ?pick_native@NetWin@@QAEXXZ 0x0047F2C0-0x0047F5EC;0x006572AD-0x00657385 FILE
 // size      1028 bytes
-// spans     0x0047F2C0-0x0047F5EC;0x006572AD-0x00657385
 // prototype void (__thiscall ?pick_native@NetWin@@QAEXXZ)(NetWin* this)
 // callers   1   call targets   26
 // kind      game

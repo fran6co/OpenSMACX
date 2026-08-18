@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005F8140 FILE
-// name      ?update_window_to_buffer@Win@@QAEXPAUBuffer@@@Z
+// ORIGINAL: 0x005F8140 ?update_window_to_buffer@Win@@QAEXPAUBuffer@@@Z 0x005F8140-0x005F83B0 FILE
 // size      624 bytes
-// spans     0x005F8140-0x005F83B0
 // prototype void (__thiscall ?update_window_to_buffer@Win@@QAEXPAUBuffer@@@Z)(Win* this, Buffer*)
 // callers   6   call targets   3
 // kind      game

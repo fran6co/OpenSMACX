@@ -1,16 +1,7 @@
-// ORIGINAL: 0x0050BCC0 FILE
-// RULED-OUT: exact register-cached reuse of the 2099*a1/2099*a2 index
-//            products across the whole tail (rebuilt recomputes idxE/idxF
-//            locally at each site instead); structure (message section +
-//            three-index diplomacy-effects section, both branches of the
-//            cVarFlags&1 split) transcribed field-by-field from the disasm
-//            with parse_says/set_agenda/set_treaty/pact_ends/treaty_on/
-//            cause_friction/great_satan/intervention argument order matched
-//            from each call's own push sequence.
+// ORIGINAL: 0x0050BCC0 ?double_cross@@YAXHHH@Z 0x0050BCC0-0x0050C2D7 FILE
+// RULED-OUT: exact register-cached reuse of the 2099*a1/2099*a2 index products across the whole tail (rebuilt recomputes idxE/idxF locally at each site instead); structure (message section + three-index diplomacy-effects section, both branches of the cVarFlags&1 split) transcribed field-by-field from the disasm with parse_says/set_agenda/set_treaty/pact_ends/treaty_on/ cause_friction/great_satan/intervention argument order matched from each call's own push sequence.
 // working copy - scaffold materialised by --work
-// name      ?double_cross@@YAXHHH@Z
 // size      1559 bytes
-// spans     0x0050BCC0-0x0050C2D7
 // prototype 
 // callers   15   call targets   9
 // kind      game

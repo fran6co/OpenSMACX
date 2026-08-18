@@ -1,18 +1,6 @@
-// ORIGINAL: 0x0047C970 FILE
-// RULED-OUT: MISMATCH #10 'push' vs 'mov' (framed build). SEH-frame password
-//            dialog: local `Popup popup;` is a real automatic object (BasePop
-//            fully laid out in the scaffold: embedded FlatButton x2 and Sprite,
-//            plus Popup's own `Scroll scroll_` which itself embeds two more
-//            FlatButtons at offsets 0xAAC/0x15F8 - matches the trailer thunks
-//            in the disassembly exactly), so ctor/dtor calls are emitted by
-//            the language rather than hand-modelled. Explicit popup.close()/
-//            popup.scroll_.close() only where the disassembly names them, not
-//            at every scope exit. Did not attempt to reproduce the compiler's
-//            own SEH funclet layout - accepted as an "omitted as unreachable"
-//            divergence per the precedent in dialog.cpp/graphicwin.cpp.
-// name      ?pick_pass@NetWin@@QAEHH@Z
+// ORIGINAL: 0x0047C970 ?pick_pass@NetWin@@QAEHH@Z 0x0047C970-0x0047CF32;0x006569C4-0x00656AED FILE
+// RULED-OUT: MISMATCH #10 'push' vs 'mov' (framed build). SEH-frame password dialog: local `Popup popup;` is a real automatic object (BasePop fully laid out in the scaffold: embedded FlatButton x2 and Sprite, plus Popup's own `Scroll scroll_` which itself embeds two more FlatButtons at offsets 0xAAC/0x15F8 - matches the trailer thunks in the disassembly exactly), so ctor/dtor calls are emitted by the language rather than hand-modelled. Explicit popup.close()/ popup.scroll_.close() only where the disassembly names them, not at every scope exit. Did not attempt to reproduce the compiler's own SEH funclet layout - accepted as an "omitted as unreachable" divergence per the precedent in dialog.cpp/graphicwin.cpp.
 // size      1771 bytes
-// spans     0x0047C970-0x0047CF32;0x006569C4-0x00656AED
 // prototype int (__thiscall ?pick_pass@NetWin@@QAEHH@Z)(NetWin* this, int)
 // callers   3   call targets   17
 // kind      game

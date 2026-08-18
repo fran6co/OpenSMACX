@@ -1,18 +1,7 @@
-// ORIGINAL: 0x004CE790 FILE
-// RULED-OUT: literal parameter-slot layout (a1/a2/a3 kept live as named
-//            locals rather than reused stack slots the original repurposes
-//            after FX::play/kill); diverges at instruction #5, before the
-//            base_find call, so it's a prologue register-allocation gap.
-//            Full logic (opportunistic-attack radius scan, territory
-//            check, and the fungus-spread loop with veh_init/bit_set/
-//            world_alt_set/synch_bit/draw_tile) is landed and faithful to
-//            the byte-offset table math (record stride 0x34, faction
-//            matrix stride 0x20cc), cross-checked instruction-by-instruction
-//            against the disassembly rather than trusted from Ghidra alone.
+// ORIGINAL: 0x004CE790 ?action_fungal@@YAXHHH@Z 0x004CE790-0x004CEDDB FILE
+// RULED-OUT: literal parameter-slot layout (a1/a2/a3 kept live as named locals rather than reused stack slots the original repurposes after FX::play/kill); diverges at instruction #5, before the base_find call, so it's a prologue register-allocation gap. Full logic (opportunistic-attack radius scan, territory check, and the fungus-spread loop with veh_init/bit_set/ world_alt_set/synch_bit/draw_tile) is landed and faithful to the byte-offset table math (record stride 0x34, faction matrix stride 0x20cc), cross-checked instruction-by-instruction against the disassembly rather than trusted from Ghidra alone.
 // working copy - scaffold materialised by --work
-// name      ?action_fungal@@YAXHHH@Z
 // size      1611 bytes
-// spans     0x004CE790-0x004CEDDB
 // prototype void (__cdecl ?action_fungal@@YAXHHH@Z)(int vehID, int xCoord, int yCoord)
 // callers   3   call targets   16
 // kind      game

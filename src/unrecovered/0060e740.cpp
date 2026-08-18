@@ -1,8 +1,6 @@
-// ORIGINAL: 0x0060E740 FILE
+// ORIGINAL: 0x0060E740 ??1CheckBox@@QAE@XZ 0x0060E740-0x0060E7C0 FILE
 // working copy - scaffold materialised by --work
-// name      ??1CheckBox@@QAE@XZ
 // size      128 bytes
-// spans     0x0060E740-0x0060E7C0
 // prototype void (__thiscall ??1CheckBox@@QAE@XZ)(CheckBox* this)
 // callers   24   call targets   2
 // kind      game

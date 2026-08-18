@@ -1,14 +1,11 @@
-// ORIGINAL: 0x00617920 FILE
-// name      ?add_object@Caviar@@QAEHPAUCaviarData@@PAUVOX_Vect@@H@Z
+// ORIGINAL: 0x00617920 ?add_object@Caviar@@QAEHPAUCaviarData@@PAUVOX_Vect@@H@Z 0x00617920-0x00617A9F FILE
+// RULED-OUT: none confirmed byte-exact; MISMATCH #0 prologue 'sub' vs 'mov' - frame setup differs from the original's register-save order.
 // size      383 bytes
-// spans     0x00617920-0x00617A9F
 // prototype int (__thiscall ?add_object@Caviar@@QAEHPAUCaviarData@@PAUVOX_Vect@@H@Z)(Caviar* this, CaviarData*, game_base_warnings*, int)
 // callers   6   call targets   1
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00628150
-// RULED-OUT: none confirmed byte-exact; MISMATCH #0 prologue 'sub' vs 'mov' -
-//            frame setup differs from the original's register-save order.
 typedef int int32_t;
 typedef unsigned int uint32_t;
 typedef short int16_t;

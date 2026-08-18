@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0055B760 BYTE_EXACT FILE
-// name      ?treaty_off@@YAXHHH@Z
+// ORIGINAL: 0x0055B760 ?treaty_off@@YAXHHH@Z 0x0055B760-0x0055B818 FILE BYTE_EXACT
 // size      184 bytes
-// spans     0x0055B760-0x0055B818
 // prototype 
 // callers   14   call targets   0
 // kind      

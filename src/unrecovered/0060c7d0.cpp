@@ -1,12 +1,6 @@
-// ORIGINAL: 0x0060C7D0 FILE
-// RULED-OUT: the `[esi]` read is a vbtable pointer (virtual base via
-//            GraphicWin), same `char *base = self + vbtable[2];` idiom as
-//            0x004717A0's `listBox_.vbtable_pointer_`; `_strcmpi` needed a
-//            2-arg redeclaration since the scaffold's default is nullary.
-//            First divergence #3 mov/push, not chased further.
-// name      ?UNK2@ListBox@@QAEHPAD@Z
+// ORIGINAL: 0x0060C7D0 ?UNK2@ListBox@@QAEHPAD@Z 0x0060C7D0-0x0060C920 FILE
+// RULED-OUT: the `[esi]` read is a vbtable pointer (virtual base via GraphicWin), same `char *base = self + vbtable[2];` idiom as 0x004717A0's `listBox_.vbtable_pointer_`; `_strcmpi` needed a 2-arg redeclaration since the scaffold's default is nullary. First divergence #3 mov/push, not chased further.
 // size      336 bytes
-// spans     0x0060C7D0-0x0060C920
 // prototype int (__thiscall ?UNK2@ListBox@@QAEHPAD@Z)(ListBox* this, int8*)
 // callers   2   call targets   2
 // kind      game

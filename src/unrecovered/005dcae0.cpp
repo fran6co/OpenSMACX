@@ -1,17 +1,7 @@
-// ORIGINAL: 0x005DCAE0 FILE
-// RULED-OUT: structured for(;;) loop instead of the byref-alias inline scan
-//            helper the original clearly used (lea &a4; store/reload through
-//            [ebp-4]/[ebp-8]) for the two special-char scans; a plain
-//            switch(char) collapsed to if/else chain matching disasm order
-//            ($ before = before {}[]); raw self+offset field access
-//            throughout since the Buffer field layout past 0x4ac is
-//            unverified (0x4b8 lands inside the scaffold's spot_ object).
-//            MISMATCH #3 in the prologue - register/stack allocation differs
-//            from the first few instructions already.
+// ORIGINAL: 0x005DCAE0 ?write_multi_font_raw_l@Buffer@@QAEHPADHHH@Z 0x005DCAE0-0x005DCE23 FILE
+// RULED-OUT: structured for(;;) loop instead of the byref-alias inline scan helper the original clearly used (lea &a4; store/reload through [ebp-4]/[ebp-8]) for the two special-char scans; a plain switch(char) collapsed to if/else chain matching disasm order ($ before = before {}[]); raw self+offset field access throughout since the Buffer field layout past 0x4ac is unverified (0x4b8 lands inside the scaffold's spot_ object). MISMATCH #3 in the prologue - register/stack allocation differs from the first few instructions already.
 // working copy - scaffold materialised by --work
-// name      ?write_multi_font_raw_l@Buffer@@QAEHPADHHH@Z
 // size      835 bytes
-// spans     0x005DCAE0-0x005DCE23
 // prototype int (__thiscall ?write_multi_font_raw_l@Buffer@@QAEHPADHHH@Z)(Buffer* this, int8*, int, int, int)
 // callers   14   call targets   6
 // kind      game

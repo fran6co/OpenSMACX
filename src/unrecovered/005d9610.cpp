@@ -1,20 +1,13 @@
-// ORIGINAL: 0x005D9610 FILE
+// ORIGINAL: 0x005D9610 ?copy@Buffer@@QAEHPAVBuffer@@HHHHHHHH@Z 0x005D9610-0x005D98EA FILE
+// RULED-OUT: slot017 shows a redundant `push ecx` of its own dispatch object right before `call [vtbl+0x44]` even though ecx is already the thiscall `this`; retyped as slot017(void*) with one explicit arg (the &hdc2_ out-slot) and did not chase reproducing that redundant push. slot026 similarly takes the HDC being released as its one explicit int arg.
 // working copy - scaffold materialised by --work
-// name      ?copy@Buffer@@QAEHPAVBuffer@@HHHHHHHH@Z
 // size      730 bytes
-// spans     0x005D9610-0x005D98EA
 // prototype int (__thiscall ?copy@Buffer@@QAEHPAVBuffer@@HHHHHHHH@Z)(Buffer* this, Buffer* hdcSrc, int xSrc, int ySrc, int wSrc, int hSrc, int xDest, int yDest, int wDest, int hDest)
 // callers   4   call targets   3
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005E3503 0x005E3563 0x005FE560
 // indirect  0x005D9637 0x005D966F 0x005D967A 0x005D96A6 0x005D96D2 0x005D96DD 0x005D9732 0x005D973D 0x005D97A5 0x005D9817 0x005D986D 0x005D98BC 0x005D98C7
-// RULED-OUT: slot017 shows a redundant `push ecx` of its own dispatch
-//            object right before `call [vtbl+0x44]` even though ecx is
-//            already the thiscall `this`; retyped as slot017(void*) with
-//            one explicit arg (the &hdc2_ out-slot) and did not chase
-//            reproducing that redundant push. slot026 similarly takes the
-//            HDC being released as its one explicit int arg.
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?copy@Buffer@@QAEHPAVBuffer@@HHHHHHHH@Z  at 0x005D9610  (730 bytes)

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006468D0 EXCLUDED S1
-// name      _strstr
+// ORIGINAL: 0x006468D0 _strstr 0x006468D0-0x00646950 EXCLUDED S1
 // size      128 bytes
-// spans     0x006468D0-0x00646950
 // prototype 
 // callers   5   call targets   0
 // kind      library

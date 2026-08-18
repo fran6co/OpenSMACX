@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005FF470 FILE
+// ORIGINAL: 0x005FF470 ?get_nearest_palette_index@Palette@@QAEHEEEH@Z 0x005FF470-0x005FF627 FILE
 // RULED-OUT: separate loops for the a4==0 (linear scan) and a4!=0 (group-reserved scan) paths with a stack reserved[0x100] array; diverges at #1, stack layout order
-// name      ?get_nearest_palette_index@Palette@@QAEHEEEH@Z
 // size      439 bytes
-// spans     0x005FF470-0x005FF627
 // prototype int (__thiscall ?get_nearest_palette_index@Palette@@QAEHEEEH@Z)(Palette* this, unsigned int8, unsigned int8, unsigned int8, int)
 // callers   5   call targets   0
 // kind      game

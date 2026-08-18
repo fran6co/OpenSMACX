@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004055A0 FILE
-// name      ?POP3@@YAXPBDPBDHHH@Z
+// ORIGINAL: 0x004055A0 ?POP3@@YAXPBDPBDHHH@Z 0x004055A0-0x00405910;0x00650839-0x006508CD FILE
 // size      1028 bytes
-// spans     0x004055A0-0x00405910;0x00650839-0x006508CD
 // prototype 
 // callers   2   call targets   14
 // kind      game

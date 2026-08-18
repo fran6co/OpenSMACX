@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00605D90 FILE
-// name      ?on_mouse_move@Scroll@@QAEXHH@Z
+// ORIGINAL: 0x00605D90 ?on_mouse_move@Scroll@@QAEXHH@Z 0x00605D90-0x006061DB FILE
 // size      1099 bytes
-// spans     0x00605D90-0x006061DB
 // prototype void (__thiscall ?on_mouse_move@Scroll@@QAEXHH@Z)(Scroll* this, int, int)
 // callers   0   call targets   3
 // kind      game

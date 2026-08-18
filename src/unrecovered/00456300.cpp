@@ -1,14 +1,7 @@
-// ORIGINAL: 0x00456300 FILE
-// RULED-OUT: frame size does not match 0x504 (many named char[256]/int
-//            temps vs the original's smaller register-heavy layout); the
-//            25/19/11-entry jump tables were treated as compiler-generated
-//            unwind dispatch (never reproduced) rather than real cases 8-24;
-//            CharUpperA and several graphics helpers in the case 4/5 ranking
-//            bar-chart panel were stubbed rather than fully modelled.
+// ORIGINAL: 0x00456300 ?setup_text@InfoWin@@QAEXXZ 0x00456300-0x0045838D FILE
+// RULED-OUT: frame size does not match 0x504 (many named char[256]/int temps vs the original's smaller register-heavy layout); the 25/19/11-entry jump tables were treated as compiler-generated unwind dispatch (never reproduced) rather than real cases 8-24; CharUpperA and several graphics helpers in the case 4/5 ranking bar-chart panel were stubbed rather than fully modelled.
 // working copy - scaffold materialised by --work
-// name      ?setup_text@InfoWin@@QAEXXZ
 // size      8333 bytes
-// spans     0x00456300-0x0045838D
 // prototype void (__thiscall ?setup_text@InfoWin@@QAEXXZ)(InfoWin* this)
 // callers   4   call targets   21
 // kind      game

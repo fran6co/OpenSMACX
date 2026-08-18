@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005EEE70 BYTE_EXACT FILE
-// name      ?client_to_nonclient@Win@@QAEXPAH0@Z
+// ORIGINAL: 0x005EEE70 ?client_to_nonclient@Win@@QAEXPAH0@Z 0x005EEE70-0x005EEF56 FILE BYTE_EXACT
 // size      230 bytes
-// spans     0x005EEE70-0x005EEF56
 // prototype void (__thiscall ?client_to_nonclient@Win@@QAEXPAH0@Z)(Win* this, int*, int*)
 // callers   3   call targets   0
 // kind      

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064EC1F EXCLUDED S1
-// name      __setmbcp
+// ORIGINAL: 0x0064EC1F __setmbcp 0x0064EC1F-0x0064EDCC EXCLUDED S1
 // size      429 bytes
-// spans     0x0064EC1F-0x0064EDCC
 // prototype 
 // callers   1   call targets   6
 // kind      library

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004AE340 FILE
-// name      ?on_left_click@SetupWin@@QAEXHH@Z
+// ORIGINAL: 0x004AE340 ?on_left_click@SetupWin@@QAEXHH@Z 0x004AE340-0x004AE380 FILE
 // size      64 bytes
-// spans     0x004AE340-0x004AE380
 // prototype void (__thiscall ?on_left_click@SetupWin@@QAEXHH@Z)(SetupWin* this, int xCoord, int yCoord)
 // callers   0   call targets   1
 // kind      game

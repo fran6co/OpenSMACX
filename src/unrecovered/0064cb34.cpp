@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064CB34 EXCLUDED S1
-// name      ?__CxxUnhandledExceptionFilter@@YGJPAU_EXCEPTION_POINTERS@@@Z
+// ORIGINAL: 0x0064CB34 ?__CxxUnhandledExceptionFilter@@YGJPAU_EXCEPTION_POINTERS@@@Z 0x0064CB34-0x0064CB7A EXCLUDED S1
 // size      70 bytes
-// spans     0x0064CB34-0x0064CB7A
 // prototype LONG (__stdcall ?__CxxUnhandledExceptionFilter@@YGJPAU_EXCEPTION_POINTERS@@@Z)(_EXCEPTION_POINTERS* ExceptionInfo)
 // callers   0   call targets   1
 // kind      library

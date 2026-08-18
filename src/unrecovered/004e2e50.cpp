@@ -1,14 +1,7 @@
-// ORIGINAL: 0x004E2E50 FILE
-// RULED-OUT: automatic Popup dtor cascade for the SEH frame (LEVER #1);
-//            direct pushes for start()/X_pop() arg order re-derived from
-//            disasm; join_session/positioning logic transcribed twice
-//            (matches two inlined copies in the original). Diverges at
-//            instruction #15 (register alloc order for the shared cleanup
-//            path), not re-derived further.
+// ORIGINAL: 0x004E2E50 ?join@AlphaNet@@QAEHXZ 0x004E2E50-0x004E31D6;0x0065C771-0x0065C7EC FILE
+// RULED-OUT: automatic Popup dtor cascade for the SEH frame (LEVER #1); direct pushes for start()/X_pop() arg order re-derived from disasm; join_session/positioning logic transcribed twice (matches two inlined copies in the original). Diverges at instruction #15 (register alloc order for the shared cleanup path), not re-derived further.
 // working copy - scaffold materialised by --work
-// name      ?join@AlphaNet@@QAEHXZ
 // size      1025 bytes
-// spans     0x004E2E50-0x004E31D6;0x0065C771-0x0065C7EC
 // prototype int (__thiscall ?join@AlphaNet@@QAEHXZ)(AlphaNet* this)
 // callers   2   call targets   21
 // kind      game

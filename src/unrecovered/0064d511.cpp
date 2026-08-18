@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064D511 EXCLUDED S1
-// name      __IsZeroMan
+// ORIGINAL: 0x0064D511 __IsZeroMan 0x0064D511-0x0064D52C EXCLUDED S1
 // size      27 bytes
-// spans     0x0064D511-0x0064D52C
 // prototype 
 // callers   1   call targets   0
 // kind      library

@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00416FB0 FILE
+// ORIGINAL: 0x00416FB0 ?delete_queue@BaseWin@@QAEXH@Z 0x00416FB0-0x0041703C FILE
 // working copy - scaffold materialised by --work
-// name      ?delete_queue@BaseWin@@QAEXH@Z
 // size      140 bytes
-// spans     0x00416FB0-0x0041703C
 // prototype void (__thiscall ?delete_queue@BaseWin@@QAEXH@Z)(BaseWin* this, int)
 // callers   0   call targets   1
 // kind      game

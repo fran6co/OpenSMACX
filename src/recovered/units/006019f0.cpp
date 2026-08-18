@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006019F0 BYTE_EXACT FILE
-// name      ?button@BasePop@@QAEHPAD@Z
+// ORIGINAL: 0x006019F0 ?button@BasePop@@QAEHPAD@Z 0x006019F0-0x00601A3B FILE BYTE_EXACT
 // size      75 bytes
-// spans     0x006019F0-0x00601A3B
 // prototype int (__thiscall ?button@BasePop@@QAEHPAD@Z)(BasePop* this, int8*)
 // callers   4   call targets   1
 // kind      game

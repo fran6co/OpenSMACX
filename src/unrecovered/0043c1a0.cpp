@@ -1,11 +1,7 @@
-// ORIGINAL: 0x0043C1A0 BYTE_EXACT FILE
-// LEVER: raw self+offset pointer casts for every field (the class is opaque
-//        except spot_ at 0x12764), do/while(count!=0) counting down from
-//        0x19 over VCall slot090 stepping by 0xb4c.
+// ORIGINAL: 0x0043C1A0 ?close@DesignWin@@QAEXXZ 0x0043C1A0-0x0043C261 FILE BYTE_EXACT
+// LEVER: raw self+offset pointer casts for every field (the class is opaque except spot_ at 0x12764), do/while(count!=0) counting down from 0x19 over VCall slot090 stepping by 0xb4c.
 // working copy - scaffold materialised by --work
-// name      ?close@DesignWin@@QAEXXZ
 // size      193 bytes
-// spans     0x0043C1A0-0x0043C261
 // prototype void (__thiscall ?close@DesignWin@@QAEXXZ)(DesignWin* this)
 // callers   6   call targets   4
 // kind      game

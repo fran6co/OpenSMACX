@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00455EB0 FILE
-// name      ?load_sprites@@YAXXZ
+// ORIGINAL: 0x00455EB0 ?load_sprites@@YAXXZ 0x00455EB0-0x00455F0E FILE
 // size      94 bytes
-// spans     0x00455EB0-0x00455F0E
 // prototype 
 // callers   1   call targets   4
 // kind      game

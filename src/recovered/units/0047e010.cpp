@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0047E010 FILE
-// name      ?pick_num_players@NetWin@@QAEXXZ
+// ORIGINAL: 0x0047E010 ?pick_num_players@NetWin@@QAEXXZ 0x0047E010-0x0047E33B;0x00656D9D-0x00656E75 FILE
 // size      1027 bytes
-// spans     0x0047E010-0x0047E33B;0x00656D9D-0x00656E75
 // prototype void (__thiscall ?pick_num_players@NetWin@@QAEXXZ)(NetWin* this)
 // callers   1   call targets   26
 // kind      game

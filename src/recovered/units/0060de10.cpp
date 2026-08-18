@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0060DE10 FILE
-// name      ?on_left_down@RadioButton@@QAEXHH@Z
+// ORIGINAL: 0x0060DE10 ?on_left_down@RadioButton@@QAEXHH@Z 0x0060DE10-0x0060E01B FILE
 // size      523 bytes
-// spans     0x0060DE10-0x0060E01B
 // prototype void (__thiscall ?on_left_down@RadioButton@@QAEXHH@Z)(RadioButton* this, int xCoord, int yCoord)
 // callers   1   call targets   4
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004D95F0 FILE
-// name      ?assemble@Console@@QAEXXZ
+// ORIGINAL: 0x004D95F0 ?assemble@Console@@QAEXXZ 0x004D95F0-0x004D9970 FILE
 // size      896 bytes
-// spans     0x004D95F0-0x004D9970
 // prototype void (__thiscall ?assemble@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   7
 // kind      game

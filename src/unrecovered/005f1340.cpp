@@ -1,10 +1,7 @@
-// ORIGINAL: 0x005F1340 FILE
-// RULED-OUT: BeginPaint/EndPaint reached through the IAT slots as fn-ptr casts;
-//            bool return passed straight through EndPaint's result
+// ORIGINAL: 0x005F1340 ?OnPaint@Win@@QAA_NPAX@Z 0x005F1340-0x005F13A2 FILE
+// RULED-OUT: BeginPaint/EndPaint reached through the IAT slots as fn-ptr casts; bool return passed straight through EndPaint's result
 // working copy - scaffold materialised by --work
-// name      ?OnPaint@Win@@QAA_NPAX@Z
 // size      98 bytes
-// spans     0x005F1340-0x005F13A2
 // prototype bool (__cdecl ?OnPaint@Win@@QAA_NPAX@Z)(HWND hWnd)
 // callers   0   call targets   2
 // kind      game

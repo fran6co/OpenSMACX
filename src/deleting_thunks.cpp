@@ -159,10 +159,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GAlphaMovie@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-ORIGINAL: 0x004043A0
-// name      ??_GAlphaMovie@@UAEPAXI@Z
+// ORIGINAL: 0x004043A0 ??_GAlphaMovie@@UAEPAXI@Z 0x004043A0-0x004043C1
 // size      33 bytes
-// spans     0x004043A0-0x004043C1
 // prototype 
 // callers   0   call targets   2
 // kind      game
@@ -183,10 +181,8 @@ void *__fastcall scalar_delete_alpha_movie(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject sub_4042b0 expects, then
          forward unchanged.
-ORIGINAL: 0x00404420
-// name      sub_404420
+// ORIGINAL: 0x00404420 sub_404420 0x00404420-0x0040442B
 // size      11 bytes
-// spans     0x00404420-0x0040442B
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -203,15 +199,13 @@ void *__fastcall adjust_this_sub_404420(void *self, void *) {
 /*
 Purpose: Step the receiver back to the subobject ??_GAlphaMovie@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x00404430
-// name      ??_GAlphaMovie@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x00404430 ??_GAlphaMovie@@WEEE@AEPAXI@Z 0x00404430-0x0040443B
 // CORRECTED from ??3AlphaMovie@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x004043A0` into
 //   ??_GAlphaMovie@@UAEPAXI@Z, which executes `ret 4`; no stack access
 //   and the receiver stays in ECX. `WEEE@` re-demangles to
 //   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x00404430-0x0040443B
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -231,10 +225,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GFlatButton@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-ORIGINAL: 0x004068E0
-// name      ??_GFlatButton@@UAEPAXI@Z
+// ORIGINAL: 0x004068E0 ??_GFlatButton@@UAEPAXI@Z 0x004068E0-0x00406901
 // size      33 bytes
-// spans     0x004068E0-0x00406901
 // prototype void* (__thiscall ??_GFlatButton@@UAEPAXI@Z)(FlatButton* this, unsigned int)
 // callers   0   call targets   2
 // kind      game
@@ -258,10 +250,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GBasePop@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-ORIGINAL: 0x00406B40
-// name      ??_GBasePop@@UAEPAXI@Z
+// ORIGINAL: 0x00406B40 ??_GBasePop@@UAEPAXI@Z 0x00406B40-0x00406B61
 // size      33 bytes
-// spans     0x00406B40-0x00406B61
 // prototype 
 // callers   0   call targets   2
 // kind      game
@@ -284,10 +274,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GPopup@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-ORIGINAL: 0x00406BD0
-// name      ??_GPopup@@UAEPAXI@Z
+// ORIGINAL: 0x00406BD0 ??_GPopup@@UAEPAXI@Z 0x00406BD0-0x00406BF1
 // size      33 bytes
-// spans     0x00406BD0-0x00406BF1
 // prototype 
 // callers   0   call targets   2
 // kind      game
@@ -307,15 +295,13 @@ void *__fastcall scalar_delete_popup(void *self, void *, unsigned int arg0) {
 /*
 Purpose: Step the receiver back to the subobject ??_GBasePop@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x004070B0
-// name      ??_GBasePop@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x004070B0 ??_GBasePop@@WEEE@AEPAXI@Z 0x004070B0-0x004070BB
 // CORRECTED from ??3BasePop@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x00406B40` into
 //   ??_GBasePop@@UAEPAXI@Z, which executes `ret 4`; no stack access and
 //   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
 //   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x004070B0-0x004070BB
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -332,15 +318,13 @@ void *__fastcall adjust_this_base_pop(void *self, void *, unsigned int arg0) {
 /*
 Purpose: Step the receiver back to the subobject ??_GScroll@@UAEPAXI@Z expects,
          then forward unchanged.
-ORIGINAL: 0x004070C0
-// name      ??_GScroll@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x004070C0 ??_GScroll@@WEEE@AEPAXI@Z 0x004070C0-0x004070CB
 // CORRECTED from ??3Scroll@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x00406F20` into
 //   ??_GScroll@@UAEPAXI@Z, which executes `ret 4`; no stack access and
 //   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
 //   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x004070C0-0x004070CB
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -358,15 +342,13 @@ void *__fastcall adjust_this_scroll(void *self, void *, unsigned int arg0) {
 /*
 Purpose: Step the receiver back to the subobject ??_GPopup@@UAEPAXI@Z expects,
          then forward unchanged.
-ORIGINAL: 0x004070D0
-// name      ??_GPopup@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x004070D0 ??_GPopup@@WEEE@AEPAXI@Z 0x004070D0-0x004070DB
 // CORRECTED from ??3Popup@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x00406BD0` into
 //   ??_GPopup@@UAEPAXI@Z, which executes `ret 4`; no stack access and
 //   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
 //   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x004070D0-0x004070DB
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -383,15 +365,13 @@ void *__fastcall adjust_this_popup(void *self, void *, unsigned int arg0) {
 /*
 Purpose: Step the receiver back to the subobject ??_GFlatButton@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x004070E0
-// name      ??_GFlatButton@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x004070E0 ??_GFlatButton@@WEEE@AEPAXI@Z 0x004070E0-0x004070EB
 // CORRECTED from ??3FlatButton@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x004068E0` into
 //   ??_GFlatButton@@UAEPAXI@Z, which executes `ret 4`; no stack access
 //   and the receiver stays in ECX. `WEEE@` re-demangles to
 //   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x004070E0-0x004070EB
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -411,10 +391,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GEditBox@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-ORIGINAL: 0x00408080
-// name      ??_GEditBox@@UAEPAXI@Z
+// ORIGINAL: 0x00408080 ??_GEditBox@@UAEPAXI@Z 0x00408080-0x004080A1
 // size      33 bytes
-// spans     0x00408080-0x004080A1
 // prototype 
 // callers   0   call targets   2
 // kind      game
@@ -437,10 +415,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GAlphaSave@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-ORIGINAL: 0x00408140
-// name      ??_GAlphaSave@@UAEPAXI@Z
+// ORIGINAL: 0x00408140 ??_GAlphaSave@@UAEPAXI@Z 0x00408140-0x00408161
 // size      33 bytes
-// spans     0x00408140-0x00408161
 // prototype 
 // callers   0   call targets   2
 // kind      game
@@ -461,15 +437,13 @@ void *__fastcall scalar_delete_alpha_save(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GAlphaSave@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x00408390
-// name      ??_GAlphaSave@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x00408390 ??_GAlphaSave@@WEEE@AEPAXI@Z 0x00408390-0x0040839B
 // CORRECTED from ??3AlphaSave@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x00408140` into
 //   ??_GAlphaSave@@UAEPAXI@Z, which executes `ret 4`; no stack access
 //   and the receiver stays in ECX. `WEEE@` re-demangles to
 //   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x00408390-0x0040839B
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -487,15 +461,13 @@ void *__fastcall adjust_this_alpha_save(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GEditBox@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x004083A0
-// name      ??_GEditBox@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x004083A0 ??_GEditBox@@WEEE@AEPAXI@Z 0x004083A0-0x004083AB
 // CORRECTED from ??3EditBox@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x00408080` into
 //   ??_GEditBox@@UAEPAXI@Z, which executes `ret 4`; no stack access and
 //   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
 //   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x004083A0-0x004083AB
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -514,10 +486,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GProdPicker@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-ORIGINAL: 0x004213A0
-// name      ??_GProdPicker@@UAEPAXI@Z
+// ORIGINAL: 0x004213A0 ??_GProdPicker@@UAEPAXI@Z 0x004213A0-0x004213C1
 // size      33 bytes
-// spans     0x004213A0-0x004213C1
 // prototype 
 // callers   0   call targets   2
 // kind      game
@@ -540,10 +510,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GBaseWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-ORIGINAL: 0x004213D0
-// name      ??_GBaseWin@@UAEPAXI@Z
+// ORIGINAL: 0x004213D0 ??_GBaseWin@@UAEPAXI@Z 0x004213D0-0x004213F1
 // size      33 bytes
-// spans     0x004213D0-0x004213F1
 // prototype 
 // callers   0   call targets   2
 // kind      game
@@ -566,10 +534,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GPopMenu@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-ORIGINAL: 0x00421640
-// name      ??_GPopMenu@@UAEPAXI@Z
+// ORIGINAL: 0x00421640 ??_GPopMenu@@UAEPAXI@Z 0x00421640-0x00421661
 // size      33 bytes
-// spans     0x00421640-0x00421661
 // prototype 
 // callers   0   call targets   2
 // kind      game
@@ -590,15 +556,13 @@ void *__fastcall scalar_delete_pop_menu(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GBaseWin@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x00421810
-// name      ??_GBaseWin@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x00421810 ??_GBaseWin@@WEEE@AEPAXI@Z 0x00421810-0x0042181B
 // CORRECTED from ??3BaseWin@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x004213D0` into
 //   ??_GBaseWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
 //   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
 //   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x00421810-0x0042181B
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -615,15 +579,13 @@ void *__fastcall adjust_this_base_win(void *self, void *, unsigned int arg0) {
 /*
 Purpose: Step the receiver back to the subobject ??_GProdPicker@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x00421970
-// name      ??_GProdPicker@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x00421970 ??_GProdPicker@@WEEE@AEPAXI@Z 0x00421970-0x0042197B
 // CORRECTED from ??3ProdPicker@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x004213A0` into
 //   ??_GProdPicker@@UAEPAXI@Z, which executes `ret 4`; no stack access
 //   and the receiver stays in ECX. `WEEE@` re-demangles to
 //   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x00421970-0x0042197B
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -641,10 +603,8 @@ void *__fastcall adjust_this_prod_picker(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GPopMenu@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x00421980
-// name      PopMenu::delete1
+// ORIGINAL: 0x00421980 PopMenu::delete1 0x00421980-0x0042198B
 // size      11 bytes
-// spans     0x00421980-0x0042198B
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -662,10 +622,8 @@ void *__fastcall adjust_this_pop_menu_delete1(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GPopMenu@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x00421990
-// name      PopMenu::delete2
+// ORIGINAL: 0x00421990 PopMenu::delete2 0x00421990-0x0042199B
 // size      11 bytes
-// spans     0x00421990-0x0042199B
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -683,10 +641,8 @@ void *__fastcall adjust_this_pop_menu_delete2(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GPopMenu@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x004219A0
-// name      PopMenu::delete3
+// ORIGINAL: 0x004219A0 PopMenu::delete3 0x004219A0-0x004219AB
 // size      11 bytes
-// spans     0x004219A0-0x004219AB
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -706,10 +662,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GCouncWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-ORIGINAL: 0x00428710
-// name      ??_GCouncWin@@UAEPAXI@Z
+// ORIGINAL: 0x00428710 ??_GCouncWin@@UAEPAXI@Z 0x00428710-0x00428731
 // size      33 bytes
-// spans     0x00428710-0x00428731
 // prototype void* (__thiscall ??_GCouncWin@@UAEPAXI@Z)(CouncWin* this, unsigned int)
 // callers   0   call targets   2
 // kind      game
@@ -730,15 +684,13 @@ void *__fastcall scalar_delete_counc_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GCouncWin@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x00428740
-// name      ??_GCouncWin@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x00428740 ??_GCouncWin@@WEEE@AEPAXI@Z 0x00428740-0x0042874B
 // CORRECTED from ??3CouncWin@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x00428710` into
 //   ??_GCouncWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
 //   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
 //   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x00428740-0x0042874B
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -757,10 +709,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GCredits@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-ORIGINAL: 0x00428E60
-// name      ??_GCredits@@UAEPAXI@Z
+// ORIGINAL: 0x00428E60 ??_GCredits@@UAEPAXI@Z 0x00428E60-0x00428E81
 // size      33 bytes
-// spans     0x00428E60-0x00428E81
 // prototype 
 // callers   0   call targets   2
 // kind      game
@@ -780,15 +730,13 @@ void *__fastcall scalar_delete_credits(void *self, void *, unsigned int arg0) {
 /*
 Purpose: Step the receiver back to the subobject ??_GCredits@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x00428F80
-// name      ??_GCredits@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x00428F80 ??_GCredits@@WEEE@AEPAXI@Z 0x00428F80-0x00428F8B
 // CORRECTED from ??3Credits@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x00428E60` into
 //   ??_GCredits@@UAEPAXI@Z, which executes `ret 4`; no stack access and
 //   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
 //   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x00428F80-0x00428F8B
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -807,10 +755,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GStringBox@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-ORIGINAL: 0x00432770
-// name      ??_GStringBox@@UAEPAXI@Z
+// ORIGINAL: 0x00432770 ??_GStringBox@@UAEPAXI@Z 0x00432770-0x00432791
 // size      33 bytes
-// spans     0x00432770-0x00432791
 // prototype void* (__thiscall ??_GStringBox@@UAEPAXI@Z)(StringBox* this, unsigned int)
 // callers   0   call targets   2
 // kind      game
@@ -833,10 +779,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GDatalink@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-ORIGINAL: 0x00432800
-// name      ??_GDatalink@@UAEPAXI@Z
+// ORIGINAL: 0x00432800 ??_GDatalink@@UAEPAXI@Z 0x00432800-0x00432821
 // size      33 bytes
-// spans     0x00432800-0x00432821
 // prototype void* (__thiscall ??_GDatalink@@UAEPAXI@Z)(Datalink* this, unsigned int)
 // callers   0   call targets   2
 // kind      game
@@ -857,15 +801,13 @@ void *__fastcall scalar_delete_datalink(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GStringBox@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x00432830
-// name      ??_GStringBox@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x00432830 ??_GStringBox@@WEEE@AEPAXI@Z 0x00432830-0x0043283B
 // CORRECTED from ??3StringBox@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x00432770` into
 //   ??_GStringBox@@UAEPAXI@Z, which executes `ret 4`; no stack access
 //   and the receiver stays in ECX. `WEEE@` re-demangles to
 //   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x00432830-0x0043283B
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -883,15 +825,13 @@ void *__fastcall adjust_this_string_box(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GDatalink@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x00432840
-// name      ??_GDatalink@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x00432840 ??_GDatalink@@WEEE@AEPAXI@Z 0x00432840-0x0043284B
 // CORRECTED from ??3Datalink@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x00432800` into
 //   ??_GDatalink@@UAEPAXI@Z, which executes `ret 4`; no stack access and
 //   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
 //   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x00432840-0x0043284B
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -910,10 +850,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GDesignWin@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-ORIGINAL: 0x0043EDB0
-// name      ??_GDesignWin@@UAEPAXI@Z
+// ORIGINAL: 0x0043EDB0 ??_GDesignWin@@UAEPAXI@Z 0x0043EDB0-0x0043EDD1
 // size      33 bytes
-// spans     0x0043EDB0-0x0043EDD1
 // prototype 
 // callers   0   call targets   2
 // kind      game
@@ -936,10 +874,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GSelectPartWin@@UAEPAXI@Z: run the complete destructor, then
          release the storage through the executable's operator delete only when
          bit 0 of the flags asks.
-ORIGINAL: 0x0043EDE0
-// name      ??_GSelectPartWin@@UAEPAXI@Z
+// ORIGINAL: 0x0043EDE0 ??_GSelectPartWin@@UAEPAXI@Z 0x0043EDE0-0x0043EE01
 // size      33 bytes
-// spans     0x0043EDE0-0x0043EE01
 // prototype 
 // callers   0   call targets   2
 // kind      game
@@ -960,15 +896,13 @@ void *__fastcall scalar_delete_select_part_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GDesignWin@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x0043EFA0
-// name      ??_GDesignWin@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x0043EFA0 ??_GDesignWin@@WEEE@AEPAXI@Z 0x0043EFA0-0x0043EFAB
 // CORRECTED from ??3DesignWin@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x0043EDB0` into
 //   ??_GDesignWin@@UAEPAXI@Z, which executes `ret 4`; no stack access
 //   and the receiver stays in ECX. `WEEE@` re-demangles to
 //   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x0043EFA0-0x0043EFAB
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -986,15 +920,13 @@ void *__fastcall adjust_this_design_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GSelectPartWin@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x0043EFB0
-// name      ??_GSelectPartWin@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x0043EFB0 ??_GSelectPartWin@@WEEE@AEPAXI@Z 0x0043EFB0-0x0043EFBB
 // CORRECTED from ??3SelectPartWin@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x0043EDE0` into
 //   ??_GSelectPartWin@@UAEPAXI@Z, which executes `ret 4`; no stack
 //   access and the receiver stays in ECX. `WEEE@` re-demangles to
 //   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x0043EFB0-0x0043EFBB
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1014,10 +946,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GDiploPop@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-ORIGINAL: 0x00440EC0
-// name      ??_GDiploPop@@UAEPAXI@Z
+// ORIGINAL: 0x00440EC0 ??_GDiploPop@@UAEPAXI@Z 0x00440EC0-0x00440EE1
 // size      33 bytes
-// spans     0x00440EC0-0x00440EE1
 // prototype void* (__thiscall ??_GDiploPop@@UAEPAXI@Z)(DiploPop* this, unsigned int)
 // callers   0   call targets   2
 // kind      game
@@ -1038,15 +968,13 @@ void *__fastcall scalar_delete_diplo_pop(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GDiploPop@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x00440EF0
-// name      ??_GDiploPop@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x00440EF0 ??_GDiploPop@@WEEE@AEPAXI@Z 0x00440EF0-0x00440EFB
 // CORRECTED from ??3DiploPop@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x00440EC0` into
 //   ??_GDiploPop@@UAEPAXI@Z, which executes `ret 4`; no stack access and
 //   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
 //   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x00440EF0-0x00440EFB
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1065,10 +993,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GDiploWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-ORIGINAL: 0x00445080
-// name      ??_GDiploWin@@UAEPAXI@Z
+// ORIGINAL: 0x00445080 ??_GDiploWin@@UAEPAXI@Z 0x00445080-0x004450A1
 // size      33 bytes
-// spans     0x00445080-0x004450A1
 // prototype void* (__thiscall ??_GDiploWin@@UAEPAXI@Z)(DiploWin* this, unsigned int)
 // callers   0   call targets   2
 // kind      game
@@ -1089,15 +1015,13 @@ void *__fastcall scalar_delete_diplo_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GDiploWin@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x00445120
-// name      ??_GDiploWin@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x00445120 ??_GDiploWin@@WEEE@AEPAXI@Z 0x00445120-0x0044512B
 // CORRECTED from ??3DiploWin@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x00445080` into
 //   ??_GDiploWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
 //   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
 //   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x00445120-0x0044512B
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1116,10 +1040,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GEffect@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-ORIGINAL: 0x00448350
-// name      ??_GEffect@@UAEPAXI@Z
+// ORIGINAL: 0x00448350 ??_GEffect@@UAEPAXI@Z 0x00448350-0x00448371
 // size      33 bytes
-// spans     0x00448350-0x00448371
 // prototype void* (__thiscall ??_GEffect@@UAEPAXI@Z)(Effect* this, unsigned int)
 // callers   0   call targets   2
 // kind      game
@@ -1140,10 +1062,8 @@ void *__fastcall scalar_delete_effect(void *self, void *, unsigned int arg0) {
 Purpose: The compiler-generated scalar deleting destructor at sub_448390: run
          the complete destructor, then release the storage through the
          executable's operator delete only when bit 0 of the flags asks.
-ORIGINAL: 0x00448390
-// name      sub_448390
+// ORIGINAL: 0x00448390 sub_448390 0x00448390-0x004483B1
 // size      33 bytes
-// spans     0x00448390-0x004483B1
 // prototype 
 // callers   0   call targets   2
 // kind      game
@@ -1167,10 +1087,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GFameWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-ORIGINAL: 0x0044B300
-// name      ??_GFameWin@@UAEPAXI@Z
+// ORIGINAL: 0x0044B300 ??_GFameWin@@UAEPAXI@Z 0x0044B300-0x0044B321
 // size      33 bytes
-// spans     0x0044B300-0x0044B321
 // prototype 
 // callers   0   call targets   2
 // kind      game
@@ -1191,15 +1109,13 @@ void *__fastcall scalar_delete_fame_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GFameWin@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x0044B330
-// name      ??_GFameWin@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x0044B330 ??_GFameWin@@WEEE@AEPAXI@Z 0x0044B330-0x0044B33B
 // CORRECTED from ??3FameWin@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x0044B300` into
 //   ??_GFameWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
 //   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
 //   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x0044B330-0x0044B33B
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1218,10 +1134,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GGamma@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-ORIGINAL: 0x00456280
-// name      ??_GGamma@@UAEPAXI@Z
+// ORIGINAL: 0x00456280 ??_GGamma@@UAEPAXI@Z 0x00456280-0x004562A1
 // size      33 bytes
-// spans     0x00456280-0x004562A1
 // prototype void* (__thiscall ??_GGamma@@UAEPAXI@Z)(Gamma* this, unsigned int)
 // callers   0   call targets   2
 // kind      game
@@ -1241,15 +1155,13 @@ void *__fastcall scalar_delete_gamma(void *self, void *, unsigned int arg0) {
 /*
 Purpose: Step the receiver back to the subobject ??_GGamma@@UAEPAXI@Z expects,
          then forward unchanged.
-ORIGINAL: 0x004562B0
-// name      ??_GGamma@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x004562B0 ??_GGamma@@WEEE@AEPAXI@Z 0x004562B0-0x004562BB
 // CORRECTED from ??3Gamma@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x00456280` into
 //   ??_GGamma@@UAEPAXI@Z, which executes `ret 4`; no stack access and
 //   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
 //   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x004562B0-0x004562BB
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1268,10 +1180,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GMainInterface@@UAEPAXI@Z: run the complete destructor, then
          release the storage through the executable's operator delete only when
          bit 0 of the flags asks.
-ORIGINAL: 0x0045F1C0
-// name      ??_GMainInterface@@UAEPAXI@Z
+// ORIGINAL: 0x0045F1C0 ??_GMainInterface@@UAEPAXI@Z 0x0045F1C0-0x0045F1E1
 // size      33 bytes
-// spans     0x0045F1C0-0x0045F1E1
 // prototype 
 // callers   0   call targets   2
 // kind      game
@@ -1292,15 +1202,13 @@ void *__fastcall scalar_delete_main_interface(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GMainInterface@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x0045F1F0
-// name      ??_GMainInterface@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x0045F1F0 ??_GMainInterface@@WEEE@AEPAXI@Z 0x0045F1F0-0x0045F1FB
 // CORRECTED from ??3MainInterface@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x0045F1C0` into
 //   ??_GMainInterface@@UAEPAXI@Z, which executes `ret 4`; no stack
 //   access and the receiver stays in ECX. `WEEE@` re-demangles to
 //   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x0045F1F0-0x0045F1FB
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1320,10 +1228,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GInterlude@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-ORIGINAL: 0x0045F710
-// name      ??_GInterlude@@UAEPAXI@Z
+// ORIGINAL: 0x0045F710 ??_GInterlude@@UAEPAXI@Z 0x0045F710-0x0045F731
 // size      33 bytes
-// spans     0x0045F710-0x0045F731
 // prototype void* (__thiscall ??_GInterlude@@UAEPAXI@Z)(Interlude* this, unsigned int)
 // callers   0   call targets   2
 // kind      game
@@ -1344,15 +1250,13 @@ void *__fastcall scalar_delete_interlude(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GInterlude@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x0045F910
-// name      ??_GInterlude@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x0045F910 ??_GInterlude@@WEEE@AEPAXI@Z 0x0045F910-0x0045F91B
 // CORRECTED from ??3Interlude@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x0045F710` into
 //   ??_GInterlude@@UAEPAXI@Z, which executes `ret 4`; no stack access
 //   and the receiver stays in ECX. `WEEE@` re-demangles to
 //   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x0045F910-0x0045F91B
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1371,10 +1275,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GMonuWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-ORIGINAL: 0x00477DD0
-// name      ??_GMonuWin@@UAEPAXI@Z
+// ORIGINAL: 0x00477DD0 ??_GMonuWin@@UAEPAXI@Z 0x00477DD0-0x00477DF1
 // size      33 bytes
-// spans     0x00477DD0-0x00477DF1
 // prototype void* (__thiscall ??_GMonuWin@@UAEPAXI@Z)(MonuWin* this, unsigned int)
 // callers   0   call targets   2
 // kind      game
@@ -1395,15 +1297,13 @@ void *__fastcall scalar_delete_monu_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GMonuWin@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x00477E00
-// name      ??_GMonuWin@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x00477E00 ??_GMonuWin@@WEEE@AEPAXI@Z 0x00477E00-0x00477E0B
 // CORRECTED from ??3MonuWin@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x00477DD0` into
 //   ??_GMonuWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
 //   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
 //   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x00477E00-0x00477E0B
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1422,10 +1322,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GMultiWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-ORIGINAL: 0x0047A6C0
-// name      ??_GMultiWin@@UAEPAXI@Z
+// ORIGINAL: 0x0047A6C0 ??_GMultiWin@@UAEPAXI@Z 0x0047A6C0-0x0047A6E1
 // size      33 bytes
-// spans     0x0047A6C0-0x0047A6E1
 // prototype void* (__thiscall ??_GMultiWin@@UAEPAXI@Z)(MultiWin* this, unsigned int)
 // callers   0   call targets   2
 // kind      game
@@ -1446,15 +1344,13 @@ void *__fastcall scalar_delete_multi_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GMultiWin@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x0047A760
-// name      ??_GMultiWin@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x0047A760 ??_GMultiWin@@WEEE@AEPAXI@Z 0x0047A760-0x0047A76B
 // CORRECTED from ??3MultiWin@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x0047A6C0` into
 //   ??_GMultiWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
 //   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
 //   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x0047A760-0x0047A76B
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1473,10 +1369,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GNetMsg@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-ORIGINAL: 0x0047AD70
-// name      ??_GNetMsg@@UAEPAXI@Z
+// ORIGINAL: 0x0047AD70 ??_GNetMsg@@UAEPAXI@Z 0x0047AD70-0x0047AD91
 // size      33 bytes
-// spans     0x0047AD70-0x0047AD91
 // prototype void* (__thiscall ??_GNetMsg@@UAEPAXI@Z)(NetMsg* this, unsigned int)
 // callers   0   call targets   2
 // kind      game
@@ -1496,15 +1390,13 @@ void *__fastcall scalar_delete_net_msg(void *self, void *, unsigned int arg0) {
 /*
 Purpose: Step the receiver back to the subobject ??_GNetMsg@@UAEPAXI@Z expects,
          then forward unchanged.
-ORIGINAL: 0x0047AFE0
-// name      ??_GNetMsg@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x0047AFE0 ??_GNetMsg@@WEEE@AEPAXI@Z 0x0047AFE0-0x0047AFEB
 // CORRECTED from ??3NetMsg@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x0047AD70` into
 //   ??_GNetMsg@@UAEPAXI@Z, which executes `ret 4`; no stack access and
 //   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
 //   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x0047AFE0-0x0047AFEB
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1523,10 +1415,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GNetWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-ORIGINAL: 0x004837C0
-// name      ??_GNetWin@@UAEPAXI@Z
+// ORIGINAL: 0x004837C0 ??_GNetWin@@UAEPAXI@Z 0x004837C0-0x004837E1
 // size      33 bytes
-// spans     0x004837C0-0x004837E1
 // prototype void* (__thiscall ??_GNetWin@@UAEPAXI@Z)(NetWin* this, unsigned int)
 // callers   0   call targets   2
 // kind      game
@@ -1546,15 +1436,13 @@ void *__fastcall scalar_delete_net_win(void *self, void *, unsigned int arg0) {
 /*
 Purpose: Step the receiver back to the subobject ??_GNetWin@@UAEPAXI@Z expects,
          then forward unchanged.
-ORIGINAL: 0x00483840
-// name      ??_GNetWin@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x00483840 ??_GNetWin@@WEEE@AEPAXI@Z 0x00483840-0x0048384B
 // CORRECTED from ??3NetWin@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x004837C0` into
 //   ??_GNetWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
 //   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
 //   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x00483840-0x0048384B
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1573,10 +1461,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GNewTechWin@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-ORIGINAL: 0x00484A80
-// name      ??_GNewTechWin@@UAEPAXI@Z
+// ORIGINAL: 0x00484A80 ??_GNewTechWin@@UAEPAXI@Z 0x00484A80-0x00484AA1
 // size      33 bytes
-// spans     0x00484A80-0x00484AA1
 // prototype void* (__thiscall ??_GNewTechWin@@UAEPAXI@Z)(NewTechWin* this, unsigned int)
 // callers   0   call targets   2
 // kind      game
@@ -1597,15 +1483,13 @@ void *__fastcall scalar_delete_new_tech_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GNewTechWin@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x00484AB0
-// name      ??_GNewTechWin@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x00484AB0 ??_GNewTechWin@@WEEE@AEPAXI@Z 0x00484AB0-0x00484ABB
 // CORRECTED from ??3NewTechWin@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x00484A80` into
 //   ??_GNewTechWin@@UAEPAXI@Z, which executes `ret 4`; no stack access
 //   and the receiver stays in ECX. `WEEE@` re-demangles to
 //   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x00484AB0-0x00484ABB
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1625,10 +1509,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GPickTech@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-ORIGINAL: 0x00488660
-// name      ??_GPickTech@@UAEPAXI@Z
+// ORIGINAL: 0x00488660 ??_GPickTech@@UAEPAXI@Z 0x00488660-0x00488681
 // size      33 bytes
-// spans     0x00488660-0x00488681
 // prototype void* (__thiscall ??_GPickTech@@UAEPAXI@Z)(PickTech* this, unsigned int)
 // callers   0   call targets   2
 // kind      game
@@ -1649,15 +1531,13 @@ void *__fastcall scalar_delete_pick_tech(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GPickTech@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x00488740
-// name      ??_GPickTech@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x00488740 ??_GPickTech@@WEEE@AEPAXI@Z 0x00488740-0x0048874B
 // CORRECTED from ??3PickTech@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x00488660` into
 //   ??_GPickTech@@UAEPAXI@Z, which executes `ret 4`; no stack access and
 //   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
 //   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x00488740-0x0048874B
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1676,10 +1556,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GPickWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-ORIGINAL: 0x0048ADC0
-// name      ??_GPickWin@@UAEPAXI@Z
+// ORIGINAL: 0x0048ADC0 ??_GPickWin@@UAEPAXI@Z 0x0048ADC0-0x0048ADE1
 // size      33 bytes
-// spans     0x0048ADC0-0x0048ADE1
 // prototype void* (__thiscall ??_GPickWin@@UAEPAXI@Z)(PickWin* this, unsigned int)
 // callers   0   call targets   2
 // kind      game
@@ -1700,15 +1578,13 @@ void *__fastcall scalar_delete_pick_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GPickWin@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x0048ADF0
-// name      ??_GPickWin@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x0048ADF0 ??_GPickWin@@WEEE@AEPAXI@Z 0x0048ADF0-0x0048ADFB
 // CORRECTED from ??3PickWin@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x0048ADC0` into
 //   ??_GPickWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
 //   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
 //   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x0048ADF0-0x0048ADFB
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1725,15 +1601,13 @@ void *__fastcall adjust_this_pick_win(void *self, void *, unsigned int arg0) {
 /*
 Purpose: Step the receiver back by the vtordisp stored ahead of it to the one
          ??_GPlanWin@@UAEPAXI@Z expects, then forward unchanged.
-ORIGINAL: 0x0048BF10
-// name      ??_GPlanWin@@$4PPPPPPPM@A@AEPAXI@Z
+// ORIGINAL: 0x0048BF10 ??_GPlanWin@@$4PPPPPPPM@A@AEPAXI@Z 0x0048BF10-0x0048BF18
 // CORRECTED from ??3PlanWin@@SAXPAXI@Z
 //   8 bytes, `sub ecx, dword ptr [ecx - 4]; jmp 0x0048BF20` into
 //   ??_GPlanWin@@UAEPAXI@Z, which executes `ret 4`. `$4PPPPPPPM@A@` re-
 //   demangles to vtordisp{-4, 0} - the field at -4 and no further
 //   adjustment, which is exactly the one subtraction the body performs
 // size      8 bytes
-// spans     0x0048BF10-0x0048BF18
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1754,10 +1628,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GPrefWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-ORIGINAL: 0x004923E0
-// name      ??_GPrefWin@@UAEPAXI@Z
+// ORIGINAL: 0x004923E0 ??_GPrefWin@@UAEPAXI@Z 0x004923E0-0x00492401
 // size      33 bytes
-// spans     0x004923E0-0x00492401
 // prototype void* (__thiscall ??_GPrefWin@@UAEPAXI@Z)(PrefWin* this, unsigned int)
 // callers   0   call targets   2
 // kind      game
@@ -1778,15 +1650,13 @@ void *__fastcall scalar_delete_pref_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GPrefWin@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x00492410
-// name      ??_GPrefWin@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x00492410 ??_GPrefWin@@WEEE@AEPAXI@Z 0x00492410-0x0049241B
 // CORRECTED from ??3PrefWin@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x004923E0` into
 //   ??_GPrefWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
 //   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
 //   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x00492410-0x0049241B
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1805,10 +1675,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GQuayleWin@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-ORIGINAL: 0x004968C0
-// name      ??_GQuayleWin@@UAEPAXI@Z
+// ORIGINAL: 0x004968C0 ??_GQuayleWin@@UAEPAXI@Z 0x004968C0-0x004968E1
 // size      33 bytes
-// spans     0x004968C0-0x004968E1
 // prototype void* (__thiscall ??_GQuayleWin@@UAEPAXI@Z)(QuayleWin* this, unsigned int)
 // callers   0   call targets   2
 // kind      game
@@ -1829,15 +1697,13 @@ void *__fastcall scalar_delete_quayle_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GQuayleWin@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x004968F0
-// name      ??_GQuayleWin@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x004968F0 ??_GQuayleWin@@WEEE@AEPAXI@Z 0x004968F0-0x004968FB
 // CORRECTED from ??3QuayleWin@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x004968C0` into
 //   ??_GQuayleWin@@UAEPAXI@Z, which executes `ret 4`; no stack access
 //   and the receiver stays in ECX. `WEEE@` re-demangles to
 //   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x004968F0-0x004968FB
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1857,10 +1723,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GReportWin@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-ORIGINAL: 0x004AD840
-// name      ??_GReportWin@@UAEPAXI@Z
+// ORIGINAL: 0x004AD840 ??_GReportWin@@UAEPAXI@Z 0x004AD840-0x004AD861
 // size      33 bytes
-// spans     0x004AD840-0x004AD861
 // prototype void* (__thiscall ??_GReportWin@@UAEPAXI@Z)(ReportWin* this, unsigned int)
 // callers   0   call targets   2
 // kind      game
@@ -1881,15 +1745,13 @@ void *__fastcall scalar_delete_report_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GReportWin@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x004AD870
-// name      ??_GReportWin@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x004AD870 ??_GReportWin@@WEEE@AEPAXI@Z 0x004AD870-0x004AD87B
 // CORRECTED from ??3ReportWin@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x004AD840` into
 //   ??_GReportWin@@UAEPAXI@Z, which executes `ret 4`; no stack access
 //   and the receiver stays in ECX. `WEEE@` re-demangles to
 //   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x004AD870-0x004AD87B
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1909,10 +1771,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GSetupWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-ORIGINAL: 0x004AE760
-// name      ??_GSetupWin@@UAEPAXI@Z
+// ORIGINAL: 0x004AE760 ??_GSetupWin@@UAEPAXI@Z 0x004AE760-0x004AE781
 // size      33 bytes
-// spans     0x004AE760-0x004AE781
 // prototype void* (__thiscall ??_GSetupWin@@UAEPAXI@Z)(SetupWin* this, unsigned int)
 // callers   0   call targets   2
 // kind      game
@@ -1933,15 +1793,13 @@ void *__fastcall scalar_delete_setup_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GSetupWin@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x004AE9A0
-// name      ??_GSetupWin@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x004AE9A0 ??_GSetupWin@@WEEE@AEPAXI@Z 0x004AE9A0-0x004AE9AB
 // CORRECTED from ??3SetupWin@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x004AE760` into
 //   ??_GSetupWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
 //   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
 //   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x004AE9A0-0x004AE9AB
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1960,10 +1818,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GCheckButton@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-ORIGINAL: 0x004B3F20
-// name      ??_GCheckButton@@UAEPAXI@Z
+// ORIGINAL: 0x004B3F20 ??_GCheckButton@@UAEPAXI@Z 0x004B3F20-0x004B3F41
 // size      33 bytes
-// spans     0x004B3F20-0x004B3F41
 // prototype void* (__thiscall ??_GCheckButton@@UAEPAXI@Z)(CheckButton* this, unsigned int)
 // callers   0   call targets   2
 // kind      game
@@ -1986,10 +1842,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GSocialWin@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-ORIGINAL: 0x004B3F50
-// name      ??_GSocialWin@@UAEPAXI@Z
+// ORIGINAL: 0x004B3F50 ??_GSocialWin@@UAEPAXI@Z 0x004B3F50-0x004B3F71
 // size      33 bytes
-// spans     0x004B3F50-0x004B3F71
 // prototype 
 // callers   0   call targets   2
 // kind      game
@@ -2010,15 +1864,13 @@ void *__fastcall scalar_delete_social_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GCheckButton@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x004B3F80
-// name      ??_GCheckButton@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x004B3F80 ??_GCheckButton@@WEEE@AEPAXI@Z 0x004B3F80-0x004B3F8B
 // CORRECTED from ??3CheckButton@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x004B3F20` into
 //   ??_GCheckButton@@UAEPAXI@Z, which executes `ret 4`; no stack access
 //   and the receiver stays in ECX. `WEEE@` re-demangles to
 //   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x004B3F80-0x004B3F8B
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2036,15 +1888,13 @@ void *__fastcall adjust_this_check_button(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GSocialWin@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x004B3F90
-// name      ??_GSocialWin@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x004B3F90 ??_GSocialWin@@WEEE@AEPAXI@Z 0x004B3F90-0x004B3F9B
 // CORRECTED from ??3SocialWin@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x004B3F50` into
 //   ??_GSocialWin@@UAEPAXI@Z, which executes `ret 4`; no stack access
 //   and the receiver stays in ECX. `WEEE@` re-demangles to
 //   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x004B3F90-0x004B3F9B
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2064,10 +1914,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GTutWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-ORIGINAL: 0x004BE9F0
-// name      ??_GTutWin@@UAEPAXI@Z
+// ORIGINAL: 0x004BE9F0 ??_GTutWin@@UAEPAXI@Z 0x004BE9F0-0x004BEA11
 // size      33 bytes
-// spans     0x004BE9F0-0x004BEA11
 // prototype void* (__thiscall ??_GTutWin@@UAEPAXI@Z)(TutWin* this, unsigned int)
 // callers   0   call targets   2
 // kind      game
@@ -2087,15 +1935,13 @@ void *__fastcall scalar_delete_tut_win(void *self, void *, unsigned int arg0) {
 /*
 Purpose: Step the receiver back to the subobject ??_GTutWin@@UAEPAXI@Z expects,
          then forward unchanged.
-ORIGINAL: 0x004BEA20
-// name      ??_GTutWin@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x004BEA20 ??_GTutWin@@WEEE@AEPAXI@Z 0x004BEA20-0x004BEA2B
 // CORRECTED from ??3TutWin@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x004BE9F0` into
 //   ??_GTutWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
 //   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
 //   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x004BEA20-0x004BEA2B
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2114,10 +1960,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GWorldWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-ORIGINAL: 0x004C4C70
-// name      ??_GWorldWin@@UAEPAXI@Z
+// ORIGINAL: 0x004C4C70 ??_GWorldWin@@UAEPAXI@Z 0x004C4C70-0x004C4C91
 // size      33 bytes
-// spans     0x004C4C70-0x004C4C91
 // prototype void* (__thiscall ??_GWorldWin@@UAEPAXI@Z)(WorldWin* this, unsigned int)
 // callers   0   call targets   2
 // kind      game
@@ -2138,15 +1982,13 @@ void *__fastcall scalar_delete_world_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GWorldWin@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x004C4CA0
-// name      ??_GWorldWin@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x004C4CA0 ??_GWorldWin@@WEEE@AEPAXI@Z 0x004C4CA0-0x004C4CAB
 // CORRECTED from ??3WorldWin@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x004C4C70` into
 //   ??_GWorldWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
 //   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
 //   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x004C4CA0-0x004C4CAB
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2165,10 +2007,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GAmbience@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-ORIGINAL: 0x004C9330
-// name      ??_GAmbience@@UAEPAXI@Z
+// ORIGINAL: 0x004C9330 ??_GAmbience@@UAEPAXI@Z 0x004C9330-0x004C9351
 // size      33 bytes
-// spans     0x004C9330-0x004C9351
 // prototype void* (__thiscall ??_GAmbience@@UAEPAXI@Z)(Ambience* this, unsigned int)
 // callers   0   call targets   2
 // kind      game
@@ -2192,10 +2032,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GVideo@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-ORIGINAL: 0x004C9360
-// name      ??_GVideo@@UAEPAXI@Z
+// ORIGINAL: 0x004C9360 ??_GVideo@@UAEPAXI@Z 0x004C9360-0x004C9381
 // size      33 bytes
-// spans     0x004C9360-0x004C9381
 // prototype void* (__thiscall ??_GVideo@@UAEPAXI@Z)(Video* this, int8)
 // callers   0   call targets   2
 // kind      game
@@ -2217,10 +2055,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GVoiceRx@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-ORIGINAL: 0x004C93B0
-// name      ??_GVoiceRx@@UAEPAXI@Z
+// ORIGINAL: 0x004C93B0 ??_GVoiceRx@@UAEPAXI@Z 0x004C93B0-0x004C93D1
 // size      33 bytes
-// spans     0x004C93B0-0x004C93D1
 // prototype void* (__thiscall ??_GVoiceRx@@UAEPAXI@Z)(VoiceRx* this, unsigned int)
 // callers   0   call targets   2
 // kind      game
@@ -2243,10 +2079,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GVoiceTx@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-ORIGINAL: 0x004C93F0
-// name      ??_GVoiceTx@@UAEPAXI@Z
+// ORIGINAL: 0x004C93F0 ??_GVoiceTx@@UAEPAXI@Z 0x004C93F0-0x004C9411
 // size      33 bytes
-// spans     0x004C93F0-0x004C9411
 // prototype void* (__thiscall ??_GVoiceTx@@UAEPAXI@Z)(VoiceTx* this, unsigned int)
 // callers   0   call targets   2
 // kind      game
@@ -2269,10 +2103,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GDipEdit@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-ORIGINAL: 0x004E23C0
-// name      ??_GDipEdit@@UAEPAXI@Z
+// ORIGINAL: 0x004E23C0 ??_GDipEdit@@UAEPAXI@Z 0x004E23C0-0x004E23E1
 // size      33 bytes
-// spans     0x004E23C0-0x004E23E1
 // prototype void* (__thiscall ??_GDipEdit@@UAEPAXI@Z)(DipEdit* this, unsigned int)
 // callers   0   call targets   2
 // kind      game
@@ -2293,15 +2125,13 @@ void *__fastcall scalar_delete_dip_edit(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GDipEdit@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x004E23F0
-// name      ??_GDipEdit@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x004E23F0 ??_GDipEdit@@WEEE@AEPAXI@Z 0x004E23F0-0x004E23FB
 // CORRECTED from ??3DipEdit@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x004E23C0` into
 //   ??_GDipEdit@@UAEPAXI@Z, which executes `ret 4`; no stack access and
 //   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
 //   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x004E23F0-0x004E23FB
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2320,10 +2150,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GAlphaMenu@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-ORIGINAL: 0x0051DC90
-// name      ??_GAlphaMenu@@UAEPAXI@Z
+// ORIGINAL: 0x0051DC90 ??_GAlphaMenu@@UAEPAXI@Z 0x0051DC90-0x0051DCB1
 // size      33 bytes
-// spans     0x0051DC90-0x0051DCB1
 // prototype void* (__thiscall ??_GAlphaMenu@@UAEPAXI@Z)(AlphaMenu* this, unsigned int)
 // callers   0   call targets   2
 // kind      game
@@ -2344,15 +2172,13 @@ void *__fastcall scalar_delete_alpha_menu(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GAlphaMenu@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x0051DF70
-// name      ??_GAlphaMenu@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x0051DF70 ??_GAlphaMenu@@WEEE@AEPAXI@Z 0x0051DF70-0x0051DF7B
 // CORRECTED from ??3AlphaMenu@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x0051DC90` into
 //   ??_GAlphaMenu@@UAEPAXI@Z, which executes `ret 4`; no stack access
 //   and the receiver stays in ECX. `WEEE@` re-demangles to
 //   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x0051DF70-0x0051DF7B
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2372,10 +2198,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GReplayWin@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-ORIGINAL: 0x005AE0B0
-// name      ??_GReplayWin@@UAEPAXI@Z
+// ORIGINAL: 0x005AE0B0 ??_GReplayWin@@UAEPAXI@Z 0x005AE0B0-0x005AE0D1
 // size      33 bytes
-// spans     0x005AE0B0-0x005AE0D1
 // prototype void* (__thiscall ??_GReplayWin@@UAEPAXI@Z)(ReplayWin* this, unsigned int)
 // callers   0   call targets   2
 // kind      game
@@ -2396,15 +2220,13 @@ void *__fastcall scalar_delete_replay_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GReplayWin@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x005AE0E0
-// name      ??_GReplayWin@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x005AE0E0 ??_GReplayWin@@WEEE@AEPAXI@Z 0x005AE0E0-0x005AE0EB
 // CORRECTED from ??3ReplayWin@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x005AE0B0` into
 //   ??_GReplayWin@@UAEPAXI@Z, which executes `ret 4`; no stack access
 //   and the receiver stays in ECX. `WEEE@` re-demangles to
 //   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x005AE0E0-0x005AE0EB
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2424,10 +2246,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GMultiDebug@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-ORIGINAL: 0x005C9E80
-// name      ??_GMultiDebug@@UAEPAXI@Z
+// ORIGINAL: 0x005C9E80 ??_GMultiDebug@@UAEPAXI@Z 0x005C9E80-0x005C9EA1
 // size      33 bytes
-// spans     0x005C9E80-0x005C9EA1
 // prototype void* (__thiscall ??_GMultiDebug@@UAEPAXI@Z)(MultiDebug* this, unsigned int)
 // callers   0   call targets   2
 // kind      game
@@ -2448,15 +2268,13 @@ void *__fastcall scalar_delete_multi_debug(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GMultiDebug@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x005C9EB0
-// name      ??_GMultiDebug@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x005C9EB0 ??_GMultiDebug@@WEEE@AEPAXI@Z 0x005C9EB0-0x005C9EBB
 // CORRECTED from ??3MultiDebug@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x005C9E80` into
 //   ??_GMultiDebug@@UAEPAXI@Z, which executes `ret 4`; no stack access
 //   and the receiver stays in ECX. `WEEE@` re-demangles to
 //   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x005C9EB0-0x005C9EBB
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2476,10 +2294,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GGraphicWin@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-ORIGINAL: 0x005D7140
-// name      ??_GGraphicWin@@UAEPAXI@Z
+// ORIGINAL: 0x005D7140 ??_GGraphicWin@@UAEPAXI@Z 0x005D7140-0x005D715E
 // size      30 bytes
-// spans     0x005D7140-0x005D715E
 // prototype void* (__thiscall ??_GGraphicWin@@UAEPAXI@Z)(GraphicWin* this, unsigned int)
 // callers   0   call targets   2
 // kind      game
@@ -2501,15 +2317,13 @@ void *__fastcall scalar_delete_graphic_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GGraphicWin@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x005D7160
-// name      ??_GGraphicWin@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x005D7160 ??_GGraphicWin@@WEEE@AEPAXI@Z 0x005D7160-0x005D716B
 // CORRECTED from ??3GraphicWin@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x005D7140` into
 //   ??_GGraphicWin@@UAEPAXI@Z, which executes `ret 4`; no stack access
 //   and the receiver stays in ECX. `WEEE@` re-demangles to
 //   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x005D7160-0x005D716B
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2529,10 +2343,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GBuffer@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-ORIGINAL: 0x005E3610
-// name      ??_GBuffer@@UAEPAXI@Z
+// ORIGINAL: 0x005E3610 ??_GBuffer@@UAEPAXI@Z 0x005E3610-0x005E362E
 // size      30 bytes
-// spans     0x005E3610-0x005E362E
 // prototype void* (__thiscall ??_GBuffer@@UAEPAXI@Z)(Buffer* this, int8)
 // callers   0   call targets   2
 // kind      game
@@ -2555,10 +2367,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-ORIGINAL: 0x005F8610
-// name      ??_GWin@@UAEPAXI@Z
+// ORIGINAL: 0x005F8610 ??_GWin@@UAEPAXI@Z 0x005F8610-0x005F862E
 // size      30 bytes
-// spans     0x005F8610-0x005F862E
 // prototype void* (__thiscall ??_GWin@@UAEPAXI@Z)(Win* this, unsigned int)
 // callers   0   call targets   2
 // kind      game
@@ -2580,10 +2390,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GPullDown@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-ORIGINAL: 0x005FA770
-// name      ??_GPullDown@@UAEPAXI@Z
+// ORIGINAL: 0x005FA770 ??_GPullDown@@UAEPAXI@Z 0x005FA770-0x005FA78E
 // size      30 bytes
-// spans     0x005FA770-0x005FA78E
 // prototype void* (__thiscall ??_GPullDown@@UAEPAXI@Z)(PullDown* this, unsigned int)
 // callers   0   call targets   2
 // kind      game
@@ -2605,15 +2413,13 @@ void *__fastcall scalar_delete_pull_down(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GPullDown@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x005FA790
-// name      ??_GPullDown@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x005FA790 ??_GPullDown@@WEEE@AEPAXI@Z 0x005FA790-0x005FA79B
 // CORRECTED from ??3PullDown@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x005FA770` into
 //   ??_GPullDown@@UAEPAXI@Z, which executes `ret 4`; no stack access and
 //   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
 //   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x005FA790-0x005FA79B
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2632,10 +2438,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GMenu@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-ORIGINAL: 0x005FC6D0
-// name      ??_GMenu@@UAEPAXI@Z
+// ORIGINAL: 0x005FC6D0 ??_GMenu@@UAEPAXI@Z 0x005FC6D0-0x005FC6EE
 // size      30 bytes
-// spans     0x005FC6D0-0x005FC6EE
 // prototype void* (__thiscall ??_GMenu@@UAEPAXI@Z)(Menu* this, unsigned int)
 // callers   0   call targets   2
 // kind      game
@@ -2655,15 +2459,13 @@ void *__fastcall scalar_delete_menu(void *self, void *, unsigned int arg0) {
 /*
 Purpose: Step the receiver back to the subobject ??_GMenu@@UAEPAXI@Z expects,
          then forward unchanged.
-ORIGINAL: 0x005FC6F0
-// name      ??_GMenu@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x005FC6F0 ??_GMenu@@WEEE@AEPAXI@Z 0x005FC6F0-0x005FC6FB
 // CORRECTED from ??3Menu@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x005FC6D0` into ??_GMenu@@UAEPAXI@Z,
 //   which executes `ret 4`; no stack access and the receiver stays in
 //   ECX. `WEEE@` re-demangles to adjustor{1092} and 1092 == 0x444, the
 //   constant subtracted
 // size      11 bytes
-// spans     0x005FC6F0-0x005FC6FB
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2682,10 +2484,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GBaseButton@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-ORIGINAL: 0x00607CC0
-// name      ??_GBaseButton@@UAEPAXI@Z
+// ORIGINAL: 0x00607CC0 ??_GBaseButton@@UAEPAXI@Z 0x00607CC0-0x00607CDE
 // size      30 bytes
-// spans     0x00607CC0-0x00607CDE
 // prototype void* (__thiscall ??_GBaseButton@@UAEPAXI@Z)(BaseButton* this, unsigned int)
 // callers   0   call targets   2
 // kind      game
@@ -2707,15 +2507,13 @@ void *__fastcall scalar_delete_base_button(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GBaseButton@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x00607CE0
-// name      ??_GBaseButton@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x00607CE0 ??_GBaseButton@@WEEE@AEPAXI@Z 0x00607CE0-0x00607CEB
 // CORRECTED from ??3BaseButton@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x00607CC0` into
 //   ??_GBaseButton@@UAEPAXI@Z, which executes `ret 4`; no stack access
 //   and the receiver stays in ECX. `WEEE@` re-demangles to
 //   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x00607CE0-0x00607CEB
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2733,10 +2531,8 @@ void *__fastcall adjust_this_base_button(void *self, void *,
 /*
 Purpose: Step the receiver back by the vtordisp stored ahead of it to the one
          sub_612710 expects, then forward unchanged.
-ORIGINAL: 0x00612700
-// name      sub_612700
+// ORIGINAL: 0x00612700 sub_612700 0x00612700-0x00612708
 // size      8 bytes
-// spans     0x00612700-0x00612708
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2758,10 +2554,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GImageButton@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-ORIGINAL: 0x006256D0
-// name      ??_GImageButton@@UAEPAXI@Z
+// ORIGINAL: 0x006256D0 ??_GImageButton@@UAEPAXI@Z 0x006256D0-0x006256EE
 // size      30 bytes
-// spans     0x006256D0-0x006256EE
 // prototype void* (__thiscall ??_GImageButton@@UAEPAXI@Z)(ImageButton* this, unsigned int)
 // callers   0   call targets   2
 // kind      game
@@ -2782,15 +2576,13 @@ void *__fastcall scalar_delete_image_button(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GImageButton@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x006256F0
-// name      ??_GImageButton@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x006256F0 ??_GImageButton@@WEEE@AEPAXI@Z 0x006256F0-0x006256FB
 // CORRECTED from ??3ImageButton@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x006256D0` into
 //   ??_GImageButton@@UAEPAXI@Z, which executes `ret 4`; no stack access
 //   and the receiver stays in ECX. `WEEE@` re-demangles to
 //   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x006256F0-0x006256FB
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2810,10 +2602,8 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GPushButton@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-ORIGINAL: 0x0062C830
-// name      ??_GPushButton@@UAEPAXI@Z
+// ORIGINAL: 0x0062C830 ??_GPushButton@@UAEPAXI@Z 0x0062C830-0x0062C84E
 // size      30 bytes
-// spans     0x0062C830-0x0062C84E
 // prototype void* (__thiscall ??_GPushButton@@UAEPAXI@Z)(PushButton* this, unsigned int)
 // callers   0   call targets   2
 // kind      game
@@ -2834,15 +2624,13 @@ void *__fastcall scalar_delete_push_button(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GPushButton@@UAEPAXI@Z
          expects, then forward unchanged.
-ORIGINAL: 0x0062C850
-// name      ??_GPushButton@@WEEE@AEPAXI@Z
+// ORIGINAL: 0x0062C850 ??_GPushButton@@WEEE@AEPAXI@Z 0x0062C850-0x0062C85B
 // CORRECTED from ??3PushButton@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x0062C830` into
 //   ??_GPushButton@@UAEPAXI@Z, which executes `ret 4`; no stack access
 //   and the receiver stays in ECX. `WEEE@` re-demangles to
 //   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
-// spans     0x0062C850-0x0062C85B
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2861,10 +2649,8 @@ void *__fastcall adjust_this_push_button(void *self, void *,
 Purpose: The compiler-generated scalar deleting destructor at sub_633160: run
          the complete destructor, then release the storage through the
          executable's operator delete only when bit 0 of the flags asks.
-ORIGINAL: 0x00633160
-// name      sub_633160
+// ORIGINAL: 0x00633160 sub_633160 0x00633160-0x0063317E
 // size      30 bytes
-// spans     0x00633160-0x0063317E
 // prototype 
 // callers   0   call targets   2
 // kind      game
@@ -2885,10 +2671,8 @@ void *__fastcall scalar_delete_sub_633160(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject sub_6336d0 expects, then
          forward unchanged.
-ORIGINAL: 0x00633730
-// name      sub_633730
+// ORIGINAL: 0x00633730 sub_633730 0x00633730-0x00633738
 // size      8 bytes
-// spans     0x00633730-0x00633738
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2906,10 +2690,8 @@ void *__fastcall adjust_this_sub_633730(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject sub_633160 expects, then
          forward unchanged.
-ORIGINAL: 0x00633740
-// name      sub_633740
+// ORIGINAL: 0x00633740 sub_633740 0x00633740-0x0063374B
 // size      11 bytes
-// spans     0x00633740-0x0063374B
 // prototype 
 // callers   0   call targets   0
 // kind      game

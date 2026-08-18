@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004043D0 FILE
-// name      ??1UV2Player@@QAE@XZ
+// ORIGINAL: 0x004043D0 ??1UV2Player@@QAE@XZ 0x004043D0-0x0040441C;0x00650740-0x00650758 FILE
 // size      100 bytes
-// spans     0x004043D0-0x0040441C;0x00650740-0x00650758
 // prototype void (__thiscall ??1UV2Player@@QAE@XZ)(UV2Player* this)
 // callers   0   call targets   2
 // kind      game

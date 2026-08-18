@@ -20,10 +20,8 @@ void text_clear_index_source(TextIndex *indexes) {
     }
 }
 
-// ORIGINAL: 0x005FE1F0
-// name      ?text_make_index@@YAXPAD@Z
+// ORIGINAL: 0x005FE1F0 ?text_make_index@@YAXPAD@Z 0x005FE1F0-0x005FE228
 // size      56 bytes
-// spans     0x005FE1F0-0x005FE228
 // prototype 
 // callers   1   call targets   1
 // kind      game
@@ -39,10 +37,8 @@ void __cdecl text_make_index(LPCSTR source_txt) {
     }
 }
 
-// ORIGINAL: 0x005FE230
-// name      ?text_search_index@@YAHPAD0@Z
+// ORIGINAL: 0x005FE230 ?text_search_index@@YAHPAD0@Z 0x005FE230-0x005FE26C
 // size      60 bytes
-// spans     0x005FE230-0x005FE26C
 // prototype 
 // callers   0   call targets   1
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00649564 EXCLUDED S1
-// name      _flsall
+// ORIGINAL: 0x00649564 _flsall 0x00649564-0x00649608 EXCLUDED S1
 // size      164 bytes
-// spans     0x00649564-0x00649608
 // prototype 
 // callers   1   call targets   5
 // kind      library

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004160F0 FILE
-// name      ?iface_click@BaseWin@@QAEXHHHH@Z
+// ORIGINAL: 0x004160F0 ?iface_click@BaseWin@@QAEXHHHH@Z 0x004160F0-0x00416512 FILE
 // size      1058 bytes
-// spans     0x004160F0-0x00416512
 // prototype void (__thiscall ?iface_click@BaseWin@@QAEXHHHH@Z)(BaseWin* this, int xCoord, int yCoord, int, int)
 // callers   4   call targets   16
 // kind      game

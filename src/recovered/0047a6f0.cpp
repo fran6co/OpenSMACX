@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0047A6F0 BYTE_EXACT
-// name      ?UNK3@MultiWin@@QAEHHHPAURECT@@@Z
+// ORIGINAL: 0x0047A6F0 ?UNK3@MultiWin@@QAEHHHPAURECT@@@Z 0x0047A6F0-0x0047A71E BYTE_EXACT
 // size      46 bytes
-// spans     0x0047A6F0-0x0047A71E
 // prototype int (__thiscall ?UNK3@MultiWin@@QAEHHHPAURECT@@@Z)(MultiWin* this, int, int, RECT*)
 // callers   1   call targets   1
 // kind      game

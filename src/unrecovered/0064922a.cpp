@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064922A EXCLUDED S1
-// name      __freeptd
+// ORIGINAL: 0x0064922A __freeptd 0x0064922A-0x006492CA EXCLUDED S1
 // size      160 bytes
-// spans     0x0064922A-0x006492CA
 // prototype 
 // callers   1   call targets   1
 // kind      library

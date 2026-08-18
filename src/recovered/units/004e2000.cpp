@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004E2000 FILE
-// name      ?corner_the_market@Console@@QAEXXZ
+// ORIGINAL: 0x004E2000 ?corner_the_market@Console@@QAEXXZ 0x004E2000-0x004E2235 FILE
 // size      565 bytes
-// spans     0x004E2000-0x004E2235
 // prototype void (__thiscall ?corner_the_market@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   12
 // kind      game

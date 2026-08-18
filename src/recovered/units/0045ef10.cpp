@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0045EF10 FILE
-// name      ??0MainInterface@@QAE@XZ
+// ORIGINAL: 0x0045EF10 ??0MainInterface@@QAE@XZ 0x0045EF10-0x0045F1BE;0x00655530-0x00655723 FILE
 // size      1185 bytes
-// spans     0x0045EF10-0x0045F1BE;0x00655530-0x00655723
 // prototype void (__thiscall ??0MainInterface@@QAE@XZ)(MainInterface* this)
 // callers   1   call targets   9
 // kind      game

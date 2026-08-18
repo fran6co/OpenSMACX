@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0043F1C0 BYTE_EXACT FILE
-// name      ?bioscan_anim@DiploPop@@QAEXXZ
+// ORIGINAL: 0x0043F1C0 ?bioscan_anim@DiploPop@@QAEXXZ 0x0043F1C0-0x0043F1FC FILE BYTE_EXACT
 // size      60 bytes
-// spans     0x0043F1C0-0x0043F1FC
 // prototype void (__thiscall ?bioscan_anim@DiploPop@@QAEXXZ)(DiploPop* this)
 // callers   0   call targets   2
 // kind      game

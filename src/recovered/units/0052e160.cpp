@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0052E160 FILE
-// name      ?on_player_added@NetDaemon@@QAEXPADK@Z
+// ORIGINAL: 0x0052E160 ?on_player_added@NetDaemon@@QAEXPADK@Z 0x0052E160-0x0052E364 FILE
 // size      516 bytes
-// spans     0x0052E160-0x0052E364
 // prototype void (__thiscall ?on_player_added@NetDaemon@@QAEXPADK@Z)(NetDaemon* this, int8* lpszInput, unsigned int)
 // callers   0   call targets   11
 // kind      game

@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005EB29F FILE
+// ORIGINAL: 0x005EB29F ?fill_entry@SpriteList@@QAEHPAUSpriteStruct@@@Z 0x005EB29F-0x005EB320 FILE
 // working copy - scaffold materialised by --work
-// name      ?fill_entry@SpriteList@@QAEHPAUSpriteStruct@@@Z
 // size      129 bytes
-// spans     0x005EB29F-0x005EB320
 // prototype int (__thiscall ?fill_entry@SpriteList@@QAEHPAUSpriteStruct@@@Z)(SpriteList* this, SpriteStruct*)
 // callers   0   call targets   4
 // kind      game

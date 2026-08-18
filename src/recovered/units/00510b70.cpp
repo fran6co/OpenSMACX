@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00510B70 FILE
-// name      ?next_cursor@Console@@QAEXXZ
+// ORIGINAL: 0x00510B70 ?next_cursor@Console@@QAEXXZ 0x00510B70-0x00510C89 FILE
 // size      281 bytes
-// spans     0x00510B70-0x00510C89
 // prototype void (__thiscall ?next_cursor@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   10
 // kind      game

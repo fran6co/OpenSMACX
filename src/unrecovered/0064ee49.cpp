@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064EE49 EXCLUDED S1
-// name      _setSBCS
+// ORIGINAL: 0x0064EE49 _setSBCS 0x0064EE49-0x0064EE72 EXCLUDED S1
 // size      41 bytes
-// spans     0x0064EE49-0x0064EE72
 // prototype 
 // callers   1   call targets   0
 // kind      library

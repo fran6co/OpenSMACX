@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005B5620 BYTE_EXACT FILE
-// name      ?social_select@@YAXH@Z
+// ORIGINAL: 0x005B5620 ?social_select@@YAXH@Z 0x005B5620-0x005B5688 FILE BYTE_EXACT
 // size      104 bytes
-// spans     0x005B5620-0x005B5688
 // prototype void (__cdecl ?social_select@@YAXH@Z)(int factionID)
 // callers   4   call targets   5
 // kind      game

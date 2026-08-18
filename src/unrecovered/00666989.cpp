@@ -1,16 +1,11 @@
-// ORIGINAL: 0x00666989 EXCLUDED S2d
-// name      sub_666989
+// ORIGINAL: 0x00666989 sub_666989 0x00666989-0x00666A7D EXCLUDED S2d
+// RULED-OUT: was `EXCLUDED S2a`; disassembly is a normal `ret`, no tail-jmp, self-contained store sequence - not an EH funclet by docs/EXCLUSIONS.md 2a's own test (see 0x00664D51's note in full). Un-excluded.
 // size      244 bytes
-// spans     0x00666989-0x00666A7D
 // prototype
 // callers   1   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
-// RULED-OUT: was `EXCLUDED S2a`; disassembly is a normal `ret`, no tail-jmp,
-//            self-contained store sequence - not an EH funclet by
-//            docs/EXCLUSIONS.md 2a's own test (see 0x00664D51's note in
-//            full). Un-excluded.
 // NOTE: content-independent REFUSED either way: tools/byte_match.py
 //       SELFMOD_RANGE (0x00664000,0x00669000) covers this address, so
 //       `classify_body` reports REFUSED/"body has a span in _SELFMOD" for

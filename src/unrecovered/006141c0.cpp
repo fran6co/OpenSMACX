@@ -1,23 +1,11 @@
-// ORIGINAL: 0x006141C0
-// name      ?set_def_name@FileWin@@QAEHPAD@Z
+// ORIGINAL: 0x006141C0 ?set_def_name@FileWin@@QAEHPAD@Z 0x006141C0-0x006142C9
+// RULED-OUT: plain `strlen`/`strcat` declarations get inlined by /O2 (repnz scasb / rep movs), which the original does not do at this call site; the `_strlen`/`_strcat` no-arg extern + function-pointer cast idiom (see src/unrecovered/00614d90.cpp) forces a real call and got the prologue and the backslash-search loop byte-exact (a `while` loop, not `do/while`, avoided a loop rotation the original does not have). Still MISMATCH: the drive-letter append block (`dirEnd[1]==':'`) converges back to the trailing strlen/strcat with a duplicated block reached via `jmp` in the original, but this source form falls straight through instead - a block-layout choice, not an arithmetic one.
 // size      265 bytes
-// spans     0x006141C0-0x006142C9
 // prototype int (__thiscall ?set_def_name@FileWin@@QAEHPAD@Z)(FileWin* this, int8*)
 // callers   5   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x006453E0 0x00645470
-// RULED-OUT: plain `strlen`/`strcat` declarations get inlined by /O2 (repnz
-//            scasb / rep movs), which the original does not do at this call
-//            site; the `_strlen`/`_strcat` no-arg extern + function-pointer
-//            cast idiom (see src/unrecovered/00614d90.cpp) forces a real
-//            call and got the prologue and the backslash-search loop
-//            byte-exact (a `while` loop, not `do/while`, avoided a loop
-//            rotation the original does not have). Still MISMATCH: the
-//            drive-letter append block (`dirEnd[1]==':'`) converges back to
-//            the trailing strlen/strcat with a duplicated block reached via
-//            `jmp` in the original, but this source form falls straight
-//            through instead - a block-layout choice, not an arithmetic one.
 
 extern "C" int __cdecl _strlen();
 typedef unsigned int (__cdecl *StrlenFn)(const char *);

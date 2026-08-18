@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0045D140 BYTE_EXACT
-// name      ?on_iface_selected@MainInterface@@QAEXHH@Z
+// ORIGINAL: 0x0045D140 ?on_iface_selected@MainInterface@@QAEXHH@Z 0x0045D140-0x0045D159 BYTE_EXACT
 // size      25 bytes
-// spans     0x0045D140-0x0045D159
 // prototype void (__thiscall ?on_iface_selected@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
 // callers   0   call targets   1
 // kind      game

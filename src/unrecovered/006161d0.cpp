@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006161D0 BYTE_EXACT FILE
-// name      ??0Time@@QAE@XZ
+// ORIGINAL: 0x006161D0 ??0Time@@QAE@XZ 0x006161D0-0x006161F6 FILE BYTE_EXACT
 // size      38 bytes
-// spans     0x006161D0-0x006161F6
 // prototype void (__thiscall ??0Time@@QAE@XZ)(Time* this)
 // callers   19   call targets   0
 // kind      

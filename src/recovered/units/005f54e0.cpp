@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005F54E0 FILE
-// name      ?on_paint@Win@@QAEXPAURECT@@@Z
+// ORIGINAL: 0x005F54E0 ?on_paint@Win@@QAEXPAURECT@@@Z 0x005F54E0-0x005F5803 FILE
 // size      803 bytes
-// spans     0x005F54E0-0x005F5803
 // prototype void (__thiscall ?on_paint@Win@@QAEXPAURECT@@@Z)(Win* this, RECT* lprc)
 // callers   0   call targets   2
 // kind      game

@@ -1,24 +1,7 @@
-// ORIGINAL: 0x0048D0D0 FILE
-// RULED-OUT: declaring BOTH `Popup();` (matched: this disassembly calls
-//            Popup's own ctor at 0x4048a0, not BasePop+Scroll separately)
-//            AND `~Popup();` (declaration only, no body) on the Popup class
-//            lets `Popup pop;` be a real local without the compiler
-//            synthesising-and-EMITTING its own ~Popup() - the destructor
-//            declaration alone suppresses synthesis, so scope-exit just
-//            calls the external symbol once. This compiles clean (unlike
-//            0x00405140, which hit the one-external-symbol error from an
-//            implicit ~Popup()). The extensive widget teardown after the
-//            `if (a3 != 0)` branch (FlatButton/BaseButton/Dialogs/Dialog/
-//            Spot/Heap) is called through small raw-byte-buffer casts
-//            rather than real locals, since those types have no declared
-//            constructors in this scaffold and a real local would risk
-//            the same implicit-synthesis problem. Reaches MISMATCH #11
-//            ('push' vs 'lea'); did not chase the exact field-store
-//            sequence (callback pointers, vtable resets) further.
+// ORIGINAL: 0x0048D0D0 ?veh_pick@@YAHHPBDH@Z 0x0048D0D0-0x0048D4EA;0x006585CB-0x006586B3 FILE
+// RULED-OUT: declaring BOTH `Popup();` (matched: this disassembly calls Popup's own ctor at 0x4048a0, not BasePop+Scroll separately) AND `~Popup();` (declaration only, no body) on the Popup class lets `Popup pop;` be a real local without the compiler synthesising-and-EMITTING its own ~Popup() - the destructor declaration alone suppresses synthesis, so scope-exit just calls the external symbol once. This compiles clean (unlike 0x00405140, which hit the one-external-symbol error from an implicit ~Popup()). The extensive widget teardown after the `if (a3 != 0)` branch (FlatButton/BaseButton/Dialogs/Dialog/ Spot/Heap) is called through small raw-byte-buffer casts rather than real locals, since those types have no declared constructors in this scaffold and a real local would risk the same implicit-synthesis problem. Reaches MISMATCH #11 ('push' vs 'lea'); did not chase the exact field-store sequence (callback pointers, vtable resets) further.
 // working copy - scaffold materialised by --work
-// name      ?veh_pick@@YAHHPBDH@Z
 // size      1282 bytes
-// spans     0x0048D0D0-0x0048D4EA;0x006585CB-0x006586B3
 // prototype int (__cdecl ?veh_pick@@YAHHPBDH@Z)(int vehID, int8*, int)
 // callers   3   call targets   24
 // kind      game

@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005EE750 BYTE_EXACT FILE
+// ORIGINAL: 0x005EE750 ?left_down_event@Win@@QAEXHHH@Z 0x005EE750-0x005EE802 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?left_down_event@Win@@QAEXHHH@Z
 // size      178 bytes
-// spans     0x005EE750-0x005EE802
 // prototype void (__thiscall ?left_down_event@Win@@QAEXHHH@Z)(Win* this, int, int, int)
 // callers   1   call targets   0
 // kind      game

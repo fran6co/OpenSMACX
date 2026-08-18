@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005BE940 FILE
-// name      ?tech_research@@YAXHH@Z
+// ORIGINAL: 0x005BE940 ?tech_research@@YAXHH@Z 0x005BE940-0x005BEB70 FILE
 // size      560 bytes
-// spans     0x005BE940-0x005BEB70
 // prototype 
 // callers   1   call targets   6
 // kind      game

@@ -1,18 +1,7 @@
-// ORIGINAL: 0x0060F030 FILE
-// RULED-OUT: literal Ghidra transcription with the vbtable-slot pattern made explicit
-//            (desc = *(int*)this; vb1=desc[1], vb2=desc[2] give the GraphicWin/Dialog
-//            virtual-base offsets 0x1C/0xA34) and receivers cast to the already-declared
-//            Buffer/Dialog/StringStruct/Win/Sprite/VCall types compiles and matches the
-//            overall control flow, but two register captures (Ghidra's unaff_EDI/
-//            unaff_ESI, which even Ghidra could not trace a defining write for) are
-//            approximated - unaff_EDI as the loop accumulator local_24, unaff_ESI as a
-//            literal third parameter - so it diverges from the prologue on. Original
-//            prologue is frameless (`sub esp,0x24` with no push ebp); did not chase
-//            further given the size.
+// ORIGINAL: 0x0060F030 ?draw_item@CheckBox@@QAEXHHH@Z 0x0060F030-0x0060F6FF FILE
+// RULED-OUT: literal Ghidra transcription with the vbtable-slot pattern made explicit (desc = *(int*)this; vb1=desc[1], vb2=desc[2] give the GraphicWin/Dialog virtual-base offsets 0x1C/0xA34) and receivers cast to the already-declared Buffer/Dialog/StringStruct/Win/Sprite/VCall types compiles and matches the overall control flow, but two register captures (Ghidra's unaff_EDI/ unaff_ESI, which even Ghidra could not trace a defining write for) are approximated - unaff_EDI as the loop accumulator local_24, unaff_ESI as a literal third parameter - so it diverges from the prologue on. Original prologue is frameless (`sub esp,0x24` with no push ebp); did not chase further given the size.
 // working copy - scaffold materialised by --work
-// name      ?draw_item@CheckBox@@QAEXHHH@Z
 // size      1743 bytes
-// spans     0x0060F030-0x0060F6FF
 // prototype void (__thiscall ?draw_item@CheckBox@@QAEXHHH@Z)(CheckBox* this, int, int, int)
 // callers   3   call targets   13
 // kind      game

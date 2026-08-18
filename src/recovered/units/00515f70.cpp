@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00515F70 FILE
-// name      ?show_movies@Console@@QAEXXZ
+// ORIGINAL: 0x00515F70 ?show_movies@Console@@QAEXXZ 0x00515F70-0x00516291;0x0065D3F3-0x0065D4D0 FILE
 // size      1022 bytes
-// spans     0x00515F70-0x00516291;0x0065D3F3-0x0065D4D0
 // prototype void (__thiscall ?show_movies@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   23
 // kind      game

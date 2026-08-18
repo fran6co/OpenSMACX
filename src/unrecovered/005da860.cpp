@@ -1,17 +1,12 @@
-// ORIGINAL: 0x005DA860
-// name      ?tile@Buffer@@QAEHPAVBuffer@@HHHHHH@Z
+// ORIGINAL: 0x005DA860 ?tile@Buffer@@QAEHPAVBuffer@@HHHHHH@Z 0x005DA860-0x005DA9EC
+// RULED-OUT: straight transcription diverges at #2 (original pushes ebx/ebp/esi/edi as one prologue block; this form only needs three, so the compiler's register save set differs) - 122/144 mnemonics still agree. Landing the closest.
 // size      396 bytes
-// spans     0x005DA860-0x005DA9EC
 // prototype int (__thiscall ?tile@Buffer@@QAEHPAVBuffer@@HHHHHH@Z)(Buffer* this, Buffer*, int, int, int, int, int, int)
 // callers   12   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D8000 0x005DFF00
 // indirect  0x005DA8E4
-// RULED-OUT: straight transcription diverges at #2 (original pushes
-//            ebx/ebp/esi/edi as one prologue block; this form only needs
-//            three, so the compiler's register save set differs) - 122/144
-//            mnemonics still agree. Landing the closest.
 
 typedef int (__stdcall *IntersectRectFn)(RECT *, const RECT *, const RECT *);
 

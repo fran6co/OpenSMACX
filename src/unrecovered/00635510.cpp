@@ -1,12 +1,7 @@
-// ORIGINAL: 0x00635510 FILE
-// RULED-OUT: __stdcall free-function form (contract head) - ecx is read as a
-//            receiver with no matching stack slot before any field access,
-//            and ret 0x10 pops exactly 4 stack dwords, so recast as a
-//            __thiscall member (DDInit::init); diverges at instr #8
+// ORIGINAL: 0x00635510 sub_635510 0x00635510-0x00635746;0x00663870-0x00663885 FILE
+// RULED-OUT: __stdcall free-function form (contract head) - ecx is read as a receiver with no matching stack slot before any field access, and ret 0x10 pops exactly 4 stack dwords, so recast as a __thiscall member (DDInit::init); diverges at instr #8
 // working copy - scaffold materialised by --work
-// name      sub_635510
 // size      587 bytes
-// spans     0x00635510-0x00635746;0x00663870-0x00663885
 // prototype 
 // callers   2   call targets   10
 // kind      game

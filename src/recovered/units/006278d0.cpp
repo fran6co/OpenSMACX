@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006278D0 BYTE_EXACT FILE
-// name      ?pop_ask@@YAHPADPADP6AHXZH@Z
+// ORIGINAL: 0x006278D0 ?pop_ask@@YAHPADPADP6AHXZH@Z 0x006278D0-0x00627904 FILE BYTE_EXACT
 // size      52 bytes
-// spans     0x006278D0-0x00627904
 // prototype int (__cdecl ?pop_ask@@YAHPADPADP6AHXZH@Z)(int8* sectionID, int8*, int (__cdecl *)(), int)
 // callers   0   call targets   2
 // kind      game

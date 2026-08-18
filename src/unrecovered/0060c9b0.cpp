@@ -1,8 +1,6 @@
-// ORIGINAL: 0x0060C9B0 FILE
+// ORIGINAL: 0x0060C9B0 ?update_changes@ListBox@@QAEHXZ 0x0060C9B0-0x0060CB63 FILE
 // RULED-OUT: raw vbtable-adjustor arithmetic (vbt[1]/vbt[2]) for the Win/Dialog virtual bases plus a hand-written VCall shim with slot054 taking int; diverges at #0, register allocation differs immediately
-// name      ?update_changes@ListBox@@QAEHXZ
 // size      435 bytes
-// spans     0x0060C9B0-0x0060CB63
 // prototype int (__thiscall ?update_changes@ListBox@@QAEHXZ)(ListBox* this)
 // callers   10   call targets   10
 // kind      game

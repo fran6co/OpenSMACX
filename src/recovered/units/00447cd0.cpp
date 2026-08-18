@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00447CD0 BYTE_EXACT FILE
-// name      ?new_base@GAmbience@@QAEXXZ
+// ORIGINAL: 0x00447CD0 ?new_base@GAmbience@@QAEXXZ 0x00447CD0-0x00447D07 FILE BYTE_EXACT
 // size      55 bytes
-// spans     0x00447CD0-0x00447D07
 // prototype void (__thiscall ?new_base@GAmbience@@QAEXXZ)(GAmbience* this)
 // callers   0   call targets   0
 // kind      game

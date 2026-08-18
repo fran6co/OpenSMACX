@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004921E0 FILE
-// name      ??0PrefWin@@QAE@XZ
+// ORIGINAL: 0x004921E0 ??0PrefWin@@QAE@XZ 0x004921E0-0x004923DA;0x00658930-0x00658ABC FILE
 // size      902 bytes
-// spans     0x004921E0-0x004923DA;0x00658930-0x00658ABC
 // prototype void (__thiscall ??0PrefWin@@QAE@XZ)(PrefWin* this)
 // callers   1   call targets   4
 // kind      game

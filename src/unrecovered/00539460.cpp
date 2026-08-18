@@ -1,11 +1,7 @@
-// ORIGINAL: 0x00539460 BYTE_EXACT FILE
-// LEVER: table indexed by a1*0x833/a3*0x833 needed its own
-//   `extern int g_96cc00_tbl[]` (lea vs add) instead of the scaffold's
-//   fixed-address `int *const g_0096cc00` used for the plain-load calls.
+// ORIGINAL: 0x00539460 ?net_energy@@YAXHHHHH@Z 0x00539460-0x00539506 FILE BYTE_EXACT
+// LEVER: table indexed by a1*0x833/a3*0x833 needed its own `extern int g_96cc00_tbl[]` (lea vs add) instead of the scaffold's fixed-address `int *const g_0096cc00` used for the plain-load calls.
 // working copy - scaffold materialised by --work
-// name      ?net_energy@@YAXHHHHH@Z
 // size      166 bytes
-// spans     0x00539460-0x00539506
 // prototype 
 // callers   3   call targets   4
 // kind      game

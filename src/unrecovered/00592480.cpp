@@ -1,12 +1,7 @@
-// ORIGINAL: 0x00592480 FILE
-// RULED-OUT: idx*0x2c direct multiply (compiler drops the lea/lea *11
-//            decomposition); byte 0x66efbc/0x66f440 offset tables need a
-//            distinct extern (not caught by the fixed-global scanner since
-//            they're addressed as [reg+imm] with no separate mov).
+// ORIGINAL: 0x00592480 sub_592480 0x00592480-0x00592550 FILE
+// RULED-OUT: idx*0x2c direct multiply (compiler drops the lea/lea *11 decomposition); byte 0x66efbc/0x66f440 offset tables need a distinct extern (not caught by the fixed-global scanner since they're addressed as [reg+imm] with no separate mov).
 // working copy - scaffold materialised by --work
-// name      sub_592480
 // size      208 bytes
-// spans     0x00592480-0x00592550
 // prototype 
 // callers   0   call targets   0
 // kind      game

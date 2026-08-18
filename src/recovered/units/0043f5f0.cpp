@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0043F5F0 FILE
-// name      ?draw_bioscan@DiploPop@@QAEXXZ
+// ORIGINAL: 0x0043F5F0 ?draw_bioscan@DiploPop@@QAEXXZ 0x0043F5F0-0x0043F784 FILE
 // size      404 bytes
-// spans     0x0043F5F0-0x0043F784
 // prototype void (__thiscall ?draw_bioscan@DiploPop@@QAEXXZ)(DiploPop* this)
 // callers   1   call targets   8
 // kind      game

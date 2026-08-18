@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00647851 EXCLUDED S1
-// name      _floor
+// ORIGINAL: 0x00647851 _floor 0x00647851-0x00647920 EXCLUDED S1
 // size      207 bytes
-// spans     0x00647851-0x00647920
 // prototype 
 // callers   2   call targets   5
 // kind      library

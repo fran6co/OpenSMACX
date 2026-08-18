@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005F4EC0 FILE
-// name      ?recurse_zorder@@YAXPAUWin@@@Z
+// ORIGINAL: 0x005F4EC0 ?recurse_zorder@@YAXPAUWin@@@Z 0x005F4EC0-0x005F5013 FILE
 // size      339 bytes
-// spans     0x005F4EC0-0x005F5013
 // prototype 
 // callers   12   call targets   2
 // kind      game

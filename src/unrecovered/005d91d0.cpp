@@ -1,14 +1,12 @@
-// ORIGINAL: 0x005D91D0 BYTE_EXACT FILE
-// name      sub_5d91d0
+// ORIGINAL: 0x005D91D0 sub_5d91d0 0x005D91D0-0x005D92BE FILE BYTE_EXACT
+// LEVER: byte-identical in structure to the six Buffer::draw_* siblings at
 // size      238 bytes
-// spans     0x005D91D0-0x005D92BE
 // prototype
 // callers   0   call targets   1
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005E81BC
 // indirect  0x005D9287
-// LEVER: byte-identical in structure to the six Buffer::draw_* siblings at
 // 005d8650/005d8840/005d8a30/005d8df0/005d8fe0/005d93c0: a thiscall Buffer
 // method (ecx=this, ret 0x14) that IDA misread as a stdcall(int,int,int,
 // int,int) free function for lack of a mangled name. FILE mode: the body

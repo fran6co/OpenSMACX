@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004C8190 BYTE_EXACT
-// name      sub_4c8190
+// ORIGINAL: 0x004C8190 sub_4c8190 0x004C8190-0x004C81B5 BYTE_EXACT
 // size      37 bytes
-// spans     0x004C8190-0x004C81B5
 // prototype 
 // callers   0   call targets   1
 // kind      game

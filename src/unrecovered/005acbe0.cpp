@@ -1,23 +1,6 @@
-// ORIGINAL: 0x005ACBE0 FILE
-// RULED-OUT: MISMATCH #6 'xor' vs 'push' (framed build, sim 0.71). Faction
-//            diplomacy scoring, recursive (calls itself per-faction with
-//            a4=1 to find the best rival score). Ghidra's decompile carries
-//            the "type propagation not settling" warning and reuses `param_1`
-//            and `param_3` as unrelated scratch accumulators after their
-//            parameter roles are spent; gave each reuse its own named local
-//            (ownWeight/matchPop/totalPop) instead of shadowing the
-//            parameters, and kept `piVar4`'s role as a separately-named `out`
-//            pointer captured once after both NULL-default checks, matching
-//            Ghidra's own split between `param_3` (reused as scratch) and
-//            `piVar4` (the stable output pointer). Byte-vs-element pointer
-//            arithmetic resolved per array against this codebase's
-//            established conventions (0x833-int / 0x20cc-byte diplomacy-pair
-//            stride, 0x59c-byte per-faction row) rather than trusting
-//            Ghidra's inferred pointer types, which are inconsistent in this
-//            output.
-// name      ?compute_score@@YAXHPAHPAHH@Z
+// ORIGINAL: 0x005ACBE0 ?compute_score@@YAXHPAHPAHH@Z 0x005ACBE0-0x005AD3AD FILE
+// RULED-OUT: MISMATCH #6 'xor' vs 'push' (framed build, sim 0.71). Faction diplomacy scoring, recursive (calls itself per-faction with a4=1 to find the best rival score). Ghidra's decompile carries the "type propagation not settling" warning and reuses `param_1` and `param_3` as unrelated scratch accumulators after their parameter roles are spent; gave each reuse its own named local (ownWeight/matchPop/totalPop) instead of shadowing the parameters, and kept `piVar4`'s role as a separately-named `out` pointer captured once after both NULL-default checks, matching Ghidra's own split between `param_3` (reused as scratch) and `piVar4` (the stable output pointer). Byte-vs-element pointer arithmetic resolved per array against this codebase's established conventions (0x833-int / 0x20cc-byte diplomacy-pair stride, 0x59c-byte per-faction row) rather than trusting Ghidra's inferred pointer types, which are inconsistent in this output.
 // size      1997 bytes
-// spans     0x005ACBE0-0x005AD3AD
 // prototype void (__cdecl ?compute_score@@YAXHPAHPAHH@Z)(int factionID, int*, int*, int)
 // callers   4   call targets   6
 // kind      game

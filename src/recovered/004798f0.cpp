@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004798F0 BYTE_EXACT
-// name      ?on_redraw@MultiWin@@QAEXXZ
+// ORIGINAL: 0x004798F0 ?on_redraw@MultiWin@@QAEXXZ 0x004798F0-0x004798F8 BYTE_EXACT
 // size      8 bytes
-// spans     0x004798F0-0x004798F8
 // prototype void (__thiscall ?on_redraw@MultiWin@@QAEXXZ)(MultiWin* this)
 // callers   0   call targets   1
 // kind      game

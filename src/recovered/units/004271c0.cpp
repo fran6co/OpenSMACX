@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004271C0 FILE
-// name      ?arrived@CouncWin@@QAEXH@Z
+// ORIGINAL: 0x004271C0 ?arrived@CouncWin@@QAEXH@Z 0x004271C0-0x0042722D FILE
 // size      109 bytes
-// spans     0x004271C0-0x0042722D
 // prototype void (__thiscall ?arrived@CouncWin@@QAEXH@Z)(CouncWin* this, int)
 // callers   1   call targets   1
 // kind      game

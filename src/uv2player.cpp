@@ -20,10 +20,8 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
-ORIGINAL: 0x004BF380 BYTE_EXACT
-// name      ?UNK4@UV2Player@@QAEHXZ
+// ORIGINAL: 0x004BF380 ?UNK4@UV2Player@@QAEHXZ 0x004BF380-0x004BF383 BYTE_EXACT
 // size      3 bytes
-// spans     0x004BF380-0x004BF383
 // prototype int (__thiscall ?UNK4@UV2Player@@QAEHXZ)(UV2Player* this)
 // callers   0   call targets   0
 // kind      game

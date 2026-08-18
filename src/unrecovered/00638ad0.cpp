@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00638AD0 FILE
-// name      sub_638ad0
+// ORIGINAL: 0x00638AD0 sub_638ad0 0x00638AD0-0x00638CB9 FILE
 // size      489 bytes
-// spans     0x00638AD0-0x00638CB9
 // prototype 
 // callers   1   call targets   6
 // kind      game

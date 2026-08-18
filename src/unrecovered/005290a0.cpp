@@ -1,14 +1,7 @@
-// ORIGINAL: 0x005290A0 FILE
-// RULED-OUT: direct global-arithmetic translation of the Ghidra listing
-//            (fixed globals, DeletionList/NetDaemon/NetMsg/Console
-//            members, NET_DRAIN() macro for the receive-loop idiom)
-//            matches the first 10 instructions then diverges (xor vs
-//            mov) - register allocation for the 5-way local flags, not
-//            a structural difference.
+// ORIGINAL: 0x005290A0 ?net_upkeep@@YAXXZ 0x005290A0-0x00529BE2 FILE
+// RULED-OUT: direct global-arithmetic translation of the Ghidra listing (fixed globals, DeletionList/NetDaemon/NetMsg/Console members, NET_DRAIN() macro for the receive-loop idiom) matches the first 10 instructions then diverges (xor vs mov) - register allocation for the 5-way local flags, not a structural difference.
 // working copy - scaffold materialised by --work
-// name      ?net_upkeep@@YAXXZ
 // size      2882 bytes
-// spans     0x005290A0-0x00529BE2
 // prototype 
 // callers   1   call targets   29
 // kind      game

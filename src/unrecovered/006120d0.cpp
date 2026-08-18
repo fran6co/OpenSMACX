@@ -1,13 +1,7 @@
-// ORIGINAL: 0x006120D0 FILE
-// RULED-OUT: both `if (a1 == 0) {...null...} else-fallthrough {...set...}`
-//            and the inverted `if (a1 != 0) {...set...} else {...null...}`
-//            diverge immediately at instr #1 (original 'push ebx' first in
-//            the prologue vs rebuilt 'mov') - a register-allocation order
-//            artifact, not a control-flow one.
+// ORIGINAL: 0x006120D0 ?set_default@EditGroup@@QAEHPADH@Z 0x006120D0-0x00612144 FILE
+// RULED-OUT: both `if (a1 == 0) {...null...} else-fallthrough {...set...}` and the inverted `if (a1 != 0) {...set...} else {...null...}` diverge immediately at instr #1 (original 'push ebx' first in the prologue vs rebuilt 'mov') - a register-allocation order artifact, not a control-flow one.
 // working copy - scaffold materialised by --work
-// name      ?set_default@EditGroup@@QAEHPADH@Z
 // size      116 bytes
-// spans     0x006120D0-0x00612144
 // prototype int (__thiscall ?set_default@EditGroup@@QAEHPADH@Z)(EditGroup* this, int8*, int)
 // callers   1   call targets   4
 // kind      game

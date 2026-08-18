@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005F5200 BYTE_EXACT FILE
-// name      ?add_child@Win@@QAEXPAUWin@@@Z
+// ORIGINAL: 0x005F5200 ?add_child@Win@@QAEXPAUWin@@@Z 0x005F5200-0x005F5268 FILE BYTE_EXACT
 // size      104 bytes
-// spans     0x005F5200-0x005F5268
 // prototype 
 // callers   0   call targets   0
 // kind      game

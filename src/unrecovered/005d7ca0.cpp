@@ -1,10 +1,6 @@
-// ORIGINAL: 0x005D7CA0 FILE
-// RULED-OUT: same load_tga/load_bmp/load_pcx SEH-frame family as
-//            0x005D7A30 and 0x005D7B40; try{}catch(...){throw;} is the
-//            closest known shape and still diverges at #0 push/mov.
-// name      ?load_bmp@Buffer@@QAGHPBDPAVPalette@@HH@Z
+// ORIGINAL: 0x005D7CA0 ?load_bmp@Buffer@@QAGHPBDPAVPalette@@HH@Z 0x005D7CA0-0x005D7DD8;0x00662BA7-0x00662BBC FILE
+// RULED-OUT: same load_tga/load_bmp/load_pcx SEH-frame family as 0x005D7A30 and 0x005D7B40; try{}catch(...){throw;} is the closest known shape and still diverges at #0 push/mov.
 // size      333 bytes
-// spans     0x005D7CA0-0x005D7DD8;0x00662BA7-0x00662BBC
 // prototype 
 // callers   1   call targets   5
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00650172 EXCLUDED S1
-// name      ___multtenpow12
+// ORIGINAL: 0x00650172 ___multtenpow12 0x00650172-0x006501EE EXCLUDED S1
 // size      124 bytes
-// spans     0x00650172-0x006501EE
 // prototype 
 // callers   2   call targets   1
 // kind      library

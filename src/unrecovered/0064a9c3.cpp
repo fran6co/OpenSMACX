@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064A9C3 EXCLUDED S1
-// name      __dosmaperr
+// ORIGINAL: 0x0064A9C3 __dosmaperr 0x0064A9C3-0x0064AA36 EXCLUDED S1
 // size      115 bytes
-// spans     0x0064A9C3-0x0064AA36
 // prototype 
 // callers   9   call targets   2
 // kind      library

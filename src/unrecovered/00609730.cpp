@@ -1,21 +1,7 @@
-// ORIGINAL: 0x00609730 FILE
-// RULED-OUT: MISMATCH, closest at 187/190 bytes (mnemonic_similarity 0.97).
-//            Same embedded-manager close-and-relink shape as
-//            SetupWin::close (0x004AD9C0): a single mutated `char *p`
-//            (starts as `this`, then `p += 0xbc` to become the manager)
-//            reproduces the whole prologue, field stores AND the loop
-//            body byte-for-byte - matching original's single-register
-//            reuse (esi: this, then mgr) instead of a separate named
-//            `mgr` local, which cost an extra register/push. The two
-//            vtable-adjustment "deleting dtor" calls (vtbl[1] read as a
-//            byte displacement, this-adjusted, then that pointer's own
-//            vtbl[0] called with arg 1) still diverge by a few
-//            instructions each - same register-allocator nuance as
-//            0x004AD9C0's second call site, not chased further.
+// ORIGINAL: 0x00609730 ?init@Dialog@@QAEHHHHHPAUHeap@@@Z 0x00609730-0x006097EE FILE
+// RULED-OUT: MISMATCH, closest at 187/190 bytes (mnemonic_similarity 0.97). Same embedded-manager close-and-relink shape as SetupWin::close (0x004AD9C0): a single mutated `char *p` (starts as `this`, then `p += 0xbc` to become the manager) reproduces the whole prologue, field stores AND the loop body byte-for-byte - matching original's single-register reuse (esi: this, then mgr) instead of a separate named `mgr` local, which cost an extra register/push. The two vtable-adjustment "deleting dtor" calls (vtbl[1] read as a byte displacement, this-adjusted, then that pointer's own vtbl[0] called with arg 1) still diverge by a few instructions each - same register-allocator nuance as 0x004AD9C0's second call site, not chased further.
 // working copy - scaffold materialised by --work
-// name      ?init@Dialog@@QAEHHHHHPAUHeap@@@Z
 // size      190 bytes
-// spans     0x00609730-0x006097EE
 // prototype int (__thiscall ?init@Dialog@@QAEHHHHHPAUHeap@@@Z)(Dialog* this, int, int, int, int, Heap*)
 // callers   2   call targets   1
 // kind      game

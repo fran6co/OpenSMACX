@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00442560 BYTE_EXACT
-// name      ?on_key_down@DiploWin@@QAEHH@Z
+// ORIGINAL: 0x00442560 ?on_key_down@DiploWin@@QAEHH@Z 0x00442560-0x0044258A BYTE_EXACT
 // size      42 bytes
-// spans     0x00442560-0x0044258A
 // prototype int (__thiscall ?on_key_down@DiploWin@@QAEHH@Z)(DiploWin* this, int)
 // callers   0   call targets   0
 // kind      game

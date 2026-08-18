@@ -1,23 +1,11 @@
-// ORIGINAL: 0x005CEE80
-// name      sub_5cee80
+// ORIGINAL: 0x005CEE80 sub_5cee80 0x005CEE80-0x005CEF8A
+// RULED-OUT: same unexpressible-convention finding as 0x005D2C0A and its sibling 0x005D2B20 - `esi` (src) is read from the first real instruction with no stack setup, so a normal parameter cannot reproduce the prologue (MISMATCH from instruction 0). Unlike 0x005D2C0A this one does NOT do the final `>> 17` scale (plain sum/difference like 0x005D2B20), and its `dst` comes from a global pointer (`g_009c3004`, a plain load) rather than a second implicit register, with the intermediate values spilled to fixed globals (`g_009c3008`.."14) instead of the stack - landed with a `src` parameter and the global dst load, which the lever note calls out as safe for a plain load.
 // size      266 bytes
-// spans     0x005CEE80-0x005CEF8A
 // prototype
 // callers   1   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
-// RULED-OUT: same unexpressible-convention finding as 0x005D2C0A and its
-//            sibling 0x005D2B20 - `esi` (src) is read from the first real
-//            instruction with no stack setup, so a normal parameter cannot
-//            reproduce the prologue (MISMATCH from instruction 0). Unlike
-//            0x005D2C0A this one does NOT do the final `>> 17` scale (plain
-//            sum/difference like 0x005D2B20), and its `dst` comes from a
-//            global pointer (`g_009c3004`, a plain load) rather than a
-//            second implicit register, with the intermediate values spilled
-//            to fixed globals (`g_009c3008`.."14) instead of the stack -
-//            landed with a `src` parameter and the global dst load, which
-//            the lever note calls out as safe for a plain load.
 
 extern "C" void __cdecl sub_5cee80(int *src) {
     int *dst = *reinterpret_cast<int **>(g_009c3004);

@@ -1,8 +1,6 @@
-// ORIGINAL: 0x004A0810 FILE
+// ORIGINAL: 0x004A0810 ?sat_edit@@YAXHHH@Z 0x004A0810-0x004A08D2 FILE
 // working copy - scaffold materialised by --work
-// name      ?sat_edit@@YAXHHH@Z
 // size      194 bytes
-// spans     0x004A0810-0x004A08D2
 // prototype void (__cdecl ?sat_edit@@YAXHHH@Z)(int a1, int factionID, int type)
 // callers   1   call targets   2
 // kind      game

@@ -1,21 +1,7 @@
-// ORIGINAL: 0x005AAAB0 FILE
-// RULED-OUT: RAII locals (FileBox/AlphaSave/FileWin/Scroll/Sprite x7/
-//            FlatButton x4/ListBox/Dialog/EditBox/Time) declared once at
-//            function scope in place of the original's per-branch
-//            conditionally-constructed objects (evidenced by inline
-//            vtable-pointer stores immediately before each dtor/close() in
-//            the exception funclets at 0x661E84+); AlphaSave and EditBox
-//            were given a GraphicWin base (embedded Buffer at +0x444
-//            matches the paired GraphicWin-dtor calls on the same address)
-//            and FileBox::load/AlphaSave::load were retyped to return
-//            char* (eax used immediately as a strcpy/strncpy source, but
-//            the catalogued mangling is QAEXXZ = void) - see PROPOSALS.
-//            Diverges at instr #14 (xor vs lea); not chased further given
-//            the 3414-byte, ~15-local-object scope.
+// ORIGINAL: 0x005AAAB0 ?load_game@@YAHHH@Z 0x005AAAB0-0x005AB5E3;0x00661E84-0x006620A7 FILE
+// RULED-OUT: RAII locals (FileBox/AlphaSave/FileWin/Scroll/Sprite x7/ FlatButton x4/ListBox/Dialog/EditBox/Time) declared once at function scope in place of the original's per-branch conditionally-constructed objects (evidenced by inline vtable-pointer stores immediately before each dtor/close() in the exception funclets at 0x661E84+); AlphaSave and EditBox were given a GraphicWin base (embedded Buffer at +0x444 matches the paired GraphicWin-dtor calls on the same address) and FileBox::load/AlphaSave::load were retyped to return char* (eax used immediately as a strcpy/strncpy source, but the catalogued mangling is QAEXXZ = void) - see PROPOSALS. Diverges at instr #14 (xor vs lea); not chased further given the 3414-byte, ~15-local-object scope.
 // working copy - scaffold materialised by --work
-// name      ?load_game@@YAHHH@Z
 // size      3414 bytes
-// spans     0x005AAAB0-0x005AB5E3;0x00661E84-0x006620A7
 // prototype 
 // callers   3   call targets   54
 // kind      game

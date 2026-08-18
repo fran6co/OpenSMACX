@@ -1,11 +1,7 @@
-// ORIGINAL: 0x006370E0 FILE
-// RULED-OUT: own VCall2 shim (35 slots) for slot34(int) since the scaffold's
-//   VCall types it nullary; cached TimeGetTimeFn across both timeGetTime()
-//   calls. MISMATCH #2 mov/push, early prologue register-save ordering only.
+// ORIGINAL: 0x006370E0 ?play@Video@@QAEHXZ 0x006370E0-0x0063718F FILE
+// RULED-OUT: own VCall2 shim (35 slots) for slot34(int) since the scaffold's VCall types it nullary; cached TimeGetTimeFn across both timeGetTime() calls. MISMATCH #2 mov/push, early prologue register-save ordering only.
 // working copy - scaffold materialised by --work
-// name      ?play@Video@@QAEHXZ
 // size      175 bytes
-// spans     0x006370E0-0x0063718F
 // prototype int (__thiscall ?play@Video@@QAEHXZ)(Video* this)
 // callers   0   call targets   3
 // kind      game

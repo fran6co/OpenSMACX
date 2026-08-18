@@ -1,8 +1,6 @@
-// ORIGINAL: 0x0055F770 FILE
+// ORIGINAL: 0x0055F770 ?break_treaty@@YAHHHH@Z 0x0055F770-0x0055F923 FILE
 // RULED-OUT: byte-record table (stride 0x59c) plus extern uint32 flags array for the a2+a1*0x833 index; reaches #23 before a push/mov split in the parse_says argument staging
-// name      ?break_treaty@@YAHHHH@Z
 // size      435 bytes
-// spans     0x0055F770-0x0055F923
 // prototype 
 // callers   7   call targets   4
 // kind      game

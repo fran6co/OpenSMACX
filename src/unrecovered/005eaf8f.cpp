@@ -1,12 +1,6 @@
-// ORIGINAL: 0x005EAF8F
-// RULED-OUT: a stack-local `Filemap fm;` (RAII) reproduces the SEH try/finally
-//        scaffold (0x662C30/0x662C38, __CxxFrameHandler) automatically -
-//        no hand-written exception frame needed. Landed at MISMATCH #44,
-//        well past the whole prologue, both early-return cleanup paths and
-//        the `create` call.
-// name      ?save@Sprite@@QAEHH@Z
+// ORIGINAL: 0x005EAF8F ?save@Sprite@@QAEHH@Z 0x005EAF8F-0x005EB0B2;0x00662C30-0x00662C42
+// RULED-OUT: a stack-local `Filemap fm;` (RAII) reproduces the SEH try/finally scaffold (0x662C30/0x662C38, __CxxFrameHandler) automatically - no hand-written exception frame needed. Landed at MISMATCH #44, well past the whole prologue, both early-return cleanup paths and the `create` call.
 // size      309 bytes
-// spans     0x005EAF8F-0x005EB0B2;0x00662C30-0x00662C42
 // prototype int (__thiscall ?save@Sprite@@QAEHH@Z)(Sprite* this, int)
 // callers   0   call targets   5
 // kind      game

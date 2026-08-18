@@ -1,27 +1,12 @@
-// ORIGINAL: 0x006095F0
-// name      ?init@Dialog@@QAEHH@Z
+// ORIGINAL: 0x006095F0 ?init@Dialog@@QAEHH@Z 0x006095F0-0x00609730
+// RULED-OUT: the scaffold-provided nullary `VCall` shim's slots cannot be re-parameterised from the body (C2660 at `slot001(piVar1)`), so declared an own `DialogVCall` class instead, permitted by the "class to express __thiscall" carve-out. The two "delete entry" calls are genuine virtual dispatch too, not a raw function-pointer call: `ecx` already holds the computed address (vtable[1] + object) from the preceding instructions when `call dword ptr [edx]` executes, so it is `((DialogVCall*)addr)->slot0(1)`, not a bare cdecl call. Testing a1 == 0 first vs testing a1 != 0 first was tried; the latter (a1 != 0 as the fallthrough) scores higher similarity overall despite an earlier first divergence. Best reached: MISMATCH, edit_count 31, 421 bytes vs 320, mnemonic similarity ~0.79.
 // size      320 bytes
-// spans     0x006095F0-0x00609730
 // prototype int (__thiscall ?init@Dialog@@QAEHH@Z)(Dialog* this, int)
 // callers   2   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D4620 0x00608F50
 // indirect  0x00609655 0x00609667 0x00609683 0x006096D9 0x006096ED 0x00609708
-// RULED-OUT: the scaffold-provided nullary `VCall` shim's slots cannot be
-//            re-parameterised from the body (C2660 at `slot001(piVar1)`),
-//            so declared an own `DialogVCall` class instead, permitted by
-//            the "class to express __thiscall" carve-out. The two "delete
-//            entry" calls are genuine virtual dispatch too, not a raw
-//            function-pointer call: `ecx` already holds the computed
-//            address (vtable[1] + object) from the preceding instructions
-//            when `call dword ptr [edx]` executes, so it is
-//            `((DialogVCall*)addr)->slot0(1)`, not a bare cdecl call.
-//            Testing a1 == 0 first vs testing a1 != 0 first was tried; the
-//            latter (a1 != 0 as the fallthrough) scores higher similarity
-//            overall despite an earlier first divergence.
-//            Best reached: MISMATCH, edit_count 31, 421 bytes vs 320,
-//            mnemonic similarity ~0.79.
 int Dialog::init(int a1) {
     class DialogVCall {
     public:

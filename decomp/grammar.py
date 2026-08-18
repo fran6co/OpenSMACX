@@ -3,18 +3,14 @@
 What a marker LOOKS LIKE lives here; what it MEANS - regions, states,
 lessons - lives in `reader`, and deciding between records lives in
 `annotation_scan`. Keeping the grammar apart is what lets a reader audit
-it in one screenful, and what lets `python -m decomp` enumerate it
-exhaustively when it holds this package's parse against the `tools/`
-originals.
+it in one screenful.
 
-A COPY, AND KNOWINGLY SO. `tools/annotation_scan.py` and the reading half of
-`tools/project_catalogue.py` hold the same patterns, because the 61 scripts in
-`tools/` still import them and this package must not depend on `tools/`.
-`python -m decomp` compares the two parses and fails if they stop agreeing -
-that check is the whole defence against the copies drifting, so do not delete
-it while both exist. **A pattern edit lands in `decomp/grammar.py` AND in the
-`tools/` originals** until the tools are refactored onto this package and the
-originals are deleted.
+`tools/annotation_scan.py` and the reading half of
+`tools/project_catalogue.py` still carry their own copies of these
+patterns for the 61 scripts in `tools/`. On 2026-08-18 the marker moved -
+it carries the piece's name and its image spans - and the tools copies
+stayed on the old spelling by decision; the package proves itself against
+`src/` alone from then on.
 """
 
 from __future__ import annotations
@@ -32,6 +28,13 @@ import re
 MARKER = re.compile(
     r"(?<![A-Za-z0-9_-])ORIGINAL:\s*0x(?P<addr>[0-9A-Fa-f]{6,8})"
     r"(?P<tail>[^\n*]*)")
+# The tail's structure: the marker names the piece before saying how to
+# read it - mangled name, then the image spans, then the keywords.
+MARKER_TAIL = re.compile(
+    r"^\s*(?P<name>\S+)\s+"
+    r"(?P<spans>0x[0-9A-Fa-f]{6,8}-0x[0-9A-Fa-f]{6,8}"
+    r"(?:;0x[0-9A-Fa-f]{6,8}-0x[0-9A-Fa-f]{6,8})*)"
+    r"\s*(?P<rest>.*)$", re.S)
 # The keyword, read out of the marker's own tail rather than by a second
 # alternation, so `FILE` and `BYTE_EXACT` may appear in either order.
 MARKER_KEYWORD = re.compile(r"^\s*(?P<kw>FILE|EXCLUDED)\b(?P<rest>.*)$", re.S)
@@ -87,7 +90,6 @@ SENTINEL = "// BODY GOES HERE."
 _MANGLED_BASE = re.compile(r"^\?\?(?:_[A-Za-z]|[0-9A-Za-z])([A-Za-z_]\w*)@"
                            r"|^\?([A-Za-z_]\w*)@"
                            r"|^([A-Za-z_]\w*)$")
-_NAME_FIELD = re.compile(r"^\s*(?://+|\*)?\s*name\s+(\S+)\s*$")
 
 # ----------------------------------------------------- the catalogue facts
 
@@ -118,18 +120,3 @@ FACT_LINE = re.compile(
 CONTINUED = re.compile(r"^(?://|\*)( +)"
                        r"((?:0x[0-9A-Fa-f]{8}(?: \(\d+x\))?(?: |$))+)$")
 CONTINUABLE = ("calls", "indirect")
-
-# ------------------------------------------------------------------ inventory
-
-# Every pattern above, named, so a checker can compare the grammar
-# EXHAUSTIVELY instead of curating a list. The two copies keep these names in
-# different homes: SCAN_PATTERNS live in `tools/annotation_scan.py`,
-# CATALOGUE_PATTERNS in `tools/project_catalogue.py`.
-SCAN_PATTERNS = (
-    "MARKER", "MARKER_KEYWORD", "MARKER_MATCHED",
-    "EXCLUSION_TOKEN",
-    "LESSON_LEVER", "LESSON_RULED_OUT", "LESSON_CONTINUED",
-    "LESSON_UNRECOVERABLE", "LESSON_DEFERRED",
-    "NEXT_MARKER", "_MANGLED_BASE", "_NAME_FIELD",
-)
-CATALOGUE_PATTERNS = ("FACT_LINE", "CONTINUED")

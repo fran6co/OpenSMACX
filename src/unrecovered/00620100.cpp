@@ -1,13 +1,6 @@
-// ORIGINAL: 0x00620100 FILE
-// RULED-OUT: IDA/Ghidra guessed a nullary/void signature; the disassembly
-//            proves 2 explicit int args (int*, int) with no `this`. The
-//            0x9BB490/0x9BB4F4/0x9BB4FC globals hold POINTERS (double
-//            indirection: `mov ecx,[addr]` then index off ecx), not raw
-//            table bases - a plain load, not an indexed-base address. First
-//            divergence #0 mov/push, not chased further.
-// name      sub_620100
+// ORIGINAL: 0x00620100 sub_620100 0x00620100-0x00620254 FILE
+// RULED-OUT: IDA/Ghidra guessed a nullary/void signature; the disassembly proves 2 explicit int args (int*, int) with no `this`. The 0x9BB490/0x9BB4F4/0x9BB4FC globals hold POINTERS (double indirection: `mov ecx,[addr]` then index off ecx), not raw table bases - a plain load, not an indexed-base address. First divergence #0 mov/push, not chased further.
 // size      340 bytes
-// spans     0x00620100-0x00620254
 // prototype 
 // callers   2   call targets   1
 // kind      game

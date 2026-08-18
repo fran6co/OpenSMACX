@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0042A100 BYTE_EXACT FILE
-// name      ?on_dialog_back_draw@Datalink@@QAEHPAUGraphicWin@@@Z
+// ORIGINAL: 0x0042A100 ?on_dialog_back_draw@Datalink@@QAEHPAUGraphicWin@@@Z 0x0042A100-0x0042A150 FILE BYTE_EXACT
 // size      80 bytes
-// spans     0x0042A100-0x0042A150
 // prototype int (__thiscall ?on_dialog_back_draw@Datalink@@QAEHPAUGraphicWin@@@Z)(Datalink* this, GraphicWin*)
 // callers   0   call targets   1
 // kind      game

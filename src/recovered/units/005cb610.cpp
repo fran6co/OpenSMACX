@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005CB610 FILE
-// name      sub_5cb610
+// ORIGINAL: 0x005CB610 sub_5cb610 0x005CB610-0x005CB652 FILE
 // size      66 bytes
-// spans     0x005CB610-0x005CB652
 // prototype 
 // callers   1   call targets   0
 // kind      game

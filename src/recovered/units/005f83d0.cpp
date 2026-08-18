@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005F83D0 FILE
-// name      ?set_bubble_text@Win@@QAEXPADPAURECT@@@Z
+// ORIGINAL: 0x005F83D0 ?set_bubble_text@Win@@QAEXPADPAURECT@@@Z 0x005F83D0-0x005F84FB FILE
 // size      299 bytes
-// spans     0x005F83D0-0x005F84FB
 // prototype void (__thiscall ?set_bubble_text@Win@@QAEXPADPAURECT@@@Z)(Win* this, int8*, RECT*)
 // callers   14   call targets   4
 // kind      game

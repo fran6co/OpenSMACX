@@ -13,10 +13,8 @@
 
 /*
 Purpose: Convert a multiplayer process ID to its one-based player index.
-ORIGINAL: 0x004E25E0 BYTE_EXACT
-// name      ?pid_2_idx@AlphaNet@@QAEHK@Z
+// ORIGINAL: 0x004E25E0 ?pid_2_idx@AlphaNet@@QAEHK@Z 0x004E25E0-0x004E2607 BYTE_EXACT
 // size      39 bytes
-// spans     0x004E25E0-0x004E2607
 // prototype int (__thiscall ?pid_2_idx@AlphaNet@@QAEHK@Z)(AlphaNet* this, unsigned int)
 // callers   20   call targets   0
 // kind      game
@@ -40,10 +38,8 @@ int AlphaNet::pid_2_idx(uint32_t process_id) {
 
 /*
 Purpose: Convert a multiplayer process ID to its signed player identity.
-ORIGINAL: 0x004E2610
-// name      ?pid_2_who@AlphaNet@@QAEHK@Z
+// ORIGINAL: 0x004E2610 ?pid_2_who@AlphaNet@@QAEHK@Z 0x004E2610-0x004E2653
 // size      67 bytes
-// spans     0x004E2610-0x004E2653
 // prototype int (__thiscall ?pid_2_who@AlphaNet@@QAEHK@Z)(AlphaNet* this, unsigned int)
 // callers   2   call targets   0
 // kind      game
@@ -69,10 +65,8 @@ int AlphaNet::pid_2_who(uint32_t process_id) {
 
 /*
 Purpose: Convert a signed multiplayer player identity to its process ID.
-ORIGINAL: 0x004E2660
-// name      ?who_2_pid@AlphaNet@@QAEHH@Z
+// ORIGINAL: 0x004E2660 ?who_2_pid@AlphaNet@@QAEHH@Z 0x004E2660-0x004E26A8
 // size      72 bytes
-// spans     0x004E2660-0x004E26A8
 // prototype int (__thiscall ?who_2_pid@AlphaNet@@QAEHH@Z)(AlphaNet* this, int)
 // callers   4   call targets   0
 // kind      game
@@ -98,10 +92,8 @@ int AlphaNet::who_2_pid(int identity) {
 
 /*
 Purpose: Convert a signed multiplayer player identity to its one-based index.
-ORIGINAL: 0x004E26B0
-// name      ?who_2_idx@AlphaNet@@QAEXH@Z
+// ORIGINAL: 0x004E26B0 ?who_2_idx@AlphaNet@@QAEXH@Z 0x004E26B0-0x004E26DC
 // size      44 bytes
-// spans     0x004E26B0-0x004E26DC
 // prototype void (__thiscall ?who_2_idx@AlphaNet@@QAEXH@Z)(AlphaNet* this, int)
 // callers   1   call targets   0
 // kind      game
@@ -147,10 +139,8 @@ func_net_close NetCloseOriginal = original_method<func_net_close>(0x0062E010);
 
 /*
 Purpose: Clear every player's process slot and hand off to the network close.
-ORIGINAL: 0x004E25B0
-// name      ?close@AlphaNet@@QAEXXZ
+// ORIGINAL: 0x004E25B0 ?close@AlphaNet@@QAEXXZ 0x004E25B0-0x004E25D8
 // size      40 bytes
-// spans     0x004E25B0-0x004E25D8
 // prototype void (__thiscall ?close@AlphaNet@@QAEXXZ)(AlphaNet* this)
 // callers   14   call targets   0
 // kind      game
@@ -177,10 +167,8 @@ void __fastcall alpha_net_close_redirect(AlphaNet *self, void *) {
 }
 
 /*
-ORIGINAL: 0x00401CE0
-// name      SessionStruct::close
+// ORIGINAL: 0x00401CE0 SessionStruct::close 0x00401CE0-0x00401D79
 // size      153 bytes
-// spans     0x00401CE0-0x00401D79
 // prototype 
 // callers   1   call targets   0
 // kind      game

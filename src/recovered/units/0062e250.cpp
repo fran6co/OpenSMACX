@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0062E250 BYTE_EXACT FILE
-// name      ?poll_services@Net@@QAEHPAUServiceList@@@Z
+// ORIGINAL: 0x0062E250 ?poll_services@Net@@QAEHPAUServiceList@@@Z 0x0062E250-0x0062E299 FILE BYTE_EXACT
 // size      73 bytes
-// spans     0x0062E250-0x0062E299
 // prototype int (__thiscall ?poll_services@Net@@QAEHPAUServiceList@@@Z)(Net* this, ServiceList*)
 // callers   1   call targets   1
 // kind      game

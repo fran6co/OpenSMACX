@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064526E EXCLUDED S1
-// name      __local_unwind2
+// ORIGINAL: 0x0064526E __local_unwind2 0x0064526E-0x006452D6 EXCLUDED S1
 // size      104 bytes
-// spans     0x0064526E-0x006452D6
 // prototype 
 // callers   3   call targets   1
 // kind      library

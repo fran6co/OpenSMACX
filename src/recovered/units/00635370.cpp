@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00635370 FILE
-// name      ?get_tex_mem@TexHeap@@QAEHH@Z
+// ORIGINAL: 0x00635370 ?get_tex_mem@TexHeap@@QAEHH@Z 0x00635370-0x006353BD FILE
 // size      77 bytes
-// spans     0x00635370-0x006353BD
 // prototype int (__thiscall ?get_tex_mem@TexHeap@@QAEHH@Z)(TexHeap* this, int)
 // callers   1   call targets   1
 // kind      game

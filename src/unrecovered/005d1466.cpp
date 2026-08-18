@@ -1,14 +1,7 @@
-// ORIGINAL: 0x005D1466 FILE
-// RULED-OUT: callee (sub_5d2037) takes its args in esi/edi/ebp with no
-//            stack push before `call` - no cdecl/fastcall signature the
-//            compiler can be told to use reproduces that register setup
-//            without __asm, which is barred. Landed with plausible field
-//            offsets and call count/order; prologue register save order
-//            and the per-call register loads do not match.
+// ORIGINAL: 0x005D1466 sub_5d1466 0x005D1466-0x005D1654 FILE
+// RULED-OUT: callee (sub_5d2037) takes its args in esi/edi/ebp with no stack push before `call` - no cdecl/fastcall signature the compiler can be told to use reproduces that register setup without __asm, which is barred. Landed with plausible field offsets and call count/order; prologue register save order and the per-call register loads do not match.
 // working copy - scaffold materialised by --work
-// name      sub_5d1466
 // size      494 bytes
-// spans     0x005D1466-0x005D1654
 // prototype 
 // callers   1   call targets   2
 // kind      game

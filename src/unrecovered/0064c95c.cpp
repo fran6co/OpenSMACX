@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064C95C EXCLUDED S1
-// name      __decomp
+// ORIGINAL: 0x0064C95C __decomp 0x0064C95C-0x0064CA1D EXCLUDED S1
 // size      193 bytes
-// spans     0x0064C95C-0x0064CA1D
 // prototype 
 // callers   2   call targets   1
 // kind      library

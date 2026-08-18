@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00644EC6 EXCLUDED S1
-// name      __lockexit
+// ORIGINAL: 0x00644EC6 __lockexit 0x00644EC6-0x00644ECF EXCLUDED S1
 // size      9 bytes
-// spans     0x00644EC6-0x00644ECF
 // prototype 
 // callers   2   call targets   1
 // kind      library

@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00404A80 FILE
+// ORIGINAL: 0x00404A80 ?hide@Popup@@QAEXXZ 0x00404A80-0x00404AFF FILE
 // working copy - scaffold materialised by --work
-// name      ?hide@Popup@@QAEXXZ
 // size      127 bytes
-// spans     0x00404A80-0x00404AFF
 // prototype void (__thiscall ?hide@Popup@@QAEXXZ)(Popup* this)
 // callers   4   call targets   4
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0047B380 FILE
-// name      ?get_player_color@NetWin@@QAEHH@Z
+// ORIGINAL: 0x0047B380 ?get_player_color@NetWin@@QAEHH@Z 0x0047B380-0x0047B442 FILE
 // size      194 bytes
-// spans     0x0047B380-0x0047B442
 // prototype int (__thiscall ?get_player_color@NetWin@@QAEHH@Z)(NetWin* this, int)
 // callers   4   call targets   0
 // kind      

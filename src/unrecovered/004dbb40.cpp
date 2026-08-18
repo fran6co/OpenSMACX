@@ -1,11 +1,6 @@
-// ORIGINAL: 0x004DBB40 FILE
-// RULED-OUT: nothing yet - MISMATCH #16 mov/push (94% mnemonic sim), a
-//            push/store reordering around the `compute_faction_modifiers`
-//            call; not chased further. `this` is unused throughout
-//            (thiscall receiver never touched).
-// name      ?editor_reset_faction@Console@@QAEXXZ
+// ORIGINAL: 0x004DBB40 ?editor_reset_faction@Console@@QAEXXZ 0x004DBB40-0x004DBC32 FILE
+// RULED-OUT: nothing yet - MISMATCH #16 mov/push (94% mnemonic sim), a push/store reordering around the `compute_faction_modifiers` call; not chased further. `this` is unused throughout (thiscall receiver never touched).
 // size      242 bytes
-// spans     0x004DBB40-0x004DBC32
 // prototype void (__thiscall ?editor_reset_faction@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   3
 // kind      game

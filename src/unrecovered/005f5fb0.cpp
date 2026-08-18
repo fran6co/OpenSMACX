@@ -1,14 +1,7 @@
-// ORIGINAL: 0x005F5FB0 FILE
-// RULED-OUT: extern "C" __stdcall(int,int) free function per IDA's guess -
-//            the spilled ecx is read back later ([esp+0x10] resolves to the
-//            "push ecx" slot itself, not a caller stack arg) and used as a
-//            Win* (scroll_vert_/scroll_horz_/key_click_event), so this is
-//            landed as Win::sub_5f5fb0(char, int) __thiscall instead; the
-//            unused 2nd stack dword explains `ret 8` with only 1 real read.
+// ORIGINAL: 0x005F5FB0 sub_5f5fb0 0x005F5FB0-0x005F622B FILE
+// RULED-OUT: extern "C" __stdcall(int,int) free function per IDA's guess - the spilled ecx is read back later ([esp+0x10] resolves to the "push ecx" slot itself, not a caller stack arg) and used as a Win* (scroll_vert_/scroll_horz_/key_click_event), so this is landed as Win::sub_5f5fb0(char, int) __thiscall instead; the unused 2nd stack dword explains `ret 8` with only 1 real read.
 // working copy - scaffold materialised by --work
-// name      sub_5f5fb0
 // size      635 bytes
-// spans     0x005F5FB0-0x005F622B
 // prototype 
 // callers   0   call targets   7
 // kind      game

@@ -1,14 +1,7 @@
-// ORIGINAL: 0x0054DCF0 FILE
-// RULED-OUT: byte-exact prologue global-write order (a64cc load/cmp interleaved
-//            between fa30/fa7c/f7cc/fab0/fa34/fa5c in the original, sequential
-//            here); the six-panel Popup/Dialogs dispatch, item()/exec() gating
-//            and faction-loop strides are transcribed from raw disasm + the
-//            (uncorrupted for this function) Ghidra hypothesis cross-checked
-//            against it - diverges first at #11, in the prologue.
+// ORIGINAL: 0x0054DCF0 ?proposal_menu@@YAHHH@Z 0x0054DCF0-0x0054F412;0x0065FAE9-0x0065FD5F FILE
+// RULED-OUT: byte-exact prologue global-write order (a64cc load/cmp interleaved between fa30/fa7c/f7cc/fab0/fa34/fa5c in the original, sequential here); the six-panel Popup/Dialogs dispatch, item()/exec() gating and faction-loop strides are transcribed from raw disasm + the (uncorrupted for this function) Ghidra hypothesis cross-checked against it - diverges first at #11, in the prologue.
 // working copy - scaffold materialised by --work
-// name      ?proposal_menu@@YAHHH@Z
 // size      6552 bytes
-// spans     0x0054DCF0-0x0054F412;0x0065FAE9-0x0065FD5F
 // prototype 
 // callers   1   call targets   47
 // kind      game

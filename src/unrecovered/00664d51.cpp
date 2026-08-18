@@ -1,24 +1,12 @@
-// ORIGINAL: 0x00664D51 EXCLUDED S2d
-// name      sub_664d51
+// ORIGINAL: 0x00664D51 sub_664d51 0x00664D51-0x00664E43 EXCLUDED S2d
+// RULED-OUT: this was carried as `EXCLUDED S2a` (C++ EH unwind funclet) by a prior bulk pass, but the disassembly contradicts that ground: docs/EXCLUSIONS.md 2a's own definition is "no frame of its own ... no prologue, no epilogue, no ret - a tail jmp into another symbol's entry", and this function has a normal `ret`, no tail-jmp into anyone else's entry point, and is fully self-contained (reads six globals, republishes them across table records, returns). It was swept into the funclet population by proximity - it sits in the byte gap between two much larger EH-funclet-bearing functions (0x006647F0 and 0x00664E50) - not by matching the population's own test. Un-excluded here so the body below can be measured.
+// RULED-OUT: combining the two `+= g_9be6b4` adds into one expression (`value + g_9be6b4 + g_9be6b4`) vs. splitting them into two statements - VC6 lowers both to the same `lea`/`mov` pair either way (original is two separate `add`); tried both, identical rebuilt bytes. Kept split as the more faithful source form. First divergence #18 add/mov (mnemonic similarity 0.92, 4 edit blocks, none of them affecting this expression's semantics).
 // size      242 bytes
-// spans     0x00664D51-0x00664E43
 // prototype
 // callers   1   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
-// RULED-OUT: this was carried as `EXCLUDED S2a` (C++ EH unwind funclet) by
-//            a prior bulk pass, but the disassembly contradicts that ground:
-//            docs/EXCLUSIONS.md 2a's own definition is "no frame of its own
-//            ... no prologue, no epilogue, no ret - a tail jmp into another
-//            symbol's entry", and this function has a normal `ret`, no
-//            tail-jmp into anyone else's entry point, and is fully
-//            self-contained (reads six globals, republishes them across
-//            table records, returns). It was swept into the funclet
-//            population by proximity - it sits in the byte gap between two
-//            much larger EH-funclet-bearing functions (0x006647F0 and
-//            0x00664E50) - not by matching the population's own test.
-//            Un-excluded here so the body below can be measured.
 // NOTE: the address IS structurally capped regardless, but for a DIFFERENT,
 //       undocumented reason: tools/byte_match.py's SELFMOD_RANGE is the flat
 //       interval (0x00664000, 0x00669000) - "copy protection" - and this
@@ -31,14 +19,6 @@
 //       the wrong citation for it. Landed anyway per the coverage brief:
 //       compiles and is a faithful transcription, which is what a REFUSED
 //       ceiling still leaves worth banking.
-// RULED-OUT: combining the two `+= g_9be6b4` adds into one expression
-//            (`value + g_9be6b4 + g_9be6b4`) vs. splitting them into two
-//            statements - VC6 lowers both to the same `lea`/`mov` pair
-//            either way (original is two separate `add`); tried both,
-//            identical rebuilt bytes. Kept split as the more faithful
-//            source form. First divergence #18 add/mov (mnemonic
-//            similarity 0.92, 4 edit blocks, none of them affecting this
-//            expression's semantics).
 
 extern "C" {
     extern int g_9be6bc;

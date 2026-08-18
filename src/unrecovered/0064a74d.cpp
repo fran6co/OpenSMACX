@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064A74D EXCLUDED S1
-// name      __nosnan2
+// ORIGINAL: 0x0064A74D __nosnan2 0x0064A74D-0x0064A7B6 EXCLUDED S1
 // size      105 bytes
-// spans     0x0064A74D-0x0064A7B6
 // prototype 
 // callers   0   call targets   0
 // kind      library

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006463E4 EXCLUDED S1
-// name      _sin
+// ORIGINAL: 0x006463E4 _sin 0x006463E4-0x0064647E;0x0064A87E-0x0064A88B;0x0064A88B-0x0064A8B5 EXCLUDED S1
 // size      209 bytes
-// spans     0x006463E4-0x0064647E;0x0064A87E-0x0064A88B;0x0064A88B-0x0064A8B5
 // prototype 
 // callers   7   call targets   3
 // kind      library

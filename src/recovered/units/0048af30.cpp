@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0048AF30 FILE
-// name      ?on_redraw@PlanWin@@QAEXXZ
+// ORIGINAL: 0x0048AF30 ?on_redraw@PlanWin@@QAEXXZ 0x0048AF30-0x0048B3B7 FILE
 // size      1159 bytes
-// spans     0x0048AF30-0x0048B3B7
 // prototype void (__thiscall ?on_redraw@PlanWin@@QAEXXZ)(PlanWin* this)
 // callers   6   call targets   6
 // kind      game

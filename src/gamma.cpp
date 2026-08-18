@@ -20,10 +20,8 @@
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 1.
-ORIGINAL: 0x005C9410 BYTE_EXACT
-// name      ?on_key_click@Gamma@@QAEHHH@Z
+// ORIGINAL: 0x005C9410 ?on_key_click@Gamma@@QAEHHH@Z 0x005C9410-0x005C9418 BYTE_EXACT
 // size      8 bytes
-// spans     0x005C9410-0x005C9418
 // prototype int (__thiscall ?on_key_click@Gamma@@QAEHHH@Z)(Gamma* this, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -44,10 +42,8 @@ func_gamma_adjust_palette GammaOriginalAdjustPalette =
     original_method<func_gamma_adjust_palette>(0x005C9520);
 
 /*
-ORIGINAL: 0x005C9390
-// name      ?on_scrolled@Gamma@@QAEXHH@Z
+// ORIGINAL: 0x005C9390 ?on_scrolled@Gamma@@QAEXHH@Z 0x005C9390-0x005C9398
 // size      8 bytes
-// spans     0x005C9390-0x005C9398
 // prototype void (__thiscall ?on_scrolled@Gamma@@QAEXHH@Z)(Gamma* this, int, int)
 // callers   0   call targets   1
 // kind      game

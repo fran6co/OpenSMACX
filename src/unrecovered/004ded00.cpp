@@ -1,19 +1,7 @@
-// ORIGINAL: 0x004DED00 FILE
-// RULED-OUT: real RAII locals (Popup for the outer/who dialogs, plus
-//            individually-declared Scroll/FlatButton/BasePop/Spot/
-//            Dialogs/Dialog/StringStruct/Sprite/Heap locals for the
-//            tile-edit-window cleanup block) so VC6 emits the SEH
-//            prologue/epilogue and destructor cascade itself, with
-//            item()/veh_avail/veh_init/bit_set/synch_bit/draw_tile
-//            argument order verified against raw disasm; compiles,
-//            MISMATCH #2 (this function has ~15 embedded local
-//            aggregates sharing/reusing stack ranges across mutually
-//            exclusive branches - true byte-exactness needs the exact
-//            source-level object layout, not attempted further here).
+// ORIGINAL: 0x004DED00 ?editor_veh@Console@@QAEXXZ 0x004DED00-0x004DF4E5;0x0065BD30-0x0065BE73 FILE
+// RULED-OUT: real RAII locals (Popup for the outer/who dialogs, plus individually-declared Scroll/FlatButton/BasePop/Spot/ Dialogs/Dialog/StringStruct/Sprite/Heap locals for the tile-edit-window cleanup block) so VC6 emits the SEH prologue/epilogue and destructor cascade itself, with item()/veh_avail/veh_init/bit_set/synch_bit/draw_tile argument order verified against raw disasm; compiles, MISMATCH #2 (this function has ~15 embedded local aggregates sharing/reusing stack ranges across mutually exclusive branches - true byte-exactness needs the exact source-level object layout, not attempted further here).
 // working copy - scaffold materialised by --work
-// name      ?editor_veh@Console@@QAEXXZ
 // size      2344 bytes
-// spans     0x004DED00-0x004DF4E5;0x0065BD30-0x0065BE73
 // prototype void (__thiscall ?editor_veh@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   33
 // kind      game

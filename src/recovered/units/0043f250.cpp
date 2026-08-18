@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0043F250 FILE
-// name      ?timer_callback_daemon2@DiploPop@@QAAXHH@Z
+// ORIGINAL: 0x0043F250 ?timer_callback_daemon2@DiploPop@@QAAXHH@Z 0x0043F250-0x0043F288 FILE
 // size      56 bytes
-// spans     0x0043F250-0x0043F288
 // prototype 
 // callers   0   call targets   2
 // kind      game

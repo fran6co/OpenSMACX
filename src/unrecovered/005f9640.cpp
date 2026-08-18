@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005F9640 FILE
+// ORIGINAL: 0x005F9640 ?on_key_click@PullDown@@QAEHHH@Z 0x005F9640-0x005F9840 FILE
 // working copy - scaffold materialised by --work
-// name      ?on_key_click@PullDown@@QAEHHH@Z
 // size      512 bytes
-// spans     0x005F9640-0x005F9840
 // prototype int (__thiscall ?on_key_click@PullDown@@QAEHHH@Z)(PullDown* this, int, int)
 // callers   0   call targets   3
 // kind      game

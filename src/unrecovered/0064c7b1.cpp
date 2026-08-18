@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064C7B1 EXCLUDED S1
-// name      __umatherr
+// ORIGINAL: 0x0064C7B1 __umatherr 0x0064C7B1-0x0064C839 EXCLUDED S1
 // size      136 bytes
-// spans     0x0064C7B1-0x0064C839
 // prototype int (__cdecl __umatherr)(int Value, int, int, int, int, int, unknown float, int)
 // callers   4   call targets   4
 // kind      library

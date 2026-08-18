@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006474A0 EXCLUDED S1
-// name      _strcspn
+// ORIGINAL: 0x006474A0 _strcspn 0x006474A0-0x006474DE EXCLUDED S1
 // size      62 bytes
-// spans     0x006474A0-0x006474DE
 // prototype 
 // callers   2   call targets   0
 // kind      library

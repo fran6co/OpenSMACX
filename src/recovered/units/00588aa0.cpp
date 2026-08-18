@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00588AA0 FILE
-// name      ?config_popups@@YAXXZ
+// ORIGINAL: 0x00588AA0 ?config_popups@@YAXXZ 0x00588AA0-0x00588F8E FILE
 // size      1262 bytes
-// spans     0x00588AA0-0x00588F8E
 // prototype 
 // callers   1   call targets   8
 // kind      game

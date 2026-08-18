@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00583CD0 FILE
-// name      ?hq_list_draw@@YAXPAUGraphicWin@@HHHHH@Z
+// ORIGINAL: 0x00583CD0 ?hq_list_draw@@YAXPAUGraphicWin@@HHHHH@Z 0x00583CD0-0x00583E2A FILE
 // size      346 bytes
-// spans     0x00583CD0-0x00583E2A
 // prototype 
 // callers   0   call targets   2
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00470420 FILE
-// name      ?compute_lighting_table@MapWin@@QAEXXZ
+// ORIGINAL: 0x00470420 ?compute_lighting_table@MapWin@@QAEXXZ 0x00470420-0x00470536 FILE
 // size      278 bytes
-// spans     0x00470420-0x00470536
 // prototype void (__thiscall ?compute_lighting_table@MapWin@@QAEXXZ)(MapWin* this)
 // callers   1   call targets   1
 // kind      game

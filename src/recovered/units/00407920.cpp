@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00407920 FILE
-// name      ?save@AlphaSave@@QAEXXZ
+// ORIGINAL: 0x00407920 ?save@AlphaSave@@QAEXXZ 0x00407920-0x00407A7E FILE
 // size      350 bytes
-// spans     0x00407920-0x00407A7E
 // prototype void (__thiscall ?save@AlphaSave@@QAEXXZ)(AlphaSave* this)
 // callers   1   call targets   10
 // kind      game

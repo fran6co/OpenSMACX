@@ -1,14 +1,7 @@
-// ORIGINAL: 0x00581260 FILE
-// RULED-OUT: mechanical register/stack-slot goto transliteration (304 labels,
-//            one 7-case switch off 0x0094A37D, 6375-line body): compiles,
-//            MISMATCH sim 0.80 on /O2 /Oy- framed. Cross-branch shared-push
-//            args (26 pushes never traced to a specific call by the linear
-//            model) are a known soft spot - values landed but not re-verified
-//            by hand past the two spots that broke arg *counts* outright.
+// ORIGINAL: 0x00581260 ?consider_designs@@YAXH@Z 0x00581260-0x00583C8F FILE
+// RULED-OUT: mechanical register/stack-slot goto transliteration (304 labels, one 7-case switch off 0x0094A37D, 6375-line body): compiles, MISMATCH sim 0.80 on /O2 /Oy- framed. Cross-branch shared-push args (26 pushes never traced to a specific call by the linear model) are a known soft spot - values landed but not re-verified by hand past the two spots that broke arg *counts* outright.
 // working copy - scaffold materialised by --work
-// name      ?consider_designs@@YAXH@Z
 // size      10799 bytes
-// spans     0x00581260-0x00583C8F
 // prototype 
 // callers   7   call targets   9
 // kind      game

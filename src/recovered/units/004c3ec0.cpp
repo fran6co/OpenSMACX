@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004C3EC0 FILE
-// name      ?on_redraw@WorldWin@@QAEXXZ
+// ORIGINAL: 0x004C3EC0 ?on_redraw@WorldWin@@QAEXXZ 0x004C3EC0-0x004C4227 FILE
 // size      871 bytes
-// spans     0x004C3EC0-0x004C4227
 // prototype void (__thiscall ?on_redraw@WorldWin@@QAEXXZ)(WorldWin* this)
 // callers   0   call targets   12
 // kind      game

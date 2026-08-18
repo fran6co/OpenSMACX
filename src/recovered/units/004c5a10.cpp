@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004C5A10 BYTE_EXACT FILE
-// name      ?init@Wave_In_Device@@QAEHPAXK@Z
+// ORIGINAL: 0x004C5A10 ?init@Wave_In_Device@@QAEHPAXK@Z 0x004C5A10-0x004C5A4D FILE BYTE_EXACT
 // size      61 bytes
-// spans     0x004C5A10-0x004C5A4D
 // prototype int (__thiscall ?init@Wave_In_Device@@QAEHPAXK@Z)(Wave_In_Device* this, void*, unsigned int)
 // callers   1   call targets   0
 // kind      game

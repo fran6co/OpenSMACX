@@ -1,16 +1,7 @@
-// ORIGINAL: 0x004DFAD0 FILE
-// RULED-OUT: the SEH __try/__finally frame and its per-object unwind-state
-//   byte (tracked at ebp-4 in the original, one value per live local); a
-//   real nested class model for the two Popup dialogs and their widget
-//   cascades, since the scaffold's BasePop/Popup are missing the
-//   Dialogs/Dialog/Spot members this function's *second* popup actually
-//   has - a raw ebp-relative buffer addressed the same way the disassembly
-//   does instead, so every call lands on the right bytes without needing
-//   the class widened.
+// ORIGINAL: 0x004DFAD0 ?editor_tech@Console@@QAEXXZ 0x004DFAD0-0x004E0118;0x0065C0BE-0x0065C0C8 FILE
+// RULED-OUT: the SEH __try/__finally frame and its per-object unwind-state byte (tracked at ebp-4 in the original, one value per live local); a real nested class model for the two Popup dialogs and their widget cascades, since the scaffold's BasePop/Popup are missing the Dialogs/Dialog/Spot members this function's *second* popup actually has - a raw ebp-relative buffer addressed the same way the disassembly does instead, so every call lands on the right bytes without needing the class widened.
 // working copy - scaffold materialised by --work
-// name      ?editor_tech@Console@@QAEXXZ
 // size      1618 bytes
-// spans     0x004DFAD0-0x004E0118;0x0065C0BE-0x0065C0C8
 // prototype void (__thiscall ?editor_tech@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   33
 // kind      game

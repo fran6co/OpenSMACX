@@ -1,25 +1,11 @@
-// ORIGINAL: 0x005D2C0A
-// name      sub_5d2c0a
+// ORIGINAL: 0x005D2C0A sub_5d2c0a 0x005D2C0A-0x005D2D13
+// RULED-OUT: BYTE_EXACT is structurally unreachable here without `__asm` (banned), same finding as the sibling 8-point butterfly at 0x005D2B20 (see src/unrecovered/005d2b20.cpp): the disassembly reads `esi` (src) from the very first real instruction and `edi` (dst, saved via `push edi` at entry and reloaded from the stack near the end) with no stack setup for either, which none of __cdecl/__stdcall/__fastcall/__thiscall can request. Landed as `sub_5d2c0a(int *dst, int *src)` (MISMATCH from instruction 0, the prologue) so the arithmetic is on record: identical sum/difference/`__int64` fixed-point-multiply butterfly to the sibling, but every combined pair is additionally scaled by `>> 17` before it is stored, which the sibling's version does not do.
 // size      265 bytes
-// spans     0x005D2C0A-0x005D2D13
 // prototype
 // callers   1   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
-// RULED-OUT: BYTE_EXACT is structurally unreachable here without `__asm`
-//            (banned), same finding as the sibling 8-point butterfly at
-//            0x005D2B20 (see src/unrecovered/005d2b20.cpp): the disassembly
-//            reads `esi` (src) from the very first real instruction and
-//            `edi` (dst, saved via `push edi` at entry and reloaded from the
-//            stack near the end) with no stack setup for either, which none
-//            of __cdecl/__stdcall/__fastcall/__thiscall can request. Landed
-//            as `sub_5d2c0a(int *dst, int *src)` (MISMATCH from instruction
-//            0, the prologue) so the arithmetic is on record: identical
-//            sum/difference/`__int64` fixed-point-multiply butterfly to the
-//            sibling, but every combined pair is additionally scaled by
-//            `>> 17` before it is stored, which the sibling's version does
-//            not do.
 
 extern "C" void __cdecl sub_5d2c0a(int *dst, int *src) {
     int iVar9 = src[3] + src[5];

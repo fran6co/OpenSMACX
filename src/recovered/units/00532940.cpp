@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00532940 BYTE_EXACT FILE
-// name      ?send_message@NetDaemon@@QAEXPADKH@Z
+// ORIGINAL: 0x00532940 ?send_message@NetDaemon@@QAEXPADKH@Z 0x00532940-0x00532A44 FILE BYTE_EXACT
 // size      260 bytes
-// spans     0x00532940-0x00532A44
 // prototype void (__thiscall ?send_message@NetDaemon@@QAEXPADKH@Z)(NetDaemon* this, int8*, unsigned int, int)
 // callers   12   call targets   2
 // kind      game

@@ -1,10 +1,7 @@
-// ORIGINAL: 0x0062A210 BYTE_EXACT FILE
-// LEVER: fseek scaffolds nullary (not in declfix CRT_SIGNATURES); take &fseek
-//        and cast to the real function-pointer type instead of redeclaring
+// ORIGINAL: 0x0062A210 ?UNK2@Flic@@QAEHXZ 0x0062A210-0x0062A27B FILE BYTE_EXACT
+// LEVER: fseek scaffolds nullary (not in declfix CRT_SIGNATURES); take &fseek and cast to the real function-pointer type instead of redeclaring
 // working copy - scaffold materialised by --work
-// name      ?UNK2@Flic@@QAEHXZ
 // size      107 bytes
-// spans     0x0062A210-0x0062A27B
 // prototype int (__thiscall ?UNK2@Flic@@QAEHXZ)(Flic* this)
 // callers   0   call targets   1
 // kind      game

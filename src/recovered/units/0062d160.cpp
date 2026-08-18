@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0062D160 FILE
-// name      sub_62d160
+// ORIGINAL: 0x0062D160 sub_62d160 0x0062D160-0x0062D191 FILE
 // size      49 bytes
-// spans     0x0062D160-0x0062D191
 // prototype 
 // callers   0   call targets   0
 // kind      game

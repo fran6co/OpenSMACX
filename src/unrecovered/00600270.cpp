@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00600270 FILE
+// ORIGINAL: 0x00600270 ?stop@MCIVideo@@QAEXXZ 0x00600270-0x006002EB FILE
 // working copy - scaffold materialised by --work
-// name      ?stop@MCIVideo@@QAEXXZ
 // size      123 bytes
-// spans     0x00600270-0x006002EB
 // prototype void (__thiscall ?stop@MCIVideo@@QAEXXZ)(MCIVideo* this)
 // callers   1   call targets   0
 // kind      game

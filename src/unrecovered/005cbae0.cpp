@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005CBAE0 FILE
-// name      sub_5cbae0
+// ORIGINAL: 0x005CBAE0 sub_5cbae0 0x005CBAE0-0x005CBBB6 FILE
 // size      214 bytes
-// spans     0x005CBAE0-0x005CBBB6
 // prototype 
 // callers   2   call targets   0
 // kind      

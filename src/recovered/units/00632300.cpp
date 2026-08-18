@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00632300 BYTE_EXACT FILE
-// name      ?set_polling@Net@@QAEXH@Z
+// ORIGINAL: 0x00632300 ?set_polling@Net@@QAEXH@Z 0x00632300-0x00632341 FILE BYTE_EXACT
 // size      65 bytes
-// spans     0x00632300-0x00632341
 // prototype void (__thiscall ?set_polling@Net@@QAEXH@Z)(Net* this, int)
 // callers   1   call targets   0
 // kind      game

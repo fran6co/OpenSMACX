@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004B8DF0 BYTE_EXACT
-// name      ?UNK3@StatusWin@@QAEXXZ
+// ORIGINAL: 0x004B8DF0 ?UNK3@StatusWin@@QAEXXZ 0x004B8DF0-0x004B8E31 BYTE_EXACT
 // size      65 bytes
-// spans     0x004B8DF0-0x004B8E31
 // prototype void (__thiscall ?UNK3@StatusWin@@QAEXXZ)(StatusWin* this)
 // callers   0   call targets   3
 // kind      game

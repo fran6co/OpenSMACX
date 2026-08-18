@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0065021A EXCLUDED S2a
-// name      RtlUnwind
+// ORIGINAL: 0x0065021A RtlUnwind 0x0065021A-0x00650220 EXCLUDED S2a
 // size      6 bytes
-// spans     0x0065021A-0x00650220
 // prototype void (__stdcall RtlUnwind)(PVOID TargetFrame, PVOID TargetIp, PEXCEPTION_RECORD ExceptionRecord, PVOID ReturnValue)
 // callers   2   call targets   0
 // kind      thunk

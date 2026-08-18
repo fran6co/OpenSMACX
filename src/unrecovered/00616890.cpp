@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00616890 BYTE_EXACT FILE
-// name      ?close_class@Time@@QAAXXZ
+// ORIGINAL: 0x00616890 ?close_class@Time@@QAAXXZ 0x00616890-0x00616897 FILE BYTE_EXACT
 // size      7 bytes
-// spans     0x00616890-0x00616897
 // prototype 
 // callers   1   call targets   0
 // kind      

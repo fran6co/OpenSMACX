@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005D439F FILE
+// ORIGINAL: 0x005D439F sub_5d439f 0x005D439F-0x005D4448 FILE
 // working copy - scaffold materialised by --work
-// name      sub_5d439f
 // size      169 bytes
-// spans     0x005D439F-0x005D4448
 // prototype 
 // callers   1   call targets   0
 // kind      game

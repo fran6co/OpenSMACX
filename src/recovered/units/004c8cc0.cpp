@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004C8CC0 FILE
-// name      ??0VoiceTx@@QAE@XZ
+// ORIGINAL: 0x004C8CC0 ??0VoiceTx@@QAE@XZ 0x004C8CC0-0x004C8DAF;0x004C8450-0x004C8457;0x00659FBE-0x00659FD8 FILE
 // size      272 bytes
-// spans     0x004C8CC0-0x004C8DAF;0x004C8450-0x004C8457;0x00659FBE-0x00659FD8
 // prototype void (__thiscall ??0VoiceTx@@QAE@XZ)(VoiceTx* this)
 // callers   1   call targets   4
 // kind      game

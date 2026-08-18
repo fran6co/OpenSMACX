@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0061B1F0 FILE
-// name      ?draw@Texture@@QAEXPAUBuffer@@PAUVert@@PAHHPAUVert@@@Z
+// ORIGINAL: 0x0061B1F0 ?draw@Texture@@QAEXPAUBuffer@@PAUVert@@PAHHPAUVert@@@Z 0x0061B1F0-0x0061B778 FILE
 // size      1416 bytes
-// spans     0x0061B1F0-0x0061B778
 // prototype void (__thiscall ?draw@Texture@@QAEXPAUBuffer@@PAUVert@@PAHHPAUVert@@@Z)(Texture* this, Buffer*, Vert*, int*, int, Vert*)
 // callers   3   call targets   3
 // kind      game

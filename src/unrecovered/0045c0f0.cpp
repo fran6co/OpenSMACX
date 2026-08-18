@@ -1,11 +1,7 @@
-// ORIGINAL: 0x0045C0F0 BYTE_EXACT FILE
-// LEVER: local Font object plus direct calls to string_box_.add(...) and the
-//        fixed-address MessageWin instance reproduced the SEH-wrapped body
-//        exactly as compiled.
+// ORIGINAL: 0x0045C0F0 ?set_message@MainInterface@@QAEXPADHHHH@Z 0x0045C0F0-0x0045C162;0x00655745-0x00655757 FILE BYTE_EXACT
+// LEVER: local Font object plus direct calls to string_box_.add(...) and the fixed-address MessageWin instance reproduced the SEH-wrapped body exactly as compiled.
 // working copy - scaffold materialised by --work
-// name      ?set_message@MainInterface@@QAEXPADHHHH@Z
 // size      132 bytes
-// spans     0x0045C0F0-0x0045C162;0x00655745-0x00655757
 // prototype void (__thiscall ?set_message@MainInterface@@QAEXPADHHHH@Z)(MainInterface* this, int8*, int, int, int, int)
 // callers   3   call targets   4
 // kind      game

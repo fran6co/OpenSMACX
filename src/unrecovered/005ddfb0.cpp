@@ -1,20 +1,12 @@
-// ORIGINAL: 0x005DDFB0 FILE
+// ORIGINAL: 0x005DDFB0 ?wrap_flying@Buffer@@QAEHPAD@Z 0x005DDFB0-0x005DE1C8 FILE
+// RULED-OUT: MISMATCH #2 'push' vs 'sub' - the original reserves its EH/this-save slot with `push ecx` before the other pushes; not chased further. Dropped the `mov eax,0x696cdc; test eax,eax; je` guard entirely (Ghidra already resolved it as always-true and folded it away; a compile-time-nonzero address literal risked our own compiler eliding the branch differently).
 // working copy - scaffold materialised by --work
-// name      ?wrap_flying@Buffer@@QAEHPAD@Z
 // size      536 bytes
-// spans     0x005DDFB0-0x005DE1C8
 // prototype int (__thiscall ?wrap_flying@Buffer@@QAEHPAD@Z)(Buffer* this, int8*)
 // callers   3   call targets   6
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005DC410 0x005DC7C0 0x005DCAE0 0x006453E0 0x00645470 0x00645930
-// RULED-OUT: MISMATCH #2 'push' vs 'sub' - the original reserves its
-//            EH/this-save slot with `push ecx` before the other pushes;
-//            not chased further. Dropped the `mov eax,0x696cdc; test
-//            eax,eax; je` guard entirely (Ghidra already resolved it as
-//            always-true and folded it away; a compile-time-nonzero
-//            address literal risked our own compiler eliding the branch
-//            differently).
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?wrap_flying@Buffer@@QAEHPAD@Z  at 0x005DDFB0  (536 bytes)

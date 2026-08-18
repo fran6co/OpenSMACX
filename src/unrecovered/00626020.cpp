@@ -1,9 +1,7 @@
-// ORIGINAL: 0x00626020 BYTE_EXACT FILE
+// ORIGINAL: 0x00626020 ??1Log@@QAE@XZ 0x00626020-0x0062603A FILE BYTE_EXACT
 // LEVER: guard-then-free-then-clear, matching the disassembly's own order
 // working copy - scaffold materialised by --work
-// name      ??1Log@@QAE@XZ
 // size      26 bytes
-// spans     0x00626020-0x0062603A
 // prototype void (__thiscall ??1Log@@QAE@XZ)(Log* this)
 // callers   1   call targets   1
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0046A530 BYTE_EXACT
-// name      ?draw_radius@MapWin@@QAEXHHH@Z
+// ORIGINAL: 0x0046A530 ?draw_radius@MapWin@@QAEXHHH@Z 0x0046A530-0x0046A54A BYTE_EXACT
 // size      26 bytes
-// spans     0x0046A530-0x0046A54A
 // prototype void (__thiscall ?draw_radius@MapWin@@QAEXHHH@Z)(MapWin* this, int xCoord, int yCoord, int)
 // callers   0   call targets   1
 // kind      game

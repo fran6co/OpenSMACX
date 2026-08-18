@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0045D2A0 BYTE_EXACT
-// name      ?set_alert@MainInterface@@QAEXH@Z
+// ORIGINAL: 0x0045D2A0 ?set_alert@MainInterface@@QAEXH@Z 0x0045D2A0-0x0045D2D1 BYTE_EXACT
 // size      49 bytes
-// spans     0x0045D2A0-0x0045D2D1
 // prototype void (__thiscall ?set_alert@MainInterface@@QAEXH@Z)(MainInterface* this, int)
 // callers   1   call targets   1
 // kind      game

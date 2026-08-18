@@ -22,10 +22,8 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
-ORIGINAL: 0x0060C7C0 BYTE_EXACT
-// name      ?on_dialog_focus@ListBox@@QAEXH@Z
+// ORIGINAL: 0x0060C7C0 ?on_dialog_focus@ListBox@@QAEXH@Z 0x0060C7C0-0x0060C7C3 BYTE_EXACT
 // size      3 bytes
-// spans     0x0060C7C0-0x0060C7C3
 // prototype void (__thiscall ?on_dialog_focus@ListBox@@QAEXH@Z)(ListBox* this, int)
 // callers   1   call targets   0
 // kind      game
@@ -59,10 +57,8 @@ Purpose: Close the ListBox: close its GraphicWin virtual base (source-owned) and
          its Dialog virtual base (original dependency via seam), both located
          through the runtime vbtable, then reset the ListBox-owned fields from
          the process defaults and re-arm Dialog::field_B4_.
-ORIGINAL: 0x00609F20
-// name      ?close@ListBox@@QAEXXZ
+// ORIGINAL: 0x00609F20 ?close@ListBox@@QAEXXZ 0x00609F20-0x00609F9D
 // size      125 bytes
-// spans     0x00609F20-0x00609F9D
 // prototype void (__thiscall ?close@ListBox@@QAEXXZ)(ListBox* this)
 // callers   35   call targets   2
 // kind      game
@@ -117,10 +113,8 @@ Purpose: Destroy a ListBox: re-stage the GraphicWin, Buffer, and Dialog subobjec
          vtables and refresh the two vbase-adjust fields (all located through the
          runtime vbtable), then run close(). The original opens no exception
          frame; there is nothing to omit.
-ORIGINAL: 0x00609EC0
-// name      ??1ListBox@@QAE@XZ
+// ORIGINAL: 0x00609EC0 ??1ListBox@@QAE@XZ 0x00609EC0-0x00609F13
 // size      83 bytes
-// spans     0x00609EC0-0x00609F13
 // prototype void (__thiscall ??1ListBox@@QAE@XZ)(ListBox* this)
 // callers   35   call targets   1
 // kind      game
@@ -176,10 +170,8 @@ uint32_t __fastcall list_box_destructor_redirect(void *adjusted, void *) {
 
 /*
 Purpose: Clear the hover index and repaint, through the enclosing object.
-ORIGINAL: 0x0060CE10 BYTE_EXACT
-// name      ?on_mouse_leave@ListBox@@QAEXHH@Z
+// ORIGINAL: 0x0060CE10 ?on_mouse_leave@ListBox@@QAEXHH@Z 0x0060CE10-0x0060CE38 BYTE_EXACT
 // size      40 bytes
-// spans     0x0060CE10-0x0060CE38
 // prototype void (__thiscall ?on_mouse_leave@ListBox@@QAEXHH@Z)(ListBox* this, int, int)
 // callers   1   call targets   0
 // kind      game

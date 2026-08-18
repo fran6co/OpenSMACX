@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00539920 BYTE_EXACT FILE
-// name      ?pop_expire@@YAHXZ
+// ORIGINAL: 0x00539920 ?pop_expire@@YAHXZ 0x00539920-0x00539961 FILE BYTE_EXACT
 // size      65 bytes
-// spans     0x00539920-0x00539961
 // prototype 
 // callers   0   call targets   1
 // kind      game

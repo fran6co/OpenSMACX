@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005ABFF0 BYTE_EXACT FILE
-// name      ?get_rating@@YAHHH@Z
+// ORIGINAL: 0x005ABFF0 ?get_rating@@YAHHH@Z 0x005ABFF0-0x005AC051 FILE BYTE_EXACT
 // size      97 bytes
-// spans     0x005ABFF0-0x005AC051
 // prototype int (__cdecl ?get_rating@@YAHHH@Z)(int factionID, int)
 // callers   3   call targets   0
 // kind      

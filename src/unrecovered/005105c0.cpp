@@ -1,14 +1,7 @@
-// ORIGINAL: 0x005105C0 FILE
-// RULED-OUT: mode==1/mode==0 as two plain `if(){return;}`, as goto-labelled
-//            skips, and reversed check order - all three still merge the
-//            early `return 1` into a shared epilogue (rebuilt 'je' at #8
-//            where original has a duplicated-epilogue 'jne'); not chased
-//            further, rest of the function (loops, adjustor-thunk dispatch,
-//            table lookups) is a faithful transcription
+// ORIGINAL: 0x005105C0 ?selecting@Console@@QAEHHH@Z 0x005105C0-0x005107D5 FILE
+// RULED-OUT: mode==1/mode==0 as two plain `if(){return;}`, as goto-labelled skips, and reversed check order - all three still merge the early `return 1` into a shared epilogue (rebuilt 'je' at #8 where original has a duplicated-epilogue 'jne'); not chased further, rest of the function (loops, adjustor-thunk dispatch, table lookups) is a faithful transcription
 // working copy - scaffold materialised by --work
-// name      ?selecting@Console@@QAEHHH@Z
 // size      533 bytes
-// spans     0x005105C0-0x005107D5
 // prototype int (__thiscall ?selecting@Console@@QAEHHH@Z)(Console* this, int xCoord, int yCoord)
 // callers   1   call targets   4
 // kind      game

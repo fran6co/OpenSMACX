@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0060AA60 FILE
-// name      ?on_left_down@ListBox@@QAEXHH@Z
+// ORIGINAL: 0x0060AA60 ?on_left_down@ListBox@@QAEXHH@Z 0x0060AA60-0x0060AF84 FILE
 // size      1316 bytes
-// spans     0x0060AA60-0x0060AF84
 // prototype void (__thiscall ?on_left_down@ListBox@@QAEXHH@Z)(ListBox* this, int xCoord, int yCoord)
 // callers   1   call targets   3
 // kind      game

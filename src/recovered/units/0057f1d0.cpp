@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0057F1D0 FILE
-// name      ?retire_proto@@YAXHH@Z
+// ORIGINAL: 0x0057F1D0 ?retire_proto@@YAXHH@Z 0x0057F1D0-0x0057F4B0 FILE
 // size      736 bytes
-// spans     0x0057F1D0-0x0057F4B0
 // prototype 
 // callers   4   call targets   4
 // kind      game

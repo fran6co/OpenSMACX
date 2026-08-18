@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005C32A0 FILE
-// name      ?world_rocky@@YAXXZ
+// ORIGINAL: 0x005C32A0 ?world_rocky@@YAXXZ 0x005C32A0-0x005C343F FILE
 // size      415 bytes
-// spans     0x005C32A0-0x005C343F
 // prototype 
 // callers   2   call targets   5
 // kind      game

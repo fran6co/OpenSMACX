@@ -1,17 +1,7 @@
-// ORIGINAL: 0x00530D50 FILE
-// RULED-OUT: caching baseX/baseY in locals reused across the log_say and
-//   lock() calls (94.8% similarity, #56 lea vs push) - the original
-//   re-derives x/y from the row pointer at each use instead, closer at
-//   97.7% (#59 shl vs movsx, in the tail width-shift the emitted skeleton
-//   doesn't attempt). 0x0097D070 (indexed via `[eax*4+0x97D070]`) is
-//   `Bases[idx].state` at the +0x30 offset into the same 0x0097D040 record
-//   array action_gate/council_get_vote's siblings use, so `g_Bases[][0x134]`
-//   is `extern`, not the scaffold's folded pointer, per the indexed-table
-//   lever.
+// ORIGINAL: 0x00530D50 ?lock_base@NetDaemon@@QAEHHHHH@Z 0x00530D50-0x00530E48 FILE
+// RULED-OUT: caching baseX/baseY in locals reused across the log_say and lock() calls (94.8% similarity, #56 lea vs push) - the original re-derives x/y from the row pointer at each use instead, closer at 97.7% (#59 shl vs movsx, in the tail width-shift the emitted skeleton doesn't attempt). 0x0097D070 (indexed via `[eax*4+0x97D070]`) is `Bases[idx].state` at the +0x30 offset into the same 0x0097D040 record array action_gate/council_get_vote's siblings use, so `g_Bases[][0x134]` is `extern`, not the scaffold's folded pointer, per the indexed-table lever.
 // working copy - scaffold materialised by --work
-// name      ?lock_base@NetDaemon@@QAEHHHHH@Z
 // size      248 bytes
-// spans     0x00530D50-0x00530E48
 // prototype int (__thiscall ?lock_base@NetDaemon@@QAEHHHHH@Z)(NetDaemon* this, int, int, int, int)
 // callers   26   call targets   3
 // kind      game

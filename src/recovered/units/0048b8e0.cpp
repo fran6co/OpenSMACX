@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0048B8E0 FILE
-// name      ?monocenter@PlanWin@@QAEXHHH@Z
+// ORIGINAL: 0x0048B8E0 ?monocenter@PlanWin@@QAEXHHH@Z 0x0048B8E0-0x0048BAA1 FILE
 // size      449 bytes
-// spans     0x0048B8E0-0x0048BAA1
 // prototype void (__thiscall ?monocenter@PlanWin@@QAEXHHH@Z)(PlanWin* this, int, int, int)
 // callers   3   call targets   4
 // kind      game

@@ -1,14 +1,6 @@
-// ORIGINAL: 0x00409100 FILE
-// RULED-OUT: the two field reads (0x40b8c, 0x40b94) as named int locals -
-//   compiles with an extra `push`/register spill the original (which keeps
-//   the value live in a register, never re-materialised) doesn't have.
-//   `get_pixel` called through `reinterpret_cast<Buffer*>(this)` since `ecx`
-//   (this) is never reassigned before that call in the original either.
-//   `extern int g_66ef24[]/g_66ef38[]` for the two lookup tables so indexing
-//   compiles as scaled-index addressing instead of folding the base.
-// name      ?farm_get@BaseWin@@QAEHHH@Z
+// ORIGINAL: 0x00409100 ?farm_get@BaseWin@@QAEHHH@Z 0x00409100-0x004091FB FILE
+// RULED-OUT: the two field reads (0x40b8c, 0x40b94) as named int locals - compiles with an extra `push`/register spill the original (which keeps the value live in a register, never re-materialised) doesn't have. `get_pixel` called through `reinterpret_cast<Buffer*>(this)` since `ecx` (this) is never reassigned before that call in the original either. `extern int g_66ef24[]/g_66ef38[]` for the two lookup tables so indexing compiles as scaled-index addressing instead of folding the base.
 // size      251 bytes
-// spans     0x00409100-0x004091FB
 // prototype int (__thiscall ?farm_get@BaseWin@@QAEHHH@Z)(BaseWin* this, int, int)
 // callers   4   call targets   2
 // kind      game

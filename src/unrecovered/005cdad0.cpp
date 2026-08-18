@@ -1,13 +1,7 @@
-// ORIGINAL: 0x005CDAD0 FILE
-// RULED-OUT: signature changed stdcall(int,int,int) -> fastcall(int*,int*,int,int,int);
-//            evidence: ecx/edx read directly at entry with no matching stack loads,
-//            `ret 0xc` pops exactly 3 stack dwords. Rebuilt vtable dispatch (slots
-//            6, 0, 2) as void** casts. First divergence at instr #3 mov vs push
-//            (prologue register-save order), not chased further.
+// ORIGINAL: 0x005CDAD0 sub_5cdad0 0x005CDAD0-0x005CDB83 FILE
+// RULED-OUT: signature changed stdcall(int,int,int) -> fastcall(int*,int*,int,int,int); evidence: ecx/edx read directly at entry with no matching stack loads, `ret 0xc` pops exactly 3 stack dwords. Rebuilt vtable dispatch (slots 6, 0, 2) as void** casts. First divergence at instr #3 mov vs push (prologue register-save order), not chased further.
 // working copy - scaffold materialised by --work
-// name      sub_5cdad0
 // size      179 bytes
-// spans     0x005CDAD0-0x005CDB83
 // prototype 
 // callers   1   call targets   0
 // kind      game

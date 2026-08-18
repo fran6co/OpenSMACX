@@ -1,14 +1,7 @@
-// ORIGINAL: 0x00590910 BYTE_EXACT FILE
-// LEVER: string-routines-are-calls  the fixed-pointer spelling was never the
-//        problem. Recorded here as ruled out was `extern int
-//        g_009a4b68[]` to keep the `[reg+imm]` addressing mode, with
-//        "MISMATCH at #7, 121 vs 126 bytes, not tried further" - and five
-//        bytes is a `call rel32` against the inline expansion the scaffold
-//        was emitting for a routine the image calls.
+// ORIGINAL: 0x00590910 ?say_facility@@YAXPAXHH@Z 0x00590910-0x0059098E FILE BYTE_EXACT
+// LEVER: string-routines-are-calls the fixed-pointer spelling was never the problem. Recorded here as ruled out was `extern int g_009a4b68[]` to keep the `[reg+imm]` addressing mode, with "MISMATCH at #7, 121 vs 126 bytes, not tried further" - and five bytes is a `call rel32` against the inline expansion the scaffold was emitting for a routine the image calls.
 // working copy - scaffold materialised by --work
-// name      ?say_facility@@YAXPAXHH@Z
 // size      126 bytes
-// spans     0x00590910-0x0059098E
 // prototype 
 // callers   1   call targets   2
 // kind      game

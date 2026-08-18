@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00476B30 BYTE_EXACT
-// name      ?clear_monuments@@YAXXZ
+// ORIGINAL: 0x00476B30 ?clear_monuments@@YAXXZ 0x00476B30-0x00476B61 BYTE_EXACT
 // size      49 bytes
-// spans     0x00476B30-0x00476B61
 // prototype 
 // callers   2   call targets   0
 // kind      game

@@ -58,10 +58,8 @@ Palette *PaletteCurrent;  // 0x009B8174
 
 /*
 Purpose: Convert process palette RGB entries into Windows RGBQUAD order.
-ORIGINAL: 0x005FE560
-// name      ?get_rgbquad@Palette@@QAEHPAURGBQUAD@@HH@Z
+// ORIGINAL: 0x005FE560 ?get_rgbquad@Palette@@QAEHPAURGBQUAD@@HH@Z 0x005FE560-0x005FE5BD
 // size      93 bytes
-// spans     0x005FE560-0x005FE5BD
 // prototype int (__thiscall ?get_rgbquad@Palette@@QAEHPAURGBQUAD@@HH@Z)(Palette* this, RGBQUAD*, int, int)
 // callers   7   call targets   0
 // kind      game
@@ -109,10 +107,8 @@ int __fastcall palette_get_rgbquad_redirect(
 
 /*
 Purpose: Record the window the palette applies to.
-ORIGINAL: 0x005FE4F0 BYTE_EXACT
-// name      ?set_active_window@Palette@@QAAXPAVWin@@@Z
+// ORIGINAL: 0x005FE4F0 ?set_active_window@Palette@@QAAXPAVWin@@@Z 0x005FE4F0-0x005FE4F1 BYTE_EXACT
 // size      1 bytes
-// spans     0x005FE4F0-0x005FE4F1
 // prototype 
 // callers   8   call targets   0
 // kind      game
@@ -135,10 +131,8 @@ void __cdecl palette_set_active_window_redirect(Win *window) {
 Purpose: Find the slot for a value in the five-entry internal table, returning
          the index of the matching entry or the first empty one, and 5 when the
          table is full without a match.
-ORIGINAL: 0x005FED10
-// name      ?get_pos@Palette@@QAEHH@Z
+// ORIGINAL: 0x005FED10 ?get_pos@Palette@@QAEHH@Z 0x005FED10-0x005FED35
 // size      37 bytes
-// spans     0x005FED10-0x005FED35
 // prototype int (__thiscall ?get_pos@Palette@@QAEHH@Z)(Palette* this, int)
 // callers   0   call targets   0
 // kind      game
@@ -164,8 +158,7 @@ int __fastcall palette_get_pos_redirect(Palette *self, void *, int value) {
 /*
 Purpose: Build the process palette and hand it to GDI, replacing whatever
          palette was there before.
-ORIGINAL: 0x005FEBB0
-// name      ?init_palette_class@Palette@@SAXH@Z
+// ORIGINAL: 0x005FEBB0 ?init_palette_class@Palette@@SAXH@Z 0x005FEBB0-0x005FECF0
 // CORRECTED from ?init_palette_class@Palette@@QAAXH@Z
 //   `QAA` is a public NON-STATIC member declared __cdecl - it takes a `this`
 //   as its first stack argument. The bytes say there is none. This body reads
@@ -176,7 +169,6 @@ ORIGINAL: 0x005FEBB0
 //   that pushes one argument and no receiver. `SA` is the static spelling,
 //   which is what `palette.h` has always declared.
 // size      320 bytes
-// spans     0x005FEBB0-0x005FECF0
 // prototype
 // callers   1   call targets   2
 // kind      game
@@ -253,10 +245,8 @@ void Palette::init_palette_class(int use_system_colours) {
 }
 
 /*
-ORIGINAL: 0x005FE460 BYTE_EXACT
-// name      ?set@Palette@@QAEHXZ
+// ORIGINAL: 0x005FE460 ?set@Palette@@QAEHXZ 0x005FE460-0x005FE4EB BYTE_EXACT
 // size      139 bytes
-// spans     0x005FE460-0x005FE4EB
 // prototype int (__thiscall ?set@Palette@@QAEHXZ)(Palette* this)
 // callers   12   call targets   1
 // kind      game
@@ -295,10 +285,8 @@ int Palette::set() {
 }
 
 /*
-ORIGINAL: 0x005FE500
-// name      ?close@Palette@@QAEXXZ
+// ORIGINAL: 0x005FE500 ?close@Palette@@QAEXXZ 0x005FE500-0x005FE554
 // size      84 bytes
-// spans     0x005FE500-0x005FE554
 // prototype void (__thiscall ?close@Palette@@QAEXXZ)(Palette* this)
 // callers   5   call targets   3
 // kind      game
@@ -333,10 +321,8 @@ void Palette::close() {
 }
 
 /*
-ORIGINAL: 0x005FE330
-// name      ?init@Palette@@QAEXXZ
+// ORIGINAL: 0x005FE330 ?init@Palette@@QAEXXZ 0x005FE330-0x005FE45F
 // size      303 bytes
-// spans     0x005FE330-0x005FE45F
 // prototype void (__thiscall ?init@Palette@@QAEXXZ)(Palette* this)
 // callers   5   call targets   2
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0062B190 FILE
-// name      ?decode_delta_flc_trans@Flic@@QAEXXZ
+// ORIGINAL: 0x0062B190 ?decode_delta_flc_trans@Flic@@QAEXXZ 0x0062B190-0x0062B5ED FILE
 // size      1117 bytes
-// spans     0x0062B190-0x0062B5ED
 // prototype void (__thiscall ?decode_delta_flc_trans@Flic@@QAEXXZ)(Flic* this)
 // callers   1   call targets   4
 // kind      game

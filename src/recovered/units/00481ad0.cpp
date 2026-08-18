@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00481AD0 FILE
-// name      ?on_redraw@NetWin@@QAEXXZ
+// ORIGINAL: 0x00481AD0 ?on_redraw@NetWin@@QAEXXZ 0x00481AD0-0x00481C50 FILE
 // size      384 bytes
-// spans     0x00481AD0-0x00481C50
 // prototype void (__thiscall ?on_redraw@NetWin@@QAEXXZ)(NetWin* this)
 // callers   3   call targets   15
 // kind      game

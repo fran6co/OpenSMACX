@@ -1,8 +1,6 @@
-// ORIGINAL: 0x006327E0 FILE
+// ORIGINAL: 0x006327E0 ?internal_receive@Net@@QAAHPAUNetThreadInfo@@@Z 0x006327E0-0x00632CB3 FILE
 // working copy - scaffold materialised by --work
-// name      ?internal_receive@Net@@QAAHPAUNetThreadInfo@@@Z
 // size      1235 bytes
-// spans     0x006327E0-0x00632CB3
 // prototype 
 // callers   1   call targets   3
 // kind      game

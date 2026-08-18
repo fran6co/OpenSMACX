@@ -1,9 +1,7 @@
-// ORIGINAL: 0x00616880 BYTE_EXACT FILE
+// ORIGINAL: 0x00616880 ?init_class@Time@@QAAHXZ 0x00616880-0x0061688E FILE BYTE_EXACT
 // LEVER: plain ++(*g_global); return 0; - no arithmetic on the address itself
 // working copy - scaffold materialised by --work
-// name      ?init_class@Time@@QAAHXZ
 // size      14 bytes
-// spans     0x00616880-0x0061688E
 // prototype 
 // callers   1   call targets   0
 // kind      game

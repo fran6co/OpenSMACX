@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0052DCF0 BYTE_EXACT
-// name      ?UNK1@DeletionList@@QAEHXZ
+// ORIGINAL: 0x0052DCF0 ?UNK1@DeletionList@@QAEHXZ 0x0052DCF0-0x0052DD10 BYTE_EXACT
 // size      32 bytes
-// spans     0x0052DCF0-0x0052DD10
 // prototype int (__thiscall ?UNK1@DeletionList@@QAEHXZ)(DeletionList* this)
 // callers   0   call targets   0
 // kind      game

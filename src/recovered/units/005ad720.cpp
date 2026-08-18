@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005AD720 FILE
-// name      ?init@ReplayWin@@QAEXXZ
+// ORIGINAL: 0x005AD720 ?init@ReplayWin@@QAEXXZ 0x005AD720-0x005AD99A FILE
 // size      634 bytes
-// spans     0x005AD720-0x005AD99A
 // prototype void (__thiscall ?init@ReplayWin@@QAEXXZ)(ReplayWin* this)
 // callers   1   call targets   11
 // kind      game

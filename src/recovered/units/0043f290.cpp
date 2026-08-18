@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0043F290 BYTE_EXACT FILE
-// name      ?on_button_clicked@DiploPop@@QAEXH@Z
+// ORIGINAL: 0x0043F290 ?on_button_clicked@DiploPop@@QAEXH@Z 0x0043F290-0x0043F2AD FILE BYTE_EXACT
 // size      29 bytes
-// spans     0x0043F290-0x0043F2AD
 // prototype void (__thiscall ?on_button_clicked@DiploPop@@QAEXH@Z)(DiploPop* this, int)
 // callers   0   call targets   0
 // kind      game

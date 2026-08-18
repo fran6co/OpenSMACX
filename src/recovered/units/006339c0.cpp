@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006339C0 BYTE_EXACT FILE
-// name      ??0NetFifo@@QAE@XZ
+// ORIGINAL: 0x006339C0 ??0NetFifo@@QAE@XZ 0x006339C0-0x006339DB FILE BYTE_EXACT
 // size      27 bytes
-// spans     0x006339C0-0x006339DB
 // prototype void (__thiscall ??0NetFifo@@QAE@XZ)(NetFifo* this)
 // callers   1   call targets   0
 // kind      game

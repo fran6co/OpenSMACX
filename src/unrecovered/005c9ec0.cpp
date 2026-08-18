@@ -1,24 +1,14 @@
-// ORIGINAL: 0x005C9EC0 FILE
+// ORIGINAL: 0x005C9EC0 sub_5c9ec0 0x005C9EC0-0x005CA22C FILE
+// RULED-OUT: sub_5ca230/5ca310/5ca6c0 are __thiscall members of the object this function receives in ecx (mov ecx,esi before each direct call); the three `// indirect` sites are all the same cached mmioRead(HMMIO,HPSTR,LONG) stdcall pointer loaded from g_0066936c once and called through a register.
+// RULED-OUT: transcribed the fourcc/cch big-endian header decode as explicit byte shifts (buf[0..3], buf[4..7]) and the branch tree as goto-labelled ifs mirroring Ghidra 1:1; compiles and is structurally faithful but only 0.44 mnemonic similarity (996 vs 876 bytes) - did not reverse-engineer the exact esp-relative overlapping-load pattern the original uses to build the two big-endian dwords, nor match the alloca'd buffer's exact size.
 // working copy - scaffold materialised by --work
-// name      sub_5c9ec0
 // size      876 bytes
-// spans     0x005C9EC0-0x005CA22C
 // prototype 
 // callers   3   call targets   4
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005CA230 0x005CA310 0x005CA6C0 0x00645550
 // indirect  0x005C9EE4 0x005C9FED 0x005CA21C
-// RULED-OUT: sub_5ca230/5ca310/5ca6c0 are __thiscall members of the object this
-//   function receives in ecx (mov ecx,esi before each direct call); the three
-//   `// indirect` sites are all the same cached mmioRead(HMMIO,HPSTR,LONG)
-//   stdcall pointer loaded from g_0066936c once and called through a register.
-// RULED-OUT: transcribed the fourcc/cch big-endian header decode as explicit
-//   byte shifts (buf[0..3], buf[4..7]) and the branch tree as goto-labelled
-//   ifs mirroring Ghidra 1:1; compiles and is structurally faithful but only
-//   0.44 mnemonic similarity (996 vs 876 bytes) - did not reverse-engineer the
-//   exact esp-relative overlapping-load pattern the original uses to build
-//   the two big-endian dwords, nor match the alloca'd buffer's exact size.
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: sub_5c9ec0  at 0x005C9EC0  (876 bytes)

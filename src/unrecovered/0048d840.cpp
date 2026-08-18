@@ -1,21 +1,7 @@
-// ORIGINAL: 0x0048D840 FILE
-// RULED-OUT: full hand transcription from raw disassembly (Ghidra had only one
-//            benign unreachable-block warning and was trustworthy here). The
-//            six "BASICPREFS/ADVANCEDPREFS/AUTOMATIONPREFS/AUDIOVISUALPREFS/
-//            BASEWARNINGS/(unconditional)/MAPPREFS" tab pages each resolve an
-//            embedded CheckBox's own vtable slot at +8 (a stored byte offset
-//            to an embedded Dialog sub-object, not a function pointer) and
-//            dispatch that Dialog's vtable slot 1/2 - confirmed against raw
-//            asm receiver setup (`lea ecx,[esi+N]` before each call), not
-//            trusted from Ghidra's frequently-dropped implicit `this`. Two
-//            VCall shims used since slot002 is nullary on one dispatch chain
-//            and takes one int on the sibling chain. First divergence is
-//            instruction #5 (prologue scheduling) - not byte-verified beyond
-//            the receiver/signature spot-checks cited above.
+// ORIGINAL: 0x0048D840 ?init@PrefWin@@QAEXXZ 0x0048D840-0x0048F9F5 FILE
+// RULED-OUT: full hand transcription from raw disassembly (Ghidra had only one benign unreachable-block warning and was trustworthy here). The six "BASICPREFS/ADVANCEDPREFS/AUTOMATIONPREFS/AUDIOVISUALPREFS/ BASEWARNINGS/(unconditional)/MAPPREFS" tab pages each resolve an embedded CheckBox's own vtable slot at +8 (a stored byte offset to an embedded Dialog sub-object, not a function pointer) and dispatch that Dialog's vtable slot 1/2 - confirmed against raw asm receiver setup (`lea ecx,[esi+N]` before each call), not trusted from Ghidra's frequently-dropped implicit `this`. Two VCall shims used since slot002 is nullary on one dispatch chain and takes one int on the sibling chain. First divergence is instruction #5 (prologue scheduling) - not byte-verified beyond the receiver/signature spot-checks cited above.
 // working copy - scaffold materialised by --work
-// name      ?init@PrefWin@@QAEXXZ
 // size      8629 bytes
-// spans     0x0048D840-0x0048F9F5
 // prototype void (__thiscall ?init@PrefWin@@QAEXXZ)(PrefWin* this)
 // callers   1   call targets   21
 // kind      game

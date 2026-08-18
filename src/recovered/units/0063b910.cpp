@@ -1,5 +1,4 @@
-// ORIGINAL: 0x0063B910 BYTE_EXACT FILE
-// name      ?init_cursor_class@Cursor@@QAAHXZ
+// ORIGINAL: 0x0063B910 ?init_cursor_class@Cursor@@QAAHXZ 0x0063B910-0x0063B92D FILE BYTE_EXACT
 // CORRECTED from ?init_cursor_class@Cursor@@QAAXXZ
 //   The old name returns `X` - void. Two independent bytes say `H` - int:
 //   the BYTE_EXACT body below is `return 0;` in a function typed `int`, and
@@ -8,7 +7,6 @@
 //   result of a void call, so the source that compiled to those bytes had
 //   an int-returning declaration in scope.
 // size      29 bytes
-// spans     0x0063B910-0x0063B92D
 // prototype 
 // callers   1   call targets   0
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00408B20 FILE
-// name      ?draw_psych@BaseWin@@QAEXXZ
+// ORIGINAL: 0x00408B20 ?draw_psych@BaseWin@@QAEXXZ 0x00408B20-0x00408E93;0x00651579-0x0065158B FILE
 // size      901 bytes
-// spans     0x00408B20-0x00408E93;0x00651579-0x0065158B
 // prototype void (__thiscall ?draw_psych@BaseWin@@QAEXXZ)(BaseWin* this)
 // callers   1   call targets   13
 // kind      game

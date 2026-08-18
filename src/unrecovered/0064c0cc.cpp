@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064C0CC EXCLUDED S1
-// name      __ftbuf
+// ORIGINAL: 0x0064C0CC __ftbuf 0x0064C0CC-0x0064C0F6 EXCLUDED S1
 // size      42 bytes
-// spans     0x0064C0CC-0x0064C0F6
 // prototype 
 // callers   1   call targets   1
 // kind      library

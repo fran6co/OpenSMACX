@@ -1,8 +1,6 @@
-// ORIGINAL: 0x0048FCD0 FILE
+// ORIGINAL: 0x0048FCD0 ?on_key_click@PrefWin@@QAEHHH@Z 0x0048FCD0-0x0048FD98 FILE
 // working copy - scaffold materialised by --work
-// name      ?on_key_click@PrefWin@@QAEHHH@Z
 // size      200 bytes
-// spans     0x0048FCD0-0x0048FD98
 // prototype int (__thiscall ?on_key_click@PrefWin@@QAEHHH@Z)(PrefWin* this, int, int)
 // callers   0   call targets   2
 // kind      game

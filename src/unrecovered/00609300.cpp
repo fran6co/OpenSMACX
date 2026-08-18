@@ -1,28 +1,12 @@
-// ORIGINAL: 0x00609300
-// name      ?init@Dialog@@QAEHHHHHH@Z
+// ORIGINAL: 0x00609300 ?init@Dialog@@QAEHHHHHH@Z 0x00609300-0x00609465
+// RULED-OUT: the two branches (`a5 != 0` / `a5 == 0`) each inline the SAME list-teardown loop already seen standalone as `SessionStruct::close` (0x00401CE0, src/alphanet.cpp) over the member at `this+0xbc`, reproduced with the same `VCall`-shim idiom as 0x004E3350/0x004E3730 rather than calling a shared helper (no helper functions allowed). The field at `list+0x18` (`this+0xd4`) is set to the register `edi` un-conditionally after the loop in the disassembly, which holds either `a1` (re-read from the stack, only when the loop actually ran) or the dead heap-pointer value from an earlier step (when the loop was skipped) - a register-reuse artifact, not a real value; written here as plain `a1` in the `a5 != 0` branch (matching Ghidra) since reproducing the stale-register case is not expressible from source. 0.89 mnemonic similarity, first divergence at #22.
 // size      357 bytes
-// spans     0x00609300-0x00609465
 // prototype int (__thiscall ?init@Dialog@@QAEHHHHHH@Z)(Dialog* this, int, int, int, int, int)
 // callers   3   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D4620 0x00608F50
 // indirect  0x0060938A 0x0060939C 0x006093B8 0x0060940E 0x00609422 0x0060943D
-// RULED-OUT: the two branches (`a5 != 0` / `a5 == 0`) each inline the SAME
-//            list-teardown loop already seen standalone as
-//            `SessionStruct::close` (0x00401CE0, src/alphanet.cpp) over the
-//            member at `this+0xbc`, reproduced with the same `VCall`-shim
-//            idiom as 0x004E3350/0x004E3730 rather than calling a shared
-//            helper (no helper functions allowed). The field at
-//            `list+0x18` (`this+0xd4`) is set to the register `edi`
-//            un-conditionally after the loop in the disassembly, which
-//            holds either `a1` (re-read from the stack, only when the loop
-//            actually ran) or the dead heap-pointer value from an earlier
-//            step (when the loop was skipped) - a register-reuse artifact,
-//            not a real value; written here as plain `a1` in the `a5 != 0`
-//            branch (matching Ghidra) since reproducing the stale-register
-//            case is not expressible from source. 0.89 mnemonic
-//            similarity, first divergence at #22.
 
 class VCall {
 public:

@@ -1,23 +1,11 @@
-// ORIGINAL: 0x0053E4C0 FILE
-// name      ?demands_withdrawal@@YAXHH@Z
+// ORIGINAL: 0x0053E4C0 ?demands_withdrawal@@YAXHH@Z 0x0053E4C0-0x0053E5B6 FILE
+// RULED-OUT: `(byte)(1 << (a2 & 0x1f))` (explicit mask before the shift, mnemonic similarity 0.896, 8 edit blocks - the mask compiles to a spurious `and` the original does not have, since `shl` already masks its count to 5 bits at the hardware level) vs. plain `(byte)(1 << a2)` (0.945, 2 edit blocks). Also: if/else-if chain over the 0/1/2 result vs. `switch` - the original lowers the three-way dispatch as a decrement chain (`sub eax,0 / je / dec / je / dec / jne`), which only the `switch` form reproduces. Landed the switch form. Neither reached BYTE_EXACT; first remaining divergence is at the record-base multiply by 0x59c (#35, `shl` vs `mov`).
 // size      246 bytes
-// spans     0x0053E4C0-0x0053E5B6
 // prototype void (__cdecl ?demands_withdrawal@@YAXHH@Z)(int, int)
 // callers   ?   call targets   4
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x0047A890 0x00549270 0x005589E0 0x00625EC0
-// RULED-OUT: `(byte)(1 << (a2 & 0x1f))` (explicit mask before the shift,
-//            mnemonic similarity 0.896, 8 edit blocks - the mask compiles
-//            to a spurious `and` the original does not have, since `shl`
-//            already masks its count to 5 bits at the hardware level) vs.
-//            plain `(byte)(1 << a2)` (0.945, 2 edit blocks). Also:
-//            if/else-if chain over the 0/1/2 result vs. `switch` - the
-//            original lowers the three-way dispatch as a decrement chain
-//            (`sub eax,0 / je / dec / je / dec / jne`), which only the
-//            `switch` form reproduces. Landed the switch form. Neither
-//            reached BYTE_EXACT; first remaining divergence is at the
-//            record-base multiply by 0x59c (#35, `shl` vs `mov`).
 
 // GENERATED SKELETON (hand-written, following tools/emit_translation_unit.py
 // conventions) - a VERIFICATION ARTIFACT, not product source: classes are

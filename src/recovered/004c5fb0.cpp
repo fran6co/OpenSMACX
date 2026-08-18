@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004C5FB0 BYTE_EXACT
-// name      ?init_sound_timer@@YAHKK@Z
+// ORIGINAL: 0x004C5FB0 ?init_sound_timer@@YAHKK@Z 0x004C5FB0-0x004C5FD6 BYTE_EXACT
 // size      38 bytes
-// spans     0x004C5FB0-0x004C5FD6
 // prototype 
 // callers   0   call targets   0
 // kind      game

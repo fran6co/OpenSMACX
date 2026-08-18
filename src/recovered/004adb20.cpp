@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004ADB20 BYTE_EXACT
-// name      ?do_menu@SetupWin@@QAEHPAUPopup@@HH@Z
+// ORIGINAL: 0x004ADB20 ?do_menu@SetupWin@@QAEHPAUPopup@@HH@Z 0x004ADB20-0x004ADB66 BYTE_EXACT
 // size      70 bytes
-// spans     0x004ADB20-0x004ADB66
 // prototype int (__thiscall ?do_menu@SetupWin@@QAEHPAUPopup@@HH@Z)(SetupWin* this, Popup*, int, int)
 // callers   5   call targets   1
 // kind      game

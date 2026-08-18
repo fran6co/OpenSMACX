@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00601820 BYTE_EXACT FILE
+// ORIGINAL: 0x00601820 ?set_cancel_text@BasePop@@QAEHPAD@Z 0x00601820-0x00601891 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?set_cancel_text@BasePop@@QAEHPAD@Z
 // size      113 bytes
-// spans     0x00601820-0x00601891
 // prototype int (__thiscall ?set_cancel_text@BasePop@@QAEHPAD@Z)(BasePop* this, int8*)
 // callers   3   call targets   4
 // kind      game

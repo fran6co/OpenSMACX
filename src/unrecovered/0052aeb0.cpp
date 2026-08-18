@@ -1,22 +1,7 @@
-// ORIGINAL: 0x0052AEB0 FILE
-// RULED-OUT: only case 0 (propose alliance) is transcribed with real
-//   fidelity, and only through the point the original reaches a shared
-//   continuation at 0x52B3C2 that this body does not chase further -
-//   the remaining ~2/3 of that case (great_satan rivalry, per-faction
-//   relationship-table gating via the `esi*65+esi`-stride tables seen
-//   in propose_treaty) is not modelled. Cases 1/2/3-4/5-7/8/9 are
-//   short plausible stand-ins using the same six callees
-//   (council_votes/wants_to_attack/great_satan/has_tech/bit_count/
-//   bitmask) with invented scoring, not transcriptions - each real
-//   case is itself a dense multi-hundred-instruction block this pass
-//   did not read in full. Jump-table case grouping (3/4 and 5/6/7
-//   share a target; case 10 and >10 both fall to the -9 default) is
-//   read from the image and correct. MISMATCH #2 (prologue, sub vs
-//   push - the SEH/frame shape here isn't modelled either).
+// ORIGINAL: 0x0052AEB0 ?wants_prop@@YAHHHH@Z 0x0052AEB0-0x0052BE32 FILE
+// RULED-OUT: only case 0 (propose alliance) is transcribed with real fidelity, and only through the point the original reaches a shared continuation at 0x52B3C2 that this body does not chase further - the remaining ~2/3 of that case (great_satan rivalry, per-faction relationship-table gating via the `esi*65+esi`-stride tables seen in propose_treaty) is not modelled. Cases 1/2/3-4/5-7/8/9 are short plausible stand-ins using the same six callees (council_votes/wants_to_attack/great_satan/has_tech/bit_count/ bitmask) with invented scoring, not transcriptions - each real case is itself a dense multi-hundred-instruction block this pass did not read in full. Jump-table case grouping (3/4 and 5/6/7 share a target; case 10 and >10 both fall to the -9 default) is read from the image and correct. MISMATCH #2 (prologue, sub vs push - the SEH/frame shape here isn't modelled either).
 // working copy - scaffold materialised by --work
-// name      ?wants_prop@@YAHHHH@Z
 // size      3970 bytes
-// spans     0x0052AEB0-0x0052BE32
 // prototype 
 // callers   3   call targets   6
 // kind      game

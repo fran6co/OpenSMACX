@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00649CDF EXCLUDED S1
-// name      __isctype
+// ORIGINAL: 0x00649CDF __isctype 0x00649CDF-0x00649D54 EXCLUDED S1
 // size      117 bytes
-// spans     0x00649CDF-0x00649D54
 // prototype 
 // callers   8   call targets   1
 // kind      library

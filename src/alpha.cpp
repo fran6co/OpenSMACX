@@ -48,10 +48,8 @@ uint32_t *Language = (uint32_t *)0x009BC054;
 
 /*
 Purpose: Convert the tech name string to a numeric tech id.
-ORIGINAL: 0x00584D60
-// name      ?tech_name@@YAHPAD@Z
+// ORIGINAL: 0x00584D60 ?tech_name@@YAHPAD@Z 0x00584D60-0x00584E3B
 // size      219 bytes
-// spans     0x00584D60-0x00584E3B
 // prototype int (__cdecl ?tech_name@@YAHPAD@Z)(int8* techID)
 // callers   6   call targets   4
 // kind      game
@@ -82,10 +80,8 @@ int __cdecl tech_name(LPSTR name) {
 
 /*
 Purpose: Convert the chassis name string to a numeric chassis id.
-ORIGINAL: 0x00584E40
-// name      ?chas_name@@YAHPAD@Z
+// ORIGINAL: 0x00584E40 ?chas_name@@YAHPAD@Z 0x00584E40-0x00584F33
 // size      243 bytes
-// spans     0x00584E40-0x00584F33
 // prototype 
 // callers   1   call targets   5
 // kind      game
@@ -116,10 +112,8 @@ int __cdecl chas_name(LPSTR name) {
 
 /*
 Purpose: Convert the weapon name string to a numeric weapon id.
-ORIGINAL: 0x00584F40
-// name      ?weap_name@@YAHPAD@Z
+// ORIGINAL: 0x00584F40 ?weap_name@@YAHPAD@Z 0x00584F40-0x00585030
 // size      240 bytes
-// spans     0x00584F40-0x00585030
 // prototype 
 // callers   1   call targets   5
 // kind      game
@@ -150,10 +144,8 @@ int __cdecl weap_name(LPSTR name) {
 
 /*
 Purpose: Convert the armor name string to a numeric armor id.
-ORIGINAL: 0x00585030
-// name      ?arm_name@@YAHPAD@Z
+// ORIGINAL: 0x00585030 ?arm_name@@YAHPAD@Z 0x00585030-0x00585120
 // size      240 bytes
-// spans     0x00585030-0x00585120
 // prototype 
 // callers   1   call targets   5
 // kind      game
@@ -184,10 +176,8 @@ int __cdecl arm_name(LPSTR name) {
 
 /*
 Purpose: Parse the current tech name inside the Txt item buffer into a tech id.
-ORIGINAL: 0x00585150 BYTE_EXACT
-// name      ?tech_item@@YAHXZ
+// ORIGINAL: 0x00585150 ?tech_item@@YAHXZ 0x00585150-0x00585164 BYTE_EXACT
 // size      20 bytes
-// spans     0x00585150-0x00585164
 // prototype 
 // callers   0   call targets   3
 // kind      game
@@ -203,10 +193,8 @@ int __cdecl tech_item() {
 
 /*
 Purpose: Parse the #RULES & #WORLDBUILDER sections inside the alpha(x).txt.
-ORIGINAL: 0x00585170
-// name      ?read_basic_rules@@YAHXZ
+// ORIGINAL: 0x00585170 ?read_basic_rules@@YAHXZ 0x00585170-0x00585E26
 // size      3254 bytes
-// spans     0x00585170-0x00585E26
 // prototype 
 // callers   1   call targets   6
 // kind      game
@@ -341,10 +329,8 @@ BOOL __cdecl read_basic_rules() {
 
 /*
 Purpose: Parse the #TECHNOLOGY section inside the alpha(x).txt with a duplicate entry check.
-ORIGINAL: 0x00585E30
-// name      ?read_tech@@YAHXZ
+// ORIGINAL: 0x00585E30 ?read_tech@@YAHXZ 0x00585E30-0x00585FDB
 // size      427 bytes
-// spans     0x00585E30-0x00585FDB
 // prototype 
 // callers   1   call targets   12
 // kind      game
@@ -403,10 +389,8 @@ BOOL __cdecl read_tech() {
 
 /*
 Purpose: Clear the rule values for the specified player.
-ORIGINAL: 0x00585FE0
-// name      ?clear_faction@@YAXPAUPlayer@@@Z
+// ORIGINAL: 0x00585FE0 ?clear_faction@@YAXPAUPlayer@@@Z 0x00585FE0-0x00586049
 // size      105 bytes
-// spans     0x00585FE0-0x00586049
 // prototype void (__cdecl ?clear_faction@@YAXPAUPlayer@@@Z)(Player* player)
 // callers   0   call targets   0
 // kind      game
@@ -435,10 +419,8 @@ void __cdecl clear_faction(Player *player) {
 
 /*
 Purpose: Parse the faction's file and art for the specified player id.
-ORIGINAL: 0x00586050
-// name      ?read_faction@@YAXH@Z
+// ORIGINAL: 0x00586050 ?read_faction@@YAXH@Z 0x00586050-0x00586081
 // size      49 bytes
-// spans     0x00586050-0x00586081
 // prototype 
 // callers   3   call targets   2
 // kind      game
@@ -457,10 +439,8 @@ void __cdecl read_faction(int player_id) {
 /*
 Purpose: Parse the 1st eight lines of the specified faction's file into a player structure. The 
          toggle parameter will end the function early if set to 2 (original code never uses this).
-ORIGINAL: 0x00586090
-// name      ?read_faction@@YAXPAUPlayer@@H@Z
+// ORIGINAL: 0x00586090 ?read_faction@@YAXPAUPlayer@@H@Z 0x00586090-0x00586F2B
 // size      3739 bytes
-// spans     0x00586090-0x00586F2B
 // prototype void (__cdecl ?read_faction@@YAXPAUPlayer@@H@Z)(Player* player, int type)
 // callers   4   call targets   15
 // kind      game
@@ -752,10 +732,8 @@ void __cdecl read_faction(Player *player, int toggle) {
 
 /*
 Purpose: Parse the #BONUSNAMES, #FACTIONS, and #NEWFACTIONS sections inside the alpha(x).txt.
-ORIGINAL: 0x00586F30
-// name      ?read_factions@@YAHXZ
+// ORIGINAL: 0x00586F30 ?read_factions@@YAHXZ 0x00586F30-0x005871C9
 // size      665 bytes
-// spans     0x00586F30-0x005871C9
 // prototype 
 // callers   1   call targets   9
 // kind      game
@@ -833,10 +811,8 @@ BOOL __cdecl read_factions() {
 
 /*
 Purpose: Parse and set the noun item's gender and plurality from the Txt buffer.
-ORIGINAL: 0x005871D0 BYTE_EXACT
-// name      ?noun_item@@YAXPAHPAH@Z
+// ORIGINAL: 0x005871D0 ?noun_item@@YAXPAHPAH@Z 0x005871D0-0x0058723E BYTE_EXACT
 // size      110 bytes
-// spans     0x005871D0-0x0058723E
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -847,10 +823,8 @@ Status: Complete
 */
 /*
 Purpose: Set the noun's gender and plurality from the current Txt item.
-ORIGINAL: 0x005871D0
-// name      ?noun_item@@YAXPAHPAH@Z
+// ORIGINAL: 0x005871D0 ?noun_item@@YAXPAHPAH@Z 0x005871D0-0x0058723E
 // size      110 bytes
-// spans     0x005871D0-0x0058723E
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -886,10 +860,8 @@ void __cdecl noun_item(int *gender, int *plurality) {
 
 /*
 Purpose: Parse the #UNITS section inside the alpha(x).txt.
-ORIGINAL: 0x00587240
-// name      ?read_units@@YAHXZ
+// ORIGINAL: 0x00587240 ?read_units@@YAHXZ 0x00587240-0x005873B1
 // size      369 bytes
-// spans     0x00587240-0x005873B1
 // prototype 
 // callers   1   call targets   11
 // kind      game
@@ -951,10 +923,8 @@ BOOL __cdecl read_units() {
 /*
 Purpose: Parse in all the game rules via alpha/x.txt. If the toggle param is set to true, parse the
          #UNITS & #FACTIONS sections. Otherwise, skip both. New game vs reload?
-ORIGINAL: 0x005873C0
-// name      ?read_rules@@YAHH@Z
+// ORIGINAL: 0x005873C0 ?read_rules@@YAHH@Z 0x005873C0-0x0058829C
 // size      3804 bytes
-// spans     0x005873C0-0x0058829C
 // prototype BOOL (__cdecl ?read_rules@@YAHH@Z)(BOOL tglAllRules)
 // callers   3   call targets   23
 // kind      game
@@ -1351,10 +1321,8 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
 
 /*
 Purpose: Attempt to read the setting's value from the ini file.
-ORIGINAL: 0x0059D980
-// name      ?prefs_get@@YAPADPADPADH@Z
+// ORIGINAL: 0x0059D980 ?prefs_get@@YAPADPADPADH@Z 0x0059D980-0x0059DA19
 // size      153 bytes
-// spans     0x0059D980-0x0059DA19
 // prototype int8* (__cdecl ?prefs_get@@YAPADPADPADH@Z)(int8* lpKeyName, int8* lpDefault, int)
 // callers   4   call targets   2
 // kind      game
@@ -1378,10 +1346,8 @@ LPSTR __cdecl prefs_get(LPCSTR key_name, LPCSTR default_value, BOOL use_default)
 
 /*
 Purpose: Get the default value for the 1st set of preferences.
-ORIGINAL: 0x0059DA20
-// name      ?default_prefs@@YAHXZ
+// ORIGINAL: 0x0059DA20 ?default_prefs@@YAHXZ 0x0059DA20-0x0059DA99
 // size      121 bytes
-// spans     0x0059DA20-0x0059DA99
 // prototype 
 // callers   1   call targets   3
 // kind      game
@@ -1406,10 +1372,8 @@ uint32_t __cdecl default_prefs() {
 
 /*
 Purpose: Get the default value for the 2nd set of preferences.
-ORIGINAL: 0x0059DAA0
-// name      ?default_prefs2@@YAHXZ
+// ORIGINAL: 0x0059DAA0 ?default_prefs2@@YAHXZ 0x0059DAA0-0x0059DB19
 // size      121 bytes
-// spans     0x0059DAA0-0x0059DB19
 // prototype 
 // callers   1   call targets   3
 // kind      game
@@ -1430,10 +1394,8 @@ uint32_t __cdecl default_prefs2() {
 
 /*
 Purpose: Get the default value for the warning pop-up preferences.
-ORIGINAL: 0x0059DB20 BYTE_EXACT
-// name      ?default_warn@@YAHXZ
+// ORIGINAL: 0x0059DB20 ?default_warn@@YAHXZ 0x0059DB20-0x0059DB26 BYTE_EXACT
 // size      6 bytes
-// spans     0x0059DB20-0x0059DB26
 // prototype 
 // callers   1   call targets   0
 // kind      game
@@ -1451,10 +1413,8 @@ uint32_t __cdecl default_warn() {
 
 /*
 Purpose: Get the default value for the rule related preferences.
-ORIGINAL: 0x0059DB30 BYTE_EXACT
-// name      ?default_rules@@YAHXZ
+// ORIGINAL: 0x0059DB30 ?default_rules@@YAHXZ 0x0059DB30-0x0059DB36 BYTE_EXACT
 // size      6 bytes
-// spans     0x0059DB30-0x0059DB36
 // prototype 
 // callers   2   call targets   0
 // kind      game
@@ -1470,10 +1430,8 @@ uint32_t __cdecl default_rules() {
 
 /*
 Purpose: Attempt to read the setting's value from the ini file.
-ORIGINAL: 0x0059DB40
-// name      ?prefs_get@@YAHPADHH@Z
+// ORIGINAL: 0x0059DB40 ?prefs_get@@YAHPADHH@Z 0x0059DB40-0x0059DBC9
 // size      137 bytes
-// spans     0x0059DB40-0x0059DBC9
 // prototype int (__cdecl ?prefs_get@@YAHPADHH@Z)(LPCSTR keyName, int defaultValue, BOOL useDefault)
 // callers   17   call targets   4
 // kind      game
@@ -1498,10 +1456,8 @@ int __cdecl prefs_get(LPCSTR key_name, int default_value, BOOL use_default) {
 Purpose: Read the faction filenames and search for keys from the ini file (SMACX only). This has 
          the added effect of forcing the player's search_key to be set to the filename value. 
          Rewrote almost the entire function because of how terrible the original code logic was.
-ORIGINAL: 0x0059DBD0
-// name      ?prefs_fac_load@@YAXXZ
+// ORIGINAL: 0x0059DBD0 ?prefs_fac_load@@YAXXZ 0x0059DBD0-0x0059DCE8
 // size      280 bytes
-// spans     0x0059DBD0-0x0059DCE8
 // prototype 
 // callers   1   call targets   4
 // kind      game
@@ -1536,10 +1492,8 @@ void __cdecl prefs_fac_load() {
 
 /*
 Purpose: Load the most common preferences from the game's ini to globals.
-ORIGINAL: 0x0059DCF0
-// name      ?prefs_load@@YAXH@Z
+// ORIGINAL: 0x0059DCF0 ?prefs_load@@YAXH@Z 0x0059DCF0-0x0059E502
 // size      2066 bytes
-// spans     0x0059DCF0-0x0059E502
 // prototype void (__cdecl ?prefs_load@@YAXH@Z)(BOOL useDefault)
 // callers   3   call targets   8
 // kind      game
@@ -1590,10 +1544,8 @@ void __cdecl prefs_load(BOOL use_default) {
 
 /*
 Purpose: Write the string value to the pref key of the ini.
-ORIGINAL: 0x0059E510
-// name      ?prefs_put@@YAXPADPAD@Z
+// ORIGINAL: 0x0059E510 ?prefs_put@@YAXPADPAD@Z 0x0059E510-0x0059E52F
 // size      31 bytes
-// spans     0x0059E510-0x0059E52F
 // prototype void (__cdecl ?prefs_put@@YAXPADPAD@Z)(int8* lpKeyName, int8* lpString)
 // callers   7   call targets   0
 // kind      game
@@ -1609,10 +1561,8 @@ void __cdecl prefs_put(LPCSTR key_name, LPCSTR value) {
 
 /*
 Purpose: Write the value as either an integer or a binary string to the pref key inside the ini.
-ORIGINAL: 0x0059E530
-// name      ?prefs_put@@YAXPADHH@Z
+// ORIGINAL: 0x0059E530 ?prefs_put@@YAXPADHH@Z 0x0059E530-0x0059E5CD
 // size      157 bytes
-// spans     0x0059E530-0x0059E5CD
 // prototype void (__cdecl ?prefs_put@@YAXPADHH@Z)(int8* lpKeyName, int, int)
 // callers   12   call targets   2
 // kind      game
@@ -1630,10 +1580,8 @@ void __cdecl prefs_put(LPCSTR key_name, int value, BOOL tgl_binary) {
 
 /*
 Purpose: Save the most common preferences from memory to the game's ini. 
-ORIGINAL: 0x0059E5D0
-// name      ?prefs_save@@YAXH@Z
+// ORIGINAL: 0x0059E5D0 ?prefs_save@@YAXH@Z 0x0059E5D0-0x0059E946
 // size      886 bytes
-// spans     0x0059E5D0-0x0059E946
 // prototype void (__cdecl ?prefs_save@@YAXH@Z)(BOOL saveFactions)
 // callers   17   call targets   3
 // kind      game
@@ -1675,10 +1623,8 @@ void __cdecl prefs_save(BOOL save_factions) {
 
 /*
 Purpose: Set the internal game preference globals from the ini setting globals.
-ORIGINAL: 0x0059E950
-// name      ?prefs_use@@YAXXZ
+// ORIGINAL: 0x0059E950 ?prefs_use@@YAXXZ 0x0059E950-0x0059E973
 // size      35 bytes
-// spans     0x0059E950-0x0059E973
 // prototype 
 // callers   6   call targets   0
 // kind      game
@@ -1715,10 +1661,8 @@ std::string __cdecl prefs_get_binary(int value) {
 
 /*
 Purpose: Parse the #LABELS section inside the labels.txt file.
-ORIGINAL: 0x00616A00
-// name      ?labels_init@@YAHXZ
+// ORIGINAL: 0x00616A00 ?labels_init@@YAHXZ 0x00616A00-0x00616A93
 // size      147 bytes
-// spans     0x00616A00-0x00616A93
 // prototype 
 // callers   3   call targets   7
 // kind      game
@@ -1747,10 +1691,8 @@ BOOL __cdecl labels_init() {
 
 /*
 Purpose: Shutdown or reset the labels global variable.
-ORIGINAL: 0x006169D0
-// name      ?labels_shutdown@@YAXXZ
+// ORIGINAL: 0x006169D0 ?labels_shutdown@@YAXXZ 0x006169D0-0x006169F7
 // size      39 bytes
-// spans     0x006169D0-0x006169F7
 // prototype 
 // callers   4   call targets   1
 // kind      game
@@ -1769,10 +1711,8 @@ void __cdecl labels_shutdown() {
 
 /*
 Purpose: Set the game's language.
-ORIGINAL: 0x00627100
-// name      ?set_language@@YAXH@Z
+// ORIGINAL: 0x00627100 ?set_language@@YAXH@Z 0x00627100-0x0062710A
 // size      10 bytes
-// spans     0x00627100-0x0062710A
 // prototype void (__cdecl ?set_language@@YAXH@Z)(int lang)
 // callers   2   call targets   0
 // kind      game
@@ -1787,10 +1727,8 @@ void __cdecl set_language(int language) {
 
 /*
 Purpose: Get the label string and concatenate it to the stringTemp buffer.
-ORIGINAL: 0x005A5880
-// name      ?say_label@@YAXH@Z
+// ORIGINAL: 0x005A5880 ?say_label@@YAXH@Z 0x005A5880-0x005A58AA
 // size      42 bytes
-// spans     0x005A5880-0x005A58AA
 // prototype void (__cdecl ?say_label@@YAXH@Z)(int labelID)
 // callers   1   call targets   2
 // kind      game

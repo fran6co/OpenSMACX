@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004E0B00 FILE
-// name      ?editor_terrain@Console@@QAEXXZ
+// ORIGINAL: 0x004E0B00 ?editor_terrain@Console@@QAEXXZ 0x004E0B00-0x004E0E9E;0x0065C2AF-0x0065C38C FILE
 // size      1147 bytes
-// spans     0x004E0B00-0x004E0E9E;0x0065C2AF-0x0065C38C
 // prototype void (__thiscall ?editor_terrain@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   23
 // kind      game

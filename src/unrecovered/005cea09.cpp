@@ -1,23 +1,12 @@
-// ORIGINAL: 0x005CEA09 FILE
-// name      sub_5cea09 (no mangled name - IDA guess only)
+// ORIGINAL: 0x005CEA09 sub_5cea09 0x005CEA09-0x005CEB12 FILE
+// RULED-OUT: byte-exactness is not reachable in standard C++ here - the 16 calls to sub_5ceb12() take NO explicit arguments; the original threads state between them entirely through the callee-saved registers esi/edi/ebp (incremented by 0x40/ 0x20/a caller-stack value between calls), which is a register-level calling convention no C++ source can express without __asm (forbidden). Landed as 16 unrolled calls with `void` return (the disassembly never sets eax before `ret`, contradicting the `int` in the given contract head) and the 4 IDA-guessed int parameters, unused since nothing in valid C++ can route them into esi/edi/ebp for the callee.
+// (no mangled name - IDA guess only)
 // size      265 bytes
-// spans     0x005CEA09-0x005CEB12
 // prototype extern "C" void __cdecl sub_5cea09(int, int, int, int)
 // callers   1   call targets   1
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     0x005CEB12 (16x)
-// RULED-OUT: byte-exactness is not reachable in standard C++ here - the
-//            16 calls to sub_5ceb12() take NO explicit arguments; the
-//            original threads state between them entirely through the
-//            callee-saved registers esi/edi/ebp (incremented by 0x40/
-//            0x20/a caller-stack value between calls), which is a
-//            register-level calling convention no C++ source can express
-//            without __asm (forbidden). Landed as 16 unrolled calls with
-//            `void` return (the disassembly never sets eax before `ret`,
-//            contradicting the `int` in the given contract head) and the
-//            4 IDA-guessed int parameters, unused since nothing in valid
-//            C++ can route them into esi/edi/ebp for the callee.
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: sub_5cea09  at 0x005CEA09  (265 bytes)
 //

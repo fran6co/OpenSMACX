@@ -1,10 +1,7 @@
-// ORIGINAL: 0x0041E3E0 FILE
-// RULED-OUT: two `char*` bases (self, self-0xa14) computed via arithmetic
-//            instead of matching the single-esi-reuse register shape
+// ORIGINAL: 0x0041E3E0 ?on_iface_mouse_leave@BaseWin@@QAEXHH@Z 0x0041E3E0-0x0041E4C0 FILE
+// RULED-OUT: two `char*` bases (self, self-0xa14) computed via arithmetic instead of matching the single-esi-reuse register shape
 // working copy - scaffold materialised by --work
-// name      ?on_iface_mouse_leave@BaseWin@@QAEXHH@Z
 // size      224 bytes
-// spans     0x0041E3E0-0x0041E4C0
 // prototype void (__thiscall ?on_iface_mouse_leave@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
 // callers   0   call targets   7
 // kind      game

@@ -1,16 +1,7 @@
-// ORIGINAL: 0x0063C7C0 FILE
-// RULED-OUT: `__thiscall` function-pointer casts for the dynamically
-//            adjusted vtable dispatches (C4234, VC6 refuses them) - routed
-//            through a second VCall-style shim (VCallSlot0) instead, one
-//            per distinct slot/arity pair, matching the brief's guidance.
-//            Did not chase the remaining register-allocation divergence
-//            (first mismatch at instruction #2) further given the size and
-//            structural complexity of this function (three raw vtable
-//            adjustor dispatches plus ListBox::attach/item/update_changes).
+// ORIGINAL: 0x0063C7C0 sub_63c7c0 0x0063C7C0-0x0063C9B6 FILE
+// RULED-OUT: `__thiscall` function-pointer casts for the dynamically adjusted vtable dispatches (C4234, VC6 refuses them) - routed through a second VCall-style shim (VCallSlot0) instead, one per distinct slot/arity pair, matching the brief's guidance. Did not chase the remaining register-allocation divergence (first mismatch at instruction #2) further given the size and structural complexity of this function (three raw vtable adjustor dispatches plus ListBox::attach/item/update_changes).
 // working copy - scaffold materialised by --work
-// name      sub_63c7c0
 // size      502 bytes
-// spans     0x0063C7C0-0x0063C9B6
 // prototype 
 // callers   1   call targets   6
 // kind      game

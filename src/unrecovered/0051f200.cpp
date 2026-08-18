@@ -1,8 +1,6 @@
-// ORIGINAL: 0x0051F200 FILE
+// ORIGINAL: 0x0051F200 ?wait_loop@@YAXXZ 0x0051F200-0x0051F2BF FILE
 // working copy - scaffold materialised by --work
-// name      ?wait_loop@@YAXXZ
 // size      191 bytes
-// spans     0x0051F200-0x0051F2BF
 // prototype 
 // callers   7   call targets   4
 // kind      game

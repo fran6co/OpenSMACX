@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00539510 BYTE_EXACT
-// name      ?net_loan@@YAXHHHH@Z
+// ORIGINAL: 0x00539510 ?net_loan@@YAXHHHH@Z 0x00539510-0x0053957F BYTE_EXACT
 // size      111 bytes
-// spans     0x00539510-0x0053957F
 // prototype 
 // callers   1   call targets   2
 // kind      game

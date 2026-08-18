@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004D2220 FILE
-// name      ?sentry@Console@@QAEXHH@Z
+// ORIGINAL: 0x004D2220 ?sentry@Console@@QAEXHH@Z 0x004D2220-0x004D24BB FILE
 // size      667 bytes
-// spans     0x004D2220-0x004D24BB
 // prototype void (__thiscall ?sentry@Console@@QAEXHH@Z)(Console* this, int vehID, int)
 // callers   2   call targets   8
 // kind      game

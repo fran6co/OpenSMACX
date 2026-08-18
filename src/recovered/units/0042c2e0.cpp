@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0042C2E0 FILE
-// name      ?draw_concept@Datalink@@QAEXXZ
+// ORIGINAL: 0x0042C2E0 ?draw_concept@Datalink@@QAEXXZ 0x0042C2E0-0x0042C64D;0x0065358E-0x00653650 FILE
 // size      1071 bytes
-// spans     0x0042C2E0-0x0042C64D;0x0065358E-0x00653650
 // prototype void (__thiscall ?draw_concept@Datalink@@QAEXXZ)(Datalink* this)
 // callers   1   call targets   25
 // kind      game

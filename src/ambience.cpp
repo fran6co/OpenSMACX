@@ -22,10 +22,8 @@
 
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
-ORIGINAL: 0x00447220 BYTE_EXACT
-// name      ?begin@FactionAmbience@@QAEXXZ
+// ORIGINAL: 0x00447220 ?begin@FactionAmbience@@QAEXXZ 0x00447220-0x00447221 BYTE_EXACT
 // size      1 bytes
-// spans     0x00447220-0x00447221
 // prototype void (__thiscall ?begin@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
 // kind      game
@@ -39,10 +37,8 @@ void FactionAmbience::begin() {
 
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
-ORIGINAL: 0x00447230 BYTE_EXACT
-// name      ?tech@FactionAmbience@@QAEXXZ
+// ORIGINAL: 0x00447230 ?tech@FactionAmbience@@QAEXXZ 0x00447230-0x00447231 BYTE_EXACT
 // size      1 bytes
-// spans     0x00447230-0x00447231
 // prototype void (__thiscall ?tech@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
 // kind      game
@@ -56,10 +52,8 @@ void FactionAmbience::tech() {
 
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
-ORIGINAL: 0x00447240 BYTE_EXACT
-// name      ?terraform@FactionAmbience@@QAEXXZ
+// ORIGINAL: 0x00447240 ?terraform@FactionAmbience@@QAEXXZ 0x00447240-0x00447241 BYTE_EXACT
 // size      1 bytes
-// spans     0x00447240-0x00447241
 // prototype void (__thiscall ?terraform@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
 // kind      game
@@ -73,10 +67,8 @@ void FactionAmbience::terraform() {
 
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
-ORIGINAL: 0x00447250 BYTE_EXACT
-// name      ?production@FactionAmbience@@QAEXXZ
+// ORIGINAL: 0x00447250 ?production@FactionAmbience@@QAEXXZ 0x00447250-0x00447251 BYTE_EXACT
 // size      1 bytes
-// spans     0x00447250-0x00447251
 // prototype void (__thiscall ?production@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
 // kind      game
@@ -90,10 +82,8 @@ void FactionAmbience::production() {
 
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
-ORIGINAL: 0x00447260 BYTE_EXACT
-// name      ?general@FactionAmbience@@QAEXXZ
+// ORIGINAL: 0x00447260 ?general@FactionAmbience@@QAEXXZ 0x00447260-0x00447261 BYTE_EXACT
 // size      1 bytes
-// spans     0x00447260-0x00447261
 // prototype void (__thiscall ?general@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
 // kind      game
@@ -107,10 +97,8 @@ void FactionAmbience::general() {
 
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
-ORIGINAL: 0x004472B0 BYTE_EXACT
-// name      ?new_base@FactionAmbience@@QAEXXZ
+// ORIGINAL: 0x004472B0 ?new_base@FactionAmbience@@QAEXXZ 0x004472B0-0x004472B1 BYTE_EXACT
 // size      1 bytes
-// spans     0x004472B0-0x004472B1
 // prototype void (__thiscall ?new_base@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
 // kind      game
@@ -124,10 +112,8 @@ void FactionAmbience::new_base() {
 
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
-ORIGINAL: 0x004472C0 BYTE_EXACT
-// name      ?popup1@FactionAmbience@@QAEXXZ
+// ORIGINAL: 0x004472C0 ?popup1@FactionAmbience@@QAEXXZ 0x004472C0-0x004472C1 BYTE_EXACT
 // size      1 bytes
-// spans     0x004472C0-0x004472C1
 // prototype void (__thiscall ?popup1@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
 // kind      game
@@ -141,10 +127,8 @@ void FactionAmbience::popup1() {
 
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
-ORIGINAL: 0x004472D0 BYTE_EXACT
-// name      ?eot@FactionAmbience@@QAEXXZ
+// ORIGINAL: 0x004472D0 ?eot@FactionAmbience@@QAEXXZ 0x004472D0-0x004472D1 BYTE_EXACT
 // size      1 bytes
-// spans     0x004472D0-0x004472D1
 // prototype void (__thiscall ?eot@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
 // kind      game
@@ -158,10 +142,8 @@ void FactionAmbience::eot() {
 
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
-ORIGINAL: 0x004472E0 BYTE_EXACT
-// name      ?hostility@FactionAmbience@@QAEXXZ
+// ORIGINAL: 0x004472E0 ?hostility@FactionAmbience@@QAEXXZ 0x004472E0-0x004472E1 BYTE_EXACT
 // size      1 bytes
-// spans     0x004472E0-0x004472E1
 // prototype void (__thiscall ?hostility@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
 // kind      game
@@ -175,10 +157,8 @@ void FactionAmbience::hostility() {
 
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
-ORIGINAL: 0x004472F0 BYTE_EXACT
-// name      ?energy_resources@FactionAmbience@@QAEXXZ
+// ORIGINAL: 0x004472F0 ?energy_resources@FactionAmbience@@QAEXXZ 0x004472F0-0x004472F1 BYTE_EXACT
 // size      1 bytes
-// spans     0x004472F0-0x004472F1
 // prototype void (__thiscall ?energy_resources@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
 // kind      game
@@ -192,10 +172,8 @@ void FactionAmbience::energy_resources() {
 
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
-ORIGINAL: 0x00447300 BYTE_EXACT
-// name      ?base_liberated@FactionAmbience@@QAEXXZ
+// ORIGINAL: 0x00447300 ?base_liberated@FactionAmbience@@QAEXXZ 0x00447300-0x00447301 BYTE_EXACT
 // size      1 bytes
-// spans     0x00447300-0x00447301
 // prototype void (__thiscall ?base_liberated@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
 // kind      game
@@ -209,10 +187,8 @@ void FactionAmbience::base_liberated() {
 
 /*
 Purpose: UAmbience ignores this event; the legacy implementation is a bare return.
-ORIGINAL: 0x00447690 BYTE_EXACT
-// name      ?tech@UAmbience@@QAEXXZ
+// ORIGINAL: 0x00447690 ?tech@UAmbience@@QAEXXZ 0x00447690-0x00447691 BYTE_EXACT
 // size      1 bytes
-// spans     0x00447690-0x00447691
 // prototype void (__thiscall ?tech@UAmbience@@QAEXXZ)(UAmbience* this)
 // callers   0   call targets   0
 // kind      game
@@ -226,10 +202,8 @@ void UAmbience::tech() {
 
 /*
 Purpose: UAmbience ignores this event; the legacy implementation is a bare return.
-ORIGINAL: 0x004476A0 BYTE_EXACT
-// name      ?popup1@UAmbience@@QAEXXZ
+// ORIGINAL: 0x004476A0 ?popup1@UAmbience@@QAEXXZ 0x004476A0-0x004476A1 BYTE_EXACT
 // size      1 bytes
-// spans     0x004476A0-0x004476A1
 // prototype void (__thiscall ?popup1@UAmbience@@QAEXXZ)(UAmbience* this)
 // callers   0   call targets   0
 // kind      game
@@ -243,10 +217,8 @@ void UAmbience::popup1() {
 
 /*
 Purpose: UAmbience ignores this event; the legacy implementation is a bare return.
-ORIGINAL: 0x004476B0 BYTE_EXACT
-// name      ?eot@UAmbience@@QAEXXZ
+// ORIGINAL: 0x004476B0 ?eot@UAmbience@@QAEXXZ 0x004476B0-0x004476B1 BYTE_EXACT
 // size      1 bytes
-// spans     0x004476B0-0x004476B1
 // prototype void (__thiscall ?eot@UAmbience@@QAEXXZ)(UAmbience* this)
 // callers   0   call targets   0
 // kind      game
@@ -260,10 +232,8 @@ void UAmbience::eot() {
 
 /*
 Purpose: GAmbience ignores this event; the legacy implementation is a bare return.
-ORIGINAL: 0x00447C60 BYTE_EXACT
-// name      ?tech@GAmbience@@QAEXXZ
+// ORIGINAL: 0x00447C60 ?tech@GAmbience@@QAEXXZ 0x00447C60-0x00447C61 BYTE_EXACT
 // size      1 bytes
-// spans     0x00447C60-0x00447C61
 // prototype void (__thiscall ?tech@GAmbience@@QAEXXZ)(GAmbience* this)
 // callers   0   call targets   0
 // kind      game
@@ -277,10 +247,8 @@ void GAmbience::tech() {
 
 /*
 Purpose: GAmbience ignores this event; the legacy implementation is a bare return.
-ORIGINAL: 0x00447CA0 BYTE_EXACT
-// name      ?production@GAmbience@@QAEXXZ
+// ORIGINAL: 0x00447CA0 ?production@GAmbience@@QAEXXZ 0x00447CA0-0x00447CA1 BYTE_EXACT
 // size      1 bytes
-// spans     0x00447CA0-0x00447CA1
 // prototype void (__thiscall ?production@GAmbience@@QAEXXZ)(GAmbience* this)
 // callers   0   call targets   0
 // kind      game
@@ -294,10 +262,8 @@ void GAmbience::production() {
 
 /*
 Purpose: GAmbience ignores this event; the legacy implementation is a bare return.
-ORIGINAL: 0x00447CB0 BYTE_EXACT
-// name      ?popup1@GAmbience@@QAEXXZ
+// ORIGINAL: 0x00447CB0 ?popup1@GAmbience@@QAEXXZ 0x00447CB0-0x00447CB1 BYTE_EXACT
 // size      1 bytes
-// spans     0x00447CB0-0x00447CB1
 // prototype void (__thiscall ?popup1@GAmbience@@QAEXXZ)(GAmbience* this)
 // callers   0   call targets   0
 // kind      game
@@ -311,10 +277,8 @@ void GAmbience::popup1() {
 
 /*
 Purpose: GAmbience ignores this event; the legacy implementation is a bare return.
-ORIGINAL: 0x00447CC0 BYTE_EXACT
-// name      ?eot@GAmbience@@QAEXXZ
+// ORIGINAL: 0x00447CC0 ?eot@GAmbience@@QAEXXZ 0x00447CC0-0x00447CC1 BYTE_EXACT
 // size      1 bytes
-// spans     0x00447CC0-0x00447CC1
 // prototype void (__thiscall ?eot@GAmbience@@QAEXXZ)(GAmbience* this)
 // callers   0   call targets   0
 // kind      game
@@ -424,10 +388,8 @@ Purpose: Destroy an ambience. Its own stage frees the remembered filename
          global sound chain when the chained bit is set. The original's
          exception frame is omitted as unreachable. The vtable is staged
          through all three levels.
-ORIGINAL: 0x004C7670
-// name      ??1Ambience@@QAE@XZ
+// ORIGINAL: 0x004C7670 ??1Ambience@@QAE@XZ 0x004C7670-0x004C7760;0x004C8450-0x004C8457;0x00659F32-0x00659F4C
 // size      273 bytes
-// spans     0x004C7670-0x004C7760;0x004C8450-0x004C8457;0x00659F32-0x00659F4C
 // prototype void (__thiscall ??1Ambience@@QAE@XZ)(Ambience* this)
 // callers   1   call targets   1
 // kind      game
@@ -512,10 +474,8 @@ Purpose: Build the ambience. The original constructs in four vtable stages -
          clear is four bytes wide, this one is a single byte, so 0x55..0x57
          keep whatever the storage held - and nothing at or above 0x58 is
          written at all, which is what pins the shared base's extent there.
-ORIGINAL: 0x004C8460
-// name      ??0Ambience@@QAE@XZ
+// ORIGINAL: 0x004C8460 ??0Ambience@@QAE@XZ 0x004C8460-0x004C852D;0x004C8450-0x004C8457;0x00659F4C-0x00659F5E
 // size      230 bytes
-// spans     0x004C8460-0x004C852D;0x004C8450-0x004C8457;0x00659F4C-0x00659F5E
 // prototype void (__thiscall ??0Ambience@@QAE@XZ)(Ambience* this)
 // callers   7   call targets   2
 // kind      game
@@ -595,10 +555,8 @@ Ambience *__fastcall ambience_construct_redirect(Ambience *self, void *) {
 /*
 Purpose: FactionAmbience records the event in a flag byte and does nothing else;
          the legacy implementation is a single store.
-ORIGINAL: 0x00447270 BYTE_EXACT
-// name      ?basewin_show@FactionAmbience@@QAEXXZ
+// ORIGINAL: 0x00447270 ?basewin_show@FactionAmbience@@QAEXXZ 0x00447270-0x00447275 BYTE_EXACT
 // size      5 bytes
-// spans     0x00447270-0x00447275
 // prototype void (__thiscall ?basewin_show@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
 // kind      game
@@ -618,10 +576,8 @@ void __fastcall faction_ambience_basewin_show_redirect(FactionAmbience *self, vo
 /*
 Purpose: FactionAmbience records the event in a flag byte and does nothing else;
          the legacy implementation is a single store.
-ORIGINAL: 0x00447280 BYTE_EXACT
-// name      ?basewin_hide@FactionAmbience@@QAEXXZ
+// ORIGINAL: 0x00447280 ?basewin_hide@FactionAmbience@@QAEXXZ 0x00447280-0x00447285 BYTE_EXACT
 // size      5 bytes
-// spans     0x00447280-0x00447285
 // prototype void (__thiscall ?basewin_hide@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
 // kind      game
@@ -641,10 +597,8 @@ void __fastcall faction_ambience_basewin_hide_redirect(FactionAmbience *self, vo
 /*
 Purpose: FactionAmbience records the event in a flag byte and does nothing else;
          the legacy implementation is a single store.
-ORIGINAL: 0x00447290 BYTE_EXACT
-// name      ?design_window_show@FactionAmbience@@QAEXXZ
+// ORIGINAL: 0x00447290 ?design_window_show@FactionAmbience@@QAEXXZ 0x00447290-0x00447295 BYTE_EXACT
 // size      5 bytes
-// spans     0x00447290-0x00447295
 // prototype void (__thiscall ?design_window_show@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
 // kind      game
@@ -664,10 +618,8 @@ void __fastcall faction_ambience_design_window_show_redirect(FactionAmbience *se
 /*
 Purpose: FactionAmbience records the event in a flag byte and does nothing else;
          the legacy implementation is a single store.
-ORIGINAL: 0x004472A0 BYTE_EXACT
-// name      ?design_window_hide@FactionAmbience@@QAEXXZ
+// ORIGINAL: 0x004472A0 ?design_window_hide@FactionAmbience@@QAEXXZ 0x004472A0-0x004472A5 BYTE_EXACT
 // size      5 bytes
-// spans     0x004472A0-0x004472A5
 // prototype void (__thiscall ?design_window_hide@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
 // kind      game
@@ -694,10 +646,8 @@ Purpose: GAmbience raises the flag byte only when it is CLEAR.
          unconditionally, and an unconditional store here would agree for the
          values 0 and 1 and differ for every other: a byte holding 5 keeps 5,
          where `field_6C_ = 1` would overwrite it.
-ORIGINAL: 0x00447BE0 BYTE_EXACT
-// name      ?basewin_show@GAmbience@@QAEXXZ
+// ORIGINAL: 0x00447BE0 ?basewin_show@GAmbience@@QAEXXZ 0x00447BE0-0x00447BEC BYTE_EXACT
 // size      12 bytes
-// spans     0x00447BE0-0x00447BEC
 // prototype void (__thiscall ?basewin_show@GAmbience@@QAEXXZ)(GAmbience* this)
 // callers   0   call targets   0
 // kind      game
@@ -719,10 +669,8 @@ void __fastcall g_ambience_basewin_show_redirect(GAmbience *self, void *) {
 /*
 Purpose: GAmbience records the event in a flag byte and does nothing else;
          the legacy implementation is a single store.
-ORIGINAL: 0x00447BF0 BYTE_EXACT
-// name      ?basewin_hide@GAmbience@@QAEXXZ
+// ORIGINAL: 0x00447BF0 ?basewin_hide@GAmbience@@QAEXXZ 0x00447BF0-0x00447BF5 BYTE_EXACT
 // size      5 bytes
-// spans     0x00447BF0-0x00447BF5
 // prototype void (__thiscall ?basewin_hide@GAmbience@@QAEXXZ)(GAmbience* this)
 // callers   0   call targets   0
 // kind      game
@@ -768,10 +716,8 @@ Purpose: Run the shared Ambience constructor, publish this variant's vtable,
          0x6c and 0x6d are BYTES. 0x6e and 0x6f are not written, so whatever
          the storage held survives there.
 
-ORIGINAL: 0x004471F0
-// name      ??0FactionAmbience@@QAE@XZ
+// ORIGINAL: 0x004471F0 ??0FactionAmbience@@QAE@XZ 0x004471F0-0x00447219
 // size      41 bytes
-// spans     0x004471F0-0x00447219
 // prototype void (__thiscall ??0FactionAmbience@@QAE@XZ)(FactionAmbience* this)
 // callers   1   call targets   1
 // kind      game
@@ -800,10 +746,8 @@ FactionAmbience *__fastcall faction_ambience_construct_redirect(
 
 /*
 Purpose: As 004471F0, with the MAmbience vtable and one more field.
-ORIGINAL: 0x00447310
-// name      ??0MAmbience@@QAE@XZ
+// ORIGINAL: 0x00447310 ??0MAmbience@@QAE@XZ 0x00447310-0x0044733C
 // size      44 bytes
-// spans     0x00447310-0x0044733C
 // prototype void (__thiscall ??0MAmbience@@QAE@XZ)(MAmbience* this)
 // callers   0   call targets   1
 // kind      game
@@ -832,10 +776,8 @@ MAmbience *__fastcall m_ambience_construct_redirect(MAmbience *self, void *) {
 
 /*
 Purpose: As 004471F0, with the SAmbience vtable and two more fields.
-ORIGINAL: 0x00447850
-// name      ??0SAmbience@@QAE@XZ
+// ORIGINAL: 0x00447850 ??0SAmbience@@QAE@XZ 0x00447850-0x0044787F
 // size      47 bytes
-// spans     0x00447850-0x0044787F
 // prototype void (__thiscall ??0SAmbience@@QAE@XZ)(SAmbience* this)
 // callers   0   call targets   1
 // kind      game
@@ -865,10 +807,8 @@ SAmbience *__fastcall s_ambience_construct_redirect(SAmbience *self, void *) {
 
 /*
 Purpose: As 004471F0, with the GAmbience vtable and one more field.
-ORIGINAL: 0x00447B90
-// name      ??0GAmbience@@QAE@XZ
+// ORIGINAL: 0x00447B90 ??0GAmbience@@QAE@XZ 0x00447B90-0x00447BBC
 // size      44 bytes
-// spans     0x00447B90-0x00447BBC
 // prototype void (__thiscall ??0GAmbience@@QAE@XZ)(GAmbience* this)
 // callers   0   call targets   1
 // kind      game

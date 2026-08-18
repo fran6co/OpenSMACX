@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00480180 FILE
-// name      ?draw_diffs@NetWin@@QAEXXZ
+// ORIGINAL: 0x00480180 ?draw_diffs@NetWin@@QAEXXZ 0x00480180-0x0048036F FILE
 // size      495 bytes
-// spans     0x00480180-0x0048036F
 // prototype void (__thiscall ?draw_diffs@NetWin@@QAEXXZ)(NetWin* this)
 // callers   1   call targets   13
 // kind      game

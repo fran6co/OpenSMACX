@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006378B0 BYTE_EXACT FILE
-// name      ?read_frame_process@Video@@QAEXXZ
+// ORIGINAL: 0x006378B0 ?read_frame_process@Video@@QAEXXZ 0x006378B0-0x00637906 FILE BYTE_EXACT
 // size      86 bytes
-// spans     0x006378B0-0x00637906
 // prototype void (__thiscall ?read_frame_process@Video@@QAEXXZ)(Video* this)
 // callers   0   call targets   4
 // kind      game

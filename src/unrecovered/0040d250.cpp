@@ -1,20 +1,7 @@
-// ORIGINAL: 0x0040D250 FILE
-// RULED-OUT: real `Sprite`/`Font` locals (Sprite has no destructor in
-//   this scaffold, only close(), so it is closed explicitly on both
-//   the early-out and the final path, matching the disassembly and the
-//   SEH-funclet targets exactly; the two Fonts get their real
-//   constructor/destructor from RAII). The panel setup (box_sprite x2,
-//   blank-sprite scratch buffer, set_clip, two Font::init calls) is
-//   transcribed with reasonable fidelity. The unit-info body - vehicle
-//   sprite draw, morale/speed/ability/action text built through
-//   several hundred instructions of wrap/wrap_cent/strcat calls - is
-//   condensed to a representative subset of the same callees in
-//   roughly the original order, not a transcription. MISMATCH #11
-//   (setup block, mov vs call).
+// ORIGINAL: 0x0040D250 ?draw_flash@BaseWin@@QAEXH@Z 0x0040D250-0x0040E35B;0x00651AA2-0x00651ACD FILE
+// RULED-OUT: real `Sprite`/`Font` locals (Sprite has no destructor in this scaffold, only close(), so it is closed explicitly on both the early-out and the final path, matching the disassembly and the SEH-funclet targets exactly; the two Fonts get their real constructor/destructor from RAII). The panel setup (box_sprite x2, blank-sprite scratch buffer, set_clip, two Font::init calls) is transcribed with reasonable fidelity. The unit-info body - vehicle sprite draw, morale/speed/ability/action text built through several hundred instructions of wrap/wrap_cent/strcat calls - is condensed to a representative subset of the same callees in roughly the original order, not a transcription. MISMATCH #11 (setup block, mov vs call).
 // working copy - scaffold materialised by --work
-// name      ?draw_flash@BaseWin@@QAEXH@Z
 // size      4406 bytes
-// spans     0x0040D250-0x0040E35B;0x00651AA2-0x00651ACD
 // prototype void (__thiscall ?draw_flash@BaseWin@@QAEXH@Z)(BaseWin* this, int)
 // callers   1   call targets   31
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0045F740 FILE
-// name      ??1Interlude@@QAE@XZ
+// ORIGINAL: 0x0045F740 ??1Interlude@@QAE@XZ 0x0045F740-0x0045F905;0x00655820-0x00655859 FILE
 // size      510 bytes
-// spans     0x0045F740-0x0045F905;0x00655820-0x00655859
 // prototype void (__thiscall ??1Interlude@@QAE@XZ)(Interlude* this)
 // callers   1   call targets   5
 // kind      game

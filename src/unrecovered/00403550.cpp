@@ -1,12 +1,7 @@
-// ORIGINAL: 0x00403550 FILE
-// RULED-OUT: if/else polarity flipped to match layout (jne first, matches);
-//            remaining MISMATCH is the compiler omitting the EBP frame that
-//            the original allocates (esp-relative &a2 suffices here), not
-//            reproduced by reordering statements
+// ORIGINAL: 0x00403550 ?on_mouse_move@AlphaMenu@@QAEXHH@Z 0x00403550-0x0040360F FILE
+// RULED-OUT: if/else polarity flipped to match layout (jne first, matches); remaining MISMATCH is the compiler omitting the EBP frame that the original allocates (esp-relative &a2 suffices here), not reproduced by reordering statements
 // working copy - scaffold materialised by --work
-// name      ?on_mouse_move@AlphaMenu@@QAEXHH@Z
 // size      191 bytes
-// spans     0x00403550-0x0040360F
 // prototype void (__thiscall ?on_mouse_move@AlphaMenu@@QAEXHH@Z)(AlphaMenu* this, int xCoord, int yCoord)
 // callers   0   call targets   2
 // kind      game

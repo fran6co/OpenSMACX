@@ -1,30 +1,7 @@
-// ORIGINAL: 0x004DDA50 FILE
-// RULED-OUT: like 0x005AE120, this has a real SEH frame with ~40 widget
-//            destructor calls; used the same real-RAII-for-Popup +
-//            separate-approximate-locals-for-the-rest strategy. The
-//            harder problem here was call ARGUMENTS: this compiler emits
-//            /EHsc calls through a FIXED scratch-slot area (puStack_20,
-//            pcStack_24, ... one slot per 4 bytes, reused across every
-//            call) rather than push/pop, because esp must stay constant
-//            for the fs:[0] chain - so Ghidra shows every call as
-//            `FUN_xxx();` with the real arguments as separate slot
-//            assignments beforehand, in scratch-slot order rather than
-//            argument order. Confirmed against several call sites'
-//            raw asm (veh_at, X_pop, strcat) that argument order is the
-//            REVERSE of assignment order (nearest-to-the-call assignment
-//            is arg1), and used that rule mechanically to reconstruct
-//            all ~50 call sites; ONE callee (itoa) broke the rule and
-//            was fixed by hand from its own push sequence. The scratch
-//            slots were declared `void *` uniformly (with `int *`/
-//            `unsigned char *` kept only where real pointer arithmetic
-//            or dereference was needed) since their type varies call to
-//            call - this is why the rebuilt prologue class already
-//            diverges at #0. Every FUN_ callee resolved to a real name
-//            from the disassembly's own comments; none were guessed.
+// ORIGINAL: 0x004DDA50 ?editor_edit_veh@Console@@QAEXH@Z 0x004DDA50-0x004DE95B;0x0065B97E-0x0065BC13 FILE
+// RULED-OUT: like 0x005AE120, this has a real SEH frame with ~40 widget destructor calls; used the same real-RAII-for-Popup + separate-approximate-locals-for-the-rest strategy. The harder problem here was call ARGUMENTS: this compiler emits /EHsc calls through a FIXED scratch-slot area (puStack_20, pcStack_24, ... one slot per 4 bytes, reused across every call) rather than push/pop, because esp must stay constant for the fs:[0] chain - so Ghidra shows every call as `FUN_xxx();` with the real arguments as separate slot assignments beforehand, in scratch-slot order rather than argument order. Confirmed against several call sites' raw asm (veh_at, X_pop, strcat) that argument order is the REVERSE of assignment order (nearest-to-the-call assignment is arg1), and used that rule mechanically to reconstruct all ~50 call sites; ONE callee (itoa) broke the rule and was fixed by hand from its own push sequence. The scratch slots were declared `void *` uniformly (with `int *`/ `unsigned char *` kept only where real pointer arithmetic or dereference was needed) since their type varies call to call - this is why the rebuilt prologue class already diverges at #0. Every FUN_ callee resolved to a real name from the disassembly's own comments; none were guessed.
 // working copy - scaffold materialised by --work
-// name      ?editor_edit_veh@Console@@QAEXH@Z
 // size      4512 bytes
-// spans     0x004DDA50-0x004DE95B;0x0065B97E-0x0065BC13
 // prototype void (__thiscall ?editor_edit_veh@Console@@QAEXH@Z)(Console* this, int)
 // callers   5   call targets   35
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064F09C BYTE_EXACT FILE
-// name      sub_64f09c
+// ORIGINAL: 0x0064F09C sub_64f09c 0x0064F09C-0x0064F09F FILE BYTE_EXACT
 // size      3 bytes
-// spans     0x0064F09C-0x0064F09F
 // prototype 
 // callers   2   call targets   0
 // kind      

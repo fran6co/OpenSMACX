@@ -1,22 +1,7 @@
-// ORIGINAL: 0x0053C370 FILE
-// RULED-OUT: real signature per the mangled name (int __cdecl(int,int)).
-//   Outer loop walks Veh[] (g_0095282a = &Vehs[0].y, stride 0x34 matches
-//   veh.h's static_assert; veh-2/veh/veh+0xc/veh+8/veh+0xf/veh+2/veh+0x23
-//   line up with Veh.x/y/faction_id/proto_id/order/state/morale from
-//   veh.h). Inner loop walks Bases[] (g_0097d040/42/44 = &Bases[0].x/y/
-//   faction_id_current, stride 0x134 matches base.h's static_assert), not
-//   "units" as an earlier sibling function's comment guessed - confirmed
-//   by cross-checking both structs' real field offsets in src/veh.h and
-//   src/base.h rather than trusting Ghidra's raw index arithmetic.
-//   `veh_lift` is called for its (used) return value right before
-//   `veh_drop`, contradicting the catalogued `void __cdecl veh_lift(int)`
-//   - proposed int return below. Compiles; diverges at instruction #11
-//   (stack slot scheduling for the many nested locals) - not chased
-//   further given the function's size.
+// ORIGINAL: 0x0053C370 ?pact_withdraw@@YAHHH@Z 0x0053C370-0x0053C649 FILE
+// RULED-OUT: real signature per the mangled name (int __cdecl(int,int)). Outer loop walks Veh[] (g_0095282a = &Vehs[0].y, stride 0x34 matches veh.h's static_assert; veh-2/veh/veh+0xc/veh+8/veh+0xf/veh+2/veh+0x23 line up with Veh.x/y/faction_id/proto_id/order/state/morale from veh.h). Inner loop walks Bases[] (g_0097d040/42/44 = &Bases[0].x/y/ faction_id_current, stride 0x134 matches base.h's static_assert), not "units" as an earlier sibling function's comment guessed - confirmed by cross-checking both structs' real field offsets in src/veh.h and src/base.h rather than trusting Ghidra's raw index arithmetic. `veh_lift` is called for its (used) return value right before `veh_drop`, contradicting the catalogued `void __cdecl veh_lift(int)` - proposed int return below. Compiles; diverges at instruction #11 (stack slot scheduling for the many nested locals) - not chased further given the function's size.
 // working copy - scaffold materialised by --work
-// name      ?pact_withdraw@@YAHHH@Z
 // size      729 bytes
-// spans     0x0053C370-0x0053C649
 // prototype int (__cdecl ?pact_withdraw@@YAHHH@Z)(int factionID1, int factionID2)
 // callers   1   call targets   8
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00637300 BYTE_EXACT
-// name      Video_unk11
+// ORIGINAL: 0x00637300 Video_unk11 0x00637300-0x00637308 BYTE_EXACT
 // size      8 bytes
-// spans     0x00637300-0x00637308
 // prototype 
 // callers   0   call targets   1
 // kind      game

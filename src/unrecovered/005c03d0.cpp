@@ -1,11 +1,7 @@
-// ORIGINAL: 0x005C03D0 FILE
-// RULED-OUT: direct Ghidra transcription with own extern DAT_ table arrays (byte/dword
-//            typed per bracket-index width) instead of the given g_ address pointers;
-//            diverges at insn #5, plausibly register-allocation shape of the ~200-line body
+// ORIGINAL: 0x005C03D0 ?veh_init@@YAHHHHH@Z 0x005C03D0-0x005C08C0 FILE
+// RULED-OUT: direct Ghidra transcription with own extern DAT_ table arrays (byte/dword typed per bracket-index width) instead of the given g_ address pointers; diverges at insn #5, plausibly register-allocation shape of the ~200-line body
 // working copy - scaffold materialised by --work
-// name      ?veh_init@@YAHHHHH@Z
 // size      1264 bytes
-// spans     0x005C03D0-0x005C08C0
 // prototype int (__cdecl ?veh_init@@YAHHHHH@Z)(int protoID, int factionID, int xCoord, int yCoord)
 // callers   13   call targets   12
 // kind      game

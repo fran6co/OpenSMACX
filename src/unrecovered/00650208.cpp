@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00650208 EXCLUDED S2a
-// name      DirectPlayLobbyCreateA
+// ORIGINAL: 0x00650208 DirectPlayLobbyCreateA 0x00650208-0x0065020E EXCLUDED S2a
 // size      6 bytes
-// spans     0x00650208-0x0065020E
 // prototype 
 // callers   1   call targets   0
 // kind      thunk

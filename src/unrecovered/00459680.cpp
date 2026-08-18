@@ -1,29 +1,5 @@
-// ORIGINAL: 0x00459680 FILE
-// DEFERRED: not blocked, but the receiver-tracking needed for correctness
-//     is deeper than a single pass captures - concrete evidence below,
-//     which is the reusable part.
-//   The first ~40% (0x459680-0x459E93, everything up to and including the
-//     resolution-dependent RECT layout math) IS mechanical: every store is
-//     `*(int*)((char*)this+N) = <constant or prior-field arithmetic>` with
-//     N matching this file's own member-map table exactly (field_A5C_=0xA,
-//     field_A60_=0x14, ... all confirmed, none guessed).
-//   The remaining ~60% calls BaseButton::init/set_bubble_text/set_font
-//     ~30 times through `edi`/`ebx`, and those registers are NOT simply
-//     `this+constant` throughout - e.g. at 0x0045AAF3 `mov edi, ebx`
-//     re-aliases edi to whatever ebx last held (itself `this+0xE00` from
-//     0x0045AA0B), so a receiver map built only from `lea edi/ebx,
-//     [esi+N]` sites (33 of them, listed by address in scratch notes) is
-//     INCOMPLETE - it silently mis-resolved `lea ecx, [edi+0x444]` at
-//     0x0045AB13 to this+0x444 instead of the correct this+0xE00+0x444,
-//     an error that would not show up as a compile failure, only as a
-//     wrong receiver. Confirmed by cross-checking every `mov edi,ebx` /
-//     `mov ebx,edi` in the raw disassembly, not just `lea reg, [esi+N]`.
-//   Also present: two indirect-vtable-slot call sites
-//     (`(**(code**)(*(int*)(this+N)+8))()` and `+0xf8`, i.e. VCall slots
-//     2 and 62) needing the VCall shim extended past its current slot002,
-//     and an 11-entry jump table at 0x0045B1DC (already resolved in this
-//     function's own brief, not yet incorporated) inside a 36-iteration
-//     loop over button rects at this+0x8A44 stride 0x2D3*4.
+// ORIGINAL: 0x00459680 ?init@MainInterface@@QAEHH@Z 0x00459680-0x0045B500;0x00655730-0x00655745 FILE
+// DEFERRED: not blocked, but the receiver-tracking needed for correctness is deeper than a single pass captures - concrete evidence below, which is the reusable part. The first ~40% (0x459680-0x459E93, everything up to and including the resolution-dependent RECT layout math) IS mechanical: every store is `*(int*)((char*)this+N) = <constant or prior-field arithmetic>` with N matching this file's own member-map table exactly (field_A5C_=0xA, field_A60_=0x14, ... all confirmed, none guessed). The remaining ~60% calls BaseButton::init/set_bubble_text/set_font ~30 times through `edi`/`ebx`, and those registers are NOT simply `this+constant` throughout - e.g. at 0x0045AAF3 `mov edi, ebx` re-aliases edi to whatever ebx last held (itself `this+0xE00` from 0x0045AA0B), so a receiver map built only from `lea edi/ebx, [esi+N]` sites (33 of them, listed by address in scratch notes) is INCOMPLETE - it silently mis-resolved `lea ecx, [edi+0x444]` at 0x0045AB13 to this+0x444 instead of the correct this+0xE00+0x444, an error that would not show up as a compile failure, only as a wrong receiver. Confirmed by cross-checking every `mov edi,ebx` / `mov ebx,edi` in the raw disassembly, not just `lea reg, [esi+N]`. Also present: two indirect-vtable-slot call sites (`(**(code**)(*(int*)(this+N)+8))()` and `+0xf8`, i.e. VCall slots 2 and 62) needing the VCall shim extended past its current slot002, and an 11-entry jump table at 0x0045B1DC (already resolved in this function's own brief, not yet incorporated) inside a 36-iteration loop over button rects at this+0x8A44 stride 0x2D3*4.
 // UNBLOCKER: rebuild the receiver map by tracking ALL of edi/ebx/eax/edx
 //     def-sites (mov reg,reg included, not just lea reg,[esi+N]) in
 //     address order, verify each resolved `this+N` against the member-map
@@ -31,9 +7,7 @@
 //     mechanical RECT-constant prologue first (safe), the button-array
 //     tail second (needs the corrected receiver map).
 // working copy - scaffold materialised by --work
-// name      ?init@MainInterface@@QAEHH@Z
 // size      7829 bytes
-// spans     0x00459680-0x0045B500;0x00655730-0x00655745
 // prototype int (__thiscall ?init@MainInterface@@QAEHH@Z)(MainInterface* this, int)
 // callers   1   call targets   25
 // kind      game

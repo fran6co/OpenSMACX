@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00424720 FILE
-// name      ?set_vote@CouncWin@@QAEXHH@Z
+// ORIGINAL: 0x00424720 ?set_vote@CouncWin@@QAEXHH@Z 0x00424720-0x0042486C FILE
 // size      332 bytes
-// spans     0x00424720-0x0042486C
 // prototype void (__thiscall ?set_vote@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
 // callers   4   call targets   3
 // kind      game

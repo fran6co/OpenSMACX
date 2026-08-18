@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004D6070 FILE
-// name      ?goto_routine@Console@@QAAXH@Z
+// ORIGINAL: 0x004D6070 ?goto_routine@Console@@QAAXH@Z 0x004D6070-0x004D6196 FILE
 // size      294 bytes
-// spans     0x004D6070-0x004D6196
 // prototype 
 // callers   1   call targets   6
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00649778 EXCLUDED S1
-// name      __getstream
+// ORIGINAL: 0x00649778 __getstream 0x00649778-0x00649840 EXCLUDED S1
 // size      200 bytes
-// spans     0x00649778-0x00649840
 // prototype 
 // callers   1   call targets   5
 // kind      library

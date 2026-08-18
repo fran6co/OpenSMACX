@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00611380 FILE
+// ORIGINAL: 0x00611380 ?on_redraw@SpriteBox@@QAEXXZ 0x00611380-0x006113F9 FILE
 // working copy - scaffold materialised by --work
-// name      ?on_redraw@SpriteBox@@QAEXXZ
 // size      121 bytes
-// spans     0x00611380-0x006113F9
 // prototype void (__thiscall ?on_redraw@SpriteBox@@QAEXXZ)(SpriteBox* this)
 // callers   0   call targets   2
 // kind      game

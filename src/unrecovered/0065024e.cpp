@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0065024E EXCLUDED S1
-// name      __hypothlp
+// ORIGINAL: 0x0065024E __hypothlp 0x0065024E-0x006504D3 EXCLUDED S1
 // size      645 bytes
-// spans     0x0065024E-0x006504D3
 // prototype 
 // callers   1   call targets   7
 // kind      library

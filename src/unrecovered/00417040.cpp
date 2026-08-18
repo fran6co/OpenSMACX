@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00417040 FILE
+// ORIGINAL: 0x00417040 ?production@BaseWin@@QAEXHH@Z 0x00417040-0x00418DBD;0x00651BB0-0x0065221C FILE
 // working copy - scaffold materialised by --work
-// name      ?production@BaseWin@@QAEXHH@Z
 // size      9193 bytes
-// spans     0x00417040-0x00418DBD;0x00651BB0-0x0065221C
 // prototype void (__thiscall ?production@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
 // callers   7   call targets   54
 // kind      game

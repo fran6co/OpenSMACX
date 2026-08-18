@@ -1,28 +1,12 @@
-// ORIGINAL: 0x005F4D90
-// name      sub_5f4d90
+// ORIGINAL: 0x005F4D90 sub_5f4d90 0x005F4D90-0x005F4EB1
+// RULED-OUT: reads at offset 0xa8 (matches Win::poWinBase_) and 0x13c/0x140/ 0x144/0x148 (Win::outer_rect_) with the receiver cached to edi and no matching stack slot for it mean __thiscall on Win, but the class introduced to carry the method - needed only to avoid clashing with the scaffold's own closed Win member list - draws the same region-truncation the other multi-type units here do: a second top-level type ahead of an out-of-line definition returns the brace-depth to zero at its own close, before the real body, and this file's extractor never sees past it. Landed as a free stdcall function taking the receiver explicitly. The two indirect calls are vtable slots 3 (0xc/4) and 63 (0xfc/4) on the receiver and on the a1 pointer respectively; both go through an empty local class used purely for its member-pointer representation, which draws no C4234 and no extra symbol.
 // size      289 bytes
-// spans     0x005F4D90-0x005F4EB1
 // prototype
 // callers   0   call targets   1
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005F4EC0
 // indirect  0x005F4DC9 0x005F4DFD 0x005F4E10 0x005F4E3B 0x005F4EA3
-// RULED-OUT: reads at offset 0xa8 (matches Win::poWinBase_) and 0x13c/0x140/
-//            0x144/0x148 (Win::outer_rect_) with the receiver cached to edi
-//            and no matching stack slot for it mean __thiscall on Win, but
-//            the class introduced to carry the method - needed only to
-//            avoid clashing with the scaffold's own closed Win member list
-//            - draws the same region-truncation the other multi-type units
-//            here do: a second top-level type ahead of an out-of-line
-//            definition returns the brace-depth to zero at its own close,
-//            before the real body, and this file's extractor never sees
-//            past it. Landed as a free stdcall function taking the
-//            receiver explicitly. The two indirect calls are vtable slots
-//            3 (0xc/4) and 63 (0xfc/4) on the receiver and on the a1
-//            pointer respectively; both go through an empty local class
-//            used purely for its member-pointer representation, which
-//            draws no C4234 and no extra symbol.
 
 extern "C" int __stdcall sub_5f4d90(void *self_ptr, void *a1) {
   class MfpBase {};

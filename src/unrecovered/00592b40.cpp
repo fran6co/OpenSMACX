@@ -1,14 +1,7 @@
-// ORIGINAL: 0x00592B40 FILE
-// RULED-OUT: single cached srcIndex/width/height locals across the record
-//            copy loop cause /O2 to spill to a `sub esp` stack frame where
-//            the original keeps everything in registers and the [ebp+8]/
-//            [ebp+0xc] parameter slots as scratch; first divergence is the
-//            prologue itself (mov ebp,esp vs sub esp,N). Semantics verified
-//            against the Ghidra decompile and disasm field-by-field.
+// ORIGINAL: 0x00592B40 sub_592b40 0x00592B40-0x00592D6F FILE
+// RULED-OUT: single cached srcIndex/width/height locals across the record copy loop cause /O2 to spill to a `sub esp` stack frame where the original keeps everything in registers and the [ebp+8]/ [ebp+0xc] parameter slots as scratch; first divergence is the prologue itself (mov ebp,esp vs sub esp,N). Semantics verified against the Ghidra decompile and disasm field-by-field.
 // working copy - scaffold materialised by --work
-// name      sub_592b40
 // size      559 bytes
-// spans     0x00592B40-0x00592D6F
 // prototype 
 // callers   0   call targets   4
 // kind      game

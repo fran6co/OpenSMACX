@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00618520 BYTE_EXACT FILE
-// name      ?UNK13@Caviar@@QAEXXZ
+// ORIGINAL: 0x00618520 ?UNK13@Caviar@@QAEXXZ 0x00618520-0x00618556 FILE BYTE_EXACT
 // size      54 bytes
-// spans     0x00618520-0x00618556
 // prototype void (__thiscall ?UNK13@Caviar@@QAEXXZ)(Caviar* this)
 // callers   0   call targets   0
 // kind      game

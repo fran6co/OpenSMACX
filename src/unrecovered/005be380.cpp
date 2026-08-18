@@ -1,13 +1,6 @@
-// ORIGINAL: 0x005BE380
-// RULED-OUT: MISMATCH #5 xor/push - the two per-tech record globals
-//            (0x9c5b2c-family index arithmetic and the 0x946a50 record
-//            array) used as plain static-address casts rather than
-//            typed `extern` arrays; the call to the still-unrecovered
-//            0x5BEB70 declared locally since it is not a catalogued
-//            callee of this address.
-// name      ?tech_selection@@YAHH@Z
+// ORIGINAL: 0x005BE380 ?tech_selection@@YAHH@Z 0x005BE380-0x005BE52A
+// RULED-OUT: MISMATCH #5 xor/push - the two per-tech record globals (0x9c5b2c-family index arithmetic and the 0x946a50 record array) used as plain static-address casts rather than typed `extern` arrays; the call to the still-unrecovered 0x5BEB70 declared locally since it is not a catalogued callee of this address.
 // size      426 bytes
-// spans     0x005BE380-0x005BE52A
 // prototype int (__cdecl ?tech_selection@@YAHH@Z)(int factionID)
 // callers   3   call targets   6
 // kind      game

@@ -1,10 +1,7 @@
-// ORIGINAL: 0x005CD2D0 FILE
-// RULED-OUT: `long long` (VC6 has none, use __int64); flat 64-iter loop
-//            instead of nested 8x8 do/while counted down
+// ORIGINAL: 0x005CD2D0 sub_5cd2d0 0x005CD2D0-0x005CD3A2 FILE
+// RULED-OUT: `long long` (VC6 has none, use __int64); flat 64-iter loop instead of nested 8x8 do/while counted down
 // working copy - scaffold materialised by --work
-// name      sub_5cd2d0
 // size      210 bytes
-// spans     0x005CD2D0-0x005CD3A2
 // prototype 
 // callers   1   call targets   1
 // kind      game

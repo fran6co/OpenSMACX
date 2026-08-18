@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064C886 EXCLUDED S1
-// name      __errcode
+// ORIGINAL: 0x0064C886 __errcode 0x0064C886-0x0064C8B3 EXCLUDED S1
 // size      45 bytes
-// spans     0x0064C886-0x0064C8B3
 // prototype 
 // callers   2   call targets   0
 // kind      library

@@ -1,14 +1,7 @@
-// ORIGINAL: 0x0047ACF0 FILE
-// RULED-OUT: placement-new onto the already-declared Popup()/Time() ctors
-//        (`new (this) Popup(); new (self+0x538c) Time();`), then the field
-//        stores in the DISASSEMBLY order (field_5380 before field_537c,
-//        then both vtable-pointer stores from the already-declared
-//        g_0066cb60/g_0066cb58, then field_5384, then field_5388).
-//        MISMATCH #3 'push' vs 'mov' remains open (SEH prologue shape).
+// ORIGINAL: 0x0047ACF0 ??0NetMsg@@QAE@HHH@Z 0x0047ACF0-0x0047AD6E;0x00656440-0x00656452 FILE
+// RULED-OUT: placement-new onto the already-declared Popup()/Time() ctors (`new (this) Popup(); new (self+0x538c) Time();`), then the field stores in the DISASSEMBLY order (field_5380 before field_537c, then both vtable-pointer stores from the already-declared g_0066cb60/g_0066cb58, then field_5384, then field_5388). MISMATCH #3 'push' vs 'mov' remains open (SEH prologue shape).
 // working copy - scaffold materialised by --work
-// name      ??0NetMsg@@QAE@HHH@Z
 // size      144 bytes
-// spans     0x0047ACF0-0x0047AD6E;0x00656440-0x00656452
 // prototype void (__thiscall ??0NetMsg@@QAE@HHH@Z)(NetMsg* this, int, int, int)
 // callers   2   call targets   2
 // kind      game

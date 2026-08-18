@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005303B0 FILE
+// ORIGINAL: 0x005303B0 ?wait@NetDaemon@@QAEHPADPAHHH@Z 0x005303B0-0x00530493 FILE
 // working copy - scaffold materialised by --work
-// name      ?wait@NetDaemon@@QAEHPADPAHHH@Z
 // size      227 bytes
-// spans     0x005303B0-0x00530493
 // prototype int (__thiscall ?wait@NetDaemon@@QAEHPADPAHHH@Z)(NetDaemon* this, int8*, int*, int, int)
 // callers   2   call targets   7
 // kind      game

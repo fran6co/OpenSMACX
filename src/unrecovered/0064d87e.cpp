@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064D87E EXCLUDED S1
-// name      ___dtold
+// ORIGINAL: 0x0064D87E ___dtold 0x0064D87E-0x0064D934 EXCLUDED S1
 // size      182 bytes
-// spans     0x0064D87E-0x0064D934
 // prototype 
 // callers   1   call targets   0
 // kind      library

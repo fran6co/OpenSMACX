@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006198E0 FILE
-// name      ?draw_trans@Texture@@QAEXPAUBuffer@@PAUVert@@HPAUVert@@@Z
+// ORIGINAL: 0x006198E0 ?draw_trans@Texture@@QAEXPAUBuffer@@PAUVert@@HPAUVert@@@Z 0x006198E0-0x00619D7F FILE
 // size      1183 bytes
-// spans     0x006198E0-0x00619D7F
 // prototype void (__thiscall ?draw_trans@Texture@@QAEXPAUBuffer@@PAUVert@@HPAUVert@@@Z)(Texture* this, Buffer*, Vert*, int, Vert*)
 // callers   1   call targets   3
 // kind      game

@@ -1,25 +1,8 @@
-// ORIGINAL: 0x005888E0 FILE
-// RULED-OUT: the 8 callee declarations (set_def_string_font, set_def_dialog_font,
-//        set_def_button_font, set_def_string_color[/2/3], set_def_font,
-//        set_def_text_color) had to be marked `static` - the scaffold
-//        omitted `static` even though the mangled names (QAA, not QAE) and
-//        the disassembly (no ecx/this setup at any call site) both say
-//        static; a non-static call is C2352. Statement order matters where
-//        the original interleaves an unrelated global store between an
-//        argument load and its push/call (e.g. `*g_006a721c = 2;` sits
-//        between loading the three Font* values and the call, and
-//        `*g_00696ee0 = 0;`/`*g_00697058 = 1;` sit between the last
-//        argument load and their calls) - hoisting the load into a local
-//        first and placing the store right after reproduces it
-//        (MISMATCH #3 -> MNEMONIC_ONLY, all 61 mnemonics match).
-// RULED-OUT: nothing further found the last 1-byte size difference
-//            (rebuilt 221B vs original 222B, no masked-byte disagreement) -
-//            likely an add-esp or push-immediate encoding choice the
-//            optimizer makes independent of source form.
+// ORIGINAL: 0x005888E0 ?popups_tutorial@@YAXXZ 0x005888E0-0x005889BE FILE
+// RULED-OUT: the 8 callee declarations (set_def_string_font, set_def_dialog_font, set_def_button_font, set_def_string_color[/2/3], set_def_font, set_def_text_color) had to be marked `static` - the scaffold omitted `static` even though the mangled names (QAA, not QAE) and the disassembly (no ecx/this setup at any call site) both say static; a non-static call is C2352. Statement order matters where the original interleaves an unrelated global store between an argument load and its push/call (e.g. `*g_006a721c = 2;` sits between loading the three Font* values and the call, and `*g_00696ee0 = 0;`/`*g_00697058 = 1;` sit between the last argument load and their calls) - hoisting the load into a local first and placing the store right after reproduces it (MISMATCH #3 -> MNEMONIC_ONLY, all 61 mnemonics match).
+// RULED-OUT: nothing further found the last 1-byte size difference (rebuilt 221B vs original 222B, no masked-byte disagreement) - likely an add-esp or push-immediate encoding choice the optimizer makes independent of source form.
 // working copy - scaffold materialised by --work
-// name      ?popups_tutorial@@YAXXZ
 // size      222 bytes
-// spans     0x005888E0-0x005889BE
 // prototype 
 // callers   2   call targets   8
 // kind      game

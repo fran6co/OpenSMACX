@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004457C0 BYTE_EXACT
-// name      ?input_callback@@YAXXZ
+// ORIGINAL: 0x004457C0 ?input_callback@@YAXXZ 0x004457C0-0x004457D3 BYTE_EXACT
 // size      19 bytes
-// spans     0x004457C0-0x004457D3
 // prototype 
 // callers   0   call targets   0
 // kind      game

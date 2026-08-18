@@ -1,14 +1,7 @@
-// ORIGINAL: 0x0057E040 FILE
-// RULED-OUT: near-direct Ghidra transcription (this decompile had no
-//            extraout/jumptable warnings); table strides and Strings::get
-//            call sites were cross-checked against the disassembly, but
-//            the exact if/else vs goto shape of the two long fallback
-//            chains was not re-derived instruction-by-instruction, so
-//            byte-exactness is unlikely even though structure matches.
+// ORIGINAL: 0x0057E040 ?name_proto@@YAXPADHHHHHHH@Z 0x0057E040-0x0057EF95 FILE
+// RULED-OUT: near-direct Ghidra transcription (this decompile had no extraout/jumptable warnings); table strides and Strings::get call sites were cross-checked against the disassembly, but the exact if/else vs goto shape of the two long fallback chains was not re-derived instruction-by-instruction, so byte-exactness is unlikely even though structure matches.
 // working copy - scaffold materialised by --work
-// name      ?name_proto@@YAXPADHHHHHHH@Z
 // size      3925 bytes
-// spans     0x0057E040-0x0057EF95
 // prototype void (__cdecl ?name_proto@@YAXPADHHHHHHH@Z)(int8*, int protoID, int, int, int, int, int, int)
 // callers   7   call targets   9
 // kind      game

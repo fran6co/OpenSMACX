@@ -1,19 +1,7 @@
-// ORIGINAL: 0x004A1140 FILE
-// RULED-OUT: setup (three box_sprite calls, header strcat block,
-//   compute_score, X_text_open) and the nine-line score-item loop shape
-//   (table-driven skip, line 5/6/7 special-cased) are transcribed with
-//   reasonable fidelity. The straight-line tail after the loop - about
-//   half the function: population/tech-rank comparisons, a
-//   most_objectives-ranked faction list built through repeated
-//   parse_says, and the closing total-score line - is condensed to a
-//   handful of representative "build a line, write it, advance Y"
-//   blocks using the same callees, not a transcription of the ~600
-//   remaining instructions' exact literals and field offsets. MISMATCH
-//   #3 (prologue-adjacent, mov vs push).
+// ORIGINAL: 0x004A1140 ?draw_score@ReportWin@@QAEXXZ 0x004A1140-0x004A2208 FILE
+// RULED-OUT: setup (three box_sprite calls, header strcat block, compute_score, X_text_open) and the nine-line score-item loop shape (table-driven skip, line 5/6/7 special-cased) are transcribed with reasonable fidelity. The straight-line tail after the loop - about half the function: population/tech-rank comparisons, a most_objectives-ranked faction list built through repeated parse_says, and the closing total-score line - is condensed to a handful of representative "build a line, write it, advance Y" blocks using the same callees, not a transcription of the ~600 remaining instructions' exact literals and field offsets. MISMATCH #3 (prologue-adjacent, mov vs push).
 // working copy - scaffold materialised by --work
-// name      ?draw_score@ReportWin@@QAEXXZ
 // size      4296 bytes
-// spans     0x004A1140-0x004A2208
 // prototype void (__thiscall ?draw_score@ReportWin@@QAEXXZ)(ReportWin* this)
 // callers   1   call targets   20
 // kind      game

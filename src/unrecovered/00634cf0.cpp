@@ -1,11 +1,7 @@
-// ORIGINAL: 0x00634CF0 FILE
-// RULED-OUT: void return kept per mangled QAEXXZ (tail neg/sbb/and masked-eax
-//            not reproduced); own OpenFileNameShim struct (classic 0x4C
-//            OPENFILENAMEA layout) + differently-named GetOpenFileNameA_real
+// ORIGINAL: 0x00634CF0 ?load@FileBox@@QAEXXZ 0x00634CF0-0x00634DAE FILE
+// RULED-OUT: void return kept per mangled QAEXXZ (tail neg/sbb/and masked-eax not reproduced); own OpenFileNameShim struct (classic 0x4C OPENFILENAMEA layout) + differently-named GetOpenFileNameA_real
 // working copy - scaffold materialised by --work
-// name      ?load@FileBox@@QAEXXZ
 // size      190 bytes
-// spans     0x00634CF0-0x00634DAE
 // prototype void (__thiscall ?load@FileBox@@QAEXXZ)(FileBox* this)
 // callers   1   call targets   2
 // kind      game

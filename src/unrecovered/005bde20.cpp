@@ -1,18 +1,7 @@
-// ORIGINAL: 0x005BDE20 FILE
-// RULED-OUT: `void` return instead of `int 0`; splitting the two
-//            negative-parameter guards into separate `if`s instead of
-//            `||` - neither moved the divergence, which sits at #4
-//            (`mov ebx,[ebp+0x10]` vs a hoisted `xor ebx,ebx`),
-//            already before the first call; likely register
-//            allocation pressure from the many later 0-argument
-//            pushes, not the guard shape. Control flow, field offsets
-//            (field_2144_, dialogs_+0x2274/+0x2240) and the
-//            lookupA/2+lookupB+lookupMid tie-break were hand-traced
-//            from the raw disasm, not Ghidra's decompile.
+// ORIGINAL: 0x005BDE20 tech_wizard_unk1 0x005BDE20-0x005BE0F8 FILE
+// RULED-OUT: `void` return instead of `int 0`; splitting the two negative-parameter guards into separate `if`s instead of `||` - neither moved the divergence, which sits at #4 (`mov ebx,[ebp+0x10]` vs a hoisted `xor ebx,ebx`), already before the first call; likely register allocation pressure from the many later 0-argument pushes, not the guard shape. Control flow, field offsets (field_2144_, dialogs_+0x2274/+0x2240) and the lookupA/2+lookupB+lookupMid tie-break were hand-traced from the raw disasm, not Ghidra's decompile.
 // working copy - scaffold materialised by --work
-// name      tech_wizard_unk1
 // size      728 bytes
-// spans     0x005BDE20-0x005BE0F8
 // prototype 
 // callers   0   call targets   8
 // kind      game

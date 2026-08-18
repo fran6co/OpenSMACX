@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0058F700 BYTE_EXACT FILE
-// name      ?say_fac_special@@YAXPADPADH@Z
+// ORIGINAL: 0x0058F700 ?say_fac_special@@YAXPADPADH@Z 0x0058F700-0x0058F80A FILE BYTE_EXACT
 // size      266 bytes
-// spans     0x0058F700-0x0058F80A
 // prototype 
 // callers   1   call targets   2
 // kind      game

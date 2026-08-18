@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00404310 FILE
+// ORIGINAL: 0x00404310 ??1AlphaMovie@@QAE@XZ 0x00404310-0x00404395;0x00650710-0x0065073B FILE
 // working copy - scaffold materialised by --work
-// name      ??1AlphaMovie@@QAE@XZ
 // size      176 bytes
-// spans     0x00404310-0x00404395;0x00650710-0x0065073B
 // prototype void (__thiscall ??1AlphaMovie@@QAE@XZ)(AlphaMovie* this)
 // callers   1   call targets   4
 // kind      game

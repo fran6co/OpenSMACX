@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005D6A50 BYTE_EXACT
-// name      ?set_def_nc_sprites@GraphicWin@@QAAXPAUNCSprites@@@Z
+// ORIGINAL: 0x005D6A50 ?set_def_nc_sprites@GraphicWin@@QAAXPAUNCSprites@@@Z 0x005D6A50-0x005D6ABA BYTE_EXACT
 // size      106 bytes
-// spans     0x005D6A50-0x005D6ABA
 // prototype 
 // callers   1   call targets   0
 // kind      game

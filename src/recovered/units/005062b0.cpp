@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005062B0 FILE
-// name      ?promote@@YAXH@Z
+// ORIGINAL: 0x005062B0 ?promote@@YAXH@Z 0x005062B0-0x0050648B FILE
 // size      475 bytes
-// spans     0x005062B0-0x0050648B
 // prototype void (__cdecl ?promote@@YAXH@Z)(int vehID)
 // callers   1   call targets   5
 // kind      game

@@ -1,18 +1,12 @@
-// ORIGINAL: 0x00463040 FILE
+// ORIGINAL: 0x00463040 ?pixel_to_tile@MapWin@@QAEHHHPAHPAH@Z 0x00463040-0x004632CC FILE
+// RULED-OUT: MISMATCH #10 'lea' vs 'cmp' - transcribed the Ghidra pseudocode almost verbatim (including the vbtable-indirected bounds check via *(int*)(*this+4)); the entry sequence loading eax/ecx from [edi] and [eax+4] diverges around instruction 10, not chased further.
 // working copy - scaffold materialised by --work
-// name      ?pixel_to_tile@MapWin@@QAEHHHPAHPAH@Z
 // size      652 bytes
-// spans     0x00463040-0x004632CC
 // prototype int (__thiscall ?pixel_to_tile@MapWin@@QAEHHHPAHPAH@Z)(MapWin* this, int, int, int*, int*)
 // callers   7   call targets   1
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x0046FE70
-// RULED-OUT: MISMATCH #10 'lea' vs 'cmp' - transcribed the Ghidra pseudocode
-//            almost verbatim (including the vbtable-indirected bounds check
-//            via *(int*)(*this+4)); the entry sequence loading eax/ecx from
-//            [edi] and [eax+4] diverges around instruction 10, not chased
-//            further.
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?pixel_to_tile@MapWin@@QAEHHHPAHPAH@Z  at 0x00463040  (652 bytes)

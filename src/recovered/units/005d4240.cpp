@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005D4240 FILE
-// name      sub_5d4240
+// ORIGINAL: 0x005D4240 sub_5d4240 0x005D4240-0x005D427C FILE
 // size      60 bytes
-// spans     0x005D4240-0x005D427C
 // prototype 
 // callers   0   call targets   0
 // kind      game

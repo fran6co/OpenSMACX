@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00467190 FILE
-// name      ?draw_bases@MapWin@@QAEXHHHHH@Z
+// ORIGINAL: 0x00467190 ?draw_bases@MapWin@@QAEXHHHHH@Z 0x00467190-0x004672B8 FILE
 // size      296 bytes
-// spans     0x00467190-0x004672B8
 // prototype void (__thiscall ?draw_bases@MapWin@@QAEXHHHHH@Z)(MapWin* this, int xCoord, int yCoord, int, int, int)
 // callers   2   call targets   2
 // kind      game

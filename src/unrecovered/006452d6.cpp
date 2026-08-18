@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006452D6 EXCLUDED S1
-// name      __abnormal_termination
+// ORIGINAL: 0x006452D6 __abnormal_termination 0x006452D6-0x006452F9 EXCLUDED S1
 // size      35 bytes
-// spans     0x006452D6-0x006452F9
 // prototype 
 // callers   1   call targets   0
 // kind      library

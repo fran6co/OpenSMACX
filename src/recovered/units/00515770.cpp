@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00515770 FILE
-// name      ?chat@Console@@QAEXH@Z
+// ORIGINAL: 0x00515770 ?chat@Console@@QAEXH@Z 0x00515770-0x005158F4 FILE
 // size      388 bytes
-// spans     0x00515770-0x005158F4
 // prototype void (__thiscall ?chat@Console@@QAEXH@Z)(Console* this, int)
 // callers   5   call targets   4
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00500120 BYTE_EXACT
-// name      ?clear@@YAXXZ
+// ORIGINAL: 0x00500120 ?clear@@YAXXZ 0x00500120-0x00500128 BYTE_EXACT
 // size      8 bytes
-// spans     0x00500120-0x00500128
 // prototype 
 // callers   4   call targets   0
 // kind      game

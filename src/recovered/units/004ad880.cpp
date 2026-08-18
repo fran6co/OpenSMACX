@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004AD880 FILE
-// name      ??0SetupWin@@QAE@XZ
+// ORIGINAL: 0x004AD880 ??0SetupWin@@QAE@XZ 0x004AD880-0x004AD9C0;0x006595D0-0x0065960C FILE
 // size      380 bytes
-// spans     0x004AD880-0x004AD9C0;0x006595D0-0x0065960C
 // prototype void (__thiscall ??0SetupWin@@QAE@XZ)(SetupWin* this)
 // callers   5   call targets   3
 // kind      game

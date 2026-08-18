@@ -1,8 +1,6 @@
-// ORIGINAL: 0x004710E0 FILE
+// ORIGINAL: 0x004710E0 ?mapwin_system_shutdown@@YAXXZ 0x004710E0-0x0047115F FILE
 // working copy - scaffold materialised by --work
-// name      ?mapwin_system_shutdown@@YAXXZ
 // size      127 bytes
-// spans     0x004710E0-0x0047115F
 // prototype 
 // callers   3   call targets   2
 // kind      game

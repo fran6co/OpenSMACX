@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00476DA0 FILE
-// name      ?mon_secrets_of_tech@@YAXH@Z
+// ORIGINAL: 0x00476DA0 ?mon_secrets_of_tech@@YAXH@Z 0x00476DA0-0x00476EDD FILE
 // size      317 bytes
-// spans     0x00476DA0-0x00476EDD
 // prototype 
 // callers   1   call targets   2
 // kind      game

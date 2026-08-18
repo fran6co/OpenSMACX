@@ -1,17 +1,11 @@
-// ORIGINAL: 0x005061B0 FILE
-// name      ?battle_kill_chaff@@YAXHPAHPAHPAHHH@Z
+// ORIGINAL: 0x005061B0 ?battle_kill_chaff@@YAXHPAHPAHPAHHH@Z 0x005061B0-0x005062A2 FILE
+// RULED-OUT: nothing tried beyond the direct transcription below - landed at first compiling candidate given batch size. Mnemonic similarity 0.93, first divergence is a `movsx` the rebuilt body splits into two `mov`s (short-to-int widening scheduled differently around the record-base computation, #25).
 // size      242 bytes
-// spans     0x005061B0-0x005062A2
 // prototype void (__cdecl ?battle_kill_chaff@@YAXHPAHPAHPAHHH@Z)(int, int*, int*, int*, int, int)
 // callers   ?   call targets   1
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x00505D80
-// RULED-OUT: nothing tried beyond the direct transcription below - landed
-//            at first compiling candidate given batch size. Mnemonic
-//            similarity 0.93, first divergence is a `movsx` the rebuilt
-//            body splits into two `mov`s (short-to-int widening scheduled
-//            differently around the record-base computation, #25).
 
 // GENERATED SKELETON (hand-written, following tools/emit_translation_unit.py
 // conventions) - a VERIFICATION ARTIFACT, not product source: classes are

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00558C60 FILE
-// name      ?commlink_attempt@@YAXH@Z
+// ORIGINAL: 0x00558C60 ?commlink_attempt@@YAXH@Z 0x00558C60-0x00558FB4 FILE
 // size      852 bytes
-// spans     0x00558C60-0x00558FB4
 // prototype 
 // callers   3   call targets   13
 // kind      game

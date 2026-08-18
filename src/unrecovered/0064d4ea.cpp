@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064D4EA EXCLUDED S1
-// name      __CopyMan
+// ORIGINAL: 0x0064D4EA __CopyMan 0x0064D4EA-0x0064D505 EXCLUDED S1
 // size      27 bytes
-// spans     0x0064D4EA-0x0064D505
 // prototype 
 // callers   1   call targets   0
 // kind      library

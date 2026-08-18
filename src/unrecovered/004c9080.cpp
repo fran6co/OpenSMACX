@@ -1,20 +1,7 @@
-// ORIGINAL: 0x004C9080 FILE
-// RULED-OUT: the offsets (ebp-0x343c BasePop, ebp-0x3a4 Spot, ebp-0x10e4
-//            Dialogs, ebp-0x6cc Dialog, two ebp-0x12xx StringStructs,
-//            ebp-0x1e94/0x29e0 FlatButtons, ebp-0x2a14 Heap) all land
-//            inside where the header's own BasePop class already places
-//            same-named/typed fields, suggesting one giant `BasePop`
-//            local - not used here because the header's BasePop still
-//            has raw byte placeholders (dialogs_, two StringStruct
-//            regions) that would silently drop those cleanup calls if
-//            left to an implicit destructor. Used one flat byte buffer
-//            plus explicit reinterpret_cast calls instead, in exact
-//            disassembly order/targets, at the cost of the free SEH
-//            prologue/epilogue (no `__alloca_probe`/fs:[0] chain here).
+// ORIGINAL: 0x004C9080 sub_4c9080 0x004C9080-0x004C92CF;0x00659FF2-0x0065A090 FILE
+// RULED-OUT: the offsets (ebp-0x343c BasePop, ebp-0x3a4 Spot, ebp-0x10e4 Dialogs, ebp-0x6cc Dialog, two ebp-0x12xx StringStructs, ebp-0x1e94/0x29e0 FlatButtons, ebp-0x2a14 Heap) all land inside where the header's own BasePop class already places same-named/typed fields, suggesting one giant `BasePop` local - not used here because the header's BasePop still has raw byte placeholders (dialogs_, two StringStruct regions) that would silently drop those cleanup calls if left to an implicit destructor. Used one flat byte buffer plus explicit reinterpret_cast calls instead, in exact disassembly order/targets, at the cost of the free SEH prologue/epilogue (no `__alloca_probe`/fs:[0] chain here).
 // working copy - scaffold materialised by --work
-// name      sub_4c9080
 // size      749 bytes
-// spans     0x004C9080-0x004C92CF;0x00659FF2-0x0065A090
 // prototype 
 // callers   1   call targets   16
 // kind      game

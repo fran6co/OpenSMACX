@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0043E490 FILE
-// name      ?setup_veh@DesignWin@@QAEXHH@Z
+// ORIGINAL: 0x0043E490 ?setup_veh@DesignWin@@QAEXHH@Z 0x0043E490-0x0043E952 FILE
 // size      1218 bytes
-// spans     0x0043E490-0x0043E952
 // prototype void (__thiscall ?setup_veh@DesignWin@@QAEXHH@Z)(DesignWin* this, int protoID, int)
 // callers   3   call targets   7
 // kind      game

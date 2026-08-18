@@ -1,14 +1,7 @@
-// ORIGINAL: 0x004E80B0 FILE
-// RULED-OUT: literal register-machine transliteration (pseudo-regs eax..edi + stack
-//   slots v04..v58, goto per basic block); covers ~100% of instructions (5804
-//   rebuilt vs 5275 original bytes). cdq/sub/sar-1 divide-by-2 idioms folded to
-//   `/2`; neg/sbb/not boolean tricks folded to ternaries; magic-const /3 folded
-//   to `/3`. Divergence is from stack/local layout (more temporaries than the
-//   original's register allocation), not from control flow or field offsets.
+// ORIGINAL: 0x004E80B0 ?base_yield@@YAXXZ 0x004E80B0-0x004E954B FILE
+// RULED-OUT: literal register-machine transliteration (pseudo-regs eax..edi + stack slots v04..v58, goto per basic block); covers ~100% of instructions (5804 rebuilt vs 5275 original bytes). cdq/sub/sar-1 divide-by-2 idioms folded to `/2`; neg/sbb/not boolean tricks folded to ternaries; magic-const /3 folded to `/3`. Divergence is from stack/local layout (more temporaries than the original's register allocation), not from control flow or field offsets.
 // working copy - scaffold materialised by --work
-// name      ?base_yield@@YAXXZ
 // size      5275 bytes
-// spans     0x004E80B0-0x004E954B
 // prototype 
 // callers   7   call targets   9
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064628F EXCLUDED S1
-// name      _toupper
+// ORIGINAL: 0x0064628F _toupper 0x0064628F-0x006462FE EXCLUDED S1
 // size      111 bytes
-// spans     0x0064628F-0x006462FE
 // prototype 
 // callers   5   call targets   3
 // kind      library

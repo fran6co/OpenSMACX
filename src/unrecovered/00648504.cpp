@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00648504 EXCLUDED S1
-// name      ___sbh_alloc_new_group
+// ORIGINAL: 0x00648504 ___sbh_alloc_new_group 0x00648504-0x006485FF EXCLUDED S1
 // size      251 bytes
-// spans     0x00648504-0x006485FF
 // prototype 
 // callers   1   call targets   0
 // kind      library

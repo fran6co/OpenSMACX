@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064DD40 EXCLUDED S1
-// name      __aullrem
+// ORIGINAL: 0x0064DD40 __aullrem 0x0064DD40-0x0064DDB5 EXCLUDED S1
 // size      117 bytes
-// spans     0x0064DD40-0x0064DDB5
 // prototype 
 // callers   1   call targets   0
 // kind      library

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004BDFA0 BYTE_EXACT FILE
-// name      ?base_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z
+// ORIGINAL: 0x004BDFA0 ?base_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z 0x004BDFA0-0x004BDFDD FILE BYTE_EXACT
 // size      61 bytes
-// spans     0x004BDFA0-0x004BDFDD
 // prototype 
 // callers   0   call targets   1
 // kind      game

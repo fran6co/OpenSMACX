@@ -1,15 +1,7 @@
-// ORIGINAL: 0x005D9BE0 FILE
-// RULED-OUT: Ghidra-faithful translation (Win::get_hdc/release_hdc made
-//            static to match win.h; IntersectRect/BitBlt/ValidateRect/
-//            SetDIBColorTable called through __stdcall function-pointer
-//            typedefs read from the IAT-slot globals; slot017/slot026
-//            retyped for the observer dispatch). Compiles and matches
-//            through instr #57 (of ~230); diverges at #58 (inc vs mov,
-//            likely a refcount decrement's codegen). Landed at MISMATCH.
+// ORIGINAL: 0x005D9BE0 ?copy_to_window@Buffer@@QAEHPAVWin@@HHHHHH@Z 0x005D9BE0-0x005D9FAF FILE
+// RULED-OUT: Ghidra-faithful translation (Win::get_hdc/release_hdc made static to match win.h; IntersectRect/BitBlt/ValidateRect/ SetDIBColorTable called through __stdcall function-pointer typedefs read from the IAT-slot globals; slot017/slot026 retyped for the observer dispatch). Compiles and matches through instr #57 (of ~230); diverges at #58 (inc vs mov, likely a refcount decrement's codegen). Landed at MISMATCH.
 // working copy - scaffold materialised by --work
-// name      ?copy_to_window@Buffer@@QAEHPAVWin@@HHHHHH@Z
 // size      975 bytes
-// spans     0x005D9BE0-0x005D9FAF
 // prototype int (__thiscall ?copy_to_window@Buffer@@QAEHPAVWin@@HHHHHH@Z)(Buffer* this, Win*, int, int, int, int, int, int)
 // callers   2   call targets   8
 // kind      game

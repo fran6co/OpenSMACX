@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00645470 EXCLUDED S1
-// name      _strcat
+// ORIGINAL: 0x00645470 _strcat 0x00645470-0x00645550 EXCLUDED S1
 // size      224 bytes
-// spans     0x00645470-0x00645550
 // prototype 
 // callers   446   call targets   0
 // kind      library

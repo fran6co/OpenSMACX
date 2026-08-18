@@ -28,10 +28,8 @@ uint32_t *CheckBoxDefault2 = (uint32_t *)0x00697108;
 Purpose: Reset the check box to its defaults, then close its dialog and
          graphic base. Both calls resolve through the vbtable, so they reach
          the Dialog and the virtual base rather than the object itself.
-ORIGINAL: 0x0060E7C0
-// name      ?close@CheckBox@@QAEXXZ
+// ORIGINAL: 0x0060E7C0 ?close@CheckBox@@QAEXXZ 0x0060E7C0-0x0060E7F9
 // size      57 bytes
-// spans     0x0060E7C0-0x0060E7F9
 // prototype void (__thiscall ?close@CheckBox@@QAEXXZ)(CheckBox* this)
 // callers   13   call targets   2
 // kind      game
@@ -84,10 +82,8 @@ Purpose: Toggle one bit of the state word - clear it when set, set it when
          The shift count is whatever CL holds, so the position is masked to
          five bits by the hardware; `pos & 31` states that rather than relying
          on C++ shift-overflow, which is undefined rather than truncating.
-ORIGINAL: 0x0060EB50
-// name      ?UNK1@CheckBox@@QAEXH@Z
+// ORIGINAL: 0x0060EB50 ?UNK1@CheckBox@@QAEXH@Z 0x0060EB50-0x0060EB7D
 // size      45 bytes
-// spans     0x0060EB50-0x0060EB7D
 // prototype void (__thiscall ?UNK1@CheckBox@@QAEXH@Z)(CheckBox* this, int)
 // callers   0   call targets   0
 // kind      game
@@ -119,10 +115,8 @@ Purpose: Report whether one bit of the state word is set. Returns the MASKED
          WORD, not a normalised 0 or 1 - the body ends `and eax, esi` with no
          further narrowing, so a caller testing it against 1 would read a
          different answer than the original gives.
-ORIGINAL: 0x0060ECC0
-// name      ?UNK2@CheckBox@@QAEHH@Z
+// ORIGINAL: 0x0060ECC0 ?UNK2@CheckBox@@QAEHH@Z 0x0060ECC0-0x0060ECE0
 // size      32 bytes
-// spans     0x0060ECC0-0x0060ECE0
 // prototype int (__thiscall ?UNK2@CheckBox@@QAEHH@Z)(CheckBox* this, int)
 // callers   0   call targets   0
 // kind      game
@@ -148,10 +142,8 @@ int __fastcall check_box_unk2_redirect(CheckBox *self, void *, int pos) {
 /*
 Purpose: Set or clear one bit of the state word, chosen by the second argument.
          Unlike UNK1 this does not depend on the bit's current value.
-ORIGINAL: 0x0060EC80
-// name      ?set_state_pos@CheckBox@@QAEXHH@Z
+// ORIGINAL: 0x0060EC80 ?set_state_pos@CheckBox@@QAEXHH@Z 0x0060EC80-0x0060ECB1
 // size      49 bytes
-// spans     0x0060EC80-0x0060ECB1
 // prototype void (__thiscall ?set_state_pos@CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -181,10 +173,8 @@ void __fastcall check_box_set_state_pos_redirect(CheckBox *self, void *,
 
 /*
 Purpose: Repaint on dialog focus, dispatching through the enclosing object.
-ORIGINAL: 0x0060FB90 BYTE_EXACT
-// name      ?on_dialog_focus@CheckBox@@QAEXH@Z
+// ORIGINAL: 0x0060FB90 ?on_dialog_focus@CheckBox@@QAEXH@Z 0x0060FB90-0x0060FBA7 BYTE_EXACT
 // size      23 bytes
-// spans     0x0060FB90-0x0060FBA7
 // prototype void (__thiscall ?on_dialog_focus@CheckBox@@QAEXH@Z)(CheckBox* this, int)
 // callers   1   call targets   0
 // kind      game
@@ -211,10 +201,8 @@ void CheckBox::on_dialog_focus(int a1) {
 
 /*
 Purpose: Clear the hover index and repaint, through the enclosing object.
-ORIGINAL: 0x0060FC30 BYTE_EXACT
-// name      ?on_mouse_leave@CheckBox@@QAEXHH@Z
+// ORIGINAL: 0x0060FC30 ?on_mouse_leave@CheckBox@@QAEXHH@Z 0x0060FC30-0x0060FC58 BYTE_EXACT
 // size      40 bytes
-// spans     0x0060FC30-0x0060FC58
 // prototype void (__thiscall ?on_mouse_leave@CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)
 // callers   1   call targets   0
 // kind      game
@@ -249,10 +237,9 @@ void CheckBox::on_mouse_leave(int a1, int a2) {
 }
 
 /*
-ORIGINAL: 0x0060FC60
-// name      ?init_class@CheckBox@@QAAHXZ
+// ORIGINAL: 0x0060FC60 ?init_class@CheckBox@@QAAHXZ 0x0060FC60-0x0060FD52;0x00662F84-0x00662F99
+// RULED-OUT: a real local `Buffer buf;` double-destructs (the explicit ~Buffer() call plus the automatic scope-exit one). A raw `char[sizeof(Buffer)]` + placement `new` + explicit `->~Buffer()` is the shape the original uses. SEH prologue/unwind funclet not reproduced (same gap as the RadioButton sibling).
 // size      263 bytes
-// spans     0x0060FC60-0x0060FD52;0x00662F84-0x00662F99
 // prototype int (__cdecl ?init_class@CheckBox@@QAAHXZ)()
 // callers   1   call targets   5
 // kind      game
@@ -261,11 +248,6 @@ ORIGINAL: 0x0060FC60
 //
 // Promoted 2026-08-15 from src/unrecovered/0060fc60.cpp to retire its
 // pending_bodies forwarder.
-// RULED-OUT: a real local `Buffer buf;` double-destructs (the explicit
-//            ~Buffer() call plus the automatic scope-exit one). A raw
-//            `char[sizeof(Buffer)]` + placement `new` + explicit `->~Buffer()`
-//            is the shape the original uses. SEH prologue/unwind funclet not
-//            reproduced (same gap as the RadioButton sibling).
 Status: Complete
 */
 static int *const g_0069710c = (int *)0x0069710C;

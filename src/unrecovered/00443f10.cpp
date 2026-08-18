@@ -1,19 +1,7 @@
-// ORIGINAL: 0x00443F10 FILE
-// RULED-OUT: the ~500-instruction layout-RECT tree (this+0xedc onward,
-//   built by repeatedly splitting/insetting a screen rect) is
-//   approximated at the right field offsets with plausible rather than
-//   register-derived values; likewise the AI offer-table indexing
-//   (0x7388d8/0x7388e0/0x7388e8/0x738928, 9-wide rows keyed by ab4/ab8)
-//   is a simplified approximation, not the exact addressing. The widget
-//   init/call sequence (Spot::init, GraphicWin::init/fill, box_sprite,
-//   StringBox::init, EditBox::init, the 13-button BaseButton loop,
-//   add_offer/rand dispatch, message_data/iface teardown) is
-//   transcribed in order with matching argument counts. MISMATCH #20
-//   (layout block, lea vs sub).
+// ORIGINAL: 0x00443F10 ?exec@DiploWin@@QAEXHH@Z 0x00443F10-0x00444D8B FILE
+// RULED-OUT: the ~500-instruction layout-RECT tree (this+0xedc onward, built by repeatedly splitting/insetting a screen rect) is approximated at the right field offsets with plausible rather than register-derived values; likewise the AI offer-table indexing (0x7388d8/0x7388e0/0x7388e8/0x738928, 9-wide rows keyed by ab4/ab8) is a simplified approximation, not the exact addressing. The widget init/call sequence (Spot::init, GraphicWin::init/fill, box_sprite, StringBox::init, EditBox::init, the 13-button BaseButton loop, add_offer/rand dispatch, message_data/iface teardown) is transcribed in order with matching argument counts. MISMATCH #20 (layout block, lea vs sub).
 // working copy - scaffold materialised by --work
-// name      ?exec@DiploWin@@QAEXHH@Z
 // size      3707 bytes
-// spans     0x00443F10-0x00444D8B
 // prototype void (__thiscall ?exec@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)
 // callers   1   call targets   24
 // kind      game

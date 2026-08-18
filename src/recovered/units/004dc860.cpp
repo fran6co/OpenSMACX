@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004DC860 FILE
-// name      ?editor_scen_victory@Console@@QAEXXZ
+// ORIGINAL: 0x004DC860 ?editor_scen_victory@Console@@QAEXXZ 0x004DC860-0x004DCCB4;0x0065B5CC-0x0065B6A4 FILE
 // size      1324 bytes
-// spans     0x004DC860-0x004DCCB4;0x0065B5CC-0x0065B6A4
 // prototype void (__thiscall ?editor_scen_victory@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   22
 // kind      game

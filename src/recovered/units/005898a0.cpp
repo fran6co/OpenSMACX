@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005898A0 FILE
-// name      ?thumb_routine@@YAXH@Z
+// ORIGINAL: 0x005898A0 ?thumb_routine@@YAXH@Z 0x005898A0-0x00589A24 FILE
 // size      388 bytes
-// spans     0x005898A0-0x00589A24
 // prototype 
 // callers   1   call targets   10
 // kind      game

@@ -1,10 +1,7 @@
-// ORIGINAL: 0x006018A0 FILE
-// RULED-OUT: nothing beyond the direct free/mem_get/strcat transcription;
-//            diverges at #1 (mov vs push)
+// ORIGINAL: 0x006018A0 ?set_def_ok_text@BasePop@@QAAHPAD@Z 0x006018A0-0x00601902 FILE
+// RULED-OUT: nothing beyond the direct free/mem_get/strcat transcription; diverges at #1 (mov vs push)
 // working copy - scaffold materialised by --work
-// name      ?set_def_ok_text@BasePop@@QAAHPAD@Z
 // size      98 bytes
-// spans     0x006018A0-0x00601902
 // prototype 
 // callers   2   call targets   4
 // kind      game

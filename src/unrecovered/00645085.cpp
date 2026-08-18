@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00645085 EXCLUDED S1
-// name      ?_CallSETranslator@@YAHPAUEHExceptionRecord@@PAUEHRegistrationNode@@PAX2PBU_s_FuncInfo@@H1@Z
+// ORIGINAL: 0x00645085 ?_CallSETranslator@@YAHPAUEHExceptionRecord@@PAUEHRegistrationNode@@PAX2PBU_s_FuncInfo@@H1@Z 0x00645085-0x0064513B EXCLUDED S1
 // size      182 bytes
-// spans     0x00645085-0x0064513B
 // prototype 
 // callers   1   call targets   1
 // kind      library

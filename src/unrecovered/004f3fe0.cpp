@@ -1,15 +1,7 @@
-// ORIGINAL: 0x004F3FE0 FILE
-// RULED-OUT: full register-transliteration from raw disasm (not Ghidra, whose DAT_0090ea30
-//            offsets are all mis-scaled x2 - it typed that global short*, and its 4th arg to
-//            at_goal() is wrong too, using DAT_0090ea30[1] where raw disasm shows edi/cost).
-//            Division-by-constant idioms (magic-multiply+shift) written as plain C `/` and
-//            trusted to re-lower; verified against Ghidra's own reconstructed divisors (10,
-//            25,50,100,250) rather than reverse-engineering each magic constant by hand.
-//            Compiles; frameless prologue vs original's framed - not chased given size.
+// ORIGINAL: 0x004F3FE0 ?base_hurry@@YAXXZ 0x004F3FE0-0x004F4826 FILE
+// RULED-OUT: full register-transliteration from raw disasm (not Ghidra, whose DAT_0090ea30 offsets are all mis-scaled x2 - it typed that global short*, and its 4th arg to at_goal() is wrong too, using DAT_0090ea30[1] where raw disasm shows edi/cost). Division-by-constant idioms (magic-multiply+shift) written as plain C `/` and trusted to re-lower; verified against Ghidra's own reconstructed divisors (10, 25,50,100,250) rather than reverse-engineering each magic constant by hand. Compiles; frameless prologue vs original's framed - not chased given size.
 // working copy - scaffold materialised by --work
-// name      ?base_hurry@@YAXXZ
 // size      2118 bytes
-// spans     0x004F3FE0-0x004F4826
 // prototype 
 // callers   1   call targets   10
 // kind      game

@@ -15,10 +15,8 @@
 
 /*
 Purpose: Initialize a zero vector.
-ORIGINAL: 0x006343C0 BYTE_EXACT
-// name      ??0Vector@@QAE@XZ
+// ORIGINAL: 0x006343C0 ??0Vector@@QAE@XZ 0x006343C0-0x006343CD BYTE_EXACT
 // size      13 bytes
-// spans     0x006343C0-0x006343CD
 // prototype void (__thiscall ??0Vector@@QAE@XZ)(Vector* this)
 // callers   1   call targets   0
 // kind      game
@@ -35,10 +33,8 @@ Vector::Vector() {
 
 /*
 Purpose: Clear all vector components.
-ORIGINAL: 0x006343D0 BYTE_EXACT
-// name      ?close@Vector@@QAEXXZ
+// ORIGINAL: 0x006343D0 ?close@Vector@@QAEXXZ 0x006343D0-0x006343DB BYTE_EXACT
 // size      11 bytes
-// spans     0x006343D0-0x006343DB
 // prototype void (__thiscall ?close@Vector@@QAEXXZ)(Vector* this)
 // callers   1   call targets   0
 // kind      game
@@ -59,10 +55,8 @@ Note:    `output` is the hidden return-object slot of `Vector operator-`, not
          a declared parameter - see the signature note in vector.h. The
          difference is computed into a temporary first because the original
          does, and because the caller may pass the same object twice.
-ORIGINAL: 0x00634430
-// name      ?__mi@Vector@@QAEXAAVVector@@AAVVector@@@Z
+// ORIGINAL: 0x00634430 ?__mi@Vector@@QAEXAAVVector@@AAVVector@@@Z 0x00634430-0x0063447B
 // size      75 bytes
-// spans     0x00634430-0x0063447B
 // prototype void (__thiscall ?__mi@Vector@@QAEXAAVVector@@AAVVector@@@Z)(Vector* this, Vector*, Vector*)
 // callers   1   call targets   0
 // kind      game
@@ -84,14 +78,12 @@ Purpose: Add another vector into this one, component by component.
 Note:    Returns `*this`, which is what leaves the receiver in EAX at `ret 4`.
          The catalogued `void` return does not reproduce these bytes; this
          does, exactly.
-ORIGINAL: 0x00634480 BYTE_EXACT
-// name      ?__apl@Vector@@QAEAAVVector@@AAVVector@@@Z
+// ORIGINAL: 0x00634480 ?__apl@Vector@@QAEAAVVector@@AAVVector@@@Z 0x00634480-0x006344A1 BYTE_EXACT
 // CORRECTED from ?__apl@Vector@@QAEXAAVVector@@@Z
 //   opens `mov eax, ecx` and leaves `this` in EAX at `ret 4`; with a
 //   `Vector &` return and `return *this` the body is byte-exact, with
 //   the catalogued `void` it is a different 29-byte sequence
 // size      33 bytes
-// spans     0x00634480-0x006344A1
 // prototype Vector* (__thiscall ?__apl@Vector@@QAEAAVVector@@AAVVector@@@Z)(Vector* this, Vector*)
 // callers   1   call targets   0
 // kind      game
@@ -110,12 +102,10 @@ Vector &Vector::__apl(Vector &right) {
 
 /*
 Purpose: Subtract another vector from this one, component by component.
-ORIGINAL: 0x006344B0 BYTE_EXACT
-// name      ?__ami@Vector@@QAEAAVVector@@AAVVector@@@Z
+// ORIGINAL: 0x006344B0 ?__ami@Vector@@QAEAAVVector@@AAVVector@@@Z 0x006344B0-0x006344D1 BYTE_EXACT
 // CORRECTED from ?__ami@Vector@@QAEXAAVVector@@@Z
 //   the same shape with fsub for fadd, and the same two verdicts
 // size      33 bytes
-// spans     0x006344B0-0x006344D1
 // prototype Vector* (__thiscall ?__ami@Vector@@QAEAAVVector@@AAVVector@@@Z)(Vector* this, Vector*)
 // callers   1   call targets   0
 // kind      game
@@ -139,10 +129,8 @@ Note:    The original scales `this` IN PLACE and then copies it out; `output`
          is the hidden return slot of `Vector scale(float)`. Both effects are
          load-bearing - a caller that ignores the result still sees `this`
          scaled.
-ORIGINAL: 0x00634670
-// name      ?scale@Vector@@QAEXAAVVector@@M@Z
+// ORIGINAL: 0x00634670 ?scale@Vector@@QAEXAAVVector@@M@Z 0x00634670-0x006346B1
 // size      65 bytes
-// spans     0x00634670-0x006346B1
 // prototype void (__thiscall ?scale@Vector@@QAEXAAVVector@@M@Z)(Vector* this, Vector*, float)
 // callers   1   call targets   0
 // kind      game
@@ -194,10 +182,8 @@ Vector *__fastcall vector_scale_redirect(
 
 /*
 Purpose: Add two vectors component-wise into an output vector.
-ORIGINAL: 0x00628150
-// name      sub_628150
+// ORIGINAL: 0x00628150 sub_628150 0x00628150-0x00628175
 // size      37 bytes
-// spans     0x00628150-0x00628175
 // prototype 
 // callers   17   call targets   0
 // kind      game

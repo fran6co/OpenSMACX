@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00447490 BYTE_EXACT
-// name      ?energy_resources@MAmbience@@QAEXXZ
+// ORIGINAL: 0x00447490 ?energy_resources@MAmbience@@QAEXXZ 0x00447490-0x004474AF BYTE_EXACT
 // size      31 bytes
-// spans     0x00447490-0x004474AF
 // prototype void (__thiscall ?energy_resources@MAmbience@@QAEXXZ)(MAmbience* this)
 // callers   0   call targets   0
 // kind      game

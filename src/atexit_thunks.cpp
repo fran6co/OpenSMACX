@@ -423,10 +423,8 @@ TextIndex *TxtIndexGlobal = (TextIndex *)0x009B7D08;
 
 /*
 Purpose: Atexit teardown thunk for g_ALPHAMENU_WAVE.
-ORIGINAL: 0x00402F30
-// name      ??__Fg_ALPHAMENU_WAVE@@YAXXZ
+// ORIGINAL: 0x00402F30 ??__Fg_ALPHAMENU_WAVE@@YAXXZ 0x00402F30-0x00402F3A
 // size      10 bytes
-// spans     0x00402F30-0x00402F3A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -441,10 +439,8 @@ void __cdecl destroy_alphamenu_wave() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR02.
-ORIGINAL: 0x00404460
-// name      ??__Fg_UNUSED_SPRITE_VAR02@@YAXXZ
+// ORIGINAL: 0x00404460 ??__Fg_UNUSED_SPRITE_VAR02@@YAXXZ 0x00404460-0x0040446A
 // size      10 bytes
-// spans     0x00404460-0x0040446A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -459,10 +455,8 @@ void __cdecl destroy_unused_sprite_var02() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR11.
-ORIGINAL: 0x00404490
-// name      ??__Fg_UNUSED_SPRITE_VAR11@@YAXXZ
+// ORIGINAL: 0x00404490 ??__Fg_UNUSED_SPRITE_VAR11@@YAXXZ 0x00404490-0x0040449A
 // size      10 bytes
-// spans     0x00404490-0x0040449A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -477,10 +471,8 @@ void __cdecl destroy_unused_sprite_var11() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR06.
-ORIGINAL: 0x004044C0
-// name      ??__Fg_UNUSED_SPRITE_VAR06@@YAXXZ
+// ORIGINAL: 0x004044C0 ??__Fg_UNUSED_SPRITE_VAR06@@YAXXZ 0x004044C0-0x004044CA
 // size      10 bytes
-// spans     0x004044C0-0x004044CA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -495,10 +487,8 @@ void __cdecl destroy_unused_sprite_var06() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR09.
-ORIGINAL: 0x004044F0
-// name      ??__Fg_UNUSED_SPRITE_VAR09@@YAXXZ
+// ORIGINAL: 0x004044F0 ??__Fg_UNUSED_SPRITE_VAR09@@YAXXZ 0x004044F0-0x004044FA
 // size      10 bytes
-// spans     0x004044F0-0x004044FA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -513,10 +503,8 @@ void __cdecl destroy_unused_sprite_var09() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR21.
-ORIGINAL: 0x00404520
-// name      ??__Fg_UNUSED_SPRITE_VAR21@@YAXXZ
+// ORIGINAL: 0x00404520 ??__Fg_UNUSED_SPRITE_VAR21@@YAXXZ 0x00404520-0x0040452A
 // size      10 bytes
-// spans     0x00404520-0x0040452A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -531,10 +519,8 @@ void __cdecl destroy_unused_sprite_var21() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR05.
-ORIGINAL: 0x00404550
-// name      ??__Fg_UNUSED_SPRITE_VAR05@@YAXXZ
+// ORIGINAL: 0x00404550 ??__Fg_UNUSED_SPRITE_VAR05@@YAXXZ 0x00404550-0x0040455A
 // size      10 bytes
-// spans     0x00404550-0x0040455A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -549,10 +535,8 @@ void __cdecl destroy_unused_sprite_var05() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR08.
-ORIGINAL: 0x00404580
-// name      ??__Fg_UNUSED_SPRITE_VAR08@@YAXXZ
+// ORIGINAL: 0x00404580 ??__Fg_UNUSED_SPRITE_VAR08@@YAXXZ 0x00404580-0x0040458A
 // size      10 bytes
-// spans     0x00404580-0x0040458A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -567,10 +551,8 @@ void __cdecl destroy_unused_sprite_var08() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR04.
-ORIGINAL: 0x004045B0
-// name      ??__Fg_UNUSED_SPRITE_VAR04@@YAXXZ
+// ORIGINAL: 0x004045B0 ??__Fg_UNUSED_SPRITE_VAR04@@YAXXZ 0x004045B0-0x004045BA
 // size      10 bytes
-// spans     0x004045B0-0x004045BA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -585,10 +567,8 @@ void __cdecl destroy_unused_sprite_var04() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR01.
-ORIGINAL: 0x004045E0
-// name      ??__Fg_UNUSED_SPRITE_VAR01@@YAXXZ
+// ORIGINAL: 0x004045E0 ??__Fg_UNUSED_SPRITE_VAR01@@YAXXZ 0x004045E0-0x004045EA
 // size      10 bytes
-// spans     0x004045E0-0x004045EA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -603,10 +583,8 @@ void __cdecl destroy_unused_sprite_var01() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR18.
-ORIGINAL: 0x00404610
-// name      ??__Fg_UNUSED_SPRITE_VAR18@@YAXXZ
+// ORIGINAL: 0x00404610 ??__Fg_UNUSED_SPRITE_VAR18@@YAXXZ 0x00404610-0x0040461A
 // size      10 bytes
-// spans     0x00404610-0x0040461A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -621,10 +599,8 @@ void __cdecl destroy_unused_sprite_var18() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR03.
-ORIGINAL: 0x00404640
-// name      ??__Fg_UNUSED_SPRITE_VAR03@@YAXXZ
+// ORIGINAL: 0x00404640 ??__Fg_UNUSED_SPRITE_VAR03@@YAXXZ 0x00404640-0x0040464A
 // size      10 bytes
-// spans     0x00404640-0x0040464A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -639,10 +615,8 @@ void __cdecl destroy_unused_sprite_var03() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR20.
-ORIGINAL: 0x00404670
-// name      ??__Fg_UNUSED_SPRITE_VAR20@@YAXXZ
+// ORIGINAL: 0x00404670 ??__Fg_UNUSED_SPRITE_VAR20@@YAXXZ 0x00404670-0x0040467A
 // size      10 bytes
-// spans     0x00404670-0x0040467A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -657,10 +631,8 @@ void __cdecl destroy_unused_sprite_var20() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR16.
-ORIGINAL: 0x004046A0
-// name      ??__Fg_UNUSED_SPRITE_VAR16@@YAXXZ
+// ORIGINAL: 0x004046A0 ??__Fg_UNUSED_SPRITE_VAR16@@YAXXZ 0x004046A0-0x004046AA
 // size      10 bytes
-// spans     0x004046A0-0x004046AA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -675,10 +647,8 @@ void __cdecl destroy_unused_sprite_var16() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR14.
-ORIGINAL: 0x004046D0
-// name      ??__Fg_UNUSED_SPRITE_VAR14@@YAXXZ
+// ORIGINAL: 0x004046D0 ??__Fg_UNUSED_SPRITE_VAR14@@YAXXZ 0x004046D0-0x004046DA
 // size      10 bytes
-// spans     0x004046D0-0x004046DA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -693,10 +663,8 @@ void __cdecl destroy_unused_sprite_var14() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR22.
-ORIGINAL: 0x00404700
-// name      ??__Fg_UNUSED_SPRITE_VAR22@@YAXXZ
+// ORIGINAL: 0x00404700 ??__Fg_UNUSED_SPRITE_VAR22@@YAXXZ 0x00404700-0x0040470A
 // size      10 bytes
-// spans     0x00404700-0x0040470A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -711,10 +679,8 @@ void __cdecl destroy_unused_sprite_var22() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR10.
-ORIGINAL: 0x00404730
-// name      ??__Fg_UNUSED_SPRITE_VAR10@@YAXXZ
+// ORIGINAL: 0x00404730 ??__Fg_UNUSED_SPRITE_VAR10@@YAXXZ 0x00404730-0x0040473A
 // size      10 bytes
-// spans     0x00404730-0x0040473A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -729,10 +695,8 @@ void __cdecl destroy_unused_sprite_var10() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR15.
-ORIGINAL: 0x00404760
-// name      ??__Fg_UNUSED_SPRITE_VAR15@@YAXXZ
+// ORIGINAL: 0x00404760 ??__Fg_UNUSED_SPRITE_VAR15@@YAXXZ 0x00404760-0x0040476A
 // size      10 bytes
-// spans     0x00404760-0x0040476A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -747,10 +711,8 @@ void __cdecl destroy_unused_sprite_var15() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR13.
-ORIGINAL: 0x00404790
-// name      ??__Fg_UNUSED_SPRITE_VAR13@@YAXXZ
+// ORIGINAL: 0x00404790 ??__Fg_UNUSED_SPRITE_VAR13@@YAXXZ 0x00404790-0x0040479A
 // size      10 bytes
-// spans     0x00404790-0x0040479A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -765,10 +727,8 @@ void __cdecl destroy_unused_sprite_var13() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR17.
-ORIGINAL: 0x004047C0
-// name      ??__Fg_UNUSED_SPRITE_VAR17@@YAXXZ
+// ORIGINAL: 0x004047C0 ??__Fg_UNUSED_SPRITE_VAR17@@YAXXZ 0x004047C0-0x004047CA
 // size      10 bytes
-// spans     0x004047C0-0x004047CA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -783,10 +743,8 @@ void __cdecl destroy_unused_sprite_var17() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR19.
-ORIGINAL: 0x004047F0
-// name      ??__Fg_UNUSED_SPRITE_VAR19@@YAXXZ
+// ORIGINAL: 0x004047F0 ??__Fg_UNUSED_SPRITE_VAR19@@YAXXZ 0x004047F0-0x004047FA
 // size      10 bytes
-// spans     0x004047F0-0x004047FA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -801,10 +759,8 @@ void __cdecl destroy_unused_sprite_var19() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR12.
-ORIGINAL: 0x00404820
-// name      ??__Fg_UNUSED_SPRITE_VAR12@@YAXXZ
+// ORIGINAL: 0x00404820 ??__Fg_UNUSED_SPRITE_VAR12@@YAXXZ 0x00404820-0x0040482A
 // size      10 bytes
-// spans     0x00404820-0x0040482A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -819,10 +775,8 @@ void __cdecl destroy_unused_sprite_var12() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR07.
-ORIGINAL: 0x00404850
-// name      ??__Fg_UNUSED_SPRITE_VAR07@@YAXXZ
+// ORIGINAL: 0x00404850 ??__Fg_UNUSED_SPRITE_VAR07@@YAXXZ 0x00404850-0x0040485A
 // size      10 bytes
-// spans     0x00404850-0x0040485A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -837,10 +791,8 @@ void __cdecl destroy_unused_sprite_var07() {
 
 /*
 Purpose: Atexit teardown thunk for g_BASEWIN.
-ORIGINAL: 0x004083D0
-// name      ??__Fg_BASEWIN@@YAXXZ
+// ORIGINAL: 0x004083D0 ??__Fg_BASEWIN@@YAXXZ 0x004083D0-0x004083DA
 // size      10 bytes
-// spans     0x004083D0-0x004083DA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -855,10 +807,8 @@ void __cdecl destroy_basewin() {
 
 /*
 Purpose: Atexit teardown thunk for g_BASEWIN_WAVE.
-ORIGINAL: 0x00408400
-// name      ??__Fg_BASEWIN_WAVE@@YAXXZ
+// ORIGINAL: 0x00408400 ??__Fg_BASEWIN_WAVE@@YAXXZ 0x00408400-0x0040840A
 // size      10 bytes
-// spans     0x00408400-0x0040840A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -873,10 +823,8 @@ void __cdecl destroy_basewin_wave() {
 
 /*
 Purpose: Atexit teardown thunk for g_BattleWin.
-ORIGINAL: 0x004219D0
-// name      ??__Fg_BattleWin@@YAXXZ
+// ORIGINAL: 0x004219D0 ??__Fg_BattleWin@@YAXXZ 0x004219D0-0x004219DA
 // size      10 bytes
-// spans     0x004219D0-0x004219DA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -891,10 +839,8 @@ void __cdecl destroy_battlewin() {
 
 /*
 Purpose: Atexit teardown thunk for g_COUNCWIN.
-ORIGINAL: 0x004243C0
-// name      ??__Fg_COUNCWIN@@YAXXZ
+// ORIGINAL: 0x004243C0 ??__Fg_COUNCWIN@@YAXXZ 0x004243C0-0x004243CA
 // size      10 bytes
-// spans     0x004243C0-0x004243CA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -909,10 +855,8 @@ void __cdecl destroy_councwin() {
 
 /*
 Purpose: Atexit teardown thunk for g_CREDITS_WAVE.
-ORIGINAL: 0x00428770
-// name      ??__Fg_CREDITS_WAVE@@YAXXZ
+// ORIGINAL: 0x00428770 ??__Fg_CREDITS_WAVE@@YAXXZ 0x00428770-0x0042877A
 // size      10 bytes
-// spans     0x00428770-0x0042877A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -927,10 +871,8 @@ void __cdecl destroy_credits_wave() {
 
 /*
 Purpose: Atexit teardown thunk for g_DATALINK.
-ORIGINAL: 0x00428FB0
-// name      ??__Fg_DATALINK@@YAXXZ
+// ORIGINAL: 0x00428FB0 ??__Fg_DATALINK@@YAXXZ 0x00428FB0-0x00428FBA
 // size      10 bytes
-// spans     0x00428FB0-0x00428FBA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -945,10 +887,8 @@ void __cdecl destroy_datalink() {
 
 /*
 Purpose: Atexit teardown thunk for g_DESIGNWIN.
-ORIGINAL: 0x00432870
-// name      ??__Fg_DESIGNWIN@@YAXXZ
+// ORIGINAL: 0x00432870 ??__Fg_DESIGNWIN@@YAXXZ 0x00432870-0x0043287A
 // size      10 bytes
-// spans     0x00432870-0x0043287A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -963,10 +903,8 @@ void __cdecl destroy_designwin() {
 
 /*
 Purpose: Atexit teardown thunk for g_DESIGNWIN_WAVE.
-ORIGINAL: 0x004328A0
-// name      ??__Fg_DESIGNWIN_WAVE@@YAXXZ
+// ORIGINAL: 0x004328A0 ??__Fg_DESIGNWIN_WAVE@@YAXXZ 0x004328A0-0x004328AA
 // size      10 bytes
-// spans     0x004328A0-0x004328AA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -981,10 +919,8 @@ void __cdecl destroy_designwin_wave() {
 
 /*
 Purpose: Atexit teardown thunk for g_DIPLOPOP.
-ORIGINAL: 0x0043EFE0
-// name      ??__Fg_DIPLOPOP@@YAXXZ
+// ORIGINAL: 0x0043EFE0 ??__Fg_DIPLOPOP@@YAXXZ 0x0043EFE0-0x0043EFEA
 // size      10 bytes
-// spans     0x0043EFE0-0x0043EFEA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -999,10 +935,8 @@ void __cdecl destroy_diplopop() {
 
 /*
 Purpose: Atexit teardown thunk for g_DIPLOWIN.
-ORIGINAL: 0x00440F20
-// name      ??__Fg_DIPLOWIN@@YAXXZ
+// ORIGINAL: 0x00440F20 ??__Fg_DIPLOWIN@@YAXXZ 0x00440F20-0x00440F2A
 // size      10 bytes
-// spans     0x00440F20-0x00440F2A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1017,10 +951,8 @@ void __cdecl destroy_diplowin() {
 
 /*
 Purpose: Atexit teardown thunk for g_CPU_WAVES.
-ORIGINAL: 0x00445480
-// name      ??__Fg_CPU_WAVES@@YAXXZ
+// ORIGINAL: 0x00445480 ??__Fg_CPU_WAVES@@YAXXZ 0x00445480-0x00445494
 // size      20 bytes
-// spans     0x00445480-0x00445494
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -1035,10 +967,8 @@ void __cdecl destroy_cpu_waves() {
 
 /*
 Purpose: Atexit teardown thunk for g_MENU_UP_WAVE.
-ORIGINAL: 0x004454C0
-// name      ??__Fg_MENU_UP_WAVE@@YAXXZ
+// ORIGINAL: 0x004454C0 ??__Fg_MENU_UP_WAVE@@YAXXZ 0x004454C0-0x004454CA
 // size      10 bytes
-// spans     0x004454C0-0x004454CA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1053,10 +983,8 @@ void __cdecl destroy_menu_up_wave() {
 
 /*
 Purpose: Atexit teardown thunk for g_MENU_DOWN_WAVE.
-ORIGINAL: 0x004454F0
-// name      ??__Fg_MENU_DOWN_WAVE@@YAXXZ
+// ORIGINAL: 0x004454F0 ??__Fg_MENU_DOWN_WAVE@@YAXXZ 0x004454F0-0x004454FA
 // size      10 bytes
-// spans     0x004454F0-0x004454FA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1071,10 +999,8 @@ void __cdecl destroy_menu_down_wave() {
 
 /*
 Purpose: Atexit teardown thunk for g_SCOOT_WAVE.
-ORIGINAL: 0x00445520
-// name      ??__Fg_SCOOT_WAVE@@YAXXZ
+// ORIGINAL: 0x00445520 ??__Fg_SCOOT_WAVE@@YAXXZ 0x00445520-0x0044552A
 // size      10 bytes
-// spans     0x00445520-0x0044552A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1089,10 +1015,8 @@ void __cdecl destroy_scoot_wave() {
 
 /*
 Purpose: Atexit teardown thunk for g_OK_WAVE.
-ORIGINAL: 0x00445550
-// name      ??__Fg_OK_WAVE@@YAXXZ
+// ORIGINAL: 0x00445550 ??__Fg_OK_WAVE@@YAXXZ 0x00445550-0x0044555A
 // size      10 bytes
-// spans     0x00445550-0x0044555A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1107,10 +1031,8 @@ void __cdecl destroy_ok_wave() {
 
 /*
 Purpose: Atexit teardown thunk for g_PASSOVER_WAVE.
-ORIGINAL: 0x00445580
-// name      ??__Fg_PASSOVER_WAVE@@YAXXZ
+// ORIGINAL: 0x00445580 ??__Fg_PASSOVER_WAVE@@YAXXZ 0x00445580-0x0044558A
 // size      10 bytes
-// spans     0x00445580-0x0044558A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1125,10 +1047,8 @@ void __cdecl destroy_passover_wave() {
 
 /*
 Purpose: Atexit teardown thunk for g_FX.
-ORIGINAL: 0x004455B0
-// name      ??__Fg_FX@@YAXXZ
+// ORIGINAL: 0x004455B0 ??__Fg_FX@@YAXXZ 0x004455B0-0x004455BA
 // size      10 bytes
-// spans     0x004455B0-0x004455BA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1143,10 +1063,8 @@ void __cdecl destroy_fx() {
 
 /*
 Purpose: Atexit teardown thunk for g_AMBIENCE.
-ORIGINAL: 0x004455E0
-// name      ??__Fg_AMBIENCE@@YAXXZ
+// ORIGINAL: 0x004455E0 ??__Fg_AMBIENCE@@YAXXZ 0x004455E0-0x004455EA
 // size      10 bytes
-// spans     0x004455E0-0x004455EA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1161,10 +1079,8 @@ void __cdecl destroy_ambience() {
 
 /*
 Purpose: Atexit teardown thunk for g_FAMEWIN.
-ORIGINAL: 0x004483F0
-// name      ??__Fg_FAMEWIN@@YAXXZ
+// ORIGINAL: 0x004483F0 ??__Fg_FAMEWIN@@YAXXZ 0x004483F0-0x004483FA
 // size      10 bytes
-// spans     0x004483F0-0x004483FA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1179,10 +1095,8 @@ void __cdecl destroy_famewin() {
 
 /*
 Purpose: Atexit teardown thunk for g_PCX_PARSE_TEMP_BUFFER1.
-ORIGINAL: 0x0044CC40
-// name      ??__Fg_PCX_PARSE_TEMP_BUFFER1@@YAXXZ
+// ORIGINAL: 0x0044CC40 ??__Fg_PCX_PARSE_TEMP_BUFFER1@@YAXXZ 0x0044CC40-0x0044CC4A
 // size      10 bytes
-// spans     0x0044CC40-0x0044CC4A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1197,10 +1111,8 @@ void __cdecl destroy_pcx_parse_temp_buffer1() {
 
 /*
 Purpose: Atexit teardown thunk for FactionArt.
-ORIGINAL: 0x0044CC80
-// name      ??__FFactionArt@@YAXXZ
+// ORIGINAL: 0x0044CC80 ??__FFactionArt@@YAXXZ 0x0044CC80-0x0044CC97
 // size      23 bytes
-// spans     0x0044CC80-0x0044CC97
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -1215,10 +1127,8 @@ void __cdecl destroy_factionart() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_CLOSE_X_SPRITES.
-ORIGINAL: 0x0044CCD0
-// name      ??__Fg_IFACE_CLOSE_X_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044CCD0 ??__Fg_IFACE_CLOSE_X_SPRITES@@YAXXZ 0x0044CCD0-0x0044CCE4
 // size      20 bytes
-// spans     0x0044CCD0-0x0044CCE4
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -1233,10 +1143,8 @@ void __cdecl destroy_iface_close_x_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_BOX_SPRITES1.
-ORIGINAL: 0x0044CD20
-// name      ??__Fg_IFACE_BOX_SPRITES1@@YAXXZ
+// ORIGINAL: 0x0044CD20 ??__Fg_IFACE_BOX_SPRITES1@@YAXXZ 0x0044CD20-0x0044CD34
 // size      20 bytes
-// spans     0x0044CD20-0x0044CD34
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -1251,10 +1159,8 @@ void __cdecl destroy_iface_box_sprites1() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_BOX_SPRITES2.
-ORIGINAL: 0x0044CD70
-// name      ??__Fg_IFACE_BOX_SPRITES2@@YAXXZ
+// ORIGINAL: 0x0044CD70 ??__Fg_IFACE_BOX_SPRITES2@@YAXXZ 0x0044CD70-0x0044CD84
 // size      20 bytes
-// spans     0x0044CD70-0x0044CD84
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -1269,10 +1175,8 @@ void __cdecl destroy_iface_box_sprites2() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_BOX_SPRITES3.
-ORIGINAL: 0x0044CDC0
-// name      ??__Fg_IFACE_BOX_SPRITES3@@YAXXZ
+// ORIGINAL: 0x0044CDC0 ??__Fg_IFACE_BOX_SPRITES3@@YAXXZ 0x0044CDC0-0x0044CDD4
 // size      20 bytes
-// spans     0x0044CDC0-0x0044CDD4
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -1287,10 +1191,8 @@ void __cdecl destroy_iface_box_sprites3() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_BOX_SPRITES4.
-ORIGINAL: 0x0044CE10
-// name      ??__Fg_IFACE_BOX_SPRITES4@@YAXXZ
+// ORIGINAL: 0x0044CE10 ??__Fg_IFACE_BOX_SPRITES4@@YAXXZ 0x0044CE10-0x0044CE24
 // size      20 bytes
-// spans     0x0044CE10-0x0044CE24
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -1305,10 +1207,8 @@ void __cdecl destroy_iface_box_sprites4() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_BOX_SPRITES5.
-ORIGINAL: 0x0044CE60
-// name      ??__Fg_IFACE_BOX_SPRITES5@@YAXXZ
+// ORIGINAL: 0x0044CE60 ??__Fg_IFACE_BOX_SPRITES5@@YAXXZ 0x0044CE60-0x0044CE74
 // size      20 bytes
-// spans     0x0044CE60-0x0044CE74
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -1323,10 +1223,8 @@ void __cdecl destroy_iface_box_sprites5() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_BOX_SPRITES6.
-ORIGINAL: 0x0044CEB0
-// name      ??__Fg_IFACE_BOX_SPRITES6@@YAXXZ
+// ORIGINAL: 0x0044CEB0 ??__Fg_IFACE_BOX_SPRITES6@@YAXXZ 0x0044CEB0-0x0044CEC4
 // size      20 bytes
-// spans     0x0044CEB0-0x0044CEC4
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -1341,10 +1239,8 @@ void __cdecl destroy_iface_box_sprites6() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_BOX_SPRITES7.
-ORIGINAL: 0x0044CF00
-// name      ??__Fg_IFACE_BOX_SPRITES7@@YAXXZ
+// ORIGINAL: 0x0044CF00 ??__Fg_IFACE_BOX_SPRITES7@@YAXXZ 0x0044CF00-0x0044CF14
 // size      20 bytes
-// spans     0x0044CF00-0x0044CF14
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -1359,10 +1255,8 @@ void __cdecl destroy_iface_box_sprites7() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_BOX_SPRITES8.
-ORIGINAL: 0x0044CF50
-// name      ??__Fg_IFACE_BOX_SPRITES8@@YAXXZ
+// ORIGINAL: 0x0044CF50 ??__Fg_IFACE_BOX_SPRITES8@@YAXXZ 0x0044CF50-0x0044CF64
 // size      20 bytes
-// spans     0x0044CF50-0x0044CF64
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -1377,10 +1271,8 @@ void __cdecl destroy_iface_box_sprites8() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_BOX_SPRITE_BUFFERS.
-ORIGINAL: 0x0044CFA0
-// name      ??__Fg_IFACE_BOX_SPRITE_BUFFERS@@YAXXZ
+// ORIGINAL: 0x0044CFA0 ??__Fg_IFACE_BOX_SPRITE_BUFFERS@@YAXXZ 0x0044CFA0-0x0044CFB7
 // size      23 bytes
-// spans     0x0044CFA0-0x0044CFB7
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -1395,10 +1287,8 @@ void __cdecl destroy_iface_box_sprite_buffers() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_STD_POPUPS_TOP_LEFT_SPRITE.
-ORIGINAL: 0x0044CFE0
-// name      ??__Fg_IFACE_STD_POPUPS_TOP_LEFT_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044CFE0 ??__Fg_IFACE_STD_POPUPS_TOP_LEFT_SPRITE@@YAXXZ 0x0044CFE0-0x0044CFEA
 // size      10 bytes
-// spans     0x0044CFE0-0x0044CFEA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1413,10 +1303,8 @@ void __cdecl destroy_iface_std_popups_top_left_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_STD_POPUPS_TOP_RIGHT_SPRITE.
-ORIGINAL: 0x0044D010
-// name      ??__Fg_IFACE_STD_POPUPS_TOP_RIGHT_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044D010 ??__Fg_IFACE_STD_POPUPS_TOP_RIGHT_SPRITE@@YAXXZ 0x0044D010-0x0044D01A
 // size      10 bytes
-// spans     0x0044D010-0x0044D01A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1431,10 +1319,8 @@ void __cdecl destroy_iface_std_popups_top_right_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_STD_POPUPS_BOT_LEFT_SPRITE.
-ORIGINAL: 0x0044D040
-// name      ??__Fg_IFACE_STD_POPUPS_BOT_LEFT_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044D040 ??__Fg_IFACE_STD_POPUPS_BOT_LEFT_SPRITE@@YAXXZ 0x0044D040-0x0044D04A
 // size      10 bytes
-// spans     0x0044D040-0x0044D04A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1449,10 +1335,8 @@ void __cdecl destroy_iface_std_popups_bot_left_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_STD_POPUPS_BOT_RIGHT_SPRITE.
-ORIGINAL: 0x0044D070
-// name      ??__Fg_IFACE_STD_POPUPS_BOT_RIGHT_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044D070 ??__Fg_IFACE_STD_POPUPS_BOT_RIGHT_SPRITE@@YAXXZ 0x0044D070-0x0044D07A
 // size      10 bytes
-// spans     0x0044D070-0x0044D07A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1467,10 +1351,8 @@ void __cdecl destroy_iface_std_popups_bot_right_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_STD_POPUPS_TOP_MID_SPRITE.
-ORIGINAL: 0x0044D0A0
-// name      ??__Fg_IFACE_STD_POPUPS_TOP_MID_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044D0A0 ??__Fg_IFACE_STD_POPUPS_TOP_MID_SPRITE@@YAXXZ 0x0044D0A0-0x0044D0AA
 // size      10 bytes
-// spans     0x0044D0A0-0x0044D0AA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1485,10 +1367,8 @@ void __cdecl destroy_iface_std_popups_top_mid_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_STD_POPUPS_BOT_MID_SPRITE.
-ORIGINAL: 0x0044D0D0
-// name      ??__Fg_IFACE_STD_POPUPS_BOT_MID_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044D0D0 ??__Fg_IFACE_STD_POPUPS_BOT_MID_SPRITE@@YAXXZ 0x0044D0D0-0x0044D0DA
 // size      10 bytes
-// spans     0x0044D0D0-0x0044D0DA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1503,10 +1383,8 @@ void __cdecl destroy_iface_std_popups_bot_mid_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_STD_POPUPS_MID_LEFT_SPRITE.
-ORIGINAL: 0x0044D100
-// name      ??__Fg_IFACE_STD_POPUPS_MID_LEFT_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044D100 ??__Fg_IFACE_STD_POPUPS_MID_LEFT_SPRITE@@YAXXZ 0x0044D100-0x0044D10A
 // size      10 bytes
-// spans     0x0044D100-0x0044D10A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1521,10 +1399,8 @@ void __cdecl destroy_iface_std_popups_mid_left_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_STD_POPUPS_MID_RIGHT_SPRITE.
-ORIGINAL: 0x0044D130
-// name      ??__Fg_IFACE_STD_POPUPS_MID_RIGHT_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044D130 ??__Fg_IFACE_STD_POPUPS_MID_RIGHT_SPRITE@@YAXXZ 0x0044D130-0x0044D13A
 // size      10 bytes
-// spans     0x0044D130-0x0044D13A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1539,10 +1415,8 @@ void __cdecl destroy_iface_std_popups_mid_right_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_STD_POPUPS_MIDDLE_BUFFER.
-ORIGINAL: 0x0044D160
-// name      ??__Fg_IFACE_STD_POPUPS_MIDDLE_BUFFER@@YAXXZ
+// ORIGINAL: 0x0044D160 ??__Fg_IFACE_STD_POPUPS_MIDDLE_BUFFER@@YAXXZ 0x0044D160-0x0044D16A
 // size      10 bytes
-// spans     0x0044D160-0x0044D16A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1557,10 +1431,8 @@ void __cdecl destroy_iface_std_popups_middle_buffer() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_CAVIARDATA_VAR1.
-ORIGINAL: 0x0044D190
-// name      ??__Fg_UNUSED_CAVIARDATA_VAR1@@YAXXZ
+// ORIGINAL: 0x0044D190 ??__Fg_UNUSED_CAVIARDATA_VAR1@@YAXXZ 0x0044D190-0x0044D19A
 // size      10 bytes
-// spans     0x0044D190-0x0044D19A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1575,10 +1447,8 @@ void __cdecl destroy_unused_caviardata_var1() {
 
 /*
 Purpose: Atexit teardown thunk for g_SSF_CAVIARDATA.
-ORIGINAL: 0x0044D1C0
-// name      ??__Fg_SSF_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D1C0 ??__Fg_SSF_CAVIARDATA@@YAXXZ 0x0044D1C0-0x0044D1CA
 // size      10 bytes
-// spans     0x0044D1C0-0x0044D1CA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1593,10 +1463,8 @@ void __cdecl destroy_ssf_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_SDP_CAVIARDATA.
-ORIGINAL: 0x0044D1F0
-// name      ??__Fg_SDP_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D1F0 ??__Fg_SDP_CAVIARDATA@@YAXXZ 0x0044D1F0-0x0044D1FA
 // size      10 bytes
-// spans     0x0044D1F0-0x0044D1FA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1611,10 +1479,8 @@ void __cdecl destroy_sdp_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_SAS_CAVIARDATA.
-ORIGINAL: 0x0044D220
-// name      ??__Fg_SAS_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D220 ??__Fg_SAS_CAVIARDATA@@YAXXZ 0x0044D220-0x0044D22A
 // size      10 bytes
-// spans     0x0044D220-0x0044D22A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1629,10 +1495,8 @@ void __cdecl destroy_sas_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_SCD_CAVIARDATA.
-ORIGINAL: 0x0044D250
-// name      ??__Fg_SCD_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D250 ??__Fg_SCD_CAVIARDATA@@YAXXZ 0x0044D250-0x0044D25A
 // size      10 bytes
-// spans     0x0044D250-0x0044D25A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1647,10 +1511,8 @@ void __cdecl destroy_scd_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_SCJ_CAVIARDATA.
-ORIGINAL: 0x0044D280
-// name      ??__Fg_SCJ_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D280 ??__Fg_SCJ_CAVIARDATA@@YAXXZ 0x0044D280-0x0044D28A
 // size      10 bytes
-// spans     0x0044D280-0x0044D28A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1665,10 +1527,8 @@ void __cdecl destroy_scj_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_SAGS_CAVIARDATA.
-ORIGINAL: 0x0044D2B0
-// name      ??__Fg_SAGS_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D2B0 ??__Fg_SAGS_CAVIARDATA@@YAXXZ 0x0044D2B0-0x0044D2BA
 // size      10 bytes
-// spans     0x0044D2B0-0x0044D2BA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1683,10 +1543,8 @@ void __cdecl destroy_sags_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_SFT_CAVIARDATA.
-ORIGINAL: 0x0044D2E0
-// name      ??__Fg_SFT_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D2E0 ??__Fg_SFT_CAVIARDATA@@YAXXZ 0x0044D2E0-0x0044D2EA
 // size      10 bytes
-// spans     0x0044D2E0-0x0044D2EA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1701,10 +1559,8 @@ void __cdecl destroy_sft_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VHR_CAVIARDATA1.
-ORIGINAL: 0x0044D310
-// name      ??__Fg_VHR_CAVIARDATA1@@YAXXZ
+// ORIGINAL: 0x0044D310 ??__Fg_VHR_CAVIARDATA1@@YAXXZ 0x0044D310-0x0044D31A
 // size      10 bytes
-// spans     0x0044D310-0x0044D31A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1719,10 +1575,8 @@ void __cdecl destroy_vhr_caviardata1() {
 
 /*
 Purpose: Atexit teardown thunk for g_SHT_CAVIARDATA.
-ORIGINAL: 0x0044D340
-// name      ??__Fg_SHT_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D340 ??__Fg_SHT_CAVIARDATA@@YAXXZ 0x0044D340-0x0044D34A
 // size      10 bytes
-// spans     0x0044D340-0x0044D34A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1737,10 +1591,8 @@ void __cdecl destroy_sht_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_SRB_CAVIARDATA.
-ORIGINAL: 0x0044D370
-// name      ??__Fg_SRB_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D370 ??__Fg_SRB_CAVIARDATA@@YAXXZ 0x0044D370-0x0044D37A
 // size      10 bytes
-// spans     0x0044D370-0x0044D37A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1755,10 +1607,8 @@ void __cdecl destroy_srb_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_ASAS_CAVIARDATA.
-ORIGINAL: 0x0044D3A0
-// name      ??__Fg_ASAS_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D3A0 ??__Fg_ASAS_CAVIARDATA@@YAXXZ 0x0044D3A0-0x0044D3AA
 // size      10 bytes
-// spans     0x0044D3A0-0x0044D3AA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1773,10 +1623,8 @@ void __cdecl destroy_asas_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_RESLASER_CAVIARDATA.
-ORIGINAL: 0x0044D3D0
-// name      ??__Fg_RESLASER_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D3D0 ??__Fg_RESLASER_CAVIARDATA@@YAXXZ 0x0044D3D0-0x0044D3DA
 // size      10 bytes
-// spans     0x0044D3D0-0x0044D3DA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1791,10 +1639,8 @@ void __cdecl destroy_reslaser_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_RESBOLT_CAVIARDATA.
-ORIGINAL: 0x0044D400
-// name      ??__Fg_RESBOLT_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D400 ??__Fg_RESBOLT_CAVIARDATA@@YAXXZ 0x0044D400-0x0044D40A
 // size      10 bytes
-// spans     0x0044D400-0x0044D40A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1809,10 +1655,8 @@ void __cdecl destroy_resbolt_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_FUNLOAD_CAVIARDATA.
-ORIGINAL: 0x0044D430
-// name      ??__Fg_FUNLOAD_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D430 ??__Fg_FUNLOAD_CAVIARDATA@@YAXXZ 0x0044D430-0x0044D43A
 // size      10 bytes
-// spans     0x0044D430-0x0044D43A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1827,10 +1671,8 @@ void __cdecl destroy_funload_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_TECLOAD_CAVIARDATA.
-ORIGINAL: 0x0044D460
-// name      ??__Fg_TECLOAD_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D460 ??__Fg_TECLOAD_CAVIARDATA@@YAXXZ 0x0044D460-0x0044D46A
 // size      10 bytes
-// spans     0x0044D460-0x0044D46A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1845,10 +1687,8 @@ void __cdecl destroy_tecload_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_SP_DISSWAVE_CAVIARDATA.
-ORIGINAL: 0x0044D490
-// name      ??__Fg_SP_DISSWAVE_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D490 ??__Fg_SP_DISSWAVE_CAVIARDATA@@YAXXZ 0x0044D490-0x0044D49A
 // size      10 bytes
-// spans     0x0044D490-0x0044D49A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1863,10 +1703,8 @@ void __cdecl destroy_sp_disswave_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_SP_MARINED_CAVIARDATA.
-ORIGINAL: 0x0044D4C0
-// name      ??__Fg_SP_MARINED_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D4C0 ??__Fg_SP_MARINED_CAVIARDATA@@YAXXZ 0x0044D4C0-0x0044D4CA
 // size      10 bytes
-// spans     0x0044D4C0-0x0044D4CA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1881,10 +1719,8 @@ void __cdecl destroy_sp_marined_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_SP_NANOO_CAVIARDATA.
-ORIGINAL: 0x0044D4F0
-// name      ??__Fg_SP_NANOO_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D4F0 ??__Fg_SP_NANOO_CAVIARDATA@@YAXXZ 0x0044D4F0-0x0044D4FA
 // size      10 bytes
-// spans     0x0044D4F0-0x0044D4FA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1899,10 +1735,8 @@ void __cdecl destroy_sp_nanoo_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_SP_SOPORIFIC_CAVIARDATA.
-ORIGINAL: 0x0044D520
-// name      ??__Fg_SP_SOPORIFIC_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D520 ??__Fg_SP_SOPORIFIC_CAVIARDATA@@YAXXZ 0x0044D520-0x0044D52A
 // size      10 bytes
-// spans     0x0044D520-0x0044D52A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1917,10 +1751,8 @@ void __cdecl destroy_sp_soporific_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_AA01_CAVIARDATA.
-ORIGINAL: 0x0044D550
-// name      ??__Fg_AA01_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D550 ??__Fg_AA01_CAVIARDATA@@YAXXZ 0x0044D550-0x0044D55A
 // size      10 bytes
-// spans     0x0044D550-0x0044D55A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1935,10 +1767,8 @@ void __cdecl destroy_aa01_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_AA_ROVER_CAVIARDATA.
-ORIGINAL: 0x0044D580
-// name      ??__Fg_AA_ROVER_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D580 ??__Fg_AA_ROVER_CAVIARDATA@@YAXXZ 0x0044D580-0x0044D58A
 // size      10 bytes
-// spans     0x0044D580-0x0044D58A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1953,10 +1783,8 @@ void __cdecl destroy_aa_rover_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_AA_WING_CAVIARDATA.
-ORIGINAL: 0x0044D5C0
-// name      ??__Fg_AA_WING_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D5C0 ??__Fg_AA_WING_CAVIARDATA@@YAXXZ 0x0044D5C0-0x0044D5D4
 // size      20 bytes
-// spans     0x0044D5C0-0x0044D5D4
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -1971,10 +1799,8 @@ void __cdecl destroy_aa_wing_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_ACP_CAVIARDATA.
-ORIGINAL: 0x0044D610
-// name      ??__Fg_ACP_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D610 ??__Fg_ACP_CAVIARDATA@@YAXXZ 0x0044D610-0x0044D624
 // size      20 bytes
-// spans     0x0044D610-0x0044D624
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -1989,10 +1815,8 @@ void __cdecl destroy_acp_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_AX_CAVIARDATA.
-ORIGINAL: 0x0044D650
-// name      ??__Fg_AX_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D650 ??__Fg_AX_CAVIARDATA@@YAXXZ 0x0044D650-0x0044D65A
 // size      10 bytes
-// spans     0x0044D650-0x0044D65A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2007,10 +1831,8 @@ void __cdecl destroy_ax_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_AA_CAVIARDATA.
-ORIGINAL: 0x0044D680
-// name      ??__Fg_AA_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D680 ??__Fg_AA_CAVIARDATA@@YAXXZ 0x0044D680-0x0044D68A
 // size      10 bytes
-// spans     0x0044D680-0x0044D68A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2025,10 +1847,8 @@ void __cdecl destroy_aa_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_ACOLPOD_CAVIARDATA.
-ORIGINAL: 0x0044D6B0
-// name      ??__Fg_ACOLPOD_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D6B0 ??__Fg_ACOLPOD_CAVIARDATA@@YAXXZ 0x0044D6B0-0x0044D6BA
 // size      10 bytes
-// spans     0x0044D6B0-0x0044D6BA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2043,10 +1863,8 @@ void __cdecl destroy_acolpod_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_AT_CAVIARDATA.
-ORIGINAL: 0x0044D6E0
-// name      ??__Fg_AT_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D6E0 ??__Fg_AT_CAVIARDATA@@YAXXZ 0x0044D6E0-0x0044D6EA
 // size      10 bytes
-// spans     0x0044D6E0-0x0044D6EA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2061,10 +1879,8 @@ void __cdecl destroy_at_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VTA_CAVIARDATA.
-ORIGINAL: 0x0044D710
-// name      ??__Fg_VTA_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D710 ??__Fg_VTA_CAVIARDATA@@YAXXZ 0x0044D710-0x0044D71A
 // size      10 bytes
-// spans     0x0044D710-0x0044D71A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2079,10 +1895,8 @@ void __cdecl destroy_vta_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_ATP_CAVIARDATA.
-ORIGINAL: 0x0044D740
-// name      ??__Fg_ATP_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D740 ??__Fg_ATP_CAVIARDATA@@YAXXZ 0x0044D740-0x0044D74A
 // size      10 bytes
-// spans     0x0044D740-0x0044D74A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2097,10 +1911,8 @@ void __cdecl destroy_atp_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_SSFA_CAVIARDATA.
-ORIGINAL: 0x0044D770
-// name      ??__Fg_SSFA_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D770 ??__Fg_SSFA_CAVIARDATA@@YAXXZ 0x0044D770-0x0044D77A
 // size      10 bytes
-// spans     0x0044D770-0x0044D77A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2115,10 +1927,8 @@ void __cdecl destroy_ssfa_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_SFTA_CAVIARDATA.
-ORIGINAL: 0x0044D7A0
-// name      ??__Fg_SFTA_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D7A0 ??__Fg_SFTA_CAVIARDATA@@YAXXZ 0x0044D7A0-0x0044D7AA
 // size      10 bytes
-// spans     0x0044D7A0-0x0044D7AA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2133,10 +1943,8 @@ void __cdecl destroy_sfta_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VW00_CAVIARDATA.
-ORIGINAL: 0x0044D7D0
-// name      ??__Fg_VW00_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D7D0 ??__Fg_VW00_CAVIARDATA@@YAXXZ 0x0044D7D0-0x0044D7DA
 // size      10 bytes
-// spans     0x0044D7D0-0x0044D7DA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2151,10 +1959,8 @@ void __cdecl destroy_vw00_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VIPTAWL_CAVIARDATA.
-ORIGINAL: 0x0044D800
-// name      ??__Fg_VIPTAWL_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D800 ??__Fg_VIPTAWL_CAVIARDATA@@YAXXZ 0x0044D800-0x0044D80A
 // size      10 bytes
-// spans     0x0044D800-0x0044D80A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2169,10 +1975,8 @@ void __cdecl destroy_viptawl_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VIPTASGN_CAVIARDATA.
-ORIGINAL: 0x0044D830
-// name      ??__Fg_VIPTASGN_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D830 ??__Fg_VIPTASGN_CAVIARDATA@@YAXXZ 0x0044D830-0x0044D83A
 // size      10 bytes
-// spans     0x0044D830-0x0044D83A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2187,10 +1991,8 @@ void __cdecl destroy_viptasgn_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VIPTAPSI_CAVIARDATA.
-ORIGINAL: 0x0044D860
-// name      ??__Fg_VIPTAPSI_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D860 ??__Fg_VIPTAPSI_CAVIARDATA@@YAXXZ 0x0044D860-0x0044D86A
 // size      10 bytes
-// spans     0x0044D860-0x0044D86A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2205,10 +2007,8 @@ void __cdecl destroy_viptapsi_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VIPTR_CAVIARDATA.
-ORIGINAL: 0x0044D8A0
-// name      ??__Fg_VIPTR_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D8A0 ??__Fg_VIPTR_CAVIARDATA@@YAXXZ 0x0044D8A0-0x0044D8B4
 // size      20 bytes
-// spans     0x0044D8A0-0x0044D8B4
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -2223,10 +2023,8 @@ void __cdecl destroy_viptr_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VIPTA_CAVIARDATA.
-ORIGINAL: 0x0044D8F0
-// name      ??__Fg_VIPTA_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D8F0 ??__Fg_VIPTA_CAVIARDATA@@YAXXZ 0x0044D8F0-0x0044D904
 // size      20 bytes
-// spans     0x0044D8F0-0x0044D904
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -2241,10 +2039,8 @@ void __cdecl destroy_vipta_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_PTMOD_CAVIARDATA.
-ORIGINAL: 0x0044D930
-// name      ??__Fg_PTMOD_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D930 ??__Fg_PTMOD_CAVIARDATA@@YAXXZ 0x0044D930-0x0044D93A
 // size      10 bytes
-// spans     0x0044D930-0x0044D93A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2259,10 +2055,8 @@ void __cdecl destroy_ptmod_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VB_CAVIARDATA.
-ORIGINAL: 0x0044D960
-// name      ??__Fg_VB_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D960 ??__Fg_VB_CAVIARDATA@@YAXXZ 0x0044D960-0x0044D96A
 // size      10 bytes
-// spans     0x0044D960-0x0044D96A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2277,10 +2071,8 @@ void __cdecl destroy_vb_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VBP_CAVIARDATA.
-ORIGINAL: 0x0044D990
-// name      ??__Fg_VBP_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D990 ??__Fg_VBP_CAVIARDATA@@YAXXZ 0x0044D990-0x0044D99A
 // size      10 bytes
-// spans     0x0044D990-0x0044D99A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2295,10 +2087,8 @@ void __cdecl destroy_vbp_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VGMC_CAVIARDATA.
-ORIGINAL: 0x0044D9C0
-// name      ??__Fg_VGMC_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D9C0 ??__Fg_VGMC_CAVIARDATA@@YAXXZ 0x0044D9C0-0x0044D9CA
 // size      10 bytes
-// spans     0x0044D9C0-0x0044D9CA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2313,10 +2103,8 @@ void __cdecl destroy_vgmc_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VGMCP_CAVIARDATA.
-ORIGINAL: 0x0044D9F0
-// name      ??__Fg_VGMCP_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044D9F0 ??__Fg_VGMCP_CAVIARDATA@@YAXXZ 0x0044D9F0-0x0044D9FA
 // size      10 bytes
-// spans     0x0044D9F0-0x0044D9FA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2331,10 +2119,8 @@ void __cdecl destroy_vgmcp_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VLIGHTS_CAVIARDATA.
-ORIGINAL: 0x0044DA20
-// name      ??__Fg_VLIGHTS_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044DA20 ??__Fg_VLIGHTS_CAVIARDATA@@YAXXZ 0x0044DA20-0x0044DA2A
 // size      10 bytes
-// spans     0x0044DA20-0x0044DA2A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2349,10 +2135,8 @@ void __cdecl destroy_vlights_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VPT_CAVIARDATA.
-ORIGINAL: 0x0044DA50
-// name      ??__Fg_VPT_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044DA50 ??__Fg_VPT_CAVIARDATA@@YAXXZ 0x0044DA50-0x0044DA5A
 // size      10 bytes
-// spans     0x0044DA50-0x0044DA5A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2367,10 +2151,8 @@ void __cdecl destroy_vpt_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_A_CAVIARDATA.
-ORIGINAL: 0x0044DA80
-// name      ??__Fg_A_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044DA80 ??__Fg_A_CAVIARDATA@@YAXXZ 0x0044DA80-0x0044DA8A
 // size      10 bytes
-// spans     0x0044DA80-0x0044DA8A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2385,10 +2167,8 @@ void __cdecl destroy_a_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_APWALL_CAVIARDATA.
-ORIGINAL: 0x0044DAB0
-// name      ??__Fg_APWALL_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044DAB0 ??__Fg_APWALL_CAVIARDATA@@YAXXZ 0x0044DAB0-0x0044DABA
 // size      10 bytes
-// spans     0x0044DAB0-0x0044DABA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2403,10 +2183,8 @@ void __cdecl destroy_apwall_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_ASGEN_CAVIARDATA.
-ORIGINAL: 0x0044DAE0
-// name      ??__Fg_ASGEN_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044DAE0 ??__Fg_ASGEN_CAVIARDATA@@YAXXZ 0x0044DAE0-0x0044DAEA
 // size      10 bytes
-// spans     0x0044DAE0-0x0044DAEA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2421,10 +2199,8 @@ void __cdecl destroy_asgen_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_APSID_CAVIARDATA.
-ORIGINAL: 0x0044DB10
-// name      ??__Fg_APSID_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044DB10 ??__Fg_APSID_CAVIARDATA@@YAXXZ 0x0044DB10-0x0044DB1A
 // size      10 bytes
-// spans     0x0044DB10-0x0044DB1A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2439,10 +2215,8 @@ void __cdecl destroy_apsid_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VA01_CAVIARDATA.
-ORIGINAL: 0x0044DB40
-// name      ??__Fg_VA01_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044DB40 ??__Fg_VA01_CAVIARDATA@@YAXXZ 0x0044DB40-0x0044DB4A
 // size      10 bytes
-// spans     0x0044DB40-0x0044DB4A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2457,10 +2231,8 @@ void __cdecl destroy_va01_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VR_CAVIARDATA.
-ORIGINAL: 0x0044DB80
-// name      ??__Fg_VR_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044DB80 ??__Fg_VR_CAVIARDATA@@YAXXZ 0x0044DB80-0x0044DB94
 // size      20 bytes
-// spans     0x0044DB80-0x0044DB94
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -2475,10 +2247,8 @@ void __cdecl destroy_vr_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VHR_CAVIARDATA2.
-ORIGINAL: 0x0044DBC0
-// name      ??__Fg_VHR_CAVIARDATA2@@YAXXZ
+// ORIGINAL: 0x0044DBC0 ??__Fg_VHR_CAVIARDATA2@@YAXXZ 0x0044DBC0-0x0044DBCA
 // size      10 bytes
-// spans     0x0044DBC0-0x0044DBCA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2493,10 +2263,8 @@ void __cdecl destroy_vhr_caviardata2() {
 
 /*
 Purpose: Atexit teardown thunk for g_VRC_CAVIARDATA.
-ORIGINAL: 0x0044DC00
-// name      ??__Fg_VRC_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044DC00 ??__Fg_VRC_CAVIARDATA@@YAXXZ 0x0044DC00-0x0044DC14
 // size      20 bytes
-// spans     0x0044DC00-0x0044DC14
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -2511,10 +2279,8 @@ void __cdecl destroy_vrc_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VI_CAVIARDATA.
-ORIGINAL: 0x0044DC40
-// name      ??__Fg_VI_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044DC40 ??__Fg_VI_CAVIARDATA@@YAXXZ 0x0044DC40-0x0044DC4A
 // size      10 bytes
-// spans     0x0044DC40-0x0044DC4A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2529,10 +2295,8 @@ void __cdecl destroy_vi_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VGMT_CAVIARDATA.
-ORIGINAL: 0x0044DC70
-// name      ??__Fg_VGMT_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044DC70 ??__Fg_VGMT_CAVIARDATA@@YAXXZ 0x0044DC70-0x0044DC7A
 // size      10 bytes
-// spans     0x0044DC70-0x0044DC7A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2547,10 +2311,8 @@ void __cdecl destroy_vgmt_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VGMTP_CAVIARDATA.
-ORIGINAL: 0x0044DCA0
-// name      ??__Fg_VGMTP_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044DCA0 ??__Fg_VGMTP_CAVIARDATA@@YAXXZ 0x0044DCA0-0x0044DCAA
 // size      10 bytes
-// spans     0x0044DCA0-0x0044DCAA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2565,10 +2327,8 @@ void __cdecl destroy_vgmtp_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_CAVIARDATA_VAR2.
-ORIGINAL: 0x0044DCD0
-// name      ??__Fg_UNUSED_CAVIARDATA_VAR2@@YAXXZ
+// ORIGINAL: 0x0044DCD0 ??__Fg_UNUSED_CAVIARDATA_VAR2@@YAXXZ 0x0044DCD0-0x0044DCDA
 // size      10 bytes
-// spans     0x0044DCD0-0x0044DCDA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2583,10 +2343,8 @@ void __cdecl destroy_unused_caviardata_var2() {
 
 /*
 Purpose: Atexit teardown thunk for g_VWNTU_CAVIARDATA.
-ORIGINAL: 0x0044DD00
-// name      ??__Fg_VWNTU_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044DD00 ??__Fg_VWNTU_CAVIARDATA@@YAXXZ 0x0044DD00-0x0044DD0A
 // size      10 bytes
-// spans     0x0044DD00-0x0044DD0A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2601,10 +2359,8 @@ void __cdecl destroy_vwntu_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VT_CAVIARDATA.
-ORIGINAL: 0x0044DD30
-// name      ??__Fg_VT_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044DD30 ??__Fg_VT_CAVIARDATA@@YAXXZ 0x0044DD30-0x0044DD3A
 // size      10 bytes
-// spans     0x0044DD30-0x0044DD3A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2619,10 +2375,8 @@ void __cdecl destroy_vt_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_DROP_CAVIARDATA.
-ORIGINAL: 0x0044DD60
-// name      ??__Fg_DROP_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044DD60 ??__Fg_DROP_CAVIARDATA@@YAXXZ 0x0044DD60-0x0044DD6A
 // size      10 bytes
-// spans     0x0044DD60-0x0044DD6A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2637,10 +2391,8 @@ void __cdecl destroy_drop_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_DROPLET_CAVIARDATA.
-ORIGINAL: 0x0044DD90
-// name      ??__Fg_DROPLET_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044DD90 ??__Fg_DROPLET_CAVIARDATA@@YAXXZ 0x0044DD90-0x0044DD9A
 // size      10 bytes
-// spans     0x0044DD90-0x0044DD9A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2655,10 +2407,8 @@ void __cdecl destroy_droplet_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VCL_CAVIARDATA.
-ORIGINAL: 0x0044DDC0
-// name      ??__Fg_VCL_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044DDC0 ??__Fg_VCL_CAVIARDATA@@YAXXZ 0x0044DDC0-0x0044DDCA
 // size      10 bytes
-// spans     0x0044DDC0-0x0044DDCA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2673,10 +2423,8 @@ void __cdecl destroy_vcl_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_CAVIARDATA_VAR3.
-ORIGINAL: 0x0044DE00
-// name      ??__Fg_UNUSED_CAVIARDATA_VAR3@@YAXXZ
+// ORIGINAL: 0x0044DE00 ??__Fg_UNUSED_CAVIARDATA_VAR3@@YAXXZ 0x0044DE00-0x0044DE14
 // size      20 bytes
-// spans     0x0044DE00-0x0044DE14
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -2691,10 +2439,8 @@ void __cdecl destroy_unused_caviardata_var3() {
 
 /*
 Purpose: Atexit teardown thunk for g_VCLT00_CAVIARDATA.
-ORIGINAL: 0x0044DE40
-// name      ??__Fg_VCLT00_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044DE40 ??__Fg_VCLT00_CAVIARDATA@@YAXXZ 0x0044DE40-0x0044DE4A
 // size      10 bytes
-// spans     0x0044DE40-0x0044DE4A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2709,10 +2455,8 @@ void __cdecl destroy_vclt00_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VHT_VBP_CAVIARDATA.
-ORIGINAL: 0x0044DE70
-// name      ??__Fg_VHT_VBP_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044DE70 ??__Fg_VHT_VBP_CAVIARDATA@@YAXXZ 0x0044DE70-0x0044DE7A
 // size      10 bytes
-// spans     0x0044DE70-0x0044DE7A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2727,10 +2471,8 @@ void __cdecl destroy_vht_vbp_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VHTP_CAVIARDATA.
-ORIGINAL: 0x0044DEA0
-// name      ??__Fg_VHTP_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044DEA0 ??__Fg_VHTP_CAVIARDATA@@YAXXZ 0x0044DEA0-0x0044DEAA
 // size      10 bytes
-// spans     0x0044DEA0-0x0044DEAA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2745,10 +2487,8 @@ void __cdecl destroy_vhtp_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VHTA0_CAVIARDATA.
-ORIGINAL: 0x0044DEE0
-// name      ??__Fg_VHTA0_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044DEE0 ??__Fg_VHTA0_CAVIARDATA@@YAXXZ 0x0044DEE0-0x0044DEF4
 // size      20 bytes
-// spans     0x0044DEE0-0x0044DEF4
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -2763,10 +2503,8 @@ void __cdecl destroy_vhta0_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VHTTP_CAVIARDATA.
-ORIGINAL: 0x0044DF20
-// name      ??__Fg_VHTTP_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044DF20 ??__Fg_VHTTP_CAVIARDATA@@YAXXZ 0x0044DF20-0x0044DF2A
 // size      10 bytes
-// spans     0x0044DF20-0x0044DF2A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2781,10 +2519,8 @@ void __cdecl destroy_vhttp_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VHTTPA0_CAVIARDATA.
-ORIGINAL: 0x0044DF60
-// name      ??__Fg_VHTTPA0_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044DF60 ??__Fg_VHTTPA0_CAVIARDATA@@YAXXZ 0x0044DF60-0x0044DF74
 // size      20 bytes
-// spans     0x0044DF60-0x0044DF74
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -2799,10 +2535,8 @@ void __cdecl destroy_vhttpa0_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VSP_CAVIARDATA.
-ORIGINAL: 0x0044DFA0
-// name      ??__Fg_VSP_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044DFA0 ??__Fg_VSP_CAVIARDATA@@YAXXZ 0x0044DFA0-0x0044DFAA
 // size      10 bytes
-// spans     0x0044DFA0-0x0044DFAA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2817,10 +2551,8 @@ void __cdecl destroy_vsp_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VSPA0_CAVIARDATA.
-ORIGINAL: 0x0044DFE0
-// name      ??__Fg_VSPA0_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044DFE0 ??__Fg_VSPA0_CAVIARDATA@@YAXXZ 0x0044DFE0-0x0044DFF4
 // size      20 bytes
-// spans     0x0044DFE0-0x0044DFF4
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -2835,10 +2567,8 @@ void __cdecl destroy_vspa0_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VSPTF_CAVIARDATA.
-ORIGINAL: 0x0044E020
-// name      ??__Fg_VSPTF_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044E020 ??__Fg_VSPTF_CAVIARDATA@@YAXXZ 0x0044E020-0x0044E02A
 // size      10 bytes
-// spans     0x0044E020-0x0044E02A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2853,10 +2583,8 @@ void __cdecl destroy_vsptf_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VSPTB_CAVIARDATA.
-ORIGINAL: 0x0044E050
-// name      ??__Fg_VSPTB_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044E050 ??__Fg_VSPTB_CAVIARDATA@@YAXXZ 0x0044E050-0x0044E05A
 // size      10 bytes
-// spans     0x0044E050-0x0044E05A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2871,10 +2599,8 @@ void __cdecl destroy_vsptb_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VFL_CAVIARDATA.
-ORIGINAL: 0x0044E080
-// name      ??__Fg_VFL_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044E080 ??__Fg_VFL_CAVIARDATA@@YAXXZ 0x0044E080-0x0044E08A
 // size      10 bytes
-// spans     0x0044E080-0x0044E08A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2889,10 +2615,8 @@ void __cdecl destroy_vfl_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VGS_CAVIARDATA.
-ORIGINAL: 0x0044E0B0
-// name      ??__Fg_VGS_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044E0B0 ??__Fg_VGS_CAVIARDATA@@YAXXZ 0x0044E0B0-0x0044E0BA
 // size      10 bytes
-// spans     0x0044E0B0-0x0044E0BA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2907,10 +2631,8 @@ void __cdecl destroy_vgs_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VGSP_CAVIARDATA.
-ORIGINAL: 0x0044E0E0
-// name      ??__Fg_VGSP_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044E0E0 ??__Fg_VGSP_CAVIARDATA@@YAXXZ 0x0044E0E0-0x0044E0EA
 // size      10 bytes
-// spans     0x0044E0E0-0x0044E0EA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2925,10 +2647,8 @@ void __cdecl destroy_vgsp_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VJTP_CAVIARDATA.
-ORIGINAL: 0x0044E110
-// name      ??__Fg_VJTP_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044E110 ??__Fg_VJTP_CAVIARDATA@@YAXXZ 0x0044E110-0x0044E11A
 // size      10 bytes
-// spans     0x0044E110-0x0044E11A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2943,10 +2663,8 @@ void __cdecl destroy_vjtp_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VJT0_CAVIARDATA.
-ORIGINAL: 0x0044E150
-// name      ??__Fg_VJT0_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044E150 ??__Fg_VJT0_CAVIARDATA@@YAXXZ 0x0044E150-0x0044E164
 // size      20 bytes
-// spans     0x0044E150-0x0044E164
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -2961,10 +2679,8 @@ void __cdecl destroy_vjt0_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VCU_CAVIARDATA.
-ORIGINAL: 0x0044E190
-// name      ??__Fg_VCU_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044E190 ??__Fg_VCU_CAVIARDATA@@YAXXZ 0x0044E190-0x0044E19A
 // size      10 bytes
-// spans     0x0044E190-0x0044E19A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2979,10 +2695,8 @@ void __cdecl destroy_vcu_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VCUP_CAVIARDATA.
-ORIGINAL: 0x0044E1C0
-// name      ??__Fg_VCUP_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044E1C0 ??__Fg_VCUP_CAVIARDATA@@YAXXZ 0x0044E1C0-0x0044E1CA
 // size      10 bytes
-// spans     0x0044E1C0-0x0044E1CA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -2997,10 +2711,8 @@ void __cdecl destroy_vcup_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VCUA0_CAVIARDATA.
-ORIGINAL: 0x0044E200
-// name      ??__Fg_VCUA0_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044E200 ??__Fg_VCUA0_CAVIARDATA@@YAXXZ 0x0044E200-0x0044E214
 // size      20 bytes
-// spans     0x0044E200-0x0044E214
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -3015,10 +2727,8 @@ void __cdecl destroy_vcua0_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VCUW_CAVIARDATA.
-ORIGINAL: 0x0044E240
-// name      ??__Fg_VCUW_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044E240 ??__Fg_VCUW_CAVIARDATA@@YAXXZ 0x0044E240-0x0044E24A
 // size      10 bytes
-// spans     0x0044E240-0x0044E24A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -3033,10 +2743,8 @@ void __cdecl destroy_vcuw_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VCT_CAVIARDATA.
-ORIGINAL: 0x0044E270
-// name      ??__Fg_VCT_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044E270 ??__Fg_VCT_CAVIARDATA@@YAXXZ 0x0044E270-0x0044E27A
 // size      10 bytes
-// spans     0x0044E270-0x0044E27A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -3051,10 +2759,8 @@ void __cdecl destroy_vct_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VCTP_CAVIARDATA.
-ORIGINAL: 0x0044E2A0
-// name      ??__Fg_VCTP_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044E2A0 ??__Fg_VCTP_CAVIARDATA@@YAXXZ 0x0044E2A0-0x0044E2AA
 // size      10 bytes
-// spans     0x0044E2A0-0x0044E2AA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -3069,10 +2775,8 @@ void __cdecl destroy_vctp_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VCTB_CAVIARDATA.
-ORIGINAL: 0x0044E2D0
-// name      ??__Fg_VCTB_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044E2D0 ??__Fg_VCTB_CAVIARDATA@@YAXXZ 0x0044E2D0-0x0044E2DA
 // size      10 bytes
-// spans     0x0044E2D0-0x0044E2DA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -3087,10 +2791,8 @@ void __cdecl destroy_vctb_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VCT0_CAVIARDATA.
-ORIGINAL: 0x0044E310
-// name      ??__Fg_VCT0_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044E310 ??__Fg_VCT0_CAVIARDATA@@YAXXZ 0x0044E310-0x0044E324
 // size      20 bytes
-// spans     0x0044E310-0x0044E324
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -3105,10 +2807,8 @@ void __cdecl destroy_vct0_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VWNTT_CAVIARDATA.
-ORIGINAL: 0x0044E350
-// name      ??__Fg_VWNTT_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044E350 ??__Fg_VWNTT_CAVIARDATA@@YAXXZ 0x0044E350-0x0044E35A
 // size      10 bytes
-// spans     0x0044E350-0x0044E35A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -3123,10 +2823,8 @@ void __cdecl destroy_vwntt_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VWNST_CAVIARDATA.
-ORIGINAL: 0x0044E380
-// name      ??__Fg_VWNST_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044E380 ??__Fg_VWNST_CAVIARDATA@@YAXXZ 0x0044E380-0x0044E38A
 // size      10 bytes
-// spans     0x0044E380-0x0044E38A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -3141,10 +2839,8 @@ void __cdecl destroy_vwnst_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VWNAA_CAVIARDATA.
-ORIGINAL: 0x0044E3B0
-// name      ??__Fg_VWNAA_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044E3B0 ??__Fg_VWNAA_CAVIARDATA@@YAXXZ 0x0044E3B0-0x0044E3BA
 // size      10 bytes
-// spans     0x0044E3B0-0x0044E3BA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -3159,10 +2855,8 @@ void __cdecl destroy_vwnaa_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VW_CAVIARDATA.
-ORIGINAL: 0x0044E3F0
-// name      ??__Fg_VW_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044E3F0 ??__Fg_VW_CAVIARDATA@@YAXXZ 0x0044E3F0-0x0044E404
 // size      20 bytes
-// spans     0x0044E3F0-0x0044E404
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -3177,10 +2871,8 @@ void __cdecl destroy_vw_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VM_CAVIARDATA.
-ORIGINAL: 0x0044E430
-// name      ??__Fg_VM_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044E430 ??__Fg_VM_CAVIARDATA@@YAXXZ 0x0044E430-0x0044E43A
 // size      10 bytes
-// spans     0x0044E430-0x0044E43A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -3195,10 +2887,8 @@ void __cdecl destroy_vm_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VM13_CAVIARDATA.
-ORIGINAL: 0x0044E460
-// name      ??__Fg_VM13_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044E460 ??__Fg_VM13_CAVIARDATA@@YAXXZ 0x0044E460-0x0044E46A
 // size      10 bytes
-// spans     0x0044E460-0x0044E46A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -3213,10 +2903,8 @@ void __cdecl destroy_vm13_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VPBR0_CAVIARDATA.
-ORIGINAL: 0x0044E4A0
-// name      ??__Fg_VPBR0_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044E4A0 ??__Fg_VPBR0_CAVIARDATA@@YAXXZ 0x0044E4A0-0x0044E4B4
 // size      20 bytes
-// spans     0x0044E4A0-0x0044E4B4
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -3231,10 +2919,8 @@ void __cdecl destroy_vpbr0_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_CAVIARDATA_VAR4.
-ORIGINAL: 0x0044E4F0
-// name      ??__Fg_UNUSED_CAVIARDATA_VAR4@@YAXXZ
+// ORIGINAL: 0x0044E4F0 ??__Fg_UNUSED_CAVIARDATA_VAR4@@YAXXZ 0x0044E4F0-0x0044E504
 // size      20 bytes
-// spans     0x0044E4F0-0x0044E504
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -3249,10 +2935,8 @@ void __cdecl destroy_unused_caviardata_var4() {
 
 /*
 Purpose: Atexit teardown thunk for g_NW_CAVIARDATA.
-ORIGINAL: 0x0044E530
-// name      ??__Fg_NW_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044E530 ??__Fg_NW_CAVIARDATA@@YAXXZ 0x0044E530-0x0044E53A
 // size      10 bytes
-// spans     0x0044E530-0x0044E53A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -3267,10 +2951,8 @@ void __cdecl destroy_nw_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_NI_CAVIARDATA.
-ORIGINAL: 0x0044E560
-// name      ??__Fg_NI_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044E560 ??__Fg_NI_CAVIARDATA@@YAXXZ 0x0044E560-0x0044E56A
 // size      10 bytes
-// spans     0x0044E560-0x0044E56A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -3285,10 +2967,8 @@ void __cdecl destroy_ni_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_NLC_CAVIARDATA.
-ORIGINAL: 0x0044E590
-// name      ??__Fg_NLC_CAVIARDATA@@YAXXZ
+// ORIGINAL: 0x0044E590 ??__Fg_NLC_CAVIARDATA@@YAXXZ 0x0044E590-0x0044E59A
 // size      10 bytes
-// spans     0x0044E590-0x0044E59A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -3303,10 +2983,8 @@ void __cdecl destroy_nlc_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_CAVIARDATA_VAR5.
-ORIGINAL: 0x0044E5D0
-// name      ??__Fg_UNUSED_CAVIARDATA_VAR5@@YAXXZ
+// ORIGINAL: 0x0044E5D0 ??__Fg_UNUSED_CAVIARDATA_VAR5@@YAXXZ 0x0044E5D0-0x0044E5E4
 // size      20 bytes
-// spans     0x0044E5D0-0x0044E5E4
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -3321,10 +2999,8 @@ void __cdecl destroy_unused_caviardata_var5() {
 
 /*
 Purpose: Atexit teardown thunk for g_RADIUS1_TEXTURE.
-ORIGINAL: 0x0044E610
-// name      ??__Fg_RADIUS1_TEXTURE@@YAXXZ
+// ORIGINAL: 0x0044E610 ??__Fg_RADIUS1_TEXTURE@@YAXXZ 0x0044E610-0x0044E61A
 // size      10 bytes
-// spans     0x0044E610-0x0044E61A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -3339,10 +3015,8 @@ void __cdecl destroy_radius1_texture() {
 
 /*
 Purpose: Atexit teardown thunk for g_RADIUS2_TEXTURE.
-ORIGINAL: 0x0044E640
-// name      ??__Fg_RADIUS2_TEXTURE@@YAXXZ
+// ORIGINAL: 0x0044E640 ??__Fg_RADIUS2_TEXTURE@@YAXXZ 0x0044E640-0x0044E64A
 // size      10 bytes
-// spans     0x0044E640-0x0044E64A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -3357,10 +3031,8 @@ void __cdecl destroy_radius2_texture() {
 
 /*
 Purpose: Atexit teardown thunk for g_ROCKY_TEXTURES.
-ORIGINAL: 0x0044E680
-// name      ??__Fg_ROCKY_TEXTURES@@YAXXZ
+// ORIGINAL: 0x0044E680 ??__Fg_ROCKY_TEXTURES@@YAXXZ 0x0044E680-0x0044E694
 // size      20 bytes
-// spans     0x0044E680-0x0044E694
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -3375,10 +3047,8 @@ void __cdecl destroy_rocky_textures() {
 
 /*
 Purpose: Atexit teardown thunk for g_OCEAN_TEXTURES.
-ORIGINAL: 0x0044E6D0
-// name      ??__Fg_OCEAN_TEXTURES@@YAXXZ
+// ORIGINAL: 0x0044E6D0 ??__Fg_OCEAN_TEXTURES@@YAXXZ 0x0044E6D0-0x0044E6E4
 // size      20 bytes
-// spans     0x0044E6D0-0x0044E6E4
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -3393,10 +3063,8 @@ void __cdecl destroy_ocean_textures() {
 
 /*
 Purpose: Atexit teardown thunk for g_FLAT_ARID_LAND_TEXTURE.
-ORIGINAL: 0x0044E710
-// name      ??__Fg_FLAT_ARID_LAND_TEXTURE@@YAXXZ
+// ORIGINAL: 0x0044E710 ??__Fg_FLAT_ARID_LAND_TEXTURE@@YAXXZ 0x0044E710-0x0044E71A
 // size      10 bytes
-// spans     0x0044E710-0x0044E71A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -3411,10 +3079,8 @@ void __cdecl destroy_flat_arid_land_texture() {
 
 /*
 Purpose: Atexit teardown thunk for g_MOIST_LAND_TEXTURES.
-ORIGINAL: 0x0044E750
-// name      ??__Fg_MOIST_LAND_TEXTURES@@YAXXZ
+// ORIGINAL: 0x0044E750 ??__Fg_MOIST_LAND_TEXTURES@@YAXXZ 0x0044E750-0x0044E764
 // size      20 bytes
-// spans     0x0044E750-0x0044E764
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -3429,10 +3095,8 @@ void __cdecl destroy_moist_land_textures() {
 
 /*
 Purpose: Atexit teardown thunk for g_RAINY_LAND_TEXTURES.
-ORIGINAL: 0x0044E7A0
-// name      ??__Fg_RAINY_LAND_TEXTURES@@YAXXZ
+// ORIGINAL: 0x0044E7A0 ??__Fg_RAINY_LAND_TEXTURES@@YAXXZ 0x0044E7A0-0x0044E7B4
 // size      20 bytes
-// spans     0x0044E7A0-0x0044E7B4
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -3447,10 +3111,8 @@ void __cdecl destroy_rainy_land_textures() {
 
 /*
 Purpose: Atexit teardown thunk for g_JUNGLE_LAND_TEXTURES.
-ORIGINAL: 0x0044E7F0
-// name      ??__Fg_JUNGLE_LAND_TEXTURES@@YAXXZ
+// ORIGINAL: 0x0044E7F0 ??__Fg_JUNGLE_LAND_TEXTURES@@YAXXZ 0x0044E7F0-0x0044E804
 // size      20 bytes
-// spans     0x0044E7F0-0x0044E804
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -3465,10 +3127,8 @@ void __cdecl destroy_jungle_land_textures() {
 
 /*
 Purpose: Atexit teardown thunk for g_DUNE_LAND_TEXTURE.
-ORIGINAL: 0x0044E830
-// name      ??__Fg_DUNE_LAND_TEXTURE@@YAXXZ
+// ORIGINAL: 0x0044E830 ??__Fg_DUNE_LAND_TEXTURE@@YAXXZ 0x0044E830-0x0044E83A
 // size      10 bytes
-// spans     0x0044E830-0x0044E83A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -3483,10 +3143,8 @@ void __cdecl destroy_dune_land_texture() {
 
 /*
 Purpose: Atexit teardown thunk for g_SUNNY_MESA_TEXTURES.
-ORIGINAL: 0x0044E870
-// name      ??__Fg_SUNNY_MESA_TEXTURES@@YAXXZ
+// ORIGINAL: 0x0044E870 ??__Fg_SUNNY_MESA_TEXTURES@@YAXXZ 0x0044E870-0x0044E884
 // size      20 bytes
-// spans     0x0044E870-0x0044E884
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -3501,10 +3159,8 @@ void __cdecl destroy_sunny_mesa_textures() {
 
 /*
 Purpose: Atexit teardown thunk for g_RAINFALL_SINGLE_TILE_TEXTURES.
-ORIGINAL: 0x0044E8C0
-// name      ??__Fg_RAINFALL_SINGLE_TILE_TEXTURES@@YAXXZ
+// ORIGINAL: 0x0044E8C0 ??__Fg_RAINFALL_SINGLE_TILE_TEXTURES@@YAXXZ 0x0044E8C0-0x0044E8D4
 // size      20 bytes
-// spans     0x0044E8C0-0x0044E8D4
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -3519,10 +3175,8 @@ void __cdecl destroy_rainfall_single_tile_textures() {
 
 /*
 Purpose: Atexit teardown thunk for g_ROAD_TEXTURES.
-ORIGINAL: 0x0044E910
-// name      ??__Fg_ROAD_TEXTURES@@YAXXZ
+// ORIGINAL: 0x0044E910 ??__Fg_ROAD_TEXTURES@@YAXXZ 0x0044E910-0x0044E924
 // size      20 bytes
-// spans     0x0044E910-0x0044E924
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -3537,10 +3191,8 @@ void __cdecl destroy_road_textures() {
 
 /*
 Purpose: Atexit teardown thunk for g_MAGTUBE_TEXTURES.
-ORIGINAL: 0x0044E960
-// name      ??__Fg_MAGTUBE_TEXTURES@@YAXXZ
+// ORIGINAL: 0x0044E960 ??__Fg_MAGTUBE_TEXTURES@@YAXXZ 0x0044E960-0x0044E974
 // size      20 bytes
-// spans     0x0044E960-0x0044E974
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -3555,10 +3207,8 @@ void __cdecl destroy_magtube_textures() {
 
 /*
 Purpose: Atexit teardown thunk for g_RIVER_TEXTURES.
-ORIGINAL: 0x0044E9B0
-// name      ??__Fg_RIVER_TEXTURES@@YAXXZ
+// ORIGINAL: 0x0044E9B0 ??__Fg_RIVER_TEXTURES@@YAXXZ 0x0044E9B0-0x0044E9C4
 // size      20 bytes
-// spans     0x0044E9B0-0x0044E9C4
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -3573,10 +3223,8 @@ void __cdecl destroy_river_textures() {
 
 /*
 Purpose: Atexit teardown thunk for g_MOUNT_PLANET_TEXTURES.
-ORIGINAL: 0x0044EA00
-// name      ??__Fg_MOUNT_PLANET_TEXTURES@@YAXXZ
+// ORIGINAL: 0x0044EA00 ??__Fg_MOUNT_PLANET_TEXTURES@@YAXXZ 0x0044EA00-0x0044EA14
 // size      20 bytes
-// spans     0x0044EA00-0x0044EA14
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -3591,10 +3239,8 @@ void __cdecl destroy_mount_planet_textures() {
 
 /*
 Purpose: Atexit teardown thunk for g_GARLAND_CRATER_TEXTURES.
-ORIGINAL: 0x0044EA50
-// name      ??__Fg_GARLAND_CRATER_TEXTURES@@YAXXZ
+// ORIGINAL: 0x0044EA50 ??__Fg_GARLAND_CRATER_TEXTURES@@YAXXZ 0x0044EA50-0x0044EA64
 // size      20 bytes
-// spans     0x0044EA50-0x0044EA64
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -3609,10 +3255,8 @@ void __cdecl destroy_garland_crater_textures() {
 
 /*
 Purpose: Atexit teardown thunk for g_FUNGUS_TEXTURES.
-ORIGINAL: 0x0044EAA0
-// name      ??__Fg_FUNGUS_TEXTURES@@YAXXZ
+// ORIGINAL: 0x0044EAA0 ??__Fg_FUNGUS_TEXTURES@@YAXXZ 0x0044EAA0-0x0044EAB4
 // size      20 bytes
-// spans     0x0044EAA0-0x0044EAB4
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -3627,10 +3271,8 @@ void __cdecl destroy_fungus_textures() {
 
 /*
 Purpose: Atexit teardown thunk for g_FARM_TEXTURES.
-ORIGINAL: 0x0044EAF0
-// name      ??__Fg_FARM_TEXTURES@@YAXXZ
+// ORIGINAL: 0x0044EAF0 ??__Fg_FARM_TEXTURES@@YAXXZ 0x0044EAF0-0x0044EB04
 // size      20 bytes
-// spans     0x0044EAF0-0x0044EB04
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -3645,10 +3287,8 @@ void __cdecl destroy_farm_textures() {
 
 /*
 Purpose: Atexit teardown thunk for g_FOREST_TEXTURES.
-ORIGINAL: 0x0044EB40
-// name      ??__Fg_FOREST_TEXTURES@@YAXXZ
+// ORIGINAL: 0x0044EB40 ??__Fg_FOREST_TEXTURES@@YAXXZ 0x0044EB40-0x0044EB54
 // size      20 bytes
-// spans     0x0044EB40-0x0044EB54
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -3663,10 +3303,8 @@ void __cdecl destroy_forest_textures() {
 
 /*
 Purpose: Atexit teardown thunk for g_RAINFALL_SINGLE_TILE_TEXTURE.
-ORIGINAL: 0x0044EB80
-// name      ??__Fg_RAINFALL_SINGLE_TILE_TEXTURE@@YAXXZ
+// ORIGINAL: 0x0044EB80 ??__Fg_RAINFALL_SINGLE_TILE_TEXTURE@@YAXXZ 0x0044EB80-0x0044EB8A
 // size      10 bytes
-// spans     0x0044EB80-0x0044EB8A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -3681,10 +3319,8 @@ void __cdecl destroy_rainfall_single_tile_texture() {
 
 /*
 Purpose: Atexit teardown thunk for g_TER1_WHITE_ORG_YEL_TILE_SPRITES.
-ORIGINAL: 0x0044EBC0
-// name      ??__Fg_TER1_WHITE_ORG_YEL_TILE_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044EBC0 ??__Fg_TER1_WHITE_ORG_YEL_TILE_SPRITES@@YAXXZ 0x0044EBC0-0x0044EBD4
 // size      20 bytes
-// spans     0x0044EBC0-0x0044EBD4
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -3699,10 +3335,8 @@ void __cdecl destroy_ter1_white_org_yel_tile_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_TER1_BOTTOM_LEFT_TILE_SPRITES.
-ORIGINAL: 0x0044EC10
-// name      ??__Fg_TER1_BOTTOM_LEFT_TILE_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044EC10 ??__Fg_TER1_BOTTOM_LEFT_TILE_SPRITES@@YAXXZ 0x0044EC10-0x0044EC24
 // size      20 bytes
-// spans     0x0044EC10-0x0044EC24
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -3717,10 +3351,8 @@ void __cdecl destroy_ter1_bottom_left_tile_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_TER1_UNUSED_SPRITES2.
-ORIGINAL: 0x0044EC60
-// name      ??__Fg_TER1_UNUSED_SPRITES2@@YAXXZ
+// ORIGINAL: 0x0044EC60 ??__Fg_TER1_UNUSED_SPRITES2@@YAXXZ 0x0044EC60-0x0044EC74
 // size      20 bytes
-// spans     0x0044EC60-0x0044EC74
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -3735,10 +3367,8 @@ void __cdecl destroy_ter1_unused_sprites2() {
 
 /*
 Purpose: Atexit teardown thunk for g_TER1_MINE_SPRITE.
-ORIGINAL: 0x0044ECA0
-// name      ??__Fg_TER1_MINE_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044ECA0 ??__Fg_TER1_MINE_SPRITE@@YAXXZ 0x0044ECA0-0x0044ECAA
 // size      10 bytes
-// spans     0x0044ECA0-0x0044ECAA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -3753,10 +3383,8 @@ void __cdecl destroy_ter1_mine_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_TER1_SOLAR_COLLECTOR_SPRITE.
-ORIGINAL: 0x0044ECD0
-// name      ??__Fg_TER1_SOLAR_COLLECTOR_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044ECD0 ??__Fg_TER1_SOLAR_COLLECTOR_SPRITE@@YAXXZ 0x0044ECD0-0x0044ECDA
 // size      10 bytes
-// spans     0x0044ECD0-0x0044ECDA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -3771,10 +3399,8 @@ void __cdecl destroy_ter1_solar_collector_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_TER1_TIDAL_HARNESS_SPRITE.
-ORIGINAL: 0x0044ED00
-// name      ??__Fg_TER1_TIDAL_HARNESS_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044ED00 ??__Fg_TER1_TIDAL_HARNESS_SPRITE@@YAXXZ 0x0044ED00-0x0044ED0A
 // size      10 bytes
-// spans     0x0044ED00-0x0044ED0A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -3789,10 +3415,8 @@ void __cdecl destroy_ter1_tidal_harness_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_TER1_MINING_PLATFORM_SPRITE.
-ORIGINAL: 0x0044ED30
-// name      ??__Fg_TER1_MINING_PLATFORM_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044ED30 ??__Fg_TER1_MINING_PLATFORM_SPRITE@@YAXXZ 0x0044ED30-0x0044ED3A
 // size      10 bytes
-// spans     0x0044ED30-0x0044ED3A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -3807,10 +3431,8 @@ void __cdecl destroy_ter1_mining_platform_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_TER1_TUT_BLANK_SPRITE.
-ORIGINAL: 0x0044ED60
-// name      ??__Fg_TER1_TUT_BLANK_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044ED60 ??__Fg_TER1_TUT_BLANK_SPRITE@@YAXXZ 0x0044ED60-0x0044ED6A
 // size      10 bytes
-// spans     0x0044ED60-0x0044ED6A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -3825,10 +3447,8 @@ void __cdecl destroy_ter1_tut_blank_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_TER1_KELP_FARM_SPRITE.
-ORIGINAL: 0x0044ED90
-// name      ??__Fg_TER1_KELP_FARM_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044ED90 ??__Fg_TER1_KELP_FARM_SPRITE@@YAXXZ 0x0044ED90-0x0044ED9A
 // size      10 bytes
-// spans     0x0044ED90-0x0044ED9A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -3843,10 +3463,8 @@ void __cdecl destroy_ter1_kelp_farm_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_TER1_CONDENSER_SPRITE.
-ORIGINAL: 0x0044EDC0
-// name      ??__Fg_TER1_CONDENSER_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044EDC0 ??__Fg_TER1_CONDENSER_SPRITE@@YAXXZ 0x0044EDC0-0x0044EDCA
 // size      10 bytes
-// spans     0x0044EDC0-0x0044EDCA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -3861,10 +3479,8 @@ void __cdecl destroy_ter1_condenser_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_TER1_ECHELON_MIRROR_SPRITE.
-ORIGINAL: 0x0044EDF0
-// name      ??__Fg_TER1_ECHELON_MIRROR_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044EDF0 ??__Fg_TER1_ECHELON_MIRROR_SPRITE@@YAXXZ 0x0044EDF0-0x0044EDFA
 // size      10 bytes
-// spans     0x0044EDF0-0x0044EDFA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -3879,10 +3495,8 @@ void __cdecl destroy_ter1_echelon_mirror_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_TER1_BOREHOLE_SPRITE.
-ORIGINAL: 0x0044EE20
-// name      ??__Fg_TER1_BOREHOLE_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044EE20 ??__Fg_TER1_BOREHOLE_SPRITE@@YAXXZ 0x0044EE20-0x0044EE2A
 // size      10 bytes
-// spans     0x0044EE20-0x0044EE2A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -3897,10 +3511,8 @@ void __cdecl destroy_ter1_borehole_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_TER1_BOREHOLE_CLUSTER_SPRITE.
-ORIGINAL: 0x0044EE50
-// name      ??__Fg_TER1_BOREHOLE_CLUSTER_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044EE50 ??__Fg_TER1_BOREHOLE_CLUSTER_SPRITE@@YAXXZ 0x0044EE50-0x0044EE5A
 // size      10 bytes
-// spans     0x0044EE50-0x0044EE5A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -3915,10 +3527,8 @@ void __cdecl destroy_ter1_borehole_cluster_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_TER1_MANIFOLD_NEXUS_SPRITES.
-ORIGINAL: 0x0044EE90
-// name      ??__Fg_TER1_MANIFOLD_NEXUS_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044EE90 ??__Fg_TER1_MANIFOLD_NEXUS_SPRITES@@YAXXZ 0x0044EE90-0x0044EEA4
 // size      20 bytes
-// spans     0x0044EE90-0x0044EEA4
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -3933,10 +3543,8 @@ void __cdecl destroy_ter1_manifold_nexus_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_TER1WRECK_UNITY_WRECKAGE_SPRITES.
-ORIGINAL: 0x0044EEE0
-// name      ??__Fg_TER1WRECK_UNITY_WRECKAGE_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044EEE0 ??__Fg_TER1WRECK_UNITY_WRECKAGE_SPRITES@@YAXXZ 0x0044EEE0-0x0044EEF4
 // size      20 bytes
-// spans     0x0044EEE0-0x0044EEF4
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -3951,10 +3559,8 @@ void __cdecl destroy_ter1wreck_unity_wreckage_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES.
-ORIGINAL: 0x0044EF30
-// name      ??__Fg_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044EF30 ??__Fg_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES@@YAXXZ 0x0044EF30-0x0044EF44
 // size      20 bytes
-// spans     0x0044EF30-0x0044EF44
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -3969,10 +3575,8 @@ void __cdecl destroy_ter1wreck_unity_wreckage_alt_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_FOSSIL_FIELD_RIDGE_SPRITES.
-ORIGINAL: 0x0044EF80
-// name      ??__Fg_FOSSIL_FIELD_RIDGE_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044EF80 ??__Fg_FOSSIL_FIELD_RIDGE_SPRITES@@YAXXZ 0x0044EF80-0x0044EF94
 // size      20 bytes
-// spans     0x0044EF80-0x0044EF94
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -3987,10 +3591,8 @@ void __cdecl destroy_fossil_field_ridge_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_TER1_UNUSED_SPRITES1.
-ORIGINAL: 0x0044EFD0
-// name      ??__Fg_TER1_UNUSED_SPRITES1@@YAXXZ
+// ORIGINAL: 0x0044EFD0 ??__Fg_TER1_UNUSED_SPRITES1@@YAXXZ 0x0044EFD0-0x0044EFE4
 // size      20 bytes
-// spans     0x0044EFD0-0x0044EFE4
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -4005,10 +3607,8 @@ void __cdecl destroy_ter1_unused_sprites1() {
 
 /*
 Purpose: Atexit teardown thunk for g_TER1_FARM_SPRITES.
-ORIGINAL: 0x0044F020
-// name      ??__Fg_TER1_FARM_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044F020 ??__Fg_TER1_FARM_SPRITES@@YAXXZ 0x0044F020-0x0044F034
 // size      20 bytes
-// spans     0x0044F020-0x0044F034
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -4023,10 +3623,8 @@ void __cdecl destroy_ter1_farm_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_TER1_SOIL_ENRICHER_SPRITES.
-ORIGINAL: 0x0044F070
-// name      ??__Fg_TER1_SOIL_ENRICHER_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044F070 ??__Fg_TER1_SOIL_ENRICHER_SPRITES@@YAXXZ 0x0044F070-0x0044F084
 // size      20 bytes
-// spans     0x0044F070-0x0044F084
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -4041,10 +3639,8 @@ void __cdecl destroy_ter1_soil_enricher_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_TER1_SEA_LAND_RESOURCE_SPRITES.
-ORIGINAL: 0x0044F0C0
-// name      ??__Fg_TER1_SEA_LAND_RESOURCE_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044F0C0 ??__Fg_TER1_SEA_LAND_RESOURCE_SPRITES@@YAXXZ 0x0044F0C0-0x0044F0D4
 // size      20 bytes
-// spans     0x0044F0C0-0x0044F0D4
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -4059,10 +3655,8 @@ void __cdecl destroy_ter1_sea_land_resource_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_TER1_LANDMARK_RESOURCE_SPRITES.
-ORIGINAL: 0x0044F110
-// name      ??__Fg_TER1_LANDMARK_RESOURCE_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044F110 ??__Fg_TER1_LANDMARK_RESOURCE_SPRITES@@YAXXZ 0x0044F110-0x0044F124
 // size      20 bytes
-// spans     0x0044F110-0x0044F124
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -4077,10 +3671,8 @@ void __cdecl destroy_ter1_landmark_resource_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_GLOW_SPRITES.
-ORIGINAL: 0x0044F160
-// name      ??__Fg_GLOW_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044F160 ??__Fg_GLOW_SPRITES@@YAXXZ 0x0044F160-0x0044F174
 // size      20 bytes
-// spans     0x0044F160-0x0044F174
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -4095,10 +3687,8 @@ void __cdecl destroy_glow_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_TER1_UNITY_POD_SPRITES.
-ORIGINAL: 0x0044F1B0
-// name      ??__Fg_TER1_UNITY_POD_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044F1B0 ??__Fg_TER1_UNITY_POD_SPRITES@@YAXXZ 0x0044F1B0-0x0044F1C4
 // size      20 bytes
-// spans     0x0044F1B0-0x0044F1C4
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -4113,10 +3703,8 @@ void __cdecl destroy_ter1_unity_pod_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_TER1_MONOLITH_SPRITE.
-ORIGINAL: 0x0044F1F0
-// name      ??__Fg_TER1_MONOLITH_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044F1F0 ??__Fg_TER1_MONOLITH_SPRITE@@YAXXZ 0x0044F1F0-0x0044F1FA
 // size      10 bytes
-// spans     0x0044F1F0-0x0044F1FA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -4131,10 +3719,8 @@ void __cdecl destroy_ter1_monolith_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_TER1_BUNKER_SPRITE.
-ORIGINAL: 0x0044F220
-// name      ??__Fg_TER1_BUNKER_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044F220 ??__Fg_TER1_BUNKER_SPRITE@@YAXXZ 0x0044F220-0x0044F22A
 // size      10 bytes
-// spans     0x0044F220-0x0044F22A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -4149,10 +3735,8 @@ void __cdecl destroy_ter1_bunker_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_TER1_AIRBASE_SPRITE.
-ORIGINAL: 0x0044F250
-// name      ??__Fg_TER1_AIRBASE_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044F250 ??__Fg_TER1_AIRBASE_SPRITE@@YAXXZ 0x0044F250-0x0044F25A
 // size      10 bytes
-// spans     0x0044F250-0x0044F25A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -4167,10 +3751,8 @@ void __cdecl destroy_ter1_airbase_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_TER1_SENSOR_ARRAY_SPRITE.
-ORIGINAL: 0x0044F280
-// name      ??__Fg_TER1_SENSOR_ARRAY_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044F280 ??__Fg_TER1_SENSOR_ARRAY_SPRITE@@YAXXZ 0x0044F280-0x0044F28A
 // size      10 bytes
-// spans     0x0044F280-0x0044F28A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -4185,10 +3767,8 @@ void __cdecl destroy_ter1_sensor_array_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_RAINFALL_DOUBLE_TILE_SPRITES.
-ORIGINAL: 0x0044F2C0
-// name      ??__Fg_RAINFALL_DOUBLE_TILE_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044F2C0 ??__Fg_RAINFALL_DOUBLE_TILE_SPRITES@@YAXXZ 0x0044F2C0-0x0044F2D4
 // size      20 bytes
-// spans     0x0044F2C0-0x0044F2D4
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -4203,10 +3783,8 @@ void __cdecl destroy_rainfall_double_tile_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_VEH_SPRITES.
-ORIGINAL: 0x0044F310
-// name      ??__Fg_VEH_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044F310 ??__Fg_VEH_SPRITES@@YAXXZ 0x0044F310-0x0044F327
 // size      23 bytes
-// spans     0x0044F310-0x0044F327
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -4221,10 +3799,8 @@ void __cdecl destroy_veh_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_FLAGS_VEH_SPRITES.
-ORIGINAL: 0x0044F360
-// name      ??__Fg_FLAGS_VEH_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044F360 ??__Fg_FLAGS_VEH_SPRITES@@YAXXZ 0x0044F360-0x0044F374
 // size      20 bytes
-// spans     0x0044F360-0x0044F374
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -4239,10 +3815,8 @@ void __cdecl destroy_flags_veh_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_ICONS_GENERAL_SPRITES.
-ORIGINAL: 0x0044F3B0
-// name      ??__Fg_ICONS_GENERAL_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044F3B0 ??__Fg_ICONS_GENERAL_SPRITES@@YAXXZ 0x0044F3B0-0x0044F3C4
 // size      20 bytes
-// spans     0x0044F3B0-0x0044F3C4
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -4257,10 +3831,8 @@ void __cdecl destroy_icons_general_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_RESOURCE_ICON_SPRITES.
-ORIGINAL: 0x0044F400
-// name      ??__Fg_RESOURCE_ICON_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044F400 ??__Fg_RESOURCE_ICON_SPRITES@@YAXXZ 0x0044F400-0x0044F414
 // size      20 bytes
-// spans     0x0044F400-0x0044F414
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -4275,10 +3847,8 @@ void __cdecl destroy_resource_icon_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_CITIZEN_LG_CURSOR_SPRITES.
-ORIGINAL: 0x0044F450
-// name      ??__Fg_CITIZEN_LG_CURSOR_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044F450 ??__Fg_CITIZEN_LG_CURSOR_SPRITES@@YAXXZ 0x0044F450-0x0044F464
 // size      20 bytes
-// spans     0x0044F450-0x0044F464
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -4293,10 +3863,8 @@ void __cdecl destroy_citizen_lg_cursor_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_SPECIALIST_LG_CURSOR_SPRITES.
-ORIGINAL: 0x0044F4A0
-// name      ??__Fg_SPECIALIST_LG_CURSOR_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044F4A0 ??__Fg_SPECIALIST_LG_CURSOR_SPRITES@@YAXXZ 0x0044F4A0-0x0044F4B4
 // size      20 bytes
-// spans     0x0044F4A0-0x0044F4B4
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -4311,10 +3879,8 @@ void __cdecl destroy_specialist_lg_cursor_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_CITIZEN_SM_CURSOR_SPRITES.
-ORIGINAL: 0x0044F4F0
-// name      ??__Fg_CITIZEN_SM_CURSOR_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044F4F0 ??__Fg_CITIZEN_SM_CURSOR_SPRITES@@YAXXZ 0x0044F4F0-0x0044F504
 // size      20 bytes
-// spans     0x0044F4F0-0x0044F504
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -4329,10 +3895,8 @@ void __cdecl destroy_citizen_sm_cursor_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_SPECIALIST_SM_CURSOR_SPRITES.
-ORIGINAL: 0x0044F540
-// name      ??__Fg_SPECIALIST_SM_CURSOR_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044F540 ??__Fg_SPECIALIST_SM_CURSOR_SPRITES@@YAXXZ 0x0044F540-0x0044F554
 // size      20 bytes
-// spans     0x0044F540-0x0044F554
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -4347,10 +3911,8 @@ void __cdecl destroy_specialist_sm_cursor_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_AL_CITIZEN_LG_CURSOR_SPRITES.
-ORIGINAL: 0x0044F590
-// name      ??__Fg_AL_CITIZEN_LG_CURSOR_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044F590 ??__Fg_AL_CITIZEN_LG_CURSOR_SPRITES@@YAXXZ 0x0044F590-0x0044F5A4
 // size      20 bytes
-// spans     0x0044F590-0x0044F5A4
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -4365,10 +3927,8 @@ void __cdecl destroy_al_citizen_lg_cursor_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_AL_SPECIALIST_LG_CURSOR_SPRITES.
-ORIGINAL: 0x0044F5E0
-// name      ??__Fg_AL_SPECIALIST_LG_CURSOR_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044F5E0 ??__Fg_AL_SPECIALIST_LG_CURSOR_SPRITES@@YAXXZ 0x0044F5E0-0x0044F5F4
 // size      20 bytes
-// spans     0x0044F5E0-0x0044F5F4
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -4383,10 +3943,8 @@ void __cdecl destroy_al_specialist_lg_cursor_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_AL_CITIZEN_SM_CURSOR_SPRITES.
-ORIGINAL: 0x0044F630
-// name      ??__Fg_AL_CITIZEN_SM_CURSOR_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044F630 ??__Fg_AL_CITIZEN_SM_CURSOR_SPRITES@@YAXXZ 0x0044F630-0x0044F644
 // size      20 bytes
-// spans     0x0044F630-0x0044F644
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -4401,10 +3959,8 @@ void __cdecl destroy_al_citizen_sm_cursor_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_AL_SPECIALIST_SM_CURSOR_SPRITES.
-ORIGINAL: 0x0044F680
-// name      ??__Fg_AL_SPECIALIST_SM_CURSOR_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044F680 ??__Fg_AL_SPECIALIST_SM_CURSOR_SPRITES@@YAXXZ 0x0044F680-0x0044F694
 // size      20 bytes
-// spans     0x0044F680-0x0044F694
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -4419,10 +3975,8 @@ void __cdecl destroy_al_specialist_sm_cursor_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_RED_ALIEN_HEAD_ICON_SPRITE.
-ORIGINAL: 0x0044F6C0
-// name      ??__Fg_RED_ALIEN_HEAD_ICON_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044F6C0 ??__Fg_RED_ALIEN_HEAD_ICON_SPRITE@@YAXXZ 0x0044F6C0-0x0044F6CA
 // size      10 bytes
-// spans     0x0044F6C0-0x0044F6CA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -4437,10 +3991,8 @@ void __cdecl destroy_red_alien_head_icon_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_SILVER_MENU_ICON_SPRITES.
-ORIGINAL: 0x0044F700
-// name      ??__Fg_SILVER_MENU_ICON_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044F700 ??__Fg_SILVER_MENU_ICON_SPRITES@@YAXXZ 0x0044F700-0x0044F714
 // size      20 bytes
-// spans     0x0044F700-0x0044F714
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -4455,10 +4007,8 @@ void __cdecl destroy_silver_menu_icon_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_SILVER_CHECKBOX_ICON_SPRITES.
-ORIGINAL: 0x0044F750
-// name      ??__Fg_SILVER_CHECKBOX_ICON_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044F750 ??__Fg_SILVER_CHECKBOX_ICON_SPRITES@@YAXXZ 0x0044F750-0x0044F764
 // size      20 bytes
-// spans     0x0044F750-0x0044F764
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -4473,10 +4023,8 @@ void __cdecl destroy_silver_checkbox_icon_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_RED_MALE_HEAD_ICON_SPRITE.
-ORIGINAL: 0x0044F790
-// name      ??__Fg_RED_MALE_HEAD_ICON_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044F790 ??__Fg_RED_MALE_HEAD_ICON_SPRITE@@YAXXZ 0x0044F790-0x0044F79A
 // size      10 bytes
-// spans     0x0044F790-0x0044F79A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -4491,10 +4039,8 @@ void __cdecl destroy_red_male_head_icon_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_NULL_RESOURCE_ICON_SPRITE.
-ORIGINAL: 0x0044F7C0
-// name      ??__Fg_NULL_RESOURCE_ICON_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044F7C0 ??__Fg_NULL_RESOURCE_ICON_SPRITE@@YAXXZ 0x0044F7C0-0x0044F7CA
 // size      10 bytes
-// spans     0x0044F7C0-0x0044F7CA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -4509,10 +4055,8 @@ void __cdecl destroy_null_resource_icon_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_PEACE_SIGN_SPRITES.
-ORIGINAL: 0x0044F800
-// name      ??__Fg_PEACE_SIGN_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044F800 ??__Fg_PEACE_SIGN_SPRITES@@YAXXZ 0x0044F800-0x0044F814
 // size      20 bytes
-// spans     0x0044F800-0x0044F814
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -4527,10 +4071,8 @@ void __cdecl destroy_peace_sign_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_ICON_TILE_SQUARE_SPRITE.
-ORIGINAL: 0x0044F840
-// name      ??__Fg_ICON_TILE_SQUARE_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044F840 ??__Fg_ICON_TILE_SQUARE_SPRITE@@YAXXZ 0x0044F840-0x0044F84A
 // size      10 bytes
-// spans     0x0044F840-0x0044F84A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -4545,10 +4087,8 @@ void __cdecl destroy_icon_tile_square_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_XI_BOOM_VEH_SPRITES.
-ORIGINAL: 0x0044F880
-// name      ??__Fg_XI_BOOM_VEH_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044F880 ??__Fg_XI_BOOM_VEH_SPRITES@@YAXXZ 0x0044F880-0x0044F897
 // size      23 bytes
-// spans     0x0044F880-0x0044F897
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -4563,10 +4103,8 @@ void __cdecl destroy_xi_boom_veh_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_XF_BOOM_VEH_SPRITES.
-ORIGINAL: 0x0044F8D0
-// name      ??__Fg_XF_BOOM_VEH_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044F8D0 ??__Fg_XF_BOOM_VEH_SPRITES@@YAXXZ 0x0044F8D0-0x0044F8E4
 // size      20 bytes
-// spans     0x0044F8D0-0x0044F8E4
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -4581,10 +4119,8 @@ void __cdecl destroy_xf_boom_veh_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_BATTLE_MIND_WORM_SPRITE.
-ORIGINAL: 0x0044F910
-// name      ??__Fg_BATTLE_MIND_WORM_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044F910 ??__Fg_BATTLE_MIND_WORM_SPRITE@@YAXXZ 0x0044F910-0x0044F91A
 // size      10 bytes
-// spans     0x0044F910-0x0044F91A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -4599,10 +4135,8 @@ void __cdecl destroy_battle_mind_worm_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_BATTLE_ISLE_DEEP_SPRITE.
-ORIGINAL: 0x0044F940
-// name      ??__Fg_BATTLE_ISLE_DEEP_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044F940 ??__Fg_BATTLE_ISLE_DEEP_SPRITE@@YAXXZ 0x0044F940-0x0044F94A
 // size      10 bytes
-// spans     0x0044F940-0x0044F94A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -4617,10 +4151,8 @@ void __cdecl destroy_battle_isle_deep_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_BATTLE_LOCUSTS_CHIRON_SPRITE.
-ORIGINAL: 0x0044F970
-// name      ??__Fg_BATTLE_LOCUSTS_CHIRON_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044F970 ??__Fg_BATTLE_LOCUSTS_CHIRON_SPRITE@@YAXXZ 0x0044F970-0x0044F97A
 // size      10 bytes
-// spans     0x0044F970-0x0044F97A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -4635,10 +4167,8 @@ void __cdecl destroy_battle_locusts_chiron_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_BATTLE_FUNGAL_TOWER_SPRITE.
-ORIGINAL: 0x0044F9A0
-// name      ??__Fg_BATTLE_FUNGAL_TOWER_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044F9A0 ??__Fg_BATTLE_FUNGAL_TOWER_SPRITE@@YAXXZ 0x0044F9A0-0x0044F9AA
 // size      10 bytes
-// spans     0x0044F9A0-0x0044F9AA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -4653,10 +4183,8 @@ void __cdecl destroy_battle_fungal_tower_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_BATTLE_SPORE_LAUNCHER_SPRITE.
-ORIGINAL: 0x0044F9D0
-// name      ??__Fg_BATTLE_SPORE_LAUNCHER_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044F9D0 ??__Fg_BATTLE_SPORE_LAUNCHER_SPRITE@@YAXXZ 0x0044F9D0-0x0044F9DA
 // size      10 bytes
-// spans     0x0044F9D0-0x0044F9DA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -4671,10 +4199,8 @@ void __cdecl destroy_battle_spore_launcher_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_BATTLE_SEALURK_SPRITE.
-ORIGINAL: 0x0044FA00
-// name      ??__Fg_BATTLE_SEALURK_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044FA00 ??__Fg_BATTLE_SEALURK_SPRITE@@YAXXZ 0x0044FA00-0x0044FA0A
 // size      10 bytes
-// spans     0x0044FA00-0x0044FA0A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -4689,10 +4215,8 @@ void __cdecl destroy_battle_sealurk_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_TECH_ICON_SPRITES.
-ORIGINAL: 0x0044FA40
-// name      ??__Fg_TECH_ICON_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044FA40 ??__Fg_TECH_ICON_SPRITES@@YAXXZ 0x0044FA40-0x0044FA54
 // size      20 bytes
-// spans     0x0044FA40-0x0044FA54
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -4707,10 +4231,8 @@ void __cdecl destroy_tech_icon_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_FACILITY_ICON_SPRITES.
-ORIGINAL: 0x0044FA90
-// name      ??__Fg_FACILITY_ICON_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044FA90 ??__Fg_FACILITY_ICON_SPRITES@@YAXXZ 0x0044FA90-0x0044FAA4
 // size      20 bytes
-// spans     0x0044FA90-0x0044FAA4
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -4725,10 +4247,8 @@ void __cdecl destroy_facility_icon_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_SECRET_PROJECT_ICON_SPRITES.
-ORIGINAL: 0x0044FAE0
-// name      ??__Fg_SECRET_PROJECT_ICON_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044FAE0 ??__Fg_SECRET_PROJECT_ICON_SPRITES@@YAXXZ 0x0044FAE0-0x0044FAF4
 // size      20 bytes
-// spans     0x0044FAE0-0x0044FAF4
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -4743,10 +4263,8 @@ void __cdecl destroy_secret_project_icon_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_MP_COMBO_ARROW_SPRITES.
-ORIGINAL: 0x0044FB30
-// name      ??__Fg_IFACE_MP_COMBO_ARROW_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044FB30 ??__Fg_IFACE_MP_COMBO_ARROW_SPRITES@@YAXXZ 0x0044FB30-0x0044FB44
 // size      20 bytes
-// spans     0x0044FB30-0x0044FB44
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -4761,10 +4279,8 @@ void __cdecl destroy_iface_mp_combo_arrow_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_SCROLL_BAR_ARROW_ICON_SPRITES.
-ORIGINAL: 0x0044FB80
-// name      ??__Fg_SCROLL_BAR_ARROW_ICON_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044FB80 ??__Fg_SCROLL_BAR_ARROW_ICON_SPRITES@@YAXXZ 0x0044FB80-0x0044FB94
 // size      20 bytes
-// spans     0x0044FB80-0x0044FB94
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -4779,10 +4295,8 @@ void __cdecl destroy_scroll_bar_arrow_icon_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_SCROLL_BAR_SMALL_ARROW_ICON_SPRITES.
-ORIGINAL: 0x0044FBD0
-// name      ??__Fg_SCROLL_BAR_SMALL_ARROW_ICON_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044FBD0 ??__Fg_SCROLL_BAR_SMALL_ARROW_ICON_SPRITES@@YAXXZ 0x0044FBD0-0x0044FBE4
 // size      20 bytes
-// spans     0x0044FBD0-0x0044FBE4
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -4797,10 +4311,8 @@ void __cdecl destroy_scroll_bar_small_arrow_icon_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_SCROLL_BAR_FILLER_ICON_SPRITES.
-ORIGINAL: 0x0044FC10
-// name      ??__Fg_SCROLL_BAR_FILLER_ICON_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044FC10 ??__Fg_SCROLL_BAR_FILLER_ICON_SPRITES@@YAXXZ 0x0044FC10-0x0044FC1A
 // size      10 bytes
-// spans     0x0044FC10-0x0044FC1A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -4815,10 +4327,8 @@ void __cdecl destroy_scroll_bar_filler_icon_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_SCROLL_BAR_SMALL_FILLER_ICON_SPRITE.
-ORIGINAL: 0x0044FC40
-// name      ??__Fg_SCROLL_BAR_SMALL_FILLER_ICON_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044FC40 ??__Fg_SCROLL_BAR_SMALL_FILLER_ICON_SPRITE@@YAXXZ 0x0044FC40-0x0044FC4A
 // size      10 bytes
-// spans     0x0044FC40-0x0044FC4A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -4833,10 +4343,8 @@ void __cdecl destroy_scroll_bar_small_filler_icon_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_LOCK_SPRITES.
-ORIGINAL: 0x0044FC80
-// name      ??__Fg_IFACE_LOCK_SPRITES@@YAXXZ
+// ORIGINAL: 0x0044FC80 ??__Fg_IFACE_LOCK_SPRITES@@YAXXZ 0x0044FC80-0x0044FC94
 // size      20 bytes
-// spans     0x0044FC80-0x0044FC94
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -4851,10 +4359,8 @@ void __cdecl destroy_iface_lock_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITES_VAR01.
-ORIGINAL: 0x0044FCD0
-// name      ??__Fg_UNUSED_SPRITES_VAR01@@YAXXZ
+// ORIGINAL: 0x0044FCD0 ??__Fg_UNUSED_SPRITES_VAR01@@YAXXZ 0x0044FCD0-0x0044FCE4
 // size      20 bytes
-// spans     0x0044FCD0-0x0044FCE4
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -4869,10 +4375,8 @@ void __cdecl destroy_unused_sprites_var01() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_GENERAL_WINDOWS_TOP_LEFT_SPRITE.
-ORIGINAL: 0x0044FD10
-// name      ??__Fg_IFACE_GENERAL_WINDOWS_TOP_LEFT_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044FD10 ??__Fg_IFACE_GENERAL_WINDOWS_TOP_LEFT_SPRITE@@YAXXZ 0x0044FD10-0x0044FD1A
 // size      10 bytes
-// spans     0x0044FD10-0x0044FD1A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -4887,10 +4391,8 @@ void __cdecl destroy_iface_general_windows_top_left_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_GENERAL_WINDOWS_TOP_RIGHT_SPRITE.
-ORIGINAL: 0x0044FD40
-// name      ??__Fg_IFACE_GENERAL_WINDOWS_TOP_RIGHT_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044FD40 ??__Fg_IFACE_GENERAL_WINDOWS_TOP_RIGHT_SPRITE@@YAXXZ 0x0044FD40-0x0044FD4A
 // size      10 bytes
-// spans     0x0044FD40-0x0044FD4A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -4905,10 +4407,8 @@ void __cdecl destroy_iface_general_windows_top_right_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_GENERAL_WINDOWS_BOT_LEFT_SPRITE.
-ORIGINAL: 0x0044FD70
-// name      ??__Fg_IFACE_GENERAL_WINDOWS_BOT_LEFT_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044FD70 ??__Fg_IFACE_GENERAL_WINDOWS_BOT_LEFT_SPRITE@@YAXXZ 0x0044FD70-0x0044FD7A
 // size      10 bytes
-// spans     0x0044FD70-0x0044FD7A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -4923,10 +4423,8 @@ void __cdecl destroy_iface_general_windows_bot_left_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_GENERAL_WINDOWS_BOT_RIGHT_SPRITE.
-ORIGINAL: 0x0044FDA0
-// name      ??__Fg_IFACE_GENERAL_WINDOWS_BOT_RIGHT_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044FDA0 ??__Fg_IFACE_GENERAL_WINDOWS_BOT_RIGHT_SPRITE@@YAXXZ 0x0044FDA0-0x0044FDAA
 // size      10 bytes
-// spans     0x0044FDA0-0x0044FDAA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -4941,10 +4439,8 @@ void __cdecl destroy_iface_general_windows_bot_right_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_GENERAL_WINDOWS_MID_LEFT_SPRITE.
-ORIGINAL: 0x0044FDD0
-// name      ??__Fg_IFACE_GENERAL_WINDOWS_MID_LEFT_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044FDD0 ??__Fg_IFACE_GENERAL_WINDOWS_MID_LEFT_SPRITE@@YAXXZ 0x0044FDD0-0x0044FDDA
 // size      10 bytes
-// spans     0x0044FDD0-0x0044FDDA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -4959,10 +4455,8 @@ void __cdecl destroy_iface_general_windows_mid_left_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_GENERAL_WINDOWS_MID_RIGHT_SPRITE.
-ORIGINAL: 0x0044FE00
-// name      ??__Fg_IFACE_GENERAL_WINDOWS_MID_RIGHT_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044FE00 ??__Fg_IFACE_GENERAL_WINDOWS_MID_RIGHT_SPRITE@@YAXXZ 0x0044FE00-0x0044FE0A
 // size      10 bytes
-// spans     0x0044FE00-0x0044FE0A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -4977,10 +4471,8 @@ void __cdecl destroy_iface_general_windows_mid_right_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_GENERAL_WINDOWS_TOP_MID_SPRITE.
-ORIGINAL: 0x0044FE30
-// name      ??__Fg_IFACE_GENERAL_WINDOWS_TOP_MID_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044FE30 ??__Fg_IFACE_GENERAL_WINDOWS_TOP_MID_SPRITE@@YAXXZ 0x0044FE30-0x0044FE3A
 // size      10 bytes
-// spans     0x0044FE30-0x0044FE3A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -4995,10 +4487,8 @@ void __cdecl destroy_iface_general_windows_top_mid_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_GENERAL_WINDOWS_BOT_MID_SPRITE.
-ORIGINAL: 0x0044FE60
-// name      ??__Fg_IFACE_GENERAL_WINDOWS_BOT_MID_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044FE60 ??__Fg_IFACE_GENERAL_WINDOWS_BOT_MID_SPRITE@@YAXXZ 0x0044FE60-0x0044FE6A
 // size      10 bytes
-// spans     0x0044FE60-0x0044FE6A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5013,10 +4503,8 @@ void __cdecl destroy_iface_general_windows_bot_mid_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_GENERAL_WINDOWS_NONCAP_MID_SPRITE.
-ORIGINAL: 0x0044FE90
-// name      ??__Fg_IFACE_GENERAL_WINDOWS_NONCAP_MID_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044FE90 ??__Fg_IFACE_GENERAL_WINDOWS_NONCAP_MID_SPRITE@@YAXXZ 0x0044FE90-0x0044FE9A
 // size      10 bytes
-// spans     0x0044FE90-0x0044FE9A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5031,10 +4519,8 @@ void __cdecl destroy_iface_general_windows_noncap_mid_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_GENERAL_WINDOWS_NONCAP_LEFT_SPRITE.
-ORIGINAL: 0x0044FEC0
-// name      ??__Fg_IFACE_GENERAL_WINDOWS_NONCAP_LEFT_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044FEC0 ??__Fg_IFACE_GENERAL_WINDOWS_NONCAP_LEFT_SPRITE@@YAXXZ 0x0044FEC0-0x0044FECA
 // size      10 bytes
-// spans     0x0044FEC0-0x0044FECA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5049,10 +4535,8 @@ void __cdecl destroy_iface_general_windows_noncap_left_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_GENERAL_WINDOWS_NONCAP_RIGHT_SPRITE.
-ORIGINAL: 0x0044FEF0
-// name      ??__Fg_IFACE_GENERAL_WINDOWS_NONCAP_RIGHT_SPRITE@@YAXXZ
+// ORIGINAL: 0x0044FEF0 ??__Fg_IFACE_GENERAL_WINDOWS_NONCAP_RIGHT_SPRITE@@YAXXZ 0x0044FEF0-0x0044FEFA
 // size      10 bytes
-// spans     0x0044FEF0-0x0044FEFA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5067,10 +4551,8 @@ void __cdecl destroy_iface_general_windows_noncap_right_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR23.
-ORIGINAL: 0x0044FF20
-// name      ??__Fg_UNUSED_SPRITE_VAR23@@YAXXZ
+// ORIGINAL: 0x0044FF20 ??__Fg_UNUSED_SPRITE_VAR23@@YAXXZ 0x0044FF20-0x0044FF2A
 // size      10 bytes
-// spans     0x0044FF20-0x0044FF2A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5085,10 +4567,8 @@ void __cdecl destroy_unused_sprite_var23() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR24.
-ORIGINAL: 0x0044FF50
-// name      ??__Fg_UNUSED_SPRITE_VAR24@@YAXXZ
+// ORIGINAL: 0x0044FF50 ??__Fg_UNUSED_SPRITE_VAR24@@YAXXZ 0x0044FF50-0x0044FF5A
 // size      10 bytes
-// spans     0x0044FF50-0x0044FF5A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5103,10 +4583,8 @@ void __cdecl destroy_unused_sprite_var24() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR25.
-ORIGINAL: 0x0044FF80
-// name      ??__Fg_UNUSED_SPRITE_VAR25@@YAXXZ
+// ORIGINAL: 0x0044FF80 ??__Fg_UNUSED_SPRITE_VAR25@@YAXXZ 0x0044FF80-0x0044FF8A
 // size      10 bytes
-// spans     0x0044FF80-0x0044FF8A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5121,10 +4599,8 @@ void __cdecl destroy_unused_sprite_var25() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR26.
-ORIGINAL: 0x0044FFB0
-// name      ??__Fg_UNUSED_SPRITE_VAR26@@YAXXZ
+// ORIGINAL: 0x0044FFB0 ??__Fg_UNUSED_SPRITE_VAR26@@YAXXZ 0x0044FFB0-0x0044FFBA
 // size      10 bytes
-// spans     0x0044FFB0-0x0044FFBA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5139,10 +4615,8 @@ void __cdecl destroy_unused_sprite_var26() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR27.
-ORIGINAL: 0x0044FFE0
-// name      ??__Fg_UNUSED_SPRITE_VAR27@@YAXXZ
+// ORIGINAL: 0x0044FFE0 ??__Fg_UNUSED_SPRITE_VAR27@@YAXXZ 0x0044FFE0-0x0044FFEA
 // size      10 bytes
-// spans     0x0044FFE0-0x0044FFEA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5157,10 +4631,8 @@ void __cdecl destroy_unused_sprite_var27() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR28.
-ORIGINAL: 0x00450010
-// name      ??__Fg_UNUSED_SPRITE_VAR28@@YAXXZ
+// ORIGINAL: 0x00450010 ??__Fg_UNUSED_SPRITE_VAR28@@YAXXZ 0x00450010-0x0045001A
 // size      10 bytes
-// spans     0x00450010-0x0045001A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5175,10 +4647,8 @@ void __cdecl destroy_unused_sprite_var28() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR29.
-ORIGINAL: 0x00450040
-// name      ??__Fg_UNUSED_SPRITE_VAR29@@YAXXZ
+// ORIGINAL: 0x00450040 ??__Fg_UNUSED_SPRITE_VAR29@@YAXXZ 0x00450040-0x0045004A
 // size      10 bytes
-// spans     0x00450040-0x0045004A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5193,10 +4663,8 @@ void __cdecl destroy_unused_sprite_var29() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR30.
-ORIGINAL: 0x00450070
-// name      ??__Fg_UNUSED_SPRITE_VAR30@@YAXXZ
+// ORIGINAL: 0x00450070 ??__Fg_UNUSED_SPRITE_VAR30@@YAXXZ 0x00450070-0x0045007A
 // size      10 bytes
-// spans     0x00450070-0x0045007A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5211,10 +4679,8 @@ void __cdecl destroy_unused_sprite_var30() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR31.
-ORIGINAL: 0x004500A0
-// name      ??__Fg_UNUSED_SPRITE_VAR31@@YAXXZ
+// ORIGINAL: 0x004500A0 ??__Fg_UNUSED_SPRITE_VAR31@@YAXXZ 0x004500A0-0x004500AA
 // size      10 bytes
-// spans     0x004500A0-0x004500AA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5229,10 +4695,8 @@ void __cdecl destroy_unused_sprite_var31() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR32.
-ORIGINAL: 0x004500D0
-// name      ??__Fg_UNUSED_SPRITE_VAR32@@YAXXZ
+// ORIGINAL: 0x004500D0 ??__Fg_UNUSED_SPRITE_VAR32@@YAXXZ 0x004500D0-0x004500DA
 // size      10 bytes
-// spans     0x004500D0-0x004500DA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5247,10 +4711,8 @@ void __cdecl destroy_unused_sprite_var32() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR33.
-ORIGINAL: 0x00450100
-// name      ??__Fg_UNUSED_SPRITE_VAR33@@YAXXZ
+// ORIGINAL: 0x00450100 ??__Fg_UNUSED_SPRITE_VAR33@@YAXXZ 0x00450100-0x0045010A
 // size      10 bytes
-// spans     0x00450100-0x0045010A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5265,10 +4727,8 @@ void __cdecl destroy_unused_sprite_var33() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR34.
-ORIGINAL: 0x00450130
-// name      ??__Fg_UNUSED_SPRITE_VAR34@@YAXXZ
+// ORIGINAL: 0x00450130 ??__Fg_UNUSED_SPRITE_VAR34@@YAXXZ 0x00450130-0x0045013A
 // size      10 bytes
-// spans     0x00450130-0x0045013A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5283,10 +4743,8 @@ void __cdecl destroy_unused_sprite_var34() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR35.
-ORIGINAL: 0x00450160
-// name      ??__Fg_UNUSED_SPRITE_VAR35@@YAXXZ
+// ORIGINAL: 0x00450160 ??__Fg_UNUSED_SPRITE_VAR35@@YAXXZ 0x00450160-0x0045016A
 // size      10 bytes
-// spans     0x00450160-0x0045016A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5301,10 +4759,8 @@ void __cdecl destroy_unused_sprite_var35() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR36.
-ORIGINAL: 0x00450190
-// name      ??__Fg_UNUSED_SPRITE_VAR36@@YAXXZ
+// ORIGINAL: 0x00450190 ??__Fg_UNUSED_SPRITE_VAR36@@YAXXZ 0x00450190-0x0045019A
 // size      10 bytes
-// spans     0x00450190-0x0045019A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5319,10 +4775,8 @@ void __cdecl destroy_unused_sprite_var36() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR37.
-ORIGINAL: 0x004501C0
-// name      ??__Fg_UNUSED_SPRITE_VAR37@@YAXXZ
+// ORIGINAL: 0x004501C0 ??__Fg_UNUSED_SPRITE_VAR37@@YAXXZ 0x004501C0-0x004501CA
 // size      10 bytes
-// spans     0x004501C0-0x004501CA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5337,10 +4791,8 @@ void __cdecl destroy_unused_sprite_var37() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR38.
-ORIGINAL: 0x004501F0
-// name      ??__Fg_UNUSED_SPRITE_VAR38@@YAXXZ
+// ORIGINAL: 0x004501F0 ??__Fg_UNUSED_SPRITE_VAR38@@YAXXZ 0x004501F0-0x004501FA
 // size      10 bytes
-// spans     0x004501F0-0x004501FA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5355,10 +4807,8 @@ void __cdecl destroy_unused_sprite_var38() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR39.
-ORIGINAL: 0x00450220
-// name      ??__Fg_UNUSED_SPRITE_VAR39@@YAXXZ
+// ORIGINAL: 0x00450220 ??__Fg_UNUSED_SPRITE_VAR39@@YAXXZ 0x00450220-0x0045022A
 // size      10 bytes
-// spans     0x00450220-0x0045022A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5373,10 +4823,8 @@ void __cdecl destroy_unused_sprite_var39() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR40.
-ORIGINAL: 0x00450250
-// name      ??__Fg_UNUSED_SPRITE_VAR40@@YAXXZ
+// ORIGINAL: 0x00450250 ??__Fg_UNUSED_SPRITE_VAR40@@YAXXZ 0x00450250-0x0045025A
 // size      10 bytes
-// spans     0x00450250-0x0045025A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5391,10 +4839,8 @@ void __cdecl destroy_unused_sprite_var40() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR41.
-ORIGINAL: 0x00450280
-// name      ??__Fg_UNUSED_SPRITE_VAR41@@YAXXZ
+// ORIGINAL: 0x00450280 ??__Fg_UNUSED_SPRITE_VAR41@@YAXXZ 0x00450280-0x0045028A
 // size      10 bytes
-// spans     0x00450280-0x0045028A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5409,10 +4855,8 @@ void __cdecl destroy_unused_sprite_var41() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR42.
-ORIGINAL: 0x004502B0
-// name      ??__Fg_UNUSED_SPRITE_VAR42@@YAXXZ
+// ORIGINAL: 0x004502B0 ??__Fg_UNUSED_SPRITE_VAR42@@YAXXZ 0x004502B0-0x004502BA
 // size      10 bytes
-// spans     0x004502B0-0x004502BA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5427,10 +4871,8 @@ void __cdecl destroy_unused_sprite_var42() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR43.
-ORIGINAL: 0x004502E0
-// name      ??__Fg_UNUSED_SPRITE_VAR43@@YAXXZ
+// ORIGINAL: 0x004502E0 ??__Fg_UNUSED_SPRITE_VAR43@@YAXXZ 0x004502E0-0x004502EA
 // size      10 bytes
-// spans     0x004502E0-0x004502EA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5445,10 +4887,8 @@ void __cdecl destroy_unused_sprite_var43() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR44.
-ORIGINAL: 0x00450310
-// name      ??__Fg_UNUSED_SPRITE_VAR44@@YAXXZ
+// ORIGINAL: 0x00450310 ??__Fg_UNUSED_SPRITE_VAR44@@YAXXZ 0x00450310-0x0045031A
 // size      10 bytes
-// spans     0x00450310-0x0045031A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5463,10 +4903,8 @@ void __cdecl destroy_unused_sprite_var44() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR45.
-ORIGINAL: 0x00450340
-// name      ??__Fg_UNUSED_SPRITE_VAR45@@YAXXZ
+// ORIGINAL: 0x00450340 ??__Fg_UNUSED_SPRITE_VAR45@@YAXXZ 0x00450340-0x0045034A
 // size      10 bytes
-// spans     0x00450340-0x0045034A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5481,10 +4919,8 @@ void __cdecl destroy_unused_sprite_var45() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR46.
-ORIGINAL: 0x00450370
-// name      ??__Fg_UNUSED_SPRITE_VAR46@@YAXXZ
+// ORIGINAL: 0x00450370 ??__Fg_UNUSED_SPRITE_VAR46@@YAXXZ 0x00450370-0x0045037A
 // size      10 bytes
-// spans     0x00450370-0x0045037A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5499,10 +4935,8 @@ void __cdecl destroy_unused_sprite_var46() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_TECH_TREE_ARROW_SPRITES.
-ORIGINAL: 0x004503B0
-// name      ??__Fg_IFACE_TECH_TREE_ARROW_SPRITES@@YAXXZ
+// ORIGINAL: 0x004503B0 ??__Fg_IFACE_TECH_TREE_ARROW_SPRITES@@YAXXZ 0x004503B0-0x004503C4
 // size      20 bytes
-// spans     0x004503B0-0x004503C4
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -5517,10 +4951,8 @@ void __cdecl destroy_iface_tech_tree_arrow_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR47.
-ORIGINAL: 0x004503F0
-// name      ??__Fg_UNUSED_SPRITE_VAR47@@YAXXZ
+// ORIGINAL: 0x004503F0 ??__Fg_UNUSED_SPRITE_VAR47@@YAXXZ 0x004503F0-0x004503FA
 // size      10 bytes
-// spans     0x004503F0-0x004503FA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5535,10 +4967,8 @@ void __cdecl destroy_unused_sprite_var47() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR48.
-ORIGINAL: 0x00450420
-// name      ??__Fg_UNUSED_SPRITE_VAR48@@YAXXZ
+// ORIGINAL: 0x00450420 ??__Fg_UNUSED_SPRITE_VAR48@@YAXXZ 0x00450420-0x0045042A
 // size      10 bytes
-// spans     0x00450420-0x0045042A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5553,10 +4983,8 @@ void __cdecl destroy_unused_sprite_var48() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR49.
-ORIGINAL: 0x00450450
-// name      ??__Fg_UNUSED_SPRITE_VAR49@@YAXXZ
+// ORIGINAL: 0x00450450 ??__Fg_UNUSED_SPRITE_VAR49@@YAXXZ 0x00450450-0x0045045A
 // size      10 bytes
-// spans     0x00450450-0x0045045A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5571,10 +4999,8 @@ void __cdecl destroy_unused_sprite_var49() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR50.
-ORIGINAL: 0x00450480
-// name      ??__Fg_UNUSED_SPRITE_VAR50@@YAXXZ
+// ORIGINAL: 0x00450480 ??__Fg_UNUSED_SPRITE_VAR50@@YAXXZ 0x00450480-0x0045048A
 // size      10 bytes
-// spans     0x00450480-0x0045048A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5589,10 +5015,8 @@ void __cdecl destroy_unused_sprite_var50() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR51.
-ORIGINAL: 0x004504B0
-// name      ??__Fg_UNUSED_SPRITE_VAR51@@YAXXZ
+// ORIGINAL: 0x004504B0 ??__Fg_UNUSED_SPRITE_VAR51@@YAXXZ 0x004504B0-0x004504BA
 // size      10 bytes
-// spans     0x004504B0-0x004504BA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5607,10 +5031,8 @@ void __cdecl destroy_unused_sprite_var51() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR52.
-ORIGINAL: 0x004504E0
-// name      ??__Fg_UNUSED_SPRITE_VAR52@@YAXXZ
+// ORIGINAL: 0x004504E0 ??__Fg_UNUSED_SPRITE_VAR52@@YAXXZ 0x004504E0-0x004504EA
 // size      10 bytes
-// spans     0x004504E0-0x004504EA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5625,10 +5047,8 @@ void __cdecl destroy_unused_sprite_var52() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR53.
-ORIGINAL: 0x00450510
-// name      ??__Fg_UNUSED_SPRITE_VAR53@@YAXXZ
+// ORIGINAL: 0x00450510 ??__Fg_UNUSED_SPRITE_VAR53@@YAXXZ 0x00450510-0x0045051A
 // size      10 bytes
-// spans     0x00450510-0x0045051A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5643,10 +5063,8 @@ void __cdecl destroy_unused_sprite_var53() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR54.
-ORIGINAL: 0x00450540
-// name      ??__Fg_UNUSED_SPRITE_VAR54@@YAXXZ
+// ORIGINAL: 0x00450540 ??__Fg_UNUSED_SPRITE_VAR54@@YAXXZ 0x00450540-0x0045054A
 // size      10 bytes
-// spans     0x00450540-0x0045054A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5661,10 +5079,8 @@ void __cdecl destroy_unused_sprite_var54() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR55.
-ORIGINAL: 0x00450570
-// name      ??__Fg_UNUSED_SPRITE_VAR55@@YAXXZ
+// ORIGINAL: 0x00450570 ??__Fg_UNUSED_SPRITE_VAR55@@YAXXZ 0x00450570-0x0045057A
 // size      10 bytes
-// spans     0x00450570-0x0045057A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5679,10 +5095,8 @@ void __cdecl destroy_unused_sprite_var55() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR56.
-ORIGINAL: 0x004505A0
-// name      ??__Fg_UNUSED_SPRITE_VAR56@@YAXXZ
+// ORIGINAL: 0x004505A0 ??__Fg_UNUSED_SPRITE_VAR56@@YAXXZ 0x004505A0-0x004505AA
 // size      10 bytes
-// spans     0x004505A0-0x004505AA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5697,10 +5111,8 @@ void __cdecl destroy_unused_sprite_var56() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR57.
-ORIGINAL: 0x004505D0
-// name      ??__Fg_UNUSED_SPRITE_VAR57@@YAXXZ
+// ORIGINAL: 0x004505D0 ??__Fg_UNUSED_SPRITE_VAR57@@YAXXZ 0x004505D0-0x004505DA
 // size      10 bytes
-// spans     0x004505D0-0x004505DA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5715,10 +5127,8 @@ void __cdecl destroy_unused_sprite_var57() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR58.
-ORIGINAL: 0x00450600
-// name      ??__Fg_UNUSED_SPRITE_VAR58@@YAXXZ
+// ORIGINAL: 0x00450600 ??__Fg_UNUSED_SPRITE_VAR58@@YAXXZ 0x00450600-0x0045060A
 // size      10 bytes
-// spans     0x00450600-0x0045060A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5733,10 +5143,8 @@ void __cdecl destroy_unused_sprite_var58() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR59.
-ORIGINAL: 0x00450630
-// name      ??__Fg_UNUSED_SPRITE_VAR59@@YAXXZ
+// ORIGINAL: 0x00450630 ??__Fg_UNUSED_SPRITE_VAR59@@YAXXZ 0x00450630-0x0045063A
 // size      10 bytes
-// spans     0x00450630-0x0045063A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5751,10 +5159,8 @@ void __cdecl destroy_unused_sprite_var59() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR60.
-ORIGINAL: 0x00450660
-// name      ??__Fg_UNUSED_SPRITE_VAR60@@YAXXZ
+// ORIGINAL: 0x00450660 ??__Fg_UNUSED_SPRITE_VAR60@@YAXXZ 0x00450660-0x0045066A
 // size      10 bytes
-// spans     0x00450660-0x0045066A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5769,10 +5175,8 @@ void __cdecl destroy_unused_sprite_var60() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR61.
-ORIGINAL: 0x00450690
-// name      ??__Fg_UNUSED_SPRITE_VAR61@@YAXXZ
+// ORIGINAL: 0x00450690 ??__Fg_UNUSED_SPRITE_VAR61@@YAXXZ 0x00450690-0x0045069A
 // size      10 bytes
-// spans     0x00450690-0x0045069A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5787,10 +5191,8 @@ void __cdecl destroy_unused_sprite_var61() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR62.
-ORIGINAL: 0x004506C0
-// name      ??__Fg_UNUSED_SPRITE_VAR62@@YAXXZ
+// ORIGINAL: 0x004506C0 ??__Fg_UNUSED_SPRITE_VAR62@@YAXXZ 0x004506C0-0x004506CA
 // size      10 bytes
-// spans     0x004506C0-0x004506CA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5805,10 +5207,8 @@ void __cdecl destroy_unused_sprite_var62() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR63.
-ORIGINAL: 0x004506F0
-// name      ??__Fg_UNUSED_SPRITE_VAR63@@YAXXZ
+// ORIGINAL: 0x004506F0 ??__Fg_UNUSED_SPRITE_VAR63@@YAXXZ 0x004506F0-0x004506FA
 // size      10 bytes
-// spans     0x004506F0-0x004506FA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5823,10 +5223,8 @@ void __cdecl destroy_unused_sprite_var63() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR64.
-ORIGINAL: 0x00450720
-// name      ??__Fg_UNUSED_SPRITE_VAR64@@YAXXZ
+// ORIGINAL: 0x00450720 ??__Fg_UNUSED_SPRITE_VAR64@@YAXXZ 0x00450720-0x0045072A
 // size      10 bytes
-// spans     0x00450720-0x0045072A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5841,10 +5239,8 @@ void __cdecl destroy_unused_sprite_var64() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR65.
-ORIGINAL: 0x00450750
-// name      ??__Fg_UNUSED_SPRITE_VAR65@@YAXXZ
+// ORIGINAL: 0x00450750 ??__Fg_UNUSED_SPRITE_VAR65@@YAXXZ 0x00450750-0x0045075A
 // size      10 bytes
-// spans     0x00450750-0x0045075A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5859,10 +5255,8 @@ void __cdecl destroy_unused_sprite_var65() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR66.
-ORIGINAL: 0x00450780
-// name      ??__Fg_UNUSED_SPRITE_VAR66@@YAXXZ
+// ORIGINAL: 0x00450780 ??__Fg_UNUSED_SPRITE_VAR66@@YAXXZ 0x00450780-0x0045078A
 // size      10 bytes
-// spans     0x00450780-0x0045078A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5877,10 +5271,8 @@ void __cdecl destroy_unused_sprite_var66() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR67.
-ORIGINAL: 0x004507B0
-// name      ??__Fg_UNUSED_SPRITE_VAR67@@YAXXZ
+// ORIGINAL: 0x004507B0 ??__Fg_UNUSED_SPRITE_VAR67@@YAXXZ 0x004507B0-0x004507BA
 // size      10 bytes
-// spans     0x004507B0-0x004507BA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5895,10 +5287,8 @@ void __cdecl destroy_unused_sprite_var67() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR68.
-ORIGINAL: 0x004507E0
-// name      ??__Fg_UNUSED_SPRITE_VAR68@@YAXXZ
+// ORIGINAL: 0x004507E0 ??__Fg_UNUSED_SPRITE_VAR68@@YAXXZ 0x004507E0-0x004507EA
 // size      10 bytes
-// spans     0x004507E0-0x004507EA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5913,10 +5303,8 @@ void __cdecl destroy_unused_sprite_var68() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR69.
-ORIGINAL: 0x00450810
-// name      ??__Fg_UNUSED_SPRITE_VAR69@@YAXXZ
+// ORIGINAL: 0x00450810 ??__Fg_UNUSED_SPRITE_VAR69@@YAXXZ 0x00450810-0x0045081A
 // size      10 bytes
-// spans     0x00450810-0x0045081A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5931,10 +5319,8 @@ void __cdecl destroy_unused_sprite_var69() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR70.
-ORIGINAL: 0x00450840
-// name      ??__Fg_UNUSED_SPRITE_VAR70@@YAXXZ
+// ORIGINAL: 0x00450840 ??__Fg_UNUSED_SPRITE_VAR70@@YAXXZ 0x00450840-0x0045084A
 // size      10 bytes
-// spans     0x00450840-0x0045084A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5949,10 +5335,8 @@ void __cdecl destroy_unused_sprite_var70() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR71.
-ORIGINAL: 0x00450870
-// name      ??__Fg_UNUSED_SPRITE_VAR71@@YAXXZ
+// ORIGINAL: 0x00450870 ??__Fg_UNUSED_SPRITE_VAR71@@YAXXZ 0x00450870-0x0045087A
 // size      10 bytes
-// spans     0x00450870-0x0045087A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5967,10 +5351,8 @@ void __cdecl destroy_unused_sprite_var71() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR72.
-ORIGINAL: 0x004508A0
-// name      ??__Fg_UNUSED_SPRITE_VAR72@@YAXXZ
+// ORIGINAL: 0x004508A0 ??__Fg_UNUSED_SPRITE_VAR72@@YAXXZ 0x004508A0-0x004508AA
 // size      10 bytes
-// spans     0x004508A0-0x004508AA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -5985,10 +5367,8 @@ void __cdecl destroy_unused_sprite_var72() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR73.
-ORIGINAL: 0x004508D0
-// name      ??__Fg_UNUSED_SPRITE_VAR73@@YAXXZ
+// ORIGINAL: 0x004508D0 ??__Fg_UNUSED_SPRITE_VAR73@@YAXXZ 0x004508D0-0x004508DA
 // size      10 bytes
-// spans     0x004508D0-0x004508DA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6003,10 +5383,8 @@ void __cdecl destroy_unused_sprite_var73() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR74.
-ORIGINAL: 0x00450900
-// name      ??__Fg_UNUSED_SPRITE_VAR74@@YAXXZ
+// ORIGINAL: 0x00450900 ??__Fg_UNUSED_SPRITE_VAR74@@YAXXZ 0x00450900-0x0045090A
 // size      10 bytes
-// spans     0x00450900-0x0045090A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6021,10 +5399,8 @@ void __cdecl destroy_unused_sprite_var74() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITES_VAR02.
-ORIGINAL: 0x00450940
-// name      ??__Fg_UNUSED_SPRITES_VAR02@@YAXXZ
+// ORIGINAL: 0x00450940 ??__Fg_UNUSED_SPRITES_VAR02@@YAXXZ 0x00450940-0x00450954
 // size      20 bytes
-// spans     0x00450940-0x00450954
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -6039,10 +5415,8 @@ void __cdecl destroy_unused_sprites_var02() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITES_VAR03.
-ORIGINAL: 0x00450990
-// name      ??__Fg_UNUSED_SPRITES_VAR03@@YAXXZ
+// ORIGINAL: 0x00450990 ??__Fg_UNUSED_SPRITES_VAR03@@YAXXZ 0x00450990-0x004509A4
 // size      20 bytes
-// spans     0x00450990-0x004509A4
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -6057,10 +5431,8 @@ void __cdecl destroy_unused_sprites_var03() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITES_VAR04.
-ORIGINAL: 0x004509E0
-// name      ??__Fg_UNUSED_SPRITES_VAR04@@YAXXZ
+// ORIGINAL: 0x004509E0 ??__Fg_UNUSED_SPRITES_VAR04@@YAXXZ 0x004509E0-0x004509F4
 // size      20 bytes
-// spans     0x004509E0-0x004509F4
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -6075,10 +5447,8 @@ void __cdecl destroy_unused_sprites_var04() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITES_VAR05.
-ORIGINAL: 0x00450A30
-// name      ??__Fg_UNUSED_SPRITES_VAR05@@YAXXZ
+// ORIGINAL: 0x00450A30 ??__Fg_UNUSED_SPRITES_VAR05@@YAXXZ 0x00450A30-0x00450A44
 // size      20 bytes
-// spans     0x00450A30-0x00450A44
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -6093,10 +5463,8 @@ void __cdecl destroy_unused_sprites_var05() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITES_VAR06.
-ORIGINAL: 0x00450A80
-// name      ??__Fg_UNUSED_SPRITES_VAR06@@YAXXZ
+// ORIGINAL: 0x00450A80 ??__Fg_UNUSED_SPRITES_VAR06@@YAXXZ 0x00450A80-0x00450A94
 // size      20 bytes
-// spans     0x00450A80-0x00450A94
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -6111,10 +5479,8 @@ void __cdecl destroy_unused_sprites_var06() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITES_VAR07.
-ORIGINAL: 0x00450AD0
-// name      ??__Fg_UNUSED_SPRITES_VAR07@@YAXXZ
+// ORIGINAL: 0x00450AD0 ??__Fg_UNUSED_SPRITES_VAR07@@YAXXZ 0x00450AD0-0x00450AE4
 // size      20 bytes
-// spans     0x00450AD0-0x00450AE4
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -6129,10 +5495,8 @@ void __cdecl destroy_unused_sprites_var07() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITES_VAR08.
-ORIGINAL: 0x00450B20
-// name      ??__Fg_UNUSED_SPRITES_VAR08@@YAXXZ
+// ORIGINAL: 0x00450B20 ??__Fg_UNUSED_SPRITES_VAR08@@YAXXZ 0x00450B20-0x00450B34
 // size      20 bytes
-// spans     0x00450B20-0x00450B34
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -6147,10 +5511,8 @@ void __cdecl destroy_unused_sprites_var08() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITES_VAR09.
-ORIGINAL: 0x00450B70
-// name      ??__Fg_UNUSED_SPRITES_VAR09@@YAXXZ
+// ORIGINAL: 0x00450B70 ??__Fg_UNUSED_SPRITES_VAR09@@YAXXZ 0x00450B70-0x00450B84
 // size      20 bytes
-// spans     0x00450B70-0x00450B84
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -6165,10 +5527,8 @@ void __cdecl destroy_unused_sprites_var09() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITES_VAR10.
-ORIGINAL: 0x00450BC0
-// name      ??__Fg_UNUSED_SPRITES_VAR10@@YAXXZ
+// ORIGINAL: 0x00450BC0 ??__Fg_UNUSED_SPRITES_VAR10@@YAXXZ 0x00450BC0-0x00450BD4
 // size      20 bytes
-// spans     0x00450BC0-0x00450BD4
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -6183,10 +5543,8 @@ void __cdecl destroy_unused_sprites_var10() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR75.
-ORIGINAL: 0x00450C00
-// name      ??__Fg_UNUSED_SPRITE_VAR75@@YAXXZ
+// ORIGINAL: 0x00450C00 ??__Fg_UNUSED_SPRITE_VAR75@@YAXXZ 0x00450C00-0x00450C0A
 // size      10 bytes
-// spans     0x00450C00-0x00450C0A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6201,10 +5559,8 @@ void __cdecl destroy_unused_sprite_var75() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR76.
-ORIGINAL: 0x00450C30
-// name      ??__Fg_UNUSED_SPRITE_VAR76@@YAXXZ
+// ORIGINAL: 0x00450C30 ??__Fg_UNUSED_SPRITE_VAR76@@YAXXZ 0x00450C30-0x00450C3A
 // size      10 bytes
-// spans     0x00450C30-0x00450C3A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6219,10 +5575,8 @@ void __cdecl destroy_unused_sprite_var76() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR77.
-ORIGINAL: 0x00450C60
-// name      ??__Fg_UNUSED_SPRITE_VAR77@@YAXXZ
+// ORIGINAL: 0x00450C60 ??__Fg_UNUSED_SPRITE_VAR77@@YAXXZ 0x00450C60-0x00450C6A
 // size      10 bytes
-// spans     0x00450C60-0x00450C6A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6237,10 +5591,8 @@ void __cdecl destroy_unused_sprite_var77() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR78.
-ORIGINAL: 0x00450C90
-// name      ??__Fg_UNUSED_SPRITE_VAR78@@YAXXZ
+// ORIGINAL: 0x00450C90 ??__Fg_UNUSED_SPRITE_VAR78@@YAXXZ 0x00450C90-0x00450C9A
 // size      10 bytes
-// spans     0x00450C90-0x00450C9A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6255,10 +5607,8 @@ void __cdecl destroy_unused_sprite_var78() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR79.
-ORIGINAL: 0x00450CC0
-// name      ??__Fg_UNUSED_SPRITE_VAR79@@YAXXZ
+// ORIGINAL: 0x00450CC0 ??__Fg_UNUSED_SPRITE_VAR79@@YAXXZ 0x00450CC0-0x00450CCA
 // size      10 bytes
-// spans     0x00450CC0-0x00450CCA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6273,10 +5623,8 @@ void __cdecl destroy_unused_sprite_var79() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR80.
-ORIGINAL: 0x00450CF0
-// name      ??__Fg_UNUSED_SPRITE_VAR80@@YAXXZ
+// ORIGINAL: 0x00450CF0 ??__Fg_UNUSED_SPRITE_VAR80@@YAXXZ 0x00450CF0-0x00450CFA
 // size      10 bytes
-// spans     0x00450CF0-0x00450CFA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6291,10 +5639,8 @@ void __cdecl destroy_unused_sprite_var80() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR81.
-ORIGINAL: 0x00450D20
-// name      ??__Fg_UNUSED_SPRITE_VAR81@@YAXXZ
+// ORIGINAL: 0x00450D20 ??__Fg_UNUSED_SPRITE_VAR81@@YAXXZ 0x00450D20-0x00450D2A
 // size      10 bytes
-// spans     0x00450D20-0x00450D2A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6309,10 +5655,8 @@ void __cdecl destroy_unused_sprite_var81() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR82.
-ORIGINAL: 0x00450D50
-// name      ??__Fg_UNUSED_SPRITE_VAR82@@YAXXZ
+// ORIGINAL: 0x00450D50 ??__Fg_UNUSED_SPRITE_VAR82@@YAXXZ 0x00450D50-0x00450D5A
 // size      10 bytes
-// spans     0x00450D50-0x00450D5A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6327,10 +5671,8 @@ void __cdecl destroy_unused_sprite_var82() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITE_VAR83.
-ORIGINAL: 0x00450D80
-// name      ??__Fg_UNUSED_SPRITE_VAR83@@YAXXZ
+// ORIGINAL: 0x00450D80 ??__Fg_UNUSED_SPRITE_VAR83@@YAXXZ 0x00450D80-0x00450D8A
 // size      10 bytes
-// spans     0x00450D80-0x00450D8A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6345,10 +5687,8 @@ void __cdecl destroy_unused_sprite_var83() {
 
 /*
 Purpose: Atexit teardown thunk for g_BASEWIN_SPRITES.
-ORIGINAL: 0x00450DC0
-// name      ??__Fg_BASEWIN_SPRITES@@YAXXZ
+// ORIGINAL: 0x00450DC0 ??__Fg_BASEWIN_SPRITES@@YAXXZ 0x00450DC0-0x00450DD4
 // size      20 bytes
-// spans     0x00450DC0-0x00450DD4
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -6363,10 +5703,8 @@ void __cdecl destroy_basewin_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_INFOWIN.
-ORIGINAL: 0x004562E0
-// name      ??__Fg_INFOWIN@@YAXXZ
+// ORIGINAL: 0x004562E0 ??__Fg_INFOWIN@@YAXXZ 0x004562E0-0x004562EA
 // size      10 bytes
-// spans     0x004562E0-0x004562EA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6381,10 +5719,8 @@ void __cdecl destroy_infowin() {
 
 /*
 Purpose: Atexit teardown thunk for g_MAININTERFACE.
-ORIGINAL: 0x00459580
-// name      ??__Fg_MAININTERFACE@@YAXXZ
+// ORIGINAL: 0x00459580 ??__Fg_MAININTERFACE@@YAXXZ 0x00459580-0x0045958A
 // size      10 bytes
-// spans     0x00459580-0x0045958A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6399,10 +5735,8 @@ void __cdecl destroy_maininterface() {
 
 /*
 Purpose: Atexit teardown thunk for g_MAININTERFACE_WAVE.
-ORIGINAL: 0x004595B0
-// name      ??__Fg_MAININTERFACE_WAVE@@YAXXZ
+// ORIGINAL: 0x004595B0 ??__Fg_MAININTERFACE_WAVE@@YAXXZ 0x004595B0-0x004595BA
 // size      10 bytes
-// spans     0x004595B0-0x004595BA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6417,10 +5751,8 @@ void __cdecl destroy_maininterface_wave() {
 
 /*
 Purpose: Atexit teardown thunk for g_JACKAL_FONT.
-ORIGINAL: 0x0045F940 BYTE_EXACT
-// name      ??__Fg_JACKAL_FONT@@YAXXZ
+// ORIGINAL: 0x0045F940 ??__Fg_JACKAL_FONT@@YAXXZ 0x0045F940-0x0045F94A BYTE_EXACT
 // size      10 bytes
-// spans     0x0045F940-0x0045F94A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6435,10 +5767,8 @@ void __cdecl destroy_jackal_font() {
 
 /*
 Purpose: Atexit teardown thunk for g_MESSAGEWIN.
-ORIGINAL: 0x00471340
-// name      ??__Fg_MESSAGEWIN@@YAXXZ
+// ORIGINAL: 0x00471340 ??__Fg_MESSAGEWIN@@YAXXZ 0x00471340-0x0047134A
 // size      10 bytes
-// spans     0x00471340-0x0047134A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6453,10 +5783,8 @@ void __cdecl destroy_messagewin() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_GREEN_RIGHT_ARROW_SPRITE.
-ORIGINAL: 0x00471380
-// name      ??__Fg_IFACE_GREEN_RIGHT_ARROW_SPRITE@@YAXXZ
+// ORIGINAL: 0x00471380 ??__Fg_IFACE_GREEN_RIGHT_ARROW_SPRITE@@YAXXZ 0x00471380-0x00471394
 // size      20 bytes
-// spans     0x00471380-0x00471394
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -6471,10 +5799,8 @@ void __cdecl destroy_iface_green_right_arrow_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_MONUWIN.
-ORIGINAL: 0x00472220
-// name      ??__Fg_MONUWIN@@YAXXZ
+// ORIGINAL: 0x00472220 ??__Fg_MONUWIN@@YAXXZ 0x00472220-0x0047222A
 // size      10 bytes
-// spans     0x00472220-0x0047222A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6489,10 +5815,8 @@ void __cdecl destroy_monuwin() {
 
 /*
 Purpose: Atexit teardown thunk for g_MULTIWIN.
-ORIGINAL: 0x00477E30
-// name      ??__Fg_MULTIWIN@@YAXXZ
+// ORIGINAL: 0x00477E30 ??__Fg_MULTIWIN@@YAXXZ 0x00477E30-0x00477E3A
 // size      10 bytes
-// spans     0x00477E30-0x00477E3A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6507,10 +5831,8 @@ void __cdecl destroy_multiwin() {
 
 /*
 Purpose: Atexit teardown thunk for g_MULTIWIN_WAVE.
-ORIGINAL: 0x00477E60
-// name      ??__Fg_MULTIWIN_WAVE@@YAXXZ
+// ORIGINAL: 0x00477E60 ??__Fg_MULTIWIN_WAVE@@YAXXZ 0x00477E60-0x00477E6A
 // size      10 bytes
-// spans     0x00477E60-0x00477E6A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6525,10 +5847,8 @@ void __cdecl destroy_multiwin_wave() {
 
 /*
 Purpose: Atexit teardown thunk for g_NETMSG1.
-ORIGINAL: 0x0047A790
-// name      ??__Fg_NETMSG1@@YAXXZ
+// ORIGINAL: 0x0047A790 ??__Fg_NETMSG1@@YAXXZ 0x0047A790-0x0047A79A
 // size      10 bytes
-// spans     0x0047A790-0x0047A79A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6543,10 +5863,8 @@ void __cdecl destroy_netmsg1() {
 
 /*
 Purpose: Atexit teardown thunk for g_NETMSG2.
-ORIGINAL: 0x0047A7C0
-// name      ??__Fg_NETMSG2@@YAXXZ
+// ORIGINAL: 0x0047A7C0 ??__Fg_NETMSG2@@YAXXZ 0x0047A7C0-0x0047A7CA
 // size      10 bytes
-// spans     0x0047A7C0-0x0047A7CA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6561,10 +5879,8 @@ void __cdecl destroy_netmsg2() {
 
 /*
 Purpose: Atexit teardown thunk for g_NETWIN.
-ORIGINAL: 0x0047B010
-// name      ??__Fg_NETWIN@@YAXXZ
+// ORIGINAL: 0x0047B010 ??__Fg_NETWIN@@YAXXZ 0x0047B010-0x0047B01A
 // size      10 bytes
-// spans     0x0047B010-0x0047B01A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6579,10 +5895,8 @@ void __cdecl destroy_netwin() {
 
 /*
 Purpose: Atexit teardown thunk for g_NEWTECHWIN.
-ORIGINAL: 0x00483870
-// name      ??__Fg_NEWTECHWIN@@YAXXZ
+// ORIGINAL: 0x00483870 ??__Fg_NEWTECHWIN@@YAXXZ 0x00483870-0x0048387A
 // size      10 bytes
-// spans     0x00483870-0x0048387A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6597,10 +5911,8 @@ void __cdecl destroy_newtechwin() {
 
 /*
 Purpose: Atexit teardown thunk for g_PICKWIN.
-ORIGINAL: 0x00488770
-// name      ??__Fg_PICKWIN@@YAXXZ
+// ORIGINAL: 0x00488770 ??__Fg_PICKWIN@@YAXXZ 0x00488770-0x0048877A
 // size      10 bytes
-// spans     0x00488770-0x0048877A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6615,10 +5927,8 @@ void __cdecl destroy_pickwin() {
 
 /*
 Purpose: Atexit teardown thunk for g_PREFWIN.
-ORIGINAL: 0x0048D510
-// name      ??__Fg_PREFWIN@@YAXXZ
+// ORIGINAL: 0x0048D510 ??__Fg_PREFWIN@@YAXXZ 0x0048D510-0x0048D51A
 // size      10 bytes
-// spans     0x0048D510-0x0048D51A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6633,10 +5943,8 @@ void __cdecl destroy_prefwin() {
 
 /*
 Purpose: Atexit teardown thunk for g_PREFWIN_BUTTONGROUP.
-ORIGINAL: 0x0048D540
-// name      ??__Fg_PREFWIN_BUTTONGROUP@@YAXXZ
+// ORIGINAL: 0x0048D540 ??__Fg_PREFWIN_BUTTONGROUP@@YAXXZ 0x0048D540-0x0048D54A
 // size      10 bytes
-// spans     0x0048D540-0x0048D54A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6651,10 +5959,8 @@ void __cdecl destroy_prefwin_buttongroup() {
 
 /*
 Purpose: Atexit teardown thunk for g_QUAYLEWIN.
-ORIGINAL: 0x00495190
-// name      ??__Fg_QUAYLEWIN@@YAXXZ
+// ORIGINAL: 0x00495190 ??__Fg_QUAYLEWIN@@YAXXZ 0x00495190-0x0049519A
 // size      10 bytes
-// spans     0x00495190-0x0049519A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6669,10 +5975,8 @@ void __cdecl destroy_quaylewin() {
 
 /*
 Purpose: Atexit teardown thunk for g_REPORTIF.
-ORIGINAL: 0x00496920
-// name      ??__Fg_REPORTIF@@YAXXZ
+// ORIGINAL: 0x00496920 ??__Fg_REPORTIF@@YAXXZ 0x00496920-0x0049692A
 // size      10 bytes
-// spans     0x00496920-0x0049692A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6687,10 +5991,8 @@ void __cdecl destroy_reportif() {
 
 /*
 Purpose: Atexit teardown thunk for g_REPORTWIN.
-ORIGINAL: 0x00496950
-// name      ??__Fg_REPORTWIN@@YAXXZ
+// ORIGINAL: 0x00496950 ??__Fg_REPORTWIN@@YAXXZ 0x00496950-0x0049695A
 // size      10 bytes
-// spans     0x00496950-0x0049695A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6705,10 +6007,8 @@ void __cdecl destroy_reportwin() {
 
 /*
 Purpose: Atexit teardown thunk for SocialWinParent.
-ORIGINAL: 0x004AE9D0
-// name      ??__FSocialWinParent@@YAXXZ
+// ORIGINAL: 0x004AE9D0 ??__FSocialWinParent@@YAXXZ 0x004AE9D0-0x004AE9DA
 // size      10 bytes
-// spans     0x004AE9D0-0x004AE9DA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6723,10 +6023,8 @@ void __cdecl destroy_socialwinparent() {
 
 /*
 Purpose: Atexit teardown thunk for g_STATUSWIN.
-ORIGINAL: 0x004B3FC0
-// name      ??__Fg_STATUSWIN@@YAXXZ
+// ORIGINAL: 0x004B3FC0 ??__Fg_STATUSWIN@@YAXXZ 0x004B3FC0-0x004B3FCA
 // size      10 bytes
-// spans     0x004B3FC0-0x004B3FCA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6741,10 +6039,8 @@ void __cdecl destroy_statuswin() {
 
 /*
 Purpose: Atexit teardown thunk for g_TUTWIN.
-ORIGINAL: 0x004BA5E0
-// name      ??__Fg_TUTWIN@@YAXXZ
+// ORIGINAL: 0x004BA5E0 ??__Fg_TUTWIN@@YAXXZ 0x004BA5E0-0x004BA5EA
 // size      10 bytes
-// spans     0x004BA5E0-0x004BA5EA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6759,10 +6055,8 @@ void __cdecl destroy_tutwin() {
 
 /*
 Purpose: Atexit teardown thunk for g_VEHDRAW_CAVIAR.
-ORIGINAL: 0x004BF700
-// name      ??__Fg_VEHDRAW_CAVIAR@@YAXXZ
+// ORIGINAL: 0x004BF700 ??__Fg_VEHDRAW_CAVIAR@@YAXXZ 0x004BF700-0x004BF70A
 // size      10 bytes
-// spans     0x004BF700-0x004BF70A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6777,10 +6071,8 @@ void __cdecl destroy_vehdraw_caviar() {
 
 /*
 Purpose: Atexit teardown thunk for g_VEHDRAW_BUFFER.
-ORIGINAL: 0x004BF730
-// name      ??__Fg_VEHDRAW_BUFFER@@YAXXZ
+// ORIGINAL: 0x004BF730 ??__Fg_VEHDRAW_BUFFER@@YAXXZ 0x004BF730-0x004BF73A
 // size      10 bytes
-// spans     0x004BF730-0x004BF73A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6795,10 +6087,8 @@ void __cdecl destroy_vehdraw_buffer() {
 
 /*
 Purpose: Atexit teardown thunk for g_WORLDWIN.
-ORIGINAL: 0x004C38D0
-// name      ??__Fg_WORLDWIN@@YAXXZ
+// ORIGINAL: 0x004C38D0 ??__Fg_WORLDWIN@@YAXXZ 0x004C38D0-0x004C38DA
 // size      10 bytes
-// spans     0x004C38D0-0x004C38DA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6813,10 +6103,8 @@ void __cdecl destroy_worldwin() {
 
 /*
 Purpose: Atexit teardown thunk for g_WAVE_DEVICE.
-ORIGINAL: 0x004C5C70
-// name      ??__Fg_WAVE_DEVICE@@YAXXZ
+// ORIGINAL: 0x004C5C70 ??__Fg_WAVE_DEVICE@@YAXXZ 0x004C5C70-0x004C5C7A
 // size      10 bytes
-// spans     0x004C5C70-0x004C5C7A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6831,10 +6119,8 @@ void __cdecl destroy_wave_device() {
 
 /*
 Purpose: Atexit teardown thunk for g_MIDI_DEVICE.
-ORIGINAL: 0x004C5CA0
-// name      ??__Fg_MIDI_DEVICE@@YAXXZ
+// ORIGINAL: 0x004C5CA0 ??__Fg_MIDI_DEVICE@@YAXXZ 0x004C5CA0-0x004C5CAA
 // size      10 bytes
-// spans     0x004C5CA0-0x004C5CAA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6849,10 +6135,8 @@ void __cdecl destroy_midi_device() {
 
 /*
 Purpose: Atexit teardown thunk for g_WAVE_IN_DEVICE.
-ORIGINAL: 0x004C5CD0
-// name      ??__Fg_WAVE_IN_DEVICE@@YAXXZ
+// ORIGINAL: 0x004C5CD0 ??__Fg_WAVE_IN_DEVICE@@YAXXZ 0x004C5CD0-0x004C5CDA
 // size      10 bytes
-// spans     0x004C5CD0-0x004C5CDA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6867,10 +6151,8 @@ void __cdecl destroy_wave_in_device() {
 
 /*
 Purpose: Atexit teardown thunk for g_CONSOLE_TIMER.
-ORIGINAL: 0x0050E9A0
-// name      ??__Fg_CONSOLE_TIMER@@YAXXZ
+// ORIGINAL: 0x0050E9A0 ??__Fg_CONSOLE_TIMER@@YAXXZ 0x0050E9A0-0x0050E9AA
 // size      10 bytes
-// spans     0x0050E9A0-0x0050E9AA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6885,10 +6167,8 @@ void __cdecl destroy_console_timer() {
 
 /*
 Purpose: Atexit teardown thunk for g_CURSOR_SPRITES.
-ORIGINAL: 0x0052DAF0
-// name      ??__Fg_CURSOR_SPRITES@@YAXXZ
+// ORIGINAL: 0x0052DAF0 ??__Fg_CURSOR_SPRITES@@YAXXZ 0x0052DAF0-0x0052DB04
 // size      20 bytes
-// spans     0x0052DAF0-0x0052DB04
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -6903,10 +6183,8 @@ void __cdecl destroy_cursor_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_NETDAEMON.
-ORIGINAL: 0x0052DB30
-// name      ??__Fg_NETDAEMON@@YAXXZ
+// ORIGINAL: 0x0052DB30 ??__Fg_NETDAEMON@@YAXXZ 0x0052DB30-0x0052DB3A
 // size      10 bytes
-// spans     0x0052DB30-0x0052DB3A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6921,10 +6199,8 @@ void __cdecl destroy_netdaemon() {
 
 /*
 Purpose: Atexit teardown thunk for g_FONTQUEUE_VAL2.
-ORIGINAL: 0x00559250
-// name      ??__Fg_FONTQUEUE_VAL2@@YAXXZ
+// ORIGINAL: 0x00559250 ??__Fg_FONTQUEUE_VAL2@@YAXXZ 0x00559250-0x0055925A
 // size      10 bytes
-// spans     0x00559250-0x0055925A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6939,10 +6215,8 @@ void __cdecl destroy_fontqueue_val2() {
 
 /*
 Purpose: Atexit teardown thunk for g_FONTQUEUE_VAL1.
-ORIGINAL: 0x00559280
-// name      ??__Fg_FONTQUEUE_VAL1@@YAXXZ
+// ORIGINAL: 0x00559280 ??__Fg_FONTQUEUE_VAL1@@YAXXZ 0x00559280-0x0055928A
 // size      10 bytes
-// spans     0x00559280-0x0055928A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6957,10 +6231,8 @@ void __cdecl destroy_fontqueue_val1() {
 
 /*
 Purpose: Atexit teardown thunk for g_TOP_MENU_WAVE.
-ORIGINAL: 0x00584D20
-// name      ??__Fg_TOP_MENU_WAVE@@YAXXZ
+// ORIGINAL: 0x00584D20 ??__Fg_TOP_MENU_WAVE@@YAXXZ 0x00584D20-0x00584D2A
 // size      10 bytes
-// spans     0x00584D20-0x00584D2A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -6975,10 +6247,8 @@ void __cdecl destroy_top_menu_wave() {
 
 /*
 Purpose: Atexit teardown thunk for g_FONTS.
-ORIGINAL: 0x005882D0
-// name      ??__Fg_FONTS@@YAXXZ
+// ORIGINAL: 0x005882D0 ??__Fg_FONTS@@YAXXZ 0x005882D0-0x005882E4
 // size      20 bytes
-// spans     0x005882D0-0x005882E4
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -6993,10 +6263,8 @@ void __cdecl destroy_fonts() {
 
 /*
 Purpose: Atexit teardown thunk for g_CRASH_LANDING_WAVE.
-ORIGINAL: 0x005AE110
-// name      ??__Fg_CRASH_LANDING_WAVE@@YAXXZ
+// ORIGINAL: 0x005AE110 ??__Fg_CRASH_LANDING_WAVE@@YAXXZ 0x005AE110-0x005AE11A
 // size      10 bytes
-// spans     0x005AE110-0x005AE11A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -7011,10 +6279,8 @@ void __cdecl destroy_crash_landing_wave() {
 
 /*
 Purpose: Atexit teardown thunk for g_WAVE_GENERAL.
-ORIGINAL: 0x005B9C30
-// name      ??__Fg_WAVE_GENERAL@@YAXXZ
+// ORIGINAL: 0x005B9C30 ??__Fg_WAVE_GENERAL@@YAXXZ 0x005B9C30-0x005B9C3A
 // size      10 bytes
-// spans     0x005B9C30-0x005B9C3A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -7029,10 +6295,8 @@ void __cdecl destroy_wave_general() {
 
 /*
 Purpose: Atexit teardown thunk for g_PALETTE1.
-ORIGINAL: 0x005BEC60
-// name      ??__Fg_PALETTE1@@YAXXZ
+// ORIGINAL: 0x005BEC60 ??__Fg_PALETTE1@@YAXXZ 0x005BEC60-0x005BEC6A
 // size      10 bytes
-// spans     0x005BEC60-0x005BEC6A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -7047,10 +6311,8 @@ void __cdecl destroy_palette1() {
 
 /*
 Purpose: Atexit teardown thunk for g_PALETTE2.
-ORIGINAL: 0x005BEC90
-// name      ??__Fg_PALETTE2@@YAXXZ
+// ORIGINAL: 0x005BEC90 ??__Fg_PALETTE2@@YAXXZ 0x005BEC90-0x005BEC9A
 // size      10 bytes
-// spans     0x005BEC90-0x005BEC9A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -7065,10 +6327,8 @@ void __cdecl destroy_palette2() {
 
 /*
 Purpose: Atexit teardown thunk for g_MULTIDEBUG.
-ORIGINAL: 0x005C97E0
-// name      ??__Fg_MULTIDEBUG@@YAXXZ
+// ORIGINAL: 0x005C97E0 ??__Fg_MULTIDEBUG@@YAXXZ 0x005C97E0-0x005C97EA
 // size      10 bytes
-// spans     0x005C97E0-0x005C97EA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -7083,10 +6343,8 @@ void __cdecl destroy_multidebug() {
 
 /*
 Purpose: Atexit teardown thunk for g_BUFFER.
-ORIGINAL: 0x005E37D0
-// name      ??__Fg_BUFFER@@YAXXZ
+// ORIGINAL: 0x005E37D0 ??__Fg_BUFFER@@YAXXZ 0x005E37D0-0x005E37DA
 // size      10 bytes
-// spans     0x005E37D0-0x005E37DA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -7101,10 +6359,8 @@ void __cdecl destroy_buffer() {
 
 /*
 Purpose: Atexit teardown thunk for TxtIndex.
-ORIGINAL: 0x005FD510
-// name      ??__FTxtIndex@@YAXXZ
+// ORIGINAL: 0x005FD510 ??__FTxtIndex@@YAXXZ 0x005FD510-0x005FD527
 // size      23 bytes
-// spans     0x005FD510-0x005FD527
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -7119,10 +6375,8 @@ void __cdecl destroy_txtindex() {
 
 /*
 Purpose: Atexit teardown thunk for StringTable.
-ORIGINAL: 0x006168C0
-// name      ??__FStringTable@@YAXXZ
+// ORIGINAL: 0x006168C0 ??__FStringTable@@YAXXZ 0x006168C0-0x006168CA
 // size      10 bytes
-// spans     0x006168C0-0x006168CA
 // prototype 
 // callers   0   call targets   0
 // kind      game

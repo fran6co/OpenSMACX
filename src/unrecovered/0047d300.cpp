@@ -1,16 +1,7 @@
-// ORIGINAL: 0x0047D300 FILE
-// RULED-OUT: time-boxed - setup (Popup/PullDown/Buffer RAII, PopMenu
-//            init/exec, four Dialogs::item calls, mouse pos) and the
-//            top-level choice dispatch (load_map/load_game/parse_num
-//            LAN-limit check) are transcribed against the disassembly;
-//            the network-host session-record population (~30 field
-//            strcpy calls into an unverified struct layout) is a
-//            deliberate stub rather than fabricated field offsets.
-//            MISMATCH #10, well past the prologue.
+// ORIGINAL: 0x0047D300 ?pick_map@NetWin@@QAEXXZ 0x0047D300-0x0047E003;0x00656BC5-0x00656D9D FILE
+// RULED-OUT: time-boxed - setup (Popup/PullDown/Buffer RAII, PopMenu init/exec, four Dialogs::item calls, mouse pos) and the top-level choice dispatch (load_map/load_game/parse_num LAN-limit check) are transcribed against the disassembly; the network-host session-record population (~30 field strcpy calls into an unverified struct layout) is a deliberate stub rather than fabricated field offsets. MISMATCH #10, well past the prologue.
 // working copy - scaffold materialised by --work
-// name      ?pick_map@NetWin@@QAEXXZ
 // size      3803 bytes
-// spans     0x0047D300-0x0047E003;0x00656BC5-0x00656D9D
 // prototype void (__thiscall ?pick_map@NetWin@@QAEXXZ)(NetWin* this)
 // callers   1   call targets   40
 // kind      game

@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00618EE0 BYTE_EXACT FILE
+// ORIGINAL: 0x00618EE0 ??1Font@@QAE@XZ 0x00618EE0-0x00618F2D FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ??1Font@@QAE@XZ
 // size      77 bytes
-// spans     0x00618EE0-0x00618F2D
 // prototype void (__thiscall ??1Font@@QAE@XZ)(Font* this)
 // callers   53   call targets   1
 // kind      game

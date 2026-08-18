@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0048BF20 BYTE_EXACT
-// name      ??_GPlanWin@@UAEPAXI@Z
+// ORIGINAL: 0x0048BF20 ??_GPlanWin@@UAEPAXI@Z 0x0048BF20-0x0048BF56 BYTE_EXACT
 // size      54 bytes
-// spans     0x0048BF20-0x0048BF56
 // prototype void* (__thiscall ??_GPlanWin@@UAEPAXI@Z)(PlanWin* this, unsigned int)
 // callers   0   call targets   3
 // kind      game

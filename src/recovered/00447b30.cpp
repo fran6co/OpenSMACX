@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00447B30 BYTE_EXACT
-// name      ?new_base@BAmbience@@QAEXXZ
+// ORIGINAL: 0x00447B30 ?new_base@BAmbience@@QAEXXZ 0x00447B30-0x00447B58 BYTE_EXACT
 // size      40 bytes
-// spans     0x00447B30-0x00447B58
 // prototype void (__thiscall ?new_base@BAmbience@@QAEXXZ)(BAmbience* this)
 // callers   0   call targets   0
 // kind      game

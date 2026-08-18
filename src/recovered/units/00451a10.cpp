@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00451A10 FILE
-// name      ?load_palette@@YAXXZ
+// ORIGINAL: 0x00451A10 ?load_palette@@YAXXZ 0x00451A10-0x00451C44;0x00655042-0x006550F9 FILE
 // size      747 bytes
-// spans     0x00451A10-0x00451C44;0x00655042-0x006550F9
 // prototype 
 // callers   1   call targets   18
 // kind      game

@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005D6F50 BYTE_EXACT FILE
+// ORIGINAL: 0x005D6F50 ?load_all_nc_sprites_from_defs@GraphicWin@@QAEXXZ 0x005D6F50-0x005D7022 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?load_all_nc_sprites_from_defs@GraphicWin@@QAEXXZ
 // size      210 bytes
-// spans     0x005D6F50-0x005D7022
 // prototype void (__thiscall ?load_all_nc_sprites_from_defs@GraphicWin@@QAEXXZ)(GraphicWin* this)
 // callers   1   call targets   0
 // kind      game

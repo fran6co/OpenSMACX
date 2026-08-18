@@ -1,10 +1,7 @@
-// ORIGINAL: 0x005ECC40 FILE
-// RULED-OUT: for(;;)/break loop shape for the list search instead of a
-//            do/while counted against field_D4_
+// ORIGINAL: 0x005ECC40 ?set_dialog_focus@Win@@QAEXPAVWin@@@Z 0x005ECC40-0x005ECD1B FILE
+// RULED-OUT: for(;;)/break loop shape for the list search instead of a do/while counted against field_D4_
 // working copy - scaffold materialised by --work
-// name      ?set_dialog_focus@Win@@QAEXPAVWin@@@Z
 // size      219 bytes
-// spans     0x005ECC40-0x005ECD1B
 // prototype void (__thiscall ?set_dialog_focus@Win@@QAEXPAVWin@@@Z)(Win* this, Win*)
 // callers   0   call targets   0
 // kind      game

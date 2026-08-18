@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00647AB0 EXCLUDED S1
-// name      __CIacos
+// ORIGINAL: 0x00647AB0 __CIacos 0x00647AB0-0x00647AC4 EXCLUDED S1
 // size      20 bytes
-// spans     0x00647AB0-0x00647AC4
 // prototype 
 // callers   1   call targets   2
 // kind      library

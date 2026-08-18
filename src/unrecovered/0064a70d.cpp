@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064A70D EXCLUDED S1
-// name      __rtnospopde
+// ORIGINAL: 0x0064A70D __rtnospopde 0x0064A70D-0x0064A714 EXCLUDED S1
 // size      7 bytes
-// spans     0x0064A70D-0x0064A714
 // prototype 
 // callers   0   call targets   1
 // kind      library

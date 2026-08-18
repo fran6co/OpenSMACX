@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00543A20 FILE
-// name      ?trade_maps@@YAXHH@Z
+// ORIGINAL: 0x00543A20 ?trade_maps@@YAXHH@Z 0x00543A20-0x00543BC0 FILE
 // size      416 bytes
-// spans     0x00543A20-0x00543BC0
 // prototype 
 // callers   6   call targets   3
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00491C00 FILE
-// name      ?on_redraw@PrefWin@@QAEXXZ
+// ORIGINAL: 0x00491C00 ?on_redraw@PrefWin@@QAEXXZ 0x00491C00-0x00491DEE FILE
 // size      494 bytes
-// spans     0x00491C00-0x00491DEE
 // prototype void (__thiscall ?on_redraw@PrefWin@@QAEXXZ)(PrefWin* this)
 // callers   0   call targets   3
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005905C0 FILE
-// name      ?say_weapon@@YAXPAXHH@Z
+// ORIGINAL: 0x005905C0 ?say_weapon@@YAXPAXHH@Z 0x005905C0-0x005906EC FILE
 // size      300 bytes
-// spans     0x005905C0-0x005906EC
 // prototype 
 // callers   0   call targets   3
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005F04E0 BYTE_EXACT
-// name      ?close_class@Win@@QAAXXZ
+// ORIGINAL: 0x005F04E0 ?close_class@Win@@QAAXXZ 0x005F04E0-0x005F0520 BYTE_EXACT
 // size      64 bytes
-// spans     0x005F04E0-0x005F0520
 // prototype 
 // callers   1   call targets   1
 // kind      game

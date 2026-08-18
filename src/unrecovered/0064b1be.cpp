@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064B1BE EXCLUDED S1
-// name      _write_multi_char
+// ORIGINAL: 0x0064B1BE _write_multi_char 0x0064B1BE-0x0064B1EF EXCLUDED S1
 // size      49 bytes
-// spans     0x0064B1BE-0x0064B1EF
 // prototype 
 // callers   1   call targets   1
 // kind      library

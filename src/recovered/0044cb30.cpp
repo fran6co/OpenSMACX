@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0044CB30 BYTE_EXACT
-// name      ?help_any@@YAXXZ
+// ORIGINAL: 0x0044CB30 ?help_any@@YAXXZ 0x0044CB30-0x0044CB3F BYTE_EXACT
 // size      15 bytes
-// spans     0x0044CB30-0x0044CB3F
 // prototype 
 // callers   5   call targets   1
 // kind      game

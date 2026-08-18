@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0055CE20 FILE
-// name      ?enemies_unpact@@YAXHH@Z
+// ORIGINAL: 0x0055CE20 ?enemies_unpact@@YAXHH@Z 0x0055CE20-0x0055D031 FILE
 // size      529 bytes
-// spans     0x0055CE20-0x0055D031
 // prototype 
 // callers   1   call targets   4
 // kind      game

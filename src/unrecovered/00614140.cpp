@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00614140 FILE
+// ORIGINAL: 0x00614140 ?add_def_ext@FileWin@@QAEHPAD@Z 0x00614140-0x006141BC FILE
 // working copy - scaffold materialised by --work
-// name      ?add_def_ext@FileWin@@QAEHPAD@Z
 // size      124 bytes
-// spans     0x00614140-0x006141BC
 // prototype int (__thiscall ?add_def_ext@FileWin@@QAEHPAD@Z)(FileWin* this, int8*)
 // callers   3   call targets   2
 // kind      game

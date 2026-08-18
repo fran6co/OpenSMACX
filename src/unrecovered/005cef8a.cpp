@@ -1,18 +1,11 @@
-// ORIGINAL: 0x005CEF8A
-// name      sub_5cef8a
+// ORIGINAL: 0x005CEF8A sub_5cef8a 0x005CEF8A-0x005CF11D
+// RULED-OUT: each of the 15 calls is preceded by a `mov esi, <literal table address>` the sibling 0x005CED1D confirmed is a genuine hidden ESI input (Ghidra flags `unaff_ESI` there), not reproducible without inline asm; this transcribes every visible global store (DAT_009c3000/DAT_009c3004) and the call sequence and drops only the ESI loads, landing at 0.51 similarity.
 // size      403 bytes
-// spans     0x005CEF8A-0x005CF11D
 // prototype
 // callers   1   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005CED1D 0x005CEE80
-// RULED-OUT: each of the 15 calls is preceded by a `mov esi, <literal
-//            table address>` the sibling 0x005CED1D confirmed is a genuine
-//            hidden ESI input (Ghidra flags `unaff_ESI` there), not
-//            reproducible without inline asm; this transcribes every visible
-//            global store (DAT_009c3000/DAT_009c3004) and the call sequence
-//            and drops only the ESI loads, landing at 0.51 similarity.
 
 extern "C" void __cdecl sub_5cef8a(int a1, int a2) {
     *g_009c3000 = a2 << 2;

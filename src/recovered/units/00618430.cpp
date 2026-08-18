@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00618430 BYTE_EXACT FILE
-// name      ?set_shadow_table@Caviar@@QAEHPAE@Z
+// ORIGINAL: 0x00618430 ?set_shadow_table@Caviar@@QAEHPAE@Z 0x00618430-0x00618468 FILE BYTE_EXACT
 // size      56 bytes
-// spans     0x00618430-0x00618468
 // prototype int (__thiscall ?set_shadow_table@Caviar@@QAEHPAE@Z)(Caviar* this, LPBYTE)
 // callers   4   call targets   1
 // kind      game

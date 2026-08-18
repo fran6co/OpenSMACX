@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00607CF0 BYTE_EXACT FILE
+// ORIGINAL: 0x00607CF0 ??0FlatButton@@QAE@XZ 0x00607CF0-0x00607D96 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ??0FlatButton@@QAE@XZ
 // size      166 bytes
-// spans     0x00607CF0-0x00607D96
 // prototype void (__thiscall ??0FlatButton@@QAE@XZ)(FlatButton* this)
 // callers   17   call targets   1
 // kind      game

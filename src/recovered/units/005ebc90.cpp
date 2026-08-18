@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005EBC90 FILE
-// name      ??1Win@@QAE@XZ
+// ORIGINAL: 0x005EBC90 ??1Win@@QAE@XZ 0x005EBC90-0x005EBD7F;0x005F8630-0x005F863B;0x005F86F0-0x005F8767;0x00662C60-0x00662C80 FILE
 // size      401 bytes
-// spans     0x005EBC90-0x005EBD7F;0x005F8630-0x005F863B;0x005F86F0-0x005F8767;0x00662C60-0x00662C80
 // prototype void (__thiscall ??1Win@@QAE@XZ)(Win* this)
 // callers   2   call targets   3
 // kind      game

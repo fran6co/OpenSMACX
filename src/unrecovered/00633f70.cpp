@@ -1,11 +1,7 @@
-// ORIGINAL: 0x00633F70 FILE
-// RULED-OUT: local FifoNode struct over the opaque node pointer, CS via
-//   `self+0xc` and a stdcall function-pointer cast for Enter/LeaveCS.
-//   MISMATCH #1 push/mov, prologue register-save shape only.
+// ORIGINAL: 0x00633F70 ?get@NetFifo@@QAEHPAXPAIPAHPAI@Z 0x00633F70-0x0063401D FILE
+// RULED-OUT: local FifoNode struct over the opaque node pointer, CS via `self+0xc` and a stdcall function-pointer cast for Enter/LeaveCS. MISMATCH #1 push/mov, prologue register-save shape only.
 // working copy - scaffold materialised by --work
-// name      ?get@NetFifo@@QAEHPAXPAIPAHPAI@Z
 // size      173 bytes
-// spans     0x00633F70-0x0063401D
 // prototype int (__thiscall ?get@NetFifo@@QAEHPAXPAIPAHPAI@Z)(NetFifo* this, void*, unsigned int*, int*, unsigned int*)
 // callers   3   call targets   2
 // kind      game

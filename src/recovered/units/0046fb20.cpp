@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0046FB20 BYTE_EXACT FILE
-// name      ?standard_caption@MapWin@@QAEXXZ
+// ORIGINAL: 0x0046FB20 ?standard_caption@MapWin@@QAEXXZ 0x0046FB20-0x0046FB7B FILE BYTE_EXACT
 // size      91 bytes
-// spans     0x0046FB20-0x0046FB7B
 // prototype void (__thiscall ?standard_caption@MapWin@@QAEXXZ)(MapWin* this)
 // callers   0   call targets   3
 // kind      game

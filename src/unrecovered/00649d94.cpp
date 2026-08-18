@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00649D94 EXCLUDED S1
-// name      __flsbuf
+// ORIGINAL: 0x00649D94 __flsbuf 0x00649D94-0x00649EAC EXCLUDED S1
 // size      280 bytes
-// spans     0x00649D94-0x00649EAC
 // prototype 
 // callers   4   call targets   4
 // kind      library

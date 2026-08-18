@@ -1,17 +1,12 @@
-// ORIGINAL: 0x005DD530 FILE
+// ORIGINAL: 0x005DD530 ?wrap@Buffer@@QAEHPADPAURECT@@@Z 0x005DD530-0x005DD730 FILE
+// RULED-OUT: MISMATCH #2 'push' vs 'sub' - direct transcription of the Ghidra do-while, using font1_ (0x52C) and its font_obj_ (+8); the entry-block stack-frame allocation shape diverges from the original almost immediately, not chased further.
 // working copy - scaffold materialised by --work
-// name      ?wrap@Buffer@@QAEHPADPAURECT@@@Z
 // size      512 bytes
-// spans     0x005DD530-0x005DD730
 // prototype int (__thiscall ?wrap@Buffer@@QAEHPADPAURECT@@@Z)(Buffer* this, int8*, RECT*)
 // callers   7   call targets   3
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005DC410 0x005DCAE0 0x006453E0
-// RULED-OUT: MISMATCH #2 'push' vs 'sub' - direct transcription of the Ghidra
-//            do-while, using font1_ (0x52C) and its font_obj_ (+8); the
-//            entry-block stack-frame allocation shape diverges from the
-//            original almost immediately, not chased further.
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?wrap@Buffer@@QAEHPADPAURECT@@@Z  at 0x005DD530  (512 bytes)

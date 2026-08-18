@@ -21,10 +21,8 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 1.
-ORIGINAL: 0x0062ED30 BYTE_EXACT
-// name      ?poll_players@Net@@QAEHPAUSessionStruct@@@Z
+// ORIGINAL: 0x0062ED30 ?poll_players@Net@@QAEHPAUSessionStruct@@@Z 0x0062ED30-0x0062ED38 BYTE_EXACT
 // size      8 bytes
-// spans     0x0062ED30-0x0062ED38
 // prototype int (__thiscall ?poll_players@Net@@QAEHPAUSessionStruct@@@Z)(Net* this, SessionStruct*)
 // callers   0   call targets   0
 // kind      game
@@ -64,10 +62,8 @@ Purpose: Find a player's name by key, or nothing.
          not established and this function is not evidence enough to establish
          it - it only shows that something 0x58 bytes wide lives at 0x154.
 
-ORIGINAL: 0x00631A20
-// name      ?get_player_name@Net@@QAEPADK@Z
+// ORIGINAL: 0x00631A20 ?get_player_name@Net@@QAEPADK@Z 0x00631A20-0x00631A55
 // size      53 bytes
-// spans     0x00631A20-0x00631A55
 // prototype int8* (__thiscall ?get_player_name@Net@@QAEPADK@Z)(Net* this, unsigned int)
 // callers   6   call targets   0
 // kind      game

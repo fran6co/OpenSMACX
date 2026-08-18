@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0058F9D0 FILE
-// name      ?get_pact@@YAPADH@Z
+// ORIGINAL: 0x0058F9D0 ?get_pact@@YAPADH@Z 0x0058F9D0-0x0058FA19 FILE
 // size      73 bytes
-// spans     0x0058F9D0-0x0058FA19
 // prototype 
 // callers   8   call targets   1
 // kind      game

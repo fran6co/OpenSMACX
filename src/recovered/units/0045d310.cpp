@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0045D310 FILE
-// name      ?set_iface_mode@SubInterface@@QAEXXZ
+// ORIGINAL: 0x0045D310 ?set_iface_mode@SubInterface@@QAEXXZ 0x0045D310-0x0045D37D FILE
 // size      109 bytes
-// spans     0x0045D310-0x0045D37D
 // prototype void (__thiscall ?set_iface_mode@SubInterface@@QAEXXZ)(SubInterface* this)
 // callers   9   call targets   1
 // kind      game

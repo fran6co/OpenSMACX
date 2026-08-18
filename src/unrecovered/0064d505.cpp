@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064D505 EXCLUDED S1
-// name      __FillZeroMan
+// ORIGINAL: 0x0064D505 __FillZeroMan 0x0064D505-0x0064D511 EXCLUDED S1
 // size      12 bytes
-// spans     0x0064D505-0x0064D511
 // prototype 
 // callers   1   call targets   0
 // kind      library

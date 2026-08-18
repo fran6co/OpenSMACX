@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004482D0 BYTE_EXACT FILE
-// name      ??0Effect@@QAE@XZ
+// ORIGINAL: 0x004482D0 ??0Effect@@QAE@XZ 0x004482D0-0x004482E2 FILE BYTE_EXACT
 // size      18 bytes
-// spans     0x004482D0-0x004482E2
 // prototype void (__thiscall ??0Effect@@QAE@XZ)(Effect* this)
 // callers   0   call targets   1
 // kind      game

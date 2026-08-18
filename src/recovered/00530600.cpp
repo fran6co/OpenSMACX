@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00530600 BYTE_EXACT
-// name      ?close_channel@NetDaemon@@QAEXXZ
+// ORIGINAL: 0x00530600 ?close_channel@NetDaemon@@QAEXXZ 0x00530600-0x0053062F BYTE_EXACT
 // size      47 bytes
-// spans     0x00530600-0x0053062F
 // prototype void (__thiscall ?close_channel@NetDaemon@@QAEXXZ)(NetDaemon* this)
 // callers   1   call targets   1
 // kind      game

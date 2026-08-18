@@ -1,24 +1,12 @@
-// ORIGINAL: 0x005A94F0
-// name      ?save_daemon@@YAHPAD@Z
+// ORIGINAL: 0x005A94F0 ?save_daemon@@YAHPAD@Z 0x005A94F0-0x005A96C3
+// RULED-OUT: `fclose`/`remove` are catalogued nullary cdecl, so they are reached through explicit function-pointer casts rather than by name (a direct call fails C2660: too many arguments). The return-value accumulator (`edi`) starts at 2 before `header_write`, becomes 3 once the first `fwrite` succeeds, and only reaches 0 once `game_data` and the second `fwrite` both succeed - the fclose/remove tail runs unconditionally, and `remove` only when the status is still nonzero. Landing the closest control-flow-faithful form (divergence starts at instruction #6, on the `inc` vs. explicit reload of the reentrancy counter).
 // size      467 bytes
-// spans     0x005A94F0-0x005A96C3
 // prototype
 // callers   6   call targets   10
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00538FB0 0x0057D240 0x005A6AC0 0x00634BB0 0x00645470 0x00645598 0x00645930 0x00645DD0 0x0064603F 0x00646950
 // indirect  0x005A950A
-// RULED-OUT: `fclose`/`remove` are catalogued nullary cdecl, so they are
-//            reached through explicit function-pointer casts rather than
-//            by name (a direct call fails C2660: too many arguments). The
-//            return-value accumulator (`edi`) starts at 2 before
-//            `header_write`, becomes 3 once the first `fwrite` succeeds,
-//            and only reaches 0 once `game_data` and the second `fwrite`
-//            both succeed - the fclose/remove tail runs unconditionally,
-//            and `remove` only when the status is still nonzero. Landing
-//            the closest control-flow-faithful form (divergence starts at
-//            instruction #6, on the `inc` vs. explicit reload of the
-//            reentrancy counter).
 
 typedef unsigned long DWORD;
 typedef DWORD(__stdcall *GetTickCountFn)();

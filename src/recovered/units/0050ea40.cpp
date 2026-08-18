@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0050EA40 FILE
-// name      ?blink_timer@@YAXH@Z
+// ORIGINAL: 0x0050EA40 ?blink_timer@@YAXH@Z 0x0050EA40-0x0050EE25 FILE
 // size      997 bytes
-// spans     0x0050EA40-0x0050EE25
 // prototype 
 // callers   0   call targets   8
 // kind      game

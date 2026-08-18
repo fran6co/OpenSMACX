@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00612AE0 FILE
+// ORIGINAL: 0x00612AE0 ?on_mouse_leave@Dialogs@@QAEXHH@Z 0x00612AE0-0x00612B58 FILE
 // working copy - scaffold materialised by --work
-// name      ?on_mouse_leave@Dialogs@@QAEXHH@Z
 // size      120 bytes
-// spans     0x00612AE0-0x00612B58
 // prototype void (__thiscall ?on_mouse_leave@Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
 // callers   0   call targets   4
 // kind      game

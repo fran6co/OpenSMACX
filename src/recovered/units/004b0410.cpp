@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004B0410 FILE
-// name      ?draw_overview@SocialWin@@QAEXXZ
+// ORIGINAL: 0x004B0410 ?draw_overview@SocialWin@@QAEXXZ 0x004B0410-0x004B089A FILE
 // size      1162 bytes
-// spans     0x004B0410-0x004B089A
 // prototype void (__thiscall ?draw_overview@SocialWin@@QAEXXZ)(SocialWin* this)
 // callers   2   call targets   20
 // kind      game

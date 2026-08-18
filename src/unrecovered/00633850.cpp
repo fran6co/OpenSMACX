@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00633850 FILE
+// ORIGINAL: 0x00633850 ?on_redraw@CheckButton@@QAEXXZ 0x00633850-0x00633912 FILE
 // working copy - scaffold materialised by --work
-// name      ?on_redraw@CheckButton@@QAEXXZ
 // size      194 bytes
-// spans     0x00633850-0x00633912
 // prototype void (__thiscall ?on_redraw@CheckButton@@QAEXXZ)(CheckButton* this)
 // callers   0   call targets   2
 // kind      game

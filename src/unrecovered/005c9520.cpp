@@ -1,12 +1,7 @@
-// ORIGINAL: 0x005C9520 FILE
-// RULED-OUT: differently-named pow_impl(double,double) sidesteps the
-//            scaffold's nullary pow(); (int) cast triggers _ftol implicitly.
-//            reordering the table-pointer vs base-double locals did not
-//            change the FPU stack scheduling; MISMATCH from #5 onward
+// ORIGINAL: 0x005C9520 ?adjust_palette@Gamma@@QAEXXZ 0x005C9520-0x005C95E0 FILE
+// RULED-OUT: differently-named pow_impl(double,double) sidesteps the scaffold's nullary pow(); (int) cast triggers _ftol implicitly. reordering the table-pointer vs base-double locals did not change the FPU stack scheduling; MISMATCH from #5 onward
 // working copy - scaffold materialised by --work
-// name      ?adjust_palette@Gamma@@QAEXXZ
 // size      192 bytes
-// spans     0x005C9520-0x005C95E0
 // prototype void (__thiscall ?adjust_palette@Gamma@@QAEXXZ)(Gamma* this)
 // callers   2   call targets   4
 // kind      game

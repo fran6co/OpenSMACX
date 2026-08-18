@@ -1,19 +1,6 @@
-// ORIGINAL: 0x00432060 BYTE_EXACT FILE
-// LEVER: statement-order  not declaration order - `this - 0xA14` (the
-//        GraphicWin-adjusted receiver used for slide_show/slide_hide,
-//        draw_entry, show, hide) is recomputed fresh inside each branch
-//        rather than hoisted once; and in the a1==0 branch the
-//        `*(self+0x2020)=0` store sits between computing the 0x126A0
-//        vtable-slot address and dereferencing it, matching the
-//        lea/mov/mov/call order byte for byte. Vtable dispatch and the
-//        recursive `esi-0xa14` receiver both use the OriginalObject/
-//        original_method/original_slot pointer-to-member pattern from
-//        src/original_seam.h, inlined here since the scaffold TU cannot
-//        #include project headers and `__thiscall` on a function-pointer
-//        typedef is C4234 in this cl.
-// name      ?on_status@Datalink@@QAEXH@Z
+// ORIGINAL: 0x00432060 ?on_status@Datalink@@QAEXH@Z 0x00432060-0x00432152 FILE BYTE_EXACT
+// LEVER: statement-order not declaration order - `this - 0xA14` (the GraphicWin-adjusted receiver used for slide_show/slide_hide, draw_entry, show, hide) is recomputed fresh inside each branch rather than hoisted once; and in the a1==0 branch the `*(self+0x2020)=0` store sits between computing the 0x126A0 vtable-slot address and dereferencing it, matching the lea/mov/mov/call order byte for byte. Vtable dispatch and the recursive `esi-0xa14` receiver both use the OriginalObject/ original_method/original_slot pointer-to-member pattern from src/original_seam.h, inlined here since the scaffold TU cannot #include project headers and `__thiscall` on a function-pointer typedef is C4234 in this cl.
 // size      242 bytes
-// spans     0x00432060-0x00432152
 // prototype void (__thiscall ?on_status@Datalink@@QAEXH@Z)(Datalink* this, int)
 // callers   0   call targets   5
 // kind      game

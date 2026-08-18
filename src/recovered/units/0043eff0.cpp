@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0043EFF0 FILE
-// name      ??0DiploPop@@QAE@XZ
+// ORIGINAL: 0x0043EFF0 ??0DiploPop@@QAE@XZ 0x0043EFF0-0x0043F0EA;0x00654880-0x006548F4 FILE
 // size      366 bytes
-// spans     0x0043EFF0-0x0043F0EA;0x00654880-0x006548F4
 // prototype void (__thiscall ??0DiploPop@@QAE@XZ)(DiploPop* this)
 // callers   1   call targets   5
 // kind      game

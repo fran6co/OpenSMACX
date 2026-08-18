@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004860B0 BYTE_EXACT FILE
-// name      ?on_left_click@PickTech@@QAEXHH@Z
+// ORIGINAL: 0x004860B0 ?on_left_click@PickTech@@QAEXHH@Z 0x004860B0-0x00486109 FILE BYTE_EXACT
 // size      89 bytes
-// spans     0x004860B0-0x00486109
 // prototype void (__thiscall ?on_left_click@PickTech@@QAEXHH@Z)(PickTech* this, int, int)
 // callers   0   call targets   0
 // kind      game

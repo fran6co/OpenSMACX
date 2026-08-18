@@ -1,9 +1,6 @@
-// ORIGINAL: 0x00636300 FILE
-// RULED-OUT: nothing yet - MISMATCH #2 mov/push, mnemonic similarity 0.908.
-//            for-loop and do/while shaped identically; not chased further.
-// name      ?do_video@@YAXXZ
+// ORIGINAL: 0x00636300 ?do_video@@YAXXZ 0x00636300-0x006363EE FILE
+// RULED-OUT: nothing yet - MISMATCH #2 mov/push, mnemonic similarity 0.908. for-loop and do/while shaped identically; not chased further.
 // size      238 bytes
-// spans     0x00636300-0x006363EE
 // prototype
 // callers   16   call targets   4
 // kind      game

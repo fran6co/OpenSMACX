@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064BC04 EXCLUDED S1
-// name      __ioinit
+// ORIGINAL: 0x0064BC04 __ioinit 0x0064BC04-0x0064BDC0 EXCLUDED S1
 // size      444 bytes
-// spans     0x0064BC04-0x0064BDC0
 // prototype 
 // callers   1   call targets   2
 // kind      library

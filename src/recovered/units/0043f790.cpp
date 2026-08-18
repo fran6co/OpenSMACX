@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0043F790 FILE
-// name      ?draw_portrait@DiploPop@@QAEXXZ
+// ORIGINAL: 0x0043F790 ?draw_portrait@DiploPop@@QAEXXZ 0x0043F790-0x0043FA8E FILE
 // size      766 bytes
-// spans     0x0043F790-0x0043FA8E
 // prototype void (__thiscall ?draw_portrait@DiploPop@@QAEXXZ)(DiploPop* this)
 // callers   1   call targets   11
 // kind      game

@@ -1,8 +1,6 @@
-// ORIGINAL: 0x0063B072 FILE
+// ORIGINAL: 0x0063B072 sub_63b072 0x0063B072-0x0063B11C FILE
 // working copy - scaffold materialised by --work
-// name      sub_63b072
 // size      170 bytes
-// spans     0x0063B072-0x0063B11C
 // prototype 
 // callers   0   call targets   0
 // kind      game

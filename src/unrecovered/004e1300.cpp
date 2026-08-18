@@ -1,8 +1,6 @@
-// ORIGINAL: 0x004E1300 FILE
+// ORIGINAL: 0x004E1300 ?editor_clear_vehicles@Console@@QAEXXZ 0x004E1300-0x004E137F FILE
 // working copy - scaffold materialised by --work
-// name      ?editor_clear_vehicles@Console@@QAEXXZ
 // size      127 bytes
-// spans     0x004E1300-0x004E137F
 // prototype void (__thiscall ?editor_clear_vehicles@Console@@QAEXXZ)(Console* this)
 // callers   1   call targets   3
 // kind      game

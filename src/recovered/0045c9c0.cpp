@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0045C9C0 BYTE_EXACT
-// name      ?on_mouse_leave@MainInterface@@QAEXHH@Z
+// ORIGINAL: 0x0045C9C0 ?on_mouse_leave@MainInterface@@QAEXHH@Z 0x0045C9C0-0x0045C9F4 BYTE_EXACT
 // size      52 bytes
-// spans     0x0045C9C0-0x0045C9F4
 // prototype void (__thiscall ?on_mouse_leave@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
 // callers   0   call targets   0
 // kind      game

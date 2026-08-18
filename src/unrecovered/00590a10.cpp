@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00590A10 BYTE_EXACT FILE
+// ORIGINAL: 0x00590A10 ?say_society@@YAXPAXHH@Z 0x00590A10-0x00590A93 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?say_society@@YAXPAXHH@Z
 // size      131 bytes
-// spans     0x00590A10-0x00590A93
 // prototype 
 // callers   0   call targets   2
 // kind      game

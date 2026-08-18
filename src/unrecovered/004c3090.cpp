@@ -1,21 +1,7 @@
-// ORIGINAL: 0x004C3090 FILE
-// RULED-OUT: two real C `switch` statements (on a4, then on a2) transcribed
-//   from Ghidra's own goto/label reconstruction (joined_4c3723, LAB_4c375d,
-//   LAB_4c36b2, LAB_4c36f8 kept as real labels), with a fourth `add_object`
-//   overload added (CaviarData*, VOX_Vect*, int) that the scaffold's Caviar
-//   class was missing. Byte-offset table lookups for the `+iVar3*0xc`
-//   addresses use plain int arithmetic (not Ghidra's undefined4* scaling,
-//   which is wrong by 4x against the raw disassembly's `lea eax,[edx*4+ADDR]`
-//   with edx=iVar3*3). Every `return;` not immediately preceded by an
-//   add_object call is `return bVar2;` (eax==bVar2 at every such exit,
-//   confirmed against the raw asm); every other exit is `return
-//   a6->add_object(...)`, using the callee's own eax as the function result.
-//   Framed-build compiles and matches through instr #2 (mov vs push) - not
-//   chased further, large jump-table-heavy function, landed for coverage.
+// ORIGINAL: 0x004C3090 ?vehdraw_construct_armor@@YAHHHHHHPAUCaviar@@@Z 0x004C3090-0x004C3795 FILE
+// RULED-OUT: two real C `switch` statements (on a4, then on a2) transcribed from Ghidra's own goto/label reconstruction (joined_4c3723, LAB_4c375d, LAB_4c36b2, LAB_4c36f8 kept as real labels), with a fourth `add_object` overload added (CaviarData*, VOX_Vect*, int) that the scaffold's Caviar class was missing. Byte-offset table lookups for the `+iVar3*0xc` addresses use plain int arithmetic (not Ghidra's undefined4* scaling, which is wrong by 4x against the raw disassembly's `lea eax,[edx*4+ADDR]` with edx=iVar3*3). Every `return;` not immediately preceded by an add_object call is `return bVar2;` (eax==bVar2 at every such exit, confirmed against the raw asm); every other exit is `return a6->add_object(...)`, using the callee's own eax as the function result. Framed-build compiles and matches through instr #2 (mov vs push) - not chased further, large jump-table-heavy function, landed for coverage.
 // working copy - scaffold materialised by --work
-// name      ?vehdraw_construct_armor@@YAHHHHHHPAUCaviar@@@Z
 // size      1797 bytes
-// spans     0x004C3090-0x004C3795
 // prototype 
 // callers   12   call targets   4
 // kind      game

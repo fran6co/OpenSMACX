@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00513B90 FILE
-// name      ?veh_turn@Console@@QAEHXZ
+// ORIGINAL: 0x00513B90 ?veh_turn@Console@@QAEHXZ 0x00513B90-0x00513FB9 FILE
 // size      1065 bytes
-// spans     0x00513B90-0x00513FB9
 // prototype int (__thiscall ?veh_turn@Console@@QAEHXZ)(Console* this)
 // callers   1   call targets   21
 // kind      game

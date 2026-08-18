@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0060E1E0 BYTE_EXACT FILE
-// name      ?on_left_double_click@RadioButton@@QAEXHH@Z
+// ORIGINAL: 0x0060E1E0 ?on_left_double_click@RadioButton@@QAEXHH@Z 0x0060E1E0-0x0060E217 FILE BYTE_EXACT
 // size      55 bytes
-// spans     0x0060E1E0-0x0060E217
 // prototype void (__thiscall ?on_left_double_click@RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)
 // callers   1   call targets   1
 // kind      game

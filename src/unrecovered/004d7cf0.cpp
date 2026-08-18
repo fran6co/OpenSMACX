@@ -1,11 +1,7 @@
-// ORIGINAL: 0x004D7CF0 BYTE_EXACT FILE
-// LEVER: `this` (ecx) is genuinely unused - the whole body indexes fixed
-//        globals off `a1` only. Byte-offset table access via `char*`
-//        bases (`tbl_ADDR + a1*0x34`) instead of typed-array indexing.
+// ORIGINAL: 0x004D7CF0 ?designate@Console@@QAEXH@Z 0x004D7CF0-0x004D7DD8 FILE BYTE_EXACT
+// LEVER: `this` (ecx) is genuinely unused - the whole body indexes fixed globals off `a1` only. Byte-offset table access via `char*` bases (`tbl_ADDR + a1*0x34`) instead of typed-array indexing.
 // working copy - scaffold materialised by --work
-// name      ?designate@Console@@QAEXH@Z
 // size      232 bytes
-// spans     0x004D7CF0-0x004D7DD8
 // prototype void (__thiscall ?designate@Console@@QAEXH@Z)(Console* this, int vehID)
 // callers   2   call targets   5
 // kind      game

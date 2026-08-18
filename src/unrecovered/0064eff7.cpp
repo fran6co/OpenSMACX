@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064EFF7 EXCLUDED S1
-// name      ___initmbctable
+// ORIGINAL: 0x0064EFF7 ___initmbctable 0x0064EFF7-0x0064F013 EXCLUDED S1
 // size      28 bytes
-// spans     0x0064EFF7-0x0064F013
 // prototype 
 // callers   3   call targets   1
 // kind      library

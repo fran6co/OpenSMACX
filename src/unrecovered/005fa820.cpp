@@ -1,9 +1,7 @@
-// ORIGINAL: 0x005FA820 BYTE_EXACT FILE
+// ORIGINAL: 0x005FA820 ?clear@Spot@@QAEXXZ 0x005FA820-0x005FA82B FILE BYTE_EXACT
 // LEVER: store order max_count_, add_count_, spots_ - not declaration order
 // working copy - scaffold materialised by --work
-// name      ?clear@Spot@@QAEXXZ
 // size      11 bytes
-// spans     0x005FA820-0x005FA82B
 // prototype void (__thiscall ?clear@Spot@@QAEXXZ)(Spot* this)
 // callers   0   call targets   0
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004BDF20 BYTE_EXACT
-// name      ?terrain_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z
+// ORIGINAL: 0x004BDF20 ?terrain_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z 0x004BDF20-0x004BDF66 BYTE_EXACT
 // size      70 bytes
-// spans     0x004BDF20-0x004BDF66
 // prototype 
 // callers   0   call targets   1
 // kind      game

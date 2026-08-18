@@ -1,8 +1,6 @@
-// ORIGINAL: 0x0051E000 FILE
+// ORIGINAL: 0x0051E000 ?read_tamper@@YAXXZ 0x0051E000-0x0051E087 FILE
 // working copy - scaffold materialised by --work
-// name      ?read_tamper@@YAXXZ
 // size      135 bytes
-// spans     0x0051E000-0x0051E087
 // prototype 
 // callers   0   call targets   0
 // kind      game

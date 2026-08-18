@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0045D000 FILE
-// name      ?on_iface_mouse_move@MainInterface@@QAEXHH@Z
+// ORIGINAL: 0x0045D000 ?on_iface_mouse_move@MainInterface@@QAEXHH@Z 0x0045D000-0x0045D105 FILE
 // size      261 bytes
-// spans     0x0045D000-0x0045D105
 // prototype void (__thiscall ?on_iface_mouse_move@MainInterface@@QAEXHH@Z)(MainInterface* this, int xCoord, int yCoord)
 // callers   0   call targets   4
 // kind      game

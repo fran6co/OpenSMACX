@@ -1,8 +1,6 @@
-// ORIGINAL: 0x004C1740 FILE
+// ORIGINAL: 0x004C1740 vehdraw_unk1 0x004C1740-0x004C1B05 FILE
 // working copy - scaffold materialised by --work
-// name      vehdraw_unk1
 // size      965 bytes
-// spans     0x004C1740-0x004C1B05
 // prototype 
 // callers   0   call targets   18
 // kind      game

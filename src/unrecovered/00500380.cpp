@@ -1,25 +1,11 @@
-// ORIGINAL: 0x00500380
-// name      sub_500380
+// ORIGINAL: 0x00500380 sub_500380 0x00500380-0x005004EA
+// RULED-OUT: signature kept `void __cdecl sub_500380(int, int, int)` (was void per Ghidra/asm - no eax set before ret) rather than the brief's nullary head, since the three reads at [ebp+8/c/10] with no `this` use are plain stack args. Body reproduces the two early-return conditions inside the loop's abitily/range check (`return`, matching Ghidra, not `continue` - both jump to the function epilogue, not the loop latch) and the candidate-selection guard (has_tech || table-owner match). 0.824 mnemonic similarity; first divergence at #5 is the callee-saved register push order in the prologue (ebx/esi/edi pushed at different points around the `mov esi,[ebp+8]`), which register allocation controls and no source reshuffle tried here changed.
 // size      362 bytes
-// spans     0x00500380-0x005004EA
 // prototype
 // callers   0   call targets   3
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005B9F20 0x005BF1F0 0x00644F3A
-// RULED-OUT: signature kept `void __cdecl sub_500380(int, int, int)` (was
-//            void per Ghidra/asm - no eax set before ret) rather than the
-//            brief's nullary head, since the three reads at [ebp+8/c/10]
-//            with no `this` use are plain stack args. Body reproduces the
-//            two early-return conditions inside the loop's abitily/range
-//            check (`return`, matching Ghidra, not `continue` - both jump
-//              to the function epilogue, not the loop latch) and the
-//            candidate-selection guard (has_tech || table-owner match).
-//            0.824 mnemonic similarity; first divergence at #5 is the
-//            callee-saved register push order in the prologue (ebx/esi/edi
-//            pushed at different points around the `mov esi,[ebp+8]`),
-//            which register allocation controls and no source reshuffle
-//            tried here changed.
 
 typedef unsigned char uint8_t;
 

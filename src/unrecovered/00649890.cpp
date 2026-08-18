@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00649890 EXCLUDED S1
-// name      __ms_p5_mp_test_fdiv
+// ORIGINAL: 0x00649890 __ms_p5_mp_test_fdiv 0x00649890-0x006498B9 EXCLUDED S1
 // size      41 bytes
-// spans     0x00649890-0x006498B9
 // prototype 
 // callers   1   call targets   0
 // kind      library

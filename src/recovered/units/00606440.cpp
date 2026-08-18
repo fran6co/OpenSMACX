@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00606440 FILE
-// name      ?on_mousewheel_up@Scroll@@QAEXH@Z
+// ORIGINAL: 0x00606440 ?on_mousewheel_up@Scroll@@QAEXH@Z 0x00606440-0x0060655C FILE
 // size      284 bytes
-// spans     0x00606440-0x0060655C
 // prototype void (__thiscall ?on_mousewheel_up@Scroll@@QAEXH@Z)(Scroll* this, int)
 // callers   4   call targets   0
 // kind      game

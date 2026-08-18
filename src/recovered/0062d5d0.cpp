@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0062D5D0 BYTE_EXACT
-// name      ?check_net@@YAXXZ
+// ORIGINAL: 0x0062D5D0 ?check_net@@YAXXZ 0x0062D5D0-0x0062D5E9 BYTE_EXACT
 // size      25 bytes
-// spans     0x0062D5D0-0x0062D5E9
 // prototype 
 // callers   21   call targets   0
 // kind      game

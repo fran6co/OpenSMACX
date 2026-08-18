@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004CF480 FILE
-// name      ?action_sat_attack@@YAXHHHH@Z
+// ORIGINAL: 0x004CF480 ?action_sat_attack@@YAXHHHH@Z 0x004CF480-0x004CF73E FILE
 // size      702 bytes
-// spans     0x004CF480-0x004CF73E
 // prototype void (__cdecl ?action_sat_attack@@YAXHHHH@Z)(int factionIDAtk, int factionIDDef, int type, int baseID)
 // callers   3   call targets   7
 // kind      game

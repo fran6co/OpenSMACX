@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00592250 FILE
-// name      ?say_loc@@YAXPADHHHHH@Z
+// ORIGINAL: 0x00592250 ?say_loc@@YAXPADHHHHH@Z 0x00592250-0x005923FD FILE
 // size      429 bytes
-// spans     0x00592250-0x005923FD
 // prototype void (__cdecl ?say_loc@@YAXPADHHHHH@Z)(int8*, int xCoord, int yCoord, int, int, int)
 // callers   4   call targets   5
 // kind      game

@@ -1,8 +1,6 @@
-// ORIGINAL: 0x004BF390 FILE
+// ORIGINAL: 0x004BF390 ?on_key@UV2Player@@QAAHXZ 0x004BF390-0x004BF3FE FILE
 // working copy - scaffold materialised by --work
-// name      ?on_key@UV2Player@@QAAHXZ
 // size      110 bytes
-// spans     0x004BF390-0x004BF3FE
 // prototype 
 // callers   0   call targets   0
 // kind      game

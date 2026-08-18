@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0060AF90 FILE
-// name      ?on_key_down@ListBox@@QAEXH@Z
+// ORIGINAL: 0x0060AF90 ?on_key_down@ListBox@@QAEXH@Z 0x0060AF90-0x0060B4D5 FILE
 // size      1349 bytes
-// spans     0x0060AF90-0x0060B4D5
 // prototype void (__thiscall ?on_key_down@ListBox@@QAEXH@Z)(ListBox* this, int)
 // callers   1   call targets   8
 // kind      game

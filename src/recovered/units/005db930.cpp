@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005DB930 BYTE_EXACT FILE
-// name      ?write_right_l@Buffer@@QAEHPAVFont@@PADPAURECT@@H@Z
+// ORIGINAL: 0x005DB930 ?write_right_l@Buffer@@QAEHPAVFont@@PADPAURECT@@H@Z 0x005DB930-0x005DB984 FILE BYTE_EXACT
 // size      84 bytes
-// spans     0x005DB930-0x005DB984
 // prototype int (__thiscall ?write_right_l@Buffer@@QAEHPAVFont@@PADPAURECT@@H@Z)(Buffer* this, Font*, int8*, RECT*, int)
 // callers   0   call targets   1
 // kind      game

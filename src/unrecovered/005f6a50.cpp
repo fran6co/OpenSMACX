@@ -1,10 +1,7 @@
-// ORIGINAL: 0x005F6A50 FILE
-// RULED-OUT: direct transcription only tried once; diverges at #0 (push vs
-//            mov) in the prologue register-save pattern
+// ORIGINAL: 0x005F6A50 ?get_key_window@Win@@QAGHXZ 0x005F6A50-0x005F6AB0 FILE
+// RULED-OUT: direct transcription only tried once; diverges at #0 (push vs mov) in the prologue register-save pattern
 // working copy - scaffold materialised by --work
-// name      ?get_key_window@Win@@QAGHXZ
 // size      96 bytes
-// spans     0x005F6A50-0x005F6AB0
 // prototype 
 // callers   1   call targets   1
 // kind      game

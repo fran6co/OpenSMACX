@@ -1,8 +1,6 @@
-// ORIGINAL: 0x004F8110 BYTE_EXACT FILE
+// ORIGINAL: 0x004F8110 ?base_claimed@@YAHHHHHHH@Z 0x004F8110-0x004F8195 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?base_claimed@@YAHHHHHHH@Z
 // size      133 bytes
-// spans     0x004F8110-0x004F8195
 // prototype 
 // callers   1   call targets   0
 // kind      game

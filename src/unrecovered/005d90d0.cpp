@@ -1,15 +1,8 @@
-// ORIGINAL: 0x005D90D0 FILE
-// RULED-OUT: same shape as 0x005D8740 (no mangled name either) - __fastcall
-//   (self, unused-edx, 7 stack ints) instead of the given __stdcall
-//   (a1..a7): `mov esi, ecx` with no matching stack slot is a receiver.
-//   See 0x005D8740's note for the stdcall-Unlock function-pointer form.
-// RULED-OUT: nothing new past that - 94.9%+ mnemonic similarity, first gap
-//   at #41 (mov vs cmp) in the NULL-surface lock-count arm, same spot as
-//   every sibling in this family.
+// ORIGINAL: 0x005D90D0 sub_5d90d0 0x005D90D0-0x005D91C8 FILE
+// RULED-OUT: same shape as 0x005D8740 (no mangled name either) - __fastcall (self, unused-edx, 7 stack ints) instead of the given __stdcall (a1..a7): `mov esi, ecx` with no matching stack slot is a receiver. See 0x005D8740's note for the stdcall-Unlock function-pointer form.
+// RULED-OUT: nothing new past that - 94.9%+ mnemonic similarity, first gap at #41 (mov vs cmp) in the NULL-surface lock-count arm, same spot as every sibling in this family.
 // working copy - scaffold materialised by --work
-// name      sub_5d90d0
 // size      248 bytes
-// spans     0x005D90D0-0x005D91C8
 // prototype 
 // callers   0   call targets   1
 // kind      game

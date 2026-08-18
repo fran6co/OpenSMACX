@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0060ECE0 BYTE_EXACT FILE
-// name      ?set_state_flag@CheckBox@@QAEXJ@Z
+// ORIGINAL: 0x0060ECE0 ?set_state_flag@CheckBox@@QAEXJ@Z 0x0060ECE0-0x0060ED03 FILE BYTE_EXACT
 // size      35 bytes
-// spans     0x0060ECE0-0x0060ED03
 // prototype void (__thiscall ?set_state_flag@CheckBox@@QAEXJ@Z)(CheckBox* this, int)
 // callers   1   call targets   0
 // kind      game

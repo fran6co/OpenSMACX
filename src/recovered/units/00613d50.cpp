@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00613D50 FILE
-// name      ?save@FileWin@@QAEXXZ
+// ORIGINAL: 0x00613D50 ?save@FileWin@@QAEXXZ 0x00613D50-0x00613F5C FILE
 // size      524 bytes
-// spans     0x00613D50-0x00613F5C
 // prototype void (__thiscall ?save@FileWin@@QAEXXZ)(FileWin* this)
 // callers   1   call targets   9
 // kind      game

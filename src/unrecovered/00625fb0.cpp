@@ -1,10 +1,7 @@
-// ORIGINAL: 0x00625FB0 BYTE_EXACT FILE
-// LEVER: field stores in declaration order, matching the disassembly's store
-//        order directly
+// ORIGINAL: 0x00625FB0 ??0Log@@QAE@XZ 0x00625FB0-0x00625FC0 FILE BYTE_EXACT
+// LEVER: field stores in declaration order, matching the disassembly's store order directly
 // working copy - scaffold materialised by --work
-// name      ??0Log@@QAE@XZ
 // size      16 bytes
-// spans     0x00625FB0-0x00625FC0
 // prototype Log* (__thiscall ??0Log@@QAE@XZ)(Log* this)
 // callers   1   call targets   0
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004457E0 FILE
-// name      ?load_music@@YAXH@Z
+// ORIGINAL: 0x004457E0 ?load_music@@YAXH@Z 0x004457E0-0x00445BA4;0x00654CF0-0x00654D52 FILE
 // size      1062 bytes
-// spans     0x004457E0-0x00445BA4;0x00654CF0-0x00654D52
 // prototype 
 // callers   2   call targets   6
 // kind      game

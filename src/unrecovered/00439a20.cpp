@@ -1,17 +1,7 @@
-// ORIGINAL: 0x00439A20 FILE
-// RULED-OUT: the auto-scaffold's vtable shim declares slot044() nullary
-//   (it reads the OFFSET from the catalogued indirect-call list, not the
-//   body's argument list), so the body edits that slot's signature in
-//   place to `virtual void slot044(int);` after landing - a bare-body
-//   --dir candidate cannot express this at all, only a FILE-mode one can.
-//   Landed at 0.65 similarity: several cases (0xd, 0x1b, 0x25/0x64) share
-//   ONE call site in the original via a `goto`-style jump; writing each
-//   case's call inline (no shared label) is what the remaining `jmp`/`mov`
-//   swaps trace back to.
+// ORIGINAL: 0x00439A20 ?on_key_click@DesignWin@@QAEHHH@Z 0x00439A20-0x00439B3B FILE
+// RULED-OUT: the auto-scaffold's vtable shim declares slot044() nullary (it reads the OFFSET from the catalogued indirect-call list, not the body's argument list), so the body edits that slot's signature in place to `virtual void slot044(int);` after landing - a bare-body --dir candidate cannot express this at all, only a FILE-mode one can. Landed at 0.65 similarity: several cases (0xd, 0x1b, 0x25/0x64) share ONE call site in the original via a `goto`-style jump; writing each case's call inline (no shared label) is what the remaining `jmp`/`mov` swaps trace back to.
 // working copy - scaffold materialised by --work
-// name      ?on_key_click@DesignWin@@QAEHHH@Z
 // size      283 bytes
-// spans     0x00439A20-0x00439B3B
 // prototype int (__thiscall ?on_key_click@DesignWin@@QAEHHH@Z)(DesignWin* this, int, int)
 // callers   0   call targets   2
 // kind      game

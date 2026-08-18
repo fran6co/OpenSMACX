@@ -1,16 +1,7 @@
-// ORIGINAL: 0x0062D2C0 FILE
-// RULED-OUT: IntersectRect/EqualRect are called through the fixed
-//            IAT-style slots (0x669338/0x6692bc) with `this` pushed as
-//            an explicit stdcall arg, not via C++ virtual dispatch -
-//            modelled with raw `PFN_*` casts. Every early-out in the
-//            original shares ONE epilogue (add esp,0x40; ret); separate
-//            `if (x) return 0;` statements each get their own inline
-//            return instead of jumping to a shared tail, which is most
-//            of the 0.82 mnemonic-similarity gap.
+// ORIGINAL: 0x0062D2C0 sub_62d2c0 0x0062D2C0-0x0062D38E FILE
+// RULED-OUT: IntersectRect/EqualRect are called through the fixed IAT-style slots (0x669338/0x6692bc) with `this` pushed as an explicit stdcall arg, not via C++ virtual dispatch - modelled with raw `PFN_*` casts. Every early-out in the original shares ONE epilogue (add esp,0x40; ret); separate `if (x) return 0;` statements each get their own inline return instead of jumping to a shared tail, which is most of the 0.82 mnemonic-similarity gap.
 // working copy - scaffold materialised by --work
-// name      sub_62d2c0
 // size      206 bytes
-// spans     0x0062D2C0-0x0062D38E
 // prototype 
 // callers   0   call targets   0
 // kind      game

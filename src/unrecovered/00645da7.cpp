@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00645DA7 EXCLUDED S1
-// name      _atoi
+// ORIGINAL: 0x00645DA7 _atoi 0x00645DA7-0x00645DB2 EXCLUDED S1
 // size      11 bytes
-// spans     0x00645DA7-0x00645DB2
 // prototype 
 // callers   24   call targets   1
 // kind      library

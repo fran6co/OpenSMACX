@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00618D20 FILE
-// name      ?close_class@Caviar@@QAAXXZ
+// ORIGINAL: 0x00618D20 ?close_class@Caviar@@QAAXXZ 0x00618D20-0x00618D95 FILE
 // size      117 bytes
-// spans     0x00618D20-0x00618D95
 // prototype 
 // callers   1   call targets   4
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00493C70 BYTE_EXACT
-// name      ?on_redraw@ProdPicker@@QAEXXZ
+// ORIGINAL: 0x00493C70 ?on_redraw@ProdPicker@@QAEXXZ 0x00493C70-0x00493CA6 BYTE_EXACT
 // size      54 bytes
-// spans     0x00493C70-0x00493CA6
 // prototype void (__thiscall ?on_redraw@ProdPicker@@QAEXXZ)(ProdPicker* this)
 // callers   0   call targets   1
 // kind      game

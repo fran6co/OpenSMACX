@@ -23,10 +23,8 @@ func_base_pop_init BasePopOriginalInit = original_method<func_base_pop_init>(0x0
 
 /*
 Purpose: Initialise the pop-up menu with the base defaults.
-ORIGINAL: 0x0059D3A0
-// name      ?init@PopMenu@@QAEHXZ
+// ORIGINAL: 0x0059D3A0 ?init@PopMenu@@QAEHXZ 0x0059D3A0-0x0059D3AA
 // size      10 bytes
-// spans     0x0059D3A0-0x0059D3AA
 // prototype int (__thiscall ?init@PopMenu@@QAEHXZ)(PopMenu* this)
 // callers   14   call targets   1
 // kind      game

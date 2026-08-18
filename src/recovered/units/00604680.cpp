@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00604680 FILE
-// name      ?close_class@BasePop@@QAAXXZ
+// ORIGINAL: 0x00604680 ?close_class@BasePop@@QAAXXZ 0x00604680-0x006046ED FILE
 // size      109 bytes
-// spans     0x00604680-0x006046ED
 // prototype 
 // callers   1   call targets   1
 // kind      game

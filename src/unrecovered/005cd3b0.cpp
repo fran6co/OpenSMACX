@@ -1,14 +1,6 @@
-// ORIGINAL: 0x005CD3B0
-// RULED-OUT: MISMATCH #3 push/mov - Ghidra's own decode (6 char params + int*
-//            + uint, matching the disassembly's 8 stack slots exactly) used
-//            over IDA's 4-char/4-int guess; the four fixed-point multiplies
-//            use `__int64` (VC6 has no `long long`) mirroring
-//            src/unrecovered/005cd2d0.cpp's established idiom; register
-//            allocation for the four fill loops still differs from the
-//            original past instruction 3.
-// name      sub_5cd3b0
+// ORIGINAL: 0x005CD3B0 sub_5cd3b0 0x005CD3B0-0x005CD556
+// RULED-OUT: MISMATCH #3 push/mov - Ghidra's own decode (6 char params + int* + uint, matching the disassembly's 8 stack slots exactly) used over IDA's 4-char/4-int guess; the four fixed-point multiplies use `__int64` (VC6 has no `long long`) mirroring src/unrecovered/005cd2d0.cpp's established idiom; register allocation for the four fill loops still differs from the original past instruction 3.
 // size      422 bytes
-// spans     0x005CD3B0-0x005CD556
 // prototype
 // callers   1   call targets   0
 // kind      game

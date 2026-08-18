@@ -1,8 +1,6 @@
-// ORIGINAL: 0x004B9EA0 BYTE_EXACT FILE
+// ORIGINAL: 0x004B9EA0 ?redraw@StatusWin@@QAEXXZ 0x004B9EA0-0x004B9F7B FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?redraw@StatusWin@@QAEXXZ
 // size      219 bytes
-// spans     0x004B9EA0-0x004B9F7B
 // prototype void (__thiscall ?redraw@StatusWin@@QAEXXZ)(StatusWin* this)
 // callers   17   call targets   3
 // kind      game

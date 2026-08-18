@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004243F0 BYTE_EXACT FILE
-// name      ?clear_council_notify@@YAXXZ
+// ORIGINAL: 0x004243F0 ?clear_council_notify@@YAXXZ 0x004243F0-0x0042440D FILE BYTE_EXACT
 // size      29 bytes
-// spans     0x004243F0-0x0042440D
 // prototype 
 // callers   1   call targets   0
 // kind      game

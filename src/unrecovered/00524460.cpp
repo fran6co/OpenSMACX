@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00524460 FILE
+// ORIGINAL: 0x00524460 Demo__init 0x00524460-0x005247A6;0x0065D6C8-0x0065D6DD FILE
 // working copy - scaffold materialised by --work
-// name      Demo__init
 // size      859 bytes
-// spans     0x00524460-0x005247A6;0x0065D6C8-0x0065D6DD
 // prototype 
 // callers   0   call targets   8
 // kind      game

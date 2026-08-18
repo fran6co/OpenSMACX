@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00484810 FILE
-// name      ??1NewTechWin@@QAE@XZ
+// ORIGINAL: 0x00484810 ??1NewTechWin@@QAE@XZ 0x00484810-0x004849CD;0x00657510-0x006575C9 FILE
 // size      630 bytes
-// spans     0x00484810-0x004849CD;0x00657510-0x006575C9
 // prototype void (__thiscall ??1NewTechWin@@QAE@XZ)(NewTechWin* this)
 // callers   1   call targets   8
 // kind      game

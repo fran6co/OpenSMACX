@@ -1,12 +1,6 @@
-// ORIGINAL: 0x005DE320
-// RULED-OUT: MISMATCH #2 push/sub - the disassembly reads no stack args and
-//            takes the receiver in ecx (no [ecx+N] though; it is only used
-//            to call Buffer methods), so this is modelled as a Buffer
-//            __thiscall member instead of the placeholder's free __stdcall
-//            function; stack-frame shape still differs after that.
-// name      sub_5de320
+// ORIGINAL: 0x005DE320 sub_5de320 0x005DE320-0x005DE4C5
+// RULED-OUT: MISMATCH #2 push/sub - the disassembly reads no stack args and takes the receiver in ecx (no [ecx+N] though; it is only used to call Buffer methods), so this is modelled as a Buffer __thiscall member instead of the placeholder's free __stdcall function; stack-frame shape still differs after that.
 // size      421 bytes
-// spans     0x005DE320-0x005DE4C5
 // prototype int (__stdcall sub_5DE320)(LPCSTR lpString)
 // callers   1   call targets   6
 // kind      game

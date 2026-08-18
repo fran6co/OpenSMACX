@@ -1,11 +1,7 @@
-// ORIGINAL: 0x00615630 FILE
-// RULED-OUT: field addresses cached as int& locals for the whole function
-//            (extra spill/push before the a1 range check); memcpy_0 as a
-//            nullary declaration (arity must be 3 for the call to compile)
+// ORIGINAL: 0x00615630 ?on_key_click@EditBox@@QAEHHH@Z 0x00615630-0x00615839 FILE
+// RULED-OUT: field addresses cached as int& locals for the whole function (extra spill/push before the a1 range check); memcpy_0 as a nullary declaration (arity must be 3 for the call to compile)
 // working copy - scaffold materialised by --work
-// name      ?on_key_click@EditBox@@QAEHHH@Z
 // size      521 bytes
-// spans     0x00615630-0x00615839
 // prototype int (__thiscall ?on_key_click@EditBox@@QAEHHH@Z)(EditBox* this, int, int)
 // callers   0   call targets   3
 // kind      game

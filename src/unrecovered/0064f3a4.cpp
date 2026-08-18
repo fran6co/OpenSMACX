@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064F3A4 EXCLUDED S1
-// name      ___add_12
+// ORIGINAL: 0x0064F3A4 ___add_12 0x0064F3A4-0x0064F402 EXCLUDED S1
 // size      94 bytes
-// spans     0x0064F3A4-0x0064F402
 // prototype 
 // callers   2   call targets   1
 // kind      library

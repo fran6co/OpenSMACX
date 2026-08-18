@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006196D0 BYTE_EXACT FILE
-// name      ?extract@Texture@@QAEHPAUBuffer@@PAURECT@@@Z
+// ORIGINAL: 0x006196D0 ?extract@Texture@@QAEHPAUBuffer@@PAURECT@@@Z 0x006196D0-0x00619706 FILE BYTE_EXACT
 // size      54 bytes
-// spans     0x006196D0-0x00619706
 // prototype int (__thiscall ?extract@Texture@@QAEHPAUBuffer@@PAURECT@@@Z)(Texture* this, Buffer*, RECT*)
 // callers   0   call targets   1
 // kind      game

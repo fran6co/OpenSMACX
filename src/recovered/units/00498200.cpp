@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00498200 FILE
-// name      ?on_scrolling@ReportWin@@QAEXHH@Z
+// ORIGINAL: 0x00498200 ?on_scrolling@ReportWin@@QAEXHH@Z 0x00498200-0x00498258 FILE
 // size      88 bytes
-// spans     0x00498200-0x00498258
 // prototype void (__thiscall ?on_scrolling@ReportWin@@QAEXHH@Z)(ReportWin* this, int, int)
 // callers   0   call targets   3
 // kind      game

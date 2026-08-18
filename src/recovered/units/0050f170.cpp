@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0050F170 FILE
-// name      ?go_timer@@YAXH@Z
+// ORIGINAL: 0x0050F170 ?go_timer@@YAXH@Z 0x0050F170-0x0050F3C4 FILE
 // size      596 bytes
-// spans     0x0050F170-0x0050F3C4
 // prototype 
 // callers   1   call targets   8
 // kind      game

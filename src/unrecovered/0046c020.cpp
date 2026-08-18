@@ -1,12 +1,7 @@
-// ORIGINAL: 0x0046C020 BYTE_EXACT FILE
-// LEVER: table walk over 0x7D3C3C..0x7D3C5C needed its own
-//   `extern MapWin *g_7d3c3c_tbl[]` (pointer-increment do/while, `p ==
-//   g_7d3c3c_tbl` for the first-element special case) instead of the
-//   scaffold's fixed-address `int *const g_007d3c3c`.
+// ORIGINAL: 0x0046C020 ?UNK4@MapWin@@QAEXHH@Z 0x0046C020-0x0046C0C9 FILE BYTE_EXACT
+// LEVER: table walk over 0x7D3C3C..0x7D3C5C needed its own `extern MapWin *g_7d3c3c_tbl[]` (pointer-increment do/while, `p == g_7d3c3c_tbl` for the first-element special case) instead of the scaffold's fixed-address `int *const g_007d3c3c`.
 // working copy - scaffold materialised by --work
-// name      ?UNK4@MapWin@@QAEXHH@Z
 // size      169 bytes
-// spans     0x0046C020-0x0046C0C9
 // prototype void (__thiscall ?UNK4@MapWin@@QAEXHH@Z)(MapWin* this, int xCoord, int yCoord)
 // callers   0   call targets   3
 // kind      game

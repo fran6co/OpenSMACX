@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064FDF0 EXCLUDED S1
-// name      __strnicmp
+// ORIGINAL: 0x0064FDF0 __strnicmp 0x0064FDF0-0x0064FEF1 EXCLUDED S1
 // size      257 bytes
-// spans     0x0064FDF0-0x0064FEF1
 // prototype 
 // callers   7   call targets   3
 // kind      library

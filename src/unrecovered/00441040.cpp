@@ -1,10 +1,7 @@
-// ORIGINAL: 0x00441040 FILE
-// RULED-OUT: void __cdecl(int a1, int a2), direct linked-list walk transcription;
-//            diverges at #29 mov vs cmp, not chased further
+// ORIGINAL: 0x00441040 sub_441040 0x00441040-0x004410F1 FILE
+// RULED-OUT: void __cdecl(int a1, int a2), direct linked-list walk transcription; diverges at #29 mov vs cmp, not chased further
 // working copy - scaffold materialised by --work
-// name      sub_441040
 // size      177 bytes
-// spans     0x00441040-0x004410F1
 // prototype 
 // callers   0   call targets   2
 // kind      game

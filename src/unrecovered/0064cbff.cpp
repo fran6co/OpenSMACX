@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064CBFF EXCLUDED S1
-// name      __alloc_osfhnd
+// ORIGINAL: 0x0064CBFF __alloc_osfhnd 0x0064CBFF-0x0064CD22 EXCLUDED S1
 // size      291 bytes
-// spans     0x0064CBFF-0x0064CD22
 // prototype 
 // callers   1   call targets   4
 // kind      library

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004E2400 FILE
-// name      sub_4e2400
+// ORIGINAL: 0x004E2400 sub_4e2400 0x004E2400-0x004E2444 FILE
 // size      68 bytes
-// spans     0x004E2400-0x004E2444
 // prototype 
 // callers   0   call targets   0
 // kind      game

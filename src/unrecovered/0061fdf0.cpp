@@ -1,12 +1,7 @@
-// ORIGINAL: 0x0061FDF0 FILE
-// RULED-OUT: calling through the scaffold's `Texture::setup_edge_gouraud`
-//            member (thiscall, this-in-ECX) - the disasm shows two bare
-//            pushes and no ECX setup, so a free __cdecl decl was used
-//            instead; MISMATCH is at #20 (near the tail), not tried further.
+// ORIGINAL: 0x0061FDF0 sub_61fdf0 0x0061FDF0-0x0061FE68 FILE
+// RULED-OUT: calling through the scaffold's `Texture::setup_edge_gouraud` member (thiscall, this-in-ECX) - the disasm shows two bare pushes and no ECX setup, so a free __cdecl decl was used instead; MISMATCH is at #20 (near the tail), not tried further.
 // working copy - scaffold materialised by --work
-// name      sub_61fdf0
 // size      120 bytes
-// spans     0x0061FDF0-0x0061FE68
 // prototype 
 // callers   0   call targets   1
 // kind      game

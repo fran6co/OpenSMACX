@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00604A80 BYTE_EXACT
-// name      ?on_modal@BasePop@@QAAHXZ
+// ORIGINAL: 0x00604A80 ?on_modal@BasePop@@QAAHXZ 0x00604A80-0x00604A8E BYTE_EXACT
 // size      14 bytes
-// spans     0x00604A80-0x00604A8E
 // prototype 
 // callers   0   call targets   0
 // kind      game

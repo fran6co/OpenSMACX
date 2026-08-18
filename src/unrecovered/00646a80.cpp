@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00646A80 EXCLUDED S1
-// name      __CIpow
+// ORIGINAL: 0x00646A80 __CIpow 0x00646A80-0x00646A99 EXCLUDED S1
 // size      25 bytes
-// spans     0x00646A80-0x00646A99
 // prototype 
 // callers   0   call targets   1
 // kind      library

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006501F6 EXCLUDED S2a
-// name      GetSaveFileNameA
+// ORIGINAL: 0x006501F6 GetSaveFileNameA 0x006501F6-0x006501FC EXCLUDED S2a
 // size      6 bytes
-// spans     0x006501F6-0x006501FC
 // prototype 
 // callers   1   call targets   0
 // kind      thunk

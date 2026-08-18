@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005EB20F FILE
-// name      ?fill_scaling_table@Sprite@@QAEXXZ
+// ORIGINAL: 0x005EB20F ?fill_scaling_table@Sprite@@QAEXXZ 0x005EB20F-0x005EB294 FILE
 // size      133 bytes
-// spans     0x005EB20F-0x005EB294
 // prototype void (__thiscall ?fill_scaling_table@Sprite@@QAEXXZ)(Sprite* this)
 // callers   8   call targets   0
 // kind      

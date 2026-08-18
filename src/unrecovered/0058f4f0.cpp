@@ -1,17 +1,7 @@
-// ORIGINAL: 0x0058F4F0 BYTE_EXACT FILE
-// LEVER: string-routines-are-calls  the body was already right; the scaffold
-//        was compiling a string routine the image CALLS into an `/Oi` inline
-//        expansion. What was written down here as a ruled-out source form -
-//        "VC6 lowers `local_104[0]=0;` as `and byte ptr [buf],0` rather than
-//        `mov`, and each branch shares one `lea` instead of recomputing it,
-//        both compiler instruction-selection choices at /O1 that plain
-//        restatement did not move" - was that expansion changing the
-//        register pressure around them. The if/else-if chain matching
-//        Ghidra's structure is the right shape and always was.
+// ORIGINAL: 0x0058F4F0 sub_58f4f0 0x0058F4F0-0x0058F609 FILE BYTE_EXACT
+// LEVER: string-routines-are-calls the body was already right; the scaffold was compiling a string routine the image CALLS into an `/Oi` inline expansion. What was written down here as a ruled-out source form - "VC6 lowers `local_104[0]=0;` as `and byte ptr [buf],0` rather than `mov`, and each branch shares one `lea` instead of recomputing it, both compiler instruction-selection choices at /O1 that plain restatement did not move" - was that expansion changing the register pressure around them. The if/else-if chain matching Ghidra's structure is the right shape and always was.
 // working copy - scaffold materialised by --work
-// name      sub_58f4f0
 // size      281 bytes
-// spans     0x0058F4F0-0x0058F609
 // prototype
 // callers   0   call targets   2
 // kind      game

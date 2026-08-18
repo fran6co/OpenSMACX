@@ -1,17 +1,7 @@
-// ORIGINAL: 0x004C6080 FILE
-// RULED-OUT: no tier is reachable for ANY body - SHARED_TAIL, the helper at
-//            0x004C8450 (mov [ecx],0x66e444; ret) is COMDAT-folded with
-//            another catalogued function, same wall as VoiceRx::VoiceRx()
-//            at 0x004C8960. Straight-line field reconstruction below, no
-//            attempt at the SEH try/catch unwind frame (bare try/catch with
-//            rethrow produced no fs:[0] frame at all under this compiler's
-//            flags; the scaffold gives Sound no base class to hang the
-//            automatic base/derived vtable-swap unwind on, same as the
-//            already-ruled-out ~UV2Player shape).
+// ORIGINAL: 0x004C6080 ??0Sound@@QAE@XZ 0x004C6080-0x004C611A;0x004C8450-0x004C8457;0x00659ED0-0x00659EE2 FILE
+// RULED-OUT: no tier is reachable for ANY body - SHARED_TAIL, the helper at 0x004C8450 (mov [ecx],0x66e444; ret) is COMDAT-folded with another catalogued function, same wall as VoiceRx::VoiceRx() at 0x004C8960. Straight-line field reconstruction below, no attempt at the SEH try/catch unwind frame (bare try/catch with rethrow produced no fs:[0] frame at all under this compiler's flags; the scaffold gives Sound no base class to hang the automatic base/derived vtable-swap unwind on, same as the already-ruled-out ~UV2Player shape).
 // working copy - scaffold materialised by --work
-// name      ??0Sound@@QAE@XZ
 // size      179 bytes
-// spans     0x004C6080-0x004C611A;0x004C8450-0x004C8457;0x00659ED0-0x00659EE2
 // prototype void (__thiscall ??0Sound@@QAE@XZ)(Sound* this)
 // callers   0   call targets   1
 // kind      game

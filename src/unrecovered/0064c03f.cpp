@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064C03F EXCLUDED S1
-// name      __stbuf
+// ORIGINAL: 0x0064C03F __stbuf 0x0064C03F-0x0064C0CC EXCLUDED S1
 // size      141 bytes
-// spans     0x0064C03F-0x0064C0CC
 // prototype 
 // callers   1   call targets   2
 // kind      library

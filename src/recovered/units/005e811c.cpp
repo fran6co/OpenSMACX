@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005E811C BYTE_EXACT FILE
-// name      ?draw_dest_source@Sprite@@QAEHPAUBuffer@@HHHHHPAE@Z
+// ORIGINAL: 0x005E811C ?draw_dest_source@Sprite@@QAEHPAUBuffer@@HHHHHPAE@Z 0x005E811C-0x005E816C FILE BYTE_EXACT
 // size      80 bytes
-// spans     0x005E811C-0x005E816C
 // prototype int (__thiscall ?draw_dest_source@Sprite@@QAEHPAUBuffer@@HHHHHPAE@Z)(Sprite* this, Buffer*, int, int, int, int, int, unsigned int8*)
 // callers   1   call targets   1
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0046FD20 FILE
-// name      ?UNK8@MapWin@@QAEXHHH@Z
+// ORIGINAL: 0x0046FD20 ?UNK8@MapWin@@QAEXHHH@Z 0x0046FD20-0x0046FD83 FILE
 // size      99 bytes
-// spans     0x0046FD20-0x0046FD83
 // prototype void (__thiscall ?UNK8@MapWin@@QAEXHHH@Z)(MapWin* this, int, int, int)
 // callers   0   call targets   1
 // kind      game

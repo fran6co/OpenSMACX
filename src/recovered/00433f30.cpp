@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00433F30 BYTE_EXACT
-// name      ?on_scrolled@SelectPartWin@@QAEXHH@Z
+// ORIGINAL: 0x00433F30 ?on_scrolled@SelectPartWin@@QAEXHH@Z 0x00433F30-0x00433F4F BYTE_EXACT
 // size      31 bytes
-// spans     0x00433F30-0x00433F4F
 // prototype void (__thiscall ?on_scrolled@SelectPartWin@@QAEXHH@Z)(SelectPartWin* this, int, int)
 // callers   0   call targets   0
 // kind      game

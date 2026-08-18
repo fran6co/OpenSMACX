@@ -1,20 +1,11 @@
-// ORIGINAL: 0x005F5C00 FILE
-// name      ?on_activate@Win@@QAEJIPAXJ@Z
+// ORIGINAL: 0x005F5C00 ?on_activate@Win@@QAEJIPAXJ@Z 0x005F5C00-0x005F5D05 FILE
+// RULED-OUT: `this` is never referenced by [ecx+N] anywhere in the body (fake thiscall - all state is via fixed globals); kept the catalogued `__thiscall Win::on_activate` head anyway since rewriting a fake-thiscall as real changed nothing elsewhere (0x005E3630). `goto done` for the shared DefWindowProcA tail vs restructuring as nested if/return - landed with goto, still MISMATCH at #13 (if/else branch order inside the `*g_009b3ab0 == 0` arm).
 // size      261 bytes
-// spans     0x005F5C00-0x005F5D05
 // prototype long (__thiscall ?on_activate@Win@@QAEJIPAXJ@Z)(Win* this, unsigned int, void*, long)
 // callers   0   call targets   0
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     (none)
-// RULED-OUT: `this` is never referenced by [ecx+N] anywhere in the body
-//            (fake thiscall - all state is via fixed globals); kept the
-//            catalogued `__thiscall Win::on_activate` head anyway since
-//            rewriting a fake-thiscall as real changed nothing elsewhere
-//            (0x005E3630). `goto done` for the shared DefWindowProcA tail
-//            vs restructuring as nested if/return - landed with goto,
-//            still MISMATCH at #13 (if/else branch order inside the
-//            `*g_009b3ab0 == 0` arm).
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?on_activate@Win@@QAEJIPAXJ@Z  at 0x005F5C00  (261 bytes)
 //

@@ -1,13 +1,7 @@
-// ORIGINAL: 0x0041DE60 BYTE_EXACT FILE
-// LEVER: locals declared at top of function (not just before use) reproduces
-//        `sub esp,8` for two 4-byte slots instead of the optimizer reusing a
-//        dead parameter's stack slot for one of them; and the two adjacent
-//        global stores (g_009b7abc then g_009b7ac0) had to be written in
-//        that exact order - Ghidra's own pseudocode printed them reversed.
+// ORIGINAL: 0x0041DE60 ?on_iface_left_down@BaseWin@@QAEXHH@Z 0x0041DE60-0x0041DF38 FILE BYTE_EXACT
+// LEVER: locals declared at top of function (not just before use) reproduces `sub esp,8` for two 4-byte slots instead of the optimizer reusing a dead parameter's stack slot for one of them; and the two adjacent global stores (g_009b7abc then g_009b7ac0) had to be written in that exact order - Ghidra's own pseudocode printed them reversed.
 // working copy - scaffold materialised by --work
-// name      ?on_iface_left_down@BaseWin@@QAEXHH@Z
 // size      216 bytes
-// spans     0x0041DE60-0x0041DF38
 // prototype void (__thiscall ?on_iface_left_down@BaseWin@@QAEXHH@Z)(BaseWin* this, int xCoord, int yCoord)
 // callers   0   call targets   3
 // kind      game

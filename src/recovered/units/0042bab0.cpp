@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0042BAB0 FILE
-// name      ?set_cat_terraform@Datalink@@QAEXXZ
+// ORIGINAL: 0x0042BAB0 ?set_cat_terraform@Datalink@@QAEXXZ 0x0042BAB0-0x0042BCB1 FILE
 // size      513 bytes
-// spans     0x0042BAB0-0x0042BCB1
 // prototype void (__thiscall ?set_cat_terraform@Datalink@@QAEXXZ)(Datalink* this)
 // callers   2   call targets   10
 // kind      game

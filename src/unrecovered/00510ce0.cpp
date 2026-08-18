@@ -1,18 +1,12 @@
-// ORIGINAL: 0x00510CE0 FILE
+// ORIGINAL: 0x00510CE0 ?ready_search@Console@@QAEHH@Z 0x00510CE0-0x00510F48 FILE
+// RULED-OUT: prologue register order (7-slot frame, edi saved to a local purely to free it as scratch across the inner loop) - not chased byte-for-byte; control flow/offsets re-derived from raw disasm since Ghidra's local_N numbering did not line up with the real ebp-relative slots here.
 // working copy - scaffold materialised by --work
-// name      ?ready_search@Console@@QAEHH@Z
 // size      616 bytes
-// spans     0x00510CE0-0x00510F48
 // prototype int (__thiscall ?ready_search@Console@@QAEHH@Z)(Console* this, int)
 // callers   4   call targets   2
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005C1B70 0x00644F3A
-// RULED-OUT: prologue register order (7-slot frame, edi saved to a local
-//            purely to free it as scratch across the inner loop) - not
-//            chased byte-for-byte; control flow/offsets re-derived from
-//            raw disasm since Ghidra's local_N numbering did not line up
-//            with the real ebp-relative slots here.
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?ready_search@Console@@QAEHH@Z  at 0x00510CE0  (616 bytes)

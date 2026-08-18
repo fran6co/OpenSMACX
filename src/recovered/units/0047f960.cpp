@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0047F960 FILE
-// name      ?draw_custom_rules@NetWin@@QAEXXZ
+// ORIGINAL: 0x0047F960 ?draw_custom_rules@NetWin@@QAEXXZ 0x0047F960-0x0047FE2E FILE
 // size      1230 bytes
-// spans     0x0047F960-0x0047FE2E
 // prototype void (__thiscall ?draw_custom_rules@NetWin@@QAEXXZ)(NetWin* this)
 // callers   1   call targets   15
 // kind      game

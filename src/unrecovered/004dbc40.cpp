@@ -1,17 +1,7 @@
-// ORIGINAL: 0x004DBC40 FILE
-// RULED-OUT: `field_23BDC_` named field is WRONG - it lands at 0x245f0, not
-//   0x23bdc (raw `self+0x23bdc` cast is correct, per the "scaffold's named
-//   fields can be wrong" caution). `reinterpret_cast<int>` on the three
-//   pointer loop bounds gets `jl` instead of `jb` (pointer `<` compiles
-//   unsigned). Landed at MNEMONIC_ONLY: the one remaining diff is the
-//   `*p=0` store and the `p[1]` load at the very last loop swapped order
-//   (compiler schedules the independent load before the store regardless
-//   of source order) - tried a named temp, a ternary store, and an
-//   if/else split; none reproduced store-then-load.
+// ORIGINAL: 0x004DBC40 ?editor_reset_tech@Console@@QAEXXZ 0x004DBC40-0x004DBD18 FILE
+// RULED-OUT: `field_23BDC_` named field is WRONG - it lands at 0x245f0, not 0x23bdc (raw `self+0x23bdc` cast is correct, per the "scaffold's named fields can be wrong" caution). `reinterpret_cast<int>` on the three pointer loop bounds gets `jl` instead of `jb` (pointer `<` compiles unsigned). Landed at MNEMONIC_ONLY: the one remaining diff is the `*p=0` store and the `p[1]` load at the very last loop swapped order (compiler schedules the independent load before the store regardless of source order) - tried a named temp, a ternary store, and an if/else split; none reproduced store-then-load.
 // working copy - scaffold materialised by --work
-// name      ?editor_reset_tech@Console@@QAEXXZ
 // size      216 bytes
-// spans     0x004DBC40-0x004DBD18
 // prototype void (__thiscall ?editor_reset_tech@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   3
 // kind      game

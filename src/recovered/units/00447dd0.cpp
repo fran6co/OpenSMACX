@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00447DD0 FILE
-// name      ?general@AAmbience@@QAEXXZ
+// ORIGINAL: 0x00447DD0 ?general@AAmbience@@QAEXXZ 0x00447DD0-0x00448273 FILE
 // size      1187 bytes
-// spans     0x00447DD0-0x00448273
 // prototype void (__thiscall ?general@AAmbience@@QAEXXZ)(AAmbience* this)
 // callers   0   call targets   0
 // kind      game

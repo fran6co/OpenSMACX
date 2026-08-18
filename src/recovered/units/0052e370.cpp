@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0052E370 FILE
-// name      ?on_player_deleted@NetDaemon@@QAEXPADK@Z
+// ORIGINAL: 0x0052E370 ?on_player_deleted@NetDaemon@@QAEXPADK@Z 0x0052E370-0x0052E8FD FILE
 // size      1421 bytes
-// spans     0x0052E370-0x0052E8FD
 // prototype void (__thiscall ?on_player_deleted@NetDaemon@@QAEXPADK@Z)(NetDaemon* this, int8*, unsigned int)
 // callers   0   call targets   13
 // kind      game

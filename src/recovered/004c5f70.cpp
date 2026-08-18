@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004C5F70 BYTE_EXACT
-// name      ?unload_sound_dll@@YAXXZ
+// ORIGINAL: 0x004C5F70 ?unload_sound_dll@@YAXXZ 0x004C5F70-0x004C5FA5 BYTE_EXACT
 // size      53 bytes
-// spans     0x004C5F70-0x004C5FA5
 // prototype 
 // callers   0   call targets   0
 // kind      game

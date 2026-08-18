@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005C1F20 FILE
-// name      ?UNK1@Fractal@@QAEHHH@Z
+// ORIGINAL: 0x005C1F20 ?UNK1@Fractal@@QAEHHH@Z 0x005C1F20-0x005C1FB9 FILE
 // size      153 bytes
-// spans     0x005C1F20-0x005C1FB9
 // prototype int (__thiscall ?UNK1@Fractal@@QAEHHH@Z)(Fractal* this, int, int)
 // callers   3   call targets   0
 // kind      

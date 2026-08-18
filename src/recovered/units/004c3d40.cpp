@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004C3D40 FILE
-// name      ?click@WorldWin@@QAEXHHHH@Z
+// ORIGINAL: 0x004C3D40 ?click@WorldWin@@QAEXHHHH@Z 0x004C3D40-0x004C3E48 FILE
 // size      264 bytes
-// spans     0x004C3D40-0x004C3E48
 // prototype void (__thiscall ?click@WorldWin@@QAEXHHHH@Z)(WorldWin* this, int, int, int, int)
 // callers   2   call targets   5
 // kind      game

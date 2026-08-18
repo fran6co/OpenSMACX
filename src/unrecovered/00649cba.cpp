@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00649CBA EXCLUDED S1
-// name      __shift
+// ORIGINAL: 0x00649CBA __shift 0x00649CBA-0x00649CDF EXCLUDED S1
 // size      37 bytes
-// spans     0x00649CBA-0x00649CDF
 // prototype 
 // callers   2   call targets   2
 // kind      library

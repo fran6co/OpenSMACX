@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0050BA50 FILE
-// name      ?intervention@@YAXHH@Z
+// ORIGINAL: 0x0050BA50 ?intervention@@YAXHH@Z 0x0050BA50-0x0050BCB6 FILE
 // size      614 bytes
-// spans     0x0050BA50-0x0050BCB6
 // prototype 
 // callers   1   call targets   4
 // kind      game

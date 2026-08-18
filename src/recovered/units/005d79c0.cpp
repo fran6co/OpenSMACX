@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005D79C0 BYTE_EXACT FILE
-// name      ?resize@Buffer@@QAEXHH@Z
+// ORIGINAL: 0x005D79C0 ?resize@Buffer@@QAEXHH@Z 0x005D79C0-0x005D7A05 FILE BYTE_EXACT
 // size      69 bytes
-// spans     0x005D79C0-0x005D7A05
 // prototype void (__thiscall ?resize@Buffer@@QAEXHH@Z)(Buffer* this, int width, int height)
 // callers   5   call targets   1
 // kind      game

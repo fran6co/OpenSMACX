@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004E5A60 FILE
-// name      ?base_change@@YAXHH@Z
+// ORIGINAL: 0x004E5A60 ?base_change@@YAXHH@Z 0x004E5A60-0x004E5FDC FILE
 // size      1404 bytes
-// spans     0x004E5A60-0x004E5FDC
 // prototype void (__cdecl ?base_change@@YAXHH@Z)(int baseID, int)
 // callers   1   call targets   8
 // kind      game

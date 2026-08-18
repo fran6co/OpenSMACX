@@ -1,24 +1,13 @@
-// ORIGINAL: 0x00614FE0
-// name      ?init@EditBox@@QAEHHHHHPAUWin@@H@Z
+// ORIGINAL: 0x00614FE0 ?init@EditBox@@QAEHHHHHPAUWin@@H@Z 0x00614FE0-0x00615179
+// RULED-OUT: same as 0x005C9860 - the scaffold's GraphicWin::init is stale as `void` (src/graphicwin.cpp's real recovery returns `int`, and this disassembly tests the return value), so a same-layout `GraphicWinInitShim` with the correct `int` return gets the call.
+// RULED-OUT: landed at 0.92 similarity, 410 vs 409 bytes; diverges at #45 where the trailing low-byte or/and-with-1 flag update compiles to a wider `not`/`and` sequence here, and VC6 inlines the `strlen` call as `repne scasb` where the original kept a real `call`. Tried an explicit `unsigned char` low-byte read/write for the flag update instead of a 32-bit read-modify-write; same divergence point.
 // size      409 bytes
-// spans     0x00614FE0-0x00615179
 // prototype int (__thiscall ?init@EditBox@@QAEHHHHHPAUWin@@H@Z)(EditBox* this, int, int, int, int, Win*, int)
 // callers   5   call targets   7
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D4E40 0x005D4EF0 0x005DACB0 0x005EC7C0 0x00616260 0x00616780 0x006453E0
 // indirect  0x00615125 0x00615143
-// RULED-OUT: same as 0x005C9860 - the scaffold's GraphicWin::init is stale as
-//        `void` (src/graphicwin.cpp's real recovery returns `int`, and this
-//        disassembly tests the return value), so a same-layout
-//        `GraphicWinInitShim` with the correct `int` return gets the call.
-// RULED-OUT: landed at 0.92 similarity, 410 vs 409 bytes; diverges at #45
-//            where the trailing low-byte or/and-with-1 flag update compiles
-//            to a wider `not`/`and` sequence here, and VC6 inlines the
-//            `strlen` call as `repne scasb` where the original kept a real
-//            `call`. Tried an explicit `unsigned char` low-byte read/write
-//            for the flag update instead of a 32-bit read-modify-write;
-//            same divergence point.
 
 class VCall { public:
     virtual void slot000();

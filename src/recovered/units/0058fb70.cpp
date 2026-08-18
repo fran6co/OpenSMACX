@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0058FB70 BYTE_EXACT FILE
-// name      sub_58fb70
+// ORIGINAL: 0x0058FB70 sub_58fb70 0x0058FB70-0x0058FBB2 FILE BYTE_EXACT
 // size      66 bytes
-// spans     0x0058FB70-0x0058FBB2
 // prototype 
 // callers   0   call targets   0
 // kind      game

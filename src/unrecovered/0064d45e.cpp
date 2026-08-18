@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064D45E EXCLUDED S1
-// name      __RoundMan
+// ORIGINAL: 0x0064D45E __RoundMan 0x0064D45E-0x0064D4EA EXCLUDED S1
 // size      140 bytes
-// spans     0x0064D45E-0x0064D4EA
 // prototype 
 // callers   1   call targets   2
 // kind      library

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0065020E EXCLUDED S2a
-// name      DirectPlayEnumerateA
+// ORIGINAL: 0x0065020E DirectPlayEnumerateA 0x0065020E-0x00650214 EXCLUDED S2a
 // size      6 bytes
-// spans     0x0065020E-0x00650214
 // prototype 
 // callers   2   call targets   0
 // kind      thunk

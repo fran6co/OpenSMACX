@@ -1,8 +1,6 @@
-// ORIGINAL: 0x0044B000 BYTE_EXACT FILE
+// ORIGINAL: 0x0044B000 ?hof_save@@YAHXZ 0x0044B000-0x0044B06C FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?hof_save@@YAHXZ
 // size      108 bytes
-// spans     0x0044B000-0x0044B06C
 // prototype 
 // callers   0   call targets   3
 // kind      game

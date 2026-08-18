@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00610440 BYTE_EXACT
-// name      ?init@SpriteBox@@QAEHHHHHH@Z
+// ORIGINAL: 0x00610440 ?init@SpriteBox@@QAEHHHHHH@Z 0x00610440-0x00610471 BYTE_EXACT
 // size      49 bytes
-// spans     0x00610440-0x00610471
 // prototype int (__thiscall ?init@SpriteBox@@QAEHHHHHH@Z)(SpriteBox* this, int, int, int, int, int)
 // callers   1   call targets   2
 // kind      game

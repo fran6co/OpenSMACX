@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006469F7 EXCLUDED S1
-// name      _rename
+// ORIGINAL: 0x006469F7 _rename 0x006469F7-0x00646A25 EXCLUDED S1
 // size      46 bytes
-// spans     0x006469F7-0x00646A25
 // prototype 
 // callers   2   call targets   1
 // kind      library

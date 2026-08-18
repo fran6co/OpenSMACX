@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006470E4 EXCLUDED S1
-// name      __heap_alloc
+// ORIGINAL: 0x006470E4 __heap_alloc 0x006470E4-0x00647132 EXCLUDED S1
 // size      78 bytes
-// spans     0x006470E4-0x00647132
 // prototype 
 // callers   1   call targets   3
 // kind      library

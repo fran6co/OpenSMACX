@@ -39,10 +39,8 @@ int Wave_In_Device::init(void *window, unsigned long backends) {
 
 /*
 Purpose: Midi_Device devices decline to be polled; the legacy implementation is a bare return.
-ORIGINAL: 0x004C58B0 BYTE_EXACT
-// name      ?update_sound@Midi_Device@@QAEXXZ
+// ORIGINAL: 0x004C58B0 ?update_sound@Midi_Device@@QAEXXZ 0x004C58B0-0x004C58B1 BYTE_EXACT
 // size      1 bytes
-// spans     0x004C58B0-0x004C58B1
 // prototype void (__thiscall ?update_sound@Midi_Device@@QAEXXZ)(Midi_Device* this)
 // callers   0   call targets   0
 // kind      game
@@ -56,10 +54,8 @@ void Midi_Device::update_sound() {
 
 /*
 Purpose: Midi_Device devices decline to be suspended; the legacy implementation is a bare return.
-ORIGINAL: 0x004C58E0 BYTE_EXACT
-// name      ?suspend@Midi_Device@@QAEXXZ
+// ORIGINAL: 0x004C58E0 ?suspend@Midi_Device@@QAEXXZ 0x004C58E0-0x004C58E1 BYTE_EXACT
 // size      1 bytes
-// spans     0x004C58E0-0x004C58E1
 // prototype void (__thiscall ?suspend@Midi_Device@@QAEXXZ)(Midi_Device* this)
 // callers   0   call targets   0
 // kind      game
@@ -73,10 +69,8 @@ void Midi_Device::suspend() {
 
 /*
 Purpose: Midi_Device devices decline to be restarted; the legacy implementation is a bare return.
-ORIGINAL: 0x004C58F0 BYTE_EXACT
-// name      ?restart@Midi_Device@@QAEXXZ
+// ORIGINAL: 0x004C58F0 ?restart@Midi_Device@@QAEXXZ 0x004C58F0-0x004C58F1 BYTE_EXACT
 // size      1 bytes
-// spans     0x004C58F0-0x004C58F1
 // prototype void (__thiscall ?restart@Midi_Device@@QAEXXZ)(Midi_Device* this)
 // callers   0   call targets   0
 // kind      game
@@ -90,10 +84,8 @@ void Midi_Device::restart() {
 
 /*
 Purpose: Wave_In_Device devices decline to be polled; the legacy implementation is a bare return.
-ORIGINAL: 0x004C5B10 BYTE_EXACT
-// name      ?update_sound@Wave_In_Device@@QAEXXZ
+// ORIGINAL: 0x004C5B10 ?update_sound@Wave_In_Device@@QAEXXZ 0x004C5B10-0x004C5B11 BYTE_EXACT
 // size      1 bytes
-// spans     0x004C5B10-0x004C5B11
 // prototype void (__thiscall ?update_sound@Wave_In_Device@@QAEXXZ)(Wave_In_Device* this)
 // callers   0   call targets   0
 // kind      game
@@ -107,10 +99,8 @@ void Wave_In_Device::update_sound() {
 
 /*
 Purpose: Wave_In_Device devices decline to be suspended; the legacy implementation is a bare return.
-ORIGINAL: 0x004C5B40 BYTE_EXACT
-// name      ?suspend@Wave_In_Device@@QAEXXZ
+// ORIGINAL: 0x004C5B40 ?suspend@Wave_In_Device@@QAEXXZ 0x004C5B40-0x004C5B41 BYTE_EXACT
 // size      1 bytes
-// spans     0x004C5B40-0x004C5B41
 // prototype void (__thiscall ?suspend@Wave_In_Device@@QAEXXZ)(Wave_In_Device* this)
 // callers   0   call targets   0
 // kind      game
@@ -124,10 +114,8 @@ void Wave_In_Device::suspend() {
 
 /*
 Purpose: Wave_In_Device devices decline to be restarted; the legacy implementation is a bare return.
-ORIGINAL: 0x004C5B50 BYTE_EXACT
-// name      ?restart@Wave_In_Device@@QAEXXZ
+// ORIGINAL: 0x004C5B50 ?restart@Wave_In_Device@@QAEXXZ 0x004C5B50-0x004C5B51 BYTE_EXACT
 // size      1 bytes
-// spans     0x004C5B50-0x004C5B51
 // prototype void (__thiscall ?restart@Wave_In_Device@@QAEXXZ)(Wave_In_Device* this)
 // callers   0   call targets   0
 // kind      game
@@ -165,10 +153,8 @@ void __fastcall wave_in_device_restart_redirect(Wave_In_Device *self, void *) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
-ORIGINAL: 0x004C5840 BYTE_EXACT
-// name      ?select@Midi_Device@@QAEHI@Z
+// ORIGINAL: 0x004C5840 ?select@Midi_Device@@QAEHI@Z 0x004C5840-0x004C5845 BYTE_EXACT
 // size      5 bytes
-// spans     0x004C5840-0x004C5845
 // prototype int (__thiscall ?select@Midi_Device@@QAEHI@Z)(Midi_Device* this, unsigned int)
 // callers   0   call targets   0
 // kind      game
@@ -187,10 +173,8 @@ int __fastcall midi_device_select_redirect(Midi_Device *self, void *, unsigned i
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x004C5860 BYTE_EXACT
-// name      ?set_volume@Midi_Device@@QAEXI@Z
+// ORIGINAL: 0x004C5860 ?set_volume@Midi_Device@@QAEXI@Z 0x004C5860-0x004C5863 BYTE_EXACT
 // size      3 bytes
-// spans     0x004C5860-0x004C5863
 // prototype void (__thiscall ?set_volume@Midi_Device@@QAEXI@Z)(Midi_Device* this, unsigned int)
 // callers   0   call targets   0
 // kind      game
@@ -208,10 +192,8 @@ void __fastcall midi_device_set_volume_redirect(Midi_Device *self, void *, unsig
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x004C5880 BYTE_EXACT
-// name      ?set_pan@Midi_Device@@QAEXH@Z
+// ORIGINAL: 0x004C5880 ?set_pan@Midi_Device@@QAEXH@Z 0x004C5880-0x004C5883 BYTE_EXACT
 // size      3 bytes
-// spans     0x004C5880-0x004C5883
 // prototype void (__thiscall ?set_pan@Midi_Device@@QAEXH@Z)(Midi_Device* this, int)
 // callers   0   call targets   0
 // kind      game
@@ -229,10 +211,8 @@ void __fastcall midi_device_set_pan_redirect(Midi_Device *self, void *, int a1) 
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
-ORIGINAL: 0x004C5890 BYTE_EXACT
-// name      ?fade@Midi_Device@@QAEHI@Z
+// ORIGINAL: 0x004C5890 ?fade@Midi_Device@@QAEHI@Z 0x004C5890-0x004C5895 BYTE_EXACT
 // size      5 bytes
-// spans     0x004C5890-0x004C5895
 // prototype int (__thiscall ?fade@Midi_Device@@QAEHI@Z)(Midi_Device* this, unsigned int)
 // callers   0   call targets   0
 // kind      game
@@ -251,10 +231,8 @@ int __fastcall midi_device_fade_redirect(Midi_Device *self, void *, unsigned int
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x004C58C0 BYTE_EXACT
-// name      ?set_rate@Midi_Device@@QAEXI@Z
+// ORIGINAL: 0x004C58C0 ?set_rate@Midi_Device@@QAEXI@Z 0x004C58C0-0x004C58C3 BYTE_EXACT
 // size      3 bytes
-// spans     0x004C58C0-0x004C58C3
 // prototype void (__thiscall ?set_rate@Midi_Device@@QAEXI@Z)(Midi_Device* this, unsigned int)
 // callers   0   call targets   0
 // kind      game
@@ -272,10 +250,8 @@ void __fastcall midi_device_set_rate_redirect(Midi_Device *self, void *, unsigne
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
-ORIGINAL: 0x004C5AD0 BYTE_EXACT
-// name      ?select@Wave_In_Device@@QAEHI@Z
+// ORIGINAL: 0x004C5AD0 ?select@Wave_In_Device@@QAEHI@Z 0x004C5AD0-0x004C5AD5 BYTE_EXACT
 // size      5 bytes
-// spans     0x004C5AD0-0x004C5AD5
 // prototype int (__thiscall ?select@Wave_In_Device@@QAEHI@Z)(Wave_In_Device* this, unsigned int)
 // callers   0   call targets   0
 // kind      game
@@ -294,10 +270,8 @@ int __fastcall wave_in_device_select_redirect(Wave_In_Device *self, void *, unsi
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
-ORIGINAL: 0x004C5AF0 BYTE_EXACT
-// name      ?get_caps@Wave_In_Device@@QAEHI@Z
+// ORIGINAL: 0x004C5AF0 ?get_caps@Wave_In_Device@@QAEHI@Z 0x004C5AF0-0x004C5AF5 BYTE_EXACT
 // size      5 bytes
-// spans     0x004C5AF0-0x004C5AF5
 // prototype int (__thiscall ?get_caps@Wave_In_Device@@QAEHI@Z)(Wave_In_Device* this, unsigned int)
 // callers   0   call targets   0
 // kind      game
@@ -316,10 +290,8 @@ int __fastcall wave_in_device_get_caps_redirect(Wave_In_Device *self, void *, un
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x004C5B20 BYTE_EXACT
-// name      ?set_rate@Wave_In_Device@@QAEXI@Z
+// ORIGINAL: 0x004C5B20 ?set_rate@Wave_In_Device@@QAEXI@Z 0x004C5B20-0x004C5B23 BYTE_EXACT
 // size      3 bytes
-// spans     0x004C5B20-0x004C5B23
 // prototype void (__thiscall ?set_rate@Wave_In_Device@@QAEXI@Z)(Wave_In_Device* this, unsigned int)
 // callers   0   call targets   0
 // kind      game
@@ -337,10 +309,8 @@ void __fastcall wave_in_device_set_rate_redirect(Wave_In_Device *self, void *, u
 
 /*
 Purpose: Report no device description; the legacy implementation returns 0.
-ORIGINAL: 0x004C5850 BYTE_EXACT
-// name      ?get_description@Midi_Device@@QAEHIPADI@Z
+// ORIGINAL: 0x004C5850 ?get_description@Midi_Device@@QAEHIPADI@Z 0x004C5850-0x004C5855 BYTE_EXACT
 // size      5 bytes
-// spans     0x004C5850-0x004C5855
 // prototype int (__thiscall ?get_description@Midi_Device@@QAEHIPADI@Z)(Midi_Device* this, unsigned int, int8*, unsigned int)
 // callers   0   call targets   0
 // kind      game
@@ -359,10 +329,8 @@ int __fastcall midi_device_get_description_redirect(Midi_Device *self, void *, u
 
 /*
 Purpose: Report no device description; the legacy implementation returns 0.
-ORIGINAL: 0x004C5AE0 BYTE_EXACT
-// name      ?get_description@Wave_In_Device@@QAEHIPADI@Z
+// ORIGINAL: 0x004C5AE0 ?get_description@Wave_In_Device@@QAEHIPADI@Z 0x004C5AE0-0x004C5AE5 BYTE_EXACT
 // size      5 bytes
-// spans     0x004C5AE0-0x004C5AE5
 // prototype int (__thiscall ?get_description@Wave_In_Device@@QAEHIPADI@Z)(Wave_In_Device* this, unsigned int, int8*, unsigned int)
 // callers   0   call targets   0
 // kind      game
@@ -381,10 +349,8 @@ int __fastcall wave_in_device_get_description_redirect(Wave_In_Device *self, voi
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
-ORIGINAL: 0x004C5830 BYTE_EXACT
-// name      ?get_ndevices@Midi_Device@@QAEHXZ
+// ORIGINAL: 0x004C5830 ?get_ndevices@Midi_Device@@QAEHXZ 0x004C5830-0x004C5833 BYTE_EXACT
 // size      3 bytes
-// spans     0x004C5830-0x004C5833
 // prototype int (__thiscall ?get_ndevices@Midi_Device@@QAEHXZ)(Midi_Device* this)
 // callers   0   call targets   0
 // kind      game
@@ -399,10 +365,8 @@ int Midi_Device::get_ndevices() {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
-ORIGINAL: 0x004C5870 BYTE_EXACT
-// name      ?get_volume@Midi_Device@@QAEHXZ
+// ORIGINAL: 0x004C5870 ?get_volume@Midi_Device@@QAEHXZ 0x004C5870-0x004C5873 BYTE_EXACT
 // size      3 bytes
-// spans     0x004C5870-0x004C5873
 // prototype int (__thiscall ?get_volume@Midi_Device@@QAEHXZ)(Midi_Device* this)
 // callers   0   call targets   0
 // kind      game
@@ -417,10 +381,8 @@ int Midi_Device::get_volume() {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
-ORIGINAL: 0x004C58A0 BYTE_EXACT
-// name      ?stop@Midi_Device@@QAEHXZ
+// ORIGINAL: 0x004C58A0 ?stop@Midi_Device@@QAEHXZ 0x004C58A0-0x004C58A3 BYTE_EXACT
 // size      3 bytes
-// spans     0x004C58A0-0x004C58A3
 // prototype int (__thiscall ?stop@Midi_Device@@QAEHXZ)(Midi_Device* this)
 // callers   0   call targets   0
 // kind      game
@@ -435,10 +397,8 @@ int Midi_Device::stop() {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
-ORIGINAL: 0x004C58D0 BYTE_EXACT
-// name      ?get_rate@Midi_Device@@QAEHXZ
+// ORIGINAL: 0x004C58D0 ?get_rate@Midi_Device@@QAEHXZ 0x004C58D0-0x004C58D3 BYTE_EXACT
 // size      3 bytes
-// spans     0x004C58D0-0x004C58D3
 // prototype int (__thiscall ?get_rate@Midi_Device@@QAEHXZ)(Midi_Device* this)
 // callers   0   call targets   0
 // kind      game
@@ -453,10 +413,8 @@ int Midi_Device::get_rate() {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
-ORIGINAL: 0x004C5AC0 BYTE_EXACT
-// name      ?get_ndevices@Wave_In_Device@@QAEHXZ
+// ORIGINAL: 0x004C5AC0 ?get_ndevices@Wave_In_Device@@QAEHXZ 0x004C5AC0-0x004C5AC3 BYTE_EXACT
 // size      3 bytes
-// spans     0x004C5AC0-0x004C5AC3
 // prototype int (__thiscall ?get_ndevices@Wave_In_Device@@QAEHXZ)(Wave_In_Device* this)
 // callers   0   call targets   0
 // kind      game
@@ -471,10 +429,8 @@ int Wave_In_Device::get_ndevices() {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
-ORIGINAL: 0x004C5B00 BYTE_EXACT
-// name      ?stop@Wave_In_Device@@QAEHXZ
+// ORIGINAL: 0x004C5B00 ?stop@Wave_In_Device@@QAEHXZ 0x004C5B00-0x004C5B03 BYTE_EXACT
 // size      3 bytes
-// spans     0x004C5B00-0x004C5B03
 // prototype int (__thiscall ?stop@Wave_In_Device@@QAEHXZ)(Wave_In_Device* this)
 // callers   0   call targets   0
 // kind      game
@@ -489,10 +445,8 @@ int Wave_In_Device::stop() {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
-ORIGINAL: 0x004C5B30 BYTE_EXACT
-// name      ?get_rate@Wave_In_Device@@QAEHXZ
+// ORIGINAL: 0x004C5B30 ?get_rate@Wave_In_Device@@QAEHXZ 0x004C5B30-0x004C5B33 BYTE_EXACT
 // size      3 bytes
-// spans     0x004C5B30-0x004C5B33
 // prototype int (__thiscall ?get_rate@Wave_In_Device@@QAEHXZ)(Wave_In_Device* this)
 // callers   0   call targets   0
 // kind      game
@@ -550,10 +504,8 @@ void dispatch_midi_device(Midi_Device *self, int vtable_offset) {
 
 /*
 Purpose: Enable the wrapped device, if there is one, through vtable slot 0x54.
-ORIGINAL: 0x004C5900
-// name      ?enable@Midi_Device@@QAEXXZ
+// ORIGINAL: 0x004C5900 ?enable@Midi_Device@@QAEXXZ 0x004C5900-0x004C590F
 // size      15 bytes
-// spans     0x004C5900-0x004C590F
 // prototype void (__thiscall ?enable@Midi_Device@@QAEXXZ)(Midi_Device* this)
 // callers   0   call targets   0
 // kind      game
@@ -569,10 +521,8 @@ void Midi_Device::enable() {
 
 /*
 Purpose: Disable the wrapped device, if there is one, through vtable slot 0x58.
-ORIGINAL: 0x004C5910
-// name      ?disable@Midi_Device@@QAEXXZ
+// ORIGINAL: 0x004C5910 ?disable@Midi_Device@@QAEXXZ 0x004C5910-0x004C591F
 // size      15 bytes
-// spans     0x004C5910-0x004C591F
 // prototype void (__thiscall ?disable@Midi_Device@@QAEXXZ)(Midi_Device* this)
 // callers   0   call targets   0
 // kind      game
@@ -614,10 +564,8 @@ int query_device_at_14(void *self, int vtable_offset, int no_device_result) {
 /*
 Purpose: Ask the wrapped device whether it is disabled, through vtable slot
          0x5C. With no device wrapped the answer is yes.
-ORIGINAL: 0x004C5920
-// name      ?is_disabled@Midi_Device@@QAEHXZ
+// ORIGINAL: 0x004C5920 ?is_disabled@Midi_Device@@QAEHXZ 0x004C5920-0x004C5932
 // size      18 bytes
-// spans     0x004C5920-0x004C5932
 // prototype int (__thiscall ?is_disabled@Midi_Device@@QAEHXZ)(Midi_Device* this)
 // callers   0   call targets   0
 // kind      game
@@ -633,10 +581,8 @@ int Midi_Device::is_disabled() {
 /*
 Purpose: Ask the wrapped device to start recording, through vtable slot 0x58.
          The original discards its answer.
-ORIGINAL: 0x004C5B60
-// name      ?start_record@Wave_In_Device@@QAEHXZ
+// ORIGINAL: 0x004C5B60 ?start_record@Wave_In_Device@@QAEHXZ 0x004C5B60-0x004C5B6F
 // size      15 bytes
-// spans     0x004C5B60-0x004C5B6F
 // prototype int (__thiscall ?start_record@Wave_In_Device@@QAEHXZ)(Wave_In_Device* this)
 // callers   1   call targets   0
 // kind      game
@@ -654,10 +600,8 @@ int Wave_In_Device::start_record() {
 /*
 Purpose: Ask the wrapped device to stop recording, through vtable slot 0x5C.
          The original discards its answer.
-ORIGINAL: 0x004C5B70
-// name      ?end_record@Wave_In_Device@@QAEHXZ
+// ORIGINAL: 0x004C5B70 ?end_record@Wave_In_Device@@QAEHXZ 0x004C5B70-0x004C5B7F
 // size      15 bytes
-// spans     0x004C5B70-0x004C5B7F
 // prototype int (__thiscall ?end_record@Wave_In_Device@@QAEHXZ)(Wave_In_Device* this)
 // callers   1   call targets   0
 // kind      game

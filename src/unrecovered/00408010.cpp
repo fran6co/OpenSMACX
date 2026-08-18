@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00408010 FILE
+// ORIGINAL: 0x00408010 ??1EditBox@@QAE@XZ 0x00408010-0x00408077;0x00650CF0-0x00650D10 FILE
 // working copy - scaffold materialised by --work
-// name      ??1EditBox@@QAE@XZ
 // size      135 bytes
-// spans     0x00408010-0x00408077;0x00650CF0-0x00650D10
 // prototype void (__thiscall ??1EditBox@@QAE@XZ)(EditBox* this)
 // callers   2   call targets   3
 // kind      game

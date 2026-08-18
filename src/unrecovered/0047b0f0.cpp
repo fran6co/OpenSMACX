@@ -1,12 +1,7 @@
-// ORIGINAL: 0x0047B0F0 BYTE_EXACT FILE
-// LEVER: xor/or order - writing the dword-zero field first in the record
-//   loop (matching `xor ebx,ebx` before `or ecx,-1`) reproduced the
-//   register setup order; `#pragma function(memcpy)` kept the `call
-//   _memcpy` instead of an inlined `rep movsd`.
+// ORIGINAL: 0x0047B0F0 ?send_all_player_packets@@YAXH@Z 0x0047B0F0-0x0047B1CE FILE BYTE_EXACT
+// LEVER: xor/or order - writing the dword-zero field first in the record loop (matching `xor ebx,ebx` before `or ecx,-1`) reproduced the register setup order; `#pragma function(memcpy)` kept the `call _memcpy` instead of an inlined `rep movsd`.
 // working copy - scaffold materialised by --work
-// name      ?send_all_player_packets@@YAXH@Z
 // size      222 bytes
-// spans     0x0047B0F0-0x0047B1CE
 // prototype 
 // callers   1   call targets   2
 // kind      game

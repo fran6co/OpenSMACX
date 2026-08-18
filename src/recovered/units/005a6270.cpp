@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005A6270 FILE
-// name      ?proto_sort@@YAXH@Z
+// ORIGINAL: 0x005A6270 ?proto_sort@@YAXH@Z 0x005A6270-0x005A63C9 FILE
 // size      345 bytes
-// spans     0x005A6270-0x005A63C9
 // prototype void (__cdecl ?proto_sort@@YAXH@Z)(int factionID)
 // callers   2   call targets   4
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005AD610 BYTE_EXACT FILE
-// name      ?on_redraw@ReplayWin@@QAEXXZ
+// ORIGINAL: 0x005AD610 ?on_redraw@ReplayWin@@QAEXXZ 0x005AD610-0x005AD71F FILE BYTE_EXACT
 // size      271 bytes
-// spans     0x005AD610-0x005AD71F
 // prototype void (__thiscall ?on_redraw@ReplayWin@@QAEXXZ)(ReplayWin* this)
 // callers   0   call targets   7
 // kind      game

@@ -1,18 +1,7 @@
-// ORIGINAL: 0x0062C110 FILE
-// RULED-OUT: transcribed from Ghidra's decompile, fixing a real structural
-//   miss on the first pass - the sprite/tile draw block (0xac8!=0 branch)
-//   nests on `*(self+0xa9c)==0`, selecting between TWO parallel 9-draw sets
-//   (0xac8.. vs 0xaec..) that share one closing `tile()` call after the
-//   if/else, not one flat sequence. `this`-null guards
-//   (`-(uint)(this!=0)&buf`) are dropped in favour of `buf` directly - a
-//   member fn's `this` is never null, and the brief warns the ternary form
-//   of this idiom gets optimized away anyway. Frameless build compiles and
-//   matches through instr #2 (mov vs push) - not chased further, large
-//   member function with many null-guarded draws, landed for coverage.
+// ORIGINAL: 0x0062C110 ?on_redraw@PushButton@@QAEXXZ 0x0062C110-0x0062C82D FILE
+// RULED-OUT: transcribed from Ghidra's decompile, fixing a real structural miss on the first pass - the sprite/tile draw block (0xac8!=0 branch) nests on `*(self+0xa9c)==0`, selecting between TWO parallel 9-draw sets (0xac8.. vs 0xaec..) that share one closing `tile()` call after the if/else, not one flat sequence. `this`-null guards (`-(uint)(this!=0)&buf`) are dropped in favour of `buf` directly - a member fn's `this` is never null, and the brief warns the ternary form of this idiom gets optimized away anyway. Frameless build compiles and matches through instr #2 (mov vs push) - not chased further, large member function with many null-guarded draws, landed for coverage.
 // working copy - scaffold materialised by --work
-// name      ?on_redraw@PushButton@@QAEXXZ
 // size      1821 bytes
-// spans     0x0062C110-0x0062C82D
 // prototype void (__thiscall ?on_redraw@PushButton@@QAEXXZ)(PushButton* this)
 // callers   0   call targets   8
 // kind      game

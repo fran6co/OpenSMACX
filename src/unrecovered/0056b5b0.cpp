@@ -1,8 +1,6 @@
-// ORIGINAL: 0x0056B5B0 FILE
+// ORIGINAL: 0x0056B5B0 ?enemy_move@@YAHH@Z 0x0056B5B0-0x00579208 FILE
 // working copy - scaffold materialised by --work
-// name      ?enemy_move@@YAHH@Z
 // size      56408 bytes
-// spans     0x0056B5B0-0x00579208
 // prototype int (__cdecl ?enemy_move@@YAHH@Z)(int vehID)
 // callers   2   call targets   106
 // kind      game

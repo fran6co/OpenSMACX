@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004B8E40 FILE
-// name      ?on_left_click@StatusWin@@QAEXHH@Z
+// ORIGINAL: 0x004B8E40 ?on_left_click@StatusWin@@QAEXHH@Z 0x004B8E40-0x004B8FD3 FILE
 // size      403 bytes
-// spans     0x004B8E40-0x004B8FD3
 // prototype void (__thiscall ?on_left_click@StatusWin@@QAEXHH@Z)(StatusWin* this, int xCoord, int yCoord)
 // callers   2   call targets   13
 // kind      game

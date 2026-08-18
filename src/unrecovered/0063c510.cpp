@@ -1,8 +1,6 @@
-// ORIGINAL: 0x0063C510 FILE
+// ORIGINAL: 0x0063C510 sub_63c510 0x0063C510-0x0063C6CA FILE
 // RULED-OUT: __thiscall helper class (NetConnectHelper) with pop()/parse_says() overload resolution by arg count and a 1-arg VCall::slot000; diverges at #0, frame setup differs
-// name      sub_63c510
 // size      442 bytes
-// spans     0x0063C510-0x0063C6CA
 // prototype 
 // callers   1   call targets   8
 // kind      game

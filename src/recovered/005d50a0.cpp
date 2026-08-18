@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005D50A0 BYTE_EXACT
-// name      ?init@GraphicWin@@QAEHPAURECT@@PADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z
+// ORIGINAL: 0x005D50A0 ?init@GraphicWin@@QAEHPAURECT@@PADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z 0x005D50A0-0x005D50E8 BYTE_EXACT
 // size      72 bytes
-// spans     0x005D50A0-0x005D50E8
 // prototype int (__thiscall ?init@GraphicWin@@QAEHPAURECT@@PADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z)(GraphicWin* this, RECT*, int8*, int, Win*, Menu*, BorderSizing*)
 // callers   7   call targets   1
 // kind      game

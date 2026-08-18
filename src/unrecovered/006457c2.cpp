@@ -1,8 +1,6 @@
-// ORIGINAL: 0x006457C2 FILE
+// ORIGINAL: 0x006457C2 ??_L@YGXPAXIHP6EX0@Z1@Z 0x006457C2-0x00645844 FILE
 // working copy - scaffold materialised by --work
-// name      ??_L@YGXPAXIHP6EX0@Z1@Z
 // size      130 bytes
-// spans     0x006457C2-0x00645844
 // prototype void (__stdcall ??_L@YGXPAXIHP6EX0@Z1@Z)(void*, unsigned int size, int count, void (__thiscall *)(void*), void (__thiscall *)(void*))
 // callers   132   call targets   2
 // kind      library

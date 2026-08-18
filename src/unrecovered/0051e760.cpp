@@ -1,17 +1,7 @@
-// ORIGINAL: 0x0051E760 FILE
-// RULED-OUT: literal transcription of the ~25 itoa+strcat+log_say_hex report blocks and 3
-//            walk loops (verified every log_say/log_say_hex call is (msg,value,0,0) with the
-//            message text pushed last=1st-param, confirmed against raw disasm push order, not
-//            assumed); the switch's dead "cmp esi,4;jne" fallthrough at 0x51E82B is provably
-//            unreachable (case4's own short jmp skips over it) and is omitted. Used a
-//            file-scope #define REPORT(...)/#undef macro instead of a helper function to stay
-//            inside "no helper" while avoiding 25x hand-duplicated blocks. Compiles; first
-//            divergence at instr #13 (deeper than most landings this batch), not chased to
-//            byte-exact given size (2375 bytes).
+// ORIGINAL: 0x0051E760 ?do_checksums@@YAXH@Z 0x0051E760-0x0051F0A7 FILE
+// RULED-OUT: literal transcription of the ~25 itoa+strcat+log_say_hex report blocks and 3 walk loops (verified every log_say/log_say_hex call is (msg,value,0,0) with the message text pushed last=1st-param, confirmed against raw disasm push order, not assumed); the switch's dead "cmp esi,4;jne" fallthrough at 0x51E82B is provably unreachable (case4's own short jmp skips over it) and is omitted. Used a file-scope #define REPORT(...)/#undef macro instead of a helper function to stay inside "no helper" while avoiding 25x hand-duplicated blocks. Compiles; first divergence at instr #13 (deeper than most landings this batch), not chased to byte-exact given size (2375 bytes).
 // working copy - scaffold materialised by --work
-// name      ?do_checksums@@YAXH@Z
 // size      2375 bytes
-// spans     0x0051E760-0x0051F0A7
 // prototype void (__cdecl ?do_checksums@@YAXH@Z)(int type)
 // callers   4   call targets   5
 // kind      game

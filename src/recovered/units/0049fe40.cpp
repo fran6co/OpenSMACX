@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0049FE40 FILE
-// name      ?sat_anim@ReportWin@@QAEXXZ
+// ORIGINAL: 0x0049FE40 ?sat_anim@ReportWin@@QAEXXZ 0x0049FE40-0x0049FFB7 FILE
 // size      375 bytes
-// spans     0x0049FE40-0x0049FFB7
 // prototype void (__thiscall ?sat_anim@ReportWin@@QAEXXZ)(ReportWin* this)
 // callers   3   call targets   6
 // kind      game

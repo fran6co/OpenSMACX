@@ -1,14 +1,7 @@
-// ORIGINAL: 0x00600860 FILE
-// RULED-OUT: sub-object construction (GraphicWin/Heap/FlatButton x2/Sprite) left
-//            as implicit member init (declaration order matches disasm call order);
-//            Dialogs/Spot placement-constructed explicitly at their disasm point.
-//            Body is a mechanical RD()-based field-by-field transcription of the
-//            constant/global-copy sequence; MISMATCH #2 (SEH prologue/frame) not
-//            chased further.
+// ORIGINAL: 0x00600860 ??0BasePop@@QAE@XZ 0x00600860-0x00600EF5;0x00662D80-0x00662E02 FILE
+// RULED-OUT: sub-object construction (GraphicWin/Heap/FlatButton x2/Sprite) left as implicit member init (declaration order matches disasm call order); Dialogs/Spot placement-constructed explicitly at their disasm point. Body is a mechanical RD()-based field-by-field transcription of the constant/global-copy sequence; MISMATCH #2 (SEH prologue/frame) not chased further.
 // working copy - scaffold materialised by --work
-// name      ??0BasePop@@QAE@XZ
 // size      1815 bytes
-// spans     0x00600860-0x00600EF5;0x00662D80-0x00662E02
 // prototype void (__thiscall ??0BasePop@@QAE@XZ)(BasePop* this)
 // callers   8   call targets   7
 // kind      game

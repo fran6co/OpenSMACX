@@ -1,11 +1,7 @@
-// ORIGINAL: 0x00539820 BYTE_EXACT FILE
-// LEVER: `x >= 10000` (not `9999 < x`) on both the elapsed-time and
-//        retry-count checks - each `9999 < x` spelling compiled to a
-//        signed/short-circuited jg/ja instead of the original's jae/jl.
+// ORIGINAL: 0x00539820 ?diplo_lock@@YAHH@Z 0x00539820-0x005398BF FILE BYTE_EXACT
+// LEVER: `x >= 10000` (not `9999 < x`) on both the elapsed-time and retry-count checks - each `9999 < x` spelling compiled to a signed/short-circuited jg/ja instead of the original's jae/jl.
 // working copy - scaffold materialised by --work
-// name      ?diplo_lock@@YAHH@Z
 // size      159 bytes
-// spans     0x00539820-0x005398BF
 // prototype 
 // callers   10   call targets   4
 // kind      game

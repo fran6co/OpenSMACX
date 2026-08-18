@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0060F700 FILE
-// name      ?on_left_down@CheckBox@@QAEXHH@Z
+// ORIGINAL: 0x0060F700 ?on_left_down@CheckBox@@QAEXHH@Z 0x0060F700-0x0060F8B0 FILE
 // size      432 bytes
-// spans     0x0060F700-0x0060F8B0
 // prototype void (__thiscall ?on_left_down@CheckBox@@QAEXHH@Z)(CheckBox* this, int xCoord, int yCoord)
 // callers   1   call targets   6
 // kind      game

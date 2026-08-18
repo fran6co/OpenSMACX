@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004029F0 FILE
-// name      ??1StringStruct@@QAE@H@Z
+// ORIGINAL: 0x004029F0 ??1StringStruct@@QAE@H@Z 0x004029F0-0x00402A56 FILE
 // size      102 bytes
-// spans     0x004029F0-0x00402A56
 // prototype void (__thiscall ??1StringStruct@@QAE@H@Z)(StringStruct* this, unsigned int)
 // callers   0   call targets   2
 // kind      game

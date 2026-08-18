@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0048FFB0 FILE
-// name      ?hide_option_buttons@PrefWin@@QAEXXZ
+// ORIGINAL: 0x0048FFB0 ?hide_option_buttons@PrefWin@@QAEXXZ 0x0048FFB0-0x00490123 FILE
 // size      371 bytes
-// spans     0x0048FFB0-0x00490123
 // prototype void (__thiscall ?hide_option_buttons@PrefWin@@QAEXXZ)(PrefWin* this)
 // callers   1   call targets   0
 // kind      game

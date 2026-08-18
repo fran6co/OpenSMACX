@@ -1,20 +1,7 @@
-// ORIGINAL: 0x0063BF10 FILE
-// RULED-OUT: not __stdcall(int,int,int) as the brief's fallback signature
-//            guessed - it's __thiscall(int,char*,Font*,int,int,int) returning
-//            int, 6 stack args popped by `ret 0x18`, cross-checked against
-//            Ghidra's param numbering (param_1 is `this`). Dialog init/
-//            set_dialog_* calls do NOT address self+0xa50 directly: the
-//            embedded Dialog's real base is `self+0xa50+*(*(self+0xa50)+8)`,
-//            an owner/index indirection re-derived from the raw disasm since
-//            Ghidra's flattened `*(*piVar1+8)+OFFSET+param_1` addressing
-//            looked at first like a plain field write. slot062 (0xf8/4)
-//            called nullary, no retype needed. sim 0.85 at plain /O2; first
-//            divergence #53 is a register-vs-recompute choice in the
-//            width/height layout arithmetic, not chased further.
+// ORIGINAL: 0x0063BF10 sub_63bf10 0x0063BF10-0x0063C33F FILE
+// RULED-OUT: not __stdcall(int,int,int) as the brief's fallback signature guessed - it's __thiscall(int,char*,Font*,int,int,int) returning int, 6 stack args popped by `ret 0x18`, cross-checked against Ghidra's param numbering (param_1 is `this`). Dialog init/ set_dialog_* calls do NOT address self+0xa50 directly: the embedded Dialog's real base is `self+0xa50+*(*(self+0xa50)+8)`, an owner/index indirection re-derived from the raw disasm since Ghidra's flattened `*(*piVar1+8)+OFFSET+param_1` addressing looked at first like a plain field write. slot062 (0xf8/4) called nullary, no retype needed. sim 0.85 at plain /O2; first divergence #53 is a register-vs-recompute choice in the width/height layout arithmetic, not chased further.
 // working copy - scaffold materialised by --work
-// name      sub_63bf10
 // size      1071 bytes
-// spans     0x0063BF10-0x0063C33F
 // prototype 
 // callers   0   call targets   9
 // kind      game

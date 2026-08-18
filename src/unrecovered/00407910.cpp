@@ -1,11 +1,7 @@
-// ORIGINAL: 0x00407910 BYTE_EXACT FILE
-// LEVER: thiscall shim - a synthetic GraphicWin class exposes close() as a
-//        member so reinterpret_cast<GraphicWin*>(this)->close() folds into
-//        the original's bare 5-byte jmp (same shim shape as 0x004210F0)
+// ORIGINAL: 0x00407910 ?close@AlphaSave@@QAEXXZ 0x00407910-0x00407915 FILE BYTE_EXACT
+// LEVER: thiscall shim - a synthetic GraphicWin class exposes close() as a member so reinterpret_cast<GraphicWin*>(this)->close() folds into the original's bare 5-byte jmp (same shim shape as 0x004210F0)
 // working copy - scaffold materialised by --work
-// name      ?close@AlphaSave@@QAEXXZ
 // size      5 bytes
-// spans     0x00407910-0x00407915
 // prototype void (__thiscall ?close@AlphaSave@@QAEXXZ)(AlphaSave* this)
 // callers   3   call targets   0
 // kind      thunk

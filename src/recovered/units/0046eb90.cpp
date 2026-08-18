@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0046EB90 BYTE_EXACT FILE
-// name      ?on_lose_mouse_capture@MapWin@@QAEXXZ
+// ORIGINAL: 0x0046EB90 ?on_lose_mouse_capture@MapWin@@QAEXXZ 0x0046EB90-0x0046EB95 FILE BYTE_EXACT
 // size      5 bytes
-// spans     0x0046EB90-0x0046EB95
 // prototype void (__thiscall ?on_lose_mouse_capture@MapWin@@QAEXXZ)(MapWin* this)
 // callers   0   call targets   0
 // kind      thunk

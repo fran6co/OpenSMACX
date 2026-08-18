@@ -21,10 +21,8 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-ORIGINAL: 0x004345C0 BYTE_EXACT
-// name      ?UNK1@DesignWin@@QAEXXZ
+// ORIGINAL: 0x004345C0 ?UNK1@DesignWin@@QAEXXZ 0x004345C0-0x004345C1 BYTE_EXACT
 // size      1 bytes
-// spans     0x004345C0-0x004345C1
 // prototype void (__thiscall ?UNK1@DesignWin@@QAEXXZ)(DesignWin* this)
 // callers   0   call targets   0
 // kind      game
@@ -42,10 +40,8 @@ void __fastcall design_win_unk1_redirect(DesignWin *self, void *) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x0043D330 BYTE_EXACT
-// name      ?on_iface_left_down@DesignWin@@QAEXHH@Z
+// ORIGINAL: 0x0043D330 ?on_iface_left_down@DesignWin@@QAEXHH@Z 0x0043D330-0x0043D333 BYTE_EXACT
 // size      3 bytes
-// spans     0x0043D330-0x0043D333
 // prototype void (__thiscall ?on_iface_left_down@DesignWin@@QAEXHH@Z)(DesignWin* this, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -63,10 +59,8 @@ void __fastcall design_win_on_iface_left_down_redirect(DesignWin *self, void *, 
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x0043D340 BYTE_EXACT
-// name      ?on_iface_right_down@DesignWin@@QAEXHH@Z
+// ORIGINAL: 0x0043D340 ?on_iface_right_down@DesignWin@@QAEXHH@Z 0x0043D340-0x0043D343 BYTE_EXACT
 // size      3 bytes
-// spans     0x0043D340-0x0043D343
 // prototype void (__thiscall ?on_iface_right_down@DesignWin@@QAEXHH@Z)(DesignWin* this, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -84,10 +78,8 @@ void __fastcall design_win_on_iface_right_down_redirect(DesignWin *self, void *,
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x0043D400 BYTE_EXACT
-// name      ?on_iface_selected@DesignWin@@QAEXHH@Z
+// ORIGINAL: 0x0043D400 ?on_iface_selected@DesignWin@@QAEXHH@Z 0x0043D400-0x0043D403 BYTE_EXACT
 // size      3 bytes
-// spans     0x0043D400-0x0043D403
 // prototype void (__thiscall ?on_iface_selected@DesignWin@@QAEXHH@Z)(DesignWin* this, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -105,10 +97,8 @@ void __fastcall design_win_on_iface_selected_redirect(DesignWin *self, void *, i
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x0043D410 BYTE_EXACT
-// name      ?on_iface_left_double_click@DesignWin@@QAEXHH@Z
+// ORIGINAL: 0x0043D410 ?on_iface_left_double_click@DesignWin@@QAEXHH@Z 0x0043D410-0x0043D413 BYTE_EXACT
 // size      3 bytes
-// spans     0x0043D410-0x0043D413
 // prototype void (__thiscall ?on_iface_left_double_click@DesignWin@@QAEXHH@Z)(DesignWin* this, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -126,10 +116,8 @@ void __fastcall design_win_on_iface_left_double_click_redirect(DesignWin *self, 
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x0043D420 BYTE_EXACT
-// name      ?on_iface_right_double_click@DesignWin@@QAEXHH@Z
+// ORIGINAL: 0x0043D420 ?on_iface_right_double_click@DesignWin@@QAEXHH@Z 0x0043D420-0x0043D423 BYTE_EXACT
 // size      3 bytes
-// spans     0x0043D420-0x0043D423
 // prototype void (__thiscall ?on_iface_right_double_click@DesignWin@@QAEXHH@Z)(DesignWin* this, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -147,10 +135,8 @@ void __fastcall design_win_on_iface_right_double_click_redirect(DesignWin *self,
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x0043D470 BYTE_EXACT
-// name      ?on_iface_button_toggled@DesignWin@@QAEXHH@Z
+// ORIGINAL: 0x0043D470 ?on_iface_button_toggled@DesignWin@@QAEXHH@Z 0x0043D470-0x0043D473 BYTE_EXACT
 // size      3 bytes
-// spans     0x0043D470-0x0043D473
 // prototype void (__thiscall ?on_iface_button_toggled@DesignWin@@QAEXHH@Z)(DesignWin* this, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -168,10 +154,8 @@ void __fastcall design_win_on_iface_button_toggled_redirect(DesignWin *self, voi
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x0043D480 BYTE_EXACT
-// name      ?on_iface_group_clicked@DesignWin@@QAEXHHH@Z
+// ORIGINAL: 0x0043D480 ?on_iface_group_clicked@DesignWin@@QAEXHHH@Z 0x0043D480-0x0043D483 BYTE_EXACT
 // size      3 bytes
-// spans     0x0043D480-0x0043D483
 // prototype void (__thiscall ?on_iface_group_clicked@DesignWin@@QAEXHHH@Z)(DesignWin* this, int, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -196,10 +180,8 @@ Purpose: Dismiss the bubble text when the pointer leaves. The whole body is two
          and the two are observationally identical unless something re-arms the
          bubble between them - which is why the fixture re-arms it rather than
          asserting a single refresh and calling that agreement.
-ORIGINAL: 0x00437BE0 BYTE_EXACT
-// name      ?on_mouse_leave@DesignWin@@QAEXHH@Z
+// ORIGINAL: 0x00437BE0 ?on_mouse_leave@DesignWin@@QAEXHH@Z 0x00437BE0-0x00437BED BYTE_EXACT
 // size      13 bytes
-// spans     0x00437BE0-0x00437BED
 // prototype void (__thiscall ?on_mouse_leave@DesignWin@@QAEXHH@Z)(DesignWin* this, int, int)
 // callers   0   call targets   1
 // kind      game
@@ -218,10 +200,8 @@ void __fastcall design_win_on_mouse_leave_redirect(DesignWin *self, void *, int 
 }
 
 /*
-ORIGINAL: 0x0043BE10 BYTE_EXACT
-// name      ?select_special_1@DesignWin@@QAEXXZ
+// ORIGINAL: 0x0043BE10 ?select_special_1@DesignWin@@QAEXXZ 0x0043BE10-0x0043BE18 BYTE_EXACT
 // size      8 bytes
-// spans     0x0043BE10-0x0043BE18
 // prototype void (__thiscall ?select_special_1@DesignWin@@QAEXXZ)(DesignWin* this)
 // callers   0   call targets   1
 // kind      game
@@ -234,10 +214,8 @@ void DesignWin::select_special_1() {
 }
 
 /*
-ORIGINAL: 0x0043BE20 BYTE_EXACT
-// name      ?select_special_2@DesignWin@@QAEXXZ
+// ORIGINAL: 0x0043BE20 ?select_special_2@DesignWin@@QAEXXZ 0x0043BE20-0x0043BE28 BYTE_EXACT
 // size      8 bytes
-// spans     0x0043BE20-0x0043BE28
 // prototype void (__thiscall ?select_special_2@DesignWin@@QAEXXZ)(DesignWin* this)
 // callers   0   call targets   1
 // kind      game

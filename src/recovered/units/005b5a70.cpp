@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005B5A70 FILE
-// name      ?unspot_stack@@YAXH@Z
+// ORIGINAL: 0x005B5A70 ?unspot_stack@@YAXH@Z 0x005B5A70-0x005B5AC5 FILE
 // size      85 bytes
-// spans     0x005B5A70-0x005B5AC5
 // prototype void (__cdecl ?unspot_stack@@YAXH@Z)(int vehID)
 // callers   2   call targets   0
 // kind      game

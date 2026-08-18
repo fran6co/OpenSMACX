@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064DED7 EXCLUDED S1
-// name      unknown_libname_301
+// ORIGINAL: 0x0064DED7 unknown_libname_301 0x0064DED7-0x0064E376 EXCLUDED S1
 // size      1183 bytes
-// spans     0x0064DED7-0x0064E376
 // prototype 
 // callers   0   call targets   1
 // kind      library

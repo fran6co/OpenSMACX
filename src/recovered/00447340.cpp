@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00447340 BYTE_EXACT
-// name      ?begin@MAmbience@@QAEXXZ
+// ORIGINAL: 0x00447340 ?begin@MAmbience@@QAEXXZ 0x00447340-0x00447356 BYTE_EXACT
 // size      22 bytes
-// spans     0x00447340-0x00447356
 // prototype void (__thiscall ?begin@MAmbience@@QAEXXZ)(MAmbience* this)
 // callers   0   call targets   0
 // kind      game

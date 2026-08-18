@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00609D50 BYTE_EXACT
-// name      ?set_def_dialog_text_color@Dialog@@QAAXHHHHH@Z
+// ORIGINAL: 0x00609D50 ?set_def_dialog_text_color@Dialog@@QAAXHHHHH@Z 0x00609D50-0x00609D8C BYTE_EXACT
 // size      60 bytes
-// spans     0x00609D50-0x00609D8C
 // prototype 
 // callers   1   call targets   0
 // kind      game

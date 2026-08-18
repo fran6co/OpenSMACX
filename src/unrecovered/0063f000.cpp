@@ -1,12 +1,7 @@
-// ORIGINAL: 0x0063F000 FILE
-// RULED-OUT: 5-int __cdecl signature transcribed faithfully from the two
-//   branches (bit2==0 single-shot vs bit2-set do/while loop over pbVar6);
-//   prologue diverges at instr #0 (sub esp,0x58 vs push) - not chased further,
-//   large FP-heavy function, landed for coverage.
+// ORIGINAL: 0x0063F000 sub_63f000 0x0063F000-0x0063F5D7 FILE
+// RULED-OUT: 5-int __cdecl signature transcribed faithfully from the two branches (bit2==0 single-shot vs bit2-set do/while loop over pbVar6); prologue diverges at instr #0 (sub esp,0x58 vs push) - not chased further, large FP-heavy function, landed for coverage.
 // working copy - scaffold materialised by --work
-// name      sub_63f000
 // size      1495 bytes
-// spans     0x0063F000-0x0063F5D7
 // prototype 
 // callers   1   call targets   7
 // kind      game

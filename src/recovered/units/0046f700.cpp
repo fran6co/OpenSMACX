@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0046F700 FILE
-// name      ?on_nc_left_down@MapWin@@QAEXHH@Z
+// ORIGINAL: 0x0046F700 ?on_nc_left_down@MapWin@@QAEXHH@Z 0x0046F700-0x0046F880 FILE
 // size      384 bytes
-// spans     0x0046F700-0x0046F880
 // prototype void (__thiscall ?on_nc_left_down@MapWin@@QAEXHH@Z)(MapWin* this, int, int)
 // callers   0   call targets   1
 // kind      game

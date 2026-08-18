@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00433940 FILE
+// ORIGINAL: 0x00433940 ?on_left_up@SelectPartWin@@QAEXHH@Z 0x00433940-0x004339BF FILE
 // working copy - scaffold materialised by --work
-// name      ?on_left_up@SelectPartWin@@QAEXHH@Z
 // size      127 bytes
-// spans     0x00433940-0x004339BF
 // prototype void (__thiscall ?on_left_up@SelectPartWin@@QAEXHH@Z)(SelectPartWin* this, int, int)
 // callers   0   call targets   0
 // kind      game

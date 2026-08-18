@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00477320 FILE
-// name      ?mon_conquer_base@@YAXHPAD@Z
+// ORIGINAL: 0x00477320 ?mon_conquer_base@@YAXHPAD@Z 0x00477320-0x00477434 FILE
 // size      276 bytes
-// spans     0x00477320-0x00477434
 // prototype void (__cdecl ?mon_conquer_base@@YAXHPAD@Z)(int factionID, int8* lpszBaseName)
 // callers   1   call targets   3
 // kind      game

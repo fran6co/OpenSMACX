@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00422C50 BYTE_EXACT FILE
-// name      ?clear@BattleWin@@QAEXXZ
+// ORIGINAL: 0x00422C50 ?clear@BattleWin@@QAEXXZ 0x00422C50-0x00422CB5 FILE BYTE_EXACT
 // size      101 bytes
-// spans     0x00422C50-0x00422CB5
 // prototype void (__thiscall ?clear@BattleWin@@QAEXXZ)(BattleWin* this)
 // callers   1   call targets   3
 // kind      game

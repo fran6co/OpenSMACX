@@ -1,11 +1,7 @@
-// ORIGINAL: 0x005D8D00 FILE
-// RULED-OUT: 233 vs 234 bytes; same divergence as its twin 0x005D8C20 -
-//            register/instruction ordering inside the `piVar1==0` branch
-//            (mov/cmp order). See that address's note for what was tried.
+// ORIGINAL: 0x005D8D00 sub_5d8d00 0x005D8D00-0x005D8DEA FILE
+// RULED-OUT: 233 vs 234 bytes; same divergence as its twin 0x005D8C20 - register/instruction ordering inside the `piVar1==0` branch (mov/cmp order). See that address's note for what was tried.
 // working copy - scaffold materialised by --work
-// name      sub_5d8d00
 // size      234 bytes
-// spans     0x005D8D00-0x005D8DEA
 // prototype 
 // callers   0   call targets   1
 // kind      game

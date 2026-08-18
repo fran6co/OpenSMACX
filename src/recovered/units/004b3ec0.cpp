@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004B3EC0 FILE
-// name      ??1CheckButton@@QAE@XZ
+// ORIGINAL: 0x004B3EC0 ??1CheckButton@@QAE@XZ 0x004B3EC0-0x004B3F18;0x00659880-0x00659892 FILE
 // size      106 bytes
-// spans     0x004B3EC0-0x004B3F18;0x00659880-0x00659892
 // prototype void (__thiscall ??1CheckButton@@QAE@XZ)(CheckButton* this)
 // callers   1   call targets   2
 // kind      game

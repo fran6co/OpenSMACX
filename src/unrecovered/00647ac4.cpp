@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00647AC4 EXCLUDED S1
-// name      _acos
+// ORIGINAL: 0x00647AC4 _acos 0x00647AC4-0x00647ACD EXCLUDED S1
 // size      9 bytes
-// spans     0x00647AC4-0x00647ACD
 // prototype 
 // callers   0   call targets   1
 // kind      library

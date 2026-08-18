@@ -1,16 +1,7 @@
-// ORIGINAL: 0x00425DB0 FILE
-// RULED-OUT: exact jump-table case order for the 6-way `arrayA54[a1]+5`
-//            switch was guessed from code layout order (table data itself
-//            not disassembled); rank/spot-position math (2-pass "count
-//            active factions" loop, war-friction 2099*a1 index, sprite
-//            table lookups at self+0xd54/self+0xd14) transcribed field-by-
-//            field, with CouncWin treated as GraphicWin-compatible at
-//            offset 0 (soft_update called via that cast) since the class
-//            carries no declared fields of its own.
+// ORIGINAL: 0x00425DB0 ?draw_leader@CouncWin@@QAEXH@Z 0x00425DB0-0x00426459 FILE
+// RULED-OUT: exact jump-table case order for the 6-way `arrayA54[a1]+5` switch was guessed from code layout order (table data itself not disassembled); rank/spot-position math (2-pass "count active factions" loop, war-friction 2099*a1 index, sprite table lookups at self+0xd54/self+0xd14) transcribed field-by- field, with CouncWin treated as GraphicWin-compatible at offset 0 (soft_update called via that cast) since the class carries no declared fields of its own.
 // working copy - scaffold materialised by --work
-// name      ?draw_leader@CouncWin@@QAEXH@Z
 // size      1705 bytes
-// spans     0x00425DB0-0x00426459
 // prototype void (__thiscall ?draw_leader@CouncWin@@QAEXH@Z)(CouncWin* this, int factionID)
 // callers   5   call targets   13
 // kind      game

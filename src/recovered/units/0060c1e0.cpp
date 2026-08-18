@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0060C1E0 FILE
-// name      ?UNK1@ListBox@@QAEXH@Z
+// ORIGINAL: 0x0060C1E0 ?UNK1@ListBox@@QAEXH@Z 0x0060C1E0-0x0060C33F FILE
 // size      351 bytes
-// spans     0x0060C1E0-0x0060C33F
 // prototype void (__thiscall ?UNK1@ListBox@@QAEXH@Z)(ListBox* this, int)
 // callers   0   call targets   2
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00406860 BYTE_EXACT FILE
-// name      ?hide@BaseButton@@QAEXXZ
+// ORIGINAL: 0x00406860 ?hide@BaseButton@@QAEXXZ 0x00406860-0x00406879 FILE BYTE_EXACT
 // size      25 bytes
-// spans     0x00406860-0x00406879
 // prototype void (__thiscall ?hide@BaseButton@@QAEXXZ)(BaseButton* this)
 // callers   0   call targets   0
 // kind      game

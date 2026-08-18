@@ -1,20 +1,7 @@
-// ORIGINAL: 0x00451C50 FILE
-// RULED-OUT: sim 0.94, 1704/1715 mnemonics (99.4%); first divergence is the
-//            missing `mov byte ptr[ebp-4],N` SEH local-unwind state byte the
-//            compiler writes between constructing locals and the first
-//            call - not reproduced since it falls out of the compiler's own
-//            bookkeeping for the `Sprite arr1[4]; Sprite arr2[4]; Buffer
-//            buf804;` RAII locals (matching the original's `??_L`/`??_M`
-//            array-constructor-iterator calls) rather than anything we
-//            write by hand. Every Texture::extract/Sprite::extract/
-//            change_color loop (including the two 4x4 grids with the
-//            `ebx==3&&esi==3` skip, the register-relative `esi±0x2c`
-//            sprite-table walks, and the get_pixel/palette-remap blocks)
-//            is transcribed from the disassembly, not approximated.
+// ORIGINAL: 0x00451C50 ?load_terrain@@YAXXZ 0x00451C50-0x0045370C;0x006550F9-0x0065513A FILE
+// RULED-OUT: sim 0.94, 1704/1715 mnemonics (99.4%); first divergence is the missing `mov byte ptr[ebp-4],N` SEH local-unwind state byte the compiler writes between constructing locals and the first call - not reproduced since it falls out of the compiler's own bookkeeping for the `Sprite arr1[4]; Sprite arr2[4]; Buffer buf804;` RAII locals (matching the original's `??_L`/`??_M` array-constructor-iterator calls) rather than anything we write by hand. Every Texture::extract/Sprite::extract/ change_color loop (including the two 4x4 grids with the `ebx==3&&esi==3` skip, the register-relative `esi±0x2c` sprite-table walks, and the get_pixel/palette-remap blocks) is transcribed from the disassembly, not approximated.
 // working copy - scaffold materialised by --work
-// name      ?load_terrain@@YAXXZ
 // size      6909 bytes
-// spans     0x00451C50-0x0045370C;0x006550F9-0x0065513A
 // prototype 
 // callers   1   call targets   13
 // kind      game

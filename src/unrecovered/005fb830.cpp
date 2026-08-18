@@ -1,14 +1,7 @@
-// ORIGINAL: 0x005FB830 FILE
-// RULED-OUT: dropping `return 0;` entirely (eax is never set on any path
-//            in the disassembly) - C4716 "must return a value" is a hard
-//            error here, not a warning, since the scaffold's own class
-//            declares `int menu_event(int)`. similarity 0.9905 with the
-//            explicit `return 0;`; the only divergence left is the
-//            resulting `xor eax,eax`. PROPOSAL: retype as void.
+// ORIGINAL: 0x005FB830 ?menu_event@Menu@@QAEHH@Z 0x005FB830-0x005FB8D8 FILE
+// RULED-OUT: dropping `return 0;` entirely (eax is never set on any path in the disassembly) - C4716 "must return a value" is a hard error here, not a warning, since the scaffold's own class declares `int menu_event(int)`. similarity 0.9905 with the explicit `return 0;`; the only divergence left is the resulting `xor eax,eax`. PROPOSAL: retype as void.
 // working copy - scaffold materialised by --work
-// name      ?menu_event@Menu@@QAEHH@Z
 // size      168 bytes
-// spans     0x005FB830-0x005FB8D8
 // prototype int (__thiscall ?menu_event@Menu@@QAEHH@Z)(Menu* this, int)
 // callers   1   call targets   2
 // kind      game

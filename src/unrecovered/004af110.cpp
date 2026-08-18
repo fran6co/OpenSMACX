@@ -1,8 +1,6 @@
-// ORIGINAL: 0x004AF110 FILE
+// ORIGINAL: 0x004AF110 ?maximize_effect@SocialWin@@QAEXH@Z 0x004AF110-0x004AF1D7 FILE
 // working copy - scaffold materialised by --work
-// name      ?maximize_effect@SocialWin@@QAEXH@Z
 // size      199 bytes
-// spans     0x004AF110-0x004AF1D7
 // prototype void (__thiscall ?maximize_effect@SocialWin@@QAEXH@Z)(SocialWin* this, int effectID)
 // callers   1   call targets   3
 // kind      game

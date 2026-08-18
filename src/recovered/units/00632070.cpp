@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00632070 BYTE_EXACT FILE
-// name      ?enable_join@Net@@QAEXXZ
+// ORIGINAL: 0x00632070 ?enable_join@Net@@QAEXXZ 0x00632070-0x006320DA FILE BYTE_EXACT
 // size      106 bytes
-// spans     0x00632070-0x006320DA
 // prototype void (__thiscall ?enable_join@Net@@QAEXXZ)(Net* this)
 // callers   1   call targets   2
 // kind      game

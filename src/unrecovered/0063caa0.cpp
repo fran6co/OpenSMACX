@@ -1,21 +1,7 @@
-// ORIGINAL: 0x0063CAA0 FILE
-// RULED-OUT: `this` is GraphicWin* (esi passed straight to
-//   ?fill@GraphicWin@@ with no offset, and buffer_ member at self+0x444
-//   matches every Buffer:: call site's `lea ecx,[esi+0x444]`), reading a
-//   RECT from self+0x374c and driving a nested box()-drawing loop, then
-//   (if Dialog::get_selected_id() is nonzero) reinterpreting that int
-//   return as a pointer into an unrelated list-cursor structure
-//   (+0x20/+0x34/+0x38/+0x3c/+0x40) to walk entries and write_l() their
-//   text - transcribed as raw offset arithmetic since that structure does
-//   not match the catalogued Dialog field layout at those offsets.
-//   Compiles and matches the first 6 instructions; diverges at #6
-//   (original hoists `ebx = esi+0x374c` once and reuses it for all three
-//   RECT reads for the whole function, rebuilt recomputes the offset at
-//   each use) - register allocation, not source form.
+// ORIGINAL: 0x0063CAA0 sub_63caa0 0x0063CAA0-0x0063CD4E FILE
+// RULED-OUT: `this` is GraphicWin* (esi passed straight to ?fill@GraphicWin@@ with no offset, and buffer_ member at self+0x444 matches every Buffer:: call site's `lea ecx,[esi+0x444]`), reading a RECT from self+0x374c and driving a nested box()-drawing loop, then (if Dialog::get_selected_id() is nonzero) reinterpreting that int return as a pointer into an unrelated list-cursor structure (+0x20/+0x34/+0x38/+0x3c/+0x40) to walk entries and write_l() their text - transcribed as raw offset arithmetic since that structure does not match the catalogued Dialog field layout at those offsets. Compiles and matches the first 6 instructions; diverges at #6 (original hoists `ebx = esi+0x374c` once and reuses it for all three RECT reads for the whole function, rebuilt recomputes the offset at each use) - register allocation, not source form.
 // working copy - scaffold materialised by --work
-// name      sub_63caa0
 // size      686 bytes
-// spans     0x0063CAA0-0x0063CD4E
 // prototype 
 // callers   1   call targets   8
 // kind      game

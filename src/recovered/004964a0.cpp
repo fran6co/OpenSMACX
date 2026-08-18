@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004964A0 BYTE_EXACT
-// name      ?close@QuayleWin@@QAEXXZ
+// ORIGINAL: 0x004964A0 ?close@QuayleWin@@QAEXXZ 0x004964A0-0x004964C1 BYTE_EXACT
 // size      33 bytes
-// spans     0x004964A0-0x004964C1
 // prototype void (__thiscall ?close@QuayleWin@@QAEXXZ)(QuayleWin* this)
 // callers   0   call targets   2
 // kind      game

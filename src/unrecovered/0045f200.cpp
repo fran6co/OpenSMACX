@@ -1,18 +1,11 @@
-// ORIGINAL: 0x0045F200 FILE
-// name      ??0Interlude@@QAE@XZ
+// ORIGINAL: 0x0045F200 ??0Interlude@@QAE@XZ 0x0045F200-0x0045F2DF;0x00655800-0x00655820 FILE
+// RULED-OUT: reproducing the `push -1/push handler/mov fs:[0]` SEH frame and the two unwind funclets (~GraphicWin, and a tail call into sub_406820 on `this+0xa24`) - explicit placement-new / raw pointer-cast statements in an ordinary function body do not make MSVC emit member-initializer-list unwind protection, so this is landed without it (same call as 0x004849D0).
 // size      255 bytes
-// spans     0x0045F200-0x0045F2DF;0x00655800-0x00655820
 // prototype void (__thiscall ??0Interlude@@QAE@XZ)(Interlude* this)
 // callers   1   call targets   2
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x005D4CF0 0x005D7210
-// RULED-OUT: reproducing the `push -1/push handler/mov fs:[0]` SEH frame and
-//            the two unwind funclets (~GraphicWin, and a tail call into
-//            sub_406820 on `this+0xa24`) - explicit placement-new / raw
-//            pointer-cast statements in an ordinary function body do not
-//            make MSVC emit member-initializer-list unwind protection, so
-//            this is landed without it (same call as 0x004849D0).
 
 inline void *__cdecl operator new(unsigned int, void *p) { return p; }
 

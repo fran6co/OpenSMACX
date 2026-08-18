@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00614E30 BYTE_EXACT FILE
-// name      ?close_class@FileWin@@QAAXXZ
+// ORIGINAL: 0x00614E30 ?close_class@FileWin@@QAAXXZ 0x00614E30-0x00614E4D FILE BYTE_EXACT
 // size      29 bytes
-// spans     0x00614E30-0x00614E4D
 // prototype 
 // callers   1   call targets   1
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064C0F6 EXCLUDED S1
-// name      __handle_qnan1
+// ORIGINAL: 0x0064C0F6 __handle_qnan1 0x0064C0F6-0x0064C14A EXCLUDED S1
 // size      84 bytes
-// spans     0x0064C0F6-0x0064C14A
 // prototype 
 // callers   1   call targets   3
 // kind      library

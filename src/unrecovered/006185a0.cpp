@@ -1,21 +1,7 @@
-// ORIGINAL: 0x006185A0 FILE
-// RULED-OUT: original has a real SEH frame (`mov eax,fs:[0]` prologue) and
-//            8+ local C++ objects (BasePop/Spot/Dialogs/Dialog/FlatButton
-//            x2/Sprite, plus 3 unnamed thiscall types) whose cleanup is
-//            replayed by a partial-unwind table on early-failure paths but
-//            by real dtors on the two success-ish paths. Reproducing that
-//            exactly needs the real class layouts this opaque scaffold
-//            doesn't have, so this body calls each constructor/close/dtor
-//            directly by address (via original_method) on dedicated raw
-//            buffers, matching Ghidra's call sequence per branch, rather
-//            than attempting RAII (which would double-destruct on the
-//            manual-cleanup paths). Reaches MISMATCH #0 - no SEH frame is
-//            emitted since no local here is a real destructor-bearing
-//            type; not chased further given the missing class layouts.
+// ORIGINAL: 0x006185A0 ?init_class@Caviar@@QAAHXZ 0x006185A0-0x00618D16;0x00663150-0x006632F1 FILE
+// RULED-OUT: original has a real SEH frame (`mov eax,fs:[0]` prologue) and 8+ local C++ objects (BasePop/Spot/Dialogs/Dialog/FlatButton x2/Sprite, plus 3 unnamed thiscall types) whose cleanup is replayed by a partial-unwind table on early-failure paths but by real dtors on the two success-ish paths. Reproducing that exactly needs the real class layouts this opaque scaffold doesn't have, so this body calls each constructor/close/dtor directly by address (via original_method) on dedicated raw buffers, matching Ghidra's call sequence per branch, rather than attempting RAII (which would double-destruct on the manual-cleanup paths). Reaches MISMATCH #0 - no SEH frame is emitted since no local here is a real destructor-bearing type; not chased further given the missing class layouts.
 // working copy - scaffold materialised by --work
-// name      ?init_class@Caviar@@QAAHXZ
 // size      2327 bytes
-// spans     0x006185A0-0x00618D16;0x00663150-0x006632F1
 // prototype 
 // callers   1   call targets   24
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064B227 EXCLUDED S1
-// name      _get_int_arg
+// ORIGINAL: 0x0064B227 _get_int_arg 0x0064B227-0x0064B234 EXCLUDED S1
 // size      13 bytes
-// spans     0x0064B227-0x0064B234
 // prototype 
 // callers   1   call targets   0
 // kind      library

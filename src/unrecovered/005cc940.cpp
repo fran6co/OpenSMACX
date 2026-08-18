@@ -1,4 +1,4 @@
-// ORIGINAL: 0x005CC940 FILE
+// ORIGINAL: 0x005CC940 sub_5cc940 0x005CC940-0x005CD28C FILE
 // UNRECOVERABLE (partial): a DirectDraw surface-format-change/blit handler
 //   (COM vtable dispatch through IDirectDrawSurface-shaped interfaces,
 //   confirmed by the 0x887601c2/DDERR_SURFACELOST-style comparisons and the
@@ -20,9 +20,7 @@
 //   as a placeholder (RULED-OUT) rather than guess the per-run-type byte
 //   layout without more time.
 // working copy - scaffold materialised by --work
-// name      sub_5cc940
 // size      2380 bytes
-// spans     0x005CC940-0x005CD28C
 // prototype 
 // callers   2   call targets   17
 // kind      game

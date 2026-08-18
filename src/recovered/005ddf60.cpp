@@ -9,10 +9,8 @@
 // is the ability to CHECK it from a scaffold, so the claim goes with it -
 // state is measured, not remembered. It comes back the day this body is
 // promoted into the file that owns its class, which is where it belongs.
-// ORIGINAL: 0x005DDF60
-// name      ?wrap_flying@Buffer@@QAEHPADHHH@Z
+// ORIGINAL: 0x005DDF60 ?wrap_flying@Buffer@@QAEHPADHHH@Z 0x005DDF60-0x005DDFA6
 // size      70 bytes
-// spans     0x005DDF60-0x005DDFA6
 // prototype int (__thiscall ?wrap_flying@Buffer@@QAEHPADHHH@Z)(Buffer* this, int8*, int, int, int)
 // callers   3   call targets   1
 // kind      game

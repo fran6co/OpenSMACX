@@ -1,13 +1,7 @@
-// ORIGINAL: 0x005E2B00 FILE
-// RULED-OUT: plain nested for-loop instead of the Duff's-device-style
-//            4x-unrolled byte-compare-copy the original lowers to;
-//            edi/esi roles are swapped from the naive reading - `a1`
-//            (the argument) is the one WRITTEN and mask-tested, `this`
-//            is the one READ; diverges at instr #0 (prologue shape)
+// ORIGINAL: 0x005E2B00 ?copy_mask@Buffer@@QAEHPAVBuffer@@HHHHHHH@Z 0x005E2B00-0x005E2DD3 FILE
+// RULED-OUT: plain nested for-loop instead of the Duff's-device-style 4x-unrolled byte-compare-copy the original lowers to; edi/esi roles are swapped from the naive reading - `a1` (the argument) is the one WRITTEN and mask-tested, `this` is the one READ; diverges at instr #0 (prologue shape)
 // working copy - scaffold materialised by --work
-// name      ?copy_mask@Buffer@@QAEHPAVBuffer@@HHHHHHH@Z
 // size      723 bytes
-// spans     0x005E2B00-0x005E2DD3
 // prototype int (__thiscall ?copy_mask@Buffer@@QAEHPAVBuffer@@HHHHHHH@Z)(Buffer* this, Buffer*, int, int, int, int, int, int, int)
 // callers   2   call targets   2
 // kind      game

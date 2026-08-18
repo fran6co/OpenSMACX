@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004ACB30 FILE
-// name      ?report_security@@YAXXZ
+// ORIGINAL: 0x004ACB30 ?report_security@@YAXXZ 0x004ACB30-0x004ACB7C FILE
 // size      76 bytes
-// spans     0x004ACB30-0x004ACB7C
 // prototype 
 // callers   2   call targets   1
 // kind      game

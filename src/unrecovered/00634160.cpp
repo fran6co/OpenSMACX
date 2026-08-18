@@ -1,11 +1,9 @@
-// ORIGINAL: 0x00634160 FILE
+// ORIGINAL: 0x00634160 sub_634160 0x00634160-0x006341F9 FILE
 // RULED-OUT: MISMATCH #0 push/mov, prologue differs
 // PROPOSAL: extern "C" int __stdcall sub_634160(int,int,int,int) ->
 //           Sub634160Recv::sub_634160, __thiscall: ecx used as linked-list owner + CRITICAL_SECTION at this+0xC
 // working copy - scaffold materialised by --work
-// name      sub_634160
 // size      153 bytes
-// spans     0x00634160-0x006341F9
 // prototype 
 // callers   0   call targets   1
 // kind      game

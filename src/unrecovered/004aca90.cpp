@@ -1,10 +1,7 @@
-// ORIGINAL: 0x004ACA90 FILE
-// RULED-OUT: explicit __thiscall function-pointer typedef for the vtable call
-//            (C4234); used a member-pointer/union cast instead
+// ORIGINAL: 0x004ACA90 ?report_projects@@YAXXZ 0x004ACA90-0x004ACADC FILE
+// RULED-OUT: explicit __thiscall function-pointer typedef for the vtable call (C4234); used a member-pointer/union cast instead
 // working copy - scaffold materialised by --work
-// name      ?report_projects@@YAXXZ
 // size      76 bytes
-// spans     0x004ACA90-0x004ACADC
 // prototype 
 // callers   2   call targets   1
 // kind      game

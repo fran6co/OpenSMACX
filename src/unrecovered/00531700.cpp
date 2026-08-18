@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00531700 BYTE_EXACT FILE
+// ORIGINAL: 0x00531700 ?maybe_lock@NetDaemon@@QAEHPAHHHHHH@Z 0x00531700-0x00531780 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?maybe_lock@NetDaemon@@QAEHPAHHHHHH@Z
 // size      128 bytes
-// spans     0x00531700-0x00531780
 // prototype int (__thiscall ?maybe_lock@NetDaemon@@QAEHPAHHHHHH@Z)(NetDaemon* this, int*, int, int, int, int, int)
 // callers   1   call targets   2
 // kind      game

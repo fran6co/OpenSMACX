@@ -1,25 +1,11 @@
-// ORIGINAL: 0x0060EC10 BYTE_EXACT FILE
-// name      ?get_state_id@CheckBox@@QAEHH@Z
+// ORIGINAL: 0x0060EC10 ?get_state_id@CheckBox@@QAEHH@Z 0x0060EC10-0x0060EC79 FILE BYTE_EXACT
+// LEVER: a `for (idx = 0; idx < count; idx = idx + 1) { ...; if (match) break; ... }` matches the original's single `cmp;jl` loop back-edge exactly; the equivalent `if (0 < count) { do { ...; if (match) break; ... } while (idx < count); }` phrasing compiled the SAME loop with an extra `cmp;jge` ahead of the back-edge test every time it was tried (11 candidates, always MISMATCH at the loop tail) even though it is the textbook lowering of a for-loop and should be identical at -O2. The list-search structure: base = *(*this+8); the node list lives at this+base+0xbc, with head/current at +8, count at +0x10, a running index at +0x14, and each node's key/next at +4/+0xc. The tail re-derives `*(*this+8)` fresh rather than reusing the cached `base` local - reusing it compiles to extra reload instructions the original does not have.
 // size      105 bytes
-// spans     0x0060EC10-0x0060EC79
 // prototype int (__thiscall ?get_state_id@CheckBox@@QAEHH@Z)(CheckBox* this, int)
 // callers   6   call targets   0
 // kind      
 // flags     
 // calls     (none)
-// LEVER: a `for (idx = 0; idx < count; idx = idx + 1) { ...; if (match) break; ... }`
-//        matches the original's single `cmp;jl` loop back-edge exactly; the
-//        equivalent `if (0 < count) { do { ...; if (match) break; ... }
-//        while (idx < count); }` phrasing compiled the SAME loop with an
-//        extra `cmp;jge` ahead of the back-edge test every time it was tried
-//        (11 candidates, always MISMATCH at the loop tail) even though it is
-//        the textbook lowering of a for-loop and should be identical at -O2.
-//        The list-search structure: base = *(*this+8); the node list lives
-//        at this+base+0xbc, with head/current at +8, count at +0x10, a
-//        running index at +0x14, and each node's key/next at +4/+0xc. The
-//        tail re-derives `*(*this+8)` fresh rather than reusing the cached
-//        `base` local - reusing it compiles to extra reload instructions
-//        the original does not have.
 // working copy - scaffold materialised by --work
 
 // GENERATED SKELETON - tools/emit_translation_unit.py

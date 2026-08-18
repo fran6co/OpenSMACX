@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00453A20 FILE
-// name      ?load_bases@@YAXXZ
+// ORIGINAL: 0x00453A20 ?load_bases@@YAXXZ 0x00453A20-0x00453A6A FILE
 // size      74 bytes
-// spans     0x00453A20-0x00453A6A
 // prototype 
 // callers   0   call targets   0
 // kind      game

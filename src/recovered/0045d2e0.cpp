@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0045D2E0 BYTE_EXACT
-// name      ?delete_iface_mode@SubInterface@@QAEXXZ
+// ORIGINAL: 0x0045D2E0 ?delete_iface_mode@SubInterface@@QAEXXZ 0x0045D2E0-0x0045D303 BYTE_EXACT
 // size      35 bytes
-// spans     0x0045D2E0-0x0045D303
 // prototype void (__thiscall ?delete_iface_mode@SubInterface@@QAEXXZ)(SubInterface* this)
 // callers   1   call targets   0
 // kind      game

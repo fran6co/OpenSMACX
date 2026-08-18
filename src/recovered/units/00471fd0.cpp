@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00471FD0 BYTE_EXACT FILE
-// name      ?listbox_write@MessageWin@@QAAHPAUGraphicWin@@HHPAURECT@@PAD@Z
+// ORIGINAL: 0x00471FD0 ?listbox_write@MessageWin@@QAAHPAUGraphicWin@@HHPAURECT@@PAD@Z 0x00471FD0-0x0047201F FILE BYTE_EXACT
 // size      79 bytes
-// spans     0x00471FD0-0x0047201F
 // prototype 
 // callers   0   call targets   1
 // kind      game

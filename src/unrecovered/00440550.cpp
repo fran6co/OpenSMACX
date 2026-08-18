@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00440550 FILE
+// ORIGINAL: 0x00440550 ?on_iface_button_clicked@DiploPop@@QAEXH@Z 0x00440550-0x00440604 FILE
 // working copy - scaffold materialised by --work
-// name      ?on_iface_button_clicked@DiploPop@@QAEXH@Z
 // size      180 bytes
-// spans     0x00440550-0x00440604
 // prototype void (__thiscall ?on_iface_button_clicked@DiploPop@@QAEXH@Z)(DiploPop* this, int)
 // callers   0   call targets   6
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00647C37 EXCLUDED S1
-// name      __lock_file
+// ORIGINAL: 0x00647C37 __lock_file 0x00647C37-0x00647C66 EXCLUDED S1
 // size      47 bytes
-// spans     0x00647C37-0x00647C66
 // prototype 
 // callers   10   call targets   1
 // kind      library

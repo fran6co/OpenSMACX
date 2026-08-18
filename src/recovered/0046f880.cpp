@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0046F880 BYTE_EXACT
-// name      ?on_sys_close@MapWin@@QAEXXZ
+// ORIGINAL: 0x0046F880 ?on_sys_close@MapWin@@QAEXXZ 0x0046F880-0x0046F8C0 BYTE_EXACT
 // size      64 bytes
-// spans     0x0046F880-0x0046F8C0
 // prototype void (__thiscall ?on_sys_close@MapWin@@QAEXXZ)(MapWin* this)
 // callers   0   call targets   2
 // kind      game

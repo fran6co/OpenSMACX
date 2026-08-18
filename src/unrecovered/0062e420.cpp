@@ -1,24 +1,12 @@
-// ORIGINAL: 0x0062E420
-// name      ?on_player_added@Net@@QAEHPADI@Z
+// ORIGINAL: 0x0062E420 ?on_player_added@Net@@QAEHPADI@Z 0x0062E420-0x0062E536
+// RULED-OUT: only one source-form tried. The mangled `a2` is `unsigned int`, but the tail dereferences it as a struct pointer (offsets +8/+0xc/+0x10/+0x14) - kept the catalogued type and did the pointer arithmetic through casts rather than widening the signature, since this address has a real mangled name the linker's import table pins. The indirect call at 0x0062E4C4 is __stdcall with the object as an EXPLICIT first stack arg (not `this` in ecx - vtbl[13] takes 6 params), so no VCall shim is needed, just a plain `__stdcall` function-pointer typedef. Landed at mnemonic_similarity 0.789 (252 vs 278 bytes).
 // size      278 bytes
-// spans     0x0062E420-0x0062E536
 // prototype int (__thiscall ?on_player_added@Net@@QAEHPADI@Z)(Net* this, int8*, unsigned int)
 // callers   3   call targets   3
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D49D0 0x00644F3A 0x006465F0
 // indirect  0x0062E4C4
-// RULED-OUT: only one source-form tried. The mangled `a2` is `unsigned
-//            int`, but the tail dereferences it as a struct pointer
-//            (offsets +8/+0xc/+0x10/+0x14) - kept the catalogued type and
-//            did the pointer arithmetic through casts rather than
-//            widening the signature, since this address has a real
-//            mangled name the linker's import table pins. The indirect
-//            call at 0x0062E4C4 is __stdcall with the object as an
-//            EXPLICIT first stack arg (not `this` in ecx - vtbl[13] takes
-//            6 params), so no VCall shim is needed, just a plain
-//            `__stdcall` function-pointer typedef. Landed at
-//            mnemonic_similarity 0.789 (252 vs 278 bytes).
 
 typedef int (__stdcall *Slot13Fn)(void *, void *, int, void *, int, int);
 

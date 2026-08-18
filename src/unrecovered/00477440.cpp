@@ -1,19 +1,11 @@
-// ORIGINAL: 0x00477440 FILE
-// name      ?mon_naval_unit_built@@YAXH@Z
+// ORIGINAL: 0x00477440 ?mon_naval_unit_built@@YAXH@Z 0x00477440-0x0047753E FILE
+// RULED-OUT: MonRecord struct + reinterpret_cast<MonRecord*>(base)+a1 array indexing reproduces every instruction from the flag/active check onward byte-for-byte; only the prologue diverges at MISMATCH #6 (original reserves the `year` local with `push ecx` ahead of the ebx/esi callee-save pushes - same wall as 0x00477840's sibling, and every C form tried here has the compiler push ebx/esi first instead).
 // size      254 bytes
-// spans     0x00477440-0x0047753E
 // prototype 
 // callers   1   call targets   2
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00476A50 0x005C89A0
-// RULED-OUT: MonRecord struct + reinterpret_cast<MonRecord*>(base)+a1 array
-//            indexing reproduces every instruction from the flag/active
-//            check onward byte-for-byte; only the prologue diverges at
-//            MISMATCH #6 (original reserves the `year` local with `push
-//            ecx` ahead of the ebx/esi callee-save pushes - same wall as
-//            0x00477840's sibling, and every C form tried here has the
-//            compiler push ebx/esi first instead).
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?mon_naval_unit_built@@YAXH@Z  at 0x00477440  (254 bytes)
 //

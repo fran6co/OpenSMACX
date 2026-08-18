@@ -1,12 +1,7 @@
-// ORIGINAL: 0x005EAE4F FILE
-// RULED-OUT: register pressure gap - original keeps this/a1/zero-const/size
-//            live across 3 calls (free x2, mem_get, memcpy) in 4
-//            callee-saved regs; straightforward member-access C body uses
-//            fewer, so the prologue push count diverges very early.
+// ORIGINAL: 0x005EAE4F ?copy@Sprite@@QAEHPAUSprite@@@Z 0x005EAE4F-0x005EAF34 FILE
+// RULED-OUT: register pressure gap - original keeps this/a1/zero-const/size live across 3 calls (free x2, mem_get, memcpy) in 4 callee-saved regs; straightforward member-access C body uses fewer, so the prologue push count diverges very early.
 // working copy - scaffold materialised by --work
-// name      ?copy@Sprite@@QAEHPAUSprite@@@Z
 // size      229 bytes
-// spans     0x005EAE4F-0x005EAF34
 // prototype int (__thiscall ?copy@Sprite@@QAEHPAUSprite@@@Z)(Sprite* this, Sprite*)
 // callers   2   call targets   3
 // kind      game

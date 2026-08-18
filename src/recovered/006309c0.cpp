@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006309C0 BYTE_EXACT
-// name      sub_6309c0
+// ORIGINAL: 0x006309C0 sub_6309c0 0x006309C0-0x006309FD BYTE_EXACT
 // size      61 bytes
-// spans     0x006309C0-0x006309FD
 // prototype 
 // callers   0   call targets   1
 // kind      game

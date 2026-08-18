@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0051E390 FILE
-// name      ?clear_tamper@@YAXXZ
+// ORIGINAL: 0x0051E390 ?clear_tamper@@YAXXZ 0x0051E390-0x0051E3BC FILE
 // size      44 bytes
-// spans     0x0051E390-0x0051E3BC
 // prototype 
 // callers   2   call targets   0
 // kind      game

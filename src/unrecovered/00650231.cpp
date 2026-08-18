@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00650231 EXCLUDED S1
-// name      __hypot
+// ORIGINAL: 0x00650231 __hypot 0x00650231-0x0065024E EXCLUDED S1
 // size      29 bytes
-// spans     0x00650231-0x0065024E
 // prototype 
 // callers   1   call targets   1
 // kind      library

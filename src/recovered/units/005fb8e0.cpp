@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005FB8E0 FILE
-// name      ?UNK11@Menu@@QAEHHH@Z
+// ORIGINAL: 0x005FB8E0 ?UNK11@Menu@@QAEHHH@Z 0x005FB8E0-0x005FB930 FILE
 // size      80 bytes
-// spans     0x005FB8E0-0x005FB930
 // prototype int (__thiscall ?UNK11@Menu@@QAEHHH@Z)(Menu* this, int, int)
 // callers   0   call targets   1
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0062DF20 BYTE_EXACT
-// name      ?start_voice@Net@@QAEHK@Z
+// ORIGINAL: 0x0062DF20 ?start_voice@Net@@QAEHK@Z 0x0062DF20-0x0062DF6E BYTE_EXACT
 // size      78 bytes
-// spans     0x0062DF20-0x0062DF6E
 // prototype int (__thiscall ?start_voice@Net@@QAEHK@Z)(Net* this, unsigned int)
 // callers   1   call targets   0
 // kind      game

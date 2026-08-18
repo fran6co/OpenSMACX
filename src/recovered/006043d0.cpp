@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006043D0 BYTE_EXACT
-// name      ?set_def_file@BasePop@@QAAHPAD@Z
+// ORIGINAL: 0x006043D0 ?set_def_file@BasePop@@QAAHPAD@Z 0x006043D0-0x00604407 BYTE_EXACT
 // size      55 bytes
-// spans     0x006043D0-0x00604407
 // prototype 
 // callers   1   call targets   2
 // kind      game

@@ -1,13 +1,7 @@
-// ORIGINAL: 0x005D35B0 FILE
-// RULED-OUT: __fastcall(param_1,param_2) + 3 stack args (IDA's 3-arg __stdcall
-//            guess missed the two register params); the imul/shl/shr/adc
-//            fixed-point-multiply idiom is written as `__int64` products
-//            (VC6 keyword, not the forbidden `long long`) rather than
-//            replicating the exact carry sequence. MISMATCH #7, not chased.
+// ORIGINAL: 0x005D35B0 sub_5d35b0 0x005D35B0-0x005D3980 FILE
+// RULED-OUT: __fastcall(param_1,param_2) + 3 stack args (IDA's 3-arg __stdcall guess missed the two register params); the imul/shl/shr/adc fixed-point-multiply idiom is written as `__int64` products (VC6 keyword, not the forbidden `long long`) rather than replicating the exact carry sequence. MISMATCH #7, not chased.
 // working copy - scaffold materialised by --work
-// name      sub_5d35b0
 // size      976 bytes
-// spans     0x005D35B0-0x005D3980
 // prototype 
 // callers   1   call targets   3
 // kind      game

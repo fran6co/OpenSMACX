@@ -1,15 +1,7 @@
-// ORIGINAL: 0x00549930 FILE
-// RULED-OUT: full-function transcription (~370 instructions, sim 0.69 vs
-//            original at /O2 /Oy-); diverges at instr #4 in the prologue
-//            frame shape. Approximated: log_say's 2nd-4th args where the
-//            decompiler elided them (derived from the paired message_data
-//            call's matching args, confirmed against raw disasm on 2/2
-//            spot checks); the fa98 mood-recompute arithmetic order taken
-//            from Ghidra rather than re-derived by hand.
+// ORIGINAL: 0x00549930 ?threaten@@YAXHH@Z 0x00549930-0x0054ACB9 FILE
+// RULED-OUT: full-function transcription (~370 instructions, sim 0.69 vs original at /O2 /Oy-); diverges at instr #4 in the prologue frame shape. Approximated: log_say's 2nd-4th args where the decompiler elided them (derived from the paired message_data call's matching args, confirmed against raw disasm on 2/2 spot checks); the fa98 mood-recompute arithmetic order taken from Ghidra rather than re-derived by hand.
 // working copy - scaffold materialised by --work
-// name      ?threaten@@YAXHH@Z
 // size      5001 bytes
-// spans     0x00549930-0x0054ACB9
 // prototype 
 // callers   1   call targets   27
 // kind      game

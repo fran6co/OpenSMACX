@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00618E90 BYTE_EXACT
-// name      ?vx_tell@Caviar@@QAAXH@Z
+// ORIGINAL: 0x00618E90 ?vx_tell@Caviar@@QAAXH@Z 0x00618E90-0x00618E9E BYTE_EXACT
 // size      14 bytes
-// spans     0x00618E90-0x00618E9E
 // prototype 
 // callers   0   call targets   1
 // kind      game

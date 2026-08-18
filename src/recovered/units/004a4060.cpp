@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004A4060 FILE
-// name      ?bl_anim@ReportIf@@QAEXXZ
+// ORIGINAL: 0x004A4060 ?bl_anim@ReportIf@@QAEXXZ 0x004A4060-0x004A4191 FILE
 // size      305 bytes
-// spans     0x004A4060-0x004A4191
 // prototype void (__thiscall ?bl_anim@ReportIf@@QAEXXZ)(ReportIf* this)
 // callers   2   call targets   3
 // kind      game

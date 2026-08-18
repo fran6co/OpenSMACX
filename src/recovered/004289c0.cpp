@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004289C0 BYTE_EXACT
-// name      ?close@Credits@@QAEXXZ
+// ORIGINAL: 0x004289C0 ?close@Credits@@QAEXXZ 0x004289C0-0x004289E9 BYTE_EXACT
 // size      41 bytes
-// spans     0x004289C0-0x004289E9
 // prototype void (__thiscall ?close@Credits@@QAEXXZ)(Credits* this)
 // callers   0   call targets   2
 // kind      game

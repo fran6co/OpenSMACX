@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00650202 EXCLUDED S2a
-// name      DirectDrawEnumerateA
+// ORIGINAL: 0x00650202 DirectDrawEnumerateA 0x00650202-0x00650208 EXCLUDED S2a
 // size      6 bytes
-// spans     0x00650202-0x00650208
 // prototype HRESULT (__stdcall DirectDrawEnumerateA)(LPDDENUMCALLBACKA lpCallback, LPVOID lpContext)
 // callers   1   call targets   0
 // kind      thunk

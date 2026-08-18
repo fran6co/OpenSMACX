@@ -1,23 +1,14 @@
-// ORIGINAL: 0x005A9760 FILE
+// ORIGINAL: 0x005A9760 ?load_daemon@@YAHPADH@Z 0x005A9760-0x005A9B19 FILE
+// RULED-OUT: no Ghidra decompilation was provided for this address; transcribed straight from the disassembly. The two `// indirect` sites are vtable slots 1 (takes an int) and 2 (nullary) on the static object at g_007b0cb8, dispatched through VCall as the brief's shim pattern.
+// RULED-OUT: nothing further tried; MISMATCH #0 (push vs sub - a prologue/ stack-layout difference from the local array sizing), similarity 0.73 over 953 bytes. The "copy loop" at 0x5A9A02 is a broadcast of the value at a fixed index into all 0x20 slots of two parallel int arrays (g_009392c0, g_00939340), not a running index as first guessed.
 // working copy - scaffold materialised by --work
-// name      ?load_daemon@@YAHPADH@Z
 // size      953 bytes
-// spans     0x005A9760-0x005A9B19
 // prototype int (__cdecl ?load_daemon@@YAHPADH@Z)(int8* path, int* toggle)
 // callers   3   call targets   17
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x00470F70 0x0050BA30 0x0051E110 0x00532A90 0x00532B70 0x00538FB0 0x0057D1F0 0x0059A220 0x005A6AC0 0x005B9F20 0x005C5AE0 0x00634BB0 0x00645598 0x00645660 0x00646178 0x006468D0 0x00646950
 // indirect  0x005A9A8B 0x005A9A9B
-// RULED-OUT: no Ghidra decompilation was provided for this address; transcribed
-//   straight from the disassembly. The two `// indirect` sites are vtable
-//   slots 1 (takes an int) and 2 (nullary) on the static object at
-//   g_007b0cb8, dispatched through VCall as the brief's shim pattern.
-// RULED-OUT: nothing further tried; MISMATCH #0 (push vs sub - a prologue/
-//   stack-layout difference from the local array sizing), similarity 0.73
-//   over 953 bytes. The "copy loop" at 0x5A9A02 is a broadcast of the value
-//   at a fixed index into all 0x20 slots of two parallel int arrays
-//   (g_009392c0, g_00939340), not a running index as first guessed.
 
 
 // GENERATED SKELETON - tools/emit_translation_unit.py

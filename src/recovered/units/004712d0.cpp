@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004712D0 BYTE_EXACT FILE
-// name      mapwin_unk1
+// ORIGINAL: 0x004712D0 mapwin_unk1 0x004712D0-0x00471316 FILE BYTE_EXACT
 // size      70 bytes
-// spans     0x004712D0-0x00471316
 // prototype 
 // callers   1   call targets   1
 // kind      game

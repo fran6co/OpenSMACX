@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00402A60 FILE
-// name      ServiceStruct::dt
+// ORIGINAL: 0x00402A60 ServiceStruct::dt 0x00402A60-0x00402AC6 FILE
 // size      102 bytes
-// spans     0x00402A60-0x00402AC6
 // prototype 
 // callers   0   call targets   2
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0053A230 FILE
-// name      ?mention_prototypes@@YAXHH@Z
+// ORIGINAL: 0x0053A230 ?mention_prototypes@@YAXHH@Z 0x0053A230-0x0053A496 FILE
 // size      614 bytes
-// spans     0x0053A230-0x0053A496
 // prototype 
 // callers   2   call targets   10
 // kind      game

@@ -1,20 +1,7 @@
-// ORIGINAL: 0x004F81A0 FILE
-// RULED-OUT: mismatch #3 (call vs test) - this is the largest function
-//            in the batch (32280 bytes, a 72-entry switch reached via
-//            the jump table at 0x4FA56E documented in the brief, one
-//            arm per buildable unit/facility/project id) preceded by
-//            ~0x360 bytes of reactor/rules-bit eligibility computation
-//            and several 0x200/0x36-int array-zeroing blocks. Only the
-//            entry parameter normalization (a1<0 fold) plus
-//            set_base()/base_compute(1) are transcribed; the switch and
-//            its scoring tables are not modelled - the body returns the
-//            same -1/"no candidate" sentinel the original's accumulator
-//            starts in, rather than fabricate any of the 72 per-item
-//            eligibility rules.
+// ORIGINAL: 0x004F81A0 ?base_build@@YAHHPAH00@Z 0x004F81A0-0x004FFFB8 FILE
+// RULED-OUT: mismatch #3 (call vs test) - this is the largest function in the batch (32280 bytes, a 72-entry switch reached via the jump table at 0x4FA56E documented in the brief, one arm per buildable unit/facility/project id) preceded by ~0x360 bytes of reactor/rules-bit eligibility computation and several 0x200/0x36-int array-zeroing blocks. Only the entry parameter normalization (a1<0 fold) plus set_base()/base_compute(1) are transcribed; the switch and its scoring tables are not modelled - the body returns the same -1/"no candidate" sentinel the original's accumulator starts in, rather than fabricate any of the 72 per-item eligibility rules.
 // working copy - scaffold materialised by --work
-// name      ?base_build@@YAHHPAH00@Z
 // size      32280 bytes
-// spans     0x004F81A0-0x004FFFB8
 // prototype int (__cdecl ?base_build@@YAHHPAH00@Z)(int baseID, int*, int*, int*)
 // callers   1   call targets   59
 // kind      game

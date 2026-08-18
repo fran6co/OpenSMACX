@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00624CD0 FILE
-// name      sub_624cd0
+// ORIGINAL: 0x00624CD0 sub_624cd0 0x00624CD0-0x00624CFD FILE
 // size      45 bytes
-// spans     0x00624CD0-0x00624CFD
 // prototype 
 // callers   0   call targets   1
 // kind      game

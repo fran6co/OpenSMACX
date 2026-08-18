@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005EDFF0 BYTE_EXACT
-// name      ?UNK7@Win@@QAEXHHHH@Z
+// ORIGINAL: 0x005EDFF0 ?UNK7@Win@@QAEXHHHH@Z 0x005EDFF0-0x005EE01D BYTE_EXACT
 // size      45 bytes
-// spans     0x005EDFF0-0x005EE01D
 // prototype void (__thiscall ?UNK7@Win@@QAEXHHHH@Z)(Win* this, int xLeft, int yTop, int, int)
 // callers   0   call targets   0
 // kind      game

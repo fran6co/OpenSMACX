@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064A80C EXCLUDED S1
-// name      __convertTOStoQNaN
+// ORIGINAL: 0x0064A80C __convertTOStoQNaN 0x0064A80C-0x0064A825 EXCLUDED S1
 // size      25 bytes
-// spans     0x0064A80C-0x0064A825
 // prototype 
 // callers   5   call targets   0
 // kind      library

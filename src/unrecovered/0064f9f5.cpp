@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064F9F5 EXCLUDED S1
-// name      _$I10_OUTPUT
+// ORIGINAL: 0x0064F9F5 _$I10_OUTPUT 0x0064F9F5-0x0064FC88 EXCLUDED S1
 // size      659 bytes
-// spans     0x0064F9F5-0x0064FC88
 // prototype 
 // callers   1   call targets   6
 // kind      library

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005F0610 BYTE_EXACT
-// name      ?set_bottom_border_thickness@Win@@QAEXH@Z
+// ORIGINAL: 0x005F0610 ?set_bottom_border_thickness@Win@@QAEXH@Z 0x005F0610-0x005F064D BYTE_EXACT
 // size      61 bytes
-// spans     0x005F0610-0x005F064D
 // prototype void (__thiscall ?set_bottom_border_thickness@Win@@QAEXH@Z)(Win* this, int thickness)
 // callers   1   call targets   0
 // kind      game

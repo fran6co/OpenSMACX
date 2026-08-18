@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064DB00 EXCLUDED S1
-// name      _strpbrk
+// ORIGINAL: 0x0064DB00 _strpbrk 0x0064DB00-0x0064DB3A EXCLUDED S1
 // size      58 bytes
-// spans     0x0064DB00-0x0064DB3A
 // prototype 
 // callers   0   call targets   0
 // kind      library

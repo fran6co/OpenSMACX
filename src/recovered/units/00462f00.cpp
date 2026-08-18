@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00462F00 FILE
-// name      ?tile_to_pixel@MapWin@@QAEXHHPAHPAH@Z
+// ORIGINAL: 0x00462F00 ?tile_to_pixel@MapWin@@QAEXHHPAHPAH@Z 0x00462F00-0x0046303C FILE
 // size      316 bytes
-// spans     0x00462F00-0x0046303C
 // prototype void (__thiscall ?tile_to_pixel@MapWin@@QAEXHHPAHPAH@Z)(MapWin* this, int xCoord, int yCoord, int*, int*)
 // callers   18   call targets   1
 // kind      game

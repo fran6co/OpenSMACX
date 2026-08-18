@@ -1,20 +1,7 @@
-// ORIGINAL: 0x0041A7E0 FILE
-// RULED-OUT: MISMATCH, closest at 198/199 bytes (mnemonic_similarity 0.92).
-//            `#pragma function(abs)` stops VC6 inlining the four `abs()`
-//            calls as the branchless cdq/xor/sub idiom (matches the memcpy
-//            lever for the same reason). `is_visible()` is a direct
-//            (non-virtual) call reached via `reinterpret_cast<Win*>(this)`
-//            since the scaffold gives BaseWin no base class. The
-//            index*0x134 table lookup (`idx*77` via the same
-//            shift/lea/lea/lea chain as the original, then `<<2` to a
-//            byte offset) still gets the final `<<2` folded into a SIB
-//            `[eax*4+CONST]` scale on the two `movsx` loads instead of a
-//            materialised `shl eax,2` - same fold seen at 0x00514F50,
-//            not chased further.
+// ORIGINAL: 0x0041A7E0 ?check_loc@BaseWin@@QAEXHHH@Z 0x0041A7E0-0x0041A8A7 FILE
+// RULED-OUT: MISMATCH, closest at 198/199 bytes (mnemonic_similarity 0.92). `#pragma function(abs)` stops VC6 inlining the four `abs()` calls as the branchless cdq/xor/sub idiom (matches the memcpy lever for the same reason). `is_visible()` is a direct (non-virtual) call reached via `reinterpret_cast<Win*>(this)` since the scaffold gives BaseWin no base class. The index*0x134 table lookup (`idx*77` via the same shift/lea/lea/lea chain as the original, then `<<2` to a byte offset) still gets the final `<<2` folded into a SIB `[eax*4+CONST]` scale on the two `movsx` loads instead of a materialised `shl eax,2` - same fold seen at 0x00514F50, not chased further.
 // working copy - scaffold materialised by --work
-// name      ?check_loc@BaseWin@@QAEXHHH@Z
 // size      199 bytes
-// spans     0x0041A7E0-0x0041A8A7
 // prototype void (__thiscall ?check_loc@BaseWin@@QAEXHHH@Z)(BaseWin* this, int, int, int)
 // callers   2   call targets   4
 // kind      game

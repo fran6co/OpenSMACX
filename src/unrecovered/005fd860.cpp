@@ -1,10 +1,7 @@
-// ORIGINAL: 0x005FD860 BYTE_EXACT FILE
-// LEVER: field stores in disassembly order (byte@0, then four dwords), not
-//        declaration order
+// ORIGINAL: 0x005FD860 ??0Text@@QAE@@Z 0x005FD860-0x005FD87F FILE BYTE_EXACT
+// LEVER: field stores in disassembly order (byte@0, then four dwords), not declaration order
 // working copy - scaffold materialised by --work
-// name      ??0Text@@QAE@@Z
 // size      31 bytes
-// spans     0x005FD860-0x005FD87F
 // prototype _Text* (__thiscall ??0Text@@QAE@@Z)(_Text* this)
 // callers   0   call targets   0
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0050C2E0 BYTE_EXACT FILE
-// name      ?act_of_aggression@@YAHHH@Z
+// ORIGINAL: 0x0050C2E0 ?act_of_aggression@@YAHHH@Z 0x0050C2E0-0x0050C332 FILE BYTE_EXACT
 // size      82 bytes
-// spans     0x0050C2E0-0x0050C332
 // prototype 
 // callers   4   call targets   2
 // kind      game

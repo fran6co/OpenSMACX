@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006498B9 EXCLUDED S1
-// name      __forcdecpt
+// ORIGINAL: 0x006498B9 __forcdecpt 0x006498B9-0x00649913 EXCLUDED S1
 // size      90 bytes
-// spans     0x006498B9-0x00649913
 // prototype 
 // callers   0   call targets   2
 // kind      library

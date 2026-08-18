@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005EE280 FILE
-// name      ?release_modal@Win@@QAEXXZ
+// ORIGINAL: 0x005EE280 ?release_modal@Win@@QAEXXZ 0x005EE280-0x005EE327 FILE
 // size      167 bytes
-// spans     0x005EE280-0x005EE327
 // prototype void (__thiscall ?release_modal@Win@@QAEXXZ)(Win* this)
 // callers   5   call targets   0
 // kind      

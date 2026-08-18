@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064D5B9 EXCLUDED S1
-// name      __ld12cvt
+// ORIGINAL: 0x0064D5B9 __ld12cvt 0x0064D5B9-0x0064D725 EXCLUDED S1
 // size      364 bytes
-// spans     0x0064D5B9-0x0064D725
 // prototype 
 // callers   2   call targets   5
 // kind      library

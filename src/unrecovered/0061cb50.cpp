@@ -1,21 +1,7 @@
-// ORIGINAL: 0x0061CB50 FILE
-// RULED-OUT: the brief's parameterless/no-this contract - `mov esi,ecx` at
-//            entry and later `[esi+0x6c]` (borrowed_) dereferenced prove a
-//            Texture* receiver; the a1 checked/stored throughout is a
-//            Buffer* (get_data()/free_data(1) called on it, field +0x4a8
-//            read as a row stride, +0x20 as a 4-int clip rect). Faithful
-//            through the guard chain, global setup and the point-array
-//            min/max scan; the perspective-correct x87 divide, the two
-//            setup_edge() edge-delta calls and the colour-keyed scanline
-//            inner loop are reproduced only in shape (right calls, right
-//            globals touched, a loop) not by value - this is a sibling of
-//            0x006202E0/0x0061F800's rasterizers and shares their fixed
-//            point stepping, which was already not chased to the byte
-//            there either.
+// ORIGINAL: 0x0061CB50 sub_61cb50 0x0061CB50-0x0061D08F FILE
+// RULED-OUT: the brief's parameterless/no-this contract - `mov esi,ecx` at entry and later `[esi+0x6c]` (borrowed_) dereferenced prove a Texture* receiver; the a1 checked/stored throughout is a Buffer* (get_data()/free_data(1) called on it, field +0x4a8 read as a row stride, +0x20 as a 4-int clip rect). Faithful through the guard chain, global setup and the point-array min/max scan; the perspective-correct x87 divide, the two setup_edge() edge-delta calls and the colour-keyed scanline inner loop are reproduced only in shape (right calls, right globals touched, a loop) not by value - this is a sibling of 0x006202E0/0x0061F800's rasterizers and shares their fixed point stepping, which was already not chased to the byte there either.
 // working copy - scaffold materialised by --work
-// name      sub_61cb50
 // size      1343 bytes
-// spans     0x0061CB50-0x0061D08F
 // prototype 
 // callers   0   call targets   3
 // kind      game

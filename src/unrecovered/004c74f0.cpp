@@ -1,12 +1,7 @@
-// ORIGINAL: 0x004C74F0 FILE
-// RULED-OUT: [ecx+N] reads with no matching stack slot -> a __thiscall
-//            receiver (Obj4c74f0), not the given __stdcall(int). 0.89
-//            mnemonic sim; first divergence is prologue register/stack-slot
-//            allocation for the `this`/`a1` locals, not chased further.
+// ORIGINAL: 0x004C74F0 sub_4c74f0 0x004C74F0-0x004C75A0 FILE
+// RULED-OUT: [ecx+N] reads with no matching stack slot -> a __thiscall receiver (Obj4c74f0), not the given __stdcall(int). 0.89 mnemonic sim; first divergence is prologue register/stack-slot allocation for the `this`/`a1` locals, not chased further.
 // working copy - scaffold materialised by --work
-// name      sub_4c74f0
 // size      176 bytes
-// spans     0x004C74F0-0x004C75A0
 // prototype 
 // callers   0   call targets   4
 // kind      game

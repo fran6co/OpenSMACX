@@ -20,10 +20,8 @@
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x004980F0 BYTE_EXACT
-// name      ?on_mouse_move@ReportWin@@QAEXHH@Z
+// ORIGINAL: 0x004980F0 ?on_mouse_move@ReportWin@@QAEXHH@Z 0x004980F0-0x004980F3 BYTE_EXACT
 // size      3 bytes
-// spans     0x004980F0-0x004980F3
 // prototype void (__thiscall ?on_mouse_move@ReportWin@@QAEXHH@Z)(ReportWin* this, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -41,10 +39,8 @@ void __fastcall report_win_on_mouse_move_redirect(ReportWin *self, void *, int a
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00498100 BYTE_EXACT
-// name      ?on_mouse_leave@ReportWin@@QAEXHH@Z
+// ORIGINAL: 0x00498100 ?on_mouse_leave@ReportWin@@QAEXHH@Z 0x00498100-0x00498103 BYTE_EXACT
 // size      3 bytes
-// spans     0x00498100-0x00498103
 // prototype void (__thiscall ?on_mouse_leave@ReportWin@@QAEXHH@Z)(ReportWin* this, int, int)
 // callers   0   call targets   0
 // kind      game

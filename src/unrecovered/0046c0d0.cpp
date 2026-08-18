@@ -1,15 +1,7 @@
-// ORIGINAL: 0x0046C0D0 FILE
-// RULED-OUT: full transcription of both menu-build paths (quick 6-item and
-//            the full context menu) and the whole 3-level action dispatch
-//            (39 item ids across 4 jump-table ranges); MISMATCH #15 is in
-//            the SEH/PullDown-construction prologue, not the menu logic -
-//            coverage is close to 100% of the original's ~5270 bytes. A few
-//            multi-arg call orderings (e.g. lock_veh) were derived from push
-//            order rather than re-verified against a second source.
+// ORIGINAL: 0x0046C0D0 ?right_menu@MapWin@@QAEXHHHH@Z 0x0046C0D0-0x0046D552;0x00655944-0x00655959 FILE
+// RULED-OUT: full transcription of both menu-build paths (quick 6-item and the full context menu) and the whole 3-level action dispatch (39 item ids across 4 jump-table ranges); MISMATCH #15 is in the SEH/PullDown-construction prologue, not the menu logic - coverage is close to 100% of the original's ~5270 bytes. A few multi-arg call orderings (e.g. lock_veh) were derived from push order rather than re-verified against a second source.
 // working copy - scaffold materialised by --work
-// name      ?right_menu@MapWin@@QAEXHHHH@Z
 // size      5271 bytes
-// spans     0x0046C0D0-0x0046D552;0x00655944-0x00655959
 // prototype void (__thiscall ?right_menu@MapWin@@QAEXHHHH@Z)(MapWin* this, int xCoord, int yCoord, int, int)
 // callers   1   call targets   55
 // kind      game

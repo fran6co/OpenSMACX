@@ -1,20 +1,12 @@
-// ORIGINAL: 0x005E2070
-// name      ?change_color@Buffer@@QAEHHHHHHH@Z
+// ORIGINAL: 0x005E2070 ?change_color@Buffer@@QAEHHHHHHH@Z 0x005E2070-0x005E220D
+// RULED-OUT: clip against rect1_, then a DirectDraw Lock/search-replace/ Unlock byte fill on the locked surface (Lock/Unlock are genuinely __stdcall COM methods - `this` is pushed as an explicit arg, not passed via ecx, confirmed by the disassembly never setting ecx before either indirect call). Landed at 0.67 similarity; diverges at #8 on the width_/ height_ range-check scheduling.
 // size      413 bytes
-// spans     0x005E2070-0x005E220D
 // prototype int (__thiscall ?change_color@Buffer@@QAEHHHHHHH@Z)(Buffer* this, int, int, int, int, int, int)
 // callers   2   call targets   0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
 // indirect  0x005E20C5 0x005E212E 0x005E21F6
-// RULED-OUT: clip against rect1_, then a DirectDraw Lock/search-replace/
-//            Unlock byte fill on the locked surface (Lock/Unlock are
-//            genuinely __stdcall COM methods - `this` is pushed as an
-//            explicit arg, not passed via ecx, confirmed by the
-//            disassembly never setting ecx before either indirect call).
-//            Landed at 0.67 similarity; diverges at #8 on the width_/
-//            height_ range-check scheduling.
 
 typedef int (__stdcall *IntersectRectFn)(RECT *, const RECT *, const RECT *);
 typedef long (__stdcall *DDLockFn)(void *, void *, void *, unsigned long, void *);

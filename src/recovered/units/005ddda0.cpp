@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005DDDA0 FILE
-// name      ?wrap_height_flying@Buffer@@QAEHPADH@Z
+// ORIGINAL: 0x005DDDA0 ?wrap_height_flying@Buffer@@QAEHPADH@Z 0x005DDDA0-0x005DDDD2 FILE
 // size      50 bytes
-// spans     0x005DDDA0-0x005DDDD2
 // prototype int (__thiscall ?wrap_height_flying@Buffer@@QAEHPADH@Z)(Buffer* this, int8*, int)
 // callers   2   call targets   1
 // kind      game

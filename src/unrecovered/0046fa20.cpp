@@ -1,13 +1,7 @@
-// ORIGINAL: 0x0046FA20 FILE
-// RULED-OUT: nothing yet - MISMATCH #5 xor/push (78% mnemonic sim). `this`
-//            is unused throughout (thiscall receiver never touched).
-//            RULED-OUT: 0x00915B74/0x00915B78/0x00939F48 are all used as
-//            index-table bases (`[reg + addr]`), so declared as
-//            `extern int Table[]`/`extern Rec4 OutputTable[]` rather than
-//            fixed-address globals, matching the lever note.
-// name      ?UNK5@MapWin@@QAEXH@Z
+// ORIGINAL: 0x0046FA20 ?UNK5@MapWin@@QAEXH@Z 0x0046FA20-0x0046FB10 FILE
+// RULED-OUT: nothing yet - MISMATCH #5 xor/push (78% mnemonic sim). `this` is unused throughout (thiscall receiver never touched).
+// RULED-OUT: 0x00915B74/0x00915B78/0x00939F48 are all used as index-table bases (`[reg + addr]`), so declared as `extern int Table[]`/`extern Rec4 OutputTable[]` rather than fixed-address globals, matching the lever note.
 // size      240 bytes
-// spans     0x0046FA20-0x0046FB10
 // prototype void (__thiscall ?UNK5@MapWin@@QAEXH@Z)(MapWin* this, int)
 // callers   1   call targets   0
 // kind      game

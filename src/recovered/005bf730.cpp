@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005BF730 BYTE_EXACT
-// name      ?X_pops@@YAHPADPBDPADHPAUSprite@@HHP6AHXZ@Z
+// ORIGINAL: 0x005BF730 ?X_pops@@YAHPADPBDPADHPAUSprite@@HHP6AHXZ@Z 0x005BF730-0x005BF770 BYTE_EXACT
 // size      64 bytes
-// spans     0x005BF730-0x005BF770
 // prototype 
 // callers   0   call targets   2
 // kind      game

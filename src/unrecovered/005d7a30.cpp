@@ -1,13 +1,7 @@
-// ORIGINAL: 0x005D7A30 FILE
-// RULED-OUT: plain local `Filemap fm;` with early returns (no SEH
-//            prologue at all, 90 vs 170 B). Wrapping in
-//            try{}catch(...){throw;} recovers most of the /GX frame
-//            shape (179 vs 170 B) but still diverges at #1 push/mov -
-//            same wall as 0x004C4BF0's WorldWin ctor.
+// ORIGINAL: 0x005D7A30 sub_5d7a30 0x005D7A30-0x005D7ADA;0x00662B80-0x00662B92 FILE
+// RULED-OUT: plain local `Filemap fm;` with early returns (no SEH prologue at all, 90 vs 170 B). Wrapping in try{}catch(...){throw;} recovers most of the /GX frame shape (179 vs 170 B) but still diverges at #1 push/mov - same wall as 0x004C4BF0's WorldWin ctor.
 // working copy - scaffold materialised by --work
-// name      sub_5d7a30
 // size      188 bytes
-// spans     0x005D7A30-0x005D7ADA;0x00662B80-0x00662B92
 // prototype 
 // callers   1   call targets   3
 // kind      game

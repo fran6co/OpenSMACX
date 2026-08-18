@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00480370 FILE
-// name      ?draw_player_names@NetWin@@QAEXXZ
+// ORIGINAL: 0x00480370 ?draw_player_names@NetWin@@QAEXXZ 0x00480370-0x004808F2 FILE
 // size      1410 bytes
-// spans     0x00480370-0x004808F2
 // prototype void (__thiscall ?draw_player_names@NetWin@@QAEXXZ)(NetWin* this)
 // callers   1   call targets   21
 // kind      game

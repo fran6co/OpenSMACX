@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064F013 EXCLUDED S1
-// name      ___crtMessageBoxA
+// ORIGINAL: 0x0064F013 ___crtMessageBoxA 0x0064F013-0x0064F09C EXCLUDED S1
 // size      137 bytes
-// spans     0x0064F013-0x0064F09C
 // prototype 
 // callers   1   call targets   0
 // kind      library

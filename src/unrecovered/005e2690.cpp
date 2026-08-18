@@ -1,16 +1,7 @@
-// ORIGINAL: 0x005E2690 FILE
-// RULED-OUT: retyped VCall::slot001/slot003 (int, not void - the return
-//            value is tested/used as a pointer); slot17/25/26/32 modeled
-//            as COM (explicit receiver push, confirmed on all four call
-//            sites); PCX header parsed as a raw byte buffer at the
-//            documented field offsets rather than named struct fields.
-//            set_from_dib/get_rgbquad are called on `a3` (Palette*), not
-//            `this` - confirmed by ecx=ebp=param_4 at the call site.
-//            Diverges at #0 (prologue/local layout).
+// ORIGINAL: 0x005E2690 ?load_pcx@Buffer@@QAEHPAEKPAVPalette@@HH@Z 0x005E2690-0x005E2AF7 FILE
+// RULED-OUT: retyped VCall::slot001/slot003 (int, not void - the return value is tested/used as a pointer); slot17/25/26/32 modeled as COM (explicit receiver push, confirmed on all four call sites); PCX header parsed as a raw byte buffer at the documented field offsets rather than named struct fields. set_from_dib/get_rgbquad are called on `a3` (Palette*), not `this` - confirmed by ecx=ebp=param_4 at the call site. Diverges at #0 (prologue/local layout).
 // working copy - scaffold materialised by --work
-// name      ?load_pcx@Buffer@@QAEHPAEKPAVPalette@@HH@Z
 // size      1127 bytes
-// spans     0x005E2690-0x005E2AF7
 // prototype int (__thiscall ?load_pcx@Buffer@@QAEHPAEKPAVPalette@@HH@Z)(Buffer* this, unsigned int8*, unsigned int, Palette*, int, int)
 // callers   2   call targets   7
 // kind      game

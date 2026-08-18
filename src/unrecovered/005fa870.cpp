@@ -1,10 +1,7 @@
-// ORIGINAL: 0x005FA870 BYTE_EXACT FILE
-// LEVER: spots_ is stored to 0 twice - once inside the `if (spots_)` branch
-//        right after free(), and again unconditionally after the resets
+// ORIGINAL: 0x005FA870 ??1Spot@@QAE@XZ 0x005FA870-0x005FA89E FILE BYTE_EXACT
+// LEVER: spots_ is stored to 0 twice - once inside the `if (spots_)` branch right after free(), and again unconditionally after the resets
 // working copy - scaffold materialised by --work
-// name      ??1Spot@@QAE@XZ
 // size      46 bytes
-// spans     0x005FA870-0x005FA89E
 // prototype void (__thiscall ??1Spot@@QAE@XZ)(Spot* this)
 // callers   110   call targets   1
 // kind      game

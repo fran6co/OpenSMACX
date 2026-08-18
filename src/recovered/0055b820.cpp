@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0055B820 BYTE_EXACT
-// name      ?agenda_off@@YAXHHH@Z
+// ORIGINAL: 0x0055B820 ?agenda_off@@YAXHHH@Z 0x0055B820-0x0055B870 BYTE_EXACT
 // size      80 bytes
-// spans     0x0055B820-0x0055B870
 // prototype 
 // callers   5   call targets   0
 // kind      game

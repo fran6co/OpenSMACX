@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0050EF10 BYTE_EXACT
-// name      ?turn_timer@@YAXH@Z
+// ORIGINAL: 0x0050EF10 ?turn_timer@@YAXH@Z 0x0050EF10-0x0050EF42 BYTE_EXACT
 // size      50 bytes
-// spans     0x0050EF10-0x0050EF42
 // prototype 
 // callers   0   call targets   2
 // kind      game

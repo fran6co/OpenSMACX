@@ -1,21 +1,7 @@
-// ORIGINAL: 0x004ADB70 FILE
-// RULED-OUT: SEH-framed function with 4 real local objects (Buffer, Font,
-//   Wave, Flic) - reproduced via plain RAII locals (`Buffer buf1; Font font;
-//   Wave wave; Flic flic;` with `Palette pal;` scoped to end right before
-//   the final destructor cascade, matching the original's separate
-//   ~Palette() call ahead of the buf1/font/wave/flic teardown) and plain
-//   `return`/goto for the early-exit paths, letting the compiler emit its
-//   own SEH prologue/epilogue and destructor calls rather than hand-writing
-//   the fs:[0] chain or the mid-function state-index byte stores. Diverges
-//   at #2 (framed EH prologue ordering) - did not chase further given the
-//   size; body is a full instruction-level transcription of the menu/flic
-//   drawing logic (token-line parsing loop, two flic decode/blit/pace
-//   loops via a shared static helper, Spot::add layout loop, draw_item
-//   loop) with call arguments cross-checked against raw disassembly.
+// ORIGINAL: 0x004ADB70 ?do_menu_rightside@SetupWin@@QAEHPADH@Z 0x004ADB70-0x004AE336;0x0065960C-0x00659697 FILE
+// RULED-OUT: SEH-framed function with 4 real local objects (Buffer, Font, Wave, Flic) - reproduced via plain RAII locals (`Buffer buf1; Font font; Wave wave; Flic flic;` with `Palette pal;` scoped to end right before the final destructor cascade, matching the original's separate ~Palette() call ahead of the buf1/font/wave/flic teardown) and plain `return`/goto for the early-exit paths, letting the compiler emit its own SEH prologue/epilogue and destructor calls rather than hand-writing the fs:[0] chain or the mid-function state-index byte stores. Diverges at #2 (framed EH prologue ordering) - did not chase further given the size; body is a full instruction-level transcription of the menu/flic drawing logic (token-line parsing loop, two flic decode/blit/pace loops via a shared static helper, Spot::add layout loop, draw_item loop) with call arguments cross-checked against raw disassembly.
 // working copy - scaffold materialised by --work
-// name      ?do_menu_rightside@SetupWin@@QAEHPADH@Z
 // size      2129 bytes
-// spans     0x004ADB70-0x004AE336;0x0065960C-0x00659697
 // prototype int (__thiscall ?do_menu_rightside@SetupWin@@QAEHPADH@Z)(SetupWin* this, int8*, int)
 // callers   2   call targets   40
 // kind      game

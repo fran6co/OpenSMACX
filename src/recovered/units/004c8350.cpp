@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004C8350 FILE
-// name      sub_4c8350
+// ORIGINAL: 0x004C8350 sub_4c8350 0x004C8350-0x004C8396 FILE
 // size      70 bytes
-// spans     0x004C8350-0x004C8396
 // prototype 
 // callers   0   call targets   0
 // kind      game

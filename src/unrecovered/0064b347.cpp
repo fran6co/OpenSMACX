@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064B347 EXCLUDED S1
-// name      zerotoxdone
+// ORIGINAL: 0x0064B347 zerotoxdone 0x0064B347-0x0064B348 EXCLUDED S1
 // size      1 bytes
-// spans     0x0064B347-0x0064B348
 // prototype 
 // callers   0   call targets   0
 // kind      library

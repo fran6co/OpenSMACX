@@ -1,19 +1,11 @@
-// ORIGINAL: 0x006176E0
-// name      ?add_object@Caviar@@QAEHPAUCaviarData@@PAUCaviarData@@PAUVOX_Vect@@H@Z
+// ORIGINAL: 0x006176E0 ?add_object@Caviar@@QAEHPAUCaviarData@@PAUCaviarData@@PAUVOX_Vect@@H@Z 0x006176E0-0x006177FE
+// RULED-OUT: calling sub_628150 through a cast function pointer (its scaffold prototype is nullary) turns the direct `call rel32` into a loaded/indirect call; the loop body and field offsets (record_->0x24 loop count, record_->0x20 divisor, the index*3+0x1d4 table read, the 0x10ac/0x10c/0x110 tri-tables) match the disassembly, but the prologue register allocation (push/sub order) diverges early. Landing the closest MISMATCH.
 // size      286 bytes
-// spans     0x006176E0-0x006177FE
 // prototype int (__thiscall ?add_object@Caviar@@QAEHPAUCaviarData@@PAUCaviarData@@PAUVOX_Vect@@H@Z)(Caviar* this, CaviarData*, CaviarData*, VOX_Vect*, int)
 // callers   0   call targets   1
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     0x00628150
-// RULED-OUT: calling sub_628150 through a cast function pointer (its
-//            scaffold prototype is nullary) turns the direct `call rel32`
-//            into a loaded/indirect call; the loop body and field offsets
-//            (record_->0x24 loop count, record_->0x20 divisor, the
-//            index*3+0x1d4 table read, the 0x10ac/0x10c/0x110 tri-tables)
-//            match the disassembly, but the prologue register allocation
-//            (push/sub order) diverges early. Landing the closest MISMATCH.
 
 int Caviar::add_object(CaviarData * a1, CaviarData * a2, VOX_Vect * a3, int a4) {
   typedef int(__cdecl * Fn3)(int, VOX_Vect *, int);

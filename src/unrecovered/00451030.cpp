@@ -1,18 +1,7 @@
-// ORIGINAL: 0x00451030 FILE
-// RULED-OUT: real `CaviarData scratch;` local (constructor + init()/
-//            close() reused for the four embedded-record loads, real
-//            `.record_` member instead of raw ebp-relative offsets),
-//            all ~130 CaviarData::init(str) calls generated from the
-//            (ecx-target, pushed-string) pairs in the raw disasm, the
-//            table-fill loop rewritten as plain `base / 3` (0x2AAAAAAB
-//            is the textbook divide-by-3 magic constant, so /O2 should
-//            regenerate the same imul/sar/shr sequence); compiles,
-//            MISMATCH #2 (this early is almost certainly frame size -
-//            not chased further given the ~130-call body).
+// ORIGINAL: 0x00451030 ?load_voxels@@YAXXZ 0x00451030-0x00451A09;0x00655030-0x00655042 FILE
+// RULED-OUT: real `CaviarData scratch;` local (constructor + init()/ close() reused for the four embedded-record loads, real `.record_` member instead of raw ebp-relative offsets), all ~130 CaviarData::init(str) calls generated from the (ecx-target, pushed-string) pairs in the raw disasm, the table-fill loop rewritten as plain `base / 3` (0x2AAAAAAB is the textbook divide-by-3 magic constant, so /O2 should regenerate the same imul/sar/shr sequence); compiles, MISMATCH #2 (this early is almost certainly frame size - not chased further given the ~130-call body).
 // working copy - scaffold materialised by --work
-// name      ?load_voxels@@YAXXZ
 // size      2539 bytes
-// spans     0x00451030-0x00451A09;0x00655030-0x00655042
 // prototype 
 // callers   1   call targets   10
 // kind      game

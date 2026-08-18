@@ -1,9 +1,7 @@
-// ORIGINAL: 0x006381E0 BYTE_EXACT FILE
+// ORIGINAL: 0x006381E0 Video_unk16 0x006381E0-0x006381E5 FILE BYTE_EXACT
 // LEVER: tail call to the unnamed sub via a plain extern "C" declaration
 // working copy - scaffold materialised by --work
-// name      Video_unk16
 // size      5 bytes
-// spans     0x006381E0-0x006381E5
 // prototype 
 // callers   0   call targets   0
 // kind      thunk

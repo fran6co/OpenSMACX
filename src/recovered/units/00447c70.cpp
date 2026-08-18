@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00447C70 BYTE_EXACT FILE
-// name      ?terraform@GAmbience@@QAEXXZ
+// ORIGINAL: 0x00447C70 ?terraform@GAmbience@@QAEXXZ 0x00447C70-0x00447C9A FILE BYTE_EXACT
 // size      42 bytes
-// spans     0x00447C70-0x00447C9A
 // prototype void (__thiscall ?terraform@GAmbience@@QAEXXZ)(GAmbience* this)
 // callers   0   call targets   0
 // kind      game

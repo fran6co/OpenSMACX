@@ -24,10 +24,8 @@ int Time::TimeInitCount;
 
 /*
 Purpose: Initialize an instance of the class with a single parameter callback.
-ORIGINAL: 0x00616260
-// name      ?init@Time@@QAEXP6AXH@ZHHH@Z
+// ORIGINAL: 0x00616260 ?init@Time@@QAEXP6AXH@ZHHH@Z 0x00616260-0x006162CE
 // size      110 bytes
-// spans     0x00616260-0x006162CE
 // prototype void (__thiscall ?init@Time@@QAEXP6AXH@ZHHH@Z)(Time* this, void (__cdecl *)(int this), int, int, int)
 // callers   4   call targets   1
 // kind      game
@@ -52,10 +50,8 @@ void Time::init(void(__cdecl *callback)(int), int param, uint32_t cnt, uint32_t 
 
 /*
 Purpose: Initialize an instance of the class with a two parameter callback.
-ORIGINAL: 0x006162D0
-// name      ?init@Time@@QAEXP6AXHH@ZHHHH@Z
+// ORIGINAL: 0x006162D0 ?init@Time@@QAEXP6AXHH@ZHHHH@Z 0x006162D0-0x00616342
 // size      114 bytes
-// spans     0x006162D0-0x00616342
 // prototype void (__thiscall ?init@Time@@QAEXP6AXHH@ZHHHH@Z)(Time* this, void (__cdecl *)(int this, int), int, int, int, int)
 // callers   5   call targets   1
 // kind      game
@@ -81,13 +77,11 @@ void Time::init(void(__cdecl *callback)(int, int), int param, int param2, uint32
 
 /*
 Purpose: Start an instance of the class with a single parameter callback.
-ORIGINAL: 0x00616350
-// name      ?start@Time@@QAEHP6AXH@ZHHH@Z
+// ORIGINAL: 0x00616350 ?start@Time@@QAEHP6AXH@ZHHH@Z 0x00616350-0x00616405
 // CORRECTED from ?start@Time@@QAEXP6AXH@ZHHH@Z
 //   tail is `and al, 0xfe; add eax, 2; ret 0x10` - a computed return;
 //   0x0063C340 tests the result at 0x0063C356 with `test eax, eax`
 // size      181 bytes
-// spans     0x00616350-0x00616405
 // prototype int (__thiscall ?start@Time@@QAEHP6AXH@ZHHH@Z)(Time* this, void (__cdecl *)(int this), int, int, int uDelay)
 // callers   11   call targets   1
 // kind      game
@@ -114,10 +108,8 @@ uint32_t Time::start(void(__cdecl *callback)(int), int param, uint32_t cnt, uint
 
 /*
 Purpose: Start an instance of the class with a two parameter callback.
-ORIGINAL: 0x00616410
-// name      ?start@Time@@QAEXP6AXHH@ZHHHH@Z
+// ORIGINAL: 0x00616410 ?start@Time@@QAEXP6AXHH@ZHHHH@Z 0x00616410-0x006164CA
 // size      186 bytes
-// spans     0x00616410-0x006164CA
 // prototype void (__thiscall ?start@Time@@QAEXP6AXHH@ZHHHH@Z)(Time* this, void (__cdecl *)(int this, int), int, int, int, int)
 // callers   2   call targets   1
 // kind      game
@@ -145,13 +137,11 @@ uint32_t Time::start(void(__cdecl *callback)(int, int), int param, int param2, u
 
 /*
 Purpose: Start a pulse instance of the class with a single parameter callback.
-ORIGINAL: 0x006164D0
-// name      ?pulse@Time@@QAEHP6AXH@ZHHH@Z
+// ORIGINAL: 0x006164D0 ?pulse@Time@@QAEHP6AXH@ZHHH@Z 0x006164D0-0x00616585
 // CORRECTED from ?pulse@Time@@QAEXP6AXH@ZHHH@Z
 //   tail is `and al, 0xfe; add eax, 2; ret 0x10`, the same computed
 //   return as its `start` sibling
 // size      181 bytes
-// spans     0x006164D0-0x00616585
 // prototype int (__thiscall ?pulse@Time@@QAEHP6AXH@ZHHH@Z)(Time* this, void (__cdecl *)(int this), int, int, int uDelay)
 // callers   2   call targets   1
 // kind      game
@@ -181,10 +171,8 @@ uint32_t Time::pulse(void(__cdecl *callback)(int), int param, uint32_t cnt, uint
 
 /*
 Purpose: Start a pulse instance of the class with a two parameter callback.
-ORIGINAL: 0x00616590
-// name      ?pulse@Time@@QAEXP6AXHH@ZHHHH@Z
+// ORIGINAL: 0x00616590 ?pulse@Time@@QAEXP6AXHH@ZHHHH@Z 0x00616590-0x0061664D
 // size      189 bytes
-// spans     0x00616590-0x0061664D
 // prototype void (__thiscall ?pulse@Time@@QAEXP6AXHH@ZHHHH@Z)(Time* this, void (__cdecl *)(int this, int), int, int, int, int)
 // callers   1   call targets   1
 // kind      game
@@ -212,12 +200,10 @@ uint32_t Time::pulse(void(__cdecl *callback)(int, int), int param, int param2, u
 
 /*
 Purpose: Start an instance of the timer.
-ORIGINAL: 0x00616650 BYTE_EXACT
-// name      ?start@Time@@QAEHXZ
+// ORIGINAL: 0x00616650 ?start@Time@@QAEHXZ 0x00616650-0x006166BA BYTE_EXACT
 // CORRECTED from ?start@Time@@QAEXXZ
 //   tail is `neg eax; sbb eax, eax; and al, 0xfe; add eax, 2; ret`
 // size      106 bytes
-// spans     0x00616650-0x006166BA
 // prototype int (__thiscall ?start@Time@@QAEHXZ)(Time* this)
 // callers   11   call targets   0
 // kind      game
@@ -243,12 +229,10 @@ uint32_t Time::start() {
 
 /*
 Purpose: Start an instance of the pulse timer.
-ORIGINAL: 0x006166C0 BYTE_EXACT
-// name      ?pulse@Time@@QAEHXZ
+// ORIGINAL: 0x006166C0 ?pulse@Time@@QAEHXZ 0x006166C0-0x0061672C BYTE_EXACT
 // CORRECTED from ?pulse@Time@@QAEXXZ
 //   tail is `neg eax; sbb eax, eax; and al, 0xfe; add eax, 2; ret`
 // size      108 bytes
-// spans     0x006166C0-0x0061672C
 // prototype int (__thiscall ?pulse@Time@@QAEHXZ)(Time* this)
 // callers   1   call targets   0
 // kind      game
@@ -274,10 +258,8 @@ uint32_t Time::pulse() {
 
 /*
 Purpose: Stop an instance of the class.
-ORIGINAL: 0x00616730
-// name      ?stop@Time@@QAEXXZ
+// ORIGINAL: 0x00616730 ?stop@Time@@QAEXXZ 0x00616730-0x00616772
 // size      66 bytes
-// spans     0x00616730-0x00616772
 // prototype void (__thiscall ?stop@Time@@QAEXXZ)(Time* this)
 // callers   30   call targets   0
 // kind      game
@@ -303,10 +285,8 @@ void Time::stop() {
 
 /*
 Purpose: Close out an instance of the class.
-ORIGINAL: 0x00616780
-// name      ?close@Time@@QAEXXZ
+// ORIGINAL: 0x00616780 ?close@Time@@QAEXXZ 0x00616780-0x006167E0
 // size      96 bytes
-// spans     0x00616780-0x006167E0
 // prototype void (__thiscall ?close@Time@@QAEXXZ)(Time* this)
 // callers   16   call targets   1
 // kind      game
@@ -331,10 +311,8 @@ void Time::close() {
 
 /*
 Purpose: Callback function that processes WM_TIMER messages (SetTimer).
-ORIGINAL: 0x006167E0
-// name      ?TimerProc@Time@@QAEXPAXIIK@Z
+// ORIGINAL: 0x006167E0 ?TimerProc@Time@@QAEXPAXIIK@Z 0x006167E0-0x0061681C
 // size      60 bytes
-// spans     0x006167E0-0x0061681C
 // prototype void (__thiscall ?TimerProc@Time@@QAEXPAXIIK@Z)(Time* this, HWND hwnd, uint32_t msg, uint32_t* idEvent, uint32_t dwTime)
 // callers   0   call targets   0
 // kind      game
@@ -355,10 +333,8 @@ void Time::TimerProc(HWND UNUSED(hwnd), uint32_t UNUSED(msg), UINT_PTR id_timer,
 
 /*
 Purpose: Callback function for the timeSetEvent. Effectively the same as TimerProc.
-ORIGINAL: 0x00616820
-// name      ?MultimediaProc@Time@@QAEXIIKKK@Z
+// ORIGINAL: 0x00616820 ?MultimediaProc@Time@@QAEXIIKKK@Z 0x00616820-0x0061685C
 // size      60 bytes
-// spans     0x00616820-0x0061685C
 // prototype void (__thiscall ?MultimediaProc@Time@@QAEXIIKKK@Z)(Time* this, UINT uTimerID, UINT uMsg, DWORD dwUser, DWORD dw1, unsigned int)
 // callers   0   call targets   0
 // kind      game
@@ -387,10 +363,8 @@ Time *ConsoleTimer = (Time *)0x00939E88;
 
 /*
 Purpose: Start global timers.
-ORIGINAL: 0x0050F3D0
-// name      ?start_timers@@YAXXZ
+// ORIGINAL: 0x0050F3D0 ?start_timers@@YAXXZ 0x0050F3D0-0x0050F431
 // size      97 bytes
-// spans     0x0050F3D0-0x0050F431
 // prototype 
 // callers   3   call targets   1
 // kind      game
@@ -408,10 +382,8 @@ void __cdecl start_timers() {
 
 /*
 Purpose: Stop global timers.
-ORIGINAL: 0x0050F440
-// name      ?stop_timers@@YAXXZ
+// ORIGINAL: 0x0050F440 ?stop_timers@@YAXXZ 0x0050F440-0x0050F45E
 // size      30 bytes
-// spans     0x0050F440-0x0050F45E
 // prototype 
 // callers   6   call targets   1
 // kind      game
@@ -429,10 +401,8 @@ void __cdecl stop_timers() {
 
 /*
 Purpose: Clear timer message queue.
-ORIGINAL: 0x005FD370
-// name      ?flush_timer@@YAXXZ
+// ORIGINAL: 0x005FD370 ?flush_timer@@YAXXZ 0x005FD370-0x005FD3F2
 // size      130 bytes
-// spans     0x005FD370-0x005FD3F2
 // prototype 
 // callers   8   call targets   0
 // kind      game

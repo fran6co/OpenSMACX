@@ -1,13 +1,7 @@
-// ORIGINAL: 0x004BDCC0 FILE
-// RULED-OUT: `extern int g_009a64bc_rmw;` for the trailing `or [addr],esi` (RMW
-//        on a fixed global) turned the const-pointer's load/or/store into
-//        a single `or`, reaching MNEMONIC_ONLY (61/61 mnemonics match);
-//        the one remaining divergence is register choice in the tail,
-//        where the original reuses esi for child2 and ours picks another.
+// ORIGINAL: 0x004BDCC0 ?on_button_clicked@TutWin@@QAEXH@Z 0x004BDCC0-0x004BDDA2 FILE
+// RULED-OUT: `extern int g_009a64bc_rmw;` for the trailing `or [addr],esi` (RMW on a fixed global) turned the const-pointer's load/or/store into a single `or`, reaching MNEMONIC_ONLY (61/61 mnemonics match); the one remaining divergence is register choice in the tail, where the original reuses esi for child2 and ours picks another.
 // working copy - scaffold materialised by --work
-// name      ?on_button_clicked@TutWin@@QAEXH@Z
 // size      226 bytes
-// spans     0x004BDCC0-0x004BDDA2
 // prototype void (__thiscall ?on_button_clicked@TutWin@@QAEXH@Z)(TutWin* this, int)
 // callers   0   call targets   1
 // kind      game

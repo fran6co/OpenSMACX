@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005FE2F0 BYTE_EXACT FILE
-// name      ?__as@Palette@@QAEHQAUPalette@@@Z
+// ORIGINAL: 0x005FE2F0 ?__as@Palette@@QAEHQAUPalette@@@Z 0x005FE2F0-0x005FE32F FILE BYTE_EXACT
 // size      63 bytes
-// spans     0x005FE2F0-0x005FE32F
 // prototype int (__thiscall ?__as@Palette@@QAEHQAUPalette@@@Z)(Palette* this, Palette*)
 // callers   2   call targets   2
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004B8990 BYTE_EXACT
-// name      ?on_left_double_click@StatusWin@@QAEXHH@Z
+// ORIGINAL: 0x004B8990 ?on_left_double_click@StatusWin@@QAEXHH@Z 0x004B8990-0x004B89BE BYTE_EXACT
 // size      46 bytes
-// spans     0x004B8990-0x004B89BE
 // prototype void (__thiscall ?on_left_double_click@StatusWin@@QAEXHH@Z)(StatusWin* this, int xCoord, int yCoord)
 // callers   1   call targets   1
 // kind      game

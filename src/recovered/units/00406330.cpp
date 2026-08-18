@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00406330 BYTE_EXACT FILE
-// name      ?on_listbox_scroll_delete@Popup@@QAEHPAUScroll@@@Z
+// ORIGINAL: 0x00406330 ?on_listbox_scroll_delete@Popup@@QAEHPAUScroll@@@Z 0x00406330-0x0040637C FILE BYTE_EXACT
 // size      76 bytes
-// spans     0x00406330-0x0040637C
 // prototype int (__thiscall ?on_listbox_scroll_delete@Popup@@QAEHPAUScroll@@@Z)(Popup* this, Scroll*)
 // callers   0   call targets   2
 // kind      game

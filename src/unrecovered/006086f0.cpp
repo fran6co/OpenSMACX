@@ -1,8 +1,6 @@
-// ORIGINAL: 0x006086F0 FILE
+// ORIGINAL: 0x006086F0 ?fill_entry@StringList@@QAEHPAUStringStruct@@@Z 0x006086F0-0x00608761 FILE
 // working copy - scaffold materialised by --work
-// name      ?fill_entry@StringList@@QAEHPAUStringStruct@@@Z
 // size      113 bytes
-// spans     0x006086F0-0x00608761
 // prototype int (__thiscall ?fill_entry@StringList@@QAEHPAUStringStruct@@@Z)(StringList* this, StringStruct*)
 // callers   0   call targets   4
 // kind      game

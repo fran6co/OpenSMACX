@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00483310 BYTE_EXACT FILE
-// name      ?on_key_down@NetWin@@QAEHH@Z
+// ORIGINAL: 0x00483310 ?on_key_down@NetWin@@QAEHH@Z 0x00483310-0x00483414 FILE BYTE_EXACT
 // size      260 bytes
-// spans     0x00483310-0x00483414
 // prototype int (__thiscall ?on_key_down@NetWin@@QAEHH@Z)(NetWin* this, int)
 // callers   0   call targets   8
 // kind      game

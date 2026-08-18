@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00645D1C EXCLUDED S1
-// name      _atol
+// ORIGINAL: 0x00645D1C _atol 0x00645D1C-0x00645DA7 EXCLUDED S1
 // size      139 bytes
-// spans     0x00645D1C-0x00645DA7
 // prototype 
 // callers   2   call targets   1
 // kind      library

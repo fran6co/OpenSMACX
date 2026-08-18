@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006461A7 EXCLUDED S1
-// name      _fread
+// ORIGINAL: 0x006461A7 _fread 0x006461A7-0x0064628F EXCLUDED S1
 // size      232 bytes
-// spans     0x006461A7-0x0064628F
 // prototype 
 // callers   1   call targets   3
 // kind      library

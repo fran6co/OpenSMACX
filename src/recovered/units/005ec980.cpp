@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005EC980 BYTE_EXACT FILE
-// name      ?get_rbutton_state@Win@@QAEHXZ
+// ORIGINAL: 0x005EC980 ?get_rbutton_state@Win@@QAEHXZ 0x005EC980-0x005EC99B FILE BYTE_EXACT
 // size      27 bytes
-// spans     0x005EC980-0x005EC99B
 // prototype int (__thiscall ?get_rbutton_state@Win@@QAEHXZ)(Win* this)
 // callers   0   call targets   0
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00531300 FILE
-// name      ?await_exec@NetDaemon@@QAEXH@Z
+// ORIGINAL: 0x00531300 ?await_exec@NetDaemon@@QAEXH@Z 0x00531300-0x00531477 FILE
 // size      375 bytes
-// spans     0x00531300-0x00531477
 // prototype void (__thiscall ?await_exec@NetDaemon@@QAEXH@Z)(NetDaemon* this, int)
 // callers   17   call targets   9
 // kind      game

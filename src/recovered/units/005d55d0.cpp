@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005D55D0 BYTE_EXACT FILE
-// name      ?update@GraphicWin@@QAEXHHHHPAUGraphicWin@@@Z
+// ORIGINAL: 0x005D55D0 ?update@GraphicWin@@QAEXHHHHPAUGraphicWin@@@Z 0x005D55D0-0x005D562F FILE BYTE_EXACT
 // size      95 bytes
-// spans     0x005D55D0-0x005D562F
 // prototype void (__thiscall ?update@GraphicWin@@QAEXHHHHPAUGraphicWin@@@Z)(GraphicWin* this, int, int, int, int, GraphicWin*)
 // callers   2   call targets   4
 // kind      game

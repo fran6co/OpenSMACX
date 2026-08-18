@@ -1,16 +1,7 @@
-// ORIGINAL: 0x00635870 FILE
-// RULED-OUT: a flat `switch(a1)` over all 99 distinct DDERR_ case values
-//            (built from the disassembly's own compare/jump-table chain,
-//            not trusted from Ghidra's case values alone - cross-checked
-//            each against its `push ADDR` string target) reaches
-//            instruction #22 before diverging ('push' vs 'mov'): MSVC's
-//            own jump-table/byte-remap lowering for this case set differs
-//            from the original's in how it re-groups the five original
-//            sub-tables, not in which case maps to which string.
+// ORIGINAL: 0x00635870 sub_635870 0x00635870-0x00635F0B FILE
+// RULED-OUT: a flat `switch(a1)` over all 99 distinct DDERR_ case values (built from the disassembly's own compare/jump-table chain, not trusted from Ghidra's case values alone - cross-checked each against its `push ADDR` string target) reaches instruction #22 before diverging ('push' vs 'mov'): MSVC's own jump-table/byte-remap lowering for this case set differs from the original's in how it re-groups the five original sub-tables, not in which case maps to which string.
 // working copy - scaffold materialised by --work
-// name      sub_635870
 // size      1691 bytes
-// spans     0x00635870-0x00635F0B
 // prototype 
 // callers   1   call targets   3
 // kind      game

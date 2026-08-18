@@ -1,16 +1,7 @@
-// ORIGINAL: 0x005E5833 FILE
-// RULED-OUT: hand-unrolled Duff's device (three variants: 1:1 shrink,
-//   table-driven shrink, four-orientation expand) reached through a
-//   computed jump (`lea reg,[label]; jmp reg` / `jmp dword ptr [global]`)
-//   with EBP/EBX repurposed as data pointers mid-function - no C source
-//   form reaches this (a switch-based Duff's device still emits direct
-//   per-case branches). Setup/validation/dispatch transcribed faithfully;
-//   the three copy loops are a plain non-matching approximation.
-//   MISMATCH at #8 (validation block, cmp vs test).
+// ORIGINAL: 0x005E5833 ?draw_dest@Sprite@@QAEHPAUBuffer@@HHHPAE@Z 0x005E5833-0x005E6652 FILE
+// RULED-OUT: hand-unrolled Duff's device (three variants: 1:1 shrink, table-driven shrink, four-orientation expand) reached through a computed jump (`lea reg,[label]; jmp reg` / `jmp dword ptr [global]`) with EBP/EBX repurposed as data pointers mid-function - no C source form reaches this (a switch-based Duff's device still emits direct per-case branches). Setup/validation/dispatch transcribed faithfully; the three copy loops are a plain non-matching approximation. MISMATCH at #8 (validation block, cmp vs test).
 // working copy - scaffold materialised by --work
-// name      ?draw_dest@Sprite@@QAEHPAUBuffer@@HHHPAE@Z
 // size      3615 bytes
-// spans     0x005E5833-0x005E6652
 // prototype int (__thiscall ?draw_dest@Sprite@@QAEHPAUBuffer@@HHHPAE@Z)(Sprite* this, Buffer*, int, int, int, unsigned int8*)
 // callers   5   call targets   8
 // kind      game

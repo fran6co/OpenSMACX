@@ -1,15 +1,7 @@
-// ORIGINAL: 0x005594F0 FILE
-// RULED-OUT: signed-division-by-power-of-2 idiom `(x+(x>>31&N))>>shift`
-//            replaced with plain `x/(N+1)` (matches, /O2 regenerates the
-//            same shift+sign-fix); Sprite::draw/draw_mono/draw_dest all
-//            take the sprite's own cTransparentIndex_ byte as their 2nd
-//            arg (missing in the first pass -> C2660, "does not take N
-//            parameters" is the tell). Diverges at instr #4, before the
-//            body proper.
+// ORIGINAL: 0x005594F0 ?veh_draw@@YAHPAUBuffer@@HHHHHH@Z 0x005594F0-0x0055A14E FILE
+// RULED-OUT: signed-division-by-power-of-2 idiom `(x+(x>>31&N))>>shift` replaced with plain `x/(N+1)` (matches, /O2 regenerates the same shift+sign-fix); Sprite::draw/draw_mono/draw_dest all take the sprite's own cTransparentIndex_ byte as their 2nd arg (missing in the first pass -> C2660, "does not take N parameters" is the tell). Diverges at instr #4, before the body proper.
 // working copy - scaffold materialised by --work
-// name      ?veh_draw@@YAHPAUBuffer@@HHHHHH@Z
 // size      3166 bytes
-// spans     0x005594F0-0x0055A14E
 // prototype int (__cdecl ?veh_draw@@YAHPAUBuffer@@HHHHHH@Z)(Buffer*, int vehID, int, int, int, int, int)
 // callers   22   call targets   21
 // kind      game

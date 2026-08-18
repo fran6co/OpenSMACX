@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0044AE50 BYTE_EXACT FILE
-// name      ?hall_of_fame@@YAXH@Z
+// ORIGINAL: 0x0044AE50 ?hall_of_fame@@YAXH@Z 0x0044AE50-0x0044AF6D FILE BYTE_EXACT
 // size      285 bytes
-// spans     0x0044AE50-0x0044AF6D
 // prototype 
 // callers   4   call targets   8
 // kind      game

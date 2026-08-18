@@ -1,23 +1,11 @@
-// ORIGINAL: 0x00407D90 FILE
-// RULED-OUT: same "iVar1<=bound-1 / abs / dec-loop" shape as 0x0063C6D0 -
-//   reused the `setField` flag so the trailing store isn't shared between
-//   the negative- and positive-`iVar5` branches (see that address's note).
-//   `#pragma function(strlen)` was needed too (not just `abs`) or the
-//   length call inlines to `repne scasb`. Flipping `if (x==0) a=0; else
-//   a=...;` to `if (x!=0) a=...; else a=0;` matched the original's `jne`
-//   polarity. Landed at 96.4%: the last gap is that this source's compiler
-//   assigns `this` to esi and the loaded pointer to edi/ebx, a full
-//   permutation from the original's ebx=this/esi=base/edi=count - not
-//   forceable through statement reordering, matching what was already
-//   seen on 0x00496D00's esi/edi swap.
+// ORIGINAL: 0x00407D90 ?on_selected@AlphaSave@@QAEXH@Z 0x00407D90-0x00407E7B FILE
+// RULED-OUT: same "iVar1<=bound-1 / abs / dec-loop" shape as 0x0063C6D0 - reused the `setField` flag so the trailing store isn't shared between the negative- and positive-`iVar5` branches (see that address's note). `#pragma function(strlen)` was needed too (not just `abs`) or the length call inlines to `repne scasb`. Flipping `if (x==0) a=0; else a=...;` to `if (x!=0) a=...; else a=0;` matched the original's `jne` polarity. Landed at 96.4%: the last gap is that this source's compiler assigns `this` to esi and the loaded pointer to edi/ebx, a full permutation from the original's ebx=this/esi=base/edi=count - not forceable through statement reordering, matching what was already seen on 0x00496D00's esi/edi swap.
 // PROPOSAL: `void AlphaSave::on_selected(int a1)` - `a1` is read nowhere in
 //   the disassembly (no `[ebp+8]`/`[esp+N]` load exists), only `ret 4`
 //   proves a second thiscall argument was popped; the parameter is
 //   genuinely unused, not misdetected.
 // working copy - scaffold materialised by --work
-// name      ?on_selected@AlphaSave@@QAEXH@Z
 // size      235 bytes
-// spans     0x00407D90-0x00407E7B
 // prototype void (__thiscall ?on_selected@AlphaSave@@QAEXH@Z)(AlphaSave* this, int)
 // callers   0   call targets   3
 // kind      game

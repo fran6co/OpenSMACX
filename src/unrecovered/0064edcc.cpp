@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064EDCC EXCLUDED S1
-// name      _getSystemCP
+// ORIGINAL: 0x0064EDCC _getSystemCP 0x0064EDCC-0x0064EE16 EXCLUDED S1
 // size      74 bytes
-// spans     0x0064EDCC-0x0064EE16
 // prototype 
 // callers   1   call targets   0
 // kind      library

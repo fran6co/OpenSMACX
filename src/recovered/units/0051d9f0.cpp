@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0051D9F0 FILE
-// name      ??1Console@@QAE@XZ
+// ORIGINAL: 0x0051D9F0 ??1Console@@QAE@XZ 0x0051D9F0-0x0051DC10;0x0065D0E0-0x0065D220 FILE
 // size      864 bytes
-// spans     0x0051D9F0-0x0051DC10;0x0065D0E0-0x0065D220
 // prototype void (__thiscall ??1Console@@QAE@XZ)(Console* this)
 // callers   2   call targets   10
 // kind      game

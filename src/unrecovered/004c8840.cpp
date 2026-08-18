@@ -1,11 +1,7 @@
-// ORIGINAL: 0x004C8840 BYTE_EXACT FILE
-// LEVER: the g_0090db28 function pointer is __cdecl, not __stdcall - the
-//        original has `add esp,4` after that call; __stdcall dropped it
-//        and cost a MISMATCH at the trailing `add`/`jmp`.
+// ORIGINAL: 0x004C8840 sub_4c8840 0x004C8840-0x004C8888 FILE BYTE_EXACT
+// LEVER: the g_0090db28 function pointer is __cdecl, not __stdcall - the original has `add esp,4` after that call; __stdcall dropped it and cost a MISMATCH at the trailing `add`/`jmp`.
 // working copy - scaffold materialised by --work
-// name      sub_4c8840
 // size      72 bytes
-// spans     0x004C8840-0x004C8888
 // prototype 
 // callers   0   call targets   0
 // kind      game

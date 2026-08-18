@@ -1,17 +1,7 @@
-// ORIGINAL: 0x005D4020 FILE
-// RULED-OUT: not chased past the first instruction (MISMATCH #0 'push' vs
-//            'sub', 62% mnemonic similarity) - __fastcall(this, dest, int,
-//            int) reproduces the `ret 8` pop count and the edx-as-second-
-//            register-arg evidence (no `mov ebp,esp` frame, `[esp+0x10]`
-//            live from entry with no stack spill) but the prologue's
-//            register-save order still differs. Structurally follows the
-//            raw disassembly's three shapes (mode==8 raw copy via
-//            sub_5d271d, else 2-byte-per-pixel CLUT unrolled x8, else
-//            4-byte-per-pixel CLUT unrolled x8).
+// ORIGINAL: 0x005D4020 sub_5d4020 0x005D4020-0x005D4231 FILE
+// RULED-OUT: not chased past the first instruction (MISMATCH #0 'push' vs 'sub', 62% mnemonic similarity) - __fastcall(this, dest, int, int) reproduces the `ret 8` pop count and the edx-as-second- register-arg evidence (no `mov ebp,esp` frame, `[esp+0x10]` live from entry with no stack spill) but the prologue's register-save order still differs. Structurally follows the raw disassembly's three shapes (mode==8 raw copy via sub_5d271d, else 2-byte-per-pixel CLUT unrolled x8, else 4-byte-per-pixel CLUT unrolled x8).
 // working copy - scaffold materialised by --work
-// name      sub_5d4020
 // size      529 bytes
-// spans     0x005D4020-0x005D4231
 // prototype 
 // callers   1   call targets   1
 // kind      game

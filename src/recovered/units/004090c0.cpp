@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004090C0 BYTE_EXACT FILE
-// name      ?UNK1@BaseWin@@QAEHH@Z
+// ORIGINAL: 0x004090C0 ?UNK1@BaseWin@@QAEHH@Z 0x004090C0-0x004090FA FILE BYTE_EXACT
 // size      58 bytes
-// spans     0x004090C0-0x004090FA
 // prototype int (__thiscall ?UNK1@BaseWin@@QAEHH@Z)(BaseWin* this, int)
 // callers   0   call targets   0
 // kind      game

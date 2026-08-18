@@ -21,10 +21,8 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-ORIGINAL: 0x004562F0 BYTE_EXACT
-// name      ?UNK1@InfoWin@@QAEXXZ
+// ORIGINAL: 0x004562F0 ?UNK1@InfoWin@@QAEXXZ 0x004562F0-0x004562F1 BYTE_EXACT
 // size      1 bytes
-// spans     0x004562F0-0x004562F1
 // prototype void (__thiscall ?UNK1@InfoWin@@QAEXXZ)(InfoWin* this)
 // callers   0   call targets   0
 // kind      game
@@ -38,10 +36,8 @@ void InfoWin::UNK1() {
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-ORIGINAL: 0x00458910 BYTE_EXACT
-// name      ?on_redraw@InfoWin@@QAEXXZ
+// ORIGINAL: 0x00458910 ?on_redraw@InfoWin@@QAEXXZ 0x00458910-0x00458911 BYTE_EXACT
 // size      1 bytes
-// spans     0x00458910-0x00458911
 // prototype void (__thiscall ?on_redraw@InfoWin@@QAEXXZ)(InfoWin* this)
 // callers   6   call targets   0
 // kind      game
@@ -63,10 +59,8 @@ void __fastcall info_win_on_redraw_redirect(InfoWin *self, void *) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00458900 BYTE_EXACT
-// name      ?change@InfoWin@@QAEXH@Z
+// ORIGINAL: 0x00458900 ?change@InfoWin@@QAEXH@Z 0x00458900-0x00458903 BYTE_EXACT
 // size      3 bytes
-// spans     0x00458900-0x00458903
 // prototype void (__thiscall ?change@InfoWin@@QAEXH@Z)(InfoWin* this, int)
 // callers   10   call targets   0
 // kind      game
@@ -84,10 +78,8 @@ void __fastcall info_win_change_redirect(InfoWin *self, void *, int a1) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00458920 BYTE_EXACT
-// name      ?UNK3@InfoWin@@QAEXHH@Z
+// ORIGINAL: 0x00458920 ?UNK3@InfoWin@@QAEXHH@Z 0x00458920-0x00458923 BYTE_EXACT
 // size      3 bytes
-// spans     0x00458920-0x00458923
 // prototype void (__thiscall ?UNK3@InfoWin@@QAEXHH@Z)(InfoWin* this, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -108,10 +100,8 @@ func_info_win_timer_proc InfoWinOriginalTimerProc =
 
 /*
 Purpose: Cancel the pending info-window timer, if one is outstanding.
-ORIGINAL: 0x00459280
-// name      ?reset@InfoWin@@QAEXXZ
+// ORIGINAL: 0x00459280 ?reset@InfoWin@@QAEXXZ 0x00459280-0x0045929C
 // size      28 bytes
-// spans     0x00459280-0x0045929C
 // prototype void (__thiscall ?reset@InfoWin@@QAEXXZ)(InfoWin* this)
 // callers   7   call targets   1
 // kind      game
@@ -132,10 +122,8 @@ void __fastcall info_win_reset_redirect(InfoWin *self, void *) {
 }
 
 /*
-ORIGINAL: 0x00458D40 BYTE_EXACT
-// name      ?on_right_click@InfoWin@@QAEXHH@Z
+// ORIGINAL: 0x00458D40 ?on_right_click@InfoWin@@QAEXHH@Z 0x00458D40-0x00458D54 BYTE_EXACT
 // size      20 bytes
-// spans     0x00458D40-0x00458D54
 // prototype void (__thiscall ?on_right_click@InfoWin@@QAEXHH@Z)(InfoWin* this, int, int)
 // callers   1   call targets   1
 // kind      game

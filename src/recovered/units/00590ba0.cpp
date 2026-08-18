@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00590BA0 FILE
-// name      ?say_vehicles@@YAXPAXHH@Z
+// ORIGINAL: 0x00590BA0 ?say_vehicles@@YAXPAXHH@Z 0x00590BA0-0x00590C14 FILE
 // size      116 bytes
-// spans     0x00590BA0-0x00590C14
 // prototype 
 // callers   0   call targets   2
 // kind      game

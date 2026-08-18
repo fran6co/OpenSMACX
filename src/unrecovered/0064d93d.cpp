@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064D93D EXCLUDED S1
-// name      ___crtGetStringTypeA
+// ORIGINAL: 0x0064D93D ___crtGetStringTypeA 0x0064D93D-0x0064DA86 EXCLUDED S1
 // size      329 bytes
-// spans     0x0064D93D-0x0064DA86
 // prototype int (__cdecl ___crtGetStringTypeA)(DWORD dwInfoType, LPCSTR lpSrcStr, int cchSrc, LPWORD lpCharType, UINT CodePage, LCID Locale, int)
 // callers   2   call targets   2
 // kind      library

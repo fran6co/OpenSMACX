@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0050EF50 FILE
-// name      ?go_reset@@YAXXZ
+// ORIGINAL: 0x0050EF50 ?go_reset@@YAXXZ 0x0050EF50-0x0050F166 FILE
 // size      534 bytes
-// spans     0x0050EF50-0x0050F166
 // prototype 
 // callers   7   call targets   4
 // kind      game

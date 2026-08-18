@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00627C30 BYTE_EXACT FILE
+// ORIGINAL: 0x00627C30 ?pop_ask_number@@YAHPADPADHP6AHXZ@Z 0x00627C30-0x00627CFC FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?pop_ask_number@@YAHPADPADHP6AHXZ@Z
 // size      204 bytes
-// spans     0x00627C30-0x00627CFC
 // prototype int (__cdecl ?pop_ask_number@@YAHPADPADHP6AHXZ@Z)(int8* srcFileID, int8* sectionID, int, int (__cdecl *)())
 // callers   1   call targets   9
 // kind      game

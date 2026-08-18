@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004C56D0 BYTE_EXACT
-// name      ?create_device@Midi_Device@@QAEHK@Z
+// ORIGINAL: 0x004C56D0 ?create_device@Midi_Device@@QAEHK@Z 0x004C56D0-0x004C5707 BYTE_EXACT
 // size      55 bytes
-// spans     0x004C56D0-0x004C5707
 // prototype int (__thiscall ?create_device@Midi_Device@@QAEHK@Z)(Midi_Device* this, unsigned int)
 // callers   0   call targets   0
 // kind      game

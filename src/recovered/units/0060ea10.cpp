@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0060EA10 FILE
-// name      ?flip_state_id@CheckBox@@QAEXH@Z
+// ORIGINAL: 0x0060EA10 ?flip_state_id@CheckBox@@QAEXH@Z 0x0060EA10-0x0060EB48 FILE
 // size      312 bytes
-// spans     0x0060EA10-0x0060EB48
 // prototype void (__thiscall ?flip_state_id@CheckBox@@QAEXH@Z)(CheckBox* this, int)
 // callers   1   call targets   0
 // kind      game

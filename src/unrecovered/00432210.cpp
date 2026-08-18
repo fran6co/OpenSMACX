@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00432210 BYTE_EXACT FILE
+// ORIGINAL: 0x00432210 ?on_iface_group_clicked@Datalink@@QAEXHHH@Z 0x00432210-0x0043228B FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?on_iface_group_clicked@Datalink@@QAEXHHH@Z
 // size      123 bytes
-// spans     0x00432210-0x0043228B
 // prototype void (__thiscall ?on_iface_group_clicked@Datalink@@QAEXHHH@Z)(Datalink* this, int, int, int)
 // callers   0   call targets   3
 // kind      game

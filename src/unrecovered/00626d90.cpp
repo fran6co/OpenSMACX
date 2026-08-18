@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00626D90 FILE
+// ORIGINAL: 0x00626D90 ?scan_out_line_poly_dest@@YAIHH@Z 0x00626D90-0x00626E0B FILE
 // working copy - scaffold materialised by --work
-// name      ?scan_out_line_poly_dest@@YAIHH@Z
 // size      123 bytes
-// spans     0x00626D90-0x00626E0B
 // prototype 
 // callers   0   call targets   0
 // kind      game

@@ -1,17 +1,6 @@
-// ORIGINAL: 0x004B1080 FILE
-// RULED-OUT: MISMATCH #9 'call' vs 'mov' (framed build, sim 0.57). Diplomacy
-//            mood tooltip: two nested 11-slot table walks (skipping index 3,
-//            the "self" faction) over g_0094b024/g_0096ccb0 with two
-//            neg/border-guard special cases, transcribed from the Ghidra
-//            pseudocode's already-resolved index math rather than re-deriving
-//            it from the raw asm. Dropped the `piVar5 - 9` sprite-frame index
-//            correction (applied past the skipped slot) as a simplification -
-//            used the plain loop index instead. `Strings::get` returns `int`,
-//            not `char *` - matches the catalogue signature; the first draft
-//            mismatched that and was a NO_COMPILE.
-// name      ?draw_mouseover@SocialWin@@QAEXXZ
+// ORIGINAL: 0x004B1080 ?draw_mouseover@SocialWin@@QAEXXZ 0x004B1080-0x004B178F FILE
+// RULED-OUT: MISMATCH #9 'call' vs 'mov' (framed build, sim 0.57). Diplomacy mood tooltip: two nested 11-slot table walks (skipping index 3, the "self" faction) over g_0094b024/g_0096ccb0 with two neg/border-guard special cases, transcribed from the Ghidra pseudocode's already-resolved index math rather than re-deriving it from the raw asm. Dropped the `piVar5 - 9` sprite-frame index correction (applied past the skipped slot) as a simplification - used the plain loop index instead. `Strings::get` returns `int`, not `char *` - matches the catalogue signature; the first draft mismatched that and was a NO_COMPILE.
 // size      1807 bytes
-// spans     0x004B1080-0x004B178F
 // prototype void (__thiscall ?draw_mouseover@SocialWin@@QAEXXZ)(SocialWin* this)
 // callers   4   call targets   13
 // kind      game

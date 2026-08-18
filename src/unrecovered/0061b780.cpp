@@ -1,4 +1,4 @@
-// ORIGINAL: 0x0061B780 FILE
+// ORIGINAL: 0x0061B780 sub_61b780 0x0061B780-0x0061C08E FILE
 // UNRECOVERABLE (partial): sibling of 0x00620A10 - a gouraud-shaded affine
 //   texture-mapping scanline rasterizer with the same dual FPU/integer
 //   fixed-point DDA pixel loop that packs an `add` carry-out into an
@@ -13,9 +13,7 @@
 //   the raw disassembly. The two DDA loop bodies are placeholders
 //   (RULED-OUT) that compile but do not reproduce the pixel math.
 // working copy - scaffold materialised by --work
-// name      sub_61b780
 // size      2318 bytes
-// spans     0x0061B780-0x0061C08E
 // prototype 
 // callers   0   call targets   3
 // kind      game

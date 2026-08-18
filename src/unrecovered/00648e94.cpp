@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00648E94 EXCLUDED S1
-// name      ?ExFilterRethrow@@YAHPAU_EXCEPTION_POINTERS@@@Z
+// ORIGINAL: 0x00648E94 ?ExFilterRethrow@@YAHPAU_EXCEPTION_POINTERS@@@Z 0x00648E94-0x00648EBE EXCLUDED S1
 // size      42 bytes
-// spans     0x00648E94-0x00648EBE
 // prototype 
 // callers   1   call targets   0
 // kind      library

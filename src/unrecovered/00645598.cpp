@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00645598 EXCLUDED S1
-// name      _fclose
+// ORIGINAL: 0x00645598 _fclose 0x00645598-0x006455C9 EXCLUDED S1
 // size      49 bytes
-// spans     0x00645598-0x006455C9
 // prototype 
 // callers   36   call targets   3
 // kind      library

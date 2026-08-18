@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064A09C EXCLUDED S1
-// name      __filbuf
+// ORIGINAL: 0x0064A09C __filbuf 0x0064A09C-0x0064A178 EXCLUDED S1
 // size      220 bytes
-// spans     0x0064A09C-0x0064A178
 // prototype 
 // callers   3   call targets   2
 // kind      library

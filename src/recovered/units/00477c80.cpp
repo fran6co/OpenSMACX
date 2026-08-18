@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00477C80 FILE
-// name      ??0MonuWin@@QAE@XZ
+// ORIGINAL: 0x00477C80 ??0MonuWin@@QAE@XZ 0x00477C80-0x00477DC7;0x00656080-0x0065615E FILE
 // size      549 bytes
-// spans     0x00477C80-0x00477DC7;0x00656080-0x0065615E
 // prototype void (__thiscall ??0MonuWin@@QAE@XZ)(MonuWin* this)
 // callers   1   call targets   7
 // kind      game

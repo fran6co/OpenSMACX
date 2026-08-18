@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064D3BF EXCLUDED S1
-// name      __ZeroTail
+// ORIGINAL: 0x0064D3BF __ZeroTail 0x0064D3BF-0x0064D408 EXCLUDED S1
 // size      73 bytes
-// spans     0x0064D3BF-0x0064D408
 // prototype 
 // callers   1   call targets   0
 // kind      library

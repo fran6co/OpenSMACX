@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004D8FA0 FILE
-// name      ?convoy@Console@@QAEXH@Z
+// ORIGINAL: 0x004D8FA0 ?convoy@Console@@QAEXH@Z 0x004D8FA0-0x004D916D FILE
 // size      461 bytes
-// spans     0x004D8FA0-0x004D916D
 // prototype void (__thiscall ?convoy@Console@@QAEXH@Z)(Console* this, int vehID)
 // callers   2   call targets   13
 // kind      game

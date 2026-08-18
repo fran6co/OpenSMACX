@@ -24,10 +24,8 @@ func_edit_box_set_text EditBoxOriginalSetText =
 
 /*
 Purpose: Apply one length limit to all ten edit boxes in the group.
-ORIGINAL: 0x006120B0 BYTE_EXACT
-// name      ?set_text_limits@EditGroup@@QAEXH@Z
+// ORIGINAL: 0x006120B0 ?set_text_limits@EditGroup@@QAEXH@Z 0x006120B0-0x006120C3 BYTE_EXACT
 // size      19 bytes
-// spans     0x006120B0-0x006120C3
 // prototype void (__thiscall ?set_text_limits@EditGroup@@QAEXH@Z)(EditGroup* this, int)
 // callers   1   call targets   0
 // kind      game
@@ -44,10 +42,8 @@ void EditGroup::set_text_limits(int limit) {
 
 /*
 Purpose: Return one box's text buffer, or nothing when that box is absent.
-ORIGINAL: 0x00612060
-// name      ?get_text@EditGroup@@QAEPADH@Z
+// ORIGINAL: 0x00612060 ?get_text@EditGroup@@QAEPADH@Z 0x00612060-0x00612079
 // size      25 bytes
-// spans     0x00612060-0x00612079
 // prototype int8* (__thiscall ?get_text@EditGroup@@QAEPADH@Z)(EditGroup* this, int)
 // callers   1   call targets   0
 // kind      game
@@ -66,10 +62,8 @@ char *EditGroup::get_text(int index) {
 
 /*
 Purpose: Set one box's text, doing nothing when that box is absent.
-ORIGINAL: 0x00612040
-// name      ?set_text@EditGroup@@QAEXPADH@Z
+// ORIGINAL: 0x00612040 ?set_text@EditGroup@@QAEXPADH@Z 0x00612040-0x00612059
 // size      25 bytes
-// spans     0x00612040-0x00612059
 // prototype void (__thiscall ?set_text@EditGroup@@QAEXPADH@Z)(EditGroup* this, int8*, int)
 // callers   0   call targets   1
 // kind      game

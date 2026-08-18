@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064F430 EXCLUDED S1
-// name      ___shr_12
+// ORIGINAL: 0x0064F430 ___shr_12 0x0064F430-0x0064F45D EXCLUDED S1
 // size      45 bytes
-// spans     0x0064F430-0x0064F45D
 // prototype 
 // callers   2   call targets   0
 // kind      library

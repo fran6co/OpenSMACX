@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064524C EXCLUDED S1
-// name      __unwind_handler
+// ORIGINAL: 0x0064524C __unwind_handler 0x0064524C-0x0064526E EXCLUDED S1
 // size      34 bytes
-// spans     0x0064524C-0x0064526E
 // prototype 
 // callers   0   call targets   0
 // kind      library

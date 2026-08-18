@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005D5C50 FILE
+// ORIGINAL: 0x005D5C50 PrevWndFunc 0x005D5C50-0x005D5CEA FILE
 // working copy - scaffold materialised by --work
-// name      PrevWndFunc
 // size      154 bytes
-// spans     0x005D5C50-0x005D5CEA
 // prototype 
 // callers   0   call targets   0
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064AA3F EXCLUDED S1
-// name      ___doserrno
+// ORIGINAL: 0x0064AA3F ___doserrno 0x0064AA3F-0x0064AA48 EXCLUDED S1
 // size      9 bytes
-// spans     0x0064AA3F-0x0064AA48
 // prototype 
 // callers   13   call targets   1
 // kind      library

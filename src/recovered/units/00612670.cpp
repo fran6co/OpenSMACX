@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00612670 BYTE_EXACT FILE
-// name      ?on_dialog_focus@EditGroup@@QAEXH@Z
+// ORIGINAL: 0x00612670 ?on_dialog_focus@EditGroup@@QAEXH@Z 0x00612670-0x006126B6 FILE BYTE_EXACT
 // size      70 bytes
-// spans     0x00612670-0x006126B6
 // prototype void (__thiscall ?on_dialog_focus@EditGroup@@QAEXH@Z)(EditGroup* this, int)
 // callers   1   call targets   0
 // kind      game

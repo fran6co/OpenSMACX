@@ -1,16 +1,7 @@
-// ORIGINAL: 0x00436090 FILE
-// RULED-OUT: full transcription (mnemonic_similarity 0.576, 930/1780 original
-//            mnemonics in common); two Font structs are embedded back to back
-//            at +0x14568 (detail line font) and +0x14590 (name font), each
-//            with the compiler inlining `unk1<0 ? line_height_ : height_+unk1`
-//            at every call site rather than through a getter - kept as a
-//            helper here. First divergence is in the opening RECT-copy
-//            prologue (four field reads compiled as one push/lea shuffle in
-//            the original vs plain assignment here).
+// ORIGINAL: 0x00436090 ?draw_vehicle@DesignWin@@QAEXH@Z 0x00436090-0x00437999 FILE
+// RULED-OUT: full transcription (mnemonic_similarity 0.576, 930/1780 original mnemonics in common); two Font structs are embedded back to back at +0x14568 (detail line font) and +0x14590 (name font), each with the compiler inlining `unk1<0 ? line_height_ : height_+unk1` at every call site rather than through a getter - kept as a helper here. First divergence is in the opening RECT-copy prologue (four field reads compiled as one push/lea shuffle in the original vs plain assignment here).
 // working copy - scaffold materialised by --work
-// name      ?draw_vehicle@DesignWin@@QAEXH@Z
 // size      6409 bytes
-// spans     0x00436090-0x00437999
 // prototype void (__thiscall ?draw_vehicle@DesignWin@@QAEXH@Z)(DesignWin* this, int)
 // callers   8   call targets   31
 // kind      game

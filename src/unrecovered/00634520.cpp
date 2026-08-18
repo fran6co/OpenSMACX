@@ -1,14 +1,7 @@
-// ORIGINAL: 0x00634520 FILE
-// RULED-OUT: extern "C" int __stdcall sub_634520(int) per scaffold contract
-//            (no this, wrong callee: disasm reads ecx=this Vec3 and a stack
-//            dest ptr, ret 4). Rewritten as Vec3F::normalize(float*)
-//            thiscall; differently-named sqrt_impl(double) sidesteps the
-//            scaffold's nullary sqrt(). MISMATCH: FPU stack scheduling and
-//            extra stack zero-stores not reproduced (153 vs 189 bytes)
+// ORIGINAL: 0x00634520 sub_634520 0x00634520-0x006345DD FILE
+// RULED-OUT: extern "C" int __stdcall sub_634520(int) per scaffold contract (no this, wrong callee: disasm reads ecx=this Vec3 and a stack dest ptr, ret 4). Rewritten as Vec3F::normalize(float*) thiscall; differently-named sqrt_impl(double) sidesteps the scaffold's nullary sqrt(). MISMATCH: FPU stack scheduling and extra stack zero-stores not reproduced (153 vs 189 bytes)
 // working copy - scaffold materialised by --work
-// name      sub_634520
 // size      189 bytes
-// spans     0x00634520-0x006345DD
 // prototype 
 // callers   0   call targets   1
 // kind      game

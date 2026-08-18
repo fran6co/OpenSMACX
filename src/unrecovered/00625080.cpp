@@ -1,18 +1,12 @@
-// ORIGINAL: 0x00625080 FILE
+// ORIGINAL: 0x00625080 sub_625080 0x00625080-0x00625294 FILE
+// RULED-OUT: verbatim zero-param head - disasm reads [esp+0x10]/[esp+0x14]/ [esp+0x1c] as three stack args before any push (IDA's 3-int guess confirmed by field roles: int*, int, byte*), so the head was widened to those 3 params; prologue order still diverges from the original's odd 2-push-then-arg2 pattern.
 // working copy - scaffold materialised by --work
-// name      sub_625080
 // size      532 bytes
-// spans     0x00625080-0x00625294
 // prototype 
 // callers   4   call targets   1
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00628AD0
-// RULED-OUT: verbatim zero-param head - disasm reads [esp+0x10]/[esp+0x14]/
-//            [esp+0x1c] as three stack args before any push (IDA's 3-int
-//            guess confirmed by field roles: int*, int, byte*), so the
-//            head was widened to those 3 params; prologue order still
-//            diverges from the original's odd 2-push-then-arg2 pattern.
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: sub_625080  at 0x00625080  (532 bytes)

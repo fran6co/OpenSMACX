@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00647942 EXCLUDED S1
-// name      __ftell_lk
+// ORIGINAL: 0x00647942 __ftell_lk 0x00647942-0x00647AA3 EXCLUDED S1
 // size      353 bytes
-// spans     0x00647942-0x00647AA3
 // prototype 
 // callers   2   call targets   2
 // kind      library

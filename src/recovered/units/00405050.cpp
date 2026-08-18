@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00405050 BYTE_EXACT FILE
-// name      ?on_adjust_button_placement@Popup@@QAEXPAH00@Z
+// ORIGINAL: 0x00405050 ?on_adjust_button_placement@Popup@@QAEXPAH00@Z 0x00405050-0x00405093 FILE BYTE_EXACT
 // size      67 bytes
-// spans     0x00405050-0x00405093
 // prototype void (__thiscall ?on_adjust_button_placement@Popup@@QAEXPAH00@Z)(Popup* this, int*, int*, int*)
 // callers   0   call targets   0
 // kind      game

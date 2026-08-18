@@ -1,19 +1,7 @@
-// ORIGINAL: 0x005FC7F0 FILE
-// RULED-OUT: PeekMessageA/TranslateMessage/DispatchMessageA (loaded as
-//   plain function pointers from the IAT slots at 0x669358/0x66935c/
-//   0x669340, per the emitted globals) read into locals right after the
-//   first do_video/do_net/check_net() triple, matching the original's
-//   `mov esi,[...]` placement AFTER those three calls rather than before
-//   (moving it earlier cost the first 5 instructions). Best reached is
-//   78.3% mnemonic similarity (#5 call vs push): the callee-register-save
-//   prologue still spills one extra value this body doesn't, not chased
-//   further. `handle_sys_msg` at 0x632db0 is a thiscall `Net` member with
-//   `this` read from 0x9be608 right before the call (`mov ecx,[0x9be608]`),
-//   not a bare cdecl call.
+// ORIGINAL: 0x005FC7F0 ?do_task@@YAHXZ 0x005FC7F0-0x005FC8E8 FILE
+// RULED-OUT: PeekMessageA/TranslateMessage/DispatchMessageA (loaded as plain function pointers from the IAT slots at 0x669358/0x66935c/ 0x669340, per the emitted globals) read into locals right after the first do_video/do_net/check_net() triple, matching the original's `mov esi,[...]` placement AFTER those three calls rather than before (moving it earlier cost the first 5 instructions). Best reached is 78.3% mnemonic similarity (#5 call vs push): the callee-register-save prologue still spills one extra value this body doesn't, not chased further. `handle_sys_msg` at 0x632db0 is a thiscall `Net` member with `this` read from 0x9be608 right before the call (`mov ecx,[0x9be608]`), not a bare cdecl call.
 // working copy - scaffold materialised by --work
-// name      ?do_task@@YAHXZ
 // size      248 bytes
-// spans     0x005FC7F0-0x005FC8E8
 // prototype 
 // callers   4   call targets   4
 // kind      game

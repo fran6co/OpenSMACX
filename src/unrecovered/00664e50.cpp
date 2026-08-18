@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00664E50 EXCLUDED S2d
-// name      sub_664e50
+// ORIGINAL: 0x00664E50 sub_664e50 0x00664E50-0x0066554B EXCLUDED S2d
 // size      1787 bytes
-// spans     0x00664E50-0x0066554B
 // prototype 
 // callers   0   call targets   0
 // kind      game

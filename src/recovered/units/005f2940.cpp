@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005F2940 FILE
-// name      ?set_rects@Win@@QAEXXZ
+// ORIGINAL: 0x005F2940 ?set_rects@Win@@QAEXXZ 0x005F2940-0x005F2ABA FILE
 // size      378 bytes
-// spans     0x005F2940-0x005F2ABA
 // prototype void (__thiscall ?set_rects@Win@@QAEXXZ)(Win* this)
 // callers   0   call targets   3
 // kind      game

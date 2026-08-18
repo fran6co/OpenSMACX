@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00471870 BYTE_EXACT
-// name      ?listbox_draw@MessageWin@@QAAHPAUGraphicWin@@HHHHH@Z
+// ORIGINAL: 0x00471870 ?listbox_draw@MessageWin@@QAAHPAUGraphicWin@@HHHHH@Z 0x00471870-0x004718BF BYTE_EXACT
 // size      79 bytes
-// spans     0x00471870-0x004718BF
 // prototype 
 // callers   0   call targets   1
 // kind      game

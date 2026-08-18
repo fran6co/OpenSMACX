@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00617020 BYTE_EXACT
-// name      ?close@Caviar@@QAEXXZ
+// ORIGINAL: 0x00617020 ?close@Caviar@@QAEXXZ 0x00617020-0x0061707F BYTE_EXACT
 // size      95 bytes
-// spans     0x00617020-0x0061707F
 // prototype void (__thiscall ?close@Caviar@@QAEXXZ)(Caviar* this)
 // callers   11   call targets   1
 // kind      game

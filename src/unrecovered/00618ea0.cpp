@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00618EA0 BYTE_EXACT FILE
-// name      ??0Font@@QAE@XZ
+// ORIGINAL: 0x00618EA0 ??0Font@@QAE@XZ 0x00618EA0-0x00618EC0 FILE BYTE_EXACT
 // size      32 bytes
-// spans     0x00618EA0-0x00618EC0
 // prototype void (__thiscall ??0Font@@QAE@XZ)(Font* this)
 // callers   41   call targets   0
 // kind      

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00645C70 EXCLUDED S1
-// name      _memcmp
+// ORIGINAL: 0x00645C70 _memcmp 0x00645C70-0x00645D1C EXCLUDED S1
 // size      172 bytes
-// spans     0x00645C70-0x00645D1C
 // prototype 
 // callers   6   call targets   0
 // kind      library

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064C8EE EXCLUDED S1
-// name      __get_exp
+// ORIGINAL: 0x0064C8EE __get_exp 0x0064C8EE-0x0064C902 EXCLUDED S1
 // size      20 bytes
-// spans     0x0064C8EE-0x0064C902
 // prototype 
 // callers   1   call targets   0
 // kind      library

@@ -1,27 +1,13 @@
-// ORIGINAL: 0x00614360 FILE
+// ORIGINAL: 0x00614360 ?UNK3@FileWin@@QAEHPAD@Z 0x00614360-0x00614694 FILE
+// RULED-OUT: MISMATCH #0 'sub' vs 'push' - original is FPO'd (no ebp frame, ebp free as a GP register); the rebuilt body gets a standard ebp frame instead. Not chased (820B, heaviest Win32-API surface in this batch: GetCurrentDirectoryA/ SetCurrentDirectoryA/DlgDirListA/FindFirstFileA/FindClose/ SendMessageA/GetLastError all called indirectly through the IAT-slot globals, matching the disasm's `call dword ptr [addr]` sites). `edi` = self+0x286c (the embedded ListBox) is constant for the whole function body past its one `lea`; the two vbtable-adjusted calls (remove_all, final slot001) go through a `StringStructThunk`/`VCall` shim built from the raw `*(int*)(*(int*)lb+N)` displacement, not from a modelled virtual-base layout.
 // working copy - scaffold materialised by --work
-// name      ?UNK3@FileWin@@QAEHPAD@Z
 // size      820 bytes
-// spans     0x00614360-0x00614694
 // prototype int (__thiscall ?UNK3@FileWin@@QAEHPAD@Z)(FileWin* this, int8* lpPathName)
 // callers   4   call targets   9
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00402970 0x0060A670 0x0060C920 0x0060C9B0 0x00628AF0 0x006453E0 0x00645470 0x00645660 0x0064FD20
 // indirect  0x00614396 0x006143A3 0x006143AE 0x00614418 0x00614422 0x0061444E 0x0061446A 0x006144A1 0x006144A8 0x006144FA 0x00614504 0x0061452C 0x00614552 0x006145C0 0x006145C7 0x00614680
-// RULED-OUT: MISMATCH #0 'sub' vs 'push' - original is FPO'd (no ebp
-//            frame, ebp free as a GP register); the rebuilt body gets a
-//            standard ebp frame instead. Not chased (820B, heaviest
-//            Win32-API surface in this batch: GetCurrentDirectoryA/
-//            SetCurrentDirectoryA/DlgDirListA/FindFirstFileA/FindClose/
-//            SendMessageA/GetLastError all called indirectly through the
-//            IAT-slot globals, matching the disasm's `call dword ptr
-//            [addr]` sites). `edi` = self+0x286c (the embedded ListBox)
-//            is constant for the whole function body past its one `lea`;
-//            the two vbtable-adjusted calls (remove_all, final slot001)
-//            go through a `StringStructThunk`/`VCall` shim built from
-//            the raw `*(int*)(*(int*)lb+N)` displacement, not from a
-//            modelled virtual-base layout.
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?UNK3@FileWin@@QAEHPAD@Z  at 0x00614360  (820 bytes)

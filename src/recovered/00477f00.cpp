@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00477F00 BYTE_EXACT
-// name      ?on_button_clicked@MultiWin@@QAEXH@Z
+// ORIGINAL: 0x00477F00 ?on_button_clicked@MultiWin@@QAEXH@Z 0x00477F00-0x00477F30 BYTE_EXACT
 // size      48 bytes
-// spans     0x00477F00-0x00477F30
 // prototype void (__thiscall ?on_button_clicked@MultiWin@@QAEXH@Z)(MultiWin* this, int)
 // callers   2   call targets   2
 // kind      game

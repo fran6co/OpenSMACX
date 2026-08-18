@@ -1,17 +1,7 @@
-// ORIGINAL: 0x004B0FA0 BYTE_EXACT FILE
-// LEVER: push/mov the faction test lives in an `int` set on BOTH paths of the
-//   `baseID >= 0` branch and tested after the join, not inside it. The join
-//   forces VC6 to MATERIALISE the comparison (`xor eax,eax; sete al;
-//   test eax,eax`) instead of folding it into `cmp/jne`, and that one extra
-//   live value is what pushes `this` out of ecx into the callee-saved edi
-//   (`mov edi, ecx`) - the whole prologue interleave follows from it. Every
-//   in-place spelling folds: `int eq = (b==f)`, `!!`, `?1:0`, `==1`, an
-//   `__inline` helper, and a shared top-level `eq` all emit `cmp/jne`, and
-//   `& 1` / `& 0xFFFF` materialise but leak into `test al,1`.
+// ORIGINAL: 0x004B0FA0 ?immune@SocialWin@@QAEHHHH@Z 0x004B0FA0-0x004B1074 FILE BYTE_EXACT
+// LEVER: push/mov the faction test lives in an `int` set on BOTH paths of the `baseID >= 0` branch and tested after the join, not inside it. The join forces VC6 to MATERIALISE the comparison (`xor eax,eax; sete al; test eax,eax`) instead of folding it into `cmp/jne`, and that one extra live value is what pushes `this` out of ecx into the callee-saved edi (`mov edi, ecx`) - the whole prologue interleave follows from it. Every in-place spelling folds: `int eq = (b==f)`, `!!`, `?1:0`, `==1`, an `__inline` helper, and a shared top-level `eq` all emit `cmp/jne`, and `& 1` / `& 0xFFFF` materialise but leak into `test al,1`.
 // working copy - scaffold materialised by --work
-// name      ?immune@SocialWin@@QAEHHHH@Z
 // size      212 bytes
-// spans     0x004B0FA0-0x004B1074
 // prototype int (__thiscall ?immune@SocialWin@@QAEHHHH@Z)(SocialWin* this, int, int, int)
 // callers   0   call targets   0
 // kind      game

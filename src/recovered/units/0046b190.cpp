@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0046B190 BYTE_EXACT FILE
-// name      ?draw_map@@YAXH@Z
+// ORIGINAL: 0x0046B190 ?draw_map@@YAXH@Z 0x0046B190-0x0046B1CA FILE BYTE_EXACT
 // size      58 bytes
-// spans     0x0046B190-0x0046B1CA
 // prototype 
 // callers   68   call targets   1
 // kind      game

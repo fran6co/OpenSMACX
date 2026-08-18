@@ -1,10 +1,7 @@
-// ORIGINAL: 0x005DB6C0 FILE
-// RULED-OUT: direct transcription only tried once; diverges at #0 (push vs
-//            mov) in the prologue register-save pattern
+// ORIGINAL: 0x005DB6C0 ?write_cent_l@Buffer@@QAEHPAVFont@@PADHHHH@Z 0x005DB6C0-0x005DB71E FILE
+// RULED-OUT: direct transcription only tried once; diverges at #0 (push vs mov) in the prologue register-save pattern
 // working copy - scaffold materialised by --work
-// name      ?write_cent_l@Buffer@@QAEHPAVFont@@PADHHHH@Z
 // size      94 bytes
-// spans     0x005DB6C0-0x005DB71E
 // prototype int (__thiscall ?write_cent_l@Buffer@@QAEHPAVFont@@PADHHHH@Z)(Buffer* this, Font*, int8*, int, int, int, int)
 // callers   0   call targets   1
 // kind      game

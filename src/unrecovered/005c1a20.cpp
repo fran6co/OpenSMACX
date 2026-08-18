@@ -1,12 +1,7 @@
-// ORIGINAL: 0x005C1A20 FILE
-// RULED-OUT: nesting the a1<0 guard as `if (a1>=0){...} return 0;` instead
-//            of an early return - same 'jl' polarity either way (/O2
-//            canonicalises both to the same CFG); the rest of the OR-chain
-//            and both later guards already match
+// ORIGINAL: 0x005C1A20 ?veh_selectable@@YAHH@Z 0x005C1A20-0x005C1AAA FILE
+// RULED-OUT: nesting the a1<0 guard as `if (a1>=0){...} return 0;` instead of an early return - same 'jl' polarity either way (/O2 canonicalises both to the same CFG); the rest of the OR-chain and both later guards already match
 // working copy - scaffold materialised by --work
-// name      ?veh_selectable@@YAHH@Z
 // size      138 bytes
-// spans     0x005C1A20-0x005C1AAA
 // prototype int (__cdecl ?veh_selectable@@YAHH@Z)(int vehID)
 // callers   11   call targets   1
 // kind      game

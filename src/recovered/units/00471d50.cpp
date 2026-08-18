@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00471D50 FILE
-// name      ?init@MessageWin@@QAEXXZ
+// ORIGINAL: 0x00471D50 ?init@MessageWin@@QAEXXZ 0x00471D50-0x00471F66;0x00655F75-0x00655F8A FILE
 // size      555 bytes
-// spans     0x00471D50-0x00471F66;0x00655F75-0x00655F8A
 // prototype void (__thiscall ?init@MessageWin@@QAEXXZ)(MessageWin* this)
 // callers   1   call targets   10
 // kind      game

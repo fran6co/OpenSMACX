@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005ED9D0 FILE
-// name      ?show@Win@@QAEXH@Z
+// ORIGINAL: 0x005ED9D0 ?show@Win@@QAEXH@Z 0x005ED9D0-0x005EDCCB FILE
 // size      763 bytes
-// spans     0x005ED9D0-0x005EDCCB
 // prototype void (__thiscall ?show@Win@@QAEXH@Z)(Win* this, int)
 // callers   35   call targets   6
 // kind      game

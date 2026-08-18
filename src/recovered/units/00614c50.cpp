@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00614C50 BYTE_EXACT FILE
-// name      ?filebox_draw@FileWin@@QAAXPAUGraphicWin@@HHHHH@Z
+// ORIGINAL: 0x00614C50 ?filebox_draw@FileWin@@QAAXPAUGraphicWin@@HHHHH@Z 0x00614C50-0x00614D84 FILE BYTE_EXACT
 // size      308 bytes
-// spans     0x00614C50-0x00614D84
 // prototype 
 // callers   1   call targets   1
 // kind      game

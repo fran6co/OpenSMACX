@@ -1,9 +1,7 @@
-// ORIGINAL: 0x004402A0 FILE
+// ORIGINAL: 0x004402A0 ?on_redraw@DiploPop@@QAEXXZ 0x004402A0-0x00440379 FILE
 // RULED-OUT: RECT local via named struct field assigns, not raw offsets
 // working copy - scaffold materialised by --work
-// name      ?on_redraw@DiploPop@@QAEXXZ
 // size      217 bytes
-// spans     0x004402A0-0x00440379
 // prototype void (__thiscall ?on_redraw@DiploPop@@QAEXXZ)(DiploPop* this)
 // callers   0   call targets   6
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00406380 FILE
-// name      ?start@Popup@@QAEXPADPBDHPADHPAUGraphicWin@@@Z
+// ORIGINAL: 0x00406380 ?start@Popup@@QAEXPADPBDHPADHPAUGraphicWin@@@Z 0x00406380-0x004064CC FILE
 // size      332 bytes
-// spans     0x00406380-0x004064CC
 // prototype void (__thiscall ?start@Popup@@QAEXPADPBDHPADHPAUGraphicWin@@@Z)(Popup* this, int8* srcFileID, int8* sectionID, int, int8*, int, GraphicWin*)
 // callers   84   call targets   4
 // kind      game

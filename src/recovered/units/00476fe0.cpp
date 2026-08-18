@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00476FE0 FILE
-// name      ?mon_facility_built@@YAXHPAD@Z
+// ORIGINAL: 0x00476FE0 ?mon_facility_built@@YAXHPAD@Z 0x00476FE0-0x004770F2 FILE
 // size      274 bytes
-// spans     0x00476FE0-0x004770F2
 // prototype 
 // callers   1   call targets   3
 // kind      game

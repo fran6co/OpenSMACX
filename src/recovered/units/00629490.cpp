@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00629490 FILE
-// name      ?add_fixup@StringBox@@QAEXXZ
+// ORIGINAL: 0x00629490 ?add_fixup@StringBox@@QAEXXZ 0x00629490-0x00629703 FILE
 // size      627 bytes
-// spans     0x00629490-0x00629703
 // prototype void (__thiscall ?add_fixup@StringBox@@QAEXXZ)(StringBox* this)
 // callers   21   call targets   7
 // kind      game

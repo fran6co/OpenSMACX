@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064BFCC EXCLUDED S1
-// name      __lseek_lk
+// ORIGINAL: 0x0064BFCC __lseek_lk 0x0064BFCC-0x0064C03F EXCLUDED S1
 // size      115 bytes
-// spans     0x0064BFCC-0x0064C03F
 // prototype int (__cdecl __lseek_lk)(int, LONG lDistanceToMove, DWORD dwMoveMethod)
 // callers   5   call targets   3
 // kind      library

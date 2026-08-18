@@ -1,11 +1,7 @@
-// ORIGINAL: 0x004CDA30 FILE
-// RULED-OUT: fixed const-pointer globals for the two indexed word
-//            arrays (address itself scales, so `extern`-style raw
-//            casts used instead). Reached MNEMONIC_ONLY (188 vs 186 B).
+// ORIGINAL: 0x004CDA30 ?action_patrol@@YAXHHH@Z 0x004CDA30-0x004CDAEA FILE
+// RULED-OUT: fixed const-pointer globals for the two indexed word arrays (address itself scales, so `extern`-style raw casts used instead). Reached MNEMONIC_ONLY (188 vs 186 B).
 // working copy - scaffold materialised by --work
-// name      ?action_patrol@@YAXHHH@Z
 // size      186 bytes
-// spans     0x004CDA30-0x004CDAEA
 // prototype void (__cdecl ?action_patrol@@YAXHHH@Z)(int vehID, int xCoord, int yCoord)
 // callers   2   call targets   1
 // kind      game

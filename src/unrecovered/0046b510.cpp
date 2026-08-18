@@ -1,13 +1,7 @@
-// ORIGINAL: 0x0046B510 FILE
-// RULED-OUT: `mov edx,edx` prologue zeroing (used explicit `bool`/int locals
-//            instead of a single xor'd register reused for 0); divergence is
-//            in the prologue register setup (push vs xor at insn #4), not in
-//            the switch body, which was cross-checked field-for-field
-//            against src/map.h's Map struct and the 11-entry jump table.
+// ORIGINAL: 0x0046B510 ?editor@MapWin@@QAEXHHH@Z 0x0046B510-0x0046BFCF FILE
+// RULED-OUT: `mov edx,edx` prologue zeroing (used explicit `bool`/int locals instead of a single xor'd register reused for 0); divergence is in the prologue register setup (push vs xor at insn #4), not in the switch body, which was cross-checked field-for-field against src/map.h's Map struct and the 11-entry jump table.
 // working copy - scaffold materialised by --work
-// name      ?editor@MapWin@@QAEXHHH@Z
 // size      2751 bytes
-// spans     0x0046B510-0x0046BFCF
 // prototype void (__thiscall ?editor@MapWin@@QAEXHHH@Z)(MapWin* this, int xCoord, int yCoord, int)
 // callers   4   call targets   12
 // kind      game

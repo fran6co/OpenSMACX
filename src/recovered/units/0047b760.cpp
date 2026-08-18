@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0047B760 FILE
-// name      ?on_left_click@NetWin@@QAEXHH@Z
+// ORIGINAL: 0x0047B760 ?on_left_click@NetWin@@QAEXHH@Z 0x0047B760-0x0047BAF6 FILE
 // size      918 bytes
-// spans     0x0047B760-0x0047BAF6
 // prototype void (__thiscall ?on_left_click@NetWin@@QAEXHH@Z)(NetWin* this, int xCoord, int yCoord)
 // callers   0   call targets   16
 // kind      game

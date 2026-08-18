@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005E8FA5 FILE
-// name      ?draw_multi_table_dest@Sprite@@QAEHPAUBuffer@@HHHHHPAE@Z
+// ORIGINAL: 0x005E8FA5 ?draw_multi_table_dest@Sprite@@QAEHPAUBuffer@@HHHHHPAE@Z 0x005E8FA5-0x005E8FF5 FILE
 // size      80 bytes
-// spans     0x005E8FA5-0x005E8FF5
 // prototype int (__thiscall ?draw_multi_table_dest@Sprite@@QAEHPAUBuffer@@HHHHHPAE@Z)(Sprite* this, Buffer*, int, int, int, int, int, unsigned int8*)
 // callers   1   call targets   1
 // kind      game

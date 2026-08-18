@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004C39D0 FILE
-// name      ?show_all@WorldWin@@QAEXXZ
+// ORIGINAL: 0x004C39D0 ?show_all@WorldWin@@QAEXXZ 0x004C39D0-0x004C3A39 FILE
 // size      105 bytes
-// spans     0x004C39D0-0x004C3A39
 // prototype void (__thiscall ?show_all@WorldWin@@QAEXXZ)(WorldWin* this)
 // callers   5   call targets   2
 // kind      game

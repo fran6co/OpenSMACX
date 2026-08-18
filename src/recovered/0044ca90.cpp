@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0044CA90 BYTE_EXACT
-// name      sub_44ca90
+// ORIGINAL: 0x0044CA90 sub_44ca90 0x0044CA90-0x0044CABA BYTE_EXACT
 // size      42 bytes
-// spans     0x0044CA90-0x0044CABA
 // prototype 
 // callers   0   call targets   1
 // kind      game

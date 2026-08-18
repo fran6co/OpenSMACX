@@ -1,13 +1,7 @@
-// ORIGINAL: 0x004C9B00 FILE
-// RULED-OUT: BaseWin/GraphicWin/TutWin singleton receivers resolved from the
-//            raw disasm's `mov ecx, ADDR` before each thiscall (0x6A7628,
-//            0x8C6E68) since Ghidra rendered them as bare FUN_ calls;
-//            prologue shape differs (#0 push vs sub) from local layout, not
-//            from any single wrong operation.
+// ORIGINAL: 0x004C9B00 ?action_terraform@@YAHHHH@Z 0x004C9B00-0x004CA76B FILE
+// RULED-OUT: BaseWin/GraphicWin/TutWin singleton receivers resolved from the raw disasm's `mov ecx, ADDR` before each thiscall (0x6A7628, 0x8C6E68) since Ghidra rendered them as bare FUN_ calls; prologue shape differs (#0 push vs sub) from local layout, not from any single wrong operation.
 // working copy - scaffold materialised by --work
-// name      ?action_terraform@@YAHHHH@Z
 // size      3179 bytes
-// spans     0x004C9B00-0x004CA76B
 // prototype int (__cdecl ?action_terraform@@YAHHHH@Z)(int vehID, int terraformID, BOOL tgl)
 // callers   8   call targets   27
 // kind      game

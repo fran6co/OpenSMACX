@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0051D720 BYTE_EXACT FILE
-// name      ?menu_daemon@Console@@QAAXH@Z
+// ORIGINAL: 0x0051D720 ?menu_daemon@Console@@QAAXH@Z 0x0051D720-0x0051D733 FILE BYTE_EXACT
 // size      19 bytes
-// spans     0x0051D720-0x0051D733
 // prototype 
 // callers   0   call targets   1
 // kind      game

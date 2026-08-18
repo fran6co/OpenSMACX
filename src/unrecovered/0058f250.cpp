@@ -1,8 +1,6 @@
-// ORIGINAL: 0x0058F250 FILE
+// ORIGINAL: 0x0058F250 ?system_close@@YAXXZ 0x0058F250-0x0058F2E6 FILE
 // working copy - scaffold materialised by --work
-// name      ?system_close@@YAXXZ
 // size      150 bytes
-// spans     0x0058F250-0x0058F2E6
 // prototype 
 // callers   1   call targets   6
 // kind      game

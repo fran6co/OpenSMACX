@@ -1,17 +1,7 @@
-// ORIGINAL: 0x006396A0 FILE
-// RULED-OUT: dense FPU tile/sprite-projection math, esp-relative (frameless) args -
-//            tracked esp displacement by hand across every sub/add esp to resolve which
-//            [esp+N] occurrences are the same real argument vs reused scratch slots
-//            (found Ghidra's own decompile conflated two different pointers under one
-//            "param_1", corrected to p1+4 vs p1+0xc). Signature changed to
-//            float(int,int,int,int,float*,float*) - FPU return, matches trailing
-//            fld+ret with no output slot. Compiles, sim 0.61 framed/frameless (tied).
-//            fxch-heavy FPU scheduling makes byte-exact implausible by hand; not retried
-//            given size (1972 bytes).
+// ORIGINAL: 0x006396A0 sub_6396a0 0x006396A0-0x00639E54 FILE
+// RULED-OUT: dense FPU tile/sprite-projection math, esp-relative (frameless) args - tracked esp displacement by hand across every sub/add esp to resolve which [esp+N] occurrences are the same real argument vs reused scratch slots (found Ghidra's own decompile conflated two different pointers under one "param_1", corrected to p1+4 vs p1+0xc). Signature changed to float(int,int,int,int,float*,float*) - FPU return, matches trailing fld+ret with no output slot. Compiles, sim 0.61 framed/frameless (tied). fxch-heavy FPU scheduling makes byte-exact implausible by hand; not retried given size (1972 bytes).
 // working copy - scaffold materialised by --work
-// name      sub_6396a0
 // size      1972 bytes
-// spans     0x006396A0-0x00639E54
 // prototype 
 // callers   1   call targets   7
 // kind      game

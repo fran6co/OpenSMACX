@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005FD050 BYTE_EXACT FILE
-// name      ?do_mouse@@YAXXZ
+// ORIGINAL: 0x005FD050 ?do_mouse@@YAXXZ 0x005FD050-0x005FD09D FILE BYTE_EXACT
 // size      77 bytes
-// spans     0x005FD050-0x005FD09D
 // prototype 
 // callers   0   call targets   2
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064B597 EXCLUDED S1
-// name      __d_inttype
+// ORIGINAL: 0x0064B597 __d_inttype 0x0064B597-0x0064B5FC EXCLUDED S1
 // size      101 bytes
-// spans     0x0064B597-0x0064B5FC
 // prototype 
 // callers   1   call targets   2
 // kind      library

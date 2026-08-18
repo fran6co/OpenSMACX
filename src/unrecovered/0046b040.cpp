@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0046B040 BYTE_EXACT FILE
-// name      ?draw_tile_fixup@@YAXHHHHHH@Z
+// ORIGINAL: 0x0046B040 ?draw_tile_fixup@@YAXHHHHHH@Z 0x0046B040-0x0046B132 FILE BYTE_EXACT
 // size      242 bytes
-// spans     0x0046B040-0x0046B132
 // prototype
 // callers   1   call targets   1
 // kind      game

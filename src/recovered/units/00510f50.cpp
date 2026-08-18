@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00510F50 FILE
-// name      ?ready@Console@@QAEXXZ
+// ORIGINAL: 0x00510F50 ?ready@Console@@QAEXXZ 0x00510F50-0x00511471 FILE
 // size      1313 bytes
-// spans     0x00510F50-0x00511471
 // prototype void (__thiscall ?ready@Console@@QAEXXZ)(Console* this)
 // callers   3   call targets   15
 // kind      game

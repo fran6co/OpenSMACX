@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00445BB0 FILE
-// name      ?init@Effect@@QAEXPADJ@Z
+// ORIGINAL: 0x00445BB0 ?init@Effect@@QAEXPADJ@Z 0x00445BB0-0x00445CC6 FILE
 // size      278 bytes
-// spans     0x00445BB0-0x00445CC6
 // prototype void (__thiscall ?init@Effect@@QAEXPADJ@Z)(Effect* this, int8*, unsigned int32)
 // callers   1   call targets   5
 // kind      game

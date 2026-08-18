@@ -1,11 +1,7 @@
-// ORIGINAL: 0x005FB700 FILE
-// RULED-OUT: direct transcription only tried once; diverges at #0 (push vs
-//            mov) - the compiled prologue does not preserve esi/edi the same
-//            way the original does
+// ORIGINAL: 0x005FB700 ?rename_menu_item@Menu@@QAEHHHPAD@Z 0x005FB700-0x005FB759 FILE
+// RULED-OUT: direct transcription only tried once; diverges at #0 (push vs mov) - the compiled prologue does not preserve esi/edi the same way the original does
 // working copy - scaffold materialised by --work
-// name      ?rename_menu_item@Menu@@QAEHHHPAD@Z
 // size      89 bytes
-// spans     0x005FB700-0x005FB759
 // prototype int (__thiscall ?rename_menu_item@Menu@@QAEHHHPAD@Z)(Menu* this, int, int, int8*)
 // callers   1   call targets   1
 // kind      game

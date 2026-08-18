@@ -1,14 +1,7 @@
-// ORIGINAL: 0x00468CD0 FILE
-// RULED-OUT: this->field_1DDC0_ (offset 0x1DDC0, matches self[0x7770] and the
-//            class's own field name) and the virtual-base offset table at
-//            *(int*)this (vbptr[1] gives the displacement, then +this+0x474
-//            or +0x4c8) reproduce the two IntersectRect-source-rect and
-//            default-bottom reads; diverges early (#6) given the function's
-//            size (701 bytes, four scan loops) - not chased further.
+// ORIGINAL: 0x00468CD0 ?compute_clip@MapWin@@QAEHHHHPAURECT@@@Z 0x00468CD0-0x00468F8D FILE
+// RULED-OUT: this->field_1DDC0_ (offset 0x1DDC0, matches self[0x7770] and the class's own field name) and the virtual-base offset table at *(int*)this (vbptr[1] gives the displacement, then +this+0x474 or +0x4c8) reproduce the two IntersectRect-source-rect and default-bottom reads; diverges early (#6) given the function's size (701 bytes, four scan loops) - not chased further.
 // working copy - scaffold materialised by --work
-// name      ?compute_clip@MapWin@@QAEHHHHPAURECT@@@Z
 // size      701 bytes
-// spans     0x00468CD0-0x00468F8D
 // prototype int (__thiscall ?compute_clip@MapWin@@QAEHHHHPAURECT@@@Z)(MapWin* this, int, int, int, RECT*)
 // callers   3   call targets   1
 // kind      game

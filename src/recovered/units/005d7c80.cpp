@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005D7C80 BYTE_EXACT FILE
-// name      ?load_bmp@Buffer@@QAGHPBD@Z
+// ORIGINAL: 0x005D7C80 ?load_bmp@Buffer@@QAGHPBD@Z 0x005D7C80-0x005D7C96 FILE BYTE_EXACT
 // size      22 bytes
-// spans     0x005D7C80-0x005D7C96
 // prototype int (__stdcall ?load_bmp@Buffer@@QAGHPBD@Z)(Buffer* this, int8*)
 // callers   0   call targets   1
 // kind      game

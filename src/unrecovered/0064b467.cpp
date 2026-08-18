@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064B467 EXCLUDED S1
-// name      __powhlp
+// ORIGINAL: 0x0064B467 __powhlp 0x0064B467-0x0064B597 EXCLUDED S1
 // size      304 bytes
-// spans     0x0064B467-0x0064B597
 // prototype 
 // callers   1   call targets   1
 // kind      library

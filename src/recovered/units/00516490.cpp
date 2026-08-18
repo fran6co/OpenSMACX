@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00516490 BYTE_EXACT FILE
-// name      ?erase_landmark@Console@@QAEXHH@Z
+// ORIGINAL: 0x00516490 ?erase_landmark@Console@@QAEXHH@Z 0x00516490-0x005165A6 FILE BYTE_EXACT
 // size      278 bytes
-// spans     0x00516490-0x005165A6
 // prototype void (__thiscall ?erase_landmark@Console@@QAEXHH@Z)(Console* this, int xCoord, int yCoord)
 // callers   3   call targets   8
 // kind      game

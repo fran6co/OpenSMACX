@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00441250 FILE
-// name      ?clear_all_offers@@YAXXZ
+// ORIGINAL: 0x00441250 ?clear_all_offers@@YAXXZ 0x00441250-0x00441296 FILE
 // size      70 bytes
-// spans     0x00441250-0x00441296
 // prototype 
 // callers   1   call targets   0
 // kind      game

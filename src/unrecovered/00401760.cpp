@@ -1,12 +1,7 @@
-// ORIGINAL: 0x00401760 FILE
-// RULED-OUT: goto-preserving transcription of the Ghidra decompile (3-tier
-//            Heap::get/mem_get fallback, twice per node-type A/B, VCall slot0
-//            insert callback); diverges at insn #7 in the prologue/local
-//            register allocation, not in the control-flow shape
+// ORIGINAL: 0x00401760 ?add@ServiceStruct@@QAEHH@Z 0x00401760-0x00401B73 FILE
+// RULED-OUT: goto-preserving transcription of the Ghidra decompile (3-tier Heap::get/mem_get fallback, twice per node-type A/B, VCall slot0 insert callback); diverges at insn #7 in the prologue/local register allocation, not in the control-flow shape
 // working copy - scaffold materialised by --work
-// name      ?add@ServiceStruct@@QAEHH@Z
 // size      1043 bytes
-// spans     0x00401760-0x00401B73
 // prototype int (__thiscall ?add@ServiceStruct@@QAEHH@Z)(ServiceStruct* this, int)
 // callers   1   call targets   3
 // kind      game

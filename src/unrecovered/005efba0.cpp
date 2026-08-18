@@ -1,13 +1,6 @@
-// ORIGINAL: 0x005EFBA0 FILE
-// RULED-OUT: `ecx` used as `this` before any stack read proves __thiscall,
-//            not the IDA-guessed __stdcall(int x6); modelled as a member of
-//            a local class per the 0x004C8290 idiom. The two indirect calls
-//            through DAT_009BC498's vtable pass the interface object as an
-//            EXPLICIT stack arg (not via ecx), so they are __stdcall function
-//            pointers, not VCall thiscall slots. First divergence #5 je/jne.
-// name      sub_5efba0
+// ORIGINAL: 0x005EFBA0 sub_5efba0 0x005EFBA0-0x005EFCF5 FILE
+// RULED-OUT: `ecx` used as `this` before any stack read proves __thiscall, not the IDA-guessed __stdcall(int x6); modelled as a member of a local class per the 0x004C8290 idiom. The two indirect calls through DAT_009BC498's vtable pass the interface object as an EXPLICIT stack arg (not via ecx), so they are __stdcall function pointers, not VCall thiscall slots. First divergence #5 je/jne.
 // size      341 bytes
-// spans     0x005EFBA0-0x005EFCF5
 // prototype 
 // callers   0   call targets   1
 // kind      game

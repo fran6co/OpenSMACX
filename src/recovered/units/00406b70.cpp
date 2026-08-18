@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00406B70 BYTE_EXACT FILE
-// name      sub_406b70
+// ORIGINAL: 0x00406B70 sub_406b70 0x00406B70-0x00406B9C FILE BYTE_EXACT
 // size      44 bytes
-// spans     0x00406B70-0x00406B9C
 // prototype 
 // callers   0   call targets   0
 // kind      game

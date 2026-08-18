@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005247B0 FILE
+// ORIGINAL: 0x005247B0 ?generators@@YAHHPAH@Z 0x005247B0-0x00524862 FILE
 // working copy - scaffold materialised by --work
-// name      ?generators@@YAHHPAH@Z
 // size      178 bytes
-// spans     0x005247B0-0x00524862
 // prototype int (__cdecl ?generators@@YAHHPAH@Z)(int factionID, int* count)
 // callers   2   call targets   1
 // kind      game

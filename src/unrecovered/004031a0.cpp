@@ -1,25 +1,6 @@
-// ORIGINAL: 0x004031A0 FILE
-// RULED-OUT: SHAPE_EXACT now - every instruction matches and the only
-//            difference left is the FRAME LAYOUT, so these are ruled out
-//            for the LAST byte rather than for the shape. All measured:
-//            any frameless spelling, since the original keeps ebp;
-//            a real object local to force an SEH frame - div 2, this
-//            prologue registers no handler at all; declaration order of
-//            the locals - all six permutations byte-identical;
-//            statement order - 13 of 15 legal orders break the shape and
-//            the other 2 give the same slots; extra unreferenced ints or
-//            arrays to grow sub esp - reclaimed, frame stays 0x18.
-//            VC6 lays locals out by size ASCENDING, ties broken by a fixed
-//            intrinsic order top, bottom_end, top_end, i, entry, width that
-//            no source edit moved. Aggregates are therefore a real size
-//            lever and a 16-byte struct member landed 5 of the 6 slots
-//            exactly - but the original wants top_end at ebp-0x10 ABOVE top
-//            at ebp-0x18 in a 0x2c frame, which needs top_end allocated
-//            FIRST, and that forces size top_end < size top with the three
-//            summing to 0x20 and size bottom_end >= 0x10. No integers fit.
-// name      ?compute@AlphaMenu@@QAEXXZ
+// ORIGINAL: 0x004031A0 ?compute@AlphaMenu@@QAEXXZ 0x004031A0-0x00403292 FILE
+// RULED-OUT: SHAPE_EXACT now - every instruction matches and the only difference left is the FRAME LAYOUT, so these are ruled out for the LAST byte rather than for the shape. All measured: any frameless spelling, since the original keeps ebp; a real object local to force an SEH frame - div 2, this prologue registers no handler at all; declaration order of the locals - all six permutations byte-identical; statement order - 13 of 15 legal orders break the shape and the other 2 give the same slots; extra unreferenced ints or arrays to grow sub esp - reclaimed, frame stays 0x18. VC6 lays locals out by size ASCENDING, ties broken by a fixed intrinsic order top, bottom_end, top_end, i, entry, width that no source edit moved. Aggregates are therefore a real size lever and a 16-byte struct member landed 5 of the 6 slots exactly - but the original wants top_end at ebp-0x10 ABOVE top at ebp-0x18 in a 0x2c frame, which needs top_end allocated FIRST, and that forces size top_end < size top with the three summing to 0x20 and size bottom_end >= 0x10. No integers fit.
 // size      242 bytes
-// spans     0x004031A0-0x00403292
 // prototype void (__thiscall ?compute@AlphaMenu@@QAEXXZ)(AlphaMenu* this)
 // callers   0   call targets   2
 // kind      game

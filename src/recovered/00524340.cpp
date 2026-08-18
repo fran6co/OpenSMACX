@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00524340 BYTE_EXACT
-// name      Demo::timer_callback
+// ORIGINAL: 0x00524340 Demo::timer_callback 0x00524340-0x00524363 BYTE_EXACT
 // size      35 bytes
-// spans     0x00524340-0x00524363
 // prototype 
 // callers   0   call targets   0
 // kind      game

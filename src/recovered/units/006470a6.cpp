@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006470A6 BYTE_EXACT FILE
-// name      _malloc
+// ORIGINAL: 0x006470A6 _malloc 0x006470A6-0x006470B8 FILE BYTE_EXACT
 // size      18 bytes
-// spans     0x006470A6-0x006470B8
 // prototype 
 // callers   16   call targets   1
 // kind      library

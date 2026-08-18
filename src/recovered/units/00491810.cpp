@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00491810 FILE
-// name      ?redraw_option@PrefWin@@QAEXXZ
+// ORIGINAL: 0x00491810 ?redraw_option@PrefWin@@QAEXXZ 0x00491810-0x00491857 FILE
 // size      71 bytes
-// spans     0x00491810-0x00491857
 // prototype void (__thiscall ?redraw_option@PrefWin@@QAEXXZ)(PrefWin* this)
 // callers   0   call targets   1
 // kind      game

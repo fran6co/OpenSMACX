@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064C8B3 EXCLUDED S1
-// name      __frnd
+// ORIGINAL: 0x0064C8B3 __frnd 0x0064C8B3-0x0064C8C5 EXCLUDED S1
 // size      18 bytes
-// spans     0x0064C8B3-0x0064C8C5
 // prototype 
 // callers   2   call targets   0
 // kind      library

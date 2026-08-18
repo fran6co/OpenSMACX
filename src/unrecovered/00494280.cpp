@@ -1,13 +1,7 @@
-// ORIGINAL: 0x00494280 FILE
-// RULED-OUT: a straight port of the jump-table switch (12 case labels,
-//            two cross-case gotos folded away algebraically once traced
-//            by hand) - matches semantics and field offsets (confirmed
-//            against param_1[N] * 4 in the Ghidra dump) but the compiler's
-//            jump table shape/ordering diverges early; not chased further.
+// ORIGINAL: 0x00494280 ?on_key_click@ProdPicker@@QAEHHH@Z 0x00494280-0x00494545 FILE
+// RULED-OUT: a straight port of the jump-table switch (12 case labels, two cross-case gotos folded away algebraically once traced by hand) - matches semantics and field offsets (confirmed against param_1[N] * 4 in the Ghidra dump) but the compiler's jump table shape/ordering diverges early; not chased further.
 // working copy - scaffold materialised by --work
-// name      ?on_key_click@ProdPicker@@QAEHHH@Z
 // size      709 bytes
-// spans     0x00494280-0x00494545
 // prototype int (__thiscall ?on_key_click@ProdPicker@@QAEHHH@Z)(ProdPicker* this, int, int)
 // callers   0   call targets   3
 // kind      game

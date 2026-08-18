@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005F25C0 FILE
-// name      ?OnRButtonDown@Win@@QAAXPAXJHHI@Z
+// ORIGINAL: 0x005F25C0 ?OnRButtonDown@Win@@QAAXPAXJHHI@Z 0x005F25C0-0x005F261F FILE
 // size      95 bytes
-// spans     0x005F25C0-0x005F261F
 // prototype 
 // callers   0   call targets   1
 // kind      game

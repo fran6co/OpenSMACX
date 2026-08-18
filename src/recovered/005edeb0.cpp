@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005EDEB0 BYTE_EXACT
-// name      ?minimize@Win@@QAEHXZ
+// ORIGINAL: 0x005EDEB0 ?minimize@Win@@QAEHXZ 0x005EDEB0-0x005EDEF8 BYTE_EXACT
 // size      72 bytes
-// spans     0x005EDEB0-0x005EDEF8
 // prototype int (__thiscall ?minimize@Win@@QAEHXZ)(Win* this)
 // callers   1   call targets   0
 // kind      game

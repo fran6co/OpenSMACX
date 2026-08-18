@@ -1,13 +1,7 @@
-// ORIGINAL: 0x00629D60 FILE
-// RULED-OUT: plain placement-new on Buffer/Palette individually (no local
-//            layout type) - same divergence, lower mnemonic similarity.
-//            MISMATCH #3 'push' vs 'xor'/'mov' remains open (SEH prologue
-//            shape for sub-object ctors that can throw - same open item as
-//            0047acf0.cpp).
+// ORIGINAL: 0x00629D60 ??0Flic@@QAE@XZ 0x00629D60-0x00629DE2;0x00663320-0x00663335 FILE
+// RULED-OUT: plain placement-new on Buffer/Palette individually (no local layout type) - same divergence, lower mnemonic similarity. MISMATCH #3 'push' vs 'xor'/'mov' remains open (SEH prologue shape for sub-object ctors that can throw - same open item as 0047acf0.cpp).
 // working copy - scaffold materialised by --work
-// name      ??0Flic@@QAE@XZ
 // size      151 bytes
-// spans     0x00629D60-0x00629DE2;0x00663320-0x00663335
 // prototype void (__thiscall ??0Flic@@QAE@XZ)(Flic* this)
 // callers   9   call targets   2
 // kind      game

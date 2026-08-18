@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00428DF0 FILE
+// ORIGINAL: 0x00428DF0 ?show_credits@@YAXXZ 0x00428DF0-0x00428E5B;0x0065315A-0x0065316F FILE
 // working copy - scaffold materialised by --work
-// name      ?show_credits@@YAXXZ
 // size      128 bytes
-// spans     0x00428DF0-0x00428E5B;0x0065315A-0x0065316F
 // prototype 
 // callers   4   call targets   4
 // kind      game

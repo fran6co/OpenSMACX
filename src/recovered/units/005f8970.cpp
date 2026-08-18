@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005F8970 BYTE_EXACT FILE
-// name      ?UNK1@PullDown@@QAEXXZ
+// ORIGINAL: 0x005F8970 ?UNK1@PullDown@@QAEXXZ 0x005F8970-0x005F89C8 FILE BYTE_EXACT
 // size      88 bytes
-// spans     0x005F8970-0x005F89C8
 // prototype void (__thiscall ?UNK1@PullDown@@QAEXXZ)(PullDown* this)
 // callers   0   call targets   2
 // kind      game

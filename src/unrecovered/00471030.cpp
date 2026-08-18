@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00471030 FILE
+// ORIGINAL: 0x00471030 ?mapwin_system_init@@YAXH@Z 0x00471030-0x004710DF FILE
 // working copy - scaffold materialised by --work
-// name      ?mapwin_system_init@@YAXH@Z
 // size      175 bytes
-// spans     0x00471030-0x004710DF
 // prototype 
 // callers   1   call targets   4
 // kind      game

@@ -1,15 +1,11 @@
-// ORIGINAL: 0x00633C90 FILE
-// RULED-OUT: nothing yet - MISMATCH #1 push/mov (66% mnemonic sim), extra
-//            local `int *self`/`void *cs` shift the prologue; not chased
-//            further.
+// ORIGINAL: 0x00633C90 sub_633c90 0x00633C90-0x00633D81 FILE
+// RULED-OUT: nothing yet - MISMATCH #1 push/mov (66% mnemonic sim), extra local `int *self`/`void *cs` shift the prologue; not chased further.
 // PROPOSAL: sub_633c90(void*, int, int, int) -> a __thiscall member (this =
 //           receiver, `mov ebp, ecx` at entry, `ret 0x10` pops exactly the
 //           4 explicit stack args) taking (int a2, int a3, int a4, int *a5);
 //           evidence: [ecx+...] field reads with no matching stack slot for
 //           a first parameter.
-// name      sub_633c90
 // size      241 bytes
-// spans     0x00633C90-0x00633D81
 // prototype
 // callers   0   call targets   2
 // kind      game

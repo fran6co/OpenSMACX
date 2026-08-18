@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005A58B0 BYTE_EXACT FILE
-// name      ?space@@YAXXZ
+// ORIGINAL: 0x005A58B0 ?space@@YAXXZ 0x005A58B0-0x005A58C3 FILE BYTE_EXACT
 // size      19 bytes
-// spans     0x005A58B0-0x005A58C3
 // prototype 
 // callers   1   call targets   1
 // kind      game

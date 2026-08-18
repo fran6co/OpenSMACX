@@ -1,18 +1,13 @@
-// ORIGINAL: 0x005F9D30 FILE
+// ORIGINAL: 0x005F9D30 ?compute_length@PullDown@@QAEHPAD@Z 0x005F9D30-0x005F9F34 FILE
+// RULED-OUT: the emitted PullDown layout already places items_ at 0xA18 and width_ at 0xF24 (field_A14_ + PullDownItem[64] + two dwords), so the body reads them by name instead of by offset.
+// RULED-OUT: nothing further tried; MISMATCH #0 (push vs mov - the original has no ebp frame, esp-relative throughout like 0x6401B0), similarity 0.41.
 // working copy - scaffold materialised by --work
-// name      ?compute_length@PullDown@@QAEHPAD@Z
 // size      516 bytes
-// spans     0x005F9D30-0x005F9F34
 // prototype int (__thiscall ?compute_length@PullDown@@QAEHPAD@Z)(PullDown* this, int8*)
 // callers   2   call targets   3
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00619280 0x006192F0 0x00645DD0
-// RULED-OUT: the emitted PullDown layout already places items_ at 0xA18 and
-//   width_ at 0xF24 (field_A14_ + PullDownItem[64] + two dwords), so the
-//   body reads them by name instead of by offset.
-// RULED-OUT: nothing further tried; MISMATCH #0 (push vs mov - the original
-//   has no ebp frame, esp-relative throughout like 0x6401B0), similarity 0.41.
 
 
 // GENERATED SKELETON - tools/emit_translation_unit.py

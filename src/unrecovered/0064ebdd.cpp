@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064EBDD EXCLUDED S1
-// name      __ismbblead
+// ORIGINAL: 0x0064EBDD __ismbblead 0x0064EBDD-0x0064EBEE EXCLUDED S1
 // size      17 bytes
-// spans     0x0064EBDD-0x0064EBEE
 // prototype 
 // callers   1   call targets   1
 // kind      library

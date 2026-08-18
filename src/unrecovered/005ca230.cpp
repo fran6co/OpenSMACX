@@ -1,18 +1,8 @@
-// ORIGINAL: 0x005CA230 FILE
-// RULED-OUT: real signature is __fastcall(int *param_1, int param_2, int param_3)
-//        (ecx/edx/stack), not the given __stdcall(int a1) - the given head
-//        drops two of the three real parameters. This is mmio ring-buffer
-//        bookkeeping: param_1[7]/[9] are byte offsets, param_1+0xdf a ring
-//        counter, param_1+0xe0/0xe2 sibling counters bumped via
-//        InterlockedIncrement.
-// RULED-OUT: `<=`-with-sum-on-the-right vs `>=`-with-sum-on-the-left for the
-//            wrap check (marginal effect only); could not reproduce the
-//            entry "push ecx" dummy-stack-slot idiom VC6 uses ahead of the
-//            callee-saved pushes.
+// ORIGINAL: 0x005CA230 sub_5ca230 0x005CA230-0x005CA308 FILE
+// RULED-OUT: real signature is __fastcall(int *param_1, int param_2, int param_3) (ecx/edx/stack), not the given __stdcall(int a1) - the given head drops two of the three real parameters. This is mmio ring-buffer bookkeeping: param_1[7]/[9] are byte offsets, param_1+0xdf a ring counter, param_1+0xe0/0xe2 sibling counters bumped via InterlockedIncrement.
+// RULED-OUT: `<=`-with-sum-on-the-right vs `>=`-with-sum-on-the-left for the wrap check (marginal effect only); could not reproduce the entry "push ecx" dummy-stack-slot idiom VC6 uses ahead of the callee-saved pushes.
 // working copy - scaffold materialised by --work
-// name      sub_5ca230
 // size      216 bytes
-// spans     0x005CA230-0x005CA308
 // prototype 
 // callers   1   call targets   0
 // kind      game

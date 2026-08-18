@@ -29,10 +29,8 @@ uint32_t *TutWinShownFlag = (uint32_t *)0x008CC244;
 /*
 Purpose: Reset the tutorial window - four fields to zero, four to -1, and the
          shared shown-marker cleared with them.
-ORIGINAL: 0x004BA720
-// name      ?UNK1@TutWin@@QAEXXZ
+// ORIGINAL: 0x004BA720 ?UNK1@TutWin@@QAEXXZ 0x004BA720-0x004BA761
 // size      65 bytes
-// spans     0x004BA720-0x004BA761
 // prototype void (__thiscall ?UNK1@TutWin@@QAEXXZ)(TutWin* this)
 // callers   1   call targets   0
 // kind      game
@@ -56,10 +54,8 @@ void TutWin::UNK1() {
 
 /*
 Purpose: Store a single value at 0x53D4.
-ORIGINAL: 0x004BDDD0 BYTE_EXACT
-// name      ?UNK3@TutWin@@QAEXH@Z
+// ORIGINAL: 0x004BDDD0 ?UNK3@TutWin@@QAEXH@Z 0x004BDDD0-0x004BDDE0 BYTE_EXACT
 // size      16 bytes
-// spans     0x004BDDD0-0x004BDDE0
 // prototype void (__thiscall ?UNK3@TutWin@@QAEXH@Z)(TutWin* this, int)
 // callers   0   call targets   0
 // kind      game
@@ -98,10 +94,8 @@ Win *TutWinIfaceWindow = reinterpret_cast<Win *>(0x007AE820);
 /*
 Purpose: Centre the rectangle on both axes and convert the result to screen
          coordinates through the iface window.
-ORIGINAL: 0x004BC5A0
-// name      ?iface_rect@TutWin@@QAEXPAURECT@@PAH1@Z
+// ORIGINAL: 0x004BC5A0 ?iface_rect@TutWin@@QAEXPAURECT@@PAH1@Z 0x004BC5A0-0x004BC5E3
 // size      67 bytes
-// spans     0x004BC5A0-0x004BC5E3
 // prototype void (__thiscall ?iface_rect@TutWin@@QAEXPAURECT@@PAH1@Z)(TutWin* this, RECT*, int*, int*)
 // callers   3   call targets   1
 // kind      game
@@ -137,10 +131,8 @@ Win *TutWinBaseWindow = reinterpret_cast<Win *>(0x006A7628);
 /*
 Purpose: Centre the rectangle on both axes and convert the result to screen
          coordinates through the base window.
-ORIGINAL: 0x004BC5F0
-// name      ?base_rect@TutWin@@QAEXPAURECT@@PAH1@Z
+// ORIGINAL: 0x004BC5F0 ?base_rect@TutWin@@QAEXPAURECT@@PAH1@Z 0x004BC5F0-0x004BC633
 // size      67 bytes
-// spans     0x004BC5F0-0x004BC633
 // prototype void (__thiscall ?base_rect@TutWin@@QAEXPAURECT@@PAH1@Z)(TutWin* this, RECT*, int*, int*)
 // callers   2   call targets   1
 // kind      game
@@ -176,10 +168,8 @@ Win *TutWinSocWindow = reinterpret_cast<Win *>(0x008A6270);
 /*
 Purpose: Centre the rectangle on both axes and convert the result to screen
          coordinates through the soc window.
-ORIGINAL: 0x004BC640
-// name      ?soc_rect@TutWin@@QAEXPAURECT@@PAH1@Z
+// ORIGINAL: 0x004BC640 ?soc_rect@TutWin@@QAEXPAURECT@@PAH1@Z 0x004BC640-0x004BC683
 // size      67 bytes
-// spans     0x004BC640-0x004BC683
 // prototype void (__thiscall ?soc_rect@TutWin@@QAEXPAURECT@@PAH1@Z)(TutWin* this, RECT*, int*, int*)
 // callers   2   call targets   1
 // kind      game
@@ -215,10 +205,8 @@ Win *TutWinDesWindow = reinterpret_cast<Win *>(0x0071F2B0);
 /*
 Purpose: Centre the rectangle on both axes and convert the result to screen
          coordinates through the des window.
-ORIGINAL: 0x004BC690
-// name      ?des_rect@TutWin@@QAEXPAURECT@@PAH1@Z
+// ORIGINAL: 0x004BC690 ?des_rect@TutWin@@QAEXPAURECT@@PAH1@Z 0x004BC690-0x004BC6D3
 // size      67 bytes
-// spans     0x004BC690-0x004BC6D3
 // prototype void (__thiscall ?des_rect@TutWin@@QAEXPAURECT@@PAH1@Z)(TutWin* this, RECT*, int*, int*)
 // callers   2   call targets   1
 // kind      game
@@ -262,10 +250,8 @@ func_tut_win_show TutWinOriginalShow = original_method<func_tut_win_show>(0x004B
 /*
 Purpose: Centre the rectangle, convert it through the base window, and
          show the tutorial text there against the primary map window.
-ORIGINAL: 0x004BA870
-// name      ?do_base@TutWin@@QAEXPAURECT@@PBDH@Z
+// ORIGINAL: 0x004BA870 ?do_base@TutWin@@QAEXPAURECT@@PBDH@Z 0x004BA870-0x004BA8EB
 // size      123 bytes
-// spans     0x004BA870-0x004BA8EB
 // prototype void (__thiscall ?do_base@TutWin@@QAEXPAURECT@@PBDH@Z)(TutWin* this, RECT*, int8*, int)
 // callers   2   call targets   2
 // kind      game
@@ -314,10 +300,8 @@ void __fastcall tut_win_do_base_redirect(
 /*
 Purpose: Centre the rectangle, convert it through the iface window, and
          show the tutorial text there against the primary map window.
-ORIGINAL: 0x004BA8F0
-// name      ?do_iface@TutWin@@QAEXPAURECT@@PBDH@Z
+// ORIGINAL: 0x004BA8F0 ?do_iface@TutWin@@QAEXPAURECT@@PBDH@Z 0x004BA8F0-0x004BA96B
 // size      123 bytes
-// spans     0x004BA8F0-0x004BA96B
 // prototype void (__thiscall ?do_iface@TutWin@@QAEXPAURECT@@PBDH@Z)(TutWin* this, RECT*, int8*, int)
 // callers   1   call targets   2
 // kind      game
@@ -366,10 +350,8 @@ void __fastcall tut_win_do_iface_redirect(
 /*
 Purpose: Centre the rectangle, convert it through the soc window, and
          show the tutorial text there against the primary map window.
-ORIGINAL: 0x004BA970
-// name      ?do_soc@TutWin@@QAEXPAURECT@@PBDH@Z
+// ORIGINAL: 0x004BA970 ?do_soc@TutWin@@QAEXPAURECT@@PBDH@Z 0x004BA970-0x004BA9EB
 // size      123 bytes
-// spans     0x004BA970-0x004BA9EB
 // prototype void (__thiscall ?do_soc@TutWin@@QAEXPAURECT@@PBDH@Z)(TutWin* this, RECT*, int8*, int)
 // callers   1   call targets   2
 // kind      game
@@ -418,10 +400,8 @@ void __fastcall tut_win_do_soc_redirect(
 /*
 Purpose: Centre the rectangle, convert it through the des window, and
          show the tutorial text there against the primary map window.
-ORIGINAL: 0x004BA9F0
-// name      ?do_des@TutWin@@QAEXPAURECT@@PBDH@Z
+// ORIGINAL: 0x004BA9F0 ?do_des@TutWin@@QAEXPAURECT@@PBDH@Z 0x004BA9F0-0x004BAA6B
 // size      123 bytes
-// spans     0x004BA9F0-0x004BAA6B
 // prototype void (__thiscall ?do_des@TutWin@@QAEXPAURECT@@PBDH@Z)(TutWin* this, RECT*, int8*, int)
 // callers   1   call targets   2
 // kind      game
@@ -469,10 +449,8 @@ void __fastcall tut_win_do_des_redirect(
 
 /*
 Purpose: Tell the attached object the tutorial window moved.
-ORIGINAL: 0x004BDDB0 BYTE_EXACT
-// name      ?on_move@TutWin@@QAEXHH@Z
+// ORIGINAL: 0x004BDDB0 ?on_move@TutWin@@QAEXHH@Z 0x004BDDB0-0x004BDDC5 BYTE_EXACT
 // size      21 bytes
-// spans     0x004BDDB0-0x004BDDC5
 // prototype void (__thiscall ?on_move@TutWin@@QAEXHH@Z)(TutWin* this, int, int)
 // callers   0   call targets   0
 // kind      game

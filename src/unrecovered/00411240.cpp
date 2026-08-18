@@ -1,17 +1,7 @@
-// ORIGINAL: 0x00411240 FILE
-// RULED-OUT: literal transcription of Ghidra's (clean, non-SEH-mangled) pseudocode,
-//            mapping the three unlabelled thiscall calls (0x618EA0/0x618EE0/0x618F40)
-//            onto BaseWin's already-declared UNK4/UNK7/UNK6 slots by call-site position
-//            and declaring the other dozen FUN_ helpers as plain cdecl free functions
-//            (their true receiver/convention was not established) compiles and matches
-//            the arithmetic/branch structure, but the original installs a real SEH
-//            frame (fs:[0] chain) that this body does not reproduce since nothing here
-//            needs unwind-safety in the C++ source; diverges from the framed build
-//            around #2.
+// ORIGINAL: 0x00411240 ?draw_nutrients@BaseWin@@QAEXH@Z 0x00411240-0x00411973;0x00651B37-0x00651B4C FILE
+// RULED-OUT: literal transcription of Ghidra's (clean, non-SEH-mangled) pseudocode, mapping the three unlabelled thiscall calls (0x618EA0/0x618EE0/0x618F40) onto BaseWin's already-declared UNK4/UNK7/UNK6 slots by call-site position and declaring the other dozen FUN_ helpers as plain cdecl free functions (their true receiver/convention was not established) compiles and matches the arithmetic/branch structure, but the original installs a real SEH frame (fs:[0] chain) that this body does not reproduce since nothing here needs unwind-safety in the C++ source; diverges from the framed build around #2.
 // working copy - scaffold materialised by --work
-// name      ?draw_nutrients@BaseWin@@QAEXH@Z
 // size      1864 bytes
-// spans     0x00411240-0x00411973;0x00651B37-0x00651B4C
 // prototype void (__thiscall ?draw_nutrients@BaseWin@@QAEXH@Z)(BaseWin* this, int)
 // callers   1   call targets   19
 // kind      game

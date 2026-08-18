@@ -1,11 +1,7 @@
-// ORIGINAL: 0x0051F0C0 BYTE_EXACT FILE
-// LEVER: `while (daemon->receive() != 0) {}` reproduces the two-call-site
-//        loop shape (one test before the loop, one inside) purely from the
-//        standard while-loop rotation - no need to hand-duplicate the call.
+// ORIGINAL: 0x0051F0C0 ?help_spock@@YAXXZ 0x0051F0C0-0x0051F1AA FILE BYTE_EXACT
+// LEVER: `while (daemon->receive() != 0) {}` reproduces the two-call-site loop shape (one test before the loop, one inside) purely from the standard while-loop rotation - no need to hand-duplicate the call.
 // working copy - scaffold materialised by --work
-// name      ?help_spock@@YAXXZ
 // size      234 bytes
-// spans     0x0051F0C0-0x0051F1AA
 // prototype 
 // callers   0   call targets   2
 // kind      game

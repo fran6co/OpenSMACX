@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064CB98 EXCLUDED S1
-// name      ?_ValidateRead@@YAHPBXI@Z
+// ORIGINAL: 0x0064CB98 ?_ValidateRead@@YAHPBXI@Z 0x0064CB98-0x0064CBB4 EXCLUDED S1
 // size      28 bytes
-// spans     0x0064CB98-0x0064CBB4
 // prototype int (__cdecl ?_ValidateRead@@YAHPBXI@Z)(void* lp, UINT_PTR ucb)
 // callers   2   call targets   0
 // kind      library

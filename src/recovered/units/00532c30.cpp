@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00532C30 FILE
-// name      ?synch_display@@YAXHHHH@Z
+// ORIGINAL: 0x00532C30 ?synch_display@@YAXHHHH@Z 0x00532C30-0x00532DA2 FILE
 // size      370 bytes
-// spans     0x00532C30-0x00532DA2
 // prototype 
 // callers   1   call targets   3
 // kind      game

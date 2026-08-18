@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005F5270 FILE
-// name      ?remove_child@Win@@QAEXPAUWin@@@Z
+// ORIGINAL: 0x005F5270 ?remove_child@Win@@QAEXPAUWin@@@Z 0x005F5270-0x005F52D1 FILE
 // size      97 bytes
-// spans     0x005F5270-0x005F52D1
 // prototype 
 // callers   0   call targets   0
 // kind      game

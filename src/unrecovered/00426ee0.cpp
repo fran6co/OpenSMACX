@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00426EE0 BYTE_EXACT FILE
+// ORIGINAL: 0x00426EE0 ?on_mouse_move@CouncWin@@QAEXHH@Z 0x00426EE0-0x00426F78 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?on_mouse_move@CouncWin@@QAEXHH@Z
 // size      152 bytes
-// spans     0x00426EE0-0x00426F78
 // prototype void (__thiscall ?on_mouse_move@CouncWin@@QAEXHH@Z)(CouncWin* this, int xCoord, int yCoord)
 // callers   0   call targets   3
 // kind      game

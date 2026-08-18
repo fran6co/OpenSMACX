@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0060C350 FILE
-// name      ?on_redraw@ListBox@@QAEXXZ
+// ORIGINAL: 0x0060C350 ?on_redraw@ListBox@@QAEXXZ 0x0060C350-0x0060C5C4 FILE
 // size      628 bytes
-// spans     0x0060C350-0x0060C5C4
 // prototype void (__thiscall ?on_redraw@ListBox@@QAEXXZ)(ListBox* this)
 // callers   0   call targets   6
 // kind      game

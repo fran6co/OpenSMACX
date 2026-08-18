@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00470A90 FILE
-// name      ?init@MapWin@@QAEXHH@Z
+// ORIGINAL: 0x00470A90 ?init@MapWin@@QAEXHH@Z 0x00470A90-0x00470EC2 FILE
 // size      1074 bytes
-// spans     0x00470A90-0x00470EC2
 // prototype void (__thiscall ?init@MapWin@@QAEXHH@Z)(MapWin* this, int, int)
 // callers   5   call targets   9
 // kind      game

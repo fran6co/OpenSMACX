@@ -1,25 +1,12 @@
-// ORIGINAL: 0x005CAE80
-// name      sub_5cae80
+// ORIGINAL: 0x005CAE80 sub_5cae80 0x005CAE80-0x005CB046
+// RULED-OUT: 0x005CB050's scaffolded prototype takes only one fastcall param, but the real callee reads its object from EDX (`mov esi, edx` at its own entry) with ECX dead - called here through an explicit fastcall(LPSTR, int*) function-pointer cast rather than by name, since a second extern "C" declaration for the same symbol conflicts. The four thiscall callees (sub_5ce340/sub_5cbe30/sub_5cb220/sub_5ce450/ sub_5cc710) are similarly unreachable by name (VC6 C4234 on a free __thiscall) and go through the Dummy member-function- pointer trick. Landing the closest control-flow-faithful form (divergence starts at instruction #12, inside the calloc/zero preamble).
 // size      454 bytes
-// spans     0x005CAE80-0x005CB046
 // prototype int (__cdecl sub_5CAE80)(LPSTR pszFileName, int, int)
 // callers   1   call targets   10
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005CB050 0x005CB220 0x005CBE30 0x005CC710 0x005CE340 0x005CE450 0x00644EF2 0x00646ED0 0x00646F5D 0x00647067
 // indirect  0x005CAEF4 0x005CAF34 0x005CAF43 0x005CAF48 0x005CAF52 0x005CAFAD 0x005CB020 0x005CB027
-// RULED-OUT: 0x005CB050's scaffolded prototype takes only one fastcall
-//            param, but the real callee reads its object from EDX (`mov
-//            esi, edx` at its own entry) with ECX dead - called here
-//            through an explicit fastcall(LPSTR, int*) function-pointer
-//            cast rather than by name, since a second extern "C"
-//            declaration for the same symbol conflicts. The four thiscall
-//            callees (sub_5ce340/sub_5cbe30/sub_5cb220/sub_5ce450/
-//            sub_5cc710) are similarly unreachable by name (VC6 C4234 on a
-//            free __thiscall) and go through the Dummy member-function-
-//            pointer trick. Landing the closest control-flow-faithful form
-//            (divergence starts at instruction #12, inside the calloc/zero
-//            preamble).
 
 extern "C" void *memset(void *, int, unsigned int);
 

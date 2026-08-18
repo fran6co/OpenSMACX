@@ -39,10 +39,8 @@ int int_from_bits(uint32_t bits) {
 
 /*
 Purpose: Hide the first item with the requested ID.
-ORIGINAL: 0x005F8CB0
-// name      ?hide_item@PullDown@@QAEHH@Z
+// ORIGINAL: 0x005F8CB0 ?hide_item@PullDown@@QAEHH@Z 0x005F8CB0-0x005F8D1F
 // size      111 bytes
-// spans     0x005F8CB0-0x005F8D1F
 // prototype int (__thiscall ?hide_item@PullDown@@QAEHH@Z)(PullDown* this, int)
 // callers   1   call targets   0
 // kind      game
@@ -67,10 +65,8 @@ int PullDown::hide_item(int id) {
 
 /*
 Purpose: Show the first item with the requested ID.
-ORIGINAL: 0x005F8D20
-// name      ?show_item@PullDown@@QAEHH@Z
+// ORIGINAL: 0x005F8D20 ?show_item@PullDown@@QAEHH@Z 0x005F8D20-0x005F8D8F
 // size      111 bytes
-// spans     0x005F8D20-0x005F8D8F
 // prototype int (__thiscall ?show_item@PullDown@@QAEHH@Z)(PullDown* this, int)
 // callers   1   call targets   0
 // kind      game
@@ -95,10 +91,8 @@ int PullDown::show_item(int id) {
 
 /*
 Purpose: Disable the first item with the requested ID.
-ORIGINAL: 0x005F8D90
-// name      ?disable_item@PullDown@@QAEHH@Z
+// ORIGINAL: 0x005F8D90 ?disable_item@PullDown@@QAEHH@Z 0x005F8D90-0x005F8DEF
 // size      95 bytes
-// spans     0x005F8D90-0x005F8DEF
 // prototype int (__thiscall ?disable_item@PullDown@@QAEHH@Z)(PullDown* this, int)
 // callers   2   call targets   0
 // kind      game
@@ -119,10 +113,8 @@ int PullDown::disable_item(int id) {
 
 /*
 Purpose: Enable the first item with the requested ID.
-ORIGINAL: 0x005F8DF0
-// name      ?enable_item@PullDown@@QAEHH@Z
+// ORIGINAL: 0x005F8DF0 ?enable_item@PullDown@@QAEHH@Z 0x005F8DF0-0x005F8E4F
 // size      95 bytes
-// spans     0x005F8DF0-0x005F8E4F
 // prototype int (__thiscall ?enable_item@PullDown@@QAEHH@Z)(PullDown* this, int)
 // callers   1   call targets   0
 // kind      game
@@ -143,10 +135,8 @@ int PullDown::enable_item(int id) {
 
 /*
 Purpose: Check the first item with the requested ID.
-ORIGINAL: 0x005F9040
-// name      ?check_item@PullDown@@QAEHH@Z
+// ORIGINAL: 0x005F9040 ?check_item@PullDown@@QAEHH@Z 0x005F9040-0x005F909F
 // size      95 bytes
-// spans     0x005F9040-0x005F909F
 // prototype int (__thiscall ?check_item@PullDown@@QAEHH@Z)(PullDown* this, int)
 // callers   1   call targets   0
 // kind      game
@@ -167,10 +157,8 @@ int PullDown::check_item(int id) {
 
 /*
 Purpose: Uncheck the first item with the requested ID.
-ORIGINAL: 0x005F90A0
-// name      ?uncheck_item@PullDown@@QAEHH@Z
+// ORIGINAL: 0x005F90A0 ?uncheck_item@PullDown@@QAEHH@Z 0x005F90A0-0x005F90FF
 // size      95 bytes
-// spans     0x005F90A0-0x005F90FF
 // prototype int (__thiscall ?uncheck_item@PullDown@@QAEHH@Z)(PullDown* this, int)
 // callers   1   call targets   0
 // kind      game
@@ -191,10 +179,8 @@ int PullDown::uncheck_item(int id) {
 
 /*
 Purpose: Return the selected item index unless that item is disabled.
-ORIGINAL: 0x005F9F40 BYTE_EXACT
-// name      ?get_selected@PullDown@@QAEHXZ
+// ORIGINAL: 0x005F9F40 ?get_selected@PullDown@@QAEHXZ 0x005F9F40-0x005F9F5C BYTE_EXACT
 // size      28 bytes
-// spans     0x005F9F40-0x005F9F5C
 // prototype int (__thiscall ?get_selected@PullDown@@QAEHXZ)(PullDown* this)
 // callers   13   call targets   0
 // kind      game
@@ -260,10 +246,8 @@ uint32_t *PullDownFieldF3CDefault = (uint32_t *)0x009B7B5C;
 Purpose: Destroy a PullDown by releasing every item's text pair, resetting
          the trailing fields from their global defaults, and delegating to
          the GraphicWin destructor.
-ORIGINAL: 0x005F88A0
-// name      ??1PullDown@@QAE@XZ
+// ORIGINAL: 0x005F88A0 ??1PullDown@@QAE@XZ 0x005F88A0-0x005F891B
 // size      123 bytes
-// spans     0x005F88A0-0x005F891B
 // prototype void (__thiscall ??1PullDown@@QAE@XZ)(PullDown* this)
 // callers   27   call targets   2
 // kind      game
@@ -307,10 +291,8 @@ PullDown *__fastcall pull_down_destructor_redirect(PullDown *self, void *) {
 /*
 Purpose: Legacy stub; the original body returns 8 without reading its
          arguments.
-ORIGINAL: 0x005F8C90 BYTE_EXACT
-// name      ?UNK2@PullDown@@QAEHH@Z
+// ORIGINAL: 0x005F8C90 ?UNK2@PullDown@@QAEHH@Z 0x005F8C90-0x005F8C98 BYTE_EXACT
 // size      8 bytes
-// spans     0x005F8C90-0x005F8C98
 // prototype int (__thiscall ?UNK2@PullDown@@QAEHH@Z)(PullDown* this, int)
 // callers   1   call targets   0
 // kind      game
@@ -330,10 +312,8 @@ int __fastcall pull_down_unk2_redirect(
 /*
 Purpose: Legacy stub; the original body returns 8 without reading its
          arguments.
-ORIGINAL: 0x005F8CA0 BYTE_EXACT
-// name      ?UNK3@PullDown@@QAEHHHH@Z
+// ORIGINAL: 0x005F8CA0 ?UNK3@PullDown@@QAEHHHH@Z 0x005F8CA0-0x005F8CA8 BYTE_EXACT
 // size      8 bytes
-// spans     0x005F8CA0-0x005F8CA8
 // prototype int (__thiscall ?UNK3@PullDown@@QAEHHHH@Z)(PullDown* this, int, int, int)
 // callers   1   call targets   0
 // kind      game
@@ -353,10 +333,8 @@ int __fastcall pull_down_unk3_redirect(
 /*
 Purpose: Legacy stub; the original body returns 1 without reading its
          arguments.
-ORIGINAL: 0x005FA750 BYTE_EXACT
-// name      ?UNK5@PullDown@@QAEHXZ
+// ORIGINAL: 0x005FA750 ?UNK5@PullDown@@QAEHXZ 0x005FA750-0x005FA756 BYTE_EXACT
 // size      6 bytes
-// spans     0x005FA750-0x005FA756
 // prototype int (__thiscall ?UNK5@PullDown@@QAEHXZ)(PullDown* this)
 // callers   0   call targets   0
 // kind      game
@@ -376,10 +354,8 @@ int __fastcall pull_down_unk5_redirect(
 /*
 Purpose: Legacy stub; the original body returns 1 without reading its
          arguments.
-ORIGINAL: 0x005FA760 BYTE_EXACT
-// name      ?UNK6@PullDown@@QAEHXZ
+// ORIGINAL: 0x005FA760 ?UNK6@PullDown@@QAEHXZ 0x005FA760-0x005FA766 BYTE_EXACT
 // size      6 bytes
-// spans     0x005FA760-0x005FA766
 // prototype int (__thiscall ?UNK6@PullDown@@QAEHXZ)(PullDown* this)
 // callers   0   call targets   0
 // kind      game
@@ -398,10 +374,8 @@ int __fastcall pull_down_unk6_redirect(
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x005FA740 BYTE_EXACT
-// name      ?on_mouse_leave@PullDown@@QAEXHH@Z
+// ORIGINAL: 0x005FA740 ?on_mouse_leave@PullDown@@QAEXHH@Z 0x005FA740-0x005FA743 BYTE_EXACT
 // size      3 bytes
-// spans     0x005FA740-0x005FA743
 // prototype void (__thiscall ?on_mouse_leave@PullDown@@QAEXHH@Z)(PullDown* this, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -421,10 +395,8 @@ void __fastcall pull_down_on_mouse_leave_redirect(PullDown *self, void *, int a1
 Purpose: Find a menu item by its id and return its index, scanning up to the
          64 item slots. Stops at the first slot whose id is the -1 sentinel,
          and returns -1 when the id is not found or that sentinel is reached.
-ORIGINAL: 0x005F9D00 BYTE_EXACT
-// name      ?id_to_index@PullDown@@QAEHH@Z
+// ORIGINAL: 0x005F9D00 ?id_to_index@PullDown@@QAEHH@Z 0x005F9D00-0x005F9D28 BYTE_EXACT
 // size      40 bytes
-// spans     0x005F9D00-0x005F9D28
 // prototype int (__thiscall ?id_to_index@PullDown@@QAEHH@Z)(PullDown* this, int)
 // callers   1   call targets   0
 // kind      game
@@ -451,10 +423,8 @@ int __fastcall pull_down_id_to_index_redirect(PullDown *self, void *, int id) {
 }
 
 /*
-ORIGINAL: 0x005F93A0 BYTE_EXACT
-// name      ?hide@PullDown@@QAEXXZ
+// ORIGINAL: 0x005F93A0 ?hide@PullDown@@QAEXXZ 0x005F93A0-0x005F93B9 BYTE_EXACT
 // size      25 bytes
-// spans     0x005F93A0-0x005F93B9
 // prototype void (__thiscall ?hide@PullDown@@QAEXXZ)(PullDown* this)
 // callers   0   call targets   2
 // kind      game

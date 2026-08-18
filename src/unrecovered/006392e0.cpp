@@ -1,13 +1,7 @@
-// ORIGINAL: 0x006392E0 FILE
-// RULED-OUT: a hand-rolled pointer-increment copy loop for the 6-dword
-//            block (rep movsd became mov/add/mov/add, 0.84 sim); memcpy(6*
-//            sizeof(int)) got the rep movsd back (0.94 sim). `status==0 ||
-//            status>5` (two cmp/jcc) beat `status!=0 && status<6` (folded
-//            to one range check) - not iterated past MISMATCH #2.
+// ORIGINAL: 0x006392E0 sub_6392e0 0x006392E0-0x0063937F FILE
+// RULED-OUT: a hand-rolled pointer-increment copy loop for the 6-dword block (rep movsd became mov/add/mov/add, 0.84 sim); memcpy(6* sizeof(int)) got the rep movsd back (0.94 sim). `status==0 || status>5` (two cmp/jcc) beat `status!=0 && status<6` (folded to one range check) - not iterated past MISMATCH #2.
 // working copy - scaffold materialised by --work
-// name      sub_6392e0
 // size      159 bytes
-// spans     0x006392E0-0x0063937F
 // prototype 
 // callers   1   call targets   2
 // kind      game

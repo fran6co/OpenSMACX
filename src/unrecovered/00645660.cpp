@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00645660 EXCLUDED S1
-// name      _strcmp
+// ORIGINAL: 0x00645660 _strcmp 0x00645660-0x006456E4 EXCLUDED S1
 // size      132 bytes
-// spans     0x00645660-0x006456E4
 // prototype 
 // callers   64   call targets   0
 // kind      library

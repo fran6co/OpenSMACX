@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064FC88 EXCLUDED S1
-// name      __itoa
+// ORIGINAL: 0x0064FC88 __itoa 0x0064FC88-0x0064FCB5 EXCLUDED S1
 // size      45 bytes
-// spans     0x0064FC88-0x0064FCB5
 // prototype 
 // callers   199   call targets   1
 // kind      library

@@ -1,12 +1,6 @@
-// ORIGINAL: 0x00531150
-// RULED-OUT: MISMATCH #26 mov/add - NetDaemon has no known field layout, so
-//            the `locked` flag at this+0x1BB4 and the embedded Lock at
-//            this+0x14A0 are raw offsets rather than named members; close
-//            past instruction 26 but register allocation in the retry loop
-//            still differs.
-// name      ?automated_lock@NetDaemon@@QAEHPAHH@Z
+// ORIGINAL: 0x00531150 ?automated_lock@NetDaemon@@QAEHPAHH@Z 0x00531150-0x005312F6
+// RULED-OUT: MISMATCH #26 mov/add - NetDaemon has no known field layout, so the `locked` flag at this+0x1BB4 and the embedded Lock at this+0x14A0 are raw offsets rather than named members; close past instruction 26 but register allocation in the retry loop still differs.
 // size      422 bytes
-// spans     0x00531150-0x005312F6
 // prototype int (__thiscall ?automated_lock@NetDaemon@@QAEHPAHH@Z)(NetDaemon* this, int*, int)
 // callers   2   call targets   9
 // kind      game

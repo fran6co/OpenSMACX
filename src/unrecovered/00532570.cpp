@@ -1,19 +1,14 @@
-// ORIGINAL: 0x00532570 FILE
+// ORIGINAL: 0x00532570 ?action@NetDaemon@@QAEHHH@Z 0x00532570-0x005328BA FILE
+// RULED-OUT: g_00669368 is a cached stdcall function pointer (timeGetTime), called twice through the same loaded pointer - matches the two `// indirect` sites.
+// RULED-OUT: nothing else tried; landed at MISMATCH #7 (original compares several fields against a zero register cached once via `xor ebx,ebx` and reused, rebuilt re-derives `== 0` per comparison; similarity 0.886).
 // working copy - scaffold materialised by --work
-// name      ?action@NetDaemon@@QAEHHH@Z
 // size      842 bytes
-// spans     0x00532570-0x005328BA
 // prototype int (__thiscall ?action@NetDaemon@@QAEHHH@Z)(NetDaemon* this, int vehID, int)
 // callers   3   call targets   14
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x0047A7D0 0x0047A890 0x004CB310 0x004CB580 0x004CF740 0x0051F1B0 0x00531150 0x00534400 0x005901D0 0x00592E10 0x00592EE0 0x005FC700 0x006262F0 0x00630A00
 // indirect  0x00532768 0x0053278B
-// RULED-OUT: g_00669368 is a cached stdcall function pointer (timeGetTime), called
-//   twice through the same loaded pointer - matches the two `// indirect` sites.
-// RULED-OUT: nothing else tried; landed at MISMATCH #7 (original compares
-//   several fields against a zero register cached once via `xor ebx,ebx` and
-//   reused, rebuilt re-derives `== 0` per comparison; similarity 0.886).
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?action@NetDaemon@@QAEHHH@Z  at 0x00532570  (842 bytes)

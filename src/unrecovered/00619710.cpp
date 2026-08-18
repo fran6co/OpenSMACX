@@ -1,16 +1,11 @@
-// ORIGINAL: 0x00619710
-// name      ?extract@Texture@@QAEHPAUBuffer@@HHHHPAUTexHeap@@@Z
+// ORIGINAL: 0x00619710 ?extract@Texture@@QAEHPAUBuffer@@HHHHPAUTexHeap@@@Z 0x00619710-0x006198DE
+// RULED-OUT: the extra locals this body needs (widthMinus1, heightMinus1, stride, etc.) push the prologue to a `sub esp` before the register pushes, so divergence starts at instruction #1 (push vs mov). Landing the closest control-flow-faithful form.
 // size      462 bytes
-// spans     0x00619710-0x006198DE
 // prototype int (__thiscall ?extract@Texture@@QAEHPAUBuffer@@HHHHPAUTexHeap@@@Z)(Texture* this, Buffer*, int xCoord, int yCoord, int height, int width, #120*)
 // callers   3   call targets   6
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D4510 0x005E33F3 0x005E34A3 0x00635370 0x00644EF2 0x00645930
-// RULED-OUT: the extra locals this body needs (widthMinus1, heightMinus1,
-//            stride, etc.) push the prologue to a `sub esp` before the
-//            register pushes, so divergence starts at instruction #1
-//            (push vs mov). Landing the closest control-flow-faithful form.
 
 int Texture::extract(Buffer * a1, int a2, int a3, int a4, int a5, TexHeap * a6) {
   if (a1 == 0) {

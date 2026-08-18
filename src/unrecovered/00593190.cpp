@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00593190 FILE
+// ORIGINAL: 0x00593190 ?message_chat@@YAXHHPAD@Z 0x00593190-0x00593215 FILE
 // working copy - scaffold materialised by --work
-// name      ?message_chat@@YAXHHPAD@Z
 // size      133 bytes
-// spans     0x00593190-0x00593215
 // prototype 
 // callers   3   call targets   2
 // kind      game

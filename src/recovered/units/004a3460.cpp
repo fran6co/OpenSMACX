@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004A3460 FILE
-// name      ?init@ReportIf@@QAEXXZ
+// ORIGINAL: 0x004A3460 ?init@ReportIf@@QAEXXZ 0x004A3460-0x004A3927;0x00659580-0x00659595 FILE
 // size      1244 bytes
-// spans     0x004A3460-0x004A3927;0x00659580-0x00659595
 // prototype void (__thiscall ?init@ReportIf@@QAEXXZ)(ReportIf* this)
 // callers   1   call targets   9
 // kind      game

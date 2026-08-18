@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00634F20 BYTE_EXACT
-// name      ?UNK1@FileBox@@QAEHPAD@Z
+// ORIGINAL: 0x00634F20 ?UNK1@FileBox@@QAEHPAD@Z 0x00634F20-0x00634F6E BYTE_EXACT
 // size      78 bytes
-// spans     0x00634F20-0x00634F6E
 // prototype int (__thiscall ?UNK1@FileBox@@QAEHPAD@Z)(FileBox* this, int8*)
 // callers   0   call targets   2
 // kind      game

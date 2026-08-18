@@ -1,8 +1,6 @@
-// ORIGINAL: 0x004E1200 FILE
+// ORIGINAL: 0x004E1200 ?editor_clear_random@Console@@QAEXXZ 0x004E1200-0x004E128B FILE
 // working copy - scaffold materialised by --work
-// name      ?editor_clear_random@Console@@QAEXXZ
 // size      139 bytes
-// spans     0x004E1200-0x004E128B
 // prototype void (__thiscall ?editor_clear_random@Console@@QAEXXZ)(Console* this)
 // callers   1   call targets   3
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0065BFBC FILE
-// name      sub_65bfbc
+// ORIGINAL: 0x0065BFBC sub_65bfbc 0x0065BFBC-0x0065BFC7 FILE
 // size      11 bytes
-// spans     0x0065BFBC-0x0065BFC7
 // prototype 
 // callers   0   call targets   0
 // kind      game

@@ -1,16 +1,7 @@
-// ORIGINAL: 0x00622200 FILE
-// RULED-OUT: __thiscall-receiver rewrite of Ghidra's decode (guard chain,
-//            bbox min/max scan, sub_625080 edge-walk setup, then a
-//            plain-C long-double port of the FPU gradient section and a
-//            byte-macro (concat31/21/22/11, carry4) port of the CONCAT/CARRY
-//            inner pixel-blend loop) compiles but diverges at instruction #0
-//            (push vs sub - no local-var-count/register-allocation match is
-//            plausible for a function this size without a register-literal
-//            transcription of all ~470 instructions, not attempted here).
+// ORIGINAL: 0x00622200 sub_622200 0x00622200-0x0062280C FILE
+// RULED-OUT: __thiscall-receiver rewrite of Ghidra's decode (guard chain, bbox min/max scan, sub_625080 edge-walk setup, then a plain-C long-double port of the FPU gradient section and a byte-macro (concat31/21/22/11, carry4) port of the CONCAT/CARRY inner pixel-blend loop) compiles but diverges at instruction #0 (push vs sub - no local-var-count/register-allocation match is plausible for a function this size without a register-literal transcription of all ~470 instructions, not attempted here).
 // working copy - scaffold materialised by --work
-// name      sub_622200
 // size      1548 bytes
-// spans     0x00622200-0x0062280C
 // prototype 
 // callers   1   call targets   3
 // kind      game

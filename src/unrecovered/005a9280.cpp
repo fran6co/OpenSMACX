@@ -1,13 +1,7 @@
-// ORIGINAL: 0x005A9280 FILE
-// RULED-OUT: inline duplication of each read/write block - factored into
-//            rw_plain/rw_block helpers instead; DAT_00945d74 is written
-//            once (=0) and never again, so the encrypt branch is dead at
-//            runtime but still emitted (matches source, not a live check
-//            removed); diverges at instr #5
+// ORIGINAL: 0x005A9280 ?map_data@@YAHPAUFILE@@HH@Z 0x005A9280-0x005A94ED FILE
+// RULED-OUT: inline duplication of each read/write block - factored into rw_plain/rw_block helpers instead; DAT_00945d74 is written once (=0) and never again, so the encrypt branch is dead at runtime but still emitted (matches source, not a live check removed); diverges at instr #5
 // working copy - scaffold materialised by --work
-// name      ?map_data@@YAHPAUFILE@@HH@Z
 // size      621 bytes
-// spans     0x005A9280-0x005A94ED
 // prototype int (__cdecl ?map_data@@YAHPAUFILE@@HH@Z)(FILE* file, int, int)
 // callers   2   call targets   7
 // kind      game

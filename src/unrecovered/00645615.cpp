@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00645615 EXCLUDED S1
-// name      __fsopen
+// ORIGINAL: 0x00645615 __fsopen 0x00645615-0x00645646 EXCLUDED S1
 // size      49 bytes
-// spans     0x00645615-0x00645646
 // prototype 
 // callers   1   call targets   3
 // kind      library

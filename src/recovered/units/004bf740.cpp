@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004BF740 FILE
-// name      ?compute_camera@@YAXPAUVOX_Vect@@PAUVOX_Matrix@@@Z
+// ORIGINAL: 0x004BF740 ?compute_camera@@YAXPAUVOX_Vect@@PAUVOX_Matrix@@@Z 0x004BF740-0x004BF8C1 FILE
 // size      385 bytes
-// spans     0x004BF740-0x004BF8C1
 // prototype 
 // callers   4   call targets   5
 // kind      game

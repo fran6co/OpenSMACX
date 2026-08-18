@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0052A980 FILE
-// name      sub_52a980
+// ORIGINAL: 0x0052A980 sub_52a980 0x0052A980-0x0052A9A5 FILE
 // size      37 bytes
-// spans     0x0052A980-0x0052A9A5
 // prototype 
 // callers   0   call targets   0
 // kind      game

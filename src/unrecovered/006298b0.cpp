@@ -1,12 +1,7 @@
-// ORIGINAL: 0x006298B0 FILE
-// RULED-OUT: member-fn-pointer+union thunk (same shape as 0x00440F80)
-//            for the vtable-adjusted release calls and the slot1
-//            notify call on the embedded list container at self+0x2b70.
-//            First divergence #22 jl/jge.
+// ORIGINAL: 0x006298B0 ?UNK1@StringBox@@QAEXH@Z 0x006298B0-0x0062997B FILE
+// RULED-OUT: member-fn-pointer+union thunk (same shape as 0x00440F80) for the vtable-adjusted release calls and the slot1 notify call on the embedded list container at self+0x2b70. First divergence #22 jl/jge.
 // working copy - scaffold materialised by --work
-// name      ?UNK1@StringBox@@QAEXH@Z
 // size      203 bytes
-// spans     0x006298B0-0x0062997B
 // prototype void (__thiscall ?UNK1@StringBox@@QAEXH@Z)(StringBox* this, int)
 // callers   0   call targets   1
 // kind      game

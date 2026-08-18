@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004C3950 BYTE_EXACT FILE
-// name      ?set_detail_map@WorldWin@@QAEXXZ
+// ORIGINAL: 0x004C3950 ?set_detail_map@WorldWin@@QAEXXZ 0x004C3950-0x004C398A FILE BYTE_EXACT
 // size      58 bytes
-// spans     0x004C3950-0x004C398A
 // prototype void (__thiscall ?set_detail_map@WorldWin@@QAEXXZ)(WorldWin* this)
 // callers   3   call targets   1
 // kind      game

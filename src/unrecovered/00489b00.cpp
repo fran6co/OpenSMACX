@@ -1,11 +1,7 @@
-// ORIGINAL: 0x00489B00 BYTE_EXACT FILE
-// LEVER: unresolved tail-call target - a synthetic shim class with the same
-//        signature, called via reinterpret_cast<Shim*>(this), tail-jumps
-//        since relocation targets are masked by the comparison
+// ORIGINAL: 0x00489B00 ?close@PickWin@@QAEXXZ 0x00489B00-0x00489B05 FILE BYTE_EXACT
+// LEVER: unresolved tail-call target - a synthetic shim class with the same signature, called via reinterpret_cast<Shim*>(this), tail-jumps since relocation targets are masked by the comparison
 // working copy - scaffold materialised by --work
-// name      ?close@PickWin@@QAEXXZ
 // size      5 bytes
-// spans     0x00489B00-0x00489B05
 // prototype void (__thiscall ?close@PickWin@@QAEXXZ)(PickWin* this)
 // callers   0   call targets   0
 // kind      thunk

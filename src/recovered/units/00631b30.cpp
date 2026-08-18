@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00631B30 FILE
-// name      ?close_game@Net@@QAEXXZ
+// ORIGINAL: 0x00631B30 ?close_game@Net@@QAEXXZ 0x00631B30-0x00631B9A FILE
 // size      106 bytes
-// spans     0x00631B30-0x00631B9A
 // prototype void (__thiscall ?close_game@Net@@QAEXXZ)(Net* this)
 // callers   1   call targets   2
 // kind      game

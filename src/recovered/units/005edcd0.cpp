@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005EDCD0 FILE
-// name      ?hide@Win@@QAEXXZ
+// ORIGINAL: 0x005EDCD0 ?hide@Win@@QAEXXZ 0x005EDCD0-0x005EDE56 FILE
 // size      390 bytes
-// spans     0x005EDCD0-0x005EDE56
 // prototype void (__thiscall ?hide@Win@@QAEXXZ)(Win* this)
 // callers   34   call targets   4
 // kind      game

@@ -1,31 +1,12 @@
-// ORIGINAL: 0x00402DD0 FILE
-// name      sub_402dd0
+// ORIGINAL: 0x00402DD0 sub_402dd0 0x00402DD0-0x00402ED2;0x006505A0-0x006505B5 FILE
+// RULED-OUT: this is the "StringStruct-shaped member destructor" wall this project already documents (see 0x00421100's ProdPicker dtor and 0x004E3300's ClassX::sub_4e3300, both same idiom): a this-adjusted (`this-8`) inline teardown of an embedded container - vtable-patch, walk entries calling two indirect "scalar deleting destructor" style virtual calls per entry (slot001(payload) on the node's own patched vtable, then slot000(1) through a this-adjustor delta read from each item's own vtable+4) - followed by restoring the outer object's vtable. The BODY-mode scaffold's auto-generated `VCall` shim is nullary and can't carry the arguments these calls need, so this is landed FILE-mode with `VCall` edited to `slot000(int)`/`slot001(void*)`. Not expected exact: the compiler-synthesized SEH try-frame (fs:[0] chain, `push -1; push handler`) that protects partial teardown is not reproduced by a call-by-call translation over raw pointers with no real local object for the compiler to protect (mnemonic_similarity 0.81, 204 vs 258 primary-span bytes).
 // size      279 bytes
-// spans     0x00402DD0-0x00402ED2;0x006505A0-0x006505B5
 // prototype 
 // callers   4   call targets   1
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00402970
 // indirect  0x00402E5F 0x00402E71 0x00402E8D
-// RULED-OUT: this is the "StringStruct-shaped member destructor" wall this
-//            project already documents (see 0x00421100's ProdPicker
-//            dtor and 0x004E3300's ClassX::sub_4e3300, both same idiom): a
-//            this-adjusted (`this-8`) inline teardown of an embedded
-//            container - vtable-patch, walk entries calling two indirect
-//            "scalar deleting destructor" style virtual calls per entry
-//            (slot001(payload) on the node's own patched vtable, then
-//            slot000(1) through a this-adjustor delta read from each
-//            item's own vtable+4) - followed by restoring the outer
-//            object's vtable. The BODY-mode scaffold's auto-generated
-//            `VCall` shim is nullary and can't carry the arguments these
-//            calls need, so this is landed FILE-mode with `VCall` edited
-//            to `slot000(int)`/`slot001(void*)`. Not expected exact: the
-//            compiler-synthesized SEH try-frame (fs:[0] chain, `push -1;
-//            push handler`) that protects partial teardown is not
-//            reproduced by a call-by-call translation over raw pointers
-//            with no real local object for the compiler to protect
-//            (mnemonic_similarity 0.81, 204 vs 258 primary-span bytes).
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: sub_402dd0  at 0x00402DD0  (279 bytes)
 //

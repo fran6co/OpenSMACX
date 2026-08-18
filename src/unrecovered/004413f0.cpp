@@ -1,13 +1,7 @@
-// ORIGINAL: 0x004413F0 FILE
-// RULED-OUT: `int idx = a2;` declared inside the inner `if (a2 < count - 1)`
-//            (mismatch, idx assign shifted 5 instructions late) and hoisted
-//            above it with a separate `countMinus1` temp (MNEMONIC_ONLY,
-//            worse). Landed the inner-if placement: MISMATCH #23, mnemonic
-//            similarity 0.98, same byte count (156/156).
+// ORIGINAL: 0x004413F0 ?kill_offer@DiploWin@@QAEXHH@Z 0x004413F0-0x0044148C FILE
+// RULED-OUT: `int idx = a2;` declared inside the inner `if (a2 < count - 1)` (mismatch, idx assign shifted 5 instructions late) and hoisted above it with a separate `countMinus1` temp (MNEMONIC_ONLY, worse). Landed the inner-if placement: MISMATCH #23, mnemonic similarity 0.98, same byte count (156/156).
 // working copy - scaffold materialised by --work
-// name      ?kill_offer@DiploWin@@QAEXHH@Z
 // size      156 bytes
-// spans     0x004413F0-0x0044148C
 // prototype void (__thiscall ?kill_offer@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)
 // callers   3   call targets   1
 // kind      game

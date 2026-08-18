@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004103B0 FILE
-// name      ?draw_garrison@BaseWin@@QAEXH@Z
+// ORIGINAL: 0x004103B0 ?draw_garrison@BaseWin@@QAEXH@Z 0x004103B0-0x00410868;0x00651B0D-0x00651B22 FILE
 // size      1229 bytes
-// spans     0x004103B0-0x00410868;0x00651B0D-0x00651B22
 // prototype void (__thiscall ?draw_garrison@BaseWin@@QAEXH@Z)(BaseWin* this, int)
 // callers   2   call targets   20
 // kind      game

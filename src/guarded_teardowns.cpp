@@ -70,10 +70,8 @@ func_thiscall_teardown TeardownTarget005E3820 = original_method<func_thiscall_te
 Purpose: ?timer_callback_daemon@BattleWin@@QAAXHH@Z - run 1 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
-ORIGINAL: 0x00422EB0
-// name      ?timer_callback_daemon@BattleWin@@QAAXHH@Z
+// ORIGINAL: 0x00422EB0 ?timer_callback_daemon@BattleWin@@QAAXHH@Z 0x00422EB0-0x00422EBA
 // size      10 bytes
-// spans     0x00422EB0-0x00422EBA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -90,10 +88,8 @@ void __cdecl teardown_00422eb0() {
 Purpose: ?timer_callback_daemon@BattleWin@@QAAXH@Z - run 1 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
-ORIGINAL: 0x00422EC0
-// name      ?timer_callback_daemon@BattleWin@@QAAXH@Z
+// ORIGINAL: 0x00422EC0 ?timer_callback_daemon@BattleWin@@QAAXH@Z 0x00422EC0-0x00422ECA
 // size      10 bytes
-// spans     0x00422EC0-0x00422ECA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -110,10 +106,8 @@ void __cdecl teardown_00422ec0() {
 Purpose: ?passover_callback@@YAXXZ - run 1 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
-ORIGINAL: 0x004456A0
-// name      ?passover_callback@@YAXXZ
+// ORIGINAL: 0x004456A0 ?passover_callback@@YAXXZ 0x004456A0-0x004456AA
 // size      10 bytes
-// spans     0x004456A0-0x004456AA
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -130,10 +124,8 @@ void __cdecl teardown_004456a0() {
 Purpose: ??__Fg_MAPWIN@@YAXXZ - run 2 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
-ORIGINAL: 0x004620A0
-// name      ??__Fg_MAPWIN@@YAXXZ
+// ORIGINAL: 0x004620A0 ??__Fg_MAPWIN@@YAXXZ 0x004620A0-0x004620B4
 // size      20 bytes
-// spans     0x004620A0-0x004620B4
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -151,10 +143,8 @@ void __cdecl teardown_g_mapwin() {
 Purpose: ??__Fg_PLANWIN@@YAXXZ - run 2 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
-ORIGINAL: 0x0048AE20
-// name      ??__Fg_PLANWIN@@YAXXZ
+// ORIGINAL: 0x0048AE20 ??__Fg_PLANWIN@@YAXXZ 0x0048AE20-0x0048AE34
 // size      20 bytes
-// spans     0x0048AE20-0x0048AE34
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -172,10 +162,8 @@ void __cdecl teardown_g_planwin() {
 Purpose: ??__Eg_BOOM_BUFFER1@@YAXXZ - run 1 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
-ORIGINAL: 0x00505D20
-// name      ??__Eg_BOOM_BUFFER1@@YAXXZ
+// ORIGINAL: 0x00505D20 ??__Eg_BOOM_BUFFER1@@YAXXZ 0x00505D20-0x00505D2A
 // size      10 bytes
-// spans     0x00505D20-0x00505D2A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -192,10 +180,8 @@ void __cdecl teardown_00505d20() {
 Purpose: ??__Eg_BOOM_FLIC@@YAXXZ - run 1 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
-ORIGINAL: 0x00505D30
-// name      ??__Eg_BOOM_FLIC@@YAXXZ
+// ORIGINAL: 0x00505D30 ??__Eg_BOOM_FLIC@@YAXXZ 0x00505D30-0x00505D3A
 // size      10 bytes
-// spans     0x00505D30-0x00505D3A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -212,10 +198,8 @@ void __cdecl teardown_00505d30() {
 Purpose: ??__Fg_CONSOLE@@YAXXZ - run 2 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
-ORIGINAL: 0x0050E870
-// name      ??__Fg_CONSOLE@@YAXXZ
+// ORIGINAL: 0x0050E870 ??__Fg_CONSOLE@@YAXXZ 0x0050E870-0x0050E884
 // size      20 bytes
-// spans     0x0050E870-0x0050E884
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -233,10 +217,8 @@ void __cdecl teardown_g_console() {
 Purpose: sub_589890 - run 1 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
-ORIGINAL: 0x00589890
-// name      sub_589890
+// ORIGINAL: 0x00589890 sub_589890 0x00589890-0x0058989A
 // size      10 bytes
-// spans     0x00589890-0x0058989A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -253,10 +235,8 @@ void __cdecl teardown_00589890() {
 Purpose: ??__Fg_BUFFER_SPRITE@@YAXXZ - tear down the global at 0x9b3a50 through
          ?close@Sprite@@QAEXXZ, at most once, gated on bit 2 of the flag byte
          at 0x9b37cc.
-ORIGINAL: 0x005D71F0
-// name      ??__Fg_BUFFER_SPRITE@@YAXXZ
+// ORIGINAL: 0x005D71F0 ??__Fg_BUFFER_SPRITE@@YAXXZ 0x005D71F0-0x005D720F
 // size      31 bytes
-// spans     0x005D71F0-0x005D720F
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -280,10 +260,8 @@ void __cdecl teardown_g_buffer_sprite() {
 Purpose: ??__Fg_WIN_BUFFER@@YAXXZ - tear down the global at 0x9b6f08 through
          ??1Buffer@@QAE@XZ, at most once, gated on bit 1 of the flag byte
          at 0x9b6e30.
-ORIGINAL: 0x005EB370
-// name      ??__Fg_WIN_BUFFER@@YAXXZ
+// ORIGINAL: 0x005EB370 ??__Fg_WIN_BUFFER@@YAXXZ 0x005EB370-0x005EB38F
 // size      31 bytes
-// spans     0x005EB370-0x005EB38F
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -307,10 +285,8 @@ void __cdecl teardown_g_win_buffer() {
 Purpose: sub_5eb3b0 - tear down the global at 0x9b7490 through
          ??1Buffer@@QAE@XZ, at most once, gated on bit 2 of the flag byte
          at 0x9b6e30.
-ORIGINAL: 0x005EB3B0
-// name      sub_5eb3b0
+// ORIGINAL: 0x005EB3B0 sub_5eb3b0 0x005EB3B0-0x005EB3CF
 // size      31 bytes
-// spans     0x005EB3B0-0x005EB3CF
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -334,10 +310,8 @@ void __cdecl teardown_005eb3b0() {
 Purpose: ??__Fg_RADIOBUTTON_SPRITE_1@@YAXXZ - tear down the global at 0x9b8ef8 through
          ?close@Sprite@@QAEXXZ, at most once, gated on bit 1 of the flag byte
          at 0x9b8ef0.
-ORIGINAL: 0x0060D080
-// name      ??__Fg_RADIOBUTTON_SPRITE_1@@YAXXZ
+// ORIGINAL: 0x0060D080 ??__Fg_RADIOBUTTON_SPRITE_1@@YAXXZ 0x0060D080-0x0060D09F
 // size      31 bytes
-// spans     0x0060D080-0x0060D09F
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -361,10 +335,8 @@ void __cdecl teardown_g_radiobutton_sprite_1() {
 Purpose: ??__Fg_RADIOBUTTON_SPRITE_2@@YAXXZ - tear down the global at 0x9b8f28 through
          ?close@Sprite@@QAEXXZ, at most once, gated on bit 2 of the flag byte
          at 0x9b8ef0.
-ORIGINAL: 0x0060D0C0
-// name      ??__Fg_RADIOBUTTON_SPRITE_2@@YAXXZ
+// ORIGINAL: 0x0060D0C0 ??__Fg_RADIOBUTTON_SPRITE_2@@YAXXZ 0x0060D0C0-0x0060D0DF
 // size      31 bytes
-// spans     0x0060D0C0-0x0060D0DF
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -388,10 +360,8 @@ void __cdecl teardown_g_radiobutton_sprite_2() {
 Purpose: ?close_class@RadioButton@@QAAXXZ - run 2 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
-ORIGINAL: 0x0060E5D0
-// name      ?close_class@RadioButton@@QAAXXZ
+// ORIGINAL: 0x0060E5D0 ?close_class@RadioButton@@QAAXXZ 0x0060E5D0-0x0060E5E4
 // size      20 bytes
-// spans     0x0060E5D0-0x0060E5E4
 // prototype 
 // callers   1   call targets   1
 // kind      game
@@ -409,10 +379,8 @@ void __cdecl teardown_0060e5d0() {
 Purpose: ??__Fg_CHECKBOX_SPRITE_1@@YAXXZ - tear down the global at 0x9b8f60 through
          ?close@Sprite@@QAEXXZ, at most once, gated on bit 1 of the flag byte
          at 0x9b8f58.
-ORIGINAL: 0x0060E610
-// name      ??__Fg_CHECKBOX_SPRITE_1@@YAXXZ
+// ORIGINAL: 0x0060E610 ??__Fg_CHECKBOX_SPRITE_1@@YAXXZ 0x0060E610-0x0060E62F
 // size      31 bytes
-// spans     0x0060E610-0x0060E62F
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -436,10 +404,8 @@ void __cdecl teardown_g_checkbox_sprite_1() {
 Purpose: ??__Fg_CHECKBOX_SPRITE_2@@YAXXZ - tear down the global at 0x9b8f90 through
          ?close@Sprite@@QAEXXZ, at most once, gated on bit 2 of the flag byte
          at 0x9b8f58.
-ORIGINAL: 0x0060E650
-// name      ??__Fg_CHECKBOX_SPRITE_2@@YAXXZ
+// ORIGINAL: 0x0060E650 ??__Fg_CHECKBOX_SPRITE_2@@YAXXZ 0x0060E650-0x0060E66F
 // size      31 bytes
-// spans     0x0060E650-0x0060E66F
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -463,10 +429,8 @@ void __cdecl teardown_g_checkbox_sprite_2() {
 Purpose: ?close_class@CheckBox@@QAAXXZ - run 2 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
-ORIGINAL: 0x0060FD60
-// name      ?close_class@CheckBox@@QAAXXZ
+// ORIGINAL: 0x0060FD60 ?close_class@CheckBox@@QAAXXZ 0x0060FD60-0x0060FD74
 // size      20 bytes
-// spans     0x0060FD60-0x0060FD74
 // prototype 
 // callers   1   call targets   1
 // kind      game
@@ -484,10 +448,8 @@ void __cdecl teardown_0060fd60() {
 Purpose: ??__Fg_FILEWIN_SPRITE_1@@YAXXZ - tear down the global at 0x9b9048 through
          ?close@Sprite@@QAEXXZ, at most once, gated on bit 1 of the flag byte
          at 0x9b9014.
-ORIGINAL: 0x006137B0
-// name      ??__Fg_FILEWIN_SPRITE_1@@YAXXZ
+// ORIGINAL: 0x006137B0 ??__Fg_FILEWIN_SPRITE_1@@YAXXZ 0x006137B0-0x006137CF
 // size      31 bytes
-// spans     0x006137B0-0x006137CF
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -511,10 +473,8 @@ void __cdecl teardown_g_filewin_sprite_1() {
 Purpose: ??__Fg_FILEWIN_SPRITE_2@@YAXXZ - tear down the global at 0x9b9018 through
          ?close@Sprite@@QAEXXZ, at most once, gated on bit 2 of the flag byte
          at 0x9b9014.
-ORIGINAL: 0x006137F0
-// name      ??__Fg_FILEWIN_SPRITE_2@@YAXXZ
+// ORIGINAL: 0x006137F0 ??__Fg_FILEWIN_SPRITE_2@@YAXXZ 0x006137F0-0x0061380F
 // size      31 bytes
-// spans     0x006137F0-0x0061380F
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -538,10 +498,8 @@ void __cdecl teardown_g_filewin_sprite_2() {
 Purpose: ??__Fg_FILEWIN_SPRITE_3@@YAXXZ - tear down the global at 0x9b9078 through
          ?close@Sprite@@QAEXXZ, at most once, gated on bit 4 of the flag byte
          at 0x9b9014.
-ORIGINAL: 0x00613830
-// name      ??__Fg_FILEWIN_SPRITE_3@@YAXXZ
+// ORIGINAL: 0x00613830 ??__Fg_FILEWIN_SPRITE_3@@YAXXZ 0x00613830-0x0061384F
 // size      31 bytes
-// spans     0x00613830-0x0061384F
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -565,10 +523,8 @@ void __cdecl teardown_g_filewin_sprite_3() {
 Purpose: ??__Fg_CAVIAR_BUFFER_1@@YAXXZ - tear down the global at 0x9b9108 through
          ??1Buffer@@QAE@XZ, at most once, gated on bit 1 of the flag byte
          at 0x9b9104.
-ORIGINAL: 0x00616AC0
-// name      ??__Fg_CAVIAR_BUFFER_1@@YAXXZ
+// ORIGINAL: 0x00616AC0 ??__Fg_CAVIAR_BUFFER_1@@YAXXZ 0x00616AC0-0x00616ADF
 // size      31 bytes
-// spans     0x00616AC0-0x00616ADF
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -592,10 +548,8 @@ void __cdecl teardown_g_caviar_buffer_1() {
 Purpose: ??__Fg_CAVIAR_BUFFER_2@@YAXXZ - tear down the global at 0x9b96b0 through
          ??1Buffer@@QAE@XZ, at most once, gated on bit 2 of the flag byte
          at 0x9b9104.
-ORIGINAL: 0x00616B00
-// name      ??__Fg_CAVIAR_BUFFER_2@@YAXXZ
+// ORIGINAL: 0x00616B00 ??__Fg_CAVIAR_BUFFER_2@@YAXXZ 0x00616B00-0x00616B1F
 // size      31 bytes
-// spans     0x00616B00-0x00616B1F
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -619,10 +573,8 @@ void __cdecl teardown_g_caviar_buffer_2() {
 Purpose: sub_63bb00 - tear down the global at 0x9beae8 through
          ?close@Sprite@@QAEXXZ, at most once, gated on bit 1 of the flag byte
          at 0x9beae0.
-ORIGINAL: 0x0063BB00
-// name      sub_63bb00
+// ORIGINAL: 0x0063BB00 sub_63bb00 0x0063BB00-0x0063BB1F
 // size      31 bytes
-// spans     0x0063BB00-0x0063BB1F
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -646,10 +598,8 @@ void __cdecl teardown_0063bb00() {
 Purpose: sub_63cef0 - run 1 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
-ORIGINAL: 0x0063CEF0
-// name      sub_63cef0
+// ORIGINAL: 0x0063CEF0 sub_63cef0 0x0063CEF0-0x0063CEFA
 // size      10 bytes
-// spans     0x0063CEF0-0x0063CEFA
 // prototype 
 // callers   1   call targets   0
 // kind      game

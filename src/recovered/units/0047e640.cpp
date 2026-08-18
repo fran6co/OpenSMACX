@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0047E640 FILE
-// name      ?pick_time@NetWin@@QAEXXZ
+// ORIGINAL: 0x0047E640 ?pick_time@NetWin@@QAEXXZ 0x0047E640-0x0047E924;0x00656F4D-0x00657025 FILE
 // size      956 bytes
-// spans     0x0047E640-0x0047E924;0x00656F4D-0x00657025
 // prototype void (__thiscall ?pick_time@NetWin@@QAEXXZ)(NetWin* this)
 // callers   1   call targets   25
 // kind      game

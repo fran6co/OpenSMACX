@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00646ED0 EXCLUDED S1
-// name      _calloc
+// ORIGINAL: 0x00646ED0 _calloc 0x00646ED0-0x00646F5D EXCLUDED S1
 // size      141 bytes
-// spans     0x00646ED0-0x00646F5D
 // prototype 
 // callers   8   call targets   5
 // kind      library

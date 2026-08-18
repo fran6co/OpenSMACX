@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00632DB0 FILE
-// name      ?handle_sys_msg@Net@@QAEXXZ
+// ORIGINAL: 0x00632DB0 ?handle_sys_msg@Net@@QAEXXZ 0x00632DB0-0x00632F97 FILE
 // size      487 bytes
-// spans     0x00632DB0-0x00632F97
 // prototype void (__thiscall ?handle_sys_msg@Net@@QAEXXZ)(Net* this)
 // callers   7   call targets   4
 // kind      game

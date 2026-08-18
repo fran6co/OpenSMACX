@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004E1190 FILE
-// name      ?editor_randomize@Console@@QAEXXZ
+// ORIGINAL: 0x004E1190 ?editor_randomize@Console@@QAEXXZ 0x004E1190-0x004E11F7 FILE
 // size      103 bytes
-// spans     0x004E1190-0x004E11F7
 // prototype void (__thiscall ?editor_randomize@Console@@QAEXXZ)(Console* this)
 // callers   1   call targets   3
 // kind      game

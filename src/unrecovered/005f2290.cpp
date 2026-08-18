@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005F2290 FILE
+// ORIGINAL: 0x005F2290 ?OnMouseMove@Win@@QAAXPAXHHI@Z 0x005F2290-0x005F232D FILE
 // working copy - scaffold materialised by --work
-// name      ?OnMouseMove@Win@@QAAXPAXHHI@Z
 // size      157 bytes
-// spans     0x005F2290-0x005F232D
 // prototype 
 // callers   0   call targets   3
 // kind      game

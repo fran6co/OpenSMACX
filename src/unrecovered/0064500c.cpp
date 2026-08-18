@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064500C EXCLUDED S1
-// name      ?_CallCatchBlock2@@YAPAXPAUEHRegistrationNode@@PBU_s_FuncInfo@@PAXHK@Z
+// ORIGINAL: 0x0064500C ?_CallCatchBlock2@@YAPAXPAUEHRegistrationNode@@PBU_s_FuncInfo@@PAXHK@Z 0x0064500C-0x00645060 EXCLUDED S1
 // size      84 bytes
-// spans     0x0064500C-0x00645060
 // prototype 
 // callers   1   call targets   1
 // kind      library

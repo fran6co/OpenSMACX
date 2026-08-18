@@ -1,28 +1,18 @@
-// ORIGINAL: 0x00665BA1 EXCLUDED S2d
-// name      sub_665ba1
+// ORIGINAL: 0x00665BA1 sub_665ba1 0x00665BA1-0x00665C93 EXCLUDED S2d
+// RULED-OUT: was `EXCLUDED S2a`; same shape as 0x00664D51's sibling (see that file's note in full) - the disassembly is a normal `ret`, no tail-jmp, self-contained store sequence, not an EH funclet by docs/EXCLUSIONS.md 2a's own test. Un-excluded.
+// RULED-OUT: combining `value + g_9be6b4 + g_9be6b4` into one expression vs. splitting into two statements - identical rebuilt bytes either way (VC6 folds both into one `lea`/`mov` pair; original is two separate `add`). Kept split as the more faithful source form. First divergence #18 add/mov, mnemonic similarity 0.92, 4 edit blocks, unrelated to this expression's semantics.
 // size      242 bytes
-// spans     0x00665BA1-0x00665C93
 // prototype
 // callers   1   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
-// RULED-OUT: was `EXCLUDED S2a`; same shape as 0x00664D51's sibling
-//            (see that file's note in full) - the disassembly is a normal
-//            `ret`, no tail-jmp, self-contained store sequence, not an EH
-//            funclet by docs/EXCLUSIONS.md 2a's own test. Un-excluded.
 // NOTE: still structurally capped, but for a different reason than S2a
 //       claimed: tools/byte_match.py SELFMOD_RANGE (0x00664000,0x00669000)
 //       covers this address too, so classify_body reports
 //       REFUSED/"body has a span in _SELFMOD" for ANY body, content-
 //       independent - same ceiling as 0x004C86D0's SHARED_TAIL. No
 //       docs/EXCLUSIONS.md section cites it. Landed anyway for coverage.
-// RULED-OUT: combining `value + g_9be6b4 + g_9be6b4` into one expression vs.
-//            splitting into two statements - identical rebuilt bytes either
-//            way (VC6 folds both into one `lea`/`mov` pair; original is two
-//            separate `add`). Kept split as the more faithful source form.
-//            First divergence #18 add/mov, mnemonic similarity 0.92, 4 edit
-//            blocks, unrelated to this expression's semantics.
 
 extern "C" {
     extern int g_9be6bc;

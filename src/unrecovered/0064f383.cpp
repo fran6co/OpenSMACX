@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064F383 EXCLUDED S1
-// name      ___addl
+// ORIGINAL: 0x0064F383 ___addl 0x0064F383-0x0064F3A4 EXCLUDED S1
 // size      33 bytes
-// spans     0x0064F383-0x0064F3A4
 // prototype 
 // callers   3   call targets   0
 // kind      library

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006132A0 BYTE_EXACT
-// name      ?calculate_dimensions@Dialogs@@QAEHXZ
+// ORIGINAL: 0x006132A0 ?calculate_dimensions@Dialogs@@QAEHXZ 0x006132A0-0x006132F8 BYTE_EXACT
 // size      88 bytes
-// spans     0x006132A0-0x006132F8
 // prototype int (__thiscall ?calculate_dimensions@Dialogs@@QAEHXZ)(Dialogs* this)
 // callers   1   call targets   0
 // kind      game

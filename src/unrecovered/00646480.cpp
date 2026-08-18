@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00646480 EXCLUDED S1
-// name      __CIcos
+// ORIGINAL: 0x00646480 __CIcos 0x00646480-0x00646494 EXCLUDED S1
 // size      20 bytes
-// spans     0x00646480-0x00646494
 // prototype 
 // callers   0   call targets   2
 // kind      library

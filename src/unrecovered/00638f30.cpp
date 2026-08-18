@@ -1,11 +1,6 @@
-// ORIGINAL: 0x00638F30 FILE
-// RULED-OUT: nullary IDA guess replaced with the 4 args the disassembly
-//            reads at [esp+8],[esp+0x1c..0x28]; DAT_009C0B90 is a plain
-//            __cdecl function-pointer slot (caller cleans up 0xC). First
-//            divergence #19 or/pop, not chased further.
-// name      sub_638f30
+// ORIGINAL: 0x00638F30 sub_638f30 0x00638F30-0x00639086 FILE
+// RULED-OUT: nullary IDA guess replaced with the 4 args the disassembly reads at [esp+8],[esp+0x1c..0x28]; DAT_009C0B90 is a plain __cdecl function-pointer slot (caller cleans up 0xC). First divergence #19 or/pop, not chased further.
 // size      342 bytes
-// spans     0x00638F30-0x00639086
 // prototype 
 // callers   1   call targets   3
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0048C060 BYTE_EXACT FILE
-// name      ?parse_it@@YAXPADPBD@Z
+// ORIGINAL: 0x0048C060 ?parse_it@@YAXPADPBD@Z 0x0048C060-0x0048C099 FILE BYTE_EXACT
 // size      57 bytes
-// spans     0x0048C060-0x0048C099
 // prototype void (__cdecl ?parse_it@@YAXPADPBD@Z)(int8* srcFileID, int8* sectionID)
 // callers   5   call targets   3
 // kind      game

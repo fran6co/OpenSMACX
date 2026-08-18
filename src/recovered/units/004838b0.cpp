@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004838B0 FILE
-// name      ??__Fg_NEWTECHWIN_SPRITES@@YAXXZ
+// ORIGINAL: 0x004838B0 ??__Fg_NEWTECHWIN_SPRITES@@YAXXZ 0x004838B0-0x004838D8 FILE
 // size      40 bytes
-// spans     0x004838B0-0x004838D8
 // prototype 
 // callers   0   call targets   1
 // kind      game

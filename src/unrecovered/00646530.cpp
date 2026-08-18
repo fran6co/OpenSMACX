@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00646530 EXCLUDED S1
-// name      __CIsqrt
+// ORIGINAL: 0x00646530 __CIsqrt 0x00646530-0x00646544 EXCLUDED S1
 // size      20 bytes
-// spans     0x00646530-0x00646544
 // prototype 
 // callers   0   call targets   2
 // kind      library

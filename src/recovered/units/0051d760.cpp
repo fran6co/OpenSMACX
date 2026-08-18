@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0051D760 FILE
-// name      sub_51d760
+// ORIGINAL: 0x0051D760 sub_51d760 0x0051D760-0x0051D7B5 FILE
 // size      85 bytes
-// spans     0x0051D760-0x0051D7B5
 // prototype 
 // callers   0   call targets   0
 // kind      game

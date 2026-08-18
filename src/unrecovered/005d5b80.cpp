@@ -1,10 +1,7 @@
-// ORIGINAL: 0x005D5B80 FILE
-// RULED-OUT: Win::get_hdc/release_hdc called w/ explicit this (mismatch
-//            at implicit-ecx call sites); LFSR loop as do/while matching asm
+// ORIGINAL: 0x005D5B80 sub_5d5b80 0x005D5B80-0x005D5C4E FILE
+// RULED-OUT: Win::get_hdc/release_hdc called w/ explicit this (mismatch at implicit-ecx call sites); LFSR loop as do/while matching asm
 // working copy - scaffold materialised by --work
-// name      sub_5d5b80
 // size      206 bytes
-// spans     0x005D5B80-0x005D5C4E
 // prototype 
 // callers   0   call targets   8
 // kind      game

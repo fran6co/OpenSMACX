@@ -1,8 +1,6 @@
-// ORIGINAL: 0x006136B0 BYTE_EXACT FILE
+// ORIGINAL: 0x006136B0 ?init@Dialogs@@QAEHPAUHeap@@@Z 0x006136B0-0x00613734 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?init@Dialogs@@QAEHPAUHeap@@@Z
 // size      132 bytes
-// spans     0x006136B0-0x00613734
 // prototype int (__thiscall ?init@Dialogs@@QAEHPAUHeap@@@Z)(Dialogs* this, Heap*)
 // callers   1   call targets   6
 // kind      game

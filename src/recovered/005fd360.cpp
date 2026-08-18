@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005FD360 BYTE_EXACT
-// name      ?do_all_sounds@@YAXXZ
+// ORIGINAL: 0x005FD360 ?do_all_sounds@@YAXXZ 0x005FD360-0x005FD36B BYTE_EXACT
 // size      11 bytes
-// spans     0x005FD360-0x005FD36B
 // prototype 
 // callers   0   call targets   0
 // kind      game

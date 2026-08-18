@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005F0580 BYTE_EXACT FILE
-// name      ?set_caption_height@Win@@QAEXH@Z
+// ORIGINAL: 0x005F0580 ?set_caption_height@Win@@QAEXH@Z 0x005F0580-0x005F05BD FILE BYTE_EXACT
 // size      61 bytes
-// spans     0x005F0580-0x005F05BD
 // prototype void (__thiscall ?set_caption_height@Win@@QAEXH@Z)(Win* this, int)
 // callers   1   call targets   0
 // kind      game

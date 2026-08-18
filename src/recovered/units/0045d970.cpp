@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0045D970 FILE
-// name      ?slide_hide@@YAXPAUGraphicWin@@H@Z
+// ORIGINAL: 0x0045D970 ?slide_hide@@YAXPAUGraphicWin@@H@Z 0x0045D970-0x0045DEA0;0x00655777-0x006557A2 FILE
 // size      1371 bytes
-// spans     0x0045D970-0x0045DEA0;0x00655777-0x006557A2
 // prototype 
 // callers   13   call targets   20
 // kind      game

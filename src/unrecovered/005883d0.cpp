@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005883D0 BYTE_EXACT FILE
-// name      ?scroll_small@@YAXXZ
+// ORIGINAL: 0x005883D0 ?scroll_small@@YAXXZ 0x005883D0-0x0058845D FILE BYTE_EXACT
 // size      141 bytes
-// spans     0x005883D0-0x0058845D
 // prototype 
 // callers   6   call targets   0
 // kind      

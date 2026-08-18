@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00629D40 BYTE_EXACT
-// name      ?on_scrolling@StringBox@@QAEXHH@Z
+// ORIGINAL: 0x00629D40 ?on_scrolling@StringBox@@QAEXHH@Z 0x00629D40-0x00629D55 BYTE_EXACT
 // size      21 bytes
-// spans     0x00629D40-0x00629D55
 // prototype void (__thiscall ?on_scrolling@StringBox@@QAEXHH@Z)(StringBox* this, int, int)
 // callers   0   call targets   0
 // kind      game

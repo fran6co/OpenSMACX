@@ -1,17 +1,11 @@
-// ORIGINAL: 0x004BA5F0 BYTE_EXACT FILE
-// name      ?tut_check@@YAHH@Z
+// ORIGINAL: 0x004BA5F0 ?tut_check@@YAHH@Z 0x004BA5F0-0x004BA64E FILE BYTE_EXACT
+// LEVER: test/push the flag word as a named `extern int`, not a const-address pointer - the pointer spelling lets VC6 prove no alias with the table read, cache it in eax and push/pop esi; a real global may alias, so it reloads and `|=` lowers to load/or/store. Transferred from 0x004BA650, then MEASURED here.
 // size      94 bytes
-// spans     0x004BA5F0-0x004BA64E
 // prototype 
 // callers   7   call targets   0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
-// LEVER: test/push  the flag word as a named `extern int`, not a
-//   const-address pointer - the pointer spelling lets VC6 prove no
-//   alias with the table read, cache it in eax and push/pop esi; a
-//   real global may alias, so it reloads and `|=` lowers to
-//   load/or/store. Transferred from 0x004BA650, then MEASURED here.
 // working copy - scaffold materialised by --work
 
 // GENERATED SKELETON - tools/emit_translation_unit.py

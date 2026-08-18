@@ -1,15 +1,7 @@
-// ORIGINAL: 0x004A08E0 FILE
-// RULED-OUT: full transcription landed (MISMATCH #3, prologue divergence).
-//            Verified every multi-arg call (box_sprite, write_cent_l,
-//            write_l/write_right_l, Spot::add, veh_fake, veh_draw, set_font,
-//            set_text_color*, say_stats) against raw bytes since Ghidra
-//            silently drops the implicit `this`/buf receiver on several of
-//            these; CharUpperA reached through the IAT slot at 0x66931C via
-//            a __stdcall function-pointer typedef.
+// ORIGINAL: 0x004A08E0 ?draw_security@ReportWin@@QAEXXZ 0x004A08E0-0x004A1134 FILE
+// RULED-OUT: full transcription landed (MISMATCH #3, prologue divergence). Verified every multi-arg call (box_sprite, write_cent_l, write_l/write_right_l, Spot::add, veh_fake, veh_draw, set_font, set_text_color*, say_stats) against raw bytes since Ghidra silently drops the implicit `this`/buf receiver on several of these; CharUpperA reached through the IAT slot at 0x66931C via a __stdcall function-pointer typedef.
 // working copy - scaffold materialised by --work
-// name      ?draw_security@ReportWin@@QAEXXZ
 // size      2132 bytes
-// spans     0x004A08E0-0x004A1134
 // prototype void (__thiscall ?draw_security@ReportWin@@QAEXXZ)(ReportWin* this)
 // callers   2   call targets   20
 // kind      game

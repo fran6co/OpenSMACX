@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005F5020 BYTE_EXACT FILE
-// name      ?update_zorder@Win@@QAAXXZ
+// ORIGINAL: 0x005F5020 ?update_zorder@Win@@QAAXXZ 0x005F5020-0x005F5080 FILE BYTE_EXACT
 // size      96 bytes
-// spans     0x005F5020-0x005F5080
 // prototype 
 // callers   1   call targets   1
 // kind      game

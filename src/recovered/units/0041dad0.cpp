@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0041DAD0 BYTE_EXACT FILE
-// name      ?on_status@BaseWin@@QAEXH@Z
+// ORIGINAL: 0x0041DAD0 ?on_status@BaseWin@@QAEXH@Z 0x0041DAD0-0x0041DC7F FILE BYTE_EXACT
 // size      431 bytes
-// spans     0x0041DAD0-0x0041DC7F
 // prototype void (__thiscall ?on_status@BaseWin@@QAEXH@Z)(BaseWin* this, int isDisplaying)
 // callers   0   call targets   11
 // kind      game

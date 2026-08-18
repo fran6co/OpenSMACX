@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0045C8B0 BYTE_EXACT FILE
-// name      ?on_dialog_back_draw@MainInterface@@QAEHPAUGraphicWin@@@Z
+// ORIGINAL: 0x0045C8B0 ?on_dialog_back_draw@MainInterface@@QAEHPAUGraphicWin@@@Z 0x0045C8B0-0x0045C8E6 FILE BYTE_EXACT
 // size      54 bytes
-// spans     0x0045C8B0-0x0045C8E6
 // prototype int (__thiscall ?on_dialog_back_draw@MainInterface@@QAEHPAUGraphicWin@@@Z)(MainInterface* this, GraphicWin*)
 // callers   0   call targets   0
 // kind      game

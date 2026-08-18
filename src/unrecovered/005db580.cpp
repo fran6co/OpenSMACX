@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005DB580 BYTE_EXACT FILE
+// ORIGINAL: 0x005DB580 ?write_l@Buffer@@QAEHPAVFont@@PADHHH@Z 0x005DB580-0x005DB65F FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?write_l@Buffer@@QAEHPAVFont@@PADHHH@Z
 // size      223 bytes
-// spans     0x005DB580-0x005DB65F
 // prototype int (__thiscall ?write_l@Buffer@@QAEHPAVFont@@PADHHH@Z)(Buffer* this, Font*, int8*, int, int, int)
 // callers   1   call targets   2
 // kind      game

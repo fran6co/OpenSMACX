@@ -1,9 +1,6 @@
-// ORIGINAL: 0x005CD560 FILE
-// RULED-OUT: (none - lands as MISMATCH #2 movsx/mov, likely helper-function
-//   extraction changing register scheduling around the sign-extend widen)
-// name      sub_5cd560
+// ORIGINAL: 0x005CD560 sub_5cd560 0x005CD560-0x005CD74D FILE
+// RULED-OUT: (none - lands as MISMATCH #2 movsx/mov, likely helper-function extraction changing register scheduling around the sign-extend widen)
 // size      493 bytes
-// spans     0x005CD560-0x005CD74D
 // prototype 
 // callers   1   call targets   0
 // kind      game

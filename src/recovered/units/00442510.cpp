@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00442510 BYTE_EXACT FILE
-// name      ?on_left_click@DiploWin@@QAEXHH@Z
+// ORIGINAL: 0x00442510 ?on_left_click@DiploWin@@QAEXHH@Z 0x00442510-0x00442558 FILE BYTE_EXACT
 // size      72 bytes
-// spans     0x00442510-0x00442558
 // prototype void (__thiscall ?on_left_click@DiploWin@@QAEXHH@Z)(DiploWin* this, int xCoord, int yCoord)
 // callers   0   call targets   2
 // kind      game

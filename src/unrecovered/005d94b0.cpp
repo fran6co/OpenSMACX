@@ -1,13 +1,8 @@
-// ORIGINAL: 0x005D94B0 FILE
-// RULED-OUT: same shape as 0x005D8930/0x005D8B20/0x005D8EE0 - see 0x005D8740's
-//   note for the stdcall-Unlock function-pointer form.
-// RULED-OUT: nothing new past that - 94.9%+ mnemonic similarity, first gap
-//   at #41 (mov vs cmp) in the NULL-surface lock-count arm, same spot as
-//   every sibling in this family.
+// ORIGINAL: 0x005D94B0 ?draw_multi_table_dest@Buffer@@QAEHPAVBuffer@@HHHHHPAE@Z 0x005D94B0-0x005D95A8 FILE
+// RULED-OUT: same shape as 0x005D8930/0x005D8B20/0x005D8EE0 - see 0x005D8740's note for the stdcall-Unlock function-pointer form.
+// RULED-OUT: nothing new past that - 94.9%+ mnemonic similarity, first gap at #41 (mov vs cmp) in the NULL-surface lock-count arm, same spot as every sibling in this family.
 // working copy - scaffold materialised by --work
-// name      ?draw_multi_table_dest@Buffer@@QAEHPAVBuffer@@HHHHHPAE@Z
 // size      248 bytes
-// spans     0x005D94B0-0x005D95A8
 // prototype int (__thiscall ?draw_multi_table_dest@Buffer@@QAEHPAVBuffer@@HHHHHPAE@Z)(Buffer* this, Buffer*, int, int, int, int, int, unsigned int8*)
 // callers   4   call targets   1
 // kind      game

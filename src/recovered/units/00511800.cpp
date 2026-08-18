@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00511800 FILE
-// name      ?turn_hints@Console@@QAEXXZ
+// ORIGINAL: 0x00511800 ?turn_hints@Console@@QAEXXZ 0x00511800-0x00511BA8 FILE
 // size      936 bytes
-// spans     0x00511800-0x00511BA8
 // prototype void (__thiscall ?turn_hints@Console@@QAEXXZ)(Console* this)
 // callers   1   call targets   6
 // kind      game

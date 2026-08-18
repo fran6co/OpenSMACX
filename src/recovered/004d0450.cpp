@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004D0450 BYTE_EXACT
-// name      ?skip@Console@@QAEXH@Z
+// ORIGINAL: 0x004D0450 ?skip@Console@@QAEXH@Z 0x004D0450-0x004D0494 BYTE_EXACT
 // size      68 bytes
-// spans     0x004D0450-0x004D0494
 // prototype void (__thiscall ?skip@Console@@QAEXH@Z)(Console* this, int vehID)
 // callers   2   call targets   3
 // kind      game

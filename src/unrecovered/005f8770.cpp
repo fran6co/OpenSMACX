@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005F8770 FILE
+// ORIGINAL: 0x005F8770 sub_5f8770 0x005F8770-0x005F87F6 FILE
 // working copy - scaffold materialised by --work
-// name      sub_5f8770
 // size      134 bytes
-// spans     0x005F8770-0x005F87F6
 // prototype 
 // callers   0   call targets   2
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004838E0 BYTE_EXACT
-// name      ?on_link_clicked@NewTechWin@@QAEHHPAD@Z
+// ORIGINAL: 0x004838E0 ?on_link_clicked@NewTechWin@@QAEHHPAD@Z 0x004838E0-0x0048391F BYTE_EXACT
 // size      63 bytes
-// spans     0x004838E0-0x0048391F
 // prototype int (__thiscall ?on_link_clicked@NewTechWin@@QAEHHPAD@Z)(NewTechWin* this, int, int8*)
 // callers   0   call targets   1
 // kind      game

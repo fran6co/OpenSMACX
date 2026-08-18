@@ -1,16 +1,7 @@
-// ORIGINAL: 0x005FFF90 FILE
-// RULED-OUT: Wave_Device::disable() is void per its own mangled name
-//            (?disable@Wave_Device@@QAEXXZ), so the post-call `test eax`
-//            guard in the disasm can't be reproduced from the class method -
-//            dropped that check. One unified `stack[0x464]` scratch frame
-//            (AT(name) = stack+0x464-name) stands in for Ghidra's dozen
-//            aliased locals, including the local_3d8/local_400 overlap
-//            (GetPaletteEntries buffer, read back 0x28 bytes in). Divergence
-//            starts at #2 (push vs mov) - frame-layout, not chased further.
+// ORIGINAL: 0x005FFF90 ?load@MCIVideo@@QAEHPADPAUWin@@HH@Z 0x005FFF90-0x006001D2 FILE
+// RULED-OUT: Wave_Device::disable() is void per its own mangled name (?disable@Wave_Device@@QAEXXZ), so the post-call `test eax` guard in the disasm can't be reproduced from the class method - dropped that check. One unified `stack[0x464]` scratch frame (AT(name) = stack+0x464-name) stands in for Ghidra's dozen aliased locals, including the local_3d8/local_400 overlap (GetPaletteEntries buffer, read back 0x28 bytes in). Divergence starts at #2 (push vs mov) - frame-layout, not chased further.
 // working copy - scaffold materialised by --work
-// name      ?load@MCIVideo@@QAEHPADPAUWin@@HH@Z
 // size      578 bytes
-// spans     0x005FFF90-0x006001D2
 // prototype int (__thiscall ?load@MCIVideo@@QAEHPADPAUWin@@HH@Z)(MCIVideo* this, int8*, Win*, int xCoord, int yCoord)
 // callers   1   call targets   3
 // kind      game

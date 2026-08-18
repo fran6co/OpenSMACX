@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0044C9E0 BYTE_EXACT
-// name      ?help_project@@YAXH@Z
+// ORIGINAL: 0x0044C9E0 ?help_project@@YAXH@Z 0x0044C9E0-0x0044C9F8 BYTE_EXACT
 // size      24 bytes
-// spans     0x0044C9E0-0x0044C9F8
 // prototype 
 // callers   1   call targets   1
 // kind      game

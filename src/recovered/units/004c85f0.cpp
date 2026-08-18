@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004C85F0 BYTE_EXACT FILE
-// name      ?unload@Ambience@@QAEXXZ
+// ORIGINAL: 0x004C85F0 ?unload@Ambience@@QAEXXZ 0x004C85F0-0x004C861C FILE BYTE_EXACT
 // size      44 bytes
-// spans     0x004C85F0-0x004C861C
 // prototype void (__thiscall ?unload@Ambience@@QAEXXZ)(Ambience* this)
 // callers   0   call targets   0
 // kind      game

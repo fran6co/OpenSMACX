@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004C4630 FILE
-// name      ?draw_box@WorldWin@@QAEXXZ
+// ORIGINAL: 0x004C4630 ?draw_box@WorldWin@@QAEXXZ 0x004C4630-0x004C47E7 FILE
 // size      439 bytes
-// spans     0x004C4630-0x004C47E7
 // prototype void (__thiscall ?draw_box@WorldWin@@QAEXXZ)(WorldWin* this)
 // callers   1   call targets   4
 // kind      game

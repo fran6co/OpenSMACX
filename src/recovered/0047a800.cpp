@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0047A800 BYTE_EXACT
-// name      ?timer_daemon@NetMsg@@QAAXH@Z
+// ORIGINAL: 0x0047A800 ?timer_daemon@NetMsg@@QAAXH@Z 0x0047A800-0x0047A85F BYTE_EXACT
 // size      95 bytes
-// spans     0x0047A800-0x0047A85F
 // prototype 
 // callers   0   call targets   2
 // kind      game

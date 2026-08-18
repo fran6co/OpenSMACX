@@ -1,13 +1,7 @@
-// ORIGINAL: 0x00478630 FILE
-// RULED-OUT: MISMATCH #5, register-allocation-level divergence early in the
-//            function. Ghidra's param_2/param_3 initially looked swapped
-//            against a1/a2 (param_2 is actually a1, the player-slot index;
-//            param_3 is a2, the itoa'd number) - fixed via cross-check
-//            against the raw disassembly's ebp+8/ebp+0xc reads.
+// ORIGINAL: 0x00478630 ?draw_player@MultiWin@@QAEXHHPAURECT@@@Z 0x00478630-0x00478BDB FILE
+// RULED-OUT: MISMATCH #5, register-allocation-level divergence early in the function. Ghidra's param_2/param_3 initially looked swapped against a1/a2 (param_2 is actually a1, the player-slot index; param_3 is a2, the itoa'd number) - fixed via cross-check against the raw disassembly's ebp+8/ebp+0xc reads.
 // working copy - scaffold materialised by --work
-// name      ?draw_player@MultiWin@@QAEXHHPAURECT@@@Z
 // size      1451 bytes
-// spans     0x00478630-0x00478BDB
 // prototype void (__thiscall ?draw_player@MultiWin@@QAEXHHPAURECT@@@Z)(MultiWin* this, int, int, RECT*)
 // callers   1   call targets   11
 // kind      game

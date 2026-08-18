@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0048AE40 BYTE_EXACT FILE
-// name      ?add_line@PlanWin@@QAEXHHHHH@Z
+// ORIGINAL: 0x0048AE40 ?add_line@PlanWin@@QAEXHHHHH@Z 0x0048AE40-0x0048AE90 FILE BYTE_EXACT
 // size      80 bytes
-// spans     0x0048AE40-0x0048AE90
 // prototype void (__thiscall ?add_line@PlanWin@@QAEXHHHHH@Z)(PlanWin* this, int, int, int, int, int)
 // callers   1   call targets   0
 // kind      game

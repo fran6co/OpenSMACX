@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00611730 BYTE_EXACT FILE
-// name      sub_611730
+// ORIGINAL: 0x00611730 sub_611730 0x00611730-0x006117C3 FILE BYTE_EXACT
 // size      147 bytes
-// spans     0x00611730-0x006117C3
 // prototype 
 // callers   3   call targets   0
 // kind      

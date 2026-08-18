@@ -1,16 +1,7 @@
-// ORIGINAL: 0x004C4BF0 FILE
-// RULED-OUT: bare placement-new for the 3 sub-objects (no SEH frame at all,
-//            0.52 sim, missing push -1/frame-handler prologue entirely,
-//            since the scaffold's WorldWin is opaque and redeclaring it with
-//            real Buffer/MapWin members as base/members is C2011 against the
-//            regenerated scaffold). Wrapping the placement-news in
-//            try{}catch(...){throw;} recovers SOME of the /GX frame shape
-//            (0.75 sim, 140 vs 119 bytes) - landed that; still short the
-//            per-subobject unwind dispatch the real member layout would give.
+// ORIGINAL: 0x004C4BF0 ??0WorldWin@@QAE@XZ 0x004C4BF0-0x004C4C67;0x00659E50-0x00659E7E FILE
+// RULED-OUT: bare placement-new for the 3 sub-objects (no SEH frame at all, 0.52 sim, missing push -1/frame-handler prologue entirely, since the scaffold's WorldWin is opaque and redeclaring it with real Buffer/MapWin members as base/members is C2011 against the regenerated scaffold). Wrapping the placement-news in try{}catch(...){throw;} recovers SOME of the /GX frame shape (0.75 sim, 140 vs 119 bytes) - landed that; still short the per-subobject unwind dispatch the real member layout would give.
 // working copy - scaffold materialised by --work
-// name      ??0WorldWin@@QAE@XZ
 // size      165 bytes
-// spans     0x004C4BF0-0x004C4C67;0x00659E50-0x00659E7E
 // prototype void (__thiscall ??0WorldWin@@QAE@XZ)(WorldWin* this)
 // callers   1   call targets   3
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0043ECB0 FILE
-// name      ??1DesignWin@@QAE@XZ
+// ORIGINAL: 0x0043ECB0 ??1DesignWin@@QAE@XZ 0x0043ECB0-0x0043EDA6;0x00653E70-0x00653F0D FILE
 // size      403 bytes
-// spans     0x0043ECB0-0x0043EDA6;0x00653E70-0x00653F0D
 // prototype void (__thiscall ??1DesignWin@@QAE@XZ)(DesignWin* this)
 // callers   1   call targets   8
 // kind      game

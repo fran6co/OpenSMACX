@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00483920 BYTE_EXACT
-// name      ?info@NewTechWin@@QAAXPAD@Z
+// ORIGINAL: 0x00483920 ?info@NewTechWin@@QAAXPAD@Z 0x00483920-0x00483950 BYTE_EXACT
 // size      48 bytes
-// spans     0x00483920-0x00483950
 // prototype 
 // callers   0   call targets   1
 // kind      game

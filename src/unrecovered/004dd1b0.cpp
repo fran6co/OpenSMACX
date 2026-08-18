@@ -1,26 +1,7 @@
-// ORIGINAL: 0x004DD1B0 FILE
-// RULED-OUT: two `Popup` locals (LEVER #1) - an outer one spanning the whole
-//            function and an inner one scoped to the "choose which faction"
-//            sub-dialog block, matching the disassembly's two separate
-//            `??0Popup@@QAE@XZ` calls and the inner one's mid-function
-//            `??1Popup@@QAE@XZ`. BasePop::dialogs_ (already a named field at
-//            0x21D0, confirmed against the class's own field_21CC_/field_
-//            2E64_ neighbours) reached the inner popup's Dialogs sub-object;
-//            EditGroup and the marker/index fields used raw offsets since
-//            those aren't named in this scaffold. `synch`'s 7-argument push
-//            order and the two-array (0x94b024-style) caption-key lookups
-//            are re-derived from the disassembly, and Ghidra's own decomp
-//            independently agreed on the control flow (both branches'
-//            cancel/accept split, and which fields feed the final atoi/
-//            strnicmp/synch calls). MISMATCH #0 (`push` vs `mov`, no SEH
-//            frame at all) - unlike 0x004DCCC0's identical-shaped-triple
-//            regression, this one's threshold was not isolated: the budget
-//            for this pass ran out on landing a compiling, structurally
-//            faithful body rather than re-running the same bisection here.
+// ORIGINAL: 0x004DD1B0 ?custom_my_faction@Console@@QAEXXZ 0x004DD1B0-0x004DD6E5;0x0065B7B0-0x0065B872 FILE
+// RULED-OUT: two `Popup` locals (LEVER #1) - an outer one spanning the whole function and an inner one scoped to the "choose which faction" sub-dialog block, matching the disassembly's two separate `??0Popup@@QAE@XZ` calls and the inner one's mid-function `??1Popup@@QAE@XZ`. BasePop::dialogs_ (already a named field at 0x21D0, confirmed against the class's own field_21CC_/field_ 2E64_ neighbours) reached the inner popup's Dialogs sub-object; EditGroup and the marker/index fields used raw offsets since those aren't named in this scaffold. `synch`'s 7-argument push order and the two-array (0x94b024-style) caption-key lookups are re-derived from the disassembly, and Ghidra's own decomp independently agreed on the control flow (both branches' cancel/accept split, and which fields feed the final atoi/ strnicmp/synch calls). MISMATCH #0 (`push` vs `mov`, no SEH frame at all) - unlike 0x004DCCC0's identical-shaped-triple regression, this one's threshold was not isolated: the budget for this pass ran out on landing a compiling, structurally faithful body rather than re-running the same bisection here.
 // working copy - scaffold materialised by --work
-// name      ?custom_my_faction@Console@@QAEXXZ
 // size      1527 bytes
-// spans     0x004DD1B0-0x004DD6E5;0x0065B7B0-0x0065B872
 // prototype void (__thiscall ?custom_my_faction@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   20
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004B08A0 FILE
-// name      ?draw_economy_alloc@SocialWin@@QAEXXZ
+// ORIGINAL: 0x004B08A0 ?draw_economy_alloc@SocialWin@@QAEXXZ 0x004B08A0-0x004B0AF2 FILE
 // size      594 bytes
-// spans     0x004B08A0-0x004B0AF2
 // prototype void (__thiscall ?draw_economy_alloc@SocialWin@@QAEXXZ)(SocialWin* this)
 // callers   1   call targets   13
 // kind      game

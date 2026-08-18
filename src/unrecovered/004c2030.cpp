@@ -1,17 +1,12 @@
-// ORIGINAL: 0x004C2030 FILE
+// ORIGINAL: 0x004C2030 ?vehdraw_construct_abil@@YAHHPAUCaviar@@H@Z 0x004C2030-0x004C2360 FILE
+// RULED-OUT: byte-offset pointer arithmetic on the declared g_* globals reproduces the record-array indexing (esi = a3*0x59c) and the has_tech/add_object call order; MISMATCH #27 remains (extra mov to satisfy C4716's mandatory return, and one and/mov vs test byte ptr fold on the g_00946f58 flag byte read).
 // working copy - scaffold materialised by --work
-// name      ?vehdraw_construct_abil@@YAHHPAUCaviar@@H@Z
 // size      816 bytes
-// spans     0x004C2030-0x004C2360
 // prototype int (__cdecl ?vehdraw_construct_abil@@YAHHPAUCaviar@@H@Z)(int abilityFlags, Caviar*, int factionID)
 // callers   3   call targets   2
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x005B9F20 0x00617F20
-// RULED-OUT: byte-offset pointer arithmetic on the declared g_* globals reproduces
-//   the record-array indexing (esi = a3*0x59c) and the has_tech/add_object call
-//   order; MISMATCH #27 remains (extra mov to satisfy C4716's mandatory return,
-//   and one and/mov vs test byte ptr fold on the g_00946f58 flag byte read).
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?vehdraw_construct_abil@@YAHHPAUCaviar@@H@Z  at 0x004C2030  (816 bytes)

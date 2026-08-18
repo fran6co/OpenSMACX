@@ -1,13 +1,7 @@
-// ORIGINAL: 0x004A84A0 FILE
-// RULED-OUT: raw self+offset transcription with manual ListBox/Dialog
-//            virtual-base adjustor arithmetic (vtable[+8]/[+4] thunks) for
-//            both energy-facility and support-facility ListBox blocks
-//            diverges at instr #8 (mov vs lea); not chased further given
-//            the 2935-byte, dual-listbox scope.
+// ORIGINAL: 0x004A84A0 ?draw_energy@ReportIf@@QAEXXZ 0x004A84A0-0x004A9017 FILE
+// RULED-OUT: raw self+offset transcription with manual ListBox/Dialog virtual-base adjustor arithmetic (vtable[+8]/[+4] thunks) for both energy-facility and support-facility ListBox blocks diverges at instr #8 (mov vs lea); not chased further given the 2935-byte, dual-listbox scope.
 // working copy - scaffold materialised by --work
-// name      ?draw_energy@ReportIf@@QAEXXZ
 // size      2935 bytes
-// spans     0x004A84A0-0x004A9017
 // prototype void (__thiscall ?draw_energy@ReportIf@@QAEXXZ)(ReportIf* this)
 // callers   4   call targets   25
 // kind      game

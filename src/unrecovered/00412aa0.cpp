@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00412AA0 FILE
+// ORIGINAL: 0x00412AA0 ?draw_expenses@BaseWin@@QAEXH@Z 0x00412AA0-0x00414B38;0x00651B61-0x00651B76 FILE
 // working copy - scaffold materialised by --work
-// name      ?draw_expenses@BaseWin@@QAEXH@Z
 // size      8365 bytes
-// spans     0x00412AA0-0x00414B38;0x00651B61-0x00651B76
 // prototype void (__thiscall ?draw_expenses@BaseWin@@QAEXH@Z)(BaseWin* this, int)
 // callers   5   call targets   20
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00402B40 FILE
-// name      SessionStruct::dt
+// ORIGINAL: 0x00402B40 SessionStruct::dt 0x00402B40-0x00402BA6 FILE
 // size      102 bytes
-// spans     0x00402B40-0x00402BA6
 // prototype 
 // callers   0   call targets   2
 // kind      game

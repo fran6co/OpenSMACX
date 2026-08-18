@@ -1,20 +1,7 @@
-// ORIGINAL: 0x004AA0B0 FILE
-// RULED-OUT: full transcription landed (MISMATCH #0: original has an SEH
-//            frame - push -1/handler/fs:[0] - that this body does not
-//            reproduce). A local `StringStruct localList(0);` reproduces the
-//            constructor call, but StringStruct has no declared destructor
-//            here so no unwind funclet gets generated; the two inlined
-//            "walk head_/entry_count_, adjustor-thunk release each entry"
-//            blocks are called as `localList.remove_all()` instead of
-//            reproduced byte-for-byte. Caught one real Ghidra error:
-//            find_font is `int find_font(int,int)` (2 args, per its mangled
-//            name @@YAHHH@Z has only two H's after the this-less Y); Ghidra
-//            printed it with 3 args by misattributing an outer accumulated
-//            push meant for the following set_font call.
+// ORIGINAL: 0x004AA0B0 ?draw_projects@ReportIf@@QAEXXZ 0x004AA0B0-0x004AA921;0x00659595-0x006595C9 FILE
+// RULED-OUT: full transcription landed (MISMATCH #0: original has an SEH frame - push -1/handler/fs:[0] - that this body does not reproduce). A local `StringStruct localList(0);` reproduces the constructor call, but StringStruct has no declared destructor here so no unwind funclet gets generated; the two inlined "walk head_/entry_count_, adjustor-thunk release each entry" blocks are called as `localList.remove_all()` instead of reproduced byte-for-byte. Caught one real Ghidra error: find_font is `int find_font(int,int)` (2 args, per its mangled name @@YAHHH@Z has only two H's after the this-less Y); Ghidra printed it with 3 args by misattributing an outer accumulated push meant for the following set_font call.
 // working copy - scaffold materialised by --work
-// name      ?draw_projects@ReportIf@@QAEXXZ
 // size      2213 bytes
-// spans     0x004AA0B0-0x004AA921;0x00659595-0x006595C9
 // prototype void (__thiscall ?draw_projects@ReportIf@@QAEXXZ)(ReportIf* this)
 // callers   5   call targets   19
 // kind      game

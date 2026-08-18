@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00613260 BYTE_EXACT FILE
-// name      ?on_scroll_delete@Dialogs@@QAEHPAUScroll@@@Z
+// ORIGINAL: 0x00613260 ?on_scroll_delete@Dialogs@@QAEHPAUScroll@@@Z 0x00613260-0x0061329F FILE BYTE_EXACT
 // size      63 bytes
-// spans     0x00613260-0x0061329F
 // prototype int (__thiscall ?on_scroll_delete@Dialogs@@QAEHPAUScroll@@@Z)(Dialogs* this, Scroll*)
 // callers   0   call targets   0
 // kind      game

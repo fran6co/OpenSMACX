@@ -1,21 +1,12 @@
-// ORIGINAL: 0x004C86D0 FILE
-// name      sub_4c86d0
+// ORIGINAL: 0x004C86D0 sub_4c86d0 0x004C86D0-0x004C87A2;0x004C8450-0x004C8457;0x00659F70-0x00659F8A FILE
+// RULED-OUT: literal `call 0x64557f`/SEH __try/__finally reproduction - the span at 0x004C8450-0x004C8457 is COMDAT-folded with src/wave.cpp's Wave::~Wave and src/ambience.cpp's Ambience::~Ambience (both list it in their own spans too), so classify_body reports SHARED_TAIL for this address regardless of body content - no per-function verdict is well defined here, confirmed by running the bare verifier against the empty placeholder before writing anything.
 // size      243 bytes
-// spans     0x004C86D0-0x004C87A2;0x004C8450-0x004C8457;0x00659F70-0x00659F8A
 // prototype
 // callers   2   call targets   1
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x0064557F
 // indirect  0x004C8706 0x004C873C
-// RULED-OUT: literal `call 0x64557f`/SEH __try/__finally reproduction - the
-//            span at 0x004C8450-0x004C8457 is COMDAT-folded with
-//            src/wave.cpp's Wave::~Wave and src/ambience.cpp's
-//            Ambience::~Ambience (both list it in their own spans too), so
-//            classify_body reports SHARED_TAIL for this address regardless
-//            of body content - no per-function verdict is well defined here,
-//            confirmed by running the bare verifier against the empty
-//            placeholder before writing anything.
 
 // GENERATED SKELETON (hand-written, following tools/emit_translation_unit.py
 // conventions) - a VERIFICATION ARTIFACT, not product source: classes are

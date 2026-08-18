@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0045CF40 BYTE_EXACT FILE
-// name      ?on_iface_left_down@MainInterface@@QAEXHH@Z
+// ORIGINAL: 0x0045CF40 ?on_iface_left_down@MainInterface@@QAEXHH@Z 0x0045CF40-0x0045CF75 FILE BYTE_EXACT
 // size      53 bytes
-// spans     0x0045CF40-0x0045CF75
 // prototype void (__thiscall ?on_iface_left_down@MainInterface@@QAEXHH@Z)(MainInterface* this, int xCoord, int yCoord)
 // callers   0   call targets   2
 // kind      game

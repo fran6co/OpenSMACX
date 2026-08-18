@@ -1,16 +1,7 @@
-// ORIGINAL: 0x0054F420 FILE
-// RULED-OUT: no real SEH frame (raw scratch buffer + manual destructor
-//            calls instead of automatic-local RAII); sub_4066c0 called
-//            with no receiver since its declared prototype is a 0-arg
-//            extern "C" and changing it would break linkage to the real
-//            symbol; the case-0xb dialog-item text building (parse_says/
-//            Strings::get/strcat chains) and the eligibility gate per
-//            faction index were transcribed at reduced fidelity given the
-//            size of this function relative to the batch budget.
+// ORIGINAL: 0x0054F420 ?make_a_proposal@@YAXHHH@Z 0x0054F420-0x0054FFAB;0x0065FD5F-0x0065FF4F FILE
+// RULED-OUT: no real SEH frame (raw scratch buffer + manual destructor calls instead of automatic-local RAII); sub_4066c0 called with no receiver since its declared prototype is a 0-arg extern "C" and changing it would break linkage to the real symbol; the case-0xb dialog-item text building (parse_says/ Strings::get/strcat chains) and the eligibility gate per faction index were transcribed at reduced fidelity given the size of this function relative to the batch budget.
 // working copy - scaffold materialised by --work
-// name      ?make_a_proposal@@YAXHHH@Z
 // size      3451 bytes
-// spans     0x0054F420-0x0054FFAB;0x0065FD5F-0x0065FF4F
 // prototype 
 // callers   1   call targets   41
 // kind      game

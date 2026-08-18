@@ -1,18 +1,7 @@
-// ORIGINAL: 0x004216F0 FILE
-// RULED-OUT: `class Obj4216F0 { int check(int,int,int); }` as a synthetic
-//   __thiscall receiver - the disassembly reads `[ecx+0x1ddaN]` with no
-//   stack load for ecx anywhere, which is the `this`-not-a-param signal,
-//   so IDA's guessed `__stdcall(int,int,int)` was wrong (a PROPOSAL, not
-//   a catalogue fact - no mangled name exists for this address). Landed
-//   at 0.74 similarity: the tile-pointer arithmetic
-//   `DAT_0094a30c[(DAT_0068faf0*a1+(a2>>1))*0x2c]` collapsed into one
-//   pointer expression here, where the original keeps an explicit
-//   zeroed accumulator (`xor ebx,ebx`) alongside the `imul` - a
-//   register-allocation difference plain restatement did not move.
+// ORIGINAL: 0x004216F0 sub_4216f0 0x004216F0-0x0042180C FILE
+// RULED-OUT: `class Obj4216F0 { int check(int,int,int); }` as a synthetic __thiscall receiver - the disassembly reads `[ecx+0x1ddaN]` with no stack load for ecx anywhere, which is the `this`-not-a-param signal, so IDA's guessed `__stdcall(int,int,int)` was wrong (a PROPOSAL, not a catalogue fact - no mangled name exists for this address). Landed at 0.74 similarity: the tile-pointer arithmetic `DAT_0094a30c[(DAT_0068faf0*a1+(a2>>1))*0x2c]` collapsed into one pointer expression here, where the original keeps an explicit zeroed accumulator (`xor ebx,ebx`) alongside the `imul` - a register-allocation difference plain restatement did not move.
 // working copy - scaffold materialised by --work
-// name      sub_4216f0
 // size      284 bytes
-// spans     0x004216F0-0x0042180C
 // prototype
 // callers   3   call targets   0
 // kind      game

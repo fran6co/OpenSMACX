@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004F5CE0 FILE
-// name      ?base_drones@@YAXXZ
+// ORIGINAL: 0x004F5CE0 ?base_drones@@YAXXZ 0x004F5CE0-0x004F5F25 FILE
 // size      581 bytes
-// spans     0x004F5CE0-0x004F5F25
 // prototype 
 // callers   1   call targets   3
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005D5720 FILE
-// name      ?soft_update@GraphicWin@@QAEXHHHH@Z
+// ORIGINAL: 0x005D5720 ?soft_update@GraphicWin@@QAEXHHHH@Z 0x005D5720-0x005D588C FILE
 // size      364 bytes
-// spans     0x005D5720-0x005D588C
 // prototype void (__thiscall ?soft_update@GraphicWin@@QAEXHHHH@Z)(GraphicWin* this, int, int, int, int)
 // callers   1   call targets   2
 // kind      game

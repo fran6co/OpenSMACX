@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00423000 FILE
-// name      ?colortables_init_faction@@YAXH@Z
+// ORIGINAL: 0x00423000 ?colortables_init_faction@@YAXH@Z 0x00423000-0x00423566;0x00652BE2-0x00652C0A FILE
 // size      1422 bytes
-// spans     0x00423000-0x00423566;0x00652BE2-0x00652C0A
 // prototype 
 // callers   1   call targets   20
 // kind      game

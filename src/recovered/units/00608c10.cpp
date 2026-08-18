@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00608C10 FILE
-// name      ??0Dialog@@QAE@XZ
+// ORIGINAL: 0x00608C10 ??0Dialog@@QAE@XZ 0x00608C10-0x00608E09 FILE
 // size      505 bytes
-// spans     0x00608C10-0x00608E09
 // prototype void (__thiscall ??0Dialog@@QAE@XZ)(Dialog* this)
 // callers   6   call targets   1
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00517060 FILE
-// name      ?use_time_bonus@Console@@QAEXXZ
+// ORIGINAL: 0x00517060 ?use_time_bonus@Console@@QAEXXZ 0x00517060-0x00517173 FILE
 // size      275 bytes
-// spans     0x00517060-0x00517173
 // prototype void (__thiscall ?use_time_bonus@Console@@QAEXXZ)(Console* this)
 // callers   3   call targets   3
 // kind      game

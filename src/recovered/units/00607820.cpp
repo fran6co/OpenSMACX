@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00607820 BYTE_EXACT FILE
-// name      ?on_mouse_leave@BaseButton@@QAEXHH@Z
+// ORIGINAL: 0x00607820 ?on_mouse_leave@BaseButton@@QAEXHH@Z 0x00607820-0x0060784D FILE BYTE_EXACT
 // size      45 bytes
-// spans     0x00607820-0x0060784D
 // prototype void (__thiscall ?on_mouse_leave@BaseButton@@QAEXHH@Z)(BaseButton* this, int, int)
 // callers   0   call targets   0
 // kind      game

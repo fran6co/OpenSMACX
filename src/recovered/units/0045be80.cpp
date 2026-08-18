@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0045BE80 FILE
-// name      ?set_date@MainInterface@@QAEXPAD@Z
+// ORIGINAL: 0x0045BE80 ?set_date@MainInterface@@QAEXPAD@Z 0x0045BE80-0x0045C0AF FILE
 // size      559 bytes
-// spans     0x0045BE80-0x0045C0AF
 // prototype void (__thiscall ?set_date@MainInterface@@QAEXPAD@Z)(MainInterface* this, int8*)
 // callers   4   call targets   11
 // kind      game

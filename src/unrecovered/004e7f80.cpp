@@ -1,15 +1,11 @@
-// ORIGINAL: 0x004E7F80
-// name      sub_4e7f80
+// ORIGINAL: 0x004E7F80 sub_4e7f80 0x004E7F80-0x004E8094
+// RULED-OUT: same register-allocation divergence at the prologue as 0x004E7E50 (its near-identical sibling, subtracting the yield instead of adding it); landing the same closest form.
 // size      276 bytes
-// spans     0x004E7F80-0x004E8094
 // prototype
 // callers   0   call targets   3
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x004E6E50 0x004E7310 0x004E7750
-// RULED-OUT: same register-allocation divergence at the prologue as
-//            0x004E7E50 (its near-identical sibling, subtracting the yield
-//            instead of adding it); landing the same closest form.
 
 extern int g_0066efbc[];
 extern int g_0066f440[];

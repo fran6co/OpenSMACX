@@ -1,12 +1,7 @@
-// ORIGINAL: 0x00590DC0 FILE
-// RULED-OUT: `if (count > 0)` reads as `cmp;jle` here, not the original's
-//            `test;jle`; tried elsewhere didn't move it. Indexed struct
-//            field access (`g_945a60[i].fn`) collapses lea+mov into one mov;
-//            original keeps them split (address-of first).
+// ORIGINAL: 0x00590DC0 sub_590dc0 0x00590DC0-0x00590E90 FILE
+// RULED-OUT: `if (count > 0)` reads as `cmp;jle` here, not the original's `test;jle`; tried elsewhere didn't move it. Indexed struct field access (`g_945a60[i].fn`) collapses lea+mov into one mov; original keeps them split (address-of first).
 // working copy - scaffold materialised by --work
-// name      sub_590dc0
 // size      208 bytes
-// spans     0x00590DC0-0x00590E90
 // prototype 
 // callers   0   call targets   3
 // kind      game

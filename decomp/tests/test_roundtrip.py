@@ -97,7 +97,7 @@ def test_byte_exact():
     assert write(MATCHED_TEXT, records) == MATCHED_TEXT
 
 
-LESSON_TEXT = """// ORIGINAL: 0x00405000
+LESSON_TEXT = """// ORIGINAL: 0x00405000 ?f@@YAXXZ 0x00405000-0x00405040
 // LEVER: fp-1234 the cast that landed it
 // RULED-OUT: plain ret 4 leaves ECX live
 // UNRECOVERABLE: reads three registers live-in
@@ -117,7 +117,7 @@ def test_lessons():
     assert write(LESSON_TEXT, records) == LESSON_TEXT
 
 
-WRAPPED_LESSON = """// ORIGINAL: 0x00405100
+WRAPPED_LESSON = """// ORIGINAL: 0x00405100 ?g@@YAXXZ 0x00405100-0x00405140
 // RULED-OUT: plain ret 4 leaves ECX live,
 //            so the stub must zero it first
 void __cdecl h() {
@@ -138,11 +138,11 @@ def test_wrapped_lesson_canonicalises():
     assert write(rewritten, reread) == rewritten
 
 
-MULTI = """// ORIGINAL: 0x00406000
+MULTI = """// ORIGINAL: 0x00406000 ?a@@YAXXZ 0x00406000-0x00406008
 void __cdecl a() {
 }
 
-// ORIGINAL: 0x00406010
+// ORIGINAL: 0x00406010 ?b@@YAXXZ 0x00406010-0x00406018
 void __cdecl b() {
 }
 """
@@ -200,8 +200,8 @@ def test_append_past_the_last_line():
     made = [record(0x00408100, line=len(text.splitlines()) + 1,
                    name="?g@@YAXXZ", spans=((0x00408100, 0x00408104),))]
     rewritten = write(text, made)
-    assert rewritten.splitlines()[-3] == "// ORIGINAL: 0x00408100"
-    assert rewritten.splitlines()[-2] == "// name      ?g@@YAXXZ"
+    assert rewritten.splitlines()[-1] == \
+        "// ORIGINAL: 0x00408100 ?g@@YAXXZ 0x00408100-0x00408104"
 
 
 # ------------------------------------------------- remove is a statement
@@ -307,11 +307,10 @@ def test_insert_new_annotation_above_a_function():
                    spans=((0x00409000, 0x00409008),))]
     rewritten = write(PLAIN, made)
     lines = rewritten.splitlines()
-    assert lines[0] == "// ORIGINAL: 0x00409000"
-    # The annotation lands complete: its identity recorded as facts.
-    assert lines[1] == "// name      ?alpha@@YAXXZ"
-    assert lines[2] == "// spans     0x00409000-0x00409008"
-    assert lines[3] == "void __cdecl alpha() {"   # definition untouched
+    # The annotation lands complete: the marker names the piece and says
+    # where it ends in the image.
+    assert lines[0] == "// ORIGINAL: 0x00409000 ?alpha@@YAXXZ 0x00409000-0x00409008"
+    assert lines[1] == "void __cdecl alpha() {"   # definition untouched
     reread = read(rewritten, FIXTURE)
     assert len(reread) == 1
     assert reread[0].address == 0x00409000
@@ -328,14 +327,14 @@ def test_insert_refuses_an_annotation_without_identity():
         write(PLAIN, [record(0x00409000, line=1)])
 
 
-MARKED = """// ORIGINAL: 0x00400100
+MARKED = """// ORIGINAL: 0x00400100 ?alpha@@YAXXZ 0x00400100-0x00400108
 void __cdecl alpha() {
 }
 
 void __cdecl beta() {
 }
 
-// ORIGINAL: 0x00400300
+// ORIGINAL: 0x00400300 ?gamma@@YAXXZ 0x00400300-0x00400308
 void __cdecl gamma() {
 }
 """
@@ -361,8 +360,10 @@ def test_one_call_mixes_replacement_and_insertion():
     new = record(0x00400200, line=5, name="?beta@@YAXXZ",
                  spans=((0x00400200, 0x00400208),))
     rewritten = write(MARKED, records + [new])
-    assert "// ORIGINAL: 0x00400100 BYTE_EXACT" in rewritten
-    assert "// ORIGINAL: 0x00400200" in rewritten
+    assert ("// ORIGINAL: 0x00400100 ?alpha@@YAXXZ 0x00400100-0x00400108 "
+            "BYTE_EXACT") in rewritten
+    assert "// ORIGINAL: 0x00400200 ?beta@@YAXXZ 0x00400200-0x00400208" \
+        in rewritten
     reread = read(rewritten, FIXTURE)
     assert [r.address for r in reread] == [0x00400100, 0x00400200, 0x00400300]
     assert reread[0].byte_exact is True
@@ -432,9 +433,9 @@ def test_annotate_by_name_end_to_end(tmp_path):
     assert reread[0].name == "?close@StringStruct@@QAEXXZ"
     assert reread[0].image_spans == ((0x00401060, 0x004010F9),)
     lines = path.read_text().splitlines()
-    assert lines[1] == "// name      ?close@StringStruct@@QAEXXZ"
-    assert lines[2] == "// spans     0x00401060-0x004010F9"
-    assert lines[3] == "int StringStruct::close(int x) {"
+    assert lines[0] == ("// ORIGINAL: 0x00401060 ?close@StringStruct@@QAEXXZ "
+                        "0x00401060-0x004010F9")
+    assert lines[1] == "int StringStruct::close(int x) {"
 
 
 # ------------------------------------------------------------- the loop

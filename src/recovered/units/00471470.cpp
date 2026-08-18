@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00471470 FILE
-// name      ?UNK2@MessageWin@@QAEHHPADH@Z
+// ORIGINAL: 0x00471470 ?UNK2@MessageWin@@QAEHHPADH@Z 0x00471470-0x004714C2 FILE
 // size      82 bytes
-// spans     0x00471470-0x004714C2
 // prototype int (__thiscall ?UNK2@MessageWin@@QAEHHPADH@Z)(MessageWin* this, int, int8* lpString, int)
 // callers   0   call targets   4
 // kind      game

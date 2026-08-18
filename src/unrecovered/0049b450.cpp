@@ -1,13 +1,7 @@
-// ORIGINAL: 0x0049B450 FILE
-// RULED-OUT: Ghidra-structure translation fixed to real Sprite::draw()/
-//            Buffer::set_clip()/box_sprite() member calls (Ghidra had
-//            flattened the thiscall receiver away on all 6 draw() sites
-//            and both callee methods); compiles, MISMATCH #6 (early -
-//            likely the local8/table[idx]!=8 selection prologue).
+// ORIGINAL: 0x0049B450 ?labs_line@ReportWin@@QAEXHHHHHHH@Z 0x0049B450-0x0049BCC7 FILE
+// RULED-OUT: Ghidra-structure translation fixed to real Sprite::draw()/ Buffer::set_clip()/box_sprite() member calls (Ghidra had flattened the thiscall receiver away on all 6 draw() sites and both callee methods); compiles, MISMATCH #6 (early - likely the local8/table[idx]!=8 selection prologue).
 // working copy - scaffold materialised by --work
-// name      ?labs_line@ReportWin@@QAEXHHHHHHH@Z
 // size      2167 bytes
-// spans     0x0049B450-0x0049BCC7
 // prototype void (__thiscall ?labs_line@ReportWin@@QAEXHHHHHHH@Z)(ReportWin* this, int, int, int, int, int, int, int)
 // callers   2   call targets   3
 // kind      game

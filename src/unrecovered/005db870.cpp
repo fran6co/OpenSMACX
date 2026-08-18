@@ -1,12 +1,7 @@
-// ORIGINAL: 0x005DB870 FILE
-// RULED-OUT: named-local save/restore and raw-pointer-triple save/restore
-//            both match control flow and the call, but VC6 schedules the
-//            three register saves (ebx/ebp/esi) differently than the
-//            original at #0 (push vs mov) - register allocation, not logic
+// ORIGINAL: 0x005DB870 ?write_right_l@Buffer@@QAEHPAVFont@@PADHHHH@Z 0x005DB870-0x005DB8CE FILE
+// RULED-OUT: named-local save/restore and raw-pointer-triple save/restore both match control flow and the call, but VC6 schedules the three register saves (ebx/ebp/esi) differently than the original at #0 (push vs mov) - register allocation, not logic
 // working copy - scaffold materialised by --work
-// name      ?write_right_l@Buffer@@QAEHPAVFont@@PADHHHH@Z
 // size      94 bytes
-// spans     0x005DB870-0x005DB8CE
 // prototype int (__thiscall ?write_right_l@Buffer@@QAEHPAVFont@@PADHHHH@Z)(Buffer* this, Font*, int8*, int, int, int, int)
 // callers   0   call targets   1
 // kind      game

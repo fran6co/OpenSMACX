@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00447AC0 BYTE_EXACT FILE
-// name      ?design_window_hide@BAmbience@@QAEXXZ
+// ORIGINAL: 0x00447AC0 ?design_window_hide@BAmbience@@QAEXXZ 0x00447AC0-0x00447AEB FILE BYTE_EXACT
 // size      43 bytes
-// spans     0x00447AC0-0x00447AEB
 // prototype void (__thiscall ?design_window_hide@BAmbience@@QAEXXZ)(BAmbience* this)
 // callers   0   call targets   0
 // kind      game

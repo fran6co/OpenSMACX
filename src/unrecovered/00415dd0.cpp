@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00415DD0 BYTE_EXACT FILE
+// ORIGINAL: 0x00415DD0 ?focus@BaseWin@@QAEXXZ 0x00415DD0-0x00415E52 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?focus@BaseWin@@QAEXXZ
 // size      130 bytes
-// spans     0x00415DD0-0x00415E52
 // prototype void (__thiscall ?focus@BaseWin@@QAEXXZ)(BaseWin* this)
 // callers   4   call targets   4
 // kind      game

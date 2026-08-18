@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064F524 EXCLUDED S1
-// name      ___strgtold12
+// ORIGINAL: 0x0064F524 ___strgtold12 0x0064F524-0x0064F9C5 EXCLUDED S1
 // size      1185 bytes
-// spans     0x0064F524-0x0064F9C5
 // prototype 
 // callers   2   call targets   3
 // kind      library

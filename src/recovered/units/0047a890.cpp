@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0047A890 FILE
-// name      ?pop@NetMsg@@QAEXPBDHHPBD@Z
+// ORIGINAL: 0x0047A890 ?pop@NetMsg@@QAEXPBDHHPBD@Z 0x0047A890-0x0047ACE3;0x00656550-0x0065664C FILE
 // size      1359 bytes
-// spans     0x0047A890-0x0047ACE3;0x00656550-0x0065664C
 // prototype void (__thiscall ?pop@NetMsg@@QAEXPBDHHPBD@Z)(NetMsg* this, int8*, int, int, int8*)
 // callers   108   call targets   29
 // kind      game

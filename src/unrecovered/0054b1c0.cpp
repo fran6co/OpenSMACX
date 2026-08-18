@@ -1,16 +1,7 @@
-// ORIGINAL: 0x0054B1C0 FILE
-// RULED-OUT: same Popup-teardown-cascade shape as PickWin (mechanical
-//            EBP(x) buffer transcription, reused from that pattern).
-//            The post-BasePop::exec block (0x54B978-0x54BA25, writing
-//            g_0096cdd0/cdd4/da54/da58) is OMITTED - falls straight to the
-//            close@PlanWin cascade instead of computing those derived
-//            fields, since the base_find/tile-ownership arithmetic there
-//            wasn't independently re-verified in the time available.
-//            sim 0.18-0.61 across flag sets.
+// ORIGINAL: 0x0054B1C0 ?battle_plans@@YAXHH@Z 0x0054B1C0-0x0054BEBE;0x0065F662-0x0065F8FC FILE
+// RULED-OUT: same Popup-teardown-cascade shape as PickWin (mechanical EBP(x) buffer transcription, reused from that pattern). The post-BasePop::exec block (0x54B978-0x54BA25, writing g_0096cdd0/cdd4/da54/da58) is OMITTED - falls straight to the close@PlanWin cascade instead of computing those derived fields, since the base_find/tile-ownership arithmetic there wasn't independently re-verified in the time available. sim 0.18-0.61 across flag sets.
 // working copy - scaffold materialised by --work
-// name      ?battle_plans@@YAXHH@Z
 // size      3992 bytes
-// spans     0x0054B1C0-0x0054BEBE;0x0065F662-0x0065F8FC
 // prototype 
 // callers   1   call targets   43
 // kind      game

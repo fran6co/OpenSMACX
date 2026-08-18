@@ -1,8 +1,6 @@
-// ORIGINAL: 0x004032A0 FILE
+// ORIGINAL: 0x004032A0 ?adjust@AlphaMenu@@QAEXXZ 0x004032A0-0x00403335 FILE
 // working copy - scaffold materialised by --work
-// name      ?adjust@AlphaMenu@@QAEXXZ
 // size      149 bytes
-// spans     0x004032A0-0x00403335
 // prototype void (__thiscall ?adjust@AlphaMenu@@QAEXXZ)(AlphaMenu* this)
 // callers   0   call targets   1
 // kind      game

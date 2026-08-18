@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00646544 EXCLUDED S1
-// name      _sqrt
+// ORIGINAL: 0x00646544 _sqrt 0x00646544-0x006465EA;0x0064A87E-0x0064A88B;0x0064A88B-0x0064A8B5 EXCLUDED S1
 // size      221 bytes
-// spans     0x00646544-0x006465EA;0x0064A87E-0x0064A88B;0x0064A88B-0x0064A8B5
 // prototype 
 // callers   5   call targets   4
 // kind      library

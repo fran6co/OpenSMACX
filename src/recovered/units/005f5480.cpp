@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005F5480 BYTE_EXACT FILE
-// name      ?on_window_pos_changed@Win@@QAEJPAUWINDOWPOS@@@Z
+// ORIGINAL: 0x005F5480 ?on_window_pos_changed@Win@@QAEJPAUWINDOWPOS@@@Z 0x005F5480-0x005F54A1 FILE BYTE_EXACT
 // size      33 bytes
-// spans     0x005F5480-0x005F54A1
 // prototype LRESULT (__thiscall ?on_window_pos_changed@Win@@QAEJPAUWINDOWPOS@@@Z)(Win* this, WINDOWPOS*)
 // callers   0   call targets   0
 // kind      game

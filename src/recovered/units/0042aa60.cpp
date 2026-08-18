@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0042AA60 FILE
-// name      ?set_cat_weapon@Datalink@@QAEXXZ
+// ORIGINAL: 0x0042AA60 ?set_cat_weapon@Datalink@@QAEXXZ 0x0042AA60-0x0042ABBA FILE
 // size      346 bytes
-// spans     0x0042AA60-0x0042ABBA
 // prototype void (__thiscall ?set_cat_weapon@Datalink@@QAEXXZ)(Datalink* this)
 // callers   2   call targets   10
 // kind      game

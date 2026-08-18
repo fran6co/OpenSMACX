@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00402BB0 FILE
-// name      sub_402bb0
+// ORIGINAL: 0x00402BB0 sub_402bb0 0x00402BB0-0x00402C16 FILE
 // size      102 bytes
-// spans     0x00402BB0-0x00402C16
 // prototype 
 // callers   0   call targets   2
 // kind      game

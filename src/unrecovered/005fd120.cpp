@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005FD120 BYTE_EXACT FILE
+// ORIGINAL: 0x005FD120 ?flush_input@@YAXXZ 0x005FD120-0x005FD1BA FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?flush_input@@YAXXZ
 // size      154 bytes
-// spans     0x005FD120-0x005FD1BA
 // prototype 
 // callers   17   call targets   1
 // kind      game

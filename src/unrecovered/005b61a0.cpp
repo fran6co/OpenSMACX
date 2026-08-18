@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005B61A0 FILE
+// ORIGINAL: 0x005B61A0 sub_5b61a0 0x005B61A0-0x005B6259 FILE
 // working copy - scaffold materialised by --work
-// name      sub_5b61a0
 // size      185 bytes
-// spans     0x005B61A0-0x005B6259
 // prototype int (__cdecl sub_5B61A0)(int vehID)
 // callers   0   call targets   1
 // kind      game

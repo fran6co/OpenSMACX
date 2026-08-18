@@ -1,11 +1,7 @@
-// ORIGINAL: 0x005EE610 BYTE_EXACT FILE
-// LEVER: void return (eax never set before ret) + own VCall2 shim for
-//        slot023 (int return, tested) and slots 29/39 ((int,int)), not the
-//        file's nullary VCall
+// ORIGINAL: 0x005EE610 sub_5ee610 0x005EE610-0x005EE6AE FILE BYTE_EXACT
+// LEVER: void return (eax never set before ret) + own VCall2 shim for slot023 (int return, tested) and slots 29/39 ((int,int)), not the file's nullary VCall
 // working copy - scaffold materialised by --work
-// name      sub_5ee610
 // size      158 bytes
-// spans     0x005EE610-0x005EE6AE
 // prototype 
 // callers   0   call targets   0
 // kind      game

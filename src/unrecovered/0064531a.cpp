@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064531A EXCLUDED S1
-// name      __onexit
+// ORIGINAL: 0x0064531A __onexit 0x0064531A-0x00645398 EXCLUDED S1
 // size      126 bytes
-// spans     0x0064531A-0x00645398
 // prototype 
 // callers   1   call targets   4
 // kind      library

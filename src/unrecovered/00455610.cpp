@@ -1,15 +1,7 @@
-// ORIGINAL: 0x00455610 FILE
-// RULED-OUT: full transcription landed (MISMATCH #0, prologue push/sub
-//            divergence - likely stack-frame shape from the local
-//            NCSprites-array/struct layout differing from the original's).
-//            Verified every extract()/change_color() argument order and the
-//            `this` receiver for the two loop-driven extract() sequences
-//            against raw bytes, since Ghidra silently drops the implicit
-//            `this` on every extract() call in its pseudocode.
+// ORIGINAL: 0x00455610 ?load_interface@@YAXH@Z 0x00455610-0x00455E41 FILE
+// RULED-OUT: full transcription landed (MISMATCH #0, prologue push/sub divergence - likely stack-frame shape from the local NCSprites-array/struct layout differing from the original's). Verified every extract()/change_color() argument order and the `this` receiver for the two loop-driven extract() sequences against raw bytes, since Ghidra silently drops the implicit `this` on every extract() call in its pseudocode.
 // working copy - scaffold materialised by --work
-// name      ?load_interface@@YAXH@Z
 // size      2097 bytes
-// spans     0x00455610-0x00455E41
 // prototype 
 // callers   1   call targets   9
 // kind      game

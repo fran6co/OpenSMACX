@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005FE5C0 FILE
+// ORIGINAL: 0x005FE5C0 ?UNK1@Palette@@QAEHHHH@Z 0x005FE5C0-0x005FE646 FILE
 // working copy - scaffold materialised by --work
-// name      ?UNK1@Palette@@QAEHHHH@Z
 // size      134 bytes
-// spans     0x005FE5C0-0x005FE646
 // prototype int (__thiscall ?UNK1@Palette@@QAEHHHH@Z)(Palette* this, int, int, int)
 // callers   2   call targets   1
 // kind      game

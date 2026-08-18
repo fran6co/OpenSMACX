@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00439670 FILE
-// name      ?bubble_me_elmo2@DesignWin@@QAEXPADHH@Z
+// ORIGINAL: 0x00439670 ?bubble_me_elmo2@DesignWin@@QAEXPADHH@Z 0x00439670-0x004396B0 FILE
 // size      64 bytes
-// spans     0x00439670-0x004396B0
 // prototype void (__thiscall ?bubble_me_elmo2@DesignWin@@QAEXPADHH@Z)(DesignWin* this, LPCSTR, int, int)
 // callers   0   call targets   2
 // kind      game

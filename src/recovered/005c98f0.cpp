@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005C98F0 BYTE_EXACT
-// name      ?timer_callback@MultiDebug@@QAEXXZ
+// ORIGINAL: 0x005C98F0 ?timer_callback@MultiDebug@@QAEXXZ 0x005C98F0-0x005C98F8 BYTE_EXACT
 // size      8 bytes
-// spans     0x005C98F0-0x005C98F8
 // prototype void (__thiscall ?timer_callback@MultiDebug@@QAEXXZ)(MultiDebug* this)
 // callers   0   call targets   0
 // kind      game

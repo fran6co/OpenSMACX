@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00422E30 BYTE_EXACT FILE
-// name      ?on_iface_left_down@BattleWin@@QAEXHH@Z
+// ORIGINAL: 0x00422E30 ?on_iface_left_down@BattleWin@@QAEXHH@Z 0x00422E30-0x00422E64 FILE BYTE_EXACT
 // size      52 bytes
-// spans     0x00422E30-0x00422E64
 // prototype void (__thiscall ?on_iface_left_down@BattleWin@@QAEXHH@Z)(BattleWin* this, int xCoord, int yCoord)
 // callers   0   call targets   2
 // kind      game

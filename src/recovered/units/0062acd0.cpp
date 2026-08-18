@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0062ACD0 FILE
-// name      ?decode_chunk@Flic@@QAEXPAUDataChunk@@@Z
+// ORIGINAL: 0x0062ACD0 ?decode_chunk@Flic@@QAEXPAUDataChunk@@@Z 0x0062ACD0-0x0062AEED FILE
 // size      541 bytes
-// spans     0x0062ACD0-0x0062AEED
 // prototype int (__thiscall ?decode_chunk@Flic@@QAEXPAUDataChunk@@@Z)(Flic* this, DataChunk*)
 // callers   4   call targets   13
 // kind      game

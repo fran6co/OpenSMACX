@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005EB390 BYTE_EXACT FILE
-// name      sub_5eb390
+// ORIGINAL: 0x005EB390 sub_5eb390 0x005EB390-0x005EB3A6 FILE BYTE_EXACT
 // size      22 bytes
-// spans     0x005EB390-0x005EB3A6
 // prototype 
 // callers   0   call targets   2
 // kind      game

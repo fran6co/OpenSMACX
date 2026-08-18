@@ -1,12 +1,6 @@
-// ORIGINAL: 0x005CDB90 FILE
-// RULED-OUT: `extern "C" ... sub_5cdb90()` fallback head; the disasm's
-//            no-`push ebp` esp-relative frame with 6 stack reads matches
-//            IDA's 6-arg guess, so the signature was changed to
-//            (int, int*, int*, int*, int, unsigned int*). #0 mismatch is
-//            the `sub esp,0x10` prologue vs the compiler's own frame shape.
-// name      sub_5cdb90
+// ORIGINAL: 0x005CDB90 sub_5cdb90 0x005CDB90-0x005CDD0C FILE
+// RULED-OUT: `extern "C" ... sub_5cdb90()` fallback head; the disasm's no-`push ebp` esp-relative frame with 6 stack reads matches IDA's 6-arg guess, so the signature was changed to (int, int*, int*, int*, int, unsigned int*). #0 mismatch is the `sub esp,0x10` prologue vs the compiler's own frame shape.
 // size      380 bytes
-// spans     0x005CDB90-0x005CDD0C
 // prototype 
 // callers   1   call targets   0
 // kind      game

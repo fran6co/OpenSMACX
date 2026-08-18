@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00515010 BYTE_EXACT FILE
+// ORIGINAL: 0x00515010 ?set_tech@Console@@QAEXH@Z 0x00515010-0x005150C2 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?set_tech@Console@@QAEXH@Z
 // size      178 bytes
-// spans     0x00515010-0x005150C2
 // prototype void (__thiscall ?set_tech@Console@@QAEXH@Z)(Console* this, int factionID)
 // callers   3   call targets   5
 // kind      game

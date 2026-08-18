@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00646EB5 EXCLUDED S1
-// name      __seh_longjmp_unwind@4
+// ORIGINAL: 0x00646EB5 __seh_longjmp_unwind@4 0x00646EB5-0x00646ED0 EXCLUDED S1
 // size      27 bytes
-// spans     0x00646EB5-0x00646ED0
 // prototype 
 // callers   0   call targets   1
 // kind      library

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00559060 BYTE_EXACT
-// name      ?get_name@@YAPADH@Z
+// ORIGINAL: 0x00559060 ?get_name@@YAPADH@Z 0x00559060-0x00559092 BYTE_EXACT
 // size      50 bytes
-// spans     0x00559060-0x00559092
 // prototype int8* (__cdecl ?get_name@@YAPADH@Z)(int factionID)
 // callers   2   call targets   0
 // kind      game

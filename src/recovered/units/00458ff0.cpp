@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00458FF0 FILE
-// name      ?timer_change@InfoWin@@QAEXH@Z
+// ORIGINAL: 0x00458FF0 ?timer_change@InfoWin@@QAEXH@Z 0x00458FF0-0x00459141 FILE
 // size      337 bytes
-// spans     0x00458FF0-0x00459141
 // prototype void (__thiscall ?timer_change@InfoWin@@QAEXH@Z)(InfoWin* this, int)
 // callers   2   call targets   4
 // kind      game

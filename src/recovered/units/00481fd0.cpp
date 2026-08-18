@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00481FD0 FILE
-// name      ?setup_faction_data@NetWin@@QAEXPAUMessageFactionData@@@Z
+// ORIGINAL: 0x00481FD0 ?setup_faction_data@NetWin@@QAEXPAUMessageFactionData@@@Z 0x00481FD0-0x00482488;0x006574E9-0x006574FE FILE
 // size      1229 bytes
-// spans     0x00481FD0-0x00482488;0x006574E9-0x006574FE
 // prototype void (__thiscall ?setup_faction_data@NetWin@@QAEXPAUMessageFactionData@@@Z)(NetWin* this, MessageFactionData*)
 // callers   3   call targets   15
 // kind      game

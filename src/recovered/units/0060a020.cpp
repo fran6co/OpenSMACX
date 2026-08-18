@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0060A020 FILE
-// name      ?set_selected_pos@ListBox@@QAEXHH@Z
+// ORIGINAL: 0x0060A020 ?set_selected_pos@ListBox@@QAEXHH@Z 0x0060A020-0x0060A1DD FILE
 // size      445 bytes
-// spans     0x0060A020-0x0060A1DD
 // prototype void (__thiscall ?set_selected_pos@ListBox@@QAEXHH@Z)(ListBox* this, int, int)
 // callers   21   call targets   4
 // kind      game

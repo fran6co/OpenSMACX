@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00645844 EXCLUDED S1
-// name      __purecall
+// ORIGINAL: 0x00645844 __purecall 0x00645844-0x0064584D EXCLUDED S1
 // size      9 bytes
-// spans     0x00645844-0x0064584D
 // prototype 
 // callers   0   call targets   1
 // kind      library

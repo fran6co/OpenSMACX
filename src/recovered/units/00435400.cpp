@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00435400 FILE
-// name      ?draw_armor@DesignWin@@QAEXH@Z
+// ORIGINAL: 0x00435400 ?draw_armor@DesignWin@@QAEXH@Z 0x00435400-0x00435800 FILE
 // size      1024 bytes
-// spans     0x00435400-0x00435800
 // prototype void (__thiscall ?draw_armor@DesignWin@@QAEXH@Z)(DesignWin* this, int)
 // callers   4   call targets   17
 // kind      game

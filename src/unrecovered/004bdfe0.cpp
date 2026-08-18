@@ -1,17 +1,7 @@
-// ORIGINAL: 0x004BDFE0 FILE
-// RULED-OUT: real `Sprite localSprite;` (no explicit ctor/dtor calls, relying
-//            on the scaffold's Sprite having no declared destructor so none
-//            is emitted, matching the disassembly which never calls ~Sprite
-//            on the normal path) plus field-offset writes transcribed
-//            instruction-by-instruction (including the cdq/and-7 rounding
-//            idioms rewritten as `(val<0)?7:0` bias terms) compiles and
-//            reaches instruction #2 before diverging (no SEH try/finally
-//            frame is generated without a non-trivial local destructor, and
-//            the original's frame protects the Sprite constructor call).
+// ORIGINAL: 0x004BDFE0 ?tut_win@TutWin@@QAEHPAUGraphicWin@@PBDHHPAUSprite@@HHH@Z 0x004BDFE0-0x004BE643;0x00659CE0-0x00659CF2 FILE
+// RULED-OUT: real `Sprite localSprite;` (no explicit ctor/dtor calls, relying on the scaffold's Sprite having no declared destructor so none is emitted, matching the disassembly which never calls ~Sprite on the normal path) plus field-offset writes transcribed instruction-by-instruction (including the cdq/and-7 rounding idioms rewritten as `(val<0)?7:0` bias terms) compiles and reaches instruction #2 before diverging (no SEH try/finally frame is generated without a non-trivial local destructor, and the original's frame protects the Sprite constructor call).
 // working copy - scaffold materialised by --work
-// name      ?tut_win@TutWin@@QAEHPAUGraphicWin@@PBDHHPAUSprite@@HHH@Z
 // size      1653 bytes
-// spans     0x004BDFE0-0x004BE643;0x00659CE0-0x00659CF2
 // prototype int (__thiscall ?tut_win@TutWin@@QAEHPAUGraphicWin@@PBDHHPAUSprite@@HHH@Z)(TutWin* this, GraphicWin*, int8*, int, int, Sprite*, int, int, int)
 // callers   13   call targets   16
 // kind      game

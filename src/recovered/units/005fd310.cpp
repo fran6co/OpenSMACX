@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005FD310 FILE
-// name      sub_5fd310
+// ORIGINAL: 0x005FD310 sub_5fd310 0x005FD310-0x005FD35D FILE
 // size      77 bytes
-// spans     0x005FD310-0x005FD35D
 // prototype 
 // callers   0   call targets   1
 // kind      game

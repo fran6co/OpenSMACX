@@ -1,17 +1,7 @@
-// ORIGINAL: 0x005D6210 FILE
-// RULED-OUT: 91.7% mnemonic similarity (#6 mov vs push): the
-//   `a2==0 || a3==0` guard and its width/height fallback compile to a
-//   different register-save order than the original's brief `push ebp`
-//   framing for just that check - not chased further. Indirect calls at
-//   +0x108/+0x128/+0xf8 are slots 66/74/62; slot074 is the only one with
-//   args (two ints, `push -1; push 0` before the call), so the emitted
-//   VCall's uniform nullary slots needed slot074(int,int) added by hand
-//   (own `WinVCall` shim, since the scaffold's own VCall is already fixed
-//   at nullary and this file owns both halves).
+// ORIGINAL: 0x005D6210 ?on_size@GraphicWin@@QAEXIHH@Z 0x005D6210-0x005D6308 FILE
+// RULED-OUT: 91.7% mnemonic similarity (#6 mov vs push): the `a2==0 || a3==0` guard and its width/height fallback compile to a different register-save order than the original's brief `push ebp` framing for just that check - not chased further. Indirect calls at +0x108/+0x128/+0xf8 are slots 66/74/62; slot074 is the only one with args (two ints, `push -1; push 0` before the call), so the emitted VCall's uniform nullary slots needed slot074(int,int) added by hand (own `WinVCall` shim, since the scaffold's own VCall is already fixed at nullary and this file owns both halves).
 // working copy - scaffold materialised by --work
-// name      ?on_size@GraphicWin@@QAEXIHH@Z
 // size      248 bytes
-// spans     0x005D6210-0x005D6308
 // prototype void (__thiscall ?on_size@GraphicWin@@QAEXIHH@Z)(GraphicWin* this, unsigned int, int, int)
 // callers   0   call targets   5
 // kind      game

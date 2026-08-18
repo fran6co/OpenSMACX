@@ -1,9 +1,7 @@
-// ORIGINAL: 0x00427150 BYTE_EXACT FILE
+// ORIGINAL: 0x00427150 ?hide@CouncWin@@QAEHXZ 0x00427150-0x00427155 FILE BYTE_EXACT
 // LEVER: tail call, this reinterpreted as Win* to call is_visible() directly
 // working copy - scaffold materialised by --work
-// name      ?hide@CouncWin@@QAEHXZ
 // size      5 bytes
-// spans     0x00427150-0x00427155
 // prototype int (__thiscall ?hide@CouncWin@@QAEHXZ)(CouncWin* this)
 // callers   0   call targets   0
 // kind      thunk

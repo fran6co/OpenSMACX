@@ -21,10 +21,8 @@
 
 /*
 Purpose: Reset the square lock to its unset sentinels.
-ORIGINAL: 0x0058FD70 BYTE_EXACT
-// name      ?clear@SquareLock@@QAEXXZ
+// ORIGINAL: 0x0058FD70 ?clear@SquareLock@@QAEXXZ 0x0058FD70-0x0058FD85 BYTE_EXACT
 // size      21 bytes
-// spans     0x0058FD70-0x0058FD85
 // prototype void (__thiscall ?clear@SquareLock@@QAEXXZ)(SquareLock* this)
 // callers   0   call targets   0
 // kind      game
@@ -52,10 +50,8 @@ Purpose: Release the square this lock holds and every tile in its footprint.
          tiles (81 when the 0x8 flag is also set) walked through the shared
          RadiusOffset tables and wrapped in x by xrange. The record is reset to
          its unset sentinels on the way out.
-ORIGINAL: 0x0058FD90
-// name      ?unlock@SquareLock@@QAEXH@Z
+// ORIGINAL: 0x0058FD90 ?unlock@SquareLock@@QAEXH@Z 0x0058FD90-0x0058FE77
 // size      231 bytes
-// spans     0x0058FD90-0x0058FE77
 // prototype void (__thiscall ?unlock@SquareLock@@QAEXH@Z)(SquareLock* this, int)
 // callers   4   call targets   1
 // kind      game
@@ -105,10 +101,8 @@ Purpose: Take a square and every tile in its footprint for a faction. The
          tiles walked through the shared RadiusOffset tables and wrapped in x by
          xrange; if any tile is already held by another faction the attempt is
          abandoned at that tile.
-ORIGINAL: 0x0058FE80
-// name      ?lock@SquareLock@@QAEHHHHH@Z
+// ORIGINAL: 0x0058FE80 ?lock@SquareLock@@QAEHHHHH@Z 0x0058FE80-0x0058FF68
 // size      232 bytes
-// spans     0x0058FE80-0x0058FF68
 // prototype BOOL (__thiscall ?lock@SquareLock@@QAEHHHHH@Z)(SquareLock* this, int factionID, int flags, int xCoord, int yCoord)
 // callers   4   call targets   1
 // kind      game

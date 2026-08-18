@@ -1,18 +1,11 @@
-// ORIGINAL: 0x00627F50
-// name      sub_627f50
+// ORIGINAL: 0x00627F50 sub_627f50 0x00627F50-0x006280DF
+// RULED-OUT: 3x3 matrix inverse (adjugate/determinant, classic cofactor transpose) - the math matches Ghidra's flattened SSA form exactly, but this form diverges at #4 on x87 stack scheduling: the original reloads each element repeatedly rather than caching it (9 values through an 8-deep FPU stack), which a single-read-per-element C form does not reproduce.
 // size      399 bytes
-// spans     0x00627F50-0x006280DF
 // prototype
 // callers   6   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
-// RULED-OUT: 3x3 matrix inverse (adjugate/determinant, classic cofactor
-//            transpose) - the math matches Ghidra's flattened SSA form
-//            exactly, but this form diverges at #4 on x87 stack scheduling:
-//            the original reloads each element repeatedly rather than
-//            caching it (9 values through an 8-deep FPU stack), which a
-//            single-read-per-element C form does not reproduce.
 
 extern "C" void __cdecl sub_627f50(float *m, float *out) {
     float m00 = m[0], m01 = m[1], m02 = m[2];

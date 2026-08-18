@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005D7030 FILE
-// name      ?compute_min_size@GraphicWin@@QAEXXZ
+// ORIGINAL: 0x005D7030 ?compute_min_size@GraphicWin@@QAEXXZ 0x005D7030-0x005D7140 FILE
 // size      272 bytes
-// spans     0x005D7030-0x005D7140
 // prototype void (__thiscall ?compute_min_size@GraphicWin@@QAEXXZ)(GraphicWin* this)
 // callers   3   call targets   0
 // kind      game

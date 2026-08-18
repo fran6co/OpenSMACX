@@ -1,11 +1,7 @@
-// ORIGINAL: 0x00445CD0 FILE
-// RULED-OUT: register-faithful transcription (self=ecx, no ebx-copy) diverges at
-//            instr #2 (mov ebx,ecx vs push) - /O2 register allocation differs
-//            for this 3089-byte, ~150-call function; not chased further.
+// ORIGINAL: 0x00445CD0 ?init@FX@@QAEXXZ 0x00445CD0-0x004468E1 FILE
+// RULED-OUT: register-faithful transcription (self=ecx, no ebx-copy) diverges at instr #2 (mov ebx,ecx vs push) - /O2 register allocation differs for this 3089-byte, ~150-call function; not chased further.
 // working copy - scaffold materialised by --work
-// name      ?init@FX@@QAEXXZ
 // size      3089 bytes
-// spans     0x00445CD0-0x004468E1
 // prototype void (__thiscall ?init@FX@@QAEXXZ)(FX* this)
 // callers   1   call targets   7
 // kind      game

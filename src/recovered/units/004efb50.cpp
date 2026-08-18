@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004EFB50 FILE
-// name      ?do_upgrade@@YAXHHH@Z
+// ORIGINAL: 0x004EFB50 ?do_upgrade@@YAXHHH@Z 0x004EFB50-0x004EFD4A FILE
 // size      506 bytes
-// spans     0x004EFB50-0x004EFD4A
 // prototype void (__cdecl ?do_upgrade@@YAXHHH@Z)(int factionID, int protoID1, int protoID2)
 // callers   2   call targets   4
 // kind      game

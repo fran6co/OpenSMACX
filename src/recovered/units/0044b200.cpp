@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0044B200 FILE
-// name      ??0FameWin@@QAE@XZ
+// ORIGINAL: 0x0044B200 ??0FameWin@@QAE@XZ 0x0044B200-0x0044B2F3;0x00654E00-0x00654E8E FILE
 // size      385 bytes
-// spans     0x0044B200-0x0044B2F3;0x00654E00-0x00654E8E
 // prototype void (__thiscall ??0FameWin@@QAE@XZ)(FameWin* this)
 // callers   1   call targets   7
 // kind      game

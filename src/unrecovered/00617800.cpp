@@ -1,24 +1,11 @@
-// ORIGINAL: 0x00617800 FILE
-// name      ?add_object@Caviar@@QAEHPAUCaviarData@@PAEPAUCaviarData@@PAUVOX_Vect@@@Z
+// ORIGINAL: 0x00617800 ?add_object@Caviar@@QAEHPAUCaviarData@@PAEPAUCaviarData@@PAUVOX_Vect@@@Z 0x00617800-0x00617916 FILE
+// RULED-OUT: the catalogued 4-param prototype (CaviarData*, unsigned char*, CaviarData*, VOX_Vect*) reads only 16 bytes off the stack, but this body's `ret 0x14` pops 20 and the disassembly reads a genuine 5th stack dword at entry+0x14 (used as `a5 % divisor`) - Ghidra independently reconstructed the same 5 explicit params. Landed FILE-mode with a 5-int overload (`..., VOX_Vect*, int`) since the body-mode scaffold's auto-declared 4-param member can't be widened from outside. The unused 2nd param (`unsigned char* a2`, entry+8) is never read anywhere in the body either, matching the disassembly. Not expected exact (mnemonic_similarity 0.72, 303 vs 278 bytes) - only one source-form pass was tried.
 // size      278 bytes
-// spans     0x00617800-0x00617916
 // prototype int (__thiscall ?add_object@Caviar@@QAEHPAUCaviarData@@PAEPAUCaviarData@@PAUVOX_Vect@@@Z)(Caviar* this, CaviarData*, LPBYTE, CaviarData*, VOX_Vect*)
 // callers   0   call targets   1
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     0x00628150
-// RULED-OUT: the catalogued 4-param prototype (CaviarData*, unsigned
-//            char*, CaviarData*, VOX_Vect*) reads only 16 bytes off the
-//            stack, but this body's `ret 0x14` pops 20 and the disassembly
-//            reads a genuine 5th stack dword at entry+0x14 (used as
-//            `a5 % divisor`) - Ghidra independently reconstructed the same
-//            5 explicit params. Landed FILE-mode with a 5-int overload
-//            (`..., VOX_Vect*, int`) since the body-mode scaffold's
-//            auto-declared 4-param member can't be widened from outside.
-//            The unused 2nd param (`unsigned char* a2`, entry+8) is never
-//            read anywhere in the body either, matching the disassembly.
-//            Not expected exact (mnemonic_similarity 0.72, 303 vs 278
-//            bytes) - only one source-form pass was tried.
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?add_object@Caviar@@QAEHPAUCaviarData@@PAEPAUCaviarData@@PAUVOX_Vect@@@Z  at 0x00617800  (278 bytes)
 //

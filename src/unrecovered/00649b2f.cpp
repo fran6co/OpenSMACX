@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00649B2F EXCLUDED S1
-// name      __cftof2
+// ORIGINAL: 0x00649B2F __cftof2 0x00649B2F-0x00649BD6 EXCLUDED S1
 // size      167 bytes
-// spans     0x00649B2F-0x00649BD6
 // prototype 
 // callers   2   call targets   2
 // kind      library

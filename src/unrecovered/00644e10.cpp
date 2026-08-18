@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00644E10 EXCLUDED S1
-// name      __exit
+// ORIGINAL: 0x00644E10 __exit 0x00644E10-0x00644E21 EXCLUDED S1
 // size      17 bytes
-// spans     0x00644E10-0x00644E21
 // prototype 
 // callers   5   call targets   1
 // kind      library

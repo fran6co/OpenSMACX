@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00523C60 FILE
-// name      ?set_time_controls@@YAXXZ
+// ORIGINAL: 0x00523C60 ?set_time_controls@@YAXXZ 0x00523C60-0x00523DC9 FILE
 // size      361 bytes
-// spans     0x00523C60-0x00523DC9
 // prototype 
 // callers   2   call targets   0
 // kind      game

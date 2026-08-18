@@ -1,11 +1,7 @@
-// ORIGINAL: 0x005A6890 FILE
-// RULED-OUT: divergence at #4 (push edi/esi vs test) is register allocation
-//            for a1 not hoisting into a callee-saved reg; a hoisted `base`
-//            local and inline `(char*)a1+off` casts compile identically.
+// ORIGINAL: 0x005A6890 ?game_io@@YAHHPAUFILE@@@Z 0x005A6890-0x005A6AC0 FILE
+// RULED-OUT: divergence at #4 (push edi/esi vs test) is register allocation for a1 not hoisting into a callee-saved reg; a hoisted `base` local and inline `(char*)a1+off` casts compile identically.
 // working copy - scaffold materialised by --work
-// name      ?game_io@@YAHHPAUFILE@@@Z
 // size      560 bytes
-// spans     0x005A6890-0x005A6AC0
 // prototype int (__cdecl ?game_io@@YAHHPAUFILE@@@Z)(int, FILE* file)
 // callers   1   call targets   4
 // kind      game

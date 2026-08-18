@@ -1,12 +1,7 @@
-// ORIGINAL: 0x00431DC0 FILE
-// RULED-OUT: separate `%`/`/` (idiv pair, similarity 0.74); `/` then
-//            `value - cat*10000` for the remainder got mnemonic sim 0.98,
-//            same shape everywhere except the final vtable-adjust dance
-//            (mov-then-lea vs lea-then-mov reorder, #49). Landed that form.
+// ORIGINAL: 0x00431DC0 ?on_link_clicked@Datalink@@QAEHHPAD@Z 0x00431DC0-0x00431E61 FILE
+// RULED-OUT: separate `%`/`/` (idiv pair, similarity 0.74); `/` then `value - cat*10000` for the remainder got mnemonic sim 0.98, same shape everywhere except the final vtable-adjust dance (mov-then-lea vs lea-then-mov reorder, #49). Landed that form.
 // working copy - scaffold materialised by --work
-// name      ?on_link_clicked@Datalink@@QAEHHPAD@Z
 // size      161 bytes
-// spans     0x00431DC0-0x00431E61
 // prototype int (__thiscall ?on_link_clicked@Datalink@@QAEHHPAD@Z)(Datalink* this, int, int8*)
 // callers   0   call targets   3
 // kind      game

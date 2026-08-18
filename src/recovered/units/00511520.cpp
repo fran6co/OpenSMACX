@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00511520 FILE
-// name      ?set_move@Console@@QAEXH@Z
+// ORIGINAL: 0x00511520 ?set_move@Console@@QAEXH@Z 0x00511520-0x005117FD FILE
 // size      733 bytes
-// spans     0x00511520-0x005117FD
 // prototype void (__thiscall ?set_move@Console@@QAEXH@Z)(Console* this, int)
 // callers   15   call targets   16
 // kind      game

@@ -1,12 +1,7 @@
-// ORIGINAL: 0x005589E0 FILE
-// RULED-OUT: straightforward translation matches from instr #3 on (prologue
-//            push/frame-pointer order); did not chase further given the
-//            three parse_says(chan, ptr, -1, -1) call sites and the shared
-//            9bbfec/9bbff0 globals already reproduce the control flow.
+// ORIGINAL: 0x005589E0 ?commlink_attempter@@YAHHH@Z 0x005589E0-0x00558C55 FILE
+// RULED-OUT: straightforward translation matches from instr #3 on (prologue push/frame-pointer order); did not chase further given the three parse_says(chan, ptr, -1, -1) call sites and the shared 9bbfec/9bbff0 globals already reproduce the control flow.
 // working copy - scaffold materialised by --work
-// name      ?commlink_attempter@@YAHHH@Z
 // size      629 bytes
-// spans     0x005589E0-0x00558C55
 // prototype 
 // callers   3   call targets   6
 // kind      game

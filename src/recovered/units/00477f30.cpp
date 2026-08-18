@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00477F30 FILE
-// name      ?on_left_click@MultiWin@@QAEXHH@Z
+// ORIGINAL: 0x00477F30 ?on_left_click@MultiWin@@QAEXHH@Z 0x00477F30-0x00478148 FILE
 // size      536 bytes
-// spans     0x00477F30-0x00478148
 // prototype void (__thiscall ?on_left_click@MultiWin@@QAEXHH@Z)(MultiWin* this, int xCoord, int yCoord)
 // callers   0   call targets   9
 // kind      game

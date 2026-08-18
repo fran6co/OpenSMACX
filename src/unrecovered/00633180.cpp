@@ -1,15 +1,7 @@
-// ORIGINAL: 0x00633180 FILE
-// RULED-OUT: __stdcall(int) free function per the literal contract - ecx is
-//            read as an object throughout and only one dword is popped
-//            (ret 4), so recast as a __thiscall member (VoiceRxOwner::method)
-//            taking the real stack int; body transcribes the two heap/mem_get
-//            alloc-retry blocks (0x1c node, 0x60 VoiceRx) and list splice, but
-//            does not reproduce the original's SEH prologue (no local objects
-//            requiring an unwind frame here).
+// ORIGINAL: 0x00633180 sub_633180 0x00633180-0x006336C2;0x006637B0-0x0066386E FILE
+// RULED-OUT: __stdcall(int) free function per the literal contract - ecx is read as an object throughout and only one dword is popped (ret 4), so recast as a __thiscall member (VoiceRxOwner::method) taking the real stack int; body transcribes the two heap/mem_get alloc-retry blocks (0x1c node, 0x60 VoiceRx) and list splice, but does not reproduce the original's SEH prologue (no local objects requiring an unwind frame here).
 // working copy - scaffold materialised by --work
-// name      sub_633180
 // size      1536 bytes
-// spans     0x00633180-0x006336C2;0x006637B0-0x0066386E
 // prototype 
 // callers   1   call targets   5
 // kind      game

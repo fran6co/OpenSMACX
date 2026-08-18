@@ -1,12 +1,7 @@
-// ORIGINAL: 0x004C49A0 FILE
-// RULED-OUT: custom VCallW(int) shim for slot001 (scaffold's slot001 is
-//            nullary); byte-read/dword-write split for g_00939ed8's flag
-//            bit. MISMATCH from #4: register push scheduling around the
-//            four af51c/af520/af524/af528 locals differs
+// ORIGINAL: 0x004C49A0 ?init@WorldWin@@QAEXH@Z 0x004C49A0-0x004C4A66 FILE
+// RULED-OUT: custom VCallW(int) shim for slot001 (scaffold's slot001 is nullary); byte-read/dword-write split for g_00939ed8's flag bit. MISMATCH from #4: register push scheduling around the four af51c/af520/af524/af528 locals differs
 // working copy - scaffold materialised by --work
-// name      ?init@WorldWin@@QAEXH@Z
 // size      198 bytes
-// spans     0x004C49A0-0x004C4A66
 // prototype void (__thiscall ?init@WorldWin@@QAEXH@Z)(WorldWin* this, int)
 // callers   1   call targets   3
 // kind      game

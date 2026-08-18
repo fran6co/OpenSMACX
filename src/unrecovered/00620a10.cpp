@@ -1,4 +1,4 @@
-// ORIGINAL: 0x00620A10 FILE
+// ORIGINAL: 0x00620A10 sub_620a10 0x00620A10-0x006212A4 FILE
 // UNRECOVERABLE (partial): this is a fixed-point/FPU-dual-mode affine
 //   texture-mapping scanline rasterizer. The two inner pixel loops
 //   (0x620EA1-0x620ECA and 0x621102-0x621197) pack a running fixed-point
@@ -16,9 +16,7 @@
 //   disassembly. The two DDA loop bodies are placeholders (RULED-OUT) that
 //   compile but do not reproduce the pixel math.
 // working copy - scaffold materialised by --work
-// name      sub_620a10
 // size      2196 bytes
-// spans     0x00620A10-0x006212A4
 // prototype 
 // callers   1   call targets   4
 // kind      game

@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00612B80 BYTE_EXACT FILE
+// ORIGINAL: 0x00612B80 ?on_mouse_move@Dialogs@@QAEXHH@Z 0x00612B80-0x00612BF8 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?on_mouse_move@Dialogs@@QAEXHH@Z
 // size      120 bytes
-// spans     0x00612B80-0x00612BF8
 // prototype void (__thiscall ?on_mouse_move@Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
 // callers   0   call targets   4
 // kind      game

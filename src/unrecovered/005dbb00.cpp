@@ -1,14 +1,6 @@
-// ORIGINAL: 0x005DBB00 FILE
-// RULED-OUT: `wrapWidth` (the find_line_break_l out-param) reset from `a5`
-//   once before the loop instead of every iteration - worse (16 edits vs 15).
-//   Kept the per-iteration reset (matches Ghidra's `param_2 = param_6` inside
-//   the do/while) even though the raw disassembly's `[esp+0x24]` write reads
-//   like a once-only init; the compiled edit count says otherwise. Missing
-//   one `push` near the top (2 saved regs where the original has 3) is the
-//   dominant remaining difference.
-// name      ?wrap_cent@Buffer@@QAEHPAVFont@@PADHHHH@Z
+// ORIGINAL: 0x005DBB00 ?wrap_cent@Buffer@@QAEHPAVFont@@PADHHHH@Z 0x005DBB00-0x005DBBFA FILE
+// RULED-OUT: `wrapWidth` (the find_line_break_l out-param) reset from `a5` once before the loop instead of every iteration - worse (16 edits vs 15). Kept the per-iteration reset (matches Ghidra's `param_2 = param_6` inside the do/while) even though the raw disassembly's `[esp+0x24]` write reads like a once-only init; the compiled edit count says otherwise. Missing one `push` near the top (2 saved regs where the original has 3) is the dominant remaining difference.
 // size      250 bytes
-// spans     0x005DBB00-0x005DBBFA
 // prototype int (__thiscall ?wrap_cent@Buffer@@QAEHPAVFont@@PADHHHH@Z)(Buffer* this, Font*, int8*, int, int, int, int)
 // callers   0   call targets   3
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004E68B0 FILE
-// name      ?farm_compute@@YAXXZ
+// ORIGINAL: 0x004E68B0 ?farm_compute@@YAXXZ 0x004E68B0-0x004E6E4E FILE
 // size      1438 bytes
-// spans     0x004E68B0-0x004E6E4E
 // prototype 
 // callers   1   call targets   7
 // kind      game

@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005C1AB0 FILE
+// ORIGINAL: 0x005C1AB0 ?veh_unmoved@@YAHH@Z 0x005C1AB0-0x005C1B6F FILE
 // working copy - scaffold materialised by --work
-// name      ?veh_unmoved@@YAHH@Z
 // size      191 bytes
-// spans     0x005C1AB0-0x005C1B6F
 // prototype int (__cdecl ?veh_unmoved@@YAHH@Z)(int vehID)
 // callers   1   call targets   2
 // kind      game

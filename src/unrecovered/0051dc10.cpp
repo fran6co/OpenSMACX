@@ -1,18 +1,7 @@
-// ORIGINAL: 0x0051DC10 FILE
-// RULED-OUT: computed that AlphaMenu : public Menu (Menu ends at exactly
-//            0xB64, where Buffer buffer_ starts, which ends at exactly
-//            0x10EC, where Sprite sprite_ starts, ending at 0x1118 where
-//            Sprite sprites_[3] starts) - a real member layout that would
-//            let the SEH prologue emerge automatically, but AlphaMenu is
-//            the fixed scaffold class and cannot carry real members here.
-//            Explicit dtor calls at the right offsets/order compile and
-//            are structurally faithful; the SEH frame (push -1/handler,
-//            unwind funclets) is not reproduced - same open item as
-//            0x00629D60 (Flic::Flic) and 0047acf0.cpp.
+// ORIGINAL: 0x0051DC10 ??1AlphaMenu@@QAE@XZ 0x0051DC10-0x0051DC86;0x0065D220-0x0065D24E FILE
+// RULED-OUT: computed that AlphaMenu : public Menu (Menu ends at exactly 0xB64, where Buffer buffer_ starts, which ends at exactly 0x10EC, where Sprite sprite_ starts, ending at 0x1118 where Sprite sprites_[3] starts) - a real member layout that would let the SEH prologue emerge automatically, but AlphaMenu is the fixed scaffold class and cannot carry real members here. Explicit dtor calls at the right offsets/order compile and are structurally faithful; the SEH frame (push -1/handler, unwind funclets) is not reproduced - same open item as 0x00629D60 (Flic::Flic) and 0047acf0.cpp.
 // working copy - scaffold materialised by --work
-// name      ??1AlphaMenu@@QAE@XZ
 // size      164 bytes
-// spans     0x0051DC10-0x0051DC86;0x0065D220-0x0065D24E
 // prototype void (__thiscall ??1AlphaMenu@@QAE@XZ)(AlphaMenu* this)
 // callers   1   call targets   4
 // kind      game

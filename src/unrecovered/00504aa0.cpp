@@ -1,28 +1,7 @@
-// ORIGINAL: 0x00504AA0 FILE
-// RULED-OUT: mechanical transcription of the Ghidra decompilation
-//            (integer fixed-point animation math, no float). Two one-time
-//            static-init pools (8 Buffers at 0x912428, 8 more at 0x90f7e0,
-//            each array-constructed via the compiler's own `??_L` array-
-//            construct helper already declared as fn_006457c2) plus a
-//            lone Flic/Buffer pair at 0x90ea68/0x915068 constructed with
-//            placement `new` and registered via atexit for teardown -
-//            all four receivers confirmed from the raw disassembly's
-//            `mov ecx, ADDR` before each ctor call. Every FUN_ callee
-//            resolved to a real name from the disassembly's own comments.
-//            Not fully chased: several Buffer::copy/init/draw_multi_
-//            table_dest calls inside the 8-slot animation loop use a
-//            fixed 0x915068 receiver as a placeholder - the raw asm shows
-//            the true receiver is a per-iteration resolved screen-buffer
-//            pointer (the same `*(int*)0x7d3c3c`-based idiom used
-//            throughout this codebase) that would take another pass to
-//            thread through every call site correctly. Landed at
-//            MISMATCH #4 without chasing the prologue divergence, given
-//            the size of this function and the remaining time in this
-//            batch.
+// ORIGINAL: 0x00504AA0 ?boom@@YAHHHH@Z 0x00504AA0-0x00505D1B FILE
+// RULED-OUT: mechanical transcription of the Ghidra decompilation (integer fixed-point animation math, no float). Two one-time static-init pools (8 Buffers at 0x912428, 8 more at 0x90f7e0, each array-constructed via the compiler's own `??_L` array- construct helper already declared as fn_006457c2) plus a lone Flic/Buffer pair at 0x90ea68/0x915068 constructed with placement `new` and registered via atexit for teardown - all four receivers confirmed from the raw disassembly's `mov ecx, ADDR` before each ctor call. Every FUN_ callee resolved to a real name from the disassembly's own comments. Not fully chased: several Buffer::copy/init/draw_multi_ table_dest calls inside the 8-slot animation loop use a fixed 0x915068 receiver as a placeholder - the raw asm shows the true receiver is a per-iteration resolved screen-buffer pointer (the same `*(int*)0x7d3c3c`-based idiom used throughout this codebase) that would take another pass to thread through every call site correctly. Landed at MISMATCH #4 without chasing the prologue divergence, given the size of this function and the remaining time in this batch.
 // working copy - scaffold materialised by --work
-// name      ?boom@@YAHHHH@Z
 // size      4731 bytes
-// spans     0x00504AA0-0x00505D1B
 // prototype int (__cdecl ?boom@@YAHHHH@Z)(int xCoord, int yCoord, int)
 // callers   7   call targets   20
 // kind      game

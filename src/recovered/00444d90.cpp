@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00444D90 BYTE_EXACT
-// name      ?diplo@@YAXHH@Z
+// ORIGINAL: 0x00444D90 ?diplo@@YAXHH@Z 0x00444D90-0x00444DA7 BYTE_EXACT
 // size      23 bytes
-// spans     0x00444D90-0x00444DA7
 // prototype 
 // callers   4   call targets   1
 // kind      game

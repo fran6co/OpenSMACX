@@ -1,12 +1,7 @@
-// ORIGINAL: 0x005797D0 FILE
-// RULED-OUT: single combined expression and explicit a1/a2 temp reads both
-//            match 44/46 mnemonics at 98/98 bytes; VC6 interleaves the
-//            push esi/mov esi(a2)/push edi/mov edi(a1) prologue differently
-//            (push,push,mov,mov instead) - register scheduling, not logic
+// ORIGINAL: 0x005797D0 ?site_at@@YAHHHH@Z 0x005797D0-0x00579832 FILE
+// RULED-OUT: single combined expression and explicit a1/a2 temp reads both match 44/46 mnemonics at 98/98 bytes; VC6 interleaves the push esi/mov esi(a2)/push edi/mov edi(a1) prologue differently (push,push,mov,mov instead) - register scheduling, not logic
 // working copy - scaffold materialised by --work
-// name      ?site_at@@YAHHHH@Z
 // size      98 bytes
-// spans     0x005797D0-0x00579832
 // prototype 
 // callers   1   call targets   2
 // kind      game

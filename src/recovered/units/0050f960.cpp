@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0050F960 FILE
-// name      ?on_post_redraw_nc_buffer@Console@@QAEXPAUBuffer@@H@Z
+// ORIGINAL: 0x0050F960 ?on_post_redraw_nc_buffer@Console@@QAEXPAUBuffer@@H@Z 0x0050F960-0x0050FB08 FILE
 // size      424 bytes
-// spans     0x0050F960-0x0050FB08
 // prototype void (__thiscall ?on_post_redraw_nc_buffer@Console@@QAEXPAUBuffer@@H@Z)(Console* this, Buffer*, int)
 // callers   0   call targets   1
 // kind      game

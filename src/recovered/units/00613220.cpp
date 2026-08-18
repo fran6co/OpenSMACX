@@ -1,5 +1,4 @@
-// ORIGINAL: 0x00613220 FILE
-// name      ?on_scroll_create@Dialogs@@QAEHXZ
+// ORIGINAL: 0x00613220 ?on_scroll_create@Dialogs@@QAEHXZ 0x00613220-0x00613254 FILE
 // CORRECTED from ?on_scroll_create@Dialogs@@QAEXXZ
 //   ends `call dword ptr [eax+0x20]; ret` on the success path - no eax
 //   handling at all, so the callee's return value IS this function's -
@@ -7,7 +6,6 @@
 //   also explains why the original does not tail-jmp the dispatch: VC6
 //   folds that only when the value is discarded
 // size      52 bytes
-// spans     0x00613220-0x00613254
 // prototype int (__thiscall ?on_scroll_create@Dialogs@@QAEHXZ)(Dialogs* this)
 // callers   0   call targets   0
 // kind      game

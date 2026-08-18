@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00649110 EXCLUDED S1
-// name      __CallSettingFrame@12
+// ORIGINAL: 0x00649110 __CallSettingFrame@12 0x00649110-0x0064915C EXCLUDED S1
 // size      76 bytes
-// spans     0x00649110-0x0064915C
 // prototype 
 // callers   2   call targets   1
 // kind      library

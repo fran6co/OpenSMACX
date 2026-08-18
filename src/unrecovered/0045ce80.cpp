@@ -1,11 +1,7 @@
-// ORIGINAL: 0x0045CE80 BYTE_EXACT FILE
-// LEVER: g_008c5568/g_007ad2a0 used directly as the "this" pointer for a
-//        member call (plain const-pointer global, not indexed) reproduces
-//        `mov ecx, imm`.
+// ORIGINAL: 0x0045CE80 ?on_iface_right_click@MainInterface@@QAEXHH@Z 0x0045CE80-0x0045CF38 FILE BYTE_EXACT
+// LEVER: g_008c5568/g_007ad2a0 used directly as the "this" pointer for a member call (plain const-pointer global, not indexed) reproduces `mov ecx, imm`.
 // working copy - scaffold materialised by --work
-// name      ?on_iface_right_click@MainInterface@@QAEXHH@Z
 // size      184 bytes
-// spans     0x0045CE80-0x0045CF38
 // prototype void (__thiscall ?on_iface_right_click@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
 // callers   0   call targets   3
 // kind      game

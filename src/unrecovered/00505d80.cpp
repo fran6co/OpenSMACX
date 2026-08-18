@@ -1,18 +1,13 @@
-// ORIGINAL: 0x00505D80 FILE
+// ORIGINAL: 0x00505D80 ?battle_kill@@YAHHPAHPAHPAHHH@Z 0x00505D80-0x0050612A FILE
+// RULED-OUT: unit records are 0x34 bytes (0x952800 area); byte-offset casts on the declared g_* globals reproduce the (bVar1*0x20cc+sVar3)-style table indexing and the terrain-base indirection through g_0094a30c/g_0068faf0.
+// RULED-OUT: nothing further tried; MISMATCH #8 (xor vs lea, likely a zeroed- register-reuse difference like 0x00532570), similarity 0.86.
 // working copy - scaffold materialised by --work
-// name      ?battle_kill@@YAHHPAHPAHPAHHH@Z
 // size      938 bytes
-// spans     0x00505D80-0x0050612A
 // prototype int (__cdecl ?battle_kill@@YAHHPAHPAHPAHHH@Z)(int vehID1, int*, int*, int*, int vehID2, int)
 // callers   3   call targets   9
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x004E3C60 0x005230E0 0x005B9580 0x005BFFA0 0x005C0080 0x005C08C0 0x005C0E40 0x005C1D20 0x00625EC0
-// RULED-OUT: unit records are 0x34 bytes (0x952800 area); byte-offset casts on
-//   the declared g_* globals reproduce the (bVar1*0x20cc+sVar3)-style table
-//   indexing and the terrain-base indirection through g_0094a30c/g_0068faf0.
-// RULED-OUT: nothing further tried; MISMATCH #8 (xor vs lea, likely a zeroed-
-//   register-reuse difference like 0x00532570), similarity 0.86.
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?battle_kill@@YAHHPAHPAHPAHHH@Z  at 0x00505D80  (938 bytes)

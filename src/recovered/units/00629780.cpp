@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00629780 BYTE_EXACT FILE
-// name      ?clear@StringBox@@QAEXXZ
+// ORIGINAL: 0x00629780 ?clear@StringBox@@QAEXXZ 0x00629780-0x006298A4 FILE BYTE_EXACT
 // size      292 bytes
-// spans     0x00629780-0x006298A4
 // prototype void (__thiscall ?clear@StringBox@@QAEXXZ)(StringBox* this)
 // callers   20   call targets   1
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00435DE0 FILE
-// name      ?draw_special_2@DesignWin@@QAEXH@Z
+// ORIGINAL: 0x00435DE0 ?draw_special_2@DesignWin@@QAEXH@Z 0x00435DE0-0x00436081 FILE
 // size      673 bytes
-// spans     0x00435DE0-0x00436081
 // prototype void (__thiscall ?draw_special_2@DesignWin@@QAEXH@Z)(DesignWin* this, int)
 // callers   6   call targets   11
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0046FB90 FILE
-// name      ?clear_alt@MapWin@@QAEXHHH@Z
+// ORIGINAL: 0x0046FB90 ?clear_alt@MapWin@@QAEXHHH@Z 0x0046FB90-0x0046FC29 FILE
 // size      153 bytes
-// spans     0x0046FB90-0x0046FC29
 // prototype void (__thiscall ?clear_alt@MapWin@@QAEXHHH@Z)(MapWin* this, int, int, int)
 // callers   2   call targets   0
 // kind      

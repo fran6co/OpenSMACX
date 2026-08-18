@@ -1,11 +1,7 @@
-// ORIGINAL: 0x005109B0 BYTE_EXACT FILE
-// LEVER: `(*idx + 1) % 32` reproduces the and/jns/dec/or/inc signed-modulo
-//        idiom directly; g_009392c0/g_00939340 as `extern int[]` (indexed
-//        table bases) instead of the scaffold's static const pointer.
+// ORIGINAL: 0x005109B0 ?cursor_next@Console@@QAEXHH@Z 0x005109B0-0x00510A59 FILE BYTE_EXACT
+// LEVER: `(*idx + 1) % 32` reproduces the and/jns/dec/or/inc signed-modulo idiom directly; g_009392c0/g_00939340 as `extern int[]` (indexed table bases) instead of the scaffold's static const pointer.
 // working copy - scaffold materialised by --work
-// name      ?cursor_next@Console@@QAEXHH@Z
 // size      169 bytes
-// spans     0x005109B0-0x00510A59
 // prototype void (__thiscall ?cursor_next@Console@@QAEXHH@Z)(Console* this, int, int)
 // callers   11   call targets   2
 // kind      game

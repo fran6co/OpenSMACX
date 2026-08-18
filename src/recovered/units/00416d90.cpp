@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00416D90 BYTE_EXACT FILE
-// name      ?recompute@BaseWin@@QAEXH@Z
+// ORIGINAL: 0x00416D90 ?recompute@BaseWin@@QAEXH@Z 0x00416D90-0x00416DCA FILE BYTE_EXACT
 // size      58 bytes
-// spans     0x00416D90-0x00416DCA
 // prototype void (__thiscall ?recompute@BaseWin@@QAEXH@Z)(BaseWin* this, int)
 // callers   1   call targets   4
 // kind      game

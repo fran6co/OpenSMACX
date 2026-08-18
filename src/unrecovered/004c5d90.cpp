@@ -1,8 +1,6 @@
-// ORIGINAL: 0x004C5D90 BYTE_EXACT FILE
+// ORIGINAL: 0x004C5D90 ?release_sound@@YAHXZ 0x004C5D90-0x004C5E42 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?release_sound@@YAHXZ
 // size      178 bytes
-// spans     0x004C5D90-0x004C5E42
 // prototype 
 // callers   1   call targets   4
 // kind      game

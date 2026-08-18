@@ -1,13 +1,7 @@
-// ORIGINAL: 0x0063A280 FILE
-// RULED-OUT: __cdecl(int,int,int,int) direct transcription of the Ghidra
-//            decompile (per-item bbox accumulation via sub_6280e0/628150/
-//            6385d0/6282e0/627e20/63f5e0, two parallel min/max passes for
-//            two bbox slots at param_1+8 and param_1+0x20); diverges at
-//            insn #13, no-frame ESP-relative local layout not reproduced
+// ORIGINAL: 0x0063A280 sub_63a280 0x0063A280-0x0063A6F0 FILE
+// RULED-OUT: __cdecl(int,int,int,int) direct transcription of the Ghidra decompile (per-item bbox accumulation via sub_6280e0/628150/ 6385d0/6282e0/627e20/63f5e0, two parallel min/max passes for two bbox slots at param_1+8 and param_1+0x20); diverges at insn #13, no-frame ESP-relative local layout not reproduced
 // working copy - scaffold materialised by --work
-// name      sub_63a280
 // size      1136 bytes
-// spans     0x0063A280-0x0063A6F0
 // prototype 
 // callers   1   call targets   6
 // kind      game

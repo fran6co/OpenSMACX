@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00644F79 EXCLUDED S1
-// name      sub_644f79
+// ORIGINAL: 0x00644F79 sub_644f79 0x00644F79-0x00644F80 EXCLUDED S1
 // size      7 bytes
-// spans     0x00644F79-0x00644F80
 // prototype 
 // callers   2   call targets   0
 // kind      library

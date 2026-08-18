@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006452F9 EXCLUDED S1
-// name      __NLG_Notify1
+// ORIGINAL: 0x006452F9 __NLG_Notify1 0x006452F9-0x00645302 EXCLUDED S1
 // size      9 bytes
-// spans     0x006452F9-0x00645302
 // prototype 
 // callers   1   call targets   0
 // kind      library

@@ -1,11 +1,7 @@
-// ORIGINAL: 0x00605010 FILE
-// RULED-OUT: `flags & 0x400` compiles to a single `test [mem], imm`; original
-//            keeps the mask 0x400 in a register and does `test eax,edx`.
-//            Named local for the flags read didn't change it.
+// ORIGINAL: 0x00605010 ?set_external_window@BasePop@@QAEXPAUGraphicWin@@HHHH@Z 0x00605010-0x006050E7 FILE
+// RULED-OUT: `flags & 0x400` compiles to a single `test [mem], imm`; original keeps the mask 0x400 in a register and does `test eax,edx`. Named local for the flags read didn't change it.
 // working copy - scaffold materialised by --work
-// name      ?set_external_window@BasePop@@QAEXPAUGraphicWin@@HHHH@Z
 // size      215 bytes
-// spans     0x00605010-0x006050E7
 // prototype void (__thiscall ?set_external_window@BasePop@@QAEXPAUGraphicWin@@HHHH@Z)(BasePop* this, GraphicWin*, int, int, int, int)
 // callers   0   call targets   0
 // kind      game

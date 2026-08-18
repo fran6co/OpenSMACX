@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005398C0 BYTE_EXACT FILE
-// name      ?diplo_unlock@@YAXXZ
+// ORIGINAL: 0x005398C0 ?diplo_unlock@@YAXXZ 0x005398C0-0x005398DD FILE BYTE_EXACT
 // size      29 bytes
-// spans     0x005398C0-0x005398DD
 // prototype 
 // callers   10   call targets   1
 // kind      game

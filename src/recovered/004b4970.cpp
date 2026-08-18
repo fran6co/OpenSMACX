@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004B4970 BYTE_EXACT
-// name      ?say_orders@@YAXH@Z
+// ORIGINAL: 0x004B4970 ?say_orders@@YAXH@Z 0x004B4970-0x004B4986 BYTE_EXACT
 // size      22 bytes
-// spans     0x004B4970-0x004B4986
 // prototype void (__cdecl ?say_orders@@YAXH@Z)(int vehID)
 // callers   2   call targets   1
 // kind      game

@@ -50,10 +50,8 @@ uint32_t *GraphicWinFieldA0CDefault = (uint32_t *)0x009B33C0;
 /*
 Purpose: Construct the Win base and Buffer subobject, then install GraphicWin
          tables and initialize its trailing window state.
-ORIGINAL: 0x005D4CF0
-// name      ??0GraphicWin@@QAE@XZ
+// ORIGINAL: 0x005D4CF0 ??0GraphicWin@@QAE@XZ 0x005D4CF0-0x005D4DC4;0x00662B10-0x00662B22
 // size      230 bytes
-// spans     0x005D4CF0-0x005D4DC4;0x00662B10-0x00662B22
 // prototype void (__thiscall ??0GraphicWin@@QAE@XZ)(GraphicWin* this)
 // callers   52   call targets   2
 // kind      game
@@ -123,10 +121,8 @@ typedef uint32_t (OriginalObject::*func_scalar_deleting_destructor)(uint32_t);
 Purpose: Close a GraphicWin by closing its Win base and Buffer subobject,
          resetting its window-specific state, and deleting the trailing
          owned interface when present.
-ORIGINAL: 0x005D4E40
-// name      ?close@GraphicWin@@QAEXXZ
+// ORIGINAL: 0x005D4E40 ?close@GraphicWin@@QAEXXZ 0x005D4E40-0x005D4EE6
 // size      166 bytes
-// spans     0x005D4E40-0x005D4EE6
 // prototype void (__thiscall ?close@GraphicWin@@QAEXXZ)(GraphicWin* this)
 // callers   66   call targets   2
 // kind      game
@@ -188,10 +184,8 @@ uint32_t __fastcall graphic_win_close_redirect(GraphicWin *self, void *) {
 Purpose: Destroy a GraphicWin by installing the original virtual tables,
          clearing the trailing field, and destroying the Buffer subobject
          before the Win base.
-ORIGINAL: 0x005D4DD0
-// name      ??1GraphicWin@@QAE@XZ
+// ORIGINAL: 0x005D4DD0 ??1GraphicWin@@QAE@XZ 0x005D4DD0-0x005D4E37;0x00662B22-0x00662B34
 // size      121 bytes
-// spans     0x005D4DD0-0x005D4E37;0x00662B22-0x00662B34
 // prototype void (__thiscall ??1GraphicWin@@QAE@XZ)(GraphicWin* this)
 // callers   185   call targets   2
 // kind      game
@@ -233,10 +227,8 @@ GraphicWin *__fastcall graphic_win_destructor_redirect(GraphicWin *self, void *)
 
 /*
 Purpose: Fill a rectangle in the window's own buffer.
-ORIGINAL: 0x005D5440
-// name      ?fill@GraphicWin@@QAEHHHHHH@Z
+// ORIGINAL: 0x005D5440 ?fill@GraphicWin@@QAEHHHHHH@Z 0x005D5440-0x005D5467
 // size      39 bytes
-// spans     0x005D5440-0x005D5467
 // prototype int (__thiscall ?fill@GraphicWin@@QAEHHHHHH@Z)(GraphicWin* this, int xLeft, int yTop, int length, int width, int)
 // callers   6   call targets   1
 // kind      game
@@ -288,10 +280,8 @@ const uintptr_t GraphicWinInvalidateRectImport = 0x00669304;
 Purpose: Paint the window's surface in one colour. A window that is marked
          transparent and whose parent agrees copies the parent's pixels in
          instead, then remaps them through the process colour table.
-ORIGINAL: 0x005D5250
-// name      ?fill@GraphicWin@@QAEXH@Z
+// ORIGINAL: 0x005D5250 ?fill@GraphicWin@@QAEXH@Z 0x005D5250-0x005D5346
 // size      246 bytes
-// spans     0x005D5250-0x005D5346
 // prototype void (__thiscall ?fill@GraphicWin@@QAEXH@Z)(GraphicWin* this, int)
 // callers   58   call targets   3
 // kind      game
@@ -363,10 +353,8 @@ void __fastcall graphic_win_fill_color_redirect(GraphicWin *self, void *,
 Purpose: Repaint the window and invalidate the screen area it occupies. A
          window already inside a redraw is skipped, so a paint hook that
          redraws again cannot recurse.
-ORIGINAL: 0x005D5A70
-// name      ?redraw@GraphicWin@@QAEXXZ
+// ORIGINAL: 0x005D5A70 ?redraw@GraphicWin@@QAEXXZ 0x005D5A70-0x005D5B64
 // size      244 bytes
-// spans     0x005D5A70-0x005D5B64
 // prototype void (__thiscall ?redraw@GraphicWin@@QAEXXZ)(GraphicWin* this)
 // callers   42   call targets   3
 // kind      game
@@ -459,8 +447,7 @@ Purpose: Initialise a GraphicWin. Reset the window, republish the eleven
          allocate the owned Buffer the window parks at 0xA08, initialise the
          Win base, then size and initialise the window's own drawing surface
          and sync it to the active palette.
-ORIGINAL: 0x005D4EF0
-// name      ?init@GraphicWin@@QAEHHHHHPADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z
+// ORIGINAL: 0x005D4EF0 ?init@GraphicWin@@QAEHHHHHPADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z 0x005D4EF0-0x005D5096;0x00662B34-0x00662B49
 // CORRECTED from ?init@GraphicWin@@QAEXHHHHPADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z
 //   BaseButton::init calls it at 0x006072A2 and immediately tests the
 //   result (`test eax, eax` / `jne` at 0x006072A7); all three exits set
@@ -469,7 +456,6 @@ ORIGINAL: 0x005D4EF0
 //   0x005D5081. The independent IDA prototype already reads int, so only
 //   the symbol string is stale
 // size      443 bytes
-// spans     0x005D4EF0-0x005D5096;0x00662B34-0x00662B49
 // prototype int (__thiscall ?init@GraphicWin@@QAEHHHHHPADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z)(GraphicWin* this, int, int, int, int, int8*, int, Win*, Menu*, BorderSizing*)
 // callers   47   call targets   9
 // kind      game
@@ -623,10 +609,8 @@ int __fastcall graphic_win_init_redirect(GraphicWin *self, void *,
 }
 
 /*
-ORIGINAL: 0x005D6310 BYTE_EXACT
-// name      ?on_mouse_move@GraphicWin@@QAEXHHIH@Z
+// ORIGINAL: 0x005D6310 ?on_mouse_move@GraphicWin@@QAEXHHIH@Z 0x005D6310-0x005D632C BYTE_EXACT
 // size      28 bytes
-// spans     0x005D6310-0x005D632C
 // prototype void (__thiscall ?on_mouse_move@GraphicWin@@QAEXHHIH@Z)(GraphicWin* this, int, int, unsigned int, int)
 // callers   0   call targets   1
 // kind      game

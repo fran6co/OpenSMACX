@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004D26A0 FILE
-// name      ?give_veh@Console@@QAEXH@Z
+// ORIGINAL: 0x004D26A0 ?give_veh@Console@@QAEXH@Z 0x004D26A0-0x004D2ABC FILE
 // size      1052 bytes
-// spans     0x004D26A0-0x004D2ABC
 // prototype void (__thiscall ?give_veh@Console@@QAEXH@Z)(Console* this, int vehID)
 // callers   2   call targets   9
 // kind      game

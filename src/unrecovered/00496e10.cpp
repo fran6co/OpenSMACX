@@ -1,18 +1,7 @@
-// ORIGINAL: 0x00496E10 FILE
-// RULED-OUT: word-index `self[N]` addressing (matching Ghidra's own
-//            `param_1[N]` scheme) instead of byte-offset field structs;
-//            GetAsyncKeyState called directly (relocation) instead of
-//            through the stored function pointer at 0x00669330 (indirect
-//            call). Jump table (11-entry, first table) cross-checked
-//            against the raw table in the brief, not Ghidra's case labels,
-//            which mislabelled the four generic-landmark-style cases as
-//            0x1a-0x1d elsewhere in this batch; here they showed as
-//            plain, correctly-valued `case 2/4/5/7` bodies once matched
-//            against the real jump targets.
+// ORIGINAL: 0x00496E10 ?on_left_click@ReportWin@@QAEXHH@Z 0x00496E10-0x00497A30 FILE
+// RULED-OUT: word-index `self[N]` addressing (matching Ghidra's own `param_1[N]` scheme) instead of byte-offset field structs; GetAsyncKeyState called directly (relocation) instead of through the stored function pointer at 0x00669330 (indirect call). Jump table (11-entry, first table) cross-checked against the raw table in the brief, not Ghidra's case labels, which mislabelled the four generic-landmark-style cases as 0x1a-0x1d elsewhere in this batch; here they showed as plain, correctly-valued `case 2/4/5/7` bodies once matched against the real jump targets.
 // working copy - scaffold materialised by --work
-// name      ?on_left_click@ReportWin@@QAEXHH@Z
 // size      3104 bytes
-// spans     0x00496E10-0x00497A30
 // prototype void (__thiscall ?on_left_click@ReportWin@@QAEXHH@Z)(ReportWin* this, int xCoord, int yCoord)
 // callers   0   call targets   27
 // kind      game

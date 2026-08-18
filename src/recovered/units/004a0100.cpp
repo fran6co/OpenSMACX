@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004A0100 FILE
-// name      ?exp_anim@ReportWin@@QAEXXZ
+// ORIGINAL: 0x004A0100 ?exp_anim@ReportWin@@QAEXXZ 0x004A0100-0x004A0248 FILE
 // size      328 bytes
-// spans     0x004A0100-0x004A0248
 // prototype void (__thiscall ?exp_anim@ReportWin@@QAEXXZ)(ReportWin* this)
 // callers   1   call targets   6
 // kind      game

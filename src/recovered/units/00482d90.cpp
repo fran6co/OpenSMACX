@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00482D90 FILE
-// name      ?prepare_game@NetWin@@QAEXXZ
+// ORIGINAL: 0x00482D90 ?prepare_game@NetWin@@QAEXXZ 0x00482D90-0x0048318E;0x006574FE-0x00657510 FILE
 // size      1040 bytes
-// spans     0x00482D90-0x0048318E;0x006574FE-0x00657510
 // prototype void (__thiscall ?prepare_game@NetWin@@QAEXXZ)(NetWin* this)
 // callers   1   call targets   12
 // kind      game

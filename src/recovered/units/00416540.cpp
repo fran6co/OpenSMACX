@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00416540 BYTE_EXACT FILE
-// name      ?bubble_me_elmo2@BaseWin@@QAEXPADHH@Z
+// ORIGINAL: 0x00416540 ?bubble_me_elmo2@BaseWin@@QAEXPADHH@Z 0x00416540-0x00416580 FILE BYTE_EXACT
 // size      64 bytes
-// spans     0x00416540-0x00416580
 // prototype void (__thiscall ?bubble_me_elmo2@BaseWin@@QAEXPADHH@Z)(BaseWin* this, int8*, int, int)
 // callers   0   call targets   2
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005165B0 FILE
-// name      ?zoom_to_upkeep_base@Console@@QAEXXZ
+// ORIGINAL: 0x005165B0 ?zoom_to_upkeep_base@Console@@QAEXXZ 0x005165B0-0x005166C3 FILE
 // size      275 bytes
-// spans     0x005165B0-0x005166C3
 // prototype void (__thiscall ?zoom_to_upkeep_base@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   2
 // kind      game

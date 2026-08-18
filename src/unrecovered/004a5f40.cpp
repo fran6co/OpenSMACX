@@ -1,13 +1,7 @@
-// ORIGINAL: 0x004A5F40 FILE
-// RULED-OUT: `check(a1, a2, &a1, &a2)` for the out-params (wrong operand
-//            order); the push order decodes to check(a1,a2,&a2,&a1).
-//            Explicit __thiscall function-pointer typedef for the vtable
-//            slot at +0xE4 (C4234) - a member-function-pointer/union shim
-//            compiles. MISMATCH #16 'inc' vs 'cmp' remains open.
+// ORIGINAL: 0x004A5F40 ?on_iface_left_click@ReportIf@@QAEXHH@Z 0x004A5F40-0x004A5FD6 FILE
+// RULED-OUT: `check(a1, a2, &a1, &a2)` for the out-params (wrong operand order); the push order decodes to check(a1,a2,&a2,&a1). Explicit __thiscall function-pointer typedef for the vtable slot at +0xE4 (C4234) - a member-function-pointer/union shim compiles. MISMATCH #16 'inc' vs 'cmp' remains open.
 // working copy - scaffold materialised by --work
-// name      ?on_iface_left_click@ReportIf@@QAEXHH@Z
 // size      150 bytes
-// spans     0x004A5F40-0x004A5FD6
 // prototype void (__thiscall ?on_iface_left_click@ReportIf@@QAEXHH@Z)(ReportIf* this, int xCoord, int yCoord)
 // callers   0   call targets   2
 // kind      game

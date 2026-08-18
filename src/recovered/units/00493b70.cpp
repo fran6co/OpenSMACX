@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00493B70 BYTE_EXACT FILE
-// name      ?edbc_fac@ProdPicker@@QAEHH@Z
+// ORIGINAL: 0x00493B70 ?edbc_fac@ProdPicker@@QAEHH@Z 0x00493B70-0x00493BB3 FILE BYTE_EXACT
 // size      67 bytes
-// spans     0x00493B70-0x00493BB3
 // prototype int (__thiscall ?edbc_fac@ProdPicker@@QAEHH@Z)(ProdPicker* this, int)
 // callers   2   call targets   0
 // kind      game

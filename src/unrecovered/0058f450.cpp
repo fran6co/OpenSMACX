@@ -1,8 +1,6 @@
-// ORIGINAL: 0x0058F450 BYTE_EXACT FILE
+// ORIGINAL: 0x0058F450 ?game_reload@@YAHHH@Z 0x0058F450-0x0058F4E7 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?game_reload@@YAHHH@Z
 // size      151 bytes
-// spans     0x0058F450-0x0058F4E7
 // prototype int (__cdecl ?game_reload@@YAHHH@Z)(int, BOOL tglAllRules)
 // callers   2   call targets   11
 // kind      game

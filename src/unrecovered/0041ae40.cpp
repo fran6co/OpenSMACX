@@ -1,11 +1,7 @@
-// ORIGINAL: 0x0041AE40 BYTE_EXACT FILE
-// LEVER: guard clause on the NEGATED condition (`if (!is_visible())`) with
-//        the big not-visible body inside and the zoom call after, not
-//        `if (is_visible()) { zoom; return; } else { body }`
+// ORIGINAL: 0x0041AE40 ?soft_zoom@BaseWin@@QAEXH@Z 0x0041AE40-0x0041AF12 FILE BYTE_EXACT
+// LEVER: guard clause on the NEGATED condition (`if (!is_visible())`) with the big not-visible body inside and the zoom call after, not `if (is_visible()) { zoom; return; } else { body }`
 // working copy - scaffold materialised by --work
-// name      ?soft_zoom@BaseWin@@QAEXH@Z
 // size      210 bytes
-// spans     0x0041AE40-0x0041AF12
 // prototype void (__thiscall ?soft_zoom@BaseWin@@QAEXH@Z)(BaseWin* this, int)
 // callers   6   call targets   6
 // kind      game

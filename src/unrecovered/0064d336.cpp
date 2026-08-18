@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064D336 EXCLUDED S1
-// name      __hw_cw
+// ORIGINAL: 0x0064D336 __hw_cw 0x0064D336-0x0064D3BF EXCLUDED S1
 // size      137 bytes
-// spans     0x0064D336-0x0064D3BF
 // prototype 
 // callers   1   call targets   0
 // kind      library

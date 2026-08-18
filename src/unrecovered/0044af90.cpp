@@ -1,11 +1,7 @@
-// ORIGINAL: 0x0044AF90 BYTE_EXACT FILE
-// LEVER: write-branch-first if/else polarity (matches the original's `je`
-//        target) plus a signed (int) pointer-vs-address comparison instead
-//        of unsigned, in the zero-fill loop's exit test
+// ORIGINAL: 0x0044AF90 sub_44af90 0x0044AF90-0x0044AFF2 FILE BYTE_EXACT
+// LEVER: write-branch-first if/else polarity (matches the original's `je` target) plus a signed (int) pointer-vs-address comparison instead of unsigned, in the zero-fill loop's exit test
 // working copy - scaffold materialised by --work
-// name      sub_44af90
 // size      98 bytes
-// spans     0x0044AF90-0x0044AFF2
 // prototype 
 // callers   0   call targets   2
 // kind      game

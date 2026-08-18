@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00469B40 FILE
-// name      ?gen_bases_only@MapWin@@QAEXXZ
+// ORIGINAL: 0x00469B40 ?gen_bases_only@MapWin@@QAEXXZ 0x00469B40-0x00469C9F FILE
 // size      351 bytes
-// spans     0x00469B40-0x00469C9F
 // prototype void (__thiscall ?gen_bases_only@MapWin@@QAEXXZ)(MapWin* this)
 // callers   1   call targets   2
 // kind      game

@@ -1,12 +1,7 @@
-// ORIGINAL: 0x00500560 FILE
-// RULED-OUT: structural transcription (two proximity scan loops with early-exit
-//            gotos, extern lever on the three lea-taken-as-pointer table bases
-//            0097d053/00946d34/00946d54) compiles and matches to instr #6
-//            (prologue: original zeroes edi with `xor`, rebuilt uses `mov`).
+// ORIGINAL: 0x00500560 ?shoot@@YAHHHHH@Z 0x00500560-0x00500B51 FILE
+// RULED-OUT: structural transcription (two proximity scan loops with early-exit gotos, extern lever on the three lea-taken-as-pointer table bases 0097d053/00946d34/00946d54) compiles and matches to instr #6 (prologue: original zeroes edi with `xor`, rebuilt uses `mov`).
 // working copy - scaffold materialised by --work
-// name      ?shoot@@YAHHHHH@Z
 // size      1521 bytes
-// spans     0x00500560-0x00500B51
 // prototype int (__cdecl ?shoot@@YAHHHHH@Z)(int atk_factionID, int def_factionID, int xDest, int yDest)
 // callers   1   call targets   8
 // kind      game

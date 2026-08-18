@@ -1,15 +1,7 @@
-// ORIGINAL: 0x005CB6C0 FILE
-// RULED-OUT: the generated VCall shim (thiscall dispatch) - every indirect
-//            call here pushes the receiver explicitly before `call [reg+off]`
-//            (confirmed on all 16 call sites), so COM-style raw vtable-slot
-//            casts were used instead; case1/case2/case4 bodies transcribed
-//            from the disassembly (Ghidra under-reports some arg counts,
-//            e.g. slot 0x14/0x58/0x80 calls, corrected from raw asm).
-//            Diverges at instruction #0 (prologue register allocation).
+// ORIGINAL: 0x005CB6C0 sub_5cb6c0 0x005CB6C0-0x005CBAD1 FILE
+// RULED-OUT: the generated VCall shim (thiscall dispatch) - every indirect call here pushes the receiver explicitly before `call [reg+off]` (confirmed on all 16 call sites), so COM-style raw vtable-slot casts were used instead; case1/case2/case4 bodies transcribed from the disassembly (Ghidra under-reports some arg counts, e.g. slot 0x14/0x58/0x80 calls, corrected from raw asm). Diverges at instruction #0 (prologue register allocation).
 // working copy - scaffold materialised by --work
-// name      sub_5cb6c0
 // size      1041 bytes
-// spans     0x005CB6C0-0x005CBAD1
 // prototype 
 // callers   2   call targets   2
 // kind      game

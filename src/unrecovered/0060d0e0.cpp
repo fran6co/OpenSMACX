@@ -1,13 +1,7 @@
-// ORIGINAL: 0x0060D0E0 FILE
-// RULED-OUT: SEH prologue absent (diverges at instr #1) - same cause as
-//            0x0048BCD0: GraphicWin/Dialog only have constructors
-//            declared on the scaffold, no destructors, so VC6 has nothing
-//            to protect. Field writes and the two placement-`new`
-//            sub-object constructions otherwise match the disassembly.
+// ORIGINAL: 0x0060D0E0 ??0RadioButton@@QAE@H@Z 0x0060D0E0-0x0060D1A2;0x00662F20-0x00662F44 FILE
+// RULED-OUT: SEH prologue absent (diverges at instr #1) - same cause as 0x0048BCD0: GraphicWin/Dialog only have constructors declared on the scaffold, no destructors, so VC6 has nothing to protect. Field writes and the two placement-`new` sub-object constructions otherwise match the disassembly.
 // working copy - scaffold materialised by --work
-// name      ??0RadioButton@@QAE@H@Z
 // size      230 bytes
-// spans     0x0060D0E0-0x0060D1A2;0x00662F20-0x00662F44
 // prototype void (__thiscall ??0RadioButton@@QAE@H@Z)(RadioButton* this, int)
 // callers   1   call targets   2
 // kind      game

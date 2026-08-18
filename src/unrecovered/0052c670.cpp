@@ -1,18 +1,12 @@
-// ORIGINAL: 0x0052C670 FILE
+// ORIGINAL: 0x0052C670 ?can_call_council@@YAHHH@Z 0x0052C670-0x0052C87D FILE
+// RULED-OUT: MISMATCH #41 'mov' vs 'and', not chased further. The loop's triple early-exit (0x93f660==0 / two bit-mask misses) is a `goto blocked;` out of the for-loop rather than a `continue`, matching that all three targets jump clean out of the scan (not to its per-iteration increment).
 // working copy - scaffold materialised by --work
-// name      ?can_call_council@@YAHHH@Z
 // size      525 bytes
-// spans     0x0052C670-0x0052C87D
 // prototype 
 // callers   3   call targets   1
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x0047A890
-// RULED-OUT: MISMATCH #41 'mov' vs 'and', not chased further. The loop's
-//            triple early-exit (0x93f660==0 / two bit-mask misses) is a
-//            `goto blocked;` out of the for-loop rather than a `continue`,
-//            matching that all three targets jump clean out of the scan
-//            (not to its per-iteration increment).
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?can_call_council@@YAHHH@Z  at 0x0052C670  (525 bytes)

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005ADBF0 FILE
-// name      ?show_replay@@YAXXZ
+// ORIGINAL: 0x005ADBF0 ?show_replay@@YAXXZ 0x005ADBF0-0x005ADE7B;0x004210D0-0x004210E7;0x00662240-0x00662355 FILE
 // size      951 bytes
-// spans     0x005ADBF0-0x005ADE7B;0x004210D0-0x004210E7;0x00662240-0x00662355
 // prototype 
 // callers   4   call targets   23
 // kind      game

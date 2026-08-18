@@ -1,15 +1,7 @@
-// ORIGINAL: 0x004AA970 FILE
-// RULED-OUT: raw offset casts on `this` (opaque ReportIf class, no
-//            fields declared) mirroring the two near-identical
-//            D3C-mode/else-mode text panels and the button-creation
-//            loop; matches 10 instructions before diverging. The
-//            per-faction Players-array index scaling (idx*0x167 for
-//            byte-offset 0x304, matching src/faction.h's
-//            adj_name_faction) reused from 0x0053D360's introduce().
+// ORIGINAL: 0x004AA970 ?draw_sat@ReportIf@@QAEXXZ 0x004AA970-0x004AB54B FILE
+// RULED-OUT: raw offset casts on `this` (opaque ReportIf class, no fields declared) mirroring the two near-identical D3C-mode/else-mode text panels and the button-creation loop; matches 10 instructions before diverging. The per-faction Players-array index scaling (idx*0x167 for byte-offset 0x304, matching src/faction.h's adj_name_faction) reused from 0x0053D360's introduce().
 // working copy - scaffold materialised by --work
-// name      ?draw_sat@ReportIf@@QAEXXZ
 // size      3035 bytes
-// spans     0x004AA970-0x004AB54B
 // prototype void (__thiscall ?draw_sat@ReportIf@@QAEXXZ)(ReportIf* this)
 // callers   4   call targets   23
 // kind      game

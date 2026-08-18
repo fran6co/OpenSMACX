@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004CE210 FILE
-// name      ?action_tectonic@@YAXHHH@Z
+// ORIGINAL: 0x004CE210 ?action_tectonic@@YAXHHH@Z 0x004CE210-0x004CE6A1 FILE
 // size      1169 bytes
-// spans     0x004CE210-0x004CE6A1
 // prototype void (__cdecl ?action_tectonic@@YAXHHH@Z)(int vehID, int xCoord, int yCoord)
 // callers   3   call targets   13
 // kind      game

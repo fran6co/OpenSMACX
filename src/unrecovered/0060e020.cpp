@@ -1,29 +1,12 @@
-// ORIGINAL: 0x0060E020
-// name      ?on_key_down@RadioButton@@QAEHH@Z
+// ORIGINAL: 0x0060E020 ?on_key_down@RadioButton@@QAEHH@Z 0x0060E020-0x0060E183
+// RULED-OUT: `this` arrives already adjusted to the GraphicWin virtual-base subobject (the function computes `this-0x18` for RadioButton's own start, matching src/radiobutton.h's documented vbtable {0,0x18,0xA30}), so field access goes through an adjustor offset read out of RadioButton's own vtable slots 1 and 2 (`*(vt+4)`/`*(vt+8)`) rather than a fixed member offset - modelled with raw `char*`/`int*` arithmetic, not a real class layout. The `[0x25,0x68]` key-code switch (VK_LEFT through VK_NUMPAD8) has only 4 distinct bodies out of 0x44 case values; the jump/case-index TABLE BYTES themselves are not in the brief, so the case labels used here (1, 3, 0x50, 0x52) are a guess at which key maps to which body, not a fact - the bodies themselves (decrement-clamp-to-0, increment-clamp-to- count-1, add-a-page-then-clamp-down, subtract-a-page-then- clamp-up) are transcribed directly from the disassembly. 0.80 mnemonic similarity, first divergence at #2.
 // size      355 bytes
-// spans     0x0060E020-0x0060E183
 // prototype int (__thiscall ?on_key_down@RadioButton@@QAEHH@Z)(RadioButton* this, int)
 // callers   1   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D5890 0x0060D750
 // indirect  0x0060E145
-// RULED-OUT: `this` arrives already adjusted to the GraphicWin virtual-base
-//            subobject (the function computes `this-0x18` for RadioButton's
-//            own start, matching src/radiobutton.h's documented vbtable
-//            {0,0x18,0xA30}), so field access goes through an adjustor
-//            offset read out of RadioButton's own vtable slots 1 and 2
-//            (`*(vt+4)`/`*(vt+8)`) rather than a fixed member offset -
-//            modelled with raw `char*`/`int*` arithmetic, not a real class
-//            layout. The `[0x25,0x68]` key-code switch (VK_LEFT through
-//            VK_NUMPAD8) has only 4 distinct bodies out of 0x44 case
-//            values; the jump/case-index TABLE BYTES themselves are not in
-//            the brief, so the case labels used here (1, 3, 0x50, 0x52) are
-//            a guess at which key maps to which body, not a fact - the
-//            bodies themselves (decrement-clamp-to-0, increment-clamp-to-
-//            count-1, add-a-page-then-clamp-down, subtract-a-page-then-
-//            clamp-up) are transcribed directly from the disassembly.
-//            0.80 mnemonic similarity, first divergence at #2.
 
 static int *const g_009b7ab8 = (int *)0x009B7AB8;
 

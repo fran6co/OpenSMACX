@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0059D250 FILE
-// name      ?exec@PopMenu@@QAEXHHP6AHXZ@Z
+// ORIGINAL: 0x0059D250 ?exec@PopMenu@@QAEXHHP6AHXZ@Z 0x0059D250-0x0059D392 FILE
 // size      322 bytes
-// spans     0x0059D250-0x0059D392
 // prototype void (__thiscall ?exec@PopMenu@@QAEXHHP6AHXZ@Z)(PopMenu* this, int, int, int (__cdecl *)())
 // callers   16   call targets   8
 // kind      game

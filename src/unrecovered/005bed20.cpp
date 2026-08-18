@@ -1,24 +1,7 @@
-// ORIGINAL: 0x005BED20 FILE
-// RULED-OUT: real signature per the mangled name (int __cdecl(int,int,int)).
-//   `rec = *(base + idx*0x2c + 0xc)` gates a `switch` on `rec>>0x18` in
-//   [0,0x13]; cases 0/8 play a sound + NetMsg::pop + veh_init a unit and
-//   flag it; case 10 bumps a per-faction bonus table and calls
-//   InfoWin::on_redraw; case 0x13 walks every unit calling bitmask/strcmp/
-//   spot_loc, then draw_map + GraphicWin::redraw. FX/NetMsg/InfoWin/
-//   GraphicWin receivers are fixed-address global object instances (plain
-//   loads, e.g. `mov ecx,0x749cf8; call FX::play`), and the CharUpperA
-//   call is through a fixed IAT slot (g_0066931c) cast to a function
-//   pointer, same idiom as the change_color-style calls elsewhere in this
-//   tree. Compiles, all call sites/argument orders verified against the
-//   disassembly by hand. Diverges at instruction #2: original keeps a
-//   lean `push ebp; mov ebp,esp` frame with no up-front `sub esp`,
-//   rebuilt's larger set of top-level locals (idx/base/rec/caseVal) makes
-//   the compiler reserve stack space immediately - frame layout, not
-//   source form; not chased further given the function's size.
+// ORIGINAL: 0x005BED20 ?do_unity_crash@@YAHHHH@Z 0x005BED20-0x005BEFDF FILE
+// RULED-OUT: real signature per the mangled name (int __cdecl(int,int,int)). `rec = *(base + idx*0x2c + 0xc)` gates a `switch` on `rec>>0x18` in [0,0x13]; cases 0/8 play a sound + NetMsg::pop + veh_init a unit and flag it; case 10 bumps a per-faction bonus table and calls InfoWin::on_redraw; case 0x13 walks every unit calling bitmask/strcmp/ spot_loc, then draw_map + GraphicWin::redraw. FX/NetMsg/InfoWin/ GraphicWin receivers are fixed-address global object instances (plain loads, e.g. `mov ecx,0x749cf8; call FX::play`), and the CharUpperA call is through a fixed IAT slot (g_0066931c) cast to a function pointer, same idiom as the change_color-style calls elsewhere in this tree. Compiles, all call sites/argument orders verified against the disassembly by hand. Diverges at instruction #2: original keeps a lean `push ebp; mov ebp,esp` frame with no up-front `sub esp`, rebuilt's larger set of top-level locals (idx/base/rec/caseVal) makes the compiler reserve stack space immediately - frame layout, not source form; not chased further given the function's size.
 // working copy - scaffold materialised by --work
-// name      ?do_unity_crash@@YAHHHH@Z
 // size      703 bytes
-// spans     0x005BED20-0x005BEFDF
 // prototype int (__cdecl ?do_unity_crash@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)
 // callers   1   call targets   12
 // kind      game

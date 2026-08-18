@@ -1,11 +1,7 @@
-// ORIGINAL: 0x00636530 FILE
-// RULED-OUT: MISMATCH #1 push/mov - no SEH __try/__finally frame emitted;
-//            Video/Buffer/Palette have no dtor chain in the scaffold so
-//            the compiler treats it as trivial-unwind and skips the frame
+// ORIGINAL: 0x00636530 ??1Video@@QAE@XZ 0x00636530-0x006365A6;0x006638C9-0x00663902 FILE
+// RULED-OUT: MISMATCH #1 push/mov - no SEH __try/__finally frame emitted; Video/Buffer/Palette have no dtor chain in the scaffold so the compiler treats it as trivial-unwind and skips the frame
 // working copy - scaffold materialised by --work
-// name      ??1Video@@QAE@XZ
 // size      175 bytes
-// spans     0x00636530-0x006365A6;0x006638C9-0x00663902
 // prototype void (__thiscall ??1Video@@QAE@XZ)(Video* this)
 // callers   0   call targets   5
 // kind      game

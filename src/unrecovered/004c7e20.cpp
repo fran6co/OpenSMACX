@@ -1,10 +1,7 @@
-// ORIGINAL: 0x004C7E20 BYTE_EXACT FILE
-// LEVER: own vtable shim (not the scaffolded VCall) so slots 5/23 return
-//        int; offset 0x40 field reached by pointer arithmetic, masked &=
+// ORIGINAL: 0x004C7E20 ?unload@Midi@@QAEHXZ 0x004C7E20-0x004C7E79 FILE BYTE_EXACT
+// LEVER: own vtable shim (not the scaffolded VCall) so slots 5/23 return int; offset 0x40 field reached by pointer arithmetic, masked &=
 // working copy - scaffold materialised by --work
-// name      ?unload@Midi@@QAEHXZ
 // size      89 bytes
-// spans     0x004C7E20-0x004C7E79
 // prototype int (__thiscall ?unload@Midi@@QAEHXZ)(Midi* this)
 // callers   0   call targets   0
 // kind      game

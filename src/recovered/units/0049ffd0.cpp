@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0049FFD0 FILE
-// name      ?start_attack@ReportWin@@QAEXHHHH@Z
+// ORIGINAL: 0x0049FFD0 ?start_attack@ReportWin@@QAEXHHHH@Z 0x0049FFD0-0x004A00F1 FILE
 // size      289 bytes
-// spans     0x0049FFD0-0x004A00F1
 // prototype void (__thiscall ?start_attack@ReportWin@@QAEXHHHH@Z)(ReportWin* this, int, int, int, int)
 // callers   1   call targets   6
 // kind      game

@@ -1,16 +1,7 @@
-// ORIGINAL: 0x006276A0 FILE
-// RULED-OUT: no ghidra decompile was available for this address; the
-//            parameter mapping (esp+N -> a1..a9) was hand-derived from
-//            the callee-cleanup arithmetic of each thiscall in between
-//            (start/set_loc/write_check each clean their own stack args,
-//            so esp returns to its post-prologue value between calls).
-//            a5's high bits (0x8000, 0x300) gate the two tails via `test
-//            bh, N` on the byte-register view of a5. Landed at 0.90
-//            mnemonic similarity.
+// ORIGINAL: 0x006276A0 ?pops@@YAHPADPADHPADHPAUSprite@@HHP6AHXZ@Z 0x006276A0-0x006277F9 FILE
+// RULED-OUT: no ghidra decompile was available for this address; the parameter mapping (esp+N -> a1..a9) was hand-derived from the callee-cleanup arithmetic of each thiscall in between (start/set_loc/write_check each clean their own stack args, so esp returns to its post-prologue value between calls). a5's high bits (0x8000, 0x300) gate the two tails via `test bh, N` on the byte-register view of a5. Landed at 0.90 mnemonic similarity.
 // working copy - scaffold materialised by --work
-// name      ?pops@@YAHPADPADHPADHPAUSprite@@HHP6AHXZ@Z
 // size      345 bytes
-// spans     0x006276A0-0x006277F9
 // prototype
 // callers   ?   call targets   9
 // kind      game

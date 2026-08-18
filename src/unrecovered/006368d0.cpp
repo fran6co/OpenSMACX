@@ -1,8 +1,6 @@
-// ORIGINAL: 0x006368D0 FILE
+// ORIGINAL: 0x006368D0 Video_unk4 0x006368D0-0x00636954 FILE
 // working copy - scaffold materialised by --work
-// name      Video_unk4
 // size      132 bytes
-// spans     0x006368D0-0x00636954
 // prototype 
 // callers   0   call targets   1
 // kind      game

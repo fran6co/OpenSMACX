@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005EC740 BYTE_EXACT FILE
-// name      ?set_cursor@Win@@QAEHPAVSprite@@HH@Z
+// ORIGINAL: 0x005EC740 ?set_cursor@Win@@QAEHPAVSprite@@HH@Z 0x005EC740-0x005EC773 FILE BYTE_EXACT
 // size      51 bytes
-// spans     0x005EC740-0x005EC773
 // prototype int (__thiscall ?set_cursor@Win@@QAEHPAVSprite@@HH@Z)(Win* this, Sprite*, int, int)
 // callers   6   call targets   1
 // kind      game

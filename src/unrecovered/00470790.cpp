@@ -1,15 +1,11 @@
-// ORIGINAL: 0x00470790 FILE
-// name      ?get_point_light@MapWin@@QAEHHHH@Z
+// ORIGINAL: 0x00470790 ?get_point_light@MapWin@@QAEHHHH@Z 0x00470790-0x00470917 FILE
+// RULED-OUT: none confirmed byte-exact; MISMATCH #4 'mov' vs 'push' - the do/while neighbour-sum loop's register pressure does not reproduce the original's ebp-frame local layout.
 // size      391 bytes
-// spans     0x00470790-0x00470917
 // prototype int (__thiscall ?get_point_light@MapWin@@QAEHHHH@Z)(MapWin* this, int, int, int)
 // callers   1   call targets   1
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00470550
-// RULED-OUT: none confirmed byte-exact; MISMATCH #4 'mov' vs 'push' - the
-//            do/while neighbour-sum loop's register pressure does not
-//            reproduce the original's ebp-frame local layout.
 typedef int int32_t;
 typedef unsigned int uint32_t;
 typedef short int16_t;

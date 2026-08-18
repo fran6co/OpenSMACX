@@ -1,12 +1,7 @@
-// ORIGINAL: 0x0046AD60 FILE
-// RULED-OUT: the plain `int*const` globals g_009392c0/g_00939340 for the
-//            index-scaled table reads (address does work via `[eax*4+..]`)
-//            - own `extern int[]` names keep the indexed addressing mode.
-//            MISMATCH #1 'push' vs 'mov' remains open.
+// ORIGINAL: 0x0046AD60 ?draw_cursor@MapWin@@QAEXXZ 0x0046AD60-0x0046ADF1 FILE
+// RULED-OUT: the plain `int*const` globals g_009392c0/g_00939340 for the index-scaled table reads (address does work via `[eax*4+..]`) - own `extern int[]` names keep the indexed addressing mode. MISMATCH #1 'push' vs 'mov' remains open.
 // working copy - scaffold materialised by --work
-// name      ?draw_cursor@MapWin@@QAEXXZ
 // size      145 bytes
-// spans     0x0046AD60-0x0046ADF1
 // prototype void (__thiscall ?draw_cursor@MapWin@@QAEXXZ)(MapWin* this)
 // callers   10   call targets   1
 // kind      game

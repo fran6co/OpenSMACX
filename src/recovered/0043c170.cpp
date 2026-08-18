@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0043C170 BYTE_EXACT
-// name      ?timer_function@DesignWin@@QAAXH@Z
+// ORIGINAL: 0x0043C170 ?timer_function@DesignWin@@QAAXH@Z 0x0043C170-0x0043C19B BYTE_EXACT
 // size      43 bytes
-// spans     0x0043C170-0x0043C19B
 // prototype 
 // callers   0   call targets   2
 // kind      game

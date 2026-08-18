@@ -1,13 +1,7 @@
-// ORIGINAL: 0x005DD920 BYTE_EXACT FILE
-// LEVER: #pragma function(strlen) stops the intrinsic `repne scasb` inlining;
-//        write_cent_l's length arg is duplicated per branch (if/else each
-//        with its own call) rather than computed into a shared `len` local
-//        first - the shared-local form left a spurious "sub" where the
-//        original had "mov,mov,mov" building each branch's own push list.
+// ORIGINAL: 0x005DD920 ?wrap_cent@Buffer@@QAEHPADHHH@Z 0x005DD920-0x005DD9F2 FILE BYTE_EXACT
+// LEVER: #pragma function(strlen) stops the intrinsic `repne scasb` inlining; write_cent_l's length arg is duplicated per branch (if/else each with its own call) rather than computed into a shared `len` local first - the shared-local form left a spurious "sub" where the original had "mov,mov,mov" building each branch's own push list.
 // working copy - scaffold materialised by --work
-// name      ?wrap_cent@Buffer@@QAEHPADHHH@Z
 // size      210 bytes
-// spans     0x005DD920-0x005DD9F2
 // prototype int (__thiscall ?wrap_cent@Buffer@@QAEHPADHHH@Z)(Buffer* this, int8*, int, int, int)
 // callers   13   call targets   3
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00446AF0 BYTE_EXACT FILE
-// name      ?set_pitch@FX@@QAEXHH@Z
+// ORIGINAL: 0x00446AF0 ?set_pitch@FX@@QAEXHH@Z 0x00446AF0-0x00446B10 FILE BYTE_EXACT
 // size      32 bytes
-// spans     0x00446AF0-0x00446B10
 // prototype void (__thiscall ?set_pitch@FX@@QAEXHH@Z)(FX* this, int, int)
 // callers   0   call targets   0
 // kind      game

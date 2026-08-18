@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064A1DD EXCLUDED S1
-// name      __read_lk
+// ORIGINAL: 0x0064A1DD __read_lk 0x0064A1DD-0x0064A3B6 EXCLUDED S1
 // size      473 bytes
-// spans     0x0064A1DD-0x0064A3B6
 // prototype int (__cdecl __read_lk)(int, LPVOID lpBuffer, DWORD nNumberOfBytesToRead)
 // callers   2   call targets   4
 // kind      library

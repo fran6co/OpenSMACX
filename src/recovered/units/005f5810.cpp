@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005F5810 FILE
-// name      ?on_nc_paint@Win@@QAEXPAURECT@@H@Z
+// ORIGINAL: 0x005F5810 ?on_nc_paint@Win@@QAEXPAURECT@@H@Z 0x005F5810-0x005F5ACA FILE
 // size      698 bytes
-// spans     0x005F5810-0x005F5ACA
 // prototype void (__thiscall ?on_nc_paint@Win@@QAEXPAURECT@@H@Z)(Win* this, RECT* rect, int)
 // callers   0   call targets   4
 // kind      game

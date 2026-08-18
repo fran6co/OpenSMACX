@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00523B50 FILE
-// name      ?ascent@@YAXXZ
+// ORIGINAL: 0x00523B50 ?ascent@@YAXXZ 0x00523B50-0x00523C58 FILE
 // size      264 bytes
-// spans     0x00523B50-0x00523C58
 // prototype 
 // callers   0   call targets   5
 // kind      game

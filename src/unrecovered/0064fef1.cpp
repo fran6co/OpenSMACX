@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064FEF1 EXCLUDED S1
-// name      __setmode_lk
+// ORIGINAL: 0x0064FEF1 __setmode_lk 0x0064FEF1-0x0064FF52 EXCLUDED S1
 // size      97 bytes
-// spans     0x0064FEF1-0x0064FF52
 // prototype 
 // callers   1   call targets   1
 // kind      library

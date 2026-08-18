@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0044A500 BYTE_EXACT FILE
-// name      ?on_left_click@FameWin@@QAEXHH@Z
+// ORIGINAL: 0x0044A500 ?on_left_click@FameWin@@QAEXHH@Z 0x0044A500-0x0044A563 FILE BYTE_EXACT
 // size      99 bytes
-// spans     0x0044A500-0x0044A563
 // prototype void (__thiscall ?on_left_click@FameWin@@QAEXHH@Z)(FameWin* this, int xCoord, int yCoord)
 // callers   0   call targets   1
 // kind      game

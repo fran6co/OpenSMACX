@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00615180 BYTE_EXACT FILE
-// name      ?UNK1@EditBox@@QAEHPAUFont@@HHHPAUWin@@@Z
+// ORIGINAL: 0x00615180 ?UNK1@EditBox@@QAEHPAUFont@@HHHPAUWin@@@Z 0x00615180-0x006151D6 FILE BYTE_EXACT
 // size      86 bytes
-// spans     0x00615180-0x006151D6
 // prototype int (__thiscall ?UNK1@EditBox@@QAEHPAUFont@@HHHPAUWin@@@Z)(EditBox* this, Font*, int, int, int, Win*)
 // callers   0   call targets   3
 // kind      game

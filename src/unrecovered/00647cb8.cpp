@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00647CB8 EXCLUDED S1
-// name      __unlock_file2
+// ORIGINAL: 0x00647CB8 __unlock_file2 0x00647CB8-0x00647CDB EXCLUDED S1
 // size      35 bytes
-// spans     0x00647CB8-0x00647CDB
 // prototype 
 // callers   2   call targets   1
 // kind      library

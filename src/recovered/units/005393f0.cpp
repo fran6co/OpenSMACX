@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005393F0 BYTE_EXACT FILE
-// name      ?net_set_agenda@@YAXHHHHH@Z
+// ORIGINAL: 0x005393F0 ?net_set_agenda@@YAXHHHHH@Z 0x005393F0-0x00539460 FILE BYTE_EXACT
 // size      112 bytes
-// spans     0x005393F0-0x00539460
 // prototype 
 // callers   1   call targets   4
 // kind      game

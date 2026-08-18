@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004B43E0 FILE
-// name      ?say_orders@@YAXPADH@Z
+// ORIGINAL: 0x004B43E0 ?say_orders@@YAXPADH@Z 0x004B43E0-0x004B496D FILE
 // size      1421 bytes
-// spans     0x004B43E0-0x004B496D
 // prototype void (__cdecl ?say_orders@@YAXPADH@Z)(int8*, int vehID)
 // callers   2   call targets   9
 // kind      game

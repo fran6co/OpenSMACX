@@ -1,9 +1,7 @@
-// ORIGINAL: 0x004C1D10 BYTE_EXACT FILE
+// ORIGINAL: 0x004C1D10 ?vehdraw_setup@@YAXXZ 0x004C1D10-0x004C1D15 FILE BYTE_EXACT
 // LEVER: plain __cdecl tail-call, no args, to vehdraw_compute_facet_normals()
 // working copy - scaffold materialised by --work
-// name      ?vehdraw_setup@@YAXXZ
 // size      5 bytes
-// spans     0x004C1D10-0x004C1D15
 // prototype 
 // callers   1   call targets   0
 // kind      thunk

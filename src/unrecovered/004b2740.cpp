@@ -1,18 +1,7 @@
-// ORIGINAL: 0x004B2740 FILE
-// RULED-OUT: full-function transcription (~1448 instructions, sim 0.57 vs
-//            original at /O2 /Oy-); diverges at instr #9. Receivers for
-//            member calls were traced by hand from `mov ecx,...`
-//            immediately preceding each call site (VCall slots 1,2,57,62,90
-//            widened to match observed arg counts); the society-name walk
-//            loop (local_30 vs &DAT_009466d0) and the two multi-row
-//            BaseButton/CheckButton hover-rect blocks are the least
-//            independently re-checked regions - approximated by pattern
-//            match against the neighbouring, verified blocks rather than a
-//            second raw-disassembly pass.
+// ORIGINAL: 0x004B2740 ?init@SocialWin@@QAEXH@Z 0x004B2740-0x004B3C7D;0x00659A0A-0x00659A1F FILE
+// RULED-OUT: full-function transcription (~1448 instructions, sim 0.57 vs original at /O2 /Oy-); diverges at instr #9. Receivers for member calls were traced by hand from `mov ecx,...` immediately preceding each call site (VCall slots 1,2,57,62,90 widened to match observed arg counts); the society-name walk loop (local_30 vs &DAT_009466d0) and the two multi-row BaseButton/CheckButton hover-rect blocks are the least independently re-checked regions - approximated by pattern match against the neighbouring, verified blocks rather than a second raw-disassembly pass.
 // working copy - scaffold materialised by --work
-// name      ?init@SocialWin@@QAEXH@Z
 // size      5458 bytes
-// spans     0x004B2740-0x004B3C7D;0x00659A0A-0x00659A1F
 // prototype void (__thiscall ?init@SocialWin@@QAEXH@Z)(SocialWin* this, int factionID)
 // callers   2   call targets   26
 // kind      game

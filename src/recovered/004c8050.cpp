@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004C8050 BYTE_EXACT
-// name      ?set_play_type@Midi@@QAEHI@Z
+// ORIGINAL: 0x004C8050 ?set_play_type@Midi@@QAEHI@Z 0x004C8050-0x004C806A BYTE_EXACT
 // size      26 bytes
-// spans     0x004C8050-0x004C806A
 // prototype int (__thiscall ?set_play_type@Midi@@QAEHI@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
 // kind      game

@@ -1,22 +1,13 @@
-// ORIGINAL: 0x00530630 FILE
+// ORIGINAL: 0x00530630 ?lock@NetDaemon@@QAEHHHHHHH@Z 0x00530630-0x0053091E FILE
+// RULED-OUT: MISMATCH #2 'push' vs 'mov' - prologue register-save order (ebx/esi/edi) differs from a straight `mov esi, ecx` first statement; did not chase further given function size (750B, 4 nested wait-loops). Body reproduces both wait-for-lock loops (do/while + break on the global abort flag), the a1/a6/a2/a3 stack-slot reuse as scratch locals matching the disassembly's post-use reuse, and the merged final NOLOCK/NOLOCKGLOBAL warning-pop path.
 // working copy - scaffold materialised by --work
-// name      ?lock@NetDaemon@@QAEHHHHHHH@Z
 // size      750 bytes
-// spans     0x00530630-0x0053091E
 // prototype int (__thiscall ?lock@NetDaemon@@QAEHHHHHHH@Z)(NetDaemon* this, int, int, int, int, int, int)
 // callers   4   call targets   9
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x0047A7D0 0x0047A890 0x0051F1B0 0x00534400 0x005901D0 0x00593090 0x005FC700 0x006262F0 0x00630A00
 // indirect  0x005306EA 0x0053070F 0x005307E0 0x00530802
-// RULED-OUT: MISMATCH #2 'push' vs 'mov' - prologue register-save order
-//            (ebx/esi/edi) differs from a straight `mov esi, ecx` first
-//            statement; did not chase further given function size (750B,
-//            4 nested wait-loops). Body reproduces both wait-for-lock
-//            loops (do/while + break on the global abort flag), the
-//            a1/a6/a2/a3 stack-slot reuse as scratch locals matching the
-//            disassembly's post-use reuse, and the merged final
-//            NOLOCK/NOLOCKGLOBAL warning-pop path.
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?lock@NetDaemon@@QAEHHHHHHH@Z  at 0x00530630  (750 bytes)

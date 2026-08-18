@@ -1,14 +1,7 @@
-// ORIGINAL: 0x00588800 FILE
-// RULED-OUT: the 3 set_def_* callees needed `static` added by hand (the
-//            emitter leaves BasePop/Dialog/BaseButton members non-static);
-//            after that, MISMATCH #3 is /O2 hoisting the three unrelated
-//            global stores (6a721c/696ed0/696ed4/696ee0/697058) past the
-//            call-argument loads for scheduling - not a source-order issue,
-//            statement order already matches the Ghidra order.
+// ORIGINAL: 0x00588800 sub_588800 0x00588800-0x005888DE FILE
+// RULED-OUT: the 3 set_def_* callees needed `static` added by hand (the emitter leaves BasePop/Dialog/BaseButton members non-static); after that, MISMATCH #3 is /O2 hoisting the three unrelated global stores (6a721c/696ed0/696ed4/696ee0/697058) past the call-argument loads for scheduling - not a source-order issue, statement order already matches the Ghidra order.
 // working copy - scaffold materialised by --work
-// name      sub_588800
 // size      222 bytes
-// spans     0x00588800-0x005888DE
 // prototype 
 // callers   0   call targets   8
 // kind      game

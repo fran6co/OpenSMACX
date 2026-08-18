@@ -1,12 +1,6 @@
-// ORIGINAL: 0x00422CC0 BYTE_EXACT FILE
-// LEVER: vtable dispatch via member-fn-pointer union shim, inlined as one
-//   expression with no intermediate locals - a separate `obj`/`shim` local
-//   forced an extra `mov` (union round-tripped through memory);
-//   `(reinterpret_cast<VCallObjI*>(addr)->*(*(VCallShimI*)(...)).memberFn)(args)`
-//   as a single statement let /O2 fold it to the original's `mov;push;mov;call`.
-// name      ?on_status@BattleWin@@QAEXH@Z
+// ORIGINAL: 0x00422CC0 ?on_status@BattleWin@@QAEXH@Z 0x00422CC0-0x00422DB9 FILE BYTE_EXACT
+// LEVER: vtable dispatch via member-fn-pointer union shim, inlined as one expression with no intermediate locals - a separate `obj`/`shim` local forced an extra `mov` (union round-tripped through memory); `(reinterpret_cast<VCallObjI*>(addr)->*(*(VCallShimI*)(...)).memberFn)(args)` as a single statement let /O2 fold it to the original's `mov;push;mov;call`.
 // size      249 bytes
-// spans     0x00422CC0-0x00422DB9
 // prototype void (__thiscall ?on_status@BattleWin@@QAEXH@Z)(BattleWin* this, int)
 // callers   0   call targets   7
 // kind      game

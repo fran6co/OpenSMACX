@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00538EC0 FILE
-// name      ??1JackalVoiceRx@@QAE@XZ
+// ORIGINAL: 0x00538EC0 ??1JackalVoiceRx@@QAE@XZ 0x00538EC0-0x00538F2E FILE
 // size      110 bytes
-// spans     0x00538EC0-0x00538F2E
 // prototype void (__thiscall ??1JackalVoiceRx@@QAE@XZ)(JackalVoiceRx* this)
 // callers   2   call targets   0
 // kind      game

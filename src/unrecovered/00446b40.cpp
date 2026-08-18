@@ -1,26 +1,12 @@
-// ORIGINAL: 0x00446B40
-// name      ?ambience@@YAHH@Z
+// ORIGINAL: 0x00446B40 ?ambience@@YAHH@Z 0x00446B40-0x00446CD6
+// RULED-OUT: guard bit 0x800, no-op-if-unchanged, in-range switch dispatch on *DAT_0074daa0's vtable (14 cases mapping to slots verified against the raw jump table at 0x446CD8, not Ghidra's summary, which collapsed two distinct case targets), else stop the old FX entry (slot 0x28), start the new one (slot 0x5c), revert on failure (slot 0x20), and FX::play() the result. Landed at 0.89 similarity; diverges at #108 where case 0xc8 and case 0xd0 - same vtable slot, genuinely two separate blocks in the original (`mov eax`/`call [eax+..]` vs `mov edx`/`call [edx+..]`) - compile to one shared jump target here. Tried plain int* stride (`g_00749cf8 + id*27`) against explicit byte-offset char* arithmetic for the FX table addressing; neither changed the divergence.
 // size      406 bytes
-// spans     0x00446B40-0x00446CD6
 // prototype
 // callers   18   call targets   1
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00446A00
 // indirect  0x00446BA3 0x00446BB0 0x00446BBD 0x00446BCA 0x00446BD7 0x00446BE4 0x00446BF1 0x00446BFE 0x00446C0B 0x00446C18 0x00446C25 0x00446C32 0x00446C3F 0x00446C4C 0x00446C79 0x00446C9A 0x00446CBA
-// RULED-OUT: guard bit 0x800, no-op-if-unchanged, in-range switch dispatch
-//            on *DAT_0074daa0's vtable (14 cases mapping to slots verified
-//            against the raw jump table at 0x446CD8, not Ghidra's summary,
-//            which collapsed two distinct case targets), else stop the old
-//            FX entry (slot 0x28), start the new one (slot 0x5c), revert on
-//            failure (slot 0x20), and FX::play() the result. Landed at 0.89
-//            similarity; diverges at #108 where case 0xc8 and case 0xd0 -
-//            same vtable slot, genuinely two separate blocks in the
-//            original (`mov eax`/`call [eax+..]` vs `mov edx`/`call
-//            [edx+..]`) - compile to one shared jump target here. Tried
-//            plain int* stride (`g_00749cf8 + id*27`) against explicit
-//            byte-offset char* arithmetic for the FX table addressing;
-//            neither changed the divergence.
 
 class VCall { public:
     virtual void slot000();

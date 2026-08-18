@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0055C430 FILE
-// name      ?comm_check@@YAXHH@Z
+// ORIGINAL: 0x0055C430 ?comm_check@@YAXHH@Z 0x0055C430-0x0055C726 FILE
 // size      758 bytes
-// spans     0x0055C430-0x0055C726
 // prototype 
 // callers   1   call targets   5
 // kind      game

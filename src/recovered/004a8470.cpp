@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004A8470 BYTE_EXACT
-// name      ?close_labs@ReportIf@@QAEXXZ
+// ORIGINAL: 0x004A8470 ?close_labs@ReportIf@@QAEXXZ 0x004A8470-0x004A849E BYTE_EXACT
 // size      46 bytes
-// spans     0x004A8470-0x004A849E
 // prototype void (__thiscall ?close_labs@ReportIf@@QAEXXZ)(ReportIf* this)
 // callers   0   call targets   1
 // kind      game

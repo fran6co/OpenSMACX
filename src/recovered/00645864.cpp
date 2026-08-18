@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00645864 BYTE_EXACT
-// name      nullsub_18
+// ORIGINAL: 0x00645864 nullsub_18 0x00645864-0x00645865 BYTE_EXACT
 // size      1 bytes
-// spans     0x00645864-0x00645865
 // prototype 
 // callers   0   call targets   0
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005FD1C0 BYTE_EXACT
-// name      ?flush_keyboard@@YAXXZ
+// ORIGINAL: 0x005FD1C0 ?flush_keyboard@@YAXXZ 0x005FD1C0-0x005FD21A BYTE_EXACT
 // size      90 bytes
-// spans     0x005FD1C0-0x005FD21A
 // prototype 
 // callers   0   call targets   1
 // kind      game

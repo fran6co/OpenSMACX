@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00646DF8 EXCLUDED S1
-// name      __except_handler3
+// ORIGINAL: 0x00646DF8 __except_handler3 0x00646DF8-0x00646EB5 EXCLUDED S1
 // size      189 bytes
-// spans     0x00646DF8-0x00646EB5
 // prototype int (__cdecl __except_handler3)(int, PVOID TargetFrame, int)
 // callers   0   call targets   3
 // kind      library

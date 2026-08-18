@@ -1,16 +1,12 @@
-// ORIGINAL: 0x005DA9F0
-// name      ?tile@Buffer@@QAEHPAVSprite@@HHHHHH@Z
+// ORIGINAL: 0x005DA9F0 ?tile@Buffer@@QAEHPAVSprite@@HHHHHH@Z 0x005DA9F0-0x005DAB8A
+// RULED-OUT: same shape as 0x005DA860/0x005DA6C0 - straight transcription diverges at #2 on the prologue register-save set (fewer registers stay live in this form than the original chose).
 // size      410 bytes
-// spans     0x005DA9F0-0x005DAB8A
 // prototype int (__thiscall ?tile@Buffer@@QAEHPAVSprite@@HHHHHH@Z)(Buffer* this, Sprite*, int, int, int, int, int, int)
 // callers   13   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D8000 0x005E4B4A
 // indirect  0x005DAA74
-// RULED-OUT: same shape as 0x005DA860/0x005DA6C0 - straight transcription
-//            diverges at #2 on the prologue register-save set (fewer
-//            registers stay live in this form than the original chose).
 
 typedef int (__stdcall *IntersectRectFn)(RECT *, const RECT *, const RECT *);
 

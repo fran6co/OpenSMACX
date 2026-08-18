@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00649BD6 EXCLUDED S1
-// name      __cftog
+// ORIGINAL: 0x00649BD6 __cftog 0x00649BD6-0x00649C69 EXCLUDED S1
 // size      147 bytes
-// spans     0x00649BD6-0x00649C69
 // prototype 
 // callers   1   call targets   4
 // kind      library

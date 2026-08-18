@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005F4CC0 BYTE_EXACT FILE
-// name      ?redraw@Win@@QAAXXZ
+// ORIGINAL: 0x005F4CC0 ?redraw@Win@@QAAXXZ 0x005F4CC0-0x005F4CF1 FILE BYTE_EXACT
 // size      49 bytes
-// spans     0x005F4CC0-0x005F4CF1
 // prototype 
 // callers   0   call targets   1
 // kind      game

@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00500B60 FILE
+// ORIGINAL: 0x00500B60 ?planet_busting@@YAHHHH@Z 0x00500B60-0x005010BB FILE
 // working copy - scaffold materialised by --work
-// name      ?planet_busting@@YAHHHH@Z
 // size      1371 bytes
-// spans     0x00500B60-0x005010BB
 // prototype int (__cdecl ?planet_busting@@YAHHHH@Z)(int vehID, int xCoord, int yCoord)
 // callers   1   call targets   21
 // kind      game

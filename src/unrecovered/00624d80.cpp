@@ -1,22 +1,11 @@
-// ORIGINAL: 0x00624D80
-// name      ?setup_edge@Texture@@QAAHPAUEdgeScan@@H@Z
+// ORIGINAL: 0x00624D80 ?setup_edge@Texture@@QAAHPAUEdgeScan@@H@Z 0x00624D80-0x00624EA9
+// RULED-OUT: the trailing division/remainder pair (offsets 0x2c/0x30) is computed with a THIRD separate idiv after the sign-dependent branch that already computed a quotient - the original never reuses that quotient's remainder, it redoes `diff % iVar1` from scratch, so the two writes here are kept as two separate statements rather than one combined div/mod to match that shape. `<< 0x10` kept as a shift rather than `* 0x10000` to match the original's shl. Landing the closest MISMATCH; divergence starts at instruction #2, a `mov` in the original reloading DAT_9bb4b0 versus a `push` in the rebuilt.
 // size      297 bytes
-// spans     0x00624D80-0x00624EA9
 // prototype
 // callers   9   call targets   1
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00628AD0
-// RULED-OUT: the trailing division/remainder pair (offsets 0x2c/0x30) is
-//            computed with a THIRD separate idiv after the sign-dependent
-//            branch that already computed a quotient - the original never
-//            reuses that quotient's remainder, it redoes `diff % iVar1`
-//            from scratch, so the two writes here are kept as two separate
-//            statements rather than one combined div/mod to match that
-//            shape. `<< 0x10` kept as a shift rather than `* 0x10000` to
-//            match the original's shl. Landing the closest MISMATCH;
-//            divergence starts at instruction #2, a `mov` in the original
-//            reloading DAT_9bb4b0 versus a `push` in the rebuilt.
 
 int __cdecl Texture::setup_edge(EdgeScan *a1, int a2) {
   char *e = (char *)a1;

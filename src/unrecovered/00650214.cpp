@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00650214 EXCLUDED S2a
-// name      DirectPlayCreate
+// ORIGINAL: 0x00650214 DirectPlayCreate 0x00650214-0x0065021A EXCLUDED S2a
 // size      6 bytes
-// spans     0x00650214-0x0065021A
 // prototype HRESULT (__stdcall DirectPlayCreate)(LPGUID lpGUID, LPDIRECTPLAY* lplpDP, IUnknown* pUnk)
 // callers   1   call targets   0
 // kind      thunk

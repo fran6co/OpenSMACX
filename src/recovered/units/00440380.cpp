@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00440380 BYTE_EXACT FILE
-// name      ?on_status@DiploPop@@QAEXH@Z
+// ORIGINAL: 0x00440380 ?on_status@DiploPop@@QAEXH@Z 0x00440380-0x004404B4 FILE BYTE_EXACT
 // size      308 bytes
-// spans     0x00440380-0x004404B4
 // prototype void (__thiscall ?on_status@DiploPop@@QAEXH@Z)(DiploPop* this, int)
 // callers   0   call targets   9
 // kind      game

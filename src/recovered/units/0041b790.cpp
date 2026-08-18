@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0041B790 FILE
-// name      ?base_editor_fac@BaseWin@@QAEXXZ
+// ORIGINAL: 0x0041B790 ?base_editor_fac@BaseWin@@QAEXXZ 0x0041B790-0x0041BBBC;0x0065249C-0x0065255E FILE
 // size      1262 bytes
-// spans     0x0041B790-0x0041BBBC;0x0065249C-0x0065255E
 // prototype void (__thiscall ?base_editor_fac@BaseWin@@QAEXXZ)(BaseWin* this)
 // callers   1   call targets   26
 // kind      game

@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00538FE0 FILE
+// ORIGINAL: 0x00538FE0 ?checksum_file@@YAEPAD@Z 0x00538FE0-0x0053908F;0x0065E450-0x0065E462 FILE
 // working copy - scaffold materialised by --work
-// name      ?checksum_file@@YAEPAD@Z
 // size      193 bytes
-// spans     0x00538FE0-0x0053908F;0x0065E450-0x0065E462
 // prototype 
 // callers   2   call targets   4
 // kind      game

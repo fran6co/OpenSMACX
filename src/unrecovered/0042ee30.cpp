@@ -1,20 +1,7 @@
-// ORIGINAL: 0x0042EE30 FILE
-// RULED-OUT: a genuine `StringStruct local40(0);` local to pick up the
-//            compiler's own /GX SEH frame (as worked elsewhere) still
-//            diverges at instruction #2 (sub vs push) - this function's
-//            frame layout (0x98-byte locals, three linked-list teardown
-//            passes at the tail) needs more than one matching ctor call to
-//            reproduce. Landed the full field-setup/string-building/switch/
-//            StringList::load/write_strings/StringBox path faithfully
-//            (reusing the same local as StringStruct then StringList via
-//            reinterpret_cast, matching the disassembly's own reuse of one
-//            `this` across two mangled entry points); the two vtable-walk
-//            destructor passes at the end are omitted as they only free
-//            temporaries and don't produce any value this function returns.
+// ORIGINAL: 0x0042EE30 ?draw_ability@Datalink@@QAEXXZ 0x0042EE30-0x0042F468;0x00653816-0x0065384A FILE
+// RULED-OUT: a genuine `StringStruct local40(0);` local to pick up the compiler's own /GX SEH frame (as worked elsewhere) still diverges at instruction #2 (sub vs push) - this function's frame layout (0x98-byte locals, three linked-list teardown passes at the tail) needs more than one matching ctor call to reproduce. Landed the full field-setup/string-building/switch/ StringList::load/write_strings/StringBox path faithfully (reusing the same local as StringStruct then StringList via reinterpret_cast, matching the disassembly's own reuse of one `this` across two mangled entry points); the two vtable-walk destructor passes at the end are omitted as they only free temporaries and don't produce any value this function returns.
 // working copy - scaffold materialised by --work
-// name      ?draw_ability@Datalink@@QAEXXZ
 // size      1644 bytes
-// spans     0x0042EE30-0x0042F468;0x00653816-0x0065384A
 // prototype void (__thiscall ?draw_ability@Datalink@@QAEXXZ)(Datalink* this)
 // callers   1   call targets   20
 // kind      game

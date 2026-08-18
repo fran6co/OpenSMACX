@@ -1,14 +1,7 @@
-// ORIGINAL: 0x005C1B70 FILE
-// RULED-OUT: separate 'if (cond) return 0;' per check duplicated the
-//            epilogue (245 vs 200 bytes); combined into nested && conditions
-//            sharing one trailing `return 0` (lever: single-exit chain).
-//            extern char[] base for the runtime a1*0x34 struct index.
-//            MISMATCH from #9: the a1*0x34 multiply still lowers via a
-//            different instruction chain than the original's lea/lea/shl
+// ORIGINAL: 0x005C1B70 ?veh_ready@@YAHH@Z 0x005C1B70-0x005C1C38 FILE
+// RULED-OUT: separate 'if (cond) return 0;' per check duplicated the epilogue (245 vs 200 bytes); combined into nested && conditions sharing one trailing `return 0` (lever: single-exit chain). extern char[] base for the runtime a1*0x34 struct index. MISMATCH from #9: the a1*0x34 multiply still lowers via a different instruction chain than the original's lea/lea/shl
 // working copy - scaffold materialised by --work
-// name      ?veh_ready@@YAHH@Z
 // size      200 bytes
-// spans     0x005C1B70-0x005C1C38
 // prototype int (__cdecl ?veh_ready@@YAHH@Z)(int vehID)
 // callers   14   call targets   2
 // kind      game

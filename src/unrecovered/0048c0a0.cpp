@@ -1,30 +1,7 @@
-// ORIGINAL: 0x0048C0A0 FILE
-// RULED-OUT: a real automatic-storage `Popup popup;` local - BasePop
-//            already declares a non-trivial `~BasePop()`, so the compiler
-//            is forced to emit ITS OWN scope-exit destructor chain the
-//            moment such a local exists, which fights the explicit,
-//            interleaved close()/dtor/vtable-reset sequence the original
-//            shows (SEH funclet table at 0x6582E0, matched only by
-//            span - the byte comparison covers 0x48C0A0-0x48C31F only).
-//            Landed instead: a raw `unsigned char popupStorage[0x5390]`
-//            plus placement `new` to call the real constructor
-//            explicitly, then hand-written calls mirroring the disasm's
-//            own teardown order (Popup::close, Scroll::close,
-//            FlatButton::close, then explicit qualified destructors
-//            BaseButton::~BaseButton/~FlatButton/GraphicWin::~GraphicWin/
-//            BasePop::~BasePop) and the two vtable-reset writes per
-//            stage (offset 0 and offset 0x444 - a second vtable slot
-//            common to every GraphicWin-derived sub-object here).
-//            [ebp-0x3278] traced to BasePop's own `sprite_` member via
-//            its declared offset (0x2118) plus Sprite's real size
-//            (0x2C, not the field list's apparent 13*4). Reaches
-//            MISMATCH, 100/181 mnemonics shared (0.53) over the
-//            0x48C0A0-0x48C31F span, first divergence at #3 (no real
-//            SEH prologue, expected from the traded-off approach).
+// ORIGINAL: 0x0048C0A0 ?popp@@YAHPADPBDHPBDP6AHXZ@Z 0x0048C0A0-0x0048C31F;0x006582E0-0x00658337 FILE
+// RULED-OUT: a real automatic-storage `Popup popup;` local - BasePop already declares a non-trivial `~BasePop()`, so the compiler is forced to emit ITS OWN scope-exit destructor chain the moment such a local exists, which fights the explicit, interleaved close()/dtor/vtable-reset sequence the original shows (SEH funclet table at 0x6582E0, matched only by span - the byte comparison covers 0x48C0A0-0x48C31F only). Landed instead: a raw `unsigned char popupStorage[0x5390]` plus placement `new` to call the real constructor explicitly, then hand-written calls mirroring the disasm's own teardown order (Popup::close, Scroll::close, FlatButton::close, then explicit qualified destructors BaseButton::~BaseButton/~FlatButton/GraphicWin::~GraphicWin/ BasePop::~BasePop) and the two vtable-reset writes per stage (offset 0 and offset 0x444 - a second vtable slot common to every GraphicWin-derived sub-object here). [ebp-0x3278] traced to BasePop's own `sprite_` member via its declared offset (0x2118) plus Sprite's real size (0x2C, not the field list's apparent 13*4). Reaches MISMATCH, 100/181 mnemonics shared (0.53) over the 0x48C0A0-0x48C31F span, first divergence at #3 (no real SEH prologue, expected from the traded-off approach).
 // working copy - scaffold materialised by --work
-// name      ?popp@@YAHPADPBDHPBDP6AHXZ@Z
 // size      726 bytes
-// spans     0x0048C0A0-0x0048C31F;0x006582E0-0x00658337
 // prototype 
 // callers   66   call targets   16
 // kind      game

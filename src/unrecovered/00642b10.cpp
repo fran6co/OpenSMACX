@@ -1,10 +1,8 @@
-// ORIGINAL: 0x00642B10 BYTE_EXACT FILE
+// ORIGINAL: 0x00642B10 _inflate_blocks_reset 0x00642B10-0x00642BA2 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      _inflate_blocks_reset
 // CORRECTED from sub_642b10
 //   zlib 1.0.2 infblock.c, 146 bytes, byte-exact from upstream
 // size      146 bytes
-// spans     0x00642B10-0x00642BA2
 // prototype 
 // callers   4   call targets   2
 // kind      game

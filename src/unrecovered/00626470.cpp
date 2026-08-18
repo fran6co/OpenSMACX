@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00626470 FILE
-// name      sub_626470
+// ORIGINAL: 0x00626470 sub_626470 0x00626470-0x00626540 FILE
 // size      208 bytes
-// spans     0x00626470-0x00626540
 // prototype 
 // callers   3   call targets   0
 // kind      

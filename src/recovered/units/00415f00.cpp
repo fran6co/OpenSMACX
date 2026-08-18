@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00415F00 BYTE_EXACT FILE
-// name      ?gov_activate@BaseWin@@QAEXXZ
+// ORIGINAL: 0x00415F00 ?gov_activate@BaseWin@@QAEXXZ 0x00415F00-0x00415F70 FILE BYTE_EXACT
 // size      112 bytes
-// spans     0x00415F00-0x00415F70
 // prototype void (__thiscall ?gov_activate@BaseWin@@QAEXXZ)(BaseWin* this)
 // callers   2   call targets   3
 // kind      game

@@ -1,10 +1,7 @@
-// ORIGINAL: 0x00633720 BYTE_EXACT FILE
-// LEVER: "return foo();" tail call - matching nullary cdecl signatures let
-//        the call fold into the original's bare 5-byte jmp
+// ORIGINAL: 0x00633720 j_VoiceRx__VoiceRx_dt 0x00633720-0x00633725 FILE BYTE_EXACT
+// LEVER: "return foo();" tail call - matching nullary cdecl signatures let the call fold into the original's bare 5-byte jmp
 // working copy - scaffold materialised by --work
-// name      j_VoiceRx__VoiceRx_dt
 // size      5 bytes
-// spans     0x00633720-0x00633725
 // prototype 
 // callers   1   call targets   0
 // kind      thunk

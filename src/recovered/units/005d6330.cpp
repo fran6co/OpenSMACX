@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005D6330 BYTE_EXACT FILE
-// name      ?on_set_cursor@GraphicWin@@QAEHPAXII@Z
+// ORIGINAL: 0x005D6330 ?on_set_cursor@GraphicWin@@QAEHPAXII@Z 0x005D6330-0x005D6350 FILE BYTE_EXACT
 // size      32 bytes
-// spans     0x005D6330-0x005D6350
 // prototype int (__thiscall ?on_set_cursor@GraphicWin@@QAEHPAXII@Z)(GraphicWin* this, void*, unsigned int, unsigned int)
 // callers   0   call targets   1
 // kind      game

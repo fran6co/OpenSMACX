@@ -1,17 +1,11 @@
-// ORIGINAL: 0x005592D0 FILE
-// name      ?get_zoom@FontQueue@@QAEHHHHH@Z
+// ORIGINAL: 0x005592D0 ?get_zoom@FontQueue@@QAEHHHHH@Z 0x005592D0-0x005593D9 FILE
+// RULED-OUT: `int foundPos=-1` sentinel search vs a `while` loop with an early `goto`-style break matching the disassembly's `jl` dead branch (SF!=OF on an always-nonnegative counter) - landed with the sentinel form, MISMATCH at #2 already (loop-entry `cmp` vs the original's cached `mov`).
 // size      265 bytes
-// spans     0x005592D0-0x005593D9
 // prototype int (__thiscall ?get_zoom@FontQueue@@QAEHHHHH@Z)(FontQueue* this, int, int, int, int)
 // callers   2   call targets   1
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     0x00618F40
-// RULED-OUT: `int foundPos=-1` sentinel search vs a `while` loop with an
-//            early `goto`-style break matching the disassembly's `jl`
-//            dead branch (SF!=OF on an always-nonnegative counter) -
-//            landed with the sentinel form, MISMATCH at #2 already
-//            (loop-entry `cmp` vs the original's cached `mov`).
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?get_zoom@FontQueue@@QAEHHHHH@Z  at 0x005592D0  (265 bytes)
 //

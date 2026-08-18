@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004BFC70 FILE
-// name      ?vehdraw_turn@@YAXPAUBuffer@@HHHH@Z
+// ORIGINAL: 0x004BFC70 ?vehdraw_turn@@YAXPAUBuffer@@HHHH@Z 0x004BFC70-0x004BFDFA FILE
 // size      394 bytes
-// spans     0x004BFC70-0x004BFDFA
 // prototype 
 // callers   1   call targets   7
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005DD730 FILE
-// name      ?wrap@Buffer@@QAEHPADHHH@Z
+// ORIGINAL: 0x005DD730 ?wrap@Buffer@@QAEHPADHHH@Z 0x005DD730-0x005DD91C FILE
 // size      492 bytes
-// spans     0x005DD730-0x005DD91C
 // prototype int (__thiscall ?wrap@Buffer@@QAEHPADHHH@Z)(Buffer* this, int8*, int, int, int)
 // callers   8   call targets   3
 // kind      game

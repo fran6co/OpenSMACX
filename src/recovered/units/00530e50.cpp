@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00530E50 FILE
-// name      ?unlock_base@NetDaemon@@QAEXH@Z
+// ORIGINAL: 0x00530E50 ?unlock_base@NetDaemon@@QAEXH@Z 0x00530E50-0x0053101F FILE
 // size      463 bytes
-// spans     0x00530E50-0x0053101F
 // prototype void (__thiscall ?unlock_base@NetDaemon@@QAEXH@Z)(NetDaemon* this, int)
 // callers   26   call targets   10
 // kind      game

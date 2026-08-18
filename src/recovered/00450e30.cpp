@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00450E30 BYTE_EXACT
-// name      sub_450e30
+// ORIGINAL: 0x00450E30 sub_450e30 0x00450E30-0x00450E7D BYTE_EXACT
 // size      77 bytes
-// spans     0x00450E30-0x00450E7D
 // prototype 
 // callers   0   call targets   2
 // kind      game

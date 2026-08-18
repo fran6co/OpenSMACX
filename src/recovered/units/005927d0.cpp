@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005927D0 FILE
-// name      ?delete_landmark@@YAXHH@Z
+// ORIGINAL: 0x005927D0 ?delete_landmark@@YAXHH@Z 0x005927D0-0x00592938 FILE
 // size      360 bytes
-// spans     0x005927D0-0x00592938
 // prototype void (__cdecl ?delete_landmark@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   1   call targets   1
 // kind      game

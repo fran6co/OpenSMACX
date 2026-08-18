@@ -1,10 +1,7 @@
-// ORIGINAL: 0x00601910 FILE
-// RULED-OUT: local char* copy of a1 (identical codegen); mismatch is at
-//            instr #4 (push vs mov), esi not preserved the same way.
+// ORIGINAL: 0x00601910 ?set_def_cancel_text@BasePop@@QAAHPAD@Z 0x00601910-0x00601972 FILE
+// RULED-OUT: local char* copy of a1 (identical codegen); mismatch is at instr #4 (push vs mov), esi not preserved the same way.
 // working copy - scaffold materialised by --work
-// name      ?set_def_cancel_text@BasePop@@QAAHPAD@Z
 // size      98 bytes
-// spans     0x00601910-0x00601972
 // prototype 
 // callers   2   call targets   4
 // kind      game

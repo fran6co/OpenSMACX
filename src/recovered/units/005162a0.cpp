@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005162A0 FILE
-// name      ?name_landmark@Console@@QAEXHH@Z
+// ORIGINAL: 0x005162A0 ?name_landmark@Console@@QAEXHH@Z 0x005162A0-0x0051648F FILE
 // size      495 bytes
-// spans     0x005162A0-0x0051648F
 // prototype void (__thiscall ?name_landmark@Console@@QAEXHH@Z)(Console* this, int xCoord, int yCoord)
 // callers   3   call targets   11
 // kind      game

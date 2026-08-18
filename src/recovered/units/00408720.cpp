@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00408720 FILE
-// name      ?psych_row@BaseWin@@QAEXHHHHHHH@Z
+// ORIGINAL: 0x00408720 ?psych_row@BaseWin@@QAEXHHHHHHH@Z 0x00408720-0x00408B1B;0x00651567-0x00651579 FILE
 // size      1037 bytes
-// spans     0x00408720-0x00408B1B;0x00651567-0x00651579
 // prototype void (__thiscall ?psych_row@BaseWin@@QAEXHHHHHHH@Z)(BaseWin* this, int, int, int, int, int, int, int)
 // callers   1   call targets   6
 // kind      game

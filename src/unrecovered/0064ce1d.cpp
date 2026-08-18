@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064CE1D EXCLUDED S1
-// name      __get_osfhandle
+// ORIGINAL: 0x0064CE1D __get_osfhandle 0x0064CE1D-0x0064CE5F EXCLUDED S1
 // size      66 bytes
-// spans     0x0064CE1D-0x0064CE5F
 // prototype 
 // callers   4   call targets   2
 // kind      library

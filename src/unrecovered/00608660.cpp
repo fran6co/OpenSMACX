@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00608660 FILE
+// ORIGINAL: 0x00608660 ?on_mouse_leave@FlatButton@@QAEXHH@Z 0x00608660-0x006086EC FILE
 // working copy - scaffold materialised by --work
-// name      ?on_mouse_leave@FlatButton@@QAEXHH@Z
 // size      140 bytes
-// spans     0x00608660-0x006086EC
 // prototype void (__thiscall ?on_mouse_leave@FlatButton@@QAEXHH@Z)(FlatButton* this, int, int)
 // callers   0   call targets   2
 // kind      game

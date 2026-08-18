@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004C74B0 FILE
-// name      sub_4c74b0
+// ORIGINAL: 0x004C74B0 sub_4c74b0 0x004C74B0-0x004C74F0 FILE
 // size      64 bytes
-// spans     0x004C74B0-0x004C74F0
 // prototype 
 // callers   0   call targets   4
 // kind      game

@@ -1,12 +1,7 @@
-// ORIGINAL: 0x005F13B0 FILE
-// RULED-OUT: zero-arg contract (disasm reads one stack arg -> HWND); reusing
-//            the auto-generated nullary `VCall::slot074` (own `PaintVCall`
-//            class instead, real signature). Register allocation in the
-//            prologue still MISMATCHes.
+// ORIGINAL: 0x005F13B0 sub_5f13b0 0x005F13B0-0x005F141B FILE
+// RULED-OUT: zero-arg contract (disasm reads one stack arg -> HWND); reusing the auto-generated nullary `VCall::slot074` (own `PaintVCall` class instead, real signature). Register allocation in the prologue still MISMATCHes.
 // working copy - scaffold materialised by --work
-// name      sub_5f13b0
 // size      107 bytes
-// spans     0x005F13B0-0x005F141B
 // prototype 
 // callers   0   call targets   0
 // kind      game

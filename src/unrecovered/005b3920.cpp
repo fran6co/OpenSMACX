@@ -1,19 +1,7 @@
-// ORIGINAL: 0x005B3920 FILE
-// RULED-OUT: diverges at #3 (prologue-adjacent instruction scheduling,
-//   original 'push' vs rebuilt 'and'); did not chase further. Body is a
-//   full structural transcription adapted from Ghidra and cross-checked
-//   against raw disassembly for every call's argument order (verified
-//   agenda_on/set_treaty/set_agenda push order by hand against the raw
-//   bytes - Ghidra had them right), the AI-faction placement loop, the
-//   diplomacy name-matching double loop, and the two zero/fill loop
-//   families. Fixed two Ghidra-vs-disasm gaps: local_68 is 12 ints (the
-//   zeroing loop bound is 0xc), not the 4 Ghidra inferred from the first
-//   few accesses, and CharUpperA is an indirect call through the import
-//   thunk at 0x66931C, not a direct symbol.
+// ORIGINAL: 0x005B3920 ?setup_game@@YAXH@Z 0x005B3920-0x005B4201 FILE
+// RULED-OUT: diverges at #3 (prologue-adjacent instruction scheduling, original 'push' vs rebuilt 'and'); did not chase further. Body is a full structural transcription adapted from Ghidra and cross-checked against raw disassembly for every call's argument order (verified agenda_on/set_treaty/set_agenda push order by hand against the raw bytes - Ghidra had them right), the AI-faction placement loop, the diplomacy name-matching double loop, and the two zero/fill loop families. Fixed two Ghidra-vs-disasm gaps: local_68 is 12 ints (the zeroing loop bound is 0xc), not the 4 Ghidra inferred from the first few accesses, and CharUpperA is an indirect call through the import thunk at 0x66931C, not a direct symbol.
 // working copy - scaffold materialised by --work
-// name      ?setup_game@@YAXH@Z
 // size      2273 bytes
-// spans     0x005B3920-0x005B4201
 // prototype 
 // callers   4   call targets   22
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005C95E0 FILE
-// name      ?adjust_pal@Gamma@@QAEXN@Z
+// ORIGINAL: 0x005C95E0 ?adjust_pal@Gamma@@QAEXN@Z 0x005C95E0-0x005C97B1 FILE
 // size      465 bytes
-// spans     0x005C95E0-0x005C97B1
 // prototype void (__thiscall ?adjust_pal@Gamma@@QAEXN@Z)(Gamma* this, unknown float)
 // callers   1   call targets   4
 // kind      game

@@ -1,11 +1,6 @@
-// ORIGINAL: 0x005FEFF0
-// RULED-OUT: MISMATCH #3 test/push - Palette has no named per-field layout
-//            (all generic field_XX_), so `this` is treated as a raw
-//            unsigned char* (the 256-entry colour table, then the 5-record
-//            "special colours" table at +0x40c) rather than named members.
-// name      ?create_table_from_color@Palette@@QAEHHPAEHHHH@Z
+// ORIGINAL: 0x005FEFF0 ?create_table_from_color@Palette@@QAEHHPAEHHHH@Z 0x005FEFF0-0x005FF19E
+// RULED-OUT: MISMATCH #3 test/push - Palette has no named per-field layout (all generic field_XX_), so `this` is treated as a raw unsigned char* (the 256-entry colour table, then the 5-record "special colours" table at +0x40c) rather than named members.
 // size      430 bytes
-// spans     0x005FEFF0-0x005FF19E
 // prototype int (__thiscall ?create_table_from_color@Palette@@QAEHHPAEHHHH@Z)(Palette* this, int, unsigned int8*, int, int, int, int)
 // callers   2   call targets   1
 // kind      game

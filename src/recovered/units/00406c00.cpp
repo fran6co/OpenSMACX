@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00406C00 FILE
-// name      ??1Popup@@QAE@XZ
+// ORIGINAL: 0x00406C00 ??1Popup@@QAE@XZ 0x00406C00-0x00406E52;0x00650AB0-0x00650BA2 FILE
 // size      836 bytes
-// spans     0x00406C00-0x00406E52;0x00650AB0-0x00650BA2
 // prototype void (__thiscall ??1Popup@@QAE@XZ)(Popup* this)
 // callers   6   call targets   12
 // kind      game

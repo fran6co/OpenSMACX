@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00481D10 BYTE_EXACT FILE
+// ORIGINAL: 0x00481D10 ?close@NetWin@@QAEXXZ 0x00481D10-0x00481D9C FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?close@NetWin@@QAEXXZ
 // size      140 bytes
-// spans     0x00481D10-0x00481D9C
 // prototype void (__thiscall ?close@NetWin@@QAEXXZ)(NetWin* this)
 // callers   0   call targets   5
 // kind      game

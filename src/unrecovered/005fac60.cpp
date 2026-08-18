@@ -1,11 +1,7 @@
-// ORIGINAL: 0x005FAC60 FILE
-// RULED-OUT: MISMATCH #1 push/mov - no SEH __try/__finally frame emitted;
-//            GraphicWin/Spot have no dtor declared in scaffold so the
-//            compiler treats the ctor chain as trivial-unwind and skips it
+// ORIGINAL: 0x005FAC60 ??0Menu@@QAE@XZ 0x005FAC60-0x005FACF6;0x00662CF0-0x00662D02 FILE
+// RULED-OUT: MISMATCH #1 push/mov - no SEH __try/__finally frame emitted; GraphicWin/Spot have no dtor declared in scaffold so the compiler treats the ctor chain as trivial-unwind and skips it
 // working copy - scaffold materialised by --work
-// name      ??0Menu@@QAE@XZ
 // size      168 bytes
-// spans     0x005FAC60-0x005FACF6;0x00662CF0-0x00662D02
 // prototype void (__thiscall ??0Menu@@QAE@XZ)(Menu* this)
 // callers   1   call targets   2
 // kind      game

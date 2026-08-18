@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00430B30 FILE
-// name      ?draw_tech@Datalink@@QAEXXZ
+// ORIGINAL: 0x00430B30 ?draw_tech@Datalink@@QAEXXZ 0x00430B30-0x00430C76 FILE
 // size      326 bytes
-// spans     0x00430B30-0x00430C76
 // prototype void (__thiscall ?draw_tech@Datalink@@QAEXXZ)(Datalink* this)
 // callers   0   call targets   12
 // kind      game

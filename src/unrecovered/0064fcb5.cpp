@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064FCB5 EXCLUDED S1
-// name      _xtoa
+// ORIGINAL: 0x0064FCB5 _xtoa 0x0064FCB5-0x0064FD11 EXCLUDED S1
 // size      92 bytes
-// spans     0x0064FCB5-0x0064FD11
 // prototype 
 // callers   1   call targets   0
 // kind      library

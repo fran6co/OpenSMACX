@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005FC290 FILE
-// name      ?on_redraw@Menu@@QAEXXZ
+// ORIGINAL: 0x005FC290 ?on_redraw@Menu@@QAEXXZ 0x005FC290-0x005FC594 FILE
 // size      772 bytes
-// spans     0x005FC290-0x005FC594
 // prototype void (__thiscall ?on_redraw@Menu@@QAEXXZ)(Menu* this)
 // callers   0   call targets   11
 // kind      game

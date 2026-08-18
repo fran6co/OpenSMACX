@@ -1,13 +1,7 @@
-// ORIGINAL: 0x005CA310 FILE
-// RULED-OUT: __fastcall(ecx,edx) two-arg signature + large local buffer for
-//            __alloca_probe reaches MISMATCH #3 (prologue); several output
-//            scratch locals (sub_5cdd10/5cdb90/5ce6e3 args) use fresh locals
-//            rather than the exact original stack slot, since those callees
-//            are opaque and their slot placement doesn't affect this body.
+// ORIGINAL: 0x005CA310 sub_5ca310 0x005CA310-0x005CA6BC FILE
+// RULED-OUT: __fastcall(ecx,edx) two-arg signature + large local buffer for __alloca_probe reaches MISMATCH #3 (prologue); several output scratch locals (sub_5cdd10/5cdb90/5ce6e3 args) use fresh locals rather than the exact original stack slot, since those callees are opaque and their slot placement doesn't affect this body.
 // working copy - scaffold materialised by --work
-// name      sub_5ca310
 // size      940 bytes
-// spans     0x005CA310-0x005CA6BC
 // prototype 
 // callers   1   call targets   4
 // kind      game

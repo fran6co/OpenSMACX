@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00644DD2 EXCLUDED S1
-// name      __cinit
+// ORIGINAL: 0x00644DD2 __cinit 0x00644DD2-0x00644DFF EXCLUDED S1
 // size      45 bytes
-// spans     0x00644DD2-0x00644DFF
 // prototype 
 // callers   1   call targets   1
 // kind      library

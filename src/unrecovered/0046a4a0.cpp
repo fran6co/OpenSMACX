@@ -1,8 +1,6 @@
-// ORIGINAL: 0x0046A4A0 FILE
+// ORIGINAL: 0x0046A4A0 ?draw_tile@MapWin@@QAEXHHH@Z 0x0046A4A0-0x0046A52F FILE
 // working copy - scaffold materialised by --work
-// name      ?draw_tile@MapWin@@QAEXHHH@Z
 // size      143 bytes
-// spans     0x0046A4A0-0x0046A52F
 // prototype void (__thiscall ?draw_tile@MapWin@@QAEXHHH@Z)(MapWin* this, int xCoord, int yCoord, int)
 // callers   1   call targets   1
 // kind      game

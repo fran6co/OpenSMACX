@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00612E80 BYTE_EXACT
-// name      ?on_left_click@Dialogs@@QAEXHH@Z
+// ORIGINAL: 0x00612E80 ?on_left_click@Dialogs@@QAEXHH@Z 0x00612E80-0x00612EB0 BYTE_EXACT
 // size      48 bytes
-// spans     0x00612E80-0x00612EB0
 // prototype void (__thiscall ?on_left_click@Dialogs@@QAEXHH@Z)(Dialogs* this, int xCoord, int yCoord)
 // callers   0   call targets   1
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00529F30 FILE
-// name      ?net_end_of_turn@@YAXXZ
+// ORIGINAL: 0x00529F30 ?net_end_of_turn@@YAXXZ 0x00529F30-0x0052A2D3 FILE
 // size      931 bytes
-// spans     0x00529F30-0x0052A2D3
 // prototype 
 // callers   1   call targets   21
 // kind      game

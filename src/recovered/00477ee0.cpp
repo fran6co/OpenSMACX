@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00477EE0 BYTE_EXACT
-// name      ?on_mouse_leave@MultiWin@@QAEXHH@Z
+// ORIGINAL: 0x00477EE0 ?on_mouse_leave@MultiWin@@QAEXHH@Z 0x00477EE0-0x00477EFE BYTE_EXACT
 // size      30 bytes
-// spans     0x00477EE0-0x00477EFE
 // prototype void (__thiscall ?on_mouse_leave@MultiWin@@QAEXHH@Z)(MultiWin* this, int, int)
 // callers   0   call targets   1
 // kind      game

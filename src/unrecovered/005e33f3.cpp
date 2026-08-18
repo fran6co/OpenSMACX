@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005E33F3 BYTE_EXACT FILE
-// name      ?get_data@Buffer@@QAEHHH@Z
+// ORIGINAL: 0x005E33F3 ?get_data@Buffer@@QAEHHH@Z 0x005E33F3-0x005E349D FILE BYTE_EXACT
 // size      170 bytes
-// spans     0x005E33F3-0x005E349D
 // prototype int (__thiscall ?get_data@Buffer@@QAEHHH@Z)(Buffer* this, int, int)
 // callers   9   call targets   0
 // kind      

@@ -1,12 +1,7 @@
-// ORIGINAL: 0x005DDBB0 FILE
-// RULED-OUT: source order already matches Ghidra's (g=0; field18=0;
-//            field14=field10; y=a3); the original's `ebx/ebp` push order
-//            ahead of the field writes looks like pure register-scheduling,
-//            not reachable by reordering the C statements that produced it.
+// ORIGINAL: 0x005DDBB0 ?wrap_right@Buffer@@QAEHPADHHH@Z 0x005DDBB0-0x005DDC8F FILE
+// RULED-OUT: source order already matches Ghidra's (g=0; field18=0; field14=field10; y=a3); the original's `ebx/ebp` push order ahead of the field writes looks like pure register-scheduling, not reachable by reordering the C statements that produced it.
 // working copy - scaffold materialised by --work
-// name      ?wrap_right@Buffer@@QAEHPADHHH@Z
 // size      223 bytes
-// spans     0x005DDBB0-0x005DDC8F
 // prototype int (__thiscall ?wrap_right@Buffer@@QAEHPADHHH@Z)(Buffer* this, int8*, int, int, int)
 // callers   1   call targets   3
 // kind      game

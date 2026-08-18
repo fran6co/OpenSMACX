@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00649EAC EXCLUDED S1
-// name      __write
+// ORIGINAL: 0x00649EAC __write 0x00649EAC-0x00649F11 EXCLUDED S1
 // size      101 bytes
-// spans     0x00649EAC-0x00649F11
 // prototype 
 // callers   4   call targets   5
 // kind      library

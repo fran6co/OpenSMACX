@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00416580 BYTE_EXACT FILE
-// name      ?bubble_me_elmo2@BaseWin@@QAGXPADHH@Z
+// ORIGINAL: 0x00416580 ?bubble_me_elmo2@BaseWin@@QAGXPADHH@Z 0x00416580-0x004165C2 FILE BYTE_EXACT
 // size      66 bytes
-// spans     0x00416580-0x004165C2
 // prototype 
 // callers   0   call targets   2
 // kind      game

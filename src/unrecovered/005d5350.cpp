@@ -1,14 +1,13 @@
-// ORIGINAL: 0x005D5350 FILE
-// name      ?fill@GraphicWin@@QAEHPAURECT@@H@Z
+// ORIGINAL: 0x005D5350 ?fill@GraphicWin@@QAEHPAURECT@@H@Z 0x005D5350-0x005D543E FILE
+// RULED-OUT: the scaffold's own VCall shim declares slot061 as `void`
+// RULED-OUT: could not reproduce the original's frameless, purely
 // size      238 bytes
-// spans     0x005D5350-0x005D543E
 // prototype int (__thiscall ?fill@GraphicWin@@QAEHPAURECT@@H@Z)(GraphicWin* this, RECT*, int)
 // callers   18   call targets   3
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005DA330 0x005DFCD0 0x005DFF00
 // indirect  0x005D5373
-// RULED-OUT: the scaffold's own VCall shim declares slot061 as `void`
 // (undetectable return-use), so this file declares a private
 // `GwFillVCall` with the same 62 slots but `int slot061()`, to express
 // `win_parent_->vtable[0xf4/4]() != 0` - only declaration ORDER matters
@@ -16,7 +15,6 @@
 // FILE mode: that class is a new top-level declaration ahead of the
 // definition, and body-mode's census extractor stops at its first
 // top-level closing brace (the class's, not the function's).
-// RULED-OUT: could not reproduce the original's frameless, purely
 // esp-relative layout (it reads its own `RECT* a1` back off the incoming
 // stack slot mid-function via `[esp+0x14]`, after several pushes, rather
 // than keeping it in a register or an ebp-relative local). Every spelling

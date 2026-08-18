@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064CBD0 EXCLUDED S1
-// name      ?_ValidateExecute@@YAHP6GHXZ@Z
+// ORIGINAL: 0x0064CBD0 ?_ValidateExecute@@YAHP6GHXZ@Z 0x0064CBD0-0x0064CBE8 EXCLUDED S1
 // size      24 bytes
-// spans     0x0064CBD0-0x0064CBE8
 // prototype int (__cdecl ?_ValidateExecute@@YAHP6GHXZ@Z)(FARPROC lpfn)
 // callers   2   call targets   0
 // kind      library

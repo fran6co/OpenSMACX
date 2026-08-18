@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00645764 EXCLUDED S1
-// name      ?__ArrayUnwind@@YGXPAXIHP6EX0@Z@Z
+// ORIGINAL: 0x00645764 ?__ArrayUnwind@@YGXPAXIHP6EX0@Z@Z 0x00645764-0x006457C2 EXCLUDED S1
 // size      94 bytes
-// spans     0x00645764-0x006457C2
 // prototype 
 // callers   3   call targets   1
 // kind      library

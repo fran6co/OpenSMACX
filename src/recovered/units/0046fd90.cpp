@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0046FD90 FILE
-// name      ?clear_terrain@MapWin@@QAEXXZ
+// ORIGINAL: 0x0046FD90 ?clear_terrain@MapWin@@QAEXXZ 0x0046FD90-0x0046FDFE FILE
 // size      110 bytes
-// spans     0x0046FD90-0x0046FDFE
 // prototype void (__thiscall ?clear_terrain@MapWin@@QAEXXZ)(MapWin* this)
 // callers   4   call targets   0
 // kind      game

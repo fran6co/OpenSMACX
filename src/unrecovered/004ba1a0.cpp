@@ -1,13 +1,7 @@
-// ORIGINAL: 0x004BA1A0 FILE
-// RULED-OUT: real Caviar/Font/Spot members on StatusWin is C2011 against the
-//            regenerated scaffold (StatusWin already declared opaque).
-//            placement-new + try{}catch(...){throw;} (WorldWin's 0x004C4BF0
-//            pattern) recovers the /GX frame shape but not the per-subobject
-//            unwind dispatch (4 label thunks) real member layout would give.
+// ORIGINAL: 0x004BA1A0 ??0StatusWin@@QAE@XZ 0x004BA1A0-0x004BA217;0x00659A60-0x00659A9F FILE
+// RULED-OUT: real Caviar/Font/Spot members on StatusWin is C2011 against the regenerated scaffold (StatusWin already declared opaque). placement-new + try{}catch(...){throw;} (WorldWin's 0x004C4BF0 pattern) recovers the /GX frame shape but not the per-subobject unwind dispatch (4 label thunks) real member layout would give.
 // working copy - scaffold materialised by --work
-// name      ??0StatusWin@@QAE@XZ
 // size      182 bytes
-// spans     0x004BA1A0-0x004BA217;0x00659A60-0x00659A9F
 // prototype void (__thiscall ??0StatusWin@@QAE@XZ)(StatusWin* this)
 // callers   1   call targets   3
 // kind      game

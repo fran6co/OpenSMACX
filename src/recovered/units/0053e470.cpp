@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0053E470 BYTE_EXACT FILE
-// name      ?diplomacy_ends@@YAXHH@Z
+// ORIGINAL: 0x0053E470 ?diplomacy_ends@@YAXHH@Z 0x0053E470-0x0053E4BC FILE BYTE_EXACT
 // size      76 bytes
-// spans     0x0053E470-0x0053E4BC
 // prototype void (__cdecl ?diplomacy_ends@@YAXHH@Z)(int factionID, int)
 // callers   3   call targets   3
 // kind      game

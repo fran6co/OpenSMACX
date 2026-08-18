@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00615E40 FILE
-// name      ?caret_callback@EditBox@@QAEXH@Z
+// ORIGINAL: 0x00615E40 ?caret_callback@EditBox@@QAEXH@Z 0x00615E40-0x00615E5F FILE
 // size      31 bytes
-// spans     0x00615E40-0x00615E5F
 // prototype void (__thiscall ?caret_callback@EditBox@@QAEXH@Z)(EditBox* this, int)
 // callers   0   call targets   0
 // kind      game

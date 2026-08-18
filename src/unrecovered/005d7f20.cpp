@@ -1,18 +1,12 @@
-// ORIGINAL: 0x005D7F20 FILE
-// name      sub_5d7f20 (no mangled name - IDA guess only)
+// ORIGINAL: 0x005D7F20 sub_5d7f20 0x005D7F20-0x005D7FFB;0x00662BD1-0x00662BFC FILE
+// RULED-OUT: reproducing the SEH frame/unwind funclets (~Buffer only runs on the EXCEPTION path in the original; the normal path calls close()+~Spot() explicitly instead) - landed with the local `Buffer buf` left trivially destructible (no ~Buffer call at all on scope exit) and the explicit close()/spot_.~Spot() calls matching the normal path only.
+// (no mangled name - IDA guess only)
 // size      262 bytes
-// spans     0x005D7F20-0x005D7FFB;0x00662BD1-0x00662BFC
 // prototype extern "C" int __stdcall sub_5d7f20(int, int, int, int)
 // callers   0   call targets   4
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x005D7210 0x005D7470 0x005D7DE0 0x005FA870
-// RULED-OUT: reproducing the SEH frame/unwind funclets (~Buffer only runs
-//            on the EXCEPTION path in the original; the normal path calls
-//            close()+~Spot() explicitly instead) - landed with the local
-//            `Buffer buf` left trivially destructible (no ~Buffer call at
-//            all on scope exit) and the explicit close()/spot_.~Spot()
-//            calls matching the normal path only.
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: sub_5d7f20  at 0x005D7F20  (262 bytes)
 //

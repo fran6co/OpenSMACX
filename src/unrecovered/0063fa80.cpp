@@ -1,26 +1,17 @@
-// ORIGINAL: 0x0063FA80 FILE
+// ORIGINAL: 0x0063FA80 sub_63fa80 0x0063FA80-0x0063FC92 FILE
+// RULED-OUT: the do/while(--n) with a hoisted `int delta = dst-src` byte pointer trick (rather than a plain `for` with two array subscripts) moved the mismatch from instruction #3 to #10 - matches the original's single moving pointer covering both arrays via `eax+ecx`.
+// RULED-OUT: MISMATCH #10 'fld' vs 'mov', not chased further - the round-half-away-from-zero helper (`v + (v>=thresh?+.5:-.5)` then truncate) reproduces the fcomp/fnstsw/test-ah,1 shape per call site but not byte-for-byte across all nine.
 // working copy - scaffold materialised by --work
-// name      sub_63fa80
 // size      530 bytes
-// spans     0x0063FA80-0x0063FC92
 // prototype 
 // callers   3   call targets   1
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x006458C8
-// RULED-OUT: the do/while(--n) with a hoisted `int delta = dst-src` byte
-//        pointer trick (rather than a plain `for` with two array
-//        subscripts) moved the mismatch from instruction #3 to #10 -
-//        matches the original's single moving pointer covering both
-//        arrays via `eax+ecx`.
 // PROPOSAL: sub_63fa80() -> sub_63fa80(float *param_1), void return.
 //           IDA's `int __cdecl(int)` guess is contradicted by the
 //           disasm: no `ret N`, no deliberate eax return, and [esp+4]
 //           is dereferenced as a float* base for `fld dword ptr[eax]`.
-// RULED-OUT: MISMATCH #10 'fld' vs 'mov', not chased further - the
-//            round-half-away-from-zero helper (`v + (v>=thresh?+.5:-.5)`
-//            then truncate) reproduces the fcomp/fnstsw/test-ah,1 shape
-//            per call site but not byte-for-byte across all nine.
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: sub_63fa80  at 0x0063FA80  (530 bytes)

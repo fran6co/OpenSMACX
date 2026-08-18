@@ -1,11 +1,7 @@
-// ORIGINAL: 0x006169C0 BYTE_EXACT FILE
-// LEVER: thiscall shim - a synthetic HeapEx : public Heap class exposes
-//        shutdown() as a member so the call folds into the original's bare
-//        5-byte jmp; the shim's class name does not need to match Heap
+// ORIGINAL: 0x006169C0 ??1Strings@@QAE@XZ 0x006169C0-0x006169C5 FILE BYTE_EXACT
+// LEVER: thiscall shim - a synthetic HeapEx : public Heap class exposes shutdown() as a member so the call folds into the original's bare 5-byte jmp; the shim's class name does not need to match Heap
 // working copy - scaffold materialised by --work
-// name      ??1Strings@@QAE@XZ
 // size      5 bytes
-// spans     0x006169C0-0x006169C5
 // prototype void (__thiscall ??1Strings@@QAE@XZ)(Strings* this)
 // callers   0   call targets   0
 // kind      thunk

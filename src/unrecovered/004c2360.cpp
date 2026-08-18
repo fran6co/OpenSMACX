@@ -1,21 +1,12 @@
-// ORIGINAL: 0x004C2360
-// name      ?vehdraw_construct_vehicle@@YAHHHHHHHPAUCaviar@@@Z
+// ORIGINAL: 0x004C2360 ?vehdraw_construct_vehicle@@YAHHHHHHHPAUCaviar@@@Z 0x004C2360-0x004C246D
+// RULED-OUT: `extern signed char g_0094f280[];` (array decl, not a fixed pointer const) kept the shift/index a genuine `lea`/scaled address instead of the compiler folding the base into an `add` before the `shl` - the indexed-table-base case the brief warns about.
+// RULED-OUT: every exit after an `add_object` call falls straight to `pop/ret` with no `xor eax,eax` in the original, and the final fallthrough leaves whatever the last call happened to leave in eax - so the original return type is `void`, not `int`; MNEMONIC_ONLY (109/109, 269/269 bytes) once the two early exits became bare `return;`.
 // size      269 bytes
-// spans     0x004C2360-0x004C246D
 // prototype int (__cdecl ?vehdraw_construct_vehicle@@YAHHHHHHHPAUCaviar@@@Z)(int factionID, int, int, int, int, int, Caviar*)
 // callers   0   call targets   6
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x004C2030 0x004C2470 0x004C2CF0 0x004C3090 0x00617920 0x00617F20
-// RULED-OUT: `extern signed char g_0094f280[];` (array decl, not a fixed
-//        pointer const) kept the shift/index a genuine `lea`/scaled address
-//        instead of the compiler folding the base into an `add` before the
-//        `shl` - the indexed-table-base case the brief warns about.
-// RULED-OUT: every exit after an `add_object` call falls straight to `pop/ret`
-//        with no `xor eax,eax` in the original, and the final fallthrough
-//        leaves whatever the last call happened to leave in eax - so the
-//        original return type is `void`, not `int`; MNEMONIC_ONLY (109/109,
-//        269/269 bytes) once the two early exits became bare `return;`.
 // PROPOSAL: int -> void, since the disassembly never zeroes eax before any
 //           `ret` and one path returns with eax = the last-loaded a6.
 

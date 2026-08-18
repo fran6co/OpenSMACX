@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004C1B10 FILE
-// name      ?vehdraw_compute_facet_normals@@YAXXZ
+// ORIGINAL: 0x004C1B10 ?vehdraw_compute_facet_normals@@YAXXZ 0x004C1B10-0x004C1CF7 FILE
 // size      487 bytes
-// spans     0x004C1B10-0x004C1CF7
 // prototype 
 // callers   0   call targets   2
 // kind      game

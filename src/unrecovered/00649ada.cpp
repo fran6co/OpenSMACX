@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00649ADA EXCLUDED S1
-// name      __cftof
+// ORIGINAL: 0x00649ADA __cftof 0x00649ADA-0x00649B2F EXCLUDED S1
 // size      85 bytes
-// spans     0x00649ADA-0x00649B2F
 // prototype 
 // callers   1   call targets   3
 // kind      library

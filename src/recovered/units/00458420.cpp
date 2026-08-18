@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00458420 FILE
-// name      ?draw_text@InfoWin@@QAEXH@Z
+// ORIGINAL: 0x00458420 ?draw_text@InfoWin@@QAEXH@Z 0x00458420-0x004588A9 FILE
 // size      1161 bytes
-// spans     0x00458420-0x004588A9
 // prototype void (__thiscall ?draw_text@InfoWin@@QAEXH@Z)(InfoWin* this, int)
 // callers   6   call targets   11
 // kind      game

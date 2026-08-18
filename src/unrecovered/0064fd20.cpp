@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064FD20 EXCLUDED S1
-// name      __strcmpi
+// ORIGINAL: 0x0064FD20 __strcmpi 0x0064FD20-0x0064FDF0 EXCLUDED S1
 // size      208 bytes
-// spans     0x0064FD20-0x0064FDF0
 // prototype 
 // callers   22   call targets   3
 // kind      library

@@ -1,15 +1,7 @@
-// ORIGINAL: 0x00477A60 FILE
-// RULED-OUT: g_00946f58 already scaffold-declared as `int *const` (plain
-//            load elsewhere) -> C2373 redefinition; renamed the
-//            address-does-work extern to g_byteflags_946f58 alongside three
-//            new `extern int name[]` table bases (0094cd60/ca08/cea0),
-//            masked relocations, cheap per the documented lever. MISMATCH
-//            0.86 sim: original spills `year` to an extra `push ecx` frame
-//            slot our register allocation never needed; not chased further.
+// ORIGINAL: 0x00477A60 ?mon_killed_faction@@YAXHH@Z 0x00477A60-0x00477B0F FILE
+// RULED-OUT: g_00946f58 already scaffold-declared as `int *const` (plain load elsewhere) -> C2373 redefinition; renamed the address-does-work extern to g_byteflags_946f58 alongside three new `extern int name[]` table bases (0094cd60/ca08/cea0), masked relocations, cheap per the documented lever. MISMATCH 0.86 sim: original spills `year` to an extra `push ecx` frame slot our register allocation never needed; not chased further.
 // working copy - scaffold materialised by --work
-// name      ?mon_killed_faction@@YAXHH@Z
 // size      175 bytes
-// spans     0x00477A60-0x00477B0F
 // prototype 
 // callers   1   call targets   2
 // kind      game

@@ -1,19 +1,12 @@
-// ORIGINAL: 0x005D68C0 FILE
-// name      sub_5d68c0
+// ORIGINAL: 0x005D68C0 sub_5d68c0 0x005D68C0-0x005D6A42 FILE
+// RULED-OUT: none confirmed byte-exact; MISMATCH #44 'mov' vs 'jmp' - the IDA-guessed __stdcall(int) contradicts pervasive [ecx+N] reads with no matching stack slot, so this landed as a __thiscall member of a synthetic owner class instead (PROPOSAL below).
+// RULED-OUT: flipping the `(flags & 0x10) == 0` polarity to `!= 0` and swapping which field group goes in which arm moved the first divergence from #31 to #44 (similarity 0.70 -> 0.83).
 // size      386 bytes
-// spans     0x005D68C0-0x005D6A42
 // prototype
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
-// RULED-OUT: none confirmed byte-exact; MISMATCH #44 'mov' vs 'jmp' - the
-//            IDA-guessed __stdcall(int) contradicts pervasive [ecx+N] reads
-//            with no matching stack slot, so this landed as a __thiscall
-//            member of a synthetic owner class instead (PROPOSAL below).
-//            RULED-OUT: flipping the `(flags & 0x10) == 0` polarity to `!= 0`
-//            and swapping which field group goes in which arm moved the
-//            first divergence from #31 to #44 (similarity 0.70 -> 0.83).
 // PROPOSAL: extern "C" int __stdcall sub_5d68c0(int a1) ->
 //           __thiscall void sub_5d68c0(Sub5D68C0Arg *a1) on a synthetic
 //           receiver class - evidence: pervasive [ecx+0x9cc..0x9f4]/[ecx+

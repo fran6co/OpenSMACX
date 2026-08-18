@@ -1,19 +1,12 @@
-// ORIGINAL: 0x005F7320 FILE
-// name      ?update_screen@Win@@QAAHPAURECT@@PAVWin@@@Z
+// ORIGINAL: 0x005F7320 ?update_screen@Win@@QAAHPAURECT@@PAVWin@@@Z 0x005F7320-0x005F749F FILE
+// RULED-OUT: none confirmed byte-exact; MISMATCH #9 'test' vs 'mov' - the [0x669338] seam is modelled as a raw IntersectRect-shaped __stdcall function pointer with a guessed (dest, src1, src2) argument order; the real signature at that seam is unconfirmed, and the down-counting child-window loop's register pressure does not match the original's.
 // size      383 bytes
-// spans     0x005F7320-0x005F749F
 // prototype
 // callers   12   call targets   4
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005DFB50 0x005DFCD0 0x005DFF00 0x005F7E90
 // indirect  0x005F73DA 0x005F73F9 0x005F7450
-// RULED-OUT: none confirmed byte-exact; MISMATCH #9 'test' vs 'mov' - the
-//            [0x669338] seam is modelled as a raw IntersectRect-shaped
-//            __stdcall function pointer with a guessed (dest, src1, src2)
-//            argument order; the real signature at that seam is
-//            unconfirmed, and the down-counting child-window loop's
-//            register pressure does not match the original's.
 typedef int int32_t;
 typedef unsigned int uint32_t;
 typedef short int16_t;

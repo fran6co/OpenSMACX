@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004B2210 BYTE_EXACT
-// name      ?on_iface_left_click@SocialWin@@QAEHHH@Z
+// ORIGINAL: 0x004B2210 ?on_iface_left_click@SocialWin@@QAEHHH@Z 0x004B2210-0x004B221D BYTE_EXACT
 // size      13 bytes
-// spans     0x004B2210-0x004B221D
 // prototype int (__thiscall ?on_iface_left_click@SocialWin@@QAEHHH@Z)(SocialWin* this, int, int)
 // callers   0   call targets   1
 // kind      game

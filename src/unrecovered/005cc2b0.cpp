@@ -1,10 +1,6 @@
-// ORIGINAL: 0x005CC2B0 FILE
-// RULED-OUT: `__int64` product + `(x+0x8000)>>16` for the imul/shr-5
-//            rounded-highword idiom, instead of the raw edx:eax add/adc
-//            sequence; #1 mismatch is in the fastcall-arg-to-local store.
-// name      sub_5cc2b0
+// ORIGINAL: 0x005CC2B0 sub_5cc2b0 0x005CC2B0-0x005CC42C FILE
+// RULED-OUT: `__int64` product + `(x+0x8000)>>16` for the imul/shr-5 rounded-highword idiom, instead of the raw edx:eax add/adc sequence; #1 mismatch is in the fastcall-arg-to-local store.
 // size      380 bytes
-// spans     0x005CC2B0-0x005CC42C
 // prototype 
 // callers   1   call targets   0
 // kind      game

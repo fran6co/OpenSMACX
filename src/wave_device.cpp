@@ -23,10 +23,8 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
-ORIGINAL: 0x004C5180 BYTE_EXACT
-// name      ?set_pan@Wave_Device@@QAEXH@Z
+// ORIGINAL: 0x004C5180 ?set_pan@Wave_Device@@QAEXH@Z 0x004C5180-0x004C5183 BYTE_EXACT
 // size      3 bytes
-// spans     0x004C5180-0x004C5183
 // prototype void (__thiscall ?set_pan@Wave_Device@@QAEXH@Z)(Wave_Device* this, int)
 // callers   0   call targets   0
 // kind      game
@@ -40,10 +38,8 @@ void Wave_Device::set_pan(int) {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
-ORIGINAL: 0x004C51A0 BYTE_EXACT
-// name      ?fade@Wave_Device@@QAEHI@Z
+// ORIGINAL: 0x004C51A0 ?fade@Wave_Device@@QAEHI@Z 0x004C51A0-0x004C51A5 BYTE_EXACT
 // size      5 bytes
-// spans     0x004C51A0-0x004C51A5
 // prototype int (__thiscall ?fade@Wave_Device@@QAEHI@Z)(Wave_Device* this, unsigned int)
 // callers   0   call targets   0
 // kind      game
@@ -110,10 +106,8 @@ int forward_to_wrapped_device(Wave_Device *self, int vtable_offset, int a1,
 
 /*
 Purpose: Enable the wrapped device, if there is one, through vtable slot 0x60.
-ORIGINAL: 0x004C51C0
-// name      ?enable@Wave_Device@@QAEXXZ
+// ORIGINAL: 0x004C51C0 ?enable@Wave_Device@@QAEXXZ 0x004C51C0-0x004C51CF
 // size      15 bytes
-// spans     0x004C51C0-0x004C51CF
 // prototype void (__thiscall ?enable@Wave_Device@@QAEXXZ)(Wave_Device* this)
 // callers   4   call targets   0
 // kind      game
@@ -129,10 +123,8 @@ void Wave_Device::enable() {
 
 /*
 Purpose: Disable the wrapped device, if there is one, through vtable slot 0x64.
-ORIGINAL: 0x004C51D0
-// name      ?disable@Wave_Device@@QAEXXZ
+// ORIGINAL: 0x004C51D0 ?disable@Wave_Device@@QAEXXZ 0x004C51D0-0x004C51DF
 // size      15 bytes
-// spans     0x004C51D0-0x004C51DF
 // prototype void (__thiscall ?disable@Wave_Device@@QAEXXZ)(Wave_Device* this)
 // callers   4   call targets   0
 // kind      game
@@ -164,10 +156,8 @@ void __fastcall wave_device_disable_redirect(Wave_Device *self, void *) {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
-ORIGINAL: 0x004C5170 BYTE_EXACT
-// name      ?get_volume@Wave_Device@@QAEHXZ
+// ORIGINAL: 0x004C5170 ?get_volume@Wave_Device@@QAEHXZ 0x004C5170-0x004C5173 BYTE_EXACT
 // size      3 bytes
-// spans     0x004C5170-0x004C5173
 // prototype int (__thiscall ?get_volume@Wave_Device@@QAEHXZ)(Wave_Device* this)
 // callers   0   call targets   0
 // kind      game
@@ -182,10 +172,8 @@ int Wave_Device::get_volume() {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
-ORIGINAL: 0x004C51B0 BYTE_EXACT
-// name      ?stop@Wave_Device@@QAEHXZ
+// ORIGINAL: 0x004C51B0 ?stop@Wave_Device@@QAEHXZ 0x004C51B0-0x004C51B3 BYTE_EXACT
 // size      3 bytes
-// spans     0x004C51B0-0x004C51B3
 // prototype int (__thiscall ?stop@Wave_Device@@QAEHXZ)(Wave_Device* this)
 // callers   0   call targets   0
 // kind      game
@@ -208,10 +196,8 @@ int __fastcall wave_device_stop_redirect(Wave_Device *self, void *) {
 
 /*
 Purpose: Ask the wrapped device to suspend, through its vtable slot 0x48.
-ORIGINAL: 0x004C4FC0
-// name      ?suspend@Wave_Device@@QAEXXZ
+// ORIGINAL: 0x004C4FC0 ?suspend@Wave_Device@@QAEXXZ 0x004C4FC0-0x004C4FCD
 // size      13 bytes
-// spans     0x004C4FC0-0x004C4FCD
 // prototype void (__thiscall ?suspend@Wave_Device@@QAEXXZ)(Wave_Device* this)
 // callers   1   call targets   0
 // kind      game
@@ -226,10 +212,8 @@ void Wave_Device::suspend() {
 
 /*
 Purpose: Ask the wrapped device to restart, through its vtable slot 0x4C.
-ORIGINAL: 0x004C4FD0
-// name      ?restart@Wave_Device@@QAEXXZ
+// ORIGINAL: 0x004C4FD0 ?restart@Wave_Device@@QAEXXZ 0x004C4FD0-0x004C4FDD
 // size      13 bytes
-// spans     0x004C4FD0-0x004C4FDD
 // prototype void (__thiscall ?restart@Wave_Device@@QAEXXZ)(Wave_Device* this)
 // callers   1   call targets   0
 // kind      game
@@ -244,10 +228,8 @@ void Wave_Device::restart() {
 
 /*
 Purpose: Poll the wrapped device, through its vtable slot 0x34.
-ORIGINAL: 0x004C4FE0
-// name      ?update_sound@Wave_Device@@QAEXXZ
+// ORIGINAL: 0x004C4FE0 ?update_sound@Wave_Device@@QAEXXZ 0x004C4FE0-0x004C4FED
 // size      13 bytes
-// spans     0x004C4FE0-0x004C4FED
 // prototype void (__thiscall ?update_sound@Wave_Device@@QAEXXZ)(Wave_Device* this)
 // callers   0   call targets   0
 // kind      game
@@ -263,10 +245,8 @@ void Wave_Device::update_sound() {
 /*
 Purpose: Ask the wrapped device how many devices it offers, through its vtable
          slot 0x14.
-ORIGINAL: 0x004C4FF0
-// name      ?get_ndevices@Wave_Device@@QAEHXZ
+// ORIGINAL: 0x004C4FF0 ?get_ndevices@Wave_Device@@QAEHXZ 0x004C4FF0-0x004C4FFF
 // size      15 bytes
-// spans     0x004C4FF0-0x004C4FFF
 // prototype int (__thiscall ?get_ndevices@Wave_Device@@QAEHXZ)(Wave_Device* this)
 // callers   0   call targets   0
 // kind      game
@@ -282,10 +262,8 @@ int Wave_Device::get_ndevices() {
 /*
 Purpose: Ask the wrapped device for its hardware memory size, through its
          vtable slot 0x58.
-ORIGINAL: 0x004C5020
-// name      ?get_hw_mem_size@Wave_Device@@QAEHXZ
+// ORIGINAL: 0x004C5020 ?get_hw_mem_size@Wave_Device@@QAEHXZ 0x004C5020-0x004C502F
 // size      15 bytes
-// spans     0x004C5020-0x004C502F
 // prototype int (__thiscall ?get_hw_mem_size@Wave_Device@@QAEHXZ)(Wave_Device* this)
 // callers   0   call targets   0
 // kind      game
@@ -301,10 +279,8 @@ int Wave_Device::get_hw_mem_size() {
 /*
 Purpose: Ask the wrapped device for its sample rate, through its vtable
          slot 0x3C.
-ORIGINAL: 0x004C5140
-// name      ?get_rate@Wave_Device@@QAEHXZ
+// ORIGINAL: 0x004C5140 ?get_rate@Wave_Device@@QAEHXZ 0x004C5140-0x004C514F
 // size      15 bytes
-// spans     0x004C5140-0x004C514F
 // prototype int (__thiscall ?get_rate@Wave_Device@@QAEHXZ)(Wave_Device* this)
 // callers   0   call targets   0
 // kind      game
@@ -320,10 +296,8 @@ int Wave_Device::get_rate() {
 /*
 Purpose: Ask the wrapped device for its DirectSound interface, through its
          vtable slot 0x70.
-ORIGINAL: 0x004C5190
-// name      ?get_ds@Wave_Device@@QAEHXZ
+// ORIGINAL: 0x004C5190 ?get_ds@Wave_Device@@QAEHXZ 0x004C5190-0x004C519F
 // size      15 bytes
-// spans     0x004C5190-0x004C519F
 // prototype int (__thiscall ?get_ds@Wave_Device@@QAEHXZ)(Wave_Device* this)
 // callers   1   call targets   0
 // kind      game
@@ -340,10 +314,8 @@ int Wave_Device::get_ds() {
 Purpose: Ask the wrapped device whether it supports EAX, through its vtable
          slot 0x74. With no device wrapped the original clears only al, which
          is the codegen for a false of byte width; zero is that value.
-ORIGINAL: 0x004C54B0
-// name      ?is_eax@Wave_Device@@QAEHXZ
+// ORIGINAL: 0x004C54B0 ?is_eax@Wave_Device@@QAEHXZ 0x004C54B0-0x004C54BF
 // size      15 bytes
-// spans     0x004C54B0-0x004C54BF
 // prototype int (__thiscall ?is_eax@Wave_Device@@QAEHXZ)(Wave_Device* this)
 // callers   0   call targets   0
 // kind      game
@@ -391,10 +363,8 @@ int __fastcall wave_device_is_eax_redirect(Wave_Device *self, void *) {
 /*
 Purpose: Ask the wrapped device whether it is disabled, through vtable slot
          0x68. With no device wrapped the answer is yes.
-ORIGINAL: 0x004C51E0
-// name      ?is_disabled@Wave_Device@@QAEHXZ
+// ORIGINAL: 0x004C51E0 ?is_disabled@Wave_Device@@QAEHXZ 0x004C51E0-0x004C51F2
 // size      18 bytes
-// spans     0x004C51E0-0x004C51F2
 // prototype int (__thiscall ?is_disabled@Wave_Device@@QAEHXZ)(Wave_Device* this)
 // callers   0   call targets   0
 // kind      game
@@ -410,10 +380,8 @@ int Wave_Device::is_disabled() {
 /*
 Purpose: Ask the wrapped device to stop dumping raw audio, through vtable slot
          0x54.
-ORIGINAL: 0x004C5220
-// name      ?stop_raw_dump@Wave_Device@@QAEHXZ
+// ORIGINAL: 0x004C5220 ?stop_raw_dump@Wave_Device@@QAEHXZ 0x004C5220-0x004C5232
 // size      18 bytes
-// spans     0x004C5220-0x004C5232
 // prototype int (__thiscall ?stop_raw_dump@Wave_Device@@QAEHXZ)(Wave_Device* this)
 // callers   0   call targets   0
 // kind      game
@@ -430,10 +398,8 @@ int Wave_Device::stop_raw_dump() {
 Purpose: Ask the wrapped device whether it does 3D audio, through vtable slot
          0x84. With no device wrapped the original clears only al, the codegen
          for a false of byte width; zero is that value.
-ORIGINAL: 0x004C5530
-// name      ?is_3d@Wave_Device@@QAEHXZ
+// ORIGINAL: 0x004C5530 ?is_3d@Wave_Device@@QAEHXZ 0x004C5530-0x004C5542
 // size      18 bytes
-// spans     0x004C5530-0x004C5542
 // prototype int (__thiscall ?is_3d@Wave_Device@@QAEHXZ)(Wave_Device* this)
 // callers   0   call targets   0
 // kind      game
@@ -448,10 +414,8 @@ int Wave_Device::is_3d() {
 
 /*
 Purpose: Hand the sample rate to the wrapped device, through vtable slot 0x38.
-ORIGINAL: 0x004C5120
-// name      ?set_rate@Wave_Device@@QAEXK@Z
+// ORIGINAL: 0x004C5120 ?set_rate@Wave_Device@@QAEXK@Z 0x004C5120-0x004C5137
 // size      23 bytes
-// spans     0x004C5120-0x004C5137
 // prototype void (__thiscall ?set_rate@Wave_Device@@QAEXK@Z)(Wave_Device* this, unsigned int)
 // callers   0   call targets   0
 // kind      game
@@ -467,10 +431,8 @@ void Wave_Device::set_rate(unsigned long a1) {
 
 /*
 Purpose: Hand the volume to the wrapped device, through vtable slot 0x20.
-ORIGINAL: 0x004C5150
-// name      ?set_volume@Wave_Device@@QAEXK@Z
+// ORIGINAL: 0x004C5150 ?set_volume@Wave_Device@@QAEXK@Z 0x004C5150-0x004C5167
 // size      23 bytes
-// spans     0x004C5150-0x004C5167
 // prototype void (__thiscall ?set_volume@Wave_Device@@QAEXK@Z)(Wave_Device* this, unsigned int)
 // callers   2   call targets   0
 // kind      game
@@ -486,10 +448,8 @@ void Wave_Device::set_volume(unsigned long a1) {
 
 /*
 Purpose: Hand the game window to the wrapped device, through vtable slot 0x6C.
-ORIGINAL: 0x004C5000
-// name      ?set_hwnd@Wave_Device@@QAEHPAX@Z
+// ORIGINAL: 0x004C5000 ?set_hwnd@Wave_Device@@QAEHPAX@Z 0x004C5000-0x004C5020
 // size      32 bytes
-// spans     0x004C5000-0x004C5020
 // prototype int (__thiscall ?set_hwnd@Wave_Device@@QAEHPAX@Z)(Wave_Device* this, void*)
 // callers   0   call targets   0
 // kind      game
@@ -510,10 +470,8 @@ int Wave_Device::set_hwnd(void *a1) {
 Purpose: Read one group's volume from the sixteen-entry table of 24-byte
          records the object keeps at 0x28. Nothing is dispatched; an index past
          the table answers zero.
-ORIGINAL: 0x004C5380 BYTE_EXACT
-// name      ?get_group_volume@Wave_Device@@QAEHI@Z
+// ORIGINAL: 0x004C5380 ?get_group_volume@Wave_Device@@QAEHI@Z 0x004C5380-0x004C539C BYTE_EXACT
 // size      28 bytes
-// spans     0x004C5380-0x004C539C
 // prototype int (__thiscall ?get_group_volume@Wave_Device@@QAEHI@Z)(Wave_Device* this, unsigned int)
 // callers   1   call targets   0
 // kind      game
@@ -572,10 +530,8 @@ Purpose: Put a wave into one of the sixteen groups. The list-insert helper
          threads it through the group's node list, and the wave's own group
          slot at 0x68 records the group AFTER the insert - the original
          writes the field last, so the helper still sees the old slot.
-ORIGINAL: 0x004C5240
-// name      ?add_to_group@Wave_Device@@QAEHIPAUWave@@@Z
+// ORIGINAL: 0x004C5240 ?add_to_group@Wave_Device@@QAEHIPAUWave@@@Z 0x004C5240-0x004C5277
 // size      55 bytes
-// spans     0x004C5240-0x004C5277
 // prototype int (__thiscall ?add_to_group@Wave_Device@@QAEHIPAUWave@@@Z)(Wave_Device* this, unsigned int, Wave*)
 // callers   2   call targets   1
 // kind      game
@@ -609,10 +565,8 @@ Purpose: Take a wave out of its group. The wave's slot names the group; its
          out. A wave whose node is not on the list - or a group with no list
          at all - just forgets its slot. Either way the wave's slot becomes
          the out-of-range 0x10.
-ORIGINAL: 0x004C5280
-// name      ?pull_from_group@Wave_Device@@QAEHPAUWave@@@Z
+// ORIGINAL: 0x004C5280 ?pull_from_group@Wave_Device@@QAEHPAUWave@@@Z 0x004C5280-0x004C531C
 // size      156 bytes
-// spans     0x004C5280-0x004C531C
 // prototype int (__thiscall ?pull_from_group@Wave_Device@@QAEHPAUWave@@@Z)(Wave_Device* this, Wave*)
 // callers   1   call targets   1
 // kind      game
@@ -671,10 +625,8 @@ Purpose: Report whether a group is disabled: out-of-range groups always are,
          and a real one is disabled while its enabled byte is zero. The
          original defines only AL on the out-of-range path; callers test the
          byte.
-ORIGINAL: 0x004C5460
-// name      ?is_group_disabled@Wave_Device@@QAEHI@Z
+// ORIGINAL: 0x004C5460 ?is_group_disabled@Wave_Device@@QAEHI@Z 0x004C5460-0x004C5481
 // size      33 bytes
-// spans     0x004C5460-0x004C5481
 // prototype int (__thiscall ?is_group_disabled@Wave_Device@@QAEHI@Z)(Wave_Device* this, unsigned int)
 // callers   1   call targets   0
 // kind      game
@@ -705,10 +657,8 @@ Purpose: Append a wave to a group's node list. A fresh 12-byte node comes
          shapes are kept. With a live tail the new node's prev is the
          RE-READ tail field, after the old tail's next was written - an
          order the original's aliasing permits to matter.
-ORIGINAL: 0x004C5BF0
-// name      sub_4c5bf0
+// ORIGINAL: 0x004C5BF0 sub_4c5bf0 0x004C5BF0-0x004C5C4A
 // size      90 bytes
-// spans     0x004C5BF0-0x004C5C4A
 // prototype 
 // callers   1   call targets   1
 // kind      game
@@ -752,10 +702,8 @@ void __fastcall wave_group_insert_redirect(WaveGroupList *self, void *,
 /*
 Purpose: Forward get_description to the wrapped device through its vtable slot
          0x1c.
-ORIGINAL: 0x004C50F0
-// name      ?get_description@Wave_Device@@QAEXKPADK@Z
+// ORIGINAL: 0x004C50F0 ?get_description@Wave_Device@@QAEXKPADK@Z 0x004C50F0-0x004C5111
 // size      33 bytes
-// spans     0x004C50F0-0x004C5111
 // prototype void (__thiscall ?get_description@Wave_Device@@QAEXKPADK@Z)(Wave_Device* this, unsigned int, int8*, unsigned int)
 // callers   0   call targets   0
 // kind      game
@@ -780,10 +728,8 @@ void __fastcall wave_device_get_description_redirect(Wave_Device *self, void *, 
 /*
 Purpose: Forward start_raw_dump to the wrapped device through its vtable slot
          0x50.
-ORIGINAL: 0x004C5200
-// name      ?start_raw_dump@Wave_Device@@QAEHPAD@Z
+// ORIGINAL: 0x004C5200 ?start_raw_dump@Wave_Device@@QAEHPAD@Z 0x004C5200-0x004C5220
 // size      32 bytes
-// spans     0x004C5200-0x004C5220
 // prototype int (__thiscall ?start_raw_dump@Wave_Device@@QAEHPAD@Z)(Wave_Device* this, int8*)
 // callers   0   call targets   0
 // kind      game
@@ -809,10 +755,8 @@ int __fastcall wave_device_start_raw_dump_redirect(Wave_Device *self, void *, ch
 /*
 Purpose: Forward set_eax to the wrapped device through its vtable slot
          0x7c.
-ORIGINAL: 0x004C54C0
-// name      ?set_eax@Wave_Device@@QAEHPAUEAX_REVERB_PROPERTIES@@@Z
+// ORIGINAL: 0x004C54C0 ?set_eax@Wave_Device@@QAEHPAUEAX_REVERB_PROPERTIES@@@Z 0x004C54C0-0x004C54E0
 // size      32 bytes
-// spans     0x004C54C0-0x004C54E0
 // prototype int (__thiscall ?set_eax@Wave_Device@@QAEHPAUEAX_REVERB_PROPERTIES@@@Z)(Wave_Device* this, EAX_REVERB_PROPERTIES*)
 // callers   0   call targets   0
 // kind      game
@@ -838,10 +782,8 @@ int __fastcall wave_device_set_eax_props_redirect(Wave_Device *self, void *, EAX
 /*
 Purpose: Forward set_eax to the wrapped device through its vtable slot
          0x78.
-ORIGINAL: 0x004C54E0
-// name      ?set_eax@Wave_Device@@QAEHK@Z
+// ORIGINAL: 0x004C54E0 ?set_eax@Wave_Device@@QAEHK@Z 0x004C54E0-0x004C5500
 // size      32 bytes
-// spans     0x004C54E0-0x004C5500
 // prototype int (__thiscall ?set_eax@Wave_Device@@QAEHK@Z)(Wave_Device* this, unsigned int)
 // callers   0   call targets   0
 // kind      game
@@ -867,10 +809,8 @@ int __fastcall wave_device_set_eax_redirect(Wave_Device *self, void *, unsigned 
 /*
 Purpose: Forward set_eax_mix to the wrapped device through its vtable slot
          0x80.
-ORIGINAL: 0x004C5500
-// name      ?set_eax_mix@Wave_Device@@QAEHM@Z
+// ORIGINAL: 0x004C5500 ?set_eax_mix@Wave_Device@@QAEHM@Z 0x004C5500-0x004C5523
 // size      35 bytes
-// spans     0x004C5500-0x004C5523
 // prototype int (__thiscall ?set_eax_mix@Wave_Device@@QAEHM@Z)(Wave_Device* this, float)
 // callers   0   call targets   0
 // kind      game
@@ -896,10 +836,8 @@ int __fastcall wave_device_set_eax_mix_redirect(Wave_Device *self, void *, float
 /*
 Purpose: Forward set_listener_position to the wrapped device through its vtable slot
          0x88.
-ORIGINAL: 0x004C5550
-// name      ?set_listener_position@Wave_Device@@QAEHMMM@Z
+// ORIGINAL: 0x004C5550 ?set_listener_position@Wave_Device@@QAEHMMM@Z 0x004C5550-0x004C557B
 // size      43 bytes
-// spans     0x004C5550-0x004C557B
 // prototype int (__thiscall ?set_listener_position@Wave_Device@@QAEHMMM@Z)(Wave_Device* this, float, float, float)
 // callers   0   call targets   0
 // kind      game
@@ -925,10 +863,8 @@ int __fastcall wave_device_set_listener_position_redirect(Wave_Device *self, voi
 /*
 Purpose: Forward get_listener_position to the wrapped device through its vtable slot
          0x8c.
-ORIGINAL: 0x004C5580
-// name      ?get_listener_position@Wave_Device@@QAEHPAM00@Z
+// ORIGINAL: 0x004C5580 ?get_listener_position@Wave_Device@@QAEHPAM00@Z 0x004C5580-0x004C55AB
 // size      43 bytes
-// spans     0x004C5580-0x004C55AB
 // prototype int (__thiscall ?get_listener_position@Wave_Device@@QAEHPAM00@Z)(Wave_Device* this, float*, float*, float*)
 // callers   0   call targets   0
 // kind      game
@@ -954,10 +890,8 @@ int __fastcall wave_device_get_listener_position_redirect(Wave_Device *self, voi
 /*
 Purpose: Forward set_listener_xpos to the wrapped device through its vtable slot
          0x90.
-ORIGINAL: 0x004C55B0
-// name      ?set_listener_xpos@Wave_Device@@QAEHM@Z
+// ORIGINAL: 0x004C55B0 ?set_listener_xpos@Wave_Device@@QAEHM@Z 0x004C55B0-0x004C55D3
 // size      35 bytes
-// spans     0x004C55B0-0x004C55D3
 // prototype int (__thiscall ?set_listener_xpos@Wave_Device@@QAEHM@Z)(Wave_Device* this, float)
 // callers   0   call targets   0
 // kind      game
@@ -983,10 +917,8 @@ int __fastcall wave_device_set_listener_xpos_redirect(Wave_Device *self, void *,
 /*
 Purpose: Forward get_listener_xpos to the wrapped device through its vtable slot
          0x94.
-ORIGINAL: 0x004C55E0
-// name      ?get_listener_xpos@Wave_Device@@QAEHPAM@Z
+// ORIGINAL: 0x004C55E0 ?get_listener_xpos@Wave_Device@@QAEHPAM@Z 0x004C55E0-0x004C5603
 // size      35 bytes
-// spans     0x004C55E0-0x004C5603
 // prototype int (__thiscall ?get_listener_xpos@Wave_Device@@QAEHPAM@Z)(Wave_Device* this, float*)
 // callers   0   call targets   0
 // kind      game
@@ -1012,10 +944,8 @@ int __fastcall wave_device_get_listener_xpos_redirect(Wave_Device *self, void *,
 /*
 Purpose: Forward set_listener_ypos to the wrapped device through its vtable slot
          0x98.
-ORIGINAL: 0x004C5610
-// name      ?set_listener_ypos@Wave_Device@@QAEHM@Z
+// ORIGINAL: 0x004C5610 ?set_listener_ypos@Wave_Device@@QAEHM@Z 0x004C5610-0x004C5633
 // size      35 bytes
-// spans     0x004C5610-0x004C5633
 // prototype int (__thiscall ?set_listener_ypos@Wave_Device@@QAEHM@Z)(Wave_Device* this, float)
 // callers   0   call targets   0
 // kind      game
@@ -1041,10 +971,8 @@ int __fastcall wave_device_set_listener_ypos_redirect(Wave_Device *self, void *,
 /*
 Purpose: Forward get_listener_ypos to the wrapped device through its vtable slot
          0x9c.
-ORIGINAL: 0x004C5640
-// name      ?get_listener_ypos@Wave_Device@@QAEHPAM@Z
+// ORIGINAL: 0x004C5640 ?get_listener_ypos@Wave_Device@@QAEHPAM@Z 0x004C5640-0x004C5663
 // size      35 bytes
-// spans     0x004C5640-0x004C5663
 // prototype int (__thiscall ?get_listener_ypos@Wave_Device@@QAEHPAM@Z)(Wave_Device* this, float*)
 // callers   0   call targets   0
 // kind      game
@@ -1070,10 +998,8 @@ int __fastcall wave_device_get_listener_ypos_redirect(Wave_Device *self, void *,
 /*
 Purpose: Forward set_listener_zpos to the wrapped device through its vtable slot
          0xa0.
-ORIGINAL: 0x004C5670
-// name      ?set_listener_zpos@Wave_Device@@QAEHM@Z
+// ORIGINAL: 0x004C5670 ?set_listener_zpos@Wave_Device@@QAEHM@Z 0x004C5670-0x004C5693
 // size      35 bytes
-// spans     0x004C5670-0x004C5693
 // prototype int (__thiscall ?set_listener_zpos@Wave_Device@@QAEHM@Z)(Wave_Device* this, float)
 // callers   0   call targets   0
 // kind      game
@@ -1099,10 +1025,8 @@ int __fastcall wave_device_set_listener_zpos_redirect(Wave_Device *self, void *,
 /*
 Purpose: Forward get_listener_zpos to the wrapped device through its vtable slot
          0xa4.
-ORIGINAL: 0x004C56A0
-// name      ?get_listener_zpos@Wave_Device@@QAEHPAM@Z
+// ORIGINAL: 0x004C56A0 ?get_listener_zpos@Wave_Device@@QAEHPAM@Z 0x004C56A0-0x004C56C3
 // size      35 bytes
-// spans     0x004C56A0-0x004C56C3
 // prototype int (__thiscall ?get_listener_zpos@Wave_Device@@QAEHPAM@Z)(Wave_Device* this, float*)
 // callers   0   call targets   0
 // kind      game
@@ -1220,10 +1144,8 @@ void load_wave_by_name(Wave *wave, char *fname) {
 Purpose: Set a group's volume scale and replay every member wave's own
          stored volume through its vtable slot 0x40, so the new scale takes
          effect. Bad slots and volumes above 0x7F answer 0xA.
-ORIGINAL: 0x004C5320
-// name      ?set_group_volume@Wave_Device@@QAEHII@Z
+// ORIGINAL: 0x004C5320 ?set_group_volume@Wave_Device@@QAEHII@Z 0x004C5320-0x004C537F
 // size      95 bytes
-// spans     0x004C5320-0x004C537F
 // prototype int (__thiscall ?set_group_volume@Wave_Device@@QAEHII@Z)(Wave_Device* this, unsigned int, unsigned int)
 // callers   2   call targets   0
 // kind      game
@@ -1254,10 +1176,8 @@ Purpose: Enable a group. Only a disabled one does any work: every member
          wave resumes through its vtable slot 0x8C, and the enabled byte is
          written AFTER the walk. An already-enabled group is left exactly as
          it is, nonzero byte and all.
-ORIGINAL: 0x004C53A0
-// name      ?enable_group@Wave_Device@@QAEHI@Z
+// ORIGINAL: 0x004C53A0 ?enable_group@Wave_Device@@QAEHI@Z 0x004C53A0-0x004C5400
 // size      96 bytes
-// spans     0x004C53A0-0x004C5400
 // prototype int (__thiscall ?enable_group@Wave_Device@@QAEHI@Z)(Wave_Device* this, unsigned int)
 // callers   1   call targets   0
 // kind      game
@@ -1288,10 +1208,8 @@ int __fastcall wave_device_enable_group_redirect(Wave_Device *self, void *,
 Purpose: Disable a group. Only an enabled one does any work: every member
          wave halts through its vtable slot 0x14, and the enabled byte is
          cleared AFTER the walk.
-ORIGINAL: 0x004C5400
-// name      ?disable_group@Wave_Device@@QAEHI@Z
+// ORIGINAL: 0x004C5400 ?disable_group@Wave_Device@@QAEHI@Z 0x004C5400-0x004C545D
 // size      93 bytes
-// spans     0x004C5400-0x004C545D
 // prototype int (__thiscall ?disable_group@Wave_Device@@QAEHI@Z)(Wave_Device* this, unsigned int)
 // callers   1   call targets   0
 // kind      game
@@ -1329,10 +1247,8 @@ Purpose: Switch the wrapped device to another output. Every sound on the
          attribute word is fetched twice per chained sound, and a sound
          appended to the resume list keeps whatever its next link held until
          the replay clears it.
-ORIGINAL: 0x004C5030
-// name      ?select@Wave_Device@@QAEHK@Z
+// ORIGINAL: 0x004C5030 ?select@Wave_Device@@QAEHK@Z 0x004C5030-0x004C50EF
 // size      191 bytes
-// spans     0x004C5030-0x004C50EF
 // prototype int (__thiscall ?select@Wave_Device@@QAEHK@Z)(Wave_Device* this, unsigned int)
 // callers   0   call targets   0
 // kind      game
@@ -1392,10 +1308,8 @@ func_wave_device_destroy **WaveDeviceDestroySlot =
 Purpose: Build the wrapped device of the requested kind through the factory
          hook, straight into the 0x14 field. A device already wrapped is
          refused with 0xC; a dead factory answers 0x14.
-ORIGINAL: 0x004C4ED0
-// name      ?create_device@Wave_Device@@QAEHK@Z
+// ORIGINAL: 0x004C4ED0 ?create_device@Wave_Device@@QAEHK@Z 0x004C4ED0-0x004C4F07
 // size      55 bytes
-// spans     0x004C4ED0-0x004C4F07
 // prototype int (__thiscall ?create_device@Wave_Device@@QAEHK@Z)(Wave_Device* this, unsigned int)
 // callers   0   call targets   0
 // kind      game
@@ -1424,10 +1338,8 @@ int __fastcall wave_device_create_device_redirect(Wave_Device *self, void *,
 /*
 Purpose: Tear the wrapped device down through the argument-less destroy hook
          and forget it. Without a device or a hook, 0x14 and nothing happens.
-ORIGINAL: 0x004C4F10
-// name      ?delete_device@Wave_Device@@QAEHXZ
+// ORIGINAL: 0x004C4F10 ?delete_device@Wave_Device@@QAEHXZ 0x004C4F10-0x004C4F37
 // size      39 bytes
-// spans     0x004C4F10-0x004C4F37
 // prototype int (__thiscall ?delete_device@Wave_Device@@QAEHXZ)(Wave_Device* this)
 // callers   0   call targets   0
 // kind      game
@@ -1460,10 +1372,8 @@ Purpose: Initialise the device stack: the Wave_Device's OWN virtual slot 0
          offset zero), then the wrapped device initialises through its slot
          0xC with both arguments, and a failure there runs the Wave_Device's
          own virtual slot 4 before the error propagates.
-ORIGINAL: 0x004C4F40
-// name      ?init@Wave_Device@@QAEHPAXK@Z
+// ORIGINAL: 0x004C4F40 ?init@Wave_Device@@QAEHPAXK@Z 0x004C4F40-0x004C4F7D
 // size      61 bytes
-// spans     0x004C4F40-0x004C4F7D
 // prototype int (__thiscall ?init@Wave_Device@@QAEHPAXK@Z)(Wave_Device* this, void*, unsigned int)
 // callers   1   call targets   0
 // kind      game
@@ -1500,10 +1410,8 @@ Purpose: Release the wrapped device: its own vtable slot 0x10 winds it down,
          and only if the device is STILL there afterwards - the callback may
          have cleared it - does the destroy hook run. Either way the field is
          forgotten.
-ORIGINAL: 0x004C4F80
-// name      ?release@Wave_Device@@QAEXXZ
+// ORIGINAL: 0x004C4F80 ?release@Wave_Device@@QAEXXZ 0x004C4F80-0x004C4FB3
 // size      51 bytes
-// spans     0x004C4F80-0x004C4FB3
 // prototype void (__thiscall ?release@Wave_Device@@QAEXXZ)(Wave_Device* this)
 // callers   1   call targets   0
 // kind      game
@@ -1539,10 +1447,8 @@ func_thiscall_teardown WaveControlGroupOriginalDtor =
 /*
 Purpose: Construct one control group: the list fields - head, tail, cursor,
          count - zero out; the enabled byte and volume are left untouched.
-ORIGINAL: 0x004C5490
-// name      ??0WaveControlGroup@@QAE@XZ
+// ORIGINAL: 0x004C5490 ??0WaveControlGroup@@QAE@XZ 0x004C5490-0x004C54AB
 // size      27 bytes
-// spans     0x004C5490-0x004C54AB
 // prototype void (__thiscall ??0WaveControlGroup@@QAE@XZ)(WaveControlGroup* this)
 // callers   0   call targets   0
 // kind      game
@@ -1567,10 +1473,8 @@ Purpose: Destroy one control group by draining its node list from the head:
          and the count drops - but a node carrying a NULL wave stops the
          drain right after it is freed, leaving the rest of the list in
          place. The cursor is never touched.
-ORIGINAL: 0x004C5B80
-// name      ??1WaveControlGroup@@QAE@XZ
+// ORIGINAL: 0x004C5B80 ??1WaveControlGroup@@QAE@XZ 0x004C5B80-0x004C5BEF
 // size      111 bytes
-// spans     0x004C5B80-0x004C5BEF
 // prototype void (__thiscall ??1WaveControlGroup@@QAE@XZ)(WaveControlGroup* this)
 // callers   0   call targets   1
 // kind      game
@@ -1610,10 +1514,8 @@ Purpose: Build the device singleton in two vtable stages: the base's vtable
          constructor iterator (their destructor rides along for the
          unreachable unwind path), the device's own vtable (0x0066E0E8)
          publishes, and the trailing dword clears. The SEH frame is omitted.
-ORIGINAL: 0x004C4DD0
-// name      ??0Wave_Device@@QAE@XZ
+// ORIGINAL: 0x004C4DD0 ??0Wave_Device@@QAE@XZ 0x004C4DD0-0x004C4E5E;0x004C4DB0-0x004C4DC3;0x00659EA0-0x00659EB2
 // size      179 bytes
-// spans     0x004C4DD0-0x004C4E5E;0x004C4DB0-0x004C4DC3;0x00659EA0-0x00659EB2
 // prototype void (__thiscall ??0Wave_Device@@QAE@XZ)(Wave_Device* this)
 // callers   1   call targets   2
 // kind      game
@@ -1647,10 +1549,8 @@ Purpose: Tear the device singleton down: its own vtable republishes, the
          iterator, the base vtable takes over, and a wrapped device is wound
          down through its slot 0x10 - kept in the field, since the object is
          dying anyway. The SEH frame is omitted.
-ORIGINAL: 0x004C4E60
-// name      ??1Wave_Device@@QAE@XZ
+// ORIGINAL: 0x004C4E60 ??1Wave_Device@@QAE@XZ 0x004C4E60-0x004C4EC6;0x004C4DB0-0x004C4DC3;0x00659EB2-0x00659EC4
 // size      139 bytes
-// spans     0x004C4E60-0x004C4EC6;0x004C4DB0-0x004C4DC3;0x00659EB2-0x00659EC4
 // prototype void (__thiscall ??1Wave_Device@@QAE@XZ)(Wave_Device* this)
 // callers   0   call targets   1
 // kind      game

@@ -20,10 +20,8 @@
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x004404C0 BYTE_EXACT
-// name      ?on_iface_left_click@DiploPop@@QAEXHH@Z
+// ORIGINAL: 0x004404C0 ?on_iface_left_click@DiploPop@@QAEXHH@Z 0x004404C0-0x004404C3 BYTE_EXACT
 // size      3 bytes
-// spans     0x004404C0-0x004404C3
 // prototype void (__thiscall ?on_iface_left_click@DiploPop@@QAEXHH@Z)(DiploPop* this, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -41,10 +39,8 @@ void __fastcall diplo_pop_on_iface_left_click_redirect(DiploPop *self, void *, i
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x004404D0 BYTE_EXACT
-// name      ?on_iface_right_click@DiploPop@@QAEXHH@Z
+// ORIGINAL: 0x004404D0 ?on_iface_right_click@DiploPop@@QAEXHH@Z 0x004404D0-0x004404D3 BYTE_EXACT
 // size      3 bytes
-// spans     0x004404D0-0x004404D3
 // prototype void (__thiscall ?on_iface_right_click@DiploPop@@QAEXHH@Z)(DiploPop* this, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -62,10 +58,8 @@ void __fastcall diplo_pop_on_iface_right_click_redirect(DiploPop *self, void *, 
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x004404E0 BYTE_EXACT
-// name      ?on_iface_left_down@DiploPop@@QAEXHH@Z
+// ORIGINAL: 0x004404E0 ?on_iface_left_down@DiploPop@@QAEXHH@Z 0x004404E0-0x004404E3 BYTE_EXACT
 // size      3 bytes
-// spans     0x004404E0-0x004404E3
 // prototype void (__thiscall ?on_iface_left_down@DiploPop@@QAEXHH@Z)(DiploPop* this, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -83,10 +77,8 @@ void __fastcall diplo_pop_on_iface_left_down_redirect(DiploPop *self, void *, in
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x004404F0 BYTE_EXACT
-// name      ?on_iface_right_down@DiploPop@@QAEXHH@Z
+// ORIGINAL: 0x004404F0 ?on_iface_right_down@DiploPop@@QAEXHH@Z 0x004404F0-0x004404F3 BYTE_EXACT
 // size      3 bytes
-// spans     0x004404F0-0x004404F3
 // prototype void (__thiscall ?on_iface_right_down@DiploPop@@QAEXHH@Z)(DiploPop* this, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -104,10 +96,8 @@ void __fastcall diplo_pop_on_iface_right_down_redirect(DiploPop *self, void *, i
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00440500 BYTE_EXACT
-// name      ?on_iface_mouse_move@DiploPop@@QAEXHH@Z
+// ORIGINAL: 0x00440500 ?on_iface_mouse_move@DiploPop@@QAEXHH@Z 0x00440500-0x00440503 BYTE_EXACT
 // size      3 bytes
-// spans     0x00440500-0x00440503
 // prototype void (__thiscall ?on_iface_mouse_move@DiploPop@@QAEXHH@Z)(DiploPop* this, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -125,10 +115,8 @@ void __fastcall diplo_pop_on_iface_mouse_move_redirect(DiploPop *self, void *, i
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00440510 BYTE_EXACT
-// name      ?on_iface_mouse_leave@DiploPop@@QAEXHH@Z
+// ORIGINAL: 0x00440510 ?on_iface_mouse_leave@DiploPop@@QAEXHH@Z 0x00440510-0x00440513 BYTE_EXACT
 // size      3 bytes
-// spans     0x00440510-0x00440513
 // prototype void (__thiscall ?on_iface_mouse_leave@DiploPop@@QAEXHH@Z)(DiploPop* this, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -146,10 +134,8 @@ void __fastcall diplo_pop_on_iface_mouse_leave_redirect(DiploPop *self, void *, 
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00440520 BYTE_EXACT
-// name      ?on_iface_selected@DiploPop@@QAEXHH@Z
+// ORIGINAL: 0x00440520 ?on_iface_selected@DiploPop@@QAEXHH@Z 0x00440520-0x00440523 BYTE_EXACT
 // size      3 bytes
-// spans     0x00440520-0x00440523
 // prototype void (__thiscall ?on_iface_selected@DiploPop@@QAEXHH@Z)(DiploPop* this, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -167,10 +153,8 @@ void __fastcall diplo_pop_on_iface_selected_redirect(DiploPop *self, void *, int
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00440530 BYTE_EXACT
-// name      ?on_iface_left_double_click@DiploPop@@QAEXHH@Z
+// ORIGINAL: 0x00440530 ?on_iface_left_double_click@DiploPop@@QAEXHH@Z 0x00440530-0x00440533 BYTE_EXACT
 // size      3 bytes
-// spans     0x00440530-0x00440533
 // prototype void (__thiscall ?on_iface_left_double_click@DiploPop@@QAEXHH@Z)(DiploPop* this, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -188,10 +172,8 @@ void __fastcall diplo_pop_on_iface_left_double_click_redirect(DiploPop *self, vo
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00440540 BYTE_EXACT
-// name      ?on_iface_right_double_click@DiploPop@@QAEXHH@Z
+// ORIGINAL: 0x00440540 ?on_iface_right_double_click@DiploPop@@QAEXHH@Z 0x00440540-0x00440543 BYTE_EXACT
 // size      3 bytes
-// spans     0x00440540-0x00440543
 // prototype void (__thiscall ?on_iface_right_double_click@DiploPop@@QAEXHH@Z)(DiploPop* this, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -209,10 +191,8 @@ void __fastcall diplo_pop_on_iface_right_double_click_redirect(DiploPop *self, v
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00440610 BYTE_EXACT
-// name      ?on_iface_button_toggled@DiploPop@@QAEXHH@Z
+// ORIGINAL: 0x00440610 ?on_iface_button_toggled@DiploPop@@QAEXHH@Z 0x00440610-0x00440613 BYTE_EXACT
 // size      3 bytes
-// spans     0x00440610-0x00440613
 // prototype void (__thiscall ?on_iface_button_toggled@DiploPop@@QAEXHH@Z)(DiploPop* this, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -229,10 +209,8 @@ void __fastcall diplo_pop_on_iface_button_toggled_redirect(DiploPop *self, void 
 }
 
 /*
-ORIGINAL: 0x0043F170 BYTE_EXACT
-// name      ?hide@DiploPop@@QAEXXZ
+// ORIGINAL: 0x0043F170 ?hide@DiploPop@@QAEXXZ 0x0043F170-0x0043F185 BYTE_EXACT
 // size      21 bytes
-// spans     0x0043F170-0x0043F185
 // prototype void (__thiscall ?hide@DiploPop@@QAEXXZ)(DiploPop* this)
 // callers   0   call targets   2
 // kind      game

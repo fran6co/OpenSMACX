@@ -1,16 +1,7 @@
-// ORIGINAL: 0x0054BEC0 FILE
-// RULED-OUT: raw-disassembly-derived body (Ghidra's own decompile is SEH-state-machine
-//            noise here too) with Popup+SpriteBox locals for the destructor tail;
-//            argument values were cross-checked against the asm for the faction-search
-//            loop and the two parse_says/set_treaty blocks, but the later
-//            fn_0055bc80/fn_005bf7d0/fn_00592ee0/fn_006262f0/fn_005315c0/fn_0055d760
-//            calls have no established signature evidence and are called nullary.
-//            Compiles and matches the branch structure; diverges from the frameless
-//            build around #2.
+// ORIGINAL: 0x0054BEC0 ?call_off_vendetta@@YAXHH@Z 0x0054BEC0-0x0054C552;0x0065F8FC-0x0065FA01 FILE
+// RULED-OUT: raw-disassembly-derived body (Ghidra's own decompile is SEH-state-machine noise here too) with Popup+SpriteBox locals for the destructor tail; argument values were cross-checked against the asm for the faction-search loop and the two parse_says/set_treaty blocks, but the later fn_0055bc80/fn_005bf7d0/fn_00592ee0/fn_006262f0/fn_005315c0/fn_0055d760 calls have no established signature evidence and are called nullary. Compiles and matches the branch structure; diverges from the frameless build around #2.
 // working copy - scaffold materialised by --work
-// name      ?call_off_vendetta@@YAXHH@Z
 // size      1943 bytes
-// spans     0x0054BEC0-0x0054C552;0x0065F8FC-0x0065FA01
 // prototype 
 // callers   1   call targets   23
 // kind      game

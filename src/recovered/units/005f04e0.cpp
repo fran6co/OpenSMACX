@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005F04E0 FILE
-// name      ?close_class@Win@@QAAXXZ
+// ORIGINAL: 0x005F04E0 ?close_class@Win@@QAAXXZ 0x005F04E0-0x005F0520 FILE
 // size      64 bytes
-// spans     0x005F04E0-0x005F0520
 // prototype 
 // callers   1   call targets   1
 // kind      game

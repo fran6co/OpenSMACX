@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004626E0 FILE
-// name      ??0MapWin@@QAE@H@Z
+// ORIGINAL: 0x004626E0 ??0MapWin@@QAE@H@Z 0x004626E0-0x00462868;0x00655860-0x00655920 FILE
 // size      584 bytes
-// spans     0x004626E0-0x00462868;0x00655860-0x00655920
 // prototype void (__thiscall ??0MapWin@@QAE@H@Z)(MapWin* this, BOOL)
 // callers   7   call targets   6
 // kind      game

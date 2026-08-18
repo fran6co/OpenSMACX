@@ -1,18 +1,7 @@
-// ORIGINAL: 0x0051F2E0 FILE
-// RULED-OUT: mechanical register/stack-slot goto transliteration (260 labels,
-//            39 independent per-case epilogues auto-detected from the pop/pop/
-//            pop/mov-esp-ebp/pop/ret shape, a 22-case switch off 0x0097D044,
-//            two thiscall-via-fixed-ecx targets on Console/MapWin, one
-//            indirect GetKeyState call through g_00669330): compiles,
-//            MISMATCH sim 0.32 on /O2 /Oy- framed, divergence at instruction
-//            #33. Large negative 32-bit immediates (e.g. 0xfffffc18) need an
-//            explicit (int) cast before a signed compare, or MSVC types the
-//            literal unsigned and turns jge into jae - fixed once, may still
-//            be lurking elsewhere unverified.
+// ORIGINAL: 0x0051F2E0 ?random_events@@YAXH@Z 0x0051F2E0-0x0052211D FILE
+// RULED-OUT: mechanical register/stack-slot goto transliteration (260 labels, 39 independent per-case epilogues auto-detected from the pop/pop/ pop/mov-esp-ebp/pop/ret shape, a 22-case switch off 0x0097D044, two thiscall-via-fixed-ecx targets on Console/MapWin, one indirect GetKeyState call through g_00669330): compiles, MISMATCH sim 0.32 on /O2 /Oy- framed, divergence at instruction #33. Large negative 32-bit immediates (e.g. 0xfffffc18) need an explicit (int) cast before a signed compare, or MSVC types the literal unsigned and turns jge into jae - fixed once, may still be lurking elsewhere unverified.
 // working copy - scaffold materialised by --work
-// name      ?random_events@@YAXH@Z
 // size      11837 bytes
-// spans     0x0051F2E0-0x0052211D
 // prototype 
 // callers   1   call targets   36
 // kind      game

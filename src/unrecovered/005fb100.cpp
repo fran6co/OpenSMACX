@@ -1,12 +1,7 @@
-// ORIGINAL: 0x005FB100 FILE
-// RULED-OUT: linear search over entries_[] for id==a1 (sentinel -1 terminates
-//            early, cap at 15), then entries_[i].pull_down->add_item(a2, a3);
-//            compiles and matches through the search, diverges at #1 in the
-//            call-site register shuffle (push vs mov)
+// ORIGINAL: 0x005FB100 ?add_menu_item@Menu@@QAEHHHPAD@Z 0x005FB100-0x005FB159 FILE
+// RULED-OUT: linear search over entries_[] for id==a1 (sentinel -1 terminates early, cap at 15), then entries_[i].pull_down->add_item(a2, a3); compiles and matches through the search, diverges at #1 in the call-site register shuffle (push vs mov)
 // working copy - scaffold materialised by --work
-// name      ?add_menu_item@Menu@@QAEHHHPAD@Z
 // size      89 bytes
-// spans     0x005FB100-0x005FB159
 // prototype int (__thiscall ?add_menu_item@Menu@@QAEHHHPAD@Z)(Menu* this, int, int, int8*)
 // callers   1   call targets   1
 // kind      game

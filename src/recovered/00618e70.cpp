@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00618E70 BYTE_EXACT
-// name      ?vx_seek@Caviar@@QAAXHJH@Z
+// ORIGINAL: 0x00618E70 ?vx_seek@Caviar@@QAAXHJH@Z 0x00618E70-0x00618E88 BYTE_EXACT
 // size      24 bytes
-// spans     0x00618E70-0x00618E88
 // prototype 
 // callers   0   call targets   1
 // kind      game

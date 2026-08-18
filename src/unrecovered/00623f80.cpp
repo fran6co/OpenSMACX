@@ -1,18 +1,7 @@
-// ORIGINAL: 0x00623F80 FILE
-// RULED-OUT: same shape as 0x00622200 (Gouraud-textured coastline scanline
-//            fill): guard chain, bbox scan, two setup_edge_gouraud edge
-//            records ported as flat int[14] with field indices verified
-//            against the raw ebp-relative disassembly (not Ghidra's shifted
-//            local_XX offsets, which mislabeled the struct-address operand
-//            in two calls), FPU gradients as plain long double, and a
-//            best-effort port of the inner span loop, which the original
-//            spells with `mov esp, ecx` / `add sp, dx` - ESP used as a
-//            general-purpose accumulator, not expressible as portable C.
-//            Compiles and reaches instruction #4 before diverging.
+// ORIGINAL: 0x00623F80 ?draw_coast@Texture@@QAEXPAUBuffer@@PAUVert@@PAHPAUTexture@@PAEHPAUVert@@H@Z 0x00623F80-0x00624626 FILE
+// RULED-OUT: same shape as 0x00622200 (Gouraud-textured coastline scanline fill): guard chain, bbox scan, two setup_edge_gouraud edge records ported as flat int[14] with field indices verified against the raw ebp-relative disassembly (not Ghidra's shifted local_XX offsets, which mislabeled the struct-address operand in two calls), FPU gradients as plain long double, and a best-effort port of the inner span loop, which the original spells with `mov esp, ecx` / `add sp, dx` - ESP used as a general-purpose accumulator, not expressible as portable C. Compiles and reaches instruction #4 before diverging.
 // working copy - scaffold materialised by --work
-// name      ?draw_coast@Texture@@QAEXPAUBuffer@@PAUVert@@PAHPAUTexture@@PAEHPAUVert@@H@Z
 // size      1702 bytes
-// spans     0x00623F80-0x00624626
 // prototype 
 // callers   1   call targets   4
 // kind      game

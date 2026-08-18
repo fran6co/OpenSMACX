@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064B774 EXCLUDED S1
-// name      __wincmdln
+// ORIGINAL: 0x0064B774 __wincmdln 0x0064B774-0x0064B7CC EXCLUDED S1
 // size      88 bytes
-// spans     0x0064B774-0x0064B7CC
 // prototype 
 // callers   1   call targets   2
 // kind      library

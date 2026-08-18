@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00565160 FILE
+// ORIGINAL: 0x00565160 sub_565160 0x00565160-0x0056531A FILE
 // RULED-OUT: two-phase radius-table scan (find owning base, then scan around it) with direct treaty-flags array indexing; reaches #11 before the second bonus_at-style helper call ordering
-// name      sub_565160
 // size      442 bytes
-// spans     0x00565160-0x0056531A
 // prototype 
 // callers   0   call targets   2
 // kind      game

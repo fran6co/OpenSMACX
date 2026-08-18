@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004C8F00 BYTE_EXACT
-// name      ?stop@VoiceTx@@QAEHXZ
+// ORIGINAL: 0x004C8F00 ?stop@VoiceTx@@QAEHXZ 0x004C8F00-0x004C8F3C BYTE_EXACT
 // size      60 bytes
-// spans     0x004C8F00-0x004C8F3C
 // prototype int (__thiscall ?stop@VoiceTx@@QAEHXZ)(VoiceTx* this)
 // callers   0   call targets   2
 // kind      game

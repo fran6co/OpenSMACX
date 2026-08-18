@@ -1,15 +1,7 @@
-// ORIGINAL: 0x00580860 FILE
-// RULED-OUT: Ghidra pseudocode used as primary source (call arg orders for is_bunged,
-//            psi_factor x4, has_tech, retire_proto, make_proto, name_proto, prune_protos all
-//            independently confirmed against raw disasm push order - none needed fixing),
-//            with the one known-recurring bug fixed: DAT_009ab898 is a byte array with real
-//            record stride 0x34, not Ghidra's 2-byte-scaled 0x1a (same defect class as
-//            0x004AB600's 0x9ab898 use). Compiles; not chased to byte-exact given size
-//            (2312 bytes, dense per-record scoring loop).
+// ORIGINAL: 0x00580860 ?propose_proto@@YAHHHHHHHHPAD@Z 0x00580860-0x00581168 FILE
+// RULED-OUT: Ghidra pseudocode used as primary source (call arg orders for is_bunged, psi_factor x4, has_tech, retire_proto, make_proto, name_proto, prune_protos all independently confirmed against raw disasm push order - none needed fixing), with the one known-recurring bug fixed: DAT_009ab898 is a byte array with real record stride 0x34, not Ghidra's 2-byte-scaled 0x1a (same defect class as 0x004AB600's 0x9ab898 use). Compiles; not chased to byte-exact given size (2312 bytes, dense per-record scoring loop).
 // working copy - scaffold materialised by --work
-// name      ?propose_proto@@YAHHHHHHHHPAD@Z
 // size      2312 bytes
-// spans     0x00580860-0x00581168
 // prototype int (__cdecl ?propose_proto@@YAHHHHHHHHPAD@Z)(int factionID, int chassisType, int weapType, int armorType, int ability, int reactorType, int, int8*)
 // callers   5   call targets   11
 // kind      game

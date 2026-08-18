@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004DD6F0 FILE
-// name      ?editor_diff@Console@@QAEXXZ
+// ORIGINAL: 0x004DD6F0 ?editor_diff@Console@@QAEXXZ 0x004DD6F0-0x004DDA4E;0x0065B872-0x0065B97E FILE
 // size      1130 bytes
-// spans     0x004DD6F0-0x004DDA4E;0x0065B872-0x0065B97E
 // prototype void (__thiscall ?editor_diff@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   21
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005D271D FILE
-// name      sub_5d271d
+// ORIGINAL: 0x005D271D sub_5d271d 0x005D271D-0x005D2761 FILE
 // size      68 bytes
-// spans     0x005D271D-0x005D2761
 // prototype 
 // callers   1   call targets   0
 // kind      game

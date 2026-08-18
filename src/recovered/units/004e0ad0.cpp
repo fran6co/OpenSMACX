@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004E0AD0 BYTE_EXACT FILE
-// name      ?editor_minor@Console@@QAEXXZ
+// ORIGINAL: 0x004E0AD0 ?editor_minor@Console@@QAEXXZ 0x004E0AD0-0x004E0AF5 FILE BYTE_EXACT
 // size      37 bytes
-// spans     0x004E0AD0-0x004E0AF5
 // prototype void (__thiscall ?editor_minor@Console@@QAEXXZ)(Console* this)
 // callers   1   call targets   2
 // kind      game

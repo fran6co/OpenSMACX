@@ -1,16 +1,7 @@
-// ORIGINAL: 0x006388C0 FILE
-// RULED-OUT: named locals (remaining/expectedCount/objIndex) instead of
-//            the original's literal reuse of the param2/param3 stack
-//            slots as scratch (the disassembly overwrites its own
-//            argument homes for the running object index and the
-//            freshly-read array count) - compiles and follows the same
-//            chunk-tag dispatch/loop structure, but the prologue and
-//            stack layout diverge from instruction #0. Did not chase
-//            reproducing the literal slot reuse further.
+// ORIGINAL: 0x006388C0 sub_6388c0 0x006388C0-0x00638AC2 FILE
+// RULED-OUT: named locals (remaining/expectedCount/objIndex) instead of the original's literal reuse of the param2/param3 stack slots as scratch (the disassembly overwrites its own argument homes for the running object index and the freshly-read array count) - compiles and follows the same chunk-tag dispatch/loop structure, but the prologue and stack layout diverge from instruction #0. Did not chase reproducing the literal slot reuse further.
 // working copy - scaffold materialised by --work
-// name      sub_6388c0
 // size      514 bytes
-// spans     0x006388C0-0x00638AC2
 // prototype 
 // callers   1   call targets   5
 // kind      game

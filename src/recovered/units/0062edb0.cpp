@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0062EDB0 BYTE_EXACT FILE
-// name      ?delete_group@Net@@QAEXH@Z
+// ORIGINAL: 0x0062EDB0 ?delete_group@Net@@QAEXH@Z 0x0062EDB0-0x0062EDC7 FILE BYTE_EXACT
 // size      23 bytes
-// spans     0x0062EDB0-0x0062EDC7
 // prototype void (__thiscall ?delete_group@Net@@QAEXH@Z)(Net* this, int)
 // callers   1   call targets   0
 // kind      game

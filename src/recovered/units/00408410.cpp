@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00408410 FILE
-// name      ?load_inverts@@YAXXZ
+// ORIGINAL: 0x00408410 ?load_inverts@@YAXXZ 0x00408410-0x0040846B FILE
 // size      91 bytes
-// spans     0x00408410-0x0040846B
 // prototype 
 // callers   0   call targets   5
 // kind      game

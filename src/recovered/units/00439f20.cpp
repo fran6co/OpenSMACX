@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00439F20 FILE
-// name      ?select_chassis@DesignWin@@QAEXXZ
+// ORIGINAL: 0x00439F20 ?select_chassis@DesignWin@@QAEXXZ 0x00439F20-0x0043A300;0x006541FC-0x00654281 FILE
 // size      1125 bytes
-// spans     0x00439F20-0x0043A300;0x006541FC-0x00654281
 // prototype void (__thiscall ?select_chassis@DesignWin@@QAEXXZ)(DesignWin* this)
 // callers   1   call targets   23
 // kind      game

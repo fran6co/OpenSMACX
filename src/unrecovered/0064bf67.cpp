@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064BF67 EXCLUDED S1
-// name      __lseek
+// ORIGINAL: 0x0064BF67 __lseek 0x0064BF67-0x0064BFCC EXCLUDED S1
 // size      101 bytes
-// spans     0x0064BF67-0x0064BFCC
 // prototype 
 // callers   6   call targets   5
 // kind      library

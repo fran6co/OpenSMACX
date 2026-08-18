@@ -1,12 +1,7 @@
-// ORIGINAL: 0x0060E220 FILE
-// RULED-OUT: 200 vs 222 bytes; the many named int locals (offsets, args)
-//            push an extra callee-saved register before the first field
-//            read, where the original moves `this` into edi first. Did not
-//            try collapsing to fewer locals given budget.
+// ORIGINAL: 0x0060E220 ?on_redraw@RadioButton@@QAEXXZ 0x0060E220-0x0060E2FE FILE
+// RULED-OUT: 200 vs 222 bytes; the many named int locals (offsets, args) push an extra callee-saved register before the first field read, where the original moves `this` into edi first. Did not try collapsing to fewer locals given budget.
 // working copy - scaffold materialised by --work
-// name      ?on_redraw@RadioButton@@QAEXXZ
 // size      222 bytes
-// spans     0x0060E220-0x0060E2FE
 // prototype void (__thiscall ?on_redraw@RadioButton@@QAEXXZ)(RadioButton* this)
 // callers   0   call targets   3
 // kind      game

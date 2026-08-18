@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0058F430 BYTE_EXACT FILE
-// name      ?game_close@@YAXH@Z
+// ORIGINAL: 0x0058F430 ?game_close@@YAXH@Z 0x0058F430-0x0058F444 FILE BYTE_EXACT
 // size      20 bytes
-// spans     0x0058F430-0x0058F444
 // prototype 
 // callers   1   call targets   2
 // kind      game

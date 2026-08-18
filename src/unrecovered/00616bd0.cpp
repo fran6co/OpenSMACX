@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00616BD0 BYTE_EXACT FILE
+// ORIGINAL: 0x00616BD0 ?init@CaviarData@@QAEHPAD@Z 0x00616BD0-0x00616C55 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?init@CaviarData@@QAEHPAD@Z
 // size      133 bytes
-// spans     0x00616BD0-0x00616C55
 // prototype int (__thiscall ?init@CaviarData@@QAEHPAD@Z)(CaviarData* this, int8*)
 // callers   1   call targets   4
 // kind      game

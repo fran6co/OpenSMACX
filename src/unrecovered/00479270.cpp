@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00479270 FILE
+// ORIGINAL: 0x00479270 ?UNK1@MultiWin@@QAEXPAURECT@@@Z 0x00479270-0x0047932C FILE
 // working copy - scaffold materialised by --work
-// name      ?UNK1@MultiWin@@QAEXPAURECT@@@Z
 // size      188 bytes
-// spans     0x00479270-0x0047932C
 // prototype void (__thiscall ?UNK1@MultiWin@@QAEXPAURECT@@@Z)(MultiWin* this, RECT*)
 // callers   0   call targets   4
 // kind      game

@@ -1,25 +1,7 @@
-// ORIGINAL: 0x0046D5D0 FILE
-// RULED-OUT: GENUINELY PARTIAL - literal register-machine transliteration (same
-//   technique as 0x00547C10/0x00448D90: raw EBP(n)-mapped buffer standing in for
-//   the Popup/Scroll/2xFlatButton ensemble, original_method<> calls for their
-//   lifecycle, goto per basic block) but covers roughly the first ~1/4 of the
-//   function only (asm 0x0046D5D0-0x0046DD86 of a 0x46D5D0-0x46EB38+ span:
-//   the SEH-free prologue, the AlphaMenu/InfoWin/StatusWin/TutWin reset calls,
-//   the editor-mode/key-state checks, Console::edit_lock gate, pixel_to_tile
-//   click resolution, the world-climate redraw dispatch, and the NetDaemon
-//   base-lock + Dialogs base-picker + port_to_port confirmation flow, each
-//   with its own full Popup-cleanup early-exit). Every remaining branch
-//   (unit orders, right-click menu, build/terraform dispatch, and the shared
-//   tail at 0x46EB38) is UNWRITTEN - the two forward labels it would reach
-//   (LAB_0046eac4, LAB_0046eb38) are stubbed empty and the function returns
-//   there instead. Left this way rather than guessing the remaining ~3/4:
-//   every call/branch actually present above is a faithful, push-order-
-//   verified transcription, not invented filler. 1643 rebuilt bytes against
-//   5528 scored original bytes.
+// ORIGINAL: 0x0046D5D0 ?click@MapWin@@QAEXHHH@Z 0x0046D5D0-0x0046EB68;0x00655959-0x00655E92 FILE
+// RULED-OUT: GENUINELY PARTIAL - literal register-machine transliteration (same technique as 0x00547C10/0x00448D90: raw EBP(n)-mapped buffer standing in for the Popup/Scroll/2xFlatButton ensemble, original_method<> calls for their lifecycle, goto per basic block) but covers roughly the first ~1/4 of the function only (asm 0x0046D5D0-0x0046DD86 of a 0x46D5D0-0x46EB38+ span: the SEH-free prologue, the AlphaMenu/InfoWin/StatusWin/TutWin reset calls, the editor-mode/key-state checks, Console::edit_lock gate, pixel_to_tile click resolution, the world-climate redraw dispatch, and the NetDaemon base-lock + Dialogs base-picker + port_to_port confirmation flow, each with its own full Popup-cleanup early-exit). Every remaining branch (unit orders, right-click menu, build/terraform dispatch, and the shared tail at 0x46EB38) is UNWRITTEN - the two forward labels it would reach (LAB_0046eac4, LAB_0046eb38) are stubbed empty and the function returns there instead. Left this way rather than guessing the remaining ~3/4: every call/branch actually present above is a faithful, push-order- verified transcription, not invented filler. 1643 rebuilt bytes against 5528 scored original bytes.
 // working copy - scaffold materialised by --work
-// name      ?click@MapWin@@QAEXHHH@Z
 // size      6865 bytes
-// spans     0x0046D5D0-0x0046EB68;0x00655959-0x00655E92
 // prototype void (__thiscall ?click@MapWin@@QAEXHHH@Z)(MapWin* this, int, int, int)
 // callers   2   call targets   59
 // kind      game

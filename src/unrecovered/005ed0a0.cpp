@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005ED0A0 FILE
+// ORIGINAL: 0x005ED0A0 ?nonscreen_to_client@Win@@QAEXPAURECT@@@Z 0x005ED0A0-0x005ED16A FILE
 // working copy - scaffold materialised by --work
-// name      ?nonscreen_to_client@Win@@QAEXPAURECT@@@Z
 // size      202 bytes
-// spans     0x005ED0A0-0x005ED16A
 // prototype void (__thiscall ?nonscreen_to_client@Win@@QAEXPAURECT@@@Z)(Win* this, RECT*)
 // callers   0   call targets   1
 // kind      game

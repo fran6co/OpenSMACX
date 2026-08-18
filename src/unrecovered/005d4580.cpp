@@ -1,10 +1,7 @@
-// ORIGINAL: 0x005D4580 BYTE_EXACT FILE
-// LEVER: base_ = 0 written explicitly inside the free()-if AND again in the
-//        unconditional zero-out pass, matching the original's double store
+// ORIGINAL: 0x005D4580 ??1Heap@@QAE@XZ 0x005D4580-0x005D45AA FILE BYTE_EXACT
+// LEVER: base_ = 0 written explicitly inside the free()-if AND again in the unconditional zero-out pass, matching the original's double store
 // working copy - scaffold materialised by --work
-// name      ??1Heap@@QAE@XZ
 // size      42 bytes
-// spans     0x005D4580-0x005D45AA
 // prototype void (__thiscall ??1Heap@@QAE@XZ)(Heap* this)
 // callers   6   call targets   1
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006458C8 EXCLUDED S1
-// name      __ftol
+// ORIGINAL: 0x006458C8 __ftol 0x006458C8-0x006458EF EXCLUDED S1
 // size      39 bytes
-// spans     0x006458C8-0x006458EF
 // prototype 
 // callers   36   call targets   0
 // kind      library

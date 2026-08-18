@@ -1,13 +1,7 @@
-// ORIGINAL: 0x004AE4D0 FILE
-// RULED-OUT: void return (no eax set anywhere in 647 bytes, so int->void);
-//            matches to #29/647 bytes. neg/sbb/and guard for the `this!=0`
-//            select before the first copy() call got closest; inlining the
-//            set_text_color color ternary into the call vs. a named local
-//            made no difference to where it first diverges.
+// ORIGINAL: 0x004AE4D0 ?draw_item@SetupWin@@QAEHHH@Z 0x004AE4D0-0x004AE757 FILE
+// RULED-OUT: void return (no eax set anywhere in 647 bytes, so int->void); matches to #29/647 bytes. neg/sbb/and guard for the `this!=0` select before the first copy() call got closest; inlining the set_text_color color ternary into the call vs. a named local made no difference to where it first diverges.
 // working copy - scaffold materialised by --work
-// name      ?draw_item@SetupWin@@QAEHHH@Z
 // size      647 bytes
-// spans     0x004AE4D0-0x004AE757
 // prototype int (__thiscall ?draw_item@SetupWin@@QAEHHH@Z)(SetupWin* this, int, int)
 // callers   3   call targets   10
 // kind      game
