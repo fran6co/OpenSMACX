@@ -7,7 +7,6 @@ and skips itself on a box without it; the end-to-end agreement check is a
 smoke test, with the ratchet in tools/ keeping the strict machinery.
 """
 
-import os
 import shutil
 import struct
 from pathlib import Path
@@ -20,16 +19,14 @@ from decomp.asm import (_coff_function, _facts, _span, compiled_asm,
 from decomp.reader import REPO_ROOT
 
 # The environment's facts live HERE, not in the package: where the pinned
-# image, the compiler and the build database are on this box.
+# image and the build database are on this box. The compiler itself is the
+# build's own business - the compile command names it.
 EXE = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
-VC6_ROOT = Path(os.environ.get("VC6_ROOT", str(Path.home() / "opt" / "vc6")))
 COMPILE_COMMANDS = REPO_ROOT / "build" / "compile_commands.json"
 FLAGS = "/c /O2 /Gy /GR- /Oy- /GX"     # the ratchet's measured flag set
 
 HAVE_EXE = EXE.is_file()
-HAVE_VC6 = ((VC6_ROOT / "BIN" / "CL.EXE").is_file()
-            and shutil.which("wine") is not None)
-HAVE_BUILD = COMPILE_COMMANDS.is_file()
+HAVE_BUILD = COMPILE_COMMANDS.is_file() and shutil.which("wine") is not None
 
 MARKED = """// ORIGINAL: 0x00401000
 // name      ?f@C@@QAEXXZ
@@ -73,8 +70,7 @@ def test_original_asm_refused_without_the_exe(tmp_path):
 
 def test_compiled_asm_refused_without_the_name_fact(tmp_path):
     with pytest.raises(ValueError, match="no name"):
-        compiled_asm(record_in(tmp_path, NO_FACTS), COMPILE_COMMANDS,
-                     VC6_ROOT, FLAGS)
+        compiled_asm(record_in(tmp_path, NO_FACTS), COMPILE_COMMANDS, FLAGS)
 
 
 # --------------------------------------------------------------- COFF reader
@@ -118,8 +114,8 @@ def test_original_asm_on_a_known_record():
     assert lines[0].startswith("0x005D7210")
 
 
-@pytest.mark.skipif(not (HAVE_EXE and HAVE_VC6 and HAVE_BUILD),
-                    reason="no VC6 environment")
+@pytest.mark.skipif(not (HAVE_EXE and HAVE_BUILD),
+                    reason="no build environment")
 def test_byte_exact_body_compiles_to_the_same_shape():
     """Smoke: a BYTE_EXACT claim reproduces its instruction count. Strict
     byte verdicts stay with the ratchet in tools/byte_match.py."""
@@ -127,6 +123,6 @@ def test_byte_exact_body_compiles_to_the_same_shape():
     record = next(r for r in records if r.address == 0x00616BC0)
     assert record.byte_exact
     original = original_asm(record, EXE)
-    compiled = compiled_asm(record, COMPILE_COMMANDS, VC6_ROOT, FLAGS)
+    compiled = compiled_asm(record, COMPILE_COMMANDS, FLAGS)
     assert len(compiled) == len(original), \
         f"instruction count: compiled {len(compiled)} vs original {len(original)}"

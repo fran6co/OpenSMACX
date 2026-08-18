@@ -13,17 +13,17 @@ Two functions, one per side of the recovery's central question:
     # what VC6 makes of the record's code, compiled with the flags the
     # ratchet measures with:
     compiled_asm(record, Path("build/compile_commands.json"),
-                 Path("~/opt/vc6").expanduser(), "/c /O2 /Gy /GR- /Oy- /GX")
+                 "/c /O2 /Gy /GR- /Oy- /GX")
 
 THE ORIGINAL SIDE reads the pinned executable's bytes at the record's span
-and disassembles them. THE COMPILED SIDE compiles the record's file with
-VC6 under wine - the include and define flags lifted from CMake's
-compile_commands.json, the optimisation flags the ratchet measures with -
-pulls the function out of the resulting object by its mangled name, and
-disassembles that. Both return lines shaped like tools/disasm.py's output:
-address, bytes, mnemonic. NOWHERE IN THIS MODULE IS A PATH HARD-CODED:
-where the image, the compiler and the build database live are the caller's
-facts, passed as arguments.
+and disassembles them. THE COMPILED SIDE takes the build's own compile
+command for the record's file from compile_commands.json, keeps its
+compiler and its include and define flags, swaps in the caller's
+optimisation flags, and disassembles the function pulled out of the
+resulting object by the record's mangled name. The compiler the entry
+names is the build's own wrapper - it knows where VC6 lives and how to
+run it under wine, so this module never asks. Both functions return lines
+shaped like tools/disasm.py's output: address, bytes, mnemonic.
 
 CAPSTONE is imported lazily and is the one thing here that is not standard
 library; `uv sync` installs it. The PE and COFF readers below are small
@@ -37,9 +37,7 @@ what is done with the pair is the caller's question.
 from __future__ import annotations
 
 import json
-import os
 import shlex
-import shutil
 import struct
 import subprocess
 import tempfile
@@ -133,76 +131,66 @@ def original_asm(record: DecompilationState, exe: Path | str) -> list:
 # --------------------------------------------------------------- the compile
 
 
-def _wine_path(text: str) -> str:
-    """`/home/x/y.cpp` -> `Z:\\home\\x\\y.cpp`; relative paths unchanged."""
-    if not text.startswith("/"):
-        return text
-    return "Z:" + text.replace("/", "\\")
-
-
-def _include_flags(source: Path, compile_commands: Path) -> list:
-    """The include and define flags CMake compiles `source` with, lifted
-    from `compile_commands` - includes, defines and forced includes only:
-    what decides whether the file parses, not how it is optimised."""
+def _entry_for(source: Path, compile_commands: Path) -> dict:
+    """The compile_commands entry describing how the build compiles
+    `source`."""
     if not compile_commands.is_file():
         raise ValueError(
             f"no {compile_commands} - configure the build first")
     table = json.loads(compile_commands.read_text())
     resolved = source.resolve()
-    entry = None
     for candidate in table:
         file = Path(candidate["file"])
         if not file.is_absolute():
             file = Path(candidate.get("directory", ".")) / file
         if file.resolve() == resolved:
-            entry = candidate
-            break
-    if entry is None:
-        raise ValueError(
-            f"{source.name} is not a build input in "
-            f"{compile_commands.name}")
+            return candidate
+    raise ValueError(
+        f"{source.name} is not a build input in {compile_commands.name}")
+
+
+def _compile_command(entry: dict, flags: str) -> list:
+    """The build's own compile command with its optimisation flags swapped
+    for `flags`.
+
+    The leading tokens up to the first flag are the compiler the build
+    invokes - this tree's wrapper, which knows where VC6 lives and how to
+    run it under wine, and translates POSIX paths on its own. The include
+    and define flags stay exactly as the build parses them; its PCH flags
+    are dropped, because they point at a precompiled header built for the
+    build's own object directory. `/Fo` and `/Fd` are replaced by the
+    caller.
+    """
     words = shlex.split(entry.get("command")
                         or " ".join(entry.get("arguments", [])))
-    kept = []
-    for word in words:
-        if "cmake_pch" in word:
+    split = 0
+    for index, word in enumerate(words):
+        if index and word.startswith(("-", "/", "@")):
+            split = index
+            break
+    compiler, kept = words[:split], []
+    for word in words[split:]:
+        if "cmake_pch" in word or word.startswith(("/Fo", "/Fd", "/Fp")):
             continue
         if word.startswith(("-I", "-D", "-FI")):
             word = "/" + word[1:]
         if (word.startswith(("/I", "/D")) and len(word) > 2) or \
                 (word.startswith("/FI") and len(word) > 3):
-            for prefix in ("/FI", "/I", "/D"):
-                if word.startswith(prefix):
-                    word = prefix + _wine_path(word[len(prefix):])
-                    break
             kept.append(word)
-    return kept
+    return [*compiler, "/nologo", *flags.split(), *kept]
 
 
-def _compile(source: Path, flags: str, compile_commands: Path,
-             vc6_root: Path) -> bytes:
-    """Compile `source` with the VC6 at `vc6_root` under wine; return the
-    object's bytes."""
-    cl = vc6_root / "BIN" / "CL.EXE"
-    if not cl.is_file():
-        raise ValueError(f"no VC6 at {vc6_root}")
-    wine = shutil.which("wine")
-    if wine is None:
-        raise ValueError("wine is not on PATH")
-    command = [wine, str(cl), "/nologo", *flags.split(),
-               *_include_flags(source, compile_commands), "/Founit.obj",
-               _wine_path(str(source.resolve()))]
-    env = dict(os.environ,
-               WINEPREFIX=str(vc6_root / ".wineprefix"),
-               WINEDEBUG="-all",
-               INCLUDE=f"Z:{vc6_root / 'INCLUDE'}".replace("/", "\\"),
-               LIB=f"Z:{vc6_root / 'LIB'}".replace("/", "\\"))
+def _compile(source: Path, flags: str, compile_commands: Path) -> bytes:
+    """Compile `source` with the build's own command; return the object's
+    bytes."""
+    command = _compile_command(_entry_for(source, compile_commands), flags)
     with tempfile.TemporaryDirectory() as work:
-        result = subprocess.run(command, cwd=work, env=env,
-                                capture_output=True, text=True, timeout=120)
+        result = subprocess.run([*command, "/Founit.obj", str(source)],
+                                cwd=work, capture_output=True, text=True,
+                                timeout=120)
         obj = Path(work) / "unit.obj"
         if not obj.is_file():
-            raise ValueError("CL.EXE produced no object:\n"
+            raise ValueError("the compile produced no object:\n"
                              f"{result.stdout}\n{result.stderr}")
         return obj.read_bytes()
 
@@ -260,18 +248,17 @@ def _coff_function(obj: bytes, symbol: str) -> bytes:
 
 
 def compiled_asm(record: DecompilationState, compile_commands: Path | str,
-                 vc6_root: Path | str, flags: str) -> list:
+                 flags: str) -> list:
     """The assembly VC6 produces for the record's code: the record's file
-    compiled under `flags` with the include and define flags lifted from
-    `compile_commands`, the function pulled out of the object by the
+    compiled by the build's own compile command with its optimisation flags
+    swapped for `flags`, the function pulled out of the object by the
     record's mangled name, disassembled at the record's address so the
     listing lines up with `original_asm`."""
     name = _facts(record).get("name", "")
     if not name:
         raise ValueError(
             f"{record.address_hex}: no name fact under its marker")
-    obj = _compile(record.path, flags, Path(compile_commands),
-                   Path(vc6_root))
+    obj = _compile(record.path, flags, Path(compile_commands))
     return _disasm(_coff_function(obj, name), record.address)
 
 
