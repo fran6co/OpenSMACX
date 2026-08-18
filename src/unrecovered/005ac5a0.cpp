@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005AC5A0 FILE
+// ORIGINAL: 0x005AC5A0 ?most_objectives@@YAHPAHPAH@Z 0x005AC5A0-0x005AC62F FILE
 // working copy - scaffold materialised by --work
-// name      ?most_objectives@@YAHPAHPAH@Z
 // size      143 bytes
-// spans     0x005AC5A0-0x005AC62F
 // prototype 
 // callers   2   call targets   1
 // kind      game

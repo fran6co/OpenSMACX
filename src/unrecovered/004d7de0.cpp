@@ -1,13 +1,6 @@
-// ORIGINAL: 0x004D7DE0 FILE
-// RULED-OUT: nothing tried beyond this shape - structure (lock_veh via &a1,
-//   base_at, owner-byte compare against the veh table, synch/await/unlock
-//   NetDaemon calls, BaseWin::check_base x2, Console::update_data) all match
-//   in order. Remaining ~9-edit MISMATCH is mostly frame-pointer allocation:
-//   original establishes an ebp frame before the first pushes (needed since
-//   `&a1` escapes to lock_veh), rebuilt's /O2 sequences the pushes first.
-// name      ?go_home@Console@@QAEXH@Z
+// ORIGINAL: 0x004D7DE0 ?go_home@Console@@QAEXH@Z 0x004D7DE0-0x004D7EDA FILE
+// RULED-OUT: nothing tried beyond this shape - structure (lock_veh via &a1, base_at, owner-byte compare against the veh table, synch/await/unlock NetDaemon calls, BaseWin::check_base x2, Console::update_data) all match in order. Remaining ~9-edit MISMATCH is mostly frame-pointer allocation: original establishes an ebp frame before the first pushes (needed since `&a1` escapes to lock_veh), rebuilt's /O2 sequences the pushes first.
 // size      250 bytes
-// spans     0x004D7DE0-0x004D7EDA
 // prototype void (__thiscall ?go_home@Console@@QAEXH@Z)(Console* this, int vehID)
 // callers   3   call targets   8
 // kind      game

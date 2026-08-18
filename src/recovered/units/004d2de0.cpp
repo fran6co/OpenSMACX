@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004D2DE0 BYTE_EXACT FILE
-// name      ?disband@Console@@QAEXHH@Z
+// ORIGINAL: 0x004D2DE0 ?disband@Console@@QAEXHH@Z 0x004D2DE0-0x004D2EF3 FILE BYTE_EXACT
 // size      275 bytes
-// spans     0x004D2DE0-0x004D2EF3
 // prototype void (__thiscall ?disband@Console@@QAEXHH@Z)(Console* this, int xCoord, int yCoord)
 // callers   2   call targets   10
 // kind      game

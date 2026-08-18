@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004482C0 BYTE_EXACT FILE
-// name      ??1Effect@@QAE@XZ
+// ORIGINAL: 0x004482C0 ??1Effect@@QAE@XZ 0x004482C0-0x004482C5 FILE BYTE_EXACT
 // size      5 bytes
-// spans     0x004482C0-0x004482C5
 // prototype void (__thiscall ??1Effect@@QAE@XZ)(Effect* this)
 // callers   1   call targets   0
 // kind      thunk

@@ -1,18 +1,7 @@
-// ORIGINAL: 0x005F74A0 FILE
-// RULED-OUT: `if (a1 != 0) { big-block } return simple();` puts the branches
-//            in the wrong order (`je` skipping the block where the original
-//            has `jne` falling into the simple case first) - an early-return
-//            guard `if (a1 == 0) return simple(); big-block;` fixes that.
-//            update_screen is __cdecl per win.h (func_win_update_screen),
-//            not the scaffold's implicit-thiscall class member, so it's
-//            called through a separately-declared `extern "C"` free function
-//            of the real signature. Remaining: the original spends two extra
-//            callee-saved registers (ebx, ebp) holding self[0x140]/self[0x13c]
-//            before the adds; this form only needed one (ebx). 62/73 shared.
+// ORIGINAL: 0x005F74A0 ?update_window@Win@@QAEHPAURECT@@@Z 0x005F74A0-0x005F757F FILE
+// RULED-OUT: `if (a1 != 0) { big-block } return simple();` puts the branches in the wrong order (`je` skipping the block where the original has `jne` falling into the simple case first) - an early-return guard `if (a1 == 0) return simple(); big-block;` fixes that. update_screen is __cdecl per win.h (func_win_update_screen), not the scaffold's implicit-thiscall class member, so it's called through a separately-declared `extern "C"` free function of the real signature. Remaining: the original spends two extra callee-saved registers (ebx, ebp) holding self[0x140]/self[0x13c] before the adds; this form only needed one (ebx). 62/73 shared.
 // working copy - scaffold materialised by --work
-// name      ?update_window@Win@@QAEHPAURECT@@@Z
 // size      223 bytes
-// spans     0x005F74A0-0x005F757F
 // prototype int (__thiscall ?update_window@Win@@QAEHPAURECT@@@Z)(Win* this, RECT* lprcSrc2)
 // callers   3   call targets   2
 // kind      game

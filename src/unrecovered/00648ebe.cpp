@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00648EBE EXCLUDED S1
-// name      ?BuildCatchObject@@YAXPAUEHExceptionRecord@@PAUEHRegistrationNode@@PBU_s_HandlerType@@PBU_s_CatchableType@@@Z
+// ORIGINAL: 0x00648EBE ?BuildCatchObject@@YAXPAUEHExceptionRecord@@PAUEHRegistrationNode@@PBU_s_HandlerType@@PBU_s_CatchableType@@@Z 0x00648EBE-0x00649082 EXCLUDED S1
 // size      452 bytes
-// spans     0x00648EBE-0x00649082
 // prototype 
 // callers   1   call targets   8
 // kind      library

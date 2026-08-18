@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064B244 EXCLUDED S1
-// name      _get_short_arg
+// ORIGINAL: 0x0064B244 _get_short_arg 0x0064B244-0x0064B252 EXCLUDED S1
 // size      14 bytes
-// spans     0x0064B244-0x0064B252
 // prototype 
 // callers   1   call targets   0
 // kind      library

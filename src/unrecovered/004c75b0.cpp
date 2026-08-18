@@ -1,12 +1,7 @@
-// ORIGINAL: 0x004C75B0 FILE
-// RULED-OUT: SHARED_TAIL - the 0x4c8450/0x659f20 unwind-handler span is
-//            COMDAT-folded with another function's handler, so no tier is
-//            reachable regardless of body. Left as a plain field-write
-//            transcription (no SEH frame modeled) for the next pass.
+// ORIGINAL: 0x004C75B0 sub_4c75b0 0x004C75B0-0x004C766D;0x004C8450-0x004C8457;0x00659F20-0x00659F32 FILE
+// RULED-OUT: SHARED_TAIL - the 0x4c8450/0x659f20 unwind-handler span is COMDAT-folded with another function's handler, so no tier is reachable regardless of body. Left as a plain field-write transcription (no SEH frame modeled) for the next pass.
 // working copy - scaffold materialised by --work
-// name      sub_4c75b0
 // size      214 bytes
-// spans     0x004C75B0-0x004C766D;0x004C8450-0x004C8457;0x00659F20-0x00659F32
 // prototype 
 // callers   0   call targets   1
 // kind      game

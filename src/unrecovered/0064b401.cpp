@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064B401 EXCLUDED S1
-// name      _isintTOS
+// ORIGINAL: 0x0064B401 _isintTOS 0x0064B401-0x0064B426;0x0064B427-0x0064B435 EXCLUDED S1
 // size      51 bytes
-// spans     0x0064B401-0x0064B426;0x0064B427-0x0064B435
 // prototype 
 // callers   1   call targets   0
 // kind      library

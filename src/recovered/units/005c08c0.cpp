@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005C08C0 FILE
-// name      ?veh_kill@@YAXH@Z
+// ORIGINAL: 0x005C08C0 ?veh_kill@@YAXH@Z 0x005C08C0-0x005C0AF4 FILE
 // size      564 bytes
-// spans     0x005C08C0-0x005C0AF4
 // prototype void (__cdecl ?veh_kill@@YAXH@Z)(int vehID)
 // callers   15   call targets   6
 // kind      game

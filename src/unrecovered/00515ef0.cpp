@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00515EF0 FILE
+// ORIGINAL: 0x00515EF0 ?toggle_patrol@Console@@QAEXXZ 0x00515EF0-0x00515F70 FILE
 // working copy - scaffold materialised by --work
-// name      ?toggle_patrol@Console@@QAEXXZ
 // size      128 bytes
-// spans     0x00515EF0-0x00515F70
 // prototype void (__thiscall ?toggle_patrol@Console@@QAEXXZ)(Console* this)
 // callers   0   call targets   2
 // kind      game

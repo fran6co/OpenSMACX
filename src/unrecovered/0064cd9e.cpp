@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064CD9E EXCLUDED S1
-// name      __free_osfhnd
+// ORIGINAL: 0x0064CD9E __free_osfhnd 0x0064CD9E-0x0064CE1D EXCLUDED S1
 // size      127 bytes
-// spans     0x0064CD9E-0x0064CE1D
 // prototype 
 // callers   1   call targets   2
 // kind      library

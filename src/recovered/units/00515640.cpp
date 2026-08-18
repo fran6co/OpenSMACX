@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00515640 BYTE_EXACT FILE
-// name      ?toggle_flatten@Console@@QAEXXZ
+// ORIGINAL: 0x00515640 ?toggle_flatten@Console@@QAEXXZ 0x00515640-0x00515691 FILE BYTE_EXACT
 // size      81 bytes
-// spans     0x00515640-0x00515691
 // prototype void (__thiscall ?toggle_flatten@Console@@QAEXXZ)(Console* this)
 // callers   0   call targets   4
 // kind      game

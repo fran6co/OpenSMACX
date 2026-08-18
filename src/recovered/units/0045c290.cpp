@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0045C290 FILE
-// name      ?restore_back@MainInterface@@QAEXH@Z
+// ORIGINAL: 0x0045C290 ?restore_back@MainInterface@@QAEXH@Z 0x0045C290-0x0045C393 FILE
 // size      259 bytes
-// spans     0x0045C290-0x0045C393
 // prototype void (__thiscall ?restore_back@MainInterface@@QAEXH@Z)(MainInterface* this, int)
 // callers   12   call targets   2
 // kind      game

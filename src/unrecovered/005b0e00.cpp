@@ -1,23 +1,7 @@
-// ORIGINAL: 0x005B0E00 FILE
-// RULED-OUT: full-body transcription from Ghidra hypothesis, corrected
-//            against raw disasm for: tech_ai/tech_achieved and abil_index/
-//            has_tech dangling-outer-call pushes (same shape as time_warp's
-//            has_tech fold), veh_lift/veh_drop split (PROPOSAL: veh_lift
-//            should be `int veh_lift(int)`), CharUpperA reached through the
-//            IAT thunk at g_0066931c (matches src/recovered's established
-//            idiom), and per-field pointer widths across the ~230 referenced
-//            globals recovered from `movsx`/`test byte ptr` on the raw
-//            disassembly, since the scaffold's g_ globals are declared int*
-//            uniformly. All C2xxx NO_COMPILE errors from iterative
-//            verify_recovered_function.py runs were fixed; the final
-//            byte-tier measurement did not finish inside this session (a
-//            single VC6 /O2 pass on this body ran >12 minutes without
-//            completing - the same body compiles other optimisation levels'
-//            passes fine, so this reads as a slow pass, not a stuck one).
+// ORIGINAL: 0x005B0E00 ?setup_player@@YAHHHH@Z 0x005B0E00-0x005B337C FILE
+// RULED-OUT: full-body transcription from Ghidra hypothesis, corrected against raw disasm for: tech_ai/tech_achieved and abil_index/ has_tech dangling-outer-call pushes (same shape as time_warp's has_tech fold), veh_lift/veh_drop split (PROPOSAL: veh_lift should be `int veh_lift(int)`), CharUpperA reached through the IAT thunk at g_0066931c (matches src/recovered's established idiom), and per-field pointer widths across the ~230 referenced globals recovered from `movsx`/`test byte ptr` on the raw disassembly, since the scaffold's g_ globals are declared int* uniformly. All C2xxx NO_COMPILE errors from iterative verify_recovered_function.py runs were fixed; the final byte-tier measurement did not finish inside this session (a single VC6 /O2 pass on this body ran >12 minutes without completing - the same body compiles other optimisation levels' passes fine, so this reads as a slow pass, not a stuck one).
 // working copy - scaffold materialised by --work
-// name      ?setup_player@@YAHHHH@Z
 // size      9596 bytes
-// spans     0x005B0E00-0x005B337C
 // prototype int (__cdecl ?setup_player@@YAHHHH@Z)(int8*, int protoID, int)
 // callers   4   call targets   37
 // kind      game

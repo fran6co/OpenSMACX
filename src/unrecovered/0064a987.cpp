@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064A987 EXCLUDED S1
-// name      __startOneArgErrorHandling
+// ORIGINAL: 0x0064A987 __startOneArgErrorHandling 0x0064A987-0x0064A9C3 EXCLUDED S1
 // size      60 bytes
-// spans     0x0064A987-0x0064A9C3
 // prototype 
 // callers   6   call targets   1
 // kind      library

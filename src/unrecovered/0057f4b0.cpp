@@ -1,13 +1,7 @@
-// ORIGINAL: 0x0057F4B0 FILE
-// RULED-OUT: full goto-per-branch literal transcription of all 1404
-//            instructions (register vars + B/W/D/SB/SW byte-address macros);
-//            compiles and matches control flow/field offsets/call order but
-//            diverges at instr #0 (prologue/frame layout, MSVC's register
-//            allocation for this huge frame is not reproduced by hand).
+// ORIGINAL: 0x0057F4B0 ?prune_protos@@YAXHHH@Z 0x0057F4B0-0x00580859 FILE
+// RULED-OUT: full goto-per-branch literal transcription of all 1404 instructions (register vars + B/W/D/SB/SW byte-address macros); compiles and matches control flow/field offsets/call order but diverges at instr #0 (prologue/frame layout, MSVC's register allocation for this huge frame is not reproduced by hand).
 // working copy - scaffold materialised by --work
-// name      ?prune_protos@@YAXHHH@Z
 // size      5033 bytes
-// spans     0x0057F4B0-0x00580859
 // prototype 
 // callers   4   call targets   12
 // kind      game

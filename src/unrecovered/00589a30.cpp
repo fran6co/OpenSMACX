@@ -1,17 +1,11 @@
-// ORIGINAL: 0x00589A30 FILE
-// name      ?change_opening@@YAHPAD@Z
+// ORIGINAL: 0x00589A30 ?change_opening@@YAHPAD@Z 0x00589A30-0x00589B1D;0x00660255-0x0066026A FILE
+// RULED-OUT: reproducing the SEH frame/unwind funclet for the local `Buffer buf` explicitly - a real local of non-trivial type (ctor/dtor declared, undefined) makes MSVC generate its own construction/destruction and unwind automatically; landed relying on that instead of hand-writing the funclet.
 // size      258 bytes
-// spans     0x00589A30-0x00589B1D;0x00660255-0x0066026A
 // prototype
 // callers   1   call targets   4
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x005D7210 0x005D7410 0x005D7DE0 0x005D9610
-// RULED-OUT: reproducing the SEH frame/unwind funclet for the local
-//            `Buffer buf` explicitly - a real local of non-trivial type
-//            (ctor/dtor declared, undefined) makes MSVC generate its own
-//            construction/destruction and unwind automatically; landed
-//            relying on that instead of hand-writing the funclet.
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?change_opening@@YAHPAD@Z  at 0x00589A30  (258 bytes)
 //

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006494D1 EXCLUDED S1
-// name      __fflush_lk
+// ORIGINAL: 0x006494D1 __fflush_lk 0x006494D1-0x006494FF EXCLUDED S1
 // size      46 bytes
-// spans     0x006494D1-0x006494FF
 // prototype 
 // callers   1   call targets   2
 // kind      library

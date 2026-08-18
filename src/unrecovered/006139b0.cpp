@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006139B0 FILE
-// name      ?init@FileWin@@QAEHPADPAUGraphicWin@@PAUFileWinConstruct@@@Z
+// ORIGINAL: 0x006139B0 ?init@FileWin@@QAEHPADPAUGraphicWin@@PAUFileWinConstruct@@@Z 0x006139B0-0x00613B97 FILE
 // size      487 bytes
-// spans     0x006139B0-0x00613B97
 // prototype int (__thiscall ?init@FileWin@@QAEHPADPAUGraphicWin@@PAUFileWinConstruct@@@Z)(FileWin* this, int8*, GraphicWin*, FileWinConstruct*)
 // callers   1   call targets   5
 // kind      game

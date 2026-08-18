@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064EE72 EXCLUDED S1
-// name      _setSBUpLow
+// ORIGINAL: 0x0064EE72 _setSBUpLow 0x0064EE72-0x0064EFF7 EXCLUDED S1
 // size      389 bytes
-// spans     0x0064EE72-0x0064EFF7
 // prototype 
 // callers   1   call targets   2
 // kind      library

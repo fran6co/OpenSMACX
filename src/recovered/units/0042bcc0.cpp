@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0042BCC0 BYTE_EXACT FILE
-// name      ?set_index@Datalink@@QAEXHH@Z
+// ORIGINAL: 0x0042BCC0 ?set_index@Datalink@@QAEXHH@Z 0x0042BCC0-0x0042BD14 FILE BYTE_EXACT
 // size      84 bytes
-// spans     0x0042BCC0-0x0042BD14
 // prototype void (__thiscall ?set_index@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
 // callers   1   call targets   1
 // kind      game

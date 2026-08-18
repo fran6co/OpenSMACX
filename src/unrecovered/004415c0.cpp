@@ -1,18 +1,7 @@
-// ORIGINAL: 0x004415C0 FILE
-// RULED-OUT: 15-way jump table (resolved in the brief) transcribed as a
-//            switch/goto over (a1+2); same Popup-teardown-cascade shape as
-//            the other DiploWin/PickWin siblings, plus one extra pair of
-//            vtable-relative writes (self and self+0x444) for an embedded
-//            RadioButton this function's Dialogs region has that the others
-//            don't. Cases 5/6/8/9 (tech-trade and base-swap proposal loops)
-//            are the largest handlers and were transcribed at "good faith"
-//            fidelity - the array-scan/skip conditions and REL() bit tests
-//            were matched to the raw bytes but not independently re-verified
-//            a second time given the time remaining. sim 0.12-0.34.
+// ORIGINAL: 0x004415C0 ?on_button_clicked@DiploWin@@QAEXH@Z 0x004415C0-0x004424C6;0x00654A50-0x00654CEA FILE
+// RULED-OUT: 15-way jump table (resolved in the brief) transcribed as a switch/goto over (a1+2); same Popup-teardown-cascade shape as the other DiploWin/PickWin siblings, plus one extra pair of vtable-relative writes (self and self+0x444) for an embedded RadioButton this function's Dialogs region has that the others don't. Cases 5/6/8/9 (tech-trade and base-swap proposal loops) are the largest handlers and were transcribed at "good faith" fidelity - the array-scan/skip conditions and REL() bit tests were matched to the raw bytes but not independently re-verified a second time given the time remaining. sim 0.12-0.34.
 // working copy - scaffold materialised by --work
-// name      ?on_button_clicked@DiploWin@@QAEXH@Z
 // size      4512 bytes
-// spans     0x004415C0-0x004424C6;0x00654A50-0x00654CEA
 // prototype void (__thiscall ?on_button_clicked@DiploWin@@QAEXH@Z)(DiploWin* this, int)
 // callers   0   call targets   41
 // kind      game

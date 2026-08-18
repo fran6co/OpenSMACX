@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005398E0 BYTE_EXACT
-// name      ?pop_wait@@YAHXZ
+// ORIGINAL: 0x005398E0 ?pop_wait@@YAHXZ 0x005398E0-0x00539914 BYTE_EXACT
 // size      52 bytes
-// spans     0x005398E0-0x00539914
 // prototype 
 // callers   0   call targets   1
 // kind      game

@@ -1,21 +1,12 @@
-// ORIGINAL: 0x00548F80 FILE
+// ORIGINAL: 0x00548F80 ?do_withdrawal@@YAHHH@Z 0x00548F80-0x00549264 FILE
+// RULED-OUT: MISMATCH #6 'push' vs 'mov'. Tried both `if (n>0){...}` and the inverted `if (n<=0) return 0;` early-out for the outer guard; neither reproduces the original's push-esi-before-branch / xor+cmp zero-reuse pattern. veh_lift/veh_drop's second push (used as the leftover eax arg to the paired veh_drop call) is reproduced by calling veh_lift(i); veh_drop(i, x, y) as two independent statements rather than chaining a return value, since veh_lift is declared void in this unit.
 // working copy - scaffold materialised by --work
-// name      ?do_withdrawal@@YAHHH@Z
 // size      740 bytes
-// spans     0x00548F80-0x00549264
 // prototype 
 // callers   4   call targets   12
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x0046AF90 0x0046B140 0x004E3C60 0x0055BB30 0x0055BBA0 0x005B8E10 0x005B9580 0x005BF1F0 0x005BFE90 0x005BFFA0 0x005C0080 0x005C1760
-// RULED-OUT: MISMATCH #6 'push' vs 'mov'. Tried both `if (n>0){...}` and the
-//            inverted `if (n<=0) return 0;` early-out for the outer guard;
-//            neither reproduces the original's push-esi-before-branch /
-//            xor+cmp zero-reuse pattern. veh_lift/veh_drop's second push
-//            (used as the leftover eax arg to the paired veh_drop call) is
-//            reproduced by calling veh_lift(i); veh_drop(i, x, y) as two
-//            independent statements rather than chaining a return value,
-//            since veh_lift is declared void in this unit.
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?do_withdrawal@@YAHHH@Z  at 0x00548F80  (740 bytes)

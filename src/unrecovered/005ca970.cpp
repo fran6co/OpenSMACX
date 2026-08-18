@@ -1,19 +1,6 @@
-// ORIGINAL: 0x005CA970 FILE
-// RULED-OUT: reads `[ecx+N]` with no stack arg -> __thiscall receiver, its
-//            own minimal class (own field offsets, not a catalogued name).
-//            Under frameless /O2 flags this body's prologue and the first
-//            ~40 bytes are an exact instruction-for-instruction match, but
-//            the scorer's `/Oy-` attempt (forced frame pointer) has a
-//            higher overall mnemonic similarity (0.51 vs 0.35) despite
-//            diverging on instruction #1, and `_better` ranks by similarity
-//            before divergence point - so `/Oy-` is the kept verdict.
-//            Not chased past that: the two flag sets disagree on which of
-//            this body's branches tracks the original, which is a
-//            structural difference deeper in the function, not a cheap
-//            source-form tweak.
-// name      sub_5ca970
+// ORIGINAL: 0x005CA970 sub_5ca970 0x005CA970-0x005CAAA1 FILE
+// RULED-OUT: reads `[ecx+N]` with no stack arg -> __thiscall receiver, its own minimal class (own field offsets, not a catalogued name). Under frameless /O2 flags this body's prologue and the first ~40 bytes are an exact instruction-for-instruction match, but the scorer's `/Oy-` attempt (forced frame pointer) has a higher overall mnemonic similarity (0.51 vs 0.35) despite diverging on instruction #1, and `_better` ranks by similarity before divergence point - so `/Oy-` is the kept verdict. Not chased past that: the two flag sets disagree on which of this body's branches tracks the original, which is a structural difference deeper in the function, not a cheap source-form tweak.
 // size      305 bytes
-// spans     0x005CA970-0x005CAAA1
 // prototype
 // callers   1   call targets   1
 // kind      game

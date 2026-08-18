@@ -1,33 +1,8 @@
-// ORIGINAL: 0x004632D0 FILE
-// RULED-OUT: SEH prologue vanished entirely by declaring a real `Random
-//        local_rand;` local (ctor/dtor already recovered in random.h) and
-//        deleting every explicit ctor/dtor call the Ghidra hypothesis
-//        showed - the compiler emits the frame and every return path's
-//        implicit destructor call itself, exactly as the brief predicted.
-// RULED-OUT: contract typed a4/a5 as plain int; Ghidra uses both as real
-//            int*/uint32_t* throughout (dereferenced, compared, walked) -
-//            retyping them (and the MapWin class prototype) cleared ~70 of
-//            the ~90 initial C2440/C2446 errors in one pass. `a1` (really
-//            Buffer*) and the pre-fix `param_2`->`a2` (MapWin*) both get
-//            reused mid-function as a plain int/byte scratch slot after
-//            their last pointer use (matches the loop_base_idx pattern
-//            found in base_terraform) - split into fresh locals
-//            (`crop_diff`) rather than fighting the parameter's type.
-//            Twelve callees (Texture-family scanline/Duff's-device
-//            blitters) have no recovered name or signature anywhere in the
-//            tree, and their own dedicated scaffolds are themselves
-//            RULED-OUT approximations (ESP used as live data, no C
-//            construct reaches that) - declared `extern "C" void
-//            FUN_xxxxxxxx(...);` (ellipsis, no fixed params) so every call
-//            site's argument values/order are preserved without guessing a
-//            per-position type. Diverges at #1 (frame size / prologue),
-//            same shape as the four-of-seven-bodies prologue note - some
-//            combination of the extra `crop_diff` local and the RAII
-//            frame's own layout shifts `sub esp` versus the original.
+// ORIGINAL: 0x004632D0 ?gen_terrain_poly@MapWin@@QAAHPAUBuffer@@PAUMapWin@@HHHHHHHH@Z 0x004632D0-0x00466C92;0x00655920-0x00655932 FILE
+// RULED-OUT: SEH prologue vanished entirely by declaring a real `Random local_rand;` local (ctor/dtor already recovered in random.h) and deleting every explicit ctor/dtor call the Ghidra hypothesis showed - the compiler emits the frame and every return path's implicit destructor call itself, exactly as the brief predicted.
+// RULED-OUT: contract typed a4/a5 as plain int; Ghidra uses both as real int*/uint32_t* throughout (dereferenced, compared, walked) - retyping them (and the MapWin class prototype) cleared ~70 of the ~90 initial C2440/C2446 errors in one pass. `a1` (really Buffer*) and the pre-fix `param_2`->`a2` (MapWin*) both get reused mid-function as a plain int/byte scratch slot after their last pointer use (matches the loop_base_idx pattern found in base_terraform) - split into fresh locals (`crop_diff`) rather than fighting the parameter's type. Twelve callees (Texture-family scanline/Duff's-device blitters) have no recovered name or signature anywhere in the tree, and their own dedicated scaffolds are themselves RULED-OUT approximations (ESP used as live data, no C construct reaches that) - declared `extern "C" void FUN_xxxxxxxx(...);` (ellipsis, no fixed params) so every call site's argument values/order are preserved without guessing a per-position type. Diverges at #1 (frame size / prologue), same shape as the four-of-seven-bodies prologue note - some combination of the extra `crop_diff` local and the RAII frame's own layout shifts `sub esp` versus the original.
 // working copy - scaffold materialised by --work
-// name      ?gen_terrain_poly@MapWin@@QAAHPAUBuffer@@PAUMapWin@@HHHHHHHH@Z
 // size      14804 bytes
-// spans     0x004632D0-0x00466C92;0x00655920-0x00655932
 // prototype 
 // callers   7   call targets   38
 // kind      game

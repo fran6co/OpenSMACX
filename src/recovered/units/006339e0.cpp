@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006339E0 FILE
-// name      ??1NetFifo@@QAE@XZ
+// ORIGINAL: 0x006339E0 ??1NetFifo@@QAE@XZ 0x006339E0-0x00633A42 FILE
 // size      98 bytes
-// spans     0x006339E0-0x00633A42
 // prototype void (__thiscall ??1NetFifo@@QAE@XZ)(NetFifo* this)
 // callers   3   call targets   1
 // kind      game

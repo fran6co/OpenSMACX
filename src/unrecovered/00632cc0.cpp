@@ -1,20 +1,7 @@
-// ORIGINAL: 0x00632CC0 FILE
-// RULED-OUT: bare `strcat` intrinsic-expands to strlen(scasb)+memcpy;
-//            `#pragma function(strcat)` forces the real call. ecx is `this`
-//            (not the stdcall the IDA guess implied) - rewritten as a
-//            thiscall member of a throwaway class taking (char*, int,
-//            unsigned char), matching the "ret 0xc" 3-stack-arg cleanup.
-//            do-while / for over the 16-slot search loop UNROLLS the first
-//            iteration (duplicated body) under /O2, which the original
-//            does not show; `while(true){...; if(cond) break;}` keeps a
-//            single instance matching the original's layout, but still
-//            emits `jge` where the original has `jl` at the loop's back
-//            edge - flipping the break condition's polarity didn't change
-//            it. 84% mnemonic match, single divergence region.
+// ORIGINAL: 0x00632CC0 sub_632cc0 0x00632CC0-0x00632DAA FILE
+// RULED-OUT: bare `strcat` intrinsic-expands to strlen(scasb)+memcpy; `#pragma function(strcat)` forces the real call. ecx is `this` (not the stdcall the IDA guess implied) - rewritten as a thiscall member of a throwaway class taking (char*, int, unsigned char), matching the "ret 0xc" 3-stack-arg cleanup. do-while / for over the 16-slot search loop UNROLLS the first iteration (duplicated body) under /O2, which the original does not show; `while(true){...; if(cond) break;}` keeps a single instance matching the original's layout, but still emits `jge` where the original has `jl` at the loop's back edge - flipping the break condition's polarity didn't change it. 84% mnemonic match, single divergence region.
 // working copy - scaffold materialised by --work
-// name      sub_632cc0
 // size      234 bytes
-// spans     0x00632CC0-0x00632DAA
 // prototype 
 // callers   2   call targets   3
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004B2470 FILE
-// name      ?on_iface_button_clicked@SocialWin@@QAEXH@Z
+// ORIGINAL: 0x004B2470 ?on_iface_button_clicked@SocialWin@@QAEXH@Z 0x004B2470-0x004B264E FILE
 // size      478 bytes
-// spans     0x004B2470-0x004B264E
 // prototype void (__thiscall ?on_iface_button_clicked@SocialWin@@QAEXH@Z)(SocialWin* this, int)
 // callers   0   call targets   6
 // kind      game

@@ -1,15 +1,7 @@
-// ORIGINAL: 0x0052C880 FILE
-// RULED-OUT: literal register/goto transcription of all ~85 branches and the
-//            10-entry switch resolved from the image; Popup+embedded Scroll+
-//            2 embedded FlatButton locals (BasePop+0x3230=Scroll start,
-//            Scroll+0xAAC/0x15F8=flat_button_left_/right_, matching the
-//            SEH thunks at 0x65DB99/0x65DBA7); vtable-reassert writes before
-//            every close() and the per-site EH state bytes are compiler
-//            artifacts, not transcribed. #18 first divergence still open.
+// ORIGINAL: 0x0052C880 ?call_council@@YAXH@Z 0x0052C880-0x0052DA98;0x0065DB70-0x0065DF45 FILE
+// RULED-OUT: literal register/goto transcription of all ~85 branches and the 10-entry switch resolved from the image; Popup+embedded Scroll+ 2 embedded FlatButton locals (BasePop+0x3230=Scroll start, Scroll+0xAAC/0x15F8=flat_button_left_/right_, matching the SEH thunks at 0x65DB99/0x65DBA7); vtable-reassert writes before every close() and the per-site EH state bytes are compiler artifacts, not transcribed. #18 first divergence still open.
 // working copy - scaffold materialised by --work
-// name      ?call_council@@YAXH@Z
 // size      5613 bytes
-// spans     0x0052C880-0x0052DA98;0x0065DB70-0x0065DF45
 // prototype void (__cdecl ?call_council@@YAXH@Z)(int factionID)
 // callers   3   call targets   30
 // kind      game

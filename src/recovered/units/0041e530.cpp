@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0041E530 BYTE_EXACT FILE
-// name      ?on_iface_button_toggled@BaseWin@@QAEXHH@Z
+// ORIGINAL: 0x0041E530 ?on_iface_button_toggled@BaseWin@@QAEXHH@Z 0x0041E530-0x0041E551 FILE BYTE_EXACT
 // size      33 bytes
-// spans     0x0041E530-0x0041E551
 // prototype void (__thiscall ?on_iface_button_toggled@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
 // callers   0   call targets   0
 // kind      game

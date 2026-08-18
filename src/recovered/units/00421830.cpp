@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00421830 BYTE_EXACT FILE
-// name      ??_GMapWin@@UAEPAXI@Z
+// ORIGINAL: 0x00421830 ??_GMapWin@@UAEPAXI@Z 0x00421830-0x00421866 FILE BYTE_EXACT
 // size      54 bytes
-// spans     0x00421830-0x00421866
 // prototype void* (__thiscall ??_GMapWin@@UAEPAXI@Z)(MapWin* this, unsigned int)
 // callers   0   call targets   3
 // kind      game

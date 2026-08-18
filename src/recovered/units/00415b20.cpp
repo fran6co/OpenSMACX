@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00415B20 FILE
-// name      ?draw_info@BaseWin@@QAEXH@Z
+// ORIGINAL: 0x00415B20 ?draw_info@BaseWin@@QAEXH@Z 0x00415B20-0x00415DCE FILE
 // size      686 bytes
-// spans     0x00415B20-0x00415DCE
 // prototype void (__thiscall ?draw_info@BaseWin@@QAEXH@Z)(BaseWin* this, int)
 // callers   2   call targets   11
 // kind      game

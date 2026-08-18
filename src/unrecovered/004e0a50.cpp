@@ -1,12 +1,7 @@
-// ORIGINAL: 0x004E0A50 FILE
-// RULED-OUT: `a1 > 5` (jl/jle flip at #12, fixed by `a1 >= 6`); `counter =
-//            a1 - 6` as one expression (lea vs sub at #15, tried splitting
-//            into `counter=a1; counter-=6;`, no change). Same size as
-//            original (127/127), mismatch only at #15.
+// ORIGINAL: 0x004E0A50 ?editor_paints@Console@@QAEXH@Z 0x004E0A50-0x004E0ACF FILE
+// RULED-OUT: `a1 > 5` (jl/jle flip at #12, fixed by `a1 >= 6`); `counter = a1 - 6` as one expression (lea vs sub at #15, tried splitting into `counter=a1; counter-=6;`, no change). Same size as original (127/127), mismatch only at #15.
 // working copy - scaffold materialised by --work
-// name      ?editor_paints@Console@@QAEXH@Z
 // size      127 bytes
-// spans     0x004E0A50-0x004E0ACF
 // prototype void (__thiscall ?editor_paints@Console@@QAEXH@Z)(Console* this, int)
 // callers   5   call targets   3
 // kind      game

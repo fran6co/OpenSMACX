@@ -1,10 +1,7 @@
-// ORIGINAL: 0x005CB660 FILE
-// RULED-OUT: nothing beyond the direct InterlockedExchange/Sleep
-//            transcription; diverges at #12 (test vs mov)
+// ORIGINAL: 0x005CB660 sub_5cb660 0x005CB660-0x005CB6BF FILE
+// RULED-OUT: nothing beyond the direct InterlockedExchange/Sleep transcription; diverges at #12 (test vs mov)
 // working copy - scaffold materialised by --work
-// name      sub_5cb660
 // size      95 bytes
-// spans     0x005CB660-0x005CB6BF
 // prototype 
 // callers   1   call targets   0
 // kind      game

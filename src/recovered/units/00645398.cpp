@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00645398 BYTE_EXACT FILE
-// name      _atexit
+// ORIGINAL: 0x00645398 _atexit 0x00645398-0x006453AA FILE BYTE_EXACT
 // size      18 bytes
-// spans     0x00645398-0x006453AA
 // prototype 
 // callers   401   call targets   1
 // kind      library

@@ -1,22 +1,7 @@
-// ORIGINAL: 0x004AF310 FILE
-// RULED-OUT: transcribed directly from the disassembly (Ghidra's own
-//            decompilation agreed on the control flow and formulas once its
-//            confusing overlapping-stack-slot local numbering was resolved
-//            against the raw ebp-relative offsets) - the header/derived RECT
-//            pair, the per-row avail==0 header-only path, the count-then-
-//            draw two-pass loop over the fixed 11-entry table at 0x94b2cc
-//            (index 3 excluded), and the `this!=0 ? obj : 0` guard before
-//            each Sprite::draw. Draw receivers are the big/small Sprite
-//            sub-objects themselves (`bigIcon->draw(buffer, ...)`), not the
-//            Buffer - an early draft called the wrong receiver and was
-//            fixed before landing. MISMATCH #0 (`push`/`sub` prologue) on a
-//            1452-byte function with a deeply nested sign-magnitude
-//            classification loop - not chased to byte-exactness, this is a
-//            structural transcription.
+// ORIGINAL: 0x004AF310 ?draw_social@SocialWin@@QAEXH@Z 0x004AF310-0x004AF8BC FILE
+// RULED-OUT: transcribed directly from the disassembly (Ghidra's own decompilation agreed on the control flow and formulas once its confusing overlapping-stack-slot local numbering was resolved against the raw ebp-relative offsets) - the header/derived RECT pair, the per-row avail==0 header-only path, the count-then- draw two-pass loop over the fixed 11-entry table at 0x94b2cc (index 3 excluded), and the `this!=0 ? obj : 0` guard before each Sprite::draw. Draw receivers are the big/small Sprite sub-objects themselves (`bigIcon->draw(buffer, ...)`), not the Buffer - an early draft called the wrong receiver and was fixed before landing. MISMATCH #0 (`push`/`sub` prologue) on a 1452-byte function with a deeply nested sign-magnitude classification loop - not chased to byte-exactness, this is a structural transcription.
 // working copy - scaffold materialised by --work
-// name      ?draw_social@SocialWin@@QAEXH@Z
 // size      1452 bytes
-// spans     0x004AF310-0x004AF8BC
 // prototype void (__thiscall ?draw_social@SocialWin@@QAEXH@Z)(SocialWin* this, int socCategory)
 // callers   2   call targets   12
 // kind      game

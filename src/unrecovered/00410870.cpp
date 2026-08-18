@@ -1,19 +1,7 @@
-// ORIGINAL: 0x00410870 FILE
-// RULED-OUT: SEH-framed function with one real local object (`Font font;`,
-//   matching the single ??0Font/??1Font pair) reproduced via plain RAII,
-//   same as 0x004ADB70. Diverges at #12 (sim 0.53), not chased further
-//   given time. The "own faction" index scan, both box_sprite/set_font/
-//   set_text_color RECT setups, and the tail (soft_update vs update on a1,
-//   restore clip) are a direct instruction-level transcription off raw
-//   disassembly. The per-faction commerce-report loop body (the `slot`
-//   loop building relation strings via write_l) and the military-score
-//   ELSE branch are adapted from Ghidra with real field offsets and real
-//   calls but approximated message-selection logic - not verified
-//   call-for-call against raw bytes given the remaining budget.
+// ORIGINAL: 0x00410870 ?draw_commerce@BaseWin@@QAEXH@Z 0x00410870-0x00411235;0x00651B22-0x00651B37 FILE
+// RULED-OUT: SEH-framed function with one real local object (`Font font;`, matching the single ??0Font/??1Font pair) reproduced via plain RAII, same as 0x004ADB70. Diverges at #12 (sim 0.53), not chased further given time. The "own faction" index scan, both box_sprite/set_font/ set_text_color RECT setups, and the tail (soft_update vs update on a1, restore clip) are a direct instruction-level transcription off raw disassembly. The per-faction commerce-report loop body (the `slot` loop building relation strings via write_l) and the military-score ELSE branch are adapted from Ghidra with real field offsets and real calls but approximated message-selection logic - not verified call-for-call against raw bytes given the remaining budget.
 // working copy - scaffold materialised by --work
-// name      ?draw_commerce@BaseWin@@QAEXH@Z
 // size      2522 bytes
-// spans     0x00410870-0x00411235;0x00651B22-0x00651B37
 // prototype void (__thiscall ?draw_commerce@BaseWin@@QAEXH@Z)(BaseWin* this, int)
 // callers   1   call targets   15
 // kind      game

@@ -1,8 +1,6 @@
-// ORIGINAL: 0x004E13E0 FILE
+// ORIGINAL: 0x004E13E0 ?editor_fungus@Console@@QAEXXZ 0x004E13E0-0x004E149B FILE
 // working copy - scaffold materialised by --work
-// name      ?editor_fungus@Console@@QAEXXZ
 // size      187 bytes
-// spans     0x004E13E0-0x004E149B
 // prototype void (__thiscall ?editor_fungus@Console@@QAEXXZ)(Console* this)
 // callers   1   call targets   4
 // kind      game

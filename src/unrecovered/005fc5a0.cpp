@@ -1,11 +1,7 @@
-// ORIGINAL: 0x005FC5A0 BYTE_EXACT FILE
-// LEVER: emitter's VCall is always nullary; declared a second, own-named
-//        vtable shim (MenuVCall) with slot003 given the real (int,int,int)
-//        signature instead of trying to redeclare the fixed one.
+// ORIGINAL: 0x005FC5A0 ?adjust@Menu@@QAEXXZ 0x005FC5A0-0x005FC61B FILE BYTE_EXACT
+// LEVER: emitter's VCall is always nullary; declared a second, own-named vtable shim (MenuVCall) with slot003 given the real (int,int,int) signature instead of trying to redeclare the fixed one.
 // working copy - scaffold materialised by --work
-// name      ?adjust@Menu@@QAEXXZ
 // size      123 bytes
-// spans     0x005FC5A0-0x005FC61B
 // prototype void (__thiscall ?adjust@Menu@@QAEXXZ)(Menu* this)
 // callers   0   call targets   1
 // kind      game

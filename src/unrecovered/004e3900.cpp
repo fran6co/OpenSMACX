@@ -1,11 +1,7 @@
-// ORIGINAL: 0x004E3900 FILE
-// RULED-OUT: register-save push order (ebx/esi/edi prologue) drifts from a
-//            struct-model body; single-level VCall casts used for the three
-//            argument-taking slots. 207 vs 197 rebuilt bytes.
+// ORIGINAL: 0x004E3900 sub_4e3900 0x004E3900-0x004E39CF FILE
+// RULED-OUT: register-save push order (ebx/esi/edi prologue) drifts from a struct-model body; single-level VCall casts used for the three argument-taking slots. 207 vs 197 rebuilt bytes.
 // working copy - scaffold materialised by --work
-// name      sub_4e3900
 // size      207 bytes
-// spans     0x004E3900-0x004E39CF
 // prototype 
 // callers   0   call targets   1
 // kind      game

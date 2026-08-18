@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005FFD80
-// name      ??0MCIVideo@@QAE@XZ
+// ORIGINAL: 0x005FFD80 ??0MCIVideo@@QAE@XZ 0x005FFD80-0x005FFDA1
 // size      33 bytes
-// spans     0x005FFD80-0x005FFDA1
 // prototype void (__thiscall ??0MCIVideo@@QAE@XZ)(MCIVideo* this)
 // callers   2   call targets   1
 // kind      game

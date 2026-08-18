@@ -1,15 +1,7 @@
-// ORIGINAL: 0x005EB640 FILE
-// RULED-OUT: full instruction-order port of the 1610-byte teardown (modal/
-//   focus clear, parent redraw-list unlink at +0xcc/+0xd0/+0xd4/+0xdc,
-//   mutually-exclusive parent-children-array vs global-window-list removal,
-//   heap-block/three-vtable-object cleanup at +0xe0/e4/e8/ec, then ~90
-//   individual field resets using the class's offset-named fields).
-//   Compiles and matches through instr #4; diverges at #5 on push/xor
-//   register-save scheduling. Not chased further given the size.
+// ORIGINAL: 0x005EB640 ?close@Win@@QAEXXZ 0x005EB640-0x005EBC8A FILE
+// RULED-OUT: full instruction-order port of the 1610-byte teardown (modal/ focus clear, parent redraw-list unlink at +0xcc/+0xd0/+0xd4/+0xdc, mutually-exclusive parent-children-array vs global-window-list removal, heap-block/three-vtable-object cleanup at +0xe0/e4/e8/ec, then ~90 individual field resets using the class's offset-named fields). Compiles and matches through instr #4; diverges at #5 on push/xor register-save scheduling. Not chased further given the size.
 // working copy - scaffold materialised by --work
-// name      ?close@Win@@QAEXXZ
 // size      1610 bytes
-// spans     0x005EB640-0x005EBC8A
 // prototype void (__thiscall ?close@Win@@QAEXXZ)(Win* this)
 // callers   4   call targets   6
 // kind      game

@@ -1,7 +1,6 @@
-// ORIGINAL: 0x005CC710
-// name      sub_5cc710
+// ORIGINAL: 0x005CC710 sub_5cc710 0x005CC710-0x005CC856
+// RULED-OUT: the four vtable-slot-2 calls read `push piVar1; mov ecx, [piVar1]; call dword ptr [ecx+8]` - a plain function-pointer call taking one explicit pointer argument, NOT a thiscall dispatch (the receiver never lands in ecx before the call), so these are cdecl function-pointer casts, not virtual calls through an introduced class. `sub_5cbae0` similarly cannot be called by name (catalogued unmangled with no CRT_SIGNATURES entry, so declfix leaves it nullary - C2660 direct, C2733 redeclared) and the real call passes `this` in ecx and a literal 0 in edx with no stack push, i.e. __fastcall(void*, int); routed through a __fastcall function-pointer cast. Best reached: MISMATCH, edit_count 4, 338 bytes vs 326, mnemonic similarity ~0.98.
 // size      326 bytes
-// spans     0x005CC710-0x005CC856
 // prototype
 // callers   2   call targets   2
 // kind      game
@@ -13,19 +12,6 @@
 //           field reads (this + 0x3c, this + 0x648, ...). Expressed via an
 //           introduced `Sub5cc710Shim` class, class-close and out-of-line
 //           definition sharing one line for the same reason as 0x005D50F0.
-// RULED-OUT: the four vtable-slot-2 calls read `push piVar1; mov ecx,
-//            [piVar1]; call dword ptr [ecx+8]` - a plain function-pointer
-//            call taking one explicit pointer argument, NOT a thiscall
-//            dispatch (the receiver never lands in ecx before the call),
-//            so these are cdecl function-pointer casts, not virtual calls
-//            through an introduced class. `sub_5cbae0` similarly cannot be
-//            called by name (catalogued unmangled with no CRT_SIGNATURES
-//            entry, so declfix leaves it nullary - C2660 direct, C2733
-//            redeclared) and the real call passes `this` in ecx and a
-//            literal 0 in edx with no stack push, i.e. __fastcall(void*,
-//            int); routed through a __fastcall function-pointer cast.
-//            Best reached: MISMATCH, edit_count 4, 338 bytes vs 326,
-//            mnemonic similarity ~0.98.
 class Sub5cc710Shim {
 public:
     void run();

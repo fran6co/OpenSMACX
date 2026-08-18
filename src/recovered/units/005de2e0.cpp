@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005DE2E0 FILE
-// name      sub_5de2e0
+// ORIGINAL: 0x005DE2E0 sub_5de2e0 0x005DE2E0-0x005DE31A FILE
 // size      58 bytes
-// spans     0x005DE2E0-0x005DE31A
 // prototype 
 // callers   0   call targets   1
 // kind      game

@@ -1,8 +1,6 @@
-// ORIGINAL: 0x0052DDC0 FILE
+// ORIGINAL: 0x0052DDC0 ?convert@DeletionList@@QAEHHH@Z 0x0052DDC0-0x0052DE65 FILE
 // working copy - scaffold materialised by --work
-// name      ?convert@DeletionList@@QAEHHH@Z
 // size      165 bytes
-// spans     0x0052DDC0-0x0052DE65
 // prototype int (__thiscall ?convert@DeletionList@@QAEHHH@Z)(DeletionList* this, int, int)
 // callers   1   call targets   1
 // kind      game

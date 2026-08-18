@@ -30,17 +30,13 @@ THE LAYOUT. Each module is one concern:
                          file with VC6 and pulls the function from the object
 
 SELF-CONTAINED, BY REQUIREMENT. Nothing here imports from `tools/`, and
-nothing here imports outside the standard library. The reader is a COPY of
-the reading side of `tools/annotation_scan.py`, which the scripts in
-`tools/` still import directly. That means two parsers for one grammar,
-which is a real cost and is paid on purpose: the package owes nothing to
-the scripts and can be lifted out whole. The cost is bounded by
-`python -m decomp`, which parses `src/` and proves the result directly
-against the tree, then holds its parse against the `tools/` original and
-fails if the answers diverge - so a grammar edit landing in one copy and
-not the other is caught by the next run rather than by a wrong number
-months later. When the tools are refactored onto this package,
-`tools/annotation_scan.py` is deleted and that comparison goes with it.
+nothing here imports outside the standard library. The scripts in `tools/`
+still carry their own copies of the reading machinery; on 2026-08-18 the
+marker moved - it carries the piece's name and its image spans - and the
+tools copies stayed on the old spelling by decision. `python -m decomp`
+proves the package against `src/` alone: the parse and the read -> write ->
+read loop. When the tools are refactored onto this package, their copies
+are deleted.
 """
 
 from __future__ import annotations

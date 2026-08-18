@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005E3770 BYTE_EXACT FILE
-// name      sub_5e3770
+// ORIGINAL: 0x005E3770 sub_5e3770 0x005E3770-0x005E37A9 FILE BYTE_EXACT
 // size      57 bytes
-// spans     0x005E3770-0x005E37A9
 // prototype int (__stdcall sub_5E3770)(LPCSTR lpString, int)
 // callers   1   call targets   2
 // kind      game

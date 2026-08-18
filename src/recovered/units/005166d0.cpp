@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005166D0 FILE
-// name      ?cursor_key@Console@@QAEXHHH@Z
+// ORIGINAL: 0x005166D0 ?cursor_key@Console@@QAEXHHH@Z 0x005166D0-0x005168B7 FILE
 // size      487 bytes
-// spans     0x005166D0-0x005168B7
 // prototype void (__thiscall ?cursor_key@Console@@QAEXHHH@Z)(Console* this, int, int, int)
 // callers   1   call targets   8
 // kind      game

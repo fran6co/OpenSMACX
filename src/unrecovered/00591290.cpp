@@ -1,14 +1,7 @@
-// ORIGINAL: 0x00591290 FILE
-// RULED-OUT: no Ghidra hint for this one - straight register-variable/goto
-//            transcription from the raw disassembly (44-byte tile struct,
-//            0x833-stride owner tables, round-to-zero /2 idiom, extern lever
-//            on the lea-taken 0x00946d54 table). Compiles; diverges at
-//            instruction #0 (push vs mov), so the prologue/frame shape
-//            itself differs, not yet investigated further.
+// ORIGINAL: 0x00591290 ?alt_set@@YAXHHH@Z 0x00591290-0x00591894 FILE
+// RULED-OUT: no Ghidra hint for this one - straight register-variable/goto transcription from the raw disassembly (44-byte tile struct, 0x833-stride owner tables, round-to-zero /2 idiom, extern lever on the lea-taken 0x00946d54 table). Compiles; diverges at instruction #0 (push vs mov), so the prologue/frame shape itself differs, not yet investigated further.
 // working copy - scaffold materialised by --work
-// name      ?alt_set@@YAXHHH@Z
 // size      1540 bytes
-// spans     0x00591290-0x00591894
 // prototype void (__cdecl ?alt_set@@YAXHHH@Z)(int xCoord, int yCoord, int)
 // callers   3   call targets   15
 // kind      game

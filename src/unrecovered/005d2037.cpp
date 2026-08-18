@@ -1,18 +1,7 @@
-// ORIGINAL: 0x005D2037 FILE
-// RULED-OUT: nullary per the contract head - no [esp+N]/[ebp+N] read exists
-//            anywhere in the body, but esi/edi/ebp are read from the very
-//            first instruction with no prologue and no assignment into them
-//            first, so nullary leaves the data unreachable. Proposed a
-//            3-pointer signature (data/tables/out standing in for
-//            esi/edi/ebp) so the 8 unrolled DES-style S-box rounds compile
-//            and read correctly; this is a PROPOSAL, not decoded evidence -
-//            no standard calling convention passes 3 live registers with
-//            zero prologue, so BYTE_EXACT is structurally unreachable here
-//            short of __asm (refused). MISMATCH #0 is the prologue itself.
+// ORIGINAL: 0x005D2037 sub_5d2037 0x005D2037-0x005D2536 FILE
+// RULED-OUT: nullary per the contract head - no [esp+N]/[ebp+N] read exists anywhere in the body, but esi/edi/ebp are read from the very first instruction with no prologue and no assignment into them first, so nullary leaves the data unreachable. Proposed a 3-pointer signature (data/tables/out standing in for esi/edi/ebp) so the 8 unrolled DES-style S-box rounds compile and read correctly; this is a PROPOSAL, not decoded evidence - no standard calling convention passes 3 live registers with zero prologue, so BYTE_EXACT is structurally unreachable here short of __asm (refused). MISMATCH #0 is the prologue itself.
 // working copy - scaffold materialised by --work
-// name      sub_5d2037
 // size      1279 bytes
-// spans     0x005D2037-0x005D2536
 // prototype 
 // callers   1   call targets   0
 // kind      game

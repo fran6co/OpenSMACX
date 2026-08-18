@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006130E0 FILE
-// name      ?on_dialog_focus@Dialogs@@QAEXH@Z
+// ORIGINAL: 0x006130E0 ?on_dialog_focus@Dialogs@@QAEXH@Z 0x006130E0-0x00613154 FILE
 // size      116 bytes
-// spans     0x006130E0-0x00613154
 // prototype void (__thiscall ?on_dialog_focus@Dialogs@@QAEXH@Z)(Dialogs* this, int)
 // callers   0   call targets   5
 // kind      game

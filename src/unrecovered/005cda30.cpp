@@ -1,17 +1,13 @@
-// ORIGINAL: 0x005CDA30 FILE
+// ORIGINAL: 0x005CDA30 sub_5cda30 0x005CDA30-0x005CDAC4 FILE
+// RULED-OUT: nothing forced the `push ecx`-as-spill-slot / `pop ecx` prologue trick the original uses for one local; plain locals compile 6 bytes shorter (142 vs 148), diverging early
 // PROPOSAL: sub_5cda30(int,int,int) __stdcall -> sub_5cda30(int *param_1,
 //           int param_2, int param_3, int param_4, unsigned int param_5)
 //           __fastcall; ecx/edx are read as real incoming values (param_1
 //           base pointer, param_2 stored to param_1[0x17e]) before either is
 //           ever assigned, and `ret 0xc` only pops the 3 stack args - the
 //           2 register args are fastcall's, not stdcall's.
-// RULED-OUT: nothing forced the `push ecx`-as-spill-slot / `pop ecx`
-//            prologue trick the original uses for one local; plain locals
-//            compile 6 bytes shorter (142 vs 148), diverging early
 // working copy - scaffold materialised by --work
-// name      sub_5cda30
 // size      148 bytes
-// spans     0x005CDA30-0x005CDAC4
 // prototype 
 // callers   1   call targets   1
 // kind      game

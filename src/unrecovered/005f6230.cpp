@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005F6230 FILE
+// ORIGINAL: 0x005F6230 ?on_sys_key@Win@@QAGHIJHI@Z 0x005F6230-0x005F62C8 FILE
 // working copy - scaffold materialised by --work
-// name      ?on_sys_key@Win@@QAGHIJHI@Z
 // size      152 bytes
-// spans     0x005F6230-0x005F62C8
 // prototype LRESULT (__stdcall ?on_sys_key@Win@@QAGHIJHI@Z)(WPARAM wParam, int, int, unsigned int)
 // callers   0   call targets   0
 // kind      game

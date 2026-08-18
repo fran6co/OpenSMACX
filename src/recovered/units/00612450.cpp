@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00612450 FILE
-// name      ?on_redraw@EditGroup@@QAEXXZ
+// ORIGINAL: 0x00612450 ?on_redraw@EditGroup@@QAEXXZ 0x00612450-0x00612669 FILE
 // size      537 bytes
-// spans     0x00612450-0x00612669
 // prototype void (__thiscall ?on_redraw@EditGroup@@QAEXXZ)(EditGroup* this)
 // callers   0   call targets   4
 // kind      game

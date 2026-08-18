@@ -1,16 +1,7 @@
-// ORIGINAL: 0x005F1820 FILE
-// RULED-OUT: dispatch built from the RESOLVED 20-entry jump table at
-//            0x005F1B3C (not guessed); flip/get_mouse_window marked static
-//            in this file's Win class since raw disasm sets no receiver
-//            before either call (both mangle QAA, matching the same
-//            static-member pattern update_cursor itself uses). Reaches
-//            MISMATCH #0 'sub' vs 'push' - the original opens `sub esp,N`
-//            with no `push ebp/mov ebp,esp` frame, which this body's
-//            ordinary locals don't reproduce; not chased further.
+// ORIGINAL: 0x005F1820 ?update_cursor@Win@@QAAHPAUWin@@H@Z 0x005F1820-0x005F2200 FILE
+// RULED-OUT: dispatch built from the RESOLVED 20-entry jump table at 0x005F1B3C (not guessed); flip/get_mouse_window marked static in this file's Win class since raw disasm sets no receiver before either call (both mangle QAA, matching the same static-member pattern update_cursor itself uses). Reaches MISMATCH #0 'sub' vs 'push' - the original opens `sub esp,N` with no `push ebp/mov ebp,esp` frame, which this body's ordinary locals don't reproduce; not chased further.
 // working copy - scaffold materialised by --work
-// name      ?update_cursor@Win@@QAAHPAUWin@@H@Z
 // size      2528 bytes
-// spans     0x005F1820-0x005F2200
 // prototype 
 // callers   8   call targets   6
 // kind      game

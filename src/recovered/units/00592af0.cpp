@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00592AF0 BYTE_EXACT FILE
-// name      ?clear_dirty@@YAXXZ
+// ORIGINAL: 0x00592AF0 ?clear_dirty@@YAXXZ 0x00592AF0-0x00592B3C FILE BYTE_EXACT
 // size      76 bytes
-// spans     0x00592AF0-0x00592B3C
 // prototype 
 // callers   2   call targets   0
 // kind      game

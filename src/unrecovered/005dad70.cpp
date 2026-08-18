@@ -1,21 +1,13 @@
-// ORIGINAL: 0x005DAD70 FILE
+// ORIGINAL: 0x005DAD70 ?write_strings_height@Buffer@@QAEHPAUStringList@@HH@Z 0x005DAD70-0x005DB03E FILE
+// RULED-OUT: redeclared sub_5e3630/sub_5e3650 as StringStruct::method_5e3630()/ Font::method_5e3650() (thiscall, 0 explicit stack args) - the "push ebp"/"push edx" seen before some call sites are the NEXT call's pre-staged 2nd argument (a2), left unpopped since sub_5e3630 never touches caller stack args; the one call site with a clean stack (0x5DB00E) confirms 0-arity. Prologue register order not chased further past that.
 // working copy - scaffold materialised by --work
-// name      ?write_strings_height@Buffer@@QAEHPAUStringList@@HH@Z
 // size      718 bytes
-// spans     0x005DAD70-0x005DB03E
 // prototype int (__thiscall ?write_strings_height@Buffer@@QAEHPAUStringList@@HH@Z)(Buffer* this, StringList*, int, int)
 // callers   4   call targets   11
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     0x00402500 0x00402530 0x005DC360 0x005DC410 0x005DCAB0 0x005DDDA0 0x005DDDE0 0x005DDEF0 0x005E3630 0x005E3650 0x006453E0
 // indirect  0x005DADCB 0x005DAF78
-// RULED-OUT: redeclared sub_5e3630/sub_5e3650 as StringStruct::method_5e3630()/
-//            Font::method_5e3650() (thiscall, 0 explicit stack args) - the
-//            "push ebp"/"push edx" seen before some call sites are the
-//            NEXT call's pre-staged 2nd argument (a2), left unpopped
-//            since sub_5e3630 never touches caller stack args; the one
-//            call site with a clean stack (0x5DB00E) confirms 0-arity.
-//            Prologue register order not chased further past that.
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?write_strings_height@Buffer@@QAEHPAUStringList@@HH@Z  at 0x005DAD70  (718 bytes)

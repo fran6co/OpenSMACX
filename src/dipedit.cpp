@@ -20,10 +20,8 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
-ORIGINAL: 0x004D9DC0 BYTE_EXACT
-// name      ?on_left_click@DipEdit@@QAEXHH@Z
+// ORIGINAL: 0x004D9DC0 ?on_left_click@DipEdit@@QAEXHH@Z 0x004D9DC0-0x004D9DC3 BYTE_EXACT
 // size      3 bytes
-// spans     0x004D9DC0-0x004D9DC3
 // prototype void (__thiscall ?on_left_click@DipEdit@@QAEXHH@Z)(DipEdit* this, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -37,10 +35,8 @@ void DipEdit::on_left_click(int, int) {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
-ORIGINAL: 0x004D9DD0 BYTE_EXACT
-// name      ?on_redraw@DipEdit@@QAEXXZ
+// ORIGINAL: 0x004D9DD0 ?on_redraw@DipEdit@@QAEXXZ 0x004D9DD0-0x004D9DD1 BYTE_EXACT
 // size      1 bytes
-// spans     0x004D9DD0-0x004D9DD1
 // prototype void (__thiscall ?on_redraw@DipEdit@@QAEXXZ)(DipEdit* this)
 // callers   0   call targets   0
 // kind      game
@@ -61,10 +57,8 @@ void __fastcall dip_edit_on_redraw_redirect(DipEdit *self, void *) {
 }
 
 /*
-ORIGINAL: 0x004DA740 BYTE_EXACT
-// name      ?on_selected@DipEdit@@QAEXH@Z
+// ORIGINAL: 0x004DA740 ?on_selected@DipEdit@@QAEXH@Z 0x004DA740-0x004DA760 BYTE_EXACT
 // size      32 bytes
-// spans     0x004DA740-0x004DA760
 // prototype void (__thiscall ?on_selected@DipEdit@@QAEXH@Z)(DipEdit* this, int)
 // callers   0   call targets   2
 // kind      game

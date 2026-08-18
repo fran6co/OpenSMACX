@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004B1BC0 FILE
-// name      ?on_right_click@SocialWin@@QAEXHH@Z
+// ORIGINAL: 0x004B1BC0 ?on_right_click@SocialWin@@QAEXHH@Z 0x004B1BC0-0x004B1CD1 FILE
 // size      273 bytes
-// spans     0x004B1BC0-0x004B1CD1
 // prototype void (__thiscall ?on_right_click@SocialWin@@QAEXHH@Z)(SocialWin* this, int, int)
 // callers   0   call targets   5
 // kind      game

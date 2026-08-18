@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00422F20 BYTE_EXACT FILE
+// ORIGINAL: 0x00422F20 ?compare_palettes@@YAHXZ 0x00422F20-0x00422FFA;0x00652BD0-0x00652BE2 FILE BYTE_EXACT
 // LEVER: memcmp/memcpy called through a cast function pointer instead of directly - the scaffold's own memcmp() declaration takes no params (it only needs to be an address, not a callable prototype), so redeclaring it is C2011; casting sidesteps that AND stops VC6 inlining the constant-size memcpy as rep movsd, which the original does not do.
-// name      ?compare_palettes@@YAHXZ
 // size      236 bytes
-// spans     0x00422F20-0x00422FFA;0x00652BD0-0x00652BE2
 // prototype 
 // callers   2   call targets   7
 // kind      game

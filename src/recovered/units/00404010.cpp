@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00404010 FILE
-// name      ??0AlphaMovie@@QAE@XZ
+// ORIGINAL: 0x00404010 ??0AlphaMovie@@QAE@XZ 0x00404010-0x00404067;0x006506DC-0x006506EE FILE
 // size      105 bytes
-// spans     0x00404010-0x00404067;0x006506DC-0x006506EE
 // prototype void (__thiscall ??0AlphaMovie@@QAE@XZ)(AlphaMovie* this)
 // callers   0   call targets   2
 // kind      game

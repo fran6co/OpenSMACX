@@ -1,15 +1,7 @@
-// ORIGINAL: 0x004863F0 FILE
-// RULED-OUT: a `Rect4{left,top,right,bottom}` local (matches the RECT the
-//   original builds on the stack field-by-field) and the `-(int)(a2!=0)&2`
-//   neg/sbb/and idiom for the sprite-params table offset, per the lever
-//   for a `guard ? obj : 0` shape. Landed at 0.71 similarity: the original
-//   keeps a stack frame (`push ebp; mov ebp,esp`) that this body's
-//   simpler local set let VC6 omit, the same shape seen on
-//   0x00458DC0/0x004863F0-sized leaf-ish functions this batch.
+// ORIGINAL: 0x004863F0 ?draw_item@PickTech@@QAEHHH@Z 0x004863F0-0x0048650C FILE
+// RULED-OUT: a `Rect4{left,top,right,bottom}` local (matches the RECT the original builds on the stack field-by-field) and the `-(int)(a2!=0)&2` neg/sbb/and idiom for the sprite-params table offset, per the lever for a `guard ? obj : 0` shape. Landed at 0.71 similarity: the original keeps a stack frame (`push ebp; mov ebp,esp`) that this body's simpler local set let VC6 omit, the same shape seen on 0x00458DC0/0x004863F0-sized leaf-ish functions this batch.
 // working copy - scaffold materialised by --work
-// name      ?draw_item@PickTech@@QAEHHH@Z
 // size      284 bytes
-// spans     0x004863F0-0x0048650C
 // prototype int (__thiscall ?draw_item@PickTech@@QAEHHH@Z)(PickTech* this, int, int)
 // callers   3   call targets   3
 // kind      game

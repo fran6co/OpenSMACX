@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006253D0 FILE
-// name      ?on_redraw@ImageButton@@QAEXXZ
+// ORIGINAL: 0x006253D0 ?on_redraw@ImageButton@@QAEXXZ 0x006253D0-0x006256CC FILE
 // size      764 bytes
-// spans     0x006253D0-0x006256CC
 // prototype void (__thiscall ?on_redraw@ImageButton@@QAEXXZ)(ImageButton* this)
 // callers   0   call targets   7
 // kind      game

@@ -1,15 +1,7 @@
-// ORIGINAL: 0x0041E8D0 FILE
-// RULED-OUT: sim 0.70 (framed /O2 /Oy-), first divergence #9 push-vs-mov in the
-//            prologue/Wave-init region; every field store, BaseButton/Sprite/Buffer
-//            /Caviar/Time/Spot/Font/Wave call and its receiver was cross-checked
-//            against the raw disassembly (not Ghidra's dropped-this renderings),
-//            including the trailing 22x1 BaseButton array and the two vtable
-//            slot002/slot062 dispatch loops; RECT/float scratch temporaries use
-//            fresh locals rather than the original's exact reused stack slots.
+// ORIGINAL: 0x0041E8D0 ?init@BaseWin@@QAEXXZ 0x0041E8D0-0x00420A3D;0x00652A94-0x00652AA9 FILE
+// RULED-OUT: sim 0.70 (framed /O2 /Oy-), first divergence #9 push-vs-mov in the prologue/Wave-init region; every field store, BaseButton/Sprite/Buffer /Caviar/Time/Spot/Font/Wave call and its receiver was cross-checked against the raw disassembly (not Ghidra's dropped-this renderings), including the trailing 22x1 BaseButton array and the two vtable slot002/slot062 dispatch loops; RECT/float scratch temporaries use fresh locals rather than the original's exact reused stack slots.
 // working copy - scaffold materialised by --work
-// name      ?init@BaseWin@@QAEXXZ
 // size      8578 bytes
-// spans     0x0041E8D0-0x00420A3D;0x00652A94-0x00652AA9
 // prototype void (__thiscall ?init@BaseWin@@QAEXXZ)(BaseWin* this)
 // callers   1   call targets   30
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00610280 FILE
-// name      ?close@SpriteBox@@QAEXXZ
+// ORIGINAL: 0x00610280 ?close@SpriteBox@@QAEXXZ 0x00610280-0x00610416 FILE
 // size      406 bytes
-// spans     0x00610280-0x00610416
 // prototype void (__thiscall ?close@SpriteBox@@QAEXXZ)(SpriteBox* this)
 // callers   8   call targets   7
 // kind      game

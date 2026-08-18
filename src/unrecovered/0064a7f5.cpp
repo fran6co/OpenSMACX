@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064A7F5 EXCLUDED S1
-// name      __load_CW
+// ORIGINAL: 0x0064A7F5 __load_CW 0x0064A7F5-0x0064A80C EXCLUDED S1
 // size      23 bytes
-// spans     0x0064A7F5-0x0064A80C
 // prototype 
 // callers   3   call targets   0
 // kind      library

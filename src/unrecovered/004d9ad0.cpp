@@ -1,27 +1,13 @@
-// ORIGINAL: 0x004D9AD0 FILE
+// ORIGINAL: 0x004D9AD0 ?editor_who@Console@@QAEHHH@Z 0x004D9AD0-0x004D9DB4;0x0065B275-0x0065B347 FILE
+// RULED-OUT: a plain `Popup popup;` local reproduces the SEH frame, the __alloca_probe (Popup is ~21KB), and the whole close()-then- automatic-dtor cascade over its embedded scroll_/sprite_/ flat_button1_/flat_button2_/heap_ members for free - matched through instruction #11.
+// RULED-OUT: MISMATCH #11 'push' vs 'lea', not chased further (950B, heaviest object graph in this batch: Popup->BasePop-> {Scroll{2x FlatButton}, 2x FlatButton, Sprite, Heap} plus separate Dialogs/Spot locals and two `sub_4066c0`-typed objects the emitter could only give a nullary cdecl decl, handled via a `Sub4066c0Thunk` shim class for the thiscall). Exact interleaving of the inlined implicit-dtor chain against the separate Dialogs/Spot/mystery destructors is optimizer scheduling, not fully controlled from source.
 // working copy - scaffold materialised by --work
-// name      ?editor_who@Console@@QAEHHH@Z
 // size      950 bytes
-// spans     0x004D9AD0-0x004D9DB4;0x0065B275-0x0065B347
 // prototype int (__thiscall ?editor_who@Console@@QAEHHH@Z)(Console* this, int, int)
 // callers   4   call targets   17
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x004048A0 0x00404900 0x00406380 0x004066C0 0x00406910 0x005D45B0 0x005D4DD0 0x005E3820 0x005FA870 0x00600F00 0x00602600 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00612A70 0x00645550
-// RULED-OUT: a plain `Popup popup;` local reproduces the SEH frame, the
-//        __alloca_probe (Popup is ~21KB), and the whole close()-then-
-//        automatic-dtor cascade over its embedded scroll_/sprite_/
-//        flat_button1_/flat_button2_/heap_ members for free - matched
-//        through instruction #11.
-// RULED-OUT: MISMATCH #11 'push' vs 'lea', not chased further (950B,
-//            heaviest object graph in this batch: Popup->BasePop->
-//            {Scroll{2x FlatButton}, 2x FlatButton, Sprite, Heap} plus
-//            separate Dialogs/Spot locals and two `sub_4066c0`-typed
-//            objects the emitter could only give a nullary cdecl decl,
-//            handled via a `Sub4066c0Thunk` shim class for the thiscall).
-//            Exact interleaving of the inlined implicit-dtor chain
-//            against the separate Dialogs/Spot/mystery destructors is
-//            optimizer scheduling, not fully controlled from source.
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?editor_who@Console@@QAEHHH@Z  at 0x004D9AD0  (950 bytes)

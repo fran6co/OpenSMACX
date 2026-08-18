@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004429C0 BYTE_EXACT
-// name      ?done_deal@DiploWin@@QAEXXZ
+// ORIGINAL: 0x004429C0 ?done_deal@DiploWin@@QAEXXZ 0x004429C0-0x004429E7 BYTE_EXACT
 // size      39 bytes
-// spans     0x004429C0-0x004429E7
 // prototype void (__thiscall ?done_deal@DiploWin@@QAEXXZ)(DiploWin* this)
 // callers   1   call targets   0
 // kind      game

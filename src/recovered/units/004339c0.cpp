@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004339C0 BYTE_EXACT FILE
-// name      ?on_redraw@SelectPartWin@@QAEXXZ
+// ORIGINAL: 0x004339C0 ?on_redraw@SelectPartWin@@QAEXXZ 0x004339C0-0x00433A02 FILE BYTE_EXACT
 // size      66 bytes
-// spans     0x004339C0-0x00433A02
 // prototype void (__thiscall ?on_redraw@SelectPartWin@@QAEXXZ)(SelectPartWin* this)
 // callers   0   call targets   1
 // kind      game

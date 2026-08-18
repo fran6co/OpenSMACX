@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0054CF40 FILE
-// name      ?give_a_base@@YAXHH@Z
+// ORIGINAL: 0x0054CF40 ?give_a_base@@YAXHH@Z 0x0054CF40-0x0054D410 FILE
 // size      1232 bytes
-// spans     0x0054CF40-0x0054D410
 // prototype void (__cdecl ?give_a_base@@YAXHH@Z)(int baseID, int factionID)
 // callers   5   call targets   13
 // kind      game

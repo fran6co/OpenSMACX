@@ -20,10 +20,8 @@
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00428D80 BYTE_EXACT
-// name      ?on_left_down@Credits@@QAEXHH@Z
+// ORIGINAL: 0x00428D80 ?on_left_down@Credits@@QAEXHH@Z 0x00428D80-0x00428D83 BYTE_EXACT
 // size      3 bytes
-// spans     0x00428D80-0x00428D83
 // prototype void (__thiscall ?on_left_down@Credits@@QAEXHH@Z)(Credits* this, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -41,10 +39,8 @@ void __fastcall credits_on_left_down_redirect(Credits *self, void *, int a1, int
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00428D90 BYTE_EXACT
-// name      ?on_right_down@Credits@@QAEXHH@Z
+// ORIGINAL: 0x00428D90 ?on_right_down@Credits@@QAEXHH@Z 0x00428D90-0x00428D93 BYTE_EXACT
 // size      3 bytes
-// spans     0x00428D90-0x00428D93
 // prototype void (__thiscall ?on_right_down@Credits@@QAEXHH@Z)(Credits* this, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -62,10 +58,8 @@ void __fastcall credits_on_right_down_redirect(Credits *self, void *, int a1, in
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00428DA0 BYTE_EXACT
-// name      ?on_mouse_move@Credits@@QAEXHH@Z
+// ORIGINAL: 0x00428DA0 ?on_mouse_move@Credits@@QAEXHH@Z 0x00428DA0-0x00428DA3 BYTE_EXACT
 // size      3 bytes
-// spans     0x00428DA0-0x00428DA3
 // prototype void (__thiscall ?on_mouse_move@Credits@@QAEXHH@Z)(Credits* this, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -83,10 +77,8 @@ void __fastcall credits_on_mouse_move_redirect(Credits *self, void *, int a1, in
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00428DB0 BYTE_EXACT
-// name      ?on_button_clicked@Credits@@QAEXH@Z
+// ORIGINAL: 0x00428DB0 ?on_button_clicked@Credits@@QAEXH@Z 0x00428DB0-0x00428DB3 BYTE_EXACT
 // size      3 bytes
-// spans     0x00428DB0-0x00428DB3
 // prototype void (__thiscall ?on_button_clicked@Credits@@QAEXH@Z)(Credits* this, int)
 // callers   0   call targets   0
 // kind      game

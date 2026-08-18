@@ -1,8 +1,6 @@
-// ORIGINAL: 0x004D8CD0 FILE
+// ORIGINAL: 0x004D8CD0 ?set_bombing_run@Console@@QAEXHHH@Z 0x004D8CD0-0x004D8DBE FILE
 // RULED-OUT: computing the a1*0xd flag-slot index once vs re-indexing read+write - both compile; landed at MISMATCH (edit_count 3, 97% mnemonic similarity) with the array-indexed form.
-// name      ?set_bombing_run@Console@@QAEXHHH@Z
 // size      238 bytes
-// spans     0x004D8CD0-0x004D8DBE
 // prototype void (__thiscall ?set_bombing_run@Console@@QAEXHHH@Z)(Console* this, int vehID, int xCoord, int yCoord)
 // callers   2   call targets   6
 // kind      game

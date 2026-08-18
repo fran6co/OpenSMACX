@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004E5FE0 FILE
-// name      ?base_reset@@YAXHH@Z
+// ORIGINAL: 0x004E5FE0 ?base_reset@@YAXHH@Z 0x004E5FE0-0x004E62FB FILE
 // size      795 bytes
-// spans     0x004E5FE0-0x004E62FB
 // prototype void (__cdecl ?base_reset@@YAXHH@Z)(int baseID, int)
 // callers   12   call targets   6
 // kind      game

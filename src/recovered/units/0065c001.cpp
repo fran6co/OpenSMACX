@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0065C001 FILE
-// name      sub_65c001
+// ORIGINAL: 0x0065C001 sub_65c001 0x0065C001-0x0065C009 FILE
 // size      8 bytes
-// spans     0x0065C001-0x0065C009
 // prototype 
 // callers   0   call targets   0
 // kind      game

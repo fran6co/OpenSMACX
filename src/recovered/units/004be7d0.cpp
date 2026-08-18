@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004BE7D0 FILE
-// name      ??1TutWin@@QAE@XZ
+// ORIGINAL: 0x004BE7D0 ??1TutWin@@QAE@XZ 0x004BE7D0-0x004BE9EE;0x00659BF0-0x00659CD7 FILE
 // size      773 bytes
-// spans     0x004BE7D0-0x004BE9EE;0x00659BF0-0x00659CD7
 // prototype void (__thiscall ??1TutWin@@QAE@XZ)(TutWin* this)
 // callers   1   call targets   14
 // kind      game

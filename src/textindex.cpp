@@ -23,10 +23,8 @@
 /*
 Purpose: Read the specified file and create an index of section headers ("#EXAMPLE"). Store the file 
          offset of each section for improved search time.
-ORIGINAL: 0x005FDF80
-// name      ?make_index@TextIndex@@QAEXPAD@Z
+// ORIGINAL: 0x005FDF80 ?make_index@TextIndex@@QAEXPAD@Z 0x005FDF80-0x005FE11B;0x00662D40-0x00662D52
 // size      429 bytes
-// spans     0x005FDF80-0x005FE11B;0x00662D40-0x00662D52
 // prototype void (__thiscall ?make_index@TextIndex@@QAEXPAD@Z)(TextIndex* this, int8*)
 // callers   1   call targets   17
 // kind      game
@@ -72,10 +70,8 @@ void TextIndex::make_index(LPCSTR source_txt) {
 
 /*
 Purpose: Search the source text file for a section header.
-ORIGINAL: 0x005FE120
-// name      ?search_index@TextIndex@@QAEHPAD0@Z
+// ORIGINAL: 0x005FE120 ?search_index@TextIndex@@QAEHPAD0@Z 0x005FE120-0x005FE1E1
 // size      193 bytes
-// spans     0x005FE120-0x005FE1E1
 // prototype int (__thiscall ?search_index@TextIndex@@QAEHPAD0@Z)(TextIndex* this, int8*, int8*)
 // callers   2   call targets   4
 // kind      game
@@ -109,10 +105,8 @@ int TextIndex::search_index(LPCSTR source_txt, LPCSTR section_txt) {
 // global
 TextIndex *TxtIndex = (TextIndex *)0x009B7D08;
 
-// ORIGINAL: 0x005FE270
-// name      ?text_clear_index@@YAXXZ
+// ORIGINAL: 0x005FE270 ?text_clear_index@@YAXXZ 0x005FE270-0x005FE299
 // size      41 bytes
-// spans     0x005FE270-0x005FE299
 // prototype 
 // callers   1   call targets   1
 // kind      game

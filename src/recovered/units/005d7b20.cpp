@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005D7B20 BYTE_EXACT FILE
-// name      ?load_tga@Buffer@@QAGHPBD@Z
+// ORIGINAL: 0x005D7B20 ?load_tga@Buffer@@QAGHPBD@Z 0x005D7B20-0x005D7B36 FILE BYTE_EXACT
 // size      22 bytes
-// spans     0x005D7B20-0x005D7B36
 // prototype int (__stdcall ?load_tga@Buffer@@QAGHPBD@Z)(Buffer* this, int8*)
 // callers   0   call targets   1
 // kind      game

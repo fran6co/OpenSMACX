@@ -60,10 +60,8 @@ LPSTR VehBattleDisplayTerrain;
 
 /*
 Purpose: Generate an output string for the specified unit's morale.
-ORIGINAL: 0x004B3FD0
-// name      ?say_morale@@YAXPADHH@Z
+// ORIGINAL: 0x004B3FD0 ?say_morale@@YAXPADHH@Z 0x004B3FD0-0x004B43BF
 // size      1007 bytes
-// spans     0x004B3FD0-0x004B43BF
 // prototype void (__cdecl ?say_morale@@YAXPADHH@Z)(int8* moraleOutput, int vehID, int factionIDvsNative)
 // callers   2   call targets   5
 // kind      game
@@ -159,10 +157,8 @@ void __cdecl say_morale(LPSTR morale_output, int veh_id, int faction_id_vs_nativ
 
 /*
 Purpose: Get the morale string for the specified unit and store it in the stringTemp buffer.
-ORIGINAL: 0x004B43C0
-// name      ?say_morale@@YAXHH@Z
+// ORIGINAL: 0x004B43C0 ?say_morale@@YAXHH@Z 0x004B43C0-0x004B43DA
 // size      26 bytes
-// spans     0x004B43C0-0x004B43DA
 // prototype void (__cdecl ?say_morale@@YAXHH@Z)(int vehID, int factionID)
 // callers   4   call targets   1
 // kind      game
@@ -177,10 +173,8 @@ void __cdecl say_morale(int veh_id, int faction_id_vs_native) {
 
 /*
 Purpose: Check whether the specified unit could ever reach the given tile as a patrol waypoint.
-ORIGINAL: 0x004CD6A0
-// name      ?valid_patrol@@YAHHHH@Z
+// ORIGINAL: 0x004CD6A0 ?valid_patrol@@YAHHHH@Z 0x004CD6A0-0x004CDA23
 // size      899 bytes
-// spans     0x004CD6A0-0x004CDA23
 // prototype int (__cdecl ?valid_patrol@@YAHHHH@Z)(int vehID, int xCoord, int yCoord)
 // callers   2   call targets   5
 // kind      game
@@ -304,10 +298,8 @@ int __cdecl valid_patrol(int veh_id, int x, int y) {
 
 /*
 Purpose: Calculate maximum range a faction's units can drop (air drops, Drop Pods).
-ORIGINAL: 0x00500320
-// name      ?drop_range@@YAHH@Z
+// ORIGINAL: 0x00500320 ?drop_range@@YAHH@Z 0x00500320-0x0050037C
 // size      92 bytes
-// spans     0x00500320-0x0050037C
 // prototype int (__cdecl ?drop_range@@YAHH@Z)(int factionID)
 // callers   3   call targets   1
 // kind      game
@@ -326,10 +318,8 @@ int __cdecl drop_range(int faction_id) {
 
 /*
 Purpose: Check whether the specified prototype is a planet buster.
-ORIGINAL: 0x005004F0
-// name      ?planet_buster2@@YAHH@Z
+// ORIGINAL: 0x005004F0 ?planet_buster2@@YAHH@Z 0x005004F0-0x00500518
 // size      40 bytes
-// spans     0x005004F0-0x00500518
 // prototype int (__cdecl ?planet_buster2@@YAHH@Z)(int protoID)
 // callers   2   call targets   0
 // kind      game
@@ -345,10 +335,8 @@ uint32_t __cdecl planet_buster2(int proto_id) {
 
 /*
 Purpose: Check whether the specified unit is a planet buster.
-ORIGINAL: 0x00500520
-// name      ?planet_buster@@YAHH@Z
+// ORIGINAL: 0x00500520 ?planet_buster@@YAHH@Z 0x00500520-0x00500556
 // size      54 bytes
-// spans     0x00500520-0x00500556
 // prototype int (__cdecl ?planet_buster@@YAHH@Z)(int vehID)
 // callers   4   call targets   0
 // kind      game
@@ -363,10 +351,8 @@ uint32_t __cdecl planet_buster(int veh_id) {
 
 /*
 Purpose: Calculate how defensive the specified tile is to the defending unit based on the terrain.
-ORIGINAL: 0x005010C0
-// name      ?defense_value@@YAHHHHHH@Z
+// ORIGINAL: 0x005010C0 ?defense_value@@YAHHHHHH@Z 0x005010C0-0x0050134F
 // size      655 bytes
-// spans     0x005010C0-0x0050134F
 // prototype int (__cdecl ?defense_value@@YAHHHHHH@Z)(int factionID, int xCoord, int yCoord, int vehIDDef, int vehIDAtk)
 // callers   2   call targets   0
 // kind      game
@@ -413,10 +399,8 @@ int __cdecl defense_value(int faction_id, int x, int y, int veh_id_def,
 
 /*
 Purpose: Calculate the lifecycle (morale) of the specified native life unit.
-ORIGINAL: 0x00501350
-// name      ?morale_alien@@YAHHH@Z
+// ORIGINAL: 0x00501350 ?morale_alien@@YAHHH@Z 0x00501350-0x005014F1
 // size      417 bytes
-// spans     0x00501350-0x005014F1
 // prototype int (__cdecl ?morale_alien@@YAHHH@Z)(int vehID, int factionIDvsNative)
 // callers   9   call targets   0
 // kind      game
@@ -475,10 +459,8 @@ uint32_t __cdecl morale_alien(int veh_id, int faction_id_vs_native) {
 
 /*
 Purpose: Calculate the psi combat factor for an attacking or defending unit.
-ORIGINAL: 0x00501500
-// name      ?psi_factor@@YAHHHHH@Z
+// ORIGINAL: 0x00501500 ?psi_factor@@YAHHHHH@Z 0x00501500-0x005015AB
 // size      171 bytes
-// spans     0x00501500-0x005015AB
 // prototype int (__cdecl ?psi_factor@@YAHHHHH@Z)(int combatRatio, int factionID, BOOL isAttack, BOOL isFungalTower)
 // callers   7   call targets   0
 // kind      game
@@ -507,10 +489,8 @@ int __cdecl psi_factor(int combat_ratio, int faction_id, BOOL is_attack, BOOL is
 
 /*
 Purpose: Get the basic offense value for an attacking unit with an optional defender unit parameter.
-ORIGINAL: 0x005015B0
-// name      ?get_basic_offense@@YAHHHHHH@Z
+// ORIGINAL: 0x005015B0 ?get_basic_offense@@YAHHHHHH@Z 0x005015B0-0x00501940
 // size      912 bytes
-// spans     0x005015B0-0x00501940
 // prototype int (__cdecl ?get_basic_offense@@YAHHHHHH@Z)(int vehIDAtk, int vehIDDef, uint32_t psiCombatType, BOOL isBombardment, int isUnkTgl)
 // callers   2   call targets   6
 // kind      game
@@ -577,10 +557,8 @@ int __cdecl get_basic_offense(int veh_id_atk, int veh_id_def, int psi_combat_typ
 
 /*
 Purpose: Get the basic defense value for a defending unit with an optional attacker unit parameter.
-ORIGINAL: 0x00501940
-// name      ?get_basic_defense@@YAHHHHH@Z
+// ORIGINAL: 0x00501940 ?get_basic_defense@@YAHHHHH@Z 0x00501940-0x00501D26
 // size      998 bytes
-// spans     0x00501940-0x00501D26
 // prototype int (__cdecl ?get_basic_defense@@YAHHHHH@Z)(int vehIDDef, int vehIDAtk, uint32_t psiCombatType, BOOL isBombardment)
 // callers   1   call targets   6
 // kind      game
@@ -652,10 +630,8 @@ int __cdecl get_basic_defense(int veh_id_def, int veh_id_atk, int psi_combat_typ
 
 /*
 Purpose: Initialize or reset the battle related global variables.
-ORIGINAL: 0x00501D30
-// name      ?battle_init@@YAXXZ
+// ORIGINAL: 0x00501D30 ?battle_init@@YAXXZ 0x00501D30-0x00501D47
 // size      23 bytes
-// spans     0x00501D30-0x00501D47
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -673,10 +649,8 @@ void __cdecl battle_init() {
 
 /*
 Purpose: Add combat battle modifier for type (offense, defense).
-ORIGINAL: 0x00501D50
-// name      ?add_bat@@YAXHHPAD@Z
+// ORIGINAL: 0x00501D50 ?add_bat@@YAXHHPAD@Z 0x00501D50-0x00501D9A
 // size      74 bytes
-// spans     0x00501D50-0x00501D9A
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -697,10 +671,8 @@ void __cdecl add_bat(int type, int modifier, LPCSTR display_str) {
 
 /*
 Purpose: Calculate the battle outcome between two units.
-ORIGINAL: 0x00501DA0
-// name      ?battle_compute@@YAXHHPAHPAHH@Z
+// ORIGINAL: 0x00501DA0 ?battle_compute@@YAXHHPAHPAHH@Z 0x00501DA0-0x005044C4
 // size      10020 bytes
-// spans     0x00501DA0-0x005044C4
 // prototype void (__cdecl ?battle_compute@@YAXHHPAHPAHH@Z)(int vehIDAtk, int vehIDDef, int* offenseOutput, int* defenseOutput, int combatType)
 // callers   2   call targets   15
 // kind      game
@@ -1181,10 +1153,8 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
 
 /*
 Purpose: Determine the best defender in a stack.
-ORIGINAL: 0x005044D0
-// name      ?best_defender@@YAHHHH@Z
+// ORIGINAL: 0x005044D0 ?best_defender@@YAHHHH@Z 0x005044D0-0x00504A9B
 // size      1483 bytes
-// spans     0x005044D0-0x00504A9B
 // prototype int (__cdecl ?best_defender@@YAHHHH@Z)(int vehIDDef, int vehIDAtk, BOOL useArtillery)
 // callers   1   call targets   6
 // kind      game
@@ -1269,10 +1239,8 @@ uint32_t __cdecl best_defender(int veh_id_def, int veh_id_atk, BOOL check_artill
 /*
 Purpose: Determine whether any enemy naval transports are carrying land units within range to 
          attack the specified base. If so, set the units to move towards the base.
-ORIGINAL: 0x00506490
-// name      ?invasions@@YAXH@Z
+// ORIGINAL: 0x00506490 ?invasions@@YAXH@Z 0x00506490-0x00506646
 // size      438 bytes
-// spans     0x00506490-0x00506646
 // prototype void (__cdecl ?invasions@@YAXH@Z)(int baseID)
 // callers   1   call targets   4
 // kind      game
@@ -1305,10 +1273,8 @@ void __cdecl invasions(int base_id) {
 
 /*
 Purpose: Direct the unit to start moving automatically towards the specified tile.
-ORIGINAL: 0x00560AD0
-// name      ?go_to@@YAXHDHH@Z
+// ORIGINAL: 0x00560AD0 ?go_to@@YAXHDHH@Z 0x00560AD0-0x00560B25
 // size      85 bytes
-// spans     0x00560AD0-0x00560B25
 // prototype void (__cdecl ?go_to@@YAXHDHH@Z)(int vehID, int8 type, int xCoord, int yCoord)
 // callers   1   call targets   0
 // kind      game
@@ -1354,10 +1320,8 @@ static int course_xrange(int x) {
 /*
 Purpose: Send the unit toward the given tile the long way round - by water - choosing the anchorage
          next to it that fronts the most of the destination's own landmass.
-ORIGINAL: 0x00564890
-// name      ?set_course@@YAXHDHH@Z
+// ORIGINAL: 0x00564890 ?set_course@@YAXHDHH@Z 0x00564890-0x00564B82
 // size      754 bytes
-// spans     0x00564890-0x00564B82
 // prototype void (__cdecl ?set_course@@YAXHDHH@Z)(int vehID, int8 type, int xCoord, int yCoord)
 // callers   2   call targets   2
 // kind      game
@@ -1462,10 +1426,8 @@ void __cdecl set_course(int veh_id, char type, int x, int y) {
 
 /*
 Purpose: Get the unit on the top of the stack.
-ORIGINAL: 0x00579920
-// name      ?veh_top@@YAHH@Z
+// ORIGINAL: 0x00579920 ?veh_top@@YAHH@Z 0x00579920-0x0057995A
 // size      58 bytes
-// spans     0x00579920-0x0057995A
 // prototype int (__cdecl ?veh_top@@YAHH@Z)(int vehID)
 // callers   2   call targets   0
 // kind      game
@@ -1487,10 +1449,8 @@ int __cdecl veh_top(int veh_id) {
 
 /*
 Purpose: Get the current moves left for the specified unit.
-ORIGINAL: 0x00579960
-// name      ?veh_moves@@YAHH@Z
+// ORIGINAL: 0x00579960 ?veh_moves@@YAHH@Z 0x00579960-0x00579998
 // size      56 bytes
-// spans     0x00579960-0x00579998
 // prototype int (__cdecl ?veh_moves@@YAHH@Z)(int vehID)
 // callers   1   call targets   1
 // kind      game
@@ -1505,10 +1465,8 @@ int __cdecl veh_moves(int veh_id) {
 
 /*
 Purpose: Get the specified unit's reactor power value from its prototype.
-ORIGINAL: 0x005799A0
-// name      ?proto_power@@YAHH@Z
+// ORIGINAL: 0x005799A0 ?proto_power@@YAHH@Z 0x005799A0-0x005799F9
 // size      89 bytes
-// spans     0x005799A0-0x005799F9
 // prototype int (__cdecl ?proto_power@@YAHH@Z)(int vehID)
 // callers   1   call targets   0
 // kind      game
@@ -1527,10 +1485,8 @@ int __cdecl proto_power(int veh_id) {
 
 /*
 Purpose: Determine whether the specified unit is eligible for a monolith morale upgrade.
-ORIGINAL: 0x00579F80
-// name      ?want_monolith@@YAHH@Z
+// ORIGINAL: 0x00579F80 ?want_monolith@@YAHH@Z 0x00579F80-0x00579FE6
 // size      102 bytes
-// spans     0x00579F80-0x00579FE6
 // prototype int (__cdecl ?want_monolith@@YAHH@Z)(int vehID)
 // callers   2   call targets   1
 // kind      game
@@ -1550,10 +1506,8 @@ BOOL __cdecl want_monolith(int veh_id) {
 
 /*
 Purpose: Calculate the armor strategy for the specified armor id.
-ORIGINAL: 0x0057D270
-// name      ?arm_strat@@YAHHH@Z
+// ORIGINAL: 0x0057D270 ?arm_strat@@YAHHH@Z 0x0057D270-0x0057D2D5
 // size      101 bytes
-// spans     0x0057D270-0x0057D2D5
 // prototype int (__cdecl ?arm_strat@@YAHHH@Z)(int armorID, int factionID)
 // callers   7   call targets   1
 // kind      game
@@ -1577,10 +1531,8 @@ int __cdecl arm_strat(int armor_id, int faction_id) {
 
 /*
 Purpose: Calculate the weapon strategy for the specified weapon id.
-ORIGINAL: 0x0057D2E0
-// name      ?weap_strat@@YAHHH@Z
+// ORIGINAL: 0x0057D2E0 ?weap_strat@@YAHHH@Z 0x0057D2E0-0x0057D35D
 // size      125 bytes
-// spans     0x0057D2E0-0x0057D35D
 // prototype int (__cdecl ?weap_strat@@YAHHH@Z)(int weaponID, int factionID)
 // callers   7   call targets   1
 // kind      game
@@ -1604,10 +1556,8 @@ int __cdecl weap_strat(int weapon_id, int faction_id) {
 
 /*
 Purpose: Calculate the weapon value for the specified prototype.
-ORIGINAL: 0x0057D360
-// name      ?weap_val@@YAHHH@Z
+// ORIGINAL: 0x0057D360 ?weap_val@@YAHHH@Z 0x0057D360-0x0057D3ED
 // size      141 bytes
-// spans     0x0057D360-0x0057D3ED
 // prototype int (__cdecl ?weap_val@@YAHHH@Z)(int protoID, int factionID)
 // callers   5   call targets   1
 // kind      game
@@ -1622,10 +1572,8 @@ int __cdecl weap_val(int proto_id, int faction_id) {
 
 /*
 Purpose: Calculate the armor value for the specified armor id.
-ORIGINAL: 0x0057D3F0
-// name      ?arm_val@@YAHHH@Z
+// ORIGINAL: 0x0057D3F0 ?arm_val@@YAHHH@Z 0x0057D3F0-0x0057D471
 // size      129 bytes
-// spans     0x0057D3F0-0x0057D471
 // prototype int (__cdecl ?arm_val@@YAHHH@Z)(int armorID, int factionID)
 // callers   3   call targets   1
 // kind      game
@@ -1641,10 +1589,8 @@ int __cdecl arm_val(int armor_id, int faction_id) {
 
 /*
 Purpose: Calculate the armor value for the specified prototype.
-ORIGINAL: 0x0057D480
-// name      ?armor_val@@YAHHH@Z
+// ORIGINAL: 0x0057D480 ?armor_val@@YAHHH@Z 0x0057D480-0x0057D50D
 // size      141 bytes
-// spans     0x0057D480-0x0057D50D
 // prototype int (__cdecl ?armor_val@@YAHHH@Z)(int protoID, int factionID)
 // callers   2   call targets   1
 // kind      game
@@ -1659,10 +1605,8 @@ int __cdecl armor_val(int proto_id, int faction_id) {
 
 /*
 Purpose: Calculate the carrying/transport capacity for the specified chassis, abilities and reactor.
-ORIGINAL: 0x0057D510
-// name      ?transport_val@@YAHHHH@Z
+// ORIGINAL: 0x0057D510 ?transport_val@@YAHHHH@Z 0x0057D510-0x0057D556
 // size      70 bytes
-// spans     0x0057D510-0x0057D556
 // prototype int (__cdecl ?transport_val@@YAHHHH@Z)(int chassis, int ability, int reactor)
 // callers   2   call targets   0
 // kind      game
@@ -1689,10 +1633,8 @@ int __cdecl transport_val(int chassis_id, int ability, int reactor_id) {
 Purpose: Generate offensive display string for the specified prototype. Replaced existing non-safe
          strcat with string. Original function took a 2nd parameter with char buffer and didn't
          return anything.
-ORIGINAL: 0x0057D560
-// name      ?say_offense@@YAXPADH@Z
+// ORIGINAL: 0x0057D560 ?say_offense@@YAXPADH@Z 0x0057D560-0x0057D6C5
 // size      357 bytes
-// spans     0x0057D560-0x0057D6C5
 // prototype void (__cdecl ?say_offense@@YAXPADH@Z)(int8*, int protoID)
 // callers   3   call targets   5
 // kind      game
@@ -1737,10 +1679,8 @@ std::string __cdecl say_offense(uint32_t proto_id) {
 Purpose: Generate defense display string for the specified prototype. Replaced existing non-safe 
          strcat with string. Original function took a 2nd parameter with char buffer and didn't 
          return anything.
-ORIGINAL: 0x0057D6D0
-// name      ?say_defense@@YAXPADH@Z
+// ORIGINAL: 0x0057D6D0 ?say_defense@@YAXPADH@Z 0x0057D6D0-0x0057D7C4
 // size      244 bytes
-// spans     0x0057D6D0-0x0057D7C4
 // prototype void (__cdecl ?say_defense@@YAXPADH@Z)(int8*, int protoID)
 // callers   3   call targets   4
 // kind      game
@@ -1773,10 +1713,8 @@ std::string __cdecl say_defense(uint32_t proto_id) {
 /*
 Purpose: Generate stats string for specified prototype. Replaced existing non-safe strcat with 
          string. Reworked to integrate with existing C code.
-ORIGINAL: 0x0057D7D0
-// name      ?say_stats_3@@YAXPADH@Z
+// ORIGINAL: 0x0057D7D0 ?say_stats_3@@YAXPADH@Z 0x0057D7D0-0x0057D8D3
 // size      259 bytes
-// spans     0x0057D7D0-0x0057D8D3
 // prototype void (__cdecl ?say_stats_3@@YAXPADH@Z)(int8*, int protoID)
 // callers   13   call targets   5
 // kind      game
@@ -1810,10 +1748,8 @@ void __cdecl say_stats_3(LPSTR stat, int proto_id) {
 
 /*
 Purpose: Generate prototype stats using stringTemp buffer.
-ORIGINAL: 0x0050B9A0
-// name      ?say_stats_3@@YAXH@Z
+// ORIGINAL: 0x0050B9A0 ?say_stats_3@@YAXH@Z 0x0050B9A0-0x0050B9B6
 // size      22 bytes
-// spans     0x0050B9A0-0x0050B9B6
 // prototype void (__cdecl ?say_stats_3@@YAXH@Z)(int protoID)
 // callers   1   call targets   1
 // kind      game
@@ -1829,10 +1765,8 @@ void __cdecl say_stats_3(int proto_id) {
 /*
 Purpose: Generate stats string for specified prototype. List whether prototype is psi, sea or air.
          Replaced existing non-safe strcat with string. Reworked to integrate with existing C code.
-ORIGINAL: 0x0057D8E0
-// name      ?say_stats_2@@YAXPADH@Z
+// ORIGINAL: 0x0057D8E0 ?say_stats_2@@YAXPADH@Z 0x0057D8E0-0x0057DA94
 // size      436 bytes
-// spans     0x0057D8E0-0x0057DA94
 // prototype void (__cdecl ?say_stats_2@@YAXPADH@Z)(int8*, int protoID)
 // callers   4   call targets   6
 // kind      game
@@ -1876,10 +1810,8 @@ void __cdecl say_stats_2(LPSTR stat, int proto_id) {
 Purpose: Generate verbose stats string for specified prototype. Used by Design Workshop and Military
          Command Nexus. Replaced existing non-safe strcat with string. Reworked to integrate with 
          existing C code.
-ORIGINAL: 0x0057DAA0
-// name      ?say_stats@@YAXPADHPAD@Z
+// ORIGINAL: 0x0057DAA0 ?say_stats@@YAXPADHPAD@Z 0x0057DAA0-0x0057DED8
 // size      1080 bytes
-// spans     0x0057DAA0-0x0057DED8
 // prototype void (__cdecl ?say_stats@@YAXPADHPAD@Z)(int8*, int protoID, int8*)
 // callers   2   call targets   6
 // kind      game
@@ -1954,10 +1886,8 @@ void __cdecl say_stats(LPSTR stat, int proto_id, LPSTR custom_spacer) {
 
 /*
 Purpose: Check against faction's available tech for best available reactor.
-ORIGINAL: 0x0057EFA0
-// name      ?best_reactor@@YAHH@Z
+// ORIGINAL: 0x0057EFA0 ?best_reactor@@YAHH@Z 0x0057EFA0-0x0057EFE2
 // size      66 bytes
-// spans     0x0057EFA0-0x0057EFE2
 // prototype int (__cdecl ?best_reactor@@YAHH@Z)(int factionID)
 // callers   3   call targets   1
 // kind      game
@@ -1977,10 +1907,8 @@ uint32_t __cdecl best_reactor(int faction_id) {
 
 /*
 Purpose: Check against faction's available tech for best available chassis meeting requirements.
-ORIGINAL: 0x0057EFF0
-// name      ?pick_chassis@@YAHHHH@Z
+// ORIGINAL: 0x0057EFF0 ?pick_chassis@@YAHHHH@Z 0x0057EFF0-0x0057F0A1
 // size      177 bytes
-// spans     0x0057EFF0-0x0057F0A1
 // prototype int (__cdecl ?pick_chassis@@YAHHHH@Z)(int factionID, int triadChk, int speedChk)
 // callers   1   call targets   1
 // kind      game
@@ -2023,10 +1951,8 @@ int __cdecl pick_chassis(int faction_id, int triad_chk, int speed_chk) {
 Purpose: Check against faction's available tech for the best available weapon meeting requirements.
          The condition variable has a dual purpose of either max cost or search for 1st instance of
          a particular weapon mode.
-ORIGINAL: 0x0057F0B0
-// name      ?weapon_budget@@YAHHHH@Z
+// ORIGINAL: 0x0057F0B0 ?weapon_budget@@YAHHHH@Z 0x0057F0B0-0x0057F142
 // size      146 bytes
-// spans     0x0057F0B0-0x0057F142
 // prototype int (__cdecl ?weapon_budget@@YAHHHH@Z)(int factionID, int condition, BOOL checkMode)
 // callers   2   call targets   1
 // kind      game
@@ -2062,10 +1988,8 @@ int __cdecl weapon_budget(int faction_id, int condition, BOOL check_mode) {
 /*
 Purpose: Check against the faction's available tech for the best available armor meeting the cost 
          requirement.
-ORIGINAL: 0x0057F150
-// name      ?armor_budget@@YAHHH@Z
+// ORIGINAL: 0x0057F150 ?armor_budget@@YAHHH@Z 0x0057F150-0x0057F1CF
 // size      127 bytes
-// spans     0x0057F150-0x0057F1CF
 // prototype int (__cdecl ?armor_budget@@YAHHH@Z)(int factionID, int maxCost)
 // callers   0   call targets   1
 // kind      game
@@ -2096,10 +2020,8 @@ int __cdecl armor_budget(int faction_id, int max_cost) {
 
 /*
 Purpose: Get the index value of a particular ability's bitfield.
-ORIGINAL: 0x00581170 BYTE_EXACT
-// name      ?abil_index@@YAHH@Z
+// ORIGINAL: 0x00581170 ?abil_index@@YAHH@Z 0x00581170-0x00581187 BYTE_EXACT
 // size      23 bytes
-// spans     0x00581170-0x00581187
 // prototype int (__cdecl ?abil_index@@YAHH@Z)(int abilityID)
 // callers   7   call targets   0
 // kind      game
@@ -2118,10 +2040,8 @@ int __cdecl abil_index(int ability_id) {
 
 /*
 Purpose: Calculate the movement penalty/cost.
-ORIGINAL: 0x00593510
-// name      ?hex_cost@@YAHHHHHHHH@Z
+// ORIGINAL: 0x00593510 ?hex_cost@@YAHHHHHHHH@Z 0x00593510-0x0059382F
 // size      799 bytes
-// spans     0x00593510-0x0059382F
 // prototype int (__cdecl ?hex_cost@@YAHHHHHHHH@Z)(int protoID, int factionID, int xCoordSrc, int yCoordSrc, int xCoordDst, int yCoordDst, int toggle)
 // callers   5   call targets   3
 // kind      game
@@ -2195,10 +2115,8 @@ int __cdecl hex_cost(int proto_id, int faction_id, int x_src, int y_src, int x_d
 
 /*
 Purpose: Relocate an existing unit to the specified tile.
-ORIGINAL: 0x005A59B0 BYTE_EXACT
-// name      ?veh_put@@YAXHHH@Z
+// ORIGINAL: 0x005A59B0 ?veh_put@@YAXHHH@Z 0x005A59B0-0x005A59D2 BYTE_EXACT
 // size      34 bytes
-// spans     0x005A59B0-0x005A59D2
 // prototype void (__cdecl ?veh_put@@YAXHHH@Z)(int vehID, int xCoord, int yCoord)
 // callers   1   call targets   2
 // kind      game
@@ -2213,10 +2131,8 @@ void __cdecl veh_put(int veh_id, int x, int y) {
 
 /*
 Purpose: Get the current health of the specified unit factoring in damage.
-ORIGINAL: 0x005A59E0
-// name      ?veh_health@@YAHH@Z
+// ORIGINAL: 0x005A59E0 ?veh_health@@YAHH@Z 0x005A59E0-0x005A5A52
 // size      114 bytes
-// spans     0x005A59E0-0x005A5A52
 // prototype int (__cdecl ?veh_health@@YAHH@Z)(int vehID)
 // callers   1   call targets   0
 // kind      game
@@ -2235,10 +2151,8 @@ int __cdecl veh_health(int veh_id) {
 /*
 Purpose: Calculates cost of the prototype based on various factors. Optimized logic flow from 
          the original without any differences to the final calculation.
-ORIGINAL: 0x005A5A60
-// name      ?proto_cost@@YAHHHHHH@Z
+// ORIGINAL: 0x005A5A60 ?proto_cost@@YAHHHHHH@Z 0x005A5A60-0x005A5CE1
 // size      641 bytes
-// spans     0x005A5A60-0x005A5CE1
 // prototype int (__cdecl ?proto_cost@@YAHHHHHH@Z)(int chassisType, int weapType, int armorType, int ability, int reactorType)
 // callers   4   call targets   0
 // kind      game
@@ -2363,10 +2277,8 @@ uint32_t __cdecl proto_cost(int chassis_id, int weapon_id, int armor_id,
 
 /*
 Purpose: Calculates the base cost of the specified prototype.
-ORIGINAL: 0x005A5D00
-// name      ?base_cost@@YAHH@Z
+// ORIGINAL: 0x005A5D00 ?base_cost@@YAHH@Z 0x005A5D00-0x005A5D3F
 // size      63 bytes
-// spans     0x005A5D00-0x005A5D3F
 // prototype int (__cdecl ?base_cost@@YAHH@Z)(int protoID)
 // callers   1   call targets   1
 // kind      game
@@ -2382,10 +2294,8 @@ int __cdecl base_cost(int proto_id) {
 
 /*
 Purpose: Create a new prototype. Sets initial values for everything except veh_name and preq_tech.
-ORIGINAL: 0x005A5D40
-// name      ?make_proto@@YAXHHHHHH@Z
+// ORIGINAL: 0x005A5D40 ?make_proto@@YAXHHHHHH@Z 0x005A5D40-0x005A6269
 // size      1321 bytes
-// spans     0x005A5D40-0x005A6269
 // prototype void (__cdecl ?make_proto@@YAXHHHHHH@Z)(int protoID, int chassisType, int weapType, int armorType, int ability, int reactorType)
 // callers   4   call targets   4
 // kind      game
@@ -2536,10 +2446,8 @@ void __cdecl make_proto(int proto_id, int chassis_id, int weapon_id, int armor_i
 
 /*
 Purpose: Search for the 1st prototype (basic + faction specific) that matches the specified plan.
-ORIGINAL: 0x005AED50
-// name      ?get_plan@@YAHHH@Z
+// ORIGINAL: 0x005AED50 ?get_plan@@YAHHH@Z 0x005AED50-0x005AEDE0
 // size      144 bytes
-// spans     0x005AED50-0x005AEDE0
 // prototype int (__cdecl ?get_plan@@YAHHH@Z)(int factionID, int plan)
 // callers   0   call targets   1
 // kind      game
@@ -2566,10 +2474,8 @@ int __cdecl get_plan(int faction_id, int plan) {
 /*
 Purpose: Reveal the specified tile to the specified faction and keep the
          faction's remembered copy of the tile's terrain bits in step with it.
-ORIGINAL: 0x005B5700
-// name      sub_5b5700
+// ORIGINAL: 0x005B5700 sub_5b5700 0x005B5700-0x005B57CA
 // size      202 bytes
-// spans     0x005B5700-0x005B57CA
 // prototype 
 // callers   1   call targets   1
 // kind      game
@@ -2610,10 +2516,8 @@ void __cdecl spot_tile(int x, int y, int faction_id) {
 /*
 Purpose: Reveal the specified base, and the tile it stands on, to the specified
          faction.
-ORIGINAL: 0x005B57D0
-// name      ?spot_base@@YAXHH@Z
+// ORIGINAL: 0x005B57D0 ?spot_base@@YAXHH@Z 0x005B57D0-0x005B58D2
 // size      258 bytes
-// spans     0x005B57D0-0x005B58D2
 // prototype void (__cdecl ?spot_base@@YAXHH@Z)(int baseID, int factionID)
 // callers   8   call targets   1
 // kind      game
@@ -2640,10 +2544,8 @@ void __cdecl spot_base(int base_id, int faction_id) {
 /*
 Purpose: Reveal the whole of the specified unit's stack, and the tile it stands
          on, to the specified faction.
-ORIGINAL: 0x005B58E0
-// name      ?spot_stack@@YAXHH@Z
+// ORIGINAL: 0x005B58E0 ?spot_stack@@YAXHH@Z 0x005B58E0-0x005B5A61
 // size      385 bytes
-// spans     0x005B58E0-0x005B5A61
 // prototype void (__cdecl ?spot_stack@@YAXHH@Z)(int vehID, int factionID)
 // callers   2   call targets   1
 // kind      game
@@ -2692,10 +2594,8 @@ void __cdecl spot_stack(int veh_id, int faction_id) {
 Purpose: Reveal whatever occupies the specified location - the tile itself, and
          then either the base standing on it or the whole unit stack - to the
          specified faction.
-ORIGINAL: 0x005B5AD0
-// name      ?spot_loc@@YAXHHH@Z
+// ORIGINAL: 0x005B5AD0 ?spot_loc@@YAXHHH@Z 0x005B5AD0-0x005B5E05
 // size      821 bytes
-// spans     0x005B5AD0-0x005B5E05
 // prototype void (__cdecl ?spot_loc@@YAXHHH@Z)(int xCoord, int yCoord, int factionID)
 // callers   6   call targets   3
 // kind      game
@@ -2738,10 +2638,8 @@ void __cdecl spot_loc(int x, int y, int faction_id) {
 /*
 Purpose: Determine if the specified unit wants to wake up based on certain conditions and
          preferences. Optional parameter for spotted veh_id (-1 to skip).
-ORIGINAL: 0x005B5EA0
-// name      ?want_to_wake@@YAHHHH@Z
+// ORIGINAL: 0x005B5EA0 ?want_to_wake@@YAHHHH@Z 0x005B5EA0-0x005B6060
 // size      448 bytes
-// spans     0x005B5EA0-0x005B6060
 // prototype int (__cdecl ?want_to_wake@@YAHHHH@Z)(unsigned int factionID, unsigned int vehID, int vehID2)
 // callers   1   call targets   0
 // kind      game
@@ -2800,10 +2698,8 @@ BOOL __cdecl want_to_wake(int faction_id, int veh_id, int spotted_veh_id) {
 
 /*
 Purpose: Wake up units meeting specific conditions from the stack where specified unit is located.
-ORIGINAL: 0x005B6060
-// name      ?wake_stack@@YAXH@Z
+// ORIGINAL: 0x005B6060 ?wake_stack@@YAXH@Z 0x005B6060-0x005B619A
 // size      314 bytes
-// spans     0x005B6060-0x005B619A
 // prototype void (__cdecl ?wake_stack@@YAXH@Z)(int vehID)
 // callers   1   call targets   0
 // kind      game
@@ -2830,10 +2726,8 @@ void __cdecl wake_stack(int veh_id) {
 
 /*
 Purpose: Move a stack of units in the same stack as the specified unit to a destination.
-ORIGINAL: 0x005B8AF0
-// name      ?stack_put@@YAXHHH@Z
+// ORIGINAL: 0x005B8AF0 ?stack_put@@YAXHHH@Z 0x005B8AF0-0x005B8B5D
 // size      109 bytes
-// spans     0x005B8AF0-0x005B8B5D
 // prototype void (__cdecl ?stack_put@@YAXHHH@Z)(int vehID, int xCoord, int yCoord)
 // callers   5   call targets   2
 // kind      game
@@ -2856,10 +2750,8 @@ void __cdecl stack_put(int veh_id, int x, int y) {
 
 /*
 Purpose: Sort a stack of units with the transports moved to the top.
-ORIGINAL: 0x005B8B60
-// name      ?stack_sort@@YAXH@Z
+// ORIGINAL: 0x005B8B60 ?stack_sort@@YAXH@Z 0x005B8B60-0x005B8C8D
 // size      301 bytes
-// spans     0x005B8B60-0x005B8C8D
 // prototype void (__cdecl ?stack_sort@@YAXH@Z)(int vehID)
 // callers   2   call targets   4
 // kind      game
@@ -2889,10 +2781,8 @@ void __cdecl stack_sort(int veh_id) {
 
 /*
 Purpose: Sort a stack of units with colony pods at the top followed by combat/offensive units.
-ORIGINAL: 0x005B8C90
-// name      ?stack_sort_2@@YAXH@Z
+// ORIGINAL: 0x005B8C90 ?stack_sort_2@@YAXH@Z 0x005B8C90-0x005B8E0A
 // size      378 bytes
-// spans     0x005B8C90-0x005B8E0A
 // prototype void (__cdecl ?stack_sort_2@@YAXH@Z)(int vehID)
 // callers   2   call targets   3
 // kind      game
@@ -2933,10 +2823,8 @@ void __cdecl stack_sort_2(int veh_id) {
 
 /*
 Purpose: Refresh and fix the stack. Used by DirectPlay multiplayer only.
-ORIGINAL: 0x005B8E10
-// name      ?stack_fix@@YAHH@Z
+// ORIGINAL: 0x005B8E10 ?stack_fix@@YAHH@Z 0x005B8E10-0x005B8ED9
 // size      201 bytes
-// spans     0x005B8E10-0x005B8ED9
 // prototype int (__cdecl ?stack_fix@@YAHH@Z)(int vehID)
 // callers   26   call targets   2
 // kind      game
@@ -2967,10 +2855,8 @@ Purpose: Board the eligible units stacked with the specified transport or carrie
          anything; mode 1 sorts the stack first and lifts each boarder plus the subject to the
          off-map holding square; mode 2+ makes a single pass and short-circuits to the lift when
          the subject already sits on a faction-owned base.
-ORIGINAL: 0x005B8EE0
-// name      ?stack_veh@@YAHHH@Z
+// ORIGINAL: 0x005B8EE0 ?stack_veh@@YAHHH@Z 0x005B8EE0-0x005B950F
 // size      1583 bytes
-// spans     0x005B8EE0-0x005B950F
 // prototype int (__cdecl ?stack_veh@@YAHHH@Z)(int vehID, int)
 // callers   10   call targets   7
 // kind      game
@@ -3120,10 +3006,8 @@ int __cdecl stack_veh(int veh_id, int mode) {
 
 /*
 Purpose: Various unit stack related calculations based on type parameter (0-19) and conditions.
-ORIGINAL: 0x005B9580
-// name      ?stack_check@@YAHHHHHH@Z
+// ORIGINAL: 0x005B9580 ?stack_check@@YAHHHHHH@Z 0x005B9580-0x005B9BB8
 // size      1592 bytes
-// spans     0x005B9580-0x005B9BB8
 // prototype int (__cdecl ?stack_check@@YAHHHHHH@Z)(int vehID, int type, int cond1, int cond2, int cond3)
 // callers   39   call targets   5
 // kind      game
@@ -3267,10 +3151,8 @@ int __cdecl stack_check(int veh_id, int type, int cond1, int cond2, int cond3) {
 /*
 Purpose: Check to see whether provided faction and base can build a specific prototype. Checks are
          included to prevent SMACX specific units from being built in SMAC mode.
-ORIGINAL: 0x005BA910
-// name      ?veh_avail@@YAHHHH@Z
+// ORIGINAL: 0x005BA910 ?veh_avail@@YAHHHH@Z 0x005BA910-0x005BAB39
 // size      553 bytes
-// spans     0x005BA910-0x005BAB39
 // prototype int (__cdecl ?veh_avail@@YAHHHH@Z)(int protoID, int factionID, int baseID)
 // callers   7   call targets   1
 // kind      game
@@ -3320,10 +3202,8 @@ BOOL __cdecl veh_avail(int proto_id, int faction_id, int base_id) {
 /*
 Purpose: Determine whether a faction wants the specified prototype based on the faction's current
          prototype designs.
-ORIGINAL: 0x005BE100
-// name      ?wants_prototype@@YAHHH@Z
+// ORIGINAL: 0x005BE100 ?wants_prototype@@YAHHH@Z 0x005BE100-0x005BE29D
 // size      413 bytes
-// spans     0x005BE100-0x005BE29D
 // prototype int (__cdecl ?wants_prototype@@YAHHH@Z)(int protoID, int factionID)
 // callers   1   call targets   1
 // kind      game
@@ -3372,10 +3252,8 @@ BOOL __cdecl wants_prototype(int proto_id, int faction_id) {
 
 /*
 Purpose: Check the coordinates for units and if at least one is found return the top most id.
-ORIGINAL: 0x005BFE90
-// name      ?veh_at@@YAHHH@Z
+// ORIGINAL: 0x005BFE90 ?veh_at@@YAHHH@Z 0x005BFE90-0x005BFF9E
 // size      270 bytes
-// spans     0x005BFE90-0x005BFF9E
 // prototype int (__cdecl ?veh_at@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   61   call targets   2
 // kind      game
@@ -3411,10 +3289,8 @@ int __cdecl veh_at(int x, int y) {
 
 /*
 Purpose: Check whether the prototype has a specific ability.
-ORIGINAL: 0x005BF1F0
-// name      ?has_abil@@YAHHH@Z
+// ORIGINAL: 0x005BF1F0 ?has_abil@@YAHHH@Z 0x005BF1F0-0x005BF310
 // size      288 bytes
-// spans     0x005BF1F0-0x005BF310
 // prototype int (__cdecl ?has_abil@@YAHHH@Z)(int protoID, int abilityID)
 // callers   54   call targets   1
 // kind      game
@@ -3460,10 +3336,8 @@ BOOL __cdecl has_abil(int proto_id, int ability_id) {
 /*
 Purpose: Temporarily remove the specified unit from its current square and stack in preparation for 
          another action such as interacting with the stack, moving or killing it.
-ORIGINAL: 0x005BFFA0
-// name      ?veh_lift@@YAXH@Z
+// ORIGINAL: 0x005BFFA0 ?veh_lift@@YAXH@Z 0x005BFFA0-0x005C007F
 // size      223 bytes
-// spans     0x005BFFA0-0x005C007F
 // prototype void (__cdecl ?veh_lift@@YAXH@Z)(int vehID)
 // callers   18   call targets   1
 // kind      game
@@ -3499,10 +3373,8 @@ int __cdecl veh_lift(int veh_id) {
 
 /*
 Purpose: Move the specified unit to the provided coordinates.
-ORIGINAL: 0x005C0080
-// name      ?veh_drop@@YAXHHH@Z
+// ORIGINAL: 0x005C0080 ?veh_drop@@YAXHHH@Z 0x005C0080-0x005C019C
 // size      284 bytes
-// spans     0x005C0080-0x005C019C
 // prototype void (__cdecl ?veh_drop@@YAXHHH@Z)(int vehID, int xCoord, int yCoord)
 // callers   17   call targets   3
 // kind      game
@@ -3538,10 +3410,8 @@ int __cdecl veh_drop(int veh_id, int x, int y) {
 
 /*
 Purpose: Set the unit's status to sentry/board.
-ORIGINAL: 0x005C01A0
-// name      ?sleep@@YAXH@Z
+// ORIGINAL: 0x005C01A0 ?sleep@@YAXH@Z 0x005C01A0-0x005C01CA
 // size      42 bytes
-// spans     0x005C01A0-0x005C01CA
 // prototype void (__cdecl ?sleep@@YAXH@Z)(int vehID)
 // callers   8   call targets   0
 // kind      game
@@ -3558,10 +3428,8 @@ void __cdecl sleep(int veh_id) {
 
 /*
 Purpose: Move the specified unit to the bottom of the stack.
-ORIGINAL: 0x005C01D0
-// name      ?veh_demote@@YAXH@Z
+// ORIGINAL: 0x005C01D0 ?veh_demote@@YAXH@Z 0x005C01D0-0x005C0256
 // size      134 bytes
-// spans     0x005C01D0-0x005C0256
 // prototype void (__cdecl ?veh_demote@@YAXH@Z)(int vehID)
 // callers   4   call targets   1
 // kind      game
@@ -3593,10 +3461,8 @@ void __cdecl veh_demote(int veh_id) {
 
 /*
 Purpose: Move the specified unit to the top of the stack.
-ORIGINAL: 0x005C0260
-// name      ?veh_promote@@YAXH@Z
+// ORIGINAL: 0x005C0260 ?veh_promote@@YAXH@Z 0x005C0260-0x005C02CE
 // size      110 bytes
-// spans     0x005C0260-0x005C02CE
 // prototype 
 // callers   6   call targets   2
 // kind      game
@@ -3614,10 +3480,8 @@ void __cdecl veh_promote(int veh_id) {
 
 /*
 Purpose: Clear the specified unit.
-ORIGINAL: 0x005C02D0
-// name      ?veh_clear@@YAXHHH@Z
+// ORIGINAL: 0x005C02D0 ?veh_clear@@YAXHHH@Z 0x005C02D0-0x005C03C3
 // size      243 bytes
-// spans     0x005C02D0-0x005C03C3
 // prototype void (__cdecl ?veh_clear@@YAXHHH@Z)(int vehID, int protoID, int factionID)
 // callers   2   call targets   0
 // kind      game
@@ -3661,10 +3525,8 @@ void __cdecl veh_clear(int veh_id, int proto_id, int faction_id) {
 /*
 Purpose: Check if the prototype can perform artillery combat. The 2nd parameter determines how sea 
          units are treated.
-ORIGINAL: 0x005C0DB0
-// name      ?can_arty@@YAHHH@Z
+// ORIGINAL: 0x005C0DB0 ?can_arty@@YAHHH@Z 0x005C0DB0-0x005C0E35
 // size      133 bytes
-// spans     0x005C0DB0-0x005C0E35
 // prototype int (__cdecl ?can_arty@@YAHHH@Z)(int protoID, int triad_sea_retn)
 // callers   14   call targets   1
 // kind      game
@@ -3691,10 +3553,8 @@ BOOL __cdecl can_arty(int proto_id, BOOL sea_triad_retn) {
 /*
 Purpose: Calculate a unit's morale. TODO: Determine if 2nd param is a toggle for display vs actual 
          morale.
-ORIGINAL: 0x005C0E40
-// name      ?morale_veh@@YAHHHH@Z
+// ORIGINAL: 0x005C0E40 ?morale_veh@@YAHHHH@Z 0x005C0E40-0x005C1143
 // size      771 bytes
-// spans     0x005C0E40-0x005C1143
 // prototype int (__cdecl ?morale_veh@@YAHHHH@Z)(int vehID, int checkDroneRiot, int factionIDvsNative)
 // callers   16   call targets   3
 // kind      game
@@ -3763,10 +3623,8 @@ int __cdecl morale_veh(int veh_id, BOOL check_drone_riot, int faction_id_vs_nati
 /*
 Purpose: Calculate the offense of the specified prototype. Optional param of the unit defending 
          against (-1 to ignore) as well as whether artillery or missile combat is being utilized.
-ORIGINAL: 0x005C1150
-// name      ?offense_proto@@YAHHHH@Z
+// ORIGINAL: 0x005C1150 ?offense_proto@@YAHHHH@Z 0x005C1150-0x005C128F
 // size      319 bytes
-// spans     0x005C1150-0x005C128F
 // prototype int (__cdecl ?offense_proto@@YAHHHH@Z)(int protoID, int vehIDDef, BOOL isBombardment)
 // callers   4   call targets   0
 // kind      game
@@ -3803,10 +3661,8 @@ int __cdecl offense_proto(int proto_id, int veh_id_def, BOOL is_bombard) {
 /*
 Purpose: Calculate the defense of the specified prototype. Optional param if unit is being attacked 
          (-1 to ignore) as well as whether artillery or missile combat is being utilized.
-ORIGINAL: 0x005C1290
-// name      ?armor_proto@@YAHHHH@Z
+// ORIGINAL: 0x005C1290 ?armor_proto@@YAHHHH@Z 0x005C1290-0x005C13AD
 // size      285 bytes
-// spans     0x005C1290-0x005C13AD
 // prototype int (__cdecl ?armor_proto@@YAHHHH@Z)(int protoID, int vehIDAtk, int isBombardment)
 // callers   3   call targets   0
 // kind      game
@@ -3834,10 +3690,8 @@ int __cdecl armor_proto(int proto_id, int veh_id_atk, BOOL is_bombard) {
 
 /*
 Purpose: Calculate the speed of the specified prototype on roads.
-ORIGINAL: 0x005C13B0
-// name      ?speed_proto@@YAHH@Z
+// ORIGINAL: 0x005C13B0 ?speed_proto@@YAHH@Z 0x005C13B0-0x005C1532
 // size      386 bytes
-// spans     0x005C13B0-0x005C1532
 // prototype int (__cdecl ?speed_proto@@YAHH@Z)(int protoID)
 // callers   12   call targets   1
 // kind      game
@@ -3888,10 +3742,8 @@ int __cdecl speed_proto(int proto_id) {
 Purpose: Calculate the speed of a unit on roads taking into consideration prototype speed, 
          elite morale, if the unit is damaged and other factors. The skip_morale parameter seems to 
          only be set to true for certain combat calculations in battle_fight().
-ORIGINAL: 0x005C1540
-// name      ?speed@@YAHHH@Z
+// ORIGINAL: 0x005C1540 ?speed@@YAHHH@Z 0x005C1540-0x005C1752
 // size      530 bytes
-// spans     0x005C1540-0x005C1752
 // prototype int (__cdecl ?speed@@YAHHH@Z)(int vehID, int toggle)
 // callers   27   call targets   2
 // kind      game
@@ -3934,10 +3786,8 @@ int __cdecl speed(int veh_id, BOOL skip_morale) {
 /*
 Purpose: Calculate the cargo capacity of a unit. It seems Spore Launchers were considered to have 
          cargo capacity at one time.
-ORIGINAL: 0x005C1760
-// name      ?veh_cargo@@YAHH@Z
+// ORIGINAL: 0x005C1760 ?veh_cargo@@YAHH@Z 0x005C1760-0x005C17C4
 // size      100 bytes
-// spans     0x005C1760-0x005C17C4
 // prototype int (__cdecl ?veh_cargo@@YAHH@Z)(int vehID)
 // callers   19   call targets   0
 // kind      game
@@ -3956,10 +3806,8 @@ int __cdecl veh_cargo(int veh_id) {
 /*
 Purpose: Determine the extra percent cost for building a prototype. Includes a check if the faction 
          has the free prototype flag set or if the player is using one of the easier difficulties.
-ORIGINAL: 0x005C17D0
-// name      ?prototype_factor@@YAHH@Z
+// ORIGINAL: 0x005C17D0 ?prototype_factor@@YAHH@Z 0x005C17D0-0x005C184F
 // size      127 bytes
-// spans     0x005C17D0-0x005C184F
 // prototype int (__cdecl ?prototype_factor@@YAHH@Z)(int protoID)
 // callers   3   call targets   0
 // kind      game
@@ -3989,10 +3837,8 @@ int __cdecl prototype_factor(int proto_id) {
 /*
 Purpose: Calculate the specified prototype's overall cost to build. Optional output parameter
          whether there is an associated 1st time prototype cost (true) or just the base (false).
-ORIGINAL: 0x005C1850
-// name      ?veh_cost@@YAHHHPAH@Z
+// ORIGINAL: 0x005C1850 ?veh_cost@@YAHHHPAH@Z 0x005C1850-0x005C1A1D
 // size      461 bytes
-// spans     0x005C1850-0x005C1A1D
 // prototype int (__cdecl ?veh_cost@@YAHHHPAH@Z)(int protoID, int baseID, int* hasProtoCost)
 // callers   12   call targets   2
 // kind      game
@@ -4027,10 +3873,8 @@ int __cdecl veh_cost(int proto_id, int base_id, BOOL *has_proto_cost) {
 /*
 Purpose: Check if the land unit inside an air transport can disembark. The transport must be in 
          either a base or an airbase to do so.
-ORIGINAL: 0x005C1C40
-// name      ?veh_jail@@YAHH@Z
+// ORIGINAL: 0x005C1C40 ?veh_jail@@YAHH@Z 0x005C1C40-0x005C1D16
 // size      214 bytes
-// spans     0x005C1C40-0x005C1D16
 // prototype int (__cdecl ?veh_jail@@YAHH@Z)(int vehID)
 // callers   8   call targets   0
 // kind      game
@@ -4053,10 +3897,8 @@ BOOL __cdecl veh_jail(int veh_id) {
 
 /*
 Purpose: Sets all moves for the specified unit as expended.
-ORIGINAL: 0x005C1D20
-// name      ?veh_skip@@YAXH@Z
+// ORIGINAL: 0x005C1D20 ?veh_skip@@YAXH@Z 0x005C1D20-0x005C1D42
 // size      34 bytes
-// spans     0x005C1D20-0x005C1D42
 // prototype void (__cdecl ?veh_skip@@YAXH@Z)(int vehID)
 // callers   19   call targets   1
 // kind      game
@@ -4073,10 +3915,8 @@ void __cdecl veh_skip(int veh_id) {
 
 /*
 Purpose: Initialize/reset the fake unit id (2048) used as a placeholder for various UI elements.
-ORIGINAL: 0x005C1D50 BYTE_EXACT
-// name      ?veh_fake@@YAHHH@Z
+// ORIGINAL: 0x005C1D50 ?veh_fake@@YAHHH@Z 0x005C1D50-0x005C1D6F BYTE_EXACT
 // size      31 bytes
-// spans     0x005C1D50-0x005C1D6F
 // prototype int (__cdecl ?veh_fake@@YAHHH@Z)(int protoID, int factionID)
 // callers   13   call targets   1
 // kind      game
@@ -4092,10 +3932,8 @@ int __cdecl veh_fake(int proto_id, int faction_id) {
 
 /*
 Purpose: Activate the specified unit and clear the current action.
-ORIGINAL: 0x005C1D70
-// name      ?veh_wake@@YAHH@Z
+// ORIGINAL: 0x005C1D70 ?veh_wake@@YAHH@Z 0x005C1D70-0x005C1E1F
 // size      175 bytes
-// spans     0x005C1D70-0x005C1E1F
 // prototype int (__cdecl ?veh_wake@@YAHH@Z)(int vehID)
 // callers   6   call targets   2
 // kind      game
@@ -4214,10 +4052,8 @@ Purpose: Send a unit home. Search the friendly and pacted bases, then - for an a
          friendly carriers and air supply convoys, then the airbases inside the search radius, for
          the closest place this unit could return to. Clear its orders if it is already standing
          there, otherwise point a move-to waypoint at it.
-ORIGINAL: 0x004CBAA0
-// name      ?action_home@@YAHHH@Z
+// ORIGINAL: 0x004CBAA0 ?action_home@@YAHHH@Z 0x004CBAA0-0x004CC35F
 // size      2239 bytes
-// spans     0x004CBAA0-0x004CC35F
 // prototype int (__cdecl ?action_home@@YAHHH@Z)(int vehID, int)
 // callers   8   call targets   6
 // kind      game
@@ -4428,10 +4264,8 @@ int __cdecl action_home(int veh_id, int flags) {
 Purpose: Weight the raw odds of an attack by how badly the faction's AI wants that particular
          stack dead. The odds arrive already computed by battle_fight; everything here is a
          strategic multiplier on top of them.
-ORIGINAL: 0x00565F20
-// name      ?compute_odds@@YAHHHHHH@Z
+// ORIGINAL: 0x00565F20 ?compute_odds@@YAHHHHHH@Z 0x00565F20-0x005665CC
 // size      1708 bytes
-// spans     0x00565F20-0x005665CC
 // prototype int (__cdecl ?compute_odds@@YAHHHHHH@Z)(int, int factionID, int vehID1, int vehID2, int)
 // callers   2   call targets   5
 // kind      game
@@ -4673,10 +4507,8 @@ int __cdecl compute_odds(int odds, int faction_id, int veh_id_atk, int veh_id_de
 
 /*
 Purpose: Choose which base a native life form standing on the specified tile should head for.
-ORIGINAL: 0x005665D0
-// name      ?alien_base@@YAHHHH@Z
+// ORIGINAL: 0x005665D0 ?alien_base@@YAHHHH@Z 0x005665D0-0x00566802
 // size      562 bytes
-// spans     0x005665D0-0x00566802
 // prototype int (__cdecl ?alien_base@@YAHHHH@Z)(int vehID, int xCoord, int yCoord)
 // callers   1   call targets   4
 // kind      game

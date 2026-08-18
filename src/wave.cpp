@@ -22,10 +22,8 @@
 
 /*
 Purpose: Returns a fixed 11; the legacy implementation is a single constant load.
-ORIGINAL: 0x004C70E0 BYTE_EXACT
-// name      ?set_asdr@Wave@@QAEHXZ
+// ORIGINAL: 0x004C70E0 ?set_asdr@Wave@@QAEHXZ 0x004C70E0-0x004C70E6 BYTE_EXACT
 // size      6 bytes
-// spans     0x004C70E0-0x004C70E6
 // prototype int (__thiscall ?set_asdr@Wave@@QAEHXZ)(Wave* this)
 // callers   0   call targets   0
 // kind      game
@@ -44,10 +42,8 @@ int __fastcall wave_set_asdr_redirect(Wave *self, void *) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 11.
-ORIGINAL: 0x004C70D0 BYTE_EXACT
-// name      ?set_bufflimit@Wave@@QAEHI@Z
+// ORIGINAL: 0x004C70D0 ?set_bufflimit@Wave@@QAEHI@Z 0x004C70D0-0x004C70D8 BYTE_EXACT
 // size      8 bytes
-// spans     0x004C70D0-0x004C70D8
 // prototype int (__thiscall ?set_bufflimit@Wave@@QAEHI@Z)(Wave* this, unsigned int)
 // callers   0   call targets   0
 // kind      game
@@ -66,10 +62,8 @@ int __fastcall wave_set_bufflimit_redirect(Wave *self, void *, unsigned int a1) 
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 11.
-ORIGINAL: 0x004C70F0 BYTE_EXACT
-// name      ?set_attack@Wave@@QAEHIII@Z
+// ORIGINAL: 0x004C70F0 ?set_attack@Wave@@QAEHIII@Z 0x004C70F0-0x004C70F8 BYTE_EXACT
 // size      8 bytes
-// spans     0x004C70F0-0x004C70F8
 // prototype int (__thiscall ?set_attack@Wave@@QAEHIII@Z)(Wave* this, unsigned int, unsigned int, unsigned int)
 // callers   0   call targets   0
 // kind      game
@@ -88,10 +82,8 @@ int __fastcall wave_set_attack_redirect(Wave *self, void *, unsigned int a1, uns
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 11.
-ORIGINAL: 0x004C7100 BYTE_EXACT
-// name      ?set_sustain@Wave@@QAEHIII@Z
+// ORIGINAL: 0x004C7100 ?set_sustain@Wave@@QAEHIII@Z 0x004C7100-0x004C7108 BYTE_EXACT
 // size      8 bytes
-// spans     0x004C7100-0x004C7108
 // prototype int (__thiscall ?set_sustain@Wave@@QAEHIII@Z)(Wave* this, unsigned int, unsigned int, unsigned int)
 // callers   0   call targets   0
 // kind      game
@@ -110,10 +102,8 @@ int __fastcall wave_set_sustain_redirect(Wave *self, void *, unsigned int a1, un
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 11.
-ORIGINAL: 0x004C7110 BYTE_EXACT
-// name      ?set_decay@Wave@@QAEHIII@Z
+// ORIGINAL: 0x004C7110 ?set_decay@Wave@@QAEHIII@Z 0x004C7110-0x004C7118 BYTE_EXACT
 // size      8 bytes
-// spans     0x004C7110-0x004C7118
 // prototype int (__thiscall ?set_decay@Wave@@QAEHIII@Z)(Wave* this, unsigned int, unsigned int, unsigned int)
 // callers   0   call targets   0
 // kind      game
@@ -132,10 +122,8 @@ int __fastcall wave_set_decay_redirect(Wave *self, void *, unsigned int a1, unsi
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 11.
-ORIGINAL: 0x004C7120 BYTE_EXACT
-// name      ?set_release@Wave@@QAEHIII@Z
+// ORIGINAL: 0x004C7120 ?set_release@Wave@@QAEHIII@Z 0x004C7120-0x004C7128 BYTE_EXACT
 // size      8 bytes
-// spans     0x004C7120-0x004C7128
 // prototype int (__thiscall ?set_release@Wave@@QAEHIII@Z)(Wave* this, unsigned int, unsigned int, unsigned int)
 // callers   0   call targets   0
 // kind      game
@@ -158,10 +146,8 @@ Purpose: Release the loaded wave. The wrapped device, if there is one, is asked
          return value; the device is then forgotten. Unless bit 1 of the flag
          dword at 0x54 suppresses it, the object's own vtable slot 0x80 is run,
          and the loaded bit (bit 0) of the flag dword at 0x40 is cleared.
-ORIGINAL: 0x004C6EA0
-// name      ?unload@Wave@@QAEXXZ
+// ORIGINAL: 0x004C6EA0 ?unload@Wave@@QAEXXZ 0x004C6EA0-0x004C6ED9
 // size      57 bytes
-// spans     0x004C6EA0-0x004C6ED9
 // prototype void (__thiscall ?unload@Wave@@QAEXXZ)(Wave* this)
 // callers   7   call targets   0
 // kind      game
@@ -202,10 +188,8 @@ int __fastcall wave_unload_redirect(Wave *self, void *) {
 Purpose: Set the playback pitch, clamped to the range the engine accepts
          (-1200 to 1200). The clamped value is stored at 0x58 and handed to the
          wrapped device, if there is one, through its vtable slot 0x98.
-ORIGINAL: 0x004C6EE0
-// name      ?set_pitch@Wave@@QAEXH@Z
+// ORIGINAL: 0x004C6EE0 ?set_pitch@Wave@@QAEXH@Z 0x004C6EE0-0x004C6F19
 // size      57 bytes
-// spans     0x004C6EE0-0x004C6F19
 // prototype void (__thiscall ?set_pitch@Wave@@QAEXH@Z)(Wave* this, int)
 // callers   3   call targets   0
 // kind      game
@@ -234,10 +218,8 @@ void Wave::set_pitch(int a1) {
 Purpose: Load a wave. The object's own vtable slot 0x88 does the loading; unless
          bit 2 of the second argument says otherwise, its own slot 0x8C then
          runs as the follow-up and supplies the result.
-ORIGINAL: 0x004C6DB0
-// name      ?load@Wave@@QAEHPADK@Z
+// ORIGINAL: 0x004C6DB0 ?load@Wave@@QAEHPADK@Z 0x004C6DB0-0x004C6DE6
 // size      54 bytes
-// spans     0x004C6DB0-0x004C6DE6
 // prototype int (__thiscall ?load@Wave@@QAEHPADK@Z)(Wave* this, int8*, unsigned int)
 // callers   5   call targets   0
 // kind      game
@@ -272,10 +254,8 @@ int __fastcall wave_load_redirect(Wave *self, void *, char *a1,
 /*
 Purpose: Report the wave's length in milliseconds, a plain read of the field
          at 0x60.
-ORIGINAL: 0x004C6B00 BYTE_EXACT
-// name      ?get_ms_length@Wave@@QAEHXZ
+// ORIGINAL: 0x004C6B00 ?get_ms_length@Wave@@QAEHXZ 0x004C6B00-0x004C6B04 BYTE_EXACT
 // size      4 bytes
-// spans     0x004C6B00-0x004C6B04
 // prototype int (__thiscall ?get_ms_length@Wave@@QAEHXZ)(Wave* this)
 // callers   0   call targets   0
 // kind      game
@@ -304,10 +284,8 @@ func_time_get_time **WaveTimeGetTimeSlot =
 Purpose: Report whether the wave is still sounding. A wrapped device answers
          for itself through its own vtable slot 0x5C; with no device the wave
          is timed against the clock instead.
-ORIGINAL: 0x004C6B10
-// name      ?is_playing@Wave@@QAEHXZ
+// ORIGINAL: 0x004C6B10 ?is_playing@Wave@@QAEHXZ 0x004C6B10-0x004C6B53
 // size      67 bytes
-// spans     0x004C6B10-0x004C6B53
 // prototype int (__thiscall ?is_playing@Wave@@QAEHXZ)(Wave* this)
 // callers   5   call targets   0
 // kind      game
@@ -352,10 +330,8 @@ Purpose: Start the wave playing. A wrapped device answers through its own
          vtable slot 0x94, as the receiver, with the play argument passed on;
          its result is returned verbatim. With no device the answer is a
          fixed 0x14.
-ORIGINAL: 0x004C68F0
-// name      ?play@Wave@@QAEHH@Z
+// ORIGINAL: 0x004C68F0 ?play@Wave@@QAEHH@Z 0x004C68F0-0x004C6913
 // size      35 bytes
-// spans     0x004C68F0-0x004C6913
 // prototype int (__thiscall ?play@Wave@@QAEHH@Z)(Wave* this, int)
 // callers   0   call targets   0
 // kind      game
@@ -386,10 +362,8 @@ int __fastcall wave_play_redirect(Wave *self, void *, int a1) {
 /*
 Purpose: Ask the wrapped device, through its vtable slot 0xC8, whether the
          buffer is in hardware.
-ORIGINAL: 0x004C6AE0
-// name      ?is_hwbuffer@Wave@@QAEHXZ
+// ORIGINAL: 0x004C6AE0 ?is_hwbuffer@Wave@@QAEHXZ 0x004C6AE0-0x004C6AF2
 // size      18 bytes
-// spans     0x004C6AE0-0x004C6AF2
 // prototype int (__thiscall ?is_hwbuffer@Wave@@QAEHXZ)(Wave* this)
 // callers   0   call targets   0
 // kind      game
@@ -414,10 +388,8 @@ int __fastcall wave_is_hwbuffer_redirect(Wave *self, void *) {
 /*
 Purpose: Ask the wrapped device for a time value through its vtable slot 0xB4,
          passing the query argument on.
-ORIGINAL: 0x004C6FD0
-// name      ?get_time@Wave@@QAEHI@Z
+// ORIGINAL: 0x004C6FD0 ?get_time@Wave@@QAEHI@Z 0x004C6FD0-0x004C6FF0
 // size      32 bytes
-// spans     0x004C6FD0-0x004C6FF0
 // prototype int (__thiscall ?get_time@Wave@@QAEHI@Z)(Wave* this, unsigned int)
 // callers   0   call targets   0
 // kind      game
@@ -443,10 +415,8 @@ int __fastcall wave_get_time_redirect(Wave *self, void *, uint32_t a1) {
 /*
 Purpose: Ask the wrapped device for the current marker through its vtable
          slot 0xB8.
-ORIGINAL: 0x004C6FF0
-// name      ?get_current_marker@Wave@@QAEHXZ
+// ORIGINAL: 0x004C6FF0 ?get_current_marker@Wave@@QAEHXZ 0x004C6FF0-0x004C7003
 // size      19 bytes
-// spans     0x004C6FF0-0x004C7003
 // prototype int (__thiscall ?get_current_marker@Wave@@QAEHXZ)(Wave* this)
 // callers   0   call targets   0
 // kind      game
@@ -471,10 +441,8 @@ int __fastcall wave_get_current_marker_redirect(Wave *self, void *) {
 /*
 Purpose: Ask the wrapped device for the game window handle through its vtable
          slot 0x3C.
-ORIGINAL: 0x004C7010
-// name      ?get_game_hwnd@Wave@@QAEHXZ
+// ORIGINAL: 0x004C7010 ?get_game_hwnd@Wave@@QAEHXZ 0x004C7010-0x004C701F
 // size      15 bytes
-// spans     0x004C7010-0x004C701F
 // prototype int (__thiscall ?get_game_hwnd@Wave@@QAEHXZ)(Wave* this)
 // callers   0   call targets   0
 // kind      game
@@ -499,10 +467,8 @@ int __fastcall wave_get_game_hwnd_redirect(Wave *self, void *) {
 /*
 Purpose: Ask the wrapped device for the device count through its vtable
          slot 0xBC.
-ORIGINAL: 0x004C7020
-// name      ?get_ndevices@Wave@@QAEHXZ
+// ORIGINAL: 0x004C7020 ?get_ndevices@Wave@@QAEHXZ 0x004C7020-0x004C7032
 // size      18 bytes
-// spans     0x004C7020-0x004C7032
 // prototype int (__thiscall ?get_ndevices@Wave@@QAEHXZ)(Wave* this)
 // callers   0   call targets   0
 // kind      game
@@ -529,10 +495,8 @@ Purpose: Unknown. The original chases the pointer chain that starts at the
          wrapped device and continues through each node's own 0x3C slot until
          it runs out, reads nothing else, and always answers 1. The argument
          is ignored.
-ORIGINAL: 0x004C7080 BYTE_EXACT
-// name      ?UNK1@Wave@@QAEHH@Z
+// ORIGINAL: 0x004C7080 ?UNK1@Wave@@QAEHH@Z 0x004C7080-0x004C7096 BYTE_EXACT
 // size      22 bytes
-// spans     0x004C7080-0x004C7096
 // prototype int (__thiscall ?UNK1@Wave@@QAEHH@Z)(Wave* this, int)
 // callers   0   call targets   0
 // kind      game
@@ -556,10 +520,8 @@ int __fastcall wave_unk1_redirect(Wave *self, void *, int a1) {
 /*
 Purpose: Set the reverb mix. The value is stored at 0x5C first, then the
          wrapped device is told through its vtable slot 0xE0.
-ORIGINAL: 0x004C70A0
-// name      ?set_reverb_mix@Wave@@QAEHM@Z
+// ORIGINAL: 0x004C70A0 ?set_reverb_mix@Wave@@QAEHM@Z 0x004C70A0-0x004C70C6
 // size      38 bytes
-// spans     0x004C70A0-0x004C70C6
 // prototype int (__thiscall ?set_reverb_mix@Wave@@QAEHM@Z)(Wave* this, float)
 // callers   0   call targets   0
 // kind      game
@@ -586,10 +548,8 @@ int __fastcall wave_set_reverb_mix_redirect(Wave *self, void *, float a1) {
 /*
 Purpose: Ask the wrapped device, through its vtable slot 0xDC, whether the
          wave is 3D positioned.
-ORIGINAL: 0x004C7250
-// name      ?is_3d@Wave@@QAEHXZ
+// ORIGINAL: 0x004C7250 ?is_3d@Wave@@QAEHXZ 0x004C7250-0x004C7262
 // size      18 bytes
-// spans     0x004C7250-0x004C7262
 // prototype int (__thiscall ?is_3d@Wave@@QAEHXZ)(Wave* this)
 // callers   0   call targets   0
 // kind      game
@@ -617,10 +577,8 @@ Purpose: Describe a device into the caller's buffer through the wrapped
          device's vtable slot 0xC0. With no device the buffer is terminated
          to an empty string - but only when the third argument is nonzero,
          and without any null check on the buffer - and the answer is 1.
-ORIGINAL: 0x004C7040
-// name      ?get_device_description@Wave@@QAEHPADHH@Z
+// ORIGINAL: 0x004C7040 ?get_device_description@Wave@@QAEHPADHH@Z 0x004C7040-0x004C7078
 // size      56 bytes
-// spans     0x004C7040-0x004C7078
 // prototype int (__thiscall ?get_device_description@Wave@@QAEHPADHH@Z)(Wave* this, int8*, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -650,10 +608,8 @@ int __fastcall wave_get_device_description_redirect(Wave *self, void *,
 /*
 Purpose: Position the wave in 3D through the wrapped device's vtable
          slot 0xCC.
-ORIGINAL: 0x004C7190
-// name      ?set_position3d@Wave@@QAEHMMM@Z
+// ORIGINAL: 0x004C7190 ?set_position3d@Wave@@QAEHMMM@Z 0x004C7190-0x004C71BB
 // size      43 bytes
-// spans     0x004C7190-0x004C71BB
 // prototype int (__thiscall ?set_position3d@Wave@@QAEHMMM@Z)(Wave* this, float, float, float)
 // callers   0   call targets   0
 // kind      game
@@ -680,10 +636,8 @@ int __fastcall wave_set_position3d_redirect(Wave *self, void *, float a1,
 /*
 Purpose: Set the wave's X position through the wrapped device's vtable
          slot 0xD0.
-ORIGINAL: 0x004C71C0
-// name      ?set_xpos@Wave@@QAEHM@Z
+// ORIGINAL: 0x004C71C0 ?set_xpos@Wave@@QAEHM@Z 0x004C71C0-0x004C71E3
 // size      35 bytes
-// spans     0x004C71C0-0x004C71E3
 // prototype int (__thiscall ?set_xpos@Wave@@QAEHM@Z)(Wave* this, float)
 // callers   0   call targets   0
 // kind      game
@@ -709,10 +663,8 @@ int __fastcall wave_set_xpos_redirect(Wave *self, void *, float a1) {
 /*
 Purpose: Set the wave's Y position through the wrapped device's vtable
          slot 0xD4.
-ORIGINAL: 0x004C71F0
-// name      ?set_ypos@Wave@@QAEHM@Z
+// ORIGINAL: 0x004C71F0 ?set_ypos@Wave@@QAEHM@Z 0x004C71F0-0x004C7213
 // size      35 bytes
-// spans     0x004C71F0-0x004C7213
 // prototype int (__thiscall ?set_ypos@Wave@@QAEHM@Z)(Wave* this, float)
 // callers   0   call targets   0
 // kind      game
@@ -738,10 +690,8 @@ int __fastcall wave_set_ypos_redirect(Wave *self, void *, float a1) {
 /*
 Purpose: Set the wave's Z position through the wrapped device's vtable
          slot 0xD8.
-ORIGINAL: 0x004C7220
-// name      ?set_zpos@Wave@@QAEHM@Z
+// ORIGINAL: 0x004C7220 ?set_zpos@Wave@@QAEHM@Z 0x004C7220-0x004C7243
 // size      35 bytes
-// spans     0x004C7220-0x004C7243
 // prototype int (__thiscall ?set_zpos@Wave@@QAEHM@Z)(Wave* this, float)
 // callers   0   call targets   0
 // kind      game
@@ -771,10 +721,8 @@ Purpose: Store the attribute mask into the wave's own fields, then tell the
          (bit 0 -> 1, bit 2 -> 2, bit 6 -> 8, bit 7 -> 0x10, and - only when
          bit 2 is clear - bit 4 -> 4 and bit 8 -> 0x20). Bits already set at
          0x54 are never cleared.
-ORIGINAL: 0x004C6F20
-// name      ?set_attrib@Wave@@QAEXK@Z
+// ORIGINAL: 0x004C6F20 ?set_attrib@Wave@@QAEXK@Z 0x004C6F20-0x004C6F80
 // size      96 bytes
-// spans     0x004C6F20-0x004C6F80
 // prototype void (__thiscall ?set_attrib@Wave@@QAEXK@Z)(Wave* this, unsigned int)
 // callers   0   call targets   0
 // kind      game
@@ -823,10 +771,8 @@ Purpose: Compose the attribute mask back out of the wave's own fields, OR-ed
          slot 0x70 (0 with no device). The mapping inverts set_attrib's:
          the dword at 0x30 -> bit 1, and the 0x54 flag dword's bits
          1 -> 0, 8 -> 6, 2 -> 2, 4 -> 4, 0x10 -> 7, 0x20 -> 8.
-ORIGINAL: 0x004C6F80
-// name      ?get_attrib@Wave@@QAEHXZ
+// ORIGINAL: 0x004C6F80 ?get_attrib@Wave@@QAEHXZ 0x004C6F80-0x004C6FCA
 // size      74 bytes
-// spans     0x004C6F80-0x004C6FCA
 // prototype int (__thiscall ?get_attrib@Wave@@QAEHXZ)(Wave* this)
 // callers   0   call targets   0
 // kind      game
@@ -882,10 +828,8 @@ Purpose: Set the wave's volume. The low seven bits of the argument are stored
          every 24 bytes in the singleton's table), as level/127 * group in
          double precision truncated back to an integer. The wrapped device,
          if any, hears the result through its vtable slot 0x40.
-ORIGINAL: 0x004C7130
-// name      ?set_volume@Wave@@QAEXH@Z
+// ORIGINAL: 0x004C7130 ?set_volume@Wave@@QAEXH@Z 0x004C7130-0x004C718D
 // size      93 bytes
-// spans     0x004C7130-0x004C718D
 // prototype void (__thiscall ?set_volume@Wave@@QAEXH@Z)(Wave* this, int)
 // callers   5   call targets   1
 // kind      game
@@ -923,10 +867,8 @@ Purpose: Remember the wave's filename. The previous copy, if any, goes back
          to the game CRT heap first; the new string is measured, allocated on
          that same heap, recorded at 0x4C, and copied in - in that order, so
          the field already names the block while it is still being filled.
-ORIGINAL: 0x004C6B60
-// name      ?set_fname@Wave@@QAEHPBD@Z
+// ORIGINAL: 0x004C6B60 ?set_fname@Wave@@QAEHPBD@Z 0x004C6B60-0x004C6BAB
 // size      75 bytes
-// spans     0x004C6B60-0x004C6BAB
 // prototype int (__thiscall ?set_fname@Wave@@QAEHPBD@Z)(Wave* this, int8*)
 // callers   0   call targets   4
 // kind      game
@@ -963,10 +905,8 @@ Purpose: Start the wave. While it holds a device group slot, a disabled group
          0x14. Finally a clocked wave stamps the start time from the game's
          timeGetTime import, runs its own vtable slot 0x80, and forgets the
          device.
-ORIGINAL: 0x004C6920
-// name      ?play@Wave@@QAEHXZ
+// ORIGINAL: 0x004C6920 ?play@Wave@@QAEHXZ 0x004C6920-0x004C69AD
 // size      141 bytes
-// spans     0x004C6920-0x004C69AD
 // prototype int (__thiscall ?play@Wave@@QAEHXZ)(Wave* this)
 // callers   20   call targets   2
 // kind      game
@@ -1027,10 +967,8 @@ Purpose: Load the wave from its remembered filename. With no wrapped device
          the device hears through its slot 0x6C, the base Sound::load reads
          the file, and on success the device reports the length in
          milliseconds through its slot 0xC4 into the field at 0x60.
-ORIGINAL: 0x004C6CE0
-// name      ?load@Wave@@QAEHXZ
+// ORIGINAL: 0x004C6CE0 ?load@Wave@@QAEHXZ 0x004C6CE0-0x004C6DAC
 // size      204 bytes
-// spans     0x004C6CE0-0x004C6DAC
 // prototype int (__thiscall ?load@Wave@@QAEHXZ)(Wave* this)
 // callers   3   call targets   1
 // kind      game
@@ -1107,10 +1045,8 @@ Purpose: Reload the wave from its remembered filename. The device is created
          loaded bit of the 0x40 flag dword is set BEFORE the wave's own
          vtable slot 0x7C runs, and a nonzero dword at 0x30 additionally
          starts the device looping through its slot 0x48 with argument 1.
-ORIGINAL: 0x004C6DF0
-// name      ?reload@Wave@@QAEHXZ
+// ORIGINAL: 0x004C6DF0 ?reload@Wave@@QAEHXZ 0x004C6DF0-0x004C6E95
 // size      165 bytes
-// spans     0x004C6DF0-0x004C6E95
 // prototype int (__thiscall ?reload@Wave@@QAEHXZ)(Wave* this)
 // callers   0   call targets   0
 // kind      game
@@ -1181,10 +1117,8 @@ Purpose: Load the wave from in-memory data. Refuses (0xC) when a device is
          own slot 0x70 composes the attribute mask - the original dispatches
          the following slot 0x6C through that captured table on the re-read
          device - and the wave's own slot 0x7C finishes.
-ORIGINAL: 0x004C6BB0
-// name      ?dyna_load@Wave@@QAEHPAD@Z
+// ORIGINAL: 0x004C6BB0 ?dyna_load@Wave@@QAEHPAD@Z 0x004C6BB0-0x004C6C1A
 // size      106 bytes
-// spans     0x004C6BB0-0x004C6C1A
 // prototype int (__thiscall ?dyna_load@Wave@@QAEHPAD@Z)(Wave* this, int8*)
 // callers   0   call targets   0
 // kind      game
@@ -1230,10 +1164,8 @@ Purpose: Load the wave from a caller-supplied filename. The guarded creation
          device answers the length through slot 0xC4 and then hears the
          stored volume, pitch, and the dword at 0x08 through its slots
          0x40, 0x98, and 0x44.
-ORIGINAL: 0x004C6C20
-// name      ?load@Wave@@QAEHPBD@Z
+// ORIGINAL: 0x004C6C20 ?load@Wave@@QAEHPBD@Z 0x004C6C20-0x004C6CD8
 // size      184 bytes
-// spans     0x004C6C20-0x004C6CD8
 // prototype int (__thiscall ?load@Wave@@QAEHPBD@Z)(Wave* this, int8*)
 // callers   4   call targets   1
 // kind      game
@@ -1317,10 +1249,8 @@ Purpose: Build the wave. The original constructs in the same three vtable
          under the same policy. The net field state: full volume, zeroed
          regions, a 1000ms default at 0x38, flag dword 4, Sound::set_type
          run with type 1, unit reverb mix, and the out-of-range group slot.
-ORIGINAL: 0x004C66E0
-// name      ??0Wave@@QAE@XZ
+// ORIGINAL: 0x004C66E0 ??0Wave@@QAE@XZ 0x004C66E0-0x004C67B6;0x004C8450-0x004C8457;0x00659EF4-0x00659F06
 // size      239 bytes
-// spans     0x004C66E0-0x004C67B6;0x004C8450-0x004C8457;0x00659EF4-0x00659F06
 // prototype void (__thiscall ??0Wave@@QAE@XZ)(Wave* this)
 // callers   16   call targets   2
 // kind      game
@@ -1381,10 +1311,8 @@ Purpose: Initialise the wave from a filename and a mode mask. Streaming waves
          0x6C. The mode bits then fold onto the flag dword as in set_attrib
          (bit 4 suppressed for streaming waves, bit 8 unsuppressed here), and
          bit 1 of the mode runs the wave's own vtable slot 0x48 with 1.
-ORIGINAL: 0x004C69B0
-// name      ?init@Wave@@QAEXPADK@Z
+// ORIGINAL: 0x004C69B0 ?init@Wave@@QAEXPADK@Z 0x004C69B0-0x004C6AD5
 // size      293 bytes
-// spans     0x004C69B0-0x004C6AD5
 // prototype void (__thiscall ?init@Wave@@QAEXPADK@Z)(Wave* this, int8*, unsigned int)
 // callers   5   call targets   6
 // kind      game
@@ -1467,10 +1395,8 @@ void __fastcall wave_init_redirect(Wave *self, void *, char *a1, uint32_t a2) {
 Purpose: The compiler-generated scalar deleting destructor: destroy the wave
          and, when bit 0 of the mode argument asks for it, return the storage
          to the game CRT heap.
-ORIGINAL: 0x004C9300
-// name      ??_GWave@@UAEPAXI@Z
+// ORIGINAL: 0x004C9300 ??_GWave@@UAEPAXI@Z 0x004C9300-0x004C9321
 // size      33 bytes
-// spans     0x004C9300-0x004C9321
 // prototype void* (__thiscall ??_GWave@@UAEPAXI@Z)(Wave* this, unsigned int)
 // callers   0   call targets   2
 // kind      game
@@ -1517,10 +1443,8 @@ Purpose: Destroy the wave. The original is a three-stage teardown of an
          release hook re-arms them, exactly as in the original. The registered
          SEH frame is omitted: the binary has no throw entry point, so it is
          unreachable.
-ORIGINAL: 0x004C67C0
-// name      ??1Wave@@QAE@XZ
+// ORIGINAL: 0x004C67C0 ??1Wave@@QAE@XZ 0x004C67C0-0x004C68EC;0x004C8450-0x004C8457;0x00659F06-0x00659F20
 // size      333 bytes
-// spans     0x004C67C0-0x004C68EC;0x004C8450-0x004C8457;0x00659F06-0x00659F20
 // prototype 
 // callers   2   call targets   2
 // kind      game

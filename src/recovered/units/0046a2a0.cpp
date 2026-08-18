@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0046A2A0 FILE
-// name      ?draw_radius@MapWin@@QAEXHHHH@Z
+// ORIGINAL: 0x0046A2A0 ?draw_radius@MapWin@@QAEXHHHH@Z 0x0046A2A0-0x0046A496 FILE
 // size      502 bytes
-// spans     0x0046A2A0-0x0046A496
 // prototype void (__thiscall ?draw_radius@MapWin@@QAEXHHHH@Z)(MapWin* this, int xCoord, int yCoord, int, int)
 // callers   10   call targets   5
 // kind      game

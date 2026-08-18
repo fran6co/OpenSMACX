@@ -1,12 +1,7 @@
-// ORIGINAL: 0x006044D0 FILE
-// RULED-OUT: early-return on tab==1 (MSVC folds the later redundant tab==1
-//            check into dead code, collapsing 4 original instrs to 1 lea);
-//            lea-vs-add on the (off+base) address computation persists
-//            regardless of local-vs-inline pointer arithmetic
+// ORIGINAL: 0x006044D0 ?double_click@BasePop@@QAEXH@Z 0x006044D0-0x00604581 FILE
+// RULED-OUT: early-return on tab==1 (MSVC folds the later redundant tab==1 check into dead code, collapsing 4 original instrs to 1 lea); lea-vs-add on the (off+base) address computation persists regardless of local-vs-inline pointer arithmetic
 // working copy - scaffold materialised by --work
-// name      ?double_click@BasePop@@QAEXH@Z
 // size      177 bytes
-// spans     0x006044D0-0x00604581
 // prototype void (__thiscall ?double_click@BasePop@@QAEXH@Z)(BasePop* this, int)
 // callers   0   call targets   1
 // kind      game

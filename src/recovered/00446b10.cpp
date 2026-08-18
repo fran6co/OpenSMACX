@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00446B10 BYTE_EXACT
-// name      ?engine_pitch@FX@@QAEXH@Z
+// ORIGINAL: 0x00446B10 ?engine_pitch@FX@@QAEXH@Z 0x00446B10-0x00446B37 BYTE_EXACT
 // size      39 bytes
-// spans     0x00446B10-0x00446B37
 // prototype void (__thiscall ?engine_pitch@FX@@QAEXH@Z)(FX* this, int)
 // callers   1   call targets   0
 // kind      game

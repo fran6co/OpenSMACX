@@ -15,10 +15,8 @@ Purpose: Return the constant 0x1.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x00406840 BYTE_EXACT
-// name      sub_406840
+// ORIGINAL: 0x00406840 sub_406840 0x00406840-0x00406846 BYTE_EXACT
 // size      6 bytes
-// spans     0x00406840-0x00406846
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -45,10 +43,8 @@ Purpose: Increment the dword field at 0x58.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x004476E0 BYTE_EXACT
-// name      ?tech@SAmbience@@QAEXXZ
+// ORIGINAL: 0x004476E0 ?tech@SAmbience@@QAEXXZ 0x004476E0-0x004476E4 BYTE_EXACT
 // size      4 bytes
-// spans     0x004476E0-0x004476E4
 // prototype void (__thiscall ?tech@SAmbience@@QAEXXZ)(SAmbience* this)
 // callers   0   call targets   0
 // kind      game
@@ -76,10 +72,8 @@ Purpose: Store 0x1 in the byte at 0x6d.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x00447AB0 BYTE_EXACT
-// name      ?design_window_show@BAmbience@@QAEXXZ
+// ORIGINAL: 0x00447AB0 ?design_window_show@BAmbience@@QAEXXZ 0x00447AB0-0x00447AB5 BYTE_EXACT
 // size      5 bytes
-// spans     0x00447AB0-0x00447AB5
 // prototype void (__thiscall ?design_window_show@BAmbience@@QAEXXZ)(BAmbience* this)
 // callers   0   call targets   0
 // kind      game
@@ -106,10 +100,8 @@ Purpose: Increment the dword field at 0x58.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x00448280 BYTE_EXACT
-// name      ?tech@AAmbience@@QAEXXZ
+// ORIGINAL: 0x00448280 ?tech@AAmbience@@QAEXXZ 0x00448280-0x00448284 BYTE_EXACT
 // size      4 bytes
-// spans     0x00448280-0x00448284
 // prototype void (__thiscall ?tech@AAmbience@@QAEXXZ)(AAmbience* this)
 // callers   0   call targets   0
 // kind      game
@@ -137,10 +129,8 @@ Purpose: Read the dword field at 0x48.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x00448310 BYTE_EXACT
-// name      sub_448310
+// ORIGINAL: 0x00448310 sub_448310 0x00448310-0x00448314 BYTE_EXACT
 // size      4 bytes
-// spans     0x00448310-0x00448314
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -168,10 +158,8 @@ Purpose: Read the dword field at 0x44.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x00448320 BYTE_EXACT
-// name      sub_448320
+// ORIGINAL: 0x00448320 sub_448320 0x00448320-0x00448324 BYTE_EXACT
 // size      4 bytes
-// spans     0x00448320-0x00448324
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -199,10 +187,8 @@ Purpose: Read the dword field at 0x50.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x00448330 BYTE_EXACT
-// name      sub_448330
+// ORIGINAL: 0x00448330 sub_448330 0x00448330-0x00448334 BYTE_EXACT
 // size      4 bytes
-// spans     0x00448330-0x00448334
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -230,10 +216,8 @@ Purpose: Read the dword field at 0x200.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x004C75A0 BYTE_EXACT
-// name      sub_4c75a0
+// ORIGINAL: 0x004C75A0 sub_4c75a0 0x004C75A0-0x004C75A7 BYTE_EXACT
 // size      7 bytes
-// spans     0x004C75A0-0x004C75A7
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -261,10 +245,8 @@ Purpose: Set 9 field(s) to constants.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x004C8090 BYTE_EXACT
-// name      sub_4c8090
+// ORIGINAL: 0x004C8090 sub_4c8090 0x004C8090-0x004C80B3 BYTE_EXACT
 // size      35 bytes
-// spans     0x004C8090-0x004C80B3
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -301,10 +283,8 @@ Purpose: Set 2 field(s) to constants.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x004C8100 BYTE_EXACT
-// name      sub_4c8100
+// ORIGINAL: 0x004C8100 sub_4c8100 0x004C8100-0x004C810B BYTE_EXACT
 // size      11 bytes
-// spans     0x004C8100-0x004C810B
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -334,10 +314,8 @@ Purpose: Return the constant 0xb.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x004C93E0 BYTE_EXACT
-// name      sub_4c93e0
+// ORIGINAL: 0x004C93E0 sub_4c93e0 0x004C93E0-0x004C93E8 BYTE_EXACT
 // size      8 bytes
-// spans     0x004C93E0-0x004C93E8
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -364,10 +342,8 @@ Purpose: Set 1 field(s) to constants.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x00590D60 BYTE_EXACT
-// name      sub_590d60
+// ORIGINAL: 0x00590D60 sub_590d60 0x00590D60-0x00590D6B BYTE_EXACT
 // size      11 bytes
-// spans     0x00590D60-0x00590D6B
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -395,10 +371,8 @@ Purpose: Return the constant 0x8.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x005DA6A0 BYTE_EXACT
-// name      sub_5da6a0
+// ORIGINAL: 0x005DA6A0 sub_5da6a0 0x005DA6A0-0x005DA6A8 BYTE_EXACT
 // size      8 bytes
-// spans     0x005DA6A0-0x005DA6A8
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -425,10 +399,8 @@ Purpose: Return the constant 0x8.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x005DA6B0 BYTE_EXACT
-// name      sub_5da6b0
+// ORIGINAL: 0x005DA6B0 sub_5da6b0 0x005DA6B0-0x005DA6B8 BYTE_EXACT
 // size      8 bytes
-// spans     0x005DA6B0-0x005DA6B8
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -455,10 +427,8 @@ Purpose: Return the constant 0x8.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x005E2460 BYTE_EXACT
-// name      sub_5e2460
+// ORIGINAL: 0x005E2460 sub_5e2460 0x005E2460-0x005E2468 BYTE_EXACT
 // size      8 bytes
-// spans     0x005E2460-0x005E2468
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -485,10 +455,8 @@ Purpose: Return the constant 0x8.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x005E2470 BYTE_EXACT
-// name      sub_5e2470
+// ORIGINAL: 0x005E2470 sub_5e2470 0x005E2470-0x005E2478 BYTE_EXACT
 // size      8 bytes
-// spans     0x005E2470-0x005E2478
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -515,10 +483,8 @@ Purpose: Set 9 field(s) to constants.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x005E35D0 BYTE_EXACT
-// name      sub_5e35d0
+// ORIGINAL: 0x005E35D0 sub_5e35d0 0x005E35D0-0x005E35EF BYTE_EXACT
 // size      31 bytes
-// spans     0x005E35D0-0x005E35EF
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -555,10 +521,8 @@ Purpose: Set 9 field(s) to constants.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x005E35F0 BYTE_EXACT
-// name      sub_5e35f0
+// ORIGINAL: 0x005E35F0 sub_5e35f0 0x005E35F0-0x005E360D BYTE_EXACT
 // size      29 bytes
-// spans     0x005E35F0-0x005E360D
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -594,10 +558,8 @@ Purpose: Read the dword field at 0x0, masked to 0x1.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x00600320 BYTE_EXACT
-// name      ?is_playing@MCIVideo@@QAEHXZ
+// ORIGINAL: 0x00600320 ?is_playing@MCIVideo@@QAEHXZ 0x00600320-0x00600326 BYTE_EXACT
 // size      6 bytes
-// spans     0x00600320-0x00600326
 // prototype int (__thiscall ?is_playing@MCIVideo@@QAEHXZ)(MCIVideo* this)
 // callers   1   call targets   0
 // kind      game
@@ -626,10 +588,8 @@ Purpose: Set 3 field(s) to constants.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x00616B20 BYTE_EXACT
-// name      sub_616b20
+// ORIGINAL: 0x00616B20 sub_616b20 0x00616B20-0x00616B2D BYTE_EXACT
 // size      13 bytes
-// spans     0x00616B20-0x00616B2D
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -660,10 +620,8 @@ Purpose: Return the constant 0x1.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x0062D390 BYTE_EXACT
-// name      sub_62d390
+// ORIGINAL: 0x0062D390 sub_62d390 0x0062D390-0x0062D396 BYTE_EXACT
 // size      6 bytes
-// spans     0x0062D390-0x0062D396
 // prototype 
 // callers   1   call targets   0
 // kind      game
@@ -690,10 +648,8 @@ Purpose: Set 9 field(s) to constants.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x006346C0 BYTE_EXACT
-// name      sub_6346c0
+// ORIGINAL: 0x006346C0 sub_6346c0 0x006346C0-0x006346E4 BYTE_EXACT
 // size      36 bytes
-// spans     0x006346C0-0x006346E4
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -730,10 +686,8 @@ Purpose: Set 9 field(s) to constants.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x006346F0 BYTE_EXACT
-// name      sub_6346f0
+// ORIGINAL: 0x006346F0 sub_6346f0 0x006346F0-0x00634712 BYTE_EXACT
 // size      34 bytes
-// spans     0x006346F0-0x00634712
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -769,10 +723,8 @@ Purpose: Set 9 field(s) to constants.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x00634B70 BYTE_EXACT
-// name      sub_634b70
+// ORIGINAL: 0x00634B70 sub_634b70 0x00634B70-0x00634B94 BYTE_EXACT
 // size      36 bytes
-// spans     0x00634B70-0x00634B94
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -809,10 +761,8 @@ Purpose: Set 4 field(s) to constants.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x00634FB0 BYTE_EXACT
-// name      ??0TexHeap@@QAE@XZ
+// ORIGINAL: 0x00634FB0 ??0TexHeap@@QAE@XZ 0x00634FB0-0x00634FC0 BYTE_EXACT
 // size      16 bytes
-// spans     0x00634FB0-0x00634FC0
 // prototype TexHeap* (__thiscall ??0TexHeap@@QAE@XZ)(TexHeap* this)
 // callers   0   call targets   0
 // kind      game
@@ -844,10 +794,8 @@ Purpose: Set 7 field(s) to constants.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x006354D0 BYTE_EXACT
-// name      sub_6354d0
+// ORIGINAL: 0x006354D0 sub_6354d0 0x006354D0-0x006354E9 BYTE_EXACT
 // size      25 bytes
-// spans     0x006354D0-0x006354E9
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -882,10 +830,8 @@ Purpose: Read the dword field at 0x4ac, masked to 0x8000.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x006363F0 BYTE_EXACT
-// name      sub_6363f0
+// ORIGINAL: 0x006363F0 sub_6363f0 0x006363F0-0x006363FC BYTE_EXACT
 // size      12 bytes
-// spans     0x006363F0-0x006363FC
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -914,10 +860,8 @@ Purpose: Set 4 field(s) to constants.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x0063E520 BYTE_EXACT
-// name      sub_63e520
+// ORIGINAL: 0x0063E520 sub_63e520 0x0063E520-0x0063E534 BYTE_EXACT
 // size      20 bytes
-// spans     0x0063E520-0x0063E534
 // prototype 
 // callers   1   call targets   0
 // kind      game
@@ -949,10 +893,8 @@ Purpose: Do nothing; the original body is only its `ret`.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x00406B20 BYTE_EXACT
-// name      nullsub_27
+// ORIGINAL: 0x00406B20 nullsub_27 0x00406B20-0x00406B23 BYTE_EXACT
 // size      3 bytes
-// spans     0x00406B20-0x00406B23
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -979,10 +921,8 @@ Purpose: Return the constant 0x0.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x00616D80 BYTE_EXACT
-// name      sub_616d80
+// ORIGINAL: 0x00616D80 sub_616d80 0x00616D80-0x00616D85 BYTE_EXACT
 // size      5 bytes
-// spans     0x00616D80-0x00616D85
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1009,10 +949,8 @@ Purpose: Do nothing; the original body is only its `ret`.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x0061F785 BYTE_EXACT
-// name      nullsub_259
+// ORIGINAL: 0x0061F785 nullsub_259 0x0061F785-0x0061F788 BYTE_EXACT
 // size      3 bytes
-// spans     0x0061F785-0x0061F788
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1039,10 +977,8 @@ Purpose: Do nothing; the original body is only its `ret`.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x00634C20 BYTE_EXACT
-// name      ??1FileBox@@QAE@XZ
+// ORIGINAL: 0x00634C20 ??1FileBox@@QAE@XZ 0x00634C20-0x00634C21 BYTE_EXACT
 // size      1 bytes
-// spans     0x00634C20-0x00634C21
 // prototype void (__thiscall ??1FileBox@@QAE@XZ)(FileBox* this)
 // callers   4   call targets   0
 // kind      game
@@ -1069,10 +1005,8 @@ Purpose: Do nothing; the original body is only its `ret`.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x0050F640 BYTE_EXACT
-// name      nullsub_185
+// ORIGINAL: 0x0050F640 nullsub_185 0x0050F640-0x0050F643 BYTE_EXACT
 // size      3 bytes
-// spans     0x0050F640-0x0050F643
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1099,10 +1033,8 @@ Purpose: Copy 1 argument(s) into field(s) of `this`.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x00589750 BYTE_EXACT
-// name      sub_589750
+// ORIGINAL: 0x00589750 sub_589750 0x00589750-0x00589760 BYTE_EXACT
 // size      16 bytes
-// spans     0x00589750-0x00589760
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1130,10 +1062,8 @@ Purpose: Copy 2 argument(s) into field(s) of `this`.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x00590CB0 BYTE_EXACT
-// name      sub_590cb0
+// ORIGINAL: 0x00590CB0 sub_590cb0 0x00590CB0-0x00590CC2 BYTE_EXACT
 // size      18 bytes
-// spans     0x00590CB0-0x00590CC2
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1162,10 +1092,8 @@ Purpose: Copy 1 argument(s) into field(s) of `this`.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x005F05C0 BYTE_EXACT
-// name      sub_5f05c0
+// ORIGINAL: 0x005F05C0 sub_5f05c0 0x005F05C0-0x005F05CD BYTE_EXACT
 // size      13 bytes
-// spans     0x005F05C0-0x005F05CD
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1193,10 +1121,8 @@ Purpose: Set 5 field(s) to constants.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x005D4540 BYTE_EXACT
-// name      Heap::Heap2
+// ORIGINAL: 0x005D4540 Heap::Heap2 0x005D4540-0x005D4551 BYTE_EXACT
 // size      17 bytes
-// spans     0x005D4540-0x005D4551
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1228,10 +1154,8 @@ Purpose: Set 8 field(s) to constants.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x00634BE0 BYTE_EXACT
-// name      ??0FileBox@@QAE@XZ
+// ORIGINAL: 0x00634BE0 ??0FileBox@@QAE@XZ 0x00634BE0-0x00634C13 BYTE_EXACT
 // size      51 bytes
-// spans     0x00634BE0-0x00634C13
 // prototype void (__thiscall ??0FileBox@@QAE@XZ)(FileBox* this)
 // callers   4   call targets   0
 // kind      game
@@ -1267,10 +1191,8 @@ Purpose: Set 8 field(s) to constants.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x00634F70 BYTE_EXACT
-// name      ?UNK2@FileBox@@QAEXXZ
+// ORIGINAL: 0x00634F70 ?UNK2@FileBox@@QAEXXZ 0x00634F70-0x00634FA1 BYTE_EXACT
 // size      49 bytes
-// spans     0x00634F70-0x00634FA1
 // prototype void (__thiscall ?UNK2@FileBox@@QAEXXZ)(FileBox* this)
 // callers   0   call targets   0
 // kind      game
@@ -1305,10 +1227,8 @@ Purpose: Clamp field 0xc against an argument, then store unconditionally.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x004C80C0 BYTE_EXACT
-// name      sub_4c80c0
+// ORIGINAL: 0x004C80C0 sub_4c80c0 0x004C80C0-0x004C80D7 BYTE_EXACT
 // size      23 bytes
-// spans     0x004C80C0-0x004C80D7
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1340,10 +1260,8 @@ Purpose: Clamp field 0x8 against an argument, then store unconditionally.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x004C80E0 BYTE_EXACT
-// name      sub_4c80e0
+// ORIGINAL: 0x004C80E0 sub_4c80e0 0x004C80E0-0x004C80F7 BYTE_EXACT
 // size      23 bytes
-// spans     0x004C80E0-0x004C80F7
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1375,10 +1293,8 @@ Purpose: Sign-extend bit 0 of field 0x40: 0 or -1.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x00448380 BYTE_EXACT
-// name      sub_448380
+// ORIGINAL: 0x00448380 sub_448380 0x00448380-0x0044838A BYTE_EXACT
 // size      10 bytes
-// spans     0x00448380-0x0044838A
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -1388,10 +1304,8 @@ Return Value: the value described above
 Status: Complete
 */
 /*
-ORIGINAL: 0x00448380
-// name      sub_448380
+// ORIGINAL: 0x00448380 sub_448380 0x00448380-0x0044838A
 // size      3 bytes
-// spans     0x00448380-0x0044838A
 // prototype 
 // callers   0   call targets   0
 // kind      game

@@ -1,19 +1,7 @@
-// ORIGINAL: 0x00615F50 FILE
-// RULED-OUT: plain `strcat(buf, ...)` compiles to an inlined
-//   `repne scasb`/copy sequence, not the original's `call _strcat`;
-//   `#pragma function(strcat)` restores the call. Landed at 82.4%
-//   mnemonic similarity (172 vs 217 bytes): the original duplicates its
-//   `text_width` + threshold-compare tail in BOTH branches (masked and
-//   unmasked text), but this source's identical trailing 3 statements in
-//   each branch let VC6 tail-merge them into one shared block with a
-//   `jmp`, which the original does not do even though its two tails are
-//   mnemonic-for-mnemonic identical too. Tried: a shared vs per-branch
-//   `threshold`/`base` local, folding the compare inline vs a named
-//   `threshold` variable - the merge persisted across all of them.
+// ORIGINAL: 0x00615F50 ?text_fits@EditBox@@QAEHXZ 0x00615F50-0x00616029 FILE
+// RULED-OUT: plain `strcat(buf, ...)` compiles to an inlined `repne scasb`/copy sequence, not the original's `call _strcat`; `#pragma function(strcat)` restores the call. Landed at 82.4% mnemonic similarity (172 vs 217 bytes): the original duplicates its `text_width` + threshold-compare tail in BOTH branches (masked and unmasked text), but this source's identical trailing 3 statements in each branch let VC6 tail-merge them into one shared block with a `jmp`, which the original does not do even though its two tails are mnemonic-for-mnemonic identical too. Tried: a shared vs per-branch `threshold`/`base` local, folding the compare inline vs a named `threshold` variable - the merge persisted across all of them.
 // working copy - scaffold materialised by --work
-// name      ?text_fits@EditBox@@QAEHXZ
 // size      217 bytes
-// spans     0x00615F50-0x00616029
 // prototype int (__thiscall ?text_fits@EditBox@@QAEHXZ)(EditBox* this)
 // callers   2   call targets   2
 // kind      game

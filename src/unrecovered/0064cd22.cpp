@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064CD22 EXCLUDED S1
-// name      __set_osfhnd
+// ORIGINAL: 0x0064CD22 __set_osfhnd 0x0064CD22-0x0064CD9E EXCLUDED S1
 // size      124 bytes
-// spans     0x0064CD22-0x0064CD9E
 // prototype int (__cdecl __set_osfhnd)(int, HANDLE hHandle)
 // callers   1   call targets   2
 // kind      library

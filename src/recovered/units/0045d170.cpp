@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0045D170 FILE
-// name      ?on_iface_button_clicked@MainInterface@@QAEXH@Z
+// ORIGINAL: 0x0045D170 ?on_iface_button_clicked@MainInterface@@QAEXH@Z 0x0045D170-0x0045D271 FILE
 // size      257 bytes
-// spans     0x0045D170-0x0045D271
 // prototype void (__thiscall ?on_iface_button_clicked@MainInterface@@QAEXH@Z)(MainInterface* this, int)
 // callers   2   call targets   10
 // kind      game

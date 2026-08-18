@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0062A720 FILE
-// name      ?decode_delta_flc@Flic@@QAEXXZ
+// ORIGINAL: 0x0062A720 ?decode_delta_flc@Flic@@QAEXXZ 0x0062A720-0x0062AAE7 FILE
 // size      967 bytes
-// spans     0x0062A720-0x0062AAE7
 // prototype void (__thiscall ?decode_delta_flc@Flic@@QAEXXZ)(Flic* this)
 // callers   1   call targets   5
 // kind      game

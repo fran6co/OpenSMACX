@@ -1,13 +1,6 @@
-// ORIGINAL: 0x0062D8E0 BYTE_EXACT FILE
-// LEVER: vtable dispatch (slot at +0x84, thiscall taking 3 ints) via
-//   member-fn-pointer union shim, with `self + 0x58` written out at BOTH use
-//   sites (the cast-to-receiver and the vtable-slot dereference) instead of
-//   a shared `obj58` local - same fix as 0x00422CC0: a named intermediate
-//   pointer forces the read of [self+0x58] after the `lea`, where the
-//   original reads it before computing the address.
-// name      ?init@Net@@QAEHPAU_GUID@@HH@Z
+// ORIGINAL: 0x0062D8E0 ?init@Net@@QAEHPAU_GUID@@HH@Z 0x0062D8E0-0x0062D9D8 FILE BYTE_EXACT
+// LEVER: vtable dispatch (slot at +0x84, thiscall taking 3 ints) via member-fn-pointer union shim, with `self + 0x58` written out at BOTH use sites (the cast-to-receiver and the vtable-slot dereference) instead of a shared `obj58` local - same fix as 0x00422CC0: a named intermediate pointer forces the read of [self+0x58] after the `lea`, where the original reads it before computing the address.
 // size      248 bytes
-// spans     0x0062D8E0-0x0062D9D8
 // prototype int (__thiscall ?init@Net@@QAEHPAU_GUID@@HH@Z)(Net* this, _GUID*, int, int)
 // callers   2   call targets   2
 // kind      game

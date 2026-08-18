@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064D28E EXCLUDED S1
-// name      __controlfp
+// ORIGINAL: 0x0064D28E __controlfp 0x0064D28E-0x0064D2A4 EXCLUDED S1
 // size      22 bytes
-// spans     0x0064D28E-0x0064D2A4
 // prototype 
 // callers   1   call targets   1
 // kind      library

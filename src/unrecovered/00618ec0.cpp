@@ -1,9 +1,7 @@
-// ORIGINAL: 0x00618EC0 BYTE_EXACT FILE
+// ORIGINAL: 0x00618EC0 ??0Font@@QAE@PADHH@Z 0x00618EC0-0x00618EDF FILE BYTE_EXACT
 // LEVER: plain forwarding call to init(a1, a2, a3) in argument order
 // working copy - scaffold materialised by --work
-// name      ??0Font@@QAE@PADHH@Z
 // size      31 bytes
-// spans     0x00618EC0-0x00618EDF
 // prototype void (__thiscall ??0Font@@QAE@PADHH@Z)(Font* this, LPSTR fontName, int height, int style)
 // callers   0   call targets   1
 // kind      game

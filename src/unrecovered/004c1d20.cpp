@@ -1,19 +1,12 @@
-// ORIGINAL: 0x004C1D20 FILE
+// ORIGINAL: 0x004C1D20 ?vehdraw_construct_vehicle@@YAHHPAUCaviar@@@Z 0x004C1D20-0x004C202D FILE
+// RULED-OUT: MISMATCH #0 'push' vs 'mov' - transcribed the Ghidra decompile, confirming via raw disasm that DAT_009ab888 is a dword field at offset 0 of the same 0x34-byte-stride record as DAT_009ab88c/d/e/f, and DAT_00952832/0x952836 form a matching per-vehID 0x34-byte record; even so the very first instruction (prologue register save order) diverges, not chased further.
 // working copy - scaffold materialised by --work
-// name      ?vehdraw_construct_vehicle@@YAHHPAUCaviar@@@Z
 // size      781 bytes
-// spans     0x004C1D20-0x004C202D
 // prototype int (__cdecl ?vehdraw_construct_vehicle@@YAHHPAUCaviar@@@Z)(int vehID, Caviar*)
 // callers   6   call targets   10
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x004C2030 0x004C2470 0x004C2CF0 0x004C3090 0x00501350 0x005C0E40 0x00617920 0x00617F20 0x006183B0 0x006183C0
-// RULED-OUT: MISMATCH #0 'push' vs 'mov' - transcribed the Ghidra decompile,
-//            confirming via raw disasm that DAT_009ab888 is a dword field at
-//            offset 0 of the same 0x34-byte-stride record as DAT_009ab88c/d/e/f,
-//            and DAT_00952832/0x952836 form a matching per-vehID 0x34-byte
-//            record; even so the very first instruction (prologue register
-//            save order) diverges, not chased further.
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?vehdraw_construct_vehicle@@YAHHPAUCaviar@@@Z  at 0x004C1D20  (781 bytes)

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00646829 EXCLUDED S1
-// name      __mkdir
+// ORIGINAL: 0x00646829 __mkdir 0x00646829-0x00646855 EXCLUDED S1
 // size      44 bytes
-// spans     0x00646829-0x00646855
 // prototype 
 // callers   2   call targets   1
 // kind      library

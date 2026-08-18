@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0052F520 FILE
-// name      ?send_rules@NetDaemon@@QAEXXZ
+// ORIGINAL: 0x0052F520 ?send_rules@NetDaemon@@QAEXXZ 0x0052F520-0x0052F8D6 FILE
 // size      950 bytes
-// spans     0x0052F520-0x0052F8D6
 // prototype void (__thiscall ?send_rules@NetDaemon@@QAEXXZ)(NetDaemon* this)
 // callers   1   call targets   3
 // kind      game

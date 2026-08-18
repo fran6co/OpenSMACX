@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00403BA0 BYTE_EXACT FILE
-// name      ?amovie_project@@YAXH@Z
+// ORIGINAL: 0x00403BA0 ?amovie_project@@YAXH@Z 0x00403BA0-0x00403BDF FILE BYTE_EXACT
 // size      63 bytes
-// spans     0x00403BA0-0x00403BDF
 // prototype 
 // callers   2   call targets   4
 // kind      game

@@ -1,17 +1,7 @@
-// ORIGINAL: 0x00437BF0 FILE
-// RULED-OUT: Ghidra's `&DAT_009ab898 + idx*0x1a` / `&DAT_009ab89a + idx*0x1a`
-//            is WRONG (Ghidra typed those globals as 2-byte elements) -
-//            confirmed byte multiplier via raw disasm is idx*0x34 (and
-//            idx*0xd00 for the 0x680-scaled form); corrected throughout.
-//            All multi-arg call orders (popp/X_pop/make_proto/name_proto/
-//            message_data/prune_protos/retire_proto) verified against raw
-//            disasm. Reaches MISMATCH #8 'cmp' vs 'mov', a register/stack
-//            allocation divergence; not chased further given size (2149
-//            bytes).
+// ORIGINAL: 0x00437BF0 ?design_it@DesignWin@@QAEHXZ 0x00437BF0-0x00438455 FILE
+// RULED-OUT: Ghidra's `&DAT_009ab898 + idx*0x1a` / `&DAT_009ab89a + idx*0x1a` is WRONG (Ghidra typed those globals as 2-byte elements) - confirmed byte multiplier via raw disasm is idx*0x34 (and idx*0xd00 for the 0x680-scaled form); corrected throughout. All multi-arg call orders (popp/X_pop/make_proto/name_proto/ message_data/prune_protos/retire_proto) verified against raw disasm. Reaches MISMATCH #8 'cmp' vs 'mov', a register/stack allocation divergence; not chased further given size (2149 bytes).
 // working copy - scaffold materialised by --work
-// name      ?design_it@DesignWin@@QAEHXZ
 // size      2149 bytes
-// spans     0x00437BF0-0x00438455
 // prototype int (__thiscall ?design_it@DesignWin@@QAEHXZ)(DesignWin* this)
 // callers   1   call targets   17
 // kind      game

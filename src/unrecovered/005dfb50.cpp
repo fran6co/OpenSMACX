@@ -1,10 +1,6 @@
-// ORIGINAL: 0x005DFB50 FILE
-// RULED-OUT: locals (bltfx[0x64], ddsd[0x6C]) declared inside their own
-//            nested blocks instead of hoisted to the top of the function;
-//            mismatch #6 is in the prologue's `sub esp, N` frame size.
-// name      ?fill@Buffer@@QAEHH@Z
+// ORIGINAL: 0x005DFB50 ?fill@Buffer@@QAEHH@Z 0x005DFB50-0x005DFCCD FILE
+// RULED-OUT: locals (bltfx[0x64], ddsd[0x6C]) declared inside their own nested blocks instead of hoisted to the top of the function; mismatch #6 is in the prologue's `sub esp, N` frame size.
 // size      381 bytes
-// spans     0x005DFB50-0x005DFCCD
 // prototype int (__thiscall ?fill@Buffer@@QAEHH@Z)(Buffer* this, int)
 // callers   20   call targets   1
 // kind      game

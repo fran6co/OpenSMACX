@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004D04E0 FILE
-// name      ?unload@Console@@QAEXH@Z
+// ORIGINAL: 0x004D04E0 ?unload@Console@@QAEXH@Z 0x004D04E0-0x004D06B6 FILE
 // size      470 bytes
-// spans     0x004D04E0-0x004D06B6
 // prototype void (__thiscall ?unload@Console@@QAEXH@Z)(Console* this, int vehID)
 // callers   2   call targets   8
 // kind      game

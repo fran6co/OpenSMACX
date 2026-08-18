@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00402C70 FILE
-// name      sub_402c70
+// ORIGINAL: 0x00402C70 sub_402c70 0x00402C70-0x00402CB2 FILE
 // size      66 bytes
-// spans     0x00402C70-0x00402CB2
 // prototype 
 // callers   0   call targets   1
 // kind      game

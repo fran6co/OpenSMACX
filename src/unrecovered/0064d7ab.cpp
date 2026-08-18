@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064D7AB EXCLUDED S1
-// name      __fptostr
+// ORIGINAL: 0x0064D7AB __fptostr 0x0064D7AB-0x0064D822 EXCLUDED S1
 // size      119 bytes
-// spans     0x0064D7AB-0x0064D822
 // prototype 
 // callers   3   call targets   2
 // kind      library

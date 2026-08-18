@@ -1,15 +1,7 @@
-// ORIGINAL: 0x00636FC0 BYTE_EXACT FILE
-// LEVER: one 32-bit `flags` load reused for the first `& 0x8000`/`& 0x10`
-//        pair (matches the original's single `mov eax` feeding both
-//        `test ah,0x80` and `test al,0x10`), fresh byte reloads for every
-//        later `& 0x10` check (matches the repeated `mov al, [esi+0x4ac]`
-//        after each intervening call), and `while (r != 0 && (r =
-//        decode_frame(0)) != 0) r = play_frame();` for the tail loop.
-//        First try, byte exact.
+// ORIGINAL: 0x00636FC0 ?process@Video@@QAEXXZ 0x00636FC0-0x0063706F FILE BYTE_EXACT
+// LEVER: one 32-bit `flags` load reused for the first `& 0x8000`/`& 0x10` pair (matches the original's single `mov eax` feeding both `test ah,0x80` and `test al,0x10`), fresh byte reloads for every later `& 0x10` check (matches the repeated `mov al, [esi+0x4ac]` after each intervening call), and `while (r != 0 && (r = decode_frame(0)) != 0) r = play_frame();` for the tail loop. First try, byte exact.
 // working copy - scaffold materialised by --work
-// name      ?process@Video@@QAEXXZ
 // size      175 bytes
-// spans     0x00636FC0-0x0063706F
 // prototype void (__thiscall ?process@Video@@QAEXXZ)(Video* this)
 // callers   0   call targets   4
 // kind      game

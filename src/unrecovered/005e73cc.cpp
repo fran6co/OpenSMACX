@@ -1,10 +1,7 @@
-// ORIGINAL: 0x005E73CC BYTE_EXACT FILE
-// LEVER: save/restore two globals around a call to the 4-arg sibling
-//        overload, matching the Ghidra hypothesis directly
+// ORIGINAL: 0x005E73CC ?draw_dest_unk1@Sprite@@QAEHPAUBuffer@@HHHHPAE@Z 0x005E73CC-0x005E7417 FILE BYTE_EXACT
+// LEVER: save/restore two globals around a call to the 4-arg sibling overload, matching the Ghidra hypothesis directly
 // working copy - scaffold materialised by --work
-// name      ?draw_dest_unk1@Sprite@@QAEHPAUBuffer@@HHHHPAE@Z
 // size      75 bytes
-// spans     0x005E73CC-0x005E7417
 // prototype int (__thiscall ?draw_dest_unk1@Sprite@@QAEHPAUBuffer@@HHHHPAE@Z)(Sprite* this, Buffer*, int, int, int, int, unsigned int8*)
 // callers   1   call targets   1
 // kind      game

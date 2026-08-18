@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006494A6 EXCLUDED S1
-// name      __freebuf
+// ORIGINAL: 0x006494A6 __freebuf 0x006494A6-0x006494D1 EXCLUDED S1
 // size      43 bytes
-// spans     0x006494A6-0x006494D1
 // prototype 
 // callers   1   call targets   1
 // kind      library

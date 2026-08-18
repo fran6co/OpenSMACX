@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005ECB60 FILE
+// ORIGINAL: 0x005ECB60 ?remove_parent_dialog@Win@@QAEXXZ 0x005ECB60-0x005ECC40 FILE
 // working copy - scaffold materialised by --work
-// name      ?remove_parent_dialog@Win@@QAEXXZ
 // size      224 bytes
-// spans     0x005ECB60-0x005ECC40
 // prototype void (__thiscall ?remove_parent_dialog@Win@@QAEXXZ)(Win* this)
 // callers   0   call targets   1
 // kind      game

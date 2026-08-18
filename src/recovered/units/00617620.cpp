@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00617620 FILE
-// name      ?render_mono@Caviar@@QAEXPAUBuffer@@HHHH@Z
+// ORIGINAL: 0x00617620 ?render_mono@Caviar@@QAEXPAUBuffer@@HHHH@Z 0x00617620-0x0061766F FILE
 // size      79 bytes
-// spans     0x00617620-0x0061766F
 // prototype void (__thiscall ?render_mono@Caviar@@QAEXPAUBuffer@@HHHH@Z)(Caviar* this, Buffer*, int, int, int, int)
 // callers   4   call targets   2
 // kind      game

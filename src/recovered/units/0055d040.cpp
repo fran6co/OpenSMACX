@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0055D040 FILE
-// name      ?pact_truce@@YAXHH@Z
+// ORIGINAL: 0x0055D040 ?pact_truce@@YAXHH@Z 0x0055D040-0x0055D181 FILE
 // size      321 bytes
-// spans     0x0055D040-0x0055D181
 // prototype 
 // callers   0   call targets   3
 // kind      game

@@ -20,10 +20,8 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-ORIGINAL: 0x0062A710 BYTE_EXACT
-// name      ?UNK4@Flic@@QAEXXZ
+// ORIGINAL: 0x0062A710 ?UNK4@Flic@@QAEXXZ 0x0062A710-0x0062A711 BYTE_EXACT
 // size      1 bytes
-// spans     0x0062A710-0x0062A711
 // prototype void (__thiscall ?UNK4@Flic@@QAEXXZ)(Flic* this)
 // callers   0   call targets   0
 // kind      game
@@ -37,10 +35,8 @@ void Flic::UNK4() {
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-ORIGINAL: 0x0062AAF0 BYTE_EXACT
-// name      ?UNK5@Flic@@QAEXXZ
+// ORIGINAL: 0x0062AAF0 ?UNK5@Flic@@QAEXXZ 0x0062AAF0-0x0062AAF1 BYTE_EXACT
 // size      1 bytes
-// spans     0x0062AAF0-0x0062AAF1
 // prototype void (__thiscall ?UNK5@Flic@@QAEXXZ)(Flic* this)
 // callers   0   call targets   0
 // kind      game
@@ -54,10 +50,8 @@ void Flic::UNK5() {
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-ORIGINAL: 0x0062AB00 BYTE_EXACT
-// name      ?UNK6@Flic@@QAEXXZ
+// ORIGINAL: 0x0062AB00 ?UNK6@Flic@@QAEXXZ 0x0062AB00-0x0062AB01 BYTE_EXACT
 // size      1 bytes
-// spans     0x0062AB00-0x0062AB01
 // prototype void (__thiscall ?UNK6@Flic@@QAEXXZ)(Flic* this)
 // callers   0   call targets   0
 // kind      game
@@ -71,10 +65,8 @@ void Flic::UNK6() {
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-ORIGINAL: 0x0062ACC0 BYTE_EXACT
-// name      ?UNK7@Flic@@QAEXXZ
+// ORIGINAL: 0x0062ACC0 ?UNK7@Flic@@QAEXXZ 0x0062ACC0-0x0062ACC1 BYTE_EXACT
 // size      1 bytes
-// spans     0x0062ACC0-0x0062ACC1
 // prototype void (__thiscall ?UNK7@Flic@@QAEXXZ)(Flic* this)
 // callers   0   call targets   0
 // kind      game
@@ -88,10 +80,8 @@ void Flic::UNK7() {
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-ORIGINAL: 0x0062B5F0 BYTE_EXACT
-// name      ?UNK8@Flic@@QAEXXZ
+// ORIGINAL: 0x0062B5F0 ?UNK8@Flic@@QAEXXZ 0x0062B5F0-0x0062B5F1 BYTE_EXACT
 // size      1 bytes
-// spans     0x0062B5F0-0x0062B5F1
 // prototype void (__thiscall ?UNK8@Flic@@QAEXXZ)(Flic* this)
 // callers   0   call targets   0
 // kind      game

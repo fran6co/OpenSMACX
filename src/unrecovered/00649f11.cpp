@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00649F11 EXCLUDED S1
-// name      __write_lk
+// ORIGINAL: 0x00649F11 __write_lk 0x00649F11-0x0064A09C EXCLUDED S1
 // size      395 bytes
-// spans     0x00649F11-0x0064A09C
 // prototype int (__cdecl __write_lk)(int, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite)
 // callers   2   call targets   4
 // kind      library

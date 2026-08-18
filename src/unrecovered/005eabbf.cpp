@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005EABBF FILE
-// name      ?get_clipped_y_table_expand@Sprite@@QAEHPAURECT@@PAURECT@@PAHPAHPAHPAH@Z
+// ORIGINAL: 0x005EABBF ?get_clipped_y_table_expand@Sprite@@QAEHPAURECT@@PAURECT@@PAHPAHPAHPAH@Z 0x005EABBF-0x005EAC69 FILE
 // size      170 bytes
-// spans     0x005EABBF-0x005EAC69
 // prototype int (__thiscall ?get_clipped_y_table_expand@Sprite@@QAEHPAURECT@@PAURECT@@PAHPAHPAHPAH@Z)(Spot* this, RECT*, RECT*, int*, int*, int*, int*)
 // callers   8   call targets   0
 // kind      

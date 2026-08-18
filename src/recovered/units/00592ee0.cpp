@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00592EE0 FILE
-// name      ?message_data@@YAXHHHHHH@Z
+// ORIGINAL: 0x00592EE0 ?message_data@@YAXHHHHHH@Z 0x00592EE0-0x00592F4C FILE
 // size      108 bytes
-// spans     0x00592EE0-0x00592F4C
 // prototype 
 // callers   92   call targets   1
 // kind      game

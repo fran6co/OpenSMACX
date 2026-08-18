@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005DDA00 FILE
+// ORIGINAL: 0x005DDA00 ?wrap_cent@Buffer@@QAEHPADHHHH@Z 0x005DDA00-0x005DDAA2 FILE
 // working copy - scaffold materialised by --work
-// name      ?wrap_cent@Buffer@@QAEHPADHHHH@Z
 // size      162 bytes
-// spans     0x005DDA00-0x005DDAA2
 // prototype int (__thiscall ?wrap_cent@Buffer@@QAEHPADHHHH@Z)(Buffer* this, int8* lpString, int, int, int, int)
 // callers   0   call targets   3
 // kind      game

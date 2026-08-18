@@ -1,11 +1,6 @@
-// ORIGINAL: 0x00618080 FILE
-// RULED-OUT: straightforward transcription (record/tables/idx pointer
-//            walk over CaviarData::record_) compiles and matches structure;
-//            first divergence is #1 push/mov in the prologue, not chased
-//            further.
-// name      ?add_object@Caviar@@QAEHPAUCaviarData@@PAEH@Z
+// ORIGINAL: 0x00618080 ?add_object@Caviar@@QAEHPAUCaviarData@@PAEH@Z 0x00618080-0x006181D0 FILE
+// RULED-OUT: straightforward transcription (record/tables/idx pointer walk over CaviarData::record_) compiles and matches structure; first divergence is #1 push/mov in the prologue, not chased further.
 // size      336 bytes
-// spans     0x00618080-0x006181D0
 // prototype int (__thiscall ?add_object@Caviar@@QAEHPAUCaviarData@@PAEH@Z)(Caviar* this, CaviarData*, LPBYTE, int)
 // callers   3   call targets   0
 // kind      game

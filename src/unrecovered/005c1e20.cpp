@@ -1,16 +1,11 @@
-// ORIGINAL: 0x005C1E20 FILE
-// name      ?init@Fractal@@QAEXXZ
+// ORIGINAL: 0x005C1E20 ?init@Fractal@@QAEXXZ 0x005C1E20-0x005C1F12 FILE
+// RULED-OUT: nothing tried beyond the direct transcription below - landed at first compiling candidate given batch size. Mnemonic similarity 0.80, first divergence is prologue register-save scheduling (`sub esp,N` vs a `push`, #2).
 // size      242 bytes
-// spans     0x005C1E20-0x005C1F12
 // prototype void (__thiscall ?init@Fractal@@QAEXXZ)(Fractal* this)
 // callers   ?   call targets   1
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x0064601D
-// RULED-OUT: nothing tried beyond the direct transcription below - landed
-//            at first compiling candidate given batch size. Mnemonic
-//            similarity 0.80, first divergence is prologue register-save
-//            scheduling (`sub esp,N` vs a `push`, #2).
 // NOTE: the weighted-sum loop at 0x005C1E9A computes a `total` (an int
 //       accumulator seeded from the byte at [row][col], shifted left 2,
 //       then summed against 8 entries from a fixed weight table at

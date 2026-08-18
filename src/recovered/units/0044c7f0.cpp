@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0044C7F0 BYTE_EXACT FILE
-// name      ?help_tech_info@@YAXPAUPopup@@HH@Z
+// ORIGINAL: 0x0044C7F0 ?help_tech_info@@YAXPAUPopup@@HH@Z 0x0044C7F0-0x0044C814 FILE BYTE_EXACT
 // size      36 bytes
-// spans     0x0044C7F0-0x0044C814
 // prototype 
 // callers   1   call targets   1
 // kind      game

@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005E3890 FILE
+// ORIGINAL: 0x005E3890 ?init@Sprite@@QAEHPADHH@Z 0x005E3890-0x005E3953 FILE
 // working copy - scaffold materialised by --work
-// name      ?init@Sprite@@QAEHPADHH@Z
 // size      195 bytes
-// spans     0x005E3890-0x005E3953
 // prototype int (__thiscall ?init@Sprite@@QAEHPADHH@Z)(Sprite* this, int8*, int, int)
 // callers   15   call targets   4
 // kind      game

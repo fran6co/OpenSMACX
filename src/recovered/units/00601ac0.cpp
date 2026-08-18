@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00601AC0 BYTE_EXACT FILE
-// name      ?set_height@BasePop@@QAEXH@Z
+// ORIGINAL: 0x00601AC0 ?set_height@BasePop@@QAEXH@Z 0x00601AC0-0x00601B17 FILE BYTE_EXACT
 // size      87 bytes
-// spans     0x00601AC0-0x00601B17
 // prototype void (__thiscall ?set_height@BasePop@@QAEXH@Z)(BasePop* this, int)
 // callers   0   call targets   0
 // kind      game

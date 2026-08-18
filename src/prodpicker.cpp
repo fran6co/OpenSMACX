@@ -21,10 +21,8 @@
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 1.
-ORIGINAL: 0x00493C10 BYTE_EXACT
-// name      ?UNK1@ProdPicker@@QAEHH@Z
+// ORIGINAL: 0x00493C10 ?UNK1@ProdPicker@@QAEHH@Z 0x00493C10-0x00493C18 BYTE_EXACT
 // size      8 bytes
-// spans     0x00493C10-0x00493C18
 // prototype int (__thiscall ?UNK1@ProdPicker@@QAEHH@Z)(ProdPicker* this, int)
 // callers   0   call targets   0
 // kind      game
@@ -43,10 +41,8 @@ int __fastcall prod_picker_unk1_redirect(ProdPicker *self, void *, int a1) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00493E90 BYTE_EXACT
-// name      ?on_mouse_move@ProdPicker@@QAEXHH@Z
+// ORIGINAL: 0x00493E90 ?on_mouse_move@ProdPicker@@QAEXHH@Z 0x00493E90-0x00493E93 BYTE_EXACT
 // size      3 bytes
-// spans     0x00493E90-0x00493E93
 // prototype void (__thiscall ?on_mouse_move@ProdPicker@@QAEXHH@Z)(ProdPicker* this, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -64,10 +60,8 @@ void __fastcall prod_picker_on_mouse_move_redirect(ProdPicker *self, void *, int
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00495160 BYTE_EXACT
-// name      ?UNK3@ProdPicker@@QAEXH@Z
+// ORIGINAL: 0x00495160 ?UNK3@ProdPicker@@QAEXH@Z 0x00495160-0x00495163 BYTE_EXACT
 // size      3 bytes
-// spans     0x00495160-0x00495163
 // prototype void (__thiscall ?UNK3@ProdPicker@@QAEXH@Z)(ProdPicker* this, int)
 // callers   0   call targets   0
 // kind      game
@@ -86,10 +80,8 @@ void __fastcall prod_picker_unk3_redirect(ProdPicker *self, void *, int a1) {
 /*
 Purpose: Close the picker - clear the field at 0xA14 that marks it live, then
          run the GraphicWin close it inherits.
-ORIGINAL: 0x004926B0 BYTE_EXACT
-// name      ?close@ProdPicker@@QAEXXZ
+// ORIGINAL: 0x004926B0 ?close@ProdPicker@@QAEXXZ 0x004926B0-0x004926BF BYTE_EXACT
 // size      15 bytes
-// spans     0x004926B0-0x004926BF
 // prototype void (__thiscall ?close@ProdPicker@@QAEXXZ)(ProdPicker* this)
 // callers   2   call targets   0
 // kind      game
@@ -109,10 +101,8 @@ void __fastcall prod_picker_close_redirect(ProdPicker *self, void *) {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
-ORIGINAL: 0x004945C0 BYTE_EXACT
-// name      ?on_redraw_nc@ProdPicker@@QAEXPAURECT@@H@Z
+// ORIGINAL: 0x004945C0 ?on_redraw_nc@ProdPicker@@QAEXPAURECT@@H@Z 0x004945C0-0x004945C3 BYTE_EXACT
 // size      3 bytes
-// spans     0x004945C0-0x004945C3
 // prototype void (__thiscall ?on_redraw_nc@ProdPicker@@QAEXPAURECT@@H@Z)(ProdPicker* this, RECT*, int)
 // callers   0   call targets   0
 // kind      game

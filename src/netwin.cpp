@@ -20,10 +20,8 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-ORIGINAL: 0x0047F920 BYTE_EXACT
-// name      ?UNK1@NetWin@@QAEXXZ
+// ORIGINAL: 0x0047F920 ?UNK1@NetWin@@QAEXXZ 0x0047F920-0x0047F921 BYTE_EXACT
 // size      1 bytes
-// spans     0x0047F920-0x0047F921
 // prototype void (__thiscall ?UNK1@NetWin@@QAEXXZ)(NetWin* this)
 // callers   0   call targets   0
 // kind      game
@@ -37,10 +35,8 @@ void NetWin::UNK1() {
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-ORIGINAL: 0x0047F930 BYTE_EXACT
-// name      ?UNK2@NetWin@@QAEXXZ
+// ORIGINAL: 0x0047F930 ?UNK2@NetWin@@QAEXXZ 0x0047F930-0x0047F931 BYTE_EXACT
 // size      1 bytes
-// spans     0x0047F930-0x0047F931
 // prototype void (__thiscall ?UNK2@NetWin@@QAEXXZ)(NetWin* this)
 // callers   0   call targets   0
 // kind      game
@@ -54,10 +50,8 @@ void NetWin::UNK2() {
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-ORIGINAL: 0x004834D0 BYTE_EXACT
-// name      ?alloc_slots@NetWin@@QAEXXZ
+// ORIGINAL: 0x004834D0 ?alloc_slots@NetWin@@QAEXXZ 0x004834D0-0x004834D1 BYTE_EXACT
 // size      1 bytes
-// spans     0x004834D0-0x004834D1
 // prototype void (__thiscall ?alloc_slots@NetWin@@QAEXXZ)(NetWin* this)
 // callers   0   call targets   0
 // kind      game
@@ -83,10 +77,8 @@ void __fastcall net_win_alloc_slots_redirect(NetWin *self, void *) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 1.
-ORIGINAL: 0x0047B750 BYTE_EXACT
-// name      ?on_key_click@NetWin@@QAEHHH@Z
+// ORIGINAL: 0x0047B750 ?on_key_click@NetWin@@QAEHHH@Z 0x0047B750-0x0047B758 BYTE_EXACT
 // size      8 bytes
-// spans     0x0047B750-0x0047B758
 // prototype int (__thiscall ?on_key_click@NetWin@@QAEHHH@Z)(NetWin* this, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -105,10 +97,8 @@ int __fastcall net_win_on_key_click_redirect(NetWin *self, void *, int a1, int a
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x0047F940 BYTE_EXACT
-// name      ?on_mouse_move@NetWin@@QAEXHH@Z
+// ORIGINAL: 0x0047F940 ?on_mouse_move@NetWin@@QAEXHH@Z 0x0047F940-0x0047F943 BYTE_EXACT
 // size      3 bytes
-// spans     0x0047F940-0x0047F943
 // prototype void (__thiscall ?on_mouse_move@NetWin@@QAEXHH@Z)(NetWin* this, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -126,10 +116,8 @@ void __fastcall net_win_on_mouse_move_redirect(NetWin *self, void *, int a1, int
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x0047F950 BYTE_EXACT
-// name      ?on_mouse_leave@NetWin@@QAEXHH@Z
+// ORIGINAL: 0x0047F950 ?on_mouse_leave@NetWin@@QAEXHH@Z 0x0047F950-0x0047F953 BYTE_EXACT
 // size      3 bytes
-// spans     0x0047F950-0x0047F953
 // prototype void (__thiscall ?on_mouse_leave@NetWin@@QAEXHH@Z)(NetWin* this, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -167,10 +155,8 @@ Purpose: Clear the dword at 0x178 and write a five-byte pattern over the start
          The behaviour is transcribed as the original has it, byte for byte and
          in the original's order - 0x178 first - rather than corrected to what
          it seems like it ought to be.
-ORIGINAL: 0x00483820
-// name      ?UNK5@NetWin@@QAEXXZ
+// ORIGINAL: 0x00483820 ?UNK5@NetWin@@QAEXXZ 0x00483820-0x0048383C
 // size      28 bytes
-// spans     0x00483820-0x0048383C
 // prototype void (__thiscall ?UNK5@NetWin@@QAEXXZ)(NetWin* this)
 // callers   0   call targets   0
 // kind      game

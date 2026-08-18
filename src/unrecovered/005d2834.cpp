@@ -1,11 +1,7 @@
-// ORIGINAL: 0x005D2834 FILE
-// RULED-OUT: literal Ghidra-order locals (uVar1/uVar2) and inline expr order
-//            both produce a tight 191-byte body without the 6-register
-//            push prologue the original has; register pressure not reproduced.
+// ORIGINAL: 0x005D2834 sub_5d2834 0x005D2834-0x005D2901 FILE
+// RULED-OUT: literal Ghidra-order locals (uVar1/uVar2) and inline expr order both produce a tight 191-byte body without the 6-register push prologue the original has; register pressure not reproduced.
 // working copy - scaffold materialised by --work
-// name      sub_5d2834
 // size      205 bytes
-// spans     0x005D2834-0x005D2901
 // prototype 
 // callers   0   call targets   0
 // kind      game

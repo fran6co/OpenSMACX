@@ -1,15 +1,7 @@
-// ORIGINAL: 0x00566810 FILE
-// RULED-OUT: near-direct Ghidra transcription (clean decompile, no
-//            extraout/jumptable warnings). Per-vehicle/per-target table
-//            fields were unified onto two byte offsets (vehOff = a1*0x34,
-//            iVar18v = target*0x134) since every DAT_xxx family the
-//            disassembly touches shares that stride; a few element widths
-//            (e.g. DAT_0096da3c as byte vs int) were guessed rather than
-//            confirmed against the raw bytes.
+// ORIGINAL: 0x00566810 ?alien_move@@YAHH@Z 0x00566810-0x005678B9 FILE
+// RULED-OUT: near-direct Ghidra transcription (clean decompile, no extraout/jumptable warnings). Per-vehicle/per-target table fields were unified onto two byte offsets (vehOff = a1*0x34, iVar18v = target*0x134) since every DAT_xxx family the disassembly touches shares that stride; a few element widths (e.g. DAT_0096da3c as byte vs int) were guessed rather than confirmed against the raw bytes.
 // working copy - scaffold materialised by --work
-// name      ?alien_move@@YAHH@Z
 // size      4265 bytes
-// spans     0x00566810-0x005678B9
 // prototype int (__cdecl ?alien_move@@YAHH@Z)(int vehID)
 // callers   1   call targets   27
 // kind      game

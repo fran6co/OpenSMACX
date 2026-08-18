@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005F4CA0 BYTE_EXACT
-// name      ?update_nc_buffer@Win@@QAEXH@Z
+// ORIGINAL: 0x005F4CA0 ?update_nc_buffer@Win@@QAEXH@Z 0x005F4CA0-0x005F4CB2 BYTE_EXACT
 // size      18 bytes
-// spans     0x005F4CA0-0x005F4CB2
 // prototype void (__thiscall ?update_nc_buffer@Win@@QAEXH@Z)(Win* this, int)
 // callers   1   call targets   0
 // kind      game

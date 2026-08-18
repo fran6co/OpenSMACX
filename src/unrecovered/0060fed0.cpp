@@ -1,13 +1,7 @@
-// ORIGINAL: 0x0060FED0 FILE
-// RULED-OUT: signature stdcall(int) -> thiscall member(unsigned int flag),
-//            returning void*; same body as 0x0060FD80 (this thunk only differs
-//            in the leading adjustor, `sub ecx,[ecx-4]; sub ecx,0xa18` vs
-//            `sub ecx,[ecx-4]`), which is why it is COMDAT-folded with it.
-//            Vtordisp thunk not modeled; see 0x0060FD80 for the reasoning.
+// ORIGINAL: 0x0060FED0 sub_60fed0 0x0060FED0-0x0060FEDE;0x0060FD90-0x0060FE40 FILE
+// RULED-OUT: signature stdcall(int) -> thiscall member(unsigned int flag), returning void*; same body as 0x0060FD80 (this thunk only differs in the leading adjustor, `sub ecx,[ecx-4]; sub ecx,0xa18` vs `sub ecx,[ecx-4]`), which is why it is COMDAT-folded with it. Vtordisp thunk not modeled; see 0x0060FD80 for the reasoning.
 // working copy - scaffold materialised by --work
-// name      sub_60fed0
 // size      190 bytes
-// spans     0x0060FED0-0x0060FEDE;0x0060FD90-0x0060FE40
 // prototype 
 // callers   0   call targets   5
 // kind      game

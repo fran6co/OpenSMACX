@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0050B9E0 BYTE_EXACT FILE
-// name      ?pop@NetMsg@@QAAXPBDPBD@Z
+// ORIGINAL: 0x0050B9E0 ?pop@NetMsg@@QAAXPBDPBD@Z 0x0050B9E0-0x0050B9FE FILE BYTE_EXACT
 // size      30 bytes
-// spans     0x0050B9E0-0x0050B9FE
 // prototype 
 // callers   2   call targets   1
 // kind      game

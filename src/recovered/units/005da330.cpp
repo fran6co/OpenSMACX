@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005DA330 FILE
-// name      ?map_colors@Buffer@@QAEHHHHHPAE@Z
+// ORIGINAL: 0x005DA330 ?map_colors@Buffer@@QAEHHHHHPAE@Z 0x005DA330-0x005DA4C1 FILE
 // size      401 bytes
-// spans     0x005DA330-0x005DA4C1
 // prototype int (__thiscall ?map_colors@Buffer@@QAEHHHHHPAE@Z)(Buffer* this, int, int, int, int, unsigned int8*)
 // callers   2   call targets   0
 // kind      game

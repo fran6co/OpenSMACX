@@ -1,14 +1,7 @@
-// ORIGINAL: 0x0051D7D0 BYTE_EXACT FILE
-// LEVER: the scaffold's Console::field_23BC8_ etc. do NOT sit at their named
-//        offset (offsetof lands 0xA14 higher - MapWin's embedded GraphicWin-
-//        shaped tail is not folded into the size its own field names assume).
-//        Raw self+0x23bc8 pointer casts bypass the class layout and land
-//        BYTE_EXACT; the named-field version was only SHAPE_EXACT, off by
-//        a constant 0xA14 on every offset.
+// ORIGINAL: 0x0051D7D0 ?close@Console@@QAEXXZ 0x0051D7D0-0x0051D88E FILE BYTE_EXACT
+// LEVER: the scaffold's Console::field_23BC8_ etc. do NOT sit at their named offset (offsetof lands 0xA14 higher - MapWin's embedded GraphicWin- shaped tail is not folded into the size its own field names assume). Raw self+0x23bc8 pointer casts bypass the class layout and land BYTE_EXACT; the named-field version was only SHAPE_EXACT, off by a constant 0xA14 on every offset.
 // working copy - scaffold materialised by --work
-// name      ?close@Console@@QAEXXZ
 // size      190 bytes
-// spans     0x0051D7D0-0x0051D88E
 // prototype void (__thiscall ?close@Console@@QAEXXZ)(Console* this)
 // callers   3   call targets   4
 // kind      game

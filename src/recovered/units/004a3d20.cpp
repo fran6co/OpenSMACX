@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004A3D20 FILE
-// name      ?reset@ReportIf@@QAEXXZ
+// ORIGINAL: 0x004A3D20 ?reset@ReportIf@@QAEXXZ 0x004A3D20-0x004A3FBF FILE
 // size      671 bytes
-// spans     0x004A3D20-0x004A3FBF
 // prototype void (__thiscall ?reset@ReportIf@@QAEXXZ)(ReportIf* this)
 // callers   5   call targets   7
 // kind      game

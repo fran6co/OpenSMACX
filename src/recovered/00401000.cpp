@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00401000 BYTE_EXACT
-// name      ??0StringStruct@@QAE@H@Z
+// ORIGINAL: 0x00401000 ??0StringStruct@@QAE@H@Z 0x00401000-0x00401058 BYTE_EXACT
 // size      88 bytes
-// spans     0x00401000-0x00401058
 // prototype void (__thiscall ??0StringStruct@@QAE@H@Z)(StringStruct* this, int)
 // callers   12   call targets   0
 // kind      game

@@ -21,10 +21,8 @@
 
 /*
 Purpose: Shutdown the class instance.
-ORIGINAL: 0x005FA830
-// name      ?shutdown@Spot@@QAEXXZ
+// ORIGINAL: 0x005FA830 ?shutdown@Spot@@QAEXXZ 0x005FA830-0x005FA85E
 // size      46 bytes
-// spans     0x005FA830-0x005FA85E
 // prototype void (__thiscall ?shutdown@Spot@@QAEXXZ)(Spot* this)
 // callers   9   call targets   1
 // kind      game
@@ -42,10 +40,8 @@ void Spot::shutdown() {
 
 /*
 Purpose: Initialize the class instance with count.
-ORIGINAL: 0x005FA8A0
-// name      ?init@Spot@@QAEXH@Z
+// ORIGINAL: 0x005FA8A0 ?init@Spot@@QAEXH@Z 0x005FA8A0-0x005FA8F5
 // size      85 bytes
-// spans     0x005FA8A0-0x005FA8F5
 // prototype void (__thiscall ?init@Spot@@QAEXH@Z)(Spot* this, int count)
 // callers   20   call targets   2
 // kind      game
@@ -65,10 +61,8 @@ void Spot::init(int count) {
 
 /*
 Purpose: Search for a specific spot and replace the RECT value.
-ORIGINAL: 0x005FA900
-// name      ?replace@Spot@@QAEXHHHHHH@Z
+// ORIGINAL: 0x005FA900 ?replace@Spot@@QAEXHHHHHH@Z 0x005FA900-0x005FA956
 // size      86 bytes
-// spans     0x005FA900-0x005FA956
 // prototype void (__thiscall ?replace@Spot@@QAEXHHHHHH@Z)(Spot* this, int position, int type, int left, int top, int length, int width)
 // callers   0   call targets   0
 // kind      game
@@ -90,10 +84,8 @@ void Spot::replace(int position, int type, int left, int top, int length, int wi
 
 /*
 Purpose: Add a new spot from the specified values.
-ORIGINAL: 0x005FA960
-// name      ?add@Spot@@QAEHHHHHHH@Z
+// ORIGINAL: 0x005FA960 ?add@Spot@@QAEHHHHHHH@Z 0x005FA960-0x005FA9C0
 // size      96 bytes
-// spans     0x005FA960-0x005FA9C0
 // prototype int (__thiscall ?add@Spot@@QAEHHHHHHH@Z)(Spot* this, int position, int type, int left, int top, int length, int width)
 // callers   37   call targets   0
 // kind      game
@@ -128,10 +120,8 @@ int Spot::add(int position, int type, RECT *rect) {
 
 /*
 Purpose: Remove all spots at a specific position.
-ORIGINAL: 0x005FA9C0
-// name      ?kill_pos@Spot@@QAEXH@Z
+// ORIGINAL: 0x005FA9C0 ?kill_pos@Spot@@QAEXH@Z 0x005FA9C0-0x005FAA04
 // size      68 bytes
-// spans     0x005FA9C0-0x005FAA04
 // prototype void (__thiscall ?kill_pos@Spot@@QAEXH@Z)(Spot* this, int position)
 // callers   0   call targets   0
 // kind      game
@@ -153,10 +143,8 @@ void Spot::kill_pos(int position) {
 
 /*
 Purpose: Remove a specific spot.
-ORIGINAL: 0x005FAA10
-// name      ?kill_specific@Spot@@QAEXHH@Z
+// ORIGINAL: 0x005FAA10 ?kill_specific@Spot@@QAEXHH@Z 0x005FAA10-0x005FAA89
 // size      121 bytes
-// spans     0x005FAA10-0x005FAA89
 // prototype void (__thiscall ?kill_specific@Spot@@QAEXHH@Z)(Spot* this, int position, int type)
 // callers   0   call targets   0
 // kind      game
@@ -175,10 +163,8 @@ void Spot::kill_specific(int position, int type) {
 
 /*
 Purpose: Remove all spots of a specific type.
-ORIGINAL: 0x005FAA90
-// name      ?kill_type@Spot@@QAEXH@Z
+// ORIGINAL: 0x005FAA90 ?kill_type@Spot@@QAEXH@Z 0x005FAA90-0x005FAAFD
 // size      109 bytes
-// spans     0x005FAA90-0x005FAAFD
 // prototype void (__thiscall ?kill_type@Spot@@QAEXH@Z)(Spot* this, int type)
 // callers   25   call targets   0
 // kind      game
@@ -197,10 +183,8 @@ void Spot::kill_type(int type) {
 
 /*
 Purpose: Check if the coordinates fall inside a spot. If so, return information about the spot.
-ORIGINAL: 0x005FAB00
-// name      ?check@Spot@@QAEHHHPAH0@Z
+// ORIGINAL: 0x005FAB00 ?check@Spot@@QAEHHHPAH0@Z 0x005FAB00-0x005FAB69
 // size      105 bytes
-// spans     0x005FAB00-0x005FAB69
 // prototype int (__thiscall ?check@Spot@@QAEHHHPAH0@Z)(Spot* this, int xCoord, int yCoord, int* spotPos, int* spotType)
 // callers   49   call targets   0
 // kind      game
@@ -231,10 +215,8 @@ int Spot::check(int x, int y, int *spot_pos, int *spot_type) {
 
 /*
 Purpose: Check if the coordinates fall within a spot. If so, return information about the spot.
-ORIGINAL: 0x005FAB70
-// name      ?check@Spot@@QAEHHHPAH0PAURECT@@@Z
+// ORIGINAL: 0x005FAB70 ?check@Spot@@QAEHHHPAH0PAURECT@@@Z 0x005FAB70-0x005FABFF
 // size      143 bytes
-// spans     0x005FAB70-0x005FABFF
 // prototype int (__thiscall ?check@Spot@@QAEHHHPAH0PAURECT@@@Z)(Spot* this, int xCoord, int yCoord, int* spotPos, int* spotType, RECT* spotRect)
 // callers   0   call targets   0
 // kind      game
@@ -268,10 +250,8 @@ int Spot::check(int x, int y, int *spot_pos, int *spot_type, RECT *spot_rect) {
 
 /*
 Purpose: Get the RECT for a specific spot.
-ORIGINAL: 0x005FAC00 BYTE_EXACT
-// name      ?get_rect@Spot@@QAEHHHPAURECT@@@Z
+// ORIGINAL: 0x005FAC00 ?get_rect@Spot@@QAEHHHPAURECT@@@Z 0x005FAC00-0x005FAC5B BYTE_EXACT
 // size      91 bytes
-// spans     0x005FAC00-0x005FAC5B
 // prototype int (__thiscall ?get_rect@Spot@@QAEHHHPAURECT@@@Z)(Spot* this, int position, int type, RECT* spotRect)
 // callers   2   call targets   0
 // kind      game

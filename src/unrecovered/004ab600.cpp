@@ -1,14 +1,7 @@
-// ORIGINAL: 0x004AB600 FILE
-// RULED-OUT: literal register-transliteration (eax/ecx/edx/ebx/edi locals) compiles and
-//            is a faithful line-by-line transcription (verified box_sprite/set_font/write_*
-//            arg order and the 0x9ab898 flag-byte stride=0x34 against raw disasm, not Ghidra
-//            which mis-scaled it to 0x1a); compiler emits a frameless prologue (sub) where
-//            original is framed (push ebp/mov ebp,esp) - #0 divergence. Not chased further
-//            given size (2084 bytes).
+// ORIGINAL: 0x004AB600 ?draw_security@ReportIf@@QAEXXZ 0x004AB600-0x004ABE24 FILE
+// RULED-OUT: literal register-transliteration (eax/ecx/edx/ebx/edi locals) compiles and is a faithful line-by-line transcription (verified box_sprite/set_font/write_* arg order and the 0x9ab898 flag-byte stride=0x34 against raw disasm, not Ghidra which mis-scaled it to 0x1a); compiler emits a frameless prologue (sub) where original is framed (push ebp/mov ebp,esp) - #0 divergence. Not chased further given size (2084 bytes).
 // working copy - scaffold materialised by --work
-// name      ?draw_security@ReportIf@@QAEXXZ
 // size      2084 bytes
-// spans     0x004AB600-0x004ABE24
 // prototype void (__thiscall ?draw_security@ReportIf@@QAEXXZ)(ReportIf* this)
 // callers   5   call targets   14
 // kind      game

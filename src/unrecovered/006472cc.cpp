@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006472CC EXCLUDED S1
-// name      _rewind
+// ORIGINAL: 0x006472CC _rewind 0x006472CC-0x00647330 EXCLUDED S1
 // size      100 bytes
-// spans     0x006472CC-0x00647330
 // prototype 
 // callers   1   call targets   4
 // kind      library

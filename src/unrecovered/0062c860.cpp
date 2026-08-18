@@ -1,8 +1,6 @@
-// ORIGINAL: 0x0062C860 FILE
+// ORIGINAL: 0x0062C860 Callback 0x0062C860-0x0062C8D7 FILE
 // working copy - scaffold materialised by --work
-// name      Callback
 // size      119 bytes
-// spans     0x0062C860-0x0062C8D7
 // prototype 
 // callers   0   call targets   3
 // kind      game

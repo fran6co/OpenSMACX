@@ -1,11 +1,7 @@
-// ORIGINAL: 0x005DB8D0 FILE
-// RULED-OUT: nothing beyond the direct save/swap/delegate/restore
-//            transcription; diverges at #0 (push vs mov), likely
-//            register/local allocation order
+// ORIGINAL: 0x005DB8D0 ?write_right_l@Buffer@@QAEHPAVFont@@PADHHH@Z 0x005DB8D0-0x005DB929 FILE
+// RULED-OUT: nothing beyond the direct save/swap/delegate/restore transcription; diverges at #0 (push vs mov), likely register/local allocation order
 // working copy - scaffold materialised by --work
-// name      ?write_right_l@Buffer@@QAEHPAVFont@@PADHHH@Z
 // size      89 bytes
-// spans     0x005DB8D0-0x005DB929
 // prototype int (__thiscall ?write_right_l@Buffer@@QAEHPAVFont@@PADHHH@Z)(Buffer* this, Font*, int8*, int, int, int)
 // callers   0   call targets   1
 // kind      game

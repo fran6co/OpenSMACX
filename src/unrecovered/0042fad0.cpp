@@ -1,14 +1,7 @@
-// ORIGINAL: 0x0042FAD0 FILE
-// RULED-OUT: exact local-object footprint for Popup's embedded destructor
-//            cascade (same shape as 0x00430C80's draw_faction) - modelled as
-//            a single `Popup popup;` with popup.close() and implicit dtor;
-//            business logic (project/tech title, cost_factor/parse_num/
-//            tech_name/parse_says formatting, sprite draw, two write_strings
-//            panels, StringBox blurb branch) transcribed field-by-field.
+// ORIGINAL: 0x0042FAD0 ?draw_project@Datalink@@QAEXXZ 0x0042FAD0-0x00430087;0x00653927-0x006539F9 FILE
+// RULED-OUT: exact local-object footprint for Popup's embedded destructor cascade (same shape as 0x00430C80's draw_faction) - modelled as a single `Popup popup;` with popup.close() and implicit dtor; business logic (project/tech title, cost_factor/parse_num/ tech_name/parse_says formatting, sprite draw, two write_strings panels, StringBox blurb branch) transcribed field-by-field.
 // working copy - scaffold materialised by --work
-// name      ?draw_project@Datalink@@QAEXXZ
 // size      1673 bytes
-// spans     0x0042FAD0-0x00430087;0x00653927-0x006539F9
 // prototype void (__thiscall ?draw_project@Datalink@@QAEXXZ)(Datalink* this)
 // callers   1   call targets   33
 // kind      game

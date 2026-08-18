@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064A825 EXCLUDED S1
-// name      __fload_withFB
+// ORIGINAL: 0x0064A825 __fload_withFB 0x0064A825-0x0064A868 EXCLUDED S1
 // size      67 bytes
-// spans     0x0064A825-0x0064A868
 // prototype 
 // callers   6   call targets   0
 // kind      library

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005F6880 FILE
-// name      ?on_r_button_up@Win@@QAEXHHIH@Z
+// ORIGINAL: 0x005F6880 ?on_r_button_up@Win@@QAEXHHIH@Z 0x005F6880-0x005F6A21 FILE
 // size      417 bytes
-// spans     0x005F6880-0x005F6A21
 // prototype void (__thiscall ?on_r_button_up@Win@@QAEXHHIH@Z)(Win* this, int, int, unsigned int, int)
 // callers   0   call targets   1
 // kind      game

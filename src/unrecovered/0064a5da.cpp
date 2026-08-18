@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064A5DA EXCLUDED S1
-// name      _strncnt
+// ORIGINAL: 0x0064A5DA _strncnt 0x0064A5DA-0x0064A605 EXCLUDED S1
 // size      43 bytes
-// spans     0x0064A5DA-0x0064A605
 // prototype 
 // callers   1   call targets   0
 // kind      library

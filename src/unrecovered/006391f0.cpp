@@ -1,8 +1,6 @@
-// ORIGINAL: 0x006391F0 FILE
+// ORIGINAL: 0x006391F0 sub_6391f0 0x006391F0-0x006392DC FILE
 // RULED-OUT: signature had no params in the fallback head; changed to (int a1, int a2) on the [esp+0x1010]-before-any-push evidence, matching IDA's guess. sub_638650() is declared no-arg by the scaffold, called through a cast function pointer to get the real 3-arg call site. Landed at MISMATCH (91% mnemonic similarity, 12 edits): the original keeps ebx callee-saved across the whole function because it is live in the tail loop, so every early-return path pops it even though this body's early returns precede any use - a register-allocation artifact, not a logic gap.
-// name      sub_6391f0
 // size      236 bytes
-// spans     0x006391F0-0x006392DC
 // prototype 
 // callers   1   call targets   2
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00609BF0 FILE
-// name      ?UNK2@Dialog@@QAEXHHHH@Z
+// ORIGINAL: 0x00609BF0 ?UNK2@Dialog@@QAEXHHHH@Z 0x00609BF0-0x00609C60 FILE
 // size      112 bytes
-// spans     0x00609BF0-0x00609C60
 // prototype void (__thiscall ?UNK2@Dialog@@QAEXHHHH@Z)(Dialog* this, HWND hWndParent, UINT Msg, HWND hWnd, LPARAM lParam)
 // callers   0   call targets   0
 // kind      game

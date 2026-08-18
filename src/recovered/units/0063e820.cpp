@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0063E820 FILE
-// name      sub_63e820
+// ORIGINAL: 0x0063E820 sub_63e820 0x0063E820-0x0063E85B FILE
 // size      59 bytes
-// spans     0x0063E820-0x0063E85B
 // prototype 
 // callers   2   call targets   1
 // kind      game

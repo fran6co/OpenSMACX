@@ -1,12 +1,7 @@
-// ORIGINAL: 0x00406260 FILE
-// RULED-OUT: RECT localSpot = *(RECT*)(self+0x474) reproduces the
-//            magic-number /10000==1000 check and the dead left/right
-//            stores as a struct copy; MISMATCH from #24, the scroll rect
-//            arithmetic scheduling around the init() args differs slightly
+// ORIGINAL: 0x00406260 ?on_listbox_scroll_create@Popup@@QAEHXZ 0x00406260-0x00406323 FILE
+// RULED-OUT: RECT localSpot = *(RECT*)(self+0x474) reproduces the magic-number /10000==1000 check and the dead left/right stores as a struct copy; MISMATCH from #24, the scroll rect arithmetic scheduling around the init() args differs slightly
 // working copy - scaffold materialised by --work
-// name      ?on_listbox_scroll_create@Popup@@QAEHXZ
 // size      195 bytes
-// spans     0x00406260-0x00406323
 // prototype int (__thiscall ?on_listbox_scroll_create@Popup@@QAEHXZ)(Popup* this)
 // callers   0   call targets   4
 // kind      game

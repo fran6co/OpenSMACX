@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0060AA20 BYTE_EXACT FILE
-// name      ?on_right_down@ListBox@@QAEXHH@Z
+// ORIGINAL: 0x0060AA20 ?on_right_down@ListBox@@QAEXHH@Z 0x0060AA20-0x0060AA52 FILE BYTE_EXACT
 // size      50 bytes
-// spans     0x0060AA20-0x0060AA52
 // prototype void (__thiscall ?on_right_down@ListBox@@QAEXHH@Z)(ListBox* this, int, int)
 // callers   0   call targets   0
 // kind      game

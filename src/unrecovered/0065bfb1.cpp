@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0065BFB1 EXCLUDED S2a
-// name      sub_65bfb1
+// ORIGINAL: 0x0065BFB1 sub_65bfb1 0x0065BFB1-0x0065BFBC EXCLUDED S2a
 // size      11 bytes
-// spans     0x0065BFB1-0x0065BFBC
 // prototype 
 // callers   0   call targets   0
 // kind      game

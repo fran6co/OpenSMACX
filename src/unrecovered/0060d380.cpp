@@ -1,11 +1,7 @@
-// ORIGINAL: 0x0060D380 FILE
-// RULED-OUT: full Ghidra-derived arithmetic transliteration (vtbl[1]/vtbl[2]
-//            base offsets, Buffer receiver fixed up) compiles and matches
-//            logic; MISMATCH #1 is prologue register-save order, not chased.
+// ORIGINAL: 0x0060D380 ?calculate_dimensions@RadioButton@@QAEHXZ 0x0060D380-0x0060D745 FILE
+// RULED-OUT: full Ghidra-derived arithmetic transliteration (vtbl[1]/vtbl[2] base offsets, Buffer receiver fixed up) compiles and matches logic; MISMATCH #1 is prologue register-save order, not chased.
 // working copy - scaffold materialised by --work
-// name      ?calculate_dimensions@RadioButton@@QAEHXZ
 // size      965 bytes
-// spans     0x0060D380-0x0060D745
 // prototype int (__thiscall ?calculate_dimensions@RadioButton@@QAEHXZ)(RadioButton* this)
 // callers   1   call targets   6
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0044B340 BYTE_EXACT FILE
-// name      sub_44b340
+// ORIGINAL: 0x0044B340 sub_44b340 0x0044B340-0x0044B37B FILE BYTE_EXACT
 // size      59 bytes
-// spans     0x0044B340-0x0044B37B
 // prototype 
 // callers   0   call targets   0
 // kind      game

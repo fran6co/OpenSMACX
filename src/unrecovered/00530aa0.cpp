@@ -1,16 +1,7 @@
-// ORIGINAL: 0x00530AA0 FILE
-// RULED-OUT: translated the Ghidra hypothesis directly (two near-identical
-//            wait-for-global-lock phases, each: warn-once via NetMsg::pop
-//            after a timeGetTime() timeout, Net::get()/process_message()
-//            poll loop, Lock::check_global()+check_spock(), then
-//            NetMsg::close() if warned). MISMATCH #5 xor/mov - looks like
-//            register allocation for the ebx=0 constant, not a structural
-//            difference; body compiles and follows the disasm's two-phase
-//            shape and final NOLOCK/NOLOCKGLOBAL message selection exactly.
+// ORIGINAL: 0x00530AA0 ?add_global@NetDaemon@@QAEHXZ 0x00530AA0-0x00530CFF FILE
+// RULED-OUT: translated the Ghidra hypothesis directly (two near-identical wait-for-global-lock phases, each: warn-once via NetMsg::pop after a timeGetTime() timeout, Net::get()/process_message() poll loop, Lock::check_global()+check_spock(), then NetMsg::close() if warned). MISMATCH #5 xor/mov - looks like register allocation for the ebx=0 constant, not a structural difference; body compiles and follows the disasm's two-phase shape and final NOLOCK/NOLOCKGLOBAL message selection exactly.
 // working copy - scaffold materialised by --work
-// name      ?add_global@NetDaemon@@QAEHXZ
 // size      607 bytes
-// spans     0x00530AA0-0x00530CFF
 // prototype int (__thiscall ?add_global@NetDaemon@@QAEHXZ)(NetDaemon* this)
 // callers   12   call targets   8
 // kind      game

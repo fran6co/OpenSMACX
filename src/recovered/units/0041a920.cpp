@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0041A920 FILE
-// name      ?zoom@BaseWin@@QAEXHH@Z
+// ORIGINAL: 0x0041A920 ?zoom@BaseWin@@QAEXHH@Z 0x0041A920-0x0041AE40 FILE
 // size      1312 bytes
-// spans     0x0041A920-0x0041AE40
 // prototype void (__thiscall ?zoom@BaseWin@@QAEXHH@Z)(BaseWin* this, int baseID, int)
 // callers   23   call targets   18
 // kind      game

@@ -1,8 +1,6 @@
-// ORIGINAL: 0x0062EEA0 FILE
+// ORIGINAL: 0x0062EEA0 ?send_group@Net@@QAEHPAXHJH@Z 0x0062EEA0-0x0062F38C FILE
 // working copy - scaffold materialised by --work
-// name      ?send_group@Net@@QAEHPAXHJH@Z
 // size      1260 bytes
-// spans     0x0062EEA0-0x0062F38C
 // prototype int (__thiscall ?send_group@Net@@QAEHPAXHJH@Z)(Net* this, void*, int, int, int)
 // callers   1   call targets   10
 // kind      game

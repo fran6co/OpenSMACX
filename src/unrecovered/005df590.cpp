@@ -1,17 +1,7 @@
-// ORIGINAL: 0x005DF590 FILE
-// RULED-OUT: RAII Filemap local (relying on compiler-inserted cleanup)
-//            compiles and reaches the same PCX-header/RLE-encode/palette
-//            structure as the disasm, but diverges at instr #1 - the
-//            original's explicit SEH frame (fs:[0] chain, manual dtor
-//            calls at each return) isn't reproduced by ordinary RAII.
-//            Two vtable-ish calls (offsets 0x64, 0x80) push `this` as an
-//            explicit stdcall arg rather than via ECX/thiscall; modelled
-//            with raw __stdcall function-pointer typedefs instead of the
-//            VCall shim. Landed at MISMATCH.
+// ORIGINAL: 0x005DF590 ?write_pcx@Buffer@@QAEHPAD@Z 0x005DF590-0x005DF907;0x00662BFC-0x00662C11 FILE
+// RULED-OUT: RAII Filemap local (relying on compiler-inserted cleanup) compiles and reaches the same PCX-header/RLE-encode/palette structure as the disasm, but diverges at instr #1 - the original's explicit SEH frame (fs:[0] chain, manual dtor calls at each return) isn't reproduced by ordinary RAII. Two vtable-ish calls (offsets 0x64, 0x80) push `this` as an explicit stdcall arg rather than via ECX/thiscall; modelled with raw __stdcall function-pointer typedefs instead of the VCall shim. Landed at MISMATCH.
 // working copy - scaffold materialised by --work
-// name      ?write_pcx@Buffer@@QAEHPAD@Z
 // size      908 bytes
-// spans     0x005DF590-0x005DF907;0x00662BFC-0x00662C11
 // prototype int (__thiscall ?write_pcx@Buffer@@QAEHPAD@Z)(Buffer* this, int8*)
 // callers   2   call targets   8
 // kind      game

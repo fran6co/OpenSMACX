@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004A8440 BYTE_EXACT FILE
-// name      ?labs_write@@YAXPAUGraphicWin@@HHPAURECT@@PAD@Z
+// ORIGINAL: 0x004A8440 ?labs_write@@YAXPAUGraphicWin@@HHPAURECT@@PAD@Z 0x004A8440-0x004A846E FILE BYTE_EXACT
 // size      46 bytes
-// spans     0x004A8440-0x004A846E
 // prototype 
 // callers   0   call targets   3
 // kind      game

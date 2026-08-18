@@ -1,8 +1,6 @@
-// ORIGINAL: 0x0060C710 FILE
+// ORIGINAL: 0x0060C710 ?on_left_double_click@ListBox@@QAEXHH@Z 0x0060C710-0x0060C7BB FILE
 // working copy - scaffold materialised by --work
-// name      ?on_left_double_click@ListBox@@QAEXHH@Z
 // size      171 bytes
-// spans     0x0060C710-0x0060C7BB
 // prototype void (__thiscall ?on_left_double_click@ListBox@@QAEXHH@Z)(ListBox* this, int, int)
 // callers   1   call targets   1
 // kind      game

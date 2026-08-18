@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0045C200 BYTE_EXACT
-// name      ?timer_callback_daemon@MainInterface@@QAAXHH@Z
+// ORIGINAL: 0x0045C200 ?timer_callback_daemon@MainInterface@@QAAXHH@Z 0x0045C200-0x0045C273 BYTE_EXACT
 // size      115 bytes
-// spans     0x0045C200-0x0045C273
 // prototype 
 // callers   0   call targets   2
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005DC2D0 FILE
-// name      ?get_special@@YAHPADPAH@Z
+// ORIGINAL: 0x005DC2D0 ?get_special@@YAHPADPAH@Z 0x005DC2D0-0x005DC30C FILE
 // size      60 bytes
-// spans     0x005DC2D0-0x005DC30C
 // prototype 
 // callers   0   call targets   0
 // kind      game

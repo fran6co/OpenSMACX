@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004BA220 BYTE_EXACT FILE
-// name      ?textcolor_init@@YAXXZ
+// ORIGINAL: 0x004BA220 ?textcolor_init@@YAXXZ 0x004BA220-0x004BA5B3;0x00659BD0-0x00659BE5 FILE BYTE_EXACT
 // size      936 bytes
-// spans     0x004BA220-0x004BA5B3;0x00659BD0-0x00659BE5
 // prototype 
 // callers   1   call targets   5
 // kind      game

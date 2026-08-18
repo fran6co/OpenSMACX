@@ -1,15 +1,8 @@
-// ORIGINAL: 0x00483240 FILE
-// RULED-OUT: do/while (empty body) instead of while - the inner `if` already
-//        proved the first iteration, so the loop itself is a do/while;
-//        `while` produced an extra redundant pre-test call (18B over)
-// RULED-OUT: duplicating `*g_00811d10=1;` into both sides of the count<1
-//            check to match the store landing before `jl` in the original -
-//            regressed to an earlier divergence; left as single store (4B
-//            over, one instruction reordered around the branch)
+// ORIGINAL: 0x00483240 ?modal_callback_daemon@NetWin@@QAAHXZ 0x00483240-0x004832CF FILE
+// RULED-OUT: do/while (empty body) instead of while - the inner `if` already proved the first iteration, so the loop itself is a do/while; `while` produced an extra redundant pre-test call (18B over)
+// RULED-OUT: duplicating `*g_00811d10=1;` into both sides of the count<1 check to match the store landing before `jl` in the original - regressed to an earlier divergence; left as single store (4B over, one instruction reordered around the branch)
 // working copy - scaffold materialised by --work
-// name      ?modal_callback_daemon@NetWin@@QAAHXZ
 // size      143 bytes
-// spans     0x00483240-0x004832CF
 // prototype 
 // callers   0   call targets   1
 // kind      game

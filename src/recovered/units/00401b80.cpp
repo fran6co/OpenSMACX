@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00401B80 FILE
-// name      sub_401b80
+// ORIGINAL: 0x00401B80 sub_401b80 0x00401B80-0x00401BD8 FILE
 // size      88 bytes
-// spans     0x00401B80-0x00401BD8
 // prototype 
 // callers   1   call targets   0
 // kind      game

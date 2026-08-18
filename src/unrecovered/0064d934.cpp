@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064D934 EXCLUDED S1
-// name      __fptrap
+// ORIGINAL: 0x0064D934 __fptrap 0x0064D934-0x0064D93B EXCLUDED S1
 // size      7 bytes
-// spans     0x0064D934-0x0064D93B
 // prototype 
 // callers   0   call targets   1
 // kind      library

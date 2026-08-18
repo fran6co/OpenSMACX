@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00649A18 EXCLUDED S1
-// name      __cftoe2
+// ORIGINAL: 0x00649A18 __cftoe2 0x00649A18-0x00649ADA EXCLUDED S1
 // size      194 bytes
-// spans     0x00649A18-0x00649ADA
 // prototype 
 // callers   2   call targets   2
 // kind      library

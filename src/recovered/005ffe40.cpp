@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005FFE40 BYTE_EXACT
-// name      sub_5ffe40
+// ORIGINAL: 0x005FFE40 sub_5ffe40 0x005FFE40-0x005FFE78 BYTE_EXACT
 // size      56 bytes
-// spans     0x005FFE40-0x005FFE78
 // prototype 
 // callers   0   call targets   0
 // kind      game

@@ -1,10 +1,7 @@
-// ORIGINAL: 0x00614B90 FILE
-// RULED-OUT: plain if/else-if chain (je/jne #4); single-level `!=` nesting (#6);
-//            hoisted &field_1CF8_ local (still diverges #18, deep in case -1 loop)
+// ORIGINAL: 0x00614B90 ?on_button_clicked@FileWin@@QAEXH@Z 0x00614B90-0x00614C40 FILE
+// RULED-OUT: plain if/else-if chain (je/jne #4); single-level `!=` nesting (#6); hoisted &field_1CF8_ local (still diverges #18, deep in case -1 loop)
 // working copy - scaffold materialised by --work
-// name      ?on_button_clicked@FileWin@@QAEXH@Z
 // size      176 bytes
-// spans     0x00614B90-0x00614C40
 // prototype void (__thiscall ?on_button_clicked@FileWin@@QAEXH@Z)(FileWin* this, int)
 // callers   1   call targets   2
 // kind      game

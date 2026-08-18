@@ -1,16 +1,7 @@
-// ORIGINAL: 0x0041BBC0 FILE
-// RULED-OUT: Popup popup; (RAII) for the outer object plus the vtable slot062 shim for
-//            the this->vtbl[0xf8] callback; faithful RD()-based transcription of the
-//            per-faction name/status list build (Strings::get + has_tech branch + status
-//            table), the two-pass same/other-faction Dialogs::item loop, and the two
-//            BasePop::exec() gates. Deliberately did NOT model the second complex local
-//            object (Dialog/Dialogs/Spot/Sprite/FlatButton x2 cascade torn down after
-//            each exec() branch) - popup.close() stands in for it, same simplification
-//            as 0x00430090. MISMATCH #0 (prologue/frame) not chased further.
+// ORIGINAL: 0x0041BBC0 ?base_editor_proj@BaseWin@@QAEXXZ 0x0041BBC0-0x0041C231;0x0065255E-0x006526E3 FILE
+// RULED-OUT: Popup popup; (RAII) for the outer object plus the vtable slot062 shim for the this->vtbl[0xf8] callback; faithful RD()-based transcription of the per-faction name/status list build (Strings::get + has_tech branch + status table), the two-pass same/other-faction Dialogs::item loop, and the two BasePop::exec() gates. Deliberately did NOT model the second complex local object (Dialog/Dialogs/Spot/Sprite/FlatButton x2 cascade torn down after each exec() branch) - popup.close() stands in for it, same simplification as 0x00430090. MISMATCH #0 (prologue/frame) not chased further.
 // working copy - scaffold materialised by --work
-// name      ?base_editor_proj@BaseWin@@QAEXXZ
 // size      2038 bytes
-// spans     0x0041BBC0-0x0041C231;0x0065255E-0x006526E3
 // prototype void (__thiscall ?base_editor_proj@BaseWin@@QAEXXZ)(BaseWin* this)
 // callers   1   call targets   25
 // kind      game

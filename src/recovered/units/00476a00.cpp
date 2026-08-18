@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00476A00 BYTE_EXACT FILE
-// name      ?on_key_click@MonuWin@@QAEHHH@Z
+// ORIGINAL: 0x00476A00 ?on_key_click@MonuWin@@QAEHHH@Z 0x00476A00-0x00476A42 FILE BYTE_EXACT
 // size      66 bytes
-// spans     0x00476A00-0x00476A42
 // prototype int (__thiscall ?on_key_click@MonuWin@@QAEHHH@Z)(MonuWin* this, int, int)
 // callers   0   call targets   1
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0053E5C0 FILE
-// name      ?renounce_pact@@YAXHH@Z
+// ORIGINAL: 0x0053E5C0 ?renounce_pact@@YAXHH@Z 0x0053E5C0-0x0053E7F8 FILE
 // size      568 bytes
-// spans     0x0053E5C0-0x0053E7F8
 // prototype 
 // callers   1   call targets   15
 // kind      game

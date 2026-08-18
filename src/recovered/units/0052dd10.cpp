@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0052DD10 FILE
-// name      ?UNK2@DeletionList@@QAEHH@Z
+// ORIGINAL: 0x0052DD10 ?UNK2@DeletionList@@QAEHH@Z 0x0052DD10-0x0052DD4B FILE
 // size      59 bytes
-// spans     0x0052DD10-0x0052DD4B
 // prototype int (__thiscall ?UNK2@DeletionList@@QAEHH@Z)(DeletionList* this, int)
 // callers   0   call targets   0
 // kind      game

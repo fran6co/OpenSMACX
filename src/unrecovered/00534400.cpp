@@ -1,16 +1,7 @@
-// ORIGINAL: 0x00534400 FILE
-// RULED-OUT: no Ghidra hypothesis was available for this one (raw asm
-//            only). The real dispatcher spans ~67 distinct message-type
-//            case bodies across several chained range checks up to type
-//            0x1300+; only the first band (0xF05-0xF0F, 11 cases) and the
-//            shared default "fixup_message + send_message" forwarding path
-//            (the target of the large majority of jump-table slots) were
-//            read from the disassembly and modelled. Everything above type
-//            0x1101 is unimplemented.
+// ORIGINAL: 0x00534400 ?process_message@NetDaemon@@QAEXPADKH@Z 0x00534400-0x005388B9;0x0065E0C2-0x0065E442 FILE
+// RULED-OUT: no Ghidra hypothesis was available for this one (raw asm only). The real dispatcher spans ~67 distinct message-type case bodies across several chained range checks up to type 0x1300+; only the first band (0xF05-0xF0F, 11 cases) and the shared default "fixup_message + send_message" forwarding path (the target of the large majority of jump-table slots) were read from the disassembly and modelled. Everything above type 0x1101 is unimplemented.
 // working copy - scaffold materialised by --work
-// name      ?process_message@NetDaemon@@QAEXPADKH@Z
 // size      18489 bytes
-// spans     0x00534400-0x005388B9;0x0065E0C2-0x0065E442
 // prototype void (__thiscall ?process_message@NetDaemon@@QAEXPADKH@Z)(NetDaemon* this, MessageFactionData*, unsigned int, int)
 // callers   18   call targets   133
 // kind      game

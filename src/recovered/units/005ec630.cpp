@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005EC630 BYTE_EXACT FILE
-// name      ?init@Win@@QAEHPAURECT@@PADHPAVWin@@PAVMenu@@PAUBorderSizing@@@Z
+// ORIGINAL: 0x005EC630 ?init@Win@@QAEHPAURECT@@PADHPAVWin@@PAVMenu@@PAUBorderSizing@@@Z 0x005EC630-0x005EC678 FILE BYTE_EXACT
 // size      72 bytes
-// spans     0x005EC630-0x005EC678
 // prototype int (__thiscall ?init@Win@@QAEHPAURECT@@PADHPAVWin@@PAVMenu@@PAUBorderSizing@@@Z)(Win* this, RECT*, int8*, int, Win*, Menu*, BorderSizing*)
 // callers   0   call targets   1
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064675E EXCLUDED S1
-// name      _tolower_0
+// ORIGINAL: 0x0064675E _tolower_0 0x0064675E-0x00646829 EXCLUDED S1
 // size      203 bytes
-// spans     0x0064675E-0x00646829
 // prototype 
 // callers   3   call targets   2
 // kind      library

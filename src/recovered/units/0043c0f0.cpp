@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0043C0F0 BYTE_EXACT FILE
-// name      ?construct_armor@DesignWin@@QAEXH@Z
+// ORIGINAL: 0x0043C0F0 ?construct_armor@DesignWin@@QAEXH@Z 0x0043C0F0-0x0043C126 FILE BYTE_EXACT
 // size      54 bytes
-// spans     0x0043C0F0-0x0043C126
 // prototype void (__thiscall ?construct_armor@DesignWin@@QAEXH@Z)(DesignWin* this, int)
 // callers   0   call targets   1
 // kind      game

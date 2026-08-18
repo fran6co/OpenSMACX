@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005E1350 FILE
-// name      ?vline@Buffer@@QAEXHHHHHHHH@Z
+// ORIGINAL: 0x005E1350 ?vline@Buffer@@QAEXHHHHHHHH@Z 0x005E1350-0x005E15E7 FILE
 // size      663 bytes
-// spans     0x005E1350-0x005E15E7
 // prototype void (__thiscall ?vline@Buffer@@QAEXHHHHHHHH@Z)(Buffer* this, int, int, int, int, int, int, int, int)
 // callers   1   call targets   0
 // kind      game

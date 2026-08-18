@@ -1,11 +1,7 @@
-// ORIGINAL: 0x005C5A30 BYTE_EXACT FILE
-// LEVER: `reinterpret_cast<int>(p) < reinterpret_cast<int>(g_007d3c5c)` for
-//        the pointer-array loop bound, to force signed `jl` instead of the
-//        unsigned `jb` a plain pointer compare emits. First try, byte exact.
+// ORIGINAL: 0x005C5A30 ?world_climate@@YAXXZ 0x005C5A30-0x005C5ADB FILE BYTE_EXACT
+// LEVER: `reinterpret_cast<int>(p) < reinterpret_cast<int>(g_007d3c5c)` for the pointer-array loop bound, to force signed `jl` instead of the unsigned `jb` a plain pointer compare emits. First try, byte exact.
 // working copy - scaffold materialised by --work
-// name      ?world_climate@@YAXXZ
 // size      171 bytes
-// spans     0x005C5A30-0x005C5ADB
 // prototype 
 // callers   18   call targets   12
 // kind      game

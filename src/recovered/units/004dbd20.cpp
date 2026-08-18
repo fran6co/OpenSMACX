@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004DBD20 FILE
-// name      ?editor_personality@Console@@QAEXXZ
+// ORIGINAL: 0x004DBD20 ?editor_personality@Console@@QAEXXZ 0x004DBD20-0x004DBFA8 FILE
 // size      648 bytes
-// spans     0x004DBD20-0x004DBFA8
 // prototype void (__thiscall ?editor_personality@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   4
 // kind      game

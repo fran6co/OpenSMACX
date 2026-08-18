@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00467430 FILE
-// name      ?dest_line@MapWin@@QAEXHHHHHHHHHHH@Z
+// ORIGINAL: 0x00467430 ?dest_line@MapWin@@QAEXHHHHHHHHHHH@Z 0x00467430-0x00467958 FILE
 // size      1320 bytes
-// spans     0x00467430-0x00467958
 // prototype void (__thiscall ?dest_line@MapWin@@QAEXHHHHHHHHHHH@Z)(MapWin* this, int xCoord1, int yCoord1, int xCoord2, int yCoord2, int vehID, int, int, int, int, int, int)
 // callers   4   call targets   10
 // kind      game

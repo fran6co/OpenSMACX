@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064A610 EXCLUDED S1
-// name      __trandisp1
+// ORIGINAL: 0x0064A610 __trandisp1 0x0064A610-0x0064A677 EXCLUDED S1
 // size      103 bytes
-// spans     0x0064A610-0x0064A677
 // prototype 
 // callers   0   call targets   0
 // kind      library

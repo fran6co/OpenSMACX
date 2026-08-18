@@ -1,10 +1,7 @@
-// ORIGINAL: 0x005EC8A0 FILE
-// RULED-OUT: tagPOINT (undeclared, C2065); reaches #38/~178B with local Pt struct
-//            + GetCursorPos via g_00669284 fn-ptr, outer_rect_/client_rect_ members
+// ORIGINAL: 0x005EC8A0 ?get_mouse_pos@Win@@QAEXPAHPAH@Z 0x005EC8A0-0x005EC952 FILE
+// RULED-OUT: tagPOINT (undeclared, C2065); reaches #38/~178B with local Pt struct + GetCursorPos via g_00669284 fn-ptr, outer_rect_/client_rect_ members
 // working copy - scaffold materialised by --work
-// name      ?get_mouse_pos@Win@@QAEXPAHPAH@Z
 // size      178 bytes
-// spans     0x005EC8A0-0x005EC952
 // prototype void (__thiscall ?get_mouse_pos@Win@@QAEXPAHPAH@Z)(Win* this, int*, int*)
 // callers   26   call targets   1
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005FB160 FILE
-// name      ?add_separator@Menu@@QAEHHH@Z
+// ORIGINAL: 0x005FB160 ?add_separator@Menu@@QAEHHH@Z 0x005FB160-0x005FB1B6 FILE
 // size      86 bytes
-// spans     0x005FB160-0x005FB1B6
 // prototype int (__thiscall ?add_separator@Menu@@QAEHHH@Z)(Menu* this, int, int)
 // callers   1   call targets   1
 // kind      game

@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00524210 FILE
+// ORIGINAL: 0x00524210 ?climactic_changes@@YAXXZ 0x00524210-0x005242C0 FILE
 // working copy - scaffold materialised by --work
-// name      ?climactic_changes@@YAXXZ
 // size      176 bytes
-// spans     0x00524210-0x005242C0
 // prototype 
 // callers   0   call targets   3
 // kind      game

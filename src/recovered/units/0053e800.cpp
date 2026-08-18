@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0053E800 FILE
-// name      ?tech_analysis@@YAXHH@Z
+// ORIGINAL: 0x0053E800 ?tech_analysis@@YAXHH@Z 0x0053E800-0x0053EB42 FILE
 // size      834 bytes
-// spans     0x0053E800-0x0053EB42
 // prototype 
 // callers   7   call targets   3
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004C8410 BYTE_EXACT FILE
-// name      ??0Patch@@QAE@XZ
+// ORIGINAL: 0x004C8410 ??0Patch@@QAE@XZ 0x004C8410-0x004C8442 FILE BYTE_EXACT
 // size      50 bytes
-// spans     0x004C8410-0x004C8442
 // prototype void (__thiscall ??0Patch@@QAE@XZ)(Patch* this)
 // callers   0   call targets   1
 // kind      game

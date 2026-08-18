@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006320E0 FILE
-// name      ?check_polling@Net@@QAEXXZ
+// ORIGINAL: 0x006320E0 ?check_polling@Net@@QAEXXZ 0x006320E0-0x00632290 FILE
 // size      432 bytes
-// spans     0x006320E0-0x00632290
 // prototype void (__thiscall ?check_polling@Net@@QAEXXZ)(Net* this)
 // callers   4   call targets   2
 // kind      game

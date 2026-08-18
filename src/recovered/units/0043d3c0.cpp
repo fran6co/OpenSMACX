@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0043D3C0 BYTE_EXACT FILE
-// name      ?on_iface_mouse_leave@DesignWin@@QAEXHH@Z
+// ORIGINAL: 0x0043D3C0 ?on_iface_mouse_leave@DesignWin@@QAEXHH@Z 0x0043D3C0-0x0043D3F1 FILE BYTE_EXACT
 // size      49 bytes
-// spans     0x0043D3C0-0x0043D3F1
 // prototype void (__thiscall ?on_iface_mouse_leave@DesignWin@@QAEXHH@Z)(DesignWin* this, int, int)
 // callers   0   call targets   2
 // kind      game

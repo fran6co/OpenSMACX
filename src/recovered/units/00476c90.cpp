@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00476C90 FILE
-// name      ?mon_tech_discovered@@YAXHH@Z
+// ORIGINAL: 0x00476C90 ?mon_tech_discovered@@YAXHH@Z 0x00476C90-0x00476D93 FILE
 // size      259 bytes
-// spans     0x00476C90-0x00476D93
 // prototype 
 // callers   1   call targets   2
 // kind      game

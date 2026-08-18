@@ -1,24 +1,11 @@
-// ORIGINAL: 0x005D427C
-// name      sub_5d427c
+// ORIGINAL: 0x005D427C sub_5d427c 0x005D427C-0x005D439F
+// RULED-OUT: entry uses pushal/popal (all eight registers saved and restored) around the whole body with cld and only rep movsb/ rep movsd inside, which VC6 never emits for ordinary compiled C++ - this is very likely inline assembly in the original source, which the rules here bar reproducing. Transcribed Ghidra's decompilation (already a faithful read of the byte stream) into plain C++ instead: a byte-oriented decoder that walks a control word one bit at a time, alternating literal dword/byte copies from the source with back-reference copies from already-written output, matching an LZ-style unpacker. No `__asm`; this compiles but will not reach the original's register-saving shape.
 // size      291 bytes
-// spans     0x005D427C-0x005D439F
 // prototype
 // callers   1   call targets   0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
-// RULED-OUT: entry uses pushal/popal (all eight registers saved and
-//            restored) around the whole body with cld and only rep movsb/
-//            rep movsd inside, which VC6 never emits for ordinary compiled
-//            C++ - this is very likely inline assembly in the original
-//            source, which the rules here bar reproducing. Transcribed
-//            Ghidra's decompilation (already a faithful read of the byte
-//            stream) into plain C++ instead: a byte-oriented decoder that
-//            walks a control word one bit at a time, alternating literal
-//            dword/byte copies from the source with back-reference copies
-//            from already-written output, matching an LZ-style unpacker.
-//            No `__asm`; this compiles but will not reach the original's
-//            register-saving shape.
 
 extern "C" int __cdecl sub_5d427c(int a1, int a2, int a3) {
   unsigned short *param_3 = (unsigned short *)a1;

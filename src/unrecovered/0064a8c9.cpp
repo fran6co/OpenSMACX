@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064A8C9 EXCLUDED S1
-// name      __check_range_exit
+// ORIGINAL: 0x0064A8C9 __check_range_exit 0x0064A8C9-0x0064A96C EXCLUDED S1
 // size      163 bytes
-// spans     0x0064A8C9-0x0064A96C
 // prototype 
 // callers   0   call targets   2
 // kind      library

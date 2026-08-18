@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064CEE0 EXCLUDED S1
-// name      __commit
+// ORIGINAL: 0x0064CEE0 __commit 0x0064CEE0-0x0064CF73 EXCLUDED S1
 // size      147 bytes
-// spans     0x0064CEE0-0x0064CF73
 // prototype 
 // callers   1   call targets   5
 // kind      library

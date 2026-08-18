@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004A5F00 BYTE_EXACT
-// name      ?show@ReportWin@@QAEXH@Z
+// ORIGINAL: 0x004A5F00 ?show@ReportWin@@QAEXH@Z 0x004A5F00-0x004A5F16 BYTE_EXACT
 // size      22 bytes
-// spans     0x004A5F00-0x004A5F16
 // prototype void (__thiscall ?show@ReportWin@@QAEXH@Z)(ReportWin* this, int)
 // callers   0   call targets   2
 // kind      game

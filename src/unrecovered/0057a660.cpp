@@ -1,21 +1,5 @@
-// ORIGINAL: 0x0057A660 FILE
-// DEFERRED: structurally the most promising remaining shape in this batch,
-//     not yet landed. Frame is only 0x34 bytes (plain locals, no embedded
-//     C++ objects), and the function is a dispatcher: a 26-entry jump
-//     table at 0x0057A9BF (targets listed in this file's own brief,
-//     already resolved from the image - cases 12-17 share one target
-//     0x0057C5C8, and two more small tables at 0x0057C451/0x0057C531
-//     handle an 8-way and 4-way sub-dispatch off the tail of that). That
-//     makes this closer to "26 mostly-independent small case bodies"
-//     than one tangled 10KB function - each case is a self-contained
-//     goody-box outcome (energy, new tech, new unit, mines, artifact,
-//     ...), calling _rand(29x)/?pop@NetMsg@@(25x, the popup message)/
-//     ?bit_set@@(15x, faction tech/facility grant)/?veh_init@@(9x, spawn
-//     a unit)/?parse_says@@/?play@FX@@/?draw_tile@@/?base_find@@ - none
-//     of which chain into the register-computed multi-field arithmetic
-//     that made the two smaller functions in this batch unsafe to rush.
-//     Still 3172 instructions / 1243 Ghidra lines total, too much for
-//     this pass in the time remaining.
+// ORIGINAL: 0x0057A660 ?goody_box@@YAHHH@Z 0x0057A660-0x0057CDE6 FILE
+// DEFERRED: structurally the most promising remaining shape in this batch, not yet landed. Frame is only 0x34 bytes (plain locals, no embedded C++ objects), and the function is a dispatcher: a 26-entry jump table at 0x0057A9BF (targets listed in this file's own brief, already resolved from the image - cases 12-17 share one target 0x0057C5C8, and two more small tables at 0x0057C451/0x0057C531 handle an 8-way and 4-way sub-dispatch off the tail of that). That makes this closer to "26 mostly-independent small case bodies" than one tangled 10KB function - each case is a self-contained goody-box outcome (energy, new tech, new unit, mines, artifact, ...), calling _rand(29x)/?pop@NetMsg@@(25x, the popup message)/ ?bit_set@@(15x, faction tech/facility grant)/?veh_init@@(9x, spawn a unit)/?parse_says@@/?play@FX@@/?draw_tile@@/?base_find@@ - none of which chain into the register-computed multi-field arithmetic that made the two smaller functions in this batch unsafe to rush. Still 3172 instructions / 1243 Ghidra lines total, too much for this pass in the time remaining.
 // UNBLOCKER: land it case-by-case using the jump table above as the
 //     section boundaries, rather than attempting the whole switch body
 //     transcription at once - each case can be verified independently
@@ -23,9 +7,7 @@
 //     cases (with the rest as an honest default/fallthrough) is a
 //     legitimate intermediate landing per the coverage-first rule.
 // working copy - scaffold materialised by --work
-// name      ?goody_box@@YAHHH@Z
 // size      10118 bytes
-// spans     0x0057A660-0x0057CDE6
 // prototype int (__cdecl ?goody_box@@YAHHH@Z)(int vehID, int type)
 // callers   2   call targets   54
 // kind      game

@@ -1,8 +1,6 @@
-// ORIGINAL: 0x0047B020 BYTE_EXACT FILE
+// ORIGINAL: 0x0047B020 ?send_faction_data@@YAXH@Z 0x0047B020-0x0047B0E1 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?send_faction_data@@YAXH@Z
 // size      193 bytes
-// spans     0x0047B020-0x0047B0E1
 // prototype 
 // callers   2   call targets   4
 // kind      game

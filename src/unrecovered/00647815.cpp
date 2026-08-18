@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00647815 EXCLUDED S1
-// name      _fprintf
+// ORIGINAL: 0x00647815 _fprintf 0x00647815-0x00647851 EXCLUDED S1
 // size      60 bytes
-// spans     0x00647815-0x00647851
 // prototype 
 // callers   6   call targets   5
 // kind      library

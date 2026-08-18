@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064A7D3 EXCLUDED S1
-// name      __rtchsifneg
+// ORIGINAL: 0x0064A7D3 __rtchsifneg 0x0064A7D3-0x0064A7DA EXCLUDED S1
 // size      7 bytes
-// spans     0x0064A7D3-0x0064A7DA
 // prototype 
 // callers   0   call targets   0
 // kind      library

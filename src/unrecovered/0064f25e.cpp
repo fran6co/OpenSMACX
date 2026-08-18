@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064F25E EXCLUDED S1
-// name      __chsize_lk
+// ORIGINAL: 0x0064F25E __chsize_lk 0x0064F25E-0x0064F383 EXCLUDED S1
 // size      293 bytes
-// spans     0x0064F25E-0x0064F383
 // prototype int (__cdecl __chsize_lk)(int, LONG lDistanceToMove)
 // callers   1   call targets   8
 // kind      library

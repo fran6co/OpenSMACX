@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005F5F60 BYTE_EXACT FILE
-// name      ?on_char@Win@@QAAHDH@Z
+// ORIGINAL: 0x005F5F60 ?on_char@Win@@QAAHDH@Z 0x005F5F60-0x005F5FA1 FILE BYTE_EXACT
 // size      65 bytes
-// spans     0x005F5F60-0x005F5FA1
 // prototype 
 // callers   0   call targets   0
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004CD4E0 FILE
-// name      ?action_oblit@@YAXHH@Z
+// ORIGINAL: 0x004CD4E0 ?action_oblit@@YAXHH@Z 0x004CD4E0-0x004CD69D FILE
 // size      445 bytes
-// spans     0x004CD4E0-0x004CD69D
 // prototype void (__cdecl ?action_oblit@@YAXHH@Z)(int vehID, int baseID)
 // callers   3   call targets   6
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00516DA0 FILE
-// name      ?governor_directives@Console@@QAEXXZ
+// ORIGINAL: 0x00516DA0 ?governor_directives@Console@@QAEXXZ 0x00516DA0-0x00517033 FILE
 // size      659 bytes
-// spans     0x00516DA0-0x00517033
 // prototype void (__thiscall ?governor_directives@Console@@QAEXXZ)(Console* this)
 // callers   0   call targets   9
 // kind      game

@@ -1,7 +1,6 @@
-// ORIGINAL: 0x00633010
-// name      sub_633010
+// ORIGINAL: 0x00633010 sub_633010 0x00633010-0x00633152;0x00663730-0x006637AF
+// RULED-OUT: the tail at 0x00663730-0x006637AF is a chain of EH unwind funclets (push -1 / __CxxFrameHandler prologue) protecting the partial destruction of several embedded members if an earlier member's destructor throws. Reproducing that would need this class's exact multiple/virtual-inheritance layout (a ListBox member whose Dialog and GraphicWin virtual bases are destroyed separately by the most-derived class, matching how src/stringstruct.cpp's StringList::destroy documents the same shape for its own virtual base) modelled with real inheritance so the compiler regenerates the funclets itself; landing the flat, unprotected call sequence instead; the string-list member at +0x36a8 is StringStruct::close_with_tables (0x00401060) inlined at the call site with two different literal table pairs, remove_all (0x00402970) left as a real call - matches src/stringstruct.cpp's close_with_tables/remove_all pair.
 // size      449 bytes
-// spans     0x00633010-0x00633152;0x00663730-0x006637AF
 // prototype
 // callers   1   call targets   8
 // kind      game
@@ -11,21 +10,6 @@
 //           free params - evidence: `mov esi, ecx` at entry with every
 //           access reached from esi thereafter. Expressed via an introduced
 //           `Sub633010Shim` class, as 0x005CC710 does.
-// RULED-OUT: the tail at 0x00663730-0x006637AF is a chain of EH unwind
-//            funclets (push -1 / __CxxFrameHandler prologue) protecting the
-//            partial destruction of several embedded members if an earlier
-//            member's destructor throws. Reproducing that would need this
-//            class's exact multiple/virtual-inheritance layout (a ListBox
-//            member whose Dialog and GraphicWin virtual bases are destroyed
-//            separately by the most-derived class, matching how
-//            src/stringstruct.cpp's StringList::destroy documents the same
-//            shape for its own virtual base) modelled with real inheritance
-//            so the compiler regenerates the funclets itself; landing the
-//            flat, unprotected call sequence instead; the string-list member
-//            at +0x36a8 is StringStruct::close_with_tables (0x00401060)
-//            inlined at the call site with two different literal table
-//            pairs, remove_all (0x00402970) left as a real call - matches
-//            src/stringstruct.cpp's close_with_tables/remove_all pair.
 
 class Sub633010Shim {
  public:

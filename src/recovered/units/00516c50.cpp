@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00516C50 FILE
-// name      ?show_scen_objectives@Console@@QAEXXZ
+// ORIGINAL: 0x00516C50 ?show_scen_objectives@Console@@QAEXXZ 0x00516C50-0x00516D98 FILE
 // size      328 bytes
-// spans     0x00516C50-0x00516D98
 // prototype void (__thiscall ?show_scen_objectives@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   5
 // kind      game

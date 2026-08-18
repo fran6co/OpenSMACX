@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0062A280 BYTE_EXACT FILE
-// name      ?rewind@Flic@@QAEHXZ
+// ORIGINAL: 0x0062A280 ?rewind@Flic@@QAEHXZ 0x0062A280-0x0062A2B9 FILE BYTE_EXACT
 // size      57 bytes
-// spans     0x0062A280-0x0062A2B9
 // prototype int (__thiscall ?rewind@Flic@@QAEHXZ)(Flic* this)
 // callers   3   call targets   1
 // kind      game

@@ -1,14 +1,7 @@
-// ORIGINAL: 0x0060A1E0 FILE
-// RULED-OUT: direct named-member access on dialog_/virtual_base_ instead of
-//            the original's dynamic vbtable-index lookup (vtable[8]=dialog_
-//            displacement, vtable[4]=GraphicWin displacement, confirmed by
-//            matching field offsets 0x7c-0xa8 to Dialog's text_color/font
-//            fields and 0xc4-0xd0 to its entry list). Diverges at #2
-//            (compiler emits a fixed-offset load, not the indirection).
+// ORIGINAL: 0x0060A1E0 ?calculate_dimensions@ListBox@@QAEHXZ 0x0060A1E0-0x0060A66B FILE
+// RULED-OUT: direct named-member access on dialog_/virtual_base_ instead of the original's dynamic vbtable-index lookup (vtable[8]=dialog_ displacement, vtable[4]=GraphicWin displacement, confirmed by matching field offsets 0x7c-0xa8 to Dialog's text_color/font fields and 0xc4-0xd0 to its entry list). Diverges at #2 (compiler emits a fixed-offset load, not the indirection).
 // working copy - scaffold materialised by --work
-// name      ?calculate_dimensions@ListBox@@QAEHXZ
 // size      1163 bytes
-// spans     0x0060A1E0-0x0060A66B
 // prototype int (__thiscall ?calculate_dimensions@ListBox@@QAEHXZ)(ListBox* this)
 // callers   2   call targets   6
 // kind      game

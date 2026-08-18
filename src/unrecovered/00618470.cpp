@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00618470 FILE
+// ORIGINAL: 0x00618470 ?clear_buffers@Caviar@@QAEXH@Z 0x00618470-0x0061851D FILE
 // working copy - scaffold materialised by --work
-// name      ?clear_buffers@Caviar@@QAEXH@Z
 // size      173 bytes
-// spans     0x00618470-0x0061851D
 // prototype void (__thiscall ?clear_buffers@Caviar@@QAEXH@Z)(Caviar* this, int)
 // callers   8   call targets   3
 // kind      game

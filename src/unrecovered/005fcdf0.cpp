@@ -1,10 +1,7 @@
-// ORIGINAL: 0x005FCDF0 FILE
-// RULED-OUT: per-call reinterpret_cast<Proc*>(g) load (5 call sites) instead
-//            of caching Peek/Translate/Dispatch ptrs in registers once
+// ORIGINAL: 0x005FCDF0 sub_5fcdf0 0x005FCDF0-0x005FCEC0 FILE
+// RULED-OUT: per-call reinterpret_cast<Proc*>(g) load (5 call sites) instead of caching Peek/Translate/Dispatch ptrs in registers once
 // working copy - scaffold materialised by --work
-// name      sub_5fcdf0
 // size      208 bytes
-// spans     0x005FCDF0-0x005FCEC0
 // prototype 
 // callers   0   call targets   2
 // kind      game

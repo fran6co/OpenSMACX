@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064BAD2 EXCLUDED S1
-// name      ___crtGetEnvironmentStringsA
+// ORIGINAL: 0x0064BAD2 ___crtGetEnvironmentStringsA 0x0064BAD2-0x0064BC04 EXCLUDED S1
 // size      306 bytes
-// spans     0x0064BAD2-0x0064BC04
 // prototype 
 // callers   1   call targets   3
 // kind      library

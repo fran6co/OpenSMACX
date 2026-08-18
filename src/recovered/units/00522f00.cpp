@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00522F00 FILE
-// name      ?do_fungal_towers@@YAXXZ
+// ORIGINAL: 0x00522F00 ?do_fungal_towers@@YAXXZ 0x00522F00-0x005230DD FILE
 // size      477 bytes
-// spans     0x00522F00-0x005230DD
 // prototype 
 // callers   1   call targets   6
 // kind      game

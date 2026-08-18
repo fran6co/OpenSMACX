@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004E1380 BYTE_EXACT FILE
-// name      ?editor_clear_terrain@Console@@QAEXXZ
+// ORIGINAL: 0x004E1380 ?editor_clear_terrain@Console@@QAEXXZ 0x004E1380-0x004E13D2 FILE BYTE_EXACT
 // size      82 bytes
-// spans     0x004E1380-0x004E13D2
 // prototype void (__thiscall ?editor_clear_terrain@Console@@QAEXXZ)(Console* this)
 // callers   1   call targets   2
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005FBC20 FILE
-// name      ?on_left_down@Menu@@QAEXHH@Z
+// ORIGINAL: 0x005FBC20 ?on_left_down@Menu@@QAEXHH@Z 0x005FBC20-0x005FBDAB FILE
 // size      395 bytes
-// spans     0x005FBC20-0x005FBDAB
 // prototype void (__thiscall ?on_left_down@Menu@@QAEXHH@Z)(Menu* this, int xCoord, int yCoord)
 // callers   0   call targets   6
 // kind      game

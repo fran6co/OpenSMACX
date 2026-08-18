@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00459260 BYTE_EXACT
-// name      ?timer_daemon@InfoWin@@QAAXH@Z
+// ORIGINAL: 0x00459260 ?timer_daemon@InfoWin@@QAAXH@Z 0x00459260-0x0045927C BYTE_EXACT
 // size      28 bytes
-// spans     0x00459260-0x0045927C
 // prototype 
 // callers   0   call targets   1
 // kind      game

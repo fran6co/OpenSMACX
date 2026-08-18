@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0053D160 FILE
-// name      ?pledge_truce@@YAXHHH@Z
+// ORIGINAL: 0x0053D160 ?pledge_truce@@YAXHHH@Z 0x0053D160-0x0053D351 FILE
 // size      497 bytes
-// spans     0x0053D160-0x0053D351
 // prototype 
 // callers   1   call targets   7
 // kind      game

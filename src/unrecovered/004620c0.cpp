@@ -1,11 +1,7 @@
-// ORIGINAL: 0x004620C0 FILE
-// RULED-OUT: nullary contract head (reads [ebp+8]/[ebp+0xc], no ecx
-//            use -> 2 plain int args, not __thiscall). First
-//            divergence #2 push/mov, 176 vs 196 B.
+// ORIGINAL: 0x004620C0 sub_4620c0 0x004620C0-0x00462184 FILE
+// RULED-OUT: nullary contract head (reads [ebp+8]/[ebp+0xc], no ecx use -> 2 plain int args, not __thiscall). First divergence #2 push/mov, 176 vs 196 B.
 // working copy - scaffold materialised by --work
-// name      sub_4620c0
 // size      196 bytes
-// spans     0x004620C0-0x00462184
 // prototype 
 // callers   0   call targets   0
 // kind      game

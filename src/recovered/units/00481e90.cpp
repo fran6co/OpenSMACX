@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00481E90 FILE
-// name      ?config_players@NetWin@@QAEXXZ
+// ORIGINAL: 0x00481E90 ?config_players@NetWin@@QAEXXZ 0x00481E90-0x00481FC9 FILE
 // size      313 bytes
-// spans     0x00481E90-0x00481FC9
 // prototype void (__thiscall ?config_players@NetWin@@QAEXXZ)(NetWin* this)
 // callers   1   call targets   2
 // kind      game

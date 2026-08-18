@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00437BA0 FILE
-// name      ?on_mouse_move@DesignWin@@QAEXHH@Z
+// ORIGINAL: 0x00437BA0 ?on_mouse_move@DesignWin@@QAEXHH@Z 0x00437BA0-0x00437BD5 FILE
 // size      53 bytes
-// spans     0x00437BA0-0x00437BD5
 // prototype void (__thiscall ?on_mouse_move@DesignWin@@QAEXHH@Z)(DesignWin* this, int xCoord, int yCoord)
 // callers   0   call targets   2
 // kind      game

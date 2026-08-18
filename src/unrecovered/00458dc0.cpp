@@ -1,16 +1,7 @@
-// ORIGINAL: 0x00458DC0 FILE
-// RULED-OUT: writing the boundary tests as `val >= N` instead of the
-//   algebraically-equal `N-1 < val` so VC6 keeps the original's literal
-//   (0x32/0x64/0x14) and jump mnemonic (jl/jge) instead of picking an
-//   off-by-one immediate with the flipped `jle`/`jg`; that alone moved
-//   0.74 -> 0.81 similarity. Landed as MISMATCH: the remaining gap is a
-//   missing stack frame at the very top (original keeps ebp, this body's
-//   simpler per-case expressions let VC6 omit it) - a register-pressure
-//   difference the case bodies did not induce here.
+// ORIGINAL: 0x00458DC0 ?state_valid@InfoWin@@QAEHH@Z 0x00458DC0-0x00458EDA FILE
+// RULED-OUT: writing the boundary tests as `val >= N` instead of the algebraically-equal `N-1 < val` so VC6 keeps the original's literal (0x32/0x64/0x14) and jump mnemonic (jl/jge) instead of picking an off-by-one immediate with the flipped `jle`/`jg`; that alone moved 0.74 -> 0.81 similarity. Landed as MISMATCH: the remaining gap is a missing stack frame at the very top (original keeps ebp, this body's simpler per-case expressions let VC6 omit it) - a register-pressure difference the case bodies did not induce here.
 // working copy - scaffold materialised by --work
-// name      ?state_valid@InfoWin@@QAEHH@Z
 // size      282 bytes
-// spans     0x00458DC0-0x00458EDA
 // prototype int (__thiscall ?state_valid@InfoWin@@QAEHH@Z)(InfoWin* this, int)
 // callers   3   call targets   0
 // kind      game

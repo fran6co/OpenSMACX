@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0051DDF0 BYTE_EXACT
-// name      ??_GConsole@@UAEPAXI@Z
+// ORIGINAL: 0x0051DDF0 ??_GConsole@@UAEPAXI@Z 0x0051DDF0-0x0051DE26 BYTE_EXACT
 // size      54 bytes
-// spans     0x0051DDF0-0x0051DE26
 // prototype void* (__thiscall ??_GConsole@@UAEPAXI@Z)(Console* this, unsigned int)
 // callers   0   call targets   3
 // kind      game

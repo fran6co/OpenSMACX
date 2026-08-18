@@ -28,10 +28,8 @@ BOOL *ProbeTargetHasHSA = (BOOL *)0x00945B38;
 
 /*
 Purpose: Calculate the amount of energy that can be stolen from a base based on its population.
-ORIGINAL: 0x0050C4B0
-// name      ?steal_energy@@YAHH@Z
+// ORIGINAL: 0x0050C4B0 ?steal_energy@@YAHH@Z 0x0050C4B0-0x0050C504
 // size      84 bytes
-// spans     0x0050C4B0-0x0050C504
 // prototype int (__cdecl ?steal_energy@@YAHH@Z)(int baseID)
 // callers   1   call targets   0
 // kind      game
@@ -50,10 +48,8 @@ int __cdecl steal_energy(int base_id) {
 /*
 Purpose: Calculate the cost for the faction to be able to mind control the specified base. The 3rd
          parameter determines if this cost is for cornering the market (true) or via probe (false).
-ORIGINAL: 0x0059EA80
-// name      ?mind_control@@YAHHHH@Z
+// ORIGINAL: 0x0059EA80 ?mind_control@@YAHHHH@Z 0x0059EA80-0x0059EE42
 // size      962 bytes
-// spans     0x0059EA80-0x0059EE42
 // prototype int (__cdecl ?mind_control@@YAHHHH@Z)(int baseID, int factionID, BOOL isCornerMarket)
 // callers   2   call targets   7
 // kind      game
@@ -136,10 +132,8 @@ int __cdecl mind_control(int base_id, int faction_id, BOOL is_corner_market) {
 Purpose: Calculate the success and survival rates for a probe action based on the probe's morale and
          the difficulty of the action. These are used to generate a chances probability string for
          provided id. A baseID is an optional parameter to factor in its probe defenses.
-ORIGINAL: 0x0059EEE0
-// name      ?success_rates@@YAHHHHH@Z
+// ORIGINAL: 0x0059EEE0 ?success_rates@@YAHHHHH@Z 0x0059EEE0-0x0059F11E
 // size      574 bytes
-// spans     0x0059EEE0-0x0059F11E
 // prototype int (__cdecl ?success_rates@@YAHHHHH@Z)(uint32_t id, uint32_t morale, uint32_t diffModifier, int baseID)
 // callers   1   call targets   4
 // kind      game

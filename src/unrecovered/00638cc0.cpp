@@ -1,17 +1,12 @@
-// ORIGINAL: 0x00638CC0
-// name      sub_638cc0
+// ORIGINAL: 0x00638CC0 sub_638cc0 0x00638CC0-0x00638DD4
+// RULED-OUT: only one source-form tried; the callee-save register allocation (ebx/ebp/esi/edi across the whole loop) at the prologue diverges early. Landing the closest structural translation (mnemonic_similarity 0.635).
 // size      276 bytes
-// spans     0x00638CC0-0x00638DD4
 // prototype
 // callers   1   call targets   3
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00638620 0x00638650 0x00639390
 // indirect  0x00638D1B
-// RULED-OUT: only one source-form tried; the callee-save register
-//            allocation (ebx/ebp/esi/edi across the whole loop) at the
-//            prologue diverges early. Landing the closest structural
-//            translation (mnemonic_similarity 0.635).
 
 typedef int (__cdecl *Fn638650)(int, void *, int);
 typedef int (__cdecl *Fn638620)(int, int *);

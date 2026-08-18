@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00612E00 FILE
-// name      ?on_redraw@Dialogs@@QAEXXZ
+// ORIGINAL: 0x00612E00 ?on_redraw@Dialogs@@QAEXXZ 0x00612E00-0x00612E4D FILE
 // size      77 bytes
-// spans     0x00612E00-0x00612E4D
 // prototype void (__thiscall ?on_redraw@Dialogs@@QAEXXZ)(Dialogs* this)
 // callers   0   call targets   0
 // kind      game

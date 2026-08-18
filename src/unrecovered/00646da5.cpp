@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00646DA5 EXCLUDED S1
-// name      __amsg_exit
+// ORIGINAL: 0x00646DA5 __amsg_exit 0x00646DA5-0x00646DCA EXCLUDED S1
 // size      37 bytes
-// spans     0x00646DA5-0x00646DCA
 // prototype int (__cdecl __amsg_exit)(DWORD NumberOfBytesWritten)
 // callers   11   call targets   2
 // kind      library

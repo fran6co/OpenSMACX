@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00493C20 BYTE_EXACT FILE
-// name      ?on_mousewheel@ProdPicker@@QAEXH@Z
+// ORIGINAL: 0x00493C20 ?on_mousewheel@ProdPicker@@QAEXH@Z 0x00493C20-0x00493C68 FILE BYTE_EXACT
 // size      72 bytes
-// spans     0x00493C20-0x00493C68
 // prototype void (__thiscall ?on_mousewheel@ProdPicker@@QAEXH@Z)(ProdPicker* this, int)
 // callers   0   call targets   2
 // kind      game

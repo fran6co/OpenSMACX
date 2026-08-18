@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00447360 FILE
-// name      ?general@MAmbience@@QAEXXZ
+// ORIGINAL: 0x00447360 ?general@MAmbience@@QAEXXZ 0x00447360-0x0044746A FILE
 // size      266 bytes
-// spans     0x00447360-0x0044746A
 // prototype void (__thiscall ?general@MAmbience@@QAEXXZ)(MAmbience* this)
 // callers   0   call targets   0
 // kind      game

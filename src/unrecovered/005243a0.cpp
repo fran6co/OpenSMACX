@@ -1,12 +1,7 @@
-// ORIGINAL: 0x005243A0 FILE
-// RULED-OUT: extern "C" __stdcall(int,int) contract (ecx has no matching stack
-//            slot, so it is __thiscall); own Obj_5243a0 class (3 embedded
-//            RECTs) + VCall slot058 reaches MNEMONIC_ONLY, same 187 bytes,
-//            same mnemonics, an operand still differs
+// ORIGINAL: 0x005243A0 sub_5243a0 0x005243A0-0x0052445B FILE
+// RULED-OUT: extern "C" __stdcall(int,int) contract (ecx has no matching stack slot, so it is __thiscall); own Obj_5243a0 class (3 embedded RECTs) + VCall slot058 reaches MNEMONIC_ONLY, same 187 bytes, same mnemonics, an operand still differs
 // working copy - scaffold materialised by --work
-// name      sub_5243a0
 // size      187 bytes
-// spans     0x005243A0-0x0052445B
 // prototype 
 // callers   0   call targets   1
 // kind      game

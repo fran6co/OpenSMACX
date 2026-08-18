@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00588F90 FILE
-// name      ?alien_start@@YAXXZ
+// ORIGINAL: 0x00588F90 ?alien_start@@YAXXZ 0x00588F90-0x0058917C FILE
 // size      492 bytes
-// spans     0x00588F90-0x0058917C
 // prototype 
 // callers   1   call targets   4
 // kind      game

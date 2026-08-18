@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0047FED0 FILE
-// name      ?draw_factions@NetWin@@QAEXXZ
+// ORIGINAL: 0x0047FED0 ?draw_factions@NetWin@@QAEXXZ 0x0047FED0-0x00480173 FILE
 // size      675 bytes
-// spans     0x0047FED0-0x00480173
 // prototype void (__thiscall ?draw_factions@NetWin@@QAEXXZ)(NetWin* this)
 // callers   1   call targets   15
 // kind      game

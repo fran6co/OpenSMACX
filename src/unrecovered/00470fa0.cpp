@@ -1,14 +1,10 @@
-// ORIGINAL: 0x00470FA0 FILE
+// ORIGINAL: 0x00470FA0 sub_470fa0 0x00470FA0-0x0047102D FILE
+// RULED-OUT: for(;;){...if(p>=end)return;} vs do/while(p<end) vs goto-found form - all three land the same `jae + jmp` where the original has a single `jl` (140B vs 141B, one instruction over)
 // PROPOSAL: sub_470fa0() -> sub_470fa0(int a1, int a2), return int -> void;
 //           disasm reads [ebp+8]/[ebp+0xc] as two stack args and never sets
 //           eax before the plain `ret`
-// RULED-OUT: for(;;){...if(p>=end)return;} vs do/while(p<end) vs goto-found
-//            form - all three land the same `jae + jmp` where the original
-//            has a single `jl` (140B vs 141B, one instruction over)
 // working copy - scaffold materialised by --work
-// name      sub_470fa0
 // size      141 bytes
-// spans     0x00470FA0-0x0047102D
 // prototype 
 // callers   0   call targets   2
 // kind      game

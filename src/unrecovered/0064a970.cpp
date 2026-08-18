@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064A970 EXCLUDED S1
-// name      __startTwoArgErrorHandling
+// ORIGINAL: 0x0064A970 __startTwoArgErrorHandling 0x0064A970-0x0064A987 EXCLUDED S1
 // size      23 bytes
-// spans     0x0064A970-0x0064A987
 // prototype 
 // callers   2   call targets   0
 // kind      library

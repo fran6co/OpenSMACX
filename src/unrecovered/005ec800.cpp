@@ -1,12 +1,7 @@
-// ORIGINAL: 0x005EC800 FILE
-// RULED-OUT: `a1+client_rect_.left+outer_rect_.left` left-to-right, and
-//   `(client_rect_.left+outer_rect_.left)+a1` grouped - both MISMATCH #9
-//   mov/add, a local-store scheduling difference around the x/y pair, not
-//   the arithmetic itself.
+// ORIGINAL: 0x005EC800 ?set_mouse_pos@Win@@QAEXHH@Z 0x005EC800-0x005EC89B FILE
+// RULED-OUT: `a1+client_rect_.left+outer_rect_.left` left-to-right, and `(client_rect_.left+outer_rect_.left)+a1` grouped - both MISMATCH #9 mov/add, a local-store scheduling difference around the x/y pair, not the arithmetic itself.
 // working copy - scaffold materialised by --work
-// name      ?set_mouse_pos@Win@@QAEXHH@Z
 // size      155 bytes
-// spans     0x005EC800-0x005EC89B
 // prototype void (__thiscall ?set_mouse_pos@Win@@QAEXHH@Z)(Win* this, int xCoord, int yCoord)
 // callers   0   call targets   1
 // kind      game

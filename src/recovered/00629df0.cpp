@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00629DF0 BYTE_EXACT
-// name      ?close@Flic@@QAEXXZ
+// ORIGINAL: 0x00629DF0 ?close@Flic@@QAEXXZ 0x00629DF0-0x00629E44 BYTE_EXACT
 // size      84 bytes
-// spans     0x00629DF0-0x00629E44
 // prototype void (__thiscall ?close@Flic@@QAEXXZ)(Flic* this)
 // callers   11   call targets   1
 // kind      game

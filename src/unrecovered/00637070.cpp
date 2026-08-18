@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00637070 BYTE_EXACT FILE
+// ORIGINAL: 0x00637070 Video_unk6 0x00637070-0x006370D2 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      Video_unk6
 // size      98 bytes
-// spans     0x00637070-0x006370D2
 // prototype 
 // callers   0   call targets   3
 // kind      game

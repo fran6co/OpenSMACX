@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005FD220 BYTE_EXACT FILE
-// name      ?flush_mouse@@YAXXZ
+// ORIGINAL: 0x005FD220 ?flush_mouse@@YAXXZ 0x005FD220-0x005FD27A FILE BYTE_EXACT
 // size      90 bytes
-// spans     0x005FD220-0x005FD27A
 // prototype 
 // callers   0   call targets   1
 // kind      game

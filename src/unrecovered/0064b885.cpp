@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064B885 EXCLUDED S1
-// name      __setargv
+// ORIGINAL: 0x0064B885 __setargv 0x0064B885-0x0064B91E EXCLUDED S1
 // size      153 bytes
-// spans     0x0064B885-0x0064B91E
 // prototype 
 // callers   1   call targets   4
 // kind      library

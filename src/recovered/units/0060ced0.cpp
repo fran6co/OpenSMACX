@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0060CED0 FILE
-// name      sub_60ced0
+// ORIGINAL: 0x0060CED0 sub_60ced0 0x0060CED0-0x0060CF01 FILE
 // size      49 bytes
-// spans     0x0060CED0-0x0060CF01
 // prototype 
 // callers   0   call targets   0
 // kind      game

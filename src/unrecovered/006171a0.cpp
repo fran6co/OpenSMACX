@@ -1,11 +1,7 @@
-// ORIGINAL: 0x006171A0 FILE
-// RULED-OUT: named locals for a1/a4/a6 to hint push order - callee-saved
-//            register allocation order (ebx/ebp/esi/edi) still differs from
-//            source order; only the prologue's push/mov sequencing diverges
+// ORIGINAL: 0x006171A0 ?render_multi_table_dest@Caviar@@QAEXPAUBuffer@@HHHPAEH@Z 0x006171A0-0x00617226 FILE
+// RULED-OUT: named locals for a1/a4/a6 to hint push order - callee-saved register allocation order (ebx/ebp/esi/edi) still differs from source order; only the prologue's push/mov sequencing diverges
 // working copy - scaffold materialised by --work
-// name      ?render_multi_table_dest@Caviar@@QAEXPAUBuffer@@HHHPAEH@Z
 // size      134 bytes
-// spans     0x006171A0-0x00617226
 // prototype void (__thiscall ?render_multi_table_dest@Caviar@@QAEXPAUBuffer@@HHHPAEH@Z)(Caviar* this, Buffer*, int, int, int, LPBYTE, int)
 // callers   8   call targets   5
 // kind      game

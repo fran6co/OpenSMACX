@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00592A80 FILE
-// name      ?set_dirty@@YAXXZ
+// ORIGINAL: 0x00592A80 ?set_dirty@@YAXXZ 0x00592A80-0x00592AE6 FILE
 // size      102 bytes
-// spans     0x00592A80-0x00592AE6
 // prototype 
 // callers   6   call targets   0
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004219E0 FILE
-// name      ?init@BattleWin@@QAEXXZ
+// ORIGINAL: 0x004219E0 ?init@BattleWin@@QAEXXZ 0x004219E0-0x00421B1F FILE
 // size      319 bytes
-// spans     0x004219E0-0x00421B1F
 // prototype void (__thiscall ?init@BattleWin@@QAEXXZ)(BattleWin* this)
 // callers   1   call targets   2
 // kind      game

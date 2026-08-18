@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00404EF0 FILE
+// ORIGINAL: 0x00404EF0 ?on_post_window_init@Popup@@QAEXXZ 0x00404EF0-0x00404F7A FILE
 // working copy - scaffold materialised by --work
-// name      ?on_post_window_init@Popup@@QAEXXZ
 // size      138 bytes
-// spans     0x00404EF0-0x00404F7A
 // prototype void (__thiscall ?on_post_window_init@Popup@@QAEXXZ)(Popup* this)
 // callers   0   call targets   3
 // kind      game

@@ -1,11 +1,6 @@
-// ORIGINAL: 0x005D2536 FILE
-// RULED-OUT: no C++ calling convention passes edi/esi/ebp as params with
-//   no prologue; __asm is banned, so the register-implicit entry (no
-//   push/pop, bare ret) cannot be reproduced byte-exact. Reshaped as
-//   three pointer params for a faithful (non-exact) transcription.
-// name      sub_5d2536
+// ORIGINAL: 0x005D2536 sub_5d2536 0x005D2536-0x005D271D FILE
+// RULED-OUT: no C++ calling convention passes edi/esi/ebp as params with no prologue; __asm is banned, so the register-implicit entry (no push/pop, bare ret) cannot be reproduced byte-exact. Reshaped as three pointer params for a faithful (non-exact) transcription.
 // size      487 bytes
-// spans     0x005D2536-0x005D271D
 // prototype 
 // callers   1   call targets   0
 // kind      game

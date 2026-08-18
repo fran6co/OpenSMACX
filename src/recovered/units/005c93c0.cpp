@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005C93C0 FILE
-// name      ?on_button_clicked@Gamma@@QAEXH@Z
+// ORIGINAL: 0x005C93C0 ?on_button_clicked@Gamma@@QAEXH@Z 0x005C93C0-0x005C9406 FILE
 // size      70 bytes
-// spans     0x005C93C0-0x005C9406
 // prototype void (__thiscall ?on_button_clicked@Gamma@@QAEXH@Z)(Gamma* this, int)
 // callers   0   call targets   0
 // kind      game

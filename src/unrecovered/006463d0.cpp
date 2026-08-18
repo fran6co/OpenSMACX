@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006463D0 EXCLUDED S1
-// name      __CIsin
+// ORIGINAL: 0x006463D0 __CIsin 0x006463D0-0x006463E4 EXCLUDED S1
 // size      20 bytes
-// spans     0x006463D0-0x006463E4
 // prototype 
 // callers   0   call targets   2
 // kind      library

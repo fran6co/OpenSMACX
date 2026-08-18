@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005EE9F0 FILE
+// ORIGINAL: 0x005EE9F0 sub_5ee9f0 0x005EE9F0-0x005EEA8E FILE
 // working copy - scaffold materialised by --work
-// name      sub_5ee9f0
 // size      158 bytes
-// spans     0x005EE9F0-0x005EEA8E
 // prototype 
 // callers   0   call targets   0
 // kind      game

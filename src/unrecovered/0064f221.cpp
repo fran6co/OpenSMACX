@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064F221 EXCLUDED S1
-// name      _siglookup
+// ORIGINAL: 0x0064F221 _siglookup 0x0064F221-0x0064F25E EXCLUDED S1
 // size      61 bytes
-// spans     0x0064F221-0x0064F25E
 // prototype 
 // callers   1   call targets   0
 // kind      library

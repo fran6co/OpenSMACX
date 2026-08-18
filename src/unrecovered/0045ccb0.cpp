@@ -1,8 +1,6 @@
-// ORIGINAL: 0x0045CCB0 FILE
+// ORIGINAL: 0x0045CCB0 ?on_iface_group_clicked@MainInterface@@QAEXHHH@Z 0x0045CCB0-0x0045CD75 FILE
 // working copy - scaffold materialised by --work
-// name      ?on_iface_group_clicked@MainInterface@@QAEXHHH@Z
 // size      197 bytes
-// spans     0x0045CCB0-0x0045CD75
 // prototype void (__thiscall ?on_iface_group_clicked@MainInterface@@QAEXHHH@Z)(MainInterface* this, int, int, int)
 // callers   1   call targets   4
 // kind      game

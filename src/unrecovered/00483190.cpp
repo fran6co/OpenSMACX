@@ -1,9 +1,7 @@
-// ORIGINAL: 0x00483190 FILE
+// ORIGINAL: 0x00483190 ?modal_callback@NetWin@@QAEHXZ 0x00483190-0x00483234 FILE
 // RULED-OUT: MISMATCH #2 mov/push, do/while call-site folding differs
 // working copy - scaffold materialised by --work
-// name      ?modal_callback@NetWin@@QAEHXZ
 // size      164 bytes
-// spans     0x00483190-0x00483234
 // prototype int (__thiscall ?modal_callback@NetWin@@QAEHXZ)(NetWin* this)
 // callers   0   call targets   1
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00435800 FILE
-// name      ?draw_reactor@DesignWin@@QAEXH@Z
+// ORIGINAL: 0x00435800 ?draw_reactor@DesignWin@@QAEXH@Z 0x00435800-0x00435B29 FILE
 // size      809 bytes
-// spans     0x00435800-0x00435B29
 // prototype void (__thiscall ?draw_reactor@DesignWin@@QAEXH@Z)(DesignWin* this, int)
 // callers   4   call targets   16
 // kind      game

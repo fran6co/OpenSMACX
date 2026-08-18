@@ -1,18 +1,12 @@
-// ORIGINAL: 0x005D0AAB FILE
+// ORIGINAL: 0x005D0AAB sub_5d0aab 0x005D0AAB-0x005D0D82 FILE
+// RULED-OUT: no prologue/epilogue in the original (falls into 0x5D0D82, no ret) - edi/esi/ebp are register-passed by one caller sharing its frame; no standalone C parameter list can receive that, so byte-exactness is not reachable here. Modelled as static globals a companion routine would set instead.
 // working copy - scaffold materialised by --work
-// name      sub_5d0aab
 // size      727 bytes
-// spans     0x005D0AAB-0x005D0D82
 // prototype 
 // callers   5   call targets   1
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D0D82
-// RULED-OUT: no prologue/epilogue in the original (falls into 0x5D0D82,
-//            no ret) - edi/esi/ebp are register-passed by one caller
-//            sharing its frame; no standalone C parameter list can receive
-//            that, so byte-exactness is not reachable here. Modelled as
-//            static globals a companion routine would set instead.
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: sub_5d0aab  at 0x005D0AAB  (727 bytes)

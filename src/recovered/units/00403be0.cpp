@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00403BE0 FILE
-// name      ?amovie_project@@YAXPAD@Z
+// ORIGINAL: 0x00403BE0 ?amovie_project@@YAXPAD@Z 0x00403BE0-0x0040400D;0x006505E0-0x006506DC FILE
 // size      1321 bytes
-// spans     0x00403BE0-0x0040400D;0x006505E0-0x006506DC
 // prototype 
 // callers   5   call targets   16
 // kind      game

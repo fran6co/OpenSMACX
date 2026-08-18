@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00476850 FILE
-// name      ?on_mouse_move@MonuWin@@QAEXHH@Z
+// ORIGINAL: 0x00476850 ?on_mouse_move@MonuWin@@QAEXHH@Z 0x00476850-0x004769A9 FILE
 // size      345 bytes
-// spans     0x00476850-0x004769A9
 // prototype void (__thiscall ?on_mouse_move@MonuWin@@QAEXHH@Z)(MonuWin* this, int xCoord, int yCoord)
 // callers   0   call targets   3
 // kind      game

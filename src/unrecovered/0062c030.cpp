@@ -1,12 +1,7 @@
-// ORIGINAL: 0x0062C030 BYTE_EXACT FILE
-// LEVER: reinterpret_cast<BaseButton*>(this)->close() for the zero-offset
-//        base call, then 18 individual field-by-field assignments from the
-//        18 fixed globals (fully unrolled in the original, no rep movsd),
-//        matching disasm order exactly.
+// ORIGINAL: 0x0062C030 ?close@PushButton@@QAEXXZ 0x0062C030-0x0062C10C FILE BYTE_EXACT
+// LEVER: reinterpret_cast<BaseButton*>(this)->close() for the zero-offset base call, then 18 individual field-by-field assignments from the 18 fixed globals (fully unrolled in the original, no rep movsd), matching disasm order exactly.
 // working copy - scaffold materialised by --work
-// name      ?close@PushButton@@QAEXXZ
 // size      220 bytes
-// spans     0x0062C030-0x0062C10C
 // prototype void (__thiscall ?close@PushButton@@QAEXXZ)(PushButton* this)
 // callers   0   call targets   1
 // kind      game

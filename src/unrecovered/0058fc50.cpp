@@ -1,8 +1,6 @@
-// ORIGINAL: 0x0058FC50 FILE
+// ORIGINAL: 0x0058FC50 ?get_him_her@@YAPADHH@Z 0x0058FC50-0x0058FCDB FILE
 // working copy - scaffold materialised by --work
-// name      ?get_him_her@@YAPADHH@Z
 // size      139 bytes
-// spans     0x0058FC50-0x0058FCDB
 // prototype 
 // callers   5   call targets   2
 // kind      game

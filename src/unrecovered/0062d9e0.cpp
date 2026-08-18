@@ -1,8 +1,6 @@
-// ORIGINAL: 0x0062D9E0 FILE
+// ORIGINAL: 0x0062D9E0 ?check_for_lobby@Net@@QAEHPADPAU_GUID@@HH@Z 0x0062D9E0-0x0062DF16 FILE
 // working copy - scaffold materialised by --work
-// name      ?check_for_lobby@Net@@QAEHPADPAU_GUID@@HH@Z
 // size      1334 bytes
-// spans     0x0062D9E0-0x0062DF16
 // prototype int (__thiscall ?check_for_lobby@Net@@QAEHPADPAU_GUID@@HH@Z)(Net* this, int8*, _GUID*, int, int)
 // callers   1   call targets   11
 // kind      game

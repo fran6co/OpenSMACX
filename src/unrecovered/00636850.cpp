@@ -1,13 +1,7 @@
-// ORIGINAL: 0x00636850 FILE
-// RULED-OUT: reads `[ecx+N]` with no matching stack `this` -> changed from
-//            the scaffold's free `__stdcall Video_unk3(int,int,int,int)` to
-//            a thiscall member (own `VideoSelf3` class, since this file's
-//            scaffold never declares `class Video`). Diverges at instr #16
-//            (original 'and' vs rebuilt 'mov') around the flags mask/store.
+// ORIGINAL: 0x00636850 Video_unk3 0x00636850-0x006368C8 FILE
+// RULED-OUT: reads `[ecx+N]` with no matching stack `this` -> changed from the scaffold's free `__stdcall Video_unk3(int,int,int,int)` to a thiscall member (own `VideoSelf3` class, since this file's scaffold never declares `class Video`). Diverges at instr #16 (original 'and' vs rebuilt 'mov') around the flags mask/store.
 // working copy - scaffold materialised by --work
-// name      Video_unk3
 // size      120 bytes
-// spans     0x00636850-0x006368C8
 // prototype 
 // callers   0   call targets   1
 // kind      game

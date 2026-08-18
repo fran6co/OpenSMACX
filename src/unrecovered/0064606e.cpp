@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064606E EXCLUDED S1
-// name      _fwrite
+// ORIGINAL: 0x0064606E _fwrite 0x0064606E-0x00646178 EXCLUDED S1
 // size      266 bytes
-// spans     0x0064606E-0x00646178
 // prototype 
 // callers   1   call targets   4
 // kind      library

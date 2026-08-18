@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00647B7B EXCLUDED S1
-// name      ___initstdio
+// ORIGINAL: 0x00647B7B ___initstdio 0x00647B7B-0x00647C23 EXCLUDED S1
 // size      168 bytes
-// spans     0x00647B7B-0x00647C23
 // prototype 
 // callers   0   call targets   2
 // kind      library

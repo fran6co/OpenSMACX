@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005AD470 BYTE_EXACT FILE
-// name      sub_5ad470
+// ORIGINAL: 0x005AD470 sub_5ad470 0x005AD470-0x005AD4C0 FILE BYTE_EXACT
 // size      80 bytes
-// spans     0x005AD470-0x005AD4C0
 // prototype 
 // callers   0   call targets   0
 // kind      game

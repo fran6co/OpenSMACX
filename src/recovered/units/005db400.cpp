@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005DB400 FILE
-// name      sub_5db400
+// ORIGINAL: 0x005DB400 sub_5db400 0x005DB400-0x005DB44F FILE
 // size      79 bytes
-// spans     0x005DB400-0x005DB44F
 // prototype 
 // callers   0   call targets   1
 // kind      game

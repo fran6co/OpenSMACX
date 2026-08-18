@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004CD2F0 FILE
-// name      ?action_destruct@@YAXH@Z
+// ORIGINAL: 0x004CD2F0 ?action_destruct@@YAXH@Z 0x004CD2F0-0x004CD4D1 FILE
 // size      481 bytes
-// spans     0x004CD2F0-0x004CD4D1
 // prototype void (__cdecl ?action_destruct@@YAXH@Z)(int vehID)
 // callers   2   call targets   8
 // kind      game

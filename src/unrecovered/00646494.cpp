@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00646494 EXCLUDED S1
-// name      _cos
+// ORIGINAL: 0x00646494 _cos 0x00646494-0x0064652E;0x0064A87E-0x0064A88B;0x0064A88B-0x0064A8B5 EXCLUDED S1
 // size      209 bytes
-// spans     0x00646494-0x0064652E;0x0064A87E-0x0064A88B;0x0064A88B-0x0064A8B5
 // prototype 
 // callers   6   call targets   3
 // kind      library

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00611A90 BYTE_EXACT FILE
-// name      ?close@EditGroup@@QAEXXZ
+// ORIGINAL: 0x00611A90 ?close@EditGroup@@QAEXXZ 0x00611A90-0x00611AF0 FILE BYTE_EXACT
 // size      96 bytes
-// spans     0x00611A90-0x00611AF0
 // prototype void (__thiscall ?close@EditGroup@@QAEXXZ)(EditGroup* this)
 // callers   9   call targets   2
 // kind      game

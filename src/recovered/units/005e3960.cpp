@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005E3960 BYTE_EXACT FILE
-// name      ?extract@Sprite@@QAEHPAUBuffer@@HPAURECT@@PAUTexHeap@@@Z
+// ORIGINAL: 0x005E3960 ?extract@Sprite@@QAEHPAUBuffer@@HPAURECT@@PAUTexHeap@@@Z 0x005E3960-0x005E399E FILE BYTE_EXACT
 // size      62 bytes
-// spans     0x005E3960-0x005E399E
 // prototype int (__thiscall ?extract@Sprite@@QAEHPAUBuffer@@HPAURECT@@PAUTexHeap@@@Z)(Sprite* this, Buffer*, int, RECT*, #120*)
 // callers   1   call targets   1
 // kind      game

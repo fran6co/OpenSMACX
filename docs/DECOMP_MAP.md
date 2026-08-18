@@ -25,17 +25,26 @@ and a human must place.
 ## The grammar
 
 One marker, valid in any comment form (`//` or inside `/* */`); the whole
-map is `grep -rn "ORIGINAL: 0x" src/`:
+map is `grep -rn "ORIGINAL: 0x" src/`. The marker NAMES the piece before
+saying how to read it: the mangled name and the image spans ride the
+marker line, ahead of the keywords — an annotation that cannot say what it
+names and where the piece ends in the image cannot be added. (Moved to
+this spelling 2026-08-18; the `// name` and `// spans` fact lines came
+out of the tree with it.)
 
 ```
-ORIGINAL: 0x00401640              the function definition that follows is
+ORIGINAL: 0x00401640 ?init@Game@@QAEHH@Z 0x00401640-0x00401B00
+                                  the function definition that follows is
                                   the decompiled body; it is extracted and
                                   measured in generated VC6 scaffolding
-ORIGINAL: 0x00403B70 FILE         the WHOLE file is the translation unit
+ORIGINAL: 0x00403B70 ?f@Win@@QAEXXZ 0x00403B70-0x00403F00 FILE
+                                  the WHOLE file is the translation unit
                                   for this address; compiled verbatim
-ORIGINAL: 0x0064A123 EXCLUDED S1  deliberately not decompiled; the token
+ORIGINAL: 0x0064A123 ?crt_init@@YAXXZ 0x0064A123-0x0064A130 EXCLUDED S1
+                                  deliberately not decompiled; the token
                                   cites the ground in docs/EXCLUSIONS.md
-ORIGINAL: 0x0046FB10 BYTE_EXACT   RATCHET CLAIM: this was proved to
+ORIGINAL: 0x0046FB10 ?g@@YAXXZ 0x0046FB10-0x0046FB40 BYTE_EXACT
+                                  RATCHET CLAIM: this was proved to
                                   recompile to the shipped bytes, and
                                   `--check` fails if it stops
 ```

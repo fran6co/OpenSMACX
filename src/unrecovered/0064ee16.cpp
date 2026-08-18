@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064EE16 EXCLUDED S1
-// name      _CPtoLCID
+// ORIGINAL: 0x0064EE16 _CPtoLCID 0x0064EE16-0x0064EE49 EXCLUDED S1
 // size      51 bytes
-// spans     0x0064EE16-0x0064EE49
 // prototype 
 // callers   1   call targets   0
 // kind      library

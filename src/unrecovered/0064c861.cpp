@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064C861 EXCLUDED S1
-// name      __get_fname
+// ORIGINAL: 0x0064C861 __get_fname 0x0064C861-0x0064C886 EXCLUDED S1
 // size      37 bytes
-// spans     0x0064C861-0x0064C886
 // prototype 
 // callers   1   call targets   0
 // kind      library

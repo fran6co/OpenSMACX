@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00644F3A EXCLUDED S1
-// name      _abs
+// ORIGINAL: 0x00644F3A _abs 0x00644F3A-0x00644F45 EXCLUDED S1
 // size      11 bytes
-// spans     0x00644F3A-0x00644F45
 // prototype 
 // callers   126   call targets   0
 // kind      library

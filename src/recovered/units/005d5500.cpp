@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005D5500 BYTE_EXACT FILE
-// name      ?load_pcx@GraphicWin@@QAEHPADPAUPalette@@HH@Z
+// ORIGINAL: 0x005D5500 ?load_pcx@GraphicWin@@QAEHPADPAUPalette@@HH@Z 0x005D5500-0x005D5536 FILE BYTE_EXACT
 // size      54 bytes
-// spans     0x005D5500-0x005D5536
 // prototype int (__thiscall ?load_pcx@GraphicWin@@QAEHPADPAUPalette@@HH@Z)(GraphicWin* this, int8* lpszFileName, Palette*, int, int)
 // callers   2   call targets   1
 // kind      game

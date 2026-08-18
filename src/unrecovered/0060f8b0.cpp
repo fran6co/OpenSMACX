@@ -1,29 +1,12 @@
-// ORIGINAL: 0x0060F8B0
-// name      ?on_key_down@CheckBox@@QAEHH@Z
+// ORIGINAL: 0x0060F8B0 ?on_key_down@CheckBox@@QAEHH@Z 0x0060F8B0-0x0060FA18
+// RULED-OUT: same shape as sibling 0x0060E020 (RadioButton::on_key_down): `this` arrives adjusted to the GraphicWin virtual base (`this-0x1c` recovers CheckBox's own start), and field access goes through an adjustor offset read from CheckBox's own vtable slots 1/2. Unlike RadioButton, the "current bit index" field (`this-0x18`) and the callback pointer (`this-0x14`) are DIRECT fields needing no adjustor, while the flags dword at `off2+0xec` is addressed off `edi` (the true CheckBox base) and the count/page-size fields at `off2+0xb0`/`off2+0x3c` are addressed off `esi` (the adjusted GraphicWin pointer) - kept that distinction since it is visible in the disassembly. The key-range switch (VK_SPACE..VK_NUMPAD8) case labels (1, 3, 0x50, 0x52, 0x54) are a guess at the mapping, same caveat as the RadioButton sibling - the jump/case-index table bytes are not in the brief. 0.89 mnemonic similarity, first divergence at #24.
 // size      360 bytes
-// spans     0x0060F8B0-0x0060FA18
 // prototype int (__thiscall ?on_key_down@CheckBox@@QAEHH@Z)(CheckBox* this, int)
 // callers   1   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D5890 0x0060F030
 // indirect  0x0060F9D1
-// RULED-OUT: same shape as sibling 0x0060E020 (RadioButton::on_key_down):
-//            `this` arrives adjusted to the GraphicWin virtual base
-//            (`this-0x1c` recovers CheckBox's own start), and field access
-//            goes through an adjustor offset read from CheckBox's own
-//            vtable slots 1/2. Unlike RadioButton, the "current bit index"
-//            field (`this-0x18`) and the callback pointer (`this-0x14`)
-//            are DIRECT fields needing no adjustor, while the flags dword
-//            at `off2+0xec` is addressed off `edi` (the true CheckBox base)
-//            and the count/page-size fields at `off2+0xb0`/`off2+0x3c` are
-//            addressed off `esi` (the adjusted GraphicWin pointer) - kept
-//            that distinction since it is visible in the disassembly. The
-//            key-range switch (VK_SPACE..VK_NUMPAD8) case labels (1, 3,
-//            0x50, 0x52, 0x54) are a guess at the mapping, same caveat as
-//            the RadioButton sibling - the jump/case-index table bytes are
-//            not in the brief. 0.89 mnemonic similarity, first divergence
-//            at #24.
 
 static int *const g_009b7ab8 = (int *)0x009B7AB8;
 

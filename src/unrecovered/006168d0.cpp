@@ -1,10 +1,7 @@
-// ORIGINAL: 0x006168D0 BYTE_EXACT FILE
-// LEVER: base Heap() ctor runs implicitly first; is_populated_ = 0 in the
-//        body matches the disassembly's store order
+// ORIGINAL: 0x006168D0 ??0Strings@@QAE@XZ 0x006168D0-0x006168E3 FILE BYTE_EXACT
+// LEVER: base Heap() ctor runs implicitly first; is_populated_ = 0 in the body matches the disassembly's store order
 // working copy - scaffold materialised by --work
-// name      ??0Strings@@QAE@XZ
 // size      19 bytes
-// spans     0x006168D0-0x006168E3
 // prototype void (__thiscall ??0Strings@@QAE@XZ)(Strings* this)
 // callers   1   call targets   1
 // kind      game

@@ -1,11 +1,7 @@
-// ORIGINAL: 0x0063AE20 BYTE_EXACT FILE
-// LEVER: switch(type){case 1: case 2: default:} reproduces the dec/je/dec/jne
-//        idiom; if/else-if compiled to cmp/jne instead. Signature is really
-//        void __cdecl sub_63ae20(unsigned char *param_1), not int __cdecl().
+// ORIGINAL: 0x0063AE20 sub_63ae20 0x0063AE20-0x0063AED2 FILE BYTE_EXACT
+// LEVER: switch(type){case 1: case 2: default:} reproduces the dec/je/dec/jne idiom; if/else-if compiled to cmp/jne instead. Signature is really void __cdecl sub_63ae20(unsigned char *param_1), not int __cdecl().
 // working copy - scaffold materialised by --work
-// name      sub_63ae20
 // size      178 bytes
-// spans     0x0063AE20-0x0063AED2
 // prototype 
 // callers   1   call targets   0
 // kind      game

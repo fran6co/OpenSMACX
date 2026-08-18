@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005FF280 FILE
-// name      ?UNK7@Palette@@QAEHHHHHHH@Z
+// ORIGINAL: 0x005FF280 ?UNK7@Palette@@QAEHHHHHHH@Z 0x005FF280-0x005FF46B FILE
 // size      491 bytes
-// spans     0x005FF280-0x005FF46B
 // prototype int (__thiscall ?UNK7@Palette@@QAEHHHHHHH@Z)(Palette* this, int, int, int, int, int, int)
 // callers   1   call targets   0
 // kind      game

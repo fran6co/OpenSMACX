@@ -1,20 +1,13 @@
-// ORIGINAL: 0x00637910 FILE
+// ORIGINAL: 0x00637910 ?decode_frame@Video@@QAEHH@Z 0x00637910-0x00637C26 FILE
+// RULED-OUT: MISMATCH #42 'mov' vs 'and' - transcribed the Ghidra decompile directly, sub_63e7f0/sub_63e820 redeclared to take the receiver (self+0xA5C) as an explicit int since a free-function thiscall can't be spelled without a helper class; matches structurally through the first ~40 instructions before diverging, not chased further.
 // working copy - scaffold materialised by --work
-// name      ?decode_frame@Video@@QAEHH@Z
 // size      790 bytes
-// spans     0x00637910-0x00637C26
 // prototype int (__thiscall ?decode_frame@Video@@QAEHH@Z)(Video* this, int)
 // callers   8   call targets   7
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005DFF00 0x005E3373 0x00626250 0x006262F0 0x0063E7F0 0x0063E820 0x00644DC6
 // indirect  0x006379DC 0x00637B74 0x00637BF7
-// RULED-OUT: MISMATCH #42 'mov' vs 'and' - transcribed the Ghidra decompile
-//            directly, sub_63e7f0/sub_63e820 redeclared to take the receiver
-//            (self+0xA5C) as an explicit int since a free-function thiscall
-//            can't be spelled without a helper class; matches structurally
-//            through the first ~40 instructions before diverging, not chased
-//            further.
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?decode_frame@Video@@QAEHH@Z  at 0x00637910  (790 bytes)

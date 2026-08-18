@@ -1,11 +1,7 @@
-// ORIGINAL: 0x00616200 BYTE_EXACT FILE
-// LEVER: two indirect calls through fixed function-pointer slots, gated on
-//        count_ < 0x32; store order matches declaration except resolution_
-//        gets the immediate 5, not 0
+// ORIGINAL: 0x00616200 ??1Time@@QAE@XZ 0x00616200-0x00616260 FILE BYTE_EXACT
+// LEVER: two indirect calls through fixed function-pointer slots, gated on count_ < 0x32; store order matches declaration except resolution_ gets the immediate 5, not 0
 // working copy - scaffold materialised by --work
-// name      ??1Time@@QAE@XZ
 // size      96 bytes
-// spans     0x00616200-0x00616260
 // prototype void (__thiscall ??1Time@@QAE@XZ)(Time* this)
 // callers   30   call targets   1
 // kind      game

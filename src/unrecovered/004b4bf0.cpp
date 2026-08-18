@@ -1,8 +1,6 @@
-// ORIGINAL: 0x004B4BF0 BYTE_EXACT FILE
+// ORIGINAL: 0x004B4BF0 ?draw_my_dest@@YAXH@Z 0x004B4BF0-0x004B4CC5 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?draw_my_dest@@YAXH@Z
 // size      213 bytes
-// spans     0x004B4BF0-0x004B4CC5
 // prototype 
 // callers   2   call targets   3
 // kind      game

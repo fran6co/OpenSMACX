@@ -1,14 +1,7 @@
-// ORIGINAL: 0x004DF4F0 FILE
-// RULED-OUT: same raw-buffer + AT(offset) reinterpret_cast approach as 0x005AB600
-//            (Popup/BasePop/Scroll/FlatButton sizes uncertain in this scaffold);
-//            VCall::slot001 retyped to take an int (the disasm pushes one arg only
-//            on that branch, none on slot002). Compiles, right call order/args/
-//            offsets, sim up to 0.60. No SEH frame, so byte-exact ruled out; not
-//            retried given size (1822 bytes).
+// ORIGINAL: 0x004DF4F0 ?editor_view@Console@@QAEXXZ 0x004DF4F0-0x004DFAD0;0x0065BE73-0x0065BFB1 FILE
+// RULED-OUT: same raw-buffer + AT(offset) reinterpret_cast approach as 0x005AB600 (Popup/BasePop/Scroll/FlatButton sizes uncertain in this scaffold); VCall::slot001 retyped to take an int (the disasm pushes one arg only on that branch, none on slot002). Compiles, right call order/args/ offsets, sim up to 0.60. No SEH frame, so byte-exact ruled out; not retried given size (1822 bytes).
 // working copy - scaffold materialised by --work
-// name      ?editor_view@Console@@QAEXXZ
 // size      1822 bytes
-// spans     0x004DF4F0-0x004DFAD0;0x0065BE73-0x0065BFB1
 // prototype void (__thiscall ?editor_view@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   27
 // kind      game

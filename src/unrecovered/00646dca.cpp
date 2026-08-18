@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00646DCA EXCLUDED S1
-// name      _fast_error_exit
+// ORIGINAL: 0x00646DCA _fast_error_exit 0x00646DCA-0x00646DEE EXCLUDED S1
 // size      36 bytes
-// spans     0x00646DCA-0x00646DEE
 // prototype int (__cdecl _fast_error_exit)(DWORD NumberOfBytesWritten)
 // callers   1   call targets   2
 // kind      library

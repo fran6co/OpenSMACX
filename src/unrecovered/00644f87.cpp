@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00644F87 EXCLUDED S1
-// name      ?_UnwindNestedFrames@@YGXPAUEHRegistrationNode@@PAUEHExceptionRecord@@@Z
+// ORIGINAL: 0x00644F87 ?_UnwindNestedFrames@@YGXPAUEHRegistrationNode@@PAUEHExceptionRecord@@@Z 0x00644F87-0x00644FD6 EXCLUDED S1
 // size      79 bytes
-// spans     0x00644F87-0x00644FD6
 // prototype void (__stdcall ?_UnwindNestedFrames@@YGXPAUEHRegistrationNode@@PAUEHExceptionRecord@@@Z)(PVOID TargetFrame, PEXCEPTION_RECORD ExceptionRecord)
 // callers   2   call targets   1
 // kind      library

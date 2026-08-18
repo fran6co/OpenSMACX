@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004CEDE0 FILE
-// name      ?action_give@@YAXHH@Z
+// ORIGINAL: 0x004CEDE0 ?action_give@@YAXHH@Z 0x004CEDE0-0x004CF379 FILE
 // size      1433 bytes
-// spans     0x004CEDE0-0x004CF379
 // prototype void (__cdecl ?action_give@@YAXHH@Z)(int vehID, int protoID)
 // callers   3   call targets   9
 // kind      game

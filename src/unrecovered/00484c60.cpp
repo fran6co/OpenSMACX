@@ -1,18 +1,7 @@
-// ORIGINAL: 0x00484C60 FILE
-// RULED-OUT: full transcription of all branches/tables/calls (~95% of
-//            instructions); approximated the StringStruct/StringList
-//            entry-teardown loop (~0x00485EB0-0x00485F9C, ~9% of the
-//            function) as a simplified linked-list walk instead of the
-//            adjustor-thunk virtual dispatch the disassembly performs,
-//            since the scaffold's StringStruct/StringList carry no
-//            vtable to reproduce it exactly; find_font/mandate_color
-//            call sites re-derived from raw push/pop counts against the
-//            declared 2-arg/1-arg signatures rather than Ghidra's
-//            (wrong) 3-arg/4-arg attribution of leftover stack pushes.
+// ORIGINAL: 0x00484C60 ?draw_tech@PickTech@@QAEHHPAURECT@@H@Z 0x00484C60-0x00485FBD;0x0065766C-0x006576A0 FILE
+// RULED-OUT: full transcription of all branches/tables/calls (~95% of instructions); approximated the StringStruct/StringList entry-teardown loop (~0x00485EB0-0x00485F9C, ~9% of the function) as a simplified linked-list walk instead of the adjustor-thunk virtual dispatch the disassembly performs, since the scaffold's StringStruct/StringList carry no vtable to reproduce it exactly; find_font/mandate_color call sites re-derived from raw push/pop counts against the declared 2-arg/1-arg signatures rather than Ghidra's (wrong) 3-arg/4-arg attribution of leftover stack pushes.
 // working copy - scaffold materialised by --work
-// name      ?draw_tech@PickTech@@QAEHHPAURECT@@H@Z
 // size      5009 bytes
-// spans     0x00484C60-0x00485FBD;0x0065766C-0x006576A0
 // prototype int (__thiscall ?draw_tech@PickTech@@QAEHHPAURECT@@H@Z)(PickTech* this, int, RECT*, int)
 // callers   1   call targets   25
 // kind      game

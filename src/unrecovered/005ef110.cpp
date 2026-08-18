@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005EF110 BYTE_EXACT FILE
-// name      ?nonclient_to_client@Win@@QAEXPAURECT@@@Z
+// ORIGINAL: 0x005EF110 ?nonclient_to_client@Win@@QAEXPAURECT@@@Z 0x005EF110-0x005EF1D1 FILE BYTE_EXACT
 // size      193 bytes
-// spans     0x005EF110-0x005EF1D1
 // prototype void (__thiscall ?nonclient_to_client@Win@@QAEXPAURECT@@@Z)(Win* this, RECT*)
 // callers   2   call targets   0
 // kind      

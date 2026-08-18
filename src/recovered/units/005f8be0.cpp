@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005F8BE0 FILE
-// name      ?add_separator@PullDown@@QAEHH@Z
+// ORIGINAL: 0x005F8BE0 ?add_separator@PullDown@@QAEHH@Z 0x005F8BE0-0x005F8C81 FILE
 // size      161 bytes
-// spans     0x005F8BE0-0x005F8C81
 // prototype int (__thiscall ?add_separator@PullDown@@QAEHH@Z)(PullDown* this, int)
 // callers   10   call targets   0
 // kind      game

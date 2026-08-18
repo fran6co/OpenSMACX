@@ -1,17 +1,7 @@
-// ORIGINAL: 0x005258C0 FILE
-// RULED-OUT: transcribed directly from Ghidra's decompile (already correct,
-//   self-consistent short*/uint* pointer arithmetic throughout), fixing only
-//   DAT_/FUN_ names against the catalogue (all ~25 callees were already
-//   declared with matching signatures) and CharUpperA (undeclared IAT slot
-//   at 0x66931C, called through a typed function-pointer global).
-//   MapWin::main_caption()'s receiver is `*g_007d3c3c`, confirmed against
-//   src/console.cpp's own use of the same slot. Framed build compiles and
-//   matches through instr #3 (mov vs push), sim 0.75 - not chased further,
-//   very large orchestration function, landed for coverage.
+// ORIGINAL: 0x005258C0 ?turn_upkeep@@YAXXZ 0x005258C0-0x0052602D FILE
+// RULED-OUT: transcribed directly from Ghidra's decompile (already correct, self-consistent short*/uint* pointer arithmetic throughout), fixing only DAT_/FUN_ names against the catalogue (all ~25 callees were already declared with matching signatures) and CharUpperA (undeclared IAT slot at 0x66931C, called through a typed function-pointer global). MapWin::main_caption()'s receiver is `*g_007d3c3c`, confirmed against src/console.cpp's own use of the same slot. Framed build compiles and matches through instr #3 (mov vs push), sim 0.75 - not chased further, very large orchestration function, landed for coverage.
 // working copy - scaffold materialised by --work
-// name      ?turn_upkeep@@YAXXZ
 // size      1901 bytes
-// spans     0x005258C0-0x0052602D
 // prototype 
 // callers   2   call targets   28
 // kind      game

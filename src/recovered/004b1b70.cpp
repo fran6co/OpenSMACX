@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004B1B70 BYTE_EXACT
-// name      ?bubble_me_elmo2@SocialWin@@QAGXPADHH@Z
+// ORIGINAL: 0x004B1B70 ?bubble_me_elmo2@SocialWin@@QAGXPADHH@Z 0x004B1B70-0x004B1BB2 BYTE_EXACT
 // size      66 bytes
-// spans     0x004B1B70-0x004B1BB2
 // prototype void (__stdcall ?bubble_me_elmo2@SocialWin@@QAGXPADHH@Z)(SocialWin* this, int8*, int, int)
 // callers   0   call targets   2
 // kind      game

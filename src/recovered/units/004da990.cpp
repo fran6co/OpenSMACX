@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004DA990 FILE
-// name      ?read_check@DipEdit@@QAEXXZ
+// ORIGINAL: 0x004DA990 ?read_check@DipEdit@@QAEXXZ 0x004DA990-0x004DAD9B FILE
 // size      1035 bytes
-// spans     0x004DA990-0x004DAD9B
 // prototype void (__thiscall ?read_check@DipEdit@@QAEXXZ)(DipEdit* this)
 // callers   2   call targets   8
 // kind      game

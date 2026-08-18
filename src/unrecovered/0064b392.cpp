@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064B392 EXCLUDED S1
-// name      _expbigret
+// ORIGINAL: 0x0064B392 _expbigret 0x0064B392-0x0064B393 EXCLUDED S1
 // size      1 bytes
-// spans     0x0064B392-0x0064B393
 // prototype 
 // callers   0   call targets   0
 // kind      library

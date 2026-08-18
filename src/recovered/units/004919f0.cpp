@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004919F0 FILE
-// name      ?change_volume_button_state@PrefWin@@QAEXH@Z
+// ORIGINAL: 0x004919F0 ?change_volume_button_state@PrefWin@@QAEXH@Z 0x004919F0-0x00491BE9 FILE
 // size      505 bytes
-// spans     0x004919F0-0x00491BE9
 // prototype void (__thiscall ?change_volume_button_state@PrefWin@@QAEXH@Z)(PrefWin* this, int)
 // callers   1   call targets   6
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004E2490 FILE
-// name      ??0AlphaNet@@QAE@XZ
+// ORIGINAL: 0x004E2490 ??0AlphaNet@@QAE@XZ 0x004E2490-0x004E25A5;0x0065C610-0x0065C630 FILE
 // size      309 bytes
-// spans     0x004E2490-0x004E25A5;0x0065C610-0x0065C630
 // prototype void (__thiscall ??0AlphaNet@@QAE@XZ)(AlphaNet* this)
 // callers   1   call targets   2
 // kind      game

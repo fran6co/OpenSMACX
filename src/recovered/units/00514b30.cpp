@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00514B30 FILE
-// name      ?retire_game@Console@@QAEXXZ
+// ORIGINAL: 0x00514B30 ?retire_game@Console@@QAEXXZ 0x00514B30-0x00514D2B FILE
 // size      507 bytes
-// spans     0x00514B30-0x00514D2B
 // prototype void (__thiscall ?retire_game@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   13
 // kind      game

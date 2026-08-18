@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004C8BD0 BYTE_EXACT FILE
-// name      ?release@VoiceRx@@QAEHXZ
+// ORIGINAL: 0x004C8BD0 ?release@VoiceRx@@QAEHXZ 0x004C8BD0-0x004C8C18 FILE BYTE_EXACT
 // size      72 bytes
-// spans     0x004C8BD0-0x004C8C18
 // prototype int (__thiscall ?release@VoiceRx@@QAEHXZ)(VoiceRx* this)
 // callers   0   call targets   0
 // kind      game

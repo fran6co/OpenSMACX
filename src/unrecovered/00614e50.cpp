@@ -1,13 +1,12 @@
-// ORIGINAL: 0x00614E50 FILE
-// name      ??0EditBox@@QAE@XZ
+// ORIGINAL: 0x00614E50 ??0EditBox@@QAE@XZ 0x00614E50-0x00614F2C;0x00663130-0x00663142 FILE
+// RULED-OUT: the scaffold's own opaque `EditBox` (padded only to the highest
+// RULED-OUT: expected /GX to auto-generate the original's SEH prologue
 // size      238 bytes
-// spans     0x00614E50-0x00614F2C;0x00663130-0x00663142
 // prototype void (__thiscall ??0EditBox@@QAE@XZ)(EditBox* this)
 // callers   5   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D4CF0 0x006161D0
-// RULED-OUT: the scaffold's own opaque `EditBox` (padded only to the highest
 // offset THIS constructor's own field writes reach, 0xB48) has no
 // GraphicWin base or Time member, so out-of-line member access needs a
 // real class. FILE mode: this declares EditBox itself, in place of the
@@ -19,7 +18,6 @@
 // declaration order) - vtable installs, then 0xa14, 0xb14, 0xb28, 0xb2c,
 // 0xb30, 0xb34, 0xb1c, 0xb20, 0xb38, 0xb24, 0xb40, 0xb44, 0xb48, 0xb18,
 // 0xb3c.
-// RULED-OUT: expected /GX to auto-generate the original's SEH prologue
 // (`push -1; push &LAB_663138; mov eax,fs:[0]; push eax; mov fs:[0],esp`)
 // around the GraphicWin-then-Time construction purely from having a base
 // class plus a member, the way the brief's own Ghidra decompile shows

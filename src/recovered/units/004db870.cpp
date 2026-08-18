@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004DB870 FILE
-// name      ?editor_diplomacy@Console@@QAEXXZ
+// ORIGINAL: 0x004DB870 ?editor_diplomacy@Console@@QAEXXZ 0x004DB870-0x004DBB40;0x0065B469-0x0065B55F FILE
 // size      966 bytes
-// spans     0x004DB870-0x004DBB40;0x0065B469-0x0065B55F
 // prototype void (__thiscall ?editor_diplomacy@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   22
 // kind      game

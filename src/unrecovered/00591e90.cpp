@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00591E90 FILE
+// ORIGINAL: 0x00591E90 sub_591e90 0x00591E90-0x00591EF9 FILE
 // working copy - scaffold materialised by --work
-// name      sub_591e90
 // size      105 bytes
-// spans     0x00591E90-0x00591EF9
 // prototype 
 // callers   0   call targets   0
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0041AF50 BYTE_EXACT
-// name      ?on_key_click@BaseWin@@QAEXHH@Z
+// ORIGINAL: 0x0041AF50 ?on_key_click@BaseWin@@QAEXHH@Z 0x0041AF50-0x0041AF69 BYTE_EXACT
 // size      25 bytes
-// spans     0x0041AF50-0x0041AF69
 // prototype void (__thiscall ?on_key_click@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
 // callers   0   call targets   1
 // kind      game

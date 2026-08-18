@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064B91E EXCLUDED S1
-// name      _parse_cmdline
+// ORIGINAL: 0x0064B91E _parse_cmdline 0x0064B91E-0x0064BAD2 EXCLUDED S1
 // size      436 bytes
-// spans     0x0064B91E-0x0064BAD2
 // prototype 
 // callers   1   call targets   0
 // kind      library

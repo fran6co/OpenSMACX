@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004C7DD0 BYTE_EXACT
-// name      ?load@Midi@@QAEHXZ
+// ORIGINAL: 0x004C7DD0 ?load@Midi@@QAEHXZ 0x004C7DD0-0x004C7E1B BYTE_EXACT
 // size      75 bytes
-// spans     0x004C7DD0-0x004C7E1B
 // prototype int (__thiscall ?load@Midi@@QAEHXZ)(Midi* this)
 // callers   0   call targets   1
 // kind      game

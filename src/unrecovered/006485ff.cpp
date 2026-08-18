@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006485FF EXCLUDED S1
-// name      ___sbh_resize_block
+// ORIGINAL: 0x006485FF ___sbh_resize_block 0x006485FF-0x006488F5 EXCLUDED S1
 // size      758 bytes
-// spans     0x006485FF-0x006488F5
 // prototype 
 // callers   1   call targets   0
 // kind      library

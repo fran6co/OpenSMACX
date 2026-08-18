@@ -1,19 +1,7 @@
-// ORIGINAL: 0x00514F50 FILE
-// RULED-OUT: MISMATCH, closest at 171/191 bytes (mnemonic_similarity 0.80).
-//            The index*0x20CC (=2099*4) computation matches through the
-//            shift/add/lea chain exactly, but VC6 then defers the final
-//            `shl esi,2` into a `[eax*4+CONST]` SIB scale on each of the
-//            four field loads/stores instead of materialising the full
-//            byte offset once (as original does) - tried both a
-//            sizeof(struct)-scaled array index and an explicit
-//            `a1 * 0x20CC` byte-offset multiply into a `char*`, same
-//            fold either way. Not chased further; some earlier
-//            expression must have kept `esi` un-inferrable as a
-//            multiple of 4 to the original's compiler.
+// ORIGINAL: 0x00514F50 ?set_ai@Console@@QAEXH@Z 0x00514F50-0x0051500F FILE
+// RULED-OUT: MISMATCH, closest at 171/191 bytes (mnemonic_similarity 0.80). The index*0x20CC (=2099*4) computation matches through the shift/add/lea chain exactly, but VC6 then defers the final `shl esi,2` into a `[eax*4+CONST]` SIB scale on each of the four field loads/stores instead of materialising the full byte offset once (as original does) - tried both a sizeof(struct)-scaled array index and an explicit `a1 * 0x20CC` byte-offset multiply into a `char*`, same fold either way. Not chased further; some earlier expression must have kept `esi` un-inferrable as a multiple of 4 to the original's compiler.
 // working copy - scaffold materialised by --work
-// name      ?set_ai@Console@@QAEXH@Z
 // size      191 bytes
-// spans     0x00514F50-0x0051500F
 // prototype void (__thiscall ?set_ai@Console@@QAEXH@Z)(Console* this, int factionID)
 // callers   3   call targets   2
 // kind      game

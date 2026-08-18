@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00634C30 FILE
+// ORIGINAL: 0x00634C30 ?save@FileBox@@QAEXXZ 0x00634C30-0x00634CEE FILE
 // working copy - scaffold materialised by --work
-// name      ?save@FileBox@@QAEXXZ
 // size      190 bytes
-// spans     0x00634C30-0x00634CEE
 // prototype void (__thiscall ?save@FileBox@@QAEXXZ)(FileBox* this)
 // callers   2   call targets   2
 // kind      game

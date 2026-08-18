@@ -1,16 +1,7 @@
-// ORIGINAL: 0x005F2680 FILE
-// RULED-OUT: the auto-scaffold's `VCall` shim fixes every slot to `void()`,
-//            so slot023's return value (tested with `test eax,eax` after
-//            the call) can't be read through it (C2120, void compared to
-//            0). Declared a second, unused-by-the-scaffold `MyVCall` shim
-//            with the same slot layout but `int slot023()`. `return 0`
-//            after the SC_CLOSE branch adds an extra "xor eax,eax" the
-//            original's bare tail doesn't have (#46, both early-return and
-//            nested-if forms land the same divergence).
+// ORIGINAL: 0x005F2680 ?OnSysCommand@Win@@QAAHPAXIHH@Z 0x005F2680-0x005F26FF FILE
+// RULED-OUT: the auto-scaffold's `VCall` shim fixes every slot to `void()`, so slot023's return value (tested with `test eax,eax` after the call) can't be read through it (C2120, void compared to 0). Declared a second, unused-by-the-scaffold `MyVCall` shim with the same slot layout but `int slot023()`. `return 0` after the SC_CLOSE branch adds an extra "xor eax,eax" the original's bare tail doesn't have (#46, both early-return and nested-if forms land the same divergence).
 // working copy - scaffold materialised by --work
-// name      ?OnSysCommand@Win@@QAAHPAXIHH@Z
 // size      127 bytes
-// spans     0x005F2680-0x005F26FF
 // prototype int (__cdecl ?OnSysCommand@Win@@QAAHPAXIHH@Z)(HWND hWnd, WPARAM wParam, int, int)
 // callers   0   call targets   0
 // kind      game

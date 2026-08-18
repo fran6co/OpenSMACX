@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00404200 BYTE_EXACT
-// name      ?UNK1@AlphaMovie@@QAEXXZ
+// ORIGINAL: 0x00404200 ?UNK1@AlphaMovie@@QAEXXZ 0x00404200-0x00404208 BYTE_EXACT
 // size      8 bytes
-// spans     0x00404200-0x00404208
 // prototype void (__thiscall ?UNK1@AlphaMovie@@QAEXXZ)(AlphaMovie* this)
 // callers   0   call targets   0
 // kind      game

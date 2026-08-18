@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0062A500 FILE
-// name      ?decode_byte_run@Flic@@QAEXXZ
+// ORIGINAL: 0x0062A500 ?decode_byte_run@Flic@@QAEXXZ 0x0062A500-0x0062A70F FILE
 // size      527 bytes
-// spans     0x0062A500-0x0062A70F
 // prototype void (__thiscall ?decode_byte_run@Flic@@QAEXXZ)(Flic* this)
 // callers   1   call targets   6
 // kind      game

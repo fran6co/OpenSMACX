@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0047E340 FILE
-// name      ?pick_global_diff@NetWin@@QAEXXZ
+// ORIGINAL: 0x0047E340 ?pick_global_diff@NetWin@@QAEXXZ 0x0047E340-0x0047E640;0x00656E75-0x00656F4D FILE
 // size      984 bytes
-// spans     0x0047E340-0x0047E640;0x00656E75-0x00656F4D
 // prototype void (__thiscall ?pick_global_diff@NetWin@@QAEXXZ)(NetWin* this)
 // callers   1   call targets   26
 // kind      game

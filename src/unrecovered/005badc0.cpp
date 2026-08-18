@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005BADC0 FILE
+// ORIGINAL: 0x005BADC0 ?tech_secret@@YAXHH@Z 0x005BADC0-0x005BAE54 FILE
 // working copy - scaffold materialised by --work
-// name      ?tech_secret@@YAXHH@Z
 // size      148 bytes
-// spans     0x005BADC0-0x005BAE54
 // prototype void (__cdecl ?tech_secret@@YAXHH@Z)(int techID, int factionID)
 // callers   0   call targets   5
 // kind      game

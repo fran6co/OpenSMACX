@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0055EEE0 FILE
-// name      ?atrocity@@YAXHHHH@Z
+// ORIGINAL: 0x0055EEE0 ?atrocity@@YAXHHHH@Z 0x0055EEE0-0x0055F44F FILE
 // size      1391 bytes
-// spans     0x0055EEE0-0x0055F44F
 // prototype void (__cdecl ?atrocity@@YAXHHHH@Z)(int factionID1, int factionID2, int, int)
 // callers   4   call targets   11
 // kind      game

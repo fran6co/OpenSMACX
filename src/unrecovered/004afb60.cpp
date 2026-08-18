@@ -1,16 +1,7 @@
-// ORIGINAL: 0x004AFB60 FILE
-// RULED-OUT: checked the return-type flag directly - the disassembly has
-//            exactly ONE `ret` (0x004B0404), reached only via fallthrough
-//            after `call set_clip`, with no `mov eax,N` immediately before
-//            it and no early-exit paths. The 4/0x28/0x50 values the audit
-//            saw are percentage-bar clamp bounds (`if (v>0x28) v=0x28`
-//            etc.), not return-value setup; `void` stands. Reaches
-//            MISMATCH #4 'mov' vs 'push' (register/stack allocation),
-//            not chased further given size (2213 bytes).
+// ORIGINAL: 0x004AFB60 ?draw_info@SocialWin@@QAEXXZ 0x004AFB60-0x004B0405 FILE
+// RULED-OUT: checked the return-type flag directly - the disassembly has exactly ONE `ret` (0x004B0404), reached only via fallthrough after `call set_clip`, with no `mov eax,N` immediately before it and no early-exit paths. The 4/0x28/0x50 values the audit saw are percentage-bar clamp bounds (`if (v>0x28) v=0x28` etc.), not return-value setup; `void` stands. Reaches MISMATCH #4 'mov' vs 'push' (register/stack allocation), not chased further given size (2213 bytes).
 // working copy - scaffold materialised by --work
-// name      ?draw_info@SocialWin@@QAEXXZ
 // size      2213 bytes
-// spans     0x004AFB60-0x004B0405
 // prototype void (__thiscall ?draw_info@SocialWin@@QAEXXZ)(SocialWin* this)
 // callers   1   call targets   13
 // kind      game

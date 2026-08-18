@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00647CDB EXCLUDED S1
-// name      __mtinitlocks
+// ORIGINAL: 0x00647CDB __mtinitlocks 0x00647CDB-0x00647D04 EXCLUDED S1
 // size      41 bytes
-// spans     0x00647CDB-0x00647D04
 // prototype 
 // callers   1   call targets   0
 // kind      library

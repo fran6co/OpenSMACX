@@ -1,13 +1,7 @@
-// ORIGINAL: 0x0060ED10 FILE
-// RULED-OUT: MISMATCH #101 push/xor - three min/max ternaries rewritten as
-//            if/else (operand order matching the original's cmp/jcc) moved
-//            the divergence from #78 to #101; further tweaks to the
-//            text_height() ternary and the max_width loop's > vs >=
-//            made no further difference.
+// ORIGINAL: 0x0060ED10 ?calculate_dimensions@CheckBox@@QAEHXZ 0x0060ED10-0x0060F02B FILE
+// RULED-OUT: MISMATCH #101 push/xor - three min/max ternaries rewritten as if/else (operand order matching the original's cmp/jcc) moved the divergence from #78 to #101; further tweaks to the text_height() ternary and the max_width loop's > vs >= made no further difference.
 // working copy - scaffold materialised by --work
-// name      ?calculate_dimensions@CheckBox@@QAEHXZ
 // size      795 bytes
-// spans     0x0060ED10-0x0060F02B
 // prototype int (__thiscall ?calculate_dimensions@CheckBox@@QAEHXZ)(CheckBox* this)
 // callers   1   call targets   6
 // kind      game

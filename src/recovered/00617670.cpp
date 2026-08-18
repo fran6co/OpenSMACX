@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00617670 BYTE_EXACT
-// name      ?UNK2@Caviar@@QAEHPAUBuffer@@HHHH@Z
+// ORIGINAL: 0x00617670 ?UNK2@Caviar@@QAEHPAUBuffer@@HHHH@Z 0x00617670-0x006176BA BYTE_EXACT
 // size      74 bytes
-// spans     0x00617670-0x006176BA
 // prototype int (__thiscall ?UNK2@Caviar@@QAEHPAUBuffer@@HHHH@Z)(Caviar* this, Buffer*, int, int, int, int)
 // callers   0   call targets   1
 // kind      game

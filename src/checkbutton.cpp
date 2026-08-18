@@ -20,10 +20,8 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-ORIGINAL: 0x006339B0 BYTE_EXACT
-// name      ?close_class@CheckButton@@QAAXXZ
+// ORIGINAL: 0x006339B0 ?close_class@CheckButton@@QAAXXZ 0x006339B0-0x006339B1 BYTE_EXACT
 // size      1 bytes
-// spans     0x006339B0-0x006339B1
 // prototype 
 // callers   1   call targets   0
 // kind      game
@@ -41,10 +39,8 @@ void __cdecl check_button_close_class_redirect() {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
-ORIGINAL: 0x006339A0 BYTE_EXACT
-// name      ?init_class@CheckButton@@QAAHXZ
+// ORIGINAL: 0x006339A0 ?init_class@CheckButton@@QAAHXZ 0x006339A0-0x006339A3 BYTE_EXACT
 // size      3 bytes
-// spans     0x006339A0-0x006339A3
 // prototype 
 // callers   1   call targets   0
 // kind      game

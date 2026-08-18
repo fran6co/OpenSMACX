@@ -1,8 +1,6 @@
-// ORIGINAL: 0x0060C920 FILE
+// ORIGINAL: 0x0060C920 ?item@ListBox@@QAEHPADH@Z 0x0060C920-0x0060C9A9 FILE
 // working copy - scaffold materialised by --work
-// name      ?item@ListBox@@QAEHPADH@Z
 // size      137 bytes
-// spans     0x0060C920-0x0060C9A9
 // prototype int (__thiscall ?item@ListBox@@QAEHPADH@Z)(ListBox* this, int8* lpString, int)
 // callers   32   call targets   2
 // kind      game

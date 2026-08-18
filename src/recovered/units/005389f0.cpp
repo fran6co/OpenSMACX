@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005389F0 FILE
-// name      ??0NetDaemon@@QAE@XZ
+// ORIGINAL: 0x005389F0 ??0NetDaemon@@QAE@XZ 0x005389F0-0x00538B58;0x0065DF50-0x0065DF62 FILE
 // size      378 bytes
-// spans     0x005389F0-0x00538B58;0x0065DF50-0x0065DF62
 // prototype void (__thiscall ??0NetDaemon@@QAE@XZ)(NetDaemon* this)
 // callers   1   call targets   4
 // kind      game

@@ -1,17 +1,7 @@
-// ORIGINAL: 0x00462870 FILE
-// RULED-OUT: `g_939340`/`g_9392c0` as the scaffold's `int *const` globals -
-//   the address does work (indexed by `*g_009392b8`), so switched to
-//   `extern int name[]`. Landed at 97.7%: the original loads
-//   `*g_00939e5c` into a register before comparing it to 1000, where this
-//   source's compiler folds the load into `cmp dword ptr[addr],1000`
-//   directly - tried both an inline dereference and a named local holding
-//   the read first; the compiler made the same choice either way. The
-//   `((t<1000)-1)&6` then `-6` also comes out as `sub eax,6` here against
-//   the original's `add eax,-6` (same value, different opcode).
+// ORIGINAL: 0x00462870 ?clear@MapWin@@QAEXH@Z 0x00462870-0x00462959 FILE
+// RULED-OUT: `g_939340`/`g_9392c0` as the scaffold's `int *const` globals - the address does work (indexed by `*g_009392b8`), so switched to `extern int name[]`. Landed at 97.7%: the original loads `*g_00939e5c` into a register before comparing it to 1000, where this source's compiler folds the load into `cmp dword ptr[addr],1000` directly - tried both an inline dereference and a named local holding the read first; the compiler made the same choice either way. The `((t<1000)-1)&6` then `-6` also comes out as `sub eax,6` here against the original's `add eax,-6` (same value, different opcode).
 // working copy - scaffold materialised by --work
-// name      ?clear@MapWin@@QAEXH@Z
 // size      233 bytes
-// spans     0x00462870-0x00462959
 // prototype void (__thiscall ?clear@MapWin@@QAEXH@Z)(MapWin* this, int)
 // callers   12   call targets   1
 // kind      game

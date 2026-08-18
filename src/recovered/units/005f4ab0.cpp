@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005F4AB0 FILE
-// name      ?bring_to_top@Win@@QAEXXZ
+// ORIGINAL: 0x005F4AB0 ?bring_to_top@Win@@QAEXXZ 0x005F4AB0-0x005F4C24 FILE
 // size      372 bytes
-// spans     0x005F4AB0-0x005F4C24
 // prototype void (__thiscall ?bring_to_top@Win@@QAEXXZ)(Win* this)
 // callers   0   call targets   1
 // kind      game

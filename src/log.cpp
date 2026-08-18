@@ -23,10 +23,8 @@
 
 /*
 Purpose: Initialize a log file.
-ORIGINAL: 0x00626040
-// name      ?init@Log@@QAEHPAD@Z
+// ORIGINAL: 0x00626040 ?init@Log@@QAEHPAD@Z 0x00626040-0x006260C3
 // size      131 bytes
-// spans     0x00626040-0x006260C3
 // prototype int (__thiscall ?init@Log@@QAEHPAD@Z)(Log* this, int8*)
 // callers   2   call targets   6
 // kind      game
@@ -56,10 +54,8 @@ int Log::init(LPCSTR input) {
 
 /*
 Purpose: Reset the log file.
-ORIGINAL: 0x006260D0 BYTE_EXACT
-// name      ?reset@Log@@QAEXXZ
+// ORIGINAL: 0x006260D0 ?reset@Log@@QAEXXZ 0x006260D0-0x006260EC BYTE_EXACT
 // size      28 bytes
-// spans     0x006260D0-0x006260EC
 // prototype void (__thiscall ?reset@Log@@QAEXXZ)(Log* this)
 // callers   2   call targets   2
 // kind      game
@@ -77,10 +73,8 @@ void Log::reset() {
 
 /*
 Purpose: Write to the log file with the numbers displayed in base 10.
-ORIGINAL: 0x006260F0
-// name      ?say@Log@@QAEXPADPADHHH@Z
+// ORIGINAL: 0x006260F0 ?say@Log@@QAEXPADPADHHH@Z 0x006260F0-0x0062618B
 // size      155 bytes
-// spans     0x006260F0-0x0062618B
 // prototype void (__thiscall ?say@Log@@QAEXPADPADHHH@Z)(Log* this, int8*, int8*, int, int, int)
 // callers   1   call targets   3
 // kind      game
@@ -103,10 +97,8 @@ void Log::say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
 
 /*
 Purpose: Write to the log file with the numbers displayed in base 16.
-ORIGINAL: 0x00626190
-// name      ?say_hex@Log@@QAEXPADPADHHH@Z
+// ORIGINAL: 0x00626190 ?say_hex@Log@@QAEXPADPADHHH@Z 0x00626190-0x0062622B
 // size      155 bytes
-// spans     0x00626190-0x0062622B
 // prototype void (__thiscall ?say_hex@Log@@QAEXPADPADHHH@Z)(Log* this, int8*, int8*, int, int, int)
 // callers   0   call targets   3
 // kind      game
@@ -131,10 +123,8 @@ void Log::say_hex(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
 Log *Logging = (Log *)0x009BBFF8;
 BOOL *IsLoggingDisabled = (BOOL *)0x009BC004;
 
-// ORIGINAL: 0x00625F20
-// name      ??__ELogging@@YAXXZ
+// ORIGINAL: 0x00625F20 ??__ELogging@@YAXXZ 0x00625F20-0x00625F8B
 // size      107 bytes
-// spans     0x00625F20-0x00625F8B
 // prototype 
 // callers   0   call targets   6
 // kind      game
@@ -146,10 +136,8 @@ void __cdecl log_logging() {
     atexit(log_logging_exit);
 }
 
-// ORIGINAL: 0x00625F90
-// name      ??__FLogging@@YAXXZ
+// ORIGINAL: 0x00625F90 ??__FLogging@@YAXXZ 0x00625F90-0x00625FAD
 // size      29 bytes
-// spans     0x00625F90-0x00625FAD
 // prototype 
 // callers   0   call targets   1
 // kind      game
@@ -158,10 +146,8 @@ void __cdecl log_logging() {
 // notes     Staged hybrid export redirect calls the source-owned exit cleanup
 void __cdecl log_logging_exit() { Logging->~Log(); }
 
-// ORIGINAL: 0x00626230
-// name      ?log_reset@@YAXXZ
+// ORIGINAL: 0x00626230 ?log_reset@@YAXXZ 0x00626230-0x0062624F
 // size      31 bytes
-// spans     0x00626230-0x0062624F
 // prototype 
 // callers   2   call targets   2
 // kind      game
@@ -170,10 +156,8 @@ void __cdecl log_logging_exit() { Logging->~Log(); }
 // notes     Staged hybrid export redirect calls the source-owned reset wrapper
 void __cdecl log_reset() { Logging->reset(); }
 
-// ORIGINAL: 0x00626250
-// name      ?log_say@@YAXPADPADHHH@Z
+// ORIGINAL: 0x00626250 ?log_say@@YAXPADPADHHH@Z 0x00626250-0x006262E9
 // size      153 bytes
-// spans     0x00626250-0x006262E9
 // prototype 
 // callers   25   call targets   3
 // kind      game
@@ -184,10 +168,8 @@ void __cdecl log_say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
     Logging->say(str1, str2, num1, num2, num3);
 }
 
-// ORIGINAL: 0x006262F0
-// name      ?log_say@@YAXPADHHH@Z
+// ORIGINAL: 0x006262F0 ?log_say@@YAXPADHHH@Z 0x006262F0-0x0062634C
 // size      92 bytes
-// spans     0x006262F0-0x0062634C
 // prototype 
 // callers   98   call targets   3
 // kind      game
@@ -198,10 +180,8 @@ void __cdecl log_say(LPCSTR str1, int num1, int num2, int num3) {
     Logging->say(str1, NULL, num1, num2, num3);
 }
 
-// ORIGINAL: 0x00626350
-// name      ?log_say_hex@@YAXPADPADHHH@Z
+// ORIGINAL: 0x00626350 ?log_say_hex@@YAXPADPADHHH@Z 0x00626350-0x006263E9
 // size      153 bytes
-// spans     0x00626350-0x006263E9
 // prototype 
 // callers   1   call targets   3
 // kind      game
@@ -212,10 +192,8 @@ void __cdecl log_say_hex(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3)
     Logging->say_hex(str1, str2, num1, num2, num3);
 }
 
-// ORIGINAL: 0x006263F0
-// name      ?log_say_hex@@YAXPADHHH@Z
+// ORIGINAL: 0x006263F0 ?log_say_hex@@YAXPADHHH@Z 0x006263F0-0x0062644C
 // size      92 bytes
-// spans     0x006263F0-0x0062644C
 // prototype 
 // callers   4   call targets   3
 // kind      game
@@ -226,10 +204,8 @@ void __cdecl log_say_hex(LPCSTR str1, int num1, int num2, int num3) {
     Logging->say_hex(str1, NULL, num1, num2, num3);
 }
 
-// ORIGINAL: 0x00626450
-// name      ?log_set_state@@YAXH@Z
+// ORIGINAL: 0x00626450 ?log_set_state@@YAXH@Z 0x00626450-0x00626461
 // size      17 bytes
-// spans     0x00626450-0x00626461
 // prototype 
 // callers   5   call targets   0
 // kind      game

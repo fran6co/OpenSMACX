@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005F2C40 BYTE_EXACT FILE
-// name      ?set_display_mode@Win@@QAAHHHHH@Z
+// ORIGINAL: 0x005F2C40 ?set_display_mode@Win@@QAAHHHHH@Z 0x005F2C40-0x005F2C5F FILE BYTE_EXACT
 // size      31 bytes
-// spans     0x005F2C40-0x005F2C5F
 // prototype 
 // callers   2   call targets   1
 // kind      game

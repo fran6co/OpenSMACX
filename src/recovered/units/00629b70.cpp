@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00629B70 FILE
-// name      ?on_redraw@StringBox@@QAEXXZ
+// ORIGINAL: 0x00629B70 ?on_redraw@StringBox@@QAEXXZ 0x00629B70-0x00629D1C FILE
 // size      428 bytes
-// spans     0x00629B70-0x00629D1C
 // prototype void (__thiscall ?on_redraw@StringBox@@QAEXXZ)(StringBox* this)
 // callers   0   call targets   7
 // kind      game

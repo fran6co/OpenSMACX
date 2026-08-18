@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00647C23 EXCLUDED S1
-// name      ___endstdio
+// ORIGINAL: 0x00647C23 ___endstdio 0x00647C23-0x00647C37 EXCLUDED S1
 // size      20 bytes
-// spans     0x00647C23-0x00647C37
 // prototype 
 // callers   0   call targets   1
 // kind      library

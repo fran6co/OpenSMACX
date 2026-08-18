@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00644ED8 EXCLUDED S1
-// name      __initterm
+// ORIGINAL: 0x00644ED8 __initterm 0x00644ED8-0x00644EF2 EXCLUDED S1
 // size      26 bytes
-// spans     0x00644ED8-0x00644EF2
 // prototype 
 // callers   2   call targets   0
 // kind      library

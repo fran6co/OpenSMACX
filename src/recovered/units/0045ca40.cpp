@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0045CA40 FILE
-// name      ?on_status@MainInterface@@QAEXH@Z
+// ORIGINAL: 0x0045CA40 ?on_status@MainInterface@@QAEXH@Z 0x0045CA40-0x0045CC78 FILE
 // size      568 bytes
-// spans     0x0045CA40-0x0045CC78
 // prototype void (__thiscall ?on_status@MainInterface@@QAEXH@Z)(MainInterface* this, int)
 // callers   0   call targets   14
 // kind      game

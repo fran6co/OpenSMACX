@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006069A0 FILE
-// name      ?on_button_pressed@Scroll@@QAEXH@Z
+// ORIGINAL: 0x006069A0 ?on_button_pressed@Scroll@@QAEXH@Z 0x006069A0-0x00606B14 FILE
 // size      372 bytes
-// spans     0x006069A0-0x00606B14
 // prototype void (__thiscall ?on_button_pressed@Scroll@@QAEXH@Z)(Scroll* this, int)
 // callers   0   call targets   0
 // kind      game

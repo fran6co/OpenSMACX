@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00454D10 FILE
-// name      ?load_misc@@YAXXZ
+// ORIGINAL: 0x00454D10 ?load_misc@@YAXXZ 0x00454D10-0x00454FB6 FILE
 // size      678 bytes
-// spans     0x00454D10-0x00454FB6
 // prototype 
 // callers   1   call targets   3
 // kind      game

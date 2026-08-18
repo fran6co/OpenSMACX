@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005C9330 BYTE_EXACT FILE
-// name      ?close@Gamma@@QAEXXZ
+// ORIGINAL: 0x005C9330 ?close@Gamma@@QAEXXZ 0x005C9330-0x005C938B FILE BYTE_EXACT
 // size      91 bytes
-// spans     0x005C9330-0x005C938B
 // prototype void (__thiscall ?close@Gamma@@QAEXXZ)(Gamma* this)
 // callers   3   call targets   4
 // kind      game

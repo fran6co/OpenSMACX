@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006501F0 EXCLUDED S2a
-// name      DirectSoundCreate
+// ORIGINAL: 0x006501F0 DirectSoundCreate 0x006501F0-0x006501F6 EXCLUDED S2a
 // size      6 bytes
-// spans     0x006501F0-0x006501F6
 // prototype 
 // callers   1   call targets   0
 // kind      thunk

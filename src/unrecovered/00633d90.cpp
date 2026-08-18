@@ -1,20 +1,7 @@
-// ORIGINAL: 0x00633D90 FILE
-// RULED-OUT: bare memcpy() gets intrinsic-expanded to rep movsd/movsb;
-//            `#pragma function(memcpy)` forces the real call, matching.
-//            a2 is compared as a raw dword (never dereferenced) - the given
-//            "unsigned int *" contract is likely wrong (should be a plain
-//            unsigned int), kept as-is to match the existing class member
-//            declaration and cast at the compare site instead (see PROPOSAL).
-//            Ghidra's redundant double-null-check structure (`if(p!=0){
-//            while(...){...} if(p!=0){...}}`) reproduces the original's
-//            extra `test/je` pair around the match; a single flat
-//            `if(cur==0) return; while(...); <process>` (this candidate)
-//            drops it as dead code the optimizer removes - 4 edit ops,
-//            200/229 bytes, still the closest reached.
+// ORIGINAL: 0x00633D90 ?get@NetFifo@@QAEHPAXPAIPAH1@Z 0x00633D90-0x00633E75 FILE
+// RULED-OUT: bare memcpy() gets intrinsic-expanded to rep movsd/movsb; `#pragma function(memcpy)` forces the real call, matching. a2 is compared as a raw dword (never dereferenced) - the given "unsigned int *" contract is likely wrong (should be a plain unsigned int), kept as-is to match the existing class member declaration and cast at the compare site instead (see PROPOSAL). Ghidra's redundant double-null-check structure (`if(p!=0){ while(...){...} if(p!=0){...}}`) reproduces the original's extra `test/je` pair around the match; a single flat `if(cur==0) return; while(...); <process>` (this candidate) drops it as dead code the optimizer removes - 4 edit ops, 200/229 bytes, still the closest reached.
 // working copy - scaffold materialised by --work
-// name      ?get@NetFifo@@QAEHPAXPAIPAH1@Z
 // size      229 bytes
-// spans     0x00633D90-0x00633E75
 // prototype int (__thiscall ?get@NetFifo@@QAEHPAXPAIPAH1@Z)(NetFifo* this, void*, unsigned int*, int*, unsigned int*)
 // callers   2   call targets   2
 // kind      game

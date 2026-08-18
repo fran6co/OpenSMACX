@@ -1,19 +1,7 @@
-// ORIGINAL: 0x004165D0 FILE
-// RULED-OUT: transcribed from raw disassembly directly (no usable Ghidra
-//   dump) - a chain of 10 `in_box()`-guarded hotspot checks each fetching a
-//   Strings::get() index through the `*(int*)g_009b90f8 + N` double
-//   indirection, then converging on the same client_to_screen/set_bubble_text
-//   pattern, followed by a Spot::check() dispatch to farm_click/
-//   facilities_click gated by a faction-diplomacy-table lookup (same
-//   `partner + faction*0x833` indexing scheme confirmed against 0x005258C0's
-//   turn_upkeep). Slot 4 reached via VCall member-pointer, one cast level.
-//   Framed build compiles and matches through instr #25, sim 0.82 - not
-//   chased further, large repetitive hotspot-dispatch function, landed for
-//   coverage.
+// ORIGINAL: 0x004165D0 ?click@BaseWin@@QAEXHHHH@Z 0x004165D0-0x00416D83 FILE
+// RULED-OUT: transcribed from raw disassembly directly (no usable Ghidra dump) - a chain of 10 `in_box()`-guarded hotspot checks each fetching a Strings::get() index through the `*(int*)g_009b90f8 + N` double indirection, then converging on the same client_to_screen/set_bubble_text pattern, followed by a Spot::check() dispatch to farm_click/ facilities_click gated by a faction-diplomacy-table lookup (same `partner + faction*0x833` indexing scheme confirmed against 0x005258C0's turn_upkeep). Slot 4 reached via VCall member-pointer, one cast level. Framed build compiles and matches through instr #25, sim 0.82 - not chased further, large repetitive hotspot-dispatch function, landed for coverage.
 // working copy - scaffold materialised by --work
-// name      ?click@BaseWin@@QAEXHHHH@Z
 // size      1971 bytes
-// spans     0x004165D0-0x00416D83
 // prototype void (__thiscall ?click@BaseWin@@QAEXHHHH@Z)(BaseWin* this, int xCoord, int yCoord, int, int)
 // callers   3   call targets   14
 // kind      game

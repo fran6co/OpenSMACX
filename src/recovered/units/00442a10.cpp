@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00442A10 FILE
-// name      ?draw_who@DiploWin@@QAEXXZ
+// ORIGINAL: 0x00442A10 ?draw_who@DiploWin@@QAEXXZ 0x00442A10-0x00442D98 FILE
 // size      904 bytes
-// spans     0x00442A10-0x00442D98
 // prototype void (__thiscall ?draw_who@DiploWin@@QAEXXZ)(DiploWin* this)
 // callers   1   call targets   10
 // kind      game

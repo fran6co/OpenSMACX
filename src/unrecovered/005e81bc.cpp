@@ -1,16 +1,7 @@
-// ORIGINAL: 0x005E81BC FILE
-// RULED-OUT: two indirect back-edges (jmp edx @0x5E8420, jmp [0x9B3AC4] @0x5E8766)
-//            are Duff's-device dispatch through a computed label; rewritten as
-//            switch(remainder){...} on the loop-invariant state instead of a
-//            real indirect jump - semantically faithful, not byte-exact.
-//            Row-repeat count loop @0x5E87F8-0x5E8817 (esi += stride, N-1
-//            times from a y-table byte) is a case Ghidra silently dropped
-//            (its pseudocode shows a no-op decrement loop with no esi update);
-//            reconstructed from raw bytes instead.
+// ORIGINAL: 0x005E81BC ?draw_dest_unk2@Sprite@@QAEHPAUBuffer@@HHHPAE@Z 0x005E81BC-0x005E8FA5 FILE
+// RULED-OUT: two indirect back-edges (jmp edx @0x5E8420, jmp [0x9B3AC4] @0x5E8766) are Duff's-device dispatch through a computed label; rewritten as switch(remainder){...} on the loop-invariant state instead of a real indirect jump - semantically faithful, not byte-exact. Row-repeat count loop @0x5E87F8-0x5E8817 (esi += stride, N-1 times from a y-table byte) is a case Ghidra silently dropped (its pseudocode shows a no-op decrement loop with no esi update); reconstructed from raw bytes instead.
 // working copy - scaffold materialised by --work
-// name      ?draw_dest_unk2@Sprite@@QAEHPAUBuffer@@HHHPAE@Z
 // size      3561 bytes
-// spans     0x005E81BC-0x005E8FA5
 // prototype int (__thiscall ?draw_dest_unk2@Sprite@@QAEHPAUBuffer@@HHHPAE@Z)(Sprite* this, Buffer*, int, int, int, unsigned int8*)
 // callers   2   call targets   8
 // kind      game

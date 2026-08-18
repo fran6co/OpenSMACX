@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004A3950 FILE
-// name      ?report@ReportIf@@QAEXHHH@Z
+// ORIGINAL: 0x004A3950 ?report@ReportIf@@QAEXHHH@Z 0x004A3950-0x004A3CD3 FILE
 // size      899 bytes
-// spans     0x004A3950-0x004A3CD3
 // prototype void (__thiscall ?report@ReportIf@@QAEXHHH@Z)(ReportIf* this, int, int factionID, int)
 // callers   12   call targets   18
 // kind      game

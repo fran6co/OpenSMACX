@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064DACA EXCLUDED S1
-// name      __isatty
+// ORIGINAL: 0x0064DACA __isatty 0x0064DACA-0x0064DAF3 EXCLUDED S1
 // size      41 bytes
-// spans     0x0064DACA-0x0064DAF3
 // prototype 
 // callers   2   call targets   0
 // kind      library

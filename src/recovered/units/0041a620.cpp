@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0041A620 FILE
-// name      ?base_killed@BaseWin@@QAEXH@Z
+// ORIGINAL: 0x0041A620 ?base_killed@BaseWin@@QAEXH@Z 0x0041A620-0x0041A79D FILE
 // size      381 bytes
-// spans     0x0041A620-0x0041A79D
 // prototype void (__thiscall ?base_killed@BaseWin@@QAEXH@Z)(BaseWin* this, int baseID)
 // callers   1   call targets   5
 // kind      game

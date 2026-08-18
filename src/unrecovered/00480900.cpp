@@ -1,18 +1,7 @@
-// ORIGINAL: 0x00480900 FILE
-// RULED-OUT: the leading/trailing StringStruct bookkeeping (the manual
-//            allocator-swap and linked-list-walk cleanup ghidra shows
-//            around local_60/local_3c, with its triple-indirect vtable
-//            calls) was approximated as plain StringStruct construction
-//            plus a single remove_all() rather than replicated
-//            instruction-for-instruction. The repeated
-//            label/value/wrap-or-write/spot-add pattern across the eight
-//            session-info rows is a direct transcription, cross-checked
-//            against the disassembly for the Buffer receiver (this+0x444)
-//            and the Spot receiver (this+0xd34).
+// ORIGINAL: 0x00480900 ?draw_session_info@NetWin@@QAEXXZ 0x00480900-0x00481AC2;0x0065745D-0x00657491 FILE
+// RULED-OUT: the leading/trailing StringStruct bookkeeping (the manual allocator-swap and linked-list-walk cleanup ghidra shows around local_60/local_3c, with its triple-indirect vtable calls) was approximated as plain StringStruct construction plus a single remove_all() rather than replicated instruction-for-instruction. The repeated label/value/wrap-or-write/spot-add pattern across the eight session-info rows is a direct transcription, cross-checked against the disassembly for the Buffer receiver (this+0x444) and the Spot receiver (this+0xd34).
 // working copy - scaffold materialised by --work
-// name      ?draw_session_info@NetWin@@QAEXXZ
 // size      4598 bytes
-// spans     0x00480900-0x00481AC2;0x0065745D-0x00657491
 // prototype void (__thiscall ?draw_session_info@NetWin@@QAEXXZ)(NetWin* this)
 // callers   1   call targets   20
 // kind      game

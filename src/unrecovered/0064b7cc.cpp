@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064B7CC EXCLUDED S1
-// name      __setenvp
+// ORIGINAL: 0x0064B7CC __setenvp 0x0064B7CC-0x0064B885 EXCLUDED S1
 // size      185 bytes
-// spans     0x0064B7CC-0x0064B885
 // prototype 
 // callers   1   call targets   6
 // kind      library

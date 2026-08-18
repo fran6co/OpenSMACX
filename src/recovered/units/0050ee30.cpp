@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0050EE30 BYTE_EXACT FILE
-// name      ?blink2_timer@@YAXH@Z
+// ORIGINAL: 0x0050EE30 ?blink2_timer@@YAXH@Z 0x0050EE30-0x0050EE7D FILE BYTE_EXACT
 // size      77 bytes
-// spans     0x0050EE30-0x0050EE7D
 // prototype 
 // callers   0   call targets   1
 // kind      game

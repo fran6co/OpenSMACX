@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005397B0 BYTE_EXACT FILE
-// name      ?net_double_cross@@YAXHHHH@Z
+// ORIGINAL: 0x005397B0 ?net_double_cross@@YAXHHHH@Z 0x005397B0-0x0053981A FILE BYTE_EXACT
 // size      106 bytes
-// spans     0x005397B0-0x0053981A
 // prototype 
 // callers   2   call targets   4
 // kind      game

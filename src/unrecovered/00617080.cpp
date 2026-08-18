@@ -1,18 +1,7 @@
-// ORIGINAL: 0x00617080 FILE
-// RULED-OUT: a local `RECT{left,top,right,bottom}` and a direct-cast call
-//   `reinterpret_cast<Sub639E60Fn>(sub_639e60)(...)` inline (no
-//   intermediate function-pointer local) for the direct `call 0x639e60`,
-//   same lever as 0x004C5E50's import calls, plus a locally-declared
-//   `UnionRect` since it is an IAT thunk the scaffold does not surface as
-//   a callee. Swapping the `(a2&2)==0 ? 1 : 0` if/else body order to
-//   `!=0 ? 0 : 1` flipped `jne`->`je` to match with no other change.
-//   Landed at 0.93 similarity: one `lea`/`mov` pair right before the
-//   sub_639e60 call remains a register-source choice this body's operand
-//   order did not move.
+// ORIGINAL: 0x00617080 ?UNK1@Caviar@@QAEHHH@Z 0x00617080-0x0061719E FILE
+// RULED-OUT: a local `RECT{left,top,right,bottom}` and a direct-cast call `reinterpret_cast<Sub639E60Fn>(sub_639e60)(...)` inline (no intermediate function-pointer local) for the direct `call 0x639e60`, same lever as 0x004C5E50's import calls, plus a locally-declared `UnionRect` since it is an IAT thunk the scaffold does not surface as a callee. Swapping the `(a2&2)==0 ? 1 : 0` if/else body order to `!=0 ? 0 : 1` flipped `jne`->`je` to match with no other change. Landed at 0.93 similarity: one `lea`/`mov` pair right before the sub_639e60 call remains a register-source choice this body's operand order did not move.
 // working copy - scaffold materialised by --work
-// name      ?UNK1@Caviar@@QAEHHH@Z
 // size      286 bytes
-// spans     0x00617080-0x0061719E
 // prototype int (__thiscall ?UNK1@Caviar@@QAEHHH@Z)(Caviar* this, int, int)
 // callers   0   call targets   2
 // kind      game

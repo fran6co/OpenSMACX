@@ -1,17 +1,7 @@
-// ORIGINAL: 0x004C5E50 FILE
-// RULED-OUT: direct pointer-typed calls (no intermediate function-pointer
-//   locals) for the three import-thunk calls (LoadLibraryA/FreeLibrary/the
-//   version fn ptr) so VC6 folds them to `call dword ptr [addr]` instead of
-//   loading the address into a register first; a `do { GetProcAddress(...) }
-//   while` loop for the fill-in-table pass. Landed as MISMATCH: the do-while
-//   still diverges right where the original skips the redundant reload of
-//   `DAT_0090db78` on the loop's first iteration (a PRE optimisation tied to
-//   the value already being live in a register from the code just above the
-//   loop) - not reproduced by restating the same load inside the loop body.
+// ORIGINAL: 0x004C5E50 ?load_sound_dll@@YAHXZ 0x004C5E50-0x004C5F68 FILE
+// RULED-OUT: direct pointer-typed calls (no intermediate function-pointer locals) for the three import-thunk calls (LoadLibraryA/FreeLibrary/the version fn ptr) so VC6 folds them to `call dword ptr [addr]` instead of loading the address into a register first; a `do { GetProcAddress(...) } while` loop for the fill-in-table pass. Landed as MISMATCH: the do-while still diverges right where the original skips the redundant reload of `DAT_0090db78` on the loop's first iteration (a PRE optimisation tied to the value already being live in a register from the code just above the loop) - not reproduced by restating the same load inside the loop body.
 // working copy - scaffold materialised by --work
-// name      ?load_sound_dll@@YAHXZ
 // size      280 bytes
-// spans     0x004C5E50-0x004C5F68
 // prototype
 // callers   1   call targets   2
 // kind      game

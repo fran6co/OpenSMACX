@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005FDF40 BYTE_EXACT FILE
+// ORIGINAL: 0x005FDF40 ??0TextIndex@@QAE@XZ 0x005FDF40-0x005FDF5F FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ??0TextIndex@@QAE@XZ
 // size      31 bytes
-// spans     0x005FDF40-0x005FDF5F
 // prototype void (__thiscall ??0TextIndex@@QAE@XZ)(TextIndex* this)
 // callers   0   call targets   1
 // kind      game

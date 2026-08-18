@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064A714 EXCLUDED S1
-// name      __rtzeropop
+// ORIGINAL: 0x0064A714 __rtzeropop 0x0064A714-0x0064A716 EXCLUDED S1
 // size      2 bytes
-// spans     0x0064A714-0x0064A716
 // prototype 
 // callers   0   call targets   0
 // kind      library

@@ -1,14 +1,12 @@
-// ORIGINAL: 0x00628380 BYTE_EXACT FILE
-// name      ??0Filemap@@QAE@XZ
+// ORIGINAL: 0x00628380 ??0Filemap@@QAE@XZ 0x00628380-0x00628397 FILE BYTE_EXACT
+// LEVER: direct field-name assignment matches the three-store constructor verbatim
 // size      23 bytes
-// spans     0x00628380-0x00628397
 // prototype void (__thiscall ??0Filemap@@QAE@XZ)(Filemap* this)
 // callers   15   call targets   0
 // kind      
 // flags     
 // calls     (none)
 // notes     Staged hybrid export redirect calls the source-owned constructor
-// LEVER: direct field-name assignment matches the three-store constructor verbatim
 // working copy - scaffold materialised by --work
 
 // GENERATED SKELETON - tools/emit_translation_unit.py

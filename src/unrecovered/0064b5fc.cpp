@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064B5FC EXCLUDED S1
-// name      __XcptFilter
+// ORIGINAL: 0x0064B5FC __XcptFilter 0x0064B5FC-0x0064B73A EXCLUDED S1
 // size      318 bytes
-// spans     0x0064B5FC-0x0064B73A
 // prototype int (__cdecl __XcptFilter)(int, _EXCEPTION_POINTERS* ExceptionInfo)
 // callers   2   call targets   2
 // kind      library

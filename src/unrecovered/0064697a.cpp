@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064697A EXCLUDED S1
-// name      _isupper
+// ORIGINAL: 0x0064697A _isupper 0x0064697A-0x006469A2 EXCLUDED S1
 // size      40 bytes
-// spans     0x0064697A-0x006469A2
 // prototype 
 // callers   1   call targets   1
 // kind      library

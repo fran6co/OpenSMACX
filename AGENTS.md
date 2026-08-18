@@ -727,14 +727,13 @@ parallel-agent targets (see "Parallel recovery" above):
   compute the published block through it; `tools/test_recovery_metrics.py` pins that they agree.
 - `decomp/`: the source map as an installed package - `from decomp import read, write,
   function_line`, no `sys.path` line, works from any directory: the reader reads the
-  `ORIGINAL: 0x...` markers, the writer rewrites the annotations the records describe,
-  each at its own line, and `decomp.remove` deletes them. It is SELF-CONTAINED
-  (standard library only, imports nothing from `tools/`), so its reader is a COPY of the
-  reading side of `tools/annotation_scan.py`.
-  **A change to the annotation grammar must land in both copies.** `uv run python -m decomp`
-  parses `src/` each way and fails if they disagree, and closes the read -> write -> read
-  loop over every annotated file; it is the only thing standing between two parsers and two
-  answers, and it retires when the tools move onto the package.
+  `ORIGINAL: 0x...` markers - each carries the piece's name and its image spans ahead of
+  the keywords, since 2026-08-18 - the writer rewrites the annotations the records
+  describe, each at its own line, and `decomp.remove` deletes them. It is SELF-CONTAINED
+  (standard library only, imports nothing from `tools/`). The scripts in `tools/` still
+  carry their own copies of the reading machinery, on the old marker spelling by decision.
+  `uv run python -m decomp` proves the package against `src/`: the parse, and the
+  read -> write -> read loop over every annotated file.
 - `tools/fetch_external_analysis.py`: verified local fetcher for ignored historical-analysis snapshots.
 - the retired `extract_legacy_leaves`: conservative local-only island extractor.
 - `test_extract_legacy_leaves (retired)`: 21 classifier, explicit-selection, symlink-containment, and output-ownership regression tests.

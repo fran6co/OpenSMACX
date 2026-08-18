@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004C12A0 FILE
-// name      ?vehdraw_draw@@YAXPAUBuffer@@HHHHHH@Z
+// ORIGINAL: 0x004C12A0 ?vehdraw_draw@@YAXPAUBuffer@@HHHHHH@Z 0x004C12A0-0x004C1732 FILE
 // size      1170 bytes
-// spans     0x004C12A0-0x004C1732
 // prototype void (__cdecl ?vehdraw_draw@@YAXPAUBuffer@@HHHHHH@Z)(Buffer*, int unitID, int, int, int, int, int)
 // callers   1   call targets   16
 // kind      game

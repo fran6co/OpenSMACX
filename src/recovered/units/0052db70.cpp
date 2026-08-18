@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0052DB70 FILE
-// name      sub_52db70
+// ORIGINAL: 0x0052DB70 sub_52db70 0x0052DB70-0x0052DB9C FILE
 // size      44 bytes
-// spans     0x0052DB70-0x0052DB9C
 // prototype 
 // callers   0   call targets   0
 // kind      game

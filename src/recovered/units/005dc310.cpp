@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005DC310 FILE
-// name      ?get_special_link@@YAHPADPAH@Z
+// ORIGINAL: 0x005DC310 ?get_special_link@@YAHPADPAH@Z 0x005DC310-0x005DC351 FILE
 // size      65 bytes
-// spans     0x005DC310-0x005DC351
 // prototype 
 // callers   0   call targets   0
 // kind      game

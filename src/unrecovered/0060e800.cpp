@@ -1,16 +1,11 @@
-// ORIGINAL: 0x0060E800 FILE
-// name      ?attach@CheckBox@@QAEHPAUGraphicWin@@HHH@Z
+// ORIGINAL: 0x0060E800 ?attach@CheckBox@@QAEHPAUGraphicWin@@HHH@Z 0x0060E800-0x0060E97F FILE
+// RULED-OUT: nothing confirmed byte-exact; MISMATCH #3 'push' vs 'mov' - the vtable-array double-reads (edx/ecx caching across the 0xa34/0x1c constants) get register-allocated differently than the original's edi-kept-live scheme.
 // size      383 bytes
-// spans     0x0060E800-0x0060E97F
 // prototype int (__thiscall ?attach@CheckBox@@QAEHPAUGraphicWin@@HHH@Z)(CheckBox* this, GraphicWin*, int, int, int)
 // callers   2   call targets   6
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D4EF0 0x005DAC70 0x005DACB0 0x005DACE0 0x005DAD10 0x0060ED10
-// RULED-OUT: nothing confirmed byte-exact; MISMATCH #3 'push' vs 'mov' - the
-//            vtable-array double-reads (edx/ecx caching across the 0xa34/0x1c
-//            constants) get register-allocated differently than the
-//            original's edi-kept-live scheme.
 typedef int int32_t;
 typedef unsigned int uint32_t;
 typedef short int16_t;

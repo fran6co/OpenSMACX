@@ -1,13 +1,7 @@
-// ORIGINAL: 0x005E09D0 FILE
-// RULED-OUT: Bresenham re-derived from raw asm (swap block, COM-style slot25/32 dispatch
-//            via a lockInfo[0x84] byte buffer, rect1_ cached to 4 locals) with mutable
-//            a1..a9 parameter copies standing in for the register-cached values; compiles,
-//            sim 0.74 framed. Extra scratch locals vs the original's tighter register
-//            reuse keep it off byte-exact; not retried given size (1770 bytes).
+// ORIGINAL: 0x005E09D0 ?line@Buffer@@QAEXHHHHHHHHH@Z 0x005E09D0-0x005E10BA FILE
+// RULED-OUT: Bresenham re-derived from raw asm (swap block, COM-style slot25/32 dispatch via a lockInfo[0x84] byte buffer, rect1_ cached to 4 locals) with mutable a1..a9 parameter copies standing in for the register-cached values; compiles, sim 0.74 framed. Extra scratch locals vs the original's tighter register reuse keep it off byte-exact; not retried given size (1770 bytes).
 // working copy - scaffold materialised by --work
-// name      ?line@Buffer@@QAEXHHHHHHHHH@Z
 // size      1770 bytes
-// spans     0x005E09D0-0x005E10BA
 // prototype void (__thiscall ?line@Buffer@@QAEXHHHHHHHHH@Z)(Buffer* this, int, int, int, int, int, int, int, int, int)
 // callers   4   call targets   3
 // kind      game

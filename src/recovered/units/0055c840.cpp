@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0055C840 FILE
-// name      ?enemies_war@@YAXHH@Z
+// ORIGINAL: 0x0055C840 ?enemies_war@@YAXHH@Z 0x0055C840-0x0055CC9A FILE
 // size      1114 bytes
-// spans     0x0055C840-0x0055CC9A
 // prototype 
 // callers   1   call targets   9
 // kind      game

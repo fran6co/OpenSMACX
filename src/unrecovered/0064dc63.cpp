@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064DC63 EXCLUDED S1
-// name      __wctomb_lk
+// ORIGINAL: 0x0064DC63 __wctomb_lk 0x0064DC63-0x0064DCCC EXCLUDED S1
 // size      105 bytes
-// spans     0x0064DC63-0x0064DCCC
 // prototype int (__cdecl __wctomb_lk)(LPSTR lpMultiByteStr, WCHAR WideCharStr)
 // callers   1   call targets   1
 // kind      library

@@ -1,13 +1,7 @@
-// ORIGINAL: 0x004779D0 FILE
-// RULED-OUT: extern "C" on the already-declared (plain-linkage) game_year /
-//            monument callees - conflicts as C2732. Declaring a new byte
-//            table extern for 0x94cd18 (not auto-picked-up by the emitter,
-//            only ever seen via [ecx+const] addressing) compiles.
-//            MISMATCH #11 'lea' vs 'sub' remains open.
+// ORIGINAL: 0x004779D0 ?mon_winning_trans@@YAXHH@Z 0x004779D0-0x00477A57 FILE
+// RULED-OUT: extern "C" on the already-declared (plain-linkage) game_year / monument callees - conflicts as C2732. Declaring a new byte table extern for 0x94cd18 (not auto-picked-up by the emitter, only ever seen via [ecx+const] addressing) compiles. MISMATCH #11 'lea' vs 'sub' remains open.
 // working copy - scaffold materialised by --work
-// name      ?mon_winning_trans@@YAXHH@Z
 // size      135 bytes
-// spans     0x004779D0-0x00477A57
 // prototype 
 // callers   1   call targets   2
 // kind      game

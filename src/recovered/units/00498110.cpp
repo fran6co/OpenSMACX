@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00498110 FILE
-// name      ?UNK1@ReportWin@@QAEXHHHH@Z
+// ORIGINAL: 0x00498110 ?UNK1@ReportWin@@QAEXHHHH@Z 0x00498110-0x00498174 FILE
 // size      100 bytes
-// spans     0x00498110-0x00498174
 // prototype void (__thiscall ?UNK1@ReportWin@@QAEXHHHH@Z)(ReportWin* this, int, int, int, int)
 // callers   0   call targets   2
 // kind      game

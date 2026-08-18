@@ -1,22 +1,7 @@
-// ORIGINAL: 0x00610970 FILE
-// RULED-OUT: real `__thiscall` per the mangled name; `this` reads two
-//   distinct adjustor offsets off its own vtable (vt[4]+0x444 for the
-//   embedded Buffer receiver on every set_text_color*/set_font/text_width/
-//   text_line_height call, vt[8] for a second sub-object whose fields at
-//   +0x2c..+0xa8 hold the margins/colors/fonts and the running w/h/line
-//   totals) - transcribed as raw offsets, not a modelled base class, since
-//   spritebox.h itself documents the layout past field_38_ as
-//   unestablished. One branch reads literal absolute address 4
-//   (`*(int*)4`, matching the original's `xor eax,eax; mov ebx,[eax+4]`)
-//   when field_2c_==0 and field_30_!=0 - transcribed literally, not
-//   chased for meaning. Confirmed field_2C_/0x30_/0x34_(signed count)/
-//   0x38_ against spritebox.h's own comment before using them. Compiles;
-//   diverges at instruction #5, just past the thiscall prologue - not
-//   chased further given the function's size.
+// ORIGINAL: 0x00610970 ?calculate_dimensions@SpriteBox@@QAEHXZ 0x00610970-0x00610C4A FILE
+// RULED-OUT: real `__thiscall` per the mangled name; `this` reads two distinct adjustor offsets off its own vtable (vt[4]+0x444 for the embedded Buffer receiver on every set_text_color*/set_font/text_width/ text_line_height call, vt[8] for a second sub-object whose fields at +0x2c..+0xa8 hold the margins/colors/fonts and the running w/h/line totals) - transcribed as raw offsets, not a modelled base class, since spritebox.h itself documents the layout past field_38_ as unestablished. One branch reads literal absolute address 4 (`*(int*)4`, matching the original's `xor eax,eax; mov ebx,[eax+4]`) when field_2c_==0 and field_30_!=0 - transcribed literally, not chased for meaning. Confirmed field_2C_/0x30_/0x34_(signed count)/ 0x38_ against spritebox.h's own comment before using them. Compiles; diverges at instruction #5, just past the thiscall prologue - not chased further given the function's size.
 // working copy - scaffold materialised by --work
-// name      ?calculate_dimensions@SpriteBox@@QAEHXZ
 // size      730 bytes
-// spans     0x00610970-0x00610C4A
 // prototype int (__thiscall ?calculate_dimensions@SpriteBox@@QAEHXZ)(SpriteBox* this)
 // callers   1   call targets   6
 // kind      game

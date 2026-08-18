@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00469720 FILE
-// name      ?draw_legend@MapWin@@QAEXXZ
+// ORIGINAL: 0x00469720 ?draw_legend@MapWin@@QAEXXZ 0x00469720-0x004698C8;0x00655932-0x00655944 FILE
 // size      442 bytes
-// spans     0x00469720-0x004698C8;0x00655932-0x00655944
 // prototype void (__thiscall ?draw_legend@MapWin@@QAEXXZ)(MapWin* this)
 // callers   2   call targets   9
 // kind      game

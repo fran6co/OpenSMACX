@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00633920 BYTE_EXACT FILE
-// name      ?on_left_click@CheckButton@@QAEXHH@Z
+// ORIGINAL: 0x00633920 ?on_left_click@CheckButton@@QAEXHH@Z 0x00633920-0x0063397F FILE BYTE_EXACT
 // size      95 bytes
-// spans     0x00633920-0x0063397F
 // prototype void (__thiscall ?on_left_click@CheckButton@@QAEXHH@Z)(CheckButton* this, int, int)
 // callers   0   call targets   0
 // kind      game

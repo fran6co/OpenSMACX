@@ -1,7 +1,6 @@
-// ORIGINAL: 0x005F2830 FILE
-// name      sub_5f2830
+// ORIGINAL: 0x005F2830 sub_5f2830 0x005F2830-0x005F293B FILE
+// RULED-OUT: not chased to byte-exact (MISMATCH from instruction 0, 267 vs 214 bytes). Landed for control flow: a switch on `a1` in {0,1,2}, each case reading/clearing the same pair of window globals (g_009b7abc/g_009b7ac0) around a `slot004()` virtual call, matching the disassembly's duplicated case-0/case-1 shape (Ghidra's own decompile duplicates it the same way).
 // size      267 bytes
-// spans     0x005F2830-0x005F293B
 // prototype
 // callers   0   call targets   0
 // kind      game
@@ -9,12 +8,6 @@
 // calls     (none)
 // indirect  0x005F2854 0x005F2864 0x005F2878 0x005F2887 0x005F28AC
 //           0x005F28C5 0x005F28D5 0x005F28FE 0x005F2919 0x005F2932
-// RULED-OUT: not chased to byte-exact (MISMATCH from instruction 0, 267 vs
-//            214 bytes). Landed for control flow: a switch on `a1` in
-//            {0,1,2}, each case reading/clearing the same pair of window
-//            globals (g_009b7abc/g_009b7ac0) around a `slot004()` virtual
-//            call, matching the disassembly's duplicated case-0/case-1
-//            shape (Ghidra's own decompile duplicates it the same way).
 // NOTE: landed as FILE mode - this needs its own vtable shim class ahead of
 //       the function (see 0x005CE340's note on the same
 //       tools/annotation_scan.py::extract_forward_text truncation).

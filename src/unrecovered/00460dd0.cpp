@@ -1,16 +1,7 @@
-// ORIGINAL: 0x00460DD0 FILE
-// RULED-OUT: time-boxed - roughly the first quarter of the function
-//            (a long sequence of Menu::show_menu_item/hide_menu_item/
-//            enable_menu_item gates against game-option and tech
-//            flags, transcribed with goto-labelled control flow
-//            matching the disassembly's branch targets) is faithful;
-//            the difficulty-table-driven remainder (several hundred
-//            more show/hide/enable calls) is a deliberate stub.
-//            MISMATCH #2, well past the prologue.
+// ORIGINAL: 0x00460DD0 ?check@MainMenu@@QAEXH@Z 0x00460DD0-0x0046207E FILE
+// RULED-OUT: time-boxed - roughly the first quarter of the function (a long sequence of Menu::show_menu_item/hide_menu_item/ enable_menu_item gates against game-option and tech flags, transcribed with goto-labelled control flow matching the disassembly's branch targets) is faithful; the difficulty-table-driven remainder (several hundred more show/hide/enable calls) is a deliberate stub. MISMATCH #2, well past the prologue.
 // working copy - scaffold materialised by --work
-// name      ?check@MainMenu@@QAEXH@Z
 // size      4782 bytes
-// spans     0x00460DD0-0x0046207E
 // prototype void (__thiscall ?check@MainMenu@@QAEXH@Z)(MainMenu* this, int vehID)
 // callers   15   call targets   17
 // kind      game

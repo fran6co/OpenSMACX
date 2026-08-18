@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064CF8A EXCLUDED S1
-// name      __sopen
+// ORIGINAL: 0x0064CF8A __sopen 0x0064CF8A-0x0064D259 EXCLUDED S1
 // size      719 bytes
-// spans     0x0064CF8A-0x0064D259
 // prototype 
 // callers   2   call targets   10
 // kind      library

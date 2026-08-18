@@ -1,13 +1,7 @@
-// ORIGINAL: 0x00438460 FILE
-// RULED-OUT: fresh-temporary destructor sequencing for the Popup/Scroll/
-//            BasePop/Dialogs teardown tail (same technique as
-//            Console::editor_diff, 0x004DD6F0) instead of hand-replaying the
-//            SEH funclet's exact interleave - compiles, MISMATCH #10
-//            push/mov, sim ~0.59 on the framed row.
+// ORIGINAL: 0x00438460 ?on_button_clicked@DesignWin@@QAEXH@Z 0x00438460-0x004395E1;0x00654010-0x006541FC FILE
+// RULED-OUT: fresh-temporary destructor sequencing for the Popup/Scroll/ BasePop/Dialogs teardown tail (same technique as Console::editor_diff, 0x004DD6F0) instead of hand-replaying the SEH funclet's exact interleave - compiles, MISMATCH #10 push/mov, sim ~0.59 on the framed row.
 // working copy - scaffold materialised by --work
-// name      ?on_button_clicked@DesignWin@@QAEXH@Z
 // size      4973 bytes
-// spans     0x00438460-0x004395E1;0x00654010-0x006541FC
 // prototype void (__thiscall ?on_button_clicked@DesignWin@@QAEXH@Z)(DesignWin* this, int)
 // callers   0   call targets   46
 // kind      game

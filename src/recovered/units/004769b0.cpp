@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004769B0 FILE
-// name      ?on_button_clicked@MonuWin@@QAEXH@Z
+// ORIGINAL: 0x004769B0 ?on_button_clicked@MonuWin@@QAEXH@Z 0x004769B0-0x004769F7 FILE
 // size      71 bytes
-// spans     0x004769B0-0x004769F7
 // prototype void (__thiscall ?on_button_clicked@MonuWin@@QAEXH@Z)(MonuWin* this, int)
 // callers   0   call targets   1
 // kind      game

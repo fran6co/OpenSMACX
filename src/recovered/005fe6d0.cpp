@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005FE6D0 BYTE_EXACT
-// name      ?reseed@Palette@@QAEXXZ
+// ORIGINAL: 0x005FE6D0 ?reseed@Palette@@QAEXXZ 0x005FE6D0-0x005FE6F8 BYTE_EXACT
 // size      40 bytes
-// spans     0x005FE6D0-0x005FE6F8
 // prototype void (__thiscall ?reseed@Palette@@QAEXXZ)(Palette* this)
 // callers   3   call targets   1
 // kind      game

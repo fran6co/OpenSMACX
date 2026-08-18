@@ -1,10 +1,6 @@
-// ORIGINAL: 0x00405B20 FILE
-// RULED-OUT: RECT-by-value local plus Sprite/BoxSpriteParams table lookups
-//            (a3-indexed, stride 0x2C/0x28) compiles and matches structure;
-//            first divergence is #4 push/mov, not chased further.
-// name      ?on_dialog_item_back_draw@Popup@@QAEHPAUGraphicWin@@HHPAURECT@@@Z
+// ORIGINAL: 0x00405B20 ?on_dialog_item_back_draw@Popup@@QAEHPAUGraphicWin@@HHPAURECT@@@Z 0x00405B20-0x00405C72 FILE
+// RULED-OUT: RECT-by-value local plus Sprite/BoxSpriteParams table lookups (a3-indexed, stride 0x2C/0x28) compiles and matches structure; first divergence is #4 push/mov, not chased further.
 // size      338 bytes
-// spans     0x00405B20-0x00405C72
 // prototype int (__thiscall ?on_dialog_item_back_draw@Popup@@QAEHPAUGraphicWin@@HHPAURECT@@@Z)(Popup* this, GraphicWin*, int, int, RECT*)
 // callers   0   call targets   4
 // kind      game

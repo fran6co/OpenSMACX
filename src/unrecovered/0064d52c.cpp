@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064D52C EXCLUDED S1
-// name      __ShrMan
+// ORIGINAL: 0x0064D52C __ShrMan 0x0064D52C-0x0064D5B9 EXCLUDED S1
 // size      141 bytes
-// spans     0x0064D52C-0x0064D5B9
 // prototype 
 // callers   1   call targets   0
 // kind      library

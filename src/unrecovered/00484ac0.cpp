@@ -1,10 +1,7 @@
-// ORIGINAL: 0x00484AC0 FILE
-// RULED-OUT: placement-new base/Font subobjects w/o the fs:[0] SEH unwind
-//            frame (no local of a destructor-modelling class declared)
+// ORIGINAL: 0x00484AC0 ??0PickTech@@QAE@XZ 0x00484AC0-0x00484B5C;0x00657630-0x0065766C FILE
+// RULED-OUT: placement-new base/Font subobjects w/o the fs:[0] SEH unwind frame (no local of a destructor-modelling class declared)
 // working copy - scaffold materialised by --work
-// name      ??0PickTech@@QAE@XZ
 // size      216 bytes
-// spans     0x00484AC0-0x00484B5C;0x00657630-0x0065766C
 // prototype void (__thiscall ??0PickTech@@QAE@XZ)(PickTech* this)
 // callers   1   call targets   2
 // kind      game

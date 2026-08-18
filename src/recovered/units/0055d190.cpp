@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0055D190 FILE
-// name      ?pact_treaty@@YAXHH@Z
+// ORIGINAL: 0x0055D190 ?pact_treaty@@YAXHH@Z 0x0055D190-0x0055D293 FILE
 // size      259 bytes
-// spans     0x0055D190-0x0055D293
 // prototype 
 // callers   0   call targets   3
 // kind      game

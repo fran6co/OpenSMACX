@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006015B0 FILE
-// name      ?init@BasePop@@QAEHHJ@Z
+// ORIGINAL: 0x006015B0 ?init@BasePop@@QAEHHJ@Z 0x006015B0-0x0060179A FILE
 // size      490 bytes
-// spans     0x006015B0-0x0060179A
 // prototype int (__thiscall ?init@BasePop@@QAEHHJ@Z)(BasePop* this, int, int)
 // callers   9   call targets   6
 // kind      game

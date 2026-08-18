@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064522C EXCLUDED S1
-// name      __global_unwind2
+// ORIGINAL: 0x0064522C __global_unwind2 0x0064522C-0x0064524C EXCLUDED S1
 // size      32 bytes
-// spans     0x0064522C-0x0064524C
 // prototype int (__cdecl __global_unwind2)(PVOID TargetFrame)
 // callers   1   call targets   1
 // kind      library

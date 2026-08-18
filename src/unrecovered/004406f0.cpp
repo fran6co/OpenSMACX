@@ -1,8 +1,6 @@
-// ORIGINAL: 0x004406F0 BYTE_EXACT FILE
+// ORIGINAL: 0x004406F0 ?release_modal@DiploPop@@QAEXXZ 0x004406F0-0x004406F5 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?release_modal@DiploPop@@QAEXXZ
 // size      5 bytes
-// spans     0x004406F0-0x004406F5
 // prototype void (__thiscall ?release_modal@DiploPop@@QAEXXZ)(DiploPop* this)
 // callers   0   call targets   0
 // kind      thunk

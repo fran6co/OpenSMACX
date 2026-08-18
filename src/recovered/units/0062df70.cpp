@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0062DF70 BYTE_EXACT FILE
-// name      ?start_voice@Net@@QAEHJ@Z
+// ORIGINAL: 0x0062DF70 ?start_voice@Net@@QAEHJ@Z 0x0062DF70-0x0062DFBE FILE BYTE_EXACT
 // size      78 bytes
-// spans     0x0062DF70-0x0062DFBE
 // prototype int (__thiscall ?start_voice@Net@@QAEHJ@Z)(Net* this, int)
 // callers   1   call targets   0
 // kind      game

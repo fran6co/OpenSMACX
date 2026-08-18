@@ -1,20 +1,7 @@
-// ORIGINAL: 0x0040E360 FILE
-// RULED-OUT: BaseWin is opaque past field_40b10_ in this scaffold, so every
-//            `this`-relative access below 0x40C6C etc. is a raw I32/B8 cast
-//            rather than a named member; the two Font locals + one Sprite
-//            local (matching the two Font ctor calls and the single Sprite
-//            ctor/close pair in the disassembly) reproduce that RAII shape.
-//            The header/border setup and the unit-vs-facility info panel are
-//            transcribed from the disassembly; the queue-grid cell-size
-//            search and its per-item draw loop (~110 instructions) are
-//            replaced with a single representative call rather than the
-//            original's two-pass sizing + nested row/column loop, since the
-//            unnamed FUN_ callees for that section have no recovered
-//            signature to transcribe against.
+// ORIGINAL: 0x0040E360 ?draw_production@BaseWin@@QAEXH@Z 0x0040E360-0x0040F0E5;0x00651ACD-0x00651AF8 FILE
+// RULED-OUT: BaseWin is opaque past field_40b10_ in this scaffold, so every `this`-relative access below 0x40C6C etc. is a raw I32/B8 cast rather than a named member; the two Font locals + one Sprite local (matching the two Font ctor calls and the single Sprite ctor/close pair in the disassembly) reproduce that RAII shape. The header/border setup and the unit-vs-facility info panel are transcribed from the disassembly; the queue-grid cell-size search and its per-item draw loop (~110 instructions) are replaced with a single representative call rather than the original's two-pass sizing + nested row/column loop, since the unnamed FUN_ callees for that section have no recovered signature to transcribe against.
 // working copy - scaffold materialised by --work
-// name      ?draw_production@BaseWin@@QAEXH@Z
 // size      3504 bytes
-// spans     0x0040E360-0x0040F0E5;0x00651ACD-0x00651AF8
 // prototype void (__thiscall ?draw_production@BaseWin@@QAEXH@Z)(BaseWin* this, int)
 // callers   6   call targets   39
 // kind      game

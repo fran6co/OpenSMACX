@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064C8C5 EXCLUDED S1
-// name      __set_exp
+// ORIGINAL: 0x0064C8C5 __set_exp 0x0064C8C5-0x0064C8EE EXCLUDED S1
 // size      41 bytes
-// spans     0x0064C8C5-0x0064C8EE
 // prototype 
 // callers   2   call targets   0
 // kind      library

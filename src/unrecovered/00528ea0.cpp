@@ -1,17 +1,7 @@
-// ORIGINAL: 0x00528EA0 FILE
-// RULED-OUT: `int shiftAmt = *g_00939284; ... 1 << shiftAmt` vs a
-//            two-statement `unsigned int bit = 1; bit <<= shiftAmt;` vs
-//            computing the bitmask load before/after the shift - all three
-//            schedule the same as the original up to instruction #5, where
-//            the original still has a bare `mov eax, 1` that the rebuilt
-//            folds away before the `shl`. Rest of the function (the
-//            do/while upkeep-poll loop, the two log_say/message_data
-//            pairs, the NetDaemon/NetMsg calls) is a straight disassembly
-//            transcription.
+// ORIGINAL: 0x00528EA0 ?net_upkeep_phase@@YAHH@Z 0x00528EA0-0x00529097 FILE
+// RULED-OUT: `int shiftAmt = *g_00939284; ... 1 << shiftAmt` vs a two-statement `unsigned int bit = 1; bit <<= shiftAmt;` vs computing the bitmask load before/after the shift - all three schedule the same as the original up to instruction #5, where the original still has a bare `mov eax, 1` that the rebuilt folds away before the `shl`. Rest of the function (the do/while upkeep-poll loop, the two log_say/message_data pairs, the NetDaemon/NetMsg calls) is a straight disassembly transcription.
 // working copy - scaffold materialised by --work
-// name      ?net_upkeep_phase@@YAHH@Z
 // size      503 bytes
-// spans     0x00528EA0-0x00529097
 // prototype 
 // callers   1   call targets   10
 // kind      game

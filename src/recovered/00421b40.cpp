@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00421B40 BYTE_EXACT
-// name      ?stop_timer@BattleWin@@QAEXXZ
+// ORIGINAL: 0x00421B40 ?stop_timer@BattleWin@@QAEXXZ 0x00421B40-0x00421B48 BYTE_EXACT
 // size      8 bytes
-// spans     0x00421B40-0x00421B48
 // prototype void (__thiscall ?stop_timer@BattleWin@@QAEXXZ)(BattleWin* this)
 // callers   2   call targets   0
 // kind      game

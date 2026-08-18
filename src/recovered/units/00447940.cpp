@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00447940 FILE
-// name      ?general@BAmbience@@QAEXXZ
+// ORIGINAL: 0x00447940 ?general@BAmbience@@QAEXXZ 0x00447940-0x00447AA9 FILE
 // size      361 bytes
-// spans     0x00447940-0x00447AA9
 // prototype void (__thiscall ?general@BAmbience@@QAEXXZ)(BAmbience* this)
 // callers   0   call targets   1
 // kind      game

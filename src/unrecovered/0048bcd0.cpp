@@ -1,14 +1,7 @@
-// ORIGINAL: 0x0048BCD0 FILE
-// RULED-OUT: SEH prologue absent (diverges at instr #2) because the
-//            scaffold's GraphicWin/MapWin/Buffer only declare constructors,
-//            not destructors, so VC6 has nothing to protect with an
-//            unwind frame. Field writes and the three placement-`new`
-//            sub-object constructions otherwise match the disassembly's
-//            store order.
+// ORIGINAL: 0x0048BCD0 ??0PlanWin@@QAE@H@Z 0x0048BCD0-0x0048BD7E;0x006581D0-0x00658205 FILE
+// RULED-OUT: SEH prologue absent (diverges at instr #2) because the scaffold's GraphicWin/MapWin/Buffer only declare constructors, not destructors, so VC6 has nothing to protect with an unwind frame. Field writes and the three placement-`new` sub-object constructions otherwise match the disassembly's store order.
 // working copy - scaffold materialised by --work
-// name      ??0PlanWin@@QAE@H@Z
 // size      227 bytes
-// spans     0x0048BCD0-0x0048BD7E;0x006581D0-0x00658205
 // prototype void (__thiscall ??0PlanWin@@QAE@H@Z)(PlanWin* this, int)
 // callers   1   call targets   3
 // kind      game

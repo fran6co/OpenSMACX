@@ -20,10 +20,8 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-ORIGINAL: 0x0063B930 BYTE_EXACT
-// name      ?close_cursor_class@Cursor@@QAAXXZ
+// ORIGINAL: 0x0063B930 ?close_cursor_class@Cursor@@QAAXXZ 0x0063B930-0x0063B931 BYTE_EXACT
 // size      1 bytes
-// spans     0x0063B930-0x0063B931
 // prototype 
 // callers   1   call targets   0
 // kind      game
@@ -54,10 +52,8 @@ Purpose: Clear all four fields.
          observed: four independent stores of the same constant to distinct
          fields leave the same object whatever order they run in, and nothing
          interleaves. Saying so beats implying the sequence was matched.
-ORIGINAL: 0x0063B2D0
-// name      ??0Cursor@@QAE@XZ
+// ORIGINAL: 0x0063B2D0 ??0Cursor@@QAE@XZ 0x0063B2D0-0x0063B2E0
 // size      16 bytes
-// spans     0x0063B2D0-0x0063B2E0
 // prototype Cursor* (__thiscall ??0Cursor@@QAE@XZ)(Cursor* this)
 // callers   0   call targets   0
 // kind      game

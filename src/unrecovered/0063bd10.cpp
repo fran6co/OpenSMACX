@@ -1,10 +1,6 @@
-// ORIGINAL: 0x0063BD10
-// RULED-OUT: MISMATCH #0 push/sub - unknown containing class, receiver
-//            expressed as an opaque thiscall shim (no field names); stack
-//            frame shape differs from the original's spill choices.
-// name      sub_63bd10
+// ORIGINAL: 0x0063BD10 sub_63bd10 0x0063BD10-0x0063BEAD
+// RULED-OUT: MISMATCH #0 push/sub - unknown containing class, receiver expressed as an opaque thiscall shim (no field names); stack frame shape differs from the original's spill choices.
 // size      413 bytes
-// spans     0x0063BD10-0x0063BEAD
 // prototype
 // callers   2   call targets   3
 // kind      game

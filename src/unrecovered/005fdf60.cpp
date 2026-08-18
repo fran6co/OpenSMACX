@@ -1,10 +1,7 @@
-// ORIGINAL: 0x005FDF60 BYTE_EXACT FILE
-// LEVER: store order (not declaration order) plus a thiscall shim on the
-//        embedded heap_ so the tail call to Heap::shutdown() folds to jmp
+// ORIGINAL: 0x005FDF60 ??1TextIndex@@QAE@XZ 0x005FDF60-0x005FDF78 FILE BYTE_EXACT
+// LEVER: store order (not declaration order) plus a thiscall shim on the embedded heap_ so the tail call to Heap::shutdown() folds to jmp
 // working copy - scaffold materialised by --work
-// name      ??1TextIndex@@QAE@XZ
 // size      24 bytes
-// spans     0x005FDF60-0x005FDF78
 // prototype void (__thiscall ??1TextIndex@@QAE@XZ)(TextIndex* this)
 // callers   0   call targets   0
 // kind      game

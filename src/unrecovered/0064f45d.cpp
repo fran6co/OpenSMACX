@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064F45D EXCLUDED S1
-// name      ___mtold12
+// ORIGINAL: 0x0064F45D ___mtold12 0x0064F45D-0x0064F524 EXCLUDED S1
 // size      199 bytes
-// spans     0x0064F45D-0x0064F524
 // prototype 
 // callers   1   call targets   2
 // kind      library

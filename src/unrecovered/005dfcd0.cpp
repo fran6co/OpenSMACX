@@ -1,20 +1,13 @@
-// ORIGINAL: 0x005DFCD0 FILE
+// ORIGINAL: 0x005DFCD0 ?fill@Buffer@@QAEHPAURECT@@H@Z 0x005DFCD0-0x005DFEFC FILE
+// RULED-OUT: MISMATCH #4 'push' vs 'mov' - structurally faithful transcription (field54/field58 dispatch, DDSURFACEDESC-shaped Lock() struct, DDBLTFX-shaped color-fill blit, manual rep-stosd-style fill loop) but the early register/stack scheduling around the field54/field58 reads diverges from the original within the first few instructions; not chased further.
 // working copy - scaffold materialised by --work
-// name      ?fill@Buffer@@QAEHPAURECT@@H@Z
 // size      556 bytes
-// spans     0x005DFCD0-0x005DFEFC
 // prototype int (__thiscall ?fill@Buffer@@QAEHPAURECT@@H@Z)(Buffer* this, RECT* rect, int)
 // callers   8   call targets   0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
 // indirect  0x005DFD1E 0x005DFD43 0x005DFD89 0x005DFE00 0x005DFEE5
-// RULED-OUT: MISMATCH #4 'push' vs 'mov' - structurally faithful transcription
-//            (field54/field58 dispatch, DDSURFACEDESC-shaped Lock() struct,
-//            DDBLTFX-shaped color-fill blit, manual rep-stosd-style fill loop)
-//            but the early register/stack scheduling around the field54/field58
-//            reads diverges from the original within the first few instructions;
-//            not chased further.
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?fill@Buffer@@QAEHPAURECT@@H@Z  at 0x005DFCD0  (556 bytes)

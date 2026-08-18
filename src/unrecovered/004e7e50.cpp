@@ -1,18 +1,11 @@
-// ORIGINAL: 0x004E7E50
-// name      sub_4e7e50
+// ORIGINAL: 0x004E7E50 sub_4e7e50 0x004E7E50-0x004E7F64
+// RULED-OUT: various expression orderings for the x/y base+offset sums and the wrap-around guard placement all keep the divergence at the very first instructions (register allocation for edx/ecx/a1 differs from the original's push-ebx/push-esi-before-movsx order); none reproduced the original's exact prologue. Landing the closest form (mnemonic_similarity 0.807).
 // size      276 bytes
-// spans     0x004E7E50-0x004E7F64
 // prototype
 // callers   0   call targets   3
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x004E6E50 0x004E7310 0x004E7750
-// RULED-OUT: various expression orderings for the x/y base+offset sums and
-//            the wrap-around guard placement all keep the divergence at the
-//            very first instructions (register allocation for edx/ecx/a1
-//            differs from the original's push-ebx/push-esi-before-movsx
-//            order); none reproduced the original's exact prologue.
-//            Landing the closest form (mnemonic_similarity 0.807).
 
 extern int g_0066efbc[];
 extern int g_0066f440[];

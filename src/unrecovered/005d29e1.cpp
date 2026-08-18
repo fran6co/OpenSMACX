@@ -1,32 +1,11 @@
-// ORIGINAL: 0x005D29E1
-// name      sub_5d29e1
+// ORIGINAL: 0x005D29E1 sub_5d29e1 0x005D29E1-0x005D2B20
+// RULED-OUT: this is not addressable with a normal calling convention - the body reads unaff_ESI/unaff_EDI with no stack access and no register setup of its own (first instruction is `push edi`, `mov ebx,[esi+0x14]` immediately after), so the 3 callers must be pre-loading esi/edi before `call`ing in. That is an interprocedural register-allocation artifact of compiling the 3 call sites and this body together as one translation unit; it cannot be reproduced by compiling this function alone under any ordinary C++ signature, since VC6 only picks a non-standard register ABI for an internal-linkage callee when it can see all of its callers. Declared it as a plain two-pointer __cdecl function instead (src, dst) for a faithful, compiling body. Also not reproduced: the fadd-then- reinterpret-low-dword pattern for double->int (`fstp qword ptr`, then `mov` of the low 4 bytes) is the classic magic- number float truncation trick that avoids calling `_ftol`; mimicked with a raw double-then-reinterpret-cast here. Best reached: MISMATCH, edit_count 7, 455 bytes vs 319 - the whole prologue/epilogue and call sequencing differ because of the calling-convention gap above.
 // size      319 bytes
-// spans     0x005D29E1-0x005D2B20
 // prototype
 // callers   3   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
-// RULED-OUT: this is not addressable with a normal calling convention -
-//            the body reads unaff_ESI/unaff_EDI with no stack access and
-//            no register setup of its own (first instruction is `push
-//            edi`, `mov ebx,[esi+0x14]` immediately after), so the 3
-//            callers must be pre-loading esi/edi before `call`ing in. That
-//            is an interprocedural register-allocation artifact of
-//            compiling the 3 call sites and this body together as one
-//            translation unit; it cannot be reproduced by compiling this
-//            function alone under any ordinary C++ signature, since VC6
-//            only picks a non-standard register ABI for an internal-linkage
-//            callee when it can see all of its callers. Declared it as a
-//            plain two-pointer __cdecl function instead (src, dst) for a
-//            faithful, compiling body. Also not reproduced: the fadd-then-
-//            reinterpret-low-dword pattern for double->int (`fstp qword
-//            ptr`, then `mov` of the low 4 bytes) is the classic magic-
-//            number float truncation trick that avoids calling `_ftol`;
-//            mimicked with a raw double-then-reinterpret-cast here.
-//            Best reached: MISMATCH, edit_count 7, 455 bytes vs 319 - the
-//            whole prologue/epilogue and call sequencing differ because of
-//            the calling-convention gap above.
 extern "C" void __cdecl sub_5d29e1(int *src, int *dst) {
     int iVar2, iVar3, iVar4, iVar5, iVar6, iVar7, iVar8;
     double d1, d2;

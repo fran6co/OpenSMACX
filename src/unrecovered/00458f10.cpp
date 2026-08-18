@@ -1,13 +1,7 @@
-// ORIGINAL: 0x00458F10 FILE
-// RULED-OUT: 0.986 mnemonic similarity, one instruction off (`jns` vs
-//            `jge`) on `if ((v &= 0x80000007) < 0)` - VC6 inserts a fresh
-//            cmp/test instead of reusing the AND's flags no matter how the
-//            mask+compare is split or combined; flipping the a2==0 ternary
-//            arm order (else-first) fixed the two other divergences.
+// ORIGINAL: 0x00458F10 ?set_state@InfoWin@@QAEXHH@Z 0x00458F10-0x00458FEA FILE
+// RULED-OUT: 0.986 mnemonic similarity, one instruction off (`jns` vs `jge`) on `if ((v &= 0x80000007) < 0)` - VC6 inserts a fresh cmp/test instead of reusing the AND's flags no matter how the mask+compare is split or combined; flipping the a2==0 ternary arm order (else-first) fixed the two other divergences.
 // working copy - scaffold materialised by --work
-// name      ?set_state@InfoWin@@QAEXHH@Z
 // size      218 bytes
-// spans     0x00458F10-0x00458FEA
 // prototype void (__thiscall ?set_state@InfoWin@@QAEXHH@Z)(InfoWin* this, int, int)
 // callers   3   call targets   4
 // kind      game

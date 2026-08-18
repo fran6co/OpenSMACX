@@ -1,14 +1,7 @@
-// ORIGINAL: 0x00610540 FILE
-// RULED-OUT: no Ghidra hypothesis was provided for this address; body is a
-//            direct register-to-variable transcription of the disassembly
-//            (no vtable shim - all callees are direct calls; `T[1]`/`T[2]`
-//            model a per-class layout-offset table read through ebx=
-//            this-0xaa4). Compiles and matches through instr #1; diverges
-//            at #2 (push vs mov, prologue-adjacent). Landed at MISMATCH.
+// ORIGINAL: 0x00610540 ?attach@SpriteBox@@QAEHPAUGraphicWin@@HHH@Z 0x00610540-0x006108D5 FILE
+// RULED-OUT: no Ghidra hypothesis was provided for this address; body is a direct register-to-variable transcription of the disassembly (no vtable shim - all callees are direct calls; `T[1]`/`T[2]` model a per-class layout-offset table read through ebx= this-0xaa4). Compiles and matches through instr #1; diverges at #2 (push vs mov, prologue-adjacent). Landed at MISMATCH.
 // working copy - scaffold materialised by --work
-// name      ?attach@SpriteBox@@QAEHPAUGraphicWin@@HHH@Z
 // size      917 bytes
-// spans     0x00610540-0x006108D5
 // prototype int (__thiscall ?attach@SpriteBox@@QAEHPAUGraphicWin@@HHH@Z)(SpriteBox* this, GraphicWin*, int, int, int)
 // callers   2   call targets   9
 // kind      game

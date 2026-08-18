@@ -1,18 +1,7 @@
-// ORIGINAL: 0x00632350 FILE
-// RULED-OUT: literal transcription of the disasm (not the Ghidra hint,
-//            which mislabels two re-read stack params as `unaff_retaddr`/
-//            `iStack_4` when they're actually a2 and a1 read again - cross
-//            checked against the raw instructions). Four distinct vtable
-//            receivers (Net itself, Net+0xb0 list helper, a child object,
-//            and an object reached through the child's own vtable+4 offset
-//            table) modelled as four separate VCall* shim classes since one
-//            shared shim can't give slot002 two different arg counts.
-//            Compiles and matches through instr #0; diverges at #1 (mov vs
-//            push, prologue-adjacent). Landed at MISMATCH.
+// ORIGINAL: 0x00632350 ?drop_player@Net@@QAEHKH@Z 0x00632350-0x00632716 FILE
+// RULED-OUT: literal transcription of the disasm (not the Ghidra hint, which mislabels two re-read stack params as `unaff_retaddr`/ `iStack_4` when they're actually a2 and a1 read again - cross checked against the raw instructions). Four distinct vtable receivers (Net itself, Net+0xb0 list helper, a child object, and an object reached through the child's own vtable+4 offset table) modelled as four separate VCall* shim classes since one shared shim can't give slot002 two different arg counts. Compiles and matches through instr #0; diverges at #1 (mov vs push, prologue-adjacent). Landed at MISMATCH.
 // working copy - scaffold materialised by --work
-// name      ?drop_player@Net@@QAEHKH@Z
 // size      966 bytes
-// spans     0x00632350-0x00632716
 // prototype int (__thiscall ?drop_player@Net@@QAEHKH@Z)(Net* this, unsigned int, int)
 // callers   2   call targets   5
 // kind      game

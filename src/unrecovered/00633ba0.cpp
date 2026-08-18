@@ -1,11 +1,7 @@
-// ORIGINAL: 0x00633BA0 FILE
-// RULED-OUT: extern "C" __stdcall(5 int) verbatim head (ecx used with no
-//            stack slot -> reads as __thiscall); rewritten as thiscall
-//            member on a new FifoNode633ba0 class
+// ORIGINAL: 0x00633BA0 sub_633ba0 0x00633BA0-0x00633C81 FILE
+// RULED-OUT: extern "C" __stdcall(5 int) verbatim head (ecx used with no stack slot -> reads as __thiscall); rewritten as thiscall member on a new FifoNode633ba0 class
 // working copy - scaffold materialised by --work
-// name      sub_633ba0
 // size      225 bytes
-// spans     0x00633BA0-0x00633C81
 // prototype 
 // callers   0   call targets   2
 // kind      game

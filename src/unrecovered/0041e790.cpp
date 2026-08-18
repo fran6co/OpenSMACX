@@ -1,7 +1,6 @@
-// ORIGINAL: 0x0041E790 FILE
-// name      ?on_redraw@BaseWin@@QAEXXZ
+// ORIGINAL: 0x0041E790 ?on_redraw@BaseWin@@QAEXXZ 0x0041E790-0x0041E885 FILE
+// RULED-OUT: caching `[this+0x40afc]` into one local reused for all three BaseButton::set checks (mnemonic similarity 0.945, 8 edit blocks) vs. re-reading it through a `volatile int *` for each check (0.959, 6 edit blocks) - the original re-reads the field three separate times (0x0041E7B9, 0x0041E7D2, 0x0041E7EC), so the volatile re-read is the more faithful form and scores closer. Neither reached BYTE_EXACT; first divergence is prologue/register scheduling around the button-set sequence.
 // size      245 bytes
-// spans     0x0041E790-0x0041E885
 // prototype void (__thiscall ?on_redraw@BaseWin@@QAEXXZ)(BaseWin* this)
 // callers   ?   call targets   16
 // kind      game
@@ -9,14 +8,6 @@
 // calls     0x0040C850 0x0040E360 0x0040F0F0 0x0040FCC0 0x00410870 0x00411240
 //           0x004103B0 0x00412AA0 0x00414B40 0x00415080 0x00415730 0x00415B20
 //           0x0041E560 0x0045C290 0x005D5890 0x00607C80
-// RULED-OUT: caching `[this+0x40afc]` into one local reused for all three
-//            BaseButton::set checks (mnemonic similarity 0.945, 8 edit
-//            blocks) vs. re-reading it through a `volatile int *` for each
-//            check (0.959, 6 edit blocks) - the original re-reads the field
-//            three separate times (0x0041E7B9, 0x0041E7D2, 0x0041E7EC), so
-//            the volatile re-read is the more faithful form and scores
-//            closer. Neither reached BYTE_EXACT; first divergence is
-//            prologue/register scheduling around the button-set sequence.
 
 // GENERATED SKELETON (hand-written, following tools/emit_translation_unit.py
 // conventions) - a VERIFICATION ARTIFACT, not product source: classes are

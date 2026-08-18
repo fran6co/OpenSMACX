@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00526E70 FILE
-// name      ?production_phase@@YAXH@Z
+// ORIGINAL: 0x00526E70 ?production_phase@@YAXH@Z 0x00526E70-0x00527285 FILE
 // size      1045 bytes
-// spans     0x00526E70-0x00527285
 // prototype void (__cdecl ?production_phase@@YAXH@Z)(int factionID)
 // callers   1   call targets   6
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064B3B1 EXCLUDED S1
-// name      _rtforexpinf
+// ORIGINAL: 0x0064B3B1 _rtforexpinf 0x0064B3B1-0x0064B3BE;0x0064A716-0x0064A71B;0x0064B364-0x0064B369 EXCLUDED S1
 // size      23 bytes
-// spans     0x0064B3B1-0x0064B3BE;0x0064A716-0x0064A71B;0x0064B364-0x0064B369
 // prototype 
 // callers   0   call targets   0
 // kind      library

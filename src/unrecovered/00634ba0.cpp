@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00634BA0 EXCLUDED S1
-// name      ??0Iostream_init@@QAE@XZ_1
+// ORIGINAL: 0x00634BA0 ??0Iostream_init@@QAE@XZ_1 0x00634BA0-0x00634BA3 EXCLUDED S1
 // size      3 bytes
-// spans     0x00634BA0-0x00634BA3
 // prototype void (__thiscall ??0Iostream_init@@QAE@XZ_1)(Iostream_init* this)
 // callers   0   call targets   0
 // kind      library

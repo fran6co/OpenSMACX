@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0051E090 BYTE_EXACT FILE
-// name      ?set_tamper@@YAXXZ
+// ORIGINAL: 0x0051E090 ?set_tamper@@YAXXZ 0x0051E090-0x0051E102 FILE BYTE_EXACT
 // size      114 bytes
-// spans     0x0051E090-0x0051E102
 // prototype 
 // callers   0   call targets   0
 // kind      game

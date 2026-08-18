@@ -30,10 +30,8 @@ uint32_t *BaseButtonDynamicDefaults = (uint32_t *)0x009B8E2C;
 /*
 Purpose: Construct the GraphicWin base and two Time members, then install the
          BaseButton tables and process defaults.
-ORIGINAL: 0x00606F30
-// name      ??0BaseButton@@QAE@XZ
+// ORIGINAL: 0x00606F30 ??0BaseButton@@QAE@XZ 0x00606F30-0x00607033;0x00662E50-0x00662E70
 // size      291 bytes
-// spans     0x00606F30-0x00607033;0x00662E50-0x00662E70
 // prototype void (__thiscall ??0BaseButton@@QAE@XZ)(BaseButton* this)
 // callers   3   call targets   2
 // kind      game
@@ -85,10 +83,8 @@ BaseButton *__fastcall base_button_construct_redirect(
 /*
 Purpose: Close the GraphicWin base, reset BaseButton-owned state from the
          process defaults, then release the owned name and bubble strings.
-ORIGINAL: 0x006070C0
-// name      ?close@BaseButton@@QAEXXZ
+// ORIGINAL: 0x006070C0 ?close@BaseButton@@QAEXXZ 0x006070C0-0x00607190
 // size      208 bytes
-// spans     0x006070C0-0x00607190
 // prototype void (__thiscall ?close@BaseButton@@QAEXXZ)(BaseButton* this)
 // callers   3   call targets   2
 // kind      game
@@ -147,10 +143,8 @@ uint32_t __fastcall base_button_close_redirect(BaseButton *self, void *) {
 /*
 Purpose: Destroy a BaseButton by installing its two virtual tables, closing
          it, destroying Time2 then Time1, and finally destroying GraphicWin.
-ORIGINAL: 0x00607040
-// name      ??1BaseButton@@QAE@XZ
+// ORIGINAL: 0x00607040 ??1BaseButton@@QAE@XZ 0x00607040-0x006070B9;0x00662E70-0x00662E9E
 // size      167 bytes
-// spans     0x00607040-0x006070B9;0x00662E70-0x00662E9E
 // prototype void (__thiscall ??1BaseButton@@QAE@XZ)(BaseButton* this)
 // callers   134   call targets   3
 // kind      game
@@ -179,10 +173,8 @@ BaseButton *__fastcall base_button_destructor_redirect(
 
 /*
 Purpose: Set the button's bubble text.
-ORIGINAL: 0x00607550
-// name      ?set_bubble_text@BaseButton@@QAEHPAD@Z
+// ORIGINAL: 0x00607550 ?set_bubble_text@BaseButton@@QAEHPAD@Z 0x00607550-0x006075B7
 // size      103 bytes
-// spans     0x00607550-0x006075B7
 // prototype int (__thiscall ?set_bubble_text@BaseButton@@QAEHPAD@Z)(BaseButton* this, int8*)
 // callers   8   call targets   4
 // kind      game
@@ -211,10 +203,8 @@ int BaseButton::set_bubble_text(LPCSTR input) {
 
 /*
 Purpose: Set the button's name string.
-ORIGINAL: 0x006074E0
-// name      ?set_name@BaseButton@@QAEHPAD@Z
+// ORIGINAL: 0x006074E0 ?set_name@BaseButton@@QAEHPAD@Z 0x006074E0-0x0060754D
 // size      109 bytes
-// spans     0x006074E0-0x0060754D
 // prototype int (__thiscall ?set_name@BaseButton@@QAEHPAD@Z)(BaseButton* this, int8*)
 // callers   4   call targets   4
 // kind      game
@@ -264,10 +254,8 @@ void store_default_text_colors(size_t tier, int color1, int color2,
 
 /*
 Purpose: Set the primary default text colours shared by every button.
-ORIGINAL: 0x00607420
-// name      ?set_def_text_color@BaseButton@@QAAXHHHH@Z
+// ORIGINAL: 0x00607420 ?set_def_text_color@BaseButton@@QAAXHHHH@Z 0x00607420-0x00607447
 // size      39 bytes
-// spans     0x00607420-0x00607447
 // prototype 
 // callers   3   call targets   0
 // kind      game
@@ -281,10 +269,8 @@ void BaseButton::set_def_text_color(int color1, int color2, int color3, int colo
 
 /*
 Purpose: Set the secondary default text colours shared by every button.
-ORIGINAL: 0x00607450
-// name      ?set_def_text_color2@BaseButton@@QAAXHHHH@Z
+// ORIGINAL: 0x00607450 ?set_def_text_color2@BaseButton@@QAAXHHHH@Z 0x00607450-0x00607477
 // size      39 bytes
-// spans     0x00607450-0x00607477
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -298,10 +284,8 @@ void BaseButton::set_def_text_color2(int color1, int color2, int color3, int col
 
 /*
 Purpose: Set the tertiary default text colours shared by every button.
-ORIGINAL: 0x00607480
-// name      ?set_def_text_color3@BaseButton@@QAAXHHHH@Z
+// ORIGINAL: 0x00607480 ?set_def_text_color3@BaseButton@@QAAXHHHH@Z 0x00607480-0x006074A7
 // size      39 bytes
-// spans     0x00607480-0x006074A7
 // prototype 
 // callers   0   call targets   0
 // kind      game
@@ -315,10 +299,8 @@ void BaseButton::set_def_text_color3(int color1, int color2, int color3, int col
 
 /*
 Purpose: Set the default fonts shared by every button.
-ORIGINAL: 0x006074B0
-// name      ?set_def_font@BaseButton@@QAAHPAUFont@@PAUFont@@PAUFont@@@Z
+// ORIGINAL: 0x006074B0 ?set_def_font@BaseButton@@QAAHPAUFont@@PAUFont@@PAUFont@@@Z 0x006074B0-0x006074E0
 // size      48 bytes
-// spans     0x006074B0-0x006074E0
 // prototype 
 // callers   4   call targets   0
 // kind      game
@@ -383,10 +365,8 @@ void recolour(Buffer &buffer, BufferColourSetter setter,
 
 /*
 Purpose: Set the button's primary text colours.
-ORIGINAL: 0x00607360
-// name      ?set_text_color@BaseButton@@QAEXHHHH@Z
+// ORIGINAL: 0x00607360 ?set_text_color@BaseButton@@QAEXHHHH@Z 0x00607360-0x0060739D
 // size      61 bytes
-// spans     0x00607360-0x0060739D
 // prototype void (__thiscall ?set_text_color@BaseButton@@QAEXHHHH@Z)(BaseButton* this, int, int, int, int)
 // callers   11   call targets   2
 // kind      game
@@ -411,10 +391,8 @@ void BaseButton::set_text_color(int color1, int color2, int color3, int color4) 
 
 /*
 Purpose: Set the button's secondary text colours.
-ORIGINAL: 0x006073A0
-// name      ?set_text_color2@BaseButton@@QAEXHHHH@Z
+// ORIGINAL: 0x006073A0 ?set_text_color2@BaseButton@@QAEXHHHH@Z 0x006073A0-0x006073DD
 // size      61 bytes
-// spans     0x006073A0-0x006073DD
 // prototype void (__thiscall ?set_text_color2@BaseButton@@QAEXHHHH@Z)(BaseButton* this, int, int, int, int)
 // callers   1   call targets   2
 // kind      game
@@ -431,10 +409,8 @@ void BaseButton::set_text_color2(int color1, int color2, int color3, int color4)
 
 /*
 Purpose: Set the button's tertiary text colours.
-ORIGINAL: 0x006073E0
-// name      ?set_text_color3@BaseButton@@QAEXHHHH@Z
+// ORIGINAL: 0x006073E0 ?set_text_color3@BaseButton@@QAEXHHHH@Z 0x006073E0-0x0060741D
 // size      61 bytes
-// spans     0x006073E0-0x0060741D
 // prototype void (__thiscall ?set_text_color3@BaseButton@@QAEXHHHH@Z)(BaseButton* this, int, int, int, int)
 // callers   1   call targets   2
 // kind      game
@@ -480,10 +456,8 @@ static const size_t WinValueChangedSlot = 0xB4;
 /*
 Purpose: Give the button a new value, redrawing and notifying its parent only
          when the value actually changes.
-ORIGINAL: 0x00607C80 BYTE_EXACT
-// name      ?set@BaseButton@@QAEXH@Z
+// ORIGINAL: 0x00607C80 ?set@BaseButton@@QAEXH@Z 0x00607C80-0x00607CBD BYTE_EXACT
 // size      61 bytes
-// spans     0x00607C80-0x00607CBD
 // prototype void (__thiscall ?set@BaseButton@@QAEXH@Z)(BaseButton* this, int)
 // callers   7   call targets   0
 // kind      game
@@ -521,13 +495,11 @@ void __fastcall base_button_set_redirect(BaseButton *self, void *, int value) {
 
 /*
 Purpose: Legacy stub; the original body returns nothing without reading its
-ORIGINAL: 0x006077F0 BYTE_EXACT
-// name      ?on_key_click@BaseButton@@QAEHHH@Z
+// ORIGINAL: 0x006077F0 ?on_key_click@BaseButton@@QAEHHH@Z 0x006077F0-0x006077F5 BYTE_EXACT
 // CORRECTED from ?on_key_click@BaseButton@@QAEXHH@Z
 //   body is `xor eax, eax; ret 8` - it returns zero, and the sibling
 //   class BasePop declares the same handler `int on_key_click(int, int)`
 // size      5 bytes
-// spans     0x006077F0-0x006077F5
 // prototype int (__thiscall ?on_key_click@BaseButton@@QAEHHH@Z)(BaseButton* this, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -547,12 +519,10 @@ void __fastcall base_button_on_key_click_redirect(
 
 /*
 Purpose: Legacy stub; the original body returns nothing without reading its
-ORIGINAL: 0x00607800 BYTE_EXACT
-// name      ?on_key_down@BaseButton@@QAEHH@Z
+// ORIGINAL: 0x00607800 ?on_key_down@BaseButton@@QAEHH@Z 0x00607800-0x00607805 BYTE_EXACT
 // CORRECTED from ?on_key_down@BaseButton@@QAEXH@Z
 //   body is `xor eax, eax; ret 4`; BasePop::on_key_down returns int
 // size      5 bytes
-// spans     0x00607800-0x00607805
 // prototype int (__thiscall ?on_key_down@BaseButton@@QAEHH@Z)(BaseButton* this, int)
 // callers   0   call targets   0
 // kind      game
@@ -572,12 +542,10 @@ void __fastcall base_button_on_key_down_redirect(
 
 /*
 Purpose: Legacy stub; the original body returns nothing without reading its
-ORIGINAL: 0x00607810 BYTE_EXACT
-// name      ?on_key_up@BaseButton@@QAEHH@Z
+// ORIGINAL: 0x00607810 ?on_key_up@BaseButton@@QAEHH@Z 0x00607810-0x00607815 BYTE_EXACT
 // CORRECTED from ?on_key_up@BaseButton@@QAEXH@Z
 //   body is `xor eax, eax; ret 4`; BasePop::on_key_up returns int
 // size      5 bytes
-// spans     0x00607810-0x00607815
 // prototype int (__thiscall ?on_key_up@BaseButton@@QAEHH@Z)(BaseButton* this, int)
 // callers   0   call targets   0
 // kind      game
@@ -615,10 +583,8 @@ Purpose: Reinitialise a button - close whatever it currently holds, take a
          private copy of its name, build the GraphicWin base with the button
          style word, publish the shared default colours and fonts into the
          window buffer, then show it.
-ORIGINAL: 0x00607210
-// name      ?init@BaseButton@@QAEHPADHHHHHPAUWin@@H@Z
+// ORIGINAL: 0x00607210 ?init@BaseButton@@QAEHPADHHHHHPAUWin@@H@Z 0x00607210-0x00607352
 // size      322 bytes
-// spans     0x00607210-0x00607352
 // prototype int (__thiscall ?init@BaseButton@@QAEHPADHHHHHPAUWin@@H@Z)(BaseButton* this, int8*, int, int, int, int, int, Win*, int)
 // callers   30   call targets   8
 // kind      game
@@ -727,10 +693,8 @@ int __fastcall base_button_init_redirect(
 }
 
 /*
-ORIGINAL: 0x00607A00 BYTE_EXACT
-// name      ?on_right_click@BaseButton@@QAEXHH@Z
+// ORIGINAL: 0x00607A00 ?on_right_click@BaseButton@@QAEXHH@Z 0x00607A00-0x00607A14 BYTE_EXACT
 // size      20 bytes
-// spans     0x00607A00-0x00607A14
 // prototype void (__thiscall ?on_right_click@BaseButton@@QAEXHH@Z)(BaseButton* this, int, int)
 // callers   0   call targets   1
 // kind      game
@@ -747,10 +711,8 @@ void BaseButton::on_right_click(int a1, int a2) {
 }
 
 /*
-ORIGINAL: 0x00607B10 BYTE_EXACT
-// name      ?timer_callback_daemon@BaseButton@@QAAXHH@Z
+// ORIGINAL: 0x00607B10 ?timer_callback_daemon@BaseButton@@QAAXHH@Z 0x00607B10-0x00607B23 BYTE_EXACT
 // size      19 bytes
-// spans     0x00607B10-0x00607B23
 // prototype 
 // callers   0   call targets   1
 // kind      game

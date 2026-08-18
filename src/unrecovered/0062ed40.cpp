@@ -1,8 +1,6 @@
-// ORIGINAL: 0x0062ED40 FILE
+// ORIGINAL: 0x0062ED40 ?create_group@Net@@QAEHPAD@Z 0x0062ED40-0x0062EDA2 FILE
 // working copy - scaffold materialised by --work
-// name      ?create_group@Net@@QAEHPAD@Z
 // size      98 bytes
-// spans     0x0062ED40-0x0062EDA2
 // prototype int (__thiscall ?create_group@Net@@QAEHPAD@Z)(Net* this, int8*)
 // callers   1   call targets   1
 // kind      game

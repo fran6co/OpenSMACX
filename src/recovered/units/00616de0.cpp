@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00616DE0 FILE
-// name      ?init@Caviar@@QAEXXZ
+// ORIGINAL: 0x00616DE0 ?init@Caviar@@QAEXXZ 0x00616DE0-0x00617013 FILE
 // size      563 bytes
-// spans     0x00616DE0-0x00617013
 // prototype void (__thiscall ?init@Caviar@@QAEXXZ)(Caviar* this)
 // callers   7   call targets   5
 // kind      game

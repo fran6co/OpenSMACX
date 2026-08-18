@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0043E960 FILE
-// name      ?shut_that_badboy_down@DesignWin@@QAEXXZ
+// ORIGINAL: 0x0043E960 ?shut_that_badboy_down@DesignWin@@QAEXXZ 0x0043E960-0x0043E99D FILE
 // size      61 bytes
-// spans     0x0043E960-0x0043E99D
 // prototype void (__thiscall ?shut_that_badboy_down@DesignWin@@QAEXXZ)(DesignWin* this)
 // callers   2   call targets   3
 // kind      game

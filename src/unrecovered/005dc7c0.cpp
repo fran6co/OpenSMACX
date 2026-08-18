@@ -1,14 +1,7 @@
-// ORIGINAL: 0x005DC7C0 FILE
-// RULED-OUT: separate `if(!font1_)`/`if(!field_520_)` blocks (register-alloc
-//            differs from the original's single edi=this pass); goto-based
-//            transcription of the jump-table switch (chars {}[]$= dispatch,
-//            verified against the raw jump/byte tables at 0x5dca04/0x5dca20)
-//            reaches MISMATCH with first divergence at instr #6, 122/201
-//            mnemonics shared.
+// ORIGINAL: 0x005DC7C0 ?text_width@Buffer@@QAEHPADH@Z 0x005DC7C0-0x005DCA02 FILE
+// RULED-OUT: separate `if(!font1_)`/`if(!field_520_)` blocks (register-alloc differs from the original's single edi=this pass); goto-based transcription of the jump-table switch (chars {}[]$= dispatch, verified against the raw jump/byte tables at 0x5dca04/0x5dca20) reaches MISMATCH with first divergence at instr #6, 122/201 mnemonics shared.
 // working copy - scaffold materialised by --work
-// name      ?text_width@Buffer@@QAEHPADH@Z
 // size      578 bytes
-// spans     0x005DC7C0-0x005DCA02
 // prototype int (__thiscall ?text_width@Buffer@@QAEHPADH@Z)(Buffer* this, int8*, int)
 // callers   16   call targets   3
 // kind      game

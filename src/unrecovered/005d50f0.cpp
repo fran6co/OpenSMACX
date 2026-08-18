@@ -1,7 +1,6 @@
-// ORIGINAL: 0x005D50F0
-// name      sub_5d50f0
+// ORIGINAL: 0x005D50F0 sub_5d50f0 0x005D50F0-0x005D5235
+// RULED-OUT: reading `*(uint*)(base+0x98)` twice (once per bit test) added an extra `mov` vs the original's single load reused by both `test al,N`; caching it in a local did not change the rebuilt bytes, so the remaining divergence is scheduling, not this. Best reached: MISMATCH, edit_count 5, 345 bytes vs 325, mnemonic similarity ~0.92.
 // size      325 bytes
-// spans     0x005D50F0-0x005D5235
 // prototype
 // callers   0   call targets   6
 // kind      game
@@ -23,13 +22,6 @@
 //           standalone closing line for the class closes the region it is
 //           measuring before reaching the function at all, scoring the
 //           whole thing NO_COMPILE with zero .text symbols found.
-// RULED-OUT: reading `*(uint*)(base+0x98)` twice (once per bit test) added
-//            an extra `mov` vs the original's single load reused by both
-//            `test al,N`; caching it in a local did not change the
-//            rebuilt bytes, so the remaining divergence is scheduling, not
-//            this.
-//            Best reached: MISMATCH, edit_count 5, 345 bytes vs 325,
-//            mnemonic similarity ~0.92.
 class GWShim {
 public:
     int sub_5d50f0(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9);

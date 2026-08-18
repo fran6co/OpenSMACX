@@ -1,13 +1,7 @@
-// ORIGINAL: 0x005ED170 FILE
-// RULED-OUT: byte-exact - 97.6% mnemonic similarity; the remaining
-//            divergence is the entry frame reserving a scratch stack slot
-//            via `push ecx` (one extra local-sized push before esi=ecx)
-//            that our two-int-local (x,y) version doesn't trigger the same
-//            way.
+// ORIGINAL: 0x005ED170 ?nonclient_to_screen@Win@@QAEXPAURECT@@@Z 0x005ED170-0x005ED236 FILE
+// RULED-OUT: byte-exact - 97.6% mnemonic similarity; the remaining divergence is the entry frame reserving a scratch stack slot via `push ecx` (one extra local-sized push before esi=ecx) that our two-int-local (x,y) version doesn't trigger the same way.
 // working copy - scaffold materialised by --work
-// name      ?nonclient_to_screen@Win@@QAEXPAURECT@@@Z
 // size      198 bytes
-// spans     0x005ED170-0x005ED236
 // prototype void (__thiscall ?nonclient_to_screen@Win@@QAEXPAURECT@@@Z)(Win* this, RECT*)
 // callers   1   call targets   1
 // kind      game

@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005E32F3 FILE
+// ORIGINAL: 0x005E32F3 ?dotted_box@Buffer@@QAEHPAURECT@@H@Z 0x005E32F3-0x005E3370 FILE
 // working copy - scaffold materialised by --work
-// name      ?dotted_box@Buffer@@QAEHPAURECT@@H@Z
 // size      125 bytes
-// spans     0x005E32F3-0x005E3370
 // prototype int (__thiscall ?dotted_box@Buffer@@QAEHPAURECT@@H@Z)(Buffer* this, RECT*, int)
 // callers   2   call targets   2
 // kind      game

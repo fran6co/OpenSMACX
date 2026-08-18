@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0050F680 FILE
-// name      ?on_nc_hittest@Console@@QAEXHH@Z
+// ORIGINAL: 0x0050F680 ?on_nc_hittest@Console@@QAEXHH@Z 0x0050F680-0x0050F951 FILE
 // size      721 bytes
-// spans     0x0050F680-0x0050F951
 // prototype void (__thiscall ?on_nc_hittest@Console@@QAEXHH@Z)(Console* this, int, int)
 // callers   0   call targets   1
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0048A8E0 FILE
-// name      ??1PickWin@@QAE@XZ
+// ORIGINAL: 0x0048A8E0 ??1PickWin@@QAE@XZ 0x0048A8E0-0x0048AC09;0x00657C70-0x00657E2F FILE
 // size      1256 bytes
-// spans     0x0048A8E0-0x0048AC09;0x00657C70-0x00657E2F
 // prototype void (__thiscall ??1PickWin@@QAE@XZ)(PickWin* this)
 // callers   1   call targets   12
 // kind      game

@@ -1,16 +1,7 @@
-// ORIGINAL: 0x005CEB12 FILE
-// RULED-OUT: no C-callable convention passes 3 pointers in esi/edi/ebp
-//            with zero prologue and no stack args - the original has no
-//            `push ebp`/frame at all and even leaves ecx/edx's high 24
-//            bits as whatever the caller left them (Ghidra's CONCAT31
-//            "uVar1/uVar2" tracking), which only a hand-written
-//            leaf/tail-continuation does. Landed as a real 3-pointer
-//            function reproducing the LUT-pack arithmetic; first
-//            divergence is the (unavoidable) prologue itself.
+// ORIGINAL: 0x005CEB12 sub_5ceb12 0x005CEB12-0x005CED1D FILE
+// RULED-OUT: no C-callable convention passes 3 pointers in esi/edi/ebp with zero prologue and no stack args - the original has no `push ebp`/frame at all and even leaves ecx/edx's high 24 bits as whatever the caller left them (Ghidra's CONCAT31 "uVar1/uVar2" tracking), which only a hand-written leaf/tail-continuation does. Landed as a real 3-pointer function reproducing the LUT-pack arithmetic; first divergence is the (unavoidable) prologue itself.
 // working copy - scaffold materialised by --work
-// name      sub_5ceb12
 // size      523 bytes
-// spans     0x005CEB12-0x005CED1D
 // prototype 
 // callers   1   call targets   0
 // kind      game

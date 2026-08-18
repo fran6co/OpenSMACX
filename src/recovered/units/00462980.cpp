@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00462980 FILE
-// name      ?calculate_dimensions@MapWin@@QAEXXZ
+// ORIGINAL: 0x00462980 ?calculate_dimensions@MapWin@@QAEXXZ 0x00462980-0x00462EFA FILE
 // size      1402 bytes
-// spans     0x00462980-0x00462EFA
 // prototype void (__thiscall ?calculate_dimensions@MapWin@@QAEXXZ)(MapWin* this)
 // callers   3   call targets   1
 // kind      game

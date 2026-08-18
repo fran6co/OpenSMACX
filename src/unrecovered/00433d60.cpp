@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00433D60 FILE
+// ORIGINAL: 0x00433D60 ?draw_part@SelectPartWin@@QAEHHH@Z 0x00433D60-0x00433F1D FILE
 // RULED-OUT: real switch/case for the 4-way jump table plus explicit self+0x444 Buffer this-pointer reuse across set_clip calls; reaches #21 before the post-inset rect arithmetic
-// name      ?draw_part@SelectPartWin@@QAEHHH@Z
 // size      445 bytes
-// spans     0x00433D60-0x00433F1D
 // prototype int (__thiscall ?draw_part@SelectPartWin@@QAEHHH@Z)(SelectPartWin* this, int, int)
 // callers   4   call targets   7
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0048B450 FILE
-// name      ?find_view@PlanWin@@QAEXHHHHHHHH@Z
+// ORIGINAL: 0x0048B450 ?find_view@PlanWin@@QAEXHHHHHHHH@Z 0x0048B450-0x0048B629 FILE
 // size      473 bytes
-// spans     0x0048B450-0x0048B629
 // prototype void (__thiscall ?find_view@PlanWin@@QAEXHHHHHHHH@Z)(PlanWin* this, int, int, int, int, int, int, int, int)
 // callers   1   call targets   1
 // kind      game

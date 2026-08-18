@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006292D0 FILE
-// name      ?init@StringBox@@QAEXHHHHPAUWin@@PAUStringList@@H@Z
+// ORIGINAL: 0x006292D0 ?init@StringBox@@QAEXHHHHPAUWin@@PAUStringList@@H@Z 0x006292D0-0x00629486 FILE
 // size      438 bytes
-// spans     0x006292D0-0x00629486
 // prototype void (__thiscall ?init@StringBox@@QAEXHHHHPAUWin@@PAUStringList@@H@Z)(StringBox* this, int, int, int, int, Win*, StringList*, int)
 // callers   6   call targets   4
 // kind      game

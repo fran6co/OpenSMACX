@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0047E930 FILE
-// name      ?pick_planet_size@NetWin@@QAEXXZ
+// ORIGINAL: 0x0047E930 ?pick_planet_size@NetWin@@QAEXXZ 0x0047E930-0x0047EC60;0x00657025-0x006570FD FILE
 // size      1032 bytes
-// spans     0x0047E930-0x0047EC60;0x00657025-0x006570FD
 // prototype void (__thiscall ?pick_planet_size@NetWin@@QAEXXZ)(NetWin* this)
 // callers   1   call targets   26
 // kind      game

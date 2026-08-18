@@ -1,22 +1,11 @@
-// ORIGINAL: 0x005ED5C0
-// name      ?center@Win@@QAEHXZ
+// ORIGINAL: 0x005ED5C0 ?center@Win@@QAEHXZ 0x005ED5C0-0x005ED6F7
+// RULED-OUT: named `parent` local for win_parent_ (extra register pressure, forces a 4th callee-save + frame pointer); computing both local_8 and local_4 divisions fully inside each if/else branch (extra register); calling screen_to_client() on win_parent_ itself instead of win_parent_->win_parent_ (asm's ecx at the call site is loaded from [win_parent_+0xc4], i.e. the grandparent, reused straight from the preceding null check). Best reached: MISMATCH, edit_count 10/95 mnemonics, 312 bytes vs 311 - a register-colouring difference only (rebuilt keeps `this` in esi where the original keeps it in ebx).
 // size      311 bytes
-// spans     0x005ED5C0-0x005ED6F7
 // prototype int (__thiscall ?center@Win@@QAEHXZ)(Win* this)
 // callers   6   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005ED2D0 0x005ED7D0
-// RULED-OUT: named `parent` local for win_parent_ (extra register pressure,
-//            forces a 4th callee-save + frame pointer); computing both
-//            local_8 and local_4 divisions fully inside each if/else branch
-//            (extra register); calling screen_to_client() on win_parent_
-//            itself instead of win_parent_->win_parent_ (asm's ecx at the
-//            call site is loaded from [win_parent_+0xc4], i.e. the
-//            grandparent, reused straight from the preceding null check).
-//            Best reached: MISMATCH, edit_count 10/95 mnemonics, 312 bytes
-//            vs 311 - a register-colouring difference only (rebuilt keeps
-//            `this` in esi where the original keeps it in ebx).
 int Win::center() {
     int local_8;
     int local_4;

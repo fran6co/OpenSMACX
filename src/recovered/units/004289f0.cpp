@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004289F0 FILE
-// name      ?exec@Credits@@QAEXXZ
+// ORIGINAL: 0x004289F0 ?exec@Credits@@QAEXXZ 0x004289F0-0x00428BF2 FILE
 // size      514 bytes
-// spans     0x004289F0-0x00428BF2
 // prototype void (__thiscall ?exec@Credits@@QAEXXZ)(Credits* this)
 // callers   1   call targets   15
 // kind      game

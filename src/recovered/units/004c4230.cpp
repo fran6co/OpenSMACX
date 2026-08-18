@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004C4230 FILE
-// name      ?UNK2@WorldWin@@QAEXH@Z
+// ORIGINAL: 0x004C4230 ?UNK2@WorldWin@@QAEXH@Z 0x004C4230-0x004C43F0 FILE
 // size      448 bytes
-// spans     0x004C4230-0x004C43F0
 // prototype void (__thiscall ?UNK2@WorldWin@@QAEXH@Z)(WorldWin* this, int)
 // callers   0   call targets   6
 // kind      game

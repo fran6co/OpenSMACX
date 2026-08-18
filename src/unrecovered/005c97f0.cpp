@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005C97F0 FILE
+// ORIGINAL: 0x005C97F0 ??0MultiDebug@@QAE@XZ 0x005C97F0-0x005C9860;0x00662AF0-0x00662B10 FILE
 // working copy - scaffold materialised by --work
-// name      ??0MultiDebug@@QAE@XZ
 // size      144 bytes
-// spans     0x005C97F0-0x005C9860;0x00662AF0-0x00662B10
 // prototype void (__thiscall ??0MultiDebug@@QAE@XZ)(MultiDebug* this)
 // callers   1   call targets   3
 // kind      game

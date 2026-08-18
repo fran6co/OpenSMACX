@@ -1,10 +1,7 @@
-// ORIGINAL: 0x004BEDC0 BYTE_EXACT FILE
-// LEVER: literal thiscall member with a guarded do/while (a4>0) around the
-//   cached timeGetTime slot; nested guarded do/while for the busy-wait.
+// ORIGINAL: 0x004BEDC0 ?UNK1@UV2Player@@QAEHHHHH@Z 0x004BEDC0-0x004BEE5A FILE BYTE_EXACT
+// LEVER: literal thiscall member with a guarded do/while (a4>0) around the cached timeGetTime slot; nested guarded do/while for the busy-wait.
 // working copy - scaffold materialised by --work
-// name      ?UNK1@UV2Player@@QAEHHHHH@Z
 // size      154 bytes
-// spans     0x004BEDC0-0x004BEE5A
 // prototype int (__thiscall ?UNK1@UV2Player@@QAEHHHHH@Z)(UV2Player* this, int, int, int, int)
 // callers   0   call targets   1
 // kind      game

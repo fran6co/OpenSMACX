@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005889C0 BYTE_EXACT FILE
-// name      ?popups_medium@@YAXXZ
+// ORIGINAL: 0x005889C0 ?popups_medium@@YAXXZ 0x005889C0-0x00588A2A FILE BYTE_EXACT
 // size      106 bytes
-// spans     0x005889C0-0x00588A2A
 // prototype 
 // callers   1   call targets   3
 // kind      game

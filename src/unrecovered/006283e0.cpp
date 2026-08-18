@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006283E0 BYTE_EXACT FILE
-// name      ??1Filemap@@QAE@XZ
+// ORIGINAL: 0x006283E0 ??1Filemap@@QAE@XZ 0x006283E0-0x00628423 FILE BYTE_EXACT
 // size      67 bytes
-// spans     0x006283E0-0x00628423
 // prototype void (__thiscall ??1Filemap@@QAE@XZ)(Filemap* this)
 // callers   15   call targets   0
 // kind      

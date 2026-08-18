@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064CA3A EXCLUDED S1
-// name      __ctrlfp
+// ORIGINAL: 0x0064CA3A __ctrlfp 0x0064CA3A-0x0064CA5D EXCLUDED S1
 // size      35 bytes
-// spans     0x0064CA3A-0x0064CA5D
 // prototype 
 // callers   8   call targets   0
 // kind      library

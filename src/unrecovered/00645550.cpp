@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00645550 EXCLUDED S1
-// name      __alloca_probe
+// ORIGINAL: 0x00645550 __alloca_probe 0x00645550-0x0064557F EXCLUDED S1
 // size      47 bytes
-// spans     0x00645550-0x0064557F
 // prototype 
 // callers   137   call targets   0
 // kind      library

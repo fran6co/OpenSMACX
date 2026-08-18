@@ -23,10 +23,8 @@
 
 /*
 Purpose: Initialize a button group while preserving the original selected ID and flags slots.
-ORIGINAL: 0x0062B7C0 BYTE_EXACT
-// name      ??0ButtonGroup@@QAE@XZ
+// ORIGINAL: 0x0062B7C0 ??0ButtonGroup@@QAE@XZ 0x0062B7C0-0x0062B7E4 BYTE_EXACT
 // size      36 bytes
-// spans     0x0062B7C0-0x0062B7E4
 // prototype void (__thiscall ??0ButtonGroup@@QAE@XZ)(ButtonGroup* this)
 // callers   8   call targets   0
 // kind      game
@@ -49,10 +47,8 @@ ButtonGroup::~ButtonGroup() {
 
 /*
 Purpose: Clear the active group while retaining the original selected ID and flags slots.
-ORIGINAL: 0x0062B7F0 BYTE_EXACT
-// name      ?close@ButtonGroup@@QAEXXZ
+// ORIGINAL: 0x0062B7F0 ?close@ButtonGroup@@QAEXXZ 0x0062B7F0-0x0062B810 BYTE_EXACT
 // size      32 bytes
-// spans     0x0062B7F0-0x0062B810
 // prototype void (__thiscall ?close@ButtonGroup@@QAEXXZ)(ButtonGroup* this)
 // callers   9   call targets   0
 // kind      game
@@ -72,10 +68,8 @@ void ButtonGroup::close() {
 
 /*
 Purpose: Initialize all button-group state.
-ORIGINAL: 0x0062B810 BYTE_EXACT
-// name      ?init@ButtonGroup@@QAEXHH@Z
+// ORIGINAL: 0x0062B810 ?init@ButtonGroup@@QAEXHH@Z 0x0062B810-0x0062B84C BYTE_EXACT
 // size      60 bytes
-// spans     0x0062B810-0x0062B84C
 // prototype void (__thiscall ?init@ButtonGroup@@QAEXHH@Z)(ButtonGroup* this, int, int)
 // callers   9   call targets   0
 // kind      game
@@ -96,10 +90,8 @@ void ButtonGroup::init(int group_id, int flags) {
 
 /*
 Purpose: Add a button to the group and link the button back to it.
-ORIGINAL: 0x0062B850 BYTE_EXACT
-// name      ?add@ButtonGroup@@QAEXPAUBaseButton@@@Z
+// ORIGINAL: 0x0062B850 ?add@ButtonGroup@@QAEXPAUBaseButton@@@Z 0x0062B850-0x0062B86C BYTE_EXACT
 // size      28 bytes
-// spans     0x0062B850-0x0062B86C
 // prototype void (__thiscall ?add@ButtonGroup@@QAEXPAUBaseButton@@@Z)(ButtonGroup* this, BaseButton* button)
 // callers   9   call targets   0
 // kind      game
@@ -140,10 +132,8 @@ func_button_group_click ButtonGroupOriginalButtonClick =
 /*
 Purpose: Activate a button in the group, suppressing the group's own
          notification while the click is dispatched when notify is zero.
-ORIGINAL: 0x0062B870
-// name      ?set@ButtonGroup@@QAEHHH@Z
+// ORIGINAL: 0x0062B870 ?set@ButtonGroup@@QAEHHH@Z 0x0062B870-0x0062B89F
 // size      47 bytes
-// spans     0x0062B870-0x0062B89F
 // prototype int (__thiscall ?set@ButtonGroup@@QAEHHH@Z)(ButtonGroup* this, int, int)
 // callers   35   call targets   1
 // kind      game

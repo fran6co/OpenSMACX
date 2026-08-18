@@ -1,17 +1,7 @@
-// ORIGINAL: 0x0058CED0 FILE
-// RULED-OUT: real Popup/SetupWin RAII locals with Popup::start()'s six
-//            args re-derived from push order (p1 is the fixed
-//            0x9b8aa8 char* buffer, not the GraphicWin* - this is
-//            backwards from what an earlier sibling function assumed),
-//            plus text_open/text_get/text_item/EditGroup::edit/
-//            prefs_get/X_pop/Path::init argument order verified
-//            against raw disasm; compiles, MISMATCH #24 (past the
-//            prologue and into the item-list loop - likely the
-//            itemNum2/itemCount stack array layout or the loop bound).
+// ORIGINAL: 0x0058CED0 ?size_of_planet@@YAHH@Z 0x0058CED0-0x0058D6A4;0x006607D7-0x00660989 FILE
+// RULED-OUT: real Popup/SetupWin RAII locals with Popup::start()'s six args re-derived from push order (p1 is the fixed 0x9b8aa8 char* buffer, not the GraphicWin* - this is backwards from what an earlier sibling function assumed), plus text_open/text_get/text_item/EditGroup::edit/ prefs_get/X_pop/Path::init argument order verified against raw disasm; compiles, MISMATCH #24 (past the prologue and into the item-list loop - likely the itemNum2/itemCount stack array layout or the loop bound).
 // working copy - scaffold materialised by --work
-// name      ?size_of_planet@@YAHH@Z
 // size      2438 bytes
-// spans     0x0058CED0-0x0058D6A4;0x006607D7-0x00660989
 // prototype 
 // callers   3   call targets   35
 // kind      game

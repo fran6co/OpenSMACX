@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005FC620 BYTE_EXACT FILE
-// name      ?hide_menus@Menu@@QAEXXZ
+// ORIGINAL: 0x005FC620 ?hide_menus@Menu@@QAEXXZ 0x005FC620-0x005FC67C FILE BYTE_EXACT
 // size      92 bytes
-// spans     0x005FC620-0x005FC67C
 // prototype void (__thiscall ?hide_menus@Menu@@QAEXXZ)(Menu* this)
 // callers   2   call targets   2
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00616030 FILE
-// name      ?text_position@EditBox@@QAEXH@Z
+// ORIGINAL: 0x00616030 ?text_position@EditBox@@QAEXH@Z 0x00616030-0x00616135 FILE
 // size      261 bytes
-// spans     0x00616030-0x00616135
 // prototype void (__thiscall ?text_position@EditBox@@QAEXH@Z)(EditBox* this, int)
 // callers   3   call targets   3
 // kind      game

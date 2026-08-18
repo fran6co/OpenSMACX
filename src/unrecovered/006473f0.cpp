@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006473F0 EXCLUDED S1
-// name      _memchr
+// ORIGINAL: 0x006473F0 _memchr 0x006473F0-0x00647495 EXCLUDED S1
 // size      165 bytes
-// spans     0x006473F0-0x00647495
 // prototype 
 // callers   2   call targets   0
 // kind      library

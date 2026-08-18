@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005ADE80 FILE
+// ORIGINAL: 0x005ADE80 ?replay_base@@YAXHHHH@Z 0x005ADE80-0x005ADF03 FILE
 // working copy - scaffold materialised by --work
-// name      ?replay_base@@YAXHHHH@Z
 // size      131 bytes
-// spans     0x005ADE80-0x005ADF03
 // prototype 
 // callers   5   call targets   2
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064BDF9 EXCLUDED S1
-// name      __NMSG_WRITE
+// ORIGINAL: 0x0064BDF9 __NMSG_WRITE 0x0064BDF9-0x0064BF4C EXCLUDED S1
 // size      339 bytes
-// spans     0x0064BDF9-0x0064BF4C
 // prototype int (__cdecl __NMSG_WRITE)(DWORD NumberOfBytesWritten)
 // callers   5   call targets   5
 // kind      library

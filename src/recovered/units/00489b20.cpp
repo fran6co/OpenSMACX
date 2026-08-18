@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00489B20 FILE
-// name      ?on_group_clicked@PickWin@@QAEXHHH@Z
+// ORIGINAL: 0x00489B20 ?on_group_clicked@PickWin@@QAEXHHH@Z 0x00489B20-0x00489B94 FILE
 // size      116 bytes
-// spans     0x00489B20-0x00489B94
 // prototype void (__thiscall ?on_group_clicked@PickWin@@QAEXHHH@Z)(PickWin* this, int, int, int)
 // callers   0   call targets   3
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0048BD80 FILE
-// name      ??1PlanWin@@QAE@XZ
+// ORIGINAL: 0x0048BD80 ??1PlanWin@@QAE@XZ 0x0048BD80-0x0048BED6;0x00658210-0x006582DE FILE
 // size      548 bytes
-// spans     0x0048BD80-0x0048BED6;0x00658210-0x006582DE
 // prototype void (__thiscall ??1PlanWin@@QAE@XZ)(PlanWin* this)
 // callers   2   call targets   5
 // kind      game

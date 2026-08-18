@@ -1,8 +1,6 @@
-// ORIGINAL: 0x0043D490 FILE
+// ORIGINAL: 0x0043D490 ?center_stack@DesignWin@@QAEXHH@Z 0x0043D490-0x0043D50B FILE
 // working copy - scaffold materialised by --work
-// name      ?center_stack@DesignWin@@QAEXHH@Z
 // size      123 bytes
-// spans     0x0043D490-0x0043D50B
 // prototype void (__thiscall ?center_stack@DesignWin@@QAEXHH@Z)(DesignWin* this, int, int)
 // callers   0   call targets   2
 // kind      game

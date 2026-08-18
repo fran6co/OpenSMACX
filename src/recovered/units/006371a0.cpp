@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006371A0 BYTE_EXACT FILE
-// name      Video_unk8
+// ORIGINAL: 0x006371A0 Video_unk8 0x006371A0-0x006371C2 FILE BYTE_EXACT
 // size      34 bytes
-// spans     0x006371A0-0x006371C2
 // prototype 
 // callers   0   call targets   0
 // kind      game

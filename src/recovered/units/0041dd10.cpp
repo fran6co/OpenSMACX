@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0041DD10 FILE
-// name      ?on_iface_left_up@BaseWin@@QAEXHH@Z
+// ORIGINAL: 0x0041DD10 ?on_iface_left_up@BaseWin@@QAEXHH@Z 0x0041DD10-0x0041DE5B FILE
 // size      331 bytes
-// spans     0x0041DD10-0x0041DE5B
 // prototype void (__thiscall ?on_iface_left_up@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
 // callers   0   call targets   4
 // kind      game

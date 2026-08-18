@@ -1,13 +1,7 @@
-// ORIGINAL: 0x00532E00 FILE
-// RULED-OUT: full transcription of both jump-table dispatches (size switch,
-//            address switch, tail array-compaction switch) and the chunk
-//            loop; MISMATCH #0 in the prologue (frame-size/local-order only),
-//            not in the dispatch logic - coverage is close to 100% of the
-//            original's ~4900 bytes, byte-exactness not chased further.
+// ORIGINAL: 0x00532E00 ?synch@NetDaemon@@QAEXFHHHPADHF@Z 0x00532E00-0x00534129 FILE
+// RULED-OUT: full transcription of both jump-table dispatches (size switch, address switch, tail array-compaction switch) and the chunk loop; MISMATCH #0 in the prologue (frame-size/local-order only), not in the dispatch logic - coverage is close to 100% of the original's ~4900 bytes, byte-exactness not chased further.
 // working copy - scaffold materialised by --work
-// name      ?synch@NetDaemon@@QAEXFHHHPADHF@Z
 // size      4905 bytes
-// spans     0x00532E00-0x00534129
 // prototype void (__thiscall ?synch@NetDaemon@@QAEXFHHHPADHF@Z)(NetDaemon* this, int16, int id, int, int, int8*, int uDelay, int16)
 // callers   24   call targets   23
 // kind      game

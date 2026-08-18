@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0043EE10 FILE
-// name      ??1SelectPartWin@@QAE@XZ
+// ORIGINAL: 0x0043EE10 ??1SelectPartWin@@QAE@XZ 0x0043EE10-0x0043EF6A;0x00654720-0x006547AC FILE
 // size      486 bytes
-// spans     0x0043EE10-0x0043EF6A;0x00654720-0x006547AC
 // prototype void (__thiscall ??1SelectPartWin@@QAE@XZ)(SelectPartWin* this)
 // callers   1   call targets   9
 // kind      game

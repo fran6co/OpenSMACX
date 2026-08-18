@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005D2E00 BYTE_EXACT FILE
+// ORIGINAL: 0x005D2E00 sub_5d2e00 0x005D2E00-0x005D2E6E FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      sub_5d2e00
 // size      110 bytes
-// spans     0x005D2E00-0x005D2E6E
 // prototype 
 // callers   1   call targets   0
 // kind      game

@@ -1,11 +1,7 @@
-// ORIGINAL: 0x00443E50 FILE
-// RULED-OUT: two separate null-check ifs (worse fit); localRect copy before
-//            set_clip (worse fit); closest is buf cached once, single ||
-//            null check, localRect copied after set_clip - 5-edit MISMATCH
+// ORIGINAL: 0x00443E50 ?on_iface_dialog_item_back_draw@DiploWin@@QAEHPAUGraphicWin@@HHPAURECT@@@Z 0x00443E50-0x00443F0C FILE
+// RULED-OUT: two separate null-check ifs (worse fit); localRect copy before set_clip (worse fit); closest is buf cached once, single || null check, localRect copied after set_clip - 5-edit MISMATCH
 // working copy - scaffold materialised by --work
-// name      ?on_iface_dialog_item_back_draw@DiploWin@@QAEHPAUGraphicWin@@HHPAURECT@@@Z
 // size      188 bytes
-// spans     0x00443E50-0x00443F0C
 // prototype int (__thiscall ?on_iface_dialog_item_back_draw@DiploWin@@QAEHPAUGraphicWin@@HHPAURECT@@@Z)(DiploWin* this, GraphicWin*, int, int, RECT*)
 // callers   0   call targets   4
 // kind      game

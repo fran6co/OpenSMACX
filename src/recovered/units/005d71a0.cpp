@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005D71A0 FILE
-// name      sub_5d71a0
+// ORIGINAL: 0x005D71A0 sub_5d71a0 0x005D71A0-0x005D71C8 FILE
 // size      40 bytes
-// spans     0x005D71A0-0x005D71C8
 // prototype 
 // callers   0   call targets   1
 // kind      game

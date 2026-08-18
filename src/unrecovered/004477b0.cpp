@@ -1,8 +1,6 @@
-// ORIGINAL: 0x004477B0 FILE
+// ORIGINAL: 0x004477B0 ?hostility@SAmbience@@QAEXXZ 0x004477B0-0x00447831 FILE
 // working copy - scaffold materialised by --work
-// name      ?hostility@SAmbience@@QAEXXZ
 // size      129 bytes
-// spans     0x004477B0-0x00447831
 // prototype void (__thiscall ?hostility@SAmbience@@QAEXXZ)(SAmbience* this)
 // callers   0   call targets   0
 // kind      game

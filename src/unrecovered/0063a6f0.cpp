@@ -1,21 +1,7 @@
-// ORIGINAL: 0x0063A6F0 FILE
-// RULED-OUT: `void __cdecl(int,int,float*,float*)` (matches IDA's 4-arg
-//   guess; the two float* outputs are written per-iteration, not read).
-//   Per iteration: sub_627e20 writes a FULL 3x3 matrix (9 floats, not a
-//   vec3 - confirmed by 9 distinct Ghidra locals local_24..local_4 with
-//   no other producer, each 4 bytes apart), whose three ROWS get scaled
-//   per-axis by (short model field * uniform scale) and fed to sub_63a9d0
-//   along with a pivot point to produce a min/max AABB corner pair,
-//   accumulated across all `count` sub-objects (first iteration seeds
-//   param_3/param_4, rest take running min/max). Compiles; diverges at
-//   instruction #0 (original allocates a flat 0x7c-byte frame of many
-//   named floats, rebuilt's array-grouped locals produce a different
-//   frame) - not chased further given the function's size and float
-//   scheduling sensitivity.
+// ORIGINAL: 0x0063A6F0 sub_63a6f0 0x0063A6F0-0x0063A9C9 FILE
+// RULED-OUT: `void __cdecl(int,int,float*,float*)` (matches IDA's 4-arg guess; the two float* outputs are written per-iteration, not read). Per iteration: sub_627e20 writes a FULL 3x3 matrix (9 floats, not a vec3 - confirmed by 9 distinct Ghidra locals local_24..local_4 with no other producer, each 4 bytes apart), whose three ROWS get scaled per-axis by (short model field * uniform scale) and fed to sub_63a9d0 along with a pivot point to produce a min/max AABB corner pair, accumulated across all `count` sub-objects (first iteration seeds param_3/param_4, rest take running min/max). Compiles; diverges at instruction #0 (original allocates a flat 0x7c-byte frame of many named floats, rebuilt's array-grouped locals produce a different frame) - not chased further given the function's size and float scheduling sensitivity.
 // working copy - scaffold materialised by --work
-// name      sub_63a6f0
 // size      729 bytes
-// spans     0x0063A6F0-0x0063A9C9
 // prototype 
 // callers   1   call targets   5
 // kind      game

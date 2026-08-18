@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0059A320 BYTE_EXACT FILE
-// name      ??1Path@@QAE@XZ
+// ORIGINAL: 0x0059A320 ??1Path@@QAE@XZ 0x0059A320-0x0059A368 FILE BYTE_EXACT
 // size      72 bytes
-// spans     0x0059A320-0x0059A368
 // prototype void (__thiscall ??1Path@@QAE@XZ)(Path* this)
 // callers   0   call targets   1
 // kind      game

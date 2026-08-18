@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005CD980 FILE
+// ORIGINAL: 0x005CD980 sub_5cd980 0x005CD980-0x005CDA2C FILE
 // working copy - scaffold materialised by --work
-// name      sub_5cd980
 // size      172 bytes
-// spans     0x005CD980-0x005CDA2C
 // prototype 
 // callers   1   call targets   2
 // kind      game

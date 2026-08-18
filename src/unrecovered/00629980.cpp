@@ -1,16 +1,7 @@
-// ORIGINAL: 0x00629980 BYTE_EXACT FILE
-// LEVER: `field4 > a2` (not `a2 < field4`) flipped the cmp operand order to
-//        match `jbe`. Re-reading self+0x2b7c fresh at each of the three
-//        points the original does (instead of reusing the first read)
-//        reproduces its exact instruction count. The two `delete` calls go
-//        through a real virtual base adjustor: read vtbl+4 for an offset,
-//        add it to the object pointer, then dispatch slot0 on THAT adjusted
-//        pointer - a second real `virtual void slot0(int)` class, not the
-//        auto-generated nullary VCall shim.
+// ORIGINAL: 0x00629980 ?UNK2@StringBox@@QAEXHH@Z 0x00629980-0x00629A63 FILE BYTE_EXACT
+// LEVER: `field4 > a2` (not `a2 < field4`) flipped the cmp operand order to match `jbe`. Re-reading self+0x2b7c fresh at each of the three points the original does (instead of reusing the first read) reproduces its exact instruction count. The two `delete` calls go through a real virtual base adjustor: read vtbl+4 for an offset, add it to the object pointer, then dispatch slot0 on THAT adjusted pointer - a second real `virtual void slot0(int)` class, not the auto-generated nullary VCall shim.
 // working copy - scaffold materialised by --work
-// name      ?UNK2@StringBox@@QAEXHH@Z
 // size      227 bytes
-// spans     0x00629980-0x00629A63
 // prototype void (__thiscall ?UNK2@StringBox@@QAEXHH@Z)(StringBox* this, int, int)
 // callers   0   call targets   1
 // kind      game

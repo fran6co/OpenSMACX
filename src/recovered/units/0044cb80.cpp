@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0044CB80 BYTE_EXACT FILE
-// name      ?help_create_link@@YAXPAD00@Z
+// ORIGINAL: 0x0044CB80 ?help_create_link@@YAXPAD00@Z 0x0044CB80-0x0044CBC2 FILE BYTE_EXACT
 // size      66 bytes
-// spans     0x0044CB80-0x0044CBC2
 // prototype 
 // callers   1   call targets   1
 // kind      game

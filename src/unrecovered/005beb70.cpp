@@ -1,29 +1,11 @@
-// ORIGINAL: 0x005BEB70 FILE
-// name      ?tech_pick@@YAHHHHPAD@Z
+// ORIGINAL: 0x005BEB70 ?tech_pick@@YAHHHHPAD@Z 0x005BEB70-0x005BEC3D;0x00662A1E-0x00662A64 FILE
+// RULED-OUT: this is the project's known EH-heavy-constructor wall (see src/recovered/units/00408490.cpp's BaseWin::BaseWin note): a local `PickTech` (GraphicWin base + 4 embedded `Font`s, constructed via placement new at the offsets the disassembly uses: 0xc34/0xc0c/0xbe4/0xbbc from the object base) is a faithful call-by-call translation, but the compiler- synthesized SEH try-frame (fs:[0] chain for unwind-safe partial construction, plus the ~PickTech funclet at 0x00662A1E which the scaffold never declares because it is reached only by unwind tables, not a `call`) is not something this reproduces. Landed FILE-mode because BODY mode's naive brace-balance extraction (`extract_forward_text`) stops at the first top-level `{...}` it meets - the placement-new `operator new` helper closes before `tech_pick` even starts, so a body-mode file here silently truncates to zero external symbols (measured: NO_COMPILE, "found 0"). Not expected exact (mnemonic_similarity 0.71).
 // size      275 bytes
-// spans     0x005BEB70-0x005BEC3D;0x00662A1E-0x00662A64
 // prototype int (__cdecl ?tech_pick@@YAHHHHPAD@Z)(int factionID, int, int, int8* sectionID)
 // callers   3   call targets   5
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00484AC0 0x00484B60 0x00486510 0x005D4DD0 0x00618EE0
-// RULED-OUT: this is the project's known EH-heavy-constructor wall (see
-//            src/recovered/units/00408490.cpp's BaseWin::BaseWin note): a
-//            local `PickTech` (GraphicWin base + 4 embedded `Font`s,
-//            constructed via placement new at the offsets the disassembly
-//            uses: 0xc34/0xc0c/0xbe4/0xbbc from the object base) is a
-//            faithful call-by-call translation, but the compiler-
-//            synthesized SEH try-frame (fs:[0] chain for unwind-safe
-//            partial construction, plus the ~PickTech funclet at
-//            0x00662A1E which the scaffold never declares because it is
-//            reached only by unwind tables, not a `call`) is not something
-//            this reproduces. Landed FILE-mode because BODY mode's naive
-//            brace-balance extraction (`extract_forward_text`) stops at
-//            the first top-level `{...}` it meets - the placement-new
-//            `operator new` helper closes before `tech_pick` even starts,
-//            so a body-mode file here silently truncates to zero external
-//            symbols (measured: NO_COMPILE, "found 0"). Not expected
-//            exact (mnemonic_similarity 0.71).
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?tech_pick@@YAHHHHPAD@Z  at 0x005BEB70  (275 bytes)
 //

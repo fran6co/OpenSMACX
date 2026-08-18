@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00401660 FILE
-// name      ??0ServiceStruct@@QAE@H@Z
+// ORIGINAL: 0x00401660 ??0ServiceStruct@@QAE@H@Z 0x00401660-0x004016B8 FILE
 // size      88 bytes
-// spans     0x00401660-0x004016B8
 // prototype void (__thiscall ??0ServiceStruct@@QAE@H@Z)(ServiceStruct* this, int)
 // callers   2   call targets   0
 // kind      game

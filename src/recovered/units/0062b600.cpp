@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0062B600 FILE
-// name      ?decode_black_trans@Flic@@QAEXXZ
+// ORIGINAL: 0x0062B600 ?decode_black_trans@Flic@@QAEXXZ 0x0062B600-0x0062B66E FILE
 // size      110 bytes
-// spans     0x0062B600-0x0062B66E
 // prototype void (__thiscall ?decode_black_trans@Flic@@QAEXXZ)(Flic* this)
 // callers   0   call targets   1
 // kind      game

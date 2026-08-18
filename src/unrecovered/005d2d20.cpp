@@ -1,20 +1,7 @@
-// ORIGINAL: 0x005D2D20 FILE
-// RULED-OUT: `extern "C" int __stdcall sub_5d2d20(int a1, int a2, int a3)`
-//   per the given def head - `test edx,edx` and `lea eax,[ecx+7]` read both
-//   registers with no matching stack loads, so two args (src ptr in ecx,
-//   mode in edx) are __fastcall register params, not part of a 3-int
-//   __stdcall; changed to `void __fastcall(char*,int,int,char*,char)` with
-//   5 total params (2 register + 3 stack), void return (eax never set).
-//   `int step = stride * 4;` hoisted above the `if` (matching the
-//   unconditional `lea edi,[eax*4]` before the branch) gets close; best
-//   found is 83.6% mnemonic similarity (`--dir` picked /O1 framed over
-//   /O2 frameless) - remaining diff is a 4-instruction reorder of which
-//   register (edx vs ecx) holds `dst` while `adjust`/`i` are set up,
-//   which is register-allocation scheduling, not a control-flow gap.
+// ORIGINAL: 0x005D2D20 sub_5d2d20 0x005D2D20-0x005D2DF2 FILE
+// RULED-OUT: `extern "C" int __stdcall sub_5d2d20(int a1, int a2, int a3)` per the given def head - `test edx,edx` and `lea eax,[ecx+7]` read both registers with no matching stack loads, so two args (src ptr in ecx, mode in edx) are __fastcall register params, not part of a 3-int __stdcall; changed to `void __fastcall(char*,int,int,char*,char)` with 5 total params (2 register + 3 stack), void return (eax never set). `int step = stride * 4;` hoisted above the `if` (matching the unconditional `lea edi,[eax*4]` before the branch) gets close; best found is 83.6% mnemonic similarity (`--dir` picked /O1 framed over /O2 frameless) - remaining diff is a 4-instruction reorder of which register (edx vs ecx) holds `dst` while `adjust`/`i` are set up, which is register-allocation scheduling, not a control-flow gap.
 // working copy - scaffold materialised by --work
-// name      sub_5d2d20
 // size      210 bytes
-// spans     0x005D2D20-0x005D2DF2
 // prototype 
 // callers   1   call targets   0
 // kind      game

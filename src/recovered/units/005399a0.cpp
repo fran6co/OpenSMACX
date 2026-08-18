@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005399A0 FILE
-// name      ?diplomacy_caption@@YAXHH@Z
+// ORIGINAL: 0x005399A0 ?diplomacy_caption@@YAXHH@Z 0x005399A0-0x00539B6B FILE
 // size      459 bytes
-// spans     0x005399A0-0x00539B6B
 // prototype 
 // callers   20   call targets   7
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064932B EXCLUDED S1
-// name      sub_64932b
+// ORIGINAL: 0x0064932B sub_64932b 0x0064932B-0x00649381;0x0064CBE8-0x0064CBFF EXCLUDED S1
 // size      109 bytes
-// spans     0x0064932B-0x00649381;0x0064CBE8-0x0064CBFF
 // prototype 
 // callers   6   call targets   4
 // kind      library

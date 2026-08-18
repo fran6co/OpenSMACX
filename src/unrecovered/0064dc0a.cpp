@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064DC0A EXCLUDED S1
-// name      _wctomb
+// ORIGINAL: 0x0064DC0A _wctomb 0x0064DC0A-0x0064DC63 EXCLUDED S1
 // size      89 bytes
-// spans     0x0064DC0A-0x0064DC63
 // prototype 
 // callers   1   call targets   3
 // kind      library

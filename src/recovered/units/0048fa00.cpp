@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0048FA00 FILE
-// name      ?display@PrefWin@@QAEXH@Z
+// ORIGINAL: 0x0048FA00 ?display@PrefWin@@QAEXH@Z 0x0048FA00-0x0048FCC5 FILE
 // size      709 bytes
-// spans     0x0048FA00-0x0048FCC5
 // prototype void (__thiscall ?display@PrefWin@@QAEXH@Z)(PrefWin* this, int)
 // callers   6   call targets   7
 // kind      game

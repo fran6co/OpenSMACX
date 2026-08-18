@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005EEF60 FILE
-// name      ?nonclient_to_client@Win@@QAEXPAH0@Z
+// ORIGINAL: 0x005EEF60 ?nonclient_to_client@Win@@QAEXPAH0@Z 0x005EEF60-0x005EF050 FILE
 // size      240 bytes
-// spans     0x005EEF60-0x005EF050
 // prototype void (__thiscall ?nonclient_to_client@Win@@QAEXPAH0@Z)(Win* this, int*, int*)
 // callers   4   call targets   0
 // kind      

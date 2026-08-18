@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0051F2C0 BYTE_EXACT
-// name      ?wait_2@@YAXXZ
+// ORIGINAL: 0x0051F2C0 ?wait_2@@YAXXZ 0x0051F2C0-0x0051F2D8 BYTE_EXACT
 // size      24 bytes
-// spans     0x0051F2C0-0x0051F2D8
 // prototype 
 // callers   1   call targets   0
 // kind      game

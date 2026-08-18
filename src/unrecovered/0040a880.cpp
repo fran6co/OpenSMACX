@@ -1,14 +1,7 @@
-// ORIGINAL: 0x0040A880 FILE
-// RULED-OUT: no real SEH frame (raw scratch buffer + manual destructor
-//            calls instead of automatic-local RAII, so the compiler never
-//            emits the frame-based __except handler the original has);
-//            sub_4066c0/sub_406820 called with no receiver since their
-//            declared prototype is a 0-arg extern "C" and changing it
-//            would break linkage to the real symbol.
+// ORIGINAL: 0x0040A880 ?pop_click@BaseWin@@QAEXHHHH@Z 0x0040A880-0x0040B11A;0x006518EA-0x00651A78 FILE
+// RULED-OUT: no real SEH frame (raw scratch buffer + manual destructor calls instead of automatic-local RAII, so the compiler never emits the frame-based __except handler the original has); sub_4066c0/sub_406820 called with no receiver since their declared prototype is a 0-arg extern "C" and changing it would break linkage to the real symbol.
 // working copy - scaffold materialised by --work
-// name      ?pop_click@BaseWin@@QAEXHHHH@Z
 // size      2600 bytes
-// spans     0x0040A880-0x0040B11A;0x006518EA-0x00651A78
 // prototype void (__thiscall ?pop_click@BaseWin@@QAEXHHHH@Z)(BaseWin* this, int, int, int, int)
 // callers   2   call targets   36
 // kind      game

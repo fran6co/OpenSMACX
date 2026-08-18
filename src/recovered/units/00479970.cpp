@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00479970 FILE
-// name      ?show@MultiWin@@QAEXXZ
+// ORIGINAL: 0x00479970 ?show@MultiWin@@QAEXXZ 0x00479970-0x00479BF1;0x006563F5-0x0065640A FILE
 // size      662 bytes
-// spans     0x00479970-0x00479BF1;0x006563F5-0x0065640A
 // prototype void (__thiscall ?show@MultiWin@@QAEXXZ)(MultiWin* this)
 // callers   4   call targets   13
 // kind      game

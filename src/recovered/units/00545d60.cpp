@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00545D60 FILE
-// name      ?propose_trade_maps@@YAXHH@Z
+// ORIGINAL: 0x00545D60 ?propose_trade_maps@@YAXHH@Z 0x00545D60-0x00545E80 FILE
 // size      288 bytes
-// spans     0x00545D60-0x00545E80
 // prototype 
 // callers   0   call targets   6
 // kind      game

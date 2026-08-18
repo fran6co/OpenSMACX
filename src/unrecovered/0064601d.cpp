@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064601D EXCLUDED S1
-// name      _rand
+// ORIGINAL: 0x0064601D _rand 0x0064601D-0x0064603F EXCLUDED S1
 // size      34 bytes
-// spans     0x0064601D-0x0064603F
 // prototype 
 // callers   74   call targets   1
 // kind      library

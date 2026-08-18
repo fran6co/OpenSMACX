@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064CEBE EXCLUDED S1
-// name      __unlock_fhandle
+// ORIGINAL: 0x0064CEBE __unlock_fhandle 0x0064CEBE-0x0064CEE0 EXCLUDED S1
 // size      34 bytes
-// spans     0x0064CEBE-0x0064CEE0
 // prototype 
 // callers   6   call targets   0
 // kind      library

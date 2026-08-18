@@ -1,14 +1,7 @@
-// ORIGINAL: 0x00490B00 FILE
-// RULED-OUT: 7 do/while loops over switch(i){id,flag} pairs calling
-//            CheckBox::set_state_id, matching Ghidra's structure; the three
-//            byte-indexed jump-table dispatches (0x490DCE/0x490F03, whose
-//            table bytes are not in the brief) were simplified to a uniform
-//            field test per loop, dropping the change_volume_button_text
-//            special cases - MISMATCH #2 (prologue) not chased further.
+// ORIGINAL: 0x00490B00 ?get_preferences@PrefWin@@QAEXXZ 0x00490B00-0x004911FD FILE
+// RULED-OUT: 7 do/while loops over switch(i){id,flag} pairs calling CheckBox::set_state_id, matching Ghidra's structure; the three byte-indexed jump-table dispatches (0x490DCE/0x490F03, whose table bytes are not in the brief) were simplified to a uniform field test per loop, dropping the change_volume_button_text special cases - MISMATCH #2 (prologue) not chased further.
 // working copy - scaffold materialised by --work
-// name      ?get_preferences@PrefWin@@QAEXXZ
 // size      1789 bytes
-// spans     0x00490B00-0x004911FD
 // prototype void (__thiscall ?get_preferences@PrefWin@@QAEXXZ)(PrefWin* this)
 // callers   2   call targets   3
 // kind      game

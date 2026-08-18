@@ -1,15 +1,7 @@
-// ORIGINAL: 0x006212B0 FILE
-// RULED-OUT: MISMATCH #5. Same ESP-as-counter inner blitter family as
-//            0x006239E0/0x0061AC60/0x00622810 - not reproducible without
-//            __asm. This variant has no zval-vs-threshold guard scan (unlike
-//            0x00622810's sibling); instead it clamps every zvals[i] into
-//            [DAT_006972cc, DAT_006972d0] before the min/max-vertex scan,
-//            and DAT_009bb514 (the per-pixel light threshold) comes from the
-//            global DAT_009bb548 rather than a call argument.
+// ORIGINAL: 0x006212B0 sub_6212b0 0x006212B0-0x00621868 FILE
+// RULED-OUT: MISMATCH #5. Same ESP-as-counter inner blitter family as 0x006239E0/0x0061AC60/0x00622810 - not reproducible without __asm. This variant has no zval-vs-threshold guard scan (unlike 0x00622810's sibling); instead it clamps every zvals[i] into [DAT_006972cc, DAT_006972d0] before the min/max-vertex scan, and DAT_009bb514 (the per-pixel light threshold) comes from the global DAT_009bb548 rather than a call argument.
 // working copy - scaffold materialised by --work
-// name      sub_6212b0
 // size      1464 bytes
-// spans     0x006212B0-0x00621868
 // prototype 
 // callers   1   call targets   3
 // kind      game

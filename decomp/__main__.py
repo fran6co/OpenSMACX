@@ -1,11 +1,11 @@
 """`uv run python -m decomp` - are the reader and the writer sane?
 
-THREE CHECKS. The first is the ground truth and would be enough on its own:
-parse `src/` and prove the result against the tree itself - the count, and
-the shapes every consumer reads. It catches the failure this package can
-actually have in isolation, which is silence: a reader that finds nothing
-returns `[]`, and every count computed from it comes out zero looking like
-an answer.
+TWO CHECKS. The first is the ground truth and would be enough on its own:
+parse `src/` and prove the result against the tree itself - the count, the
+shapes every consumer reads, and the completeness every annotation now
+carries. It catches the failure this package can actually have in
+isolation, which is silence: a reader that finds nothing returns `[]`, and
+every count computed from it comes out zero looking like an answer.
 
 The second closes the loop the writer opens: every annotated file is read,
 rewritten in memory from its own records, and read again - the two parses
@@ -13,27 +13,22 @@ must agree in every fact they carry, and a second write from the rewritten
 text must change nothing. The annotation layer is allowed to canonicalise;
 the code underneath it is not.
 
-The third is transitional. The same grammar also lives in
-`tools/annotation_scan.py` and `tools/project_catalogue.py`, which the
-scripts in `tools/` still import; while both copies exist, this holds the
-package's parse against theirs and fails on any record or any pattern of
-the grammar disagreeing. The shapes differ - this package's records carry
-enums and absolute paths - so the comparison projects both sides onto the
-facts the grammar decides. It skips itself once those modules are gone,
-which is what a finished refactor looks like.
+There used to be a third: the parse held against the `tools/` copies, so
+the two could not drift while both existed. The marker format moved on
+2026-08-18 - the marker names the piece, carrying its name and its image
+spans - and the tools copies stayed on the old spelling, by decision; the
+comparison died with the shared format, and the package proves itself
+against `src/` alone from then on.
 """
 
 from __future__ import annotations
 
-import sys
-from collections.abc import Callable
 from pathlib import Path
 
 from decomp import DecompilationState, State, grammar, read, reader, write
 from decomp.reader import SRC_ROOT
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-TOOLS = REPO_ROOT / "tools"
 
 
 def sanity() -> list:
@@ -43,64 +38,13 @@ def sanity() -> list:
     assert any(record.state is State.IMPLEMENTED for record in records)
     assert all(isinstance(record.path, Path) and record.path.is_absolute()
                for record in records)
+    # A marker names the piece it carries: the migration put a name and
+    # image spans on every one, and a fresh annotation must supply both.
+    unnamed = [r for r in records if not r.name or not r.image_spans]
+    assert not unnamed, \
+        f"{len(unnamed)} records without name/spans, first at " \
+        f"{unnamed[0].path}:{unnamed[0].line}"
     return records
-
-
-def _fingerprint(records: list[DecompilationState], claim_attr: str,
-                 path_of: Callable[[DecompilationState], str]) -> list:
-    """Everything about a record that the grammar decides.
-
-    `claim_attr` and `path_of` project each copy's shape onto common facts:
-    the ratchet claim is `byte_exact` here and `matched` in tools/, the path
-    is absolute here and repo-relative there.
-    """
-    return sorted((a.address, a.mode, a.state, path_of(a), a.line,
-                   a.exclusion, getattr(a, claim_attr), a.recipe,
-                   a.extract_error, hash(a.region), a.levers, a.ruled_out,
-                   a.unrecoverable, a.deferred) for a in records)
-
-
-def drift(records: list[DecompilationState]) -> bool:
-    """True if the check ran. Raises if the two parsers disagree."""
-    if not (TOOLS / "annotation_scan.py").is_file():
-        print("skip: tools/annotation_scan.py is gone - the copies are now one")
-        return False
-    # THE ONE PLACE `tools/` IS TOUCHED, and only to be disagreed with. The
-    # package itself never does this; a check that compares two things has to
-    # reach both.
-    sys.path.insert(0, str(TOOLS))
-    try:
-        import annotation_scan as their_scan
-        import project_catalogue as their_catalogue
-    except ImportError as missing:            # their deps, not ours
-        print(f"skip: tools/ copies not importable ({missing})")
-        return False
-    finally:
-        sys.path.remove(str(TOOLS))
-
-    theirs = their_scan.scan_tree()
-    ours = _fingerprint(records, "byte_exact",
-                        lambda a: str(a.path.relative_to(REPO_ROOT)))
-    mine = _fingerprint(theirs, "matched", lambda a: a.path)
-    assert len(theirs) == len(records), \
-        f"record count: tools {len(theirs)} vs decomp {len(records)}"
-    if ours != mine:
-        for left, right in zip(ours, mine):
-            assert left == right, f"record drift:\n  tools  {left}\n  decomp {right}"
-    assert ours == mine, "record drift past the pairwise walk"
-
-    # The grammar itself, EXHAUSTIVELY - every pattern `grammar` declares, so
-    # a tightened pattern is caught even on a tree where no annotation
-    # happens to exercise the difference.
-    for name in grammar.SCAN_PATTERNS:
-        assert getattr(their_scan, name).pattern == \
-            getattr(grammar, name).pattern, f"{name} drift"
-    for name in grammar.CATALOGUE_PATTERNS:
-        assert getattr(their_catalogue, name).pattern == \
-            getattr(grammar, name).pattern, f"{name} drift"
-    assert their_catalogue.CONTINUABLE == grammar.CONTINUABLE, \
-        "CONTINUABLE drift"
-    return True
 
 
 def _code_only(region: str) -> str:
@@ -203,11 +147,9 @@ def loop() -> tuple[int, int]:
 
 def main() -> int:
     records = sanity()
-    checked = drift(records)
     looped, skipped = loop()
-    against = "agrees with tools/" if checked else "tools/ copies absent"
     print(f"ok: {len(records)} records (proved against src/, loop closed on "
-          f"{looped} files, {skipped} skipped, {against})")
+          f"{looped} files, {skipped} skipped)")
     return 0
 
 

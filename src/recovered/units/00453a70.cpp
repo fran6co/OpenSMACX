@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00453A70 FILE
-// name      ?load_box_sprites@@YAXXZ
+// ORIGINAL: 0x00453A70 ?load_box_sprites@@YAXXZ 0x00453A70-0x00453F6F FILE
 // size      1279 bytes
-// spans     0x00453A70-0x00453F6F
 // prototype 
 // callers   1   call targets   6
 // kind      game

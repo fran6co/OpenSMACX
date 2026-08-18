@@ -1,4 +1,5 @@
-// ORIGINAL: 0x0061F800 FILE
+// ORIGINAL: 0x0061F800 sub_61f800 0x0061F800-0x0061FA24 FILE
+// RULED-OUT: the catalogued 1158-byte span is really TWO machine-code functions back to back, each with its OWN complete "push ebp; mov ebp,esp; sub esp,0x24; push ebx/esi/edi" prologue and its own "ret" - a single C++ function cannot emit two prologues, so only the FIRST (0x61F800-0x61FA23, plain per-pixel copy, no colour key) is reproduced; the second (0x61FA30 on, adds a *g_009bb514 colour-key skip and writes *g_009bb51c) is a distinct unnamed function the catalogue's size measurement folded into this one.
 // SPAN CORRECTED 2026-08-14, from 1158 bytes to 548. The catalogued span was
 //            two machine-code functions back to back and this row now covers
 //            only the first; `ret` at 0x0061FA23, twelve `nop` of alignment,
@@ -8,19 +9,8 @@
 //            uncovered rather than folded into a row no body can reproduce.
 //            tools/verify_span_termination.py --check-split now fails on any
 //            span holding a second prologue; this was the only one.
-// RULED-OUT: the catalogued 1158-byte span is really TWO machine-code
-//            functions back to back, each with its OWN complete
-//            "push ebp; mov ebp,esp; sub esp,0x24; push ebx/esi/edi"
-//            prologue and its own "ret" - a single C++ function cannot
-//            emit two prologues, so only the FIRST (0x61F800-0x61FA23,
-//            plain per-pixel copy, no colour key) is reproduced; the
-//            second (0x61FA30 on, adds a *g_009bb514 colour-key skip and
-//            writes *g_009bb51c) is a distinct unnamed function the
-//            catalogue's size measurement folded into this one.
 // working copy - scaffold materialised by --work
-// name      sub_61f800
 // size      548 bytes
-// spans     0x0061F800-0x0061FA24
 // prototype 
 // callers   0   call targets   0
 // kind      game

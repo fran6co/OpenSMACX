@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005F16D0 BYTE_EXACT FILE
-// name      ?OnSysKey@Win@@QAAXPAXIJHI@Z
+// ORIGINAL: 0x005F16D0 ?OnSysKey@Win@@QAAXPAXIJHI@Z 0x005F16D0-0x005F1745 FILE BYTE_EXACT
 // size      117 bytes
-// spans     0x005F16D0-0x005F1745
 // prototype 
 // callers   0   call targets   1
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00630A00 BYTE_EXACT FILE
-// name      ?get@Net@@QAEHPAKPAK@Z
+// ORIGINAL: 0x00630A00 ?get@Net@@QAEHPAKPAK@Z 0x00630A00-0x00630A3A FILE BYTE_EXACT
 // size      58 bytes
-// spans     0x00630A00-0x00630A3A
 // prototype int (__thiscall ?get@Net@@QAEHPAKPAK@Z)(Net* this, unsigned int*, unsigned int*)
 // callers   18   call targets   1
 // kind      game

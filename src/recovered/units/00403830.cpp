@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00403830 FILE
-// name      ?hide@AlphaMenu@@QAEXXZ
+// ORIGINAL: 0x00403830 ?hide@AlphaMenu@@QAEXXZ 0x00403830-0x00403AE5 FILE
 // size      693 bytes
-// spans     0x00403830-0x00403AE5
 // prototype void (__thiscall ?hide@AlphaMenu@@QAEXXZ)(AlphaMenu* this)
 // callers   8   call targets   12
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00516930 FILE
-// name      ?menu_detail@Console@@QAEXXZ
+// ORIGINAL: 0x00516930 ?menu_detail@Console@@QAEXXZ 0x00516930-0x00516961 FILE
 // size      49 bytes
-// spans     0x00516930-0x00516961
 // prototype void (__thiscall ?menu_detail@Console@@QAEXXZ)(Console* this)
 // callers   0   call targets   2
 // kind      game

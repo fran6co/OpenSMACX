@@ -1,39 +1,11 @@
-// ORIGINAL: 0x005A6AC0 FILE
-// DEFERRED: confirmed tractable shape, not yet landed - 1983 lines of
-//     Ghidra decompilation and 196 conditionals is more than this pass
-//     could hand-verify, but the structure is now characterised:
-//   Overwhelmingly mechanical: 220 of 256 call sites are
-//     __fwrite(60)/__fread(60)/?encrypt_write@@(50)/?encrypt_read@@(50);
-//     the other 36 are ?mem_get@@(4)/_memcpy(4)/_free(4)/_abs(4)/
-//     _strcpy(3)/_strlen(2)/?game_io@@(2)/?add@StringStruct@@(2)/
-//     ?map_write@@/?map_read@@/?clear_scenario@@/?clear_monuments@@/
-//     ?clear_bunglist@@/?bit_count@@ (1 each). This is a save/load
-//     serializer, field after field.
-//   a2 selects the direction: the FIRST call is FUN_0064603f(local_378)
-//     when a2!=0 (write: pack current globals into a 0x31C-byte header
-//     buffer before writing it) vs FUN_00646178(local_378,0x31C,1,a1)
-//     when a2==0 (read: fread that many bytes off `a1` first). Confirmed
-//     against the raw disasm's branch on a2 at function entry.
-//   The named blockers are ONE gate, not many: `if (local_74 < 0xb)`
-//     (local_74 is the version field inside that same 0x31C legacy
-//     header) guards roughly 10 raw copy-loops migrating the OLD struct
-//     layout into the CURRENT globals (`?9a6490` region) - this is the
-//     whole "legacy-struct migration block" and it is READ-ONLY-PATH
-//     dead code on any save from version >= 0xb, i.e. every save this
-//     binary itself produces. It is real work to transcribe (found
-//     0x2C/0x40/0x16-element copy loops in the first 120 Ghidra lines
-//     alone) but it is bounded and separable from the ~220 I/O calls.
-//   Frame is 0x374 bytes (from the brief) - count locals against it before
-//     landing; a batch of seven diverged only at the prologue over this
-//     exact mistake.
+// ORIGINAL: 0x005A6AC0 ?game_data@@YAHPAUFILE@@H@Z 0x005A6AC0-0x005A9279 FILE
+// DEFERRED: confirmed tractable shape, not yet landed - 1983 lines of Ghidra decompilation and 196 conditionals is more than this pass could hand-verify, but the structure is now characterised: Overwhelmingly mechanical: 220 of 256 call sites are __fwrite(60)/__fread(60)/?encrypt_write@@(50)/?encrypt_read@@(50); the other 36 are ?mem_get@@(4)/_memcpy(4)/_free(4)/_abs(4)/ _strcpy(3)/_strlen(2)/?game_io@@(2)/?add@StringStruct@@(2)/ ?map_write@@/?map_read@@/?clear_scenario@@/?clear_monuments@@/ ?clear_bunglist@@/?bit_count@@ (1 each). This is a save/load serializer, field after field. a2 selects the direction: the FIRST call is FUN_0064603f(local_378) when a2!=0 (write: pack current globals into a 0x31C-byte header buffer before writing it) vs FUN_00646178(local_378,0x31C,1,a1) when a2==0 (read: fread that many bytes off `a1` first). Confirmed against the raw disasm's branch on a2 at function entry. The named blockers are ONE gate, not many: `if (local_74 < 0xb)` (local_74 is the version field inside that same 0x31C legacy header) guards roughly 10 raw copy-loops migrating the OLD struct layout into the CURRENT globals (`?9a6490` region) - this is the whole "legacy-struct migration block" and it is READ-ONLY-PATH dead code on any save from version >= 0xb, i.e. every save this binary itself produces. It is real work to transcribe (found 0x2C/0x40/0x16-element copy loops in the first 120 Ghidra lines alone) but it is bounded and separable from the ~220 I/O calls. Frame is 0x374 bytes (from the brief) - count locals against it before landing; a batch of seven diverged only at the prologue over this exact mistake.
 // UNBLOCKER: transcribe the ~220 I/O calls first (mechanical, low risk
 //     per line - a wrong size/count on one field does not cascade into
 //     the next), landing the version-gate legacy block last as its own
 //     bounded sub-problem; do not attempt both in one pass.
 // working copy - scaffold materialised by --work
-// name      ?game_data@@YAHPAUFILE@@H@Z
 // size      10169 bytes
-// spans     0x005A6AC0-0x005A9279
 // prototype int (__cdecl ?game_data@@YAHPAUFILE@@H@Z)(FILE* file, int)
 // callers   2   call targets   18
 // kind      game

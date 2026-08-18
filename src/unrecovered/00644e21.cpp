@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00644E21 EXCLUDED S1
-// name      _doexit
+// ORIGINAL: 0x00644E21 _doexit 0x00644E21-0x00644EC6 EXCLUDED S1
 // size      165 bytes
-// spans     0x00644E21-0x00644EC6
 // prototype int (__cdecl _doexit)(UINT uExitCode, int, int)
 // callers   2   call targets   3
 // kind      library

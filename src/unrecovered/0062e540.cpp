@@ -1,12 +1,7 @@
-// ORIGINAL: 0x0062E540 FILE
-// RULED-OUT: real Font locals (SEH-frame lever) + COM-style dispatch through the
-//            provided ComSlot004/006/014/022/024 shims, retyped to their real arities,
-//            plus an added ComSlot031; diverges at insn #8 of this SEH-wrapped,
-//            DirectPlay-COM-heavy ~1400-byte body
+// ORIGINAL: 0x0062E540 ?join_session@Net@@QAEHPAUSessionStruct@@PADPAD@Z 0x0062E540-0x0062EA97;0x006634DF-0x006634FF FILE
+// RULED-OUT: real Font locals (SEH-frame lever) + COM-style dispatch through the provided ComSlot004/006/014/022/024 shims, retyped to their real arities, plus an added ComSlot031; diverges at insn #8 of this SEH-wrapped, DirectPlay-COM-heavy ~1400-byte body
 // working copy - scaffold materialised by --work
-// name      ?join_session@Net@@QAEHPAUSessionStruct@@PADPAD@Z
 // size      1399 bytes
-// spans     0x0062E540-0x0062EA97;0x006634DF-0x006634FF
 // prototype int (__thiscall ?join_session@Net@@QAEHPAUSessionStruct@@PADPAD@Z)(Net* this, SessionStruct*, int8*, int8*)
 // callers   7   call targets   14
 // kind      game

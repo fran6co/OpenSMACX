@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0048B3F0 FILE
-// name      ?back_redraw@PlanWin@@QAEXXZ
+// ORIGINAL: 0x0048B3F0 ?back_redraw@PlanWin@@QAEXXZ 0x0048B3F0-0x0048B445 FILE
 // size      85 bytes
-// spans     0x0048B3F0-0x0048B445
 // prototype void (__thiscall ?back_redraw@PlanWin@@QAEXXZ)(PlanWin* this)
 // callers   4   call targets   3
 // kind      game

@@ -1,8 +1,6 @@
-// ORIGINAL: 0x004B1D70 FILE
+// ORIGINAL: 0x004B1D70 ?on_button_passover@SocialWin@@QAEXHH@Z 0x004B1D70-0x004B1DF3 FILE
 // working copy - scaffold materialised by --work
-// name      ?on_button_passover@SocialWin@@QAEXHH@Z
 // size      131 bytes
-// spans     0x004B1D70-0x004B1DF3
 // prototype void (__thiscall ?on_button_passover@SocialWin@@QAEXHH@Z)(SocialWin* this, int, int)
 // callers   0   call targets   3
 // kind      game

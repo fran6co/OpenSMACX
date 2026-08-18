@@ -1,8 +1,6 @@
-// ORIGINAL: 0x004C8F70 FILE
+// ORIGINAL: 0x004C8F70 ?init@VoiceTx@@QAEHKPAXK@Z 0x004C8F70-0x004C9007 FILE
 // working copy - scaffold materialised by --work
-// name      ?init@VoiceTx@@QAEHKPAXK@Z
 // size      151 bytes
-// spans     0x004C8F70-0x004C9007
 // prototype int (__thiscall ?init@VoiceTx@@QAEHKPAXK@Z)(VoiceTx* this, unsigned int, void*, unsigned int)
 // callers   0   call targets   0
 // kind      game

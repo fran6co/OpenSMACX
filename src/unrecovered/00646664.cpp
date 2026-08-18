@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00646664 EXCLUDED S1
-// name      _atan
+// ORIGINAL: 0x00646664 _atan 0x00646664-0x006466EF;0x0064A87E-0x0064A88B;0x0064A88B-0x0064A8B5 EXCLUDED S1
 // size      194 bytes
-// spans     0x00646664-0x006466EF;0x0064A87E-0x0064A88B;0x0064A88B-0x0064A8B5
 // prototype 
 // callers   2   call targets   3
 // kind      library

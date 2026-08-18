@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00644FD6 EXCLUDED S1
-// name      ___CxxFrameHandler
+// ORIGINAL: 0x00644FD6 ___CxxFrameHandler 0x00644FD6-0x0064500C EXCLUDED S1
 // size      54 bytes
-// spans     0x00644FD6-0x0064500C
 // prototype int (__cdecl ___CxxFrameHandler)(PEXCEPTION_RECORD ExceptionRecord, EHRegistrationNode*, _CONTEXT*, void*)
 // callers   0   call targets   1
 // kind      library

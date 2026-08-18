@@ -1,17 +1,7 @@
-// ORIGINAL: 0x00498280 FILE
-// RULED-OUT: sharing the report2..8 blocks across the direct-hotkey and
-//            mod-7 arrow-cycle paths via goto (as Ghidra's decompilation
-//            does) - written as two independent, semantically-identical
-//            if-chains instead since matching bytes across a shared jump
-//            target vs duplicated inline code is a frame-layout question,
-//            not a semantics one. ReportWin's opaque padding was too small
-//            (0x5A0C) for this function's offsets (0xC0F8-0xC10C); widened
-//            and added scroll_ (embedded Scroll) at 0xC10C, field_c0f8_.
-//            .._c108_ before it. Reaches #18 (cmp/jle) before diverging.
+// ORIGINAL: 0x00498280 ?on_key_click@ReportWin@@QAEHHH@Z 0x00498280-0x00498691 FILE
+// RULED-OUT: sharing the report2..8 blocks across the direct-hotkey and mod-7 arrow-cycle paths via goto (as Ghidra's decompilation does) - written as two independent, semantically-identical if-chains instead since matching bytes across a shared jump target vs duplicated inline code is a frame-layout question, not a semantics one. ReportWin's opaque padding was too small (0x5A0C) for this function's offsets (0xC0F8-0xC10C); widened and added scroll_ (embedded Scroll) at 0xC10C, field_c0f8_. .._c108_ before it. Reaches #18 (cmp/jle) before diverging.
 // working copy - scaffold materialised by --work
-// name      ?on_key_click@ReportWin@@QAEHHH@Z
 // size      1041 bytes
-// spans     0x00498280-0x00498691
 // prototype int (__thiscall ?on_key_click@ReportWin@@QAEHHH@Z)(ReportWin* this, int, int)
 // callers   0   call targets   4
 // kind      game

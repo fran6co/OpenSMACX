@@ -1,19 +1,7 @@
-// ORIGINAL: 0x00620640 FILE
-// RULED-OUT: MISMATCH #3 (mov vs push, prologue) - full transcription of
-//            both loop bodies (dxStep<0 and dxStep>=0), all field reads/
-//            writes, and the two 64-bit divides. Ghidra's CONCAT44/CARRY
-//            macros were replaced by their algebraic equivalents rather
-//            than copied literally: `(uint)(P>>0x10) | (int)(P>>0x20)<<0x10`
-//            for a 64-bit product P is exactly `(uint)(P>>16)`, and the
-//            byte-add-with-manual-+0x100-on-carry dither-table index is
-//            exactly a plain 32-bit pointer add (verified by hand: the
-//            8-bit carry-out always lands on the same bit the `add
-//            ebx,0x100` sets). Not expected byte-exact at 976 bytes of
-//            dense fixed-point DDA arithmetic.
+// ORIGINAL: 0x00620640 sub_620640 0x00620640-0x00620A10 FILE
+// RULED-OUT: MISMATCH #3 (mov vs push, prologue) - full transcription of both loop bodies (dxStep<0 and dxStep>=0), all field reads/ writes, and the two 64-bit divides. Ghidra's CONCAT44/CARRY macros were replaced by their algebraic equivalents rather than copied literally: `(uint)(P>>0x10) | (int)(P>>0x20)<<0x10` for a 64-bit product P is exactly `(uint)(P>>16)`, and the byte-add-with-manual-+0x100-on-carry dither-table index is exactly a plain 32-bit pointer add (verified by hand: the 8-bit carry-out always lands on the same bit the `add ebx,0x100` sets). Not expected byte-exact at 976 bytes of dense fixed-point DDA arithmetic.
 // working copy - scaffold materialised by --work
-// name      sub_620640
 // size      976 bytes
-// spans     0x00620640-0x00620A10
 // prototype 
 // callers   0   call targets   0
 // kind      game

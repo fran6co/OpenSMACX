@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064DB3A EXCLUDED S1
-// name      __87except
+// ORIGINAL: 0x0064DB3A __87except 0x0064DB3A-0x0064DC0A EXCLUDED S1
 // size      208 bytes
-// spans     0x0064DB3A-0x0064DC0A
 // prototype 
 // callers   1   call targets   5
 // kind      library

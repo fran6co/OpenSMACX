@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004F4E80 FILE
-// name      ?base_research@@YAXXZ
+// ORIGINAL: 0x004F4E80 ?base_research@@YAXXZ 0x004F4E80-0x004F4FAB FILE
 // size      299 bytes
-// spans     0x004F4E80-0x004F4FAB
 // prototype 
 // callers   1   call targets   2
 // kind      game

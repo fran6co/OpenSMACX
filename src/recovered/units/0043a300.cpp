@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0043A300 FILE
-// name      ?select_weapon@DesignWin@@QAEXXZ
+// ORIGINAL: 0x0043A300 ?select_weapon@DesignWin@@QAEXXZ 0x0043A300-0x0043A754;0x00654281-0x00654306 FILE
 // size      1241 bytes
-// spans     0x0043A300-0x0043A754;0x00654281-0x00654306
 // prototype void (__thiscall ?select_weapon@DesignWin@@QAEXXZ)(DesignWin* this)
 // callers   1   call targets   23
 // kind      game

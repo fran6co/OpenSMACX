@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00481DA0 FILE
+// ORIGINAL: 0x00481DA0 ?fill_player@NetWin@@QAEXPAUPlayerData@@H@Z 0x00481DA0-0x00481E8D FILE
 // RULED-OUT: register scheduling (mov vs push at entry) and imul-vs-lea strength reduction for a2*400 - both are compiler allocation choices, not source-form bugs; landed at MISMATCH.
-// name      ?fill_player@NetWin@@QAEXPAUPlayerData@@H@Z
 // size      237 bytes
-// spans     0x00481DA0-0x00481E8D
 // prototype int (__thiscall ?fill_player@NetWin@@QAEXPAUPlayerData@@H@Z)(NetWin* this, player_data*, int)
 // callers   1   call targets   3
 // kind      game

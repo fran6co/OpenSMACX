@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00611A20 FILE
-// name      ??1EditGroup@@QAE@XZ
+// ORIGINAL: 0x00611A20 ??1EditGroup@@QAE@XZ 0x00611A20-0x00611A88 FILE
 // size      104 bytes
-// spans     0x00611A20-0x00611A88
 // prototype void (__thiscall ??1EditGroup@@QAE@XZ)(EditGroup* this)
 // callers   20   call targets   1
 // kind      game

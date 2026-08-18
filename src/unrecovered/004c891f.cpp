@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004C891F EXCLUDED S1
-// name      ?underflow@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAEHXZ_0
+// ORIGINAL: 0x004C891F ?underflow@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAEHXZ_0 0x004C891F-0x004C8923 EXCLUDED S1
 // size      4 bytes
-// spans     0x004C891F-0x004C8923
 // prototype 
 // callers   0   call targets   0
 // kind      library

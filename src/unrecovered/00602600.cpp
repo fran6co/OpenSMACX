@@ -1,21 +1,7 @@
-// ORIGINAL: 0x00602600 FILE
-// RULED-OUT: covers only the first ~10% of the function - the
-//   slot095 entry gate, the field+0x2350/0x2274/0xa14 visibility
-//   checks, and the GraphicWin::init + four set_text_color*/set_font +
-//   set_caption block (the same mechanical field-read-then-push shape
-//   as draw_terraform's color/font setup). Retyped VCall::slot090 and
-//   slot095 to `int` since their return value is tested (the emitted
-//   shim types every slot `void()`). The event loop this function is
-//   named for - FlatButton layout against the 0x9b7b1c/0x9b7b20
-//   visible-region tables, button-hit dispatch, and the modal message
-//   pump via the caller-supplied callback - is roughly 4000 of the
-//   4618 bytes and is not reproduced; the body returns 0 right after
-//   the one-time setup instead. MISMATCH #0 (prologue: no SEH frame
-//   modelled).
+// ORIGINAL: 0x00602600 ?exec@BasePop@@QAEHHP6AHXZ@Z 0x00602600-0x006037F5;0x00662E02-0x00662E17 FILE
+// RULED-OUT: covers only the first ~10% of the function - the slot095 entry gate, the field+0x2350/0x2274/0xa14 visibility checks, and the GraphicWin::init + four set_text_color*/set_font + set_caption block (the same mechanical field-read-then-push shape as draw_terraform's color/font setup). Retyped VCall::slot090 and slot095 to `int` since their return value is tested (the emitted shim types every slot `void()`). The event loop this function is named for - FlatButton layout against the 0x9b7b1c/0x9b7b20 visible-region tables, button-hit dispatch, and the modal message pump via the caller-supplied callback - is roughly 4000 of the 4618 bytes and is not reproduced; the body returns 0 right after the one-time setup instead. MISMATCH #0 (prologue: no SEH frame modelled).
 // working copy - scaffold materialised by --work
-// name      ?exec@BasePop@@QAEHHP6AHXZ@Z
 // size      4618 bytes
-// spans     0x00602600-0x006037F5;0x00662E02-0x00662E17
 // prototype int (__thiscall ?exec@BasePop@@QAEHHP6AHXZ@Z)(BasePop* this, int, int (__cdecl *)())
 // callers   87   call targets   24
 // kind      game

@@ -1,8 +1,6 @@
-// ORIGINAL: 0x004B2120 BYTE_EXACT FILE
+// ORIGINAL: 0x004B2120 ?on_status@SocialWin@@QAEXH@Z 0x004B2120-0x004B2204 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?on_status@SocialWin@@QAEXH@Z
 // size      228 bytes
-// spans     0x004B2120-0x004B2204
 // prototype void (__thiscall ?on_status@SocialWin@@QAEXH@Z)(SocialWin* this, int)
 // callers   0   call targets   6
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004B26D0 BYTE_EXACT FILE
-// name      ?close@SocialWin@@QAEXXZ
+// ORIGINAL: 0x004B26D0 ?close@SocialWin@@QAEXXZ 0x004B26D0-0x004B273C FILE BYTE_EXACT
 // size      108 bytes
-// spans     0x004B26D0-0x004B273C
 // prototype void (__thiscall ?close@SocialWin@@QAEXXZ)(SocialWin* this)
 // callers   2   call targets   1
 // kind      game

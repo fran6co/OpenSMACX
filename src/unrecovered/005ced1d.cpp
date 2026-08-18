@@ -1,21 +1,7 @@
-// ORIGINAL: 0x005CED1D FILE
-// RULED-OUT: the function is called with a pre-loaded ESI (no caller in
-//            this image, no visible parameter setup - Ghidra's own
-//            "unaff_ESI" flags the same thing) and returns void (no eax
-//            set at either `ret`); PROPOSAL: void __fastcall
-//            sub_5ced1d(int *esiPtr) below. The original also writes an
-//            8-byte `fstp qword` into 0x9c3008/0x9c3010 and rereads the
-//            two dwords as plain ints - a manual int-pair packed through
-//            one FPU store, not a real float<->int conversion; this
-//            transcribes ghidra's already-resolved integer VALUES rather
-//            than reproducing the packing trick, so it computes the same
-//            result through different instructions. Landed at 0.41
-//            mnemonic similarity - logic and field writes are transcribed
-//            directly from the disassembly/ghidra, scheduling is not.
+// ORIGINAL: 0x005CED1D sub_5ced1d 0x005CED1D-0x005CEE80 FILE
+// RULED-OUT: the function is called with a pre-loaded ESI (no caller in this image, no visible parameter setup - Ghidra's own "unaff_ESI" flags the same thing) and returns void (no eax set at either `ret`); PROPOSAL: void __fastcall sub_5ced1d(int *esiPtr) below. The original also writes an 8-byte `fstp qword` into 0x9c3008/0x9c3010 and rereads the two dwords as plain ints - a manual int-pair packed through one FPU store, not a real float<->int conversion; this transcribes ghidra's already-resolved integer VALUES rather than reproducing the packing trick, so it computes the same result through different instructions. Landed at 0.41 mnemonic similarity - logic and field writes are transcribed directly from the disassembly/ghidra, scheduling is not.
 // working copy - scaffold materialised by --work
-// name      sub_5ced1d
 // size      355 bytes
-// spans     0x005CED1D-0x005CEE80
 // prototype
 // callers   ?   call targets   0
 // kind      game

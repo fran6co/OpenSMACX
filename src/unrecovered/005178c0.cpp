@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005178C0 FILE
+// ORIGINAL: 0x005178C0 ?on_key_click@Console@@QAEHHH@Z 0x005178C0-0x0051B66F;0x0065D4D0-0x0065D4E2 FILE
 // working copy - scaffold materialised by --work
-// name      ?on_key_click@Console@@QAEHHH@Z
 // size      15809 bytes
-// spans     0x005178C0-0x0051B66F;0x0065D4D0-0x0065D4E2
 // prototype int (__thiscall ?on_key_click@Console@@QAEHHH@Z)(Console* this, int, int)
 // callers   2   call targets   176
 // kind      game

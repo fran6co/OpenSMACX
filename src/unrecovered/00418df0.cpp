@@ -1,16 +1,7 @@
-// ORIGINAL: 0x00418DF0 FILE
-// RULED-OUT: `Popup popup;` RAII with raw popup-relative offsets for
-//            scroll_/flat_button/dialogs_/spot_/sprite_/heap_ reproduces
-//            the close cascades' shape and offsets (cross-checked against
-//            the scaffold's independently-derived field layout), but the
-//            success-path teardown ends with a manual GraphicWin dtor
-//            call rather than suppressing the compiler's own implicit
-//            ~Popup() at the closing brace, which the original does not
-//            emit on that path; MISMATCH #2.
+// ORIGINAL: 0x00418DF0 ?hurry@BaseWin@@QAEXXZ 0x00418DF0-0x00419A8E;0x0065221C-0x0065249C FILE
+// RULED-OUT: `Popup popup;` RAII with raw popup-relative offsets for scroll_/flat_button/dialogs_/spot_/sprite_/heap_ reproduces the close cascades' shape and offsets (cross-checked against the scaffold's independently-derived field layout), but the success-path teardown ends with a manual GraphicWin dtor call rather than suppressing the compiler's own implicit ~Popup() at the closing brace, which the original does not emit on that path; MISMATCH #2.
 // working copy - scaffold materialised by --work
-// name      ?hurry@BaseWin@@QAEXXZ
 // size      3870 bytes
-// spans     0x00418DF0-0x00419A8E;0x0065221C-0x0065249C
 // prototype void (__thiscall ?hurry@BaseWin@@QAEXXZ)(BaseWin* this)
 // callers   5   call targets   38
 // kind      game

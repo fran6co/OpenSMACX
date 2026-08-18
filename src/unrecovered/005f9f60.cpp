@@ -1,16 +1,7 @@
-// ORIGINAL: 0x005F9F60 FILE
-// RULED-OUT: mechanical Ghidra-shape transcription, with the four scalar
-//            "rect-ish" locals (left/top/right/bottom passed as &local_20)
-//            promoted to a real RECT so fill/write_l/write_right_l/
-//            soft_update get valid contiguous storage instead of relying on
-//            adjacent-local layout; fill() moved from Buffer to GraphicWin
-//            (real receiver is `this`, not the Buffer at self+0x444).
-//            Original prologue is frameless (`sub esp,0x38; push ebx...`);
-//            not chased to byte-exact given size (1867 bytes).
+// ORIGINAL: 0x005F9F60 ?pulldown_update@PullDown@@QAEXHH@Z 0x005F9F60-0x005FA6AB FILE
+// RULED-OUT: mechanical Ghidra-shape transcription, with the four scalar "rect-ish" locals (left/top/right/bottom passed as &local_20) promoted to a real RECT so fill/write_l/write_right_l/ soft_update get valid contiguous storage instead of relying on adjacent-local layout; fill() moved from Buffer to GraphicWin (real receiver is `this`, not the Buffer at self+0x444). Original prologue is frameless (`sub esp,0x38; push ebx...`); not chased to byte-exact given size (1867 bytes).
 // working copy - scaffold materialised by --work
-// name      ?pulldown_update@PullDown@@QAEXHH@Z
 // size      1867 bytes
-// spans     0x005F9F60-0x005FA6AB
 // prototype void (__thiscall ?pulldown_update@PullDown@@QAEXHH@Z)(PullDown* this, int, int)
 // callers   2   call targets   12
 // kind      game

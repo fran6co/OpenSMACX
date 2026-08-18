@@ -1,18 +1,7 @@
-// ORIGINAL: 0x0041C7A0 FILE
-// RULED-OUT: time-boxed - the PullDown menu build (14 add_item + 4
-//            add_separator calls, resolved from the raw jump-table
-//            bytes at 0x0041D4BC), show()/get_selected(), and 12 of
-//            the 14 dispatch cases are transcribed against the
-//            disassembly; cases 11/12's confirm-number teardown path
-//            and cases 13/14's nested base-picker Popup are deliberate
-//            stubs (unverified struct/BasePop::exec follow-up) rather
-//            than fabricated logic. RAII on PullDown/Popup stands in
-//            for the original's per-case duplicated teardown cascades.
-//            MISMATCH #10, well past the prologue.
+// ORIGINAL: 0x0041C7A0 ?base_editor@BaseWin@@QAEXXZ 0x0041C7A0-0x0041D4BA;0x006527EF-0x00652A94 FILE
+// RULED-OUT: time-boxed - the PullDown menu build (14 add_item + 4 add_separator calls, resolved from the raw jump-table bytes at 0x0041D4BC), show()/get_selected(), and 12 of the 14 dispatch cases are transcribed against the disassembly; cases 11/12's confirm-number teardown path and cases 13/14's nested base-picker Popup are deliberate stubs (unverified struct/BasePop::exec follow-up) rather than fabricated logic. RAII on PullDown/Popup stands in for the original's per-case duplicated teardown cascades. MISMATCH #10, well past the prologue.
 // working copy - scaffold materialised by --work
-// name      ?base_editor@BaseWin@@QAEXXZ
 // size      4031 bytes
-// spans     0x0041C7A0-0x0041D4BA;0x006527EF-0x00652A94
 // prototype void (__thiscall ?base_editor@BaseWin@@QAEXXZ)(BaseWin* this)
 // callers   2   call targets   56
 // kind      game

@@ -1,13 +1,11 @@
-// ORIGINAL: 0x004E0120
-// name      ?editor_energy@Console@@QAEXXZ
+// ORIGINAL: 0x004E0120 ?editor_energy@Console@@QAEXXZ 0x004E0120-0x004E020E
+// RULED-OUT: statement order for the two loop-body stores
 // size      238 bytes
-// spans     0x004E0120-0x004E020E
 // prototype void (__thiscall ?editor_energy@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   7
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x0041E790 0x004D9AD0 0x00514880 0x005ABF20 0x005BFD10 0x00625E30 0x00625EC0
-// RULED-OUT: statement order for the two loop-body stores
 // (`DAT_009bbfec`/`DAT_009bbff0`) ahead of `parse_says`, and reordering
 // them relative to each other - every spelling tried lands the same 76
 // mnemonics, but the original interleaves `push edi` BETWEEN the two

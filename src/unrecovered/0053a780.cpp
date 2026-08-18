@@ -1,15 +1,12 @@
-// ORIGINAL: 0x0053A780 FILE
+// ORIGINAL: 0x0053A780 ?contiguous@@YAHHHHH@Z 0x0053A780-0x0053A97C FILE
+// RULED-OUT: prologue register order (mov ecx,[ebp+0x10] before pushes vs a push earlier) - not chased; while/if structure matches disasm.
 // working copy - scaffold materialised by --work
-// name      ?contiguous@@YAHHHHH@Z
 // size      508 bytes
-// spans     0x0053A780-0x0053A97C
 // prototype int (__cdecl ?contiguous@@YAHHHHH@Z)(int factionID1, int factionID2, int region, int)
 // callers   5   call targets   2
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x0059A530 0x0059C3C0
-// RULED-OUT: prologue register order (mov ecx,[ebp+0x10] before pushes vs a
-//            push earlier) - not chased; while/if structure matches disasm.
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?contiguous@@YAHHHHH@Z  at 0x0053A780  (508 bytes)

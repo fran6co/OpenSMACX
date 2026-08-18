@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005C9920 FILE
-// name      ?on_redraw@MultiDebug@@QAEXXZ
+// ORIGINAL: 0x005C9920 ?on_redraw@MultiDebug@@QAEXXZ 0x005C9920-0x005C9DF9 FILE
 // size      1241 bytes
-// spans     0x005C9920-0x005C9DF9
 // prototype void (__thiscall ?on_redraw@MultiDebug@@QAEXXZ)(MultiDebug* this)
 // callers   0   call targets   8
 // kind      game

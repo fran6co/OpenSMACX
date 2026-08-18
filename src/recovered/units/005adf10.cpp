@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005ADF10 FILE
-// name      ??1ReplayWin@@QAE@XZ
+// ORIGINAL: 0x005ADF10 ??1ReplayWin@@QAE@XZ 0x005ADF10-0x005AE0A8;0x004210D0-0x004210E7;0x00662360-0x0066244C FILE
 // size      667 bytes
-// spans     0x005ADF10-0x005AE0A8;0x004210D0-0x004210E7;0x00662360-0x0066244C
 // prototype void (__thiscall ??1ReplayWin@@QAE@XZ)(ReplayWin* this)
 // callers   1   call targets   10
 // kind      game

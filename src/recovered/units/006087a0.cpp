@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006087A0 FILE
-// name      ?sort@StringList@@QAEXH@Z
+// ORIGINAL: 0x006087A0 ?sort@StringList@@QAEXH@Z 0x006087A0-0x00608980 FILE
 // size      480 bytes
-// spans     0x006087A0-0x00608980
 // prototype void (__thiscall ?sort@StringList@@QAEXH@Z)(StringList* this, SortType)
 // callers   3   call targets   3
 // kind      game

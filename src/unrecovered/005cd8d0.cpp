@@ -1,14 +1,7 @@
-// ORIGINAL: 0x005CD8D0 FILE
-// RULED-OUT: the given `__stdcall(int,int,int)` head - disasm reads edx with
-//   no prior init (a real 2nd register param) and `push ecx` at entry is pure
-//   stack reservation, not `this` preservation; rewrote as
-//   `__fastcall(int*,int,int,int,uint)` matching Ghidra's 5-param read, with
-//   differently-named cdecl externs for the two nullary-scaffolded callees.
-//   MISMATCH #4 push/mov, prologue register shape only.
+// ORIGINAL: 0x005CD8D0 sub_5cd8d0 0x005CD8D0-0x005CD97B FILE
+// RULED-OUT: the given `__stdcall(int,int,int)` head - disasm reads edx with no prior init (a real 2nd register param) and `push ecx` at entry is pure stack reservation, not `this` preservation; rewrote as `__fastcall(int*,int,int,int,uint)` matching Ghidra's 5-param read, with differently-named cdecl externs for the two nullary-scaffolded callees. MISMATCH #4 push/mov, prologue register shape only.
 // working copy - scaffold materialised by --work
-// name      sub_5cd8d0
 // size      171 bytes
-// spans     0x005CD8D0-0x005CD97B
 // prototype 
 // callers   1   call targets   2
 // kind      game

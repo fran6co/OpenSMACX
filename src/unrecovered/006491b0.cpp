@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006491B0 EXCLUDED S1
-// name      __initptd
+// ORIGINAL: 0x006491B0 __initptd 0x006491B0-0x006491C3 EXCLUDED S1
 // size      19 bytes
-// spans     0x006491B0-0x006491C3
 // prototype 
 // callers   3   call targets   0
 // kind      library

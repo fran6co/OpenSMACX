@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004C43F0 FILE
-// name      ?pixel_to_tile@WorldWin@@QAEHHHPAH0@Z
+// ORIGINAL: 0x004C43F0 ?pixel_to_tile@WorldWin@@QAEHHHPAH0@Z 0x004C43F0-0x004C44D3 FILE
 // size      227 bytes
-// spans     0x004C43F0-0x004C44D3
 // prototype int (__thiscall ?pixel_to_tile@WorldWin@@QAEHHHPAH0@Z)(WorldWin* this, int, int, int*, int*)
 // callers   3   call targets   0
 // kind      

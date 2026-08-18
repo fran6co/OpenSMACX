@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0062AB10 FILE
-// name      ?fill@Flic@@QAEXXZ
+// ORIGINAL: 0x0062AB10 ?fill@Flic@@QAEXXZ 0x0062AB10-0x0062AB72 FILE
 // size      98 bytes
-// spans     0x0062AB10-0x0062AB72
 // prototype void (__thiscall ?fill@Flic@@QAEXXZ)(Flic* this)
 // callers   0   call targets   1
 // kind      game

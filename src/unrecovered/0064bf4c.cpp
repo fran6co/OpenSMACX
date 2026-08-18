@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064BF4C EXCLUDED S1
-// name      __callnewh
+// ORIGINAL: 0x0064BF4C __callnewh 0x0064BF4C-0x0064BF67 EXCLUDED S1
 // size      27 bytes
-// spans     0x0064BF4C-0x0064BF67
 // prototype 
 // callers   3   call targets   0
 // kind      library

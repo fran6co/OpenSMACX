@@ -1,10 +1,7 @@
-// ORIGINAL: 0x005FCCF0 BYTE_EXACT FILE
-// LEVER: cast the three fixed IAT slots to __stdcall function-pointer types
-//        and called through them directly
+// ORIGINAL: 0x005FCCF0 sub_5fccf0 0x005FCCF0-0x005FCD3D FILE BYTE_EXACT
+// LEVER: cast the three fixed IAT slots to __stdcall function-pointer types and called through them directly
 // working copy - scaffold materialised by --work
-// name      sub_5fccf0
 // size      77 bytes
-// spans     0x005FCCF0-0x005FCD3D
 // prototype 
 // callers   0   call targets   2
 // kind      game

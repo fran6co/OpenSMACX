@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00584B50 FILE
+// ORIGINAL: 0x00584B50 ?abil_cond@@YAHHHHH@Z 0x00584B50-0x00584CFF FILE
 // RULED-OUT: extern-array field access for the a1*7 flags table and a2*0x90/a3*0x10 lookups; diverges at #5 (prologue register order), not the field math
-// name      ?abil_cond@@YAHHHHH@Z
 // size      431 bytes
-// spans     0x00584B50-0x00584CFF
 // prototype 
 // callers   3   call targets   0
 // kind      game

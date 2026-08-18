@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006493C6 EXCLUDED S1
-// name      __close
+// ORIGINAL: 0x006493C6 __close 0x006493C6-0x00649423 EXCLUDED S1
 // size      93 bytes
-// spans     0x006493C6-0x00649423
 // prototype 
 // callers   3   call targets   5
 // kind      library

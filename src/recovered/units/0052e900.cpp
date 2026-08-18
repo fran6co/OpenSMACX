@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0052E900 FILE
-// name      ?send_game@NetDaemon@@QAEXXZ
+// ORIGINAL: 0x0052E900 ?send_game@NetDaemon@@QAEXXZ 0x0052E900-0x0052ED33 FILE
 // size      1075 bytes
-// spans     0x0052E900-0x0052ED33
 // prototype void (__thiscall ?send_game@NetDaemon@@QAEXXZ)(NetDaemon* this)
 // callers   1   call targets   3
 // kind      game

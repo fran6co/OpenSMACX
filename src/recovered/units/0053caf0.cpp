@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0053CAF0 FILE
-// name      ?pact_of_brotherhood@@YAXHH@Z
+// ORIGINAL: 0x0053CAF0 ?pact_of_brotherhood@@YAXHH@Z 0x0053CAF0-0x0053CE05 FILE
 // size      789 bytes
-// spans     0x0053CAF0-0x0053CE05
 // prototype 
 // callers   2   call targets   15
 // kind      game

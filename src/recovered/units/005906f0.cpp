@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005906F0 FILE
-// name      ?say_armor@@YAXPAXHH@Z
+// ORIGINAL: 0x005906F0 ?say_armor@@YAXPAXHH@Z 0x005906F0-0x005907F5 FILE
 // size      261 bytes
-// spans     0x005906F0-0x005907F5
 // prototype 
 // callers   0   call targets   3
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00647DF4 EXCLUDED S1
-// name      ___sbh_find_block
+// ORIGINAL: 0x00647DF4 ___sbh_find_block 0x00647DF4-0x00647E1F EXCLUDED S1
 // size      43 bytes
-// spans     0x00647DF4-0x00647E1F
 // prototype 
 // callers   3   call targets   0
 // kind      library

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00406850 BYTE_EXACT FILE
-// name      ??1Sprite@@QAE@XZ
+// ORIGINAL: 0x00406850 ??1Sprite@@QAE@XZ 0x00406850-0x00406855 FILE BYTE_EXACT
 // size      5 bytes
-// spans     0x00406850-0x00406855
 // prototype 
 // callers   1   call targets   0
 // kind      thunk

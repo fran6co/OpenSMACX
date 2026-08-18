@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00648C4A EXCLUDED S1
-// name      ___FrameUnwindToState
+// ORIGINAL: 0x00648C4A ___FrameUnwindToState 0x00648C4A-0x00648CE8 EXCLUDED S1
 // size      158 bytes
-// spans     0x00648C4A-0x00648CE8
 // prototype 
 // callers   2   call targets   3
 // kind      library

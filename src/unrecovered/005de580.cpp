@@ -1,12 +1,6 @@
-// ORIGINAL: 0x005DE580
-// RULED-OUT: MISMATCH #7 xor/mov - get_data()/free_data() logic inlined by
-//            hand (raw uint32_t offsets, matching Buffer::get_data's own
-//            style) rather than calling the real methods, since neither is
-//            a catalogued callee of this address; register allocation
-//            differs from the original past that point.
-// name      ?change_color@Buffer@@QAEHHH@Z
+// ORIGINAL: 0x005DE580 ?change_color@Buffer@@QAEHHH@Z 0x005DE580-0x005DE721
+// RULED-OUT: MISMATCH #7 xor/mov - get_data()/free_data() logic inlined by hand (raw uint32_t offsets, matching Buffer::get_data's own style) rather than calling the real methods, since neither is a catalogued callee of this address; register allocation differs from the original past that point.
 // size      417 bytes
-// spans     0x005DE580-0x005DE721
 // prototype int (__thiscall ?change_color@Buffer@@QAEHHH@Z)(Buffer* this, int, int)
 // callers   12   call targets   0
 // kind      game

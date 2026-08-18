@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004F4830 FILE
-// name      ?base_check_support@@YAXXZ
+// ORIGINAL: 0x004F4830 ?base_check_support@@YAXXZ 0x004F4830-0x004F4DBB FILE
 // size      1419 bytes
-// spans     0x004F4830-0x004F4DBB
 // prototype 
 // callers   1   call targets   7
 // kind      game

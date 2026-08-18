@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005EFD20 FILE
-// name      ?flip@Win@@QAAXPAURECT@@@Z
+// ORIGINAL: 0x005EFD20 ?flip@Win@@QAAXPAURECT@@@Z 0x005EFD20-0x005F01E7 FILE
 // size      1223 bytes
-// spans     0x005EFD20-0x005F01E7
 // prototype 
 // callers   27   call targets   14
 // kind      game

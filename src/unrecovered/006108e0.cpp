@@ -1,10 +1,7 @@
-// ORIGINAL: 0x006108E0 FILE
-// RULED-OUT: base = self+0x24 to hint a shared-base store (matches ecx=lea);
-//            still 3 bytes short (one lea/mov collapsed) at the a1/0/0 store
+// ORIGINAL: 0x006108E0 ?sprite@SpriteBox@@QAEHPAUSprite@@PADH@Z 0x006108E0-0x00610965 FILE
+// RULED-OUT: base = self+0x24 to hint a shared-base store (matches ecx=lea); still 3 bytes short (one lea/mov collapsed) at the a1/0/0 store
 // working copy - scaffold materialised by --work
-// name      ?sprite@SpriteBox@@QAEHPAUSprite@@PADH@Z
 // size      133 bytes
-// spans     0x006108E0-0x00610965
 // prototype int (__thiscall ?sprite@SpriteBox@@QAEHPAUSprite@@PADH@Z)(SpriteBox* this, Sprite*, int8*, int)
 // callers   22   call targets   2
 // kind      game

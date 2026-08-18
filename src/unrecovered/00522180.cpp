@@ -1,15 +1,7 @@
-// ORIGINAL: 0x00522180 FILE
-// RULED-OUT: near-literal transcription of Ghidra (reliable here, no
-//            unaff_* registers, all callees are free functions except
-//            MapWin::focus and NetMsg::pop, whose `this` (g_007d3c3c,
-//            g_00805338) came from raw disasm since Ghidra drops it); the
-//            CONCAT31(...)&0xffffffdf idiom simplified to (uVar13|uVar14)&
-//            0xffffffdf since uVar14's low byte is always 0. Diverges at
-//            insn #3 (xor vs mov), likely register-zeroing choice.
+// ORIGINAL: 0x00522180 ?alien_fauna@@YAXXZ 0x00522180-0x00522EFC FILE
+// RULED-OUT: near-literal transcription of Ghidra (reliable here, no unaff_* registers, all callees are free functions except MapWin::focus and NetMsg::pop, whose `this` (g_007d3c3c, g_00805338) came from raw disasm since Ghidra drops it); the CONCAT31(...)&0xffffffdf idiom simplified to (uVar13|uVar14)& 0xffffffdf since uVar14's low byte is always 0. Diverges at insn #3 (xor vs mov), likely register-zeroing choice.
 // working copy - scaffold materialised by --work
-// name      ?alien_fauna@@YAXXZ
 // size      3452 bytes
-// spans     0x00522180-0x00522EFC
 // prototype 
 // callers   1   call targets   15
 // kind      game

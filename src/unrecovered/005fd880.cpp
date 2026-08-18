@@ -1,10 +1,7 @@
-// ORIGINAL: 0x005FD880 BYTE_EXACT FILE
-// LEVER: fields reached by offset through the opaque class (byte at 0x0,
-//        dwords at 0x150/0x154/0x158/0x15c), store order matching disasm
+// ORIGINAL: 0x005FD880 ??0Text@@QAE@H@Z 0x005FD880-0x005FD8CF FILE BYTE_EXACT
+// LEVER: fields reached by offset through the opaque class (byte at 0x0, dwords at 0x150/0x154/0x158/0x15c), store order matching disasm
 // working copy - scaffold materialised by --work
-// name      ??0Text@@QAE@H@Z
 // size      79 bytes
-// spans     0x005FD880-0x005FD8CF
 // prototype _Text* (__thiscall ??0Text@@QAE@H@Z)(_Text* this, int)
 // callers   1   call targets   1
 // kind      game

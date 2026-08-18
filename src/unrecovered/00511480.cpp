@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00511480 BYTE_EXACT FILE
+// ORIGINAL: 0x00511480 ?set_view@Console@@QAEXH@Z 0x00511480-0x00511518 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?set_view@Console@@QAEXH@Z
 // size      152 bytes
-// spans     0x00511480-0x00511518
 // prototype void (__thiscall ?set_view@Console@@QAEXH@Z)(Console* this, int)
 // callers   8   call targets   7
 // kind      game

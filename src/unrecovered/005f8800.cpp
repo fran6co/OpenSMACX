@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005F8800 BYTE_EXACT FILE
+// ORIGINAL: 0x005F8800 ??0PullDown@@QAE@XZ 0x005F8800-0x005F8893 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ??0PullDown@@QAE@XZ
 // size      147 bytes
-// spans     0x005F8800-0x005F8893
 // prototype void (__thiscall ??0PullDown@@QAE@XZ)(PullDown* this)
 // callers   26   call targets   1
 // kind      game

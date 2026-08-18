@@ -1,12 +1,7 @@
-// ORIGINAL: 0x00603800 FILE
-// RULED-OUT: literal per-instruction register transcription (eax/ebx/ecx/edx/ebp/edi +
-//            I32()/U8() offset macros on `this`, spare1/spare2 for [esp+0x10]/[esp+0x14],
-//            resolved jump-table switch on field_2350_+1); diverges at instr #0 (prologue
-//            shape: original does sub esp,8 before the push sequence), not chased further.
+// ORIGINAL: 0x00603800 ?calculate_dimensions@BasePop@@QAEHXZ 0x00603800-0x006042D2 FILE
+// RULED-OUT: literal per-instruction register transcription (eax/ebx/ecx/edx/ebp/edi + I32()/U8() offset macros on `this`, spare1/spare2 for [esp+0x10]/[esp+0x14], resolved jump-table switch on field_2350_+1); diverges at instr #0 (prologue shape: original does sub esp,8 before the push sequence), not chased further.
 // working copy - scaffold materialised by --work
-// name      ?calculate_dimensions@BasePop@@QAEHXZ
 // size      2770 bytes
-// spans     0x00603800-0x006042D2
 // prototype int (__thiscall ?calculate_dimensions@BasePop@@QAEHXZ)(BasePop* this)
 // callers   1   call targets   16
 // kind      game

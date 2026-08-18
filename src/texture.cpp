@@ -23,10 +23,8 @@ func_texture_free *TextureFree = (func_texture_free *)0x00644EF2;
 
 /*
 Purpose: Start an empty texture - no pixels, no descriptors, not borrowed.
-ORIGINAL: 0x00619650 BYTE_EXACT
-// name      ??0Texture@@QAE@XZ
+// ORIGINAL: 0x00619650 ??0Texture@@QAE@XZ 0x00619650-0x00619660 BYTE_EXACT
 // size      16 bytes
-// spans     0x00619650-0x00619660
 // prototype void (__thiscall ??0Texture@@QAE@XZ)(Texture* this)
 // callers   5   call targets   0
 // kind      game
@@ -47,10 +45,8 @@ Purpose: Destroy the texture. Unlike close, which resets every field, the
          destructor only settles the pixel block: freed and cleared when there
          are pixels and they are ours, left entirely alone otherwise. The
          descriptor fields and the borrowed flag keep whatever they held.
-ORIGINAL: 0x00619660
-// name      ??1Texture@@QAE@XZ
+// ORIGINAL: 0x00619660 ??1Texture@@QAE@XZ 0x00619660-0x00619685
 // size      37 bytes
-// spans     0x00619660-0x00619685
 // prototype void (__thiscall ??1Texture@@QAE@XZ)(Texture* this)
 // callers   0   call targets   1
 // kind      game
@@ -78,10 +74,8 @@ Purpose: Release the texture. The pixels are freed only when they are ours -
          a borrowed texture keeps its block and is merely forgotten. Either way
          the same four fields the constructor set are reset, except that a
          borrowed texture leaves its pixel pointer alone.
-ORIGINAL: 0x00619690
-// name      ?close@Texture@@QAEXXZ
+// ORIGINAL: 0x00619690 ?close@Texture@@QAEXXZ 0x00619690-0x006196CA
 // size      58 bytes
-// spans     0x00619690-0x006196CA
 // prototype void (__thiscall ?close@Texture@@QAEXXZ)(Texture* this)
 // callers   0   call targets   1
 // kind      game
@@ -103,10 +97,8 @@ void Texture::close() {
 /*
 Purpose: Tear down the store, leaving a count of 3 at offset 0 and clearing
          the field at 4. Calls nothing.
-ORIGINAL: 0x006252B0 BYTE_EXACT
-// name      ??1TextureStore@@QAE@XZ
+// ORIGINAL: 0x006252B0 ??1TextureStore@@QAE@XZ 0x006252B0-0x006252BE BYTE_EXACT
 // size      14 bytes
-// spans     0x006252B0-0x006252BE
 // prototype void (__thiscall ??1TextureStore@@QAE@XZ)(TextureStore* this)
 // callers   6   call targets   0
 // kind      game
@@ -151,10 +143,8 @@ Purpose: Set the store's two fields to 3 and 0.
          `mov eax,ecx` first is the legacy EAX = this residue, carried by the
          redirect. The 3 is a constant the original writes and is reproduced as
          one; nothing here says what it means.
-ORIGINAL: 0x006252A0
-// name      ??0TextureStore@@QAE@XZ
+// ORIGINAL: 0x006252A0 ??0TextureStore@@QAE@XZ 0x006252A0-0x006252B0
 // size      16 bytes
-// spans     0x006252A0-0x006252B0
 // prototype void (__thiscall ??0TextureStore@@QAE@XZ)(TextureStore* this)
 // callers   1   call targets   0
 // kind      game

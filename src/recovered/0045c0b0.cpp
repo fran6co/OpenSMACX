@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0045C0B0 BYTE_EXACT
-// name      ?chat@MainInterface@@QAEXPADH@Z
+// ORIGINAL: 0x0045C0B0 ?chat@MainInterface@@QAEXPADH@Z 0x0045C0B0-0x0045C0E5 BYTE_EXACT
 // size      53 bytes
-// spans     0x0045C0B0-0x0045C0E5
 // prototype void (__thiscall ?chat@MainInterface@@QAEXPADH@Z)(MainInterface* this, int8*, int)
 // callers   1   call targets   2
 // kind      game

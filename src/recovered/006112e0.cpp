@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006112E0 BYTE_EXACT
-// name      ?on_left_double_click@SpriteBox@@QAEXHH@Z
+// ORIGINAL: 0x006112E0 ?on_left_double_click@SpriteBox@@QAEXHH@Z 0x006112E0-0x00611330 BYTE_EXACT
 // size      80 bytes
-// spans     0x006112E0-0x00611330
 // prototype void (__thiscall ?on_left_double_click@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)
 // callers   1   call targets   1
 // kind      game

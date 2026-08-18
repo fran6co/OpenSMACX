@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0060E320 FILE
-// name      ?on_mouse_move@RadioButton@@QAEXHH@Z
+// ORIGINAL: 0x0060E320 ?on_mouse_move@RadioButton@@QAEXHH@Z 0x0060E320-0x0060E494 FILE
 // size      372 bytes
-// spans     0x0060E320-0x0060E494
 // prototype void (__thiscall ?on_mouse_move@RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)
 // callers   1   call targets   2
 // kind      game

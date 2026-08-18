@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00447DB0 BYTE_EXACT
-// name      ?begin@AAmbience@@QAEXXZ
+// ORIGINAL: 0x00447DB0 ?begin@AAmbience@@QAEXXZ 0x00447DB0-0x00447DC6 BYTE_EXACT
 // size      22 bytes
-// spans     0x00447DB0-0x00447DC6
 // prototype void (__thiscall ?begin@AAmbience@@QAEXXZ)(AAmbience* this)
 // callers   0   call targets   0
 // kind      game

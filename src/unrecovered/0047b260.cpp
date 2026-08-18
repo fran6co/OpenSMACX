@@ -1,8 +1,6 @@
-// ORIGINAL: 0x0047B260 BYTE_EXACT FILE
+// ORIGINAL: 0x0047B260 ?send_session_packet@@YAXHH@Z 0x0047B260-0x0047B2DE FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?send_session_packet@@YAXHH@Z
 // size      126 bytes
-// spans     0x0047B260-0x0047B2DE
 // prototype 
 // callers   1   call targets   1
 // kind      game

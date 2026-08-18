@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005D44FC FILE
+// ORIGINAL: 0x005D44FC DirectDrawCreate 0x005D44FC-0x005D4502 FILE
 // working copy - scaffold materialised by --work
-// name      DirectDrawCreate
 // size      6 bytes
-// spans     0x005D44FC-0x005D4502
 // prototype HRESULT (__stdcall DirectDrawCreate)(GUID* lpGUID, LPDIRECTDRAW* lplpDD, IUnknown* pUnkOuter)
 // callers   3   call targets   0
 // kind      thunk

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004C7380 BYTE_EXACT
-// name      sub_4c7380
+// ORIGINAL: 0x004C7380 sub_4c7380 0x004C7380-0x004C73B3 BYTE_EXACT
 // size      51 bytes
-// spans     0x004C7380-0x004C73B3
 // prototype 
 // callers   0   call targets   1
 // kind      game

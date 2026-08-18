@@ -1,12 +1,7 @@
-// ORIGINAL: 0x005E3690 FILE
-// RULED-OUT: naked strlen() got inlined to repne scasb (0.36 mnemonic sim);
-//        an untyped `_strlen` nullary alias + StrlenFn cast keeps the CALL
-//        and lifted similarity to 0.88. Buffer_5e3690 : public Buffer gives
-//        a real __thiscall receiver since explicit __thiscall is C4234.
+// ORIGINAL: 0x005E3690 sub_5e3690 0x005E3690-0x005E372A FILE
+// RULED-OUT: naked strlen() got inlined to repne scasb (0.36 mnemonic sim); an untyped `_strlen` nullary alias + StrlenFn cast keeps the CALL and lifted similarity to 0.88. Buffer_5e3690 : public Buffer gives a real __thiscall receiver since explicit __thiscall is C4234.
 // working copy - scaffold materialised by --work
-// name      sub_5e3690
 // size      154 bytes
-// spans     0x005E3690-0x005E372A
 // prototype int (__stdcall sub_5E3690)(LPCSTR lpString, int x, int y)
 // callers   1   call targets   2
 // kind      game

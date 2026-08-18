@@ -1,7 +1,6 @@
-// ORIGINAL: 0x00636740 FILE
-// name      Video_unk2
+// ORIGINAL: 0x00636740 Video_unk2 0x00636740-0x0063684D FILE
+// RULED-OUT: not chased to byte-exact (MISMATCH from instruction 1, 276 vs 269 bytes). Landed for the field-write order and call order, which match the disassembly one-for-one, including the `and ch,0x7f` / `test al,1` pair - a mask-after-copy on the SAME dword (`bit0` read before the 0x8000 bit is cleared).
 // size      269 bytes
-// spans     0x00636740-0x0063684D
 // prototype
 // callers   1   call targets   7
 // kind      game
@@ -9,11 +8,6 @@
 // calls     0x005D7470 0x005FE500 0x0063E590 0x00644DC0 0x00644DC6 0x00644EF2
 //           0x006465F0
 // indirect  0x00636770 0x006367AC 0x006367B8 0x006367D0
-// RULED-OUT: not chased to byte-exact (MISMATCH from instruction 1, 276 vs
-//            269 bytes). Landed for the field-write order and call order,
-//            which match the disassembly one-for-one, including the
-//            `and ch,0x7f` / `test al,1` pair - a mask-after-copy on the
-//            SAME dword (`bit0` read before the 0x8000 bit is cleared).
 // PROPOSAL: `int __cdecl Video_unk2()` is a placeholder; `mov esi, ecx` as
 //           the second instruction with immediate `[esi+N]` reads proves a
 //           `__thiscall` receiver. Landed as `VideoDevice::unk2()` on an

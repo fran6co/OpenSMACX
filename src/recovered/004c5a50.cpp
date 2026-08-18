@@ -1,12 +1,10 @@
-// ORIGINAL: 0x004C5A50 BYTE_EXACT
-// name      ?release@Wave_In_Device@@QAEHXZ
+// ORIGINAL: 0x004C5A50 ?release@Wave_In_Device@@QAEHXZ 0x004C5A50-0x004C5A71 BYTE_EXACT
 // CORRECTED from ?release@Wave_In_Device@@QAEXXZ
 //   a trailing `xor eax, eax` at 0x004C5A6D is reached from BOTH the
 //   guard-taken and guard-skipped paths before `pop esi; ret`, so it is
 //   a shared `return 0` and the function returns int. With the void head
 //   the body matches through instruction 10 and is 2 bytes short
 // size      33 bytes
-// spans     0x004C5A50-0x004C5A71
 // prototype int (__thiscall ?release@Wave_In_Device@@QAEHXZ)(Wave_In_Device* this)
 // callers   1   call targets   0
 // kind      game

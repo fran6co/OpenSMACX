@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005D8200 BYTE_EXACT
-// name      ?set_clip@Buffer@@QAEHHHHH@Z
+// ORIGINAL: 0x005D8200 ?set_clip@Buffer@@QAEHHHHH@Z 0x005D8200-0x005D823D BYTE_EXACT
 // size      61 bytes
-// spans     0x005D8200-0x005D823D
 // prototype int (__thiscall ?set_clip@Buffer@@QAEHHHHH@Z)(Buffer* this, int xLeft, int yTop, int length, int width)
 // callers   2   call targets   1
 // kind      game

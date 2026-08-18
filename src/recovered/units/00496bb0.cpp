@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00496BB0 FILE
-// name      ?reset@ReportWin@@QAEXXZ
+// ORIGINAL: 0x00496BB0 ?reset@ReportWin@@QAEXXZ 0x00496BB0-0x00496CFC FILE
 // size      332 bytes
-// spans     0x00496BB0-0x00496CFC
 // prototype void (__thiscall ?reset@ReportWin@@QAEXXZ)(ReportWin* this)
 // callers   9   call targets   5
 // kind      game

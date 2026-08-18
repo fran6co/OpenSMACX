@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0053C650 FILE
-// name      ?pact_ends@@YAXHH@Z
+// ORIGINAL: 0x0053C650 ?pact_ends@@YAXHH@Z 0x0053C650-0x0053CAE6;0x0065E470-0x0065E53A FILE
 // size      1376 bytes
-// spans     0x0053C650-0x0053CAE6;0x0065E470-0x0065E53A
 // prototype void (__cdecl ?pact_ends@@YAXHH@Z)(int factionID1, int factionID2)
 // callers   9   call targets   25
 // kind      game

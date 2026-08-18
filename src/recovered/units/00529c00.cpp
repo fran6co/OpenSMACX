@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00529C00 FILE
-// name      ?mash_planes@@YAXXZ
+// ORIGINAL: 0x00529C00 ?mash_planes@@YAXXZ 0x00529C00-0x00529E67 FILE
 // size      615 bytes
-// spans     0x00529C00-0x00529E67
 // prototype 
 // callers   1   call targets   6
 // kind      game

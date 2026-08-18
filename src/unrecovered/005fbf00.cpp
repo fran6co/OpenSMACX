@@ -1,15 +1,7 @@
-// ORIGINAL: 0x005FBF00 FILE
-// RULED-OUT: MISMATCH #5 (mov vs or) - pure prologue scheduling: the
-//            original loads a2 into a register before `or ebp,-1`, ours
-//            after. Full control flow transcribed from Ghidra/disasm:
-//            entries_ array confirmed at self+0xa44 (mnemonic char* at
-//            +0, PullDown* at +4, stride 0x14 - matches the sibling
-//            0x005FBDB0 mouse_move's self+0xa48 pulldown access exactly).
-//            slot023 retyped to `int` since its return value is tested.
+// ORIGINAL: 0x005FBF00 ?on_key_click@Menu@@QAEHHH@Z 0x005FBF00-0x005FC21F FILE
+// RULED-OUT: MISMATCH #5 (mov vs or) - pure prologue scheduling: the original loads a2 into a register before `or ebp,-1`, ours after. Full control flow transcribed from Ghidra/disasm: entries_ array confirmed at self+0xa44 (mnemonic char* at +0, PullDown* at +4, stride 0x14 - matches the sibling 0x005FBDB0 mouse_move's self+0xa48 pulldown access exactly). slot023 retyped to `int` since its return value is tested.
 // working copy - scaffold materialised by --work
-// name      ?on_key_click@Menu@@QAEHHH@Z
 // size      799 bytes
-// spans     0x005FBF00-0x005FC21F
 // prototype int (__thiscall ?on_key_click@Menu@@QAEHHH@Z)(Menu* this, int, int)
 // callers   0   call targets   10
 // kind      game

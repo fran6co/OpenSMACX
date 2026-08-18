@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004CD060 BYTE_EXACT
-// name      ?action_feature@@YAXXZ
+// ORIGINAL: 0x004CD060 ?action_feature@@YAXXZ 0x004CD060-0x004CD082 BYTE_EXACT
 // size      34 bytes
-// spans     0x004CD060-0x004CD082
 // prototype 
 // callers   0   call targets   1
 // kind      game

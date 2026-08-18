@@ -1,8 +1,6 @@
-// ORIGINAL: 0x004AB550 BYTE_EXACT FILE
+// ORIGINAL: 0x004AB550 ?close_sat@ReportIf@@QAEXXZ 0x004AB550-0x004AB5F9 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?close_sat@ReportIf@@QAEXXZ
 // size      169 bytes
-// spans     0x004AB550-0x004AB5F9
 // prototype void (__thiscall ?close_sat@ReportIf@@QAEXXZ)(ReportIf* this)
 // callers   2   call targets   2
 // kind      game

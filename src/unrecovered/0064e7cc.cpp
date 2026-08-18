@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064E7CC EXCLUDED S1
-// name      unknown_libname_315
+// ORIGINAL: 0x0064E7CC unknown_libname_315 0x0064E7CC-0x0064E87E EXCLUDED S1
 // size      178 bytes
-// spans     0x0064E7CC-0x0064E87E
 // prototype 
 // callers   1   call targets   1
 // kind      library

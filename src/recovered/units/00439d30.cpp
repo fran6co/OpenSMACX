@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00439D30 FILE
-// name      ?suggest_abil@DesignWin@@QAEXH@Z
+// ORIGINAL: 0x00439D30 ?suggest_abil@DesignWin@@QAEXH@Z 0x00439D30-0x00439EA3 FILE
 // size      371 bytes
-// spans     0x00439D30-0x00439EA3
 // prototype void (__thiscall ?suggest_abil@DesignWin@@QAEXH@Z)(DesignWin* this, int)
 // callers   3   call targets   5
 // kind      game

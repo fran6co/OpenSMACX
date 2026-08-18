@@ -1,10 +1,7 @@
-// ORIGINAL: 0x004210F0 BYTE_EXACT FILE
-// LEVER: thiscall shim - a synthetic class exposes close() as a member so
-//        "call close(); ret" folds into the original's bare 5-byte jmp
+// ORIGINAL: 0x004210F0 ??1Caviar@@QAE@XZ 0x004210F0-0x004210F5 FILE BYTE_EXACT
+// LEVER: thiscall shim - a synthetic class exposes close() as a member so "call close(); ret" folds into the original's bare 5-byte jmp
 // working copy - scaffold materialised by --work
-// name      ??1Caviar@@QAE@XZ
 // size      5 bytes
-// spans     0x004210F0-0x004210F5
 // prototype void (__thiscall ??1Caviar@@QAE@XZ)(Caviar* this)
 // callers   0   call targets   0
 // kind      thunk

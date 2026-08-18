@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0063B8D0 BYTE_EXACT FILE
-// name      ??1Cursor@@QAE@XZ
+// ORIGINAL: 0x0063B8D0 ??1Cursor@@QAE@XZ 0x0063B8D0-0x0063B90A FILE BYTE_EXACT
 // size      58 bytes
-// spans     0x0063B8D0-0x0063B90A
 // prototype void (__thiscall ??1Cursor@@QAE@XZ)(Cursor* this)
 // callers   0   call targets   2
 // kind      game

@@ -1,12 +1,7 @@
-// ORIGINAL: 0x0052DBF0 FILE
-// RULED-OUT: do-while loop over i=[*g_009a6820+1, 8) with hi/lo byte reads
-//            hoisted before the loop, matching the Ghidra hypothesis
-//            closely; diverges at instr #14 (original 'lea' vs rebuilt
-//            'inc'), a register/addressing-mode choice around the `+1`.
+// ORIGINAL: 0x0052DBF0 ?next_player_turn@@YAHXZ 0x0052DBF0-0x0052DC68 FILE
+// RULED-OUT: do-while loop over i=[*g_009a6820+1, 8) with hi/lo byte reads hoisted before the loop, matching the Ghidra hypothesis closely; diverges at instr #14 (original 'lea' vs rebuilt 'inc'), a register/addressing-mode choice around the `+1`.
 // working copy - scaffold materialised by --work
-// name      ?next_player_turn@@YAHXZ
 // size      120 bytes
-// spans     0x0052DBF0-0x0052DC68
 // prototype 
 // callers   2   call targets   1
 // kind      game

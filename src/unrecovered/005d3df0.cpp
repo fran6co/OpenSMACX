@@ -1,12 +1,7 @@
-// ORIGINAL: 0x005D3DF0 FILE
-// RULED-OUT: __fastcall(this,a2) signature chosen from the ecx=this /
-//            edx=a2 register reads at entry; PROPOSAL below. Landed at
-//            0.88 mnemonic similarity - remaining divergence is prologue
-//            register-save scheduling, not logic.
+// ORIGINAL: 0x005D3DF0 sub_5d3df0 0x005D3DF0-0x005D3F48 FILE
+// RULED-OUT: __fastcall(this,a2) signature chosen from the ecx=this / edx=a2 register reads at entry; PROPOSAL below. Landed at 0.88 mnemonic similarity - remaining divergence is prologue register-save scheduling, not logic.
 // working copy - scaffold materialised by --work
-// name      sub_5d3df0
 // size      344 bytes
-// spans     0x005D3DF0-0x005D3F48
 // prototype
 // callers   ?   call targets   3
 // kind      game

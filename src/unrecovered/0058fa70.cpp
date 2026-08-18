@@ -1,8 +1,6 @@
-// ORIGINAL: 0x0058FA70 FILE
+// ORIGINAL: 0x0058FA70 ?get_pacts@@YAPADHH@Z 0x0058FA70-0x0058FAFA FILE
 // working copy - scaffold materialised by --work
-// name      ?get_pacts@@YAPADHH@Z
 // size      138 bytes
-// spans     0x0058FA70-0x0058FAFA
 // prototype 
 // callers   2   call targets   1
 // kind      game

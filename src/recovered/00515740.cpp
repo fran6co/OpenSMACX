@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00515740 BYTE_EXACT
-// name      ?toggle_dest@Console@@QAEXXZ
+// ORIGINAL: 0x00515740 ?toggle_dest@Console@@QAEXXZ 0x00515740-0x00515758 BYTE_EXACT
 // size      24 bytes
-// spans     0x00515740-0x00515758
 // prototype void (__thiscall ?toggle_dest@Console@@QAEXXZ)(Console* this)
 // callers   0   call targets   1
 // kind      game

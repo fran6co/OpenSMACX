@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0048CEB0 BYTE_EXACT FILE
-// name      ?veh_sprite_draw@@YAHPAUSprite@@PAUGraphicWin@@HHH@Z
+// ORIGINAL: 0x0048CEB0 ?veh_sprite_draw@@YAHPAUSprite@@PAUGraphicWin@@HHH@Z 0x0048CEB0-0x0048CEF2 FILE BYTE_EXACT
 // size      66 bytes
-// spans     0x0048CEB0-0x0048CEF2
 // prototype int (__cdecl ?veh_sprite_draw@@YAHPAUSprite@@PAUGraphicWin@@HHH@Z)(Sprite*, GraphicWin*, int vehID, int, int)
 // callers   0   call targets   1
 // kind      game

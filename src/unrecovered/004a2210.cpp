@@ -1,13 +1,7 @@
-// ORIGINAL: 0x004A2210 FILE
-// RULED-OUT: transcribed the Ghidra-informed strcat/get/write_l sequence
-//            for each report row faithfully in call order and menu-string
-//            offsets, but a few array-index computations (council-seat
-//            stride, the per-institution row loop's stride 0xd4) are
-//            approximated rather than re-derived from the raw LEA chains.
+// ORIGINAL: 0x004A2210 ?draw_intel@ReportWin@@QAEXXZ 0x004A2210-0x004A345F FILE
+// RULED-OUT: transcribed the Ghidra-informed strcat/get/write_l sequence for each report row faithfully in call order and menu-string offsets, but a few array-index computations (council-seat stride, the per-institution row loop's stride 0xd4) are approximated rather than re-derived from the raw LEA chains.
 // working copy - scaffold materialised by --work
-// name      ?draw_intel@ReportWin@@QAEXXZ
 // size      4687 bytes
-// spans     0x004A2210-0x004A345F
 // prototype void (__thiscall ?draw_intel@ReportWin@@QAEXXZ)(ReportWin* this)
 // callers   1   call targets   17
 // kind      game

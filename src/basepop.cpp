@@ -24,10 +24,8 @@
 
 /*
 Purpose: Update either base-popup coordinate unless its keep-current sentinel is supplied.
-ORIGINAL: 0x00601B80 BYTE_EXACT
-// name      ?set_loc@BasePop@@QAEXHH@Z
+// ORIGINAL: 0x00601B80 ?set_loc@BasePop@@QAEXHH@Z 0x00601B80-0x00601BA5 BYTE_EXACT
 // size      37 bytes
-// spans     0x00601B80-0x00601BA5
 // prototype void (__thiscall ?set_loc@BasePop@@QAEXHH@Z)(BasePop* this, int, int)
 // callers   7   call targets   0
 // kind      game
@@ -76,10 +74,8 @@ int publish_default_fonts(Font **slots, Font *const *fonts, size_t count) {
 
 /*
 Purpose: Set the default string fonts shared by every popup.
-ORIGINAL: 0x006048C0
-// name      ?set_def_string_font@BasePop@@QAAHPAUFont@@PAUFont@@PAUFont@@PAUFont@@@Z
+// ORIGINAL: 0x006048C0 ?set_def_string_font@BasePop@@QAAHPAUFont@@PAUFont@@PAUFont@@PAUFont@@@Z 0x006048C0-0x006048FA
 // size      58 bytes
-// spans     0x006048C0-0x006048FA
 // prototype 
 // callers   5   call targets   0
 // kind      game
@@ -96,10 +92,8 @@ int BasePop::set_def_string_font(Font *font1, Font *font2, Font *font3,
 
 /*
 Purpose: Set the default button fonts shared by every popup.
-ORIGINAL: 0x006049C0
-// name      ?set_def_button_font@BasePop@@QAAHPAUFont@@PAUFont@@PAUFont@@@Z
+// ORIGINAL: 0x006049C0 ?set_def_button_font@BasePop@@QAAHPAUFont@@PAUFont@@PAUFont@@@Z 0x006049C0-0x006049F0
 // size      48 bytes
-// spans     0x006049C0-0x006049F0
 // prototype 
 // callers   5   call targets   0
 // kind      game
@@ -148,10 +142,8 @@ void store_colors(uint32_t *table, size_t stride, size_t tier,
 
 /*
 Purpose: Set default string colour tier 0 shared by every popup.
-ORIGINAL: 0x00604900
-// name      ?set_def_string_color@BasePop@@QAAXHHHH@Z
+// ORIGINAL: 0x00604900 ?set_def_string_color@BasePop@@QAAXHHHH@Z 0x00604900-0x00604927
 // size      39 bytes
-// spans     0x00604900-0x00604927
 // prototype 
 // callers   3   call targets   0
 // kind      game
@@ -169,10 +161,8 @@ void __cdecl base_pop_set_def_string_color_redirect(int c1, int c2, int c3, int 
 
 /*
 Purpose: Set default string colour tier 1 shared by every popup.
-ORIGINAL: 0x00604930
-// name      ?set_def_string_color2@BasePop@@QAAXHHHH@Z
+// ORIGINAL: 0x00604930 ?set_def_string_color2@BasePop@@QAAXHHHH@Z 0x00604930-0x00604957
 // size      39 bytes
-// spans     0x00604930-0x00604957
 // prototype 
 // callers   3   call targets   0
 // kind      game
@@ -190,10 +180,8 @@ void __cdecl base_pop_set_def_string_color2_redirect(int c1, int c2, int c3, int
 
 /*
 Purpose: Set default string colour tier 2 shared by every popup.
-ORIGINAL: 0x00604960
-// name      ?set_def_string_color3@BasePop@@QAAXHHHH@Z
+// ORIGINAL: 0x00604960 ?set_def_string_color3@BasePop@@QAAXHHHH@Z 0x00604960-0x00604987
 // size      39 bytes
-// spans     0x00604960-0x00604987
 // prototype 
 // callers   3   call targets   0
 // kind      game
@@ -211,10 +199,8 @@ void __cdecl base_pop_set_def_string_color3_redirect(int c1, int c2, int c3, int
 
 /*
 Purpose: Set default string colour tier 3 shared by every popup.
-ORIGINAL: 0x00604990
-// name      ?set_def_string_color_hyper@BasePop@@QAAXHHHH@Z
+// ORIGINAL: 0x00604990 ?set_def_string_color_hyper@BasePop@@QAAXHHHH@Z 0x00604990-0x006049B7
 // size      39 bytes
-// spans     0x00604990-0x006049B7
 // prototype 
 // callers   1   call targets   0
 // kind      game
@@ -232,10 +218,8 @@ void __cdecl base_pop_set_def_string_color_hyper_redirect(int c1, int c2, int c3
 
 /*
 Purpose: Set default button colour tier 0 shared by every popup.
-ORIGINAL: 0x006049F0
-// name      ?set_def_button_color@BasePop@@QAAXHHHH@Z
+// ORIGINAL: 0x006049F0 ?set_def_button_color@BasePop@@QAAXHHHH@Z 0x006049F0-0x00604A17
 // size      39 bytes
-// spans     0x006049F0-0x00604A17
 // prototype 
 // callers   1   call targets   0
 // kind      game
@@ -253,10 +237,8 @@ void __cdecl base_pop_set_def_button_color_redirect(int c1, int c2, int c3, int 
 
 /*
 Purpose: Set default button colour tier 1 shared by every popup.
-ORIGINAL: 0x00604A20
-// name      ?set_def_button_color2@BasePop@@QAAXHHHH@Z
+// ORIGINAL: 0x00604A20 ?set_def_button_color2@BasePop@@QAAXHHHH@Z 0x00604A20-0x00604A47
 // size      39 bytes
-// spans     0x00604A20-0x00604A47
 // prototype 
 // callers   1   call targets   0
 // kind      game
@@ -274,10 +256,8 @@ void __cdecl base_pop_set_def_button_color2_redirect(int c1, int c2, int c3, int
 
 /*
 Purpose: Set default button colour tier 2 shared by every popup.
-ORIGINAL: 0x00604A50
-// name      ?set_def_button_color3@BasePop@@QAAXHHHH@Z
+// ORIGINAL: 0x00604A50 ?set_def_button_color3@BasePop@@QAAXHHHH@Z 0x00604A50-0x00604A77
 // size      39 bytes
-// spans     0x00604A50-0x00604A77
 // prototype 
 // callers   1   call targets   0
 // kind      game
@@ -295,10 +275,8 @@ void __cdecl base_pop_set_def_button_color3_redirect(int c1, int c2, int c3, int
 
 /*
 Purpose: Set this popup's string color slots.
-ORIGINAL: 0x00604730 BYTE_EXACT
-// name      ?set_string_color@BasePop@@QAEXHHHH@Z
+// ORIGINAL: 0x00604730 ?set_string_color@BasePop@@QAEXHHHH@Z 0x00604730-0x0060475B BYTE_EXACT
 // size      43 bytes
-// spans     0x00604730-0x0060475B
 // prototype void (__thiscall ?set_string_color@BasePop@@QAEXHHHH@Z)(BasePop* this, int, int, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -320,10 +298,8 @@ void __fastcall base_pop_set_string_color_redirect(
 
 /*
 Purpose: Set this popup's string color2 slots.
-ORIGINAL: 0x00604760 BYTE_EXACT
-// name      ?set_string_color2@BasePop@@QAEXHHHH@Z
+// ORIGINAL: 0x00604760 ?set_string_color2@BasePop@@QAEXHHHH@Z 0x00604760-0x0060478B BYTE_EXACT
 // size      43 bytes
-// spans     0x00604760-0x0060478B
 // prototype void (__thiscall ?set_string_color2@BasePop@@QAEXHHHH@Z)(BasePop* this, int, int, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -345,10 +321,8 @@ void __fastcall base_pop_set_string_color2_redirect(
 
 /*
 Purpose: Set this popup's string color3 slots.
-ORIGINAL: 0x00604790 BYTE_EXACT
-// name      ?set_string_color3@BasePop@@QAEXHHHH@Z
+// ORIGINAL: 0x00604790 ?set_string_color3@BasePop@@QAEXHHHH@Z 0x00604790-0x006047BB BYTE_EXACT
 // size      43 bytes
-// spans     0x00604790-0x006047BB
 // prototype void (__thiscall ?set_string_color3@BasePop@@QAEXHHHH@Z)(BasePop* this, int, int, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -370,10 +344,8 @@ void __fastcall base_pop_set_string_color3_redirect(
 
 /*
 Purpose: Set this popup's string color hyper slots.
-ORIGINAL: 0x006047C0 BYTE_EXACT
-// name      ?set_string_color_hyper@BasePop@@QAEXHHHH@Z
+// ORIGINAL: 0x006047C0 ?set_string_color_hyper@BasePop@@QAEXHHHH@Z 0x006047C0-0x006047EB BYTE_EXACT
 // size      43 bytes
-// spans     0x006047C0-0x006047EB
 // prototype void (__thiscall ?set_string_color_hyper@BasePop@@QAEXHHHH@Z)(BasePop* this, int, int, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -395,10 +367,8 @@ void __fastcall base_pop_set_string_color_hyper_redirect(
 
 /*
 Purpose: Set this popup's button color slots.
-ORIGINAL: 0x00604830 BYTE_EXACT
-// name      ?set_button_color@BasePop@@QAEXDHHH@Z
+// ORIGINAL: 0x00604830 ?set_button_color@BasePop@@QAEXDHHH@Z 0x00604830-0x0060485B BYTE_EXACT
 // size      43 bytes
-// spans     0x00604830-0x0060485B
 // prototype void (__thiscall ?set_button_color@BasePop@@QAEXDHHH@Z)(BasePop* this, int8, int, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -423,10 +393,8 @@ void __fastcall base_pop_set_button_color_redirect(
 
 /*
 Purpose: Set this popup's button color2 slots.
-ORIGINAL: 0x00604860 BYTE_EXACT
-// name      ?set_button_color2@BasePop@@QAEXDHHH@Z
+// ORIGINAL: 0x00604860 ?set_button_color2@BasePop@@QAEXDHHH@Z 0x00604860-0x0060488B BYTE_EXACT
 // size      43 bytes
-// spans     0x00604860-0x0060488B
 // prototype void (__thiscall ?set_button_color2@BasePop@@QAEXDHHH@Z)(BasePop* this, int8, int, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -451,10 +419,8 @@ void __fastcall base_pop_set_button_color2_redirect(
 
 /*
 Purpose: Set this popup's button color3 slots.
-ORIGINAL: 0x00604890 BYTE_EXACT
-// name      ?set_button_color3@BasePop@@QAEXDHHH@Z
+// ORIGINAL: 0x00604890 ?set_button_color3@BasePop@@QAEXDHHH@Z 0x00604890-0x006048BB BYTE_EXACT
 // size      43 bytes
-// spans     0x00604890-0x006048BB
 // prototype void (__thiscall ?set_button_color3@BasePop@@QAEXDHHH@Z)(BasePop* this, int8, int, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -482,10 +448,8 @@ int *BasePopFalloutFlag = reinterpret_cast<int *>(0x009B8CFC);
 
 /*
 Purpose: Raise the fallout flag, but only while the gate is set.
-ORIGINAL: 0x00604A90
-// name      ?fallout@BasePop@@QAAXXZ
+// ORIGINAL: 0x00604A90 ?fallout@BasePop@@QAAXXZ 0x00604A90-0x00604AA4
 // size      20 bytes
-// spans     0x00604A90-0x00604AA4
 // prototype 
 // callers   1   call targets   0
 // kind      game
@@ -508,10 +472,8 @@ func_set_state_flag CheckBoxOriginalSetStateFlag =
 
 /*
 Purpose: Set the popup's embedded check box, at 0x2228, to the given state.
-ORIGINAL: 0x00601BB0
-// name      ?write_check@BasePop@@QAEXJ@Z
+// ORIGINAL: 0x00601BB0 ?write_check@BasePop@@QAEXJ@Z 0x00601BB0-0x00601BC3
 // size      19 bytes
-// spans     0x00601BB0-0x00601BC3
 // prototype void (__thiscall ?write_check@BasePop@@QAEXJ@Z)(BasePop* this, int)
 // callers   6   call targets   1
 // kind      game
@@ -538,10 +500,8 @@ Purpose: Set the dialog width, scaled to three-halves in the high-resolution
          subobject of the embedded Dialogs, located through that Dialogs'
          own vbtable exactly as the original does rather than at a hardcoded
          offset.
-ORIGINAL: 0x00601B20
-// name      ?set_width@BasePop@@QAEXH@Z
+// ORIGINAL: 0x00601B20 ?set_width@BasePop@@QAEXH@Z 0x00601B20-0x00601B77
 // size      87 bytes
-// spans     0x00601B20-0x00601B77
 // prototype void (__thiscall ?set_width@BasePop@@QAEXH@Z)(BasePop* this, int)
 // callers   4   call targets   0
 // kind      game
@@ -570,10 +530,8 @@ func_base_pop_exec BasePopExec = original_method<func_base_pop_exec>(0x00602600)
 
 /*
 Purpose: Run the popup modally with no completion callback.
-ORIGINAL: 0x005A5900
-// name      ?exec@BasePop@@QAEHXZ
+// ORIGINAL: 0x005A5900 ?exec@BasePop@@QAEHXZ 0x005A5900-0x005A590A
 // size      10 bytes
-// spans     0x005A5900-0x005A590A
 // prototype int (__thiscall ?exec@BasePop@@QAEHXZ)(BasePop* this)
 // callers   1   call targets   1
 // kind      game
@@ -588,10 +546,8 @@ int BasePop::exec() {
 
 /*
 Purpose: Run the popup modally with a completion callback.
-ORIGINAL: 0x00558FC0
-// name      ?exec@BasePop@@QAEHP6AHXZ@Z
+// ORIGINAL: 0x00558FC0 ?exec@BasePop@@QAEHP6AHXZ@Z 0x00558FC0-0x00558FD2
 // size      18 bytes
-// spans     0x00558FC0-0x00558FD2
 // prototype int (__thiscall ?exec@BasePop@@QAEHP6AHXZ@Z)(BasePop* this, int (__cdecl *)())
 // callers   1   call targets   1
 // kind      game
@@ -622,10 +578,8 @@ Purpose: Report whether the popup will accept a key click. Both this and
          so the answer is bit 14 of field_30A8_ INVERTED - one when the bit is
          clear. The arguments are ignored; the two differ only in how many they
          clean off the stack.
-ORIGINAL: 0x00604490 BYTE_EXACT
-// name      ?on_key_click@BasePop@@QAEHHH@Z
+// ORIGINAL: 0x00604490 ?on_key_click@BasePop@@QAEHHH@Z 0x00604490-0x006044A1 BYTE_EXACT
 // size      17 bytes
-// spans     0x00604490-0x006044A1
 // prototype int (__thiscall ?on_key_click@BasePop@@QAEHHH@Z)(BasePop* this, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -647,10 +601,8 @@ Purpose: As on_key_click above, over the same field and the same bit. Kept as
          its own body rather than delegating, because the original is a
          separate function with a different stack cleanup and a delegation
          would change the instruction the caller returns to.
-ORIGINAL: 0x006044B0 BYTE_EXACT
-// name      ?on_key_up@BasePop@@QAEHH@Z
+// ORIGINAL: 0x006044B0 ?on_key_up@BasePop@@QAEHH@Z 0x006044B0-0x006044C1 BYTE_EXACT
 // size      17 bytes
-// spans     0x006044B0-0x006044C1
 // prototype int (__thiscall ?on_key_up@BasePop@@QAEHH@Z)(BasePop* this, int)
 // callers   0   call targets   0
 // kind      game
@@ -685,10 +637,8 @@ Purpose: Set or clear bit 0 of the flags word at offset 0x20 - set when the
          header says its layout is not established. Reaching through it by name
          would state a relationship this function does not need and cannot
          confirm; the offset is the thing the original encodes.
-ORIGINAL: 0x00605180 BYTE_EXACT
-// name      ?UNK3@BasePop@@QAEXH@Z
+// ORIGINAL: 0x00605180 ?UNK3@BasePop@@QAEXH@Z 0x00605180-0x0060519B BYTE_EXACT
 // size      27 bytes
-// spans     0x00605180-0x0060519B
 // prototype void (__thiscall ?UNK3@BasePop@@QAEXH@Z)(BasePop* this, int)
 // callers   1   call targets   0
 // kind      game
@@ -714,10 +664,8 @@ void __fastcall base_pop_unk3_redirect(BasePop *self, void *, int a1) {
 /*
 Purpose: As UNK3 above, over the same flags word but bit 1 (`or al, 2` /
          `and al, 0xFD`).
-ORIGINAL: 0x006051A0 BYTE_EXACT
-// name      ?UNK4@BasePop@@QAEXH@Z
+// ORIGINAL: 0x006051A0 ?UNK4@BasePop@@QAEXH@Z 0x006051A0-0x006051BB BYTE_EXACT
 // size      27 bytes
-// spans     0x006051A0-0x006051BB
 // prototype void (__thiscall ?UNK4@BasePop@@QAEXH@Z)(BasePop* this, int)
 // callers   2   call targets   0
 // kind      game
@@ -754,10 +702,8 @@ Purpose: Fetch one item's text from the embedded Dialogs at 0x21D0.
          Dialogs::item takes the Dialog's address from the EMBEDDING object's
          own vbtable rather than from where a Dialogs sits when it is
          most-derived, which is why this can hand it a subobject at all.
-ORIGINAL: 0x00558FE0 BYTE_EXACT
-// name      ?item@BasePop@@QAEHPADH@Z
+// ORIGINAL: 0x00558FE0 ?item@BasePop@@QAEHPADH@Z 0x00558FE0-0x00558FFA BYTE_EXACT
 // size      26 bytes
-// spans     0x00558FE0-0x00558FFA
 // prototype int (__thiscall ?item@BasePop@@QAEHPADH@Z)(BasePop* this, int8* lpString, int position)
 // callers   2   call targets   1
 // kind      game
@@ -796,10 +742,8 @@ Purpose: Read the state word of the CheckBox embedded at 0x2228.
          SpriteBox::id_to_pos and Dialogs::destroy are: the body ends by
          loading the word into EAX and a void body cannot promise that. The
          return type does not change the thiscall cleanup.
-ORIGINAL: 0x00601BD0 BYTE_EXACT
-// name      ?read_check@BasePop@@QAEXXZ
+// ORIGINAL: 0x00601BD0 ?read_check@BasePop@@QAEXXZ 0x00601BD0-0x00601BE1 BYTE_EXACT
 // size      17 bytes
-// spans     0x00601BD0-0x00601BE1
 // prototype void (__thiscall ?read_check@BasePop@@QAEXXZ)(BasePop* this)
 // callers   1   call targets   0
 // kind      game
@@ -820,25 +764,19 @@ uint32_t __fastcall base_pop_read_check_redirect(BasePop *self, void *) {
 }
 /*
 Purpose: Allocate a BasePop on the heap and construct it.
-ORIGINAL: 0x00604E40 BYTE_EXACT
-// name      ?basepop_alloc@BasePop@@SAHXZ
+// ORIGINAL: 0x00604E40 ?basepop_alloc@BasePop@@SAHXZ 0x00604E40-0x00604E9A;0x00662E17-0x00662E2C BYTE_EXACT
+// LEVER: `new BasePop()` reproduces the whole /GX operator-new + SEH-frame + conditional-constructor-call sequence verbatim
+// LEVER: ctor-not-inline basepop.h declares `BasePop();` rather than defining it empty inline. An inline empty constructor is inlined away and the `call ??0BasePop@@QAE@XZ` at 0x00604E75 never appears; with it declared, this is BYTE_EXACT and without it MISMATCH at #1.
 // CORRECTED from ?basepop_alloc@BasePop@@QAEHXZ
 //   the body reads ecx nowhere - `push ecx` at 0x00604E55 is a stack
 //   reservation, overwritten by `mov [esp], eax` - and all seven call
 //   sites through the 0x00696ECC hook set up no receiver
 // size      111 bytes
-// spans     0x00604E40-0x00604E9A;0x00662E17-0x00662E2C
 // prototype int (__cdecl ?basepop_alloc@BasePop@@SAHXZ)()
 // callers   0   call targets   3
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00600860 0x0064557F 0x0064558A
-// LEVER: `new BasePop()` reproduces the whole /GX operator-new + SEH-frame +
-//        conditional-constructor-call sequence verbatim
-// LEVER: ctor-not-inline  basepop.h declares `BasePop();` rather than
-//        defining it empty inline. An inline empty constructor is inlined
-//        away and the `call ??0BasePop@@QAE@XZ` at 0x00604E75 never appears;
-//        with it declared, this is BYTE_EXACT and without it MISMATCH at #1.
 Return Value: The new object as an int, or zero if the allocation failed
 Status: Complete
 */
@@ -847,10 +785,8 @@ int BasePop::basepop_alloc() {
 }
 
 /*
-ORIGINAL: 0x00604590
-// name      ?init_class@BasePop@@QAAHXZ
+// ORIGINAL: 0x00604590 ?init_class@BasePop@@QAAHXZ 0x00604590-0x0060467A
 // size      234 bytes
-// spans     0x00604590-0x0060467A
 // prototype
 // callers   1   call targets   4
 // kind      game

@@ -1,12 +1,7 @@
-// ORIGINAL: 0x00405C80 FILE
-// RULED-OUT: structural transcription (branch-local Buffer* target, register-vs-global
-//            box_sprite receiver per branch) compiles and matches to instr #6 (prologue
-//            push/mov order for callee-saved regs); moving the `self` cast local closer
-//            to first use did not change it.
+// ORIGINAL: 0x00405C80 ?on_draw_background@Popup@@QAEHXZ 0x00405C80-0x00406251 FILE
+// RULED-OUT: structural transcription (branch-local Buffer* target, register-vs-global box_sprite receiver per branch) compiles and matches to instr #6 (prologue push/mov order for callee-saved regs); moving the `self` cast local closer to first use did not change it.
 // working copy - scaffold materialised by --work
-// name      ?on_draw_background@Popup@@QAEHXZ
 // size      1489 bytes
-// spans     0x00405C80-0x00406251
 // prototype int (__thiscall ?on_draw_background@Popup@@QAEHXZ)(Popup* this)
 // callers   0   call targets   9
 // kind      game

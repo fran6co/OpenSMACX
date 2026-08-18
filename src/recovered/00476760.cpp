@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00476760 BYTE_EXACT
-// name      ?close@MonuWin@@QAEXXZ
+// ORIGINAL: 0x00476760 ?close@MonuWin@@QAEXXZ 0x00476760-0x00476774 BYTE_EXACT
 // size      20 bytes
-// spans     0x00476760-0x00476774
 // prototype void (__thiscall ?close@MonuWin@@QAEXXZ)(MonuWin* this)
 // callers   0   call targets   1
 // kind      game

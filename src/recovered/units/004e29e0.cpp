@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004E29E0 BYTE_EXACT FILE
-// name      ?do_join_or_create@AlphaNet@@QAEHXZ
+// ORIGINAL: 0x004E29E0 ?do_join_or_create@AlphaNet@@QAEHXZ 0x004E29E0-0x004E2A2F FILE BYTE_EXACT
 // size      79 bytes
-// spans     0x004E29E0-0x004E2A2F
 // prototype int (__thiscall ?do_join_or_create@AlphaNet@@QAEHXZ)(AlphaNet* this)
 // callers   0   call targets   3
 // kind      game

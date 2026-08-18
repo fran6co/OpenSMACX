@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0049B220 FILE
-// name      ?on_button_passover@ReportWin@@QAEXHH@Z
+// ORIGINAL: 0x0049B220 ?on_button_passover@ReportWin@@QAEXHH@Z 0x0049B220-0x0049B446 FILE
 // size      550 bytes
-// spans     0x0049B220-0x0049B446
 // prototype void (__thiscall ?on_button_passover@ReportWin@@QAEXHH@Z)(ReportWin* this, int, int)
 // callers   1   call targets   3
 // kind      game

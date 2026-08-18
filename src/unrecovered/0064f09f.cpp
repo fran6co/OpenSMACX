@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064F09F EXCLUDED S1
-// name      _raise
+// ORIGINAL: 0x0064F09F _raise 0x0064F09F-0x0064F221 EXCLUDED S1
 // size      386 bytes
-// spans     0x0064F09F-0x0064F221
 // prototype 
 // callers   2   call targets   5
 // kind      library

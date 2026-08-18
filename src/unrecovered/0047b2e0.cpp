@@ -1,11 +1,7 @@
-// ORIGINAL: 0x0047B2E0 FILE
-// RULED-OUT: manual dword copy loop for the 0x168-byte payload (MISMATCH #3,
-//   push/mov prologue); a struct assignment from *(PayloadBlob*)g_0090e778
-//   reaches #25 instead (je/jne polarity in the a2==0/else selection).
+// ORIGINAL: 0x0047B2E0 ?send_session2_packet@@YAXHH@Z 0x0047B2E0-0x0047B379 FILE
+// RULED-OUT: manual dword copy loop for the 0x168-byte payload (MISMATCH #3, push/mov prologue); a struct assignment from *(PayloadBlob*)g_0090e778 reaches #25 instead (je/jne polarity in the a2==0/else selection).
 // working copy - scaffold materialised by --work
-// name      ?send_session2_packet@@YAXHH@Z
 // size      153 bytes
-// spans     0x0047B2E0-0x0047B379
 // prototype 
 // callers   1   call targets   1
 // kind      game

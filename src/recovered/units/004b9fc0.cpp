@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004B9FC0 FILE
-// name      ?init@StatusWin@@QAEXXZ
+// ORIGINAL: 0x004B9FC0 ?init@StatusWin@@QAEXXZ 0x004B9FC0-0x004BA11E FILE
 // size      350 bytes
-// spans     0x004B9FC0-0x004BA11E
 // prototype void (__thiscall ?init@StatusWin@@QAEXXZ)(StatusWin* this)
 // callers   1   call targets   5
 // kind      game

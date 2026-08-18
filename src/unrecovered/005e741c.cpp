@@ -1,15 +1,7 @@
-// ORIGINAL: 0x005E741C FILE
-// RULED-OUT: exact Duff's-device unrolled blit (jmp through a stored code address / jmp edx)
-//            is not reproducible without inline asm; landed the setup/validation/clip-table
-//            calls faithfully (get_data, fill_scaling_table, IntersectRect, get_clipped_x/y_
-//            table_shrink/expand in the right order with the right early-outs) and replaced
-//            all three unrolled transparency-tested copy loops with a single plain
-//            nearest-neighbor loop that performs the same per-pixel operation. Diverges early
-//            (#5) given the wholesale loop-shape difference; not chased further.
+// ORIGINAL: 0x005E741C ?draw_dest_source@Sprite@@QAEHPAUBuffer@@HHHPAE@Z 0x005E741C-0x005E811C FILE
+// RULED-OUT: exact Duff's-device unrolled blit (jmp through a stored code address / jmp edx) is not reproducible without inline asm; landed the setup/validation/clip-table calls faithfully (get_data, fill_scaling_table, IntersectRect, get_clipped_x/y_ table_shrink/expand in the right order with the right early-outs) and replaced all three unrolled transparency-tested copy loops with a single plain nearest-neighbor loop that performs the same per-pixel operation. Diverges early (#5) given the wholesale loop-shape difference; not chased further.
 // working copy - scaffold materialised by --work
-// name      ?draw_dest_source@Sprite@@QAEHPAUBuffer@@HHHPAE@Z
 // size      3328 bytes
-// spans     0x005E741C-0x005E811C
 // prototype int (__thiscall ?draw_dest_source@Sprite@@QAEHPAUBuffer@@HHHPAE@Z)(Sprite* this, Buffer*, int, int, int, unsigned int8*)
 // callers   2   call targets   8
 // kind      game

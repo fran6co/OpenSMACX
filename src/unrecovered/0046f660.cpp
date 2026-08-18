@@ -1,13 +1,7 @@
-// ORIGINAL: 0x0046F660 FILE
-// RULED-OUT: `int` return (mov eax,1 before ret) - the scaffold's
-//            declared prototype is void, so C2556/C2371 on redefinition;
-//            keeping void drops the eax=1 the early-return path sets.
-//            MISMATCH #6 'mov' vs 'push' remains open (instruction
-//            scheduling around the in_box/rect stores).
+// ORIGINAL: 0x0046F660 ?on_nc_hittest@MapWin@@QAEXHH@Z 0x0046F660-0x0046F6F9 FILE
+// RULED-OUT: `int` return (mov eax,1 before ret) - the scaffold's declared prototype is void, so C2556/C2371 on redefinition; keeping void drops the eax=1 the early-return path sets. MISMATCH #6 'mov' vs 'push' remains open (instruction scheduling around the in_box/rect stores).
 // working copy - scaffold materialised by --work
-// name      ?on_nc_hittest@MapWin@@QAEXHH@Z
 // size      153 bytes
-// spans     0x0046F660-0x0046F6F9
 // prototype void (__thiscall ?on_nc_hittest@MapWin@@QAEXHH@Z)(MapWin* this, int, int)
 // callers   0   call targets   2
 // kind      game

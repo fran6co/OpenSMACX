@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00425BA0 FILE
-// name      ?on_key_click@CouncWin@@QAEHHH@Z
+// ORIGINAL: 0x00425BA0 ?on_key_click@CouncWin@@QAEHHH@Z 0x00425BA0-0x00425D8D FILE
 // size      493 bytes
-// spans     0x00425BA0-0x00425D8D
 // prototype int (__thiscall ?on_key_click@CouncWin@@QAEHHH@Z)(CouncWin* this, int, int)
 // callers   0   call targets   4
 // kind      game

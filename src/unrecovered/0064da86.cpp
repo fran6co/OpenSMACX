@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064DA86 EXCLUDED S1
-// name      __getbuf
+// ORIGINAL: 0x0064DA86 __getbuf 0x0064DA86-0x0064DACA EXCLUDED S1
 // size      68 bytes
-// spans     0x0064DA86-0x0064DACA
 // prototype 
 // callers   2   call targets   1
 // kind      library

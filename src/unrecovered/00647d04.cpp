@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00647D04 EXCLUDED S1
-// name      __lock
+// ORIGINAL: 0x00647D04 __lock 0x00647D04-0x00647D65 EXCLUDED S1
 // size      97 bytes
-// spans     0x00647D04-0x00647D65
 // prototype 
 // callers   21   call targets   5
 // kind      library

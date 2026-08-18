@@ -698,10 +698,8 @@ uint32_t *MsgStatus = (uint32_t *)0x009B7B9C;
 
 /*
 Purpose: Process non-input related message.
-ORIGINAL: 0x005FCA30
-// name      ?do_non_input@@YAXXZ
+// ORIGINAL: 0x005FCA30 ?do_non_input@@YAXXZ 0x005FCA30-0x005FCB14
 // size      228 bytes
-// spans     0x005FCA30-0x005FCB14
 // prototype 
 // callers   12   call targets   3
 // kind      game
@@ -738,10 +736,8 @@ BOOL __cdecl do_non_input() {
 
 /*
 Purpose: Process all non-input related messages.
-ORIGINAL: 0x005FCB20
-// name      ?do_all_non_input@@YAXXZ
+// ORIGINAL: 0x005FCB20 ?do_all_non_input@@YAXXZ 0x005FCB20-0x005FCB5A
 // size      58 bytes
-// spans     0x005FCB20-0x005FCB5A
 // prototype 
 // callers   27   call targets   2
 // kind      game
@@ -761,10 +757,8 @@ void __cdecl do_all_non_input() {
 
 /*
 Purpose: Process draw related message.
-ORIGINAL: 0x005FCB60
-// name      ?do_draw@@YAHXZ
+// ORIGINAL: 0x005FCB60 ?do_draw@@YAHXZ 0x005FCB60-0x005FCBAC
 // size      76 bytes
-// spans     0x005FCB60-0x005FCBAC
 // prototype 
 // callers   1   call targets   3
 // kind      game
@@ -789,10 +783,8 @@ BOOL __cdecl do_draw() {
 
 /*
 Purpose: Process all draw related messages.
-ORIGINAL: 0x005FCBB0
-// name      ?do_all_draws@@YAXXZ
+// ORIGINAL: 0x005FCBB0 ?do_all_draws@@YAXXZ 0x005FCBB0-0x005FCC1F
 // size      111 bytes
-// spans     0x005FCBB0-0x005FCC1F
 // prototype 
 // callers   57   call targets   3
 // kind      game
@@ -811,10 +803,8 @@ void __cdecl do_all_draws() {
 
 /*
 Purpose: Process keyboard related message.
-ORIGINAL: 0x005FCC20
-// name      ?do_keyboard@@YAXXZ
+// ORIGINAL: 0x005FCC20 ?do_keyboard@@YAXXZ 0x005FCC20-0x005FCC6D
 // size      77 bytes
-// spans     0x005FCC20-0x005FCC6D
 // prototype 
 // callers   0   call targets   2
 // kind      game
@@ -838,10 +828,8 @@ BOOL __cdecl do_keyboard() {
 
 /*
 Purpose: Process all keyboard related messages.
-ORIGINAL: 0x005FCC70
-// name      ?do_all_keyboard@@YAXXZ
+// ORIGINAL: 0x005FCC70 ?do_all_keyboard@@YAXXZ 0x005FCC70-0x005FCCE5
 // size      117 bytes
-// spans     0x005FCC70-0x005FCCE5
 // prototype 
 // callers   0   call targets   3
 // kind      game

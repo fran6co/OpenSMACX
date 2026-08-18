@@ -1,21 +1,7 @@
-// ORIGINAL: 0x00544E40 FILE
-// RULED-OUT: the acceptance-scoring block (percentage math against
-//   tech_val/relationship tables using reciprocal-multiply constants
-//   for `/100`-style division, several hundred instructions) is
-//   approximated with a smaller set of named boolean gates feeding the
-//   same dialogue/X_pops/log_say/message_data/treaty_off/double_cross/
-//   make_treaty calls, not the per-register arithmetic or exact
-//   nesting - the branch order genuinely differs from the disassembly
-//   (val_8 is actually tested AFTER the opening-dialogue X_pops loop,
-//   not before it). The early gate (strcmp vs the AI-type name, the two
-//   "pact already blocked" table checks using the 2099-stride index)
-//   and the final treaty_off/double_cross/make_treaty tail are
-//   transcribed in call order. MISMATCH #5 (prologue-adjacent, mov vs
-//   push).
+// ORIGINAL: 0x00544E40 ?propose_treaty@@YAHHH@Z 0x00544E40-0x00545D55 FILE
+// RULED-OUT: the acceptance-scoring block (percentage math against tech_val/relationship tables using reciprocal-multiply constants for `/100`-style division, several hundred instructions) is approximated with a smaller set of named boolean gates feeding the same dialogue/X_pops/log_say/message_data/treaty_off/double_cross/ make_treaty calls, not the per-register arithmetic or exact nesting - the branch order genuinely differs from the disassembly (val_8 is actually tested AFTER the opening-dialogue X_pops loop, not before it). The early gate (strcmp vs the AI-type name, the two "pact already blocked" table checks using the 2099-stride index) and the final treaty_off/double_cross/make_treaty tail are transcribed in call order. MISMATCH #5 (prologue-adjacent, mov vs push).
 // working copy - scaffold materialised by --work
-// name      ?propose_treaty@@YAHHH@Z
 // size      3861 bytes
-// spans     0x00544E40-0x00545D55
 // prototype 
 // callers   1   call targets   24
 // kind      game

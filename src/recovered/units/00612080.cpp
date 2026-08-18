@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00612080 BYTE_EXACT FILE
-// name      ?append_text@EditGroup@@QAEXPADH@Z
+// ORIGINAL: 0x00612080 ?append_text@EditGroup@@QAEXPADH@Z 0x00612080-0x006120AA FILE BYTE_EXACT
 // size      42 bytes
-// spans     0x00612080-0x006120AA
 // prototype void (__thiscall ?append_text@EditGroup@@QAEXPADH@Z)(EditGroup* this, int8*, int)
 // callers   0   call targets   1
 // kind      game

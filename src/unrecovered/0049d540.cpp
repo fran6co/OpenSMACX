@@ -1,22 +1,7 @@
-// ORIGINAL: 0x0049D540 FILE
-// RULED-OUT: full transcription of the header/setup, string-building/switch,
-//            per-row spot+box_sprite+name/status rendering, and the 0x8b3
-//            (production preview) branch, all cross-checked against raw
-//            push/pop counts; mandate_color(int) sites that Ghidra showed
-//            as 4-arg were re-derived as mandate_color(x) followed by a
-//            separate set_text_color(result,-1,1,1) sharing 3 leftover
-//            pushes, matching the same pattern found on 0x00484C60.
-//            Approximated: the 0x8b4 sprite-table indices/bases in the
-//            "!special" loops (0x00776420/0x00776428/0x0077644c family)
-//            are inferred by analogy with the "special" 0x0075b710 pair
-//            (this=base, transparent idx=base+8) rather than independently
-//            re-derived from raw bytes, so their exact table base/stride
-//            may be off; roughly 90% of the function's instructions are
-//            covered by a structurally faithful path.
+// ORIGINAL: 0x0049D540 ?draw_ops@ReportWin@@QAEXXZ 0x0049D540-0x0049EAEB;0x00659435-0x00659447 FILE
+// RULED-OUT: full transcription of the header/setup, string-building/switch, per-row spot+box_sprite+name/status rendering, and the 0x8b3 (production preview) branch, all cross-checked against raw push/pop counts; mandate_color(int) sites that Ghidra showed as 4-arg were re-derived as mandate_color(x) followed by a separate set_text_color(result,-1,1,1) sharing 3 leftover pushes, matching the same pattern found on 0x00484C60. Approximated: the 0x8b4 sprite-table indices/bases in the "!special" loops (0x00776420/0x00776428/0x0077644c family) are inferred by analogy with the "special" 0x0075b710 pair (this=base, transparent idx=base+8) rather than independently re-derived from raw bytes, so their exact table base/stride may be off; roughly 90% of the function's instructions are covered by a structurally faithful path.
 // working copy - scaffold materialised by --work
-// name      ?draw_ops@ReportWin@@QAEXXZ
 // size      5565 bytes
-// spans     0x0049D540-0x0049EAEB;0x00659435-0x00659447
 // prototype void (__thiscall ?draw_ops@ReportWin@@QAEXXZ)(ReportWin* this)
 // callers   2   call targets   36
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004A6D70 FILE
-// name      ?on_iface_group_clicked@ReportIf@@QAEXHHH@Z
+// ORIGINAL: 0x004A6D70 ?on_iface_group_clicked@ReportIf@@QAEXHHH@Z 0x004A6D70-0x004A6FD7 FILE
 // size      615 bytes
-// spans     0x004A6D70-0x004A6FD7
 // prototype void (__thiscall ?on_iface_group_clicked@ReportIf@@QAEXHHH@Z)(ReportIf* this, int, int, int)
 // callers   0   call targets   14
 // kind      game

@@ -1,11 +1,7 @@
-// ORIGINAL: 0x005171D0 FILE
-// RULED-OUT: MISMATCH #3 push-vs-mov in the prologue; hoisting the two guard
-//            reads into locals before the branch did not change register
-//            allocation order. Full switch/goto structure otherwise matches.
+// ORIGINAL: 0x005171D0 ?veh_key@Console@@QAEXHHH@Z 0x005171D0-0x0051778A FILE
+// RULED-OUT: MISMATCH #3 push-vs-mov in the prologue; hoisting the two guard reads into locals before the branch did not change register allocation order. Full switch/goto structure otherwise matches.
 // working copy - scaffold materialised by --work
-// name      ?veh_key@Console@@QAEXHHH@Z
 // size      1466 bytes
-// spans     0x005171D0-0x0051778A
 // prototype void (__thiscall ?veh_key@Console@@QAEXHHH@Z)(Console* this, int, int, int)
 // callers   1   call targets   24
 // kind      game

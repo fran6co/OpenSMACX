@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004B19A0 FILE
-// name      ?on_redraw@SocialWin@@QAEXXZ
+// ORIGINAL: 0x004B19A0 ?on_redraw@SocialWin@@QAEXXZ 0x004B19A0-0x004B1B19 FILE
 // size      377 bytes
-// spans     0x004B19A0-0x004B1B19
 // prototype void (__thiscall ?on_redraw@SocialWin@@QAEXXZ)(SocialWin* this)
 // callers   0   call targets   12
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00645DD0 EXCLUDED S1
-// name      _strchr
+// ORIGINAL: 0x00645DD0 _strchr 0x00645DD0-0x00645E8C;0x00645DC0-0x00645DC5 EXCLUDED S1
 // size      193 bytes
-// spans     0x00645DD0-0x00645E8C;0x00645DC0-0x00645DC5
 // prototype 
 // callers   35   call targets   0
 // kind      library

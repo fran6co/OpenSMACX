@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0047A860 BYTE_EXACT
-// name      ?on_button_clicked@NetMsg@@QAEXH@Z
+// ORIGINAL: 0x0047A860 ?on_button_clicked@NetMsg@@QAEXH@Z 0x0047A860-0x0047A88D BYTE_EXACT
 // size      45 bytes
-// spans     0x0047A860-0x0047A88D
 // prototype void (__thiscall ?on_button_clicked@NetMsg@@QAEXH@Z)(NetMsg* this, int)
 // callers   0   call targets   2
 // kind      game

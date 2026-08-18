@@ -1,14 +1,6 @@
-// ORIGINAL: 0x0062BF20 FILE
-// RULED-OUT: the scaffold's `class PushButton` has no base class (unlike
-//            src/pushbutton.h), so genuine base-subobject construction is
-//            unreachable; `new (this) T()` on a locally-declared
-//            `struct : BaseButton {}` compiles but adds an operator-new call
-//            the original does not make. Landed without the BaseButton()
-//            call - every other mnemonic/operand (vtable stores + all 18
-//            field copies) matches.
-// name      ??0PushButton@@QAE@XZ
+// ORIGINAL: 0x0062BF20 ??0PushButton@@QAE@XZ 0x0062BF20-0x0062C00E FILE
+// RULED-OUT: the scaffold's `class PushButton` has no base class (unlike src/pushbutton.h), so genuine base-subobject construction is unreachable; `new (this) T()` on a locally-declared `struct : BaseButton {}` compiles but adds an operator-new call the original does not make. Landed without the BaseButton() call - every other mnemonic/operand (vtable stores + all 18 field copies) matches.
 // size      238 bytes
-// spans     0x0062BF20-0x0062C00E
 // prototype void (__thiscall ??0PushButton@@QAE@XZ)(PushButton* this)
 // callers   3   call targets   1
 // kind      game

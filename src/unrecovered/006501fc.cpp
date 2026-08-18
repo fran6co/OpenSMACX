@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006501FC EXCLUDED S2a
-// name      GetOpenFileNameA
+// ORIGINAL: 0x006501FC GetOpenFileNameA 0x006501FC-0x00650202 EXCLUDED S2a
 // size      6 bytes
-// spans     0x006501FC-0x00650202
 // prototype 
 // callers   1   call targets   0
 // kind      thunk

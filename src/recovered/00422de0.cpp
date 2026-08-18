@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00422DE0 BYTE_EXACT
-// name      ?on_iface_group_clicked@BattleWin@@QAEXHHH@Z
+// ORIGINAL: 0x00422DE0 ?on_iface_group_clicked@BattleWin@@QAEXHHH@Z 0x00422DE0-0x00422E06 BYTE_EXACT
 // size      38 bytes
-// spans     0x00422DE0-0x00422E06
 // prototype void (__thiscall ?on_iface_group_clicked@BattleWin@@QAEXHHH@Z)(BattleWin* this, int, int, int)
 // callers   0   call targets   2
 // kind      game

@@ -1,21 +1,11 @@
-// ORIGINAL: 0x005C9420 FILE
-// name      ?on_redraw@Gamma@@QAEXXZ
+// ORIGINAL: 0x005C9420 ?on_redraw@Gamma@@QAEXXZ 0x005C9420-0x005C951D FILE
+// RULED-OUT: `RECT rect = *(RECT*)(self+0xa14);` (struct assignment through one base pointer, not 4 independent offset loads - the latter drops the original's `lea`+shared-`ecx` shape entirely) gets every field store byte-exact through the loop setup. The y2 = (bottom-top)+top redundant identity the ASM computes (sub ecx,eax; add ecx,eax) is always constant-folded to a plain `bottom` by every /O flag combination tried, whether written inline or through a named `height` temp - MISMATCH #19 is that fold, not a missed field.
 // size      253 bytes
-// spans     0x005C9420-0x005C951D
 // prototype void (__thiscall ?on_redraw@Gamma@@QAEXXZ)(Gamma* this)
 // callers   0   call targets   8
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005D5350 0x005D5890 0x005DAC70 0x005DACB0 0x005DD130 0x005E15F0 0x006453E0 0x00646A25
-// RULED-OUT: `RECT rect = *(RECT*)(self+0xa14);` (struct assignment through
-//            one base pointer, not 4 independent offset loads - the latter
-//            drops the original's `lea`+shared-`ecx` shape entirely) gets
-//            every field store byte-exact through the loop setup. The
-//            y2 = (bottom-top)+top redundant identity the ASM computes
-//            (sub ecx,eax; add ecx,eax) is always constant-folded to a
-//            plain `bottom` by every /O flag combination tried, whether
-//            written inline or through a named `height` temp - MISMATCH #19
-//            is that fold, not a missed field.
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?on_redraw@Gamma@@QAEXXZ  at 0x005C9420  (253 bytes)
 //

@@ -1,22 +1,7 @@
-// ORIGINAL: 0x005FAD00 FILE
-// RULED-OUT: the fs:[0] SEH frame IS reachable by using the scaffold's real
-//        Spot/GraphicWin members with real destructors (auto member/base
-//        destruction after the hand-written body) - no manual ->~T() calls.
-//        entries_[15] cleanup is HAND-WRITTEN (free()/vtable-slot0 delete),
-//        not array auto-destruction: MenuEntry has no dtor. A single real
-//        `virtual void slot0(int)` on a throwaway class gives a direct
-//        `call [eax]`; the union member-pointer shim used elsewhere here
-//        forces an extra `mov eax,[eax]` before `call eax`. The two
-//        `mov [x], CONST` writes at offsets 0 and 0x444 are plain data
-//        stores of the fixed globals' VALUES (not dereferenced) into
-//        auto_sound_.vtable_ and buffer_.vtable_ - not compiler-generated
-//        C++ vtable resets. RULED-OUT: only the pull_down null-check's
-//        instruction position (hoisted one step earlier here than the
-//        original) - bytes otherwise match exactly (193/193).
+// ORIGINAL: 0x005FAD00 ??1Menu@@QAE@XZ 0x005FAD00-0x005FADC1;0x00662D02-0x00662D22 FILE
+// RULED-OUT: the fs:[0] SEH frame IS reachable by using the scaffold's real Spot/GraphicWin members with real destructors (auto member/base destruction after the hand-written body) - no manual ->~T() calls. entries_[15] cleanup is HAND-WRITTEN (free()/vtable-slot0 delete), not array auto-destruction: MenuEntry has no dtor. A single real `virtual void slot0(int)` on a throwaway class gives a direct `call [eax]`; the union member-pointer shim used elsewhere here forces an extra `mov eax,[eax]` before `call eax`. The two `mov [x], CONST` writes at offsets 0 and 0x444 are plain data stores of the fixed globals' VALUES (not dereferenced) into auto_sound_.vtable_ and buffer_.vtable_ - not compiler-generated C++ vtable resets. RULED-OUT: only the pull_down null-check's instruction position (hoisted one step earlier here than the original) - bytes otherwise match exactly (193/193).
 // working copy - scaffold materialised by --work
-// name      ??1Menu@@QAE@XZ
 // size      225 bytes
-// spans     0x005FAD00-0x005FADC1;0x00662D02-0x00662D22
 // prototype void (__thiscall ??1Menu@@QAE@XZ)(Menu* this)
 // callers   3   call targets   3
 // kind      game

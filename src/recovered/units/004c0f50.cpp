@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004C0F50 FILE
-// name      ?vehdraw_scoot@@YAXPAUBuffer@@HHHH@Z
+// ORIGINAL: 0x004C0F50 ?vehdraw_scoot@@YAXPAUBuffer@@HHHH@Z 0x004C0F50-0x004C1296 FILE
 // size      838 bytes
-// spans     0x004C0F50-0x004C1296
 // prototype 
 // callers   1   call targets   15
 // kind      game

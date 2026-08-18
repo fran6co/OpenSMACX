@@ -1,11 +1,7 @@
-// ORIGINAL: 0x00515450 BYTE_EXACT FILE
-// LEVER: re-read the fixed global for the `this` of the draw_map() call
-//        instead of reusing the pointer already cached for the field
-//        save/restore - the original re-reads it too
+// ORIGINAL: 0x00515450 ?survey@Console@@QAEXXZ 0x00515450-0x0051552B FILE BYTE_EXACT
+// LEVER: re-read the fixed global for the `this` of the draw_map() call instead of reusing the pointer already cached for the field save/restore - the original re-reads it too
 // working copy - scaffold materialised by --work
-// name      ?survey@Console@@QAEXXZ
 // size      219 bytes
-// spans     0x00515450-0x0051552B
 // prototype void (__thiscall ?survey@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   1
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0062D500 BYTE_EXACT
-// name      ?jackal_close@@YAXXZ
+// ORIGINAL: 0x0062D500 ?jackal_close@@YAXXZ 0x0062D500-0x0062D562 BYTE_EXACT
 // size      98 bytes
-// spans     0x0062D500-0x0062D562
 // prototype 
 // callers   1   call targets   15
 // kind      game

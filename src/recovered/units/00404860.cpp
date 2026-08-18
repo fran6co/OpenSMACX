@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00404860 BYTE_EXACT FILE
-// name      ?sprite_draw_func@@YAXPAUSprite@@PAUGraphicWin@@HHH@Z
+// ORIGINAL: 0x00404860 ?sprite_draw_func@@YAXPAUSprite@@PAUGraphicWin@@HHH@Z 0x00404860-0x00404896 FILE BYTE_EXACT
 // size      54 bytes
-// spans     0x00404860-0x00404896
 // prototype 
 // callers   0   call targets   1
 // kind      game

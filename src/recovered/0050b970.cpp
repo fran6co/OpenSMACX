@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0050B970 BYTE_EXACT
-// name      ?popp@@YAHPBDPBDP6AHXZ@Z
+// ORIGINAL: 0x0050B970 ?popp@@YAHPBDPBDP6AHXZ@Z 0x0050B970-0x0050B991 BYTE_EXACT
 // size      33 bytes
-// spans     0x0050B970-0x0050B991
 // prototype 
 // callers   2   call targets   1
 // kind      game

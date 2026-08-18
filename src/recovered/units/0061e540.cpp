@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0061E540 FILE
-// name      ?draw_mask_dest@Texture@@QAEXPAUBuffer@@PAUVert@@PAEPAEHPAUVert@@@Z
+// ORIGINAL: 0x0061E540 ?draw_mask_dest@Texture@@QAEXPAUBuffer@@PAUVert@@PAEPAEHPAUVert@@@Z 0x0061E540-0x0061EACE FILE
 // size      1422 bytes
-// spans     0x0061E540-0x0061EACE
 // prototype void (__thiscall ?draw_mask_dest@Texture@@QAEXPAUBuffer@@PAUVert@@PAEPAEHPAUVert@@@Z)(Texture* this, Buffer*, Vert*, unsigned int8*, unsigned int8*, int, Vert*)
 // callers   1   call targets   3
 // kind      game

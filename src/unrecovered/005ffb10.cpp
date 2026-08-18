@@ -1,19 +1,7 @@
-// ORIGINAL: 0x005FFB10 FILE
-// RULED-OUT: flipping the outer if/else polarity to test
-//            *g_009bc494 != 0 first (matching the disasm's fall-through
-//            order literally) moved the divergence from #13 (a lone
-//            je/jne polarity swap) to #0 (a different prologue
-//            entirely - no `sub esp,0x428`), so the `== 0`-first form
-//            below is the better body. Full control flow, field
-//            offsets and the interpolation formula
-//            (backup*stepsRemaining + target*progressCounter)/a4 were
-//            hand-traced from the raw disasm stack-offset arithmetic,
-//            not from Ghidra's decompile, which mis-simplifies the
-//            backup-buffer pointer trick.
+// ORIGINAL: 0x005FFB10 ?UNK9@Palette@@QAEHHHHHH@Z 0x005FFB10-0x005FFD7F FILE
+// RULED-OUT: flipping the outer if/else polarity to test *g_009bc494 != 0 first (matching the disasm's fall-through order literally) moved the divergence from #13 (a lone je/jne polarity swap) to #0 (a different prologue entirely - no `sub esp,0x428`), so the `== 0`-first form below is the better body. Full control flow, field offsets and the interpolation formula (backup*stepsRemaining + target*progressCounter)/a4 were hand-traced from the raw disasm stack-offset arithmetic, not from Ghidra's decompile, which mis-simplifies the backup-buffer pointer trick.
 // working copy - scaffold materialised by --work
-// name      ?UNK9@Palette@@QAEHHHHHH@Z
 // size      623 bytes
-// spans     0x005FFB10-0x005FFD7F
 // prototype int (__thiscall ?UNK9@Palette@@QAEHHHHHH@Z)(Palette* this, UINT, UINT iStartIndex, UINT cEntries, int, int)
 // callers   0   call targets   3
 // kind      game

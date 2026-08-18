@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004B1FF0 FILE
-// name      ?allocate_energy@SocialWin@@QAEXHH@Z
+// ORIGINAL: 0x004B1FF0 ?allocate_energy@SocialWin@@QAEXHH@Z 0x004B1FF0-0x004B211C FILE
 // size      300 bytes
-// spans     0x004B1FF0-0x004B211C
 // prototype void (__thiscall ?allocate_energy@SocialWin@@QAEXHH@Z)(SocialWin* this, int energyAllocID, int energyAllocSet)
 // callers   1   call targets   1
 // kind      game

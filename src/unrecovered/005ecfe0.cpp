@@ -1,11 +1,7 @@
-// ORIGINAL: 0x005ECFE0 FILE
-// RULED-OUT: owner->client_to_screen(&x,&y) via the declared sibling
-//            overload; struct-field += for the RECT update. First
-//            divergence #10 add/push, rebuilt 6 bytes shorter.
+// ORIGINAL: 0x005ECFE0 ?client_to_screen@Win@@QAEXPAURECT@@@Z 0x005ECFE0-0x005ED094 FILE
+// RULED-OUT: owner->client_to_screen(&x,&y) via the declared sibling overload; struct-field += for the RECT update. First divergence #10 add/push, rebuilt 6 bytes shorter.
 // working copy - scaffold materialised by --work
-// name      ?client_to_screen@Win@@QAEXPAURECT@@@Z
 // size      180 bytes
-// spans     0x005ECFE0-0x005ED094
 // prototype void (__thiscall ?client_to_screen@Win@@QAEXPAURECT@@@Z)(Win* this, RECT*)
 // callers   12   call targets   1
 // kind      game

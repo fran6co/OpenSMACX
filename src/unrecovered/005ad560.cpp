@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005AD560 FILE
+// ORIGINAL: 0x005AD560 ?make_bases@ReplayWin@@QAEXXZ 0x005AD560-0x005AD607 FILE
 // working copy - scaffold materialised by --work
-// name      ?make_bases@ReplayWin@@QAEXXZ
 // size      167 bytes
-// spans     0x005AD560-0x005AD607
 // prototype void (__thiscall ?make_bases@ReplayWin@@QAEXXZ)(ReplayWin* this)
 // callers   2   call targets   3
 // kind      game

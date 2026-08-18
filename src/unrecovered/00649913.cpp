@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00649913 EXCLUDED S1
-// name      __cropzeros
+// ORIGINAL: 0x00649913 __cropzeros 0x00649913-0x00649961 EXCLUDED S1
 // size      78 bytes
-// spans     0x00649913-0x00649961
 // prototype 
 // callers   0   call targets   0
 // kind      library

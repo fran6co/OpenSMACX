@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0055BA80 BYTE_EXACT FILE
-// name      ?agenda_on@@YAXHHH@Z
+// ORIGINAL: 0x0055BA80 ?agenda_on@@YAXHHH@Z 0x0055BA80-0x0055BB29 FILE BYTE_EXACT
 // size      169 bytes
-// spans     0x0055BA80-0x0055BB29
 // prototype 
 // callers   8   call targets   0
 // kind      

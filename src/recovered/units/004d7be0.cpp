@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004D7BE0 FILE
-// name      ?road_to@Console@@QAEXHH@Z
+// ORIGINAL: 0x004D7BE0 ?road_to@Console@@QAEXHH@Z 0x004D7BE0-0x004D7CED FILE
 // size      269 bytes
-// spans     0x004D7BE0-0x004D7CED
 // prototype void (__thiscall ?road_to@Console@@QAEXHH@Z)(Console* this, int, int)
 // callers   2   call targets   3
 // kind      game

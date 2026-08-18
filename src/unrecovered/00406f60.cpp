@@ -1,10 +1,7 @@
-// ORIGINAL: 0x00406F60 FILE
-// RULED-OUT: unconditional operator delete (no vbase-destroy flag reachable
-//            from a zero-param dtor); ebp-frame/esi-edi push forced by hand
+// ORIGINAL: 0x00406F60 ??1RadioButton@@QAE@H@Z 0x00406F60-0x00406FE2 FILE
+// RULED-OUT: unconditional operator delete (no vbase-destroy flag reachable from a zero-param dtor); ebp-frame/esi-edi push forced by hand
 // working copy - scaffold materialised by --work
-// name      ??1RadioButton@@QAE@H@Z
 // size      130 bytes
-// spans     0x00406F60-0x00406FE2
 // prototype void (__thiscall ??1RadioButton@@QAE@H@Z)(RadioButton* this, int)
 // callers   0   call targets   4
 // kind      game

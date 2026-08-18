@@ -1,21 +1,11 @@
-// ORIGINAL: 0x0061D090 FILE
+// ORIGINAL: 0x0061D090 sub_61d090 0x0061D090-0x0061D98A FILE
+// RULED-OUT: this is a perspective/gouraud scanline texture blitter using x87 80-bit stack state Ghidra itself could not track (extraout_ST*) plus hand-written 64-bit carry-chain fixed point (ADC/SBB/SHRD). Landed the bounding-box setup, the edge-stepping loop shape and the two setup_edge_gouraud@Texture call sites faithfully, but the innermost per-pixel blit (the two ADC/SBB loops at 0x61D54B/0x61D7BD) is NOT reproduced - only the step-size math is computed and discarded. This is a real behavioral gap, not just a byte gap: no pixels are written by this body.
 // PROPOSAL: receiver is `this` (ecx used with [ecx+N], no reload before
 //           setup_edge_gouraud@Texture) -> Texture member, not free stdcall;
 //           `ret 0x10` (4 stack dwords) + ecx confirms this+4 explicit args,
 //           not the 4-total stdcall the catalogue head showed.
-// RULED-OUT: this is a perspective/gouraud scanline texture blitter using
-//            x87 80-bit stack state Ghidra itself could not track (extraout_ST*)
-//            plus hand-written 64-bit carry-chain fixed point (ADC/SBB/SHRD).
-//            Landed the bounding-box setup, the edge-stepping loop shape and
-//            the two setup_edge_gouraud@Texture call sites faithfully, but
-//            the innermost per-pixel blit (the two ADC/SBB loops at
-//            0x61D54B/0x61D7BD) is NOT reproduced - only the step-size math
-//            is computed and discarded. This is a real behavioral gap, not
-//            just a byte gap: no pixels are written by this body.
 // working copy - scaffold materialised by --work
-// name      sub_61d090
 // size      2298 bytes
-// spans     0x0061D090-0x0061D98A
 // prototype 
 // callers   0   call targets   3
 // kind      game

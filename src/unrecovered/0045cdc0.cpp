@@ -1,8 +1,6 @@
-// ORIGINAL: 0x0045CDC0 BYTE_EXACT FILE
+// ORIGINAL: 0x0045CDC0 ?on_iface_left_click@MainInterface@@QAEXHH@Z 0x0045CDC0-0x0045CE72 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?on_iface_left_click@MainInterface@@QAEXHH@Z
 // size      178 bytes
-// spans     0x0045CDC0-0x0045CE72
 // prototype void (__thiscall ?on_iface_left_click@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
 // callers   0   call targets   3
 // kind      game

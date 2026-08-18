@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005ABB90 FILE
-// name      ?save_map@@YAXXZ
+// ORIGINAL: 0x005ABB90 ?save_map@@YAXXZ 0x005ABB90-0x005ABD0C;0x0066221F-0x00662234 FILE
 // size      401 bytes
-// spans     0x005ABB90-0x005ABD0C;0x0066221F-0x00662234
 // prototype 
 // callers   1   call targets   15
 // kind      game

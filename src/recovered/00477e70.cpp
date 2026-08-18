@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00477E70 BYTE_EXACT
-// name      ?on_mouse_move@MultiWin@@QAEXHH@Z
+// ORIGINAL: 0x00477E70 ?on_mouse_move@MultiWin@@QAEXHH@Z 0x00477E70-0x00477EDB BYTE_EXACT
 // size      107 bytes
-// spans     0x00477E70-0x00477EDB
 // prototype void (__thiscall ?on_mouse_move@MultiWin@@QAEXHH@Z)(MultiWin* this, int xCoord, int yCoord)
 // callers   0   call targets   2
 // kind      game

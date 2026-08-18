@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0042DEF0 FILE
-// name      ?draw_reactor@Datalink@@QAEXXZ
+// ORIGINAL: 0x0042DEF0 ?draw_reactor@Datalink@@QAEXXZ 0x0042DEF0-0x0042E2D3;0x0065377A-0x006537AE FILE
 // size      1047 bytes
-// spans     0x0042DEF0-0x0042E2D3;0x0065377A-0x006537AE
 // prototype void (__thiscall ?draw_reactor@Datalink@@QAEXXZ)(Datalink* this)
 // callers   1   call targets   21
 // kind      game

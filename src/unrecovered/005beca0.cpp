@@ -1,17 +1,7 @@
-// ORIGINAL: 0x005BECA0 BYTE_EXACT FILE
-// LEVER: string-routines-are-calls  "Original keeps a `push ebp; mov ebp,
-//        esp` frame this source form never reproduces (register-pressure
-//        shape, not yet found)" was the note here, and the shape has now
-//        been found: the scaffold inlined a string routine the image calls,
-//        the expansion needs esi and edi, and VC6 answered by changing what
-//        it saved on entry. The prologue was downstream of the intrinsic.
-//        The `g_00691b0c`/`g_00691b20` reading stands - they are PTR_s_
-//        globals holding a `char*`, one dereference more than the address of
-//        the string itself.
+// ORIGINAL: 0x005BECA0 ?X_text_open@@YAHPADPBD@Z 0x005BECA0-0x005BED17 FILE BYTE_EXACT
+// LEVER: string-routines-are-calls "Original keeps a `push ebp; mov ebp, esp` frame this source form never reproduces (register-pressure shape, not yet found)" was the note here, and the shape has now been found: the scaffold inlined a string routine the image calls, the expansion needs esi and edi, and VC6 answered by changing what it saved on entry. The prologue was downstream of the intrinsic. The `g_00691b0c`/`g_00691b20` reading stands - they are PTR_s_ globals holding a `char*`, one dereference more than the address of the string itself.
 // working copy - scaffold materialised by --work
-// name      ?X_text_open@@YAHPADPBD@Z
 // size      119 bytes
-// spans     0x005BECA0-0x005BED17
 // prototype int (__cdecl ?X_text_open@@YAHPADPBD@Z)(int8* srcFileID, int8* sectionID)
 // callers   19   call targets   2
 // kind      game

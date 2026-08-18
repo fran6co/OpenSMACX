@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00648BED EXCLUDED S1
-// name      ?TypeMatch@@YAHPBU_s_HandlerType@@PBU_s_CatchableType@@PBU_s_ThrowInfo@@@Z
+// ORIGINAL: 0x00648BED ?TypeMatch@@YAHPBU_s_HandlerType@@PBU_s_CatchableType@@PBU_s_ThrowInfo@@@Z 0x00648BED-0x00648C4A EXCLUDED S1
 // size      93 bytes
-// spans     0x00648BED-0x00648C4A
 // prototype 
 // callers   1   call targets   1
 // kind      library

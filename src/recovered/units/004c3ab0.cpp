@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004C3AB0 FILE
-// name      ?right_menu@WorldWin@@QAEXHH@Z
+// ORIGINAL: 0x004C3AB0 ?right_menu@WorldWin@@QAEXHH@Z 0x004C3AB0-0x004C3D0C;0x00659E80-0x00659E95 FILE
 // size      625 bytes
-// spans     0x004C3AB0-0x004C3D0C;0x00659E80-0x00659E95
 // prototype void (__thiscall ?right_menu@WorldWin@@QAEXHH@Z)(WorldWin* this, int, int)
 // callers   1   call targets   15
 // kind      game

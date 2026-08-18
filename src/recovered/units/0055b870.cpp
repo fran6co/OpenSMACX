@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0055B870 FILE
-// name      ?treaty_on@@YAXHHH@Z
+// ORIGINAL: 0x0055B870 ?treaty_on@@YAXHHH@Z 0x0055B870-0x0055BA76 FILE
 // size      518 bytes
-// spans     0x0055B870-0x0055BA76
 // prototype 
 // callers   33   call targets   2
 // kind      game

@@ -1,16 +1,7 @@
-// ORIGINAL: 0x005A9EB0 FILE
-// RULED-OUT: time-boxed - the filename/faction/year string build, the
-//            FileBox/FileWin set_def_name/set_def_ext/add_filter/
-//            add_def_ext setup, prefs_get/put, the is_visible-gated
-//            AlphaSave::save vs FileBox::save dispatch and do_all_draws
-//            are transcribed against the disassembly; the failure path
-//            (daemon-reserved-name checks, save_daemon, auto_save,
-//            NetDaemon::hang_up, a large session-struct zero-fill) is a
-//            deliberate stub. MISMATCH #0, prologue only.
+// ORIGINAL: 0x005A9EB0 ?save_game@@YAHH@Z 0x005A9EB0-0x005AAAA9;0x00661B40-0x00661E84 FILE
+// RULED-OUT: time-boxed - the filename/faction/year string build, the FileBox/FileWin set_def_name/set_def_ext/add_filter/ add_def_ext setup, prefs_get/put, the is_visible-gated AlphaSave::save vs FileBox::save dispatch and do_all_draws are transcribed against the disassembly; the failure path (daemon-reserved-name checks, save_daemon, auto_save, NetDaemon::hang_up, a large session-struct zero-fill) is a deliberate stub. MISMATCH #0, prologue only.
 // working copy - scaffold materialised by --work
-// name      ?save_game@@YAHH@Z
 // size      3901 bytes
-// spans     0x005A9EB0-0x005AAAA9;0x00661B40-0x00661E84
 // prototype 
 // callers   6   call targets   47
 // kind      game

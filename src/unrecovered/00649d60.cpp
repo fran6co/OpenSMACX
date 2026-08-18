@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00649D60 EXCLUDED S1
-// name      __allmul
+// ORIGINAL: 0x00649D60 __allmul 0x00649D60-0x00649D94 EXCLUDED S1
 // size      52 bytes
-// spans     0x00649D60-0x00649D94
 // prototype 
 // callers   0   call targets   0
 // kind      library

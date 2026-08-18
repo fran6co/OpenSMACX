@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00431FC0 BYTE_EXACT FILE
-// name      ?on_key_click@Datalink@@QAEHHH@Z
+// ORIGINAL: 0x00431FC0 ?on_key_click@Datalink@@QAEHHH@Z 0x00431FC0-0x00431FFB FILE BYTE_EXACT
 // size      59 bytes
-// spans     0x00431FC0-0x00431FFB
 // prototype int (__thiscall ?on_key_click@Datalink@@QAEHHH@Z)(Datalink* this, int, int)
 // callers   0   call targets   0
 // kind      game

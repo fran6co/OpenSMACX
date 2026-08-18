@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00613530 FILE
+// ORIGINAL: 0x00613530 ?init@Dialogs@@QAEHHHHHPAUHeap@@@Z 0x00613530-0x00613602 FILE
 // working copy - scaffold materialised by --work
-// name      ?init@Dialogs@@QAEHHHHHPAUHeap@@@Z
 // size      210 bytes
-// spans     0x00613530-0x00613602
 // prototype int (__thiscall ?init@Dialogs@@QAEHHHHHPAUHeap@@@Z)(Dialogs* this, int, int, int, int, Heap*)
 // callers   0   call targets   6
 // kind      game

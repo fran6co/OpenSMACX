@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00415F70 FILE
-// name      ?gov_on@BaseWin@@QAEXH@Z
+// ORIGINAL: 0x00415F70 ?gov_on@BaseWin@@QAEXH@Z 0x00415F70-0x004160E1 FILE
 // size      369 bytes
-// spans     0x00415F70-0x004160E1
 // prototype void (__thiscall ?gov_on@BaseWin@@QAEXH@Z)(BaseWin* this, int)
 // callers   4   call targets   7
 // kind      game

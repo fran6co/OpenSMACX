@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00601A40 BYTE_EXACT FILE
+// ORIGINAL: 0x00601A40 ?UNK1@BasePop@@QAEHPAD@Z 0x00601A40-0x00601AB1 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?UNK1@BasePop@@QAEHPAD@Z
 // size      113 bytes
-// spans     0x00601A40-0x00601AB1
 // prototype int (__thiscall ?UNK1@BasePop@@QAEHPAD@Z)(BasePop* this, int8*)
 // callers   0   call targets   4
 // kind      game

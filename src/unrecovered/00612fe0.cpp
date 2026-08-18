@@ -1,14 +1,7 @@
-// ORIGINAL: 0x00612FE0 FILE
-// RULED-OUT: interleaved case grouping (1,6,11/2,7,12/...) compiles to a
-//   direct 16-entry jump table; CONTIGUOUS ranges (1-3/4-6/7-9/10-12/13-16)
-//   compile to the byte-selector + address-table dispatch the original
-//   uses, matching mov/dec/cmp/ja/xor/mov/jmp exactly (99.2% mnemonic sim,
-//   only diverges 2 bytes past the final ret - same isolated-compile jump
-//   table alignment artifact noted on 0x006130E0's sibling).
+// ORIGINAL: 0x00612FE0 ?attach@Dialogs@@QAEHPAUGraphicWin@@HHH@Z 0x00612FE0-0x006130AE FILE
+// RULED-OUT: interleaved case grouping (1,6,11/2,7,12/...) compiles to a direct 16-entry jump table; CONTIGUOUS ranges (1-3/4-6/7-9/10-12/13-16) compile to the byte-selector + address-table dispatch the original uses, matching mov/dec/cmp/ja/xor/mov/jmp exactly (99.2% mnemonic sim, only diverges 2 bytes past the final ret - same isolated-compile jump table alignment artifact noted on 0x006130E0's sibling).
 // working copy - scaffold materialised by --work
-// name      ?attach@Dialogs@@QAEHPAUGraphicWin@@HHH@Z
 // size      206 bytes
-// spans     0x00612FE0-0x006130AE
 // prototype int (__thiscall ?attach@Dialogs@@QAEHPAUGraphicWin@@HHH@Z)(Dialogs* this, GraphicWin*, int, int, int)
 // callers   0   call targets   5
 // kind      game

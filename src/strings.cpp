@@ -20,10 +20,8 @@
 
 /*
 Purpose: Initialize the class instance with a new string table of the specified size.
-ORIGINAL: 0x006168F0
-// name      ?init@Strings@@QAEHH@Z
+// ORIGINAL: 0x006168F0 ?init@Strings@@QAEHH@Z 0x006168F0-0x00616950
 // size      96 bytes
-// spans     0x006168F0-0x00616950
 // prototype int (__thiscall ?init@Strings@@QAEHH@Z)(Strings* this, int)
 // callers   4   call targets   5
 // kind      game
@@ -46,10 +44,8 @@ BOOL Strings::init(size_t mem_size) {
 
 /*
 Purpose: Shutdown the class instance.
-ORIGINAL: 0x00616950
-// name      ?shutdown@Strings@@QAEHXZ
+// ORIGINAL: 0x00616950 ?shutdown@Strings@@QAEHXZ 0x00616950-0x00616963
 // size      19 bytes
-// spans     0x00616950-0x00616963
 // prototype int (__thiscall ?shutdown@Strings@@QAEHXZ)(Strings* this)
 // callers   4   call targets   1
 // kind      game
@@ -65,10 +61,8 @@ void Strings::shutdown() {
 
 /*
 Purpose: Put the input string into the string table.
-ORIGINAL: 0x00616970
-// name      ?put@Strings@@QAEHPAD@Z
+// ORIGINAL: 0x00616970 ?put@Strings@@QAEHPAD@Z 0x00616970-0x0061699D
 // size      45 bytes
-// spans     0x00616970-0x0061699D
 // prototype int (__thiscall ?put@Strings@@QAEHPAD@Z)(Strings* this, int8*)
 // callers   5   call targets   3
 // kind      game
@@ -86,10 +80,8 @@ LPSTR Strings::put(LPCSTR input) {
 
 /*
 Purpose: Check if the string address is within the table.
-ORIGINAL: 0x006169A0 BYTE_EXACT
-// name      ?get@Strings@@QAEHH@Z
+// ORIGINAL: 0x006169A0 ?get@Strings@@QAEHH@Z 0x006169A0-0x006169BB BYTE_EXACT
 // size      27 bytes
-// spans     0x006169A0-0x006169BB
 // prototype int (__thiscall ?get@Strings@@QAEHH@Z)(Strings* this, int)
 // callers   290   call targets   0
 // kind      game

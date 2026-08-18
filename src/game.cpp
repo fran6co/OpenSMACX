@@ -80,10 +80,8 @@ static int territory_xrange(int x) {
 /*
 Purpose: Recompute which faction owns each tile of the map, and rebuild every
          per-faction and per-region tally that ownership feeds.
-ORIGINAL: 0x00523DD0
-// name      ?reset_territory@@YAXXZ
+// ORIGINAL: 0x00523DD0 ?reset_territory@@YAXXZ 0x00523DD0-0x00524202
 // size      1074 bytes
-// spans     0x00523DD0-0x00524202
 // prototype 
 // callers   11   call targets   7
 // kind      game
@@ -269,10 +267,8 @@ void __cdecl reset_territory() {
 /*
 Purpose: Determine whether the turn currently belongs to another faction in a
          networked game, which is what gates local input.
-ORIGINAL: 0x0052DC70
-// name      ?not_my_turn@@YAHXZ
+// ORIGINAL: 0x0052DC70 ?not_my_turn@@YAHXZ 0x0052DC70-0x0052DC9C
 // size      44 bytes
-// spans     0x0052DC70-0x0052DC9C
 // prototype 
 // callers   8   call targets   0
 // kind      game
@@ -298,10 +294,8 @@ BOOL __cdecl not_my_turn() {
 
 /*
 Purpose: Handle creation of pop-up message on Planetfall.
-ORIGINAL: 0x00589180
-// name      ?planetfall@@YAXH@Z
+// ORIGINAL: 0x00589180 ?planetfall@@YAXH@Z 0x00589180-0x00589329
 // size      425 bytes
-// spans     0x00589180-0x00589329
 // prototype void (__cdecl ?planetfall@@YAXH@Z)(int factionID)
 // callers   2   call targets   6
 // kind      game
@@ -339,10 +333,8 @@ void __cdecl planetfall(int faction_id) {
 
 /*
 Purpose: Clear and reset scenario game variables.
-ORIGINAL: 0x005B38D0
-// name      ?clear_scenario@@YAXXZ
+// ORIGINAL: 0x005B38D0 ?clear_scenario@@YAXXZ 0x005B38D0-0x005B3919
 // size      73 bytes
-// spans     0x005B38D0-0x005B3919
 // prototype 
 // callers   1   call targets   0
 // kind      game
@@ -363,10 +355,8 @@ void __cdecl clear_scenario() {
 
 /*
 Purpose: Calculate game year from start date and turn number.
-ORIGINAL: 0x005C89A0
-// name      ?game_year@@YAHH@Z
+// ORIGINAL: 0x005C89A0 ?game_year@@YAHH@Z 0x005C89A0-0x005C89B0
 // size      16 bytes
-// spans     0x005C89A0-0x005C89B0
 // prototype int (__cdecl ?game_year@@YAHH@Z)(int turn)
 // callers   30   call targets   0
 // kind      game
@@ -381,10 +371,8 @@ uint32_t __cdecl game_year(int turn) {
 
 /*
 Purpose: Craft game year string. Assume buffer of at least 80. Revisit and convert to std::string.
-ORIGINAL: 0x005C89B0
-// name      ?say_year@@YAXPAD@Z
+// ORIGINAL: 0x005C89B0 ?say_year@@YAXPAD@Z 0x005C89B0-0x005C89E4
 // size      52 bytes
-// spans     0x005C89B0-0x005C89E4
 // prototype 
 // callers   19   call targets   2
 // kind      game
@@ -402,10 +390,8 @@ void __cdecl say_year(LPSTR output) {
 /*
 Purpose: Run the repair phase for the specified faction: reset the per-turn unit state, heal every
          damaged unit by its reactor-weighted repair rate, and redraw the tiles the units stand on.
-ORIGINAL: 0x00526030
-// name      ?repair_phase@@YAXH@Z
+// ORIGINAL: 0x00526030 ?repair_phase@@YAXH@Z 0x00526030-0x005267A9
 // size      1913 bytes
-// spans     0x00526030-0x005267A9
 // prototype void (__cdecl ?repair_phase@@YAXH@Z)(int factionID)
 // callers   1   call targets   8
 // kind      game

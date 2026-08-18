@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005AD9E0 FILE
-// name      ?timer_callback@ReplayWin@@QAEXXZ
+// ORIGINAL: 0x005AD9E0 ?timer_callback@ReplayWin@@QAEXXZ 0x005AD9E0-0x005ADBCC FILE
 // size      492 bytes
-// spans     0x005AD9E0-0x005ADBCC
 // prototype void (__thiscall ?timer_callback@ReplayWin@@QAEXXZ)(ReplayWin* this)
 // callers   1   call targets   5
 // kind      game

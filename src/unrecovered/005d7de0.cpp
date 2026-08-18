@@ -1,11 +1,6 @@
-// ORIGINAL: 0x005D7DE0 FILE
-// RULED-OUT: same SEH-frame family as 0x005D7A30/0x005D7B40/0x005D7CA0;
-//            try{}catch(...){throw;} plus the chained call into the 5-arg
-//            Buffer::load_pcx(uchar*,ulong,Palette*,int,int) overload is the
-//            closest known shape, still diverges at #0 push/mov.
-// name      ?load_pcx@Buffer@@QAEHPBDPAVPalette@@HH@Z
+// ORIGINAL: 0x005D7DE0 ?load_pcx@Buffer@@QAEHPBDPAVPalette@@HH@Z 0x005D7DE0-0x005D7F1D;0x00662BBC-0x00662BD1 FILE
+// RULED-OUT: same SEH-frame family as 0x005D7A30/0x005D7B40/0x005D7CA0; try{}catch(...){throw;} plus the chained call into the 5-arg Buffer::load_pcx(uchar*,ulong,Palette*,int,int) overload is the closest known shape, still diverges at #0 push/mov.
 // size      338 bytes
-// spans     0x005D7DE0-0x005D7F1D;0x00662BBC-0x00662BD1
 // prototype int (__thiscall ?load_pcx@Buffer@@QAEHPBDPAVPalette@@HH@Z)(Buffer* this, int8* fileName, Palette*, int, int size)
 // callers   44   call targets   6
 // kind      game

@@ -1,13 +1,7 @@
-// ORIGINAL: 0x00615840 FILE
-// RULED-OUT: direct switch(key16) transcription with per-case pointer-offset
-//            math and VCall::slot062() dispatch compiles and follows control
-//            flow faithfully, but register allocation across the ~8-case
-//            switch differs from the original from instruction #0 (prologue
-//            push order); not chased further given function size.
+// ORIGINAL: 0x00615840 ?on_key_down@EditBox@@QAEHH@Z 0x00615840-0x00615D73 FILE
+// RULED-OUT: direct switch(key16) transcription with per-case pointer-offset math and VCall::slot062() dispatch compiles and follows control flow faithfully, but register allocation across the ~8-case switch differs from the original from instruction #0 (prologue push order); not chased further given function size.
 // working copy - scaffold materialised by --work
-// name      ?on_key_down@EditBox@@QAEHH@Z
 // size      1331 bytes
-// spans     0x00615840-0x00615D73
 // prototype int (__thiscall ?on_key_down@EditBox@@QAEHH@Z)(EditBox* this, int)
 // callers   0   call targets   5
 // kind      game

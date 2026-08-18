@@ -1,16 +1,7 @@
-// ORIGINAL: 0x0052BF60 FILE
-// RULED-OUT: literal Ghidra transcription of the switch(a1){1,2,5,6,7} body, using the
-//            already-declared g_ADDR globals with pointer arithmetic scaled to match
-//            each DAT_ symbol's Ghidra-inferred width (uint*/byte* casts per site)
-//            compiles and preserves the case order and every call, but several popp()
-//            call sites show 4 explicit pushes in the raw disassembly against a 5-arg
-//            cdecl cleanup (`add esp,0x14`) - trusted Ghidra's resolved 5-arg call form
-//            over the raw push count, which is an unreconciled discrepancy. Diverges
-//            from the framed-prologue build around #2.
+// ORIGINAL: 0x0052BF60 ?council_action@@YAXHH@Z 0x0052BF60-0x0052C650 FILE
+// RULED-OUT: literal Ghidra transcription of the switch(a1){1,2,5,6,7} body, using the already-declared g_ADDR globals with pointer arithmetic scaled to match each DAT_ symbol's Ghidra-inferred width (uint*/byte* casts per site) compiles and preserves the case order and every call, but several popp() call sites show 4 explicit pushes in the raw disassembly against a 5-arg cdecl cleanup (`add esp,0x14`) - trusted Ghidra's resolved 5-arg call form over the raw push count, which is an unreconciled discrepancy. Diverges from the framed-prologue build around #2.
 // working copy - scaffold materialised by --work
-// name      ?council_action@@YAXHH@Z
 // size      1776 bytes
-// spans     0x0052BF60-0x0052C650
 // prototype 
 // callers   3   call targets   10
 // kind      game

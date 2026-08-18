@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00446D10 FILE
-// name      ?ambience_veh@@YAXH@Z
+// ORIGINAL: 0x00446D10 ?ambience_veh@@YAXH@Z 0x00446D10-0x004471EE FILE
 // size      1246 bytes
-// spans     0x00446D10-0x004471EE
 // prototype 
 // callers   2   call targets   1
 // kind      game

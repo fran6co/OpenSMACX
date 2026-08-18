@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005FE8B0 FILE
-// name      ?start_cycle@Palette@@QAEHH@Z
+// ORIGINAL: 0x005FE8B0 ?start_cycle@Palette@@QAEHH@Z 0x005FE8B0-0x005FE8FB FILE
 // size      75 bytes
-// spans     0x005FE8B0-0x005FE8FB
 // prototype int (__thiscall ?start_cycle@Palette@@QAEHH@Z)(Palette* this, int)
 // callers   1   call targets   1
 // kind      game

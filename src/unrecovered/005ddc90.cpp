@@ -1,18 +1,11 @@
-// ORIGINAL: 0x005DDC90 FILE
-// name      ?wrap_right@Buffer@@QAEHPADH@Z
+// ORIGINAL: 0x005DDC90 ?wrap_right@Buffer@@QAEHPADH@Z 0x005DDC90-0x005DDD91 FILE
+// RULED-OUT: `int *a2` second parameter - the mangled name is `PADH` (char*, int), not `PADPAH`, so the second argument really is `int` and the disassembly's [eax]/[eax+4]/[eax+8] reads are the body reinterpreting that int as an `int*` internally, not a real pointer parameter.
 // size      257 bytes
-// spans     0x005DDC90-0x005DDD91
 // prototype int (__thiscall ?wrap_right@Buffer@@QAEHPADH@Z)(Buffer* this, char*, int)
 // callers   1   call targets   3
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x005DC410 0x005DD3B0 0x006453E0
-// RULED-OUT: `int *a2` second parameter - the mangled name is
-//            `PADH` (char*, int), not `PADPAH`, so the second
-//            argument really is `int` and the disassembly's
-//            [eax]/[eax+4]/[eax+8] reads are the body reinterpreting
-//            that int as an `int*` internally, not a real pointer
-//            parameter.
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?wrap_right@Buffer@@QAEHPADH@Z  at 0x005DDC90  (257 bytes)
 //

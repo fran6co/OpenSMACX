@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00466CA0 FILE
-// name      ?draw_vehicles@MapWin@@QAEXHHHHH@Z
+// ORIGINAL: 0x00466CA0 ?draw_vehicles@MapWin@@QAEXHHHHH@Z 0x00466CA0-0x0046718F FILE
 // size      1263 bytes
-// spans     0x00466CA0-0x0046718F
 // prototype void (__thiscall ?draw_vehicles@MapWin@@QAEXHHHHH@Z)(MapWin* this, int, int, int, int, int)
 // callers   3   call targets   8
 // kind      game

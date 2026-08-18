@@ -1,8 +1,6 @@
-// ORIGINAL: 0x004CF740 BYTE_EXACT FILE
+// ORIGINAL: 0x004CF740 ?action@@YAHH@Z 0x004CF740-0x004CF7B4 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?action@@YAHH@Z
 // size      116 bytes
-// spans     0x004CF740-0x004CF7B4
 // prototype int (__cdecl ?action@@YAHH@Z)(int vehID)
 // callers   3   call targets   3
 // kind      game

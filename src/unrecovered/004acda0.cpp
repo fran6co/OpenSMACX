@@ -1,15 +1,7 @@
-// ORIGINAL: 0x004ACDA0 FILE
-// RULED-OUT: real embedded members (ButtonGroup/FlatButton/ListBox/Dialog/
-//            GraphicWin/Spot/Sprite[]) letting the compiler auto-generate the
-//            member-teardown cascade + SEH frame - instead used explicit
-//            reinterpret_cast<T*>(self+offset)->method()/~T() calls plus the
-//            emitted fn_006456e4 vector-dtor-iterator seam, matching the
-//            disasm's call sequence and argument order one-to-one but not its
-//            SEH prologue (no real locals means no unwind frame is emitted).
+// ORIGINAL: 0x004ACDA0 ??1ReportIf@@QAE@XZ 0x004ACDA0-0x004AD16C;0x00658D50-0x00658F74 FILE
+// RULED-OUT: real embedded members (ButtonGroup/FlatButton/ListBox/Dialog/ GraphicWin/Spot/Sprite[]) letting the compiler auto-generate the member-teardown cascade + SEH frame - instead used explicit reinterpret_cast<T*>(self+offset)->method()/~T() calls plus the emitted fn_006456e4 vector-dtor-iterator seam, matching the disasm's call sequence and argument order one-to-one but not its SEH prologue (no real locals means no unwind frame is emitted).
 // working copy - scaffold materialised by --work
-// name      ??1ReportIf@@QAE@XZ
 // size      1520 bytes
-// spans     0x004ACDA0-0x004AD16C;0x00658D50-0x00658F74
 // prototype void (__thiscall ??1ReportIf@@QAE@XZ)(ReportIf* this)
 // callers   0   call targets   8
 // kind      game

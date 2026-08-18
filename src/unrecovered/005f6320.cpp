@@ -1,12 +1,7 @@
-// ORIGINAL: 0x005F6320 BYTE_EXACT FILE
-// LEVER: a second vtable shim (VCallX) with slot017/031 typed (int,int)
-//        and slot023 typed int() while slot007 stays void() reproduced the
-//        four dispatches exactly; raw offset casts (0x98,0x9c,0x408,0x1c,
-//        0x4c) instead of the named-but-mis-sized AutoSound fields.
+// ORIGINAL: 0x005F6320 ?on_mouse_move@Win@@QAEXHHIH@Z 0x005F6320-0x005F63BB FILE BYTE_EXACT
+// LEVER: a second vtable shim (VCallX) with slot017/031 typed (int,int) and slot023 typed int() while slot007 stays void() reproduced the four dispatches exactly; raw offset casts (0x98,0x9c,0x408,0x1c, 0x4c) instead of the named-but-mis-sized AutoSound fields.
 // working copy - scaffold materialised by --work
-// name      ?on_mouse_move@Win@@QAEXHHIH@Z
 // size      155 bytes
-// spans     0x005F6320-0x005F63BB
 // prototype void (__thiscall ?on_mouse_move@Win@@QAEXHHIH@Z)(Win* this, int, int, unsigned int, int)
 // callers   1   call targets   0
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00496610 FILE
-// name      sub_496610
+// ORIGINAL: 0x00496610 sub_496610 0x00496610-0x00496668 FILE
 // size      88 bytes
-// spans     0x00496610-0x00496668
 // prototype 
 // callers   0   call targets   1
 // kind      game

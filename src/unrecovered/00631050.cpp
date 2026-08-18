@@ -1,17 +1,7 @@
-// ORIGINAL: 0x00631050 FILE
-// RULED-OUT: no ESP-relative frame (raw buffer + manual calls, not a real
-//            frame pointer omission); the entry receiver (`mov edi,ecx`)
-//            and Ghidra's `param_2` are not recoverable under the mandated
-//            0-arg `__cdecl` signature, so both are read from placeholder
-//            storage instead of a real caller-supplied value; sub_63bb20/
-//            sub_63bd10/sub_4e34b0/sub_4e3350/sub_4080b0/fn_00401c80/
-//            fn_00401ce0/fn_00402970 called with no receiver/args since
-//            their declared prototypes are 0-arg extern "C" and changing
-//            them would break linkage to the real symbol.
+// ORIGINAL: 0x00631050 sub_631050 0x00631050-0x00631A06;0x00663528-0x0066372B FILE
+// RULED-OUT: no ESP-relative frame (raw buffer + manual calls, not a real frame pointer omission); the entry receiver (`mov edi,ecx`) and Ghidra's `param_2` are not recoverable under the mandated 0-arg `__cdecl` signature, so both are read from placeholder storage instead of a real caller-supplied value; sub_63bb20/ sub_63bd10/sub_4e34b0/sub_4e3350/sub_4080b0/fn_00401c80/ fn_00401ce0/fn_00402970 called with no receiver/args since their declared prototypes are 0-arg extern "C" and changing them would break linkage to the real symbol.
 // working copy - scaffold materialised by --work
-// name      sub_631050
 // size      3001 bytes
-// spans     0x00631050-0x00631A06;0x00663528-0x0066372B
 // prototype 
 // callers   0   call targets   30
 // kind      game

@@ -1,8 +1,6 @@
-// ORIGINAL: 0x004595C0 FILE
+// ORIGINAL: 0x004595C0 ?bung_momma@@YAXXZ 0x004595C0-0x0045967F FILE
 // working copy - scaffold materialised by --work
-// name      ?bung_momma@@YAXXZ
 // size      191 bytes
-// spans     0x004595C0-0x0045967F
 // prototype 
 // callers   1   call targets   5
 // kind      game

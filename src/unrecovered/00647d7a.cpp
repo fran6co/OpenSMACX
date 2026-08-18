@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00647D7A EXCLUDED S1
-// name      __heap_init
+// ORIGINAL: 0x00647D7A __heap_init 0x00647D7A-0x00647DB6 EXCLUDED S1
 // size      60 bytes
-// spans     0x00647D7A-0x00647DB6
 // prototype 
 // callers   1   call targets   1
 // kind      library

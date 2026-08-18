@@ -1,12 +1,6 @@
-// ORIGINAL: 0x00496810 FILE
-// RULED-OUT: same shape as 0x00484AC0 (PickTech's ctor) - placement-new for
-//   the 7 subobjects (GraphicWin base, FlatButton x2, Spot, ListBox(1),
-//   Buffer x2, in disassembly order) plus the 2 vtable stores reproduce the
-//   call sequence but not the opaque scaffold's missing SEH-unwind prologue
-//   (see 0x00484AC0's note for why).
-// name      ??0QuayleWin@@QAE@XZ
+// ORIGINAL: 0x00496810 ??0QuayleWin@@QAE@XZ 0x00496810-0x004968B4;0x00658CB0-0x00658D08 FILE
+// RULED-OUT: same shape as 0x00484AC0 (PickTech's ctor) - placement-new for the 7 subobjects (GraphicWin base, FlatButton x2, Spot, ListBox(1), Buffer x2, in disassembly order) plus the 2 vtable stores reproduce the call sequence but not the opaque scaffold's missing SEH-unwind prologue (see 0x00484AC0's note for why).
 // size      252 bytes
-// spans     0x00496810-0x004968B4;0x00658CB0-0x00658D08
 // prototype void (__thiscall ??0QuayleWin@@QAE@XZ)(QuayleWin* this)
 // callers   1   call targets   5
 // kind      game

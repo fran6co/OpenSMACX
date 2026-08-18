@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00647132 EXCLUDED S1
-// name      _realloc
+// ORIGINAL: 0x00647132 _realloc 0x00647132-0x0064726A EXCLUDED S1
 // size      312 bytes
-// spans     0x00647132-0x0064726A
 // prototype 
 // callers   3   call targets   10
 // kind      library

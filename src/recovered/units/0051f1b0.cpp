@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0051F1B0 BYTE_EXACT FILE
-// name      ?check_spock@@YAXXZ
+// ORIGINAL: 0x0051F1B0 ?check_spock@@YAXXZ 0x0051F1B0-0x0051F1F2 FILE BYTE_EXACT
 // size      66 bytes
-// spans     0x0051F1B0-0x0051F1F2
 // prototype 
 // callers   22   call targets   1
 // kind      game

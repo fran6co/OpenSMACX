@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006469CA EXCLUDED S1
-// name      _isxdigit
+// ORIGINAL: 0x006469CA _isxdigit 0x006469CA-0x006469F7 EXCLUDED S1
 // size      45 bytes
-// spans     0x006469CA-0x006469F7
 // prototype 
 // callers   2   call targets   1
 // kind      library

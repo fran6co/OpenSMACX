@@ -20,10 +20,8 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
-ORIGINAL: 0x00403610 BYTE_EXACT
-// name      ?requested_height@AlphaMenu@@QAEHXZ
+// ORIGINAL: 0x00403610 ?requested_height@AlphaMenu@@QAEHXZ 0x00403610-0x00403613 BYTE_EXACT
 // size      3 bytes
-// spans     0x00403610-0x00403613
 // prototype int (__thiscall ?requested_height@AlphaMenu@@QAEHXZ)(AlphaMenu* this)
 // callers   0   call targets   0
 // kind      game

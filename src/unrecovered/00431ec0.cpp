@@ -1,22 +1,8 @@
-// ORIGINAL: 0x00431EC0 BYTE_EXACT FILE
-// LEVER: sub/dec a `switch` on the button id, NOT an `if`/`else if` chain.
-//        `switch (id) { case 0x10: ... case 0x11: ... default: ... }` is what
-//        lowers to `mov eax,ecx; sub eax,0x10; je; dec eax; je` with the id
-//        left live in ecx for the default arm's `push ecx`. The `if` chain
-//        emits `cmp eax,0x10; jne` instead, loads the parameter into eax
-//        before saving esi, and lays the three arms out in source order where
-//        the switch puts the default first and the cases in reverse. That one
-//        edit moved first divergence from #0 to #69 of 79 instructions.
-// LEVER: lea/mov re-derive the virtual-base `this` from the OBJECT, not from
-//        the sub-object pointer already in a register: `self + 0xf628 + disp`
-//        gives `mov edx,[ecx+esi+0xf628]` / `lea ecx,[ecx+esi+0xf628]`, where
-//        the readable `sub + disp` (with `sub` already held in ebx) gives
-//        `add ecx,ebx` / `mov edx,[ecx]`. Same address, one fewer live value,
-//        and it is the whole of the last two instructions that differed.
+// ORIGINAL: 0x00431EC0 ?on_button_clicked@Datalink@@QAEXH@Z 0x00431EC0-0x00431FA9 FILE BYTE_EXACT
+// LEVER: sub/dec a `switch` on the button id, NOT an `if`/`else if` chain. `switch (id) { case 0x10: ... case 0x11: ... default: ... }` is what lowers to `mov eax,ecx; sub eax,0x10; je; dec eax; je` with the id left live in ecx for the default arm's `push ecx`. The `if` chain emits `cmp eax,0x10; jne` instead, loads the parameter into eax before saving esi, and lays the three arms out in source order where the switch puts the default first and the cases in reverse. That one edit moved first divergence from #0 to #69 of 79 instructions.
+// LEVER: lea/mov re-derive the virtual-base `this` from the OBJECT, not from the sub-object pointer already in a register: `self + 0xf628 + disp` gives `mov edx,[ecx+esi+0xf628]` / `lea ecx,[ecx+esi+0xf628]`, where the readable `sub + disp` (with `sub` already held in ebx) gives `add ecx,ebx` / `mov edx,[ecx]`. Same address, one fewer live value, and it is the whole of the last two instructions that differed.
 // working copy - scaffold materialised by --work
-// name      ?on_button_clicked@Datalink@@QAEXH@Z
 // size      233 bytes
-// spans     0x00431EC0-0x00431FA9
 // prototype void (__thiscall ?on_button_clicked@Datalink@@QAEXH@Z)(Datalink* this, int)
 // callers   0   call targets   4
 // kind      game

@@ -22,10 +22,8 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-ORIGINAL: 0x004C45E0 BYTE_EXACT
-// name      ?clear_terrain@WorldWin@@QAEXXZ
+// ORIGINAL: 0x004C45E0 ?clear_terrain@WorldWin@@QAEXXZ 0x004C45E0-0x004C45E1 BYTE_EXACT
 // size      1 bytes
-// spans     0x004C45E0-0x004C45E1
 // prototype void (__thiscall ?clear_terrain@WorldWin@@QAEXXZ)(WorldWin* this)
 // callers   2   call targets   0
 // kind      game
@@ -43,10 +41,8 @@ void __fastcall world_win_clear_terrain_redirect(WorldWin *self, void *) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x004C3E90 BYTE_EXACT
-// name      ?on_left_double_click@WorldWin@@QAEXHH@Z
+// ORIGINAL: 0x004C3E90 ?on_left_double_click@WorldWin@@QAEXHH@Z 0x004C3E90-0x004C3E93 BYTE_EXACT
 // size      3 bytes
-// spans     0x004C3E90-0x004C3E93
 // prototype void (__thiscall ?on_left_double_click@WorldWin@@QAEXHH@Z)(WorldWin* this, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -66,10 +62,8 @@ func_world_win_click WorldWinClick = original_method<func_world_win_click>(0x004
 
 /*
 Purpose: Report a left click to the world window's shared click handler.
-ORIGINAL: 0x004C3E50
-// name      ?on_left_click@WorldWin@@QAEXHH@Z
+// ORIGINAL: 0x004C3E50 ?on_left_click@WorldWin@@QAEXHH@Z 0x004C3E50-0x004C3E68
 // size      24 bytes
-// spans     0x004C3E50-0x004C3E68
 // prototype void (__thiscall ?on_left_click@WorldWin@@QAEXHH@Z)(WorldWin* this, int, int)
 // callers   0   call targets   1
 // kind      game
@@ -84,10 +78,8 @@ void WorldWin::on_left_click(int a1, int a2) {
 
 /*
 Purpose: Report a right click to the world window's shared click handler.
-ORIGINAL: 0x004C3E70
-// name      ?on_right_click@WorldWin@@QAEXHH@Z
+// ORIGINAL: 0x004C3E70 ?on_right_click@WorldWin@@QAEXHH@Z 0x004C3E70-0x004C3E88
 // size      24 bytes
-// spans     0x004C3E70-0x004C3E88
 // prototype void (__thiscall ?on_right_click@WorldWin@@QAEXHH@Z)(WorldWin* this, int, int)
 // callers   0   call targets   1
 // kind      game
@@ -109,10 +101,8 @@ void __fastcall world_win_on_right_click_redirect(WorldWin *self, void *, int a1
 }
 
 /*
-ORIGINAL: 0x004C45F0 BYTE_EXACT
-// name      ?set_center@WorldWin@@QAEXHH@Z
+// ORIGINAL: 0x004C45F0 ?set_center@WorldWin@@QAEXHH@Z 0x004C45F0-0x004C4603 BYTE_EXACT
 // size      19 bytes
-// spans     0x004C45F0-0x004C4603
 // prototype void (__thiscall ?set_center@WorldWin@@QAEXHH@Z)(WorldWin* this, int, int)
 // callers   1   call targets   1
 // kind      game
@@ -127,10 +117,8 @@ void WorldWin::set_center(int a1, int a2) {
 }
 
 /*
-ORIGINAL: 0x004C4610 BYTE_EXACT
-// name      ?focus@WorldWin@@QAEXHH@Z
+// ORIGINAL: 0x004C4610 ?focus@WorldWin@@QAEXHH@Z 0x004C4610-0x004C4623 BYTE_EXACT
 // size      19 bytes
-// spans     0x004C4610-0x004C4623
 // prototype void (__thiscall ?focus@WorldWin@@QAEXHH@Z)(WorldWin* this, int, int)
 // callers   0   call targets   1
 // kind      game
@@ -145,10 +133,8 @@ void WorldWin::focus(int a1, int a2) {
 }
 
 /*
-ORIGINAL: 0x004C3EA0 BYTE_EXACT
-// name      ?follow_center@WorldWin@@QAEXHH@Z
+// ORIGINAL: 0x004C3EA0 ?follow_center@WorldWin@@QAEXHH@Z 0x004C3EA0-0x004C3EB3 BYTE_EXACT
 // size      19 bytes
-// spans     0x004C3EA0-0x004C3EB3
 // prototype void (__thiscall ?follow_center@WorldWin@@QAEXHH@Z)(WorldWin* this, int xCoord, int yCoord)
 // callers   1   call targets   1
 // kind      game

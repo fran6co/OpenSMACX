@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00477100 FILE
-// name      ?mon_secret_project@@YAXHH@Z
+// ORIGINAL: 0x00477100 ?mon_secret_project@@YAXHH@Z 0x00477100-0x00477207 FILE
 // size      263 bytes
-// spans     0x00477100-0x00477207
 // prototype 
 // callers   1   call targets   2
 // kind      game

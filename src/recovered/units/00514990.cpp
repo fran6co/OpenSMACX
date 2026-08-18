@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00514990 FILE
-// name      ?quit_game@Console@@QAEXXZ
+// ORIGINAL: 0x00514990 ?quit_game@Console@@QAEXXZ 0x00514990-0x00514B2C FILE
 // size      412 bytes
-// spans     0x00514990-0x00514B2C
 // prototype void (__thiscall ?quit_game@Console@@QAEXXZ)(Console* this)
 // callers   0   call targets   8
 // kind      game

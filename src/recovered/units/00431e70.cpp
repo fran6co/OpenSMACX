@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00431E70 BYTE_EXACT FILE
-// name      ?on_redraw@Datalink@@QAEXXZ
+// ORIGINAL: 0x00431E70 ?on_redraw@Datalink@@QAEXXZ 0x00431E70-0x00431EA6 FILE BYTE_EXACT
 // size      54 bytes
-// spans     0x00431E70-0x00431EA6
 // prototype void (__thiscall ?on_redraw@Datalink@@QAEXXZ)(Datalink* this)
 // callers   0   call targets   3
 // kind      game

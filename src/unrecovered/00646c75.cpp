@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00646C75 EXCLUDED S1
-// name      sub_646c75
+// ORIGINAL: 0x00646C75 sub_646c75 0x00646C75-0x00646C9D EXCLUDED S1
 // size      40 bytes
-// spans     0x00646C75-0x00646C9D
 // prototype 
 // callers   1   call targets   0
 // kind      library

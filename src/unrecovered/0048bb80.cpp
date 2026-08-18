@@ -1,8 +1,6 @@
-// ORIGINAL: 0x0048BB80 FILE
+// ORIGINAL: 0x0048BB80 ?draw_line@PlanWin@@QAEXHHHHH@Z 0x0048BB80-0x0048BC14 FILE
 // working copy - scaffold materialised by --work
-// name      ?draw_line@PlanWin@@QAEXHHHHH@Z
 // size      148 bytes
-// spans     0x0048BB80-0x0048BC14
 // prototype void (__thiscall ?draw_line@PlanWin@@QAEXHHHHH@Z)(PlanWin* this, int xCoord, int yCoord, int, int, int)
 // callers   0   call targets   2
 // kind      game

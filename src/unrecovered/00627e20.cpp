@@ -1,16 +1,6 @@
-// ORIGINAL: 0x00627E20 FILE
-// RULED-OUT: this is a plain 3x3 row-major matrix multiply, out = a * b
-//            (verified term-by-term against the FPU trace). Every term
-//            ordering tried (Ghidra's, the natural k=0,1,2 loop order, and
-//            several explicit parenthesisations) makes VC6 fold the
-//            three-product sum to a flat fld/fmul/faddp x2/fstp sequence
-//            with no `fxch`, while the original holds all three products on
-//            the FPU stack at once (needs 2 `fxch` per component). Whatever
-//            source shape produces that (a real 3-deep dot-product helper?)
-//            was not found; landed at MISMATCH #4 with correct values.
-// name      sub_627e20
+// ORIGINAL: 0x00627E20 sub_627e20 0x00627E20-0x00627F4F FILE
+// RULED-OUT: this is a plain 3x3 row-major matrix multiply, out = a * b (verified term-by-term against the FPU trace). Every term ordering tried (Ghidra's, the natural k=0,1,2 loop order, and several explicit parenthesisations) makes VC6 fold the three-product sum to a flat fld/fmul/faddp x2/fstp sequence with no `fxch`, while the original holds all three products on the FPU stack at once (needs 2 `fxch` per component). Whatever source shape produces that (a real 3-deep dot-product helper?) was not found; landed at MISMATCH #4 with correct values.
 // size      303 bytes
-// spans     0x00627E20-0x00627F4F
 // prototype
 // callers   5   call targets   0
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00493EA0 FILE
-// name      ?on_right_click@ProdPicker@@QAEXHH@Z
+// ORIGINAL: 0x00493EA0 ?on_right_click@ProdPicker@@QAEXHH@Z 0x00493EA0-0x0049419F;0x00658C09-0x00658C1E FILE
 // size      788 bytes
-// spans     0x00493EA0-0x0049419F;0x00658C09-0x00658C1E
 // prototype void (__thiscall ?on_right_click@ProdPicker@@QAEXHH@Z)(ProdPicker* this, int, int)
 // callers   0   call targets   11
 // kind      game

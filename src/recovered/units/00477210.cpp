@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00477210 BYTE_EXACT FILE
-// name      ?mon_enemy_destroyed@@YAXHH@Z
+// ORIGINAL: 0x00477210 ?mon_enemy_destroyed@@YAXHH@Z 0x00477210-0x00477320 FILE BYTE_EXACT
 // size      272 bytes
-// spans     0x00477210-0x00477320
 // prototype 
 // callers   1   call targets   2
 // kind      game

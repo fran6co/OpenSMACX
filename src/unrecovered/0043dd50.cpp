@@ -1,13 +1,7 @@
-// ORIGINAL: 0x0043DD50 FILE
-// RULED-OUT: register-level transliteration (RD/RDb/RDs macros, eax/ebx/ecx/edx/esi
-//            locals) with two real Font locals for RAII ctor/dtor order, matching
-//            the cache-hit check, box_sprite/set_clip/veh_fake/veh_draw/name_proto/
-//            wrap_cent/say_stats_3/Strings::get call sequence; MISMATCH #9 (early
-//            prologue/frame) not chased further.
+// ORIGINAL: 0x0043DD50 ?draw_flash@DesignWin@@QAEXXZ 0x0043DD50-0x0043E486;0x006546EC-0x00654709 FILE
+// RULED-OUT: register-level transliteration (RD/RDb/RDs macros, eax/ebx/ecx/edx/esi locals) with two real Font locals for RAII ctor/dtor order, matching the cache-hit check, box_sprite/set_clip/veh_fake/veh_draw/name_proto/ wrap_cent/say_stats_3/Strings::get call sequence; MISMATCH #9 (early prologue/frame) not chased further.
 // working copy - scaffold materialised by --work
-// name      ?draw_flash@DesignWin@@QAEXXZ
 // size      1875 bytes
-// spans     0x0043DD50-0x0043E486;0x006546EC-0x00654709
 // prototype void (__thiscall ?draw_flash@DesignWin@@QAEXXZ)(DesignWin* this)
 // callers   8   call targets   20
 // kind      game

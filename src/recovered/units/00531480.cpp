@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00531480 FILE
-// name      ?await_synch@NetDaemon@@QAEXXZ
+// ORIGINAL: 0x00531480 ?await_synch@NetDaemon@@QAEXXZ 0x00531480-0x005315B6 FILE
 // size      310 bytes
-// spans     0x00531480-0x005315B6
 // prototype void (__thiscall ?await_synch@NetDaemon@@QAEXXZ)(NetDaemon* this)
 // callers   22   call targets   8
 // kind      game

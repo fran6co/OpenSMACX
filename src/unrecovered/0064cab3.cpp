@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064CAB3 EXCLUDED S1
-// name      __fcloseall
+// ORIGINAL: 0x0064CAB3 __fcloseall 0x0064CAB3-0x0064CB34 EXCLUDED S1
 // size      129 bytes
-// spans     0x0064CAB3-0x0064CB34
 // prototype 
 // callers   0   call targets   4
 // kind      library

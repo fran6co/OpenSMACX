@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0041A160 FILE
-// name      ?next@BaseWin@@QAEXXZ
+// ORIGINAL: 0x0041A160 ?next@BaseWin@@QAEXXZ 0x0041A160-0x0041A2AD FILE
 // size      333 bytes
-// spans     0x0041A160-0x0041A2AD
 // prototype void (__thiscall ?next@BaseWin@@QAEXXZ)(BaseWin* this)
 // callers   2   call targets   4
 // kind      game

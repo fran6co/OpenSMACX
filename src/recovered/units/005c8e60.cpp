@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005C8E60 FILE
-// name      ?exec@Gamma@@QAEXPAUPalette@@MH@Z
+// ORIGINAL: 0x005C8E60 ?exec@Gamma@@QAEXPAUPalette@@MH@Z 0x005C8E60-0x005C9325 FILE
 // size      1221 bytes
-// spans     0x005C8E60-0x005C9325
 // prototype void (__thiscall ?exec@Gamma@@QAEXPAUPalette@@MH@Z)(Gamma* this, Palette*, float, int)
 // callers   2   call targets   24
 // kind      game

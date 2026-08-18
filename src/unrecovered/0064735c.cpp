@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064735C EXCLUDED S1
-// name      __fseek_lk
+// ORIGINAL: 0x0064735C __fseek_lk 0x0064735C-0x006473E9 EXCLUDED S1
 // size      141 bytes
-// spans     0x0064735C-0x006473E9
 // prototype 
 // callers   1   call targets   4
 // kind      library

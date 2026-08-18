@@ -1,15 +1,7 @@
-// ORIGINAL: 0x0045DEA0 FILE
-// RULED-OUT: full transcription of scroll_show (twin of the landed scroll_hide
-//   at 0x0045E540), using automatic Buffer ctor/dtor for the 3 local RAII
-//   objects (relying on the compiler's own SEH frame for unwind, not manual
-//   tracking), plain-register-name locals for the straight-line arithmetic,
-//   and ORIGINAL()/original_slot() for the two indirect vtable calls (slots
-//   1 and 3). Compiles and matches through instr #9 (push vs lea) - not
-//   chased further, large SEH-heavy function, landed for coverage.
+// ORIGINAL: 0x0045DEA0 ?scroll_show@@YAXPAUGraphicWin@@PAUScroll@@@Z 0x0045DEA0-0x0045E535;0x006557A2-0x006557CD FILE
+// RULED-OUT: full transcription of scroll_show (twin of the landed scroll_hide at 0x0045E540), using automatic Buffer ctor/dtor for the 3 local RAII objects (relying on the compiler's own SEH frame for unwind, not manual tracking), plain-register-name locals for the straight-line arithmetic, and ORIGINAL()/original_slot() for the two indirect vtable calls (slots 1 and 3). Compiles and matches through instr #9 (push vs lea) - not chased further, large SEH-heavy function, landed for coverage.
 // working copy - scaffold materialised by --work
-// name      ?scroll_show@@YAXPAUGraphicWin@@PAUScroll@@@Z
 // size      1728 bytes
-// spans     0x0045DEA0-0x0045E535;0x006557A2-0x006557CD
 // prototype 
 // callers   8   call targets   17
 // kind      game

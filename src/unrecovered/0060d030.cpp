@@ -1,17 +1,7 @@
-// ORIGINAL: 0x0060D030 FILE
-// RULED-OUT: full reproduction as a single function - the scaffold's
-//            "spans" field folds this vtordisp thunk together with the
-//            shared ListBox scalar-deleting-destructor body at 0x60CE50,
-//            which is compiler-synthesised for multiple/virtual
-//            inheritance and not directly expressible from source without
-//            the full outer class hierarchy. Landed the 10-byte thunk
-//            (adjust `this` by *(this-4) and a fixed 0xA18, forward to the
-//            shared body) as a plain call, not a tail-jmp; scored
-//            SHARED_TAIL (COMDAT-folded span, no per-function verdict).
+// ORIGINAL: 0x0060D030 sub_60d030 0x0060D030-0x0060D03E;0x0060CE50-0x0060CECF FILE
+// RULED-OUT: full reproduction as a single function - the scaffold's "spans" field folds this vtordisp thunk together with the shared ListBox scalar-deleting-destructor body at 0x60CE50, which is compiler-synthesised for multiple/virtual inheritance and not directly expressible from source without the full outer class hierarchy. Landed the 10-byte thunk (adjust `this` by *(this-4) and a fixed 0xA18, forward to the shared body) as a plain call, not a tail-jmp; scored SHARED_TAIL (COMDAT-folded span, no per-function verdict).
 // working copy - scaffold materialised by --work
-// name      sub_60d030
 // size      141 bytes
-// spans     0x0060D030-0x0060D03E;0x0060CE50-0x0060CECF
 // prototype 
 // callers   0   call targets   4
 // kind      game

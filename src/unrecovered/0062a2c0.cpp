@@ -1,12 +1,7 @@
-// ORIGINAL: 0x0062A2C0 FILE
-// RULED-OUT: function is naturally frameless (no push ebp) in the original,
-//            best flags omit /Oy-; sim 0.846, first divergence is prologue
-//            instruction order (mov a1 before sub esp vs after) not chased
-//            further; not byte-exact.
+// ORIGINAL: 0x0062A2C0 ?UNK3@Flic@@QAEHH@Z 0x0062A2C0-0x0062A4FA FILE
+// RULED-OUT: function is naturally frameless (no push ebp) in the original, best flags omit /Oy-; sim 0.846, first divergence is prologue instruction order (mov a1 before sub esp vs after) not chased further; not byte-exact.
 // working copy - scaffold materialised by --work
-// name      ?UNK3@Flic@@QAEHH@Z
 // size      570 bytes
-// spans     0x0062A2C0-0x0062A4FA
 // prototype int (__thiscall ?UNK3@Flic@@QAEHH@Z)(Flic* this, int)
 // callers   0   call targets   5
 // kind      game

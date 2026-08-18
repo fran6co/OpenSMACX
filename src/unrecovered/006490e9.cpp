@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006490E9 EXCLUDED S1
-// name      ?AdjustPointer@@YAPAXPAXABUPMD@@@Z
+// ORIGINAL: 0x006490E9 ?AdjustPointer@@YAPAXPAXABUPMD@@@Z 0x006490E9-0x0064910C EXCLUDED S1
 // size      35 bytes
-// spans     0x006490E9-0x0064910C
 // prototype 
 // callers   1   call targets   0
 // kind      library

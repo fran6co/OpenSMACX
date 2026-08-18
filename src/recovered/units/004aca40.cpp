@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004ACA40 FILE
-// name      ?report_ops@@YAXXZ
+// ORIGINAL: 0x004ACA40 ?report_ops@@YAXXZ 0x004ACA40-0x004ACA8C FILE
 // size      76 bytes
-// spans     0x004ACA40-0x004ACA8C
 // prototype 
 // callers   2   call targets   1
 // kind      game

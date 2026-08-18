@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004ABE30 BYTE_EXACT
-// name      ?close_security@ReportIf@@QAEXXZ
+// ORIGINAL: 0x004ABE30 ?close_security@ReportIf@@QAEXXZ 0x004ABE30-0x004ABE62 BYTE_EXACT
 // size      50 bytes
-// spans     0x004ABE30-0x004ABE62
 // prototype void (__thiscall ?close_security@ReportIf@@QAEXXZ)(ReportIf* this)
 // callers   0   call targets   0
 // kind      game

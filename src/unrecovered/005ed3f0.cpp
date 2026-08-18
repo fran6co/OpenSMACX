@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005ED3F0 BYTE_EXACT FILE
+// ORIGINAL: 0x005ED3F0 ?nonclient_to_screen@Win@@QAEXPAH0@Z 0x005ED3F0-0x005ED48D FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?nonclient_to_screen@Win@@QAEXPAH0@Z
 // size      157 bytes
-// spans     0x005ED3F0-0x005ED48D
 // prototype void (__thiscall ?nonclient_to_screen@Win@@QAEXPAH0@Z)(Win* this, int*, int*)
 // callers   1   call targets   1
 // kind      game

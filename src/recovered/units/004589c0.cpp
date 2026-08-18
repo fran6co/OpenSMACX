@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004589C0 FILE
-// name      ?right_menu@InfoWin@@QAEXHH@Z
+// ORIGINAL: 0x004589C0 ?right_menu@InfoWin@@QAEXHH@Z 0x004589C0-0x00458D3A;0x00655280-0x00655295 FILE
 // size      911 bytes
-// spans     0x004589C0-0x00458D3A;0x00655280-0x00655295
 // prototype void (__thiscall ?right_menu@InfoWin@@QAEXHH@Z)(InfoWin* this, int, int)
 // callers   1   call targets   14
 // kind      game

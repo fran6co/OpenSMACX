@@ -1,18 +1,7 @@
-// ORIGINAL: 0x004D7F60 FILE
-// RULED-OUT: `Popup popup;` RAII (same class this catalog's introduce()
-//            at 0x0053D360 established: BasePop(0x3230)+Scroll scroll_,
-//            dialogs_ blob at +0x21D0) reproduces the prologue and the
-//            per-branch close()+return teardown the compiler generates
-//            automatically; matches 21 instructions. The deep branch
-//            after the bit_count()>=2 dialog picker (engineer-terraform
-//            vs. drop-range-cursor path) is a best-effort shape, not
-//            verified instruction-by-instruction against the disasm -
-//            next pass should re-derive LAB_004d875a/LAB_004d8969
-//            precisely before trusting it beyond MISMATCH.
+// ORIGINAL: 0x004D7F60 ?use_ability@Console@@QAEXH@Z 0x004D7F60-0x004D8A62;0x0065AFD2-0x0065B275 FILE
+// RULED-OUT: `Popup popup;` RAII (same class this catalog's introduce() at 0x0053D360 established: BasePop(0x3230)+Scroll scroll_, dialogs_ blob at +0x21D0) reproduces the prologue and the per-branch close()+return teardown the compiler generates automatically; matches 21 instructions. The deep branch after the bit_count()>=2 dialog picker (engineer-terraform vs. drop-range-cursor path) is a best-effort shape, not verified instruction-by-instruction against the disasm - next pass should re-derive LAB_004d875a/LAB_004d8969 precisely before trusting it beyond MISMATCH.
 // working copy - scaffold materialised by --work
-// name      ?use_ability@Console@@QAEXH@Z
 // size      3493 bytes
-// spans     0x004D7F60-0x004D8A62;0x0065AFD2-0x0065B275
 // prototype void (__thiscall ?use_ability@Console@@QAEXH@Z)(Console* this, int vehID)
 // callers   2   call targets   30
 // kind      game

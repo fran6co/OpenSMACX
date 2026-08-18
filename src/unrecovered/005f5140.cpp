@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005F5140 FILE
+// ORIGINAL: 0x005F5140 ?bring_parent_to_top@Win@@QAAXPAVWin@@@Z 0x005F5140-0x005F51F7 FILE
 // working copy - scaffold materialised by --work
-// name      ?bring_parent_to_top@Win@@QAAXPAVWin@@@Z
 // size      183 bytes
-// spans     0x005F5140-0x005F51F7
 // prototype 
 // callers   2   call targets   1
 // kind      game

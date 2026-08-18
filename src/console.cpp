@@ -34,10 +34,8 @@ func_get_key_state **ConsoleEditKeyStateSlot =
 
 /*
 Purpose: Open the shared preferences window to the preferences page.
-ORIGINAL: 0x00514EF0
-// name      ?set_preferences@Console@@QAEXXZ
+// ORIGINAL: 0x00514EF0 ?set_preferences@Console@@QAEXXZ 0x00514EF0-0x00514EFD
 // size      13 bytes
-// spans     0x00514EF0-0x00514EFD
 // prototype void (__thiscall ?set_preferences@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   1
 // kind      game
@@ -52,10 +50,8 @@ void Console::set_preferences() {
 
 /*
 Purpose: Open the shared preferences window to the automation page.
-ORIGINAL: 0x00514F10
-// name      ?set_auto_preferences@Console@@QAEXXZ
+// ORIGINAL: 0x00514F10 ?set_auto_preferences@Console@@QAEXXZ 0x00514F10-0x00514F1D
 // size      13 bytes
-// spans     0x00514F10-0x00514F1D
 // prototype void (__thiscall ?set_auto_preferences@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   1
 // kind      game
@@ -70,10 +66,8 @@ void Console::set_auto_preferences() {
 
 /*
 Purpose: Open the shared preferences window to the base page.
-ORIGINAL: 0x00514F20
-// name      ?set_base_preferences@Console@@QAEXXZ
+// ORIGINAL: 0x00514F20 ?set_base_preferences@Console@@QAEXXZ 0x00514F20-0x00514F2D
 // size      13 bytes
-// spans     0x00514F20-0x00514F2D
 // prototype void (__thiscall ?set_base_preferences@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   1
 // kind      game
@@ -88,10 +82,8 @@ void Console::set_base_preferences() {
 
 /*
 Purpose: Open the shared preferences window to the audiovisual page.
-ORIGINAL: 0x00514F30
-// name      ?set_audiovisual@Console@@QAEXXZ
+// ORIGINAL: 0x00514F30 ?set_audiovisual@Console@@QAEXXZ 0x00514F30-0x00514F3D
 // size      13 bytes
-// spans     0x00514F30-0x00514F3D
 // prototype void (__thiscall ?set_audiovisual@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   1
 // kind      game
@@ -106,10 +98,8 @@ void Console::set_audiovisual() {
 
 /*
 Purpose: Open the shared preferences window to the map-display page.
-ORIGINAL: 0x00514F40
-// name      ?set_map_display@Console@@QAEXXZ
+// ORIGINAL: 0x00514F40 ?set_map_display@Console@@QAEXXZ 0x00514F40-0x00514F4D
 // size      13 bytes
-// spans     0x00514F40-0x00514F4D
 // prototype void (__thiscall ?set_map_display@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   1
 // kind      game
@@ -148,10 +138,8 @@ uint8_t *ConsoleGroupTable = reinterpret_cast<uint8_t *>(0x0095282C);
 /*
 Purpose: Clear the console's active-group field and drop the highlight bit
          (0x08000000) from every entry of the group table, at its 0x34 stride.
-ORIGINAL: 0x0050F650
-// name      ?clear_group@Console@@QAEXXZ
+// ORIGINAL: 0x0050F650 ?clear_group@Console@@QAEXXZ 0x0050F650-0x0050F67B
 // size      43 bytes
-// spans     0x0050F650-0x0050F67B
 // prototype void (__thiscall ?clear_group@Console@@QAEXXZ)(Console* this)
 // callers   1   call targets   0
 // kind      game
@@ -185,10 +173,8 @@ void __fastcall console_clear_group_redirect(Console *self, void *) {
 Purpose: Report whether editing is locked out. Only meaningful in the scenario
          editor; there editing is locked whenever Scroll Lock is toggled on or
          the game is in editor-only mode.
-ORIGINAL: 0x004E1F40
-// name      ?edit_lock@Console@@QAEHXZ
+// ORIGINAL: 0x004E1F40 ?edit_lock@Console@@QAEHXZ 0x004E1F40-0x004E1F70
 // size      48 bytes
-// spans     0x004E1F40-0x004E1F70
 // prototype int (__thiscall ?edit_lock@Console@@QAEHXZ)(Console* this)
 // callers   8   call targets   0
 // kind      game
@@ -215,10 +201,8 @@ int __fastcall console_edit_lock_redirect(Console *self, void *) {
 
 /*
 Purpose: Open the shared preferences window to the advanced page.
-ORIGINAL: 0x00514F00
-// name      ?set_adv_preferences@Console@@QAEXXZ
+// ORIGINAL: 0x00514F00 ?set_adv_preferences@Console@@QAEXXZ 0x00514F00-0x00514F0D
 // size      13 bytes
-// spans     0x00514F00-0x00514F0D
 // prototype void (__thiscall ?set_adv_preferences@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   1
 // kind      game
@@ -234,10 +218,8 @@ void Console::set_adv_preferences() {
 /*
 Purpose: Undo the last scenario-editor change, by asking load_undo for the
          editor's undo slot.
-ORIGINAL: 0x004E1F20 BYTE_EXACT
-// name      ?editor_undo@Console@@QAEXXZ
+// ORIGINAL: 0x004E1F20 ?editor_undo@Console@@QAEXXZ 0x004E1F20-0x004E1F29 BYTE_EXACT
 // size      9 bytes
-// spans     0x004E1F20-0x004E1F29
 // prototype void (__thiscall ?editor_undo@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   1
 // kind      game
@@ -268,10 +250,8 @@ void **ConsoleMapWinSlot = reinterpret_cast<void **>(0x007D3C3C);
 Purpose: Refresh everything the console shows after a selection or turn change:
          hand the change code to the shared InfoWin, redraw the shared
          StatusWin, then push the map's caption into the main interface.
-ORIGINAL: 0x00514880
-// name      ?update_data@Console@@QAEXH@Z
+// ORIGINAL: 0x00514880 ?update_data@Console@@QAEXH@Z 0x00514880-0x005148AA
 // size      42 bytes
-// spans     0x00514880-0x005148AA
 // prototype void (__thiscall ?update_data@Console@@QAEXH@Z)(Console* this, int)
 // callers   33   call targets   3
 // kind      game
@@ -332,10 +312,8 @@ Purpose: Point the map windows at one tile on behalf of one faction. Build a
          selects. The primary window, slot 0, is handled quite differently from
          the rest, and only its success counts: when it moves, the queued input
          is flushed and 1 is returned.
-ORIGINAL: 0x005108A0
-// name      ?focus@Console@@QAEXHHH@Z
+// ORIGINAL: 0x005108A0 ?focus@Console@@QAEXHHH@Z 0x005108A0-0x005109A3
 // size      259 bytes
-// spans     0x005108A0-0x005109A3
 // prototype void (__thiscall ?focus@Console@@QAEXHHH@Z)(Console* this, int xCoord, int yCoord, int factionID)
 // callers   32   call targets   4
 // kind      game
@@ -495,10 +473,8 @@ int __fastcall console_focus_redirect(Console *self, void *, int x_coord,
 /*
 Purpose: Record that the console was closed from the system menu, by raising
          the flag the turn loop watches.
-ORIGINAL: 0x0051D7C0
-// name      ?on_sys_close@Console@@QAEXXZ
+// ORIGINAL: 0x0051D7C0 ?on_sys_close@Console@@QAEXXZ 0x0051D7C0-0x0051D7CB
 // size      11 bytes
-// spans     0x0051D7C0-0x0051D7CB
 // prototype void (__thiscall ?on_sys_close@Console@@QAEXXZ)(Console* this)
 // callers   0   call targets   0
 // kind      game
@@ -512,10 +488,8 @@ void Console::on_sys_close() {
 }
 
 /*
-ORIGINAL: 0x004E0FA0 BYTE_EXACT
-// name      ?editor_climate@Console@@QAEXXZ
+// ORIGINAL: 0x004E0FA0 ?editor_climate@Console@@QAEXXZ 0x004E0FA0-0x004E0FC3 BYTE_EXACT
 // size      35 bytes
-// spans     0x004E0FA0-0x004E0FC3
 // prototype void (__thiscall ?editor_climate@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   4
 // kind      game
@@ -532,10 +506,8 @@ void Console::editor_climate() {
 }
 
 /*
-ORIGINAL: 0x004E1F30 BYTE_EXACT
-// name      ?editor_redo@Console@@QAEXXZ
+// ORIGINAL: 0x004E1F30 ?editor_redo@Console@@QAEXXZ 0x004E1F30-0x004E1F39 BYTE_EXACT
 // size      9 bytes
-// spans     0x004E1F30-0x004E1F39
 // prototype void (__thiscall ?editor_redo@Console@@QAEXXZ)(Console* this)
 // callers   1   call targets   1
 // kind      game
@@ -548,10 +520,8 @@ void Console::editor_redo() {
 }
 
 /*
-ORIGINAL: 0x0051D740
-// name      ?menu_update@Console@@QAEXXZ
+// ORIGINAL: 0x0051D740 ?menu_update@Console@@QAEXXZ 0x0051D740-0x0051D753
 // size      19 bytes
-// spans     0x0051D740-0x0051D753
 // prototype void (__thiscall ?menu_update@Console@@QAEXXZ)(Console* this)
 // callers   0   call targets   1
 // kind      game
@@ -566,10 +536,8 @@ void Console::menu_update() {
 }
 
 /*
-ORIGINAL: 0x004E0F80 BYTE_EXACT
-// name      ?editor_polar@Console@@QAEXXZ
+// ORIGINAL: 0x004E0F80 ?editor_polar@Console@@QAEXXZ 0x004E0F80-0x004E0F98 BYTE_EXACT
 // size      24 bytes
-// spans     0x004E0F80-0x004E0F98
 // prototype void (__thiscall ?editor_polar@Console@@QAEXXZ)(Console* this)
 // callers   1   call targets   4
 // kind      game

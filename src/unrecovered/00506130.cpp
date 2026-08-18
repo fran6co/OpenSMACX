@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00506130 BYTE_EXACT FILE
+// ORIGINAL: 0x00506130 ?battle_kill_stack@@YAXHPAHPAHPAHHH@Z 0x00506130-0x005061AE FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?battle_kill_stack@@YAXHPAHPAHPAHHH@Z
 // size      126 bytes
-// spans     0x00506130-0x005061AE
 // prototype void (__cdecl ?battle_kill_stack@@YAXHPAHPAHPAHHH@Z)(int vehID1, int*, int*, int*, int vehID2, int)
 // callers   1   call targets   1
 // kind      game

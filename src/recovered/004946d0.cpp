@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004946D0 BYTE_EXACT
-// name      ?UNK2@ProdPicker@@QAAXHPAUProdPicker@@@Z
+// ORIGINAL: 0x004946D0 ?UNK2@ProdPicker@@QAAXHPAUProdPicker@@@Z 0x004946D0-0x004946F7 BYTE_EXACT
 // size      39 bytes
-// spans     0x004946D0-0x004946F7
 // prototype 
 // callers   0   call targets   1
 // kind      game

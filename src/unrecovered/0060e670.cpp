@@ -1,15 +1,7 @@
-// ORIGINAL: 0x0060E670 FILE
-// RULED-OUT: no `__try`/SEH-frame modelling attempted - the constructor
-//            installs a real fs:[0] frame (push -1; push handler; ...)
-//            that a plain body cannot reproduce, plus a multi-inheritance
-//            adjustor-thunk vtable poke computed from *(vtbl+4)/*(vtbl+8).
-//            Landed body uses placement-new for the GraphicWin/Dialog
-//            subobjects and transcribes the thunk stores from Ghidra;
-//            0.71 mnemonic similarity, first divergence in the prologue.
+// ORIGINAL: 0x0060E670 ??0CheckBox@@QAE@H@Z 0x0060E670-0x0060E735;0x00662F60-0x00662F84 FILE
+// RULED-OUT: no `__try`/SEH-frame modelling attempted - the constructor installs a real fs:[0] frame (push -1; push handler; ...) that a plain body cannot reproduce, plus a multi-inheritance adjustor-thunk vtable poke computed from *(vtbl+4)/*(vtbl+8). Landed body uses placement-new for the GraphicWin/Dialog subobjects and transcribes the thunk stores from Ghidra; 0.71 mnemonic similarity, first divergence in the prologue.
 // working copy - scaffold materialised by --work
-// name      ??0CheckBox@@QAE@H@Z
 // size      233 bytes
-// spans     0x0060E670-0x0060E735;0x00662F60-0x00662F84
 // prototype void (__thiscall ??0CheckBox@@QAE@H@Z)(CheckBox* this, int)
 // callers   4   call targets   2
 // kind      game

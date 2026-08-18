@@ -1,11 +1,7 @@
-// ORIGINAL: 0x00479330 FILE
-// RULED-OUT: raw self+offset field reads (MultiWin left opaque) with reinterpret_cast to
-//            Spot/GraphicWin/Buffer sub-objects at their disassembly-derived offsets;
-//            diverges at insn #11
+// ORIGINAL: 0x00479330 ?draw@MultiWin@@QAEXH@Z 0x00479330-0x004798EC FILE
+// RULED-OUT: raw self+offset field reads (MultiWin left opaque) with reinterpret_cast to Spot/GraphicWin/Buffer sub-objects at their disassembly-derived offsets; diverges at insn #11
 // working copy - scaffold materialised by --work
-// name      ?draw@MultiWin@@QAEXH@Z
 // size      1468 bytes
-// spans     0x00479330-0x004798EC
 // prototype void (__thiscall ?draw@MultiWin@@QAEXH@Z)(MultiWin* this, int)
 // callers   12   call targets   20
 // kind      game

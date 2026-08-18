@@ -1,16 +1,7 @@
-// ORIGINAL: 0x005CC860 FILE
-// RULED-OUT: __stdcall(int,int,int) per IDA's guess - entry reads ecx/edx
-//            directly with no matching stack slot, so this is __fastcall
-//            with param_1/param_2 in ecx/edx. The three vtable-style calls
-//            push their receiver as an explicit stack arg rather than
-//            loading it into ecx, so they are plain function-pointer calls
-//            through *(vtable+off), not C++ virtual dispatch; exact stack
-//            slot reuse for the WSA-shaped struct (0x6c/0x1007/0x80/0x20/4)
-//            not nailed down byte-for-byte.
+// ORIGINAL: 0x005CC860 sub_5cc860 0x005CC860-0x005CC935 FILE
+// RULED-OUT: __stdcall(int,int,int) per IDA's guess - entry reads ecx/edx directly with no matching stack slot, so this is __fastcall with param_1/param_2 in ecx/edx. The three vtable-style calls push their receiver as an explicit stack arg rather than loading it into ecx, so they are plain function-pointer calls through *(vtable+off), not C++ virtual dispatch; exact stack slot reuse for the WSA-shaped struct (0x6c/0x1007/0x80/0x20/4) not nailed down byte-for-byte.
 // working copy - scaffold materialised by --work
-// name      sub_5cc860
 // size      213 bytes
-// spans     0x005CC860-0x005CC935
 // prototype 
 // callers   1   call targets   0
 // kind      game

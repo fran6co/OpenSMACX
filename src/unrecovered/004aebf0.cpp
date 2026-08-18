@@ -1,20 +1,7 @@
-// ORIGINAL: 0x004AEBF0 FILE
-// RULED-OUT: a plain `do { *dst = dst[-11]; ++dst; } while(--count);` loop
-//   copying the 11-int `Sprite` (`socEffect_` at 0xd08 into `socEffectOrig_`
-//   at 0xd34 - sizes and adjacency match) compiles to `rep movsd`, not the
-//   original's dec/jne loop; a `volatile int *dst` blocks the recognition
-//   but spills `dst` to a stack slot every iteration (96.6%). Making only
-//   the LOOP COUNTER `volatile int count` (not the pointer) blocks the same
-//   recognition while keeping `dst` in a register, landing at 98.6% - the
-//   one remaining diff is `count` round-tripping through a stack slot each
-//   iteration (`mov;dec;mov`) where the original keeps it in ecx throughout.
-//   The `push 0` for social_calc's trailing `0,0` args gets scheduled by
-//   the compiler ahead of the two unrelated field stores on its own,
-//   matching the original's interleaving without deliberate reordering.
+// ORIGINAL: 0x004AEBF0 ?UNK1@SocialWin@@QAEXHH@Z 0x004AEBF0-0x004AECD2 FILE
+// RULED-OUT: a plain `do { *dst = dst[-11]; ++dst; } while(--count);` loop copying the 11-int `Sprite` (`socEffect_` at 0xd08 into `socEffectOrig_` at 0xd34 - sizes and adjacency match) compiles to `rep movsd`, not the original's dec/jne loop; a `volatile int *dst` blocks the recognition but spills `dst` to a stack slot every iteration (96.6%). Making only the LOOP COUNTER `volatile int count` (not the pointer) blocks the same recognition while keeping `dst` in a register, landing at 98.6% - the one remaining diff is `count` round-tripping through a stack slot each iteration (`mov;dec;mov`) where the original keeps it in ecx throughout. The `push 0` for social_calc's trailing `0,0` args gets scheduled by the compiler ahead of the two unrelated field stores on its own, matching the original's interleaving without deliberate reordering.
 // working copy - scaffold materialised by --work
-// name      ?UNK1@SocialWin@@QAEXHH@Z
 // size      226 bytes
-// spans     0x004AEBF0-0x004AECD2
 // prototype void (__thiscall ?UNK1@SocialWin@@QAEXHH@Z)(SocialWin* this, int, int)
 // callers   2   call targets   3
 // kind      game

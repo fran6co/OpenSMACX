@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005396D0 BYTE_EXACT FILE
-// name      ?net_withdrawal@@YAXHHH@Z
+// ORIGINAL: 0x005396D0 ?net_withdrawal@@YAXHHH@Z 0x005396D0-0x00539738 FILE BYTE_EXACT
 // size      104 bytes
-// spans     0x005396D0-0x00539738
 // prototype 
 // callers   0   call targets   4
 // kind      game

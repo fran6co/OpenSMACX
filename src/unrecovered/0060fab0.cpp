@@ -1,16 +1,7 @@
-// ORIGINAL: 0x0060FAB0 FILE
-// RULED-OUT: reusing one `char *b = self - 0x1c` for both the vtable-slot
-//            lookup and the null-check-then-adjust pattern collapses two
-//            distinct registers (edi and ebp in the original, which hold the
-//            same VALUE but are never merged) into one - the original keeps
-//            a separate register alive purely for the "cast-to-virtual-base"
-//            null check, this candidate CSEs it away. 69/84 mnemonics match,
-//            no stack spill (ternary over if/else avoided the local-int
-//            spill an earlier if/else form produced).
+// ORIGINAL: 0x0060FAB0 ?on_redraw@CheckBox@@QAEXXZ 0x0060FAB0-0x0060FB8D FILE
+// RULED-OUT: reusing one `char *b = self - 0x1c` for both the vtable-slot lookup and the null-check-then-adjust pattern collapses two distinct registers (edi and ebp in the original, which hold the same VALUE but are never merged) into one - the original keeps a separate register alive purely for the "cast-to-virtual-base" null check, this candidate CSEs it away. 69/84 mnemonics match, no stack spill (ternary over if/else avoided the local-int spill an earlier if/else form produced).
 // working copy - scaffold materialised by --work
-// name      ?on_redraw@CheckBox@@QAEXXZ
 // size      221 bytes
-// spans     0x0060FAB0-0x0060FB8D
 // prototype void (__thiscall ?on_redraw@CheckBox@@QAEXXZ)(CheckBox* this)
 // callers   0   call targets   2
 // kind      game

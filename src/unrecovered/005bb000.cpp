@@ -1,39 +1,5 @@
-// ORIGINAL: 0x005BB000 FILE
-// DEFERRED: two independent, evidenced blockers, not "too big":
-//  (1) The `Dialogs` branch this function needs IS the blocked inheritance
-//      spelling, not the simple stack-local one. At 0x005BC60C-0x005BC687
-//      the code reads a vbtable pointer at [ebp-0x3230] (offset 0), fetches
-//      a DISPLACEMENT from *(vtbl+4), and writes vtable-pointer constants
-//      (0x669be8, 0x669be0, 0x669bd4) to [ebp+displacement-0x3230] before
-//      calling ?close@Dialogs@@QAEXXZ - a hand-inlined Dialogs() ctor doing
-//      real virtual-base placement, which the flattened `Dialogs` class in
-//      this file (a direct member, not `: ListBox`) cannot reproduce.
-//      Frame layout for this region is independently confirmed by TWO
-//      arithmetic paths agreeing: BasePop's own field list read from THIS
-//      file (heap_ at 0xA24, flat_button1_ at 0xA5C, flat_button2_ at
-//      0x15A8, dialogs_[0xC94] at 0x21D0) and the destructor addresses
-//      pulled from disasm (?close@Dialogs@@ recv=[ebp-0x3230],
-//      ??1ListBox@@ recv=[ebp-0x31E8], ??1Dialog@@ recv=[ebp-0x2690],
-//      ??1GraphicWin@@ recv=[ebp-0x30A8]) land at offsets 0x2170/0x2218/
-//      0x2D70/0x2358 respectively - 0x2218 and 0x2358 are exactly
-//      sizeof(vbtable_pointer_+ListBox's own fields)=0x48 and
-//      dialogs_start+virtual_base_'s own offset 0x188 into a Dialogs-shaped
-//      region, i.e. this really is `Dialogs : public ListBox` sharing a
-//      GraphicWin virtual base, not two independent locals.
-//  (2) The rest of the body (~1000 Ghidra-decompiled lines outside that
-//      branch) is dense PlayersData/tech-table bit arithmetic, e.g.
-//      `local_24[0x25b36b]` where local_24=a1*0x20cc - i.e.
-//      *(int*)(a1*0x20cc + 0x25b36b*4). That resolved address (0x96CDAC)
-//      matches this file's own extracted g_0096cdac constant, confirming
-//      the TECHNIQUE (Ghidra pointer-index * declared-element-size = a real
-//      relocation already in this file's globals list) is sound - but
-//      applying it by hand to the ~90 remaining DAT_/indexed expressions is
-//      exactly the class of error the technique is meant to catch: a first
-//      hand pass already produced one wrong offset (puVar14[0x4d5c4c] as a
-//      ushort* is *4d5c4c*2=0x9AB898, not the 0x131318 first written) before
-//      being caught by cross-checking against the g_ list. Landing ~90 more
-//      such conversions unverified risks "compiles but computes something
-//      else" more than it risks NO_COMPILE.
+// ORIGINAL: 0x005BB000 ?tech_achieved@@YAXHHHH@Z 0x005BB000-0x005BCB55;0x00662710-0x00662A1E FILE
+// DEFERRED: two independent, evidenced blockers, not "too big": (1) The `Dialogs` branch this function needs IS the blocked inheritance spelling, not the simple stack-local one. At 0x005BC60C-0x005BC687 the code reads a vbtable pointer at [ebp-0x3230] (offset 0), fetches a DISPLACEMENT from *(vtbl+4), and writes vtable-pointer constants (0x669be8, 0x669be0, 0x669bd4) to [ebp+displacement-0x3230] before calling ?close@Dialogs@@QAEXXZ - a hand-inlined Dialogs() ctor doing real virtual-base placement, which the flattened `Dialogs` class in this file (a direct member, not `: ListBox`) cannot reproduce. Frame layout for this region is independently confirmed by TWO arithmetic paths agreeing: BasePop's own field list read from THIS file (heap_ at 0xA24, flat_button1_ at 0xA5C, flat_button2_ at 0x15A8, dialogs_[0xC94] at 0x21D0) and the destructor addresses pulled from disasm (?close@Dialogs@@ recv=[ebp-0x3230], ??1ListBox@@ recv=[ebp-0x31E8], ??1Dialog@@ recv=[ebp-0x2690], ??1GraphicWin@@ recv=[ebp-0x30A8]) land at offsets 0x2170/0x2218/ 0x2D70/0x2358 respectively - 0x2218 and 0x2358 are exactly sizeof(vbtable_pointer_+ListBox's own fields)=0x48 and dialogs_start+virtual_base_'s own offset 0x188 into a Dialogs-shaped region, i.e. this really is `Dialogs : public ListBox` sharing a GraphicWin virtual base, not two independent locals. (2) The rest of the body (~1000 Ghidra-decompiled lines outside that branch) is dense PlayersData/tech-table bit arithmetic, e.g. `local_24[0x25b36b]` where local_24=a1*0x20cc - i.e. *(int*)(a1*0x20cc + 0x25b36b*4). That resolved address (0x96CDAC) matches this file's own extracted g_0096cdac constant, confirming the TECHNIQUE (Ghidra pointer-index * declared-element-size = a real relocation already in this file's globals list) is sound - but applying it by hand to the ~90 remaining DAT_/indexed expressions is exactly the class of error the technique is meant to catch: a first hand pass already produced one wrong offset (puVar14[0x4d5c4c] as a ushort* is *4d5c4c*2=0x9AB898, not the 0x131318 first written) before being caught by cross-checking against the g_ list. Landing ~90 more such conversions unverified risks "compiles but computes something else" more than it risks NO_COMPILE.
 // UNBLOCKER: script-assisted conversion (parse Ghidra's own local
 //      declarations for pointee size, rewrite `ident[expr]` to
 //      `*(T*)((char*)base+(expr)*sizeof(T))` programmatically, then verify
@@ -41,9 +7,7 @@
 //      before use) rather than hand arithmetic, plus the direct-offset
 //      Dialogs approximation already worked out above for blocker (1).
 // working copy - scaffold materialised by --work
-// name      ?tech_achieved@@YAXHHHH@Z
 // size      7779 bytes
-// spans     0x005BB000-0x005BCB55;0x00662710-0x00662A1E
 // prototype void (__cdecl ?tech_achieved@@YAXHHHH@Z)(int factionID1, int techID, int factionID2, int)
 // callers   24   call targets   63
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004072D0 FILE
-// name      ?filebox_draw@AlphaSave@@QAAXPAUGraphicWin@@HHHHH@Z
+// ORIGINAL: 0x004072D0 ?filebox_draw@AlphaSave@@QAAXPAUGraphicWin@@HHHHH@Z 0x004072D0-0x00407348 FILE
 // size      120 bytes
-// spans     0x004072D0-0x00407348
 // prototype 
 // callers   0   call targets   2
 // kind      game

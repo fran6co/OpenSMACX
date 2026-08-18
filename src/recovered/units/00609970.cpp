@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00609970 BYTE_EXACT FILE
-// name      ?UNK1@Dialog@@QAEXHH@Z
+// ORIGINAL: 0x00609970 ?UNK1@Dialog@@QAEXHH@Z 0x00609970-0x0060998A FILE BYTE_EXACT
 // size      26 bytes
-// spans     0x00609970-0x0060998A
 // prototype void (__thiscall ?UNK1@Dialog@@QAEXHH@Z)(Dialog* this, int, int)
 // callers   0   call targets   0
 // kind      game

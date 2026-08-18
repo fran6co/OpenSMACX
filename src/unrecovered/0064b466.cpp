@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064B466 EXCLUDED S1
-// name      noerror
+// ORIGINAL: 0x0064B466 noerror 0x0064B466-0x0064B467 EXCLUDED S1
 // size      1 bytes
-// spans     0x0064B466-0x0064B467
 // prototype 
 // callers   0   call targets   0
 // kind      library

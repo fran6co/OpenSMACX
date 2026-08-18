@@ -21,10 +21,8 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-ORIGINAL: 0x00404280 BYTE_EXACT
-// name      ?UNK7@AlphaMovie@@QAEXXZ
+// ORIGINAL: 0x00404280 ?UNK7@AlphaMovie@@QAEXXZ 0x00404280-0x00404281 BYTE_EXACT
 // size      1 bytes
-// spans     0x00404280-0x00404281
 // prototype void (__thiscall ?UNK7@AlphaMovie@@QAEXXZ)(AlphaMovie* this)
 // callers   0   call targets   0
 // kind      game
@@ -42,10 +40,8 @@ void __fastcall alpha_movie_unk7_redirect(AlphaMovie *self, void *) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
-ORIGINAL: 0x00404220 BYTE_EXACT
-// name      ?UNK2@AlphaMovie@@QAEHHHH@Z
+// ORIGINAL: 0x00404220 ?UNK2@AlphaMovie@@QAEHHHH@Z 0x00404220-0x00404225 BYTE_EXACT
 // size      5 bytes
-// spans     0x00404220-0x00404225
 // prototype int (__thiscall ?UNK2@AlphaMovie@@QAEHHHH@Z)(AlphaMovie* this, int, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -64,10 +60,8 @@ int __fastcall alpha_movie_unk2_redirect(AlphaMovie *self, void *, int a1, int a
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
-ORIGINAL: 0x00404240 BYTE_EXACT
-// name      ?UNK4@AlphaMovie@@QAEHHHHH@Z
+// ORIGINAL: 0x00404240 ?UNK4@AlphaMovie@@QAEHHHHH@Z 0x00404240-0x00404245 BYTE_EXACT
 // size      5 bytes
-// spans     0x00404240-0x00404245
 // prototype int (__thiscall ?UNK4@AlphaMovie@@QAEHHHHH@Z)(AlphaMovie* this, int, int, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -95,10 +89,8 @@ Purpose: Unknown; the legacy implementation returns its argument unchanged.
          width and with no truncation or re-extension. It touches no field,
          which is why it can be replaced ahead of the class layout like its
          neighbours.
-ORIGINAL: 0x00404230 BYTE_EXACT
-// name      ?UNK3@AlphaMovie@@QAEHH@Z
+// ORIGINAL: 0x00404230 ?UNK3@AlphaMovie@@QAEHH@Z 0x00404230-0x0040423A BYTE_EXACT
 // size      10 bytes
-// spans     0x00404230-0x0040423A
 // prototype int (__thiscall ?UNK3@AlphaMovie@@QAEHH@Z)(AlphaMovie* this, int)
 // callers   0   call targets   0
 // kind      game
@@ -117,10 +109,8 @@ int __fastcall alpha_movie_unk3_redirect(AlphaMovie *self, void *, int a1) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
-ORIGINAL: 0x00404250 BYTE_EXACT
-// name      ?UNK5@AlphaMovie@@QAEHH@Z
+// ORIGINAL: 0x00404250 ?UNK5@AlphaMovie@@QAEHH@Z 0x00404250-0x00404255 BYTE_EXACT
 // size      5 bytes
-// spans     0x00404250-0x00404255
 // prototype int (__thiscall ?UNK5@AlphaMovie@@QAEHH@Z)(AlphaMovie* this, int)
 // callers   0   call targets   0
 // kind      game
@@ -139,10 +129,8 @@ int __fastcall alpha_movie_unk5_redirect(AlphaMovie *self, void *, int a1) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00404260 BYTE_EXACT
-// name      ?UNK6@AlphaMovie@@QAEXHH@Z
+// ORIGINAL: 0x00404260 ?UNK6@AlphaMovie@@QAEXHH@Z 0x00404260-0x00404263 BYTE_EXACT
 // size      3 bytes
-// spans     0x00404260-0x00404263
 // prototype void (__thiscall ?UNK6@AlphaMovie@@QAEXHH@Z)(AlphaMovie* this, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -160,10 +148,8 @@ void __fastcall alpha_movie_unk6_00404260_redirect(AlphaMovie *self, void *, int
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00404270 BYTE_EXACT
-// name      ?UNK6@AlphaMovie@@QAEXH@Z
+// ORIGINAL: 0x00404270 ?UNK6@AlphaMovie@@QAEXH@Z 0x00404270-0x00404273 BYTE_EXACT
 // size      3 bytes
-// spans     0x00404270-0x00404273
 // prototype void (__thiscall ?UNK6@AlphaMovie@@QAEXH@Z)(AlphaMovie* this, int)
 // callers   0   call targets   0
 // kind      game
@@ -181,10 +167,8 @@ void __fastcall alpha_movie_unk6_00404270_redirect(AlphaMovie *self, void *, int
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 1.
-ORIGINAL: 0x004042A0 BYTE_EXACT
-// name      ?UNK8@AlphaMovie@@QAEHHH@Z
+// ORIGINAL: 0x004042A0 ?UNK8@AlphaMovie@@QAEHHH@Z 0x004042A0-0x004042A8 BYTE_EXACT
 // size      8 bytes
-// spans     0x004042A0-0x004042A8
 // prototype int (__thiscall ?UNK8@AlphaMovie@@QAEHHH@Z)(AlphaMovie* this, int, int)
 // callers   0   call targets   0
 // kind      game
@@ -202,10 +186,8 @@ int __fastcall alpha_movie_unk8_redirect(AlphaMovie *self, void *, int a1, int a
 }
 
 /*
-ORIGINAL: 0x004041E0 BYTE_EXACT
-// name      ?close@AlphaMovie@@QAEXXZ
+// ORIGINAL: 0x004041E0 ?close@AlphaMovie@@QAEXXZ 0x004041E0-0x004041F7 BYTE_EXACT
 // size      23 bytes
-// spans     0x004041E0-0x004041F7
 // prototype void (__thiscall ?close@AlphaMovie@@QAEXXZ)(AlphaMovie* this)
 // callers   0   call targets   2
 // kind      game
@@ -220,10 +202,8 @@ void AlphaMovie::close() {
 }
 
 /*
-ORIGINAL: 0x00404290 BYTE_EXACT
-// name      ?update@AlphaMovie@@QAEXXZ
+// ORIGINAL: 0x00404290 ?update@AlphaMovie@@QAEXXZ 0x00404290-0x00404298 BYTE_EXACT
 // size      8 bytes
-// spans     0x00404290-0x00404298
 // prototype void (__thiscall ?update@AlphaMovie@@QAEXXZ)(AlphaMovie* this)
 // callers   0   call targets   1
 // kind      game

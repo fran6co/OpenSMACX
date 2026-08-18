@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00415730 FILE
-// name      ?draw_misc@BaseWin@@QAEXH@Z
+// ORIGINAL: 0x00415730 ?draw_misc@BaseWin@@QAEXH@Z 0x00415730-0x00415B15 FILE
 // size      997 bytes
-// spans     0x00415730-0x00415B15
 // prototype void (__thiscall ?draw_misc@BaseWin@@QAEXH@Z)(BaseWin* this, int)
 // callers   1   call targets   13
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0060FA80 BYTE_EXACT
-// name      ?on_left_double_click@CheckBox@@QAEXHH@Z
+// ORIGINAL: 0x0060FA80 ?on_left_double_click@CheckBox@@QAEXHH@Z 0x0060FA80-0x0060FAAD BYTE_EXACT
 // size      45 bytes
-// spans     0x0060FA80-0x0060FAAD
 // prototype void (__thiscall ?on_left_double_click@CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)
 // callers   1   call targets   0
 // kind      game

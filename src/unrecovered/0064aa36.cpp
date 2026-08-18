@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064AA36 EXCLUDED S1
-// name      __errno
+// ORIGINAL: 0x0064AA36 __errno 0x0064AA36-0x0064AA3F EXCLUDED S1
 // size      9 bytes
-// spans     0x0064AA36-0x0064AA3F
 // prototype 
 // callers   21   call targets   1
 // kind      library

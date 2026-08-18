@@ -1,8 +1,6 @@
-// ORIGINAL: 0x004F07E0 FILE
+// ORIGINAL: 0x004F07E0 ?base_production@@YAXXZ 0x004F07E0-0x004F3FD8;0x0065C8A0-0x0065D0D6 FILE
 // working copy - scaffold materialised by --work
-// name      ?base_production@@YAXXZ
 // size      16430 bytes
-// spans     0x004F07E0-0x004F3FD8;0x0065C8A0-0x0065D0D6
 // prototype 
 // callers   1   call targets   90
 // kind      game

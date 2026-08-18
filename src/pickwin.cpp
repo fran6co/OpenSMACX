@@ -20,10 +20,8 @@
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00489B10 BYTE_EXACT
-// name      ?on_button_passover@PickWin@@QAEXHH@Z
+// ORIGINAL: 0x00489B10 ?on_button_passover@PickWin@@QAEXHH@Z 0x00489B10-0x00489B13 BYTE_EXACT
 // size      3 bytes
-// spans     0x00489B10-0x00489B13
 // prototype void (__thiscall ?on_button_passover@PickWin@@QAEXHH@Z)(PickWin* this, int, int)
 // callers   0   call targets   0
 // kind      game

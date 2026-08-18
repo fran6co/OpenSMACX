@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00618DA0 FILE
-// name      ?object_start@Caviar@@QAAXPAUVOX_ScnRenderHnd@@JPAUVOX_Vect@@PAUVOX_Matrix@@PAUVOX_Rect@@PAUVOX_Vect@@@Z
+// ORIGINAL: 0x00618DA0 ?object_start@Caviar@@QAAXPAUVOX_ScnRenderHnd@@JPAUVOX_Vect@@PAUVOX_Matrix@@PAUVOX_Rect@@PAUVOX_Vect@@@Z 0x00618DA0-0x00618E06 FILE
 // size      102 bytes
-// spans     0x00618DA0-0x00618E06
 // prototype 
 // callers   0   call targets   1
 // kind      game

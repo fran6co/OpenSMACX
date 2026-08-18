@@ -93,10 +93,8 @@ BOOL __cdecl is_alive(uint32_t faction_id) {
 
 /*
 Purpose: Calculate the base amount of talents and drones for the specified faction.
-ORIGINAL: 0x004EA4A0
-// name      ?psych_check@@YAXHPAHPAH@Z
+// ORIGINAL: 0x004EA4A0 ?psych_check@@YAXHPAHPAH@Z 0x004EA4A0-0x004EA533
 // size      147 bytes
-// spans     0x004EA4A0-0x004EA533
 // prototype void (__cdecl ?psych_check@@YAXHPAHPAH@Z)(int factionID, int* drones, int* talents)
 // callers   1   call targets   0
 // kind      game
@@ -114,10 +112,8 @@ void __cdecl psych_check(int faction_id, int *drones, int *talents) {
 /*
 Purpose: Check whether the primary faction has at least one of the specified treaties (bitfield) 
          with the secondary faction.
-ORIGINAL: 0x005002F0
-// name      ?has_treaty@@YAHHHH@Z
+// ORIGINAL: 0x005002F0 ?has_treaty@@YAHHHH@Z 0x005002F0-0x00500319
 // size      41 bytes
-// spans     0x005002F0-0x00500319
 // prototype int (__cdecl ?has_treaty@@YAHHHH@Z)(int factionID, int factionIDWith, int treaty)
 // callers   4   call targets   0
 // kind      game
@@ -132,10 +128,8 @@ int __cdecl has_treaty(int faction_id, int faction_id_with, int treaty) {
 
 /*
 Purpose: Get the faction's name adjective.
-ORIGINAL: 0x0050B910
-// name      ?get_adjective@@YAHH@Z
+// ORIGINAL: 0x0050B910 ?get_adjective@@YAHH@Z 0x0050B910-0x0050B92A
 // size      26 bytes
-// spans     0x0050B910-0x0050B92A
 // prototype int (__cdecl ?get_adjective@@YAHH@Z)(int factionID)
 // callers   3   call targets   0
 // kind      game
@@ -150,10 +144,8 @@ LPSTR __cdecl get_adjective(int faction_id) {
 
 /*
 Purpose: Get the faction's noun.
-ORIGINAL: 0x0050B930
-// name      ?get_noun@@YAHH@Z
+// ORIGINAL: 0x0050B930 ?get_noun@@YAHH@Z 0x0050B930-0x0050B964
 // size      52 bytes
-// spans     0x0050B930-0x0050B964
 // prototype int (__cdecl ?get_noun@@YAHH@Z)(int factionID)
 // callers   5   call targets   0
 // kind      game
@@ -169,10 +161,8 @@ LPSTR __cdecl get_noun(int faction_id) {
 
 /*
 Purpose: Determine whether automatic contact is enabled for net or PBEM games.
-ORIGINAL: 0x00539160
-// name      ?auto_contact@@YAHXZ
+// ORIGINAL: 0x00539160 ?auto_contact@@YAHXZ 0x00539160-0x00539193
 // size      51 bytes
-// spans     0x00539160-0x00539193
 // prototype 
 // callers   3   call targets   0
 // kind      game
@@ -188,10 +178,8 @@ BOOL __cdecl auto_contact() {
 
 /*
 Purpose: Determine if the overall dominant human faction is a minor threat based on base count.
-ORIGINAL: 0x00539B70
-// name      ?great_beelzebub@@YAHHH@Z
+// ORIGINAL: 0x00539B70 ?great_beelzebub@@YAHHH@Z 0x00539B70-0x00539BF2
 // size      130 bytes
-// spans     0x00539B70-0x00539BF2
 // prototype BOOL (__cdecl ?great_beelzebub@@YAHHH@Z)(int factionID, int tgl)
 // callers   2   call targets   0
 // kind      game
@@ -218,10 +206,8 @@ BOOL __cdecl great_beelzebub(int faction_id, BOOL is_aggressive) {
 /*
 Purpose: Determine if the specified faction is considered a threat based on the game state and 
          ranking.
-ORIGINAL: 0x00539C00
-// name      ?great_satan@@YAHHH@Z
+// ORIGINAL: 0x00539C00 ?great_satan@@YAHHH@Z 0x00539C00-0x00539D3B
 // size      315 bytes
-// spans     0x00539C00-0x00539D3B
 // prototype 
 // callers   20   call targets   2
 // kind      game
@@ -263,10 +249,8 @@ BOOL __cdecl great_satan(int faction_id, BOOL is_aggressive) {
 Purpose: Check whether the specified faction is nearing the diplomatic victory requirements to be 
          able to call a Supreme Leader vote. Optional 2nd parameter (0/-1 to disable) that specifies
          a faction to skip if they have a pact with faction from the 1st parameter.
-ORIGINAL: 0x00539D40
-// name      ?aah_ooga@@YAHHH@Z
+// ORIGINAL: 0x00539D40 ?aah_ooga@@YAHHH@Z 0x00539D40-0x00539E3E
 // size      254 bytes
-// spans     0x00539D40-0x00539E3E
 // prototype 
 // callers   7   call targets   2
 // kind      game
@@ -303,10 +287,8 @@ uint32_t __cdecl aah_ooga(int faction_id, int pact_faction_id) {
 
 /*
 Purpose: Check if the human controlled player is nearing the endgame.
-ORIGINAL: 0x00539E40
-// name      ?climactic_battle@@YAHXZ
+// ORIGINAL: 0x00539E40 ?climactic_battle@@YAHXZ 0x00539E40-0x00539EE4
 // size      164 bytes
-// spans     0x00539E40-0x00539EE4
 // prototype 
 // callers   7   call targets   2
 // kind      game
@@ -338,10 +320,8 @@ BOOL __cdecl climactic_battle() {
 
 /*
 Purpose: Determine if the specified AI faction is at the game climax based on certain conditions.
-ORIGINAL: 0x00539EF0
-// name      ?at_climax@@YAHH@Z
+// ORIGINAL: 0x00539EF0 ?at_climax@@YAHH@Z 0x00539EF0-0x0053A022
 // size      306 bytes
-// spans     0x00539EF0-0x0053A022
 // prototype 
 // callers   6   call targets   3
 // kind      game
@@ -391,10 +371,8 @@ BOOL __cdecl at_climax(int faction_id) {
 
 /*
 Purpose: Add friction between the two specified factions.
-ORIGINAL: 0x0053A030
-// name      ?cause_friction@@YAXHHH@Z
+// ORIGINAL: 0x0053A030 ?cause_friction@@YAXHHH@Z 0x0053A030-0x0053A08D
 // size      93 bytes
-// spans     0x0053A030-0x0053A08D
 // prototype void (__cdecl ?cause_friction@@YAXHHH@Z)(int factionID, int factionIDWith, int friction)
 // callers   8   call targets   0
 // kind      game
@@ -413,10 +391,8 @@ void __cdecl cause_friction(int faction_id, int faction_id_with, int friction) {
 
 /*
 Purpose: Normalize the diplomatic friction value into a mood offset.
-ORIGINAL: 0x0053A090 BYTE_EXACT
-// name      ?get_mood@@YAHH@Z
+// ORIGINAL: 0x0053A090 ?get_mood@@YAHH@Z 0x0053A090-0x0053A0F5 BYTE_EXACT
 // size      101 bytes
-// spans     0x0053A090-0x0053A0F5
 // prototype int (__cdecl ?get_mood@@YAHH@Z)(int friction)
 // callers   3   call targets   0
 // kind      game
@@ -452,10 +428,8 @@ uint32_t __cdecl get_mood(int friction) {
 
 /*
 Purpose: Calculate the negative reputation the specified faction has with another.
-ORIGINAL: 0x0053A100
-// name      ?reputation@@YAHHH@Z
+// ORIGINAL: 0x0053A100 ?reputation@@YAHHH@Z 0x0053A100-0x0053A14D
 // size      77 bytes
-// spans     0x0053A100-0x0053A14D
 // prototype 
 // callers   4   call targets   0
 // kind      game
@@ -471,10 +445,8 @@ int __cdecl reputation(int faction_id, int faction_id_with) {
 
 /*
 Purpose: Calculate the amount of patience the specified faction has with another.
-ORIGINAL: 0x0053A150
-// name      ?get_patience@@YAHHH@Z
+// ORIGINAL: 0x0053A150 ?get_patience@@YAHHH@Z 0x0053A150-0x0053A1B8
 // size      104 bytes
-// spans     0x0053A150-0x0053A1B8
 // prototype int (__cdecl ?get_patience@@YAHHH@Z)(int factionIDWith, int factionID)
 // callers   1   call targets   0
 // kind      game
@@ -496,10 +468,8 @@ int __cdecl get_patience(int faction_id_with, int faction_id) {
 
 /*
 Purpose: Calculate the amount of goodwill a loan will generate. This is used to reduce friction.
-ORIGINAL: 0x0053A1C0 BYTE_EXACT
-// name      ?energy_value@@YAHH@Z
+// ORIGINAL: 0x0053A1C0 ?energy_value@@YAHH@Z 0x0053A1C0-0x0053A228 BYTE_EXACT
 // size      104 bytes
-// spans     0x0053A1C0-0x0053A228
 // prototype 
 // callers   1   call targets   0
 // kind      game
@@ -509,10 +479,8 @@ Return Value: Goodwill (friction reduction amount)
 Status: Complete
 */
 /*
-ORIGINAL: 0x0053A1C0
-// name      ?energy_value@@YAHH@Z
+// ORIGINAL: 0x0053A1C0 ?energy_value@@YAHH@Z 0x0053A1C0-0x0053A228
 // size      104 bytes
-// spans     0x0053A1C0-0x0053A228
 // prototype 
 // callers   1   call targets   0
 // kind      game
@@ -535,10 +503,8 @@ int __cdecl energy_value(int loan_principal) {
 /*
 Purpose: Pick out the two prototypes of faction_id_with that are worth putting in front of
          faction_id: the strongest one it owns, and the strongest one still worth bragging about.
-ORIGINAL: 0x0053A4A0
-// name      ?scan_prototypes@@YAXHH@Z
+// ORIGINAL: 0x0053A4A0 ?scan_prototypes@@YAXHH@Z 0x0053A4A0-0x0053A774
 // size      724 bytes
-// spans     0x0053A4A0-0x0053A774
 // prototype 
 // callers   3   call targets   2
 // kind      game
@@ -687,10 +653,8 @@ void __cdecl scan_prototypes(int faction_id, int faction_id_with) {
 
 /*
 Purpose: Set or unset the diplomatic treaty for the specified faction with another faction.
-ORIGINAL: 0x0055BB30
-// name      ?set_treaty@@YAXHHHH@Z
+// ORIGINAL: 0x0055BB30 ?set_treaty@@YAXHHHH@Z 0x0055BB30-0x0055BB98
 // size      104 bytes
-// spans     0x0055BB30-0x0055BB98
 // prototype 
 // callers   24   call targets   0
 // kind      game
@@ -712,10 +676,8 @@ void __cdecl set_treaty(int faction_id, int faction_id_with, int treaty, BOOL se
 
 /*
 Purpose: Set or unset the diplomatic agenda for the specified faction with another faction.
-ORIGINAL: 0x0055BBA0
-// name      ?set_agenda@@YAXHHHH@Z
+// ORIGINAL: 0x0055BBA0 ?set_agenda@@YAXHHHH@Z 0x0055BBA0-0x0055BBF1
 // size      81 bytes
-// spans     0x0055BBA0-0x0055BBF1
 // prototype void (__cdecl ?set_agenda@@YAXHHHH@Z)(int factionID, int factionIDWith, int agenda, int set)
 // callers   10   call targets   0
 // kind      game
@@ -735,10 +697,8 @@ void __cdecl set_agenda(int faction_id, int faction_id_with, int agenda, BOOL se
 /*
 Purpose: Check whether the primary faction has at least one of the specified agendas (bitfield)
          with the secondary faction.
-ORIGINAL: 0x005591E0
-// name      ?has_agenda@@YAHHHH@Z
+// ORIGINAL: 0x005591E0 ?has_agenda@@YAHHHH@Z 0x005591E0-0x00559209
 // size      41 bytes
-// spans     0x005591E0-0x00559209
 // prototype int (__cdecl ?has_agenda@@YAHHHH@Z)(int factionID, int factionIDWith, int agenda)
 // callers   1   call targets   0
 // kind      game
@@ -753,10 +713,8 @@ int __cdecl has_agenda(int faction_id, int faction_id_with, int agenda) {
 
 /*
 Purpose: Determine if the specified faction want to attack the target faction.
-ORIGINAL: 0x0055BC80
-// name      ?wants_to_attack@@YAHHHH@Z
+// ORIGINAL: 0x0055BC80 ?wants_to_attack@@YAHHHH@Z 0x0055BC80-0x0055C42B
 // size      1963 bytes
-// spans     0x0055BC80-0x0055C42B
 // prototype int (__cdecl ?wants_to_attack@@YAHHHH@Z)(uint32_t factionID, uint32_t factionIDTarget, int factionIDUnk)
 // callers   9   call targets   3
 // kind      game
@@ -951,10 +909,8 @@ BOOL __cdecl wants_to_attack(int faction_id, int faction_id_tgt, int faction_id_
 /*
 Purpose: Weigh how badly the specified faction's territory is being trespassed on by another
          faction's units, and mark those units so the rest of diplomacy can find them again.
-ORIGINAL: 0x0055EB80
-// name      ?territory@@YAHHHHPAHPAH@Z
+// ORIGINAL: 0x0055EB80 ?territory@@YAHHHHPAHPAH@Z 0x0055EB80-0x0055EEDE
 // size      862 bytes
-// spans     0x0055EB80-0x0055EEDE
 // prototype 
 // callers   4   call targets   2
 // kind      game
@@ -1130,10 +1086,8 @@ int __cdecl territory(int faction_id, int faction_id_with, int flags, int *base_
 
 /*
 Purpose: Determine the ideal unit count to protect a faction's bases in the specified land region.
-ORIGINAL: 0x00560D50
-// name      ?guard_check@@YAHHH@Z
+// ORIGINAL: 0x00560D50 ?guard_check@@YAHHH@Z 0x00560D50-0x00560DC3
 // size      115 bytes
-// spans     0x00560D50-0x00560DC3
 // prototype int (__cdecl ?guard_check@@YAHHH@Z)(int factionID, int region)
 // callers   1   call targets   0
 // kind      game
@@ -1161,10 +1115,8 @@ int __cdecl guard_check(int faction_id, int region) {
 
 /*
 Purpose: Add the specific goal to the faction's goals for the specified tile. Optional base param.
-ORIGINAL: 0x00579A30
-// name      ?add_goal@@YAXHHHHHH@Z
+// ORIGINAL: 0x00579A30 ?add_goal@@YAXHHHHHH@Z 0x00579A30-0x00579B64
 // size      308 bytes
-// spans     0x00579A30-0x00579B64
 // prototype void (__cdecl ?add_goal@@YAXHHHHHH@Z)(int factionID, int type, int priority, int xCoord, int yCoord, int baseID)
 // callers   12   call targets   0
 // kind      game
@@ -1215,10 +1167,8 @@ void __cdecl add_goal(int faction_id, int type, int priority, int x, int y, int 
 
 /*
 Purpose: Add the specific site to the faction's site goals for the specified tile.
-ORIGINAL: 0x00579B70
-// name      ?add_site@@YAXHHHHH@Z
+// ORIGINAL: 0x00579B70 ?add_site@@YAXHHHHH@Z 0x00579B70-0x00579CB5
 // size      325 bytes
-// spans     0x00579B70-0x00579CB5
 // prototype void (__cdecl ?add_site@@YAXHHHHH@Z)(int factionID, int type, int priority, int xCoord, int yCoord)
 // callers   4   call targets   2
 // kind      game
@@ -1269,10 +1219,8 @@ void __cdecl add_site(int faction_id, int type, int priority, int x, int y) {
 
 /*
 Purpose: Check if a goal exists at the tile for the specified faction and type.
-ORIGINAL: 0x00579CC0
-// name      ?at_goal@@YAHHHHH@Z
+// ORIGINAL: 0x00579CC0 ?at_goal@@YAHHHHH@Z 0x00579CC0-0x00579D16
 // size      86 bytes
-// spans     0x00579CC0-0x00579D16
 // prototype int (__cdecl ?at_goal@@YAHHHHH@Z)(int factionID, int type, int xCoord, int yCoord)
 // callers   5   call targets   0
 // kind      game
@@ -1293,10 +1241,8 @@ BOOL __cdecl at_goal(int faction_id, int type, int x, int y) {
 
 /*
 Purpose: Check if a site exists at the tile for the specified faction and type.
-ORIGINAL: 0x00579D20
-// name      ?at_site@@YAHHHHH@Z
+// ORIGINAL: 0x00579D20 ?at_site@@YAHHHHH@Z 0x00579D20-0x00579D76
 // size      86 bytes
-// spans     0x00579D20-0x00579D76
 // prototype int (__cdecl ?at_site@@YAHHHHH@Z)(int factionID, int type, int xCoord, int yCoord)
 // callers   2   call targets   0
 // kind      game
@@ -1317,10 +1263,8 @@ BOOL __cdecl at_site(int faction_id, int type, int x, int y) {
 
 /*
 Purpose: Wipe all goals for the specified faction then recreate any active site related goals.
-ORIGINAL: 0x00579D80
-// name      ?wipe_goals@@YAXH@Z
+// ORIGINAL: 0x00579D80 ?wipe_goals@@YAXH@Z 0x00579D80-0x00579DFC
 // size      124 bytes
-// spans     0x00579D80-0x00579DFC
 // prototype void (__cdecl ?wipe_goals@@YAXH@Z)(int factionID)
 // callers   1   call targets   1
 // kind      game
@@ -1350,10 +1294,8 @@ void __cdecl wipe_goals(int faction_id) {
 
 /*
 Purpose: Initialize all goals for the specified faction.
-ORIGINAL: 0x00579E00
-// name      ?init_goals@@YAXH@Z
+// ORIGINAL: 0x00579E00 ?init_goals@@YAXH@Z 0x00579E00-0x00579E66
 // size      102 bytes
-// spans     0x00579E00-0x00579E66
 // prototype void (__cdecl ?init_goals@@YAXH@Z)(int factionID)
 // callers   1   call targets   0
 // kind      game
@@ -1383,10 +1325,8 @@ void __cdecl init_goals(int faction_id) {
 
 /*
 Purpose: Delete sites of the specified type within proximity of the tile along with related goals.
-ORIGINAL: 0x00579E70
-// name      ?del_site@@YAXHHHHH@Z
+// ORIGINAL: 0x00579E70 ?del_site@@YAXHHHHH@Z 0x00579E70-0x00579F73
 // size      259 bytes
-// spans     0x00579E70-0x00579F73
 // prototype void (__cdecl ?del_site@@YAXHHHHH@Z)(int factionID, int type, int xCoord, int yCoord, int proximity)
 // callers   5   call targets   1
 // kind      game
@@ -1417,10 +1357,8 @@ void __cdecl del_site(int faction_id, int type, int x, int y, int proximity) {
 
 /*
 Purpose: Calculate the cost for the faction to corner the Global Energy Market (Economic Victory).
-ORIGINAL: 0x0059EE50
-// name      ?corner_market@@YAHH@Z
+// ORIGINAL: 0x0059EE50 ?corner_market@@YAHH@Z 0x0059EE50-0x0059EEDD
 // size      141 bytes
-// spans     0x0059EE50-0x0059EEDD
 // prototype int (__cdecl ?corner_market@@YAHH@Z)(int factionID)
 // callers   2   call targets   1
 // kind      game
@@ -1446,10 +1384,8 @@ int __cdecl corner_market(int faction_id) {
 /*
 Purpose: Validate whether each faction meets the requirements to have the Map revealed. Added some
          minor tweaks to improve performance without changing the logic.
-ORIGINAL: 0x005A96D0
-// name      ?see_map_check@@YAXXZ
+// ORIGINAL: 0x005A96D0 ?see_map_check@@YAXXZ 0x005A96D0-0x005A9753
 // size      131 bytes
-// spans     0x005A96D0-0x005A9753
 // prototype 
 // callers   2   call targets   1
 // kind      game
@@ -1482,10 +1418,8 @@ void __cdecl see_map_check() {
 /*
 Purpose: Rescore every faction's power, and optionally publish the ranking order that scoring
          implies plus the betrayals the new order provokes.
-ORIGINAL: 0x005AC690
-// name      ?rankings@@YAXH@Z
+// ORIGINAL: 0x005AC690 ?rankings@@YAXH@Z 0x005AC690-0x005ACBD6
 // size      1350 bytes
-// spans     0x005AC690-0x005ACBD6
 // prototype 
 // callers   3   call targets   7
 // kind      game
@@ -1732,10 +1666,8 @@ void __cdecl rankings(int apply_ranks) {
 
 /*
 Purpose: Calculate the basic social engineering modifiers for the specified faction.
-ORIGINAL: 0x005B0D70
-// name      ?compute_faction_modifiers@@YAXH@Z
+// ORIGINAL: 0x005B0D70 ?compute_faction_modifiers@@YAXH@Z 0x005B0D70-0x005B0DF3
 // size      131 bytes
-// spans     0x005B0D70-0x005B0DF3
 // prototype void (__cdecl ?compute_faction_modifiers@@YAXH@Z)(int factionID)
 // callers   4   call targets   0
 // kind      game
@@ -1758,10 +1690,8 @@ void __cdecl compute_faction_modifiers(int faction_id) {
 
 /*
 Purpose: Calculate the social engineering effect modifiers for the specified faction.
-ORIGINAL: 0x005B4210
-// name      ?social_calc@@YAXPAHPAHHHH@Z
+// ORIGINAL: 0x005B4210 ?social_calc@@YAXPAHPAHHHH@Z 0x005B4210-0x005B44C9
 // size      697 bytes
-// spans     0x005B4210-0x005B44C9
 // prototype void (__cdecl ?social_calc@@YAXPAHPAHHHH@Z)(social_category* category, social_effect* effect, uint32_t factionID, BOOL toggle, BOOL isQuickCalc)
 // callers   7   call targets   1
 // kind      game
@@ -1844,10 +1774,8 @@ void __cdecl social_calc(SocialCategory *category, SocialEffect *effect, int fac
 
 /*
 Purpose: Handle the social engineering turn upkeep for the specified faction.
-ORIGINAL: 0x005B44D0
-// name      ?social_upkeep@@YAXH@Z
+// ORIGINAL: 0x005B44D0 ?social_upkeep@@YAXH@Z 0x005B44D0-0x005B4550
 // size      128 bytes
-// spans     0x005B44D0-0x005B4550
 // prototype void (__cdecl ?social_upkeep@@YAXH@Z)(int factionID)
 // callers   2   call targets   1
 // kind      game
@@ -1870,10 +1798,8 @@ void __cdecl social_upkeep(int faction_id) {
 
 /*
 Purpose: Calculate the cost of the social upheaval for the specified faction.
-ORIGINAL: 0x005B4550
-// name      ?social_upheaval@@YAHHPAH@Z
+// ORIGINAL: 0x005B4550 ?social_upheaval@@YAHHPAH@Z 0x005B4550-0x005B45F8
 // size      168 bytes
-// spans     0x005B4550-0x005B45F8
 // prototype int (__cdecl ?social_upheaval@@YAHHPAH@Z)(int factionID, social_category* category)
 // callers   2   call targets   0
 // kind      game
@@ -1904,10 +1830,8 @@ uint32_t __cdecl social_upheaval(int faction_id, SocialCategory *category_new) {
 
 /*
 Purpose: Check to see whether the faction can utilize a specific social category and model.
-ORIGINAL: 0x005B4730
-// name      ?society_avail@@YAHHHH@Z
+// ORIGINAL: 0x005B4730 ?society_avail@@YAHHHH@Z 0x005B4730-0x005B4786
 // size      86 bytes
-// spans     0x005B4730-0x005B4786
 // prototype int (__cdecl ?society_avail@@YAHHHH@Z)(int socCategory, int socModel, int factionID)
 // callers   5   call targets   1
 // kind      game
@@ -1926,10 +1850,8 @@ BOOL __cdecl society_avail(int soc_category, int soc_model, int faction_id) {
 
 /*
 Purpose: Calculate an AI faction's social engineering.
-ORIGINAL: 0x005B4790
-// name      ?social_ai@@YAXHHHHHPAH@Z
+// ORIGINAL: 0x005B4790 ?social_ai@@YAXHHHHHPAH@Z 0x005B4790-0x005B5612
 // size      3714 bytes
-// spans     0x005B4790-0x005B5612
 // prototype void (__cdecl ?social_ai@@YAXHHHHHPAH@Z)(int factionID, int growthVal, int techVal, int wealthVal, int powerVal, social_category* output)
 // callers   2   call targets   7
 // kind      game
@@ -2460,10 +2382,8 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
 Purpose: Calculate specified faction's best available weapon and armor ratings as well as the
          fastest moving ground Veh chassis. Compare these capabilities to faction's best opponent
          capabilities based on current diplomacy.
-ORIGINAL: 0x00560DD0
-// name      ?enemy_capabilities@@YAXH@Z
+// ORIGINAL: 0x00560DD0 ?enemy_capabilities@@YAXH@Z 0x00560DD0-0x00561076
 // size      678 bytes
-// spans     0x00560DD0-0x00561076
 // prototype void (__cdecl ?enemy_capabilities@@YAXH@Z)(int factionID)
 // callers   3   call targets   4
 // kind      game

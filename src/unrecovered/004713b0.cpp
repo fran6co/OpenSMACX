@@ -1,8 +1,6 @@
-// ORIGINAL: 0x004713B0 FILE
+// ORIGINAL: 0x004713B0 ?add_base@MessageWin@@QAEXHPADPAUSprite@@@Z 0x004713B0-0x00471461 FILE
 // working copy - scaffold materialised by --work
-// name      ?add_base@MessageWin@@QAEXHPADPAUSprite@@@Z
 // size      177 bytes
-// spans     0x004713B0-0x00471461
 // prototype void (__thiscall ?add_base@MessageWin@@QAEXHPADPAUSprite@@@Z)(MessageWin* this, int, int8* lpString, Sprite*)
 // callers   1   call targets   5
 // kind      game

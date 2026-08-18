@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0041E560 FILE
-// name      ?update_gov_buttons@BaseWin@@QAEXXZ
+// ORIGINAL: 0x0041E560 ?update_gov_buttons@BaseWin@@QAEXXZ 0x0041E560-0x0041E788 FILE
 // size      552 bytes
-// spans     0x0041E560-0x0041E788
 // prototype void (__thiscall ?update_gov_buttons@BaseWin@@QAEXXZ)(BaseWin* this)
 // callers   1   call targets   1
 // kind      game

@@ -1,10 +1,7 @@
-// ORIGINAL: 0x005F15C0 FILE
-// RULED-OUT: MISMATCH #1 test/push at the ternary-vs-if for the first
-//            global select; body verified structurally correct otherwise
+// ORIGINAL: 0x005F15C0 ?OnKey@Win@@QAAXPAXIJHI@Z 0x005F15C0-0x005F1657 FILE
+// RULED-OUT: MISMATCH #1 test/push at the ternary-vs-if for the first global select; body verified structurally correct otherwise
 // working copy - scaffold materialised by --work
-// name      ?OnKey@Win@@QAAXPAXIJHI@Z
 // size      151 bytes
-// spans     0x005F15C0-0x005F1657
 // prototype 
 // callers   0   call targets   1
 // kind      game

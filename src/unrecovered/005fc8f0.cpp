@@ -1,14 +1,13 @@
-// ORIGINAL: 0x005FC8F0 FILE
-// name      ?do_all_tasks@@YAXXZ
+// ORIGINAL: 0x005FC8F0 ?do_all_tasks@@YAXXZ 0x005FC8F0-0x005FC9DE FILE
+// RULED-OUT: PeekMessageA/TranslateMessage/DispatchMessageA are resolved
+// RULED-OUT: could not reproduce the original's frameless, purely
 // size      238 bytes
-// spans     0x005FC8F0-0x005FC9DE
 // prototype
 // callers   2   call targets   4
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x0062D5B0 0x0062D5D0 0x00632DB0 0x00636300
 // indirect  0x005FC948 0x005FC953 0x005FC95A 0x005FC977 0x005FC982 0x005FC989 0x005FC99F
-// RULED-OUT: PeekMessageA/TranslateMessage/DispatchMessageA are resolved
 // function pointers held in fixed globals (g_00669358/g_0066935c/
 // g_00669340), same shape as auto_play_callback's PostMessageA/
 // SetCursorPos - not real WinAPI declarations, since the scaffold has no
@@ -16,7 +15,6 @@
 // new top-level declaration ahead of the definition, and body-mode's
 // census extractor stops at its first top-level closing brace (the
 // struct's, not the function's).
-// RULED-OUT: could not reproduce the original's frameless, purely
 // esp-relative layout (`sub esp,0x38` then two stack MSG buffers
 // addressed via `[esp+N]` throughout, `ebx`/`esi`/`edi`/`ebp` all holding
 // the three resolved function pointers plus a loop counter with no `ebp`

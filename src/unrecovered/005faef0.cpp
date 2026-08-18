@@ -1,15 +1,7 @@
-// ORIGINAL: 0x005FAEF0 FILE
-// RULED-OUT: SEH frame (push -1/push handler/fs:[0]) not reproduced by the
-//            plain operator-new + placement-new PullDown construction (same
-//            gap as the 0x00428DF0 precedent, which drops it the same way);
-//            not chased further. Field layout (entries_[idx].id/text/
-//            mnemonic/flags/pull_down), the ampersand-mnemonic split, and
-//            the duplicate-id/table-full/alloc-fail return codes are a
-//            faithful transcription off the raw disassembly.
+// ORIGINAL: 0x005FAEF0 ?add_menu@Menu@@QAEHHPADH@Z 0x005FAEF0-0x005FB0FA;0x00662D22-0x00662D37 FILE
+// RULED-OUT: SEH frame (push -1/push handler/fs:[0]) not reproduced by the plain operator-new + placement-new PullDown construction (same gap as the 0x00428DF0 precedent, which drops it the same way); not chased further. Field layout (entries_[idx].id/text/ mnemonic/flags/pull_down), the ampersand-mnemonic split, and the duplicate-id/table-full/alloc-fail return codes are a faithful transcription off the raw disassembly.
 // working copy - scaffold materialised by --work
-// name      ?add_menu@Menu@@QAEHHPADH@Z
 // size      543 bytes
-// spans     0x005FAEF0-0x005FB0FA;0x00662D22-0x00662D37
 // prototype int (__thiscall ?add_menu@Menu@@QAEHHPADH@Z)(Menu* this, int, int8*, int)
 // callers   1   call targets   9
 // kind      game

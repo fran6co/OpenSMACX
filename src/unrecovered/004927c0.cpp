@@ -1,13 +1,7 @@
-// ORIGINAL: 0x004927C0 FILE
-// RULED-OUT: direct translation of Ghidra's (already-clean) pseudocode into RD()-based
-//            offset access, matching the bounds check / grid position calc / set_clip+
-//            box_sprite / three seek-list blocks / mandate_color+wrap_cent name draw /
-//            veh_fake+veh_draw+Caviar render-or-Sprite::draw_mono branch / veh_cost
-//            string; MISMATCH #0 (prologue/frame) not chased further.
+// ORIGINAL: 0x004927C0 ?draw_item@ProdPicker@@QAEXHH@Z 0x004927C0-0x00492F9F FILE
+// RULED-OUT: direct translation of Ghidra's (already-clean) pseudocode into RD()-based offset access, matching the bounds check / grid position calc / set_clip+ box_sprite / three seek-list blocks / mandate_color+wrap_cent name draw / veh_fake+veh_draw+Caviar render-or-Sprite::draw_mono branch / veh_cost string; MISMATCH #0 (prologue/frame) not chased further.
 // working copy - scaffold materialised by --work
-// name      ?draw_item@ProdPicker@@QAEXHH@Z
 // size      2015 bytes
-// spans     0x004927C0-0x00492F9F
 // prototype void (__thiscall ?draw_item@ProdPicker@@QAEXHH@Z)(ProdPicker* this, int, int)
 // callers   5   call targets   25
 // kind      game

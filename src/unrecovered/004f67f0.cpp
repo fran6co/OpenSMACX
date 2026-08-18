@@ -1,14 +1,7 @@
-// ORIGINAL: 0x004F67F0 FILE
-// RULED-OUT: heavily time-boxed given batch budget - only the leading
-//            probability gate (faction-table accumulator update, a
-//            rand()%100 roll against a base-stat threshold, and the
-//            two disabling-flag checks) is transcribed; the ecology
-//            event itself, most of the function, is a deliberate stub.
-//            MISMATCH #0, prologue only.
+// ORIGINAL: 0x004F67F0 ?base_ecology@@YAXXZ 0x004F67F0-0x004F79B3 FILE
+// RULED-OUT: heavily time-boxed given batch budget - only the leading probability gate (faction-table accumulator update, a rand()%100 roll against a base-stat threshold, and the two disabling-flag checks) is transcribed; the ecology event itself, most of the function, is a deliberate stub. MISMATCH #0, prologue only.
 // working copy - scaffold materialised by --work
-// name      ?base_ecology@@YAXXZ
 // size      4547 bytes
-// spans     0x004F67F0-0x004F79B3
 // prototype 
 // callers   1   call targets   22
 // kind      game

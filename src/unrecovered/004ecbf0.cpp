@@ -1,17 +1,7 @@
-// ORIGINAL: 0x004ECBF0 FILE
-// RULED-OUT: Ghidra ported almost verbatim (DAT_0090ea30 recovered as a real
-//            `short *base16` on *BaseCurrent - offsets proven against the ASM
-//            at faction_id_current/population_size/state/governor/x/y/
-//            mineral+energy_intake_1/unk_x/unk_y; the 15 FUN_ callees matched
-//            to their real, already-recovered names by prototype arity; two
-//            Ghidra call-site arg-grouping bugs fixed (abil_index/has_tech
-//            argument swap) - diverges at #6 'or eax,-1' vs 'xor eax,eax'
-//            register-idiom for the first of three `= 0xffffffff` locals,
-//            a compiler-idiom choice not obviously steerable from source.
+// ORIGINAL: 0x004ECBF0 ?base_terraform@@YAXH@Z 0x004ECBF0-0x004EEF61 FILE
+// RULED-OUT: Ghidra ported almost verbatim (DAT_0090ea30 recovered as a real `short *base16` on *BaseCurrent - offsets proven against the ASM at faction_id_current/population_size/state/governor/x/y/ mineral+energy_intake_1/unk_x/unk_y; the 15 FUN_ callees matched to their real, already-recovered names by prototype arity; two Ghidra call-site arg-grouping bugs fixed (abil_index/has_tech argument swap) - diverges at #6 'or eax,-1' vs 'xor eax,eax' register-idiom for the first of three `= 0xffffffff` locals, a compiler-idiom choice not obviously steerable from source.
 // working copy - scaffold materialised by --work
-// name      ?base_terraform@@YAXH@Z
 // size      9073 bytes
-// spans     0x004ECBF0-0x004EEF61
 // prototype 
 // callers   2   call targets   15
 // kind      game

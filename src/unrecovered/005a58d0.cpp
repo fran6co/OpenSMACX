@@ -1,9 +1,7 @@
-// ORIGINAL: 0x005A58D0 BYTE_EXACT FILE
+// ORIGINAL: 0x005A58D0 timeGetTime 0x005A58D0-0x005A58D6 FILE BYTE_EXACT
 // LEVER: cast the fixed IAT slot to a function-pointer-pointer, call through
 // working copy - scaffold materialised by --work
-// name      timeGetTime
 // size      6 bytes
-// spans     0x005A58D0-0x005A58D6
 // prototype 
 // callers   1   call targets   0
 // kind      thunk

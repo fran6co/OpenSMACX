@@ -1,8 +1,6 @@
-// ORIGINAL: 0x004AE3E0 FILE
+// ORIGINAL: 0x004AE3E0 ?on_key_click@SetupWin@@QAEHHH@Z 0x004AE3E0-0x004AE49D FILE
 // working copy - scaffold materialised by --work
-// name      ?on_key_click@SetupWin@@QAEHHH@Z
 // size      189 bytes
-// spans     0x004AE3E0-0x004AE49D
 // prototype int (__thiscall ?on_key_click@SetupWin@@QAEHHH@Z)(SetupWin* this, int, int)
 // callers   0   call targets   2
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00607850 FILE
-// name      ?on_mouse_move@BaseButton@@QAEXHH@Z
+// ORIGINAL: 0x00607850 ?on_mouse_move@BaseButton@@QAEXHH@Z 0x00607850-0x006079F3 FILE
 // size      419 bytes
-// spans     0x00607850-0x006079F3
 // prototype void (__thiscall ?on_mouse_move@BaseButton@@QAEXHH@Z)(BaseButton* this, int, int)
 // callers   1   call targets   4
 // kind      game

@@ -1,13 +1,7 @@
-// ORIGINAL: 0x004CE6B0 FILE
-// RULED-OUT: caching the recomputed table index in one local (idx) instead
-//            of re-reading g_0068faf0 fresh each use loses the frame; kept
-//            `half = a1>>1` cached (matches the original's stack-slot
-//            reuse of the a2 parameter) but still diverges on the imul
-//            operand ordering a few instructions in.
+// ORIGINAL: 0x004CE6B0 sub_4ce6b0 0x004CE6B0-0x004CE78D FILE
+// RULED-OUT: caching the recomputed table index in one local (idx) instead of re-reading g_0068faf0 fresh each use loses the frame; kept `half = a1>>1` cached (matches the original's stack-slot reuse of the a2 parameter) but still diverges on the imul operand ordering a few instructions in.
 // working copy - scaffold materialised by --work
-// name      sub_4ce6b0
 // size      221 bytes
-// spans     0x004CE6B0-0x004CE78D
 // prototype 
 // callers   0   call targets   4
 // kind      game

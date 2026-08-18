@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064D408 EXCLUDED S1
-// name      __IncMan
+// ORIGINAL: 0x0064D408 __IncMan 0x0064D408-0x0064D45E EXCLUDED S1
 // size      86 bytes
-// spans     0x0064D408-0x0064D45E
 // prototype 
 // callers   1   call targets   1
 // kind      library

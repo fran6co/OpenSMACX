@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0062EDD0 BYTE_EXACT FILE
-// name      ?add_to_group@Net@@QAEHJK@Z
+// ORIGINAL: 0x0062EDD0 ?add_to_group@Net@@QAEHJK@Z 0x0062EDD0-0x0062EDFA FILE BYTE_EXACT
 // size      42 bytes
-// spans     0x0062EDD0-0x0062EDFA
 // prototype int (__thiscall ?add_to_group@Net@@QAEHJK@Z)(Net* this, int, unsigned int)
 // callers   1   call targets   0
 // kind      game

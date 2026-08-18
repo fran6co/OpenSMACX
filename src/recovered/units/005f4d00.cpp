@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005F4D00 FILE
-// name      ?update@Win@@QAAXXZ
+// ORIGINAL: 0x005F4D00 ?update@Win@@QAAXXZ 0x005F4D00-0x005F4D4D FILE
 // size      77 bytes
-// spans     0x005F4D00-0x005F4D4D
 // prototype 
 // callers   0   call targets   1
 // kind      game

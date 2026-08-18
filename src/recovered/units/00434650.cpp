@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00434650 BYTE_EXACT FILE
-// name      ?UNK3@DesignWin@@QAEXXZ
+// ORIGINAL: 0x00434650 ?UNK3@DesignWin@@QAEXXZ 0x00434650-0x00434691 FILE BYTE_EXACT
 // size      65 bytes
-// spans     0x00434650-0x00434691
 // prototype void (__thiscall ?UNK3@DesignWin@@QAEXXZ)(DesignWin* this)
 // callers   0   call targets   0
 // kind      game

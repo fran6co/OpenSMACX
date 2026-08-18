@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00469190 FILE
-// name      ?gen_radius@MapWin@@QAEXHHHHH@Z
+// ORIGINAL: 0x00469190 ?gen_radius@MapWin@@QAEXHHHHH@Z 0x00469190-0x00469718 FILE
 // size      1416 bytes
-// spans     0x00469190-0x00469718
 // prototype void (__thiscall ?gen_radius@MapWin@@QAEXHHHHH@Z)(MapWin* this, int, int, int, int, int)
 // callers   1   call targets   13
 // kind      game

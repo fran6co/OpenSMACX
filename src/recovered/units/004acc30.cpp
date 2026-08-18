@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004ACC30 FILE
-// name      ?merge_sort@ReportIf@@QAEXHH@Z
+// ORIGINAL: 0x004ACC30 ?merge_sort@ReportIf@@QAEXHH@Z 0x004ACC30-0x004ACD98 FILE
 // size      360 bytes
-// spans     0x004ACC30-0x004ACD98
 // prototype void (__thiscall ?merge_sort@ReportIf@@QAEXHH@Z)(ReportIf* this, int, int)
 // callers   2   call targets   2
 // kind      game

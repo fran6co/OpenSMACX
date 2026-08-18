@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00471240 BYTE_EXACT FILE
-// name      ?mapwin_terrain_fixup@@YAXXZ
+// ORIGINAL: 0x00471240 ?mapwin_terrain_fixup@@YAXXZ 0x00471240-0x00471293 FILE BYTE_EXACT
 // size      83 bytes
-// spans     0x00471240-0x00471293
 // prototype 
 // callers   1   call targets   1
 // kind      game

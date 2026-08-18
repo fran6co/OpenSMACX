@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00472020 FILE
-// name      ??1MessageWin@@QAE@XZ
+// ORIGINAL: 0x00472020 ??1MessageWin@@QAE@XZ 0x00472020-0x00472184;0x00655EA0-0x00655F23 FILE
 // size      487 bytes
-// spans     0x00472020-0x00472184;0x00655EA0-0x00655F23
 // prototype void (__thiscall ??1MessageWin@@QAE@XZ)(MessageWin* this)
 // callers   0   call targets   12
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0047FE80 BYTE_EXACT
-// name      ?UNK3@NetWin@@QAEXXZ
+// ORIGINAL: 0x0047FE80 ?UNK3@NetWin@@QAEXXZ 0x0047FE80-0x0047FEC6 BYTE_EXACT
 // size      70 bytes
-// spans     0x0047FE80-0x0047FEC6
 // prototype void (__thiscall ?UNK3@NetWin@@QAEXXZ)(NetWin* this)
 // callers   0   call targets   1
 // kind      game

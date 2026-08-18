@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0047EC60 FILE
-// name      ?pick_ocean@NetWin@@QAEXXZ
+// ORIGINAL: 0x0047EC60 ?pick_ocean@NetWin@@QAEXXZ 0x0047EC60-0x0047EF8C;0x006570FD-0x006571D5 FILE
 // size      1028 bytes
-// spans     0x0047EC60-0x0047EF8C;0x006570FD-0x006571D5
 // prototype void (__thiscall ?pick_ocean@NetWin@@QAEXXZ)(NetWin* this)
 // callers   1   call targets   26
 // kind      game

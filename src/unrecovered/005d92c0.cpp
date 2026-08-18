@@ -1,14 +1,8 @@
-// ORIGINAL: 0x005D92C0 FILE
-// RULED-OUT: same shape as 0x005D8740/0x005D90D0 - see 0x005D8740's note for
-//   the stdcall-Unlock form and the __fastcall(self, unused-edx, 7 stack
-//   ints) signature override.
-// RULED-OUT: nothing new past that - 94.9%+ mnemonic similarity, first gap
-//   at #41 (mov vs cmp) in the NULL-surface lock-count arm, same spot as
-//   every sibling in this family.
+// ORIGINAL: 0x005D92C0 sub_5d92c0 0x005D92C0-0x005D93B8 FILE
+// RULED-OUT: same shape as 0x005D8740/0x005D90D0 - see 0x005D8740's note for the stdcall-Unlock form and the __fastcall(self, unused-edx, 7 stack ints) signature override.
+// RULED-OUT: nothing new past that - 94.9%+ mnemonic similarity, first gap at #41 (mov vs cmp) in the NULL-surface lock-count arm, same spot as every sibling in this family.
 // working copy - scaffold materialised by --work
-// name      sub_5d92c0
 // size      248 bytes
-// spans     0x005D92C0-0x005D93B8
 // prototype 
 // callers   0   call targets   1
 // kind      game

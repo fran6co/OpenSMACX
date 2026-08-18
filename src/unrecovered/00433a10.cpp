@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00433A10 FILE
+// ORIGINAL: 0x00433A10 ?on_key_click@SelectPartWin@@QAEHHH@Z 0x00433A10-0x00433CD0 FILE
 // working copy - scaffold materialised by --work
-// name      ?on_key_click@SelectPartWin@@QAEHHH@Z
 // size      704 bytes
-// spans     0x00433A10-0x00433CD0
 // prototype int (__thiscall ?on_key_click@SelectPartWin@@QAEHHH@Z)(SelectPartWin* this, int, int)
 // callers   0   call targets   2
 // kind      game

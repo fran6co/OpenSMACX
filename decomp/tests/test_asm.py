@@ -27,10 +27,8 @@ FLAGS = "/c /O2 /Gy /GR- /Oy- /GX"     # the ratchet's measured flag set
 HAVE_EXE = EXE.is_file()
 HAVE_BUILD = COMPILE_COMMANDS.is_file() and shutil.which("wine") is not None
 
-MARKED = """// ORIGINAL: 0x00401000
-// name      ?f@C@@QAEXXZ
+MARKED = """// ORIGINAL: 0x00401000 ?f@C@@QAEXXZ 0x00401000-0x00401008
 // size      8 bytes
-// spans     0x00401000-0x00401008
 void C::f() {
 }
 """

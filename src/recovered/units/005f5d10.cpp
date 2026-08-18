@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005F5D10 FILE
-// name      ?on_key@Win@@QAEXIJHI@Z
+// ORIGINAL: 0x005F5D10 ?on_key@Win@@QAEXIJHI@Z 0x005F5D10-0x005F5F53 FILE
 // size      579 bytes
-// spans     0x005F5D10-0x005F5F53
 // prototype void (__thiscall ?on_key@Win@@QAEXIJHI@Z)(Win* this, unsigned int, int, int, unsigned int)
 // callers   0   call targets   6
 // kind      game

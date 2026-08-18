@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006075C0 FILE
-// name      ?on_left_down@BaseButton@@QAEXHH@Z
+// ORIGINAL: 0x006075C0 ?on_left_down@BaseButton@@QAEXHH@Z 0x006075C0-0x0060771C FILE
 // size      348 bytes
-// spans     0x006075C0-0x0060771C
 // prototype void (__thiscall ?on_left_down@BaseButton@@QAEXHH@Z)(BaseButton* this, int, int)
 // callers   0   call targets   2
 // kind      game

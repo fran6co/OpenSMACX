@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006183D0 FILE
-// name      ?set_buffer@Caviar@@QAEHPAUBuffer@@@Z
+// ORIGINAL: 0x006183D0 ?set_buffer@Caviar@@QAEHPAUBuffer@@@Z 0x006183D0-0x00618426 FILE
 // size      86 bytes
-// spans     0x006183D0-0x00618426
 // prototype int (__thiscall ?set_buffer@Caviar@@QAEHPAUBuffer@@@Z)(Caviar* this, Buffer*)
 // callers   0   call targets   0
 // kind      game

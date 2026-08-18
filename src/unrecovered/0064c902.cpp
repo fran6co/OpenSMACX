@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064C902 EXCLUDED S1
-// name      __sptype
+// ORIGINAL: 0x0064C902 __sptype 0x0064C902-0x0064C95C EXCLUDED S1
 // size      90 bytes
-// spans     0x0064C902-0x0064C95C
 // prototype 
 // callers   2   call targets   0
 // kind      library

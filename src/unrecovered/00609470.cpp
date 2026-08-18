@@ -1,11 +1,6 @@
-// ORIGINAL: 0x00609470 FILE
-// RULED-OUT: field_D4_ set from &heap_ (this+4) per Ghidra's `param_1+4`
-//            in the heap-init-success path; the raw disasm's stale
-//            [esp+0x14] reload (still holding rect->left from the a1 stack
-//            slot reuse) may be the true value instead - not disambiguated.
-// name      ?init@Dialog@@QAEHPAURECT@@H@Z
+// ORIGINAL: 0x00609470 ?init@Dialog@@QAEHPAURECT@@H@Z 0x00609470-0x006095EE FILE
+// RULED-OUT: field_D4_ set from &heap_ (this+4) per Ghidra's `param_1+4` in the heap-init-success path; the raw disasm's stale [esp+0x14] reload (still holding rect->left from the a1 stack slot reuse) may be the true value instead - not disambiguated.
 // size      382 bytes
-// spans     0x00609470-0x006095EE
 // prototype int (__thiscall ?init@Dialog@@QAEHPAURECT@@H@Z)(Dialog* this, RECT*, int size)
 // callers   13   call targets   2
 // kind      game

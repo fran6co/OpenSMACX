@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0062DFC0 BYTE_EXACT FILE
-// name      ?stop_voice@Net@@QAEXXZ
+// ORIGINAL: 0x0062DFC0 ?stop_voice@Net@@QAEXXZ 0x0062DFC0-0x0062E005 FILE BYTE_EXACT
 // size      69 bytes
-// spans     0x0062DFC0-0x0062E005
 // prototype void (__thiscall ?stop_voice@Net@@QAEXXZ)(Net* this)
 // callers   1   call targets   1
 // kind      game

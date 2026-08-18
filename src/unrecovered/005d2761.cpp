@@ -1,12 +1,7 @@
-// ORIGINAL: 0x005D2761 FILE
-// RULED-OUT: original prologue saves 6 registers (ebx,ecx,edx,esi,edi,ebp);
-//            plain __cdecl(uint*,uint*,int) body only pressures 1-2, so the
-//            reservation never reproduces. Explicit per-register temps for
-//            each S-box term didn't move it either.
+// ORIGINAL: 0x005D2761 sub_5d2761 0x005D2761-0x005D2834 FILE
+// RULED-OUT: original prologue saves 6 registers (ebx,ecx,edx,esi,edi,ebp); plain __cdecl(uint*,uint*,int) body only pressures 1-2, so the reservation never reproduces. Explicit per-register temps for each S-box term didn't move it either.
 // working copy - scaffold materialised by --work
-// name      sub_5d2761
 // size      211 bytes
-// spans     0x005D2761-0x005D2834
 // prototype 
 // callers   1   call targets   0
 // kind      game

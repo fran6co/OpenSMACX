@@ -1,23 +1,7 @@
-// ORIGINAL: 0x005F1150 FILE
-// RULED-OUT: this inlines the same get_hdc()/release_hdc() logic already
-//   product-recovered in src/win.cpp (WinHdcRefCount/WinSharedHdc/
-//   WinHdcSurface/WinHdcWindow at these same addresses) - no `call` to
-//   those symbols exists in the disassembly, so it is the compiler's own
-//   inlining, reproduced here by hand. No path sets `eax` before any of
-//   the several `ret`s (no `xor eax,eax` anywhere), so despite the `int`
-//   in the mangled name the body never manufactures a return value except
-//   at the one distinct early `ret` (0x5F120C), where returning the
-//   vtable slot's own `long` result reproduces the "value already sitting
-//   in eax" shape instead of adding one. Caching `*g_009b7b2c` into a
-//   named `hdc` local forces a `push esi`/frame (95.2% similarity);
-//   re-reading the global at every use drops the frame and gets to
-//   95.9% - the sole remaining diff is that the original does not reload
-//   eax on the GetDC-success path into the shared threshold check (this
-//   source's compiler reloads on both incoming edges of that merge).
+// ORIGINAL: 0x005F1150 ?OnPaletteChanged@Win@@QAAHPAXPAX@Z 0x005F1150-0x005F122B FILE
+// RULED-OUT: this inlines the same get_hdc()/release_hdc() logic already product-recovered in src/win.cpp (WinHdcRefCount/WinSharedHdc/ WinHdcSurface/WinHdcWindow at these same addresses) - no `call` to those symbols exists in the disassembly, so it is the compiler's own inlining, reproduced here by hand. No path sets `eax` before any of the several `ret`s (no `xor eax,eax` anywhere), so despite the `int` in the mangled name the body never manufactures a return value except at the one distinct early `ret` (0x5F120C), where returning the vtable slot's own `long` result reproduces the "value already sitting in eax" shape instead of adding one. Caching `*g_009b7b2c` into a named `hdc` local forces a `push esi`/frame (95.2% similarity); re-reading the global at every use drops the frame and gets to 95.9% - the sole remaining diff is that the original does not reload eax on the GetDC-success path into the shared threshold check (this source's compiler reloads on both incoming edges of that merge).
 // working copy - scaffold materialised by --work
-// name      ?OnPaletteChanged@Win@@QAAHPAXPAX@Z
 // size      219 bytes
-// spans     0x005F1150-0x005F122B
 // prototype int (__cdecl ?OnPaletteChanged@Win@@QAAHPAXPAX@Z)(HWND hWnd, LPARAM lParam)
 // callers   0   call targets   0
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064915C EXCLUDED S1
-// name      __mtinit
+// ORIGINAL: 0x0064915C __mtinit 0x0064915C-0x006491B0 EXCLUDED S1
 // size      84 bytes
-// spans     0x0064915C-0x006491B0
 // prototype 
 // callers   1   call targets   3
 // kind      library

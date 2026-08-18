@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00647067 EXCLUDED S1
-// name      __endthread
+// ORIGINAL: 0x00647067 __endthread 0x00647067-0x006470A6 EXCLUDED S1
 // size      63 bytes
-// spans     0x00647067-0x006470A6
 // prototype 
 // callers   5   call targets   3
 // kind      library

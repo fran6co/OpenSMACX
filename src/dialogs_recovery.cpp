@@ -45,10 +45,8 @@ Dialog *dialog_of(void *self) {
 /*
 Purpose: Fetch one item's text, from whichever widget this kind of dialog
          keeps its items in.
-ORIGINAL: 0x00612A70
-// name      ?item@Dialogs@@QAEHPADH@Z
+// ORIGINAL: 0x00612A70 ?item@Dialogs@@QAEHPADH@Z 0x00612A70-0x00612ABF
 // size      79 bytes
-// spans     0x00612A70-0x00612ABF
 // prototype int (__thiscall ?item@Dialogs@@QAEHPADH@Z)(Dialogs* this, int8* lpString, int position)
 // callers   72   call targets   2
 // kind      game
@@ -76,10 +74,8 @@ int Dialogs::item(char *text, int index) {
 
 /*
 Purpose: Count the items this kind of dialog holds.
-ORIGINAL: 0x00613740
-// name      ?get_num_items@Dialogs@@QAEHXZ
+// ORIGINAL: 0x00613740 ?get_num_items@Dialogs@@QAEHXZ 0x00613740-0x00613772
 // size      50 bytes
-// spans     0x00613740-0x00613772
 // prototype int (__thiscall ?get_num_items@Dialogs@@QAEHXZ)(Dialogs* this)
 // callers   4   call targets   0
 // kind      game
@@ -131,10 +127,8 @@ Purpose: Forward on right down to the embedded widget, but only when the
          active dialog is the sprite-box kind (8). `this` arrives at the interface subobject, so
          the discriminator sits 8 bytes before it and the target is reached by
          adjusting back 0x8C.
-ORIGINAL: 0x00612ED0
-// name      ?on_right_down@Dialogs@@QAEXHH@Z
+// ORIGINAL: 0x00612ED0 ?on_right_down@Dialogs@@QAEXHH@Z 0x00612ED0-0x00612EEE
 // size      30 bytes
-// spans     0x00612ED0-0x00612EEE
 // prototype void (__thiscall ?on_right_down@Dialogs@@QAEXHH@Z)(Dialogs* this, int xCoord, int yCoord)
 // callers   0   call targets   1
 // kind      game
@@ -157,10 +151,8 @@ Purpose: Forward on right double click to the embedded widget, but only when the
          active dialog is the sprite-box kind (8). `this` arrives at the interface subobject, so
          the discriminator sits 8 bytes before it and the target is reached by
          adjusting back 0x8C.
-ORIGINAL: 0x00612EF0
-// name      ?on_right_double_click@Dialogs@@QAEXHH@Z
+// ORIGINAL: 0x00612EF0 ?on_right_double_click@Dialogs@@QAEXHH@Z 0x00612EF0-0x00612F0E
 // size      30 bytes
-// spans     0x00612EF0-0x00612F0E
 // prototype void (__thiscall ?on_right_double_click@Dialogs@@QAEXHH@Z)(Dialogs* this, int xCoord, int yCoord)
 // callers   0   call targets   1
 // kind      game
@@ -183,10 +175,8 @@ Purpose: Forward on left up to the embedded widget, but only when the
          active dialog is the sprite-box kind (8). `this` arrives at the interface subobject, so
          the discriminator sits 8 bytes before it and the target is reached by
          adjusting back 0x8C.
-ORIGINAL: 0x00612F10
-// name      ?on_left_up@Dialogs@@QAEXHH@Z
+// ORIGINAL: 0x00612F10 ?on_left_up@Dialogs@@QAEXHH@Z 0x00612F10-0x00612F35
 // size      37 bytes
-// spans     0x00612F10-0x00612F35
 // prototype void (__thiscall ?on_left_up@Dialogs@@QAEXHH@Z)(Dialogs* this, int xCoord, int yCoord)
 // callers   0   call targets   1
 // kind      game
@@ -209,10 +199,8 @@ Purpose: Forward on right up to the embedded widget, but only when the
          active dialog is the sprite-box kind (8). `this` arrives at the interface subobject, so
          the discriminator sits 8 bytes before it and the target is reached by
          adjusting back 0x8C.
-ORIGINAL: 0x00612F40
-// name      ?on_right_up@Dialogs@@QAEXHH@Z
+// ORIGINAL: 0x00612F40 ?on_right_up@Dialogs@@QAEXHH@Z 0x00612F40-0x00612F5E
 // size      30 bytes
-// spans     0x00612F40-0x00612F5E
 // prototype void (__thiscall ?on_right_up@Dialogs@@QAEXHH@Z)(Dialogs* this, int xCoord, int yCoord)
 // callers   0   call targets   1
 // kind      game
@@ -235,10 +223,8 @@ Purpose: Forward on right click to the embedded widget, but only when the
          active dialog is the sprite-box kind (8). `this` arrives at the interface subobject, so
          the discriminator sits 8 bytes before it and the target is reached by
          adjusting back 0x8C.
-ORIGINAL: 0x00612F60
-// name      ?on_right_click@Dialogs@@QAEXHH@Z
+// ORIGINAL: 0x00612F60 ?on_right_click@Dialogs@@QAEXHH@Z 0x00612F60-0x00612F7E
 // size      30 bytes
-// spans     0x00612F60-0x00612F7E
 // prototype void (__thiscall ?on_right_click@Dialogs@@QAEXHH@Z)(Dialogs* this, int xCoord, int yCoord)
 // callers   0   call targets   1
 // kind      game
@@ -261,10 +247,8 @@ Purpose: Forward on scrolled to the embedded widget, but only when the
          active dialog is the list-box kind (2). `this` arrives at the interface subobject, so
          the discriminator sits 8 bytes before it and the target is reached by
          adjusting back 0x140.
-ORIGINAL: 0x00612F80
-// name      ?on_scrolled@Dialogs@@QAEXHH@Z
+// ORIGINAL: 0x00612F80 ?on_scrolled@Dialogs@@QAEXHH@Z 0x00612F80-0x00612FA0
 // size      32 bytes
-// spans     0x00612F80-0x00612FA0
 // prototype void (__thiscall ?on_scrolled@Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
 // callers   0   call targets   1
 // kind      game
@@ -287,10 +271,8 @@ Purpose: Forward on scrolling to the embedded widget, but only when the
          active dialog is the list-box kind (2). `this` arrives at the interface subobject, so
          the discriminator sits 8 bytes before it and the target is reached by
          adjusting back 0x140.
-ORIGINAL: 0x00612FA0
-// name      ?on_scrolling@Dialogs@@QAEXHH@Z
+// ORIGINAL: 0x00612FA0 ?on_scrolling@Dialogs@@QAEXHH@Z 0x00612FA0-0x00612FC0
 // size      32 bytes
-// spans     0x00612FA0-0x00612FC0
 // prototype void (__thiscall ?on_scrolling@Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
 // callers   0   call targets   1
 // kind      game
@@ -313,10 +295,8 @@ Purpose: Forward on mousewheel to the embedded widget, but only when the
          active dialog is the list-box kind (2). `this` arrives at the interface subobject, so
          the discriminator sits 8 bytes before it and the target is reached by
          adjusting back 0x140.
-ORIGINAL: 0x00612FC0
-// name      ?on_mousewheel@Dialogs@@QAEXH@Z
+// ORIGINAL: 0x00612FC0 ?on_mousewheel@Dialogs@@QAEXH@Z 0x00612FC0-0x00612FDB
 // size      27 bytes
-// spans     0x00612FC0-0x00612FDB
 // prototype void (__thiscall ?on_mousewheel@Dialogs@@QAEXH@Z)(Dialogs* this, int)
 // callers   0   call targets   1
 // kind      game
@@ -428,10 +408,8 @@ Purpose: Destroy a Dialogs. Stage the Dialogs tables into the GraphicWin/Win
          allocation base, so each staging overwrites the previous tables in
          the original's exact order. The original's C++ exception frame
          targets __CxxFrameHandler and is omitted as unreachable per policy.
-ORIGINAL: 0x00406910
-// name      ??1Dialogs@@QAE@XZ
+// ORIGINAL: 0x00406910 ??1Dialogs@@QAE@XZ 0x00406910-0x00406A74;0x006509C0-0x00650AAA
 // size      590 bytes
-// spans     0x00406910-0x00406A74;0x006509C0-0x00650AAA
 // prototype void (__thiscall ??1Dialogs@@QAE@XZ)(Dialogs* this)
 // callers   72   call targets   6
 // kind      game
@@ -497,10 +475,8 @@ Purpose: The compiler-generated scalar deleting destructor: run ~Dialogs, the
          Always returns the allocation base (this - 0x188), the original's
          EAX. The fixed +0xBA0/+0x188 subobject offsets are complete-object
          facts: this thunk is only ever entered on a most-derived Dialogs.
-ORIGINAL: 0x00407100
-// name      ??_GDialogs@@UAEPAXI@Z
+// ORIGINAL: 0x00407100 ??_GDialogs@@UAEPAXI@Z 0x00407100-0x00407141
 // size      65 bytes
-// spans     0x00407100-0x00407141
 // prototype void* (__thiscall ??_GDialogs@@UAEPAXI@Z)(Dialogs* this, unsigned int)
 // callers   0   call targets   4
 // kind      game

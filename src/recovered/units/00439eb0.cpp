@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00439EB0 FILE
-// name      ?delete_abil@DesignWin@@QAEXH@Z
+// ORIGINAL: 0x00439EB0 ?delete_abil@DesignWin@@QAEXH@Z 0x00439EB0-0x00439F18 FILE
 // size      104 bytes
-// spans     0x00439EB0-0x00439F18
 // prototype void (__thiscall ?delete_abil@DesignWin@@QAEXH@Z)(DesignWin* this, int)
 // callers   0   call targets   0
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005FBDB0 FILE
-// name      ?mouse_move@Menu@@QAEXHH@Z
+// ORIGINAL: 0x005FBDB0 ?mouse_move@Menu@@QAEXHH@Z 0x005FBDB0-0x005FBEFD FILE
 // size      333 bytes
-// spans     0x005FBDB0-0x005FBEFD
 // prototype void (__thiscall ?mouse_move@Menu@@QAEXHH@Z)(Menu* this, int, int)
 // callers   3   call targets   3
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005ED9C0 BYTE_EXACT FILE
-// name      ?on_redraw@Win@@QAEHXZ
+// ORIGINAL: 0x005ED9C0 ?on_redraw@Win@@QAEHXZ 0x005ED9C0-0x005ED9C5 FILE BYTE_EXACT
 // size      5 bytes
-// spans     0x005ED9C0-0x005ED9C5
 // prototype int (__thiscall ?on_redraw@Win@@QAEHXZ)(Win* this)
 // callers   0   call targets   0
 // kind      game

@@ -1,17 +1,7 @@
-// ORIGINAL: 0x0058F8B0 FILE
-// RULED-OUT: `a2 += 9` on the parameter itself (not a fresh local) to keep
-//   the original's `add`, plus a separate loop counter local so the
-//   text_get() loop matches its `mov esi,eax` / `dec esi` shape; a
-//   `#pragma function(strcpy)` to stop VC6 inlining the first strcpy into
-//   a `repne scasb`+copy sequence. Landed at 96.5% mnemonic match: the
-//   remaining two `lea`/`push` pairs near the strcpy calls come out in a
-//   different relative ORDER (both pushes happen, just one before instead
-//   of after the destination `lea`) - an instruction-scheduling choice
-//   that plain argument-order or temp-variable rewrites did not move.
+// ORIGINAL: 0x0058F8B0 ?get_noun_phrase@@YAPADHH@Z 0x0058F8B0-0x0058F9C9 FILE
+// RULED-OUT: `a2 += 9` on the parameter itself (not a fresh local) to keep the original's `add`, plus a separate loop counter local so the text_get() loop matches its `mov esi,eax` / `dec esi` shape; a `#pragma function(strcpy)` to stop VC6 inlining the first strcpy into a `repne scasb`+copy sequence. Landed at 96.5% mnemonic match: the remaining two `lea`/`push` pairs near the strcpy calls come out in a different relative ORDER (both pushes happen, just one before instead of after the destination `lea`) - an instruction-scheduling choice that plain argument-order or temp-variable rewrites did not move.
 // working copy - scaffold materialised by --work
-// name      ?get_noun_phrase@@YAPADHH@Z
 // size      281 bytes
-// spans     0x0058F8B0-0x0058F9C9
 // prototype
 // callers   9   call targets   7
 // kind      game

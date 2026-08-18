@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00416DE0 FILE
-// name      ?add_queue@BaseWin@@QAEXHH@Z
+// ORIGINAL: 0x00416DE0 ?add_queue@BaseWin@@QAEXHH@Z 0x00416DE0-0x00416FA8 FILE
 // size      456 bytes
-// spans     0x00416DE0-0x00416FA8
 // prototype void (__thiscall ?add_queue@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
 // callers   1   call targets   2
 // kind      game

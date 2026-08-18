@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064A722 EXCLUDED S1
-// name      __tosnan1
+// ORIGINAL: 0x0064A722 __tosnan1 0x0064A722-0x0064A74D EXCLUDED S1
 // size      43 bytes
-// spans     0x0064A722-0x0064A74D
 // prototype 
 // callers   0   call targets   0
 // kind      library

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005D63F0 FILE
-// name      ?on_redraw_nc@GraphicWin@@QAEXPAURECT@@H@Z
+// ORIGINAL: 0x005D63F0 ?on_redraw_nc@GraphicWin@@QAEXPAURECT@@H@Z 0x005D63F0-0x005D68B7 FILE
 // size      1223 bytes
-// spans     0x005D63F0-0x005D68B7
 // prototype void (__thiscall ?on_redraw_nc@GraphicWin@@QAEXPAURECT@@H@Z)(GraphicWin* this, RECT*, int)
 // callers   0   call targets   4
 // kind      game

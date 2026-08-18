@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004ACAE0 FILE
-// name      ?report_sat@@YAXXZ
+// ORIGINAL: 0x004ACAE0 ?report_sat@@YAXXZ 0x004ACAE0-0x004ACB2C FILE
 // size      76 bytes
-// spans     0x004ACAE0-0x004ACB2C
 // prototype 
 // callers   2   call targets   1
 // kind      game

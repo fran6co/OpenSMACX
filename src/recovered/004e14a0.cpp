@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004E14A0 BYTE_EXACT
-// name      ?editor_rockiness@Console@@QAEXXZ
+// ORIGINAL: 0x004E14A0 ?editor_rockiness@Console@@QAEXXZ 0x004E14A0-0x004E14C8 BYTE_EXACT
 // size      40 bytes
-// spans     0x004E14A0-0x004E14C8
 // prototype void (__thiscall ?editor_rockiness@Console@@QAEXXZ)(Console* this)
 // callers   1   call targets   4
 // kind      game

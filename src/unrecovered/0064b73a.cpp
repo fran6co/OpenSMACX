@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064B73A EXCLUDED S1
-// name      _xcptlookup
+// ORIGINAL: 0x0064B73A _xcptlookup 0x0064B73A-0x0064B774 EXCLUDED S1
 // size      58 bytes
-// spans     0x0064B73A-0x0064B774
 // prototype 
 // callers   1   call targets   0
 // kind      library

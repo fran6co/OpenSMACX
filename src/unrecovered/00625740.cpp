@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00625740 BYTE_EXACT FILE
-// name      ??1Random@@QAE@XZ
+// ORIGINAL: 0x00625740 ??1Random@@QAE@XZ 0x00625740-0x00625747 FILE BYTE_EXACT
 // size      7 bytes
-// spans     0x00625740-0x00625747
 // prototype void (__thiscall ??1Random@@QAE@XZ)(Random* this)
 // callers   5   call targets   0
 // kind      

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0043BF50 FILE
-// name      ?construct_vehicle@DesignWin@@QAEXXZ
+// ORIGINAL: 0x0043BF50 ?construct_vehicle@DesignWin@@QAEXXZ 0x0043BF50-0x0043C062 FILE
 // size      274 bytes
-// spans     0x0043BF50-0x0043C062
 // prototype void (__thiscall ?construct_vehicle@DesignWin@@QAEXXZ)(DesignWin* this)
 // callers   1   call targets   5
 // kind      game

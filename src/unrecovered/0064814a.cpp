@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064814A EXCLUDED S1
-// name      ___sbh_alloc_block
+// ORIGINAL: 0x0064814A ___sbh_alloc_block 0x0064814A-0x00648453 EXCLUDED S1
 // size      777 bytes
-// spans     0x0064814A-0x00648453
 // prototype 
 // callers   3   call targets   2
 // kind      library

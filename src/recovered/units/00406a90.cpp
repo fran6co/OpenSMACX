@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00406A90 BYTE_EXACT FILE
-// name      sub_406a90
+// ORIGINAL: 0x00406A90 sub_406a90 0x00406A90-0x00406AE3 FILE BYTE_EXACT
 // size      83 bytes
-// spans     0x00406A90-0x00406AE3
 // prototype 
 // callers   9   call targets   1
 // kind      game

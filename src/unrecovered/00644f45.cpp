@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00644F45 EXCLUDED S1
-// name      ?_JumpToContinuation@@YGXPAXPAUEHRegistrationNode@@@Z
+// ORIGINAL: 0x00644F45 ?_JumpToContinuation@@YGXPAXPAUEHRegistrationNode@@@Z 0x00644F45-0x00644F79 EXCLUDED S1
 // size      52 bytes
-// spans     0x00644F45-0x00644F79
 // prototype 
 // callers   1   call targets   0
 // kind      library

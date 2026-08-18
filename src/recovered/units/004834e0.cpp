@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004834E0 FILE
-// name      ??1NetWin@@QAE@XZ
+// ORIGINAL: 0x004834E0 ??1NetWin@@QAE@XZ 0x004834E0-0x004837B4;0x00656650-0x0065673F FILE
 // size      963 bytes
-// spans     0x004834E0-0x004837B4;0x00656650-0x0065673F
 // prototype void (__thiscall ??1NetWin@@QAE@XZ)(NetWin* this)
 // callers   1   call targets   14
 // kind      game

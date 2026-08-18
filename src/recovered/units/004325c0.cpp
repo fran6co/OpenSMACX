@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004325C0 FILE
-// name      ??1StringBox@@QAE@XZ
+// ORIGINAL: 0x004325C0 ??1StringBox@@QAE@XZ 0x004325C0-0x00432713;0x006533B0-0x0065341D FILE
 // size      448 bytes
-// spans     0x004325C0-0x00432713;0x006533B0-0x0065341D
 // prototype void (__thiscall ??1StringBox@@QAE@XZ)(StringBox* this)
 // callers   1   call targets   6
 // kind      game

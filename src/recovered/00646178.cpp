@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00646178 BYTE_EXACT
-// name      __fread
+// ORIGINAL: 0x00646178 __fread 0x00646178-0x006461A7 BYTE_EXACT
 // size      47 bytes
-// spans     0x00646178-0x006461A7
 // prototype int (__cdecl __fread)(void* DstBuf, size_t ElementSize, size_t Count, FILE* File)
 // callers   21   call targets   3
 // kind      game

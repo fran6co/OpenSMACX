@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004D8A70 FILE
-// name      ?automate@Console@@QAEXHH@Z
+// ORIGINAL: 0x004D8A70 ?automate@Console@@QAEXHH@Z 0x004D8A70-0x004D8CC9 FILE
 // size      601 bytes
-// spans     0x004D8A70-0x004D8CC9
 // prototype void (__thiscall ?automate@Console@@QAEXHH@Z)(Console* this, int vehID, uint32_t orderAutoType)
 // callers   3   call targets   7
 // kind      game

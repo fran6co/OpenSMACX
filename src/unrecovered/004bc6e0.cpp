@@ -1,12 +1,7 @@
-// ORIGINAL: 0x004BC6E0 FILE
-// RULED-OUT: full structural transcription of both scoring loops and the
-//            10x tut_win/client_to_screen chain (from raw disasm, cross-checked
-//            against Ghidra); diverges at instr #33 (push vs mov) - register
-//            allocation for the phase-1 direction-search loop, not a logic gap.
+// ORIGINAL: 0x004BC6E0 ?tour@TutWin@@QAEXXZ 0x004BC6E0-0x004BDCBE FILE
+// RULED-OUT: full structural transcription of both scoring loops and the 10x tut_win/client_to_screen chain (from raw disasm, cross-checked against Ghidra); diverges at instr #33 (push vs mov) - register allocation for the phase-1 direction-search loop, not a logic gap.
 // working copy - scaffold materialised by --work
-// name      ?tour@TutWin@@QAEXXZ
 // size      5598 bytes
-// spans     0x004BC6E0-0x004BDCBE
 // prototype void (__thiscall ?tour@TutWin@@QAEXXZ)(TutWin* this)
 // callers   5   call targets   29
 // kind      game

@@ -1,25 +1,6 @@
-// ORIGINAL: 0x0054C560 FILE
-// RULED-OUT: MISMATCH #16 'push' vs 'xor' (framed build, sim 0.78). SEH dialog
-//            builder: `Popup popup;` real automatic object using confirmed
-//            named members (scroll_, scroll_.flat_button_left_/right_, spot_,
-//            sprite_, dialogs_ cast to Dialogs*) plus popup-base-relative
-//            reinterpret_casts for the remaining teardown targets whose exact
-//            field identity in BasePop I could not confirm (two StringStruct-
-//            like locals torn down via the ORIGINAL()/original_method(0x4066C0)
-//            thiscall shim, matching Dialog::destroy()'s close_with_tables
-//            precedent; two more FlatButtons; one Heap). Offsets computed as
-//            (0x5388 - ebp-relative magnitude) from the disassembly's own
-//            `lea ecx,[ebp-N]` targets, not guessed.
-//            STRUCTURE (BasePop, confirmed against 0047C970's identical
-//            layout): flat_button1_/flat_button2_, sprite_, spot_, and
-//            dialogs_[0xC94] are real named members; Popup adds `Scroll
-//            scroll_` at offset 0x3230, and Scroll's own flat_button_left_/
-//            right_ sit at 0xAAC/0x15F8 within it - all match the trailer
-//            thunks (`add ecx,0xaac`/`0x15f8`) in both this function and
-//            0047C970 byte-for-byte.
-// name      ?diplomacy_menu@@YAHHH@Z
+// ORIGINAL: 0x0054C560 ?diplomacy_menu@@YAHHH@Z 0x0054C560-0x0054CB46;0x0065FA01-0x0065FAE9 FILE
+// RULED-OUT: MISMATCH #16 'push' vs 'xor' (framed build, sim 0.78). SEH dialog builder: `Popup popup;` real automatic object using confirmed named members (scroll_, scroll_.flat_button_left_/right_, spot_, sprite_, dialogs_ cast to Dialogs*) plus popup-base-relative reinterpret_casts for the remaining teardown targets whose exact field identity in BasePop I could not confirm (two StringStruct- like locals torn down via the ORIGINAL()/original_method(0x4066C0) thiscall shim, matching Dialog::destroy()'s close_with_tables precedent; two more FlatButtons; one Heap). Offsets computed as (0x5388 - ebp-relative magnitude) from the disassembly's own `lea ecx,[ebp-N]` targets, not guessed. STRUCTURE (BasePop, confirmed against 0047C970's identical layout): flat_button1_/flat_button2_, sprite_, spot_, and dialogs_[0xC94] are real named members; Popup adds `Scroll scroll_` at offset 0x3230, and Scroll's own flat_button_left_/ right_ sit at 0xAAC/0x15F8 within it - all match the trailer thunks (`add ecx,0xaac`/`0x15f8`) in both this function and 0047C970 byte-for-byte.
 // size      1742 bytes
-// spans     0x0054C560-0x0054CB46;0x0065FA01-0x0065FAE9
 // prototype 
 // callers   1   call targets   28
 // kind      game

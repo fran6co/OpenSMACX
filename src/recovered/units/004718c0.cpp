@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004718C0 FILE
-// name      ?on_selected@MessageWin@@QAEXHH@Z
+// ORIGINAL: 0x004718C0 ?on_selected@MessageWin@@QAEXHH@Z 0x004718C0-0x00471D36;0x00655F60-0x00655F75 FILE
 // size      1163 bytes
-// spans     0x004718C0-0x00471D36;0x00655F60-0x00655F75
 // prototype void (__thiscall ?on_selected@MessageWin@@QAEXHH@Z)(MessageWin* this, int, int)
 // callers   1   call targets   16
 // kind      game

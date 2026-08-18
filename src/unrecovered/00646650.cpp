@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00646650 EXCLUDED S1
-// name      __CIatan
+// ORIGINAL: 0x00646650 __CIatan 0x00646650-0x00646664 EXCLUDED S1
 // size      20 bytes
-// spans     0x00646650-0x00646664
 // prototype 
 // callers   0   call targets   2
 // kind      library

@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00477940 FILE
+// ORIGINAL: 0x00477940 ?mon_winning_unify@@YAXHH@Z 0x00477940-0x004779C7 FILE
 // working copy - scaffold materialised by --work
-// name      ?mon_winning_unify@@YAXHH@Z
 // size      135 bytes
-// spans     0x00477940-0x004779C7
 // prototype 
 // callers   1   call targets   2
 // kind      game

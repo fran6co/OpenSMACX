@@ -21,10 +21,8 @@
 
 /*
 Purpose: Close the debug window by clearing its single active flag.
-ORIGINAL: 0x005C98E0 BYTE_EXACT
-// name      ?close@MultiDebug@@QAEXXZ
+// ORIGINAL: 0x005C98E0 ?close@MultiDebug@@QAEXXZ 0x005C98E0-0x005C98EB BYTE_EXACT
 // size      11 bytes
-// spans     0x005C98E0-0x005C98EB
 // prototype void (__thiscall ?close@MultiDebug@@QAEXXZ)(MultiDebug* this)
 // callers   1   call targets   0
 // kind      game
@@ -43,10 +41,8 @@ void __fastcall multi_debug_close_redirect(MultiDebug *self, void *) {
 
 /*
 Purpose: Forward the timer tick to the object's own virtual slot 62.
-ORIGINAL: 0x005C9900 BYTE_EXACT
-// name      ?timer_callback_daemon@MultiDebug@@QAAXH@Z
+// ORIGINAL: 0x005C9900 ?timer_callback_daemon@MultiDebug@@QAAXH@Z 0x005C9900-0x005C9914 BYTE_EXACT
 // size      20 bytes
-// spans     0x005C9900-0x005C9914
 // prototype 
 // callers   0   call targets   0
 // kind      game

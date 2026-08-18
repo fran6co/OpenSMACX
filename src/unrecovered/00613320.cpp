@@ -1,15 +1,7 @@
-// ORIGINAL: 0x00613320 FILE
-// RULED-OUT: 208 vs 210 bytes; the RadioButton::close() receiver compiles
-//            to `mov ecx,eax; call` instead of a direct `lea ecx,[..]; call`.
-//            Tried a shared base-address local, no local at all, and a
-//            named typed-pointer local for the receiver; all three landed
-//            on the same divergence, so it looks like inherent codegen for
-//            a computed `this` into a non-virtual thiscall call, not a
-//            source-form choice.
+// ORIGINAL: 0x00613320 ?init@Dialogs@@QAEHHHHHH@Z 0x00613320-0x006133F2 FILE
+// RULED-OUT: 208 vs 210 bytes; the RadioButton::close() receiver compiles to `mov ecx,eax; call` instead of a direct `lea ecx,[..]; call`. Tried a shared base-address local, no local at all, and a named typed-pointer local for the receiver; all three landed on the same divergence, so it looks like inherent codegen for a computed `this` into a non-virtual thiscall call, not a source-form choice.
 // working copy - scaffold materialised by --work
-// name      ?init@Dialogs@@QAEHHHHHH@Z
 // size      210 bytes
-// spans     0x00613320-0x006133F2
 // prototype int (__thiscall ?init@Dialogs@@QAEHHHHHH@Z)(Dialogs* this, int, int, int, int, int)
 // callers   0   call targets   6
 // kind      game

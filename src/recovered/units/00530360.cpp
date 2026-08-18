@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00530360 BYTE_EXACT FILE
-// name      ?net_tasks@NetDaemon@@QAEXXZ
+// ORIGINAL: 0x00530360 ?net_tasks@NetDaemon@@QAEXXZ 0x00530360-0x005303A9 FILE BYTE_EXACT
 // size      73 bytes
-// spans     0x00530360-0x005303A9
 // prototype void (__thiscall ?net_tasks@NetDaemon@@QAEXXZ)(NetDaemon* this)
 // callers   6   call targets   5
 // kind      game

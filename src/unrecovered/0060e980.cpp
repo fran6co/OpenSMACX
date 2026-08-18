@@ -1,8 +1,6 @@
-// ORIGINAL: 0x0060E980 FILE
+// ORIGINAL: 0x0060E980 ?item@CheckBox@@QAEHPADHH@Z 0x0060E980-0x0060EA0D FILE
 // working copy - scaffold materialised by --work
-// name      ?item@CheckBox@@QAEHPADHH@Z
 // size      141 bytes
-// spans     0x0060E980-0x0060EA0D
 // prototype int (__thiscall ?item@CheckBox@@QAEHPADHH@Z)(CheckBox* this, int8*, int, int)
 // callers   2   call targets   1
 // kind      game

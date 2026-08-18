@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005FECF0 BYTE_EXACT FILE
-// name      ?close_palette_class@Palette@@QAAXXZ
+// ORIGINAL: 0x005FECF0 ?close_palette_class@Palette@@QAAXXZ 0x005FECF0-0x005FED0B FILE BYTE_EXACT
 // size      27 bytes
-// spans     0x005FECF0-0x005FED0B
 // prototype 
 // callers   1   call targets   0
 // kind      game

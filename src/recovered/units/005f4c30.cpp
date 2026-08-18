@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005F4C30 FILE
-// name      ?redraw_nc_buffer@Win@@QAEHH@Z
+// ORIGINAL: 0x005F4C30 ?redraw_nc_buffer@Win@@QAEHH@Z 0x005F4C30-0x005F4C82 FILE
 // size      82 bytes
-// spans     0x005F4C30-0x005F4C82
 // prototype int (__thiscall ?redraw_nc_buffer@Win@@QAEHH@Z)(Win* this, int)
 // callers   1   call targets   0
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0050E890
-// name      ?auto_play_callback@@YAXH@Z
+// ORIGINAL: 0x0050E890 ?auto_play_callback@@YAXH@Z 0x0050E890-0x0050E97E
 // size      238 bytes
-// spans     0x0050E890-0x0050E97E
 // prototype
 // callers   0   call targets   2
 // kind      game

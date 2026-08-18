@@ -1,13 +1,7 @@
-// ORIGINAL: 0x00469CA0 FILE
-// RULED-OUT: faithful transcription of the 3-loop terrain/vehicle/overlay
-//   scan (matches through instr #28, incl. the vtable-adjusted GraphicWin::fill
-//   call and the loop-bound setup); diverges at #29 on i&1 parity scheduling
-//   in the row/col base computation - tried hoisting `i&1` to a temp first,
-//   no change. Not chased further; large triple-loop function.
+// ORIGINAL: 0x00469CA0 ?gen_map@MapWin@@QAEXHH@Z 0x00469CA0-0x0046A292 FILE
+// RULED-OUT: faithful transcription of the 3-loop terrain/vehicle/overlay scan (matches through instr #28, incl. the vtable-adjusted GraphicWin::fill call and the loop-bound setup); diverges at #29 on i&1 parity scheduling in the row/col base computation - tried hoisting `i&1` to a temp first, no change. Not chased further; large triple-loop function.
 // working copy - scaffold materialised by --work
-// name      ?gen_map@MapWin@@QAEXHH@Z
 // size      1522 bytes
-// spans     0x00469CA0-0x0046A292
 // prototype void (__thiscall ?gen_map@MapWin@@QAEXHH@Z)(MapWin* this, int, int)
 // callers   1   call targets   9
 // kind      game

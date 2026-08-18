@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00496710 FILE
-// name      ??1QuayleWin@@QAE@XZ
+// ORIGINAL: 0x00496710 ??1QuayleWin@@QAE@XZ 0x00496710-0x00496801;0x00658C40-0x00658CA8 FILE
 // size      345 bytes
-// spans     0x00496710-0x00496801;0x00658C40-0x00658CA8
 // prototype void (__thiscall ??1QuayleWin@@QAE@XZ)(QuayleWin* this)
 // callers   1   call targets   7
 // kind      game

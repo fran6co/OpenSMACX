@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005FAEE0 BYTE_EXACT FILE
-// name      ?set_def_font@Menu@@QAAXPAUFont@@@Z
+// ORIGINAL: 0x005FAEE0 ?set_def_font@Menu@@QAAXPAUFont@@@Z 0x005FAEE0-0x005FAEEE;0x005F0520-0x005F0535 FILE BYTE_EXACT
 // size      35 bytes
-// spans     0x005FAEE0-0x005FAEEE;0x005F0520-0x005F0535
 // prototype 
 // callers   1   call targets   0
 // kind      game

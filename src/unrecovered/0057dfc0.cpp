@@ -1,8 +1,6 @@
-// ORIGINAL: 0x0057DFC0 FILE
+// ORIGINAL: 0x0057DFC0 ?is_bunged@@YA_NHHHHHH@Z 0x0057DFC0-0x0057E037 FILE
 // working copy - scaffold materialised by --work
-// name      ?is_bunged@@YA_NHHHHHH@Z
 // size      119 bytes
-// spans     0x0057DFC0-0x0057E037
 // prototype 
 // callers   1   call targets   0
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006474E0 EXCLUDED S1
-// name      _memcpy_0
+// ORIGINAL: 0x006474E0 _memcpy_0 0x006474E0-0x00647815 EXCLUDED S1
 // size      821 bytes
-// spans     0x006474E0-0x00647815
 // prototype 
 // callers   7   call targets   0
 // kind      library

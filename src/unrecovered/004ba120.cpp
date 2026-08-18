@@ -1,16 +1,7 @@
-// ORIGINAL: 0x004BA120 FILE
-// RULED-OUT: real embedded Spot/Font/Caviar value members with member-init-list
-//            or auto (reverse-declaration-order) destruction - the trailing
-//            Caviar::close() runs AFTER all four dtor calls, but automatic
-//            member destruction always runs AFTER a hand-written body, so it
-//            can't reproduce a close() that comes last; used raw offset casts
-//            instead (0x15e0 Spot, 0x1580/0x1558/0x1530 Font x3, 0x30 Caviar).
-//            First divergence at #2 is the fs:[0] EH frame prologue, which VC6
-//            won't synthesise around hand-written ->~T() calls (known wall).
+// ORIGINAL: 0x004BA120 ??1StatusWin@@QAE@XZ 0x004BA120-0x004BA19C;0x00659A20-0x00659A5F FILE
+// RULED-OUT: real embedded Spot/Font/Caviar value members with member-init-list or auto (reverse-declaration-order) destruction - the trailing Caviar::close() runs AFTER all four dtor calls, but automatic member destruction always runs AFTER a hand-written body, so it can't reproduce a close() that comes last; used raw offset casts instead (0x15e0 Spot, 0x1580/0x1558/0x1530 Font x3, 0x30 Caviar). First divergence at #2 is the fs:[0] EH frame prologue, which VC6 won't synthesise around hand-written ->~T() calls (known wall).
 // working copy - scaffold materialised by --work
-// name      ??1StatusWin@@QAE@XZ
 // size      187 bytes
-// spans     0x004BA120-0x004BA19C;0x00659A20-0x00659A5F
 // prototype void (__thiscall ??1StatusWin@@QAE@XZ)(StatusWin* this)
 // callers   0   call targets   3
 // kind      game

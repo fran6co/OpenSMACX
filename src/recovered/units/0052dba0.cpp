@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0052DBA0 FILE
-// name      ?current_server@@YAHXZ
+// ORIGINAL: 0x0052DBA0 ?current_server@@YAHXZ 0x0052DBA0-0x0052DBE6 FILE
 // size      70 bytes
-// spans     0x0052DBA0-0x0052DBE6
 // prototype 
 // callers   3   call targets   0
 // kind      game

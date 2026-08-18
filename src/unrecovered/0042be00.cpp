@@ -1,8 +1,6 @@
-// ORIGINAL: 0x0042BE00 FILE
+// ORIGINAL: 0x0042BE00 ?UNK5@Datalink@@QAEXXZ 0x0042BE00-0x0042BE9D FILE
 // working copy - scaffold materialised by --work
-// name      ?UNK5@Datalink@@QAEXXZ
 // size      157 bytes
-// spans     0x0042BE00-0x0042BE9D
 // prototype void (__thiscall ?UNK5@Datalink@@QAEXXZ)(Datalink* this)
 // callers   0   call targets   3
 // kind      game

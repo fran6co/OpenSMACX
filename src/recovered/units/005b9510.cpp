@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005B9510 BYTE_EXACT FILE
-// name      ?stack_kill@@YAXH@Z
+// ORIGINAL: 0x005B9510 ?stack_kill@@YAXH@Z 0x005B9510-0x005B9577 FILE BYTE_EXACT
 // size      103 bytes
-// spans     0x005B9510-0x005B9577
 // prototype void (__cdecl ?stack_kill@@YAXH@Z)(int vehID)
 // callers   5   call targets   1
 // kind      game

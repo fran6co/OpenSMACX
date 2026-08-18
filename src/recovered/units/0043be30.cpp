@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0043BE30 FILE
-// name      ?select_name@DesignWin@@QAEXXZ
+// ORIGINAL: 0x0043BE30 ?select_name@DesignWin@@QAEXXZ 0x0043BE30-0x0043BF4C FILE
 // size      284 bytes
-// spans     0x0043BE30-0x0043BF4C
 // prototype void (__thiscall ?select_name@DesignWin@@QAEXXZ)(DesignWin* this)
 // callers   1   call targets   7
 // kind      game

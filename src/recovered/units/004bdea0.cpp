@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004BDEA0 BYTE_EXACT FILE
-// name      ?draw_arrow@TutWin@@QAEXXZ
+// ORIGINAL: 0x004BDEA0 ?draw_arrow@TutWin@@QAEXXZ 0x004BDEA0-0x004BDF16 FILE BYTE_EXACT
 // size      118 bytes
-// spans     0x004BDEA0-0x004BDF16
 // prototype void (__thiscall ?draw_arrow@TutWin@@QAEXXZ)(TutWin* this)
 // callers   3   call targets   1
 // kind      game

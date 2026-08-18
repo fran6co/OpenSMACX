@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006282E0 FILE
-// name      sub_6282e0
+// ORIGINAL: 0x006282E0 sub_6282e0 0x006282E0-0x00628377 FILE
 // size      151 bytes
-// spans     0x006282E0-0x00628377
 // prototype 
 // callers   2   call targets   0
 // kind      

@@ -1,8 +1,6 @@
-// ORIGINAL: 0x004DA870 FILE
+// ORIGINAL: 0x004DA870 ?UNK3@DipEdit@@QAEXH@Z 0x004DA870-0x004DA8F4 FILE
 // working copy - scaffold materialised by --work
-// name      ?UNK3@DipEdit@@QAEXH@Z
 // size      132 bytes
-// spans     0x004DA870-0x004DA8F4
 // prototype void (__thiscall ?UNK3@DipEdit@@QAEXH@Z)(DipEdit* this, int)
 // callers   1   call targets   2
 // kind      game

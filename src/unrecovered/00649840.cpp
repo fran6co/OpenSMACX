@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00649840 EXCLUDED S1
-// name      __setdefaultprecision
+// ORIGINAL: 0x00649840 __setdefaultprecision 0x00649840-0x00649852 EXCLUDED S1
 // size      18 bytes
-// spans     0x00649840-0x00649852
 // prototype 
 // callers   1   call targets   1
 // kind      library

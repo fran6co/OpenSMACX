@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005AD9A0 BYTE_EXACT
-// name      ?close@ReplayWin@@QAEXXZ
+// ORIGINAL: 0x005AD9A0 ?close@ReplayWin@@QAEXXZ 0x005AD9A0-0x005AD9E0 BYTE_EXACT
 // size      64 bytes
-// spans     0x005AD9A0-0x005AD9E0
 // prototype void (__thiscall ?close@ReplayWin@@QAEXXZ)(ReplayWin* this)
 // callers   0   call targets   3
 // kind      game

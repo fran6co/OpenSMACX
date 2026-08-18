@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00505D60 BYTE_EXACT FILE
-// name      ??__Eg_BOOM_BUFFERS2@@YAXXZ
+// ORIGINAL: 0x00505D60 ??__Eg_BOOM_BUFFERS2@@YAXXZ 0x00505D60-0x00505D77 FILE BYTE_EXACT
 // size      23 bytes
-// spans     0x00505D60-0x00505D77
 // prototype 
 // callers   0   call targets   1
 // kind      game

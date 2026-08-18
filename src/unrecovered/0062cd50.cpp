@@ -1,21 +1,7 @@
-// ORIGINAL: 0x0062CD50 FILE
-// RULED-OUT: nullary/int-arg per the contract/IDA guess - no stack param
-//            reads exist, so kept nullary; DirectDraw init sequence with
-//            slots {0,2,4,5,6,8,11,12,20,21,31} matches the real
-//            IDirectDraw2/IDirectDrawSurface vtable orders exactly
-//            (QueryInterface/Release/CreateClipper/CreatePalette/
-//            CreateSurface/EnumDisplayModes/GetCaps/GetDisplayMode/
-//            SetCooperativeLevel/SetDisplayMode/SetPalette), confirming
-//            the derived arg counts per push-site. One value ([esp+0x90],
-//            Ghidra's unaff_EDI) reads stack memory past this function's
-//            own frame in the original and is not reproducible in C;
-//            replaced with a zero-initialized local. Frame layout differs
-//            from instruction #0 given the size/local count; not pursued
-//            further.
+// ORIGINAL: 0x0062CD50 sub_62cd50 0x0062CD50-0x0062D0ED FILE
+// RULED-OUT: nullary/int-arg per the contract/IDA guess - no stack param reads exist, so kept nullary; DirectDraw init sequence with slots {0,2,4,5,6,8,11,12,20,21,31} matches the real IDirectDraw2/IDirectDrawSurface vtable orders exactly (QueryInterface/Release/CreateClipper/CreatePalette/ CreateSurface/EnumDisplayModes/GetCaps/GetDisplayMode/ SetCooperativeLevel/SetDisplayMode/SetPalette), confirming the derived arg counts per push-site. One value ([esp+0x90], Ghidra's unaff_EDI) reads stack memory past this function's own frame in the original and is not reproducible in C; replaced with a zero-initialized local. Frame layout differs from instruction #0 given the size/local count; not pursued further.
 // working copy - scaffold materialised by --work
-// name      sub_62cd50
 // size      925 bytes
-// spans     0x0062CD50-0x0062D0ED
 // prototype 
 // callers   0   call targets   3
 // kind      game

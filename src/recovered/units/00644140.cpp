@@ -1,9 +1,7 @@
-// ORIGINAL: 0x00644140 FILE
-// name      _inflate_codes_new
+// ORIGINAL: 0x00644140 _inflate_codes_new 0x00644140-0x00644179 FILE
 // CORRECTED from sub_644140
 //   zlib 1.0.2 infcodes.c, 57 bytes, byte-exact from upstream
 // size      57 bytes
-// spans     0x00644140-0x00644179
 // prototype 
 // callers   1   call targets   0
 // kind      game

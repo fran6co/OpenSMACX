@@ -1,16 +1,7 @@
-// ORIGINAL: 0x005EEDC0 FILE
-// RULED-OUT: `int result = 0;` declared after the recursion block (0.944
-//            sim, edi push/xor split from the prologue) vs hoisted to the
-//            top before the flags check (0.96 sim, matches original's
-//            push-edi-then-xor ordering more closely, one push/xor pair
-//            still swapped). Landed the hoisted form. Recursive call's
-//            `this` is a COMPUTED pointer (field_D0->field_4, or 0), not
-//            the same `this` - matches the disassembly's explicit ecx
-//            reload, which ghidra's decompilation silently dropped.
+// ORIGINAL: 0x005EEDC0 ?key_up_event@Win@@QAEHH@Z 0x005EEDC0-0x005EEE67 FILE
+// RULED-OUT: `int result = 0;` declared after the recursion block (0.944 sim, edi push/xor split from the prologue) vs hoisted to the top before the flags check (0.96 sim, matches original's push-edi-then-xor ordering more closely, one push/xor pair still swapped). Landed the hoisted form. Recursive call's `this` is a COMPUTED pointer (field_D0->field_4, or 0), not the same `this` - matches the disassembly's explicit ecx reload, which ghidra's decompilation silently dropped.
 // working copy - scaffold materialised by --work
-// name      ?key_up_event@Win@@QAEHH@Z
 // size      167 bytes
-// spans     0x005EEDC0-0x005EEE67
 // prototype int (__thiscall ?key_up_event@Win@@QAEHH@Z)(Win* this, int)
 // callers   2   call targets   1
 // kind      game

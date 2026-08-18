@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005156A0 BYTE_EXACT FILE
-// name      ?toggle_grid@Console@@QAEXXZ
+// ORIGINAL: 0x005156A0 ?toggle_grid@Console@@QAEXXZ 0x005156A0-0x005156EF FILE BYTE_EXACT
 // size      79 bytes
-// spans     0x005156A0-0x005156EF
 // prototype void (__thiscall ?toggle_grid@Console@@QAEXXZ)(Console* this)
 // callers   0   call targets   4
 // kind      game

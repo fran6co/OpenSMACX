@@ -1,39 +1,12 @@
-// ORIGINAL: 0x005947C0 FILE
-// DEFERRED: largest address in this batch (6708 instructions, no jump
-//     table) and its frame confirms the SAME object graph as
-//     0x005BB000/tech_achieved in this batch, offset-for-offset:
-//       [ebp-0x5410] BasePop,GraphicWin,Popup   [ebp-0x49B4]/[ebp-0x3E68]
-//       FlatButton (Popup's own two, gap 0xB4C = sizeof(FlatButton)
-//       each)   [ebp-0x32F8] Sprite   [ebp-0x31F8] ListBox
-//       [ebp-0x30B8] GraphicWin   [ebp-0x26A0] Dialog   [ebp-0x2378]
-//       Spot   [ebp-0x21E0] GraphicWin (a second, separate Scroll)
-//       [ebp-0x1734]/[ebp-0xBE8] FlatButton,BaseButton (that Scroll's
-//       own two buttons) - plus [eax+0x1C] CheckBox and [eax+0x8C]
-//       EditGroup/SpriteBox reached through a register, matching
-//       tech_achieved's DialogEntry-linked-list widget teardown exactly.
-//     tech_achieved's own DEFERRED note (this batch) traced that ListBox/
-//     GraphicWin/Dialog cluster to a hand-inlined `Dialogs::Dialogs()`
-//     doing real vbtable-relative virtual-base placement - i.e.
-//     `class Dialogs : public ListBox` sharing a GraphicWin virtual base,
-//     which the flattened `Dialogs` class this file's scaffold emits
-//     (a direct member, not `: ListBox`) cannot reproduce. Whatever
-//     fraction of THIS function's Popup/Dialogs teardown block hits that
-//     same inlined constructor is blocked the same way; the rest is
-//     dispatch-heavy multiplayer/combat logic
-//     (?parse_says@@ 36x, ?pop@NetMsg@@ 28x, ?stack_check@@ 20x,
-//     ?speed@@ 18x, ?draw_tile@@ 12x, ?has_abil@@ 10x, ?veh_skip@@ 8x,
-//     ?synch_veh@@/?await_synch@NetDaemon@@ 7x, _rand 7x) with the same
-//     low-repetition/bespoke-argument risk profile flagged on
-//     0x00561080/enemy_strategy in this batch.
+// ORIGINAL: 0x005947C0 ?order_veh@@YAHHHH@Z 0x005947C0-0x0059A1AB;0x00660F47-0x00661200 FILE
+// DEFERRED: largest address in this batch (6708 instructions, no jump table) and its frame confirms the SAME object graph as 0x005BB000/tech_achieved in this batch, offset-for-offset: [ebp-0x5410] BasePop,GraphicWin,Popup   [ebp-0x49B4]/[ebp-0x3E68] FlatButton (Popup's own two, gap 0xB4C = sizeof(FlatButton) each)   [ebp-0x32F8] Sprite   [ebp-0x31F8] ListBox [ebp-0x30B8] GraphicWin   [ebp-0x26A0] Dialog   [ebp-0x2378] Spot   [ebp-0x21E0] GraphicWin (a second, separate Scroll) [ebp-0x1734]/[ebp-0xBE8] FlatButton,BaseButton (that Scroll's own two buttons) - plus [eax+0x1C] CheckBox and [eax+0x8C] EditGroup/SpriteBox reached through a register, matching tech_achieved's DialogEntry-linked-list widget teardown exactly. tech_achieved's own DEFERRED note (this batch) traced that ListBox/ GraphicWin/Dialog cluster to a hand-inlined `Dialogs::Dialogs()` doing real vbtable-relative virtual-base placement - i.e. `class Dialogs : public ListBox` sharing a GraphicWin virtual base, which the flattened `Dialogs` class this file's scaffold emits (a direct member, not `: ListBox`) cannot reproduce. Whatever fraction of THIS function's Popup/Dialogs teardown block hits that same inlined constructor is blocked the same way; the rest is dispatch-heavy multiplayer/combat logic (?parse_says@@ 36x, ?pop@NetMsg@@ 28x, ?stack_check@@ 20x, ?speed@@ 18x, ?draw_tile@@ 12x, ?has_abil@@ 10x, ?veh_skip@@ 8x, ?synch_veh@@/?await_synch@NetDaemon@@ 7x, _rand 7x) with the same low-repetition/bespoke-argument risk profile flagged on 0x00561080/enemy_strategy in this batch.
 // UNBLOCKER: same as 0x005BB000 for the Dialogs cluster (direct-offset
 //     approximation, not true vbtable computation); the rest needs the
 //     g_00xxxxxx cross-check technique applied at this function's scale,
 //     which is a multi-pass undertaking on its own given 6708
 //     instructions.
 // working copy - scaffold materialised by --work
-// name      ?order_veh@@YAHHHH@Z
 // size      23716 bytes
-// spans     0x005947C0-0x0059A1AB;0x00660F47-0x00661200
 // prototype int (__cdecl ?order_veh@@YAHHHH@Z)(int vehID, int factionID, int)
 // callers   5   call targets   111
 // kind      game

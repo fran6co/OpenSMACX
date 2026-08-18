@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00646A99 EXCLUDED S1
-// name      _pow
+// ORIGINAL: 0x00646A99 _pow 0x00646A99-0x00646C75;0x0064A87E-0x0064A88B EXCLUDED S1
 // size      489 bytes
-// spans     0x00646A99-0x00646C75;0x0064A87E-0x0064A88B
 // prototype 
 // callers   3   call targets   6
 // kind      library

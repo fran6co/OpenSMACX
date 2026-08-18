@@ -31,10 +31,8 @@ func_thiscall_teardown FontQueueElementTeardown =
 Purpose: Destroy the queue: hand the three-slot walk to the CRT vector
          iterator with the queue itself as the array base and the Font
          destructor as the per-element teardown.
-ORIGINAL: 0x0055B740
-// name      ??1FontQueue@@QAE@XZ
+// ORIGINAL: 0x0055B740 ??1FontQueue@@QAE@XZ 0x0055B740-0x0055B750
 // size      16 bytes
-// spans     0x0055B740-0x0055B750
 // prototype void (__thiscall ??1FontQueue@@QAE@XZ)(FontQueue* this)
 // callers   0   call targets   1
 // kind      game
@@ -62,10 +60,8 @@ Font *FontTable = (Font *)0x0093FC58;
 /*
 Purpose: Select the Font whose point size is closest to the requested one,
          then index that size's row by style.
-ORIGINAL: 0x005882F0
-// name      ?find_font@@YAHHH@Z
+// ORIGINAL: 0x005882F0 ?find_font@@YAHHH@Z 0x005882F0-0x0058833B
 // size      75 bytes
-// spans     0x005882F0-0x0058833B
 // prototype 
 // callers   31   call targets   0
 // kind      game
@@ -98,10 +94,8 @@ Font *__cdecl find_font(int size, int style) {
 /*
 Purpose: Legacy stub; the original body returns 1 without reading its
          arguments.
-ORIGINAL: 0x00618F30 BYTE_EXACT
-// name      ?UNK1@Font@@QAEHHHHH@Z
+// ORIGINAL: 0x00618F30 ?UNK1@Font@@QAEHHHHH@Z 0x00618F30-0x00618F38 BYTE_EXACT
 // size      8 bytes
-// spans     0x00618F30-0x00618F38
 // prototype int (__thiscall ?UNK1@Font@@QAEHHHHH@Z)(Font* this, int, int, int, int)
 // callers   0   call targets   0
 // kind      game

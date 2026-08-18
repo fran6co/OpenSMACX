@@ -1,34 +1,7 @@
-// ORIGINAL: 0x004D61A0 FILE
-// RULED-OUT: full-function transcription (~95% of the call sequence by
-//            count) of a genuine multi-branch dispatcher: the a2==-1
-//            multi-option popup, a2==-2 "next unit", a1<0/a2==-3 fake-veh
-//            "go home", the real-vehicle lock/cargo-check/base-at/action_home
-//            paths, the shared cursor-position tail, the 8-case jump-table
-//            message builder, the base-candidate eligibility+sort loop
-//            (fixed 512-entry stack arrays inferred from the frame span,
-//            not confirmed against a named constant), and the post-exec()
-//            a2 in {-2,-1,-3,default} redispatch. Confirmed via the
-//            exception funclet table (0x0065AD6A-0x0065AFD2) that every
-//            "standalone-looking" teardown local (2 FlatButton, Sprite,
-//            Heap, Spot, Dialogs, RadioButton/ListBox/EditGroup/SpriteBox/
-//            CheckBox/Dialog/GraphicWin sub-objects, 2 StringStruct-shaped
-//            fields) is actually embedded inside Popup/BasePop/Scroll/
-//            Dialogs at a fixed offset - so the whole function needs only
-//            one real local (`Popup popup;`) and the RAII lever applies
-//            to it alone. Approximated rather than exact: the per-pair
-//            diplomacy bit-matrix index feeding the eligibility test
-//            (0x004D7179-0x004D718B / 0x004D720B-0x004D721D), the
-//            speed-based "half speed" gate deep in that same loop
-//            (0x004D7382 area), and the name/distance tie-break in the
-//            candidate sort (0x004D706E-0x004D7124) - all replaced with a
-//            same-faction/plain-distance stand-in that keeps the same
-//            call shape. MISMATCH at instruction #12 (xor vs push), which
-//            is register/stack-slot allocation this early, not a logic
-//            fork.
+// ORIGINAL: 0x004D61A0 ?go_to@Console@@QAEXHHH@Z 0x004D61A0-0x004D7B3C;0x0065AD6A-0x0065AFD2 FILE
+// RULED-OUT: full-function transcription (~95% of the call sequence by count) of a genuine multi-branch dispatcher: the a2==-1 multi-option popup, a2==-2 "next unit", a1<0/a2==-3 fake-veh "go home", the real-vehicle lock/cargo-check/base-at/action_home paths, the shared cursor-position tail, the 8-case jump-table message builder, the base-candidate eligibility+sort loop (fixed 512-entry stack arrays inferred from the frame span, not confirmed against a named constant), and the post-exec() a2 in {-2,-1,-3,default} redispatch. Confirmed via the exception funclet table (0x0065AD6A-0x0065AFD2) that every "standalone-looking" teardown local (2 FlatButton, Sprite, Heap, Spot, Dialogs, RadioButton/ListBox/EditGroup/SpriteBox/ CheckBox/Dialog/GraphicWin sub-objects, 2 StringStruct-shaped fields) is actually embedded inside Popup/BasePop/Scroll/ Dialogs at a fixed offset - so the whole function needs only one real local (`Popup popup;`) and the RAII lever applies to it alone. Approximated rather than exact: the per-pair diplomacy bit-matrix index feeding the eligibility test (0x004D7179-0x004D718B / 0x004D720B-0x004D721D), the speed-based "half speed" gate deep in that same loop (0x004D7382 area), and the name/distance tie-break in the candidate sort (0x004D706E-0x004D7124) - all replaced with a same-faction/plain-distance stand-in that keeps the same call shape. MISMATCH at instruction #12 (xor vs push), which is register/stack-slot allocation this early, not a logic fork.
 // working copy - scaffold materialised by --work
-// name      ?go_to@Console@@QAEXHHH@Z
 // size      7172 bytes
-// spans     0x004D61A0-0x004D7B3C;0x0065AD6A-0x0065AFD2
 // prototype void (__thiscall ?go_to@Console@@QAEXHHH@Z)(Console* this, int vehID, int, int)
 // callers   5   call targets   70
 // kind      game

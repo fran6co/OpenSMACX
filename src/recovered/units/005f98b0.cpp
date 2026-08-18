@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005F98B0 FILE
-// name      ?on_redraw@PullDown@@QAEXXZ
+// ORIGINAL: 0x005F98B0 ?on_redraw@PullDown@@QAEXXZ 0x005F98B0-0x005F9CFF FILE
 // size      1103 bytes
-// spans     0x005F98B0-0x005F9CFF
 // prototype void (__thiscall ?on_redraw@PullDown@@QAEXXZ)(PullDown* this)
 // callers   0   call targets   12
 // kind      game

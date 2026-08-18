@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064D822 EXCLUDED S1
-// name      __fltout2
+// ORIGINAL: 0x0064D822 __fltout2 0x0064D822-0x0064D87E EXCLUDED S1
 // size      92 bytes
-// spans     0x0064D822-0x0064D87E
 // prototype 
 // callers   3   call targets   3
 // kind      library

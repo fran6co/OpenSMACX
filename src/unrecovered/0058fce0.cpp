@@ -1,12 +1,7 @@
-// ORIGINAL: 0x0058FCE0 FILE
-// RULED-OUT: caching the CharUpperA pointer in a local vs calling through
-//            *reinterpret_cast<CharUpperAFn*>(g_0066931c) at each site -
-//            both land 18 bytes over (157-160 vs 139), extra push/push in
-//            the prologue before the a1*0x167 multiply; root cause not found
+// ORIGINAL: 0x0058FCE0 ?get_he_she@@YAPADHH@Z 0x0058FCE0-0x0058FD6B FILE
+// RULED-OUT: caching the CharUpperA pointer in a local vs calling through *reinterpret_cast<CharUpperAFn*>(g_0066931c) at each site - both land 18 bytes over (157-160 vs 139), extra push/push in the prologue before the a1*0x167 multiply; root cause not found
 // working copy - scaffold materialised by --work
-// name      ?get_he_she@@YAPADHH@Z
 // size      139 bytes
-// spans     0x0058FCE0-0x0058FD6B
 // prototype 
 // callers   6   call targets   2
 // kind      game

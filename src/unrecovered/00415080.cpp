@@ -1,14 +1,7 @@
-// ORIGINAL: 0x00415080 FILE
-// RULED-OUT: instruction-level transcription with real Font locals (to get the SEH
-//            frame/dtor thunks) and byte-offset casts for BaseWin fields; compiles,
-//            control flow/offsets/call order match the disasm, sim 0.70 framed build.
-//            Extra RECT-copy temporaries (rectA/rectQ/rectR/rectP vs the original's
-//            reused stack slots) keep it off byte-exact. Not retried with slot reuse
-//            given size (1729 bytes, SEH).
+// ORIGINAL: 0x00415080 ?draw_queue@BaseWin@@QAEXH@Z 0x00415080-0x00415724;0x00651B93-0x00651BB0 FILE
+// RULED-OUT: instruction-level transcription with real Font locals (to get the SEH frame/dtor thunks) and byte-offset casts for BaseWin fields; compiles, control flow/offsets/call order match the disasm, sim 0.70 framed build. Extra RECT-copy temporaries (rectA/rectQ/rectR/rectP vs the original's reused stack slots) keep it off byte-exact. Not retried with slot reuse given size (1729 bytes, SEH).
 // working copy - scaffold materialised by --work
-// name      ?draw_queue@BaseWin@@QAEXH@Z
 // size      1729 bytes
-// spans     0x00415080-0x00415724;0x00651B93-0x00651BB0
 // prototype void (__thiscall ?draw_queue@BaseWin@@QAEXH@Z)(BaseWin* this, int)
 // callers   8   call targets   21
 // kind      game

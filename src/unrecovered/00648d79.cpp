@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00648D79 EXCLUDED S1
-// name      ?CallCatchBlock@@YAPAXPAUEHExceptionRecord@@PAUEHRegistrationNode@@PAU_CONTEXT@@PBU_s_FuncInfo@@PAXHK@Z
+// ORIGINAL: 0x00648D79 ?CallCatchBlock@@YAPAXPAUEHExceptionRecord@@PAUEHRegistrationNode@@PAU_CONTEXT@@PBU_s_FuncInfo@@PAXHK@Z 0x00648D79-0x00648E40;0x00648E40-0x00648E94 EXCLUDED S1
 // size      283 bytes
-// spans     0x00648D79-0x00648E40;0x00648E40-0x00648E94
 // prototype 
 // callers   2   call targets   7
 // kind      library

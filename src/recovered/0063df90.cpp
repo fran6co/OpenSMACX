@@ -1,9 +1,7 @@
-// ORIGINAL: 0x0063DF90 BYTE_EXACT
-// name      _inflateEnd
+// ORIGINAL: 0x0063DF90 _inflateEnd 0x0063DF90-0x0063DFDD BYTE_EXACT
 // CORRECTED from sub_63df90
 //   zlib 1.0.2 inflate.c, 77 bytes, byte-exact from upstream
 // size      77 bytes
-// spans     0x0063DF90-0x0063DFDD
 // prototype 
 // callers   2   call targets   1
 // kind      game

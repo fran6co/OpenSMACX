@@ -1,10 +1,7 @@
-// ORIGINAL: 0x00613850 FILE
-// RULED-OUT: placement-new FlatButton/EditBox/ListBox subobjects w/o the
-//            fs:[0] SEH unwind frame (no destructor-modelling local)
+// ORIGINAL: 0x00613850 ??0FileWin@@QAE@XZ 0x00613850-0x006138F9;0x006630E0-0x00663114 FILE
+// RULED-OUT: placement-new FlatButton/EditBox/ListBox subobjects w/o the fs:[0] SEH unwind frame (no destructor-modelling local)
 // working copy - scaffold materialised by --work
-// name      ??0FileWin@@QAE@XZ
 // size      221 bytes
-// spans     0x00613850-0x006138F9;0x006630E0-0x00663114
 // prototype void (__thiscall ??0FileWin@@QAE@XZ)(FileWin* this)
 // callers   1   call targets   4
 // kind      game

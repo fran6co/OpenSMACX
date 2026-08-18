@@ -1,11 +1,9 @@
-// ORIGINAL: 0x00618E30 FILE
-// name      ?vx_read@Caviar@@SAXHPADJ@Z
+// ORIGINAL: 0x00618E30 ?vx_read@Caviar@@SAXHPADJ@Z 0x00618E30-0x00618E48 FILE
 // CORRECTED from ?vx_read@Caviar@@QAAXHPADJ@Z
 //   SHAPE_EXACT with all three parameter reads off by exactly +4
 //   (0x4/0x8/0xc against 0x8/0xc/0x10) - the width of the `this` that
 //   QAA inserts and the bytes do not have
 // size      24 bytes
-// spans     0x00618E30-0x00618E48
 // prototype 
 // callers   0   call targets   1
 // kind      game

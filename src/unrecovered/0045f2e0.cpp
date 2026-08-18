@@ -1,12 +1,7 @@
-// ORIGINAL: 0x0045F2E0 FILE
-// RULED-OUT: many named C locals (rect, w, qv, qh, str_height, half, i, ...)
-//            push the compiler to `sub esp,N` for the frame; original
-//            reserves one dword via `push ecx` for the single Buffer*
-//            local that survives calls. Structure/order matches Ghidra.
+// ORIGINAL: 0x0045F2E0 ?exec@Interlude@@QAEXPAD@Z 0x0045F2E0-0x0045F5C0 FILE
+// RULED-OUT: many named C locals (rect, w, qv, qh, str_height, half, i, ...) push the compiler to `sub esp,N` for the frame; original reserves one dword via `push ecx` for the single Buffer* local that survives calls. Structure/order matches Ghidra.
 // working copy - scaffold materialised by --work
-// name      ?exec@Interlude@@QAEXPAD@Z
 // size      736 bytes
-// spans     0x0045F2E0-0x0045F5C0
 // prototype void (__thiscall ?exec@Interlude@@QAEXPAD@Z)(Interlude* this, int8*)
 // callers   1   call targets   14
 // kind      game

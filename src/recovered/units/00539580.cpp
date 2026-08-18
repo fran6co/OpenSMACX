@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00539580 BYTE_EXACT FILE
-// name      ?net_maps@@YAXHHH@Z
+// ORIGINAL: 0x00539580 ?net_maps@@YAXHHH@Z 0x00539580-0x005395E3 FILE BYTE_EXACT
 // size      99 bytes
-// spans     0x00539580-0x005395E3
 // prototype 
 // callers   2   call targets   4
 // kind      game

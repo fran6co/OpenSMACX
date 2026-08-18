@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00628B70 FILE
-// name      ?HSV_to_RGB@@YAXPAUHSV@@PAUPALETTEENTRY@@@Z
+// ORIGINAL: 0x00628B70 ?HSV_to_RGB@@YAXPAUHSV@@PAUPALETTEENTRY@@@Z 0x00628B70-0x00628D92 FILE
 // size      546 bytes
-// spans     0x00628B70-0x00628D92
 // prototype 
 // callers   0   call targets   2
 // kind      game

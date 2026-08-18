@@ -1,12 +1,7 @@
-// ORIGINAL: 0x004DA900 FILE
-// RULED-OUT: none new; direct translation of the Ghidra shape (get_state_id,
-//        table bit-test at 0x96ca18 indexed by field_a1c*0x20c8 +
-//        (field_a1c+field_a20)*4, then conditional set_agenda) compiles.
-//        MISMATCH #4 'mov' vs 'push' remains open.
+// ORIGINAL: 0x004DA900 ?UNK4@DipEdit@@QAEXH@Z 0x004DA900-0x004DA98B FILE
+// RULED-OUT: none new; direct translation of the Ghidra shape (get_state_id, table bit-test at 0x96ca18 indexed by field_a1c*0x20c8 + (field_a1c+field_a20)*4, then conditional set_agenda) compiles. MISMATCH #4 'mov' vs 'push' remains open.
 // working copy - scaffold materialised by --work
-// name      ?UNK4@DipEdit@@QAEXH@Z
 // size      139 bytes
-// spans     0x004DA900-0x004DA98B
 // prototype void (__thiscall ?UNK4@DipEdit@@QAEXH@Z)(DipEdit* this, int)
 // callers   1   call targets   2
 // kind      game

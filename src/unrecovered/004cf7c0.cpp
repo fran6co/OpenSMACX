@@ -1,14 +1,7 @@
-// ORIGINAL: 0x004CF7C0 FILE
-// RULED-OUT: structural transcription following the Ghidra shape (validation checks each
-//            calling NetMsg::pop and returning; territory-scan loop; diplomacy/build-base
-//            wizard), corrected against the raw asm's confirmed 0x34 stride for the
-//            0x952828/0x9AB892 unit-position tables (Ghidra showed 0x1a, a known 2-byte-stride
-//            bug) and fixed `ready_search` to use the saved `this` rather than the fixed
-//            Console singleton (only `update_data` uses 0x9156B0). Diverges at instr #8.
+// ORIGINAL: 0x004CF7C0 ?new_base@Console@@QAEXH@Z 0x004CF7C0-0x004D0442 FILE
+// RULED-OUT: structural transcription following the Ghidra shape (validation checks each calling NetMsg::pop and returning; territory-scan loop; diplomacy/build-base wizard), corrected against the raw asm's confirmed 0x34 stride for the 0x952828/0x9AB892 unit-position tables (Ghidra showed 0x1a, a known 2-byte-stride bug) and fixed `ready_search` to use the saved `this` rather than the fixed Console singleton (only `update_data` uses 0x9156B0). Diverges at instr #8.
 // working copy - scaffold materialised by --work
-// name      ?new_base@Console@@QAEXH@Z
 // size      3202 bytes
-// spans     0x004CF7C0-0x004D0442
 // prototype void (__thiscall ?new_base@Console@@QAEXH@Z)(Console* this, int vehID)
 // callers   2   call targets   38
 // kind      game

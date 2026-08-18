@@ -1,20 +1,7 @@
-// ORIGINAL: 0x00607E50 FILE
-// RULED-OUT: faithful port of the 4-way fill/box_sprite/8-tile/bevel-box
-//   draw dispatch (indexed by the clamped 0/1/2 state, using the FlatButton
-//   pseudo-arrays at 0xAD4/AC8/B10/B1C/B28/B34/AE0/AEC/AF8/B04/B40 via raw
-//   offset casts) plus the trailing text layout; verified Buffer.width_/
-//   height_ land at 0x4C4/0x4C8 (buffer_ embedded at 0x444, matching Win's
-//   real size) and Sprite.iWidth_/iHeight_/cTransparentIndex_ against the
-//   disassembly's +0x18/+0x1c/+8. The tail's Ghidra "unaff_EBX"/"unaff_EBP"
-//   are mistraced [esp+0x14]/[esp+0x1c] RECT slots, not live registers;
-//   rebuilt from raw asm as rectLeft/rectRight instead. The final two-string
-//   fallback clip-rect arithmetic (stack-slot reuse interacting with a push)
-//   was approximated rather than traced exactly. Compiles and matches
-//   through instr #14; not chased further given the size.
+// ORIGINAL: 0x00607E50 ?on_redraw@FlatButton@@QAEXXZ 0x00607E50-0x006084F9 FILE
+// RULED-OUT: faithful port of the 4-way fill/box_sprite/8-tile/bevel-box draw dispatch (indexed by the clamped 0/1/2 state, using the FlatButton pseudo-arrays at 0xAD4/AC8/B10/B1C/B28/B34/AE0/AEC/AF8/B04/B40 via raw offset casts) plus the trailing text layout; verified Buffer.width_/ height_ land at 0x4C4/0x4C8 (buffer_ embedded at 0x444, matching Win's real size) and Sprite.iWidth_/iHeight_/cTransparentIndex_ against the disassembly's +0x18/+0x1c/+8. The tail's Ghidra "unaff_EBX"/"unaff_EBP" are mistraced [esp+0x14]/[esp+0x1c] RECT slots, not live registers; rebuilt from raw asm as rectLeft/rectRight instead. The final two-string fallback clip-rect arithmetic (stack-slot reuse interacting with a push) was approximated rather than traced exactly. Compiles and matches through instr #14; not chased further given the size.
 // working copy - scaffold materialised by --work
-// name      ?on_redraw@FlatButton@@QAEXXZ
 // size      1705 bytes
-// spans     0x00607E50-0x006084F9
 // prototype void (__thiscall ?on_redraw@FlatButton@@QAEXXZ)(FlatButton* this)
 // callers   0   call targets   16
 // kind      game

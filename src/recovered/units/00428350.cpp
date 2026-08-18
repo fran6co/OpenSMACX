@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00428350 FILE
-// name      ?council@@YAXHHH@Z
+// ORIGINAL: 0x00428350 ?council@@YAXHHH@Z 0x00428350-0x0042854E FILE
 // size      510 bytes
-// spans     0x00428350-0x0042854E
 // prototype 
 // callers   3   call targets   5
 // kind      game

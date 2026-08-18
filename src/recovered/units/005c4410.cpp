@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005C4410 FILE
-// name      ?world_UNK1@@YAXHH@Z
+// ORIGINAL: 0x005C4410 ?world_UNK1@@YAXHH@Z 0x005C4410-0x005C4467 FILE
 // size      87 bytes
-// spans     0x005C4410-0x005C4467
 // prototype void (__cdecl ?world_UNK1@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   0   call targets   1
 // kind      game

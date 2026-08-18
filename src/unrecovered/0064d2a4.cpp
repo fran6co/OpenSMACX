@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064D2A4 EXCLUDED S1
-// name      __abstract_cw
+// ORIGINAL: 0x0064D2A4 __abstract_cw 0x0064D2A4-0x0064D336 EXCLUDED S1
 // size      146 bytes
-// spans     0x0064D2A4-0x0064D336
 // prototype 
 // callers   1   call targets   0
 // kind      library

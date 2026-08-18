@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0060CF10 FILE
-// name      sub_60cf10
+// ORIGINAL: 0x0060CF10 sub_60cf10 0x0060CF10-0x0060CF4D FILE
 // size      61 bytes
-// spans     0x0060CF10-0x0060CF4D
 // prototype 
 // callers   0   call targets   0
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00481C50 BYTE_EXACT FILE
-// name      ??0NetWin@@QAE@XZ
+// ORIGINAL: 0x00481C50 ??0NetWin@@QAE@XZ 0x00481C50-0x00481D08;0x00657491-0x006574E9 FILE BYTE_EXACT
 // size      272 bytes
-// spans     0x00481C50-0x00481D08;0x00657491-0x006574E9
 // prototype void (__thiscall ??0NetWin@@QAE@XZ)(NetWin* this)
 // callers   1   call targets   6
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004455F0 FILE
-// name      ?wave_it@@YAXH@Z
+// ORIGINAL: 0x004455F0 ?wave_it@@YAXH@Z 0x004455F0-0x0044564D FILE
 // size      93 bytes
-// spans     0x004455F0-0x0044564D
 // prototype 
 // callers   7   call targets   3
 // kind      game

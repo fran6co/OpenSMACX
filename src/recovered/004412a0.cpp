@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004412A0 BYTE_EXACT
-// name      ?string_callback@DiploWin@@QAAXHH@Z
+// ORIGINAL: 0x004412A0 ?string_callback@DiploWin@@QAAXHH@Z 0x004412A0-0x004412D0 BYTE_EXACT
 // size      48 bytes
-// spans     0x004412A0-0x004412D0
 // prototype 
 // callers   0   call targets   1
 // kind      game

@@ -1,14 +1,7 @@
-// ORIGINAL: 0x00482490 FILE
-// RULED-OUT: full transcription treating `self` as `int *` (matches the
-//            original's word-indexed field layout exactly); vtable slot057
-//            retyped to (int,int,int) in this file's VCall, verified
-//            against raw disasm; UnionRect/CharUpperA reached via the IAT
-//            slot pattern. Reaches MISMATCH #6 'xor' vs 'mov' (register
-//            allocation), not chased further given size (2292 bytes).
+// ORIGINAL: 0x00482490 ?exec@NetWin@@QAEHXZ 0x00482490-0x00482D84 FILE
+// RULED-OUT: full transcription treating `self` as `int *` (matches the original's word-indexed field layout exactly); vtable slot057 retyped to (int,int,int) in this file's VCall, verified against raw disasm; UnionRect/CharUpperA reached via the IAT slot pattern. Reaches MISMATCH #6 'xor' vs 'mov' (register allocation), not chased further given size (2292 bytes).
 // working copy - scaffold materialised by --work
-// name      ?exec@NetWin@@QAEHXZ
 // size      2292 bytes
-// spans     0x00482490-0x00482D84
 // prototype int (__thiscall ?exec@NetWin@@QAEHXZ)(NetWin* this)
 // callers   1   call targets   33
 // kind      game

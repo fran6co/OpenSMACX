@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004C5980 BYTE_EXACT
-// name      ??1Wave_In_Device@@QAE@XZ
+// ORIGINAL: 0x004C5980 ??1Wave_In_Device@@QAE@XZ 0x004C5980-0x004C5993 BYTE_EXACT
 // size      19 bytes
-// spans     0x004C5980-0x004C5993
 // prototype void (__thiscall ??1Wave_In_Device@@QAE@XZ)(Wave_In_Device* this)
 // callers   0   call targets   0
 // kind      game

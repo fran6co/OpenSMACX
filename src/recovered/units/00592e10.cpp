@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00592E10 FILE
-// name      ?message_veh@@YAXHHHH@Z
+// ORIGINAL: 0x00592E10 ?message_veh@@YAXHHHH@Z 0x00592E10-0x00592E70 FILE
 // size      96 bytes
-// spans     0x00592E10-0x00592E70
 // prototype void (__cdecl ?message_veh@@YAXHHHH@Z)(int, int vehID, int xCoord, int yCoord)
 // callers   12   call targets   1
 // kind      game

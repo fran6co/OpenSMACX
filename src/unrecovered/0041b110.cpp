@@ -1,20 +1,7 @@
-// ORIGINAL: 0x0041B110 FILE
-// RULED-OUT: SHAPE_EXACT (every instruction's mnemonic, size and operand
-//            kind match; only immediate/relocated values differ in the
-//            diagnostic dump, which is a base-address display artifact
-//            for most of them). Grouping the two `Spot::check` out-params
-//            into an anonymous `struct { int a; int b; }` stopped VC6
-//            reusing the incoming `a1`/`a2` parameter stack slots as the
-//            output locations (which it did when they were two plain
-//            `int` locals, since a1/a2 are dead after the call) -
-//            matches the original's dedicated `sub esp,8` locals. Store
-//            order for the two `DAT_009b7abc`/`DAT_009b7ac0` guard
-//            writes had to be flipped from the Ghidra-printed order to
-//            match the disassembly's actual order.
+// ORIGINAL: 0x0041B110 ?on_left_down@BaseWin@@QAEXHH@Z 0x0041B110-0x0041B1D9 FILE
+// RULED-OUT: SHAPE_EXACT (every instruction's mnemonic, size and operand kind match; only immediate/relocated values differ in the diagnostic dump, which is a base-address display artifact for most of them). Grouping the two `Spot::check` out-params into an anonymous `struct { int a; int b; }` stopped VC6 reusing the incoming `a1`/`a2` parameter stack slots as the output locations (which it did when they were two plain `int` locals, since a1/a2 are dead after the call) - matches the original's dedicated `sub esp,8` locals. Store order for the two `DAT_009b7abc`/`DAT_009b7ac0` guard writes had to be flipped from the Ghidra-printed order to match the disassembly's actual order.
 // working copy - scaffold materialised by --work
-// name      ?on_left_down@BaseWin@@QAEXHH@Z
 // size      201 bytes
-// spans     0x0041B110-0x0041B1D9
 // prototype void (__thiscall ?on_left_down@BaseWin@@QAEXHH@Z)(BaseWin* this, int xCoord, int yCoord)
 // callers   0   call targets   3
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0043C130 BYTE_EXACT
-// name      ?construct_reactor@DesignWin@@QAEXXZ
+// ORIGINAL: 0x0043C130 ?construct_reactor@DesignWin@@QAEXXZ 0x0043C130-0x0043C163 BYTE_EXACT
 // size      51 bytes
-// spans     0x0043C130-0x0043C163
 // prototype void (__thiscall ?construct_reactor@DesignWin@@QAEXXZ)(DesignWin* this)
 // callers   0   call targets   1
 // kind      game

@@ -1,17 +1,11 @@
-// ORIGINAL: 0x005DB9E0
-// name      ?wrap_cent@Buffer@@QAEHPAVFont@@PADHHH@Z
+// ORIGINAL: 0x005DB9E0 ?wrap_cent@Buffer@@QAEHPAVFont@@PADHHH@Z 0x005DB9E0-0x005DBAF5
+// RULED-OUT: only one source-form tried; original starts with `sub esp,0xc` for locals before its register pushes (no frame pointer at all - ebp is a plain callee-saved register here), which this form doesn't reproduce. Landing the closest structural translation (mnemonic_similarity 0.712).
 // size      277 bytes
-// spans     0x005DB9E0-0x005DBAF5
 // prototype int (__thiscall ?wrap_cent@Buffer@@QAEHPAVFont@@PADHHH@Z)(Buffer* this, Font*, int8*, int, int, int)
 // callers   1   call targets   3
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005DC410 0x005DD020 0x006453E0
-// RULED-OUT: only one source-form tried; original starts with `sub esp,0xc`
-//            for locals before its register pushes (no frame pointer at
-//            all - ebp is a plain callee-saved register here), which this
-//            form doesn't reproduce. Landing the closest structural
-//            translation (mnemonic_similarity 0.712).
 
 int Buffer::wrap_cent(Font * a1, char * a2, int a3, int a4, int a5) {
     char *self = reinterpret_cast<char *>(this);

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064CA5D EXCLUDED S1
-// name      __set_statfp
+// ORIGINAL: 0x0064CA5D __set_statfp 0x0064CA5D-0x0064CAB3 EXCLUDED S1
 // size      86 bytes
-// spans     0x0064CA5D-0x0064CAB3
 // prototype 
 // callers   1   call targets   0
 // kind      library

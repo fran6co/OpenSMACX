@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00559290 FILE
-// name      ??0FontQueue@@QAE@XZ
+// ORIGINAL: 0x00559290 ??0FontQueue@@QAE@XZ 0x00559290-0x005592CD FILE
 // size      61 bytes
-// spans     0x00559290-0x005592CD
 // prototype void (__thiscall ??0FontQueue@@QAE@XZ)(FontQueue* this)
 // callers   2   call targets   1
 // kind      game

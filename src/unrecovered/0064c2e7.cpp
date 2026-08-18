@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064C2E7 EXCLUDED S1
-// name      __raise_exc
+// ORIGINAL: 0x0064C2E7 __raise_exc 0x0064C2E7-0x0064C59A EXCLUDED S1
 // size      691 bytes
-// spans     0x0064C2E7-0x0064C59A
 // prototype int (__cdecl __raise_exc)(ULONG_PTR Arguments, int, DWORD dwExceptionCode, int, int, int)
 // callers   3   call targets   2
 // kind      library

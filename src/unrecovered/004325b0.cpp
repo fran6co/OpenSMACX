@@ -1,9 +1,7 @@
-// ORIGINAL: 0x004325B0 BYTE_EXACT FILE
+// ORIGINAL: 0x004325B0 ??1ButtonGroup@@QAE@XZ 0x004325B0-0x004325B5 FILE BYTE_EXACT
 // LEVER: shim class exposing close() lets `this` tail-call it; jmp falls out
 // working copy - scaffold materialised by --work
-// name      ??1ButtonGroup@@QAE@XZ
 // size      5 bytes
-// spans     0x004325B0-0x004325B5
 // prototype void (__thiscall ??1ButtonGroup@@QAE@XZ)(ButtonGroup* this)
 // callers   0   call targets   0
 // kind      thunk

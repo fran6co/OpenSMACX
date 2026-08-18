@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0041E8B0 BYTE_EXACT
-// name      ?hide@BaseWin@@QAEXXZ
+// ORIGINAL: 0x0041E8B0 ?hide@BaseWin@@QAEXXZ 0x0041E8B0-0x0041E8C9 BYTE_EXACT
 // size      25 bytes
-// spans     0x0041E8B0-0x0041E8C9
 // prototype void (__thiscall ?hide@BaseWin@@QAEXXZ)(BaseWin* this)
 // callers   0   call targets   2
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006050F0 BYTE_EXACT FILE
-// name      ?set_def_external_window@BasePop@@QAAXPAUGraphicWin@@HHHH@Z
+// ORIGINAL: 0x006050F0 ?set_def_external_window@BasePop@@QAAXPAUGraphicWin@@HHHH@Z 0x006050F0-0x00605121 FILE BYTE_EXACT
 // size      49 bytes
-// spans     0x006050F0-0x00605121
 // prototype 
 // callers   1   call targets   0
 // kind      game

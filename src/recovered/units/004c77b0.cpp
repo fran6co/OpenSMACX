@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004C77B0 BYTE_EXACT FILE
-// name      ?switch_state@Midi@@QAEH_N@Z
+// ORIGINAL: 0x004C77B0 ?switch_state@Midi@@QAEH_N@Z 0x004C77B0-0x004C77CA FILE BYTE_EXACT
 // size      26 bytes
-// spans     0x004C77B0-0x004C77CA
 // prototype int (__thiscall ?switch_state@Midi@@QAEH_N@Z)(Midi* this, bool)
 // callers   0   call targets   0
 // kind      game

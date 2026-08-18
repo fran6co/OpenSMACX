@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00450F30 BYTE_EXACT FILE
-// name      sub_450f30
+// ORIGINAL: 0x00450F30 sub_450f30 0x00450F30-0x00450F81 FILE BYTE_EXACT
 // size      81 bytes
-// spans     0x00450F30-0x00450F81
 // prototype 
 // callers   0   call targets   2
 // kind      game

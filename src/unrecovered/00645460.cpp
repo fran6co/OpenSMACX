@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00645460 EXCLUDED S1
-// name      _strcpy
+// ORIGINAL: 0x00645460 _strcpy 0x00645460-0x00645467 EXCLUDED S1
 // size      7 bytes
-// spans     0x00645460-0x00645467
 // prototype 
 // callers   98   call targets   0
 // kind      library

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004D2F00 FILE
-// name      ?activate@Console@@QAEXHHH@Z
+// ORIGINAL: 0x004D2F00 ?activate@Console@@QAEXHHH@Z 0x004D2F00-0x004D3467 FILE
 // size      1383 bytes
-// spans     0x004D2F00-0x004D3467
 // prototype void (__thiscall ?activate@Console@@QAEXHHH@Z)(Console* this, int xCoord, int yCoord, int)
 // callers   5   call targets   23
 // kind      game

@@ -1,22 +1,7 @@
-// ORIGINAL: 0x00543BC0 FILE
-// RULED-OUT: no Popup/SEH here (free AI-heuristic function, not a UI
-//            handler) - the difficulty is a long chain of inc/dec on a
-//            score accumulator plus several reciprocal-multiplication
-//            constant-divide idioms, transcribed with plain `/` and `%`
-//            (semantically equivalent, not byte-identical). Two known
-//            simplifications, both commented in place: (1) the original
-//            unconditionally zeroes its score accumulator midway through
-//            (0x544408 `mov [ebp+0xc],ecx`) before re-deriving a fresh
-//            propose/decline decision from separate flags - this body
-//            keeps accumulating instead of discarding, to keep the later
-//            score-gated branches meaningful; (2) the "generosity cap"
-//            energy-gift arithmetic in the L54436D block approximates the
-//            original's fixed-point chain rather than reproducing it
-//            exactly. sim 0.28-0.58 across flag sets.
+// ORIGINAL: 0x00543BC0 ?propose_pact@@YAHHH@Z 0x00543BC0-0x00544E36 FILE
+// RULED-OUT: no Popup/SEH here (free AI-heuristic function, not a UI handler) - the difficulty is a long chain of inc/dec on a score accumulator plus several reciprocal-multiplication constant-divide idioms, transcribed with plain `/` and `%` (semantically equivalent, not byte-identical). Two known simplifications, both commented in place: (1) the original unconditionally zeroes its score accumulator midway through (0x544408 `mov [ebp+0xc],ecx`) before re-deriving a fresh propose/decline decision from separate flags - this body keeps accumulating instead of discarding, to keep the later score-gated branches meaningful; (2) the "generosity cap" energy-gift arithmetic in the L54436D block approximates the original's fixed-point chain rather than reproducing it exactly. sim 0.28-0.58 across flag sets.
 // working copy - scaffold materialised by --work
-// name      ?propose_pact@@YAHHH@Z
 // size      4726 bytes
-// spans     0x00543BC0-0x00544E36
 // prototype 
 // callers   1   call targets   28
 // kind      game

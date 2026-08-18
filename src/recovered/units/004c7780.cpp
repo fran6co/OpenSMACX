@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004C7780 BYTE_EXACT FILE
-// name      ?set_volume@Midi@@QAEXH@Z
+// ORIGINAL: 0x004C7780 ?set_volume@Midi@@QAEXH@Z 0x004C7780-0x004C77A3 FILE BYTE_EXACT
 // size      35 bytes
-// spans     0x004C7780-0x004C77A3
 // prototype void (__thiscall ?set_volume@Midi@@QAEXH@Z)(Midi* this, int)
 // callers   0   call targets   0
 // kind      game

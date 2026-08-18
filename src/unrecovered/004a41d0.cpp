@@ -1,17 +1,7 @@
-// ORIGINAL: 0x004A41D0 FILE
-// RULED-OUT: full hand transcription from raw disassembly (not Ghidra, whose
-//            &DAT_x+idx*N pseudocode over-scales by 4x on 0x96cdac/0x96c9f8 -
-//            fixed here against the raw asm multiply chain and byte tests);
-//            covers close path (switch+jump table+loops), init path (7-button
-//            report loop, 4 button groups, single-column cef..cf8, has_tech/
-//            bitmask channel grid, spying flags, 4-way spy-report geometry,
-//            scroll/report/slide tail). First divergence is instruction #3
-//            (prologue 'mov'/'push' scheduling) - approximate throughout, not
-//            byte-verified block by block beyond the ones cited above.
+// ORIGINAL: 0x004A41D0 ?on_status@ReportIf@@QAEXH@Z 0x004A41D0-0x004A5ED2 FILE
+// RULED-OUT: full hand transcription from raw disassembly (not Ghidra, whose &DAT_x+idx*N pseudocode over-scales by 4x on 0x96cdac/0x96c9f8 - fixed here against the raw asm multiply chain and byte tests); covers close path (switch+jump table+loops), init path (7-button report loop, 4 button groups, single-column cef..cf8, has_tech/ bitmask channel grid, spying flags, 4-way spy-report geometry, scroll/report/slide tail). First divergence is instruction #3 (prologue 'mov'/'push' scheduling) - approximate throughout, not byte-verified block by block beyond the ones cited above.
 // working copy - scaffold materialised by --work
-// name      ?on_status@ReportIf@@QAEXH@Z
 // size      7426 bytes
-// spans     0x004A41D0-0x004A5ED2
 // prototype void (__thiscall ?on_status@ReportIf@@QAEXH@Z)(ReportIf* this, int)
 // callers   0   call targets   27
 // kind      game

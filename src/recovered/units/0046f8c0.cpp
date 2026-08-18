@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0046F8C0 FILE
-// name      ?on_button_clicked@MapWin@@QAEXH@Z
+// ORIGINAL: 0x0046F8C0 ?on_button_clicked@MapWin@@QAEXH@Z 0x0046F8C0-0x0046F9E6 FILE
 // size      294 bytes
-// spans     0x0046F8C0-0x0046F9E6
 // prototype void (__thiscall ?on_button_clicked@MapWin@@QAEXH@Z)(MapWin* this, int)
 // callers   0   call targets   8
 // kind      game

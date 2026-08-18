@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004E1290 FILE
-// name      ?editor_clear@Console@@QAEXXZ
+// ORIGINAL: 0x004E1290 ?editor_clear@Console@@QAEXXZ 0x004E1290-0x004E12FB FILE
 // size      107 bytes
-// spans     0x004E1290-0x004E12FB
 // prototype void (__thiscall ?editor_clear@Console@@QAEXXZ)(Console* this)
 // callers   1   call targets   7
 // kind      game

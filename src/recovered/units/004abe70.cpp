@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004ABE70 FILE
-// name      ?draw_score@ReportIf@@QAEXXZ
+// ORIGINAL: 0x004ABE70 ?draw_score@ReportIf@@QAEXXZ 0x004ABE70-0x004AC127 FILE
 // size      695 bytes
-// spans     0x004ABE70-0x004AC127
 // prototype void (__thiscall ?draw_score@ReportIf@@QAEXXZ)(ReportIf* this)
 // callers   4   call targets   9
 // kind      game

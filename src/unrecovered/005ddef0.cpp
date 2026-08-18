@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005DDEF0 BYTE_EXACT FILE
-// name      ?wrap_height_flying_flush@Buffer@@QAEHXZ
+// ORIGINAL: 0x005DDEF0 ?wrap_height_flying_flush@Buffer@@QAEHXZ 0x005DDEF0-0x005DDF5F FILE BYTE_EXACT
 // size      111 bytes
-// spans     0x005DDEF0-0x005DDF5F
 // prototype int (__thiscall ?wrap_height_flying_flush@Buffer@@QAEHXZ)(Buffer* this)
 // callers   2   call targets   0
 // kind      

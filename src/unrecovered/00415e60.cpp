@@ -1,10 +1,7 @@
-// ORIGINAL: 0x00415E60 BYTE_EXACT FILE
-// LEVER: table[i*77] via own `extern int name[]`, not the const-pointer global;
-//        field offset 0x40b0c does not match the scaffold's pad-derived field name
+// ORIGINAL: 0x00415E60 ?UNK3@BaseWin@@QAEXH@Z 0x00415E60-0x00415EFB FILE BYTE_EXACT
+// LEVER: table[i*77] via own `extern int name[]`, not the const-pointer global; field offset 0x40b0c does not match the scaffold's pad-derived field name
 // working copy - scaffold materialised by --work
-// name      ?UNK3@BaseWin@@QAEXH@Z
 // size      155 bytes
-// spans     0x00415E60-0x00415EFB
 // prototype void (__thiscall ?UNK3@BaseWin@@QAEXH@Z)(BaseWin* this, int baseID)
 // callers   0   call targets   4
 // kind      game

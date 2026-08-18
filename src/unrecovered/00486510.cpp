@@ -1,21 +1,7 @@
-// ORIGINAL: 0x00486510 FILE
-// RULED-OUT: mismatch #2 - the 4 Popup locals (popup_a/b/c/d at
-//            -0x15010/-0xA918/-0x559C/-0xFC94) are real C++ locals with
-//            automatic construction, not matching the original's
-//            explicit ctor-call-per-slot ordering; only popup_d (2nd
-//            constructed) is ever start()ed - the other three are built
-//            then unconditionally destroyed, confirmed by exactly one
-//            `call start@Popup` and zero `call exec@BasePop` in the
-//            whole function. The category(0..3) x tech(0..0x58)
-//            eligibility scan is transcribed (has_tech x2, tech_avail,
-//            tech_category) but the "best recommendation" slot
-//            bookkeeping (weighted random tie-break across military/
-//            colonize/infra techs) is dropped - it only affects which
-//            item is pre-highlighted, not list membership.
+// ORIGINAL: 0x00486510 ?pick@PickTech@@QAEHHHHPAD@Z 0x00486510-0x00488655;0x006576A0-0x00657C12 FILE
+// RULED-OUT: mismatch #2 - the 4 Popup locals (popup_a/b/c/d at -0x15010/-0xA918/-0x559C/-0xFC94) are real C++ locals with automatic construction, not matching the original's explicit ctor-call-per-slot ordering; only popup_d (2nd constructed) is ever start()ed - the other three are built then unconditionally destroyed, confirmed by exactly one `call start@Popup` and zero `call exec@BasePop` in the whole function. The category(0..3) x tech(0..0x58) eligibility scan is transcribed (has_tech x2, tech_avail, tech_category) but the "best recommendation" slot bookkeeping (weighted random tie-break across military/ colonize/infra techs) is dropped - it only affects which item is pre-highlighted, not list membership.
 // working copy - scaffold materialised by --work
-// name      ?pick@PickTech@@QAEHHHHPAD@Z
 // size      9911 bytes
-// spans     0x00486510-0x00488655;0x006576A0-0x00657C12
 // prototype int (__thiscall ?pick@PickTech@@QAEHHHHPAD@Z)(PickTech* this, int factionID, int, int, int8* sectionID)
 // callers   1   call targets   48
 // kind      game

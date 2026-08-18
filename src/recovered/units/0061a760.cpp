@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0061A760 FILE
-// name      ?draw_upper_threshold_trans@Texture@@QAEXPAUBuffer@@PAUVert@@PAHHPAUVert@@H@Z
+// ORIGINAL: 0x0061A760 ?draw_upper_threshold_trans@Texture@@QAEXPAUBuffer@@PAUVert@@PAHHPAUVert@@H@Z 0x0061A760-0x0061AC53 FILE
 // size      1267 bytes
-// spans     0x0061A760-0x0061AC53
 // prototype 
 // callers   2   call targets   3
 // kind      game

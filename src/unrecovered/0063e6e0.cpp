@@ -1,29 +1,11 @@
-// ORIGINAL: 0x0063E6E0 FILE
-// name      sub_63e6e0
+// ORIGINAL: 0x0063E6E0 sub_63e6e0 0x0063E6E0-0x0063E7EE FILE
+// RULED-OUT: the given definition head (`__stdcall`, no `this`) contradicts the disassembly - `ecx` does real field work (`self[0..3]`) with no matching stack slot, so this is really a `__thiscall` member with 4 stack params, not a 4-arg stdcall free function. Rewritten as a member on a synthetic class - landed FILE-mode because BODY mode's naive brace-balance extraction (`extract_forward_text`) stops at the first top-level `{...}` it meets, which is the class's own declaration block, truncating the out-of-line method definition entirely (measured: NO_COMPILE, "found 0" external symbols). Reproduces the redundant `if (headOld != 0)` re-test before the second `free()` (the original keeps it even though it is statically known true) since dropping it did not change the divergence. Landed at mnemonic_similarity 0.971, byte count already matches (270/270); only the free-path register scheduling around instruction 79 still differs.
 // size      270 bytes
-// spans     0x0063E6E0-0x0063E7EE
 // prototype 
 // callers   1   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D4510 0x00644EF2
-// RULED-OUT: the given definition head (`__stdcall`, no `this`) contradicts
-//            the disassembly - `ecx` does real field work (`self[0..3]`)
-//            with no matching stack slot, so this is really a `__thiscall`
-//            member with 4 stack params, not a 4-arg stdcall free
-//            function. Rewritten as a member on a synthetic class -
-//            landed FILE-mode because BODY mode's naive brace-balance
-//            extraction (`extract_forward_text`) stops at the first
-//            top-level `{...}` it meets, which is the class's own
-//            declaration block, truncating the out-of-line method
-//            definition entirely (measured: NO_COMPILE, "found 0"
-//            external symbols). Reproduces the redundant
-//            `if (headOld != 0)` re-test before the second `free()` (the
-//            original keeps it even though it is statically known true)
-//            since dropping it did not change the divergence. Landed at
-//            mnemonic_similarity 0.971, byte count already matches
-//            (270/270); only the free-path register scheduling around
-//            instruction 79 still differs.
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: sub_63e6e0  at 0x0063E6E0  (270 bytes)
 //

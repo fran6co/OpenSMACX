@@ -1,15 +1,7 @@
-// ORIGINAL: 0x00511BB0 FILE
-// RULED-OUT: literal per-instruction register simulation (eax/ebx/ecx/edx/esi/edi as
-//            locals) with goto-labeled control flow matching every branch target;
-//            not tried: reconstructing idiomatic per-block source (member/local
-//            variable reuse) that would let the compiler's CSE match the original's
-//            code size - rebuilt is 4555 bytes against 8149 original, same first
-//            divergence at the prologue (push vs sub), so the whole body likely
-//            needs restructuring, not a single-instruction fix.
+// ORIGINAL: 0x00511BB0 ?give_hints@Console@@QAEXXZ 0x00511BB0-0x00513B85 FILE
+// RULED-OUT: literal per-instruction register simulation (eax/ebx/ecx/edx/esi/edi as locals) with goto-labeled control flow matching every branch target; not tried: reconstructing idiomatic per-block source (member/local variable reuse) that would let the compiler's CSE match the original's code size - rebuilt is 4555 bytes against 8149 original, same first divergence at the prologue (push vs sub), so the whole body likely needs restructuring, not a single-instruction fix.
 // working copy - scaffold materialised by --work
-// name      ?give_hints@Console@@QAEXXZ
 // size      8149 bytes
-// spans     0x00511BB0-0x00513B85
 // prototype void (__thiscall ?give_hints@Console@@QAEXXZ)(Console* this)
 // callers   1   call targets   21
 // kind      game

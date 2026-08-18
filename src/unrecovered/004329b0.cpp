@@ -1,11 +1,7 @@
-// ORIGINAL: 0x004329B0 FILE
-// RULED-OUT: MISMATCH #6 push/mov - direct self+offset pointer arithmetic
-//            throughout gave the allocator no reason to keep `this` pinned
-//            in edi across the whole body the way the original does.
+// ORIGINAL: 0x004329B0 ?draw_chassis@SelectPartWin@@QAEHHPAURECT@@H@Z 0x004329B0-0x00432CB1 FILE
+// RULED-OUT: MISMATCH #6 push/mov - direct self+offset pointer arithmetic throughout gave the allocator no reason to keep `this` pinned in edi across the whole body the way the original does.
 // working copy - scaffold materialised by --work
-// name      ?draw_chassis@SelectPartWin@@QAEHHPAURECT@@H@Z
 // size      769 bytes
-// spans     0x004329B0-0x00432CB1
 // prototype 
 // callers   1   call targets   14
 // kind      game

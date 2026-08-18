@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0050FE70 FILE
-// name      ?on_nc_left_up@Console@@QAEXHH@Z
+// ORIGINAL: 0x0050FE70 ?on_nc_left_up@Console@@QAEXHH@Z 0x0050FE70-0x0051010A FILE
 // size      666 bytes
-// spans     0x0050FE70-0x0051010A
 // prototype void (__thiscall ?on_nc_left_up@Console@@QAEXHH@Z)(Console* this, int, int)
 // callers   0   call targets   2
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00634FC0 BYTE_EXACT
-// name      ?UNK1@TexHeap@@QAEHH@Z
+// ORIGINAL: 0x00634FC0 ?UNK1@TexHeap@@QAEHH@Z 0x00634FC0-0x00634FD3 BYTE_EXACT
 // size      19 bytes
-// spans     0x00634FC0-0x00634FD3
 // prototype int (__thiscall ?UNK1@TexHeap@@QAEHH@Z)(TexHeap* this, int)
 // callers   0   call targets   1
 // kind      game

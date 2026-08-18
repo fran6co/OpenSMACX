@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004698D0 FILE
-// name      ?draw_wars@MapWin@@QAEXXZ
+// ORIGINAL: 0x004698D0 ?draw_wars@MapWin@@QAEXXZ 0x004698D0-0x00469B32 FILE
 // size      610 bytes
-// spans     0x004698D0-0x00469B32
 // prototype void (__thiscall ?draw_wars@MapWin@@QAEXXZ)(MapWin* this)
 // callers   1   call targets   6
 // kind      game

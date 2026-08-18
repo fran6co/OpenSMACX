@@ -1,11 +1,7 @@
-// ORIGINAL: 0x005FE650 FILE
-// RULED-OUT: `self` grabbed after the two early returns instead of at top
-//            (same prologue mismatch, #0 mov/push); param-load-before-push
-//            edi ordering not reproduced.
+// ORIGINAL: 0x005FE650 ?set_from_dib@Palette@@QAEHPAUDib@@@Z 0x005FE650-0x005FE6C7 FILE
+// RULED-OUT: `self` grabbed after the two early returns instead of at top (same prologue mismatch, #0 mov/push); param-load-before-push edi ordering not reproduced.
 // working copy - scaffold materialised by --work
-// name      ?set_from_dib@Palette@@QAEHPAUDib@@@Z
 // size      119 bytes
-// spans     0x005FE650-0x005FE6C7
 // prototype int (__thiscall ?set_from_dib@Palette@@QAEHPAUDib@@@Z)(Palette* this, Dib*)
 // callers   1   call targets   1
 // kind      game

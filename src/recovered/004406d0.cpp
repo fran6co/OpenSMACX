@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004406D0 BYTE_EXACT
-// name      ?set_modal@DiploPop@@QAEHHP6AHXZPAUWin@@@Z
+// ORIGINAL: 0x004406D0 ?set_modal@DiploPop@@QAEHHP6AHXZPAUWin@@@Z 0x004406D0-0x004406EC BYTE_EXACT
 // size      28 bytes
-// spans     0x004406D0-0x004406EC
 // prototype int (__thiscall ?set_modal@DiploPop@@QAEHHP6AHXZPAUWin@@@Z)(DiploPop* this, int, int (__cdecl *)(), Win*)
 // callers   0   call targets   1
 // kind      game

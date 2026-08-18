@@ -1,15 +1,10 @@
-// ORIGINAL: 0x00632740 FILE
+// ORIGINAL: 0x00632740 sub_632740 0x00632740-0x006327D2 FILE
+// RULED-OUT: EnterCriticalSection called only once per iteration - calling through `[dword ptr g_0066917c]` directly (not cached in a local like leaveCS/wait, which are each called twice) got the prologue's push/mov schedule to within 1 byte of the original.
 // PROPOSAL: sub_632740() -> sub_632740(NetThreadInfo *param_1); [esp+0x1c]
 //           reads a real stack argument, no eax set at any `ret`, so `int`
 //           return is unproven either way (kept it, matches the contract).
-// RULED-OUT: EnterCriticalSection called only once per iteration - calling
-//        through `[dword ptr g_0066917c]` directly (not cached in a local
-//        like leaveCS/wait, which are each called twice) got the prologue's
-//        push/mov schedule to within 1 byte of the original.
 // working copy - scaffold materialised by --work
-// name      sub_632740
 // size      146 bytes
-// spans     0x00632740-0x006327D2
 // prototype 
 // callers   0   call targets   2
 // kind      game

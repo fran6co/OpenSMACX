@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0055C730 FILE
-// name      ?pact_attacks@@YAXHH@Z
+// ORIGINAL: 0x0055C730 ?pact_attacks@@YAXHH@Z 0x0055C730-0x0055C833 FILE
 // size      259 bytes
-// spans     0x0055C730-0x0055C833
 // prototype 
 // callers   0   call targets   3
 // kind      game

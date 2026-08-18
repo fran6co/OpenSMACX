@@ -1,15 +1,7 @@
-// ORIGINAL: 0x005CB220 FILE
-// RULED-OUT: __thiscall member (class Sub5cb220Obj) with `this` reassigned to
-//            *(int**)this, matching Ghidra's structure closely; BOTH indirect
-//            calls (slots 9 and 12) are COM-style (interface pushed as an
-//            explicit stack arg, not passed in ecx) despite the brief's
-//            emitter flagging only slot 9 - confirmed by the raw asm's
-//            "push eax; call [ecx+0x30]" shape for slot 12 too, per LEVER 3.
-//            MISMATCH #0 (frame layout), not chased further.
+// ORIGINAL: 0x005CB220 sub_5cb220 0x005CB220-0x005CB60B FILE
+// RULED-OUT: __thiscall member (class Sub5cb220Obj) with `this` reassigned to *(int**)this, matching Ghidra's structure closely; BOTH indirect calls (slots 9 and 12) are COM-style (interface pushed as an explicit stack arg, not passed in ecx) despite the brief's emitter flagging only slot 9 - confirmed by the raw asm's "push eax; call [ecx+0x30]" shape for slot 12 too, per LEVER 3. MISMATCH #0 (frame layout), not chased further.
 // working copy - scaffold materialised by --work
-// name      sub_5cb220
 // size      1003 bytes
-// spans     0x005CB220-0x005CB60B
 // prototype 
 // callers   1   call targets   8
 // kind      game

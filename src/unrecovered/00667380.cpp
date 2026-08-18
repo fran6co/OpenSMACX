@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00667380 EXCLUDED S2d
-// name      sub_667380
+// ORIGINAL: 0x00667380 sub_667380 0x00667380-0x00667A6F EXCLUDED S2d
 // size      1775 bytes
-// spans     0x00667380-0x00667A6F
 // prototype 
 // callers   0   call targets   0
 // kind      game

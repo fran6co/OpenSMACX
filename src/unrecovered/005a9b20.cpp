@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005A9B20 FILE
+// ORIGINAL: 0x005A9B20 ?save_map_daemon@@YAHPAD@Z 0x005A9B20-0x005A9C05 FILE
 // working copy - scaffold materialised by --work
-// name      ?save_map_daemon@@YAHPAD@Z
 // size      229 bytes
-// spans     0x005A9B20-0x005A9C05
 // prototype 
 // callers   1   call targets   8
 // kind      game

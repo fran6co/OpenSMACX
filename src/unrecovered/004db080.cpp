@@ -1,18 +1,7 @@
-// ORIGINAL: 0x004DB080 FILE
-// RULED-OUT: literal Ghidra transcription using the same vbtable-slot pattern as the
-//            CheckBox recovery (desc = *(int32_t*)(self+0x293*4); vb1/vb2 = desc[1]/
-//            desc[2] give two virtual-base offsets) to resolve the two nested
-//            `(**(code**)(...+0xa4c)+4))(...)` nested-vtable calls onto a slot001
-//            shim; ~20 further FUN_ helpers have no scaffold declaration and are called
-//            as generic cdecl stubs. slot001 is invoked with two different arities
-//            across the function (4-arg once, 1-arg ~9 times) and a single VCall
-//            cannot carry both, so the 4-arg call site is approximated with the 1-arg
-//            VCall2 shim - a known, disclosed inaccuracy. Diverges from the frameless
-//            build around #1.
+// ORIGINAL: 0x004DB080 ?init@DipEdit@@QAEXH@Z 0x004DB080-0x004DB868 FILE
+// RULED-OUT: literal Ghidra transcription using the same vbtable-slot pattern as the CheckBox recovery (desc = *(int32_t*)(self+0x293*4); vb1/vb2 = desc[1]/ desc[2] give two virtual-base offsets) to resolve the two nested `(**(code**)(...+0xa4c)+4))(...)` nested-vtable calls onto a slot001 shim; ~20 further FUN_ helpers have no scaffold declaration and are called as generic cdecl stubs. slot001 is invoked with two different arities across the function (4-arg once, 1-arg ~9 times) and a single VCall cannot carry both, so the 4-arg call site is approximated with the 1-arg VCall2 shim - a known, disclosed inaccuracy. Diverges from the frameless build around #1.
 // working copy - scaffold materialised by --work
-// name      ?init@DipEdit@@QAEXH@Z
 // size      2024 bytes
-// spans     0x004DB080-0x004DB868
 // prototype void (__thiscall ?init@DipEdit@@QAEXH@Z)(DipEdit* this, int)
 // callers   1   call targets   23
 // kind      game

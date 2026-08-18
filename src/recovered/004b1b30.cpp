@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004B1B30 BYTE_EXACT
-// name      ?bubble_me_elmo2@SocialWin@@QAEXPADHH@Z
+// ORIGINAL: 0x004B1B30 ?bubble_me_elmo2@SocialWin@@QAEXPADHH@Z 0x004B1B30-0x004B1B70 BYTE_EXACT
 // size      64 bytes
-// spans     0x004B1B30-0x004B1B70
 // prototype void (__thiscall ?bubble_me_elmo2@SocialWin@@QAEXPADHH@Z)(SocialWin* this, LPCSTR, int, int)
 // callers   0   call targets   2
 // kind      game

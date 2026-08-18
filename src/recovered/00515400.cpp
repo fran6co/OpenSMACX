@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00515400 BYTE_EXACT
-// name      ?center@Console@@QAEXXZ
+// ORIGINAL: 0x00515400 ?center@Console@@QAEXXZ 0x00515400-0x00515423 BYTE_EXACT
 // size      35 bytes
-// spans     0x00515400-0x00515423
 // prototype void (__thiscall ?center@Console@@QAEXXZ)(Console* this)
 // callers   5   call targets   1
 // kind      game

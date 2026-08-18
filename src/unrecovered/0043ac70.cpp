@@ -1,25 +1,6 @@
-// ORIGINAL: 0x0043AC70 FILE
-// RULED-OUT: transcribed the full control flow (both tech-gate early returns,
-//            the item-building loop over the 0x9AB544 record array with
-//            has_tech/abil_cond/dup-ability checks, all 7 jump-table cases plus
-//            the eax>=0 default block, the popup.exec() branch, and the 3
-//            duplicated popup/scroll/flatbutton/basepop/spot/dialogs/dialog/
-//            stringstruct/sprite/heap teardown sequences) using the scaffold's
-//            already-confirmed Popup/BasePop/Dialogs layout (flat_button1_/2_,
-//            sprite_, heap_, scroll_ as real embedded members; Dialogs.dialog_/
-//            virtual_base_ as real embedded sub-objects) - roughly 85-90% of
-//            the original's call sequence by count. Not replicated: VC6's own
-//            /GX SEH frame (fs:[0], the [ebp-4] unwind-state byte, the
-//            __CxxFrameHandler funclet table at 0x654410+) since that is
-//            compiler-synthesized plumbing outside this function's own logic;
-//            the Dialogs item()-vs-dtor 0x188 this-adjustment
-//            (DialogsDestructorAdjustment) is not modeled, both use &dialogs;
-//            the two "sub_4066c0" objects and their real type/size are
-//            unknown, approximated as raw buffers only large enough to pass
-//            as a this-pointer.
-// name      ?select_special@DesignWin@@QAEXH@Z
+// ORIGINAL: 0x0043AC70 ?select_special@DesignWin@@QAEXH@Z 0x0043AC70-0x0043BDE9;0x00654410-0x006546C5 FILE
+// RULED-OUT: transcribed the full control flow (both tech-gate early returns, the item-building loop over the 0x9AB544 record array with has_tech/abil_cond/dup-ability checks, all 7 jump-table cases plus the eax>=0 default block, the popup.exec() branch, and the 3 duplicated popup/scroll/flatbutton/basepop/spot/dialogs/dialog/ stringstruct/sprite/heap teardown sequences) using the scaffold's already-confirmed Popup/BasePop/Dialogs layout (flat_button1_/2_, sprite_, heap_, scroll_ as real embedded members; Dialogs.dialog_/ virtual_base_ as real embedded sub-objects) - roughly 85-90% of the original's call sequence by count. Not replicated: VC6's own /GX SEH frame (fs:[0], the [ebp-4] unwind-state byte, the __CxxFrameHandler funclet table at 0x654410+) since that is compiler-synthesized plumbing outside this function's own logic; the Dialogs item()-vs-dtor 0x188 this-adjustment (DialogsDestructorAdjustment) is not modeled, both use &dialogs; the two "sub_4066c0" objects and their real type/size are unknown, approximated as raw buffers only large enough to pass as a this-pointer.
 // size      5166 bytes
-// spans     0x0043AC70-0x0043BDE9;0x00654410-0x006546C5
 // prototype void (__thiscall ?select_special@DesignWin@@QAEXH@Z)(DesignWin* this, int)
 // callers   3   call targets   34
 // kind      game

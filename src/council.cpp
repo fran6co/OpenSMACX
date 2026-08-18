@@ -24,10 +24,8 @@ RulesProposal *Proposal = (RulesProposal *)0x009A6828;
 
 /*
 Purpose: Calculate faction's vote count. Used for Planetary Governor and Supreme Leader.
-ORIGINAL: 0x0052AD30
-// name      ?council_votes@@YAHH@Z
+// ORIGINAL: 0x0052AD30 ?council_votes@@YAHH@Z 0x0052AD30-0x0052AE19
 // size      233 bytes
-// spans     0x0052AD30-0x0052AE19
 // prototype int (__cdecl ?council_votes@@YAHH@Z)(int factionID)
 // callers   9   call targets   0
 // kind      game
@@ -66,10 +64,8 @@ int __cdecl council_votes(int faction_id) {
 
 /*
 Purpose: Check whether a faction's leader is eligible to be a Planetary Governor candidate.
-ORIGINAL: 0x0052AE20
-// name      ?eligible@@YAHH@Z
+// ORIGINAL: 0x0052AE20 ?eligible@@YAHH@Z 0x0052AE20-0x0052AEA4
 // size      132 bytes
-// spans     0x0052AE20-0x0052AEA4
 // prototype 
 // callers   6   call targets   1
 // kind      game

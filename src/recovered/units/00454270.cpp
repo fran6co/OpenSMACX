@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00454270 FILE
-// name      ?load_vehicles@@YAXXZ
+// ORIGINAL: 0x00454270 ?load_vehicles@@YAXXZ 0x00454270-0x004547DB;0x0065515A-0x00655182 FILE
 // size      1427 bytes
-// spans     0x00454270-0x004547DB;0x0065515A-0x00655182
 // prototype 
 // callers   1   call targets   10
 // kind      game

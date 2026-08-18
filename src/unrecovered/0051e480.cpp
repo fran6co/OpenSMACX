@@ -1,12 +1,7 @@
-// ORIGINAL: 0x0051E480 FILE
-// RULED-OUT: named `adj2` local for the second this-adjusted vtable call
-//            (mismatched: original uses `lea` there, not `add`, unlike the
-//            first call which does match named). MISMATCH #41 is the sole
-//            remaining divergence at 98.5% mnemonic similarity.
+// ORIGINAL: 0x0051E480 sub_51e480 0x0051E480-0x0051E523 FILE
+// RULED-OUT: named `adj2` local for the second this-adjusted vtable call (mismatched: original uses `lea` there, not `add`, unlike the first call which does match named). MISMATCH #41 is the sole remaining divergence at 98.5% mnemonic similarity.
 // working copy - scaffold materialised by --work
-// name      sub_51e480
 // size      163 bytes
-// spans     0x0051E480-0x0051E523
 // prototype 
 // callers   0   call targets   0
 // kind      game

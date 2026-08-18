@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064EBEE EXCLUDED S1
-// name      _x_ismbbtype
+// ORIGINAL: 0x0064EBEE _x_ismbbtype 0x0064EBEE-0x0064EC1F EXCLUDED S1
 // size      49 bytes
-// spans     0x0064EBEE-0x0064EC1F
 // prototype 
 // callers   1   call targets   0
 // kind      library

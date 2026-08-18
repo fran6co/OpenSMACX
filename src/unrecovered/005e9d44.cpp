@@ -1,11 +1,7 @@
-// ORIGINAL: 0x005E9D44 FILE
-// RULED-OUT: literal computed-jump dispatch (register/global holds a label
-//            address, re-jumped every outer row) - not reachable from C;
-//            reproduced as switch-based Duff's device per row instead.
+// ORIGINAL: 0x005E9D44 ?draw@Sprite@@QAEHPAUBuffer@@HHHPAE@Z 0x005E9D44-0x005EAAFF FILE
+// RULED-OUT: literal computed-jump dispatch (register/global holds a label address, re-jumped every outer row) - not reachable from C; reproduced as switch-based Duff's device per row instead.
 // working copy - scaffold materialised by --work
-// name      ?draw@Sprite@@QAEHPAUBuffer@@HHHPAE@Z
 // size      3515 bytes
-// spans     0x005E9D44-0x005EAAFF
 // prototype int (__thiscall ?draw@Sprite@@QAEHPAUBuffer@@HHHPAE@Z)(Sprite* this, Buffer*, int, int, int, unsigned int8*)
 // callers   3   call targets   8
 // kind      game

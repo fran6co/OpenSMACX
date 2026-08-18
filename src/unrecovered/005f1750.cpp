@@ -1,23 +1,7 @@
-// ORIGINAL: 0x005F1750 FILE
-// RULED-OUT: MISMATCH, closest at 192/194 bytes (mnemonic_similarity 0.96).
-//            Signature changed to `void __cdecl sub_5f1750(int a1)` per
-//            [esp+0x14] read confirmed a real stack argument (IDA's
-//            guess). The call at 0x5efd20 (catalogued `Win::flip`) never
-//            sets up ecx before it and pushes only its one RECT* arg, so
-//            it is called as a bare `extern "C" void __cdecl
-//            win_flip_stub(RECT*)` rather than through the scaffold's
-//            thiscall member - matches the exact one-push call site.
-//            Naming `x`/`y` as locals (each read once, reused for both
-//            the right/bottom sum and the left/top store) reproduces the
-//            register reuse and drops an extra `push esi` a fully
-//            -inlined 4-local version needed. Remaining diff: the `top`
-//            field store lands in the RECT buffer before vs after the
-//            three `UnionRect` arg pushes - a stack-slot scheduling
-//            nuance, not chased further.
+// ORIGINAL: 0x005F1750 sub_5f1750 0x005F1750-0x005F1812 FILE
+// RULED-OUT: MISMATCH, closest at 192/194 bytes (mnemonic_similarity 0.96). Signature changed to `void __cdecl sub_5f1750(int a1)` per [esp+0x14] read confirmed a real stack argument (IDA's guess). The call at 0x5efd20 (catalogued `Win::flip`) never sets up ecx before it and pushes only its one RECT* arg, so it is called as a bare `extern "C" void __cdecl win_flip_stub(RECT*)` rather than through the scaffold's thiscall member - matches the exact one-push call site. Naming `x`/`y` as locals (each read once, reused for both the right/bottom sum and the left/top store) reproduces the register reuse and drops an extra `push esi` a fully -inlined 4-local version needed. Remaining diff: the `top` field store lands in the RECT buffer before vs after the three `UnionRect` arg pushes - a stack-slot scheduling nuance, not chased further.
 // working copy - scaffold materialised by --work
-// name      sub_5f1750
 // size      194 bytes
-// spans     0x005F1750-0x005F1812
 // prototype 
 // callers   1   call targets   2
 // kind      game

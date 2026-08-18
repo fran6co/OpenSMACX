@@ -1,13 +1,7 @@
-// ORIGINAL: 0x005EE950 BYTE_EXACT FILE
-// LEVER: [ecx+N] reads with no stack `this` -> a __thiscall receiver class
-//        (Recv5ee950), not the given __stdcall free function. Two shims:
-//        VCallSelf (slot023/036 take (int,int) on `this`) and VCallChild
-//        (slot023 returns int(), slot007 void()) on the 0x30/0x60 children -
-//        same slot index, different vtables, so one shim could not serve both.
+// ORIGINAL: 0x005EE950 sub_5ee950 0x005EE950-0x005EE9EE FILE BYTE_EXACT
+// LEVER: [ecx+N] reads with no stack `this` -> a __thiscall receiver class (Recv5ee950), not the given __stdcall free function. Two shims: VCallSelf (slot023/036 take (int,int) on `this`) and VCallChild (slot023 returns int(), slot007 void()) on the 0x30/0x60 children - same slot index, different vtables, so one shim could not serve both.
 // working copy - scaffold materialised by --work
-// name      sub_5ee950
 // size      158 bytes
-// spans     0x005EE950-0x005EE9EE
 // prototype 
 // callers   0   call targets   0
 // kind      game

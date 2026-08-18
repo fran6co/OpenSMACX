@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004ACBD0 FILE
-// name      ?report_intel@@YAXH@Z
+// ORIGINAL: 0x004ACBD0 ?report_intel@@YAXH@Z 0x004ACBD0-0x004ACC29 FILE
 // size      89 bytes
-// spans     0x004ACBD0-0x004ACC29
 // prototype 
 // callers   5   call targets   1
 // kind      game

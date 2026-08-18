@@ -1,11 +1,7 @@
-// ORIGINAL: 0x005EF050 FILE
-// RULED-OUT: __thiscall fn-ptr typedef for slot 91 (C4234); own VCall2 class
-//            (91 void slots + int slot091) reaches #24 sub-vs-mov, deep in
-//            the border-adjust arithmetic
+// ORIGINAL: 0x005EF050 ?client_to_nonclient@Win@@QAEXPAURECT@@@Z 0x005EF050-0x005EF10D FILE
+// RULED-OUT: __thiscall fn-ptr typedef for slot 91 (C4234); own VCall2 class (91 void slots + int slot091) reaches #24 sub-vs-mov, deep in the border-adjust arithmetic
 // working copy - scaffold materialised by --work
-// name      ?client_to_nonclient@Win@@QAEXPAURECT@@@Z
 // size      189 bytes
-// spans     0x005EF050-0x005EF10D
 // prototype void (__thiscall ?client_to_nonclient@Win@@QAEXPAURECT@@@Z)(Win* this, RECT*)
 // callers   1   call targets   0
 // kind      game

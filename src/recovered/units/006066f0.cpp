@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006066F0 BYTE_EXACT FILE
-// name      ?on_redraw@Scroll@@QAEXXZ
+// ORIGINAL: 0x006066F0 ?on_redraw@Scroll@@QAEXXZ 0x006066F0-0x00606854 FILE BYTE_EXACT
 // size      356 bytes
-// spans     0x006066F0-0x00606854
 // prototype void (__thiscall ?on_redraw@Scroll@@QAEXXZ)(Scroll* this)
 // callers   0   call targets   6
 // kind      game

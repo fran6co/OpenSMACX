@@ -1,19 +1,13 @@
-// ORIGINAL: 0x00637D70 FILE
+// ORIGINAL: 0x00637D70 ?play_frame@Video@@QAEHXZ 0x00637D70-0x0063808D FILE
+// RULED-OUT: prologue register order (large 797-byte function, many branches); landed as a structural transcription rather than chasing every register-allocation choice. Div-by-1000 modelled as plain unsigned int/1000 (VC6's own reciprocal-multiply idiom), not the 64-bit division Ghidra's decompile implied.
 // working copy - scaffold materialised by --work
-// name      ?play_frame@Video@@QAEHXZ
 // size      797 bytes
-// spans     0x00637D70-0x0063808D
 // prototype int (__thiscall ?play_frame@Video@@QAEHXZ)(Video* this)
 // callers   5   call targets   12
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005E3503 0x005E3563 0x005EC690 0x005EC6F0 0x00626250 0x006373A0 0x00637910 0x00637C30 0x00638130 0x0063E540 0x0063E7F0 0x0063E820
 // indirect  0x00637D8B 0x00637D95 0x00637DEB 0x0063801F 0x00638069
-// RULED-OUT: prologue register order (large 797-byte function, many
-//            branches); landed as a structural transcription rather than
-//            chasing every register-allocation choice. Div-by-1000 modelled
-//            as plain unsigned int/1000 (VC6's own reciprocal-multiply
-//            idiom), not the 64-bit division Ghidra's decompile implied.
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?play_frame@Video@@QAEHXZ  at 0x00637D70  (797 bytes)

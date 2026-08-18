@@ -1,9 +1,7 @@
-// ORIGINAL: 0x00589550 BYTE_EXACT FILE
+// ORIGINAL: 0x00589550 j_GraphicWin::close 0x00589550-0x00589555 FILE BYTE_EXACT
 // LEVER: implicit-thiscall member forwarding; explicit __thiscall on a free fn is C4234
 // working copy - scaffold materialised by --work
-// name      j_GraphicWin::close
 // size      5 bytes
-// spans     0x00589550-0x00589555
 // prototype 
 // callers   0   call targets   0
 // kind      thunk

@@ -1,18 +1,7 @@
-// ORIGINAL: 0x0040FCC0 FILE
-// RULED-OUT: automatic `Font font;` local (real ctor/dtor from the class,
-//            matching draw_psych's precedent) to get the compiler-generated
-//            SEH try-finally frame, instead of hand-rolled ExceptionList
-//            plumbing; VCall::slot001 retyped to take an int (Scroll vtable
-//            slot 1 dispatch with arg 0). Traced the real bytes (not just
-//            Ghidra, which mislabels several stack slots by a constant in
-//            the Font-adjacent region) for the rowHeight formula
-//            ((font.unk_1_>=0) ? font.height_+font.unk_1_ : font.line_height_)
-//            and the Spot::add(facId,2,left,y,width,rowHeight) arg order.
-//            Not chased to byte-exact given size (1788 bytes / SEH frame).
+// ORIGINAL: 0x0040FCC0 ?draw_facilities@BaseWin@@QAEXH@Z 0x0040FCC0-0x004103A7;0x00651AF8-0x00651B0D FILE
+// RULED-OUT: automatic `Font font;` local (real ctor/dtor from the class, matching draw_psych's precedent) to get the compiler-generated SEH try-finally frame, instead of hand-rolled ExceptionList plumbing; VCall::slot001 retyped to take an int (Scroll vtable slot 1 dispatch with arg 0). Traced the real bytes (not just Ghidra, which mislabels several stack slots by a constant in the Font-adjacent region) for the rowHeight formula ((font.unk_1_>=0) ? font.height_+font.unk_1_ : font.line_height_) and the Spot::add(facId,2,left,y,width,rowHeight) arg order. Not chased to byte-exact given size (1788 bytes / SEH frame).
 // working copy - scaffold materialised by --work
-// name      ?draw_facilities@BaseWin@@QAEXH@Z
 // size      1788 bytes
-// spans     0x0040FCC0-0x004103A7;0x00651AF8-0x00651B0D
 // prototype void (__thiscall ?draw_facilities@BaseWin@@QAEXH@Z)(BaseWin* this, int)
 // callers   2   call targets   27
 // kind      game

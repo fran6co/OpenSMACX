@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005EAD9F FILE
+// ORIGINAL: 0x005EAD9F ?change_color@Sprite@@QAEHHH@Z 0x005EAD9F-0x005EAE4E FILE
 // working copy - scaffold materialised by --work
-// name      ?change_color@Sprite@@QAEHHH@Z
 // size      175 bytes
-// spans     0x005EAD9F-0x005EAE4E
 // prototype int (__thiscall ?change_color@Sprite@@QAEHHH@Z)(Sprite* this, int, int)
 // callers   1   call targets   0
 // kind      game

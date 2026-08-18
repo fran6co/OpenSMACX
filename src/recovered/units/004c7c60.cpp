@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004C7C60 BYTE_EXACT FILE
-// name      ?init@Midi@@QAEHPADK@Z
+// ORIGINAL: 0x004C7C60 ?init@Midi@@QAEHPADK@Z 0x004C7C60-0x004C7CB5 FILE BYTE_EXACT
 // size      85 bytes
-// spans     0x004C7C60-0x004C7CB5
 // prototype int (__thiscall ?init@Midi@@QAEHPADK@Z)(Midi* this, int8*, unsigned int)
 // callers   0   call targets   5
 // kind      game

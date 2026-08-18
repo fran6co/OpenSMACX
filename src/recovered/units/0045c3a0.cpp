@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0045C3A0 FILE
-// name      ?redraw_complete@MainInterface@@QAEXXZ
+// ORIGINAL: 0x0045C3A0 ?redraw_complete@MainInterface@@QAEXXZ 0x0045C3A0-0x0045C5AF FILE
 // size      527 bytes
-// spans     0x0045C3A0-0x0045C5AF
 // prototype void (__thiscall ?redraw_complete@MainInterface@@QAEXXZ)(MainInterface* this)
 // callers   5   call targets   10
 // kind      game

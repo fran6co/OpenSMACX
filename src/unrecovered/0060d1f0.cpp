@@ -1,19 +1,11 @@
-// ORIGINAL: 0x0060D1F0 FILE
-// name      ?attach@RadioButton@@QAEHPAUGraphicWin@@HHH@Z
+// ORIGINAL: 0x0060D1F0 ?attach@RadioButton@@QAEHPAUGraphicWin@@HHH@Z 0x0060D1F0-0x0060D377 FILE
+// RULED-OUT: none confirmed byte-exact; MISMATCH #26 'push' vs 'mov', same vtable-array-double-read shape as the sibling CheckBox::attach (0x0060E800). GraphicWin::init's scaffold return type is void (the mangled name spells X), so the caller cannot propagate its failure code the way the CheckBox::attach byte pattern implies it should - RadioButton::attach DOES check calculate_dimensions()'s return here, unlike CheckBox's.
 // size      391 bytes
-// spans     0x0060D1F0-0x0060D377
 // prototype int (__thiscall ?attach@RadioButton@@QAEHPAUGraphicWin@@HHH@Z)(RadioButton* this, GraphicWin*, int, int, int)
 // callers   2   call targets   6
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D4EF0 0x005DAC70 0x005DACB0 0x005DACE0 0x005DAD10 0x0060D380
-// RULED-OUT: none confirmed byte-exact; MISMATCH #26 'push' vs 'mov', same
-//            vtable-array-double-read shape as the sibling CheckBox::attach
-//            (0x0060E800). GraphicWin::init's scaffold return type is void
-//            (the mangled name spells X), so the caller cannot propagate its
-//            failure code the way the CheckBox::attach byte pattern implies
-//            it should - RadioButton::attach DOES check
-//            calculate_dimensions()'s return here, unlike CheckBox's.
 typedef int int32_t;
 typedef unsigned int uint32_t;
 typedef short int16_t;

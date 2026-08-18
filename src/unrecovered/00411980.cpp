@@ -1,14 +1,7 @@
-// ORIGINAL: 0x00411980 FILE
-// RULED-OUT: heavily time-boxed given batch budget - only the local
-//            Font construction, the initial set_clip, Font::init and
-//            set_font calls are transcribed (MISMATCH #11, well past
-//            the prologue); the bar-chart body (many box_sprite calls
-//            with per-slider RECT arithmetic and a faction colour
-//            table) is a deliberate stub, not fabricated.
+// ORIGINAL: 0x00411980 ?draw_energy_alloc@BaseWin@@QAEXH@Z 0x00411980-0x00412A96;0x00651B4C-0x00651B61 FILE
+// RULED-OUT: heavily time-boxed given batch budget - only the local Font construction, the initial set_clip, Font::init and set_font calls are transcribed (MISMATCH #11, well past the prologue); the bar-chart body (many box_sprite calls with per-slider RECT arithmetic and a faction colour table) is a deliberate stub, not fabricated.
 // working copy - scaffold materialised by --work
-// name      ?draw_energy_alloc@BaseWin@@QAEXH@Z
 // size      4395 bytes
-// spans     0x00411980-0x00412A96;0x00651B4C-0x00651B61
 // prototype void (__thiscall ?draw_energy_alloc@BaseWin@@QAEXH@Z)(BaseWin* this, int)
 // callers   3   call targets   16
 // kind      game

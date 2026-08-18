@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0046AEF0 BYTE_EXACT FILE
-// name      ?draw_radius@@YAXHHHH@Z
+// ORIGINAL: 0x0046AEF0 ?draw_radius@@YAXHHHH@Z 0x0046AEF0-0x0046AF38 FILE BYTE_EXACT
 // size      72 bytes
-// spans     0x0046AEF0-0x0046AF38
 // prototype 
 // callers   17   call targets   1
 // kind      game

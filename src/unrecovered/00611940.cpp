@@ -1,23 +1,11 @@
-// ORIGINAL: 0x00611940 FILE
-// name      ??0EditGroup@@QAE@H@Z
+// ORIGINAL: 0x00611940 ??0EditGroup@@QAE@H@Z 0x00611940-0x00611A15;0x00663020-0x00663047 FILE
+// RULED-OUT: GraphicWin/Dialog as raw-storage placement-new subobjects at +0x8c/+0xaa4 (composition, not real inheritance - the ASM skips both constructor calls entirely when a1==0, which real base/member construction can never do), guarded by a real try/catch that destroys GraphicWin if Dialog::Dialog() throws, matching the 0x663020 unwind handler. Reproduces the vtable- thunk stores, the two this-adjuster deltas and the 10-count field-triplet loop, but MISMATCH #1: the original never establishes an ebp frame (pure esp-relative addressing) ahead of `push -1; push 0x66303d`; every flag set this harness tries gives either an ebp-framed prolog or an EH-less one instead.
 // size      252 bytes
-// spans     0x00611940-0x00611A15;0x00663020-0x00663047
 // prototype void (__thiscall ??0EditGroup@@QAE@H@Z)(EditGroup* this, int)
 // callers   1   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D4CF0 0x00608C10
-// RULED-OUT: GraphicWin/Dialog as raw-storage placement-new subobjects at
-//            +0x8c/+0xaa4 (composition, not real inheritance - the ASM
-//            skips both constructor calls entirely when a1==0, which real
-//            base/member construction can never do), guarded by a real
-//            try/catch that destroys GraphicWin if Dialog::Dialog() throws,
-//            matching the 0x663020 unwind handler. Reproduces the vtable-
-//            thunk stores, the two this-adjuster deltas and the 10-count
-//            field-triplet loop, but MISMATCH #1: the original never
-//            establishes an ebp frame (pure esp-relative addressing) ahead
-//            of `push -1; push 0x66303d`; every flag set this harness tries
-//            gives either an ebp-framed prolog or an EH-less one instead.
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ??0EditGroup@@QAE@H@Z  at 0x00611940  (252 bytes)
 //

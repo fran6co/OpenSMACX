@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005C86E0 FILE
-// name      ?world_build@@YAXXZ
+// ORIGINAL: 0x005C86E0 ?world_build@@YAXXZ 0x005C86E0-0x005C899D FILE
 // size      701 bytes
-// spans     0x005C86E0-0x005C899D
 // prototype 
 // callers   4   call targets   33
 // kind      game

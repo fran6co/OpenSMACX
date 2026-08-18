@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004064D0 FILE
-// name      ??1BasePop@@QAE@XZ
+// ORIGINAL: 0x004064D0 ??1BasePop@@QAE@XZ 0x004064D0-0x0040666F;0x006508D0-0x00650978 FILE
 // size      583 bytes
-// spans     0x004064D0-0x0040666F;0x006508D0-0x00650978
 // prototype void (__thiscall ??1BasePop@@QAE@XZ)(BasePop* this)
 // callers   75   call targets   11
 // kind      game

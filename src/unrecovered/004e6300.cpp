@@ -1,19 +1,11 @@
-// ORIGINAL: 0x004E6300 FILE
-// name      ?bases_reset@@YAXHHH@Z
+// ORIGINAL: 0x004E6300 ?bases_reset@@YAXHHH@Z 0x004E6300-0x004E63FC FILE
+// RULED-OUT: single AND-chained `if` (faction==a2 && (a1<0||idx_byte==a1) && (a3==0||bits check) && (mask flag||special)) reproduces the loop body; `int mask`/`unsigned char mask` both leave the divergence at MISMATCH #2 (original reserves the one local with `push ecx` right after `mov ebp,esp`; every C form tried here gets `sub esp,4` instead) - same prologue-reservation wall as the mon_* family (0x00477840).
 // size      252 bytes
-// spans     0x004E6300-0x004E63FC
 // prototype 
 // callers   4   call targets   1
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x004E5FE0
-// RULED-OUT: single AND-chained `if` (faction==a2 && (a1<0||idx_byte==a1) &&
-//            (a3==0||bits check) && (mask flag||special)) reproduces the loop
-//            body; `int mask`/`unsigned char mask` both leave the divergence
-//            at MISMATCH #2 (original reserves the one local with `push ecx`
-//            right after `mov ebp,esp`; every C form tried here gets `sub
-//            esp,4` instead) - same prologue-reservation wall as the mon_*
-//            family (0x00477840).
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?bases_reset@@YAXHHH@Z  at 0x004E6300  (252 bytes)
 //

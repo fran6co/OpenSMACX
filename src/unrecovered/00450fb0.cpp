@@ -1,13 +1,7 @@
-// ORIGINAL: 0x00450FB0 FILE
-// RULED-OUT: signature had 0 params in the scaffold but the disassembly
-//            reads 5 stack args - changed to
-//            sub_450fb0(int a1..a5). `-static_cast<int>((x&2)!=0)&0x1d` for
-//            the neg/sbb/and offset mask compiles close but diverges at
-//            instr #17 ('and' vs rebuilt 'shr').
+// ORIGINAL: 0x00450FB0 sub_450fb0 0x00450FB0-0x00451021 FILE
+// RULED-OUT: signature had 0 params in the scaffold but the disassembly reads 5 stack args - changed to sub_450fb0(int a1..a5). `-static_cast<int>((x&2)!=0)&0x1d` for the neg/sbb/and offset mask compiles close but diverges at instr #17 ('and' vs rebuilt 'shr').
 // working copy - scaffold materialised by --work
-// name      sub_450fb0
 // size      113 bytes
-// spans     0x00450FB0-0x00451021
 // prototype 
 // callers   0   call targets   2
 // kind      game

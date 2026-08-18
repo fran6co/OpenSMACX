@@ -1,22 +1,7 @@
-// ORIGINAL: 0x005EF310 FILE
-// RULED-OUT: signature is __thiscall Win::draw_rect_border(int,int,
-//            int,int,HGDIOBJ,HGDIOBJ,int) - `this` receiver is edi
-//            (from ecx), field_184_ is a Win member, and the 7th
-//            stack slot (esp+0x30) is read by nothing, matching
-//            `ret 0x1c`=7 dwords but only 6 used fields, not IDA's
-//            flat 7-int __stdcall guess or Ghidra's own param_1..7
-//            listing. Divergence is #2, a `sub esp,N` frame the
-//            original never builds (no `mov ebp,esp` at all, pure
-//            register+esp addressing); ruled out trimming the local
-//            `pal`/`hdc`/`prev` temporaries without moving it, so left
-//            for the next pass. The 4x repeated HDC-acquire/refcount
-//            block and the rectangle math (4 MoveToEx/LineTo edges,
-//            two alternating pens) were hand-traced from the raw
-//            disasm stack offsets, not Ghidra's decompile.
+// ORIGINAL: 0x005EF310 sub_5ef310 0x005EF310-0x005EF63B FILE
+// RULED-OUT: signature is __thiscall Win::draw_rect_border(int,int, int,int,HGDIOBJ,HGDIOBJ,int) - `this` receiver is edi (from ecx), field_184_ is a Win member, and the 7th stack slot (esp+0x30) is read by nothing, matching `ret 0x1c`=7 dwords but only 6 used fields, not IDA's flat 7-int __stdcall guess or Ghidra's own param_1..7 listing. Divergence is #2, a `sub esp,N` frame the original never builds (no `mov ebp,esp` at all, pure register+esp addressing); ruled out trimming the local `pal`/`hdc`/`prev` temporaries without moving it, so left for the next pass. The 4x repeated HDC-acquire/refcount block and the rectangle math (4 MoveToEx/LineTo edges, two alternating pens) were hand-traced from the raw disasm stack offsets, not Ghidra's decompile.
 // working copy - scaffold materialised by --work
-// name      sub_5ef310
 // size      811 bytes
-// spans     0x005EF310-0x005EF63B
 // prototype 
 // callers   0   call targets   3
 // kind      game

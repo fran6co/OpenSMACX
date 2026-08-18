@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00604AB0 FILE
-// name      ?on_redraw@BasePop@@QAEXXZ
+// ORIGINAL: 0x00604AB0 ?on_redraw@BasePop@@QAEXXZ 0x00604AB0-0x00604E31 FILE
 // size      897 bytes
-// spans     0x00604AB0-0x00604E31
 // prototype void (__thiscall ?on_redraw@BasePop@@QAEXXZ)(BasePop* this)
 // callers   0   call targets   12
 // kind      game

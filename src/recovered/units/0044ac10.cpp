@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0044AC10 FILE
-// name      ?demote@FameWin@@QAEXH@Z
+// ORIGINAL: 0x0044AC10 ?demote@FameWin@@QAEXH@Z 0x0044AC10-0x0044AE42;0x00654EBA-0x00654ECF FILE
 // size      583 bytes
-// spans     0x0044AC10-0x0044AE42;0x00654EBA-0x00654ECF
 // prototype void (__thiscall ?demote@FameWin@@QAEXH@Z)(FameWin* this, int)
 // callers   1   call targets   7
 // kind      game

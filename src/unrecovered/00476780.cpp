@@ -1,12 +1,7 @@
-// ORIGINAL: 0x00476780 FILE
-// RULED-OUT: fixed const-pointer global for 0x94cea0 (indexed table
-//            base, address itself scales - own raw cast used).
-//            First divergence #1 mov/push (prologue reg alloc), 214 vs
-//            193 B.
+// ORIGINAL: 0x00476780 ?on_left_click@MonuWin@@QAEXHH@Z 0x00476780-0x00476841 FILE
+// RULED-OUT: fixed const-pointer global for 0x94cea0 (indexed table base, address itself scales - own raw cast used). First divergence #1 mov/push (prologue reg alloc), 214 vs 193 B.
 // working copy - scaffold materialised by --work
-// name      ?on_left_click@MonuWin@@QAEXHH@Z
 // size      193 bytes
-// spans     0x00476780-0x00476841
 // prototype void (__thiscall ?on_left_click@MonuWin@@QAEXHH@Z)(MonuWin* this, int xCoord, int yCoord)
 // callers   0   call targets   1
 // kind      game

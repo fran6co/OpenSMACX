@@ -1,23 +1,7 @@
-// ORIGINAL: 0x005CC450 FILE
-// RULED-OUT: __thiscall member over a PixelFormat-like struct (bit counts
-//   at self+0/4/8, shifts at self+0xc/0x10/0x14, a flag at self+0x1c).
-//   Loop 1 builds three 512-entry float-derived tables (0x9c6f2c/772c/7f2c)
-//   from clamped index -0x100..0xff using six FPU constants at fixed
-//   .rdata addresses (dereferenced as plain float/double loads, not
-//   transcribed as literals since their bit patterns are unknown); loops
-//   2-4 build three 256-entry integer shift/clamp tables (0x9c872c/8bf4/
-//   900c) per RGB channel from the struct fields. Ghidra's `__ftol()`
-//   no-arg calls were replaced with ordinary `(int)` casts on the FPU
-//   expressions, which is what the compiler lowers to `call __ftol`
-//   itself. Compiles and matches the first 26 instructions (all of the
-//   integer clamp/index setup); diverges at #26 (`fld` vs `lea`) once the
-//   FPU stack scheduling for the three-way `fld st(0)` duplication
-//   starts - x87 stack scheduling, not source form, and not chased
-//   further given the size of the function.
+// ORIGINAL: 0x005CC450 sub_5cc450 0x005CC450-0x005CC70D FILE
+// RULED-OUT: __thiscall member over a PixelFormat-like struct (bit counts at self+0/4/8, shifts at self+0xc/0x10/0x14, a flag at self+0x1c). Loop 1 builds three 512-entry float-derived tables (0x9c6f2c/772c/7f2c) from clamped index -0x100..0xff using six FPU constants at fixed .rdata addresses (dereferenced as plain float/double loads, not transcribed as literals since their bit patterns are unknown); loops 2-4 build three 256-entry integer shift/clamp tables (0x9c872c/8bf4/ 900c) per RGB channel from the struct fields. Ghidra's `__ftol()` no-arg calls were replaced with ordinary `(int)` casts on the FPU expressions, which is what the compiler lowers to `call __ftol` itself. Compiles and matches the first 26 instructions (all of the integer clamp/index setup); diverges at #26 (`fld` vs `lea`) once the FPU stack scheduling for the three-way `fld st(0)` duplication starts - x87 stack scheduling, not source form, and not chased further given the size of the function.
 // working copy - scaffold materialised by --work
-// name      sub_5cc450
 // size      701 bytes
-// spans     0x005CC450-0x005CC70D
 // prototype 
 // callers   1   call targets   1
 // kind      game

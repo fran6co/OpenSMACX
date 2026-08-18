@@ -1,15 +1,7 @@
-// ORIGINAL: 0x005F1070 BYTE_EXACT FILE
-// LEVER: call directly through `(*reinterpret_cast<Fn*>(g_addr))(args)` at the
-//        call site instead of binding the function pointer to a named local
-//        first - the named local forced an extra reg-to-reg mov before the
-//        GetDC argument push. Also: these two "vtable" calls (slots 17/26)
-//        push the object pointer as an explicit stack arg with ecx holding
-//        the vtable pointer, not a real __thiscall dispatch, so plain
-//        `int*`/function-pointer casts matched where the VCall shim would not.
+// ORIGINAL: 0x005F1070 ?OnQueryNewPalette@Win@@QAAHPAX@Z 0x005F1070-0x005F1141 FILE BYTE_EXACT
+// LEVER: call directly through `(*reinterpret_cast<Fn*>(g_addr))(args)` at the call site instead of binding the function pointer to a named local first - the named local forced an extra reg-to-reg mov before the GetDC argument push. Also: these two "vtable" calls (slots 17/26) push the object pointer as an explicit stack arg with ecx holding the vtable pointer, not a real __thiscall dispatch, so plain `int*`/function-pointer casts matched where the VCall shim would not.
 // working copy - scaffold materialised by --work
-// name      ?OnQueryNewPalette@Win@@QAAHPAX@Z
 // size      209 bytes
-// spans     0x005F1070-0x005F1141
 // prototype int (__cdecl ?OnQueryNewPalette@Win@@QAAHPAX@Z)(HWND hWnd)
 // callers   0   call targets   0
 // kind      game

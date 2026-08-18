@@ -1,11 +1,7 @@
-// ORIGINAL: 0x005EE810 BYTE_EXACT FILE
-// LEVER: ecx receiver is a real __thiscall this (int a1,int a2,int a3 ->
-//   member fn(a1,a2,a3)); own VCall2 shim gives slot021/slot034 (int,int)
-//   and slot007/slot023 int returns, others stay nullary void from VCall.
+// ORIGINAL: 0x005EE810 sub_5ee810 0x005EE810-0x005EE8AE FILE BYTE_EXACT
+// LEVER: ecx receiver is a real __thiscall this (int a1,int a2,int a3 -> member fn(a1,a2,a3)); own VCall2 shim gives slot021/slot034 (int,int) and slot007/slot023 int returns, others stay nullary void from VCall.
 // working copy - scaffold materialised by --work
-// name      sub_5ee810
 // size      158 bytes
-// spans     0x005EE810-0x005EE8AE
 // prototype 
 // callers   0   call targets   0
 // kind      game

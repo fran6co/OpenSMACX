@@ -1,8 +1,6 @@
-// ORIGINAL: 0x0051E530 FILE
+// ORIGINAL: 0x0051E530 sub_51e530 0x0051E530-0x0051E6ED FILE
 // RULED-OUT: char* record-base arithmetic (self+0x30*a1 relative to 0x93a7b0) with adjustor-thunk VCall dispatch (slot000/slot001) for the two destroy-list virtual calls; reaches #13
-// name      sub_51e530
 // size      445 bytes
-// spans     0x0051E530-0x0051E6ED
 // prototype 
 // callers   1   call targets   5
 // kind      game

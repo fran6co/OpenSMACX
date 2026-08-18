@@ -1,17 +1,7 @@
-// ORIGINAL: 0x00448400 FILE
-// RULED-OUT: full transcription landed (MISMATCH #1, no SEH frame
-//            reproduced). Used a plain local `Buffer localBuf;` since
-//            ~Buffer() is declared here (unlike the sibling StringStruct
-//            cases) - RAII reproduces the real destructor call on every
-//            return path, matching the disassembly exactly. Did not use
-//            src/hypothesis_layouts.h's FameWin field names per the brief's
-//            warning; every FameWin/BaseButton field access is a raw
-//            self+offset cast, cross-checked against the raw bytes (not
-//            Ghidra) for both BaseButton::init 8-arg calls.
+// ORIGINAL: 0x00448400 ?init@FameWin@@QAEHXZ 0x00448400-0x00448D60;0x00654E90-0x00654EA5 FILE
+// RULED-OUT: full transcription landed (MISMATCH #1, no SEH frame reproduced). Used a plain local `Buffer localBuf;` since ~Buffer() is declared here (unlike the sibling StringStruct cases) - RAII reproduces the real destructor call on every return path, matching the disassembly exactly. Did not use src/hypothesis_layouts.h's FameWin field names per the brief's warning; every FameWin/BaseButton field access is a raw self+offset cast, cross-checked against the raw bytes (not Ghidra) for both BaseButton::init 8-arg calls.
 // working copy - scaffold materialised by --work
-// name      ?init@FameWin@@QAEHXZ
 // size      2421 bytes
-// spans     0x00448400-0x00448D60;0x00654E90-0x00654EA5
 // prototype int (__thiscall ?init@FameWin@@QAEHXZ)(FameWin* this)
 // callers   1   call targets   14
 // kind      game

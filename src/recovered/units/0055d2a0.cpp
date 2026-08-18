@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0055D2A0 FILE
-// name      ?enemies_team_up@@YAXHHH@Z
+// ORIGINAL: 0x0055D2A0 ?enemies_team_up@@YAXHHH@Z 0x0055D2A0-0x0055D425 FILE
 // size      389 bytes
-// spans     0x0055D2A0-0x0055D425
 // prototype void (__cdecl ?enemies_team_up@@YAXHHH@Z)(int factionID, int factionIDTeam, int factionIDAgainst)
 // callers   1   call targets   4
 // kind      game

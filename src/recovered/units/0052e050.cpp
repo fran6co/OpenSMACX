@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0052E050 FILE
-// name      ?hang_up@NetDaemon@@QAEXXZ
+// ORIGINAL: 0x0052E050 ?hang_up@NetDaemon@@QAEXXZ 0x0052E050-0x0052E151 FILE
 // size      257 bytes
-// spans     0x0052E050-0x0052E151
 // prototype void (__thiscall ?hang_up@NetDaemon@@QAEXXZ)(NetDaemon* this)
 // callers   9   call targets   3
 // kind      game

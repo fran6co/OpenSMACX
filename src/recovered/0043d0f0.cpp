@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0043D0F0 BYTE_EXACT
-// name      ?hide@DesignWin@@QAEXXZ
+// ORIGINAL: 0x0043D0F0 ?hide@DesignWin@@QAEXXZ 0x0043D0F0-0x0043D116 BYTE_EXACT
 // size      38 bytes
-// spans     0x0043D0F0-0x0043D116
 // prototype void (__thiscall ?hide@DesignWin@@QAEXXZ)(DesignWin* this)
 // callers   0   call targets   3
 // kind      game

@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00470ED0 FILE
+// ORIGINAL: 0x00470ED0 ?init_dummy@MapWin@@QAEXXZ 0x00470ED0-0x00470F68 FILE
 // working copy - scaffold materialised by --work
-// name      ?init_dummy@MapWin@@QAEXXZ
 // size      152 bytes
-// spans     0x00470ED0-0x00470F68
 // prototype void (__thiscall ?init_dummy@MapWin@@QAEXXZ)(MapWin* this)
 // callers   1   call targets   2
 // kind      game

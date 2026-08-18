@@ -1,26 +1,7 @@
-// ORIGINAL: 0x004BFE00 FILE
-// RULED-OUT: mechanical transcription of the Ghidra decompilation (single
-//            8-way switch, jump table already resolved to real case
-//            labels). Its `undefined4` locals split two ways on evidence:
-//            the four altitude accumulators (local_f4/118/d0/ac) stay
-//            `int` because they feed get_relative_alt()'s int return and
-//            later integer index arithmetic; everything else (local_88
-//            .. local_8, the quaternion scratch) is `float`, and the two
-//            `0x3f800000` literal stores became `1.0f` rather than a
-//            bit-pattern write, since Ghidra's own typing already treats
-//            them as the same float locals used in the surrounding
-//            arithmetic. get_relative_alt resolved to the fixed MapWin at
-//            0x9156b0 from the disassembly's own `mov ecx,0x9156b0`
-//            before each call. sub_628150/628180/6281b0/628220 (unnamed
-//            in the catalogue) were redeclared with pointer/float
-//            signatures matching their call sites - the scaffold's
-//            nullary declarations would not accept the real arguments.
-//            Landed at MISMATCH #3 without further chasing, given the
-//            size of this function relative to the remaining budget.
+// ORIGINAL: 0x004BFE00 ?vehdraw_scoot_start@@YAXHHHH@Z 0x004BFE00-0x004C0F24 FILE
+// RULED-OUT: mechanical transcription of the Ghidra decompilation (single 8-way switch, jump table already resolved to real case labels). Its `undefined4` locals split two ways on evidence: the four altitude accumulators (local_f4/118/d0/ac) stay `int` because they feed get_relative_alt()'s int return and later integer index arithmetic; everything else (local_88 .. local_8, the quaternion scratch) is `float`, and the two `0x3f800000` literal stores became `1.0f` rather than a bit-pattern write, since Ghidra's own typing already treats them as the same float locals used in the surrounding arithmetic. get_relative_alt resolved to the fixed MapWin at 0x9156b0 from the disassembly's own `mov ecx,0x9156b0` before each call. sub_628150/628180/6281b0/628220 (unnamed in the catalogue) were redeclared with pointer/float signatures matching their call sites - the scaffold's nullary declarations would not accept the real arguments. Landed at MISMATCH #3 without further chasing, given the size of this function relative to the remaining budget.
 // working copy - scaffold materialised by --work
-// name      ?vehdraw_scoot_start@@YAXHHHH@Z
 // size      4388 bytes
-// spans     0x004BFE00-0x004C0F24
 // prototype void (__cdecl ?vehdraw_scoot_start@@YAXHHHH@Z)(int vehID, int, int, int)
 // callers   1   call targets   6
 // kind      game

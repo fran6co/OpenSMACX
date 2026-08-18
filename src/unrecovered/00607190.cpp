@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00607190 FILE
+// ORIGINAL: 0x00607190 ?UNK1@BaseButton@@QAEHPAUFont@@PADHHHHPAUWin@@H@Z 0x00607190-0x0060720A FILE
 // working copy - scaffold materialised by --work
-// name      ?UNK1@BaseButton@@QAEHPAUFont@@PADHHHHPAUWin@@H@Z
 // size      122 bytes
-// spans     0x00607190-0x0060720A
 // prototype int (__thiscall ?UNK1@BaseButton@@QAEHPAUFont@@PADHHHHPAUWin@@H@Z)(BaseButton* this, Font*, int8*, int, int, int, int, Win*, int)
 // callers   0   call targets   2
 // kind      game

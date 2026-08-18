@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004E2460 FILE
-// name      sub_4e2460
+// ORIGINAL: 0x004E2460 sub_4e2460 0x004E2460-0x004E248F FILE
 // size      47 bytes
-// spans     0x004E2460-0x004E248F
 // prototype 
 // callers   0   call targets   0
 // kind      game

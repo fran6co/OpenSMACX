@@ -1,13 +1,7 @@
-// ORIGINAL: 0x005C9860 BYTE_EXACT FILE
-// LEVER: the scaffold's `GraphicWin::init` is declared `void` (a stale
-//        prototype - src/graphicwin.cpp's real recovery is `int`), but the
-//        disassembly tests its return value. Cannot redeclare GraphicWin
-//        (duplicate class), so a same-layout `GraphicWinInitShim` with the
-//        correct `int` return gets the same call site.
+// ORIGINAL: 0x005C9860 ?init@MultiDebug@@QAEHPAUNet@@PAUWin@@PAE@Z 0x005C9860-0x005C98DB FILE BYTE_EXACT
+// LEVER: the scaffold's `GraphicWin::init` is declared `void` (a stale prototype - src/graphicwin.cpp's real recovery is `int`), but the disassembly tests its return value. Cannot redeclare GraphicWin (duplicate class), so a same-layout `GraphicWinInitShim` with the correct `int` return gets the same call site.
 // working copy - scaffold materialised by --work
-// name      ?init@MultiDebug@@QAEHPAUNet@@PAUWin@@PAE@Z
 // size      123 bytes
-// spans     0x005C9860-0x005C98DB
 // prototype int (__thiscall ?init@MultiDebug@@QAEHPAUNet@@PAUWin@@PAE@Z)(MultiDebug* this, Net*, Win*, LPBYTE)
 // callers   1   call targets   4
 // kind      game

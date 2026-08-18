@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064B426 EXCLUDED S1
-// name      _isintTOSret
+// ORIGINAL: 0x0064B426 _isintTOSret 0x0064B426-0x0064B427 EXCLUDED S1
 // size      1 bytes
-// spans     0x0064B426-0x0064B427
 // prototype 
 // callers   0   call targets   0
 // kind      library

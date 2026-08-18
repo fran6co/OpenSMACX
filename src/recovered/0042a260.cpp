@@ -9,10 +9,8 @@
 // is the ability to CHECK it from a scaffold, so the claim goes with it -
 // state is measured, not remembered. It comes back the day this body is
 // promoted into the file that owns its class, which is where it belongs.
-// ORIGINAL: 0x0042A260
-// name      ?UNK3@Datalink@@QAEXIH@Z
+// ORIGINAL: 0x0042A260 ?UNK3@Datalink@@QAEXIH@Z 0x0042A260-0x0042A2BF
 // size      95 bytes
-// spans     0x0042A260-0x0042A2BF
 // prototype void (__thiscall ?UNK3@Datalink@@QAEXIH@Z)(Datalink* this, DatalinkID, int)
 // callers   0   call targets   2
 // kind      game

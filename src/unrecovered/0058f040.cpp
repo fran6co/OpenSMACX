@@ -1,22 +1,7 @@
-// ORIGINAL: 0x0058F040 FILE
-// RULED-OUT: SEH frame (push -1/handler/fs:[0], with a `LAB_00660bd7`
-//            operator-delete-on-throw cleanup around the MapWin allocation
-//            loop) not reproduced by plain operator-new + placement-new in
-//            a for loop - same gap as the 0x00428DF0 precedent this pattern
-//            is modelled on. Marking `BasePop::set_def_cancel_text`/
-//            `set_def_ok_text` `static` (the disassembly leaves whatever
-//            register a prior, unrelated Strings::get call left behind,
-//            never sets one up) let the rest of the body - two mkdir/
-//            prefs_get/Strings::init/labels_init calls, the two upper-case-
-//            unless-language-2 string builds, the 8-slot MapWin allocation
-//            loop, and the MainInterface/BattleWin/Console/MultiDebug/
-//            MessageWin/Datalink init sequence with its this-adjustor
-//            thunk - compile as a faithful transcription (73.6% mnemonic
-//            similarity).
+// ORIGINAL: 0x0058F040 ?system_init@@YAHXZ 0x0058F040-0x0058F245;0x00660BD7-0x00660BEC FILE
+// RULED-OUT: SEH frame (push -1/handler/fs:[0], with a `LAB_00660bd7` operator-delete-on-throw cleanup around the MapWin allocation loop) not reproduced by plain operator-new + placement-new in a for loop - same gap as the 0x00428DF0 precedent this pattern is modelled on. Marking `BasePop::set_def_cancel_text`/ `set_def_ok_text` `static` (the disassembly leaves whatever register a prior, unrelated Strings::get call left behind, never sets one up) let the rest of the body - two mkdir/ prefs_get/Strings::init/labels_init calls, the two upper-case- unless-language-2 string builds, the 8-slot MapWin allocation loop, and the MainInterface/BattleWin/Console/MultiDebug/ MessageWin/Datalink init sequence with its this-adjustor thunk - compile as a faithful transcription (73.6% mnemonic similarity).
 // working copy - scaffold materialised by --work
-// name      ?system_init@@YAHXZ
 // size      538 bytes
-// spans     0x0058F040-0x0058F245;0x00660BD7-0x00660BEC
 // prototype 
 // callers   1   call targets   23
 // kind      game

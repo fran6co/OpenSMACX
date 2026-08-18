@@ -1,14 +1,7 @@
-// ORIGINAL: 0x0046B310 FILE
-// RULED-OUT: literal register-mirroring transcription (eax/ecx/edx/ebx/edi as
-//            plain int locals) of the singleton-fast-path vs. wrap/clamp
-//            slow-path split on `this == 0x9156b0`; the sign-extraction idiom
-//            `and 0x80000000; neg; sbb; and 2; add 2` reduced to
-//            `(field < 0) ? 4 : 2`. MISMATCH #4 push/xor in the prologue -
-//            compiles and the branch/merge structure follows the disasm.
+// ORIGINAL: 0x0046B310 ?focus@MapWin@@QAEHHH@Z 0x0046B310-0x0046B50C FILE
+// RULED-OUT: literal register-mirroring transcription (eax/ecx/edx/ebx/edi as plain int locals) of the singleton-fast-path vs. wrap/clamp slow-path split on `this == 0x9156b0`; the sign-extraction idiom `and 0x80000000; neg; sbb; and 2; add 2` reduced to `(field < 0) ? 4 : 2`. MISMATCH #4 push/xor in the prologue - compiles and the branch/merge structure follows the disasm.
 // working copy - scaffold materialised by --work
-// name      ?focus@MapWin@@QAEHHH@Z
 // size      508 bytes
-// spans     0x0046B310-0x0046B50C
 // prototype int (__thiscall ?focus@MapWin@@QAEHHH@Z)(MapWin* this, int, int)
 // callers   9   call targets   2
 // kind      game

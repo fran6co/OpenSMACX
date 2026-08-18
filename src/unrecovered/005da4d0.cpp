@@ -1,12 +1,6 @@
-// ORIGINAL: 0x005DA4D0
-// RULED-OUT: MISMATCH #6 mov/push - get_data()/free_data() logic inlined by
-//            hand (raw uint32_t offsets, matching Buffer::get_data's own
-//            style, as in the sibling change_color at 0x005DE580) since
-//            neither is a catalogued callee of this address; register
-//            allocation differs from the original past that point.
-// name      ?map_colors@Buffer@@QAEHPAURECT@@PAE@Z
+// ORIGINAL: 0x005DA4D0 ?map_colors@Buffer@@QAEHPAURECT@@PAE@Z 0x005DA4D0-0x005DA67D
+// RULED-OUT: MISMATCH #6 mov/push - get_data()/free_data() logic inlined by hand (raw uint32_t offsets, matching Buffer::get_data's own style, as in the sibling change_color at 0x005DE580) since neither is a catalogued callee of this address; register allocation differs from the original past that point.
 // size      429 bytes
-// spans     0x005DA4D0-0x005DA67D
 // prototype int (__thiscall ?map_colors@Buffer@@QAEHPAURECT@@PAE@Z)(Buffer* this, RECT*, unsigned int8*)
 // callers   2   call targets   0
 // kind      game

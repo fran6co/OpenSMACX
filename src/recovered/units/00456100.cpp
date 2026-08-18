@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00456100 BYTE_EXACT FILE
-// name      ??1CaviarData@@QAE@XZ
+// ORIGINAL: 0x00456100 ??1CaviarData@@QAE@XZ 0x00456100-0x00456105 FILE BYTE_EXACT
 // size      5 bytes
-// spans     0x00456100-0x00456105
 // prototype void (__thiscall ??1CaviarData@@QAE@XZ)(CaviarData* this)
 // callers   0   call targets   0
 // kind      thunk

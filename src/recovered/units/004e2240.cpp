@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004E2240 FILE
-// name      ??1DipEdit@@QAE@XZ
+// ORIGINAL: 0x004E2240 ??1DipEdit@@QAE@XZ 0x004E2240-0x004E23BA;0x0065C570-0x0065C60C FILE
 // size      534 bytes
-// spans     0x004E2240-0x004E23BA;0x0065C570-0x0065C60C
 // prototype void (__thiscall ??1DipEdit@@QAE@XZ)(DipEdit* this)
 // callers   2   call targets   7
 // kind      game

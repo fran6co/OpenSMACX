@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00647DB6 EXCLUDED S1
-// name      ___sbh_heap_init
+// ORIGINAL: 0x00647DB6 ___sbh_heap_init 0x00647DB6-0x00647DF4 EXCLUDED S1
 // size      62 bytes
-// spans     0x00647DB6-0x00647DF4
 // prototype 
 // callers   1   call targets   0
 // kind      library

@@ -1,18 +1,7 @@
-// ORIGINAL: 0x004A6330 FILE
-// RULED-OUT: full transcription landed (MISMATCH #3). Used the brief's
-//            resolved jump tables directly (three switches, cases
-//            0xcef-0xcf5, 0xcf0-0xcf3, and 2-8) rather than the raw
-//            `ja`+`jmp [eax*4+addr]` ranges alone. Caught a real Ghidra
-//            error via the raw bytes: every `*(uint*)(DAT_0090ea30+0x1c)`
-//            Ghidra prints is actually `[eax+0x38]` in the disassembly
-//            (`mov eax,[0x90ea30]; mov ecx,[eax+0x38]`), confirmed at both
-//            call sites that touch it. ReportIf/BaseWin/NetDaemon fields are
-//            all raw self+offset casts, not src/reportif.h's hypothesised
-//            layout, per the brief's warning.
+// ORIGINAL: 0x004A6330 ?on_iface_button_clicked@ReportIf@@QAEXH@Z 0x004A6330-0x004A6D10 FILE
+// RULED-OUT: full transcription landed (MISMATCH #3). Used the brief's resolved jump tables directly (three switches, cases 0xcef-0xcf5, 0xcf0-0xcf3, and 2-8) rather than the raw `ja`+`jmp [eax*4+addr]` ranges alone. Caught a real Ghidra error via the raw bytes: every `*(uint*)(DAT_0090ea30+0x1c)` Ghidra prints is actually `[eax+0x38]` in the disassembly (`mov eax,[0x90ea30]; mov ecx,[eax+0x38]`), confirmed at both call sites that touch it. ReportIf/BaseWin/NetDaemon fields are all raw self+offset casts, not src/reportif.h's hypothesised layout, per the brief's warning.
 // working copy - scaffold materialised by --work
-// name      ?on_iface_button_clicked@ReportIf@@QAEXH@Z
 // size      2528 bytes
-// spans     0x004A6330-0x004A6D10
 // prototype void (__thiscall ?on_iface_button_clicked@ReportIf@@QAEXH@Z)(ReportIf* this, int)
 // callers   0   call targets   13
 // kind      game

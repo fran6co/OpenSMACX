@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00447530 BYTE_EXACT FILE
-// name      ?basewin_show@UAmbience@@QAEXXZ
+// ORIGINAL: 0x00447530 ?basewin_show@UAmbience@@QAEXXZ 0x00447530-0x0044754A FILE BYTE_EXACT
 // size      26 bytes
-// spans     0x00447530-0x0044754A
 // prototype void (__thiscall ?basewin_show@UAmbience@@QAEXXZ)(UAmbience* this)
 // callers   0   call targets   0
 // kind      game

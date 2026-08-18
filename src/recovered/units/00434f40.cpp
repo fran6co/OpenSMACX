@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00434F40 FILE
-// name      ?draw_weapon@DesignWin@@QAEXH@Z
+// ORIGINAL: 0x00434F40 ?draw_weapon@DesignWin@@QAEXH@Z 0x00434F40-0x004353FF FILE
 // size      1215 bytes
-// spans     0x00434F40-0x004353FF
 // prototype void (__thiscall ?draw_weapon@DesignWin@@QAEXH@Z)(DesignWin* this, int)
 // callers   3   call targets   17
 // kind      game

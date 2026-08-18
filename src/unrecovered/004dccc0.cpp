@@ -1,23 +1,7 @@
-// ORIGINAL: 0x004DCCC0 FILE
-// RULED-OUT: mirrors the recovered AlphaNet::create/join siblings - a stack
-//            `Popup popup;` gives the SEH frame/alloca/dtor cascade for free
-//            (LEVER #1). Measured: inlining the seven itoa/strcat/parse_says
-//            triples directly into the body keeps the frame for the first
-//            two but drops it entirely (regresses to MISMATCH #0, `push`->
-//            `mov` at the very first instruction) once a third copy is
-//            added, matching the earlier `savedResult`-local finding on
-//            0x004E2A30 - past some per-function EH-state-count threshold
-//            VC6 stops emitting the frame at all. Factoring the repeated
-//            triple into a static local helper (one call site, one unwind
-//            state, per field) keeps the frame regardless of how many times
-//            it's called; reaches MISMATCH #9 (`push` vs `lea`, a few
-//            instructions into the body) with the full logic (all seven
-//            fields, Popup::start/exec, and the accept branch re-parsing
-//            the fields back out with atoi) intact.
+// ORIGINAL: 0x004DCCC0 ?editor_scen_param@Console@@QAEXXZ 0x004DCCC0-0x004DD1A1;0x0065B6A4-0x0065B7B0 FILE
+// RULED-OUT: mirrors the recovered AlphaNet::create/join siblings - a stack `Popup popup;` gives the SEH frame/alloca/dtor cascade for free (LEVER #1). Measured: inlining the seven itoa/strcat/parse_says triples directly into the body keeps the frame for the first two but drops it entirely (regresses to MISMATCH #0, `push`-> `mov` at the very first instruction) once a third copy is added, matching the earlier `savedResult`-local finding on 0x004E2A30 - past some per-function EH-state-count threshold VC6 stops emitting the frame at all. Factoring the repeated triple into a static local helper (one call site, one unwind state, per field) keeps the frame regardless of how many times it's called; reaches MISMATCH #9 (`push` vs `lea`, a few instructions into the body) with the full logic (all seven fields, Popup::start/exec, and the accept branch re-parsing the fields back out with atoi) intact.
 // working copy - scaffold materialised by --work
-// name      ?editor_scen_param@Console@@QAEXXZ
 // size      1517 bytes
-// spans     0x004DCCC0-0x004DD1A1;0x0065B6A4-0x0065B7B0
 // prototype void (__thiscall ?editor_scen_param@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   22
 // kind      game

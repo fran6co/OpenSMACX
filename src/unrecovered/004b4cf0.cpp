@@ -1,16 +1,7 @@
-// ORIGINAL: 0x004B4CF0 FILE
-// RULED-OUT: full-function transcription (~1843 instructions, sim 0.46 vs
-//            original at /O2 /Oy-); diverges at instr #3. Both the vehicle-
-//            display and base-display halves are transcribed from Ghidra
-//            with the Buffer receiver confirmed as the fixed global
-//            g_007aec64 (checked against raw disasm at two call sites);
-//            the repeated chassis-speed/range mini-blocks were copied by
-//            pattern from the first verified instance rather than each
-//            re-checked individually against the disassembly.
+// ORIGINAL: 0x004B4CF0 ?draw_active@StatusWin@@QAEXHHH@Z 0x004B4CF0-0x004B652B FILE
+// RULED-OUT: full-function transcription (~1843 instructions, sim 0.46 vs original at /O2 /Oy-); diverges at instr #3. Both the vehicle- display and base-display halves are transcribed from Ghidra with the Buffer receiver confirmed as the fixed global g_007aec64 (checked against raw disasm at two call sites); the repeated chassis-speed/range mini-blocks were copied by pattern from the first verified instance rather than each re-checked individually against the disassembly.
 // working copy - scaffold materialised by --work
-// name      ?draw_active@StatusWin@@QAEXHHH@Z
 // size      6203 bytes
-// spans     0x004B4CF0-0x004B652B
 // prototype void (__thiscall ?draw_active@StatusWin@@QAEXHHH@Z)(StatusWin* this, int, int, int)
 // callers   4   call targets   33
 // kind      game

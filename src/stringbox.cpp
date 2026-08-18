@@ -28,10 +28,8 @@ func_string_box_add_fixup StringBoxAddFixup = original_method<func_string_box_ad
 Purpose: Add a string to the box - stage the text, index and a cleared flag
          into the string struct at 0x2B70, add it, and run the fixup pass when
          the struct reports it did not take.
-ORIGINAL: 0x00629710
-// name      ?add@StringBox@@QAEXPADHH@Z
+// ORIGINAL: 0x00629710 ?add@StringBox@@QAEXPADHH@Z 0x00629710-0x00629749
 // size      57 bytes
-// spans     0x00629710-0x00629749
 // prototype void (__thiscall ?add@StringBox@@QAEXPADHH@Z)(StringBox* this, int8*, int, int)
 // callers   6   call targets   2
 // kind      game
@@ -56,10 +54,8 @@ void __fastcall string_box_add_redirect(StringBox *self, void *, char *text,
 
 /*
 Purpose: Record the scroll position and repaint through virtual slot 62.
-ORIGINAL: 0x00629D20 BYTE_EXACT
-// name      ?on_scrolled@StringBox@@QAEXHH@Z
+// ORIGINAL: 0x00629D20 ?on_scrolled@StringBox@@QAEXHH@Z 0x00629D20-0x00629D35 BYTE_EXACT
 // size      21 bytes
-// spans     0x00629D20-0x00629D35
 // prototype void (__thiscall ?on_scrolled@StringBox@@QAEXHH@Z)(StringBox* this, int, int)
 // callers   0   call targets   0
 // kind      game

@@ -1,8 +1,6 @@
-// ORIGINAL: 0x004C81C0 FILE
+// ORIGINAL: 0x004C81C0 sub_4c81c0 0x004C81C0-0x004C8286 FILE
 // working copy - scaffold materialised by --work
-// name      sub_4c81c0
 // size      198 bytes
-// spans     0x004C81C0-0x004C8286
 // prototype 
 // callers   0   call targets   6
 // kind      game

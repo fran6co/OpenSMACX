@@ -1,11 +1,7 @@
-// ORIGINAL: 0x00408170 FILE
-// RULED-OUT: plain reinterpret_cast pointer-offset calls into close()/dtors
-//            in disasm order; no local subobjects so no SEH frame is
-//            generated (diverges at #1, the missing try/finally prologue)
+// ORIGINAL: 0x00408170 ??1AlphaSave@@QAE@XZ 0x00408170-0x00408383;0x00650D10-0x00650E20 FILE
+// RULED-OUT: plain reinterpret_cast pointer-offset calls into close()/dtors in disasm order; no local subobjects so no SEH frame is generated (diverges at #1, the missing try/finally prologue)
 // working copy - scaffold materialised by --work
-// name      ??1AlphaSave@@QAE@XZ
 // size      803 bytes
-// spans     0x00408170-0x00408383;0x00650D10-0x00650E20
 // prototype void (__thiscall ??1AlphaSave@@QAE@XZ)(AlphaSave* this)
 // callers   1   call targets   12
 // kind      game

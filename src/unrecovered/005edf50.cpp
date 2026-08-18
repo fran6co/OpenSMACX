@@ -1,8 +1,6 @@
-// ORIGINAL: 0x005EDF50 FILE
+// ORIGINAL: 0x005EDF50 ?set_caption@Win@@QAEXPAD@Z 0x005EDF50-0x005EDFD5 FILE
 // working copy - scaffold materialised by --work
-// name      ?set_caption@Win@@QAEXPAD@Z
 // size      133 bytes
-// spans     0x005EDF50-0x005EDFD5
 // prototype void (__thiscall ?set_caption@Win@@QAEXPAD@Z)(Win* this, int8*)
 // callers   6   call targets   5
 // kind      game

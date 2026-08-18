@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00458930 FILE
+// ORIGINAL: 0x00458930 ?on_left_click@InfoWin@@QAEXHH@Z 0x00458930-0x004589C0 FILE
 // working copy - scaffold materialised by --work
-// name      ?on_left_click@InfoWin@@QAEXHH@Z
 // size      144 bytes
-// spans     0x00458930-0x004589C0
 // prototype void (__thiscall ?on_left_click@InfoWin@@QAEXHH@Z)(InfoWin* this, int, int)
 // callers   1   call targets   3
 // kind      game

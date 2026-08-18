@@ -1,16 +1,7 @@
-// ORIGINAL: 0x005CDFA0 FILE
-// RULED-OUT: the brief's parameterless contract - disasm reads one cdecl
-//            stack arg at entry+4 (matches IDA's void*) and never touches
-//            ecx, so this takes a void* param, not zero args. COM slots
-//            4/11/19/20 on the interface at *(*self+0x5c) are exactly
-//            IDirectSoundBuffer::GetCurrentPosition/Lock/Unlock/Restore;
-//            ignored Ghidra's InterlockedExchange/Increment/Decrement
-//            names for the four 0x6690xx/0x669100 calls - those are wrong
-//            guesses at an unresolved fixed address, not real symbols.
+// ORIGINAL: 0x005CDFA0 sub_5cdfa0 0x005CDFA0-0x005CE2B0 FILE
+// RULED-OUT: the brief's parameterless contract - disasm reads one cdecl stack arg at entry+4 (matches IDA's void*) and never touches ecx, so this takes a void* param, not zero args. COM slots 4/11/19/20 on the interface at *(*self+0x5c) are exactly IDirectSoundBuffer::GetCurrentPosition/Lock/Unlock/Restore; ignored Ghidra's InterlockedExchange/Increment/Decrement names for the four 0x6690xx/0x669100 calls - those are wrong guesses at an unresolved fixed address, not real symbols.
 // working copy - scaffold materialised by --work
-// name      sub_5cdfa0
 // size      784 bytes
-// spans     0x005CDFA0-0x005CE2B0
 // prototype 
 // callers   0   call targets   1
 // kind      game

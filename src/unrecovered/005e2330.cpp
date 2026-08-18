@@ -1,26 +1,12 @@
-// ORIGINAL: 0x005E2330
-// name      ?put_pixel@Buffer@@QAEHHHH@Z
+// ORIGINAL: 0x005E2330 ?put_pixel@Buffer@@QAEHHHH@Z 0x005E2330-0x005E2457
+// RULED-OUT: the two indirect calls are DirectDraw surface Lock/Unlock through the surface pointer stored at field_58_ - stdcall COM methods, not thiscall members of this class, so they are reached through a plain typed function pointer read from the surface's own vtable rather than a member-pointer shim; this matches the original's own indirect-call instruction shape. Ruled out a named lock-descriptor struct in favour of a raw byte buffer sized 0x6c with the two fields it actually reads (lpSurface at +0x10, pitch at +0x24) addressed by offset, since the real DDSURFACEDESC layout is not declared here. Landing the closest MISMATCH; divergence starts at instruction #5, `push` in the original for the DDraw lock call setup versus `xor` in the rebuilt.
 // size      295 bytes
-// spans     0x005E2330-0x005E2457
 // prototype int (__thiscall ?put_pixel@Buffer@@QAEHHHH@Z)(Buffer* this, int, int, int)
 // callers   1   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
 // indirect  0x005E23C3 0x005E243F
-// RULED-OUT: the two indirect calls are DirectDraw surface Lock/Unlock
-//            through the surface pointer stored at field_58_ - stdcall COM
-//            methods, not thiscall members of this class, so they are
-//            reached through a plain typed function pointer read from the
-//            surface's own vtable rather than a member-pointer shim; this
-//            matches the original's own indirect-call instruction shape.
-//            Ruled out a named lock-descriptor struct in favour of a raw
-//            byte buffer sized 0x6c with the two fields it actually reads
-//            (lpSurface at +0x10, pitch at +0x24) addressed by offset,
-//            since the real DDSURFACEDESC layout is not declared here.
-//            Landing the closest MISMATCH; divergence starts at
-//            instruction #5, `push` in the original for the DDraw lock
-//            call setup versus `xor` in the rebuilt.
 
 int Buffer::put_pixel(int a1, int a2, int a3) {
   int local_48;

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0063E540 FILE
-// name      sub_63e540
+// ORIGINAL: 0x0063E540 sub_63e540 0x0063E540-0x0063E58F FILE
 // size      79 bytes
-// spans     0x0063E540-0x0063E58F
 // prototype 
 // callers   3   call targets   1
 // kind      game

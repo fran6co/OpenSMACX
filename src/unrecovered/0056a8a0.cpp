@@ -1,13 +1,7 @@
-// ORIGINAL: 0x0056A8A0 FILE
-// RULED-OUT: full-fidelity register-level transcription; direct struct
-//            fields (Vehs/Bases/VehPrototypes/Weapon layouts confirmed via
-//            src/veh.h, src/base.h) instead of raw address casts didn't
-//            close the divergence either; prologue shape differs (#0 push
-//            vs sub) from local/frame layout, not from any single wrong op.
+// ORIGINAL: 0x0056A8A0 ?enemy_planet_buster@@YAHH@Z 0x0056A8A0-0x0056B31A FILE
+// RULED-OUT: full-fidelity register-level transcription; direct struct fields (Vehs/Bases/VehPrototypes/Weapon layouts confirmed via src/veh.h, src/base.h) instead of raw address casts didn't close the divergence either; prologue shape differs (#0 push vs sub) from local/frame layout, not from any single wrong op.
 // working copy - scaffold materialised by --work
-// name      ?enemy_planet_buster@@YAHH@Z
 // size      2682 bytes
-// spans     0x0056A8A0-0x0056B31A
 // prototype int (__cdecl ?enemy_planet_buster@@YAHH@Z)(int vehID)
 // callers   1   call targets   12
 // kind      game

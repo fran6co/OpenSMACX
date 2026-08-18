@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00476B70 FILE
-// name      ?mon_colony_founded@@YAXHPAD@Z
+// ORIGINAL: 0x00476B70 ?mon_colony_founded@@YAXHPAD@Z 0x00476B70-0x00476C84 FILE
 // size      276 bytes
-// spans     0x00476B70-0x00476C84
 // prototype 
 // callers   1   call targets   3
 // kind      game

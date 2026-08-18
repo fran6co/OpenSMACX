@@ -1,14 +1,7 @@
-// ORIGINAL: 0x00622DB0 FILE
-// RULED-OUT: __stdcall free function (receiver is really `this` via ECX,
-//   recast as Texture::draw_trans_3); exact EdgeScan field indices; the
-//   textured fill sub-branch borrows the real ESP as a second fixed-point
-//   counter (push ebp; mov [0x9bb4ac],esp; mov esp,ecx; ...; add sp,dx;
-//   sub esp,0x10000; jns ...; mov esp,[0x9bb4ac]) - no C construct can
-//   spell operating on the live stack pointer as data.
+// ORIGINAL: 0x00622DB0 Texture::draw_trans_3 0x00622DB0-0x006233C0 FILE
+// RULED-OUT: __stdcall free function (receiver is really `this` via ECX, recast as Texture::draw_trans_3); exact EdgeScan field indices; the textured fill sub-branch borrows the real ESP as a second fixed-point counter (push ebp; mov [0x9bb4ac],esp; mov esp,ecx; ...; add sp,dx; sub esp,0x10000; jns ...; mov esp,[0x9bb4ac]) - no C construct can spell operating on the live stack pointer as data.
 // working copy - scaffold materialised by --work
-// name      Texture::draw_trans_3
 // size      1552 bytes
-// spans     0x00622DB0-0x006233C0
 // prototype 
 // callers   1   call targets   4
 // kind      game

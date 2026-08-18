@@ -1,8 +1,6 @@
-// ORIGINAL: 0x004BDDE0 BYTE_EXACT FILE
+// ORIGINAL: 0x004BDDE0 ?reset@TutWin@@QAEHXZ 0x004BDDE0-0x004BDE97 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?reset@TutWin@@QAEHXZ
 // size      183 bytes
-// spans     0x004BDDE0-0x004BDE97
 // prototype int (__thiscall ?reset@TutWin@@QAEHXZ)(TutWin* this)
 // callers   22   call targets   1
 // kind      game

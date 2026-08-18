@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00634FE0 BYTE_EXACT
-// name      ?shutdown@TexHeap@@QAEXXZ
+// ORIGINAL: 0x00634FE0 ?shutdown@TexHeap@@QAEXXZ 0x00634FE0-0x00635046 BYTE_EXACT
 // size      102 bytes
-// spans     0x00634FE0-0x00635046
 // prototype void (__thiscall ?shutdown@TexHeap@@QAEXXZ)(TexHeap* this)
 // callers   0   call targets   1
 // kind      game

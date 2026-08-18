@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005E1EF0 FILE
-// name      ?dotted_vline@Buffer@@QAEXHHHH@Z
+// ORIGINAL: 0x005E1EF0 ?dotted_vline@Buffer@@QAEXHHHH@Z 0x005E1EF0-0x005E2070 FILE
 // size      384 bytes
-// spans     0x005E1EF0-0x005E2070
 // prototype void (__thiscall ?dotted_vline@Buffer@@QAEXHHHH@Z)(Buffer* this, int, int, int, int)
 // callers   2   call targets   0
 // kind      game

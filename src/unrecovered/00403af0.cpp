@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00403AF0 FILE
+// ORIGINAL: 0x00403AF0 ?fill_func@AlphaMenu@@QAAHPAUGraphicWin@@HPAURECT@@@Z 0x00403AF0-0x00403B70 FILE
 // working copy - scaffold materialised by --work
-// name      ?fill_func@AlphaMenu@@QAAHPAUGraphicWin@@HPAURECT@@@Z
 // size      128 bytes
-// spans     0x00403AF0-0x00403B70
 // prototype 
 // callers   0   call targets   2
 // kind      game

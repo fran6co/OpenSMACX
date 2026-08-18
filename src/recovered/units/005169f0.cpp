@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005169F0 FILE
-// name      ?end_my_turn@Console@@QAEXXZ
+// ORIGINAL: 0x005169F0 ?end_my_turn@Console@@QAEXXZ 0x005169F0-0x00516C4D FILE
 // size      605 bytes
-// spans     0x005169F0-0x00516C4D
 // prototype void (__thiscall ?end_my_turn@Console@@QAEXXZ)(Console* this)
 // callers   5   call targets   13
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005EAF3F FILE
-// name      ?create_blank@Sprite@@QAEHHHH@Z
+// ORIGINAL: 0x005EAF3F ?create_blank@Sprite@@QAEHHHH@Z 0x005EAF3F-0x005EAF86 FILE
 // size      71 bytes
-// spans     0x005EAF3F-0x005EAF86
 // prototype int (__thiscall ?create_blank@Sprite@@QAEHHHH@Z)(Sprite* this, int, int, int)
 // callers   6   call targets   1
 // kind      game

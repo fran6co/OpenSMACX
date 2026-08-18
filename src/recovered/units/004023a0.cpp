@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004023A0 FILE
-// name      sub_4023a0
+// ORIGINAL: 0x004023A0 sub_4023a0 0x004023A0-0x004024F8;0x00650580-0x00650595 FILE
 // size      365 bytes
-// spans     0x004023A0-0x004024F8;0x00650580-0x00650595
 // prototype 
 // callers   1   call targets   0
 // kind      game

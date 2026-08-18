@@ -1,17 +1,7 @@
-// ORIGINAL: 0x0060FD80 FILE
-// RULED-OUT: signature nullary -> thiscall member(unsigned int flag), returning
-//            void*; evidence: ecx read at entry with no stack access, `ret 4`
-//            pops one stack dword, `mov eax,ebx` before ret. Body is a scalar
-//            deleting destructor for a class with two virtual bases (Dialog,
-//            GraphicWin); the leading `sub ecx,[ecx-4]; jmp` is a vtordisp
-//            adjustor thunk with no C++ source spelling attempted here, so
-//            offsets into the vbase are read via the vbtable at runtime
-//            (matching the disassembly) rather than modeled with real virtual
-//            inheritance. Shares its tail with 0x0060FED0 (same body, folded).
+// ORIGINAL: 0x0060FD80 sub_60fd80 0x0060FD80-0x0060FD88;0x0060FD90-0x0060FE40 FILE
+// RULED-OUT: signature nullary -> thiscall member(unsigned int flag), returning void*; evidence: ecx read at entry with no stack access, `ret 4` pops one stack dword, `mov eax,ebx` before ret. Body is a scalar deleting destructor for a class with two virtual bases (Dialog, GraphicWin); the leading `sub ecx,[ecx-4]; jmp` is a vtordisp adjustor thunk with no C++ source spelling attempted here, so offsets into the vbase are read via the vbtable at runtime (matching the disassembly) rather than modeled with real virtual inheritance. Shares its tail with 0x0060FED0 (same body, folded).
 // working copy - scaffold materialised by --work
-// name      sub_60fd80
 // size      184 bytes
-// spans     0x0060FD80-0x0060FD88;0x0060FD90-0x0060FE40
 // prototype 
 // callers   0   call targets   5
 // kind      game

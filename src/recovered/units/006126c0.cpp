@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006126C0 FILE
-// name      ?pass_dialog_focus@EditGroup@@QAEXXZ
+// ORIGINAL: 0x006126C0 ?pass_dialog_focus@EditGroup@@QAEXXZ 0x006126C0-0x006126F8 FILE
 // size      56 bytes
-// spans     0x006126C0-0x006126F8
 // prototype void (__thiscall ?pass_dialog_focus@EditGroup@@QAEXXZ)(EditGroup* this)
 // callers   0   call targets   0
 // kind      game

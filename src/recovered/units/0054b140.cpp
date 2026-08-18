@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0054B140 BYTE_EXACT FILE
-// name      ?battle_routine@@YAXH@Z
+// ORIGINAL: 0x0054B140 ?battle_routine@@YAXH@Z 0x0054B140-0x0054B1B6 FILE BYTE_EXACT
 // size      118 bytes
-// spans     0x0054B140-0x0054B1B6
 // prototype 
 // callers   0   call targets   4
 // kind      game

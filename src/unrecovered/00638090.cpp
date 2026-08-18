@@ -1,11 +1,9 @@
-// ORIGINAL: 0x00638090 FILE
+// ORIGINAL: 0x00638090 Video_unk14 0x00638090-0x00638128 FILE
 // RULED-OUT: MISMATCH #0 mov/push, prologue register choice differs
 // PROPOSAL: extern "C" int __stdcall Video_unk14(int) -> VideoUnk14Recv::Video_unk14(int),
 //           __thiscall member: ecx reads (0x4b0,0x1008,0xff8,...) with no matching stack slot
 // working copy - scaffold materialised by --work
-// name      Video_unk14
 // size      152 bytes
-// spans     0x00638090-0x00638128
 // prototype 
 // callers   1   call targets   0
 // kind      game

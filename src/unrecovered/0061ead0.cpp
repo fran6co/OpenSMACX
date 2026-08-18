@@ -1,22 +1,7 @@
-// ORIGINAL: 0x0061EAD0 FILE
-// UNRECOVERABLE: the inner scanline blit loop hijacks ESP as a plain data
-//   register, with the real stack pointer saved to a global and manually
-//   restored - not something any C source construct can force:
-//     0x0061F016  mov dword ptr [0x9bb4ac], esp   ; save real esp
-//     0x0061F01C  mov esp, ecx                     ; esp := packed loop
-//                                                    counter/accumulator
-//     0x0061F06D  add sp, dx                       ; 16-bit arithmetic on
-//                                                    the stack-pointer reg
-//     0x0061F07B  sub esp, 0x10000                 ; esp counts down as the
-//     0x0061F081  jns 0x61f028                        loop's own counter
-//     0x0061F083  mov esp, dword ptr [0x9bb4ac]    ; restore real esp
-//   No call/push/pop happens between the save and restore, which is why the
-//   original could get away with it; no C body can request this register
-//   allocation, so none is landed here.
+// ORIGINAL: 0x0061EAD0 ?draw_coast@Texture@@QAEXPAUBuffer@@PAUVert@@PAHPAUTexture@@PAEH1@Z 0x0061EAD0-0x0061F0C6 FILE
+// UNRECOVERABLE: the inner scanline blit loop hijacks ESP as a plain data register, with the real stack pointer saved to a global and manually restored - not something any C source construct can force: 0x0061F016  mov dword ptr [0x9bb4ac], esp   ; save real esp 0x0061F01C  mov esp, ecx                     ; esp := packed loop counter/accumulator 0x0061F06D  add sp, dx                       ; 16-bit arithmetic on the stack-pointer reg 0x0061F07B  sub esp, 0x10000                 ; esp counts down as the 0x0061F081  jns 0x61f028                        loop's own counter 0x0061F083  mov esp, dword ptr [0x9bb4ac]    ; restore real esp No call/push/pop happens between the save and restore, which is why the original could get away with it; no C body can request this register allocation, so none is landed here.
 // working copy - scaffold materialised by --work
-// name      ?draw_coast@Texture@@QAEXPAUBuffer@@PAUVert@@PAHPAUTexture@@PAEH1@Z
 // size      1526 bytes
-// spans     0x0061EAD0-0x0061F0C6
 // prototype void (__thiscall ?draw_coast@Texture@@QAEXPAUBuffer@@PAUVert@@PAHPAUTexture@@PAEH1@Z)(Texture* this, Buffer*, Vert*, int*, Texture*, unsigned int8*, int, Vert*)
 // callers   1   call targets   3
 // kind      game

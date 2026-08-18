@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00646A25 EXCLUDED S1
-// name      _sprintf
+// ORIGINAL: 0x00646A25 _sprintf 0x00646A25-0x00646A77 EXCLUDED S1
 // size      82 bytes
-// spans     0x00646A25-0x00646A77
 // prototype 
 // callers   1   call targets   2
 // kind      library

@@ -1,12 +1,7 @@
-// ORIGINAL: 0x0052AA30 FILE
-// RULED-OUT: MISMATCH #4 push/call - straight g_* global derefs and direct
-//            member calls gave the allocator no reason to hold ebx/esi/edi
-//            live across the whole body the way the original's cached
-//            fn-ptr (ebx) and zero/flag temps (esi/edi) do.
+// ORIGINAL: 0x0052AA30 ?control_game@@YAXXZ 0x0052AA30-0x0052AD2D FILE
+// RULED-OUT: MISMATCH #4 push/call - straight g_* global derefs and direct member calls gave the allocator no reason to hold ebx/esi/edi live across the whole body the way the original's cached fn-ptr (ebx) and zero/flag temps (esi/edi) do.
 // working copy - scaffold materialised by --work
-// name      ?control_game@@YAXXZ
 // size      765 bytes
-// spans     0x0052AA30-0x0052AD2D
 // prototype 
 // callers   1   call targets   31
 // kind      game

@@ -1,18 +1,7 @@
-// ORIGINAL: 0x005D02CC FILE
-// RULED-OUT: the callees use a custom register convention (row/block ptr in esi, the
-//            single stack arg written once to a fixed [esp] slot instead of pushed per
-//            call; OutputPixelRow16 takes esi/ebx/edi with no stack args at all) that no
-//            standard C++ calling convention expresses without __asm. Landed all 96
-//            sub_5d29e1/sub_5d2b20 calls plus the 16 OutputPixelRow16 calls with the
-//            right addresses/order as plain cdecl(void*,void*[,void*]) - compiles, right
-//            call graph, but sim only ~0.12 since every call site's instruction shape
-//            differs. Signature changed to (unsigned char*, void*, int) from the disasm's
-//            3-arg use (a1=byte* string, a2=dest, a3=row stride). Not retried given the
-//            convention mismatch is structural, not a wording issue.
+// ORIGINAL: 0x005D02CC sub_5d02cc 0x005D02CC-0x005D0AAB FILE
+// RULED-OUT: the callees use a custom register convention (row/block ptr in esi, the single stack arg written once to a fixed [esp] slot instead of pushed per call; OutputPixelRow16 takes esi/ebx/edi with no stack args at all) that no standard C++ calling convention expresses without __asm. Landed all 96 sub_5d29e1/sub_5d2b20 calls plus the 16 OutputPixelRow16 calls with the right addresses/order as plain cdecl(void*,void*[,void*]) - compiles, right call graph, but sim only ~0.12 since every call site's instruction shape differs. Signature changed to (unsigned char*, void*, int) from the disasm's 3-arg use (a1=byte* string, a2=dest, a3=row stride). Not retried given the convention mismatch is structural, not a wording issue.
 // working copy - scaffold materialised by --work
-// name      sub_5d02cc
 // size      2015 bytes
-// spans     0x005D02CC-0x005D0AAB
 // prototype 
 // callers   1   call targets   4
 // kind      game

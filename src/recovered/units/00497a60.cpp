@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00497A60 BYTE_EXACT FILE
-// name      ?on_left_double_click@ReportWin@@QAEXHH@Z
+// ORIGINAL: 0x00497A60 ?on_left_double_click@ReportWin@@QAEXHH@Z 0x00497A60-0x00497AB2 FILE BYTE_EXACT
 // size      82 bytes
-// spans     0x00497A60-0x00497AB2
 // prototype void (__thiscall ?on_left_double_click@ReportWin@@QAEXHH@Z)(ReportWin* this, int xCoord, int yCoord)
 // callers   0   call targets   2
 // kind      game

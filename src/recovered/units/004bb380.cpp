@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004BB380 FILE
-// name      ?tour5@TutWin@@QAEXXZ
+// ORIGINAL: 0x004BB380 ?tour5@TutWin@@QAEXXZ 0x004BB380-0x004BB791 FILE
 // size      1041 bytes
-// spans     0x004BB380-0x004BB791
 // prototype void (__thiscall ?tour5@TutWin@@QAEXXZ)(TutWin* this)
 // callers   1   call targets   12
 // kind      game

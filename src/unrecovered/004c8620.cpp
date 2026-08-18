@@ -1,19 +1,10 @@
-// ORIGINAL: 0x004C8620 FILE
-// RULED-OUT: byte-exact - the SEH frame prologue (push -1/handler; mov
-//            fs:[0]) has no C++ source form to reproduce without a real
-//            try/catch that this Sound-constructor body doesn't need
-//            (documented wall). Landed as a __thiscall ctor-shaped member
-//            returning `this`, with the progressive vtable_storage_
-//            reassignment (0x66e444 -> 0x66e3c0 -> 0x66e790) and the
-//            self-clobbering dead `if (device_ != 0)` check (device_ is
-//            zeroed immediately before the read) transcribed as-is.
+// ORIGINAL: 0x004C8620 sub_4c8620 0x004C8620-0x004C86C9;0x004C8450-0x004C8457;0x00659F5E-0x00659F70 FILE
+// RULED-OUT: byte-exact - the SEH frame prologue (push -1/handler; mov fs:[0]) has no C++ source form to reproduce without a real try/catch that this Sound-constructor body doesn't need (documented wall). Landed as a __thiscall ctor-shaped member returning `this`, with the progressive vtable_storage_ reassignment (0x66e444 -> 0x66e3c0 -> 0x66e790) and the self-clobbering dead `if (device_ != 0)` check (device_ is zeroed immediately before the read) transcribed as-is.
 // PROPOSAL: sub_4c8620() -> Sound-shaped __thiscall ctor(void); ecx=this
 //           (never a stack arg), eax=this on return (mov eax,esi at
 //           0x4C86B9).
 // working copy - scaffold materialised by --work
-// name      sub_4c8620
 // size      194 bytes
-// spans     0x004C8620-0x004C86C9;0x004C8450-0x004C8457;0x00659F5E-0x00659F70
 // prototype 
 // callers   1   call targets   2
 // kind      game

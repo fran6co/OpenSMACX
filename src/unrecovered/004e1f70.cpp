@@ -1,12 +1,7 @@
-// ORIGINAL: 0x004E1F70 FILE
-// RULED-OUT: straightforward if/else on the bit-test, reusing the already
-//            declared NetMsg::pop / MainInterface::draw_edit_pane / this
-//            member set_view(1). MISMATCH #0 'push' vs 'mov' remains open
-//            (register allocation for `this`/esi differs from the start).
+// ORIGINAL: 0x004E1F70 ?editor_lock2@Console@@QAEXXZ 0x004E1F70-0x004E1FF6 FILE
+// RULED-OUT: straightforward if/else on the bit-test, reusing the already declared NetMsg::pop / MainInterface::draw_edit_pane / this member set_view(1). MISMATCH #0 'push' vs 'mov' remains open (register allocation for `this`/esi differs from the start).
 // working copy - scaffold materialised by --work
-// name      ?editor_lock2@Console@@QAEXXZ
 // size      134 bytes
-// spans     0x004E1F70-0x004E1FF6
 // prototype void (__thiscall ?editor_lock2@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   3
 // kind      game

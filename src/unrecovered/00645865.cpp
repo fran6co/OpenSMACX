@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00645865 EXCLUDED S1
-// name      __cfltcvt_init_1
+// ORIGINAL: 0x00645865 __cfltcvt_init_1 0x00645865-0x0064589D EXCLUDED S1
 // size      56 bytes
-// spans     0x00645865-0x0064589D
 // prototype 
 // callers   1   call targets   0
 // kind      library

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004688E0 FILE
-// name      ?gen_overlays@MapWin@@QAEXHH@Z
+// ORIGINAL: 0x004688E0 ?gen_overlays@MapWin@@QAEXHH@Z 0x004688E0-0x00468BC5 FILE
 // size      741 bytes
-// spans     0x004688E0-0x00468BC5
 // prototype void (__thiscall ?gen_overlays@MapWin@@QAEXHH@Z)(MapWin* this, int xCoord, int yCoord)
 // callers   3   call targets   7
 // kind      game

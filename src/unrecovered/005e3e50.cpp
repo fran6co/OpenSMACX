@@ -1,15 +1,7 @@
-// ORIGINAL: 0x005E3E50 FILE
-// RULED-OUT: the pixel copy is a hand-unrolled, self-computed-goto
-//            (Duff's Device style) loop jumping into the middle of an
-//            unrolled 4-wide copy based on `count & 3`; replaced with a
-//            plain nested loop that is semantically equivalent (skip the
-//            transparent key byte, else write the fill color, honoring
-//            the row/column repeat counts the four get_clipped_*_table_*
-//            helpers hand back) rather than the exact unrolled shape.
+// ORIGINAL: 0x005E3E50 ?draw_mono@Sprite@@QAEHPAUBuffer@@HHHH@Z 0x005E3E50-0x005E4ADA FILE
+// RULED-OUT: the pixel copy is a hand-unrolled, self-computed-goto (Duff's Device style) loop jumping into the middle of an unrolled 4-wide copy based on `count & 3`; replaced with a plain nested loop that is semantically equivalent (skip the transparent key byte, else write the fill color, honoring the row/column repeat counts the four get_clipped_*_table_* helpers hand back) rather than the exact unrolled shape.
 // working copy - scaffold materialised by --work
-// name      ?draw_mono@Sprite@@QAEHPAUBuffer@@HHHH@Z
 // size      3210 bytes
-// spans     0x005E3E50-0x005E4ADA
 // prototype int (__thiscall ?draw_mono@Sprite@@QAEHPAUBuffer@@HHHH@Z)(Sprite* this, Buffer*, int, int, int, int)
 // callers   5   call targets   11
 // kind      game

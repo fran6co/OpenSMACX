@@ -1,8 +1,6 @@
-// ORIGINAL: 0x00510490 FILE
+// ORIGINAL: 0x00510490 ?cursor_on@Console@@QAEXHH@Z 0x00510490-0x0051051D FILE
 // working copy - scaffold materialised by --work
-// name      ?cursor_on@Console@@QAEXHH@Z
 // size      141 bytes
-// spans     0x00510490-0x0051051D
 // prototype void (__thiscall ?cursor_on@Console@@QAEXHH@Z)(Console* this, int, int)
 // callers   5   call targets   2
 // kind      game

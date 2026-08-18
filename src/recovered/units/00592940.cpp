@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00592940 FILE
-// name      ?fixup_landmarks@@YAXXZ
+// ORIGINAL: 0x00592940 ?fixup_landmarks@@YAXXZ 0x00592940-0x00592A74 FILE
 // size      308 bytes
-// spans     0x00592940-0x00592A74
 // prototype 
 // callers   2   call targets   0
 // kind      game

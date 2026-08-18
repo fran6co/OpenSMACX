@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064A7E0 EXCLUDED S1
-// name      __twoToTOS
+// ORIGINAL: 0x0064A7E0 __twoToTOS 0x0064A7E0-0x0064A7F5 EXCLUDED S1
 // size      21 bytes
-// spans     0x0064A7E0-0x0064A7F5
 // prototype 
 // callers   1   call targets   0
 // kind      library

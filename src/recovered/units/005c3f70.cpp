@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005C3F70 FILE
-// name      ?world_shorelines@@YAXXZ
+// ORIGINAL: 0x005C3F70 ?world_shorelines@@YAXXZ 0x005C3F70-0x005C40E3 FILE
 // size      371 bytes
-// spans     0x005C3F70-0x005C40E3
 // prototype 
 // callers   3   call targets   7
 // kind      game

@@ -1,14 +1,7 @@
-// ORIGINAL: 0x005304A0 FILE
-// RULED-OUT: 0x00669368 is a function-pointer variable (timeGetTime's IAT
-//            slot), called indirectly rather than declared as a normal
-//            extern function - matches the disassembly's `call ebx` after
-//            `mov ebx,[0x669368]`. Net/NetMsg objects at 0x93cd90/0x805338
-//            are fixed-address singletons. Landed at 0.85 mnemonic
-//            similarity.
+// ORIGINAL: 0x005304A0 ?open_channel@NetDaemon@@QAEHHH@Z 0x005304A0-0x005305FF FILE
+// RULED-OUT: 0x00669368 is a function-pointer variable (timeGetTime's IAT slot), called indirectly rather than declared as a normal extern function - matches the disassembly's `call ebx` after `mov ebx,[0x669368]`. Net/NetMsg objects at 0x93cd90/0x805338 are fixed-address singletons. Landed at 0.85 mnemonic similarity.
 // working copy - scaffold materialised by --work
-// name      ?open_channel@NetDaemon@@QAEHHH@Z
 // size      351 bytes
-// spans     0x005304A0-0x005305FF
 // prototype int (__thiscall ?open_channel@NetDaemon@@QAEHHH@Z)(NetDaemon* this, int, int)
 // callers   ?   call targets   9
 // kind      game

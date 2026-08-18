@@ -1,12 +1,7 @@
-// ORIGINAL: 0x00644DCC FILE
-// RULED-OUT: indirect call through a typed function-pointer global (plain
-//            deref, extern-declared-slot, __declspec(dllimport)) all lower
-//            to push/push/push/call/ret, not the original's bare indirect
-//            jmp - VC6 does not tail-call an INDIRECT stdcall callee here
+// ORIGINAL: 0x00644DCC ICOpen 0x00644DCC-0x00644DD2 FILE
+// RULED-OUT: indirect call through a typed function-pointer global (plain deref, extern-declared-slot, __declspec(dllimport)) all lower to push/push/push/call/ret, not the original's bare indirect jmp - VC6 does not tail-call an INDIRECT stdcall callee here
 // working copy - scaffold materialised by --work
-// name      ICOpen
 // size      6 bytes
-// spans     0x00644DCC-0x00644DD2
 // prototype HIC (__stdcall ICOpen)(DWORD fccType, DWORD fccHandler, UINT wMode)
 // callers   1   call targets   0
 // kind      thunk

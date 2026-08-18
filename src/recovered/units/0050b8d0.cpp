@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0050B8D0 BYTE_EXACT FILE
-// name      ?POP3@@YAXPBDHHH@Z
+// ORIGINAL: 0x0050B8D0 ?POP3@@YAXPBDHHH@Z 0x0050B8D0-0x0050B8EF FILE BYTE_EXACT
 // size      31 bytes
-// spans     0x0050B8D0-0x0050B8EF
 // prototype 
 // callers   1   call targets   1
 // kind      game

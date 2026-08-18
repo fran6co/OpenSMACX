@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0060CBC0 FILE
-// name      ?on_mouse_move@ListBox@@QAEXHH@Z
+// ORIGINAL: 0x0060CBC0 ?on_mouse_move@ListBox@@QAEXHH@Z 0x0060CBC0-0x0060CE0B FILE
 // size      587 bytes
-// spans     0x0060CBC0-0x0060CE0B
 // prototype void (__thiscall ?on_mouse_move@ListBox@@QAEXHH@Z)(ListBox* this, int, int)
 // callers   1   call targets   3
 // kind      game

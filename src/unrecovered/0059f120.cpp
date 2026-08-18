@@ -1,8 +1,6 @@
-// ORIGINAL: 0x0059F120 FILE
+// ORIGINAL: 0x0059F120 ?probe@@YAHHHHH@Z 0x0059F120-0x005A5837;0x006613D0-0x00661B3D FILE
 // working copy - scaffold materialised by --work
-// name      ?probe@@YAHHHHH@Z
 // size      28292 bytes
-// spans     0x0059F120-0x005A5837;0x006613D0-0x00661B3D
 // prototype int (__cdecl ?probe@@YAHHHHH@Z)(int vehID1, int baseID, int vehID2, int)
 // callers   2   call targets   120
 // kind      game

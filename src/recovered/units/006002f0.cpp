@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006002F0 BYTE_EXACT FILE
-// name      ?status@MCIVideo@@QAEHXZ
+// ORIGINAL: 0x006002F0 ?status@MCIVideo@@QAEHXZ 0x006002F0-0x0060031F FILE BYTE_EXACT
 // size      47 bytes
-// spans     0x006002F0-0x0060031F
 // prototype int (__thiscall ?status@MCIVideo@@QAEHXZ)(MCIVideo* this)
 // callers   0   call targets   0
 // kind      game

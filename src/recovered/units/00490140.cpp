@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00490140 FILE
-// name      ?update_pref_buttons@PrefWin@@QAEXXZ
+// ORIGINAL: 0x00490140 ?update_pref_buttons@PrefWin@@QAEXXZ 0x00490140-0x00490326 FILE
 // size      486 bytes
-// spans     0x00490140-0x00490326
 // prototype void (__thiscall ?update_pref_buttons@PrefWin@@QAEXXZ)(PrefWin* this)
 // callers   1   call targets   3
 // kind      game

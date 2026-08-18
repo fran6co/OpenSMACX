@@ -1,19 +1,6 @@
-// ORIGINAL: 0x005EF1E0 FILE
-// RULED-OUT: the scaffold's own Win/Palette classes cannot be reused (they
-//            are fully defined already, and body-mode's brace-counted
-//            extractor would stop at the first balanced `{}` - our own
-//            helper class - before reaching the function), so this stays
-//            FILE mode with its own minimal Win/Palette. A plain
-//            `*(FuncPtr*)addr` call for GetDC/SelectObject/etc. always
-//            loaded the pointer into a register first (mov+call reg);
-//            declaring them `__declspec(dllimport)` gets the single
-//            `call dword ptr [addr]` form the original uses. Landed at
-//            MISMATCH #29 (a `push edi` the original hoists earlier, before
-//            the palette-sync compare, that this body only emits once
-//            `oldPen` is first needed).
-// name      sub_5ef1e0
+// ORIGINAL: 0x005EF1E0 sub_5ef1e0 0x005EF1E0-0x005EF310 FILE
+// RULED-OUT: the scaffold's own Win/Palette classes cannot be reused (they are fully defined already, and body-mode's brace-counted extractor would stop at the first balanced `{}` - our own helper class - before reaching the function), so this stays FILE mode with its own minimal Win/Palette. A plain `*(FuncPtr*)addr` call for GetDC/SelectObject/etc. always loaded the pointer into a register first (mov+call reg); declaring them `__declspec(dllimport)` gets the single `call dword ptr [addr]` form the original uses. Landed at MISMATCH #29 (a `push edi` the original hoists earlier, before the palette-sync compare, that this body only emits once `oldPen` is first needed).
 // size      304 bytes
-// spans     0x005EF1E0-0x005EF310
 // prototype
 // callers   0   call targets   1
 // kind      game

@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004270F0 BYTE_EXACT FILE
-// name      ?on_iface_button_clicked@CouncWin@@QAEXH@Z
+// ORIGINAL: 0x004270F0 ?on_iface_button_clicked@CouncWin@@QAEXH@Z 0x004270F0-0x0042710D FILE BYTE_EXACT
 // size      29 bytes
-// spans     0x004270F0-0x0042710D
 // prototype void (__thiscall ?on_iface_button_clicked@CouncWin@@QAEXH@Z)(CouncWin* this, int)
 // callers   0   call targets   0
 // kind      game

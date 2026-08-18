@@ -1,10 +1,6 @@
-// ORIGINAL: 0x005BE530 FILE
-// RULED-OUT: masking the shift count with `& 0x1f` explicitly (hardware
-//            already masks CL); dropping the mask reached mismatch #76
-//            (was #44 with the mask present).
-// name      ?tech_advance@@YAHH@Z
+// ORIGINAL: 0x005BE530 ?tech_advance@@YAHH@Z 0x005BE530-0x005BE6A5 FILE
+// RULED-OUT: masking the shift count with `& 0x1f` explicitly (hardware already masks CL); dropping the mask reached mismatch #76 (was #44 with the mask present).
 // size      373 bytes
-// spans     0x005BE530-0x005BE6A5
 // prototype int (__cdecl ?tech_advance@@YAHH@Z)(int factionID)
 // callers   8   call targets   6
 // kind      game

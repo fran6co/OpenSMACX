@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00483950 FILE
-// name      ?on_redraw@NewTechWin@@QAEXXZ
+// ORIGINAL: 0x00483950 ?on_redraw@NewTechWin@@QAEXXZ 0x00483950-0x00483E7F FILE
 // size      1327 bytes
-// spans     0x00483950-0x00483E7F
 // prototype void (__thiscall ?on_redraw@NewTechWin@@QAEXXZ)(NewTechWin* this)
 // callers   0   call targets   15
 // kind      game

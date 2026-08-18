@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004B1FC0 BYTE_EXACT FILE
-// name      ?on_mouse_leave@SocialWin@@QAEXHH@Z
+// ORIGINAL: 0x004B1FC0 ?on_mouse_leave@SocialWin@@QAEXHH@Z 0x004B1FC0-0x004B1FEC FILE BYTE_EXACT
 // size      44 bytes
-// spans     0x004B1FC0-0x004B1FEC
 // prototype void (__thiscall ?on_mouse_leave@SocialWin@@QAEXHH@Z)(SocialWin* this, int, int)
 // callers   0   call targets   2
 // kind      game

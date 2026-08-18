@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004016C0 BYTE_EXACT
-// name      ?close@ServiceStruct@@QAEXXZ
+// ORIGINAL: 0x004016C0 ?close@ServiceStruct@@QAEXXZ 0x004016C0-0x00401759 BYTE_EXACT
 // size      153 bytes
-// spans     0x004016C0-0x00401759
 // prototype void (__thiscall ?close@ServiceStruct@@QAEXXZ)(ServiceStruct* this)
 // callers   1   call targets   0
 // kind      game

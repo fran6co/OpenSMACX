@@ -1,11 +1,7 @@
-// ORIGINAL: 0x004714D0 FILE
-// RULED-OUT: the scaffolding's 3-arg UNK3 declaration can't express the
-//            `ret 0x10` 4th unused stack param, so wrote a 4-arg shim method
-//            on a derived class instead; diverges at #6 (lea vs mov)
+// ORIGINAL: 0x004714D0 ?UNK3@MessageWin@@QAEHHHPAD@Z 0x004714D0-0x0047152B FILE
+// RULED-OUT: the scaffolding's 3-arg UNK3 declaration can't express the `ret 0x10` 4th unused stack param, so wrote a 4-arg shim method on a derived class instead; diverges at #6 (lea vs mov)
 // working copy - scaffold materialised by --work
-// name      ?UNK3@MessageWin@@QAEHHHPAD@Z
 // size      91 bytes
-// spans     0x004714D0-0x0047152B
 // prototype int (__thiscall ?UNK3@MessageWin@@QAEHHHPAD@Z)(MessageWin* this, int, int, int8* lpString)
 // callers   0   call targets   4
 // kind      game

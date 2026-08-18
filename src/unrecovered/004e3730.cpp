@@ -1,21 +1,12 @@
-// ORIGINAL: 0x004E3730
-// name      sub_4e3730
+// ORIGINAL: 0x004E3730 sub_4e3730 0x004E3730-0x004E3888;0x0065C880-0x0065C895
+// RULED-OUT: same shape as 0x004E3350's `ClassX::sub_4e3350` (own-stage list teardown at vtable 0x66eb20/0x66eb1c, then the same 0x6693d4/0x6693d0 pair the real `?close@ServiceStruct@@QAEXXZ` (0x004016c0, referenced from this function's unwind funclet at 0x0065C880) uses, on the member at `this-0x24`) - no SEH frame modelled, same precedent as 0x004C86D0/0x00538D10 and this function's sibling at 0x004E3350. 0.496 mnemonic similarity, first divergence at #2 (dropped SEH prologue).
 // size      365 bytes
-// spans     0x004E3730-0x004E3888;0x0065C880-0x0065C895
 // prototype
 // callers   3   call targets   0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
 // indirect  0x004E3791 0x004E37A5 0x004E37C4 0x004E3827 0x004E3839 0x004E3859
-// RULED-OUT: same shape as 0x004E3350's `ClassX::sub_4e3350` (own-stage
-//            list teardown at vtable 0x66eb20/0x66eb1c, then the same
-//            0x6693d4/0x6693d0 pair the real `?close@ServiceStruct@@QAEXXZ`
-//            (0x004016c0, referenced from this function's unwind funclet
-//            at 0x0065C880) uses, on the member at `this-0x24`) - no SEH
-//            frame modelled, same precedent as 0x004C86D0/0x00538D10 and
-//            this function's sibling at 0x004E3350. 0.496 mnemonic
-//            similarity, first divergence at #2 (dropped SEH prologue).
 
 // Vtable shim: slot0 is the adjusted-`this` release call (arg 1), slot1 is
 // the plain `this=self` teardown call taking the node's payload pointer.

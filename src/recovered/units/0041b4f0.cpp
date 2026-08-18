@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0041B4F0 FILE
-// name      ?staple_the_bastards@BaseWin@@QAEXXZ
+// ORIGINAL: 0x0041B4F0 ?staple_the_bastards@BaseWin@@QAEXXZ 0x0041B4F0-0x0041B78D FILE
 // size      669 bytes
-// spans     0x0041B4F0-0x0041B78D
 // prototype void (__thiscall ?staple_the_bastards@BaseWin@@QAEXXZ)(BaseWin* this)
 // callers   1   call targets   10
 // kind      game

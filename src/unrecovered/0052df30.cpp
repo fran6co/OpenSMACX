@@ -1,17 +1,11 @@
-// ORIGINAL: 0x0052DF30
-// name      ?init@NetDaemon@@QAEHH@Z
+// ORIGINAL: 0x0052DF30 ?init@NetDaemon@@QAEHH@Z 0x0052DF30-0x0052E041
+// RULED-OUT: `if (setup(a1)==0) return 0; return 1;` and its `!=`/local-var/ if-else variants all boolean-normalize (neg/sbb or xor/setcc) at #51 where the original keeps two distinct epilogues (fall-through returns the call's own eax, the taken branch explicitly sets eax=1). Landing the closest form.
 // size      273 bytes
-// spans     0x0052DF30-0x0052E041
 // prototype int (__thiscall ?init@NetDaemon@@QAEHH@Z)(NetDaemon* this, int)
 // callers   1   call targets   3
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x004E25B0 0x004E31E0 0x005900D0
-// RULED-OUT: `if (setup(a1)==0) return 0; return 1;` and its `!=`/local-var/
-//            if-else variants all boolean-normalize (neg/sbb or xor/setcc)
-//            at #51 where the original keeps two distinct epilogues
-//            (fall-through returns the call's own eax, the taken branch
-//            explicitly sets eax=1). Landing the closest form.
 
 int NetDaemon::init(int a1) {
     char *self = reinterpret_cast<char *>(this);

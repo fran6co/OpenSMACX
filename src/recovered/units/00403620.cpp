@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00403620 BYTE_EXACT FILE
-// name      ?on_adjust_pulldown_pos@AlphaMenu@@QAEXPAHPAH@Z
+// ORIGINAL: 0x00403620 ?on_adjust_pulldown_pos@AlphaMenu@@QAEXPAHPAH@Z 0x00403620-0x00403677 FILE BYTE_EXACT
 // size      87 bytes
-// spans     0x00403620-0x00403677
 // prototype void (__thiscall ?on_adjust_pulldown_pos@AlphaMenu@@QAEXPAHPAH@Z)(AlphaMenu* this, int*, int*)
 // callers   0   call targets   0
 // kind      game

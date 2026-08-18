@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004EC3B0 BYTE_EXACT
-// name      ?base_compute@@YAHH@Z
+// ORIGINAL: 0x004EC3B0 ?base_compute@@YAHH@Z 0x004EC3B0-0x004EC3E7 BYTE_EXACT
 // size      55 bytes
-// spans     0x004EC3B0-0x004EC3E7
 // prototype 
 // callers   43   call targets   5
 // kind      game

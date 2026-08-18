@@ -1,28 +1,11 @@
-// ORIGINAL: 0x0060EB80 BYTE_EXACT FILE
-// name      ?set_state_id@CheckBox@@QAEXHH@Z
+// ORIGINAL: 0x0060EB80 ?set_state_id@CheckBox@@QAEXHH@Z 0x0060EB80-0x0060EC0B FILE BYTE_EXACT
+// LEVER: same node-list search as get_state_id@CheckBox (0x0060EC10, this exact repo), but `idx = 0` is initialised INSIDE the `head != 0` guard (right after loading count), not before it - the disassembly places `xor esi, esi` after the `je` that skips an empty list, unlike the getter where it comes first. A `for` loop (not an `if (0<count) { do {...} while(...); }`) matches the loop's single `cmp;jl` back-edge exactly. The tail's `if (a2 != 0) { or } else { and }` polarity matters: the original falls through on `a2 != 0` (the set/or path) and only jumps for the clear/and path, so the condition has to be written positive (`a2 != 0` first) to get the branch the right way around. Every value the tail needs is re-derived through a fresh `(int)this + *(int*)(*(int*)this+8)` each time rather than cached in a local - caching it (even as `int base` reused twice) reorders the register pops relative to the original and changes the `lea`/`add` used to build the pointer.
 // size      139 bytes
-// spans     0x0060EB80-0x0060EC0B
 // prototype void (__thiscall ?set_state_id@CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)
 // callers   3   call targets   0
 // kind      
 // flags     
 // calls     (none)
-// LEVER: same node-list search as get_state_id@CheckBox (0x0060EC10, this
-//        exact repo), but `idx = 0` is initialised INSIDE the `head != 0`
-//        guard (right after loading count), not before it - the disassembly
-//        places `xor esi, esi` after the `je` that skips an empty list,
-//        unlike the getter where it comes first. A `for` loop (not an
-//        `if (0<count) { do {...} while(...); }`) matches the loop's single
-//        `cmp;jl` back-edge exactly. The tail's `if (a2 != 0) { or } else
-//        { and }` polarity matters: the original falls through on
-//        `a2 != 0` (the set/or path) and only jumps for the clear/and path,
-//        so the condition has to be written positive (`a2 != 0` first) to
-//        get the branch the right way around. Every value the tail needs is
-//        re-derived through a fresh `(int)this + *(int*)(*(int*)this+8)`
-//        each time rather than cached in a local - caching it (even as
-//        `int base` reused twice) reorders the register pops relative to
-//        the original and changes the `lea`/`add` used to build the
-//        pointer.
 // working copy - scaffold materialised by --work
 
 // GENERATED SKELETON - tools/emit_translation_unit.py

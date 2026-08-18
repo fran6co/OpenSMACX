@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005F2AC0 FILE
-// name      ?window_line_raw@Win@@QAEXHHHHHHI@Z
+// ORIGINAL: 0x005F2AC0 ?window_line_raw@Win@@QAEXHHHHHHI@Z 0x005F2AC0-0x005F2C37 FILE
 // size      375 bytes
-// spans     0x005F2AC0-0x005F2C37
 // prototype void (__thiscall ?window_line_raw@Win@@QAEXHHHHHHI@Z)(Win* this, int, int, int xCoord, int yCoord, int, int, unsigned int)
 // callers   3   call targets   1
 // kind      game

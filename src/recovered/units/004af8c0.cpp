@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004AF8C0 FILE
-// name      ?draw_faction_basal@SocialWin@@QAEXXZ
+// ORIGINAL: 0x004AF8C0 ?draw_faction_basal@SocialWin@@QAEXXZ 0x004AF8C0-0x004AFB5D FILE
 // size      669 bytes
-// spans     0x004AF8C0-0x004AFB5D
 // prototype void (__thiscall ?draw_faction_basal@SocialWin@@QAEXXZ)(SocialWin* this)
 // callers   1   call targets   10
 // kind      game

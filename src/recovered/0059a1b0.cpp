@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0059A1B0 BYTE_EXACT
-// name      ??__EPaths@@YAXXZ
+// ORIGINAL: 0x0059A1B0 ??__EPaths@@YAXXZ 0x0059A1B0-0x0059A1BC BYTE_EXACT
 // size      12 bytes
-// spans     0x0059A1B0-0x0059A1BC
 // prototype 
 // callers   0   call targets   1
 // kind      game

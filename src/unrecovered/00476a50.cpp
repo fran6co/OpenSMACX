@@ -1,15 +1,7 @@
-// ORIGINAL: 0x00476A50 FILE
-// RULED-OUT: literal 0 store to g_007fd634 before the loop (forces a 10-byte
-//            mov-immediate instead of a 6-byte mov-register); computing the
-//            vtable-slot cast after the *g_007fa9a4 store instead of before
-//            (reorders `mov edx,[0x7f9f58]` late). Fixed both -> MNEMONIC_ONLY.
-//            Remaining: compiler puts the vtable pointer in eax not edx, and
-//            folds the (0,0,0) call args to immediate pushes instead of
-//            reusing the dead return-value register; not reproduced.
+// ORIGINAL: 0x00476A50 ?monument@@YAXH@Z 0x00476A50-0x00476B22 FILE
+// RULED-OUT: literal 0 store to g_007fd634 before the loop (forces a 10-byte mov-immediate instead of a 6-byte mov-register); computing the vtable-slot cast after the *g_007fa9a4 store instead of before (reorders `mov edx,[0x7f9f58]` late). Fixed both -> MNEMONIC_ONLY. Remaining: compiler puts the vtable pointer in eax not edx, and folds the (0,0,0) call args to immediate pushes instead of reusing the dead return-value register; not reproduced.
 // working copy - scaffold materialised by --work
-// name      ?monument@@YAXH@Z
 // size      210 bytes
-// spans     0x00476A50-0x00476B22
 // prototype 
 // callers   18   call targets   3
 // kind      game

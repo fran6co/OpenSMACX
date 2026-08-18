@@ -1,8 +1,6 @@
-// ORIGINAL: 0x004C3800 FILE
+// ORIGINAL: 0x004C3800 ?vehdraw_construct_reactor@@YAHHHHHHPAUCaviar@@@Z 0x004C3800-0x004C3896 FILE
 // working copy - scaffold materialised by --work
-// name      ?vehdraw_construct_reactor@@YAHHHHHHPAUCaviar@@@Z
 // size      150 bytes
-// spans     0x004C3800-0x004C3896
 // prototype 
 // callers   5   call targets   2
 // kind      game

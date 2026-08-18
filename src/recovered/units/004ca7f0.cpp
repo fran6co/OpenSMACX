@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004CA7F0 FILE
-// name      ?action_staple@@YAXH@Z
+// ORIGINAL: 0x004CA7F0 ?action_staple@@YAXH@Z 0x004CA7F0-0x004CAA4B FILE
 // size      603 bytes
-// spans     0x004CA7F0-0x004CAA4B
 // prototype void (__cdecl ?action_staple@@YAXH@Z)(int baseID)
 // callers   3   call targets   6
 // kind      game

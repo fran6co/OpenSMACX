@@ -1,16 +1,7 @@
-// ORIGINAL: 0x0052A2E0 FILE
-// RULED-OUT: faithful port of the turn-control loop (checksum/log setup,
-//   the active-faction bitmask scan requiring both 0x9a64e8 and 0x9a64e9
-//   bits set, the base-then-veh center-view fallback search, the human/AI
-//   turn dispatch with the net_tasks polling loops, and the two
-//   net_end_of_turn continuation checks incl. the dead defensive branch
-//   Ghidra also shows). Compiles; diverges at instr #0 on stack-frame size
-//   (local declarations spread across nested blocks change the `sub esp`
-//   prologue vs the original's single big frame). Not chased further.
+// ORIGINAL: 0x0052A2E0 ?net_control_turn@@YAXXZ 0x0052A2E0-0x0052A971 FILE
+// RULED-OUT: faithful port of the turn-control loop (checksum/log setup, the active-faction bitmask scan requiring both 0x9a64e8 and 0x9a64e9 bits set, the base-then-veh center-view fallback search, the human/AI turn dispatch with the net_tasks polling loops, and the two net_end_of_turn continuation checks incl. the dead defensive branch Ghidra also shows). Compiles; diverges at instr #0 on stack-frame size (local declarations spread across nested blocks change the `sub esp` prologue vs the original's single big frame). Not chased further.
 // working copy - scaffold materialised by --work
-// name      ?net_control_turn@@YAXXZ
 // size      1681 bytes
-// spans     0x0052A2E0-0x0052A971
 // prototype 
 // callers   1   call targets   31
 // kind      game

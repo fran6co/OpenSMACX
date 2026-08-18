@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004D5D30 FILE
-// name      ?oblit@Console@@QAEXH@Z
+// ORIGINAL: 0x004D5D30 ?oblit@Console@@QAEXH@Z 0x004D5D30-0x004D5F64 FILE
 // size      564 bytes
-// spans     0x004D5D30-0x004D5F64
 // prototype void (__thiscall ?oblit@Console@@QAEXH@Z)(Console* this, int vehID)
 // callers   2   call targets   13
 // kind      game

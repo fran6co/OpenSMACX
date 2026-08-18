@@ -1,8 +1,6 @@
-// ORIGINAL: 0x0048D010 BYTE_EXACT FILE
+// ORIGINAL: 0x0048D010 ?veh_sprite_double_click@@YAHH@Z 0x0048D010-0x0048D0CD FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?veh_sprite_double_click@@YAHH@Z
 // size      189 bytes
-// spans     0x0048D010-0x0048D0CD
 // prototype 
 // callers   0   call targets   8
 // kind      game

@@ -1,8 +1,6 @@
-// ORIGINAL: 0x006181D0 FILE
+// ORIGINAL: 0x006181D0 ?set_shadow_vector@Caviar@@QAEXMM@Z 0x006181D0-0x0061824B FILE
 // working copy - scaffold materialised by --work
-// name      ?set_shadow_vector@Caviar@@QAEXMM@Z
 // size      123 bytes
-// spans     0x006181D0-0x0061824B
 // prototype void (__thiscall ?set_shadow_vector@Caviar@@QAEXMM@Z)(Caviar* this, float, float)
 // callers   0   call targets   2
 // kind      game

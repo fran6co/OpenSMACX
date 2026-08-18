@@ -1,7 +1,5 @@
-// ORIGINAL: 0x006051D0 FILE
-// name      ??0Scroll@@QAE@XZ
+// ORIGINAL: 0x006051D0 ??0Scroll@@QAE@XZ 0x006051D0-0x00605367;0x00662E30-0x00662E50 FILE
 // size      439 bytes
-// spans     0x006051D0-0x00605367;0x00662E30-0x00662E50
 // prototype Scroll* (__thiscall ??0Scroll@@QAE@XZ)(Scroll* this)
 // callers   13   call targets   2
 // kind      game

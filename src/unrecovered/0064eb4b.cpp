@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064EB4B EXCLUDED S1
-// name      __fpclass
+// ORIGINAL: 0x0064EB4B __fpclass 0x0064EB4B-0x0064EBDD EXCLUDED S1
 // size      146 bytes
-// spans     0x0064EB4B-0x0064EBDD
 // prototype 
 // callers   1   call targets   1
 // kind      library

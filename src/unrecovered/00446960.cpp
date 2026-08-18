@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00446960 FILE
-// name      ?play@FX@@QAEXHHH@Z
+// ORIGINAL: 0x00446960 ?play@FX@@QAEXHHH@Z 0x00446960-0x004469F9 FILE
 // size      153 bytes
-// spans     0x00446960-0x004469F9
 // prototype void (__thiscall ?play@FX@@QAEXHHH@Z)(FX* this, int, int xCoord, int yCoord)
 // callers   4   call targets   0
 // kind      

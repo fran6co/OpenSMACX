@@ -1,8 +1,6 @@
-// ORIGINAL: 0x0058F810 FILE
+// ORIGINAL: 0x0058F810 ?get_phrase@@YAPADHH@Z 0x0058F810-0x0058F8A2 FILE
 // working copy - scaffold materialised by --work
-// name      ?get_phrase@@YAPADHH@Z
 // size      146 bytes
-// spans     0x0058F810-0x0058F8A2
 // prototype 
 // callers   8   call targets   5
 // kind      game

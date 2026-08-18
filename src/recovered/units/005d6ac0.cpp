@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005D6AC0 FILE
-// name      ?overlay_nonclient@GraphicWin@@QAEXPAURECT@@@Z
+// ORIGINAL: 0x005D6AC0 ?overlay_nonclient@GraphicWin@@QAEXPAURECT@@@Z 0x005D6AC0-0x005D6EB7 FILE
 // size      1015 bytes
-// spans     0x005D6AC0-0x005D6EB7
 // prototype void (__thiscall ?overlay_nonclient@GraphicWin@@QAEXPAURECT@@@Z)(GraphicWin* this, RECT*)
 // callers   1   call targets   4
 // kind      game

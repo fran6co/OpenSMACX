@@ -1,18 +1,12 @@
-// ORIGINAL: 0x004C2CF0 FILE
+// ORIGINAL: 0x004C2CF0 ?vehdraw_construct_weapon@@YAHHHHPAUCaviar@@@Z 0x004C2CF0-0x004C306A FILE
+// RULED-OUT: MISMATCH #2 'sub' vs 'push' - transcribed the Ghidra decompile directly (jump-table dispatch as if/switch, the 26-entry ability table as an initializer list, three add_object overloads by argument type); the stack-frame allocation at entry diverges almost immediately, not chased further.
 // working copy - scaffold materialised by --work
-// name      ?vehdraw_construct_weapon@@YAHHHHPAUCaviar@@@Z
 // size      890 bytes
-// spans     0x004C2CF0-0x004C306A
 // prototype int (__cdecl ?vehdraw_construct_weapon@@YAHHHHPAUCaviar@@@Z)(int factionID, int a2, int weapID, Caviar* a4)
 // callers   7   call targets   3
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x00617920 0x00617F20 0x00618080
-// RULED-OUT: MISMATCH #2 'sub' vs 'push' - transcribed the Ghidra decompile
-//            directly (jump-table dispatch as if/switch, the 26-entry ability
-//            table as an initializer list, three add_object overloads by
-//            argument type); the stack-frame allocation at entry diverges
-//            almost immediately, not chased further.
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?vehdraw_construct_weapon@@YAHHHHPAUCaviar@@@Z  at 0x004C2CF0  (890 bytes)

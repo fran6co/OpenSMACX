@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00456010 FILE
-// name      ??1FactionArt@@QAE@XZ
+// ORIGINAL: 0x00456010 ??1FactionArt@@QAE@XZ 0x00456010-0x004560FC;0x00654F80-0x00655021 FILE
 // size      397 bytes
-// spans     0x00456010-0x004560FC;0x00654F80-0x00655021
 // prototype void (__thiscall ??1FactionArt@@QAE@XZ)(faction_art* this)
 // callers   0   call targets   2
 // kind      game

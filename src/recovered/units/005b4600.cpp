@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005B4600 FILE
-// name      ?social_set@@YAXH@Z
+// ORIGINAL: 0x005B4600 ?social_set@@YAXH@Z 0x005B4600-0x005B4721 FILE
 // size      289 bytes
-// spans     0x005B4600-0x005B4721
 // prototype 
 // callers   5   call targets   5
 // kind      game

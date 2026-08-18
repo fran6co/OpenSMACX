@@ -1,13 +1,7 @@
-// ORIGINAL: 0x0049F350 FILE
-// RULED-OUT: full field/call transcription (raw self+offset access, real
-//            box_sprite/write_l/write_cent_l/wrap_cent/Spot/Flic/Time calls,
-//            resolved 5-entry jump table, sqrt/sin/cos orbit-math loop)
-//            diverges at instr #4 (push vs mov), prologue register choice;
-//            not chased further given the 2766-byte scope.
+// ORIGINAL: 0x0049F350 ?draw_sat@ReportWin@@QAEXXZ 0x0049F350-0x0049FE1E FILE
+// RULED-OUT: full field/call transcription (raw self+offset access, real box_sprite/write_l/write_cent_l/wrap_cent/Spot/Flic/Time calls, resolved 5-entry jump table, sqrt/sin/cos orbit-math loop) diverges at instr #4 (push vs mov), prologue register choice; not chased further given the 2766-byte scope.
 // working copy - scaffold materialised by --work
-// name      ?draw_sat@ReportWin@@QAEXXZ
 // size      2766 bytes
-// spans     0x0049F350-0x0049FE1E
 // prototype void (__thiscall ?draw_sat@ReportWin@@QAEXXZ)(ReportWin* this)
 // callers   1   call targets   24
 // kind      game

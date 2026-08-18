@@ -1,16 +1,7 @@
-// ORIGINAL: 0x00430090 FILE
-// RULED-OUT: Popup popup; (RAII) for the outer object, mechanical RD()-based field
-//            reads for the tech-tier/quotient-remainder lookups, itoa/strcat scratch
-//            buffer building, and the per-faction tally loop; deliberately did NOT
-//            model the second local object built by sub_4066c0 (Dialog/Dialogs/
-//            StringStruct/Sprite/extra FlatButtons torn down around 0x430642) - its
-//            class is unrecoverable from this brief, so popup.close() + RAII stands
-//            in for that whole cascade. NO_COMPILE C2660 (set_font arg count) fixed
-//            first; MISMATCH #0 (prologue) not chased further.
+// ORIGINAL: 0x00430090 ?draw_social@Datalink@@QAEXXZ 0x00430090-0x00430765;0x006539F9-0x00653AD6 FILE
+// RULED-OUT: Popup popup; (RAII) for the outer object, mechanical RD()-based field reads for the tech-tier/quotient-remainder lookups, itoa/strcat scratch buffer building, and the per-faction tally loop; deliberately did NOT model the second local object built by sub_4066c0 (Dialog/Dialogs/ StringStruct/Sprite/extra FlatButtons torn down around 0x430642) - its class is unrecoverable from this brief, so popup.close() + RAII stands in for that whole cascade. NO_COMPILE C2660 (set_font arg count) fixed first; MISMATCH #0 (prologue) not chased further.
 // working copy - scaffold materialised by --work
-// name      ?draw_social@Datalink@@QAEXXZ
 // size      1970 bytes
-// spans     0x00430090-0x00430765;0x006539F9-0x00653AD6
 // prototype void (__thiscall ?draw_social@Datalink@@QAEXXZ)(Datalink* this)
 // callers   1   call targets   33
 // kind      game

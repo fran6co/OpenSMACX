@@ -1,14 +1,7 @@
-// ORIGINAL: 0x005CF5C7 FILE
-// RULED-OUT: zero-arg contract head - the body has no prologue and reads
-//            esi/edi/ebx as pre-loaded pointers with no load from any
-//            fixed address, i.e. a register-passing convention no
-//            standard C signature reproduces without __asm; recast as
-//            three explicit pointer params (diverges at instr #1, a
-//            normal push-args prologue vs none)
+// ORIGINAL: 0x005CF5C7 OutputPixelRow 0x005CF5C7-0x005CF852 FILE
+// RULED-OUT: zero-arg contract head - the body has no prologue and reads esi/edi/ebx as pre-loaded pointers with no load from any fixed address, i.e. a register-passing convention no standard C signature reproduces without __asm; recast as three explicit pointer params (diverges at instr #1, a normal push-args prologue vs none)
 // working copy - scaffold materialised by --work
-// name      OutputPixelRow
 // size      651 bytes
-// spans     0x005CF5C7-0x005CF852
 // prototype 
 // callers   2   call targets   0
 // kind      game

@@ -32,10 +32,8 @@ func_message_data *LockMessageData = (func_message_data *)0x00592EE0;
 Purpose: Drop the movement bits (0x38) from the flag byte at offset 5 of every
          map-tile record, at the record stride of 0x2C. Operates entirely on
          the global map table, ignoring the Lock instance.
-ORIGINAL: 0x00590140
-// name      ?reset_map@Lock@@QAEXXZ
+// ORIGINAL: 0x00590140 ?reset_map@Lock@@QAEXXZ 0x00590140-0x0059016B
 // size      43 bytes
-// spans     0x00590140-0x0059016B
 // prototype void (__thiscall ?reset_map@Lock@@QAEXXZ)(Lock* this)
 // callers   0   call targets   0
 // kind      game
@@ -59,10 +57,8 @@ void __fastcall lock_reset_map_redirect(Lock *self, void *) {
 /*
 Purpose: Reset the lock to empty - clear its three trailing dwords, reset all
          eight records to their unset sentinels, and run the global map reset.
-ORIGINAL: 0x005900D0
-// name      ?clear@Lock@@QAEXXZ
+// ORIGINAL: 0x005900D0 ?clear@Lock@@QAEXXZ 0x005900D0-0x0059013D
 // size      109 bytes
-// spans     0x005900D0-0x0059013D
 // prototype void (__thiscall ?clear@Lock@@QAEXXZ)(Lock* this)
 // callers   12   call targets   0
 // kind      game
@@ -96,10 +92,8 @@ Purpose: Report whether any lock is engaged. The trailing dword at 0xE0 forces
          those whose slot bit is set in both the low and second bytes of the
          enable mask, and a record counts when either of its two entries has
          its flag's low bit set. Record 0 is never scanned.
-ORIGINAL: 0x005904A0
-// name      ?any_locks@Lock@@QAEHXZ
+// ORIGINAL: 0x005904A0 ?any_locks@Lock@@QAEHXZ 0x005904A0-0x005904FE
 // size      94 bytes
-// spans     0x005904A0-0x005904FE
 // prototype int (__thiscall ?any_locks@Lock@@QAEHXZ)(Lock* this)
 // callers   3   call targets   0
 // kind      game
@@ -137,10 +131,8 @@ int __fastcall lock_any_locks_redirect(Lock *self, void *) {
 Purpose: Release the lock on one slot - forget it as the active lock if it was,
          unlock both of the slot record's square entries, and clear the
          record's flag byte.
-ORIGINAL: 0x00590170
-// name      ?unlock@Lock@@QAEXH@Z
+// ORIGINAL: 0x00590170 ?unlock@Lock@@QAEXH@Z 0x00590170-0x005901C3
 // size      83 bytes
-// spans     0x00590170-0x005901C3
 // prototype void (__thiscall ?unlock@Lock@@QAEXH@Z)(Lock* this, int)
 // callers   1   call targets   1
 // kind      game
@@ -169,10 +161,8 @@ void __fastcall lock_unlock_redirect(Lock *self, void *, int slot) {
 Purpose: Take the global lock for an owner. Succeeds when the lock is free or
          already held by that owner, recording the owner and marking it held;
          fails without change when another owner holds it.
-ORIGINAL: 0x005902C0 BYTE_EXACT
-// name      ?global_lock@Lock@@QAEHH@Z
+// ORIGINAL: 0x005902C0 ?global_lock@Lock@@QAEHH@Z 0x005902C0-0x005902F3 BYTE_EXACT
 // size      51 bytes
-// spans     0x005902C0-0x005902F3
 // prototype int (__thiscall ?global_lock@Lock@@QAEHH@Z)(Lock* this, int)
 // callers   1   call targets   0
 // kind      game
@@ -199,10 +189,8 @@ Purpose: Report whether the global lock this owner holds can now be released -
          true only on the server, when the lock is marked held by this owner
          and none of its slot records still has an active square. On success it
          also drops the held flag. Any other case reports no.
-ORIGINAL: 0x00590240
-// name      ?check_global_2@Lock@@QAEHH@Z
+// ORIGINAL: 0x00590240 ?check_global_2@Lock@@QAEHH@Z 0x00590240-0x005902BE
 // size      126 bytes
-// spans     0x00590240-0x005902BE
 // prototype int (__thiscall ?check_global_2@Lock@@QAEHH@Z)(Lock* this, int)
 // callers   1   call targets   1
 // kind      game
@@ -240,10 +228,8 @@ int __fastcall lock_check_global_2_redirect(Lock *self, void *, int owner) {
 Purpose: On the server, when a held lock has no square still active, broadcast
          its release and drop the held flag. Does nothing off the server, when
          no lock is held, or while any slot record still has an active square.
-ORIGINAL: 0x005901D0
-// name      ?check_global@Lock@@QAEXXZ
+// ORIGINAL: 0x005901D0 ?check_global@Lock@@QAEXXZ 0x005901D0-0x00590239
 // size      105 bytes
-// spans     0x005901D0-0x00590239
 // prototype void (__thiscall ?check_global@Lock@@QAEXXZ)(Lock* this)
 // callers   15   call targets   2
 // kind      game
@@ -278,10 +264,8 @@ void __fastcall lock_check_global_redirect(Lock *self, void *) {
 Purpose: Add a lock on one slot - forward to SquareLock::lock on the slot
          record's second square entry, with the mask bit 0x10 forced into the
          flags argument.
-ORIGINAL: 0x00590470
-// name      ?add_lock@Lock@@QAEHHHHH@Z
+// ORIGINAL: 0x00590470 ?add_lock@Lock@@QAEHHHHH@Z 0x00590470-0x0059049B
 // size      43 bytes
-// spans     0x00590470-0x0059049B
 // prototype int (__thiscall ?add_lock@Lock@@QAEHHHHH@Z)(Lock* this, int, int, int, int)
 // callers   1   call targets   1
 // kind      game
@@ -309,10 +293,8 @@ Purpose: Lock both of a slot's square entries in one call. Refuses when another
          the 0x2 bit was set and this is the server, the same release check
          check_global runs (but skipping this slot's own record) fires the
          release broadcast if no other slot still holds an active square.
-ORIGINAL: 0x00590300
-// name      ?lock@Lock@@QAEHHHHHHHH@Z
+// ORIGINAL: 0x00590300 ?lock@Lock@@QAEHHHHHHHH@Z 0x00590300-0x00590469
 // size      361 bytes
-// spans     0x00590300-0x00590469
 // prototype int (__thiscall ?lock@Lock@@QAEHHHHHHHH@Z)(Lock* this, int, int, int, int, int, int, int)
 // callers   1   call targets   4
 // kind      game

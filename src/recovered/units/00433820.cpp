@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00433820 FILE
-// name      ?on_mouse_move@SelectPartWin@@QAEXHH@Z
+// ORIGINAL: 0x00433820 ?on_mouse_move@SelectPartWin@@QAEXHH@Z 0x00433820-0x00433934 FILE
 // size      276 bytes
-// spans     0x00433820-0x00433934
 // prototype void (__thiscall ?on_mouse_move@SelectPartWin@@QAEXHH@Z)(SelectPartWin* this, int, int)
 // callers   0   call targets   1
 // kind      game

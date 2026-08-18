@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005F85B0 BYTE_EXACT
-// name      ?on_mousewheel_down@Win@@QAEXH@Z
+// ORIGINAL: 0x005F85B0 ?on_mousewheel_down@Win@@QAEXH@Z 0x005F85B0-0x005F85DD BYTE_EXACT
 // size      45 bytes
-// spans     0x005F85B0-0x005F85DD
 // prototype void (__thiscall ?on_mousewheel_down@Win@@QAEXH@Z)(Win* this, int)
 // callers   1   call targets   1
 // kind      game

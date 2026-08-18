@@ -1,16 +1,7 @@
-// ORIGINAL: 0x004CF380 FILE
-// RULED-OUT: veh_lift's catalogue signature is void __cdecl(int), but the
-//   call site immediately `push eax` with no reload before veh_drop, so eax
-//   must be its post-call value; reproduced via a reinterpret_cast through a
-//   local `int(__cdecl*)(int)` function-pointer type (redeclaring veh_lift
-//   itself conflicts with the scaffold's own decl, C2556). Best reached is
-//   86.6% mnemonic similarity: flags say `frame` (push ebp; mov ebp,esp) but
-//   this body compiles frameless under /O2 - a spill-count difference, not
-//   a control-flow one.
+// ORIGINAL: 0x004CF380 ?action_gate@@YAXHH@Z 0x004CF380-0x004CF477 FILE
+// RULED-OUT: veh_lift's catalogue signature is void __cdecl(int), but the call site immediately `push eax` with no reload before veh_drop, so eax must be its post-call value; reproduced via a reinterpret_cast through a local `int(__cdecl*)(int)` function-pointer type (redeclaring veh_lift itself conflicts with the scaffold's own decl, C2556). Best reached is 86.6% mnemonic similarity: flags say `frame` (push ebp; mov ebp,esp) but this body compiles frameless under /O2 - a spill-count difference, not a control-flow one.
 // working copy - scaffold materialised by --work
-// name      ?action_gate@@YAXHH@Z
 // size      247 bytes
-// spans     0x004CF380-0x004CF477
 // prototype void (__cdecl ?action_gate@@YAXHH@Z)(int vehID, int baseID)
 // callers   3   call targets   5
 // kind      game

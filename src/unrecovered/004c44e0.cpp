@@ -1,38 +1,11 @@
-// ORIGINAL: 0x004C44E0 FILE
-// name      ?tile_to_pixel@WorldWin@@QAEHHHPAH0@Z
+// ORIGINAL: 0x004C44E0 ?tile_to_pixel@WorldWin@@QAEHHHPAH0@Z 0x004C44E0-0x004C45D2 FILE
+// RULED-OUT: nested `if`/`else if` clamp plus a single `||`-chained bounds check (`if (row<0 || row>=numRows || a1<0 || a1>=numCols) return 1;`) matches the prologue's push/pop set exactly (fixed by caching `numCols` in a local reused for BOTH final `idiv`s, matching `ebx` being loaded once and never reloaded) but stalls at 258B vs 242B: the last bounds check (`a1 < numCols`) always compiles to the INVERSE polarity (`jge`) of the original's `jl`, regardless of whether it is spelled as part of one big `||`, as a chain of nested positive `if`s, or with explicit `goto fail;` for the first three conditions - all three spellings produced byte-identical output, so the compiler's block layout here does not appear to be steerable from this function's own source text. Adding a `goto check_upper;` that skips the (proveably redundant) `row < 0` re-check on the zero-clamp path - mirroring the original's own `jmp` that skips exactly that check - got closest (240B vs 242B, divergence moves later) but the compiler then proves the SAME check dead on the OTHER path too (max-clamp / unclamped), deleting it where the original keeps it; splitting `row<0 || maxRow<0` into two independent `if`s so each one only proves ITS OWN half made this worse, not better. Best landed: the `goto check_upper` version. numCols is cached (`ebx`-shaped); numRows is cached for the bounds check (`edi`-shaped) but read fresh from `*g_00949874` for the final divisions, matching `idiv dword ptr [0x949874]` reloading rather than reusing a register.
 // size      242 bytes
-// spans     0x004C44E0-0x004C45D2
 // prototype int (__thiscall ?tile_to_pixel@WorldWin@@QAEHHHPAH0@Z)(WorldWin* this, int, int, int*, int*)
 // callers   3   call targets   0
 // kind      
 // flags     
 // calls     (none)
-// RULED-OUT: nested `if`/`else if` clamp plus a single `||`-chained bounds
-//            check (`if (row<0 || row>=numRows || a1<0 || a1>=numCols)
-//            return 1;`) matches the prologue's push/pop set exactly
-//            (fixed by caching `numCols` in a local reused for BOTH final
-//            `idiv`s, matching `ebx` being loaded once and never reloaded)
-//            but stalls at 258B vs 242B: the last bounds check
-//            (`a1 < numCols`) always compiles to the INVERSE polarity
-//            (`jge`) of the original's `jl`, regardless of whether it is
-//            spelled as part of one big `||`, as a chain of nested
-//            positive `if`s, or with explicit `goto fail;` for the first
-//            three conditions - all three spellings produced byte-identical
-//            output, so the compiler's block layout here does not appear
-//            to be steerable from this function's own source text. Adding
-//            a `goto check_upper;` that skips the (proveably redundant)
-//            `row < 0` re-check on the zero-clamp path - mirroring the
-//            original's own `jmp` that skips exactly that check - got
-//            closest (240B vs 242B, divergence moves later) but the
-//            compiler then proves the SAME check dead on the OTHER path
-//            too (max-clamp / unclamped), deleting it where the original
-//            keeps it; splitting `row<0 || maxRow<0` into two independent
-//            `if`s so each one only proves ITS OWN half made this worse,
-//            not better. Best landed: the `goto check_upper` version.
-//            numCols is cached (`ebx`-shaped); numRows is cached for the
-//            bounds check (`edi`-shaped) but read fresh from
-//            `*g_00949874` for the final divisions, matching `idiv dword
-//            ptr [0x949874]` reloading rather than reusing a register.
 // working copy - scaffold materialised by --work
 
 // GENERATED SKELETON - tools/emit_translation_unit.py

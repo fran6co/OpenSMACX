@@ -1,8 +1,6 @@
-// ORIGINAL: 0x004B4990 BYTE_EXACT FILE
+// ORIGINAL: 0x004B4990 ?UNK1@StatusWin@@QAEXXZ 0x004B4990-0x004B4A1E FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?UNK1@StatusWin@@QAEXXZ
 // size      142 bytes
-// spans     0x004B4990-0x004B4A1E
 // prototype void (__thiscall ?UNK1@StatusWin@@QAEXXZ)(StatusWin* this)
 // callers   0   call targets   1
 // kind      game

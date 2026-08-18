@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00403B70 BYTE_EXACT FILE
-// name      ?backfill_func@AlphaMenu@@QAAHPAUGraphicWin@@@Z
+// ORIGINAL: 0x00403B70 ?backfill_func@AlphaMenu@@QAAHPAUGraphicWin@@@Z 0x00403B70-0x00403B94 FILE BYTE_EXACT
 // size      36 bytes
-// spans     0x00403B70-0x00403B94
 // prototype 
 // callers   0   call targets   1
 // kind      game

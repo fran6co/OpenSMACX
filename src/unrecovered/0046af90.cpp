@@ -1,8 +1,6 @@
-// ORIGINAL: 0x0046AF90 BYTE_EXACT FILE
+// ORIGINAL: 0x0046AF90 ?draw_tile_fixup@@YAXHHHH@Z 0x0046AF90-0x0046B031 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
-// name      ?draw_tile_fixup@@YAXHHHH@Z
 // size      161 bytes
-// spans     0x0046AF90-0x0046B031
 // prototype 
 // callers   7   call targets   1
 // kind      game

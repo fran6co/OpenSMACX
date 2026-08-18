@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004A3FC0 BYTE_EXACT FILE
-// name      ?on_redraw@ReportIf@@QAEXXZ
+// ORIGINAL: 0x004A3FC0 ?on_redraw@ReportIf@@QAEXXZ 0x004A3FC0-0x004A401F FILE BYTE_EXACT
 // size      95 bytes
-// spans     0x004A3FC0-0x004A401F
 // prototype void (__thiscall ?on_redraw@ReportIf@@QAEXXZ)(ReportIf* this)
 // callers   1   call targets   9
 // kind      game

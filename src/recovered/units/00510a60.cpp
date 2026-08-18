@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00510A60 BYTE_EXACT FILE
-// name      ?prev_cursor@Console@@QAEXXZ
+// ORIGINAL: 0x00510A60 ?prev_cursor@Console@@QAEXXZ 0x00510A60-0x00510B70 FILE BYTE_EXACT
 // size      272 bytes
-// spans     0x00510A60-0x00510B70
 // prototype void (__thiscall ?prev_cursor@Console@@QAEXXZ)(Console* this)
 // callers   0   call targets   10
 // kind      game

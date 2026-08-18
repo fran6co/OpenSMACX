@@ -20,10 +20,8 @@
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
-ORIGINAL: 0x004ADAD0 BYTE_EXACT
-// name      ?UNK3@SetupWin@@QAEHH@Z
+// ORIGINAL: 0x004ADAD0 ?UNK3@SetupWin@@QAEHH@Z 0x004ADAD0-0x004ADAD5 BYTE_EXACT
 // size      5 bytes
-// spans     0x004ADAD0-0x004ADAD5
 // prototype int (__thiscall ?UNK3@SetupWin@@QAEHH@Z)(SetupWin* this, int)
 // callers   0   call targets   0
 // kind      game
@@ -42,10 +40,8 @@ int __fastcall setup_win_unk3_redirect(SetupWin *self, void *, int a1) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
-ORIGINAL: 0x004ADAE0 BYTE_EXACT
-// name      ?UNK4@SetupWin@@QAEHH@Z
+// ORIGINAL: 0x004ADAE0 ?UNK4@SetupWin@@QAEHH@Z 0x004ADAE0-0x004ADAE5 BYTE_EXACT
 // size      5 bytes
-// spans     0x004ADAE0-0x004ADAE5
 // prototype int (__thiscall ?UNK4@SetupWin@@QAEHH@Z)(SetupWin* this, int)
 // callers   0   call targets   0
 // kind      game
@@ -80,10 +76,8 @@ Purpose: Scale the argument by the field at 0xA14 and divide by 1024.
          SetupWin models no fields - it derives from GraphicWin, which ends at
          0xA14 - so this is its first own field, reached through a documented
          raw offset as BasePop::UNK3 does.
-ORIGINAL: 0x004ADA80 BYTE_EXACT
-// name      ?UNK1@SetupWin@@QAEHH@Z
+// ORIGINAL: 0x004ADA80 ?UNK1@SetupWin@@QAEHH@Z 0x004ADA80-0x004ADA9D BYTE_EXACT
 // size      29 bytes
-// spans     0x004ADA80-0x004ADA9D
 // prototype int (__thiscall ?UNK1@SetupWin@@QAEHH@Z)(SetupWin* this, int)
 // callers   0   call targets   0
 // kind      game
@@ -118,10 +112,8 @@ Purpose: As UNK1, over the field at 0xA18 and dividing by 768.
          1024 and 768 beside each other read as a resolution, which is a
          plausible account of what these two scale and is NOT what the recovery
          rests on; the arithmetic is.
-ORIGINAL: 0x004ADAA0 BYTE_EXACT
-// name      ?UNK2@SetupWin@@QAEHH@Z
+// ORIGINAL: 0x004ADAA0 ?UNK2@SetupWin@@QAEHH@Z 0x004ADAA0-0x004ADAC4 BYTE_EXACT
 // size      36 bytes
-// spans     0x004ADAA0-0x004ADAC4
 // prototype int (__thiscall ?UNK2@SetupWin@@QAEHH@Z)(SetupWin* this, int)
 // callers   0   call targets   0
 // kind      game
@@ -142,10 +134,8 @@ int __fastcall setup_win_unk2_redirect(SetupWin *self, void *, int a1) {
 }
 
 /*
-ORIGINAL: 0x004ADAF0 BYTE_EXACT
-// name      ?do_menu@SetupWin@@QAEHPADHH@Z
+// ORIGINAL: 0x004ADAF0 ?do_menu@SetupWin@@QAEHPADHH@Z 0x004ADAF0-0x004ADB11 BYTE_EXACT
 // size      33 bytes
-// spans     0x004ADAF0-0x004ADB11
 // prototype int (__thiscall ?do_menu@SetupWin@@QAEHPADHH@Z)(SetupWin* this, int8*, int, int)
 // callers   1   call targets   1
 // kind      game

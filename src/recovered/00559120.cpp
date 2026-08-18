@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00559120 BYTE_EXACT
-// name      ?get_adjective_faction@@YAPADH@Z
+// ORIGINAL: 0x00559120 ?get_adjective_faction@@YAPADH@Z 0x00559120-0x0055913A BYTE_EXACT
 // size      26 bytes
-// spans     0x00559120-0x0055913A
 // prototype int8* (__cdecl ?get_adjective_faction@@YAPADH@Z)(int factionID)
 // callers   1   call targets   0
 // kind      game

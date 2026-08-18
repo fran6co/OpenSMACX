@@ -1,23 +1,12 @@
-// ORIGINAL: 0x005CE340 FILE
-// name      sub_5ce340
+// ORIGINAL: 0x005CE340 sub_5ce340 0x005CE340-0x005CE44B FILE
+// RULED-OUT: not chased to byte-exact - a DirectSound setup routine with four indirect (COM vtable, __stdcall) calls through an unidentified owner object (fields at +4, +0x54, +0x58, +0x9c, none matching a class already in src/). MISMATCH from instruction 0 (267 vs 253 bytes); landed for the control flow and call-order shape - each `if`/`else` branch and the shared "zero the slot" merge point match the disassembly's block structure, including the fact that a successful SetCooperativeLevel-equivalent (slot 6) skips both the Release-equivalent (slot 2) call AND the slot zeroing.
 // size      267 bytes
-// spans     0x005CE340-0x005CE44B
 // prototype
 // callers   1   call targets   1
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x006501F0
 // indirect  0x005CE387 0x005CE393 0x005CE3CA 0x005CE415
-// RULED-OUT: not chased to byte-exact - a DirectSound setup routine with
-//            four indirect (COM vtable, __stdcall) calls through an
-//            unidentified owner object (fields at +4, +0x54, +0x58, +0x9c,
-//            none matching a class already in src/). MISMATCH from
-//            instruction 0 (267 vs 253 bytes); landed for the control flow
-//            and call-order shape - each `if`/`else` branch and the shared
-//            "zero the slot" merge point match the disassembly's block
-//            structure, including the fact that a successful
-//            SetCooperativeLevel-equivalent (slot 6) skips both the
-//            Release-equivalent (slot 2) call AND the slot zeroing.
 // PROPOSAL: `int __cdecl sub_5ce340()` is a placeholder; the disassembly
 //           reads `[ecx+N]` with no stack access from the first real
 //           instruction (`mov ebx, ecx`), so this is a `__thiscall` member -

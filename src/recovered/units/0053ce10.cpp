@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0053CE10 FILE
-// name      ?make_treaty@@YAXHH@Z
+// ORIGINAL: 0x0053CE10 ?make_treaty@@YAXHH@Z 0x0053CE10-0x0053D158 FILE
 // size      840 bytes
-// spans     0x0053CE10-0x0053D158
 // prototype 
 // callers   2   call targets   16
 // kind      game

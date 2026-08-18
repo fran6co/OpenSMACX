@@ -44,23 +44,19 @@ line = function_line(Path("src/win.cpp"), "Win::flip")
 ```
 
 The package is SELF-CONTAINED - standard library only, and it imports nothing
-from `tools/` - so its reader is a copy of the reading side of
-`tools/annotation_scan.py`. The stamping half stays in `tools/`, because
-writing the fact block needs the export and the emitter.
+from `tools/`. The scripts in `tools/` still carry their own copies of the
+reading machinery; on 2026-08-18 the marker moved - it carries the piece's
+name and its image spans - and the tools copies stayed on the old spelling
+by decision.
 
 The readers have a writer: `decomp.write` rewrites the annotations the
-records describe, each at its own line, and `decomp.remove` deletes them -
-deletion is a statement, not an omission, and the writer trusts the records
-rather than re-reading the text to check them. `uv run python -m decomp`
-closes the read -> write -> read loop over every annotated file in `src/`.
-The pair belongs to the package alone until the tools move onto it; `tools/`
-does not call it yet.
-
-Two parsers for one grammar is a real cost, and `uv run python -m decomp` is
-what bounds it: it parses `src/` both ways and fails if the answers differ on
-any record, any row or any pattern of the grammar. **A grammar edit under
-`tools/` has to land in `decomp/` too, and vice versa, until the tools are
-refactored onto the package and the originals are deleted.**
+records describe, each at its own line - the marker carrying the name and
+the image spans - and `decomp.remove` deletes them. Deletion is a
+statement, not an omission, and the writer trusts the records rather than
+re-reading the text to check them. `uv run python -m decomp` proves the
+package against `src/`: the parse, and the read -> write -> read loop over
+every annotated file. The pair belongs to the package alone until the tools
+move onto it; `tools/` does not call it yet.
 
 ### 2. What shape is this function? — read the image
 

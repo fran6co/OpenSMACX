@@ -1,13 +1,11 @@
-// ORIGINAL: 0x006001E0 FILE
+// ORIGINAL: 0x006001E0 ?play@MCIVideo@@QAEXXZ 0x006001E0-0x00600270 FILE
 // PROPOSAL: void play() -> int play(); each of the three tails sets a
 //           distinct eax (1, 1, 0) before `ret`, but the class the scaffold
 //           declares is `void play()`, so no candidate body can express the
 //           three-way return split - it always collapses to one shared exit
 //           (30 bytes short, mismatch by #2). Needs a catalogue-side change.
 // working copy - scaffold materialised by --work
-// name      ?play@MCIVideo@@QAEXXZ
 // size      144 bytes
-// spans     0x006001E0-0x00600270
 // prototype void (__thiscall ?play@MCIVideo@@QAEXXZ)(MCIVideo* this)
 // callers   1   call targets   1
 // kind      game

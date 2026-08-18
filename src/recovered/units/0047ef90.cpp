@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0047EF90 FILE
-// name      ?pick_erosion@NetWin@@QAEXXZ
+// ORIGINAL: 0x0047EF90 ?pick_erosion@NetWin@@QAEXXZ 0x0047EF90-0x0047F2BC;0x006571D5-0x006572AD FILE
 // size      1028 bytes
-// spans     0x0047EF90-0x0047F2BC;0x006571D5-0x006572AD
 // prototype void (__thiscall ?pick_erosion@NetWin@@QAEXXZ)(NetWin* this)
 // callers   1   call targets   26
 // kind      game

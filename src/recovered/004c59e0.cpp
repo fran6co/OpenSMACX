@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004C59E0 BYTE_EXACT
-// name      ?delete_device@Wave_In_Device@@QAEHXZ
+// ORIGINAL: 0x004C59E0 ?delete_device@Wave_In_Device@@QAEHXZ 0x004C59E0-0x004C5A07 BYTE_EXACT
 // size      39 bytes
-// spans     0x004C59E0-0x004C5A07
 // prototype int (__thiscall ?delete_device@Wave_In_Device@@QAEHXZ)(Wave_In_Device* this)
 // callers   0   call targets   0
 // kind      game

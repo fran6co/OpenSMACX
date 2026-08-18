@@ -1,15 +1,7 @@
-// ORIGINAL: 0x00483F90 FILE
-// RULED-OUT: literal transcription of the RECT-cascade prologue (traced every register's
-//            concrete value through ~150 straight-line instrs) plus the loop-over-4-StringBox
-//            body using a LOCAL scratch array (the original inset math lives on the stack,
-//            not the object's fields - the loop never writes field_AA4_ etc back). Named
-//            scaffold members (flatButtons_[3], buttonGroup_, stringBoxes_[4], stringBox2_)
-//            used directly instead of raw offsets where the class already typed them.
-//            Compiles; not chased to byte-exact given size (2175 bytes).
+// ORIGINAL: 0x00483F90 ?exec@NewTechWin@@QAEXHH@Z 0x00483F90-0x0048480F FILE
+// RULED-OUT: literal transcription of the RECT-cascade prologue (traced every register's concrete value through ~150 straight-line instrs) plus the loop-over-4-StringBox body using a LOCAL scratch array (the original inset math lives on the stack, not the object's fields - the loop never writes field_AA4_ etc back). Named scaffold members (flatButtons_[3], buttonGroup_, stringBoxes_[4], stringBox2_) used directly instead of raw offsets where the class already typed them. Compiles; not chased to byte-exact given size (2175 bytes).
 // working copy - scaffold materialised by --work
-// name      ?exec@NewTechWin@@QAEXHH@Z
 // size      2175 bytes
-// spans     0x00483F90-0x0048480F
 // prototype void (__thiscall ?exec@NewTechWin@@QAEXHH@Z)(NewTechWin* this, int, int)
 // callers   1   call targets   27
 // kind      game

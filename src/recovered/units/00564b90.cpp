@@ -1,7 +1,5 @@
-// ORIGINAL: 0x00564B90 FILE
-// name      ?assemble_passengers@@YAXHHH@Z
+// ORIGINAL: 0x00564B90 ?assemble_passengers@@YAXHHH@Z 0x00564B90-0x00564D90 FILE
 // size      512 bytes
-// spans     0x00564B90-0x00564D90
 // prototype void (__cdecl ?assemble_passengers@@YAXHHH@Z)(int baseID, int, int)
 // callers   1   call targets   4
 // kind      game

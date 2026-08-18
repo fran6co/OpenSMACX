@@ -1,7 +1,5 @@
-// ORIGINAL: 0x0064D259 EXCLUDED S1
-// name      __control87
+// ORIGINAL: 0x0064D259 __control87 0x0064D259-0x0064D28E EXCLUDED S1
 // size      53 bytes
-// spans     0x0064D259-0x0064D28E
 // prototype 
 // callers   1   call targets   2
 // kind      library

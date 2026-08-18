@@ -1,7 +1,5 @@
-// ORIGINAL: 0x005FC9F0 BYTE_EXACT FILE
-// name      ?do_all_tasks@@YAXPAUWin@@@Z
+// ORIGINAL: 0x005FC9F0 ?do_all_tasks@@YAXPAUWin@@@Z 0x005FC9F0-0x005FCA23 FILE BYTE_EXACT
 // size      51 bytes
-// spans     0x005FC9F0-0x005FCA23
 // prototype 
 // callers   6   call targets   0
 // kind      game

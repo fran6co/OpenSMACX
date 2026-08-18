@@ -1,7 +1,5 @@
-// ORIGINAL: 0x004B8830 BYTE_EXACT
-// name      ?draw@StatusWin@@QAEXHHHHH@Z
+// ORIGINAL: 0x004B8830 ?draw@StatusWin@@QAEXHHHHH@Z 0x004B8830-0x004B888A BYTE_EXACT
 // size      90 bytes
-// spans     0x004B8830-0x004B888A
 // prototype void (__thiscall ?draw@StatusWin@@QAEXHHHHH@Z)(StatusWin* this, int, int, int, int, int)
 // callers   1   call targets   2
 // kind      game

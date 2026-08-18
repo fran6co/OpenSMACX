@@ -1,16 +1,7 @@
-// ORIGINAL: 0x00625FC0 BYTE_EXACT FILE
-// LEVER: string-routines-are-calls  "diverges at #1 (push vs mov) in the
-//        prologue register-save pattern" was the whole of what stood between
-//        this and the image, and it was not a prologue question: the
-//        scaffold inlined a string routine the image calls, which needs esi
-//        and edi and moves the register saves to entry. Direct transcription
-//        was correct on the first attempt. fclose is still reached through a
-//        function-pointer cast, since its scaffold declaration takes no
-//        parameters.
+// ORIGINAL: 0x00625FC0 ??0Log@@QAE@PAD@Z 0x00625FC0-0x00626016 FILE BYTE_EXACT
+// LEVER: string-routines-are-calls "diverges at #1 (push vs mov) in the prologue register-save pattern" was the whole of what stood between this and the image, and it was not a prologue question: the scaffold inlined a string routine the image calls, which needs esi and edi and moves the register saves to entry. Direct transcription was correct on the first attempt. fclose is still reached through a function-pointer cast, since its scaffold declaration takes no parameters.
 // working copy - scaffold materialised by --work
-// name      ??0Log@@QAE@PAD@Z
 // size      86 bytes
-// spans     0x00625FC0-0x00626016
 // prototype Log* (__thiscall ??0Log@@QAE@PAD@Z)(Log* this, int8*)
 // callers   0   call targets   5
 // kind      game

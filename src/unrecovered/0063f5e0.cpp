@@ -1,14 +1,7 @@
-// ORIGINAL: 0x0063F5E0 FILE
-// RULED-OUT: 6-arg __cdecl signature derived from esp+N reads at the anchor
-//            (post-prologue esp) rather than IDA's untyped guess; the
-//            per-vertex bbox loop, sub_6280e0/sub_628150/sub_6401b0 arg
-//            order, and the final outBox/localBox clamp (which Ghidra's
-//            pseudocode also shows) are transcribed from the raw asm since
-//            Ghidra's __ftol() calls hide their FPU source operands.
+// ORIGINAL: 0x0063F5E0 sub_63f5e0 0x0063F5E0-0x0063F9A8 FILE
+// RULED-OUT: 6-arg __cdecl signature derived from esp+N reads at the anchor (post-prologue esp) rather than IDA's untyped guess; the per-vertex bbox loop, sub_6280e0/sub_628150/sub_6401b0 arg order, and the final outBox/localBox clamp (which Ghidra's pseudocode also shows) are transcribed from the raw asm since Ghidra's __ftol() calls hide their FPU source operands.
 // working copy - scaffold materialised by --work
-// name      sub_63f5e0
 // size      968 bytes
-// spans     0x0063F5E0-0x0063F9A8
 // prototype 
 // callers   1   call targets   5
 // kind      game
