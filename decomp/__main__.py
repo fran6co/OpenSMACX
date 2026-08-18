@@ -1,11 +1,11 @@
 """`uv run python -m decomp` - are the reader and the writer sane?
 
 THREE CHECKS. The first is the ground truth and would be enough on its own:
-parse `src/` and prove the result against the tree itself - the counts, the
-shapes every consumer reads, and one known-good recovered body. It catches
-the failure this package can actually have in isolation, which is silence: a
-reader that resolves to nothing returns `{}`, and every count computed from
-it comes out zero looking like an answer.
+parse `src/` and prove the result against the tree itself - the count, and
+the shapes every consumer reads. It catches the failure this package can
+actually have in isolation, which is silence: a reader that finds nothing
+returns `[]`, and every count computed from it comes out zero looking like
+an answer.
 
 The second closes the loop the writer opens: every annotated file is read,
 rewritten in memory from its own records, and read again - the two parses
@@ -14,13 +14,12 @@ text must change nothing. The annotation layer is allowed to canonicalise;
 the code underneath it is not.
 
 The third is transitional. The same grammar also lives in
-`tools/annotation_scan.py` and `tools/project_catalogue.py`, which the 61
+`tools/annotation_scan.py` and `tools/project_catalogue.py`, which the
 scripts in `tools/` still import; while both copies exist, this holds the
-package's parse against theirs and fails on any record, any catalogue row,
-or any pattern of the grammar disagreeing. The shapes the two copies expose
-are deliberately different - this package's records carry enums, absolute
-paths and no parsing metadata - so the comparison projects both sides onto
-the facts the grammar decides. It skips itself once those modules are gone,
+package's parse against theirs and fails on any record or any pattern of
+the grammar disagreeing. The shapes differ - this package's records carry
+enums and absolute paths - so the comparison projects both sides onto the
+facts the grammar decides. It skips itself once those modules are gone,
 which is what a finished refactor looks like.
 """
 
@@ -30,40 +29,21 @@ import sys
 from collections.abc import Callable
 from pathlib import Path
 
-from decomp import (DecompilationState, State, from_source, grammar, read,
-                    reader, resolve, write)
-from decomp import project_catalogue
-from decomp.annotation_scan import _code_only
+from decomp import DecompilationState, State, grammar, read, reader, write
 from decomp.reader import SRC_ROOT
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 TOOLS = REPO_ROOT / "tools"
 
-FACTS = ("name", "size", "body_ranges", "prototype", "binary_kind",
-         "recovery_state", "end_address")
 
-
-def sanity() -> tuple:
+def sanity() -> list:
     """The floor: `src/` parses, and to the shape consumers read."""
-    records, _duplicates = resolve(read(SRC_ROOT))
+    records = read(SRC_ROOT)
     assert len(records) > 5000, len(records)
     assert any(record.state is State.IMPLEMENTED for record in records)
     assert all(isinstance(record.path, Path) and record.path.is_absolute()
                for record in records)
-
-    rows = from_source()
-    assert len(rows) > 5000, len(rows)
-    assert all(isinstance(address, int) for address in rows)
-    sample = next(iter(rows.values()))
-    for key in FACTS:
-        assert key in sample, key
-
-    # Buffer::Buffer, src/buffer.cpp - a recovered body carrying a full fact
-    # block, so it exercises both readers at once.
-    row = rows[0x005D7210]
-    assert row["name"] == "??0Buffer@@QAE@XZ", row["name"]
-    assert row["recovery_state"] == "source_complete", row["recovery_state"]
-    return records, rows
+    return records
 
 
 def _fingerprint(records: list[DecompilationState], claim_attr: str,
@@ -80,7 +60,7 @@ def _fingerprint(records: list[DecompilationState], claim_attr: str,
                    a.unrecoverable, a.deferred) for a in records)
 
 
-def drift(records: list[DecompilationState], rows: dict[int, dict]) -> bool:
+def drift(records: list[DecompilationState]) -> bool:
     """True if the check ran. Raises if the two parsers disagree."""
     if not (TOOLS / "annotation_scan.py").is_file():
         print("skip: tools/annotation_scan.py is gone - the copies are now one")
@@ -98,7 +78,7 @@ def drift(records: list[DecompilationState], rows: dict[int, dict]) -> bool:
     finally:
         sys.path.remove(str(TOOLS))
 
-    theirs, _ = their_scan.resolve(their_scan.scan_tree())
+    theirs = their_scan.scan_tree()
     ours = _fingerprint(records, "byte_exact",
                         lambda a: str(a.path.relative_to(REPO_ROOT)))
     mine = _fingerprint(theirs, "matched", lambda a: a.path)
@@ -108,20 +88,6 @@ def drift(records: list[DecompilationState], rows: dict[int, dict]) -> bool:
         for left, right in zip(ours, mine):
             assert left == right, f"record drift:\n  tools  {left}\n  decomp {right}"
     assert ours == mine, "record drift past the pairwise walk"
-
-    their_rows = their_catalogue.from_source()
-    assert set(their_rows) == set(rows), \
-        (f"row addresses: tools {len(their_rows)} vs decomp {len(rows)}, "
-         f"symmetric difference {len(set(their_rows) ^ set(rows))}")
-    prefix = str(REPO_ROOT) + "/"
-    for address, row in sorted(rows.items()):
-        # `source_locations` carries this package's absolute paths; tools/
-        # carries repo-relative ones. Project onto the common form.
-        ours = dict(row)
-        if ours.get("source_locations", "").startswith(prefix):
-            ours["source_locations"] = ours["source_locations"][len(prefix):]
-        assert their_rows[address] == ours, \
-            f"row drift at 0x{address:08X}:\n  tools  {their_rows[address]}\n  decomp {ours}"
 
     # The grammar itself, EXHAUSTIVELY - every pattern `grammar` declares, so
     # a tightened pattern is caught even on a tree where no annotation
@@ -135,6 +101,29 @@ def drift(records: list[DecompilationState], rows: dict[int, dict]) -> bool:
     assert their_catalogue.CONTINUABLE == grammar.CONTINUABLE, \
         "CONTINUABLE drift"
     return True
+
+
+def _code_only(region: str) -> str:
+    """The region with comments and blank lines removed."""
+    kept, in_block = [], False
+    for line in region.splitlines():
+        text = line.strip()
+        if in_block:
+            if "*/" in text:
+                in_block = False
+                text = text.split("*/", 1)[1].strip()
+            else:
+                continue
+        if "//" in text:
+            text = text.split("//", 1)[0].strip()
+        if text.startswith("/*"):
+            if "*/" not in text:
+                in_block = True
+            continue
+        if not text:
+            continue
+        kept.append(text)
+    return "\n".join(kept)
 
 
 def _region_code(region: str) -> str:
@@ -213,13 +202,12 @@ def loop() -> tuple[int, int]:
 
 
 def main() -> int:
-    records, rows = sanity()
-    checked = drift(records, rows)
+    records = sanity()
+    checked = drift(records)
     looped, skipped = loop()
     against = "agrees with tools/" if checked else "tools/ copies absent"
-    print(f"ok: {len(records)} records, {len(rows)} catalogue rows "
-          f"(proved against src/, loop closed on {looped} files, "
-          f"{skipped} skipped, {against})")
+    print(f"ok: {len(records)} records (proved against src/, loop closed on "
+          f"{looped} files, {skipped} skipped, {against})")
     return 0
 
 

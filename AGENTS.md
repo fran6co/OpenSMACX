@@ -725,13 +725,12 @@ parallel-agent targets (see "Parallel recovery" above):
 - `tools/recovery_metrics.py`: the only place that decides which rows are in scope, how a row is
   priced, and which way a number moves. Both the full exporter and the reused-export refresh path
   compute the published block through it; `tools/test_recovery_metrics.py` pins that they agree.
-- `decomp/`: the source map as an installed package - `from decomp import from_source,
-  read, resolve`, no `sys.path` line, works from any directory - and the annotation
-  writer beside the parser: `decomp.write` rewrites the annotations the records describe,
+- `decomp/`: the source map as an installed package - `from decomp import read, write,
+  function_line`, no `sys.path` line, works from any directory: the reader reads the
+  `ORIGINAL: 0x...` markers, the writer rewrites the annotations the records describe,
   each at its own line, and `decomp.remove` deletes them. It is SELF-CONTAINED
-  (standard library only, imports nothing from
-  `tools/`), so its grammar, parser and resolution are COPIES of `tools/annotation_scan.py`,
-  and its catalogue reader is a copy of the reading half of `tools/project_catalogue.py`.
+  (standard library only, imports nothing from `tools/`), so its reader is a COPY of the
+  reading side of `tools/annotation_scan.py`.
   **A change to the annotation grammar must land in both copies.** `uv run python -m decomp`
   parses `src/` each way and fails if they disagree, and closes the read -> write -> read
   loop over every annotated file; it is the only thing standing between two parsers and two
