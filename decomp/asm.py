@@ -36,11 +36,14 @@ what is done with the pair is the caller's question.
 
 from __future__ import annotations
 
+import difflib
 import json
+import re
 import shlex
 import struct
 import subprocess
 import tempfile
+from dataclasses import dataclass
 from pathlib import Path
 
 from .model import DecompilationState
@@ -236,3 +239,78 @@ def _disasm(data: bytes, base: int) -> list:
             f"{' '.join(f'{b:02X}' for b in ins.bytes):<24}  "
             f"{ins.mnemonic} {ins.op_str}".rstrip()
             for ins in Cs(CS_ARCH_X86, CS_MODE_32).disasm(data, base)]
+
+
+# -------------------------------------------------------------- comparison
+
+
+@dataclass
+class AsmComparison:
+    """How far one assembly listing reproduces another."""
+    verdict: str                    # BYTE_EXACT | MNEMONIC_ONLY | MISMATCH
+    original_count: int
+    compiled_count: int
+    matching_lines: int             # positionally identical listing lines
+    mnemonic_similarity: float      # 0..1 across the instruction sequences
+    first_divergence: int | None    # first differing instruction, or None
+    context: tuple                  # (original, compiled) lines around it
+
+
+def _mnemonic_sequence(listing: list) -> list:
+    """The instruction sequence of a listing, for similarity.
+
+    `ret` keeps its operand: `ret` and `ret 4` are different instructions,
+    and the pop count is exactly what a calling-convention slip changes.
+    """
+    out = []
+    for line in listing:
+        parts = re.split(r"\s{2,}", line.strip(), maxsplit=2)
+        if len(parts) < 3:
+            out.append(line.strip())
+            continue
+        instruction = parts[2].strip()
+        out.append(instruction
+                   if instruction.split()[0].startswith("ret")
+                   else instruction.split()[0])
+    return out
+
+
+def compare_asm(original: list, compiled: list) -> AsmComparison:
+    """How far the compiled listing reproduces the original one.
+
+    The verdicts mirror tools/byte_match.py at the listing level:
+    BYTE_EXACT when every instruction agrees byte for byte, MNEMONIC_ONLY
+    when the instruction sequence agrees but constants or encodings differ,
+    MISMATCH otherwise. The report says how many lines match outright, how
+    similar the instruction sequences are, and where the first divergence
+    is, with a window of both listings around it.
+    """
+    n, m = len(original), len(compiled)
+    matching = 0
+    first_divergence = None
+    context: tuple = ([], [])
+    for index, (a, b) in enumerate(zip(original, compiled)):
+        if a == b:
+            matching += 1
+        elif first_divergence is None:
+            first_divergence = index
+            lo = max(0, index - 3)
+            context = (original[lo:index + 4], compiled[lo:index + 4])
+    if first_divergence is None and n != m:
+        first_divergence = min(n, m)
+        lo = max(0, min(n, m) - 3)
+        context = (original[lo:], compiled[lo:])
+
+    seq_original = _mnemonic_sequence(original)
+    seq_compiled = _mnemonic_sequence(compiled)
+    similarity = difflib.SequenceMatcher(
+        None, seq_original, seq_compiled).ratio()
+
+    if n == m and matching == n:
+        verdict = "BYTE_EXACT"
+    elif seq_original == seq_compiled:
+        verdict = "MNEMONIC_ONLY"
+    else:
+        verdict = "MISMATCH"
+    return AsmComparison(verdict, n, m, matching, similarity,
+                         first_divergence, context)
