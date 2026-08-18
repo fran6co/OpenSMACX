@@ -8,10 +8,12 @@ deletes the annotations the records name, marker line and lesson run.
 the paths the records themselves carry.
 
 THE WRITER TRUSTS THE RECORDS. They are the description of the annotations
-the text carries - the output of reading it, possibly edited - so nothing
-here re-reads the text to check them. A marker the records do not describe
-passes through `write` untouched; deleting it is a `remove`, stated
-deliberately, not an omission.
+the text carries - the output of reading it, possibly edited, plus any new
+ones being added - so nothing here re-reads the text to check them. The one
+exception is a single-line look at each record's own line, because
+replace-or-insert cannot be decided from the record alone. A marker the
+records do not describe passes through `write` untouched; deleting it is a
+`remove`, stated deliberately, not an omission.
 
 THE ANNOTATION LAYER ONLY. Code lines pass through untouched, and the
 catalogue's fact block - the `// name`, `// size`, `// spans` lines stamped
@@ -36,7 +38,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from .grammar import (LESSON_CONTINUED, LESSON_DEFERRED, LESSON_LEVER,
-                      LESSON_RULED_OUT, LESSON_UNRECOVERABLE)
+                      LESSON_RULED_OUT, LESSON_UNRECOVERABLE, MARKER)
 from .model import DecompilationState, Mode, State
 
 # ------------------------------------------------------------------ spelling
@@ -100,14 +102,24 @@ def _lesson_drop(lines: list[str], index: int) -> set[int]:
 # ------------------------------------------------------------------- writing
 
 
-def write(text: str, records: list[DecompilationState]) -> str:
-    """The text with each of `records` rewritten at its own line.
+def _holds_marker(line: str, record: DecompilationState) -> bool:
+    """Whether `line` carries this record's marker - the difference
+    between rewriting an annotation and inserting a new one."""
+    match = MARKER.search(line)
+    return match is not None and int(match.group("addr"), 16) == record.address
 
-    `records` describes the annotations the text carries. Each record's
-    marker is rewritten canonically at `record.line`, replacing the line
-    that is there and the lesson run owned by it; a record one past the
-    last line appends. Everything the records do not describe - code,
-    prose, fact lines, other markers - passes through untouched.
+
+def write(text: str, records: list[DecompilationState]) -> str:
+    """The text with each of `records` written at its own line.
+
+    `records` describes the annotations the text carries - plus, if it
+    wants, new ones. A record whose line already holds its marker is
+    rewritten canonically in place, replacing that line and the lesson run
+    owned by it. A record whose line holds NO marker is an annotation being
+    ADDED: the marker and its lessons are inserted above the line, and the
+    line itself stays untouched underneath. A record one past the last line
+    appends. Everything the records do not describe - code, prose, fact
+    lines, other markers - passes through as it was.
     """
     lines = text.splitlines()
 
@@ -137,10 +149,15 @@ def write(text: str, records: list[DecompilationState]) -> str:
             continue
         record = by_line.get(index + 1)
         if record is not None:
-            drop.update(_lesson_drop(lines, index))
+            if _holds_marker(line, record):
+                drop.update(_lesson_drop(lines, index))
+                out.append(_marker_line(record))
+                out.extend(_lesson_lines(record))
+                continue
+            # A new annotation: the marker goes above this line, and the
+            # line itself - the definition it names - is kept.
             out.append(_marker_line(record))
             out.extend(_lesson_lines(record))
-            continue
         out.append(line)
 
     if len(lines) + 1 in by_line:

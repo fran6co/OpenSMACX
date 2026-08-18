@@ -19,11 +19,11 @@ THE LAYOUT. Each module is one concern:
 
     model.py             the data structures a scan produces -
                          DecompilationState, Mode, State
-    grammar.py           the annotation grammar - every pattern, plus the
-                         shared marker-recognition rule
+    grammar.py           the annotation grammar, as data - every pattern
     reader.py            the parser - lessons, extraction, stores, the tree
-                         walk, and the entry points read (a file, a directory,
-                         or an in-memory text) and read_file
+                         walk, the entry points read (a file, a directory,
+                         or an in-memory text) and read_file, and
+                         function_line (a definition's line, by name)
     annotation_scan.py   resolution - one record per address, and the map
                          held against the catalogue
     writer.py            the annotation writer - write, remove, and their
@@ -56,14 +56,14 @@ from .annotation_scan import cross_reference, resolve
 from .grammar import FACT_LINE
 from .model import DecompilationState, Mode, State
 from .project_catalogue import from_source, stamped
-from .reader import read, read_file
+from .reader import function_line, read, read_file
 from .writer import remove, remove_file, write, write_file
 
 __all__ = [
     "annotation_scan", "grammar", "model", "project_catalogue", "reader",
     "writer",
     "DecompilationState", "Mode", "State",
-    "read", "read_file", "resolve",
+    "read", "read_file", "resolve", "function_line",
     "cross_reference", "write", "remove", "write_file",
     "from_source", "stamped", "FACT_LINE",
 ]
