@@ -42,7 +42,7 @@ from .model import DecompilationState, Mode, State
 # ------------------------------------------------------------------ spelling
 
 
-def marker_line(record: DecompilationState) -> str:
+def _marker_line(record: DecompilationState) -> str:
     """The canonical marker line for a record."""
     line = f"// ORIGINAL: 0x{record.address:08X}"
     if record.mode is Mode.FILE:
@@ -54,7 +54,7 @@ def marker_line(record: DecompilationState) -> str:
     return line
 
 
-def lesson_lines(record: DecompilationState) -> list[str]:
+def _lesson_lines(record: DecompilationState) -> list[str]:
     """The record's lessons, one canonical line each.
 
     Continuation lines are a display form: the reader joins them with a
@@ -138,15 +138,15 @@ def write(text: str, records: list[DecompilationState]) -> str:
         record = by_line.get(index + 1)
         if record is not None:
             drop.update(_lesson_drop(lines, index))
-            out.append(marker_line(record))
-            out.extend(lesson_lines(record))
+            out.append(_marker_line(record))
+            out.extend(_lesson_lines(record))
             continue
         out.append(line)
 
     if len(lines) + 1 in by_line:
         record = by_line[len(lines) + 1]
-        out.append(marker_line(record))
-        out.extend(lesson_lines(record))
+        out.append(_marker_line(record))
+        out.extend(_lesson_lines(record))
 
     joined = "\n".join(out)
     if text.endswith("\n"):
