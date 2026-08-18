@@ -7,9 +7,9 @@ and every annotation under it comes back, and two arguments read in-memory
 text. `read_file` is the explicit single-file form. NOTHING HERE CACHES:
 a call reads what is on disk at
 the moment of the call, and a caller that asks repeatedly memoises at its
-own layer. The patterns and the marker-recognition rule live in `grammar`;
-deciding BETWEEN records - one claimant per address - lives in
-`annotation_scan`. This module produces the claimants.
+own layer. The patterns live in `grammar`; deciding BETWEEN records - one
+claimant per address - lives in `annotation_scan`. This module produces
+the claimants.
 """
 
 from __future__ import annotations
@@ -20,12 +20,74 @@ from pathlib import Path
 from .grammar import (EXCLUSION_TOKEN, LESSON_CONTINUED, LESSON_DEFERRED,
                       LESSON_LEVER, LESSON_RULED_OUT, LESSON_UNRECOVERABLE,
                       MARKER, MARKER_KEYWORD, MARKER_MATCHED, NEXT_MARKER,
-                      SENTINEL, _MANGLED_BASE, _NAME_FIELD, block_state_after,
-                      parse_marker)
+                      SENTINEL, _MANGLED_BASE, _NAME_FIELD)
 from .model import DecompilationState, Mode, State
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SRC_ROOT = REPO_ROOT / "src"
+
+
+# --------------------------------------------------------------- recognition
+
+# The grammar APPLIED: the rule for where a marker is valid. A hit in code
+# or data is prose, not a map entry, and this is the ONE implementation of
+# that rule - everything that reads a marker reads it through here.
+def _block_state_after(line: str, in_block: bool) -> bool:
+    """Cheap block-comment tracking: count the transitions on the line.
+
+    Deliberately naive about strings containing comment marks - a false
+    positive there only makes the scanner MORE willing to read a marker, and
+    a marker at an address the catalogue does not know is reported as
+    uncatalogued rather than believed, so the error cannot fabricate a map
+    entry.
+    THE SCAN IS BY `find`, NOT BY CHARACTER. This ran once per line of every
+    file under `src/`, and every tool in the loop reads the tree at
+    startup: the catalogue, the brief, the verifier and the ratchet all pay
+    it. Measured 2026-08-14, the character walk was 730,000 calls making 30
+    MILLION `startswith` probes - 8.8 s of the 12 s `load_functions` took, and
+    the largest single cost in the whole critical path. `find` does the same
+    search in C and skips everything between the marks.
+
+    The states are the same three: outside, inside a block, and stopped at a
+    line comment. Depth never exceeds one - the character version only ever
+    incremented from zero - so `/*` inside a block is text, exactly as before.
+    """
+    index = 0
+    if in_block:
+        end = line.find("*/")
+        if end < 0:
+            return True
+        index = end + 2
+    while True:
+        start = line.find("/*", index)
+        if start < 0:
+            return False
+        line_comment = line.find("//", index)
+        if 0 <= line_comment < start:
+            return False
+        end = line.find("*/", start + 2)
+        if end < 0:
+            return True
+        index = end + 2
+
+
+def _parse_marker(line: str, in_block: bool) -> tuple | None:
+    """(address, keyword, rest, matched) for a marker IN A COMMENT."""
+    match = MARKER.search(line)
+    if not match:
+        return None
+    # The marker only counts inside a comment: either the line opens `//`
+    # before it, or the scanner is inside a `/* */` block. A hit in code or
+    # data is prose, not a map entry.
+    prefix = line[:match.start()]
+    if not in_block and "//" not in prefix and "/*" not in prefix:
+        return None
+    tail = match.group("tail") or ""
+    matched = bool(MARKER_MATCHED.search(tail))
+    keyword_hit = MARKER_KEYWORD.match(MARKER_MATCHED.sub("", tail))
+    keyword = keyword_hit.group("kw") if keyword_hit else None
+    rest = keyword_hit.group("rest") if keyword_hit else ""
+    return int(match.group("addr"), 16), keyword, rest, matched
 
 
 def _lessons(lines: list[str], index: int) -> tuple:
@@ -378,8 +440,8 @@ def _read_text(text: str, path: Path | str) -> list[DecompilationState]:
     for index, line in enumerate(lines):
         # Parse with the state the line OPENS in, then advance the state, so
         # a marker on the line that opens a comment is still inside it.
-        parsed = parse_marker(line, in_block)
-        in_block = block_state_after(line, in_block)
+        parsed = _parse_marker(line, in_block)
+        in_block = _block_state_after(line, in_block)
         if parsed is None:
             continue
         address, keyword, rest, matched = parsed
