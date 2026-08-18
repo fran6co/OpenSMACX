@@ -25,6 +25,9 @@ THE LAYOUT. Each module is one concern:
                          function_line (a definition's line, by name)
     writer.py            the annotation writer - write, remove, and their
                          on-disk forms write_file, remove_file
+    asm.py               the assembly behind a record - original_asm reads
+                         the pinned image, compiled_asm compiles the record's
+                         file with VC6 and pulls the function from the object
 
 SELF-CONTAINED, BY REQUIREMENT. Nothing here imports from `tools/`, and
 nothing here imports outside the standard library. The reader is a COPY of
