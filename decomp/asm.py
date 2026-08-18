@@ -43,52 +43,19 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from .grammar import CONTINUABLE, CONTINUED, FACT_LINE
 from .model import DecompilationState
 
 
 # ---------------------------------------------------------------- the record
 
 
-def _facts(record: DecompilationState) -> dict:
-    """The fact block recorded under the record's marker.
-
-    Same rules as the annotation layer reads by: the first spelling of a
-    key wins, and a wrapped value continues on lines indented to the
-    value's own column.
-    """
-    lines = record.path.read_text(errors="ignore").splitlines()
-    found: dict = {}
-    open_key, column = None, None
-    for line in lines[record.line:]:
-        stripped = line.strip()
-        if not (stripped.startswith("//") or stripped.startswith("*")):
-            break
-        match = FACT_LINE.match(line)
-        if match:
-            key, value = match.group(1), match.group(2) or ""
-            fresh = key not in found
-            found.setdefault(key, value)
-            open_key = key if fresh and key in CONTINUABLE and value else None
-            column = line.index(value) if open_key else None
-            continue
-        carried = CONTINUED.match(line)
-        if open_key and carried and len(carried.group(1)) + 2 == column:
-            found[open_key] = f"{found[open_key]} {carried.group(2).strip()}"
-            continue
-        open_key, column = None, None
-    return found
-
-
 def _span(record: DecompilationState) -> tuple:
     """(low, high) of the record's primary span - the body, not the cold
     funclets a second span may cover."""
-    spans = _facts(record).get("spans", "")
-    if not spans:
+    if not record.spans:
         raise ValueError(
             f"{record.address_hex}: no spans fact under its marker")
-    low, _sep, high = spans.split(";")[0].partition("-")
-    return int(low, 16), int(high, 16)
+    return record.spans[0]
 
 
 # -------------------------------------------------------------- the original
@@ -254,12 +221,11 @@ def compiled_asm(record: DecompilationState, compile_commands: Path | str,
     swapped for `flags`, the function pulled out of the object by the
     record's mangled name, disassembled at the record's address so the
     listing lines up with `original_asm`."""
-    name = _facts(record).get("name", "")
-    if not name:
+    if not record.name:
         raise ValueError(
             f"{record.address_hex}: no name fact under its marker")
     obj = _compile(record.path, flags, Path(compile_commands))
-    return _disasm(_coff_function(obj, name), record.address)
+    return _disasm(_coff_function(obj, record.name), record.address)
 
 
 # ------------------------------------------------------------------ disasm
