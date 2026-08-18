@@ -13,8 +13,8 @@ from pathlib import Path
 
 import pytest
 
-from decomp import (DecompilationState, Mode, State, read, read_file, remove,
-                    remove_file, write, write_file)
+from decomp import (DecompilationState, Mode, State, function_line, read,
+                    read_file, remove, remove_file, write, write_file)
 from decomp.__main__ import _key, roundtrip_tree
 
 FIXTURE = Path("fixture.cpp")
@@ -283,6 +283,131 @@ def test_remove_file(tmp_path):
     remove_file(read_file(path))
     assert "ORIGINAL:" not in path.read_text()
     assert "void __cdecl f() {" in path.read_text()
+
+
+# ------------------------------------------------- new annotations: insert
+
+
+PLAIN = """void __cdecl alpha() {
+    step_one();
+}
+
+void __cdecl beta(int x) {
+    step_two(x);
+}
+"""
+
+
+def test_insert_new_annotation_above_a_function():
+    made = [record(0x00409000, line=1)]
+    rewritten = write(PLAIN, made)
+    lines = rewritten.splitlines()
+    assert lines[0] == "// ORIGINAL: 0x00409000"
+    assert lines[1] == "void __cdecl alpha() {"      # definition untouched
+    reread = read(rewritten, FIXTURE)
+    assert len(reread) == 1
+    assert reread[0].address == 0x00409000
+    assert reread[0].line == 1
+    assert reread[0].state is State.IMPLEMENTED
+    # The fixed point holds for inserted annotations too.
+    assert write(rewritten, reread) == rewritten
+
+
+MARKED = """// ORIGINAL: 0x00400100
+void __cdecl alpha() {
+}
+
+void __cdecl beta() {
+}
+
+// ORIGINAL: 0x00400300
+void __cdecl gamma() {
+}
+"""
+
+
+def test_insert_between_existing_annotations():
+    records = read(MARKED, FIXTURE)
+    assert [r.address for r in records] == [0x00400100, 0x00400300]
+    rewritten = write(MARKED, records + [record(0x00400200, line=5)])
+    reread = read(rewritten, FIXTURE)
+    assert [r.address for r in reread] == [0x00400100, 0x00400200, 0x00400300]
+    assert reread[1].line == 5
+    assert "void __cdecl beta() {" in rewritten
+
+
+def test_one_call_mixes_replacement_and_insertion():
+    records = read(MARKED, FIXTURE)
+    first = next(r for r in records if r.address == 0x00400100)
+    first.byte_exact = True
+    rewritten = write(MARKED, records + [record(0x00400200, line=5)])
+    assert "// ORIGINAL: 0x00400100 BYTE_EXACT" in rewritten
+    assert "// ORIGINAL: 0x00400200" in rewritten
+    reread = read(rewritten, FIXTURE)
+    assert [r.address for r in reread] == [0x00400100, 0x00400200, 0x00400300]
+    assert reread[0].byte_exact is True
+
+
+# ----------------------------------------------------- function_line
+
+FIND_ME = """// a line comment mentioning find_me( in prose
+/* find_me( inside a block comment
+   still inside */
+void find_me(int a);
+
+void caller() {
+    find_me(1);
+    if (find_me(2)) {
+        other();
+    }
+}
+
+void find_me(int a) {
+    const char *s = "find_me( in a string";
+}
+"""
+
+
+def test_function_line_skips_comments_calls_and_declarations():
+    assert function_line(FIND_ME, "find_me") == 13
+
+
+QUALIFIED = """int StringStruct::close(int x) {
+    return 0;
+}
+
+BasePop::BasePop() {
+    init();
+}
+"""
+
+
+def test_function_line_finds_members_and_constructors():
+    assert function_line(QUALIFIED, "StringStruct::close") == 1
+    assert function_line(QUALIFIED, "BasePop::BasePop") == 5
+
+
+def test_function_line_refuses_ambiguity_and_absence():
+    two = "void dup() {\n}\nvoid dup() {\n}\n"
+    with pytest.raises(ValueError, match="2 definitions"):
+        function_line(two, "dup")
+    with pytest.raises(ValueError, match="0 definitions"):
+        function_line(two, "absent")
+
+
+def test_annotate_by_name_end_to_end(tmp_path):
+    path = tmp_path / "unit.cpp"
+    path.write_text(QUALIFIED)
+    line = function_line(path, "StringStruct::close")
+    made = DecompilationState(address=0x00401060, mode=Mode.BODY,
+                              state=State.IMPLEMENTED,
+                              path=path.resolve(), line=line)
+    write_file([made])
+    reread = read_file(path)
+    assert len(reread) == 1
+    assert reread[0].address == 0x00401060
+    assert reread[0].line == 1
+    assert path.read_text().splitlines()[1] == "int StringStruct::close(int x) {"
 
 
 # ------------------------------------------------------------- the loop

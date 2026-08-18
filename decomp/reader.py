@@ -426,6 +426,93 @@ def read(source: Path | str,
     return read_file(source)
 
 
+def function_line(source: Path | str, name: str) -> int:
+    """The 1-based line of the DEFINITION of `name`.
+
+    `source` is a path (it is read) or the text itself; `name` is the C++
+    spelling as it appears in code - `StringStruct::close`, `mem_get`,
+    `BasePop::BasePop`. Matching happens on CODE ONLY, stripped of comments
+    and string contents by the same walk the scanner uses, so a name never
+    matches inside a comment, a fact block, or a string literal. A
+    candidate is a definition only when its parameter list closes and a
+    body opens before anything else - declarations and call sites are
+    refused. Raises ValueError, listing the candidate lines, when zero or
+    several definitions match.
+    """
+    if isinstance(source, Path):
+        text = source.read_text(errors="ignore")
+    else:
+        as_path = Path(source)
+        text = as_path.read_text(errors="ignore") if as_path.is_file() else source
+
+    pattern = re.compile(rf"(?<![\w:]){re.escape(name)}\s*\(")
+    lines = text.splitlines()
+    definitions = []
+    in_block = False
+    for index, line in enumerate(lines):
+        state = in_block
+        code = _brace_delta(line, state)[3]
+        in_block = _block_state_after(line, state)
+        if pattern.search(code) and _is_definition(lines, index, state, pattern):
+            definitions.append(index + 1)
+
+    if len(definitions) != 1:
+        raise ValueError(
+            f"{name}: {len(definitions)} definitions found"
+            f"{', lines ' + ', '.join(map(str, definitions)) if definitions else ''}")
+    return definitions[0]
+
+
+def _is_definition(lines: list[str], start: int, state: bool, pattern) -> bool:
+    """The `name(` on line `start` opens a parameter list that closes and
+    is followed by `{` - a definition, not a declaration or a call.
+
+    From the opening paren the balance is tracked over comment-stripped
+    code; when it returns to zero, the next code must be the body's brace
+    (an optional `const` in between is allowed). A `;` or anything else
+    first is a declaration; a balance that closes INSIDE a larger
+    expression - `if (name(x)) {` - is a call site.
+    """
+    code = _brace_delta(lines[start], state)[3]
+    match = pattern.search(code)
+    if match is None:
+        return False
+    stream, depth, closed = code[match.end():], 1, False
+    index, line_state = start, state
+    while True:
+        if closed:
+            # The parens are shut; the body must be the next code to come.
+            rest = stream.lstrip()
+            if rest.startswith("const"):
+                rest = rest[5:].lstrip()
+            if rest.startswith("{"):
+                return True
+            if rest:
+                return False
+        else:
+            for pos, ch in enumerate(stream):
+                if ch == "(":
+                    depth += 1
+                elif ch == ")":
+                    depth -= 1
+                    if depth == 0:
+                        rest = stream[pos + 1:].lstrip()
+                        if rest.startswith("const"):
+                            rest = rest[5:].lstrip()
+                        if rest.startswith("{"):
+                            return True
+                        if rest:
+                            return False
+                        closed = True
+                        break
+        # The next line opens in the state the current line ends in.
+        line_state = _block_state_after(lines[index], line_state)
+        index += 1
+        if index >= len(lines):
+            return False
+        stream = _brace_delta(lines[index], line_state)[3]
+
+
 def _read_text(text: str, path: Path | str) -> list[DecompilationState]:
     """Scan TEXT attributed to `path`.
 
