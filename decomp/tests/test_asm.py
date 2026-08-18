@@ -14,8 +14,7 @@ from pathlib import Path
 import pytest
 
 from decomp import read_file
-from decomp.asm import (_coff_function, _facts, _span, compiled_asm,
-                        original_asm)
+from decomp.asm import _coff_function, _span, compiled_asm, original_asm
 from decomp.reader import REPO_ROOT
 
 # The environment's facts live HERE, not in the package: where the pinned
@@ -49,11 +48,10 @@ def record_in(tmp_path, text):
     return read_file(path)[0]
 
 
-def test_facts_read_the_block(tmp_path):
+def test_record_carries_name_and_spans(tmp_path):
     record = record_in(tmp_path, MARKED)
-    facts = _facts(record)
-    assert facts["name"] == "?f@C@@QAEXXZ"
-    assert facts["size"] == "8 bytes"
+    assert record.name == "?f@C@@QAEXXZ"
+    assert record.spans == ((0x00401000, 0x00401008),)
     assert _span(record) == (0x00401000, 0x00401008)
 
 

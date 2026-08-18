@@ -17,10 +17,11 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from .grammar import (EXCLUSION_TOKEN, LESSON_CONTINUED, LESSON_DEFERRED,
-                      LESSON_LEVER, LESSON_RULED_OUT, LESSON_UNRECOVERABLE,
-                      MARKER, MARKER_KEYWORD, MARKER_MATCHED, NEXT_MARKER,
-                      SENTINEL, _MANGLED_BASE, _NAME_FIELD)
+from .grammar import (CONTINUABLE, CONTINUED, EXCLUSION_TOKEN, FACT_LINE,
+                      LESSON_CONTINUED, LESSON_DEFERRED, LESSON_LEVER,
+                      LESSON_RULED_OUT, LESSON_UNRECOVERABLE, MARKER,
+                      MARKER_KEYWORD, MARKER_MATCHED, NEXT_MARKER, SENTINEL,
+                      _MANGLED_BASE, _NAME_FIELD)
 from .model import DecompilationState, Mode, State
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -534,18 +535,22 @@ def _read_text(text: str, path: Path | str) -> list[DecompilationState]:
         address, keyword, rest, matched = parsed
         found_levers, found_ruled, found_dead, found_later = \
             _lessons(lines, index)
+        facts = _fact_block(lines, index)
+        name = facts.get("name", "")
+        spans = _spans_of(facts.get("spans", ""))
         if keyword == "FILE":
             region = text
             found.append(DecompilationState(
                 address=address, mode=Mode.FILE,
                 state=_state_of(region, ""), path=_abs(path),
-                line=index + 1, region=region, recipe="verbatim",
-                byte_exact=matched, levers=found_levers, ruled_out=found_ruled,
-                unrecoverable=found_dead, deferred=found_later))
+                line=index + 1, name=name, spans=spans, region=region,
+                recipe="verbatim", byte_exact=matched, levers=found_levers,
+                ruled_out=found_ruled, unrecoverable=found_dead,
+                deferred=found_later))
         elif keyword == "EXCLUDED":
             found.append(DecompilationState(
                 address=address, mode=Mode.BODY, state=State.EXCLUDED,
-                path=_abs(path), line=index + 1,
+                path=_abs(path), line=index + 1, name=name, spans=spans,
                 exclusion=_exclusion_citation(rest), byte_exact=matched,
                 levers=found_levers, ruled_out=found_ruled,
                 unrecoverable=found_dead, deferred=found_later))
@@ -566,12 +571,52 @@ def _read_text(text: str, path: Path | str) -> list[DecompilationState]:
             found.append(DecompilationState(
                 address=address, mode=Mode.BODY,
                 state=_state_of(region, ""), path=_abs(path),
-                line=index + 1, region=region, extract_error=error,
-                recipe=recipe, byte_exact=matched,
+                line=index + 1, name=name, spans=spans, region=region,
+                extract_error=error, recipe=recipe, byte_exact=matched,
                 levers=found_levers, ruled_out=found_ruled,
                 unrecoverable=found_dead, deferred=found_later))
 
     return found
+
+
+def _fact_block(lines: list[str], index: int) -> dict:
+    """{fact: value} recorded in the comment run after the marker at
+    `index`.
+
+    The first spelling of a fact wins - the block is written once, and a
+    second match is prose that happened to parse - and a wrapped value
+    continues on lines indented to the value's own column.
+    """
+    found: dict = {}
+    open_key, column = None, None
+    for line in lines[index + 1:]:
+        stripped = line.strip()
+        if not (stripped.startswith("//") or stripped.startswith("*")):
+            break
+        match = FACT_LINE.match(line)
+        if match:
+            key, value = match.group(1), match.group(2) or ""
+            fresh = key not in found
+            found.setdefault(key, value)
+            open_key = key if fresh and key in CONTINUABLE and value else None
+            column = line.index(value) if open_key else None
+            continue
+        carried = CONTINUED.match(line)
+        if open_key and carried and len(carried.group(1)) + 2 == column:
+            found[open_key] = f"{found[open_key]} {carried.group(2).strip()}"
+            continue
+        open_key, column = None, None
+    return found
+
+
+def _spans_of(value: str) -> tuple:
+    """(low, high) pairs out of a spans fact; the body's span is first."""
+    spans = []
+    for part in value.split(";"):
+        low, _sep, high = part.partition("-")
+        if low and high:
+            spans.append((int(low, 16), int(high, 16)))
+    return tuple(spans)
 
 
 def _proved_store(path: Path) -> bool:

@@ -41,15 +41,19 @@ class DecompilationState:
 
     Everything a consumer needs to act on the piece directly: an absolute
     `path` it can open, typed `mode` and `state`, the `region` of source the
-    annotation claims, and the lesson vocabulary recorded beside it. No
-    parsing metadata leaks into the record - how the marker was spelled is
-    the parser's concern, not the result's.
+    annotation claims, the name and spans the fact block records, and the
+    lesson vocabulary beside it. No parsing metadata leaks into the record -
+    how the marker was spelled is the parser's concern, not the result's.
     """
     address: int
     mode: Mode
     state: State
     path: Path                   # absolute location of the declaring file
     line: int                    # 1-based line of the marker (0 for filename-derived)
+    name: str = ""               # the fact block's mangled name
+    spans: tuple = ()            # the fact block's byte spans, (low, high)
+                                 # pairs; the first is the body, any further
+                                 # span is cold code the image lays elsewhere
     exclusion: str = ""          # EXCLUSIONS.md citation for State.EXCLUDED
     region: str = ""             # the code this annotation claims ("" on error)
     extract_error: str = ""      # why the region could not be cut
