@@ -93,7 +93,7 @@ def _region_code(region: str) -> str:
     return _code_only("\n".join(lines))
 
 
-def _key(record: DecompilationState) -> tuple:
+def _key(record: DecompilationState) -> tuple[object, ...]:
     """Everything a round trip must preserve.
 
     `line` is NOT in it: it is a position in one text, and a rewrite that
