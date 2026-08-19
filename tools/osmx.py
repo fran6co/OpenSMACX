@@ -23,6 +23,9 @@ from typing import Annotated
 import typer
 
 from decomp import DecompilationState, State, mangled, read
+from decomp.asm import (AsmComparison, CompileFailed, build_command,
+                        compare_record, original_asm, shared_spans,
+                        span_refusal)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -280,7 +283,6 @@ def _image_side(record: DecompilationState, records: list,
     """(refusal, lines) for a record, or ("", []) with no image to read."""
     if not exe.is_file():
         return "", []
-    from decomp.asm import original_asm, shared_spans, span_refusal
     refusal = span_refusal(record, exe, shared_spans(records))
     if refusal is not None:
         return str(refusal), []
@@ -319,6 +321,120 @@ def _print_record(entry: dict) -> None:
     else:
         typer.secho("  (no image to read; pass --exe)",
                     fg=typer.colors.YELLOW)
+
+
+# The invocations this image was built with, crossed: `/O2` implies `/Oy`,
+# which omits the frame pointer, and the shipped image is MIXED - 1,518
+# functions open with `push ebp; mov ebp, esp` and 1,544 do not. Asking one
+# answers about half the image. They live here and not in `decomp` because
+# they are a fact about this build, and they are not in the CMake
+# configuration either: that is a Debug database of `/Od /Ob0`.
+FLAG_SETS = (
+    "/c /O2 /Gy /GR- /Oy- /GX",
+    "/c /O2 /Gy /GR- /GX",
+    "/c /O1 /Gy /GR- /Oy- /GX",
+    "/c /O1 /Gy /GR- /GX",
+)
+
+
+@app.command()
+def measure(
+    target: Annotated[str, typer.Argument(
+        help="An address in hex, or a name.")],
+    src: Annotated[Path, typer.Option(
+        envvar="OPENSMACX_SRC")] = REPO_ROOT / "src",
+    exe: Annotated[Path, typer.Option(
+        envvar="OPENSMACX_IMAGE",
+    )] = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe",
+    compile_commands: Annotated[Path, typer.Option(
+        envvar="OPENSMACX_COMPILE_COMMANDS",
+    )] = REPO_ROOT / "build" / "compile_commands.json",
+    borrow: Annotated[str, typer.Option(
+        help="Compile a file the build does not name with THIS file's "
+             "command. Needed for src/recovered and src/unrecovered.",
+    )] = "src/buffer.cpp",
+    as_json: Annotated[bool, typer.Option("--json")] = False,
+) -> None:
+    """Does this body reproduce the shipped bytes?
+
+    EXITS 0 ONLY FOR BYTE_EXACT. That is the contract every other tier is
+    measured against, and it is what lets this be a loop condition:
+
+        until osmx measure 0x0045F950; do  ...edit...  done
+
+    It does not write anything. `record` is the one that stamps a claim,
+    and keeping them apart is what lets an agent be given this and not that.
+    """
+    records = read(src)
+    claimants = _matching(records, target)
+    if len(claimants) != 1:
+        typer.secho(
+            f"{len(claimants)} pieces match {target!r}; measure names one",
+            fg=typer.colors.RED)
+        raise typer.Exit(2)
+    record = claimants[0]
+
+    try:
+        command = build_command(compile_commands, record.path)
+    except ValueError:
+        # A build entry is a command, not a permission: `src/unrecovered/`
+        # is already a translation unit and only wants an invocation.
+        command = build_command(compile_commands, REPO_ROOT / borrow)
+
+    try:
+        result = compare_record(record, exe, command, FLAG_SETS,
+                                shared_spans(records))
+    except (ValueError, CompileFailed) as problem:
+        typer.secho(f"{record.address_hex}: {problem}", fg=typer.colors.RED)
+        raise typer.Exit(2) from None
+
+    if as_json:
+        typer.echo(json.dumps({
+            "address": record.address_hex,
+            "name": record.name,
+            "verdict": str(result.verdict),
+            "flags": result.flags,
+            "instructions": [result.original_instructions,
+                             result.compiled_instructions],
+            "matching": result.matching_instructions,
+            "similarity": round(result.mnemonic_similarity, 4),
+            "first_divergence": result.first_divergence,
+            "compared_bytes": result.compared_bytes,
+            "masked_bytes": result.masked_bytes,
+            "differing_constants": [list(c) for c in
+                                    result.differing_constants],
+            "diagnostic": result.diagnostic,
+        }, indent=2))
+    else:
+        _print_verdict(record, result)
+    raise typer.Exit(0 if str(result.verdict) == "BYTE_EXACT" else 1)
+
+
+def _print_verdict(record: DecompilationState,
+                   result: AsmComparison) -> None:
+    typer.secho(f"\n{record.address_hex}  {record.name}", bold=True)
+    colour = (typer.colors.GREEN if str(result.verdict) == "BYTE_EXACT"
+              else typer.colors.YELLOW)
+    typer.secho(f"  {result.verdict}", fg=colour, bold=True)
+    if result.diagnostic:
+        typer.echo(f"  {result.diagnostic}")
+        return
+    if result.flags:
+        typer.echo(f"  flags      {result.flags}")
+    typer.echo(f"  agreeing   {result.matching_instructions} of "
+               f"{result.original_instructions} instructions"
+               f"   (compiled has {result.compiled_instructions})")
+    typer.echo(f"  bytes      {result.compared_bytes} compared, "
+               f"{result.masked_bytes} discounted as relocations")
+    for index, mnemonic, was, now in result.differing_constants[:8]:
+        typer.echo(f"  constant   #{index} {mnemonic}: {was} -> {now}")
+    if result.first_divergence is None:
+        return
+    typer.echo(f"\n  first divergence at instruction "
+               f"{result.first_divergence}")
+    for original, compiled in zip(*result.context):
+        typer.echo(f"    O: {original}")
+        typer.echo(f"    C: {compiled}")
 
 
 if __name__ == "__main__":
