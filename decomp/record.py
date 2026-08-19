@@ -28,9 +28,13 @@ from .model import DecompilationState, Tier
 from .writer import write_file
 
 
-def stamped(record: DecompilationState,
-            verdict: AsmComparison) -> DecompilationState:
+def stamped(record: DecompilationState, verdict: AsmComparison,
+            demote: bool = False) -> DecompilationState:
     """The record this measurement implies, without touching the disk.
+
+    WHAT IT IMPLIES, NOT WHAT TO WRITE. Removing a claim is a statement
+    about the body; whether to act on it is a decision, and `record_match`
+    does not take it without being asked. See there.
 
     THE CLAIM FOLLOWS THE MEASUREMENT, both ways. `BYTE_EXACT` is a ratchet
     claim - "this was proved to reproduce the shipped bytes; fail if it
@@ -50,21 +54,41 @@ def stamped(record: DecompilationState,
     matched = verdict.verdict is Tier.BYTE_EXACT
     if matched:
         return replace(record, byte_exact=True, ruled_out=())
-    return replace(record, byte_exact=False, levers=(),
+    # A CLAIM IS NOT LOWERED WITHOUT BEING ASKED. The floor is the number of
+    # claims, so clearing one lowers the floor and the gate then passes
+    # because there is nothing left to check - a ratchet quietly ceasing to
+    # be one. `docs/DECOMP_MAP.md` is explicit that a claim which stops
+    # reproducing is a failure by address and file: "either a tooling change
+    # or a lost scaffolding and both need a human". `demote` is how a caller
+    # says it has looked. The LESSONS move either way, because a `LEVER` the
+    # measurement contradicts is wrong whether or not anyone has decided
+    # what to do about the claim.
+    return replace(record, byte_exact=record.byte_exact and not demote,
+                   levers=(),
                    ruled_out=record.ruled_out
                    + tuple(prose for _key, prose in record.levers))
 
 
 def record_match(record: DecompilationState, exe: Path | str,
                  command: list[str], flags: tuple | str,
-                 shared: frozenset = frozenset()) -> AsmComparison:
+                 shared: frozenset = frozenset(),
+                 demote: bool = False) -> AsmComparison:
     """Measure `record`, write what the measurement says, return the verdict.
+
+    ONE RECORD. A caller writing several in the same FILE must not use this
+    in a loop: the writer re-reads the file each time, and a first write may
+    canonicalise a wrapped lesson onto one line and move every line below
+    it, which leaves the records read before it pointing at the wrong lines.
+    Measure them all, `stamped` them all, and hand the whole set to
+    `write_file`, which groups by path and writes each file once.
+
+    A claim is not lowered unless `demote` - see `stamped`.
 
     The annotation is rewritten only when the measurement changes it, so a
     run over a tree that has not moved touches no file.
     """
     verdict = compare_record(record, exe, command, flags, shared)
-    after = stamped(record, verdict)
+    after = stamped(record, verdict, demote)
     if after != record:
         write_file([after])
     return verdict

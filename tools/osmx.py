@@ -22,7 +22,8 @@ from typing import Annotated
 
 import typer
 
-from decomp import DecompilationState, State, mangled, read
+from decomp import DecompilationState, State, mangled, read, write_file
+from decomp.record import stamped
 from decomp.asm import (AsmComparison, CompileFailed, build_command,
                         compare_record, original_asm, shared_spans,
                         span_refusal)
@@ -435,6 +436,103 @@ def _print_verdict(record: DecompilationState,
     for original, compiled in zip(*result.context):
         typer.echo(f"    O: {original}")
         typer.echo(f"    C: {compiled}")
+
+
+@app.command()
+def record(
+    targets: Annotated[list[str], typer.Argument(
+        help="Addresses in hex, or names.")],
+    src: Annotated[Path, typer.Option(
+        envvar="OPENSMACX_SRC")] = REPO_ROOT / "src",
+    exe: Annotated[Path, typer.Option(
+        envvar="OPENSMACX_IMAGE",
+    )] = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe",
+    compile_commands: Annotated[Path, typer.Option(
+        envvar="OPENSMACX_COMPILE_COMMANDS",
+    )] = REPO_ROOT / "build" / "compile_commands.json",
+    borrow: Annotated[str, typer.Option(
+        help="Compile a file the build does not name with THIS file's "
+             "command.")] = "src/buffer.cpp",
+    demote: Annotated[bool, typer.Option(
+        "--demote",
+        help="Also clear a claim that stopped reproducing. Off by default: "
+             "the floor is the number of claims.")] = False,
+) -> None:
+    """Measure these pieces and write down what was measured.
+
+    UPDATES ANNOTATIONS THAT EXIST; it does not create them. A piece with no
+    annotation cannot be named here, because naming one takes its mangled
+    name and its image spans and nothing in this tree can supply those for
+    an address nobody has annotated - `src/` IS the catalogue now. Creating
+    one is a different operation with different inputs.
+
+    Exits 1 if a claim stopped reproducing, because that is an event and not
+    a result: `docs/DECOMP_MAP.md` calls it a tooling change or a lost
+    scaffolding, and both need a human.
+    """
+    records = read(src)
+    shared = shared_spans(records)
+
+    chosen = []
+    for target in targets:
+        claimants = _matching(records, target)
+        if len(claimants) != 1:
+            typer.secho(f"{len(claimants)} pieces match {target!r}; "
+                        f"record names one", fg=typer.colors.RED)
+            raise typer.Exit(2)
+        chosen.append(claimants[0])
+
+    # MEASURED FIRST, WRITTEN AFTER, and grouped by file. Writing one record
+    # at a time re-reads its file, and a first write may canonicalise a
+    # wrapped lesson onto one line - which moves every line below it and
+    # leaves the records read before it pointing at the wrong ones.
+    updated, regressed, results = [], [], []
+    for piece in chosen:
+        try:
+            command = build_command(compile_commands, piece.path)
+        except ValueError:
+            command = build_command(compile_commands, REPO_ROOT / borrow)
+        try:
+            result = compare_record(piece, exe, command, FLAG_SETS, shared)
+        except (ValueError, CompileFailed) as problem:
+            typer.secho(f"{piece.address_hex}: {problem}",
+                        fg=typer.colors.RED)
+            raise typer.Exit(2) from None
+        results.append((piece, result))
+        after = stamped(piece, result, demote)
+        if piece.byte_exact and str(result.verdict) != "BYTE_EXACT":
+            regressed.append((piece, result))
+        if after != piece:
+            updated.append(after)
+
+    if updated:
+        write_file(updated)
+
+    for piece, result in results:
+        gained = (not piece.byte_exact
+                  and str(result.verdict) == "BYTE_EXACT")
+        mark = "  claimed" if gained else ""
+        typer.echo(f"{piece.address_hex}  {result.verdict:14}"
+                   f"{piece.name}{mark}")
+    typer.echo(f"\n{len(updated)} annotation(s) rewritten")
+
+    for piece, result in regressed:
+        typer.secho(
+            f"{piece.address_hex} claimed BYTE_EXACT and measured "
+            f"{result.verdict} - {piece.location}",
+            fg=typer.colors.RED)
+    if regressed:
+        # `--demote` IS THE ACKNOWLEDGEMENT. Exiting non-zero after being
+        # told to clear them would make the flag unusable in a script; the
+        # demotion is still reported, because a claim disappearing quietly
+        # is the thing all of this exists to prevent.
+        typer.secho(
+            f"{len(regressed)} claim(s) cleared" if demote else
+            f"{len(regressed)} claim(s) stopped reproducing and were KEPT; "
+            f"--demote clears them once someone has looked",
+            fg=typer.colors.RED)
+        if not demote:
+            raise typer.Exit(1)
 
 
 if __name__ == "__main__":

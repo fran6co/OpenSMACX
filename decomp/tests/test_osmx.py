@@ -250,3 +250,75 @@ def test_measure_writes_nothing(named, monkeypatch):
                         lambda *a, **k: AsmComparison(verdict=Tier.BYTE_EXACT))
     run("measure", "WinMain", "--src", str(named))
     assert (named / "n.cpp").read_text() == before
+
+
+# ---------------------------------------------------------------- record
+
+
+def test_record_writes_a_claim_it_proved(named, monkeypatch):
+    from decomp import Tier
+    from decomp.asm import AsmComparison
+    monkeypatch.setattr(osmx, "compare_record",
+                        lambda *a, **k: AsmComparison(verdict=Tier.BYTE_EXACT))
+    result = run("record", "WinMain", "--src", str(named))
+    assert result.exit_code == 0, result.output
+    assert "1 annotation(s) rewritten" in result.output
+    assert "_WinMain@16 0x0045F950-0x0045F958 BYTE_EXACT" in (
+        named / "n.cpp").read_text()
+
+
+def test_record_keeps_a_claim_that_stopped_and_exits_one(tmp_path,
+                                                          monkeypatch):
+    """The floor is the number of claims. Clearing one lowers the floor and
+    the gate then has nothing to fail on, so this reports and keeps."""
+    from decomp import Tier
+    from decomp.asm import AsmComparison
+    (tmp_path / "x.cpp").write_text(
+        "// ORIGINAL: 0x00401000 ?f@@YAXXZ 0x00401000-0x00401008 BYTE_EXACT\n"
+        "void f() {\n}\n")
+    monkeypatch.setattr(osmx, "compare_record",
+                        lambda *a, **k: AsmComparison(verdict=Tier.MISMATCH))
+    result = run("record", "0x00401000", "--src", str(tmp_path))
+    assert result.exit_code == 1
+    assert "stopped reproducing and were KEPT" in result.output
+    assert "BYTE_EXACT" in (tmp_path / "x.cpp").read_text()
+
+
+def test_demote_clears_it_once_someone_has_looked(tmp_path, monkeypatch):
+    from decomp import Tier
+    from decomp.asm import AsmComparison
+    (tmp_path / "x.cpp").write_text(
+        "// ORIGINAL: 0x00401000 ?f@@YAXXZ 0x00401000-0x00401008 BYTE_EXACT\n"
+        "void f() {\n}\n")
+    monkeypatch.setattr(osmx, "compare_record",
+                        lambda *a, **k: AsmComparison(verdict=Tier.MISMATCH))
+    result = run("record", "0x00401000", "--src", str(tmp_path), "--demote")
+    assert result.exit_code == 0
+    assert "BYTE_EXACT" not in (tmp_path / "x.cpp").read_text()
+
+
+def test_record_touches_nothing_when_nothing_moved(named, monkeypatch):
+    from decomp import Tier
+    from decomp.asm import AsmComparison
+    monkeypatch.setattr(osmx, "compare_record",
+                        lambda *a, **k: AsmComparison(verdict=Tier.MISMATCH))
+    before = (named / "n.cpp").read_text()
+    result = run("record", "WinMain", "--src", str(named))
+    assert result.exit_code == 0
+    assert (named / "n.cpp").read_text() == before
+
+
+def test_record_writes_several_in_one_file_at_once(named, monkeypatch):
+    """Writing one at a time re-reads the file, and a first write that
+    canonicalises a wrapped lesson moves every line below it - leaving the
+    records read before it pointing at the wrong lines."""
+    from decomp import Tier, read
+    from decomp.asm import AsmComparison
+    monkeypatch.setattr(osmx, "compare_record",
+                        lambda *a, **k: AsmComparison(verdict=Tier.BYTE_EXACT))
+    result = run("record", "WinMain", "Buffer::set_font", "Alpha::init",
+                 "--src", str(named))
+    assert result.exit_code == 0
+    assert "3 annotation(s) rewritten" in result.output
+    claimed = [r for r in read(named) if r.byte_exact]
+    assert len(claimed) == 3
