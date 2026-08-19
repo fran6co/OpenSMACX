@@ -376,7 +376,6 @@ def measure(
     and keeping them apart is what lets an agent be given this and not that.
     """
     _fresh_compile_commands(compile_commands, reconfigure)
-    _fresh_compile_commands(compile_commands, reconfigure)
     records = read(src)
     claimants = _matching(records, target)
     if len(claimants) != 1:
