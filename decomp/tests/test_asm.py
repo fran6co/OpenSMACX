@@ -14,6 +14,7 @@ from pathlib import Path
 import pytest
 
 from decomp import read_file
+from decomp import asm
 from decomp.asm import (_coff_function, compare_asm, compiled_asm,
                         original_asm)
 from decomp.reader import REPO_ROOT
@@ -23,7 +24,16 @@ from decomp.reader import REPO_ROOT
 # build's own business - the compile command names it.
 EXE = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
 COMPILE_COMMANDS = REPO_ROOT / "build" / "compile_commands.json"
-FLAGS = "/c /O2 /Gy /GR- /Oy- /GX"     # the ratchet's measured flag set
+# THE FLAG SETS BELONG TO THE CALLER, and these tests are one. `/O2` implies
+# `/Oy`, which omits the frame pointer, and the shipped image is mixed - so
+# which invocation reproduces a given function is a property of the function,
+# and asking only the first of these answers about half the image. They are
+# not a build setting either: `/Oy-` appears nowhere in this tree's CMake
+# configuration, which is a Debug database of `/Od /Ob0`.
+FLAGS = "/c /O2 /Gy /GR- /Oy- /GX"
+FRAMELESS_FLAGS = "/c /O2 /Gy /GR- /GX"
+FLAG_SETS = (FLAGS, FRAMELESS_FLAGS,
+             "/c /O1 /Gy /GR- /Oy- /GX", "/c /O1 /Gy /GR- /GX")
 
 HAVE_EXE = EXE.is_file()
 HAVE_BUILD = COMPILE_COMMANDS.is_file() and shutil.which("wine") is not None
@@ -182,3 +192,133 @@ def test_byte_exact_body_compiles_to_the_same_shape():
         f"{result.verdict}: {result.matching_lines}/{result.original_count} " \
         f"lines match, similarity {result.mnemonic_similarity:.2f}"
     assert result.matching_lines == result.original_count
+
+
+# ------------------------------------------- naming the subject in an object
+
+
+def coff(functions, relocations=()):
+    """A one-section COFF object carrying several external .text symbols.
+
+    `functions` is [(symbol, code)] laid out in order; `relocations` is
+    [(offset, type)] against the section. Enough to exercise subject
+    selection and the relocation mask without a compiler.
+    """
+    blob, placed = b"", []
+    for symbol, code in functions:
+        placed.append((symbol, len(blob)))
+        blob += code
+    n_syms = len(placed)
+    raw_ptr = 20 + 40
+    reloc_ptr = raw_ptr + len(blob) if relocations else 0
+    sym_ptr = raw_ptr + len(blob) + len(relocations) * 10
+    header = struct.pack("<HHIIIHH", 0x14C, 1, 0, sym_ptr, n_syms, 0, 0)
+    section = struct.pack("<8sIIIIIIHHI", b".text\x00\x00\x00", 0, 0,
+                          len(blob), raw_ptr, reloc_ptr, 0,
+                          len(relocations), 0, 0x60000020)
+    relocs = b"".join(struct.pack("<IIH", at, 0, kind)
+                      for at, kind in relocations)
+    entries, strtab, offset = b"", b"", 4
+    for symbol, value in placed:
+        entries += (b"\x00\x00\x00\x00" + struct.pack("<I", offset)
+                    + struct.pack("<IhHBB", value, 1, 0, 2, 0))
+        strtab += symbol.encode() + b"\x00"
+        offset += len(symbol) + 1
+    return (header + section + blob + relocs + entries
+            + struct.pack("<I", 4 + len(strtab)) + strtab)
+
+
+def test_object_relocations_become_a_mask():
+    # `push imm32` with a DIR32 relocation on the immediate at offset 1.
+    obj = coff([("?f@@YAXXZ", b"\x68\x00\x00\x00\x00\xC3")],
+               relocations=((1, 0x0006),))
+    code, mask = asm._coff_function_masked(obj, "?f@@YAXXZ")
+    assert code == b"\x68\x00\x00\x00\x00\xC3"
+    assert mask == frozenset({1, 2, 3, 4})
+
+
+# --------------------------------------------------- discounting relocations
+
+
+def test_relocated_bytes_do_not_count_as_a_divergence():
+    """The image's linked address against the object's zeros is not a
+    difference in the source, and this is the pair that used to read
+    MNEMONIC_ONLY."""
+    image = b"\x68\x74\x81\x9B\x00\xC3"          # push 0x009B8174
+    obj = b"\x68\x00\x00\x00\x00\xC3"            # push 0 + a relocation
+    mask = frozenset({1, 2, 3, 4})
+    left = asm.Listing(asm._disasm(image, 0x401000), code=image,
+                       base=0x401000, mask=frozenset())
+    right = asm.Listing(asm._disasm(obj, 0x401000), code=obj,
+                        base=0x401000, mask=mask)
+    assert compare_asm(list(left), list(right)).verdict == "MNEMONIC_ONLY"
+    result = compare_asm(left, right)
+    assert result.verdict == "BYTE_EXACT"
+    assert result.masked_bytes == 4
+    assert result.compared_bytes == 2
+
+
+def test_a_real_difference_survives_the_mask():
+    """Masking discounts relocated bytes, not the instruction around them."""
+    image = b"\x68\x74\x81\x9B\x00\xC3"
+    obj = b"\xB8\x00\x00\x00\x00\xC3"            # mov eax, imm32, not push
+    mask = frozenset({1, 2, 3, 4})
+    left = asm.Listing(asm._disasm(image, 0x401000), code=image,
+                       base=0x401000, mask=frozenset())
+    right = asm.Listing(asm._disasm(obj, 0x401000), code=obj,
+                        base=0x401000, mask=mask)
+    assert compare_asm(left, right).verdict == "MISMATCH"
+
+
+def test_padding_is_stripped_from_both_sides():
+    """A catalogued span may include COMDAT padding; the object's is already
+    stripped, so the image's must be too or the lengths never agree."""
+    body = b"\x55\x8B\xEC\xC3"
+    obj = coff([("?f@@YAXXZ", body + b"\xCC\xCC")])
+    code, _mask = asm._coff_function_masked(obj, "?f@@YAXXZ")
+    assert code == body
+
+
+def test_a_mask_does_not_reshape_a_body_of_another_length():
+    """Offsets only name the same bytes in bodies laid out alike.
+
+    `0x004E0F80` is seven instructions in the image; against an object body
+    of a different length, zeroing the image at the OBJECT's relocation
+    offsets re-split it into nine. The count a reader is given must be the
+    body's own, so the mask is not applied across a length difference.
+    """
+    image = bytes.fromhex("E89BAF0C00" "E856490E00" "E8A14A0E00"
+                          "6A01" "E8FAA1F8FF" "59" "C3")
+    obj = bytes.fromhex("56" "8BF1" "E800000000" "E800000000")
+    left = asm.Listing(asm._disasm(image, 0x004E0F80), code=image,
+                       base=0x004E0F80, mask=frozenset())
+    right = asm.Listing(asm._disasm(obj, 0x004E0F80), code=obj,
+                        base=0x004E0F80,
+                        mask=frozenset({4, 5, 6, 7, 9, 10, 11, 12}))
+    assert len(left) == 7
+    result = compare_asm(left, right)
+    assert result.verdict == "MISMATCH"
+    assert result.original_count == 7, \
+        "the mask reshaped the image's own listing"
+
+
+def test_byte_equality_decides_not_the_rendered_text():
+    """A pair that agrees on every unmasked byte is BYTE_EXACT even though
+    the rendered lines differ - the verdict reads the bytes."""
+    image = bytes.fromhex("A1 74819B00 C3".replace(" ", ""))
+    obj = bytes.fromhex("A1 00000000 C3".replace(" ", ""))
+    mask = frozenset({1, 2, 3, 4})
+    left = asm.Listing(asm._disasm(image, 0x401000), code=image,
+                       base=0x401000, mask=frozenset())
+    right = asm.Listing(asm._disasm(obj, 0x401000), code=obj,
+                        base=0x401000, mask=mask)
+    assert list(left) != list(right)          # the text differs
+    assert compare_asm(left, right).verdict == "BYTE_EXACT"
+
+
+def test_differing_lengths_are_never_byte_exact():
+    a = b"\x90\xC3"
+    b = b"\x90\x90\xC3"
+    left = asm.Listing(asm._disasm(a, 0x401000), code=a, base=0x401000)
+    right = asm.Listing(asm._disasm(b, 0x401000), code=b, base=0x401000)
+    assert compare_asm(left, right).verdict == "MISMATCH"

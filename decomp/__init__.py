@@ -25,12 +25,24 @@ THE LAYOUT. Each module is one concern:
                          function_line (a definition's line, by name)
     writer.py            the annotation writer - write, remove, and their
                          on-disk forms write_file, remove_file
-    asm.py               the assembly behind a record - original_asm reads
-                         the pinned image, compiled_asm compiles the record's
-                         file with VC6 and pulls the function from the object
+    asm.py               the assembly behind a record, and the verdict -
+                         original_asm reads the pinned image, compiled_asm
+                         compiles the record's file with VC6 and pulls the
+                         function from the object, compare_record asks every
+                         flag set and keeps the best answer. NOT imported
+                         here: it needs capstone, and reading an annotation
+                         must not.
 
-SELF-CONTAINED, BY REQUIREMENT. Nothing here imports from `tools/`, and
-nothing here imports outside the standard library. The scripts in `tools/`
+SELF-CONTAINED, BY REQUIREMENT. Nothing here imports from `tools/`.
+
+STANDARD LIBRARY TO READ, CAPSTONE TO COMPARE. `model`, `grammar`, `reader`
+and `writer` import nothing that has to be installed, so `import decomp`
+and everything above this line costs only Python; `asm` disassembles both
+sides of a byte match and needs capstone, which is why it is not imported
+here and why it is a declared dependency rather than a hopeful lazy import.
+`python -m decomp` CHECKS that split rather than restating it - see
+`layering` - because the package carried the broader claim in prose for as
+long as it was already false. The scripts in `tools/`
 still carry their own copies of the reading machinery; on 2026-08-18 the
 marker moved - it carries the piece's name and its image spans - and the
 tools copies stayed on the old spelling by decision. `python -m decomp`

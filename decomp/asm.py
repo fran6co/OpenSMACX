@@ -1,37 +1,50 @@
-"""The assembly behind a record: the original image's, and VC6's.
+"""The assembly behind a record: the original image's, VC6's, and the verdict.
 
-Two functions, one per side of the recovery's central question:
+One call answers the recovery's central question for one record:
 
     from pathlib import Path
     from decomp import read_file
-    from decomp.asm import compiled_asm, original_asm
+    from decomp.asm import compare_record
 
     records = read_file(Path("src/buffer.cpp"))
-    record = next(r for r in records if r.address == 0x005D7210)
-    # what the shipped image contains:
-    original_asm(record, Path(".opensmacx/game/terranx_original.exe"))
-    # what VC6 makes of the record's code, compiled with the flags the
-    # ratchet measures with:
-    compiled_asm(record, Path("build/compile_commands.json"),
-                 "/c /O2 /Gy /GR- /Oy- /GX")
+    record = next(r for r in records if r.address == 0x005DAC70)
+    compare_record(record,
+                   Path(".opensmacx/game/terranx_original.exe"),
+                   Path("build/compile_commands.json")).verdict
+
+and the two sides are still available separately, as `original_asm` and
+`compiled_asm`.
 
 THE ORIGINAL SIDE reads the pinned executable's bytes at the record's span
 and disassembles them. THE COMPILED SIDE takes the build's own compile
 command for the record's file from compile_commands.json, keeps its
 compiler and its include and define flags, swaps in the caller's
 optimisation flags, and disassembles the function pulled out of the
-resulting object by the record's mangled name. The compiler the entry
-names is the build's own wrapper - it knows where VC6 lives and how to
-run it under wine, so this module never asks. Both functions return lines
-shaped like tools/disasm.py's output: address, bytes, mnemonic.
+resulting object. The compiler the entry names is the build's own wrapper -
+it knows where VC6 lives and how to run it under wine, so this module never
+asks. Both return a `Listing`: lines shaped like tools/disasm.py's output,
+carrying the bytes and the relocation mask behind them.
 
-CAPSTONE is imported lazily and is the one thing here that is not standard
-library; `uv sync` installs it. The PE and COFF readers below are small
-struct walks instead of dependencies, because all they need is the section
-table and the symbol table. What this module does NOT do is the ratchet's
-comparison machinery - relocation masking, the verdict tiers, batching, the
-ledger stay in tools/byte_match.py. These two functions return assembly;
-what is done with the pair is the caller's question.
+THREE THINGS A CORRECT COMPARISON NEEDS, each of which this module got
+wrong until it was measured against the tree. Four bodies carrying a
+BYTE_EXACT claim in `src/` all reported MISMATCH:
+
+  * THE FLAG SET IS PER FUNCTION - see `compare_record`, which takes as
+    many as the caller cares to name. Asking one answers half the image.
+  * A RELOCATED BYTE IS NOT A WRONG ANSWER. The object holds zeros where
+    the image holds linked addresses; `compare_asm` discounts both sides.
+
+WHAT IS STILL ELSEWHERE. The tier ladder here is the three verdicts above;
+SHAPE_EXACT, SHARED_TAIL, REFUSED, the EH funclet classification, batching,
+caching and the ledger stay in tools/byte_match.py.
+
+CAPSTONE is imported like anything else. It is a declared dependency, so a
+lazy import bought nothing but a failure that arrives halfway through a
+measurement instead of at import; the readers that must not need it live in
+other modules, and `python -m decomp` checks that split. The PE and COFF
+readers below are small struct walks instead of dependencies, because all
+they need is the section table, the symbol table and two relocation
+directories.
 """
 
 from __future__ import annotations
@@ -389,16 +402,20 @@ def _disasm(data: bytes, base: int) -> list[str]:
 @dataclass
 class AsmComparison:
     """How far one assembly listing reproduces another."""
-    verdict: str                    # BYTE_EXACT | MNEMONIC_ONLY | MISMATCH
+    verdict: Tier                   # see model.Tier
     original_count: int
     compiled_count: int
     matching_lines: int             # positionally identical listing lines
     mnemonic_similarity: float      # 0..1 across the instruction sequences
     first_divergence: int | None    # first differing instruction, or None
-    context: tuple                  # (original, compiled) lines around it
+    context: tuple[list[str], list[str]]
+                                    # (original, compiled) lines around it
+    compared_bytes: int = 0         # bytes the verdict actually rests on
+    masked_bytes: int = 0           # bytes a relocation determined, discounted
+    flags: str = ""                 # the flag set that produced `compiled`
 
 
-def _mnemonic_sequence(listing: list) -> list:
+def _mnemonic_sequence(listing: list[str]) -> list[str]:
     """The instruction sequence of a listing, for similarity.
 
     `ret` keeps its operand: `ret` and `ret 4` are different instructions,
@@ -417,7 +434,71 @@ def _mnemonic_sequence(listing: list) -> list:
     return out
 
 
-def compare_asm(original: list, compiled: list) -> AsmComparison:
+def _zeroed(listing: Listing) -> list[str]:
+    """The listing re-rendered with every masked byte set to zero."""
+    code = bytearray(listing.code)
+    for offset in listing.mask:
+        if 0 <= offset < len(code):
+            code[offset] = 0
+    return _disasm(bytes(code), listing.base)
+
+
+def _byte_verdict(original: Disassembly,
+                  compiled: Disassembly) -> bool | None:
+    """Do the two agree byte for byte once relocations are discounted?
+
+    `None` when the pair carries no bytes - plain listings, compared as text
+    by the caller. THIS IS WHAT DECIDES BYTE_EXACT, on the bytes themselves
+    rather than on rendered text, because rendering is where a mask can lie:
+    see `_discount_relocations`.
+    """
+    if not (isinstance(original, Listing) and isinstance(compiled, Listing)):
+        return None
+    if not (original.code and compiled.code):
+        return None
+    if len(original.code) != len(compiled.code):
+        return False
+    mask = frozenset(original.mask) | frozenset(compiled.mask)
+    return all(a == b for index, (a, b)
+               in enumerate(zip(original.code, compiled.code))
+               if index not in mask)
+
+
+def _discount_relocations(original: Disassembly,
+                          compiled: Disassembly,
+                          ) -> tuple[list[str], list[str]]:
+    """Both listings with relocated bytes neutralised, or both unchanged.
+
+    The mask is applied to BOTH sides, not just the object's: the image has
+    linked addresses where the object has zeros, so zeroing only one side
+    leaves the same disagreement pointing the other way.
+
+    ONLY WHEN THE TWO ARE THE SAME LENGTH, and that guard is load-bearing.
+    A mask is a set of OFFSETS, and offsets only name the same thing in two
+    bodies that are laid out alike. Where they are not, zeroing the image at
+    an offset the OBJECT relocates overwrites bytes that carry no relocation
+    at all, and re-disassembling the result splits instructions that were
+    never there - `0x004E0F80` reported nine image instructions for a body
+    that has seven. Bodies of different lengths have already lost, so they
+    are reported exactly as they are.
+    """
+    if not (isinstance(original, Listing) and isinstance(compiled, Listing)):
+        return original, compiled
+    if not (original.code and compiled.code):
+        return original, compiled
+    if not (original.mask or compiled.mask):
+        return original, compiled
+    if len(original.code) != len(compiled.code):
+        return original, compiled
+    union = frozenset(original.mask) | frozenset(compiled.mask)
+    return (_zeroed(Listing(original, code=original.code,
+                            base=original.base, mask=union)),
+            _zeroed(Listing(compiled, code=compiled.code,
+                            base=compiled.base, mask=union)))
+
+
+def compare_asm(original: Disassembly,
+                compiled: Disassembly) -> AsmComparison:
     """How far the compiled listing reproduces the original one.
 
     The verdicts mirror tools/byte_match.py at the listing level:
@@ -426,33 +507,104 @@ def compare_asm(original: list, compiled: list) -> AsmComparison:
     MISMATCH otherwise. The report says how many lines match outright, how
     similar the instruction sequences are, and where the first divergence
     is, with a window of both listings around it.
+
+    RELOCATED BYTES ARE DISCOUNTED where both sides are `Listing`s that carry
+    a mask. An object file's `push <global>` is `68 00 00 00 00` and the
+    image's is `68` plus the linked address; the four bytes disagree because
+    one side has been linked and the other has not, which is not a fact about
+    the source. The listings are re-rendered with every masked byte zeroed on
+    BOTH sides before they are compared, so such a pair reads as identical -
+    while `context` still shows the real lines, because a reader wants the
+    address the image actually holds. Plain lists carry no mask and compare
+    as text, exactly as before.
     """
-    n, m = len(original), len(compiled)
+    left, right = _discount_relocations(original, compiled)
+    n, m = len(left), len(right)
     matching = 0
     first_divergence = None
     context: tuple = ([], [])
-    for index, (a, b) in enumerate(zip(original, compiled)):
+    for index, (a, b) in enumerate(zip(left, right)):
         if a == b:
             matching += 1
         elif first_divergence is None:
             first_divergence = index
             lo = max(0, index - 3)
-            context = (original[lo:index + 4], compiled[lo:index + 4])
+            # The window shows what each side REALLY holds, masked bytes
+            # included: a reader chasing a divergence wants the address the
+            # image carries, not the zero the comparison stood in for it.
+            context = (list(original[lo:index + 4]),
+                       list(compiled[lo:index + 4]))
     if first_divergence is None and n != m:
         first_divergence = min(n, m)
         lo = max(0, min(n, m) - 3)
-        context = (original[lo:], compiled[lo:])
+        context = (list(original[lo:]), list(compiled[lo:]))
 
-    seq_original = _mnemonic_sequence(original)
-    seq_compiled = _mnemonic_sequence(compiled)
+    seq_original = _mnemonic_sequence(left)
+    seq_compiled = _mnemonic_sequence(right)
     similarity = difflib.SequenceMatcher(
         None, seq_original, seq_compiled).ratio()
 
-    if n == m and matching == n:
-        verdict = "BYTE_EXACT"
+    identical = _byte_verdict(original, compiled)
+    if identical is True or (identical is None and n == m and matching == n):
+        verdict = Tier.BYTE_EXACT
     elif seq_original == seq_compiled:
-        verdict = "MNEMONIC_ONLY"
+        verdict = Tier.MNEMONIC_ONLY
     else:
-        verdict = "MISMATCH"
+        verdict = Tier.MISMATCH
+    masked = 0
+    if isinstance(original, Listing) and isinstance(compiled, Listing):
+        masked = len(frozenset(original.mask) | frozenset(compiled.mask))
+    size = len(getattr(original, "code", b"") or b"")
     return AsmComparison(verdict, n, m, matching, similarity,
-                         first_divergence, context)
+                         first_divergence, context,
+                         compared_bytes=max(0, size - masked),
+                         masked_bytes=masked,
+                         flags=getattr(compiled, "flags", ""))
+
+
+def compare_record(record: DecompilationState, exe: Path | str,
+                   compile_commands: Path | str,
+                   flags: tuple | str) -> AsmComparison:
+    """How far VC6 reproduces the shipped bytes for `record`, best of `flags`.
+
+    `flags` is a flag string, or several. THERE IS NO DEFAULT SET HERE, and
+    that is the point: which invocation built a given function is not
+    something this module can know, and a constant sitting in it would be
+    read as the answer. It is not even a property of the BUILD - `/Oy-`
+    appears nowhere in this tree's CMake configuration. It is a property of
+    the FUNCTION: `/O2` implies `/Oy`, which omits the frame pointer, and the
+    shipped image is mixed, so either spelling is wrong for roughly half of
+    it. A caller that asks about one invocation has asked half a question,
+    and the caller is who knows which half it meant.
+
+    THE SEARCH CANNOT LIVE IN `compiled_asm`. Keeping the best result means
+    comparing each candidate against the image, and the compiled side alone
+    has never seen the image; this is the one function that holds both, so it
+    is the one that can choose.
+
+    A flag set whose compile fails, or whose object does not name the
+    subject, is skipped rather than fatal - the question is whether ANY
+    invocation reproduces the bytes. If every one fails, the last failure is
+    raised, because "nothing compiled" and "nothing matched" are different
+    answers and only the first names a defect to fix.
+    """
+    attempts = (flags,) if isinstance(flags, str) else tuple(flags)
+    if not attempts:
+        raise ValueError("no flag sets to try")
+    original = original_asm(record, exe)
+    best, failure = None, None
+    for attempt in attempts:
+        try:
+            compiled = compiled_asm(record, compile_commands, attempt)
+        except (ValueError, subprocess.SubprocessError) as error:
+            failure = error
+            continue
+        result = compare_asm(original, compiled)
+        if best is None or result.verdict.rank < best.verdict.rank:
+            best = result
+        if best.verdict is Tier.BYTE_EXACT:
+            break                    # nothing beats byte equality
+    if best is None:
+        raise failure or ValueError(
+            f"{record.address_hex}: no flag set produced a comparison")
+    return best
