@@ -222,7 +222,7 @@ def test_measure_exits_zero_only_for_byte_exact(named, monkeypatch):
 
     for tier in Tier:
         monkeypatch.setattr(
-            osmx, "compare_record",
+            osmx, "compare_source",
             lambda *a, tier=tier, **k: AsmComparison(verdict=tier))
         result = run("measure", "WinMain", "--src", str(named))
         expected = 0 if tier is Tier.BYTE_EXACT else 1
@@ -236,7 +236,7 @@ def test_measure_reports_a_compile_failure_rather_than_crashing(named,
     def refuse(*args, **kwargs):
         raise CompileFailed("x.cpp(3) : error C2065: 'g_x' : undeclared")
 
-    monkeypatch.setattr(osmx, "compare_record", refuse)
+    monkeypatch.setattr(osmx, "compare_source", refuse)
     result = run("measure", "WinMain", "--src", str(named))
     assert result.exit_code == 2
     assert "C2065" in result.output
@@ -248,10 +248,133 @@ def test_measure_writes_nothing(named, monkeypatch):
     from decomp import Tier
     from decomp.asm import AsmComparison
     before = (named / "n.cpp").read_text()
-    monkeypatch.setattr(osmx, "compare_record",
+    monkeypatch.setattr(osmx, "compare_source",
                         lambda *a, **k: AsmComparison(verdict=Tier.BYTE_EXACT))
     run("measure", "WinMain", "--src", str(named))
     assert (named / "n.cpp").read_text() == before
+
+
+# ------------------------------------------------- candidates, not the tree
+
+
+def a_verdict(tier):
+    from decomp.asm import AsmComparison
+    return AsmComparison(verdict=tier)
+
+
+def test_body_scores_the_file_it_is_given(named, tmp_path, monkeypatch):
+    """The whole point: pose the question without editing `src/`."""
+    from decomp import Tier
+    candidate = tmp_path / "candidate.cpp"
+    candidate.write_text("void f() {}\n")
+    asked = []
+    monkeypatch.setattr(
+        osmx, "compare_source",
+        lambda record, exe, source, *a, **k: (
+            asked.append(source), a_verdict(Tier.BYTE_EXACT))[1])
+    result = run("measure", "WinMain", "--src", str(named),
+                 "--body", str(candidate))
+    assert result.exit_code == 0, result.output
+    assert asked == [candidate]
+
+
+def test_without_a_candidate_the_tree_is_the_candidate(named, monkeypatch):
+    """`measure` with no `--body` must still ask about the committed body,
+    or the plain form silently starts answering about something else."""
+    from decomp import Tier
+    asked = []
+    monkeypatch.setattr(
+        osmx, "compare_source",
+        lambda record, exe, source, *a, **k: (
+            asked.append(source), a_verdict(Tier.BYTE_EXACT))[1])
+    run("measure", "WinMain", "--src", str(named))
+    assert asked == [named / "n.cpp"]
+
+
+def test_scoring_a_candidate_writes_nothing(named, tmp_path, monkeypatch):
+    from decomp import Tier
+    candidate = tmp_path / "candidate.cpp"
+    candidate.write_text("void f() {}\n")
+    before = (named / "n.cpp").read_text()
+    monkeypatch.setattr(osmx, "compare_source",
+                        lambda *a, **k: a_verdict(Tier.BYTE_EXACT))
+    run("measure", "WinMain", "--src", str(named), "--body", str(candidate))
+    assert (named / "n.cpp").read_text() == before
+
+
+def test_one_candidate_or_a_directory_of_them_but_not_both(named, tmp_path):
+    result = run("measure", "WinMain", "--src", str(named),
+                 "--body", str(tmp_path / "a.cpp"), "--dir", str(tmp_path))
+    assert result.exit_code == 2
+    assert "pass one" in result.output
+
+
+def test_a_directory_ranks_best_first_against_the_tree(named, tmp_path,
+                                                       monkeypatch):
+    """"Best" with no baseline is not an answer anyone can act on: what a
+    candidate has to beat is what is committed."""
+    from decomp import Tier
+    variants = tmp_path / "variants"
+    variants.mkdir()
+    for name in ("a.cpp", "b.cpp"):
+        (variants / name).write_text("void f() {}\n")
+    tiers = {"a.cpp": Tier.MISMATCH, "b.cpp": Tier.BYTE_EXACT,
+             "n.cpp": Tier.NO_COMPILE}
+    monkeypatch.setattr(
+        osmx, "compare_source",
+        lambda record, exe, source, *a, **k: a_verdict(tiers[source.name]))
+    result = run("measure", "WinMain", "--src", str(named),
+                 "--dir", str(variants), "--jobs", "1")
+    assert result.exit_code == 0, result.output
+    # The table rows, which are the ones naming a file. The winner's full
+    # verdict is printed under them and repeats its tier.
+    order = [line.split()[0] for line in result.output.splitlines()
+             if line.startswith("  ") and line.split()[0].isupper()
+             and line.rstrip().endswith((".cpp", "<- the tree"))]
+    assert order == ["BYTE_EXACT", "MISMATCH", "NO_COMPILE"]
+    assert "n.cpp  <- the tree" in result.output
+
+
+def test_a_directory_with_no_best_exits_one(named, tmp_path, monkeypatch):
+    from decomp import Tier
+    variants = tmp_path / "variants"
+    variants.mkdir()
+    (variants / "a.cpp").write_text("void f() {}\n")
+    monkeypatch.setattr(osmx, "compare_source",
+                        lambda *a, **k: a_verdict(Tier.MISMATCH))
+    result = run("measure", "WinMain", "--src", str(named),
+                 "--dir", str(variants), "--jobs", "1")
+    assert result.exit_code == 1
+
+
+def test_an_empty_directory_says_so(named, tmp_path):
+    empty = tmp_path / "variants"
+    empty.mkdir()
+    result = run("measure", "WinMain", "--src", str(named),
+                 "--dir", str(empty))
+    assert result.exit_code == 2
+    assert "no *.cpp" in result.output
+
+
+def test_a_candidate_that_misses_the_subject_is_a_row_not_a_crash():
+    """Half the point of ranking a directory is that some of it is wrong; a
+    misnamed subject would otherwise take the other answers down with it."""
+    from decomp import Tier
+    import decomp.asm as asm
+
+    def refuse(*args, **kwargs):
+        raise ValueError("?f@@YAXXZ not found among the object's .text")
+
+    original = asm.compare_source
+    osmx.compare_source = refuse
+    try:
+        source, result, note = osmx._score_candidate(
+            (Path("a.cpp"), None, None, [], (), frozenset()))
+    finally:
+        osmx.compare_source = original
+    assert result is None
+    assert "not found" in note
+    assert Tier                      # the import is the point of the name
 
 
 # ---------------------------------------------------------------- record
