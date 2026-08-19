@@ -7,6 +7,8 @@ of every caller.
 """
 
 import json
+import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -322,3 +324,181 @@ def test_record_writes_several_in_one_file_at_once(named, monkeypatch):
     assert "3 annotation(s) rewritten" in result.output
     claimed = [r for r in read(named) if r.byte_exact]
     assert len(claimed) == 3
+
+
+# ----------------------------------------------------------------- check
+
+
+CLAIMS = """// ORIGINAL: 0x00401000 ?a@@YAXXZ 0x00401000-0x00401008 BYTE_EXACT
+void a() {
+}
+// ORIGINAL: 0x00402000 ?b@@YAXXZ 0x00402000-0x00402008 BYTE_EXACT
+void b() {
+}
+// ORIGINAL: 0x00403000 ?c@@YAXXZ 0x00403000-0x00403008
+void c() {
+}
+"""
+
+
+@pytest.fixture
+def claimed(tmp_path):
+    (tmp_path / "c.cpp").write_text(CLAIMS)
+    return tmp_path
+
+
+def fake_file_result(verdicts):
+    """Stand in for the worker, which needs a compiler."""
+    def worker(job):
+        _path, records, *_rest = job
+        return [(r.address, verdicts.get(r.address, "BYTE_EXACT"), "")
+                for r in records]
+    return worker
+
+
+def check(tree, *extra):
+    # `--jobs 1` runs the worker inline: a pool cannot take the local
+    # function these tests substitute for it, and a serial run is what any
+    # failure here would be debugged with anyway.
+    return run("check", "--src", str(tree), "--exe", "/nonexistent",
+               "--jobs", "1", *extra)
+
+
+def test_check_measures_only_claims(claimed, monkeypatch):
+    """`?c@@YAXXZ` carries no claim, so the ratchet has nothing to say
+    about it - the floor is the number of claims."""
+    monkeypatch.setattr(osmx, "_check_one_file", fake_file_result({}))
+    result = check(claimed, "--json")
+    assert json.loads(result.output)["claims"] == 2
+
+
+def test_check_passes_when_every_claim_holds(claimed, monkeypatch):
+    monkeypatch.setattr(osmx, "_check_one_file", fake_file_result({}))
+    assert check(claimed).exit_code == 0
+
+
+def test_a_regression_exits_one_and_names_it(claimed, monkeypatch):
+    monkeypatch.setattr(osmx, "_check_one_file",
+                        fake_file_result({0x00402000: "MISMATCH"}))
+    result = check(claimed)
+    assert result.exit_code == 1
+    assert "REGRESSED 0x00402000" in result.output
+
+
+def test_an_unverifiable_claim_is_not_a_regression(claimed, monkeypatch):
+    """A wall is not a miss. Reporting NO_COMPILE as a regression sends
+    someone to look at a body that is fine - measured on the real tree, 6
+    regressions against 534 unverifiable."""
+    monkeypatch.setattr(osmx, "_check_one_file",
+                        fake_file_result({0x00402000: "NO_COMPILE"}))
+    result = check(claimed)
+    assert result.exit_code == 3, "a different job, so a different code"
+    assert "REGRESSED 0x" not in result.output, "nothing is blamed on a body"
+    assert "0 REGRESSED" in result.output
+    assert "1 NO_COMPILE" in result.output
+
+
+def test_a_regression_outranks_an_unverifiable_claim(claimed, monkeypatch):
+    monkeypatch.setattr(osmx, "_check_one_file", fake_file_result(
+        {0x00401000: "MISMATCH", 0x00402000: "NO_COMPILE"}))
+    assert check(claimed).exit_code == 1
+
+
+def test_check_writes_nothing(claimed, monkeypatch):
+    """What makes it a gate rather than a pass of `record` that fails: one
+    that can add a claim moves the floor as a side effect of measuring it."""
+    monkeypatch.setattr(osmx, "_check_one_file",
+                        fake_file_result({0x00402000: "MISMATCH"}))
+    before = (claimed / "c.cpp").read_text()
+    check(claimed)
+    assert (claimed / "c.cpp").read_text() == before
+
+
+def test_json_is_only_json(claimed, monkeypatch):
+    monkeypatch.setattr(osmx, "_check_one_file", fake_file_result({}))
+    json.loads(check(claimed, "--json").output)
+
+
+def test_a_tree_with_no_claims_says_so(tmp_path):
+    (tmp_path / "c.cpp").write_text(
+        "// ORIGINAL: 0x00401000 ?a@@YAXXZ 0x00401000-0x00401008\nvoid a(){}\n")
+    result = check(tmp_path)
+    assert result.exit_code == 2
+    assert "no BYTE_EXACT claims" in result.output
+
+
+def test_concurrency_is_capped_by_the_wine_prefix():
+    """Eight concurrent CL is where this tree measured the knee against the
+    one shared prefix; more queue on the wineserver and win nothing."""
+    assert osmx.WINE_CEILING == 8
+
+
+# ------------------------------------------------------------- configure
+
+
+def test_a_missing_database_is_generated(tmp_path, monkeypatch):
+    calls = []
+    monkeypatch.setattr(osmx, "_configure",
+                        lambda cc, wipe=True: calls.append(("configure", wipe)))
+    osmx._fresh_compile_commands(tmp_path / "compile_commands.json")
+    assert calls == [("configure", True)]
+
+
+def test_an_input_newer_than_the_database_reconfigures(tmp_path, monkeypatch):
+    """Measuring against a database that describes a build nobody has is the
+    quiet kind of wrong: every verdict comes back, about the wrong includes."""
+    db = tmp_path / "compile_commands.json"
+    db.write_text("[]")
+    newer = tmp_path / "CMakeLists.txt"
+    newer.write_text("")
+    os.utime(newer, (db.stat().st_mtime + 10,) * 2)
+    monkeypatch.setattr(osmx, "_configure_inputs", lambda: [newer])
+    calls = []
+    monkeypatch.setattr(osmx, "_configure",
+                        lambda cc, wipe=True: calls.append(cc))
+    osmx._fresh_compile_commands(db)
+    assert calls == [db]
+
+
+def test_a_fresh_database_is_left_alone(tmp_path, monkeypatch):
+    db = tmp_path / "compile_commands.json"
+    db.write_text("[]")
+    older = tmp_path / "CMakeLists.txt"
+    older.write_text("")
+    os.utime(older, (db.stat().st_mtime - 10,) * 2)
+    monkeypatch.setattr(osmx, "_configure_inputs", lambda: [older])
+    monkeypatch.setattr(osmx, "_configure", lambda *a, **k: pytest.fail(
+        "reconfigured a database that was already current"))
+    osmx._fresh_compile_commands(db)
+
+
+def test_reconfigure_forces_it_regardless(tmp_path, monkeypatch):
+    db = tmp_path / "compile_commands.json"
+    db.write_text("[]")
+    monkeypatch.setattr(osmx, "_configure_inputs", list)
+    calls = []
+    monkeypatch.setattr(osmx, "_configure",
+                        lambda cc, wipe=True: calls.append(cc))
+    osmx._fresh_compile_commands(db, reconfigure=True)
+    assert calls == [db]
+
+
+def test_the_cache_is_cleared_not_the_build_tree(tmp_path, monkeypatch):
+    """Objects survive a reconfigure; only what cmake remembers goes."""
+    build = tmp_path / "build"
+    (build / "CMakeFiles").mkdir(parents=True)
+    (build / "CMakeCache.txt").write_text("stale")
+    (build / "CMakeFiles" / "x").write_text("")
+    kept = build / "OpenSMACX.exe"
+    kept.write_text("an object nobody should have to rebuild")
+    db = build / "compile_commands.json"
+
+    def fake_cmake(argv, **kwargs):
+        db.write_text("[]")
+        return subprocess.CompletedProcess(argv, 0, "", "")
+
+    monkeypatch.setattr(osmx.subprocess, "run", fake_cmake)
+    osmx._configure(db)
+    assert not (build / "CMakeCache.txt").exists()
+    assert not (build / "CMakeFiles").exists()
+    assert kept.read_text() == "an object nobody should have to rebuild"

@@ -13,8 +13,12 @@ through the code that uses it.
 
 from __future__ import annotations
 
+import concurrent.futures
 import json
+import os
 import re
+import shutil
+import subprocess
 import statistics
 from enum import StrEnum
 from pathlib import Path
@@ -25,8 +29,9 @@ import typer
 from decomp import DecompilationState, State, mangled, read, write_file
 from decomp.record import stamped
 from decomp.asm import (AsmComparison, CompileFailed, build_command,
-                        compare_record, original_asm, shared_spans,
-                        span_refusal)
+                        compare_asm, compare_record, compile_unit,
+                        original_asm, shared_spans, span_refusal,
+                        subject_asm)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -354,6 +359,10 @@ def measure(
         help="Compile a file the build does not name with THIS file's "
              "command. Needed for src/recovered and src/unrecovered.",
     )] = "src/buffer.cpp",
+    reconfigure: Annotated[bool, typer.Option(
+        "--reconfigure",
+        help="Clear the cmake cache and regenerate the build database "
+             "first, whether or not it looks stale.")] = False,
     as_json: Annotated[bool, typer.Option("--json")] = False,
 ) -> None:
     """Does this body reproduce the shipped bytes?
@@ -366,6 +375,8 @@ def measure(
     It does not write anything. `record` is the one that stamps a claim,
     and keeping them apart is what lets an agent be given this and not that.
     """
+    _fresh_compile_commands(compile_commands, reconfigure)
+    _fresh_compile_commands(compile_commands, reconfigure)
     records = read(src)
     claimants = _matching(records, target)
     if len(claimants) != 1:
@@ -457,6 +468,10 @@ def record(
         "--demote",
         help="Also clear a claim that stopped reproducing. Off by default: "
              "the floor is the number of claims.")] = False,
+    reconfigure: Annotated[bool, typer.Option(
+        "--reconfigure",
+        help="Clear the cmake cache and regenerate the build database "
+             "first, whether or not it looks stale.")] = False,
 ) -> None:
     """Measure these pieces and write down what was measured.
 
@@ -470,6 +485,7 @@ def record(
     a result: `docs/DECOMP_MAP.md` calls it a tooling change or a lost
     scaffolding, and both need a human.
     """
+    _fresh_compile_commands(compile_commands, reconfigure)
     records = read(src)
     shared = shared_spans(records)
 
@@ -533,6 +549,279 @@ def record(
             fg=typer.colors.RED)
         if not demote:
             raise typer.Exit(1)
+
+
+# THE CEILING IS THE WINE PREFIX, not the machine. Every VC6 compile runs
+# against the one prefix at ~/opt/vc6/.wineprefix, whose wineserver
+# serialises, and eight concurrent `CL` is where this tree measured the
+# knee. More workers than that queue on the server and win nothing; I also
+# proved the point by accident, running the test suite beside a sweep and
+# getting a compile failure that vanished when they were not competing.
+WINE_CEILING = 8
+
+
+# WHAT THE BUILD IS CONFIGURED WITH, read off the cache the first time and
+# stated here so a wiped cache can be rebuilt identically. `Debug` is not a
+# choice this makes - it is what the tree configures - and the optimisation
+# flags a match needs are NOT these: see FLAG_SETS.
+CMAKE_ARGUMENTS = (
+    "-G", "Unix Makefiles",
+    "-DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/vc6.cmake",
+    "-DCMAKE_BUILD_TYPE=Debug",
+    "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+)
+
+
+def _configure_inputs() -> list[Path]:
+    """The files a configure reads. Newer than the database means stale."""
+    found = [REPO_ROOT / "CMakeLists.txt"]
+    found += sorted((REPO_ROOT / "cmake").rglob("*.cmake"))
+    return [p for p in found if p.is_file()]
+
+
+def _configure(compile_commands: Path, wipe: bool = True) -> None:
+    """Regenerate the build database, from a cleared cache by default.
+
+    CLEARED, BECAUSE A CACHE ANSWERS FROM WHAT IT WAS TOLD ONCE. A toolchain
+    file that changed, a flag override that moved, a compiler that is no
+    longer where it was - cmake will happily reconfigure around a stale
+    cache and produce a database that describes a build nobody has. The
+    whole point of asking is to be sure, and the cost is under a second
+    against the minutes a wrong answer wastes.
+
+    The build TREE is kept; only `CMakeCache.txt` and `CMakeFiles/` go, so
+    object files survive.
+    """
+    build = compile_commands.parent
+    if wipe:
+        (build / "CMakeCache.txt").unlink(missing_ok=True)
+        shutil.rmtree(build / "CMakeFiles", ignore_errors=True)
+    result = subprocess.run(
+        ["cmake", "-S", str(REPO_ROOT), "-B", str(build), *CMAKE_ARGUMENTS],
+        capture_output=True, text=True)
+    if result.returncode != 0 or not compile_commands.is_file():
+        typer.secho(result.stdout + result.stderr, fg=typer.colors.RED)
+        raise typer.Exit(2)
+
+
+def _fresh_compile_commands(compile_commands: Path,
+                            reconfigure: bool = False) -> None:
+    """Regenerate the database when it is absent, stale, or asked for.
+
+    STALE MEANS AN INPUT IS NEWER. Measuring against a database that
+    describes a build nobody has is the quiet kind of wrong: every verdict
+    comes back, and every one of them is about the wrong include path.
+    """
+    if reconfigure or not compile_commands.is_file():
+        _configure(compile_commands)
+        return
+    stamp = compile_commands.stat().st_mtime
+    stale = [p for p in _configure_inputs() if p.stat().st_mtime > stamp]
+    if stale:
+        typer.secho(f"{stale[0].name} is newer than "
+                    f"{compile_commands.name}; reconfiguring",
+                    fg=typer.colors.YELLOW)
+        _configure(compile_commands)
+
+
+@app.command()
+def configure(
+    compile_commands: Annotated[Path, typer.Option(
+        envvar="OPENSMACX_COMPILE_COMMANDS",
+    )] = REPO_ROOT / "build" / "compile_commands.json",
+) -> None:
+    """Clear the cmake cache and regenerate the build database.
+
+    `measure`, `record` and `check` do this for themselves when an input is
+    newer than the database; this is how to do it deliberately.
+    """
+    _configure(compile_commands)
+    entries = len(json.loads(compile_commands.read_text()))
+    typer.secho(f"{entries} build inputs in {compile_commands}",
+                fg=typer.colors.GREEN)
+
+
+def _claims_by_file(records: list) -> dict:
+    grouped: dict = {}
+    for record in records:
+        if record.byte_exact:
+            grouped.setdefault(record.path, []).append(record)
+    return grouped
+
+
+def _check_one_file(job: tuple) -> list[tuple[int, str, str]]:
+    """Score every claim in one file. Runs in a worker process.
+
+    ONE COMPILE PER FLAG SET, NOT PER RECORD, and it stops as soon as every
+    claim in the file has been proved: this tree's claims are 626 across 96
+    files, so per record is 2,504 compiles and per file is at most 384 -
+    usually far fewer, because most bodies settle on the first invocation.
+    """
+    path, records, exe, command, flag_sets = job
+    best: dict = {}
+    outstanding = list(records)
+    diagnostic = ""
+    for flags in flag_sets:
+        if not outstanding:
+            break
+        try:
+            obj = compile_unit(path, command, flags)
+        except CompileFailed as failed:
+            diagnostic = diagnostic or str(failed)
+            continue
+        for record in list(outstanding):
+            try:
+                compiled = subject_asm(obj, record, flags)
+            except ValueError as problem:
+                best[record.address] = ("UNRESOLVED", str(problem))
+                outstanding.remove(record)
+                continue
+            result = compare_asm(original_asm(record, exe), compiled)
+            verdict = str(result.verdict)
+            if (record.address not in best
+                    or best[record.address][0] != "BYTE_EXACT"):
+                best[record.address] = (verdict, "")
+            if verdict == "BYTE_EXACT":
+                outstanding.remove(record)
+    for record in outstanding:
+        best.setdefault(record.address, ("NO_COMPILE", diagnostic))
+    return [(address, verdict, note)
+            for address, (verdict, note) in best.items()]
+
+
+@app.command()
+def check(
+    src: Annotated[Path, typer.Option(
+        envvar="OPENSMACX_SRC")] = REPO_ROOT / "src",
+    exe: Annotated[Path, typer.Option(
+        envvar="OPENSMACX_IMAGE",
+    )] = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe",
+    compile_commands: Annotated[Path, typer.Option(
+        envvar="OPENSMACX_COMPILE_COMMANDS",
+    )] = REPO_ROOT / "build" / "compile_commands.json",
+    borrow: Annotated[str, typer.Option(
+        help="Compile files the build does not name with THIS file's "
+             "command.")] = "src/buffer.cpp",
+    jobs: Annotated[int, typer.Option(
+        help=f"Concurrent compiles. Capped at {WINE_CEILING}: one shared "
+             f"wine prefix.")] = 0,
+    reconfigure: Annotated[bool, typer.Option(
+        "--reconfigure",
+        help="Clear the cmake cache and regenerate the build database "
+             "first, whether or not it looks stale.")] = False,
+    as_json: Annotated[bool, typer.Option("--json")] = False,
+) -> None:
+    """THE RATCHET. Does every proved body still reproduce?
+
+    Re-measures every `BYTE_EXACT` claim in the tree against the shipped
+    image and fails if one stopped. The floor is the number of claims, so
+    there is no constant to bump.
+
+    IT WRITES NOTHING, and that is what makes it a gate rather than a pass
+    of `record` that happens to fail. A gate that can add a claim changes
+    the floor as a side effect of measuring it, and one that can clear a
+    broken claim can always be made to pass.
+
+    Exit 1 means a claim REGRESSED - measured, and worse. Exit 3 means some
+    claim could not be measured at all, which is a different job and must
+    not be mistaken for a green gate. Exit 0 means every claim was asked and
+    every one still holds.
+    """
+    _fresh_compile_commands(compile_commands, reconfigure)
+    records = read(src)
+    grouped = _claims_by_file(records)
+    claims = sum(len(v) for v in grouped.values())
+    if not claims:
+        typer.secho(f"no BYTE_EXACT claims under {src}",
+                    fg=typer.colors.RED)
+        raise typer.Exit(2)
+
+    borrowed = build_command(compile_commands, REPO_ROOT / borrow)
+    jobs = max(1, min(jobs or (os.cpu_count() or 1), WINE_CEILING))
+
+    work = []
+    for path, mine in grouped.items():
+        try:
+            command = build_command(compile_commands, path)
+        except ValueError:
+            command = borrowed
+        work.append((path, mine, exe, command, FLAG_SETS))
+
+    if not as_json:
+        # `--json` must emit JSON and nothing else, or it is not
+        # machine-readable - which is the only reason it exists.
+        typer.echo(f"{claims:,} claims in {len(grouped):,} files, "
+                   f"{jobs} at a time")
+    measured: dict = {}
+    if jobs == 1:
+        # SERIAL IS A REAL MODE, not a degenerate pool of one. A failure
+        # inside a worker arrives as a re-raised copy with the original
+        # traceback lost, so `--jobs 1` is how anything here is debugged -
+        # and a pool of one pays setup to gain nothing.
+        batches = (_check_one_file(job) for job in work)
+    else:
+        pool = concurrent.futures.ProcessPoolExecutor(max_workers=jobs)
+        with pool:
+            batches = [done.result() for done in
+                       concurrent.futures.as_completed(
+                           [pool.submit(_check_one_file, job)
+                            for job in work])]
+    for batch in batches:
+        for address, verdict, note in batch:
+            measured[address] = (verdict, note)
+
+    # A WALL IS NOT A MISS, and one number would bury the difference. A
+    # claim measured WORSE has stopped reproducing - that is the ratchet
+    # failing. A claim that could not be built or whose subject could not be
+    # found was never asked, and reporting it as a regression sends someone
+    # to look at a body that is fine. Measured here: 6 against 534.
+    by_address = {r.address: r for group in grouped.values() for r in group}
+    UNASKED = ("NO_COMPILE", "UNRESOLVED", "SHARED_TAIL", "REFUSED")
+    regressed = [(by_address[a], v, n)
+                 for a, (v, n) in sorted(measured.items())
+                 if v != "BYTE_EXACT" and v not in UNASKED]
+    unasked = [(by_address[a], v, n)
+               for a, (v, n) in sorted(measured.items()) if v in UNASKED]
+    broken = regressed + unasked
+
+    if as_json:
+        def rows(items):
+            return [{"address": r.address_hex, "name": r.name,
+                     "location": str(r.location), "measured": v, "note": n}
+                    for r, v, n in items]
+        typer.echo(json.dumps({
+            "claims": claims,
+            "reproduced": claims - len(broken),
+            "regressed": rows(regressed),
+            "unverifiable": rows(unasked),
+        }, indent=2))
+    else:
+        for record, verdict, note in regressed:
+            typer.secho(f"REGRESSED {record.address_hex} claims BYTE_EXACT, "
+                        f"measured {verdict} - {record.location}",
+                        fg=typer.colors.RED)
+            if note:
+                typer.echo(f"    {note}")
+        if unasked:
+            causes: dict = {}
+            for _record, verdict, _note in unasked:
+                causes[verdict] = causes.get(verdict, 0) + 1
+            typer.secho(
+                "  unverifiable: "
+                + ", ".join(f"{n} {v}" for v, n in sorted(causes.items())),
+                fg=typer.colors.YELLOW)
+        typer.secho(
+            f"{claims - len(broken):,} verified, {len(regressed):,} "
+            f"REGRESSED, {len(unasked):,} unverifiable, of {claims:,} claims",
+            fg=typer.colors.RED if regressed else
+            typer.colors.YELLOW if unasked else typer.colors.GREEN, bold=True)
+    # THREE OUTCOMES, THREE CODES. A regression means a body stopped
+    # reproducing and someone must look at it; an unverifiable claim means
+    # the gate could not ask, which is a different job - build the unit the
+    # way it was built. Passing the second silently would leave 534 claims
+    # unchecked behind a green gate, which is the shape this whole ratchet
+    # exists to prevent.
+    raise typer.Exit(1 if regressed else 3 if unasked else 0)
 
 
 if __name__ == "__main__":
