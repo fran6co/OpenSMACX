@@ -38,9 +38,16 @@ BYTE_EXACT claim in `src/` all reported MISMATCH:
     annotation carries both - `name` and `symbol`. The lookup reads them;
     it does not guess, and a missing fact is an error that names itself.
 
-WHAT IS STILL ELSEWHERE. The tier ladder here is the three verdicts above;
-SHAPE_EXACT, SHARED_TAIL, REFUSED, the EH funclet classification, batching,
-caching and the ledger stay in tools/byte_match.py.
+SEVEN TIERS, and the last three are not failures. NO_COMPILE is a body
+that did not build, returned as a verdict because getting one from there to
+MISMATCH is the most valuable single move in a recovery pass. SHARED_TAIL
+and REFUSED are spans no verdict is DEFINED on - a `/Gy`-folded tail
+belonging to several functions, a span that rewrites itself at run time -
+and keeping them apart from the misses is what lets a reader tell a wall
+from a body nobody has written. See `model.Tier`.
+
+WHAT IS STILL ELSEWHERE: the EH funclet classification, jump-table
+clipping, batching, caching and the ledger.
 
 CAPSTONE is imported like anything else. It is a declared dependency, so a
 lazy import bought nothing but a failure that arrives halfway through a
@@ -64,7 +71,7 @@ import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from capstone import CS_ARCH_X86, CS_MODE_32, Cs
+from capstone import CS_ARCH_X86, CS_MODE_32, Cs, x86
 
 from .model import DecompilationState, Tier
 
@@ -95,9 +102,39 @@ class Listing:
                                      # the image, which was not invoked
 
     @functools.cached_property
+    def instructions(self) -> list:
+        """The decoded instructions, operands and all."""
+        return _decode(self.code, self.base)
+
+    @functools.cached_property
     def lines(self) -> list[str]:
         """`0xADDR  bytes  mnemonic operands`, one per instruction."""
-        return _disasm(self.code, self.base)
+        return [_render(instruction) for instruction in self.instructions]
+
+    @functools.cached_property
+    def mnemonics(self) -> tuple[str, ...]:
+        """The instruction sequence, for similarity and for MNEMONIC_ONLY.
+
+        `ret` keeps its operand: `ret` and `ret 4` are different
+        instructions, and the pop count is exactly what a
+        calling-convention slip changes.
+        """
+        return tuple(_mnemonic_key(i) for i in self.instructions)
+
+    @functools.cached_property
+    def shapes(self) -> tuple:
+        """Instruction selection AND register allocation, constants dropped.
+
+        What SHAPE_EXACT compares. Immediates and displacements go wholesale
+        - keeping them would make the tier nearly redundant with BYTE_EXACT,
+        because if the mnemonics, the registers and every constant agree
+        then the bytes agree too. Dropping them makes the tier say something
+        a reader can act on: the instructions are RIGHT and a value is
+        WRONG, which is the wrong-field-offset, wrong-vtable-slot,
+        wrong-loop-bound class.
+        """
+        return tuple((_mnemonic_key(i), _operand_kinds(i))
+                     for i in self.instructions)
 
     def zeroed(self, mask: frozenset[int]) -> list[str]:
         """The lines this renders to with every masked byte set to zero."""
@@ -105,7 +142,94 @@ class Listing:
         for offset in mask:
             if 0 <= offset < len(code):
                 code[offset] = 0
-        return _disasm(bytes(code), self.base)
+        return [_render(i) for i in _decode(bytes(code), self.base)]
+
+
+# ------------------------------------------------------------------ capstone
+
+_ENGINE = Cs(CS_ARCH_X86, CS_MODE_32)
+_ENGINE.detail = True                    # `shapes` needs the operands
+
+# `ret 8` and `ret` are one mnemonic to capstone, so the callee-pop count -
+# the only ground truth for arity - would never reach a verdict without this.
+_RET = ("ret", "retf", "iret", "iretd")
+
+
+def _decode(code: bytes, base: int) -> list:
+    return list(_ENGINE.disasm(code, base))
+
+
+def _render(instruction) -> str:
+    return (f"0x{instruction.address:08X}  "
+            f"{' '.join(f'{b:02X}' for b in instruction.bytes):<24}  "
+            f"{instruction.mnemonic} {instruction.op_str}").rstrip()
+
+
+def _mnemonic_key(instruction) -> str:
+    if instruction.mnemonic in _RET and instruction.op_str:
+        return f"{instruction.mnemonic} {instruction.op_str}"
+    return instruction.mnemonic
+
+
+def _operand_kinds(instruction) -> tuple:
+    """Registers and addressing form; every constant discarded."""
+    kinds = []
+    for operand in instruction.operands:
+        if operand.type == x86.X86_OP_REG:
+            kinds.append(("reg", operand.reg))
+        elif operand.type == x86.X86_OP_IMM:
+            kinds.append(("imm",))
+        elif operand.type == x86.X86_OP_MEM:
+            memory = operand.mem
+            kinds.append(("mem", memory.base, memory.index, memory.scale))
+    return tuple(kinds)
+
+
+def differing_constants(original: Listing, compiled: Listing) -> list:
+    """Which operand values disagree in a SHAPE_EXACT pair.
+
+    "Your constant is wrong at instruction 12, 0x838 against 0x83C" is a
+    repair instruction; "SHAPE_EXACT" alone is not.
+    """
+    out = []
+    for index, (a, b) in enumerate(zip(original.instructions,
+                                       compiled.instructions)):
+        for one, two in zip(a.operands, b.operands):
+            if one.type != two.type:
+                continue
+            if one.type == x86.X86_OP_IMM and one.imm != two.imm:
+                out.append((index, a.mnemonic, hex(one.imm), hex(two.imm)))
+            elif one.type == x86.X86_OP_MEM and one.mem.disp != two.mem.disp:
+                out.append((index, a.mnemonic,
+                            hex(one.mem.disp), hex(two.mem.disp)))
+    return out
+
+
+class CompileFailed(Exception):
+    """CL produced no object. Carries what CL said about it.
+
+    Its own type because a loop treats it as a RESULT - `Tier.NO_COMPILE` -
+    while a stale or missing `symbol` fact is a defect in the annotation and
+    stays a `ValueError` the caller must deal with. Both used to be one
+    exception, so a body that would not build and an annotation that lied
+    were indistinguishable to everything above.
+    """
+
+
+def _diagnostic(stdout: str, stderr: str) -> str:
+    """The first line CL called an error, or the last thing it said."""
+    for stream in (stdout or "", stderr or ""):
+        for line in stream.splitlines():
+            if "error" in line.lower():
+                return line.strip()
+    tail = (stdout or stderr or "").strip().splitlines()
+    return tail[-1].strip() if tail else "the compile produced no object"
+
+
+# THE COPY-PROTECTION RANGE, which rewrites itself at run time. Nothing a
+# compiler emits reproduces a body that is not the body at rest, so these are
+# refused before a compiler is reached rather than scored and missed.
+SELFMOD_RANGE = (0x00664000, 0x00669000)
 
 
 # -------------------------------------------------------------- the original
@@ -294,8 +418,7 @@ def _compile(source: Path, flags: str, compile_commands: Path) -> bytes:
                                 timeout=120)
         obj = Path(work) / "unit.obj"
         if not obj.is_file():
-            raise ValueError("the compile produced no object:\n"
-                             f"{result.stdout}\n{result.stderr}")
+            raise CompileFailed(_diagnostic(result.stdout, result.stderr))
         return obj.read_bytes()
 
 
@@ -413,14 +536,6 @@ def compiled_asm(record: DecompilationState, compile_commands: Path | str,
 # ------------------------------------------------------------------ disasm
 
 
-def _disasm(data: bytes, base: int) -> list[str]:
-    """Lines of `0xADDR  bytes  mnemonic operands`, capstone under the hood."""
-    return [f"0x{ins.address:08X}  "
-            f"{' '.join(f'{b:02X}' for b in ins.bytes):<24}  "
-            f"{ins.mnemonic} {ins.op_str}".rstrip()
-            for ins in Cs(CS_ARCH_X86, CS_MODE_32).disasm(data, base)]
-
-
 # -------------------------------------------------------------- comparison
 
 
@@ -450,26 +565,10 @@ class AsmComparison:
         field(default_factory=lambda: ([], []))
                                     # (original, compiled) lines around the
                                     # divergence, rendered as they REALLY are
+    differing_constants: tuple = ()  # SHAPE_EXACT only: (index, mnemonic,
+                                    # original, compiled) per wrong value
+    diagnostic: str = ""            # NO_COMPILE only: what the compiler said
     flags: str = ""                 # the flag set that produced `compiled`
-
-
-def _mnemonic_sequence(listing: list[str]) -> list[str]:
-    """The instruction sequence of a listing, for similarity.
-
-    `ret` keeps its operand: `ret` and `ret 4` are different instructions,
-    and the pop count is exactly what a calling-convention slip changes.
-    """
-    out = []
-    for line in listing:
-        parts = re.split(r"\s{2,}", line.strip(), maxsplit=2)
-        if len(parts) < 3:
-            out.append(line.strip())
-            continue
-        instruction = parts[2].strip()
-        out.append(instruction
-                   if instruction.split()[0].startswith("ret")
-                   else instruction.split()[0])
-    return out
 
 
 def _byte_verdict(original: Listing, compiled: Listing) -> bool:
@@ -513,12 +612,16 @@ def _discount_relocations(original: Listing,
 def compare_asm(original: Listing, compiled: Listing) -> AsmComparison:
     """How far the compiled listing reproduces the original one.
 
-    The verdicts mirror tools/byte_match.py at the listing level:
-    BYTE_EXACT when every instruction agrees byte for byte, MNEMONIC_ONLY
-    when the instruction sequence agrees but constants or encodings differ,
-    MISMATCH otherwise. The report says how many lines match outright, how
-    similar the instruction sequences are, and where the first divergence
-    is, with a window of both listings around it.
+    FOUR TIERS, EACH A WEAKER STATEMENT THAN THE LAST. BYTE_EXACT: every
+    compared byte agrees. SHAPE_EXACT: the instruction selection AND the
+    register allocation agree and a CONSTANT does not - the most actionable
+    miss there is, because it names a wrong field offset or vtable slot
+    rather than a wrong idea. MNEMONIC_ONLY: the instruction sequence
+    agrees but the registers or the addressing do not. MISMATCH: neither.
+
+    The report says how many instructions match outright, how similar the
+    sequences are, where the first divergence is with a window of both
+    sides around it, and - for a SHAPE_EXACT pair - which constants differ.
 
     RELOCATED BYTES ARE DISCOUNTED. An object file's `push <global>` is
     `68 00 00 00 00` and the image's is `68` plus the linked address; the
@@ -549,14 +652,18 @@ def compare_asm(original: Listing, compiled: Listing) -> AsmComparison:
         lo = max(0, min(n, m) - 3)
         context = (original.lines[lo:], compiled.lines[lo:])
 
-    seq_original = _mnemonic_sequence(left)
-    seq_compiled = _mnemonic_sequence(right)
+    # DECODED FROM THE BYTES, not parsed back out of the rendering: the
+    # sequences are a fact about the code, and the text is a view of it.
     similarity = difflib.SequenceMatcher(
-        None, seq_original, seq_compiled).ratio()
+        None, original.mnemonics, compiled.mnemonics).ratio()
 
+    constants: list = []
     if _byte_verdict(original, compiled):
         verdict = Tier.BYTE_EXACT
-    elif seq_original == seq_compiled:
+    elif original.shapes == compiled.shapes:
+        verdict = Tier.SHAPE_EXACT
+        constants = differing_constants(original, compiled)
+    elif original.mnemonics == compiled.mnemonics:
         verdict = Tier.MNEMONIC_ONLY
     else:
         verdict = Tier.MISMATCH
@@ -568,12 +675,55 @@ def compare_asm(original: Listing, compiled: Listing) -> AsmComparison:
         original_instructions=n, compiled_instructions=m,
         matching_instructions=matching, mnemonic_similarity=similarity,
         first_divergence=first_divergence, context=context,
-        flags=compiled.flags)
+        differing_constants=tuple(constants), flags=compiled.flags)
+
+
+def span_refusal(record: DecompilationState,
+                 shared: frozenset = frozenset()) -> Tier | None:
+    """The tier for a record no verdict is defined on, or None.
+
+    NOT A FAILURE, A REFUSAL, and the difference is what lets a reader tell
+    a wall from a body nobody has written. A self-modifying span cannot be
+    reproduced by a compiler at all; a span `/Gy` folded onto another
+    function's belongs to no single body, so asking which one it reproduces
+    is not a question; and a record with no primary span names nothing to
+    compare.
+
+    `shared` comes from `shared_spans` over the whole record set, because
+    whether a span has a second claimant is not knowable from one record.
+    """
+    if not record.image_spans:
+        return Tier.REFUSED
+    low, high = record.image_spans[0]
+    if SELFMOD_RANGE[0] <= low < SELFMOD_RANGE[1]:
+        return Tier.REFUSED
+    if (low, high) in shared:
+        return Tier.SHARED_TAIL
+    return None
+
+
+def shared_spans(records) -> frozenset:
+    """Spans more than one record claims - `/Gy` identical COMDAT folding.
+
+    Independent evidence the shipped build used `/Gy`, and the reason
+    SHARED_TAIL exists: a folded tail is one body serving several
+    catalogue entries, so a per-function verdict on it is not merely
+    unknown, it is undefined.
+    """
+    seen: dict = {}
+    shared = set()
+    for record in records:
+        for span in record.image_spans:
+            if span in seen and seen[span] != record.address:
+                shared.add(span)
+            seen.setdefault(span, record.address)
+    return frozenset(shared)
 
 
 def compare_record(record: DecompilationState, exe: Path | str,
                    compile_commands: Path | str,
-                   flags: tuple | str) -> AsmComparison:
+                   flags: tuple | str,
+                   shared: frozenset = frozenset()) -> AsmComparison:
     """How far VC6 reproduces the shipped bytes for `record`, best of `flags`.
 
     `flags` is a flag string, or several. THERE IS NO DEFAULT SET HERE, and
@@ -591,22 +741,30 @@ def compare_record(record: DecompilationState, exe: Path | str,
     has never seen the image; this is the one function that holds both, so it
     is the one that can choose.
 
-    A flag set whose compile fails, or whose object does not name the
-    subject, is skipped rather than fatal - the question is whether ANY
-    invocation reproduces the bytes. If every one fails, the last failure is
-    raised, because "nothing compiled" and "nothing matched" are different
-    answers and only the first names a defect to fix.
+    A COMPILE THAT FAILS IS A RESULT, not an error. `Tier.NO_COMPILE` is
+    returned with the compiler's own first error line, because getting a
+    body from there to MISMATCH is the most valuable single move in a
+    recovery pass and a loop has to be able to rank it. A stale or missing
+    `symbol` fact stays a `ValueError`: that is a defect in the annotation,
+    not a fact about the body, and swallowing it would report a body nobody
+    compiled as one that did not match.
+
+    SPANS THAT CANNOT BE SCORED come back before any of that - see
+    `span_refusal`.
     """
     attempts = (flags,) if isinstance(flags, str) else tuple(flags)
     if not attempts:
         raise ValueError("no flag sets to try")
+    refusal = span_refusal(record, shared)
+    if refusal is not None:
+        return AsmComparison(verdict=refusal, flags="")
     original = original_asm(record, exe)
-    best, failure = None, None
+    best, diagnostic = None, ""
     for attempt in attempts:
         try:
             compiled = compiled_asm(record, compile_commands, attempt)
-        except (ValueError, subprocess.SubprocessError) as error:
-            failure = error
+        except CompileFailed as failed:
+            diagnostic = diagnostic or str(failed)
             continue
         result = compare_asm(original, compiled)
         if best is None or result.verdict.rank < best.verdict.rank:
@@ -614,6 +772,5 @@ def compare_record(record: DecompilationState, exe: Path | str,
         if best.verdict is Tier.BYTE_EXACT:
             break                    # nothing beats byte equality
     if best is None:
-        raise failure or ValueError(
-            f"{record.address_hex}: no flag set produced a comparison")
+        return AsmComparison(verdict=Tier.NO_COMPILE, diagnostic=diagnostic)
     return best

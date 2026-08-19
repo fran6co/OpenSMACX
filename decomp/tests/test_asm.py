@@ -160,14 +160,26 @@ def test_compare_byte_exact():
     assert result.masked_bytes == 0
 
 
-def test_compare_mnemonic_only():
-    # the same instructions, one different constant: mov eax, 2
-    other = bytes.fromhex("55" "8BEC" "B802000000" "C3")
+def test_compare_shape_exact_names_the_wrong_constant():
+    """Same instructions, same registers, one wrong value - the miss that
+    names a field offset or a loop bound rather than a wrong idea."""
+    other = bytes.fromhex("55" "8BEC" "B802000000" "C3")   # mov eax, 2
     result = compare_asm(listing(BODY), listing(other))
-    assert result.verdict == "MNEMONIC_ONLY"
+    assert result.verdict == "SHAPE_EXACT"
     assert result.matching_instructions == 3
     assert result.mnemonic_similarity == 1.0
     assert result.first_divergence == 2
+    assert result.differing_constants == ((2, "mov", "0x1", "0x2"),)
+
+
+def test_compare_mnemonic_only_is_the_weaker_statement():
+    """Same instruction sequence, a different REGISTER. The constants are
+    identical, so this is not SHAPE_EXACT - the allocation is wrong."""
+    other = bytes.fromhex("55" "8BEC" "B901000000" "C3")   # mov ecx, 1
+    result = compare_asm(listing(BODY), listing(other))
+    assert result.verdict == "MNEMONIC_ONLY"
+    assert result.mnemonic_similarity == 1.0
+    assert result.differing_constants == ()
 
 
 def test_compare_mismatch_reports_the_divergence():
@@ -343,9 +355,9 @@ def test_relocated_bytes_do_not_count_as_a_divergence():
     mask = frozenset({1, 2, 3, 4})
     left = listing(image)
     right = listing(obj, mask)
-    # Without the mask the same pair is only MNEMONIC_ONLY: the four
-    # relocated bytes read as a difference in the source, which they are not.
-    assert compare_asm(left, listing(obj)).verdict == "MNEMONIC_ONLY"
+    # Without the mask the same pair is only SHAPE_EXACT: the four relocated
+    # bytes read as a wrong CONSTANT, which is not a difference in the source.
+    assert compare_asm(left, listing(obj)).verdict == "SHAPE_EXACT"
     result = compare_asm(left, right)
     assert result.verdict == "BYTE_EXACT"
     assert result.masked_bytes == 4
@@ -404,3 +416,59 @@ def test_differing_lengths_are_never_byte_exact():
     a = b"\x90\xC3"
     b = b"\x90\x90\xC3"
     assert compare_asm(listing(a), listing(b)).verdict == "MISMATCH"
+
+
+# ------------------------------------------------- results, not exceptions
+
+
+def test_a_body_that_will_not_build_is_a_tier(tmp_path, monkeypatch):
+    """NO_COMPILE is what a recovery pass most wants to act on, so it comes
+    back as a verdict carrying the compiler's own words - not a traceback."""
+    record = record_in(tmp_path, MARKED)
+    def refuse(*args, **kwargs):
+        raise asm.CompileFailed("x.cpp(3) : error C2065: 'g_x' : undeclared")
+    monkeypatch.setattr(asm, "compiled_asm", refuse)
+    monkeypatch.setattr(asm, "original_asm",
+                        lambda *a, **k: listing(b"\xC3"))
+    result = asm.compare_record(record, "exe", "cc", ("/c /O2",))
+    assert result.verdict == "NO_COMPILE"
+    assert "C2065" in result.diagnostic
+
+
+def test_a_lying_annotation_is_still_an_error(tmp_path, monkeypatch):
+    """A stale `symbol` fact is a defect in the annotation, not a fact about
+    the body; reporting it as NO_COMPILE would blame the wrong thing."""
+    record = record_in(tmp_path, MARKED)
+    def stale(*args, **kwargs):
+        raise ValueError("?f@C@@QAEXXZ: ... the fact is stale")
+    monkeypatch.setattr(asm, "compiled_asm", stale)
+    monkeypatch.setattr(asm, "original_asm",
+                        lambda *a, **k: listing(b"\xC3"))
+    with pytest.raises(ValueError, match="stale"):
+        asm.compare_record(record, "exe", "cc", ("/c /O2",))
+
+
+def test_the_diagnostic_prefers_what_cl_called_an_error():
+    assert "C2065" in asm._diagnostic("note\nx.cpp : error C2065: bad\n", "")
+    assert asm._diagnostic("", "") == "the compile produced no object"
+    assert asm._diagnostic("only this\n", "") == "only this"
+
+
+def test_a_self_modifying_span_is_refused_before_a_compiler(tmp_path):
+    record = record_in(tmp_path, """// ORIGINAL: 0x00664100 ?f@@YAXXZ 0x00664100-0x00664108
+void f() {
+}
+""")
+    assert asm.span_refusal(record) == "REFUSED"
+
+
+def test_a_folded_tail_belongs_to_no_single_body(tmp_path):
+    a = record_in(tmp_path, MARKED)
+    shared = asm.shared_spans([a, a.__class__(**{**a.__dict__,
+                                                "address": 0x00402000})])
+    assert a.image_spans[0] in shared
+    assert asm.span_refusal(a, shared) == "SHARED_TAIL"
+
+
+def test_an_ordinary_span_is_not_refused(tmp_path):
+    assert asm.span_refusal(record_in(tmp_path, MARKED)) is None
