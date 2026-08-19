@@ -158,6 +158,22 @@ class DecompilationState:
     def address_hex(self) -> str:
         return f"0x{self.address:08X}"
 
+    @property
+    def size(self) -> int:
+        """Bytes of the piece's PRIMARY span.
+
+        Derived, not a fact: the marker already carries the spans, and the
+        `// size` fact beside it is the catalogue's total ACROSS spans -
+        which is a different number for the 417 records that have more than
+        one, and the wrong one to compare an object against. Everything that
+        ranks or reports wants this, so it is computed once here rather than
+        spelled out at every call site.
+        """
+        if not self.image_spans:
+            return 0
+        low, high = self.image_spans[0]
+        return high - low
+
 
 # Declared after `Tier` so the members exist to be indexed.
 _TIER_ORDER = (Tier.BYTE_EXACT, Tier.SHAPE_EXACT, Tier.MNEMONIC_ONLY,

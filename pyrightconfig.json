@@ -8,5 +8,8 @@
   "exclude": [
     ".opensmacx",
     "build"
+  ],
+  "extraPaths": [
+    "tools"
   ]
 }

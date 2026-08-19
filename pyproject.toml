@@ -16,18 +16,18 @@ requires-python = ">=3.12"
 dependencies = ["capstone==5.0.6"]
 
 [dependency-groups]
-# Was tools/requirements.txt. A group rather than a project dependency: these
-# are what the 61 scripts in tools/ need, and `decomp` needs none of them.
+# The command line built on `decomp`. A group rather than a project
+# dependency: importing the package must not require the thing that wraps
+# it, and `decomp` itself uses none of this.
 tools = [
-    # capstone is NOT here: it is a project dependency now (see above), and
-    # two pins for one package is a version skew waiting to happen.
-    "pefile==2024.8.26",
-    "python-idb==0.8.0",
-    "undname==0.2",
-    "z3-solver==4.13.0.0",
+    # typer 0.15.1 calls `Parameter.make_metavar()` without the `ctx` that
+    # click 8.2 made required, so `--help` raises. Newer typer fixed it;
+    # pinning the pair is what keeps `--help` from being the one command
+    # nobody runs until it matters.
+    "typer>=0.16",
 ]
 # The decomp package's own tests. A group for the same reason: the package
-# RUNTIME stays standard-library-only, and only decomp/tests/ imports this.
+# RUNTIME stays free of them, and only decomp/tests/ imports this.
 test = [
     "pytest==8.4.1",
 ]
