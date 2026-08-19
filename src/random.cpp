@@ -124,6 +124,7 @@ void __cdecl random_reseed(uint32_t new_seed) { Rand->reseed(new_seed); }
 uint32_t __cdecl random_get() { return Rand->get_seed(); }
 
 // ORIGINAL: 0x00625810 ?random@@YAIHH@Z 0x00625810-0x0062584F
+// symbol    ?random@@YAIII@Z
 // size      63 bytes
 // prototype 
 // callers   38   call targets   0

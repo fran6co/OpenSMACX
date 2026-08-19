@@ -2067,6 +2067,7 @@ int __cdecl pop_ask(char *a1, char *a2, int a3, char *a4, int (__cdecl *a5)(), i
 
 /*
 // ORIGINAL: 0x00627830 ?pop_ask@@YAHPADPADHP6AHXZH@Z 0x00627830-0x00627854 BYTE_EXACT
+// symbol    ?pop_ask@@YAHPAD0HP6AHXZH@Z
 // size      36 bytes
 // prototype int (__cdecl ?pop_ask@@YAHPADPADHP6AHXZH@Z)(int8* srcFileID, int8* sectionID, int, int (__cdecl *)(), int)
 // callers   0   call targets   1

@@ -131,6 +131,7 @@ uint32_t __fastcall sprite_box_id_to_pos_redirect(SpriteBox *self, void *, int i
 
 /*
 // ORIGINAL: 0x00610480 ?init@SpriteBox@@QAEHPAURECT@@H@Z 0x00610480-0x006104A2 BYTE_EXACT
+// symbol    ?init@SpriteBox@@QAEHPAUtagRECT@@H@Z
 // size      34 bytes
 // prototype int (__thiscall ?init@SpriteBox@@QAEHPAURECT@@H@Z)(SpriteBox* this, RECT*, int)
 // callers   1   call targets   2
@@ -218,6 +219,7 @@ void SpriteBox::close() {
 
 /*
 // ORIGINAL: 0x006104D0 ?init@SpriteBox@@QAEHHHHHPAUHeap@@@Z 0x006104D0-0x00610501 BYTE_EXACT
+// symbol    ?init@SpriteBox@@QAEHHHHHPAVHeap@@@Z
 // size      49 bytes
 // prototype int (__thiscall ?init@SpriteBox@@QAEHHHHHPAUHeap@@@Z)(SpriteBox* this, int, int, int, int, Heap*)
 // callers   1   call targets   2

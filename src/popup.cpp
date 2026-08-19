@@ -50,6 +50,7 @@ func_popup_start_full PopupOriginalStartFull =
 Purpose: The five-argument start form, forwarding to the six-argument one with
          no parent graphic window.
 // ORIGINAL: 0x0043EF70 ?start@Popup@@QAEXPADPBDHPADH@Z 0x0043EF70-0x0043EF92
+// symbol    ?start@Popup@@QAEXPADPBDH0H@Z
 // size      34 bytes
 // prototype void (__thiscall ?start@Popup@@QAEXPADPBDHPADH@Z)(Popup* this, int8* srcFileID, int8* sectionID, int, int8*, int)
 // callers   5   call targets   1

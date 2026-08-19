@@ -23,6 +23,7 @@
 Purpose: Initialize the class by opening a file with write permission. The boolean parameter toggles 
          if the file is accessed sequentially or randomly.
 // ORIGINAL: 0x006283A0 ?init@Filemap@@QAEHPADH@Z 0x006283A0-0x006283BA BYTE_EXACT
+// symbol    ?init@Filemap@@QAEPAV1@PBDH@Z
 // size      26 bytes
 // prototype int (__thiscall ?init@Filemap@@QAEHPADH@Z)(Filemap* this, int8*, int)
 // callers   0   call targets   1
@@ -40,6 +41,7 @@ Filemap *Filemap::init(LPCSTR file_name, BOOL is_sequential) {
 /*
 Purpose: Initialize the class by opening a random access file with write permission.
 // ORIGINAL: 0x006283C0 ?init@Filemap@@QAEHPAD@Z 0x006283C0-0x006283D5 BYTE_EXACT
+// symbol    ?init@Filemap@@QAEPAV1@PBD@Z
 // size      21 bytes
 // prototype int (__thiscall ?init@Filemap@@QAEHPAD@Z)(Filemap* this, int8*)
 // callers   0   call targets   1
@@ -207,6 +209,7 @@ void Filemap::close() {
 Purpose: Close and set the end of the file. This can be used to truncate existing files. It also 
          assumes the file has write permission.
 // ORIGINAL: 0x00628810 ?close@Filemap@@QAEXPAE@Z 0x00628810-0x006288C4
+// symbol    ?close@Filemap@@QAEXPAX@Z
 // size      180 bytes
 // prototype void (__thiscall ?close@Filemap@@QAEXPAE@Z)(Filemap* this, unsigned int8*)
 // callers   3   call targets   0

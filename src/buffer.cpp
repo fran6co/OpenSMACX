@@ -535,6 +535,7 @@ func_buffer_copy_full BufferCopyFull = original_method<func_buffer_copy_full>(0x
 /*
 Purpose: Copy a region of another buffer into the same position in this one.
 // ORIGINAL: 0x005D95B0 ?copy@Buffer@@QAEHPAVBuffer@@HHHH@Z 0x005D95B0-0x005D95D3
+// symbol    ?copy@Buffer@@QAEHPAV1@HHHH@Z
 // size      35 bytes
 // prototype int (__thiscall ?copy@Buffer@@QAEHPAVBuffer@@HHHH@Z)(Buffer* this, Buffer*, int, int, int, int)
 // callers   8   call targets   1
@@ -564,6 +565,7 @@ int __fastcall buffer_copy_redirect(Buffer *self, void *, Buffer *buffer,
 Purpose: Copy the region a rectangle describes out of another buffer into the
          same position in this one.
 // ORIGINAL: 0x005D95E0 ?copy@Buffer@@QAEHPAVBuffer@@PAURECT@@@Z 0x005D95E0-0x005D960A
+// symbol    ?copy@Buffer@@QAEHPAV1@PAUtagRECT@@@Z
 // size      42 bytes
 // prototype int (__thiscall ?copy@Buffer@@QAEHPAVBuffer@@PAURECT@@@Z)(Buffer* this, Buffer*, RECT*)
 // callers   8   call targets   1
@@ -917,6 +919,7 @@ Purpose: Fill a rectangle of this buffer with a single colour, through
          DirectDraw when there is a surface and by writing the mapped bits
          when there is not.
 // ORIGINAL: 0x005DFCD0 ?fill@Buffer@@QAEHPAURECT@@H@Z 0x005DFCD0-0x005DFEFC
+// symbol    ?fill@Buffer@@QAEHPAUtagRECT@@H@Z
 // size      556 bytes
 // prototype int (__thiscall ?fill@Buffer@@QAEHPAURECT@@H@Z)(Buffer* this, RECT* rect, int)
 // callers   8   call targets   0
@@ -1774,6 +1777,7 @@ int __fastcall buffer_write_l_redirect(Buffer *self, void *, LPSTR text,
 Purpose: Draw at most `len` characters of a string flush against a
          rectangle's left edge and vertically centred on the text font.
 // ORIGINAL: 0x005DCF40 ?write_l@Buffer@@QAEHPADPAURECT@@H@Z 0x005DCF40-0x005DD016
+// symbol    ?write_l@Buffer@@QAEHPADPAUtagRECT@@H@Z
 // size      214 bytes
 // prototype int (__thiscall ?write_l@Buffer@@QAEHPADPAURECT@@H@Z)(Buffer* this, int8*, RECT*, int)
 // callers   35   call targets   2
@@ -1896,6 +1900,7 @@ int __fastcall buffer_write_cent_l_redirect(Buffer *self, void *, LPSTR text,
 Purpose: Draw at most `len` characters of a string centred both horizontally
          and vertically inside a rectangle.
 // ORIGINAL: 0x005DD130 ?write_cent_l@Buffer@@QAEHPADPAURECT@@H@Z 0x005DD130-0x005DD24A
+// symbol    ?write_cent_l@Buffer@@QAEHPADPAUtagRECT@@H@Z
 // size      282 bytes
 // prototype int (__thiscall ?write_cent_l@Buffer@@QAEHPADPAURECT@@H@Z)(Buffer* this, int8*, RECT*, int)
 // callers   108   call targets   3

@@ -380,6 +380,7 @@ void __fastcall win_set_horz_paging_redirect(Win *self, void *, int paging) {
 /*
 Purpose: Determine whether a point is inside a rectangle using Win32 edge semantics.
 // ORIGINAL: 0x005FA7E0 ?in_box@@YAHHHPAURECT@@@Z 0x005FA7E0-0x005FA814
+// symbol    ?in_box@@YAHHHPBUtagRECT@@@Z
 // size      52 bytes
 // prototype 
 // callers   24   call targets   0

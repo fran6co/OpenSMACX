@@ -1551,6 +1551,7 @@ void __cdecl prefs_load(BOOL use_default) {
 /*
 Purpose: Write the string value to the pref key of the ini.
 // ORIGINAL: 0x0059E510 ?prefs_put@@YAXPADPAD@Z 0x0059E510-0x0059E52F
+// symbol    ?prefs_put@@YAXPBD0@Z
 // size      31 bytes
 // prototype void (__cdecl ?prefs_put@@YAXPADPAD@Z)(int8* lpKeyName, int8* lpString)
 // callers   7   call targets   0
@@ -1568,6 +1569,7 @@ void __cdecl prefs_put(LPCSTR key_name, LPCSTR value) {
 /*
 Purpose: Write the value as either an integer or a binary string to the pref key inside the ini.
 // ORIGINAL: 0x0059E530 ?prefs_put@@YAXPADHH@Z 0x0059E530-0x0059E5CD
+// symbol    ?prefs_put@@YAXPBDHH@Z
 // size      157 bytes
 // prototype void (__cdecl ?prefs_put@@YAXPADHH@Z)(int8* lpKeyName, int, int)
 // callers   12   call targets   2
