@@ -1,6 +1,6 @@
 """`uv run python -m decomp` - are the reader and the writer sane?
 
-TWO CHECKS. The first is the ground truth and would be enough on its own:
+THREE CHECKS. The first is the ground truth and would be enough on its own:
 parse `src/` and prove the result against the tree itself - the count, the
 shapes every consumer reads, and the completeness every annotation now
 carries. It catches the failure this package can actually have in
@@ -13,7 +13,13 @@ must agree in every fact they carry, and a second write from the rewritten
 text must change nothing. The annotation layer is allowed to canonicalise;
 the code underneath it is not.
 
-There used to be a third: the parse held against the `tools/` copies, so
+The third holds the package to what it may depend on: the readers import
+nothing that has to be installed, and `asm` imports only capstone. The
+package spent a while claiming in prose to be standard library throughout
+while `asm` already disassembled, which is the failure this shape of check
+exists to prevent - see `layering`.
+
+There used to be another: the parse held against the `tools/` copies, so
 the two could not drift while both existed. The marker format moved on
 2026-08-18 - the marker names the piece, carrying its name and its image
 spans - and the tools copies stayed on the old spelling, by decision; the
@@ -23,6 +29,8 @@ against `src/` alone from then on.
 
 from __future__ import annotations
 
+import ast
+import sys
 from pathlib import Path
 
 from decomp import DecompilationState, State, grammar, read, reader, write
@@ -31,7 +39,7 @@ from decomp.reader import SRC_ROOT
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
-def sanity() -> list:
+def sanity() -> list[DecompilationState]:
     """The floor: `src/` parses, and to the shape consumers read."""
     records = read(SRC_ROOT)
     assert len(records) > 5000, len(records)
@@ -146,8 +154,80 @@ def loop() -> tuple[int, int]:
     return looped, skipped
 
 
+# WHAT EACH MODULE MAY IMPORT, and the reason the table exists rather than a
+# sentence in `pyproject.toml`. The package used to claim it was standard
+# library throughout; `asm` disassembles, so that claim was already false and
+# capstone is a declared dependency now. The invariant worth keeping is
+# NARROWER and is the one people actually rely on: reading an annotation costs
+# nothing but Python. A promise nobody checks decays into a comment; this is
+# the check.
+_STDLIB_ONLY = ("model", "grammar", "reader", "writer")
+_MAY_IMPORT = {"asm": frozenset({"capstone"})}
+
+
+def layering(root: Path | None = None) -> int:
+    """Every module's module-level imports, held to what it may depend on.
+
+    Returns the number of modules checked. Two rules, and the second is the
+    one that keeps the first honest.
+
+    WHAT a module may import comes from `_MAY_IMPORT`, with the readers held
+    to the standard library so that reading an annotation needs nothing
+    installed.
+
+    WHERE it may import it is: at module level, always. A lazy import is a
+    dependency that does not show up in the import block, so it escapes the
+    rule above and moves its own failure from startup into the middle of a
+    measurement - `asm` hid capstone in `_disasm` for exactly as long as the
+    package claimed to be standard library throughout. Declared dependencies
+    are imported like anything else.
+    """
+    checked = 0
+    root = root or Path(__file__).parent
+    for path in sorted(root.glob("*.py")):
+        module = path.stem
+        if module == "__main__":
+            continue
+        allowed = _MAY_IMPORT.get(module, frozenset())
+        tree = ast.parse(path.read_text())
+        top = {id(node) for node in ast.walk(tree)
+               if isinstance(node, (ast.Import, ast.ImportFrom))
+               and any(node is child for child in tree.body)}
+        for node in ast.walk(tree):
+            if not isinstance(node, (ast.Import, ast.ImportFrom)):
+                continue
+            assert id(node) in top, (
+                f"{path.name} line {node.lineno} imports inside a function; "
+                f"every import in this package belongs at module level, so "
+                f"that what a module costs to import is what it says it does")
+
+            if isinstance(node, ast.Import):
+                roots = [alias.name.split(".")[0] for alias in node.names]
+            elif isinstance(node, ast.ImportFrom):
+                if node.level:            # `from .model import ...`
+                    continue
+                roots = [(node.module or "").split(".")[0]]
+            else:
+                continue
+            for name in roots:
+                if name in sys.stdlib_module_names or name in allowed:
+                    continue
+                assert module not in _STDLIB_ONLY, (
+                    f"{path.name} imports {name!r} at module level; "
+                    f"{module} is one of the readers and must stay standard "
+                    f"library so that reading an annotation needs nothing "
+                    f"installed")
+                raise AssertionError(
+                    f"{path.name} imports {name!r} at module level, which "
+                    f"_MAY_IMPORT does not allow for {module}")
+        checked += 1
+    assert checked, "no modules checked - the glob found nothing"
+    return checked
+
+
 def main() -> int:
     records = sanity()
+    layering()
     looped, skipped = loop()
     print(f"ok: {len(records)} records (proved against src/, loop closed on "
           f"{looped} files, {skipped} skipped)")

@@ -451,3 +451,38 @@ def test_tree_roundtrip():
     looped, skipped = roundtrip_tree()
     assert looped > 3000, looped
     assert skipped == 0, skipped
+
+
+# ------------------------------------------------------- the layering check
+
+
+def test_layering_accepts_the_package_as_it_stands():
+    from decomp.__main__ import layering
+    assert layering() >= 5
+
+
+def test_layering_refuses_a_reader_that_grows_a_dependency(tmp_path):
+    """The check has teeth: a stdlib-only reader importing capstone fails.
+
+    Written because a check nobody has seen fail is a comment. This is the
+    exact edit the rule exists to stop - `reader` reaching for something that
+    must be installed - and it must be reported, not tolerated.
+    """
+    from decomp.__main__ import layering
+    (tmp_path / "reader.py").write_text("import capstone\n")
+    with pytest.raises(AssertionError, match="standard library"):
+        layering(tmp_path)
+
+
+def test_layering_refuses_an_undeclared_dependency(tmp_path):
+    """A module outside the reader set still may not import anything it likes."""
+    from decomp.__main__ import layering
+    (tmp_path / "asm.py").write_text("import pefile\n")
+    with pytest.raises(AssertionError, match="_MAY_IMPORT"):
+        layering(tmp_path)
+
+
+def test_layering_allows_what_it_declares(tmp_path):
+    from decomp.__main__ import layering
+    (tmp_path / "asm.py").write_text("import capstone\nimport struct\n")
+    assert layering(tmp_path) == 1
