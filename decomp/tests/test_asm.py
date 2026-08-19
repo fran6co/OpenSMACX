@@ -430,6 +430,7 @@ def test_a_body_that_will_not_build_is_a_tier(tmp_path, monkeypatch):
     monkeypatch.setattr(asm, "compiled_asm", refuse)
     monkeypatch.setattr(asm, "original_asm",
                         lambda *a, **k: listing(b"\xC3"))
+    monkeypatch.setattr(asm, "span_refusal", lambda *a, **k: None)
     result = asm.compare_record(record, "exe", "cc", ("/c /O2",))
     assert result.verdict == "NO_COMPILE"
     assert "C2065" in result.diagnostic
@@ -444,6 +445,7 @@ def test_a_lying_annotation_is_still_an_error(tmp_path, monkeypatch):
     monkeypatch.setattr(asm, "compiled_asm", stale)
     monkeypatch.setattr(asm, "original_asm",
                         lambda *a, **k: listing(b"\xC3"))
+    monkeypatch.setattr(asm, "span_refusal", lambda *a, **k: None)
     with pytest.raises(ValueError, match="stale"):
         asm.compare_record(record, "exe", "cc", ("/c /O2",))
 
@@ -454,12 +456,33 @@ def test_the_diagnostic_prefers_what_cl_called_an_error():
     assert asm._diagnostic("only this\n", "") == "only this"
 
 
-def test_a_self_modifying_span_is_refused_before_a_compiler(tmp_path):
-    record = record_in(tmp_path, """// ORIGINAL: 0x00664100 ?f@@YAXXZ 0x00664100-0x00664108
+SELFMOD = """// ORIGINAL: 0x00666F68 ?f@@YAXXZ 0x00666F68-0x00666F70
 void f() {
 }
-""")
-    assert asm.span_refusal(record) == "REFUSED"
+"""
+
+
+@pytest.mark.skipif(not HAVE_EXE, reason="no pinned executable")
+def test_the_image_says_which_of_its_code_can_rewrite_itself():
+    """This was `SELFMOD_RANGE = (0x00664000, 0x00669000)` in the source -
+    the bounds of one section of one image, transcribed where nothing could
+    keep them true. The image states the PROPERTY in its own section
+    characteristics: exactly one section here is executable and writable."""
+    assert asm.rewrites_itself(EXE, 0x00666F68)
+    assert not asm.rewrites_itself(EXE, 0x005DAC70)     # .text: exec, not write
+    assert not asm.rewrites_itself(EXE, 0x00682100)     # .data: write, not exec
+    assert not asm.rewrites_itself(EXE, 0x00000010)     # in no section at all
+    writable_code = [n for n, _lo, _hi, c in asm._sections(EXE)
+                     if c & asm.IMAGE_SCN_MEM_EXECUTE
+                     and c & asm.IMAGE_SCN_MEM_WRITE]
+    assert writable_code == ["_SELFMOD"], writable_code
+    assert asm.section_of(EXE, 0x005DAC70) == ".text"
+
+
+@pytest.mark.skipif(not HAVE_EXE, reason="no pinned executable")
+def test_a_self_modifying_span_is_refused_before_a_compiler(tmp_path):
+    record = record_in(tmp_path, SELFMOD)
+    assert asm.span_refusal(record, EXE) == "REFUSED"
 
 
 def test_a_folded_tail_belongs_to_no_single_body(tmp_path):
@@ -467,8 +490,8 @@ def test_a_folded_tail_belongs_to_no_single_body(tmp_path):
     shared = asm.shared_spans([a, a.__class__(**{**a.__dict__,
                                                 "address": 0x00402000})])
     assert a.image_spans[0] in shared
-    assert asm.span_refusal(a, shared) == "SHARED_TAIL"
+    assert asm.span_refusal(a, EXE, shared) == "SHARED_TAIL"
 
 
 def test_an_ordinary_span_is_not_refused(tmp_path):
-    assert asm.span_refusal(record_in(tmp_path, MARKED)) is None
+    assert asm.span_refusal(record_in(tmp_path, MARKED), EXE) is None

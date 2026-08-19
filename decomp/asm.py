@@ -226,10 +226,12 @@ def _diagnostic(stdout: str, stderr: str) -> str:
     return tail[-1].strip() if tail else "the compile produced no object"
 
 
-# THE COPY-PROTECTION RANGE, which rewrites itself at run time. Nothing a
-# compiler emits reproduces a body that is not the body at rest, so these are
-# refused before a compiler is reached rather than scored and missed.
-SELFMOD_RANGE = (0x00664000, 0x00669000)
+# SECTION CHARACTERISTICS. A section that is both executable and writable is
+# code that can rewrite itself - which is what the copy protection in this
+# image does, and why nothing a compiler emits can equal a body that is not
+# the body at rest.
+IMAGE_SCN_MEM_EXECUTE = 0x20000000
+IMAGE_SCN_MEM_WRITE = 0x80000000
 
 
 # -------------------------------------------------------------- the original
@@ -304,6 +306,54 @@ def _base_relocations(data: bytes) -> frozenset[int]:
                 addresses.append(image_base + page + (entry & 0xFFF))
         cursor += block
     return frozenset(addresses)
+
+
+@functools.lru_cache(maxsize=4)
+def _sections(exe: Path) -> tuple:
+    """(name, low, high) for each section, from the image's own table."""
+    data = exe.read_bytes()
+    (e_lfanew,) = struct.unpack_from("<I", data, 0x3C)
+    _machine, count, _ts, _sp, _ns, opt_size, _ch = \
+        struct.unpack_from("<HHIIIHH", data, e_lfanew + 4)
+    (image_base,) = struct.unpack_from("<I", data, e_lfanew + 24 + 28)
+    table = e_lfanew + 24 + opt_size
+    out = []
+    for index in range(count):
+        off = table + index * 40
+        name = data[off:off + 8].rstrip(b"\x00").decode(errors="replace")
+        va, raw_size, _raw_ptr = struct.unpack_from("<III", data, off + 12)
+        (characteristics,) = struct.unpack_from("<I", data, off + 36)
+        out.append((name, image_base + va, image_base + va + raw_size,
+                    characteristics))
+    return tuple(out)
+
+
+def section_of(exe: Path | str, address: int) -> str:
+    """The name of the section holding `address`, or "" if none does."""
+    for name, low, high, _characteristics in _sections(Path(exe)):
+        if low <= address < high:
+            return name
+    return ""
+
+
+def rewrites_itself(exe: Path | str, address: int) -> bool:
+    """Is `address` in a section that is executable AND writable?
+
+    THE IMAGE SAYS SO ITSELF, in the characteristics of its own section
+    table, and that is the whole reason this is a question rather than a
+    constant. It began as `SELFMOD_RANGE = (0x00664000, 0x00669000)` copied
+    out of tools/byte_match.py - the bounds of one section of one image,
+    transcribed into source where nothing could keep them true. Reading the
+    bounds instead of copying them was better; reading the PROPERTY is
+    better again, because the name `_SELFMOD` is this image's label for it
+    and the flags are what actually make it so. In this image exactly one
+    section carries both: `.text` is 0x60000020, `_SELFMOD` is 0xE0000020.
+    """
+    wanted = IMAGE_SCN_MEM_EXECUTE | IMAGE_SCN_MEM_WRITE
+    for _name, low, high, characteristics in _sections(Path(exe)):
+        if low <= address < high:
+            return characteristics & wanted == wanted
+    return False
 
 
 @functools.lru_cache(maxsize=4)
@@ -678,7 +728,7 @@ def compare_asm(original: Listing, compiled: Listing) -> AsmComparison:
         differing_constants=tuple(constants), flags=compiled.flags)
 
 
-def span_refusal(record: DecompilationState,
+def span_refusal(record: DecompilationState, exe: Path | str,
                  shared: frozenset = frozenset()) -> Tier | None:
     """The tier for a record no verdict is defined on, or None.
 
@@ -691,11 +741,12 @@ def span_refusal(record: DecompilationState,
 
     `shared` comes from `shared_spans` over the whole record set, because
     whether a span has a second claimant is not knowable from one record.
+    Everything else is read out of the image - see `rewrites_itself`.
     """
     if not record.image_spans:
         return Tier.REFUSED
     low, high = record.image_spans[0]
-    if SELFMOD_RANGE[0] <= low < SELFMOD_RANGE[1]:
+    if rewrites_itself(exe, low):
         return Tier.REFUSED
     if (low, high) in shared:
         return Tier.SHARED_TAIL
@@ -755,7 +806,7 @@ def compare_record(record: DecompilationState, exe: Path | str,
     attempts = (flags,) if isinstance(flags, str) else tuple(flags)
     if not attempts:
         raise ValueError("no flag sets to try")
-    refusal = span_refusal(record, shared)
+    refusal = span_refusal(record, exe, shared)
     if refusal is not None:
         return AsmComparison(verdict=refusal, flags="")
     original = original_asm(record, exe)
