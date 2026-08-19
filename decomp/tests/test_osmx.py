@@ -94,3 +94,108 @@ def test_status_is_a_report_and_not_a_gate(tree):
     """It exits 0 even with 4,045 records of outstanding work; `check` is
     the command that fails."""
     assert run("status", "--src", str(tree)).exit_code == 0
+
+
+# ----------------------------------------------------------------- show
+
+NAMED = """// ORIGINAL: 0x0045F950 _WinMain@16 0x0045F950-0x0045F958
+void a() {
+}
+// ORIGINAL: 0x005DAC70 ?set_font@Buffer@@QAEHPAVFont@@000@Z 0x005DAC70-0x005DAC78
+void b() {
+}
+// ORIGINAL: 0x00401000 ?init@Alpha@@QAEXXZ 0x00401000-0x00401008
+void c() {
+}
+// ORIGINAL: 0x00402000 ?init@Beta@@QAEXXZ 0x00402000-0x00402008
+void d() {
+}
+// ORIGINAL: 0x00403000 ?init@Gamma@@QAEXXZ 0x00403000-0x00403008
+void e() {
+}
+// ORIGINAL: 0x00404000 ?init@Delta@@QAEXXZ 0x00404000-0x00404008
+void f() {
+}
+// ORIGINAL: 0x00405000 ?init@Epsilon@@QAEXXZ 0x00405000-0x00405008
+void g() {
+}
+// ORIGINAL: 0x00406000 ?close@Alpha@@QAEXXZ 0x00406000-0x00406008
+void h() {
+}
+// ORIGINAL: 0x00406000 ?close@Alpha@@QAEXXZ 0x00406000-0x00406008 FILE
+void i() {
+}
+"""
+
+
+@pytest.fixture
+def named(tmp_path):
+    (tmp_path / "n.cpp").write_text(NAMED)
+    return tmp_path
+
+
+def show(tree, target, *extra):
+    return run("show", target, "--src", str(tree),
+               "--exe", "/nonexistent", *extra)
+
+
+def test_a_name_finds_it_through_its_decoration(named):
+    """`WinMain` is `_WinMain@16` here: the underscore is stdcall
+    decoration, so a word-boundary match would miss it entirely."""
+    result = show(named, "WinMain", "--json")
+    assert result.exit_code == 0, result.output
+    assert json.loads(result.output)[0]["name"] == "_WinMain@16"
+
+
+def test_a_scoped_name_finds_the_member(named):
+    result = show(named, "Buffer::set_font", "--json")
+    assert json.loads(result.output)[0]["address"] == "0x005DAC70"
+
+
+def test_an_address_finds_it(named):
+    for spelling in ("0x0045F950", "0045F950", "45f950"):
+        assert json.loads(show(named, spelling, "--json").output)[0][
+            "name"] == "_WinMain@16"
+
+
+def test_a_short_hex_looking_name_is_read_as_a_name(named):
+    """`add`, `face` and `dead` are all valid hex. Winning that argument
+    silently is how someone asking about a function gets the bytes at
+    0x000ADD instead, so an address takes six digits or an `0x`."""
+    assert not osmx._looks_like_an_address("add")
+    assert not osmx._looks_like_an_address("face")
+    assert osmx._looks_like_an_address("0xadd")
+    assert osmx._looks_like_an_address("0045F950")
+
+
+def test_a_name_many_pieces_share_lists_rather_than_dumps(named):
+    """Five classes have an `init`. Choosing one silently would answer a
+    question nobody asked; printing five disassemblies answers too much."""
+    result = show(named, "init")
+    assert result.exit_code == 1
+    assert "5 pieces match" in result.output
+    for owner in ("Alpha", "Beta", "Gamma", "Delta", "Epsilon"):
+        assert f"?init@{owner}@@QAEXXZ" in result.output
+
+
+def test_an_address_two_annotations_claim_shows_both(named):
+    """34 addresses in the real tree are annotated twice, usually a body in
+    `src/` and the same piece in the proved store. Both are the answer."""
+    result = show(named, "0x00406000")
+    assert result.exit_code == 0
+    assert "2 annotations match" in result.output
+    assert result.output.count("0x00406000") >= 2
+
+
+def test_an_unmatched_target_fails(named):
+    result = show(named, "NotAThing")
+    assert result.exit_code == 1
+    assert "matches" in result.output
+
+
+def test_without_an_image_it_still_answers_from_the_map(named):
+    """The map is on disk; the image may not be. What the annotation says
+    is worth having either way."""
+    result = show(named, "WinMain")
+    assert result.exit_code == 0
+    assert "no image to read" in result.output
