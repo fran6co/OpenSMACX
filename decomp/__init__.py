@@ -55,12 +55,12 @@ from __future__ import annotations
 
 from . import grammar, model, reader, writer
 from .model import DecompilationState, Mode, Recipe, State, Tier
-from .reader import function_line, read, read_file
+from .reader import function_line, read, read_file, read_text
 from .writer import remove, remove_file, write, write_file
 
 __all__ = [
     "grammar", "model", "reader", "writer",
     "DecompilationState", "Mode", "Recipe", "State", "Tier",
-    "read", "read_file", "function_line",
+    "read", "read_file", "read_text", "function_line",
     "write", "remove", "write_file", "remove_file",
 ]

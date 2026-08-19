@@ -25,8 +25,6 @@ from .grammar import (DEFINITION_HEAD, DEFINITION_KEYWORDS,
                       NEXT_MARKER, SENTINEL, _MANGLED_BASE)
 from .model import DecompilationState, Mode, Recipe, State
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-SRC_ROOT = REPO_ROOT / "src"
 
 
 # --------------------------------------------------------------- recognition
@@ -402,29 +400,26 @@ def read_file(path: Path) -> list[DecompilationState]:
     return _read_text(path.read_text(), path)
 
 
-def read(source: Path | str,
-         path: Path | str | None = None) -> list[DecompilationState]:
-    """The annotations under a path, or in a text.
+def read(path: Path | str) -> list[DecompilationState]:
+    """The annotations under `path`.
 
-    ONE ARGUMENT is a path: a FILE reads that file; a DIRECTORY is globbed
-    recursively for source files and every annotation under it comes back,
-    in deterministic order. TWO ARGUMENTS are in-memory TEXT attributed to
-    `path`. No caching anywhere: a call reads what is on disk at the moment
-    of the call. A caller that wants a different set of files reads them
-    itself and keeps the results.
+    A FILE reads that file; a DIRECTORY is globbed recursively for source
+    files and every annotation under it comes back, in deterministic order.
+    No caching anywhere: a call reads what is on disk at the moment of the
+    call. A caller that wants a different set of files reads them itself and
+    keeps the results.
+
+    ONE JOB, AND THAT IS THE CHANGE. This took an optional second argument
+    and switched on it: two arguments meant the FIRST was in-memory text.
+    Overloading on argument count cannot be expressed to a type checker, so
+    passing a path to the two-argument form parsed the FILENAME as source,
+    matched nothing, and returned `[]` - the silent empty answer this
+    package exists to avoid - and the fix was a runtime `TypeError` guarding
+    a signature that should not have been ambiguous. `read_text` is that
+    form, named.
     """
-    if path is not None:
-        # The two-argument form is TEXT, and a `Path` here is a caller that
-        # meant the one-argument form: `str(path)` would parse the filename
-        # as if it were a source file and return nothing, which is the silent
-        # empty answer this package is built to avoid.
-        if not isinstance(source, str):
-            raise TypeError(
-                "read(text, path) takes the text to scan, not "
-                f"{type(source).__name__}; read(path) reads a file")
-        return _read_text(source, Path(path))
-    source = Path(source)
-    if source.is_dir():
+    path = Path(path)
+    if path.is_dir():
         found: list[DecompilationState] = []
         # BOTH SUFFIXES. `.cpp` is what this tree is written in; `.c` arrived
         # with `src/vendor/zlib-1.0.2/`, where the recovery for thirteen
@@ -433,12 +428,21 @@ def read(source: Path | str,
         # report those annotations as missing while the files sat in the
         # tree.
         for suffix in ("*.cpp", "*.c"):
-            for file in source.rglob(suffix):
+            for file in path.rglob(suffix):
                 found.extend(read_file(file))
         found.sort(key=lambda record: (record.path, record.line,
                                        record.address))
         return found
-    return read_file(source)
+    return read_file(path)
+
+
+def read_text(text: str, path: Path | str) -> list[DecompilationState]:
+    """The annotations in `text`, attributed to `path`.
+
+    For text that is not on disk, or not on disk yet - a rewrite being
+    checked before it is written.
+    """
+    return _read_text(text, path)
 
 
 def function_line(source: Path | str, name: str) -> int:

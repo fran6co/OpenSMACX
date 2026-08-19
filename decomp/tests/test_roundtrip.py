@@ -11,11 +11,20 @@ Run with `uv run pytest decomp/tests`.
 
 from pathlib import Path
 
+import ast
+import sys
+
 import pytest
 
-from decomp import (DecompilationState, Mode, State, function_line, read,
-                    read_file, remove, remove_file, write, write_file)
-from decomp.__main__ import _key, roundtrip_tree
+import decomp
+
+from decomp import (DecompilationState, Mode, State, function_line, grammar,
+                    read,
+                    read_file, read_text, reader, remove, remove_file,
+                    write, write_file)
+
+# This checkout, answered by the test rather than by the package.
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 FIXTURE = Path("fixture.cpp")
 
@@ -29,8 +38,8 @@ def record(address, line, mode=Mode.BODY, state=State.IMPLEMENTED,
 
 def loop(text):
     """read -> write -> read; the records the loop must preserve."""
-    records = read(text, FIXTURE)
-    return records, read(write(text, records), FIXTURE)
+    records = read_text(text, FIXTURE)
+    return records, read_text(write(text, records), FIXTURE)
 
 
 def keys(records):
@@ -126,13 +135,13 @@ void __cdecl h() {
 
 
 def test_wrapped_lesson_canonicalises():
-    records = read(WRAPPED_LESSON, FIXTURE)
+    records = read_text(WRAPPED_LESSON, FIXTURE)
     # The reader joins the continuation with a space.
     assert records[0].ruled_out == \
         ("plain ret 4 leaves ECX live, so the stub must zero it first",)
     rewritten = write(WRAPPED_LESSON, records)
     assert rewritten != WRAPPED_LESSON          # one canonical line now
-    reread = read(rewritten, FIXTURE)
+    reread = read_text(rewritten, FIXTURE)
     assert keys(records) == keys(reread)
     # The fixed point: canonical is stable.
     assert write(rewritten, reread) == rewritten
@@ -180,10 +189,10 @@ void __cdecl b() {
 
 
 def test_unclaimed_markers_pass_through():
-    records = read(TWO_WITH_LESSONS, FIXTURE)
+    records = read_text(TWO_WITH_LESSONS, FIXTURE)
     described = [r for r in records if r.address == 0x00407000]
     rewritten = write(TWO_WITH_LESSONS, described)
-    reread = read(rewritten, FIXTURE)
+    reread = read_text(rewritten, FIXTURE)
     # A is rewritten canonically; B was not described, so it is untouched.
     assert [r.address for r in reread] == [0x00407000, 0x00407010]
     assert reread[0].levers == (("fp-1", "what landed A"),)
@@ -208,10 +217,10 @@ def test_append_past_the_last_line():
 
 
 def test_remove_deletes_named_records():
-    records = read(TWO_WITH_LESSONS, FIXTURE)
+    records = read_text(TWO_WITH_LESSONS, FIXTURE)
     drop = [r for r in records if r.address == 0x00407010]
     rewritten = remove(TWO_WITH_LESSONS, drop)
-    reread = read(rewritten, FIXTURE)
+    reread = read_text(rewritten, FIXTURE)
     assert [r.address for r in reread] == [0x00407000]
     # B's marker and lesson run are gone; B's code and all of A remain.
     assert "0x00407010" not in rewritten
@@ -222,7 +231,7 @@ def test_remove_deletes_named_records():
 
 
 def test_remove_all_leaves_only_the_code():
-    records = read(TWO_WITH_LESSONS, FIXTURE)
+    records = read_text(TWO_WITH_LESSONS, FIXTURE)
     rewritten = remove(TWO_WITH_LESSONS, records)
     assert "ORIGINAL:" not in rewritten
     assert "LEVER:" not in rewritten
@@ -232,8 +241,6 @@ def test_remove_all_leaves_only_the_code():
 
 
 def test_remove_refusals():
-    with pytest.raises(ValueError, match="marker-addressable"):
-        remove("anything\n", [record(0x409000, line=0)])
     with pytest.raises(ValueError, match="past the end"):
         remove("one line\n", [record(0x409000, line=99)])
 
@@ -241,9 +248,14 @@ def test_remove_refusals():
 # ----------------------------------------------------------------- refusals
 
 
-def test_refuses_filename_derived_records():
-    with pytest.raises(ValueError, match="marker-addressable"):
-        write("anything\n", [record(0x409000, line=0)])
+def test_a_line_number_is_1_based_and_the_record_says_so():
+    """Refused at construction, not at the two entry points that remembered
+    to ask: `lines[line - 1]` on a zero silently addresses the LAST line, so
+    a record that could do that must not exist in the first place."""
+    with pytest.raises(ValueError, match="1-based"):
+        record(0x409000, line=0)
+    with pytest.raises(ValueError, match="1-based"):
+        record(0x409000, line=-1)
 
 
 def test_refuses_file_and_excluded_together():
@@ -311,7 +323,7 @@ def test_insert_new_annotation_above_a_function():
     # where it ends in the image.
     assert lines[0] == "// ORIGINAL: 0x00409000 ?alpha@@YAXXZ 0x00409000-0x00409008"
     assert lines[1] == "void __cdecl alpha() {"   # definition untouched
-    reread = read(rewritten, FIXTURE)
+    reread = read_text(rewritten, FIXTURE)
     assert len(reread) == 1
     assert reread[0].address == 0x00409000
     assert reread[0].line == 1
@@ -341,12 +353,12 @@ void __cdecl gamma() {
 
 
 def test_insert_between_existing_annotations():
-    records = read(MARKED, FIXTURE)
+    records = read_text(MARKED, FIXTURE)
     assert [r.address for r in records] == [0x00400100, 0x00400300]
     new = record(0x00400200, line=5, name="?beta@@YAXXZ",
                  spans=((0x00400200, 0x00400208),))
     rewritten = write(MARKED, records + [new])
-    reread = read(rewritten, FIXTURE)
+    reread = read_text(rewritten, FIXTURE)
     assert [r.address for r in reread] == [0x00400100, 0x00400200, 0x00400300]
     assert reread[1].line == 5
     assert reread[1].name == "?beta@@YAXXZ"
@@ -354,7 +366,7 @@ def test_insert_between_existing_annotations():
 
 
 def test_one_call_mixes_replacement_and_insertion():
-    records = read(MARKED, FIXTURE)
+    records = read_text(MARKED, FIXTURE)
     first = next(r for r in records if r.address == 0x00400100)
     first.byte_exact = True
     new = record(0x00400200, line=5, name="?beta@@YAXXZ",
@@ -364,7 +376,7 @@ def test_one_call_mixes_replacement_and_insertion():
             "BYTE_EXACT") in rewritten
     assert "// ORIGINAL: 0x00400200 ?beta@@YAXXZ 0x00400200-0x00400208" \
         in rewritten
-    reread = read(rewritten, FIXTURE)
+    reread = read_text(rewritten, FIXTURE)
     assert [r.address for r in reread] == [0x00400100, 0x00400200, 0x00400300]
     assert reread[0].byte_exact is True
 
@@ -448,7 +460,7 @@ def test_tree_roundtrip():
     investigating - the writer and the reader disagreeing about what an
     annotation owns.
     """
-    looped, skipped = roundtrip_tree()
+    looped, skipped = roundtrip_tree(REPO_ROOT / "src")
     assert looped > 3000, looped
     assert skipped == 0, skipped
 
@@ -457,7 +469,6 @@ def test_tree_roundtrip():
 
 
 def test_layering_accepts_the_package_as_it_stands():
-    from decomp.__main__ import layering
     assert layering() >= 5
 
 
@@ -468,7 +479,6 @@ def test_layering_refuses_a_reader_that_grows_a_dependency(tmp_path):
     exact edit the rule exists to stop - `reader` reaching for something that
     must be installed - and it must be reported, not tolerated.
     """
-    from decomp.__main__ import layering
     (tmp_path / "reader.py").write_text("import capstone\n")
     with pytest.raises(AssertionError, match="standard library"):
         layering(tmp_path)
@@ -476,28 +486,210 @@ def test_layering_refuses_a_reader_that_grows_a_dependency(tmp_path):
 
 def test_layering_refuses_an_undeclared_dependency(tmp_path):
     """A module outside the reader set still may not import anything it likes."""
-    from decomp.__main__ import layering
     (tmp_path / "asm.py").write_text("import pefile\n")
     with pytest.raises(AssertionError, match="_MAY_IMPORT"):
         layering(tmp_path)
 
 
 def test_layering_allows_what_it_declares(tmp_path):
-    from decomp.__main__ import layering
     (tmp_path / "asm.py").write_text("import capstone\nimport struct\n")
     assert layering(tmp_path) == 1
 
 
-def test_read_refuses_a_path_where_text_belongs(tmp_path):
-    """`read(path, path)` is a caller that meant `read(path)`.
-
-    Left to itself the filename is scanned as if it were source, no marker
-    matches, and the answer is an empty list - the silent-zero failure this
-    package's own self-proof exists to catch.
+def test_reading_a_text_and_reading_a_path_are_different_calls(tmp_path):
+    """The hazard this replaces: `read(source, path)` switched on argument
+    COUNT, so `read(path, path)` scanned the FILENAME as source, matched no
+    marker and returned `[]`. Overloading on arity cannot be shown to a type
+    checker, so it needed a runtime guard; two names need none.
     """
-    from decomp import read
     source = tmp_path / "x.cpp"
-    source.write_text("// ORIGINAL: 0x00401000 ?f@@YAXXZ 0x00401000-0x00401004\n")
-    with pytest.raises(TypeError, match="takes the text to scan"):
-        read(source, source)
-    assert len(read(source.read_text(), source)) == 1
+    source.write_text(
+        "// ORIGINAL: 0x00401000 ?f@@YAXXZ 0x00401000-0x00401004\n")
+    assert len(read(source)) == 1
+    assert len(read_text(source.read_text(), source)) == 1
+
+
+# ------------------------------------------- what `python -m decomp` was
+#
+# These were `decomp/__main__.py`, run as `uv run python -m decomp`. Every
+# one of them is an assertion about the package, and this module already
+# imported three of them - a test suite reaching into an entry point for its
+# own checks, which is the wrong way round. There is one way to run the
+# package's checks now, and it is the one that was always running them.
+
+def test_the_tree_parses_to_the_shape_consumers_read():
+    """The floor, and the failure this package can actually have in
+    isolation: SILENCE. A reader that finds nothing returns `[]`, and every
+    count computed from it comes out zero looking like an answer.
+    """
+    records = read(REPO_ROOT / "src")
+    assert len(records) > 5000, len(records)
+    assert any(record.state is State.IMPLEMENTED for record in records)
+    assert all(isinstance(record.path, Path) and record.path.is_absolute()
+               for record in records)
+    # A marker names the piece it carries: the migration put a name and
+    # image spans on every one, and a fresh annotation must supply both.
+    unnamed = [r for r in records if not r.name or not r.image_spans]
+    assert not unnamed, \
+        f"{len(unnamed)} records without name/spans, first at " \
+        f"{unnamed[0].path}:{unnamed[0].line}"
+
+
+def _code_only(region: str) -> str:
+    """The region with comments and blank lines removed."""
+    kept, in_block = [], False
+    for line in region.splitlines():
+        text = line.strip()
+        if in_block:
+            if "*/" in text:
+                in_block = False
+                text = text.split("*/", 1)[1].strip()
+            else:
+                continue
+        if "//" in text:
+            text = text.split("//", 1)[0].strip()
+        if text.startswith("/*"):
+            if "*/" not in text:
+                in_block = True
+            continue
+        if not text:
+            continue
+        kept.append(text)
+    return "\n".join(kept)
+
+
+def _region_code(region: str) -> str:
+    """The region's code with the annotation layer removed.
+
+    A region can start mid-comment - a bare marker inside a doc block - and
+    `_code_only` cannot know that: it keeps the bare marker line, which is
+    annotation, and drops the `//`-prefixed one the writer emits, so the two
+    spellings of the SAME layer would compare as different code. Marker
+    lines are removed from both sides first; the code underneath is what a
+    round trip must preserve.
+    """
+    lines = [line for line in region.splitlines()
+             if not grammar.MARKER.search(line)]
+    return _code_only("\n".join(lines))
+
+
+def _key(record: DecompilationState) -> tuple[object, ...]:
+    """Everything a round trip must preserve.
+
+    `line` is NOT in it: it is a position in one text, and a rewrite that
+    canonicalises the annotation layer - a wrapped lesson re-emitted on one
+    line - legitimately moves every line below. The region is compared
+    code-only for the same reason, and the record fields beside it already
+    prove the annotations survived. What must never change is the code.
+    """
+    return (record.address, record.mode, record.state,
+            _region_code(record.region), record.byte_exact,
+            record.exclusion, record.extract_error, record.recipe,
+            record.levers, record.ruled_out, record.unrecoverable,
+            record.deferred, record.name, record.image_spans,
+            record.symbol)
+
+
+def roundtrip_tree(root: Path) -> tuple[int, int]:
+    """(looped, skipped): files whose annotations survive write -> read.
+
+    Every file with annotations is read, rewritten in memory from its own
+    records, and read again; the two parses must agree field for field.
+    A skip means `write` refused a record - measured zero since the
+    migration gave every annotation an explicit marker, so a new skip is
+    an event worth investigating.
+    """
+    by_path: dict[Path, list[DecompilationState]] = {}
+    for record in read(root):
+        by_path.setdefault(record.path, []).append(record)
+    looped = skipped = 0
+    for path, records in by_path.items():
+        try:
+            rewritten = write(path.read_text(), records)
+        except ValueError:
+            skipped += 1
+            continue
+        reread = reader.read_text(rewritten, path)
+        if [_key(r) for r in records] != [_key(r) for r in reread]:
+            skipped += 1
+            continue
+        # THE FIXED POINT. The first write may canonicalise - one line per
+        # lesson, keywords in one order - and shift every line below; the
+        # second write, from the records of the text it produced, must
+        # change nothing. Canonical is stable or it is not canonical.
+        if write(rewritten, reread) != rewritten:
+            skipped += 1
+            continue
+        looped += 1
+    return looped, skipped
+
+
+# WHAT EACH MODULE MAY IMPORT, and the reason the table exists rather than a
+# sentence in `pyproject.toml`. The package used to claim it was standard
+# library throughout; `asm` disassembles, so that claim was already false and
+# capstone is a declared dependency now. The invariant worth keeping is
+# NARROWER and is the one people actually rely on: reading an annotation costs
+# nothing but Python. A promise nobody checks decays into a comment; this is
+# the check.
+_STDLIB_ONLY = ("model", "grammar", "reader", "writer")
+_MAY_IMPORT = {"asm": frozenset({"capstone"})}
+
+
+def layering(root: Path | None = None) -> int:
+    """Every module's module-level imports, held to what it may depend on.
+
+    Returns the number of modules checked. Two rules, and the second is the
+    one that keeps the first honest.
+
+    WHAT a module may import comes from `_MAY_IMPORT`, with the readers held
+    to the standard library so that reading an annotation needs nothing
+    installed.
+
+    WHERE it may import it is: at module level, always. A lazy import is a
+    dependency that does not show up in the import block, so it escapes the
+    rule above and moves its own failure from startup into the middle of a
+    measurement - `asm` hid capstone in `_disasm` for exactly as long as the
+    package claimed to be standard library throughout. Declared dependencies
+    are imported like anything else.
+    """
+    checked = 0
+    root = root or Path(decomp.__file__).resolve().parent
+    for path in sorted(root.glob("*.py")):
+        module = path.stem
+        if module == "__main__":
+            continue
+        allowed = _MAY_IMPORT.get(module, frozenset())
+        tree = ast.parse(path.read_text())
+        top = {id(node) for node in ast.walk(tree)
+               if isinstance(node, (ast.Import, ast.ImportFrom))
+               and any(node is child for child in tree.body)}
+        for node in ast.walk(tree):
+            if not isinstance(node, (ast.Import, ast.ImportFrom)):
+                continue
+            assert id(node) in top, (
+                f"{path.name} line {node.lineno} imports inside a function; "
+                f"every import in this package belongs at module level, so "
+                f"that what a module costs to import is what it says it does")
+
+            if isinstance(node, ast.Import):
+                roots = [alias.name.split(".")[0] for alias in node.names]
+            elif isinstance(node, ast.ImportFrom):
+                if node.level:            # `from .model import ...`
+                    continue
+                roots = [(node.module or "").split(".")[0]]
+            else:
+                continue
+            for name in roots:
+                if name in sys.stdlib_module_names or name in allowed:
+                    continue
+                assert module not in _STDLIB_ONLY, (
+                    f"{path.name} imports {name!r} at module level; "
+                    f"{module} is one of the readers and must stay standard "
+                    f"library so that reading an annotation needs nothing "
+                    f"installed")
+                raise AssertionError(
+                    f"{path.name} imports {name!r} at module level, which "
+                    f"_MAY_IMPORT does not allow for {module}")
+        checked += 1
+    assert checked, "no modules checked - the glob found nothing"
+    return checked
