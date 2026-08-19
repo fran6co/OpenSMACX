@@ -36,21 +36,42 @@ class Recipe(StrEnum):
 
 
 class Tier(StrEnum):
-    """How far one assembly listing reproduces another, best first.
+    """How far one body reproduces another, best first.
 
-    The ladder this package measures, and no more of it: `tools/byte_match.py`
-    also reports SHAPE_EXACT, SHARED_TAIL and REFUSED, which need span
-    classification and an operand-level comparison that live there. A verdict
-    named here is one `compare_asm` can actually reach.
+    THE LAST TWO ARE NOT FAILURES, they are refusals: a verdict is not
+    defined for those spans at all, and summing them into a denominator with
+    the misses is what stops a reader telling a wall from a body nobody has
+    written yet.
     """
     BYTE_EXACT = "BYTE_EXACT"        # every compared byte agrees
-    MNEMONIC_ONLY = "MNEMONIC_ONLY"  # same instructions, different constants
+    SHAPE_EXACT = "SHAPE_EXACT"      # same instructions, same registers, same
+                                     # addressing - a CONSTANT is wrong. The
+                                     # most actionable miss there is: a field
+                                     # offset, a vtable slot, a loop bound.
+    MNEMONIC_ONLY = "MNEMONIC_ONLY"  # same instruction sequence, different
+                                     # registers or addressing form
     MISMATCH = "MISMATCH"            # different instructions
+    NO_COMPILE = "NO_COMPILE"        # the body did not build, so there is
+                                     # nothing to compare. A TIER and not an
+                                     # exception: getting a body from here to
+                                     # MISMATCH is the most valuable single
+                                     # move in a recovery pass, so a loop has
+                                     # to be able to rank it.
+    SHARED_TAIL = "SHARED_TAIL"      # `/Gy` folded this span onto another
+                                     # function's; it belongs to no one body
+    REFUSED = "REFUSED"              # nothing here can be scored - a
+                                     # self-modifying span, or a record with
+                                     # no primary span at all
 
     @property
     def rank(self) -> int:
         """Position in the ladder; lower is better."""
         return _TIER_ORDER.index(self)
+
+    @property
+    def scoreable(self) -> bool:
+        """False where a verdict is not defined, rather than not reached."""
+        return self not in (Tier.SHARED_TAIL, Tier.REFUSED)
 
 
 class State(StrEnum):
@@ -139,4 +160,6 @@ class DecompilationState:
 
 
 # Declared after `Tier` so the members exist to be indexed.
-_TIER_ORDER = (Tier.BYTE_EXACT, Tier.MNEMONIC_ONLY, Tier.MISMATCH)
+_TIER_ORDER = (Tier.BYTE_EXACT, Tier.SHAPE_EXACT, Tier.MNEMONIC_ONLY,
+               Tier.MISMATCH, Tier.NO_COMPILE, Tier.SHARED_TAIL,
+               Tier.REFUSED)
