@@ -36,6 +36,8 @@ what is done with the pair is the caller's question.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
+
 import difflib
 import functools
 import json
@@ -232,7 +234,7 @@ def _entry_for(source: Path, compile_commands: Path) -> dict[str, str]:
         f"{source.name} is not a build input in {compile_commands.name}")
 
 
-def _compile_command(entry: dict, flags: str) -> list:
+def _compile_command(entry: dict[str, str], flags: str) -> list[str]:
     """The build's own compile command with its optimisation flags swapped
     for `flags`.
 
@@ -278,7 +280,8 @@ def _compile(source: Path, flags: str, compile_commands: Path) -> bytes:
         return obj.read_bytes()
 
 
-def _coff_function(obj: bytes, symbol: str) -> bytes:
+def _coff_function_masked(obj: bytes, symbol: str,
+                          ) -> tuple[bytes, frozenset[int]]:
     """The symbol's code out of a COFF object - the `.text` section named
     by the symbol, from the symbol's value to the section's end, trailing
     NOP/INT3 padding stripped. With `/Gy` each function is its own COMDAT
@@ -301,37 +304,60 @@ def _coff_function(obj: bytes, symbol: str) -> bytes:
         off = 20 + i * 40
         name = obj[off:off + 8].rstrip(b"\x00").decode()
         raw_size, raw_ptr = struct.unpack_from("<II", obj, off + 16)
-        sections.append((name, raw_size, raw_ptr))
+        reloc_ptr, = struct.unpack_from("<I", obj, off + 24)
+        n_relocs, = struct.unpack_from("<H", obj, off + 32)
+        sections.append((name, raw_size, raw_ptr, reloc_ptr, n_relocs))
 
-    matches = []
+    externals = []
     i = 0
     while i < n_syms:
         off = sym_ptr + i * 18
         name = sym_name(obj[off:off + 8])
         value, section_no, _type, storage, n_aux = \
             struct.unpack_from("<IhHBB", obj, off + 8)
-        if storage == 2 and 0 < section_no <= len(sections):
-            sec = sections[section_no - 1]
-            if sec[0] == ".text" and name in (symbol, "_" + symbol):
-                matches.append((name, value, section_no - 1))
+        if storage == 2 and 0 < section_no <= len(sections) \
+                and sections[section_no - 1][0] == ".text":
+            externals.append((name, value, section_no - 1))
         i += 1 + n_aux
 
+    matches = [e for e in externals if e[0] in (symbol, "_" + symbol)]
     if not matches:
         raise ValueError(
             f"{symbol} not found among the object's .text symbols")
-    if len(matches) > 1:
+    if len({(value, sec) for _n, value, sec in matches}) > 1:
         raise ValueError(f"{symbol} is ambiguous in the object")
     _name, value, sec = matches[0]
-    _sec_name, raw_size, raw_ptr = sections[sec]
+    _sec_name, raw_size, raw_ptr, reloc_ptr, n_relocs = sections[sec]
     code = obj[raw_ptr + value:raw_ptr + raw_size]
     end = len(code)
     while end > 0 and code[end - 1] in (0x90, 0xCC):
         end -= 1
-    return code[:end]
+    code = code[:end]
+
+    # THE OBJECT'S OWN RELOCATIONS, in the same shape the image side returns:
+    # offsets into `code`. DIR32 is an absolute address the linker writes,
+    # REL32 a displacement it computes; both leave four bytes the object
+    # cannot know and the image does.
+    masked = set()
+    for index in range(n_relocs):
+        at = reloc_ptr + index * 10
+        va, _symbol_index, kind = struct.unpack_from("<IIH", obj, at)
+        if kind not in (0x0006, 0x0014):               # DIR32, REL32
+            continue
+        for byte in range(4):
+            offset = va + byte - value
+            if 0 <= offset < len(code):
+                masked.add(offset)
+    return code, frozenset(masked)
+
+
+def _coff_function(obj: bytes, symbol: str) -> bytes:
+    """The symbol's code alone, without the relocation mask beside it."""
+    return _coff_function_masked(obj, symbol)[0]
 
 
 def compiled_asm(record: DecompilationState, compile_commands: Path | str,
-                 flags: str) -> list:
+                 flags: str) -> Listing:
     """The assembly VC6 produces for the record's code: the record's file
     compiled by the build's own compile command with its optimisation flags
     swapped for `flags`, the function pulled out of the object by the
@@ -341,13 +367,15 @@ def compiled_asm(record: DecompilationState, compile_commands: Path | str,
         raise ValueError(
             f"{record.address_hex}: no name fact under its marker")
     obj = _compile(record.path, flags, Path(compile_commands))
-    return _disasm(_coff_function(obj, record.name), record.address)
+    code, mask = _coff_function_masked(obj, record.name)
+    return Listing(_disasm(code, record.address), code=code,
+                   base=record.address, mask=mask, flags=flags)
 
 
 # ------------------------------------------------------------------ disasm
 
 
-def _disasm(data: bytes, base: int) -> list:
+def _disasm(data: bytes, base: int) -> list[str]:
     """Lines of `0xADDR  bytes  mnemonic operands`, capstone under the hood."""
     return [f"0x{ins.address:08X}  "
             f"{' '.join(f'{b:02X}' for b in ins.bytes):<24}  "
