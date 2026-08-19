@@ -25,13 +25,18 @@ THE LAYOUT. Each module is one concern:
                          function_line (a definition's line, by name)
     writer.py            the annotation writer - write, remove, and their
                          on-disk forms write_file, remove_file
+    mangled.py           reading an MSVC mangled name far enough to tell
+                         two overloads apart - `arity`, and no more
     asm.py               the assembly behind a record, and the verdict -
                          original_asm reads the pinned image, compiled_asm
                          compiles the record's file with VC6 and pulls the
                          function from the object, compare_record asks every
-                         flag set and keeps the best answer. NOT imported
-                         here: it needs capstone, and reading an annotation
-                         must not.
+                         flag set and keeps the best answer
+    record.py            what a measurement does to an annotation - stamped
+                         says what it should become, record_match writes it
+
+`asm` and `record` are NOT imported here: they need capstone, and reading
+an annotation must not.
 
 SELF-CONTAINED, BY REQUIREMENT. Nothing here imports from `tools/`.
 
@@ -53,13 +58,13 @@ are deleted.
 
 from __future__ import annotations
 
-from . import grammar, model, reader, writer
+from . import grammar, mangled, model, reader, writer
 from .model import DecompilationState, Mode, Recipe, State, Tier
 from .reader import function_line, read, read_file, read_text
 from .writer import remove, remove_file, write, write_file
 
 __all__ = [
-    "grammar", "model", "reader", "writer",
+    "grammar", "mangled", "model", "reader", "writer",
     "DecompilationState", "Mode", "Recipe", "State", "Tier",
     "read", "read_file", "read_text", "function_line",
     "write", "remove", "write_file", "remove_file",
