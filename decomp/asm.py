@@ -37,6 +37,7 @@ what is done with the pair is the caller's question.
 from __future__ import annotations
 
 import difflib
+import functools
 import json
 import re
 import shlex
@@ -113,7 +114,78 @@ def _pe_bytes(exe: Path, address: int, size: int) -> bytes:
     raise ValueError(f"{exe.name}: 0x{address:08X} is in no section")
 
 
-def original_asm(record: DecompilationState, exe: Path | str) -> list:
+def _base_relocations(data: bytes) -> frozenset[int]:
+    """Every address the loader rewrites when the image is rebased.
+
+    Only HIGHLOW (type 3) marks anything: it names four bytes holding an
+    address the linker filled in, and those are exactly the bytes an object
+    file leaves at zero for a relocation to fix. Type 0 is ABSOLUTE, a
+    block-alignment pad that names no byte at all - this image carries 362 of
+    them, and counting those would mask real code.
+    """
+    (e_lfanew,) = struct.unpack_from("<I", data, 0x3C)
+    optional = e_lfanew + 24
+    (image_base,) = struct.unpack_from("<I", data, optional + 28)
+    # PE32 lays its data directories at optional-header offset 96, eight bytes
+    # each; the base relocation table is the sixth.
+    directory_rva, directory_size = struct.unpack_from(
+        "<II", data, optional + 96 + 5 * 8)
+    if not directory_rva or not directory_size:
+        return frozenset()
+
+    n_sections, = struct.unpack_from("<H", data, e_lfanew + 6)
+    opt_size, = struct.unpack_from("<H", data, e_lfanew + 20)
+    table = e_lfanew + 24 + opt_size
+
+    def file_offset(rva: int) -> int | None:
+        for index in range(n_sections):
+            off = table + index * 40
+            va, raw_size, raw_ptr = struct.unpack_from("<III", data, off + 12)
+            if va <= rva < va + raw_size:
+                return raw_ptr + (rva - va)
+        return None
+
+    start = file_offset(directory_rva)
+    if start is None:
+        return frozenset()
+    addresses, cursor, end = [], start, start + directory_size
+    while cursor + 8 <= end:
+        page, block = struct.unpack_from("<II", data, cursor)
+        if block < 8:
+            break
+        for entry_at in range(cursor + 8, min(cursor + block, end), 2):
+            (entry,) = struct.unpack_from("<H", data, entry_at)
+            if entry >> 12 == 3:                       # HIGHLOW
+                addresses.append(image_base + page + (entry & 0xFFF))
+        cursor += block
+    return frozenset(addresses)
+
+
+@functools.lru_cache(maxsize=4)
+def _image_relocations(exe: Path) -> frozenset[int]:
+    """`_base_relocations` for a file, read once per image."""
+    return _base_relocations(exe.read_bytes())
+
+
+def _image_mask(exe: Path, low: int, high: int) -> frozenset[int]:
+    """Offsets in `[low, high)`, relative to `low`, a base relocation owns.
+
+    A HIGHLOW entry names the FIRST of four bytes, so each one masks four.
+    """
+    relocated = _image_relocations(exe)
+    masked = set()
+    # Walked over the SPAN rather than over the relocation table: the table
+    # holds 107,760 entries and a body is tens to thousands of bytes, so
+    # asking the span is orders of magnitude less work per record.
+    for address in range(low - 3, high):
+        if address in relocated:
+            for byte in range(4):
+                if low <= address + byte < high:
+                    masked.add(address + byte - low)
+    return frozenset(masked)
+
+
+def original_asm(record: DecompilationState, exe: Path | str) -> Listing:
     """The shipped image's assembly for `record` - the bytes at its
     primary span in `exe`, disassembled. A record can carry no spans - a
     fresh annotation the catalogue has not stamped yet - and then nothing
@@ -126,13 +198,23 @@ def original_asm(record: DecompilationState, exe: Path | str) -> list:
     if not exe.is_file():
         raise ValueError(f"no executable at {exe}")
     low, high = record.image_spans[0]
-    return _disasm(_pe_bytes(exe, low, high - low), low)
+    code = _pe_bytes(exe, low, high - low)
+    # SYMMETRY WITH THE OBJECT SIDE. A COMDAT is padded to alignment with
+    # `int3`/`nop` and the catalogued span can include that padding, so both
+    # sides are stripped or neither is: `0x0050F630` is a thirteen-byte body
+    # in a sixteen-byte span.
+    end = len(code)
+    while end > 0 and code[end - 1] in (0x90, 0xCC):
+        end -= 1
+    code = code[:end]
+    return Listing(_disasm(code, low), code=code, base=low,
+                   mask=_image_mask(exe, low, low + len(code)))
 
 
 # --------------------------------------------------------------- the compile
 
 
-def _entry_for(source: Path, compile_commands: Path) -> dict:
+def _entry_for(source: Path, compile_commands: Path) -> dict[str, str]:
     """The compile_commands entry describing how the build compiles
     `source`."""
     if not compile_commands.is_file():
