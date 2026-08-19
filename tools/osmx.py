@@ -29,9 +29,9 @@ import typer
 from decomp import DecompilationState, State, mangled, read, write_file
 from decomp.record import stamped
 from decomp.asm import (AsmComparison, CompileFailed, build_command,
-                        compare_asm, compare_record, compile_unit,
-                        original_asm, shared_spans, span_refusal,
-                        subject_asm)
+                        compare_asm, compare_record, compare_source,
+                        compile_unit, original_asm, shared_spans,
+                        span_refusal, subject_asm)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -343,6 +343,15 @@ FLAG_SETS = (
 )
 
 
+# THE CEILING IS THE WINE PREFIX, not the machine. Every VC6 compile runs
+# against the one prefix at ~/opt/vc6/.wineprefix, whose wineserver
+# serialises, and eight concurrent `CL` is where this tree measured the
+# knee. More workers than that queue on the server and win nothing; I also
+# proved the point by accident, running the test suite beside a sweep and
+# getting a compile failure that vanished when they were not competing.
+WINE_CEILING = 8
+
+
 @app.command()
 def measure(
     target: Annotated[str, typer.Argument(
@@ -359,6 +368,18 @@ def measure(
         help="Compile a file the build does not name with THIS file's "
              "command. Needed for src/recovered and src/unrecovered.",
     )] = "src/buffer.cpp",
+    body: Annotated[Path | None, typer.Option(
+        "--body",
+        help="Score THIS file's spelling of the piece instead of the "
+             "tree's. The tree is not touched.")] = None,
+    directory: Annotated[Path | None, typer.Option(
+        "--dir",
+        help="Score every *.cpp in this directory and rank them, best "
+             "first. The tree's own body is scored alongside as the "
+             "baseline.")] = None,
+    jobs: Annotated[int, typer.Option(
+        help=f"Concurrent compiles for --dir. Capped at {WINE_CEILING}: "
+             f"one shared wine prefix.")] = 0,
     reconfigure: Annotated[bool, typer.Option(
         "--reconfigure",
         help="Clear the cmake cache and regenerate the build database "
@@ -374,7 +395,26 @@ def measure(
 
     It does not write anything. `record` is the one that stamps a claim,
     and keeping them apart is what lets an agent be given this and not that.
+
+    `--body` AND `--dir` SCORE A SPELLING THAT IS NOT IN THE TREE, which is
+    what makes this a loop rather than a report. A match is found by
+    searching over source form, and the compiler is the only thing that can
+    say which form is right; without a candidate to hand it, the only way to
+    pose the question is to edit `src/`, measure, and edit back - so a
+    failed experiment leaves a dirty checkout, one spelling can be in flight
+    at a time, and an agent that may not write cannot ask at all.
+
+        osmx measure 0x004E0F80 --dir /tmp/variants
+
+    ranks a whole directory in one run against an unchanged tree. Each
+    candidate is a translation unit that DEFINES the piece under the name
+    the annotation records; it is compiled with the record's own invocation,
+    so it sees the include path the real unit sees.
     """
+    if body and directory:
+        typer.secho("--body names one candidate and --dir a directory of "
+                    "them; pass one", fg=typer.colors.RED)
+        raise typer.Exit(2)
     _fresh_compile_commands(compile_commands, reconfigure)
     records = read(src)
     claimants = _matching(records, target)
@@ -384,46 +424,152 @@ def measure(
             fg=typer.colors.RED)
         raise typer.Exit(2)
     record = claimants[0]
+    command = _command_for(compile_commands, record.path, borrow)
+    shared = shared_spans(records)
 
-    try:
-        command = build_command(compile_commands, record.path)
-    except ValueError:
-        # A build entry is a command, not a permission: `src/unrecovered/`
-        # is already a translation unit and only wants an invocation.
-        command = build_command(compile_commands, REPO_ROOT / borrow)
+    if directory is not None:
+        _rank_candidates(record, exe, directory, command, shared, jobs,
+                         as_json)
+        return
 
+    source = body if body is not None else record.path
     try:
-        result = compare_record(record, exe, command, FLAG_SETS,
-                                shared_spans(records))
+        result = compare_source(record, exe, source, command, FLAG_SETS,
+                                shared)
     except (ValueError, CompileFailed) as problem:
         typer.secho(f"{record.address_hex}: {problem}", fg=typer.colors.RED)
         raise typer.Exit(2) from None
 
     if as_json:
-        typer.echo(json.dumps({
-            "address": record.address_hex,
-            "name": record.name,
-            "verdict": str(result.verdict),
-            "flags": result.flags,
-            "instructions": [result.original_instructions,
-                             result.compiled_instructions],
-            "matching": result.matching_instructions,
-            "similarity": round(result.mnemonic_similarity, 4),
-            "first_divergence": result.first_divergence,
-            "compared_bytes": result.compared_bytes,
-            "masked_bytes": result.masked_bytes,
-            "differing_constants": [list(c) for c in
-                                    result.differing_constants],
-            "diagnostic": result.diagnostic,
-        }, indent=2))
+        typer.echo(json.dumps(
+            {"source": str(source), **_verdict_row(record, result)}, indent=2))
     else:
-        _print_verdict(record, result)
+        _print_verdict(record, result, source)
     raise typer.Exit(0 if str(result.verdict) == "BYTE_EXACT" else 1)
 
 
-def _print_verdict(record: DecompilationState,
-                   result: AsmComparison) -> None:
+def _command_for(compile_commands: Path, source: Path,
+                 borrow: str) -> list[str]:
+    """The build's invocation for `source`, or a borrowed one.
+
+    A BUILD ENTRY IS A COMMAND, NOT A PERMISSION. `src/recovered/` and
+    `src/unrecovered/` hold translation units CMake has no reason to build,
+    and all they are missing is an invocation - but WHICH one is a judgement
+    about include paths, which is why `decomp` refuses to guess and this
+    borrows deliberately.
+    """
+    try:
+        return build_command(compile_commands, source)
+    except ValueError:
+        return build_command(compile_commands, REPO_ROOT / borrow)
+
+
+def _verdict_row(record: DecompilationState, result: AsmComparison) -> dict:
+    return {
+        "address": record.address_hex,
+        "name": record.name,
+        "verdict": str(result.verdict),
+        "flags": result.flags,
+        "instructions": [result.original_instructions,
+                         result.compiled_instructions],
+        "matching": result.matching_instructions,
+        "similarity": round(result.mnemonic_similarity, 4),
+        "first_divergence": result.first_divergence,
+        "compared_bytes": result.compared_bytes,
+        "masked_bytes": result.masked_bytes,
+        "differing_constants": [list(c) for c in result.differing_constants],
+        "diagnostic": result.diagnostic,
+    }
+
+
+def _score_candidate(job: tuple) -> tuple:
+    """Score one candidate file. Runs in a worker process.
+
+    A CANDIDATE THAT DOES NOT DEFINE THE PIECE IS A ROW, NOT A CRASH. Half
+    the point of ranking a directory is that some of it is wrong; a
+    misnamed subject or a missing `extern "C"` would otherwise take the
+    other eight answers down with it.
+    """
+    source, record, exe, command, flag_sets, shared = job
+    try:
+        return str(source), compare_source(record, exe, source, command,
+                                           flag_sets, shared), ""
+    except (ValueError, CompileFailed) as problem:
+        return str(source), None, str(problem)
+
+
+def _rank_candidates(record: DecompilationState, exe: Path, directory: Path,
+                     command: list[str], shared: frozenset, jobs: int,
+                     as_json: bool) -> None:
+    """Score every candidate in `directory` and report them best first."""
+    candidates = sorted(directory.glob("*.cpp")) + sorted(
+        directory.glob("*.c"))
+    if not candidates:
+        typer.secho(f"no *.cpp under {directory}", fg=typer.colors.RED)
+        raise typer.Exit(2)
+
+    # THE TREE'S OWN BODY IS ALWAYS IN THE FIELD. "Best" with no baseline
+    # is not an answer anyone can act on: what a candidate has to beat is
+    # what is committed, and one extra compile is what it costs to say so.
+    work = [(source, record, exe, command, FLAG_SETS, shared)
+            for source in [record.path, *candidates]]
+    jobs = max(1, min(jobs or (os.cpu_count() or 1), WINE_CEILING))
+    if jobs == 1:
+        scored = [_score_candidate(job) for job in work]
+    else:
+        pool = concurrent.futures.ProcessPoolExecutor(max_workers=jobs)
+        with pool:
+            scored = list(pool.map(_score_candidate, work))
+
+    def rank(row: tuple) -> tuple:
+        _source, result, _note = row
+        if result is None:
+            return (99, 0.0)
+        return (result.verdict.rank, -result.mnemonic_similarity)
+
+    ordered = sorted(scored, key=rank)
+    baseline = next(r for r in scored if r[0] == str(record.path))
+    best = ordered[0]
+
+    if as_json:
+        typer.echo(json.dumps({
+            "address": record.address_hex,
+            "name": record.name,
+            "baseline": str(record.path),
+            "candidates": [
+                {"source": source, "error": note,
+                 **({} if result is None else _verdict_row(record, result))}
+                for source, result, note in ordered],
+        }, indent=2))
+    else:
+        typer.secho(f"\n{record.address_hex}  {record.name}", bold=True)
+        typer.echo(f"  {len(candidates)} candidate(s) against the tree's own "
+                   f"body\n")
+        for source, result, note in ordered:
+            mark = "  <- the tree" if source == str(record.path) else ""
+            if result is None:
+                typer.secho(f"  {'ERROR':14}{Path(source).name}{mark}",
+                            fg=typer.colors.RED)
+                typer.echo(f"  {'':14}{note}")
+                continue
+            colour = (typer.colors.GREEN
+                      if str(result.verdict) == "BYTE_EXACT" else None)
+            typer.secho(f"  {str(result.verdict):14}"
+                        f"{result.matching_instructions:>4}/"
+                        f"{result.original_instructions:<5} "
+                        f"{Path(source).name}{mark}", fg=colour)
+        if best[1] is not None and best[0] != baseline[0]:
+            _print_verdict(record, best[1], Path(best[0]))
+
+    verdict = best[1] and str(best[1].verdict)
+    raise typer.Exit(0 if verdict == "BYTE_EXACT" else 1)
+
+
+def _print_verdict(record: DecompilationState, result: AsmComparison,
+                   source: Path | None = None) -> None:
     typer.secho(f"\n{record.address_hex}  {record.name}", bold=True)
+    if source is not None and source != record.path:
+        typer.echo(f"  candidate  {source}")
     colour = (typer.colors.GREEN if str(result.verdict) == "BYTE_EXACT"
               else typer.colors.YELLOW)
     typer.secho(f"  {result.verdict}", fg=colour, bold=True)
@@ -503,10 +649,7 @@ def record(
     # leaves the records read before it pointing at the wrong ones.
     updated, regressed, results = [], [], []
     for piece in chosen:
-        try:
-            command = build_command(compile_commands, piece.path)
-        except ValueError:
-            command = build_command(compile_commands, REPO_ROOT / borrow)
+        command = _command_for(compile_commands, piece.path, borrow)
         try:
             result = compare_record(piece, exe, command, FLAG_SETS, shared)
         except (ValueError, CompileFailed) as problem:
@@ -548,15 +691,6 @@ def record(
             fg=typer.colors.RED)
         if not demote:
             raise typer.Exit(1)
-
-
-# THE CEILING IS THE WINE PREFIX, not the machine. Every VC6 compile runs
-# against the one prefix at ~/opt/vc6/.wineprefix, whose wineserver
-# serialises, and eight concurrent `CL` is where this tree measured the
-# knee. More workers than that queue on the server and win nothing; I also
-# proved the point by accident, running the test suite beside a sweep and
-# getting a compile failure that vanished when they were not competing.
-WINE_CEILING = 8
 
 
 # WHAT THE BUILD IS CONFIGURED WITH, read off the cache the first time and
@@ -735,15 +869,11 @@ def check(
                     fg=typer.colors.RED)
         raise typer.Exit(2)
 
-    borrowed = build_command(compile_commands, REPO_ROOT / borrow)
     jobs = max(1, min(jobs or (os.cpu_count() or 1), WINE_CEILING))
 
     work = []
     for path, mine in grouped.items():
-        try:
-            command = build_command(compile_commands, path)
-        except ValueError:
-            command = borrowed
+        command = _command_for(compile_commands, path, borrow)
         work.append((path, mine, exe, command, FLAG_SETS))
 
     if not as_json:
