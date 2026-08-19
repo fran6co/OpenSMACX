@@ -46,7 +46,44 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
-from .model import DecompilationState
+from capstone import CS_ARCH_X86, CS_MODE_32, Cs
+
+from .model import DecompilationState, Tier
+
+class Listing(list):
+    """Disassembly lines, plus the bytes and the mask behind them.
+
+    A `list[str]` first, so everything that treats a listing as lines of text
+    keeps working unchanged. The attributes carry what a listing CANNOT: the
+    code itself, the address it was disassembled at, and the offsets a
+    relocation makes unknowable.
+
+    THE MASK IS WHY THIS EXISTS. An object file's `push <global>` is
+    `68 00 00 00 00` with a relocation on the immediate; the image has the
+    linked address in those four bytes. Comparing the rendered text calls that
+    a divergence, which is how a body that reproduces the shipped bytes
+    exactly was reported as MISMATCH. A byte a relocation determines is not a
+    wrong answer, and `compare_asm` discounts it - but only if it is told
+    which bytes those are.
+    """
+
+    def __init__(self, lines: Iterable[str], *, code: bytes = b"",
+                 base: int = 0, mask: frozenset[int] = frozenset(),
+                 flags: str = "") -> None:
+        super().__init__(lines)
+        self.code = code
+        self.base = base
+        self.mask = mask        # offsets into `code`, not addresses
+        self.flags = flags      # the flag set that produced it, "" for the image
+
+
+# WHAT THE COMPARISON ACCEPTS. `original_asm` and `compiled_asm` return
+# `Listing`s and a caller may hand in bare lines; the difference is not
+# cosmetic, because only a `Listing` carries the mask that lets a relocated
+# byte be discounted. Spelling the union out is the honest signature: a
+# `list[str]` alone would say the mask branch cannot be reached, and a bare
+# `Listing` would say plain lines are refused when they are not.
+Disassembly = Listing | list[str]
 
 
 # -------------------------------------------------------------- the original
@@ -230,11 +267,6 @@ def compiled_asm(record: DecompilationState, compile_commands: Path | str,
 
 def _disasm(data: bytes, base: int) -> list:
     """Lines of `0xADDR  bytes  mnemonic operands`, capstone under the hood."""
-    try:
-        from capstone import CS_ARCH_X86, CS_MODE_32, Cs
-    except ImportError:
-        raise ImportError(
-            "capstone is not installed - `uv sync` installs it") from None
     return [f"0x{ins.address:08X}  "
             f"{' '.join(f'{b:02X}' for b in ins.bytes):<24}  "
             f"{ins.mnemonic} {ins.op_str}".rstrip()
