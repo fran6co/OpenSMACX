@@ -383,13 +383,12 @@ def test_padding_is_stripped_from_both_sides():
     assert code == body
 
 
-def test_a_mask_does_not_reshape_a_body_of_another_length():
-    """Offsets only name the same bytes in bodies laid out alike.
-
-    `0x004E0F80` is seven instructions in the image; against an object body
-    of a different length, zeroing the image at the OBJECT's relocation
-    offsets re-split it into nine. The count a reader is given must be the
-    body's own, so the mask is not applied across a length difference.
+def test_a_mask_never_reshapes_the_body_it_describes():
+    """`0x004E0F80` is seven instructions in the image, and an early version
+    reported nine: it zeroed the image at the OBJECT's relocation offsets
+    and re-disassembled, splitting instructions that were never there.
+    Nothing is re-disassembled now - `_agree` compares an instruction's own
+    bytes - so the count a reader is given is always the body's own.
     """
     image = bytes.fromhex("E89BAF0C00" "E856490E00" "E8A14A0E00"
                           "6A01" "E8FAA1F8FF" "59" "C3")
@@ -539,3 +538,31 @@ def test_a_borrowed_command_compiles_a_file_the_build_never_names():
     verdict = compare_record(record, EXE, command, FLAGS)
     assert verdict.verdict in tuple(str(t) for t in __import__(
         "decomp").Tier)
+
+
+def test_one_instruction_of_another_size_does_not_disable_the_mask():
+    """The bug this replaced. Discounting used to need both bodies to be
+    the same LENGTH, so a single instruction differing by a byte withdrew
+    the mask from everything - measured on `_WinMain@16`, 459 bytes against
+    458, reporting 35 of 141 instructions agreeing where 138 do.
+
+    Here: `push <global>` twice, then a `mov` that is 3 bytes on one side
+    and 2 on the other. The pushes are relocated on both sides and must
+    still agree; only the `mov` may differ.
+    """
+    image = bytes.fromhex("68 74819B00  68 78819B00  8B4510"
+                          .replace(" ", ""))
+    obj = bytes.fromhex("68 00000000  68 00000000  8BC7"
+                        .replace(" ", ""))
+    relocated = frozenset({1, 2, 3, 4, 6, 7, 8, 9})
+    left = asm.Listing(code=image, base=0x401000, mask=relocated)
+    right = asm.Listing(code=obj, base=0x401000, mask=relocated)
+    assert len(left.code) != len(right.code)          # 13 against 12
+    result = compare_asm(left, right)
+    assert result.original_instructions == 3
+    assert result.matching_instructions == 2, \
+        "the two relocated pushes agree; only the mov differs"
+    assert result.first_divergence == 2
+    # Same instruction sequence, one operand a register where the other is
+    # memory - which is what `_WinMain@16` scores, for the same reason.
+    assert result.verdict == "MNEMONIC_ONLY"

@@ -138,14 +138,6 @@ class Listing:
         return tuple((_mnemonic_key(i), _operand_kinds(i))
                      for i in self.instructions)
 
-    def zeroed(self, mask: frozenset[int]) -> list[str]:
-        """The lines this renders to with every masked byte set to zero."""
-        code = bytearray(self.code)
-        for offset in mask:
-            if 0 <= offset < len(code):
-                code[offset] = 0
-        return [_render(i) for i in _decode(bytes(code), self.base)]
-
 
 # ------------------------------------------------------------------ capstone
 
@@ -638,42 +630,50 @@ class AsmComparison:
     flags: str = ""                 # the flag set that produced `compiled`
 
 
-def _byte_verdict(original: Listing, compiled: Listing) -> bool:
-    """Do the two agree byte for byte once relocations are discounted?
+def _discounted(instruction, mask: frozenset[int], base: int) -> bytes:
+    """An instruction's bytes with the ones a relocation owns blanked."""
+    offset = instruction.address - base
+    return bytes(0 if offset + index in mask else byte
+                 for index, byte in enumerate(instruction.bytes))
 
-    THIS DECIDES BYTE_EXACT, on the bytes rather than on rendered text,
-    because rendering is where a mask can lie - see `_discount_relocations`.
+
+def _agree(original: Listing, compiled: Listing, index: int) -> bool:
+    """Do the two instructions at `index` say the same thing?
+
+    PER INSTRUCTION, AND THAT IS THE POINT. This compared whole bodies -
+    zeroing both buffers at the union of their masks and re-disassembling -
+    which needed the two to be the same LENGTH, because a mask is a set of
+    offsets and offsets only name the same bytes in bodies laid out alike.
+    One instruction of a different size broke that for everything after it,
+    so the guard refused to discount anything at all.
+
+    Measured on `_WinMain@16`: 459 bytes against 458, one `mov` three bytes
+    where the other is two, and the whole-body rule reported 35 of 141
+    instructions agreeing. 138 of 141 actually do; the other three are the
+    real divergence and its knock-on. A reader given the first number
+    chases instruction 3, which is a relocated address and not a difference
+    at all.
+
+    An instruction's offsets are its own, so drift earlier in the body
+    cannot corrupt them - and nothing is re-disassembled, so a mask can no
+    longer split instructions that were never there.
+
+    THE MASKS ARE UNIONED, not taken side by side. An image `call` carries
+    no base relocation, because a REL32 displacement does not move when the
+    image does; the object's does. Discounting only what each side itself
+    relocates would call every one of those a divergence.
     """
-    if len(original.code) != len(compiled.code):
+    a = original.instructions[index]
+    b = compiled.instructions[index]
+    if a.size != b.size:
         return False
-    mask = original.mask | compiled.mask
-    return all(a == b for index, (a, b)
-               in enumerate(zip(original.code, compiled.code))
-               if index not in mask)
-
-
-def _discount_relocations(original: Listing,
-                          compiled: Listing,
-                          ) -> tuple[list[str], list[str]]:
-    """Both listings rendered with relocated bytes neutralised.
-
-    The mask is applied to BOTH sides, not just the object's: the image has
-    linked addresses where the object has zeros, so zeroing only one side
-    leaves the same disagreement pointing the other way.
-
-    ONLY WHEN THE TWO ARE THE SAME LENGTH, and that guard is load-bearing.
-    A mask is a set of OFFSETS, and offsets name the same thing only in
-    bodies laid out alike. Where they are not, zeroing the image at an offset
-    the OBJECT relocates overwrites bytes carrying no relocation at all, and
-    re-disassembling the result splits instructions that were never there -
-    `0x004E0F80` reported nine image instructions for a body that has seven.
-    Bodies of different lengths have already lost, so they are rendered
-    exactly as they are.
-    """
-    union = original.mask | compiled.mask
-    if not union or len(original.code) != len(compiled.code):
-        return original.lines, compiled.lines
-    return original.zeroed(union), compiled.zeroed(union)
+    a_offset, b_offset = a.address - original.base, b.address - compiled.base
+    for step in range(a.size):
+        if a_offset + step in original.mask or b_offset + step in compiled.mask:
+            continue                       # one side or the other relocates it
+        if a.bytes[step] != b.bytes[step]:
+            return False
+    return True
 
 
 def compare_asm(original: Listing, compiled: Listing) -> AsmComparison:
@@ -690,28 +690,26 @@ def compare_asm(original: Listing, compiled: Listing) -> AsmComparison:
     sequences are, where the first divergence is with a window of both
     sides around it, and - for a SHAPE_EXACT pair - which constants differ.
 
-    RELOCATED BYTES ARE DISCOUNTED. An object file's `push <global>` is
-    `68 00 00 00 00` and the image's is `68` plus the linked address; the
-    four bytes disagree because one side has been linked and the other has
-    not, which is not a fact about the source. Both sides are re-rendered
-    with every masked byte zeroed before they are compared, so such a pair
-    reads as identical - while `context` shows the REAL lines, because a
+    RELOCATED BYTES ARE DISCOUNTED, instruction by instruction - see
+    `_agree`. An object file's `push <global>` is `68 00 00 00 00` and the
+    image's is `68` plus the linked address; the four bytes disagree
+    because one side has been linked and the other has not, which is not a
+    fact about the source. `context` still shows the REAL lines, because a
     reader chasing a divergence wants the address the image actually holds.
     """
-    left, right = _discount_relocations(original, compiled)
-    n, m = len(left), len(right)
+    n, m = len(original.instructions), len(compiled.instructions)
     matching = 0
     first_divergence = None
     context: tuple = ([], [])
-    for index, (a, b) in enumerate(zip(left, right)):
-        if a == b:
+    for index in range(min(n, m)):
+        if _agree(original, compiled, index):
             matching += 1
         elif first_divergence is None:
             first_divergence = index
             lo = max(0, index - 3)
-            # The window shows what each side REALLY holds, masked bytes
+            # The window shows what each side REALLY holds, relocated bytes
             # included: a reader chasing a divergence wants the address the
-            # image carries, not the zero the comparison stood in for it.
+            # image carries, not the zero it was discounted to.
             context = (original.lines[lo:index + 4],
                        compiled.lines[lo:index + 4])
     if first_divergence is None and n != m:
@@ -725,7 +723,7 @@ def compare_asm(original: Listing, compiled: Listing) -> AsmComparison:
         None, original.mnemonics, compiled.mnemonics).ratio()
 
     constants: list = []
-    if _byte_verdict(original, compiled):
+    if n == m and matching == n:
         verdict = Tier.BYTE_EXACT
     elif original.shapes == compiled.shapes:
         verdict = Tier.SHAPE_EXACT
