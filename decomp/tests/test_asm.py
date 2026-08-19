@@ -228,6 +228,70 @@ def coff(functions, relocations=()):
             + struct.pack("<I", 4 + len(strtab)) + strtab)
 
 
+def test_a_name_the_compiler_does_not_emit_is_an_error():
+    """CL writes `?set_font@Buffer@@QAEHPAVFont@@000@Z` where the catalogue
+    writes the type out four times. The lookup does NOT go hunting for a
+    near-miss: the annotation is supposed to record what is emitted, and
+    saying so is more useful than guessing which neighbour was meant."""
+    obj = coff([("?set_font@Buffer@@QAEHPAVFont@@000@Z", b"\xC3")])
+    with pytest.raises(ValueError, match="no `symbol` fact"):
+        asm._coff_function_masked(
+            obj, "?set_font@Buffer@@QAEHPAVFont@@PAVFont@@PAVFont@@PAVFont@@@Z")
+
+
+def test_the_underscore_form_still_counts_as_the_same_name():
+    """`extern "C"` decorates with a leading underscore and that is the same
+    symbol, not a guess about a different one."""
+    obj = coff([("_f", b"\xC3")])
+    code, _mask = asm._coff_function_masked(obj, "f")
+    assert code == b"\xC3"
+
+
+SHIM = """// ORIGINAL: 0x00401000 ?on_scrolling@BaseWin@@QAEXHH@Z 0x00401000-0x00401004
+// symbol    @base_win_on_scrolling_redirect@16
+void __fastcall base_win_on_scrolling_redirect(void *self, void *, int a) {
+}
+"""
+
+
+def test_the_recorded_symbol_names_the_subject(tmp_path):
+    """A redirect shim carries a symbol of its own, and the annotation says
+    so - `name` stays what the IMAGE calls the piece."""
+    record = record_in(tmp_path, SHIM)
+    assert record.name == "?on_scrolling@BaseWin@@QAEXHH@Z"
+    assert record.symbol == "@base_win_on_scrolling_redirect@16"
+    obj = coff([("@base_win_on_scrolling_redirect@16", b"\xC3")])
+    code, _mask = asm._coff_function_masked(obj, record.name, record.symbol)
+    assert code == b"\xC3"
+
+
+def test_a_stale_symbol_fact_is_an_error_not_a_guess(tmp_path):
+    """Recorded and absent means the fact is wrong; the lookup must not
+    quietly fall through to a name that happens to be nearby."""
+    record = record_in(tmp_path, SHIM)
+    obj = coff([("?on_scrolling@BaseWin@@QAEXHH@Z", b"\xC3")])
+    with pytest.raises(ValueError, match="stale"):
+        asm._coff_function_masked(obj, record.name, record.symbol)
+
+
+def test_region_identifiers_reads_the_definition_head(tmp_path):
+    """The migration aid that WRITES the fact above, kept out of the
+    measurement path on purpose."""
+    record = record_in(tmp_path, SHIM)
+    from decomp.reader import region_identifiers
+    assert "base_win_on_scrolling_redirect" in region_identifiers(record)
+
+
+def test_an_unnamed_subject_says_the_fact_is_missing(tmp_path):
+    record = record_in(tmp_path, """// ORIGINAL: 0x00401000 ?f@C@@QAEXXZ 0x00401000-0x00401004
+void __fastcall some_other_spelling(void *self) {
+}
+""")
+    obj = coff([("@some_other_spelling@4", b"\xC3")])
+    with pytest.raises(ValueError, match="no `symbol` fact"):
+        asm._coff_function_masked(obj, record.name, record.symbol)
+
+
 def test_object_relocations_become_a_mask():
     # `push imm32` with a DIR32 relocation on the immediate at offset 1.
     obj = coff([("?f@@YAXXZ", b"\x68\x00\x00\x00\x00\xC3")],
