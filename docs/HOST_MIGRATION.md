@@ -106,9 +106,12 @@ Do not trust a number from the new host until these pass:
    anything the old host carried, so a host where the ratchet passes is a
    host where the recovery stands.
 
-2. **The source map parses.** `uv run python -m decomp` proves the annotation
-   parse against `src/` itself — every record, every catalogue row, and the
-   grammar's full pattern inventory.
+2. **The source map parses.** `uv run pytest decomp/tests` proves the
+   annotation parse against `src/` itself — every record, every catalogue row,
+   and the grammar's full pattern inventory — plus the read -> write -> read
+   loop over every annotated file. (This was `uv run python -m decomp` until
+   2026-08-19; that entry point held assertions the test module was already
+   importing, so it became tests and there is one way to run them.)
 
 3. **The exclusions still measure.** `uv run tools/measure_exclusions.py
    --check` re-derives every figure in docs/EXCLUSIONS.md from the image and

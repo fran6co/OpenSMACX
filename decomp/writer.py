@@ -152,10 +152,6 @@ def write(text: str, records: list[DecompilationState]) -> str:
 
     by_line = {}
     for record in records:
-        if not record.line:
-            raise ValueError(
-                f"{record.address_hex}: filename-derived records are not "
-                f"marker-addressable")
         if record.mode is Mode.FILE and record.state is State.EXCLUDED:
             raise ValueError(
                 f"{record.address_hex}: FILE and EXCLUDED are mutually "
@@ -218,10 +214,6 @@ def remove(text: str, records: list[DecompilationState]) -> str:
 
     drop: set[int] = set()
     for record in records:
-        if not record.line:
-            raise ValueError(
-                f"{record.address_hex}: filename-derived records are not "
-                f"marker-addressable")
         if record.line > len(lines):
             raise ValueError(
                 f"{record.address_hex}: line {record.line} is past the end "

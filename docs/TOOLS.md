@@ -53,9 +53,9 @@ The readers have a writer: `decomp.write` rewrites the annotations the
 records describe, each at its own line - the marker carrying the name and
 the image spans - and `decomp.remove` deletes them. Deletion is a
 statement, not an omission, and the writer trusts the records rather than
-re-reading the text to check them. `uv run python -m decomp` proves the
-package against `src/`: the parse, and the read -> write -> read loop over
-every annotated file. The pair belongs to the package alone until the tools
+re-reading the text to check them. `uv run pytest decomp/tests` proves the
+package against `src/`: the parse, the read -> write -> read loop over every
+annotated file, and what each module may import. The pair belongs to the package alone until the tools
 move onto it; `tools/` does not call it yet.
 
 ### 2. What shape is this function? — read the image

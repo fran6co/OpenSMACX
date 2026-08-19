@@ -82,7 +82,7 @@ class DecompilationState:
     mode: Mode
     state: State
     path: Path                   # absolute location of the declaring file
-    line: int                    # 1-based line of the marker (0 for filename-derived)
+    line: int                    # 1-based line of the marker
     name: str                    # the mangled name ("" until a fact block
                                  # records it; required to ADD an annotation)
     image_spans: tuple[tuple[int, int], ...]
@@ -115,6 +115,19 @@ class DecompilationState:
                                  # prose: no C body CAN exist for this piece
     deferred: tuple[str, ...] = ()
                                  # prose: a body can exist, nobody has written it
+
+    def __post_init__(self) -> None:
+        # 1-BASED, AND CHECKED HERE. `writer` used to reject `line == 0` at
+        # both of its entry points, describing it as a "filename-derived"
+        # record - a kind nothing has ever produced. What the check was
+        # really defending was indexing: `lines[record.line - 1]` on a zero
+        # silently addresses the LAST line of the file. That is an invariant
+        # of the field, so it belongs to the field, where it holds for every
+        # consumer rather than for the two that remembered to ask.
+        if self.line < 1:
+            raise ValueError(
+                f"0x{self.address:08X}: line {self.line} is not a 1-based "
+                f"line number")
 
     @property
     def location(self) -> str:

@@ -732,8 +732,9 @@ parallel-agent targets (see "Parallel recovery" above):
   describe, each at its own line, and `decomp.remove` deletes them. It is SELF-CONTAINED
   (standard library only, imports nothing from `tools/`). The scripts in `tools/` still
   carry their own copies of the reading machinery, on the old marker spelling by decision.
-  `uv run python -m decomp` proves the package against `src/`: the parse, and the
-  read -> write -> read loop over every annotated file.
+  `uv run pytest decomp/tests` proves the package against `src/`: the parse, the
+  read -> write -> read loop over every annotated file, and what each module may
+  import.
 - `tools/fetch_external_analysis.py`: verified local fetcher for ignored historical-analysis snapshots.
 - the retired `extract_legacy_leaves`: conservative local-only island extractor.
 - `test_extract_legacy_leaves (retired)`: 21 classifier, explicit-selection, symlink-containment, and output-ownership regression tests.
