@@ -585,16 +585,24 @@ def _coff_function_masked(obj: bytes, symbol: str, emitted: str = "",
 
 
 def compiled_asm(record: DecompilationState, command: list[str],
-                 flags: str) -> Listing:
+                 flags: str, source: Path | str | None = None) -> Listing:
     """The assembly VC6 produces for the record's code: the record's file
     compiled by the build's own compile command with its optimisation flags
     swapped for `flags`, the function pulled out of the object by the
     record's mangled name, disassembled at the record's address so the
-    listing lines up with `original_asm`."""
+    listing lines up with `original_asm`.
+
+    `source` COMPILES SOMETHING ELSE IN ITS PLACE - a candidate spelling of
+    the same function, living outside the tree. See `compare_source`. The
+    subject is still selected by the RECORD's name, so a candidate that does
+    not define it is a `ValueError` naming the symbol it looked for, which
+    is the honest answer: the file compiled and did not contain the piece.
+    """
     if not record.name:
         raise ValueError(
             f"{record.address_hex}: no name fact under its marker")
-    obj = compile_unit(record.path, command, flags)
+    obj = compile_unit(Path(source) if source else record.path,
+                       command, flags)
     return subject_asm(obj, record, flags)
 
 
@@ -809,7 +817,34 @@ def shared_spans(records) -> frozenset:
 def compare_record(record: DecompilationState, exe: Path | str,
                    command: list[str], flags: tuple | str,
                    shared: frozenset = frozenset()) -> AsmComparison:
-    """How far VC6 reproduces the shipped bytes for `record`, best of `flags`.
+    """How far VC6 reproduces the shipped bytes for the body IN THE TREE.
+
+    `compare_source` with the record's own file - which is the question
+    `check` and `record` ask, and the only one that can be written down.
+    """
+    return compare_source(record, exe, record.path, command, flags, shared)
+
+
+def compare_source(record: DecompilationState, exe: Path | str,
+                   source: Path | str, command: list[str],
+                   flags: tuple | str,
+                   shared: frozenset = frozenset()) -> AsmComparison:
+    """How far VC6 reproduces the shipped bytes for `record` when the piece
+    is spelled the way `source` spells it, best of `flags`.
+
+    THE CANDIDATE IS THE PARAMETER, and that is what makes an edit-measure
+    loop possible. Matching decompilation is a search over SOURCE FORM - a
+    ternary against an `if`, a condition's polarity, a temp that changes an
+    addressing mode - and there is no reasoning to the answer; the compiler
+    has to be asked. Asking it about the tree alone means editing the tree to
+    pose the question, so a failed experiment is a dirty checkout, only one
+    spelling can be in flight, and an agent with no write access cannot take
+    part at all. With `source` the useful question - "which of these nine" -
+    is one call per candidate against an unchanged tree.
+
+    `source` need only DEFINE the record's subject under the name the
+    annotation records; it is compiled with the record's own invocation, so
+    it sees the same include path the real unit does.
 
     `flags` is a flag string, or several. THERE IS NO DEFAULT SET HERE, and
     that is the point: which invocation built a given function is not
@@ -847,7 +882,7 @@ def compare_record(record: DecompilationState, exe: Path | str,
     best, diagnostic = None, ""
     for attempt in attempts:
         try:
-            compiled = compiled_asm(record, command, attempt)
+            compiled = compiled_asm(record, command, attempt, source)
         except CompileFailed as failed:
             diagnostic = diagnostic or str(failed)
             continue

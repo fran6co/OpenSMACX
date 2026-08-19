@@ -451,6 +451,28 @@ def test_a_lying_annotation_is_still_an_error(tmp_path, monkeypatch):
         asm.compare_record(record, "exe", ["cl"], ("/c /O2",))
 
 
+def test_compare_source_compiles_the_candidate_not_the_tree(tmp_path,
+                                                            monkeypatch):
+    """The candidate is the parameter, and that is what makes an
+    edit-measure loop possible: the question is posed without editing the
+    tree, so a failed experiment is not a dirty checkout."""
+    record = record_in(tmp_path, MARKED)
+    candidate = tmp_path / "candidate.cpp"
+    candidate.write_text("void f() {}\n")
+    compiled = []
+    monkeypatch.setattr(asm, "compile_unit",
+                        lambda source, *a, **k: compiled.append(source) or b"")
+    monkeypatch.setattr(asm, "subject_asm",
+                        lambda *a, **k: listing(b"\xC3"))
+    monkeypatch.setattr(asm, "original_asm",
+                        lambda *a, **k: listing(b"\xC3"))
+    monkeypatch.setattr(asm, "span_refusal", lambda *a, **k: None)
+
+    asm.compare_source(record, "exe", candidate, ["cl"], ("/c /O2",))
+    asm.compare_record(record, "exe", ["cl"], ("/c /O2",))
+    assert compiled == [candidate, record.path]
+
+
 def test_the_diagnostic_prefers_what_cl_called_an_error():
     assert "C2065" in asm._diagnostic("note\nx.cpp : error C2065: bad\n", "")
     assert asm._diagnostic("", "") == "the compile produced no object"
