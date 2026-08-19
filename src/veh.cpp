@@ -319,6 +319,7 @@ int __cdecl drop_range(int faction_id) {
 /*
 Purpose: Check whether the specified prototype is a planet buster.
 // ORIGINAL: 0x005004F0 ?planet_buster2@@YAHH@Z 0x005004F0-0x00500518
+// symbol    ?planet_buster2@@YAIH@Z
 // size      40 bytes
 // prototype int (__cdecl ?planet_buster2@@YAHH@Z)(int protoID)
 // callers   2   call targets   0
@@ -336,6 +337,7 @@ uint32_t __cdecl planet_buster2(int proto_id) {
 /*
 Purpose: Check whether the specified unit is a planet buster.
 // ORIGINAL: 0x00500520 ?planet_buster@@YAHH@Z 0x00500520-0x00500556
+// symbol    ?planet_buster@@YAIH@Z
 // size      54 bytes
 // prototype int (__cdecl ?planet_buster@@YAHH@Z)(int vehID)
 // callers   4   call targets   0
@@ -400,6 +402,7 @@ int __cdecl defense_value(int faction_id, int x, int y, int veh_id_def,
 /*
 Purpose: Calculate the lifecycle (morale) of the specified native life unit.
 // ORIGINAL: 0x00501350 ?morale_alien@@YAHHH@Z 0x00501350-0x005014F1
+// symbol    ?morale_alien@@YAIHH@Z
 // size      417 bytes
 // prototype int (__cdecl ?morale_alien@@YAHHH@Z)(int vehID, int factionIDvsNative)
 // callers   9   call targets   0
@@ -650,6 +653,7 @@ void __cdecl battle_init() {
 /*
 Purpose: Add combat battle modifier for type (offense, defense).
 // ORIGINAL: 0x00501D50 ?add_bat@@YAXHHPAD@Z 0x00501D50-0x00501D9A
+// symbol    ?add_bat@@YAXHHPBD@Z
 // size      74 bytes
 // prototype 
 // callers   0   call targets   1
@@ -672,6 +676,7 @@ void __cdecl add_bat(int type, int modifier, LPCSTR display_str) {
 /*
 Purpose: Calculate the battle outcome between two units.
 // ORIGINAL: 0x00501DA0 ?battle_compute@@YAXHHPAHPAHH@Z 0x00501DA0-0x005044C4
+// symbol    ?battle_compute@@YAXHHPAH0H@Z
 // size      10020 bytes
 // prototype void (__cdecl ?battle_compute@@YAXHHPAHPAHH@Z)(int vehIDAtk, int vehIDDef, int* offenseOutput, int* defenseOutput, int combatType)
 // callers   2   call targets   15
@@ -1154,6 +1159,7 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
 /*
 Purpose: Determine the best defender in a stack.
 // ORIGINAL: 0x005044D0 ?best_defender@@YAHHHH@Z 0x005044D0-0x00504A9B
+// symbol    ?best_defender@@YAIHHH@Z
 // size      1483 bytes
 // prototype int (__cdecl ?best_defender@@YAHHHH@Z)(int vehIDDef, int vehIDAtk, BOOL useArtillery)
 // callers   1   call targets   6
@@ -1634,6 +1640,7 @@ Purpose: Generate offensive display string for the specified prototype. Replaced
          strcat with string. Original function took a 2nd parameter with char buffer and didn't
          return anything.
 // ORIGINAL: 0x0057D560 ?say_offense@@YAXPADH@Z 0x0057D560-0x0057D6C5
+// symbol    ?say_offense@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@I@Z
 // size      357 bytes
 // prototype void (__cdecl ?say_offense@@YAXPADH@Z)(int8*, int protoID)
 // callers   3   call targets   5
@@ -1680,6 +1687,7 @@ Purpose: Generate defense display string for the specified prototype. Replaced e
          strcat with string. Original function took a 2nd parameter with char buffer and didn't 
          return anything.
 // ORIGINAL: 0x0057D6D0 ?say_defense@@YAXPADH@Z 0x0057D6D0-0x0057D7C4
+// symbol    ?say_defense@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@I@Z
 // size      244 bytes
 // prototype void (__cdecl ?say_defense@@YAXPADH@Z)(int8*, int protoID)
 // callers   3   call targets   4
@@ -1811,6 +1819,7 @@ Purpose: Generate verbose stats string for specified prototype. Used by Design W
          Command Nexus. Replaced existing non-safe strcat with string. Reworked to integrate with 
          existing C code.
 // ORIGINAL: 0x0057DAA0 ?say_stats@@YAXPADHPAD@Z 0x0057DAA0-0x0057DED8
+// symbol    ?say_stats@@YAXPADH0@Z
 // size      1080 bytes
 // prototype void (__cdecl ?say_stats@@YAXPADHPAD@Z)(int8*, int protoID, int8*)
 // callers   2   call targets   6
@@ -1887,6 +1896,7 @@ void __cdecl say_stats(LPSTR stat, int proto_id, LPSTR custom_spacer) {
 /*
 Purpose: Check against faction's available tech for best available reactor.
 // ORIGINAL: 0x0057EFA0 ?best_reactor@@YAHH@Z 0x0057EFA0-0x0057EFE2
+// symbol    ?best_reactor@@YAIH@Z
 // size      66 bytes
 // prototype int (__cdecl ?best_reactor@@YAHH@Z)(int factionID)
 // callers   3   call targets   1
@@ -2152,6 +2162,7 @@ int __cdecl veh_health(int veh_id) {
 Purpose: Calculates cost of the prototype based on various factors. Optimized logic flow from 
          the original without any differences to the final calculation.
 // ORIGINAL: 0x005A5A60 ?proto_cost@@YAHHHHHH@Z 0x005A5A60-0x005A5CE1
+// symbol    ?proto_cost@@YAIHHHHH@Z
 // size      641 bytes
 // prototype int (__cdecl ?proto_cost@@YAHHHHHH@Z)(int chassisType, int weapType, int armorType, int ability, int reactorType)
 // callers   4   call targets   0
@@ -2475,6 +2486,7 @@ int __cdecl get_plan(int faction_id, int plan) {
 Purpose: Reveal the specified tile to the specified faction and keep the
          faction's remembered copy of the tile's terrain bits in step with it.
 // ORIGINAL: 0x005B5700 sub_5b5700 0x005B5700-0x005B57CA
+// symbol    ?spot_tile@@YAXHHH@Z
 // size      202 bytes
 // prototype 
 // callers   1   call targets   1
@@ -3337,6 +3349,7 @@ BOOL __cdecl has_abil(int proto_id, int ability_id) {
 Purpose: Temporarily remove the specified unit from its current square and stack in preparation for 
          another action such as interacting with the stack, moving or killing it.
 // ORIGINAL: 0x005BFFA0 ?veh_lift@@YAXH@Z 0x005BFFA0-0x005C007F
+// symbol    ?veh_lift@@YAHH@Z
 // size      223 bytes
 // prototype void (__cdecl ?veh_lift@@YAXH@Z)(int vehID)
 // callers   18   call targets   1
@@ -3374,6 +3387,7 @@ int __cdecl veh_lift(int veh_id) {
 /*
 Purpose: Move the specified unit to the provided coordinates.
 // ORIGINAL: 0x005C0080 ?veh_drop@@YAXHHH@Z 0x005C0080-0x005C019C
+// symbol    ?veh_drop@@YAHHHH@Z
 // size      284 bytes
 // prototype void (__cdecl ?veh_drop@@YAXHHH@Z)(int vehID, int xCoord, int yCoord)
 // callers   17   call targets   3

@@ -59,6 +59,7 @@ Palette *PaletteCurrent;  // 0x009B8174
 /*
 Purpose: Convert process palette RGB entries into Windows RGBQUAD order.
 // ORIGINAL: 0x005FE560 ?get_rgbquad@Palette@@QAEHPAURGBQUAD@@HH@Z 0x005FE560-0x005FE5BD
+// symbol    ?get_rgbquad@Palette@@QAEHPAUtagRGBQUAD@@HH@Z
 // size      93 bytes
 // prototype int (__thiscall ?get_rgbquad@Palette@@QAEHPAURGBQUAD@@HH@Z)(Palette* this, RGBQUAD*, int, int)
 // callers   7   call targets   0
@@ -108,6 +109,7 @@ int __fastcall palette_get_rgbquad_redirect(
 /*
 Purpose: Record the window the palette applies to.
 // ORIGINAL: 0x005FE4F0 ?set_active_window@Palette@@QAAXPAVWin@@@Z 0x005FE4F0-0x005FE4F1 BYTE_EXACT
+// symbol    ?set_active_window@Palette@@SAXPAVWin@@@Z
 // size      1 bytes
 // prototype 
 // callers   8   call targets   0

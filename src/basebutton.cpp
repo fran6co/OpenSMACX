@@ -84,6 +84,7 @@ BaseButton *__fastcall base_button_construct_redirect(
 Purpose: Close the GraphicWin base, reset BaseButton-owned state from the
          process defaults, then release the owned name and bubble strings.
 // ORIGINAL: 0x006070C0 ?close@BaseButton@@QAEXXZ 0x006070C0-0x00607190
+// symbol    ?close@BaseButton@@QAEIXZ
 // size      208 bytes
 // prototype void (__thiscall ?close@BaseButton@@QAEXXZ)(BaseButton* this)
 // callers   3   call targets   2
@@ -174,6 +175,7 @@ BaseButton *__fastcall base_button_destructor_redirect(
 /*
 Purpose: Set the button's bubble text.
 // ORIGINAL: 0x00607550 ?set_bubble_text@BaseButton@@QAEHPAD@Z 0x00607550-0x006075B7
+// symbol    ?set_bubble_text@BaseButton@@QAEHPBD@Z
 // size      103 bytes
 // prototype int (__thiscall ?set_bubble_text@BaseButton@@QAEHPAD@Z)(BaseButton* this, int8*)
 // callers   8   call targets   4
@@ -204,6 +206,7 @@ int BaseButton::set_bubble_text(LPCSTR input) {
 /*
 Purpose: Set the button's name string.
 // ORIGINAL: 0x006074E0 ?set_name@BaseButton@@QAEHPAD@Z 0x006074E0-0x0060754D
+// symbol    ?set_name@BaseButton@@QAEHPBD@Z
 // size      109 bytes
 // prototype int (__thiscall ?set_name@BaseButton@@QAEHPAD@Z)(BaseButton* this, int8*)
 // callers   4   call targets   4
@@ -255,6 +258,7 @@ void store_default_text_colors(size_t tier, int color1, int color2,
 /*
 Purpose: Set the primary default text colours shared by every button.
 // ORIGINAL: 0x00607420 ?set_def_text_color@BaseButton@@QAAXHHHH@Z 0x00607420-0x00607447
+// symbol    ?set_def_text_color@BaseButton@@SAXHHHH@Z
 // size      39 bytes
 // prototype 
 // callers   3   call targets   0
@@ -270,6 +274,7 @@ void BaseButton::set_def_text_color(int color1, int color2, int color3, int colo
 /*
 Purpose: Set the secondary default text colours shared by every button.
 // ORIGINAL: 0x00607450 ?set_def_text_color2@BaseButton@@QAAXHHHH@Z 0x00607450-0x00607477
+// symbol    ?set_def_text_color2@BaseButton@@SAXHHHH@Z
 // size      39 bytes
 // prototype 
 // callers   0   call targets   0
@@ -285,6 +290,7 @@ void BaseButton::set_def_text_color2(int color1, int color2, int color3, int col
 /*
 Purpose: Set the tertiary default text colours shared by every button.
 // ORIGINAL: 0x00607480 ?set_def_text_color3@BaseButton@@QAAXHHHH@Z 0x00607480-0x006074A7
+// symbol    ?set_def_text_color3@BaseButton@@SAXHHHH@Z
 // size      39 bytes
 // prototype 
 // callers   0   call targets   0
@@ -300,6 +306,7 @@ void BaseButton::set_def_text_color3(int color1, int color2, int color3, int col
 /*
 Purpose: Set the default fonts shared by every button.
 // ORIGINAL: 0x006074B0 ?set_def_font@BaseButton@@QAAHPAUFont@@PAUFont@@PAUFont@@@Z 0x006074B0-0x006074E0
+// symbol    ?set_def_font@BaseButton@@SAHPAVFont@@00@Z
 // size      48 bytes
 // prototype 
 // callers   4   call targets   0
@@ -584,6 +591,7 @@ Purpose: Reinitialise a button - close whatever it currently holds, take a
          style word, publish the shared default colours and fonts into the
          window buffer, then show it.
 // ORIGINAL: 0x00607210 ?init@BaseButton@@QAEHPADHHHHHPAUWin@@H@Z 0x00607210-0x00607352
+// symbol    ?init@BaseButton@@QAEHPBDHHHHHPAVWin@@H@Z
 // size      322 bytes
 // prototype int (__thiscall ?init@BaseButton@@QAEHPADHHHHHPAUWin@@H@Z)(BaseButton* this, int8*, int, int, int, int, int, Win*, int)
 // callers   30   call targets   8
@@ -712,6 +720,7 @@ void BaseButton::on_right_click(int a1, int a2) {
 
 /*
 // ORIGINAL: 0x00607B10 ?timer_callback_daemon@BaseButton@@QAAXHH@Z 0x00607B10-0x00607B23 BYTE_EXACT
+// symbol    ?fn_00607b10@@YAXHPAVBaseButton@@@Z
 // size      19 bytes
 // prototype 
 // callers   0   call targets   1

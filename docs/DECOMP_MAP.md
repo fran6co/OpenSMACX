@@ -32,6 +32,27 @@ names and where the piece ends in the image cannot be added. (Moved to
 this spelling 2026-08-18; the `// name` and `// spans` fact lines came
 out of the tree with it.)
 
+**`name` is what the IMAGE calls the piece, and it is not always what this
+tree emits for it.** A body that re-expresses a compiler-generated construct
+— an adjustor thunk, an atexit destructor, a scalar deleting destructor —
+carries a symbol of its own by design, and a catalogued name can simply be
+wrong about a return type (`?map_init@@YAXXZ` says void over a body
+`src/map.cpp` defines as `BOOL __cdecl map_init()`). Both are recorded, as
+two facts rather than one corrected into the other:
+
+```
+// ORIGINAL: 0x0041B4C0 ?on_scrolling@BaseWin@@QAEXHH@Z 0x0041B4C0-0x0041B4D7
+// symbol    @base_win_on_scrolling_redirect@16
+```
+
+A `// symbol` line names the symbol THIS TREE'S compiler emits, measured
+from the object rather than guessed, and its value is a single token — the
+key alone cannot be trusted, because `src/` carries 2,037 prose lines that
+begin `// symbol ` and every one of them is a sentence. 1,543 were written
+on 2026-08-19 for the records the build compiles. **`decomp` reads this
+fact; `tools/` does not yet**, and an annotation without one is simply a
+piece whose emitted name is its `name`.
+
 ```
 ORIGINAL: 0x00401640 ?init@Game@@QAEHH@Z 0x00401640-0x00401B00
                                   the function definition that follows is

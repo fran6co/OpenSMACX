@@ -194,6 +194,7 @@ void __fastcall report_if_close_score_redirect(ReportIf *self, void *) {
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 1.
 // ORIGINAL: 0x004A6320 ?on_iface_dialog_item_back_draw@ReportIf@@QAEHPAUGraphicWin@@HHPAURECT@@@Z 0x004A6320-0x004A6328 BYTE_EXACT
+// symbol    ?on_iface_dialog_item_back_draw@ReportIf@@QAEHPAVGraphicWin@@HHPAUtagRECT@@@Z
 // size      8 bytes
 // prototype int (__thiscall ?on_iface_dialog_item_back_draw@ReportIf@@QAEHPAUGraphicWin@@HHPAURECT@@@Z)(ReportIf* this, GraphicWin*, int, int, RECT*)
 // callers   0   call targets   0

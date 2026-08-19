@@ -118,6 +118,7 @@ void RadioButton::on_mouse_leave(int a1, int a2) {
 
 /*
 // ORIGINAL: 0x0060E4D0 ?init_class@RadioButton@@QAAHXZ 0x0060E4D0-0x0060E5C2;0x00662F44-0x00662F59
+// symbol    ?init_class@RadioButton@@SAHXZ
 // size      263 bytes
 // prototype int (__cdecl ?init_class@RadioButton@@QAAHXZ)()
 // callers   1   call targets   5

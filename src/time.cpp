@@ -312,6 +312,7 @@ void Time::close() {
 /*
 Purpose: Callback function that processes WM_TIMER messages (SetTimer).
 // ORIGINAL: 0x006167E0 ?TimerProc@Time@@QAEXPAXIIK@Z 0x006167E0-0x0061681C
+// symbol    ?TimerProc@Time@@SAXPAUHWND__@@IKK@Z
 // size      60 bytes
 // prototype void (__thiscall ?TimerProc@Time@@QAEXPAXIIK@Z)(Time* this, HWND hwnd, uint32_t msg, uint32_t* idEvent, uint32_t dwTime)
 // callers   0   call targets   0
@@ -334,6 +335,7 @@ void Time::TimerProc(HWND UNUSED(hwnd), uint32_t UNUSED(msg), UINT_PTR id_timer,
 /*
 Purpose: Callback function for the timeSetEvent. Effectively the same as TimerProc.
 // ORIGINAL: 0x00616820 ?MultimediaProc@Time@@QAEXIIKKK@Z 0x00616820-0x0061685C
+// symbol    ?MultimediaProc@Time@@SAXIIKKK@Z
 // size      60 bytes
 // prototype void (__thiscall ?MultimediaProc@Time@@QAEXIIKKK@Z)(Time* this, UINT uTimerID, UINT uMsg, DWORD dwUser, DWORD dw1, unsigned int)
 // callers   0   call targets   0

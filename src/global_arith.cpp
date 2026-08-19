@@ -75,6 +75,7 @@ int32_t *GlobalSlot009B3A54 = reinterpret_cast<int32_t *>(0x009B3A54);
 Purpose: sub_44c870 - arithmetic over 1 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0044C870 sub_44c870 0x0044C870-0x0044C878
+// symbol    ?global_arith_0044c870_redirect@@YIXPAX0@Z
 // size      8 bytes
 // prototype 
 // callers   0   call targets   0
@@ -92,6 +93,7 @@ void __fastcall global_arith_0044c870_redirect(void *, void *) {
 Purpose: sub_48d550 - arithmetic over 2 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D550 sub_48d550 0x0048D550-0x0048D55E
+// symbol    ?global_arith_0048d550_redirect@@YIXPAX0@Z
 // size      14 bytes
 // prototype 
 // callers   0   call targets   0
@@ -111,6 +113,7 @@ void __fastcall global_arith_0048d550_redirect(void *, void *) {
 Purpose: sub_48d560 - arithmetic over 2 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D560 sub_48d560 0x0048D560-0x0048D56B
+// symbol    ?global_arith_0048d560_redirect@@YIXPAX0@Z
 // size      11 bytes
 // prototype 
 // callers   0   call targets   0
@@ -129,6 +132,7 @@ void __fastcall global_arith_0048d560_redirect(void *, void *) {
 Purpose: sub_48d570 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D570 sub_48d570 0x0048D570-0x0048D587
+// symbol    ?global_arith_0048d570_redirect@@YIXPAX0@Z
 // size      23 bytes
 // prototype 
 // callers   0   call targets   0
@@ -150,6 +154,7 @@ void __fastcall global_arith_0048d570_redirect(void *, void *) {
 Purpose: sub_48d590 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D590 sub_48d590 0x0048D590-0x0048D5A7
+// symbol    ?global_arith_0048d590_redirect@@YIXPAX0@Z
 // size      23 bytes
 // prototype 
 // callers   0   call targets   0
@@ -171,6 +176,7 @@ void __fastcall global_arith_0048d590_redirect(void *, void *) {
 Purpose: sub_48d5b0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D5B0 sub_48d5b0 0x0048D5B0-0x0048D5C4
+// symbol    ?global_arith_0048d5b0_redirect@@YIXPAX0@Z
 // size      20 bytes
 // prototype 
 // callers   0   call targets   0
@@ -191,6 +197,7 @@ void __fastcall global_arith_0048d5b0_redirect(void *, void *) {
 Purpose: sub_48d5d0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D5D0 sub_48d5d0 0x0048D5D0-0x0048D5E4
+// symbol    ?global_arith_0048d5d0_redirect@@YIXPAX0@Z
 // size      20 bytes
 // prototype 
 // callers   0   call targets   0
@@ -211,6 +218,7 @@ void __fastcall global_arith_0048d5d0_redirect(void *, void *) {
 Purpose: sub_48d5f0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D5F0 sub_48d5f0 0x0048D5F0-0x0048D607
+// symbol    ?global_arith_0048d5f0_redirect@@YIXPAX0@Z
 // size      23 bytes
 // prototype 
 // callers   0   call targets   0
@@ -232,6 +240,7 @@ void __fastcall global_arith_0048d5f0_redirect(void *, void *) {
 Purpose: sub_48d610 - arithmetic over 4 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D610 sub_48d610 0x0048D610-0x0048D62B
+// symbol    ?global_arith_0048d610_redirect@@YIXPAX0@Z
 // size      27 bytes
 // prototype 
 // callers   0   call targets   0
@@ -254,6 +263,7 @@ void __fastcall global_arith_0048d610_redirect(void *, void *) {
 Purpose: sub_48d630 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D630 sub_48d630 0x0048D630-0x0048D644
+// symbol    ?global_arith_0048d630_redirect@@YIXPAX0@Z
 // size      20 bytes
 // prototype 
 // callers   0   call targets   0
@@ -274,6 +284,7 @@ void __fastcall global_arith_0048d630_redirect(void *, void *) {
 Purpose: sub_48d670 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D670 sub_48d670 0x0048D670-0x0048D687
+// symbol    ?global_arith_0048d670_redirect@@YIXPAX0@Z
 // size      23 bytes
 // prototype 
 // callers   0   call targets   0
@@ -295,6 +306,7 @@ void __fastcall global_arith_0048d670_redirect(void *, void *) {
 Purpose: sub_48d690 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D690 sub_48d690 0x0048D690-0x0048D6A4
+// symbol    ?global_arith_0048d690_redirect@@YIXPAX0@Z
 // size      20 bytes
 // prototype 
 // callers   0   call targets   0
@@ -315,6 +327,7 @@ void __fastcall global_arith_0048d690_redirect(void *, void *) {
 Purpose: sub_48d6b0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D6B0 sub_48d6b0 0x0048D6B0-0x0048D6C4
+// symbol    ?global_arith_0048d6b0_redirect@@YIXPAX0@Z
 // size      20 bytes
 // prototype 
 // callers   0   call targets   0
@@ -335,6 +348,7 @@ void __fastcall global_arith_0048d6b0_redirect(void *, void *) {
 Purpose: sub_48d6d0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D6D0 sub_48d6d0 0x0048D6D0-0x0048D6E7
+// symbol    ?global_arith_0048d6d0_redirect@@YIXPAX0@Z
 // size      23 bytes
 // prototype 
 // callers   0   call targets   0
@@ -356,6 +370,7 @@ void __fastcall global_arith_0048d6d0_redirect(void *, void *) {
 Purpose: sub_48d6f0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D6F0 sub_48d6f0 0x0048D6F0-0x0048D704
+// symbol    ?global_arith_0048d6f0_redirect@@YIXPAX0@Z
 // size      20 bytes
 // prototype 
 // callers   0   call targets   0
@@ -376,6 +391,7 @@ void __fastcall global_arith_0048d6f0_redirect(void *, void *) {
 Purpose: sub_48d710 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D710 sub_48d710 0x0048D710-0x0048D724
+// symbol    ?global_arith_0048d710_redirect@@YIXPAX0@Z
 // size      20 bytes
 // prototype 
 // callers   0   call targets   0
@@ -396,6 +412,7 @@ void __fastcall global_arith_0048d710_redirect(void *, void *) {
 Purpose: sub_48d730 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D730 sub_48d730 0x0048D730-0x0048D747
+// symbol    ?global_arith_0048d730_redirect@@YIXPAX0@Z
 // size      23 bytes
 // prototype 
 // callers   0   call targets   0
@@ -417,6 +434,7 @@ void __fastcall global_arith_0048d730_redirect(void *, void *) {
 Purpose: sub_48d750 - arithmetic over 2 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D750 sub_48d750 0x0048D750-0x0048D75B
+// symbol    ?global_arith_0048d750_redirect@@YIXPAX0@Z
 // size      11 bytes
 // prototype 
 // callers   0   call targets   0
@@ -435,6 +453,7 @@ void __fastcall global_arith_0048d750_redirect(void *, void *) {
 Purpose: sub_48d760 - arithmetic over 2 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D760 sub_48d760 0x0048D760-0x0048D770
+// symbol    ?global_arith_0048d760_redirect@@YIXPAX0@Z
 // size      16 bytes
 // prototype 
 // callers   0   call targets   0
@@ -454,6 +473,7 @@ void __fastcall global_arith_0048d760_redirect(void *, void *) {
 Purpose: sub_48d770 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D770 sub_48d770 0x0048D770-0x0048D787
+// symbol    ?global_arith_0048d770_redirect@@YIXPAX0@Z
 // size      23 bytes
 // prototype 
 // callers   0   call targets   0
@@ -475,6 +495,7 @@ void __fastcall global_arith_0048d770_redirect(void *, void *) {
 Purpose: sub_48d790 - arithmetic over 4 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D790 sub_48d790 0x0048D790-0x0048D7AB
+// symbol    ?global_arith_0048d790_redirect@@YIXPAX0@Z
 // size      27 bytes
 // prototype 
 // callers   0   call targets   0
@@ -497,6 +518,7 @@ void __fastcall global_arith_0048d790_redirect(void *, void *) {
 Purpose: sub_48d7b0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D7B0 sub_48d7b0 0x0048D7B0-0x0048D7C4
+// symbol    ?global_arith_0048d7b0_redirect@@YIXPAX0@Z
 // size      20 bytes
 // prototype 
 // callers   0   call targets   0
@@ -517,6 +539,7 @@ void __fastcall global_arith_0048d7b0_redirect(void *, void *) {
 Purpose: sub_48d7d0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D7D0 sub_48d7d0 0x0048D7D0-0x0048D7E4
+// symbol    ?global_arith_0048d7d0_redirect@@YIXPAX0@Z
 // size      20 bytes
 // prototype 
 // callers   0   call targets   0
@@ -537,6 +560,7 @@ void __fastcall global_arith_0048d7d0_redirect(void *, void *) {
 Purpose: sub_48d7f0 - arithmetic over 4 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D7F0 sub_48d7f0 0x0048D7F0-0x0048D80B
+// symbol    ?global_arith_0048d7f0_redirect@@YIXPAX0@Z
 // size      27 bytes
 // prototype 
 // callers   0   call targets   0
@@ -559,6 +583,7 @@ void __fastcall global_arith_0048d7f0_redirect(void *, void *) {
 Purpose: sub_48d810 - arithmetic over 2 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D810 sub_48d810 0x0048D810-0x0048D81E
+// symbol    ?global_arith_0048d810_redirect@@YIXPAX0@Z
 // size      14 bytes
 // prototype 
 // callers   0   call targets   0
@@ -578,6 +603,7 @@ void __fastcall global_arith_0048d810_redirect(void *, void *) {
 Purpose: sub_5d8360 - arithmetic over 1 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x005D8360 sub_5d8360 0x005D8360-0x005D836B
+// symbol    ?global_arith_005d8360_redirect@@YIXPAX0@Z
 // size      11 bytes
 // prototype 
 // callers   0   call targets   0

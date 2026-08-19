@@ -102,6 +102,7 @@ void __fastcall prod_picker_close_redirect(ProdPicker *self, void *) {
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
 // ORIGINAL: 0x004945C0 ?on_redraw_nc@ProdPicker@@QAEXPAURECT@@H@Z 0x004945C0-0x004945C3 BYTE_EXACT
+// symbol    ?on_redraw_nc@ProdPicker@@QAEXPAUtagRECT@@H@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_redraw_nc@ProdPicker@@QAEXPAURECT@@H@Z)(ProdPicker* this, RECT*, int)
 // callers   0   call targets   0

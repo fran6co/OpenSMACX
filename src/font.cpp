@@ -208,6 +208,7 @@ int Font::width(LPSTR input, size_t max_len) {
 /*
 Purpose: Find a space in the input string that can be used as a natural line break.
 // ORIGINAL: 0x00619370 ?find_line_break_l@Font@@QAEHPADPAHH@Z 0x00619370-0x006195A7
+// symbol    ?find_line_break_l@Font@@QAEPADPADPAHI@Z
 // size      567 bytes
 // prototype int (__thiscall ?find_line_break_l@Font@@QAEHPADPAHH@Z)(Font* this, int8* input, int* breakLen, int len)
 // callers   1   call targets   2
@@ -256,6 +257,7 @@ LPSTR Font::find_line_break_l(LPSTR input, int *break_len, size_t len) {
 /*
 Purpose: Initialize the class static variables.
 // ORIGINAL: 0x006195B0 ?init_font_class@Font@@QAAHPAUFont@@@Z 0x006195B0-0x0061960D
+// symbol    ?init_font_class@Font@@SAHPAV1@@Z
 // size      93 bytes
 // prototype 
 // callers   1   call targets   1
@@ -287,6 +289,7 @@ int __cdecl Font::init_font_class(Font *font) {
 /*
 Purpose: Shutdown the class static variables.
 // ORIGINAL: 0x00619610 ?close_font_class@Font@@QAAXXZ 0x00619610-0x00619644
+// symbol    ?close_font_class@Font@@SAXXZ
 // size      52 bytes
 // prototype 
 // callers   1   call targets   0

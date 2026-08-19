@@ -52,6 +52,7 @@ Purpose: Report whether either lock entry is engaged - the low bit of its flag
          in EAX, so the value is returned here to match its behaviour rather
          than its declared type.
 // ORIGINAL: 0x0058FFA0 ?active@PlayerLock@@QAEXXZ 0x0058FFA0-0x0058FFBC BYTE_EXACT
+// symbol    ?active@PlayerLock@@QAEHXZ
 // size      28 bytes
 // prototype void (__thiscall ?active@PlayerLock@@QAEXXZ)(PlayerLock* this)
 // callers   4   call targets   0

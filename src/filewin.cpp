@@ -112,6 +112,7 @@ void FileWin::UNK4() {
 
 /*
 // ORIGINAL: 0x00614D90 ?init_class@FileWin@@QAAHXZ 0x00614D90-0x00614E2E BYTE_EXACT
+// symbol    ?init_class@FileWin@@SAHXZ
 // size      158 bytes
 // prototype
 // callers   1   call targets   6

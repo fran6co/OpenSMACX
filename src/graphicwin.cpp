@@ -122,6 +122,7 @@ Purpose: Close a GraphicWin by closing its Win base and Buffer subobject,
          resetting its window-specific state, and deleting the trailing
          owned interface when present.
 // ORIGINAL: 0x005D4E40 ?close@GraphicWin@@QAEXXZ 0x005D4E40-0x005D4EE6
+// symbol    ?close@GraphicWin@@QAEIXZ
 // size      166 bytes
 // prototype void (__thiscall ?close@GraphicWin@@QAEXXZ)(GraphicWin* this)
 // callers   66   call targets   2
@@ -448,6 +449,7 @@ Purpose: Initialise a GraphicWin. Reset the window, republish the eleven
          Win base, then size and initialise the window's own drawing surface
          and sync it to the active palette.
 // ORIGINAL: 0x005D4EF0 ?init@GraphicWin@@QAEHHHHHPADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z 0x005D4EF0-0x005D5096;0x00662B34-0x00662B49
+// symbol    ?init@GraphicWin@@QAEHHHHHPADHPAVWin@@PAVMenu@@PAUBorderSizing@@@Z
 // CORRECTED from ?init@GraphicWin@@QAEXHHHHPADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z
 //   BaseButton::init calls it at 0x006072A2 and immediately tests the
 //   result (`test eax, eax` / `jne` at 0x006072A7); all three exits set

@@ -454,6 +454,7 @@ void Path::continents() {
 /*
  Purpose: TBD
 // ORIGINAL: 0x0059CCA0 ?sensors@Path@@QAEHHPAHPAH@Z 0x0059CCA0-0x0059D22A
+// symbol    ?sensors@Path@@QAEHHPAH0@Z
 // size      1418 bytes
 // prototype int (__thiscall ?sensors@Path@@QAEHHPAHPAH@Z)(Path* this, int factionID, int* xCoordPtr, int* yCoordPtr)
 // callers   2   call targets   8

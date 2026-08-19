@@ -476,6 +476,7 @@ Purpose: The compiler-generated scalar deleting destructor: run ~Dialogs, the
          EAX. The fixed +0xBA0/+0x188 subobject offsets are complete-object
          facts: this thunk is only ever entered on a most-derived Dialogs.
 // ORIGINAL: 0x00407100 ??_GDialogs@@UAEPAXI@Z 0x00407100-0x00407141
+// symbol    ?dialogs_scalar_dtor_redirect@@YIPAXPAX0I@Z
 // size      65 bytes
 // prototype void* (__thiscall ??_GDialogs@@UAEPAXI@Z)(Dialogs* this, unsigned int)
 // callers   0   call targets   4

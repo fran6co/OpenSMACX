@@ -699,6 +699,7 @@ uint32_t *MsgStatus = (uint32_t *)0x009B7B9C;
 /*
 Purpose: Process non-input related message.
 // ORIGINAL: 0x005FCA30 ?do_non_input@@YAXXZ 0x005FCA30-0x005FCB14
+// symbol    ?do_non_input@@YAHXZ
 // size      228 bytes
 // prototype 
 // callers   12   call targets   3
@@ -804,6 +805,7 @@ void __cdecl do_all_draws() {
 /*
 Purpose: Process keyboard related message.
 // ORIGINAL: 0x005FCC20 ?do_keyboard@@YAXXZ 0x005FCC20-0x005FCC6D
+// symbol    ?do_keyboard@@YAHXZ
 // size      77 bytes
 // prototype 
 // callers   0   call targets   2

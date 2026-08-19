@@ -196,6 +196,7 @@ Purpose: The compiler-generated scalar deleting destructor: re-install the
          virtual table, reset the fields through close, and, when bit 0 of
          the mode asks, free the storage to the game heap.
 // ORIGINAL: 0x005F8640 ??_GAutoSound@@UAEPAXI@Z 0x005F8640-0x005F8664
+// symbol    ?auto_sound_scalar_dtor_redirect@@YIPAXPAVAutoSound@@PAXI@Z
 // size      36 bytes
 // prototype void* (__thiscall ??_GAutoSound@@UAEPAXI@Z)(AutoSound* this, unsigned int)
 // callers   0   call targets   2

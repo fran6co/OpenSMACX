@@ -94,6 +94,7 @@ BOOL __cdecl is_alive(uint32_t faction_id) {
 /*
 Purpose: Calculate the base amount of talents and drones for the specified faction.
 // ORIGINAL: 0x004EA4A0 ?psych_check@@YAXHPAHPAH@Z 0x004EA4A0-0x004EA533
+// symbol    ?psych_check@@YAXHPAH0@Z
 // size      147 bytes
 // prototype void (__cdecl ?psych_check@@YAXHPAHPAH@Z)(int factionID, int* drones, int* talents)
 // callers   1   call targets   0
@@ -129,6 +130,7 @@ int __cdecl has_treaty(int faction_id, int faction_id_with, int treaty) {
 /*
 Purpose: Get the faction's name adjective.
 // ORIGINAL: 0x0050B910 ?get_adjective@@YAHH@Z 0x0050B910-0x0050B92A
+// symbol    ?get_adjective@@YAPADH@Z
 // size      26 bytes
 // prototype int (__cdecl ?get_adjective@@YAHH@Z)(int factionID)
 // callers   3   call targets   0
@@ -145,6 +147,7 @@ LPSTR __cdecl get_adjective(int faction_id) {
 /*
 Purpose: Get the faction's noun.
 // ORIGINAL: 0x0050B930 ?get_noun@@YAHH@Z 0x0050B930-0x0050B964
+// symbol    ?get_noun@@YAPADH@Z
 // size      52 bytes
 // prototype int (__cdecl ?get_noun@@YAHH@Z)(int factionID)
 // callers   5   call targets   0
@@ -250,6 +253,7 @@ Purpose: Check whether the specified faction is nearing the diplomatic victory r
          able to call a Supreme Leader vote. Optional 2nd parameter (0/-1 to disable) that specifies
          a faction to skip if they have a pact with faction from the 1st parameter.
 // ORIGINAL: 0x00539D40 ?aah_ooga@@YAHHH@Z 0x00539D40-0x00539E3E
+// symbol    ?aah_ooga@@YAIHH@Z
 // size      254 bytes
 // prototype 
 // callers   7   call targets   2
@@ -392,6 +396,7 @@ void __cdecl cause_friction(int faction_id, int faction_id_with, int friction) {
 /*
 Purpose: Normalize the diplomatic friction value into a mood offset.
 // ORIGINAL: 0x0053A090 ?get_mood@@YAHH@Z 0x0053A090-0x0053A0F5 BYTE_EXACT
+// symbol    ?get_mood@@YAIH@Z
 // size      101 bytes
 // prototype int (__cdecl ?get_mood@@YAHH@Z)(int friction)
 // callers   3   call targets   0
@@ -910,6 +915,7 @@ BOOL __cdecl wants_to_attack(int faction_id, int faction_id_tgt, int faction_id_
 Purpose: Weigh how badly the specified faction's territory is being trespassed on by another
          faction's units, and mark those units so the rest of diplomacy can find them again.
 // ORIGINAL: 0x0055EB80 ?territory@@YAHHHHPAHPAH@Z 0x0055EB80-0x0055EEDE
+// symbol    ?territory@@YAHHHHPAH0@Z
 // size      862 bytes
 // prototype 
 // callers   4   call targets   2
@@ -1691,6 +1697,7 @@ void __cdecl compute_faction_modifiers(int faction_id) {
 /*
 Purpose: Calculate the social engineering effect modifiers for the specified faction.
 // ORIGINAL: 0x005B4210 ?social_calc@@YAXPAHPAHHHH@Z 0x005B4210-0x005B44C9
+// symbol    ?social_calc@@YAXPAUSocialCategory@@PAUSocialEffect@@HHH@Z
 // size      697 bytes
 // prototype void (__cdecl ?social_calc@@YAXPAHPAHHHH@Z)(social_category* category, social_effect* effect, uint32_t factionID, BOOL toggle, BOOL isQuickCalc)
 // callers   7   call targets   1
@@ -1799,6 +1806,7 @@ void __cdecl social_upkeep(int faction_id) {
 /*
 Purpose: Calculate the cost of the social upheaval for the specified faction.
 // ORIGINAL: 0x005B4550 ?social_upheaval@@YAHHPAH@Z 0x005B4550-0x005B45F8
+// symbol    ?social_upheaval@@YAIHPAUSocialCategory@@@Z
 // size      168 bytes
 // prototype int (__cdecl ?social_upheaval@@YAHHPAH@Z)(int factionID, social_category* category)
 // callers   2   call targets   0
@@ -1851,6 +1859,7 @@ BOOL __cdecl society_avail(int soc_category, int soc_model, int faction_id) {
 /*
 Purpose: Calculate an AI faction's social engineering.
 // ORIGINAL: 0x005B4790 ?social_ai@@YAXHHHHHPAH@Z 0x005B4790-0x005B5612
+// symbol    ?social_ai@@YAXHHHHHPAUSocialCategory@@@Z
 // size      3714 bytes
 // prototype void (__cdecl ?social_ai@@YAXHHHHHPAH@Z)(int factionID, int growthVal, int techVal, int wealthVal, int powerVal, social_category* output)
 // callers   2   call targets   7

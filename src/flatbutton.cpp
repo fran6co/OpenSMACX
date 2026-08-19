@@ -26,6 +26,7 @@ uint32_t *FlatButtonDefaults = (uint32_t *)0x009B8E44;
 Purpose: Close the primary Time member, reset FlatButton orientation state,
          close the BaseButton base, and reload all nine three-entry tables.
 // ORIGINAL: 0x00607DA0 ?close@FlatButton@@QAEXXZ 0x00607DA0-0x00607E41
+// symbol    ?close@FlatButton@@QAEIXZ
 // size      161 bytes
 // prototype void (__thiscall ?close@FlatButton@@QAEXXZ)(FlatButton* this)
 // callers   134   call targets   2

@@ -26,6 +26,7 @@
 /*
 Purpose: Initialize the class instance.
 // ORIGINAL: 0x005FD8D0 ?init@Text@@QAEHH@Z 0x005FD8D0-0x005FD969
+// symbol    ?init@Text@@QAEHI@Z
 // size      153 bytes
 // prototype int (__thiscall ?init@Text@@QAEHH@Z)(_Text* this, int)
 // callers   0   call targets   3
@@ -94,6 +95,7 @@ void Text::close() {
 /*
 Purpose: Open the specified text file and copy the section into the buffer for parsing.
 // ORIGINAL: 0x005FDA00 ?open@Text@@QAEHPADPAD@Z 0x005FDA00-0x005FDC04
+// symbol    ?open@Text@@QAEHPBD0@Z
 // size      516 bytes
 // prototype int (__thiscall ?open@Text@@QAEHPADPAD@Z)(_Text* this, int8* srcFileID, int8* sectionID)
 // callers   2   call targets   13
@@ -160,6 +162,7 @@ BOOL Text::open(LPCSTR src_file_id, LPCSTR section_id) {
 /*
 Purpose: Parse text from the opened file until a newline is reached. Copy this text into the buffer.
 // ORIGINAL: 0x005FDC10 ?get@Text@@QAEHXZ 0x005FDC10-0x005FDC7E
+// symbol    ?get@Text@@QAEPADXZ
 // size      110 bytes
 // prototype int (__thiscall ?get@Text@@QAEHXZ)(_Text* this)
 // callers   1   call targets   3
@@ -187,6 +190,7 @@ LPSTR Text::get() {
 /*
 Purpose: Get the string and put it into the string table.
 // ORIGINAL: 0x005FDC80 ?string@Text@@QAEXXZ 0x005FDC80-0x005FDD0F
+// symbol    ?string@Text@@QAEPADXZ
 // size      143 bytes
 // prototype void (__thiscall ?string@Text@@QAEXXZ)(_Text* this)
 // callers   0   call targets   4
@@ -203,6 +207,7 @@ LPSTR Text::string() {
 /*
 Purpose: Parse the current item into the string buffer.
 // ORIGINAL: 0x005FDD10 ?item@Text@@QAEXXZ 0x005FDD10-0x005FDD72 BYTE_EXACT
+// symbol    ?item@Text@@QAEPADXZ
 // size      98 bytes
 // prototype void (__thiscall ?item@Text@@QAEXXZ)(_Text* this)
 // callers   0   call targets   1
@@ -228,6 +233,7 @@ LPSTR Text::item() {
 /*
 Purpose: Parse the current string item into the buffer and add it to the string table.
 // ORIGINAL: 0x005FDD80 ?item_string@Text@@QAEXXZ 0x005FDD80-0x005FDDED
+// symbol    ?item_string@Text@@QAEPADXZ
 // size      109 bytes
 // prototype void (__thiscall ?item_string@Text@@QAEXXZ)(_Text* this)
 // callers   0   call targets   2
@@ -244,6 +250,7 @@ LPSTR Text::item_string() {
 /*
 Purpose: Parse the current number item.
 // ORIGINAL: 0x005FDDF0 ?item_number@Text@@QAEXXZ 0x005FDDF0-0x005FDE58
+// symbol    ?item_number@Text@@QAEHXZ
 // size      104 bytes
 // prototype void (__thiscall ?item_number@Text@@QAEXXZ)(_Text* this)
 // callers   0   call targets   2
@@ -260,6 +267,7 @@ int Text::item_number() {
 /*
 Purpose: Parse the current binary item.
 // ORIGINAL: 0x005FDE60 ?item_binary@Text@@QAEXXZ 0x005FDE60-0x005FDEC8
+// symbol    ?item_binary@Text@@QAEHXZ
 // size      104 bytes
 // prototype void (__thiscall ?item_binary@Text@@QAEXXZ)(_Text* this)
 // callers   0   call targets   2
@@ -276,6 +284,7 @@ int Text::item_binary() {
 /*
 Purpose: Parse the current hex item.
 // ORIGINAL: 0x005FDED0 ?item_hex@Text@@QAEXXZ 0x005FDED0-0x005FDF38
+// symbol    ?item_hex@Text@@QAEHXZ
 // size      104 bytes
 // prototype void (__thiscall ?item_hex@Text@@QAEXXZ)(_Text* this)
 // callers   0   call targets   2
@@ -471,6 +480,7 @@ Text::Text()
 
 
 // ORIGINAL: 0x005FD550 ?text_open@@YAHPADPAD@Z 0x005FD550-0x005FD565 BYTE_EXACT
+// symbol    ?text_open@@YAHPBD0@Z
 // size      21 bytes
 // prototype int (__cdecl ?text_open@@YAHPADPAD@Z)(int8* srcFileID, int8* sectionID)
 // callers   34   call targets   1

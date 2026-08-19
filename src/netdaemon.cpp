@@ -301,6 +301,7 @@ Purpose: Release the vehicle lock this client is holding. In a net game, tell
          record at 0x1B78 and the flag at 0x1BC4. Only the transport flag at
          0x0093F660 gates the announce; any nonzero value is a net game.
 // ORIGINAL: 0x005310F0 ?unlock_veh@NetDaemon@@QAEXXZ 0x005310F0-0x0053114A
+// symbol    ?unlock_veh@NetDaemon@@QAEIXZ
 // size      90 bytes
 // prototype void (__thiscall ?unlock_veh@NetDaemon@@QAEXXZ)(NetDaemon* this)
 // callers   33   call targets   2

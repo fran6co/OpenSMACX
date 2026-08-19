@@ -251,6 +251,7 @@ int Spot::check(int x, int y, int *spot_pos, int *spot_type, RECT *spot_rect) {
 /*
 Purpose: Get the RECT for a specific spot.
 // ORIGINAL: 0x005FAC00 ?get_rect@Spot@@QAEHHHPAURECT@@@Z 0x005FAC00-0x005FAC5B BYTE_EXACT
+// symbol    ?get_rect@Spot@@QAEHHHPAUtagRECT@@@Z
 // size      91 bytes
 // prototype int (__thiscall ?get_rect@Spot@@QAEHHHPAURECT@@@Z)(Spot* this, int position, int type, RECT* spotRect)
 // callers   2   call targets   0

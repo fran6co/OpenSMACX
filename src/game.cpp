@@ -356,6 +356,7 @@ void __cdecl clear_scenario() {
 /*
 Purpose: Calculate game year from start date and turn number.
 // ORIGINAL: 0x005C89A0 ?game_year@@YAHH@Z 0x005C89A0-0x005C89B0
+// symbol    ?game_year@@YAIH@Z
 // size      16 bytes
 // prototype int (__cdecl ?game_year@@YAHH@Z)(int turn)
 // callers   30   call targets   0

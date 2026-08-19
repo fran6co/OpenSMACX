@@ -84,6 +84,7 @@ Purpose: Walk the entry list for `id` and leave the cursor and position on the
          not change the thiscall cleanup, so this is the residue and not a
          different function.
 // ORIGINAL: 0x00611600 ?id_to_pos@SpriteBox@@QAEXH@Z 0x00611600-0x00611640
+// symbol    ?id_to_pos@SpriteBox@@QAEIH@Z
 // size      64 bytes
 // prototype void (__thiscall ?id_to_pos@SpriteBox@@QAEXH@Z)(SpriteBox* this, int)
 // callers   0   call targets   0

@@ -114,6 +114,7 @@ func_sprite_draw_original SpriteDrawOriginal = original_method<func_sprite_draw_
 /*
 Purpose: Draw the sprite with a temporarily substituted draw origin.
 // ORIGINAL: 0x005E4B4A ?draw@Sprite@@QAEHPAUBuffer@@HHHHH@Z 0x005E4B4A-0x005E4B95
+// symbol    ?draw@Sprite@@QAEHPAVBuffer@@HHHHH@Z
 // size      75 bytes
 // prototype int (__thiscall ?draw@Sprite@@QAEHPAUBuffer@@HHHHH@Z)(Sprite* this, Buffer*, int, int, int, int, int)
 // callers   48   call targets   1
@@ -223,6 +224,7 @@ void __fastcall sprite_unk4_redirect(Sprite *self, void *, int a1, int a2) {
 
 /*
 // ORIGINAL: 0x0063CE20 sub_63ce20 0x0063CE20-0x0063CEE7;0x00663998-0x006639AD
+// symbol    ?sub_63ce20@@YAHXZ
 // RULED-OUT: the original wraps the local Buffer in an fs:[0] SEH frame; no swept flag set reproduces that prologue/epilogue or the secondary 0x663998 span, so the SEH shape stays unmatched.
 // size      220 bytes
 // prototype

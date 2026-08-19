@@ -21,6 +21,7 @@ void text_clear_index_source(TextIndex *indexes) {
 }
 
 // ORIGINAL: 0x005FE1F0 ?text_make_index@@YAXPAD@Z 0x005FE1F0-0x005FE228
+// symbol    ?text_make_index@@YAXPBD@Z
 // size      56 bytes
 // prototype 
 // callers   1   call targets   1
@@ -38,6 +39,7 @@ void __cdecl text_make_index(LPCSTR source_txt) {
 }
 
 // ORIGINAL: 0x005FE230 ?text_search_index@@YAHPAD0@Z 0x005FE230-0x005FE26C
+// symbol    ?text_search_index@@YAHPBD0@Z
 // size      60 bytes
 // prototype 
 // callers   0   call targets   1

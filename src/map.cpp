@@ -884,6 +884,7 @@ uint32_t __cdecl lock_at(uint32_t x, uint32_t y) {
 /*
 Purpose: Set the lock faction id for the specified tile.
 // ORIGINAL: 0x00591C50 ?lock_set@@YAHHHH@Z 0x00591C50-0x00591C88
+// symbol    ?lock_set@@YAXHHH@Z
 // size      56 bytes
 // prototype int (__cdecl ?lock_set@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)
 // callers   0   call targets   0
@@ -1279,6 +1280,7 @@ int __cdecl find_landmark(int x, int y, int radius_range_offset) {
 /*
 Purpose: Set up a new landmark with the provided name at the specified tile.
 // ORIGINAL: 0x00592600 ?new_landmark@@YAHHHPAD@Z 0x00592600-0x0059264B
+// symbol    ?new_landmark@@YAHHHPBD@Z
 // size      75 bytes
 // prototype int (__cdecl ?new_landmark@@YAHHHPAD@Z)(int xCoord, int yCoord, int8* name)
 // callers   18   call targets   1
@@ -1579,6 +1581,7 @@ void __cdecl map_shutdown() {
 /*
 Purpose: Initialize map variables.
 // ORIGINAL: 0x00590ED0 ?map_init@@YAXXZ 0x00590ED0-0x00591036
+// symbol    ?map_init@@YAHXZ
 // size      358 bytes
 // prototype 
 // callers   6   call targets   7
@@ -1642,6 +1645,7 @@ void __cdecl map_wipe() {
 /*
 Purpose: Write map data to a file.
 // ORIGINAL: 0x005910B0 ?map_write@@YAHPAUFILE@@@Z 0x005910B0-0x00591125
+// symbol    ?map_write@@YAHPAU_iobuf@@@Z
 // size      117 bytes
 // prototype int (__cdecl ?map_write@@YAHPAUFILE@@@Z)(FILE* file)
 // callers   2   call targets   1
@@ -1663,6 +1667,7 @@ BOOL __cdecl map_write(FILE *map_file) {
 /*
 Purpose: Read the map data from a file and write it into memory.
 // ORIGINAL: 0x00591130 ?map_read@@YAHPAUFILE@@@Z 0x00591130-0x00591208
+// symbol    ?map_read@@YAHPAU_iobuf@@@Z
 // size      216 bytes
 // prototype int (__cdecl ?map_read@@YAHPAUFILE@@@Z)(FILE* file)
 // callers   2   call targets   4
@@ -1693,6 +1698,7 @@ BOOL __cdecl map_read(FILE *map_file) {
 /*
 Purpose: Get the region value for the specified tile.
 // ORIGINAL: 0x00591210 ?abstract_at@@YAHHH@Z 0x00591210-0x00591230
+// symbol    ?abstract_at@@YAEHH@Z
 // size      32 bytes
 // prototype int (__cdecl ?abstract_at@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   1   call targets   0
@@ -1726,6 +1732,7 @@ void __cdecl abstract_set(int x, int y, uint8_t region) {
 Purpose: Quickly check for unit related zone of control conflicts. If a ZOC conflict is found, store
          the coordinates of the tile inside ZOC pointers.
 // ORIGINAL: 0x00593830 ?quick_zoc@@YAXHHHHHPAH0@Z 0x00593830-0x005939FC
+// symbol    ?quick_zoc@@YAXIIIHHPAH0@Z
 // size      460 bytes
 // prototype void (__cdecl ?quick_zoc@@YAXHHHHHPAH0@Z)(int xCoordSrc, int yCoordSrc, int factionID, int xCoordDst, int yCoordDst, int* xCoordZoc, int* yCoordZoc)
 // callers   1   call targets   1

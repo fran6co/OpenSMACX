@@ -238,6 +238,7 @@ void CheckBox::on_mouse_leave(int a1, int a2) {
 
 /*
 // ORIGINAL: 0x0060FC60 ?init_class@CheckBox@@QAAHXZ 0x0060FC60-0x0060FD52;0x00662F84-0x00662F99
+// symbol    ?init_class@CheckBox@@SAHXZ
 // RULED-OUT: a real local `Buffer buf;` double-destructs (the explicit ~Buffer() call plus the automatic scope-exit one). A raw `char[sizeof(Buffer)]` + placement `new` + explicit `->~Buffer()` is the shape the original uses. SEH prologue/unwind funclet not reproduced (same gap as the RadioButton sibling).
 // size      263 bytes
 // prototype int (__cdecl ?init_class@CheckBox@@QAAHXZ)()
