@@ -142,13 +142,15 @@ wheels = [
 name = "opensmacx-decomp"
 version = "0.1.0"
 source = { editable = "." }
+dependencies = [
+    { name = "capstone" },
+]
 
 [package.dev-dependencies]
 test = [
     { name = "pytest" },
 ]
 tools = [
-    { name = "capstone" },
     { name = "pefile" },
     { name = "python-idb" },
     { name = "undname" },
@@ -156,11 +158,11 @@ tools = [
 ]
 
 [package.metadata]
+requires-dist = [{ name = "capstone", specifier = "==5.0.6" }]
 
 [package.metadata.requires-dev]
 test = [{ name = "pytest", specifier = "==8.4.1" }]
 tools = [
-    { name = "capstone", specifier = "==5.0.6" },
     { name = "pefile", specifier = "==2024.8.26" },
     { name = "python-idb", specifier = "==0.8.0" },
     { name = "undname", specifier = "==0.2" },

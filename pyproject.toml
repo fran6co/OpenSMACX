@@ -3,16 +3,24 @@ name = "opensmacx-decomp"
 version = "0.1.0"
 description = "The source map: what src/ says about the shipped SMACX image."
 requires-python = ">=3.12"
-# EMPTY, AND KEPT THAT WAY. The parsers under `decomp/` are pure stdlib.
-# capstone and z3 belong to the tools that disassemble and solve, not to a
-# comment reader, so they live in the group below instead.
-dependencies = []
+# THE READERS ARE STDLIB; THE COMPARISON IS NOT. `decomp/asm.py` disassembles
+# both sides of a byte match, so capstone is a real dependency rather than a
+# lazy import that may or may not resolve - a package whose central function
+# raises ImportError on a fresh install is not installed.
+#
+# The narrower invariant is the one worth keeping, and it is CHECKED rather
+# than promised here: `model`, `grammar`, `reader` and `writer` import nothing
+# outside the standard library, so reading an annotation still costs nothing.
+# z3, pefile and the rest belong to the tools that solve and export, and stay
+# in the group below.
+dependencies = ["capstone==5.0.6"]
 
 [dependency-groups]
 # Was tools/requirements.txt. A group rather than a project dependency: these
 # are what the 61 scripts in tools/ need, and `decomp` needs none of them.
 tools = [
-    "capstone==5.0.6",
+    # capstone is NOT here: it is a project dependency now (see above), and
+    # two pins for one package is a version skew waiting to happen.
     "pefile==2024.8.26",
     "python-idb==0.8.0",
     "undname==0.2",
