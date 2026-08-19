@@ -15,7 +15,8 @@ import pytest
 
 from decomp import read_file
 from decomp import asm
-from decomp.asm import compare_asm, compiled_asm, original_asm
+from decomp.asm import (build_command, compare_asm, compiled_asm,
+                        original_asm)
 
 # The environment's facts live HERE, not in the package: where this checkout
 # is, and where the pinned image and the build database are on this box. The
@@ -78,7 +79,7 @@ def test_original_asm_refused_without_the_exe(tmp_path):
 
 def test_compiled_asm_refused_without_the_name_fact(tmp_path):
     with pytest.raises(ValueError, match="no name"):
-        compiled_asm(record_in(tmp_path, NO_FACTS), COMPILE_COMMANDS, FLAGS)
+        compiled_asm(record_in(tmp_path, NO_FACTS), ["cl"], FLAGS)
 
 
 # --------------------------------------------------------------- COFF reader
@@ -228,7 +229,8 @@ def test_byte_exact_body_compiles_to_the_same_shape():
     record = next(r for r in records if r.address == 0x00616BC0)
     assert record.byte_exact
     original = original_asm(record, EXE)
-    compiled = compiled_asm(record, COMPILE_COMMANDS, FLAGS)
+    command = build_command(COMPILE_COMMANDS, record.path)
+    compiled = compiled_asm(record, command, FLAGS)
     result = compare_asm(original, compiled)
     assert result.verdict == "BYTE_EXACT", \
         f"{result.verdict}: {result.matching_instructions}/{result.original_instructions} " \
@@ -431,7 +433,7 @@ def test_a_body_that_will_not_build_is_a_tier(tmp_path, monkeypatch):
     monkeypatch.setattr(asm, "original_asm",
                         lambda *a, **k: listing(b"\xC3"))
     monkeypatch.setattr(asm, "span_refusal", lambda *a, **k: None)
-    result = asm.compare_record(record, "exe", "cc", ("/c /O2",))
+    result = asm.compare_record(record, "exe", ["cl"], ("/c /O2",))
     assert result.verdict == "NO_COMPILE"
     assert "C2065" in result.diagnostic
 
@@ -447,7 +449,7 @@ def test_a_lying_annotation_is_still_an_error(tmp_path, monkeypatch):
                         lambda *a, **k: listing(b"\xC3"))
     monkeypatch.setattr(asm, "span_refusal", lambda *a, **k: None)
     with pytest.raises(ValueError, match="stale"):
-        asm.compare_record(record, "exe", "cc", ("/c /O2",))
+        asm.compare_record(record, "exe", ["cl"], ("/c /O2",))
 
 
 def test_the_diagnostic_prefers_what_cl_called_an_error():
@@ -495,3 +497,45 @@ def test_a_folded_tail_belongs_to_no_single_body(tmp_path):
 
 def test_an_ordinary_span_is_not_refused(tmp_path):
     assert asm.span_refusal(record_in(tmp_path, MARKED), EXE) is None
+
+
+# --------------------------------------------- a command, not a permission
+
+
+@pytest.mark.skipif(not HAVE_BUILD, reason="no build database")
+def test_build_command_reads_the_builds_own_invocation():
+    command = build_command(COMPILE_COMMANDS, REPO_ROOT / "src" / "buffer.cpp")
+    assert command[0].endswith("vc6-cl")
+    assert any(w.startswith("/I") for w in command)
+    # NOT the optimisation flags: those are a property of the function being
+    # matched, and belong to whoever is asking.
+    assert not any(w.startswith(("/O", "/Gy", "/Oy")) for w in command)
+
+
+@pytest.mark.skipif(not HAVE_BUILD, reason="no build database")
+def test_a_file_the_build_does_not_name_is_refused_not_guessed():
+    """3,315 records live in files CMake has no reason to build, and most
+    are FILE-mode - already a translation unit, wanting only an invocation.
+    Which invocation is a judgement about include paths that the caller
+    holds, so this refuses and says what to pass instead of picking one."""
+    with pytest.raises(ValueError, match="pass the command of a file that is"):
+        build_command(COMPILE_COMMANDS,
+                      REPO_ROOT / "src" / "recovered" / "units" / "x.cpp")
+
+
+@pytest.mark.skipif(not HAVE_BUILD, reason="no build database")
+def test_a_borrowed_command_compiles_a_file_the_build_never_names():
+    """The borrow is the caller's to make, and it works: the same command
+    that builds `buffer.cpp` builds a unit CMake never sees."""
+    from decomp import read
+    from decomp.asm import compare_record
+    units = REPO_ROOT / "src" / "recovered" / "units"
+    if not units.is_dir():
+        pytest.skip("no proved-unit store in this checkout")
+    record = next((r for r in read(units) if r.symbol or r.name), None)
+    if record is None:
+        pytest.skip("no annotated unit to try")
+    command = build_command(COMPILE_COMMANDS, REPO_ROOT / "src" / "buffer.cpp")
+    verdict = compare_record(record, EXE, command, FLAGS)
+    assert verdict.verdict in tuple(str(t) for t in __import__(
+        "decomp").Tier)

@@ -8,7 +8,7 @@ a person writes; what a measurement knows is whether it still matches.
     from decomp.record import stamped, record_match
 
     stamped(record, verdict)      # the record the measurement implies
-    record_match(record, ...)     # measure, then write that record back
+    record_match(record, exe, command, flags)   # measure, then write it
 
 WHY `stamped` IS SEPARATE from writing it. A caller that measures a batch
 wants to decide what to do with the whole set before touching `src/` - the
@@ -56,14 +56,14 @@ def stamped(record: DecompilationState,
 
 
 def record_match(record: DecompilationState, exe: Path | str,
-                 compile_commands: Path | str, flags: tuple | str,
+                 command: list[str], flags: tuple | str,
                  shared: frozenset = frozenset()) -> AsmComparison:
     """Measure `record`, write what the measurement says, return the verdict.
 
     The annotation is rewritten only when the measurement changes it, so a
     run over a tree that has not moved touches no file.
     """
-    verdict = compare_record(record, exe, compile_commands, flags, shared)
+    verdict = compare_record(record, exe, command, flags, shared)
     after = stamped(record, verdict)
     if after != record:
         write_file([after])

@@ -74,7 +74,7 @@ def test_record_match_writes_the_claim_it_measured(tmp_path, monkeypatch):
     record = record_in(tmp_path, MARKED)
     monkeypatch.setattr(module, "compare_record",
                         lambda *a, **k: verdict(Tier.BYTE_EXACT))
-    assert record_match(record, "exe", "cc", ("/c /O2",)).verdict == "BYTE_EXACT"
+    assert record_match(record, "exe", ["cl"], ("/c /O2",)).verdict == "BYTE_EXACT"
     assert "BYTE_EXACT" in (tmp_path / "x.cpp").read_text()
     assert read_file(tmp_path / "x.cpp")[0].byte_exact
 
@@ -87,7 +87,7 @@ def test_record_match_touches_nothing_when_nothing_changed(tmp_path,
     before = (tmp_path / "x.cpp").stat().st_mtime_ns
     monkeypatch.setattr(module, "compare_record",
                         lambda *a, **k: verdict(Tier.BYTE_EXACT))
-    record_match(record, "exe", "cc", ("/c /O2",))
+    record_match(record, "exe", ["cl"], ("/c /O2",))
     assert (tmp_path / "x.cpp").stat().st_mtime_ns == before
 
 
@@ -97,5 +97,5 @@ def test_record_match_removes_a_claim_that_stopped_reproducing(tmp_path,
     record = record_in(tmp_path, MATCHED)
     monkeypatch.setattr(module, "compare_record",
                         lambda *a, **k: verdict(Tier.MISMATCH))
-    record_match(record, "exe", "cc", ("/c /O2",))
+    record_match(record, "exe", ["cl"], ("/c /O2",))
     assert "BYTE_EXACT" not in (tmp_path / "x.cpp").read_text()

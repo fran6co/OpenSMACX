@@ -8,19 +8,21 @@ One call answers the recovery's central question for one record:
 
     records = read_file(Path("src/buffer.cpp"))
     record = next(r for r in records if r.address == 0x005DAC70)
+    from decomp.asm import build_command
+    command = build_command(Path("build/compile_commands.json"),
+                            record.path)
     compare_record(record,
                    Path(".opensmacx/game/terranx_original.exe"),
-                   Path("build/compile_commands.json")).verdict
+                   command, FLAG_SETS).verdict
 
 and the two sides are still available separately, as `original_asm` and
 `compiled_asm`.
 
 THE ORIGINAL SIDE reads the pinned executable's bytes at the record's span
-and disassembles them. THE COMPILED SIDE takes the build's own compile
-command for the record's file from compile_commands.json, keeps its
-compiler and its include and define flags, swaps in the caller's
-optimisation flags, and disassembles the function pulled out of the
-resulting object. The compiler the entry names is the build's own wrapper -
+and disassembles them. THE COMPILED SIDE compiles the record's file with a
+command the CALLER supplies - `build_command` reads one out of the build's
+own database - plus the optimisation flags the caller is asking about, and
+disassembles the function pulled out of the resulting object. The compiler the entry names is the build's own wrapper -
 it knows where VC6 lives and how to run it under wine, so this module never
 asks. Both return a `Listing`: lines shaped like tools/disasm.py's output,
 carrying the bytes and the relocation mask behind them.
@@ -409,36 +411,52 @@ def original_asm(record: DecompilationState, exe: Path | str) -> Listing:
 # --------------------------------------------------------------- the compile
 
 
-def _entry_for(source: Path, compile_commands: Path) -> dict[str, str]:
-    """The compile_commands entry describing how the build compiles
-    `source`."""
+def build_command(compile_commands: Path | str,
+                  source: Path | str) -> list[str]:
+    """The compiler invocation this build uses for `source`, without its
+    optimisation flags.
+
+    The compiler and the include and define flags - what a translation unit
+    needs to parse - and nothing about how it is optimised, because that is
+    a property of the FUNCTION being matched and belongs to the caller. See
+    `compare_record`.
+
+    RAISES IF THE BUILD DOES NOT NAME `source`, and does not go looking for
+    something close. A build entry is a command, not a permission: this
+    tree's `src/recovered/` and `src/unrecovered/` hold 3,315 annotated
+    records CMake has no reason to build, 2,475 of them FILE-mode, where the
+    file already IS the translation unit and the only thing missing is an
+    invocation. Those are perfectly compilable with a command borrowed from
+    anywhere in the same tree - and WHICH command is a judgement about which
+    include path a unit needs, which the caller is holding and this module
+    is not. Borrow deliberately:
+
+        command = build_command(cc, record.path if in_build else a_sibling)
+
+    The leading tokens up to the first flag are the compiler the build
+    invokes - this tree's wrapper, which knows where VC6 lives and how to
+    run it under wine. PCH flags are dropped, because they point at a
+    precompiled header built for the build's own object directory.
+    """
+    compile_commands = Path(compile_commands)
     if not compile_commands.is_file():
         raise ValueError(
             f"no {compile_commands} - configure the build first")
     table = json.loads(compile_commands.read_text())
-    resolved = source.resolve()
+    resolved = Path(source).resolve()
     for candidate in table:
         file = Path(candidate["file"])
         if not file.is_absolute():
             file = Path(candidate.get("directory", ".")) / file
         if file.resolve() == resolved:
-            return candidate
+            return _invocation(candidate)
     raise ValueError(
-        f"{source.name} is not a build input in {compile_commands.name}")
+        f"{Path(source).name} is not a build input in "
+        f"{compile_commands.name}; pass the command of a file that is")
 
 
-def _compile_command(entry: dict[str, str], flags: str) -> list[str]:
-    """The build's own compile command with its optimisation flags swapped
-    for `flags`.
-
-    The leading tokens up to the first flag are the compiler the build
-    invokes - this tree's wrapper, which knows where VC6 lives and how to
-    run it under wine, and translates POSIX paths on its own. The include
-    and define flags stay exactly as the build parses them; its PCH flags
-    are dropped, because they point at a precompiled header built for the
-    build's own object directory. `/Fo` and `/Fd` are replaced by the
-    caller.
-    """
+def _invocation(entry: dict[str, str]) -> list[str]:
+    """An entry's compiler and its include and define flags."""
     words = shlex.split(entry.get("command")
                         or " ".join(entry.get("arguments", [])))
     split = 0
@@ -455,15 +473,14 @@ def _compile_command(entry: dict[str, str], flags: str) -> list[str]:
         if (word.startswith(("/I", "/D")) and len(word) > 2) or \
                 (word.startswith("/FI") and len(word) > 3):
             kept.append(word)
-    return [*compiler, "/nologo", *flags.split(), *kept]
+    return [*compiler, "/nologo", *kept]
 
 
-def _compile(source: Path, flags: str, compile_commands: Path) -> bytes:
-    """Compile `source` with the build's own command; return the object's
-    bytes."""
-    command = _compile_command(_entry_for(source, compile_commands), flags)
+def _compile(source: Path, command: list[str], flags: str) -> bytes:
+    """Compile `source` with `command` plus `flags`; return the object."""
     with tempfile.TemporaryDirectory() as work:
-        result = subprocess.run([*command, "/Founit.obj", str(source)],
+        result = subprocess.run([*command, *flags.split(), "/Founit.obj",
+                                 str(source)],
                                 cwd=work, capture_output=True, text=True,
                                 timeout=120)
         obj = Path(work) / "unit.obj"
@@ -568,7 +585,7 @@ def _coff_function_masked(obj: bytes, symbol: str, emitted: str = "",
     return code, frozenset(masked)
 
 
-def compiled_asm(record: DecompilationState, compile_commands: Path | str,
+def compiled_asm(record: DecompilationState, command: list[str],
                  flags: str) -> Listing:
     """The assembly VC6 produces for the record's code: the record's file
     compiled by the build's own compile command with its optimisation flags
@@ -578,7 +595,7 @@ def compiled_asm(record: DecompilationState, compile_commands: Path | str,
     if not record.name:
         raise ValueError(
             f"{record.address_hex}: no name fact under its marker")
-    obj = _compile(record.path, flags, Path(compile_commands))
+    obj = _compile(record.path, command, flags)
     code, mask = _coff_function_masked(obj, record.name, record.symbol)
     return Listing(code=code, base=record.address, mask=mask, flags=flags)
 
@@ -772,8 +789,7 @@ def shared_spans(records) -> frozenset:
 
 
 def compare_record(record: DecompilationState, exe: Path | str,
-                   compile_commands: Path | str,
-                   flags: tuple | str,
+                   command: list[str], flags: tuple | str,
                    shared: frozenset = frozenset()) -> AsmComparison:
     """How far VC6 reproduces the shipped bytes for `record`, best of `flags`.
 
@@ -813,7 +829,7 @@ def compare_record(record: DecompilationState, exe: Path | str,
     best, diagnostic = None, ""
     for attempt in attempts:
         try:
-            compiled = compiled_asm(record, compile_commands, attempt)
+            compiled = compiled_asm(record, command, attempt)
         except CompileFailed as failed:
             diagnostic = diagnostic or str(failed)
             continue
