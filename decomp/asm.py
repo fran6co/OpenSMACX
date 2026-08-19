@@ -468,8 +468,15 @@ def _invocation(entry: dict[str, str]) -> list[str]:
     return [*compiler, "/nologo", *kept]
 
 
-def _compile(source: Path, command: list[str], flags: str) -> bytes:
-    """Compile `source` with `command` plus `flags`; return the object."""
+def compile_unit(source: Path, command: list[str], flags: str) -> bytes:
+    """Compile `source` with `command` plus `flags`; return the object.
+
+    PUBLIC BECAUSE ONE OBJECT ANSWERS FOR MANY SUBJECTS. `compiled_asm`
+    compiles per record, which is right for one question and wrong for a
+    sweep: this tree's 626 reachable claims live in 96 files, so asking per
+    record is 2,504 compiles where asking per file is 384. A caller doing
+    the second calls this once and `subject_asm` many times.
+    """
     with tempfile.TemporaryDirectory() as work:
         result = subprocess.run([*command, *flags.split(), "/Founit.obj",
                                  str(source)],
@@ -587,7 +594,20 @@ def compiled_asm(record: DecompilationState, command: list[str],
     if not record.name:
         raise ValueError(
             f"{record.address_hex}: no name fact under its marker")
-    obj = _compile(record.path, command, flags)
+    obj = compile_unit(record.path, command, flags)
+    return subject_asm(obj, record, flags)
+
+
+def subject_asm(obj: bytes, record: DecompilationState,
+                flags: str = "") -> Listing:
+    """The record's own function, pulled out of an object already compiled.
+
+    The half of `compiled_asm` that is not the compile, so that one object
+    can answer for every subject its file defines.
+    """
+    if not record.name:
+        raise ValueError(
+            f"{record.address_hex}: no name fact under its marker")
     code, mask = _coff_function_masked(obj, record.name, record.symbol)
     return Listing(code=code, base=record.address, mask=mask, flags=flags)
 
