@@ -33,6 +33,10 @@ BYTE_EXACT claim in `src/` all reported MISMATCH:
     many as the caller cares to name. Asking one answers half the image.
   * A RELOCATED BYTE IS NOT A WRONG ANSWER. The object holds zeros where
     the image holds linked addresses; `compare_asm` discounts both sides.
+  * THE CATALOGUE'S NAME IS NOT ALWAYS THE COMPILER'S. What the image
+    calls a piece and what this tree emits for it are two facts, and the
+    annotation carries both - `name` and `symbol`. The lookup reads them;
+    it does not guess, and a missing fact is an error that names itself.
 
 WHAT IS STILL ELSEWHERE. The tier ladder here is the three verdicts above;
 SHAPE_EXACT, SHARED_TAIL, REFUSED, the EH funclet classification, batching,
@@ -293,7 +297,7 @@ def _compile(source: Path, flags: str, compile_commands: Path) -> bytes:
         return obj.read_bytes()
 
 
-def _coff_function_masked(obj: bytes, symbol: str,
+def _coff_function_masked(obj: bytes, symbol: str, emitted: str = "",
                           ) -> tuple[bytes, frozenset[int]]:
     """The symbol's code out of a COFF object - the `.text` section named
     by the symbol, from the symbol's value to the section's end, trailing
@@ -333,12 +337,37 @@ def _coff_function_masked(obj: bytes, symbol: str,
             externals.append((name, value, section_no - 1))
         i += 1 + n_aux
 
-    matches = [e for e in externals if e[0] in (symbol, "_" + symbol)]
+    # ONE RULE, AND IT READS A FACT. `emitted` is what the annotation says
+    # this tree's compiler produces for the piece; `name` is what the IMAGE
+    # calls it, and the two differ whenever the source re-expresses a
+    # compiler-generated construct - an adjustor thunk, an atexit destructor,
+    # a scalar deleting destructor - under a name of its own.
+    #
+    # THERE IS DELIBERATELY NO FALLBACK. Earlier versions guessed: a symbol
+    # sharing the mangled head, then an identifier scraped out of the
+    # region's definition head. Both existed to paper over a catalogued name
+    # that was wrong or absent, and a lookup that guesses returns the
+    # assembly of a NEIGHBOURING function, which reads as a mismatch nobody
+    # can explain. The guessing lives in the migration that writes the fact
+    # (`reader.region_identifiers`); what measures reads it.
+    wanted = emitted or symbol
+    matches = [e for e in externals
+               if e[0] == wanted or (not emitted and e[0] == "_" + symbol)]
     if not matches:
+        # TWO DIFFERENT FAULTS, SAID DIFFERENTLY. A recorded symbol that is
+        # absent is a STALE fact - the annotation made a claim and the
+        # compiler disagrees, so the fix is in the annotation. No recorded
+        # symbol is a MISSING fact, and the fix is to write one.
         raise ValueError(
-            f"{symbol} not found among the object's .text symbols")
+            f"{symbol}: the annotation records the emitted symbol "
+            f"{emitted!r}, which is not among the object's .text symbols "
+            f"- the fact is stale"
+            if emitted else
+            f"{symbol} not found among the object's .text symbols, and the "
+            f"annotation records no `symbol` fact saying what this tree "
+            f"emits for it")
     if len({(value, sec) for _n, value, sec in matches}) > 1:
-        raise ValueError(f"{symbol} is ambiguous in the object")
+        raise ValueError(f"{wanted} is ambiguous in the object")
     _name, value, sec = matches[0]
     _sec_name, raw_size, raw_ptr, reloc_ptr, n_relocs = sections[sec]
     code = obj[raw_ptr + value:raw_ptr + raw_size]
@@ -380,7 +409,7 @@ def compiled_asm(record: DecompilationState, compile_commands: Path | str,
         raise ValueError(
             f"{record.address_hex}: no name fact under its marker")
     obj = _compile(record.path, flags, Path(compile_commands))
-    code, mask = _coff_function_masked(obj, record.name)
+    code, mask = _coff_function_masked(obj, record.name, record.symbol)
     return Listing(_disasm(code, record.address), code=code,
                    base=record.address, mask=mask, flags=flags)
 
