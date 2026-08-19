@@ -98,7 +98,8 @@ def _key(record: DecompilationState) -> tuple:
             _region_code(record.region), record.byte_exact,
             record.exclusion, record.extract_error, record.recipe,
             record.levers, record.ruled_out, record.unrecoverable,
-            record.deferred, record.name, record.image_spans)
+            record.deferred, record.name, record.image_spans,
+            record.symbol)
 
 
 def roundtrip_tree(root: Path = SRC_ROOT) -> tuple[int, int]:

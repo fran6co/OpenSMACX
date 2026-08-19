@@ -84,6 +84,16 @@ NEXT_MARKER = re.compile(r"^\s*(?://|\*)?\s*ORIGINAL:\s*0x[0-9A-Fa-f]{8}\b")
 # a body.
 SENTINEL = "// BODY GOES HERE."
 
+# The identifier a C++ DEFINITION HEAD declares: the last name before a
+# parameter list. Used to find what this tree calls a piece when that is not
+# what the image calls it - see `reader.region_identifiers`.
+DEFINITION_HEAD = re.compile(
+    r"(?:^|[\s*&:~])(?P<identifier>[A-Za-z_]\w*)\s*\(", re.M)
+# Words that open a parenthesis without declaring anything.
+DEFINITION_KEYWORDS = frozenset((
+    "if", "for", "while", "switch", "return", "sizeof", "catch", "throw",
+    "do", "else", "case", "new", "delete", "and", "or", "not"))
+
 # The identifier a mangled name is built around. `?base@Class@@...` is named
 # by `base`; `??0Class@@...`, `??1`, `??_G` and friends have no base name of
 # their own and are named by the CLASS. A plain `sub_63ffe0` is itself.
@@ -107,9 +117,12 @@ _MANGLED_BASE = re.compile(r"^\?\?(?:_[A-Za-z]|[0-9A-Za-z])([A-Za-z_]\w*)@"
 # any row. The value is optional so a bare `// prototype`, which is how a row
 # with no recorded prototype is spelled once an editor strips the trailing
 # space, still registers as present-and-empty rather than absent.
+# `symbol` joined the keys when the measurement needed a fact the marker does
+# not carry: what the COMPILER emits for this piece, which is not always what
+# the image calls it. See `model.DecompilationState.symbol`.
 FACT_LINE = re.compile(
-    r"^(?://|\*) (name|size|spans|prototype|callers|kind|flags|calls|notes"
-    r"|indirect)"
+    r"^(?://|\*) (name|size|spans|symbol|prototype|callers|kind|flags|calls"
+    r"|notes|indirect)"
     r"(?: +(.*?))?\s*$")
 
 # A WRAPPED `calls` OR `indirect` VALUE. Long edge lists are re-flowed onto
