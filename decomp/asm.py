@@ -53,8 +53,6 @@ directories.
 
 from __future__ import annotations
 
-from collections.abc import Iterable
-
 import difflib
 import functools
 import json
@@ -63,47 +61,51 @@ import shlex
 import struct
 import subprocess
 import tempfile
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from capstone import CS_ARCH_X86, CS_MODE_32, Cs
 
 from .model import DecompilationState, Tier
 
-class Listing(list):
-    """Disassembly lines, plus the bytes and the mask behind them.
+@dataclass(frozen=True)
+class Listing:
+    """One disassembled body: its bytes, where they sit, and what the linker
+    has still to fill in.
 
-    A `list[str]` first, so everything that treats a listing as lines of text
-    keeps working unchanged. The attributes carry what a listing CANNOT: the
-    code itself, the address it was disassembled at, and the offsets a
-    relocation makes unknowable.
+    THE LINES ARE DERIVED, and that is the point of the shape. A listing is a
+    rendering of bytes; storing both invites them to disagree, and the only
+    thing that can be compared honestly is the bytes. `lines` renders on
+    demand and caches, so a reader still gets text without the text ever
+    being the record of what this is.
 
-    THE MASK IS WHY THIS EXISTS. An object file's `push <global>` is
-    `68 00 00 00 00` with a relocation on the immediate; the image has the
-    linked address in those four bytes. Comparing the rendered text calls that
-    a divergence, which is how a body that reproduces the shipped bytes
-    exactly was reported as MISMATCH. A byte a relocation determines is not a
-    wrong answer, and `compare_asm` discounts it - but only if it is told
-    which bytes those are.
+    THE MASK IS WHY THIS TYPE EXISTS AT ALL. An object file's `push <global>`
+    is `68 00 00 00 00` with a relocation on the immediate; the image has the
+    linked address in those four bytes. Comparing the rendering calls that a
+    divergence, which is how bodies that reproduce the shipped bytes exactly
+    were reported as MISMATCH. A byte a relocation determines is not a wrong
+    answer - but a comparison can only discount it if it is told which bytes
+    those are, and rendered text cannot say.
     """
 
-    def __init__(self, lines: Iterable[str], *, code: bytes = b"",
-                 base: int = 0, mask: frozenset[int] = frozenset(),
-                 flags: str = "") -> None:
-        super().__init__(lines)
-        self.code = code
-        self.base = base
-        self.mask = mask        # offsets into `code`, not addresses
-        self.flags = flags      # the flag set that produced it, "" for the image
+    code: bytes
+    base: int                        # the address the code is disassembled at
+    mask: frozenset[int] = frozenset()   # offsets into `code`, not addresses
+    flags: str = ""                  # the invocation that produced it, "" for
+                                     # the image, which was not invoked
 
+    @functools.cached_property
+    def lines(self) -> list[str]:
+        """`0xADDR  bytes  mnemonic operands`, one per instruction."""
+        return _disasm(self.code, self.base)
 
-# WHAT THE COMPARISON ACCEPTS. `original_asm` and `compiled_asm` return
-# `Listing`s and a caller may hand in bare lines; the difference is not
-# cosmetic, because only a `Listing` carries the mask that lets a relocated
-# byte be discounted. Spelling the union out is the honest signature: a
-# `list[str]` alone would say the mask branch cannot be reached, and a bare
-# `Listing` would say plain lines are refused when they are not.
-Disassembly = Listing | list[str]
+    def zeroed(self, mask: frozenset[int]) -> list[str]:
+        """The lines this renders to with every masked byte set to zero."""
+        code = bytearray(self.code)
+        for offset in mask:
+            if 0 <= offset < len(code):
+                code[offset] = 0
+        return _disasm(bytes(code), self.base)
 
 
 # -------------------------------------------------------------- the original
@@ -226,7 +228,7 @@ def original_asm(record: DecompilationState, exe: Path | str) -> Listing:
     while end > 0 and code[end - 1] in (0x90, 0xCC):
         end -= 1
     code = code[:end]
-    return Listing(_disasm(code, low), code=code, base=low,
+    return Listing(code=code, base=low,
                    mask=_image_mask(exe, low, low + len(code)))
 
 
@@ -393,11 +395,6 @@ def _coff_function_masked(obj: bytes, symbol: str, emitted: str = "",
     return code, frozenset(masked)
 
 
-def _coff_function(obj: bytes, symbol: str) -> bytes:
-    """The symbol's code alone, without the relocation mask beside it."""
-    return _coff_function_masked(obj, symbol)[0]
-
-
 def compiled_asm(record: DecompilationState, compile_commands: Path | str,
                  flags: str) -> Listing:
     """The assembly VC6 produces for the record's code: the record's file
@@ -410,8 +407,7 @@ def compiled_asm(record: DecompilationState, compile_commands: Path | str,
             f"{record.address_hex}: no name fact under its marker")
     obj = _compile(record.path, flags, Path(compile_commands))
     code, mask = _coff_function_masked(obj, record.name, record.symbol)
-    return Listing(_disasm(code, record.address), code=code,
-                   base=record.address, mask=mask, flags=flags)
+    return Listing(code=code, base=record.address, mask=mask, flags=flags)
 
 
 # ------------------------------------------------------------------ disasm
@@ -432,15 +428,28 @@ def _disasm(data: bytes, base: int) -> list[str]:
 class AsmComparison:
     """How far one assembly listing reproduces another."""
     verdict: Tier                   # see model.Tier
-    original_count: int
-    compiled_count: int
-    matching_lines: int             # positionally identical listing lines
-    mnemonic_similarity: float      # 0..1 across the instruction sequences
-    first_divergence: int | None    # first differing instruction, or None
-    context: tuple[list[str], list[str]]
-                                    # (original, compiled) lines around it
-    compared_bytes: int = 0         # bytes the verdict actually rests on
-    masked_bytes: int = 0           # bytes a relocation determined, discounted
+
+    # WHAT THE VERDICT RESTS ON: bytes, and how many of them a relocation
+    # took out of the question. These two decide BYTE_EXACT.
+    compared_bytes: int = 0
+    masked_bytes: int = 0
+
+    # WHAT A READER LOOKS AT. Counted over INSTRUCTIONS, not lines, and the
+    # distinction is not pedantry - these were named `*_count` and
+    # `matching_lines` when a listing WAS a list of lines and the comparison
+    # was over text. It is not; a listing renders on demand. An instruction
+    # count is a fact about the code, and a line count would be a fact about
+    # the rendering.
+    original_instructions: int = 0
+    compiled_instructions: int = 0
+    matching_instructions: int = 0  # positionally identical, once relocated
+                                    # bytes are discounted on both sides
+    mnemonic_similarity: float = 0.0  # 0..1 across the instruction sequences
+    first_divergence: int | None = None   # first differing instruction
+    context: tuple[list[str], list[str]] = \
+        field(default_factory=lambda: ([], []))
+                                    # (original, compiled) lines around the
+                                    # divergence, rendered as they REALLY are
     flags: str = ""                 # the flag set that produced `compiled`
 
 
@@ -463,71 +472,45 @@ def _mnemonic_sequence(listing: list[str]) -> list[str]:
     return out
 
 
-def _zeroed(listing: Listing) -> list[str]:
-    """The listing re-rendered with every masked byte set to zero."""
-    code = bytearray(listing.code)
-    for offset in listing.mask:
-        if 0 <= offset < len(code):
-            code[offset] = 0
-    return _disasm(bytes(code), listing.base)
-
-
-def _byte_verdict(original: Disassembly,
-                  compiled: Disassembly) -> bool | None:
+def _byte_verdict(original: Listing, compiled: Listing) -> bool:
     """Do the two agree byte for byte once relocations are discounted?
 
-    `None` when the pair carries no bytes - plain listings, compared as text
-    by the caller. THIS IS WHAT DECIDES BYTE_EXACT, on the bytes themselves
-    rather than on rendered text, because rendering is where a mask can lie:
-    see `_discount_relocations`.
+    THIS DECIDES BYTE_EXACT, on the bytes rather than on rendered text,
+    because rendering is where a mask can lie - see `_discount_relocations`.
     """
-    if not (isinstance(original, Listing) and isinstance(compiled, Listing)):
-        return None
-    if not (original.code and compiled.code):
-        return None
     if len(original.code) != len(compiled.code):
         return False
-    mask = frozenset(original.mask) | frozenset(compiled.mask)
+    mask = original.mask | compiled.mask
     return all(a == b for index, (a, b)
                in enumerate(zip(original.code, compiled.code))
                if index not in mask)
 
 
-def _discount_relocations(original: Disassembly,
-                          compiled: Disassembly,
+def _discount_relocations(original: Listing,
+                          compiled: Listing,
                           ) -> tuple[list[str], list[str]]:
-    """Both listings with relocated bytes neutralised, or both unchanged.
+    """Both listings rendered with relocated bytes neutralised.
 
     The mask is applied to BOTH sides, not just the object's: the image has
     linked addresses where the object has zeros, so zeroing only one side
     leaves the same disagreement pointing the other way.
 
     ONLY WHEN THE TWO ARE THE SAME LENGTH, and that guard is load-bearing.
-    A mask is a set of OFFSETS, and offsets only name the same thing in two
-    bodies that are laid out alike. Where they are not, zeroing the image at
-    an offset the OBJECT relocates overwrites bytes that carry no relocation
-    at all, and re-disassembling the result splits instructions that were
-    never there - `0x004E0F80` reported nine image instructions for a body
-    that has seven. Bodies of different lengths have already lost, so they
-    are reported exactly as they are.
+    A mask is a set of OFFSETS, and offsets name the same thing only in
+    bodies laid out alike. Where they are not, zeroing the image at an offset
+    the OBJECT relocates overwrites bytes carrying no relocation at all, and
+    re-disassembling the result splits instructions that were never there -
+    `0x004E0F80` reported nine image instructions for a body that has seven.
+    Bodies of different lengths have already lost, so they are rendered
+    exactly as they are.
     """
-    if not (isinstance(original, Listing) and isinstance(compiled, Listing)):
-        return original, compiled
-    if not (original.code and compiled.code):
-        return original, compiled
-    if not (original.mask or compiled.mask):
-        return original, compiled
-    if len(original.code) != len(compiled.code):
-        return original, compiled
-    union = frozenset(original.mask) | frozenset(compiled.mask)
-    return (_zeroed(Listing(original, code=original.code,
-                            base=original.base, mask=union)),
-            _zeroed(Listing(compiled, code=compiled.code,
-                            base=compiled.base, mask=union)))
+    union = original.mask | compiled.mask
+    if not union or len(original.code) != len(compiled.code):
+        return original.lines, compiled.lines
+    return original.zeroed(union), compiled.zeroed(union)
 
 
-def compare_asm(original: Disassembly,
-                compiled: Disassembly) -> AsmComparison:
+def compare_asm(original: Listing, compiled: Listing) -> AsmComparison:
     """How far the compiled listing reproduces the original one.
 
     The verdicts mirror tools/byte_match.py at the listing level:
@@ -537,15 +520,13 @@ def compare_asm(original: Disassembly,
     similar the instruction sequences are, and where the first divergence
     is, with a window of both listings around it.
 
-    RELOCATED BYTES ARE DISCOUNTED where both sides are `Listing`s that carry
-    a mask. An object file's `push <global>` is `68 00 00 00 00` and the
-    image's is `68` plus the linked address; the four bytes disagree because
-    one side has been linked and the other has not, which is not a fact about
-    the source. The listings are re-rendered with every masked byte zeroed on
-    BOTH sides before they are compared, so such a pair reads as identical -
-    while `context` still shows the real lines, because a reader wants the
-    address the image actually holds. Plain lists carry no mask and compare
-    as text, exactly as before.
+    RELOCATED BYTES ARE DISCOUNTED. An object file's `push <global>` is
+    `68 00 00 00 00` and the image's is `68` plus the linked address; the
+    four bytes disagree because one side has been linked and the other has
+    not, which is not a fact about the source. Both sides are re-rendered
+    with every masked byte zeroed before they are compared, so such a pair
+    reads as identical - while `context` shows the REAL lines, because a
+    reader chasing a divergence wants the address the image actually holds.
     """
     left, right = _discount_relocations(original, compiled)
     n, m = len(left), len(right)
@@ -561,34 +542,33 @@ def compare_asm(original: Disassembly,
             # The window shows what each side REALLY holds, masked bytes
             # included: a reader chasing a divergence wants the address the
             # image carries, not the zero the comparison stood in for it.
-            context = (list(original[lo:index + 4]),
-                       list(compiled[lo:index + 4]))
+            context = (original.lines[lo:index + 4],
+                       compiled.lines[lo:index + 4])
     if first_divergence is None and n != m:
         first_divergence = min(n, m)
         lo = max(0, min(n, m) - 3)
-        context = (list(original[lo:]), list(compiled[lo:]))
+        context = (original.lines[lo:], compiled.lines[lo:])
 
     seq_original = _mnemonic_sequence(left)
     seq_compiled = _mnemonic_sequence(right)
     similarity = difflib.SequenceMatcher(
         None, seq_original, seq_compiled).ratio()
 
-    identical = _byte_verdict(original, compiled)
-    if identical is True or (identical is None and n == m and matching == n):
+    if _byte_verdict(original, compiled):
         verdict = Tier.BYTE_EXACT
     elif seq_original == seq_compiled:
         verdict = Tier.MNEMONIC_ONLY
     else:
         verdict = Tier.MISMATCH
-    masked = 0
-    if isinstance(original, Listing) and isinstance(compiled, Listing):
-        masked = len(frozenset(original.mask) | frozenset(compiled.mask))
-    size = len(getattr(original, "code", b"") or b"")
-    return AsmComparison(verdict, n, m, matching, similarity,
-                         first_divergence, context,
-                         compared_bytes=max(0, size - masked),
-                         masked_bytes=masked,
-                         flags=getattr(compiled, "flags", ""))
+    masked = len(original.mask | compiled.mask)
+    return AsmComparison(
+        verdict=verdict,
+        compared_bytes=max(0, len(original.code) - masked),
+        masked_bytes=masked,
+        original_instructions=n, compiled_instructions=m,
+        matching_instructions=matching, mnemonic_similarity=similarity,
+        first_divergence=first_divergence, context=context,
+        flags=compiled.flags)
 
 
 def compare_record(record: DecompilationState, exe: Path | str,
