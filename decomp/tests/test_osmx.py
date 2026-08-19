@@ -199,3 +199,54 @@ def test_without_an_image_it_still_answers_from_the_map(named):
     result = show(named, "WinMain")
     assert result.exit_code == 0
     assert "no image to read" in result.output
+
+
+# --------------------------------------------------------------- measure
+
+
+def test_measure_names_exactly_one_piece(named):
+    """`measure init` cannot be answered: five pieces match. Exit 2 is a
+    usage error, distinct from exit 1, which means "measured, not exact"."""
+    result = run("measure", "init", "--src", str(named))
+    assert result.exit_code == 2
+    assert "measure names one" in result.output
+
+
+def test_measure_exits_zero_only_for_byte_exact(named, monkeypatch):
+    """The contract every other tier is measured against, and what lets
+    this be a shell loop condition."""
+    from decomp import Tier
+    from decomp.asm import AsmComparison
+
+    for tier in Tier:
+        monkeypatch.setattr(
+            osmx, "compare_record",
+            lambda *a, tier=tier, **k: AsmComparison(verdict=tier))
+        result = run("measure", "WinMain", "--src", str(named))
+        expected = 0 if tier is Tier.BYTE_EXACT else 1
+        assert result.exit_code == expected, f"{tier} gave {result.exit_code}"
+
+
+def test_measure_reports_a_compile_failure_rather_than_crashing(named,
+                                                                monkeypatch):
+    from decomp.asm import CompileFailed
+
+    def refuse(*args, **kwargs):
+        raise CompileFailed("x.cpp(3) : error C2065: 'g_x' : undeclared")
+
+    monkeypatch.setattr(osmx, "compare_record", refuse)
+    result = run("measure", "WinMain", "--src", str(named))
+    assert result.exit_code == 2
+    assert "C2065" in result.output
+
+
+def test_measure_writes_nothing(named, monkeypatch):
+    """`record` is the one that stamps a claim. Keeping them apart is what
+    lets an agent be given this and not that."""
+    from decomp import Tier
+    from decomp.asm import AsmComparison
+    before = (named / "n.cpp").read_text()
+    monkeypatch.setattr(osmx, "compare_record",
+                        lambda *a, **k: AsmComparison(verdict=Tier.BYTE_EXACT))
+    run("measure", "WinMain", "--src", str(named))
+    assert (named / "n.cpp").read_text() == before
