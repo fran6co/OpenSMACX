@@ -28,6 +28,7 @@ LPCSTR DefaultFontFace = "Arial";  // 0x00691B2C -> 0x00691BD4
 /*
 Purpose: Initialize the class using the font name, height and style.
 // ORIGINAL: 0x00618F40 ?init@Font@@QAEHPADHH@Z 0x00618F40-0x006190C6
+// symbol    ?init@Font@@QAEHPBDHH@Z
 // size      390 bytes
 // prototype int (__thiscall ?init@Font@@QAEHPADHH@Z)(Font* this, int8* fontName, int height, int style)
 // callers   49   call targets   2
@@ -88,6 +89,7 @@ int Font::init(LPCSTR font_name, int height, int style) {
 /*
 Purpose: Initialize the class using the file, font name, height and style.
 // ORIGINAL: 0x006190D0 ?init@Font@@QAEHPADPADHH@Z 0x006190D0-0x0061922C
+// symbol    ?init@Font@@QAEHPBD0HH@Z
 // size      348 bytes
 // prototype int (__thiscall ?init@Font@@QAEHPADPADHH@Z)(Font* this, int8* lpszFile, int8* fontName, int height, int style)
 // callers   1   call targets   5
@@ -180,6 +182,7 @@ int Font::width(LPSTR input) {
 /*
 Purpose: Get the width for the input text with a maximum length.
 // ORIGINAL: 0x006192F0 ?width@Font@@QAEHPADH@Z 0x006192F0-0x0061936B
+// symbol    ?width@Font@@QAEHPADI@Z
 // size      123 bytes
 // prototype int (__thiscall ?width@Font@@QAEHPADH@Z)(Font* this, int8* lpString, int max)
 // callers   3   call targets   1

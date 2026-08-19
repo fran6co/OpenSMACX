@@ -162,6 +162,7 @@ void __cdecl log_logging_exit() { Logging->~Log(); }
 void __cdecl log_reset() { Logging->reset(); }
 
 // ORIGINAL: 0x00626250 ?log_say@@YAXPADPADHHH@Z 0x00626250-0x006262E9
+// symbol    ?log_say@@YAXPBD0HHH@Z
 // size      153 bytes
 // prototype 
 // callers   25   call targets   3
@@ -174,6 +175,7 @@ void __cdecl log_say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
 }
 
 // ORIGINAL: 0x006262F0 ?log_say@@YAXPADHHH@Z 0x006262F0-0x0062634C
+// symbol    ?log_say@@YAXPBDHHH@Z
 // size      92 bytes
 // prototype 
 // callers   98   call targets   3
@@ -186,6 +188,7 @@ void __cdecl log_say(LPCSTR str1, int num1, int num2, int num3) {
 }
 
 // ORIGINAL: 0x00626350 ?log_say_hex@@YAXPADPADHHH@Z 0x00626350-0x006263E9
+// symbol    ?log_say_hex@@YAXPBD0HHH@Z
 // size      153 bytes
 // prototype 
 // callers   1   call targets   3
@@ -198,6 +201,7 @@ void __cdecl log_say_hex(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3)
 }
 
 // ORIGINAL: 0x006263F0 ?log_say_hex@@YAXPADHHH@Z 0x006263F0-0x0062644C
+// symbol    ?log_say_hex@@YAXPBDHHH@Z
 // size      92 bytes
 // prototype 
 // callers   4   call targets   3

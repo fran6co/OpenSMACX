@@ -216,6 +216,7 @@ int Spot::check(int x, int y, int *spot_pos, int *spot_type) {
 /*
 Purpose: Check if the coordinates fall within a spot. If so, return information about the spot.
 // ORIGINAL: 0x005FAB70 ?check@Spot@@QAEHHHPAH0PAURECT@@@Z 0x005FAB70-0x005FABFF
+// symbol    ?check@Spot@@QAEHHHPAH0PAUtagRECT@@@Z
 // size      143 bytes
 // prototype int (__thiscall ?check@Spot@@QAEHHHPAH0PAURECT@@@Z)(Spot* this, int xCoord, int yCoord, int* spotPos, int* spotType, RECT* spotRect)
 // callers   0   call targets   0
