@@ -486,3 +486,18 @@ def test_layering_allows_what_it_declares(tmp_path):
     from decomp.__main__ import layering
     (tmp_path / "asm.py").write_text("import capstone\nimport struct\n")
     assert layering(tmp_path) == 1
+
+
+def test_read_refuses_a_path_where_text_belongs(tmp_path):
+    """`read(path, path)` is a caller that meant `read(path)`.
+
+    Left to itself the filename is scanned as if it were source, no marker
+    matches, and the answer is an empty list - the silent-zero failure this
+    package's own self-proof exists to catch.
+    """
+    from decomp import read
+    source = tmp_path / "x.cpp"
+    source.write_text("// ORIGINAL: 0x00401000 ?f@@YAXXZ 0x00401000-0x00401004\n")
+    with pytest.raises(TypeError, match="takes the text to scan"):
+        read(source, source)
+    assert len(read(source.read_text(), source)) == 1

@@ -106,7 +106,9 @@ def _parse_marker(line: str, in_block: bool) -> tuple | None:
     return int(match.group("addr"), 16), keyword, rest, matched, name, spans
 
 
-def _lessons(lines: list[str], index: int) -> tuple:
+def _lessons(lines: list[str], index: int,
+             ) -> tuple[tuple[tuple[str, str], ...], tuple[str, ...],
+                        tuple[str, ...], tuple[str, ...]]:
     """(levers, ruled_out, unrecoverable) from the comment run after `index`.
 
     THE THREE TOKENS CARRY DIFFERENT DURABILITY, and that is the whole design.
@@ -302,7 +304,8 @@ def _region_end(lines: list[str], start: int, name: str = "") -> int | None:
     # the floor for a subject that never appears at all.
     subject = _subject_of(name) if name else None
     defined = subject is None
-    wanted = None if defined else re.compile(rf"\b{re.escape(subject)}\b")
+    wanted = (None if subject is None
+              else re.compile(rf"\b{re.escape(subject)}\b"))
     punctuated = None
     for offset, line in enumerate(lines[start:]):
         # ONLY ONCE A REGION HAS OPENED. 20 annotations sit inside a doc
@@ -315,7 +318,7 @@ def _region_end(lines: list[str], start: int, name: str = "") -> int | None:
         delta, in_block, saw_open, code = _brace_delta(line, in_block)
         # BEFORE this line's braces are judged, since a single-line
         # definition names the subject and closes the region on one line.
-        if not defined and wanted.search(code):
+        if wanted is not None and not defined and wanted.search(code):
             defined = True
         depth += delta
         if saw_open:
@@ -378,7 +381,7 @@ def _is_placeholder_region(text: str) -> bool:
     return True
 
 
-def _state_of(region: str, excluded: str) -> str:
+def _state_of(region: str, excluded: str) -> State:
     if excluded:
         return State.EXCLUDED
     if _is_placeholder_region(region):
@@ -411,6 +414,14 @@ def read(source: Path | str,
     itself and keeps the results.
     """
     if path is not None:
+        # The two-argument form is TEXT, and a `Path` here is a caller that
+        # meant the one-argument form: `str(path)` would parse the filename
+        # as if it were a source file and return nothing, which is the silent
+        # empty answer this package is built to avoid.
+        if not isinstance(source, str):
+            raise TypeError(
+                "read(text, path) takes the text to scan, not "
+                f"{type(source).__name__}; read(path) reads a file")
         return _read_text(source, Path(path))
     source = Path(source)
     if source.is_dir():
@@ -467,7 +478,8 @@ def function_line(source: Path | str, name: str) -> int:
     return definitions[0]
 
 
-def _is_definition(lines: list[str], start: int, state: bool, pattern) -> bool:
+def _is_definition(lines: list[str], start: int, state: bool,
+                   pattern: re.Pattern[str]) -> bool:
     """The `name(` on line `start` opens a parameter list that closes and
     is followed by `{` - a definition, not a declaration or a call.
 
@@ -517,7 +529,8 @@ def _is_definition(lines: list[str], start: int, state: bool, pattern) -> bool:
         stream = _brace_delta(lines[index], line_state)[3]
 
 
-def _read_text(text: str, path: Path | str) -> list[DecompilationState]:
+def _read_text(text: str, path: Path | str,
+               ) -> list[DecompilationState]:
     """Scan TEXT attributed to `path`.
 
     Only EXPLICIT markers are read - the tree's single annotation grammar.
