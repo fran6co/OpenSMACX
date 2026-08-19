@@ -47,6 +47,35 @@ _NONSTATIC = set("ABEFIJMNQRUV")
 _STATIC = set("CDKLST")
 
 
+# What a name is BUILT AROUND, under whatever decoration it carries.
+# `?name@Class@@...` is named by `name`; `??0Class@@...`, `??1` and friends
+# have no name of their own and are named by the CLASS; `_WinMain@16` and
+# `@thunk@16` are a plain identifier under stdcall or fastcall decoration.
+_IDENTIFIER = re.compile(
+    r"^\?\?(?:_[A-Za-z]|[0-9A-Za-z])(?P<ctor>[A-Za-z_]\w*)@"
+    r"|^\?(?P<member>[A-Za-z_]\w*)@"
+    r"|^[_@]?(?P<plain>[A-Za-z_]\w*?)(?:@\d+)?$")
+
+
+def identifier(mangled: str) -> str:
+    """The name a person would use for this piece, or "".
+
+    A LOOKUP NEEDS THIS because nobody types a mangled name. `WinMain` is
+    `_WinMain@16` in this map - stdcall decoration, where the leading
+    underscore is not part of the name and a word-boundary match therefore
+    misses it - and `Buffer::set_font` is
+    `?set_font@Buffer@@QAEHPAVFont@@000@Z`.
+
+    Returns "" rather than guessing when the shape is unrecognised, which
+    every caller reads as "cannot tell".
+    """
+    match = _IDENTIFIER.match((mangled or "").strip())
+    if match is None:
+        return ""
+    return (match.group("ctor") or match.group("member")
+            or match.group("plain") or "")
+
+
 def _end_of_type(text: str, index: int) -> int | None:
     """The index just past ONE encoded type, or None if unrecognised."""
     if index >= len(text):
