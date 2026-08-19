@@ -428,7 +428,7 @@ uint32_t __cdecl get_mood(int friction) {
     if (friction <= 17) {
         return MOOD_QUARRELSOME;
     }
-    return (friction > 19) + MOOD_BELLIGERENT; // or MOOD_SEETHING if condition is true
+    return friction > 19 ? MOOD_SEETHING : MOOD_BELLIGERENT;
 }
 
 /*
