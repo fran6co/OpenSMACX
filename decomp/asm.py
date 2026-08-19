@@ -814,6 +814,12 @@ def shared_spans(records) -> frozenset:
     return frozenset(shared)
 
 
+def _better(candidate: AsmComparison, incumbent: AsmComparison) -> bool:
+    """Is `candidate` the more useful of two measurements of one record?"""
+    return ((candidate.verdict.rank, -candidate.matching_instructions)
+            < (incumbent.verdict.rank, -incumbent.matching_instructions))
+
+
 def compare_record(record: DecompilationState, exe: Path | str,
                    command: list[str], flags: tuple | str,
                    shared: frozenset = frozenset()) -> AsmComparison:
@@ -887,7 +893,14 @@ def compare_source(record: DecompilationState, exe: Path | str,
             diagnostic = diagnostic or str(failed)
             continue
         result = compare_asm(original, compiled)
-        if best is None or result.verdict.rank < best.verdict.rank:
+        # TIED ON TIER, DECIDED ON AGREEMENT. Every candidate is measured
+        # against the same original, so the instruction counts compare
+        # directly - and keeping the first of four MISMATCHes reports a
+        # diagnostic nobody can act on. 0x00612B80 gave 0 of 35 under the
+        # frame-pointer set and 35 of 35 without it, both MISMATCH; the
+        # first was what came back, and it points at the prologue instead
+        # of the tail that actually differs.
+        if best is None or _better(result, best):
             best = result
         if best.verdict is Tier.BYTE_EXACT:
             break                    # nothing beats byte equality
