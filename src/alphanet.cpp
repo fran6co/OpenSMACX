@@ -14,6 +14,7 @@
 /*
 Purpose: Convert a multiplayer process ID to its one-based player index.
 // ORIGINAL: 0x004E25E0 ?pid_2_idx@AlphaNet@@QAEHK@Z 0x004E25E0-0x004E2607 BYTE_EXACT
+// symbol    ?pid_2_idx@AlphaNet@@QAEHI@Z
 // size      39 bytes
 // prototype int (__thiscall ?pid_2_idx@AlphaNet@@QAEHK@Z)(AlphaNet* this, unsigned int)
 // callers   20   call targets   0
@@ -39,6 +40,7 @@ int AlphaNet::pid_2_idx(uint32_t process_id) {
 /*
 Purpose: Convert a multiplayer process ID to its signed player identity.
 // ORIGINAL: 0x004E2610 ?pid_2_who@AlphaNet@@QAEHK@Z 0x004E2610-0x004E2653
+// symbol    ?pid_2_who@AlphaNet@@QAEHI@Z
 // size      67 bytes
 // prototype int (__thiscall ?pid_2_who@AlphaNet@@QAEHK@Z)(AlphaNet* this, unsigned int)
 // callers   2   call targets   0
@@ -93,6 +95,7 @@ int AlphaNet::who_2_pid(int identity) {
 /*
 Purpose: Convert a signed multiplayer player identity to its one-based index.
 // ORIGINAL: 0x004E26B0 ?who_2_idx@AlphaNet@@QAEXH@Z 0x004E26B0-0x004E26DC
+// symbol    ?who_2_idx@AlphaNet@@QAEHH@Z
 // size      44 bytes
 // prototype void (__thiscall ?who_2_idx@AlphaNet@@QAEXH@Z)(AlphaNet* this, int)
 // callers   1   call targets   0

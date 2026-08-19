@@ -24,6 +24,7 @@
 /*
 Purpose: Initialize a log file.
 // ORIGINAL: 0x00626040 ?init@Log@@QAEHPAD@Z 0x00626040-0x006260C3
+// symbol    ?init@Log@@QAEHPBD@Z
 // size      131 bytes
 // prototype int (__thiscall ?init@Log@@QAEHPAD@Z)(Log* this, int8*)
 // callers   2   call targets   6
@@ -74,6 +75,7 @@ void Log::reset() {
 /*
 Purpose: Write to the log file with the numbers displayed in base 10.
 // ORIGINAL: 0x006260F0 ?say@Log@@QAEXPADPADHHH@Z 0x006260F0-0x0062618B
+// symbol    ?say@Log@@QAEXPBD0HHH@Z
 // size      155 bytes
 // prototype void (__thiscall ?say@Log@@QAEXPADPADHHH@Z)(Log* this, int8*, int8*, int, int, int)
 // callers   1   call targets   3
@@ -98,6 +100,7 @@ void Log::say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
 /*
 Purpose: Write to the log file with the numbers displayed in base 16.
 // ORIGINAL: 0x00626190 ?say_hex@Log@@QAEXPADPADHHH@Z 0x00626190-0x0062622B
+// symbol    ?say_hex@Log@@QAEXPBD0HHH@Z
 // size      155 bytes
 // prototype void (__thiscall ?say_hex@Log@@QAEXPADPADHHH@Z)(Log* this, int8*, int8*, int, int, int)
 // callers   0   call targets   3
@@ -124,6 +127,7 @@ Log *Logging = (Log *)0x009BBFF8;
 BOOL *IsLoggingDisabled = (BOOL *)0x009BC004;
 
 // ORIGINAL: 0x00625F20 ??__ELogging@@YAXXZ 0x00625F20-0x00625F8B
+// symbol    ?log_logging@@YAXXZ
 // size      107 bytes
 // prototype 
 // callers   0   call targets   6
@@ -137,6 +141,7 @@ void __cdecl log_logging() {
 }
 
 // ORIGINAL: 0x00625F90 ??__FLogging@@YAXXZ 0x00625F90-0x00625FAD
+// symbol    ?log_logging_exit@@YAXXZ
 // size      29 bytes
 // prototype 
 // callers   0   call targets   1

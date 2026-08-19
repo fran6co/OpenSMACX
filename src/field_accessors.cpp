@@ -16,6 +16,7 @@ Purpose: Return the constant 0x1.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x00406840 sub_406840 0x00406840-0x00406846 BYTE_EXACT
+// symbol    ?field_accessor_00406840_redirect@@YIIPAX0@Z
 // size      6 bytes
 // prototype 
 // callers   0   call targets   0
@@ -44,6 +45,7 @@ Purpose: Increment the dword field at 0x58.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x004476E0 ?tech@SAmbience@@QAEXXZ 0x004476E0-0x004476E4 BYTE_EXACT
+// symbol    ?field_accessor_004476e0_redirect@@YIXPAX0@Z
 // size      4 bytes
 // prototype void (__thiscall ?tech@SAmbience@@QAEXXZ)(SAmbience* this)
 // callers   0   call targets   0
@@ -73,6 +75,7 @@ Purpose: Store 0x1 in the byte at 0x6d.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x00447AB0 ?design_window_show@BAmbience@@QAEXXZ 0x00447AB0-0x00447AB5 BYTE_EXACT
+// symbol    ?field_accessor_00447ab0_redirect@@YIXPAX0@Z
 // size      5 bytes
 // prototype void (__thiscall ?design_window_show@BAmbience@@QAEXXZ)(BAmbience* this)
 // callers   0   call targets   0
@@ -101,6 +104,7 @@ Purpose: Increment the dword field at 0x58.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x00448280 ?tech@AAmbience@@QAEXXZ 0x00448280-0x00448284 BYTE_EXACT
+// symbol    ?field_accessor_00448280_redirect@@YIXPAX0@Z
 // size      4 bytes
 // prototype void (__thiscall ?tech@AAmbience@@QAEXXZ)(AAmbience* this)
 // callers   0   call targets   0
@@ -130,6 +134,7 @@ Purpose: Read the dword field at 0x48.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x00448310 sub_448310 0x00448310-0x00448314 BYTE_EXACT
+// symbol    ?field_accessor_00448310_redirect@@YIIPAX0@Z
 // size      4 bytes
 // prototype 
 // callers   0   call targets   0
@@ -159,6 +164,7 @@ Purpose: Read the dword field at 0x44.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x00448320 sub_448320 0x00448320-0x00448324 BYTE_EXACT
+// symbol    ?field_accessor_00448320_redirect@@YIIPAX0@Z
 // size      4 bytes
 // prototype 
 // callers   0   call targets   0
@@ -188,6 +194,7 @@ Purpose: Read the dword field at 0x50.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x00448330 sub_448330 0x00448330-0x00448334 BYTE_EXACT
+// symbol    ?field_accessor_00448330_redirect@@YIIPAX0@Z
 // size      4 bytes
 // prototype 
 // callers   0   call targets   0
@@ -217,6 +224,7 @@ Purpose: Read the dword field at 0x200.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x004C75A0 sub_4c75a0 0x004C75A0-0x004C75A7 BYTE_EXACT
+// symbol    ?field_accessor_004c75a0_redirect@@YIIPAX0@Z
 // size      7 bytes
 // prototype 
 // callers   0   call targets   0
@@ -246,6 +254,7 @@ Purpose: Set 9 field(s) to constants.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x004C8090 sub_4c8090 0x004C8090-0x004C80B3 BYTE_EXACT
+// symbol    ?field_accessor_004c8090_redirect@@YIPAXPAX0@Z
 // size      35 bytes
 // prototype 
 // callers   0   call targets   0
@@ -284,6 +293,7 @@ Purpose: Set 2 field(s) to constants.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x004C8100 sub_4c8100 0x004C8100-0x004C810B BYTE_EXACT
+// symbol    ?field_accessor_004c8100_redirect@@YIPAXPAX0@Z
 // size      11 bytes
 // prototype 
 // callers   0   call targets   0
@@ -315,6 +325,7 @@ Purpose: Return the constant 0xb.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x004C93E0 sub_4c93e0 0x004C93E0-0x004C93E8 BYTE_EXACT
+// symbol    ?field_accessor_004c93e0_redirect@@YIIPAX0H@Z
 // size      8 bytes
 // prototype 
 // callers   0   call targets   0
@@ -343,6 +354,7 @@ Purpose: Set 1 field(s) to constants.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x00590D60 sub_590d60 0x00590D60-0x00590D6B BYTE_EXACT
+// symbol    ?field_accessor_00590d60_redirect@@YIXPAX0@Z
 // size      11 bytes
 // prototype 
 // callers   0   call targets   0
@@ -372,6 +384,7 @@ Purpose: Return the constant 0x8.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x005DA6A0 sub_5da6a0 0x005DA6A0-0x005DA6A8 BYTE_EXACT
+// symbol    ?field_accessor_005da6a0_redirect@@YIIPAX0HHH@Z
 // size      8 bytes
 // prototype 
 // callers   0   call targets   0
@@ -400,6 +413,7 @@ Purpose: Return the constant 0x8.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x005DA6B0 sub_5da6b0 0x005DA6B0-0x005DA6B8 BYTE_EXACT
+// symbol    ?field_accessor_005da6b0_redirect@@YIIPAX0HHHH@Z
 // size      8 bytes
 // prototype 
 // callers   0   call targets   0
@@ -428,6 +442,7 @@ Purpose: Return the constant 0x8.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x005E2460 sub_5e2460 0x005E2460-0x005E2468 BYTE_EXACT
+// symbol    ?field_accessor_005e2460_redirect@@YIIPAX0HHHHH@Z
 // size      8 bytes
 // prototype 
 // callers   0   call targets   0
@@ -456,6 +471,7 @@ Purpose: Return the constant 0x8.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x005E2470 sub_5e2470 0x005E2470-0x005E2478 BYTE_EXACT
+// symbol    ?field_accessor_005e2470_redirect@@YIIPAX0HHHHH@Z
 // size      8 bytes
 // prototype 
 // callers   0   call targets   0
@@ -484,6 +500,7 @@ Purpose: Set 9 field(s) to constants.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x005E35D0 sub_5e35d0 0x005E35D0-0x005E35EF BYTE_EXACT
+// symbol    ?field_accessor_005e35d0_redirect@@YIPAXPAX0@Z
 // size      31 bytes
 // prototype 
 // callers   0   call targets   0
@@ -522,6 +539,7 @@ Purpose: Set 9 field(s) to constants.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x005E35F0 sub_5e35f0 0x005E35F0-0x005E360D BYTE_EXACT
+// symbol    ?field_accessor_005e35f0_redirect@@YIXPAX0@Z
 // size      29 bytes
 // prototype 
 // callers   0   call targets   0
@@ -559,6 +577,7 @@ Purpose: Read the dword field at 0x0, masked to 0x1.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x00600320 ?is_playing@MCIVideo@@QAEHXZ 0x00600320-0x00600326 BYTE_EXACT
+// symbol    ?field_accessor_00600320_redirect@@YIIPAX0@Z
 // size      6 bytes
 // prototype int (__thiscall ?is_playing@MCIVideo@@QAEHXZ)(MCIVideo* this)
 // callers   1   call targets   0
@@ -589,6 +608,7 @@ Purpose: Set 3 field(s) to constants.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x00616B20 sub_616b20 0x00616B20-0x00616B2D BYTE_EXACT
+// symbol    ?field_accessor_00616b20_redirect@@YIPAXPAX0@Z
 // size      13 bytes
 // prototype 
 // callers   0   call targets   0
@@ -621,6 +641,7 @@ Purpose: Return the constant 0x1.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x0062D390 sub_62d390 0x0062D390-0x0062D396 BYTE_EXACT
+// symbol    ?field_accessor_0062d390_redirect@@YIIPAX0@Z
 // size      6 bytes
 // prototype 
 // callers   1   call targets   0
@@ -649,6 +670,7 @@ Purpose: Set 9 field(s) to constants.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x006346C0 sub_6346c0 0x006346C0-0x006346E4 BYTE_EXACT
+// symbol    ?field_accessor_006346c0_redirect@@YIPAXPAX0@Z
 // size      36 bytes
 // prototype 
 // callers   0   call targets   0
@@ -687,6 +709,7 @@ Purpose: Set 9 field(s) to constants.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x006346F0 sub_6346f0 0x006346F0-0x00634712 BYTE_EXACT
+// symbol    ?field_accessor_006346f0_redirect@@YIXPAX0@Z
 // size      34 bytes
 // prototype 
 // callers   0   call targets   0
@@ -724,6 +747,7 @@ Purpose: Set 9 field(s) to constants.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x00634B70 sub_634b70 0x00634B70-0x00634B94 BYTE_EXACT
+// symbol    ?field_accessor_00634b70_redirect@@YIPAXPAX0@Z
 // size      36 bytes
 // prototype 
 // callers   0   call targets   0
@@ -762,6 +786,7 @@ Purpose: Set 4 field(s) to constants.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x00634FB0 ??0TexHeap@@QAE@XZ 0x00634FB0-0x00634FC0 BYTE_EXACT
+// symbol    ?field_accessor_00634fb0_redirect@@YIPAXPAX0@Z
 // size      16 bytes
 // prototype TexHeap* (__thiscall ??0TexHeap@@QAE@XZ)(TexHeap* this)
 // callers   0   call targets   0
@@ -795,6 +820,7 @@ Purpose: Set 7 field(s) to constants.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x006354D0 sub_6354d0 0x006354D0-0x006354E9 BYTE_EXACT
+// symbol    ?field_accessor_006354d0_redirect@@YIPAXPAX0@Z
 // size      25 bytes
 // prototype 
 // callers   0   call targets   0
@@ -831,6 +857,7 @@ Purpose: Read the dword field at 0x4ac, masked to 0x8000.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x006363F0 sub_6363f0 0x006363F0-0x006363FC BYTE_EXACT
+// symbol    ?field_accessor_006363f0_redirect@@YIIPAX0@Z
 // size      12 bytes
 // prototype 
 // callers   0   call targets   0
@@ -861,6 +888,7 @@ Purpose: Set 4 field(s) to constants.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x0063E520 sub_63e520 0x0063E520-0x0063E534 BYTE_EXACT
+// symbol    ?field_accessor_0063e520_redirect@@YIPAXPAX0@Z
 // size      20 bytes
 // prototype 
 // callers   1   call targets   0
@@ -894,6 +922,7 @@ Purpose: Do nothing; the original body is only its `ret`.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x00406B20 nullsub_27 0x00406B20-0x00406B23 BYTE_EXACT
+// symbol    ?field_accessor_00406b20_redirect@@YIXPAX0HHH@Z
 // size      3 bytes
 // prototype 
 // callers   0   call targets   0
@@ -922,6 +951,7 @@ Purpose: Return the constant 0x0.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x00616D80 sub_616d80 0x00616D80-0x00616D85 BYTE_EXACT
+// symbol    ?field_accessor_00616d80_redirect@@YIIPAX0HHH@Z
 // size      5 bytes
 // prototype 
 // callers   0   call targets   0
@@ -950,6 +980,7 @@ Purpose: Do nothing; the original body is only its `ret`.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x0061F785 nullsub_259 0x0061F785-0x0061F788 BYTE_EXACT
+// symbol    ?field_accessor_0061f785_redirect@@YIXPAX0HHHHHHH@Z
 // size      3 bytes
 // prototype 
 // callers   0   call targets   0
@@ -978,6 +1009,7 @@ Purpose: Do nothing; the original body is only its `ret`.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x00634C20 ??1FileBox@@QAE@XZ 0x00634C20-0x00634C21 BYTE_EXACT
+// symbol    ?field_accessor_00634c20_redirect@@YIXPAX0@Z
 // size      1 bytes
 // prototype void (__thiscall ??1FileBox@@QAE@XZ)(FileBox* this)
 // callers   4   call targets   0
@@ -1006,6 +1038,7 @@ Purpose: Do nothing; the original body is only its `ret`.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x0050F640 nullsub_185 0x0050F640-0x0050F643 BYTE_EXACT
+// symbol    ?field_accessor_0050f640_redirect@@YIXPAX0H@Z
 // size      3 bytes
 // prototype 
 // callers   0   call targets   0
@@ -1034,6 +1067,7 @@ Purpose: Copy 1 argument(s) into field(s) of `this`.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x00589750 sub_589750 0x00589750-0x00589760 BYTE_EXACT
+// symbol    ?field_accessor_00589750_redirect@@YIXPAX0H@Z
 // size      16 bytes
 // prototype 
 // callers   0   call targets   0
@@ -1063,6 +1097,7 @@ Purpose: Copy 2 argument(s) into field(s) of `this`.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x00590CB0 sub_590cb0 0x00590CB0-0x00590CC2 BYTE_EXACT
+// symbol    ?field_accessor_00590cb0_redirect@@YIXPAX0HH@Z
 // size      18 bytes
 // prototype 
 // callers   0   call targets   0
@@ -1093,6 +1128,7 @@ Purpose: Copy 1 argument(s) into field(s) of `this`.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x005F05C0 sub_5f05c0 0x005F05C0-0x005F05CD BYTE_EXACT
+// symbol    ?field_accessor_005f05c0_redirect@@YIXPAX0H@Z
 // size      13 bytes
 // prototype 
 // callers   0   call targets   0
@@ -1122,6 +1158,7 @@ Purpose: Set 5 field(s) to constants.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x005D4540 Heap::Heap2 0x005D4540-0x005D4551 BYTE_EXACT
+// symbol    ?field_accessor_005d4540_redirect@@YIXPAX0@Z
 // size      17 bytes
 // prototype 
 // callers   0   call targets   0
@@ -1155,6 +1192,7 @@ Purpose: Set 8 field(s) to constants.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x00634BE0 ??0FileBox@@QAE@XZ 0x00634BE0-0x00634C13 BYTE_EXACT
+// symbol    ?field_accessor_00634be0_redirect@@YIPAXPAX0@Z
 // size      51 bytes
 // prototype void (__thiscall ??0FileBox@@QAE@XZ)(FileBox* this)
 // callers   4   call targets   0
@@ -1192,6 +1230,7 @@ Purpose: Set 8 field(s) to constants.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x00634F70 ?UNK2@FileBox@@QAEXXZ 0x00634F70-0x00634FA1 BYTE_EXACT
+// symbol    ?field_accessor_00634f70_redirect@@YIXPAX0@Z
 // size      49 bytes
 // prototype void (__thiscall ?UNK2@FileBox@@QAEXXZ)(FileBox* this)
 // callers   0   call targets   0
@@ -1228,6 +1267,7 @@ Purpose: Clamp field 0xc against an argument, then store unconditionally.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x004C80C0 sub_4c80c0 0x004C80C0-0x004C80D7 BYTE_EXACT
+// symbol    ?field_accessor_004c80c0_redirect@@YIXPAX0H@Z
 // size      23 bytes
 // prototype 
 // callers   0   call targets   0
@@ -1261,6 +1301,7 @@ Purpose: Clamp field 0x8 against an argument, then store unconditionally.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x004C80E0 sub_4c80e0 0x004C80E0-0x004C80F7 BYTE_EXACT
+// symbol    ?field_accessor_004c80e0_redirect@@YIXPAX0H@Z
 // size      23 bytes
 // prototype 
 // callers   0   call targets   0
@@ -1294,6 +1335,7 @@ Purpose: Sign-extend bit 0 of field 0x40: 0 or -1.
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
 // ORIGINAL: 0x00448380 sub_448380 0x00448380-0x0044838A BYTE_EXACT
+// symbol    ?field_accessor_00448380_redirect@@YIIPAX0@Z
 // size      10 bytes
 // prototype 
 // callers   0   call targets   0
@@ -1305,6 +1347,7 @@ Status: Complete
 */
 /*
 // ORIGINAL: 0x00448380 sub_448380 0x00448380-0x0044838A
+// symbol    ?field_accessor_00448380_redirect@@YIIPAX0@Z
 // size      3 bytes
 // prototype 
 // callers   0   call targets   0

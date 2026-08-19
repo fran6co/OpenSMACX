@@ -134,6 +134,7 @@ void __fastcall replay_win_on_left_up_redirect(ReplayWin *self, void *, int a1, 
 
 /*
 // ORIGINAL: 0x005ADBD0 ?timer_callback_daemon@ReplayWin@@QAAXH@Z 0x005ADBD0-0x005ADBE1 BYTE_EXACT
+// symbol    ?fn_005adbd0@@YAXPAVReplayWin@@@Z
 // size      17 bytes
 // prototype 
 // callers   0   call targets   1

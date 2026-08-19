@@ -26,6 +26,7 @@ char *XPopsCaptionBuffer = (char *)0x009B8AA8;
 Purpose: Raise a popup with the defaults the short form implies - the shared
          caption buffer, no title, no override text, and both flags set.
 // ORIGINAL: 0x005BF7D0 ?X_pops@@YAHPBDHPAUSprite@@P6AHXZ@Z 0x005BF7D0-0x005BF7FA
+// symbol    ?x_pops_short@@YAHPBDHPAVSprite@@P6AHXZ@Z
 // size      42 bytes
 // prototype 
 // callers   27   call targets   1
@@ -45,6 +46,7 @@ int __cdecl x_pops_short(const char *label, int value, Sprite *sprite,
 Purpose: The three-argument popup form: like the short form but with the value
          defaulted to zero and no override text.
 // ORIGINAL: 0x005BF5D0 ?X_pops@@YAHPBDPAUSprite@@P6AHXZ@Z 0x005BF5D0-0x005BF5F8
+// symbol    ?x_pops_minimal@@YAHPBDPAVSprite@@P6AHXZ@Z
 // size      40 bytes
 // prototype 
 // callers   6   call targets   1
@@ -65,6 +67,7 @@ Purpose: Raise the caption-less popup with its own caption and label supplied
          by the caller, rather than the shared buffer - value, override text
          and flags all take their defaults (-1, none, 0).
 // ORIGINAL: 0x005BF330 ?X_pop@@YAHPADPBDP6AHXZ@Z 0x005BF330-0x005BF34F
+// symbol    ?x_pop_caption_label@@YAHPADPBDP6AHXZ@Z
 // size      31 bytes
 // prototype 
 // callers   17   call targets   1
@@ -84,6 +87,7 @@ Purpose: Raise the caption-less popup against the shared caption buffer, with
          both the value and the flags supplied by the caller. No override
          text.
 // ORIGINAL: 0x005BF390 ?X_pop@@YAHPBDHHP6AHXZ@Z 0x005BF390-0x005BF3B4
+// symbol    ?x_pop_value_flags@@YAHPBDHHP6AHXZ@Z
 // size      36 bytes
 // prototype 
 // callers   1   call targets   1
@@ -103,6 +107,7 @@ int __cdecl x_pop_value_flags(const char *label, int value, int flags,
 Purpose: Raise the caption-less popup with a caller-supplied caption, value
          and flags. No override text.
 // ORIGINAL: 0x005BF3C0 ?X_pop@@YAHPADPBDHHP6AHXZ@Z 0x005BF3C0-0x005BF3E3
+// symbol    ?x_pop_caption_value_flags@@YAHPADPBDHHP6AHXZ@Z
 // size      35 bytes
 // prototype 
 // callers   2   call targets   1
@@ -122,6 +127,7 @@ int __cdecl x_pop_caption_value_flags(char *caption, const char *label,
 Purpose: The short form of the caption-less popup - shared caption buffer,
          value defaulted to -1, no override text, only the flags exposed.
 // ORIGINAL: 0x005BF3F0 ?X_pop@@YAHPBDHP6AHXZ@Z 0x005BF3F0-0x005BF412
+// symbol    ?x_pop_short@@YAHPBDHP6AHXZ@Z
 // size      34 bytes
 // prototype 
 // callers   17   call targets   1
@@ -141,6 +147,7 @@ int __cdecl x_pop_short(const char *label, int flags,
 Purpose: Raise the caption-less popup with a caller-supplied caption and
          flags; value defaults to -1 and there is no override text.
 // ORIGINAL: 0x005BF420 ?X_pop@@YAHPADPBDHP6AHXZ@Z 0x005BF420-0x005BF441
+// symbol    ?x_pop_caption_flags@@YAHPADPBDHP6AHXZ@Z
 // size      33 bytes
 // prototype 
 // callers   4   call targets   1
@@ -160,6 +167,7 @@ Purpose: Raise the caption-less popup against the shared caption buffer with
          everything else - value, override text and flags - supplied by the
          caller.
 // ORIGINAL: 0x005BF450 ?X_pop@@YAHPBDHPADHP6AHXZ@Z 0x005BF450-0x005BF476
+// symbol    ?x_pop_default_caption@@YAHPBDHPADHP6AHXZ@Z
 // size      38 bytes
 // prototype 
 // callers   0   call targets   1
@@ -181,6 +189,7 @@ Purpose: Raise the full popup against the shared caption buffer with title
          and both flags are caller-supplied. Unlike x_pops_short/minimal, the
          flags are not fixed to 1/1 here.
 // ORIGINAL: 0x005BF600 ?X_pops@@YAHPBDPAUSprite@@HHP6AHXZ@Z 0x005BF600-0x005BF62C
+// symbol    ?x_pops_flags@@YAHPBDPAVSprite@@HHP6AHXZ@Z
 // size      44 bytes
 // prototype 
 // callers   0   call targets   1
@@ -201,6 +210,7 @@ Purpose: The minimal popup form with a caller-supplied caption instead of the
          shared buffer - title -1, no override text, value 0, both flags
          fixed at 1.
 // ORIGINAL: 0x005BF630 ?X_pops@@YAHPADPBDPAUSprite@@P6AHXZ@Z 0x005BF630-0x005BF657
+// symbol    ?x_pops_caption_minimal@@YAHPADPBDPAVSprite@@P6AHXZ@Z
 // size      39 bytes
 // prototype 
 // callers   0   call targets   1
@@ -222,6 +232,7 @@ Purpose: Like x_pops_flags but with a caller-supplied caption in place of the
          shared buffer - title -1, no override text, value forced to 0, both
          flags caller-supplied.
 // ORIGINAL: 0x005BF660 ?X_pops@@YAHPADPBDPAUSprite@@HHP6AHXZ@Z 0x005BF660-0x005BF68B
+// symbol    ?x_pops_caption_flags@@YAHPADPBDPAVSprite@@HHP6AHXZ@Z
 // size      43 bytes
 // prototype 
 // callers   0   call targets   1
@@ -243,6 +254,7 @@ Purpose: Raise the full popup against the shared caption buffer with both
          title and value exposed (unlike the short form, which only exposes
          value); no override text, both flags fixed at 1.
 // ORIGINAL: 0x005BF690 ?X_pops@@YAHPBDHHPAUSprite@@P6AHXZ@Z 0x005BF690-0x005BF6BC
+// symbol    ?x_pops_title@@YAHPBDHHPAVSprite@@P6AHXZ@Z
 // size      44 bytes
 // prototype 
 // callers   0   call targets   1
@@ -262,6 +274,7 @@ int __cdecl x_pops_title(const char *label, int title, int value,
 Purpose: Like x_pops_title but with both flags caller-supplied instead of
          fixed at 1; shared caption buffer, no override text.
 // ORIGINAL: 0x005BF6C0 ?X_pops@@YAHPBDHHPAUSprite@@HHP6AHXZ@Z 0x005BF6C0-0x005BF6F0
+// symbol    ?x_pops_title_flags@@YAHPBDHHPAVSprite@@HHP6AHXZ@Z
 // size      48 bytes
 // prototype 
 // callers   0   call targets   1
@@ -282,6 +295,7 @@ int __cdecl x_pops_title_flags(const char *label, int title, int value,
 Purpose: Like x_pops_title but with a caller-supplied caption instead of the
          shared buffer; no override text, both flags fixed at 1.
 // ORIGINAL: 0x005BF770 ?X_pops@@YAHPADPBDHHPAUSprite@@P6AHXZ@Z 0x005BF770-0x005BF79B
+// symbol    ?x_pops_caption_title@@YAHPADPBDHHPAVSprite@@P6AHXZ@Z
 // size      43 bytes
 // prototype 
 // callers   0   call targets   1
@@ -302,6 +316,7 @@ int __cdecl x_pops_caption_title(char *caption, const char *label, int title,
 Purpose: Raise the full popup with everything but the override text
          caller-supplied - caption, title, value, sprite and both flags.
 // ORIGINAL: 0x005BF7A0 ?X_pops@@YAHPADPBDHHPAUSprite@@HHP6AHXZ@Z 0x005BF7A0-0x005BF7CF
+// symbol    ?x_pops_no_text@@YAHPADPBDHHPAVSprite@@HHP6AHXZ@Z
 // size      47 bytes
 // prototype 
 // callers   0   call targets   1
@@ -323,6 +338,7 @@ Purpose: Raise the full popup against the shared caption buffer with title
          defaulted to -1 and no override text; value and both flags are
          caller-supplied.
 // ORIGINAL: 0x005BF800 ?X_pops@@YAHPBDHPAUSprite@@HHP6AHXZ@Z 0x005BF800-0x005BF82E
+// symbol    ?x_pops_value_flags@@YAHPBDHPAVSprite@@HHP6AHXZ@Z
 // size      46 bytes
 // prototype 
 // callers   0   call targets   1
@@ -344,6 +360,7 @@ Purpose: Like x_pops_value_flags but with a caller-supplied caption in place
          of the shared buffer and both flags fixed at 1; title defaults to
          -1, no override text.
 // ORIGINAL: 0x005BF830 ?X_pops@@YAHPADPBDHPAUSprite@@P6AHXZ@Z 0x005BF830-0x005BF859
+// symbol    ?x_pops_caption_value@@YAHPADPBDHPAVSprite@@P6AHXZ@Z
 // size      41 bytes
 // prototype 
 // callers   1   call targets   1
@@ -364,6 +381,7 @@ int __cdecl x_pops_caption_value(char *caption, const char *label, int value,
 Purpose: Like x_pops_caption_value but with both flags caller-supplied
          instead of fixed at 1; title defaults to -1, no override text.
 // ORIGINAL: 0x005BF860 ?X_pops@@YAHPADPBDHPAUSprite@@HHP6AHXZ@Z 0x005BF860-0x005BF88D
+// symbol    ?x_pops_caption_value_flags@@YAHPADPBDHPAVSprite@@HHP6AHXZ@Z
 // size      45 bytes
 // prototype 
 // callers   0   call targets   1
@@ -385,6 +403,7 @@ int __cdecl x_pops_caption_value_flags(char *caption, const char *label,
 Purpose: Raise the full popup against the shared caption buffer with title,
          override text and value all caller-supplied; both flags fixed at 1.
 // ORIGINAL: 0x005BF890 ?X_pops@@YAHPBDHPADHPAUSprite@@P6AHXZ@Z 0x005BF890-0x005BF8BE
+// symbol    ?x_pops_override_text@@YAHPBDHPADHPAVSprite@@P6AHXZ@Z
 // size      46 bytes
 // prototype 
 // callers   0   call targets   1
@@ -406,6 +425,7 @@ Purpose: Raise the full popup against the shared caption buffer with every
          other argument - title, override text, value, sprite and both flags
          - caller-supplied. Only the caption defaults.
 // ORIGINAL: 0x005BF8C0 ?X_pops@@YAHPBDHPADHPAUSprite@@HHP6AHXZ@Z 0x005BF8C0-0x005BF8F2
+// symbol    ?x_pops_default_caption@@YAHPBDHPADHPAVSprite@@HHP6AHXZ@Z
 // size      50 bytes
 // prototype 
 // callers   0   call targets   1
@@ -426,6 +446,7 @@ int __cdecl x_pops_default_caption(const char *label, int title, char *text,
 Purpose: Raise the full popup with caption, title, override text, value and
          sprite all caller-supplied; only the two flags default, fixed at 1.
 // ORIGINAL: 0x005BF900 ?X_pops@@YAHPADPBDHPADHPAUSprite@@P6AHXZ@Z 0x005BF900-0x005BF92D
+// symbol    ?x_pops_no_flags@@YAHPADPBDH0HPAVSprite@@P6AHXZ@Z
 // size      45 bytes
 // prototype 
 // callers   0   call targets   1

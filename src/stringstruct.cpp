@@ -169,6 +169,7 @@ void *payload_pointer(int payload) {
 Purpose: Release every entry in the list, notifying the owner about each
          payload before destroying the payload and its entry.
 // ORIGINAL: 0x00402970 StringStruct::remove_all 0x00402970-0x004029E3
+// symbol    ?remove_all@StringStruct@@QAEXXZ
 // size      115 bytes
 // prototype 
 // callers   79   call targets   0
@@ -267,6 +268,7 @@ const uint32_t StringStructDerivedVirtualBaseVtable = 0x006698C0;
 Purpose: Close a derived string list, releasing its entries under its own
          virtual tables before closing its StringStruct base the same way.
 // ORIGINAL: 0x004066C0 sub_4066c0 0x004066C0-0x00406818;0x00650980-0x00650995
+// symbol    ?string_struct_derived_close_redirect@@YIXPAX0@Z
 // size      365 bytes
 // prototype 
 // callers   61   call targets   0
@@ -299,6 +301,7 @@ Purpose: Destroy a most-derived StringList: run the source-owned two-stage
          derived close, then hand the virtual base back its own vtable and
          republish the pending-allocation owner the constructor captured.
 // ORIGINAL: 0x00406820 sub_406820 0x00406820-0x0040683B
+// symbol    ?destroy@StringList@@QAEIXZ
 // size      27 bytes
 // prototype 
 // callers   26   call targets   1

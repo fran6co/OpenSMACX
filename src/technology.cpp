@@ -154,6 +154,7 @@ LPSTR __cdecl tech_name(int tech_id, BOOL category_lvl) {
 /*
 Purpose: Check whether faction has a particular tech or not.
 // ORIGINAL: 0x005B9F20 ?has_tech@@YA_NHH@Z 0x005B9F20-0x005B9F89
+// symbol    ?has_tech@@YAHHH@Z
 // size      105 bytes
 // prototype bool (__cdecl ?has_tech@@YA_NHH@Z)(int techID, int factionID)
 // callers   109   call targets   0

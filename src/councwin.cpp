@@ -269,6 +269,7 @@ void __fastcall counc_win_on_iface_group_clicked_redirect(CouncWin *self, void *
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
 // ORIGINAL: 0x00426F90 ?on_button_text_draw@CouncWin@@QAEHPAUGraphicWin@@PADH@Z 0x00426F90-0x00426F95 BYTE_EXACT
+// symbol    ?on_button_text_draw@CouncWin@@QAEHPAVGraphicWin@@PADH@Z
 // size      5 bytes
 // prototype int (__thiscall ?on_button_text_draw@CouncWin@@QAEHPAUGraphicWin@@PADH@Z)(CouncWin* this, GraphicWin*, int8*, int)
 // callers   0   call targets   0

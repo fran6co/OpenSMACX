@@ -58,6 +58,7 @@ Purpose: Close the ListBox: close its GraphicWin virtual base (source-owned) and
          through the runtime vbtable, then reset the ListBox-owned fields from
          the process defaults and re-arm Dialog::field_B4_.
 // ORIGINAL: 0x00609F20 ?close@ListBox@@QAEXXZ 0x00609F20-0x00609F9D
+// symbol    ?close@ListBox@@QAEIXZ
 // size      125 bytes
 // prototype void (__thiscall ?close@ListBox@@QAEXXZ)(ListBox* this)
 // callers   35   call targets   2

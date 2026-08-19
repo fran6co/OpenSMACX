@@ -22,6 +22,7 @@
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 1.
 // ORIGINAL: 0x0062ED30 ?poll_players@Net@@QAEHPAUSessionStruct@@@Z 0x0062ED30-0x0062ED38 BYTE_EXACT
+// symbol    ?poll_players@Net@@QAEHH@Z
 // size      8 bytes
 // prototype int (__thiscall ?poll_players@Net@@QAEHPAUSessionStruct@@@Z)(Net* this, SessionStruct*)
 // callers   0   call targets   0

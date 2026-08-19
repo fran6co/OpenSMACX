@@ -24,6 +24,7 @@
 Purpose: Read the specified file and create an index of section headers ("#EXAMPLE"). Store the file 
          offset of each section for improved search time.
 // ORIGINAL: 0x005FDF80 ?make_index@TextIndex@@QAEXPAD@Z 0x005FDF80-0x005FE11B;0x00662D40-0x00662D52
+// symbol    ?make_index@TextIndex@@QAEXPBD@Z
 // size      429 bytes
 // prototype void (__thiscall ?make_index@TextIndex@@QAEXPAD@Z)(TextIndex* this, int8*)
 // callers   1   call targets   17
@@ -71,6 +72,7 @@ void TextIndex::make_index(LPCSTR source_txt) {
 /*
 Purpose: Search the source text file for a section header.
 // ORIGINAL: 0x005FE120 ?search_index@TextIndex@@QAEHPAD0@Z 0x005FE120-0x005FE1E1
+// symbol    ?search_index@TextIndex@@QAEHPBD0@Z
 // size      193 bytes
 // prototype int (__thiscall ?search_index@TextIndex@@QAEHPAD0@Z)(TextIndex* this, int8*, int8*)
 // callers   2   call targets   4

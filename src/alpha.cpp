@@ -812,6 +812,7 @@ BOOL __cdecl read_factions() {
 /*
 Purpose: Parse and set the noun item's gender and plurality from the Txt buffer.
 // ORIGINAL: 0x005871D0 ?noun_item@@YAXPAHPAH@Z 0x005871D0-0x0058723E BYTE_EXACT
+// symbol    ?noun_item@@YAXPAH0@Z
 // size      110 bytes
 // prototype 
 // callers   0   call targets   1
@@ -824,6 +825,7 @@ Status: Complete
 /*
 Purpose: Set the noun's gender and plurality from the current Txt item.
 // ORIGINAL: 0x005871D0 ?noun_item@@YAXPAHPAH@Z 0x005871D0-0x0058723E
+// symbol    ?noun_item@@YAXPAH0@Z
 // size      110 bytes
 // prototype 
 // callers   0   call targets   1
@@ -1347,6 +1349,7 @@ LPSTR __cdecl prefs_get(LPCSTR key_name, LPCSTR default_value, BOOL use_default)
 /*
 Purpose: Get the default value for the 1st set of preferences.
 // ORIGINAL: 0x0059DA20 ?default_prefs@@YAHXZ 0x0059DA20-0x0059DA99
+// symbol    ?default_prefs@@YAIXZ
 // size      121 bytes
 // prototype 
 // callers   1   call targets   3
@@ -1373,6 +1376,7 @@ uint32_t __cdecl default_prefs() {
 /*
 Purpose: Get the default value for the 2nd set of preferences.
 // ORIGINAL: 0x0059DAA0 ?default_prefs2@@YAHXZ 0x0059DAA0-0x0059DB19
+// symbol    ?default_prefs2@@YAIXZ
 // size      121 bytes
 // prototype 
 // callers   1   call targets   3
@@ -1395,6 +1399,7 @@ uint32_t __cdecl default_prefs2() {
 /*
 Purpose: Get the default value for the warning pop-up preferences.
 // ORIGINAL: 0x0059DB20 ?default_warn@@YAHXZ 0x0059DB20-0x0059DB26 BYTE_EXACT
+// symbol    ?default_warn@@YAIXZ
 // size      6 bytes
 // prototype 
 // callers   1   call targets   0
@@ -1414,6 +1419,7 @@ uint32_t __cdecl default_warn() {
 /*
 Purpose: Get the default value for the rule related preferences.
 // ORIGINAL: 0x0059DB30 ?default_rules@@YAHXZ 0x0059DB30-0x0059DB36 BYTE_EXACT
+// symbol    ?default_rules@@YAIXZ
 // size      6 bytes
 // prototype 
 // callers   2   call targets   0

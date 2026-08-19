@@ -75,6 +75,7 @@ int publish_default_fonts(Font **slots, Font *const *fonts, size_t count) {
 /*
 Purpose: Set the default string fonts shared by every popup.
 // ORIGINAL: 0x006048C0 ?set_def_string_font@BasePop@@QAAHPAUFont@@PAUFont@@PAUFont@@PAUFont@@@Z 0x006048C0-0x006048FA
+// symbol    ?set_def_string_font@BasePop@@SAHPAVFont@@000@Z
 // size      58 bytes
 // prototype 
 // callers   5   call targets   0
@@ -93,6 +94,7 @@ int BasePop::set_def_string_font(Font *font1, Font *font2, Font *font3,
 /*
 Purpose: Set the default button fonts shared by every popup.
 // ORIGINAL: 0x006049C0 ?set_def_button_font@BasePop@@QAAHPAUFont@@PAUFont@@PAUFont@@@Z 0x006049C0-0x006049F0
+// symbol    ?set_def_button_font@BasePop@@SAHPAVFont@@00@Z
 // size      48 bytes
 // prototype 
 // callers   5   call targets   0
@@ -143,6 +145,7 @@ void store_colors(uint32_t *table, size_t stride, size_t tier,
 /*
 Purpose: Set default string colour tier 0 shared by every popup.
 // ORIGINAL: 0x00604900 ?set_def_string_color@BasePop@@QAAXHHHH@Z 0x00604900-0x00604927
+// symbol    ?set_def_string_color@BasePop@@SAXHHHH@Z
 // size      39 bytes
 // prototype 
 // callers   3   call targets   0
@@ -162,6 +165,7 @@ void __cdecl base_pop_set_def_string_color_redirect(int c1, int c2, int c3, int 
 /*
 Purpose: Set default string colour tier 1 shared by every popup.
 // ORIGINAL: 0x00604930 ?set_def_string_color2@BasePop@@QAAXHHHH@Z 0x00604930-0x00604957
+// symbol    ?set_def_string_color2@BasePop@@SAXHHHH@Z
 // size      39 bytes
 // prototype 
 // callers   3   call targets   0
@@ -181,6 +185,7 @@ void __cdecl base_pop_set_def_string_color2_redirect(int c1, int c2, int c3, int
 /*
 Purpose: Set default string colour tier 2 shared by every popup.
 // ORIGINAL: 0x00604960 ?set_def_string_color3@BasePop@@QAAXHHHH@Z 0x00604960-0x00604987
+// symbol    ?set_def_string_color3@BasePop@@SAXHHHH@Z
 // size      39 bytes
 // prototype 
 // callers   3   call targets   0
@@ -200,6 +205,7 @@ void __cdecl base_pop_set_def_string_color3_redirect(int c1, int c2, int c3, int
 /*
 Purpose: Set default string colour tier 3 shared by every popup.
 // ORIGINAL: 0x00604990 ?set_def_string_color_hyper@BasePop@@QAAXHHHH@Z 0x00604990-0x006049B7
+// symbol    ?set_def_string_color_hyper@BasePop@@SAXHHHH@Z
 // size      39 bytes
 // prototype 
 // callers   1   call targets   0
@@ -219,6 +225,7 @@ void __cdecl base_pop_set_def_string_color_hyper_redirect(int c1, int c2, int c3
 /*
 Purpose: Set default button colour tier 0 shared by every popup.
 // ORIGINAL: 0x006049F0 ?set_def_button_color@BasePop@@QAAXHHHH@Z 0x006049F0-0x00604A17
+// symbol    ?set_def_button_color@BasePop@@SAXHHHH@Z
 // size      39 bytes
 // prototype 
 // callers   1   call targets   0
@@ -238,6 +245,7 @@ void __cdecl base_pop_set_def_button_color_redirect(int c1, int c2, int c3, int 
 /*
 Purpose: Set default button colour tier 1 shared by every popup.
 // ORIGINAL: 0x00604A20 ?set_def_button_color2@BasePop@@QAAXHHHH@Z 0x00604A20-0x00604A47
+// symbol    ?set_def_button_color2@BasePop@@SAXHHHH@Z
 // size      39 bytes
 // prototype 
 // callers   1   call targets   0
@@ -257,6 +265,7 @@ void __cdecl base_pop_set_def_button_color2_redirect(int c1, int c2, int c3, int
 /*
 Purpose: Set default button colour tier 2 shared by every popup.
 // ORIGINAL: 0x00604A50 ?set_def_button_color3@BasePop@@QAAXHHHH@Z 0x00604A50-0x00604A77
+// symbol    ?set_def_button_color3@BasePop@@SAXHHHH@Z
 // size      39 bytes
 // prototype 
 // callers   1   call targets   0
@@ -449,6 +458,7 @@ int *BasePopFalloutFlag = reinterpret_cast<int *>(0x009B8CFC);
 /*
 Purpose: Raise the fallout flag, but only while the gate is set.
 // ORIGINAL: 0x00604A90 ?fallout@BasePop@@QAAXXZ 0x00604A90-0x00604AA4
+// symbol    ?fallout@BasePop@@SAXXZ
 // size      20 bytes
 // prototype 
 // callers   1   call targets   0
@@ -743,6 +753,7 @@ Purpose: Read the state word of the CheckBox embedded at 0x2228.
          loading the word into EAX and a void body cannot promise that. The
          return type does not change the thiscall cleanup.
 // ORIGINAL: 0x00601BD0 ?read_check@BasePop@@QAEXXZ 0x00601BD0-0x00601BE1 BYTE_EXACT
+// symbol    ?read_check@BasePop@@QAEIXZ
 // size      17 bytes
 // prototype void (__thiscall ?read_check@BasePop@@QAEXXZ)(BasePop* this)
 // callers   1   call targets   0
@@ -786,6 +797,7 @@ int BasePop::basepop_alloc() {
 
 /*
 // ORIGINAL: 0x00604590 ?init_class@BasePop@@QAAHXZ 0x00604590-0x0060467A
+// symbol    ?init_class@BasePop@@SAHXZ
 // size      234 bytes
 // prototype
 // callers   1   call targets   4

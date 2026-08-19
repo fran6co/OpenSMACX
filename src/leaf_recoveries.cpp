@@ -86,6 +86,7 @@ Purpose: Subtract two three-component float vectors into a third.
          in float throughout could round differently.
 
 // ORIGINAL: 0x00628180 sub_628180 0x00628180-0x006281A5 BYTE_EXACT
+// symbol    ?leaf_00628180_redirect@@YAXPBM0PAM@Z
 // size      37 bytes
 // prototype 
 // callers   3   call targets   0
@@ -118,6 +119,7 @@ Purpose: Scale a three-component float vector by a scalar.
          came from the same float32.
 
 // ORIGINAL: 0x006281B0 sub_6281b0 0x006281B0-0x006281D5 BYTE_EXACT
+// symbol    ?leaf_006281b0_redirect@@YAXPBMMPAM@Z
 // size      37 bytes
 // prototype 
 // callers   5   call targets   0
@@ -129,6 +131,7 @@ Status: Complete
 */
 /*
 // ORIGINAL: 0x006281B0 sub_6281b0 0x006281B0-0x006281D5
+// symbol    ?leaf_006281b0_redirect@@YAXPBMMPAM@Z
 // size      37 bytes
 // prototype 
 // callers   5   call targets   0
@@ -174,6 +177,7 @@ Purpose: Dot product of `this` with a three-component float vector.
          included - checked with objdump rather than assumed.
 
 // ORIGINAL: 0x00634650 sub_634650 0x00634650-0x0063466B BYTE_EXACT
+// symbol    ?leaf_00634650_redirect@@YIMPAX0PBM@Z
 // size      27 bytes
 // prototype 
 // callers   0   call targets   0
@@ -185,6 +189,7 @@ Status: Complete
 */
 /*
 // ORIGINAL: 0x00634650 sub_634650 0x00634650-0x0063466B
+// symbol    ?leaf_00634650_redirect@@YIMPAX0PBM@Z
 // size      27 bytes
 // prototype 
 // callers   0   call targets   0
@@ -222,6 +227,7 @@ Purpose: Round an integer DOWN to a multiple of another, toward zero.
          as they do in the original.
 
 // ORIGINAL: 0x00559210 sub_559210 0x00559210-0x00559221 BYTE_EXACT
+// symbol    ?leaf_00559210_redirect@@YAHHH@Z
 // size      17 bytes
 // prototype 
 // callers   1   call targets   0
@@ -247,6 +253,7 @@ Purpose: Follow a two-link chain, or return zero when the first link is unset.
          a body that works whenever the two happen to agree.
 
 // ORIGINAL: 0x005E3630 sub_5e3630 0x005E3630-0x005E3644
+// symbol    ?leaf_005e3630_redirect@@YIIPAX0@Z
 // size      20 bytes
 // prototype 
 // callers   2   call targets   0
@@ -258,6 +265,7 @@ Status: Complete
 */
 /*
 // ORIGINAL: 0x005E3630 sub_5e3630 0x005E3630-0x005E3644
+// symbol    ?leaf_005e3630_redirect@@YIIPAX0@Z
 // size      20 bytes
 // prototype 
 // callers   2   call targets   0
@@ -296,6 +304,7 @@ Purpose: Field 0 as an offset into field 0x10, or field 0xc when it is negative.
          for any field with the top bit set.
 
 // ORIGINAL: 0x005E3650 sub_5e3650 0x005E3650-0x005E3660 BYTE_EXACT
+// symbol    ?leaf_005e3650_redirect@@YIIPAX0@Z
 // size      16 bytes
 // prototype 
 // callers   2   call targets   0
@@ -335,6 +344,7 @@ Purpose: Store an argument into three fields, clamping anything outside 0..3
          value stored is the same for all three.
 
 // ORIGINAL: 0x005E3660 sub_5e3660 0x005E3660-0x005E368E BYTE_EXACT
+// symbol    ?leaf_005e3660_redirect@@YIXPAX0H@Z
 // size      46 bytes
 // prototype 
 // callers   1   call targets   0
@@ -365,6 +375,7 @@ Purpose: Store a non-zero argument into field 0x38, or refuse with code 10.
          would be a different function.
 
 // ORIGINAL: 0x004482F0 sub_4482f0 0x004482F0-0x0044830C BYTE_EXACT
+// symbol    ?leaf_004482f0_redirect@@YIIPAX0H@Z
 // size      28 bytes
 // prototype 
 // callers   0   call targets   0
@@ -394,6 +405,7 @@ Purpose: Clear field 4, set the low bit of field 8, put 0x24 in field 0.
          tree treats as a return value.
 
 // ORIGINAL: 0x004C8070 sub_4c8070 0x004C8070-0x004C8089 BYTE_EXACT
+// symbol    ?leaf_004c8070_redirect@@YIPAXPAX0@Z
 // size      25 bytes
 // prototype 
 // callers   0   call targets   0
@@ -424,6 +436,7 @@ Purpose: Add another 3x3 float matrix into this one, element by element.
          three restarted each time.
 
 // ORIGINAL: 0x006347C0 sub_6347c0 0x006347C0-0x006347F0
+// symbol    ?leaf_006347c0_redirect@@YIXPAX0PBM@Z
 // size      48 bytes
 // prototype 
 // callers   0   call targets   0
@@ -435,6 +448,7 @@ Status: Complete
 */
 /*
 // ORIGINAL: 0x006347C0 sub_6347c0 0x006347C0-0x006347F0
+// symbol    ?leaf_006347c0_redirect@@YIXPAX0PBM@Z
 // size      48 bytes
 // prototype 
 // callers   0   call targets   0
@@ -471,6 +485,7 @@ Purpose: Subtract another 3x3 float matrix from this one.
          result is this - other, and subtraction does not commute.
 
 // ORIGINAL: 0x006348F0 sub_6348f0 0x006348F0-0x00634920
+// symbol    ?leaf_006348f0_redirect@@YIXPAX0PBM@Z
 // size      48 bytes
 // prototype 
 // callers   0   call targets   0
@@ -499,6 +514,7 @@ Purpose: Scale a 3x3 float matrix by a scalar.
          same float32 every time.
 
 // ORIGINAL: 0x006348C0 sub_6348c0 0x006348C0-0x006348E7
+// symbol    ?leaf_006348c0_redirect@@YIXPAX0M@Z
 // size      39 bytes
 // prototype 
 // callers   0   call targets   0
@@ -510,6 +526,7 @@ Status: Complete
 */
 /*
 // ORIGINAL: 0x006348C0 sub_6348c0 0x006348C0-0x006348E7
+// symbol    ?leaf_006348c0_redirect@@YIXPAX0M@Z
 // size      39 bytes
 // prototype 
 // callers   0   call targets   0
@@ -550,6 +567,7 @@ Purpose: Are two three-component float vectors equal?
          function reads AL.
 
 // ORIGINAL: 0x006344E0 sub_6344e0 0x006344E0-0x00634513 BYTE_EXACT
+// symbol    ?leaf_006344e0_redirect@@YI_NPAX0PBM@Z
 // size      51 bytes
 // prototype 
 // callers   0   call targets   0
@@ -561,6 +579,7 @@ Status: Complete
 */
 /*
 // ORIGINAL: 0x006344E0 sub_6344e0 0x006344E0-0x00634513
+// symbol    ?leaf_006344e0_redirect@@YI_NPAX0PBM@Z
 // size      51 bytes
 // prototype 
 // callers   0   call targets   0
@@ -602,6 +621,7 @@ Purpose: Length of a three-component float vector.
          function.
 
 // ORIGINAL: 0x006281E0 sub_6281e0 0x006281E0-0x00628217
+// symbol    ?leaf_006281e0_redirect@@YAMPBM@Z
 // size      55 bytes
 // prototype 
 // callers   1   call targets   0
@@ -645,6 +665,7 @@ Purpose: Scale a field by an argument and divide by 600.
          in C++ would not be.
 
 // ORIGINAL: 0x0063BEB0 sub_63beb0 0x0063BEB0-0x0063BED1 BYTE_EXACT
+// symbol    ?leaf_0063beb0_redirect@@YIHPAX0H@Z
 // size      33 bytes
 // prototype 
 // callers   0   call targets   0
@@ -670,6 +691,7 @@ Purpose: Scale a field by an argument and divide by 440.
          206,006 inputs, with no disagreement.
 
 // ORIGINAL: 0x0063BEE0 sub_63bee0 0x0063BEE0-0x0063BF01 BYTE_EXACT
+// symbol    ?leaf_0063bee0_redirect@@YIHPAX0H@Z
 // size      33 bytes
 // prototype 
 // callers   0   call targets   0
@@ -700,6 +722,7 @@ Purpose: Fill the eight bytes at a pointer with 0xff.
          time; the result is eight 0xff bytes either way.
 
 // ORIGINAL: 0x0057DEE0 sub_57dee0 0x0057DEE0-0x0057DEFC BYTE_EXACT
+// symbol    ?leaf_0057dee0_redirect@@YAXPAX@Z
 // size      28 bytes
 // prototype 
 // callers   0   call targets   0
@@ -711,6 +734,7 @@ Status: Complete
 */
 /*
 // ORIGINAL: 0x0057DEE0 sub_57dee0 0x0057DEE0-0x0057DEFC
+// symbol    ?leaf_0057dee0_redirect@@YAXPAX@Z
 // size      28 bytes
 // prototype 
 // callers   0   call targets   0
@@ -747,6 +771,7 @@ Purpose: Hand out the next of ten 60-byte slots, wrapping back to the first.
          wrong slot on the tenth call and only then.
 
 // ORIGINAL: 0x006252C0 sub_6252c0 0x006252C0-0x006252DE BYTE_EXACT
+// symbol    ?leaf_006252c0_redirect@@YIPAXPAX0@Z
 // size      30 bytes
 // prototype 
 // callers   0   call targets   0
@@ -758,6 +783,7 @@ Status: Complete
 */
 /*
 // ORIGINAL: 0x006252C0 sub_6252c0 0x006252C0-0x006252DE
+// symbol    ?leaf_006252c0_redirect@@YIPAXPAX0@Z
 // size      30 bytes
 // prototype 
 // callers   0   call targets   0
@@ -794,6 +820,7 @@ Purpose: Half the sum of an argument and a span read out of a structure.
          negative, which is exactly what a bare `sar` would get wrong.
 
 // ORIGINAL: 0x00408470 sub_408470 0x00408470-0x0040848A BYTE_EXACT
+// symbol    ?leaf_00408470_redirect@@YAHPBXH@Z
 // size      26 bytes
 // prototype 
 // callers   0   call targets   0
@@ -825,6 +852,7 @@ Purpose: Fill 1,536 dwords with -1, starting at offset 0xa20.
          `lea` as the start would put the whole thing four bytes too high.
 
 // ORIGINAL: 0x005AD450 sub_5ad450 0x005AD450-0x005AD470 BYTE_EXACT
+// symbol    ?leaf_005ad450_redirect@@YIXPAX0@Z
 // size      32 bytes
 // prototype 
 // callers   0   call targets   0
@@ -836,6 +864,7 @@ Status: Complete
 */
 /*
 // ORIGINAL: 0x005AD450 sub_5ad450 0x005AD450-0x005AD470
+// symbol    ?leaf_005ad450_redirect@@YIXPAX0@Z
 // size      32 bytes
 // prototype 
 // callers   0   call targets   0
@@ -875,6 +904,7 @@ Purpose: Count the set bits in the low THIRTY-ONE bits of ECX.
          does not take the (void *, void *) shape the rest of these do.
 
 // ORIGINAL: 0x005CC430 sub_5cc430 0x005CC430-0x005CC44B BYTE_EXACT
+// symbol    ?leaf_005cc430_redirect@@YIHI@Z
 // size      27 bytes
 // prototype 
 // callers   1   call targets   0
@@ -911,6 +941,7 @@ Purpose: Three when there is no structure, otherwise zero or seven.
          three are declared so the adapter cleans what the original cleans.
 
 // ORIGINAL: 0x005D7A10 sub_5d7a10 0x005D7A10-0x005D7A2F BYTE_EXACT
+// symbol    ?leaf_005d7a10_redirect@@YGHPBXHHH@Z
 // size      31 bytes
 // prototype 
 // callers   1   call targets   0
@@ -948,6 +979,7 @@ Purpose: Forward all four arguments to 005D7A10.
          else.
 
 // ORIGINAL: 0x005D5470 sub_5d5470 0x005D5470-0x005D5492
+// symbol    ?leaf_005d5470_redirect@@YIHPAX0PBXHHH@Z
 // size      34 bytes
 // prototype 
 // callers   0   call targets   1
@@ -978,6 +1010,7 @@ Purpose: Reverse the low `count` bits of a value.
          the shift happens after the OR rather than before it.
 
 // ORIGINAL: 0x00642940 _bi_reverse 0x00642940-0x0064295F BYTE_EXACT
+// symbol    ?leaf_00642940_redirect@@YAIIH@Z
 // CORRECTED from sub_642940
 //   zlib 1.0.2 trees.c, 31 bytes, byte-exact from upstream
 // size      31 bytes
@@ -991,6 +1024,7 @@ Status: Complete
 */
 /*
 // ORIGINAL: 0x00642940 sub_642940 0x00642940-0x0064295F
+// symbol    ?leaf_00642940_redirect@@YAIIH@Z
 // size      31 bytes
 // prototype 
 // callers   2   call targets   0
@@ -1032,6 +1066,7 @@ Purpose: Report a node's neighbours through two optional out-parameters.
          just written, and a cached version would not.
 
 // ORIGINAL: 0x0063E7F0 sub_63e7f0 0x0063E7F0-0x0063E81C
+// symbol    ?leaf_0063e7f0_redirect@@YIIPAX0PAI1@Z
 // size      44 bytes
 // prototype 
 // callers   2   call targets   0
@@ -1073,6 +1108,7 @@ Purpose: Divide, rounding the quotient AWAY from zero when there is a
          spellings go through one division: a zero divisor and INT_MIN / -1.
 
 // ORIGINAL: 0x00532A50 sub_532a50 0x00532A50-0x00532A81 BYTE_EXACT
+// symbol    ?leaf_00532a50_redirect@@YGHHPAH0H@Z
 // size      49 bytes
 // prototype 
 // callers   0   call targets   0
@@ -1084,6 +1120,7 @@ Status: Complete
 */
 /*
 // ORIGINAL: 0x00532A50 sub_532a50 0x00532A50-0x00532A81
+// symbol    ?leaf_00532a50_redirect@@YGHHPAH0H@Z
 // size      49 bytes
 // prototype 
 // callers   0   call targets   0
@@ -1124,6 +1161,7 @@ Purpose: Is a point inside an inclusive rectangle?
          exactly on an edge is inside.
 
 // ORIGINAL: 0x00592DB0 sub_592db0 0x00592DB0-0x00592DDC BYTE_EXACT
+// symbol    ?leaf_00592db0_redirect@@YAHHHHHHH@Z
 // size      44 bytes
 // prototype 
 // callers   0   call targets   0
@@ -1158,6 +1196,7 @@ Purpose: Does this window hold the dialog focus, and its partner too?
          yes.
 
 // ORIGINAL: 0x006161A0 ?UNK2@EditBox@@QAEXXZ 0x006161A0-0x006161CA
+// symbol    ?leaf_006161a0_redirect@@YIHPAX0@Z
 // size      42 bytes
 // prototype void (__thiscall ?UNK2@EditBox@@QAEXXZ)(EditBox* this)
 // callers   0   call targets   1
@@ -1200,6 +1239,7 @@ Purpose: Find the table entry matching two keys and set its third word.
          -1.
 
 // ORIGINAL: 0x005AD4C0 sub_5ad4c0 0x005AD4C0-0x005AD500
+// symbol    ?leaf_005ad4c0_redirect@@YIHPAX0HHH@Z
 // size      64 bytes
 // prototype 
 // callers   0   call targets   0
@@ -1244,6 +1284,7 @@ Purpose: Swap two pairs of fields in the object this one points at.
          `[ecx]` would be seen.
 
 // ORIGINAL: 0x005CBBC0 sub_5cbbc0 0x005CBBC0-0x005CBBF5
+// symbol    ?leaf_005cbbc0_redirect@@YIXPAX0@Z
 // size      53 bytes
 // prototype 
 // callers   2   call targets   0
@@ -1288,6 +1329,7 @@ Purpose: Initialise 24 sixty-byte slots and the count that follows them.
          EAX still holds `this` at the `ret`.
 
 // ORIGINAL: 0x0052DCA0 ??0DeletionList@@QAE@XZ 0x0052DCA0-0x0052DCC1
+// symbol    ?leaf_0052dca0_redirect@@YIPAXPAX0@Z
 // size      33 bytes
 // prototype void (__thiscall ??0DeletionList@@QAE@XZ)(DeletionList* this)
 // callers   0   call targets   0
@@ -1329,6 +1371,7 @@ Purpose: Is the movie still playing?
          recovered as field_accessor_00600320_redirect.
 
 // ORIGINAL: 0x004041C0 ?on_modal@AlphaMovie@@QAE_NXZ 0x004041C0-0x004041D2
+// symbol    ?leaf_004041c0_redirect@@YIHPAX0@Z
 // size      18 bytes
 // prototype bool (__thiscall ?on_modal@AlphaMovie@@QAE_NXZ)(AlphaMovie* this)
 // callers   0   call targets   1
@@ -1355,6 +1398,7 @@ Purpose: Construct the Buffer subobject, then clear one field.
          order that would matter if the constructor ever reached that far back.
 
 // ORIGINAL: 0x004BEA30 ??0UV2Player@@QAE@XZ 0x004BEA30-0x004BEA4C
+// symbol    ?leaf_004bea30_redirect@@YIPAXPAX0@Z
 // size      28 bytes
 // prototype void (__thiscall ??0UV2Player@@QAE@XZ)(UV2Player* this)
 // callers   1   call targets   1
@@ -1389,6 +1433,7 @@ Purpose: Reset six fields, then close the window and its Buffer.
          subobject at 0x406c.
 
 // ORIGINAL: 0x00432970 ?close@SelectPartWin@@QAEXXZ 0x00432970-0x004329AF
+// symbol    ?leaf_00432970_redirect@@YIXPAX0@Z
 // size      63 bytes
 // prototype void (__thiscall ?close@SelectPartWin@@QAEXXZ)(SelectPartWin* this)
 // callers   0   call targets   2
@@ -1440,6 +1485,7 @@ Purpose: Append a 16-bit value to a byte stream, most significant byte first.
          and are left alone rather than papered over.
 
 // ORIGINAL: 0x0063D420 _putShortMSB 0x0063D420-0x0063D44F
+// symbol    ?leaf_0063d420_redirect@@YAXPAXI@Z
 // CORRECTED from sub_63d420
 //   zlib 1.0.2 deflate.c, 47 bytes, byte-exact from upstream
 // size      47 bytes
@@ -1491,6 +1537,7 @@ Purpose: Construct the BaseButton base, publish ImageButton's vtables, clear
          rule src/net_class.h states for Net.
 
 // ORIGINAL: 0x006252E0 ??0ImageButton@@QAE@XZ 0x006252E0-0x00625306
+// symbol    ?image_button_construct_redirect@@YIPAXPAX0@Z
 // size      38 bytes
 // prototype void (__thiscall ??0ImageButton@@QAE@XZ)(ImageButton* this)
 // callers   0   call targets   1
@@ -1520,6 +1567,7 @@ Purpose: Clear the field, then close as a BaseButton.
          quietly re-typed.
 
 // ORIGINAL: 0x00625330 ?close@ImageButton@@QAEXXZ 0x00625330-0x0062533F
+// symbol    ?image_button_close_redirect@@YIXPAX0@Z
 // size      15 bytes
 // prototype void (__thiscall ?close@ImageButton@@QAEXXZ)(ImageButton* this)
 // callers   0   call targets   0
@@ -1547,6 +1595,7 @@ Purpose: Keep the first argument, hand the other eight to BaseButton::init.
          the first kept at 0xab8 and the remaining eight passed straight on.
 
 // ORIGINAL: 0x00625340 ?init@ImageButton@@QAEHHPADHHHHHPAUWin@@H@Z 0x00625340-0x0062537A
+// symbol    ?image_button_init_redirect@@YIHPAX0HPBDHHHHHPAVWin@@H@Z
 // size      58 bytes
 // prototype int (__thiscall ?init@ImageButton@@QAEHHPADHHHHHPAUWin@@H@Z)(ImageButton* this, int, int8*, int, int, int, int, int, Win*, int)
 // callers   0   call targets   1
@@ -1585,6 +1634,7 @@ Purpose: Add one fixed item to the Dialogs at 0x21d0.
          reading quickly.
 
 // ORIGINAL: 0x0059D230 sub_59d230 0x0059D230-0x0059D243
+// symbol    ?leaf_0059d230_redirect@@YIHPAX0@Z
 // size      19 bytes
 // prototype 
 // callers   0   call targets   1
@@ -1613,6 +1663,7 @@ Purpose: Clear four fields, then close as a GraphicWin.
          reads it.
 
 // ORIGINAL: 0x00484B60 ?close@PickTech@@QAEXXZ 0x00484B60-0x00484B7F
+// symbol    ?pick_tech_close_redirect@@YIXPAX0@Z
 // size      31 bytes
 // prototype void (__thiscall ?close@PickTech@@QAEXXZ)(PickTech* this)
 // callers   1   call targets   0
@@ -1670,6 +1721,7 @@ Purpose: Destroy the ListBox at 0x48, the Dialog at 0xa60, and the GraphicWin
          rather than recomputed.
 
 // ORIGINAL: 0x004080B0 sub_4080b0 0x004080B0-0x004080D3
+// symbol    ?leaf_004080b0_redirect@@YIXPAX0@Z
 // size      35 bytes
 // prototype 
 // callers   3   call targets   3
@@ -1696,6 +1748,7 @@ Purpose: Destroy the Dialogs at 0x188, the Dialog at 0xba0, and the GraphicWin
          likewise computed once and used twice.
 
 // ORIGINAL: 0x00406AF0 sub_406af0 0x00406AF0-0x00406B16
+// symbol    ?leaf_00406af0_redirect@@YIXPAX0@Z
 // size      38 bytes
 // prototype 
 // callers   9   call targets   3
@@ -1745,6 +1798,7 @@ Purpose: Construct a Buffer on the stack and immediately destroy it.
          beats an assertion that would only appear to cover them.
 
 // ORIGINAL: 0x00455E50 ?load_deswin_sprites@@YAXXZ 0x00455E50-0x00455E73
+// symbol    ?leaf_00455e50_redirect@@YAXXZ
 // size      35 bytes
 // prototype 
 // callers   1   call targets   2

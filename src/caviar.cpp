@@ -91,6 +91,7 @@ Caviar::Caviar() {
 /*
 Purpose: Copy a camera position and orientation directly into the renderer state.
 // ORIGINAL: 0x006182A0 ?set_camera_direct@Caviar@@QAEXPAUVOX_Vect@@PAUVOX_Matrix@@@Z 0x006182A0-0x0061831F
+// symbol    ?set_camera_direct@Caviar@@QAEXPBUVOX_Vect@@PBUVOX_Matrix@@@Z
 // size      127 bytes
 // prototype void (__thiscall ?set_camera_direct@Caviar@@QAEXPAUVOX_Vect@@PAUVOX_Matrix@@@Z)(Caviar* this, VOX_Vect*, VOX_Matrix*)
 // callers   10   call targets   0
@@ -396,6 +397,7 @@ Purpose: Read back the three values at 0x2C, 0x30 and 0x34, skipping any output
          the parameters are typed that way here because that is what the body
          does with them.
 // ORIGINAL: 0x00618340 ?UNK11@Caviar@@QAEXHHH@Z 0x00618340-0x0061836A BYTE_EXACT
+// symbol    ?UNK11@Caviar@@QAEXPAH00@Z
 // size      42 bytes
 // prototype void (__thiscall ?UNK11@Caviar@@QAEXHHH@Z)(Caviar* this, int, int, int)
 // callers   0   call targets   0

@@ -404,6 +404,7 @@ Purpose: Slide a rectangle by a delta on each axis, the wrapping counterpart of
          the load at 0x005F8670, but that is a residue and not a value: the
          one caller clobbers EAX two instructions later at 0x005EDC95.
 // ORIGINAL: 0x005F8670 sub_5f8670 0x005F8670-0x005F869B
+// symbol    ?offset_rect@@YAXPAUtagRECT@@HH@Z
 // size      43 bytes
 // prototype 
 // callers   1   call targets   0
@@ -431,6 +432,7 @@ void __cdecl offset_rect(RECT *rect, int dx, int dy) {
 /*
 Purpose: Build a rectangle from an origin and dimensions using wrapping coordinates.
 // ORIGINAL: 0x005F86C0 sub_5f86c0 0x005F86C0-0x005F86E6
+// symbol    ?make_rect@@YAPAUtagRECT@@PAU1@HHHH@Z
 // size      38 bytes
 // prototype 
 // callers   2   call targets   0
@@ -480,6 +482,7 @@ int __cdecl in_box(int x, int y, int left, int top, int width, int height) {
 /*
 Purpose: Compute a rectangle center with wrapping subtraction and truncation toward zero.
 // ORIGINAL: 0x004BA830 ?UNK2@TutWin@@QAEXPAURECT@@PAHPAH@Z 0x004BA830-0x004BA863
+// symbol    ?rect_center@@YAHPAUtagRECT@@PAH1@Z
 // size      51 bytes
 // prototype void (__thiscall ?UNK2@TutWin@@QAEXPAURECT@@PAHPAH@Z)(TutWin* this, RECT*, int*, int*)
 // callers   0   call targets   0
@@ -579,6 +582,7 @@ void(__cdecl *WinKeyHook)(WPARAM key);                      // 0x009B7A8C
 /*
 Purpose: Acquire the process-wide device context, taking one reference.
 // ORIGINAL: 0x005EC690 ?get_hdc@Win@@QAGPAUHDC__@@XZ 0x005EC690-0x005EC6E1
+// symbol    ?get_hdc@Win@@SAPAUHDC__@@XZ
 // size      81 bytes
 // prototype 
 // callers   7   call targets   0
@@ -612,6 +616,7 @@ HDC Win::get_hdc() {
 Purpose: Drop one reference to the process-wide device context, releasing it
          once the last reference is gone.
 // ORIGINAL: 0x005EC6F0 ?release_hdc@Win@@QAGXXZ 0x005EC6F0-0x005EC73C BYTE_EXACT
+// symbol    ?release_hdc@Win@@SAXXZ
 // size      76 bytes
 // prototype 
 // callers   9   call targets   0
@@ -698,6 +703,7 @@ func_win_flip *WinFlipOriginal = (func_win_flip *)0x005EFD20;
 /*
 Purpose: Dismiss any pending bubble text and repaint the area it covered.
 // ORIGINAL: 0x005F8500 ?clear_bubble_text@Win@@QAGXXZ 0x005F8500-0x005F852F
+// symbol    ?clear_bubble_text@Win@@SAXXZ
 // size      47 bytes
 // prototype 
 // callers   15   call targets   2
@@ -810,6 +816,7 @@ int *WinDefaultFocus = reinterpret_cast<int *>(0x009B7AEC);
 /*
 Purpose: Record the window that receives focus by default.
 // ORIGINAL: 0x005F2CE0 ?set_def_focus@Win@@QAAXPAUWin@@@Z 0x005F2CE0-0x005F2CEA
+// symbol    ?set_def_focus@Win@@SAXH@Z
 // size      10 bytes
 // prototype 
 // callers   3   call targets   0
@@ -1110,6 +1117,7 @@ void __fastcall win_set_horz_range_redirect(Win *self, void *, int minimum, int 
 Purpose: Window cursor-set hook; the legacy implementation returns 1 to report
          it handled the message and does nothing else.
 // ORIGINAL: 0x005F2670 ?OnSetCursor@Win@@QAAHPAXPAXII@Z 0x005F2670-0x005F2676 BYTE_EXACT
+// symbol    ?OnSetCursor@Win@@SAHPAX0II@Z
 // size      6 bytes
 // prototype 
 // callers   1   call targets   0
@@ -1167,6 +1175,7 @@ Purpose: Report whether a window is anywhere below this one in the child
          tree, searching depth first. A direct child counts, and so does any
          descendant of one.
 // ORIGINAL: 0x005ECE20 ?is_descendant@Win@@QAEHPAVWin@@@Z 0x005ECE20-0x005ECE73
+// symbol    ?is_descendant@Win@@QAEHPAV1@@Z
 // size      83 bytes
 // prototype int (__thiscall ?is_descendant@Win@@QAEHPAVWin@@@Z)(Win* this, Win*)
 // callers   4   call targets   1
@@ -1337,6 +1346,7 @@ void Win::release_modal() {
 
 /*
 // ORIGINAL: 0x005F01F0 ?init_class@Win@@QAAHPAD@Z 0x005F01F0-0x005F04D4;0x00662CCC-0x00662CE1
+// symbol    ?init_class@Win@@SAHPAD@Z
 // size      761 bytes
 // prototype
 // callers   1   call targets   7
@@ -1382,6 +1392,7 @@ Purpose: Route a left button press - find the window under the pointer, ask
          it what was hit, raise it, and either begin a drag or dispatch the
          click.
 // ORIGINAL: 0x005F2330 ?OnLButtonDown@Win@@QAAXPAXJHHI@Z 0x005F2330-0x005F256B
+// symbol    ?OnLButtonDown@Win@@SAXPAUHWND__@@JHHI@Z
 // size      571 bytes
 // prototype
 // callers   2   call targets   3
@@ -1498,6 +1509,7 @@ void Win::OnLButtonDown(HWND window, LONG dbl, int x, int y, WPARAM keys) {
 Purpose: Decide which window a screen position belongs to, translating the
          position into that window's coordinates on the way.
 // ORIGINAL: 0x005F6F10 ?get_mouse_window@Win@@QAAHPAH0@Z 0x005F6F10-0x005F7319
+// symbol    ?get_mouse_window@Win@@SAPAV1@PAH0@Z
 // size      1033 bytes
 // prototype
 // callers   8   call targets   2
@@ -1647,6 +1659,7 @@ Purpose: The window procedure the class registers - route every input
          message to the Win the pointer or the keyboard focus is over, and
          hand everything else to DefWindowProc.
 // ORIGINAL: 0x005F0650 ?window_proc@Win@@QAGJPAXIIJ@Z 0x005F0650-0x005F0E27
+// symbol    ?window_proc@Win@@SGJPAUHWND__@@IIJ@Z
 // size      2007 bytes
 // prototype
 // callers   0   call targets   11

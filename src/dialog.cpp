@@ -23,6 +23,7 @@
 /*
 Purpose: Set the three fonts used by the dialog.
 // ORIGINAL: 0x00609C60 ?set_dialog_font@Dialog@@QAEHPAUFont@@PAUFont@@PAUFont@@@Z 0x00609C60-0x00609C8D BYTE_EXACT
+// symbol    ?set_dialog_font@Dialog@@QAEHPAVFont@@00@Z
 // size      45 bytes
 // prototype int (__thiscall ?set_dialog_font@Dialog@@QAEHPAUFont@@PAUFont@@PAUFont@@@Z)(Dialog* this, Font*, Font*, Font*)
 // callers   11   call targets   0
@@ -290,6 +291,7 @@ Font **DialogDefaultFonts = reinterpret_cast<Font **>(0x009B8EC0);
 /*
 Purpose: Set the default fonts shared by every dialog.
 // ORIGINAL: 0x00609D20 ?set_def_dialog_font@Dialog@@QAAHPAUFont@@PAUFont@@PAUFont@@@Z 0x00609D20-0x00609D50
+// symbol    ?set_def_dialog_font@Dialog@@SAHPAVFont@@00@Z
 // size      48 bytes
 // prototype 
 // callers   5   call targets   0
@@ -401,6 +403,7 @@ Purpose: The compiler-generated scalar deleting destructor: run the complete
          destructor and free the storage through the executable's operator
          delete only when bit 0 of the mode asks. Always returns the object.
 // ORIGINAL: 0x00609D90 ??_GDialog@@UAEPAXI@Z 0x00609D90-0x00609DAE
+// symbol    ?dialog_scalar_dtor_redirect@@YIPAXPAVDialog@@PAXI@Z
 // size      30 bytes
 // prototype void* (__thiscall ??_GDialog@@UAEPAXI@Z)(Dialog* this, unsigned int)
 // callers   0   call targets   2

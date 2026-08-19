@@ -147,6 +147,7 @@ Purpose: Release the loaded wave. The wrapped device, if there is one, is asked
          dword at 0x54 suppresses it, the object's own vtable slot 0x80 is run,
          and the loaded bit (bit 0) of the flag dword at 0x40 is cleared.
 // ORIGINAL: 0x004C6EA0 ?unload@Wave@@QAEXXZ 0x004C6EA0-0x004C6ED9
+// symbol    ?unload@Wave@@QAEHXZ
 // size      57 bytes
 // prototype void (__thiscall ?unload@Wave@@QAEXXZ)(Wave* this)
 // callers   7   call targets   0
@@ -1396,6 +1397,7 @@ Purpose: The compiler-generated scalar deleting destructor: destroy the wave
          and, when bit 0 of the mode argument asks for it, return the storage
          to the game CRT heap.
 // ORIGINAL: 0x004C9300 ??_GWave@@UAEPAXI@Z 0x004C9300-0x004C9321
+// symbol    ?wave_scalar_dtor_redirect@@YIPAXPAVWave@@PAXI@Z
 // size      33 bytes
 // prototype void* (__thiscall ??_GWave@@UAEPAXI@Z)(Wave* this, unsigned int)
 // callers   0   call targets   2

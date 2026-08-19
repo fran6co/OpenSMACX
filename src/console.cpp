@@ -313,6 +313,7 @@ Purpose: Point the map windows at one tile on behalf of one faction. Build a
          the rest, and only its success counts: when it moves, the queued input
          is flushed and 1 is returned.
 // ORIGINAL: 0x005108A0 ?focus@Console@@QAEXHHH@Z 0x005108A0-0x005109A3
+// symbol    ?focus@Console@@QAEHHHH@Z
 // size      259 bytes
 // prototype void (__thiscall ?focus@Console@@QAEXHHH@Z)(Console* this, int xCoord, int yCoord, int factionID)
 // callers   32   call targets   4

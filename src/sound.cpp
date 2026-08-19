@@ -783,6 +783,7 @@ Purpose: The compiler-generated scalar deleting destructor: destroy the
          sound and, when bit 0 of the mode asks, free the storage to the
          game heap.
 // ORIGINAL: 0x004C92D0 ??_GSound@@UAEPAXI@Z 0x004C92D0-0x004C92F1
+// symbol    ?sound_scalar_dtor_redirect@@YIPAXPAVSound@@PAXI@Z
 // size      33 bytes
 // prototype void* (__thiscall ??_GSound@@UAEPAXI@Z)(Sound* this, unsigned int)
 // callers   0   call targets   2

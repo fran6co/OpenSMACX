@@ -91,6 +91,7 @@ void ButtonGroup::init(int group_id, int flags) {
 /*
 Purpose: Add a button to the group and link the button back to it.
 // ORIGINAL: 0x0062B850 ?add@ButtonGroup@@QAEXPAUBaseButton@@@Z 0x0062B850-0x0062B86C BYTE_EXACT
+// symbol    ?add@ButtonGroup@@QAEXPAVBaseButton@@@Z
 // size      28 bytes
 // prototype void (__thiscall ?add@ButtonGroup@@QAEXPAUBaseButton@@@Z)(ButtonGroup* this, BaseButton* button)
 // callers   9   call targets   0

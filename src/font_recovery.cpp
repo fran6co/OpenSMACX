@@ -61,6 +61,7 @@ Font *FontTable = (Font *)0x0093FC58;
 Purpose: Select the Font whose point size is closest to the requested one,
          then index that size's row by style.
 // ORIGINAL: 0x005882F0 ?find_font@@YAHHH@Z 0x005882F0-0x0058833B
+// symbol    ?find_font@@YAPAVFont@@HH@Z
 // size      75 bytes
 // prototype 
 // callers   31   call targets   0

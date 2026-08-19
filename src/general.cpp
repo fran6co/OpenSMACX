@@ -176,6 +176,7 @@ int __cdecl range(int input, int min, int max) {
 /*
 Purpose: Allocate memory with error checking.
 // ORIGINAL: 0x005D4510 ?mem_get@@YAPAXH@Z 0x005D4510-0x005D453C BYTE_EXACT
+// symbol    ?mem_get@@YAPAXI@Z
 // size      44 bytes
 // prototype void* (__cdecl ?mem_get@@YAPAXH@Z)(size_t size)
 // callers   88   call targets   2
@@ -215,6 +216,7 @@ LPVOID __cdecl mem_get(size_t size) {
 /*
 Purpose: Check the source file path and attempt to open a handle to the file.
 // ORIGINAL: 0x00634BB0 ?env_open@@YAHPADPAD@Z 0x00634BB0-0x00634BD4 BYTE_EXACT
+// symbol    ?env_open@@YAPAU_iobuf@@PBD0@Z
 // size      36 bytes
 // prototype 
 // callers   18   call targets   2
@@ -311,6 +313,7 @@ int __cdecl parse_say(int id, int input, int gender, int pluralality) {
 /*
 Purpose: Copies the input string into the global message buffer.
 // ORIGINAL: 0x00625EC0 ?parse_says@@YAHHPADHH@Z 0x00625EC0-0x00625F1A
+// symbol    ?parse_says@@YAHHPBDHH@Z
 // size      90 bytes
 // prototype int (__cdecl ?parse_says@@YAHHPADHH@Z)(int nID, int8* input, int gender, int pluralality)
 // callers   199   call targets   1
@@ -339,6 +342,7 @@ int __cdecl parse_says(int id, LPCSTR input, int gender, int pluralality) {
 /*
 Purpose: Convert the binary string to an integer.
 // ORIGINAL: 0x006288D0 ?btoi@@YAHPAD@Z 0x006288D0-0x006288ED BYTE_EXACT
+// symbol    ?btoi@@YAHPBD@Z
 // size      29 bytes
 // prototype int (__cdecl ?btoi@@YAHPAD@Z)(int8* input)
 // callers   2   call targets   0
@@ -359,6 +363,7 @@ int __cdecl btoi(LPCSTR str) {
 /*
 Purpose: Convert the hex string to an integer.
 // ORIGINAL: 0x006288F0 ?htoi@@YAHPAD@Z 0x006288F0-0x0062894B BYTE_EXACT
+// symbol    ?htoi@@YAHPBD@Z
 // size      91 bytes
 // prototype int (__cdecl ?htoi@@YAHPAD@Z)(int8* input)
 // callers   2   call targets   3
@@ -385,6 +390,7 @@ int __cdecl htoi(LPCSTR str) {
 /*
 Purpose: Converts a binary, hex or decimal string to an integer.
 // ORIGINAL: 0x00628950 ?stoi@@YAHPAD@Z 0x00628950-0x006289FE
+// symbol    ?stoi@@YAHPBD@Z
 // size      174 bytes
 // prototype int (__cdecl ?stoi@@YAHPAD@Z)(int8* input)
 // callers   2   call targets   4
@@ -420,6 +426,7 @@ int __cdecl stoi(LPCSTR str) {
 /*
 Purpose: Locates the first number in a string.
 // ORIGINAL: 0x00628B30 ?findnum@@YAHPAD@Z 0x00628B30-0x00628B69
+// symbol    ?findnum@@YAPADPAD@Z
 // size      57 bytes
 // prototype 
 // callers   1   call targets   0
@@ -449,6 +456,7 @@ char *__cdecl findnum(char *str) {
 Purpose: Checks to see if the JACKAL library version is up to date. Pretty pointless but might add 
          an OpenSMACX check in the future.
 // ORIGINAL: 0x0062D570 ?jackal_version_check@@YAHPAD@Z 0x0062D570-0x0062D5A3 BYTE_EXACT
+// symbol    ?jackal_version_check@@YAHPBD@Z
 // size      51 bytes
 // prototype 
 // callers   1   call targets   1
@@ -474,6 +482,7 @@ BOOL __cdecl jackal_version_check(LPCSTR version) {
 /*
 Purpose: This handles parsing the input string and storing it in the output.
 // ORIGINAL: 0x00625880 ?parse_string@@YAHPADPAD@Z 0x00625880-0x00625DDD
+// symbol    ?parse_string@@YAHPAD0@Z
 // size      1373 bytes
 // prototype int (__cdecl ?parse_string@@YAHPADPAD@Z)(int8* input, int8* output)
 // callers   23   call targets   7
@@ -740,6 +749,7 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
 /*
 Purpose: Get the drive letter of the CD path.
 // ORIGINAL: 0x006003A0 ?filefind_cd_drive_letter@@YAPADXZ 0x006003A0-0x006003A8
+// symbol    ?filefind_cd_drive_letter@@YADXZ
 // size      8 bytes
 // prototype 
 // callers   0   call targets   0
@@ -754,6 +764,7 @@ char __cdecl filefind_cd_drive_letter() { return FilefindPath->cd_path[0]; }
 /*
 Purpose: Set an alternative path for the Filefind checks.
 // ORIGINAL: 0x006003B0 ?filefind_set_alternate@@YAXPAD@Z 0x006003B0-0x006003F6
+// symbol    ?filefind_set_alternative@@YAXPBD@Z
 // size      70 bytes
 // prototype 
 // callers   3   call targets   2
@@ -777,6 +788,7 @@ void __cdecl filefind_set_alternative(LPCSTR path) {
 Purpose: Initialize the Filefind global along with a CD check if there isn't a complete install. 
          Optimized logic since most installs will be on a HDD making the CD check less important.
 // ORIGINAL: 0x00600400 ?filefind_init@@YAHPADH@Z 0x00600400-0x006005C5
+// symbol    ?filefind_init@@YAHPBDH@Z
 // size      453 bytes
 // prototype 
 // callers   1   call targets   3
@@ -843,6 +855,7 @@ int __cdecl filefind_init(LPCSTR file_check, BOOL is_complete) {
 /*
 Purpose: Check to see if the specified file can be found at some other path.
 // ORIGINAL: 0x006005D0 ?filefind_get@@YAHPAD@Z 0x006005D0-0x00600753
+// symbol    ?filefind_get@@YAPADPBD@Z
 // size      387 bytes
 // prototype 
 // callers   7   call targets   1
@@ -927,6 +940,7 @@ int __cdecl bit_count(int bitfield) {
 /*
 Purpose: Count the number of signed bits set. Added a fix to prevent an infinite loop.
 // ORIGINAL: 0x00628AB0 ?bit_count_signed@@YAHH@Z 0x00628AB0-0x00628AC2 BYTE_EXACT
+// symbol    ?bit_count_signed@@YAIH@Z
 // size      18 bytes
 // prototype 
 // callers   1   call targets   0
@@ -938,6 +952,7 @@ Status: Complete
 */
 /*
 // ORIGINAL: 0x00628AB0 ?bit_count_signed@@YAHH@Z 0x00628AB0-0x00628AC2
+// symbol    ?bit_count_signed@@YAIH@Z
 // size      18 bytes
 // prototype 
 // callers   1   call targets   0
@@ -961,6 +976,7 @@ uint32_t __cdecl bit_count_signed(int input) {
 /*
 Purpose: Initialize the pseudo-random number generator.
 // ORIGINAL: 0x00538FB0 ?my_srand@@YAHH@Z 0x00538FB0-0x00538FD2
+// symbol    ?my_srand@@YAXH@Z
 // size      34 bytes
 // prototype int (__cdecl ?my_srand@@YAHH@Z)(int reseed)
 // callers   6   call targets   2
@@ -1040,6 +1056,7 @@ void __cdecl swap(uint8_t *var1, uint8_t *var2) {
 Purpose: Shift the numerator to the left by 16 then divide by the denominator. Added a check to 
          prevent a divide by zero crash.
 // ORIGINAL: 0x00628AD0 ?fixed_div@@YAHJJ@Z 0x00628AD0-0x00628AEC
+// symbol    ?fixed_div@@YAHHH@Z
 // size      28 bytes
 // prototype 
 // callers   7   call targets   0
@@ -1061,6 +1078,7 @@ Purpose: Reverse string search for the last occurrence of the specified characte
          original searching logic with strrchr() that does same thing. The end parameter can be 
          removed in the future.
 // ORIGINAL: 0x00628AF0 ?memrchr@@YAHPBX0H@Z 0x00628AF0-0x00628B23
+// symbol    ?memrchr@@YAPBDPBD0D@Z
 // size      51 bytes
 // prototype 
 // callers   6   call targets   0
@@ -1105,6 +1123,7 @@ int __cdecl quick_root(int input) {
 /*
 Purpose: Calculate the offset and bitmask for the specified input.
 // ORIGINAL: 0x0050BA00 ?bitmask@@YAXHPAHPAH@Z 0x0050BA00-0x0050BA27 BYTE_EXACT
+// symbol    ?bitmask@@YAXHPAH0@Z
 // size      39 bytes
 // prototype void (__cdecl ?bitmask@@YAXHPAHPAH@Z)(int input, int* offset, int* mask)
 // callers   103   call targets   0
@@ -1147,6 +1166,7 @@ uint8_t __cdecl checksum(char *buffer, int size, uint8_t seed) {
 /*
 Purpose: Calculate a basic XOR checksum for a password string.
 // ORIGINAL: 0x005390C0 ?checksum_password@@YAHPAD@Z 0x005390C0-0x00539157
+// symbol    ?checksum_password@@YAIPBD@Z
 // size      151 bytes
 // prototype 
 // callers   2   call targets   2
@@ -1176,6 +1196,7 @@ uint32_t __cdecl checksum_password(LPCSTR password) {
 Purpose: Calculate a random value within the provided bounds. The unused 2nd parameter was possibly 
          meant to have the random value append to it.
 // ORIGINAL: 0x00579770 ?rnd@@YAHHPAD@Z 0x00579770-0x00579790
+// symbol    ?rnd@@YAIHPAD@Z
 // size      32 bytes
 // prototype int (__cdecl ?rnd@@YAHHPAD@Z)(int seed, int8*)
 // callers   2   call targets   1
@@ -1192,6 +1213,7 @@ uint32_t __cdecl rnd(int bounds, LPSTR UNUSED(input)) {
 /*
 Purpose: Create a debug error pop-up then write all the parameters to the log file.
 // ORIGINAL: 0x00538F30 ?danger@@YAXPADPADHHH@Z 0x00538F30-0x00538FAA
+// symbol    ?danger@@YAXPBD0HHH@Z
 // size      122 bytes
 // prototype 
 // callers   3   call targets   4
@@ -1387,6 +1409,7 @@ void __cdecl auto_undo() {
 Purpose: Read the specified header from a file. This assumes the header string buffer is at least 
          256 characters. TODO: Replace built-in versions of _fgetc and change return to std::string.
 // ORIGINAL: 0x0057D1F0 ?header_check@@YAXPADPAUFILE@@@Z 0x0057D1F0-0x0057D235
+// symbol    ?header_check@@YAXPADPAU_iobuf@@@Z
 // size      69 bytes
 // prototype void (__cdecl ?header_check@@YAXPADPAUFILE@@@Z)(int8* header, FILE* file)
 // callers   2   call targets   1
@@ -1415,6 +1438,7 @@ void __cdecl header_check(LPSTR header, FILE *file) {
 /*
 Purpose: Write the specified header to a file. TODO: Replace built-in versions of _fputc.
 // ORIGINAL: 0x0057D240 ?header_write@@YAXPADPAUFILE@@@Z 0x0057D240-0x0057D270
+// symbol    ?header_write@@YAXPBDPAU_iobuf@@@Z
 // size      48 bytes
 // prototype 
 // callers   2   call targets   1
@@ -1436,6 +1460,7 @@ void __cdecl header_write(LPCSTR header, FILE *file) {
 /*
 Purpose: For the count, sort both id and value arrays by the least to greatest value (ascending).
 // ORIGINAL: 0x005B5690 ?sort@@YAXHPAHPAH@Z 0x005B5690-0x005B56F5
+// symbol    ?sort@@YAXHPAH0@Z
 // size      101 bytes
 // prototype void (__cdecl ?sort@@YAXHPAHPAH@Z)(int count, int* id, int* value)
 // callers   2   call targets   1
@@ -1503,6 +1528,7 @@ int JackalInitFlags;      // 0x009BC4B0
 Purpose: Bring up every drawing subsystem the game needs, in order, and stop
          at the first one that refuses.
 // ORIGINAL: 0x0062D3A0 ?jackal_init_real@@YAHPAUPalette@@PAUFont@@PADHHHH@Z 0x0062D3A0-0x0062D4F6 BYTE_EXACT
+// symbol    ?jackal_init_real@@YAHPAVPalette@@PAVFont@@PADHHHH@Z
 // size      342 bytes
 // prototype int (__cdecl ?jackal_init_real@@YAHPAUPalette@@PAUFont@@PADHHHH@Z)(Palette* pPalEntries, Font* fontBuffer, int8* lpWindowName, int nDDTgl, int displayWidth, int displayHeight, int nCmdLineVal)
 // callers   1   call targets   19

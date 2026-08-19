@@ -371,6 +371,7 @@ void __fastcall base_win_on_left_double_click_redirect(BaseWin *self, void *, in
 Purpose: Interface timer tick; the legacy implementation ignores it and
          returns.
 // ORIGINAL: 0x0041AF40 ?timer_callback@BaseWin@@QAAXHH@Z 0x0041AF40-0x0041AF41 BYTE_EXACT
+// symbol    ?timer_callback@BaseWin@@SAXHH@Z
 // size      1 bytes
 // prototype 
 // callers   0   call targets   0

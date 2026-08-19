@@ -44,6 +44,7 @@ Purpose: ?on_key_click@AlphaMovie@@QAEHHH@Z - dispatch to slot 0xe8 of this obje
          vtable load and the call, so the parameters this function declares are
          discarded and only the `ret` cleans them up.
 // ORIGINAL: 0x00404210 ?on_key_click@AlphaMovie@@QAEHHH@Z 0x00404210-0x00404220 BYTE_EXACT
+// symbol    ?alpha_movie_on_key_click_redirect@@YIHPAX0HH@Z
 // size      16 bytes
 // prototype int (__thiscall ?on_key_click@AlphaMovie@@QAEHHH@Z)(AlphaMovie* this, int, int)
 // callers   0   call targets   0
@@ -64,6 +65,7 @@ int __fastcall alpha_movie_on_key_click_redirect(void *self, void *, int a1, int
 Purpose: ?on_scrolling@BaseWin@@QAEXHH@Z - dispatch to slot 0xc0 of this object's OWN
          vtable, forwarding 2 argument(s).
 // ORIGINAL: 0x0041B4C0 ?on_scrolling@BaseWin@@QAEXHH@Z 0x0041B4C0-0x0041B4D7 BYTE_EXACT
+// symbol    ?base_win_on_scrolling_redirect@@YIXPAX0HH@Z
 // size      23 bytes
 // prototype void (__thiscall ?on_scrolling@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
 // callers   0   call targets   0
@@ -83,6 +85,7 @@ void __fastcall base_win_on_scrolling_redirect(void *self, void *, int a1, int a
 Purpose: ?on_iface_scrolling@BaseWin@@QAEXHH@Z - dispatch to slot 0x4 of this object's OWN
          vtable, forwarding 2 argument(s).
 // ORIGINAL: 0x0041DCB0 ?on_iface_scrolling@BaseWin@@QAEXHH@Z 0x0041DCB0-0x0041DCC4 BYTE_EXACT
+// symbol    ?base_win_on_iface_scrolling_redirect@@YIXPAX0HH@Z
 // size      20 bytes
 // prototype void (__thiscall ?on_iface_scrolling@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
 // callers   0   call targets   0
@@ -104,6 +107,7 @@ Purpose: ?on_key_click@Credits@@QAEXHH@Z - dispatch to slot 0xe8 of this object'
          vtable load and the call, so the parameters this function declares are
          discarded and only the `ret` cleans them up.
 // ORIGINAL: 0x00428D60 ?on_key_click@Credits@@QAEXHH@Z 0x00428D60-0x00428D70 BYTE_EXACT
+// symbol    ?credits_on_key_click_redirect@@YIHPAX0HH@Z
 // size      16 bytes
 // prototype void (__thiscall ?on_key_click@Credits@@QAEXHH@Z)(Credits* this, int, int)
 // callers   0   call targets   0
@@ -126,6 +130,7 @@ Purpose: ?on_left_click@Credits@@QAEXHH@Z - dispatch to slot 0xe8 of this object
          vtable load and the call, so the parameters this function declares are
          discarded and only the `ret` cleans them up.
 // ORIGINAL: 0x00428D70 ?on_left_click@Credits@@QAEXHH@Z 0x00428D70-0x00428D7B BYTE_EXACT
+// symbol    ?credits_on_left_click_redirect@@YIXPAX0HH@Z
 // size      11 bytes
 // prototype void (__thiscall ?on_left_click@Credits@@QAEXHH@Z)(Credits* this, int, int)
 // callers   0   call targets   0
@@ -145,6 +150,7 @@ void __fastcall credits_on_left_click_redirect(void *self, void *, int a1, int a
 Purpose: ?on_scrolling@SelectPartWin@@QAEXHH@Z - dispatch to slot 0xc0 of this object's OWN
          vtable, forwarding 2 argument(s).
 // ORIGINAL: 0x00433F50 ?on_scrolling@SelectPartWin@@QAEXHH@Z 0x00433F50-0x00433F67 BYTE_EXACT
+// symbol    ?select_part_win_on_scrolling_redirect@@YIXPAX0HH@Z
 // size      23 bytes
 // prototype void (__thiscall ?on_scrolling@SelectPartWin@@QAEXHH@Z)(SelectPartWin* this, int, int)
 // callers   0   call targets   0
@@ -166,6 +172,7 @@ Purpose: ?on_key_down@Interlude@@QAEXH@Z - dispatch to slot 0xe8 of this object'
          vtable load and the call, so the parameters this function declares are
          discarded and only the `ret` cleans them up.
 // ORIGINAL: 0x0045F6F0 ?on_key_down@Interlude@@QAEXH@Z 0x0045F6F0-0x0045F700 BYTE_EXACT
+// symbol    ?interlude_on_key_down_redirect@@YIHPAX0H@Z
 // size      16 bytes
 // prototype void (__thiscall ?on_key_down@Interlude@@QAEXH@Z)(Interlude* this, int)
 // callers   0   call targets   0
@@ -188,6 +195,7 @@ Purpose: ?on_left_down@Interlude@@QAEXHH@Z - dispatch to slot 0xe8 of this objec
          vtable load and the call, so the parameters this function declares are
          discarded and only the `ret` cleans them up.
 // ORIGINAL: 0x0045F700 ?on_left_down@Interlude@@QAEXHH@Z 0x0045F700-0x0045F70B BYTE_EXACT
+// symbol    ?interlude_on_left_down_redirect@@YIXPAX0HH@Z
 // size      11 bytes
 // prototype void (__thiscall ?on_left_down@Interlude@@QAEXHH@Z)(Interlude* this, int, int)
 // callers   0   call targets   0
@@ -209,6 +217,7 @@ Purpose: ?on_button_clicked@NewTechWin@@QAEXH@Z - dispatch to slot 0xe8 of this 
          vtable load and the call, so the parameters this function declares are
          discarded and only the `ret` cleans them up.
 // ORIGINAL: 0x00483E80 ?on_button_clicked@NewTechWin@@QAEXH@Z 0x00483E80-0x00483E8B BYTE_EXACT
+// symbol    ?new_tech_win_on_button_clicked_redirect@@YIXPAX0H@Z
 // size      11 bytes
 // prototype void (__thiscall ?on_button_clicked@NewTechWin@@QAEXH@Z)(NewTechWin* this, int)
 // callers   0   call targets   0
@@ -228,6 +237,7 @@ void __fastcall new_tech_win_on_button_clicked_redirect(void *self, void *, int 
 Purpose: ?on_scrolling@ProdPicker@@QAEXHH@Z - dispatch to slot 0xc0 of this object's OWN
          vtable, forwarding 2 argument(s).
 // ORIGINAL: 0x00493E70 ?on_scrolling@ProdPicker@@QAEXHH@Z 0x00493E70-0x00493E87 BYTE_EXACT
+// symbol    ?prod_picker_on_scrolling_redirect@@YIXPAX0HH@Z
 // size      23 bytes
 // prototype void (__thiscall ?on_scrolling@ProdPicker@@QAEXHH@Z)(ProdPicker* this, int, int)
 // callers   0   call targets   0
@@ -247,6 +257,7 @@ void __fastcall prod_picker_on_scrolling_redirect(void *self, void *, int a1, in
 Purpose: ?set_codec@Wave_In_Device@@QAEHK@Z - forward 1 argument(s) to slot 0x60 of the
          object at +0x14, answering 0x13 when that object is absent.
 // ORIGINAL: 0x004C5A80 ?set_codec@Wave_In_Device@@QAEHK@Z 0x004C5A80-0x004C5AA0
+// symbol    ?wave_in_device_set_codec_redirect@@YIHPAX0I@Z
 // size      32 bytes
 // prototype int (__thiscall ?set_codec@Wave_In_Device@@QAEHK@Z)(Wave_In_Device* this, unsigned int)
 // callers   0   call targets   0
@@ -271,6 +282,7 @@ int __fastcall wave_in_device_set_codec_redirect(void *self, void *, uint32_t a1
 Purpose: ?set_vxw_key@Wave_In_Device@@QAEHPAC@Z - forward 1 argument(s) to slot 0x64 of the
          object at +0x14, answering 0x13 when that object is absent.
 // ORIGINAL: 0x004C5AA0 ?set_vxw_key@Wave_In_Device@@QAEHPAC@Z 0x004C5AA0-0x004C5AC0
+// symbol    ?wave_in_device_set_vxw_key_redirect@@YIHPAX0H@Z
 // size      32 bytes
 // prototype int (__thiscall ?set_vxw_key@Wave_In_Device@@QAEHPAC@Z)(Wave_In_Device* this, int8*)
 // callers   0   call targets   0
@@ -295,6 +307,7 @@ int __fastcall wave_in_device_set_vxw_key_redirect(void *self, void *, int a1) {
 Purpose: ?play@Midi@@QAEHXZ - forward 0 argument(s) to slot 0x1c of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7760 ?play@Midi@@QAEHXZ 0x004C7760-0x004C7772
+// symbol    ?midi_play_redirect@@YIHPAX0@Z
 // size      18 bytes
 // prototype int (__thiscall ?play@Midi@@QAEHXZ)(Midi* this)
 // callers   0   call targets   0
@@ -318,6 +331,7 @@ int __fastcall midi_play_redirect(void *self, void *) {
 Purpose: ?set_switch_type@Midi@@QAEHK@Z - forward 1 argument(s) to slot 0x100 of the
          object at +0x3c, answering 0x13 when that object is absent.
 // ORIGINAL: 0x004C77D0 ?set_switch_type@Midi@@QAEHK@Z 0x004C77D0-0x004C77F3
+// symbol    ?midi_set_switch_type_redirect@@YIHPAX0I@Z
 // size      35 bytes
 // prototype int (__thiscall ?set_switch_type@Midi@@QAEHK@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
@@ -342,6 +356,7 @@ int __fastcall midi_set_switch_type_redirect(void *self, void *, uint32_t a1) {
 Purpose: ?add_switch_range@Midi@@QAEHKK@Z - forward 2 argument(s) to slot 0x108 of the
          object at +0x3c, answering 0x13 when that object is absent.
 // ORIGINAL: 0x004C7800 ?add_switch_range@Midi@@QAEHKK@Z 0x004C7800-0x004C7827
+// symbol    ?midi_add_switch_range_redirect@@YIHPAX0II@Z
 // size      39 bytes
 // prototype int (__thiscall ?add_switch_range@Midi@@QAEHKK@Z)(Midi* this, unsigned int, unsigned int)
 // callers   0   call targets   0
@@ -366,6 +381,7 @@ int __fastcall midi_add_switch_range_redirect(void *self, void *, uint32_t a1, u
 Purpose: ?set_nswitch_threads@Midi@@QAEHK@Z - forward 1 argument(s) to slot 0x104 of the
          object at +0x3c, answering 0x13 when that object is absent.
 // ORIGINAL: 0x004C7830 ?set_nswitch_threads@Midi@@QAEHK@Z 0x004C7830-0x004C7853
+// symbol    ?midi_set_nswitch_threads_redirect@@YIHPAX0I@Z
 // size      35 bytes
 // prototype int (__thiscall ?set_nswitch_threads@Midi@@QAEHK@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
@@ -390,6 +406,7 @@ int __fastcall midi_set_nswitch_threads_redirect(void *self, void *, uint32_t a1
 Purpose: ?map_patch@Midi@@QAEHPADKK@Z - forward 3 argument(s) to slot 0xdc of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7860 ?map_patch@Midi@@QAEHPADKK@Z 0x004C7860-0x004C788B
+// symbol    ?midi_map_patch_3_redirect@@YIHPAX0HII@Z
 // size      43 bytes
 // prototype int (__thiscall ?map_patch@Midi@@QAEHPADKK@Z)(Midi* this, int8*, unsigned int, unsigned int)
 // callers   0   call targets   0
@@ -414,6 +431,7 @@ int __fastcall midi_map_patch_3_redirect(void *self, void *, int a1, uint32_t a2
 Purpose: ?map_patch@Midi@@QAEHPADK@Z - forward 2 argument(s) to slot 0xd8 of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7890 ?map_patch@Midi@@QAEHPADK@Z 0x004C7890-0x004C78B7
+// symbol    ?midi_map_patch_2_redirect@@YIHPAX0HI@Z
 // size      39 bytes
 // prototype int (__thiscall ?map_patch@Midi@@QAEHPADK@Z)(Midi* this, int8*, unsigned int)
 // callers   0   call targets   0
@@ -438,6 +456,7 @@ int __fastcall midi_map_patch_2_redirect(void *self, void *, int a1, uint32_t a2
 Purpose: ?clear_patch@Midi@@QAEHK@Z - forward 1 argument(s) to slot 0xe0 of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C78E0 ?clear_patch@Midi@@QAEHK@Z 0x004C78E0-0x004C7903
+// symbol    ?midi_clear_patch_redirect@@YIHPAX0I@Z
 // size      35 bytes
 // prototype int (__thiscall ?clear_patch@Midi@@QAEHK@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
@@ -462,6 +481,7 @@ int __fastcall midi_clear_patch_redirect(void *self, void *, uint32_t a1) {
 Purpose: ?reset@Midi@@QAEHXZ - forward 0 argument(s) to slot 0xc8 of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7910 ?reset@Midi@@QAEHXZ 0x004C7910-0x004C7925
+// symbol    ?midi_reset_redirect@@YIHPAX0@Z
 // size      21 bytes
 // prototype int (__thiscall ?reset@Midi@@QAEHXZ)(Midi* this)
 // callers   0   call targets   0
@@ -485,6 +505,7 @@ int __fastcall midi_reset_redirect(void *self, void *) {
 Purpose: ?set_track@Midi@@QAEHPAEK@Z - forward 2 argument(s) to slot 0x84 of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7930 ?set_track@Midi@@QAEHPAEK@Z 0x004C7930-0x004C7957
+// symbol    ?midi_set_track_redirect@@YIHPAX0II@Z
 // size      39 bytes
 // prototype int (__thiscall ?set_track@Midi@@QAEHPAEK@Z)(Midi* this, unsigned int8*, unsigned int)
 // callers   0   call targets   0
@@ -509,6 +530,7 @@ int __fastcall midi_set_track_redirect(void *self, void *, uint32_t a1, uint32_t
 Purpose: ?mute_track@Midi@@QAEHK@Z - forward 1 argument(s) to slot 0x8c of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7960 ?mute_track@Midi@@QAEHK@Z 0x004C7960-0x004C7983
+// symbol    ?midi_mute_track_redirect@@YIHPAX0I@Z
 // size      35 bytes
 // prototype int (__thiscall ?mute_track@Midi@@QAEHK@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
@@ -533,6 +555,7 @@ int __fastcall midi_mute_track_redirect(void *self, void *, uint32_t a1) {
 Purpose: ?unmute_track@Midi@@QAEHK@Z - forward 1 argument(s) to slot 0xac of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7990 ?unmute_track@Midi@@QAEHK@Z 0x004C7990-0x004C79B3
+// symbol    ?midi_unmute_track_redirect@@YIHPAX0I@Z
 // size      35 bytes
 // prototype int (__thiscall ?unmute_track@Midi@@QAEHK@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
@@ -557,6 +580,7 @@ int __fastcall midi_unmute_track_redirect(void *self, void *, uint32_t a1) {
 Purpose: ?set_active_tracks@Midi@@QAEHKK@Z - forward 2 argument(s) to slot 0x94 of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C79C0 ?set_active_tracks@Midi@@QAEHKK@Z 0x004C79C0-0x004C79E7
+// symbol    ?midi_set_active_tracks_2_redirect@@YIHPAX0II@Z
 // size      39 bytes
 // prototype int (__thiscall ?set_active_tracks@Midi@@QAEHKK@Z)(Midi* this, unsigned int, unsigned int)
 // callers   0   call targets   0
@@ -581,6 +605,7 @@ int __fastcall midi_set_active_tracks_2_redirect(void *self, void *, uint32_t a1
 Purpose: ?set_active_tracks@Midi@@QAEHI@Z - forward 1 argument(s) to slot 0x90 of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C79F0 ?set_active_tracks@Midi@@QAEHI@Z 0x004C79F0-0x004C7A13
+// symbol    ?midi_set_active_tracks_1_redirect@@YIHPAX0I@Z
 // size      35 bytes
 // prototype int (__thiscall ?set_active_tracks@Midi@@QAEHI@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
@@ -605,6 +630,7 @@ int __fastcall midi_set_active_tracks_1_redirect(void *self, void *, uint32_t a1
 Purpose: ?play_trackset@Midi@@QAEHI@Z - forward 1 argument(s) to slot 0x10c of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7A20 ?play_trackset@Midi@@QAEHI@Z 0x004C7A20-0x004C7A43
+// symbol    ?midi_play_trackset_redirect@@YIHPAX0I@Z
 // size      35 bytes
 // prototype int (__thiscall ?play_trackset@Midi@@QAEHI@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
@@ -629,6 +655,7 @@ int __fastcall midi_play_trackset_redirect(void *self, void *, uint32_t a1) {
 Purpose: ?xpose_trackset@Midi@@QAEHIH@Z - forward 2 argument(s) to slot 0x114 of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7A50 ?xpose_trackset@Midi@@QAEHIH@Z 0x004C7A50-0x004C7A77
+// symbol    ?midi_xpose_trackset_redirect@@YIHPAX0IH@Z
 // size      39 bytes
 // prototype int (__thiscall ?xpose_trackset@Midi@@QAEHIH@Z)(Midi* this, unsigned int, int)
 // callers   0   call targets   0
@@ -653,6 +680,7 @@ int __fastcall midi_xpose_trackset_redirect(void *self, void *, uint32_t a1, int
 Purpose: ?stop_trackset@Midi@@QAEHI@Z - forward 1 argument(s) to slot 0x110 of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7A80 ?stop_trackset@Midi@@QAEHI@Z 0x004C7A80-0x004C7AA3
+// symbol    ?midi_stop_trackset_redirect@@YIHPAX0I@Z
 // size      35 bytes
 // prototype int (__thiscall ?stop_trackset@Midi@@QAEHI@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
@@ -677,6 +705,7 @@ int __fastcall midi_stop_trackset_redirect(void *self, void *, uint32_t a1) {
 Purpose: ?add_active_trackset@Midi@@QAEHPAUTrackSet@@@Z - forward 1 argument(s) to slot 0x98 of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7AD0 ?add_active_trackset@Midi@@QAEHPAUTrackSet@@@Z 0x004C7AD0-0x004C7AF3
+// symbol    ?midi_add_active_trackset_redirect@@YIHPAX0H@Z
 // size      35 bytes
 // prototype int (__thiscall ?add_active_trackset@Midi@@QAEHPAUTrackSet@@@Z)(Midi* this, TrackSet*)
 // callers   0   call targets   0
@@ -701,6 +730,7 @@ int __fastcall midi_add_active_trackset_redirect(void *self, void *, int a1) {
 Purpose: ?set_active_range_lo@Midi@@QAEHII@Z - forward 2 argument(s) to slot 0xa0 of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7B00 ?set_active_range_lo@Midi@@QAEHII@Z 0x004C7B00-0x004C7B27
+// symbol    ?midi_set_active_range_lo_redirect@@YIHPAX0II@Z
 // size      39 bytes
 // prototype int (__thiscall ?set_active_range_lo@Midi@@QAEHII@Z)(Midi* this, unsigned int, unsigned int)
 // callers   0   call targets   0
@@ -725,6 +755,7 @@ int __fastcall midi_set_active_range_lo_redirect(void *self, void *, uint32_t a1
 Purpose: ?set_active_range_hi@Midi@@QAEHII@Z - forward 2 argument(s) to slot 0xa4 of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7B30 ?set_active_range_hi@Midi@@QAEHII@Z 0x004C7B30-0x004C7B57
+// symbol    ?midi_set_active_range_hi_redirect@@YIHPAX0II@Z
 // size      39 bytes
 // prototype int (__thiscall ?set_active_range_hi@Midi@@QAEHII@Z)(Midi* this, unsigned int, unsigned int)
 // callers   0   call targets   0
@@ -749,6 +780,7 @@ int __fastcall midi_set_active_range_hi_redirect(void *self, void *, uint32_t a1
 Purpose: ?remove_active_trackset@Midi@@QAEHI@Z - forward 1 argument(s) to slot 0xa8 of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7B60 ?remove_active_trackset@Midi@@QAEHI@Z 0x004C7B60-0x004C7B83
+// symbol    ?midi_remove_active_trackset_redirect@@YIHPAX0I@Z
 // size      35 bytes
 // prototype int (__thiscall ?remove_active_trackset@Midi@@QAEHI@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
@@ -773,6 +805,7 @@ int __fastcall midi_remove_active_trackset_redirect(void *self, void *, uint32_t
 Purpose: ?get_trackset@Midi@@QAEHI@Z - forward 1 argument(s) to slot 0x9c of the
          object at +0x3c, answering 0x0 when that object is absent.
 // ORIGINAL: 0x004C7B90 ?get_trackset@Midi@@QAEHI@Z 0x004C7B90-0x004C7BB0
+// symbol    ?midi_get_trackset_redirect@@YIHPAX0I@Z
 // size      32 bytes
 // prototype int (__thiscall ?get_trackset@Midi@@QAEHI@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
@@ -797,6 +830,7 @@ int __fastcall midi_get_trackset_redirect(void *self, void *, uint32_t a1) {
 Purpose: ?get_ntracks@Midi@@QAEHXZ - forward 0 argument(s) to slot 0xc4 of the
          object at +0x3c, answering 0x0 when that object is absent.
 // ORIGINAL: 0x004C7BB0 ?get_ntracks@Midi@@QAEHXZ 0x004C7BB0-0x004C7BC2
+// symbol    ?midi_get_ntracks_redirect@@YIHPAX0@Z
 // size      18 bytes
 // prototype int (__thiscall ?get_ntracks@Midi@@QAEHXZ)(Midi* this)
 // callers   0   call targets   0
@@ -820,6 +854,7 @@ int __fastcall midi_get_ntracks_redirect(void *self, void *) {
 Purpose: ?load_patch@Midi@@QAEHI@Z - forward 1 argument(s) to slot 0x120 of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7BD0 ?load_patch@Midi@@QAEHI@Z 0x004C7BD0-0x004C7BF3
+// symbol    ?midi_load_patch_redirect@@YIHPAX0I@Z
 // size      35 bytes
 // prototype int (__thiscall ?load_patch@Midi@@QAEHI@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
@@ -844,6 +879,7 @@ int __fastcall midi_load_patch_redirect(void *self, void *, uint32_t a1) {
 Purpose: ?unload_patch@Midi@@QAEHI@Z - forward 1 argument(s) to slot 0x124 of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7C00 ?unload_patch@Midi@@QAEHI@Z 0x004C7C00-0x004C7C23
+// symbol    ?midi_unload_patch_redirect@@YIHPAX0I@Z
 // size      35 bytes
 // prototype int (__thiscall ?unload_patch@Midi@@QAEHI@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
@@ -868,6 +904,7 @@ int __fastcall midi_unload_patch_redirect(void *self, void *, uint32_t a1) {
 Purpose: ?set_patch@Midi@@QAEHII@Z - forward 2 argument(s) to slot 0x128 of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7C30 ?set_patch@Midi@@QAEHII@Z 0x004C7C30-0x004C7C57
+// symbol    ?midi_set_patch_redirect@@YIHPAX0II@Z
 // size      39 bytes
 // prototype int (__thiscall ?set_patch@Midi@@QAEHII@Z)(Midi* this, unsigned int, unsigned int)
 // callers   0   call targets   0
@@ -892,6 +929,7 @@ int __fastcall midi_set_patch_redirect(void *self, void *, uint32_t a1, uint32_t
 Purpose: ?set_tempo@Midi@@QAEHK@Z - forward 1 argument(s) to slot 0x88 of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7D50 ?set_tempo@Midi@@QAEHK@Z 0x004C7D50-0x004C7D73
+// symbol    ?midi_set_tempo_redirect@@YIHPAX0I@Z
 // size      35 bytes
 // prototype int (__thiscall ?set_tempo@Midi@@QAEHK@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
@@ -916,6 +954,7 @@ int __fastcall midi_set_tempo_redirect(void *self, void *, uint32_t a1) {
 Purpose: ?get_time@Midi@@QAEHK@Z - forward 1 argument(s) to slot 0xd4 of the
          object at +0x3c, answering 0x0 when that object is absent.
 // ORIGINAL: 0x004C7E80 ?get_time@Midi@@QAEHK@Z 0x004C7E80-0x004C7EA0
+// symbol    ?midi_get_time_redirect@@YIHPAX0I@Z
 // size      32 bytes
 // prototype int (__thiscall ?get_time@Midi@@QAEHK@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
@@ -940,6 +979,7 @@ int __fastcall midi_get_time_redirect(void *self, void *, uint32_t a1) {
 Purpose: ?get_control_track@Midi@@QAEHXZ - forward 0 argument(s) to slot 0xf4 of the
          object at +0x3c, answering 0x0 when that object is absent.
 // ORIGINAL: 0x004C7EA0 ?get_control_track@Midi@@QAEHXZ 0x004C7EA0-0x004C7EB2
+// symbol    ?midi_get_control_track_redirect@@YIHPAX0@Z
 // size      18 bytes
 // prototype int (__thiscall ?get_control_track@Midi@@QAEHXZ)(Midi* this)
 // callers   0   call targets   0
@@ -963,6 +1003,7 @@ int __fastcall midi_get_control_track_redirect(void *self, void *) {
 Purpose: ?get_total_track_ticks@Midi@@QAEHK@Z - forward 1 argument(s) to slot 0xf8 of the
          object at +0x3c, answering 0x0 when that object is absent.
 // ORIGINAL: 0x004C7EC0 ?get_total_track_ticks@Midi@@QAEHK@Z 0x004C7EC0-0x004C7EE0
+// symbol    ?midi_get_total_track_ticks_redirect@@YIHPAX0I@Z
 // size      32 bytes
 // prototype int (__thiscall ?get_total_track_ticks@Midi@@QAEHK@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
@@ -987,6 +1028,7 @@ int __fastcall midi_get_total_track_ticks_redirect(void *self, void *, uint32_t 
 Purpose: ?set_channel_ctrl@Midi@@QAEHPAUChannelCtrl@@@Z - forward 1 argument(s) to slot 0xe4 of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7EE0 ?set_channel_ctrl@Midi@@QAEHPAUChannelCtrl@@@Z 0x004C7EE0-0x004C7F03
+// symbol    ?midi_set_channel_ctrl_redirect@@YIHPAX0H@Z
 // size      35 bytes
 // prototype int (__thiscall ?set_channel_ctrl@Midi@@QAEHPAUChannelCtrl@@@Z)(Midi* this, ChannelCtrl*)
 // callers   0   call targets   0
@@ -1011,6 +1053,7 @@ int __fastcall midi_set_channel_ctrl_redirect(void *self, void *, int a1) {
 Purpose: ?set_program_ctrl@Midi@@QAEHPAUProgramCtrl@@@Z - forward 1 argument(s) to slot 0xe8 of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7F10 ?set_program_ctrl@Midi@@QAEHPAUProgramCtrl@@@Z 0x004C7F10-0x004C7F33
+// symbol    ?midi_set_program_ctrl_redirect@@YIHPAX0H@Z
 // size      35 bytes
 // prototype int (__thiscall ?set_program_ctrl@Midi@@QAEHPAUProgramCtrl@@@Z)(Midi* this, ProgramCtrl*)
 // callers   0   call targets   0
@@ -1035,6 +1078,7 @@ int __fastcall midi_set_program_ctrl_redirect(void *self, void *, int a1) {
 Purpose: ?set_track_ctrl@Midi@@QAEHPAUTrackCtrl@@@Z - forward 1 argument(s) to slot 0xc0 of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7F40 ?set_track_ctrl@Midi@@QAEHPAUTrackCtrl@@@Z 0x004C7F40-0x004C7F63
+// symbol    ?midi_set_track_ctrl_redirect@@YIHPAX0H@Z
 // size      35 bytes
 // prototype int (__thiscall ?set_track_ctrl@Midi@@QAEHPAUTrackCtrl@@@Z)(Midi* this, TrackCtrl*)
 // callers   0   call targets   0
@@ -1061,6 +1105,7 @@ Purpose: ?start@VoiceRx@@QAEHXZ - dispatch to slot 0x88 of the object at
          paths land on the same zeroing, so the delegate's own result
          never reaches the caller.
 // ORIGINAL: 0x004C8C20 ?start@VoiceRx@@QAEHXZ 0x004C8C20-0x004C8C32 BYTE_EXACT
+// symbol    ?voice_rx_start_redirect@@YIHPAX0@Z
 // size      18 bytes
 // prototype int (__thiscall ?start@VoiceRx@@QAEHXZ)(VoiceRx* this)
 // callers   0   call targets   0
@@ -1088,6 +1133,7 @@ Purpose: ?stop@VoiceRx@@QAEHXZ - dispatch to slot 0x20 of the object at
          paths land on the same zeroing, so the delegate's own result
          never reaches the caller.
 // ORIGINAL: 0x004C8C40 ?stop@VoiceRx@@QAEHXZ 0x004C8C40-0x004C8C4F BYTE_EXACT
+// symbol    ?voice_rx_stop_redirect@@YIHPAX0@Z
 // size      15 bytes
 // prototype int (__thiscall ?stop@VoiceRx@@QAEHXZ)(VoiceRx* this)
 // callers   0   call targets   0
@@ -1113,6 +1159,7 @@ int __fastcall voice_rx_stop_redirect(void *self, void *) {
 Purpose: ?unload@VoiceRx@@QAEHXZ - forward 0 argument(s) to slot 0x14 of the
          object at +0x3c, answering 0x13 when that object is absent.
 // ORIGINAL: 0x004C8C50 ?unload@VoiceRx@@QAEHXZ 0x004C8C50-0x004C8C62
+// symbol    ?voice_rx_unload_redirect@@YIHPAX0@Z
 // size      18 bytes
 // prototype int (__thiscall ?unload@VoiceRx@@QAEHXZ)(VoiceRx* this)
 // callers   0   call targets   0
@@ -1136,6 +1183,7 @@ int __fastcall voice_rx_unload_redirect(void *self, void *) {
 Purpose: ?add_buffer@VoiceRx@@QAEHPAU_MMIOINFO@@@Z - forward 1 argument(s) to slot 0x8c of the
          object at +0x3c, answering 0x13 when that object is absent.
 // ORIGINAL: 0x004C8C70 ?add_buffer@VoiceRx@@QAEHPAU_MMIOINFO@@@Z 0x004C8C70-0x004C8C93
+// symbol    ?voice_rx_add_buffer_redirect@@YIHPAX0H@Z
 // size      35 bytes
 // prototype int (__thiscall ?add_buffer@VoiceRx@@QAEHPAU_MMIOINFO@@@Z)(VoiceRx* this, _MMIOINFO*)
 // callers   0   call targets   0
@@ -1160,6 +1208,7 @@ int __fastcall voice_rx_add_buffer_redirect(void *self, void *, int a1) {
 Purpose: ?get_buffer_size@VoiceRx@@QAEHXZ - forward 0 argument(s) to slot 0x90 of the
          object at +0x3c, answering 0x0 when that object is absent.
 // ORIGINAL: 0x004C8CA0 ?get_buffer_size@VoiceRx@@QAEHXZ 0x004C8CA0-0x004C8CB2
+// symbol    ?voice_rx_get_buffer_size_redirect@@YIHPAX0@Z
 // size      18 bytes
 // prototype int (__thiscall ?get_buffer_size@VoiceRx@@QAEHXZ)(VoiceRx* this)
 // callers   0   call targets   0
@@ -1185,6 +1234,7 @@ Purpose: ?release@VoiceTx@@QAEXXZ - dispatch to slot 0x38 of the object at
          paths land on the same zeroing, so the delegate's own result
          never reaches the caller.
 // ORIGINAL: 0x004C8EA0 ?release@VoiceTx@@QAEXXZ 0x004C8EA0-0x004C8EAF BYTE_EXACT
+// symbol    ?voice_tx_release_redirect@@YIHPAX0@Z
 // size      15 bytes
 // prototype void (__thiscall ?release@VoiceTx@@QAEXXZ)(VoiceTx* this)
 // callers   0   call targets   0
@@ -1210,6 +1260,7 @@ int __fastcall voice_tx_release_redirect(void *self, void *) {
 Purpose: ?get_nbuffers@VoiceTx@@QAEHXZ - forward 0 argument(s) to slot 0x94 of the
          object at +0x3c, answering 0x0 when that object is absent.
 // ORIGINAL: 0x004C9010 ?get_nbuffers@VoiceTx@@QAEHXZ 0x004C9010-0x004C9022
+// symbol    ?voice_tx_get_nbuffers_redirect@@YIHPAX0@Z
 // size      18 bytes
 // prototype int (__thiscall ?get_nbuffers@VoiceTx@@QAEHXZ)(VoiceTx* this)
 // callers   0   call targets   0
@@ -1233,6 +1284,7 @@ int __fastcall voice_tx_get_nbuffers_redirect(void *self, void *) {
 Purpose: ?get_next_buffer@VoiceTx@@QAEHXZ - forward 0 argument(s) to slot 0x88 of the
          object at +0x3c, answering 0x0 when that object is absent.
 // ORIGINAL: 0x004C9030 ?get_next_buffer@VoiceTx@@QAEHXZ 0x004C9030-0x004C9042
+// symbol    ?voice_tx_get_next_buffer_redirect@@YIHPAX0@Z
 // size      18 bytes
 // prototype int (__thiscall ?get_next_buffer@VoiceTx@@QAEHXZ)(VoiceTx* this)
 // callers   0   call targets   0
@@ -1256,6 +1308,7 @@ int __fastcall voice_tx_get_next_buffer_redirect(void *self, void *) {
 Purpose: ?return_buffer@VoiceTx@@QAEHPAU_MMIOINFO@@@Z - forward 1 argument(s) to slot 0x8c of the
          object at +0x3c, answering 0x13 when that object is absent.
 // ORIGINAL: 0x004C9050 ?return_buffer@VoiceTx@@QAEHPAU_MMIOINFO@@@Z 0x004C9050-0x004C9073
+// symbol    ?voice_tx_return_buffer_redirect@@YIHPAX0H@Z
 // size      35 bytes
 // prototype int (__thiscall ?return_buffer@VoiceTx@@QAEHPAU_MMIOINFO@@@Z)(VoiceTx* this, _MMIOINFO*)
 // callers   0   call targets   0
@@ -1282,6 +1335,7 @@ Purpose: ?on_left_click@ReplayWin@@QAEXHH@Z - dispatch to slot 0xe8 of this obje
          vtable load and the call, so the parameters this function declares are
          discarded and only the `ret` cleans them up.
 // ORIGINAL: 0x005AD3B0 ?on_left_click@ReplayWin@@QAEXHH@Z 0x005AD3B0-0x005AD3BB BYTE_EXACT
+// symbol    ?replay_win_on_left_click_redirect@@YIXPAX0HH@Z
 // size      11 bytes
 // prototype void (__thiscall ?on_left_click@ReplayWin@@QAEXHH@Z)(ReplayWin* this, int, int)
 // callers   0   call targets   0
@@ -1303,6 +1357,7 @@ Purpose: ?on_right_click@ReplayWin@@QAEXHH@Z - dispatch to slot 0xe8 of this obj
          vtable load and the call, so the parameters this function declares are
          discarded and only the `ret` cleans them up.
 // ORIGINAL: 0x005AD3C0 ?on_right_click@ReplayWin@@QAEXHH@Z 0x005AD3C0-0x005AD3CB BYTE_EXACT
+// symbol    ?replay_win_on_right_click_redirect@@YIXPAX0HH@Z
 // size      11 bytes
 // prototype void (__thiscall ?on_right_click@ReplayWin@@QAEXHH@Z)(ReplayWin* this, int, int)
 // callers   0   call targets   0
@@ -1324,6 +1379,7 @@ Purpose: ?on_button_clicked@ReplayWin@@QAEXH@Z - dispatch to slot 0xe8 of this o
          vtable load and the call, so the parameters this function declares are
          discarded and only the `ret` cleans them up.
 // ORIGINAL: 0x005AD430 ?on_button_clicked@ReplayWin@@QAEXH@Z 0x005AD430-0x005AD43B BYTE_EXACT
+// symbol    ?replay_win_on_button_clicked_redirect@@YIXPAX0H@Z
 // size      11 bytes
 // prototype void (__thiscall ?on_button_clicked@ReplayWin@@QAEXH@Z)(ReplayWin* this, int)
 // callers   0   call targets   0
@@ -1345,6 +1401,7 @@ Purpose: ?on_key_click@ReplayWin@@QAEHHH@Z - dispatch to slot 0xe8 of this objec
          vtable load and the call, so the parameters this function declares are
          discarded and only the `ret` cleans them up.
 // ORIGINAL: 0x005AD440 ?on_key_click@ReplayWin@@QAEHHH@Z 0x005AD440-0x005AD450 BYTE_EXACT
+// symbol    ?replay_win_on_key_click_redirect@@YIHPAX0HH@Z
 // size      16 bytes
 // prototype int (__thiscall ?on_key_click@ReplayWin@@QAEHHH@Z)(ReplayWin* this, int, int)
 // callers   0   call targets   0
@@ -1365,6 +1422,7 @@ int __fastcall replay_win_on_key_click_redirect(void *self, void *, int a1, int 
 Purpose: ?on_scrolling@Gamma@@QAEXHH@Z - dispatch to slot 0xc0 of this object's OWN
          vtable, forwarding 2 argument(s).
 // ORIGINAL: 0x005C93A0 ?on_scrolling@Gamma@@QAEXHH@Z 0x005C93A0-0x005C93B7 BYTE_EXACT
+// symbol    ?gamma_on_scrolling_redirect@@YIXPAX0HH@Z
 // size      23 bytes
 // prototype void (__thiscall ?on_scrolling@Gamma@@QAEXHH@Z)(Gamma* this, int, int)
 // callers   0   call targets   0
@@ -1386,6 +1444,7 @@ Purpose: ?on_dialog_focus@BaseButton@@QAEXH@Z - dispatch to slot 0xf8 of this ob
          vtable load and the call, so the parameters this function declares are
          discarded and only the `ret` cleans them up.
 // ORIGINAL: 0x00607B00 ?on_dialog_focus@BaseButton@@QAEXH@Z 0x00607B00-0x00607B0B BYTE_EXACT
+// symbol    ?base_button_on_dialog_focus_redirect@@YIXPAX0H@Z
 // size      11 bytes
 // prototype void (__thiscall ?on_dialog_focus@BaseButton@@QAEXH@Z)(BaseButton* this, int)
 // callers   0   call targets   0

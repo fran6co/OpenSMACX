@@ -67,6 +67,7 @@ void Heap::squeeze(int UNUSED(toggle)) {
 /*
 Purpose: Initialize the class instance and allocate the requested memory size.
 // ORIGINAL: 0x005D4620 ?init@Heap@@QAE_NH@Z 0x005D4620-0x005D4675
+// symbol    ?init@Heap@@QAEHI@Z
 // size      85 bytes
 // prototype bool (__thiscall ?init@Heap@@QAE_NH@Z)(Heap* this, int)
 // callers   7   call targets   2
@@ -94,6 +95,7 @@ BOOL Heap::init(size_t req_size) {
 Purpose: Get the requested memory size. If there currently isn't enough memory to meet the request, 
          allocate additional memory in blocks of 1024 bytes until request is met.
 // ORIGINAL: 0x005D4680 ?get@Heap@@QAEPAXH@Z 0x005D4680-0x005D47CB
+// symbol    ?get@Heap@@QAEPAXI@Z
 // size      331 bytes
 // prototype void* (__thiscall ?get@Heap@@QAEPAXH@Z)(Heap* this, int reqSize)
 // callers   17   call targets   5

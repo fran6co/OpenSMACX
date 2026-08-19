@@ -23,6 +23,7 @@
 /*
 Purpose: Update the seed value. The original code had some convoluted XORs that served no purpose.
 // ORIGINAL: 0x00625750 ?reseed@Random@@QAEXK@Z 0x00625750-0x00625763
+// symbol    ?reseed@Random@@QAEXI@Z
 // size      19 bytes
 // prototype void (__thiscall ?reseed@Random@@QAEXK@Z)(Random* this, unsigned int)
 // callers   5   call targets   0
@@ -80,6 +81,7 @@ double Random::get() {
 Random *Rand = (Random *)0x009BB568;
 
 // ORIGINAL: 0x00625700 ??__ERand@@YAXXZ 0x00625700-0x00625716
+// symbol    ?random_rand@@YAXXZ
 // size      22 bytes
 // prototype 
 // callers   0   call targets   1
@@ -90,6 +92,7 @@ Random *Rand = (Random *)0x009BB568;
 void __cdecl random_rand() { Rand->reseed(0); atexit(random_rand_exit); }
 
 // ORIGINAL: 0x00625720 ??__FRand@@YAXXZ 0x00625720-0x0062572B
+// symbol    ?random_rand_exit@@YAXXZ
 // size      11 bytes
 // prototype 
 // callers   0   call targets   0
@@ -100,6 +103,7 @@ void __cdecl random_rand() { Rand->reseed(0); atexit(random_rand_exit); }
 void __cdecl random_rand_exit() { Rand->~Random(); }
 
 // ORIGINAL: 0x006257E0 ?random_reseed@@YAXK@Z 0x006257E0-0x006257F9
+// symbol    ?random_reseed@@YAXI@Z
 // size      25 bytes
 // prototype 
 // callers   6   call targets   0

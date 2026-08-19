@@ -177,6 +177,7 @@ Buffer *__fastcall buffer_construct_redirect(Buffer *self, void *) {
 /*
 Purpose: Set the four fonts used by the buffer.
 // ORIGINAL: 0x005DAC70 ?set_font@Buffer@@QAEHPAVFont@@PAVFont@@PAVFont@@PAVFont@@@Z 0x005DAC70-0x005DACB0 BYTE_EXACT
+// symbol    ?set_font@Buffer@@QAEHPAVFont@@000@Z
 // size      64 bytes
 // prototype int (__thiscall ?set_font@Buffer@@QAEHPAVFont@@PAVFont@@PAVFont@@PAVFont@@@Z)(Buffer* this, Font*, Font*, Font*, Font*)
 // callers   189   call targets   0
@@ -283,6 +284,7 @@ void Buffer::set_text_color_hyper(int color1, int color2, int color3, int color4
 /*
 Purpose: Initialize shared Buffer state; the legacy implementation has no state to initialize.
 // ORIGINAL: 0x005DF570 ?init_class@Buffer@@QAAHXZ 0x005DF570-0x005DF573 BYTE_EXACT
+// symbol    ?init_class@Buffer@@SAHXZ
 // size      3 bytes
 // prototype 
 // callers   1   call targets   0
@@ -300,6 +302,7 @@ int Buffer::init_class() {
 /*
 Purpose: Close shared Buffer state; the legacy implementation is intentionally empty.
 // ORIGINAL: 0x005DF580 ?close_class@Buffer@@QAAXXZ 0x005DF580-0x005DF581 BYTE_EXACT
+// symbol    ?close_class@Buffer@@QAEXXZ
 // size      1 bytes
 // prototype 
 // callers   1   call targets   0
@@ -1303,6 +1306,7 @@ const uint32_t BufferVtable = 0x0066FDBC;
 Purpose: Destroy a Buffer by installing its virtual table, releasing every
          owned resource, and destroying the trailing Spot subobject.
 // ORIGINAL: 0x005D7410 ??1Buffer@@QAE@XZ 0x005D7410-0x005D7463;0x00662B68-0x00662B80
+// symbol    ??1Buffer@@UAE@XZ
 // size      107 bytes
 // prototype void (__thiscall ??1Buffer@@QAE@XZ)(Buffer* this)
 // callers   87   call targets   2
@@ -1329,6 +1333,7 @@ void __fastcall buffer_destructor_redirect(Buffer *self, void *) {
 /*
 Purpose: Acquire the device context, taking one reference on the shared handle.
 // ORIGINAL: 0x005E3503 ?get_hdc@Buffer@@QAEHXZ 0x005E3503-0x005E355C
+// symbol    ?get_hdc@Buffer@@QAEPAUHDC__@@XZ
 // size      89 bytes
 // prototype int (__thiscall ?get_hdc@Buffer@@QAEHXZ)(Buffer* this)
 // callers   9   call targets   0
@@ -1488,6 +1493,7 @@ int __fastcall buffer_text_height_redirect(Buffer *self, void *) {
 Purpose: Clip the buffer to a rectangle, updating the GDI clip region and the
          DirectDraw clipper to match.
 // ORIGINAL: 0x005D8000 ?set_clip@Buffer@@QAEHPAURECT@@@Z 0x005D8000-0x005D81F3
+// symbol    ?set_clip@Buffer@@QAEHPAUtagRECT@@@Z
 // size      499 bytes
 // prototype int (__thiscall ?set_clip@Buffer@@QAEHPAURECT@@@Z)(Buffer* this, RECT* rect)
 // callers   114   call targets   0
@@ -1643,6 +1649,7 @@ Purpose: Outline a rectangle as a two-color bevel: the top and left edges in
          from the bottom, the left column [top, bottom-2], and the right
          column [top+1, bottom-1] one column in from the right.
 // ORIGINAL: 0x005E3203 ?box@Buffer@@QAEHPAURECT@@HH@Z 0x005E3203-0x005E3280
+// symbol    ?box@Buffer@@QAEHPAUtagRECT@@HH@Z
 // size      125 bytes
 // prototype int (__thiscall ?box@Buffer@@QAEHPAURECT@@HH@Z)(Buffer* this, RECT*, int, int)
 // callers   25   call targets   2

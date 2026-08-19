@@ -105,6 +105,7 @@ int *UnkGlobal0093A934 = (int *)0x0093A934;
 /*
 Purpose: Check if the base already has a particular facility built or if it's in the queue.
 // ORIGINAL: 0x00421670 ?has_fac@@YA_NHHH@Z 0x00421670-0x004216E9
+// symbol    ?has_fac@@YAHHHH@Z
 // size      121 bytes
 // prototype bool (__cdecl ?has_fac@@YA_NHHH@Z)(int facilityID, int baseID, int queueCount)
 // callers   14   call targets   1
@@ -309,6 +310,7 @@ int __cdecl base_find(int x, int y, int faction_id, int region, int faction_id_2
 /*
 Purpose: Find the best specialist available to the current base with more weight placed on psych.
 // ORIGINAL: 0x004E4020 ?best_specialist@@YAHXZ 0x004E4020-0x004E4090
+// symbol    ?best_specialist@@YAIXZ
 // size      112 bytes
 // prototype 
 // callers   9   call targets   1
@@ -654,6 +656,7 @@ void __cdecl set_fac(int facility_id, int base_id, BOOL set) {
 /*
 Purpose: Check whether the facility audio blurb announcement has played for the faction.
 // ORIGINAL: 0x004E4900 has_fac_announced 0x004E4900-0x004E4952
+// symbol    ?has_fac_announced@@YAHII@Z
 // size      82 bytes
 // prototype int (__cdecl has_fac_announced)(int factionID, int facilityID)
 // callers   0   call targets   1
@@ -675,6 +678,7 @@ BOOL __cdecl has_fac_announced(uint32_t faction_id, uint32_t facility_id) {
 /*
 Purpose: Set or unset whether a particular facility audio blurb has played for specified faction.
 // ORIGINAL: 0x004E4960 set_fac_announced 0x004E4960-0x004E49CA
+// symbol    ?set_fac_announced@@YAXIIH@Z
 // size      106 bytes
 // prototype int (__cdecl set_fac_announced)(int factionID, int facilityID, int set)
 // callers   0   call targets   1
@@ -1748,6 +1752,7 @@ void __cdecl base_minerals() {
 /*
 Purpose: Calculate the current base's energy loss/inefficiency for an amount of energy.
 // ORIGINAL: 0x004EA1F0 ?black_market@@YAHH@Z 0x004EA1F0-0x004EA495
+// symbol    ?black_market@@YAIH@Z
 // size      677 bytes
 // prototype 
 // callers   1   call targets   2

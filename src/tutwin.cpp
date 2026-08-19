@@ -95,6 +95,7 @@ Win *TutWinIfaceWindow = reinterpret_cast<Win *>(0x007AE820);
 Purpose: Centre the rectangle on both axes and convert the result to screen
          coordinates through the iface window.
 // ORIGINAL: 0x004BC5A0 ?iface_rect@TutWin@@QAEXPAURECT@@PAH1@Z 0x004BC5A0-0x004BC5E3
+// symbol    ?iface_rect@TutWin@@QAEXPAUtagRECT@@PAH1@Z
 // size      67 bytes
 // prototype void (__thiscall ?iface_rect@TutWin@@QAEXPAURECT@@PAH1@Z)(TutWin* this, RECT*, int*, int*)
 // callers   3   call targets   1
@@ -132,6 +133,7 @@ Win *TutWinBaseWindow = reinterpret_cast<Win *>(0x006A7628);
 Purpose: Centre the rectangle on both axes and convert the result to screen
          coordinates through the base window.
 // ORIGINAL: 0x004BC5F0 ?base_rect@TutWin@@QAEXPAURECT@@PAH1@Z 0x004BC5F0-0x004BC633
+// symbol    ?base_rect@TutWin@@QAEXPAUtagRECT@@PAH1@Z
 // size      67 bytes
 // prototype void (__thiscall ?base_rect@TutWin@@QAEXPAURECT@@PAH1@Z)(TutWin* this, RECT*, int*, int*)
 // callers   2   call targets   1
@@ -169,6 +171,7 @@ Win *TutWinSocWindow = reinterpret_cast<Win *>(0x008A6270);
 Purpose: Centre the rectangle on both axes and convert the result to screen
          coordinates through the soc window.
 // ORIGINAL: 0x004BC640 ?soc_rect@TutWin@@QAEXPAURECT@@PAH1@Z 0x004BC640-0x004BC683
+// symbol    ?soc_rect@TutWin@@QAEXPAUtagRECT@@PAH1@Z
 // size      67 bytes
 // prototype void (__thiscall ?soc_rect@TutWin@@QAEXPAURECT@@PAH1@Z)(TutWin* this, RECT*, int*, int*)
 // callers   2   call targets   1
@@ -206,6 +209,7 @@ Win *TutWinDesWindow = reinterpret_cast<Win *>(0x0071F2B0);
 Purpose: Centre the rectangle on both axes and convert the result to screen
          coordinates through the des window.
 // ORIGINAL: 0x004BC690 ?des_rect@TutWin@@QAEXPAURECT@@PAH1@Z 0x004BC690-0x004BC6D3
+// symbol    ?des_rect@TutWin@@QAEXPAUtagRECT@@PAH1@Z
 // size      67 bytes
 // prototype void (__thiscall ?des_rect@TutWin@@QAEXPAURECT@@PAH1@Z)(TutWin* this, RECT*, int*, int*)
 // callers   2   call targets   1
@@ -251,6 +255,7 @@ func_tut_win_show TutWinOriginalShow = original_method<func_tut_win_show>(0x004B
 Purpose: Centre the rectangle, convert it through the base window, and
          show the tutorial text there against the primary map window.
 // ORIGINAL: 0x004BA870 ?do_base@TutWin@@QAEXPAURECT@@PBDH@Z 0x004BA870-0x004BA8EB
+// symbol    ?do_base@TutWin@@QAEXPAUtagRECT@@PBDH@Z
 // size      123 bytes
 // prototype void (__thiscall ?do_base@TutWin@@QAEXPAURECT@@PBDH@Z)(TutWin* this, RECT*, int8*, int)
 // callers   2   call targets   2
@@ -301,6 +306,7 @@ void __fastcall tut_win_do_base_redirect(
 Purpose: Centre the rectangle, convert it through the iface window, and
          show the tutorial text there against the primary map window.
 // ORIGINAL: 0x004BA8F0 ?do_iface@TutWin@@QAEXPAURECT@@PBDH@Z 0x004BA8F0-0x004BA96B
+// symbol    ?do_iface@TutWin@@QAEXPAUtagRECT@@PBDH@Z
 // size      123 bytes
 // prototype void (__thiscall ?do_iface@TutWin@@QAEXPAURECT@@PBDH@Z)(TutWin* this, RECT*, int8*, int)
 // callers   1   call targets   2
@@ -351,6 +357,7 @@ void __fastcall tut_win_do_iface_redirect(
 Purpose: Centre the rectangle, convert it through the soc window, and
          show the tutorial text there against the primary map window.
 // ORIGINAL: 0x004BA970 ?do_soc@TutWin@@QAEXPAURECT@@PBDH@Z 0x004BA970-0x004BA9EB
+// symbol    ?do_soc@TutWin@@QAEXPAUtagRECT@@PBDH@Z
 // size      123 bytes
 // prototype void (__thiscall ?do_soc@TutWin@@QAEXPAURECT@@PBDH@Z)(TutWin* this, RECT*, int8*, int)
 // callers   1   call targets   2
@@ -401,6 +408,7 @@ void __fastcall tut_win_do_soc_redirect(
 Purpose: Centre the rectangle, convert it through the des window, and
          show the tutorial text there against the primary map window.
 // ORIGINAL: 0x004BA9F0 ?do_des@TutWin@@QAEXPAURECT@@PBDH@Z 0x004BA9F0-0x004BAA6B
+// symbol    ?do_des@TutWin@@QAEXPAUtagRECT@@PBDH@Z
 // size      123 bytes
 // prototype void (__thiscall ?do_des@TutWin@@QAEXPAURECT@@PBDH@Z)(TutWin* this, RECT*, int8*, int)
 // callers   1   call targets   2

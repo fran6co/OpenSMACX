@@ -531,6 +531,7 @@ Purpose: Put a wave into one of the sixteen groups. The list-insert helper
          slot at 0x68 records the group AFTER the insert - the original
          writes the field last, so the helper still sees the old slot.
 // ORIGINAL: 0x004C5240 ?add_to_group@Wave_Device@@QAEHIPAUWave@@@Z 0x004C5240-0x004C5277
+// symbol    ?add_to_group@Wave_Device@@QAEHIPAVWave@@@Z
 // size      55 bytes
 // prototype int (__thiscall ?add_to_group@Wave_Device@@QAEHIPAUWave@@@Z)(Wave_Device* this, unsigned int, Wave*)
 // callers   2   call targets   1
@@ -566,6 +567,7 @@ Purpose: Take a wave out of its group. The wave's slot names the group; its
          at all - just forgets its slot. Either way the wave's slot becomes
          the out-of-range 0x10.
 // ORIGINAL: 0x004C5280 ?pull_from_group@Wave_Device@@QAEHPAUWave@@@Z 0x004C5280-0x004C531C
+// symbol    ?pull_from_group@Wave_Device@@QAEHPAVWave@@@Z
 // size      156 bytes
 // prototype int (__thiscall ?pull_from_group@Wave_Device@@QAEHPAUWave@@@Z)(Wave_Device* this, Wave*)
 // callers   1   call targets   1
@@ -658,6 +660,7 @@ Purpose: Append a wave to a group's node list. A fresh 12-byte node comes
          RE-READ tail field, after the old tail's next was written - an
          order the original's aliasing permits to matter.
 // ORIGINAL: 0x004C5BF0 sub_4c5bf0 0x004C5BF0-0x004C5C4A
+// symbol    ?wave_group_insert_redirect@@YIXPAUWaveGroupList@@PAXPAVWave@@@Z
 // size      90 bytes
 // prototype 
 // callers   1   call targets   1
@@ -1448,6 +1451,7 @@ func_thiscall_teardown WaveControlGroupOriginalDtor =
 Purpose: Construct one control group: the list fields - head, tail, cursor,
          count - zero out; the enabled byte and volume are left untouched.
 // ORIGINAL: 0x004C5490 ??0WaveControlGroup@@QAE@XZ 0x004C5490-0x004C54AB
+// symbol    ?wave_control_group_ctor_redirect@@YIXPAUWaveControlGroup@@PAX@Z
 // size      27 bytes
 // prototype void (__thiscall ??0WaveControlGroup@@QAE@XZ)(WaveControlGroup* this)
 // callers   0   call targets   0
@@ -1474,6 +1478,7 @@ Purpose: Destroy one control group by draining its node list from the head:
          drain right after it is freed, leaving the rest of the list in
          place. The cursor is never touched.
 // ORIGINAL: 0x004C5B80 ??1WaveControlGroup@@QAE@XZ 0x004C5B80-0x004C5BEF
+// symbol    ?wave_control_group_dtor_redirect@@YIXPAUWaveControlGroup@@PAX@Z
 // size      111 bytes
 // prototype void (__thiscall ??1WaveControlGroup@@QAE@XZ)(WaveControlGroup* this)
 // callers   0   call targets   1
