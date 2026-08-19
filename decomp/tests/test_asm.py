@@ -588,3 +588,22 @@ def test_one_instruction_of_another_size_does_not_disable_the_mask():
     # Same instruction sequence, one operand a register where the other is
     # memory - which is what `_WinMain@16` scores, for the same reason.
     assert result.verdict == "MNEMONIC_ONLY"
+
+
+def test_a_tie_on_tier_is_decided_on_agreement(tmp_path, monkeypatch):
+    """Keeping the first of four MISMATCHes reports a diagnostic nobody can
+    act on: 0x00612B80 gave 0 of 35 under the frame-pointer set and 35 of 35
+    without it, and the first was what came back."""
+    record = record_in(tmp_path, MARKED)
+    monkeypatch.setattr(asm, "compiled_asm", lambda *a, **k: listing(b"\xC3"))
+    monkeypatch.setattr(asm, "original_asm", lambda *a, **k: listing(b"\xC3"))
+    monkeypatch.setattr(asm, "span_refusal", lambda *a, **k: None)
+    agreement = iter([0, 35, 1, 1])
+    monkeypatch.setattr(
+        asm, "compare_asm",
+        lambda *a, **k: asm.AsmComparison(
+            verdict=asm.Tier.MISMATCH, original_instructions=35,
+            matching_instructions=next(agreement)))
+    result = asm.compare_record(record, "exe", ["cl"],
+                                ("/Oy-", "/Oy", "/O1", "/O1 /Oy"))
+    assert result.matching_instructions == 35
