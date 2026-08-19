@@ -17,11 +17,13 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from .grammar import (EXCLUSION_TOKEN, LESSON_CONTINUED, LESSON_DEFERRED,
+from .grammar import (DEFINITION_HEAD, DEFINITION_KEYWORDS,
+                      EXCLUSION_TOKEN, FACT_LINE, LESSON_CONTINUED,
+                      LESSON_DEFERRED,
                       LESSON_LEVER, LESSON_RULED_OUT, LESSON_UNRECOVERABLE,
                       MARKER, MARKER_KEYWORD, MARKER_MATCHED, MARKER_TAIL,
                       NEXT_MARKER, SENTINEL, _MANGLED_BASE)
-from .model import DecompilationState, Mode, State
+from .model import DecompilationState, Mode, Recipe, State
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SRC_ROOT = REPO_ROOT / "src"
@@ -536,19 +538,22 @@ def _read_text(text: str, path: Path | str) -> list[DecompilationState]:
         address, keyword, rest, matched, name, spans = parsed
         found_levers, found_ruled, found_dead, found_later = \
             _lessons(lines, index)
+        emitted = _symbol_fact(lines, index)
         if keyword == "FILE":
             region = text
             found.append(DecompilationState(
                 address=address, mode=Mode.FILE,
                 state=_state_of(region, ""), path=_abs(path),
                 line=index + 1, name=name, image_spans=spans, region=region,
-                recipe="verbatim", byte_exact=matched, levers=found_levers,
+                symbol=emitted, recipe=Recipe.VERBATIM,
+                byte_exact=matched, levers=found_levers,
                 ruled_out=found_ruled, unrecoverable=found_dead,
                 deferred=found_later))
         elif keyword == "EXCLUDED":
             found.append(DecompilationState(
                 address=address, mode=Mode.BODY, state=State.EXCLUDED,
                 path=_abs(path), line=index + 1, name=name, image_spans=spans,
+                symbol=emitted,
                 exclusion=_exclusion_citation(rest), byte_exact=matched,
                 levers=found_levers, ruled_out=found_ruled,
                 unrecoverable=found_dead, deferred=found_later))
@@ -565,19 +570,74 @@ def _read_text(text: str, path: Path | str) -> list[DecompilationState]:
                     error = ""
                 except ValueError as problem:
                     region, error = "", str(problem)
-            recipe = "writeback" if proved else "census"
+            recipe = Recipe.WRITEBACK if proved else Recipe.CENSUS
             found.append(DecompilationState(
                 address=address, mode=Mode.BODY,
                 state=_state_of(region, ""), path=_abs(path),
                 line=index + 1, name=name, image_spans=spans, region=region,
-                extract_error=error, recipe=recipe, byte_exact=matched,
+                symbol=emitted, extract_error=error, recipe=recipe,
+                byte_exact=matched,
                 levers=found_levers, ruled_out=found_ruled,
                 unrecoverable=found_dead, deferred=found_later))
 
     return found
 
 
-def _spans_of(value: str) -> tuple:
+def region_identifiers(record: DecompilationState) -> tuple[str, ...]:
+    """Identifiers the record's own source region names, in source order.
+
+    HOW THE `symbol` FACT GETS WRITTEN, and nothing else. The source does not
+    always carry the original's name: `src/delegation_thunks.cpp` claims
+    `?on_scrolling@BaseWin@@QAEXHH@Z` over a body it spells
+    `base_win_on_scrolling_redirect`, because a redirect shim is a different
+    symbol by design. A migration guesses the identifier from the definition
+    head, compiles, and records the symbol the compiler ACTUALLY emitted.
+
+    Nothing that measures calls this. Inference is fine for writing a fact
+    down once; inside the loop that measures against the fact, a regex over
+    definition heads would quietly pick a neighbouring function as bodies are
+    edited.
+    """
+    seen: list[str] = []
+    for match in DEFINITION_HEAD.finditer(record.region or ""):
+        identifier = match.group("identifier")
+        if identifier not in DEFINITION_KEYWORDS and identifier not in seen:
+            seen.append(identifier)
+    return tuple(seen)
+
+
+def _symbol_fact(lines: list[str], index: int) -> str:
+    """The `// symbol <name>` fact under the marker at `index`, or "".
+
+    THE ONE FACT THE RECORD TAKES OUT OF THE BLOCK. `name` and `spans` ride
+    the marker; the rest of the fact block is the catalogue's and passes
+    through untouched. This one is here because the measurement needs it: it
+    says what the COMPILER emits for the piece, which a redirect shim makes
+    different from what the image calls it.
+
+    Read from the comment run immediately after the marker, the same window
+    the lessons come from, so a fact belonging to the NEXT annotation cannot
+    be picked up.
+    """
+    for line in lines[index + 1:]:
+        stripped = line.strip()
+        if not (stripped.startswith("//") or stripped.startswith("*")):
+            break
+        match = FACT_LINE.match(stripped)
+        if match and match.group(1) == "symbol":
+            value = (match.group(2) or "").strip()
+            # A SYMBOL IS ONE TOKEN. Wrapped prose is re-flowed onto lines
+            # that begin `// ` plus a word, and `symbol` is a word people
+            # write - `src/` carries 2,037 lines that start `// symbol ` and
+            # every one of them is a sentence. The key alone cannot tell
+            # them apart; the value can, because a mangled name has no
+            # spaces in it. This is the same lesson `FACT_LINE`'s own
+            # comment records for `calls`, applied before it can bite.
+            return "" if not value or " " in value else value
+    return ""
+
+
+def _spans_of(value: str) -> tuple[tuple[int, int], ...]:
     """(low, high) pairs out of a spans fact; the body's span is first."""
     spans = []
     for part in value.split(";"):

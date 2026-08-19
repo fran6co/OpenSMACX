@@ -23,6 +23,36 @@ class Mode(StrEnum):
     FILE = "file"   # the WHOLE file is the translation unit, compiled as-is
 
 
+class Recipe(StrEnum):
+    """How a scoreable translation unit is built for this piece.
+
+    Derived from where the record lives, not declared: see `reader`. It is a
+    vocabulary rather than a free string because only these three exist and a
+    typo in a fourth would read as a recipe nobody implements.
+    """
+    CENSUS = "census"        # extract the body and wrap it in scaffolding
+    WRITEBACK = "writeback"  # a proved body in the store, declfix recipe
+    VERBATIM = "verbatim"    # FILE mode: the file already IS the unit
+
+
+class Tier(StrEnum):
+    """How far one assembly listing reproduces another, best first.
+
+    The ladder this package measures, and no more of it: `tools/byte_match.py`
+    also reports SHAPE_EXACT, SHARED_TAIL and REFUSED, which need span
+    classification and an operand-level comparison that live there. A verdict
+    named here is one `compare_asm` can actually reach.
+    """
+    BYTE_EXACT = "BYTE_EXACT"        # every compared byte agrees
+    MNEMONIC_ONLY = "MNEMONIC_ONLY"  # same instructions, different constants
+    MISMATCH = "MISMATCH"            # different instructions
+
+    @property
+    def rank(self) -> int:
+        """Position in the ladder; lower is better."""
+        return _TIER_ORDER.index(self)
+
+
 class State(StrEnum):
     """What condition the claimed piece is in.
 
@@ -55,9 +85,17 @@ class DecompilationState:
     line: int                    # 1-based line of the marker (0 for filename-derived)
     name: str                    # the mangled name ("" until a fact block
                                  # records it; required to ADD an annotation)
-    image_spans: tuple                 # the byte spans, (low, high) pairs; the
+    image_spans: tuple[tuple[int, int], ...]
+                                 # the byte spans, (low, high) pairs; the
                                  # first is the body, any further span is
                                  # cold code the image lays elsewhere
+    symbol: str = ""             # the symbol THIS TREE emits for the piece,
+                                 # when it is not `name`. `name` is what the
+                                 # IMAGE calls it and stays the catalogue's
+                                 # key; a redirect shim carries a symbol of
+                                 # its own, so the two are different facts and
+                                 # neither replaces the other. Empty means
+                                 # "the compiler emits `name`".
     exclusion: str = ""          # EXCLUSIONS.md citation for State.EXCLUDED
     region: str = ""             # the code this annotation claims ("" on error)
     extract_error: str = ""      # why the region could not be cut
@@ -67,14 +105,16 @@ class DecompilationState:
                                  # claim lives beside the body it constrains
                                  # and is re-proved by every ratchet run,
                                  # while states are derived from the region.
-    recipe: str = "census"       # how the status tool must build the unit:
-                                 # "census" (extract + scaffolding), "writeback"
-                                 # (proved bodies, declfix recipe) or "verbatim"
-                                 # (FILE mode: compile the file as-is)
-    levers: tuple = ()           # (fingerprint, prose) that MADE this match
-    ruled_out: tuple = ()        # spellings tried on this body that did not
-    unrecoverable: tuple = ()    # prose: no C body CAN exist for this piece
-    deferred: tuple = ()         # prose: a body can exist, nobody has written it
+    recipe: Recipe = Recipe.CENSUS
+                                 # how a scoreable unit is built - see Recipe
+    levers: tuple[tuple[str, str], ...] = ()
+                                 # (fingerprint, prose) that MADE this match
+    ruled_out: tuple[str, ...] = ()
+                                 # spellings tried on this body that did not
+    unrecoverable: tuple[str, ...] = ()
+                                 # prose: no C body CAN exist for this piece
+    deferred: tuple[str, ...] = ()
+                                 # prose: a body can exist, nobody has written it
 
     @property
     def location(self) -> str:
@@ -83,3 +123,7 @@ class DecompilationState:
     @property
     def address_hex(self) -> str:
         return f"0x{self.address:08X}"
+
+
+# Declared after `Tier` so the members exist to be indexed.
+_TIER_ORDER = (Tier.BYTE_EXACT, Tier.MNEMONIC_ONLY, Tier.MISMATCH)
