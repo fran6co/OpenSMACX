@@ -15,13 +15,14 @@ import pytest
 
 from decomp import read_file
 from decomp import asm
-from decomp.asm import (_coff_function, compare_asm, compiled_asm,
-                        original_asm)
-from decomp.reader import REPO_ROOT
+from decomp.asm import compare_asm, compiled_asm, original_asm
 
-# The environment's facts live HERE, not in the package: where the pinned
-# image and the build database are on this box. The compiler itself is the
-# build's own business - the compile command names it.
+# The environment's facts live HERE, not in the package: where this checkout
+# is, and where the pinned image and the build database are on this box. The
+# compiler itself is the build's own business - the compile command names it.
+# `reader` used to export the repository root and this file imported it, which
+# said the exact opposite of the sentence above.
+REPO_ROOT = Path(__file__).resolve().parents[2]
 EXE = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
 COMPILE_COMMANDS = REPO_ROOT / "build" / "compile_commands.json"
 # THE FLAG SETS BELONG TO THE CALLER, and these tests are one. `/O2` implies
@@ -100,48 +101,79 @@ def tiny_coff(code: bytes, symbol: str) -> bytes:
 def test_coff_function_extracts_and_strips_padding():
     code = b"\x55\x8B\xEC\xC3"
     obj = tiny_coff(code + b"\xCC\xCC\x90\x90", "?f@@YAXXZ")
-    assert _coff_function(obj, "?f@@YAXXZ") == code
+    assert asm._coff_function_masked(obj, "?f@@YAXXZ")[0] == code
 
 
 def test_coff_function_refuses_an_absent_symbol():
     obj = tiny_coff(b"\xC3", "?f@@YAXXZ")
     with pytest.raises(ValueError, match="not found"):
-        _coff_function(obj, "?g@@YAXXZ")
+        asm._coff_function_masked(obj, "?g@@YAXXZ")
 
 
 # ------------------------------------------------------- listing comparison
 
-LISTING = [
-    "0x00401000  55                        push ebp",
-    "0x00401001  8B EC                     mov ebp, esp",
-    "0x00401003  B8 01 00 00 00              mov eax, 1",
-    "0x00401008  C3                        ret",
-]
+# push ebp; mov ebp, esp; mov eax, 1; ret - four instructions, nine bytes.
+# Built from BYTES rather than from hand-written listing text: the text is
+# what capstone renders, so asserting against text I typed asserts against
+# my own transcription.
+BODY = bytes.fromhex("55" "8BEC" "B801000000" "C3")
+
+
+def listing(code: bytes, mask: frozenset[int] = frozenset(),
+            base: int = 0x00401000) -> asm.Listing:
+    return asm.Listing(code=code, base=base, mask=mask)
+
+
+def test_lines_are_derived_from_the_bytes():
+    """A listing renders; it does not carry a rendering."""
+    lines = listing(BODY).lines
+    assert len(lines) == 4
+    assert lines[0].startswith("0x00401000")
+    assert lines[0].endswith("push ebp")
+
+
+def test_the_rendering_is_cached_and_the_bytes_are_not_writable():
+    """Derived state is only safe while the thing it derives from is fixed."""
+    one = listing(BODY)
+    assert one.lines is one.lines            # rendered once, not per access
+    with pytest.raises(Exception):           # FrozenInstanceError
+        one.code = b"\x90"                   # type: ignore[misc]
+
+
+def test_a_listing_is_its_bytes_not_its_text():
+    """Two listings of the same body at the same address are the same
+    listing - which a `list` subclass carrying rendered lines could not
+    say, because it had two representations to disagree about."""
+    assert listing(BODY) == listing(BODY)
+    assert listing(BODY) != listing(BODY, frozenset({0}))
+    assert len({listing(BODY), listing(BODY)}) == 1
 
 
 def test_compare_byte_exact():
-    result = compare_asm(LISTING, list(LISTING))
+    result = compare_asm(listing(BODY), listing(BODY))
     assert result.verdict == "BYTE_EXACT"
-    assert result.original_count == result.compiled_count == 4
-    assert result.matching_lines == 4
+    assert result.original_instructions == result.compiled_instructions == 4
+    assert result.matching_instructions == 4
     assert result.mnemonic_similarity == 1.0
     assert result.first_divergence is None
+    assert result.compared_bytes == len(BODY)
+    assert result.masked_bytes == 0
 
 
 def test_compare_mnemonic_only():
-    compiled = list(LISTING)
-    compiled[2] = "0x00401003  B8 02 00 00 00              mov eax, 2"
-    result = compare_asm(LISTING, compiled)
+    # the same instructions, one different constant: mov eax, 2
+    other = bytes.fromhex("55" "8BEC" "B802000000" "C3")
+    result = compare_asm(listing(BODY), listing(other))
     assert result.verdict == "MNEMONIC_ONLY"
-    assert result.matching_lines == 3
+    assert result.matching_instructions == 3
     assert result.mnemonic_similarity == 1.0
     assert result.first_divergence == 2
 
 
 def test_compare_mismatch_reports_the_divergence():
-    compiled = list(LISTING)
-    compiled[1] = "0x00401001  33 C0                     xor eax, eax"
-    result = compare_asm(LISTING, compiled)
+    # xor eax, eax where the original moves esp into ebp
+    other = bytes.fromhex("55" "33C0" "B801000000" "C3")
+    result = compare_asm(listing(BODY), listing(other))
     assert result.verdict == "MISMATCH"
     assert result.first_divergence == 1
     assert result.mnemonic_similarity < 1.0
@@ -150,18 +182,16 @@ def test_compare_mismatch_reports_the_divergence():
 
 def test_compare_ret_keeps_its_pop_count():
     # `ret` and `ret 4` are different instructions; the sequence must say so.
-    a = ["0x00401000  C3                        ret"]
-    b = ["0x00401000  C2 04 00                  ret 4"]
-    result = compare_asm(a, b)
+    result = compare_asm(listing(b"\xC3"), listing(bytes.fromhex("C20400")))
     assert result.verdict == "MISMATCH"
 
 
 def test_compare_length_difference():
-    result = compare_asm(LISTING, LISTING[:-1])
+    result = compare_asm(listing(BODY), listing(BODY[:-1]))
     assert result.verdict == "MISMATCH"
     assert result.first_divergence == 3
-    assert result.original_count == 4
-    assert result.compiled_count == 3
+    assert result.original_instructions == 4
+    assert result.compiled_instructions == 3
 
 
 # ------------------------------------------------------- the real thing
@@ -171,7 +201,7 @@ def test_compare_length_difference():
 def test_original_asm_on_a_known_record():
     records = read_file(REPO_ROOT / "src" / "buffer.cpp")
     record = next(r for r in records if r.address == 0x005D7210)
-    lines = original_asm(record, EXE)
+    lines = original_asm(record, EXE).lines
     assert lines
     assert lines[0].startswith("0x005D7210")
 
@@ -189,9 +219,9 @@ def test_byte_exact_body_compiles_to_the_same_shape():
     compiled = compiled_asm(record, COMPILE_COMMANDS, FLAGS)
     result = compare_asm(original, compiled)
     assert result.verdict == "BYTE_EXACT", \
-        f"{result.verdict}: {result.matching_lines}/{result.original_count} " \
+        f"{result.verdict}: {result.matching_instructions}/{result.original_instructions} " \
         f"lines match, similarity {result.mnemonic_similarity:.2f}"
-    assert result.matching_lines == result.original_count
+    assert result.matching_instructions == result.original_instructions
 
 
 # ------------------------------------------- naming the subject in an object
@@ -311,11 +341,11 @@ def test_relocated_bytes_do_not_count_as_a_divergence():
     image = b"\x68\x74\x81\x9B\x00\xC3"          # push 0x009B8174
     obj = b"\x68\x00\x00\x00\x00\xC3"            # push 0 + a relocation
     mask = frozenset({1, 2, 3, 4})
-    left = asm.Listing(asm._disasm(image, 0x401000), code=image,
-                       base=0x401000, mask=frozenset())
-    right = asm.Listing(asm._disasm(obj, 0x401000), code=obj,
-                        base=0x401000, mask=mask)
-    assert compare_asm(list(left), list(right)).verdict == "MNEMONIC_ONLY"
+    left = listing(image)
+    right = listing(obj, mask)
+    # Without the mask the same pair is only MNEMONIC_ONLY: the four
+    # relocated bytes read as a difference in the source, which they are not.
+    assert compare_asm(left, listing(obj)).verdict == "MNEMONIC_ONLY"
     result = compare_asm(left, right)
     assert result.verdict == "BYTE_EXACT"
     assert result.masked_bytes == 4
@@ -327,11 +357,7 @@ def test_a_real_difference_survives_the_mask():
     image = b"\x68\x74\x81\x9B\x00\xC3"
     obj = b"\xB8\x00\x00\x00\x00\xC3"            # mov eax, imm32, not push
     mask = frozenset({1, 2, 3, 4})
-    left = asm.Listing(asm._disasm(image, 0x401000), code=image,
-                       base=0x401000, mask=frozenset())
-    right = asm.Listing(asm._disasm(obj, 0x401000), code=obj,
-                        base=0x401000, mask=mask)
-    assert compare_asm(left, right).verdict == "MISMATCH"
+    assert compare_asm(listing(image), listing(obj, mask)).verdict == "MISMATCH"
 
 
 def test_padding_is_stripped_from_both_sides():
@@ -354,15 +380,12 @@ def test_a_mask_does_not_reshape_a_body_of_another_length():
     image = bytes.fromhex("E89BAF0C00" "E856490E00" "E8A14A0E00"
                           "6A01" "E8FAA1F8FF" "59" "C3")
     obj = bytes.fromhex("56" "8BF1" "E800000000" "E800000000")
-    left = asm.Listing(asm._disasm(image, 0x004E0F80), code=image,
-                       base=0x004E0F80, mask=frozenset())
-    right = asm.Listing(asm._disasm(obj, 0x004E0F80), code=obj,
-                        base=0x004E0F80,
-                        mask=frozenset({4, 5, 6, 7, 9, 10, 11, 12}))
-    assert len(left) == 7
+    left = listing(image, base=0x004E0F80)
+    right = listing(obj, frozenset({4, 5, 6, 7, 9, 10, 11, 12}), 0x004E0F80)
+    assert len(left.lines) == 7
     result = compare_asm(left, right)
     assert result.verdict == "MISMATCH"
-    assert result.original_count == 7, \
+    assert result.original_instructions == 7, \
         "the mask reshaped the image's own listing"
 
 
@@ -372,17 +395,12 @@ def test_byte_equality_decides_not_the_rendered_text():
     image = bytes.fromhex("A1 74819B00 C3".replace(" ", ""))
     obj = bytes.fromhex("A1 00000000 C3".replace(" ", ""))
     mask = frozenset({1, 2, 3, 4})
-    left = asm.Listing(asm._disasm(image, 0x401000), code=image,
-                       base=0x401000, mask=frozenset())
-    right = asm.Listing(asm._disasm(obj, 0x401000), code=obj,
-                        base=0x401000, mask=mask)
-    assert list(left) != list(right)          # the text differs
+    left, right = listing(image), listing(obj, mask)
+    assert left.lines != right.lines          # the text differs
     assert compare_asm(left, right).verdict == "BYTE_EXACT"
 
 
 def test_differing_lengths_are_never_byte_exact():
     a = b"\x90\xC3"
     b = b"\x90\x90\xC3"
-    left = asm.Listing(asm._disasm(a, 0x401000), code=a, base=0x401000)
-    right = asm.Listing(asm._disasm(b, 0x401000), code=b, base=0x401000)
-    assert compare_asm(left, right).verdict == "MISMATCH"
+    assert compare_asm(listing(a), listing(b)).verdict == "MISMATCH"
