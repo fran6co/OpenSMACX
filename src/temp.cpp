@@ -38,7 +38,6 @@ func18 *_fputc = (func18 *)0x00646886;
 
 // other
 func5 *load_faction_art = (func5 *)0x00453710;
-func5 *draw_map = (func5 *)0x0046B190;
 func5 *wave_it = (func5 *)0x004455F0;
 // TODO: crash bug; X_pop > . > BasePop::start > text_close > NULLs 009B7CF4 (FILE *Txt.text_file_)
 // Next call to text_get() tries to access 009B7CF4 and the game crashes.
@@ -47,8 +46,6 @@ func7 *popp = (func7 *)0x0048C0A0;
 func9 *fixup_landmarks = (func9 *)0x00592940;
 func9 *mapwin_terrain_fixup = (func9 *)0x00471240;
 func9 *world_rainfall = (func9 *)0x005C4470;
-func_custom_planet *custom_planet = (func_custom_planet *)0x0058C2A0;
-func_world_climate *world_climate = (func_world_climate *)0x005C5A30;
 func11 *wants_to_attack_ = (func11 *)0x0055BC80;
 func15 *save_daemon = (func15 *)0x005A94F0;
 func16 *load_daemon = (func16 *)0x005A9760;
