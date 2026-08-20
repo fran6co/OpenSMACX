@@ -348,7 +348,10 @@ after touching a class, `verify_recovery_abi` after changing a signature.
   What CAN carry it is the linker's map. `/MAP /MAPINFO:LINES` (wired into
   `CMakeLists.txt`) writes every public with its final address plus a line
   table per source, and this turns that into an ELF32 of pure DWARF that gdb
-  loads beside the live process:
+  loads beside the live process. THE BUILD MAKES IT — a POST_BUILD step on the
+  link, under a second — because a sidecar you have to remember to regenerate
+  goes stale silently, and gdb reads a stale one without complaint and reports
+  names for another build's addresses:
 
   ```
   cd .opensmacx/game
@@ -360,6 +363,12 @@ after touching a class, `verify_recovery_abi` after changing a signature.
   `--port` IS ORDER-SENSITIVE: after `--gdb`, value as a separate argument. The
   usage message winedbg prints otherwise names none of its options, so a
   rejected `--port` reads exactly like a winedbg that has none.
+
+  KILL THE INFERIOR BEFORE DETACHING. `detach` on a faulted process leaves it
+  alive, wine hands it to a `winedbg --auto` crash handler, and the next link
+  fails with `LNK1104: cannot open file "OpenSMACX.exe"` - which reads like a
+  build problem and is a debugger problem. `kill` in gdb, or
+  `pkill -f "winedbg --auto"` after the fact.
 
   With the sidecar loaded, gdb debugs it like anything else:
 
