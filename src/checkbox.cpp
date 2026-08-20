@@ -20,7 +20,6 @@
 #include "checkbox.h"
 #include "vtable_shim.h"
 
-func_dialog_close CheckBoxOriginalDialogClose = original_method<func_dialog_close>(0x00608F50);
 uint32_t CheckBoxDefault1;  // 0x00697104
 uint32_t CheckBoxDefault2;  // 0x00697108
 
@@ -53,7 +52,7 @@ void CheckBox::close() {
     field_C_ = 0;
     field_14_ = CheckBoxDefault2;
     field_10_ = CheckBoxDefault1;
-    (ORIGINAL(reinterpret_cast<Dialog *>(self + vbtable[2]))->*CheckBoxOriginalDialogClose)();
+    reinterpret_cast<Dialog *>(self + vbtable[2])->close();
     reinterpret_cast<GraphicWin *>(self + vbtable[1])->close();
 }
 

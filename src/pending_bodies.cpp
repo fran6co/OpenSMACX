@@ -29,6 +29,9 @@
 #include "spritebox.h"
 #include "dialogs.h"
 #include "listbox.h"
+#include "tutwin.h"
+#include "maininterface.h"
+#include "basewin.h"
 #include "cursor.h"
 #include "filewin.h"
 #include "radiobutton.h"
@@ -200,6 +203,71 @@ int __cdecl X_pop(char *caption, const char *label, int a3, char *a4, int a5,
                                   int (__cdecl *)());
     return PENDING_BODY(0x005BF480, pending)(caption, label, a3, a4, a5,
                                              callback);
+}
+
+// Five more bodies the tree called through function pointers. Each is
+// declared on its class now, so the call sites emit `call rel32`.
+void Dialog::close() {                                  // 0x00608F50
+    typedef void(__fastcall *pending)(Dialog *, void *);
+    PENDING_BODY(0x00608F50, pending)(this, nullptr);
+}
+
+void MainInterface::set_date(char *text) {              // 0x0045BE80
+    typedef void(__fastcall *pending)(MainInterface *, void *, char *);
+    PENDING_BODY(0x0045BE80, pending)(this, nullptr, text);
+}
+
+int Buffer::fill(int left, int top, int width, int height, int color) {
+    typedef int(__fastcall *pending)(Buffer *, void *, int, int, int, int,
+                                     int);                // 0x005D8240
+    return PENDING_BODY(0x005D8240, pending)(this, nullptr, left, top, width,
+                                             height, color);
+}
+
+int TutWin::tut_win(void *owner, const char *text, int a3, int a4,
+                    Sprite *sprite, int a6, int a7, int a8) {  // 0x004BDFE0
+    typedef int(__fastcall *pending)(TutWin *, void *, void *,
+                                     const char *, int, int, Sprite *, int,
+                                     int, int);
+    return PENDING_BODY(0x004BDFE0, pending)(this, nullptr, owner, text, a3,
+                                             a4, sprite, a6, a7, a8);
+}
+
+int Buffer::map_colors(int a1, int a2, int a3, int a4, void *table) {
+    typedef int(__fastcall *pending)(Buffer *, void *, int, int, int, int,
+                                     void *);              // 0x005DA330
+    return PENDING_BODY(0x005DA330, pending)(this, nullptr, a1, a2, a3, a4,
+                                             table);
+}
+
+void GraphicWin::overlay_nonclient(RECT *area) {           // 0x005D6AC0
+    typedef void(__fastcall *pending)(GraphicWin *, void *, RECT *);
+    PENDING_BODY(0x005D6AC0, pending)(this, nullptr, area);
+}
+
+void BaseWin::click(int a1, int a2, int a3, int a4) {       // 0x004165D0
+    typedef void(__fastcall *pending)(BaseWin *, void *, int, int, int, int);
+    PENDING_BODY(0x004165D0, pending)(this, nullptr, a1, a2, a3, a4);
+}
+
+void BaseWin::iface_click(int a1, int a2, int a3, int a4) {                       // 0x004160F0
+    typedef void(__fastcall *pending)(BaseWin *, void *, int, int, int, int);
+    PENDING_BODY(0x004160F0, pending)(this, nullptr, a1, a2, a3, a4);
+}
+
+void BaseWin::draw_supported(int a1) {                       // 0x0040C850
+    typedef void(__fastcall *pending)(BaseWin *, void *, int);
+    PENDING_BODY(0x0040C850, pending)(this, nullptr, a1);
+}
+
+void BaseWin::draw_facilities(int a1) {                       // 0x0040FCC0
+    typedef void(__fastcall *pending)(BaseWin *, void *, int);
+    PENDING_BODY(0x0040FCC0, pending)(this, nullptr, a1);
+}
+
+void BaseWin::garrison_click(int a1, int a2, int a3, int a4) {                       // 0x0040B140
+    typedef void(__fastcall *pending)(BaseWin *, void *, int, int, int, int);
+    PENDING_BODY(0x0040B140, pending)(this, nullptr, a1, a2, a3, a4);
 }
 
 // ?write_raw_l@Buffer@@QAEHPADHHH@Z at 0x005DBD00 - 1475 bytes, the raster

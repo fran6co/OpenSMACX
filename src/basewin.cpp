@@ -175,13 +175,11 @@ void __fastcall base_win_on_iface_selected_redirect(BaseWin *self, void *, int a
     self->on_iface_selected(a1, a2);
 }
 
-func_base_win_iface_click BaseWinIfaceClick =
-    original_method<func_base_win_iface_click>(0x004160F0);
 
 /*
 Purpose: Report a left click on the interface. Reached through the interface
          subobject at 0xA14, so `this` is adjusted back to the BaseWin.
-// ORIGINAL: 0x0041DCD0 ?on_iface_left_click@BaseWin@@QAEXHH@Z 0x0041DCD0-0x0041DCEE
+// ORIGINAL: 0x0041DCD0 ?on_iface_left_click@BaseWin@@QAEXHH@Z 0x0041DCD0-0x0041DCEE BYTE_EXACT
 // size      30 bytes
 // prototype void (__thiscall ?on_iface_left_click@BaseWin@@QAEXHH@Z)(BaseWin* this, int xCoord, int yCoord)
 // callers   0   call targets   1
@@ -194,13 +192,13 @@ Status: Complete
 void BaseWin::on_iface_left_click(int a1, int a2) {
     BaseWin *const base = reinterpret_cast<BaseWin *>(
         reinterpret_cast<uint8_t *>(this) - 0xA14);
-    (ORIGINAL(base)->*BaseWinIfaceClick)(a1, a2, 0, 0);
+    base->iface_click(a1, a2, 0, 0);
 }
 
 /*
 Purpose: Report a right click on the interface. Reached through the interface
          subobject at 0xA14, so `this` is adjusted back to the BaseWin.
-// ORIGINAL: 0x0041DCF0 ?on_iface_right_click@BaseWin@@QAEXHH@Z 0x0041DCF0-0x0041DD0E
+// ORIGINAL: 0x0041DCF0 ?on_iface_right_click@BaseWin@@QAEXHH@Z 0x0041DCF0-0x0041DD0E BYTE_EXACT
 // size      30 bytes
 // prototype void (__thiscall ?on_iface_right_click@BaseWin@@QAEXHH@Z)(BaseWin* this, int xCoord, int yCoord)
 // callers   0   call targets   1
@@ -213,13 +211,13 @@ Status: Complete
 void BaseWin::on_iface_right_click(int a1, int a2) {
     BaseWin *const base = reinterpret_cast<BaseWin *>(
         reinterpret_cast<uint8_t *>(this) - 0xA14);
-    (ORIGINAL(base)->*BaseWinIfaceClick)(a1, a2, 1, 0);
+    base->iface_click(a1, a2, 1, 0);
 }
 
 /*
 Purpose: Report a left double-click on the interface. Reached through the interface
          subobject at 0xA14, so `this` is adjusted back to the BaseWin.
-// ORIGINAL: 0x0041E4D0 ?on_iface_left_double_click@BaseWin@@QAEXHH@Z 0x0041E4D0-0x0041E4EE
+// ORIGINAL: 0x0041E4D0 ?on_iface_left_double_click@BaseWin@@QAEXHH@Z 0x0041E4D0-0x0041E4EE BYTE_EXACT
 // size      30 bytes
 // prototype void (__thiscall ?on_iface_left_double_click@BaseWin@@QAEXHH@Z)(BaseWin* this, int xCoord, int yCoord)
 // callers   0   call targets   1
@@ -232,13 +230,13 @@ Status: Complete
 void BaseWin::on_iface_left_double_click(int a1, int a2) {
     BaseWin *const base = reinterpret_cast<BaseWin *>(
         reinterpret_cast<uint8_t *>(this) - 0xA14);
-    (ORIGINAL(base)->*BaseWinIfaceClick)(a1, a2, 0, 1);
+    base->iface_click(a1, a2, 0, 1);
 }
 
 /*
 Purpose: Report a right double-click on the interface. Reached through the interface
          subobject at 0xA14, so `this` is adjusted back to the BaseWin.
-// ORIGINAL: 0x0041E4F0 ?on_iface_right_double_click@BaseWin@@QAEXHH@Z 0x0041E4F0-0x0041E50E
+// ORIGINAL: 0x0041E4F0 ?on_iface_right_double_click@BaseWin@@QAEXHH@Z 0x0041E4F0-0x0041E50E BYTE_EXACT
 // size      30 bytes
 // prototype void (__thiscall ?on_iface_right_double_click@BaseWin@@QAEXHH@Z)(BaseWin* this, int xCoord, int yCoord)
 // callers   0   call targets   1
@@ -251,7 +249,7 @@ Status: Complete
 void BaseWin::on_iface_right_double_click(int a1, int a2) {
     BaseWin *const base = reinterpret_cast<BaseWin *>(
         reinterpret_cast<uint8_t *>(this) - 0xA14);
-    (ORIGINAL(base)->*BaseWinIfaceClick)(a1, a2, 1, 1);
+    base->iface_click(a1, a2, 1, 1);
 }
 
 void __fastcall base_win_on_iface_left_click_redirect(BaseWin *self, void *, int a1, int a2) {
@@ -270,8 +268,6 @@ void __fastcall base_win_on_iface_right_double_click_redirect(BaseWin *self, voi
     self->on_iface_right_double_click(a1, a2);
 }
 
-func_base_win_draw_supported BaseWinDrawSupported =
-    original_method<func_base_win_draw_supported>(0x0040C850);
 
 /*
 Purpose: Handle an interface scroll, but only for scroll kind 2 - stash the
@@ -295,19 +291,18 @@ void BaseWin::on_iface_scrolled(int a1, int a2) {
     std::memcpy(reinterpret_cast<uint8_t *>(this) + 0x40100, &a2, sizeof(a2));
     BaseWin *const base = reinterpret_cast<BaseWin *>(
         reinterpret_cast<uint8_t *>(this) - 0xA14);
-    (ORIGINAL(base)->*BaseWinDrawSupported)(1);
+    base->draw_supported(1);
 }
 
 void __fastcall base_win_on_iface_scrolled_redirect(BaseWin *self, void *, int a1, int a2) {
     self->on_iface_scrolled(a1, a2);
 }
 
-func_base_win_click BaseWinClick = original_method<func_base_win_click>(0x004165D0);
 
 /*
 Purpose: Report a left click to the shared click handler. Unlike the
          iface_click family, `this` is the BaseWin itself with no adjustment.
-// ORIGINAL: 0x0041AF70 ?on_left_click@BaseWin@@QAEXHH@Z 0x0041AF70-0x0041AF88
+// ORIGINAL: 0x0041AF70 ?on_left_click@BaseWin@@QAEXHH@Z 0x0041AF70-0x0041AF88 BYTE_EXACT
 // size      24 bytes
 // prototype void (__thiscall ?on_left_click@BaseWin@@QAEXHH@Z)(BaseWin* this, int xCoord, int yCoord)
 // callers   0   call targets   1
@@ -318,13 +313,13 @@ Return Value: n/a
 Status: Complete
 */
 void BaseWin::on_left_click(int a1, int a2) {
-    (ORIGINAL(this)->*BaseWinClick)(a1, a2, 0, 0);
+    click(a1, a2, 0, 0);
 }
 
 /*
 Purpose: Report a right click to the shared click handler. Unlike the
          iface_click family, `this` is the BaseWin itself with no adjustment.
-// ORIGINAL: 0x0041AF90 ?on_right_click@BaseWin@@QAEXHH@Z 0x0041AF90-0x0041AFA8
+// ORIGINAL: 0x0041AF90 ?on_right_click@BaseWin@@QAEXHH@Z 0x0041AF90-0x0041AFA8 BYTE_EXACT
 // size      24 bytes
 // prototype void (__thiscall ?on_right_click@BaseWin@@QAEXHH@Z)(BaseWin* this, int xCoord, int yCoord)
 // callers   0   call targets   1
@@ -335,13 +330,13 @@ Return Value: n/a
 Status: Complete
 */
 void BaseWin::on_right_click(int a1, int a2) {
-    (ORIGINAL(this)->*BaseWinClick)(a1, a2, 1, 0);
+    click(a1, a2, 1, 0);
 }
 
 /*
 Purpose: Report a left double-click to the shared click handler. Unlike the
          iface_click family, `this` is the BaseWin itself with no adjustment.
-// ORIGINAL: 0x0041AFB0 ?on_left_double_click@BaseWin@@QAEXHH@Z 0x0041AFB0-0x0041AFC8
+// ORIGINAL: 0x0041AFB0 ?on_left_double_click@BaseWin@@QAEXHH@Z 0x0041AFB0-0x0041AFC8 BYTE_EXACT
 // size      24 bytes
 // prototype void (__thiscall ?on_left_double_click@BaseWin@@QAEXHH@Z)(BaseWin* this, int xCoord, int yCoord)
 // callers   0   call targets   1
@@ -352,7 +347,7 @@ Return Value: n/a
 Status: Complete
 */
 void BaseWin::on_left_double_click(int a1, int a2) {
-    (ORIGINAL(this)->*BaseWinClick)(a1, a2, 0, 1);
+    click(a1, a2, 0, 1);
 }
 
 void __fastcall base_win_on_left_click_redirect(BaseWin *self, void *, int a1, int a2) {
@@ -466,29 +461,4 @@ void BaseWin::on_scrolled(int a1, int a2) {
     }
 }
 
-func_base_win_draw_facilities BaseWinDrawFacilities =
-    original_method<func_base_win_draw_facilities>(0x0040FCC0);
-func_base_win_garrison_click BaseWinGarrisonClick =
-    original_method<func_base_win_garrison_click>(0x0040B140);
 
-/*
-Purpose: Redraw the base's facility list. The body at 0x0040FCC0 is NOT
-         recovered; this is a seam to the original image, not a recovery, and
-         deliberately carries no `Original Offset:` line so the catalogue does
-         not mistake it for one.
-Status: Forwarded to the original image
-*/
-void BaseWin::draw_facilities(int a1) {
-    (ORIGINAL(this)->*BaseWinDrawFacilities)(a1);
-}
-
-/*
-Purpose: Handle a click on the base's garrison list. The body at 0x0040B140 is
-         NOT recovered; this is a seam to the original image, not a recovery,
-         and deliberately carries no `Original Offset:` line so the catalogue
-         does not mistake it for one.
-Status: Forwarded to the original image
-*/
-void BaseWin::garrison_click(int vehID, int a2, int a3, int a4) {
-    (ORIGINAL(this)->*BaseWinGarrisonClick)(vehID, a2, a3, a4);
-}

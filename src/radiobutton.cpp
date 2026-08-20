@@ -20,7 +20,6 @@
 #include "radiobutton.h"
 #include "vtable_shim.h"
 
-func_dialog_close RadioButtonOriginalDialogClose = original_method<func_dialog_close>(0x00608F50);
 uint32_t RadioButtonDefault1;  // 0x006970F0
 uint32_t RadioButtonDefault2;  // 0x006970F4
 
@@ -52,7 +51,7 @@ void RadioButton::close() {
     field_10_ = 0;
     field_8_ = RadioButtonDefault2;
     field_4_ = RadioButtonDefault1;
-    (ORIGINAL(reinterpret_cast<Dialog *>(self + vbtable[2]))->*RadioButtonOriginalDialogClose)();
+    reinterpret_cast<Dialog *>(self + vbtable[2])->close();
     reinterpret_cast<GraphicWin *>(self + vbtable[1])->close();
 }
 

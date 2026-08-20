@@ -47,11 +47,19 @@
   */
 class BaseWin : GraphicWin, SubInterface {
  public:
+  // 0x004165D0, a pending_bodies forwarder: the three click handlers
+  // below funnel into it and reached it through a pointer.
+  void click(int a1, int a2, int a3, int a4);
+  // 0x004160F0, a pending_bodies forwarder.
+  void iface_click(int a1, int a2, int a3, int a4);
+  // 0x0040C850, a pending_bodies forwarder.
+  void draw_supported(int a1);
+ public:
   void on_scrolled(int a1, int a2);
   void UNK2(int a1, int a2, int a3, int a4);
   // Two siblings the recovered bodies above reach with a direct `call rel32`
   // - UNK2 calls garrison_click, on_scrolled calls draw_facilities. Both are
-  // unrecovered; declared so their callers can name them.
+  // unrecovered; pending_bodies.cpp forwards them.
   void garrison_click(int vehID, int a2, int a3, int a4);  // 0x0040B140
   void draw_facilities(int a1);                            // 0x0040FCC0
   void show(int a1);
@@ -498,16 +506,13 @@ void __fastcall base_win_on_iface_selected_redirect(BaseWin *self, void *, int a
 // through its vtable, so their `this` points there and is adjusted back to
 // the BaseWin before dispatching to iface_click, which is not recovered.
 typedef void (OriginalObject::*func_base_win_iface_click)(int a1, int a2, int button, int is_double);
-extern func_base_win_iface_click BaseWinIfaceClick;
 
 // draw_supported is not recovered.
 typedef void (OriginalObject::*func_base_win_draw_supported)(int a1);
-extern func_base_win_draw_supported BaseWinDrawSupported;
 
 // The shared click handler these three forward to is not recovered. Unlike
 // the iface_click family, these carry no this-adjustment.
 typedef void (OriginalObject::*func_base_win_click)(int a1, int a2, int button, int is_double);
-extern func_base_win_click BaseWinClick;
 
 void __fastcall base_win_on_iface_left_click_redirect(BaseWin *self, void *, int a1, int a2);
 void __fastcall base_win_on_iface_right_click_redirect(BaseWin *self, void *, int a1, int a2);
@@ -529,8 +534,6 @@ void __fastcall base_win_on_mouse_leave_redirect(BaseWin *self, void *, int a1, 
 //   ?garrison_click@BaseWin@@QAEXHHHH@Z  0x0040B140  public __thiscall
 //                                                    void(int, int, int, int)
 typedef void (OriginalObject::*func_base_win_draw_facilities)(int a1);
-extern func_base_win_draw_facilities BaseWinDrawFacilities;
 
 typedef void (OriginalObject::*func_base_win_garrison_click)(int vehID, int a2,
                                                              int a3, int a4);
-extern func_base_win_garrison_click BaseWinGarrisonClick;

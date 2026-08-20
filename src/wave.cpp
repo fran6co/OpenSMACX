@@ -819,8 +819,6 @@ int __fastcall wave_get_attrib_redirect(Wave *self, void *) {
 }
 
 uint32_t *WaveDeviceGroupVolumes = reinterpret_cast<uint32_t *>(0x0090D9A0);
-func_wave_device_is_group_disabled WaveDeviceIsGroupDisabled = original_method<func_wave_device_is_group_disabled>(0x004C5460);
-func_wave_original_load WaveOriginalLoad = original_method<func_wave_original_load>(0x004C6CE0);
 
 /*
 Purpose: Set the wave's volume. The low seven bits of the argument are stored
@@ -922,7 +920,7 @@ int Wave::play() {
     int result = 0;
     if (group_slot_ < 0x10) {
         if (static_cast<uint8_t>(
-                (ORIGINAL(WaveDeviceGlobal)->*WaveDeviceIsGroupDisabled)(group_slot_))) {
+                WaveDeviceGlobal->is_group_disabled(group_slot_))) {
             return 0x14;
         }
         if (flags_54_ & 0x10) {
@@ -935,7 +933,7 @@ int Wave::play() {
         typedef int (OriginalObject::*device_start_fn)();
         result = (ORIGINAL(device_)->*original_slot<device_start_fn>(*reinterpret_cast<uint8_t **>(device_) + 0x1C))();
     } else if (flags_54_ & 0x10) {
-        (ORIGINAL(this)->*WaveOriginalLoad)();
+        this->load();
         if (device_) {
             typedef int (OriginalObject::*device_start_fn)();
             result = (ORIGINAL(device_)->*original_slot<device_start_fn>(*reinterpret_cast<uint8_t **>(device_) + 0x1C))();
@@ -957,7 +955,6 @@ int __fastcall wave_play_empty_redirect(Wave *self, void *) {
 
 func_wave_device_create **WaveDeviceCreateSlot =
     reinterpret_cast<func_wave_device_create **>(0x0090DB24);
-func_sound_original_load SoundOriginalLoad = original_method<func_sound_original_load>(0x004C6280);
 
 /*
 Purpose: Load the wave from its remembered filename. With no wrapped device
@@ -1025,7 +1022,7 @@ int Wave::load() {
         (ORIGINAL(device_)->*original_slot<device_attrib_fn>(*reinterpret_cast<uint8_t **>(device_) + 0x6C))(
             attribs);
     }
-    const int loaded = (ORIGINAL(this)->*SoundOriginalLoad)(fname);
+    const int loaded = this->load(fname);
     if (loaded) {
         return loaded;
     }
@@ -1209,7 +1206,7 @@ int Wave::load(const char *a1) {
         (ORIGINAL(device_)->*original_slot<device_attrib_fn>(*reinterpret_cast<uint8_t **>(device_) + 0x6C))(
             attribs);
     }
-    const int loaded = (ORIGINAL(this)->*SoundOriginalLoad)(a1);
+    const int loaded = this->load(a1);
     if (loaded) {
         return loaded;
     }
@@ -1237,7 +1234,6 @@ int __fastcall wave_load_fname_redirect(Wave *self, void *, const char *a1) {
     return self->load(a1);
 }
 
-func_sound_set_type SoundSetType = original_method<func_sound_set_type>(0x004C61E0);
 
 /*
 Purpose: Build the wave. The original constructs in the same three vtable
@@ -1287,7 +1283,10 @@ Wave::Wave() {
     // pad bytes there; 0x54 is one dword, so one store says it.
     flags_54_ = 0;
     field_40_ |= 4;
-    (ORIGINAL(this)->*SoundSetType)(1);
+    // `Wave` is deliberately NOT spelled `: Sound` - see the note on the
+    // class - so the base's method is reached by cast rather than by
+    // inheritance.
+    reinterpret_cast<Sound *>(this)->set_type(1);
     pitch_ = 0;
     reverb_mix_ = 1.0f;
     group_slot_ = 0x10;
@@ -1422,8 +1421,8 @@ void *__fastcall wave_scalar_dtor_redirect(Wave *self, void *,
 // allocated it; the release hook is an indirect call on the slot at 0x0090DB28
 // guarded by the dword at 0x0090DB7C; the chain end slots are the dwords the
 // unlink falls back to when a neighbour is null.
-func_wave_device_pull_from_group WaveDevicePullFromGroup = original_method<func_wave_device_pull_from_group>(0x004C5280);
-void *WaveDeviceGlobal = reinterpret_cast<void *>(0x0090D978);
+Wave_Device *WaveDeviceGlobal =
+    reinterpret_cast<Wave_Device *>(0x0090D978);
 func_operator_delete *WaveOperatorDelete = (func_operator_delete *)0x0064557F;
 func_wave_device_release **WaveDeviceReleaseSlot =
     reinterpret_cast<func_wave_device_release **>(0x0090DB28);
@@ -1464,7 +1463,7 @@ Wave::~Wave() {
     Wave volatile *const self = this;
     self->vtable_storage_ = 0x0066E44C;
     if (self->group_slot_ < 0x10) {
-        (ORIGINAL(WaveDeviceGlobal)->*WaveDevicePullFromGroup)(this);
+        WaveDeviceGlobal->pull_from_group(this);
     }
     void *const block = self->fname_;
     if (block) {

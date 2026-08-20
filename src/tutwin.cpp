@@ -241,7 +241,6 @@ void __fastcall tut_win_des_rect_redirect(
     self->des_rect(rect, x, y);
 }
 
-func_tut_win_show TutWinOriginalShow = original_method<func_tut_win_show>(0x004BDFE0);
 
 /*
  * The four do_* helpers: 123-byte clones whose ONLY real difference is which
@@ -294,7 +293,7 @@ void TutWin::do_base(RECT *rect, const char *text, int flag) {
             *reinterpret_cast<int32_t *const *>(primary);
         window = primary + vbtable[1];
     }
-    (ORIGINAL(this)->*TutWinOriginalShow)(window, text, x, y, nullptr, flag, -1, -1);
+    this->tut_win(window, text, x, y, nullptr, flag, -1, -1);
 }
 
 void __fastcall tut_win_do_base_redirect(
@@ -345,7 +344,7 @@ void TutWin::do_iface(RECT *rect, const char *text, int flag) {
             *reinterpret_cast<int32_t *const *>(primary);
         window = primary + vbtable[1];
     }
-    (ORIGINAL(this)->*TutWinOriginalShow)(window, text, x, y, nullptr, flag, -1, -1);
+    this->tut_win(window, text, x, y, nullptr, flag, -1, -1);
 }
 
 void __fastcall tut_win_do_iface_redirect(
@@ -396,7 +395,7 @@ void TutWin::do_soc(RECT *rect, const char *text, int flag) {
             *reinterpret_cast<int32_t *const *>(primary);
         window = primary + vbtable[1];
     }
-    (ORIGINAL(this)->*TutWinOriginalShow)(window, text, x, y, nullptr, flag, -1, -1);
+    this->tut_win(window, text, x, y, nullptr, flag, -1, -1);
 }
 
 void __fastcall tut_win_do_soc_redirect(
@@ -447,7 +446,7 @@ void TutWin::do_des(RECT *rect, const char *text, int flag) {
             *reinterpret_cast<int32_t *const *>(primary);
         window = primary + vbtable[1];
     }
-    (ORIGINAL(this)->*TutWinOriginalShow)(window, text, x, y, nullptr, flag, -1, -1);
+    this->tut_win(window, text, x, y, nullptr, flag, -1, -1);
 }
 
 void __fastcall tut_win_do_des_redirect(
