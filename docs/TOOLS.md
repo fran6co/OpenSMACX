@@ -361,12 +361,33 @@ after touching a class, `verify_recovery_abi` after changing a signature.
   usage message winedbg prints otherwise names none of its options, so a
   rejected `--port` reads exactly like a winedbg that has none.
 
-  With the sidecar loaded, `break Win::flip` resolves, breakpoints land past
-  the prologue, `bt` reads `WinMain () at src/main.cpp:213`, and `next` steps
-  by source line. THE SIDECAR DESCRIBES THE REAL BINARY — that is why it exists
+  With the sidecar loaded, gdb debugs it like anything else:
+
+  ```
+  #1  0x00438825 in jackal_init_real (palette=0x47e980 <g_PALETTE1>,
+      window_name=0x47ba48 "Sid Meier's Alpha Centauri", display_width=1024,
+      colour_depth=8) at src/general.cpp:1530
+  ```
+
+  `break Win::flip` resolves, breakpoints land past the prologue, `next` steps
+  by source line, `ptype Palette` prints the members, and arguments come with
+  their values. THE SIDECAR DESCRIBES THE REAL BINARY — that is why it exists
   rather than a gcc build of the same sources, which would move every address
-  the catalogue is keyed by. Locals and types are not in it yet; they are in
-  the CodeView `/Z7` already emits into each `.obj`.
+  the catalogue is keyed by.
+
+  Locals and types come from `tools/codeview.py`, which reads the CodeView
+  `/Z7` puts in every `.obj` — `S_BPREL32` for a name and its frame offset,
+  `.debug$T` for the layouts. Three things about that format cost real time and
+  are worth not rediscovering: type indices are 4 bytes and `LF_MEMBER` is
+  0x1405 (the CV8 documentation says 0x150D); a field list is walked, not
+  scanned, so ONE unrecognised leaf silently empties a class — `Palette` came
+  back with no members until `LF_ONEMETHOD`, which VC6 emits first, was
+  handled; and THE FIRST TYPE INDEX IS NOT 0x1000 when a precompiled header is
+  in use. The PCH owns 0x1000 upward (in `.debug$P`, not `.debug$T`) and each
+  object's own table continues above it — at 0x22C3 here. Nothing states that
+  base, so it is voted for: VC6 emits a class's field list immediately before
+  the class, so `field - (position - 1)` is the base, and several hundred
+  structures agree on it.
 
   A COMPILE UNIT IS AN OBJECT, NOT A SOURCE FILE. The map reports one line
   block per (object, source) pair, so grouping by source scatters a header's

@@ -36,7 +36,9 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+import codeview  # noqa: E402
 from decomp.mangled import qualified_name  # noqa: E402
 
 
@@ -212,45 +214,271 @@ def line_program(sources: list, sequences: list) -> bytes:
     return struct.pack("<I", len(out)) + bytes(out)
 
 
-ABBREV = bytes(
-    # 1: compile_unit, has children
-    uleb(1) + uleb(0x11) + b"\x01"
-    + uleb(0x25) + uleb(0x08)   # producer  string
-    + uleb(0x13) + uleb(0x0B)   # language  data1
-    + uleb(0x03) + uleb(0x08)   # name      string
-    + uleb(0x1B) + uleb(0x08)   # comp_dir  string
-    + uleb(0x11) + uleb(0x01)   # low_pc    addr
-    + uleb(0x12) + uleb(0x01)   # high_pc   addr
-    + uleb(0x10) + uleb(0x06)   # stmt_list data4
-    + uleb(0) + uleb(0)
-    # 2: subprogram, no children
-    + uleb(2) + uleb(0x2E) + b"\x00"
-    + uleb(0x03) + uleb(0x08)   # name      string
-    + uleb(0x11) + uleb(0x01)   # low_pc    addr
-    + uleb(0x12) + uleb(0x01)   # high_pc   addr
-    + uleb(0x3F) + uleb(0x0C)   # external  flag
-    + uleb(0) + uleb(0)
-    + uleb(0))
+# DWARF tags, attributes and forms - only what is emitted here.
+TAG = dict(compile_unit=0x11, subprogram=0x2E, variable=0x34,
+           formal_parameter=0x05, base_type=0x24, pointer_type=0x0F,
+           const_type=0x26, volatile_type=0x35, structure_type=0x13,
+           class_type=0x02, union_type=0x17, member=0x0D, inheritance=0x1C,
+           array_type=0x01, subrange_type=0x21, enumeration_type=0x04,
+           enumerator=0x28, subroutine_type=0x15)
+AT = dict(name=0x03, byte_size=0x0B, encoding=0x3E, type=0x49, low_pc=0x11,
+          high_pc=0x12, external=0x3F, frame_base=0x40, location=0x02,
+          data_member_location=0x38, const_value=0x1C, upper_bound=0x2F,
+          declaration=0x3C, producer=0x25, language=0x13, comp_dir=0x1B,
+          stmt_list=0x10, prototyped=0x27)
+FORM = dict(addr=0x01, block1=0x0A, data2=0x05, data4=0x06, string=0x08,
+            block=0x09, data1=0x0B, flag=0x0C, sdata=0x0D, udata=0x0F,
+            ref4=0x13)
+
+DW_OP_fbreg, DW_OP_reg5 = 0x91, 0x55   # reg5 is ebp in the i386 numbering
 
 
-def compile_unit(source: str, comp_dir: str, functions: list,
-                 low: int, high: int, stmt_list: int) -> bytes:
-    die = bytearray()
-    die += uleb(1)
-    die += b"opensmacx gdb_sidecar\x00"
-    die += bytes([0x04])                        # DW_LANG_C_plus_plus
-    die += source.encode() + b"\x00"
-    die += comp_dir.encode() + b"\x00"
-    die += struct.pack("<II", low, high)
-    die += struct.pack("<I", stmt_list)
-    for name, start, end in functions:
-        die += uleb(2)
-        die += name.encode() + b"\x00"
-        die += struct.pack("<II", start, end)
-        die += bytes([1])
-    die += uleb(0)                              # end of children
-    header = struct.pack("<HIB", 2, 0, 4)       # version, abbrev offset, addr size
-    return struct.pack("<I", len(header) + len(die)) + header + bytes(die)
+class Die:
+    """One debugging information entry, with references left as objects.
+
+    A DIE's size does not depend on what it points AT - `DW_FORM_ref4` is four
+    bytes either way - so sizing and offset assignment finish before any
+    reference is resolved, and a type graph with cycles needs no special case.
+    """
+
+    def __init__(self, tag: str, attributes: list = None, children: list = None):
+        self.tag = tag
+        self.attributes = attributes or []
+        self.children = children if children is not None else []
+        self.offset = 0
+
+    def add(self, child: "Die") -> "Die":
+        self.children.append(child)
+        return child
+
+    def shape(self) -> tuple:
+        return (TAG[self.tag], bool(self.children),
+                tuple((AT[name], FORM[form]) for name, form, _
+                      in self.attributes))
+
+    def walk(self):
+        yield self
+        for child in self.children:
+            yield from child.walk()
+
+
+def encoded(form: str, value) -> bytes:
+    """One attribute value, with references left to the caller to resolve."""
+    if form == "string":
+        return value.encode("latin-1", "replace") + b"\x00"
+    if form == "addr" or form == "data4":
+        return struct.pack("<I", value & 0xFFFFFFFF)
+    if form == "data2":
+        return struct.pack("<H", value & 0xFFFF)
+    if form in ("data1", "flag"):
+        return bytes([value & 0xFF])
+    if form == "udata":
+        return uleb(value)
+    if form == "sdata":
+        return sleb(value)
+    if form == "block1":
+        return bytes([len(value)]) + value
+    if form == "ref4":
+        return struct.pack("<I", value)
+    raise ValueError(form)
+
+
+class Abbreviations:
+    """The shared abbreviation table every unit points at offset zero of."""
+
+    def __init__(self):
+        self.codes, self.order = {}, []
+
+    def code(self, shape: tuple) -> int:
+        if shape not in self.codes:
+            self.codes[shape] = len(self.order) + 1
+            self.order.append(shape)
+        return self.codes[shape]
+
+    def encode(self) -> bytes:
+        out = bytearray()
+        for index, (tag, has_children, attributes) in enumerate(self.order, 1):
+            out += uleb(index) + uleb(tag) + bytes([1 if has_children else 0])
+            for attribute, form in attributes:
+                out += uleb(attribute) + uleb(form)
+            out += uleb(0) + uleb(0)
+        return bytes(out + uleb(0))
+
+
+def serialise(root: Die, abbreviations: Abbreviations) -> bytes:
+    """One compile unit: assign offsets, then write.
+
+    The same walk twice, which is what lets a member's type point forwards to a
+    class that points back at it. The end-of-children marker is a byte no DIE
+    owns, so it has to be counted in the offset pass as well as written in the
+    second - a member DIE landing one byte early is a type gdb reads as
+    garbage.
+    """
+    header = 11                        # length(4) version(2) abbrev(4) size(1)
+    at = header
+
+    def assign(die: Die) -> None:
+        nonlocal at
+        die.offset = at
+        at += len(uleb(abbreviations.code(die.shape())))
+        for _, form, value in die.attributes:
+            at += 4 if form == "ref4" else len(encoded(form, value))
+        for child in die.children:
+            assign(child)
+        if die.children:
+            at += 1
+
+    assign(root)
+    total = at
+
+    def write(die: Die, out: bytearray) -> None:
+        out += uleb(abbreviations.code(die.shape()))
+        for _, form, value in die.attributes:
+            if form == "ref4":
+                out += struct.pack("<I", value.offset if isinstance(value, Die)
+                                   else value)
+            else:
+                out += encoded(form, value)
+        for child in die.children:
+            write(child, out)
+        if die.children:
+            out += b"\x00"
+
+    body = bytearray()
+    write(root, body)
+    return struct.pack("<IHIB", total - 4, 2, 0, 4) + bytes(body)
+
+
+class Types:
+    """CodeView type indices to DIEs, for one compile unit.
+
+    Memoised BEFORE recursing, because the graph has cycles: a class holds a
+    pointer to itself, and its members cannot be filled in until the class DIE
+    exists to point at.
+    """
+
+    def __init__(self, table: dict, unit: Die):
+        self.table, self.unit, self.cache = table, unit, {}
+
+    def size(self, index: int) -> int:
+        record = codeview.definition(self.table, index) or {}
+        if record.get("kind") == "pointer":
+            return 4
+        if record.get("kind") in ("base", "struct", "union", "array"):
+            return record.get("size", 0)
+        if record.get("kind") == "modifier":
+            return self.size(record["target"])
+        if record.get("kind") == "enum":
+            return 4
+        return 0
+
+    def die(self, index: int) -> Die:
+        """The DIE for a type index, or None for void and the unreadable."""
+        if index in self.cache:
+            return self.cache[index]
+        record = codeview.definition(self.table, index)
+        if record is None or record.get("kind") in ("void", "unknown"):
+            self.cache[index] = None
+            return None
+        built = self._build(index, record)
+        return built
+
+    def _build(self, index: int, record: dict) -> Die:
+        kind = record["kind"]
+        if kind == "base":
+            die = Die("base_type", [
+                ("name", "string", record["name"]),
+                ("encoding", "data1", record["encoding"]),
+                ("byte_size", "data1", record["size"])])
+            return self._keep(index, die)
+        if kind == "pointer":
+            die = self._keep(index, Die("pointer_type",
+                                        [("byte_size", "data1", 4)]))
+            target = self.die(record["target"])
+            if target is not None:
+                die.attributes.append(("type", "ref4", target))
+            return die
+        if kind == "modifier":
+            tag = "const_type" if record.get("const") else "volatile_type"
+            die = self._keep(index, Die(tag))
+            target = self.die(record["target"])
+            if target is not None:
+                die.attributes.append(("type", "ref4", target))
+            return die
+        if kind in ("struct", "union"):
+            return self._aggregate(index, record)
+        if kind == "array":
+            return self._array(index, record)
+        if kind == "enum":
+            return self._enumeration(index, record)
+        if kind == "function":
+            die = self._keep(index, Die("subroutine_type",
+                                        [("prototyped", "flag", 1)]))
+            returns = self.die(record.get("returns", 0))
+            if returns is not None:
+                die.attributes.append(("type", "ref4", returns))
+            return die
+        self.cache[index] = None
+        return None
+
+    def _keep(self, index: int, die: Die) -> Die:
+        self.cache[index] = die
+        self.unit.add(die)
+        return die
+
+    def _aggregate(self, index: int, record: dict) -> Die:
+        tag = "union_type" if record["kind"] == "union" else "structure_type"
+        attributes = [("byte_size", "udata", record.get("size", 0))]
+        if record.get("name"):
+            attributes.insert(0, ("name", "string", record["name"]))
+        die = self._keep(index, Die(tag, attributes))
+        fields = self.table.get(record.get("field", 0)) or {}
+        for member in fields.get("members", []):
+            if member["kind"] == "member":
+                target = self.die(member["type"])
+                if target is None:
+                    continue
+                die.add(Die("member", [
+                    ("name", "string", member["name"]),
+                    ("type", "ref4", target),
+                    ("data_member_location", "block1",
+                     bytes([0x23]) + uleb(member["offset"]))]))
+            elif member["kind"] == "base":
+                target = self.die(member["type"])
+                if target is None:
+                    continue
+                die.add(Die("inheritance", [
+                    ("type", "ref4", target),
+                    ("data_member_location", "block1",
+                     bytes([0x23]) + uleb(member["offset"]))]))
+        return die
+
+    def _array(self, index: int, record: dict) -> Die:
+        die = self._keep(index, Die("array_type"))
+        element = self.die(record["element"])
+        if element is None:
+            self.cache[index] = None
+            return None
+        die.attributes.append(("type", "ref4", element))
+        stride = self.size(record["element"])
+        if stride:
+            die.add(Die("subrange_type", [
+                ("upper_bound", "udata",
+                 max(record.get("size", 0) // stride - 1, 0))]))
+        return die
+
+    def _enumeration(self, index: int, record: dict) -> Die:
+        attributes = [("byte_size", "data1", 4)]
+        if record.get("name"):
+            attributes.insert(0, ("name", "string", record["name"]))
+        die = self._keep(index, Die("enumeration_type", attributes))
+        fields = self.table.get(record.get("field", 0)) or {}
+        for member in fields.get("members", []):
+            if member["kind"] == "enumerator":
+                die.add(Die("enumerator", [
+                    ("name", "string", member["name"]),
+                    ("const_value", "sdata", member["value"])]))
+        return die
 
 
 # --------------------------------------------------------------------- ELF32
@@ -356,7 +584,20 @@ def elf(sections: list, symbols: list, debug: dict, entry: int) -> bytes:
 
 # ---------------------------------------------------------------------- main
 
-def build(exe: Path, map_path: Path, output: Path, comp_dir: Path) -> dict:
+def objects(root: Path) -> dict:
+    """`{basename: path}` for every object the build produced.
+
+    Keyed by basename because that is how the map names them, both in the
+    publics table (`alpha.cpp.obj`) and in the line blocks.
+    """
+    found = {}
+    for path in sorted(root.rglob("*.obj")):
+        found.setdefault(path.name, path)
+    return found
+
+
+def build(exe: Path, map_path: Path, output: Path, comp_dir: Path,
+          build_root: Path) -> dict:
     image_base, pe = pe_sections(exe)
     publics, lines = read_map(map_path)
     publics.sort()
@@ -374,7 +615,7 @@ def build(exe: Path, map_path: Path, output: Path, comp_dir: Path) -> dict:
 
     # A public's extent is the next public's address: VC6's map records where
     # each one starts and nothing about how long it is.
-    symbols, by_object = [], {}
+    symbols, by_object, address_of = [], {}, {}
     for index, (address, mangled, is_function, owner) in enumerate(publics):
         following = publics[index + 1][0] if index + 1 < len(publics) else address
         size = max(following - address, 1) if is_function else 1
@@ -384,13 +625,23 @@ def build(exe: Path, map_path: Path, output: Path, comp_dir: Path) -> dict:
         if is_function:
             by_object.setdefault(owner, []).append((pretty, address,
                                                     address + size))
+            address_of.setdefault(mangled, (address, address + size))
 
+    available = objects(build_root)
+    inherited = {}
+    for name, path in available.items():
+        if "pch" in name:
+            inherited = codeview.precompiled(path)
+            break
+
+    abbreviations = Abbreviations()
     debug_line, debug_info = bytearray(), bytearray()
-    units = attributed = 0
-    for owner, entries in sorted(lines.items()):
+    units = attributed = described = located = 0
+    for owner in sorted(set(lines) | set(by_object)):
         functions = sorted(by_object.get(owner, []), key=lambda item: item[1])
-        if not functions or not entries:
+        if not functions:
             continue
+        entries = lines.get(owner, [])
         sources = sorted({source for source, _, _, _ in entries})
         index_of = {source: number for number, source in enumerate(sources, 1)}
         rows = sorted({(segment_base[segment] + offset, index_of[source], number)
@@ -409,25 +660,55 @@ def build(exe: Path, map_path: Path, output: Path, comp_dir: Path) -> dict:
                 cursor += 1
             if taken:
                 sequences.append(taken)
-        if not sequences:
-            continue
         attributed += sum(len(sequence) for sequence in sequences)
 
-        stmt_list = len(debug_line)
-        debug_line += line_program(sources, sequences)
-        # The unit is named for its own translation unit, which is the source
-        # whose stem matches the object - `win.cpp.obj` is `win.cpp`, not the
-        # first header it happens to define a body in.
         stem = Path(owner).name.replace(".obj", "")
-        primary = next((s for s in sources if Path(s).name == stem), sources[0])
-        debug_info += compile_unit(
-            primary, str(comp_dir), functions,
-            min(low for _, low, _ in functions),
-            max(high for _, _, high in functions), stmt_list)
+        primary = next((s for s in sources if Path(s).name == stem),
+                       sources[0] if sources else stem)
+        unit = Die("compile_unit", [
+            ("producer", "string", "opensmacx gdb_sidecar"),
+            ("language", "data1", 0x04),
+            ("name", "string", primary),
+            ("comp_dir", "string", str(comp_dir)),
+            ("low_pc", "addr", min(low for _, low, _ in functions)),
+            ("high_pc", "addr", max(high for _, _, high in functions))])
+        if sequences:
+            unit.attributes.append(("stmt_list", "data4", len(debug_line)))
+            debug_line += line_program(sources, sequences)
+
+        # The CodeView in the object is what carries locals and types; the map
+        # carries where the linker put them. Neither alone is enough.
+        described_here = set()
+        source = available.get(owner)
+        if source is not None:
+            try:
+                read = codeview.read(source, inherited)
+            except (OSError, struct.error, IndexError):
+                read = None
+            if read:
+                types = Types(read["types"], unit)
+                for procedure in read["procedures"]:
+                    placed = address_of.get(procedure.get("mangled") or "")
+                    if placed is None:
+                        continue
+                    low, high = placed
+                    described_here.add(low)
+                    described += 1
+                    located += _subprogram(unit, types, procedure, low, high)
+
+        for name, low, high in functions:
+            if low in described_here:
+                continue
+            unit.add(Die("subprogram", [
+                ("name", "string", name),
+                ("low_pc", "addr", low),
+                ("high_pc", "addr", high),
+                ("external", "flag", 1)]))
+        debug_info += serialise(unit, abbreviations)
         units += 1
 
     payload = {".debug_info": bytes(debug_info),
-               ".debug_abbrev": ABBREV,
+               ".debug_abbrev": abbreviations.encode(),
                ".debug_line": bytes(debug_line)}
     entry = next((address for address, name, _, _ in publics
                   if name in ("_WinMain@16",
@@ -438,7 +719,40 @@ def build(exe: Path, map_path: Path, output: Path, comp_dir: Path) -> dict:
                 functions=sum(len(v) for v in by_object.values()),
                 units=units, sources=len(lines),
                 rows=sum(len(v) for v in lines.values()),
-                attributed=attributed)
+                attributed=attributed, described=described, located=located)
+
+
+def _subprogram(unit: Die, types: "Types", procedure: dict, low: int,
+                high: int) -> int:
+    """One function DIE with its locals; returns how many locals were placed.
+
+    `DW_AT_frame_base` is the value in ebp, and `S_BPREL32` offsets are
+    relative to it - which is exactly `DW_OP_fbreg`. The Debug build keeps the
+    frame pointer (`/Od` implies it), so this is not an assumption the
+    optimiser can take away.
+    """
+    attributes = [("name", "string", procedure["name"]),
+                  ("low_pc", "addr", low), ("high_pc", "addr", high),
+                  ("external", "flag", 1 if procedure["external"] else 0),
+                  ("frame_base", "block1", bytes([DW_OP_reg5]))]
+    die = unit.add(Die("subprogram", attributes))
+    signature = types.table.get(procedure.get("type", 0)) or {}
+    if signature.get("kind") == "function":
+        returns = types.die(signature.get("returns", 0))
+        if returns is not None:
+            die.attributes.append(("type", "ref4", returns))
+    placed = 0
+    for local in procedure["locals"]:
+        target = types.die(local["type"])
+        tag = "formal_parameter" if local["offset"] > 0 else "variable"
+        entry = [("name", "string", local["name"]),
+                 ("location", "block1",
+                  bytes([DW_OP_fbreg]) + sleb(local["offset"]))]
+        if target is not None:
+            entry.insert(1, ("type", "ref4", target))
+        die.add(Die(tag, entry))
+        placed += 1
+    return placed
 
 
 def main() -> int:
@@ -450,6 +764,9 @@ def main() -> int:
     parser.add_argument("--out", type=Path,
                         default=REPO_ROOT / "build" / "OpenSMACX.sym")
     parser.add_argument("--comp-dir", type=Path, default=REPO_ROOT)
+    parser.add_argument("--build-root", type=Path,
+                        default=REPO_ROOT / "build" / "CMakeFiles",
+                        help="where the objects with the CodeView are")
     arguments = parser.parse_args()
 
     for path in (arguments.exe, arguments.map):
@@ -460,11 +777,12 @@ def main() -> int:
             return 2
 
     counted = build(arguments.exe, arguments.map, arguments.out,
-                    arguments.comp_dir)
+                    arguments.comp_dir, arguments.build_root)
     print(f"{arguments.out}: {counted['symbols']:,} symbols "
           f"({counted['functions']:,} functions), {counted['units']:,} units, "
-          f"{counted['attributed']:,} of {counted['rows']:,} line rows "
-          f"attributed to a function")
+          f"{counted['attributed']:,} of {counted['rows']:,} line rows, "
+          f"{counted['described']:,} functions with locals "
+          f"({counted['located']:,} variables)")
     if not counted["rows"]:
         print("gdb-sidecar: no line numbers in the map - relink with "
               "/MAPINFO:LINES for source-level stepping", file=sys.stderr)
