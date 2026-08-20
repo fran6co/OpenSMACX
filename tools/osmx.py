@@ -177,6 +177,20 @@ def _looks_like_an_address(text: str) -> bool:
     return len(text) >= 6 and all(c in "0123456789abcdef" for c in lowered)
 
 
+def _in_file(claimants: list, fragment: str) -> list:
+    """The subset of `claimants` whose file path contains `fragment`.
+
+    THIRTY-SIX ADDRESSES ARE ANNOTATED TWICE - the body in `src/` and the
+    same piece preserved in `src/recovered/` or `src/unrecovered/` - and
+    they are two claims measured in two translation units. Without a way to
+    name one, `measure` and `record` could not be pointed at either of
+    them; they refused with "2 pieces match" and there was no answer.
+    """
+    if not fragment:
+        return claimants
+    return [r for r in claimants if fragment in str(r.path)]
+
+
 def _matching(records: list, target: str) -> list:
     """Every record `target` names, by address or by name.
 
@@ -218,6 +232,10 @@ def show(
     target: Annotated[str, typer.Argument(
         help="An address in hex, or a name: WinMain, set_font, "
              "Buffer::set_font.")],
+    in_file: Annotated[str, typer.Option(
+        "--in",
+        help="Disambiguate by file when one address is annotated twice, "
+             "e.g. --in src/text.cpp or --in unrecovered.")] = "",
     src: Annotated[Path, typer.Option(
         envvar="OPENSMACX_SRC")] = REPO_ROOT / "src",
     exe: Annotated[Path, typer.Option(
@@ -235,7 +253,7 @@ def show(
     reproduces this.
     """
     records = read(src)
-    claimants = _matching(records, target)
+    claimants = _in_file(_matching(records, target), in_file)
     if not claimants:
         typer.secho(f"nothing under {src} matches {target!r}",
                     fg=typer.colors.RED)
@@ -356,6 +374,10 @@ WINE_CEILING = 8
 def measure(
     target: Annotated[str, typer.Argument(
         help="An address in hex, or a name.")],
+    in_file: Annotated[str, typer.Option(
+        "--in",
+        help="Disambiguate by file when one address is annotated twice, "
+             "e.g. --in src/text.cpp or --in unrecovered.")] = "",
     src: Annotated[Path, typer.Option(
         envvar="OPENSMACX_SRC")] = REPO_ROOT / "src",
     exe: Annotated[Path, typer.Option(
@@ -417,11 +439,14 @@ def measure(
         raise typer.Exit(2)
     _fresh_compile_commands(compile_commands, reconfigure)
     records = read(src)
-    claimants = _matching(records, target)
+    claimants = _in_file(_matching(records, target), in_file)
     if len(claimants) != 1:
         typer.secho(
-            f"{len(claimants)} pieces match {target!r}; measure names one",
+            f"{len(claimants)} pieces match {target!r}; measure names one"
+            + ("" if in_file else " - --in <path fragment> picks one"),
             fg=typer.colors.RED)
+        for piece in sorted(claimants, key=lambda r: str(r.path)):
+            typer.echo(f"  {piece.location}")
         raise typer.Exit(2)
     record = claimants[0]
     command = _command_for(compile_commands, record.path, borrow)
@@ -614,6 +639,10 @@ def _print_verdict(record: DecompilationState, result: AsmComparison,
 def record(
     targets: Annotated[list[str], typer.Argument(
         help="Addresses in hex, or names.")],
+    in_file: Annotated[str, typer.Option(
+        "--in",
+        help="Disambiguate by file when one address is annotated twice, "
+             "e.g. --in src/text.cpp or --in unrecovered.")] = "",
     src: Annotated[Path, typer.Option(
         envvar="OPENSMACX_SRC")] = REPO_ROOT / "src",
     exe: Annotated[Path, typer.Option(
@@ -652,10 +681,12 @@ def record(
 
     chosen = []
     for target in targets:
-        claimants = _matching(records, target)
+        claimants = _in_file(_matching(records, target), in_file)
         if len(claimants) != 1:
             typer.secho(f"{len(claimants)} pieces match {target!r}; "
-                        f"record names one", fg=typer.colors.RED)
+                        f"record names one"
+                        + ("" if in_file else " - --in picks one"),
+                        fg=typer.colors.RED)
             raise typer.Exit(2)
         chosen.append(claimants[0])
 
@@ -798,7 +829,20 @@ def _claims_by_file(records: list) -> dict:
     return grouped
 
 
-def _check_one_file(job: tuple) -> list[tuple[int, str, str]]:
+def _claim_key(record: DecompilationState) -> tuple:
+    """What identifies a CLAIM. Not the address.
+
+    THIRTY-FOUR ADDRESSES IN THIS TREE ARE ANNOTATED TWICE - the body in
+    `src/` and the same piece preserved in `src/recovered/` or
+    `src/unrecovered/` - and they are two claims, measured in two
+    translation units, that can disagree. Keyed by address, the second
+    result overwrote the first, so `check` reported one verdict for two
+    claims and counted the twin it never showed among the reproduced.
+    """
+    return (record.path, record.address)
+
+
+def _check_one_file(job: tuple) -> list[tuple[tuple, str, str]]:
     """Score every claim in one file. Runs in a worker process.
 
     ONE COMPILE PER FLAG SET, NOT PER RECORD, and it stops as soon as every
@@ -822,20 +866,20 @@ def _check_one_file(job: tuple) -> list[tuple[int, str, str]]:
             try:
                 compiled = subject_asm(obj, record, flags)
             except ValueError as problem:
-                best[record.address] = ("UNRESOLVED", str(problem))
+                best[_claim_key(record)] = ("UNRESOLVED",
+                                            str(problem))
                 outstanding.remove(record)
                 continue
             result = compare_subject(record, exe, compiled)
             verdict = str(result.verdict)
-            if (record.address not in best
-                    or best[record.address][0] != "BYTE_EXACT"):
-                best[record.address] = (verdict, "")
+            if (_claim_key(record) not in best
+                    or best[_claim_key(record)][0] != "BYTE_EXACT"):
+                best[_claim_key(record)] = (verdict, "")
             if verdict == "BYTE_EXACT":
                 outstanding.remove(record)
     for record in outstanding:
-        best.setdefault(record.address, ("NO_COMPILE", diagnostic))
-    return [(address, verdict, note)
-            for address, (verdict, note) in best.items()]
+        best.setdefault(_claim_key(record), ("NO_COMPILE", diagnostic))
+    return [(key, verdict, note) for key, (verdict, note) in best.items()]
 
 
 @app.command()
@@ -912,21 +956,21 @@ def check(
                            [pool.submit(_check_one_file, job)
                             for job in work])]
     for batch in batches:
-        for address, verdict, note in batch:
-            measured[address] = (verdict, note)
+        for key, verdict, note in batch:
+            measured[key] = (verdict, note)
 
     # A WALL IS NOT A MISS, and one number would bury the difference. A
     # claim measured WORSE has stopped reproducing - that is the ratchet
     # failing. A claim that could not be built or whose subject could not be
     # found was never asked, and reporting it as a regression sends someone
     # to look at a body that is fine. Measured here: 6 against 534.
-    by_address = {r.address: r for group in grouped.values() for r in group}
+    by_claim = {_claim_key(r): r for group in grouped.values() for r in group}
     UNASKED = ("NO_COMPILE", "UNRESOLVED", "SHARED_TAIL", "REFUSED")
-    regressed = [(by_address[a], v, n)
-                 for a, (v, n) in sorted(measured.items())
+    regressed = [(by_claim[k], v, n)
+                 for k, (v, n) in sorted(measured.items())
                  if v != "BYTE_EXACT" and v not in UNASKED]
-    unasked = [(by_address[a], v, n)
-               for a, (v, n) in sorted(measured.items()) if v in UNASKED]
+    unasked = [(by_claim[k], v, n)
+               for k, (v, n) in sorted(measured.items()) if v in UNASKED]
     broken = regressed + unasked
 
     if as_json:
