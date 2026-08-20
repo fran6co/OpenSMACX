@@ -1342,33 +1342,11 @@ Purpose: Acquire the device context, taking one reference on the shared handle.
 Return Value: The device context, or zero when the surface refuses one
 Status: Complete
 */
-HDC Buffer::get_hdc() {
-    if (locked_bits_ != 0) {
-        surface_lost();
-    }
-    IDirectDrawSurface *const surface = surface_;
-    // Without a surface the buffer owns its context directly, so acquiring is
-    // just publishing the stored handle and counting the reference.
-    if (!surface) {
-        hdc2_ = hdc_;
-        ++hdc_lock_count_;
-        return hdc_;
-    }
-    if (hdc2_ != nullptr) {
-        ++hdc_lock_count_;
-        return hdc2_;
-    }
-    if (surface->GetDC(&hdc2_) != 0) {
-        surface_lost();
-    }
-    ++hdc_lock_count_;
-    return hdc2_;
-}
 
 /*
 Purpose: Drop the given number of device-context references, releasing the
          handle once the last one is gone.
-// ORIGINAL: 0x005E3563 ?release_hdc@Buffer@@QAEXH@Z 0x005E3563-0x005E35C3
+// ORIGINAL: 0x005E3563 ?release_hdc@Buffer@@QAEXH@Z 0x005E3563-0x005E35C3 BYTE_EXACT
 // size      96 bytes
 // prototype void (__thiscall ?release_hdc@Buffer@@QAEXH@Z)(Buffer* this, int)
 // callers   8   call targets   0
@@ -1378,28 +1356,6 @@ Purpose: Drop the given number of device-context references, releasing the
 // indirect  0x005E35AA 0x005E35B5
 Status: Complete
 */
-void Buffer::release_hdc(int count) {
-    IDirectDrawSurface *const surface = surface_;
-    // The count is subtracted rather than decremented, so a caller may return
-    // several references at once; the handle drops only at or below zero.
-    const int remaining = static_cast<int>(hdc_lock_count_) - count;
-    hdc_lock_count_ = static_cast<uint32_t>(remaining);
-    if (!surface) {
-        if (remaining < 1) {
-            hdc2_ = nullptr;
-            hdc_lock_count_ = 0;
-        }
-        return;
-    }
-    if (hdc2_ == nullptr || remaining >= 1) {
-        return;
-    }
-    if (surface->ReleaseDC(hdc2_) != 0) {
-        surface_lost();
-    }
-    hdc_lock_count_ = 0;
-    hdc2_ = nullptr;
-}
 
 HDC __fastcall buffer_get_hdc_redirect(Buffer *self, void *) {
     return self->get_hdc();
@@ -1525,35 +1481,19 @@ int Buffer::set_clip(RECT *rect) {
         return 1;
     }
 
-    // WRITTEN OUT, NOT CALLED. The marker above says `calls (none)`: the
-    // image has the whole `get_hdc` / `release_hdc` protocol inlined here,
-    // including the `hdc2_ != nullptr` arm that this call site's own guard
-    // makes unreachable, which is what an inlined body looks like rather
-    // than a hand-written one. VC6 will not do it for us - `/O2` implies
-    // `/Ob2` and both bodies are defined above this point, so it has seen
-    // them and declined on size - and the bodies cannot move into the header
-    // to be `inline`, because they need <ddraw.h> and `buffer.h` does not
-    // have it. `Win::init_class` writes out the same protocol for the same
-    // reason.
+    // The image inlines the whole `get_hdc` / `release_hdc` protocol here -
+    // the marker above says `calls (none)` - and both bodies are in-class in
+    // `buffer.h` so that VC6 does the same. Defined in the .cpp they are
+    // ordinary calls: `/O2` implies `/Ob2` and it has seen them, but it
+    // declines on size.
     // `int`, not `bool`: the image tests it with `cmp dword ptr [esp+0x54],
     // ebp`. A `bool` is a byte and compiles `mov al, [esp+0x54]; test al, al`.
     int acquired;
     if (hdc2_ == nullptr) {
         acquired = 1;
-        if (locked_bits_ != nullptr) {
-            surface_lost();
-        }
-        if (surface_ == nullptr) {
-            hdc2_ = hdc_;
-            ++hdc_lock_count_;
-        } else if (hdc2_ != nullptr) {
-            ++hdc_lock_count_;
-        } else {
-            if (surface_->GetDC(&hdc2_) != 0) {
-                surface_lost();
-            }
-            ++hdc_lock_count_;
-        }
+        get_hdc();
+    } else {
+        acquired = 0;
     }
     if (hdc2_ != nullptr) {
         if (clip_region_ != nullptr) {
@@ -1575,22 +1515,7 @@ int Buffer::set_clip(RECT *rect) {
         SelectClipRgn(hdc2_, region);
     }
     if (acquired) {
-        // The decrement sits inside each arm, which is where the image
-        // has it: two `dec [esi + 0x68]` sites, not one hoisted above the
-        // surface test.
-        if (surface_ == nullptr) {
-            if (static_cast<int>(--hdc_lock_count_) <= 0) {
-                hdc2_ = nullptr;
-                hdc_lock_count_ = 0;
-            }
-        } else if (static_cast<int>(--hdc_lock_count_) <= 0
-                   && hdc2_ != nullptr) {
-            if (surface_->ReleaseDC(hdc2_) != 0) {
-                surface_lost();
-            }
-            hdc_lock_count_ = 0;
-            hdc2_ = nullptr;
-        }
+        release_hdc(1);
     }
 
     if (surface_ != 0) {
