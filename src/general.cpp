@@ -769,7 +769,7 @@ int __cdecl filefind_cd_drive_letter() { return FilefindPath.cd_path[0]; }
 
 /*
 Purpose: Set an alternative path for the Filefind checks.
-// ORIGINAL: 0x006003B0 ?filefind_set_alternate@@YAXPAD@Z 0x006003B0-0x006003F6
+// ORIGINAL: 0x006003B0 ?filefind_set_alternate@@YAXPAD@Z 0x006003B0-0x006003F6 BYTE_EXACT
 // symbol    ?filefind_set_alternative@@YAXPBD@Z
 // size      70 bytes
 // prototype 

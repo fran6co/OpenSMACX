@@ -250,6 +250,8 @@ class Buffer {
   int set_clip(int left, int top, int width, int height);
   int text_width(LPSTR text);
   int text_width(LPSTR text, int len);
+  void hline(int x1, int x2, int y, int color);
+  void vline(int x, int y1, int y2, int color);
   int write_raw_l(LPSTR text, int x_coord, int y_coord, int len);
   int write_multi_font_raw_l(LPSTR text, int x_coord, int y_coord, int len);
   int text_height();
@@ -572,9 +574,6 @@ int __fastcall buffer_text_width_redirect(Buffer *self, void *, LPSTR text);
 // Both are thiscall voids (ret 0x10) whose EAX residue the box body
 // deliberately discards - the original zeroes EAX after the last call
 // (`xor eax, eax` at 0x005E327A).
-typedef void (OriginalObject::*func_buffer_line)(int, int, int, int);
-extern func_buffer_line BufferHLine;
-extern func_buffer_line BufferVLine;
 
 int __fastcall buffer_box_redirect(Buffer *self, void *, RECT *rect,
                                    int color1, int color2);

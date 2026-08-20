@@ -65,7 +65,7 @@ void Strings::shutdown() {
 
 /*
 Purpose: Put the input string into the string table.
-// ORIGINAL: 0x00616970 ?put@Strings@@QAEHPAD@Z 0x00616970-0x0061699D
+// ORIGINAL: 0x00616970 ?put@Strings@@QAEHPAD@Z 0x00616970-0x0061699D BYTE_EXACT
 // symbol    ?put@Strings@@QAEPADPBD@Z
 // size      45 bytes
 // prototype int (__thiscall ?put@Strings@@QAEHPAD@Z)(Strings* this, int8*)
