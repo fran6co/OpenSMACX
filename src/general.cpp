@@ -1250,8 +1250,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl auto_save() {
-    if (!*IsMultiplayerPBEM || *IsMultiplayerNet) { // auto-saving disabled for PBEM/HotSeat games
-        if (*GameRules & RULES_IRONMAN && !(*GameState & STATE_SCENARIO_EDITOR)) {
+    if (!IsMultiplayerPBEM || IsMultiplayerNet) { // auto-saving disabled for PBEM/HotSeat games
+        if (GameRules & RULES_IRONMAN && !(GameState & STATE_SCENARIO_EDITOR)) {
             remove("saves\\auto\\Alpha Centauri Autosave 30.SAV");
             remove("saves\\auto\\Alpha Centauri Autosave 20.SAV");
             remove("saves\\auto\\Alpha Centauri Autosave 10.SAV");
@@ -1261,7 +1261,7 @@ void __cdecl auto_save() {
             remove("saves\\auto\\Alpha Centauri Autosave 2.SAV");
             save_daemon("saves\\auto\\Alpha Centauri Autosave 1");
         } else { // standard auto saves
-            if (!(*TurnCurrentNum % 10)) {
+            if (!(TurnCurrentNum % 10)) {
                 remove("saves\\auto\\Alpha Centauri Autosave 30.SAV");
                 rename("saves\\auto\\Alpha Centauri Autosave 20.SAV",
                     "saves\\auto\\Alpha Centauri Autosave 30.SAV");
@@ -1290,11 +1290,11 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl auto_save_debug() {
-    if (*TurnCurrentNum == 1) {
+    if (TurnCurrentNum == 1) {
         remove("saves\\auto\\Alpha Centauri Autosave Turn 1.SAV");
         save_daemon("saves\\auto\\Alpha Centauri Autosave Turn 1");
     }
-    if (!(*TurnCurrentNum % 10)) {
+    if (!(TurnCurrentNum % 10)) {
         remove("saves\\auto\\Alpha Centauri Autosave 500.SAV");
         char save_path_new[45];
         char save_path_old[45];
@@ -1379,7 +1379,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl auto_undo() {
-    if (*GamePreferences & PREF_BSC_AUTOSAVE_EACH_TURN) {
+    if (GamePreferences & PREF_BSC_AUTOSAVE_EACH_TURN) {
         ScenEditorUndoPosition = 1;
         remove("saves\\auto\\Scenario Editor Undo 9.SAV");
         char save_path_new[38];

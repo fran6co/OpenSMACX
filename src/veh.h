@@ -538,11 +538,11 @@ extern LPSTR *PlansShortName;
 extern LPSTR *PlansFullName;
 extern LPSTR *Triad;
 
-extern int *VehCurrentCount;
-extern int *VehDropLiftVehID;
-extern int *VehLiftX;
-extern int *VehLiftY;
-extern BOOL *VehBitError;
+extern int VehCurrentCount;
+extern int VehDropLiftVehID;
+extern int VehLiftX;
+extern int VehLiftY;
+extern BOOL VehBitError;
 extern uint32_t *VehBasicBattleMorale;
 extern int VehMoraleModifierCount;
 // Battle related globals

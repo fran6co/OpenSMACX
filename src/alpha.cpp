@@ -373,8 +373,8 @@ BOOL __cdecl read_tech() {
     if (text_open(AlphaxFileID, "TECHNOLOGY")) {
         return true;
     }
-    *TechValidCount = 0;
-    *TechCommerceCount = 0;
+    TechValidCount = 0;
+    TechCommerceCount = 0;
     for (i = 0; i < MaxTechnologyNum; i++) {
         text_get();
         Technology[i].name = text_item_string();
@@ -388,9 +388,9 @@ BOOL __cdecl read_tech() {
         Technology[i].flags = text_item_binary();
         if (Technology[i].preq_tech_1 != DisabledValue
             && Technology[i].preq_tech_2 != DisabledValue) {
-            *TechValidCount += 1;
+            TechValidCount += 1;
             if (Technology[i].flags & TFLAG_INC_COMMERCE) {
-                *TechCommerceCount += 1;
+                TechCommerceCount += 1;
             }
         }
     }
@@ -1653,9 +1653,9 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl prefs_use() {
-    *GamePreferences = AlphaIniPrefs->preferences;
-    *GameMorePreferences = AlphaIniPrefs->more_preferences;
-    *GameWarnings = AlphaIniPrefs->announce;
+    GamePreferences = AlphaIniPrefs->preferences;
+    GameMorePreferences = AlphaIniPrefs->more_preferences;
+    GameWarnings = AlphaIniPrefs->announce;
 }
 
 /*

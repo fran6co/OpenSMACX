@@ -108,7 +108,7 @@ extern int *ParseStrGender;
 // no information and cost a load at every use.
 extern HWND HandleMain;
 
-extern uint32_t *UnkBitfield1;
+extern uint32_t UnkBitfield1;
 
 /*
  * AN OBJECT, NOT A `Filefind *`. The image takes the address of a member as

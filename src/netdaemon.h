@@ -112,8 +112,8 @@ int __fastcall net_daemon_receive_redirect(NetDaemon *self, void *);
 // not linked into recovery-leaf-tests, so NetDaemon owns its own rebindable
 // pair the way src/spying_recovery.cpp owns SpyingCurrentFaction for the very
 // same faction address.
-extern int *NetDaemonIsMultiplayerNet;
-extern int *NetDaemonLocalFaction;
+extern int NetDaemonIsMultiplayerNet;
+extern int NetDaemonLocalFaction;
 
 // message_data at 0x00592EE0 broadcasts one game event; it is still an
 // original dependency (it packs a 0x20-byte record and dispatches

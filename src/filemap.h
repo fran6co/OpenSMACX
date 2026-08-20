@@ -30,7 +30,29 @@ class Filemap {
   LPVOID open_read(LPCSTR file_name, BOOL is_sequential);
   LPVOID open(LPCSTR file_name, BOOL is_sequential);
   LPVOID create(LPCSTR file_name, uint32_t size, BOOL is_sequential);
-  void close();
+  // IN-CLASS, because `open_read` and `open` INLINE it: the image opens both
+  // with the UnmapViewOfFile/CloseHandle chain written out, not a call. VC6
+  // inlines only what it can see here, and the standalone COMDAT it still
+  // emits keeps the claim beside its marker in filemap.cpp.
+  MEASURED void close() {   // 006287C0
+      if (map_view_addr_) {
+          UnmapViewOfFile(map_view_addr_);
+          map_view_addr_ = 0;
+      }
+      if (file_map_) {
+          CloseHandle(file_map_);
+          file_map_ = 0;
+      }
+      if (file_ != INVALID_HANDLE_VALUE) {
+          CloseHandle(file_);
+          file_ = 0;
+      }
+      // NO `file_size_ = 0` HERE. The image's body runs from 0x006287C0 to
+      // 0x00628803 and stores to +0x0, +0x8 and +0x4 only; a closed Filemap
+      // keeps the size of whatever it last mapped. Clearing it is one store
+      // more than the shipped code has, and it showed up inlined in
+      // `open_read` where the image has nothing.
+  }
   void close(LPVOID new_addr);
   // additional functions to assist with encapsulation
   uint32_t get_size() { return file_size_; }

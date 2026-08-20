@@ -42,7 +42,7 @@ void __fastcall list_box_on_dialog_focus_redirect(ListBox *self, void *, int a1)
 func_dialog_close ListBoxOriginalDialogClose =
     original_method<func_dialog_close>(0x00608F50);
 uint32_t *ListBoxCloseStaticDefaults = (uint32_t *)0x006970E0;
-uint32_t *ListBoxCloseDynamicDefault = (uint32_t *)0x009B8EE0;
+uint32_t ListBoxCloseDynamicDefault;  // 0x009B8EE0
 
 namespace {
 // The three subobject vtables ListBox re-stages during teardown, the same
@@ -94,7 +94,7 @@ uint32_t ListBox::close() {
     object[0x1C / 4] = 0;
     object[0x20 / 4] = 0;
     object[0x24 / 4] = ListBoxCloseStaticDefaults[0];   // 0x006970E0
-    object[0x28 / 4] = *ListBoxCloseDynamicDefault;     // 0x009B8EE0
+    object[0x28 / 4] = ListBoxCloseDynamicDefault;     // 0x009B8EE0
     object[0x2C / 4] = ListBoxCloseStaticDefaults[1];   // 0x006970E4
     object[0x10 / 4] = ListBoxCloseStaticDefaults[2];   // 0x006970E8
     object[0x14 / 4] = ListBoxCloseStaticDefaults[3];   // 0x006970EC

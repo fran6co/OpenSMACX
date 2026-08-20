@@ -110,7 +110,7 @@ extern func_subobject_close BufferSubobjectClose;
 extern func_subobject_close WinOriginalClose;
 
 // Process default copied into field_A0C_ by close().
-extern uint32_t *GraphicWinFieldA0CDefault;
+extern uint32_t GraphicWinFieldA0CDefault;
 
 // Original virtual table addresses the destructor installs before delegating.
 extern const uint32_t GraphicWinPrimaryVtable;

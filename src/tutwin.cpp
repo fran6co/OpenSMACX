@@ -24,12 +24,12 @@
 
 // The tutorial's "already shown" marker, cleared alongside the window's own
 // state. Bound at its canonical address because nothing here owns it yet.
-uint32_t *TutWinShownFlag = (uint32_t *)0x008CC244;
+uint32_t TutWinShownFlag;  // 0x008CC244
 
 /*
 Purpose: Reset the tutorial window - four fields to zero, four to -1, and the
          shared shown-marker cleared with them.
-// ORIGINAL: 0x004BA720 ?UNK1@TutWin@@QAEXXZ 0x004BA720-0x004BA761
+// ORIGINAL: 0x004BA720 ?UNK1@TutWin@@QAEXXZ 0x004BA720-0x004BA761 BYTE_EXACT
 // size      65 bytes
 // prototype void (__thiscall ?UNK1@TutWin@@QAEXXZ)(TutWin* this)
 // callers   1   call targets   0
@@ -49,7 +49,7 @@ void TutWin::UNK1() {
     field_53AC_ = -1;
     field_53B8_ = 0;
     field_53C4_ = 0;
-    *TutWinShownFlag = 0;
+    TutWinShownFlag = 0;
 }
 
 /*

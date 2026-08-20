@@ -66,7 +66,7 @@ void SquareLock::unlock(int factionID) {
     }
     const int x = first_;
     const int y = second_;
-    if (y >= 0 && y < *MapLatitudeBounds && x >= 0 && x < *MapLongitudeBounds) {
+    if (y >= 0 && y < MapLatitudeBounds && x >= 0 && x < MapLongitudeBounds) {
         int count;
         if ((flag_ & 4) && !(flag_ & 0x10)) {
             count = (flag_ & 8) ? 81 : 25;   // RadiusRange[4] or RadiusRange[2]
@@ -76,8 +76,8 @@ void SquareLock::unlock(int factionID) {
         for (int i = 0; i < count; ++i) {
             const int nx = xrange(RadiusOffsetX[i] + first_);
             const int ny = RadiusOffsetY[i] + second_;
-            if (ny >= 0 && ny < *MapLatitudeBounds &&
-                nx >= 0 && nx < *MapLongitudeBounds) {
+            if (ny >= 0 && ny < MapLatitudeBounds &&
+                nx >= 0 && nx < MapLongitudeBounds) {
                 unlock_map(nx, ny, factionID);
             }
         }
@@ -116,7 +116,7 @@ int SquareLock::lock(int factionID, int flags, int x, int y) {
     first_ = x;
     second_ = y;
     flag_ = flags | 1;
-    if (y < 0 || y >= *MapLatitudeBounds || x < 0 || x >= *MapLongitudeBounds) {
+    if (y < 0 || y >= MapLatitudeBounds || x < 0 || x >= MapLongitudeBounds) {
         return 0;
     }
     int count;
@@ -128,8 +128,8 @@ int SquareLock::lock(int factionID, int flags, int x, int y) {
     for (int i = 0; i < count; ++i) {
         const int nx = xrange(RadiusOffsetX[i] + first_);
         const int ny = RadiusOffsetY[i] + second_;
-        if (ny >= 0 && ny < *MapLatitudeBounds &&
-            nx >= 0 && nx < *MapLongitudeBounds) {
+        if (ny >= 0 && ny < MapLatitudeBounds &&
+            nx >= 0 && nx < MapLongitudeBounds) {
             if (lock_map(nx, ny, factionID)) {
                 return 1;
             }

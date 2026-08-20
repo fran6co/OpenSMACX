@@ -99,7 +99,7 @@ class TutWin : Popup {
 static_assert(sizeof(TutWin) == 0x53D8,
               "TutWin layout must match the original executable");
 
-extern uint32_t *TutWinShownFlag;
+extern uint32_t TutWinShownFlag;
 
 void __fastcall tut_win_unk1_redirect(TutWin *self, void *);
 void __fastcall tut_win_unk3_redirect(TutWin *self, void *, int a1);

@@ -39,19 +39,19 @@ RulesBonusName *BonusName = (RulesBonusName *)0x009461A8;
 uint8_t *FactionsStatus = (uint8_t *)0x009A64E8;
 uint32_t *FactionRankings = (uint32_t *)0x009A64EC; // [8]
 uint16_t *FactionRankingHistory = (uint16_t *)0x009A68AC; // [1000][8]
-uint32_t *RankingFactionIDUnk1 = (uint32_t *)0x009A650C;
-uint32_t *RankingFactionIDUnk2 = (uint32_t *)0x009A6510;
+uint32_t RankingFactionIDUnk1;  // 0x009A650C
+uint32_t RankingFactionIDUnk2;  // 0x009A6510
 uint32_t *FactionRankingsUnk = (uint32_t *)0x00945DD8; // [8]
-int *DiploFriction = (int *)0x0093FA74; // not always bounded, should it be 0-20?
-uint32_t *DiploFrictionFactionIDWith = (uint32_t *)0x0093FABC;
-uint32_t *DiploFrictionFactionID = (uint32_t *)0x0093FAC0;
+int DiploFriction;  // 0x0093FA74 // not always bounded, should it be 0-20?
+uint32_t DiploFrictionFactionIDWith;  // 0x0093FABC
+uint32_t DiploFrictionFactionID;  // 0x0093FAC0
 // Both are outputs of scan_prototypes() and both hold a prototype id or -1.
 // buy_tech (0x005401A0) reads the first, lazily recomputing it with
 // scan_prototypes when it is still negative, and turns it into a trade item
 // code by adding 0x61. mention_prototypes (0x0053A230) reads the second, which
 // is the prototype the speaking faction brags about.
-int *BestProtoForTrade = (int *)0x0093F804;
-int *BestProtoToMention = (int *)0x0093FA40;
+int BestProtoForTrade;  // 0x0093F804
+int BestProtoToMention;  // 0x0093FA40
 // The faction whose voice the next popup speaks in. Popup::start (0x00406380)
 // and popp (0x0048C0A0) are the only readers: each bounds it to 1..7 and, when
 // Players[it].rule_flags has RFLAG_ALIEN, reads the dialogue out of
@@ -59,7 +59,7 @@ int *BestProtoToMention = (int *)0x0093FA40;
 // points publish their counterpart faction here before opening a popup, which
 // is why suggest_plan writes it unconditionally rather than only on the paths
 // that go on to show one.
-int *PopupDialogFactionID = (int *)0x0093F7CC;
+int PopupDialogFactionID;  // 0x0093F7CC
 
 /*
 Purpose: Determine if the specified faction is a Progenitor alien faction (Caretakers / Usurpers).
@@ -107,7 +107,7 @@ Status: Complete
 void __cdecl psych_check(int faction_id, int *drones, int *talents) {
     *drones = 6 - (is_human(faction_id) ? PlayersData[faction_id].diff_level : DLVL_LIBRARIAN);
     *talents = (((*drones + 2) * (PlayersData[faction_id].soc_effect_pending.efficiency < 0 ? 4
-        : PlayersData[faction_id].soc_effect_pending.efficiency + 4) * *MapAreaSqRoot) / 56) / 2;
+        : PlayersData[faction_id].soc_effect_pending.efficiency + 4) * MapAreaSqRoot) / 56) / 2;
 }
 
 /*
@@ -175,8 +175,8 @@ Return Value: Is always contact enabled? true/false
 Status: Complete
 */
 BOOL __cdecl auto_contact() {
-    return (*IsMultiplayerNet && Rules->tgl_human_always_contact_net) ? true
-        : *IsMultiplayerPBEM && Rules->tgl_humans_always_contact_pbem;
+    return (IsMultiplayerNet && Rules->tgl_human_always_contact_net) ? true
+        : IsMultiplayerPBEM && Rules->tgl_humans_always_contact_pbem;
 }
 
 /*
@@ -193,13 +193,13 @@ Status: Complete
 */
 BOOL __cdecl great_beelzebub(int faction_id, BOOL is_aggressive) {
     if (is_human(faction_id) && FactionRankings[7] == faction_id) {
-        uint32_t bases_threat = (*TurnCurrentNum + 25) / 50;
+        uint32_t bases_threat = (TurnCurrentNum + 25) / 50;
         if (bases_threat < 4) {
             bases_threat = 4;
         }
         if (PlayersData[faction_id].current_num_bases > bases_threat
             && (PlayersData[faction_id].diff_level > DLVL_SPECIALIST
-                || *GameRules & RULES_INTENSE_RIVALRY || is_aggressive)) {
+                || GameRules & RULES_INTENSE_RIVALRY || is_aggressive)) {
             return true;
         }
     }
@@ -221,8 +221,8 @@ Status: Complete
 */
 BOOL __cdecl great_satan(int faction_id, BOOL is_aggressive) {
     if (great_beelzebub(faction_id, is_aggressive)) {
-        BOOL has_intense_riv = (*GameRules & RULES_INTENSE_RIVALRY);
-        if (*TurnCurrentNum <= ((has_intense_riv ? 0 
+        BOOL has_intense_riv = (GameRules & RULES_INTENSE_RIVALRY);
+        if (TurnCurrentNum <= ((has_intense_riv ? 0 
             : (DLVL_TRANSCEND - PlayersData[faction_id].diff_level) * 50) + 100)) {
             return false;
         }
@@ -235,7 +235,7 @@ BOOL __cdecl great_satan(int faction_id, BOOL is_aggressive) {
             factor = 4;
             diff_factor = DLVL_TRANSCEND;
         } else if (PlayersData[faction_id].diff_level >= DLVL_LIBRARIAN 
-            || *GameRules & RULES_VICTORY_CONQUEST || *ObjectiveReqVictory <= 1000) {
+            || GameRules & RULES_VICTORY_CONQUEST || ObjectiveReqVictory <= 1000) {
             factor = 2;
             diff_factor = DLVL_LIBRARIAN;
         } else {
@@ -264,7 +264,7 @@ Return Value: Faction id if nearing diplomatic victory or zero
 Status: Complete
 */
 uint32_t __cdecl aah_ooga(int faction_id, int pact_faction_id) {
-    if (!(*GameRules & RULES_VICTORY_DIPLOMATIC)) {
+    if (!(GameRules & RULES_VICTORY_DIPLOMATIC)) {
         return 0; // Diplomatic Victory not allowed
     }
     uint32_t votes_total = 0;
@@ -275,7 +275,7 @@ uint32_t __cdecl aah_ooga(int faction_id, int pact_faction_id) {
     for (int player = 1; player < MaxPlayerNum; player++) {
         if (player != pact_faction_id
             && (pact_faction_id <= 0 || !has_treaty(player, pact_faction_id, DTREATY_PACT)
-                || !(*GameRules & RULES_VICTORY_COOPERATIVE))) {
+                || !(GameRules & RULES_VICTORY_COOPERATIVE))) {
             int proposal_preq = Proposal[PROP_UNITE_SUPREME_LEADER].preq_tech;
             if ((has_tech(proposal_preq, faction_id)
                 || (proposal_preq >= 0 
@@ -303,7 +303,7 @@ Status: Complete
 */
 BOOL __cdecl climactic_battle() {
     for (uint32_t i = 1; i < MaxPlayerNum; i++) {
-        if (is_human(i) && PlayersData[i].corner_market_turn > *TurnCurrentNum) {
+        if (is_human(i) && PlayersData[i].corner_market_turn > TurnCurrentNum) {
             return true; // Human controlled player initiated Corner Global Energy Market
         }
     }
@@ -335,7 +335,7 @@ Return Value: Is AI faction at climax? true/false
 Status: Complete
 */
 BOOL __cdecl at_climax(int faction_id) {
-    if (is_human(faction_id) || *GameState & STATE_UNK_1 || *DiffLevelCurrent == DLVL_CITIZEN
+    if (is_human(faction_id) || GameState & STATE_UNK_1 || DiffLevelCurrent == DLVL_CITIZEN
         || !climactic_battle()) {
         return false;
     }
@@ -343,15 +343,15 @@ BOOL __cdecl at_climax(int faction_id) {
         return true;
     }
     for (uint32_t i = 1; i < MaxPlayerNum; i++) {
-        if (i != faction_id && PlayersData[faction_id].corner_market_turn > *TurnCurrentNum
+        if (i != faction_id && PlayersData[faction_id].corner_market_turn > TurnCurrentNum
             && (!has_treaty(faction_id, i, DTREATY_PACT)
-                || !(*GameRules & RULES_VICTORY_COOPERATIVE))) {
+                || !(GameRules & RULES_VICTORY_COOPERATIVE))) {
             return true;
         }
     }
     int trans_most_min_them = 0;
     int trans_most_min_us = 0;
-    for (int player = 0; player < *BaseCurrentCount; player++) {
+    for (int player = 0; player < BaseCurrentCount; player++) {
         if (Bases[player].queue_production_id[0] == -FAC_ASCENT_TO_TRANSCENDENCE) {
             int min_accum = Bases[player].minerals_accumulated;
             if (Bases[player].faction_id_current == faction_id) {
@@ -388,8 +388,8 @@ Status: Complete
 void __cdecl cause_friction(int faction_id, int faction_id_with, int friction) {
     uint32_t *diplo_friction = &PlayersData[faction_id].diplo_friction[faction_id_with];
     *diplo_friction = range(*diplo_friction + friction, 0, 20);
-    if (*DiploFrictionFactionID == faction_id && *DiploFrictionFactionIDWith == faction_id_with) {
-        *DiploFriction += friction; // not bounded?
+    if (DiploFrictionFactionID == faction_id && DiploFrictionFactionIDWith == faction_id_with) {
+        DiploFriction += friction; // not bounded?
     }
 }
 
@@ -468,7 +468,7 @@ int __cdecl get_patience(int faction_id_with, int faction_id) {
         return has_treaty(faction_id, faction_id_with, DTREATY_HAVE_SURRENDERED) ? 500 : 6;
     }
     return (has_treaty(faction_id, faction_id_with, DTREATY_TREATY) != 0) 
-        - ((*DiploFriction + 3) / 8) + 3;
+        - ((DiploFriction + 3) / 8) + 3;
 }
 
 /*
@@ -570,8 +570,8 @@ terms cannot bridge even half of the smallest plan step it produces until the wi
 eight.
 */
 void __cdecl scan_prototypes(int faction_id, int faction_id_with) {
-    *BestProtoForTrade = -1;
-    *BestProtoToMention = -1;
+    BestProtoForTrade = -1;
+    BestProtoToMention = -1;
     int best_trade_value = 0;
     int best_mention_value = 0;
     for (int i = 0; i < MaxVehProtoFactionNum; i++) {
@@ -621,7 +621,7 @@ void __cdecl scan_prototypes(int faction_id, int faction_id_with) {
         int trade_value = unmatched ? value : (value >> 4);
         if (trade_value > best_trade_value) {
             best_trade_value = trade_value;
-            *BestProtoForTrade = proto_id;
+            BestProtoForTrade = proto_id;
         }
         uint32_t treaty = PlayersData[faction_id].diplo_treaties[faction_id_with];
         if (treaty & DTREATY_PACT) {
@@ -640,7 +640,7 @@ void __cdecl scan_prototypes(int faction_id, int faction_id_with) {
         }
         if (value > best_mention_value) {
             best_mention_value = value;
-            *BestProtoToMention = proto_id;
+            BestProtoToMention = proto_id;
         }
     }
 }
@@ -755,7 +755,7 @@ BOOL __cdecl wants_to_attack(int faction_id, int faction_id_tgt, int faction_id_
                 }
             }
             if (great_beelzebub(i, false)
-                && (*TurnCurrentNum >= 100 || *GameRules & RULES_INTENSE_RIVALRY)) {
+                && (TurnCurrentNum >= 100 || GameRules & RULES_INTENSE_RIVALRY)) {
                 if (has_treaty(faction_id_tgt, i, DTREATY_VENDETTA)) {
                     want_to_attack++;
                 }
@@ -804,7 +804,7 @@ BOOL __cdecl wants_to_attack(int faction_id, int faction_id_tgt, int faction_id_
     }
     int region_target_hq = -1;
     int region_hq = -1;
-    for (int player = 0; player < *BaseCurrentCount; player++) {
+    for (int player = 0; player < BaseCurrentCount; player++) {
         if (has_fac_built(FAC_HEADQUARTERS, player)) {
             uint32_t base_faction = Bases[player].faction_id_current;
             if (base_faction == faction_id) {
@@ -881,7 +881,7 @@ BOOL __cdecl wants_to_attack(int faction_id, int faction_id_tgt, int faction_id_
         want_to_attack--;
     }
     if (has_agenda(faction_id, faction_id_tgt, DAGENDA_UNK_200)
-        && *GameRules & RULES_INTENSE_RIVALRY) {
+        && GameRules & RULES_INTENSE_RIVALRY) {
         want_to_attack--;
     }
     want_to_attack -= range((PlayersData[faction_id_tgt].integrity_blemishes 
@@ -1015,7 +1015,7 @@ int __cdecl territory(int faction_id, int faction_id_with, int flags, int *base_
             }
         }
     }
-    for (int veh_id = 0; veh_id < *VehCurrentCount; veh_id++) {
+    for (int veh_id = 0; veh_id < VehCurrentCount; veh_id++) {
         Veh &veh = Vehs[veh_id];
         veh.state &= ~VSTATE_UNK_400;
         if (veh.faction_id != (uint8_t)faction_id_with) {
@@ -1053,20 +1053,20 @@ int __cdecl territory(int faction_id, int faction_id_with, int flags, int *base_
             continue;
         }
         int x_delta = abs(Bases[base_id].x - veh.x);
-        if (!(*MapIsFlat & 1) && x_delta > (int)*MapLongitude) {
-            x_delta = *MapLongitudeBounds - x_delta;
+        if (!(MapIsFlat & 1) && x_delta > (int)MapLongitude) {
+            x_delta = MapLongitudeBounds - x_delta;
         }
         if (((abs(Bases[base_id].y - veh.y) + x_delta) & ~1) > 4
             && !(PlayersData[faction_id].diplo_treaties[faction_id_with]
                 & (DTREATY_WANT_REVENGE | DTREATY_SHALL_BETRAY | DTREATY_UNK_800))
-            && *DiploFriction <= 12) {
+            && DiploFriction <= 12) {
             continue;
         }
         if (count_out && veh.flags & 1) {
             (*count_out)++;
         }
         veh.flags |= 3;
-        if (!(veh.state & VSTATE_UNK_800) && *SunspotDuration <= 0) {
+        if (!(veh.state & VSTATE_UNK_800) && SunspotDuration <= 0) {
             veh.state |= VSTATE_UNK_800;
         } else {
             weight += (PlayersData[faction_id].diplo_treaties[faction_id_with] & DTREATY_TREATY)
@@ -1173,7 +1173,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl add_site(int faction_id, int type, int priority, int x, int y) {
-    if ((x ^ y) & 1 && *GameState & STATE_DEBUG_MODE) {
+    if ((x ^ y) & 1 && GameState & STATE_DEBUG_MODE) {
         danger("Bad SITE", "", x, y, type);
     }
     for (int i = 0; i < MaxSitesNum; i++) {
@@ -1364,7 +1364,7 @@ Status: Complete
 */
 int __cdecl corner_market(int faction_id) {
     int cost = 0;
-    for (int i = 0; i < *BaseCurrentCount; i++) {
+    for (int i = 0; i < BaseCurrentCount; i++) {
         uint32_t target_faction_id = Bases[i].faction_id_current;
         if (target_faction_id != faction_id) {
             if (!has_treaty(target_faction_id, faction_id, DTREATY_PACT)
@@ -1513,8 +1513,8 @@ void __cdecl rankings(int apply_ranks) {
         int score;
         if (!is_alive(faction_id)) {
             score = 0;
-        } else if ((*ObjectiveReqVictory < 9000 || *ObjectivesSuddenDeathVictory < 9000)
-            && !*ObjectiveAchievePts) {
+        } else if ((ObjectiveReqVictory < 9000 || ObjectivesSuddenDeathVictory < 9000)
+            && !ObjectiveAchievePts) {
             score = num_objectives(faction_id, false) * 10;
         } else {
             score = (PlayersData[faction_id].pop_total
@@ -1534,7 +1534,7 @@ void __cdecl rankings(int apply_ranks) {
                     score += 10;
                 }
             }
-            score += num_objectives(faction_id, false) * (int)*ObjectiveAchievePts;
+            score += num_objectives(faction_id, false) * (int)ObjectiveAchievePts;
             for (int proto_id = 0; proto_id < MaxVehProtoNum; proto_id++) {
                 if (proto_id < MaxVehProtoFactionNum
                     && !has_tech(VehPrototypes[proto_id].preq_tech, faction_id)) {
@@ -1561,8 +1561,8 @@ void __cdecl rankings(int apply_ranks) {
             }
         }
         FactionRankingsUnk[faction_id] = (uint32_t)score;
-        if (*TurnCurrentNum < MaxRankingHistoryTurns) {
-            FactionRankingHistory[faction_id + *TurnCurrentNum * MaxPlayerNum] = (uint16_t)score;
+        if (TurnCurrentNum < MaxRankingHistoryTurns) {
+            FactionRankingHistory[faction_id + TurnCurrentNum * MaxPlayerNum] = (uint16_t)score;
         }
     }
     if (!apply_ranks) {
@@ -1589,17 +1589,17 @@ void __cdecl rankings(int apply_ranks) {
         }
     }
     uint32_t humans = FactionsStatus[0];
-    *RankingFactionIDUnk1 = 0;
-    *RankingFactionIDUnk2 = 0;
+    RankingFactionIDUnk1 = 0;
+    RankingFactionIDUnk2 = 0;
     for (rank = MaxPlayerNum - 1; rank >= 0; rank--) {
         if (humans & (1 << FactionRankings[rank])) {
-            *RankingFactionIDUnk1 = FactionRankings[rank];
+            RankingFactionIDUnk1 = FactionRankings[rank];
             break;
         }
     }
     for (rank = 0; rank < MaxPlayerNum; rank++) {
         if (humans & (1 << FactionRankings[rank])) {
-            *RankingFactionIDUnk2 = FactionRankings[rank];
+            RankingFactionIDUnk2 = FactionRankings[rank];
             break;
         }
     }
@@ -1609,16 +1609,16 @@ void __cdecl rankings(int apply_ranks) {
         for (int faction_id = 1; faction_id < MaxPlayerNum; faction_id++) {
             if (is_human(faction_id)
                 && (PlayersData[faction_id].diff_level >= 4
-                    || *GameRules & RULES_INTENSE_RIVALRY)) {
+                    || GameRules & RULES_INTENSE_RIVALRY)) {
                 target_id = faction_id;
             }
         }
     }
     if (!target_id) {
-        *GameState &= ~STATE_UNK_200;
+        GameState &= ~STATE_UNK_200;
         return;
     }
-    *GameState |= STATE_UNK_200;
+    GameState |= STATE_UNK_200;
     int vendetta_count = 0;
     for (faction_id = 1; faction_id < MaxPlayerNum; faction_id++) {
         if (PlayersData[faction_id].diplo_treaties[target_id] & DTREATY_VENDETTA) {
@@ -1639,7 +1639,7 @@ void __cdecl rankings(int apply_ranks) {
         if (treaty & DTREATY_UNK_4000000 && !(treaty & DTREATY_UNK_800)) {
             continue;
         }
-        int weight = (*GameRules & RULES_INTENSE_RIVALRY)
+        int weight = (GameRules & RULES_INTENSE_RIVALRY)
             ? 5 : PlayersData[target_id].diff_level;
         int urge = (int)reputation(target_id, faction_id);
         if (climactic_battle()) {
@@ -1896,7 +1896,7 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
     }
     // future pop growth
     int pop_goal_growth = 0;
-    for (i = 0; i < *BaseCurrentCount; i++) {
+    for (i = 0; i < BaseCurrentCount; i++) {
         if (Bases[i].faction_id_current == faction_id) {
             pop_goal_growth += pop_goal(i) - Bases[i].population_size;
         }
@@ -1939,9 +1939,9 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
     }
     // tech ranking
     uint32_t unk_val3 = 1;
-    if (*GameState & 0x200 // set in rankings(), related to intense riv + end game
+    if (GameState & 0x200 // set in rankings(), related to intense riv + end game
         && PlayersData[faction_id].ranking < 6) {
-        int tech_rank_diff = PlayersData[*RankingFactionIDUnk1].tech_ranking / 2
+        int tech_rank_diff = PlayersData[RankingFactionIDUnk1].tech_ranking / 2
             - PlayersData[faction_id].tech_ranking / 2;
         if (tech_rank_diff > 5) {
             unk_val3 = 2;
@@ -2189,13 +2189,13 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
                 = range(soc_eff.police, -2, 2) * PlayersData[faction_id].current_num_bases 
                 * (unk_count2 * 2 + 1);
             if (PlayersData[faction_id].tech_ranking 
-                < PlayersData[*RankingFactionIDUnk2].tech_ranking
-                && PlayersData[faction_id].ranking < PlayersData[*RankingFactionIDUnk2].ranking) {
+                < PlayersData[RankingFactionIDUnk2].tech_ranking
+                && PlayersData[faction_id].ranking < PlayersData[RankingFactionIDUnk2].ranking) {
                 police_weight *= 2;
             }
             if (PlayersData[faction_id].tech_ranking 
-                < PlayersData[*RankingFactionIDUnk1].tech_ranking
-                && PlayersData[faction_id].ranking < PlayersData[*RankingFactionIDUnk1].ranking) {
+                < PlayersData[RankingFactionIDUnk1].tech_ranking
+                && PlayersData[faction_id].ranking < PlayersData[RankingFactionIDUnk1].ranking) {
                 police_weight /= 2;
             }
             if (output && (power_val || growth_val)) {

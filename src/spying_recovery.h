@@ -3,10 +3,10 @@
 
 // Globals the spying check reads, all owned by the original image.
 extern uint32_t *SpyingStatusTable;      // [faction * 2099 + subject]
-extern int *SpyingCurrentFaction;
-extern int *SpyingBaseIndex;
+extern int SpyingCurrentFaction;
+extern int SpyingBaseIndex;
 extern uint8_t *SpyingBaseFactionBytes;  // Bases[index] + 4
-extern int *SpyingObserverFaction;
+extern int SpyingObserverFaction;
 extern uint8_t *SpyingFactionFlagBytes;  // Factions[index] + 0
 
 static const size_t SpyingStatusStride = 2099;

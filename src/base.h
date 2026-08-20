@@ -502,24 +502,24 @@ extern RulesFacility *Facility;
 extern RulesCitizen *Citizen;
 extern Base *Bases;
 extern BaseSecretProject *SecretProject;
-extern int *BaseIDCurrentSelected;
-extern int *BaseCurrentCount;
-extern int *BaseFindDist;
+extern int BaseIDCurrentSelected;
+extern int BaseCurrentCount;
+extern int BaseFindDist;
 extern Base **BaseCurrent;
-extern uint32_t *ScnVictFacilityObj;
-extern uint32_t *BaseUpkeepStage;
+extern uint32_t ScnVictFacilityObj;
+extern uint32_t BaseUpkeepStage;
 extern uint32_t *BaseCurrentConvoyFrom; // resources convoyed from base
 extern uint32_t *BaseCurrentConvoyTo; // resources convoyed/extracted to base
-extern int *BaseCurrentGrowthRate;
-extern uint32_t *BaseCurrentVehPacifismCount;
-extern uint32_t *BaseCurrentForcesSupported; // Forces Supported by Base
-extern uint32_t *BaseCurrentForcesMaintCost; // Minerals expended for Forces Supported maintenance
-extern uint32_t *BaseCurrentForcesMaintCount; // Forces past the free allowance; never read back
-extern int *TileYieldRestricted; // resource a square lost to the per-square restriction
-extern int *BaseSquareEnergy; // energy_yield's publication for a base square
-extern int *GovernorFaction; // elected Planetary Governor; see the note in base.cpp
-extern int *GlobalEnergyEventState; // energy tripling state driven by random_events
-extern int *UnkGlobal0093A934; // TODO: identify global; selects the bit above
+extern int BaseCurrentGrowthRate;
+extern uint32_t BaseCurrentVehPacifismCount;
+extern uint32_t BaseCurrentForcesSupported; // Forces Supported by Base
+extern uint32_t BaseCurrentForcesMaintCost; // Minerals expended for Forces Supported maintenance
+extern uint32_t BaseCurrentForcesMaintCount; // Forces past the free allowance; never read back
+extern int TileYieldRestricted; // resource a square lost to the per-square restriction
+extern int BaseSquareEnergy; // energy_yield's publication for a base square
+extern int GovernorFaction; // elected Planetary Governor; see the note in base.cpp
+extern int GlobalEnergyEventState; // energy tripling state driven by random_events
+extern int UnkGlobal0093A934; // TODO: identify global; selects the bit above
 
 BOOL __cdecl has_fac(int facility_id, int base_id, int queue_count);
 void __cdecl set_base(int base_id);

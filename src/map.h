@@ -289,38 +289,38 @@ const int CornerOffsetY[4][4] = {
     {  1,  0,  1,  2 },
 };
 
-extern int *MapLongitudeBounds; // x
-extern int *MapLatitudeBounds; // y
-extern uint32_t *MapRandSeed;
-extern int *MapSeaLevel;
-extern int *MapSeaLevelCouncil; // Solar Shade (-3); Melt Polar Caps (+3)
-extern uint32_t *MapArea;
-extern uint32_t *MapAreaSqRoot;
-extern BOOL *MapIsFlat;
-extern int *MapLandmarkCount;
+extern int MapLongitudeBounds; // x
+extern int MapLatitudeBounds; // y
+extern uint32_t MapRandSeed;
+extern int MapSeaLevel;
+extern int MapSeaLevelCouncil; // Solar Shade (-3); Melt Polar Caps (+3)
+extern uint32_t MapArea;
+extern uint32_t MapAreaSqRoot;
+extern BOOL MapIsFlat;
+extern int MapLandmarkCount;
 extern Landmark *MapLandmark;
-extern uint32_t *MapAbstractLongBounds; // abstract x
-extern uint32_t *MapAbstractLatBounds; // abstract y
-extern uint32_t *MapAbstractArea;
-extern uint32_t *MapSizePlanet;
-extern uint32_t *MapOceanCoverage;
-extern uint32_t *MapLandCoverage; // 2 - MapOceanCoverage
-extern uint32_t *MapErosiveForces;
-extern uint32_t *MapPlanetaryOrbit; // affects temp
-extern uint32_t *MapCloudCover; // affects rainfall, rivers
-extern uint32_t *MapNativeLifeForms;
+extern uint32_t MapAbstractLongBounds; // abstract x
+extern uint32_t MapAbstractLatBounds; // abstract y
+extern uint32_t MapAbstractArea;
+extern uint32_t MapSizePlanet;
+extern uint32_t MapOceanCoverage;
+extern uint32_t MapLandCoverage; // 2 - MapOceanCoverage
+extern uint32_t MapErosiveForces;
+extern uint32_t MapPlanetaryOrbit; // affects temp
+extern uint32_t MapCloudCover; // affects rainfall, rivers
+extern uint32_t MapNativeLifeForms;
 extern LPSTR *MapFilePath;
 extern Map **MapTiles;
 extern uint8_t **MapAbstract;
-extern int *MapBaseSubmergedCount;
-extern int *MapBaseIdClosestSubmergedVeh;
-extern uint32_t *BrushVal1; // TODO: more descriptive variable name
-extern uint32_t *BrushVal2; // TODO: more descriptive variable name
-extern uint32_t *WorldBuildVal1; // TODO: more descriptive variable name
+extern int MapBaseSubmergedCount[8];
+extern int MapBaseIdClosestSubmergedVeh[8];
+extern uint32_t BrushVal1; // TODO: more descriptive variable name
+extern uint32_t BrushVal2; // TODO: more descriptive variable name
+extern uint32_t WorldBuildVal1; // TODO: more descriptive variable name
 
 extern Continent *Continents;
 extern RulesNatural *Natural;
-extern uint32_t *MapLongitude; // halve of MapLongitudeBounds
+extern uint32_t MapLongitude; // halve of MapLongitudeBounds
 extern uint32_t *AltNatural; // Default: { 0, 15, 32, 45, 60,  75,  80, 100, 100, 100, 100 };
 
 BOOL __cdecl on_map(int x, int y);

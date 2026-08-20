@@ -114,12 +114,12 @@ typedef int (__cdecl *ScrollPrimaryInitProc)(
     Scroll *, int, int, int, int, Win *, int, int);
 extern ScrollPrimaryInitProc ScrollPrimaryInit;
 extern int ScrollDefaultThickness;
-extern int *ScrollNonClientInit;
+extern int ScrollNonClientInit;
 // Defaults copied by close(). The static table contains eleven process
 // constants; the dynamic table spans seventeen process-owned slots, including
 // the sprite defaults and one intentionally unused hole.
-extern uint32_t *ScrollCloseStaticDefaults;
-extern uint32_t *ScrollCloseDynamicDefaults;
+extern uint32_t ScrollCloseStaticDefaults;
+extern uint32_t ScrollCloseDynamicDefaults;
 // The two virtual tables the destructor stages before running close.
 extern const uint32_t ScrollPrimaryVtable;
 extern const uint32_t ScrollBufferVtable;

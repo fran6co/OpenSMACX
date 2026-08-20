@@ -24,9 +24,9 @@ Win **ScrollCurrentWin = reinterpret_cast<Win **>(0x009B7AB8);
 // load at every use where the image addresses the storage directly, and
 // the address is terranx.exe's data, unmapped in a standalone build.
 int ScrollDefaultThickness;  // 0x009B8DD4
-int *ScrollNonClientInit = (int *)0x009B8E24;
-uint32_t *ScrollCloseStaticDefaults = (uint32_t *)0x00697020;
-uint32_t *ScrollCloseDynamicDefaults = (uint32_t *)0x009B8DE0;
+int ScrollNonClientInit;  // 0x009B8E24
+uint32_t ScrollCloseStaticDefaults;  // 0x00697020
+uint32_t ScrollCloseDynamicDefaults;  // 0x009B8DE0
 
 namespace {
 

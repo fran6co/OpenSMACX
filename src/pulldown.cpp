@@ -239,8 +239,8 @@ int __fastcall pull_down_get_selected_redirect(PullDown *self, void *) {
 func_sprite_free *PullDownFree = (func_sprite_free *)0x00644EF2;
 const uint32_t PullDownPrimaryVtable = 0x0066FF40;
 const uint32_t PullDownBufferVtable = 0x0066FF38;
-uint32_t *PullDownFieldF38Default = (uint32_t *)0x009B7B58;
-uint32_t *PullDownFieldF3CDefault = (uint32_t *)0x009B7B5C;
+uint32_t PullDownFieldF38Default;  // 0x009B7B58
+uint32_t PullDownFieldF3CDefault;  // 0x009B7B5C
 
 /*
 Purpose: Destroy a PullDown by releasing every item's text pair, resetting
@@ -281,8 +281,8 @@ PullDown *__fastcall pull_down_destructor_redirect(PullDown *self, void *) {
 
     *reinterpret_cast<volatile uint8_t *>(
         reinterpret_cast<uint8_t *>(self) + 0xF34) = 1;
-    ordered[0xF38 / 4] = *PullDownFieldF38Default;
-    ordered[0xF3C / 4] = *PullDownFieldF3CDefault;
+    ordered[0xF38 / 4] = PullDownFieldF38Default;
+    ordered[0xF3C / 4] = PullDownFieldF3CDefault;
     graphic_win_destructor_redirect(
         reinterpret_cast<GraphicWin *>(self), nullptr);
     return self;

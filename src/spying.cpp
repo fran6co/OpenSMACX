@@ -11,10 +11,10 @@
 #include "spying_recovery.h"
 
 uint32_t *SpyingStatusTable = (uint32_t *)0x0096C9F8;
-int *SpyingCurrentFaction = (int *)0x00939284;
-int *SpyingBaseIndex = (int *)0x009A6524;
+int SpyingCurrentFaction;  // 0x00939284
+int SpyingBaseIndex;  // 0x009A6524
 uint8_t *SpyingBaseFactionBytes = (uint8_t *)0x0097D044;
-int *SpyingObserverFaction = (int *)0x009A6614;
+int SpyingObserverFaction;  // 0x009A6614
 uint8_t *SpyingFactionFlagBytes = (uint8_t *)0x00946F58;
 
 /*
@@ -44,7 +44,7 @@ point the harness at that gate; measured against the leaf suite the result is
 vacuous by construction.
 */
 int __cdecl spying(int subject) {
-    const int faction = *SpyingCurrentFaction;
+    const int faction = SpyingCurrentFaction;
     // Status word for this faction/subject pair; bit 12 grants visibility
     // outright.
     const size_t status_index =
@@ -54,7 +54,7 @@ int __cdecl spying(int subject) {
         return 1;
     }
     // A tracked base belonging to the current faction also grants it.
-    const int base_index = *SpyingBaseIndex;
+    const int base_index = SpyingBaseIndex;
     if (base_index >= 0) {
         const uint8_t base_faction =
             SpyingBaseFactionBytes[static_cast<size_t>(base_index)
@@ -65,7 +65,7 @@ int __cdecl spying(int subject) {
     }
     // Otherwise the observing faction sees every subject whose high flag bit
     // is clear.
-    if (faction != *SpyingObserverFaction) {
+    if (faction != SpyingObserverFaction) {
         return 0;
     }
     const uint8_t flags =
@@ -85,9 +85,9 @@ bool run_spying_oracle_suite() {
     // globals, so every branch is compared by driving the two selector globals
     // across their interesting values and sweeping the subject index.
     OriginalSpying original = reinterpret_cast<OriginalSpying>(0x0055BC00U);
-    const int saved_base = *SpyingBaseIndex;
-    const int saved_observer = *SpyingObserverFaction;
-    const int saved_faction = *SpyingCurrentFaction;
+    const int saved_base = SpyingBaseIndex;
+    const int saved_observer = SpyingObserverFaction;
+    const int saved_faction = SpyingCurrentFaction;
     bool passed = true;
 
     // The current faction scales the status-table index, so it must be swept:
@@ -118,7 +118,7 @@ bool run_spying_oracle_suite() {
         cell = static_cast<uint8_t>(b);
     }
     for (int faction = 0; faction < 8 && passed; ++faction) {
-        *SpyingCurrentFaction = faction;
+        SpyingCurrentFaction = faction;
         const int observers[] = {faction, faction + 1, -1};
         for (size_t base_index_index = 0;
              base_index_index < sizeof(base_indices) / sizeof(base_indices[0]);
@@ -128,8 +128,8 @@ bool run_spying_oracle_suite() {
                  observer_index < sizeof(observers) / sizeof(observers[0]);
                  ++observer_index) {
                 int observer = observers[observer_index];
-                *SpyingBaseIndex = base_index;
-                *SpyingObserverFaction = observer;
+                SpyingBaseIndex = base_index;
+                SpyingObserverFaction = observer;
                 for (int subject = 0; subject < 8 && passed; ++subject) {
                     if (original(subject) != spying(subject)) {
                         passed = false;
@@ -152,8 +152,8 @@ bool run_spying_oracle_suite() {
     for (b = 0; b < 8; ++b) {
         SpyingBaseFactionBytes[b * SpyingBaseStride] = saved_base_bytes[b];
     }
-    *SpyingCurrentFaction = saved_faction;
-    *SpyingBaseIndex = saved_base;
-    *SpyingObserverFaction = saved_observer;
+    SpyingCurrentFaction = saved_faction;
+    SpyingBaseIndex = saved_base;
+    SpyingObserverFaction = saved_observer;
     return passed;
 }

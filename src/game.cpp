@@ -27,29 +27,29 @@
 #include "veh.h"
 
 BOOL ExpansionEnabled;  // 0x009A6488
-uint32_t *GamePreferences = (uint32_t *)0x009A6490;
-uint32_t *GameMorePreferences = (uint32_t *)0x009A6494;
-uint32_t *GameWarnings = (uint32_t *)0x009A6498;
-uint32_t *GameRules = (uint32_t *)0x009A649C;
-uint32_t *GameState = (uint32_t *)0x009A64C0;
-int *DiffLevelCurrent = (int *)0x009A64C4;
-int *TurnCurrentNum = (int *)0x009A64D4;
-uint32_t *ObjectiveReqVictory = (uint32_t *)0x0094B4C0;
-uint32_t *ObjectivesSuddenDeathVictory = (uint32_t *)0x0094B4C4;
-uint32_t *ObjectiveAchievePts = (uint32_t *)0x0094B4C8;
-uint32_t *VictoryAchieveBonusPts = (uint32_t *)0x0094B4CC;
-uint32_t *MissionYearCurrent = (uint32_t *)0x009A64D8;
-uint32_t *StartingMissionYear = (uint32_t *)0x0094B4D0;
-uint32_t *EndingMissionYear = (uint32_t *)0x0094B4D4;
+uint32_t GamePreferences;  // 0x009A6490
+uint32_t GameMorePreferences;  // 0x009A6494
+uint32_t GameWarnings;  // 0x009A6498
+uint32_t GameRules;  // 0x009A649C
+uint32_t GameState;  // 0x009A64C0
+int DiffLevelCurrent;  // 0x009A64C4
+int TurnCurrentNum;  // 0x009A64D4
+uint32_t ObjectiveReqVictory;  // 0x0094B4C0
+uint32_t ObjectivesSuddenDeathVictory;  // 0x0094B4C4
+uint32_t ObjectiveAchievePts;  // 0x0094B4C8
+uint32_t VictoryAchieveBonusPts;  // 0x0094B4CC
+uint32_t MissionYearCurrent;  // 0x009A64D8
+uint32_t StartingMissionYear;  // 0x0094B4D0
+uint32_t EndingMissionYear;  // 0x0094B4D4
 uint32_t *TectonicDetonationCount = (uint32_t *)0x00946138; // [8]; value for each faction
-int *SunspotDuration = (int *)0x009A6800;
-uint32_t *MountPlanetX = (uint32_t *)0x009A6804;
-uint32_t *MountPlanetY = (uint32_t *)0x009A6808;
-int *DustCloudDuration = (int *)0x009A680C;
-BOOL *IsMultiplayerNet = (BOOL *)0x0093F660; // DirectPlay - Serial, Modem, Internet (TCP/IP)
-BOOL *IsMultiplayerPBEM = (BOOL *)0x0093A95C; // HotSeat / PBEM
-uint8_t *NetTurnFlags = (uint8_t *)0x009A681C;
-int *NetTurnFaction = (int *)0x009A6820;
+int SunspotDuration;  // 0x009A6800
+uint32_t MountPlanetX;  // 0x009A6804
+uint32_t MountPlanetY;  // 0x009A6808
+int DustCloudDuration;  // 0x009A680C
+BOOL IsMultiplayerNet;  // 0x0093F660 // DirectPlay - Serial, Modem, Internet (TCP/IP)
+BOOL IsMultiplayerPBEM;  // 0x0093A95C // HotSeat / PBEM
+uint8_t NetTurnFlags;  // 0x009A681C
+int NetTurnFaction;  // 0x009A6820
 
 /*
 Purpose: Wrap an x coordinate the way reset_territory() wraps it.
@@ -65,13 +65,13 @@ original rather than in the transcription. world_site() at 005C4FD0 carries the
 same distinction as map.cpp's site_xrange().
 */
 static int territory_xrange(int x) {
-    if (!(*MapIsFlat & 1)) {
+    if (!(MapIsFlat & 1)) {
         if (x >= 0) {
-            if (x >= *MapLongitudeBounds) {
-                x -= *MapLongitudeBounds;
+            if (x >= MapLongitudeBounds) {
+                x -= MapLongitudeBounds;
             }
         } else {
-            x += *MapLongitudeBounds;
+            x += MapLongitudeBounds;
         }
     }
     return x;
@@ -150,8 +150,8 @@ void __cdecl reset_territory() {
         Continents[region].unk_3 = 0;
     }
     Map *tile = *MapTiles;
-    for (int y = 0; y < *MapLatitudeBounds; y++) {
-        for (int x = y & 1; x < *MapLongitudeBounds; x += 2, tile++) {
+    for (int y = 0; y < MapLatitudeBounds; y++) {
+        for (int x = y & 1; x < MapLongitudeBounds; x += 2, tile++) {
             int region = tile->region;
             for (int faction_id = 1; faction_id < MaxPlayerNum; faction_id++) {
                 uint32_t flags = PlayersData[faction_id].flags;
@@ -172,7 +172,7 @@ void __cdecl reset_territory() {
                 if (is_ocean_tile) {
                     max_dist >>= 1;
                 }
-                if (*BaseFindDist < max_dist) {
+                if (BaseFindDist < max_dist) {
                     owner = Bases[base_id].faction_id_current;
                 }
             }
@@ -192,7 +192,7 @@ void __cdecl reset_territory() {
             }
             if (owner != tile->territory) {
                 tile->bit2 |= 0x400000; // TODO: identify value
-                *UnkBitfield1 |= 1; // TODO: identify global + value
+                UnkBitfield1 |= 1; // TODO: identify global + value
             }
             tile->territory = (int8_t)owner;
             if (owner < 0) {
@@ -235,7 +235,7 @@ void __cdecl reset_territory() {
             PlayersData[owner].unk_83[region]++;
             if (owner) {
                 if (tile->visibility & (1 << owner)
-                    || (!is_human(owner) && *DiffLevelCurrent > 3)) {
+                    || (!is_human(owner) && DiffLevelCurrent > 3)) {
                     add_site(owner, 3, 1, x, y);
                 }
                 continue;
@@ -245,7 +245,7 @@ void __cdecl reset_territory() {
                     continue;
                 }
                 if (!(tile->visibility & (1 << faction_id))
-                    && (is_human(faction_id) || *DiffLevelCurrent <= 3)) {
+                    && (is_human(faction_id) || DiffLevelCurrent <= 3)) {
                     continue;
                 }
                 if (at_site(faction_id, 3, x, y)) {
@@ -255,7 +255,7 @@ void __cdecl reset_territory() {
                     continue;
                 }
                 int limit = (int)Rules->territory_max_dist_base;
-                if (*BaseFindDist < limit || *BaseFindDist > limit + limit) {
+                if (BaseFindDist < limit || BaseFindDist > limit + limit) {
                     continue;
                 }
                 add_site(faction_id, 3, 1, x, y);
@@ -267,7 +267,7 @@ void __cdecl reset_territory() {
 /*
 Purpose: Determine whether the turn currently belongs to another faction in a
          networked game, which is what gates local input.
-// ORIGINAL: 0x0052DC70 ?not_my_turn@@YAHXZ 0x0052DC70-0x0052DC9C
+// ORIGINAL: 0x0052DC70 ?not_my_turn@@YAHXZ 0x0052DC70-0x0052DC9C BYTE_EXACT
 // size      44 bytes
 // prototype 
 // callers   8   call targets   0
@@ -281,15 +281,15 @@ Status: Complete
 BOOL __cdecl not_my_turn() {
     // Both guards return before the comparison, so a non-net game and a net
     // game that is not currently passing the turn are both "my turn".
-    if (!*IsMultiplayerNet) {
+    if (!IsMultiplayerNet) {
         return false;
     }
-    if (!(*NetTurnFlags & 0x10)) {
+    if (!(NetTurnFlags & 0x10)) {
         return false;
     }
     // `cmp ecx, edx` / `setne al`: the result is the inequality itself, not a
     // normalised flag, and the faction identity is what decides it.
-    return *NetTurnFaction != *LocalFaction;
+    return NetTurnFaction != LocalFaction;
 }
 
 /*
@@ -313,8 +313,8 @@ void __cdecl planetfall(int faction_id) {
     parse_set(Players[faction_id].noun_gender, Players[faction_id].is_noun_plural);
     parse_says(1, Players[faction_id].noun_faction, -1, -1); // unused in script, leaving in for now
     char script_id[13];
-    if (*TurnCurrentNum) { // shifted logic to top to fix nonexistent accelerated script ids
-        parse_num(0, *TurnCurrentNum);
+    if (TurnCurrentNum) { // shifted logic to top to fix nonexistent accelerated script ids
+        parse_num(0, TurnCurrentNum);
         for (uint32_t i = 0; i < MaxSecretProjectNum; i++) {
             if (has_project(i, faction_id)) { // script assumes at least one SP is built per faction
                 parse_says(4, Facility[FAC_HUMAN_GENOME_PROJ + i].name, -1, -1);
@@ -344,18 +344,18 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl clear_scenario() {
-    *ObjectiveReqVictory = 9999;
-    *ObjectivesSuddenDeathVictory = 9999;
-    *ObjectiveAchievePts = 0;
-    *VictoryAchieveBonusPts = 0;
-    *StartingMissionYear = Rules->normal_starting_year;
-    *EndingMissionYear = *DiffLevelCurrent < DLVL_LIBRARIAN
+    ObjectiveReqVictory = 9999;
+    ObjectivesSuddenDeathVictory = 9999;
+    ObjectiveAchievePts = 0;
+    VictoryAchieveBonusPts = 0;
+    StartingMissionYear = Rules->normal_starting_year;
+    EndingMissionYear = DiffLevelCurrent < DLVL_LIBRARIAN
         ? Rules->normal_end_year_low_three_diff : Rules->normal_end_year_high_three_diff;
 }
 
 /*
 Purpose: Calculate game year from start date and turn number.
-// ORIGINAL: 0x005C89A0 ?game_year@@YAHH@Z 0x005C89A0-0x005C89B0
+// ORIGINAL: 0x005C89A0 ?game_year@@YAHH@Z 0x005C89A0-0x005C89B0 BYTE_EXACT
 // symbol    ?game_year@@YAIH@Z
 // size      16 bytes
 // prototype int (__cdecl ?game_year@@YAHH@Z)(int turn)
@@ -367,7 +367,7 @@ Return Value: Game year
 Status: Complete
 */
 uint32_t __cdecl game_year(int turn) {
-    return *StartingMissionYear + turn;
+    return StartingMissionYear + turn;
 }
 
 /*
@@ -384,7 +384,7 @@ Status: Complete
 */
 void __cdecl say_year(LPSTR output) {
     char year[80];
-    _itoa_s(game_year(*TurnCurrentNum), year, 80, 10);
+    _itoa_s(game_year(TurnCurrentNum), year, 80, 10);
     strcat_s(output, 80, year);
 }
 
@@ -462,7 +462,7 @@ captor's own redraw pass in the same call. Transcribed as written.
 */
 void __cdecl repair_phase(int faction_id) {
     PlayersData[faction_id].sat_odp_deployed = 0;
-    for (int veh_id = 0; veh_id < *VehCurrentCount; veh_id++) {
+    for (int veh_id = 0; veh_id < VehCurrentCount; veh_id++) {
         if (Vehs[veh_id].faction_id != faction_id) {
             continue;
         }
@@ -475,7 +475,7 @@ void __cdecl repair_phase(int faction_id) {
         Vehs[veh_id].flags &= (uint16_t)~VFLAG_UNK_1000;
         // One unit in four each turn, cycling by unit id so the whole table is covered every
         // fourth turn rather than all at once.
-        if (!((*TurnCurrentNum + veh_id) & 3)) {
+        if (!((TurnCurrentNum + veh_id) & 3)) {
             Vehs[veh_id].state &= ~VSTATE_UNK_800;
             uint16_t flags = Vehs[veh_id].flags;
             if (flags & VFLAG_UNK_2) {
@@ -635,7 +635,7 @@ void __cdecl repair_phase(int faction_id) {
             }
         }
     }
-    for (veh_id = 0; veh_id < *VehCurrentCount; veh_id++) {
+    for (veh_id = 0; veh_id < VehCurrentCount; veh_id++) {
         int veh_faction_id = Vehs[veh_id].faction_id;
         if (veh_faction_id != faction_id) {
             continue;
@@ -649,8 +649,8 @@ void __cdecl repair_phase(int faction_id) {
                 continue;  // the base's own draw covers it
             }
         }
-        if (veh_faction_id != *LocalFaction
-            && !(Vehs[veh_id].visibility & (1 << *LocalFaction))) {
+        if (veh_faction_id != LocalFaction
+            && !(Vehs[veh_id].visibility & (1 << LocalFaction))) {
             continue;
         }
         draw_tile(x, y, -1);
@@ -681,7 +681,7 @@ void __cdecl repair_phase(int faction_id) {
 // The faction the human is playing, at 0x00939284. netdaemon.cpp binds the
 // same address as NetDaemonLocalFaction; that duplicate predates this file and
 // is left alone rather than churned, but new callers should reach for this one.
-int *LocalFaction = (int *)0x00939284;
+int LocalFaction;  // 0x00939284
 
 /*
 Purpose: The ceiling on a single energy allocation slider. The legacy

@@ -594,15 +594,15 @@ extern uint32_t *FactionRankings;
 // MaxRankingHistoryTurns turns and indexed faction + turn * MaxPlayerNum. Sixteen bits per
 // entry, which is why a score above 65535 wraps in the graph and not in the ranking.
 extern uint16_t *FactionRankingHistory;
-extern uint32_t *RankingFactionIDUnk1;
-extern uint32_t *RankingFactionIDUnk2;
+extern uint32_t RankingFactionIDUnk1;
+extern uint32_t RankingFactionIDUnk2;
 extern uint32_t *FactionRankingsUnk;
-extern int *DiploFriction;
-extern uint32_t *DiploFrictionFactionIDWith;
-extern uint32_t *DiploFrictionFactionID;
-extern int *BestProtoForTrade;
-extern int *BestProtoToMention;
-extern int *PopupDialogFactionID;
+extern int DiploFriction;
+extern uint32_t DiploFrictionFactionIDWith;
+extern uint32_t DiploFrictionFactionID;
+extern int BestProtoForTrade;
+extern int BestProtoToMention;
+extern int PopupDialogFactionID;
 
 BOOL __cdecl is_alien_faction(uint32_t faction_id);
 BOOL __cdecl is_human(uint32_t faction_id);
