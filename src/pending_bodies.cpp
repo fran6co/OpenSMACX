@@ -81,6 +81,14 @@ int Sprite::draw(Buffer *buffer, int a, int b, int c) {
     return PENDING_BODY(0x005E4B9A, pending)(this, nullptr, buffer, a, b, c);
 }
 
+// ?exec@BasePop@@QAEHHP6AHXZ@Z at 0x00602600 - the modal loop both `exec`
+// overloads wrap.
+//             body in src/unrecovered/00602600.cpp
+int BasePop::exec(int flags, int(__cdecl *callback)()) {
+    typedef int(__fastcall *pending)(BasePop *, void *, int, int(__cdecl *)());
+    return PENDING_BODY(0x00602600, pending)(this, nullptr, flags, callback);
+}
+
 // ?write_raw_l@Buffer@@QAEHPADHHH@Z at 0x005DBD00 - 1475 bytes, the raster
 // writer that puts one single-font run on the surface. Called by name from
 // `write_multi_font_raw_l`, which is promoted; a pointer here would cost that

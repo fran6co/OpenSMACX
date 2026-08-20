@@ -48,33 +48,20 @@ void __fastcall base_pop_set_loc_redirect(BasePop *self, void *, int x, int y) {
     self->set_loc(x, y);
 }
 
-Font **BasePopDefaultStringFonts = reinterpret_cast<Font **>(0x009B8D98);
-Font **BasePopDefaultButtonFonts = reinterpret_cast<Font **>(0x009B8DA8);
+Font *BasePopDefaultStringFonts[4];  // 0x009B8D98
+Font *BasePopDefaultButtonFonts[3];  // 0x009B8DA8
 
 namespace {
 
 // Shared by every default-font setter in the codebase: the primary is
 // published only when it is initialized, the remaining slots are stored
 // unconditionally, and only a null primary is an error.
-int publish_default_fonts(Font **slots, Font *const *fonts, size_t count) {
-    if (!fonts[0]) {
-        return 3;
-    }
-    volatile Font **const target = const_cast<volatile Font **>(slots);
-    if (fonts[0]->is_initialized()) {
-        target[0] = fonts[0];
-    }
-    for (size_t index = 1; index < count; ++index) {
-        target[index] = fonts[index];
-    }
-    return 0;
-}
 
 }  // namespace
 
 /*
 Purpose: Set the default string fonts shared by every popup.
-// ORIGINAL: 0x006048C0 ?set_def_string_font@BasePop@@QAAHPAUFont@@PAUFont@@PAUFont@@PAUFont@@@Z 0x006048C0-0x006048FA
+// ORIGINAL: 0x006048C0 ?set_def_string_font@BasePop@@QAAHPAUFont@@PAUFont@@PAUFont@@PAUFont@@@Z 0x006048C0-0x006048FA BYTE_EXACT
 // symbol    ?set_def_string_font@BasePop@@SAHPAVFont@@000@Z
 // size      58 bytes
 // prototype 
@@ -87,13 +74,25 @@ Status: Complete
 */
 int BasePop::set_def_string_font(Font *font1, Font *font2, Font *font3,
                                  Font *font4) {
-    Font *const fonts[4] = {font1, font2, font3, font4};
-    return publish_default_fonts(BasePopDefaultStringFonts, fonts, 4);
+    // WRITTEN OUT, not published through a helper: the image tests the
+    // first font, stores it ONLY when it is initialised, and then stores the
+    // other three unconditionally. A loop over an array of four cannot make
+    // that asymmetry, and the helper is a call the image does not have.
+    if (font1 == nullptr) {
+        return 3;
+    }
+    if (font1->is_initialized()) {
+        BasePopDefaultStringFonts[0] = font1;
+    }
+    BasePopDefaultStringFonts[1] = font2;
+    BasePopDefaultStringFonts[2] = font3;
+    BasePopDefaultStringFonts[3] = font4;
+    return 0;
 }
 
 /*
 Purpose: Set the default button fonts shared by every popup.
-// ORIGINAL: 0x006049C0 ?set_def_button_font@BasePop@@QAAHPAUFont@@PAUFont@@PAUFont@@@Z 0x006049C0-0x006049F0
+// ORIGINAL: 0x006049C0 ?set_def_button_font@BasePop@@QAAHPAUFont@@PAUFont@@PAUFont@@@Z 0x006049C0-0x006049F0 BYTE_EXACT
 // symbol    ?set_def_button_font@BasePop@@SAHPAVFont@@00@Z
 // size      48 bytes
 // prototype 
@@ -105,8 +104,15 @@ Return Value: No errors (0); invalid primary font (3)
 Status: Complete
 */
 int BasePop::set_def_button_font(Font *font1, Font *font2, Font *font3) {
-    Font *const fonts[3] = {font1, font2, font3};
-    return publish_default_fonts(BasePopDefaultButtonFonts, fonts, 3);
+    if (font1 == nullptr) {
+        return 3;
+    }
+    if (font1->is_initialized()) {
+        BasePopDefaultButtonFonts[0] = font1;
+    }
+    BasePopDefaultButtonFonts[1] = font2;
+    BasePopDefaultButtonFonts[2] = font3;
+    return 0;
 }
 
 int __cdecl base_pop_set_def_string_font_redirect(
@@ -123,28 +129,20 @@ int __cdecl base_pop_set_def_button_font_redirect(
 // four tiers so its slots are 0x10 apart; the button table has three, so its
 // slots are 0xC apart. Getting that stride wrong writes into a sibling slot
 // rather than a sibling tier, which is why the tests compare whole tables.
-uint32_t *BasePopDefaultStringColors = reinterpret_cast<uint32_t *>(0x00696EE4);
-uint32_t *BasePopDefaultButtonColors = reinterpret_cast<uint32_t *>(0x00696F24);
+// ARRAYS, NOT POINTERS, and the shape is [slot][tier]: the string table has
+// four tiers so its four slots are 0x10 apart, the button table has three so
+// its slots are 0xC apart. `BasePopDefaultStringColors[1][0]` is 0x00696EF4,
+// which is where the image's second store goes.
+uint32_t BasePopDefaultStringColors[4][4];  // 0x00696EE4
+uint32_t BasePopDefaultButtonColors[4][3];  // 0x00696F24
 
 namespace {
-
-static const size_t StringColorStride = 0x10;
-static const size_t ButtonColorStride = 0x0C;
-
-void store_colors(uint32_t *table, size_t stride, size_t tier,
-                  int c1, int c2, int c3, int c4) {
-    volatile uint32_t *const slots = table;
-    const int colors[4] = {c1, c2, c3, c4};
-    for (size_t slot = 0; slot < 4; ++slot) {
-        slots[(slot * stride + tier * 4) / 4] = static_cast<uint32_t>(colors[slot]);
-    }
-}
 
 }  // namespace
 
 /*
 Purpose: Set default string colour tier 0 shared by every popup.
-// ORIGINAL: 0x00604900 ?set_def_string_color@BasePop@@QAAXHHHH@Z 0x00604900-0x00604927
+// ORIGINAL: 0x00604900 ?set_def_string_color@BasePop@@QAAXHHHH@Z 0x00604900-0x00604927 BYTE_EXACT
 // symbol    ?set_def_string_color@BasePop@@SAXHHHH@Z
 // size      39 bytes
 // prototype 
@@ -155,7 +153,10 @@ Purpose: Set default string colour tier 0 shared by every popup.
 Status: Complete
 */
 void BasePop::set_def_string_color(int c1, int c2, int c3, int c4) {
-    store_colors(BasePopDefaultStringColors, StringColorStride, 0, c1, c2, c3, c4);
+    BasePopDefaultStringColors[0][0] = static_cast<uint32_t>(c1);
+    BasePopDefaultStringColors[1][0] = static_cast<uint32_t>(c2);
+    BasePopDefaultStringColors[2][0] = static_cast<uint32_t>(c3);
+    BasePopDefaultStringColors[3][0] = static_cast<uint32_t>(c4);
 }
 
 void __cdecl base_pop_set_def_string_color_redirect(int c1, int c2, int c3, int c4) {
@@ -164,7 +165,7 @@ void __cdecl base_pop_set_def_string_color_redirect(int c1, int c2, int c3, int 
 
 /*
 Purpose: Set default string colour tier 1 shared by every popup.
-// ORIGINAL: 0x00604930 ?set_def_string_color2@BasePop@@QAAXHHHH@Z 0x00604930-0x00604957
+// ORIGINAL: 0x00604930 ?set_def_string_color2@BasePop@@QAAXHHHH@Z 0x00604930-0x00604957 BYTE_EXACT
 // symbol    ?set_def_string_color2@BasePop@@SAXHHHH@Z
 // size      39 bytes
 // prototype 
@@ -175,7 +176,10 @@ Purpose: Set default string colour tier 1 shared by every popup.
 Status: Complete
 */
 void BasePop::set_def_string_color2(int c1, int c2, int c3, int c4) {
-    store_colors(BasePopDefaultStringColors, StringColorStride, 1, c1, c2, c3, c4);
+    BasePopDefaultStringColors[0][1] = static_cast<uint32_t>(c1);
+    BasePopDefaultStringColors[1][1] = static_cast<uint32_t>(c2);
+    BasePopDefaultStringColors[2][1] = static_cast<uint32_t>(c3);
+    BasePopDefaultStringColors[3][1] = static_cast<uint32_t>(c4);
 }
 
 void __cdecl base_pop_set_def_string_color2_redirect(int c1, int c2, int c3, int c4) {
@@ -184,7 +188,7 @@ void __cdecl base_pop_set_def_string_color2_redirect(int c1, int c2, int c3, int
 
 /*
 Purpose: Set default string colour tier 2 shared by every popup.
-// ORIGINAL: 0x00604960 ?set_def_string_color3@BasePop@@QAAXHHHH@Z 0x00604960-0x00604987
+// ORIGINAL: 0x00604960 ?set_def_string_color3@BasePop@@QAAXHHHH@Z 0x00604960-0x00604987 BYTE_EXACT
 // symbol    ?set_def_string_color3@BasePop@@SAXHHHH@Z
 // size      39 bytes
 // prototype 
@@ -195,7 +199,10 @@ Purpose: Set default string colour tier 2 shared by every popup.
 Status: Complete
 */
 void BasePop::set_def_string_color3(int c1, int c2, int c3, int c4) {
-    store_colors(BasePopDefaultStringColors, StringColorStride, 2, c1, c2, c3, c4);
+    BasePopDefaultStringColors[0][2] = static_cast<uint32_t>(c1);
+    BasePopDefaultStringColors[1][2] = static_cast<uint32_t>(c2);
+    BasePopDefaultStringColors[2][2] = static_cast<uint32_t>(c3);
+    BasePopDefaultStringColors[3][2] = static_cast<uint32_t>(c4);
 }
 
 void __cdecl base_pop_set_def_string_color3_redirect(int c1, int c2, int c3, int c4) {
@@ -204,7 +211,7 @@ void __cdecl base_pop_set_def_string_color3_redirect(int c1, int c2, int c3, int
 
 /*
 Purpose: Set default string colour tier 3 shared by every popup.
-// ORIGINAL: 0x00604990 ?set_def_string_color_hyper@BasePop@@QAAXHHHH@Z 0x00604990-0x006049B7
+// ORIGINAL: 0x00604990 ?set_def_string_color_hyper@BasePop@@QAAXHHHH@Z 0x00604990-0x006049B7 BYTE_EXACT
 // symbol    ?set_def_string_color_hyper@BasePop@@SAXHHHH@Z
 // size      39 bytes
 // prototype 
@@ -215,7 +222,10 @@ Purpose: Set default string colour tier 3 shared by every popup.
 Status: Complete
 */
 void BasePop::set_def_string_color_hyper(int c1, int c2, int c3, int c4) {
-    store_colors(BasePopDefaultStringColors, StringColorStride, 3, c1, c2, c3, c4);
+    BasePopDefaultStringColors[0][3] = static_cast<uint32_t>(c1);
+    BasePopDefaultStringColors[1][3] = static_cast<uint32_t>(c2);
+    BasePopDefaultStringColors[2][3] = static_cast<uint32_t>(c3);
+    BasePopDefaultStringColors[3][3] = static_cast<uint32_t>(c4);
 }
 
 void __cdecl base_pop_set_def_string_color_hyper_redirect(int c1, int c2, int c3, int c4) {
@@ -224,7 +234,7 @@ void __cdecl base_pop_set_def_string_color_hyper_redirect(int c1, int c2, int c3
 
 /*
 Purpose: Set default button colour tier 0 shared by every popup.
-// ORIGINAL: 0x006049F0 ?set_def_button_color@BasePop@@QAAXHHHH@Z 0x006049F0-0x00604A17
+// ORIGINAL: 0x006049F0 ?set_def_button_color@BasePop@@QAAXHHHH@Z 0x006049F0-0x00604A17 BYTE_EXACT
 // symbol    ?set_def_button_color@BasePop@@SAXHHHH@Z
 // size      39 bytes
 // prototype 
@@ -235,7 +245,10 @@ Purpose: Set default button colour tier 0 shared by every popup.
 Status: Complete
 */
 void BasePop::set_def_button_color(int c1, int c2, int c3, int c4) {
-    store_colors(BasePopDefaultButtonColors, ButtonColorStride, 0, c1, c2, c3, c4);
+    BasePopDefaultButtonColors[0][0] = static_cast<uint32_t>(c1);
+    BasePopDefaultButtonColors[1][0] = static_cast<uint32_t>(c2);
+    BasePopDefaultButtonColors[2][0] = static_cast<uint32_t>(c3);
+    BasePopDefaultButtonColors[3][0] = static_cast<uint32_t>(c4);
 }
 
 void __cdecl base_pop_set_def_button_color_redirect(int c1, int c2, int c3, int c4) {
@@ -244,7 +257,7 @@ void __cdecl base_pop_set_def_button_color_redirect(int c1, int c2, int c3, int 
 
 /*
 Purpose: Set default button colour tier 1 shared by every popup.
-// ORIGINAL: 0x00604A20 ?set_def_button_color2@BasePop@@QAAXHHHH@Z 0x00604A20-0x00604A47
+// ORIGINAL: 0x00604A20 ?set_def_button_color2@BasePop@@QAAXHHHH@Z 0x00604A20-0x00604A47 BYTE_EXACT
 // symbol    ?set_def_button_color2@BasePop@@SAXHHHH@Z
 // size      39 bytes
 // prototype 
@@ -255,7 +268,10 @@ Purpose: Set default button colour tier 1 shared by every popup.
 Status: Complete
 */
 void BasePop::set_def_button_color2(int c1, int c2, int c3, int c4) {
-    store_colors(BasePopDefaultButtonColors, ButtonColorStride, 1, c1, c2, c3, c4);
+    BasePopDefaultButtonColors[0][1] = static_cast<uint32_t>(c1);
+    BasePopDefaultButtonColors[1][1] = static_cast<uint32_t>(c2);
+    BasePopDefaultButtonColors[2][1] = static_cast<uint32_t>(c3);
+    BasePopDefaultButtonColors[3][1] = static_cast<uint32_t>(c4);
 }
 
 void __cdecl base_pop_set_def_button_color2_redirect(int c1, int c2, int c3, int c4) {
@@ -264,7 +280,7 @@ void __cdecl base_pop_set_def_button_color2_redirect(int c1, int c2, int c3, int
 
 /*
 Purpose: Set default button colour tier 2 shared by every popup.
-// ORIGINAL: 0x00604A50 ?set_def_button_color3@BasePop@@QAAXHHHH@Z 0x00604A50-0x00604A77
+// ORIGINAL: 0x00604A50 ?set_def_button_color3@BasePop@@QAAXHHHH@Z 0x00604A50-0x00604A77 BYTE_EXACT
 // symbol    ?set_def_button_color3@BasePop@@SAXHHHH@Z
 // size      39 bytes
 // prototype 
@@ -275,7 +291,10 @@ Purpose: Set default button colour tier 2 shared by every popup.
 Status: Complete
 */
 void BasePop::set_def_button_color3(int c1, int c2, int c3, int c4) {
-    store_colors(BasePopDefaultButtonColors, ButtonColorStride, 2, c1, c2, c3, c4);
+    BasePopDefaultButtonColors[0][2] = static_cast<uint32_t>(c1);
+    BasePopDefaultButtonColors[1][2] = static_cast<uint32_t>(c2);
+    BasePopDefaultButtonColors[2][2] = static_cast<uint32_t>(c3);
+    BasePopDefaultButtonColors[3][2] = static_cast<uint32_t>(c4);
 }
 
 void __cdecl base_pop_set_def_button_color3_redirect(int c1, int c2, int c3, int c4) {
@@ -536,11 +555,10 @@ void __fastcall base_pop_set_width_redirect(BasePop *self, void *, int width) {
     self->set_width(width);
 }
 
-func_base_pop_exec BasePopExec = original_method<func_base_pop_exec>(0x00602600);
 
 /*
 Purpose: Run the popup modally with no completion callback.
-// ORIGINAL: 0x005A5900 ?exec@BasePop@@QAEHXZ 0x005A5900-0x005A590A
+// ORIGINAL: 0x005A5900 ?exec@BasePop@@QAEHXZ 0x005A5900-0x005A590A BYTE_EXACT
 // size      10 bytes
 // prototype int (__thiscall ?exec@BasePop@@QAEHXZ)(BasePop* this)
 // callers   1   call targets   1
@@ -551,12 +569,12 @@ Return Value: the exec result
 Status: Complete
 */
 int BasePop::exec() {
-    return (ORIGINAL(this)->*BasePopExec)(0, nullptr);
+    return exec(0, nullptr);
 }
 
 /*
 Purpose: Run the popup modally with a completion callback.
-// ORIGINAL: 0x00558FC0 ?exec@BasePop@@QAEHP6AHXZ@Z 0x00558FC0-0x00558FD2
+// ORIGINAL: 0x00558FC0 ?exec@BasePop@@QAEHP6AHXZ@Z 0x00558FC0-0x00558FD2 BYTE_EXACT
 // size      18 bytes
 // prototype int (__thiscall ?exec@BasePop@@QAEHP6AHXZ@Z)(BasePop* this, int (__cdecl *)())
 // callers   1   call targets   1
@@ -567,7 +585,7 @@ Return Value: the exec result
 Status: Complete
 */
 int BasePop::exec(int (__cdecl *callback)()) {
-    return (ORIGINAL(this)->*BasePopExec)(0, callback);
+    return exec(0, callback);
 }
 
 int __fastcall base_pop_exec_void_redirect(BasePop *self, void *) {
