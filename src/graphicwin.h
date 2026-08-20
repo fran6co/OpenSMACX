@@ -34,6 +34,10 @@
 // accessibility affects no offset, so the layout is untouched.
 class GraphicWin : public Win {
  public:
+  // 0x005D7030, a pending_bodies forwarder.
+  void compute_min_size();
+
+ public:
   // 0x005D6AC0, a pending_bodies forwarder.
   void overlay_nonclient(RECT *area);
   friend class Scroll;

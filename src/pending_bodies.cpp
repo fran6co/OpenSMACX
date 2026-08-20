@@ -270,6 +270,21 @@ void BaseWin::garrison_click(int a1, int a2, int a3, int a4) {                  
     PENDING_BODY(0x0040B140, pending)(this, nullptr, a1, a2, a3, a4);
 }
 
+int Win::init(int a1, int a2, int a3, int a4, LPSTR a5, int a6, Win * a7, Menu * a8, BorderSizing * a9) {  // 0x005EBD80
+    typedef int(__fastcall *pending)(Win *, void *, int, int, int, int, LPSTR, int, Win *, Menu *, BorderSizing *);
+    return PENDING_BODY(0x005EBD80, pending)(this, nullptr, a1, a2, a3, a4, a5, a6, a7, a8, a9);
+}
+
+void GraphicWin::compute_min_size() {  // 0x005D7030
+    typedef void(__fastcall *pending)(GraphicWin *, void *);
+    PENDING_BODY(0x005D7030, pending)(this, nullptr);
+}
+
+void Win::nonclient_to_client(int * a1, int * a2) {  // 0x005EEF60
+    typedef void(__fastcall *pending)(Win *, void *, int *, int *);
+    PENDING_BODY(0x005EEF60, pending)(this, nullptr, a1, a2);
+}
+
 // ?write_raw_l@Buffer@@QAEHPADHHH@Z at 0x005DBD00 - 1475 bytes, the raster
 // writer that puts one single-font run on the surface. Called by name from
 // `write_multi_font_raw_l`, which is promoted; a pointer here would cost that

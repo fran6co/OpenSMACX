@@ -35,6 +35,14 @@ class Scroll; // forward declaration
   * Win class: Most basic window class.
   */
 class Win {
+ public:
+  // 0x005EEF60, a pending_bodies forwarder.
+  void nonclient_to_client(int * a1, int * a2);
+
+ public:
+  // 0x005EBD80, a pending_bodies forwarder.
+  int init(int a1, int a2, int a3, int a4, LPSTR a5, int a6, Win * a7, Menu * a8, BorderSizing * a9);
+
   friend class Scroll;
   // BaseButton's colour setters test the parent link before drawing.
   friend class BaseButton;
