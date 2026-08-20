@@ -1,8 +1,12 @@
-// ORIGINAL: 0x005FD860 ??0Text@@QAE@@Z 0x005FD860-0x005FD87F FILE BYTE_EXACT
+// ORIGINAL: 0x005FD860 ??0Text@@QAE@XZ 0x005FD860-0x005FD87F FILE BYTE_EXACT
+// CORRECTED from ??0Text@@QAE@@Z, which is not a mangling any
+//   compiler emits: a default constructor's empty parameter list is
+//   `X`, not nothing. The lookup could never find it, so this claim
+//   measured UNRESOLVED - carried on the ratchet, checked by nothing.
 // LEVER: field stores in disassembly order (byte@0, then four dwords), not declaration order
 // working copy - scaffold materialised by --work
 // size      31 bytes
-// prototype _Text* (__thiscall ??0Text@@QAE@@Z)(_Text* this)
+// prototype _Text* (__thiscall ??0Text@@QAE@XZ)(_Text* this)
 // callers   0   call targets   0
 // kind      game
 // flags     sp_ready;purged_ok

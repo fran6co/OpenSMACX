@@ -467,16 +467,56 @@ int __cdecl text_get_number(int min, int max) {
 // method, and it reached the private members through a hand-mirrored
 // `struct TextState`; both are gone.
 // ---------------------------------------------------------------------------
-Text::Text()
-    : current_pos_(nullptr), text_file_(nullptr), buffer_get_(nullptr), buffer_item_(nullptr) {
+/*
+Purpose: Construct an empty Text - no file open, no buffers allocated.
+// ORIGINAL: 0x005FD860 ??0Text@@QAE@XZ 0x005FD860-0x005FD87F BYTE_EXACT
+// LEVER: field stores in disassembly order - the byte at 0x0 FIRST, then the four dwords - not in declaration order
+// size      31 bytes
+// prototype Text* (__thiscall ??0Text@@QAE@XZ)(Text* this)
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+Text::Text() {
+    // NOT AN INITIALISER LIST: one runs in DECLARATION order, which puts the
+    // four pointers before `file_name_[0]`, and the image writes the byte at
+    // offset 0 FIRST. Same shape as `Text(int)` in text.h, for the same
+    // reason.
     file_name_[0] = 0;
+    current_pos_ = nullptr;
+    text_file_ = nullptr;
+    buffer_get_ = nullptr;
+    buffer_item_ = nullptr;
 }
 
-// Text::Text(int) is DEFINED IN text.h now, in-class, so `??__ETxt` can
-// inline it the way the image does. It also used to run its stores in the
-// wrong order: an initialiser list runs in DECLARATION order - current_pos_,
-// text_file_, buffer_get_, buffer_item_ - and then the body set
-// file_name_[0], where the image writes the byte FIRST.
+/*
+Purpose: Construct a Text with `size` bytes of parse buffer.
+// ORIGINAL: 0x005FD880 ??0Text@@QAE@H@Z 0x005FD880-0x005FD8CF BYTE_EXACT
+// size      79 bytes
+// prototype Text* (__thiscall ??0Text@@QAE@H@Z)(Text* this, int size)
+// callers   1   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005D4510
+
+THE BODY IS IN text.h, IN-CLASS, and must stay there: `??__ETxt` at
+0x005FD400 - the dynamic initialiser for `Txt` - inlines it rather than
+calling it, and it can only do that where the definition is visible. The
+marker is here because the CLAIM has to sit somewhere the measurement can
+reach: `decomp.reader` globs `*.cpp` and `*.c`, and `compile_unit` compiles
+a translation unit, so a marker in a header could be read by neither. VC6
+emits `??0Text@@QAE@H@Z` into this unit's object as its own COMDAT anyway,
+which is what the comparison pulls out.
+
+It also used to run its stores in the wrong order: an initialiser list runs
+in DECLARATION order - current_pos_, text_file_, buffer_get_, buffer_item_ -
+and then the body set file_name_[0], where the image writes the byte FIRST.
+Return Value: n/a
+Status: Complete
+*/
 
 
 // ORIGINAL: 0x005FD550 ?text_open@@YAHPADPAD@Z 0x005FD550-0x005FD565 BYTE_EXACT
