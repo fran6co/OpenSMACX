@@ -425,6 +425,17 @@ FLAG_SETS = (
     "/c /O2 /Ob0 /Gy /GR- /GX",
     "/c /O1 /Ob0 /Gy /GR- /Oy- /GX",
     "/c /O1 /Ob0 /Gy /GR- /GX",
+    # AND INTRINSICS ARE THE FOURTH, which a previous measurement retired
+    # for the wrong reason: `/O2 /Oi-` reproduces the same bodies as `/O2`
+    # for bodies that never call the CRT's block functions, and that was most
+    # of the sample. It is decisive for the ones that do. `Buffer::init`
+    # measures 121 of 286 instructions with intrinsics on - VC6 expands its
+    # `memset` to `rep stosd` - and 280 of 286 with them off, because the
+    # image CALLS memset at 0x006465F0. The alternative was
+    # `#pragma function(memset)` in the source, which is a compiler switch
+    # written into the program.
+    "/c /O2 /Oi- /Gy /GR- /Oy- /GX",
+    "/c /O2 /Oi- /Gy /GR- /GX",
 )
 
 

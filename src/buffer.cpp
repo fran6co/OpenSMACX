@@ -743,6 +743,11 @@ Purpose: Give the buffer a size and the storage behind it - a DirectDraw
 Status: WIP
 */
 int Buffer::init(int width, int height, int tgl, ExtDirectDraw *direct_draw) {
+    // DECLARED HERE, not beside its use, and that is what the frame size
+    // says: the image reserves 0x74 - `borrowed` at esp+0x10, this pointer
+    // at esp+0x14, and the 0x6c descriptor from esp+0x18. Declared inside
+    // the DirectDraw arm it shares a slot and the frame comes out 0x70.
+    IDirectDrawSurface *created;
 
     const int borrowed = tgl & 4;
     if (borrowed != 0 && direct_draw == nullptr) {
@@ -796,11 +801,20 @@ int Buffer::init(int width, int height, int tgl, ExtDirectDraw *direct_draw) {
         memset(&description, 0, sizeof(description));
         description.dwSize = sizeof(description);
         description.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH;
-        description.dwHeight = height;
-        description.dwWidth = width;
+        // IMAGE ORDER: the caps go in BEFORE the extent - `mov [esp+0x88],
+        // 0x40840` precedes the width and height stores - and the width
+        // precedes the height. VC6 keeps these in source order, so the
+        // order here is a fact about the original and not a preference.
+        // OWNDC, NOT VIDEOMEMORY. The image stores 0x40840 - OFFSCREENPLAIN
+        // (0x40) | SYSTEMMEMORY (0x800) | OWNDC (0x40000) - where this had
+        // 0x4840, which reads VIDEOMEMORY (0x4000) for the third flag. A
+        // system-memory surface that also asks for video memory is a
+        // contradiction; asking it to keep its own DC is what the buffer
+        // wants, and is why `get_hdc` can hold one across calls.
         description.ddsCaps.dwCaps =
-            DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY | DDSCAPS_VIDEOMEMORY;
-        IDirectDrawSurface *created = nullptr;
+            DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY | DDSCAPS_OWNDC;
+        description.dwWidth = width;
+        description.dwHeight = height;
         if (BufferDirectDraw->CreateSurface(&description, &created,
                                             nullptr) != 0) {
             return 0x12;
@@ -816,11 +830,17 @@ int Buffer::init(int width, int height, int tgl, ExtDirectDraw *direct_draw) {
         clipper_ = direct_draw->clipper;
     }
 
-    rect2_.left = 0;
-    rect2_.top = 0;
-    rect2_.right = width;
-    rect2_.bottom = height;
-    set_clip(&rect2_);
+    // WRITTEN THROUGH THE POINTER IT PASSES. The image computes
+    // `lea eax, [esi+0x30]` once, pushes it, and stores the four fields as
+    // `[eax]`, `[eax+4]`, `[eax+8]`, `[eax+0xc]`. Storing to the members by
+    // name lets VC6 address two of them off `esi` instead, which is one byte
+    // shorter and moves every jump after it.
+    RECT *const extent = &rect2_;
+    extent->left = 0;
+    extent->top = 0;
+    extent->right = width;
+    extent->bottom = height;
+    set_clip(extent);
 
     dib_.bmiHeader.biWidth = width;
     dib_.bmiHeader.biHeight = -height;
@@ -855,7 +875,13 @@ int Buffer::init(int width, int height, int tgl, ExtDirectDraw *direct_draw) {
 
     ++hdc_lock_count_;
     SetBkMode(hdc2_, TRANSPARENT);
-    SetTextAlign(hdc2_, TA_LEFT | TA_TOP | TA_NOUPDATECP);
+    // TA_BASELINE (0x18), not the three zero-valued flags. `TA_LEFT`,
+    // `TA_TOP` and `TA_NOUPDATECP` are all 0, so that spelling passes 0 and
+    // reads as though it said something; the image pushes 0x18, which is
+    // TA_BASELINE on its own. Text placed at a baseline rather than a top
+    // edge sits somewhere else on the screen - this is a behaviour
+    // difference, not a spelling one.
+    SetTextAlign(hdc2_, TA_BASELINE);
 
     if (surface_ == nullptr) {
         if (--hdc_lock_count_ <= 0) {
