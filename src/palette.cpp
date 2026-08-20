@@ -130,10 +130,149 @@ void __cdecl palette_set_active_window_redirect(Win *window) {
 }
 
 /*
+Purpose: Drop the animation slot registered under the given key.
+// ORIGINAL: 0x005FE950 ?UNK3@Palette@@QAEXH@Z 0x005FE950-0x005FEAC4
+// symbol    ?remove_animation@Palette@@QAEXH@Z
+// size      372 bytes
+// prototype void (__thiscall)(Palette* this, int)
+// kind      game
+
+MOVED HERE FROM src/recovered/units/005fe950.cpp, half recovered: 5 of the
+image's 115 instructions. The MEANING is settled and read off the image -
+find the slot by key, delete its `Time`, copy its stored colours back over
+`entries_[first .. first+count)`, re-apply the palette through the same
+`sync_to_palette` / `AnimatePalette` path `set` uses, free the buffer, then
+shift the later slots down so the table stays packed. The name is an
+inference from that behaviour, so the catalogue's `UNK3` stays on the
+marker and `symbol` carries what this tree emits.
+Return Value: n/a
+Status: Half recovered - the body is right, the codegen is not
+*/
+void Palette::remove_animation(int key) {
+    int index = get_pos(key);
+    if (internal_[index].key != static_cast<uint32_t>(key)) {
+        return;
+    }
+    PaletteInternal &slot = internal_[index];
+    if (slot.time) {
+        delete slot.time;
+        slot.time = nullptr;
+    }
+    // THE STORED COLOURS GO BACK. `colours` holds what the entries this slot
+    // animates looked like before it started.
+    memcpy(&entries_[slot.first], slot.colours,
+           slot.count * sizeof(PALETTEENTRY));
+    if (BufferDirectDraw == nullptr) {
+        if (PaletteInitialized) {
+            PaletteActive = this;
+            ScreenBuffer.sync_to_palette(this);
+            if (PaletteUsesSystemColours == 0 && PaletteSeedCache != seed_) {
+                AnimatePalette(PaletteInitialized, 10, 236, &entries_[10]);
+                PaletteSeedCache = seed_;
+            }
+        }
+    } else if (DirectDrawPalette) {
+        DirectDrawPalette->SetEntries(0, 0, 256, entries_);
+    }
+    if (slot.colours) {
+        free(slot.colours);
+        slot.colours = nullptr;
+    }
+    // PACK THE TABLE: every later slot moves down one.
+    for (int later = index; later < 4; ++later) {
+        internal_[later].key = internal_[later + 1].key;
+        internal_[later].first = internal_[later + 1].first;
+        internal_[later].count = internal_[later + 1].count;
+        internal_[later].time = internal_[later + 1].time;
+        internal_[later].colours = internal_[later + 1].colours;
+    }
+}
+
+/*
+Purpose: Find the palette entry nearest the given colour.
+// ORIGINAL: 0x005FF280 ?UNK7@Palette@@QAEHHHHHHH@Z 0x005FF280-0x005FF46B
+// symbol    ?closest@Palette@@QAEHHHHHHH@Z
+// size      491 bytes
+// prototype int (__thiscall)(Palette* this, int, int, int, int, int, int)
+// kind      game
+
+MOVED HERE FROM src/unrecovered/005ff280.cpp, half recovered. It is not
+byte-exact - 3 of the image's 150 instructions - and the divergence is at
+instruction 2, where the image saves ONLY `esi` before the early return and
+pushes `ebx/ebp/edi` after it while we save three up front. Everything
+downstream is shifted by that, so branch-level work does not show; six
+source spellings moved it not at all. What IS settled is the meaning, read
+off the image: the distance is summed green^2 + red^2 + blue^2 in that
+order, the masks are hoisted before the loop, and `skip_animated` selects a
+pass that first marks every entry an active slot reserves.
+
+The name is an inference from behaviour, which is why the catalogue's
+`UNK7` stays on the marker and `symbol` carries what this tree emits.
+Return Value: the nearest entry's index, or 7 if there is no palette
+Status: Half recovered - see above
+*/
+int Palette::closest(int red, int green, int blue, int start, int count,
+                     int skip_animated) {
+    int best = 200000;
+    if (!PaletteInitialized) {
+        return 7;
+    }
+    int best_index = 0;
+    const int end = start + count;
+    const int want_red = red & 0xFF;
+    const int want_green = green & 0xFF;
+    const int want_blue = blue & 0xFF;
+
+    if (!skip_animated) {
+        for (int index = start; index < end; ++index) {
+            const int dr = entries_[index].peRed - want_red;
+            const int dg = entries_[index].peGreen - want_green;
+            const int db = entries_[index].peBlue - want_blue;
+            const int distance = dg * dg + dr * dr + db * db;
+            if (distance < best) {
+                best = distance;
+                best_index = index;
+            }
+        }
+        return best_index;
+    }
+
+    // EVERY ENTRY AN ACTIVE SLOT OWNS IS OFF LIMITS. A slot is active when
+    // its key is not -1, and it reserves `count` entries from `first`.
+    int reserved[256];
+    for (int index = 0; index < 256; ++index) {
+        reserved[index] = 0;
+    }
+    for (int slot = 0; slot < 5; ++slot) {
+        if (internal_[slot].key != 0xFFFFFFFFu) {
+            const unsigned first = internal_[slot].first;
+            const unsigned stop = first + internal_[slot].count;
+            for (unsigned entry = first; entry < stop; ++entry) {
+                reserved[entry] = 1;
+            }
+        }
+    }
+    for (int index = start; index < end; ++index) {
+        if (reserved[index]) {
+            continue;
+        }
+        const int dr = entries_[index].peRed - want_red;
+        const int dg = entries_[index].peGreen - want_green;
+        const int db = entries_[index].peBlue - want_blue;
+        const int distance = dg * dg + dr * dr + db * db;
+        if (distance < best) {
+            best = distance;
+            best_index = index;
+        }
+    }
+    return best_index;
+}
+
+/*
 Purpose: Find the slot for a value in the five-entry internal table, returning
          the index of the matching entry or the first empty one, and 5 when the
          table is full without a match.
-// ORIGINAL: 0x005FED10 ?get_pos@Palette@@QAEHH@Z 0x005FED10-0x005FED35
+// ORIGINAL: 0x005FED10 ?get_pos@Palette@@QAEHH@Z 0x005FED10-0x005FED35 BYTE_EXACT
 // size      37 bytes
 // prototype int (__thiscall ?get_pos@Palette@@QAEHH@Z)(Palette* this, int)
 // callers   0   call targets   0
@@ -144,13 +283,19 @@ Return Value: the slot index, 0 to 5
 Status: Complete
 */
 int Palette::get_pos(int value) {
-    for (int index = 0; index < 5; ++index) {
-        const int slot = static_cast<int>(internal_[index].field_0);
-        if (slot == value || slot == -1) {
-            return index;
+    // THE COUNTER IS THE ANSWER. Falling out of the loop leaves `index` at
+    // 5, which is the not-found result, so the image returns it rather than
+    // loading the constant: no `mov eax, 5` before the epilogue.
+    int index = 0;
+    for (; index < 5; ++index) {
+        const int slot = static_cast<int>(internal_[index].key);
+        // `value == slot`, not `slot == value`: the image compares in that
+        // order and the two spell `cmp esi, ecx` and `cmp ecx, esi`.
+        if (value == slot || slot == -1) {
+            break;
         }
     }
-    return 5;
+    return index;
 }
 
 int __fastcall palette_get_pos_redirect(Palette *self, void *, int value) {
@@ -308,19 +453,19 @@ void Palette::close() {
     // is not what the two versions disagree about.
     //
     // WHAT THEY DISAGREE ABOUT IS THE BASE REGISTER. Through a named
-    // `PaletteInternal &` VC6 bases the loop on `field_C` (this + 0x410);
+    // `PaletteInternal &` VC6 bases the loop on `colours` (this + 0x410);
     // the image bases on `.time` (this + 0x408). Both fit a byte
     // displacement, so the choice is free and something we have not
     // identified picks it - a flag, or a layout detail of this struct we
     // have modelled slightly wrong. That is the thing to chase.
     //
-    // The last two are separate: the image writes `field_0 = -1` BEFORE
+    // The last two are separate: the image writes `key = -1` BEFORE
     // loading the timer and we emit those two `mov`s transposed, through
     // seven source spellings and six flag sets including all four /G
     // processor targets. A scheduler decision, so far unreachable.
     for (int i = 0; i < 5; ++i) {
         PaletteInternal &slot = internal_[i];
-        slot.field_0 = -1;
+        slot.key = -1;
         // OWNED. The image calls `??1Time@@QAE@XZ` then the CRT's
         // `operator delete` here, which is what `delete` compiles to.
         Time *owned = slot.time;
@@ -328,12 +473,12 @@ void Palette::close() {
             delete owned;
             slot.time = nullptr;
         }
-        if (slot.field_C) {
-            free(slot.field_C);
-            slot.field_C = nullptr;
+        if (slot.colours) {
+            free(slot.colours);
+            slot.colours = nullptr;
         }
-        slot.field_8 = 0;
-        slot.field_9 = 0;
+        slot.first = 0;
+        slot.count = 0;
     }
 }
 
@@ -440,11 +585,11 @@ void Palette::init() {
 Palette::Palette() {
     seed_ = 0;
     for (int i = 0; i < 5; ++i) {
-        internal_[i].field_0 = -1;
+        internal_[i].key = -1;
         internal_[i].time = nullptr;
-        internal_[i].field_8 = 0;
-        internal_[i].field_9 = 0;
-        internal_[i].field_C = nullptr;
+        internal_[i].first = 0;
+        internal_[i].count = 0;
+        internal_[i].colours = nullptr;
     }
     init();
 }
