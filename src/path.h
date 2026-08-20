@@ -27,7 +27,22 @@ class DLLEXPORT Path {
   ~Path() { shutdown(); } // 0059A320
 
   void init();
-  void shutdown();
+  // IN-CLASS so `~Path` inlines it, which is what the image does.
+  void shutdown() {              // 0059A2D0
+    if (map_table_) {
+      free(map_table_);
+    }
+    if (x_table_) {
+      free(x_table_);
+    }
+    if (y_table_) {
+      free(y_table_);
+    }
+    // IMAGE ORDER: y_table_ is nulled before x_table_.
+    map_table_ = nullptr;
+    y_table_ = nullptr;
+    x_table_ = nullptr;
+  }
   int get(uint32_t x, uint32_t y);
   void set(uint32_t x, uint32_t y, int val);
   int zoc_path(int x, int y, int faction_id);

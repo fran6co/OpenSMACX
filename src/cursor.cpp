@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "cursor.h"
+#include "sprite.h"   // the Sprite ~Cursor owns
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
@@ -92,7 +93,7 @@ Cursor *__fastcall cursor_construct_redirect(Cursor *self, void *) {
 // ---------------------------------------------------------------------------
 
 /*
-// ORIGINAL: 0x0063B8D0 ??1Cursor@@QAE@XZ 0x0063B8D0-0x0063B90A
+// ORIGINAL: 0x0063B8D0 ??1Cursor@@QAE@XZ 0x0063B8D0-0x0063B90A BYTE_EXACT
 // body      src/cursor.h
 // size      58 bytes
 // prototype void (__thiscall ??1Cursor@@QAE@XZ)(Cursor* this)
@@ -102,3 +103,22 @@ Cursor *__fastcall cursor_construct_redirect(Cursor *self, void *) {
 // calls     0x005E3820 0x0064557F
 // indirect  0x0063B8DE
 */
+
+Cursor::~Cursor() {
+    // `field_0_` is the HCURSOR and `field_4_` a Sprite the object owns;
+    // the image destroys both and then clears the two words after them.
+    HCURSOR handle = reinterpret_cast<HCURSOR>(field_0_);
+    if (handle) {
+        DestroyCursor(handle);
+        field_0_ = 0;
+    }
+    Sprite *sprite = reinterpret_cast<Sprite *>(field_4_);
+    if (sprite) {
+        sprite->close();
+        operator delete(sprite);
+        field_4_ = 0;
+    }
+    field_8_ = 0;
+    field_C_ = 0;
+}
+
