@@ -2311,10 +2311,13 @@ int __cdecl Win::init_class(LPSTR window_name) {
     // after the constructor is VC6 saying the object is now live.
     Buffer logo;
 
-    WinModalStack[0] = nullptr;
-    WinModalStack[1] = nullptr;
-    WinModalStack[2] = nullptr;
-    WinModalStack[3] = nullptr;
+    // A MEMSET, NOT FOUR STORES, on the evidence of the register the zero
+    // lands in. The image materialises TWO zeros - `xor eax, eax` for these
+    // four global stores and `xor edi, edi` for everything after the
+    // GetModuleHandleA call that clobbers eax. Four separate assignments make
+    // VC6 reuse the one callee-saved zero it already has, and the whole body
+    // shifts; this reproduces the pair. 12 of 203 instructions to 16.
+    memset(WinModalStack, 0, sizeof(WinModalStack));
     WinInstance = GetModuleHandleA(nullptr);
 
     wndclass.style = CS_VREDRAW | CS_HREDRAW | CS_DBLCLKS | CS_OWNDC;  // 0x2B
@@ -2328,6 +2331,13 @@ int __cdecl Win::init_class(LPSTR window_name) {
     wndclass.lpszMenuName = nullptr;
     wndclass.lpszClassName = WinClassName;
 
+    // TWO DIFFERENT STRINGS IN THE IMAGE, and the ratchet cannot see it:
+    // `RegisterClassA` is handed 0x696DC8 and `CreateWindowExA` 0x696DD4,
+    // twelve bytes apart, where this passes `WinClassName` to both. Both
+    // operands are relocations, so the byte comparison masks them and a
+    // wrong one costs nothing it can report. Left as it is until something
+    // reads what is at 0x696DD4 - a second class name, or the window's
+    // caption - because guessing which would be worse than the note.
     if (RegisterClassA(&wndclass) == 0) {
         return 1;
     }
