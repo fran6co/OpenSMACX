@@ -29,7 +29,7 @@ import typer
 from decomp import DecompilationState, State, mangled, read, write_file
 from decomp.record import stamped
 from decomp.asm import (AsmComparison, CompileFailed, build_command,
-                        compare_asm, compare_record, compare_source,
+                        compare_record, compare_source, compare_subject,
                         compile_unit, original_asm, shared_spans,
                         span_refusal, subject_asm)
 
@@ -478,6 +478,8 @@ def _verdict_row(record: DecompilationState, result: AsmComparison) -> dict:
         "compared_bytes": result.compared_bytes,
         "masked_bytes": result.masked_bytes,
         "differing_constants": [list(c) for c in result.differing_constants],
+        "data_bytes": result.data_bytes,
+        "data_divergence": result.data_divergence,
         "diagnostic": result.diagnostic,
     }
 
@@ -583,6 +585,11 @@ def _print_verdict(record: DecompilationState, result: AsmComparison,
                f"   (compiled has {result.compiled_instructions})")
     typer.echo(f"  bytes      {result.compared_bytes} compared, "
                f"{result.masked_bytes} discounted as relocations")
+    if result.data_bytes:
+        where = ("agrees" if result.data_divergence is None
+                 else f"differs at +0x{result.data_divergence:X}")
+        typer.echo(f"  jump table {result.data_bytes} bytes past the span, "
+                   f"{where}")
     for index, mnemonic, was, now in result.differing_constants[:8]:
         typer.echo(f"  constant   #{index} {mnemonic}: {was} -> {now}")
     if result.first_divergence is None:
@@ -809,7 +816,7 @@ def _check_one_file(job: tuple) -> list[tuple[int, str, str]]:
                 best[record.address] = ("UNRESOLVED", str(problem))
                 outstanding.remove(record)
                 continue
-            result = compare_asm(original_asm(record, exe), compiled)
+            result = compare_subject(record, exe, compiled)
             verdict = str(result.verdict)
             if (record.address not in best
                     or best[record.address][0] != "BYTE_EXACT"):
