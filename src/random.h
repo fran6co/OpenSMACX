@@ -24,11 +24,17 @@ class DLLEXPORT Random {
  public:
   Random() : seed_(0) {
   } // 00625730
-  ~Random() {
-    *reinterpret_cast<uint32_t volatile *>(&seed_) = 0;
-  } // 00625740
+  // A PLAIN STORE. This carried a `volatile` cast to force the write - the
+  // image is `mov dword ptr [ecx], 0; ret` and the fear was that VC6 would
+  // elide a store to a member that is about to die. It does not: the plain
+  // assignment is byte exact.
+  ~Random() { seed_ = 0; }   // 00625740
 
-  void reseed(uint32_t new_seed);
+  // IN-CLASS so the free wrappers below fold them in, which is what the
+  // image does: `random_reseed` is `mov ecx, [Rand]; xor ...` with no call
+  // in it at all. Each still emits its own COMDAT under /Ob0, so each keeps
+  // its own claim.
+  void reseed(uint32_t new_seed) { seed_ = new_seed; }
   uint32_t get(int min, int max);
   double get();
   // additional functions to assist with encapsulation
@@ -43,7 +49,7 @@ static_assert(sizeof(Random) == 4, "Random layout must match the legacy ABI");
 #endif
 
 // global
-extern Random *Rand;
+extern Random Rand;
 DLLEXPORT void __cdecl random_rand();
 DLLEXPORT void __cdecl random_rand_exit();
 DLLEXPORT void __cdecl random_reseed(uint32_t new_seed);

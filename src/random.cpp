@@ -23,6 +23,7 @@
 /*
 Purpose: Update the seed value. The original code had some convoluted XORs that served no purpose.
 // ORIGINAL: 0x00625750 ?reseed@Random@@QAEXK@Z 0x00625750-0x00625763
+// body      src/random.h
 // symbol    ?reseed@Random@@QAEXI@Z
 // size      19 bytes
 // prototype void (__thiscall ?reseed@Random@@QAEXK@Z)(Random* this, unsigned int)
@@ -33,7 +34,6 @@ Purpose: Update the seed value. The original code had some convoluted XORs that 
 Return Value: n/a
 Status: Complete
 */
-void Random::reseed(uint32_t new_seed) { seed_ = new_seed; }
 
 /*
 Purpose: Get a random value between min and (max - 1).
@@ -78,9 +78,14 @@ double Random::get() {
 }
 
 // global
-Random *Rand = (Random *)0x009BB568;
+// THE OBJECT, not a pointer to one. `(Random *)0x009BB568` named storage
+// inside terranx.exe, so every use of it in the recovered executable reaches
+// a page this process does not have - and it cost every caller the ratchet
+// besides, because through a pointer VC6 emits `mov ecx, [Rand]` where the
+// image passes the object's address outright. Same defect `stringTemp` had.
+Random Rand;   // 0x009BB568
 
-// ORIGINAL: 0x00625700 ??__ERand@@YAXXZ 0x00625700-0x00625716
+// ORIGINAL: 0x00625700 ??__ERand@@YAXXZ 0x00625700-0x00625716 BYTE_EXACT
 // symbol    ?random_rand@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -89,9 +94,9 @@ Random *Rand = (Random *)0x009BB568;
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00645398
 // notes     Staged hybrid export redirect calls the source-owned initializer
-void __cdecl random_rand() { Rand->reseed(0); atexit(random_rand_exit); }
+void __cdecl random_rand() { Rand.reseed(0); atexit(random_rand_exit); }
 
-// ORIGINAL: 0x00625720 ??__FRand@@YAXXZ 0x00625720-0x0062572B
+// ORIGINAL: 0x00625720 ??__FRand@@YAXXZ 0x00625720-0x0062572B BYTE_EXACT
 // symbol    ?random_rand_exit@@YAXXZ
 // size      11 bytes
 // prototype 
@@ -100,7 +105,7 @@ void __cdecl random_rand() { Rand->reseed(0); atexit(random_rand_exit); }
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
 // notes     Staged hybrid export redirect calls the source-owned exit cleanup
-void __cdecl random_rand_exit() { Rand->~Random(); }
+void __cdecl random_rand_exit() { Rand.~Random(); }
 
 // ORIGINAL: 0x006257E0 ?random_reseed@@YAXK@Z 0x006257E0-0x006257F9
 // symbol    ?random_reseed@@YAXI@Z
@@ -111,9 +116,9 @@ void __cdecl random_rand_exit() { Rand->~Random(); }
 // flags     sp_ready;purged_ok
 // calls     (none)
 // notes     Staged hybrid export redirect calls the source-owned reseed wrapper
-void __cdecl random_reseed(uint32_t new_seed) { Rand->reseed(new_seed); }
+void __cdecl random_reseed(uint32_t new_seed) { Rand.reseed(new_seed); }
 
-// ORIGINAL: 0x00625800 ?random_get@@YAIXZ 0x00625800-0x00625806
+// ORIGINAL: 0x00625800 ?random_get@@YAIXZ 0x00625800-0x00625806 BYTE_EXACT
 // size      6 bytes
 // prototype 
 // callers   0   call targets   0
@@ -121,7 +126,7 @@ void __cdecl random_reseed(uint32_t new_seed) { Rand->reseed(new_seed); }
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
 // notes     Staged hybrid export redirect calls the source-owned seed getter
-uint32_t __cdecl random_get() { return Rand->get_seed(); }
+uint32_t __cdecl random_get() { return Rand.get_seed(); }
 
 // ORIGINAL: 0x00625810 ?random@@YAIHH@Z 0x00625810-0x0062584F
 // symbol    ?random@@YAIII@Z
@@ -132,7 +137,7 @@ uint32_t __cdecl random_get() { return Rand->get_seed(); }
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
 // notes     Staged hybrid export redirect calls the source-owned integer generator
-uint32_t __cdecl random(uint32_t min, uint32_t max) { return Rand->get(min, max); }
+uint32_t __cdecl random(uint32_t min, uint32_t max) { return Rand.get(min, max); }
 
 // ORIGINAL: 0x00625850 ?random@@YANXZ 0x00625850-0x00625880
 // size      48 bytes
@@ -142,7 +147,7 @@ uint32_t __cdecl random(uint32_t min, uint32_t max) { return Rand->get(min, max)
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
 // notes     Staged hybrid export redirect calls the source-owned floating generator
-double __cdecl random() { return Rand->get(); }
+double __cdecl random() { return Rand.get(); }
 
 
 // ---------------------------------------------------------------------------
