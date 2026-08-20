@@ -206,7 +206,12 @@ class DLLEXPORT Buffer {
   int load_pcx(const char *filename, Palette *palette, int tgl, int height);
   // 0x005E2690, the actual PCX decoder: the by-name overload above maps the
   // file and hands over the bytes and their length.
-  int load_pcx(BYTE *data, DWORD size, Palette *palette, int tgl, int height);
+  // 0x005E2690. The last two are a colour base and a colour count - the
+  // by-name overload calls them `tgl` and `height` and passes them straight
+  // through, but this one adds the first to every decoded pixel and copies
+  // that many palette entries.
+  int load_pcx(BYTE *data, DWORD size, Palette *palette, int colour_base,
+               int colour_count);
   int copy(Buffer *buffer, int xCoord, int yCoord, int width, int height,
            int src_width, int src_height);
 
