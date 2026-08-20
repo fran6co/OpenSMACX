@@ -21,6 +21,7 @@
 #include "alpha.h"
 #include "game.h"
 #include "log.h" // log_say
+#include "mapwin.h" // draw_map, promoted out of temp.h
 #include "strings.h"
 #include "text.h"
 // jackal_init_real brings all of these up, in this order.

@@ -427,6 +427,13 @@ DLLEXPORT int __cdecl world_site(int x, int y, BOOL is_ocean_site);
 DLLEXPORT void __cdecl world_analysis();
 DLLEXPORT void __cdecl world_alt_put_detail(int x, int y);
 DLLEXPORT void __cdecl world_polar_caps();
+// ?world_climate@@YAXXZ at 0x005C5A30 - still an original body, behind a
+// forwarder in src/pending_bodies.cpp. See draw_map in mapwin.h.
+DLLEXPORT void __cdecl world_climate();
+// ?custom_planet@@YAHHH@Z at 0x0058C2A0 - still an original body, behind a
+// forwarder in src/pending_bodies.cpp. It has a second span at
+// 0x006605A5-0x006607D7, which is why it is a long way from being promoted.
+DLLEXPORT int __cdecl custom_planet(int a, int b);
 DLLEXPORT void __cdecl world_linearize_contours();
 DLLEXPORT BOOL __cdecl near_landmark(int x, int y);
 DLLEXPORT void __cdecl world_crater(int x, int y);

@@ -31,6 +31,8 @@
 #include "sprite.h"
 #include "time.h"
 #include "win.h"
+#include "map.h"
+#include "mapwin.h"
 #include "popup.h"
 #include "sound.h"
 
@@ -88,6 +90,33 @@ int Caviar::init_class() {
 void Caviar::close_class() {
     typedef void(__cdecl *pending)();
     PENDING_BODY(0x00618D20, pending)();
+}
+
+// ---------------------------------------------------------------------------
+// PROMOTED OUT OF temp.h, where they were function POINTERS. A pointer
+// binding compiles `call dword ptr [draw_map]` where the image has
+// `call rel32`, so every caller of one reads as a mismatch however right its
+// body is - that is what held `Console::editor_polar` and
+// `Console::editor_climate` off the ratchet. The address is the same one
+// src/temp.cpp bound, so nothing about runtime changed; only the call shape.
+// ---------------------------------------------------------------------------
+
+// ?draw_map@@YAXH@Z at 0x0046B190 - body in src/recovered/units/0046b190.cpp
+void __cdecl draw_map(int draw_type) {
+    typedef void(__cdecl *pending)(int);
+    PENDING_BODY(0x0046B190, pending)(draw_type);
+}
+
+// ?world_climate@@YAXXZ at 0x005C5A30 - body in src/unrecovered/005c5a30.cpp
+void __cdecl world_climate() {
+    typedef void(__cdecl *pending)();
+    PENDING_BODY(0x005C5A30, pending)();
+}
+
+// ?custom_planet@@YAHHH@Z at 0x0058C2A0 - body in src/unrecovered/0058c2a0.cpp
+int __cdecl custom_planet(int a, int b) {
+    typedef int(__cdecl *pending)(int, int);
+    return PENDING_BODY(0x0058C2A0, pending)(a, b);
 }
 
 // ?control_game@@YAXXZ at 0x0052AA30 - body in src/unrecovered/0052aa30.cpp

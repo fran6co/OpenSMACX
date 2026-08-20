@@ -55,7 +55,6 @@ extern func18 *_fputc;
 // other
 typedef void func5(int);
 extern func5 *load_faction_art;
-extern func5 *draw_map;
 extern func5 *wave_it;
 typedef void *func6(char const *, int(*)(void));
 extern func6 *X_pop;
@@ -65,13 +64,14 @@ typedef void *func9(void);
 extern func9 *fixup_landmarks;
 extern func9 *mapwin_terrain_fixup;
 extern func9 *world_rainfall;
-// 0x0058C2A0 ?custom_planet@@YAHHH@Z and 0x005C5A30 ?world_climate@@YAXXZ are
-// both still original bodies; the scenario editor's climate and polar commands
-// reach them through these bindings.
-typedef int func_custom_planet(int, int);
-extern func_custom_planet *custom_planet;  // 0x0058C2A0
-typedef void func_world_climate(void);
-extern func_world_climate *world_climate;  // 0x005C5A30
+// A POINTER BINDING COSTS ITS CALLERS THE RATCHET. It compiles
+// `call dword ptr [name]` where the image has `call rel32`, so every caller
+// reads as a mismatch however right its body is - which is what held both of
+// the scenario editor's Console commands off the ratchet. `draw_map`,
+// `world_climate` and `custom_planet` left here for that reason: they are
+// declared properly now and forwarded in src/pending_bodies.cpp, which emits
+// the `E8`. Prefer a forwarder to a pointer for anything a recovered body
+// calls BY NAME; a pointer is only right for a genuine indirection.
 typedef BOOL func11(int, int, int);
 extern func11 *wants_to_attack_;
 typedef uint32_t func15(LPCSTR);

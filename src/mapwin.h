@@ -237,6 +237,12 @@ extern func_map_win_draw_radius MapWinOriginalDrawRadius;  // 0x0046A2A0
 // Redirected directly with no adapter; see src/mapwin.cpp.
 DLLEXPORT void __cdecl draw_tile(int x_coord, int y_coord, int draw_type);
 DLLEXPORT void __cdecl draw_tiles(int x_coord, int y_coord, int draw_type);
+// ?draw_map@@YAXH@Z at 0x0046B190 - the FREE function that repaints every
+// live MapWin, not `MapWin::draw_map` at 0x0046A550 below. Declared here
+// rather than bound as a pointer in temp.h so its callers emit the `E8` the
+// image emits; the body is still original, behind a forwarder in
+// src/pending_bodies.cpp.
+DLLEXPORT void __cdecl draw_map(int draw_type);
 
 // ?draw_map@MapWin@@QAEXH@Z at 0x0046A550 - public, __thiscall, void(int) by
 // the mangled name, `ret 4` by the image - is 2049 bytes and still an original
