@@ -433,12 +433,6 @@ void __fastcall graphic_win_redraw_redirect(GraphicWin *self, void *) {
 // nonclient_to_client converts an outer size to a client size in place, and
 // Buffer::init is DirectDraw/GDI surface creation; all four stay at their
 // original addresses until that closure is source-owned. Tests rebind them.
-func_win_init WinOriginalInit = original_method<func_win_init>(0x005EBD80);
-func_graphic_win_compute_min_size GraphicWinOriginalComputeMinSize =
-    original_method<func_graphic_win_compute_min_size>(0x005D7030);
-func_win_nonclient_to_client WinOriginalNonclientToClient =
-    original_method<func_win_nonclient_to_client>(0x005EEF60);
-func_buffer_init BufferOriginalInit = original_method<func_buffer_init>(0x005D7670);
 
 uint32_t *GraphicWinInitDefaults = reinterpret_cast<uint32_t *>(0x009B3394);
 
@@ -560,7 +554,7 @@ int GraphicWin::init(int x, int y, int width, int height, LPSTR title,
     }
 
     // All nine arguments go straight through in order.
-    const int base_result = (ORIGINAL(this)->*WinOriginalInit)(x, y, width, height, title, flags, parent, menu, border);
+    const int base_result = init(x, y, width, height, title, flags, parent, menu, border);
     if (base_result != 0) {
         return base_result;
     }
@@ -570,12 +564,12 @@ int GraphicWin::init(int x, int y, int width, int height, LPSTR title,
     // minimum-size computation, in the original's order.
     object[0x448 / 4] =
         static_cast<uint32_t>(reinterpret_cast<uintptr_t>(this));
-    (ORIGINAL(this)->*GraphicWinOriginalComputeMinSize)();
+    compute_min_size();
 
     if ((flags & 0x800) == 0) {
         // Converts the outer size to a client size in place. What the callee
         // subtracts is its own business and is not asserted here.
-        (ORIGINAL(this)->*WinOriginalNonclientToClient)(&width, &height);
+        nonclient_to_client(&width, &height);
     } else {
         // The 0x800 arm goes the other way and ADDS the process scrollbar
         // thickness, pairing bit 3 of the 0x98 flag dword with the width and
@@ -593,7 +587,7 @@ int GraphicWin::init(int x, int y, int width, int height, LPSTR title,
     }
 
     const int surface_result =
-        (ORIGINAL(&buffer_)->*BufferOriginalInit)(width, height, 0, nullptr);
+        buffer_.init(width, height, 0, nullptr);
     if (surface_result != 0) {
         return surface_result;
     }
