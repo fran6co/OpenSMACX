@@ -179,6 +179,10 @@ class DLLEXPORT Buffer {
   }
   int get_data();
   int set_clip(RECT *rect);
+  // 0x005D8200. The catalogue's prototype names the last two `length` and
+  // `width`, but they are added to the first two to make right and bottom,
+  // so they are a width and a height.
+  int set_clip(int left, int top, int width, int height);
   int text_width(LPSTR text);
   int text_height();
   int text_line_height();
@@ -416,10 +420,6 @@ int polygon(Buffer *buffer, Vert *verts, int a3, int a4);
 static const size_t BufferSurfaceLockSlot = 0x64;
 static const size_t BufferSurfaceUnlockSlot = 0x80;
 
-// The seven-argument copy is the real blitter and is not recovered yet, so the
-// convenience overload reaches it through a seam.
-typedef int (OriginalObject::*func_buffer_copy_full)(Buffer *, int, int, int, int, int, int);
-extern func_buffer_copy_full BufferCopyFull;
 
 int __fastcall buffer_copy_redirect(Buffer *self, void *, Buffer *buffer,
                                     int xCoord, int yCoord,

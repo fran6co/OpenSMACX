@@ -517,7 +517,6 @@ typedef void (OriginalObject::*func_buffer_virtual)();
 
 }  // namespace
 
-func_buffer_copy_full BufferCopyFull = original_method<func_buffer_copy_full>(0x005DFF00);
 
 /*
 Purpose: Copy a region of another buffer into the same position in this one.
@@ -539,7 +538,7 @@ repetition is the whole content of this overload.
 */
 int Buffer::copy(Buffer *buffer, int xCoord, int yCoord, int width,
                  int height) {
-    return (ORIGINAL(this)->*BufferCopyFull)(buffer, xCoord, yCoord, xCoord, yCoord, width, height);
+    return copy(buffer, xCoord, yCoord, xCoord, yCoord, width, height);
 }
 
 int __fastcall buffer_copy_redirect(Buffer *self, void *, Buffer *buffer,
@@ -570,7 +569,8 @@ destination and once as the source.
 int Buffer::copy(Buffer *buffer, RECT *rect) {
     const int left = rect->left;
     const int top = rect->top;
-    return (ORIGINAL(this)->*BufferCopyFull)(buffer, left, top, left, top, rect->right - left, rect->bottom - top);
+    return copy(buffer, left, top, left, top,
+                rect->right - left, rect->bottom - top);
 }
 
 int __fastcall buffer_copy_rect_redirect(Buffer *self, void *, Buffer *buffer,
@@ -1156,10 +1156,160 @@ int Buffer::load_pcx(const char *filename, Palette *palette, int tgl, int height
                     palette, tgl, height);
 }
 
-int Buffer::copy(Buffer *buffer, int xCoord, int yCoord, int width, int height,
-                 int src_width, int src_height) {
-    return (ORIGINAL(this)->*BufferCopyFull)(buffer, xCoord, yCoord, width,
-                                             height, src_width, src_height);
+/*
+Purpose: THE BLITTER. Copy a rectangle out of this buffer into `buffer`,
+         clipping the read against this buffer's own extent and the write
+         against the destination's clip rectangle, and handling the case
+         where source and destination are the same object.
+// ORIGINAL: 0x005DFF00 ?copy@Buffer@@QAEHPAVBuffer@@HHHHHH@Z 0x005DFF00-0x005E079B
+// symbol    ?copy@Buffer@@QAEHPAV1@HHHHHH@Z
+// size      2203 bytes
+// prototype int (__thiscall ?copy@Buffer@@QAEHPAVBuffer@@HHHHHH@Z)(Buffer* this, Buffer*, int, int, int, int, int, int)
+// callers   51   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005E3373 0x005E34A3
+// indirect  0x005DFFDD 0x005E0705
+Return Value: 0 for a completed or fully clipped copy, 3 for a bad argument
+              or a surface that would not lock, 7 for no pixel storage
+Status: WIP
+
+PROMOTED FROM src/recovered/units/005dff00.cpp, which is deleted. That unit
+reached the image through raw offsets - `*(int *)(bb + 0x4a8)` for the
+destination stride, `*(int *)(self + 0x84)` for the negated height - and
+through two macros and four `goto` labels, because when it was written none
+of those offsets had names. They all do now, and the two macros are one
+call: `REL_BUF_R3` and the `LRelSurfR3` label together are `free_data`, the
+no-surface arm and the surface arm, inlined by hand.
+
+NOT BYTE-EXACT, AND FAR FROM IT: 237 instructions against the image's 761,
+similarity 0.255. The gap is one deliberate decision, and it is worth
+knowing before anyone tries to close it.
+
+The image writes the same-buffer case FOUR TIMES - once per combination of
+"the horizontal shift needs a backwards copy" and "the vertical shift needs
+rows in reverse" - and each of the four repeats the whole clip,
+`get_data`, pointer-compute and `free_data` sequence inline. That is close
+to five hundred instructions of duplication, and it accounts for nearly all
+of the difference: the three largest gaps against the image are runs of
+188, 199 and 89 instructions.
+
+Here the four arms collapse into a row direction and `memmove`, because
+`memmove` is the C spelling of both halves of what the direction flag does.
+That is one readable arm instead of four unreadable ones, and it is the
+same computation. The preserved unit chose the other way - it kept all four
+arms specifically so "the clip/get_data()/pointer-compute code is repeated
+with the same multiplicity as the original" - and even then could not
+express the reversed intra-row copy through `memcpy`, so it did not match
+either.
+
+To close this properly the four arms have to come back, with `get_data` and
+`free_data` inlined at each of them, which is a different body from this
+one rather than an adjustment to it.
+*/
+int Buffer::copy(Buffer *buffer, int xCoord, int yCoord, int wx, int wy,
+                 int width, int height) {
+    if (dib_bits_ == nullptr && surface_ == nullptr) {
+        return 7;
+    }
+    if (buffer == nullptr) {
+        return 3;
+    }
+
+    // A negative read position shrinks the extent and shifts the write
+    // position by the overhang, then clamps: the standard blit clip.
+    if (xCoord < 0) {
+        width += xCoord;
+        wx -= xCoord;
+        xCoord = 0;
+    }
+    if (yCoord < 0) {
+        height += yCoord;
+        wy -= yCoord;
+        yCoord = 0;
+    }
+
+    // `biHeight` is stored negative, so `-biHeight` is the row count.
+    if (xCoord > dib_.bmiHeader.biWidth
+        || yCoord > -dib_.bmiHeader.biHeight) {
+        return 0;
+    }
+    if (xCoord + width > dib_.bmiHeader.biWidth) {
+        width = dib_.bmiHeader.biWidth - xCoord;
+    }
+    if (yCoord + height > -dib_.bmiHeader.biHeight) {
+        height = -(yCoord + dib_.bmiHeader.biHeight);
+    }
+
+    // The write rectangle, clipped against the destination's own clip rect.
+    RECT clipped;
+    clipped.left = wx;
+    clipped.top = wy;
+    clipped.right = wx + width;
+    clipped.bottom = wy + height;
+    if (!IntersectRect(&clipped, &clipped, &buffer->rect1_)) {
+        return 0;
+    }
+
+    // Whatever the intersection moved the write rect by, the read position
+    // moves with it; the extent comes from the intersected rect.
+    xCoord += clipped.left - wx;
+    yCoord += clipped.top - wy;
+    width = clipped.right - clipped.left;
+    height = clipped.bottom - clipped.top;
+
+    if (clipped.left >= buffer->dib_.bmiHeader.biWidth
+        || clipped.top >= -buffer->dib_.bmiHeader.biHeight
+        || buffer->get_data() == 0) {
+        return 3;
+    }
+    uint8_t *const write = static_cast<uint8_t *>(buffer->locked_bits_)
+        + buffer->stride_ * clipped.top + clipped.left;
+    if (write == nullptr) {
+        return 3;
+    }
+
+    if (xCoord >= dib_.bmiHeader.biWidth
+        || yCoord >= -dib_.bmiHeader.biHeight
+        || get_data() == 0) {
+        buffer->free_data(1);
+        return 3;
+    }
+    uint8_t *const read = static_cast<uint8_t *>(locked_bits_)
+        + stride_ * yCoord + xCoord;
+    if (read == nullptr) {
+        buffer->free_data(1);
+        return 3;
+    }
+
+    if (buffer != this) {
+        // Different objects cannot overlap, so rows go in either order.
+        uint8_t *destination = write;
+        const uint8_t *source = read;
+        for (int row = 0; row < height; ++row) {
+            memcpy(destination, source, static_cast<size_t>(width));
+            source += stride_;
+            destination += buffer->stride_;
+        }
+    } else {
+        // SAME BUFFER, so the two rectangles can overlap. Rows are walked
+        // from whichever end keeps the read ahead of the write, and each row
+        // is moved rather than copied because the horizontal shift can
+        // overlap too.
+        const int step = (wy < yCoord) ? 1 : -1;
+        const int first = (wy < yCoord) ? 0 : height - 1;
+        uint8_t *destination = write + first * static_cast<int>(buffer->stride_);
+        uint8_t *source = read + first * static_cast<int>(stride_);
+        for (int row = 0; row < height; ++row) {
+            memmove(destination, source, static_cast<size_t>(width));
+            destination += step * static_cast<int>(buffer->stride_);
+            source += step * static_cast<int>(stride_);
+        }
+    }
+
+    free_data(1);
+    buffer->free_data(1);
+    return 0;
 }
 
 /*
@@ -1537,6 +1687,30 @@ int Buffer::set_clip(RECT *rect) {
         surface_->SetClipper(clipper_);
     }
     return 0;
+}
+
+/*
+Purpose: Set the clip rectangle from a position and an extent.
+// ORIGINAL: 0x005D8200 ?set_clip@Buffer@@QAEHHHHH@Z 0x005D8200-0x005D823D BYTE_EXACT
+// size      61 bytes
+// prototype int (__thiscall ?set_clip@Buffer@@QAEHHHHH@Z)(Buffer* this, int xLeft, int yTop, int length, int width)
+// callers   2   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D8000
+// indirect  0x005D8224
+Return Value: whatever the RECT overload returns
+Status: Complete
+
+Promoted from src/recovered/005d8200.cpp, which is deleted. That unit reached
+`SetRect` through its IAT slot - `(*(SetRectFn *)g_00669274)(...)` - because
+a verification scaffold declares no headers; here it is the import by name,
+and the relocation is masked either way.
+*/
+int Buffer::set_clip(int left, int top, int width, int height) {
+    RECT area;
+    SetRect(&area, left, top, left + width, top + height);
+    return set_clip(&area);
 }
 
 int __fastcall buffer_set_clip_redirect(Buffer *self, void *, RECT *rect) {
