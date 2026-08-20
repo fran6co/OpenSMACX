@@ -46,6 +46,16 @@ class DLLEXPORT Palette {
   static void init_palette_class(int mode);
   static void set_active_window(Win *window);
   int get_pos(int value);
+  // ?UNK7@Palette@@QAEHHHHHHH@Z at 0x005FF280, named from what it does:
+  // walk `entries_[start .. start+count)` and return the index whose RGB is
+  // nearest, by squared distance. `skip_animated` makes it ignore every
+  // entry an active `internal_` slot has reserved.
+  int closest(int red, int green, int blue, int start, int count,
+              int skip_animated);
+  // ?UNK3@Palette@@QAEXH@Z at 0x005FE950: drop the animation slot holding
+  // `key` - stop its timer, put the colours it was cycling back, re-apply
+  // the palette, free its buffer, and close the gap in the table.
+  void remove_animation(int key);
 
  private:
   // Buffer caches this generation tag to skip republishing an unchanged
@@ -56,14 +66,23 @@ class DLLEXPORT Palette {
   // directly in init.
   PALETTEENTRY entries_[256];
   uint32_t seed_;
+  // FIVE ANIMATION SLOTS, named from what `?UNK3@Palette@@QAEXH@Z`
+  // (0x005FE950) does with them: it finds the slot whose `key` matches its
+  // argument, deletes the slot's timer, runs
+  //
+  //     memcpy(&entries_[first], colours, count * sizeof(PALETTEENTRY))
+  //
+  // then syncs a Buffer and calls `GDI32!AnimatePalette`. `get_pos` scans
+  // `key` for a match or for -1, which is find-or-allocate; the constructor
+  // and `close` set every slot back to that state.
   struct PaletteInternal {
-      uint32_t field_0;
-      Time *time;
-      uint8_t field_8;
-      uint8_t field_9;
-      uint8_t field_A;
-      uint8_t field_B;
-      void *field_C;
+      uint32_t key;         // the slot's id, -1 when free
+      Time *time;           // OWNED: `close` deletes it through ??1Time
+      uint8_t first;        // first entries_[] index this slot animates
+      uint8_t count;        // how many entries, memcpy'd count * 4 bytes
+      uint8_t field_A;      // nothing recovered touches these two - not the
+      uint8_t field_B;      // constructor, not `close`, not UNK3
+      void *colours;        // malloc'd PALETTEENTRY run; `close` frees it
   } internal_[5];
 };
 
