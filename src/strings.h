@@ -32,6 +32,24 @@
 // `->str`; with the object itself declared there is nothing to wrap.
 extern char StringTemp[1032];    // 0x009B86A0
 
+// APPEND A DECIMAL NUMBER TO StringTemp, and IN THE HEADER because the
+// image has it BOTH WAYS: a standalone body at 0x0050B8A0 with three
+// callers, and folded into `prefs_get`, whose first eight instructions are
+// byte-identical to this function's and differ only in which stack slot the
+// argument comes from. That is what an `inline` in a header produces - the
+// out-of-line copy comes from a unit that did not fold it - and it is what
+// gave `prefs_get` its otherwise baffling shape: a local buffer, an emptied
+// StringTemp and a `strcat` where a single `_itoa` would do.
+//
+// The two claims are measured under DIFFERENT flag sets: `prefs_get` under
+// /O2, which folds this in, and this one under /O2 /Ob0, which does not.
+// The per-function flag search is exactly what makes that possible.
+inline void __cdecl say_num(int value) {   // 0050B8A0
+  char text[0x50];
+  _itoa(value, text, 10);
+  strcat(StringTemp, text);
+}
+
 class DLLEXPORT Strings : Heap {
  public:
   Strings() : is_populated_(false) {

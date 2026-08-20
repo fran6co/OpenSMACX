@@ -1063,11 +1063,24 @@ def compare_source(record: DecompilationState, exe: Path | str,
         return AsmComparison(verdict=refusal, flags="")
     original_asm(record, exe)            # raises early if nothing locates it
     best, diagnostic = None, ""
+    missing = None
     for attempt in attempts:
         try:
             compiled = compiled_asm(record, command, attempt, source)
         except CompileFailed as failed:
             diagnostic = diagnostic or str(failed)
+            continue
+        except ValueError as absent:
+            # A SUBJECT THAT ONE INVOCATION DOES NOT EMIT. An `inline`
+            # function is folded into its callers under /O2 and emitted as
+            # its own COMDAT under /Ob0, so which flag sets can answer for
+            # it is a property of the invocation, not of the annotation.
+            # Raising here aborted the whole search on the first set:
+            # `say_num` is exactly this shape, and the image has it BOTH
+            # ways - a standalone body with three callers, and folded into
+            # `prefs_get`. Kept and re-raised only if NO set finds it,
+            # because that is the stale-fact case this must still catch.
+            missing = missing or absent
             continue
         result = compare_subject(record, exe, compiled)
         # TIED ON TIER, DECIDED ON AGREEMENT. Every candidate is measured
@@ -1082,5 +1095,7 @@ def compare_source(record: DecompilationState, exe: Path | str,
         if best.verdict is Tier.BYTE_EXACT:
             break                    # nothing beats byte equality
     if best is None:
+        if missing is not None:
+            raise missing            # no invocation emitted it: a bad fact
         return AsmComparison(verdict=Tier.NO_COMPILE, diagnostic=diagnostic)
     return best

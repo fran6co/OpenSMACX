@@ -1341,6 +1341,17 @@ LPSTR __cdecl prefs_get(LPCSTR key_name, LPCSTR default_value, BOOL use_default)
 }
 
 /*
+Purpose: Append a decimal number to the StringTemp buffer.
+// ORIGINAL: 0x0050B8A0 ?say_num@@YAXH@Z 0x0050B8A0-0x0050B8CA BYTE_EXACT
+// body      src/strings.h
+// size      42 bytes
+// prototype void (__cdecl ?say_num@@YAXH@Z)(int)
+// kind      game
+Return Value: n/a
+Status: Complete
+*/
+
+/*
 Purpose: Get the default value for the 1st set of preferences.
 // ORIGINAL: 0x0059DA20 ?default_prefs@@YAHXZ 0x0059DA20-0x0059DA99
 // symbol    ?default_prefs@@YAIXZ
@@ -1443,14 +1454,8 @@ Return Value: Key's integer value from the ini or default if not set
 Status: Complete
 */
 int __cdecl prefs_get(LPCSTR key_name, int default_value, BOOL use_default) {
-    // A LOCAL BUFFER AND A `strcat`, not a write straight into StringTemp:
-    // the image reserves 0x50 bytes of stack, empties StringTemp, formats
-    // the number into the local and appends it. Writing the number into
-    // StringTemp directly is one call where the image makes two.
-    char formatted[0x50];
     StringTemp[0] = 0;
-    _itoa(default_value, formatted, 10);
-    strcat(StringTemp, formatted);
+    say_num(default_value);
     if (use_default) {
         strcpy(TextBufferGetPtr, StringTemp);
     } else {

@@ -713,3 +713,41 @@ def test_a_compile_that_never_finishes_is_a_compile_failure(monkeypatch):
     monkeypatch.setattr(asm.subprocess, "run", stall)
     with pytest.raises(asm.CompileFailed, match="did not finish"):
         asm.compile_unit(Path("x.cpp"), ["cl"], "/c")
+
+
+def test_a_subject_one_invocation_does_not_emit_is_not_the_end(tmp_path,
+                                                                monkeypatch):
+    """An `inline` function is folded into its callers under /O2 and emitted
+    as its own COMDAT under /Ob0, so which flag sets can answer for it is a
+    property of the INVOCATION. Raising aborted the whole search on the
+    first set - `say_num` is that shape, and the image has it both ways."""
+    record = record_in(tmp_path, MARKED)
+    tries = iter([ValueError("not found among the object's .text symbols"),
+                  listing(b"\xC3")])
+    def maybe(*args, **kwargs):
+        got = next(tries)
+        if isinstance(got, ValueError):
+            raise got
+        return got
+    monkeypatch.setattr(asm, "compiled_asm", maybe)
+    monkeypatch.setattr(asm, "original_asm", lambda *a, **k: listing(b"\xC3"))
+    monkeypatch.setattr(asm, "span_refusal", lambda *a, **k: None)
+    monkeypatch.setattr(asm, "compare_subject",
+                        lambda *a, **k: asm.AsmComparison(
+                            verdict=asm.Tier.BYTE_EXACT))
+    result = asm.compare_record(record, "exe", ["cl"], ("/O2", "/O2 /Ob0"))
+    assert result.verdict == "BYTE_EXACT"
+
+
+def test_a_subject_no_invocation_emits_is_still_an_error(tmp_path,
+                                                          monkeypatch):
+    """The stale-fact case this must still catch: an annotation naming a
+    symbol nothing produces is a defect in the annotation."""
+    record = record_in(tmp_path, MARKED)
+    def absent(*args, **kwargs):
+        raise ValueError("?f@@YAXXZ: the fact is stale")
+    monkeypatch.setattr(asm, "compiled_asm", absent)
+    monkeypatch.setattr(asm, "original_asm", lambda *a, **k: listing(b"\xC3"))
+    monkeypatch.setattr(asm, "span_refusal", lambda *a, **k: None)
+    with pytest.raises(ValueError, match="stale"):
+        asm.compare_record(record, "exe", ["cl"], ("/O2", "/O2 /Ob0"))
