@@ -72,6 +72,15 @@
 #define PENDING_BODY(address, signature) \
     reinterpret_cast<signature>(static_cast<unsigned long>(address))
 
+// ?draw@Sprite@@QAEHPAUBuffer@@HHH@Z at 0x005E4B9A - 3225 bytes, the blitter
+// the six-argument overload wraps with a substituted origin. Called by name,
+// so it gets a forwarder rather than a pointer.
+//             body in src/unrecovered/005e4b9a.cpp
+int Sprite::draw(Buffer *buffer, int a, int b, int c) {
+    typedef int(__fastcall *pending)(Sprite *, void *, Buffer *, int, int, int);
+    return PENDING_BODY(0x005E4B9A, pending)(this, nullptr, buffer, a, b, c);
+}
+
 // ?write_raw_l@Buffer@@QAEHPADHHH@Z at 0x005DBD00 - 1475 bytes, the raster
 // writer that puts one single-font run on the surface. Called by name from
 // `write_multi_font_raw_l`, which is promoted; a pointer here would cost that

@@ -21,6 +21,7 @@
 #include "buffer.h"
 
 #include <new>
+#include "general.h"   // mem_get, for the placeholder pixel
 
 int *SpriteMemoryUsed = reinterpret_cast<int *>(0x009B6618);
 func_sprite_free *SpriteFree = (func_sprite_free *)0x00644EF2;
@@ -107,13 +108,15 @@ void __fastcall sprite_close_redirect(Sprite *self, void *) {
     self->close();
 }
 
-int *SpriteDrawOriginX = reinterpret_cast<int *>(0x00696D18);
-int *SpriteDrawOriginY = reinterpret_cast<int *>(0x00696D1C);
-func_sprite_draw_original SpriteDrawOriginal = original_method<func_sprite_draw_original>(0x005E4B9A);
+// OBJECTS, NOT POINTERS: the image addresses 0x00696D18 and 0x00696D1C
+// directly - `mov esi, dword ptr [0x696d18]` - where a pointer variable
+// loads the pointer first.
+int SpriteDrawOriginX;  // 0x00696D18
+int SpriteDrawOriginY;  // 0x00696D1C
 
 /*
 Purpose: Draw the sprite with a temporarily substituted draw origin.
-// ORIGINAL: 0x005E4B4A ?draw@Sprite@@QAEHPAUBuffer@@HHHHH@Z 0x005E4B4A-0x005E4B95
+// ORIGINAL: 0x005E4B4A ?draw@Sprite@@QAEHPAUBuffer@@HHHHH@Z 0x005E4B4A-0x005E4B95 BYTE_EXACT
 // symbol    ?draw@Sprite@@QAEHPAVBuffer@@HHHHH@Z
 // size      75 bytes
 // prototype int (__thiscall ?draw@Sprite@@QAEHPAUBuffer@@HHHHH@Z)(Sprite* this, Buffer*, int, int, int, int, int)
@@ -127,13 +130,13 @@ Status: Complete with a temporary dependency on the four-argument overload
 int Sprite::draw(Buffer *buffer, int a, int b, int c, int x, int y) {
     // The origin is swapped for the duration of the call and restored in the
     // reverse order the legacy body uses.
-    const int saved_x = *SpriteDrawOriginX;
-    const int saved_y = *SpriteDrawOriginY;
-    *SpriteDrawOriginX = x;
-    *SpriteDrawOriginY = y;
-    const int result = (ORIGINAL(this)->*SpriteDrawOriginal)(buffer, a, b, c);
-    *SpriteDrawOriginY = saved_y;
-    *SpriteDrawOriginX = saved_x;
+    const int saved_x = SpriteDrawOriginX;
+    const int saved_y = SpriteDrawOriginY;
+    SpriteDrawOriginX = x;
+    SpriteDrawOriginY = y;
+    const int result = draw(buffer, a, b, c);
+    SpriteDrawOriginY = saved_y;
+    SpriteDrawOriginX = saved_x;
     return result;
 }
 
@@ -252,21 +255,17 @@ int __cdecl sub_63ce20() {
     return result;
 }
 
-// Sheet extraction / blank creation reached by the per-control init_class
-// bodies. Bodies not yet recovered; each forwards through the seam.
+// Sheet extraction reached by the per-control init_class bodies. Not yet
+// recovered; it forwards through the seam. `create_blank` used to sit
+// here beside it and is promoted below.
 typedef int (OriginalObject::*func_sprite_extract)(Buffer *, int, int, int, int, int, TexHeap *);
-typedef int (OriginalObject::*func_sprite_create_blank)(int, int, int);
 static func_sprite_extract SpriteExtractOriginal = original_method<func_sprite_extract>(0x005E39A0);
-static func_sprite_create_blank SpriteCreateBlankOriginal = original_method<func_sprite_create_blank>(0x005EAF3F);
 
 int Sprite::extract(Buffer *buffer, int a, int b, int c, int width, int height,
                     TexHeap *heap) {
     return (ORIGINAL(this)->*SpriteExtractOriginal)(buffer, a, b, c, width, height, heap);
 }
 
-int Sprite::create_blank(int width, int height, int depth) {
-    return (ORIGINAL(this)->*SpriteCreateBlankOriginal)(width, height, depth);
-}
 
 
 // ---------------------------------------------------------------------------
@@ -294,3 +293,38 @@ int Sprite::create_blank(int width, int height, int depth) {
 // flags     hidden;thunk;sp_ready;purged_ok
 // calls     (none)
 */
+
+/*
+Purpose: Turn the sprite into a one-pixel placeholder of the given extent.
+// ORIGINAL: 0x005EAF3F ?create_blank@Sprite@@QAEHHHH@Z 0x005EAF3F-0x005EAF86
+// size      71 bytes
+// prototype int (__thiscall ?create_blank@Sprite@@QAEHHHH@Z)(Sprite* this, int, int, int)
+// kind      game
+// calls     0x005D4510
+Return Value: No errors (0); allocation failed (4)
+Status: Semantics transcribed from the image
+
+PROMOTED FROM src/recovered/units/005eaf3f.cpp, which wrote every field as
+`*reinterpret_cast<int *>(self + 0x18)`.
+
+ONE BYTE OF PIXELS. The sheet is 1x1 and the extent is whatever the caller
+asked for, so this is a placeholder that draws a single colour - and
+`iSpriteWidth2_` takes the width while `iSpriteWidth_` takes 1, which is the
+pair the drawing code reads as "sheet stride" and "frame width".
+*/
+int Sprite::create_blank(int width, int height, int depth) {
+    iWidth_ = width;
+    iSpriteWidth2_ = width;
+    iLeftOffset_ = 0;
+    iTopOffset_ = 0;
+    // ONE, SHARED. The image materialises `mov ecx, 1` once and uses it for
+    // both stores AND as the allocation size, pushing it before the stores
+    // that follow.
+    const int one = 1;
+    iSpriteWidth_ = one;
+    iSpriteHeight_ = one;
+    iHeight_ = height;
+    cTransparentIndex_ = static_cast<char>(depth);
+    pcBits_ = reinterpret_cast<int>(mem_get(one));
+    return pcBits_ ? 0 : 4;
+}

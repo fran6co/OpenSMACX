@@ -2667,33 +2667,45 @@ Verification note: the min is evaluated twice by the original and once here,
 and relaxing the min's comparison to `<=` is an equivalent mutant.
 */
 int Buffer::write_cent_l(LPSTR text, RECT *rect, int len) {
-    if (!text) {
+    // ONE RETURN FOR BOTH, as in the other overload: the image's two `je`s
+    // reach the same epilogue. Two separate `if (...) return 0;` statements
+    // make VC6 emit that epilogue twice and grow a frame around it.
+    if (!text || !rect) {
         return 0;
     }
-    if (!rect) {
-        return 0;
-    }
-    const uint32_t left = edge_bits(rect->left);
-    const uint32_t top = edge_bits(rect->top);
-    const uint32_t right = edge_bits(rect->right);
-    const uint32_t bottom = edge_bits(rect->bottom);
+    // PLAIN INT ARITHMETIC, as in `box` and the other overload: the
+    // `edge_bits`/`edge_int` round trip is a pair of calls VC6 declines to
+    // inline, and there are ten of them here. The image reads the four edges
+    // into registers in order and halves with `cdq; sub; sar 1`.
+    // A COPY OF THE RECTANGLE, which is what the frame says: the image
+    // reserves 0x10 bytes - exactly a RECT - and reads the four edges out of
+    // the caller's copy into it before doing anything else.
+    RECT area = *rect;
+    const int left = area.left;
+    const int top = area.top;
+    const int right = area.right;
+    const int bottom = area.bottom;
     if (!font1_ || !font1_->is_initialized()) {
         return 3;
     }
-    const int measured = static_cast<int>(strlen(text));
-    const int limit = (measured < len) ? measured : len;
-    if (limit <= 0) {
+    // FIVE STRLEN CALLS in this body: the `MIN` macro used twice, each
+    // evaluating its argument twice, and a fifth for the measurement below.
+    // The guards are `< 0` and `== 0` reaching the same epilogue, exactly as
+    // in the other overload.
+    int limit;
+    if (BUFFER_MIN(static_cast<int>(strlen(text)), len) < 0 ||
+        (limit = BUFFER_MIN(static_cast<int>(strlen(text)), len)) == 0) {
         return 0;
     }
-    const int drawn =
-        text_width(text, measured);
-    const int x_span = edge_int(right - edge_bits(drawn) - left);
-    const int x_coord = edge_int(left + edge_bits(x_span / 2));
+    // THE WHOLE STRING, not the clamped count: this overload measures with a
+    // fresh strlen where the other centres on the truncated text. That
+    // asymmetry is in the bytes.
+    const int drawn = text_width(text, static_cast<int>(strlen(text)));
+    const int x_coord = left + (right - drawn - left) / 2;
     if (!font1_) {
         font1_ = FontDefault;
     }
-    const int y_span = edge_int(bottom - edge_bits(font1_->height_) - top);
-    const int y_coord = edge_int(top + edge_bits(y_span / 2));
+    const int y_coord = top + (bottom - font1_->height_ - top) / 2;
     return write_multi_font_raw_l(text, x_coord, y_coord, limit);
 }
 

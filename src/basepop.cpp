@@ -812,11 +812,12 @@ int BasePop::basepop_alloc() {
 // 0x00696ECC, as the original does.
 Status: Complete
 */
+char *BasePopDefaultOkText;      // 0x009B8D80
+char *BasePopDefaultCancelText;  // 0x009B8D84
+
 static int *const g_00696ecc = (int *)0x00696ECC;
 static int *const g_00697008 = (int *)0x00697008;
 static int *const g_00697010 = (int *)0x00697010;
-static int *const g_009b8d80 = (int *)0x009B8D80;
-static int *const g_009b8d84 = (int *)0x009B8D84;
 static int *const g_009b8d98 = (int *)0x009B8D98;
 static int *const g_009b8da8 = (int *)0x009B8DA8;
 static int *const g_009bb484 = (int *)0x009BB484;
@@ -828,13 +829,13 @@ int __cdecl BasePop::init_class() {
     *g_009b8da8 = *g_009bb484;
 
     if (g_00697008 != 0) {
-        if (*g_009b8d84 != 0) {
-            free(reinterpret_cast<void *>(*g_009b8d84));
-            *g_009b8d84 = 0;
+        if (BasePopDefaultCancelText != 0) {
+            free(BasePopDefaultCancelText);
+            BasePopDefaultCancelText = nullptr;
         }
         unsigned int len = strlen(reinterpret_cast<char *>(g_00697008));
         void *p = mem_get(len + 1);
-        *g_009b8d84 = reinterpret_cast<int>(p);
+        BasePopDefaultCancelText = static_cast<char *>(p);
         if (p != 0) {
             *reinterpret_cast<char *>(p) = 0;
             strcat(reinterpret_cast<char *>(p), reinterpret_cast<char *>(g_00697008));
@@ -842,13 +843,13 @@ int __cdecl BasePop::init_class() {
     }
 
     if (g_00697010 != 0) {
-        if (*g_009b8d80 != 0) {
-            free(reinterpret_cast<void *>(*g_009b8d80));
-            *g_009b8d80 = 0;
+        if (BasePopDefaultOkText != 0) {
+            free(BasePopDefaultOkText);
+            BasePopDefaultOkText = nullptr;
         }
         unsigned int len2 = strlen(reinterpret_cast<char *>(g_00697010));
         void *p2 = mem_get(len2 + 1);
-        *g_009b8d80 = reinterpret_cast<int>(p2);
+        BasePopDefaultOkText = static_cast<char *>(p2);
         if (p2 != 0) {
             *reinterpret_cast<char *>(p2) = 0;
             strcat(reinterpret_cast<char *>(p2), reinterpret_cast<char *>(g_00697010));
@@ -865,4 +866,73 @@ int __cdecl BasePop::init_class() {
         return (-(static_cast<unsigned int>(r2 != 0)) & 0xfffffffc) + 4;
     }
     return 4;
+}
+
+/*
+Purpose: Replace the default OK caption with a heap copy of `text`.
+// ORIGINAL: 0x006018A0 ?set_def_ok_text@BasePop@@QAAHPAD@Z 0x006018A0-0x00601902 BYTE_EXACT
+// symbol    ?set_def_ok_text@BasePop@@SAHPAD@Z
+// size      98 bytes
+// callers   2   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x00644EF2 0x006453E0 0x00645470
+Return Value: No errors (0); null argument (3); allocation failed (5)
+Status: Semantics transcribed from the image
+
+PROMOTED FROM src/unrecovered/006018a0.cpp, which reached the buffer through
+`reinterpret_cast<char **>(g_009b8d80)`.
+
+THE COPY IS `dst[0] = 0` FOLLOWED BY A STRCAT, which is what the image does
+everywhere it copies a string - two arguments and `add esp, 8`, not the
+bounded three.
+*/
+int __cdecl BasePop::set_def_ok_text(LPSTR text) {
+    if (text == nullptr) {
+        return 3;
+    }
+    if (BasePopDefaultOkText != nullptr) {
+        free(BasePopDefaultOkText);
+        BasePopDefaultOkText = nullptr;
+    }
+    BasePopDefaultOkText = static_cast<char *>(mem_get(strlen(text) + 1));
+    if (BasePopDefaultOkText == nullptr) {
+        return 5;
+    }
+    BasePopDefaultOkText[0] = 0;
+    strcat(BasePopDefaultOkText, text);
+    return 0;
+}
+
+/*
+Purpose: Replace the default Cancel caption with a heap copy of `text`.
+// ORIGINAL: 0x00601910 ?set_def_cancel_text@BasePop@@QAAHPAD@Z 0x00601910-0x00601972 BYTE_EXACT
+// symbol    ?set_def_cancel_text@BasePop@@SAHPAD@Z
+// size      98 bytes
+// callers   2   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x00644EF2 0x006453E0 0x00645470
+Return Value: No errors (0); null argument (3); allocation failed (4)
+Status: Semantics transcribed from the image
+
+PROMOTED FROM src/unrecovered/00601910.cpp. NOTE THE RETURN CODE: this one
+answers 4 where its twin above answers 5 for the same failure. Both are in
+the shipped bytes.
+*/
+int __cdecl BasePop::set_def_cancel_text(LPSTR text) {
+    if (text == nullptr) {
+        return 3;
+    }
+    if (BasePopDefaultCancelText != nullptr) {
+        free(BasePopDefaultCancelText);
+        BasePopDefaultCancelText = nullptr;
+    }
+    BasePopDefaultCancelText = static_cast<char *>(mem_get(strlen(text) + 1));
+    if (BasePopDefaultCancelText == nullptr) {
+        return 4;
+    }
+    BasePopDefaultCancelText[0] = 0;
+    strcat(BasePopDefaultCancelText, text);
+    return 0;
 }
