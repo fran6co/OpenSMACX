@@ -1525,12 +1525,35 @@ int Buffer::set_clip(RECT *rect) {
         return 1;
     }
 
-    // The context is acquired only when none is already held, and released
-    // again only in that case.
-    bool acquired = false;
+    // WRITTEN OUT, NOT CALLED. The marker above says `calls (none)`: the
+    // image has the whole `get_hdc` / `release_hdc` protocol inlined here,
+    // including the `hdc2_ != nullptr` arm that this call site's own guard
+    // makes unreachable, which is what an inlined body looks like rather
+    // than a hand-written one. VC6 will not do it for us - `/O2` implies
+    // `/Ob2` and both bodies are defined above this point, so it has seen
+    // them and declined on size - and the bodies cannot move into the header
+    // to be `inline`, because they need <ddraw.h> and `buffer.h` does not
+    // have it. `Win::init_class` writes out the same protocol for the same
+    // reason.
+    // `int`, not `bool`: the image tests it with `cmp dword ptr [esp+0x54],
+    // ebp`. A `bool` is a byte and compiles `mov al, [esp+0x54]; test al, al`.
+    int acquired;
     if (hdc2_ == nullptr) {
-        acquired = true;
-        get_hdc();
+        acquired = 1;
+        if (locked_bits_ != nullptr) {
+            surface_lost();
+        }
+        if (surface_ == nullptr) {
+            hdc2_ = hdc_;
+            ++hdc_lock_count_;
+        } else if (hdc2_ != nullptr) {
+            ++hdc_lock_count_;
+        } else {
+            if (surface_->GetDC(&hdc2_) != 0) {
+                surface_lost();
+            }
+            ++hdc_lock_count_;
+        }
     }
     if (hdc2_ != nullptr) {
         if (clip_region_ != nullptr) {
@@ -1552,32 +1575,46 @@ int Buffer::set_clip(RECT *rect) {
         SelectClipRgn(hdc2_, region);
     }
     if (acquired) {
-        release_hdc(1);
+        // The decrement sits inside each arm, which is where the image
+        // has it: two `dec [esi + 0x68]` sites, not one hoisted above the
+        // surface test.
+        if (surface_ == nullptr) {
+            if (static_cast<int>(--hdc_lock_count_) <= 0) {
+                hdc2_ = nullptr;
+                hdc_lock_count_ = 0;
+            }
+        } else if (static_cast<int>(--hdc_lock_count_) <= 0
+                   && hdc2_ != nullptr) {
+            if (surface_->ReleaseDC(hdc2_) != 0) {
+                surface_lost();
+            }
+            hdc_lock_count_ = 0;
+            hdc2_ = nullptr;
+        }
     }
 
     if (surface_ != 0) {
-        // A single-rectangle RGNDATA: the header's bound and the one entry in
-        // the rectangle array are both the clipped rectangle.
-        // The clip list `SetClipList` wants, built the way the API is
-        // built: `RGNDATA` ends in `char Buffer[1]`, so the storage is
-        // sized for the header plus the rectangles and the two casts are
-        // the ones the interface forces - one to `LPRGNDATA`, one to
-        // `LPRECT` over `Buffer`.
+        // A single-rectangle clip list: the header's bound and the one entry
+        // in the rectangle array are both the clipped rectangle.
         //
-        // On the stack rather than allocated, because that is where the
-        // original puts it: it builds the block at `esp + 0x24` and its
-        // last store is `esp + 0x50`, 0x30 bytes, which is exactly
-        // `sizeof(RGNDATAHEADER) + sizeof(RECT)`.
-        BYTE storage[sizeof(RGNDATAHEADER) + sizeof(RECT)];
-        LPRGNDATA const clip = reinterpret_cast<LPRGNDATA>(storage);
-        clip->rdh.dwSize = sizeof(RGNDATAHEADER);
-        clip->rdh.iType = RDH_RECTANGLES;
-        clip->rdh.nCount = 1;
-        clip->rdh.nRgnSize = sizeof(RECT);
-        clip->rdh.rcBound = rect1_;
-        reinterpret_cast<LPRECT>(clip->Buffer)[0] = rect1_;
+        // A REAL OBJECT, not a byte array with a pointer cast over it.
+        // `RGNDATA` ends in `char Buffer[1]`, so the one-rectangle form is
+        // its own type - the same shape as `Dib` above, and for the same
+        // reason. `sizeof(RGNDATAHEADER) + sizeof(RECT)` is 0x30, and the
+        // original builds exactly that on the stack: the block starts at
+        // `esp + 0x24` and its last store is `esp + 0x50`.
+        struct ClipList {
+            RGNDATAHEADER rdh;
+            RECT rects[1];
+        } clip;
+        clip.rdh.dwSize = sizeof(RGNDATAHEADER);
+        clip.rdh.iType = RDH_RECTANGLES;
+        clip.rdh.nCount = 1;
+        clip.rdh.nRgnSize = sizeof(RECT);
+        clip.rdh.rcBound = rect1_;
+        clip.rects[0] = rect1_;
 
-        clipper_->SetClipList(clip, 0);
+        clipper_->SetClipList(reinterpret_cast<LPRGNDATA>(&clip), 0);
         surface_->SetClipper(clipper_);
     }
     return 0;
