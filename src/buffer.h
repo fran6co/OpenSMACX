@@ -70,12 +70,14 @@ struct Dib {
 class DLLEXPORT Buffer {
  public:
   int poly(Vert *a1, int a2, int a3);
-  Buffer() { ; }
-  // VIRTUAL, AND THE VPTR MEMBER IS GONE. `Buffer::construct` writes
-  // `object[0] = BufferVtable` by hand over what was an explicit
-  // `LPVOID vtable_` - a C++ vtable spelled as data. The image's slots are
-  // `??_GBuffer@@UAEPAXI@Z` at 0 and `sub_406b30` at 1; declared, the
-  // compiler puts the pointer there itself and `sizeof` stays 0x588.
+  // 0x005D7210. The body is in buffer.cpp beside its marker.
+  Buffer();
+  // VIRTUAL, AND THE VPTR MEMBER IS GONE. What the image stores at offset
+  // 0 is a C++ vtable, and this tree used to spell it as an explicit
+  // `LPVOID vtable_` written by hand. The slots are `??_GBuffer@@UAEPAXI@Z`
+  // at 0 and `sub_406b30` at 1; declared virtual, the compiler puts the
+  // pointer there itself and `sizeof` stays 0x588.
+  //
   // 0x005D7410, and the body really is this: see the annotation in
   // buffer.cpp beside the marker.
   virtual ~Buffer() { close(); }
@@ -88,8 +90,8 @@ class DLLEXPORT Buffer {
   //
   // MEASURED, 2026-08-16. Declaring it `virtual` and deleting the explicit
   // `LPVOID vtable_;` below is the right shape and is what the image has -
-  // `Buffer::construct` writes `object[0] = BufferVtable` by hand, which is
-  // a C++ vtable spelled as data. It compiles, it links, `sizeof` stays
+  // the constructor's store to offset 0 is a C++ vtable spelled as data.
+  // It compiles, it links, `sizeof` stays
   // 0x588, and it changes not one byte of `Buffer::init` or
   // `Buffer::close`: 90.8% and 95.7% either way. It also breaks 87 claims,
   // because `emit_translation_unit` emits its class shells in an order that
@@ -98,7 +100,6 @@ class DLLEXPORT Buffer {
   // the class, and it is the same blocker `Win` has.
 
 
-  void construct();
   void clear_links();
   int set_font(Font *font1, Font *font2, Font *font3, Font *font4);
   void set_text_color(int color1, int color2, int color3, int color4);
@@ -302,7 +303,6 @@ int __fastcall buffer_text_line_height_redirect(Buffer *self, void *);
 void __fastcall buffer_close_redirect(Buffer *self, void *);
 void __fastcall buffer_destructor_redirect(Buffer *self, void *);
 extern const uint32_t BufferVtable;
-extern Palette **BufferPalette;
 Buffer *__fastcall buffer_construct_redirect(Buffer *self, void *);
 
 // Selects the DirectDraw teardown path over the GDI device-context path.

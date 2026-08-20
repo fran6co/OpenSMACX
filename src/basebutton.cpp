@@ -353,7 +353,8 @@ int __cdecl base_button_set_def_font_redirect(
 }
 
 // The active palette these setters publish before recolouring. This is a
-// different global from Buffer's own BufferPalette at 0x009B8174.
+// different global from `PaletteCurrent` at 0x009B8174, which is what
+// Buffer's constructor reads.
 Palette **BaseButtonActivePalette = reinterpret_cast<Palette **>(0x009B8180);
 
 namespace {

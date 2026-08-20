@@ -131,7 +131,7 @@ void __fastcall base_button_set_text_color3_redirect(
     BaseButton *self, void *, int color1, int color2, int color3, int color4);
 
 // The palette these setters publish before recolouring. Distinct from
-// BufferPalette at 0x009B8174; tests outside the hybrid process rebind it.
+// `PaletteCurrent` at 0x009B8174; tests outside the hybrid process rebind it.
 extern Palette **BaseButtonActivePalette;
 
 void __fastcall base_button_on_key_click_redirect(
