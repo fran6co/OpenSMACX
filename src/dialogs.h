@@ -149,10 +149,6 @@ static_assert(sizeof(Dialogs) == 0xC94,
               "Dialogs ends where its vbtable puts Dialog: 0xBA0 + 0xF4");
 
 // Neither delegate target is recovered yet.
-typedef int (OriginalObject::*func_dialog_item)(char *, int);
-typedef int (OriginalObject::*func_list_box_item)(char *, int);
-extern func_dialog_item DialogOriginalItem;
-extern func_list_box_item ListBoxOriginalItem;
 
 int __fastcall dialogs_item_redirect(Dialogs *self, void *, char *text, int index);
 int __fastcall dialogs_get_num_items_redirect(Dialogs *self, void *);
@@ -162,13 +158,6 @@ void __fastcall dialogs_close_redirect(Dialogs *self, void *);
 // The SpriteBox and ListBox handlers these forward to are not recovered.
 typedef void (OriginalObject::*func_dialogs_fwd2)(int a1, int a2);
 typedef void (OriginalObject::*func_dialogs_fwd1)(int a1);
-extern func_dialogs_fwd2 DialogsSpriteBoxOnRightDown;
-extern func_dialogs_fwd2 DialogsSpriteBoxOnRightDoubleClick;
-extern func_dialogs_fwd2 DialogsSpriteBoxOnLeftUp;
-extern func_dialogs_fwd2 DialogsSpriteBoxOnRightUp;
-extern func_dialogs_fwd2 DialogsSpriteBoxOnRightClick;
-extern func_dialogs_fwd2 DialogsListBoxOnScrolling;
-extern func_dialogs_fwd1 DialogsListBoxOnMousewheel;
 
 void __fastcall dialogs_on_right_down_redirect(Dialogs *self, void *, int a1, int a2);
 void __fastcall dialogs_on_right_double_click_redirect(Dialogs *self, void *, int a1, int a2);

@@ -29,6 +29,17 @@
   */
 class SpriteBox {
  public:
+  // 0x00611240, a pending_bodies forwarder.
+  void on_right_down(int a, int b);
+  // 0x00611330, a pending_bodies forwarder.
+  void on_right_double_click(int a, int b);
+  // 0x006111A0, a pending_bodies forwarder.
+  void on_left_up(int a, int b);
+  // 0x00611290, a pending_bodies forwarder.
+  void on_right_up(int a, int b);
+  // 0x006111F0, a pending_bodies forwarder.
+  void on_right_click(int a, int b);
+ public:
   void on_dialog_focus(int a1);
   void close();
   int init(RECT* a1, int a2);

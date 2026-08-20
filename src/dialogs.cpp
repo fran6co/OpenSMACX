@@ -10,6 +10,7 @@
 #include "stdafx.h"
 #include "dialogs.h"
 #include "listbox.h"      // ListBox::destroy (source-owned)
+#include "spritebox.h"    // the SpriteBox handlers this dispatches to
 #include "original_seam.h"
 #include "radiobutton.h"  // RadioButton::close (source-owned)
 #include <cstring>
@@ -41,16 +42,9 @@ void __fastcall dialogs_close_redirect(Dialogs *self, void *) {
 // piece compiles in decides what can be inlined into it.
 // ---------------------------------------------------------------------------
 
-func_dialog_item DialogOriginalItem = original_method<func_dialog_item>(0x00609990);
-func_list_box_item ListBoxOriginalItem = original_method<func_list_box_item>(0x0060C920);
 
 namespace {
 
-// The jump table indexes on the kind minus one, and anything outside one to
-// sixteen falls through to the default arm.
-bool kind_in_range(int32_t kind) {
-    return static_cast<uint32_t>(kind - 1) <= 0xF;
-}
 
 // Where the Dialog subobject is, according to this object's own vbtable.
 Dialog *dialog_of(void *self) {
@@ -75,17 +69,18 @@ Return Value: the widget's result, zero for kinds that hold no items
 Status: Complete
 */
 int Dialogs::item(char *text, int index) {
-    if (!kind_in_range(kind_)) {
-        return 0;
-    }
     switch (kind_) {
         case 1:
         case 4:
         case 8:
         case 16:
-            return (ORIGINAL(dialog_of(this))->*DialogOriginalItem)(text, index);
+            return dialog_of(this)->item(text, index);
         case 2:
-            return (ORIGINAL(this)->*ListBoxOriginalItem)(text, index);
+            // THE RECEIVER IS THIS OBJECT, reinterpreted: the image calls
+            // ListBox::item with the Dialogs pointer unchanged, and
+            // `class Dialogs : ListBox` cannot be spelled here - see the
+            // measured sizes in dialogs.h.
+            return reinterpret_cast<ListBox *>(this)->item(text, index);
         default:
             return 0;
     }
@@ -104,9 +99,6 @@ Return Value: the count, zero for kinds that hold no items
 Status: Complete
 */
 int Dialogs::get_num_items() {
-    if (!kind_in_range(kind_)) {
-        return 0;
-    }
     switch (kind_) {
         case 1:
         case 2:
@@ -133,20 +125,13 @@ int __fastcall dialogs_get_num_items_redirect(Dialogs *self, void *) {
     return self->get_num_items();
 }
 
-func_dialogs_fwd2 DialogsSpriteBoxOnRightDown = original_method<func_dialogs_fwd2>(0x00611240);
-func_dialogs_fwd2 DialogsSpriteBoxOnRightDoubleClick = original_method<func_dialogs_fwd2>(0x00611330);
-func_dialogs_fwd2 DialogsSpriteBoxOnLeftUp = original_method<func_dialogs_fwd2>(0x006111A0);
-func_dialogs_fwd2 DialogsSpriteBoxOnRightUp = original_method<func_dialogs_fwd2>(0x00611290);
-func_dialogs_fwd2 DialogsSpriteBoxOnRightClick = original_method<func_dialogs_fwd2>(0x006111F0);
-func_dialogs_fwd2 DialogsListBoxOnScrolling = original_method<func_dialogs_fwd2>(0x0060C5D0);
-func_dialogs_fwd1 DialogsListBoxOnMousewheel = original_method<func_dialogs_fwd1>(0x0060CB70);
 
 /*
 Purpose: Forward on right down to the embedded widget, but only when the
          active dialog is the sprite-box kind (8). `this` arrives at the interface subobject, so
          the discriminator sits 8 bytes before it and the target is reached by
          adjusting back 0x8C.
-// ORIGINAL: 0x00612ED0 ?on_right_down@Dialogs@@QAEXHH@Z 0x00612ED0-0x00612EEE
+// ORIGINAL: 0x00612ED0 ?on_right_down@Dialogs@@QAEXHH@Z 0x00612ED0-0x00612EEE BYTE_EXACT
 // size      30 bytes
 // prototype void (__thiscall ?on_right_down@Dialogs@@QAEXHH@Z)(Dialogs* this, int xCoord, int yCoord)
 // callers   0   call targets   1
@@ -161,7 +146,7 @@ void Dialogs::on_right_down(int a1, int a2) {
     int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
     if (discriminator == 8) {
-        (ORIGINAL(bytes - 0x8C)->*DialogsSpriteBoxOnRightDown)(a1, a2);
+        reinterpret_cast<SpriteBox *>(bytes - 0x8C)->on_right_down(a1, a2);
     }
 }
 
@@ -170,7 +155,7 @@ Purpose: Forward on right double click to the embedded widget, but only when the
          active dialog is the sprite-box kind (8). `this` arrives at the interface subobject, so
          the discriminator sits 8 bytes before it and the target is reached by
          adjusting back 0x8C.
-// ORIGINAL: 0x00612EF0 ?on_right_double_click@Dialogs@@QAEXHH@Z 0x00612EF0-0x00612F0E
+// ORIGINAL: 0x00612EF0 ?on_right_double_click@Dialogs@@QAEXHH@Z 0x00612EF0-0x00612F0E BYTE_EXACT
 // size      30 bytes
 // prototype void (__thiscall ?on_right_double_click@Dialogs@@QAEXHH@Z)(Dialogs* this, int xCoord, int yCoord)
 // callers   0   call targets   1
@@ -185,7 +170,7 @@ void Dialogs::on_right_double_click(int a1, int a2) {
     int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
     if (discriminator == 8) {
-        (ORIGINAL(bytes - 0x8C)->*DialogsSpriteBoxOnRightDoubleClick)(a1, a2);
+        reinterpret_cast<SpriteBox *>(bytes - 0x8C)->on_right_double_click(a1, a2);
     }
 }
 
@@ -194,7 +179,7 @@ Purpose: Forward on left up to the embedded widget, but only when the
          active dialog is the sprite-box kind (8). `this` arrives at the interface subobject, so
          the discriminator sits 8 bytes before it and the target is reached by
          adjusting back 0x8C.
-// ORIGINAL: 0x00612F10 ?on_left_up@Dialogs@@QAEXHH@Z 0x00612F10-0x00612F35
+// ORIGINAL: 0x00612F10 ?on_left_up@Dialogs@@QAEXHH@Z 0x00612F10-0x00612F35 BYTE_EXACT
 // size      37 bytes
 // prototype void (__thiscall ?on_left_up@Dialogs@@QAEXHH@Z)(Dialogs* this, int xCoord, int yCoord)
 // callers   0   call targets   1
@@ -208,8 +193,16 @@ void Dialogs::on_left_up(int a1, int a2) {
     uint8_t *const bytes = reinterpret_cast<uint8_t *>(this);
     int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
+    // A DEAD TEST FOR KIND 4, and it is in the shipped bytes. Both jumps go
+    // to the SAME place - 0x00612F32, past the call - so `cmp eax, 4; je`
+    // excludes a kind that `cmp eax, 8; jne` would have excluded anyway.
+    // Reproduced because it is three instructions of the original; it
+    // changes no behaviour, which is exactly why it survived.
+    if (discriminator == 4) {
+        return;
+    }
     if (discriminator == 8) {
-        (ORIGINAL(bytes - 0x8C)->*DialogsSpriteBoxOnLeftUp)(a1, a2);
+        reinterpret_cast<SpriteBox *>(bytes - 0x8C)->on_left_up(a1, a2);
     }
 }
 
@@ -218,7 +211,7 @@ Purpose: Forward on right up to the embedded widget, but only when the
          active dialog is the sprite-box kind (8). `this` arrives at the interface subobject, so
          the discriminator sits 8 bytes before it and the target is reached by
          adjusting back 0x8C.
-// ORIGINAL: 0x00612F40 ?on_right_up@Dialogs@@QAEXHH@Z 0x00612F40-0x00612F5E
+// ORIGINAL: 0x00612F40 ?on_right_up@Dialogs@@QAEXHH@Z 0x00612F40-0x00612F5E BYTE_EXACT
 // size      30 bytes
 // prototype void (__thiscall ?on_right_up@Dialogs@@QAEXHH@Z)(Dialogs* this, int xCoord, int yCoord)
 // callers   0   call targets   1
@@ -233,7 +226,7 @@ void Dialogs::on_right_up(int a1, int a2) {
     int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
     if (discriminator == 8) {
-        (ORIGINAL(bytes - 0x8C)->*DialogsSpriteBoxOnRightUp)(a1, a2);
+        reinterpret_cast<SpriteBox *>(bytes - 0x8C)->on_right_up(a1, a2);
     }
 }
 
@@ -242,7 +235,7 @@ Purpose: Forward on right click to the embedded widget, but only when the
          active dialog is the sprite-box kind (8). `this` arrives at the interface subobject, so
          the discriminator sits 8 bytes before it and the target is reached by
          adjusting back 0x8C.
-// ORIGINAL: 0x00612F60 ?on_right_click@Dialogs@@QAEXHH@Z 0x00612F60-0x00612F7E
+// ORIGINAL: 0x00612F60 ?on_right_click@Dialogs@@QAEXHH@Z 0x00612F60-0x00612F7E BYTE_EXACT
 // size      30 bytes
 // prototype void (__thiscall ?on_right_click@Dialogs@@QAEXHH@Z)(Dialogs* this, int xCoord, int yCoord)
 // callers   0   call targets   1
@@ -257,7 +250,7 @@ void Dialogs::on_right_click(int a1, int a2) {
     int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
     if (discriminator == 8) {
-        (ORIGINAL(bytes - 0x8C)->*DialogsSpriteBoxOnRightClick)(a1, a2);
+        reinterpret_cast<SpriteBox *>(bytes - 0x8C)->on_right_click(a1, a2);
     }
 }
 
@@ -266,7 +259,7 @@ Purpose: Forward on scrolled to the embedded widget, but only when the
          active dialog is the list-box kind (2). `this` arrives at the interface subobject, so
          the discriminator sits 8 bytes before it and the target is reached by
          adjusting back 0x140.
-// ORIGINAL: 0x00612F80 ?on_scrolled@Dialogs@@QAEXHH@Z 0x00612F80-0x00612FA0
+// ORIGINAL: 0x00612F80 ?on_scrolled@Dialogs@@QAEXHH@Z 0x00612F80-0x00612FA0 BYTE_EXACT
 // size      32 bytes
 // prototype void (__thiscall ?on_scrolled@Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
 // callers   0   call targets   1
@@ -280,8 +273,15 @@ void Dialogs::on_scrolled(int a1, int a2) {
     uint8_t *const bytes = reinterpret_cast<uint8_t *>(this);
     int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
-    if (discriminator == 2) {
-        (ORIGINAL(bytes - 0x140)->*DialogsListBoxOnScrolling)(a1, a2);
+    // A SWITCH, NOT AN `if`: the image is `sub eax, 2; jne`, which is
+    // what VC6 emits for a one-case switch. An equality test compiles
+    // `cmp dword ptr [ecx-8], 2` and reads the field a second time.
+    switch (discriminator) {
+        case 2:
+            reinterpret_cast<ListBox *>(bytes - 0x140)->on_scrolling(a1, a2);
+            break;
+        default:
+            break;
     }
 }
 
@@ -290,7 +290,7 @@ Purpose: Forward on scrolling to the embedded widget, but only when the
          active dialog is the list-box kind (2). `this` arrives at the interface subobject, so
          the discriminator sits 8 bytes before it and the target is reached by
          adjusting back 0x140.
-// ORIGINAL: 0x00612FA0 ?on_scrolling@Dialogs@@QAEXHH@Z 0x00612FA0-0x00612FC0
+// ORIGINAL: 0x00612FA0 ?on_scrolling@Dialogs@@QAEXHH@Z 0x00612FA0-0x00612FC0 BYTE_EXACT
 // size      32 bytes
 // prototype void (__thiscall ?on_scrolling@Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
 // callers   0   call targets   1
@@ -304,8 +304,15 @@ void Dialogs::on_scrolling(int a1, int a2) {
     uint8_t *const bytes = reinterpret_cast<uint8_t *>(this);
     int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
-    if (discriminator == 2) {
-        (ORIGINAL(bytes - 0x140)->*DialogsListBoxOnScrolling)(a1, a2);
+    // A SWITCH, NOT AN `if`: the image is `sub eax, 2; jne`, which is
+    // what VC6 emits for a one-case switch. An equality test compiles
+    // `cmp dword ptr [ecx-8], 2` and reads the field a second time.
+    switch (discriminator) {
+        case 2:
+            reinterpret_cast<ListBox *>(bytes - 0x140)->on_scrolling(a1, a2);
+            break;
+        default:
+            break;
     }
 }
 
@@ -314,7 +321,7 @@ Purpose: Forward on mousewheel to the embedded widget, but only when the
          active dialog is the list-box kind (2). `this` arrives at the interface subobject, so
          the discriminator sits 8 bytes before it and the target is reached by
          adjusting back 0x140.
-// ORIGINAL: 0x00612FC0 ?on_mousewheel@Dialogs@@QAEXH@Z 0x00612FC0-0x00612FDB
+// ORIGINAL: 0x00612FC0 ?on_mousewheel@Dialogs@@QAEXH@Z 0x00612FC0-0x00612FDB BYTE_EXACT
 // size      27 bytes
 // prototype void (__thiscall ?on_mousewheel@Dialogs@@QAEXH@Z)(Dialogs* this, int)
 // callers   0   call targets   1
@@ -328,8 +335,15 @@ void Dialogs::on_mousewheel(int a1) {
     uint8_t *const bytes = reinterpret_cast<uint8_t *>(this);
     int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
-    if (discriminator == 2) {
-        (ORIGINAL(bytes - 0x140)->*DialogsListBoxOnMousewheel)(a1);
+    // A SWITCH, NOT AN `if`: the image is `sub eax, 2; jne`, which is
+    // what VC6 emits for a one-case switch. An equality test compiles
+    // `cmp dword ptr [ecx-8], 2` and reads the field a second time.
+    switch (discriminator) {
+        case 2:
+            reinterpret_cast<ListBox *>(bytes - 0x140)->on_mousewheel(a1);
+            break;
+        default:
+            break;
     }
 }
 
