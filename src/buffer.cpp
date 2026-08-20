@@ -602,16 +602,6 @@ int __fastcall buffer_copy_rect_redirect(Buffer *self, void *, Buffer *buffer,
     return self->copy(buffer, rect);
 }
 
-// Surface setup and image load reached by the promoted window init_class
-// bodies. Their own bodies are not yet recovered, so each forwards into the
-// original image through the seam. The seven-argument copy reuses
-// BufferCopyFull, already bound above to 0x005DFF00.
-typedef int (OriginalObject::*func_buffer_init)(int, int, int, ExtDirectDraw *);
-typedef int (OriginalObject::*func_buffer_fill)(int);
-typedef int (OriginalObject::*func_buffer_load_pcx)(const char *, Palette *, int, int);
-static func_buffer_init BufferInitOriginal = original_method<func_buffer_init>(0x005D7670);
-static func_buffer_fill BufferFillOriginal = original_method<func_buffer_fill>(0x005DFB50);
-static func_buffer_load_pcx BufferLoadPcxOriginal = original_method<func_buffer_load_pcx>(0x005D7DE0);
 
 /*
 Purpose: Give the buffer a size and the storage behind it - a DirectDraw
@@ -633,14 +623,20 @@ Purpose: Give the buffer a size and the storage behind it - a DirectDraw
 // The four returns are 3 (bad argument), 1 (no device context), 0x12 (the
 // surface or its clipper could not be created) and 0 (done, and also the
 // early-out).
+//
+// THE `memset` IS A REAL CALL IN THE IMAGE - `push 0x6c; push 0; push edx;
+// call _memset; add esp, 0xc` at 0x005D77C3 - and `/O2` implies `/Oi`,
+// which expands ours to `rep stosd`. `#pragma function(memset)` is the only
+// lever VC6 offers for that, and it is deliberately NOT used here.
+//
+// Measured both ways, because the pragma was here and had to earn its
+// place: with it, similarity 0.859 and 69 instructions in position; without
+// it, 0.705 and 80. NEITHER IS BYTE-EXACT, so what the pragma bought was a
+// metric and not a claim - and it bought that by changing the intrinsic for
+// every body below it in this file. `DDSURFACEDESC description = { 0 };`
+// and `ZeroMemory` were both tried; VC6 inlines those too, identically.
 Status: WIP
 */
-// `/O2` implies `/Oi`, which expands the `memset` below to `rep stosd`; the
-// image has `call _memset` at 0x005D77C3. `stdafx.h` already pins the four
-// string routines this way and this is the same lever, kept local because
-// only this body needs it.
-#pragma function(memset)
-
 int Buffer::init(int width, int height, int tgl, ExtDirectDraw *direct_draw) {
 
     const int borrowed = tgl & 4;
