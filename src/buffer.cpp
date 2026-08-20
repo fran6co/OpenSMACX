@@ -1308,8 +1308,18 @@ const uint32_t BufferVtable = 0x0066FDBC;
 /*
 Purpose: Destroy a Buffer by installing its virtual table, releasing every
          owned resource, and destroying the trailing Spot subobject.
-// ORIGINAL: 0x005D7410 ??1Buffer@@QAE@XZ 0x005D7410-0x005D7463;0x00662B68-0x00662B80
+
+         THE BODY IS `~Buffer() { close(); }` IN THE HEADER, and those three
+         tokens are the whole function. The vtable store, the `Spot` at
+         +0x4B0 and the EH frame that unwinds it are all things the compiler
+         emits around a virtual destructor with a member of class type; the
+         image's 20 instructions are what VC6 writes for that source, so
+         spelling any of them out by hand - as the stand-in here used to,
+         through a volatile pointer and a raw 0x4B0 - both missed the match
+         and described the layout twice.
+// ORIGINAL: 0x005D7410 ??1Buffer@@QAE@XZ 0x005D7410-0x005D7463;0x00662B68-0x00662B80 BYTE_EXACT
 // symbol    ??1Buffer@@UAE@XZ
+// body      src/buffer.h
 // size      107 bytes
 // prototype void (__thiscall ??1Buffer@@QAE@XZ)(Buffer* this)
 // callers   87   call targets   2
@@ -1319,18 +1329,11 @@ Purpose: Destroy a Buffer by installing its virtual table, releasing every
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
-void Buffer::destroy() {
-    volatile uint32_t *ordered = reinterpret_cast<volatile uint32_t *>(this);
-    ordered[0] = BufferVtable;
-    close();
-    // The Spot subobject sits immediately before the owned allocation table.
-    Spot *const spot = reinterpret_cast<Spot *>(
-        reinterpret_cast<uint8_t *>(this) + 0x4B0);
-    spot->~Spot();
-}
 
 void __fastcall buffer_destructor_redirect(Buffer *self, void *) {
-    self->destroy();
+    // QUALIFIED, so it is the direct `call ??1Buffer@@QAE@XZ` the image makes
+    // and not a dispatch through the vtable slot.
+    self->Buffer::~Buffer();
 }
 
 /*

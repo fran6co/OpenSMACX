@@ -60,7 +60,9 @@ class DLLEXPORT Buffer {
   // `LPVOID vtable_` - a C++ vtable spelled as data. The image's slots are
   // `??_GBuffer@@UAEPAXI@Z` at 0 and `sub_406b30` at 1; declared, the
   // compiler puts the pointer there itself and `sizeof` stays 0x588.
-  virtual ~Buffer() { ; }
+  // 0x005D7410, and the body really is this: see the annotation in
+  // buffer.cpp beside the marker.
+  virtual ~Buffer() { close(); }
   // `int`, and returning 0, because that is what the three bytes are:
   // `xor eax, eax; ret`. Declared `void` it compiles to `ret` alone and
   // Buffer's slot 1 stops being the function the image put there.
@@ -108,9 +110,6 @@ class DLLEXPORT Buffer {
   int write_cent_l(LPSTR text, int x_coord, int y_coord, int width, int len);
   int write_cent_l(LPSTR text, RECT *rect, int len);
   void close();
-  // Destructor body kept as a named method so the trivial ~Buffer() stays
-  // trivial and embedding classes keep their existing implicit destruction.
-  void destroy();
   void free_data(int count);
   // Surface setup and image blits. Declared so the recovered window
   // initialization bodies (Win::init_class and the per-control init_class
