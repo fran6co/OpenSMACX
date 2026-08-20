@@ -25,6 +25,10 @@
 #include "buffer.h"
 #include "checkbox.h"
 #include "checkbutton.h"
+#include "dialog.h"
+#include "spritebox.h"
+#include "dialogs.h"
+#include "listbox.h"
 #include "cursor.h"
 #include "filewin.h"
 #include "radiobutton.h"
@@ -98,6 +102,60 @@ int Scroll::init(int x, int y, int width, int height, Win *parent,
                                      Win *, int, int);
     return PENDING_BODY(0x006054D0, pending)(this, nullptr, x, y, width,
                                              height, parent, setting, options);
+}
+
+// ?item@Dialog@@QAEHPADH@Z at 0x00609990 and ?item@ListBox@@QAEHPADH@Z at
+// 0x0060C920 - the two item adders `Dialogs::item` dispatches to by kind.
+int Dialog::item(char *text, int index) {
+    typedef int(__fastcall *pending)(Dialog *, void *, char *, int);
+    return PENDING_BODY(0x00609990, pending)(this, nullptr, text, index);
+}
+
+int ListBox::item(char *text, int index) {
+    typedef int(__fastcall *pending)(ListBox *, void *, char *, int);
+    return PENDING_BODY(0x0060C920, pending)(this, nullptr, text, index);
+}
+
+// 0x00611240 - SpriteBox::on_right_down, dispatched to by kind from dialogs.cpp.
+void SpriteBox::on_right_down(int a, int b) {
+    typedef void(__fastcall *pending)(SpriteBox *, void *, int, int);
+    PENDING_BODY(0x00611240, pending)(this, nullptr, a, b);
+}
+
+// 0x00611330 - SpriteBox::on_right_double_click, dispatched to by kind from dialogs.cpp.
+void SpriteBox::on_right_double_click(int a, int b) {
+    typedef void(__fastcall *pending)(SpriteBox *, void *, int, int);
+    PENDING_BODY(0x00611330, pending)(this, nullptr, a, b);
+}
+
+// 0x006111A0 - SpriteBox::on_left_up, dispatched to by kind from dialogs.cpp.
+void SpriteBox::on_left_up(int a, int b) {
+    typedef void(__fastcall *pending)(SpriteBox *, void *, int, int);
+    PENDING_BODY(0x006111A0, pending)(this, nullptr, a, b);
+}
+
+// 0x00611290 - SpriteBox::on_right_up, dispatched to by kind from dialogs.cpp.
+void SpriteBox::on_right_up(int a, int b) {
+    typedef void(__fastcall *pending)(SpriteBox *, void *, int, int);
+    PENDING_BODY(0x00611290, pending)(this, nullptr, a, b);
+}
+
+// 0x006111F0 - SpriteBox::on_right_click, dispatched to by kind from dialogs.cpp.
+void SpriteBox::on_right_click(int a, int b) {
+    typedef void(__fastcall *pending)(SpriteBox *, void *, int, int);
+    PENDING_BODY(0x006111F0, pending)(this, nullptr, a, b);
+}
+
+// 0x0060C5D0 - ListBox::on_scrolling, dispatched to by kind from dialogs.cpp.
+void ListBox::on_scrolling(int a, int b) {
+    typedef void(__fastcall *pending)(ListBox *, void *, int, int);
+    PENDING_BODY(0x0060C5D0, pending)(this, nullptr, a, b);
+}
+
+// 0x0060CB70 - ListBox::on_mousewheel, dispatched to by kind from dialogs.cpp.
+void ListBox::on_mousewheel(int a) {
+    typedef void(__fastcall *pending)(ListBox *, void *, int);
+    PENDING_BODY(0x0060CB70, pending)(this, nullptr, a);
 }
 
 // ?write_raw_l@Buffer@@QAEHPADHHH@Z at 0x005DBD00 - 1475 bytes, the raster

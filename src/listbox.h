@@ -76,6 +76,15 @@
   */
 class ListBox {
  public:
+  // 0x0060C5D0, a pending_bodies forwarder.
+  void on_scrolling(int a, int b);
+  // 0x0060CB70, a pending_bodies forwarder.
+  void on_mousewheel(int a);
+ public:
+  // 0x0060C920, still a pending_bodies forwarder.
+  int item(char *text, int index);
+
+ public:
   void on_mouse_leave(int a1, int a2);
   ListBox() { ; }
   ~ListBox() { ; }

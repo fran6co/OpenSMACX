@@ -47,6 +47,11 @@ static_assert(offsetof(DialogEntry, previous) == 0x10,
   */
 class Dialog {
  public:
+  // 0x00609990, still a pending_bodies forwarder. `Dialogs::item` calls it
+  // BY NAME so the call site emits the image's `call rel32`.
+  int item(char *text, int index);
+
+ public:
   // Static default shared by every dialog; __cdecl in the original.
   static int set_def_dialog_font(Font *font1, Font *font2, Font *font3);
   Dialog() { ; }
