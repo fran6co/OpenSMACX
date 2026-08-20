@@ -1,10 +1,30 @@
 #include "stdafx.h"
 #include "textindex.h"
 
+/*
+// ORIGINAL: 0x005FDF40 ??0TextIndex@@QAE@XZ 0x005FDF40-0x005FDF5F
+// size      31 bytes
+// prototype void (__thiscall ??0TextIndex@@QAE@XZ)(TextIndex* this)
+// callers   0   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005D4560
+// notes     Staged hybrid export redirect calls the source-owned constructor
+*/
 TextIndex::TextIndex() : section_count_(0) {
     file_name_[0] = 0;
 }
 
+/*
+// ORIGINAL: 0x005FDF60 ??1TextIndex@@QAE@XZ 0x005FDF60-0x005FDF78
+// size      24 bytes
+// prototype void (__thiscall ??1TextIndex@@QAE@XZ)(TextIndex* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Staged hybrid export redirect calls the source-owned destructor
+*/
 TextIndex::~TextIndex() {
     section_count_ = 0;
     file_name_[0] = 0;

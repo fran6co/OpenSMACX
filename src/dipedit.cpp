@@ -90,6 +90,16 @@ void DipEdit::read_check() {
     (ORIGINAL(this)->*DipEditReadCheck)();
 }
 
+/*
+// ORIGINAL: 0x004DADA0 ?do_check@DipEdit@@QAEXXZ 0x004DADA0-0x004DB071
+// size      721 bytes
+// prototype void (__thiscall ?do_check@DipEdit@@QAEXXZ)(DipEdit* this)
+// callers   3   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x0060EB80
+// indirect  0x004DB068
+*/
 void DipEdit::do_check() {
     (ORIGINAL(this)->*DipEditDoCheck)();
 }

@@ -2,6 +2,16 @@
 #include "font.h"
 #include "vector_teardown.h"
 
+/*
+// ORIGINAL: 0x00618EA0 ??0Font@@QAE@XZ 0x00618EA0-0x00618EC0
+// size      32 bytes
+// prototype void (__thiscall ??0Font@@QAE@XZ)(Font* this)
+// callers   41   call targets   0
+// kind      
+// flags     
+// calls     (none)
+// notes     Staged hybrid export redirect calls the source-owned constructor
+*/
 Font::Font()
     : unk_1_(-1),
       is_fot_set_(0),
@@ -13,10 +23,31 @@ Font::Font()
       fot_file_name_(nullptr) {
 }
 
+/*
+// ORIGINAL: 0x00618EC0 ??0Font@@QAE@PADHH@Z 0x00618EC0-0x00618EDF BYTE_EXACT
+// size      31 bytes
+// prototype void (__thiscall ??0Font@@QAE@PADHH@Z)(Font* this, LPSTR fontName, int height, int style)
+// callers   0   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00618F40
+// notes     Staged hybrid export redirect calls the source-owned constructor
+*/
 Font::Font(LPSTR font_name, int height, int style) {
     init(font_name, height, static_cast<uint32_t>(style));
 }
 
+/*
+// ORIGINAL: 0x00618EE0 ??1Font@@QAE@XZ 0x00618EE0-0x00618F2D
+// size      77 bytes
+// prototype void (__thiscall ??1Font@@QAE@XZ)(Font* this)
+// callers   53   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00644EF2
+// indirect  0x00618F00 0x00618F11
+// notes     Staged hybrid export redirect calls the source-owned destructor
+*/
 Font::~Font() {
     close();
 }
