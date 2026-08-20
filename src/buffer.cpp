@@ -24,12 +24,6 @@
 #include "spot.h"
 
 #include <new>
-// `Buffer::init` creates the surface and clipper, and names
-// IID_IDirectDrawSurface - which lives in dxguid.lib. Linked the way
-// `time.h` links Winmm, rather than in CMakeLists, so the dependency
-// sits beside the code that needs it.
-#pragma comment(lib, "dxguid.lib")
-#include <ddraw.h>
 
 
 // The `owned_` table's length, needed by the constructor as well as by

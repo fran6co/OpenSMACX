@@ -268,7 +268,13 @@ target_compile_definitions(OpenSMACX PRIVATE
     $<$<CONFIG:Debug>:BUILD_DEBUG>
 )
 target_precompile_headers(OpenSMACX PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/stdafx.h")
-target_link_libraries(OpenSMACX PRIVATE zlib user32 gdi32 winmm)
+# `dxguid` carries the IIDs `Buffer::init` names - without it the link fails
+# with `unresolved external symbol _IID_IDirectDrawSurface`, measured. It used
+# to be a `#pragma comment(lib, "dxguid.lib")` in buffer.cpp, "so the
+# dependency sits beside the code that needs it"; the Winmm pragma that
+# comment cited as precedent turned out to be redundant with this line, so
+# the precedent was one entry that did nothing.
+target_link_libraries(OpenSMACX PRIVATE zlib user32 gdi32 winmm dxguid)
 
 # `/subsystem:windows`, because the entry point is `WinMain` and not `main`.
 # Left at the default the linker looks for `main`, finds only `_WinMain@16` and

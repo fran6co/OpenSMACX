@@ -76,6 +76,79 @@ def identifier(mangled: str) -> str:
             or match.group("plain") or "")
 
 
+# WHAT `??` INTRODUCES, for the forms this image actually carries. Counted
+# across the catalogue: 802 `??__F`, 407 `??__E`, 271 `??_G`, and the plain
+# `??0` / `??1` pairs. Operators exist in MSVC's table and do not appear here,
+# so they are not guessed at - an unknown form returns "" like everything else
+# this module cannot read.
+_SPECIAL = {
+    "0": "{scope}::{name}",
+    "1": "{scope}::~{name}",
+    "_G": "{scope}::`scalar deleting destructor'",
+    "_E": "{scope}::`vector deleting destructor'",
+    "__E": "`dynamic initializer for '{scope}''",
+    "__F": "`dynamic atexit destructor for '{scope}''",
+}
+
+
+def _components(text: str) -> list[str] | None:
+    """The `@`-separated name pieces before the `@@` that closes them.
+
+    A DIGIT IS A BACK-REFERENCE to a piece already seen, which is how MSVC
+    spells a repeated scope. Anything else unrecognised returns None rather
+    than a guess.
+    """
+    out: list[str] = []
+    for piece in text.split("@"):
+        if piece == "":
+            return out or None
+        if piece.isdigit():
+            index = int(piece)
+            if index >= len(out):
+                return None
+            out.append(out[index])
+        elif re.match(r"^[A-Za-z_?$][\w?$]*$", piece):
+            out.append(piece)
+        else:
+            return None
+    return None                        # never reached the closing `@@`
+
+
+def qualified_name(mangled: str) -> str:
+    """`Palette::get_rgbquad` for `?get_rgbquad@Palette@@QAEHPAURGBQUAD@@HH@Z`.
+
+    STILL NOT A DEMANGLER, and deliberately not: no return type, no argument
+    list, no calling convention. Those need MSVC's back-reference tables,
+    which the module comment above explains is where confident wrongness
+    comes from. A qualified NAME needs only the scope chain, which is
+    unambiguous.
+
+    Returns "" when the shape is unrecognised - the same contract as
+    `identifier`, and every caller reads it as "cannot tell".
+    """
+    mangled = (mangled or "").strip()
+    if not mangled.startswith("?"):
+        # `_WinMain@16` and `@thunk@16` are decoration, not mangling.
+        return identifier(mangled)
+    if mangled.startswith("??"):
+        for code in sorted(_SPECIAL, key=len, reverse=True):
+            if not mangled.startswith("??" + code):
+                continue
+            pieces = _components(mangled[2 + len(code):])
+            if not pieces:
+                return ""
+            # `??0Inner@Outer@@` is `Outer::Inner::Inner`: the scope chain
+            # reads outermost-first, and a constructor repeats the innermost
+            # piece as its own name.
+            scope = "::".join(reversed(pieces))
+            return _SPECIAL[code].format(scope=scope, name=pieces[0])
+        return ""
+    pieces = _components(mangled[1:])
+    if not pieces:
+        return ""
+    return "::".join(reversed(pieces))
+
+
 def _end_of_type(text: str, index: int) -> int | None:
     """The index just past ONE encoded type, or None if unrecognised."""
     if index >= len(text):
