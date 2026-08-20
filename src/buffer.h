@@ -129,6 +129,72 @@ class Buffer {
   static int init_class();
   void close_class();
   int sync_to_palette(Palette *palette);
+  // IN-CLASS, because the image INLINES BOTH into every drawing primitive
+  // that touches the pixels - `hline`, `vline`, `fill`, `copy` - and VC6
+  // inlines only what it can see here. Each still emits its own COMDAT, so
+  // each keeps the claim beside its marker in buffer.cpp.
+  MEASURED int get_data() {   // 005E3373
+      // ONE `return 0` FOR EVERY FAILURE, at the end: the image's `je` at
+      // 0x005E3388 jumps the whole length of the body to 0x005E33E5, where the
+      // Lock failure lands too. Written as an early `return 0` inside the first
+      // arm, VC6 emits a second epilogue there and the tail moves.
+      if (surface_ == nullptr) {
+          // Without a surface the buffer publishes its own storage, and the
+          // store happens whether or not that storage exists. IT RETURNS THAT
+          // STORAGE EITHER WAY - the null path is not a `return 0`, which is
+          // why the epilogue it jumps to at 0x005E33E5 has no `xor eax, eax`:
+          // eax already holds `dib_bits_`, and that IS the zero.
+          locked_bits_ = dib_bits_;
+          if (dib_bits_ != nullptr) {
+              ++surface_lock_count_;
+          }
+          return reinterpret_cast<int>(dib_bits_);
+      }
+      if (locked_bits_ != nullptr) {
+          ++surface_lock_count_;
+          return reinterpret_cast<int>(locked_bits_);
+      }
+      {
+          // THE DESCRIPTOR IS UNINITIALISED APART FROM ITS SIZE, which is what
+          // the image does and what DirectDraw asks for: `Lock` fills the rest.
+          DDSURFACEDESC description;
+          description.dwSize = sizeof(description);
+          // THIS failure returns zero where it stands - the image's
+          // `xor eax, eax` at 0x005E33C6 is inline - while the `dib_bits_`
+          // case above jumps the length of the body to the other zero at the
+          // end. Two of them, and which is which is not interchangeable.
+          if (surface_->Lock(nullptr, &description, DDLOCK_WAIT, nullptr) != 0) {
+              return 0;
+          }
+          ++surface_lock_count_;
+          stride_ = description.lPitch;
+          locked_bits_ = description.lpSurface;
+          return reinterpret_cast<int>(description.lpSurface);
+      }
+      return 0;
+  }
+
+  MEASURED void free_data(int count) {   // 005E34A3
+      // THE SURFACE TEST COMES FIRST and the subtraction is written out in
+      // both arms - `cmp ecx, edi; jne` at 0x005E34AE before any arithmetic.
+      // Hoisted above the test it lands two instructions early and every jump
+      // after it moves, which is the same shape `Buffer::close` needed.
+      if (surface_ == nullptr) {
+          surface_lock_count_ -= count;
+          if (surface_lock_count_ <= 0) {
+              locked_bits_ = nullptr;
+              surface_lock_count_ = 0;
+          }
+          return;
+      }
+      surface_lock_count_ -= count;
+      if (locked_bits_ != nullptr && surface_lock_count_ <= 0) {
+          surface_->Unlock(locked_bits_);
+          locked_bits_ = nullptr;
+          surface_lock_count_ = 0;
+      }
+  }
+
   HDC get_hdc() {
       if (locked_bits_ != 0) {
           surface_lost();
@@ -177,7 +243,6 @@ class Buffer {
           hdc2_ = nullptr;
       }
   }
-  int get_data();
   int set_clip(RECT *rect);
   // 0x005D8200. The catalogue's prototype names the last two `length` and
   // `width`, but they are added to the first two to make right and bottom,
@@ -197,7 +262,6 @@ class Buffer {
   int write_cent_l(LPSTR text, int x_coord, int y_coord, int width, int len);
   int write_cent_l(LPSTR text, RECT *rect, int len);
   void close();
-  void free_data(int count);
   // Surface setup and image blits. Declared so the recovered window
   // initialization bodies (Win::init_class and the per-control init_class
   // functions) can call them; their own bodies are still pending_bodies

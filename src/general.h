@@ -120,7 +120,7 @@ int __cdecl sub_63ce20();
 // entry and sets bit 0 once every subsystem has come up, so it is the engine's
 // own state word: the mode it was asked for, plus "initialised".
 extern int JackalInitFlags;
-char __cdecl filefind_cd_drive_letter();
+int __cdecl filefind_cd_drive_letter();
 void __cdecl filefind_set_alternative(LPCSTR path);
 LPSTR __cdecl filefind_get(LPCSTR file_name);
 int __cdecl bit_count(int bitfield);

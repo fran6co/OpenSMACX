@@ -110,7 +110,15 @@ extern HWND HandleMain;
 
 extern uint32_t *UnkBitfield1;
 
-extern Filefind *FilefindPath;
+/*
+ * AN OBJECT, NOT A `Filefind *`. The image takes the address of a member as
+ * an IMMEDIATE - `cmp esi, 0x9b8398` and `mov eax, 0x9b8398` in
+ * `filefind_get`, which is `&FilefindPath.last_path` at 0x009B8198 + 0x200 -
+ * where a pointer variable compiles a load and an add. It is also five
+ * kilobytes of terranx.exe's data, unmapped in a standalone build, so every
+ * path this tree read through it was a wild pointer.
+ */
+extern Filefind FilefindPath;
 extern MainInterface *MainInterfaceVar;
 
 int __cdecl tester();

@@ -749,8 +749,8 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
 
 /*
 Purpose: Get the drive letter of the CD path.
-// ORIGINAL: 0x006003A0 ?filefind_cd_drive_letter@@YAPADXZ 0x006003A0-0x006003A8
-// symbol    ?filefind_cd_drive_letter@@YADXZ
+// ORIGINAL: 0x006003A0 ?filefind_cd_drive_letter@@YAPADXZ 0x006003A0-0x006003A8 BYTE_EXACT
+// symbol    ?filefind_cd_drive_letter@@YAHXZ
 // size      8 bytes
 // prototype 
 // callers   0   call targets   0
@@ -760,7 +760,12 @@ Purpose: Get the drive letter of the CD path.
 Return Value: CD drive letter
 Status: Complete
 */
-char __cdecl filefind_cd_drive_letter() { return FilefindPath->cd_path[0]; }
+// INT, NOT CHAR, and the two instructions say which: the image is
+// `movsx eax, byte ptr [0x9b8198]`, a sign extension to a full register.
+// Returning `char` compiles `mov al, [X]` and leaves the rest of eax alone.
+// The catalogued name spells the return `PAD` - a `char *` - which the body
+// contradicts twice over.
+int __cdecl filefind_cd_drive_letter() { return FilefindPath.cd_path[0]; }
 
 /*
 Purpose: Set an alternative path for the Filefind checks.
@@ -776,12 +781,12 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl filefind_set_alternative(LPCSTR path) {
-    FilefindPath->alt_path[0] = 0;
+    FilefindPath.alt_path[0] = 0;
     if (path) {
         if (!strchr(path, ':') && path[0] != '\\') {
-            strcat_s(FilefindPath->alt_path, 256, FilefindPath->exe_dir);
+            strcat_s(FilefindPath.alt_path, 256, FilefindPath.exe_dir);
         }
-        strcat_s(FilefindPath->alt_path, 256, path);
+        strcat_s(FilefindPath.alt_path, 256, path);
     }
 }
 
@@ -801,9 +806,9 @@ Return Value: No errors (0) otherwise error
 Status: WIP
 */
 int __cdecl filefind_init(LPCSTR file_check, BOOL is_complete) {
-    FilefindPath->alt_path[0] = 0;
-    GetCurrentDirectoryA(256, FilefindPath->exe_dir);
-    strcat_s(FilefindPath->exe_dir, 256, "\\");
+    FilefindPath.alt_path[0] = 0;
+    GetCurrentDirectoryA(256, FilefindPath.exe_dir);
+    strcat_s(FilefindPath.exe_dir, 256, "\\");
 
     if (is_complete) {
         return 0; // complete install, no need for further checks
@@ -812,9 +817,9 @@ int __cdecl filefind_init(LPCSTR file_check, BOOL is_complete) {
         return 16; // error, file_check shouldn't be NULL
     }
     WIN32_FIND_DATAA find_file_data;
-    strcpy_s(FilefindPath->last_path, 256, FilefindPath->exe_dir);
-    strcat_s(FilefindPath->last_path, file_check);
-    HANDLE file_found = FindFirstFileA(FilefindPath->last_path, &find_file_data);
+    strcpy_s(FilefindPath.last_path, 256, FilefindPath.exe_dir);
+    strcat_s(FilefindPath.last_path, file_check);
+    HANDLE file_found = FindFirstFileA(FilefindPath.last_path, &find_file_data);
     FindClose(file_found);
     if (file_found != INVALID_HANDLE_VALUE) {
         return 0; // complete install on HDD, no need for CD
@@ -831,14 +836,14 @@ int __cdecl filefind_init(LPCSTR file_check, BOOL is_complete) {
         for (int i = 0; i < 26; i++) {
             if (GetDriveTypeA(root_path) == DRIVE_CDROM) {
                 // problem if drive was disconnected
-                strcpy_s(FilefindPath->last_path, 256, root_path);
-                strcat_s(FilefindPath->last_path, file_check);
+                strcpy_s(FilefindPath.last_path, 256, root_path);
+                strcat_s(FilefindPath.last_path, file_check);
                 //WIN32_FIND_DATA find_file_data;
                 //HANDLE file_found = FindFirstFile(g_filefind.last_path, &find_file_data);
-                file_found = FindFirstFileA(FilefindPath->last_path, &find_file_data);
+                file_found = FindFirstFileA(FilefindPath.last_path, &find_file_data);
                 FindClose(file_found);
                 if (file_found != INVALID_HANDLE_VALUE) {
-                    strcpy_s(FilefindPath->cd_path, 256, root_path);
+                    strcpy_s(FilefindPath.cd_path, 256, root_path);
                     // destroy JACKAL callBack
                     return 0;
                 }
@@ -855,7 +860,7 @@ int __cdecl filefind_init(LPCSTR file_check, BOOL is_complete) {
 
 /*
 Purpose: Check to see if the specified file can be found at some other path.
-// ORIGINAL: 0x006005D0 ?filefind_get@@YAHPAD@Z 0x006005D0-0x00600753
+// ORIGINAL: 0x006005D0 ?filefind_get@@YAHPAD@Z 0x006005D0-0x00600753 BYTE_EXACT
 // symbol    ?filefind_get@@YAPADPBD@Z
 // size      387 bytes
 // prototype 
@@ -868,43 +873,59 @@ Return Value: File path string or NULL if not found
 Status: Complete
 */
 LPSTR __cdecl filefind_get(LPCSTR file_name) {
+    // STRCAT, NOT STRCPY_S, and a copy is `dst[0] = 0` followed by one: the
+    // image pushes two arguments and clears the first byte itself -
+    // `mov byte ptr [0x9b8398], 0` then `call strcat` with `add esp, 8`.
+    // The bounded forms push three and cost the `add esp, 0xc` beside them.
+    // There is no bounds check in the shipped code and adding one here makes
+    // a different program.
     if (!file_name) {
         return 0;
     }
-    if (file_name == FilefindPath->last_path) {
-        return FilefindPath->last_path;
+    if (file_name == FilefindPath.last_path) {
+        return FilefindPath.last_path;
     }
     WIN32_FIND_DATAA find_file_data;
     HANDLE file_found;
     if (file_name[1] == ':') {
-        strcpy_s(FilefindPath->last_path, 256, file_name);
-        file_found = FindFirstFileA(FilefindPath->last_path, &find_file_data);
+        FilefindPath.last_path[0] = 0;
+        strcat(FilefindPath.last_path, file_name);
+        file_found = FindFirstFileA(FilefindPath.last_path, &find_file_data);
         FindClose(file_found);
-        return (file_found != INVALID_HANDLE_VALUE) ? FilefindPath->last_path : 0;
+        return (file_found != INVALID_HANDLE_VALUE) ? FilefindPath.last_path : 0;
     }
-    if (FilefindPath->alt_path[0]) {
-        strcpy_s(FilefindPath->last_path, 256, FilefindPath->alt_path);
-        strcat_s(FilefindPath->last_path, 256, file_name);
-        file_found = FindFirstFileA(FilefindPath->last_path, &find_file_data);
+    if (FilefindPath.alt_path[0]) {
+        FilefindPath.last_path[0] = 0;
+        strcat(FilefindPath.last_path, FilefindPath.alt_path);
+        strcat(FilefindPath.last_path, file_name);
+        file_found = FindFirstFileA(FilefindPath.last_path, &find_file_data);
         FindClose(file_found);
         if (file_found != INVALID_HANDLE_VALUE) {
-            return FilefindPath->last_path;
+            return FilefindPath.last_path;
         }
     }
-    strcpy_s(FilefindPath->last_path, 256, FilefindPath->exe_dir);
-    strcat_s(FilefindPath->last_path, 256, file_name);
-    file_found = FindFirstFileA(FilefindPath->last_path, &find_file_data);
+    FilefindPath.last_path[0] = 0;
+        strcat(FilefindPath.last_path, FilefindPath.exe_dir);
+    strcat(FilefindPath.last_path, file_name);
+    file_found = FindFirstFileA(FilefindPath.last_path, &find_file_data);
     FindClose(file_found);
     if (file_found != INVALID_HANDLE_VALUE) {
-        return FilefindPath->last_path;
+        return FilefindPath.last_path;
     }
-    if (FilefindPath->cd_path[0]) {
-        strcpy_s(FilefindPath->last_path, 256, FilefindPath->cd_path);
-        strcat_s(FilefindPath->last_path, 256, file_name);
-        file_found = FindFirstFileA(FilefindPath->last_path, &find_file_data);
-        FindClose(file_found);
+    if (FilefindPath.cd_path[0]) {
+        FilefindPath.last_path[0] = 0;
+        strcat(FilefindPath.last_path, FilefindPath.cd_path);
+        strcat(FilefindPath.last_path, file_name);
+        file_found = FindFirstFileA(FilefindPath.last_path, &find_file_data);
+        // THIS BLOCK CLOSES ONLY ON SUCCESS, unlike the three above it: the
+        // image tests first - `cmp eax, -1; je` at 0x0060072E - and calls
+        // FindClose after the branch. A failed FindFirstFileA hands back
+        // INVALID_HANDLE_VALUE, so there is nothing to leak; the asymmetry
+        // is in the shipped bytes and closing here unconditionally costs an
+        // instruction and moves the epilogue.
         if (file_found != INVALID_HANDLE_VALUE) {
-            return FilefindPath->last_path;
+            FindClose(file_found);
+            return FilefindPath.last_path;
         }
     }
     return 0;
