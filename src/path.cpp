@@ -48,7 +48,8 @@ void Path::init() {
 
 /*
  Purpose: Shutdown an instance of the class.
-// ORIGINAL: 0x0059A2D0 ?shutdown@Path@@QAEXXZ 0x0059A2D0-0x0059A318
+// ORIGINAL: 0x0059A2D0 ?shutdown@Path@@QAEXXZ 0x0059A2D0-0x0059A318 BYTE_EXACT
+// body      src/path.h
 // size      72 bytes
 // prototype void (__thiscall ?shutdown@Path@@QAEXXZ)(Path* this)
 // callers   1   call targets   1
@@ -58,20 +59,7 @@ void Path::init() {
  Return Value: n/a
  Status: Complete
 */
-void Path::shutdown() {
-    if (map_table_) {
-        free(map_table_);
-    }
-    if (x_table_) {
-        free(x_table_);
-    }
-    if (y_table_) {
-        free(y_table_);
-    }
-    map_table_ = 0;
-    x_table_ = 0;
-    y_table_ = 0;
-}
+
 
 /*
  Purpose: Get the value from the map table for the specified coordinates.
@@ -580,7 +568,7 @@ Path *Paths = (Path *)0x00945B00;
 // ---------------------------------------------------------------------------
 
 /*
-// ORIGINAL: 0x0059A320 ??1Path@@QAE@XZ 0x0059A320-0x0059A368
+// ORIGINAL: 0x0059A320 ??1Path@@QAE@XZ 0x0059A320-0x0059A368 BYTE_EXACT
 // body      src/path.h
 // size      72 bytes
 // prototype void (__thiscall ??1Path@@QAE@XZ)(Path* this)

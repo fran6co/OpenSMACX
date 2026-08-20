@@ -27,7 +27,7 @@ struct IDirectDrawPalette;  // <ddraw.h>, included where it is called
   */
 class DLLEXPORT Palette {
  public:
-  Palette() { ; }
+  Palette();                         // 005FE2A0
   // A TAIL JUMP, not an empty body: the image's destructor is one
   // instruction, `jmp ?close@Palette@@QAEXXZ`.
   ~Palette() { close(); }   // 005FE2E0

@@ -503,6 +503,13 @@ def _invocation(entry: dict[str, str]) -> list[str]:
     return [*compiler, "/nologo", *kept]
 
 
+# LONG ENOUGH FOR THE BIGGEST UNIT UNDER CONTENTION. `dialogs.cpp` is
+# 20,000 lines and every compile in this tree runs through one wine prefix,
+# so a sweep at the concurrency ceiling can leave a single invocation
+# waiting far longer than it takes to run.
+TIMEOUT_SECONDS = 300
+
+
 def compile_unit(source: Path, command: list[str], flags: str) -> bytes:
     """Compile `source` with `command` plus `flags`; return the object.
 
@@ -513,10 +520,22 @@ def compile_unit(source: Path, command: list[str], flags: str) -> bytes:
     the second calls this once and `subject_asm` many times.
     """
     with tempfile.TemporaryDirectory() as work:
-        result = subprocess.run([*command, *flags.split(), "/Founit.obj",
-                                 str(source)],
-                                cwd=work, capture_output=True, text=True,
-                                timeout=120)
+        try:
+            result = subprocess.run([*command, *flags.split(), "/Founit.obj",
+                                     str(source)],
+                                    cwd=work, capture_output=True, text=True,
+                                    timeout=TIMEOUT_SECONDS)
+        except subprocess.TimeoutExpired:
+            # A TIMEOUT IS A COMPILE FAILURE, not a different kind of event.
+            # It escaped as `subprocess.TimeoutExpired` and killed a sweep
+            # of 2,060 records outright, because every caller that guards a
+            # compile guards `CompileFailed`. The cause was wine contention
+            # rather than the source, which is exactly why it has to come
+            # back as a per-record verdict instead of taking the run down.
+            raise CompileFailed(
+                f"the compiler did not finish within {TIMEOUT_SECONDS}s "
+                f"- if several sweeps are running, they are queueing on the "
+                f"one wine prefix") from None
         obj = Path(work) / "unit.obj"
         if not obj.is_file():
             raise CompileFailed(_diagnostic(result.stdout, result.stderr))

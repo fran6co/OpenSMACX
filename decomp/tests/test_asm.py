@@ -9,6 +9,7 @@ smoke test, with the ratchet in tools/ keeping the strict machinery.
 
 import shutil
 import struct
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -700,3 +701,15 @@ def test_a_shorter_candidate_can_still_be_the_closer_one(tmp_path,
     monkeypatch.setattr(asm, "compare_asm", measured)
     result = asm.compare_record(record, "exe", ["cl"], ("/O2", "/O1"))
     assert result.mnemonic_similarity == 0.930
+
+
+def test_a_compile_that_never_finishes_is_a_compile_failure(monkeypatch):
+    """It escaped as `subprocess.TimeoutExpired` and took a sweep of 2,060
+    records down with it, because every caller that guards a compile guards
+    `CompileFailed`. The cause was contention on the one wine prefix rather
+    than the source, so it has to come back as a per-record verdict."""
+    def stall(*args, **kwargs):
+        raise subprocess.TimeoutExpired(cmd="cl", timeout=1)
+    monkeypatch.setattr(asm.subprocess, "run", stall)
+    with pytest.raises(asm.CompileFailed, match="did not finish"):
+        asm.compile_unit(Path("x.cpp"), ["cl"], "/c")

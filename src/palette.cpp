@@ -413,8 +413,7 @@ void Palette::init() {
 // ---------------------------------------------------------------------------
 
 /*
-// ORIGINAL: 0x005FE2A0 ??0Palette@@QAE@XZ 0x005FE2A0-0x005FE2D9
-// body      src/palette.h
+// ORIGINAL: 0x005FE2A0 ??0Palette@@QAE@XZ 0x005FE2A0-0x005FE2D9 BYTE_EXACT
 // size      57 bytes
 // prototype void (__thiscall ??0Palette@@QAE@XZ)(Palette* this)
 // callers   8   call targets   1
@@ -422,6 +421,19 @@ void Palette::init() {
 // flags     sp_ready;purged_ok
 // calls     0x005FE330
 */
+
+Palette::Palette() {
+    seed_ = 0;
+    for (int i = 0; i < 5; ++i) {
+        internal_[i].field_0 = -1;
+        internal_[i].time = nullptr;
+        internal_[i].field_8 = 0;
+        internal_[i].field_9 = 0;
+        internal_[i].field_C = nullptr;
+    }
+    init();
+}
+
 
 /*
 // ORIGINAL: 0x005FE2E0 ??1Palette@@QAE@XZ 0x005FE2E0-0x005FE2E5 BYTE_EXACT

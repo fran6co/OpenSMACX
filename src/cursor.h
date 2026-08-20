@@ -38,7 +38,7 @@ class DLLEXPORT Cursor {
   // as the four void-over-`xor eax, eax` names corrected before it.
   static int init_cursor_class();
   Cursor() { ; }
-  ~Cursor() { ; }
+  ~Cursor();                         // 0063B8D0
   // Spelled as a method rather than a real constructor, as Ambience's is:
   // the inline `Cursor() { ; }` above is relied on elsewhere and giving
   // the class a real one would silently change every use of it.
