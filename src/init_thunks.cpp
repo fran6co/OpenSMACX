@@ -70,7 +70,7 @@ void __fastcall ambienceinitctor_default(void *object) {
     static_cast<Ambience *>(object)->construct();
 }
 void __fastcall bufferinitctor_default(void *object) {
-    static_cast<Buffer *>(object)->construct();
+    new (object) Buffer();
 }
 void __fastcall buttongroupinitctor_default(void *object) {
     new (object) ButtonGroup();

@@ -67,7 +67,7 @@ disjoint regions.
 */
 void GraphicWin::construct() {
     static_cast<Win *>(this)->construct();
-    buffer_.construct();
+    new (&buffer_) Buffer();
     volatile uint32_t *const object =
         reinterpret_cast<volatile uint32_t *>(this);
     object[0x000 / 4] = GraphicWinPrimaryVtable;
@@ -553,8 +553,7 @@ int GraphicWin::init(int x, int y, int width, int height, LPSTR title,
         void *const block = WaveOperatorNew(0x588);
         Buffer *owned = nullptr;
         if (block != nullptr) {
-            owned = reinterpret_cast<Buffer *>(block);
-            owned->construct();
+            owned = new (block) Buffer();
         }
         object[0xA08 / 4] =
             static_cast<uint32_t>(reinterpret_cast<uintptr_t>(owned));

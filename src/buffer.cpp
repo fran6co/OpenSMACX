@@ -31,12 +31,27 @@
 #pragma comment(lib, "dxguid.lib")
 #include <ddraw.h>
 
-Palette **BufferPalette = reinterpret_cast<Palette **>(0x009B8174);
+
+// The `owned_` table's length, needed by the constructor as well as by
+// `init` and `close`, so it is declared ahead of all three.
+static const size_t OwnedAllocationCount = 20;
 
 /*
 Purpose: Construct an empty Buffer, including its Spot subobject, text state,
-         and either the process palette or the legacy grayscale fallback.
-// ORIGINAL: 0x005D7210 ??0Buffer@@QAE@XZ 0x005D7210-0x005D740A;0x00662B50-0x00662B68
+         and either the process palette or a placeholder colour table.
+
+         WRITTEN THROUGH ITS MEMBERS, and that is the whole of the change
+         that matched it. Every one of the fifty-three stores here used to
+         be `object[0x520 / 4] = ...` through a `volatile uint32_t *`,
+         because the offsets had no names; naming the DIB block at 0x7C gave
+         the last twelve of them names, and the body became ordinary C++.
+
+         THE ONLY THING THAT HAD TO BE COPIED FROM THE IMAGE is the order of
+         two pairs - 0xC before 0x8, 0x14 before 0x10. VC6 emits these stores
+         in source order, so the original wrote them that way; every other
+         line here is in the order a person would write it, and the compiler
+         schedules them into the image's.
+// ORIGINAL: 0x005D7210 ??0Buffer@@QAE@XZ 0x005D7210-0x005D740A;0x00662B50-0x00662B68 BYTE_EXACT
 // size      530 bytes
 // prototype void (__thiscall ??0Buffer@@QAE@XZ)(Buffer* this)
 // callers   80   call targets   2
@@ -45,13 +60,13 @@ Purpose: Construct an empty Buffer, including its Spot subobject, text state,
 // calls     0x005FA860 0x005FE560
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
-Verification note: five mutation-harness survivors here are equivalent by
-construction. Widening the 0x4BC loop bound writes an extra zero at 0x50C,
-which the 0xFFFFFFFF store below overwrites. Widening the fallback ramp bound
-writes a 257th entry at 0x4A4, where the index truncates to zero and all four
-bytes land on the zero already stored there. The three adjacent stores inside
-that ramp target distinct bytes with independent values, so their order is not
-observable.
+Verification note: three of the old mutation-harness survivors were artefacts
+of the raw-offset spelling and cannot be expressed now. Widening the `owned_`
+loop wrote an extra zero at 0x50C, which the -1 below overwrote; the loop is
+bounded by the array now. Widening the fallback ramp wrote a 257th entry at
+0x4A4, where the index truncated to zero; it is bounded by 256 now. The three
+adjacent stores inside that ramp still target distinct bytes with independent
+values, so their order is genuinely not observable.
 */
 // Slot 1 of the vtable - the do-nothing virtual, returning 0.
 //
@@ -78,99 +93,98 @@ observable.
 // 0x00406B30.
 int Buffer::surface_lost() { return 0; }
 
-void Buffer::construct() {
-    new (&spot_) Spot();
-    volatile uint32_t *const object =
-        reinterpret_cast<volatile uint32_t *>(this);
-    object[0x000 / 4] = BufferVtable;
-    for (size_t offset = 0x4BC; offset < 0x50C; offset += 4) {
-        object[offset / 4] = 0;
+Buffer::Buffer() {
+    // `spot_` is constructed ahead of this body by declaration order, and
+    // the vtable store the image makes here is the compiler's, not source.
+    for (size_t slot = 0; slot < OwnedAllocationCount; ++slot) {
+        owned_[slot] = nullptr;
     }
-    object[0x584 / 4] = 0;
-    object[0x00C / 4] = 0;
-    object[0x008 / 4] = 0;
-    object[0x014 / 4] = 0;
-    object[0x010 / 4] = 0;
-    object[0x018 / 4] = 0;
-    object[0x01C / 4] = 0;
-    object[0x050 / 4] = 0;
-    object[0x054 / 4] = 0;
-    object[0x058 / 4] = 0;
-    object[0x05C / 4] = 0;
-    object[0x060 / 4] = 0;
-    object[0x064 / 4] = 0;
-    object[0x068 / 4] = 0;
-    object[0x06C / 4] = 0;
-    object[0x074 / 4] = 0;
-    object[0x078 / 4] = 0;
-    object[0x4A4 / 4] = 0;
-    object[0x4A8 / 4] = 0;
-    object[0x50C / 4] = 0xFFFFFFFFU;
-    object[0x510 / 4] = 0;
-    object[0x514 / 4] = 0;
-    object[0x518 / 4] = 0;
-    object[0x51C / 4] = 0;
-    object[0x520 / 4] = BufferField520Default;
-    object[0x524 / 4] = 0;
-    object[0x530 / 4] = 0;
-    object[0x52C / 4] = reinterpret_cast<uintptr_t>(FontDefault);
-    object[0x53C / 4] = 0;
-    object[0x54C / 4] = 0xFFFFFFFFU;
-    object[0x55C / 4] = 2;
-    object[0x56C / 4] = 2;
-    object[0x540 / 4] = 0xFFFFFFFFU;
-    object[0x550 / 4] = 0xFFFFFFFFU;
-    object[0x560 / 4] = 2;
-    object[0x570 / 4] = 2;
-    object[0x534 / 4] = 0;
-    object[0x544 / 4] = 0xFFFFFFFFU;
-    object[0x554 / 4] = 0xFFFFFFFFU;
-    object[0x564 / 4] = 2;
-    object[0x574 / 4] = 2;
-    object[0x538 / 4] = 0;
-    object[0x548 / 4] = 0xFFFFFFFFU;
-    object[0x558 / 4] = 0xFFFFFFFFU;
-    object[0x568 / 4] = 2;
-    object[0x578 / 4] = 2;
-    object[0x57C / 4] = 0;
-    field_580_ = 0;
-    object[0x070 / 4] = 0;
-    object[0x004 / 4] = 0;
-    object[0x07C / 4] = 0x28;
-    object[0x080 / 4] = 0;
-    object[0x084 / 4] = 0;
-    *reinterpret_cast<volatile uint16_t *>(
-        reinterpret_cast<uint8_t *>(this) + 0x088) = 1;
-    *reinterpret_cast<volatile uint16_t *>(
-        reinterpret_cast<uint8_t *>(this) + 0x08A) = 8;
-    object[0x08C / 4] = 0;
-    object[0x090 / 4] = 0;
-    object[0x094 / 4] = 0;
-    object[0x098 / 4] = 0;
-    object[0x09C / 4] = 0x100;
-    object[0x0A0 / 4] = 0;
+    field_584_ = 0;
+    field_C_ = 0;
+    field_8_ = 0;
+    field_14_ = 0;
+    field_10_ = 0;
+    field_18_ = 0;
+    init_flags_ = 0;
+    locked_bits_ = nullptr;
+    dib_bits_ = nullptr;
+    surface_ = nullptr;
+    clipper_ = nullptr;
+    hdc2_ = nullptr;
+    hdc_ = nullptr;
+    hdc_lock_count_ = 0;
+    surface_lock_count_ = 0;
+    previous_bitmap_ = 0;
+    bitmap_handle_ = nullptr;
+    field_4A4_ = 0;
+    stride_ = 0;
+    field_50C_ = -1;
+    field_510_ = 0;
+    field_514_ = 0;
+    field_518_ = 0;
+    field_51C_ = 0;
+    field_520_ = BufferField520Default;
+    field_524_ = 0;
 
-    Palette *const palette = *BufferPalette;
-    if (palette) {
-        palette->get_rgbquad(
-            reinterpret_cast<RGBQUAD *>(
-                reinterpret_cast<uint8_t *>(this) + 0x0A4),
-            0, 0x100);
+    // THE FOUR TEXT STYLES, one `Font *` and four colours each. `set_text_color`
+    // through `set_text_color4` write one style apiece, which is what pairs
+    // `font2_` with the `color_2_val_*` row below it. Only the first gets the
+    // process default font; the other three start unset, and -1 is the "no
+    // colour" the drawing code tests for.
+    font1_ = FontDefault;
+    color_val_1_ = 0;
+    color_val_2_ = -1;
+    color_val_3_ = 2;
+    color_val_4_ = 2;
+    font2_ = nullptr;
+    color_2_val_1_ = -1;
+    color_2_val_2_ = -1;
+    color_2_val_3_ = 2;
+    color_2_val_4_ = 2;
+    font3_ = nullptr;
+    color_3_val_1_ = -1;
+    color_3_val_2_ = -1;
+    color_3_val_3_ = 2;
+    color_3_val_4_ = 2;
+    font4_ = nullptr;
+    color_hyper_val_1_ = -1;
+    color_hyper_val_2_ = -1;
+    color_hyper_val_3_ = 2;
+    color_hyper_val_4_ = 2;
+    field_57C_ = 0;
+    field_580_ = 0;
+    clip_region_ = nullptr;
+    poOwner_ = 0;
+
+    // An 8-bit top-down DIB with a full 256-colour table and nothing drawn in
+    // it yet; `Buffer::init` fills in the dimensions.
+    dib_.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    dib_.bmiHeader.biWidth = 0;
+    dib_.bmiHeader.biHeight = 0;
+    dib_.bmiHeader.biPlanes = 1;
+    dib_.bmiHeader.biBitCount = 8;
+    dib_.bmiHeader.biCompression = BI_RGB;
+    dib_.bmiHeader.biSizeImage = 0;
+    dib_.bmiHeader.biXPelsPerMeter = 0;
+    dib_.bmiHeader.biYPelsPerMeter = 0;
+    dib_.bmiHeader.biClrUsed = 256;
+    dib_.bmiHeader.biClrImportant = 0;
+
+    if (PaletteCurrent) {
+        PaletteCurrent->get_rgbquad(dib_.bmiColors, 0, 256);
     } else {
-        volatile uint8_t *entry =
-            reinterpret_cast<volatile uint8_t *>(this) + 0x0A4;
-        for (uint32_t index = 0; index < 0x100; ++index) {
-            entry[2] = 0;
-            entry[1] = 0;
-            entry[0] = static_cast<uint8_t>(index);
-            entry[3] = 0;
-            entry += 4;
+        // No palette yet: a blue ramp, so the table is at least well-formed.
+        for (int entry = 0; entry < 256; ++entry) {
+            dib_.bmiColors[entry].rgbRed = 0;
+            dib_.bmiColors[entry].rgbGreen = 0;
+            dib_.bmiColors[entry].rgbBlue = static_cast<BYTE>(entry);
+            dib_.bmiColors[entry].rgbReserved = 0;
         }
     }
 }
 
 Buffer *__fastcall buffer_construct_redirect(Buffer *self, void *) {
-    self->construct();
+    new (self) Buffer();
     return self;
 }
 
@@ -502,7 +516,7 @@ int __fastcall buffer_text_line_height_redirect(Buffer *self, void *) {
 }
 
 IDirectDraw *BufferDirectDraw;  // 0x009BC494
-// 0x00696BF0, holding 1. `Buffer::construct` and `Buffer::close` are its
+// 0x00696BF0, holding 1. `Buffer::Buffer` and `Buffer::close` are its
 // only two references in the whole image and both READ it, so it is a
 // default that the two restore into `field_520_` rather than state.
 //
@@ -524,9 +538,6 @@ uint32_t BufferFillRowGap;
 namespace {
 
 typedef void (OriginalObject::*func_buffer_virtual)();
-
-static const size_t OwnedAllocationCount = 20;
-
 
 }  // namespace
 
