@@ -146,7 +146,7 @@ TextIndex::TextIndex() {
 }
 
 /*
-// ORIGINAL: 0x005FDF60 ??1TextIndex@@QAE@XZ 0x005FDF60-0x005FDF78
+// ORIGINAL: 0x005FDF60 ??1TextIndex@@QAE@XZ 0x005FDF60-0x005FDF78 BYTE_EXACT
 // size      24 bytes
 // prototype void (__thiscall ??1TextIndex@@QAE@XZ)(TextIndex* this)
 // callers   0   call targets   0
@@ -156,9 +156,11 @@ TextIndex::TextIndex() {
 // notes     Staged hybrid export redirect calls the source-owned destructor
 */
 TextIndex::~TextIndex() {
+    // NO EXPLICIT SHUTDOWN. The member's own destructor runs after this
+    // body and the image's tail is exactly that call; spelling it here as
+    // well emitted the shutdown twice.
     section_count_ = 0;
     file_name_[0] = 0;
-    heap_.shutdown();
 }
 
 void text_clear_index_source(TextIndex *indexes) {

@@ -30,7 +30,30 @@ class DLLEXPORT Font {
   // int UNK1(int, int, int, int) { return 1; } // no direct references
   int init(LPCSTR font_name, int height, int style);
   int init(LPCSTR file, LPCSTR font_name, int height, int style);
-  void close();
+  // IN-CLASS so `~Font` inlines it, which is what the image does.
+  void close() {                 // 00619230
+    // IMAGE ORDER: height_ before line_height_, as in the constructor.
+    unk_1_ = -1;
+    height_ = 0;
+    line_height_ = 0;
+    ascent_ = 0;
+    descent_ = 0;
+    if (font_obj_) {
+      DeleteObject(font_obj_);
+      font_obj_ = 0;
+    }
+    if (fot_file_name_) {
+      RemoveFontResourceA(fot_file_name_);
+      // THE SECOND CHECK IS IN THE IMAGE. It is redundant - nothing between
+      // it and the first can null the pointer - and it was removed here as
+      // dead code, which is exactly the kind of tidying a byte match cannot
+      // afford.
+      if (fot_file_name_) {
+        free(fot_file_name_);
+      }
+      fot_file_name_ = 0;
+    }
+  }
   int width(LPSTR input);
   int width(LPSTR input, size_t max_len);
   LPSTR find_line_break_l(LPSTR input, int *break_len, size_t len);
