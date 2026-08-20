@@ -607,3 +607,75 @@ def test_a_tie_on_tier_is_decided_on_agreement(tmp_path, monkeypatch):
     result = asm.compare_record(record, "exe", ["cl"],
                                 ("/Oy-", "/Oy", "/O1", "/O1 /Oy"))
     assert result.matching_instructions == 35
+
+
+# ------------------------------------------- the jump table rides the COMDAT
+
+
+def a_listing(code, base=0x00401000, mask=frozenset(), code_bytes=None):
+    return asm.Listing(code=code, base=base, mask=mask, code_bytes=code_bytes)
+
+
+# `xor eax, eax; ret` - two instructions, three bytes, ending on a `ret`.
+TAIL_BODY = b"\x33\xC0\xC3"
+JUMP_TABLE = b"\x10\x20\x40\x00\x01\x02"
+
+
+def test_a_data_tail_is_compared_as_bytes_not_decoded(tmp_path):
+    """Decoding a jump table as instructions desynchronises everything after
+    it: the object holds zeros where the image holds linked addresses, so
+    the two sides do not even agree where one instruction ends."""
+    original = a_listing(TAIL_BODY + JUMP_TABLE, code_bytes=len(TAIL_BODY))
+    compiled = a_listing(TAIL_BODY + JUMP_TABLE)
+    result = asm.compare_asm(original, compiled)
+    assert result.verdict == "BYTE_EXACT"
+    assert result.compiled_instructions == 2      # the table was not decoded
+    assert result.data_bytes == len(JUMP_TABLE)
+    assert result.data_divergence is None
+
+
+def test_a_wrong_jump_table_is_not_a_match():
+    """The tail is part of the answer. A body whose instructions all agree
+    and whose table does not has not reproduced the function - and cutting
+    the tail off instead of comparing it would call this BYTE_EXACT."""
+    original = a_listing(TAIL_BODY + JUMP_TABLE, code_bytes=len(TAIL_BODY))
+    compiled = a_listing(TAIL_BODY + b"\x10\x20\x40\x00\x02\x01")
+    result = asm.compare_asm(original, compiled)
+    assert result.verdict != "BYTE_EXACT"
+    assert result.data_divergence == len(TAIL_BODY) + 4
+
+
+def test_a_relocated_table_entry_is_discounted_like_any_other():
+    """A jump table is four-byte addresses the linker writes, so the object
+    holds zeros and the image holds the targets."""
+    entry = frozenset(range(len(TAIL_BODY), len(TAIL_BODY) + 4))
+    original = a_listing(TAIL_BODY + JUMP_TABLE, code_bytes=len(TAIL_BODY))
+    compiled = a_listing(TAIL_BODY + b"\x00\x00\x00\x00\x01\x02", mask=entry)
+    assert asm.compare_asm(original, compiled).verdict == "BYTE_EXACT"
+
+
+def test_the_split_declines_when_the_extent_is_not_a_boundary():
+    """Landing mid-instruction means the shipped extent is not where this
+    body's code ends, so nothing has been proved about the tail."""
+    # `xor eax, eax` is two bytes; an extent of 1 falls inside it.
+    compiled = a_listing(TAIL_BODY + JUMP_TABLE)
+    assert asm._split_at(compiled, 1).code_bytes is None
+
+
+def test_the_split_declines_when_the_body_does_not_end_there():
+    """A body that merely STARTS the same way must not be called a match:
+    without this the split manufactures BYTE_EXACT out of the first N bytes
+    of something longer, which is the failure the ratchet exists for."""
+    # `xor eax, eax` at offset 0..1, then more code - no terminator at 2.
+    longer = b"\x33\xC0\x33\xC9\xC3"
+    assert asm._split_at(a_listing(longer), 2).code_bytes is None
+    # ... and with a `ret` exactly there, it is taken.
+    assert asm._split_at(a_listing(TAIL_BODY + JUMP_TABLE), 3).code_bytes == 3
+
+
+def test_a_body_with_no_tail_is_unchanged():
+    original = a_listing(TAIL_BODY)
+    compiled = a_listing(TAIL_BODY)
+    result = asm.compare_asm(original, compiled)
+    assert result.verdict == "BYTE_EXACT"
+    assert result.data_bytes == 0

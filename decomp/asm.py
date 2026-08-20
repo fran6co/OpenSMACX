@@ -70,7 +70,7 @@ import shlex
 import struct
 import subprocess
 import tempfile
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 from capstone import CS_ARCH_X86, CS_MODE_32, Cs, x86
@@ -95,6 +95,15 @@ class Listing:
     were reported as MISMATCH. A byte a relocation determines is not a wrong
     answer - but a comparison can only discount it if it is told which bytes
     those are, and rendered text cannot say.
+
+    NOT ALL OF IT IS CODE. Under `/Gy` a `switch`'s jump table is laid in
+    the same COMDAT as the function it serves, so the object hands back
+    code followed by data with no marker between them - and decoding that
+    table as instructions desynchronises the whole comparison, because the
+    object holds zeros where the linker has still to write addresses and
+    the image holds the addresses, so the two sides do not even agree on
+    where one instruction ends. `code_bytes` says where the instructions
+    stop; everything past it is `data`, compared as bytes.
     """
 
     code: bytes
@@ -102,11 +111,23 @@ class Listing:
     mask: frozenset[int] = frozenset()   # offsets into `code`, not addresses
     flags: str = ""                  # the invocation that produced it, "" for
                                      # the image, which was not invoked
+    code_bytes: int | None = None    # how much of `code` decodes as
+                                     # instructions; None means all of it
+
+    @property
+    def instruction_bytes(self) -> int:
+        """How many of `code`'s bytes decode as instructions."""
+        return len(self.code) if self.code_bytes is None else self.code_bytes
+
+    @property
+    def data(self) -> bytes:
+        """The bytes past the code - a jump table, or nothing."""
+        return self.code[self.instruction_bytes:]
 
     @functools.cached_property
     def instructions(self) -> list:
         """The decoded instructions, operands and all."""
-        return _decode(self.code, self.base)
+        return _decode(self.code[:self.instruction_bytes], self.base)
 
     @functools.cached_property
     def lines(self) -> list[str]:
@@ -374,11 +395,21 @@ def _image_mask(exe: Path, low: int, high: int) -> frozenset[int]:
     return frozenset(masked)
 
 
-def original_asm(record: DecompilationState, exe: Path | str) -> Listing:
+def original_asm(record: DecompilationState, exe: Path | str,
+                 extent: int | None = None) -> Listing:
     """The shipped image's assembly for `record` - the bytes at its
     primary span in `exe`, disassembled. A record can carry no spans - a
     fresh annotation the catalogue has not stamped yet - and then nothing
-    locates it in the image, so the call says so."""
+    locates it in the image, so the call says so.
+
+    `extent` READS PAST THE SPAN, and the span still says where the code
+    stops. A `switch`'s jump table sits immediately after the function it
+    serves and is not in the catalogue - the span is the CODE, which is
+    what 1,010 live claims already assume - but the object hands back both,
+    so a comparison that wants to prove the table too has to be able to see
+    the image's copy of it. The caller passes the object section's length;
+    what comes back carries the code and the data with the boundary marked.
+    """
     if not record.image_spans:
         raise ValueError(
             f"{record.address_hex}: the record carries no spans - nothing "
@@ -396,6 +427,10 @@ def original_asm(record: DecompilationState, exe: Path | str) -> Listing:
     while end > 0 and code[end - 1] in (0x90, 0xCC):
         end -= 1
     code = code[:end]
+    if extent is not None and extent > len(code):
+        code = _pe_bytes(exe, low, extent)
+        return Listing(code=code, base=low, code_bytes=end,
+                       mask=_image_mask(exe, low, low + extent))
     return Listing(code=code, base=low,
                    mask=_image_mask(exe, low, low + len(code)))
 
@@ -654,6 +689,13 @@ class AsmComparison:
                                     # divergence, rendered as they REALLY are
     differing_constants: tuple = ()  # SHAPE_EXACT only: (index, mnemonic,
                                     # original, compiled) per wrong value
+
+    # THE DATA TAIL - a `/Gy` COMDAT's jump table, which belongs to the
+    # function and is not in the catalogue's span. Zero for the bodies that
+    # have none, which is most of them.
+    data_bytes: int = 0
+    data_divergence: int | None = None    # first differing offset into
+                                          # `code`, relocations discounted
     diagnostic: str = ""            # NO_COMPILE only: what the compiler said
     flags: str = ""                 # the flag set that produced `compiled`
 
@@ -704,6 +746,74 @@ def _agree(original: Listing, compiled: Listing, index: int) -> bool:
     return True
 
 
+# The instructions a function can end on. A conditional jump does not end
+# one, and none of the `j<cc>` mnemonics begins with `jmp`.
+_TERMINATORS = ("ret", "jmp")
+
+
+def _split_at(compiled: Listing, extent: int) -> Listing:
+    """`compiled` with its code/data boundary marked at `extent`, when what
+    follows the shipped function's extent is provably not part of it.
+
+    THE JUMP TABLE RIDES THE COMDAT. Under `/Gy` VC6 lays a `switch`'s table
+    in the same section as the code it serves, and the object marks no
+    boundary between them - so `_coff_function_masked`, which takes the
+    symbol's value to the section's end, hands back the table decoded as
+    instructions. Three of this tree's ratchet regressions are exactly that:
+    23 of 23, 39 of 39 and 35 of 35 shipped instructions agree, and the
+    compiled listing then runs 42, 19 and 18 instructions past the function.
+
+    TWO CONDITIONS, AND BOTH ARE THE GUARD. The split is taken only when the
+    decode lands EXACTLY on `extent` at an instruction boundary and the
+    instruction ending there is a `ret` or an unconditional `jmp`. A body
+    that is genuinely longer than the shipped one rarely satisfies either;
+    one that satisfies both has reproduced the shipped function over its
+    whole extent and ended it, so what follows is data or is unreachable.
+    Splitting without the guard would call a body that merely STARTS the
+    same way a match, which is the failure this ratchet exists to prevent.
+
+    NOTHING IS DISCARDED. The tail becomes `data` and is still compared,
+    byte for byte against the image's own copy - see `compare_asm`. Cutting
+    it off instead would stop checking the jump table, and a table whose
+    cases were reordered is a real defect in a real body.
+    """
+    if len(compiled.code) <= extent or compiled.code_bytes is not None:
+        return compiled
+    at = 0
+    for instruction in compiled.instructions:
+        at += instruction.size
+        if at < extent:
+            continue
+        if at > extent:                     # not on an instruction boundary
+            return compiled
+        if not instruction.mnemonic.startswith(_TERMINATORS):
+            return compiled
+        return replace(compiled, code_bytes=extent)
+    return compiled
+
+
+def _data_divergence(original: Listing, compiled: Listing) -> int | None:
+    """The first offset into the tails that disagrees, or None.
+
+    Offsets are into `code`, so they can be read against the masks
+    directly, and a relocated byte is discounted on either side exactly as
+    it is between instructions. A jump table is four-byte addresses the
+    linker writes, so in the object it is zeros and every one of them is
+    relocated; the byte-index table beside it is not, and that is the half
+    a wrong `switch` would break.
+    """
+    if len(original.data) != len(compiled.data):
+        return min(original.instruction_bytes, compiled.instruction_bytes)
+    start = original.instruction_bytes
+    for step in range(len(original.data)):
+        offset = start + step
+        if offset in original.mask or offset in compiled.mask:
+            continue
+        if original.data[step] != compiled.data[step]:
+            return offset
+    return None
+
+
 def compare_asm(original: Listing, compiled: Listing) -> AsmComparison:
     """How far the compiled listing reproduces the original one.
 
@@ -725,6 +835,7 @@ def compare_asm(original: Listing, compiled: Listing) -> AsmComparison:
     fact about the source. `context` still shows the REAL lines, because a
     reader chasing a divergence wants the address the image actually holds.
     """
+    compiled = _split_at(compiled, original.instruction_bytes)
     n, m = len(original.instructions), len(compiled.instructions)
     matching = 0
     first_divergence = None
@@ -750,8 +861,12 @@ def compare_asm(original: Listing, compiled: Listing) -> AsmComparison:
     similarity = difflib.SequenceMatcher(
         None, original.mnemonics, compiled.mnemonics).ratio()
 
+    # THE TAIL IS PART OF THE ANSWER. A body whose instructions all agree
+    # and whose jump table does not has not reproduced the function.
+    data_divergence = _data_divergence(original, compiled)
+
     constants: list = []
-    if n == m and matching == n:
+    if n == m and matching == n and data_divergence is None:
         verdict = Tier.BYTE_EXACT
     elif original.shapes == compiled.shapes:
         verdict = Tier.SHAPE_EXACT
@@ -760,15 +875,46 @@ def compare_asm(original: Listing, compiled: Listing) -> AsmComparison:
         verdict = Tier.MNEMONIC_ONLY
     else:
         verdict = Tier.MISMATCH
+    # COUNTED OVER WHAT WAS ACTUALLY COMPARED. When the split declines, the
+    # image's tail was read but never asked about, and counting it here
+    # would let a body that reproduced only its code report the byte total
+    # of one that reproduced its table too.
+    extent = (len(original.code) if len(original.data) == len(compiled.data)
+              else original.instruction_bytes)
     masked = len(original.mask | compiled.mask)
     return AsmComparison(
         verdict=verdict,
-        compared_bytes=max(0, len(original.code) - masked),
+        compared_bytes=max(0, extent - masked),
         masked_bytes=masked,
+        data_bytes=len(original.data) if extent == len(original.code) else 0,
+        data_divergence=data_divergence,
         original_instructions=n, compiled_instructions=m,
         matching_instructions=matching, mnemonic_similarity=similarity,
         first_divergence=first_divergence, context=context,
         differing_constants=tuple(constants), flags=compiled.flags)
+
+
+def compare_subject(record: DecompilationState, exe: Path | str,
+                    compiled: Listing) -> AsmComparison:
+    """`compare_asm` with the image side aligned to the object's extent.
+
+    THE OBJECT DECIDES HOW MUCH IMAGE TO READ, because only it knows how
+    long the COMDAT is - the catalogue's span is the CODE, and a `switch`'s
+    jump table sits past it. Every caller holding a compiled `Listing`
+    wants this rather than `compare_asm` directly; `compare_asm` stays the
+    pure comparison of two listings, which is what makes it testable
+    without an image.
+    """
+    original = original_asm(record, exe)
+    if len(compiled.code) > len(original.code):
+        try:
+            original = original_asm(record, exe, extent=len(compiled.code))
+        except ValueError:
+            # The tail runs past the section's raw data, so the image has no
+            # copy of it to compare against. The comparison stays what it
+            # was, and the extra instructions read as the mismatch they are.
+            pass
+    return compare_asm(original, compiled)
 
 
 def span_refusal(record: DecompilationState, exe: Path | str,
@@ -884,7 +1030,7 @@ def compare_source(record: DecompilationState, exe: Path | str,
     refusal = span_refusal(record, exe, shared)
     if refusal is not None:
         return AsmComparison(verdict=refusal, flags="")
-    original = original_asm(record, exe)
+    original_asm(record, exe)            # raises early if nothing locates it
     best, diagnostic = None, ""
     for attempt in attempts:
         try:
@@ -892,7 +1038,7 @@ def compare_source(record: DecompilationState, exe: Path | str,
         except CompileFailed as failed:
             diagnostic = diagnostic or str(failed)
             continue
-        result = compare_asm(original, compiled)
+        result = compare_subject(record, exe, compiled)
         # TIED ON TIER, DECIDED ON AGREEMENT. Every candidate is measured
         # against the same original, so the instruction counts compare
         # directly - and keeping the first of four MISMATCHes reports a
