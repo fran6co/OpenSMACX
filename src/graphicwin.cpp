@@ -228,7 +228,7 @@ GraphicWin *__fastcall graphic_win_destructor_redirect(GraphicWin *self, void *)
 
 /*
 Purpose: Fill a rectangle in the window's own buffer.
-// ORIGINAL: 0x005D5440 ?fill@GraphicWin@@QAEHHHHHH@Z 0x005D5440-0x005D5467
+// ORIGINAL: 0x005D5440 ?fill@GraphicWin@@QAEHHHHHH@Z 0x005D5440-0x005D5467 BYTE_EXACT
 // size      39 bytes
 // prototype int (__thiscall ?fill@GraphicWin@@QAEHHHHHH@Z)(GraphicWin* this, int xLeft, int yTop, int length, int width, int)
 // callers   6   call targets   1
@@ -238,10 +238,11 @@ Purpose: Fill a rectangle in the window's own buffer.
 Return Value: whatever Buffer::fill returns
 Status: Complete
 */
-func_buffer_fill BufferOriginalFill = original_method<func_buffer_fill>(0x005D8240);
 
 int GraphicWin::fill(int x1, int y1, int x2, int y2, int color) {
-    return (ORIGINAL(reinterpret_cast<uint8_t *>(this) + 0x444)->*BufferOriginalFill)(x1, y1, x2, y2, color);
+    return reinterpret_cast<Buffer *>(
+        reinterpret_cast<uint8_t *>(this) + 0x444)->fill(x1, y1, x2, y2,
+                                                        color);
 }
 
 int __fastcall graphic_win_fill_redirect(GraphicWin *self, void *,
@@ -256,12 +257,6 @@ typedef void * (OriginalObject::*func_graphic_win_parent_query)();
 // Virtual slot 0x30, the window's own paint.
 typedef void (OriginalObject::*func_graphic_win_paint)();
 
-func_graphic_win_buffer_fill_color BufferOriginalFillColor =
-    original_method<func_graphic_win_buffer_fill_color>(0x005DFB50);
-func_graphic_win_map_colors BufferOriginalMapColors =
-    original_method<func_graphic_win_map_colors>(0x005DA330);
-func_graphic_win_overlay_nonclient GraphicWinOverlayNonclient =
-    original_method<func_graphic_win_overlay_nonclient>(0x005D6AC0);
 void **GraphicWinColorMapTable = reinterpret_cast<void **>(0x009B3390);
 // USER32!InvalidateRect, read out of the executable's import table. This is
 // resolved on FIRST USE rather than by a dynamic initializer, because the
@@ -302,7 +297,10 @@ Verification note: three loads the original performs are deliberately absent.
 */
 void GraphicWin::fill(int color) {
     uint8_t *const object = reinterpret_cast<uint8_t *>(this);
-    uint8_t *const surface = object + 0x444;
+    // The window's Buffer subobject at +0x444, typed so its methods can be
+    // called by NAME - through a pointer-to-member the call sites emitted
+    // `call [ptr]` where the image has `call rel32`.
+    Buffer *const surface = reinterpret_cast<Buffer *>(object + 0x444);
     uint32_t flags;
     std::memcpy(&flags, object + 0x98, sizeof(flags));
     uint8_t *parent;
@@ -321,7 +319,7 @@ void GraphicWin::fill(int color) {
         transparent = (ORIGINAL(parent)->*query)() != nullptr;
     }
     if (!transparent) {
-        (ORIGINAL(surface)->*BufferOriginalFillColor)(color);
+        surface->fill(color);
         return;
     }
     int32_t outer_x, outer_y, inner_x, inner_y;
@@ -344,7 +342,7 @@ void GraphicWin::fill(int color) {
     // by the remap. The bounds are inclusive, hence width-1 and -1-height.
     std::memcpy(&width, object + 0x4C4, sizeof(width));
     std::memcpy(&height, object + 0x4C8, sizeof(height));
-    (ORIGINAL(surface)->*BufferOriginalMapColors)(0, 0, width - 1, -1 - height, table);
+    surface->map_colors(0, 0, width - 1, -1 - height, table);
 }
 
 void __fastcall graphic_win_fill_color_redirect(GraphicWin *self, void *,
@@ -396,7 +394,7 @@ void GraphicWin::redraw() {
     func_graphic_win_paint const paint =
         original_method<func_graphic_win_paint>(vtable[0x30 / 4]);
     (ORIGINAL(this)->*paint)();
-    (ORIGINAL(this)->*GraphicWinOverlayNonclient)(nullptr);
+    this->overlay_nonclient(nullptr);
 
     // Re-read, do NOT reuse the latched value: the original reloads at
     // 0x005D5ABB before clearing bit 0, so any bit the paint hook or the

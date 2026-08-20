@@ -272,6 +272,11 @@ class Buffer {
   int init(int width, int height, int tgl, ExtDirectDraw *direct_draw);
   int fill(int color);
   int fill(RECT *area, int color);  // 005DFCD0
+  // 0x005D8240, a pending_bodies forwarder: the five-argument fill
+  // graphicwin.cpp reached through `BufferOriginalFill`.
+  int fill(int left, int top, int width, int height, int color);
+  // 0x005DA330, a pending_bodies forwarder.
+  int map_colors(int a1, int a2, int a3, int a4, void *table);
   int load_pcx(const char *filename, Palette *palette, int tgl, int height);
   // 0x005E2690, the actual PCX decoder: the by-name overload above maps the
   // file and hands over the bytes and their length.

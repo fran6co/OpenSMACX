@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "original_seam.h"
 #include "ambience.h"
+#include "sound.h"   // Sound::set_type, reached by cast
 #include "wave.h"
 
 /*
@@ -544,7 +545,7 @@ void Ambience::construct() {
     object[0x40 / 4] |= 8;
     bytes[0x54] |= 1;
     object[0x00 / 4] = 0x0066E664;
-    (ORIGINAL(reinterpret_cast<Wave *>(this))->*SoundSetType)(5);
+    reinterpret_cast<Sound *>(this)->set_type(5);
 }
 
 Ambience *__fastcall ambience_construct_redirect(Ambience *self, void *) {

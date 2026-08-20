@@ -55,6 +55,11 @@
   */
 class TutWin : Popup {
  public:
+  // 0x004BDFE0, a pending_bodies forwarder.
+  // The owner arrives as a raw address computed off a vbtable, which is
+  // why it is `void *` here rather than `GraphicWin *`.
+  int tut_win(void *owner, const char *text, int a3, int a4,
+              Sprite *sprite, int a6, int a7, int a8);
   void on_move(int a1, int a2);
   TutWin() { ; }
   ~TutWin() { ; }

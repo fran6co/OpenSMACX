@@ -18,6 +18,8 @@
 #pragma once
 
 #include "original_seam.h"
+#include "wave_device.h"
+#include "sound.h"
 #include "vector_teardown.h"
 
  /*
@@ -212,7 +214,10 @@ typedef int (OriginalObject::*func_wave_device_pull_from_group)(Wave *wave);
 typedef void(__cdecl func_operator_delete)(void *block);
 typedef void(__cdecl func_wave_device_release)(void *device);
 extern func_wave_device_pull_from_group WaveDevicePullFromGroup;
-extern void *WaveDeviceGlobal;
+// TYPED, not `void *`: it is the process Wave_Device at 0x0090D978 -
+// the same object init_thunks.cpp calls `g_WAVE_DEVICE` - and the call
+// sites in wave.cpp reach its methods by name.
+extern Wave_Device *WaveDeviceGlobal;
 extern func_operator_delete *WaveOperatorDelete;
 extern func_wave_device_release **WaveDeviceReleaseSlot;
 extern int *WaveDeviceReleaseGuard;
@@ -244,6 +249,5 @@ extern func_wave_device_create **WaveDeviceCreateSlot;
 typedef int (OriginalObject::*func_sound_original_load)(const char *fname);
 extern func_sound_original_load SoundOriginalLoad;
 typedef void (OriginalObject::*func_sound_set_type)(uint32_t type);
-extern func_sound_set_type SoundSetType;
 
 void __fastcall wave_dtor_redirect(Wave *self, void *);

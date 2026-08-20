@@ -50,6 +50,9 @@ class Dialog {
   // 0x00609990, still a pending_bodies forwarder. `Dialogs::item` calls it
   // BY NAME so the call site emits the image's `call rel32`.
   int item(char *text, int index);
+  // 0x00608F50, a pending_bodies forwarder. checkbox.cpp and
+  // radiobutton.cpp both reach it, and both did so through a pointer.
+  void close();
 
  public:
   // Static default shared by every dialog; __cdecl in the original.

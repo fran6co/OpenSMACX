@@ -19,6 +19,7 @@
 
 #include "original_seam.h"
 #include "graphicwin.h"
+#include "maininterface.h"   // MainInterfaceGlobal is one of these
 
  /*
   * MapWin class
@@ -178,8 +179,12 @@ void __fastcall map_win_do_image_buttons_redirect(MapWin *self, void *);
 // keeps at a fixed address, using a caption that also lives at one.
 typedef void (OriginalObject::*func_set_date)(char *);
 extern func_set_date MainInterfaceOriginalSetDate;
-extern void *MainInterfaceGlobal;
-extern char *MapWinMainCaption;
+// AN OBJECT AT 0x007AE820, not a `void *`: `MapWin::main_caption` is
+// `mov ecx, 0x7ae820` - the address as an immediate - where a pointer
+// variable loads it. Its constructor is trivial, so making it real
+// adds no dynamic initialiser.
+extern MainInterface MainInterfaceGlobal;
+extern char MapWinMainCaption[256];
 
 void __fastcall map_win_main_caption_redirect(MapWin *self, void *);
 

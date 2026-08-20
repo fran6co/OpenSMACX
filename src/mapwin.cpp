@@ -60,15 +60,16 @@ void __fastcall map_win_do_image_buttons_redirect(MapWin *self, void *) {
     self->do_image_buttons();
 }
 
-func_set_date MainInterfaceOriginalSetDate = original_method<func_set_date>(0x0045BE80);
-void *MainInterfaceGlobal = (void *)0x007AE820;
-char *MapWinMainCaption = (char *)0x009B86A0;
+MainInterface MainInterfaceGlobal;  // 0x007AE820
+// AN ARRAY: the image pushes 0x009B86A0 as an immediate. Extent is a
+// floor - nothing recovered bounds the writes.
+char MapWinMainCaption[256];  // 0x009B86A0
 
 /*
 Purpose: Push the map's caption into the main interface's date field. The
          original acts on the interface and caption it keeps at fixed
          addresses rather than on anything reached through the map window.
-// ORIGINAL: 0x0046FB10 ?main_caption@MapWin@@QAEXXZ 0x0046FB10-0x0046FB20
+// ORIGINAL: 0x0046FB10 ?main_caption@MapWin@@QAEXXZ 0x0046FB10-0x0046FB20 BYTE_EXACT
 // size      16 bytes
 // prototype void (__thiscall ?main_caption@MapWin@@QAEXXZ)(MapWin* this)
 // callers   11   call targets   1
@@ -79,7 +80,7 @@ Return Value: n/a
 Status: Complete
 */
 void MapWin::main_caption() {
-    (ORIGINAL(MainInterfaceGlobal)->*MainInterfaceOriginalSetDate)(MapWinMainCaption);
+    MainInterfaceGlobal.set_date(MapWinMainCaption);
 }
 
 void __fastcall map_win_main_caption_redirect(MapWin *self, void *) {

@@ -33,6 +33,9 @@
 // is unchanged - win_parent_ is still private in Win - and a base's
 // accessibility affects no offset, so the layout is untouched.
 class GraphicWin : public Win {
+ public:
+  // 0x005D6AC0, a pending_bodies forwarder.
+  void overlay_nonclient(RECT *area);
   friend class Scroll;
   // BaseButton's colour setters drive this buffer directly.
   friend class BaseButton;
@@ -82,7 +85,6 @@ class GraphicWin : public Win {
 // Buffer::fill is not recovered yet, so it is reached through a seam on the
 // window's own buffer at 0x444.
 typedef int (OriginalObject::*func_buffer_fill)(int, int, int, int, int);
-extern func_buffer_fill BufferOriginalFill;
 
 int __fastcall graphic_win_fill_redirect(GraphicWin *self, void *,
                                          int x1, int y1, int x2, int y2,
@@ -139,9 +141,6 @@ typedef int (OriginalObject::*func_graphic_win_buffer_fill_color)(int);
 typedef int (OriginalObject::*func_graphic_win_map_colors)(int, int, int, int, void *);
 // GraphicWin::overlay_nonclient 0x005D6AC0 (ret 4) repaints the frame.
 typedef void (OriginalObject::*func_graphic_win_overlay_nonclient)(RECT *);
-extern func_graphic_win_buffer_fill_color BufferOriginalFillColor;
-extern func_graphic_win_map_colors BufferOriginalMapColors;
-extern func_graphic_win_overlay_nonclient GraphicWinOverlayNonclient;
 
 // The translation table fill consults before remapping. A null table means
 // the plain blit is the whole operation, which is the common case.
