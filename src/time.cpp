@@ -390,7 +390,7 @@ void __cdecl stop_timers() {
 
 /*
 Purpose: Clear timer message queue.
-// ORIGINAL: 0x005FD370 ?flush_timer@@YAXXZ 0x005FD370-0x005FD3F2
+// ORIGINAL: 0x005FD370 ?flush_timer@@YAXXZ 0x005FD370-0x005FD3F2 BYTE_EXACT
 // size      130 bytes
 // prototype 
 // callers   8   call targets   0
@@ -402,13 +402,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl flush_timer() {
-    *MsgStatus |= 0x3F;
+    MsgStatus |= 0x3F;
     MSG msg;
     while (PeekMessage(&msg, NULL, WM_USER + 1, WM_USER + 1, PM_REMOVE)) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
-    *MsgStatus = 0;
+    MsgStatus = 0;
 }
 
 // ---------------------------------------------------------------------------

@@ -129,7 +129,7 @@ int DialogDefaultStyle = 3;  // 0x006970DC
 /*
 Purpose: Bring up the process - preferences, display, sound, fonts - run the
          game, and tear it back down.
-// ORIGINAL: 0x0045F950 _WinMain@16 0x0045F950-0x0045FB1B FILE
+// ORIGINAL: 0x0045F950 _WinMain@16 0x0045F950-0x0045FB1B FILE BYTE_EXACT
 // size      459 bytes
 // prototype int (__stdcall _WinMain@16)(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 // callers   1   call targets   11
@@ -246,25 +246,33 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         }
         colour_depth = 8;
     } else {
-        // BUG IN THE ORIGINAL: `colour_depth` is read here having never been
-        // written. It is the only path that does not set it, and it feeds the
-        // window width, the height AND the depth passed to jackal_init_real -
-        // so with `DirectDraw=0` in the ini the game asks for a window sized
-        // by whatever was in that stack slot.
+        // BUG IN THE ORIGINAL: with `DirectDraw=0` in the ini, the window is
+        // sized by whatever happened to be in a dead stack slot. Nothing on
+        // this path writes the width, the height or the depth, and all three
+        // are passed to jackal_init_real below.
         //
-        // This is not a transcription artefact. VC6 gave the local
-        // `lpCmdLine`'s home slot, which is dead after the strcat above, so
-        // the image reads `[ebp+0x10]` twice here and the value is the
-        // command-line pointer reinterpreted as a number. Reproducing it is
-        // what took this body from MISMATCH at instruction #2 to
-        // MNEMONIC_ONLY: writing the sane thing moves the register saves into
-        // the prologue and the divergence with them.
+        // TWO DEAD LOCALS, NOT ONE READ TWICE, and the difference is the last
+        // three bytes of the function. The image reads `[ebp+0x10]` TWICE:
+        //
+        //   0x0045FA14  8B 7D 10   mov edi, [ebp+0x10]
+        //   0x0045FA17  8B 5D 10   mov ebx, [ebp+0x10]
+        //
+        // `display_width = colour_depth; display_height = colour_depth;`
+        // cannot produce that - VC6 loads once and copies, `8B DF`, and the
+        // body stops at MNEMONIC_ONLY 138/141 with both jump displacements
+        // one short. Two SEPARATE uninitialised variables have nothing to
+        // common-subexpression, and VC6 folds them onto the same dead slot -
+        // `lpCmdLine`'s home, dead since the strcat above - which is why the
+        // one address is read twice. Six spellings were compiled; this is the
+        // only one that reproduces the shipped bytes.
         //
         // LEFT AS IT IS ON PURPOSE, because byte-exactness is the goal and a
         // fix here would be a different program. Worth fixing once the tree
         // compiles to the shipped bytes and can be diffed against them.
-        display_width = colour_depth;
-        display_height = colour_depth;
+        int uninitialised_width;
+        int uninitialised_height;
+        display_width = uninitialised_width;
+        display_height = uninitialised_height;
     }
 
     // ONE STATUS, TWO TESTS - not `if (a) return 0; if (b) return 0;` and not

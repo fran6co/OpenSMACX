@@ -35,7 +35,21 @@ class Random {
   // in it at all. Each still emits its own COMDAT under /Ob0, so each keeps
   // its own claim.
   void reseed(uint32_t new_seed) { seed_ = new_seed; }
-  uint32_t get(int min, int max);
+  // IN-CLASS for the same reason: the image's `random(int, int)` at
+  // 0x00625810 has this body folded into it - nineteen instructions with no
+  // call - and VC6 only inlines what it can see here.
+  MEASURED uint32_t get(int min, int max) {   // 00625770
+      if (min > max) {
+          min ^= max;
+          max ^= min;
+          min ^= max;
+      }
+      seed_ = seed_ * 0x19660D + 0x3C6EF35F;
+      // UNSIGNED SHIFT. The image is `shr eax, 0x10`; with `int` operands
+      // the same expression shifts arithmetically - `sar` - and that one
+      // byte was the last divergence in `random(int, int)`.
+      return ((static_cast<uint32_t>(max - min) * LOWORD(seed_)) >> 16) + min;
+  }
   double get();
   // additional functions to assist with encapsulation
   uint32_t get_seed() { return seed_; }
@@ -54,5 +68,5 @@ void __cdecl random_rand();
 void __cdecl random_rand_exit();
 void __cdecl random_reseed(uint32_t new_seed);
 uint32_t __cdecl random_get();
-uint32_t __cdecl random(uint32_t min, uint32_t max);
+uint32_t __cdecl random(int min, int max);
 double __cdecl random();

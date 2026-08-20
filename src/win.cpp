@@ -1993,7 +1993,7 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
                 // and the second tick is what stops it.
                 Time *const timer = reinterpret_cast<Time *>(wparam);
                 timer->tick_posted_ = 0;
-                if (*MsgStatus == 0) {
+                if (MsgStatus == 0) {
                     if ((timer->oneshot_state_ & TimeOneShot) != 0) {
                         if ((timer->oneshot_state_ & TimeOneShotFired) != 0) {
                             timer->stop();

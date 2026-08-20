@@ -127,7 +127,16 @@ extern func_msg *check_net;
 extern func_msg *do_net;
 extern func_msg *do_non_input_;
 
-extern uint32_t *MsgStatus;
+/*
+ * AN OBJECT, NOT A `uint32_t *` TO A FIXED ADDRESS. The pointer form costs a
+ * load the image does not perform: `MsgStatus |= 0x3F` is
+ * `mov ecx, [0x9b7b9c]` in the image and `mov eax, [MsgStatus]` followed by
+ * `mov ecx, [eax]` through a pointer, which is what held `flush_timer` at
+ * 4 of 44 instructions. It also cannot work outside the shipped image - the
+ * address is in terranx.exe's data, unmapped in a standalone build, so every
+ * use through it is a wild pointer.
+ */
+extern uint32_t MsgStatus;
 
 BOOL __cdecl do_non_input();
 void __cdecl do_all_non_input();
