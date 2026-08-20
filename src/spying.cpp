@@ -144,12 +144,12 @@ bool run_spying_oracle_suite() {
             }
         }
     }
-    for (size_t f = 0; f < SeedFactions; ++f) {
+    for (f = 0; f < SeedFactions; ++f) {
         for (size_t s = 0; s < SeedSubjects; ++s) {
             SpyingStatusTable[s + f * SpyingStatusStride] = saved_entries[f][s];
         }
     }
-    for (size_t b = 0; b < 8; ++b) {
+    for (b = 0; b < 8; ++b) {
         SpyingBaseFactionBytes[b * SpyingBaseStride] = saved_base_bytes[b];
     }
     *SpyingCurrentFaction = saved_faction;

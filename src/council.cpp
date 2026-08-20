@@ -51,7 +51,7 @@ int __cdecl council_votes(int faction_id) {
         votes *= 2; // Doubles votes
     }
     int bonus_count = Players[faction_id].faction_bonus_count;
-    for (int i = 0; i < bonus_count; i++) {
+    for (i = 0; i < bonus_count; i++) {
         if (Players[faction_id].faction_bonus_id[i] == RULE_VOTES) {
             int votes_bonus = Players[faction_id].faction_bonus_val1[i];
             if (votes_bonus >= 0) {

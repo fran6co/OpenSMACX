@@ -372,7 +372,7 @@ BOOL __cdecl read_tech() {
     }
     *TechValidCount = 0;
     *TechCommerceCount = 0;
-    for (int i = 0; i < MaxTechnologyNum; i++) {
+    for (i = 0; i < MaxTechnologyNum; i++) {
         text_get();
         Technology[i].name = text_item_string();
         text_item();
@@ -701,7 +701,7 @@ void __cdecl read_faction(Player *player, int toggle) {
             }
         }
         LPSTR soc_effect = text_item();
-        for (int j = 0; j < MaxSocialEffectNum; j++) {
+        for (j = 0; j < MaxSocialEffectNum; j++) {
             if (!_stricmp(SocialEffects[j].set1, soc_effect)) {
                 // Bug fix: Original code sets this value to -1, disabling AI faction "Emphasis"
                 // value. No indication this was intentional.
@@ -762,10 +762,10 @@ BOOL __cdecl read_factions() {
     if (text_open(AlphaxFileID, ExpansionEnabled ? "NEWFACTIONS" : "FACTIONS")) {
         return true;
     }
-    for (int i = 1; i < MaxPlayerNum; i++) {
+    for (int player = 1; player < MaxPlayerNum; player++) {
         text_get();
-        strncpy_s(Players[i].filename, text_item(), 24);
-        strncpy_s(Players[i].search_key, text_item(), 24);
+        strncpy_s(Players[player].filename, text_item(), 24);
+        strncpy_s(Players[player].search_key, text_item(), 24);
     }
     // SMACX only: Will override any values parsed from alphax.txt #NEWFACTIONS if set in ini;
     prefs_fac_load(); // Removed an extra SMACX_Enabled check around call since there is one inside
@@ -777,8 +777,8 @@ BOOL __cdecl read_factions() {
             text_get();
         }
     }
-    for (int i = 1; i < MaxPlayerNum; i++) {
-        if (!strcmp(Players[i].filename, "JENN282")) {
+    for (player = 1; player < MaxPlayerNum; player++) {
+        if (!strcmp(Players[player].filename, "JENN282")) {
             int faction_id;
             do {
                 int rand_val = random(0, faction_count); // replaced rand()
@@ -791,26 +791,26 @@ BOOL __cdecl read_factions() {
                 for (int j = faction_id; j >= 0; j--) {
                     text_get();
                 }
-                strcpy_s(Players[i].filename, 24, text_item());
-                strcpy_s(Players[i].search_key, 24, text_item()); // original copied filename twice
+                strcpy_s(Players[player].filename, 24, text_item());
+                strcpy_s(Players[player].search_key, 24, text_item()); // original copied filename twice
                 for (int k = 1; k < MaxPlayerNum; k++) {
-                    if (i != k) {
-                        if (!strcmp(Players[i].filename, Players[k].filename)) {
+                    if (player != k) {
+                        if (!strcmp(Players[player].filename, Players[k].filename)) {
                             faction_id = -1;
                             break;
                         }
                     }
                 }
                 if (faction_id != -1) { // skip Players[0] like below check
-                    read_faction(&Players[i], 0);
-                    load_faction_art(i);
+                    read_faction(&Players[player], 0);
+                    load_faction_art(player);
                 }
             } while (faction_id == -1);
         } else {
-            // removed check (&Players[i] != &Players[0]) since Players[0] is already skipped
+            // removed check (&Players[player] != &Players[0]) since Players[0] is already skipped
             // moved this into same loop to increase performance with random factions
-            read_faction(&Players[i], 0);
-            load_faction_art(i);
+            read_faction(&Players[player], 0);
+            load_faction_art(player);
         }
     }
     return false;
@@ -952,7 +952,7 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
         Terraforming[i].rate = text_item_number();
         // Land + sea orders
         LPSTR order_str = text_item();
-        for (int j = 0; j < 2; j++) {
+        for (j = 0; j < 2; j++) {
             parse_say(0, (int)*(&Terraforming[i].name + j), -1, -1);
             StringTemp[0] = 0;
             parse_string_OG(order_str, StringTemp); // TODO: replace
@@ -964,7 +964,7 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
     if (text_open(AlphaxFileID, "RESOURCEINFO")) {
         return true;
     }
-    for (int i = 0; i < MaxResourceInfoNum; i++) {
+    for (i = 0; i < MaxResourceInfoNum; i++) {
         text_get();
         text_item();
         ResourceInfo[i].nutrients = text_item_number();
@@ -975,7 +975,7 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
     if (text_open(AlphaxFileID, "TIMECONTROLS")) {
         return true;
     }
-    for (int i = 0; i < MaxTimeControlNum; i++) {
+    for (i = 0; i < MaxTimeControlNum; i++) {
         text_get();
         TimeControl[i].name = text_item_string();
         TimeControl[i].turn = text_item_number();
@@ -989,7 +989,7 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
     if (text_open(AlphaxFileID, "CHASSIS")) {
         return true;
     }
-    for (int i = 0; i < MaxChassisNum; i++) {
+    for (i = 0; i < MaxChassisNum; i++) {
         text_get();
         Chassis[i].offsv_1_name = text_item_string();
         noun_item((int *)&Chassis[i].offsv_1_gender, &Chassis[i].offsv_1_plural);
@@ -1014,7 +1014,7 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
     if (text_open(AlphaxFileID, "REACTORS")) {
         return true;
     }
-    for (int i = 0; i < MaxReactorNum; i++) {
+    for (i = 0; i < MaxReactorNum; i++) {
         text_get();
         Reactor[i].name = text_item_string();
         Reactor[i].name_short = text_item_string();
@@ -1027,7 +1027,7 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
     if (text_open(AlphaxFileID, "WEAPONS")) {
         return true;
     }
-    for (int i = 0; i < MaxWeaponNum; i++) {
+    for (i = 0; i < MaxWeaponNum; i++) {
         text_get();
         Weapon[i].name = text_item_string();
         Weapon[i].name_short = text_item_string();
@@ -1040,7 +1040,7 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
     if (text_open(AlphaxFileID, "DEFENSES")) { // Armor
         return true;
     }
-    for (int i = 0; i < MaxArmorNum; i++) {
+    for (i = 0; i < MaxArmorNum; i++) {
         text_get();
         Armor[i].name = text_item_string();
         Armor[i].name_short = text_item_string();
@@ -1052,7 +1052,7 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
     if (text_open(AlphaxFileID, "ABILITIES")) {
         return true;
     }
-    for (int i = 0; i < MaxAbilityNum; i++) {
+    for (i = 0; i < MaxAbilityNum; i++) {
         text_get();
         Ability[i].name = text_item_string();
         Ability[i].cost_factor = text_item_number();
@@ -1064,7 +1064,7 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
     if (text_open(AlphaxFileID, "MORALE")) {
         return true;
     }
-    for (int i = 0; i < MaxMoraleNum; i++) {
+    for (i = 0; i < MaxMoraleNum; i++) {
         text_get();
         Morale[i].name = text_item_string();
         Morale[i].name_lifecycle = text_item_string();
@@ -1072,7 +1072,7 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
     if (text_open(AlphaxFileID, "DEFENSEMODES")) {
         return true;
     }
-    for (int i = 0; i < MaxDefenseModeNum; i++) {
+    for (i = 0; i < MaxDefenseModeNum; i++) {
         text_get();
         DefenseModes[i].name = text_item_string();
         DefenseModes[i].hyphened = text_item_string();
@@ -1082,7 +1082,7 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
     if (text_open(AlphaxFileID, "OFFENSEMODES")) {
         return true;
     }
-    for (int i = 0; i < MaxOffenseModeNum; i++) {
+    for (i = 0; i < MaxOffenseModeNum; i++) {
         text_get();
         OffenseModes[i].name = text_item_string();
         OffenseModes[i].hyphened = text_item_string();
@@ -1104,7 +1104,7 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
     if (text_open(AlphaxFileID, "FACILITIES")) {
         return true;
     }
-    for (int i = 1; i < MaxFacilityNum; i++) { // Facility[0] is null
+    for (i = 1; i < MaxFacilityNum; i++) { // Facility[0] is null
         text_get();
         Facility[i].name = text_item_string();
         Facility[i].cost = text_item_number();
@@ -1139,7 +1139,7 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
     if (text_open(AlphaxFileID, "ORDERS")) { // Basic
         return true;
     }
-    for (int i = 0; i < MaxOrderNum; i++) {
+    for (i = 0; i < MaxOrderNum; i++) {
         if (i < 4 || i > 23) { // Skipping over orders set by #TERRAIN
             text_get();
             Order[i].order = text_item_string();
@@ -1151,14 +1151,14 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
     if (text_open(AlphaxFileID, "COMPASS")) {
         return true;
     }
-    for (int i = 0; i < MaxCompassNum; i++) {
+    for (i = 0; i < MaxCompassNum; i++) {
         text_get();
         Compass[i] = text_item_string();
     }
     if (text_open(AlphaxFileID, "PLANS")) {
         return true;
     }
-    for (int i = 0; i < MaxPlanNum; i++) {
+    for (i = 0; i < MaxPlanNum; i++) {
         text_get();
         // Future clean-up: Create structure with both short & full name vs split memory
         PlansShortName[i] = text_item_string();
@@ -1167,14 +1167,14 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
     if (text_open(AlphaxFileID, "TRIAD")) {
         return true;
     }
-    for (int i = 0; i < MaxTriadNum; i++) {
+    for (i = 0; i < MaxTriadNum; i++) {
         text_get();
         Triad[i] = text_item_string();
     }
     if (text_open(AlphaxFileID, "RESOURCES")) {
         return true;
     }
-    for (int i = 0; i < MaxResourceNum; i++) {
+    for (i = 0; i < MaxResourceNum; i++) {
         text_get();
         Resource[i].name_singular = text_item_string();
         Resource[i].name_plural = text_item_string();
@@ -1182,7 +1182,7 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
     if (text_open(AlphaxFileID, "ENERGY")) {
         return true;
     }
-    for (int i = 0; i < MaxEnergyNum; i++) {
+    for (i = 0; i < MaxEnergyNum; i++) {
         text_get();
         Energy[i].abbrev = text_item_string();
         Energy[i].name = text_item_string();
@@ -1190,7 +1190,7 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
     if (text_open(AlphaxFileID, "CITIZENS")) {
         return true;
     }
-    for (int i = 0; i < MaxCitizenNum; i++) {
+    for (i = 0; i < MaxCitizenNum; i++) {
         text_get();
         Citizen[i].singular_name = text_item_string();
         Citizen[i].plural_name = text_item_string();
@@ -1206,18 +1206,18 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
         return true;
     }
     text_get();
-    for (int i = 0; i < MaxSocialEffectNum; i++) {
+    for (i = 0; i < MaxSocialEffectNum; i++) {
         strcpy_s(SocialEffects[i].set1, 24, text_item());
     }
     text_get();
-    for (int i = 0; i < MaxSocialEffectNum; i++) {
+    for (i = 0; i < MaxSocialEffectNum; i++) {
         strcpy_s(SocialEffects[i].set2, 24, text_item());
     }
     text_get();
-    for (int i = 0; i < MaxSocialCatNum; i++) {
+    for (i = 0; i < MaxSocialCatNum; i++) {
         SocialCategories[i].type = text_item_string();
     }
-    for (int i = 0; i < MaxSocialCatNum; i++) {
+    for (i = 0; i < MaxSocialCatNum; i++) {
         for (int j = 0; j < MaxSocialModelNum; j++) {
             text_get();
             SocialCategories[i].name[j] = text_item_string();
@@ -1245,7 +1245,7 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
     if (text_open(AlphaxFileID, "DIFF")) { // Difficulty
         return true;
     }
-    for (int i = 0; i < MaxDiffNum; i++) {
+    for (i = 0; i < MaxDiffNum; i++) {
         text_get();
         Difficulty[i] = text_item_string();
     }
@@ -1255,7 +1255,7 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
     if (text_open(AlphaxFileID, "MANDATE")) {
         return true;
     }
-    for (int i = 0; i < MaxMandateNum; i++) {
+    for (i = 0; i < MaxMandateNum; i++) {
         text_get();
         Mandate[i].name = text_item_string();
         Mandate[i].name_caps = text_item_string();
@@ -1263,21 +1263,21 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
     if (text_open(AlphaxFileID, "MOOD")) {
         return true;
     }
-    for (int i = 0; i < MaxMoodNum; i++) {
+    for (i = 0; i < MaxMoodNum; i++) {
         text_get();
         Mood[i] = text_item_string();
     }
     if (text_open(AlphaxFileID, "REPUTE")) {
         return true;
     }
-    for (int i = 0; i < MaxReputeNum; i++) {
+    for (i = 0; i < MaxReputeNum; i++) {
         text_get();
         Repute[i] = text_item_string();
     }
     if (text_open(AlphaxFileID, "MIGHT")) {
         return true;
     }
-    for (int i = 0; i < MaxMightNum; i++) {
+    for (i = 0; i < MaxMightNum; i++) {
         text_get();
         Might[i].adj_start = text_item_string();
         Might[i].adj = text_item_string();
@@ -1285,7 +1285,7 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
     if (text_open(AlphaxFileID, "PROPOSALS")) {
         return true;
     }
-    for (int i = 0; i < MaxProposalNum; i++) {
+    for (i = 0; i < MaxProposalNum; i++) {
         text_get();
         Proposal[i].name = text_item_string();
         Proposal[i].preq_tech = tech_name(text_item());
@@ -1294,14 +1294,15 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
     if (text_open(AlphaxFileID, "NATURAL")) {
         return true;
     }
-    for (int i = 0; i < MaxNaturalNum; i++) {
+    for (i = 0; i < MaxNaturalNum; i++) {
         text_get();
         Natural[i].name = text_item_string();
         Natural[i].name_short = text_item_string();
     }
     // Revised original nested for loop code to be more efficient; Logic is still same.
     // Buttons used by "Edit Map" menus.
-    for (int i = 0, j = 0; i < MaxTerrainNum; i++) {
+    int j = 0;
+    for (i = 0; i < MaxTerrainNum; i++) {
         // excludes: Fungus (removal), Aquifer, Raise Land, Lower Land, Level Terrain
         if (Terraforming[i].bit) {
             MainInterfaceVar->set_bubble_text(j++ + 17,
@@ -1548,7 +1549,7 @@ void __cdecl prefs_load(BOOL use_default) {
     }
     std::string custom_world_def = ss.str();
     prefs_get("Custom World", custom_world_def.c_str(), use_default);
-    for (uint32_t i = 0; i < 7; i++) {
+    for (i = 0; i < 7; i++) {
         AlphaIniPrefs->custom_world[i] = text_item_number();
     }
     prefs_get("Time Controls", 1, use_default);

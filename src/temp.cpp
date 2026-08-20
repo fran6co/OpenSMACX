@@ -659,7 +659,7 @@ void tech_calc_output() {
                 }
             }
         }
-        for (int j = 89; j < 609; j++) {
+        for (j = 89; j < 609; j++) {
             int techVal1 = tech_val(j, i, 0);
             int techVal2 = tech_val_OG(j, i, 0);
             if (techVal1 != techVal2) {

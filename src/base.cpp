@@ -1876,7 +1876,7 @@ void __cdecl base_psych() {
         talents_sp += 2; // TODO: eval - bug fix per manual: one extra talent at every base
     }
     BOOL has_punishment_sphere = has_fac_built(FAC_PUNISHMENT_SPHERE);
-    for (int i = 8; i >= 0; i--) {
+    for (i = 8; i >= 0; i--) {
         int val;
         if (!i) {
             val = PlayersData[faction_id].soc_effect_pending.talent;
@@ -2482,7 +2482,7 @@ int __cdecl value_of_base(int base_id, int faction_id_req, int faction_id_res,
             value += (Facility[FacilitySPStart + proj].cost * 25);
         }
     }
-    for (int i = veh_top(veh_id); i >= 0; i = Vehs[i].next_veh_id_stack) {
+    for (i = veh_top(veh_id); i >= 0; i = Vehs[i].next_veh_id_stack) {
         if (Vehs[i].faction_id == faction_id_req) {
             value += (VehPrototypes[Vehs[i].proto_id].cost * 2);
         }

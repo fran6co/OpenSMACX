@@ -1077,7 +1077,7 @@ int Buffer::fill(RECT *area, int color) {
             *whole++ = quad;
         }
         uint8_t *tail = reinterpret_cast<uint8_t *>(whole);
-        for (uint32_t count = width & 3; count > 0; --count) {
+        for (count = width & 3; count > 0; --count) {
             *tail++ = value;
         }
         destination += BufferFillRowGap;
