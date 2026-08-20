@@ -1131,6 +1131,7 @@ def _check_one_file(job: tuple) -> list[tuple[tuple, str, str]]:
     """
     path, records, exe, command, flag_sets = job
     best: dict = {}
+    unresolved: dict = {}
     outstanding = list(records)
     diagnostic = ""
     for flags in flag_sets:
@@ -1145,9 +1146,15 @@ def _check_one_file(job: tuple) -> list[tuple[tuple, str, str]]:
             try:
                 compiled = subject_asm(obj, record, flags)
             except ValueError as problem:
-                best[_claim_key(record)] = ("UNRESOLVED",
-                                            str(problem))
-                outstanding.remove(record)
+                # A SUBJECT THIS INVOCATION DOES NOT EMIT IS NOT A VERDICT.
+                # An `inline` function is folded into its callers under /O2
+                # and emitted as its own COMDAT under /Ob0, so the record
+                # stays outstanding and the next flag set gets its turn;
+                # UNRESOLVED is only true if NONE of them emitted it.
+                # `decomp.asm.compare_source` learned this first and this
+                # copy of the loop did not, which is how `say_num` went from
+                # BYTE_EXACT to unverifiable between two sweeps.
+                unresolved[_claim_key(record)] = str(problem)
                 continue
             result = compare_subject(record, exe, compiled)
             verdict = str(result.verdict)
@@ -1157,7 +1164,11 @@ def _check_one_file(job: tuple) -> list[tuple[tuple, str, str]]:
             if verdict == "BYTE_EXACT":
                 outstanding.remove(record)
     for record in outstanding:
-        best.setdefault(_claim_key(record), ("NO_COMPILE", diagnostic))
+        key = _claim_key(record)
+        if key in unresolved:
+            best.setdefault(key, ("UNRESOLVED", unresolved[key]))
+        else:
+            best.setdefault(key, ("NO_COMPILE", diagnostic))
     return [(key, verdict, note) for key, (verdict, note) in best.items()]
 
 

@@ -833,3 +833,32 @@ def test_the_same_address_in_two_files_is_allowed(tmp_path, monkeypatch):
     result = check(tmp_path)
     assert result.exit_code == 0, result.output
     assert "DUPLICATE" not in result.output
+
+
+def test_a_subject_one_flag_set_does_not_emit_stays_outstanding(tmp_path,
+                                                                 monkeypatch):
+    """`check` keeps its own copy of the flag-set loop for the per-file
+    compile, and only `decomp.asm` learned this: an `inline` function is
+    folded under /O2 and emitted under /Ob0, so giving up on the first set
+    took `say_num` from BYTE_EXACT to unverifiable between two sweeps."""
+    from decomp import read
+    (tmp_path / "x.cpp").write_text(
+        "// ORIGINAL: 0x00402000 ?f@@YAXXZ 0x00402000-0x00402010 BYTE_EXACT\n"
+        "void f() {\n}\n")
+    records = read(tmp_path)
+    monkeypatch.setattr(osmx, "compile_unit", lambda *a, **k: b"")
+    tries = iter([ValueError("not found among the object's .text symbols"),
+                  "second set emits it"])
+    def maybe(obj, record, flags):
+        got = next(tries)
+        if isinstance(got, ValueError):
+            raise got
+        return got
+    monkeypatch.setattr(osmx, "subject_asm", maybe)
+    from decomp import Tier
+    from decomp.asm import AsmComparison
+    monkeypatch.setattr(osmx, "compare_subject",
+                        lambda *a, **k: AsmComparison(verdict=Tier.BYTE_EXACT))
+    out = osmx._check_one_file((tmp_path / "x.cpp", records, "exe", ["cl"],
+                                ("/O2", "/O2 /Ob0")))
+    assert [v for _k, v, _n in out] == ["BYTE_EXACT"]
