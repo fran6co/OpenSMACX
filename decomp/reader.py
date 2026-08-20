@@ -555,14 +555,15 @@ def _read_text(text: str, path: Path | str,
         address, keyword, rest, matched, name, spans = parsed
         found_levers, found_ruled, found_dead, found_later = \
             _lessons(lines, index)
-        emitted = _symbol_fact(lines, index)
+        emitted = _token_fact(lines, index, "symbol")
+        catalogued_kind = _token_fact(lines, index, "kind")
         if keyword == "FILE":
             region = text
             found.append(DecompilationState(
                 address=address, mode=Mode.FILE,
                 state=_state_of(region, ""), path=_abs(path),
                 line=index + 1, name=name, image_spans=spans, region=region,
-                symbol=emitted, recipe=Recipe.VERBATIM,
+                symbol=emitted, kind=catalogued_kind, recipe=Recipe.VERBATIM,
                 byte_exact=matched, levers=found_levers,
                 ruled_out=found_ruled, unrecoverable=found_dead,
                 deferred=found_later))
@@ -570,7 +571,7 @@ def _read_text(text: str, path: Path | str,
             found.append(DecompilationState(
                 address=address, mode=Mode.BODY, state=State.EXCLUDED,
                 path=_abs(path), line=index + 1, name=name, image_spans=spans,
-                symbol=emitted,
+                symbol=emitted, kind=catalogued_kind,
                 exclusion=_exclusion_citation(rest), byte_exact=matched,
                 levers=found_levers, ruled_out=found_ruled,
                 unrecoverable=found_dead, deferred=found_later))
@@ -592,7 +593,7 @@ def _read_text(text: str, path: Path | str,
                 address=address, mode=Mode.BODY,
                 state=_state_of(region, ""), path=_abs(path),
                 line=index + 1, name=name, image_spans=spans, region=region,
-                symbol=emitted, extract_error=error, recipe=recipe,
+                symbol=emitted, kind=catalogued_kind, extract_error=error, recipe=recipe,
                 byte_exact=matched,
                 levers=found_levers, ruled_out=found_ruled,
                 unrecoverable=found_dead, deferred=found_later))
@@ -623,14 +624,16 @@ def region_identifiers(record: DecompilationState) -> tuple[str, ...]:
     return tuple(seen)
 
 
-def _symbol_fact(lines: list[str], index: int) -> str:
-    """The `// symbol <name>` fact under the marker at `index`, or "".
+def _token_fact(lines: list[str], index: int, key: str) -> str:
+    """The `// <key> <token>` fact under the marker at `index`, or "".
 
-    THE ONE FACT THE RECORD TAKES OUT OF THE BLOCK. `name` and `spans` ride
+    THE TWO FACTS THE RECORD TAKES OUT OF THE BLOCK. `name` and `spans` ride
     the marker; the rest of the fact block is the catalogue's and passes
-    through untouched. This one is here because the measurement needs it: it
-    says what the COMPILER emits for the piece, which a redirect shim makes
-    different from what the image calls it.
+    through untouched. These are here because measurement needs them:
+    `symbol` says what the COMPILER emits for the piece, which a redirect
+    shim makes different from what the image calls it, and `kind` says
+    whether the piece is Alpha Centauri's own code or something the linker
+    brought in - the one thing a call graph has to know.
 
     Read from the comment run immediately after the marker, the same window
     the lessons come from, so a fact belonging to the NEXT annotation cannot
@@ -641,9 +644,9 @@ def _symbol_fact(lines: list[str], index: int) -> str:
         if not (stripped.startswith("//") or stripped.startswith("*")):
             break
         match = FACT_LINE.match(stripped)
-        if match and match.group(1) == "symbol":
+        if match and match.group(1) == key:
             value = (match.group(2) or "").strip()
-            # A SYMBOL IS ONE TOKEN. Wrapped prose is re-flowed onto lines
+            # THE VALUE IS ONE TOKEN. Wrapped prose is re-flowed onto lines
             # that begin `// ` plus a word, and `symbol` is a word people
             # write - `src/` carries 2,037 lines that start `// symbol ` and
             # every one of them is a sentence. The key alone cannot tell

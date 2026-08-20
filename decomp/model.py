@@ -117,6 +117,13 @@ class DecompilationState:
                                  # its own, so the two are different facts and
                                  # neither replaces the other. Empty means
                                  # "the compiler emits `name`".
+    kind: str = ""               # what the catalogue calls the piece:
+                                 # `game` (5,575 of them), `library` (331 -
+                                 # the statically linked CRT and zlib) or
+                                 # `thunk` (35). The only fact that separates
+                                 # Alpha Centauri's own code from what the
+                                 # linker brought in, which is what a call
+                                 # graph has to know to be worth reading.
     exclusion: str = ""          # EXCLUSIONS.md citation for State.EXCLUDED
     region: str = ""             # the code this annotation claims ("" on error)
     extract_error: str = ""      # why the region could not be cut
