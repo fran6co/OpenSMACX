@@ -121,13 +121,10 @@ set(OPENSMACX_SOURCES
     src/dialogs.cpp
     src/faction.cpp
     src/filemap.cpp
-    src/filemap_recovery.cpp
     src/flatbutton.cpp
     src/flic.cpp
     src/font.cpp
-    src/font_recovery.cpp
     src/game.cpp
-    src/game_recovery.cpp
     src/general.cpp
     src/graphicwin.cpp
     src/heap.cpp
@@ -169,7 +166,6 @@ set(OPENSMACX_SOURCES
     src/radiobutton.cpp
     src/checkbox.cpp
     src/editgroup.cpp
-    src/dialogs_recovery.cpp
     src/xpops.cpp
     src/planwin.cpp
     src/playerlock.cpp
@@ -199,8 +195,7 @@ set(OPENSMACX_SOURCES
     src/scenario.cpp
     src/sounddevice.cpp
     src/spot.cpp
-    src/spot_recovery.cpp
-    src/spying_recovery.cpp
+    src/spying.cpp
     src/sprite.cpp
     src/stdafx.cpp
     src/stringbox.cpp
@@ -211,9 +206,7 @@ set(OPENSMACX_SOURCES
     src/terraforming.cpp
     src/text.cpp
     src/textindex.cpp
-    src/textindex_recovery.cpp
     src/time.cpp
-    src/time_recovery.cpp
     src/veh.cpp
     src/vector.cpp
     src/win.cpp
