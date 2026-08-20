@@ -1677,7 +1677,7 @@ void __fastcall buffer_release_hdc_redirect(Buffer *self, void *, int count) {
 /*
 Purpose: Republish a palette into the buffer's colour table and device context,
          skipping the work when the palette has not changed.
-// ORIGINAL: 0x005DE8F0 ?sync_to_palette@Buffer@@QAEHPAVPalette@@@Z 0x005DE8F0-0x005DEA12
+// ORIGINAL: 0x005DE8F0 ?sync_to_palette@Buffer@@QAEHPAVPalette@@@Z 0x005DE8F0-0x005DEA12 BYTE_EXACT
 // size      290 bytes
 // prototype int (__thiscall ?sync_to_palette@Buffer@@QAEHPAVPalette@@@Z)(Buffer* this, Palette*)
 // callers   24   call targets   1
@@ -1708,9 +1708,16 @@ int Buffer::sync_to_palette(Palette *palette) {
         palette_seed_ = palette->seed_;
         RGBQUAD *const table = dib_.bmiColors;
         palette->get_rgbquad(table, 0, 0x100);
-        const HDC device = get_hdc();
-        if (device != nullptr) {
-            SetDIBColorTable(device, 0, 0x100, table);
+        // THE MEMBER, NOT THE RETURNED VALUE. `get_hdc` hands back `hdc_`
+        // and the image tests what it returns, but the call RELOADS it:
+        //
+        //   mov eax, [edi]   test eax, eax   je ...
+        //   mov ecx, [edi]   push ecx   call SetDIBColorTable
+        //
+        // Holding the result in a local passes `eax` straight through, which
+        // is one instruction shorter and moves every jump after it.
+        if (get_hdc() != nullptr) {
+            SetDIBColorTable(hdc2_, 0, 0x100, table);
             release_hdc(1);
         }
     }
@@ -2168,8 +2175,12 @@ int Buffer::write_cent_l(LPSTR text, int x_coord, int y_coord, int width,
     if (!font1_ || !font1_->is_initialized()) {
         return 3;
     }
-    const int measured = static_cast<int>(strlen(text));
-    const int limit = (measured < len) ? measured : len;
+    // STRLEN TWICE, which is a `MIN` macro double-evaluating its argument:
+    // the image calls it at 0x005DD04D, compares against `len`, and calls it
+    // AGAIN at 0x005DD05E on the branch that keeps it. Holding the result in
+    // a local is one call where the image has two.
+    const int limit = static_cast<int>(strlen(text)) < len
+        ? static_cast<int>(strlen(text)) : len;
     if (limit <= 0) {
         return x_coord;
     }
