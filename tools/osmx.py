@@ -546,7 +546,8 @@ def _rank_candidates(record: DecompilationState, exe: Path, directory: Path,
     else:
         typer.secho(f"\n{record.address_hex}  {record.name}", bold=True)
         typer.echo(f"  {len(candidates)} candidate(s) against the tree's own "
-                   f"body\n")
+                   f"body")
+        typer.echo(f"  {'tier':14}{'simil':>7} {'agree':>10}\n")
         for source, result, note in ordered:
             mark = "  <- the tree" if source == str(record.path) else ""
             if result is None:
@@ -556,7 +557,15 @@ def _rank_candidates(record: DecompilationState, exe: Path, directory: Path,
                 continue
             colour = (typer.colors.GREEN
                       if str(result.verdict) == "BYTE_EXACT" else None)
+            # SIMILARITY FIRST, BECAUSE IT IS WHAT THE RANKING USES and
+            # because `matching` is POSITIONAL: once a candidate's length
+            # differs from the image's, every instruction after the first
+            # divergence is compared against the wrong one, so the count
+            # collapses and misranks. Measured on 0x005FEBB0, the best
+            # candidate of five showed 33/99 against the tree's 34/99 while
+            # aligning three MORE instructions than the tree did.
             typer.secho(f"  {str(result.verdict):14}"
+                        f"{result.mnemonic_similarity:>7.3f} "
                         f"{result.matching_instructions:>4}/"
                         f"{result.original_instructions:<5} "
                         f"{Path(source).name}{mark}", fg=colour)

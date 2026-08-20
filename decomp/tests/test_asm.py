@@ -598,12 +598,13 @@ def test_a_tie_on_tier_is_decided_on_agreement(tmp_path, monkeypatch):
     monkeypatch.setattr(asm, "compiled_asm", lambda *a, **k: listing(b"\xC3"))
     monkeypatch.setattr(asm, "original_asm", lambda *a, **k: listing(b"\xC3"))
     monkeypatch.setattr(asm, "span_refusal", lambda *a, **k: None)
-    agreement = iter([0, 35, 1, 1])
-    monkeypatch.setattr(
-        asm, "compare_asm",
-        lambda *a, **k: asm.AsmComparison(
+    agreement = iter([(0, 0.4), (35, 0.9), (1, 0.5), (1, 0.5)])
+    def measured(*a, **k):
+        matching, similarity = next(agreement)
+        return asm.AsmComparison(
             verdict=asm.Tier.MISMATCH, original_instructions=35,
-            matching_instructions=next(agreement)))
+            matching_instructions=matching, mnemonic_similarity=similarity)
+    monkeypatch.setattr(asm, "compare_asm", measured)
     result = asm.compare_record(record, "exe", ["cl"],
                                 ("/Oy-", "/Oy", "/O1", "/O1 /Oy"))
     assert result.matching_instructions == 35
@@ -679,3 +680,23 @@ def test_a_body_with_no_tail_is_unchanged():
     result = asm.compare_asm(original, compiled)
     assert result.verdict == "BYTE_EXACT"
     assert result.data_bytes == 0
+
+
+def test_a_shorter_candidate_can_still_be_the_closer_one(tmp_path,
+                                                          monkeypatch):
+    """`matching_instructions` is POSITIONAL, so a candidate one instruction
+    short scores near zero however right the rest is. Ranking on it picked
+    the answer that kept its length over the answer that was closer."""
+    record = record_in(tmp_path, MARKED)
+    monkeypatch.setattr(asm, "compiled_asm", lambda *a, **k: listing(b"\xC3"))
+    monkeypatch.setattr(asm, "original_asm", lambda *a, **k: listing(b"\xC3"))
+    monkeypatch.setattr(asm, "span_refusal", lambda *a, **k: None)
+    scores = iter([(34, 0.838), (2, 0.930)])
+    def measured(*a, **k):
+        matching, similarity = next(scores)
+        return asm.AsmComparison(
+            verdict=asm.Tier.MISMATCH, original_instructions=99,
+            matching_instructions=matching, mnemonic_similarity=similarity)
+    monkeypatch.setattr(asm, "compare_asm", measured)
+    result = asm.compare_record(record, "exe", ["cl"], ("/O2", "/O1"))
+    assert result.mnemonic_similarity == 0.930
