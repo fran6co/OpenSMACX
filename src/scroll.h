@@ -113,7 +113,7 @@ extern Win **ScrollCurrentWin;
 typedef int (__cdecl *ScrollPrimaryInitProc)(
     Scroll *, int, int, int, int, Win *, int, int);
 extern ScrollPrimaryInitProc ScrollPrimaryInit;
-extern int *ScrollDefaultThickness;
+extern int ScrollDefaultThickness;
 extern int *ScrollNonClientInit;
 // Defaults copied by close(). The static table contains eleven process
 // constants; the dynamic table spans seventeen process-owned slots, including

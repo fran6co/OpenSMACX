@@ -719,7 +719,7 @@ extern RulesBasic *Rules;
 extern RulesWorldbuilder *WorldBuilder;
 extern AlphaIniPref *AlphaIniPrefs;
 extern DefaultPref *DefaultPrefs;
-extern uint32_t *Language;
+extern uint32_t Language;
 
 int __cdecl tech_name(LPSTR name);
 int __cdecl chas_name(LPSTR name);

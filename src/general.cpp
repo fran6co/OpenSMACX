@@ -713,7 +713,7 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
 
     //strcat(output, input); // replace with safe version _s
 
-    if (*Language == 1) { // French : handling for poor translations
+    if (Language == 1) { // French : handling for poor translations
         do {
             //LPSTR partSpeach[] = { " de ", " le ", " la ", "De ", "Le ", "La " };
             //LPSTR langParse = output;

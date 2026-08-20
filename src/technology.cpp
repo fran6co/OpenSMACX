@@ -119,7 +119,7 @@ void __cdecl say_tech(LPSTR output, int tech_id, BOOL category_lvl) {
                 label_get(629 + tech_category(tech_id)), tech_recurse(tech_id, 0));
         }
     } else if (tech_id < 97) {
-        if (*Language) {
+        if (Language) {
             sprintf_s(&output[strlen(output)], 80, "%s (%s)", label_get(487), // 'Comm Frequency'
                 get_noun(tech_id - MaxTechnologyNum));
         } else {

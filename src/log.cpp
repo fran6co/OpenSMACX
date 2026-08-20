@@ -74,7 +74,7 @@ void Log::reset() {
 
 /*
 Purpose: Write to the log file with the numbers displayed in base 10.
-// ORIGINAL: 0x006260F0 ?say@Log@@QAEXPADPADHHH@Z 0x006260F0-0x0062618B
+// ORIGINAL: 0x006260F0 ?say@Log@@QAEXPADPADHHH@Z 0x006260F0-0x0062618B BYTE_EXACT
 // symbol    ?say@Log@@QAEXPBD0HHH@Z
 // size      155 bytes
 // prototype void (__thiscall ?say@Log@@QAEXPADPADHHH@Z)(Log* this, int8*, int8*, int, int, int)
@@ -86,7 +86,7 @@ Return Value: n/a
 Status: Complete
 */
 void Log::say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
-    if (!log_file_ || is_disabled_ || *IsLoggingDisabled) {
+    if (!log_file_ || is_disabled_ || IsLoggingDisabled) {
         return;
     }
     FILE *file = env_open(log_file_, "at");
@@ -99,7 +99,7 @@ void Log::say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
 
 /*
 Purpose: Write to the log file with the numbers displayed in base 16.
-// ORIGINAL: 0x00626190 ?say_hex@Log@@QAEXPADPADHHH@Z 0x00626190-0x0062622B
+// ORIGINAL: 0x00626190 ?say_hex@Log@@QAEXPADPADHHH@Z 0x00626190-0x0062622B BYTE_EXACT
 // symbol    ?say_hex@Log@@QAEXPBD0HHH@Z
 // size      155 bytes
 // prototype void (__thiscall ?say_hex@Log@@QAEXPADPADHHH@Z)(Log* this, int8*, int8*, int, int, int)
@@ -111,7 +111,7 @@ Return Value: n/a
 Status: Complete
 */
 void Log::say_hex(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
-    if (!log_file_ || is_disabled_ || *IsLoggingDisabled) {
+    if (!log_file_ || is_disabled_ || IsLoggingDisabled) {
         return;
     }
     FILE *file = env_open(log_file_, "at");
@@ -124,7 +124,10 @@ void Log::say_hex(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
 
 // global
 Log *Logging = (Log *)0x009BBFF8;
-BOOL *IsLoggingDisabled = (BOOL *)0x009BC004;
+// AN OBJECT, NOT A POINTER TO A FIXED ADDRESS: the pointer form costs a
+// load at every use where the image addresses the storage directly, and
+// the address is terranx.exe's data, unmapped in a standalone build.
+BOOL IsLoggingDisabled;  // 0x009BC004
 
 // ORIGINAL: 0x00625F20 ??__ELogging@@YAXXZ 0x00625F20-0x00625F8B
 // symbol    ?log_logging@@YAXXZ

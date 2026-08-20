@@ -1773,7 +1773,7 @@ extern "C" int __stdcall sub_401520(int a1) {
 }
 
 /*
-// ORIGINAL: 0x00401BE0 sub_401be0 0x00401BE0-0x00401C79
+// ORIGINAL: 0x00401BE0 sub_401be0 0x00401BE0-0x00401C79 BYTE_EXACT
 // size      153 bytes
 // prototype 
 // callers   3   call targets   0

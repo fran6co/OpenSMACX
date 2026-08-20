@@ -99,7 +99,7 @@ typedef int *func8(LPSTR, LPSTR);
 extern func8 *parse_string_OG;
 extern char256 *ParseStrBuffer;
 
-extern int *BufferStrHeight;
+extern int BufferStrHeight;
 extern int *ParseNumTable;
 extern int *ParseStrPlurality;
 extern int *ParseStrGender;

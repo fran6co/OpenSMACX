@@ -152,7 +152,7 @@ extern const uint32_t StringVirtualBaseVtable;
 // this global into the object and clears it; the virtual base's destructors
 // republish it. Rebindable so tests can substitute their own storage: the
 // default address is only mapped inside the game process.
-extern uint32_t *StringVirtualBaseOwner;   // default 0x009B3374
+extern uint32_t StringVirtualBaseOwner;   // default 0x009B3374
 
 // ~StringList is entered on the UNADJUSTED object, so unlike
 // ListBoxDestructorAdjustment there is nothing to undo in the adapter; the
