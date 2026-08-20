@@ -31,6 +31,13 @@
 #include "textindex.h"
 #include "veh.h"
 
+// THE INI STRINGS ARE GLOBALS, not literals at each call site. The image
+// loads them - `mov ecx, [0x006900CC]; push ecx` - where a literal would
+// compile to `push offset`, which is two bytes shorter per use and shifts
+// every branch after it. Six call sites in this file pass them.
+const char *PrefsFile = ".\\Alpha Centauri.ini";   // 0x006900CC
+const char *PrefsSection = "Alpha Centauri";       // 0x006900D0
+
 LPCSTR AlphaxFileID = "ALPHAX";
 LPCSTR ScriptTxtID = "SCRIPT";
 LPSTR *Compass = (LPSTR *)0x00945D48;
@@ -1323,12 +1330,12 @@ Status: Complete
 */
 LPSTR __cdecl prefs_get(LPCSTR key_name, LPCSTR default_value, BOOL use_default) {
     if (use_default ||
-        (GetPrivateProfileStringA("Alpha Centauri", "Prefs Format", "0", TextBufferGetPtr, 256,
-            ".\\Alpha Centauri.ini"), atoi(TextBufferGetPtr) != 12)) {
+        (GetPrivateProfileStringA(PrefsSection, "Prefs Format", "0", TextBufferGetPtr, 256,
+            PrefsFile), atoi(TextBufferGetPtr) != 12)) {
         strcpy_s(TextBufferGetPtr, 256, default_value);
     } else {
-        GetPrivateProfileStringA("Alpha Centauri", key_name, default_value, TextBufferGetPtr, 256,
-            ".\\Alpha Centauri.ini");
+        GetPrivateProfileStringA(PrefsSection, key_name, default_value, TextBufferGetPtr, 256,
+            PrefsFile);
     }
     return Txt.update();
 }
@@ -1423,7 +1430,7 @@ uint32_t __cdecl default_rules() {
 
 /*
 Purpose: Attempt to read the setting's value from the ini file.
-// ORIGINAL: 0x0059DB40 ?prefs_get@@YAHPADHH@Z 0x0059DB40-0x0059DBC9
+// ORIGINAL: 0x0059DB40 ?prefs_get@@YAHPADHH@Z 0x0059DB40-0x0059DBC9 BYTE_EXACT
 // symbol    ?prefs_get@@YAHPBDHH@Z
 // size      137 bytes
 // prototype int (__cdecl ?prefs_get@@YAHPADHH@Z)(LPCSTR keyName, int defaultValue, BOOL useDefault)
@@ -1436,12 +1443,19 @@ Return Value: Key's integer value from the ini or default if not set
 Status: Complete
 */
 int __cdecl prefs_get(LPCSTR key_name, int default_value, BOOL use_default) {
-    _itoa_s(default_value, StringTemp, 256, 10);
+    // A LOCAL BUFFER AND A `strcat`, not a write straight into StringTemp:
+    // the image reserves 0x50 bytes of stack, empties StringTemp, formats
+    // the number into the local and appends it. Writing the number into
+    // StringTemp directly is one call where the image makes two.
+    char formatted[0x50];
+    StringTemp[0] = 0;
+    _itoa(default_value, formatted, 10);
+    strcat(StringTemp, formatted);
     if (use_default) {
-        strcpy_s(TextBufferGetPtr, 256, StringTemp);
+        strcpy(TextBufferGetPtr, StringTemp);
     } else {
-        GetPrivateProfileStringA("Alpha Centauri", key_name, StringTemp, TextBufferGetPtr, 
-            256, ".\\Alpha Centauri.ini");
+        GetPrivateProfileStringA(PrefsSection, key_name, StringTemp,
+            TextBufferGetPtr, 256, PrefsFile);
     }
     return atoi(Txt.update());
 }
@@ -1464,14 +1478,14 @@ Status: Complete
 void __cdecl prefs_fac_load() {
     if (ExpansionEnabled) {
         char returned_string[256];
-        GetPrivateProfileStringA("Alpha Centauri", "Prefs Format", "0", returned_string, 256, 
-            ".\\Alpha Centauri.ini");
+        GetPrivateProfileStringA(PrefsSection, "Prefs Format", "0", returned_string, 256, 
+            PrefsFile);
         if (atoi(returned_string) == 12) {
             for (int i = 1; i < MaxPlayerNum; i++) {
                 std::string faction = "Faction ";
                 faction += std::to_string(i);
-                GetPrivateProfileStringA("Alpha Centauri", faction.c_str(), Players[i].filename,
-                    returned_string, 256, ".\\Alpha Centauri.ini");
+                GetPrivateProfileStringA(PrefsSection, faction.c_str(), Players[i].filename,
+                    returned_string, 256, PrefsFile);
                 strncpy_s(Players[i].filename, returned_string, 24);
                 strncpy_s(Players[i].search_key, returned_string, 24);
             }
@@ -1551,7 +1565,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl prefs_put(LPCSTR key_name, LPCSTR value) {
-    WritePrivateProfileStringA("Alpha Centauri", key_name, value, ".\\Alpha Centauri.ini");
+    WritePrivateProfileStringA(PrefsSection, key_name, value, PrefsFile);
 }
 
 /*
@@ -1571,7 +1585,7 @@ Status: Complete
 void __cdecl prefs_put(LPCSTR key_name, int value, BOOL tgl_binary) {
     char temp[33];
     tgl_binary ? strcpy_s(temp, 33, prefs_get_binary(value).c_str()) : _itoa_s(value, temp, 33, 10);
-    WritePrivateProfileStringA("Alpha Centauri", key_name, temp, ".\\Alpha Centauri.ini");
+    WritePrivateProfileStringA(PrefsSection, key_name, temp, PrefsFile);
 }
 
 /*
