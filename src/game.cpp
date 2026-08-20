@@ -657,3 +657,45 @@ void __cdecl repair_phase(int faction_id) {
     }
     do_all_draws();
 }
+
+// ---------------------------------------------------------------------------
+// Merged from the retired src/game_recovery.cpp on 2026-08-20, following
+// src/text_recovery.cpp, which went into text.cpp on 2026-08-15. A class's
+// bodies in two translation units is not a neutral choice: which unit a
+// piece compiles in decides what can be inlined into it.
+// ---------------------------------------------------------------------------
+
+/*
+ * Game-scoped bindings and small recovered bodies that code outside
+ * game.cpp needs.
+ *
+ * Same split, and for the same reason, as font_recovery.cpp: game.cpp reaches
+ * Players, parse_set and parse_says, so any target that links it drags the
+ * whole alpha/base closure in. The leaf test suite cannot afford that, and
+ * Console::focus - which only wants to compare a faction id - would otherwise
+ * have to mint a third name for an address that game.cpp and netdaemon.cpp
+ * already bind twice between them. Nothing here may acquire a dependency: the
+ * point of the file is that it has none.
+ */
+
+// The faction the human is playing, at 0x00939284. netdaemon.cpp binds the
+// same address as NetDaemonLocalFaction; that duplicate predates this file and
+// is left alone rather than churned, but new callers should reach for this one.
+int *LocalFaction = (int *)0x00939284;
+
+/*
+Purpose: The ceiling on a single energy allocation slider. The legacy
+         implementation is a constant return.
+// ORIGINAL: 0x00445440 ?energy_limit@@YAHH@Z 0x00445440-0x00445446 BYTE_EXACT
+// size      6 bytes
+// prototype int (__cdecl ?energy_limit@@YAHH@Z)(int factionID)
+// callers   3   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: 10
+Status: Complete
+*/
+int __cdecl energy_limit(int) {
+    return 10;
+}
