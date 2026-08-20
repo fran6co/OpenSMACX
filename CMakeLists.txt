@@ -287,6 +287,22 @@ target_link_libraries(OpenSMACX PRIVATE zlib user32 gdi32 winmm dxguid)
 target_link_options(OpenSMACX PRIVATE
     "/MAP:${CMAKE_CURRENT_BINARY_DIR}/OpenSMACX.map" "/MAPINFO:LINES")
 
+# The sidecar is DERIVED FROM THE LINK, so it is built by it. Left as a command
+# to remember, it goes stale the moment anything moves, and a stale one is
+# worse than none: gdb reads it without complaint and reports names for the
+# addresses of an older build. It costs under a second and reads only what the
+# link just wrote - the executable, the map, and the objects' CodeView.
+add_custom_command(TARGET OpenSMACX POST_BUILD
+    COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/tools/gdb_sidecar.py"
+            --exe "$<TARGET_FILE:OpenSMACX>"
+            --map "${CMAKE_CURRENT_BINARY_DIR}/OpenSMACX.map"
+            --out "${CMAKE_CURRENT_BINARY_DIR}/OpenSMACX.sym"
+            --build-root "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles"
+            --comp-dir "${CMAKE_CURRENT_SOURCE_DIR}"
+    BYPRODUCTS "${CMAKE_CURRENT_BINARY_DIR}/OpenSMACX.sym"
+    COMMENT "Building the gdb sidecar"
+    VERBATIM)
+
 # `/subsystem:windows`, because the entry point is `WinMain` and not `main`.
 # Left at the default the linker looks for `main`, finds only `_WinMain@16` and
 # fails with LNK2001 - the property is what selects which of the two CRT entry
