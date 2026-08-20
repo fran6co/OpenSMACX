@@ -474,7 +474,7 @@ def fake_file_result(verdicts):
     """Stand in for the worker, which needs a compiler."""
     def worker(job):
         _path, records, *_rest = job
-        return [(r.address, verdicts.get(r.address, "BYTE_EXACT"), "")
+        return [(osmx._claim_key(r), verdicts.get(r.address, "BYTE_EXACT"), "")
                 for r in records]
     return worker
 
@@ -625,3 +625,31 @@ def test_the_cache_is_cleared_not_the_build_tree(tmp_path, monkeypatch):
     assert not (build / "CMakeCache.txt").exists()
     assert not (build / "CMakeFiles").exists()
     assert kept.read_text() == "an object nobody should have to rebuild"
+
+
+def test_two_annotations_of_one_address_are_two_claims(tmp_path,
+                                                        monkeypatch):
+    """34 addresses in this tree are annotated twice - the body in `src/`
+    and the same piece preserved beside it - and they are measured in two
+    translation units, so they can disagree. Keyed by address the second
+    result overwrote the first, and the twin it never showed was counted
+    among the reproduced."""
+    marker = ("// ORIGINAL: 0x00402000 ?f@@YAXXZ 0x00402000-0x00402010 "
+              "BYTE_EXACT\nvoid f() {\n}\n")
+    (tmp_path / "body.cpp").write_text(marker)
+    preserved = tmp_path / "preserved"
+    preserved.mkdir()
+    (preserved / "00402000.cpp").write_text(marker)
+
+    def worker(job):
+        path, records, *_rest = job
+        verdict = "MISMATCH" if path.name == "body.cpp" else "BYTE_EXACT"
+        return [(osmx._claim_key(r), verdict, "") for r in records]
+
+    monkeypatch.setattr(osmx, "_check_one_file", worker)
+    result = check(tmp_path)
+    assert result.exit_code == 1
+    assert "2 claims" in result.output
+    assert "1,009 verified" not in result.output
+    assert "1 REGRESSED" in result.output
+    assert "body.cpp" in result.output
