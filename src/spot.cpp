@@ -21,7 +21,8 @@
 
 /*
 Purpose: Shutdown the class instance.
-// ORIGINAL: 0x005FA830 ?shutdown@Spot@@QAEXXZ 0x005FA830-0x005FA85E
+// ORIGINAL: 0x005FA830 ?shutdown@Spot@@QAEXXZ 0x005FA830-0x005FA85E BYTE_EXACT
+// body      src/spot.h
 // size      46 bytes
 // prototype void (__thiscall ?shutdown@Spot@@QAEXXZ)(Spot* this)
 // callers   9   call targets   1
@@ -31,12 +32,7 @@ Purpose: Shutdown the class instance.
 Return Value: n/a
 Status: Complete
 */
-void Spot::shutdown() {
-    if (spots_) {
-        free(spots_);
-    }
-    clear();
-}
+
 
 /*
 Purpose: Initialize the class instance with count.
@@ -305,7 +301,7 @@ Spot::Spot() {
 }
 
 /*
-// ORIGINAL: 0x005FA870 ??1Spot@@QAE@XZ 0x005FA870-0x005FA89E
+// ORIGINAL: 0x005FA870 ??1Spot@@QAE@XZ 0x005FA870-0x005FA89E BYTE_EXACT
 // size      46 bytes
 // prototype void (__thiscall ??1Spot@@QAE@XZ)(Spot* this)
 // callers   110   call targets   1
@@ -320,6 +316,7 @@ Spot::~Spot() {
 
 /*
 // ORIGINAL: 0x005FA820 ?clear@Spot@@QAEXXZ 0x005FA820-0x005FA82B BYTE_EXACT
+// body      src/spot.h
 // size      11 bytes
 // prototype void (__thiscall ?clear@Spot@@QAEXXZ)(Spot* this)
 // callers   0   call targets   0
@@ -328,12 +325,7 @@ Spot::~Spot() {
 // calls     (none)
 // notes     Staged hybrid export redirect calls the source-owned method
 */
-void Spot::clear() {
-    // IMAGE ORDER, as in the constructor above.
-    max_count_ = 0;
-    add_count_ = 0;
-    spots_ = nullptr;
-}
+
 
 // Mirrors the recovered Spot::init (src/spot.cpp) for builds that link this
 // minimal Spot support rather than the full implementation - recovery-leaf-tests
