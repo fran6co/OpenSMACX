@@ -30,9 +30,9 @@ from decomp import DecompilationState, State, mangled, read, write_file
 from decomp.calls import CallSite, call_sites, imported_names
 from decomp.record import stamped
 from decomp.asm import (AsmComparison, CompileFailed, build_command,
-                        compare_record, compare_source, compare_subject,
-                        compile_unit, original_asm, shared_spans,
-                        span_refusal, subject_asm)
+                        build_inputs, compare_record, compare_source,
+                        compare_subject, compile_unit, original_asm,
+                        shared_spans, span_refusal, subject_asm)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -1260,6 +1260,10 @@ def check(
 
     jobs = max(1, min(jobs or (os.cpu_count() or 1), WINE_CEILING))
 
+    # THE BUILD DATABASE IS THE AUTHORITY ON WHOSE FAULT A WALL IS; see
+    # `unasked_here` below. Read once, not once per file.
+    built = build_inputs(compile_commands)
+
     work = []
     for path, mine in grouped.items():
         command = _command_for(compile_commands, path, borrow)
@@ -1294,12 +1298,38 @@ def check(
     # found was never asked, and reporting it as a regression sends someone
     # to look at a body that is fine. Measured here: 6 against 534.
     by_claim = {_claim_key(r): r for group in grouped.values() for r in group}
-    UNASKED = ("NO_COMPILE", "UNRESOLVED", "SHARED_TAIL", "REFUSED")
+    UNASKED = ("UNRESOLVED", "SHARED_TAIL", "REFUSED")
+
+    def unasked_here(record: DecompilationState, verdict: str) -> bool:
+        """Was this claim unaskable, or did someone break it?
+
+        A NO_COMPILE IS ONLY A WALL IN A FILE THE BUILD DOES NOT BUILD.
+        `src/recovered/` and `src/unrecovered/` are not build inputs - they
+        compile on a borrowed invocation and 313 of them do not compile at
+        all, which is the wall this classification was written for. A file
+        CMake compiles is a different matter: the build database naming it
+        is the project asserting that it builds, so a NO_COMPILE there is a
+        broken tree and someone must fix it.
+
+        MEASURED, not reasoned: making `Buffer::dib_` private moved
+        `width_` out of reach of `win.cpp`, and 28 claims that had been
+        BYTE_EXACT went NO_COMPILE. The gate printed the same "0 REGRESSED"
+        and the same exit 3 it prints when everything is fine, because a
+        wall someone just built looked exactly like a wall that was always
+        there. The verified count fell by 28 and nothing said so.
+        """
+        if verdict in UNASKED:
+            return True
+        if verdict == "NO_COMPILE":
+            return record.path.resolve() not in built
+        return False
+
     regressed = [(by_claim[k], v, n)
                  for k, (v, n) in sorted(measured.items())
-                 if v != "BYTE_EXACT" and v not in UNASKED]
+                 if v != "BYTE_EXACT" and not unasked_here(by_claim[k], v)]
     unasked = [(by_claim[k], v, n)
-               for k, (v, n) in sorted(measured.items()) if v in UNASKED]
+               for k, (v, n) in sorted(measured.items())
+               if v != "BYTE_EXACT" and unasked_here(by_claim[k], v)]
     broken = regressed + unasked
 
     if as_json:

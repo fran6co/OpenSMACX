@@ -51,6 +51,22 @@ struct ExtDirectDraw {
  /*
   * Buffer class
   */
+/*
+ * A BITMAPINFO WITH ITS FULL 256-ENTRY COLOUR TABLE. The name is the image's
+ * own, not this project's: `?set_from_dib@Palette@@QAEHPAUDib@@@Z` takes a
+ * `struct Dib *` - `PAU` is a pointer to a struct, `Dib@@` puts it at global
+ * scope - and the one call to it recovered so far hands it `buffer + 0x7C`.
+ *
+ * Windows declares `BITMAPINFO` with a one-entry table, so the 256-entry
+ * form always needs a struct of its own; this is what the original called
+ * theirs. Header plus table is 40 + 1024 = 0x428 bytes, and 0x7C + 0x428 is
+ * exactly `Buffer::field_4A4_`, so the block is accounted for to the byte.
+ */
+struct Dib {
+    BITMAPINFOHEADER bmiHeader;
+    RGBQUAD bmiColors[256];
+};
+
 class DLLEXPORT Buffer {
  public:
   int poly(Vert *a1, int a2, int a3);
@@ -127,7 +143,6 @@ class DLLEXPORT Buffer {
            int src_width, int src_height);
 
  private:
-  typedef int32_t Dib;
   
   uint32_t poOwner_;
   uint32_t field_8_;
@@ -180,26 +195,31 @@ class DLLEXPORT Buffer {
   // pair, written out.
   uint32_t previous_bitmap_;
   HBITMAP bitmap_handle_;
-  const BITMAPINFO *bitmap_info_;
 
  public:
-  // Read by Win::init_class to centre the splash bitmap; the original plainly
-  // reached these, so they were not private there. Kept at this exact point in
-  // the member order - moving them would move the layout.
-  uint32_t width_;
-  uint32_t height_;
+  /*
+   * 0x7C. THE DIB DESCRIPTION ITSELF, and PUBLIC because the original
+   * reached it from outside: `Win::init_class` centres the splash bitmap on
+   * `ScreenBuffer`'s width and the logo's own. `Buffer::init` hands it to
+   * `CreateDIBSection` as `lea eax, [esi + 0x7c]` - the address
+   * of a member, not a load - and the constructor fills it field by field,
+   * `biSize = 40`, `biPlanes = 1`, `biBitCount = 8`, `biClrUsed = 256`. An
+   * 8-bit palettised DIB, which is why the 256 colours follow inline.
+   *
+   * `BITMAPINFO` is declared by Windows with a one-entry colour table, so
+   * the 256-entry form always needs its own struct; this is that struct.
+   * Header plus table is 40 + 1024 = 0x428 bytes, and 0x7C + 0x428 is
+   * exactly `field_4A4_`, so the block is accounted for to the byte.
+   *
+   * `biHeight` IS STORED NEGATIVE, by `Buffer::init` and by `set_dib_bits`.
+   * That is not a quirk of this engine - a negative `biHeight` is how a DIB
+   * declares itself top-down, rows running downwards from the first byte,
+   * which is the order a blitter wants. It is why `init`'s early-out reads
+   * `height == -dib_.bmiHeader.biHeight`.
+   */
+  Dib dib_;
 
  private:
-  uint16_t field_88_;
-  uint16_t field_8A_;
-  uint32_t field_8C_;
-  // 0x90. `Buffer::init` sets it to `width * height`.
-  uint32_t pixel_count_;
-  uint32_t field_94_;
-  uint32_t field_98_;
-  uint32_t field_9C_;
-  uint32_t field_A0_;
-  Dib dib_[256];
   uint32_t field_4A4_;
   // 0x4A8. `Buffer::init` sets it to `(width + 3) & ~3`: the row pitch a
   // DIB needs, the width rounded up to a DWORD.

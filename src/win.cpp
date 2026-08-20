@@ -2137,11 +2137,12 @@ int __cdecl Win::init_class(LPSTR window_name) {
     ScreenBuffer.fill(0);
     if (logo.load_pcx("logo.pcx", PaletteActive, 10, 0xEC) == 0) {
         logo.copy(&ScreenBuffer, 0, 0,
-                  (static_cast<int>(ScreenBuffer.width_) -
-                   static_cast<int>(logo.width_)) / 2,
-                  (static_cast<int>(logo.height_) -
-                   static_cast<int>(ScreenBuffer.height_)) / 2,
-                  logo.width_, -static_cast<int>(logo.height_));
+                  (ScreenBuffer.dib_.bmiHeader.biWidth
+                   - logo.dib_.bmiHeader.biWidth) / 2,
+                  (logo.dib_.bmiHeader.biHeight
+                   - ScreenBuffer.dib_.bmiHeader.biHeight) / 2,
+                  logo.dib_.bmiHeader.biWidth,
+                  -logo.dib_.bmiHeader.biHeight);
     }
 
     if ((JackalInitFlags & 4) == 0) {
