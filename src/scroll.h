@@ -32,6 +32,11 @@ class Scroll : GraphicWin {
 
   uint32_t close();
   Scroll *destroy();
+  // 0x006054D0, still a pending_bodies forwarder. The overloads that
+  // wrap it call it BY NAME, so they emit the image's `call rel32`
+  // rather than the `call [ptr]` a function-pointer seam compiles.
+  int init(int x, int y, int width, int height, Win *parent,
+           int setting, int options);
   int init(RECT *rect, Win *parent, int setting, int options);
   int init_vert(int x, int y, int length, Win *parent, int setting);
   int init_horz(int x, int y, int length, Win *parent, int setting);
@@ -110,9 +115,6 @@ static_assert(sizeof(Scroll) == 0x214C,
               "Scroll layout must match the legacy ABI");
 
 extern Win **ScrollCurrentWin;
-typedef int (__cdecl *ScrollPrimaryInitProc)(
-    Scroll *, int, int, int, int, Win *, int, int);
-extern ScrollPrimaryInitProc ScrollPrimaryInit;
 extern int ScrollDefaultThickness;
 extern int ScrollNonClientInit;
 // Defaults copied by close(). The static table contains eleven process
