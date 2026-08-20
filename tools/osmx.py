@@ -1044,6 +1044,42 @@ def duplicated_markers(records: list) -> list:
     return duplicated
 
 
+def redundant_artifacts(records: list) -> list:
+    """A claim in `src/recovered/` or `src/unrecovered/` whose address is
+    ALSO claimed in product source.
+
+    THE ARTIFACT HAS NOTHING LEFT TO SAY. A preserved unit is proof that a
+    body reproduces somewhere; once the SHIPPED source reproduces the same
+    address, that proof is a copy, and copies drift. This is not the same
+    as an artifact whose product twin does not reproduce - that one is the
+    only evidence there is and must stay, which is why the test is on the
+    CLAIM and not on the address.
+
+    Eighteen accumulated in one session, every one of them created by
+    fixing a body and forgetting its artifact, and the same session had
+    already declared the count zero.
+    """
+    from collections import defaultdict
+    grouped: dict = defaultdict(list)
+    for record in records:
+        grouped[record.address].append(record)
+
+    def preserved(record) -> bool:
+        return ("/recovered/" in str(record.path)
+                or "/unrecovered/" in str(record.path))
+
+    redundant = []
+    for address, group in sorted(grouped.items()):
+        product = [r for r in group if not preserved(r) and r.byte_exact]
+        copies = [r for r in group if preserved(r) and r.byte_exact]
+        if product and copies:
+            for copy in copies:
+                redundant.append(
+                    (copy, f"also claimed in {product[0].path.name} - "
+                           f"the artifact is a copy"))
+    return redundant
+
+
 def dangling_bodies(records: list) -> list:
     """Every `body` fact that does not lead to a definition.
 
@@ -1212,7 +1248,9 @@ def check(
     """
     _fresh_compile_commands(compile_commands, reconfigure)
     records = read(src)
-    dangling = dangling_bodies(records) + duplicated_markers(records)
+    dangling = (dangling_bodies(records)
+                + duplicated_markers(records)
+                + redundant_artifacts(records))
     grouped = _claims_by_file(records)
     claims = sum(len(v) for v in grouped.values())
     if not claims:
@@ -1307,7 +1345,8 @@ def check(
     if dangling and not as_json:
         for record, note in dangling:
             typer.secho(f"DUPLICATE {record.address_hex} {note} - "
-                        if "annotated" in note else
+                        if "annotated" in note or "copy" in note
+                        else
                         f"DANGLING  {record.address_hex} body fact: {note} - "
                         f"{record.location}", fg=typer.colors.RED)
     raise typer.Exit(1 if regressed or dangling else 3 if unasked else 0)
