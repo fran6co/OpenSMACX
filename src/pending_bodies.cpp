@@ -89,6 +89,17 @@ int BasePop::exec(int flags, int(__cdecl *callback)()) {
     return PENDING_BODY(0x00602600, pending)(this, nullptr, flags, callback);
 }
 
+// ?init@Scroll@@QAEHHHHHPAUWin@@HH@Z at 0x006054D0 - the primary scrollbar
+// init every other overload funnels into.
+//             body in src/unrecovered/006054d0.cpp
+int Scroll::init(int x, int y, int width, int height, Win *parent,
+                 int setting, int options) {
+    typedef int(__fastcall *pending)(Scroll *, void *, int, int, int, int,
+                                     Win *, int, int);
+    return PENDING_BODY(0x006054D0, pending)(this, nullptr, x, y, width,
+                                             height, parent, setting, options);
+}
+
 // ?write_raw_l@Buffer@@QAEHPADHHH@Z at 0x005DBD00 - 1475 bytes, the raster
 // writer that puts one single-font run on the surface. Called by name from
 // `write_multi_font_raw_l`, which is promoted; a pointer here would cost that

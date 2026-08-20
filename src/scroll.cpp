@@ -30,16 +30,9 @@ uint32_t ScrollCloseDynamicDefaults;  // 0x009B8DE0
 
 namespace {
 
-typedef int (OriginalObject::*func_scroll_init)(int, int, int, int, Win *, int, int);
 typedef uint32_t (OriginalObject::*func_noarg_virtual)();
 
-func_scroll_init ScrollOriginalInit = original_method<func_scroll_init>(0x006054D0);
 
-int __cdecl call_original_scroll_init(
-        Scroll *self, int x, int y, int width, int height, Win *parent,
-        int setting, int options) {
-    return (ORIGINAL(self)->*ScrollOriginalInit)(x, y, width, height, parent, setting, options);
-}
 
 LONG long_from_bits(uint32_t bits) {
     LONG value;
@@ -146,7 +139,6 @@ uint32_t signed_divide(uint32_t dividend_bits, uint32_t divisor_bits) {
 
 }  // namespace
 
-ScrollPrimaryInitProc ScrollPrimaryInit = &call_original_scroll_init;
 
 /*
 Purpose: Reset Scroll-owned state from the process defaults, close the two
@@ -214,7 +206,7 @@ uint32_t Scroll::close() {
 
 /*
 Purpose: Initialize a scrollbar from a rectangle.
-// ORIGINAL: 0x00605840 ?init@Scroll@@QAEHPAURECT@@PAUWin@@HH@Z 0x00605840-0x00605885
+// ORIGINAL: 0x00605840 ?init@Scroll@@QAEHPAURECT@@PAUWin@@HH@Z 0x00605840-0x00605885 BYTE_EXACT
 // symbol    ?init@Scroll@@QAEHPAUtagRECT@@PAVWin@@HH@Z
 // size      69 bytes
 // prototype int (__thiscall ?init@Scroll@@QAEHPAURECT@@PAUWin@@HH@Z)(Scroll* this, RECT*, Win*, int, int)
@@ -230,20 +222,17 @@ int Scroll::init(RECT *rect, Win *parent, int setting, int options) {
         return 3;
     }
 
-    const volatile RECT *const ordered_rect = rect;
-    const uint32_t top = static_cast<uint32_t>(ordered_rect->top);
-    const uint32_t left = static_cast<uint32_t>(ordered_rect->left);
-    const uint32_t bottom = static_cast<uint32_t>(ordered_rect->bottom);
-    const uint32_t right = static_cast<uint32_t>(ordered_rect->right);
-    return ScrollPrimaryInit(
-        this, long_from_bits(left), long_from_bits(top),
-        long_from_bits(right - left), long_from_bits(bottom - top),
-        parent, setting, options);
+    // PLAIN ARITHMETIC. `long_from_bits` is a memcpy round trip VC6 will not
+    // inline, and there are four of them here - four calls the image does not
+    // make. The wrap it was protecting against is what the image's `sub` does
+    // anyway.
+    return init(rect->left, rect->top, rect->right - rect->left,
+                rect->bottom - rect->top, parent, setting, options);
 }
 
 /*
 Purpose: Initialize a vertical scrollbar using the process-default thickness.
-// ORIGINAL: 0x00605890 ?init_vert@Scroll@@QAEHHHHPAUWin@@H@Z 0x00605890-0x006058CB
+// ORIGINAL: 0x00605890 ?init_vert@Scroll@@QAEHHHHPAUWin@@H@Z 0x00605890-0x006058CB BYTE_EXACT
 // symbol    ?init_vert@Scroll@@QAEHHHHPAVWin@@H@Z
 // size      59 bytes
 // prototype int (__thiscall ?init_vert@Scroll@@QAEHHHHPAUWin@@H@Z)(Scroll* this, int, int, int, Win*, int)
@@ -259,13 +248,12 @@ int Scroll::init_vert(
     if (!parent || length == 0) {
         return 3;
     }
-    return ScrollPrimaryInit(
-        this, x, y, ScrollDefaultThickness, length, parent, setting, 0);
+    return init(x, y, ScrollDefaultThickness, length, parent, setting, 0);
 }
 
 /*
 Purpose: Initialize a horizontal scrollbar using the process-default thickness.
-// ORIGINAL: 0x006058D0 ?init_horz@Scroll@@QAEHHHHPAUWin@@H@Z 0x006058D0-0x0060590C
+// ORIGINAL: 0x006058D0 ?init_horz@Scroll@@QAEHHHHPAUWin@@H@Z 0x006058D0-0x0060590C BYTE_EXACT
 // symbol    ?init_horz@Scroll@@QAEHHHHPAVWin@@H@Z
 // size      60 bytes
 // prototype int (__thiscall ?init_horz@Scroll@@QAEHHHHPAUWin@@H@Z)(Scroll* this, int, int, int, Win*, int)
@@ -281,8 +269,7 @@ int Scroll::init_horz(
     if (!parent || length == 0) {
         return 3;
     }
-    return ScrollPrimaryInit(
-        this, x, y, length, ScrollDefaultThickness, parent, setting, 0);
+    return init(x, y, length, ScrollDefaultThickness, parent, setting, 0);
 }
 
 /*
@@ -304,8 +291,7 @@ int Scroll::init_vert_nc(
     if (!parent || length == 0) {
         return 3;
     }
-    return ScrollPrimaryInit(
-        this, x, y, ScrollDefaultThickness, length, parent, setting, 0);
+    return init(x, y, ScrollDefaultThickness, length, parent, setting, 0);
 }
 
 /*
@@ -327,8 +313,7 @@ int Scroll::init_horz_nc(
     if (!parent || length == 0) {
         return 3;
     }
-    return ScrollPrimaryInit(
-        this, x, y, length, ScrollDefaultThickness, parent, setting, 0);
+    return init(x, y, length, ScrollDefaultThickness, parent, setting, 0);
 }
 
 /*
