@@ -36,7 +36,7 @@
   * The vtable pointer at offset zero is held as opaque storage so no C++
   * vtable is generated that could disagree with the original's.
   */
-class DLLEXPORT Midi_Device {
+class Midi_Device {
  public:
   Midi_Device() { ; }
   ~Midi_Device() { ; }
@@ -72,7 +72,7 @@ class DLLEXPORT Midi_Device {
 static_assert(sizeof(Midi_Device) == 0x20,
               "Midi_Device layout must match the original executable");
 
-class DLLEXPORT Wave_In_Device {
+class Wave_In_Device {
  public:
   Wave_In_Device() { ; }
   ~Wave_In_Device() { ; }

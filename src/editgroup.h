@@ -56,7 +56,7 @@
   * `sizeof(GraphicWin) == 0xA14` is the check that would catch it going wrong.
   * Do NOT read this paragraph as "cannot be done".
   */
-class DLLEXPORT EditGroup {
+class EditGroup {
  public:
   EditGroup() { ; }
   ~EditGroup() { ; }

@@ -32,7 +32,7 @@
   * sizeof(Menu) this tree pins - the same evidence route the typing
   * campaign uses everywhere else. Anything further still needs deriving.
   */
-class DLLEXPORT AlphaMenu {
+class AlphaMenu {
  public:
   AlphaMenu() { ; }
   ~AlphaMenu() { ; }

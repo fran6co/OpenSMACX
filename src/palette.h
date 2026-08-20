@@ -26,12 +26,12 @@ struct IDirectDrawPalette;  // <ddraw.h>, included where it is called
  /*
   * Palette class
   */
-class DLLEXPORT Palette {
+class Palette {
  public:
   Palette();                         // 005FE2A0
   // A TAIL JUMP, not an empty body: the image's destructor is one
   // instruction, `jmp ?close@Palette@@QAEXXZ`.
-  ~Palette() { close(); }   // 005FE2E0
+  MEASURED ~Palette() { close(); }   // 005FE2E0
 
   int get_rgbquad(RGBQUAD *output, int start, int count);
   // 0x005FE650. Not recovered; `Buffer::load_pcx` hands it the buffer's own

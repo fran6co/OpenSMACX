@@ -37,7 +37,7 @@
   * methods recovered here are bare returns that touch no field, which is why
   * they can be replaced ahead of that mapping.
   */
-class DLLEXPORT NetWin : GraphicWin {
+class NetWin : GraphicWin {
  public:
   NetWin() { ; }
   ~NetWin() { ; }

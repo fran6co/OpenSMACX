@@ -50,7 +50,7 @@
  * offset is borrowed, and the static_assert is what will notice if
  * sizeof(Net) is ever corrected.
  */
-class DLLEXPORT AlphaNet : Net {
+class AlphaNet : Net {
  public:
   int pid_2_idx(uint32_t process_id);
   int pid_2_who(uint32_t process_id);

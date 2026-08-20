@@ -13,7 +13,7 @@ static const size_t SpyingStatusStride = 2099;
 static const size_t SpyingBaseStride = 0x134;
 static const size_t SpyingFactionStride = 0x59C;
 
-DLLEXPORT int __cdecl spying(int subject);
+int __cdecl spying(int subject);
 
 // Runtime-oracle suite for the spying check; registered in
 // src/runtime_oracle.cpp.

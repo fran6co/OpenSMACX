@@ -27,7 +27,7 @@
  * followed by eighteen four-byte fields ending at 0xB00. No method is
  * recovered and nothing pins the sizeof yet.
  */
-class DLLEXPORT PushButton : public BaseButton {
+class PushButton : public BaseButton {
  public:
   PushButton() { ; }
   ~PushButton() { ; }

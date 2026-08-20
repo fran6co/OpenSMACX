@@ -24,10 +24,9 @@
   *
   * The MCI video subobject AlphaMovie embeds at +0xA14. Declared, not laid
   * out: close() is the only member reached from here and the address is
-  * computed by hand at the call site, so nothing needs the size. Not
-  * DLLEXPORT - ?close@MCIVideo@@QAEXXZ (0x005FFDB0) is still an original body
-  * and dllexport on a class whose members only forward would export a seam
-  * that is not this DLL's to publish.
+  * computed by hand at the call site, so nothing needs the size.
+  * ?close@MCIVideo@@QAEXXZ (0x005FFDB0) is still an original body: what is
+  * here forwards to the image rather than reproducing it.
   */
 class MCIVideo {
  public:
@@ -62,7 +61,7 @@ class MCIVideo {
   * methods recovered here are bare returns that touch no field, which is why
   * they can be replaced ahead of that mapping.
   */
-class DLLEXPORT AlphaMovie : GraphicWin {
+class AlphaMovie : GraphicWin {
  public:
   void update();
   void close();

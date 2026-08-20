@@ -20,7 +20,7 @@
  /*
   * AutoSound class
   */
-class DLLEXPORT AutoSound {
+class AutoSound {
  public:
   AutoSound() { ; }
   ~AutoSound() { ; }
@@ -90,5 +90,5 @@ void *__fastcall auto_sound_scalar_dtor_redirect(AutoSound *self, void *,
 
 // Returns `int`, not `void`: the body is `xor eax, eax; ret`, where a void
 // function would emit `ret` alone. Corrected in tools/catalogue_corrections.py.
-DLLEXPORT int __cdecl do_sound();
+int __cdecl do_sound();
 int __cdecl do_sound_redirect();

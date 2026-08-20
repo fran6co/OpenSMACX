@@ -25,7 +25,7 @@ struct TexHeap;  // texture-heap handle, only ever passed through as a pointer
  /*
   * Sprite class
   */
-class DLLEXPORT Sprite {
+class Sprite {
  public:
   int UNK1(int a, int b, int c, int d, int e, int f, int g);
   int UNK2(int a, int b, int c, int d, int e);
@@ -38,7 +38,7 @@ class DLLEXPORT Sprite {
   int create_blank(int width, int height, int depth);
   Sprite();
   // `jmp ?close@Sprite@@QAEXXZ` in the image - see Palette.
-  ~Sprite() { close(); }   // 00406850
+  MEASURED ~Sprite() { close(); }   // 00406850
 
   void close();
 

@@ -91,7 +91,7 @@ static_assert(sizeof(VoiceTx) == 0x58,
   * `static_assert(sizeof(AlphaNet) == 0x14A0)` there, which is the intended
   * alarm - re-measure AlphaNet's `data_` rather than silence it.
   */
-class DLLEXPORT Net {
+class Net {
  public:
   Net() { ; }
   ~Net() { ; }

@@ -34,7 +34,7 @@
   * The methods below ignore their arguments and return a constant, which is
   * why they can be replaced ahead of that mapping.
   */
-class DLLEXPORT CouncWin : GraphicWin, SubInterface {
+class CouncWin : GraphicWin, SubInterface {
  public:
   // 0x00425DB0  ?draw_leader@CouncWin@@QAEXH@Z - public, __thiscall,
   // void(int), unrecovered. Declared so draw_all_leaders and on_mouse_leave,

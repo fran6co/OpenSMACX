@@ -25,7 +25,7 @@
  /*
   * BasePop class
   */
-class DLLEXPORT BasePop : GraphicWin {
+class BasePop : GraphicWin {
  public:
   static void fallout();
 

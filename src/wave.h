@@ -79,7 +79,7 @@
   * compiles to. tools/verify_member_offsets.py --class Wave reported the
   * straddle that withdrew the old declaration.
   */
-class DLLEXPORT Wave {
+class Wave {
  public:
   Wave();
   ~Wave();

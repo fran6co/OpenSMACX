@@ -521,70 +521,70 @@ extern int *GovernorFaction; // elected Planetary Governor; see the note in base
 extern int *GlobalEnergyEventState; // energy tripling state driven by random_events
 extern int *UnkGlobal0093A934; // TODO: identify global; selects the bit above
 
-DLLEXPORT BOOL __cdecl has_fac(int facility_id, int base_id, int queue_count);
-DLLEXPORT void __cdecl set_base(int base_id);
-DLLEXPORT void __cdecl say_base(LPSTR base_str, int base_id);
-DLLEXPORT int __cdecl base_at(int x, int y);
-DLLEXPORT int __cdecl base_find(int x, int y);
+BOOL __cdecl has_fac(int facility_id, int base_id, int queue_count);
+void __cdecl set_base(int base_id);
+void __cdecl say_base(LPSTR base_str, int base_id);
+int __cdecl base_at(int x, int y);
+int __cdecl base_find(int x, int y);
 // ?base_find@@YAHHHH@Z - three H.
-DLLEXPORT int __cdecl base_find(int x, int y, int faction_id);
-DLLEXPORT int __cdecl base_find(int x, int y, int faction_id, int region, int faction_id_2, 
+int __cdecl base_find(int x, int y, int faction_id);
+int __cdecl base_find(int x, int y, int faction_id, int region, int faction_id_2, 
                                 int faction_id_3);
-DLLEXPORT uint32_t  __cdecl best_specialist();
-DLLEXPORT void __cdecl name_base(uint32_t faction_id, LPSTR name_out, BOOL is_final, 
+uint32_t  __cdecl best_specialist();
+void __cdecl name_base(uint32_t faction_id, LPSTR name_out, BOOL is_final, 
                                  BOOL is_sea_base);
-DLLEXPORT void __cdecl base_mark(int base_id);
-DLLEXPORT int __cdecl cost_factor(int faction_id, int rsc_type, int base_id);
-DLLEXPORT int __cdecl base_making(int production_id, int base_id);
-DLLEXPORT int __cdecl base_lose_minerals(int base_id, int UNUSED(production_id) production_id);
-DLLEXPORT void __cdecl set_fac(int facility_id, int base_id, BOOL set);
-DLLEXPORT BOOL __cdecl has_fac_announced(uint32_t faction_id, uint32_t facility_id);
-DLLEXPORT void __cdecl set_fac_announced(uint32_t faction_id, uint32_t facility_id, BOOL set);
-DLLEXPORT void __cdecl base_first(int base_id);
-DLLEXPORT int __cdecl morale_mod(int base_id, int faction_id, int triad);
-DLLEXPORT int __cdecl breed_mod(int base_id, int faction_id);
-DLLEXPORT int __cdecl worm_mod(int base_id, int faction_id);
-DLLEXPORT int __cdecl crop_yield(int faction_id, int base_id, int x, int y,
+void __cdecl base_mark(int base_id);
+int __cdecl cost_factor(int faction_id, int rsc_type, int base_id);
+int __cdecl base_making(int production_id, int base_id);
+int __cdecl base_lose_minerals(int base_id, int UNUSED(production_id) production_id);
+void __cdecl set_fac(int facility_id, int base_id, BOOL set);
+BOOL __cdecl has_fac_announced(uint32_t faction_id, uint32_t facility_id);
+void __cdecl set_fac_announced(uint32_t faction_id, uint32_t facility_id, BOOL set);
+void __cdecl base_first(int base_id);
+int __cdecl morale_mod(int base_id, int faction_id, int triad);
+int __cdecl breed_mod(int base_id, int faction_id);
+int __cdecl worm_mod(int base_id, int faction_id);
+int __cdecl crop_yield(int faction_id, int base_id, int x, int y,
                                  BOOL assume_improved);
-DLLEXPORT int __cdecl mine_yield(int faction_id, int base_id, int x, int y,
+int __cdecl mine_yield(int faction_id, int base_id, int x, int y,
                                  BOOL assume_improved);
-DLLEXPORT int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
+int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
                                    BOOL assume_improved);
-DLLEXPORT void __cdecl base_support();
-DLLEXPORT void __cdecl base_nutrient();
-DLLEXPORT void __cdecl base_minerals();
-DLLEXPORT uint32_t __cdecl black_market(int energy);
-DLLEXPORT void __cdecl base_psych();
-DLLEXPORT int __cdecl base_rank(int faction_id, int rank_position);
-DLLEXPORT int __cdecl pop_goal_fac(int base_id);
-DLLEXPORT int __cdecl pop_goal(int base_id);
-DLLEXPORT BOOL __cdecl base_queue(int base_id);
-DLLEXPORT void __cdecl base_energy_costs();
-DLLEXPORT int __cdecl fac_maint(int facility_id, int faction_id);
-DLLEXPORT void __cdecl base_maint();
-DLLEXPORT void __cdecl make_base_unique(int base_id);
-DLLEXPORT BOOL __cdecl has_project(int project_id, int faction_id);
+void __cdecl base_support();
+void __cdecl base_nutrient();
+void __cdecl base_minerals();
+uint32_t __cdecl black_market(int energy);
+void __cdecl base_psych();
+int __cdecl base_rank(int faction_id, int rank_position);
+int __cdecl pop_goal_fac(int base_id);
+int __cdecl pop_goal(int base_id);
+BOOL __cdecl base_queue(int base_id);
+void __cdecl base_energy_costs();
+int __cdecl fac_maint(int facility_id, int faction_id);
+void __cdecl base_maint();
+void __cdecl make_base_unique(int base_id);
+BOOL __cdecl has_project(int project_id, int faction_id);
 // ?has_fac_built@@YA_NH@Z. `_N` is bool, not BOOL: the catalogue spells a
 // genuine one-byte bool, and per tools/catalogue_corrections.py that width is
 // byte-visible - a bool return clears with `xor al, al` (32 C0) where an int
 // uses `xor eax, eax` (33 C0). The two-argument overload is not catalogued.
-DLLEXPORT bool __cdecl has_fac_built(int facility_id);
-DLLEXPORT bool __cdecl has_fac_built(int facility_id, int base_id);
-DLLEXPORT int __cdecl base_project(int project_id);
-DLLEXPORT int __cdecl attack_from(int base_id_to_atk, int faction_id);
-DLLEXPORT int __cdecl value_of_base(int base_id, uint32_t faction_id_req, uint32_t faction_id_res, 
+bool __cdecl has_fac_built(int facility_id);
+bool __cdecl has_fac_built(int facility_id, int base_id);
+int __cdecl base_project(int project_id);
+int __cdecl attack_from(int base_id_to_atk, int faction_id);
+int __cdecl value_of_base(int base_id, uint32_t faction_id_req, uint32_t faction_id_res, 
                                     uint32_t overmatch_deg, BOOL tgl);
-DLLEXPORT int __cdecl garrison_check(int base_id);
-DLLEXPORT int __cdecl defensive_check(int base_id);
-DLLEXPORT BOOL __cdecl is_port(int base_id, BOOL is_base_radius);
-DLLEXPORT int __cdecl vulnerable(int faction_id, int x, int y);
-DLLEXPORT BOOL __cdecl is_objective(int base_id);
-DLLEXPORT int __cdecl num_objectives(int faction_id, BOOL count_pact_factions);
-DLLEXPORT BOOL __cdecl transcending(int faction_id);
-DLLEXPORT BOOL __cdecl ascending(int UNUSED(faction_id) faction_id);
-DLLEXPORT BOOL __cdecl redundant(int facility_id, int faction_id);
+int __cdecl garrison_check(int base_id);
+int __cdecl defensive_check(int base_id);
+BOOL __cdecl is_port(int base_id, BOOL is_base_radius);
+int __cdecl vulnerable(int faction_id, int x, int y);
+BOOL __cdecl is_objective(int base_id);
+int __cdecl num_objectives(int faction_id, BOOL count_pact_factions);
+BOOL __cdecl transcending(int faction_id);
+BOOL __cdecl ascending(int UNUSED(faction_id) faction_id);
+BOOL __cdecl redundant(int facility_id, int faction_id);
 // ?facility_avail@@YAHHHHH@Z - the definition already takes int.
-DLLEXPORT BOOL __cdecl facility_avail(int facility_id, int faction_id, int base_id,
+BOOL __cdecl facility_avail(int facility_id, int faction_id, int base_id,
                                       int queue_count);
-DLLEXPORT int __cdecl facility_offset(LPCSTR facil_search);
-DLLEXPORT int __cdecl suggest_plan(int faction_id, int faction_id_2);
+int __cdecl facility_offset(LPCSTR facil_search);
+int __cdecl suggest_plan(int faction_id, int faction_id_2);

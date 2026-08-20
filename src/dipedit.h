@@ -50,7 +50,7 @@
   * as far as 0x5240, the class carries no size assertion, and the runs above
   * 0xA14 remain an extent floor rather than a modelled layout.
   */
-class DLLEXPORT DipEdit : GraphicWin {
+class DipEdit : GraphicWin {
  public:
   void on_selected(int a1);
   // Siblings on_selected calls. Bodies unrecovered - 0x004DA990 (?read_check@

@@ -33,7 +33,7 @@
   * The methods below ignore their arguments and return a constant, which is
   * why they can be replaced ahead of that mapping.
   */
-class DLLEXPORT MessageWin : Sprite {
+class MessageWin : Sprite {
  public:
   MessageWin() { ; }
   ~MessageWin() { ; }

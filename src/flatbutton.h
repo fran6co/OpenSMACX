@@ -22,7 +22,7 @@
  /*
   * FlatButton class
   */
-class DLLEXPORT FlatButton : public BaseButton {
+class FlatButton : public BaseButton {
  public:
   FlatButton() { ; }
   ~FlatButton() { ; }

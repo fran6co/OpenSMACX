@@ -20,14 +20,14 @@
  /*
   * Spot class
   */
-class DLLEXPORT Spot {
+class Spot {
  public:
   Spot();  // 005FA860
   ~Spot(); // 005FA870
 
   // IN-CLASS so `shutdown` and `~Spot` inline it, as the image does.
   // IMAGE ORDER: the two counts before the pointer.
-  void clear() {                 // 005FA820
+  MEASURED void clear() {        // 005FA820
     max_count_ = 0;
     add_count_ = 0;
     spots_ = nullptr;
@@ -35,7 +35,7 @@ class DLLEXPORT Spot {
   // IN-CLASS so `~Spot` can inline it, which is what the image does: the
   // destructor is the whole cleanup, not a call to it. The null goes
   // INSIDE the guard as well as in `clear`.
-  void shutdown() {              // 005FA830
+  MEASURED void shutdown() {     // 005FA830
     if (spots_) {
       free(spots_);
       spots_ = nullptr;

@@ -29,7 +29,7 @@
   *
   * The layout is not established and nothing pins its sizeof.
 */
-class DLLEXPORT BattleWin : SubInterface {
+class BattleWin : SubInterface {
  public:
   void on_iface_button_clicked(int a1);
   BattleWin() { ; }

@@ -75,26 +75,26 @@ extern uint32_t ScenEditorUndoPosition;
 static int *const GenderDefault = (int *)0x009BBFEC;
 static BOOL *const PluralityDefault = (BOOL *)0x009BBFF0;
 
-DLLEXPORT void __cdecl purge_trailing(LPSTR input);
-DLLEXPORT void __cdecl purge_leading(LPSTR input);
-DLLEXPORT void __cdecl purge_spaces(LPSTR input);
-DLLEXPORT void __cdecl kill_lf(LPSTR str);
-DLLEXPORT void __cdecl kill_nl(LPSTR str);
-DLLEXPORT void __cdecl add_lf(LPSTR str);
-DLLEXPORT int __cdecl range(int input, int min, int max);
-DLLEXPORT LPVOID __cdecl mem_get_old(size_t size);
-DLLEXPORT LPVOID __cdecl mem_get(size_t size);
-DLLEXPORT FILE *__cdecl env_open_old(LPCSTR source, LPCSTR mode);
-DLLEXPORT FILE *__cdecl env_open(LPCSTR source, LPCSTR mode);
-DLLEXPORT void __cdecl parse_set(int gender, BOOL plurality);
-DLLEXPORT int __cdecl parse_num(int id, int value);
-DLLEXPORT int __cdecl parse_say(int id, int input, int gender, int pluralality);
-DLLEXPORT int __cdecl parse_says(int id, LPCSTR input, int gender, int pluralality);
-DLLEXPORT int __cdecl btoi(LPCSTR str);
-DLLEXPORT int __cdecl htoi(LPCSTR str);
-DLLEXPORT int __cdecl stoi(LPCSTR str);
-DLLEXPORT LPSTR __cdecl findnum(LPSTR str);
-DLLEXPORT BOOL __cdecl jackal_version_check(LPCSTR version);
+void __cdecl purge_trailing(LPSTR input);
+void __cdecl purge_leading(LPSTR input);
+void __cdecl purge_spaces(LPSTR input);
+void __cdecl kill_lf(LPSTR str);
+void __cdecl kill_nl(LPSTR str);
+void __cdecl add_lf(LPSTR str);
+int __cdecl range(int input, int min, int max);
+LPVOID __cdecl mem_get_old(size_t size);
+LPVOID __cdecl mem_get(size_t size);
+FILE *__cdecl env_open_old(LPCSTR source, LPCSTR mode);
+FILE *__cdecl env_open(LPCSTR source, LPCSTR mode);
+void __cdecl parse_set(int gender, BOOL plurality);
+int __cdecl parse_num(int id, int value);
+int __cdecl parse_say(int id, int input, int gender, int pluralality);
+int __cdecl parse_says(int id, LPCSTR input, int gender, int pluralality);
+int __cdecl btoi(LPCSTR str);
+int __cdecl htoi(LPCSTR str);
+int __cdecl stoi(LPCSTR str);
+LPSTR __cdecl findnum(LPSTR str);
+BOOL __cdecl jackal_version_check(LPCSTR version);
 // The Jackal engine's bring-up and teardown, called once each from WinMain.
 // `jackal_init_real` returns ZERO on success - WinMain's `test eax, eax` at
 // 0x0045FA50 jumps INTO the game when the result is zero and returns 0 from
@@ -104,48 +104,48 @@ DLLEXPORT BOOL __cdecl jackal_version_check(LPCSTR version);
 // name for it - ?jackal_init_real@@YAHPAUPalette@@PAUFont@@PADHHHH@Z - spells
 // that parameter `PAD`, and the mangling is what the byte match will look the
 // body up by when 0x0062D3A0 lands.
-DLLEXPORT int __cdecl jackal_init_real(Palette *palette, Font *font,
+int __cdecl jackal_init_real(Palette *palette, Font *font,
                                        LPSTR window_name, int tgl_direct_draw,
                                        int display_width, int display_height,
                                        int colour_depth);
-DLLEXPORT void __cdecl jackal_close();
+void __cdecl jackal_close();
 
 // Called once from jackal_init_real, between the FileWin and Cursor class
 // bring-ups. `sub_63ce20` has no catalogued name - the image carries no
 // symbols and IDA reconstructed none for it - so it keeps the address.
-DLLEXPORT int __cdecl trig_init();
-DLLEXPORT int __cdecl sub_63ce20();
+int __cdecl trig_init();
+int __cdecl sub_63ce20();
 
 // 0x009BC4B0. jackal_init_real stores its `tgl_direct_draw` argument here on
 // entry and sets bit 0 once every subsystem has come up, so it is the engine's
 // own state word: the mode it was asked for, plus "initialised".
 extern int JackalInitFlags;
-DLLEXPORT char __cdecl filefind_cd_drive_letter();
-DLLEXPORT void __cdecl filefind_set_alternative(LPCSTR path);
-DLLEXPORT LPSTR __cdecl filefind_get(LPCSTR file_name);
-DLLEXPORT int __cdecl bit_count(int bitfield);
-DLLEXPORT uint32_t __cdecl bit_count_signed(int bitfield);
-DLLEXPORT void __cdecl my_srand(int reseed);
-DLLEXPORT void __cdecl swap(int *var1, int *var2);
-DLLEXPORT void __cdecl swap(uint8_t *var1, uint8_t *var2);
-DLLEXPORT int __cdecl fixed_div(int numerator, int denominator);
-DLLEXPORT const char *__cdecl memrchr(LPCSTR start, LPCSTR end, char value);
-DLLEXPORT int __cdecl quick_root(int input);
-DLLEXPORT void __cdecl bitmask(int input, int *offset, int *mask);
-DLLEXPORT uint8_t __cdecl checksum(char *input, int length, uint8_t seed);
-DLLEXPORT uint32_t __cdecl checksum_password(LPCSTR password);
-DLLEXPORT uint32_t __cdecl rnd(int bounds, LPSTR UNUSED(input) input);
-DLLEXPORT void __cdecl danger(LPCSTR msg1, LPCSTR msg2, int num1, int num2, int num3);
-DLLEXPORT void __cdecl kill_auto_save();
-DLLEXPORT void __cdecl auto_save();
-DLLEXPORT void __cdecl auto_save_debug();
-DLLEXPORT void __cdecl load_undo(int type);
-DLLEXPORT void __cdecl wipe_undo();
-DLLEXPORT void __cdecl auto_undo();
-DLLEXPORT void __cdecl header_check(LPSTR header, FILE *file);
-DLLEXPORT void __cdecl header_write(LPCSTR header, FILE *file);
-DLLEXPORT void __cdecl sort(int count, int *id, int *value);
-DLLEXPORT void __cdecl sort_descending(uint32_t count, int *id, int *value);
+char __cdecl filefind_cd_drive_letter();
+void __cdecl filefind_set_alternative(LPCSTR path);
+LPSTR __cdecl filefind_get(LPCSTR file_name);
+int __cdecl bit_count(int bitfield);
+uint32_t __cdecl bit_count_signed(int bitfield);
+void __cdecl my_srand(int reseed);
+void __cdecl swap(int *var1, int *var2);
+void __cdecl swap(uint8_t *var1, uint8_t *var2);
+int __cdecl fixed_div(int numerator, int denominator);
+const char *__cdecl memrchr(LPCSTR start, LPCSTR end, char value);
+int __cdecl quick_root(int input);
+void __cdecl bitmask(int input, int *offset, int *mask);
+uint8_t __cdecl checksum(char *input, int length, uint8_t seed);
+uint32_t __cdecl checksum_password(LPCSTR password);
+uint32_t __cdecl rnd(int bounds, LPSTR UNUSED(input) input);
+void __cdecl danger(LPCSTR msg1, LPCSTR msg2, int num1, int num2, int num3);
+void __cdecl kill_auto_save();
+void __cdecl auto_save();
+void __cdecl auto_save_debug();
+void __cdecl load_undo(int type);
+void __cdecl wipe_undo();
+void __cdecl auto_undo();
+void __cdecl header_check(LPSTR header, FILE *file);
+void __cdecl header_write(LPCSTR header, FILE *file);
+void __cdecl sort(int count, int *id, int *value);
+void __cdecl sort_descending(uint32_t count, int *id, int *value);
 
 // WIP
 int __cdecl filefind_init(LPCSTR file_check, BOOL is_complete);

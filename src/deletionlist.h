@@ -25,7 +25,7 @@
   * record count is not established, so the entry is reached by computed offset
   * rather than a modelled array, and nothing pins this sizeof.
   */
-class DLLEXPORT DeletionList {
+class DeletionList {
  public:
   DeletionList() { ; }
   ~DeletionList() { ; }

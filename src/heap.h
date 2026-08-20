@@ -21,13 +21,13 @@
  /*
   * Heap class: Handles managing or allocating memory.
   */
-class DLLEXPORT Heap {
+class Heap {
  public:
   // OUT OF LINE, and that is what `Strings` needs: its own constructor
   // opens `push esi; mov esi, ecx; call ?0Heap`, a real call to the base.
   // Defined in-class the compiler inlines it and the caller never matches.
   Heap();   // 005D4560
-  ~Heap() {
+  MEASURED ~Heap() {
     // IMAGE ORDER, and the null goes INSIDE the guard as well as after it.
     if (base_) {
       std::free(base_);

@@ -45,7 +45,7 @@ static_assert(offsetof(DialogEntry, previous) == 0x10,
  /*
   * Dialog class
   */
-class DLLEXPORT Dialog {
+class Dialog {
  public:
   // Static default shared by every dialog; __cdecl in the original.
   static int set_def_dialog_font(Font *font1, Font *font2, Font *font3);

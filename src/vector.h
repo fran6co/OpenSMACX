@@ -103,7 +103,7 @@
  * offsets 0x0 to 0x20) and a component-wise add over 3x3 with the same
  * return-object flag slot. It has no class in src/ yet.
  */
-class DLLEXPORT Vector {
+class Vector {
  public:
   Vector();                                   // 0x006343C0
   void close();                               // 0x006343D0

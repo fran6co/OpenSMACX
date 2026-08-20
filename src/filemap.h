@@ -20,7 +20,7 @@
  /*
   * FileMap class: Handles file IO operations.
   */
-class DLLEXPORT Filemap {
+class Filemap {
  public:
   Filemap();  // 00628380
   ~Filemap(); // 006283E0

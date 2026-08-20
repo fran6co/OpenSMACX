@@ -26,7 +26,19 @@
 //#endif
 //#define _CRT_SECURE_NO_WARNINGS 1 // eventually remove
 #define WIN32_LEAN_AND_MEAN       // Exclude rarely-used stuff from Windows headers
-#define DLLEXPORT __declspec(dllexport)
+
+// A body defined IN-CLASS is emitted standalone only where something calls it
+// out of line, and a claim measured in a .cpp needs that standalone copy to
+// exist. `dllexport` forces the emission, and changes no byte of the body -
+// twelve such bodies survived the removal of the blanket DLLEXPORT and still
+// measure BYTE_EXACT. Removing it from these cost nine claims: seven the
+// compiler stopped emitting at all, and two that then measured MISMATCH
+// because the only flag set still emitting them was `/Ob0`, which inlines
+// nothing - so `Spot::shutdown` called `clear` where the image inlines it.
+//
+// This is the whole reason anything here is exported. Nothing in the shipped
+// image is.
+#define MEASURED __declspec(dllexport)
 
 #include "vc6_compat.h"
 

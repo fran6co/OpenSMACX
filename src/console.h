@@ -83,7 +83,7 @@
   * the total fixed. Appending would move the virtual base and break every
   * offset in the class.
   */
-class DLLEXPORT Console : MapWin {
+class Console : MapWin {
  public:
   void editor_polar();
   void on_sys_close();

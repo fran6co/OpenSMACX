@@ -28,7 +28,7 @@
   * dwords and resets every record to two -1 sentinels and a zero. reset_map
   * ignores the instance and works only on the global map table.
   */
-class DLLEXPORT Lock {
+class Lock {
  public:
   Lock() { ; }
   ~Lock() { ; }

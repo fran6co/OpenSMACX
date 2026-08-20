@@ -23,7 +23,7 @@
  /*
   * StringBox class
   */
-class DLLEXPORT StringBox : GraphicWin {
+class StringBox : GraphicWin {
  public:
   void on_scrolled(int a1, int a2);
   StringBox() { ; }

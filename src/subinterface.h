@@ -80,12 +80,11 @@
   * dispatch through the interface - starts from the evidence rather than
   * rediscovering it.
   *
-  * NOT DLLEXPORT: all three methods are unrecovered, and dllexport on a class
-  * demands a definition for every member. They are public, non-virtual
+  * All three methods are unrecovered. They are public, non-virtual
   * __thiscall, void(void) - the mangled names say so - and every call site is
   * a direct `call rel32`, so none of them may be routed through a vtable slot.
   * Two of the three now have FORWARDERS to the original image, which is not a
-  * recovery and does not make the class exportable: delete_iface_mode still
+  * recovery: delete_iface_mode still
   * has no definition, because nothing in the tree calls it.
   */
 class SubInterface {

@@ -32,7 +32,7 @@
 // gave C2248/C2247 while the base stayed private. Access to the member itself
 // is unchanged - win_parent_ is still private in Win - and a base's
 // accessibility affects no offset, so the layout is untouched.
-class DLLEXPORT GraphicWin : public Win {
+class GraphicWin : public Win {
   friend class Scroll;
   // BaseButton's colour setters drive this buffer directly.
   friend class BaseButton;

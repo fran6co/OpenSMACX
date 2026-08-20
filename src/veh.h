@@ -552,118 +552,118 @@ extern int *VehBattleModifier;
 extern LPSTR *VehBattleDisplay;
 extern LPSTR VehBattleDisplayTerrain;
 
-DLLEXPORT void __cdecl say_morale(LPSTR morale_output, uint32_t veh_id, int faction_id_vs_native);
-DLLEXPORT void __cdecl say_morale(uint32_t veh_id, int faction_id_vs_native);
-DLLEXPORT int __cdecl drop_range(int faction_id);
-DLLEXPORT uint32_t __cdecl planet_buster2(int proto_id);
-DLLEXPORT uint32_t __cdecl planet_buster(int veh_id);
+void __cdecl say_morale(LPSTR morale_output, uint32_t veh_id, int faction_id_vs_native);
+void __cdecl say_morale(uint32_t veh_id, int faction_id_vs_native);
+int __cdecl drop_range(int faction_id);
+uint32_t __cdecl planet_buster2(int proto_id);
+uint32_t __cdecl planet_buster(int veh_id);
 // `int` throughout, per the catalogue: the original exports this as
 // `?defense_value@@YAHHHHHH@Z` - all `H`, no `I`.
-DLLEXPORT int __cdecl defense_value(int faction_id, int x, int y, int veh_id_def,
+int __cdecl defense_value(int faction_id, int x, int y, int veh_id_def,
                                     int veh_id_atk);
-DLLEXPORT uint32_t __cdecl morale_alien(int veh_id, int faction_id_vs_native);
+uint32_t __cdecl morale_alien(int veh_id, int faction_id_vs_native);
 // ?psi_factor@@YAHHHHH@Z - the faction id is `int`, as the definition has it.
-DLLEXPORT int __cdecl psi_factor(int combat_ratio, int faction_id, BOOL is_attack,
+int __cdecl psi_factor(int combat_ratio, int faction_id, BOOL is_attack,
                                  BOOL is_fungal_twr);
 // `int` throughout, per the catalogue: the original exports these as
 // `?get_basic_offense@@YAHHHHHH@Z` and `?get_basic_defense@@YAHHHHH@Z`, all
 // `H`. The `uint32_t` parameters here decorated to `I` and made each of these
 // a second overload alongside the catalogued definition in veh.cpp, which is
 // what the C2666 ambiguities at every call site were.
-DLLEXPORT int __cdecl get_basic_offense(int veh_id_atk, int veh_id_def,
+int __cdecl get_basic_offense(int veh_id_atk, int veh_id_def,
                                         int psi_combat_type, BOOL is_bombard, BOOL unk_tgl);
-DLLEXPORT int __cdecl get_basic_defense(int veh_id_def, int veh_id_atk,
+int __cdecl get_basic_defense(int veh_id_def, int veh_id_atk,
                                         int psi_combat_type, BOOL is_bombard);
-DLLEXPORT void __cdecl battle_init();
-DLLEXPORT void __cdecl add_bat(int type, int modifier, LPCSTR display_str);
-DLLEXPORT void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, 
+void __cdecl battle_init();
+void __cdecl add_bat(int type, int modifier, LPCSTR display_str);
+void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, 
                                       int *defense_out, int combat_type);
-DLLEXPORT uint32_t __cdecl best_defender(int veh_id_def, int veh_id_atk, BOOL check_artillery);
-DLLEXPORT void __cdecl invasions(int base_id);
-DLLEXPORT void __cdecl go_to(int veh_id, char type, int x, int y);
-DLLEXPORT void __cdecl set_course(int veh_id, char type, int x, int y);
-DLLEXPORT int __cdecl veh_top(int veh_id);
-DLLEXPORT int __cdecl veh_moves(int veh_id);
-DLLEXPORT int __cdecl proto_power(int veh_id);
-DLLEXPORT BOOL __cdecl want_monolith(int veh_id);
-DLLEXPORT int __cdecl arm_strat(int armor_id, int faction_id);
-DLLEXPORT int __cdecl weap_strat(int weapon_id, int faction_id);
-DLLEXPORT int __cdecl weap_val(int proto_id, int faction_id);
-DLLEXPORT int __cdecl arm_val(int armor_id, int faction_id);
-DLLEXPORT int __cdecl armor_val(int proto_id, int faction_id);
-DLLEXPORT uint32_t __cdecl transport_val(uint32_t chassis_id, uint32_t ability, 
+uint32_t __cdecl best_defender(int veh_id_def, int veh_id_atk, BOOL check_artillery);
+void __cdecl invasions(int base_id);
+void __cdecl go_to(int veh_id, char type, int x, int y);
+void __cdecl set_course(int veh_id, char type, int x, int y);
+int __cdecl veh_top(int veh_id);
+int __cdecl veh_moves(int veh_id);
+int __cdecl proto_power(int veh_id);
+BOOL __cdecl want_monolith(int veh_id);
+int __cdecl arm_strat(int armor_id, int faction_id);
+int __cdecl weap_strat(int weapon_id, int faction_id);
+int __cdecl weap_val(int proto_id, int faction_id);
+int __cdecl arm_val(int armor_id, int faction_id);
+int __cdecl armor_val(int proto_id, int faction_id);
+uint32_t __cdecl transport_val(uint32_t chassis_id, uint32_t ability, 
                                          uint32_t reactor_id);
-DLLEXPORT std::string __cdecl say_offense(uint32_t proto_id);
-DLLEXPORT std::string __cdecl say_defense(uint32_t proto_id);
-DLLEXPORT void __cdecl say_stats_3(LPSTR stat, uint32_t proto_id);
-DLLEXPORT void __cdecl say_stats_3(uint32_t proto_id);
-DLLEXPORT void __cdecl say_stats_2(LPSTR stat, int proto_id);
-DLLEXPORT void __cdecl say_stats(LPSTR stat, int proto_id, LPSTR custom_spacer);
-DLLEXPORT uint32_t __cdecl best_reactor(int faction_id);
-DLLEXPORT int __cdecl pick_chassis(int faction_id, int triad_chk, int speed_chk);
-DLLEXPORT int __cdecl weapon_budget(int faction_id, int condition, BOOL check_mode);
-DLLEXPORT int __cdecl armor_budget(int faction_id, int max_cost);
-DLLEXPORT int __cdecl abil_index(int ability_id);
+std::string __cdecl say_offense(uint32_t proto_id);
+std::string __cdecl say_defense(uint32_t proto_id);
+void __cdecl say_stats_3(LPSTR stat, uint32_t proto_id);
+void __cdecl say_stats_3(uint32_t proto_id);
+void __cdecl say_stats_2(LPSTR stat, int proto_id);
+void __cdecl say_stats(LPSTR stat, int proto_id, LPSTR custom_spacer);
+uint32_t __cdecl best_reactor(int faction_id);
+int __cdecl pick_chassis(int faction_id, int triad_chk, int speed_chk);
+int __cdecl weapon_budget(int faction_id, int condition, BOOL check_mode);
+int __cdecl armor_budget(int faction_id, int max_cost);
+int __cdecl abil_index(int ability_id);
 // ?hex_cost@@YAHHHHHHHH@Z - eight H. The coordinates are int.
-DLLEXPORT int __cdecl hex_cost(int proto_id, int faction_id, int x_src, int y_src,
+int __cdecl hex_cost(int proto_id, int faction_id, int x_src, int y_src,
                                int x_dst, int y_dst, BOOL toggle);
-DLLEXPORT void __cdecl veh_put(int veh_id, int x, int y);
-DLLEXPORT int __cdecl veh_health(int veh_id);
-DLLEXPORT uint32_t __cdecl proto_cost(uint32_t chassis_id, uint32_t weapon_id, uint32_t armor_id, 
+void __cdecl veh_put(int veh_id, int x, int y);
+int __cdecl veh_health(int veh_id);
+uint32_t __cdecl proto_cost(uint32_t chassis_id, uint32_t weapon_id, uint32_t armor_id, 
                                       uint32_t ability, uint32_t reactor_id);
-DLLEXPORT int __cdecl base_cost(int proto_id);
+int __cdecl base_cost(int proto_id);
 // `int` throughout: the definition in src/veh.cpp already is, and the
 // catalogue exports ?make_proto@@YAXHHHHHH@Z - all H, no I.
-DLLEXPORT void __cdecl make_proto(int proto_id, int chassis_id, int weapon_id,
+void __cdecl make_proto(int proto_id, int chassis_id, int weapon_id,
                                   int armor_id, int ability, int reactor_id);
-DLLEXPORT int __cdecl get_plan(int faction_id, int plan);
+int __cdecl get_plan(int faction_id, int plan);
 void __cdecl spot_tile(int x, int y, int faction_id);
-DLLEXPORT void __cdecl spot_base(int base_id, int faction_id);
-DLLEXPORT void __cdecl spot_stack(int veh_id, int faction_id);
-DLLEXPORT void __cdecl spot_loc(int x, int y, int faction_id);
-DLLEXPORT BOOL __cdecl want_to_wake(int faction_id, int veh_id, int spotted_veh_id);
-DLLEXPORT void __cdecl wake_stack(int veh_id);
-DLLEXPORT void __cdecl stack_put(int veh_id, int x, int y);
-DLLEXPORT void __cdecl stack_sort(int veh_id);
-DLLEXPORT void __cdecl stack_sort_2(int veh_id);
-DLLEXPORT int __cdecl stack_fix(int veh_id);
-DLLEXPORT int __cdecl stack_veh(int veh_id, int mode);
-DLLEXPORT int __cdecl stack_check(int veh_id, int type, int cond1, int cond2, int cond3);
-DLLEXPORT BOOL __cdecl veh_avail(int proto_id, int faction_id, int base_id);
-DLLEXPORT BOOL __cdecl wants_prototype(int proto_id, int faction_id);
-DLLEXPORT int __cdecl veh_at(int x, int y);
-DLLEXPORT BOOL __cdecl has_abil(int proto_id, int ability_id);
-DLLEXPORT int __cdecl veh_lift(int veh_id);
-DLLEXPORT int __cdecl veh_drop(int veh_id, int x, int y);
-DLLEXPORT void __cdecl sleep(int veh_id);
-DLLEXPORT void __cdecl veh_demote(int veh_id);
-DLLEXPORT void __cdecl veh_promote(int veh_id);
-DLLEXPORT void __cdecl veh_clear(int veh_id, int proto_id, int faction_id);
-DLLEXPORT BOOL __cdecl can_arty(int proto_id, BOOL sea_triad_retn);
+void __cdecl spot_base(int base_id, int faction_id);
+void __cdecl spot_stack(int veh_id, int faction_id);
+void __cdecl spot_loc(int x, int y, int faction_id);
+BOOL __cdecl want_to_wake(int faction_id, int veh_id, int spotted_veh_id);
+void __cdecl wake_stack(int veh_id);
+void __cdecl stack_put(int veh_id, int x, int y);
+void __cdecl stack_sort(int veh_id);
+void __cdecl stack_sort_2(int veh_id);
+int __cdecl stack_fix(int veh_id);
+int __cdecl stack_veh(int veh_id, int mode);
+int __cdecl stack_check(int veh_id, int type, int cond1, int cond2, int cond3);
+BOOL __cdecl veh_avail(int proto_id, int faction_id, int base_id);
+BOOL __cdecl wants_prototype(int proto_id, int faction_id);
+int __cdecl veh_at(int x, int y);
+BOOL __cdecl has_abil(int proto_id, int ability_id);
+int __cdecl veh_lift(int veh_id);
+int __cdecl veh_drop(int veh_id, int x, int y);
+void __cdecl sleep(int veh_id);
+void __cdecl veh_demote(int veh_id);
+void __cdecl veh_promote(int veh_id);
+void __cdecl veh_clear(int veh_id, int proto_id, int faction_id);
+BOOL __cdecl can_arty(int proto_id, BOOL sea_triad_retn);
 // ?morale_veh@@YAHHHH@Z - returns int and takes int, as the definition does.
-DLLEXPORT int __cdecl morale_veh(int veh_id, BOOL check_drone_riot,
+int __cdecl morale_veh(int veh_id, BOOL check_drone_riot,
                                  int faction_id_vs_native);
-DLLEXPORT int __cdecl offense_proto(int proto_id, int veh_id_def, BOOL is_bombard);
-DLLEXPORT int __cdecl armor_proto(int proto_id, int veh_id_atk, BOOL is_bombard);
-DLLEXPORT int __cdecl speed_proto(int proto_id);
-DLLEXPORT int __cdecl valid_patrol(int veh_id, int x, int y);
-DLLEXPORT int __cdecl speed(int veh_id, BOOL skip_morale);
-DLLEXPORT int __cdecl veh_cargo(int veh_id);
-DLLEXPORT int __cdecl prototype_factor(int proto_id);
-DLLEXPORT int __cdecl veh_cost(int proto_id, int base_id, BOOL *has_proto_cost);
-DLLEXPORT BOOL __cdecl veh_jail(int veh_id);
-DLLEXPORT void __cdecl veh_skip(int veh_id);
-DLLEXPORT int __cdecl veh_fake(int proto_id, int faction_id);
-DLLEXPORT int __cdecl veh_wake(int veh_id);
-DLLEXPORT uint8_t __cdecl get_proto_triad(uint32_t proto_id);
-DLLEXPORT uint8_t __cdecl get_triad(uint32_t veh_id);
-DLLEXPORT int8_t __cdecl get_proto_offense_rating(uint32_t proto_id);
-DLLEXPORT int8_t __cdecl get_offense_rating(uint32_t veh_id);
-DLLEXPORT int8_t __cdecl get_proto_defense_rating(uint32_t proto_id);
-DLLEXPORT int8_t __cdecl get_defense_rating(uint32_t veh_id);
-DLLEXPORT BOOL __cdecl is_proto_missile(uint32_t proto_id);
-DLLEXPORT BOOL __cdecl is_missile(uint32_t veh_id);
-DLLEXPORT int __cdecl action_home(int veh_id, int flags);
-DLLEXPORT int __cdecl compute_odds(int odds, int faction_id, int veh_id_atk, int veh_id_def,
+int __cdecl offense_proto(int proto_id, int veh_id_def, BOOL is_bombard);
+int __cdecl armor_proto(int proto_id, int veh_id_atk, BOOL is_bombard);
+int __cdecl speed_proto(int proto_id);
+int __cdecl valid_patrol(int veh_id, int x, int y);
+int __cdecl speed(int veh_id, BOOL skip_morale);
+int __cdecl veh_cargo(int veh_id);
+int __cdecl prototype_factor(int proto_id);
+int __cdecl veh_cost(int proto_id, int base_id, BOOL *has_proto_cost);
+BOOL __cdecl veh_jail(int veh_id);
+void __cdecl veh_skip(int veh_id);
+int __cdecl veh_fake(int proto_id, int faction_id);
+int __cdecl veh_wake(int veh_id);
+uint8_t __cdecl get_proto_triad(uint32_t proto_id);
+uint8_t __cdecl get_triad(uint32_t veh_id);
+int8_t __cdecl get_proto_offense_rating(uint32_t proto_id);
+int8_t __cdecl get_offense_rating(uint32_t veh_id);
+int8_t __cdecl get_proto_defense_rating(uint32_t proto_id);
+int8_t __cdecl get_defense_rating(uint32_t veh_id);
+BOOL __cdecl is_proto_missile(uint32_t proto_id);
+BOOL __cdecl is_missile(uint32_t veh_id);
+int __cdecl action_home(int veh_id, int flags);
+int __cdecl compute_odds(int odds, int faction_id, int veh_id_atk, int veh_id_def,
                                   int base_id);
-DLLEXPORT int __cdecl alien_base(int veh_id, int x, int y);
+int __cdecl alien_base(int veh_id, int x, int y);

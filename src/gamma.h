@@ -35,7 +35,7 @@
   * The methods below ignore their arguments and return a constant, which is
   * why they can be replaced ahead of that mapping.
   */
-class DLLEXPORT Gamma : GraphicWin {
+class Gamma : GraphicWin {
  public:
   void on_scrolled(int a1, int a2);
   Gamma() { ; }

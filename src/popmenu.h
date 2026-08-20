@@ -71,7 +71,7 @@
   * for verify_subobjects.py to see - so this class still carries no size
   * assertion and 0x62BC is a floor.
   */
-class DLLEXPORT PopMenu : Popup {
+class PopMenu : Popup {
  public:
   PopMenu() { ; }
   ~PopMenu() { ; }

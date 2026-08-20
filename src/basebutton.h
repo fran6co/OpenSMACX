@@ -25,7 +25,7 @@ class Scroll; // forward declaration
  /*
   * BaseButton class
   */
-class DLLEXPORT BaseButton : GraphicWin {
+class BaseButton : GraphicWin {
   friend class ButtonGroup;
   friend class FlatButton;
   friend class Scroll;

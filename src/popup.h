@@ -30,7 +30,7 @@
   * between. Both are pinned here, at 0x3230 and 0x214C, so this much of the
   * layout is exact; where the object ends is not established.
   */
-class DLLEXPORT Popup : BasePop {
+class Popup : BasePop {
  public:
   int on_nc_hittest(int a1, int a2);
 
@@ -121,72 +121,72 @@ typedef int (__cdecl func_pops_full)(char *, char *, int, char *, int,
                                      Sprite *, int, int, int (__cdecl *)());
 extern func_pops_full *PopsOriginalFull;
 
-DLLEXPORT int __cdecl pop_label_cb(char *label, int (__cdecl *callback)());
-DLLEXPORT int __cdecl pop_caption(char *caption, char *label,
+int __cdecl pop_label_cb(char *label, int (__cdecl *callback)());
+int __cdecl pop_caption(char *caption, char *label,
                                   int (__cdecl *callback)());
-DLLEXPORT int __cdecl pop_value_title(char *label, int value, int title,
+int __cdecl pop_value_title(char *label, int value, int title,
                                       int (__cdecl *callback)());
-DLLEXPORT int __cdecl pop_caption_value_title(char *caption, char *label,
+int __cdecl pop_caption_value_title(char *caption, char *label,
                                               int value, int title,
                                               int (__cdecl *callback)());
-DLLEXPORT int __cdecl pop_title(char *label, int title,
+int __cdecl pop_title(char *label, int title,
                                 int (__cdecl *callback)());
-DLLEXPORT int __cdecl pop_caption_title(char *caption, char *label, int title,
+int __cdecl pop_caption_title(char *caption, char *label, int title,
                                         int (__cdecl *callback)());
-DLLEXPORT int __cdecl pop_value_text_title(char *label, int value,
+int __cdecl pop_value_text_title(char *label, int value,
                                            char *text, int title,
                                            int (__cdecl *callback)());
-DLLEXPORT int __cdecl pop_full(char *caption, char *label, int value,
+int __cdecl pop_full(char *caption, char *label, int value,
                                char *text, int title,
                                int (__cdecl *callback)());
 
-DLLEXPORT int __cdecl pops_minimal(char *label, Sprite *sprite,
+int __cdecl pops_minimal(char *label, Sprite *sprite,
                                    int (__cdecl *callback)());
-DLLEXPORT int __cdecl pops_flags(char *label, Sprite *sprite, int flag_a,
+int __cdecl pops_flags(char *label, Sprite *sprite, int flag_a,
                                  int flag_b, int (__cdecl *callback)());
-DLLEXPORT int __cdecl pops_caption(char *caption, char *label,
+int __cdecl pops_caption(char *caption, char *label,
                                    Sprite *sprite, int (__cdecl *callback)());
-DLLEXPORT int __cdecl pops_caption_flags(char *caption, char *label,
+int __cdecl pops_caption_flags(char *caption, char *label,
                                          Sprite *sprite, int flag_a,
                                          int flag_b,
                                          int (__cdecl *callback)());
-DLLEXPORT int __cdecl pops_value_title(char *label, int value, int title,
+int __cdecl pops_value_title(char *label, int value, int title,
                                        Sprite *sprite,
                                        int (__cdecl *callback)());
-DLLEXPORT int __cdecl pops_value_title_flags(char *label, int value,
+int __cdecl pops_value_title_flags(char *label, int value,
                                              int title, Sprite *sprite,
                                              int flag_a, int flag_b,
                                              int (__cdecl *callback)());
-DLLEXPORT int __cdecl pops_caption_value_title(char *caption, char *label,
+int __cdecl pops_caption_value_title(char *caption, char *label,
                                                int value, int title,
                                                Sprite *sprite,
                                                int (__cdecl *callback)());
-DLLEXPORT int __cdecl pops_no_text(char *caption, char *label, int value,
+int __cdecl pops_no_text(char *caption, char *label, int value,
                                    int title, Sprite *sprite, int flag_a,
                                    int flag_b, int (__cdecl *callback)());
-DLLEXPORT int __cdecl pops_title(char *label, int title, Sprite *sprite,
+int __cdecl pops_title(char *label, int title, Sprite *sprite,
                                  int (__cdecl *callback)());
-DLLEXPORT int __cdecl pops_title_flags(char *label, int title,
+int __cdecl pops_title_flags(char *label, int title,
                                        Sprite *sprite, int flag_a,
                                        int flag_b,
                                        int (__cdecl *callback)());
-DLLEXPORT int __cdecl pops_caption_title(char *caption, char *label,
+int __cdecl pops_caption_title(char *caption, char *label,
                                          int title, Sprite *sprite,
                                          int (__cdecl *callback)());
-DLLEXPORT int __cdecl pops_caption_title_flags(char *caption, char *label,
+int __cdecl pops_caption_title_flags(char *caption, char *label,
                                                int title, Sprite *sprite,
                                                int flag_a, int flag_b,
                                                int (__cdecl *callback)());
-DLLEXPORT int __cdecl pops_value_text_title(char *label, int value,
+int __cdecl pops_value_text_title(char *label, int value,
                                             char *text, int title,
                                             Sprite *sprite,
                                             int (__cdecl *callback)());
-DLLEXPORT int __cdecl pops_default_caption(char *label, int value,
+int __cdecl pops_default_caption(char *label, int value,
                                            char *text, int title,
                                            Sprite *sprite, int flag_a,
                                            int flag_b,
                                            int (__cdecl *callback)());
-DLLEXPORT int __cdecl pops_no_flags(char *caption, char *label, int value,
+int __cdecl pops_no_flags(char *caption, char *label, int value,
                                     char *text, int title, Sprite *sprite,
                                     int (__cdecl *callback)());
 
@@ -230,5 +230,5 @@ extern func_popup_wave_query PopupWavePlay;
 extern func_popup_fx_play PopupFxPlay;
 extern func_popup_time_source **PopupWaveTimeSlot;
 
-DLLEXPORT void __cdecl popup_wave_callback(PopupWave *popup, int);
+void __cdecl popup_wave_callback(PopupWave *popup, int);
 void __cdecl popup_wave_callback_redirect(PopupWave *popup, int a2);

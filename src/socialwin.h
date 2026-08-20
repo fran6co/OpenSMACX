@@ -38,7 +38,7 @@
   * methods recovered here are bare returns that touch no field, which is why
   * they can be replaced ahead of that mapping.
   */
-class DLLEXPORT SocialWin : GraphicWin, SubInterface {
+class SocialWin : GraphicWin, SubInterface {
  public:
   void hide();
   void show(int a1);

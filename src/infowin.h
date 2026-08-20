@@ -30,7 +30,7 @@
   *
   * The layout is not established and nothing pins its sizeof.
 */
-class DLLEXPORT InfoWin {
+class InfoWin {
  public:
   void on_right_click(int a1, int a2);
   // 0x004589C0  ?right_menu@InfoWin@@QAEXHH@Z - public, __thiscall,

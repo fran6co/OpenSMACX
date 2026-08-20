@@ -21,9 +21,9 @@
  /*
   * Log class: Handles debug logging.
   */
-class DLLEXPORT Log {
+class Log {
  public:
-  Log() : log_file_(nullptr), is_disabled_(false) {
+  MEASURED Log() : log_file_(nullptr), is_disabled_(false) {
   } // 00625FB0
   Log(LPCSTR input) : log_file_(nullptr) { // 00625FC0
       if (input) {
@@ -35,7 +35,7 @@ class DLLEXPORT Log {
           }
       }
   }
-  ~Log() {
+  MEASURED ~Log() {
       if (log_file_) {
           free(log_file_);
           *reinterpret_cast<LPSTR volatile *>(&log_file_) = nullptr;
@@ -62,11 +62,11 @@ static_assert(sizeof(Log) == 8, "Log layout must match the legacy ABI");
 extern Log *Logging;
 extern BOOL *IsLoggingDisabled;
 
-DLLEXPORT void __cdecl log_logging();
-DLLEXPORT void __cdecl log_logging_exit();
-DLLEXPORT void __cdecl log_reset();
-DLLEXPORT void __cdecl log_say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3);
-DLLEXPORT void __cdecl log_say(LPCSTR str1, int num1, int num2, int num3);
-DLLEXPORT void __cdecl log_say_hex(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3);
-DLLEXPORT void __cdecl log_say_hex(LPCSTR str1, int num1, int num2, int num3);
-DLLEXPORT void __cdecl log_set_state(BOOL state);
+void __cdecl log_logging();
+void __cdecl log_logging_exit();
+void __cdecl log_reset();
+void __cdecl log_say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3);
+void __cdecl log_say(LPCSTR str1, int num1, int num2, int num3);
+void __cdecl log_say_hex(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3);
+void __cdecl log_say_hex(LPCSTR str1, int num1, int num2, int num3);
+void __cdecl log_set_state(BOOL state);

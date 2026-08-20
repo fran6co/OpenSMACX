@@ -25,7 +25,7 @@
   * 0x4 and 0x10, each reset to two -1 sentinels and a zero. Nothing pins the
   * size beyond the 0x1C those writes reach.
   */
-class DLLEXPORT PlayerLock {
+class PlayerLock {
  public:
   PlayerLock() { ; }
   ~PlayerLock() { ; }

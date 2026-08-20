@@ -53,7 +53,7 @@
   * `reached TutWin 0x53D8 image reaches 0x53D8`, so the static_assert below
   * is reached by the image's own widest access.
   */
-class DLLEXPORT TutWin : Popup {
+class TutWin : Popup {
  public:
   void on_move(int a1, int a2);
   TutWin() { ; }

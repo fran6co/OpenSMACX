@@ -20,7 +20,7 @@
  /*
   * Font class
   */
-class DLLEXPORT Font {
+class Font {
  public:
   int UNK1(int, int, int, int);
   Font(); // 00618EA0
@@ -31,7 +31,7 @@ class DLLEXPORT Font {
   int init(LPCSTR font_name, int height, int style);
   int init(LPCSTR file, LPCSTR font_name, int height, int style);
   // IN-CLASS so `~Font` inlines it, which is what the image does.
-  void close() {                 // 00619230
+  MEASURED void close() {        // 00619230
     // IMAGE ORDER: height_ before line_height_, as in the constructor.
     unk_1_ = -1;
     height_ = 0;
@@ -103,7 +103,7 @@ static const size_t FontSizeTableCount = 12;
  * both types the slots and confirms sizeof(Font) = 0x28. Nothing pins more
  * than the 0x78 the walk covers.
  */
-class DLLEXPORT FontQueue {
+class FontQueue {
  public:
   FontQueue() { ; }
   ~FontQueue();
@@ -131,7 +131,7 @@ extern func_thiscall_teardown FontQueueElementTeardown;
 
 void __fastcall font_queue_dtor_redirect(FontQueue *self, void *);
 
-DLLEXPORT Font *__cdecl find_font(int size, int style);
+Font *__cdecl find_font(int size, int style);
 #endif
 
 // global

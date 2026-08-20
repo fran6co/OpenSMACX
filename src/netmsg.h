@@ -31,7 +31,7 @@
   *
   * Nothing pins this class's sizeof.
   */
-class DLLEXPORT NetMsg : Popup {
+class NetMsg : Popup {
  public:
   NetMsg() { ; }
   ~NetMsg() { ; }
