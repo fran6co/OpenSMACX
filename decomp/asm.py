@@ -961,9 +961,21 @@ def shared_spans(records) -> frozenset:
 
 
 def _better(candidate: AsmComparison, incumbent: AsmComparison) -> bool:
-    """Is `candidate` the more useful of two measurements of one record?"""
-    return ((candidate.verdict.rank, -candidate.matching_instructions)
-            < (incumbent.verdict.rank, -incumbent.matching_instructions))
+    """Is `candidate` the more useful of two measurements of one record?
+
+    SIMILARITY BEFORE POSITIONAL AGREEMENT. `matching_instructions` counts
+    instruction i against instruction i, so a candidate one instruction
+    short of the image scores near zero however right the rest of it is -
+    every later instruction is compared with the wrong one. Ranking on it
+    picked the answer that happened to keep its length over the answer that
+    was closer. `mnemonic_similarity` is an alignment, so it survives a
+    length difference; agreement still breaks ties, where it is the sharper
+    of the two.
+    """
+    return ((candidate.verdict.rank, -candidate.mnemonic_similarity,
+             -candidate.matching_instructions)
+            < (incumbent.verdict.rank, -incumbent.mnemonic_similarity,
+               -incumbent.matching_instructions))
 
 
 def compare_record(record: DecompilationState, exe: Path | str,
