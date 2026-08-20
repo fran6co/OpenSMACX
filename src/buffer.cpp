@@ -398,42 +398,31 @@ Purpose: Acquire the buffer's pixel data, locking the DirectDraw surface on the
 Status: Complete
 */
 int Buffer::get_data() {
-    volatile uint32_t *ordered = reinterpret_cast<volatile uint32_t *>(this);
-    void *const surface = reinterpret_cast<void *>(ordered[0x58 / 4]);
-    if (!surface) {
+    if (surface_ == nullptr) {
         // Without a surface the buffer publishes its own storage, and the
         // store happens whether or not that storage exists.
-        const uint32_t storage = ordered[0x54 / 4];
-        ordered[0x50 / 4] = storage;
-        if (!storage) {
+        locked_bits_ = dib_bits_;
+        if (dib_bits_ == nullptr) {
             return 0;
         }
-        ordered[0x6C / 4] = ordered[0x6C / 4] + 1;
-        return static_cast<int>(storage);
+        ++surface_lock_count_;
+        return reinterpret_cast<int>(dib_bits_);
     }
-    const uint32_t existing = ordered[0x50 / 4];
-    if (existing) {
-        ordered[0x6C / 4] = ordered[0x6C / 4] + 1;
-        return static_cast<int>(existing);
+    if (locked_bits_ != nullptr) {
+        ++surface_lock_count_;
+        return reinterpret_cast<int>(locked_bits_);
     }
-    // The legacy body leaves the descriptor uninitialised apart from its size.
-    uint8_t descriptor[SurfaceDescriptorSize];
-    const uint32_t descriptor_size = SurfaceDescriptorSize;
-    memcpy(descriptor, &descriptor_size, sizeof(descriptor_size));
-    void **const vtable = *reinterpret_cast<void ***>(surface);
-    const func_surface_lock lock = reinterpret_cast<func_surface_lock>(
-        vtable[BufferSurfaceLockSlot / sizeof(void *)]);
-    if (lock(surface, nullptr, descriptor, 1, nullptr) != 0) {
+    // THE DESCRIPTOR IS UNINITIALISED APART FROM ITS SIZE, which is what the
+    // image does and what DirectDraw asks for: `Lock` fills in the rest.
+    DDSURFACEDESC description;
+    description.dwSize = sizeof(description);
+    if (surface_->Lock(nullptr, &description, DDLOCK_WAIT, nullptr) != 0) {
         return 0;
     }
-    ordered[0x6C / 4] = ordered[0x6C / 4] + 1;
-    uint32_t pitch;
-    uint32_t data;
-    memcpy(&pitch, descriptor + SurfaceDescriptorPitch, sizeof(pitch));
-    memcpy(&data, descriptor + SurfaceDescriptorData, sizeof(data));
-    ordered[0x4A8 / 4] = pitch;
-    ordered[0x50 / 4] = data;
-    return static_cast<int>(data);
+    ++surface_lock_count_;
+    stride_ = description.lPitch;
+    locked_bits_ = description.lpSurface;
+    return reinterpret_cast<int>(description.lpSurface);
 }
 
 /*
@@ -451,26 +440,19 @@ Purpose: Release acquired references to the buffer's pixel data, unlocking the
 Status: Complete
 */
 void Buffer::free_data(int count) {
-    volatile uint32_t *ordered = reinterpret_cast<volatile uint32_t *>(this);
-    void *const surface = reinterpret_cast<void *>(ordered[0x58 / 4]);
-    const int32_t remaining = static_cast<int32_t>(
-        ordered[0x6C / 4] - static_cast<uint32_t>(count));
-    ordered[0x6C / 4] = static_cast<uint32_t>(remaining);
-    if (!surface) {
+    const int remaining = surface_lock_count_ - count;
+    surface_lock_count_ = remaining;
+    if (surface_ == nullptr) {
         if (remaining <= 0) {
-            ordered[0x50 / 4] = 0;
-            ordered[0x6C / 4] = 0;
+            locked_bits_ = nullptr;
+            surface_lock_count_ = 0;
         }
         return;
     }
-    const uint32_t data = ordered[0x50 / 4];
-    if (data != 0 && remaining <= 0) {
-        void **const vtable = *reinterpret_cast<void ***>(surface);
-        const func_surface_unlock unlock = reinterpret_cast<func_surface_unlock>(
-            vtable[BufferSurfaceUnlockSlot / sizeof(void *)]);
-        unlock(surface, reinterpret_cast<void *>(data));
-        ordered[0x50 / 4] = 0;
-        ordered[0x6C / 4] = 0;
+    if (locked_bits_ != nullptr && remaining <= 0) {
+        surface_->Unlock(locked_bits_);
+        locked_bits_ = nullptr;
+        surface_lock_count_ = 0;
     }
 }
 
@@ -677,9 +659,8 @@ int Buffer::init(int width, int height, int tgl, ExtDirectDraw *direct_draw) {
     // opposite order and 13 fewer instructions land in position.
     if (BufferDirectDraw == nullptr) {
         if (borrowed == 0) {
-            bitmap_handle_ = CreateDIBSection(
-                hdc_, reinterpret_cast<const BITMAPINFO *>(&dib_), 0,
-                &dib_bits_, nullptr, 0);
+            bitmap_handle_ = CreateDIBSection(hdc_, &dib_, 0, &dib_bits_,
+                                              nullptr, 0);
             if (bitmap_handle_ == nullptr) {
                 MessageBoxA(nullptr,
                             "Unable to allocate draw-buffer; terminating program",
