@@ -521,6 +521,32 @@ def test_an_unverifiable_claim_is_not_a_regression(claimed, monkeypatch):
     assert "1 NO_COMPILE" in result.output
 
 
+def test_no_compile_in_a_build_input_is_a_regression(claimed, monkeypatch,
+                                                     tmp_path):
+    """A wall someone just built is not a wall that was always there.
+
+    Making `Buffer::dib_` private put `width_` out of reach of `win.cpp`,
+    and 28 claims that had been BYTE_EXACT went NO_COMPILE. The gate
+    printed "0 REGRESSED" and exited 3 - exactly what it prints when the
+    tree is healthy - because the classification could not tell a file
+    CMake builds from one it has never built. The build database naming a
+    file is the project asserting that it compiles.
+    """
+    database = tmp_path / "cc.json"
+    database.write_text(json.dumps([{
+        "directory": str(claimed),
+        "file": str(claimed / "c.cpp"),
+        "command": "cl /c /I. c.cpp",
+    }]))
+    monkeypatch.setattr(osmx, "_fresh_compile_commands",
+                        lambda *_args, **_kw: None)
+    monkeypatch.setattr(osmx, "_check_one_file",
+                        fake_file_result({0x00402000: "NO_COMPILE"}))
+    result = check(claimed, "--compile-commands", str(database))
+    assert result.exit_code == 1, "the tree is broken, not unmeasurable"
+    assert "REGRESSED 0x00402000" in result.output
+
+
 def test_a_regression_outranks_an_unverifiable_claim(claimed, monkeypatch):
     monkeypatch.setattr(osmx, "_check_one_file", fake_file_result(
         {0x00401000: "MISMATCH", 0x00402000: "NO_COMPILE"}))

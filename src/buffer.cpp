@@ -614,8 +614,8 @@ Purpose: Give the buffer a size and the storage behind it - a DirectDraw
 // flags     sp_ready;purged_ok
 // calls     0x005D7470 0x005D8000 0x005FA8A0 0x00644EF2 0x006465F0
 //
-// `height_` HOLDS THE NEGATIVE, which is what makes the early-out read
-// oddly: `width == width_ && height == -height_` is "already this size".
+// `biHeight` IS NEGATIVE because the DIB is top-down, which is the whole
+// reason the early-out reads `height == -dib_.bmiHeader.biHeight`.
 // Every caller that reads it back negates it again - `Win::init_class`
 // passes `-logo.height_` to `copy` - so the sign lives in the field.
 //
@@ -639,8 +639,8 @@ int Buffer::init(int width, int height, int tgl, ExtDirectDraw *direct_draw) {
     if (width < 0 || height < 0) {
         return 3;
     }
-    if (width == static_cast<int>(width_)
-        && height == -static_cast<int>(height_)) {
+    if (width == dib_.bmiHeader.biWidth
+        && height == -dib_.bmiHeader.biHeight) {
         return 0;
     }
 
@@ -661,8 +661,8 @@ int Buffer::init(int width, int height, int tgl, ExtDirectDraw *direct_draw) {
         }
     }
 
-    width_ = width;
-    height_ = -height;
+    dib_.bmiHeader.biWidth = width;
+    dib_.bmiHeader.biHeight = -height;
 
     if (BufferDirectDraw != nullptr) {
         if (borrowed == 0) {
@@ -686,7 +686,8 @@ int Buffer::init(int width, int height, int tgl, ExtDirectDraw *direct_draw) {
                                     reinterpret_cast<void **>(&surface_));
         }
     } else if (borrowed == 0) {
-        bitmap_handle_ = CreateDIBSection(hdc_, bitmap_info_, 0, &dib_bits_,
+        bitmap_handle_ = CreateDIBSection(hdc_, reinterpret_cast<const BITMAPINFO *>(&dib_),
+                                         0, &dib_bits_,
                                           nullptr, 0);
         if (bitmap_handle_ == nullptr) {
             MessageBoxA(nullptr,
@@ -706,10 +707,10 @@ int Buffer::init(int width, int height, int tgl, ExtDirectDraw *direct_draw) {
     rect2_.bottom = height;
     set_clip(&rect2_);
 
-    width_ = width;
-    height_ = -height;
-    pixel_count_ = width * height;
-    field_9C_ = 0x100;
+    dib_.bmiHeader.biWidth = width;
+    dib_.bmiHeader.biHeight = -height;
+    dib_.bmiHeader.biSizeImage = width * height;
+    dib_.bmiHeader.biClrUsed = 256;
 
     if (BufferDirectDraw == nullptr) {
         previous_bitmap_ = reinterpret_cast<uint32_t>(
@@ -978,13 +979,13 @@ Purpose: Fill a rectangle of this buffer with a single colour, through
 // always passes `&rect1_`.
 //
 // THE `neg` IS NOT A BUG, though it was recorded as a suspected one here
-// first. `height_` HOLDS THE NEGATIVE, and `Buffer::init` carries both
+// first. `biHeight` is negative - a top-down DIB - and `Buffer::init` carries both
 // halves of the round trip: it stores the negation at 0x005D7758
 // (`neg edi; mov [esi+0x84], edi`, and again from that same EDI at
 // 0x005D788D on the DIB path), then reads it back through a second `neg`
 // at 0x005D76BE-0x005D76C6 to compare against a positive height in its
-// "already this size" early-out. So `-height_` IS the positive height, and
-// `clipped.top >= -height_` is the ordinary bounds test its `+width_`
+// "already this size" early-out. So `-biHeight` IS the positive height, and
+// `clipped.top >= -biHeight` is the ordinary bounds test its `+biWidth`
 // neighbour looks like.
 Status: WIP
 */
@@ -1022,11 +1023,11 @@ int Buffer::fill(RECT *area, int color) {
     if (!IntersectRect(&clipped, &clipped, &rect1_)) {
         return 0;
     }
-    if (clipped.left >= static_cast<int>(width_)) {
+    if (clipped.left >= dib_.bmiHeader.biWidth) {
         return 0;
     }
-    // `height_` holds the negative, so this is the plain bounds test.
-    if (clipped.top >= -static_cast<int>(height_)) {
+    // `biHeight` holds the negative, so this is the plain bounds test.
+    if (clipped.top >= -dib_.bmiHeader.biHeight) {
         return 0;
     }
 
@@ -1261,8 +1262,8 @@ void Buffer::close() {
     stride_ = 0;
     field_57C_ = 0;
     field_580_ = 0;
-    width_ = 0;
-    height_ = 0;
+    dib_.bmiHeader.biWidth = 0;
+    dib_.bmiHeader.biHeight = 0;
     locked_bits_ = 0;
     dib_bits_ = nullptr;
     field_50C_ = 0xFFFFFFFFU;
@@ -1449,7 +1450,7 @@ int Buffer::sync_to_palette(Palette *palette) {
     // the 256-entry table it guards, so an unchanged palette costs nothing.
     if (field_4A4_ != palette->seed_) {
         field_4A4_ = palette->seed_;
-        RGBQUAD *const table = reinterpret_cast<RGBQUAD *>(dib_);
+        RGBQUAD *const table = dib_.bmiColors;
         palette->get_rgbquad(table, 0, 0x100);
         const HDC device = get_hdc();
         if (device != nullptr) {

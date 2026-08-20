@@ -482,6 +482,26 @@ def build_command(compile_commands: Path | str,
         f"{compile_commands.name}; pass the command of a file that is")
 
 
+def build_inputs(compile_commands: Path | str) -> set[Path]:
+    """Every source file this build compiles, resolved.
+
+    WHICH FILES THE PROJECT ASSERTS COMPILE. `build_command` answers it one
+    file at a time and re-reads the database each time, which is fine for a
+    single question and quadratic for a sweep over a thousand files.
+    """
+    compile_commands = Path(compile_commands)
+    if not compile_commands.is_file():
+        raise ValueError(
+            f"no {compile_commands} - configure the build first")
+    inputs = set()
+    for entry in json.loads(compile_commands.read_text()):
+        file = Path(entry["file"])
+        if not file.is_absolute():
+            file = Path(entry.get("directory", ".")) / file
+        inputs.add(file.resolve())
+    return inputs
+
+
 def _invocation(entry: dict[str, str]) -> list[str]:
     """An entry's compiler and its include and define flags."""
     words = shlex.split(entry.get("command")
