@@ -536,6 +536,170 @@ it pushes arg5, arg4, arg3, arg2, arg3, arg2, arg1, so the destination
 coordinates are handed over a second time as the source coordinates. That
 repetition is the whole content of this overload.
 */
+namespace {
+
+// 0x00696BF8. Every PCX the game ships is prefixed with this and a NUL;
+// `load_pcx` steps over both when it finds them.
+const char PcxAssetPrefix[] = "monkey sweats on a tuesday";
+
+// A PCX header is 128 bytes, and the fields this decoder reads sit at fixed
+// offsets in it: magic, version, encoding, bits-per-pixel, the bounding box,
+// then planes and stride near the end.
+const size_t PcxHeaderSize = 0x80;
+const size_t PcxMagic = 0, PcxVersion = 1, PcxEncoding = 2, PcxBitsPerPixel = 3;
+const size_t PcxXMin = 4, PcxYMin = 6, PcxXMax = 8, PcxYMax = 10;
+const size_t PcxPlanes = 65, PcxBytesPerLine = 66;
+
+// Slot 1 of a Buffer's vtable answers 0 here and an object elsewhere: a
+// subclass that owns its own surface returns it, and this decoder asks that
+// object to size itself instead of calling `Buffer::init`. Nothing in this
+// tree recovers the subclass, so all that is known about the object is the
+// slot being called - which is what this declares and no more.
+struct SurfaceOwner {
+    virtual int slot0();
+    virtual int slot1();
+    virtual int slot2();
+    virtual int resize(int width, int height, int flags);
+};
+
+}  // namespace
+
+/*
+Purpose: Decode a PCX image out of memory into this buffer, then install the
+         256 colours that follow it and publish them through the palette.
+// ORIGINAL: 0x005E2690 ?load_pcx@Buffer@@QAEHPAEKPAVPalette@@HH@Z 0x005E2690-0x005E2AF7
+// symbol    ?load_pcx@Buffer@@QAEHPAEKPAVPalette@@HH@Z
+// size      1127 bytes
+// prototype int (__thiscall ?load_pcx@Buffer@@QAEHPAEKPAVPalette@@HH@Z)(Buffer* this, unsigned int8*, unsigned int, Palette*, int, int)
+// callers   2   call targets   7
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D7670 0x005FE560 0x005FE650 0x006453E0 0x006458F0 0x00645930 0x006465F0
+Return Value: 0 on success, 3 for a bad argument or an unusable header,
+              7 for no pixel storage, or whatever `init` returned
+Status: WIP
+
+PROMOTED FROM src/unrecovered/005e2690.cpp, which is deleted, and it is
+mostly SHORTER than that unit rather than merely renamed. Three blocks it
+spelled out by hand are recovered functions here:
+
+  the `if (surface_ == 0) ... else Lock(...)` block is `get_data`
+  the `--surface_lock_count_` pair that closes it is `free_data(1)`
+  the whole palette tail - the seed compare, `get_rgbquad`,
+  `SetDIBColorTable`, and the `has_palette_` / `palette_` stores that end
+  it - is `sync_to_palette`
+
+The unit could not say so because none of those fields had names when it was
+written: it reads `field_58_`, `field_50_`, `field_6C_`, `field_4A8_`,
+`field_68_`, `field_4A4_`, and calls Lock, Unlock, GetDC and ReleaseDC
+through raw vtable indices 25, 32, 17 and 26.
+
+THE LAST TWO ARGUMENTS ARE NOT WHAT THEY ARE CALLED. The by-name overload
+passes its `tgl` and `height` straight through, but this body adds the first
+to every decoded pixel and uses the second as the number of palette entries
+to copy - so they are a colour base and a colour count, and they are named
+for that here.
+*/
+int Buffer::load_pcx(BYTE *data, DWORD size, Palette *palette,
+                     int colour_base, int colour_count) {
+    if (data == nullptr && surface_ == nullptr) {
+        return 3;
+    }
+
+    // The shipped assets carry a watermark ahead of the PCX itself.
+    const size_t prefix = strlen(PcxAssetPrefix);
+    if (strncmp(reinterpret_cast<const char *>(data), PcxAssetPrefix,
+                prefix) == 0) {
+        data += prefix + 1;
+        size -= static_cast<DWORD>(prefix + 1);
+    }
+
+    BYTE header[PcxHeaderSize];
+    memcpy(header, data, sizeof(header));
+    if (header[PcxMagic] != 0x0A || header[PcxEncoding] != 1) {
+        return 3;
+    }
+    if (header[PcxVersion] < 4 && palette != nullptr) {
+        return 3;
+    }
+
+    uint16_t x_min, y_min, x_max, y_max, bytes_per_line;
+    memcpy(&x_min, header + PcxXMin, sizeof(x_min));
+    memcpy(&y_min, header + PcxYMin, sizeof(y_min));
+    memcpy(&x_max, header + PcxXMax, sizeof(x_max));
+    memcpy(&y_max, header + PcxYMax, sizeof(y_max));
+    memcpy(&bytes_per_line, header + PcxBytesPerLine, sizeof(bytes_per_line));
+    const int width = x_max - x_min + 1;
+    const int height = y_max - y_min + 1;
+    const int bits_per_pixel = header[PcxBitsPerPixel];
+    const int planes = header[PcxPlanes];
+
+    const int owner = surface_lost();
+    const int sized = (owner == 0)
+        ? init(width, height, static_cast<int>(init_flags_), nullptr)
+        : reinterpret_cast<SurfaceOwner *>(owner)->resize(width, height, 1);
+    if (sized != 0) {
+        return sized;
+    }
+    if ((1 << bits_per_pixel) * planes != 256) {
+        return 3;
+    }
+
+    uint8_t *pixels = reinterpret_cast<uint8_t *>(get_data());
+    if (pixels == nullptr) {
+        return 7;
+    }
+
+    // RLE: a byte with both top bits set is a run length and the byte after
+    // it is the value; anything else is one literal pixel. `colour_base`
+    // shifts every pixel into its slice of the palette.
+    const int row_bytes = (8 / bits_per_pixel) * bytes_per_line * planes;
+    const uint8_t *source = data + PcxHeaderSize;
+    int outstanding = row_bytes * height;
+    int filled = 0;
+    while (outstanding != 0) {
+        int run = 1;
+        uint8_t value = *source++;
+        if ((value & 0xC0) == 0xC0) {
+            run = value & 0x3F;
+            value = *source++;
+        }
+        memset(pixels, static_cast<uint8_t>(colour_base + value),
+               static_cast<size_t>(run));
+        pixels += run;
+        filled += run;
+        outstanding -= run;
+        // A row ends short of the buffer's stride, so step over the gap and
+        // give back whatever the run overshot by.
+        if (row_bytes <= filled) {
+            pixels += static_cast<int>(stride_) - filled;
+            outstanding += filled - row_bytes;
+            filled = 0;
+        }
+    }
+    free_data(1);
+
+    // The palette is the last 0x300 bytes of the file: 256 RGB triples,
+    // stored here as BGR0 quads from `colour_base` onwards.
+    const uint8_t *entry = data + size - 0x300;
+    for (int index = 0; index < colour_count; ++index) {
+        RGBQUAD &colour = dib_.bmiColors[colour_base + index];
+        colour.rgbRed = entry[0];
+        colour.rgbGreen = entry[1];
+        colour.rgbBlue = entry[2];
+        colour.rgbReserved = 0;
+        entry += 3;
+    }
+    field_580_ = static_cast<uint8_t>(colour_base);
+
+    if (palette == nullptr) {
+        return 0;
+    }
+    palette->set_from_dib(&dib_);
+    sync_to_palette(palette);
+    return 0;
+}
+
 int Buffer::copy(Buffer *buffer, int xCoord, int yCoord, int width,
                  int height) {
     return copy(buffer, xCoord, yCoord, xCoord, yCoord, width, height);
@@ -1121,6 +1285,7 @@ Purpose: Load a PCX file by name into this buffer, supplying a default
 // BYTE_EXACT, 317/317, against `/c /O2 /Gy /GR- /GX`.
 Status: Complete
 */
+
 int Buffer::load_pcx(const char *filename, Palette *palette, int tgl, int height) {
     Filemap map;
     if (filename == nullptr) {

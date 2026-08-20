@@ -214,18 +214,6 @@ extern "C" void __stdcall sub_5f86a0(int a1) {
     PENDING_BODY(0x005F86A0, pending)(a1);
 }
 
-// ?load_pcx@Buffer@@QAEHPAEKPAVPalette@@HH@Z at 0x005E2690 - 1127 bytes, body
-// in src/unrecovered/005e2690.cpp. THE FRONTIER MOVED HERE when the by-name
-// `Buffer::load_pcx` landed byte-exact in src/buffer.cpp: that one only maps
-// the file and fixes up the extension, and hands the bytes to this decoder.
-int Buffer::load_pcx(BYTE *data, DWORD size, Palette *palette, int tgl,
-                     int height) {
-    typedef int(__fastcall *pending)(Buffer *, void *, BYTE *, DWORD,
-                                     Palette *, int, int);
-    return PENDING_BODY(0x005E2690, pending)(this, nullptr, data, size,
-                                             palette, tgl, height);
-}
-
 // ?init_cursor_class@Cursor@@QAAXXZ at 0x0063B910 - `int` here, see cursor.h
 int Cursor::init_cursor_class() {
     typedef int(__cdecl *pending)();

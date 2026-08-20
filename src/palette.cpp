@@ -57,6 +57,53 @@ const uint8_t SystemColours[80] = {
 Palette *PaletteCurrent;  // 0x009B8174
 
 /*
+Purpose: Take the palette's colours from a decoded DIB and give it a fresh
+         generation tag.
+// ORIGINAL: 0x005FE650 ?set_from_dib@Palette@@QAEHPAUDib@@@Z 0x005FE650-0x005FE6C7 BYTE_EXACT
+// size      120 bytes
+// prototype int (__thiscall ?set_from_dib@Palette@@QAEHPAUDib@@@Z)(Palette* this, Dib*)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00625810
+Return Value: 3 for a null DIB, 7 while the palette is unavailable, or 0
+Status: Complete
+
+THE 236 IN THE MIDDLE IS THE WHOLE POINT. `esi = 0xec` counts entries 10
+through 245, which is every colour EXCEPT the twenty Windows reserves - the
+first ten and the last ten, the same split `SystemColours` describes. A DIB
+decoded from a PCX brings 256 colours; only the middle 236 are the
+palette's to take.
+
+The loop is the RGBQUAD-to-PALETTEENTRY swizzle: `bmiColors` is blue, green,
+red, reserved and `entries_` is red, green, blue, flags, so the two ends run
+in opposite directions and `peFlags` is left alone.
+
+The tail is `Palette::init`'s seed loop, written out again: zero, then
+random until non-zero. That is what makes zero mean "no palette cached" for
+every reader of `Buffer::palette_seed_`, and it is why this function is what
+`Buffer::load_pcx` calls before syncing.
+*/
+int Palette::set_from_dib(Dib *dib) {
+    if (dib == nullptr) {
+        return 3;
+    }
+    if (PaletteInitialized == 0) {
+        return 7;
+    }
+    for (int entry = 10; entry < 246; ++entry) {
+        entries_[entry].peRed = dib->bmiColors[entry].rgbRed;
+        entries_[entry].peGreen = dib->bmiColors[entry].rgbGreen;
+        entries_[entry].peBlue = dib->bmiColors[entry].rgbBlue;
+    }
+    seed_ = 0;
+    do {
+        seed_ = random(0, 0xffff);
+    } while (seed_ == 0);
+    return 0;
+}
+
+/*
 Purpose: Convert process palette RGB entries into Windows RGBQUAD order.
 // ORIGINAL: 0x005FE560 ?get_rgbquad@Palette@@QAEHPAURGBQUAD@@HH@Z 0x005FE560-0x005FE5BD BYTE_EXACT
 // symbol    ?get_rgbquad@Palette@@QAEHPAUtagRGBQUAD@@HH@Z

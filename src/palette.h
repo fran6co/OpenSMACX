@@ -19,6 +19,7 @@
 #include "time.h"
 
 class Win;     // forward declaration
+struct Dib;    // <buffer.h>, where the DIB block is declared
 class Buffer;  // forward declaration
 struct IDirectDrawPalette;  // <ddraw.h>, included where it is called
 
@@ -33,6 +34,9 @@ class DLLEXPORT Palette {
   ~Palette() { close(); }   // 005FE2E0
 
   int get_rgbquad(RGBQUAD *output, int start, int count);
+  // 0x005FE650. Not recovered; `Buffer::load_pcx` hands it the buffer's own
+  // `Dib` after decoding, which is the one call site this tree has.
+  int set_from_dib(Dib *dib);
   // `static`, and the image's name says so: `?init_palette_class@Palette@@
   // SAXH@Z`. It used to be catalogued `QAA`, which this comment described as
   // "a public member declared __cdecl, taking no receiver" - a contradiction,
