@@ -443,6 +443,17 @@ void __cdecl win_clear_bubble_text_redirect();
 
 // Bubble state: the pending flag, its companion slot, and the rectangle the
 // refresh republishes. Tests rebind all three.
+extern void (*WinFlipHook)();          // 0x009B7A48
+extern Font *WinBubbleFont;            // 0x009B7A54
+extern int WinBubbleFillColour;        // 0x009B7A64
+extern const int WinBubbleTextColour;  // 0x00696D2C
+extern const int WinBubbleEdgeColour;  // 0x00696D30
+extern Sprite *WinFlipSprite;          // 0x009B7A2C
+extern int WinFlipSpriteY;             // 0x009B7A30
+extern int WinFlipSpriteX;             // 0x009B7A34
+extern int WinFlipClipped;             // 0x009B7AD8
+extern IDirectDrawSurface *DirectDrawBackBuffer;  // 0x009BC49C
+extern RECT DirectDrawClipRect;        // 0x009BC2D0
 extern int *WinBubbleActive;
 extern int *WinBubbleCompanion;
 extern RECT *WinBubbleRect;

@@ -697,9 +697,233 @@ int __fastcall win_set_cursor_redirect(Win *self, void *, int name) {
 int *WinBubbleActive = reinterpret_cast<int *>(0x009B7A50);
 int *WinBubbleCompanion = reinterpret_cast<int *>(0x009B7A4C);
 RECT *WinBubbleRect = reinterpret_cast<RECT *>(0x009B6E38);
+
+// The globals `Win::flip` reaches, all of them past `.data`'s stored bytes
+// and so zero-fill - real objects for the same reason `WinHdcRefCount` and
+// `WinSharedHdc` are, and none of them named anywhere before this body came
+// out of src/recovered.
+//
+// 0x009B7A48. Called with no arguments at the top of every flip when it is
+// set. Nothing recovered installs it yet.
+void (*WinFlipHook)();
+// 0x009B7A54 / 0x009B7A64 / 0x00696D2C / 0x00696D30. The bubble's font, the
+// colour its box is filled with, its text colour and its edge colour. The
+// last two are in `.data` and both hold 255.
+Font *WinBubbleFont;
+int WinBubbleFillColour;
+const int WinBubbleTextColour = 255;   // 0x00696D2C
+const int WinBubbleEdgeColour = 255;   // 0x00696D30
+// 0x009B7A2C and the pair below it: a sprite drawn over the screen after the
+// bubble, at 0x009B7A34 across and 0x009B7A30 down. Its frame comes from its
+// own `cTransparentIndex_` at +8.
+Sprite *WinFlipSprite;
+int WinFlipSpriteY;                    // 0x009B7A30
+int WinFlipSpriteX;                    // 0x009B7A34
+// 0x009B7AD8. Chooses how a partial flip reaches the screen: zero blits the
+// whole surface, non-zero intersects the caller's rectangle first.
+int WinFlipClipped;
+// 0x009BC49C. The surface `DirectDrawSurface` is blitted FROM - the back
+// buffer to its front.
+IDirectDrawSurface *DirectDrawBackBuffer;
+// 0x009BC2D0. The rectangle a clipped flip intersects against.
+RECT DirectDrawClipRect;
 func_win_update_screen *WinUpdateScreenOriginal =
     (func_win_update_screen *)0x005F7320;
 func_win_flip *WinFlipOriginal = (func_win_flip *)0x005EFD20;
+
+/*
+Purpose: Present the screen buffer: draw the bubble text over it, flip or
+         blit the DirectDraw surface, and copy the result to the window.
+// ORIGINAL: 0x005EFD20 ?flip@Win@@QAAXPAURECT@@@Z 0x005EFD20-0x005F01E7
+// symbol    ?flip@Win@@SAXPAUtagRECT@@@Z
+// size      1223 bytes
+// callers   27   call targets   14
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D8000 0x005DAC70 0x005DACB0 0x005DD020 0x005DD130 0x005DE8F0 0x005DFCD0 0x005E3203 0x005E3503 0x005E3563 0x005E4B4A 0x005EC6F0 0x006453E0 0x00645DD0
+Return Value: n/a
+Status: WIP
+
+DERIVED FROM THE IMAGE, not ported from src/recovered/units/005efd20.cpp,
+which is deleted. That unit was checked against the listing first and three
+of its statements are wrong:
+
+  it passed `BitBlt` the height as the width. The image loads
+  `[0x9b7514]` and `[0x9b7510]`, NEGATES the first and pushes it as `cy`
+  with the second as `cx` - so the width is `biWidth` and the height is
+  `-biHeight`. The unit had them the other way round, which is a blit of
+  the wrong shape every frame.
+
+  it called the surface's slot 5 with NO arguments. The image pushes five
+  plus the receiver: `Blt(nullptr, other, nullptr, DDBLT_WAIT, nullptr)`.
+  The unit's own comment says the emitter's slots are nullary until someone
+  fixes the signature, and nobody did.
+
+  it never advanced the y between bubble lines - `top += 0`. The image adds
+  a line height derived from the font: `unk_1_` if it is negative, and
+  `height_ + unk_1_` if it is not.
+
+A fourth thing about it is not a defect but reads as one: the block after
+the bubble names its locals `top` and `right` for 0x9B6E40 and 0x9B6E3C,
+which are `right` and `top`. The STORES are correct - the block undoes the
+four adjustments the box made - so only the names mislead.
+
+THREE OF ITS "GLOBALS" ARE MEMBERS. 0x009B74C0, 0x009B7510 and 0x009B7514
+are `ScreenBuffer.rect2_`, `.dib_.bmiHeader.biWidth` and `.biHeight`:
+`ScreenBuffer` is at 0x009B7490 and those are +0x30, +0x80 and +0x84. A
+scaffold that binds globals by address cannot see that, which is most of
+why it needed thirty-three of them.
+
+THE SLOTS ARE `IDirectDrawSurface`, confirmed by the arity pushed at each
+site: 5 is `Blt`, 11 is `Flip`, 17 is `GetDC`, 25 is `Lock`, 26 is
+`ReleaseDC`, 32 is `Unlock`. Slot 11 being `Flip` is what this function is.
+*/
+void __cdecl Win::flip(RECT *area) {
+    if (WinFlipHook != nullptr) {
+        WinFlipHook();
+    }
+
+    if (*WinBubbleActive != 0) {
+        if (area != nullptr) {
+            ScreenBuffer.set_clip(area);
+        }
+        ScreenBuffer.box(WinBubbleRect, WinBubbleEdgeColour,
+                         WinBubbleEdgeColour);
+        // The box is drawn on the border and the fill inside it, so the
+        // rectangle moves in by one on each side and back out below.
+        WinBubbleRect->left += 1;
+        WinBubbleRect->top -= 1;
+        WinBubbleRect->right += 1;
+        WinBubbleRect->bottom -= 1;
+        ScreenBuffer.fill(WinBubbleRect, WinBubbleFillColour);
+        ScreenBuffer.set_font(WinBubbleFont, nullptr, nullptr, nullptr);
+        ScreenBuffer.set_text_color(WinBubbleTextColour, -1, 1, 1);
+
+        LPSTR text = reinterpret_cast<LPSTR>(*WinBubbleActive);
+        if (strchr(text, '^') == nullptr) {
+            // One line, centred in the box.
+            if (text != nullptr) {
+                ScreenBuffer.write_cent_l(text, WinBubbleRect,
+                                          static_cast<int>(strlen(text)));
+            }
+        } else {
+            // `^` separates lines. Each is centred in turn and the
+            // separator is put back so the caller's string survives.
+            int y = WinBubbleRect->top + 1;
+            LPSTR line = text;
+            for (;;) {
+                LPSTR const split = strchr(line, '^');
+                if (split != nullptr) {
+                    *split = '\0';
+                }
+                ScreenBuffer.write_cent_l(
+                    line, WinBubbleRect->left, y,
+                    WinBubbleRect->right - WinBubbleRect->left,
+                    static_cast<int>(strlen(line)));
+                y += (WinBubbleFont->unk_1_ < 0)
+                    ? WinBubbleFont->line_height_
+                    : WinBubbleFont->height_ + WinBubbleFont->unk_1_;
+                if (split == nullptr) {
+                    break;
+                }
+                *split = '^';
+                line = split + 1;
+            }
+        }
+    }
+
+    WinBubbleRect->left -= 1;
+    WinBubbleRect->top += 1;
+    WinBubbleRect->right -= 1;
+    WinBubbleRect->bottom += 1;
+    if (area != nullptr) {
+        ScreenBuffer.set_clip(&ScreenBuffer.rect2_);
+    }
+
+    if (WinFlipSprite != nullptr) {
+        // The frame index is the sprite's own byte at +8.
+        WinFlipSprite->draw(&ScreenBuffer, WinFlipSprite->cTransparentIndex_,
+                            WinFlipSpriteY, WinFlipSpriteX, 1, 1);
+    }
+
+    if (DirectDrawSurface != nullptr) {
+        // A clipped flip only reaches the screen when the caller's rectangle
+        // meets the surface's; an unclipped one always does.
+        RECT unused;
+        if (WinFlipClipped == 0 || area == nullptr
+            || IntersectRect(&unused, area, &DirectDrawClipRect)) {
+            DirectDrawSurface->Blt(nullptr, DirectDrawBackBuffer, nullptr,
+                                   DDBLT_WAIT, nullptr);
+        } else {
+            return;
+        }
+    }
+
+    if (WinHdcRefCount != 0) {
+        ++WinHdcRefCount;
+    } else {
+        WinSharedHdc = GetDC(HandleMain);
+        if (WinSharedHdc != nullptr) {
+            WinHdcRefCount = 1;
+        }
+    }
+    if (WinSharedHdc == nullptr) {
+        return;
+    }
+
+    const HDC source = ScreenBuffer.get_hdc();
+    if (source == nullptr) {
+        if (--WinHdcRefCount != 0) {
+            return;
+        }
+        if (DirectDrawSurface != nullptr) {
+            DirectDrawSurface->Blt(nullptr, DirectDrawBackBuffer, nullptr,
+                                   DDBLT_WAIT, nullptr);
+        }
+        WinSharedHdc = nullptr;
+        return;
+    }
+
+    ScreenBuffer.sync_to_palette(PaletteActive);
+
+    if (BufferDirectDraw == nullptr) {
+        if (WinHdcRefCount != 0) {
+            ++WinHdcRefCount;
+        } else if (DirectDrawSurface != nullptr) {
+            DirectDrawSurface->Flip(nullptr, DDFLIP_WAIT);
+            WinHdcRefCount = 1;
+        } else {
+            WinSharedHdc = GetDC(HandleMain);
+            if (WinSharedHdc != nullptr) {
+                WinHdcRefCount = 1;
+            }
+        }
+        if (WinSharedHdc != nullptr) {
+            SelectPalette(WinSharedHdc, PaletteInitialized, FALSE);
+            RealizePalette(WinSharedHdc);
+            Win::release_hdc();
+        }
+    }
+
+    if (area == nullptr) {
+        BitBlt(WinSharedHdc, 0, 0, ScreenBuffer.dib_.bmiHeader.biWidth,
+               -ScreenBuffer.dib_.bmiHeader.biHeight, source, 0, 0, SRCCOPY);
+    } else {
+        BitBlt(WinSharedHdc, area->left, area->top,
+               area->right - area->left, area->bottom - area->top,
+               source, area->left, area->top, SRCCOPY);
+    }
+
+    if (--WinHdcRefCount == 0) {
+        if (DirectDrawSurface != nullptr) {
+            DirectDrawSurface->ReleaseDC(WinSharedHdc);
+        } else {
+            ReleaseDC(HandleMain, WinSharedHdc);
+        }
+        WinSharedHdc = nullptr;
+    }
+}
+
 
 /*
 Purpose: Dismiss any pending bubble text and repaint the area it covered.

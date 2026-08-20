@@ -216,6 +216,9 @@ class DLLEXPORT Buffer {
            int src_width, int src_height);
 
  private:
+  // `Win::flip` clips the screen buffer back to its own extent and reads
+  // the DIB's dimensions for the final BitBlt.
+  friend class Win;
   
   uint32_t poOwner_;
   uint32_t field_8_;
