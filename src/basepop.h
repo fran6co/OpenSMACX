@@ -33,6 +33,10 @@ class BasePop : GraphicWin {
   // [esp+8], the FIRST slot, so there is no receiver: declared as a member
   // the body reads [esp+0xc] and every argument shifts. The `symbol` fact on
   // each marker records what this tree emits instead.
+  // 0x00600F00, still a pending_bodies forwarder. Declared HERE because
+  // `BasePop` inherits GraphicWin privately, so an undeclared `close`
+  // resolves to the inaccessible base one.
+  void close();
   // 0x00602600, still a pending_bodies forwarder: the two `exec`
   // overloads below call it BY NAME so they emit the image's `E8`.
   int exec(int flags, int(__cdecl *callback)());

@@ -45,6 +45,10 @@ class Popup : BasePop {
   ~Popup() { ; }
   void close();
   void on_adjust_button_width();
+  // 0x00406380, still a pending_bodies forwarder: the three overloads
+  // below call it BY NAME so they emit the image's `call rel32`.
+  void start(char *a1, const char *a2, int a3, char *a4, int a5,
+             GraphicWin *owner);
   void start(char *a1, const char *a2, int a3, char *a4, int a5);
   void start(const char *label);
   void start(const char *label, int value);
@@ -84,21 +88,17 @@ void __fastcall popup_on_redraw_nc_redirect(
     Popup *self, void *, RECT *a1, int a2);
 
 // BasePop::close is not recovered yet.
-typedef void (OriginalObject::*func_base_pop_close)();
-extern func_base_pop_close BasePopOriginalClose;
 
 void __fastcall popup_close_redirect(Popup *self, void *);
 
 // The six-argument Popup::start is not recovered; the five-argument form
 // forwards to it with a null final GraphicWin argument.
-typedef void (OriginalObject::*func_popup_start_full)(char *, const char *, int, char *, int, void *);
-extern func_popup_start_full PopupOriginalStartFull;
 
 void __fastcall popup_start_redirect(Popup *self, void *, char *a1,
                                      const char *a2, int a3, char *a4, int a5);
 
 // The two short start forms share the caption buffer at a fixed address.
-extern char *PopupStartCaption;
+extern char PopupStartCaption[256];
 
 void __fastcall popup_start_label_redirect(Popup *self, void *, const char *label);
 void __fastcall popup_start_label_value_redirect(Popup *self, void *,
@@ -117,9 +117,11 @@ int __fastcall popup_on_dialog_back_draw_redirect(Popup *self, void *, ::Graphic
  * plain char* here (PAD in the mangled names), unlike the const char*
  * label used by the XPopsOriginalFull family in xpops.h.
  */
-typedef int (__cdecl func_pops_full)(char *, char *, int, char *, int,
-                                     Sprite *, int, int, int (__cdecl *)());
-extern func_pops_full *PopsOriginalFull;
+// 0x006276A0, still a pending_bodies forwarder. Declared as a name rather
+// than reached through `func_pops_full *`, which compiled `call [ptr]` at
+// every one of the `pop` wrappers below.
+int __cdecl pops(char *caption, char *label, int a3, char *a4, int a5,
+                 Sprite *sprite, int a7, int a8, int (__cdecl *callback)());
 
 int __cdecl pop_label_cb(char *label, int (__cdecl *callback)());
 int __cdecl pop_caption(char *caption, char *label,
