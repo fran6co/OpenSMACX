@@ -99,7 +99,7 @@ Buffer::Buffer() {
     for (size_t slot = 0; slot < OwnedAllocationCount; ++slot) {
         owned_[slot] = nullptr;
     }
-    field_584_ = 0;
+    palette_ = nullptr;
     field_C_ = 0;
     field_8_ = 0;
     field_14_ = 0;
@@ -116,7 +116,7 @@ Buffer::Buffer() {
     surface_lock_count_ = 0;
     previous_bitmap_ = 0;
     bitmap_handle_ = nullptr;
-    field_4A4_ = 0;
+    palette_seed_ = 0;
     stride_ = 0;
     field_50C_ = -1;
     field_510_ = 0;
@@ -151,7 +151,7 @@ Buffer::Buffer() {
     color_hyper_val_2_ = -1;
     color_hyper_val_3_ = 2;
     color_hyper_val_4_ = 2;
-    field_57C_ = 0;
+    has_palette_ = 0;
     field_580_ = 0;
     clip_region_ = nullptr;
     poOwner_ = 0;
@@ -1269,9 +1269,9 @@ void Buffer::close() {
     field_18_ = 0;
     field_14_ = 0;
     field_10_ = 0;
-    field_4A4_ = 0;
+    palette_seed_ = 0;
     stride_ = 0;
-    field_57C_ = 0;
+    has_palette_ = 0;
     field_580_ = 0;
     dib_.bmiHeader.biWidth = 0;
     dib_.bmiHeader.biHeight = 0;
@@ -1307,7 +1307,7 @@ void Buffer::close() {
     color_hyper_val_2_ = 0xFFFFFFFFU;
     color_hyper_val_3_ = 2;
     color_hyper_val_4_ = 2;
-    field_584_ = 0;
+    palette_ = nullptr;
     init_flags_ = 0;
 }
 
@@ -1457,10 +1457,10 @@ int Buffer::sync_to_palette(Palette *palette) {
     if (!palette) {
         return 3;
     }
-    // field_4A4_ caches the palette generation tag and sits immediately after
-    // the 256-entry table it guards, so an unchanged palette costs nothing.
-    if (field_4A4_ != palette->seed_) {
-        field_4A4_ = palette->seed_;
+    // An unchanged palette costs nothing: `seed_` is the generation and
+    // `palette_seed_` is the one this buffer's colour table already holds.
+    if (palette_seed_ != palette->seed_) {
+        palette_seed_ = palette->seed_;
         RGBQUAD *const table = dib_.bmiColors;
         palette->get_rgbquad(table, 0, 0x100);
         const HDC device = get_hdc();
@@ -1469,8 +1469,8 @@ int Buffer::sync_to_palette(Palette *palette) {
             release_hdc(1);
         }
     }
-    field_57C_ = 1;
-    field_584_ = reinterpret_cast<uint32_t>(palette);
+    has_palette_ = 1;
+    palette_ = palette;
     return 0;
 }
 

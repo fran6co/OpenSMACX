@@ -60,7 +60,7 @@ struct ExtDirectDraw {
  * Windows declares `BITMAPINFO` with a one-entry table, so the 256-entry
  * form always needs a struct of its own; this is what the original called
  * theirs. Header plus table is 40 + 1024 = 0x428 bytes, and 0x7C + 0x428 is
- * exactly `Buffer::field_4A4_`, so the block is accounted for to the byte.
+ * exactly `Buffer::palette_seed_`, so the block is accounted for to the byte.
  */
 struct Dib {
     BITMAPINFOHEADER bmiHeader;
@@ -210,7 +210,7 @@ class DLLEXPORT Buffer {
    * `BITMAPINFO` is declared by Windows with a one-entry colour table, so
    * the 256-entry form always needs its own struct; this is that struct.
    * Header plus table is 40 + 1024 = 0x428 bytes, and 0x7C + 0x428 is
-   * exactly `field_4A4_`, so the block is accounted for to the byte.
+   * exactly `palette_seed_`, so the block is accounted for to the byte.
    *
    * `biHeight` IS STORED NEGATIVE, by `Buffer::init` and by `set_dib_bits`.
    * That is not a quirk of this engine - a negative `biHeight` is how a DIB
@@ -221,7 +221,26 @@ class DLLEXPORT Buffer {
   Dib dib_;
 
  private:
-  uint32_t field_4A4_;
+  /*
+   * 0x4A4. THE PALETTE GENERATION WHOSE COLOURS ARE IN `dib_.bmiColors`,
+   * and it sits immediately after the table it guards.
+   *
+   * `Palette::init` picks `seed_` at random and loops until it is non-zero,
+   * so a palette that has been initialised never carries zero and zero is
+   * free to mean "nothing cached". The constructor and `close` store zero,
+   * which is why the first publish after either always happens.
+   *
+   * SIX FUNCTIONS CONSULT IT, all with the same five lines: compare against
+   * the live palette's `seed_`, and on a difference store it, refill the
+   * 256 entries through `Palette::get_rgbquad` and push them into the
+   * device context with `SetDIBColorTable`. `Buffer::sync_to_palette` is
+   * that code written out; `copy`, `copy_to_window`, `load_pcx` and two
+   * bodies still unrecovered at 0x005D98F0 and 0x005D9FB0 have it inlined,
+   * twice each where they touch two buffers. Reading any one of them alone
+   * would suggest a private cache; reading all six is what makes it a
+   * generation tag.
+   */
+  uint32_t palette_seed_;
   // 0x4A8. `Buffer::init` sets it to `(width + 3) & ~3`: the row pitch a
   // DIB needs, the width rounded up to a DWORD.
   uint32_t stride_;
@@ -264,12 +283,41 @@ class DLLEXPORT Buffer {
   uint32_t color_2_val_4_;
   uint32_t color_3_val_4_;
   uint32_t color_hyper_val_4_;
-  uint32_t field_57C_;
+  /*
+   * 0x57C. A PALETTE HAS BEEN ATTACHED. Set to 1 at all eight sites that
+   * publish one - `sync_to_palette`, both halves of `copy`, `copy_to_window`,
+   * `load_pcx` and the two bodies still unrecovered at 0x005D98F0 and
+   * 0x005D9FB0 - and cleared to 0 by the constructor and `close`, always in
+   * the instruction immediately before `palette_` is written beside it.
+   *
+   * SET ON BOTH PATHS, which is what rules out "the colour table is stale":
+   * the branch that skips the republish because `palette_seed_` still
+   * matches lands directly on this store.
+   *
+   * NOTHING IN THE IMAGE READS IT. All thirteen references to a +0x57C
+   * displacement in `.text` are stores, ten of them Buffer's and three
+   * belonging to other classes, and none of them is SIB-based. It carries
+   * exactly what `palette_ != nullptr` already carries, so it is a flag the
+   * shipped build writes and never asks about.
+   */
+  uint32_t has_palette_;
   int8_t field_580_;
   // 0x584, and it is the alignment after `int8_t field_580_` that puts it
   // there rather than at 0x581 - which is also what makes
   // `sizeof(Buffer) == 0x588` come out right.
-  uint32_t field_584_;
+  /*
+   * 0x584. THE PALETTE THIS BUFFER LAST SYNCED TO, and a `Palette *` by
+   * dereference rather than by what is stored into it: `copy_to_window`
+   * reads it, null-checks it, and then reads `[it + 0x400]` - which is
+   * `Palette::seed_`, since `entries_[256]` occupies the 0x400 bytes before
+   * it. Every other reference is a store, of `PaletteActive` in the copy
+   * paths and of the argument in `sync_to_palette`, and stores alone could
+   * not have told a pointer from a tag.
+   *
+   * It pairs with `palette_seed_`: this is WHICH palette, that is WHICH
+   * GENERATION of it, and a publish is skipped only when both still agree.
+   */
+  Palette *palette_;
 };
 
 static_assert(sizeof(Buffer) == 0x588, "Buffer layout must match the original executable");
