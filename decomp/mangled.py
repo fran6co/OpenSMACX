@@ -151,10 +151,20 @@ def arity(mangled: str) -> int | None:
     body = tail[skip:-1]               # drop the trailing `Z`
     if body.endswith("@"):             # `@Z` closes an argument list
         body = body[:-1]
+    # A CONSTRUCTOR OR DESTRUCTOR HAS NO RETURN TYPE, and MSVC marks the
+    # absence with a bare `@` where the type would be: `??0Font@@QAE@XZ` is
+    # `QAE` then `@` then the arguments. Read as a return type, that `@`
+    # made `_types` fail and every `??0`/`??1` name came back None - which
+    # is exactly the population where arity is needed, because a class's
+    # constructors are distinguished by nothing else. `??0Font@@QAE@XZ` and
+    # `??0Font@@QAE@PADHH@Z` are two definitions on two lines of one file.
+    returns = True
+    if body.startswith("@"):
+        body, returns = body[1:], False
     types = _types(body)
     if types is None or not types:
         return None
-    arguments = types[1:]              # the first is the RETURN type
+    arguments = types[1:] if returns else types
     if arguments == ["X"]:
         return 0                       # `void` is no arguments
     return len(arguments)

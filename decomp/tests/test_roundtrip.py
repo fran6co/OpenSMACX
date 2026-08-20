@@ -696,3 +696,18 @@ def layering(root: Path | None = None) -> int:
         checked += 1
     assert checked, "no modules checked - the glob found nothing"
     return checked
+
+
+def test_a_body_fact_must_name_a_path_not_a_word():
+    """`FACT_LINE`'s own comment records this lesson for `calls`: a wrapped
+    sentence re-flowed onto its own line begins `// ` plus a word, and the
+    key alone cannot tell prose from a fact. `body needs.` is one token and
+    is the tail of a sentence in src/recovered/units/005e8fa5.cpp."""
+    prose = reader.read_text(
+        "// ORIGINAL: 0x00401000 ?f@@YAXXZ 0x00401000-0x00401008\n"
+        "// body needs.\n", Path("x.cpp"))
+    assert prose[0].body == ""
+    real = reader.read_text(
+        "// ORIGINAL: 0x00401000 ?f@@YAXXZ 0x00401000-0x00401008\n"
+        "// body      src/thing.h\n", Path("x.cpp"))
+    assert real[0].body == "src/thing.h"
