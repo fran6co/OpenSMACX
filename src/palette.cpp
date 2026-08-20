@@ -432,7 +432,7 @@ int Palette::set() {
 }
 
 /*
-// ORIGINAL: 0x005FE500 ?close@Palette@@QAEXXZ 0x005FE500-0x005FE554
+// ORIGINAL: 0x005FE500 ?close@Palette@@QAEXXZ 0x005FE500-0x005FE554 BYTE_EXACT
 // size      84 bytes
 // prototype void (__thiscall ?close@Palette@@QAEXXZ)(Palette* this)
 // callers   5   call targets   3
@@ -446,39 +446,25 @@ int Palette::set() {
 Status: Complete
 */
 void Palette::close() {
-    // 24 of the image's 34 instructions, and the ten that differ are not
-    // this body's doing. Walking a raw `char *base = (char *)this + 0x408`
-    // instead agrees on 32 - but nobody writes that, and the mnemonic
-    // sequences are IDENTICAL either way (similarity 1.000), so the source
-    // is not what the two versions disagree about.
-    //
-    // WHAT THEY DISAGREE ABOUT IS THE BASE REGISTER. Through a named
-    // `PaletteInternal &` VC6 bases the loop on `colours` (this + 0x410);
-    // the image bases on `.time` (this + 0x408). Both fit a byte
-    // displacement, so the choice is free and something we have not
-    // identified picks it - a flag, or a layout detail of this struct we
-    // have modelled slightly wrong. That is the thing to chase.
-    //
-    // The last two are separate: the image writes `key = -1` BEFORE
-    // loading the timer and we emit those two `mov`s transposed, through
-    // seven source spellings and six flag sets including all four /G
-    // processor targets. A scheduler decision, so far unreachable.
+    // SYMMETRY IS WHAT MAKES THIS EXACT. Reading `time` into a local and
+    // nulling the field touches it twice while `colours` - tested, freed and
+    // nulled - is touched three times, and VC6 bases the loop on the
+    // busier field: every displacement then lands eight bytes off the
+    // image's, which reads as SHAPE_EXACT with the right registers and the
+    // wrong constants. Treat the two the same way and the base lands where
+    // the image puts it, at `this + 0x408`.
     for (int i = 0; i < 5; ++i) {
-        PaletteInternal &slot = internal_[i];
-        slot.key = -1;
-        // OWNED. The image calls `??1Time@@QAE@XZ` then the CRT's
-        // `operator delete` here, which is what `delete` compiles to.
-        Time *owned = slot.time;
-        if (owned) {
-            delete owned;
-            slot.time = nullptr;
+        internal_[i].key = -1;
+        if (internal_[i].time) {
+            delete internal_[i].time;
+            internal_[i].time = nullptr;
         }
-        if (slot.colours) {
-            free(slot.colours);
-            slot.colours = nullptr;
+        if (internal_[i].colours) {
+            free(internal_[i].colours);
+            internal_[i].colours = nullptr;
         }
-        slot.first = 0;
-        slot.count = 0;
+        internal_[i].first = 0;
+        internal_[i].count = 0;
     }
 }
 
