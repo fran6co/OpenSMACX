@@ -636,3 +636,49 @@ Palette::Palette() {
 // flags     hidden;thunk;sp_ready;purged_ok
 // calls     (none)
 */
+
+/*
+Purpose: Restart the timer of the colour-cycling slot that owns `key`.
+// ORIGINAL: 0x005FE8B0 ?start_cycle@Palette@@QAEHH@Z 0x005FE8B0-0x005FE8FB
+// size      75 bytes
+// prototype int (__thiscall ?start_cycle@Palette@@QAEHH@Z)(Palette* this, int)
+// callers   1   call targets   1
+// kind      game
+// calls     0x00616650
+Return Value: No errors (0); no slot holds that key (0xB)
+Status: Semantics transcribed from the image
+
+PROMOTED FROM src/recovered/units/005fe8b0.cpp, which reached the slots
+through `reinterpret_cast<CycleEntry *>(self + 0x404)`.
+
+THE SCAN CAN RUN OFF THE END. Five slots, and the loop leaves `slot` at 5
+when none of them matched - the image's `cmp eax, 5; jl` exits with eax == 5
+and then reads `[eax*16 + 0x404]`, which is 0x454: one dword past the object.
+It compares that against the key and returns 0xB when it differs, which it
+almost always will. Reproduced rather than fixed; a bounds check here is a
+different program.
+*/
+int Palette::start_cycle(int key) {
+    // A WALKING POINTER AND AN INDEX, both live. The image steps `esi` by
+    // 0x10 through the slots and counts in `eax`, then recomputes the
+    // address from the INDEX afterwards - `shl eax, 4; add eax, ecx`.
+    // Indexing in the loop lets VC6 peel the first iteration and rotate the
+    // test to the bottom, which is a different shape entirely.
+    const PaletteInternal *entry = internal_;
+    int slot = 0;
+    do {
+        // Read once, compared twice: `mov edx, [esi]` then two `cmp`s
+        // against the register, not two memory compares.
+        const int held = static_cast<int>(entry->key);
+        if (key == held || held == -1) {
+            break;
+        }
+        ++slot;
+        ++entry;
+    } while (slot < 5);
+    if (static_cast<int>(internal_[slot].key) != key) {
+        return 0xB;
+    }
+    internal_[slot].time->start();
+    return 0;
+}

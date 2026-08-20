@@ -30,6 +30,7 @@ class Sprite {
   int UNK1(int a, int b, int c, int d, int e, int f, int g);
   int UNK2(int a, int b, int c, int d, int e);
   int draw(Buffer *buffer, int a, int b, int c, int x, int y);
+  int draw(Buffer *buffer, int a, int b, int c);
   // Sprite-sheet extraction used by the per-control init_class bodies; declared
   // here so they compile, still pending_bodies forwarders. `extract`'s last
   // parameter is a texture-heap pointer the callers pass as null.
@@ -83,13 +84,11 @@ int __fastcall sprite_draw_redirect(
     Sprite *self, void *, Buffer *buffer, int a, int b, int c, int x, int y);
 
 // The draw origin this overload substitutes for the duration of the call.
-extern int *SpriteDrawOriginX;
-extern int *SpriteDrawOriginY;
+extern int SpriteDrawOriginX;
+extern int SpriteDrawOriginY;
 
 // The four-argument overload this one wraps is a 3225-byte body with eleven
 // call targets, still an original dependency. Tests rebind this seam.
-typedef int (OriginalObject::*func_sprite_draw_original)(Buffer *, int, int, int);
-extern func_sprite_draw_original SpriteDrawOriginal;
 
 int __fastcall sprite_unk1_redirect(
     Sprite *self, void *, int a, int b, int c, int d, int e, int f, int g);

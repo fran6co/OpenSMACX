@@ -37,6 +37,7 @@ class Palette {
   // 0x005FE650. Not recovered; `Buffer::load_pcx` hands it the buffer's own
   // `Dib` after decoding, which is the one call site this tree has.
   int set_from_dib(Dib *dib);
+  int start_cycle(int key);
   // `static`, and the image's name says so: `?init_palette_class@Palette@@
   // SAXH@Z`. It used to be catalogued `QAA`, which this comment described as
   // "a public member declared __cdecl, taking no receiver" - a contradiction,

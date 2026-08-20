@@ -27,6 +27,16 @@
   */
 class BasePop : GraphicWin {
  public:
+  // STATIC, AND THE CATALOGUED NAME IS WRONG. It reads
+  // `?set_def_ok_text@BasePop@@QAAHPAD@Z` - QAA, a `__cdecl` MEMBER, which
+  // would push `this` as the first argument. The image reads its string from
+  // [esp+8], the FIRST slot, so there is no receiver: declared as a member
+  // the body reads [esp+0xc] and every argument shifts. The `symbol` fact on
+  // each marker records what this tree emits instead.
+  static int __cdecl set_def_ok_text(LPSTR text);
+  static int __cdecl set_def_cancel_text(LPSTR text);
+
+ public:
   static void fallout();
 
   // `static`, because the receiver its catalogued name claims is a receiver
@@ -485,3 +495,9 @@ void __cdecl base_pop_fallout_redirect();
 // Set when the fallout flag is raised, but only while the gate global is set.
 extern int *BasePopFalloutGate;
 extern int *BasePopFalloutFlag;
+
+// The two default button captions, heap copies the class owns. `init_class`
+// seeds them from the literals "OK" and "Cancel"; the two setters below
+// replace them.
+extern char *BasePopDefaultOkText;      // 0x009B8D80
+extern char *BasePopDefaultCancelText;  // 0x009B8D84
