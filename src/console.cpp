@@ -502,7 +502,11 @@ void Console::editor_climate() {
     auto_undo();
     if (!custom_planet(0, 0)) {
         world_climate();
-        draw_map(1);
+        // QUALIFIED: `Console : MapWin` inherits `MapWin::draw_map`, so the
+        // unqualified name binds to the member and compiles a `__thiscall`
+        // where the image has a `__cdecl` call to the FREE draw_map at
+        // 0x0046B190. The `::` is what makes the two the same call.
+        ::draw_map(1);
     }
 }
 
@@ -550,5 +554,5 @@ void Console::editor_polar() {
     auto_undo();
     world_polar_caps();
     world_climate();
-    draw_map(1);
+    ::draw_map(1);   // the FREE draw_map; see Console::editor_climate above
 }
