@@ -822,12 +822,14 @@ def test_one_address_annotated_twice_in_one_file_fails_the_gate(tmp_path,
 
 
 def test_the_same_address_in_two_files_is_allowed(tmp_path, monkeypatch):
-    marker = ("// ORIGINAL: 0x00402000 ?f@@YAXXZ 0x00402000-0x00402010 "
-              "BYTE_EXACT\nvoid f() {\n}\n")
-    (tmp_path / "x.cpp").write_text(marker)
+    """The body in `src/` and the piece preserved beside it. Only ONE of
+    them claims here: two CLAIMS on one address is the artifact being a
+    copy, which `redundant_artifacts` refuses."""
+    marker = "// ORIGINAL: 0x00402000 ?f@@YAXXZ 0x00402000-0x00402010"
+    (tmp_path / "x.cpp").write_text(marker + " BYTE_EXACT\nvoid f() {\n}\n")
     kept = tmp_path / "unrecovered"
     kept.mkdir()
-    (kept / "00402000.cpp").write_text(marker)
+    (kept / "00402000.cpp").write_text(marker + "\nvoid f() {\n}\n")
     monkeypatch.setattr(osmx, "_check_one_file",
                         fake_file_result({0x00402000: "BYTE_EXACT"}))
     result = check(tmp_path)
@@ -862,3 +864,37 @@ def test_a_subject_one_flag_set_does_not_emit_stays_outstanding(tmp_path,
     out = osmx._check_one_file((tmp_path / "x.cpp", records, "exe", ["cl"],
                                 ("/O2", "/O2 /Ob0")))
     assert [v for _k, v, _n in out] == ["BYTE_EXACT"]
+
+
+def test_an_artifact_claiming_what_product_source_claims_is_redundant(
+        tmp_path, monkeypatch):
+    """A preserved unit proves a body reproduces SOMEWHERE; once the shipped
+    source reproduces the same address, that proof is a copy. Eighteen
+    accumulated in one session, each created by fixing a body and forgetting
+    its artifact."""
+    marker = "// ORIGINAL: 0x00402000 ?f@@YAXXZ 0x00402000-0x00402010"
+    (tmp_path / "body.cpp").write_text(marker + " BYTE_EXACT\nvoid f() {\n}\n")
+    kept = tmp_path / "recovered"
+    kept.mkdir()
+    (kept / "00402000.cpp").write_text(marker + " BYTE_EXACT\nvoid f() {\n}\n")
+    monkeypatch.setattr(osmx, "_check_one_file",
+                        fake_file_result({0x00402000: "BYTE_EXACT"}))
+    result = check(tmp_path)
+    assert result.exit_code == 1
+    assert "the artifact is a copy" in result.output
+
+
+def test_an_artifact_whose_twin_does_not_reproduce_stays(tmp_path,
+                                                          monkeypatch):
+    """That one is the only evidence there is - which is why the test is on
+    the CLAIM and not on the address."""
+    marker = "// ORIGINAL: 0x00402000 ?f@@YAXXZ 0x00402000-0x00402010"
+    (tmp_path / "body.cpp").write_text(marker + "\nvoid f() {\n}\n")
+    kept = tmp_path / "recovered"
+    kept.mkdir()
+    (kept / "00402000.cpp").write_text(marker + " BYTE_EXACT\nvoid f() {\n}\n")
+    monkeypatch.setattr(osmx, "_check_one_file",
+                        fake_file_result({0x00402000: "BYTE_EXACT"}))
+    result = check(tmp_path)
+    assert result.exit_code == 0, result.output
+    assert "copy" not in result.output
