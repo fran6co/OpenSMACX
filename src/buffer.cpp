@@ -386,7 +386,7 @@ static const size_t SurfaceDescriptorData = 0x24;
 /*
 Purpose: Acquire the buffer's pixel data, locking the DirectDraw surface on the
          first reference and counting every acquisition.
-// ORIGINAL: 0x005E3373 ?get_data@Buffer@@QAEHXZ 0x005E3373-0x005E33EA
+// ORIGINAL: 0x005E3373 ?get_data@Buffer@@QAEHXZ 0x005E3373-0x005E33EA BYTE_EXACT
 // size      119 bytes
 // prototype int (__thiscall ?get_data@Buffer@@QAEHXZ)(Buffer* this)
 // callers   48   call targets   0
@@ -398,37 +398,50 @@ Purpose: Acquire the buffer's pixel data, locking the DirectDraw surface on the
 Status: Complete
 */
 int Buffer::get_data() {
+    // ONE `return 0` FOR EVERY FAILURE, at the end: the image's `je` at
+    // 0x005E3388 jumps the whole length of the body to 0x005E33E5, where the
+    // Lock failure lands too. Written as an early `return 0` inside the first
+    // arm, VC6 emits a second epilogue there and the tail moves.
     if (surface_ == nullptr) {
         // Without a surface the buffer publishes its own storage, and the
-        // store happens whether or not that storage exists.
+        // store happens whether or not that storage exists. IT RETURNS THAT
+        // STORAGE EITHER WAY - the null path is not a `return 0`, which is
+        // why the epilogue it jumps to at 0x005E33E5 has no `xor eax, eax`:
+        // eax already holds `dib_bits_`, and that IS the zero.
         locked_bits_ = dib_bits_;
-        if (dib_bits_ == nullptr) {
-            return 0;
+        if (dib_bits_ != nullptr) {
+            ++surface_lock_count_;
         }
-        ++surface_lock_count_;
         return reinterpret_cast<int>(dib_bits_);
     }
     if (locked_bits_ != nullptr) {
         ++surface_lock_count_;
         return reinterpret_cast<int>(locked_bits_);
     }
-    // THE DESCRIPTOR IS UNINITIALISED APART FROM ITS SIZE, which is what the
-    // image does and what DirectDraw asks for: `Lock` fills in the rest.
-    DDSURFACEDESC description;
-    description.dwSize = sizeof(description);
-    if (surface_->Lock(nullptr, &description, DDLOCK_WAIT, nullptr) != 0) {
-        return 0;
+    {
+        // THE DESCRIPTOR IS UNINITIALISED APART FROM ITS SIZE, which is what
+        // the image does and what DirectDraw asks for: `Lock` fills the rest.
+        DDSURFACEDESC description;
+        description.dwSize = sizeof(description);
+        // THIS failure returns zero where it stands - the image's
+        // `xor eax, eax` at 0x005E33C6 is inline - while the `dib_bits_`
+        // case above jumps the length of the body to the other zero at the
+        // end. Two of them, and which is which is not interchangeable.
+        if (surface_->Lock(nullptr, &description, DDLOCK_WAIT, nullptr) != 0) {
+            return 0;
+        }
+        ++surface_lock_count_;
+        stride_ = description.lPitch;
+        locked_bits_ = description.lpSurface;
+        return reinterpret_cast<int>(description.lpSurface);
     }
-    ++surface_lock_count_;
-    stride_ = description.lPitch;
-    locked_bits_ = description.lpSurface;
-    return reinterpret_cast<int>(description.lpSurface);
+    return 0;
 }
 
 /*
 Purpose: Release acquired references to the buffer's pixel data, unlocking the
          DirectDraw surface once the last reference is dropped.
-// ORIGINAL: 0x005E34A3 ?free_data@Buffer@@QAEXH@Z 0x005E34A3-0x005E34FB
+// ORIGINAL: 0x005E34A3 ?free_data@Buffer@@QAEXH@Z 0x005E34A3-0x005E34FB BYTE_EXACT
 // size      88 bytes
 // prototype void (__thiscall ?free_data@Buffer@@QAEXH@Z)(Buffer* this, int)
 // callers   43   call targets   0
@@ -440,16 +453,20 @@ Purpose: Release acquired references to the buffer's pixel data, unlocking the
 Status: Complete
 */
 void Buffer::free_data(int count) {
-    const int remaining = surface_lock_count_ - count;
-    surface_lock_count_ = remaining;
+    // THE SURFACE TEST COMES FIRST and the subtraction is written out in
+    // both arms - `cmp ecx, edi; jne` at 0x005E34AE before any arithmetic.
+    // Hoisted above the test it lands two instructions early and every jump
+    // after it moves, which is the same shape `Buffer::close` needed.
     if (surface_ == nullptr) {
-        if (remaining <= 0) {
+        surface_lock_count_ -= count;
+        if (surface_lock_count_ <= 0) {
             locked_bits_ = nullptr;
             surface_lock_count_ = 0;
         }
         return;
     }
-    if (locked_bits_ != nullptr && remaining <= 0) {
+    surface_lock_count_ -= count;
+    if (locked_bits_ != nullptr && surface_lock_count_ <= 0) {
         surface_->Unlock(locked_bits_);
         locked_bits_ = nullptr;
         surface_lock_count_ = 0;
@@ -1486,7 +1503,7 @@ int Buffer::copy(Buffer *buffer, int xCoord, int yCoord, int wx, int wy,
 /*
 Purpose: Release every resource the buffer owns and reset it to its
          constructed state.
-// ORIGINAL: 0x005D7470 ?close@Buffer@@QAEXXZ 0x005D7470-0x005D7665
+// ORIGINAL: 0x005D7470 ?close@Buffer@@QAEXXZ 0x005D7470-0x005D7665 BYTE_EXACT
 // size      501 bytes
 // prototype void (__thiscall ?close@Buffer@@QAEXXZ)(Buffer* this)
 // callers   44   call targets   1
@@ -1512,21 +1529,27 @@ void Buffer::close() {
         hdc_lock_count_ = 0;
         surface_lock_count_ = 0;
         if (BufferDirectDraw != nullptr) {
-            // The lock count was just zeroed, so this decrement always lands
-            // at or below zero and the published data is dropped.
-            const int remaining = hdc_lock_count_ - 1;
-            hdc_lock_count_ = remaining;
+            // THE SURFACE TEST COMES FIRST, and the decrement is written
+            // out in BOTH arms rather than hoisted above them - the image is
+            // `cmp [esi+0x58], ebx; jne` and only then `mov ecx, [esi+0x68];
+            // dec ecx`. Hoisted, the count lands one instruction early and
+            // the whole tail shifts. `Buffer::release_hdc` needed the same
+            // shape. The count was just zeroed, so either decrement lands at
+            // or below zero and the published data is dropped.
             if (surface_ == nullptr) {
-                if (remaining <= 0) {
+                if (--hdc_lock_count_ <= 0) {
                     hdc2_ = nullptr;
                     hdc_lock_count_ = 0;
                 }
-            } else if (hdc2_ != nullptr && remaining <= 0) {
-                if (surface_->ReleaseDC(hdc2_) != 0) {
-                    surface_lost();
+            } else {
+                const int remaining = --hdc_lock_count_;
+                if (hdc2_ != nullptr && remaining <= 0) {
+                    if (surface_->ReleaseDC(hdc2_) != 0) {
+                        surface_lost();
+                    }
+                    hdc_lock_count_ = 0;
+                    hdc2_ = nullptr;
                 }
-                hdc_lock_count_ = 0;
-                hdc2_ = nullptr;
             }
         } else if ((init_flags_ & 4U) == 0) {
             if (previous_bitmap_ != 0) {
