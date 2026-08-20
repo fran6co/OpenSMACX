@@ -690,7 +690,7 @@ func_msg *check_net = (func_msg *)0x0062D5D0;
 func_msg *do_net = (func_msg *)0x0062D5B0;
 func_msg *do_non_input_ = (func_msg *)0x005FCA30;
 
-uint32_t *MsgStatus = (uint32_t *)0x009B7B9C;
+uint32_t MsgStatus;  // 0x009B7B9C
 
 /*
 Purpose: Process non-input related message.
@@ -745,9 +745,9 @@ Status: Complete - testing
 */
 void __cdecl do_all_non_input() {
     do {
-        *MsgStatus = 32;
+        MsgStatus = 32;
     } while (do_non_input_());
-    *MsgStatus = 0;
+    MsgStatus = 0;
     do_net();
     check_net();
 }
@@ -793,9 +793,9 @@ Status: Complete - testing
 */
 void __cdecl do_all_draws() {
     do {
-        *MsgStatus = 1;
+        MsgStatus = 1;
     } while (do_draw());
-    *MsgStatus = 0;
+    MsgStatus = 0;
 }
 
 /*
@@ -839,8 +839,8 @@ Status: Complete - testing
 */
 void __cdecl do_all_keyboard() {
     do {
-        *MsgStatus = 2;
+        MsgStatus = 2;
     } while (do_keyboard());
-    *MsgStatus = 0;
+    MsgStatus = 0;
     do_net();
 }

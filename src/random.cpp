@@ -47,15 +47,7 @@ Purpose: Get a random value between min and (max - 1).
 Return Value: Random unsigned integer within bounds
 Status: Complete
 */
-uint32_t Random::get(int min, int max) {
-    if (static_cast<int32_t>(min) > static_cast<int32_t>(max)) {
-        uint32_t temp = min;
-        min = max;
-        max = temp;
-    }
-    seed_ = seed_ * 0x19660D + 0x3C6EF35F;
-    return (((max - min) * LOWORD(seed_)) >> 16) + min;
-}
+// body src/random.h
 
 /*
 Purpose: Get a random double value.
@@ -128,8 +120,7 @@ void __cdecl random_reseed(uint32_t new_seed) { Rand.reseed(new_seed); }
 // notes     Staged hybrid export redirect calls the source-owned seed getter
 uint32_t __cdecl random_get() { return Rand.get_seed(); }
 
-// ORIGINAL: 0x00625810 ?random@@YAIHH@Z 0x00625810-0x0062584F
-// symbol    ?random@@YAIII@Z
+// ORIGINAL: 0x00625810 ?random@@YAIHH@Z 0x00625810-0x0062584F BYTE_EXACT
 // size      63 bytes
 // prototype 
 // callers   38   call targets   0
@@ -137,7 +128,7 @@ uint32_t __cdecl random_get() { return Rand.get_seed(); }
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
 // notes     Staged hybrid export redirect calls the source-owned integer generator
-uint32_t __cdecl random(uint32_t min, uint32_t max) { return Rand.get(min, max); }
+uint32_t __cdecl random(int min, int max) { return Rand.get(min, max); }
 
 // ORIGINAL: 0x00625850 ?random@@YANXZ 0x00625850-0x00625880
 // size      48 bytes
