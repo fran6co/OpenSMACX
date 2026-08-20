@@ -33,6 +33,9 @@ class BasePop : GraphicWin {
   // [esp+8], the FIRST slot, so there is no receiver: declared as a member
   // the body reads [esp+0xc] and every argument shifts. The `symbol` fact on
   // each marker records what this tree emits instead.
+  // 0x00602600, still a pending_bodies forwarder: the two `exec`
+  // overloads below call it BY NAME so they emit the image's `E8`.
+  int exec(int flags, int(__cdecl *callback)());
   static int __cdecl set_def_ok_text(LPSTR text);
   static int __cdecl set_def_cancel_text(LPSTR text);
 
@@ -424,7 +427,6 @@ void __fastcall base_pop_write_check_redirect(BasePop *self, void *, long value)
 
 // The two-argument exec these forward to is not recovered.
 typedef int (OriginalObject::*func_base_pop_exec)(int flag, int (__cdecl *callback)());
-extern func_base_pop_exec BasePopExec;
 
 int __fastcall base_pop_exec_void_redirect(BasePop *self, void *);
 int __fastcall base_pop_exec_callback_redirect(BasePop *self, void *,
@@ -450,8 +452,10 @@ int __cdecl base_pop_set_def_button_font_redirect(
 
 // Default string and button font slots at 0x009B8D98 and 0x009B8DA8; tests
 // outside the hybrid process rebind them.
-extern Font **BasePopDefaultStringFonts;
-extern Font **BasePopDefaultButtonFonts;
+// ARRAYS, NOT POINTERS. Four string fonts at 0x009B8D98 and three button
+// fonts at 0x009B8DA8; the image stores straight into them.
+extern Font *BasePopDefaultStringFonts[4];  // 0x009B8D98
+extern Font *BasePopDefaultButtonFonts[3];  // 0x009B8DA8
 
 void __cdecl base_pop_set_def_string_color_redirect(int c1, int c2, int c3, int c4);
 void __cdecl base_pop_set_def_string_color2_redirect(int c1, int c2, int c3, int c4);
@@ -465,8 +469,8 @@ void __cdecl base_pop_set_def_button_color3_redirect(int c1, int c2, int c3, int
 // Two interleaved default-colour tables. The string table carries four tiers
 // at a 0x10 slot stride; the button table carries three at 0xC. Tests rebind
 // both.
-extern uint32_t *BasePopDefaultStringColors;
-extern uint32_t *BasePopDefaultButtonColors;
+extern uint32_t BasePopDefaultStringColors[4][4];  // 0x00696EE4
+extern uint32_t BasePopDefaultButtonColors[4][3];  // 0x00696F24
 
 uint32_t __fastcall base_pop_read_check_redirect(BasePop *self, void *);
 int __fastcall base_pop_item_redirect(BasePop *self, void *, char *text, int index);
