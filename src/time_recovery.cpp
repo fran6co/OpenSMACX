@@ -1,6 +1,16 @@
 #include "stdafx.h"
 #include "time.h"
 
+/*
+// ORIGINAL: 0x006161D0 ??0Time@@QAE@XZ 0x006161D0-0x006161F6
+// size      38 bytes
+// prototype void (__thiscall ??0Time@@QAE@XZ)(Time* this)
+// callers   19   call targets   0
+// kind      
+// flags     
+// calls     (none)
+// notes     Staged hybrid export redirect calls the source-owned constructor
+*/
 Time::Time()
     : oneshot_state_(0),
       id_event_(0),
@@ -14,6 +24,17 @@ Time::Time()
       unk_2_(0) {
 }
 
+/*
+// ORIGINAL: 0x00616200 ??1Time@@QAE@XZ 0x00616200-0x00616260
+// size      96 bytes
+// prototype void (__thiscall ??1Time@@QAE@XZ)(Time* this)
+// callers   30   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FD370
+// indirect  0x0061621E 0x0061622C
+// notes     Staged hybrid export redirect calls the source-owned destructor
+*/
 Time::~Time() {
     close();
 }

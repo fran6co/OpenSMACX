@@ -25,6 +25,16 @@ typedef int (OriginalObject::*func_midi_device_init)(void *, unsigned long);
 static func_midi_device_init MidiDeviceInitOriginal =
     original_method<func_midi_device_init>(0x004C57A0);
 
+/*
+// ORIGINAL: 0x004C57A0 ?init@Midi_Device@@QAEHPAXK@Z 0x004C57A0-0x004C57E4
+// size      68 bytes
+// prototype int (__thiscall ?init@Midi_Device@@QAEHPAXK@Z)(Midi_Device* this, void*, unsigned int)
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x004C57AD 0x004C57BD 0x004C57CA
+*/
 int Midi_Device::init(void *window, unsigned long backends) {
     return (ORIGINAL(this)->*MidiDeviceInitOriginal)(window, backends);
 }
@@ -33,6 +43,16 @@ typedef int (OriginalObject::*func_wave_in_device_init)(void *, unsigned long);
 static func_wave_in_device_init WaveInDeviceInitOriginal =
     original_method<func_wave_in_device_init>(0x004C5A10);
 
+/*
+// ORIGINAL: 0x004C5A10 ?init@Wave_In_Device@@QAEHPAXK@Z 0x004C5A10-0x004C5A4D
+// size      61 bytes
+// prototype int (__thiscall ?init@Wave_In_Device@@QAEHPAXK@Z)(Wave_In_Device* this, void*, unsigned int)
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x004C5A1D 0x004C5A2D 0x004C5A3A
+*/
 int Wave_In_Device::init(void *window, unsigned long backends) {
     return (ORIGINAL(this)->*WaveInDeviceInitOriginal)(window, backends);
 }

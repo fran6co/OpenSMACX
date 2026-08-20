@@ -2,13 +2,43 @@
 #include "spot.h"
 #include "general.h"
 
+/*
+// ORIGINAL: 0x005FA860 ??0Spot@@QAE@XZ 0x005FA860-0x005FA86D
+// size      13 bytes
+// prototype void (__thiscall ??0Spot@@QAE@XZ)(Spot* this)
+// callers   19   call targets   0
+// kind      
+// flags     
+// calls     (none)
+// notes     Staged hybrid export redirect calls the source-owned constructor
+*/
 Spot::Spot() : spots_(nullptr), max_count_(0), add_count_(0) {
 }
 
+/*
+// ORIGINAL: 0x005FA870 ??1Spot@@QAE@XZ 0x005FA870-0x005FA89E
+// size      46 bytes
+// prototype void (__thiscall ??1Spot@@QAE@XZ)(Spot* this)
+// callers   110   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00644EF2
+// notes     Staged hybrid export redirect calls the source-owned destructor
+*/
 Spot::~Spot() {
     shutdown();
 }
 
+/*
+// ORIGINAL: 0x005FA820 ?clear@Spot@@QAEXXZ 0x005FA820-0x005FA82B
+// size      11 bytes
+// prototype void (__thiscall ?clear@Spot@@QAEXXZ)(Spot* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Staged hybrid export redirect calls the source-owned method
+*/
 void Spot::clear() {
     spots_ = nullptr;
     max_count_ = 0;

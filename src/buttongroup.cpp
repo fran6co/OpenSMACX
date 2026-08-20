@@ -41,6 +41,15 @@ ButtonGroup::ButtonGroup() {
     memset(buttons_, 0, sizeof(buttons_));
 }
 
+/*
+// ORIGINAL: 0x004325B0 ??1ButtonGroup@@QAE@XZ 0x004325B0-0x004325B5 BYTE_EXACT
+// size      5 bytes
+// prototype void (__thiscall ??1ButtonGroup@@QAE@XZ)(ButtonGroup* this)
+// callers   0   call targets   0
+// kind      thunk
+// flags     hidden;thunk;sp_ready;purged_ok
+// calls     (none)
+*/
 ButtonGroup::~ButtonGroup() {
     close();
 }

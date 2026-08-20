@@ -1333,6 +1333,16 @@ void Win::hide() {
     (ORIGINAL(this)->*WinOriginalHide)();
 }
 
+/*
+// ORIGINAL: 0x005F6320 ?on_mouse_move@Win@@QAEXHHIH@Z 0x005F6320-0x005F63BB
+// size      155 bytes
+// prototype void (__thiscall ?on_mouse_move@Win@@QAEXHHIH@Z)(Win* this, int, int, unsigned int, int)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005F6360 0x005F636B 0x005F637B 0x005F6386 0x005F639B 0x005F63A9 0x005F63B4
+*/
 void Win::on_mouse_move(int a1, int a2, unsigned int a3, int a4) {
     (ORIGINAL(this)->*WinOriginalOnMouseMove)(a1, a2, a3, a4);
 }
