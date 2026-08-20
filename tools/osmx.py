@@ -412,6 +412,17 @@ FLAG_SETS = (
     "/c /O2 /Gy /GR- /GX",
     "/c /O1 /Gy /GR- /Oy- /GX",
     "/c /O1 /Gy /GR- /GX",
+    # AND INLINE EXPANSION IS THE THIRD AXIS, for the same reason as the
+    # frame pointer: it is a property of the FUNCTION, and this image is
+    # mixed. `??1TextIndex` tail-calls its member's destructor where /O2
+    # inlines it - 4 instructions against 21 - and `??1Text` needs the
+    # opposite, because `??__ETxt` only reproduces with the constructor
+    # folded in. Neither answer is right for the whole image, which is
+    # exactly why the caller searches instead of choosing.
+    "/c /O2 /Ob0 /Gy /GR- /Oy- /GX",
+    "/c /O2 /Ob0 /Gy /GR- /GX",
+    "/c /O1 /Ob0 /Gy /GR- /Oy- /GX",
+    "/c /O1 /Ob0 /Gy /GR- /GX",
 )
 
 

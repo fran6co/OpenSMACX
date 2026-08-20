@@ -266,7 +266,8 @@ uint32_t Time::pulse() {
 
 /*
 Purpose: Stop an instance of the class.
-// ORIGINAL: 0x00616730 ?stop@Time@@QAEXXZ 0x00616730-0x00616772
+// ORIGINAL: 0x00616730 ?stop@Time@@QAEXXZ 0x00616730-0x00616772 BYTE_EXACT
+// body      src/time.h
 // size      66 bytes
 // prototype void (__thiscall ?stop@Time@@QAEXXZ)(Time* this)
 // callers   30   call targets   0
@@ -277,23 +278,12 @@ Purpose: Stop an instance of the class.
 Return Value: n/a
 Status: Complete
 */
-void Time::stop() {
-    if (id_event_) {
-        if (count_ < 50) {
-            timeKillEvent(id_event_);
-        } else {
-            KillTimer(HandleMain, id_event_);
-        }
-        id_event_ = 0;
-    }
-    if (~oneshot_state_ & TimeOneShot) {
-        flush_timer();
-    }
-}
+
 
 /*
 Purpose: Close out an instance of the class.
-// ORIGINAL: 0x00616780 ?close@Time@@QAEXXZ 0x00616780-0x006167E0
+// ORIGINAL: 0x00616780 ?close@Time@@QAEXXZ 0x00616780-0x006167E0 BYTE_EXACT
+// body      src/time.h
 // size      96 bytes
 // prototype void (__thiscall ?close@Time@@QAEXXZ)(Time* this)
 // callers   16   call targets   1
@@ -304,18 +294,7 @@ Purpose: Close out an instance of the class.
 Return Value: n/a
 Status: Complete
 */
-void Time::close() {
-    stop();
-    oneshot_state_ = 0;
-    callback1_ = 0;
-    callback2_ = 0;
-    cb_param2_ = 0;
-    cb_param1_ = 0;
-    count_ = 0;
-    tick_posted_ = 0;
-    resolution_ = 5;
-    unk_2_ = 0;
-}
+
 
 /*
 Purpose: Callback function that processes WM_TIMER messages (SetTimer).
@@ -465,7 +444,7 @@ Time::Time() {
 }
 
 /*
-// ORIGINAL: 0x00616200 ??1Time@@QAE@XZ 0x00616200-0x00616260
+// ORIGINAL: 0x00616200 ??1Time@@QAE@XZ 0x00616200-0x00616260 BYTE_EXACT
 // size      96 bytes
 // prototype void (__thiscall ??1Time@@QAE@XZ)(Time* this)
 // callers   30   call targets   1

@@ -128,7 +128,8 @@ int Font::init(LPCSTR file, LPCSTR font_name, int height, int style) {
 
 /*
 Purpose: Close an instance of the class.
-// ORIGINAL: 0x00619230 ?close@Font@@QAEXXZ 0x00619230-0x0061927D
+// ORIGINAL: 0x00619230 ?close@Font@@QAEXXZ 0x00619230-0x0061927D BYTE_EXACT
+// body      src/font.h
 // size      77 bytes
 // prototype void (__thiscall ?close@Font@@QAEXXZ)(Font* this)
 // callers   5   call targets   1
@@ -139,22 +140,7 @@ Purpose: Close an instance of the class.
 Return Value: n/a
 Status: Complete
 */
-void Font::close() {
-    unk_1_ = -1;
-    line_height_ = 0;
-    height_ = 0;
-    ascent_ = 0;
-    descent_ = 0;
-    if (font_obj_) {
-        DeleteObject(font_obj_);
-        font_obj_ = 0;
-    }
-    if (fot_file_name_) {
-        RemoveFontResourceA(fot_file_name_);
-        free(fot_file_name_); // removed 2nd redundant check if fot_file_name_ isn't null
-        fot_file_name_ = 0;
-    }
-}
+
 
 /*
 Purpose: Get the width for the input text.
@@ -361,7 +347,7 @@ Font::Font(LPSTR font_name, int height, int style) {
 }
 
 /*
-// ORIGINAL: 0x00618EE0 ??1Font@@QAE@XZ 0x00618EE0-0x00618F2D
+// ORIGINAL: 0x00618EE0 ??1Font@@QAE@XZ 0x00618EE0-0x00618F2D BYTE_EXACT
 // size      77 bytes
 // prototype void (__thiscall ??1Font@@QAE@XZ)(Font* this)
 // callers   53   call targets   1

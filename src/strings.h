@@ -36,7 +36,11 @@ class DLLEXPORT Strings : Heap {
  public:
   Strings() : is_populated_(false) {
   } // 006168D0
-  ~Strings() { Heap::shutdown(); }     // 006169C0
+  // EMPTY. The image's is a five-byte `jmp` and this emits exactly that:
+  // the implicit call to `~Heap` IS the whole destructor, and the linker
+  // folded `~Heap` onto `Heap::shutdown`, which is why the disassembly's
+  // target reads as the latter.
+  ~Strings() { }                       // 006169C0
 
   BOOL init(size_t mem_size);
   void shutdown();

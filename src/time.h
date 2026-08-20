@@ -21,6 +21,14 @@
 
 // The two bits of `Time::oneshot_state_`. See the member for what forces
 // them to exist: `SetTimer` cannot do one-shot, so it is emulated.
+// WHAT THE IN-CLASS BODIES BELOW REACH FOR. `flush_timer` is declared at
+// the foot of this header and `HandleMain` in temp.h, both of them after
+// the point `Time::stop` needs them - and `stop` has to be in-class,
+// because the image inlines it into `close` and `close` into `~Time`. A
+// second declaration is safe: the compiler rejects one that disagrees.
+DLLEXPORT void __cdecl flush_timer();
+extern HWND HandleMain;
+
 static const int TimeOneShot = 1;
 static const int TimeOneShotFired = 2;
 
@@ -50,8 +58,38 @@ class DLLEXPORT Time {
                  uint32_t res);
   uint32_t start();
   uint32_t pulse();
-  void stop();
-  void close();
+  // IN-CLASS so `close` and `~Time` inline them, which is what the image
+  // does: the destructor is the whole teardown, not a call to it.
+  void stop() {                  // 00616730
+    // HOISTED, as the image has it: the flush test is read BEFORE the
+    // kill block, not after.
+    const int had_flush = ~oneshot_state_ & TimeOneShot;
+    if (id_event_) {
+      if (count_ < 50) {
+        timeKillEvent(id_event_);
+      } else {
+        KillTimer(HandleMain, id_event_);
+      }
+      id_event_ = 0;
+    }
+    if (had_flush) {
+      flush_timer();
+    }
+  }
+  void close() {                 // 00616780
+    // IMAGE ORDER: oneshot_state_ after callback1_, resolution_ before
+    // tick_posted_.
+    stop();
+    callback1_ = 0;
+    oneshot_state_ = 0;
+    callback2_ = 0;
+    cb_param2_ = 0;
+    cb_param1_ = 0;
+    count_ = 0;
+    resolution_ = 5;
+    tick_posted_ = 0;
+    unk_2_ = 0;
+  }
   void set_modal();     // 00616860
   void release_modal(); // 00616870
 
