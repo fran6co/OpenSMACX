@@ -1022,6 +1022,28 @@ def configure(
                 fg=typer.colors.GREEN)
 
 
+def duplicated_markers(records: list) -> list:
+    """Addresses annotated more than once WITHIN one file.
+
+    ALWAYS A DEFECT, unlike the same address in two files - that is the
+    body-and-preserved-copy pattern and it is deliberate. Two markers in one
+    unit describe one piece twice, so they compile to the same subject and
+    can only agree by luck: twenty were found here and seventeen disagreed
+    about whether the body reproduced. A sweep for unclaimed bodies that
+    already match found the UNCLAIMED HALF of a claimed pair and offered it
+    as free work, which is how they surfaced at all.
+    """
+    seen: dict = {}
+    duplicated = []
+    for record in records:
+        key = (record.path, record.address)
+        if key in seen:
+            duplicated.append((record, f"also annotated at line {seen[key]}"))
+        else:
+            seen[key] = record.line
+    return duplicated
+
+
 def dangling_bodies(records: list) -> list:
     """Every `body` fact that does not lead to a definition.
 
@@ -1082,14 +1104,21 @@ def _claims_by_file(records: list) -> dict:
 def _claim_key(record: DecompilationState) -> tuple:
     """What identifies a CLAIM. Not the address.
 
-    THIRTY-FOUR ADDRESSES IN THIS TREE ARE ANNOTATED TWICE - the body in
-    `src/` and the same piece preserved in `src/recovered/` or
-    `src/unrecovered/` - and they are two claims, measured in two
-    translation units, that can disagree. Keyed by address, the second
-    result overwrote the first, so `check` reported one verdict for two
-    claims and counted the twin it never showed among the reproduced.
+    ADDRESSES IN THIS TREE ARE ANNOTATED TWICE - the body in `src/` and the
+    same piece preserved in `src/recovered/` or `src/unrecovered/` - and
+    they are two claims, measured in two translation units, that can
+    disagree. Keyed by address, the second result overwrote the first, so
+    `check` reported one verdict for two claims and counted the twin it
+    never showed among the reproduced.
+
+    THE LINE IS IN THE KEY BECAUSE THE PATH WAS NOT ENOUGH. Twenty
+    addresses were annotated twice IN ONE FILE - adjacent comment blocks
+    eleven to fourteen lines apart, seventeen of them disagreeing about
+    BYTE_EXACT - and (path, address) collapsed those exactly as (address)
+    collapsed the others. They are gone from the tree now; the key stays
+    honest so the next pair cannot hide.
     """
-    return (record.path, record.address)
+    return (record.path, record.address, record.line)
 
 
 def _check_one_file(job: tuple) -> list[tuple[tuple, str, str]]:
@@ -1172,7 +1201,7 @@ def check(
     """
     _fresh_compile_commands(compile_commands, reconfigure)
     records = read(src)
-    dangling = dangling_bodies(records)
+    dangling = dangling_bodies(records) + duplicated_markers(records)
     grouped = _claims_by_file(records)
     claims = sum(len(v) for v in grouped.values())
     if not claims:
@@ -1266,7 +1295,9 @@ def check(
     # exists to prevent.
     if dangling and not as_json:
         for record, note in dangling:
-            typer.secho(f"DANGLING  {record.address_hex} body fact: {note} - "
+            typer.secho(f"DUPLICATE {record.address_hex} {note} - "
+                        if "annotated" in note else
+                        f"DANGLING  {record.address_hex} body fact: {note} - "
                         f"{record.location}", fg=typer.colors.RED)
     raise typer.Exit(1 if regressed or dangling else 3 if unasked else 0)
 

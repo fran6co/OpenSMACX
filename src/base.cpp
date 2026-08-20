@@ -2558,17 +2558,6 @@ Purpose: Determine the number of defensive units needed to protect the specified
 Return Value: Amount of defensive units needed (1-8)
 Status: Complete
 */
-/*
-// ORIGINAL: 0x00560D30 ?defensive_check@@YAHH@Z 0x00560D30-0x00560D4D
-// size      29 bytes
-// prototype int (__cdecl ?defensive_check@@YAHH@Z)(int baseID)
-// callers   2   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x00560B30
-Return Value: Amount of defensive units needed (1-8)
-Status: Complete
-*/
 int __cdecl defensive_check(int base_id) {
     int defenses = garrison_check(base_id);
     if (defenses > 5) {

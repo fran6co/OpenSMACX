@@ -129,19 +129,6 @@ Purpose: Zero every field, in the same legacy store order as construction,
 Return Value: n/a
 Status: Complete
 */
-/*
-Purpose: Zero every field, in the legacy store order construction uses,
-         leaving the virtual table alone.
-// ORIGINAL: 0x0062BD40 ?init@AutoSound@@QAEXXZ 0x0062BD40-0x0062BDC4
-// size      132 bytes
-// prototype void (__thiscall ?init@AutoSound@@QAEXXZ)(AutoSound* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
 void AutoSound::init() {
     // Spelled out, NOT a loop. A constant fill makes no store order
     // observable, so a loop is the natural source - but VC6 keeps a constant

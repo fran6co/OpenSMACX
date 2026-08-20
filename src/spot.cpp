@@ -36,7 +36,7 @@ Status: Complete
 
 /*
 Purpose: Initialize the class instance with count.
-// ORIGINAL: 0x005FA8A0 ?init@Spot@@QAEXH@Z 0x005FA8A0-0x005FA8F5
+// ORIGINAL: 0x005FA8A0 ?init@Spot@@QAEXH@Z 0x005FA8A0-0x005FA8F5 BYTE_EXACT
 // size      85 bytes
 // prototype void (__thiscall ?init@Spot@@QAEXH@Z)(Spot* this, int count)
 // callers   20   call targets   2

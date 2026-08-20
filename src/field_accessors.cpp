@@ -1345,18 +1345,6 @@ Purpose: Sign-extend bit 0 of field 0x40: 0 or -1.
 Return Value: the value described above
 Status: Complete
 */
-/*
-// ORIGINAL: 0x00448380 sub_448380 0x00448380-0x0044838A
-// symbol    ?field_accessor_00448380_redirect@@YIIPAX0@Z
-// size      3 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: bit 0 of the field at +0x40, sign-extended to a full mask
-Status: Complete
-*/
 uint32_t __fastcall field_accessor_00448380_redirect(void *self, void *) {
     // Sign-extend bit 0 to 0xFFFFFFFF or 0: `shl 31` puts it in the sign
     // position and `sar 31` smears it back, which is what the original does.

@@ -129,18 +129,6 @@ Purpose: Scale a three-component float vector by a scalar.
 Return Value: n/a
 Status: Complete
 */
-/*
-// ORIGINAL: 0x006281B0 sub_6281b0 0x006281B0-0x006281D5
-// symbol    ?leaf_006281b0_redirect@@YAXPBMMPAM@Z
-// size      37 bytes
-// prototype 
-// callers   5   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
 void __cdecl leaf_006281b0_redirect(const float *source, float scale,
                                     float *result) {
     // Each component is bound to a local BEFORE the multiply, and that is
@@ -177,18 +165,6 @@ Purpose: Dot product of `this` with a three-component float vector.
          included - checked with objdump rather than assumed.
 
 // ORIGINAL: 0x00634650 sub_634650 0x00634650-0x0063466B BYTE_EXACT
-// symbol    ?leaf_00634650_redirect@@YIMPAX0PBM@Z
-// size      27 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-Return Value: the dot product, in ST(0)
-Status: Complete
-*/
-/*
-// ORIGINAL: 0x00634650 sub_634650 0x00634650-0x0063466B
 // symbol    ?leaf_00634650_redirect@@YIMPAX0PBM@Z
 // size      27 bytes
 // prototype 
@@ -252,18 +228,6 @@ Purpose: Follow a two-link chain, or return zero when the first link is unset.
          DIFFERENT fields, which is easy to lose when transcribing and produces
          a body that works whenever the two happen to agree.
 
-// ORIGINAL: 0x005E3630 sub_5e3630 0x005E3630-0x005E3644
-// symbol    ?leaf_005e3630_redirect@@YIIPAX0@Z
-// size      20 bytes
-// prototype 
-// callers   2   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-Return Value: the dword two links away, or 0
-Status: Complete
-*/
-/*
 // ORIGINAL: 0x005E3630 sub_5e3630 0x005E3630-0x005E3644
 // symbol    ?leaf_005e3630_redirect@@YIIPAX0@Z
 // size      20 bytes
@@ -446,18 +410,6 @@ Purpose: Add another 3x3 float matrix into this one, element by element.
 Return Value: n/a
 Status: Complete
 */
-/*
-// ORIGINAL: 0x006347C0 sub_6347c0 0x006347C0-0x006347F0
-// symbol    ?leaf_006347c0_redirect@@YIXPAX0PBM@Z
-// size      48 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
 void __fastcall leaf_006347c0_redirect(void *self, void *, const float *other) {
     // A NESTED 3x3 pointer walk, not a flat indexed 9: the original has two
     // independent countdown counters, each with their own dec/jne. Still one
@@ -524,18 +476,6 @@ Purpose: Scale a 3x3 float matrix by a scalar.
 Return Value: n/a
 Status: Complete
 */
-/*
-// ORIGINAL: 0x006348C0 sub_6348c0 0x006348C0-0x006348E7
-// symbol    ?leaf_006348c0_redirect@@YIXPAX0M@Z
-// size      39 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
 void __fastcall leaf_006348c0_redirect(void *self, void *, float scale) {
     // A NESTED 3x3, not a flat 9. The original has two independent countdown
     // counters each with their own dec/jne, so it was written as rows and
@@ -575,18 +515,6 @@ Purpose: Are two three-component float vectors equal?
 // flags     sp_ready;purged_ok
 // calls     (none)
 Return Value: true when every component matches, or is unordered
-Status: Complete
-*/
-/*
-// ORIGINAL: 0x006344E0 sub_6344e0 0x006344E0-0x00634513
-// symbol    ?leaf_006344e0_redirect@@YI_NPAX0PBM@Z
-// size      51 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-Return Value: true when the three components compare equal or unordered
 Status: Complete
 */
 bool __fastcall leaf_006344e0_redirect(void *self, void *,
@@ -732,18 +660,6 @@ Purpose: Fill the eight bytes at a pointer with 0xff.
 Return Value: n/a
 Status: Complete
 */
-/*
-// ORIGINAL: 0x0057DEE0 sub_57dee0 0x0057DEE0-0x0057DEFC
-// symbol    ?leaf_0057dee0_redirect@@YAXPAX@Z
-// size      28 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
 void __cdecl leaf_0057dee0_redirect(void *target) {
     *static_cast<uint32_t *>(target) = 0xFFFFFFFF;
     uint8_t *const bytes = static_cast<uint8_t *>(target);
@@ -771,18 +687,6 @@ Purpose: Hand out the next of ten 60-byte slots, wrapping back to the first.
          wrong slot on the tenth call and only then.
 
 // ORIGINAL: 0x006252C0 sub_6252c0 0x006252C0-0x006252DE BYTE_EXACT
-// symbol    ?leaf_006252c0_redirect@@YIPAXPAX0@Z
-// size      30 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: a pointer to the slot that was current on entry
-Status: Complete
-*/
-/*
-// ORIGINAL: 0x006252C0 sub_6252c0 0x006252C0-0x006252DE
 // symbol    ?leaf_006252c0_redirect@@YIPAXPAX0@Z
 // size      30 bytes
 // prototype 
@@ -852,18 +756,6 @@ Purpose: Fill 1,536 dwords with -1, starting at offset 0xa20.
          `lea` as the start would put the whole thing four bytes too high.
 
 // ORIGINAL: 0x005AD450 sub_5ad450 0x005AD450-0x005AD470 BYTE_EXACT
-// symbol    ?leaf_005ad450_redirect@@YIXPAX0@Z
-// size      32 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-/*
-// ORIGINAL: 0x005AD450 sub_5ad450 0x005AD450-0x005AD470
 // symbol    ?leaf_005ad450_redirect@@YIXPAX0@Z
 // size      32 bytes
 // prototype 
@@ -1022,18 +914,6 @@ Purpose: Reverse the low `count` bits of a value.
 Return Value: the low `count` bits, reversed
 Status: Complete
 */
-/*
-// ORIGINAL: 0x00642940 sub_642940 0x00642940-0x0064295F
-// symbol    ?leaf_00642940_redirect@@YAIIH@Z
-// size      31 bytes
-// prototype 
-// callers   2   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the low `count` bits of `value`, reversed
-Status: Complete
-*/
 unsigned int __cdecl leaf_00642940_redirect(unsigned int value, int count) {
     // `count` is decremented IN PLACE. A separate `remaining` local made VC6
     // bind the counter to ecx and the value to edx, exactly the reverse of
@@ -1116,18 +996,6 @@ Purpose: Divide, rounding the quotient AWAY from zero when there is a
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
 Return Value: the quotient that was stored
-Status: Complete
-*/
-/*
-// ORIGINAL: 0x00532A50 sub_532a50 0x00532A50-0x00532A81
-// symbol    ?leaf_00532a50_redirect@@YGHHPAH0H@Z
-// size      49 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the quotient, rounded up when the division is not exact
 Status: Complete
 */
 int __stdcall leaf_00532a50_redirect(int value, int *quotient_out,

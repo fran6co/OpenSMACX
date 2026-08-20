@@ -119,19 +119,6 @@ Purpose: Find an item ID's bounded position in the dialog string list.
 Return Value: Matching position, or the configured entry count on a miss
 Status: Complete
 */
-/*
-Purpose: Find an item ID's bounded position in the dialog string list.
-// ORIGINAL: 0x00609AF0 ?id_to_pos@Dialog@@QAEHH@Z 0x00609AF0-0x00609B4B
-// size      91 bytes
-// prototype int (__thiscall ?id_to_pos@Dialog@@QAEHH@Z)(Dialog* this, int)
-// callers   1   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// notes     Runtime redirect installed by DllMain after byte-signature validation
-Return Value: Matching position, or the configured entry count on a miss
-Status: Complete
-*/
 int Dialog::id_to_pos(int id) {
     if (entry_head_) {
         int count = entry_count_;

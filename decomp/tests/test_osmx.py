@@ -799,3 +799,37 @@ def test_an_overload_is_named_by_its_address_or_its_full_name(tmp_path):
     assert "name one of these exactly, or its address" in result.output
     assert "--in <path fragment>" not in result.output
     assert "0x00408000" in result.output and "0x00409000" in result.output
+
+
+def test_one_address_annotated_twice_in_one_file_fails_the_gate(tmp_path,
+                                                                monkeypatch):
+    """Two markers in one unit describe one piece twice, so they compile to
+    the same subject and can only agree by luck: twenty were found here and
+    seventeen disagreed about whether the body reproduced. The same address
+    in two FILES is the deliberate body-and-preserved-copy pattern and must
+    stay allowed."""
+    (tmp_path / "x.cpp").write_text(
+        "// ORIGINAL: 0x00402000 ?f@@YAXXZ 0x00402000-0x00402010 BYTE_EXACT\n"
+        "void f() {\n}\n"
+        "// ORIGINAL: 0x00402000 ?f@@YAXXZ 0x00402000-0x00402010\n"
+        "void g() {\n}\n")
+    monkeypatch.setattr(osmx, "_check_one_file",
+                        fake_file_result({0x00402000: "BYTE_EXACT"}))
+    result = check(tmp_path)
+    assert result.exit_code == 1
+    assert "DUPLICATE 0x00402000" in result.output
+    assert "also annotated at line 1" in result.output
+
+
+def test_the_same_address_in_two_files_is_allowed(tmp_path, monkeypatch):
+    marker = ("// ORIGINAL: 0x00402000 ?f@@YAXXZ 0x00402000-0x00402010 "
+              "BYTE_EXACT\nvoid f() {\n}\n")
+    (tmp_path / "x.cpp").write_text(marker)
+    kept = tmp_path / "unrecovered"
+    kept.mkdir()
+    (kept / "00402000.cpp").write_text(marker)
+    monkeypatch.setattr(osmx, "_check_one_file",
+                        fake_file_result({0x00402000: "BYTE_EXACT"}))
+    result = check(tmp_path)
+    assert result.exit_code == 0, result.output
+    assert "DUPLICATE" not in result.output

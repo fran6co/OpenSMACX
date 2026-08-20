@@ -278,7 +278,7 @@ int __cdecl Font::init_font_class(Font *font) {
 
 /*
 Purpose: Shutdown the class static variables.
-// ORIGINAL: 0x00619610 ?close_font_class@Font@@QAAXXZ 0x00619610-0x00619644
+// ORIGINAL: 0x00619610 ?close_font_class@Font@@QAAXXZ 0x00619610-0x00619644 BYTE_EXACT
 // symbol    ?close_font_class@Font@@SAXXZ
 // size      52 bytes
 // prototype 
