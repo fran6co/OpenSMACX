@@ -301,25 +301,40 @@ int Palette::set() {
 Status: Complete
 */
 void Palette::close() {
-    char *base = reinterpret_cast<char *>(this) + 0x408;
-    int n = 5;
-    do {
-        Time *t = *reinterpret_cast<Time **>(base);
-        *reinterpret_cast<int *>(base - 4) = -1;
-        if (t != 0) {
-            t->~Time();
-            operator delete(t);
-            *reinterpret_cast<Time **>(base) = 0;
+    // 24 of the image's 34 instructions, and the ten that differ are not
+    // this body's doing. Walking a raw `char *base = (char *)this + 0x408`
+    // instead agrees on 32 - but nobody writes that, and the mnemonic
+    // sequences are IDENTICAL either way (similarity 1.000), so the source
+    // is not what the two versions disagree about.
+    //
+    // WHAT THEY DISAGREE ABOUT IS THE BASE REGISTER. Through a named
+    // `PaletteInternal &` VC6 bases the loop on `field_C` (this + 0x410);
+    // the image bases on `.time` (this + 0x408). Both fit a byte
+    // displacement, so the choice is free and something we have not
+    // identified picks it - a flag, or a layout detail of this struct we
+    // have modelled slightly wrong. That is the thing to chase.
+    //
+    // The last two are separate: the image writes `field_0 = -1` BEFORE
+    // loading the timer and we emit those two `mov`s transposed, through
+    // seven source spellings and six flag sets including all four /G
+    // processor targets. A scheduler decision, so far unreachable.
+    for (int i = 0; i < 5; ++i) {
+        PaletteInternal &slot = internal_[i];
+        slot.field_0 = -1;
+        // OWNED. The image calls `??1Time@@QAE@XZ` then the CRT's
+        // `operator delete` here, which is what `delete` compiles to.
+        Time *owned = slot.time;
+        if (owned) {
+            delete owned;
+            slot.time = nullptr;
         }
-        void *ptr = *reinterpret_cast<void **>(base + 8);
-        if (ptr != 0) {
-            free(ptr);
-            *reinterpret_cast<void **>(base + 8) = 0;
+        if (slot.field_C) {
+            free(slot.field_C);
+            slot.field_C = nullptr;
         }
-        *reinterpret_cast<unsigned char *>(base + 4) = 0;
-        *reinterpret_cast<unsigned char *>(base + 5) = 0;
-        base += 0x10;
-    } while (--n);
+        slot.field_8 = 0;
+        slot.field_9 = 0;
+    }
 }
 
 /*
