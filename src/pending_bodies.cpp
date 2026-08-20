@@ -158,6 +158,32 @@ void ListBox::on_mousewheel(int a) {
     PENDING_BODY(0x0060CB70, pending)(this, nullptr, a);
 }
 
+// ?close@BasePop@@QAEXXZ at 0x00600F00 and
+// ?start@Popup@@QAEXPADPBDHPADHPAUGraphicWin@@@Z at 0x00406380 - the two
+// bodies popup.cpp used to reach through pointers.
+void BasePop::close() {
+    typedef void(__fastcall *pending)(BasePop *, void *);
+    PENDING_BODY(0x00600F00, pending)(this, nullptr);
+}
+
+void Popup::start(char *a1, const char *a2, int a3, char *a4, int a5,
+                  GraphicWin *owner) {
+    typedef void(__fastcall *pending)(Popup *, void *, char *, const char *,
+                                      int, char *, int, GraphicWin *);
+    PENDING_BODY(0x00406380, pending)(this, nullptr, a1, a2, a3, a4, a5, owner);
+}
+
+// ?pops@@YAHPADPADHPADHPAUSprite@@HHP6AHXZ@Z at 0x006276A0 - the full popup
+// entry every `pop` wrapper funnels into.
+//             body in src/unrecovered/006276a0.cpp
+int __cdecl pops(char *caption, char *label, int a3, char *a4, int a5,
+                 Sprite *sprite, int a7, int a8, int (__cdecl *callback)()) {
+    typedef int(__cdecl *pending)(char *, char *, int, char *, int, Sprite *,
+                                  int, int, int (__cdecl *)());
+    return PENDING_BODY(0x006276A0, pending)(caption, label, a3, a4, a5,
+                                             sprite, a7, a8, callback);
+}
+
 // ?write_raw_l@Buffer@@QAEHPADHHH@Z at 0x005DBD00 - 1475 bytes, the raster
 // writer that puts one single-font run on the surface. Called by name from
 // `write_multi_font_raw_l`, which is promoted; a pointer here would cost that
