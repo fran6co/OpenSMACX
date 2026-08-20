@@ -70,6 +70,9 @@ class DLLEXPORT Font {
   friend class Buffer;
   // Menu::requested_height reads the resolved font's height directly.
   friend class Menu;
+  // `Win::flip` derives the bubble's line advance from these - `unk_1_`
+  // when it is negative, `height_ + unk_1_` when it is not.
+  friend class Win;
 
   int unk_1_; // height offset? set outside of class functions
   BOOL is_fot_set_; // used only by both init() functions

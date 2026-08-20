@@ -151,11 +151,6 @@ int Win::set_display_mode(int width, int height, int depth, int tgl) {
     return PENDING_BODY(0x005F2C40, pending)(width, height, depth, tgl);
 }
 
-// ?flip@Win@@QAAXPAURECT@@@Z at 0x005EFD20
-void Win::flip(RECT *area) {
-    typedef void(__cdecl *pending)(RECT *);
-    PENDING_BODY(0x005EFD20, pending)(area);
-}
 
 // What `Win::window_proc` routes to, now that it is promoted into
 // src/win.cpp. These six are what its recovery still stands on, and the

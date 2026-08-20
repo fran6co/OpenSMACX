@@ -45,6 +45,9 @@ class DLLEXPORT Sprite {
   void UNK3(int a1, int a2);
   void UNK4(int a1, int a2);
  private:
+  // `Win::flip` draws the overlay sprite and takes its frame index from
+  // `cTransparentIndex_`, which is the byte the image reads at +8.
+  friend class Win;
   int ppszFileName_;
   int pcBits_;
   char cTransparentIndex_;
