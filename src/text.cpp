@@ -340,10 +340,21 @@ UNRECOVERABLE: a measurement of either. VC6 names a generated initialiser
                change and had never been scored, so no claim is lost.
 */
 Text Txt(512);  // 0x009B7BA0
-LPSTR TextBufferGetPtr;   // 0x009B7D00
-LPSTR TextBufferItemPtr;  // 0x009B7D04
+// INITIALISED FROM Txt, in this order, in this file. Within one translation
+// unit C++ guarantees namespace-scope objects are initialised in DECLARATION
+// order, so `Txt` is constructed before these read its buffers - which is
+// exactly the guarantee the image gets from `??__ETxt` sitting immediately
+// before `text_set_get_ptr` in its initialiser table at 0x00682680.
+//
+// They used to be left null and set by `text_set_get_ptr()`, which NOTHING
+// CALLS: in the shipped image that function is not called either, it is an
+// entry IN that table. So in this build the pointers stayed null, and the
+// 44 functions that read them - `prefs_get` among them, four times from
+// WinMain - wrote through a null pointer on the startup path.
+LPSTR TextBufferGetPtr = Txt.get_buffer_get();    // 0x009B7D00
+LPSTR TextBufferItemPtr = Txt.get_buffer_item();  // 0x009B7D04
 
-// ORIGINAL: 0x005FD4C0 ?text_set_get_ptr@@YAXXZ 0x005FD4C0-0x005FD4CB
+// ORIGINAL: 0x005FD4C0 ?text_set_get_ptr@@YAXXZ 0x005FD4C0-0x005FD4CB BYTE_EXACT
 // size      11 bytes
 // prototype 
 // callers   0   call targets   0
@@ -355,7 +366,7 @@ void __cdecl text_set_get_ptr() {
     text_set_get_ptr_source(&Txt, &TextBufferGetPtr);
 }
 
-// ORIGINAL: 0x005FD4D0 ?text_set_item_ptr@@YAXXZ 0x005FD4D0-0x005FD4DB
+// ORIGINAL: 0x005FD4D0 ?text_set_item_ptr@@YAXXZ 0x005FD4D0-0x005FD4DB BYTE_EXACT
 // size      11 bytes
 // prototype 
 // callers   0   call targets   0
@@ -540,13 +551,9 @@ void __cdecl text_close_source(Text *text) {
     }
 }
 
-void __cdecl text_set_get_ptr_source(Text *text, LPSTR *output) {
-    *output = text->buffer_get_;
-}
 
-void __cdecl text_set_item_ptr_source(Text *text, LPSTR *output) {
-    *output = text->buffer_item_;
-}
+
+
 
 LPSTR __cdecl text_get_source(Text *text) {
     Text *const value = text;

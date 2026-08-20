@@ -26,6 +26,15 @@
 // declaration it sees second.
 DLLEXPORT LPVOID __cdecl mem_get(size_t size);
 
+// DECLARED BEFORE THE CLASS so the `friend` inside it refers to this
+// namespace-scope function. VC6 injects a friend declared only in-class
+// into CLASS scope, and then the definition below reads as a second body
+// for a member: `C2084: function 'void Text::text_set_get_ptr_source'
+// already has a body`.
+class Text;
+void __cdecl text_set_get_ptr_source(Text *text, LPSTR *output);
+void __cdecl text_set_item_ptr_source(Text *text, LPSTR *output);
+
 class DLLEXPORT Text {
  public:
   Text(); // 005FD860
@@ -158,8 +167,15 @@ DLLEXPORT int __cdecl text_get_number(int min, int max);
 // a `Text *` - and several are friends of the class above.
 class Strings;
 void __cdecl text_close_source(Text *text);
-void __cdecl text_set_get_ptr_source(Text *text, LPSTR *output);
-void __cdecl text_set_item_ptr_source(Text *text, LPSTR *output);
+// INLINE, because the image folds it: `text_set_get_ptr` is three
+// instructions - load the field, store it, return - where a call leaves
+// five. Same reason as Spot::shutdown and Font::close.
+inline void __cdecl text_set_get_ptr_source(Text *text, LPSTR *output) {
+  *output = text->buffer_get_;
+}
+inline void __cdecl text_set_item_ptr_source(Text *text, LPSTR *output) {
+  *output = text->buffer_item_;
+}
 LPSTR __cdecl text_get_source(Text *text);
 LPSTR __cdecl text_string_source(Text *text, Strings *strings);
 LPSTR __cdecl text_item_source(Text *text);
