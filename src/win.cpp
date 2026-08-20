@@ -1356,49 +1356,6 @@ void Win::release_modal() {
 }
 
 /*
-// ORIGINAL: 0x005F01F0 ?init_class@Win@@QAAHPAD@Z 0x005F01F0-0x005F04D4;0x00662CCC-0x00662CE1
-// symbol    ?init_class@Win@@SAHPAD@Z
-// size      761 bytes
-// prototype
-// callers   1   call targets   7
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x005D7210 0x005D7410 0x005D7670 0x005D7DE0 0x005DFB50 0x005DFF00 0x005EFD20
-// indirect  0x005F0236 0x005F0263 0x005F0273 0x005F028E 0x005F02D0 0x005F02D9 0x005F030A
-//           0x005F036F 0x005F0375 0x005F039A 0x005F03A9 0x005F03BD 0x005F03E3 0x005F03F5
-//           0x005F0498
-//
-// Promoted 2026-08-15 from src/unrecovered/005f01f0.cpp to retire its
-// pending_bodies forwarder.
-//
-// WRITTEN AGAINST THE REAL HEADERS. It used to reach every Win32 import
-// through a hand-written function-pointer typedef and its IAT slot address
-// - `(*(FnRegisterClassA *)g_0066929c)(&wndclass)` - and every global
-// through `static int *const g_009b7b14 = (int *)0x009B7B14`. That is what
-// a MEASUREMENT SCAFFOLD has to do, because a scaffold includes no
-// <windows.h> and declares no project header; this file is in the build and
-// has both. So the imports are called by name, `WNDCLASSA` is the real
-// struct, the surface is an `IDirectDrawSurface` whose `GetDC`/`ReleaseDC`
-// are the slots the offsets 0x44 and 0x68 were reaching, and the globals
-// are objects declared in win.h. Every one of those operands is relocated
-// and the comparison masks relocations, so none of it costs a byte.
-//
-// LEFT AT 88.2%, 22 edits, first divergence #7. The whole of it is one
-// callee-saved register: the original pushes esi AND edi and keeps a zero
-// in edi across every call, using it for `GetModuleHandleA(0)`, the
-// `cbClsExtra`/`cbWndExtra` stores, four of `CreateWindowExA`'s arguments
-// and every `cmp reg, edi` that follows. This build materialises the same
-// zero once, in esi, and pushes only esi.
-//
-// RULED OUT: the four flag sets are byte-identical here, so it is not the
-// frame-pointer or the /O1 register pressure; declaring `wndclass` before
-// `logo` does not move the frame; and caching the `GetSystemMetrics` import
-// slot in a local - which is what the original's `mov esi, [0x669334]` then
-// two `call esi` looks like - changes nothing, so the second register is
-// not being spent on that slot either.
-Status: Complete
-*/
-/*
 Purpose: Route a left button press - find the window under the pointer, ask
          it what was hit, raise it, and either begin a drag or dispatch the
          click.
@@ -2062,6 +2019,49 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
 // operand is relocated either way, so the literal is the honest spelling.
 static const char WinClassName[] = "JackalClass";
 
+/*
+// ORIGINAL: 0x005F01F0 ?init_class@Win@@QAAHPAD@Z 0x005F01F0-0x005F04D4;0x00662CCC-0x00662CE1
+// symbol    ?init_class@Win@@SAHPAD@Z
+// size      761 bytes
+// prototype
+// callers   1   call targets   7
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005D7210 0x005D7410 0x005D7670 0x005D7DE0 0x005DFB50 0x005DFF00 0x005EFD20
+// indirect  0x005F0236 0x005F0263 0x005F0273 0x005F028E 0x005F02D0 0x005F02D9 0x005F030A
+//           0x005F036F 0x005F0375 0x005F039A 0x005F03A9 0x005F03BD 0x005F03E3 0x005F03F5
+//           0x005F0498
+//
+// Promoted 2026-08-15 from src/unrecovered/005f01f0.cpp to retire its
+// pending_bodies forwarder.
+//
+// WRITTEN AGAINST THE REAL HEADERS. It used to reach every Win32 import
+// through a hand-written function-pointer typedef and its IAT slot address
+// - `(*(FnRegisterClassA *)g_0066929c)(&wndclass)` - and every global
+// through `static int *const g_009b7b14 = (int *)0x009B7B14`. That is what
+// a MEASUREMENT SCAFFOLD has to do, because a scaffold includes no
+// <windows.h> and declares no project header; this file is in the build and
+// has both. So the imports are called by name, `WNDCLASSA` is the real
+// struct, the surface is an `IDirectDrawSurface` whose `GetDC`/`ReleaseDC`
+// are the slots the offsets 0x44 and 0x68 were reaching, and the globals
+// are objects declared in win.h. Every one of those operands is relocated
+// and the comparison masks relocations, so none of it costs a byte.
+//
+// LEFT AT 88.2%, 22 edits, first divergence #7. The whole of it is one
+// callee-saved register: the original pushes esi AND edi and keeps a zero
+// in edi across every call, using it for `GetModuleHandleA(0)`, the
+// `cbClsExtra`/`cbWndExtra` stores, four of `CreateWindowExA`'s arguments
+// and every `cmp reg, edi` that follows. This build materialises the same
+// zero once, in esi, and pushes only esi.
+//
+// RULED OUT: the four flag sets are byte-identical here, so it is not the
+// frame-pointer or the /O1 register pressure; declaring `wndclass` before
+// `logo` does not move the frame; and caching the `GetSystemMetrics` import
+// slot in a local - which is what the original's `mov esi, [0x669334]` then
+// two `call esi` looks like - changes nothing, so the second register is
+// not being spent on that slot either.
+Status: Complete
+*/
 int __cdecl Win::init_class(LPSTR window_name) {
     WNDCLASSA wndclass;
 
