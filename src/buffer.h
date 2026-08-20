@@ -194,7 +194,11 @@ class DLLEXPORT Buffer {
   // into `hdc_` - that is, whatever was in the context before - and
   // `Buffer::close` selects it back before `DeleteDC`. The GDI save/restore
   // pair, written out.
-  uint32_t previous_bitmap_;
+  // `HGDIOBJ`, which is what both ends of its life say it is: `SelectObject`
+  // returns one into it and `SelectObject` takes it back. It was `uint32_t`
+  // with a `reinterpret_cast` at each end, and the casts were the type
+  // trying to be declared.
+  HGDIOBJ previous_bitmap_;
   HBITMAP bitmap_handle_;
 
  public:
@@ -244,14 +248,28 @@ class DLLEXPORT Buffer {
   // 0x4A8. `Buffer::init` sets it to `(width + 3) & ~3`: the row pitch a
   // DIB needs, the width rounded up to a DWORD.
   uint32_t stride_;
-  uint32_t field_4AC_;
+  /*
+   * 0x4AC. HOW MANY OF `owned_` ARE IN USE, and it is ONE-BASED:
+   * `write_multi_font_raw_l` increments it first and then stores through
+   * `[this + count * 4 + 0x4B8]`, which is `owned_[count - 1]`. Every read
+   * of it is bounded against 20 - `cmp [this + 0x4ac], 0x14; jge` - which
+   * is `OwnedAllocationCount`, so the two really are the same table.
+   * `clear_links` zeroes it beside freeing all twenty.
+   */
+  uint32_t link_count_;
   Spot spot_;
   // 0x4BC. TWENTY OWNED HEAP POINTERS - `Buffer::init` and `Buffer::close`
   // both walk `for (20) { if (*p) { free(*p); *p = 0; } p += 4; }` from
   // 0x4BC, and the walk ends at 0x50C, exactly where `field_50C_` starts.
-  // That it is an ARRAY is proved by both walks; WHAT the entries hold is
-  // not, because nothing this tree has recovered writes one. They are only
-  // ever reached through a walking pointer, never named individually, so
+  //
+  // THEY HOLD LINK TEXT. `write_multi_font_raw_l` is the writer: for each
+  // link it allocates `end - start + 1` bytes, stores the pointer at
+  // `owned_[link_count_ - 1]`, and copies the substring in. That is also
+  // what makes `clear_links` a pair of operations rather than two unrelated
+  // ones - it reinitialises `spot_` to forty hit regions and frees these
+  // twenty strings, which are the two halves of one link table. They are
+  // still only ever reached through a walking pointer, never named
+  // individually, so
   // the name says the one thing that is established: the buffer owns them
   // and frees them.
   void *owned_[20];
