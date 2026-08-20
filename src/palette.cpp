@@ -424,7 +424,7 @@ void Palette::init() {
 */
 
 /*
-// ORIGINAL: 0x005FE2E0 ??1Palette@@QAE@XZ 0x005FE2E0-0x005FE2E5
+// ORIGINAL: 0x005FE2E0 ??1Palette@@QAE@XZ 0x005FE2E0-0x005FE2E5 BYTE_EXACT
 // body      src/palette.h
 // size      5 bytes
 // prototype void (__thiscall ??1Palette@@QAE@XZ)(Palette* this)

@@ -3,7 +3,7 @@
 #include "vector_teardown.h"
 
 /*
-// ORIGINAL: 0x00618EA0 ??0Font@@QAE@XZ 0x00618EA0-0x00618EC0
+// ORIGINAL: 0x00618EA0 ??0Font@@QAE@XZ 0x00618EA0-0x00618EC0 BYTE_EXACT
 // size      32 bytes
 // prototype void (__thiscall ??0Font@@QAE@XZ)(Font* this)
 // callers   41   call targets   0
@@ -12,15 +12,17 @@
 // calls     (none)
 // notes     Staged hybrid export redirect calls the source-owned constructor
 */
-Font::Font()
-    : unk_1_(-1),
-      is_fot_set_(0),
-      font_obj_(nullptr),
-      line_height_(0),
-      height_(0),
-      ascent_(0),
-      descent_(0),
-      fot_file_name_(nullptr) {
+Font::Font() {
+    // IMAGE ORDER. An initialiser list runs in DECLARATION order,
+    // and the image does not write the fields in that order.
+    unk_1_ = -1;
+    is_fot_set_ = 0;
+    font_obj_ = nullptr;
+    height_ = 0;
+    line_height_ = 0;
+    ascent_ = 0;
+    descent_ = 0;
+    fot_file_name_ = nullptr;
 }
 
 /*

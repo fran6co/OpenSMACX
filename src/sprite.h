@@ -37,7 +37,8 @@ class DLLEXPORT Sprite {
               TexHeap *heap);
   int create_blank(int width, int height, int depth);
   Sprite();
-  ~Sprite() { ; }
+  // `jmp ?close@Sprite@@QAEXXZ` in the image - see Palette.
+  ~Sprite() { close(); }   // 00406850
 
   void close();
 

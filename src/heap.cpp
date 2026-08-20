@@ -20,6 +20,22 @@
 #include "general.h"
 
 /*
+// ORIGINAL: 0x005D4560 ??0Heap@@QAE@XZ 0x005D4560-0x005D4573 BYTE_EXACT
+// size      19 bytes
+// prototype void (__thiscall ??0Heap@@QAE@XZ)(Heap* this)
+// callers   6   call targets   0
+// notes     Staged hybrid export redirect calls the source-owned constructor
+*/
+Heap::Heap() {
+    // IMAGE ORDER: current_ before base_, free_size_ before base_size_.
+    *reinterpret_cast<volatile int8_t *>(&err_flags_) = 0;
+    current_ = nullptr;
+    base_ = nullptr;
+    free_size_ = 0;
+    base_size_ = 0;
+}
+
+/*
 Purpose: Shutdown the class instance.
 // ORIGINAL: 0x005D45B0 ?shutdown@Heap@@QAEXXZ 0x005D45B0-0x005D45DA
 // size      42 bytes
@@ -152,19 +168,7 @@ LPVOID Heap::get(size_t req_size) {
 // ---------------------------------------------------------------------------
 
 /*
-// ORIGINAL: 0x005D4560 ??0Heap@@QAE@XZ 0x005D4560-0x005D4573
-// body      src/heap.h
-// size      19 bytes
-// prototype void (__thiscall ??0Heap@@QAE@XZ)(Heap* this)
-// callers   6   call targets   0
-// kind      
-// flags     
-// calls     (none)
-// notes     Staged hybrid export redirect calls the source-owned constructor
-*/
-
-/*
-// ORIGINAL: 0x005D4580 ??1Heap@@QAE@XZ 0x005D4580-0x005D45AA
+// ORIGINAL: 0x005D4580 ??1Heap@@QAE@XZ 0x005D4580-0x005D45AA BYTE_EXACT
 // body      src/heap.h
 // size      42 bytes
 // prototype void (__thiscall ??1Heap@@QAE@XZ)(Heap* this)

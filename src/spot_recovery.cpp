@@ -3,7 +3,7 @@
 #include "general.h"
 
 /*
-// ORIGINAL: 0x005FA860 ??0Spot@@QAE@XZ 0x005FA860-0x005FA86D
+// ORIGINAL: 0x005FA860 ??0Spot@@QAE@XZ 0x005FA860-0x005FA86D BYTE_EXACT
 // size      13 bytes
 // prototype void (__thiscall ??0Spot@@QAE@XZ)(Spot* this)
 // callers   19   call targets   0
@@ -12,7 +12,13 @@
 // calls     (none)
 // notes     Staged hybrid export redirect calls the source-owned constructor
 */
-Spot::Spot() : spots_(nullptr), max_count_(0), add_count_(0) {
+Spot::Spot() {
+    // IMAGE ORDER, not declaration order - an initialiser list runs
+    // in the order the members are declared, and the image writes
+    // the two counts before the pointer.
+    max_count_ = 0;
+    add_count_ = 0;
+    spots_ = nullptr;
 }
 
 /*
@@ -30,7 +36,7 @@ Spot::~Spot() {
 }
 
 /*
-// ORIGINAL: 0x005FA820 ?clear@Spot@@QAEXXZ 0x005FA820-0x005FA82B
+// ORIGINAL: 0x005FA820 ?clear@Spot@@QAEXXZ 0x005FA820-0x005FA82B BYTE_EXACT
 // size      11 bytes
 // prototype void (__thiscall ?clear@Spot@@QAEXXZ)(Spot* this)
 // callers   0   call targets   0
@@ -40,9 +46,10 @@ Spot::~Spot() {
 // notes     Staged hybrid export redirect calls the source-owned method
 */
 void Spot::clear() {
-    spots_ = nullptr;
+    // IMAGE ORDER, as in the constructor above.
     max_count_ = 0;
     add_count_ = 0;
+    spots_ = nullptr;
 }
 
 // Mirrors the recovered Spot::init (src/spot.cpp) for builds that link this

@@ -2,7 +2,7 @@
 #include "time.h"
 
 /*
-// ORIGINAL: 0x006161D0 ??0Time@@QAE@XZ 0x006161D0-0x006161F6
+// ORIGINAL: 0x006161D0 ??0Time@@QAE@XZ 0x006161D0-0x006161F6 BYTE_EXACT
 // size      38 bytes
 // prototype void (__thiscall ??0Time@@QAE@XZ)(Time* this)
 // callers   19   call targets   0
@@ -11,17 +11,19 @@
 // calls     (none)
 // notes     Staged hybrid export redirect calls the source-owned constructor
 */
-Time::Time()
-    : oneshot_state_(0),
-      id_event_(0),
-      callback1_(nullptr),
-      callback2_(nullptr),
-      cb_param2_(0),
-      cb_param1_(0),
-      count_(0),
-      tick_posted_(0),
-      resolution_(5),
-      unk_2_(0) {
+Time::Time() {
+    // IMAGE ORDER. An initialiser list runs in DECLARATION order,
+    // and the image does not write the fields in that order.
+    id_event_ = 0;
+    callback1_ = nullptr;
+    callback2_ = nullptr;
+    cb_param2_ = 0;
+    cb_param1_ = 0;
+    count_ = 0;
+    tick_posted_ = 0;
+    resolution_ = 5;
+    unk_2_ = 0;
+    oneshot_state_ = 0;
 }
 
 /*

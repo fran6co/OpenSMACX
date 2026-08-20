@@ -285,7 +285,7 @@ int Sprite::create_blank(int width, int height, int depth) {
 // ---------------------------------------------------------------------------
 
 /*
-// ORIGINAL: 0x00406850 ??1Sprite@@QAE@XZ 0x00406850-0x00406855
+// ORIGINAL: 0x00406850 ??1Sprite@@QAE@XZ 0x00406850-0x00406855 BYTE_EXACT
 // body      src/sprite.h
 // size      5 bytes
 // prototype 
