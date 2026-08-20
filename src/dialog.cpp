@@ -167,20 +167,39 @@ Return Value: Selected item ID, or zero when the list head is null
 Status: Complete
 */
 int Dialog::get_selected_id() {
+    // NO LOCAL FOR THE COUNT. The image reads it, decrements DESTRUCTIVELY
+    // and never looks at that register again - it re-reads the member later
+    // instead. Held in a local it stays live across the `abs` calls below
+    // and VC6 spills, which is a stack frame the image has not got.
     int position = selected_position_;
-    int count = entry_count_;
-    if (count == INT_MIN || position < count) {
+    // `position <= count - 1`, WHICH IS NOT `position < count`. The image
+    // decrements the count and compares - `dec eax; cmp edi, eax; jg` - and
+    // for count == INT_MIN that decrement WRAPS, which is the whole reason
+    // this tree carried an explicit INT_MIN test beside the comparison. The
+    // wrap is the semantics; the test is a second read of it.
+    if (position <= entry_count_ - 1) {
         current_entry_ = entry_head_;
         if (position < 0) {
-            int distance = position == INT_MIN ? INT_MIN : -position;
-            if (distance <= count) {
+            // `abs`, CALLED TWICE, and the count RE-READ between them: the
+            // image is `push edi; call 0x644F3A; mov ecx, [esi+0xcc];
+            // cmp eax, ecx; jg` and then `push edi; call 0x644F3A` again.
+            // That is a MIN-style macro over `abs(position)`, not a local -
+            // and `abs(INT_MIN)` returning INT_MIN is what the hand-rolled
+            // ternary here was standing in for.
+            if (abs(position) <= entry_count_) {
+                int distance = abs(position);
                 while (distance > 0) {
                     current_entry_ = current_entry_->previous;
                     distance--;
                 }
-                uint32_t normalized =
-                    static_cast<uint32_t>(position) + static_cast<uint32_t>(count);
-                memcpy(&position, &normalized, sizeof(position));
+                // The member again, not a local - see the note above the
+                // guard. Plain `int` addition: the image is one `add`, and
+                // the uint32 round trip through memcpy is a bit-cast VC6
+                // will not inline away.
+                position += entry_count_;
+                // ONE STORE FOR BOTH ARMS. The image's negative arm ends
+                // `add edi, [esi+0xcc]` and jumps STRAIGHT to the store the
+                // positive arm falls into - `jmp` with no `mov` before it.
                 entry_position_ = position;
             }
         } else {
@@ -210,18 +229,34 @@ Status: Complete
 */
 int Dialog::pos_to_id(int position) {
     int count = entry_count_;
-    if (count == INT_MIN || position < count) {
+    // `position <= count - 1`, WHICH IS NOT `position < count`. The image
+    // decrements the count and compares - `dec eax; cmp edi, eax; jg` - and
+    // for count == INT_MIN that decrement WRAPS, which is the whole reason
+    // this tree carried an explicit INT_MIN test beside the comparison. The
+    // wrap is the semantics; the test is a second read of it.
+    if (position <= entry_count_ - 1) {
         current_entry_ = entry_head_;
         if (position < 0) {
-            int distance = position == INT_MIN ? INT_MIN : -position;
-            if (distance <= count) {
+            // `abs`, CALLED TWICE, and the count RE-READ between them: the
+            // image is `push edi; call 0x644F3A; mov ecx, [esi+0xcc];
+            // cmp eax, ecx; jg` and then `push edi; call 0x644F3A` again.
+            // That is a MIN-style macro over `abs(position)`, not a local -
+            // and `abs(INT_MIN)` returning INT_MIN is what the hand-rolled
+            // ternary here was standing in for.
+            if (abs(position) <= entry_count_) {
+                int distance = abs(position);
                 while (distance > 0) {
                     current_entry_ = current_entry_->previous;
                     distance--;
                 }
-                uint32_t normalized =
-                    static_cast<uint32_t>(position) + static_cast<uint32_t>(count);
-                memcpy(&position, &normalized, sizeof(position));
+                // The member again, not a local - see the note above the
+                // guard. Plain `int` addition: the image is one `add`, and
+                // the uint32 round trip through memcpy is a bit-cast VC6
+                // will not inline away.
+                position += entry_count_;
+                // ONE STORE FOR BOTH ARMS. The image's negative arm ends
+                // `add edi, [esi+0xcc]` and jumps STRAIGHT to the store the
+                // positive arm falls into - `jmp` with no `mov` before it.
                 entry_position_ = position;
             }
         } else {
@@ -273,11 +308,11 @@ int __fastcall dialog_pos_to_id_redirect(Dialog *self, void *, int position) {
     return self->pos_to_id(position);
 }
 
-Font **DialogDefaultFonts = reinterpret_cast<Font **>(0x009B8EC0);
+Font *DialogDefaultFonts[3];  // 0x009B8EC0
 
 /*
 Purpose: Set the default fonts shared by every dialog.
-// ORIGINAL: 0x00609D20 ?set_def_dialog_font@Dialog@@QAAHPAUFont@@PAUFont@@PAUFont@@@Z 0x00609D20-0x00609D50
+// ORIGINAL: 0x00609D20 ?set_def_dialog_font@Dialog@@QAAHPAUFont@@PAUFont@@PAUFont@@@Z 0x00609D20-0x00609D50 BYTE_EXACT
 // symbol    ?set_def_dialog_font@Dialog@@SAHPAVFont@@00@Z
 // size      48 bytes
 // prototype 
@@ -292,15 +327,15 @@ int Dialog::set_def_dialog_font(Font *font1, Font *font2, Font *font3) {
     if (!font1) {
         return 3;
     }
-    volatile Font **const slots =
-        const_cast<volatile Font **>(DialogDefaultFonts);
-    // Only an initialized primary is published; the other two are stored
-    // either way and the call still succeeds.
+    // Only an initialised primary is published; the other two are stored
+    // either way and the call still succeeds. WRITTEN OUT, not published
+    // through a volatile alias - see `BasePop::set_def_string_font`, which
+    // is the same body and was held off the ratchet by the same helper.
     if (font1->is_initialized()) {
-        slots[0] = font1;
+        DialogDefaultFonts[0] = font1;
     }
-    slots[1] = font2;
-    slots[2] = font3;
+    DialogDefaultFonts[1] = font2;
+    DialogDefaultFonts[2] = font3;
     return 0;
 }
 

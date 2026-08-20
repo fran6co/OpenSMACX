@@ -159,7 +159,9 @@ int __cdecl dialog_set_def_dialog_font_redirect(
     Font *font1, Font *font2, Font *font3);
 
 // Default dialog font slots at 0x009B8EC0; tests rebind this.
-extern Font **DialogDefaultFonts;
+// AN ARRAY, NOT A POINTER: three fonts at 0x009B8EC0, stored into
+// directly by `set_def_dialog_font`.
+extern Font *DialogDefaultFonts[3];
 
 // Every teardown that reaches the still-original Dialog::close (0x00608F50)
 // binds it through this signature; RadioButton/CheckBox/ListBox share it.
