@@ -184,6 +184,9 @@ class Buffer {
   // so they are a width and a height.
   int set_clip(int left, int top, int width, int height);
   int text_width(LPSTR text);
+  int text_width(LPSTR text, int len);
+  int write_raw_l(LPSTR text, int x_coord, int y_coord, int len);
+  int write_multi_font_raw_l(LPSTR text, int x_coord, int y_coord, int len);
   int text_height();
   int text_line_height();
   int copy(Buffer *buffer, int xCoord, int yCoord, int width, int height);
@@ -349,11 +352,23 @@ class Buffer {
   // and frees them.
   void *owned_[20];
   uint32_t field_50C_;
-  uint32_t field_510_;
+  // 0x510. The WRITER's font slot, the counterpart of `font_slot_` for
+  // `write_multi_font_raw_l`: same four values, kept apart because measuring
+  // and drawing walk the same string independently.
+  uint32_t write_font_slot_;
   uint32_t field_514_;
-  uint32_t field_518_;
-  uint32_t field_51C_;
-  uint32_t field_520_;
+  // 0x518. WHICH OF THE FOUR FONTS THE NEXT SEGMENT IS MEASURED IN, and it
+  // is an INDEX rather than a pointer: `text_width` reads
+  // `[edi + eax*4 + 0x52c]`, which is `(&font1_)[font_slot_]`. `{` selects 1,
+  // `[` selects 2, `$LINK<` selects 3, and `}`/`]` return to 0.
+  uint32_t font_slot_;
+  // 0x51C. The markup token still being consumed: 1 while a `$LINK<` header
+  // is being stepped over - five more bytes - and 2 while an `=` span runs
+  // to its `>`. Zero otherwise, and cleared when the string ends.
+  uint32_t markup_pending_;
+  // 0x520. Whether the text is parsed for markup at all. Zero takes
+  // `text_width` straight to `font1_->width(text, len)` with no scan.
+  uint32_t markup_enabled_;
   uint32_t field_524_;
   uint32_t field_528_;
   Font *font1_;
@@ -502,8 +517,6 @@ int __fastcall buffer_box_redirect(Buffer *self, void *, RECT *rect,
 
 // The measured overload this one wraps is a 578-byte body with three call
 // targets, still an original dependency. Tests rebind this seam.
-typedef int (OriginalObject::*func_buffer_text_width_measured)(LPSTR, size_t);
-extern func_buffer_text_width_measured BufferTextWidthMeasured;
 
 // The 835-byte multi-font raster writer at 0x005DCAE0 is the real glyph
 // emitter behind every length-limited text entry point, and is still an
@@ -512,8 +525,6 @@ extern func_buffer_text_width_measured BufferTextWidthMeasured;
 // the original ends `mov eax, edi` at 0x005DCE18, handing back the advanced
 // pen position, which is why the scalar writers return the incoming x when
 // they emit nothing.
-typedef int (OriginalObject::*func_buffer_write_multi_font_raw_l)(LPSTR, int, int, int);
-extern func_buffer_write_multi_font_raw_l BufferWriteMultiFontRawL;
 
 int __fastcall buffer_write_l_redirect(Buffer *self, void *, LPSTR text,
                                        int x_coord, int y_coord, int len);

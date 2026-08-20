@@ -72,6 +72,17 @@
 #define PENDING_BODY(address, signature) \
     reinterpret_cast<signature>(static_cast<unsigned long>(address))
 
+// ?write_raw_l@Buffer@@QAEHPADHHH@Z at 0x005DBD00 - 1475 bytes, the raster
+// writer that puts one single-font run on the surface. Called by name from
+// `write_multi_font_raw_l`, which is promoted; a pointer here would cost that
+// body the `E8` it now emits.
+//             body in src/unrecovered/005dbd00.cpp
+int Buffer::write_raw_l(LPSTR text, int x_coord, int y_coord, int len) {
+    typedef int(__fastcall *pending)(Buffer *, void *, LPSTR, int, int, int);
+    return PENDING_BODY(0x005DBD00, pending)(this, nullptr, text, x_coord,
+                                             y_coord, len);
+}
+
 // ?jackal_close@@YAXXZ at 0x0062D500 - body in src/recovered/0062d500.cpp
 void __cdecl jackal_close() {
     typedef void(__cdecl *pending)();

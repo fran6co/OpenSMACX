@@ -20,10 +20,16 @@
 #include "buffer.h"
 #include "filemap.h"
 #include "font.h"
+#include "general.h"   // mem_get, for the link labels this owns
 #include "palette.h"
 #include "spot.h"
 
 #include <new>
+
+// THE ORIGINAL'S MIN, which evaluates both arguments twice. `write_cent_l`
+// calls `strlen` four times because it uses this twice, and that is not a
+// transcription artefact - it is what a macro does and what the image has.
+#define BUFFER_MIN(a, b) ((a) < (b) ? (a) : (b))
 
 
 // The `owned_` table's length, needed by the constructor as well as by
@@ -113,11 +119,11 @@ Buffer::Buffer() {
     palette_seed_ = 0;
     stride_ = 0;
     field_50C_ = -1;
-    field_510_ = 0;
+    write_font_slot_ = 0;
     field_514_ = 0;
-    field_518_ = 0;
-    field_51C_ = 0;
-    field_520_ = BufferField520Default;
+    font_slot_ = 0;
+    markup_pending_ = 0;
+    markup_enabled_ = BufferField520Default;
     field_524_ = 0;
 
     // THE FOUR TEXT STYLES, one `Font *` and four colours each. `set_text_color`
@@ -494,7 +500,7 @@ int __fastcall buffer_text_line_height_redirect(Buffer *self, void *) {
 IDirectDraw *BufferDirectDraw;  // 0x009BC494
 // 0x00696BF0, holding 1. `Buffer::Buffer` and `Buffer::close` are its
 // only two references in the whole image and both READ it, so it is a
-// default that the two restore into `field_520_` rather than state.
+// default that the two restore into `markup_enabled_` rather than state.
 //
 // NOT `const`. It lives in `.data` below the zero-fill line, so the value
 // is known - but the original loads it, `mov eax, [0x696bf0]`, and a `const`
@@ -1567,11 +1573,11 @@ void Buffer::close() {
     locked_bits_ = 0;
     dib_bits_ = nullptr;
     field_50C_ = 0xFFFFFFFFU;
-    field_510_ = 0;
+    write_font_slot_ = 0;
     field_514_ = 0;
-    field_518_ = 0;
-    field_51C_ = 0;
-    field_520_ = BufferField520Default;
+    font_slot_ = 0;
+    markup_pending_ = 0;
+    markup_enabled_ = BufferField520Default;
     font1_ = FontDefault;
     // Four text slots at 0x530..0x53C with five rows 0x10 apart. The layout
     // is deliberately not uniform: the fourth slot holds 2 where the others
@@ -1889,12 +1895,151 @@ int __fastcall buffer_set_clip_redirect(Buffer *self, void *, RECT *rect) {
     return self->set_clip(rect);
 }
 
-func_buffer_text_width_measured BufferTextWidthMeasured =
-    original_method<func_buffer_text_width_measured>(0x005DC7C0);
+/*
+Purpose: Measure `len` bytes of a string, following the buffer's markup.
+// ORIGINAL: 0x005DC7C0 ?text_width@Buffer@@QAEHPADH@Z 0x005DC7C0-0x005DCA02
+// size      578 bytes
+// prototype int (__thiscall ?text_width@Buffer@@QAEHPADH@Z)(Buffer* this, int8*, int)
+// callers   16   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x006192F0 0x006458F0 0x00645DD0
+Return Value: The measured width in pixels
+Status: Semantics transcribed from the image; not yet byte exact
+
+PROMOTED FROM src/unrecovered/005dc7c0.cpp, which reached the marker through
+`*reinterpret_cast<Font **>(0x009BB484)` - that address is `FontDefault`, an
+object this tree already has - and left every caller paying `call [ptr]`
+against the image's `call rel32`.
+
+The markup: `{` `[` and `$LINK<` select fonts 1, 2 and 3, `}` and `]` return
+to font 0, and a doubled token (`{{`, `}}`, `[[`, `]]`) is an escape that
+measures as one character in the current font. `=` opens a span that runs to
+the next `>`, which is skipped entirely. Every one of those was read out of
+the jump table at 0x5DCA04 and its byte index at 0x5DCA20 rather than
+guessed, and the `$LINK<` literal off 0x00696C98.
+
+NOT BYTE EXACT, and the shape says why: the image drives the scan through
+`&len` - `lea edx, [ebp+0xc]` at 0x005DC817 - reloading the cursor and the
+count from the frame on every iteration, and accumulates the width in the
+DEAD `text` parameter slot. That is an inlined helper taking pointers, not a
+loop over locals, and a straight transcription cannot make VC6 spill the same
+way. 122 of 201 mnemonics shared at the last attempt.
+*/
+int Buffer::text_width(LPSTR text, int len) {
+    if (!font1_) {
+        font1_ = FontDefault;
+    }
+    if (!markup_enabled_) {
+        return font1_->width(text, len);
+    }
+
+    LPSTR segment = text;
+    int width = 0;
+    for (;;) {
+        // Inside a link - font slot 3 - `=` closes the run as well.
+        LPSTR cursor = segment;
+        while (len != 0) {
+            const char letter = *cursor;
+            bool token = letter == '{' || letter == '}' || letter == '[' ||
+                         letter == ']' || letter == '$';
+            if (font_slot_ == 3 && letter == '=') {
+                token = true;
+            }
+            if (token) {
+                break;
+            }
+            ++cursor;
+            --len;
+        }
+
+        int next_slot = font_slot_;
+        if (len != 0) {
+            switch (static_cast<unsigned char>(*cursor)) {
+            case '$':
+                if (strncmp(cursor, "$LINK<", 6) == 0) {
+                    markup_pending_ = 1;
+                    next_slot = 3;
+                }
+                break;
+            case '=':
+                markup_pending_ = 2;
+                break;
+            case '{':
+                if (cursor[1] == '{') {
+                    ++cursor;
+                    --len;
+                } else {
+                    next_slot = 1;
+                }
+                break;
+            case '}':
+                if (cursor[1] == '}') {
+                    ++cursor;
+                    --len;
+                } else {
+                    next_slot = 0;
+                }
+                break;
+            case '[':
+                if (cursor[1] == '[') {
+                    ++cursor;
+                    --len;
+                } else {
+                    next_slot = 2;
+                }
+                break;
+            case ']':
+                if (cursor[1] == ']') {
+                    ++cursor;
+                    --len;
+                } else {
+                    next_slot = 0;
+                }
+                break;
+            default:
+                break;
+            }
+        }
+
+        // The four fonts are consecutive, and the image indexes them:
+        // `mov ecx, [edi + eax*4 + 0x52c]`. A slot with no font measures in
+        // font1_ rather than not at all.
+        Font *const *const fonts = &font1_;
+        Font *const chosen = fonts[font_slot_];
+        const int span = static_cast<int>(cursor - segment);
+        width += chosen ? chosen->width(segment, span)
+                        : font1_->width(segment, span);
+
+        if (len == 0) {
+            markup_pending_ = 0;
+            return width;
+        }
+
+        const int pending = markup_pending_;
+        if (pending == 1) {
+            cursor += 5;          // the rest of `$LINK<`
+            len -= 5;
+        }
+        ++cursor;
+        segment = cursor;
+        if (pending == 2) {
+            LPSTR const close = strchr(cursor, '>');
+            next_slot = 0;
+            if (close) {
+                len -= static_cast<int>(close - cursor) + 1;
+                segment = close + 1;
+            }
+            markup_pending_ = next_slot;
+        }
+        font_slot_ = next_slot;
+        --len;
+    }
+}
 
 /*
 Purpose: Measure a null-terminated string with the buffer's text font.
-// ORIGINAL: 0x005DC790 ?text_width@Buffer@@QAEHPAD@Z 0x005DC790-0x005DC7BA
+// ORIGINAL: 0x005DC790 ?text_width@Buffer@@QAEHPAD@Z 0x005DC790-0x005DC7BA BYTE_EXACT
 // size      42 bytes
 // prototype int (__thiscall ?text_width@Buffer@@QAEHPAD@Z)(Buffer* this, int8*)
 // callers   17   call targets   2
@@ -1908,7 +2053,7 @@ int Buffer::text_width(LPSTR text) {
     if (!text) {
         return 0;
     }
-    return (ORIGINAL(this)->*BufferTextWidthMeasured)(text, strlen(text));
+    return text_width(text, static_cast<int>(strlen(text)));
 }
 
 int __fastcall buffer_text_width_redirect(Buffer *self, void *, LPSTR text) {
@@ -2017,8 +2162,156 @@ void __fastcall buffer_clear_links_redirect(Buffer *self, void *) {
     self->clear_links();
 }
 
-func_buffer_write_multi_font_raw_l BufferWriteMultiFontRawL =
-    original_method<func_buffer_write_multi_font_raw_l>(0x005DCAE0);
+/*
+Purpose: Draw a string, switching fonts on markup and recording link regions.
+// ORIGINAL: 0x005DCAE0 ?write_multi_font_raw_l@Buffer@@QAEHPADHHH@Z 0x005DCAE0-0x005DCE23
+// size      835 bytes
+// prototype int (__thiscall ?write_multi_font_raw_l@Buffer@@QAEHPADHHH@Z)(Buffer* this, int8*, int, int, int)
+// callers   9   call targets   6
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005DBD00 0x006458F0 0x00645DD0 0x005D4510
+Return Value: The x coordinate one past the last glyph drawn
+Status: Semantics transcribed from the image; not yet byte exact
+
+PROMOTED FROM src/unrecovered/005dcae0.cpp, which reached every field through
+`*reinterpret_cast<int *>(self + 0x51c)` and left four call sites paying
+`call [ptr]` against the image's `call rel32`.
+
+THE MEASURER'S TWIN. `text_width` walks the same markup and the same four
+fonts; this one draws it, and additionally OWNS THE LINK TABLE: `$LINK<`
+opens a region, `=` captures its label into `owned_[link_count_]`, and each
+completed run is handed to `spot_` as a hit rectangle whose height comes from
+the link font - `unk_1_` when negative, `height_ + unk_1_` when not, which is
+the same reading `Win::flip` needs for its bubble.
+
+Twenty links is the ceiling, and the image says so out loud: a twenty-first
+raises `MessageBoxA(0, "Maximum hypertext links exceeded", "WARNING!", 0)`
+and then carries on drawing.
+*/
+int Buffer::write_multi_font_raw_l(LPSTR text, int x_coord, int y_coord,
+                                   int len) {
+    if (!markup_enabled_) {
+        return write_raw_l(text, x_coord, y_coord, len);
+    }
+
+    for (;;) {
+        LPSTR stop = text;
+        while (len != 0) {
+            const char letter = *stop;
+            bool token = letter == '{' || letter == '}' || letter == '[' ||
+                         letter == ']' || letter == '$';
+            if (write_font_slot_ == 3 && letter == '=') {
+                token = true;
+            }
+            if (token) {
+                break;
+            }
+            ++stop;
+            --len;
+        }
+
+        if (len == 0) {
+            const int opened_at = x_coord;
+            const int reached = write_raw_l(text, x_coord, y_coord,
+                                            static_cast<int>(stop - text));
+            // THE LINK'S HIT REGION, recorded only while a `$LINK<` run is open.
+            // The height is the link font's, and `font4_` falling back to
+            // `font1_` is the image's own guard - `unk_1_` when negative,
+            // `height_ + unk_1_` when not.
+            if (write_font_slot_ == 3 && link_count_ < 20) {
+                Font *const link_font = font4_ ? font4_ : font1_;
+                if (link_font) {
+                        const int height = link_font->unk_1_ < 0
+                            ? link_font->line_height_
+                            : link_font->height_ + link_font->unk_1_;
+                        spot_.add(link_count_ - 1, 0, opened_at, y_coord,
+                                      reached - opened_at, height);
+                }
+            }
+            return reached;
+        }
+
+        int next_slot;
+        const char letter = *stop;
+        if (letter == '$' && strncmp(stop, "$LINK<", 6) == 0) {
+            markup_pending_ = 1;
+            next_slot = 3;
+            if (++link_count_ > 20) {
+                MessageBoxA(nullptr, "Maximum hypertext links exceeded",
+                            "WARNING!", 0);
+            }
+        } else if (letter == '=') {
+            markup_pending_ = 2;
+            next_slot = write_font_slot_;
+        } else if (letter == '{' && stop[1] != '{') {
+            next_slot = 1;
+        } else if (letter == '}' && stop[1] != '}') {
+            next_slot = 0;
+        } else if (letter == '[' && stop[1] != '[') {
+            next_slot = 2;
+        } else if (letter == ']' && stop[1] != ']') {
+            next_slot = 0;
+        } else {
+            // A doubled token is an escape: one of the pair is drawn.
+            if (letter == '{' || letter == '}' || letter == '[' ||
+                letter == ']') {
+                ++stop;
+                --len;
+            }
+            next_slot = write_font_slot_;
+        }
+
+        const int opened_at = x_coord;
+        x_coord = write_raw_l(text, x_coord, y_coord,
+                              static_cast<int>(stop - text));
+
+        const int pending = markup_pending_;
+        if (pending == 1) {
+            stop += 5;          // the rest of `$LINK<`
+            len -= 5;
+        }
+        ++stop;
+        text = stop;
+
+        if (pending == 2) {
+            LPSTR const close = strchr(stop, '>');
+            if (close) {
+                // The label between `=` and `>` is copied out and owned.
+                if (link_count_ < 20) {
+                    const int label = static_cast<int>(close - text);
+                    char *const kept = static_cast<char *>(mem_get(label + 1));
+                    owned_[link_count_] = kept;
+                    if (kept) {
+                        memcpy(kept, text, label);
+                        kept[label] = '\0';
+                    }
+                }
+                len += static_cast<int>(text - close) - 1;
+                text = close + 1;
+            }
+            next_slot = 0;
+            markup_pending_ = 0;
+        }
+
+        // THE LINK'S HIT REGION, recorded only while a `$LINK<` run is open.
+        // The height is the link font's, and `font4_` falling back to
+        // `font1_` is the image's own guard - `unk_1_` when negative,
+        // `height_ + unk_1_` when not.
+        if (write_font_slot_ == 3 && link_count_ < 20) {
+            Font *const link_font = font4_ ? font4_ : font1_;
+            if (link_font) {
+                const int height = link_font->unk_1_ < 0
+                    ? link_font->line_height_
+                    : link_font->height_ + link_font->unk_1_;
+                spot_.add(link_count_ - 1, 0, opened_at, y_coord,
+                          x_coord - opened_at, height);
+            }
+        }
+        write_font_slot_ = next_slot;
+        --len;
+    }
+}
 
 /*
 Purpose: Draw at most `len` characters of a string at an explicit pen
@@ -2062,7 +2355,7 @@ int Buffer::write_l(LPSTR text, int x_coord, int y_coord, int len) {
     if (limit <= 0) {
         return x_coord;
     }
-    return (ORIGINAL(this)->*BufferWriteMultiFontRawL)(text, x_coord, y_coord, limit);
+    return write_multi_font_raw_l(text, x_coord, y_coord, limit);
 }
 
 int __fastcall buffer_write_l_redirect(Buffer *self, void *, LPSTR text,
@@ -2129,7 +2422,7 @@ int Buffer::write_l(LPSTR text, RECT *rect, int len) {
     const uint32_t bottom = edge_bits(rect->bottom);
     const int y_span = edge_int(bottom - edge_bits(font1_->height_) - top);
     const int y_coord = edge_int(top + edge_bits(y_span / 2));
-    return (ORIGINAL(this)->*BufferWriteMultiFontRawL)(text, edge_int(left), y_coord, limit);
+    return write_multi_font_raw_l(text, edge_int(left), y_coord, limit);
 }
 
 int __fastcall buffer_write_l_rect_redirect(Buffer *self, void *, LPSTR text,
@@ -2175,20 +2468,29 @@ int Buffer::write_cent_l(LPSTR text, int x_coord, int y_coord, int width,
     if (!font1_ || !font1_->is_initialized()) {
         return 3;
     }
-    // STRLEN TWICE, which is a `MIN` macro double-evaluating its argument:
-    // the image calls it at 0x005DD04D, compares against `len`, and calls it
-    // AGAIN at 0x005DD05E on the branch that keeps it. Holding the result in
-    // a local is one call where the image has two.
-    const int limit = static_cast<int>(strlen(text)) < len
-        ? static_cast<int>(strlen(text)) : len;
-    if (limit <= 0) {
+    // FOUR STRLEN CALLS - 0x005DD04D, 0x005DD05E, 0x005DD06F, 0x005DD07C -
+    // which is a `MIN` macro used TWICE, each use evaluating its argument
+    // twice. The two guards are separate as well: `< 0` and `== 0`, jumping
+    // to one shared epilogue at 0x005DD08A. Written as one `<= 0` test over
+    // a local, this body is two calls and one branch short.
+    // ONE RETURN, TWO TESTS, as in WinMain: the image's `jl` at 0x005DD06C
+    // and its `jne` at 0x005DD088 both reach the SAME epilogue at
+    // 0x005DD08A. Two separate `if (...) return x_coord;` statements make
+    // VC6 emit that epilogue twice; a short-circuit `||` gives it one.
+    int limit;
+    if (BUFFER_MIN(static_cast<int>(strlen(text)), len) < 0 ||
+        (limit = BUFFER_MIN(static_cast<int>(strlen(text)), len)) == 0) {
         return x_coord;
     }
     const int drawn =
-        (ORIGINAL(this)->*BufferTextWidthMeasured)(text, static_cast<size_t>(limit));
-    const int x_span = edge_int(edge_bits(width) - edge_bits(drawn));
-    const int centred = edge_int(edge_bits(x_coord) + edge_bits(x_span / 2));
-    return (ORIGINAL(this)->*BufferWriteMultiFontRawL)(text, centred, y_coord, limit);
+        text_width(text, limit);
+    // PLAIN INT ARITHMETIC, because that is what the image emits: `sub`,
+    // then `cdq; sub eax, edx; sar edx, 1` - a signed halving that truncates
+    // toward zero - then `add`. The `edge_bits`/`edge_int` round trip is a
+    // pair of calls VC6 declines to inline, and five of them were the whole
+    // difference in this tail.
+    const int centred = x_coord + (width - drawn) / 2;
+    return write_multi_font_raw_l(text, centred, y_coord, limit);
 }
 
 int __fastcall buffer_write_cent_l_redirect(Buffer *self, void *, LPSTR text,
@@ -2256,7 +2558,7 @@ int Buffer::write_cent_l(LPSTR text, RECT *rect, int len) {
         return 0;
     }
     const int drawn =
-        (ORIGINAL(this)->*BufferTextWidthMeasured)(text, static_cast<size_t>(measured));
+        text_width(text, measured);
     const int x_span = edge_int(right - edge_bits(drawn) - left);
     const int x_coord = edge_int(left + edge_bits(x_span / 2));
     if (!font1_) {
@@ -2264,7 +2566,7 @@ int Buffer::write_cent_l(LPSTR text, RECT *rect, int len) {
     }
     const int y_span = edge_int(bottom - edge_bits(font1_->height_) - top);
     const int y_coord = edge_int(top + edge_bits(y_span / 2));
-    return (ORIGINAL(this)->*BufferWriteMultiFontRawL)(text, x_coord, y_coord, limit);
+    return write_multi_font_raw_l(text, x_coord, y_coord, limit);
 }
 
 int __fastcall buffer_write_cent_l_rect_redirect(Buffer *self, void *,
