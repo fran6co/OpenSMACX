@@ -114,7 +114,7 @@ Buffer::Buffer() {
     hdc_ = nullptr;
     hdc_lock_count_ = 0;
     surface_lock_count_ = 0;
-    previous_bitmap_ = 0;
+    previous_bitmap_ = nullptr;
     bitmap_handle_ = nullptr;
     palette_seed_ = 0;
     stride_ = 0;
@@ -653,7 +653,7 @@ int Buffer::init(int width, int height, int tgl, ExtDirectDraw *direct_draw) {
 
     close();
     spot_.init(0x28);
-    field_4AC_ = 0;
+    link_count_ = 0;
     for (int slot = 0; slot < 20; ++slot) {
         if (owned_[slot] != nullptr) {
             free(owned_[slot]);
@@ -671,37 +671,41 @@ int Buffer::init(int width, int height, int tgl, ExtDirectDraw *direct_draw) {
     dib_.bmiHeader.biWidth = width;
     dib_.bmiHeader.biHeight = -height;
 
-    if (BufferDirectDraw != nullptr) {
+    // THE DIB ARM COMES FIRST, as the image lays it out: `CreateDIBSection`
+    // and its fatal-error path are emitted before the DirectDraw block, not
+    // after it. Written the other way round the same blocks come out in the
+    // opposite order and 13 fewer instructions land in position.
+    if (BufferDirectDraw == nullptr) {
         if (borrowed == 0) {
-            DDSURFACEDESC description;
-            memset(&description, 0, sizeof(description));
-            description.dwSize = sizeof(description);
-            description.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH;
-            description.dwHeight = height;
-            description.dwWidth = width;
-            description.ddsCaps.dwCaps =
-                DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY | DDSCAPS_VIDEOMEMORY;
-            IDirectDrawSurface *created = nullptr;
-            if (BufferDirectDraw->CreateSurface(&description, &created,
-                                                nullptr) != 0) {
-                return 0x12;
+            bitmap_handle_ = CreateDIBSection(
+                hdc_, reinterpret_cast<const BITMAPINFO *>(&dib_), 0,
+                &dib_bits_, nullptr, 0);
+            if (bitmap_handle_ == nullptr) {
+                MessageBoxA(nullptr,
+                            "Unable to allocate draw-buffer; terminating program",
+                            "FATAL ERROR", MB_ICONEXCLAMATION);
+                exit(4);
             }
-            if (BufferDirectDraw->CreateClipper(0, &clipper_, nullptr) != 0) {
-                return 0x12;
-            }
-            created->QueryInterface(IID_IDirectDrawSurface,
-                                    reinterpret_cast<void **>(&surface_));
         }
     } else if (borrowed == 0) {
-        bitmap_handle_ = CreateDIBSection(hdc_, reinterpret_cast<const BITMAPINFO *>(&dib_),
-                                         0, &dib_bits_,
-                                          nullptr, 0);
-        if (bitmap_handle_ == nullptr) {
-            MessageBoxA(nullptr,
-                        "Unable to allocate draw-buffer; terminating program",
-                        "FATAL ERROR", MB_ICONEXCLAMATION);
-            exit(4);
+        DDSURFACEDESC description;
+        memset(&description, 0, sizeof(description));
+        description.dwSize = sizeof(description);
+        description.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH;
+        description.dwHeight = height;
+        description.dwWidth = width;
+        description.ddsCaps.dwCaps =
+            DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY | DDSCAPS_VIDEOMEMORY;
+        IDirectDrawSurface *created = nullptr;
+        if (BufferDirectDraw->CreateSurface(&description, &created,
+                                            nullptr) != 0) {
+            return 0x12;
         }
+        if (BufferDirectDraw->CreateClipper(0, &clipper_, nullptr) != 0) {
+            return 0x12;
+        }
+        created->QueryInterface(IID_IDirectDrawSurface,
+                                reinterpret_cast<void **>(&surface_));
     }
     if (borrowed != 0) {
         surface_ = direct_draw->surface;
@@ -720,8 +724,7 @@ int Buffer::init(int width, int height, int tgl, ExtDirectDraw *direct_draw) {
     dib_.bmiHeader.biClrUsed = 256;
 
     if (BufferDirectDraw == nullptr) {
-        previous_bitmap_ = reinterpret_cast<uint32_t>(
-            SelectObject(hdc_, bitmap_handle_));
+        previous_bitmap_ = SelectObject(hdc_, bitmap_handle_);
     }
     stride_ = (width + 3) & ~3;
 
@@ -1232,7 +1235,7 @@ void Buffer::close() {
         } else if ((init_flags_ & 4U) == 0) {
             if (previous_bitmap_ != 0) {
                 SelectObject(hdc_, reinterpret_cast<HGDIOBJ>(previous_bitmap_));
-                previous_bitmap_ = 0;
+                previous_bitmap_ = nullptr;
             }
             DeleteDC(hdc_);
             hdc2_ = nullptr;
@@ -1718,7 +1721,7 @@ Status: Complete
 */
 void Buffer::clear_links() {
     spot_.init(0x28);
-    field_4AC_ = 0;
+    link_count_ = 0;
     for (size_t index = 0; index < OwnedAllocationCount; ++index) {
         if (owned_[index] != nullptr) {
             free(owned_[index]);
