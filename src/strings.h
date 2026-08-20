@@ -21,6 +21,17 @@
  /*
   * Strings class: Create and interact with a basic string table.
   */
+// THE OBJECT, not a pointer to one, and a plain array rather than a
+// wrapper. `stringTemp` used to be `(char1032 *)0x009B86A0` - the
+// injected-DLL spelling, naming storage inside a process this is no longer
+// part of, so every use of it in the recovered executable wrote to unmapped
+// memory. It also cost every caller the ratchet: through a pointer the
+// compiler emits `mov edx, [stringTemp]` where the image pushes the
+// buffer's address outright. Seven functions use it and not one of them was
+// claimed. The `char1032` struct existed only to give that pointer an
+// `->str`; with the object itself declared there is nothing to wrap.
+extern char StringTemp[1032];    // 0x009B86A0
+
 class DLLEXPORT Strings : Heap {
  public:
   Strings() : is_populated_(false) {

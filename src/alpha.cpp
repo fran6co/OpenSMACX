@@ -960,9 +960,9 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
         LPSTR order_str = text_item();
         for (int j = 0; j < 2; j++) {
             parse_say(0, (int)*(&Terraforming[i].name + j), -1, -1);
-            stringTemp->str[0] = 0;
-            parse_string_OG(order_str, stringTemp->str); // TODO: replace
-            *(&Order[i + 4].order + j) = StringTable->put(stringTemp->str);
+            StringTemp[0] = 0;
+            parse_string_OG(order_str, StringTemp); // TODO: replace
+            *(&Order[i + 4].order + j) = StringTable->put(StringTemp);
         }
         Order[i + 4].letter = text_item_string();
         Terraforming[i].shortcuts = text_item_string();
@@ -1437,6 +1437,7 @@ uint32_t __cdecl default_rules() {
 /*
 Purpose: Attempt to read the setting's value from the ini file.
 // ORIGINAL: 0x0059DB40 ?prefs_get@@YAHPADHH@Z 0x0059DB40-0x0059DBC9
+// symbol    ?prefs_get@@YAHPBDHH@Z
 // size      137 bytes
 // prototype int (__cdecl ?prefs_get@@YAHPADHH@Z)(LPCSTR keyName, int defaultValue, BOOL useDefault)
 // callers   17   call targets   4
@@ -1448,11 +1449,11 @@ Return Value: Key's integer value from the ini or default if not set
 Status: Complete
 */
 int __cdecl prefs_get(LPCSTR key_name, int default_value, BOOL use_default) {
-    _itoa_s(default_value, stringTemp->str, 256, 10);
+    _itoa_s(default_value, StringTemp, 256, 10);
     if (use_default) {
-        strcpy_s(TextBufferGetPtr, 256, stringTemp->str);
+        strcpy_s(TextBufferGetPtr, 256, StringTemp);
     } else {
-        GetPrivateProfileStringA("Alpha Centauri", key_name, stringTemp->str, TextBufferGetPtr, 
+        GetPrivateProfileStringA("Alpha Centauri", key_name, StringTemp, TextBufferGetPtr, 
             256, ".\\Alpha Centauri.ini");
     }
     return atoi(Txt.update());
@@ -1623,8 +1624,8 @@ void __cdecl prefs_save(BOOL save_factions) {
     prefs_put("Time Controls", AlphaIniPrefs->time_controls, false);
     if (save_factions && ExpansionEnabled) {
         for (uint32_t i = 1; i < MaxPlayerNum; i++) {
-            sprintf_s(stringTemp->str, sizeof(stringTemp->str), "Faction %d", i);
-            prefs_put(stringTemp->str, Players[i].filename);
+            sprintf_s(StringTemp, sizeof(StringTemp), "Faction %d", i);
+            prefs_put(StringTemp, Players[i].filename);
         }
     }
 }
@@ -1746,7 +1747,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl say_label(int label_offset) {
-    strcat_s(stringTemp->str, 1032, label_get(label_offset));
+    strcat_s(StringTemp, 1032, label_get(label_offset));
 }
 
 /*

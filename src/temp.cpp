@@ -63,7 +63,6 @@ func30 *turn_timer = (func30 *)0x0050EF10;
 
 // testing
 func8 *parse_string_OG = (func8 *)0x00625880;
-char1032 *stringTemp = (char1032 *)0x009B86A0;
 char256 *ParseStrBuffer = (char256 *)0x009BB5E8;
 
 //  ; int

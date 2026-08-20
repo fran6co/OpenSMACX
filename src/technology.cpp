@@ -36,7 +36,7 @@ char TechName[80];
 
 /*
 Purpose: Get tech string for techID and store it into stringTemp buffer.
-// ORIGINAL: 0x005591A0 ?say_tech@@YAXHH@Z 0x005591A0-0x005591BA
+// ORIGINAL: 0x005591A0 ?say_tech@@YAXHH@Z 0x005591A0-0x005591BA BYTE_EXACT
 // size      26 bytes
 // prototype 
 // callers   2   call targets   1
@@ -47,7 +47,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl say_tech(int tech_id, BOOL category_lvl) {
-    say_tech(stringTemp->str, tech_id, category_lvl);
+    say_tech(StringTemp, tech_id, category_lvl);
 }
 
 /*

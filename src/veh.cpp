@@ -157,7 +157,7 @@ void __cdecl say_morale(LPSTR morale_output, int veh_id, int faction_id_vs_nativ
 
 /*
 Purpose: Get the morale string for the specified unit and store it in the stringTemp buffer.
-// ORIGINAL: 0x004B43C0 ?say_morale@@YAXHH@Z 0x004B43C0-0x004B43DA
+// ORIGINAL: 0x004B43C0 ?say_morale@@YAXHH@Z 0x004B43C0-0x004B43DA BYTE_EXACT
 // size      26 bytes
 // prototype void (__cdecl ?say_morale@@YAXHH@Z)(int vehID, int factionID)
 // callers   4   call targets   1
@@ -168,7 +168,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl say_morale(int veh_id, int faction_id_vs_native) {
-    say_morale(stringTemp->str, veh_id, faction_id_vs_native);
+    say_morale(StringTemp, veh_id, faction_id_vs_native);
 }
 
 /*
@@ -1756,7 +1756,7 @@ void __cdecl say_stats_3(LPSTR stat, int proto_id) {
 
 /*
 Purpose: Generate prototype stats using stringTemp buffer.
-// ORIGINAL: 0x0050B9A0 ?say_stats_3@@YAXH@Z 0x0050B9A0-0x0050B9B6
+// ORIGINAL: 0x0050B9A0 ?say_stats_3@@YAXH@Z 0x0050B9A0-0x0050B9B6 BYTE_EXACT
 // size      22 bytes
 // prototype void (__cdecl ?say_stats_3@@YAXH@Z)(int protoID)
 // callers   1   call targets   1
@@ -1767,7 +1767,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl say_stats_3(int proto_id) {
-    say_stats_3(stringTemp->str, proto_id);
+    say_stats_3(StringTemp, proto_id);
 }
 
 /*

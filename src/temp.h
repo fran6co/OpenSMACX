@@ -26,7 +26,6 @@
   */
 
 typedef struct char256 { char str[256]; } char256;
-typedef struct char1032 { char str[1032]; } char1032;
 
 // built-in functions
 typedef void *func1(size_t);
@@ -98,7 +97,6 @@ extern func30 *turn_timer;
 // testing
 typedef int *func8(LPSTR, LPSTR);
 extern func8 *parse_string_OG;
-extern char1032 *stringTemp;
 extern char256 *ParseStrBuffer;
 
 extern int *BufferStrHeight;

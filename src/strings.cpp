@@ -18,6 +18,8 @@
 #include "stdafx.h"
 #include "strings.h"
 
+char StringTemp[1032];   // 0x009B86A0
+
 /*
 Purpose: Initialize the class instance with a new string table of the specified size.
 // ORIGINAL: 0x006168F0 ?init@Strings@@QAEHH@Z 0x006168F0-0x00616950
