@@ -2331,13 +2331,12 @@ int __cdecl Win::init_class(LPSTR window_name) {
     wndclass.lpszMenuName = nullptr;
     wndclass.lpszClassName = WinClassName;
 
-    // TWO DIFFERENT STRINGS IN THE IMAGE, and the ratchet cannot see it:
-    // `RegisterClassA` is handed 0x696DC8 and `CreateWindowExA` 0x696DD4,
-    // twelve bytes apart, where this passes `WinClassName` to both. Both
-    // operands are relocations, so the byte comparison masks them and a
-    // wrong one costs nothing it can report. Left as it is until something
-    // reads what is at 0x696DD4 - a second class name, or the window's
-    // caption - because guessing which would be worse than the note.
+    // TWO COPIES OF ONE STRING, which is why both calls can be handed
+    // `WinClassName`. The image passes 0x696DC8 here and 0x696DD4 to
+    // CreateWindowExA, and both hold "JackalClass" - VC6 pooled neither, so
+    // the literal appears twice. Read out of the image rather than assumed:
+    // the operands are relocations, so the byte comparison masks them and
+    // could not have told the difference either way.
     if (RegisterClassA(&wndclass) == 0) {
         return 1;
     }
