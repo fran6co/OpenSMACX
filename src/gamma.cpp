@@ -54,3 +54,30 @@ Status: Complete
 void Gamma::on_scrolled(int a1, int a2) {
     (ORIGINAL(this)->*GammaOriginalAdjustPalette)();
 }
+
+
+// ---------------------------------------------------------------------------
+// DEFINED IN THE HEADER, CLAIMED HERE.
+//
+// These pieces are written in-class so the image's own inlining reproduces -
+// a constructor or destructor the compiler is expected to fold into its
+// caller. A marker cannot live beside them: `decomp.reader` globs `*.cpp`
+// and `*.c`, and a comparison compiles a TRANSLATION UNIT, so a marker in a
+// header could be neither read nor measured. VC6 emits each of them into
+// this unit's object as its own COMDAT anyway, which is what the comparison
+// pulls out, and the `body` fact says where to go to edit one.
+//
+// The ratchet still covers the header: this unit includes it, so breaking an
+// in-class body here fails the claim below. Measured, not assumed.
+// ---------------------------------------------------------------------------
+
+/*
+// ORIGINAL: 0x0062C010 ??1PushButton@@QAE@XZ 0x0062C010-0x0062C025
+// body      src/pushbutton.h
+// size      21 bytes
+// prototype void (__thiscall ??1PushButton@@QAE@XZ)(PushButton* this)
+// callers   7   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+*/

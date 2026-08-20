@@ -74,3 +74,31 @@ Cursor *__fastcall cursor_construct_redirect(Cursor *self, void *) {
     self->construct();
     return self;
 }
+
+
+// ---------------------------------------------------------------------------
+// DEFINED IN THE HEADER, CLAIMED HERE.
+//
+// These pieces are written in-class so the image's own inlining reproduces -
+// a constructor or destructor the compiler is expected to fold into its
+// caller. A marker cannot live beside them: `decomp.reader` globs `*.cpp`
+// and `*.c`, and a comparison compiles a TRANSLATION UNIT, so a marker in a
+// header could be neither read nor measured. VC6 emits each of them into
+// this unit's object as its own COMDAT anyway, which is what the comparison
+// pulls out, and the `body` fact says where to go to edit one.
+//
+// The ratchet still covers the header: this unit includes it, so breaking an
+// in-class body here fails the claim below. Measured, not assumed.
+// ---------------------------------------------------------------------------
+
+/*
+// ORIGINAL: 0x0063B8D0 ??1Cursor@@QAE@XZ 0x0063B8D0-0x0063B90A
+// body      src/cursor.h
+// size      58 bytes
+// prototype void (__thiscall ??1Cursor@@QAE@XZ)(Cursor* this)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005E3820 0x0064557F
+// indirect  0x0063B8DE
+*/

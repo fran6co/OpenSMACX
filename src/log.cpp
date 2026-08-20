@@ -222,3 +222,43 @@ void __cdecl log_say_hex(LPCSTR str1, int num1, int num2, int num3) {
 // calls     (none)
 // notes     Staged hybrid export redirect calls the source-owned state wrapper
 void __cdecl log_set_state(BOOL state) { Logging->set_state(state); }
+
+
+// ---------------------------------------------------------------------------
+// DEFINED IN THE HEADER, CLAIMED HERE.
+//
+// These pieces are written in-class so the image's own inlining reproduces -
+// a constructor or destructor the compiler is expected to fold into its
+// caller. A marker cannot live beside them: `decomp.reader` globs `*.cpp`
+// and `*.c`, and a comparison compiles a TRANSLATION UNIT, so a marker in a
+// header could be neither read nor measured. VC6 emits each of them into
+// this unit's object as its own COMDAT anyway, which is what the comparison
+// pulls out, and the `body` fact says where to go to edit one.
+//
+// The ratchet still covers the header: this unit includes it, so breaking an
+// in-class body here fails the claim below. Measured, not assumed.
+// ---------------------------------------------------------------------------
+
+/*
+// ORIGINAL: 0x00625FB0 ??0Log@@QAE@XZ 0x00625FB0-0x00625FC0 BYTE_EXACT
+// body      src/log.h
+// size      16 bytes
+// prototype Log* (__thiscall ??0Log@@QAE@XZ)(Log* this)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Staged hybrid export redirect calls the source-owned constructor
+*/
+
+/*
+// ORIGINAL: 0x00626020 ??1Log@@QAE@XZ 0x00626020-0x0062603A BYTE_EXACT
+// body      src/log.h
+// size      26 bytes
+// prototype void (__thiscall ??1Log@@QAE@XZ)(Log* this)
+// callers   1   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00644EF2
+// notes     Staged hybrid export redirect calls the source-owned destructor
+*/

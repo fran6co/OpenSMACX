@@ -134,3 +134,43 @@ LPVOID Heap::get(size_t req_size) {
     current_ = LPVOID(size_t(current_) + req_size);
     return free_mem_addr;
 }
+
+
+// ---------------------------------------------------------------------------
+// DEFINED IN THE HEADER, CLAIMED HERE.
+//
+// These pieces are written in-class so the image's own inlining reproduces -
+// a constructor or destructor the compiler is expected to fold into its
+// caller. A marker cannot live beside them: `decomp.reader` globs `*.cpp`
+// and `*.c`, and a comparison compiles a TRANSLATION UNIT, so a marker in a
+// header could be neither read nor measured. VC6 emits each of them into
+// this unit's object as its own COMDAT anyway, which is what the comparison
+// pulls out, and the `body` fact says where to go to edit one.
+//
+// The ratchet still covers the header: this unit includes it, so breaking an
+// in-class body here fails the claim below. Measured, not assumed.
+// ---------------------------------------------------------------------------
+
+/*
+// ORIGINAL: 0x005D4560 ??0Heap@@QAE@XZ 0x005D4560-0x005D4573
+// body      src/heap.h
+// size      19 bytes
+// prototype void (__thiscall ??0Heap@@QAE@XZ)(Heap* this)
+// callers   6   call targets   0
+// kind      
+// flags     
+// calls     (none)
+// notes     Staged hybrid export redirect calls the source-owned constructor
+*/
+
+/*
+// ORIGINAL: 0x005D4580 ??1Heap@@QAE@XZ 0x005D4580-0x005D45AA
+// body      src/heap.h
+// size      42 bytes
+// prototype void (__thiscall ??1Heap@@QAE@XZ)(Heap* this)
+// callers   6   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00644EF2
+// notes     Staged hybrid export redirect calls the source-owned destructor
+*/

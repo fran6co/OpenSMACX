@@ -438,3 +438,30 @@ void PullDown::hide() {
     reinterpret_cast<Win *>(this)->hide();
     do_all_draws();
 }
+
+
+// ---------------------------------------------------------------------------
+// DEFINED IN THE HEADER, CLAIMED HERE.
+//
+// These pieces are written in-class so the image's own inlining reproduces -
+// a constructor or destructor the compiler is expected to fold into its
+// caller. A marker cannot live beside them: `decomp.reader` globs `*.cpp`
+// and `*.c`, and a comparison compiles a TRANSLATION UNIT, so a marker in a
+// header could be neither read nor measured. VC6 emits each of them into
+// this unit's object as its own COMDAT anyway, which is what the comparison
+// pulls out, and the `body` fact says where to go to edit one.
+//
+// The ratchet still covers the header: this unit includes it, so breaking an
+// in-class body here fails the claim below. Measured, not assumed.
+// ---------------------------------------------------------------------------
+
+/*
+// ORIGINAL: 0x005F8800 ??0PullDown@@QAE@XZ 0x005F8800-0x005F8893
+// body      src/pulldown.h
+// size      147 bytes
+// prototype void (__thiscall ??0PullDown@@QAE@XZ)(PullDown* this)
+// callers   26   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4CF0
+*/

@@ -143,3 +143,43 @@ uint32_t __cdecl random(uint32_t min, uint32_t max) { return Rand->get(min, max)
 // calls     (none)
 // notes     Staged hybrid export redirect calls the source-owned floating generator
 double __cdecl random() { return Rand->get(); }
+
+
+// ---------------------------------------------------------------------------
+// DEFINED IN THE HEADER, CLAIMED HERE.
+//
+// These pieces are written in-class so the image's own inlining reproduces -
+// a constructor or destructor the compiler is expected to fold into its
+// caller. A marker cannot live beside them: `decomp.reader` globs `*.cpp`
+// and `*.c`, and a comparison compiles a TRANSLATION UNIT, so a marker in a
+// header could be neither read nor measured. VC6 emits each of them into
+// this unit's object as its own COMDAT anyway, which is what the comparison
+// pulls out, and the `body` fact says where to go to edit one.
+//
+// The ratchet still covers the header: this unit includes it, so breaking an
+// in-class body here fails the claim below. Measured, not assumed.
+// ---------------------------------------------------------------------------
+
+/*
+// ORIGINAL: 0x00625730 ??0Random@@QAE@XZ 0x00625730-0x00625739 BYTE_EXACT
+// body      src/random.h
+// size      9 bytes
+// prototype void (__thiscall ??0Random@@QAE@XZ)(Random* this)
+// callers   5   call targets   0
+// kind      
+// flags     
+// calls     (none)
+// notes     Staged hybrid export redirect calls the source-owned constructor
+*/
+
+/*
+// ORIGINAL: 0x00625740 ??1Random@@QAE@XZ 0x00625740-0x00625747 BYTE_EXACT
+// body      src/random.h
+// size      7 bytes
+// prototype void (__thiscall ??1Random@@QAE@XZ)(Random* this)
+// callers   5   call targets   0
+// kind      
+// flags     
+// calls     (none)
+// notes     Staged hybrid export redirect calls the source-owned destructor
+*/

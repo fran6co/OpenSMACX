@@ -627,3 +627,63 @@ int __fastcall wave_in_device_start_record_redirect(Wave_In_Device *self, void *
 int __fastcall wave_in_device_end_record_redirect(Wave_In_Device *self, void *) {
     return self->end_record();
 }
+
+
+// ---------------------------------------------------------------------------
+// DEFINED IN THE HEADER, CLAIMED HERE.
+//
+// These pieces are written in-class so the image's own inlining reproduces -
+// a constructor or destructor the compiler is expected to fold into its
+// caller. A marker cannot live beside them: `decomp.reader` globs `*.cpp`
+// and `*.c`, and a comparison compiles a TRANSLATION UNIT, so a marker in a
+// header could be neither read nor measured. VC6 emits each of them into
+// this unit's object as its own COMDAT anyway, which is what the comparison
+// pulls out, and the `body` fact says where to go to edit one.
+//
+// The ratchet still covers the header: this unit includes it, so breaking an
+// in-class body here fails the claim below. Measured, not assumed.
+// ---------------------------------------------------------------------------
+
+/*
+// ORIGINAL: 0x004C5740 ??0Midi_Device@@QAE@XZ 0x004C5740-0x004C577C
+// body      src/sounddevice.h
+// size      60 bytes
+// prototype void (__thiscall ??0Midi_Device@@QAE@XZ)(Midi_Device* this)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006465F0
+*/
+
+/*
+// ORIGINAL: 0x004C5940 ??0Wave_In_Device@@QAE@XZ 0x004C5940-0x004C597C
+// body      src/sounddevice.h
+// size      60 bytes
+// prototype void (__thiscall ??0Wave_In_Device@@QAE@XZ)(Wave_In_Device* this)
+// callers   1   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x006465F0
+*/
+
+/*
+// ORIGINAL: 0x004C5780 ??1Midi_Device@@QAE@XZ 0x004C5780-0x004C5793
+// body      src/sounddevice.h
+// size      19 bytes
+// prototype void (__thiscall ??1Midi_Device@@QAE@XZ)(Midi_Device* this)
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+*/
+
+/*
+// ORIGINAL: 0x004C5980 ??1Wave_In_Device@@QAE@XZ 0x004C5980-0x004C5993
+// body      src/sounddevice.h
+// size      19 bytes
+// prototype void (__thiscall ??1Wave_In_Device@@QAE@XZ)(Wave_In_Device* this)
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+*/
