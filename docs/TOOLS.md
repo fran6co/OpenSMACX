@@ -322,7 +322,15 @@ after touching a class, `verify_recovery_abi` after changing a signature.
   reports that `/O2` and its frameless twin cover 116 of 120 sampled bodies,
   that only 3 are explained by exactly one invocation, and that `/Ox` and
   `/O2 /Oi-` reproduce the same bodies as `/O2` to the body — which is what
-  retired `/Oi-` as a flag set
+  retired `/Oi-` as a flag set.
+
+  THAT CONCLUSION WAS WRONG, and `/Oi-` is back. It reproduces the same
+  bodies as `/O2` only for bodies that never call the CRT's block functions,
+  which was most of the 120 sampled; for the ones that do it is decisive.
+  `Buffer::init` measures 121 of 286 instructions with intrinsics on, because
+  VC6 expands its `memset` to `rep stosd`, and 280 of 286 with them off,
+  because the image CALLS memset at 0x006465F0. A sample that cannot contain
+  the counter-example cannot retire the axis
 - `tools/gdb_sidecar.py` — the symbols gdb cannot read, translated into ones it
   can. Debugging the recovered executable means running it under wine, and the
   two front ends want opposite things:
