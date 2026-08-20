@@ -40,7 +40,7 @@ class DLLEXPORT Palette {
   // its `int` one slot too high for as long as that name stood. Corrected
   // 2026-08-15 against two independent bytes; see the annotation on the body
   // in palette.cpp.
-  void init();                       // 005FE330
+  int init();                        // 005FE330
   void close();                      // 005FE500
   int set();                         // 005FE460
   static void init_palette_class(int mode);

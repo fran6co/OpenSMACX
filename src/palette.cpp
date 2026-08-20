@@ -347,21 +347,19 @@ void Palette::init_palette_class(int use_system_colours) {
         // The twenty static colours, RGBQUAD (blue, green, red) on the way in
         // and PALETTEENTRY (red, green, blue) on the way out - hence the
         // reversal. Entries 0-9 and 246-255 are the range GDI reserves.
-        PALETTEENTRY *entry = header->palPalEntry;
-        const uint8_t *colour = SystemColours;
-        const uint8_t *high_colour = SystemColours + 40;
+        // FULLY INDEXED, not walked. A pointer stepping through the
+        // entries makes VC6 pick its own induction variable and the whole
+        // loop diverges; indexing both sides off `i` is what `Palette::init`
+        // needed too, and what the image emits.
         for (int i = 0; i < 10; ++i) {
-            entry[0].peRed = colour[2];
-            entry[0].peGreen = colour[1];
-            entry[0].peBlue = colour[0];
-            entry[0].peFlags = 0;
-            entry[246].peRed = high_colour[2];
-            entry[246].peGreen = high_colour[1];
-            entry[246].peBlue = high_colour[0];
-            entry[246].peFlags = 0;
-            ++entry;
-            colour += 4;
-            high_colour += 4;
+            header->palPalEntry[i].peRed = SystemColours[i * 4 + 2];
+            header->palPalEntry[i].peGreen = SystemColours[i * 4 + 1];
+            header->palPalEntry[i].peBlue = SystemColours[i * 4];
+            header->palPalEntry[i].peFlags = 0;
+            header->palPalEntry[i + 246].peRed = SystemColours[i * 4 + 42];
+            header->palPalEntry[i + 246].peGreen = SystemColours[i * 4 + 41];
+            header->palPalEntry[i + 246].peBlue = SystemColours[i * 4 + 40];
+            header->palPalEntry[i + 246].peFlags = 0;
         }
         // Everything between the two reserved runs is ours to animate.
         PALETTEENTRY *free_entry = header->palPalEntry + 10;
@@ -469,7 +467,8 @@ void Palette::close() {
 }
 
 /*
-// ORIGINAL: 0x005FE330 ?init@Palette@@QAEXXZ 0x005FE330-0x005FE45F
+// ORIGINAL: 0x005FE330 ?init@Palette@@QAEXXZ 0x005FE330-0x005FE45F BYTE_EXACT
+// symbol    ?init@Palette@@QAEHXZ
 // size      303 bytes
 // prototype void (__thiscall ?init@Palette@@QAEXXZ)(Palette* this)
 // callers   5   call targets   2
@@ -484,7 +483,7 @@ void Palette::close() {
 // picks a fresh non-zero seed.
 Status: Complete
 */
-void Palette::init() {
+int Palette::init() {
     close();
     if (PaletteUsesSystemColours) {
         HDC screen = GetDC(0);
@@ -494,19 +493,15 @@ void Palette::init() {
         // The twenty static colours, RGBQUAD (blue, green, red) on the way in
         // and PALETTEENTRY (red, green, blue) on the way out - hence the
         // reversal. Entries 0-9 and 246-255 are the range GDI reserves.
-        const uint8_t *colour = SystemColours;
-        const uint8_t *high_colour = SystemColours + 40;
         for (int i = 0; i < 10; ++i) {
-            entries_[i].peRed = colour[2];
-            entries_[i].peGreen = colour[1];
-            entries_[i].peBlue = colour[0];
-            entries_[i].peFlags = 4;  // PC_NOCOLLAPSE
-            entries_[i + 246].peRed = high_colour[2];
-            entries_[i + 246].peGreen = high_colour[1];
-            entries_[i + 246].peBlue = high_colour[0];
+            entries_[i].peRed = SystemColours[i * 4 + 2];
+            entries_[i].peGreen = SystemColours[i * 4 + 1];
+            entries_[i].peBlue = SystemColours[i * 4];
+            entries_[i].peFlags = 4;
+            entries_[i + 246].peRed = SystemColours[i * 4 + 42];
+            entries_[i + 246].peGreen = SystemColours[i * 4 + 41];
+            entries_[i + 246].peBlue = SystemColours[i * 4 + 40];
             entries_[i + 246].peFlags = 4;
-            colour += 4;
-            high_colour += 4;
         }
         // Everything between the two reserved runs is ours to animate; the
         // original fills it with a grey ramp. VC6 leaks a for-loop's declared
@@ -540,6 +535,7 @@ void Palette::init() {
     do {
         seed_ = random(0, 0xffff);
     } while (seed_ == 0);
+    return 0;
 }
 
 
