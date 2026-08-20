@@ -267,3 +267,30 @@ int Sprite::extract(Buffer *buffer, int a, int b, int c, int width, int height,
 int Sprite::create_blank(int width, int height, int depth) {
     return (ORIGINAL(this)->*SpriteCreateBlankOriginal)(width, height, depth);
 }
+
+
+// ---------------------------------------------------------------------------
+// DEFINED IN THE HEADER, CLAIMED HERE.
+//
+// These pieces are written in-class so the image's own inlining reproduces -
+// a constructor or destructor the compiler is expected to fold into its
+// caller. A marker cannot live beside them: `decomp.reader` globs `*.cpp`
+// and `*.c`, and a comparison compiles a TRANSLATION UNIT, so a marker in a
+// header could be neither read nor measured. VC6 emits each of them into
+// this unit's object as its own COMDAT anyway, which is what the comparison
+// pulls out, and the `body` fact says where to go to edit one.
+//
+// The ratchet still covers the header: this unit includes it, so breaking an
+// in-class body here fails the claim below. Measured, not assumed.
+// ---------------------------------------------------------------------------
+
+/*
+// ORIGINAL: 0x00406850 ??1Sprite@@QAE@XZ 0x00406850-0x00406855
+// body      src/sprite.h
+// size      5 bytes
+// prototype 
+// callers   1   call targets   0
+// kind      thunk
+// flags     hidden;thunk;sp_ready;purged_ok
+// calls     (none)
+*/
