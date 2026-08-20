@@ -276,6 +276,17 @@ target_precompile_headers(OpenSMACX PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/std
 # the precedent was one entry that did nothing.
 target_link_libraries(OpenSMACX PRIVATE zlib user32 gdi32 winmm dxguid)
 
+# `/MAP /MAPINFO:LINES` is the only debug format in this toolchain that gdb can
+# be taught to read. VC6's own three cannot be: the PDB is 2.0 (`JG`, which
+# LLVM's reader refuses), the CodeView in `.debug$S` is signature 2 (LLVM
+# handles 4), and `/debugtype:coff` segfaults gdb 15.1 on `file` alone -
+# measured, all three. The map carries every public with its final address and,
+# with `/MAPINFO:LINES`, a line table per source, which is what
+# `tools/gdb_sidecar.py` turns into an ELF gdb loads beside a live winedbg.
+# It is a side file: the linked bytes are the same with it and without.
+target_link_options(OpenSMACX PRIVATE
+    "/MAP:${CMAKE_CURRENT_BINARY_DIR}/OpenSMACX.map" "/MAPINFO:LINES")
+
 # `/subsystem:windows`, because the entry point is `WinMain` and not `main`.
 # Left at the default the linker looks for `main`, finds only `_WinMain@16` and
 # fails with LNK2001 - the property is what selects which of the two CRT entry

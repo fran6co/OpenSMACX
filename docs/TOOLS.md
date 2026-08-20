@@ -323,43 +323,69 @@ after touching a class, `verify_recovery_abi` after changing a signature.
   that only 3 are explained by exactly one invocation, and that `/Ox` and
   `/O2 /Oi-` reproduce the same bodies as `/O2` to the body — which is what
   retired `/Oi-` as a flag set
-- `tools/run_recovered.py` — runs `build/OpenSMACX.exe` in `.opensmacx/game/`,
-  where the 653 files it reads by relative path are, and names the catalogued
-  function it faults in. It stages the executable and the MSVC runtimes it
-  imports beside the data first: wine resolves a DLL from the executable's
-  directory, VC6 links the CRT dynamically, and without `MSVCRTD.DLL` the
-  process dies before its first instruction with exit 53 and no diagnostic -
-  which reads exactly like the recovered code faulting immediately. Today it
-  faults at `0x0062D3C2` inside `jackal_init_real`, which is the frontier:
-  everything before it is compiled in and ran.
+- `tools/gdb_sidecar.py` — the symbols gdb cannot read, translated into ones it
+  can. Debugging the recovered executable means running it under wine, and the
+  two front ends want opposite things:
 
-  `--winedbg` is the one to reach for when you want to LOOK at something: it
-  reads `OpenSMACX.pdb` through dbghelp and gives function names, file and
-  line, parameter values and locals — `WinMain+0x21 [src/main.cpp:214]` with
-  `colour_depth=0xcccccccc`, which is the `/GZ` fill showing the uninitialised
-  read in the flesh.
+  **winedbg** reads `OpenSMACX.pdb` through dbghelp and needs nothing from
+  anybody — function names, file and line, parameters and locals:
 
-  `--gdb` starts it under winedbg's gdb proxy on a fixed `localhost:12345`,
-  for CLion's *Remote Debug* configuration or a plain
-  `gdb -ex 'target remote localhost:12345'`. That one is ASSEMBLY level — gdb
-  reads neither PDB nor CodeView — and its names are worse than none: with no
-  debug info it labels addresses from the EXPORT table, and since this tree
-  marks classes `DLLEXPORT` it will confidently call WinMain's prologue
-  `??4Sound@@QAEAAV0@ABV0@@Z+48`. Pass
-  `-ex 'set print max-symbolic-offset 1'` and break by address. `winedbg`'s `--port` is order-sensitive: it
-  must follow `--gdb` and take its value as a separate argument, and the usage
-  message it prints otherwise names none of its options, so a rejected
-  `--port` reads exactly like a winedbg that has none.
+  ```
+  cd .opensmacx/game     # the 653 files it opens by relative path live here
+  WINEPREFIX=$HOME/opt/vc6/.wineprefix winedbg \
+      'Z:\home\...\build\OpenSMACX.exe'
+  ```
 
-  DO NOT EMBED THE SYMBOLS to try to fix that. `link /debugtype:both
-  /pdb:none` genuinely embeds them — 11,042 COFF symbols and 2.2 MB of
-  CodeView, and `objdump -t` resolves every mangled name — but it removes the
-  PDB winedbg reads, so winedbg drops to "No symbols found", and gdb
-  SEGFAULTS on the COFF debug directory offline, on `file` alone. The default
-  `/debug /pdbtype:sept` debugs best; the two front ends want opposite things. It is ASSEMBLY level: the
-  executable carries a CodeView directory pointing at a PDB and gdb cannot
-  read one, so every frame is `?? ()`. For a matching decompilation that is
-  most of what there is to want, because the address IS the catalogue key
+  **gdb** reads none of what VC6 writes, and all three ways were measured
+  rather than assumed: the PDB is version 2.0 (the `JG` container — LLVM's
+  reader answers "not a supported file type"), the CodeView the compiler puts
+  in every `.obj` is signature 2 where LLVM handles 4, and `/debugtype:coff`
+  embeds 11,470 symbols that segfault gdb 15.1 on `file` alone. The gdb remote
+  protocol has no packet for debug info either — winedbg's proxy advertises
+  `qXfer:libraries/threads/features/exec-file` and nothing that could carry
+  symbols — so the process side cannot make up for it.
+
+  What CAN carry it is the linker's map. `/MAP /MAPINFO:LINES` (wired into
+  `CMakeLists.txt`) writes every public with its final address plus a line
+  table per source, and this turns that into an ELF32 of pure DWARF that gdb
+  loads beside the live process:
+
+  ```
+  cd .opensmacx/game
+  WINEPREFIX=$HOME/opt/vc6/.wineprefix winedbg --gdb --port 12345 --no-start \
+      'Z:\home\...\build\OpenSMACX.exe'
+  gdb -ex 'file build/OpenSMACX.sym' -ex 'target remote localhost:12345'
+  ```
+
+  `--port` IS ORDER-SENSITIVE: after `--gdb`, value as a separate argument. The
+  usage message winedbg prints otherwise names none of its options, so a
+  rejected `--port` reads exactly like a winedbg that has none.
+
+  With the sidecar loaded, `break Win::flip` resolves, breakpoints land past
+  the prologue, `bt` reads `WinMain () at src/main.cpp:213`, and `next` steps
+  by source line. THE SIDECAR DESCRIBES THE REAL BINARY — that is why it exists
+  rather than a gcc build of the same sources, which would move every address
+  the catalogue is keyed by. Locals and types are not in it yet; they are in
+  the CodeView `/Z7` already emits into each `.obj`.
+
+  A COMPILE UNIT IS AN OBJECT, NOT A SOURCE FILE. The map reports one line
+  block per (object, source) pair, so grouping by source scatters a header's
+  rows across the whole image and the unit built from them mis-attributes
+  everything in between — gdb placed `WinMain` in `buffer.h:100` until this was
+  keyed by object. Each function gets its own line sequence for the same
+  reason: the state machine attributes every address from one row to the next,
+  and the gaps between a unit's functions belong to other units' COMDATs.
+
+  DO NOT EMBED THE SYMBOLS to try to skip all this. `link /debugtype:both
+  /pdb:none` genuinely embeds them — 2.2 MB of CodeView, `objdump -t` resolves
+  every mangled name — but it removes the PDB winedbg reads, so winedbg drops
+  to "No symbols found" and gdb still segfaults. The default
+  `/debug /pdbtype:sept` debugs best.
+
+  The executable must run from `.opensmacx/game/`: it needs `MSVCRTD.DLL` and
+  `MSVCP60D.DLL` beside the data, and without them the process dies before its
+  first instruction with exit 53 and no diagnostic — which reads exactly like
+  the recovered code faulting immediately
 - `tools/cmake_sources.py` — every `CMakeLists.txt` the build reads, found
   rather than named. Three checks derive their population from "the
   CMakeLists" and each had spelled that as the root file; when every
