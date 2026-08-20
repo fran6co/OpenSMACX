@@ -184,6 +184,24 @@ int __cdecl pops(char *caption, char *label, int a3, char *a4, int a5,
                                              sprite, a7, a8, callback);
 }
 
+// ?X_pops@@... at 0x005BF930 and ?X_pop@@... at 0x005BF480 - the two full
+// builders every xpops wrapper funnels into.
+int __cdecl X_pops(char *caption, const char *label, int a3, char *a4, int a5,
+                   Sprite *sprite, int a7, int a8, int (__cdecl *callback)()) {
+    typedef int(__cdecl *pending)(char *, const char *, int, char *, int,
+                                  Sprite *, int, int, int (__cdecl *)());
+    return PENDING_BODY(0x005BF930, pending)(caption, label, a3, a4, a5,
+                                             sprite, a7, a8, callback);
+}
+
+int __cdecl X_pop(char *caption, const char *label, int a3, char *a4, int a5,
+                  int (__cdecl *callback)()) {
+    typedef int(__cdecl *pending)(char *, const char *, int, char *, int,
+                                  int (__cdecl *)());
+    return PENDING_BODY(0x005BF480, pending)(caption, label, a3, a4, a5,
+                                             callback);
+}
+
 // ?write_raw_l@Buffer@@QAEHPADHHH@Z at 0x005DBD00 - 1475 bytes, the raster
 // writer that puts one single-font run on the surface. Called by name from
 // `write_multi_font_raw_l`, which is promoted; a pointer here would cost that

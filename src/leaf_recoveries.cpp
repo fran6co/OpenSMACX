@@ -247,11 +247,15 @@ uint32_t __fastcall leaf_005e3630_redirect(void *self, void *) {
     // original resolves by reusing eax across the pointer chase; seven source
     // shapes were tried and none steers it (docs/BYTE_MATCH_ROUTE.md:295-340).
     if (*reinterpret_cast<const uint32_t *>(bytes + 0x8) != 0) {
-        const uint8_t *const first = *reinterpret_cast<const uint8_t *const *>(
+        // ONE WALKING POINTER RATHER THAN TWO NAMED LINKS, which is the
+        // eighth shape tried here and does not steer it either: VC6 still
+        // routes the middle link through ecx where the image reuses eax.
+        // Kept because it is the shape the image's single-register chase
+        // describes, not because it changed the measurement.
+        const uint8_t *walk = *reinterpret_cast<const uint8_t *const *>(
             bytes + 0xc);
-        const uint8_t *const second = *reinterpret_cast<const uint8_t *const *>(
-            first + 0x8);
-        return *reinterpret_cast<const uint32_t *>(second + 0x4);
+        walk = *reinterpret_cast<const uint8_t *const *>(walk + 0x8);
+        return *reinterpret_cast<const uint32_t *>(walk + 0x4);
     }
     return 0;
 }
