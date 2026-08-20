@@ -219,13 +219,47 @@ def _matching(records: list, target: str) -> list:
 
     if "::" in target:
         owner, _sep, member = target.rpartition("::")
-        scoped = f"?{member}@{owner}@@"
+        # A CONSTRUCTOR AND A DESTRUCTOR ARE NOT SPELLED LIKE A METHOD.
+        # `?member@Owner@@` is the shape for a named member; `Text::Text` and
+        # `Text::~Text` mangle to `??0Text@@` and `??1Text@@`, with no member
+        # name at all. Without this, the two spellings a person is most
+        # likely to type for the 199 header-defined pieces found nothing.
+        if member == owner:
+            scoped = f"??0{owner}@@"
+        elif member == f"~{owner}":
+            scoped = f"??1{owner}@@"
+        else:
+            scoped = f"?{member}@{owner}@@"
         return [r for r in records if r.name.startswith(scoped)
                 or (r.symbol and r.symbol.startswith(scoped))]
 
     return [r for r in records
             if target in (mangled.identifier(r.name),
                           mangled.identifier(r.symbol))]
+
+
+def _ambiguous(claimants: list, target: str, command: str,
+               in_file: str) -> None:
+    """Say why one target names several pieces, and how to say which.
+
+    THE ADVICE HAS TO FIT THE CASE. `--in` disambiguates a piece annotated
+    in two FILES - the body in `src/` and the copy preserved beside it - and
+    it cannot separate two overloads that share one. `prefs_get` is two
+    functions on lines 1326 and 1439 of `src/alpha.cpp`, so telling someone
+    to pass `--in` there sends them somewhere with no answer in it. Both are
+    reachable by address, and by the mangled name that spells the arguments
+    out, so those are what get offered - printed in full, ready to copy.
+    """
+    files = {piece.path for piece in claimants}
+    advice = (" - --in <path fragment> picks one"
+              if len(files) > 1 and not in_file else
+              " - name one of these exactly, or its address")
+    typer.secho(f"{len(claimants)} pieces match {target!r}; {command} "
+                f"names one{advice}", fg=typer.colors.RED)
+    for piece in sorted(claimants, key=lambda r: (str(r.path), r.address)):
+        typer.echo(f"  {piece.address_hex}  {piece.name}")
+        typer.echo(f"  {'':10}  {piece.location}")
+    raise typer.Exit(2)
 
 
 def _lessons(record: DecompilationState) -> list[tuple[str, str]]:
@@ -461,13 +495,7 @@ def measure(
     records = read(src)
     claimants = _in_file(_matching(records, target), in_file)
     if len(claimants) != 1:
-        typer.secho(
-            f"{len(claimants)} pieces match {target!r}; measure names one"
-            + ("" if in_file else " - --in <path fragment> picks one"),
-            fg=typer.colors.RED)
-        for piece in sorted(claimants, key=lambda r: str(r.path)):
-            typer.echo(f"  {piece.location}")
-        raise typer.Exit(2)
+        _ambiguous(claimants, target, "measure", in_file)
     record = claimants[0]
     command = _command_for(compile_commands, record.path, borrow)
     shared = shared_spans(records)
@@ -699,12 +727,7 @@ def calls(
     records = read(src)
     claimants = _in_file(_matching(records, target), in_file)
     if len(claimants) != 1:
-        typer.secho(f"{len(claimants)} pieces match {target!r}; calls names "
-                    f"one" + ("" if in_file else " - --in picks one"),
-                    fg=typer.colors.RED)
-        for piece in sorted(claimants, key=lambda r: str(r.path)):
-            typer.echo(f"  {piece.location}")
-        raise typer.Exit(2)
+        _ambiguous(claimants, target, "calls", in_file)
     record = claimants[0]
 
     refusal = span_refusal(record, exe, shared_spans(records))
@@ -854,11 +877,7 @@ def record(
     for target in targets:
         claimants = _in_file(_matching(records, target), in_file)
         if len(claimants) != 1:
-            typer.secho(f"{len(claimants)} pieces match {target!r}; "
-                        f"record names one"
-                        + ("" if in_file else " - --in picks one"),
-                        fg=typer.colors.RED)
-            raise typer.Exit(2)
+            _ambiguous(claimants, target, "record", in_file)
         chosen.append(claimants[0])
 
     # MEASURED FIRST, WRITTEN AFTER, and grouped by file. Writing one record

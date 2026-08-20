@@ -752,3 +752,50 @@ def test_a_body_fact_that_resolves_is_silent(tmp_path, monkeypatch):
     result = check(tree)
     assert result.exit_code == 0, result.output
     assert "DANGLING" not in result.output
+
+
+CTORS = """// ORIGINAL: 0x00407000 ??0Thing@@QAE@XZ 0x00407000-0x00407008
+void a() {
+}
+// ORIGINAL: 0x00407100 ??1Thing@@QAE@XZ 0x00407100-0x00407108
+void b() {
+}
+// ORIGINAL: 0x00407200 ?init@Thing@@QAEXXZ 0x00407200-0x00407208
+void c() {
+}
+"""
+
+
+def test_a_scoped_name_finds_a_constructor_and_a_destructor(tmp_path):
+    """`Text::Text` and `Text::~Text` mangle to `??0Text@@` and `??1Text@@`,
+    with no member name at all - the two spellings a person is most likely
+    to type for a header-defined piece found nothing."""
+    (tmp_path / "x.cpp").write_text(CTORS)
+    from decomp import read
+    records = read(tmp_path)
+    assert [r.address for r in osmx._matching(records, "Thing::Thing")] == [
+        0x00407000]
+    assert [r.address for r in osmx._matching(records, "Thing::~Thing")] == [
+        0x00407100]
+    assert [r.address for r in osmx._matching(records, "Thing::init")] == [
+        0x00407200]
+
+
+def test_an_overload_is_named_by_its_address_or_its_full_name(tmp_path):
+    """`--in` separates a piece annotated in two FILES; it cannot separate
+    two overloads that share one. `prefs_get` is two functions on lines 1326
+    and 1439 of src/alpha.cpp, so offering `--in` there sends someone
+    somewhere with no answer in it."""
+    (tmp_path / "x.cpp").write_text(
+        "// ORIGINAL: 0x00408000 ?f@@YAHH@Z 0x00408000-0x00408008\n"
+        "void a() {\n}\n"
+        "// ORIGINAL: 0x00409000 ?f@@YAHPAD@Z 0x00409000-0x00409008\n"
+        "void b() {\n}\n")
+    result = run("show", "f", "--src", str(tmp_path), "--exe", "/nonexistent")
+    assert result.exit_code == 0
+    assert "2 annotations match" in result.output
+    result = run("measure", "f", "--src", str(tmp_path))
+    assert result.exit_code == 2
+    assert "name one of these exactly, or its address" in result.output
+    assert "--in <path fragment>" not in result.output
+    assert "0x00408000" in result.output and "0x00409000" in result.output
