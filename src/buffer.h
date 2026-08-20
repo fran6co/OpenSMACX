@@ -36,10 +36,12 @@ struct Vert;
 // DirectDraw surface handle passed to `init`. No definition is known - the
 // original forwards it straight into the DirectDraw create call - so a forward
 // declaration is all `init`'s signature needs to compile.
-// <ddraw.h>, included where they are called.
-struct IDirectDraw;
-struct IDirectDrawSurface;
-struct IDirectDrawClipper;
+// `Buffer` holds an `IDirectDrawSurface *` and calls `GetDC`, `ReleaseDC`,
+// `Lock` and `Unlock` on it - from `get_hdc` and `release_hdc`, whose bodies
+// have to live in this header to be inlined the way the image inlines them
+// into `set_clip`. So the full interface is needed here, not forward
+// declarations.
+#include <ddraw.h>
 
 // 0x005D7852: `Buffer::init` takes the caller's surface from +0 and its
 // clipper from +4 when the `tgl & 4` flag says the storage is borrowed.
@@ -127,8 +129,54 @@ class DLLEXPORT Buffer {
   static int init_class();
   void close_class();
   int sync_to_palette(Palette *palette);
-  HDC get_hdc();
-  void release_hdc(int count);
+  HDC get_hdc() {
+      if (locked_bits_ != 0) {
+          surface_lost();
+      }
+      IDirectDrawSurface *const surface = surface_;
+      // Without a surface the buffer owns its context directly, so acquiring is
+      // just publishing the stored handle and counting the reference.
+      if (!surface) {
+          hdc2_ = hdc_;
+          ++hdc_lock_count_;
+          return hdc_;
+      }
+      if (hdc2_ != nullptr) {
+          ++hdc_lock_count_;
+          return hdc2_;
+      }
+      if (surface->GetDC(&hdc2_) != 0) {
+          surface_lost();
+      }
+      ++hdc_lock_count_;
+      return hdc2_;
+  }
+  void release_hdc(int count) {
+      // THE SURFACE TEST COMES FIRST, and the subtraction is inside each arm.
+      // The image reads `[esi + 0x58]` before either `sub`, and has two of
+      // them - one per arm - where a single subtraction above the branch
+      // would need only one.
+      if (surface_ == nullptr) {
+          hdc_lock_count_ -= count;
+          if (hdc_lock_count_ <= 0) {
+              hdc2_ = nullptr;
+              hdc_lock_count_ = 0;
+          }
+          return;
+      }
+      hdc_lock_count_ -= count;
+      // `hdc2_` is tested before the count, in that order.
+      if (hdc2_ == nullptr) {
+          return;
+      }
+      if (hdc_lock_count_ <= 0) {
+          if (surface_->ReleaseDC(hdc2_) != 0) {
+              surface_lost();
+          }
+          hdc_lock_count_ = 0;
+          hdc2_ = nullptr;
+      }
+  }
   int get_data();
   int set_clip(RECT *rect);
   int text_width(LPSTR text);
