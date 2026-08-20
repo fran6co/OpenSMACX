@@ -951,18 +951,6 @@ Purpose: Count the number of signed bits set. Added a fix to prevent an infinite
 Return Value: Bit count
 Status: Complete
 */
-/*
-// ORIGINAL: 0x00628AB0 ?bit_count_signed@@YAHH@Z 0x00628AB0-0x00628AC2
-// symbol    ?bit_count_signed@@YAIH@Z
-// size      18 bytes
-// prototype 
-// callers   1   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: Bit count
-Status: Complete
-*/
 uint32_t __cdecl bit_count_signed(int input) {
     uint32_t count = 0;
     if (input) {
@@ -1006,17 +994,6 @@ Purpose: Swap the values of two 32-bit variables. Added an additional check when
 Return Value: n/a
 Status: Complete
 */
-/*
-// ORIGINAL: 0x00628A50 ?swap@@YAXPAHPAH@Z 0x00628A50-0x00628A73
-// size      35 bytes
-// prototype 
-// callers   14   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
 void __cdecl swap(int *var1, int *var2) {
     *var1 ^= *var2;
     *var2 ^= *var1;
@@ -1027,17 +1004,6 @@ void __cdecl swap(int *var1, int *var2) {
 Purpose: Swap the values of two 8-bit variables. Added an additional check when swapping the same
          memory location.
 // ORIGINAL: 0x00628A80 ?swap@@YAXPAEPAE@Z 0x00628A80-0x00628AA3 BYTE_EXACT
-// size      35 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-/*
-// ORIGINAL: 0x00628A80 ?swap@@YAXPAEPAE@Z 0x00628A80-0x00628AA3
 // size      35 bytes
 // prototype 
 // callers   0   call targets   0

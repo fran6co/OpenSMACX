@@ -1335,7 +1335,7 @@ void __fastcall buffer_destructor_redirect(Buffer *self, void *) {
 
 /*
 Purpose: Acquire the device context, taking one reference on the shared handle.
-// ORIGINAL: 0x005E3503 ?get_hdc@Buffer@@QAEHXZ 0x005E3503-0x005E355C
+// ORIGINAL: 0x005E3503 ?get_hdc@Buffer@@QAEHXZ 0x005E3503-0x005E355C BYTE_EXACT
 // symbol    ?get_hdc@Buffer@@QAEPAUHDC__@@XZ
 // size      89 bytes
 // prototype int (__thiscall ?get_hdc@Buffer@@QAEHXZ)(Buffer* this)
@@ -1695,7 +1695,7 @@ int __fastcall buffer_box_redirect(Buffer *self, void *, RECT *rect,
 Purpose: Reset the buffer's link table - reinitialise the spot list to 40
          entries, clear the count, and free the twenty owned link pointers,
          each through the executable's CRT boundary.
-// ORIGINAL: 0x005DEF90 ?clear_links@Buffer@@QAEXXZ 0x005DEF90-0x005DEFD4
+// ORIGINAL: 0x005DEF90 ?clear_links@Buffer@@QAEXXZ 0x005DEF90-0x005DEFD4 BYTE_EXACT
 // size      68 bytes
 // prototype void (__thiscall ?clear_links@Buffer@@QAEXXZ)(Buffer* this)
 // callers   5   call targets   2

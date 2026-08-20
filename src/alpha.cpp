@@ -822,19 +822,6 @@ Purpose: Parse and set the noun item's gender and plurality from the Txt buffer.
 Return Value: n/a
 Status: Complete
 */
-/*
-Purpose: Set the noun's gender and plurality from the current Txt item.
-// ORIGINAL: 0x005871D0 ?noun_item@@YAXPAHPAH@Z 0x005871D0-0x0058723E
-// symbol    ?noun_item@@YAXPAH0@Z
-// size      110 bytes
-// prototype 
-// callers   0   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x005FD670
-Return Value: n/a
-Status: Complete
-*/
 void __cdecl noun_item(int *gender, int *plurality) {
     char *noun = text_item();
     *gender = 0; // defaults to male ('m' || 'M')

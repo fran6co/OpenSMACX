@@ -483,17 +483,6 @@ Purpose: Calculate the amount of goodwill a loan will generate. This is used to 
 Return Value: Goodwill (friction reduction amount)
 Status: Complete
 */
-/*
-// ORIGINAL: 0x0053A1C0 ?energy_value@@YAHH@Z 0x0053A1C0-0x0053A228
-// size      104 bytes
-// prototype 
-// callers   1   call targets   0
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: Goodwill (friction reduction amount)
-Status: Complete
-*/
 int __cdecl energy_value(int loan_principal) {
     int goodwill = 0;
     int divisor = 2;

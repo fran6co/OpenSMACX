@@ -2436,7 +2436,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GBuffer@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-// ORIGINAL: 0x005E3610 ??_GBuffer@@UAEPAXI@Z 0x005E3610-0x005E362E
+// ORIGINAL: 0x005E3610 ??_GBuffer@@UAEPAXI@Z 0x005E3610-0x005E362E BYTE_EXACT
 // size      30 bytes
 // prototype void* (__thiscall ??_GBuffer@@UAEPAXI@Z)(Buffer* this, int8)
 // callers   0   call targets   2
