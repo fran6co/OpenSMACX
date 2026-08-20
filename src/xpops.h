@@ -25,10 +25,11 @@
   * supplying a shared caption buffer, the two defaulted flags and the two
   * placeholders the short form does not expose.
   */
-typedef int (__cdecl func_x_pops_full)(char *, const char *, int, char *, int,
-                                       Sprite *, int, int, int (__cdecl *)());
-extern func_x_pops_full *XPopsOriginalFull;
-extern char *XPopsCaptionBuffer;
+// 0x005BF930, still a pending_bodies forwarder. A NAME, not a
+// `func_x_pops_full *`: the pointer compiled `call [ptr]` at every wrapper
+// below, where the image has `call rel32`.
+int __cdecl X_pops(char *caption, const char *label, int a3, char *a4, int a5,
+                   Sprite *sprite, int a7, int a8, int (__cdecl *callback)());
 
 int __cdecl x_pops_short(const char *label, int value, Sprite *sprite,
                                    int (__cdecl *callback)());
@@ -43,9 +44,9 @@ int __cdecl x_pops_minimal(const char *label, Sprite *sprite,
  * default whichever combination of caption/title/override-text/flags the
  * original call site did not need.
  */
-typedef int (__cdecl func_x_pop_full)(char *, const char *, int, char *, int,
-                                      int (__cdecl *)());
-extern func_x_pop_full *XPopOriginalFull;
+// 0x005BF480, likewise.
+int __cdecl X_pop(char *caption, const char *label, int a3, char *a4, int a5,
+                  int (__cdecl *callback)());
 
 int __cdecl x_pop_caption_label(char *caption, const char *label,
                                           int (__cdecl *callback)());

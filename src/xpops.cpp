@@ -17,15 +17,15 @@
  */
 #include "stdafx.h"
 #include "xpops.h"
+#include "popup.h"   // PopupStartCaption, the shared caption buffer
 
-func_x_pops_full *XPopsOriginalFull = (func_x_pops_full *)0x005BF930;
-func_x_pop_full *XPopOriginalFull = (func_x_pop_full *)0x005BF480;
-char *XPopsCaptionBuffer = (char *)0x009B8AA8;
+// THE SAME BUFFER `popup.cpp` calls `PopupStartCaption` - one array at
+// 0x009B8AA8 under two names. Defined there; used here.
 
 /*
 Purpose: Raise a popup with the defaults the short form implies - the shared
          caption buffer, no title, no override text, and both flags set.
-// ORIGINAL: 0x005BF7D0 ?X_pops@@YAHPBDHPAUSprite@@P6AHXZ@Z 0x005BF7D0-0x005BF7FA
+// ORIGINAL: 0x005BF7D0 ?X_pops@@YAHPBDHPAUSprite@@P6AHXZ@Z 0x005BF7D0-0x005BF7FA BYTE_EXACT
 // symbol    ?x_pops_short@@YAHPBDHPAVSprite@@P6AHXZ@Z
 // size      42 bytes
 // prototype 
@@ -38,14 +38,14 @@ Status: Complete
 */
 int __cdecl x_pops_short(const char *label, int value, Sprite *sprite,
                          int (__cdecl *callback)()) {
-    return XPopsOriginalFull(XPopsCaptionBuffer, label, -1, nullptr, value,
+    return X_pops(PopupStartCaption, label, -1, nullptr, value,
                              sprite, 1, 1, callback);
 }
 
 /*
 Purpose: The three-argument popup form: like the short form but with the value
          defaulted to zero and no override text.
-// ORIGINAL: 0x005BF5D0 ?X_pops@@YAHPBDPAUSprite@@P6AHXZ@Z 0x005BF5D0-0x005BF5F8
+// ORIGINAL: 0x005BF5D0 ?X_pops@@YAHPBDPAUSprite@@P6AHXZ@Z 0x005BF5D0-0x005BF5F8 BYTE_EXACT
 // symbol    ?x_pops_minimal@@YAHPBDPAVSprite@@P6AHXZ@Z
 // size      40 bytes
 // prototype 
@@ -58,7 +58,7 @@ Status: Complete
 */
 int __cdecl x_pops_minimal(const char *label, Sprite *sprite,
                            int (__cdecl *callback)()) {
-    return XPopsOriginalFull(XPopsCaptionBuffer, label, -1, nullptr, 0,
+    return X_pops(PopupStartCaption, label, -1, nullptr, 0,
                              sprite, 1, 1, callback);
 }
 
@@ -66,7 +66,7 @@ int __cdecl x_pops_minimal(const char *label, Sprite *sprite,
 Purpose: Raise the caption-less popup with its own caption and label supplied
          by the caller, rather than the shared buffer - value, override text
          and flags all take their defaults (-1, none, 0).
-// ORIGINAL: 0x005BF330 ?X_pop@@YAHPADPBDP6AHXZ@Z 0x005BF330-0x005BF34F
+// ORIGINAL: 0x005BF330 ?X_pop@@YAHPADPBDP6AHXZ@Z 0x005BF330-0x005BF34F BYTE_EXACT
 // symbol    ?x_pop_caption_label@@YAHPADPBDP6AHXZ@Z
 // size      31 bytes
 // prototype 
@@ -79,14 +79,14 @@ Status: Complete
 */
 int __cdecl x_pop_caption_label(char *caption, const char *label,
                                 int (__cdecl *callback)()) {
-    return XPopOriginalFull(caption, label, -1, nullptr, 0, callback);
+    return X_pop(caption, label, -1, nullptr, 0, callback);
 }
 
 /*
 Purpose: Raise the caption-less popup against the shared caption buffer, with
          both the value and the flags supplied by the caller. No override
          text.
-// ORIGINAL: 0x005BF390 ?X_pop@@YAHPBDHHP6AHXZ@Z 0x005BF390-0x005BF3B4
+// ORIGINAL: 0x005BF390 ?X_pop@@YAHPBDHHP6AHXZ@Z 0x005BF390-0x005BF3B4 BYTE_EXACT
 // symbol    ?x_pop_value_flags@@YAHPBDHHP6AHXZ@Z
 // size      36 bytes
 // prototype 
@@ -99,14 +99,14 @@ Status: Complete
 */
 int __cdecl x_pop_value_flags(const char *label, int value, int flags,
                               int (__cdecl *callback)()) {
-    return XPopOriginalFull(XPopsCaptionBuffer, label, value, nullptr, flags,
+    return X_pop(PopupStartCaption, label, value, nullptr, flags,
                             callback);
 }
 
 /*
 Purpose: Raise the caption-less popup with a caller-supplied caption, value
          and flags. No override text.
-// ORIGINAL: 0x005BF3C0 ?X_pop@@YAHPADPBDHHP6AHXZ@Z 0x005BF3C0-0x005BF3E3
+// ORIGINAL: 0x005BF3C0 ?X_pop@@YAHPADPBDHHP6AHXZ@Z 0x005BF3C0-0x005BF3E3 BYTE_EXACT
 // symbol    ?x_pop_caption_value_flags@@YAHPADPBDHHP6AHXZ@Z
 // size      35 bytes
 // prototype 
@@ -120,13 +120,13 @@ Status: Complete
 int __cdecl x_pop_caption_value_flags(char *caption, const char *label,
                                      int value, int flags,
                                      int (__cdecl *callback)()) {
-    return XPopOriginalFull(caption, label, value, nullptr, flags, callback);
+    return X_pop(caption, label, value, nullptr, flags, callback);
 }
 
 /*
 Purpose: The short form of the caption-less popup - shared caption buffer,
          value defaulted to -1, no override text, only the flags exposed.
-// ORIGINAL: 0x005BF3F0 ?X_pop@@YAHPBDHP6AHXZ@Z 0x005BF3F0-0x005BF412
+// ORIGINAL: 0x005BF3F0 ?X_pop@@YAHPBDHP6AHXZ@Z 0x005BF3F0-0x005BF412 BYTE_EXACT
 // symbol    ?x_pop_short@@YAHPBDHP6AHXZ@Z
 // size      34 bytes
 // prototype 
@@ -139,14 +139,14 @@ Status: Complete
 */
 int __cdecl x_pop_short(const char *label, int flags,
                         int (__cdecl *callback)()) {
-    return XPopOriginalFull(XPopsCaptionBuffer, label, -1, nullptr, flags,
+    return X_pop(PopupStartCaption, label, -1, nullptr, flags,
                             callback);
 }
 
 /*
 Purpose: Raise the caption-less popup with a caller-supplied caption and
          flags; value defaults to -1 and there is no override text.
-// ORIGINAL: 0x005BF420 ?X_pop@@YAHPADPBDHP6AHXZ@Z 0x005BF420-0x005BF441
+// ORIGINAL: 0x005BF420 ?X_pop@@YAHPADPBDHP6AHXZ@Z 0x005BF420-0x005BF441 BYTE_EXACT
 // symbol    ?x_pop_caption_flags@@YAHPADPBDHP6AHXZ@Z
 // size      33 bytes
 // prototype 
@@ -159,14 +159,14 @@ Status: Complete
 */
 int __cdecl x_pop_caption_flags(char *caption, const char *label, int flags,
                                 int (__cdecl *callback)()) {
-    return XPopOriginalFull(caption, label, -1, nullptr, flags, callback);
+    return X_pop(caption, label, -1, nullptr, flags, callback);
 }
 
 /*
 Purpose: Raise the caption-less popup against the shared caption buffer with
          everything else - value, override text and flags - supplied by the
          caller.
-// ORIGINAL: 0x005BF450 ?X_pop@@YAHPBDHPADHP6AHXZ@Z 0x005BF450-0x005BF476
+// ORIGINAL: 0x005BF450 ?X_pop@@YAHPBDHPADHP6AHXZ@Z 0x005BF450-0x005BF476 BYTE_EXACT
 // symbol    ?x_pop_default_caption@@YAHPBDHPADHP6AHXZ@Z
 // size      38 bytes
 // prototype 
@@ -179,7 +179,7 @@ Status: Complete
 */
 int __cdecl x_pop_default_caption(const char *label, int value, char *text,
                                   int flags, int (__cdecl *callback)()) {
-    return XPopOriginalFull(XPopsCaptionBuffer, label, value, text, flags,
+    return X_pop(PopupStartCaption, label, value, text, flags,
                             callback);
 }
 
@@ -188,7 +188,7 @@ Purpose: Raise the full popup against the shared caption buffer with title
          defaulted to -1, no override text and value forced to 0; the sprite
          and both flags are caller-supplied. Unlike x_pops_short/minimal, the
          flags are not fixed to 1/1 here.
-// ORIGINAL: 0x005BF600 ?X_pops@@YAHPBDPAUSprite@@HHP6AHXZ@Z 0x005BF600-0x005BF62C
+// ORIGINAL: 0x005BF600 ?X_pops@@YAHPBDPAUSprite@@HHP6AHXZ@Z 0x005BF600-0x005BF62C BYTE_EXACT
 // symbol    ?x_pops_flags@@YAHPBDPAVSprite@@HHP6AHXZ@Z
 // size      44 bytes
 // prototype 
@@ -201,7 +201,7 @@ Status: Complete
 */
 int __cdecl x_pops_flags(const char *label, Sprite *sprite, int flag1,
                          int flag2, int (__cdecl *callback)()) {
-    return XPopsOriginalFull(XPopsCaptionBuffer, label, -1, nullptr, 0,
+    return X_pops(PopupStartCaption, label, -1, nullptr, 0,
                              sprite, flag1, flag2, callback);
 }
 
@@ -209,7 +209,7 @@ int __cdecl x_pops_flags(const char *label, Sprite *sprite, int flag1,
 Purpose: The minimal popup form with a caller-supplied caption instead of the
          shared buffer - title -1, no override text, value 0, both flags
          fixed at 1.
-// ORIGINAL: 0x005BF630 ?X_pops@@YAHPADPBDPAUSprite@@P6AHXZ@Z 0x005BF630-0x005BF657
+// ORIGINAL: 0x005BF630 ?X_pops@@YAHPADPBDPAUSprite@@P6AHXZ@Z 0x005BF630-0x005BF657 BYTE_EXACT
 // symbol    ?x_pops_caption_minimal@@YAHPADPBDPAVSprite@@P6AHXZ@Z
 // size      39 bytes
 // prototype 
@@ -223,7 +223,7 @@ Status: Complete
 int __cdecl x_pops_caption_minimal(char *caption, const char *label,
                                    Sprite *sprite,
                                    int (__cdecl *callback)()) {
-    return XPopsOriginalFull(caption, label, -1, nullptr, 0, sprite, 1, 1,
+    return X_pops(caption, label, -1, nullptr, 0, sprite, 1, 1,
                              callback);
 }
 
@@ -231,7 +231,7 @@ int __cdecl x_pops_caption_minimal(char *caption, const char *label,
 Purpose: Like x_pops_flags but with a caller-supplied caption in place of the
          shared buffer - title -1, no override text, value forced to 0, both
          flags caller-supplied.
-// ORIGINAL: 0x005BF660 ?X_pops@@YAHPADPBDPAUSprite@@HHP6AHXZ@Z 0x005BF660-0x005BF68B
+// ORIGINAL: 0x005BF660 ?X_pops@@YAHPADPBDPAUSprite@@HHP6AHXZ@Z 0x005BF660-0x005BF68B BYTE_EXACT
 // symbol    ?x_pops_caption_flags@@YAHPADPBDPAVSprite@@HHP6AHXZ@Z
 // size      43 bytes
 // prototype 
@@ -245,7 +245,7 @@ Status: Complete
 int __cdecl x_pops_caption_flags(char *caption, const char *label,
                                  Sprite *sprite, int flag1, int flag2,
                                  int (__cdecl *callback)()) {
-    return XPopsOriginalFull(caption, label, -1, nullptr, 0, sprite, flag1,
+    return X_pops(caption, label, -1, nullptr, 0, sprite, flag1,
                              flag2, callback);
 }
 
@@ -253,7 +253,7 @@ int __cdecl x_pops_caption_flags(char *caption, const char *label,
 Purpose: Raise the full popup against the shared caption buffer with both
          title and value exposed (unlike the short form, which only exposes
          value); no override text, both flags fixed at 1.
-// ORIGINAL: 0x005BF690 ?X_pops@@YAHPBDHHPAUSprite@@P6AHXZ@Z 0x005BF690-0x005BF6BC
+// ORIGINAL: 0x005BF690 ?X_pops@@YAHPBDHHPAUSprite@@P6AHXZ@Z 0x005BF690-0x005BF6BC BYTE_EXACT
 // symbol    ?x_pops_title@@YAHPBDHHPAVSprite@@P6AHXZ@Z
 // size      44 bytes
 // prototype 
@@ -266,14 +266,14 @@ Status: Complete
 */
 int __cdecl x_pops_title(const char *label, int title, int value,
                          Sprite *sprite, int (__cdecl *callback)()) {
-    return XPopsOriginalFull(XPopsCaptionBuffer, label, title, nullptr, value,
+    return X_pops(PopupStartCaption, label, title, nullptr, value,
                              sprite, 1, 1, callback);
 }
 
 /*
 Purpose: Like x_pops_title but with both flags caller-supplied instead of
          fixed at 1; shared caption buffer, no override text.
-// ORIGINAL: 0x005BF6C0 ?X_pops@@YAHPBDHHPAUSprite@@HHP6AHXZ@Z 0x005BF6C0-0x005BF6F0
+// ORIGINAL: 0x005BF6C0 ?X_pops@@YAHPBDHHPAUSprite@@HHP6AHXZ@Z 0x005BF6C0-0x005BF6F0 BYTE_EXACT
 // symbol    ?x_pops_title_flags@@YAHPBDHHPAVSprite@@HHP6AHXZ@Z
 // size      48 bytes
 // prototype 
@@ -287,14 +287,14 @@ Status: Complete
 int __cdecl x_pops_title_flags(const char *label, int title, int value,
                                Sprite *sprite, int flag1, int flag2,
                                int (__cdecl *callback)()) {
-    return XPopsOriginalFull(XPopsCaptionBuffer, label, title, nullptr, value,
+    return X_pops(PopupStartCaption, label, title, nullptr, value,
                              sprite, flag1, flag2, callback);
 }
 
 /*
 Purpose: Like x_pops_title but with a caller-supplied caption instead of the
          shared buffer; no override text, both flags fixed at 1.
-// ORIGINAL: 0x005BF770 ?X_pops@@YAHPADPBDHHPAUSprite@@P6AHXZ@Z 0x005BF770-0x005BF79B
+// ORIGINAL: 0x005BF770 ?X_pops@@YAHPADPBDHHPAUSprite@@P6AHXZ@Z 0x005BF770-0x005BF79B BYTE_EXACT
 // symbol    ?x_pops_caption_title@@YAHPADPBDHHPAVSprite@@P6AHXZ@Z
 // size      43 bytes
 // prototype 
@@ -308,14 +308,14 @@ Status: Complete
 int __cdecl x_pops_caption_title(char *caption, const char *label, int title,
                                  int value, Sprite *sprite,
                                  int (__cdecl *callback)()) {
-    return XPopsOriginalFull(caption, label, title, nullptr, value, sprite, 1,
+    return X_pops(caption, label, title, nullptr, value, sprite, 1,
                              1, callback);
 }
 
 /*
 Purpose: Raise the full popup with everything but the override text
          caller-supplied - caption, title, value, sprite and both flags.
-// ORIGINAL: 0x005BF7A0 ?X_pops@@YAHPADPBDHHPAUSprite@@HHP6AHXZ@Z 0x005BF7A0-0x005BF7CF
+// ORIGINAL: 0x005BF7A0 ?X_pops@@YAHPADPBDHHPAUSprite@@HHP6AHXZ@Z 0x005BF7A0-0x005BF7CF BYTE_EXACT
 // symbol    ?x_pops_no_text@@YAHPADPBDHHPAVSprite@@HHP6AHXZ@Z
 // size      47 bytes
 // prototype 
@@ -329,7 +329,7 @@ Status: Complete
 int __cdecl x_pops_no_text(char *caption, const char *label, int title,
                            int value, Sprite *sprite, int flag1, int flag2,
                            int (__cdecl *callback)()) {
-    return XPopsOriginalFull(caption, label, title, nullptr, value, sprite,
+    return X_pops(caption, label, title, nullptr, value, sprite,
                              flag1, flag2, callback);
 }
 
@@ -337,7 +337,7 @@ int __cdecl x_pops_no_text(char *caption, const char *label, int title,
 Purpose: Raise the full popup against the shared caption buffer with title
          defaulted to -1 and no override text; value and both flags are
          caller-supplied.
-// ORIGINAL: 0x005BF800 ?X_pops@@YAHPBDHPAUSprite@@HHP6AHXZ@Z 0x005BF800-0x005BF82E
+// ORIGINAL: 0x005BF800 ?X_pops@@YAHPBDHPAUSprite@@HHP6AHXZ@Z 0x005BF800-0x005BF82E BYTE_EXACT
 // symbol    ?x_pops_value_flags@@YAHPBDHPAVSprite@@HHP6AHXZ@Z
 // size      46 bytes
 // prototype 
@@ -351,7 +351,7 @@ Status: Complete
 int __cdecl x_pops_value_flags(const char *label, int value, Sprite *sprite,
                                int flag1, int flag2,
                                int (__cdecl *callback)()) {
-    return XPopsOriginalFull(XPopsCaptionBuffer, label, -1, nullptr, value,
+    return X_pops(PopupStartCaption, label, -1, nullptr, value,
                              sprite, flag1, flag2, callback);
 }
 
@@ -359,7 +359,7 @@ int __cdecl x_pops_value_flags(const char *label, int value, Sprite *sprite,
 Purpose: Like x_pops_value_flags but with a caller-supplied caption in place
          of the shared buffer and both flags fixed at 1; title defaults to
          -1, no override text.
-// ORIGINAL: 0x005BF830 ?X_pops@@YAHPADPBDHPAUSprite@@P6AHXZ@Z 0x005BF830-0x005BF859
+// ORIGINAL: 0x005BF830 ?X_pops@@YAHPADPBDHPAUSprite@@P6AHXZ@Z 0x005BF830-0x005BF859 BYTE_EXACT
 // symbol    ?x_pops_caption_value@@YAHPADPBDHPAVSprite@@P6AHXZ@Z
 // size      41 bytes
 // prototype 
@@ -373,14 +373,14 @@ Status: Complete
 int __cdecl x_pops_caption_value(char *caption, const char *label, int value,
                                  Sprite *sprite,
                                  int (__cdecl *callback)()) {
-    return XPopsOriginalFull(caption, label, -1, nullptr, value, sprite, 1, 1,
+    return X_pops(caption, label, -1, nullptr, value, sprite, 1, 1,
                              callback);
 }
 
 /*
 Purpose: Like x_pops_caption_value but with both flags caller-supplied
          instead of fixed at 1; title defaults to -1, no override text.
-// ORIGINAL: 0x005BF860 ?X_pops@@YAHPADPBDHPAUSprite@@HHP6AHXZ@Z 0x005BF860-0x005BF88D
+// ORIGINAL: 0x005BF860 ?X_pops@@YAHPADPBDHPAUSprite@@HHP6AHXZ@Z 0x005BF860-0x005BF88D BYTE_EXACT
 // symbol    ?x_pops_caption_value_flags@@YAHPADPBDHPAVSprite@@HHP6AHXZ@Z
 // size      45 bytes
 // prototype 
@@ -395,14 +395,14 @@ int __cdecl x_pops_caption_value_flags(char *caption, const char *label,
                                       int value, Sprite *sprite, int flag1,
                                       int flag2,
                                       int (__cdecl *callback)()) {
-    return XPopsOriginalFull(caption, label, -1, nullptr, value, sprite,
+    return X_pops(caption, label, -1, nullptr, value, sprite,
                              flag1, flag2, callback);
 }
 
 /*
 Purpose: Raise the full popup against the shared caption buffer with title,
          override text and value all caller-supplied; both flags fixed at 1.
-// ORIGINAL: 0x005BF890 ?X_pops@@YAHPBDHPADHPAUSprite@@P6AHXZ@Z 0x005BF890-0x005BF8BE
+// ORIGINAL: 0x005BF890 ?X_pops@@YAHPBDHPADHPAUSprite@@P6AHXZ@Z 0x005BF890-0x005BF8BE BYTE_EXACT
 // symbol    ?x_pops_override_text@@YAHPBDHPADHPAVSprite@@P6AHXZ@Z
 // size      46 bytes
 // prototype 
@@ -416,7 +416,7 @@ Status: Complete
 int __cdecl x_pops_override_text(const char *label, int title, char *text,
                                  int value, Sprite *sprite,
                                  int (__cdecl *callback)()) {
-    return XPopsOriginalFull(XPopsCaptionBuffer, label, title, text, value,
+    return X_pops(PopupStartCaption, label, title, text, value,
                              sprite, 1, 1, callback);
 }
 
@@ -424,7 +424,7 @@ int __cdecl x_pops_override_text(const char *label, int title, char *text,
 Purpose: Raise the full popup against the shared caption buffer with every
          other argument - title, override text, value, sprite and both flags
          - caller-supplied. Only the caption defaults.
-// ORIGINAL: 0x005BF8C0 ?X_pops@@YAHPBDHPADHPAUSprite@@HHP6AHXZ@Z 0x005BF8C0-0x005BF8F2
+// ORIGINAL: 0x005BF8C0 ?X_pops@@YAHPBDHPADHPAUSprite@@HHP6AHXZ@Z 0x005BF8C0-0x005BF8F2 BYTE_EXACT
 // symbol    ?x_pops_default_caption@@YAHPBDHPADHPAVSprite@@HHP6AHXZ@Z
 // size      50 bytes
 // prototype 
@@ -438,14 +438,14 @@ Status: Complete
 int __cdecl x_pops_default_caption(const char *label, int title, char *text,
                                    int value, Sprite *sprite, int flag1,
                                    int flag2, int (__cdecl *callback)()) {
-    return XPopsOriginalFull(XPopsCaptionBuffer, label, title, text, value,
+    return X_pops(PopupStartCaption, label, title, text, value,
                              sprite, flag1, flag2, callback);
 }
 
 /*
 Purpose: Raise the full popup with caption, title, override text, value and
          sprite all caller-supplied; only the two flags default, fixed at 1.
-// ORIGINAL: 0x005BF900 ?X_pops@@YAHPADPBDHPADHPAUSprite@@P6AHXZ@Z 0x005BF900-0x005BF92D
+// ORIGINAL: 0x005BF900 ?X_pops@@YAHPADPBDHPADHPAUSprite@@P6AHXZ@Z 0x005BF900-0x005BF92D BYTE_EXACT
 // symbol    ?x_pops_no_flags@@YAHPADPBDH0HPAVSprite@@P6AHXZ@Z
 // size      45 bytes
 // prototype 
@@ -459,6 +459,6 @@ Status: Complete
 int __cdecl x_pops_no_flags(char *caption, const char *label, int title,
                             char *text, int value, Sprite *sprite,
                             int (__cdecl *callback)()) {
-    return XPopsOriginalFull(caption, label, title, text, value, sprite, 1, 1,
+    return X_pops(caption, label, title, text, value, sprite, 1, 1,
                              callback);
 }
