@@ -956,7 +956,7 @@ def record(
 # choice this makes - it is what the tree configures - and the optimisation
 # flags a match needs are NOT these: see FLAG_SETS.
 CMAKE_ARGUMENTS = (
-    "-G", "Unix Makefiles",
+    "-G", "Ninja",
     "-DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/vc6.cmake",
     "-DCMAKE_BUILD_TYPE=Debug",
     "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
