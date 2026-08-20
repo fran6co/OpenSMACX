@@ -62,9 +62,24 @@ struct ExtDirectDraw {
  * theirs. Header plus table is 40 + 1024 = 0x428 bytes, and 0x7C + 0x428 is
  * exactly `Buffer::palette_seed_`, so the block is accounted for to the byte.
  */
-struct Dib {
-    BITMAPINFOHEADER bmiHeader;
-    RGBQUAD bmiColors[256];
+struct Dib : BITMAPINFO {
+    /*
+     * BITMAPINFO IS THE BASE, not a member and not something this is cast
+     * to. `CreateDIBSection` wants a `BITMAPINFO *` and gets one by
+     * derivation - `CreateDIBSection(hdc_, &dib_, ...)`, no cast - which is
+     * the whole reason for spelling it this way.
+     *
+     * Windows declares `bmiColors[1]`, so a 256-colour DIB needs 255 more
+     * immediately behind it, and `bmiColors` is then indexed across the
+     * whole 256. That is the idiom Windows documents for this structure and
+     * every Win32 program that allocates a palettised DIB relies on it; the
+     * alternative is a `reinterpret_cast` at the API call, which trades one
+     * fudge for another and hides the layout instead of declaring it.
+     *
+     * 44 + 1020 = 0x428, and 0x7C + 0x428 is exactly `Buffer::field_4A4_`,
+     * so the block is still accounted for to the byte.
+     */
+    RGBQUAD bmiColorsRest[255];
 };
 
 class DLLEXPORT Buffer {
