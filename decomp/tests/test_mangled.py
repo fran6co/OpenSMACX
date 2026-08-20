@@ -59,3 +59,24 @@ def test_unreadable_names_say_so_rather_than_guess(bad):
     """None means "cannot tell", which every caller treats as ambiguous.
     A tokeniser that guessed would produce a symbol wrong in a NEW way."""
     assert arity(bad) is None
+
+
+def test_a_constructor_declares_an_arity_like_anything_else():
+    """MSVC marks the ABSENCE of a return type with a bare `@` where the
+    type would be, and read as a type it made `_types` fail - so every
+    `??0`/`??1` name came back None. That is exactly the population where
+    arity is needed: a class's constructors are told apart by nothing else,
+    and `??0Font@@QAE@XZ` and `??0Font@@QAE@PADHH@Z` are two definitions on
+    two lines of one file."""
+    assert arity("??0Font@@QAE@XZ") == 0
+    assert arity("??0Font@@QAE@PADHH@Z") == 3
+    assert arity("??0Text@@QAE@H@Z") == 1
+    assert arity("??1Font@@QAE@XZ") == 0
+
+
+def test_a_method_still_drops_its_return_type():
+    """The `@` only stands in for a return type that is absent; where one is
+    present it is still the first of the types and still not an argument."""
+    assert arity("?on_mouse_move@Win@@QAEXHHIH@Z") == 4
+    assert arity("?set_font@Buffer@@QAEHPAVFont@@000@Z") == 4
+    assert arity("?close@Text@@QAEXXZ") == 0

@@ -654,7 +654,18 @@ def _token_fact(lines: list[str], index: int, key: str) -> str:
             # them apart; the value can, because a mangled name has no
             # spaces in it. This is the same lesson `FACT_LINE`'s own
             # comment records for `calls`, applied before it can bite.
-            return "" if not value or " " in value else value
+            if not value or " " in value:
+                return ""
+            # AND A `body` VALUE NAMES A FILE. The one-token rule is not
+            # enough for this key: `src/recovered/units/005e8fa5.cpp` holds
+            # a wrapped sentence whose last line is `// body needs.`, and
+            # "needs." is one token. A path has a separator in it; prose
+            # re-flowed onto its own line does not. Measured over all 5,988
+            # records, this rejects exactly that one line and keeps all 27
+            # real facts.
+            if key == "body" and "/" not in value:
+                return ""
+            return value
     return ""
 
 

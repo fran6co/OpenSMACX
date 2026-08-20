@@ -707,3 +707,48 @@ def test_the_most_specific_in_fragment_wins(tmp_path):
     assert len(osmx._in_file(records, "unrecovered")) == 1
     assert len(osmx._in_file(records, "body.cpp")) == 1
     assert len(osmx._in_file(records, str(tmp_path))) == 2
+
+
+def test_a_body_fact_that_leads_nowhere_fails_the_gate(tmp_path,
+                                                        monkeypatch):
+    """The fact has to be checked or it is a comment with a parser: nothing
+    about MEASURING the piece depends on it, so the only thing keeping it
+    true is this."""
+    (tmp_path / "x.cpp").write_text(
+        "// ORIGINAL: 0x00402000 ??0Thing@@QAE@XZ 0x00402000-0x00402010 "
+        "BYTE_EXACT\n// body      src/gone.h\n")
+    monkeypatch.setattr(osmx, "_check_one_file",
+                        fake_file_result({0x00402000: "BYTE_EXACT"}))
+    result = check(tmp_path)
+    assert result.exit_code == 1
+    assert "DANGLING" in result.output
+    assert "does not exist" in result.output
+
+
+def test_a_body_fact_whose_file_lost_the_piece_fails_too(tmp_path,
+                                                          monkeypatch):
+    tree = tmp_path / "src"
+    tree.mkdir()
+    (tmp_path / "there.h").write_text("class Other { };\n")
+    (tree / "x.cpp").write_text(
+        "// ORIGINAL: 0x00402000 ??0Thing@@QAE@XZ 0x00402000-0x00402010 "
+        "BYTE_EXACT\n// body      ./there.h\n")
+    monkeypatch.setattr(osmx, "_check_one_file",
+                        fake_file_result({0x00402000: "BYTE_EXACT"}))
+    result = check(tree)
+    assert result.exit_code == 1
+    assert "does not mention Thing" in result.output
+
+
+def test_a_body_fact_that_resolves_is_silent(tmp_path, monkeypatch):
+    tree = tmp_path / "src"
+    tree.mkdir()
+    (tmp_path / "there.h").write_text("class Thing { Thing() { } };\n")
+    (tree / "x.cpp").write_text(
+        "// ORIGINAL: 0x00402000 ??0Thing@@QAE@XZ 0x00402000-0x00402010 "
+        "BYTE_EXACT\n// body      ./there.h\n")
+    monkeypatch.setattr(osmx, "_check_one_file",
+                        fake_file_result({0x00402000: "BYTE_EXACT"}))
+    result = check(tree)
+    assert result.exit_code == 0, result.output
+    assert "DANGLING" not in result.output

@@ -992,6 +992,55 @@ def configure(
                 fg=typer.colors.GREEN)
 
 
+def dangling_bodies(records: list) -> list:
+    """Every `body` fact that does not lead to a definition.
+
+    THE FACT HAS TO BE CHECKED OR IT IS A COMMENT WITH A PARSER. `// body
+    src/palette.h` says the definition is over there, and nothing about
+    measuring the piece depends on it - the marker's own unit is what gets
+    compiled. So the only thing that keeps it true is a check: the file it
+    names must exist, and must still contain the piece under the name the
+    annotation records. A body that moves out of a header, or a header that
+    is renamed, leaves the pointer behind, and a pointer nobody verifies is
+    how this tree has been misled before.
+
+    Costs no compile: a read per named file, cached.
+    """
+    text: dict = {}
+    broken = []
+    for record in records:
+        if not record.body:
+            continue
+        if record.body not in text:
+            text[record.body] = _named_file(record)
+        contents = text[record.body]
+        if contents is None:
+            broken.append((record, f"{record.body} does not exist"))
+            continue
+        identifier = mangled.identifier(record.symbol or record.name)
+        if identifier and identifier not in contents:
+            broken.append((record,
+                           f"{record.body} does not mention {identifier}"))
+    return broken
+
+
+def _named_file(record: DecompilationState) -> str | None:
+    """The text of the record's `body` file, or None if it is not there.
+
+    RESOLVED FROM THE RECORD, NOT FROM A ROOT. The fact is repo-relative
+    (`src/palette.h`) and the record knows its own absolute path, so the
+    repo root is whichever ancestor of that path the fact resolves under.
+    Deriving it from `--src` instead looked fine and broke the moment
+    someone passed a FILE there: `src/text.cpp`'s parent is `src`, and
+    `src/src/text.h` does not exist. The check caught it on its first run.
+    """
+    for ancestor in record.path.parents:
+        candidate = ancestor / record.body
+        if candidate.is_file():
+            return candidate.read_text(errors="replace")
+    return None
+
+
 def _claims_by_file(records: list) -> dict:
     grouped: dict = {}
     for record in records:
@@ -1093,6 +1142,7 @@ def check(
     """
     _fresh_compile_commands(compile_commands, reconfigure)
     records = read(src)
+    dangling = dangling_bodies(records)
     grouped = _claims_by_file(records)
     claims = sum(len(v) for v in grouped.values())
     if not claims:
@@ -1154,6 +1204,9 @@ def check(
             "reproduced": claims - len(broken),
             "regressed": rows(regressed),
             "unverifiable": rows(unasked),
+            "dangling_bodies": [{"address": r.address_hex,
+                                 "location": str(r.location), "note": n}
+                                for r, n in dangling],
         }, indent=2))
     else:
         for record, verdict, note in regressed:
@@ -1181,7 +1234,11 @@ def check(
     # way it was built. Passing the second silently would leave 534 claims
     # unchecked behind a green gate, which is the shape this whole ratchet
     # exists to prevent.
-    raise typer.Exit(1 if regressed else 3 if unasked else 0)
+    if dangling and not as_json:
+        for record, note in dangling:
+            typer.secho(f"DANGLING  {record.address_hex} body fact: {note} - "
+                        f"{record.location}", fg=typer.colors.RED)
+    raise typer.Exit(1 if regressed or dangling else 3 if unasked else 0)
 
 
 if __name__ == "__main__":
