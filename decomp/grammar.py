@@ -119,10 +119,14 @@ _MANGLED_BASE = re.compile(r"^\?\?(?:_[A-Za-z]|[0-9A-Za-z])([A-Za-z_]\w*)@"
 # space, still registers as present-and-empty rather than absent.
 # `symbol` joined the keys when the measurement needed a fact the marker does
 # not carry: what the COMPILER emits for this piece, which is not always what
-# the image calls it. See `model.DecompilationState.symbol`.
+# the image calls it. See `model.DecompilationState.symbol`. `body` joined
+# them for the 199 pieces DEFINED IN A HEADER - constructors and destructors
+# written in-class so the image's own inlining reproduces - whose marker has
+# to sit in a `.cpp` because that is what a reader globs and a compiler
+# compiles. Without it the claim points at a file with no body in it.
 FACT_LINE = re.compile(
-    r"^(?://|\*) (name|size|spans|symbol|prototype|callers|kind|flags|calls"
-    r"|notes|indirect)"
+    r"^(?://|\*) (name|size|spans|symbol|body|prototype|callers|kind|flags"
+    r"|calls|notes|indirect)"
     r"(?: +(.*?))?\s*$")
 
 # A WRAPPED `calls` OR `indirect` VALUE. Long edge lists are re-flowed onto

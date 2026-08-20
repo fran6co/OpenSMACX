@@ -117,6 +117,13 @@ class DecompilationState:
                                  # its own, so the two are different facts and
                                  # neither replaces the other. Empty means
                                  # "the compiler emits `name`".
+    body: str = ""               # where the DEFINITION is, when it is not
+                                 # under this marker: a repo-relative path to
+                                 # the header that defines it in-class. The
+                                 # marker must live in a compilable unit, so
+                                 # for the 199 pieces defined in a header the
+                                 # claim and the body cannot share a file -
+                                 # this is the pointer between them.
     kind: str = ""               # what the catalogue calls the piece:
                                  # `game` (5,575 of them), `library` (331 -
                                  # the statically linked CRT and zlib) or

@@ -189,7 +189,15 @@ def _in_file(claimants: list, fragment: str) -> list:
     """
     if not fragment:
         return claimants
-    return [r for r in claimants if fragment in str(r.path)]
+    matched = [r for r in claimants if fragment in str(r.path)]
+    # MOST SPECIFIC WINS. A plain substring makes `--in src/` match both
+    # `src/text.cpp` and `src/unrecovered/00608c00.cpp`, so the fragment that
+    # names one file exactly still refused with "2 pieces match". A fragment
+    # that ends a path is the caller naming a FILE; one that appears in the
+    # middle is naming a directory, and the first reading wins where both
+    # apply.
+    exact = [r for r in matched if str(r.path).endswith(fragment)]
+    return exact or matched
 
 
 def _matching(records: list, target: str) -> list:
@@ -282,6 +290,8 @@ def show(
             "address": record.address_hex,
             "name": record.name,
             "symbol": record.symbol,
+            "kind": record.kind,
+            "body": record.body,
             "location": str(record.location),
             "mode": str(record.mode),
             "recipe": str(record.recipe),
@@ -330,7 +340,16 @@ def _print_record(entry: dict) -> None:
                    f"the image lays elsewhere")
     if entry["symbol"]:
         typer.echo(f"  symbol     {entry['symbol']}")
-    if entry["extract_error"]:
+    if entry["kind"]:
+        typer.echo(f"  kind       {entry['kind']}")
+    if entry["body"]:
+        # THE WHOLE POINT OF THE FACT. Without it a marker with no definition
+        # under it reports "no closing brace within the file", which is true
+        # and useless: the body is in a header, on purpose, and the reader
+        # wants to be told where rather than told the file looks broken.
+        typer.echo(f"  body       {entry['body']}   (defined in-class; the "
+                   f"marker is here because a header cannot be compiled)")
+    elif entry["extract_error"]:
         typer.secho(f"  no region  {entry['extract_error']}",
                     fg=typer.colors.YELLOW)
     for kind, text in entry["lessons"]:
