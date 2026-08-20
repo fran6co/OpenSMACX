@@ -28,7 +28,9 @@ struct IDirectDrawPalette;  // <ddraw.h>, included where it is called
 class DLLEXPORT Palette {
  public:
   Palette() { ; }
-  ~Palette() { ; }
+  // A TAIL JUMP, not an empty body: the image's destructor is one
+  // instruction, `jmp ?close@Palette@@QAEXXZ`.
+  ~Palette() { close(); }   // 005FE2E0
 
   int get_rgbquad(RGBQUAD *output, int start, int count);
   // `static`, and the image's name says so: `?init_palette_class@Palette@@

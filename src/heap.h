@@ -23,22 +23,21 @@
   */
 class DLLEXPORT Heap {
  public:
-  Heap() {
-    *reinterpret_cast<volatile int8_t *>(&err_flags_) = 0;
-    base_ = nullptr;
-    current_ = nullptr;
-    base_size_ = 0;
-    free_size_ = 0;
-  } // 005D4560
+  // OUT OF LINE, and that is what `Strings` needs: its own constructor
+  // opens `push esi; mov esi, ecx; call ?0Heap`, a real call to the base.
+  // Defined in-class the compiler inlines it and the caller never matches.
+  Heap();   // 005D4560
   ~Heap() {
+    // IMAGE ORDER, and the null goes INSIDE the guard as well as after it.
     if (base_) {
       std::free(base_);
+      base_ = nullptr;
     }
     *reinterpret_cast<volatile int8_t *>(&err_flags_) = 0;
-    base_ = nullptr;
     current_ = nullptr;
-    base_size_ = 0;
+    base_ = nullptr;
     free_size_ = 0;
+    base_size_ = 0;
   } // 005D4580
 
   void shutdown();

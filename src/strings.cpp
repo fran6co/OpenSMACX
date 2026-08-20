@@ -122,7 +122,7 @@ LPSTR Strings::get(int address) {
 // ---------------------------------------------------------------------------
 
 /*
-// ORIGINAL: 0x006168D0 ??0Strings@@QAE@XZ 0x006168D0-0x006168E3
+// ORIGINAL: 0x006168D0 ??0Strings@@QAE@XZ 0x006168D0-0x006168E3 BYTE_EXACT
 // body      src/strings.h
 // size      19 bytes
 // prototype void (__thiscall ??0Strings@@QAE@XZ)(Strings* this)
