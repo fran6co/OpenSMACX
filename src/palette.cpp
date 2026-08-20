@@ -58,7 +58,7 @@ Palette *PaletteCurrent;  // 0x009B8174
 
 /*
 Purpose: Convert process palette RGB entries into Windows RGBQUAD order.
-// ORIGINAL: 0x005FE560 ?get_rgbquad@Palette@@QAEHPAURGBQUAD@@HH@Z 0x005FE560-0x005FE5BD
+// ORIGINAL: 0x005FE560 ?get_rgbquad@Palette@@QAEHPAURGBQUAD@@HH@Z 0x005FE560-0x005FE5BD BYTE_EXACT
 // symbol    ?get_rgbquad@Palette@@QAEHPAUtagRGBQUAD@@HH@Z
 // size      93 bytes
 // prototype int (__thiscall ?get_rgbquad@Palette@@QAEHPAURGBQUAD@@HH@Z)(Palette* this, RGBQUAD*, int, int)
@@ -69,6 +69,23 @@ Purpose: Convert process palette RGB entries into Windows RGBQUAD order.
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: 3 for a null output, 7 while the palette is unavailable, or 0
 Status: Complete
+
+INDEX, DO NOT WALK. This used to march two `volatile uint8_t *` cursors,
+built by casting `this` to an integer and adding `start * 4` - which is what
+`&entries_[start]` says, spelled as arithmetic because the loop predated
+knowing that `entries_` starts at offset 0. It reproduced 18 of the 37
+instructions.
+
+The image's two loop pointers are BIASED: `eax` is `output + 1` and `ecx` is
+`&entries_[start] + 2`, so the stores read `[eax + 1]`, `[eax]`, `[eax - 1]`,
+`[eax + 2]`. Marching a pointer never produces that - six spellings were
+measured, including references, post-increment, and reordered fields, and
+every one of them settled on unbiased pointers and 18 of 37. Indexing
+`output[i]` and `entries_[start + i]` off a single counter hands the compiler
+the whole address computation, and the bias is what it chooses: 37 of 37.
+
+Every cast went with it, and so did the `volatile`, which was there to stop
+the optimiser reordering stores this now expresses directly.
 */
 int Palette::get_rgbquad(RGBQUAD *output, int start, int count) {
     if (!output) {
@@ -77,27 +94,12 @@ int Palette::get_rgbquad(RGBQUAD *output, int start, int count) {
     if (PaletteInitialized == 0) {
         return 7;
     }
-    if (count <= 0) {
-        return 0;
+    for (int i = 0; i < count; ++i) {
+        output[i].rgbRed = entries_[start + i].peRed;
+        output[i].rgbGreen = entries_[start + i].peGreen;
+        output[i].rgbBlue = entries_[start + i].peBlue;
+        output[i].rgbReserved = 0;
     }
-    const uint32_t source_bits = reinterpret_cast<uintptr_t>(this)
-        + static_cast<uint32_t>(start) * 4U;
-    volatile uint8_t *source = reinterpret_cast<volatile uint8_t *>(
-        static_cast<uintptr_t>(source_bits));
-    volatile uint8_t *destination =
-        reinterpret_cast<volatile uint8_t *>(output);
-    do {
-        const uint8_t red = source[0];
-        destination[2] = red;
-        const uint8_t green = source[1];
-        destination[1] = green;
-        const uint8_t blue = source[2];
-        destination[0] = blue;
-        destination[3] = 0;
-        source += 4;
-        destination += 4;
-        --count;
-    } while (count != 0);
     return 0;
 }
 
