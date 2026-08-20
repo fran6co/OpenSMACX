@@ -2062,8 +2062,151 @@ int edge_int(uint32_t bits) {
 
 }  // namespace
 
-func_buffer_line BufferHLine = original_method<func_buffer_line>(0x005E1A80);
-func_buffer_line BufferVLine = original_method<func_buffer_line>(0x005E1BF0);
+/*
+Purpose: Fill one horizontal run of pixels, clipped to the buffer's rectangle.
+// ORIGINAL: 0x005E1A80 ?hline@Buffer@@QAEXHHHH@Z 0x005E1A80-0x005E1BF0
+// size      368 bytes
+// prototype void (__thiscall ?hline@Buffer@@QAEXHHHH@Z)(Buffer* this, int, int, int, int)
+// kind      game
+// calls     0x006465F0
+Return Value: n/a
+Status: Semantics transcribed from the image
+
+PROMOTED FROM src/recovered/units/005e1a80.cpp, which read every field as
+`*reinterpret_cast<int *>(self + 0x50)` and left `Buffer::box` calling both
+of these through a pointer-to-member.
+
+The acquire and release in the middle are `get_data` and `free_data`, which
+the image INLINES here and which are in-class for that reason.
+*/
+void Buffer::hline(int x1, int x2, int y, int color) {
+    if (dib_bits_ == nullptr && surface_ == nullptr) {
+        return;
+    }
+    if (y < rect1_.top) {
+        return;
+    }
+    if (y >= rect1_.bottom) {
+        return;
+    }
+    if (x1 == x2) {
+        return;
+    }
+    if (x1 > x2) {
+        x1 ^= x2;
+        x2 ^= x1;
+        x1 ^= x2;
+    }
+    if (x1 >= rect1_.right) {
+        return;
+    }
+    if (x2 < rect1_.left) {
+        return;
+    }
+    if (x1 < rect1_.left) {
+        x1 = rect1_.left;
+    }
+    if (x2 >= rect1_.right) {
+        x2 = rect1_.right - 1;
+    }
+    // The DIB's own extent, and the height is NEGATIVE - a top-down DIB - so
+    // the bound is its negation.
+    if (x1 >= dib_.bmiHeader.biWidth) {
+        return;
+    }
+    if (y >= -dib_.bmiHeader.biHeight) {
+        return;
+    }
+    if (get_data() == 0) {
+        return;
+    }
+    // TWO NULL CHECKS, NOT ONE. The image tests the acquired pointer at
+    // 0x005E1B6F and tests the COMPUTED ADDRESS again at 0x005E1B83 - a
+    // second `test eax, eax; je`, four bytes, which is exactly what this
+    // body was short by. The sum of a non-null base and an offset cannot be
+    // null, so the check is unreachable; it is in the shipped bytes.
+    // THE BASE IS ADDED LAST - `imul eax, ebp; add eax, ebx; add eax, edx` -
+    // so the offsets sum first and the pointer joins at the end.
+    char *const dest = stride_ * y + x1 + static_cast<char *>(locked_bits_);
+    if (dest == nullptr) {
+        return;
+    }
+    memset(dest, color, x2 - x1 + 1);
+    free_data(1);
+}
+
+/*
+Purpose: Fill one vertical run of pixels, clipped to the buffer's rectangle.
+// ORIGINAL: 0x005E1BF0 ?vline@Buffer@@QAEXHHHH@Z 0x005E1BF0-0x005E1D68
+// size      376 bytes
+// prototype void (__thiscall ?vline@Buffer@@QAEXHHHH@Z)(Buffer* this, int, int, int, int)
+// kind      game
+// calls     (none)
+Return Value: n/a
+Status: Semantics transcribed from the image
+
+PROMOTED FROM src/recovered/units/005e1bf0.cpp. Its transcription declared
+the surface descriptor as `unsigned char buf[0x28]` and then wrote 0x6c into
+its size field - a forty-byte buffer told DirectDraw it was a hundred and
+eight. `get_data` has it right.
+
+THE ROW WALK IS A DO/WHILE: the image writes one byte, adds the pitch, and
+tests the counter at the bottom, so a run of zero rows cannot happen - the
+`y1 == y2` guard above is what makes that safe.
+*/
+void Buffer::vline(int x, int y1, int y2, int color) {
+    if (dib_bits_ == nullptr && surface_ == nullptr) {
+        return;
+    }
+    if (x < rect1_.left) {
+        return;
+    }
+    if (x >= rect1_.right) {
+        return;
+    }
+    if (y1 == y2) {
+        return;
+    }
+    if (y1 > y2) {
+        y1 ^= y2;
+        y2 ^= y1;
+        y1 ^= y2;
+    }
+    if (y1 >= rect1_.bottom) {
+        return;
+    }
+    if (y2 < rect1_.top) {
+        return;
+    }
+    if (y1 < rect1_.top) {
+        y1 = rect1_.top;
+    }
+    if (y2 >= rect1_.bottom) {
+        y2 = rect1_.bottom - 1;
+    }
+    if (x >= dib_.bmiHeader.biWidth) {
+        return;
+    }
+    if (y1 >= -dib_.bmiHeader.biHeight) {
+        return;
+    }
+    if (get_data() == 0) {
+        return;
+    }
+    const int pitch = static_cast<int>(stride_);
+    char *pixel = static_cast<char *>(locked_bits_) + y1 * pitch + x;
+    // The same unreachable check `hline` carries, at 0x005E1CF7.
+    if (pixel == nullptr) {
+        return;
+    }
+    int rows = y2 - y1 + 1;
+    do {
+        *pixel = static_cast<char>(color);
+        pixel += pitch;
+    } while (--rows);
+    free_data(1);
+}
+
 
 /*
 Purpose: Outline a rectangle as a two-color bevel: the top and left edges in
@@ -2072,7 +2215,7 @@ Purpose: Outline a rectangle as a two-color bevel: the top and left edges in
          edge spans [left+1, right-1], the bottom [left, right-2] one row up
          from the bottom, the left column [top, bottom-2], and the right
          column [top+1, bottom-1] one column in from the right.
-// ORIGINAL: 0x005E3203 ?box@Buffer@@QAEHPAURECT@@HH@Z 0x005E3203-0x005E3280
+// ORIGINAL: 0x005E3203 ?box@Buffer@@QAEHPAURECT@@HH@Z 0x005E3203-0x005E3280 BYTE_EXACT
 // symbol    ?box@Buffer@@QAEHPAUtagRECT@@HH@Z
 // size      125 bytes
 // prototype int (__thiscall ?box@Buffer@@QAEHPAURECT@@HH@Z)(Buffer* this, RECT*, int, int)
@@ -2096,14 +2239,20 @@ int Buffer::box(RECT *rect, int color1, int color2) {
     if (!rect) {
         return 3;
     }
-    const uint32_t left = edge_bits(rect->left);
-    const uint32_t top = edge_bits(rect->top);
-    const uint32_t right_in = edge_bits(rect->right) - 1U;
-    const uint32_t bottom_in = edge_bits(rect->bottom) - 1U;
-    (ORIGINAL(this)->*BufferHLine)(edge_int(left + 1U), edge_int(right_in), edge_int(top), color1);
-    (ORIGINAL(this)->*BufferHLine)(edge_int(left), edge_int(right_in - 1U), edge_int(bottom_in), color2);
-    (ORIGINAL(this)->*BufferVLine)(edge_int(left), edge_int(top), edge_int(bottom_in - 1U), color1);
-    (ORIGINAL(this)->*BufferVLine)(edge_int(right_in), edge_int(top + 1U), edge_int(bottom_in), color2);
+    // PLAIN INT ARITHMETIC. The image reads the four edges into registers and
+    // walks them with `dec`/`inc`; the `edge_bits`/`edge_int` round trip is a
+    // pair of calls VC6 declines to inline, and there are eight of them here.
+    // IMAGE ORDER: top, bottom, right, left - `mov ebp,[eax+4]`,
+    // `mov esi,[eax+0xc]`, `mov edi,[eax+8]`, `mov eax,[eax]` - and the two
+    // decrements come after both are loaded.
+    const int top = rect->top;
+    const int bottom_in = rect->bottom - 1;
+    const int right_in = rect->right - 1;
+    const int left = rect->left;
+    hline(left + 1, right_in, top, color1);
+    hline(left, right_in - 1, bottom_in, color2);
+    vline(left, top, bottom_in - 1, color1);
+    vline(right_in, top + 1, bottom_in, color2);
     return 0;
 }
 

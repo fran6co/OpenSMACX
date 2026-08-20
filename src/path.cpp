@@ -26,7 +26,7 @@
 
 /*
 Purpose: Initialize an instance of the class.
-// ORIGINAL: 0x0059A220 ?init@Path@@QAEXXZ 0x0059A220-0x0059A2C3
+// ORIGINAL: 0x0059A220 ?init@Path@@QAEXXZ 0x0059A220-0x0059A2C3 BYTE_EXACT
 // size      163 bytes
 // prototype void (__thiscall ?init@Path@@QAEXXZ)(Path* this)
 // callers   6   call targets   3
