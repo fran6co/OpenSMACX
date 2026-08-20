@@ -557,13 +557,14 @@ def _read_text(text: str, path: Path | str,
             _lessons(lines, index)
         emitted = _token_fact(lines, index, "symbol")
         catalogued_kind = _token_fact(lines, index, "kind")
+        defined_in = _token_fact(lines, index, "body")
         if keyword == "FILE":
             region = text
             found.append(DecompilationState(
                 address=address, mode=Mode.FILE,
                 state=_state_of(region, ""), path=_abs(path),
                 line=index + 1, name=name, image_spans=spans, region=region,
-                symbol=emitted, kind=catalogued_kind, recipe=Recipe.VERBATIM,
+                symbol=emitted, kind=catalogued_kind, body=defined_in, recipe=Recipe.VERBATIM,
                 byte_exact=matched, levers=found_levers,
                 ruled_out=found_ruled, unrecoverable=found_dead,
                 deferred=found_later))
@@ -571,7 +572,7 @@ def _read_text(text: str, path: Path | str,
             found.append(DecompilationState(
                 address=address, mode=Mode.BODY, state=State.EXCLUDED,
                 path=_abs(path), line=index + 1, name=name, image_spans=spans,
-                symbol=emitted, kind=catalogued_kind,
+                symbol=emitted, kind=catalogued_kind, body=defined_in,
                 exclusion=_exclusion_citation(rest), byte_exact=matched,
                 levers=found_levers, ruled_out=found_ruled,
                 unrecoverable=found_dead, deferred=found_later))
@@ -593,7 +594,7 @@ def _read_text(text: str, path: Path | str,
                 address=address, mode=Mode.BODY,
                 state=_state_of(region, ""), path=_abs(path),
                 line=index + 1, name=name, image_spans=spans, region=region,
-                symbol=emitted, kind=catalogued_kind, extract_error=error, recipe=recipe,
+                symbol=emitted, kind=catalogued_kind, body=defined_in, extract_error=error, recipe=recipe,
                 byte_exact=matched,
                 levers=found_levers, ruled_out=found_ruled,
                 unrecoverable=found_dead, deferred=found_later))

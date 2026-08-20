@@ -653,3 +653,57 @@ def test_two_annotations_of_one_address_are_two_claims(tmp_path,
     assert "1,009 verified" not in result.output
     assert "1 REGRESSED" in result.output
     assert "body.cpp" in result.output
+
+
+# ------------------------------------------- a body that lives in a header
+
+HEADER_BODIED = """/*
+// ORIGINAL: 0x00404000 ??0Thing@@QAE@XZ 0x00404000-0x00404010
+// body      src/thing.h
+// kind      game
+*/
+"""
+
+
+def test_a_marker_with_no_definition_says_where_the_body_is(tmp_path):
+    """27 pieces are written in-class so the image's own inlining
+    reproduces. Their marker cannot sit beside them - a header is neither
+    globbed nor compiled - so without the fact `show` reports "no closing
+    brace within the file", which is true and useless."""
+    (tmp_path / "thing.cpp").write_text(HEADER_BODIED)
+    result = show(tmp_path, "0x00404000")
+    assert result.exit_code == 0, result.output
+    assert "body       src/thing.h" in result.output
+    assert "no region" not in result.output
+
+
+def test_the_body_fact_reaches_the_record(tmp_path):
+    from decomp import read
+    (tmp_path / "thing.cpp").write_text(HEADER_BODIED)
+    record = read(tmp_path)[0]
+    assert record.body == "src/thing.h"
+    assert record.kind == "game"
+
+
+def test_a_marker_with_no_body_fact_still_reports_the_missing_region(tmp_path):
+    """The fact suppresses the warning; its absence must not."""
+    (tmp_path / "thing.cpp").write_text(
+        HEADER_BODIED.replace("// body      src/thing.h\n", ""))
+    assert "no region" in show(tmp_path, "0x00404000").output
+
+
+def test_the_most_specific_in_fragment_wins(tmp_path):
+    """`--in src/` matched both `src/text.cpp` and
+    `src/unrecovered/00608c00.cpp`, so naming one file exactly still refused
+    with "2 pieces match"."""
+    marker = ("// ORIGINAL: 0x00402000 ?f@@YAXXZ 0x00402000-0x00402010\n"
+              "void f() {\n}\n")
+    (tmp_path / "body.cpp").write_text(marker)
+    kept = tmp_path / "unrecovered"
+    kept.mkdir()
+    (kept / "00402000.cpp").write_text(marker)
+    from decomp import read
+    records = read(tmp_path)
+    assert len(osmx._in_file(records, "unrecovered")) == 1
+    assert len(osmx._in_file(records, "body.cpp")) == 1
+    assert len(osmx._in_file(records, str(tmp_path))) == 2
