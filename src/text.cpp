@@ -117,7 +117,7 @@ BOOL Text::open(LPCSTR src_file_id, LPCSTR section_id) {
         if (!text_file_) {
             return true;
         }
-        strcpy_s(file_path_, 256, FilefindPath->last_path);
+        strcpy_s(file_path_, 256, FilefindPath.last_path);
     } else if (text_file_) {
         is_file_open = true;
     } else {
@@ -125,7 +125,7 @@ BOOL Text::open(LPCSTR src_file_id, LPCSTR section_id) {
         if (!text_file_) {
             return true;
         }
-        strcpy_s(file_path_, 256, FilefindPath->last_path);
+        strcpy_s(file_path_, 256, FilefindPath.last_path);
     }
     if (!section_id) {
         return false;

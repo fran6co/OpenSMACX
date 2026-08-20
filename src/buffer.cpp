@@ -397,46 +397,7 @@ Purpose: Acquire the buffer's pixel data, locking the DirectDraw surface on the
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
-int Buffer::get_data() {
-    // ONE `return 0` FOR EVERY FAILURE, at the end: the image's `je` at
-    // 0x005E3388 jumps the whole length of the body to 0x005E33E5, where the
-    // Lock failure lands too. Written as an early `return 0` inside the first
-    // arm, VC6 emits a second epilogue there and the tail moves.
-    if (surface_ == nullptr) {
-        // Without a surface the buffer publishes its own storage, and the
-        // store happens whether or not that storage exists. IT RETURNS THAT
-        // STORAGE EITHER WAY - the null path is not a `return 0`, which is
-        // why the epilogue it jumps to at 0x005E33E5 has no `xor eax, eax`:
-        // eax already holds `dib_bits_`, and that IS the zero.
-        locked_bits_ = dib_bits_;
-        if (dib_bits_ != nullptr) {
-            ++surface_lock_count_;
-        }
-        return reinterpret_cast<int>(dib_bits_);
-    }
-    if (locked_bits_ != nullptr) {
-        ++surface_lock_count_;
-        return reinterpret_cast<int>(locked_bits_);
-    }
-    {
-        // THE DESCRIPTOR IS UNINITIALISED APART FROM ITS SIZE, which is what
-        // the image does and what DirectDraw asks for: `Lock` fills the rest.
-        DDSURFACEDESC description;
-        description.dwSize = sizeof(description);
-        // THIS failure returns zero where it stands - the image's
-        // `xor eax, eax` at 0x005E33C6 is inline - while the `dib_bits_`
-        // case above jumps the length of the body to the other zero at the
-        // end. Two of them, and which is which is not interchangeable.
-        if (surface_->Lock(nullptr, &description, DDLOCK_WAIT, nullptr) != 0) {
-            return 0;
-        }
-        ++surface_lock_count_;
-        stride_ = description.lPitch;
-        locked_bits_ = description.lpSurface;
-        return reinterpret_cast<int>(description.lpSurface);
-    }
-    return 0;
-}
+// body src/buffer.h
 
 /*
 Purpose: Release acquired references to the buffer's pixel data, unlocking the
@@ -452,26 +413,7 @@ Purpose: Release acquired references to the buffer's pixel data, unlocking the
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
-void Buffer::free_data(int count) {
-    // THE SURFACE TEST COMES FIRST and the subtraction is written out in
-    // both arms - `cmp ecx, edi; jne` at 0x005E34AE before any arithmetic.
-    // Hoisted above the test it lands two instructions early and every jump
-    // after it moves, which is the same shape `Buffer::close` needed.
-    if (surface_ == nullptr) {
-        surface_lock_count_ -= count;
-        if (surface_lock_count_ <= 0) {
-            locked_bits_ = nullptr;
-            surface_lock_count_ = 0;
-        }
-        return;
-    }
-    surface_lock_count_ -= count;
-    if (locked_bits_ != nullptr && surface_lock_count_ <= 0) {
-        surface_->Unlock(locked_bits_);
-        locked_bits_ = nullptr;
-        surface_lock_count_ = 0;
-    }
-}
+// body src/buffer.h
 
 int __fastcall buffer_get_data_redirect(Buffer *self, void *) {
     return self->get_data();
@@ -1008,14 +950,13 @@ Purpose: Flood the whole buffer with one colour - through DirectDraw when
 Status: WIP
 */
 int Buffer::fill(int color) {
-    // BOTH DECLARED HERE, and that is what the frame size says. The image
-    // reserves 0xE0 bytes: DDBLTFX (0x64) at ebp-0x74, DDSURFACEDESC (0x6C)
-    // at ebp-0xE0, and three dwords above them. Declared inside the branches
-    // that use them the two never overlap in lifetime, VC6 folds them onto
-    // the same slot, and the frame comes out 0x6C - the whole structure of
-    // the prologue turns on where these two lines sit.
+    // THE FRAME IS WHAT THIS FUNCTION IS ABOUT. The image reserves 0xE0:
+    // DDBLTFX (0x64) at ebp-0x74, a DDSURFACEDESC (0x6C) at ebp-0xE0 - which
+    // is `get_data` INLINED, not a local of its own - and four dwords above
+    // them, one of which is a spill of `this` at ebp-0xc. Declaring the
+    // descriptor here as well folds the two onto one slot and the prologue
+    // changes shape, so it is not declared: `get_data()` brings its own.
     DDBLTFX effects;
-    DDSURFACEDESC description;
     if (surface_ != nullptr) {
         effects.dwSize = sizeof(DDBLTFX);
         effects.dwFillColor = color;
@@ -1031,27 +972,10 @@ int Buffer::fill(int color) {
         return fill(&rect1_, color);
     }
 
-    void *pixels;
-    if (surface_ == nullptr) {
-        locked_bits_ = dib_bits_;
-        pixels = dib_bits_;
-        if (dib_bits_ != nullptr) {
-            ++surface_lock_count_;
-        }
-    } else if (locked_bits_ != nullptr) {
-        ++surface_lock_count_;
-        pixels = locked_bits_;
-    } else {
-        description.dwSize = sizeof(DDSURFACEDESC);
-        if (surface_->Lock(nullptr, &description, DDLOCK_WAIT, nullptr) != 0) {
-            pixels = nullptr;
-        } else {
-            ++surface_lock_count_;
-            stride_ = description.lPitch;
-            locked_bits_ = description.lpSurface;
-            pixels = description.lpSurface;
-        }
-    }
+    // `get_data` BY NAME, now that it is in-class and VC6 can fold it in.
+    // The protocol was written out here, which is the same instructions in a
+    // different order and its own DDSURFACEDESC in a different slot.
+    void *const pixels = reinterpret_cast<void *>(get_data());
 
     // The colour in all four bytes, one dword per pixel-quad, rows of
     // `(width + 3) / 4` dwords.

@@ -74,7 +74,7 @@ HWND HandleMain;  // 0x009B7B28
 
 uint32_t *UnkBitfield1 = (uint32_t *)0x0090D91C;
 
-Filefind *FilefindPath = (Filefind *)0x009B8198;
+Filefind FilefindPath;  // 0x009B8198
 MainInterface *MainInterfaceVar = (MainInterface *)0x007AE820;
 
 int __cdecl tester() {
