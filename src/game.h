@@ -104,35 +104,35 @@ enum GameDifficultyLevel {
 // initial value is zero either way and the pointer form only bought an
 // extra load. WinMain's `mov dword ptr [0x9a6488], 1` is a direct store.
 extern BOOL ExpansionEnabled;
-extern uint32_t *GamePreferences;
-extern uint32_t *GameMorePreferences;
-extern uint32_t *GameWarnings; // used for setting pop notifications
-extern uint32_t *GameRules; // bitfield
-extern uint32_t *GameState; // bitfield
-extern int *DiffLevelCurrent;
-extern int *TurnCurrentNum;
-extern uint32_t *ObjectiveReqVictory;
-extern uint32_t *ObjectivesSuddenDeathVictory;
-extern uint32_t *ObjectiveAchievePts;
-extern uint32_t *VictoryAchieveBonusPts;
-extern uint32_t *MissionYearCurrent;
-extern uint32_t *StartingMissionYear;
-extern uint32_t *EndingMissionYear;
+extern uint32_t GamePreferences;
+extern uint32_t GameMorePreferences;
+extern uint32_t GameWarnings; // used for setting pop notifications
+extern uint32_t GameRules; // bitfield
+extern uint32_t GameState; // bitfield
+extern int DiffLevelCurrent;
+extern int TurnCurrentNum;
+extern uint32_t ObjectiveReqVictory;
+extern uint32_t ObjectivesSuddenDeathVictory;
+extern uint32_t ObjectiveAchievePts;
+extern uint32_t VictoryAchieveBonusPts;
+extern uint32_t MissionYearCurrent;
+extern uint32_t StartingMissionYear;
+extern uint32_t EndingMissionYear;
 extern uint32_t *TectonicDetonationCount;
-extern int *SunspotDuration;
-extern uint32_t *MountPlanetX;
-extern uint32_t *MountPlanetY;
-extern int *DustCloudDuration;
-extern BOOL *IsMultiplayerNet;
-extern BOOL *IsMultiplayerPBEM;
+extern int SunspotDuration;
+extern uint32_t MountPlanetX;
+extern uint32_t MountPlanetY;
+extern int DustCloudDuration;
+extern BOOL IsMultiplayerNet;
+extern BOOL IsMultiplayerPBEM;
 
 // Net turn control. Bit 4 of the flag byte is set while the net game hands the
 // turn around; the faction dword then names whose turn it currently is, and is
 // compared against the local faction at 0x00939284. `net_control_turn` and
 // `Console::use_time_bonus` read the same pair the same way.
-extern uint8_t *NetTurnFlags;
-extern int *NetTurnFaction;
-extern int *LocalFaction;
+extern uint8_t NetTurnFlags;
+extern int NetTurnFaction;
+extern int LocalFaction;
 
 int __cdecl energy_limit(int);
 

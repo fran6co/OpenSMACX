@@ -28,44 +28,46 @@
 #include "technology.h"
 #include "veh.h"
 
-int *MapLongitudeBounds = (int *)0x00949870;
-int *MapLatitudeBounds = (int *)0x00949874;
-uint32_t *MapRandSeed = (uint32_t *)0x00949878;
-int *MapSeaLevel = (int *)0x0094987C;
-int *MapSeaLevelCouncil = (int *)0x00949880;
-uint32_t *MapArea = (uint32_t *)0x00949884;
-uint32_t *MapAreaSqRoot = (uint32_t *)0x00949888;
-BOOL *MapIsFlat = (BOOL *)0x0094988C;
-int *MapLandmarkCount = (int *)0x00949890;
+int MapLongitudeBounds;  // 0x00949870
+int MapLatitudeBounds;  // 0x00949874
+uint32_t MapRandSeed;  // 0x00949878
+int MapSeaLevel;  // 0x0094987C
+int MapSeaLevelCouncil;  // 0x00949880
+uint32_t MapArea;  // 0x00949884
+uint32_t MapAreaSqRoot;  // 0x00949888
+BOOL MapIsFlat;  // 0x0094988C
+int MapLandmarkCount;  // 0x00949890
 Landmark *MapLandmark = (Landmark *)0x00949894; // [64]
-uint32_t *MapAbstractLongBounds = (uint32_t *)0x0094A294;
-uint32_t *MapAbstractLatBounds = (uint32_t *)0x0094A298;
-uint32_t *MapAbstractArea = (uint32_t *)0x0094A29C;
-uint32_t *MapSizePlanet = (uint32_t *)0x0094A2A0;
-uint32_t *MapOceanCoverage = (uint32_t *)0x0094A2A4;
-uint32_t *MapLandCoverage = (uint32_t *)0x0094A2A8;
-uint32_t *MapErosiveForces = (uint32_t *)0x0094A2AC;
-uint32_t *MapPlanetaryOrbit = (uint32_t *)0x0094A2B0;
-uint32_t *MapCloudCover = (uint32_t *)0x0094A2B4;
-uint32_t *MapNativeLifeForms = (uint32_t *)0x0094A2B8;
+uint32_t MapAbstractLongBounds;  // 0x0094A294
+uint32_t MapAbstractLatBounds;  // 0x0094A298
+uint32_t MapAbstractArea;  // 0x0094A29C
+uint32_t MapSizePlanet;  // 0x0094A2A0
+uint32_t MapOceanCoverage;  // 0x0094A2A4
+uint32_t MapLandCoverage;  // 0x0094A2A8
+uint32_t MapErosiveForces;  // 0x0094A2AC
+uint32_t MapPlanetaryOrbit;  // 0x0094A2B0
+uint32_t MapCloudCover;  // 0x0094A2B4
+uint32_t MapNativeLifeForms;  // 0x0094A2B8
 LPSTR *MapFilePath = (LPSTR *)0x0094A2BC;
 Map **MapTiles = (Map **)0x0094A30C;
 uint8_t **MapAbstract = (uint8_t **)0x0094A310;
-int *MapBaseSubmergedCount = (int *)0x009B2290; // [8]; reset each time global alt changes
-int *MapBaseIdClosestSubmergedVeh = (int *)0x009B22BC; // [8]; reset each time global alt changes
-uint32_t *BrushVal1 = (uint32_t *)0x009B22B0;
-uint32_t *BrushVal2 = (uint32_t *)0x009B22B8;
-uint32_t *WorldBuildVal1 = (uint32_t *)0x009B22B4;
+// EIGHT OF THEM, one per player: the two sites below clear
+// `sizeof(int) * MaxPlayerNum` bytes, which is what the extent is.
+int MapBaseSubmergedCount[8];  // 0x009B2290
+int MapBaseIdClosestSubmergedVeh[8];  // 0x009B22BC
+uint32_t BrushVal1;  // 0x009B22B0
+uint32_t BrushVal2;  // 0x009B22B8
+uint32_t WorldBuildVal1;  // 0x009B22B4
 
 Continent *Continents = (Continent *)0x009AA730; // [128]
 RulesNatural *Natural = (RulesNatural *)0x0094ADE0;
-uint32_t *MapLongitude = (uint32_t *)0x0068FAF0; // default set to 1
+uint32_t MapLongitude;  // 0x0068FAF0 // default set to 1
 uint32_t *AltNatural = (uint32_t *)0x0068FB4C;
 LPCSTR MapExtension = "MP";
 
 /*
 Purpose: Check whether the coordinates are on the map.
-// ORIGINAL: 0x004712A0 ?on_map@@YAHHH@Z 0x004712A0-0x004712CC
+// ORIGINAL: 0x004712A0 ?on_map@@YAHHH@Z 0x004712A0-0x004712CC BYTE_EXACT
 // size      44 bytes
 // prototype BOOL (__cdecl ?on_map@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   7   call targets   0
@@ -76,7 +78,7 @@ Return Value: Are the coordinates on the map? true/false
 Status: Complete
 */
 BOOL __cdecl on_map(int x, int y) {
-    return y >= 0 && y < (int)*MapLatitudeBounds && x >= 0 && x < (int)*MapLongitudeBounds;
+    return y >= 0 && y < (int)MapLatitudeBounds && x >= 0 && x < (int)MapLongitudeBounds;
 }
 
 /*
@@ -92,13 +94,13 @@ Return Value: X coordinate
 Status: Complete
 */
 int __cdecl xrange(int x) {
-    if (!*MapIsFlat) {
+    if (!MapIsFlat) {
         if (x >= 0) {
-            if (x >= (int)*MapLongitudeBounds) {
-                x -= *MapLongitudeBounds;
+            if (x >= (int)MapLongitudeBounds) {
+                x -= MapLongitudeBounds;
             }
         } else {
-            x += *MapLongitudeBounds;
+            x += MapLongitudeBounds;
         }
     }
     return x;
@@ -123,7 +125,7 @@ int __cdecl whose_territory(int faction_id, int x, int y, int *base_id,
         return -1; // no owner
     }
     if (faction_id != (uint32_t)owner) {
-        if (!ignore_comm && !(*GameState & STATE_OMNISCIENT_VIEW)
+        if (!ignore_comm && !(GameState & STATE_OMNISCIENT_VIEW)
             && has_treaty(faction_id, owner, DTREATY_COMMLINK | DTREATY_UNK_8000000)
                 != (DTREATY_COMMLINK | DTREATY_UNK_8000000)) {
             return -1; // owner unknown to faction
@@ -443,11 +445,11 @@ Return Value: Does base have a strategic naval importance? true/false
 Status: Complete
 */
 BOOL __cdecl naval_base(int base_id) {
-    if (base_coast(base_id) < 0 || *BaseCurrentCount <= 0) {
+    if (base_coast(base_id) < 0 || BaseCurrentCount <= 0) {
         return false;
     }
     uint32_t faction_id = Bases[base_id].faction_id_current;
-    for (int i = 0; i < *BaseCurrentCount; i++) {
+    for (int i = 0; i < BaseCurrentCount; i++) {
         if (faction_id != Bases[i].faction_id_current) {
             if (port_to_port(base_id, i)) {
                 return true;
@@ -584,7 +586,7 @@ Return Value: Pointer to map tile
 Status: Complete
 */
 Map *__cdecl map_loc(uint32_t x, uint32_t y) {
-    return &((*MapTiles)[(x >> 1) + y * *MapLongitude]);
+    return &((*MapTiles)[(x >> 1) + y * MapLongitude]);
 }
 
 /*
@@ -642,7 +644,7 @@ void __cdecl climate_set(int x, int y, int rainfall) {
     tile->climate &= 0xE7;
     tile->climate |= (rainfall & 3) << 3;
     tile->bit2 |= 0x400000; // TODO: identify value
-    *UnkBitfield1 |= 1; // TODO: identify global + value
+    UnkBitfield1 |= 1; // TODO: identify global + value
 }
 
 /*
@@ -659,9 +661,9 @@ Status: Complete
 */
 int __cdecl elev_at(int x, int y) {
     uint32_t contour = alt_detail_at(x, y);
-    int elev = 50 * (contour - ElevDetail[3] - *MapSeaLevel);
+    int elev = 50 * (contour - ElevDetail[3] - MapSeaLevel);
     elev += (contour <= ElevDetail[alt_at(x, y)]) ? 10 
-        : (x * 113 + y * 217 + *MapSeaLevel * 301) % 50;
+        : (x * 113 + y * 217 + MapSeaLevel * 301) % 50;
     return range(elev, -3000, 3500);
 }
 
@@ -678,7 +680,7 @@ Return Value: Natural altitude on a scale from 0 (ocean trench) to 6 (mountain t
 Status: Complete
 */
 int __cdecl alt_natural(int x, int y) {
-    uint32_t contour = alt_detail_at(x, y) - *MapSeaLevel;
+    uint32_t contour = alt_detail_at(x, y) - MapSeaLevel;
     uint32_t natural = ALT_3_LEVELS_ABOVE_SEA;
     while (contour < AltNatural[natural] && natural) {
         natural--;
@@ -702,7 +704,7 @@ Status: Complete
 void __cdecl alt_set_both(int x, int y, int altitude_natural) {
     alt_set(x, y, altitude_natural);
     if (alt_natural(x, y) != altitude_natural) {
-        alt_put_detail(x, y, (uint8_t)(AltNatural[altitude_natural] + *MapSeaLevel
+        alt_put_detail(x, y, (uint8_t)(AltNatural[altitude_natural] + MapSeaLevel
             + rnd(AltNatural[altitude_natural + 1] - AltNatural[altitude_natural], NULL)));
     }
 }
@@ -968,7 +970,7 @@ void __cdecl rocky_set(int x, int y, int rocky) {
     tile->val3 &= 0x3F;
     tile->val3 |= rocky << 6;
     tile->bit2 |= 0x400000; // TODO: identify value
-    *UnkBitfield1 |= 1; // TODO: identify variable + value
+    UnkBitfield1 |= 1; // TODO: identify variable + value
 }
 
 /*
@@ -1079,7 +1081,7 @@ void __cdecl code_set(int x, int y, int code) {
     Map *tile = map_loc(x, y);
     tile->bit2 &= 0xFFFFFF;
     tile->bit2 |= code << 24;
-    *UnkBitfield1 |= 4; // TODO: identify variable + value
+    UnkBitfield1 |= 4; // TODO: identify variable + value
 }
 
 /*
@@ -1113,13 +1115,13 @@ Return Value: 0 (Flat), 1 (Rolling), 2 (Rocky)
 Status: Complete
 */
 int __cdecl minerals_at(int x, int y) {
-    if (!y || y == (*MapLatitudeBounds - 1)) {
+    if (!y || y == (MapLatitudeBounds - 1)) {
         return 2; // poles
     }
     int alt = alt_at(x, y);
     int avg = (x + y) >> 1;
     x -= avg;
-    int val1 = (x / 2) + *MapRandSeed + (x - (x % 2)) + (avg - (avg % 2));
+    int val1 = (x / 2) + MapRandSeed + (x - (x % 2)) + (avg - (avg % 2));
     int val2 = (val1 - 2 * (x & 1) - (avg & 1)) & 3;
     int type = abs(alt - ALT_SHORE_LINE);
     if (alt < ALT_SHORE_LINE) {
@@ -1167,14 +1169,14 @@ int __cdecl bonus_at(int x, int y, int UNUSED(unk_val)) {
     uint32_t bit = bit_at(x, y);
     uint32_t alt = alt_at(x, y);
     BOOL has_rsc_bonus = bit & BIT_RSC_BONUS;
-    if (!has_rsc_bonus && (!*MapRandSeed
-        || (alt >= ALT_SHORE_LINE && !(*GameRules & RULES_NO_UNITY_SCATTERING)))) {
+    if (!has_rsc_bonus && (!MapRandSeed
+        || (alt >= ALT_SHORE_LINE && !(GameRules & RULES_NO_UNITY_SCATTERING)))) {
         return 0;
     }
     uint32_t avg = (x + y) >> 1;
     x -= avg;
     uint32_t chk = (avg & 3) + 4 * (x & 3);
-    if (!has_rsc_bonus && chk != ((*MapRandSeed + (-5 * (avg >> 2)) - 3 * (x >> 2)) & 0xF)) {
+    if (!has_rsc_bonus && chk != ((MapRandSeed + (-5 * (avg >> 2)) - 3 * (x >> 2)) & 0xF)) {
         return 0;
     }
     if (alt < ALT_OCEAN_SHELF) {
@@ -1207,7 +1209,7 @@ int __cdecl goody_at(int x, int y) {
     if (bit & (BIT_SUPPLY_REMOVE | BIT_MONOLITH)) {
         return 0; // nothing, supply pod already opened or monolith
     }
-    if (*GameRules & RULES_NO_UNITY_SCATTERING) {
+    if (GameRules & RULES_NO_UNITY_SCATTERING) {
         return (bit & (BIT_UNK_4000000 | BIT_UNK_8000000)) ? 2 : 0; // ?
     }
     if (bit & BIT_SUPPLY_POD) {
@@ -1220,10 +1222,10 @@ int __cdecl goody_at(int x, int y) {
     int x_diff = x - avg;
     uint32_t cmp = (avg & 3) + 4 * (x_diff & 3);
     if (!is_ocean(x, y)
-        && cmp == ((-5 * (avg >> 2) - 3 * (x_diff >> 2) + *MapRandSeed) & 0xF)) {
+        && cmp == ((-5 * (avg >> 2) - 3 * (x_diff >> 2) + MapRandSeed) & 0xF)) {
         return 2;
     }
-    return cmp == ((11 * (avg / 4) + 61 * (x_diff / 4) + *MapRandSeed + 8) & 0x1F); // 0 or 1
+    return cmp == ((11 * (avg / 4) + 61 * (x_diff / 4) + MapRandSeed + 8) & 0x1F); // 0 or 1
 }
 
 /*
@@ -1267,7 +1269,7 @@ int __cdecl find_landmark(int x, int y, int radius_range_offset) {
         int x_radius = xrange(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius)) {
-            for (int lm = 0; lm < *MapLandmarkCount; lm++) {
+            for (int lm = 0; lm < MapLandmarkCount; lm++) {
                 if (x_radius == MapLandmark[lm].x && y_radius == MapLandmark[lm].y) {
                     return lm;
                 }
@@ -1291,11 +1293,11 @@ Return Value: Landmark offset or -1 if max landmark count is reached
 Status: Complete
 */
 int __cdecl new_landmark(int x, int y, LPCSTR name) {
-    int landmark_offset = *MapLandmarkCount;
+    int landmark_offset = MapLandmarkCount;
     if (landmark_offset >= MaxLandmarkNum) {
         return -1;
     }
-    *MapLandmarkCount += 1;
+    MapLandmarkCount += 1;
     Landmark *lm = &MapLandmark[landmark_offset];
     lm->x = x;
     lm->y = y;
@@ -1316,7 +1318,7 @@ Return Value: Does the faction have control of the tile to set a landmark? true/
 Status: Complete
 */
 BOOL __cdecl valid_landmark(int x, int y, int faction_id) {
-    int terr_faction_id = *IsMultiplayerNet ? map_loc(x, y)->territory 
+    int terr_faction_id = IsMultiplayerNet ? map_loc(x, y)->territory 
         : whose_territory(faction_id, x, y, NULL, false);
     if (terr_faction_id == faction_id) {
         return true;
@@ -1343,12 +1345,12 @@ Status: Complete
 void __cdecl kill_landmark(int x, int y) {
     int landmark_to_kill = find_landmark(x, y, 1);
     if (landmark_to_kill >= 0) {
-        if (landmark_to_kill < (*MapLandmarkCount - 1)) {
+        if (landmark_to_kill < (MapLandmarkCount - 1)) {
             memcpy_s(&MapLandmark[landmark_to_kill], sizeof(Landmark) * MaxLandmarkNum,
                 &MapLandmark[landmark_to_kill + 1], // single memcpy_s replaces original loop
-                sizeof(Landmark) * (*MapLandmarkCount - landmark_to_kill - 1));
+                sizeof(Landmark) * (MapLandmarkCount - landmark_to_kill - 1));
         }
-        *MapLandmarkCount -= 1;
+        MapLandmarkCount -= 1;
     }
 }
 
@@ -1429,10 +1431,10 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl rebuild_vehicle_bits() {
-    for (int y = 0; y < *MapLatitudeBounds; y++) {
-        for (int x = y & 1; x < *MapLongitudeBounds; x += 2) {
+    for (int y = 0; y < MapLatitudeBounds; y++) {
+        for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
             bit_set(x, y, BIT_VEH_IN_TILE, false);
-            for (int veh_id = 0; veh_id < *VehCurrentCount; veh_id++) {
+            for (int veh_id = 0; veh_id < VehCurrentCount; veh_id++) {
                 if (Vehs[veh_id].x == (int)x && Vehs[veh_id].y == (int)y) {
                     bit_set(x, y, BIT_VEH_IN_TILE, true);
                     if (!(bit_at(x, y) & BIT_BASE_IN_TILE)) {
@@ -1458,10 +1460,10 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl rebuild_base_bits() {
-    for (int y = 0; y < *MapLatitudeBounds; y++) {
-        for (int x = y & 1; x < *MapLongitudeBounds; x += 2) {
+    for (int y = 0; y < MapLatitudeBounds; y++) {
+        for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
             bit_set(x, y, BIT_BASE_IN_TILE, false);
-            for (int base_id = 0; base_id < *BaseCurrentCount; base_id++) {
+            for (int base_id = 0; base_id < BaseCurrentCount; base_id++) {
                 if (Bases[base_id].x == (int)x && Bases[base_id].y == (int)y) {
                     bit_set(x, y, BIT_BASE_IN_TILE, true);
                     owner_set(x, y, Bases[base_id].faction_id_current);
@@ -1486,8 +1488,8 @@ Status: Complete
 */
 int __cdecl x_dist(int x_point_a, int x_point_b) {
     int dist = abs(x_point_a - x_point_b);
-    if (!*MapIsFlat && dist > (int)*MapLongitude) {
-        dist = *MapLongitudeBounds - dist;
+    if (!MapIsFlat && dist > (int)MapLongitude) {
+        dist = MapLongitudeBounds - dist;
     }
     return dist;
 }
@@ -1593,16 +1595,16 @@ Status: Complete
 */
 BOOL __cdecl map_init() {
     sprintf_s((LPSTR)MapFilePath, 80, "maps\\%s.%s", label_get(676), MapExtension);
-    *MapLongitude = *MapLongitudeBounds / 2;
-    *MapArea = *MapLongitude * *MapLatitudeBounds;
-    *MapAreaSqRoot = quick_root(*MapArea);
+    MapLongitude = MapLongitudeBounds / 2;
+    MapArea = MapLongitude * MapLatitudeBounds;
+    MapAreaSqRoot = quick_root(MapArea);
     *MapTiles = 0;
-    *MapTiles = (Map *)mem_get(*MapArea * sizeof(Map));
+    *MapTiles = (Map *)mem_get(MapArea * sizeof(Map));
     if (*MapTiles) {
-        *MapAbstractLongBounds = (*MapLongitudeBounds + 4) / 5;
-        *MapAbstractLatBounds = (*MapLatitudeBounds + 4) / 5;
-        *MapAbstractArea = *MapAbstractLatBounds * ((*MapAbstractLongBounds + 1) / 2);
-        *MapAbstract = (uint8_t *)mem_get(*MapAbstractArea);
+        MapAbstractLongBounds = (MapLongitudeBounds + 4) / 5;
+        MapAbstractLatBounds = (MapLatitudeBounds + 4) / 5;
+        MapAbstractArea = MapAbstractLatBounds * ((MapAbstractLongBounds + 1) / 2);
+        *MapAbstract = (uint8_t *)mem_get(MapAbstractArea);
         if (*MapAbstract) {
             mapwin_terrain_fixup();
             return false;
@@ -1625,11 +1627,11 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl map_wipe() {
-    *MapSeaLevel = 0;
-    *MapSeaLevelCouncil = 0;
-    *MapLandmarkCount = 0;
-    *MapRandSeed = random(0, 0x7FFF) + 1;
-    for (uint32_t i = 0; i < *MapArea; i++) {
+    MapSeaLevel = 0;
+    MapSeaLevelCouncil = 0;
+    MapLandmarkCount = 0;
+    MapRandSeed = random(0, 0x7FFF) + 1;
+    for (uint32_t i = 0; i < MapArea; i++) {
         (*MapTiles)[i].climate = ALT_BIT_OCEAN;
         (*MapTiles)[i].contour = 20;
         (*MapTiles)[i].val2 = 0xF;
@@ -1656,9 +1658,9 @@ Return Value: Did an error occur? true/false
 Status: Complete
 */
 BOOL __cdecl map_write(FILE *map_file) {
-    if (_fwrite(&*MapLongitudeBounds, 2724, 1, map_file)
-        && _fwrite(*MapTiles, *MapArea * sizeof(Map), 1, map_file)
-        && _fwrite(*MapAbstract, *MapAbstractArea, 1, map_file)) {
+    if (_fwrite(&MapLongitudeBounds, 2724, 1, map_file)
+        && _fwrite(*MapTiles, MapArea * sizeof(Map), 1, map_file)
+        && _fwrite(*MapAbstract, MapAbstractArea, 1, map_file)) {
         return false;
     }
     return true;
@@ -1679,7 +1681,7 @@ Status: Complete
 */
 BOOL __cdecl map_read(FILE *map_file) {
     map_shutdown();
-    if (!_fread(&*MapLongitudeBounds, 2724, 1, map_file)) {
+    if (!_fread(&MapLongitudeBounds, 2724, 1, map_file)) {
         return true;
     }
     *MapTiles = 0;
@@ -1687,8 +1689,8 @@ BOOL __cdecl map_read(FILE *map_file) {
     if (map_init()) {
         return true;
     }
-    if (!_fread(*MapTiles, *MapArea * sizeof(Map), 1, map_file)
-        || !_fread(*MapAbstract, *MapAbstractArea, 1, map_file)) {
+    if (!_fread(*MapTiles, MapArea * sizeof(Map), 1, map_file)
+        || !_fread(*MapAbstract, MapAbstractArea, 1, map_file)) {
         return true;
     }
     fixup_landmarks();
@@ -1709,7 +1711,7 @@ Return Value: Abstract value (region)
 Status: Complete
 */
 uint8_t __cdecl abstract_at(int x, int y) {
-    return (*MapAbstract)[(x >> 1) + y * (*MapAbstractLongBounds >> 1)];
+    return (*MapAbstract)[(x >> 1) + y * (MapAbstractLongBounds >> 1)];
 }
 
 /*
@@ -1725,7 +1727,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl abstract_set(int x, int y, uint8_t region) {
-    (*MapAbstract)[(x >> 1) + y * (*MapAbstractLongBounds >> 1)] = region;
+    (*MapAbstract)[(x >> 1) + y * (MapAbstractLongBounds >> 1)] = region;
 }
 
 /*
@@ -1800,11 +1802,11 @@ Status: Complete
 */
 int __cdecl radius_move(int x_src, int y_src, int x_dst, int y_dst, int range) {
     int x_radius_off = x_dst - x_src;
-    if (x_radius_off < (-(int)*MapLongitude)) {
-        x_radius_off += *MapLongitudeBounds;
+    if (x_radius_off < (-(int)MapLongitude)) {
+        x_radius_off += MapLongitudeBounds;
     }
-    if (x_radius_off > ((int)*MapLongitude)) {
-        x_radius_off -= *MapLongitudeBounds;
+    if (x_radius_off > ((int)MapLongitude)) {
+        x_radius_off -= MapLongitudeBounds;
     }
     return radius_move(x_radius_off, y_dst - y_src, range);
 }
@@ -1823,11 +1825,11 @@ Status: Complete
 */
 int __cdecl compass_move(int x_src, int y_src, int x_dst, int y_dst) {
     int x_radius_off = x_dst - x_src;
-    if (x_radius_off < (-(int)*MapLongitude)) {
-        x_radius_off += *MapLongitudeBounds;
+    if (x_radius_off < (-(int)MapLongitude)) {
+        x_radius_off += MapLongitudeBounds;
     }
-    if (x_radius_off > ((int)*MapLongitude)) {
-        x_radius_off -= *MapLongitudeBounds;
+    if (x_radius_off > ((int)MapLongitude)) {
+        x_radius_off -= MapLongitudeBounds;
     }
     int y_radius_off = y_dst - y_src;
     int direction_x = (x_radius_off > 0) ? 1 : (x_radius_off >= 0) - 1;
@@ -1855,13 +1857,13 @@ original rather than in the transcription. game.cpp's territory_xrange() carries
 the same distinction for reset_territory().
 */
 static int site_xrange(int x) {
-    if (!(*MapIsFlat & 1)) {
+    if (!(MapIsFlat & 1)) {
         if (x >= 0) {
-            if (x >= *MapLongitudeBounds) {
-                x -= *MapLongitudeBounds;
+            if (x >= MapLongitudeBounds) {
+                x -= MapLongitudeBounds;
             }
         } else {
-            x += *MapLongitudeBounds;
+            x += MapLongitudeBounds;
         }
     }
     return x;
@@ -1952,7 +1954,7 @@ far as the return value goes - in the original as much as here, since this is a 
 what 0x00564FEE through 0x00565076 does.
 
 It is kept because it is what the original executes, and because it is not quite side-effect
-free: is_sensor falls through to base_find, which writes *BaseFindDist. That write is overwritten
+free: is_sensor falls through to base_find, which writes BaseFindDist. That write is overwritten
 again by every later on-map iteration of the OUTER loop, so it survives the call only when the
 base sits in the inner nine and every remaining radius tile is off the map - which no fixture
 here builds and which changes nothing this function returns either way.
@@ -2050,8 +2052,8 @@ Return Value: Does faction control Nexus? true/false
 Status: Complete
 */
 BOOL __cdecl has_temple(int faction_id) {
-    for (int y = 0; y < *MapLatitudeBounds; y++) {
-        for (int x = y & 1; x < *MapLongitudeBounds; x += 2) {
+    for (int y = 0; y < MapLatitudeBounds; y++) {
+        for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
             if ((bit2_at(x, y) & (BIT2_UNK_80000000 | BIT2_NEXUS)) == BIT2_NEXUS
                 && !code_at(x, y) 
                 && faction_id == whose_territory(faction_id, x, y, NULL, false)
@@ -2222,17 +2224,17 @@ void __cdecl brush(int x, int y, int altitude) {
                         region_set(x_radius, y_radius, 1);
                         use_draw_radius |= alt_at(x_radius, y_radius) != altitude;
                         world_alt_set(x_radius, y_radius, altitude, true);
-                        if (*GameState & STATE_OMNISCIENT_VIEW && altitude > 3) {
+                        if (GameState & STATE_OMNISCIENT_VIEW && altitude > 3) {
                             temp_set(x_radius, y_radius, 1);
                         }
-                        *BrushVal1 += 1;
-                        *BrushVal2 += 1;
+                        BrushVal1 += 1;
+                        BrushVal2 += 1;
                     }
                 }
             }
         }
     }
-    if (*GameState & STATE_OMNISCIENT_VIEW && use_draw_radius) {
+    if (GameState & STATE_OMNISCIENT_VIEW && use_draw_radius) {
         draw_radius(x, y, 2, 2);
     }
 }
@@ -2250,8 +2252,8 @@ Return Value: n/a
 Status: Complete - testing
 */
 void __cdecl paint_land(int x, int y, int altitude, int radius) {
-    *BrushVal2 = 0;
-    for (int i = 0; i < 2000 && *BrushVal2 < radius; i++) {
+    BrushVal2 = 0;
+    for (int i = 0; i < 2000 && BrushVal2 < radius; i++) {
         int search = -1;
         uint32_t unk_val = 0;
         int x_rad_base = x;
@@ -2260,8 +2262,8 @@ void __cdecl paint_land(int x, int y, int altitude, int radius) {
             brush(x_rad_base, y_rad_base, altitude);
             uint32_t offset = rand() % 8 | 1;
             if ((int)offset == search) {
-                if (++unk_val > ((*MapLandCoverage * *MapLandCoverage) + 2)) {
-                    offset = (offset - (*MapLandCoverage * *MapLandCoverage) + unk_val - 2) % 8;
+                if (++unk_val > ((MapLandCoverage * MapLandCoverage) + 2)) {
+                    offset = (offset - (MapLandCoverage * MapLandCoverage) + unk_val - 2) % 8;
                 }
             } else {
                 search = offset;
@@ -2270,7 +2272,7 @@ void __cdecl paint_land(int x, int y, int altitude, int radius) {
             x_rad_base = xrange(x + RadiusBaseX[offset]);
             y_rad_base = y + RadiusBaseY[offset];
             i++;
-        } while (i < 2000 && on_map(x_rad_base, y_rad_base) && *BrushVal2 < radius);
+        } while (i < 2000 && on_map(x_rad_base, y_rad_base) && BrushVal2 < radius);
     }
 }
 
@@ -2287,11 +2289,11 @@ Return Value: n/a
 Status: Complete - testing
 */
 void __cdecl build_continent(int size) {
-    for (uint32_t i = 0; i < *MapArea; i++) {
+    for (uint32_t i = 0; i < MapArea; i++) {
         (*MapTiles)[i].region = 0;
     }
-    int coverage = *MapLandCoverage;
-    if (coverage && *BrushVal1 >= *WorldBuildVal1) {
+    int coverage = MapLandCoverage;
+    if (coverage && BrushVal1 >= WorldBuildVal1) {
         coverage--;
     }
     int radius = WorldBuilder->continent_mod * coverage * coverage + WorldBuilder->continent_base;
@@ -2299,8 +2301,8 @@ void __cdecl build_continent(int size) {
     int y;
     int count = 0;
     do {
-        x = rnd(*MapLongitudeBounds - (*MapIsFlat * 8), NULL) + *MapIsFlat * 4;
-        y = rnd(*MapLatitudeBounds - 8, NULL) + 4;
+        x = rnd(MapLongitudeBounds - (MapIsFlat * 8), NULL) + MapIsFlat * 4;
+        y = rnd(MapLatitudeBounds - 8, NULL) + 4;
         if (x & 1) {
             x--;
         }
@@ -2309,8 +2311,8 @@ void __cdecl build_continent(int size) {
         }
     } while (count++ < 100 && alt_at(x, y) >= ALT_BIT_SHORE_LINE);
     if (alt_at(x, y) < ALT_BIT_SHORE_LINE) {
-        uint32_t ratio = (size * 3200) / *MapArea;
-        if (ratio > WorldBuilder->cont_size_ratio5 || *BrushVal1 >= *WorldBuildVal1) {
+        uint32_t ratio = (size * 3200) / MapArea;
+        if (ratio > WorldBuilder->cont_size_ratio5 || BrushVal1 >= WorldBuildVal1) {
             radius /= 4;
             if (BrushVal1 >= WorldBuildVal1 && ratio > WorldBuilder->cont_size_ratio5) {
                 radius = rand() % 3 + 1;
@@ -2318,10 +2320,10 @@ void __cdecl build_continent(int size) {
         } else if (ratio <= WorldBuilder->cont_size_ratio4) {
             if (ratio <= WorldBuilder->cont_size_ratio3) {
                 if (ratio <= WorldBuilder->cont_size_ratio2) {
-                    if (ratio < WorldBuilder->cont_size_ratio1 && *MapLandCoverage > 1) {
+                    if (ratio < WorldBuilder->cont_size_ratio1 && MapLandCoverage > 1) {
                         radius += radius / 2;
                     }
-                } else  if (rnd(4 - *MapLandCoverage, NULL)) {
+                } else  if (rnd(4 - MapLandCoverage, NULL)) {
                     radius /= 2;
                 }
             } else {
@@ -2330,7 +2332,7 @@ void __cdecl build_continent(int size) {
         } else {
             radius /= 3;
         }
-        if (*BrushVal1 < *WorldBuildVal1 && radius < 4) {
+        if (BrushVal1 < WorldBuildVal1 && radius < 4) {
             radius = 4;
         }
         paint_land(x, y, ALT_SHORE_LINE, radius);
@@ -2356,8 +2358,8 @@ void __cdecl build_hills(int altitude) {
     int i = 0;
     BOOL keep_going = true;
     do {
-        x = rnd(*MapLongitudeBounds - (*MapIsFlat * 8), NULL) + *MapIsFlat * 4;
-        y = rnd(*MapLatitudeBounds - 8, NULL) + 4;
+        x = rnd(MapLongitudeBounds - (MapIsFlat * 8), NULL) + MapIsFlat * 4;
+        y = rnd(MapLatitudeBounds - 8, NULL) + 4;
         if (x & 1) {
             x--;
         }
@@ -2376,12 +2378,12 @@ void __cdecl build_hills(int altitude) {
             }
         }
         keep_going = false;
-        int plat_mod = WorldBuilder->plateau_mod * (2 - *MapOceanCoverage);
+        int plat_mod = WorldBuilder->plateau_mod * (2 - MapOceanCoverage);
         if (altitude != ALT_1_LEVEL_ABOVE_SEA) {
             plat_mod /= 4;
         }
         uint32_t plat_base = WorldBuilder->plateau_base;
-        if (*MapOceanCoverage >= 2) {
+        if (MapOceanCoverage >= 2) {
             plat_base /= 2;
         }
         paint_land(x, y, altitude, plat_mod + plat_base);
@@ -2402,15 +2404,15 @@ Return Value: n/a
 Status: Complete - testing
 */
 void __cdecl world_riverbeds() {
-    for (uint32_t i = 0; i < *MapArea; i++) {
+    for (uint32_t i = 0; i < MapArea; i++) {
         (*MapTiles)[i].bit &= ~(BIT_RIVERBED);
     }
     uint32_t riverbed_count = 0;
-    uint32_t max_riverbeds = (*MapArea * ((4 - *MapOceanCoverage) * (WorldBuilder->rivers_base 
-        + *MapCloudCover * WorldBuilder->rivers_rain_mod) / 3)) / 3200;
+    uint32_t max_riverbeds = (MapArea * ((4 - MapOceanCoverage) * (WorldBuilder->rivers_base 
+        + MapCloudCover * WorldBuilder->rivers_rain_mod) / 3)) / 3200;
     for (i = 0; i < 4000 && riverbed_count < max_riverbeds; i++) {
-        int x = rnd(*MapLongitudeBounds, NULL);
-        int y = rnd(*MapLatitudeBounds, NULL);
+        int x = rnd(MapLongitudeBounds, NULL);
+        int y = rnd(MapLatitudeBounds, NULL);
         if (x & 1) {
             x--;
         }
@@ -2475,7 +2477,7 @@ BOOL __cdecl world_validate() {
             }
         }
     }
-    return val1 < ((*MapLandCoverage == 1) ? ((val2 * 2) / 3) : val2 / 2);
+    return val1 < ((MapLandCoverage == 1) ? ((val2 * 2) / 3) : val2 / 2);
 }
 
 /*
@@ -2491,23 +2493,23 @@ Return Value: n/a
 Status: Complete - testing
 */
 void __cdecl world_temperature() {
-    random_reseed(*MapRandSeed + 17);
-    int temp_heat = *MapLatitudeBounds / WorldBuilder->solar_energy;
-    int thermal_banding = *MapLatitudeBounds / WorldBuilder->thermal_band;
-    int thermal_deviance = *MapLatitudeBounds / WorldBuilder->thermal_deviance;
-    int global_warming = *MapLatitudeBounds / WorldBuilder->global_warming;
-    for (int y = 0; y < *MapLatitudeBounds; y++) {
-        for (int x = y & 1; x < *MapLongitudeBounds; x += 2) {
+    random_reseed(MapRandSeed + 17);
+    int temp_heat = MapLatitudeBounds / WorldBuilder->solar_energy;
+    int thermal_banding = MapLatitudeBounds / WorldBuilder->thermal_band;
+    int thermal_deviance = MapLatitudeBounds / WorldBuilder->thermal_deviance;
+    int global_warming = MapLatitudeBounds / WorldBuilder->global_warming;
+    for (int y = 0; y < MapLatitudeBounds; y++) {
+        for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
             if ((bit2_at(x, y) & (BIT2_UNK_80000000 | BIT2_CRATER)) != BIT2_CRATER
                 || code_at(x, y) >= 21) {
                 int rand_seed = random(0, thermal_deviance * 2);
-                int rand_orbit = random(0, *MapPlanetaryOrbit + 1);
-                int val1 = (*MapLatitudeBounds / 2) - rand_seed - y + thermal_deviance;
+                int rand_orbit = random(0, MapPlanetaryOrbit + 1);
+                int val1 = (MapLatitudeBounds / 2) - rand_seed - y + thermal_deviance;
                 if (val1 < 0) { // abs?
-                    val1 = rand_seed - (*MapLatitudeBounds / 2) - thermal_deviance + y;
+                    val1 = rand_seed - (MapLatitudeBounds / 2) - thermal_deviance + y;
                 }
-                int val2 = (thermal_banding / 2 + (val1 - temp_heat * (*MapPlanetaryOrbit - 1)
-                    - *MapSeaLevelCouncil * global_warming) * 2) / thermal_banding;
+                int val2 = (thermal_banding / 2 + (val1 - temp_heat * (MapPlanetaryOrbit - 1)
+                    - MapSeaLevelCouncil * global_warming) * 2) / thermal_banding;
                 int temperature = (val2 > 2) ? ((val2 <= 9) + 1) : 3;
                 int alt = alt_at(x, y);
                 for (int i = 0; i < 8; i++) {
@@ -2525,7 +2527,7 @@ void __cdecl world_temperature() {
                         if (alt > ALT_1_LEVEL_ABOVE_SEA && !rand_orbit) {
                             temperature--;
                         }
-                    } else if (*MapPlanetaryOrbit < 2 || !random(0, 2)) {
+                    } else if (MapPlanetaryOrbit < 2 || !random(0, 2)) {
                         temperature--;
                     }
                 }
@@ -2548,7 +2550,7 @@ tile, unlike the twenty-eight and twenty-one radius tiles, is never bounds
 checked, so a negative x reaches the shift.
 */
 static Map *site_tile(int x, int y) {
-    return &(*MapTiles)[(x >> 1) + y * (int)*MapLongitude];
+    return &(*MapTiles)[(x >> 1) + y * (int)MapLongitude];
 }
 
 /*
@@ -2580,8 +2582,8 @@ int __cdecl world_site(int x, int y, BOOL is_ocean_site) {
     for (int i = 21; i < 49; i++) {
         int x_radius = site_xrange(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
-        if (y_radius < 0 || y_radius >= *MapLatitudeBounds || x_radius < 0
-            || x_radius >= *MapLongitudeBounds) {
+        if (y_radius < 0 || y_radius >= MapLatitudeBounds || x_radius < 0
+            || x_radius >= MapLongitudeBounds) {
             continue;
         }
         Map *tile = site_tile(x_radius, y_radius);
@@ -2615,12 +2617,12 @@ int __cdecl world_site(int x, int y, BOOL is_ocean_site) {
     * same program, and the caller that could reach it is off the map already.
     */
     Map *radius_tile = reinterpret_cast<Map *>(
-        static_cast<uintptr_t>(*MapIsFlat & 1));
+        static_cast<uintptr_t>(MapIsFlat & 1));
     for (i = 0; i < 21; i++) {
         int x_radius = site_xrange(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
-        if (y_radius < 0 || y_radius >= *MapLatitudeBounds || x_radius < 0
-            || x_radius >= *MapLongitudeBounds) {
+        if (y_radius < 0 || y_radius >= MapLatitudeBounds || x_radius < 0
+            || x_radius >= MapLongitudeBounds) {
             continue;
         }
         radius_tile = site_tile(x_radius, y_radius);
@@ -2725,7 +2727,7 @@ int __cdecl world_site(int x, int y, BOOL is_ocean_site) {
     score += is_ocean_site ? water : -water;
     score += (rich_terrain * 3 + 6) / 4;
     score += (fair_terrain + 1) / 3;
-    if (*TurnCurrentNum > 150) {
+    if (TurnCurrentNum > 150) {
         score += fungus_tiles / -3;
     }
     Map *tile = site_tile(x, y);
@@ -2765,8 +2767,8 @@ void __cdecl world_analysis() {
     for (uint32_t i = 0; i < MaxContinentNum; i++) {
         Continents[i].open_terrain = 0;
     }
-    for (int y = 0; y < *MapLatitudeBounds; y++) {
-        for (int x = y & 1; x < *MapLongitudeBounds; x += 2) {
+    for (int y = 0; y < MapLatitudeBounds; y++) {
+        for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
             uint32_t region = region_at(x, y);
             BOOL is_ocean_tile = is_ocean(x, y);
             if (!is_ocean_tile && climate_at(x, y) != RAINFALL_ARID 
@@ -2790,7 +2792,7 @@ void __cdecl world_analysis() {
                                 count_val1++;
                             }
                             uint32_t region_radius;
-                            if (y_radius > 4 && y_radius < ((int)*MapLatitudeBounds - 4)
+                            if (y_radius > 4 && y_radius < ((int)MapLatitudeBounds - 4)
                                 && (region_radius = region_at(x_radius, y_radius),
                                     region_radius < MaxRegionLandNum && region != region_radius
                                     && Continents[region].tile_count > 40
@@ -2815,7 +2817,7 @@ void __cdecl world_analysis() {
         }
         do_all_non_input();
     }
-    for (i = 0; i < *MapArea; i++) {
+    for (i = 0; i < MapArea; i++) {
         (*MapTiles)[i].val2 &= 0xF; // clear map sites
     }
 }
@@ -2849,16 +2851,16 @@ Return Value: n/a
 Status: Complete - testing
 */
 void __cdecl world_polar_caps() {
-    for (uint8_t x = 0; x < *MapLongitudeBounds; x += 2) {
+    for (uint8_t x = 0; x < MapLongitudeBounds; x += 2) {
         world_alt_put_detail(x, 0);
-        world_alt_put_detail(x - 1, *MapLatitudeBounds - 1);
+        world_alt_put_detail(x - 1, MapLatitudeBounds - 1);
     }
-    uint32_t bounds = *MapLongitudeBounds / 16;
+    uint32_t bounds = MapLongitudeBounds / 16;
     for (uint32_t i = 0; i < bounds; i++) {
-        world_alt_put_detail(rnd(*MapLongitude, NULL) * 2, 0);
-        world_alt_put_detail(rnd(*MapLongitude, NULL) * 2 + 1, 1);
-        world_alt_put_detail(rnd(*MapLongitude, NULL) * 2 + 1, *MapLatitudeBounds - 1);
-        world_alt_put_detail(rnd(*MapLongitude, NULL) * 2, *MapLatitudeBounds - 2);
+        world_alt_put_detail(rnd(MapLongitude, NULL) * 2, 0);
+        world_alt_put_detail(rnd(MapLongitude, NULL) * 2 + 1, 1);
+        world_alt_put_detail(rnd(MapLongitude, NULL) * 2 + 1, MapLatitudeBounds - 1);
+        world_alt_put_detail(rnd(MapLongitude, NULL) * 2, MapLatitudeBounds - 2);
     }
 }
 
@@ -2875,8 +2877,8 @@ Return Value: n/a
 Status: Complete - testing
 */
 void __cdecl world_linearize_contours() {
-    for (int y = 0; y < *MapLatitudeBounds; y++) {
-        for (int x = y & 1; x < *MapLongitudeBounds; x += 2) {
+    for (int y = 0; y < MapLatitudeBounds; y++) {
+        for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
             uint32_t alt_nat = alt_natural(x, y);
             alt_put_detail(x, y, (uint8_t)((((ElevDetail[alt_nat
                 + (alt_nat >= ALT_3_LEVELS_ABOVE_SEA) ? 4 : 1] - ElevDetail[alt_nat])
@@ -2928,8 +2930,8 @@ void __cdecl world_crater(int x, int y) {
     if (!on_map(x, y)) {
         do {
             do {
-                y = rnd(*MapLatitudeBounds - 16, NULL) + 8;
-                int x_seed = rnd(*MapLongitudeBounds, NULL);
+                y = rnd(MapLatitudeBounds - 16, NULL) + 8;
+                int x_seed = rnd(MapLongitudeBounds, NULL);
                 x = ((x_seed ^ y) & 1) ^ x_seed;
                 if (++loc_attempts >= 1000) {
                     return;
@@ -2981,8 +2983,8 @@ void __cdecl world_monsoon(int x, int y) {
         do {
             uint32_t land_count;
             do {
-                y = *MapLatitudeBounds / 2 + rand() % 4 - 2;
-                int x_seed = rnd(*MapLongitudeBounds, NULL);
+                y = MapLatitudeBounds / 2 + rand() % 4 - 2;
+                int x_seed = rnd(MapLongitudeBounds, NULL);
                 x = ((x_seed ^ y) & 1) ^ x_seed;
                 land_count = 0;
                 for (int i = 0; i < RadiusRange[5]; i++) {
@@ -3034,8 +3036,8 @@ void __cdecl world_sargasso(int x, int y) {
     if (!on_map(x, y)) {
         do {
             do {
-                y = rnd(*MapLatitudeBounds - 16, NULL) + 8;
-                int x_seed = rnd(*MapLongitudeBounds, NULL);
+                y = rnd(MapLatitudeBounds - 16, NULL) + 8;
+                int x_seed = rnd(MapLongitudeBounds, NULL);
                 x = ((x_seed ^ y) & 1) ^ x_seed;
                 if (++loc_attempts >= 1000) {
                     return;
@@ -3084,8 +3086,8 @@ void __cdecl world_ruin(int x, int y) {
     if (!on_map(x, y)) {
         do {
             do {
-                y = rnd(*MapLatitudeBounds - 16, NULL) + 8;
-                int x_seed = rnd(*MapLongitudeBounds, NULL);
+                y = rnd(MapLatitudeBounds - 16, NULL) + 8;
+                int x_seed = rnd(MapLongitudeBounds, NULL);
                 x = ((x_seed ^ y) & 1) ^ x_seed;
                 if (++loc_attempts >= 1000) {
                     return;
@@ -3137,12 +3139,12 @@ Status: Complete - testing
 void __cdecl world_dune(int x, int y) {
     world_rainfall();
     uint32_t loc_attempts = 0;
-    uint32_t half_vert_bounds = *MapLatitudeBounds / 2;
+    uint32_t half_vert_bounds = MapLatitudeBounds / 2;
     if (!on_map(x, y)) {
         do {
             do {
-                y = rnd(half_vert_bounds, NULL) + half_vert_bounds - *MapLatitudeBounds / 4;
-                int x_seed = rnd(*MapLongitudeBounds, NULL);
+                y = rnd(half_vert_bounds, NULL) + half_vert_bounds - MapLatitudeBounds / 4;
+                int x_seed = rnd(MapLongitudeBounds, NULL);
                 x = ((x_seed ^ y) & 1) ^ x_seed;
                 if (++loc_attempts >= 1000) {
                     return;
@@ -3188,8 +3190,8 @@ void __cdecl world_diamond(int x, int y) {
     if (!on_map(x, y)) {
         do {
             do {
-                y = rnd(*MapLatitudeBounds - 16, NULL) + 8;
-                int x_seed = rnd(*MapLongitudeBounds, NULL);
+                y = rnd(MapLatitudeBounds - 16, NULL) + 8;
+                int x_seed = rnd(MapLongitudeBounds, NULL);
                 x = ((x_seed ^ y) & 1) ^ x_seed;
                 if (++loc_attempts >= 1000) {
                     return;
@@ -3252,8 +3254,8 @@ void __cdecl world_fresh(int x, int y) {
     }
     int x_search = -1;
     BOOL has_set_landmark = false;
-    for (int y_it = *MapLatitudeBounds - 1; y_it >= 0 ; y_it--) {
-        for (int x_it = y_it & 1; x_it < *MapLongitudeBounds; x_it += 2) {
+    for (int y_it = MapLatitudeBounds - 1; y_it >= 0 ; y_it--) {
+        for (int x_it = y_it & 1; x_it < MapLongitudeBounds; x_it += 2) {
             if (region_at(x_it, y_it) == region) {
                 bit2_set(x_it, y_it, LM_FRESH, true);
                 if (x_search < 0) {
@@ -3286,8 +3288,8 @@ void __cdecl world_volcano(int x, int y, BOOL is_not_landmark) {
     if (!on_map(x, y)) {
         do {
             do {
-                y = rnd(*MapLatitudeBounds - 16, NULL) + 8;
-                int x_seed = rnd(*MapLongitudeBounds, NULL);
+                y = rnd(MapLatitudeBounds - 16, NULL) + 8;
+                int x_seed = rnd(MapLongitudeBounds, NULL);
                 x = ((x_seed ^ y) & 1) ^ x_seed;
                 if (++loc_attempts >= 1000) {
                     return;
@@ -3317,8 +3319,8 @@ void __cdecl world_volcano(int x, int y, BOOL is_not_landmark) {
             rocky_set(x_radius, y_radius, ROCKINESS_ROCKY);
         }
     }
-    *MountPlanetX = x;
-    *MountPlanetY = y;
+    MountPlanetX = x;
+    MountPlanetY = y;
     if (!is_not_landmark) {
         new_landmark(x, y, StringTable->get((int)Natural[LM_VOLCANO].name));
     }
@@ -3342,8 +3344,8 @@ void __cdecl world_borehole(int x, int y) {
     if (!on_map(x, y)) {
         do {
             do {
-                y = rnd(*MapLatitudeBounds - 16, NULL) + 8;
-                int x_seed = rnd(*MapLongitudeBounds, NULL);
+                y = rnd(MapLatitudeBounds - 16, NULL) + 8;
+                int x_seed = rnd(MapLongitudeBounds, NULL);
                 x = ((x_seed ^ y) & 1) ^ x_seed;
                 if (++loc_attempts >= 1000) {
                     return;
@@ -3436,8 +3438,8 @@ void __cdecl world_temple(int x, int y) {
     if (!on_map(x, y)) {
         do {
             do {
-                y = rnd(*MapLatitudeBounds - 16, NULL) + 8;
-                int x_seed = rnd(*MapLongitudeBounds, NULL);
+                y = rnd(MapLatitudeBounds - 16, NULL) + 8;
+                int x_seed = rnd(MapLongitudeBounds, NULL);
                 x = ((x_seed ^ y) & 1) ^ x_seed;
                 if (++loc_attempts >= 1000) {
                     return;
@@ -3479,8 +3481,8 @@ void __cdecl world_unity(int x, int y) {
         if (!on_map(x, y)) {
             do {
                 do {
-                    y = rnd(*MapLatitudeBounds - 16, NULL) + 8;
-                    int x_seed = rnd(*MapLongitudeBounds, NULL);
+                    y = rnd(MapLatitudeBounds - 16, NULL) + 8;
+                    int x_seed = rnd(MapLongitudeBounds, NULL);
                     x = ((x_seed ^ y) & 1) ^ x_seed;
                     if (++loc_attempts >= 1000) {
                         return;
@@ -3549,8 +3551,8 @@ void __cdecl world_fossil(int x, int y) {
         if (!on_map(x, y)) {
             do {
                 do {
-                    y = rnd(*MapLatitudeBounds - 16, NULL) + 8;
-                    int x_seed = rnd(*MapLongitudeBounds, NULL);
+                    y = rnd(MapLatitudeBounds - 16, NULL) + 8;
+                    int x_seed = rnd(MapLongitudeBounds, NULL);
                     x = ((x_seed ^ y) & 1) ^ x_seed;
                     if (++loc_attempts >= 1000) {
                         return;
@@ -3591,8 +3593,8 @@ void __cdecl world_canyon(int x, int y) {
     if (!on_map(x, y)) {
         do {
             do {
-                y = rnd(*MapLatitudeBounds - 16, NULL) + 8;
-                int x_seed = rnd(*MapLongitudeBounds, NULL);
+                y = rnd(MapLatitudeBounds - 16, NULL) + 8;
+                int x_seed = rnd(MapLongitudeBounds, NULL);
                 x = ((x_seed ^ y) & 1) ^ x_seed;
                 if (++loc_attempts >= 1000) {
                     return;
@@ -3634,8 +3636,8 @@ void __cdecl world_mesa(int x, int y) {
     if (!on_map(x, y)) {
         do {
             do {
-                y = rnd(*MapLatitudeBounds - 16, NULL) + 8;
-                int x_seed = rnd(*MapLongitudeBounds, NULL);
+                y = rnd(MapLatitudeBounds - 16, NULL) + 8;
+                int x_seed = rnd(MapLongitudeBounds, NULL);
                 x = ((x_seed ^ y) & 1) ^ x_seed;
                 if (++loc_attempts >= 1000) {
                     return;
@@ -3675,8 +3677,8 @@ void __cdecl world_ridge(int x, int y) {
     if (!on_map(x, y)) {
         do {
             do {
-                y = rnd(*MapLatitudeBounds - 16, NULL) + 8;
-                int x_seed = rnd(*MapLongitudeBounds, NULL);
+                y = rnd(MapLatitudeBounds - 16, NULL) + 8;
+                int x_seed = rnd(MapLongitudeBounds, NULL);
                 x = ((x_seed ^ y) & 1) ^ x_seed;
                 if (++loc_attempts >= 1000) {
                     return;
@@ -3717,8 +3719,8 @@ void __cdecl world_geothermal(int x, int y) {
     if (!on_map(x, y)) {
         do {
             do {
-                y = rnd(*MapLatitudeBounds - 16, NULL) + 8;
-                int x_seed = rnd(*MapLongitudeBounds, NULL);
+                y = rnd(MapLatitudeBounds - 16, NULL) + 8;
+                int x_seed = rnd(MapLongitudeBounds, NULL);
                 x = ((x_seed ^ y) & 1) ^ x_seed;
                 if (++loc_attempts >= 1000) {
                     return;
@@ -3865,7 +3867,7 @@ int __cdecl zoc_sea(int x, int y, int faction_id) {
                     veh_id = Vehs[veh_id].next_veh_id_stack) {
                     if (Vehs[veh_id].faction_id != faction_id
                         && (Vehs[veh_id].visibility & (1 << faction_id)
-                            || (!*IsMultiplayerNet && !(Vehs[veh_id].flags & VFLAG_INVISIBLE)))) {
+                            || (!IsMultiplayerNet && !(Vehs[veh_id].flags & VFLAG_INVISIBLE)))) {
                         return owner + 1;
                     }
                 }

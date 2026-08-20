@@ -45,7 +45,7 @@ func_subobject_destructor WinOriginalDestructor =
 func_subobject_close BufferSubobjectClose = original_method<func_subobject_close>(
     reinterpret_cast<unsigned long>(&buffer_subobject_close));
 func_subobject_close WinOriginalClose = original_method<func_subobject_close>(0x005EB640);
-uint32_t *GraphicWinFieldA0CDefault = (uint32_t *)0x009B33C0;
+uint32_t GraphicWinFieldA0CDefault;  // 0x009B33C0
 
 /*
 Purpose: Construct the Win base and Buffer subobject, then install GraphicWin
@@ -78,7 +78,7 @@ void GraphicWin::construct() {
     for (size_t offset = 0x9CC; offset <= 0xA08; offset += 4) {
         object[offset / 4] = 0;
     }
-    object[0xA0C / 4] = *GraphicWinFieldA0CDefault;
+    object[0xA0C / 4] = GraphicWinFieldA0CDefault;
 }
 
 GraphicWin *__fastcall graphic_win_construct_redirect(
@@ -165,7 +165,7 @@ uint32_t GraphicWin::close() {
     ordered[0x9FC / 4] = 0;
     ordered[0xA00 / 4] = 0;
     ordered[0xA04 / 4] = 0;
-    const uint32_t default_value = *GraphicWinFieldA0CDefault;
+    const uint32_t default_value = GraphicWinFieldA0CDefault;
     ordered[0xA0C / 4] = default_value;
     if (!release_target) {
         return default_value;

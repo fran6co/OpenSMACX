@@ -179,7 +179,7 @@ void refresh_loaded_game() {
         load_faction_art(faction);
     }
     LoadFlags();
-    *GameState &= 0xF79FCF16;
+    GameState &= 0xF79FCF16;
 
     void *object = reinterpret_cast<void *>(MainInterfaceAddress);
     uintptr_t *vtable = *reinterpret_cast<uintptr_t **>(object);
@@ -189,14 +189,14 @@ void refresh_loaded_game() {
 }
 
 bool validate_loaded_state() {
-    return !*IsMultiplayerNet && !*IsMultiplayerPBEM
-        && *VehCurrentCount > 0 && *VehCurrentCount <= 2049;
+    return !IsMultiplayerNet && !IsMultiplayerPBEM
+        && VehCurrentCount > 0 && VehCurrentCount <= 2049;
 }
 
 void inspect_loaded_state() {
     int current_faction = *reinterpret_cast<int *>(CurrentFactionAddress);
     int candidate = -1;
-    for (int vehicle = 0; vehicle < *VehCurrentCount; vehicle++) {
+    for (int vehicle = 0; vehicle < VehCurrentCount; vehicle++) {
         if (Vehs[vehicle].faction_id == current_faction && veh_moves(vehicle) > 0) {
             candidate = vehicle;
             break;
@@ -217,7 +217,7 @@ void inspect_loaded_state() {
         "  \"candidate\": {\"id\": %d, \"x\": %d, \"y\": %d, "
         "\"prototype\": %d, \"triad\": %u, \"moves\": %u},\n"
         "  \"adjacent\": [\n",
-        *TurnCurrentNum, current_faction, *VehCurrentCount, candidate,
+        TurnCurrentNum, current_faction, VehCurrentCount, candidate,
         Vehs[candidate].x, Vehs[candidate].y, Vehs[candidate].proto_id,
         get_proto_triad(Vehs[candidate].proto_id), veh_moves(candidate));
     if (size <= 0 || static_cast<size_t>(size) >= sizeof(output)) {
@@ -259,7 +259,7 @@ void inspect_loaded_state() {
 
 void request_end_turn(Console *self) {
     uint8_t *bytes = reinterpret_cast<uint8_t *>(self);
-    *GameState |= STATE_UNK_2;
+    GameState |= STATE_UNK_2;
     *reinterpret_cast<int *>(ControlTurnPhaseAddress) = 0;
     *reinterpret_cast<int *>(bytes + ConsoleTurnLoopOffset) = 0;
     *reinterpret_cast<int *>(bytes + ConsoleTurnActiveOffset) = 0;
@@ -268,7 +268,7 @@ void request_end_turn(Console *self) {
 }
 
 void execute_commands(Console *self) {
-    if (State.vehicle_id < 0 || State.vehicle_id >= *VehCurrentCount) {
+    if (State.vehicle_id < 0 || State.vehicle_id >= VehCurrentCount) {
         finish_failure("vehicle_out_of_range");
         return;
     }
@@ -300,7 +300,7 @@ void execute_commands(Console *self) {
         finish_failure("illegal_movement_target");
         return;
     }
-    State.initial_turn = *TurnCurrentNum;
+    State.initial_turn = TurnCurrentNum;
     State.initial_x = Vehs[State.vehicle_id].x;
     State.initial_y = Vehs[State.vehicle_id].y;
     int initial_moves_expended = Vehs[State.vehicle_id].moves_expended;
@@ -315,7 +315,7 @@ void execute_commands(Console *self) {
         return;
     }
     if (State.advance_turn) {
-        for (int vehicle = 0; vehicle < *VehCurrentCount; vehicle++) {
+        for (int vehicle = 0; vehicle < VehCurrentCount; vehicle++) {
             if (get_triad(vehicle) == TRIAD_AIR) {
                 finish_failure("turn_fixture_contains_air_vehicle");
                 return;
@@ -352,7 +352,7 @@ void execute_commands(Console *self) {
         && Vehs[State.vehicle_id].prev_veh_id_stack == -1;
     request_end_turn(self);
     uint8_t *bytes = reinterpret_cast<uint8_t *>(self);
-    bool end_turn_requested = (*GameState & STATE_UNK_2) != 0
+    bool end_turn_requested = (GameState & STATE_UNK_2) != 0
         && *reinterpret_cast<int *>(ControlTurnPhaseAddress) == 0
         && *reinterpret_cast<int *>(bytes + ConsoleTurnLoopOffset) == 0
         && *reinterpret_cast<int *>(bytes + ConsoleTurnActiveOffset) == 0;
@@ -442,11 +442,11 @@ extern "C" void __cdecl scenario_turn_advanced(uintptr_t caller_return) {
         return;
     }
     ScenarioTurnAdvanceAction = 1;
-    int advanced_turn = *TurnCurrentNum;
+    int advanced_turn = TurnCurrentNum;
     uint32_t expected_year = game_year(advanced_turn);
     bool turn_advanced = caller_return == TurnUpkeepCallerReturn
         && advanced_turn == State.initial_turn + 1
-        && *MissionYearCurrent == expected_year
+        && MissionYearCurrent == expected_year
         && Vehs[State.vehicle_id].x == State.target_x
         && Vehs[State.vehicle_id].y == State.target_y;
     if (!turn_advanced) {
@@ -466,7 +466,7 @@ extern "C" void __cdecl scenario_turn_advanced(uintptr_t caller_return) {
             "}\n",
             static_cast<unsigned int>(caller_return),
             static_cast<unsigned int>(TurnUpkeepCallerReturn),
-            State.initial_turn, advanced_turn, *MissionYearCurrent, expected_year,
+            State.initial_turn, advanced_turn, MissionYearCurrent, expected_year,
             Vehs[State.vehicle_id].x, Vehs[State.vehicle_id].y,
             State.target_x, State.target_y);
         State.phase = ScenarioPhase::Finished;
@@ -495,7 +495,7 @@ extern "C" void __cdecl scenario_turn_advanced(uintptr_t caller_return) {
         "  \"end_turn_requested\": true,\n"
         "  \"turn_advanced\": true\n"
         "}\n",
-        advanced_turn, State.initial_turn, advanced_turn, *MissionYearCurrent,
+        advanced_turn, State.initial_turn, advanced_turn, MissionYearCurrent,
         State.vehicle_id, State.initial_x, State.initial_y,
         State.target_x, State.target_y, State.movement_cost);
     State.phase = ScenarioPhase::Finished;

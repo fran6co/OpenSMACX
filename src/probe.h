@@ -33,9 +33,9 @@ enum ProbePrimaryAction {
     PRB_MIND_CONTROL_VEH = -1,
 };
 
-extern BOOL *ProbeHasAlgoEnhancement;
-extern uint32_t *ProbeTargetFactionID;
-extern BOOL *ProbeTargetHasHSA;
+extern BOOL ProbeHasAlgoEnhancement;
+extern uint32_t ProbeTargetFactionID;
+extern BOOL ProbeTargetHasHSA;
 
 int __cdecl steal_energy(int base_id);
 int __cdecl mind_control(int base_id, int faction_id, BOOL is_corner_market);

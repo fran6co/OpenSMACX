@@ -20,7 +20,7 @@
 
 const uint32_t FlatButtonPrimaryVtable = 0x00669754;
 const uint32_t FlatButtonBufferVtable = 0x0066974C;
-uint32_t *FlatButtonDefaults = (uint32_t *)0x009B8E44;
+uint32_t FlatButtonDefaults;  // 0x009B8E44
 
 /*
 Purpose: Close the primary Time member, reset FlatButton orientation state,

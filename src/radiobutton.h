@@ -80,7 +80,7 @@ class RadioButton {
 
 // RadioButton's Dialog::close is not recovered yet.
 extern func_dialog_close RadioButtonOriginalDialogClose;
-extern uint32_t *RadioButtonDefault1;
-extern uint32_t *RadioButtonDefault2;
+extern uint32_t RadioButtonDefault1;
+extern uint32_t RadioButtonDefault2;
 
 void __fastcall radio_button_close_redirect(RadioButton *self, void *);

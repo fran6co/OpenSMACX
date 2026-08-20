@@ -75,7 +75,7 @@ int *ParseStrPlurality = (int *)0x009BB570;
 int *ParseStrGender = (int *)0x009BB5C0;
 HWND HandleMain;  // 0x009B7B28
 
-uint32_t *UnkBitfield1 = (uint32_t *)0x0090D91C;
+uint32_t UnkBitfield1;  // 0x0090D91C
 
 Filefind FilefindPath;  // 0x009B8198
 MainInterface *MainInterfaceVar = (MainInterface *)0x007AE820;
@@ -120,8 +120,8 @@ int __cdecl tester() {
         }
     }
 
-    for (uint32_t y = 0; y < *MapLatitudeBounds; y++) {
-        for (uint32_t x = y & 1; x < *MapLongitudeBounds; x += 2) {
+    for (uint32_t y = 0; y < MapLatitudeBounds; y++) {
+        for (uint32_t x = y & 1; x < MapLongitudeBounds; x += 2) {
             int dist = vector_dist(x_radius, y_radius, x, y);
             if (dist <= 3) {
                 bit_set(x, y, BIT_FUNGUS, true);
@@ -132,7 +132,7 @@ int __cdecl tester() {
     }
    
     /*
-    for (int i = -2; i < *BaseCurrentCount; i++) {
+    for (int i = -2; i < BaseCurrentCount; i++) {
         for (int j = 0; j < MaxPlayerNum; j++) {
             for (int l = 0; l < MaxPlayerNum; l++) {
                 for (int k = 0; k < 2; k++) {
@@ -148,8 +148,8 @@ int __cdecl tester() {
     }
 
     /*
-    for (int i = 0; i < *VehCurrentCount; i++) { // test -1
-        for (int j = 0; j < *VehCurrentCount; j++) {
+    for (int i = 0; i < VehCurrentCount; i++) { // test -1
+        for (int j = 0; j < VehCurrentCount; j++) {
             for (int k = 0; k < 2; k++) {
                 if (best_defender_OG(j, i, k) != best_defender(j, i, k)) {
                     log_say("error: ", j, i, k);
@@ -159,7 +159,7 @@ int __cdecl tester() {
     }
     */
     /*
-    for (int i = 0; i < *BaseCurrentCount; i++) {
+    for (int i = 0; i < BaseCurrentCount; i++) {
         log_say(Base[i].name_string, Base[i].xCoord, Base[i].yCoord, 0);
         log_say("economy_total: ", Base[i].economy_total, 0, 0);
         log_say("psych_total: ", Base[i].psych_total, 0, 0);
@@ -169,8 +169,8 @@ int __cdecl tester() {
 
     /*
     char szTemp[80];
-    for (uint32_t y = 0; y < *MapLatitudeBounds; y++) {
-        for (uint32_t x = y & 1; x < *MapLongitudeBounds; x += 2) {
+    for (uint32_t y = 0; y < MapLatitudeBounds; y++) {
+        for (uint32_t x = y & 1; x < MapLongitudeBounds; x += 2) {
             map *tile = map_loc(x, y);
             if (tile->unk_1) {
                 log_say("map_unk1:", x, y, tile->unk_1);
@@ -183,8 +183,8 @@ int __cdecl tester() {
     }
     */
     /*
-    for (uint32_t y = 0; y < *MapLatitudeBounds; y++) {
-        for (uint32_t x = y & 1; x < *MapLongitudeBounds; x += 2) {
+    for (uint32_t y = 0; y < MapLatitudeBounds; y++) {
+        for (uint32_t x = y & 1; x < MapLongitudeBounds; x += 2) {
             map *tile = map_loc(x, y);
             if (tile->unk_1) {
                 log_say("map_unk1:", x, y, tile->unk_1);
@@ -214,7 +214,7 @@ int __cdecl tester() {
     }
     */
     /*
-    for (int i = -1; i < *BaseCurrentCount; i++) {
+    for (int i = -1; i < BaseCurrentCount; i++) {
         for (int j = -2; j < 10; j++) {
             for (int k = -2; k < 10; k++) {
                 for (int p = 0; p < MaxPlayerNum; p++) {
@@ -230,7 +230,7 @@ int __cdecl tester() {
     */
     /*
     for (int i = 0; i < MaxPlayerNum; i++) {
-        for (int j = 0; j < *BaseCurrentCount; j++) {
+        for (int j = 0; j < BaseCurrentCount; j++) {
             for (int k = 0; k < 2; k++) {
                 int mc1 = mind_control(j, i, k);
                 int mc2 = mind_control_OG(j, i, k);

@@ -86,8 +86,8 @@ class CheckBox {
 
 // CheckBox's Dialog::close is not recovered yet.
 extern func_dialog_close CheckBoxOriginalDialogClose;
-extern uint32_t *CheckBoxDefault1;
-extern uint32_t *CheckBoxDefault2;
+extern uint32_t CheckBoxDefault1;
+extern uint32_t CheckBoxDefault2;
 
 void __fastcall check_box_close_redirect(CheckBox *self, void *);
 void __fastcall check_box_unk1_redirect(CheckBox *self, void *, int pos);

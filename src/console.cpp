@@ -185,11 +185,11 @@ Return Value: 1 when editing is locked, 0 otherwise
 Status: Complete
 */
 int Console::edit_lock() {
-    if (!(*GameState & STATE_SCENARIO_EDITOR)) {
+    if (!(GameState & STATE_SCENARIO_EDITOR)) {
         return 0;
     }
     if (((*ConsoleEditKeyStateSlot)(VK_SCROLL) & 1) ||
-        (*GameState & STATE_EDITOR_ONLY_MODE)) {
+        (GameState & STATE_EDITOR_ONLY_MODE)) {
         return 1;
     }
     return 0;
@@ -370,7 +370,7 @@ int Console::focus(int x_coord, int y_coord, int faction_id) {
     if (faction_id < 0) {
         mask = 0x60000000U;
     } else {
-        mask = (faction_id != *LocalFaction) ? 0x40000000U : 0x20000000U;
+        mask = (faction_id != LocalFaction) ? 0x40000000U : 0x20000000U;
     }
     // 0x005108B3 `mov [ebp-4], esi` with ESI zero. The literal 1 at 0x0051097A
     // is the ONLY store into that slot, so this is a plain 0/1 flag and the

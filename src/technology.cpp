@@ -30,8 +30,8 @@
 RulesTechnology *Technology = (RulesTechnology *)0x0094F358;
 uint8_t *GameTechAchieved = (uint8_t *)0x009A6670;
 RulesMandate *Mandate = (RulesMandate *)0x0094B4A0;
-int *TechValidCount = (int *)0x00949730;
-int *TechCommerceCount = (int *)0x00949734;
+int TechValidCount;  // 0x00949730
+int TechCommerceCount;  // 0x00949734
 char TechName[80];
 
 /*
@@ -376,7 +376,7 @@ int __cdecl tech_val(int tech_id, int faction_id, BOOL simple_calc) {
         }
         uint32_t factor_ai = 1;
         if (!simple_calc) {
-            factor_ai = (*GameRules & RULES_BLIND_RESEARCH) ? 4 : 2;
+            factor_ai = (GameRules & RULES_BLIND_RESEARCH) ? 4 : 2;
         }
         BOOL ai_growth = PlayersData[faction_id].ai_growth;
         BOOL ai_power = PlayersData[faction_id].ai_power;
@@ -477,11 +477,11 @@ int __cdecl tech_val(int tech_id, int faction_id, BOOL simple_calc) {
         if (ai_growth && tech_is_preq(tech_id, TECH_DOCINIT, 2)) {
             value_ret *= 2;
         }
-        if ((ai_wealth || !*MapCloudCover) && tech_is_preq(tech_id, TECH_ENVECON, 9999)) {
+        if ((ai_wealth || !MapCloudCover) && tech_is_preq(tech_id, TECH_ENVECON, 9999)) {
             value_ret *= 2;
         }
         if (Technology[tech_id].flags & TFLAG_SECRETS && !GameTechAchieved[tech_id]
-            && !(*GameRules & RULES_BLIND_RESEARCH)) {
+            && !(GameRules & RULES_BLIND_RESEARCH)) {
             value_ret *= (ai_power + 1) * 2;
         }
         if (Players[faction_id].rule_psi > 0) {
@@ -500,7 +500,7 @@ int __cdecl tech_val(int tech_id, int faction_id, BOOL simple_calc) {
                 value_ret++;
             }
             if (tech_is_preq(tech_id, preq_tech_fusion, 1)
-                && !(*GameRules & RULES_BLIND_RESEARCH)) {
+                && !(GameRules & RULES_BLIND_RESEARCH)) {
                 value_ret *= 2;
             }
         }
@@ -516,7 +516,7 @@ int __cdecl tech_val(int tech_id, int faction_id, BOOL simple_calc) {
             if (tech_is_preq(tech_id, Facility[FAC_HAB_COMPLEX].preq_tech, 9999)) {
                 value_ret *= 2;
             } else if (tech_is_preq(tech_id, Facility[FAC_HABITATION_DOME].preq_tech, 9999)
-                && *TurnCurrentNum > 250) {
+                && TurnCurrentNum > 250) {
                 value_ret = (value_ret * 3) / 2;
             }
         }
@@ -612,7 +612,7 @@ int __cdecl tech_ai(int faction_id) {
         if (tech_avail(i, faction_id)) {
             int tech_value = tech_val(i, faction_id, false);
             int compare;
-            if (*GameRules & RULES_BLIND_RESEARCH) {
+            if (GameRules & RULES_BLIND_RESEARCH) {
                 if (is_human_player && (PlayersData[faction_id].ai_growth
                     || PlayersData[faction_id].ai_wealth)
                     && i == VehPrototypes[BSC_FORMERS].preq_tech) {
@@ -728,14 +728,14 @@ int __cdecl tech_rate(int faction_id) {
     player_factor /= 2;
     top_factor /= 2;
     BOOL is_human_player = is_human(faction_id);
-    uint32_t diff_factor = is_human_player ? PlayersData[faction_id].diff_level : *DiffLevelCurrent;
+    uint32_t diff_factor = is_human_player ? PlayersData[faction_id].diff_level : DiffLevelCurrent;
     diff_factor += (diff_factor < DLVL_LIBRARIAN);
-    uint32_t diff_lvl = !is_human_player ? *DiffLevelCurrent : DLVL_LIBRARIAN;
+    uint32_t diff_lvl = !is_human_player ? DiffLevelCurrent : DLVL_LIBRARIAN;
     diff_factor = is_human_player ? diff_factor * 4 + 8 : 29 - diff_factor * 3;
     diff_factor = range(diff_factor, 12 - player_factor, player_factor + 12);
-    uint32_t tech_stagnation = *GameRules & RULES_TECH_STAGNATION;
+    uint32_t tech_stagnation = GameRules & RULES_TECH_STAGNATION;
     uint32_t rule_factor = tech_stagnation | 0x40; // 64 or 96
-    uint32_t fin_factor = range(player_factor - (*TurnCurrentNum / (rule_factor >> 3)),
+    uint32_t fin_factor = range(player_factor - (TurnCurrentNum / (rule_factor >> 3)),
         0, (diff_factor * (rule_factor >> 5)) >> 1) + diff_factor;
     int resch_base = range(PlayersData[faction_id].soc_effect_base.research, -1, 1);
     uint32_t discovery_rate = (fin_factor
@@ -748,7 +748,7 @@ int __cdecl tech_rate(int faction_id) {
     if (Players[faction_id].rule_techcost != 100) {
         discovery_rate = discovery_rate * Players[faction_id].rule_techcost / 100;
     }
-    uint32_t cost = (discovery_rate * *MapAreaSqRoot) / 56;
+    uint32_t cost = (discovery_rate * MapAreaSqRoot) / 56;
     if (tech_stagnation) {
         cost += cost / 2; // Slower Rate of Research Discoveries
     }

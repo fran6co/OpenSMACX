@@ -40,10 +40,10 @@ void Path::init() {
     shutdown();
     x_dst_ = -1;
     y_dst_ = -1;
-    map_table_ = (int *)mem_get(*MapArea * 4);
-    x_table_ = (int16_t *)mem_get(*MapArea * 2);
-    y_table_ = (int16_t *)mem_get(*MapArea * 2);
-    ZeroMemory(map_table_, *MapArea * 4);
+    map_table_ = (int *)mem_get(MapArea * 4);
+    x_table_ = (int16_t *)mem_get(MapArea * 2);
+    y_table_ = (int16_t *)mem_get(MapArea * 2);
+    ZeroMemory(map_table_, MapArea * 4);
 }
 
 /*
@@ -68,7 +68,7 @@ void Path::init() {
  Status: Complete
 */
 int Path::get(uint32_t x, uint32_t y) {
-    return map_table_[(x >> 1) + y * *MapLongitude];
+    return map_table_[(x >> 1) + y * MapLongitude];
 }
 
 /*
@@ -78,7 +78,7 @@ int Path::get(uint32_t x, uint32_t y) {
  Status: Complete
 */
 void Path::set(uint32_t x, uint32_t y, int val) {
-    map_table_[(x >> 1) + y * *MapLongitude] = val;
+    map_table_[(x >> 1) + y * MapLongitude] = val;
 }
 
 /*
@@ -201,8 +201,8 @@ int Path::move(int veh_id, int faction_id) {
  Status: Complete
 */
 void Path::make_abstract() {
-    for (uint32_t y = 0; y < *MapAbstractLatBounds; y++) {
-        for (uint32_t x = y & 1; x < *MapAbstractLongBounds; x += 2) {
+    for (uint32_t y = 0; y < MapAbstractLatBounds; y++) {
+        for (uint32_t x = y & 1; x < MapAbstractLongBounds; x += 2) {
             uint8_t region = 0;
             for (int i = 0; i < RadiusRange[1]; i++) {
                 int x_radius = xrange(x * 5 + RadiusOffsetX[i]);
@@ -232,7 +232,7 @@ void Path::make_abstract() {
 void Path::merge(int region_old, int region_new) {
     Continents[region_new].tile_count += Continents[region_old].tile_count;
     Continents[region_old].tile_count = 0;
-    for (uint32_t i = 0; i < *MapArea; i++) {
+    for (uint32_t i = 0; i < MapArea; i++) {
         if ((uint32_t)(*MapTiles)[i].region == region_old) {
             (*MapTiles)[i].region = (uint8_t)region_new;
         }
@@ -267,7 +267,7 @@ void Path::territory(int x, int y, int UNUSED(region), int faction_id) {
             int x_radius = xrange(x_it + RadiusBaseX[i]);
             int y_radius = y_it + RadiusBaseY[i];
             Map *tile;
-            if (on_map(x_radius, y_radius) && y_it && y_it != ((int)*MapLatitudeBounds - 1)
+            if (on_map(x_radius, y_radius) && y_it && y_it != ((int)MapLatitudeBounds - 1)
                 && !is_ocean(x_radius, y_radius) && (tile = map_loc(x_radius, y_radius),
                     !tile->unk_1 && tile->territory == faction_id)) {
                 tile->unk_1 = 1;
@@ -308,7 +308,7 @@ void Path::continent(int x, int y, int region) {
             int x_radius = xrange(x_it + RadiusBaseX[i]);
             int y_radius = y_it + RadiusBaseY[i];
             BOOL is_ocean_rad;
-            if (on_map(x_radius, y_radius) && y_it && y_it != ((int)*MapLatitudeBounds - 1)
+            if (on_map(x_radius, y_radius) && y_it && y_it != ((int)MapLatitudeBounds - 1)
                 && (is_ocean_rad = is_ocean(x_radius, y_radius), is_ocean_rad == is_ocean_tile 
                     && !region_at(x_radius, y_radius))) {
                 if (is_ocean_tile && bit2_at(x_radius, y_radius) & BIT2_FRESH && is_ocean_rad) {
@@ -323,8 +323,8 @@ void Path::continent(int x, int y, int region) {
     if (fresh_water_count) {
         // land locked?
         BOOL is_fresh_water = fresh_water_count >= ((Continents[region].tile_count * 3) / 4);
-        for (int y_it = 0; y_it < *MapLatitudeBounds; y_it++) {
-            for (int x_it = y_it & 1; x_it < *MapLongitudeBounds; x_it += 2) {
+        for (int y_it = 0; y_it < MapLatitudeBounds; y_it++) {
+            for (int x_it = y_it & 1; x_it < MapLongitudeBounds; x_it += 2) {
                 if (region_at(x_it, y_it) == region) {
                     bit2_set(x_it, y_it, BIT2_FRESH, is_fresh_water);
                 }
@@ -347,14 +347,14 @@ void Path::continent(int x, int y, int region) {
  Status: Complete
 */
 void Path::continents() {
-    for (uint32_t i = 0; i < *MapArea; i++) {
+    for (uint32_t i = 0; i < MapArea; i++) {
         (*MapTiles)[i].region = 0;
     }
-    int y_south_pole = *MapLatitudeBounds - 1;
+    int y_south_pole = MapLatitudeBounds - 1;
     int ocean_region = 64;
     int land_region = 0;
     for (int y = 1; y < y_south_pole; y++) {
-        for (int x = y & 1; x < *MapLongitudeBounds; x += 2) {
+        for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
             if (!region_at(x, y)) {
                 int region_current;
                 int region_min;
@@ -390,12 +390,12 @@ void Path::continents() {
             }
         }
     }
-    for (int x = 0; x < *MapLongitudeBounds; x += 2) { // north pole
+    for (int x = 0; x < MapLongitudeBounds; x += 2) { // north pole
         uint8_t pole_region = is_ocean(x, 0) ? 127 : 63;
         region_set(x, 0, pole_region);
         Continents[pole_region].tile_count++;
     }
-    for (x = y_south_pole & 1; x < *MapLongitudeBounds; x += 2) { // south pole
+    for (x = y_south_pole & 1; x < MapLongitudeBounds; x += 2) { // south pole
         uint8_t pole_region = is_ocean(x, y_south_pole) ? 127 : 63;
         region_set(x, y_south_pole, pole_region);
         Continents[pole_region].tile_count++;
@@ -409,13 +409,13 @@ void Path::continents() {
             most_tiles = tiles;
         }
     }
-    *GameState = (most_tiles >= ((total_tiles * 4) / 5))
-        ? *GameState | STATE_UNK_100 : *GameState & ~STATE_UNK_100;
+    GameState = (most_tiles >= ((total_tiles * 4) / 5))
+        ? GameState | STATE_UNK_100 : GameState & ~STATE_UNK_100;
     for (int i_414 = 0; i_414 < MaxRegionLandNum; i_414++) {
         ZeroMemory(Continents[i_414].sea_coasts, 8);
     }
-    for (y = 0; y < *MapLatitudeBounds; y++) {
-        for (int x = y & 1; x < *MapLongitudeBounds; x += 2) {
+    for (y = 0; y < MapLatitudeBounds; y++) {
+        for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
             uint32_t region = region_at(x, y);
             if (region < MaxRegionLandNum) {
                 for (int i = 0; i < 8; i++) {
@@ -454,15 +454,15 @@ void Path::continents() {
 */
 BOOL Path::sensors(int faction_id, int *x_sensor, int *y_sensor) {
     BOOL has_sensor = true;
-    ZeroMemory(map_table_, *MapArea * 4);
+    ZeroMemory(map_table_, MapArea * 4);
     x_dst_ = -1;
     y_dst_ = -1;
     int x_search = *x_sensor;
     int y_search = *y_sensor;
     int search = 9999;
     uint32_t region = region_at(x_search, y_search);
-    for (uint32_t y = 1; y < *MapAbstractLatBounds - 1; y++) {
-        for (uint32_t x = y & 1; x < *MapAbstractLongBounds; x += 2) {
+    for (uint32_t y = 1; y < MapAbstractLatBounds - 1; y++) {
+        for (uint32_t x = y & 1; x < MapAbstractLongBounds; x += 2) {
             int veh_faction_id;
             if (region_at(x, y) == region 
                 && whose_territory(faction_id, x, y, NULL, false) == (int)faction_id

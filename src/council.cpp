@@ -39,7 +39,7 @@ int __cdecl council_votes(int faction_id) {
         return 0;
     }
     uint32_t votes = 0;
-    for (int i = 0; i < *BaseCurrentCount; i++) {
+    for (int i = 0; i < BaseCurrentCount; i++) {
         if (faction_id == Bases[i].faction_id_current) {
             votes += Bases[i].population_size;
         }

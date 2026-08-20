@@ -26,8 +26,8 @@ func_process_message NetDaemonProcessMessage =
 void *NetDaemonNet = reinterpret_cast<void *>(0x0093CD90);
 func_net_daemon_synch NetDaemonSynch =
     original_method<func_net_daemon_synch>(0x00532E00);
-int *NetDaemonIsMultiplayerNet = (int *)0x0093F660;
-int *NetDaemonLocalFaction = (int *)0x00939284;
+int NetDaemonIsMultiplayerNet;  // 0x0093F660
+int NetDaemonLocalFaction;  // 0x00939284
 func_net_message_data *NetDaemonMessageData =
     (func_net_message_data *)0x00592EE0;
 
@@ -324,10 +324,10 @@ uint32_t NetDaemon::unlock_veh() {
         reinterpret_cast<volatile uint32_t *>(this);
 
     // Loaded exactly once, and it is also the EAX the non-net path returns.
-    uint32_t residue = static_cast<uint32_t>(*NetDaemonIsMultiplayerNet);
+    uint32_t residue = static_cast<uint32_t>(NetDaemonIsMultiplayerNet);
     if (residue != 0) {
         // `cmp eax, edi` against a zeroed edi: any nonzero flag announces.
-        log_say("Client releasing lock", *NetDaemonLocalFaction, 0, 0);
+        log_say("Client releasing lock", NetDaemonLocalFaction, 0, 0);
         residue = NetDaemonMessageData(0x2212, 0, 0, 0, 0, 0);
         object[0x1BB0 / 4] = 0;
         object[0x1BAC / 4] = 0;

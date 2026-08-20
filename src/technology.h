@@ -159,8 +159,8 @@ static const int MaxMandateNum = 4;
 extern RulesTechnology *Technology; // [89]
 extern uint8_t *GameTechAchieved; // [89]
 extern RulesMandate *Mandate; // [4]
-extern int *TechValidCount;
-extern int *TechCommerceCount;
+extern int TechValidCount;
+extern int TechCommerceCount;
 extern char TechName[80];
 
 void __cdecl say_tech(int tech_id, BOOL category_lvl);

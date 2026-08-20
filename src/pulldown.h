@@ -79,8 +79,8 @@ extern const uint32_t PullDownBufferVtable;
 // Defaults the destructor copies into the two trailing fields; the game keeps
 // them at 0x009B7B58/0x009B7B5C. Tests outside the hybrid process rebind
 // them at locally mapped storage.
-extern uint32_t *PullDownFieldF38Default;
-extern uint32_t *PullDownFieldF3CDefault;
+extern uint32_t PullDownFieldF38Default;
+extern uint32_t PullDownFieldF3CDefault;
 
 PullDown *__fastcall pull_down_destructor_redirect(PullDown *self, void *);
 int __fastcall pull_down_hide_item_redirect(

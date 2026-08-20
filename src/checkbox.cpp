@@ -21,8 +21,8 @@
 #include "vtable_shim.h"
 
 func_dialog_close CheckBoxOriginalDialogClose = original_method<func_dialog_close>(0x00608F50);
-uint32_t *CheckBoxDefault1 = (uint32_t *)0x00697104;
-uint32_t *CheckBoxDefault2 = (uint32_t *)0x00697108;
+uint32_t CheckBoxDefault1;  // 0x00697104
+uint32_t CheckBoxDefault2;  // 0x00697108
 
 /*
 Purpose: Reset the check box to its defaults, then close its dialog and
@@ -51,8 +51,8 @@ void CheckBox::close() {
     field_4_ = 0;
     field_8_ = 0;
     field_C_ = 0;
-    field_14_ = *CheckBoxDefault2;
-    field_10_ = *CheckBoxDefault1;
+    field_14_ = CheckBoxDefault2;
+    field_10_ = CheckBoxDefault1;
     (ORIGINAL(reinterpret_cast<Dialog *>(self + vbtable[2]))->*CheckBoxOriginalDialogClose)();
     reinterpret_cast<GraphicWin *>(self + vbtable[1])->close();
 }

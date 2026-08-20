@@ -44,11 +44,11 @@ LPSTR *PlansShortName = (LPSTR *)0x00945FE0; // [15]
 LPSTR *PlansFullName = (LPSTR *)0x00952360; // [15]
 LPSTR *Triad = (LPSTR *)0x0094F1A8; // [3]
 
-int *VehCurrentCount = (int *)0x009A64C8;
-int *VehDropLiftVehID = (int *)0x009B2280;
-int *VehLiftX = (int *)0x009B2278;
-int *VehLiftY = (int *)0x009B2284;
-BOOL *VehBitError = (BOOL *)0x009B228C;
+int VehCurrentCount;  // 0x009A64C8
+int VehDropLiftVehID;  // 0x009B2280
+int VehLiftX;  // 0x009B2278
+int VehLiftY;  // 0x009B2284
+BOOL VehBitError;  // 0x009B228C
 uint32_t *VehBasicBattleMorale = (uint32_t *)0x00912420; // [2] ; [0] offense, [1] defense?
 int VehMoraleModifierCount; // only used by say_morale(), optimize to local var?
 // Battle related globals
@@ -227,7 +227,7 @@ int __cdecl valid_patrol(int veh_id, int x, int y) {
     if (x == veh.x && y == veh.y) {
         return false;
     }
-    if (y < 0 || y >= *MapLatitudeBounds || x < 0 || x >= *MapLongitudeBounds) {
+    if (y < 0 || y >= MapLatitudeBounds || x < 0 || x >= MapLongitudeBounds) {
         return false;
     }
     uint32_t triad = Chassis[VehPrototypes[veh.proto_id].chassis_id].triad;
@@ -286,8 +286,8 @@ int __cdecl valid_patrol(int veh_id, int x, int y) {
         * (Chassis[VehPrototypes[veh.proto_id].chassis_id].range - veh.terraforming_turns - 1)
         + moves_left) / (int)Rules->move_rate_roads;
     int x_delta = abs(x - veh.x);
-    if (!(*MapIsFlat & 1) && x_delta > (int)*MapLongitude) {
-        x_delta = *MapLongitudeBounds - x_delta;
+    if (!(MapIsFlat & 1) && x_delta > (int)MapLongitude) {
+        x_delta = MapLongitudeBounds - x_delta;
     }
     int dist = (abs(y - veh.y) + x_delta) >> 1;
     if (landing_veh && landing_dst) {
@@ -313,7 +313,7 @@ int __cdecl drop_range(int faction_id) {
         && !has_project(SP_SPACE_ELEVATOR, faction_id)) {
         return Rules->max_airdrop_sans_orb_insert;
     }
-    return (*MapLongitudeBounds <= * MapLatitudeBounds) ? *MapLatitudeBounds : *MapLongitudeBounds;
+    return (MapLongitudeBounds <= MapLatitudeBounds) ? MapLatitudeBounds : MapLongitudeBounds;
 }
 
 /*
@@ -430,15 +430,15 @@ uint32_t __cdecl morale_alien(int veh_id, int faction_id_vs_native) {
         }
         morale -= 2;
     } else { // everything else
-        if (*TurnCurrentNum < 45) {
+        if (TurnCurrentNum < 45) {
             morale = 0;
-        } else if (*TurnCurrentNum < 90) {
+        } else if (TurnCurrentNum < 90) {
             morale = 1;
-        } else if (*TurnCurrentNum < 170) {
+        } else if (TurnCurrentNum < 170) {
             morale = 2;
-        } else if (*TurnCurrentNum < 250) {
+        } else if (TurnCurrentNum < 250) {
             morale = 3;
-        } else if (*TurnCurrentNum < 330) {
+        } else if (TurnCurrentNum < 330) {
             morale = 4;
         } else { // 330+
             morale = 6;
@@ -775,8 +775,8 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                     uint32_t dropRange;
                     if (has_tech(Rules->tech_orb_insert_sans_spc_elev, faction_id_atk)
                         || has_project(SP_SPACE_ELEVATOR, faction_id_atk)) {
-                        dropRange = (*MapHorizontalBounds <= *MapLatitudeBounds)
-                            ? *MapLatitudeBounds : *MapHorizontalBounds;
+                        dropRange = (*MapHorizontalBounds <= MapLatitudeBounds)
+                            ? MapLatitudeBounds : *MapHorizontalBounds;
                     } else {
                         dropRange = Rules->max_airdrop_sans_orb_insert;
                     }
@@ -1259,7 +1259,7 @@ void __cdecl invasions(int base_id) {
     uint32_t faction_id_base = Bases[base_id].faction_id_current;
     int16_t base_x = Bases[base_id].x;
     int16_t base_y = Bases[base_id].y;
-    for (int i = 0; i < *VehCurrentCount; i++) {
+    for (int i = 0; i < VehCurrentCount; i++) {
         uint32_t veh_faction_id = Vehs[i].faction_id;
         if (veh_faction_id && !is_human(veh_faction_id) && veh_faction_id != faction_id_base
             && !has_treaty(veh_faction_id, faction_id_base, DTREATY_TREATY)) {
@@ -1311,13 +1311,13 @@ the same reading valid_patrol above and reset_territory use. The two agree on th
 game stores there and disagree on everything else.
 */
 static int course_xrange(int x) {
-    if (!(*MapIsFlat & 1)) {
+    if (!(MapIsFlat & 1)) {
         if (x >= 0) {
-            if (x >= *MapLongitudeBounds) {
-                x -= *MapLongitudeBounds;
+            if (x >= MapLongitudeBounds) {
+                x -= MapLongitudeBounds;
             }
         } else {
-            x += *MapLongitudeBounds;
+            x += MapLongitudeBounds;
         }
     }
     return x;
@@ -2507,7 +2507,7 @@ The dirty-tile arm is deliberately narrow. It fires only for the LOCAL faction,
 only the first time that faction sees the tile, and not at all under omniscient
 view or once the faction's map has been revealed outright - four conditions
 which between them mean it is the interactive map's repaint hint rather than
-game state. `bit2 |= 0x400000` and `*UnkBitfield1 |= 1` are the same pair
+game state. `bit2 |= 0x400000` and `UnkBitfield1 |= 1` are the same pair
 climate_set() sets at 00591A80 and carry the same unidentified meaning.
 */
 void __cdecl spot_tile(int x, int y, int faction_id) {
@@ -2515,11 +2515,11 @@ void __cdecl spot_tile(int x, int y, int faction_id) {
         return;
     }
     Map *tile = map_loc(x, y);
-    if (faction_id == *LocalFaction && !(tile->visibility & (1 << faction_id))
-        && !(*GameState & STATE_OMNISCIENT_VIEW)
+    if (faction_id == LocalFaction && !(tile->visibility & (1 << faction_id))
+        && !(GameState & STATE_OMNISCIENT_VIEW)
         && !(PlayersData[faction_id].flags & PFLAG_MAP_REVEALED)) {
         tile->bit2 |= 0x400000; // TODO: identify value
-        *UnkBitfield1 |= 1; // TODO: identify global + value
+        UnkBitfield1 |= 1; // TODO: identify global + value
     }
     tile->visibility |= (uint8_t)(1 << faction_id);
     synch_bit(x, y, faction_id);
@@ -2674,7 +2674,7 @@ BOOL __cdecl want_to_wake(int faction_id, int veh_id, int spotted_veh_id) {
         }
     }
     BOOL wants_to_wake;
-    if (*IsMultiplayerNet) { // restructured to be more efficient with same logic
+    if (IsMultiplayerNet) { // restructured to be more efficient with same logic
         if (has_treaty(veh_faction_id, faction_id, DTREATY_PACT)) {
             wants_to_wake = false;
         } else if (has_treaty(veh_faction_id, faction_id, DTREATY_TREATY)) {
@@ -2686,15 +2686,15 @@ BOOL __cdecl want_to_wake(int faction_id, int veh_id, int spotted_veh_id) {
         }
     } else {
         if (has_treaty(veh_faction_id, faction_id, DTREATY_PACT)) {
-            wants_to_wake = *GamePreferences & PREF_AUTO_END_MOVE_SPOT_VEH_PACT;
+            wants_to_wake = GamePreferences & PREF_AUTO_END_MOVE_SPOT_VEH_PACT;
         } else if (has_treaty(veh_faction_id, faction_id, DTREATY_TREATY)) {
-            wants_to_wake = *GamePreferences & PREF_AUTO_END_MOVE_SPOT_VEH_TREATY;
+            wants_to_wake = GamePreferences & PREF_AUTO_END_MOVE_SPOT_VEH_TREATY;
         } else if (has_treaty(veh_faction_id, faction_id, DTREATY_TRUCE)) {
-            wants_to_wake = *GamePreferences & PREF_AUTO_END_MOVE_SPOT_VEH_TRUCE;
+            wants_to_wake = GamePreferences & PREF_AUTO_END_MOVE_SPOT_VEH_TRUCE;
         } else {
-            wants_to_wake = *GamePreferences & PREF_AUTO_END_MOVE_SPOT_VEH_WAR;
+            wants_to_wake = GamePreferences & PREF_AUTO_END_MOVE_SPOT_VEH_WAR;
         }
-        if (!(*GamePreferences & PREF_AUTO_DONT_END_MOVE_DIFF_TRIAD)) {
+        if (!(GamePreferences & PREF_AUTO_DONT_END_MOVE_DIFF_TRIAD)) {
             return wants_to_wake;
         }
     }
@@ -2846,11 +2846,11 @@ Return Value: Either the parameter unit id or unit id of the stack top; Return i
 Status: Complete
 */
 int __cdecl stack_fix(int veh_id) {
-    if (veh_id < 0 || !*IsMultiplayerNet
+    if (veh_id < 0 || !IsMultiplayerNet
         || (Vehs[veh_id].next_veh_id_stack < 0 && Vehs[veh_id].prev_veh_id_stack < 0)) {
         return veh_id; // invalid veh_id, not DirectPlay MP or no stack
     }
-    for (int i = 0; i < *VehCurrentCount; i++) {
+    for (int i = 0; i < VehCurrentCount; i++) {
         // Bug fix: Original would compare against the exact same source coordinates (both veh_id
         // instead of one being iterator) likely causing a performance hit.
         if (Vehs[veh_id].x == Vehs[i].x && Vehs[veh_id].y == Vehs[i].y) {
@@ -2885,7 +2885,7 @@ int __cdecl stack_veh(int veh_id, int mode) {
         // Neither a transport nor a carrier: nothing can be stacked onto it.
         return mode ? veh_drop(veh_lift(veh_id), -2, -2) : 0;
     }
-    if (*IsMultiplayerNet) {
+    if (IsMultiplayerNet) {
         stack_fix(veh_id); // return value is discarded by the original
     }
     if (mode) {
@@ -2894,7 +2894,7 @@ int __cdecl stack_veh(int veh_id, int mode) {
             // halves x with an arithmetic shift, so map_loc()'s uint32_t parameter would send a
             // negative x roughly a gigabyte away. Same for the two other unguarded reads below.
             const Map *tile = &(*MapTiles)[(Vehs[veh_id].x >> 1)
-                + Vehs[veh_id].y * (int)*MapLongitude];
+                + Vehs[veh_id].y * (int)MapLongitude];
             // The original also compares the masked nibble against 0, which is vacuous.
             if ((tile->bit & BIT_BASE_IN_TILE) && (tile->val2 & 0xF) < MaxPlayerNum) {
                 return veh_drop(veh_lift(veh_id), -2, -2);
@@ -2953,7 +2953,7 @@ int __cdecl stack_veh(int veh_id, int mode) {
                 accept = true;
                 if (subject_is_air) {
                     const Map *tile = &(*MapTiles)[(Vehs[veh_id].x >> 1)
-                        + Vehs[veh_id].y * (int)*MapLongitude];
+                        + Vehs[veh_id].y * (int)MapLongitude];
                     uint32_t owner = tile->val2 & 0xF;
                     // Note the > 0 here: unlike the two other owner tests, faction 0 is rejected.
                     if (!((tile->bit & BIT_BASE_IN_TILE) && owner < MaxPlayerNum && owner > 0)
@@ -2970,7 +2970,7 @@ int __cdecl stack_veh(int veh_id, int mode) {
                 } else if (accept) {
                     if (Vehs[i].state & VSTATE_UNK_40000) {
                         const Map *tile = &(*MapTiles)[(Vehs[i].x >> 1)
-                            + Vehs[i].y * (int)*MapLongitude];
+                            + Vehs[i].y * (int)MapLongitude];
                         accept = ((Vehs[i].state & VSTATE_UNK_20000)
                                   && PlayersData[unit_faction].region_base_plan[tile->region]
                                          == PLAN_NAVAL_TRANSPORT);
@@ -3184,7 +3184,7 @@ BOOL __cdecl veh_avail(int proto_id, int faction_id, int base_id) {
         }
     }
     if (VehPrototypes[proto_id].plan == PLAN_COLONIZATION 
-        && *GameRules & RULES_SCN_NO_COLONY_PODS) {
+        && GameRules & RULES_SCN_NO_COLONY_PODS) {
         return false;
     }
     if (base_id >= 0 && get_proto_triad(proto_id) == TRIAD_SEA && !is_port(base_id, false)) {
@@ -3278,7 +3278,7 @@ int __cdecl veh_at(int x, int y) {
     if (on_map(x, y) && !(bit_at(x, y) & BIT_VEH_IN_TILE)) {
         return -1; // not found
     }
-    for (int veh_id = 0; veh_id < *VehCurrentCount; veh_id++) {
+    for (int veh_id = 0; veh_id < VehCurrentCount; veh_id++) {
         if (Vehs[veh_id].x == x && Vehs[veh_id].y == y) {
             return veh_top(veh_id);
         }
@@ -3286,14 +3286,14 @@ int __cdecl veh_at(int x, int y) {
     if (!on_map(x, y)) {
         return -1;
     }
-    if (!*VehBitError) {
+    if (!VehBitError) {
         log_say("Vehicle Bit Error  (x, y)", x, y, 0);
     }
-    if (*GameState & STATE_SCENARIO_EDITOR || *GameState & STATE_DEBUG_MODE || *IsMultiplayerNet) {
-        if (*VehBitError) {
+    if (GameState & STATE_SCENARIO_EDITOR || GameState & STATE_DEBUG_MODE || IsMultiplayerNet) {
+        if (VehBitError) {
             return -1;
         }
-        *VehBitError = true;
+        VehBitError = true;
     }
     rebuild_vehicle_bits();
     return -1;
@@ -3374,9 +3374,9 @@ int __cdecl veh_lift(int veh_id) {
     } else if (!prev_stack_exists && on_map(x, y)) {
         bit_set(x, y, BIT_VEH_IN_TILE, false);
     }
-    *VehDropLiftVehID = veh_id;
-    *VehLiftX = x;
-    *VehLiftY = y;
+    VehDropLiftVehID = veh_id;
+    VehLiftX = x;
+    VehLiftY = y;
     Vehs[veh_id].x = -1;
     Vehs[veh_id].y = -1;
     Vehs[veh_id].next_veh_id_stack = -1;
@@ -3403,7 +3403,7 @@ int __cdecl veh_drop(int veh_id, int x, int y) {
     Vehs[veh_id].prev_veh_id_stack = -1;
     Vehs[veh_id].x = (int16_t)x;
     Vehs[veh_id].y = (int16_t)y;
-    *VehDropLiftVehID = -1;
+    VehDropLiftVehID = -1;
     if (veh_id_dest < 0) {
         if (y < 0) {
             return veh_id;
@@ -4107,7 +4107,7 @@ int __cdecl action_home(int veh_id, int flags) {
     // collapsed into an ordinary break.
     bool alert_target = false;
 
-    for (int base_id = 0; base_id < *BaseCurrentCount; base_id++) {
+    for (int base_id = 0; base_id < BaseCurrentCount; base_id++) {
         Base &base = Bases[base_id];
         const int base_faction = base.faction_id_current;
         if (base_faction != faction_id
@@ -4145,7 +4145,7 @@ int __cdecl action_home(int veh_id, int flags) {
     if (!alert_target) {
         if (triad == TRIAD_AIR) {
             // An air unit can also come down on a friendly carrier or air supply convoy.
-            for (int other_id = 0; other_id < *VehCurrentCount; other_id++) {
+            for (int other_id = 0; other_id < VehCurrentCount; other_id++) {
                 Veh &other = Vehs[other_id];
                 if (other.faction_id != faction_id) {
                     continue;
@@ -4571,10 +4571,10 @@ the only caller - passes a unit's own sign-extended coordinates.
 */
 int __cdecl alien_base(int veh_id, int x, int y) {
     int best_value = 9999;
-    *BaseFindDist = 9999;
+    BaseFindDist = 9999;
     int base_id_best = -1;
     const int region = region_at(x, y);
-    for (int base_id = 0; base_id < *BaseCurrentCount; base_id++) {
+    for (int base_id = 0; base_id < BaseCurrentCount; base_id++) {
         Base &base = Bases[base_id];
         if (Vehs[veh_id].proto_id == BSC_SEALURK) {
             if (region < MaxRegionLandNum && region != (int)region_at(base.x, base.y)
@@ -4605,6 +4605,6 @@ int __cdecl alien_base(int veh_id, int x, int y) {
     if (base_id_best < 0) {
         return base_id_best;
     }
-    *BaseFindDist = best_value;
+    BaseFindDist = best_value;
     return base_id_best;
 }

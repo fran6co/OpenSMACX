@@ -22,9 +22,9 @@
 #include "game.h"
 #include "veh.h"
 
-BOOL *ProbeHasAlgoEnhancement = (BOOL *)0x00945B30;
-uint32_t *ProbeTargetFactionID = (uint32_t *)0x00945B34;
-BOOL *ProbeTargetHasHSA = (BOOL *)0x00945B38;
+BOOL ProbeHasAlgoEnhancement;  // 0x00945B30
+uint32_t ProbeTargetFactionID;  // 0x00945B34
+BOOL ProbeTargetHasHSA;  // 0x00945B38
 
 /*
 Purpose: Calculate the amount of energy that can be stolen from a base based on its population.
@@ -153,22 +153,22 @@ int __cdecl success_rates(int id, int morale, int diff_modifier, int base_id) {
             morale = 1;
         }
         int prb_defense = (base_id != -1 && has_fac_built(FAC_COVERT_OPS_CENTER, base_id)) ? 2 : 0;
-        prb_defense = range(PlayersData[*ProbeTargetFactionID].soc_effect_active.probe 
+        prb_defense = range(PlayersData[ProbeTargetFactionID].soc_effect_active.probe 
             + prb_defense, -2, 0);
         uint32_t failure_rate = (diff_modifier * 100) / ((morale / 2) - prb_defense + 1);
-        if (*ProbeHasAlgoEnhancement && !*ProbeTargetHasHSA) {
+        if (ProbeHasAlgoEnhancement && !ProbeTargetHasHSA) {
             failure_rate /= 2; // Algo Ench: failure cut in half when acting against normal targets
         }
         success_rate = 100 - failure_rate;
-        if (*ProbeTargetHasHSA) {
+        if (ProbeTargetHasHSA) {
             success_rate /= 2; // Chance of success is half what the chance would have been w/o HSA
         }
         uint32_t loss_rate = ((diff_modifier + 1) * 100) / (morale - prb_defense);
-        if (*ProbeHasAlgoEnhancement && !*ProbeTargetHasHSA) {
+        if (ProbeHasAlgoEnhancement && !ProbeTargetHasHSA) {
             loss_rate /= 2;
         }
         int survival_rate = 100 - loss_rate;
-        if (*ProbeTargetHasHSA) {
+        if (ProbeTargetHasHSA) {
             survival_rate /= 2; // bug fix: original had an erroneous 2nd hit to successRate
         }
         // this check was removed in my unofficial patch, leaving it as is

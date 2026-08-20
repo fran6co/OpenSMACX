@@ -1715,7 +1715,7 @@ int __fastcall buffer_text_height_redirect(Buffer *self, void *) {
 /*
 Purpose: Clip the buffer to a rectangle, updating the GDI clip region and the
          DirectDraw clipper to match.
-// ORIGINAL: 0x005D8000 ?set_clip@Buffer@@QAEHPAURECT@@@Z 0x005D8000-0x005D81F3
+// ORIGINAL: 0x005D8000 ?set_clip@Buffer@@QAEHPAURECT@@@Z 0x005D8000-0x005D81F3 BYTE_EXACT
 // symbol    ?set_clip@Buffer@@QAEHPAUtagRECT@@@Z
 // size      499 bytes
 // prototype int (__thiscall ?set_clip@Buffer@@QAEHPAURECT@@@Z)(Buffer* this, RECT* rect)
@@ -1769,19 +1769,25 @@ int Buffer::set_clip(RECT *rect) {
             DeleteObject(clip_region_);
             clip_region_ = nullptr;
         }
-        HRGN region = nullptr;
-        // A clip equal to the full extent needs no region at all; passing null
-        // to SelectClipRgn restores the unclipped state.
-        if (!EqualRect(&rect1_, &rect2_)) {
-            region = CreateRectRgnIndirect(&rect1_);
+        // TWO CALLS, NOT ONE WITH A VARIABLE. A clip equal to the full
+        // extent needs no region at all - null restores the unclipped state -
+        // and the image reaches SelectClipRgn from both arms by jumping into
+        // the other's argument setup: `push ebp; push eax; jmp 0x5d8120`.
+        // That is a tail merge of two calls, which VC6 will do for itself;
+        // written as one call on a variable it emits a test and a single
+        // push instead, and the whole tail moves.
+        if (EqualRect(&rect1_, &rect2_)) {
+            SelectClipRgn(hdc2_, nullptr);
+        } else {
+            HRGN const region = CreateRectRgnIndirect(&rect1_);
             clip_region_ = region;
             if (region == nullptr) {
                 // The legacy body returns here without releasing the context
                 // it may have just acquired; preserved deliberately.
                 return 1;
             }
+            SelectClipRgn(hdc2_, region);
         }
-        SelectClipRgn(hdc2_, region);
     }
     if (acquired) {
         release_hdc(1);
