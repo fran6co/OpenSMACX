@@ -27,6 +27,7 @@ from typing import Annotated
 import typer
 
 from decomp import DecompilationState, State, mangled, read, write_file
+from decomp.calls import CallSite, call_sites, imported_names
 from decomp.record import stamped
 from decomp.asm import (AsmComparison, CompileFailed, build_command,
                         compare_record, compare_source, compare_subject,
@@ -633,6 +634,157 @@ def _print_verdict(record: DecompilationState, result: AsmComparison,
     for original, compiled in zip(*result.context):
         typer.echo(f"    O: {original}")
         typer.echo(f"    C: {compiled}")
+
+
+# WHAT THE CALL GRAPH IS FOR, and so what it hides by default. The image
+# links the CRT and zlib statically, so a function's raw edge list is full of
+# `_memset`, `__ftol` and `inflate` - 331 catalogued pieces whose recovery is
+# not this project's job, since they can be had from the compiler and from
+# upstream. The catalogue's `kind` fact separates them from Alpha Centauri's
+# own 5,575, and imports leave the program entirely.
+OURS = ("game", "thunk")
+
+
+@app.command()
+def calls(
+    target: Annotated[str, typer.Argument(
+        help="An address in hex, or a name.")],
+    in_file: Annotated[str, typer.Option(
+        "--in", help="Disambiguate by file when one address is annotated "
+                     "twice.")] = "",
+    src: Annotated[Path, typer.Option(
+        envvar="OPENSMACX_SRC")] = REPO_ROOT / "src",
+    exe: Annotated[Path, typer.Option(
+        envvar="OPENSMACX_IMAGE",
+    )] = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe",
+    every: Annotated[bool, typer.Option(
+        "--all", help="Keep the CRT, zlib and the DLL imports too.")] = False,
+    as_json: Annotated[bool, typer.Option("--json")] = False,
+) -> None:
+    """What this function calls, IN THE ORDER THE IMAGE CALLS IT.
+
+    Read from the shipped bytes, not from the annotation's `calls` fact -
+    that fact is a sorted SET produced by a pass that no longer runs, so it
+    cannot say what happens first, cannot say a target is reached twice, and
+    nothing re-derives it when a body changes.
+
+    ALPHA CENTAURI'S OWN CODE ONLY, by default. The image links the CRT and
+    zlib statically and every DLL entry point arrives through the import
+    table; listing those buries the edges a recovery cares about. `--all`
+    keeps them, labelled.
+
+    An edge nothing in the catalogue names is still shown, marked `?`. It is
+    either uncatalogued game code or library code nobody annotated, and
+    dropping it would quietly shorten the answer.
+    """
+    records = read(src)
+    claimants = _in_file(_matching(records, target), in_file)
+    if len(claimants) != 1:
+        typer.secho(f"{len(claimants)} pieces match {target!r}; calls names "
+                    f"one" + ("" if in_file else " - --in picks one"),
+                    fg=typer.colors.RED)
+        for piece in sorted(claimants, key=lambda r: str(r.path)):
+            typer.echo(f"  {piece.location}")
+        raise typer.Exit(2)
+    record = claimants[0]
+
+    refusal = span_refusal(record, exe, shared_spans(records))
+    if refusal is not None:
+        typer.secho(f"{record.address_hex}: {refusal} - no bytes to read",
+                    fg=typer.colors.YELLOW)
+        raise typer.Exit(1)
+    listing = original_asm(record, exe)
+    imports = imported_names(exe)
+    by_address = {r.address: r for r in records}
+    neighbours = sorted(records, key=lambda r: r.address)
+
+    rows = [_edge(site, by_address, imports, neighbours)
+            for site in call_sites(listing)]
+    kept = rows if every else [r for r in rows if r["ours"]]
+
+    if as_json:
+        typer.echo(json.dumps({
+            "address": record.address_hex,
+            "name": record.name,
+            "edges": [{k: v for k, v in row.items() if k != "ours"}
+                      for row in kept],
+        }, indent=2))
+        return
+
+    typer.secho(f"\n{record.address_hex}  {record.name}", bold=True)
+    hidden = len(rows) - len(kept)
+    typer.echo(f"  {len(kept)} call(s)" + (f", {hidden} hidden (--all shows "
+               f"the CRT, zlib and the imports)" if hidden else "") + "\n")
+    for row in kept:
+        where = row["target"] or row["via"] or "?"
+        typer.echo(f"  {row['at']}  {row['form']:9}{where:12} "
+                   f"{row['kind']:8} {row['name']}")
+
+
+def _edge(site: CallSite, by_address: dict, imports: dict,
+          neighbours: list) -> dict:
+    """One call site, resolved as far as the image allows."""
+    row = {"at": f"0x{site.at:08X}", "form": site.form, "target": None,
+           "via": None, "kind": "", "name": "", "ours": False}
+    if site.slot is not None:
+        row["via"] = f"[0x{site.slot:08X}]"
+        if site.slot in imports:
+            row["kind"] = "import"
+            row["name"] = imports[site.slot]
+            return row
+        # A SLOT THAT IS NOT AN IMPORT is this image's own indirection - a
+        # vtable, a bound function pointer, a dispatch table. Where it points
+        # is a runtime fact, so the slot is the whole answer.
+        row["kind"] = "indirect"
+        row["name"] = "(this image's own slot)"
+        row["ours"] = True
+        return row
+    if site.target is None:
+        row["kind"] = "dynamic"
+        row["name"] = "(through a register)"
+        row["ours"] = True
+        return row
+    row["target"] = f"0x{site.target:08X}"
+    callee = by_address.get(site.target)
+    if callee is not None:
+        row["kind"] = callee.kind or "?"
+        row["name"] = callee.name
+        row["ours"] = callee.kind in OURS or not callee.kind
+        return row
+    return _unnamed(site.target, row, neighbours)
+
+
+def _unnamed(target: int, row: dict, neighbours: list) -> dict:
+    """An edge the catalogue does not name, described by what surrounds it.
+
+    NOT CLASSIFIED, LOCATED. Naming a kind for an address nobody annotated
+    would be an invention, and this tree has been bitten by facts that were
+    really guesses. What CAN be said is where the address falls: inside a
+    catalogued span - a call into the middle of a known function - or after
+    one, in which case the neighbour's own `kind` is evidence about the
+    neighbourhood and is reported AS evidence.
+
+    0x00644EF2 is the case that shaped this. It sits between `__initterm`
+    and `_abs`, both `library`, and it is the CRT's `free` under no name -
+    so hiding it by default is right and asserting `kind library` is not.
+    """
+    below = None
+    for record in neighbours:
+        if record.address > target:
+            break
+        below = record
+    if below is None:
+        row["kind"] = "?"
+        row["name"] = "(before anything the catalogue names)"
+        row["ours"] = True
+        return row
+    inside = any(low <= target < high for low, high in below.image_spans)
+    row["kind"] = "?"
+    row["ours"] = below.kind in OURS or not below.kind
+    row["name"] = (
+        f"(inside {below.name}, +0x{target - below.address:X})" if inside else
+        f"(unnamed; after {below.name}, kind {below.kind or '?'})")
+    return row
 
 
 @app.command()

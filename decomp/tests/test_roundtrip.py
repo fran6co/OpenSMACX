@@ -632,7 +632,10 @@ def roundtrip_tree(root: Path) -> tuple[int, int]:
 # nothing but Python. A promise nobody checks decays into a comment; this is
 # the check.
 _STDLIB_ONLY = ("model", "grammar", "reader", "writer")
-_MAY_IMPORT = {"asm": frozenset({"capstone"})}
+# `calls` reads the operands capstone decoded, so it needs the same
+# dependency for the type constants and nothing else.
+_MAY_IMPORT = {"asm": frozenset({"capstone"}),
+               "calls": frozenset({"capstone"})}
 
 
 def layering(root: Path | None = None) -> int:
