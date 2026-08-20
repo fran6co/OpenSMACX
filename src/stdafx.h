@@ -88,32 +88,3 @@
 #endif
 #endif
 
-// OPENSMACX_VC6_FIX_FOR_SCOPE
-//
-// VC6 uses the pre-standard rule where `for (int i = ...)` leaves `i` alive in
-// the enclosing scope, so the second loop in a function that counts with `i`
-// twice is `error C2374: 'i' : redefinition; multiple initialization` - 91 of
-// those across twelve files, the largest single class of error in this build
-// and not one of them a real defect. There is no `/Zc:forScope` on a compiler
-// this old; a dead `else` gives the loop the scope the standard asks for.
-//
-// The `{}` is what makes it safe. Without it `if (c) for (...) x; else y;`
-// would bind the `else` to the injected `if`; with it the injected pair is
-// already matched, so a trailing `else` still binds where it was written.
-//
-// IT IS DEFINED HERE, LAST, AND NOT IN vc6_compat.h. Placed there it lands
-// ahead of <sstream>, <string>, <vector> and <windows.h> and rewrites every
-// loop inside the STL too - which VC6 survives syntactically but not
-// otherwise: instantiating the wrapped loops took the compiler from a clean
-// precompiled header to `fatal error C1060: compiler is out of heap space` on
-// 95 of 138 translation units. Measured, both ways round. Everything the
-// macro needs to reach is compiled after this line.
-//
-// IT CANNOT MOVE THE BYTE MATCH. Verification never compiles this header:
-// `emit_translation_unit.py` builds a self-contained unit and `byte_match.py`
-// gives it its own `/O2 /Gy /GR- /Oy- /GX`. The macro is confined to the DLL,
-// where the dead branch folds away under optimisation and is unreachable
-// without it.
-#if defined(_MSC_VER) && _MSC_VER <= 1200
-#define for if (0) {} else for
-#endif

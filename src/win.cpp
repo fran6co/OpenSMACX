@@ -110,7 +110,7 @@ void Win::construct() {
     object[0x16C / 4] = 0;
     object[0x170 / 4] = 0;
     object[0x098 / 4] = 0;
-    for (size_t offset = 0x400; offset <= 0x438; offset += 4) {
+    for (offset = 0x400; offset <= 0x438; offset += 4) {
         object[offset / 4] = 0;
     }
     object[0x174 / 4] = 1;

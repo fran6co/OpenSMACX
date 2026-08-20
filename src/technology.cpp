@@ -81,7 +81,7 @@ BOOL __cdecl valid_tech_leap(int tech_id, int faction_id) {
             return false; // leap not possible for reactor tech
         }
     }
-    for (uint32_t i = 0; i < MaxWeaponNum; i++) {
+    for (i = 0; i < MaxWeaponNum; i++) {
         if (Weapon[i].preq_tech == (int)tech_id) { // may end early if 2 weapons have the same preq
             return (PlayersData[faction_id].ranking <= 2 // lowest two ranking factions
                 // this line is an odd comparison (offensive rating <= best weapon id + 2)

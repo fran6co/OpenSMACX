@@ -2104,7 +2104,7 @@ void __cdecl world_alt_set(int x, int y, int altitude, BOOL is_set_both) {
         }
     }
     int max_alt = 8 - altitude;
-    for (int i = 1, alt = i + altitude; i < max_alt; i++, alt++) {
+    for (i = 1, alt = i + altitude; i < max_alt; i++, alt++) {
         has_set_alt = false;
         for (int j = RadiusRange[i]; j < RadiusRange[i + 1]; j++) {
             int x_radius = xrange(x + RadiusOffsetX[j]);
@@ -2297,7 +2297,7 @@ void __cdecl build_continent(int size) {
     int radius = WorldBuilder->continent_mod * coverage * coverage + WorldBuilder->continent_base;
     int x; 
     int y;
-    int i = 0;
+    int count = 0;
     do {
         x = rnd(*MapLongitudeBounds - (*MapIsFlat * 8), NULL) + *MapIsFlat * 4;
         y = rnd(*MapLatitudeBounds - 8, NULL) + 4;
@@ -2307,7 +2307,7 @@ void __cdecl build_continent(int size) {
         if (y & 1) {
             x++; // validate whether this should be y and/or reasoning for x
         }
-    } while (i++ < 100 && alt_at(x, y) >= ALT_BIT_SHORE_LINE);
+    } while (count++ < 100 && alt_at(x, y) >= ALT_BIT_SHORE_LINE);
     if (alt_at(x, y) < ALT_BIT_SHORE_LINE) {
         uint32_t ratio = (size * 3200) / *MapArea;
         if (ratio > WorldBuilder->cont_size_ratio5 || *BrushVal1 >= *WorldBuildVal1) {
@@ -2408,7 +2408,7 @@ void __cdecl world_riverbeds() {
     uint32_t riverbed_count = 0;
     uint32_t max_riverbeds = (*MapArea * ((4 - *MapOceanCoverage) * (WorldBuilder->rivers_base 
         + *MapCloudCover * WorldBuilder->rivers_rain_mod) / 3)) / 3200;
-    for (uint32_t i = 0; i < 4000 && riverbed_count < max_riverbeds; i++) {
+    for (i = 0; i < 4000 && riverbed_count < max_riverbeds; i++) {
         int x = rnd(*MapLongitudeBounds, NULL);
         int y = rnd(*MapLatitudeBounds, NULL);
         if (x & 1) {
@@ -2616,7 +2616,7 @@ int __cdecl world_site(int x, int y, BOOL is_ocean_site) {
     */
     Map *radius_tile = reinterpret_cast<Map *>(
         static_cast<uintptr_t>(*MapIsFlat & 1));
-    for (int i = 0; i < 21; i++) {
+    for (i = 0; i < 21; i++) {
         int x_radius = site_xrange(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (y_radius < 0 || y_radius >= *MapLatitudeBounds || x_radius < 0
@@ -2815,7 +2815,7 @@ void __cdecl world_analysis() {
         }
         do_all_non_input();
     }
-    for (uint32_t i = 0; i < *MapArea; i++) {
+    for (i = 0; i < *MapArea; i++) {
         (*MapTiles)[i].val2 &= 0xF; // clear map sites
     }
 }
@@ -3390,7 +3390,7 @@ void __cdecl world_borehole(int x, int y) {
     }
     int x_offset_val1 = xrange(x + RadiusOffsetX[val1]); // removed from loop
     int y_offset_val1 = y + RadiusOffsetY[val1]; // removed from loop
-    for (int i = 0; i < 8; i++) {
+    for (i = 0; i < 8; i++) {
         int x_radius = xrange(x_offset_val1 + RadiusOffsetX[i + 1]);
         int y_radius = y_offset_val1 + RadiusOffsetY[i + 1];
         if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
@@ -3399,7 +3399,7 @@ void __cdecl world_borehole(int x, int y) {
     }
     int x_offset_val2 = xrange(x + RadiusOffsetX[val2]); // removed from loop
     int y_offset_val2 = y + RadiusOffsetY[val2]; // removed from loop
-    for (int i = 0; i < 8; i++) {
+    for (i = 0; i < 8; i++) {
         int x_radius = xrange(x_offset_val2 + RadiusOffsetX[i + 1]);
         int y_radius = y_offset_val2 + RadiusOffsetY[i + 1];
         if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
@@ -3408,7 +3408,7 @@ void __cdecl world_borehole(int x, int y) {
     }
     int x_offset_val3 = xrange(x + RadiusOffsetX[val3]); // removed from loop
     int y_offset_val3 = y + RadiusOffsetY[val3]; // removed from loop
-    for (int i = 0; i < 8; i++) {
+    for (i = 0; i < 8; i++) {
         int x_radius = xrange(x_offset_val3 + RadiusOffsetX[i + 1]);
         int y_radius = y_offset_val3 + RadiusOffsetY[i + 1];
         if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
@@ -3502,7 +3502,7 @@ void __cdecl world_unity(int x, int y) {
         }
         x += 2;
         y += 2;
-        for (int i = 0; i < RadiusRange[2]; i++) {
+        for (i = 0; i < RadiusRange[2]; i++) {
             int x_radius = xrange(x + RadiusOffsetX[i]);
             int y_radius = y + RadiusOffsetY[i];
             if (on_map(x_radius, y_radius)) {
@@ -3511,7 +3511,7 @@ void __cdecl world_unity(int x, int y) {
         }
         x--;
         y--;
-        for (int i = 0; i < RadiusRange[2]; i++) {
+        for (i = 0; i < RadiusRange[2]; i++) {
             int x_radius = xrange(x + RadiusOffsetX[i]);
             int y_radius = y + RadiusOffsetY[i];
             if (on_map(x_radius, y_radius)) {

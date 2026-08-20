@@ -718,11 +718,11 @@ void Scroll::compute_thumb_rect(RECT *rect) {
     left = read_bits(rect, 0);
     const uint32_t extent = right - left;
     const uint32_t drag_coordinate = read_bits(this, 0xA3C);
-    uint32_t offset;
+    uint32_t thumb_offset;
 
     if (drag_coordinate == 0xFFFFFFFFU) {
         const bool no_end_buttons = (read_bits(this, 0xA14) & 2U) != 0;
-        offset = no_end_buttons ? 0U : extent + 1U;
+        thumb_offset = no_end_buttons ? 0U : extent + 1U;
         uint32_t adjustment = 0xFFFFFFFFU - (no_end_buttons
             ? extent : extent * 3U);
         if (read_bits(this, 0xA1C) != 0xFFFFFFFFU) {
@@ -737,14 +737,14 @@ void Scroll::compute_thumb_rect(RECT *rect) {
         if (maximum != minimum) {
             const uint32_t numerator = (read_bits(this, 0xA2C) - minimum)
                 * (axis_length + adjustment);
-            offset += signed_divide(numerator, maximum - minimum);
+            thumb_offset += signed_divide(numerator, maximum - minimum);
         }
         if (horizontal) {
-            write_bits(rect, 0, read_bits(rect, 0) + offset);
-            write_bits(rect, 8, read_bits(rect, 8) + offset);
+            write_bits(rect, 0, read_bits(rect, 0) + thumb_offset);
+            write_bits(rect, 8, read_bits(rect, 8) + thumb_offset);
         } else {
-            write_bits(rect, 4, read_bits(rect, 4) + offset);
-            write_bits(rect, 12, read_bits(rect, 12) + offset);
+            write_bits(rect, 4, read_bits(rect, 4) + thumb_offset);
+            write_bits(rect, 12, read_bits(rect, 12) + thumb_offset);
         }
     } else {
         const bool no_end_buttons = (read_bits(this, 0xA14) & 2U) != 0;
@@ -760,19 +760,19 @@ void Scroll::compute_thumb_rect(RECT *rect) {
             ? far_edge : far_edge * 2U);
         const uint32_t limited = signed_min(candidate, upper);
         if (no_end_buttons) {
-            offset = long_from_bits(limited) < 0 ? 0U : limited;
+            thumb_offset = long_from_bits(limited) < 0 ? 0U : limited;
         } else if (long_from_bits(far_edge) > long_from_bits(limited)) {
-            offset = far_edge;
+            thumb_offset = far_edge;
         } else {
-            offset = limited;
+            thumb_offset = limited;
         }
-        write_bits(this, 0xA3C, offset);
+        write_bits(this, 0xA3C, thumb_offset);
         if (horizontal) {
-            write_bits(rect, 0, read_bits(rect, 0) + offset);
-            write_bits(rect, 8, read_bits(rect, 8) + offset);
+            write_bits(rect, 0, read_bits(rect, 0) + thumb_offset);
+            write_bits(rect, 8, read_bits(rect, 8) + thumb_offset);
         } else {
-            write_bits(rect, 4, read_bits(rect, 4) + offset);
-            write_bits(rect, 12, read_bits(rect, 12) + offset);
+            write_bits(rect, 4, read_bits(rect, 4) + thumb_offset);
+            write_bits(rect, 12, read_bits(rect, 12) + thumb_offset);
         }
         write_bits(this, 0xA3C, 0xFFFFFFFFU);
     }

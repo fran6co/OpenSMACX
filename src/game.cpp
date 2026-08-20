@@ -240,7 +240,7 @@ void __cdecl reset_territory() {
                 }
                 continue;
             }
-            for (int faction_id = 1; faction_id < MaxPlayerNum; faction_id++) {
+            for (faction_id = 1; faction_id < MaxPlayerNum; faction_id++) {
                 if (!PlayersData[faction_id].region_total_bases[region]) {
                     continue;
                 }
@@ -635,7 +635,7 @@ void __cdecl repair_phase(int faction_id) {
             }
         }
     }
-    for (int veh_id = 0; veh_id < *VehCurrentCount; veh_id++) {
+    for (veh_id = 0; veh_id < *VehCurrentCount; veh_id++) {
         int veh_faction_id = Vehs[veh_id].faction_id;
         if (veh_faction_id != faction_id) {
             continue;

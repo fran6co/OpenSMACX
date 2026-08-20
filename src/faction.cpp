@@ -272,17 +272,17 @@ uint32_t __cdecl aah_ooga(int faction_id, int pact_faction_id) {
         votes_total += council_votes(i);
     }
     uint32_t faction_id_ret = 0;
-    for (int i = 1; i < MaxPlayerNum; i++) {
-        if (i != pact_faction_id
-            && (pact_faction_id <= 0 || !has_treaty(i, pact_faction_id, DTREATY_PACT)
+    for (int player = 1; player < MaxPlayerNum; player++) {
+        if (player != pact_faction_id
+            && (pact_faction_id <= 0 || !has_treaty(player, pact_faction_id, DTREATY_PACT)
                 || !(*GameRules & RULES_VICTORY_COOPERATIVE))) {
             int proposal_preq = Proposal[PROP_UNITE_SUPREME_LEADER].preq_tech;
             if ((has_tech(proposal_preq, faction_id)
                 || (proposal_preq >= 0 
                     && (has_tech(Technology[proposal_preq].preq_tech_1, faction_id)
                     || has_tech(Technology[proposal_preq].preq_tech_2, faction_id))))
-                && council_votes(i) * 2 >= votes_total && (!faction_id_ret || i == faction_id)) {
-                faction_id_ret = i;
+                && council_votes(player) * 2 >= votes_total && (!faction_id_ret || player == faction_id)) {
+                faction_id_ret = player;
             }
         }
     }
@@ -351,10 +351,10 @@ BOOL __cdecl at_climax(int faction_id) {
     }
     int trans_most_min_them = 0;
     int trans_most_min_us = 0;
-    for (int i = 0; i < *BaseCurrentCount; i++) {
-        if (Bases[i].queue_production_id[0] == -FAC_ASCENT_TO_TRANSCENDENCE) {
-            int min_accum = Bases[i].minerals_accumulated;
-            if (Bases[i].faction_id_current == faction_id) {
+    for (int player = 0; player < *BaseCurrentCount; player++) {
+        if (Bases[player].queue_production_id[0] == -FAC_ASCENT_TO_TRANSCENDENCE) {
+            int min_accum = Bases[player].minerals_accumulated;
+            if (Bases[player].faction_id_current == faction_id) {
                 if (trans_most_min_us <= min_accum) {
                     trans_most_min_us = min_accum;
                 }
@@ -363,7 +363,7 @@ BOOL __cdecl at_climax(int faction_id) {
             }
         }
     }
-    for (uint32_t i = 1; i < MaxPlayerNum; i++) {
+    for (i = 1; i < MaxPlayerNum; i++) {
         if (i != faction_id) {
             if (ascending(i) && !ascending(faction_id)) { // both return same so irrelevant check
                 return true;
@@ -804,20 +804,20 @@ BOOL __cdecl wants_to_attack(int faction_id, int faction_id_tgt, int faction_id_
     }
     int region_target_hq = -1;
     int region_hq = -1;
-    for (int i = 0; i < *BaseCurrentCount; i++) {
-        if (has_fac_built(FAC_HEADQUARTERS, i)) {
-            uint32_t base_faction = Bases[i].faction_id_current;
+    for (int player = 0; player < *BaseCurrentCount; player++) {
+        if (has_fac_built(FAC_HEADQUARTERS, player)) {
+            uint32_t base_faction = Bases[player].faction_id_current;
             if (base_faction == faction_id) {
-                region_hq = region_at(Bases[i].x, Bases[i].y);
+                region_hq = region_at(Bases[player].x, Bases[player].y);
             } else if (base_faction == faction_id_tgt) {
-                region_target_hq = region_at(Bases[i].x, Bases[i].y);
+                region_target_hq = region_at(Bases[player].x, Bases[player].y);
             }
         }
     }
     uint32_t factor_force_rating = 0;
     uint32_t factor_count = 0;
     uint32_t factor_unk = 1;
-    for (int region = 1; region < MaxRegionLandNum; region++) {
+    for (region = 1; region < MaxRegionLandNum; region++) {
         if (!bad_reg(region)) {
             uint32_t force_rating = PlayersData[faction_id].region_force_rating[region];
             if (force_rating) {
@@ -1135,7 +1135,7 @@ void __cdecl add_goal(int faction_id, int type, int priority, int x, int y, int 
     }
     int priority_search = 0;
     int goal_id = -1;
-    for (int i = 0; i < MaxGoalsNum; i++) {
+    for (i = 0; i < MaxGoalsNum; i++) {
         Goal &goals = PlayersData[faction_id].goals[i];
         int type_cmp = goals.type;
         int priroty_cmp = goals.priority;
@@ -1187,7 +1187,7 @@ void __cdecl add_site(int faction_id, int type, int priority, int x, int y) {
     }
     int priority_search = 0;
     int site_id = -1;
-    for (int i = 0; i < MaxSitesNum; i++) {
+    for (i = 0; i < MaxSitesNum; i++) {
         Goal &sites = PlayersData[faction_id].sites[i];
         int type_cmp = sites.type;
         int priroty_cmp = sites.priority;
@@ -1278,7 +1278,7 @@ void __cdecl wipe_goals(int faction_id) {
             goals.priority = -priority;
         }
     }
-    for (int i = 0; i < MaxSitesNum; i++) {
+    for (i = 0; i < MaxSitesNum; i++) {
         Goal &sites = PlayersData[faction_id].sites[i];
         int16_t type = sites.type;
         if (type >= 0) {
@@ -1308,7 +1308,7 @@ void __cdecl init_goals(int faction_id) {
         goals.y = 0;
         goals.base_id = 0;
     }
-    for (int i = 0; i < MaxSitesNum; i++) {
+    for (i = 0; i < MaxSitesNum; i++) {
         Goal &sites = PlayersData[faction_id].sites[i];
         sites.type = -1;
         sites.priority = 0;
@@ -1580,10 +1580,10 @@ void __cdecl rankings(int apply_ranks) {
         FactionRankingsUnk[best_faction] = (uint32_t)-1;
         PlayersData[best_faction].ranking = (uint32_t)rank;
     }
-    for (int rank = 0; rank < MaxPlayerNum; rank++) {
+    for (rank = 0; rank < MaxPlayerNum; rank++) {
         FactionRankings[rank] = 0;
     }
-    for (int faction_id = 1; faction_id < MaxPlayerNum; faction_id++) {
+    for (faction_id = 1; faction_id < MaxPlayerNum; faction_id++) {
         if (is_alive(faction_id)) {
             FactionRankings[PlayersData[faction_id].ranking] = (uint32_t)faction_id;
         }
@@ -1591,13 +1591,13 @@ void __cdecl rankings(int apply_ranks) {
     uint32_t humans = FactionsStatus[0];
     *RankingFactionIDUnk1 = 0;
     *RankingFactionIDUnk2 = 0;
-    for (int rank = MaxPlayerNum - 1; rank >= 0; rank--) {
+    for (rank = MaxPlayerNum - 1; rank >= 0; rank--) {
         if (humans & (1 << FactionRankings[rank])) {
             *RankingFactionIDUnk1 = FactionRankings[rank];
             break;
         }
     }
-    for (int rank = 0; rank < MaxPlayerNum; rank++) {
+    for (rank = 0; rank < MaxPlayerNum; rank++) {
         if (humans & (1 << FactionRankings[rank])) {
             *RankingFactionIDUnk2 = FactionRankings[rank];
             break;
@@ -1620,12 +1620,12 @@ void __cdecl rankings(int apply_ranks) {
     }
     *GameState |= STATE_UNK_200;
     int vendetta_count = 0;
-    for (int faction_id = 1; faction_id < MaxPlayerNum; faction_id++) {
+    for (faction_id = 1; faction_id < MaxPlayerNum; faction_id++) {
         if (PlayersData[faction_id].diplo_treaties[target_id] & DTREATY_VENDETTA) {
             vendetta_count++;
         }
     }
-    for (int faction_id = 1; faction_id < MaxPlayerNum; faction_id++) {
+    for (faction_id = 1; faction_id < MaxPlayerNum; faction_id++) {
         if (is_human(faction_id)) {
             continue;
         }
@@ -1896,7 +1896,7 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
     }
     // future pop growth
     int pop_goal_growth = 0;
-    for (int i = 0; i < *BaseCurrentCount; i++) {
+    for (i = 0; i < *BaseCurrentCount; i++) {
         if (Bases[i].faction_id_current == faction_id) {
             pop_goal_growth += pop_goal(i) - Bases[i].population_size;
         }
@@ -1954,13 +1954,13 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
     int unk_val4 = -9999; // search val?
     int soc_cat_bits = -1;
     // unk_sum2 = 0 > used as iterator, optimization re-use, var unused
-    for (uint32_t i = 0; i < unk_val2; i++) {
+    for (uint32_t player = 0; player < unk_val2; player++) {
         SocialCategory soc_cat;
         SocialEffect soc_eff;
-        int k = i;
+        int k = player;
         for (int j = 0; j < MaxSocialCatNum; j++) {
             int model = k & 3;
-            *(&soc_cat.politics + i) = model;
+            *(&soc_cat.politics + player) = model;
             if (model) {
                 if (Players[faction_id].soc_anti_ideology_category == j
                     || Players[faction_id].soc_anti_ideology_model == model
@@ -2306,22 +2306,22 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
                     int probe_weight;
                     for (uint32_t f = 0; f < MaxPlayerNum; f++) {
                         if (f != faction_id) {
-                            probe_weight = PlayersData[i].mind_control_total / 4 + 1;
-                            if (has_treaty(faction_id, i, DTREATY_PACT)) {
+                            probe_weight = PlayersData[player].mind_control_total / 4 + 1;
+                            if (has_treaty(faction_id, player, DTREATY_PACT)) {
                                 probe_weight /= 2;
                             }
-                            if (!has_treaty(faction_id, i, DTREATY_WANT_REVENGE)) {
-                                if (has_treaty(faction_id, i, DTREATY_TREATY)) {
+                            if (!has_treaty(faction_id, player, DTREATY_WANT_REVENGE)) {
+                                if (has_treaty(faction_id, player, DTREATY_TREATY)) {
                                     probe_weight /= 2;
                                 }
-                                if (!has_treaty(faction_id, i, DTREATY_COMMLINK)) {
+                                if (!has_treaty(faction_id, player, DTREATY_COMMLINK)) {
                                     probe_weight /= 2;
                                 }
-                                if (!has_treaty(faction_id, i, DTREATY_VENDETTA)) {
+                                if (!has_treaty(faction_id, player, DTREATY_VENDETTA)) {
                                     probe_weight /= 2;
                                 }
                             }
-                            probe_weight = ((PlayersData[i].current_num_bases
+                            probe_weight = ((PlayersData[player].current_num_bases
                                 + PlayersData[faction_id].current_num_bases)
                                 * range(soc_eff.probe, -2, 3) * probe_weight) / 2;
                             if (tech_val || wealth_val) {
@@ -2410,7 +2410,7 @@ void __cdecl enemy_capabilities(int faction_id) {
     PlayersData[faction_id].best_psi_defense = has_worms 
         ? arm_strat(ARM_PSI_DEFENSE, faction_id) : 0;
     PlayersData[faction_id].best_armor_value = 1;
-    for (int i = 0; i < MaxArmorNum; i++) {
+    for (i = 0; i < MaxArmorNum; i++) {
         if (has_tech(Armor[i].preq_tech, faction_id)) {
             int arm_val = arm_strat(i, faction_id);
             if (Armor[i].defense_rating < 0 && arm_val > PlayersData[faction_id].best_psi_defense) {
@@ -2422,7 +2422,7 @@ void __cdecl enemy_capabilities(int faction_id) {
         }
     }
     PlayersData[faction_id].best_land_speed = 1;
-    for (int i = 0; i < MaxChassisNum; i++) {
+    for (i = 0; i < MaxChassisNum; i++) {
         if (has_tech(Chassis[i].preq_tech, faction_id) && Chassis[i].triad == TRIAD_LAND) {
             if (Chassis[i].speed > PlayersData[faction_id].best_land_speed) {
                 PlayersData[faction_id].best_land_speed = Chassis[i].speed;
@@ -2434,7 +2434,7 @@ void __cdecl enemy_capabilities(int faction_id) {
     PlayersData[faction_id].enemy_best_land_speed = 0;
     PlayersData[faction_id].enemy_best_psi_offense = 0;
     PlayersData[faction_id].enemy_best_psi_defense = 0;
-    for (int i = 0; i < 4 && !PlayersData[faction_id].enemy_best_weapon_value; i++) {
+    for (i = 0; i < 4 && !PlayersData[faction_id].enemy_best_weapon_value; i++) {
         // 1st pass: vendetta, no treaty, has commlink
         // 2nd pass: no treaty, has commlink
         // 3rd pass: has commlink
@@ -2499,7 +2499,7 @@ void __cdecl enemy_capabilities_t(uint32_t faction_id) {
     }
     //PlayersData[faction_id].bestPsiDefVal = has_worms ? arm_strat(ARM_PSI_DEFENSE, faction_id) : 0;
     PlayersData[faction_id].best_armor_value = 1;
-    for (int i = 0; i < MaxArmorNum; i++) {
+    for (i = 0; i < MaxArmorNum; i++) {
         if (has_tech(Armor[i].preq_tech, faction_id)) {
             int arm_val = arm_strat(i, faction_id);
             //if (Armor[i].defense_rating < 0 && arm_val > PlayersData[faction_id].bestPsiDefVal) {
@@ -2512,7 +2512,7 @@ void __cdecl enemy_capabilities_t(uint32_t faction_id) {
         }
     }
     PlayersData[faction_id].best_land_speed = 1;
-    for (int i = 0; i < MaxChassisNum; i++) {
+    for (i = 0; i < MaxChassisNum; i++) {
         if (has_tech(Chassis[i].preq_tech, faction_id) && Chassis[i].triad == TRIAD_LAND) {
             if (Chassis[i].speed > PlayersData[faction_id].best_land_speed) {
                 PlayersData[faction_id].best_land_speed = Chassis[i].speed;
@@ -2524,7 +2524,7 @@ void __cdecl enemy_capabilities_t(uint32_t faction_id) {
     PlayersData[faction_id].enemy_best_land_speed = 0;
     //PlayersData[faction_id].enemyBestPsiAtkVal = 0;
     //PlayersData[faction_id].enemyBestPsiDefVal = 0;
-    for (int i = 0; i < 4 && !PlayersData[faction_id].enemy_best_weapon_value; i++) {
+    for (i = 0; i < 4 && !PlayersData[faction_id].enemy_best_weapon_value; i++) {
         // 1st pass: vendetta, no treaty, has commlink
         // 2nd pass: no treaty, has commlink
         // 3rd pass: has commlink
@@ -2565,7 +2565,7 @@ void __cdecl enemy_capabilities_t(uint32_t faction_id) {
     BOOL has_worms = veh_avail(BSC_MIND_WORMS, faction_id, -1);
     PlayersData[faction_id].best_psi_offense = has_worms 
         ? weap_strat(WPN_PSI_ATTACK, faction_id) : 0;
-    for (int i = 0; i < MaxWeaponNum; i++) {
+    for (i = 0; i < MaxWeaponNum; i++) {
         if (has_tech(Weapon[i].preq_tech, faction_id) && Weapon[i].offense_rating < 99) {
             int weap_val = weap_strat(i, faction_id);
             if (Weapon[i].offense_rating < 0 && weap_val 
@@ -2576,7 +2576,7 @@ void __cdecl enemy_capabilities_t(uint32_t faction_id) {
     }
     PlayersData[faction_id].best_psi_defense = has_worms 
         ? arm_strat(ARM_PSI_DEFENSE, faction_id) : 0;
-    for (int i = 0; i < MaxArmorNum; i++) {
+    for (i = 0; i < MaxArmorNum; i++) {
         if (has_tech(Armor[i].preq_tech, faction_id)) {
             int arm_val = arm_strat(i, faction_id);
             if (Armor[i].defense_rating < 0 && arm_val > PlayersData[faction_id].best_psi_defense) {
@@ -2586,7 +2586,7 @@ void __cdecl enemy_capabilities_t(uint32_t faction_id) {
     }
     PlayersData[faction_id].enemy_best_psi_offense = 0;
     PlayersData[faction_id].enemy_best_psi_defense = 0;
-    for (int i = 0; i < 4 && !PlayersData[faction_id].enemy_best_psi_offense; i++) {
+    for (i = 0; i < 4 && !PlayersData[faction_id].enemy_best_psi_offense; i++) {
         // 1st pass: vendetta, no treaty, has commlink
         // 2nd pass: no treaty, has commlink
         // 3rd pass: has commlink

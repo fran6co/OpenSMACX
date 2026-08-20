@@ -349,7 +349,7 @@ int Lock::lock(int slot, int flags, int a3, int a4, int a5, int a6, int a7) {
 
     // A square failed: unlock both entries, clear the record, and drop the
     // global lock if this slot holds it.
-    for (int entry = 0; entry < 2; ++entry) {
+    for (entry = 0; entry < 2; ++entry) {
         (ORIGINAL(&record.entries[entry])->*LockSquareUnlock)(slot);
     }
     record.flag = 0;

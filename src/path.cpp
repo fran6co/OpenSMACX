@@ -395,15 +395,15 @@ void Path::continents() {
         region_set(x, 0, pole_region);
         Continents[pole_region].tile_count++;
     }
-    for (int x = y_south_pole & 1; x < *MapLongitudeBounds; x += 2) { // south pole
+    for (x = y_south_pole & 1; x < *MapLongitudeBounds; x += 2) { // south pole
         uint8_t pole_region = is_ocean(x, y_south_pole) ? 127 : 63;
         region_set(x, y_south_pole, pole_region);
         Continents[pole_region].tile_count++;
     }
     int most_tiles = 0;
     int total_tiles = 0;
-    for (int i = 1; i < 63; i++) {
-        int tiles = Continents[i].tile_count;
+    for (int i_405 = 1; i_405 < 63; i_405++) {
+        int tiles = Continents[i_405].tile_count;
         total_tiles += tiles;
         if (tiles > most_tiles) {
             most_tiles = tiles;
@@ -411,10 +411,10 @@ void Path::continents() {
     }
     *GameState = (most_tiles >= ((total_tiles * 4) / 5))
         ? *GameState | STATE_UNK_100 : *GameState & ~STATE_UNK_100;
-    for (int i = 0; i < MaxRegionLandNum; i++) {
-        ZeroMemory(Continents[i].sea_coasts, 8);
+    for (int i_414 = 0; i_414 < MaxRegionLandNum; i_414++) {
+        ZeroMemory(Continents[i_414].sea_coasts, 8);
     }
-    for (int y = 0; y < *MapLatitudeBounds; y++) {
+    for (y = 0; y < *MapLatitudeBounds; y++) {
         for (int x = y & 1; x < *MapLongitudeBounds; x += 2) {
             uint32_t region = region_at(x, y);
             if (region < MaxRegionLandNum) {

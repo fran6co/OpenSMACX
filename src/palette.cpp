@@ -252,7 +252,7 @@ int Palette::closest(int red, int green, int blue, int start, int count,
             }
         }
     }
-    for (int index = start; index < end; ++index) {
+    for (index = start; index < end; ++index) {
         if (reserved[index]) {
             continue;
         }
