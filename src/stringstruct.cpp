@@ -294,7 +294,10 @@ void __fastcall string_struct_derived_close_redirect(void *adjusted, void *) {
 }
 
 const uint32_t StringVirtualBaseVtable = 0x006693AC;
-uint32_t *StringVirtualBaseOwner = (uint32_t *)0x009B3374;
+// AN OBJECT, NOT A POINTER TO A FIXED ADDRESS: the pointer form costs a
+// load at every use where the image addresses the storage directly, and
+// the address is terranx.exe's data, unmapped in a standalone build.
+uint32_t StringVirtualBaseOwner;  // 0x009B3374
 
 /*
 Purpose: Destroy a most-derived StringList: run the source-owned two-stage
@@ -309,7 +312,7 @@ Purpose: Destroy a most-derived StringList: run the source-owned two-stage
 // flags     sp_ready;purged_ok
 // calls     0x004066C0
 Return Value: EAX residue - the saved owner value, republished into
-              *StringVirtualBaseOwner. The original is a void destructor;
+              StringVirtualBaseOwner. The original is a void destructor;
               modelled as uint32_t to preserve the residue, as
               GraphicWin::close and Scroll::destroy do.
 Status: Complete
@@ -340,7 +343,7 @@ uint32_t StringList::destroy() {
         reinterpret_cast<volatile uint32_t *>(virtual_base);
     const uint32_t owner = virtual_base_slots[1];    // mov eax, [esi + 4]
     virtual_base_slots[0] = StringVirtualBaseVtable; // mov [esi], 0x006693AC
-    *StringVirtualBaseOwner = owner;                 // mov [0x9B3374], eax
+    StringVirtualBaseOwner = owner;                 // mov [0x9B3374], eax
     return owner;                                    // EAX at the ret
 }
 

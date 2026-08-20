@@ -20,7 +20,10 @@
 #include "scroll.h"
 
 Win **ScrollCurrentWin = reinterpret_cast<Win **>(0x009B7AB8);
-int *ScrollDefaultThickness = (int *)0x009B8DD4;
+// AN OBJECT, NOT A POINTER TO A FIXED ADDRESS: the pointer form costs a
+// load at every use where the image addresses the storage directly, and
+// the address is terranx.exe's data, unmapped in a standalone build.
+int ScrollDefaultThickness;  // 0x009B8DD4
 int *ScrollNonClientInit = (int *)0x009B8E24;
 uint32_t *ScrollCloseStaticDefaults = (uint32_t *)0x00697020;
 uint32_t *ScrollCloseDynamicDefaults = (uint32_t *)0x009B8DE0;
@@ -257,7 +260,7 @@ int Scroll::init_vert(
         return 3;
     }
     return ScrollPrimaryInit(
-        this, x, y, *ScrollDefaultThickness, length, parent, setting, 0);
+        this, x, y, ScrollDefaultThickness, length, parent, setting, 0);
 }
 
 /*
@@ -279,7 +282,7 @@ int Scroll::init_horz(
         return 3;
     }
     return ScrollPrimaryInit(
-        this, x, y, length, *ScrollDefaultThickness, parent, setting, 0);
+        this, x, y, length, ScrollDefaultThickness, parent, setting, 0);
 }
 
 /*
@@ -302,7 +305,7 @@ int Scroll::init_vert_nc(
         return 3;
     }
     return ScrollPrimaryInit(
-        this, x, y, *ScrollDefaultThickness, length, parent, setting, 0);
+        this, x, y, ScrollDefaultThickness, length, parent, setting, 0);
 }
 
 /*
@@ -325,7 +328,7 @@ int Scroll::init_horz_nc(
         return 3;
     }
     return ScrollPrimaryInit(
-        this, x, y, length, *ScrollDefaultThickness, parent, setting, 0);
+        this, x, y, length, ScrollDefaultThickness, parent, setting, 0);
 }
 
 /*

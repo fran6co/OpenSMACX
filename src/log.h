@@ -60,7 +60,7 @@ static_assert(sizeof(Log) == 8, "Log layout must match the legacy ABI");
 
 // global
 extern Log *Logging;
-extern BOOL *IsLoggingDisabled;
+extern BOOL IsLoggingDisabled;
 
 void __cdecl log_logging();
 void __cdecl log_logging_exit();

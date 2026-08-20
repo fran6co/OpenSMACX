@@ -224,7 +224,7 @@ LPSTR Font::find_line_break_l(LPSTR input, int *break_len, size_t len) {
                 if (search_str != input) {
                     return search_str + 1;
                 }
-                return *BufferStrHeight ? search_str : NULL;
+                return BufferStrHeight ? search_str : NULL;
             }
             break;
         }
@@ -234,12 +234,12 @@ LPSTR Font::find_line_break_l(LPSTR input, int *break_len, size_t len) {
             if (search_str != input) {
                 return search_str + 1;
             }
-            return *BufferStrHeight ? search_str : space + 1;
+            return BufferStrHeight ? search_str : space + 1;
         }
         len += search_str - space;
         search_str = space;
     } while (len);
-    *BufferStrHeight += *break_len - search_brk;
+    BufferStrHeight += *break_len - search_brk;
     *break_len = search_brk;
     return NULL;
 }

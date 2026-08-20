@@ -951,6 +951,87 @@ def record(
             raise typer.Exit(1)
 
 
+@app.command()
+def sweep(
+    src: Annotated[Path, typer.Option(envvar="OPENSMACX_SRC")] = REPO_ROOT / "src",
+    exe: Annotated[Path, typer.Option(
+        envvar="OPENSMACX_IMAGE",
+    )] = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe",
+    compile_commands: Annotated[Path, typer.Option(
+        envvar="OPENSMACX_COMPILE_COMMANDS",
+    )] = REPO_ROOT / "build" / "compile_commands.json",
+    borrow: Annotated[str, typer.Option(
+        help="Compile a file the build does not name with THIS file's "
+             "command.")] = "src/buffer.cpp",
+    jobs: Annotated[int, typer.Option(
+        help=f"Concurrent compiles. Capped at {WINE_CEILING}: one shared "
+             f"wine prefix.")] = 0,
+    as_json: Annotated[bool, typer.Option("--json")] = False,
+) -> None:
+    """WHICH UNCLAIMED BODIES ALREADY REPRODUCE.
+
+    A body goes byte exact because of a change somewhere else - a global that
+    stopped being a pointer, a helper that moved in-class, a seam that was
+    deleted - and nothing tells its annotation. `check` cannot find those: it
+    only re-measures what already claims to be exact.
+
+    Prints the addresses to hand to `record`. It writes nothing itself,
+    because a sweep that stamped its own findings would be a `check` that
+    could never fail.
+    """
+    _fresh_compile_commands(compile_commands, False)
+    records = read(src)
+    built = build_inputs(compile_commands)
+    grouped: dict = {}
+    for record in records:
+        if record.byte_exact or record.path not in built:
+            continue
+        if not record.image_spans or not record.name:
+            continue
+        grouped.setdefault(record.path, []).append(record)
+    candidates = sum(len(v) for v in grouped.values())
+    if not candidates:
+        typer.echo("no unclaimed bodies in the build's own files")
+        raise typer.Exit(0)
+
+    jobs = max(1, min(jobs or (os.cpu_count() or 1), WINE_CEILING))
+    work = [(path, mine, exe, _command_for(compile_commands, path, borrow),
+             FLAG_SETS) for path, mine in grouped.items()]
+    if not as_json:
+        typer.echo(f"{candidates:,} unclaimed bodies in {len(grouped):,} "
+                   f"files, {jobs} at a time")
+
+    measured: dict = {}
+    if jobs == 1:
+        batches = (_check_one_file(job) for job in work)
+    else:
+        pool = concurrent.futures.ProcessPoolExecutor(max_workers=jobs)
+        with pool:
+            batches = [done.result() for done in
+                       concurrent.futures.as_completed(
+                           [pool.submit(_check_one_file, job)
+                            for job in work])]
+    for batch in batches:
+        for key, verdict, note in batch:
+            measured[key] = verdict
+
+    by_claim = {_claim_key(r): r for group in grouped.values() for r in group}
+    found = sorted((by_claim[key] for key, verdict in measured.items()
+                    if verdict == "BYTE_EXACT" and key in by_claim),
+                   key=lambda r: r.address)
+    if as_json:
+        typer.echo(json.dumps([{"address": r.address_hex, "name": r.name,
+                                "file": str(r.path)} for r in found], indent=2))
+        raise typer.Exit(0)
+    for record in found:
+        typer.secho(f"  {record.address_hex}  {record.name}  "
+                    f"{record.path.name}", fg=typer.colors.GREEN)
+    typer.echo(f"{len(found):,} of {candidates:,} unclaimed bodies already "
+               f"reproduce")
+    if found:
+        typer.echo("  osmx record " + " ".join(r.address_hex for r in found))
+
+
 # WHAT THE BUILD IS CONFIGURED WITH, read off the cache the first time and
 # stated here so a wiped cache can be rebuilt identically. `Debug` is not a
 # choice this makes - it is what the tree configures - and the optimisation

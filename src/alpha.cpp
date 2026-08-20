@@ -51,7 +51,10 @@ RulesBasic *Rules = (RulesBasic *)0x00949738;
 RulesWorldbuilder *WorldBuilder = (RulesWorldbuilder *)0x009502A8;
 AlphaIniPref *AlphaIniPrefs = (AlphaIniPref *)0x0094B464;
 DefaultPref *DefaultPrefs = (DefaultPref *)0x0094B350;
-uint32_t *Language = (uint32_t *)0x009BC054;
+// AN OBJECT, NOT A POINTER TO A FIXED ADDRESS: the pointer form costs a
+// load at every use where the image addresses the storage directly, and
+// the address is terranx.exe's data, unmapped in a standalone build.
+uint32_t Language;  // 0x009BC054
 
 /*
 Purpose: Convert the tech name string to a numeric tech id.
@@ -682,7 +685,7 @@ void __cdecl read_faction(Player *player, int toggle) {
         LPSTR soc_category = text_item();
         for (int j = 0; j < MaxSocialCatNum; j++) {
             LPSTR check_cat_type = StringTable->get((int)SocialCategories[j].type);
-            if (*Language ? !_strnicmp(soc_category, check_cat_type, 4) 
+            if (Language ? !_strnicmp(soc_category, check_cat_type, 4) 
                 : !_stricmp(soc_category, check_cat_type)) {
                 *(&player->soc_ideology_category + i) = j;
                 break;
@@ -693,7 +696,7 @@ void __cdecl read_faction(Player *player, int toggle) {
         if (soc_cat_num >= 0) {
             for (int j = 0; j < MaxSocialModelNum; j++) {
                 LPSTR check_model = StringTable->get((int)SocialCategories[soc_cat_num].name[j]);
-                if (*Language ?
+                if (Language ?
                     !_strnicmp(soc_model, check_model, 4) : !_stricmp(soc_model, check_model)) {
                     *(&player->soc_ideology_model + i) = j;
                     break;
@@ -1558,7 +1561,7 @@ void __cdecl prefs_load(BOOL use_default) {
 
 /*
 Purpose: Write the string value to the pref key of the ini.
-// ORIGINAL: 0x0059E510 ?prefs_put@@YAXPADPAD@Z 0x0059E510-0x0059E52F
+// ORIGINAL: 0x0059E510 ?prefs_put@@YAXPADPAD@Z 0x0059E510-0x0059E52F BYTE_EXACT
 // symbol    ?prefs_put@@YAXPBD0@Z
 // size      31 bytes
 // prototype void (__cdecl ?prefs_put@@YAXPADPAD@Z)(int8* lpKeyName, int8* lpString)
@@ -1727,7 +1730,7 @@ void __cdecl labels_shutdown() {
 
 /*
 Purpose: Set the game's language.
-// ORIGINAL: 0x00627100 ?set_language@@YAXH@Z 0x00627100-0x0062710A
+// ORIGINAL: 0x00627100 ?set_language@@YAXH@Z 0x00627100-0x0062710A BYTE_EXACT
 // size      10 bytes
 // prototype void (__cdecl ?set_language@@YAXH@Z)(int lang)
 // callers   2   call targets   0
@@ -1738,7 +1741,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl set_language(int language) {
-    *Language = language;
+    Language = language;
 }
 
 /*

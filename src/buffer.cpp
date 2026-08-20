@@ -485,7 +485,7 @@ typedef void (OriginalObject::*func_buffer_virtual)();
 
 /*
 Purpose: Copy a region of another buffer into the same position in this one.
-// ORIGINAL: 0x005D95B0 ?copy@Buffer@@QAEHPAVBuffer@@HHHH@Z 0x005D95B0-0x005D95D3
+// ORIGINAL: 0x005D95B0 ?copy@Buffer@@QAEHPAVBuffer@@HHHH@Z 0x005D95B0-0x005D95D3 BYTE_EXACT
 // symbol    ?copy@Buffer@@QAEHPAV1@HHHH@Z
 // size      35 bytes
 // prototype int (__thiscall ?copy@Buffer@@QAEHPAVBuffer@@HHHH@Z)(Buffer* this, Buffer*, int, int, int, int)

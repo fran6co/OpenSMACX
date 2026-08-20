@@ -585,7 +585,7 @@ int GraphicWin::init(int x, int y, int width, int height, LPSTR title,
         // loaded once, at 0x005D5038 and 0x005D503E, ahead of either test;
         // the original tests only AL, which is equivalent for bits 2 and 3.
         const uint32_t nonclient_flags = object[0x98 / 4];
-        const int thickness = *ScrollDefaultThickness;
+        const int thickness = ScrollDefaultThickness;
         if ((nonclient_flags & 8) != 0) {
             width += thickness;
         }
