@@ -252,9 +252,18 @@ IMAGE_SCN_MEM_WRITE = 0x80000000
 # -------------------------------------------------------------- the original
 
 
+@functools.lru_cache(maxsize=4)
+def _image_bytes(exe: Path) -> bytes:
+    """The image, read once. `_pe_bytes` is called per record and per flag
+    set, and re-reading two and a half megabytes each time is a cost the
+    sweep pays thousands of times over for nothing. `_sections` and
+    `_image_relocations` beside it are cached for the same reason."""
+    return exe.read_bytes()
+
+
 def _pe_bytes(exe: Path, address: int, size: int) -> bytes:
     """The image's bytes at `address`, mapped through the section table."""
-    data = exe.read_bytes()
+    data = _image_bytes(exe)
     (e_lfanew,) = struct.unpack_from("<I", data, 0x3C)
     if data[e_lfanew:e_lfanew + 4] != b"PE\x00\x00":
         raise ValueError(f"{exe.name}: not a PE image")
@@ -326,7 +335,7 @@ def _base_relocations(data: bytes) -> frozenset[int]:
 @functools.lru_cache(maxsize=4)
 def _sections(exe: Path) -> tuple:
     """(name, low, high) for each section, from the image's own table."""
-    data = exe.read_bytes()
+    data = _image_bytes(exe)
     (e_lfanew,) = struct.unpack_from("<I", data, 0x3C)
     _machine, count, _ts, _sp, _ns, opt_size, _ch = \
         struct.unpack_from("<HHIIIHH", data, e_lfanew + 4)
@@ -374,7 +383,7 @@ def rewrites_itself(exe: Path | str, address: int) -> bool:
 @functools.lru_cache(maxsize=4)
 def _image_relocations(exe: Path) -> frozenset[int]:
     """`_base_relocations` for a file, read once per image."""
-    return _base_relocations(exe.read_bytes())
+    return _base_relocations(_image_bytes(exe))
 
 
 def _image_mask(exe: Path, low: int, high: int) -> frozenset[int]:
@@ -436,6 +445,26 @@ def original_asm(record: DecompilationState, exe: Path | str,
 
 
 # --------------------------------------------------------------- the compile
+
+
+# THE OPTIMISATION FLAGS ARE BACK-END, so a translation unit that will not
+# PARSE will not parse under any of the others either, and a flag search that
+# retries one is buying nothing. Measured on this tree rather than assumed:
+# all 992 files with claims were compiled under all eight sets, and the 313
+# that fail failed with a BYTE-IDENTICAL diagnostic every time - none
+# disagreed. Those retries were 2,504 of a sweep's 4,831 compiles.
+#
+# C1001 IS THE EXCEPTION THAT KEEPS THE RULE HONEST: an internal compiler
+# error is the optimiser falling over, so it genuinely can depend on the
+# flags and is still worth another invocation. C1060 is the same argument
+# for memory. Neither occurred in the measurement; they are here because the
+# reasoning above does not cover them, not because they were observed.
+_FLAG_DEPENDENT = ("C1001", "C1060")
+
+
+def flag_dependent(diagnostic: str) -> bool:
+    """Could a different optimisation flag set make this compile succeed?"""
+    return any(code in diagnostic for code in _FLAG_DEPENDENT)
 
 
 def build_command(compile_commands: Path | str,
@@ -1089,7 +1118,9 @@ def compare_source(record: DecompilationState, exe: Path | str,
             compiled = compiled_asm(record, command, attempt, source)
         except CompileFailed as failed:
             diagnostic = diagnostic or str(failed)
-            continue
+            if flag_dependent(str(failed)):
+                continue
+            break
         except ValueError as absent:
             # A SUBJECT THAT ONE INVOCATION DOES NOT EMIT. An `inline`
             # function is folded into its callers under /O2 and emitted as

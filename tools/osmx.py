@@ -31,8 +31,9 @@ from decomp.calls import CallSite, call_sites, imported_names
 from decomp.record import stamped
 from decomp.asm import (AsmComparison, CompileFailed, build_command,
                         build_inputs, compare_record, compare_source,
-                        compare_subject, compile_unit, original_asm,
-                        shared_spans, span_refusal, subject_asm)
+                        compare_subject, compile_unit, flag_dependent,
+                        original_asm, shared_spans, span_refusal,
+                        subject_asm)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -1176,8 +1177,12 @@ def _check_one_file(job: tuple) -> list[tuple[tuple, str, str]]:
         try:
             obj = compile_unit(path, command, flags)
         except CompileFailed as failed:
+            # A UNIT THAT WILL NOT PARSE WILL NOT PARSE SEVEN MORE TIMES.
+            # See `decomp.asm.flag_dependent`, and the measurement behind it.
             diagnostic = diagnostic or str(failed)
-            continue
+            if flag_dependent(str(failed)):
+                continue
+            break
         for record in list(outstanding):
             try:
                 compiled = subject_asm(obj, record, flags)
