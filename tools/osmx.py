@@ -27,6 +27,7 @@ from typing import Annotated
 import typer
 
 from decomp import DecompilationState, State, mangled, read, write_file
+from decomp.mangled import qualified_name
 from decomp.calls import CallSite, call_sites, imported_names
 from decomp.record import stamped
 from decomp.asm import (AsmComparison, CompileFailed, build_command,
@@ -765,14 +766,22 @@ def calls(
         }, indent=2))
         return
 
-    typer.secho(f"\n{record.address_hex}  {record.name}", bold=True)
+    readable = qualified_name(record.name)
+    typer.secho(f"\n{record.address_hex}  {readable or record.name}", bold=True)
+    if readable and readable != record.name:
+        typer.echo(f"  {record.name}")
     hidden = len(rows) - len(kept)
     typer.echo(f"  {len(kept)} call(s)" + (f", {hidden} hidden (--all shows "
                f"the CRT, zlib and the imports)" if hidden else "") + "\n")
     for row in kept:
         where = row["target"] or row["via"] or "?"
+        # THE READABLE NAME HERE, THE MANGLED ONE IN `--json`. Nobody reads a
+        # call list to copy a symbol out of it; every other use - `measure`,
+        # `record`, a grep - wants the spelling the catalogue holds, and
+        # `--json` is what those read.
         typer.echo(f"  {row['at']}  {row['form']:9}{where:12} "
-                   f"{row['kind']:8} {row['name']}")
+                   f"{row['kind']:8} {qualified_name(row['name'])
+                                      or row['name']}")
 
 
 def _edge(site: CallSite, by_address: dict, imports: dict,

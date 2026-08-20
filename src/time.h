@@ -16,7 +16,6 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
-#pragma comment(lib, "Winmm.lib")
 #include <mmsystem.h>
 
 // The two bits of `Time::oneshot_state_`. See the member for what forces

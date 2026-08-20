@@ -711,3 +711,37 @@ def test_a_body_fact_must_name_a_path_not_a_word():
         "// ORIGINAL: 0x00401000 ?f@@YAXXZ 0x00401000-0x00401008\n"
         "// body      src/thing.h\n", Path("x.cpp"))
     assert real[0].body == "src/thing.h"
+
+
+# ------------------------------------------------- qualified_name
+
+@pytest.mark.parametrize("mangled, expected", [
+    ("?get_rgbquad@Palette@@QAEHPAURGBQUAD@@HH@Z", "Palette::get_rgbquad"),
+    ("?init_class@Win@@SAHPAD@Z", "Win::init_class"),
+    ("??0Buffer@@QAE@XZ", "Buffer::Buffer"),
+    ("??1Buffer@@QAE@XZ", "Buffer::~Buffer"),
+    ("??0Inner@Outer@@QAE@XZ", "Outer::Inner::Inner"),
+    ("??1Inner@Outer@@QAE@XZ", "Outer::Inner::~Inner"),
+    ("??_GBuffer@@UAEPAXI@Z", "Buffer::`scalar deleting destructor'"),
+    ("??__Eg_PALETTE1@@YAXXZ", "`dynamic initializer for 'g_PALETTE1''"),
+    ("??__FTxt@@YAXXZ", "`dynamic atexit destructor for 'Txt''"),
+    ("?f@A@B@@QAEXXZ", "B::A::f"),
+    ("_WinMain@16", "WinMain"),
+    ("sub_628180", "sub_628180"),
+])
+def test_qualified_name_reads_the_scope_chain(mangled, expected):
+    from decomp.mangled import qualified_name
+    assert qualified_name(mangled) == expected
+
+
+@pytest.mark.parametrize("mangled", [
+    "??2@YAPAXI@Z",          # operator new: a form this image does not carry
+    "?1bad@@YAXXZ",          # a piece that is neither a name nor a digit
+    "",
+])
+def test_qualified_name_says_it_cannot_tell(mangled):
+    """The module's contract everywhere: "" rather than a guess. MSVC's
+    operator table is real and simply does not appear in this image, so
+    inventing entries for it would be untested code that reads as fact."""
+    from decomp.mangled import qualified_name
+    assert qualified_name(mangled) == ""
