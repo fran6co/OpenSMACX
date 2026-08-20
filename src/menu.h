@@ -47,7 +47,7 @@ static_assert(offsetof(MenuEntry, flags) == 0x8,
 // It takes no arguments and its result is discarded.
 typedef void (OriginalObject::*func_menu_repaint)();
 
-class DLLEXPORT Menu : GraphicWin {
+class Menu : GraphicWin {
  public:
   void on_mouse_move(int a1, int a2);
   // ?mouse_move@Menu@@QAEXHH@Z (0x005FBDB0, 333 bytes) is unrecovered;

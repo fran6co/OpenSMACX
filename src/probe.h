@@ -37,6 +37,6 @@ extern BOOL *ProbeHasAlgoEnhancement;
 extern uint32_t *ProbeTargetFactionID;
 extern BOOL *ProbeTargetHasHSA;
 
-DLLEXPORT int __cdecl steal_energy(int base_id);
-DLLEXPORT int __cdecl mind_control(int base_id, int faction_id, BOOL is_corner_market);
-DLLEXPORT int __cdecl success_rates(int id, int morale, int diff_modifier, int base_id);
+int __cdecl steal_energy(int base_id);
+int __cdecl mind_control(int base_id, int faction_id, BOOL is_corner_market);
+int __cdecl success_rates(int id, int morale, int diff_modifier, int base_id);

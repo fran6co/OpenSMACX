@@ -74,7 +74,7 @@
   * The 0x44 and 0xA5C dwords are the GraphicWin/Dialog vbase-adjust slots that
   * sit four bytes below each virtual base; they are 0 in a most-derived ListBox.
   */
-class DLLEXPORT ListBox {
+class ListBox {
  public:
   void on_mouse_leave(int a1, int a2);
   ListBox() { ; }

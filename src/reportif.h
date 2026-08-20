@@ -27,7 +27,7 @@
   * returns touching no field, so the opaque storage below is only an object
   * for the canary to seed, not a modelled layout.
   */
-class DLLEXPORT ReportIf : SubInterface {
+class ReportIf : SubInterface {
  public:
   void done();
   ReportIf() { ; }
@@ -247,8 +247,9 @@ void __fastcall report_if_close_score_redirect(ReportIf *self, void *);
 int __fastcall report_if_on_iface_dialog_item_back_draw_redirect(
     ReportIf *self, void *, ::GraphicWin *a1, int a2, int a3, RECT *a4);
 
-// ReportIf::bl_anim is not recovered, and the class is DLLEXPORT - which
-// demands a definition for every member - so the body at the end of
-// reportif.cpp forwards through this seam.
+// ReportIf::bl_anim is not recovered, so the body at the end of reportif.cpp
+// forwards through this seam. leaf_recoveries.cpp calls it, which is what
+// keeps the definition: `__declspec(dllexport)` on the class once demanded a
+// definition for every member, and that demand is gone.
 typedef void (OriginalObject::*func_report_if_bl_anim)();
 extern func_report_if_bl_anim ReportIfBlAnim;  // 0x004A4060

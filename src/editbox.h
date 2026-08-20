@@ -35,7 +35,7 @@
  * NOTHING here is pinned: promote to `: GraphicWin` and a static_assert
  * only once derive_class_layout or derive_base_edges produces the evidence.
  */
-class DLLEXPORT EditBox {
+class EditBox {
  public:
   uint8_t graphicWin_[0xA14];  // 0x0, GraphicWin-shaped base storage
 

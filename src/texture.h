@@ -28,7 +28,7 @@
   * therefore reaches at least 0x70; that is a floor, not a size, and the
   * storage below is what the canary seeds rather than a modelled layout.
   */
-class DLLEXPORT Texture {
+class Texture {
  public:
   Texture();
   ~Texture();
@@ -52,7 +52,7 @@ static_assert(sizeof(Texture) == 0x70,
   * leaving a count of 3 at offset 0 and clearing the field at 4 - so the
   * object reaches at least 8. Nothing pins its size.
   */
-class DLLEXPORT TextureStore {
+class TextureStore {
  public:
   TextureStore() { ; }
   // A method rather than a real constructor, as Cursor::construct is: the

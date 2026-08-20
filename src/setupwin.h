@@ -33,7 +33,7 @@
   * The methods below ignore their arguments and return a constant, which is
   * why they can be replaced ahead of that mapping.
   */
-class DLLEXPORT SetupWin : GraphicWin {
+class SetupWin : GraphicWin {
  public:
   int do_menu(char* a1, int a2, int a3);
   // 0x004ADB70  ?do_menu_rightside@SetupWin@@QAEHPADH@Z - public, __thiscall,

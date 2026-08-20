@@ -45,7 +45,7 @@
   * methods recovered here are bare returns that touch no field, which is why
   * they can be replaced ahead of that mapping.
   */
-class DLLEXPORT BaseWin : GraphicWin, SubInterface {
+class BaseWin : GraphicWin, SubInterface {
  public:
   void on_scrolled(int a1, int a2);
   void UNK2(int a1, int a2, int a3, int a4);

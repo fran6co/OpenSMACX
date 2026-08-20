@@ -24,7 +24,7 @@
 // defined in-class and calls it. Spelled identically to general.h's line, or
 // VC6 reports `C2373: redefinition; different type modifiers` on whichever
 // declaration it sees second.
-DLLEXPORT LPVOID __cdecl mem_get(size_t size);
+LPVOID __cdecl mem_get(size_t size);
 
 // DECLARED BEFORE THE CLASS so the `friend` inside it refers to this
 // namespace-scope function. VC6 injects a friend declared only in-class
@@ -35,7 +35,7 @@ class Text;
 void __cdecl text_set_get_ptr_source(Text *text, LPSTR *output);
 void __cdecl text_set_item_ptr_source(Text *text, LPSTR *output);
 
-class DLLEXPORT Text {
+class Text {
  public:
   Text(); // 005FD860
   // DEFINED IN-CLASS so it can be INLINED, which is what the image does.
@@ -51,7 +51,7 @@ class DLLEXPORT Text {
   //
   // `int`, NOT `size_t`. The image's own name for it is `??0Text@@QAE@H@Z`
   // and `H` is `int`; 0x005FD880 is BYTE_EXACT against a body taking one.
-  Text(int size) {           // 005FD880
+  MEASURED Text(int size) {  // 005FD880
     file_name_[0] = 0;
     current_pos_ = 0;
     text_file_ = 0;
@@ -66,7 +66,7 @@ class DLLEXPORT Text {
   // 0x005FD460 - the atexit thunk the compiler pairs with `??__ETxt` - runs
   // the destructor INLINE, doing the fclose and the frees itself with no
   // `call ??1Text@@QAE@XZ` anywhere in it.
-  ~Text() OPENSMACX_NOEXCEPT_FALSE { shutdown(); }   // 00608C00
+  MEASURED ~Text() OPENSMACX_NOEXCEPT_FALSE { shutdown(); }   // 00608C00
 
   int init(size_t size);
   void shutdown();
@@ -147,20 +147,20 @@ extern Text Txt;
 // prefs_get: 0x01A31BE0, read out of the running original.
 extern LPSTR TextBufferGetPtr;
 extern LPSTR TextBufferItemPtr;
-DLLEXPORT void __cdecl text_txt();
-DLLEXPORT void __cdecl text_txt_exit();
-DLLEXPORT void __cdecl text_set_get_ptr();
-DLLEXPORT void __cdecl text_set_item_ptr();
-DLLEXPORT void __cdecl text_close();
-DLLEXPORT BOOL __cdecl text_open(LPCSTR src_id, LPCSTR section_id);
-DLLEXPORT LPSTR __cdecl text_get();
-DLLEXPORT LPSTR __cdecl text_string();
-DLLEXPORT LPSTR __cdecl text_item();
-DLLEXPORT LPSTR __cdecl text_item_string();
-DLLEXPORT int __cdecl text_item_number();
-DLLEXPORT int __cdecl text_item_binary();
-DLLEXPORT int __cdecl text_item_hex();
-DLLEXPORT int __cdecl text_get_number(int min, int max);
+void __cdecl text_txt();
+void __cdecl text_txt_exit();
+void __cdecl text_set_get_ptr();
+void __cdecl text_set_item_ptr();
+void __cdecl text_close();
+BOOL __cdecl text_open(LPCSTR src_id, LPCSTR section_id);
+LPSTR __cdecl text_get();
+LPSTR __cdecl text_string();
+LPSTR __cdecl text_item();
+LPSTR __cdecl text_item_string();
+int __cdecl text_item_number();
+int __cdecl text_item_binary();
+int __cdecl text_item_hex();
+int __cdecl text_get_number(int min, int max);
 
 // Recovered free functions, formerly declared in the retired
 // text_recovery.h. They are the image's own shapes - free functions taking

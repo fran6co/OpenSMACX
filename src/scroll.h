@@ -25,7 +25,7 @@
  /*
   * Scroll class
   */
-class DLLEXPORT Scroll : GraphicWin {
+class Scroll : GraphicWin {
  public:
   Scroll() { ; }
   ~Scroll() { ; }

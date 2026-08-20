@@ -54,7 +54,7 @@
   * `sizeof(GraphicWin) == 0xA14` is the check that would catch it going wrong.
   * Do NOT read this paragraph as "cannot be done".
   */
-class DLLEXPORT CheckBox {
+class CheckBox {
  public:
   // `static`: the image's name ends in `QAA` - a public member declared
   // __cdecl, taking no receiver - and jackal_init_real calls it with no

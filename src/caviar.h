@@ -17,7 +17,7 @@ struct VOX_Matrix {
   float values[3][3];
 };
 
-class DLLEXPORT CaviarData {
+class CaviarData {
  public:
   CaviarData();
   void close();
@@ -28,7 +28,7 @@ class DLLEXPORT CaviarData {
   void *record_;   // 0x8, the renderer record close releases
 };
 
-class DLLEXPORT Caviar {
+class Caviar {
  public:
   void UNK11(int *out1, int *out2, int *out3);
   Caviar();

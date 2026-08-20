@@ -20,15 +20,15 @@
  /*
   * Random class: Handles pseudo random number generator.
   */
-class DLLEXPORT Random {
+class Random {
  public:
-  Random() : seed_(0) {
+  MEASURED Random() : seed_(0) {
   } // 00625730
   // A PLAIN STORE. This carried a `volatile` cast to force the write - the
   // image is `mov dword ptr [ecx], 0; ret` and the fear was that VC6 would
   // elide a store to a member that is about to die. It does not: the plain
   // assignment is byte exact.
-  ~Random() { seed_ = 0; }   // 00625740
+  MEASURED ~Random() { seed_ = 0; }   // 00625740
 
   // IN-CLASS so the free wrappers below fold them in, which is what the
   // image does: `random_reseed` is `mov ecx, [Rand]; xor ...` with no call
@@ -50,9 +50,9 @@ static_assert(sizeof(Random) == 4, "Random layout must match the legacy ABI");
 
 // global
 extern Random Rand;
-DLLEXPORT void __cdecl random_rand();
-DLLEXPORT void __cdecl random_rand_exit();
-DLLEXPORT void __cdecl random_reseed(uint32_t new_seed);
-DLLEXPORT uint32_t __cdecl random_get();
-DLLEXPORT uint32_t __cdecl random(uint32_t min, uint32_t max);
-DLLEXPORT double __cdecl random();
+void __cdecl random_rand();
+void __cdecl random_rand_exit();
+void __cdecl random_reseed(uint32_t new_seed);
+uint32_t __cdecl random_get();
+uint32_t __cdecl random(uint32_t min, uint32_t max);
+double __cdecl random();

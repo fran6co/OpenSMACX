@@ -27,7 +27,7 @@
   * The methods recovered here are bare returns or a bare constant, touching
   * no field, which is why they can be replaced ahead of that mapping.
   */
-class DLLEXPORT Cursor {
+class Cursor {
  public:
   // `static`, because the image's name ends in `QAA` - a public member
   // declared __cdecl, taking no receiver. jackal_init_real calls it with

@@ -35,7 +35,7 @@
   * tail (0x1B78, 0x1BAC, 0x1BB0, 0x1BC4, 0x1BC8, 0x1BCC) through raw volatile
   * offsets rather than through invented placeholder fields.
   */
-class DLLEXPORT NetDaemon : AlphaNet {
+class NetDaemon : AlphaNet {
  public:
   NetDaemon() { ; }
   ~NetDaemon() { ; }
@@ -138,17 +138,17 @@ uint32_t __fastcall net_daemon_unlock_veh_redirect(NetDaemon *self, void *);
 typedef void (OriginalObject::*func_net_daemon_synch)(int16_t opcode, int a, int b, int c, char *text, int d, int16_t flags);
 extern func_net_daemon_synch NetDaemonSynch;
 
-DLLEXPORT void __cdecl synch_veh(int id);
-DLLEXPORT void __cdecl synch_base(int id);
-DLLEXPORT void __cdecl synch_energy(int id);
-DLLEXPORT void __cdecl synch_researching(int id);
-DLLEXPORT void __cdecl synch_leader(int id);
-DLLEXPORT void __cdecl synch_ai(int id);
-DLLEXPORT void __cdecl synch_research(int id);
-DLLEXPORT void __cdecl synch_alloc(int id);
-DLLEXPORT void __cdecl synch_soc(int id);
-DLLEXPORT void __cdecl synch_proto(int id);
-DLLEXPORT void __cdecl synch_obs(int id);
-DLLEXPORT void __cdecl synch_diplo(int a, int b);
-DLLEXPORT void __cdecl synch_template(int id);
-DLLEXPORT void __cdecl synch_radius(int id);
+void __cdecl synch_veh(int id);
+void __cdecl synch_base(int id);
+void __cdecl synch_energy(int id);
+void __cdecl synch_researching(int id);
+void __cdecl synch_leader(int id);
+void __cdecl synch_ai(int id);
+void __cdecl synch_research(int id);
+void __cdecl synch_alloc(int id);
+void __cdecl synch_soc(int id);
+void __cdecl synch_proto(int id);
+void __cdecl synch_obs(int id);
+void __cdecl synch_diplo(int a, int b);
+void __cdecl synch_template(int id);
+void __cdecl synch_radius(int id);

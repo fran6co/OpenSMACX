@@ -44,21 +44,21 @@ extern char StringTemp[1032];    // 0x009B86A0
 // The two claims are measured under DIFFERENT flag sets: `prefs_get` under
 // /O2, which folds this in, and this one under /O2 /Ob0, which does not.
 // The per-function flag search is exactly what makes that possible.
-inline void __cdecl say_num(int value) {   // 0050B8A0
+MEASURED inline void __cdecl say_num(int value) {   // 0050B8A0
   char text[0x50];
   _itoa(value, text, 10);
   strcat(StringTemp, text);
 }
 
-class DLLEXPORT Strings : Heap {
+class Strings : Heap {
  public:
-  Strings() : is_populated_(false) {
+  MEASURED Strings() : is_populated_(false) {
   } // 006168D0
   // EMPTY. The image's is a five-byte `jmp` and this emits exactly that:
   // the implicit call to `~Heap` IS the whole destructor, and the linker
   // folded `~Heap` onto `Heap::shutdown`, which is why the disassembly's
   // target reads as the latter.
-  ~Strings() { }                       // 006169C0
+  MEASURED ~Strings() { }              // 006169C0
 
   BOOL init(size_t mem_size);
   void shutdown();

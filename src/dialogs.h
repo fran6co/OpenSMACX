@@ -13,7 +13,7 @@
 #include "dialog.h"
 #include "graphicwin.h"
 
-class DLLEXPORT Dialogs {
+class Dialogs {
  public:
   void close();
   // The recovered complete-object destructor body (0x00406910), modelled on

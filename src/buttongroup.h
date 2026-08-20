@@ -23,7 +23,7 @@
  /*
   * ButtonGroup class
   */
-class DLLEXPORT ButtonGroup {
+class ButtonGroup {
  public:
   ButtonGroup();
   ~ButtonGroup();

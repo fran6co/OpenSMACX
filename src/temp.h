@@ -113,12 +113,12 @@ extern uint32_t *UnkBitfield1;
 extern Filefind *FilefindPath;
 extern MainInterface *MainInterfaceVar;
 
-DLLEXPORT int __cdecl tester();
+int __cdecl tester();
 
 // tech_val output
 typedef int func13(int, int, BOOL);
 extern func13 *tech_val_OG;
-DLLEXPORT void __cdecl tech_calc_output();
+void __cdecl tech_calc_output();
 
 // message handling testing
 typedef void *func_msg(void);
@@ -129,9 +129,9 @@ extern func_msg *do_non_input_;
 
 extern uint32_t *MsgStatus;
 
-DLLEXPORT BOOL __cdecl do_non_input();
-DLLEXPORT void __cdecl do_all_non_input();
-DLLEXPORT BOOL __cdecl do_draw();
-DLLEXPORT void __cdecl do_all_draws();
-DLLEXPORT BOOL __cdecl do_keyboard();
-DLLEXPORT void __cdecl do_all_keyboard();
+BOOL __cdecl do_non_input();
+void __cdecl do_all_non_input();
+BOOL __cdecl do_draw();
+void __cdecl do_all_draws();
+BOOL __cdecl do_keyboard();
+void __cdecl do_all_keyboard();

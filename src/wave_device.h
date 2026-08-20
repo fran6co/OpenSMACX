@@ -60,7 +60,7 @@ struct WaveControlGroup {
   * dwords at +4 are the 0x28-based table get_group_volume reads), taking the
   * extent to at least 0x1A4. That is still a floor, not a size.
   */
-class DLLEXPORT Wave_Device {
+class Wave_Device {
  public:
   Wave_Device();
   ~Wave_Device();

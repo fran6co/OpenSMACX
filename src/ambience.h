@@ -42,7 +42,7 @@
   * inlined Sound; this is the third Sound-rooted class, not an unrelated one,
   * and it is why src/ambience.cpp reinterprets `this` as a `Wave *`.
   */
-class DLLEXPORT Ambience {
+class Ambience {
  public:
   // Spelled as a method rather than a real constructor on purpose: the three
   // derived variants below all carry inline `{ ; }` constructors, and giving
@@ -65,7 +65,7 @@ extern const uint32_t MAmbienceVtable;
 extern const uint32_t SAmbienceVtable;
 extern const uint32_t GAmbienceVtable;
 
-class DLLEXPORT FactionAmbience : Ambience {
+class FactionAmbience : Ambience {
  public:
   FactionAmbience() { ; }
   ~FactionAmbience() { ; }
@@ -98,7 +98,7 @@ class DLLEXPORT FactionAmbience : Ambience {
   uint8_t field_6D_;
 };
 
-class DLLEXPORT UAmbience : Ambience {
+class UAmbience : Ambience {
  public:
   UAmbience() { ; }
   ~UAmbience() { ; }
@@ -126,7 +126,7 @@ class DLLEXPORT UAmbience : Ambience {
 // recovered method, so these fields and nothing beyond them are what the image
 // establishes - the same rule the file header sets out, applied to two more
 // variants rather than relaxed for them.
-class DLLEXPORT MAmbience : Ambience {
+class MAmbience : Ambience {
  public:
   MAmbience() { ; }
   ~MAmbience() { ; }
@@ -147,7 +147,7 @@ class DLLEXPORT MAmbience : Ambience {
 static_assert(sizeof(MAmbience) == 0x74,
               "MAmbience layout must match the original executable");
 
-class DLLEXPORT SAmbience : Ambience {
+class SAmbience : Ambience {
  public:
   SAmbience() { ; }
   ~SAmbience() { ; }
@@ -169,7 +169,7 @@ class DLLEXPORT SAmbience : Ambience {
 static_assert(sizeof(SAmbience) == 0x78,
               "SAmbience layout must match the original executable");
 
-class DLLEXPORT GAmbience : Ambience {
+class GAmbience : Ambience {
  public:
   GAmbience() { ; }
   ~GAmbience() { ; }

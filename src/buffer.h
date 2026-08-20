@@ -84,7 +84,7 @@ struct Dib : BITMAPINFO {
     RGBQUAD bmiColorsRest[255];
 };
 
-class DLLEXPORT Buffer {
+class Buffer {
  public:
   int poly(Vert *a1, int a2, int a3);
   // 0x005D7210. The body is in buffer.cpp beside its marker.
@@ -97,7 +97,7 @@ class DLLEXPORT Buffer {
   //
   // 0x005D7410, and the body really is this: see the annotation in
   // buffer.cpp beside the marker.
-  virtual ~Buffer() { close(); }
+  MEASURED virtual ~Buffer() { close(); }
   // `int`, and returning 0, because that is what the three bytes are:
   // `xor eax, eax; ret`. Declared `void` it compiles to `ret` alone and
   // Buffer's slot 1 stops being the function the image put there.

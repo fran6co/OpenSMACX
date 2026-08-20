@@ -22,7 +22,7 @@
  /*
   * Flic class
   */
-class DLLEXPORT Flic {
+class Flic {
  public:
   Flic() { ; }
   ~Flic() { ; }

@@ -26,7 +26,7 @@
  /*
   * MainInterface class
   */
-class DLLEXPORT MainInterface : GraphicWin {
+class MainInterface : GraphicWin {
  public:
   MainInterface() { ; }
   ~MainInterface() { ; }
@@ -322,7 +322,7 @@ void __fastcall main_interface_clear_message_redirect(MainInterface *self, void 
 void __fastcall main_interface_unk2_redirect(MainInterface *self, void *);
 void __fastcall main_interface_unk3_redirect(MainInterface *self, void *);
 void __fastcall main_interface_unk4_redirect(MainInterface *self, void *);
-DLLEXPORT void __cdecl desktop_update();
+void __cdecl desktop_update();
 void __fastcall main_interface_unk1_redirect(MainInterface *self, void *, int a1);
 void __fastcall main_interface_on_iface_scrolled_redirect(MainInterface *self, void *, int a1, int a2);
 void __fastcall main_interface_on_iface_scrolling_redirect(MainInterface *self, void *, int a1, int a2);

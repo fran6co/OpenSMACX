@@ -36,8 +36,8 @@
   * DERIVED class, so `class Console : MapWin` has to reach GraphicWin's
   * constructor itself, and a PRIVATE base here is `C2243: conversion from
   * 'const class Console *' to 'const class GraphicWin &' exists, but is
-  * inaccessible` on Console's own constructors - which DLLEXPORT forces VC6
-  * to emit whether or not anything calls them. Access changes no offset;
+  * inaccessible` on Console's own constructors, which VC6 emits wherever
+  * they are reached. Access changes no offset;
   * sizeof(MapWin) and sizeof(Console) are both unmoved by it.
   *
   * The size is the vbtable's, not a guess: the table at 0x0066C870 reads
@@ -51,7 +51,7 @@
   * rather than appended - appending would move the virtual base and break
   * every offset in the class.
   */
-class DLLEXPORT MapWin : protected virtual GraphicWin {
+class MapWin : protected virtual GraphicWin {
  public:
   void on_resize(int a1, int a2);
   void on_redraw();
@@ -235,14 +235,14 @@ extern func_map_win_draw_radius MapWinOriginalDrawRadius;  // 0x0046A2A0
 
 // Free functions, __cdecl (the `ret` at 0x0046AF85 / 0x0046B185 pops nothing).
 // Redirected directly with no adapter; see src/mapwin.cpp.
-DLLEXPORT void __cdecl draw_tile(int x_coord, int y_coord, int draw_type);
-DLLEXPORT void __cdecl draw_tiles(int x_coord, int y_coord, int draw_type);
+void __cdecl draw_tile(int x_coord, int y_coord, int draw_type);
+void __cdecl draw_tiles(int x_coord, int y_coord, int draw_type);
 // ?draw_map@@YAXH@Z at 0x0046B190 - the FREE function that repaints every
 // live MapWin, not `MapWin::draw_map` at 0x0046A550 below. Declared here
 // rather than bound as a pointer in temp.h so its callers emit the `E8` the
 // image emits; the body is still original, behind a forwarder in
 // src/pending_bodies.cpp.
-DLLEXPORT void __cdecl draw_map(int draw_type);
+void __cdecl draw_map(int draw_type);
 
 // ?draw_map@MapWin@@QAEXH@Z at 0x0046A550 - public, __thiscall, void(int) by
 // the mangled name, `ret 4` by the image - is 2049 bytes and still an original

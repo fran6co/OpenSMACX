@@ -30,7 +30,7 @@
   * GraphicWin is pinned at 0xA14, which fixes the origin for the one field
   * below. Where the object ends is not established.
   */
-class DLLEXPORT MultiDebug : GraphicWin {
+class MultiDebug : GraphicWin {
  public:
   void __cdecl timer_callback_daemon(int a2);
   MultiDebug() { ; }

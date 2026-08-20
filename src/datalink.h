@@ -46,7 +46,7 @@
 // one-int struct would state a size the evidence does not support.
 struct DatalinkID;
 
-class DLLEXPORT Datalink : GraphicWin {
+class Datalink : GraphicWin {
  public:
   void hide();
   void show(int a1);
@@ -280,13 +280,13 @@ extern void *DatalinkMain;
 typedef void (OriginalObject::*func_datalink_draw_entry)();
 extern func_datalink_draw_entry DatalinkDrawEntry;
 
-DLLEXPORT void __cdecl help_tech(int id);
-DLLEXPORT void __cdecl help_weapon(int id);
-DLLEXPORT void __cdecl help_armor(int id);
-DLLEXPORT void __cdecl help_chassis(int id);
-DLLEXPORT void __cdecl help_facility(int id);
-DLLEXPORT void __cdecl help_abil(int id);
-DLLEXPORT void __cdecl help_social(int id);
-DLLEXPORT void __cdecl help_faction(int id);
-DLLEXPORT void __cdecl help_veh(int id);
-DLLEXPORT void __cdecl help_topic(unsigned int topic, int index);
+void __cdecl help_tech(int id);
+void __cdecl help_weapon(int id);
+void __cdecl help_armor(int id);
+void __cdecl help_chassis(int id);
+void __cdecl help_facility(int id);
+void __cdecl help_abil(int id);
+void __cdecl help_social(int id);
+void __cdecl help_faction(int id);
+void __cdecl help_veh(int id);
+void __cdecl help_topic(unsigned int topic, int index);

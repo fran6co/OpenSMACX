@@ -32,7 +32,7 @@ static_assert(offsetof(StringStructEntry, id) == 0x4,
 static_assert(offsetof(StringStructEntry, payload) == 0x8,
               "StringStructEntry payload offset must match the original executable");
 
-class DLLEXPORT StringStruct {
+class StringStruct {
  public:
   int seek_pos(int a1);
   int current_id();
@@ -112,7 +112,7 @@ int __fastcall string_struct_seek_id_redirect(StringStruct *self, void *, int id
  *   0x30  size - consecutive StringLists are 0x30 apart at 0x0048CD01 and at
  *         the inlined destructors 0x00406540 / 0x00406585
  */
-class DLLEXPORT StringList {
+class StringList {
  public:
   // ~StringList is a void destructor in the original, but EAX at its ret
   // still holds the saved owner value; modelled as uint32_t to preserve the

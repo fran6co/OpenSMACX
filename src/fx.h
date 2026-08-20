@@ -27,7 +27,7 @@
   * and 0x6C independently confirms the Wave extent the atexit thunk table
   * pinned. The extent here is at least 0x61 * 0x6C; nothing pins more.
   */
-class DLLEXPORT FX {
+class FX {
  public:
   void fade(int a1);
   void release(int a1);

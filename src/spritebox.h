@@ -27,7 +27,7 @@
   * returns touching no field, so the opaque storage below is only an object
   * for the canary to seed, not a modelled layout.
   */
-class DLLEXPORT SpriteBox {
+class SpriteBox {
  public:
   void on_dialog_focus(int a1);
   void close();

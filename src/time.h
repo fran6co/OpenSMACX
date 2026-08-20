@@ -25,7 +25,7 @@
 // the point `Time::stop` needs them - and `stop` has to be in-class,
 // because the image inlines it into `close` and `close` into `~Time`. A
 // second declaration is safe: the compiler rejects one that disagrees.
-DLLEXPORT void __cdecl flush_timer();
+void __cdecl flush_timer();
 extern HWND HandleMain;
 
 static const int TimeOneShot = 1;
@@ -34,7 +34,7 @@ static const int TimeOneShotFired = 2;
  /*
   * Time class
   */
-class DLLEXPORT Time {
+class Time {
   // The timer posts WM_USER+1 to the main window and `Win::window_proc`
   // runs the tick: it clears `tick_posted_`, tests and sets `oneshot_state_`, and calls
   // `callback1_`/`callback2_` with the stored parameters. The original has
@@ -59,7 +59,7 @@ class DLLEXPORT Time {
   uint32_t pulse();
   // IN-CLASS so `close` and `~Time` inline them, which is what the image
   // does: the destructor is the whole teardown, not a call to it.
-  void stop() {                  // 00616730
+  MEASURED void stop() {         // 00616730
     // HOISTED, as the image has it: the flush test is read BEFORE the
     // kill block, not after.
     const int had_flush = ~oneshot_state_ & TimeOneShot;
@@ -75,7 +75,7 @@ class DLLEXPORT Time {
       flush_timer();
     }
   }
-  void close() {                 // 00616780
+  MEASURED void close() {        // 00616780
     // IMAGE ORDER: oneshot_state_ after callback1_, resolution_ before
     // tick_posted_.
     stop();
@@ -147,6 +147,6 @@ extern Time *Blink2Timer;
 extern Time *GoTimer;
 extern Time *ConsoleTimer;
 
-DLLEXPORT void __cdecl start_timers();
-DLLEXPORT void __cdecl stop_timers();
-DLLEXPORT void __cdecl flush_timer();
+void __cdecl start_timers();
+void __cdecl stop_timers();
+void __cdecl flush_timer();

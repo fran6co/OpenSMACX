@@ -31,7 +31,7 @@
   *
   * The layout is not established and nothing pins its sizeof.
 */
-class DLLEXPORT StatusWin {
+class StatusWin {
  public:
   StatusWin() { ; }
   ~StatusWin() { ; }

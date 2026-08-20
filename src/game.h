@@ -134,16 +134,16 @@ extern uint8_t *NetTurnFlags;
 extern int *NetTurnFaction;
 extern int *LocalFaction;
 
-DLLEXPORT int __cdecl energy_limit(int);
+int __cdecl energy_limit(int);
 
-DLLEXPORT void __cdecl reset_territory();
-DLLEXPORT BOOL __cdecl not_my_turn();
-DLLEXPORT void __cdecl planetfall(int faction_id);
-DLLEXPORT void __cdecl clear_scenario();
-DLLEXPORT uint32_t __cdecl game_year(int turn);
-DLLEXPORT void __cdecl say_year(LPSTR output);
-DLLEXPORT void __cdecl repair_phase(int faction_id);
+void __cdecl reset_territory();
+BOOL __cdecl not_my_turn();
+void __cdecl planetfall(int faction_id);
+void __cdecl clear_scenario();
+uint32_t __cdecl game_year(int turn);
+void __cdecl say_year(LPSTR output);
+void __cdecl repair_phase(int faction_id);
 
 // The game's main loop, called once from WinMain between Jackal bring-up and
 // teardown. Everything the player ever sees happens inside this call.
-DLLEXPORT void __cdecl control_game();
+void __cdecl control_game();

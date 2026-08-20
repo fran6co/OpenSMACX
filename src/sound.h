@@ -27,7 +27,7 @@
   * original's. The rest is an object for the canary to seed, not a modelled
   * layout.
   */
-class DLLEXPORT Sound {
+class Sound {
  public:
   Sound() { ; }
   ~Sound();

@@ -26,7 +26,7 @@
   * deliberately no fields, for the same reason as AlphaMenu: UNK4 reads none,
   * and invented storage would be a guess the rest of the tree would inherit.
   */
-class DLLEXPORT UV2Player {
+class UV2Player {
  public:
   UV2Player() { ; }
   ~UV2Player() { ; }

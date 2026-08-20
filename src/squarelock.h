@@ -23,7 +23,7 @@
   * A small standalone record. clear() is the layout evidence: two -1 sentinels
   * at 0x0 and 0x4 and a zero at 0x8, the same shape as PlayerLock's entries.
   */
-class DLLEXPORT SquareLock {
+class SquareLock {
  public:
   SquareLock() { ; }
   ~SquareLock() { ; }
