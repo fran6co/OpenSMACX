@@ -2047,19 +2047,36 @@ static const char WinClassName[] = "JackalClass";
 // are objects declared in win.h. Every one of those operands is relocated
 // and the comparison masks relocations, so none of it costs a byte.
 //
-// LEFT AT 88.2%, 22 edits, first divergence #7. The whole of it is one
-// callee-saved register: the original pushes esi AND edi and keeps a zero
-// in edi across every call, using it for `GetModuleHandleA(0)`, the
-// `cbClsExtra`/`cbWndExtra` stores, four of `CreateWindowExA`'s arguments
-// and every `cmp reg, edi` that follows. This build materialises the same
-// zero once, in esi, and pushes only esi.
+// LEFT AT 88.7%, first divergence #7, and the divergence is a PROLOGUE
+// PUSH: the image saves esi and edi up front, this build saves only esi
+// there.
 //
-// RULED OUT: the four flag sets are byte-identical here, so it is not the
-// frame-pointer or the /O1 register pressure; declaring `wndclass` before
-// `logo` does not move the frame; and caching the `GetSystemMetrics` import
-// slot in a local - which is what the original's `mov esi, [0x669334]` then
-// two `call esi` looks like - changes nothing, so the second register is
-// not being spent on that slot either.
+// NOT "one register short", which is what this note used to say. Both
+// builds use two callee-saved registers and both cache the
+// `GetSystemMetrics` import slot - `call edi` twice here, `call esi` twice
+// there. What differs is WHICH register holds the zero. The image keeps it
+// in edi from function entry, so edi is live before the `return 1` that
+// `RegisterClassA` failing takes and has to be saved in the prologue. This
+// build keeps the zero in esi and gives edi to the import slot, whose live
+// range starts AFTER that early return - so VC6 shrink-wraps it and emits
+// `push edi` at the point of first use, thirty instructions in. Every
+// instruction after the prologue is then four bytes off in the frame, which
+// is why positional agreement collapses to 12 of 203 while similarity is
+// 0.887.
+//
+// So the question is not how to spend a second register. It is how to make
+// VC6 assign the constant zero to the register it saves first, and that is
+// allocation order, which no spelling tried here reaches.
+//
+// RULED OUT: the flag sets are byte-identical here, so it is not the frame
+// pointer or /O1 register pressure; declaring `wndclass` before `logo` does
+// not move the frame; and caching the import slot in a local changes
+// nothing, because this build already caches it.
+//
+// FIXED: the four `WinModalStack` stores now precede `GetModuleHandleA`,
+// which is where the image has them - it stores all four from a zeroed eax
+// and only then makes the call. Worth 0.882 -> 0.887, and it is what the
+// image does regardless of what it is worth.
 Status: Complete
 */
 int __cdecl Win::init_class(LPSTR window_name) {
@@ -2072,9 +2089,9 @@ int __cdecl Win::init_class(LPSTR window_name) {
 
     WinModalStack[0] = nullptr;
     WinModalStack[1] = nullptr;
-    WinInstance = GetModuleHandleA(nullptr);
     WinModalStack[2] = nullptr;
     WinModalStack[3] = nullptr;
+    WinInstance = GetModuleHandleA(nullptr);
 
     wndclass.style = CS_VREDRAW | CS_HREDRAW | CS_DBLCLKS | CS_OWNDC;  // 0x2B
     wndclass.lpfnWndProc = &Win::window_proc;
