@@ -1149,7 +1149,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_pcx_parse_temp_buffer1() {
-    g_PCX_PARSE_TEMP_BUFFER1->destroy();
+    g_PCX_PARSE_TEMP_BUFFER1->Buffer::~Buffer();
 }
 
 /*
@@ -1489,7 +1489,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_iface_std_popups_middle_buffer() {
-    g_IFACE_STD_POPUPS_MIDDLE_BUFFER->destroy();
+    g_IFACE_STD_POPUPS_MIDDLE_BUFFER->Buffer::~Buffer();
 }
 
 /*
@@ -6436,7 +6436,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_vehdraw_buffer() {
-    g_VEHDRAW_BUFFER->destroy();
+    g_VEHDRAW_BUFFER->Buffer::~Buffer();
 }
 
 /*
@@ -6725,7 +6725,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_buffer() {
-    g_BUFFER->destroy();
+    g_BUFFER->Buffer::~Buffer();
 }
 
 /*
