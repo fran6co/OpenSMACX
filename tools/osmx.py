@@ -977,6 +977,11 @@ def sweep(
     jobs: Annotated[int, typer.Option(
         help=f"Concurrent compiles. Capped at {WINE_CEILING}: one shared "
              f"wine prefix.")] = 0,
+    verdicts: Annotated[bool, typer.Option(
+        "--verdicts",
+        help="Print EVERY unclaimed body's verdict, worst last, not just "
+             "the ones that reproduce. This is the only way to see which "
+             "of them are close.")] = False,
     as_json: Annotated[bool, typer.Option("--json")] = False,
 ) -> None:
     """WHICH UNCLAIMED BODIES ALREADY REPRODUCE.
@@ -1027,6 +1032,27 @@ def sweep(
             measured[key] = verdict
 
     by_claim = {_claim_key(r): r for group in grouped.values() for r in group}
+    if verdicts:
+        order = {"BYTE_EXACT": 0, "SHAPE_EXACT": 1, "MNEMONIC_ONLY": 2,
+                 "MISMATCH": 3}
+        rows = sorted(((order.get(verdict, 4), by_claim[key].address,
+                        verdict, by_claim[key])
+                       for key, verdict in measured.items() if key in by_claim),
+                      key=lambda row: row[:2])
+        if as_json:
+            typer.echo(json.dumps([{"address": r.address_hex,
+                                    "verdict": verdict, "name": r.name,
+                                    "file": str(r.path)}
+                                   for _, _, verdict, r in rows], indent=2))
+            raise typer.Exit(0)
+        for _, _, verdict, r in rows:
+            typer.echo(f"  {r.address_hex}  {verdict:14s} "
+                       f"{r.path.name:24s} {r.name}")
+        tally: dict = {}
+        for _, _, verdict, _r in rows:
+            tally[verdict] = tally.get(verdict, 0) + 1
+        typer.echo("  ".join(f"{v}: {n:,}" for v, n in sorted(tally.items())))
+        raise typer.Exit(0)
     found = sorted((by_claim[key] for key, verdict in measured.items()
                     if verdict == "BYTE_EXACT" and key in by_claim),
                    key=lambda r: r.address)
