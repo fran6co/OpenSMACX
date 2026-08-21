@@ -605,8 +605,6 @@ extern int BestProtoToMention;
 extern int PopupDialogFactionID;
 
 BOOL __cdecl is_alien_faction(uint32_t faction_id);
-BOOL __cdecl is_human(uint32_t faction_id);
-BOOL __cdecl is_alive(uint32_t faction_id);
 void __cdecl psych_check(int faction_id, int *drones, int *talents);
 // `int`, not `uint32_t`, and the catalogue is the authority: the original
 // exports `?has_treaty@@YAHHHH@Z`, where each `H` is an int. The `uint32_t`
@@ -661,3 +659,13 @@ void __cdecl social_ai(uint32_t faction_id, int growth_val, int tech_val, int we
                                  int power_val, SocialCategory *output);
 void __cdecl enemy_capabilities(int faction_id);
 void __cdecl enemy_capabilities_t(uint32_t faction_id);
+
+// INLINE: the image has no is_human - it open-codes what this names.
+inline BOOL __cdecl is_human(uint32_t faction_id) {
+    return FactionsStatus[0] & (1 << faction_id);
+}
+
+// INLINE: the image has no is_alive - it open-codes what this names.
+inline BOOL __cdecl is_alive(uint32_t faction_id) {
+    return FactionsStatus[1] & (1 << faction_id);
+}

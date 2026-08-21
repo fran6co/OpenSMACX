@@ -363,37 +363,28 @@ BOOL __cdecl coast_or_border(uint32_t x_point_a, uint32_t y_point_a, uint32_t x_
 inline Map *__cdecl map_loc(int x, int y) {
   return &map_tiles()[(x >> 1) + y * MapLongitude];
 }
-uint32_t __cdecl temp_at(uint32_t x, uint32_t y);
 void __cdecl temp_set(int x, int y, int temperature);
-uint32_t __cdecl climate_at(uint32_t x, uint32_t y);
 void __cdecl climate_set(int x, int y, int climate);
 int __cdecl elev_at(int x, int y);
 int __cdecl alt_natural(int x, int y);
 void __cdecl alt_set_both(int x, int y, int altitude_natural);
 int __cdecl alt_at(int x, int y);
-int __cdecl altitude_at(uint32_t x, uint32_t y);
 int __cdecl alt_detail_at(int x, int y);
 int __cdecl alt_get_ocean_detail(int x, int y, int corner, int point);
 void __cdecl alt_put_detail(int x, int y, int detail);
-uint32_t __cdecl owner_at(uint32_t x, uint32_t y);
 void __cdecl owner_set(int x, int y, int faction_id);
 void __cdecl site_set(int x, int y, int site);
 int __cdecl region_at(int x, int y);
 void __cdecl region_set(int x, int y, int region);
-uint32_t __cdecl using_at(uint32_t x, uint32_t y);
 void __cdecl using_set(int x, int y, int faction_id);
-uint32_t __cdecl lock_at(uint32_t x, uint32_t y);
 void __cdecl lock_set(int x, int y, int faction_id);
 BOOL __cdecl lock_map(int x, int y, int faction_id);
 void __cdecl unlock_map(int x, int y, int faction_id);
-uint32_t __cdecl rocky_at(uint32_t x, uint32_t y);
 void __cdecl rocky_set(int x, int y, int rocky);
 int __cdecl bit_at(int x, int y);
 void __cdecl bit_put(int x, int y, int bit);
 void __cdecl bit_set(int x, int y, int bit, BOOL set);
-uint32_t __cdecl bit2_at(uint32_t x, uint32_t y);
 void __cdecl bit2_set(int x, int y, int bit2, BOOL set);
-uint32_t __cdecl code_at(uint32_t x, uint32_t y);
 void __cdecl code_set(int x, int y, int code);
 void __cdecl synch_bit(int x, int y, int faction_id);
 int __cdecl minerals_at(int x, int y);
@@ -472,7 +463,56 @@ int __cdecl zoc_any(int x, int y, int faction_id);
 int __cdecl zoc_veh(int x, int y, int faction_id);
 int __cdecl zoc_sea(int x, int y, int faction_id);
 int __cdecl zoc_move(int x, int y, int faction_id);
-int __cdecl cursor_dist(int x_point_a, int y_point_a, int x_point_b, int y_point_b);
 int __cdecl mandate_color(int mandate);
 int __cdecl mandate_color_redirect(int mandate);
 uint32_t *const MandateColors = (uint32_t *)0x008C6DE4;
+
+// INLINE: the image has no temp_at - it open-codes what this names.
+inline uint32_t __cdecl temp_at(uint32_t x, uint32_t y) {
+    return map_loc(x, y)->climate & 7;
+}
+
+// INLINE: the image has no climate_at - it open-codes what this names.
+inline uint32_t __cdecl climate_at(uint32_t x, uint32_t y) {
+    return map_loc(x, y)->climate & (RAINFALL_RAINY | RAINFALL_MOIST);
+}
+
+// INLINE: the image has no altitude_at - it open-codes what this names.
+inline int __cdecl altitude_at(uint32_t x, uint32_t y) {
+    return map_loc(x, y)->climate & 0xE0;
+}
+
+// INLINE: the image has no owner_at - it open-codes what this names.
+inline uint32_t __cdecl owner_at(uint32_t x, uint32_t y) {
+    return map_loc(x, y)->val2 & 0xF;
+}
+
+// INLINE: the image has no using_at - it open-codes what this names.
+inline uint32_t __cdecl using_at(uint32_t x, uint32_t y) {
+    return map_loc(x, y)->val3 & 7;
+}
+
+// INLINE: the image has no lock_at - it open-codes what this names.
+inline uint32_t __cdecl lock_at(uint32_t x, uint32_t y) {
+    return (map_loc(x, y)->val3 >> 3) & 7;
+}
+
+// INLINE: the image has no rocky_at - it open-codes what this names.
+inline uint32_t __cdecl rocky_at(uint32_t x, uint32_t y) {
+    return map_loc(x, y)->val3 & 0xC0;
+}
+
+// INLINE: the image has no bit2_at - it open-codes what this names.
+inline uint32_t __cdecl bit2_at(uint32_t x, uint32_t y) {
+    return map_loc(x, y)->bit2;
+}
+
+// INLINE: the image has no code_at - it open-codes what this names.
+inline uint32_t __cdecl code_at(uint32_t x, uint32_t y) {
+    return map_loc(x, y)->bit2 >> 24;
+}
+
+// INLINE: the image has no cursor_dist - it open-codes what this names.
+inline int __cdecl cursor_dist(int x_point_a, int y_point_a, int x_point_b, int y_point_b) {
+    return (x_dist(x_point_a, x_point_b) + abs(y_point_a - y_point_b)) / 2;
+}

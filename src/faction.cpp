@@ -62,25 +62,7 @@ BOOL __cdecl is_alien_faction(uint32_t faction_id) {
     return ExpansionEnabled && (Players[faction_id].rule_flags & RFLAG_ALIEN);
 }
 
-/*
-Purpose: Determine if the specified faction is controlled by a human player or computer AI.
-Original Offset: n/a
-Return Value: Is faction a human? true/false
-Status: Complete
-*/
-BOOL __cdecl is_human(uint32_t faction_id) {
-    return FactionsStatus[0] & (1 << faction_id);
-}
 
-/*
-Purpose: Determine if the specified faction is alive or whether they've been eliminated.
-Original Offset: n/a
-Return Value: Is faction alive? true/false
-Status: Complete
-*/
-BOOL __cdecl is_alive(uint32_t faction_id) {
-    return FactionsStatus[1] & (1 << faction_id);
-}
 
 /*
 Purpose: Calculate the base amount of talents and drones for the specified faction.
