@@ -1381,12 +1381,14 @@ BasePop::BasePop() {
 // `DDInit::init` (0x00635510) is promoted into win.cpp. Its two callees
 // that are still unrecovered stay here as forwarders:
 
-// ?report_error@DDInit@@... at 0x00635870 - the DDERR_* -> message-box
-// switch `init` calls on failure. src/unrecovered/00635870.cpp has a
-// RULED-OUT transcription; still unrecovered.
-int DDInit::report_error(int hr) {
-    typedef int(__fastcall *pending)(DDInit *, void *, int);
-    return PENDING_BODY(0x00635870, pending)(this, nullptr, hr);
+// 0x00628F30, what `DDInit::report_error` tails into once its popup is
+// dismissed. 432 bytes of GetDriveTypeA/FindFirstFileA/LoadLibraryA against
+// fixed-slot pointers - the install-media check - with two callers and no
+// recovery yet. The name describes the body; the catalogue only has
+// `sub_628f30`.
+int __cdecl cd_check() {
+    typedef int(__cdecl *pending)();
+    return PENDING_BODY(0x00628F30, pending)();
 }
 
 
