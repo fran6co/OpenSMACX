@@ -55,6 +55,11 @@ COLLECTING A WORKTREE'S WORK (for whoever hands one out)
 - From the WORKTREE: `git diff -- src/ > patch`. From the ROOT:
   `git apply --3way patch`. Check `git branch --show-current` before any git
   write - a `cd` into a worktree persists across commands.
+- NEVER USE `git stash`. It is per-REPOSITORY, not per-worktree: every worktree
+  pushes onto ONE shared stack, so parallel agents pop each other's work. Eight
+  stray entries survived one Workflow run, three of them titled "RECOVERED by
+  ... diff popped by mistake (shared stash stack)". Park work in a patch file
+  instead - `git diff -- src/ > /tmp/mine.patch` is worktree-local.
 - NEVER PIPE `git apply` INTO `head`. It prints "Applied patch to 'x' cleanly"
   for every file BEFORE it writes them; `head` closes the pipe, SIGPIPE kills
   git between the message and the write, and you get a success report over a
