@@ -33,8 +33,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from decomp import read
-from decomp.asm import (build_command, build_inputs, compile_unit,
-                        original_asm, shared_spans, span_refusal, subject_asm)
+from decomp.asm import (build_command, build_inputs, call_symbols,
+                        compile_unit, original_asm, shared_spans,
+                        span_refusal, subject_asm)
 from decomp.calls import call_sites
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -70,8 +71,16 @@ def _one(job: tuple) -> list[tuple]:
         # addresses, and the useful statement is about how many.
         theirs, mine = _targets(image), _targets(here)
         if sum(theirs.values()) != sum(mine.values()):
+            # WHICH ONES, on the tree's side. The object's call target is a
+            # relocation, so the SYMBOL is the only thing that names it - and
+            # "you call `vector_dist` and the image does not" is the sentence
+            # worth printing.
+            try:
+                calling = call_symbols(obj, record.name, record.symbol)
+            except Exception:               # noqa: BLE001 - names are a bonus
+                calling = []
             out.append((record, sum(theirs.values()), sum(mine.values()),
-                        sorted(theirs)))
+                        sorted(theirs), calling))
     return out
 
 
@@ -108,8 +117,8 @@ if __name__ == "__main__":
 
     rows = [row for batch in batches for row in batch]
     rows.sort(key=lambda row: (-abs(row[1] - row[2]), row[0].address))
-    for record, theirs, mine, targets in (rows if "--all" in sys.argv
-                                          else rows[:40]):
+    for record, theirs, mine, targets, calling in (rows if "--all" in sys.argv
+                                                   else rows[:40]):
         where = "MORE" if mine > theirs else "FEWER"
         names = ", ".join(named.get(t, f"0x{t:08X}") or f"0x{t:08X}"
                           for t in targets[:4])
@@ -118,5 +127,8 @@ if __name__ == "__main__":
         print(f"      {record.path.name:22s} {record.name}")
         if names:
             print(f"      image calls: {names}")
+        if calling and mine > theirs:
+            extra = ", ".join(sorted(set(calling))[:5])
+            print(f"      this tree calls: {extra}")
     print(f"{len(rows):,} body(s) disagree with the image about how many "
           f"calls they make")

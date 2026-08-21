@@ -200,6 +200,53 @@ def _operand_kinds(instruction) -> tuple:
     return tuple(kinds)
 
 
+def call_symbols(obj: bytes, symbol: str, emitted: str = "") -> list[str]:
+    """The symbols a body's REL32 relocations name - what it CALLS.
+
+    The object side of a call is a relocation, not an address: the linker
+    writes the target. So "which helper is this body calling" is answerable
+    only from the relocation's symbol, and that is exactly the question when
+    the image makes fewer calls than this tree does.
+
+    Names are returned as the compiler emits them, in the order the call sites
+    appear. A duplicate means the body calls it more than once.
+    """
+    _machine, n_sections, _ts, sym_ptr, n_syms = \
+        struct.unpack_from("<HHIII", obj, 0)
+    str_ptr = sym_ptr + n_syms * 18
+
+    def name_of(index: int) -> str:
+        off = sym_ptr + index * 18
+        field = obj[off:off + 8]
+        if field[:4] == b"\x00\x00\x00\x00":
+            (at,) = struct.unpack("<I", field[4:])
+            end = obj.index(b"\x00", str_ptr + at)
+            return obj[str_ptr + at:end].decode()
+        return field.rstrip(b"\x00").decode()
+
+    wanted = emitted or symbol
+    section = None
+    for entry, value, index in text_symbols(obj):
+        if entry in (wanted, "_" + wanted):
+            section, start = index, value
+            break
+    if section is None:
+        return []
+    off = 20 + section * 40
+    raw_size, _raw_ptr = struct.unpack_from("<II", obj, off + 16)
+    reloc_ptr, = struct.unpack_from("<I", obj, off + 24)
+    n_relocs, = struct.unpack_from("<H", obj, off + 32)
+    out = []
+    for index in range(n_relocs):
+        at = reloc_ptr + index * 10
+        va, symbol_index, kind = struct.unpack_from("<IIH", obj, at)
+        if kind != 0x14:                 # REL32: a call or a near jump
+            continue
+        if start <= va < raw_size:
+            out.append(name_of(symbol_index))
+    return out
+
+
 def allocation_only(original: Listing, compiled: Listing) -> str:
     """"" if the two differ ONLY in which registers hold what, else why not.
 
