@@ -11,6 +11,15 @@ seam because there was nothing to call.
 
     uv run tools/promotable.py            # only those the compiled tree CALLS
     uv run tools/promotable.py --all      # every artifact-only byte-exact body
+    uv run tools/promotable.py --unmarked # bodies already IN the tree, unclaimed
+
+THREE SHAPES, and `--unmarked` is much the cheapest. Some of these bodies are
+already DEFINED in product source and simply carry no `// ORIGINAL:` marker, so
+the catalogue knows them only through the artifact - `Time::init_class` had been
+correct in `time.cpp` all along. Those are not promotions, they are missing
+claims on finished work: read the true span with `osmx show`, get the emitted
+symbol (the catalogued name is often `QAA`, a non-static member, where the tree
+emits `SA`), write the marker, and `osmx record` it.
 
 RANKED BY WHETHER IT MATTERS. An artifact body some compiled body CALLS is worth
 promoting now: it removes a `pending_bodies.cpp` forwarder, turns an indirect
@@ -58,6 +67,39 @@ if __name__ == "__main__":
                 called.update(int(x, 16)
                               for x in re.findall(r"0x[0-9A-Fa-f]{8}", line))
 
+    # Bodies whose function is already DEFINED in product source. Comments are
+    # blanked first so a mention in prose does not read as a definition.
+    def blanked(text: str) -> str:
+        text = re.sub(r"/\*.*?\*/", lambda m: " " * len(m.group(0)), text,
+                      flags=re.S)
+        return re.sub(r"//[^\n]*", "", text)
+
+    product_text = "\n".join(
+        blanked(p.read_text(errors="replace"))
+        for p in sorted((REPO_ROOT / "src").glob("*.cpp")))
+
+    def cpp_name(mangled: str | None) -> str | None:
+        found = re.match(r"\?(\w+)@(\w+)@@", mangled or "")
+        if found:
+            return f"{found.group(2)}::{found.group(1)}"
+        found = re.match(r"\?(\w+)@@", mangled or "")
+        return found.group(1) if found else None
+
+    unmarked = {}
+    for address, record in orphan.items():
+        name = cpp_name(record.name)
+        if name and re.search(rf"\b{re.escape(name)}\s*\(", product_text):
+            unmarked[address] = name
+
+    if "--unmarked" in sys.argv:
+        for address in sorted(unmarked):
+            record = orphan[address]
+            print(f"  0x{address:08X}  {record.size or 0:6,}b  "
+                  f"{unmarked[address]}")
+        print(f"\n{len(unmarked):,} byte-exact bodies are ALREADY DEFINED in "
+              f"product source and merely unmarked")
+        sys.exit(0)
+
     wanted = sorted(a for a in orphan if a in called)
     rest = sorted(a for a in orphan if a not in called)
     show = wanted + (rest if "--all" in sys.argv else [])
@@ -69,6 +111,8 @@ if __name__ == "__main__":
               f"{record.path.parent.name}/{record.path.name:20s} {record.name}")
     print(f"\n{len(orphan):,} byte-exact bodies exist only in an artifact; "
           f"{len(wanted):,} of them are CALLED by code the build compiles")
+    print(f"{len(unmarked):,} of the {len(orphan):,} are already DEFINED in "
+          f"product source and merely unmarked (--unmarked lists them)")
     if rest and "--all" not in sys.argv:
         print(f"{len(rest):,} more have no caller in the compiled tree "
               f"(--all lists them)")
