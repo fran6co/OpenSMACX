@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "original_seam.h"
 #include "editgroup.h"
+#include "editbox.h"
 
 func_edit_box_set_text EditBoxOriginalSetText =
     original_method<func_edit_box_set_text>(0x006151E0);
@@ -62,7 +63,7 @@ char *EditGroup::get_text(int index) {
 
 /*
 Purpose: Set one box's text, doing nothing when that box is absent.
-// ORIGINAL: 0x00612040 ?set_text@EditGroup@@QAEXPADH@Z 0x00612040-0x00612059
+// ORIGINAL: 0x00612040 ?set_text@EditGroup@@QAEXPADH@Z 0x00612040-0x00612059 BYTE_EXACT
 // size      25 bytes
 // prototype void (__thiscall ?set_text@EditGroup@@QAEXPADH@Z)(EditGroup* this, int8*, int)
 // callers   0   call targets   1
@@ -75,7 +76,8 @@ Status: Complete
 void EditGroup::set_text(char *text, int index) {
     void *const box = boxes_[index];
     if (box) {
-        (ORIGINAL(box)->*EditBoxOriginalSetText)(text);
+        // A NAMED METHOD, not the seam: the image emits `call rel32` here.
+        reinterpret_cast<EditBox *>(box)->EditBox::set_text(text);
     }
 }
 

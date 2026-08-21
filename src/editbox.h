@@ -42,6 +42,11 @@ class EditBox {
   // needs a `call rel32`.
   ~EditBox();
 
+  // 0x006151E0, a pending_bodies forwarder. `EditGroup::set_text` reached it
+  // through a `func_edit_box_set_text` pointer-to-member seam, which emits
+  // `call dword ptr [...]` where the image emits `call rel32`.
+  void set_text(char *text);
+
  public:
   uint8_t graphicWin_[0xA14];  // 0x0, GraphicWin-shaped base storage
 
