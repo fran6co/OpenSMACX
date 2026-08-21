@@ -208,7 +208,7 @@ int __fastcall wave_device_stop_redirect(Wave_Device *self, void *) {
 
 /*
 Purpose: Ask the wrapped device to suspend, through its vtable slot 0x48.
-// ORIGINAL: 0x004C4FC0 ?suspend@Wave_Device@@QAEXXZ 0x004C4FC0-0x004C4FCD
+// ORIGINAL: 0x004C4FC0 ?suspend@Wave_Device@@QAEXXZ 0x004C4FC0-0x004C4FCD BYTE_EXACT
 // size      13 bytes
 // prototype void (__thiscall ?suspend@Wave_Device@@QAEXXZ)(Wave_Device* this)
 // callers   1   call targets   0
@@ -219,12 +219,17 @@ Return Value: n/a
 Status: Complete
 */
 void Wave_Device::suspend() {
-    dispatch_wrapped_device(this, 0x48);
+    void *device = device_14_;
+    if (device) {
+        uint8_t *vtable = *reinterpret_cast<uint8_t **>(device);
+        device_vfn fn = *reinterpret_cast<device_vfn *>(vtable + 0x48);
+        (ORIGINAL(device)->*fn)();
+    }
 }
 
 /*
 Purpose: Ask the wrapped device to restart, through its vtable slot 0x4C.
-// ORIGINAL: 0x004C4FD0 ?restart@Wave_Device@@QAEXXZ 0x004C4FD0-0x004C4FDD
+// ORIGINAL: 0x004C4FD0 ?restart@Wave_Device@@QAEXXZ 0x004C4FD0-0x004C4FDD BYTE_EXACT
 // size      13 bytes
 // prototype void (__thiscall ?restart@Wave_Device@@QAEXXZ)(Wave_Device* this)
 // callers   1   call targets   0
@@ -235,7 +240,12 @@ Return Value: n/a
 Status: Complete
 */
 void Wave_Device::restart() {
-    dispatch_wrapped_device(this, 0x4C);
+    void *device = device_14_;
+    if (device) {
+        uint8_t *vtable = *reinterpret_cast<uint8_t **>(device);
+        device_vfn fn = *reinterpret_cast<device_vfn *>(vtable + 0x4C);
+        (ORIGINAL(device)->*fn)();
+    }
 }
 
 /*
@@ -545,7 +555,7 @@ Purpose: Put a wave into one of the sixteen groups. The list-insert helper
          threads it through the group's node list, and the wave's own group
          slot at 0x68 records the group AFTER the insert - the original
          writes the field last, so the helper still sees the old slot.
-// ORIGINAL: 0x004C5240 ?add_to_group@Wave_Device@@QAEHIPAUWave@@@Z 0x004C5240-0x004C5277
+// ORIGINAL: 0x004C5240 ?add_to_group@Wave_Device@@QAEHIPAUWave@@@Z 0x004C5240-0x004C5277 BYTE_EXACT
 // symbol    ?add_to_group@Wave_Device@@QAEHIPAVWave@@@Z
 // size      55 bytes
 // prototype int (__thiscall ?add_to_group@Wave_Device@@QAEHIPAUWave@@@Z)(Wave_Device* this, unsigned int, Wave*)
@@ -1386,7 +1396,7 @@ Purpose: Initialise the device stack: the Wave_Device's OWN virtual slot 0
          offset zero), then the wrapped device initialises through its slot
          0xC with both arguments, and a failure there runs the Wave_Device's
          own virtual slot 4 before the error propagates.
-// ORIGINAL: 0x004C4F40 ?init@Wave_Device@@QAEHPAXK@Z 0x004C4F40-0x004C4F7D
+// ORIGINAL: 0x004C4F40 ?init@Wave_Device@@QAEHPAXK@Z 0x004C4F40-0x004C4F7D BYTE_EXACT
 // size      61 bytes
 // prototype int (__thiscall ?init@Wave_Device@@QAEHPAXK@Z)(Wave_Device* this, void*, unsigned int)
 // callers   1   call targets   0
