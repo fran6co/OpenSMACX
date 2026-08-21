@@ -83,6 +83,7 @@
 #include "socialwin.h"
 #include "editbox.h"
 #include "wave.h"
+#include "wave_device.h"
 
 /*
  * THE FRONTIER.
@@ -1009,4 +1010,11 @@ int Cursor::init_cursor_class() {
 int __cdecl trig_init() {
     typedef int(__cdecl *pending)();
     return PENDING_BODY(0x0063B940, pending)();
+}
+
+// ?insert@WaveGroupList@@ at 0x004C5BF0 - the wave group list-insert helper
+// Wave_Device::add_to_group threads new waves through.
+void WaveGroupList::insert(Wave *wave) {
+    typedef void(__fastcall *pending)(WaveGroupList *, void *, Wave *);
+    PENDING_BODY(0x004C5BF0, pending)(this, nullptr, wave);
 }

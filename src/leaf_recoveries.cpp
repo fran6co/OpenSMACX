@@ -949,7 +949,7 @@ Purpose: Report a node's neighbours through two optional out-parameters.
          out-parameter points at `[ecx]` itself, the second read sees the value
          just written, and a cached version would not.
 
-// ORIGINAL: 0x0063E7F0 sub_63e7f0 0x0063E7F0-0x0063E81C
+// ORIGINAL: 0x0063E7F0 sub_63e7f0 0x0063E7F0-0x0063E81C SEMANTIC
 // symbol    ?leaf_0063e7f0_redirect@@YIIPAX0PAI1@Z
 // size      44 bytes
 // prototype 
@@ -1155,7 +1155,7 @@ Purpose: Swap two pairs of fields in the object this one points at.
          each swap, exactly as the original does, so a swap that wrote over
          `[ecx]` would be seen.
 
-// ORIGINAL: 0x005CBBC0 sub_5cbbc0 0x005CBBC0-0x005CBBF5
+// ORIGINAL: 0x005CBBC0 sub_5cbbc0 0x005CBBC0-0x005CBBF5 SEMANTIC
 // symbol    ?leaf_005cbbc0_redirect@@YIXPAX0@Z
 // size      53 bytes
 // prototype 

@@ -54,9 +54,7 @@ Original Offset: n/a
 Return Value: Is faction a Progenitor? true/false
 Status: Complete
 */
-BOOL __cdecl is_alien_faction(uint32_t faction_id) {
-    return ExpansionEnabled && (Players[faction_id].rule_flags & RFLAG_ALIEN);
-}
+// BODY IN faction.h: six bodies call it where the image calls nothing.
 
 
 
@@ -183,6 +181,12 @@ BOOL __cdecl great_beelzebub(int faction_id, BOOL is_aggressive) {
 Purpose: Determine if the specified faction is considered a threat based on the game state and 
          ranking.
 // ORIGINAL: 0x00539C00 ?great_satan@@YAHHH@Z 0x00539C00-0x00539D3B
+// LEVER: the image never calls great_beelzebub - its whole body is open-coded
+//        here and the register holding GameRules/diff_level is reused past
+//        the inline boundary. Wrote it inlined (is_minor_threat local) instead
+//        of calling great_beelzebub(); moved from 1/113 (wrong shape, esp-frame,
+//        real call) to 9/113 agreeing. RULED-OUT: open-coding is_human's bit
+//        test directly instead of the call did not move the tier further.
 // size      315 bytes
 // prototype 
 // callers   20   call targets   2
@@ -193,7 +197,19 @@ Return Value: Is the specified faction a threat? true/false
 Status: Complete
 */
 BOOL __cdecl great_satan(int faction_id, BOOL is_aggressive) {
-    if (great_beelzebub(faction_id, is_aggressive)) {
+    BOOL is_minor_threat = false;
+    if (is_human(faction_id) && FactionRankings[7] == faction_id) {
+        uint32_t bases_threat = (TurnCurrentNum + 25) / 50;
+        if (bases_threat < 4) {
+            bases_threat = 4;
+        }
+        if (PlayersData[faction_id].current_num_bases > bases_threat
+            && (PlayersData[faction_id].diff_level > DLVL_SPECIALIST
+                || GameRules & RULES_INTENSE_RIVALRY || is_aggressive)) {
+            is_minor_threat = true;
+        }
+    }
+    if (is_minor_threat) {
         BOOL has_intense_riv = (GameRules & RULES_INTENSE_RIVALRY);
         if (TurnCurrentNum <= ((has_intense_riv ? 0 
             : (DLVL_TRANSCEND - PlayersData[faction_id].diff_level) * 50) + 100)) {
@@ -265,6 +281,15 @@ uint32_t __cdecl aah_ooga(int faction_id, int pact_faction_id) {
 /*
 Purpose: Check if the human controlled player is nearing the endgame.
 // ORIGINAL: 0x00539E40 ?climactic_battle@@YAHXZ 0x00539E40-0x00539EE4
+// LEVER: the image never calls ascending(0) - it is a real 4-caller function
+//        elsewhere, but here it inlines to `base_project(SP_VOICE_OF_PLANET)
+//        != SP_Unbuilt` (base_project is already MEASURED inline in base.h).
+//        Swapping the call for that expression moved 14/56 -> 16/56 agreeing.
+//        Remaining divergence starts at instruction 0: the image loads
+//        FactionsStatus[0]/TurnCurrentNum and walks PlayersData[1].. by a raw
+//        incrementing pointer through the first loop; this tree's compile
+//        still indexes by `i` and schedules differently from instruction 0.
+//        Plateaus here after the ascending() fix; not chased further.
 // size      164 bytes
 // prototype 
 // callers   7   call targets   2
@@ -284,7 +309,7 @@ BOOL __cdecl climactic_battle() {
         return true; // TODO: Revisit in future once more end game code is complete. This may have
                      //       been effectively disabled as a design decision rather than a bug.
     }
-    if (ascending(0)) {
+    if (base_project(SP_VOICE_OF_PLANET) != SP_Unbuilt) {
         for (uint32_t i = 1; i < MaxPlayerNum; i++) {
             if (is_human(i) && (has_tech(Facility[FAC_PSI_GATE].preq_tech, i)
                 || has_tech(Facility[FAC_VOICE_OF_PLANET].preq_tech, i))) {
@@ -349,6 +374,15 @@ BOOL __cdecl at_climax(int faction_id) {
 /*
 Purpose: Add friction between the two specified factions.
 // ORIGINAL: 0x0053A030 ?cause_friction@@YAXHHH@Z 0x0053A030-0x0053A08D
+// RULED-OUT: direct double array-index instead of a *diplo_friction pointer;
+//            a `new_friction` local holding range()'s result before the store.
+//            Same shape as set_treaty's divergence: the image computes the
+//            PlayersData[faction_id].diplo_friction[faction_id_with] address
+//            via an explicit multiply reused for both the load and the store
+//            (`mov ecx,[edx*4+base]; ...; mov [edx*4+base],ecx`), while this
+//            tree's compile folds the *4 into the addressing mode on the
+//            store and recomputes it with `lea`/`mov` split differently.
+//            Plateaus at 13/33 agreeing across tried flag sets.
 // size      93 bytes
 // prototype void (__cdecl ?cause_friction@@YAXHHH@Z)(int factionID, int factionIDWith, int friction)
 // callers   8   call targets   0
@@ -621,6 +655,12 @@ void __cdecl scan_prototypes(int faction_id, int faction_id_with) {
 /*
 Purpose: Set or unset the diplomatic treaty for the specified faction with another faction.
 // ORIGINAL: 0x0055BB30 ?set_treaty@@YAXHHHH@Z 0x0055BB30-0x0055BB98
+// RULED-OUT: pointer to diplo_treaties field (shared or per-branch); local index var;
+//            unsigned cast on index; explicit RMW temp; if-condition hoisted before the |=.
+//            Set branch: image computes the index via explicit `shl eax,2` then reuses
+//            the plain [eax+base] address for both the load and the store; this tree's
+//            compile always folds the *4 into the addressing mode instead. Plateaus at
+//            15/36 agreeing across all tried flag sets.
 // size      104 bytes
 // prototype 
 // callers   24   call targets   0
@@ -1084,6 +1124,15 @@ int __cdecl guard_check(int faction_id, int region) {
 /*
 Purpose: Add the specific goal to the faction's goals for the specified tile. Optional base param.
 // ORIGINAL: 0x00579A30 ?add_goal@@YAXHHHHHH@Z 0x00579A30-0x00579B64
+// LEVER: declaring `priority_search`/`goal_id` before the first loop (matching
+//        their eventual use right after it, not right before the second loop)
+//        moved 5/104 -> 11/104 agreeing. RULED-OUT: rewriting the `Goal&`
+//        aliases as direct PlayersData[faction_id].goals[i].field accesses
+//        made it worse (1/104) - the reference form is closer to the image.
+//        Remaining gap: the image needs only ebx/esi/edi as callee-saved
+//        registers and reuses the (dead, post-use) faction_id parameter slot
+//        at [ebp+8] as a spill for priority_search; this tree's compile still
+//        pushes an extra ecx for a fourth save. Not chased further.
 // size      308 bytes
 // prototype void (__cdecl ?add_goal@@YAXHHHHHH@Z)(int factionID, int type, int priority, int xCoord, int yCoord, int baseID)
 // callers   12   call targets   0
@@ -1097,6 +1146,8 @@ void __cdecl add_goal(int faction_id, int type, int priority, int x, int y, int 
     if (!on_map(x, y)) {
         return;
     }
+    int priority_search = 0;
+    int goal_id = -1;
     for (int i = 0; i < MaxGoalsNum; i++) {
         Goal &goals = PlayersData[faction_id].goals[i];
         if (goals.x == x && goals.y == y && goals.type == type) {
@@ -1106,8 +1157,6 @@ void __cdecl add_goal(int faction_id, int type, int priority, int x, int y, int 
             return;
         }
     }
-    int priority_search = 0;
-    int goal_id = -1;
     for (i = 0; i < MaxGoalsNum; i++) {
         Goal &goals = PlayersData[faction_id].goals[i];
         int type_cmp = goals.type;
@@ -1136,6 +1185,14 @@ void __cdecl add_goal(int faction_id, int type, int priority, int x, int y, int 
 /*
 Purpose: Add the specific site to the faction's site goals for the specified tile.
 // ORIGINAL: 0x00579B70 ?add_site@@YAXHHHHH@Z 0x00579B70-0x00579CB5
+// RULED-OUT: hoisting priority_search/site_id before the first loop (the lever
+//            that helped add_goal) made this WORSE (7/116, two spilled locals
+//            instead of one); reverted. Separate loop counters (i for the
+//            first loop, j for the second) instead of reusing `i` made no
+//            difference. Image reserves exactly one stack slot (`push ecx` ->
+//            [ebp-4], site_id) and keeps priority_search live only in a
+//            register across the second loop; this tree's compile reserves
+//            two (`sub esp,8`). Plateaus at 17/116 agreeing.
 // size      325 bytes
 // prototype void (__cdecl ?add_site@@YAXHHHHH@Z)(int factionID, int type, int priority, int xCoord, int yCoord)
 // callers   4   call targets   2
@@ -1210,6 +1267,13 @@ BOOL __cdecl at_goal(int faction_id, int type, int x, int y) {
 /*
 Purpose: Check if a site exists at the tile for the specified faction and type.
 // ORIGINAL: 0x00579D20 ?at_site@@YAHHHHH@Z 0x00579D20-0x00579D76
+// RULED-OUT: a `Goal *sites` pointer hoisted out of the loop (worse, 17/40);
+//            a `while` loop instead of `for` (identical, 22/40). The image
+//            zeroes the loop counter (ecx) LAST, right before the loop body,
+//            after using ecx to build the PlayersData[faction_id].sites base
+//            address; this tree's compile zeroes it FIRST and uses edx for
+//            the address instead, needing one more register. Field compare
+//            order (x, y, type) already matches. Plateaus at 22/40 agreeing.
 // size      86 bytes
 // prototype int (__cdecl ?at_site@@YAHHHHH@Z)(int factionID, int type, int xCoord, int yCoord)
 // callers   2   call targets   0
@@ -1262,7 +1326,7 @@ void __cdecl wipe_goals(int faction_id) {
 
 /*
 Purpose: Initialize all goals for the specified faction.
-// ORIGINAL: 0x00579E00 ?init_goals@@YAXH@Z 0x00579E00-0x00579E66
+// ORIGINAL: 0x00579E00 ?init_goals@@YAXH@Z 0x00579E00-0x00579E66 SEMANTIC
 // size      102 bytes
 // prototype void (__cdecl ?init_goals@@YAXH@Z)(int factionID)
 // callers   1   call targets   0
@@ -1296,6 +1360,16 @@ void __cdecl init_goals(int faction_id) {
 /*
 Purpose: Delete sites of the specified type within proximity of the tile along with related goals.
 // ORIGINAL: 0x00579E70 ?del_site@@YAXHHHHH@Z 0x00579E70-0x00579F73
+// LEVER: the image never calls vector_dist - `calls 0x00644F3A` is abs() alone,
+//        called 4 times. vector_dist(x,y,sites.x,sites.y) is fully open-coded
+//        as x_dist(x,sites.x) [inline, one abs inside] then abs(y-sites.y),
+//        then the 2-arg vector_dist body re-abs's both (redundant but what the
+//        image does) and runs the largest/smallest formula. Writing that out
+//        instead of calling vector_dist() moved 9/95 -> 36/95 agreeing.
+//        RULED-OUT: testing sites.type==type via a plain array index before
+//        taking the Goal& reference - no change. Remaining divergence is a
+//        `lea` vs `add`/offset-by-4 choice for the sites[i] base pointer used
+//        for the type field read; not chased further.
 // size      259 bytes
 // prototype void (__cdecl ?del_site@@YAXHHHHH@Z)(int factionID, int type, int xCoord, int yCoord, int proximity)
 // callers   5   call targets   1
@@ -1309,7 +1383,19 @@ void __cdecl del_site(int faction_id, int type, int x, int y, int proximity) {
     for (int i = 0; i < MaxSitesNum; i++) {
         Goal &sites = PlayersData[faction_id].sites[i];
         if (sites.type == type) {
-            int dist = vector_dist(x, y, sites.x, sites.y);
+            int dx = x_dist(x, sites.x);
+            int dy = abs(y - sites.y);
+            int abs_dx = abs(dx);
+            int abs_dy = abs(dy);
+            int largest = abs_dx;
+            if (abs_dx <= abs_dy) {
+                largest = abs_dy;
+            }
+            int smallest = abs_dx;
+            if (abs_dx >= abs_dy) {
+                smallest = abs_dy;
+            }
+            int dist = largest - (((abs_dy + abs_dx) / 2) - smallest + 1) / 2;
             if (dist <= proximity) {
                 sites.type = AI_GOAL_UNUSED;
                 sites.priority = 0;

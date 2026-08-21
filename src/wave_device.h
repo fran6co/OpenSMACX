@@ -38,6 +38,9 @@ struct WaveGroupList {
   WaveGroupNode *tail;
   WaveGroupNode *cursor;
   uint32_t count;
+
+  // 0x004C5BF0, a pending_bodies forwarder: not yet source-owned.
+  void insert(Wave *wave);
 };
 
 // One 24-byte group record; the device holds sixteen of them from 0x24.
@@ -125,11 +128,6 @@ class Wave_Device {
 
 static_assert(sizeof(WaveControlGroup) == 0x18, "group records stride 24 bytes");
 
-// The list-insert helper add_to_group threads new waves through: not yet
-// source-owned, so it stays a rebindable dependency. Its receiver is the
-// address of the group's head field.
-typedef void (OriginalObject::*func_wave_group_insert)(Wave *wave);
-extern func_wave_group_insert WaveDeviceGroupInsert;
 
 // The device factory/destroy hooks: two more function-pointer slots beside
 // the creation hook the waves use, consulted by the device lifecycle. The

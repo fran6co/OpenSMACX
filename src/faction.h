@@ -16,6 +16,8 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+
+#include "game.h"  // ExpansionEnabled, which is_alien_faction inlines
 #include "sprite.h"
 #include "stdafx.h"
 
@@ -604,7 +606,6 @@ extern int BestProtoForTrade;
 extern int BestProtoToMention;
 extern int PopupDialogFactionID;
 
-BOOL __cdecl is_alien_faction(uint32_t faction_id);
 void __cdecl psych_check(int faction_id, int *drones, int *talents);
 // `int`, not `uint32_t`, and the catalogue is the authority: the original
 // exports `?has_treaty@@YAHHHH@Z`, where each `H` is an int. The `uint32_t`
@@ -674,4 +675,8 @@ inline BOOL __cdecl is_human(uint32_t faction_id) {
 // INLINE: the image has no is_alive - it open-codes what this names.
 inline BOOL __cdecl is_alive(uint32_t faction_id) {
     return FactionsStatus[1] & (1 << faction_id);
+}
+
+inline BOOL __cdecl is_alien_faction(uint32_t faction_id) {
+    return ExpansionEnabled && (Players[faction_id].rule_flags & RFLAG_ALIEN);
 }
