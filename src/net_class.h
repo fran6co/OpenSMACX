@@ -45,6 +45,12 @@
   */
 class VoiceTx {
  public:
+  // 0x004C8DB0 is not recovered: a pending_bodies forwarder, because
+  // an empty inline stub emits nothing and the deleting destructor
+  // needs a `call rel32`.
+  ~VoiceTx();
+
+ public:
   uint32_t field_0_;    // 0x0
   uint32_t field_4_;    // 0x4
   uint32_t field_8_;    // 0x8

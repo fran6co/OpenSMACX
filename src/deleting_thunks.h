@@ -49,6 +49,9 @@
 #include "stringbox.h"
 #include "tutwin.h"
 #include "worldwin.h"
+#include "hypothesis_layouts.h"
+#include "editbox.h"
+#include "net_class.h"
 
 /*
  * Object-deletion thunks
@@ -81,25 +84,12 @@ typedef void (OriginalObject::*func_deleting_dtor)();
 typedef void * (OriginalObject::*func_deleting_forward)(unsigned int arg0);
 typedef void * (OriginalObject::*func_deleting_forward_nullary)();
 
-extern func_deleting_dtor AlphaSaveDtorTarget;   // 0x00408170
-extern func_deleting_dtor EditBoxDtorTarget;   // 0x00408010
-extern func_deleting_dtor FameWinDtorTarget;   // 0x0044B100
-extern func_deleting_dtor ImageButtonDtorTarget;   // 0x00625310
-extern func_deleting_dtor InterludeDtorTarget;   // 0x0045F740
-extern func_deleting_dtor MonuWinDtorTarget;   // 0x00477B10
-extern func_deleting_dtor MultiWinDtorTarget;   // 0x0047A430
-extern func_deleting_dtor PickTechDtorTarget;   // 0x00488690
 extern func_deleting_dtor PopupDtorTarget;   // 0x00406C00
-extern func_deleting_dtor PrefWinDtorTarget;   // 0x00491DF0
-extern func_deleting_dtor QuayleWinDtorTarget;   // 0x00496710
-extern func_deleting_dtor SelectPartWinDtorTarget;   // 0x0043EE10
 extern func_deleting_forward_nullary Sub004042B0Target;   // 0x004042B0
 extern func_deleting_dtor Sub004C86D0Target;   // 0x004C86D0
 extern func_deleting_forward Sub00612710Target;   // 0x00612710
 extern func_deleting_dtor Sub00633010Target;   // 0x00633010
 extern func_deleting_forward Sub006336D0Target;   // 0x006336D0
-extern func_deleting_dtor VoiceRxDtorTarget;   // 0x004C8A50
-extern func_deleting_dtor VoiceTxDtorTarget;   // 0x004C8DB0
 
 void *__fastcall scalar_delete_alpha_movie(void *self, void *,
                                            unsigned int arg0);

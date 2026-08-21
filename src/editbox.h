@@ -37,6 +37,12 @@
  */
 class EditBox {
  public:
+  // 0x00408010 is not recovered: a pending_bodies forwarder, because
+  // an empty inline stub emits nothing and the deleting destructor
+  // needs a `call rel32`.
+  ~EditBox();
+
+ public:
   uint8_t graphicWin_[0xA14];  // 0x0, GraphicWin-shaped base storage
 
   uint32_t field_A14_;  // 0xA14

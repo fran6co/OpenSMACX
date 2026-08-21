@@ -45,6 +45,7 @@
 #include "socialwin.h"
 #include "tutwin.h"
 #include "worldwin.h"
+#include "hypothesis_layouts.h"
 
 func_wave_destructor WaveOriginalDestructor =
     original_method<func_wave_destructor>(0x004C67C0);
@@ -799,7 +800,7 @@ void __cdecl destroy_ambience() {
 
 /*
 Purpose: Atexit teardown thunk for g_FAMEWIN.
-// ORIGINAL: 0x004483F0 ??__Fg_FAMEWIN@@YAXXZ 0x004483F0-0x004483FA
+// ORIGINAL: 0x004483F0 ??__Fg_FAMEWIN@@YAXXZ 0x004483F0-0x004483FA BYTE_EXACT
 // symbol    ?destroy_famewin@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -811,7 +812,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_famewin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x0074DAF8))->*FameWinDtorTarget)();
+    static_cast<FameWin *>(reinterpret_cast<void *>(0x0074DAF8))->FameWin::~FameWin();
 }
 
 /*
@@ -5814,7 +5815,7 @@ void __cdecl destroy_iface_green_right_arrow_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_MONUWIN.
-// ORIGINAL: 0x00472220 ??__Fg_MONUWIN@@YAXXZ 0x00472220-0x0047222A
+// ORIGINAL: 0x00472220 ??__Fg_MONUWIN@@YAXXZ 0x00472220-0x0047222A BYTE_EXACT
 // symbol    ?destroy_monuwin@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -5826,12 +5827,12 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_monuwin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x007F9F58))->*MonuWinDtorTarget)();
+    static_cast<MonuWin *>(reinterpret_cast<void *>(0x007F9F58))->MonuWin::~MonuWin();
 }
 
 /*
 Purpose: Atexit teardown thunk for g_MULTIWIN.
-// ORIGINAL: 0x00477E30 ??__Fg_MULTIWIN@@YAXXZ 0x00477E30-0x00477E3A
+// ORIGINAL: 0x00477E30 ??__Fg_MULTIWIN@@YAXXZ 0x00477E30-0x00477E3A BYTE_EXACT
 // symbol    ?destroy_multiwin@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -5843,7 +5844,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_multiwin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x007FD648))->*MultiWinDtorTarget)();
+    static_cast<MultiWin *>(reinterpret_cast<void *>(0x007FD648))->MultiWin::~MultiWin();
 }
 
 /*
@@ -5950,7 +5951,7 @@ void __cdecl destroy_pickwin() {
 
 /*
 Purpose: Atexit teardown thunk for g_PREFWIN.
-// ORIGINAL: 0x0048D510 ??__Fg_PREFWIN@@YAXXZ 0x0048D510-0x0048D51A
+// ORIGINAL: 0x0048D510 ??__Fg_PREFWIN@@YAXXZ 0x0048D510-0x0048D51A BYTE_EXACT
 // symbol    ?destroy_prefwin@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -5962,7 +5963,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_prefwin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x008578D8))->*PrefWinDtorTarget)();
+    static_cast<PrefWin *>(reinterpret_cast<void *>(0x008578D8))->PrefWin::~PrefWin();
 }
 
 /*
@@ -5984,7 +5985,7 @@ void __cdecl destroy_prefwin_buttongroup() {
 
 /*
 Purpose: Atexit teardown thunk for g_QUAYLEWIN.
-// ORIGINAL: 0x00495190 ??__Fg_QUAYLEWIN@@YAXXZ 0x00495190-0x0049519A
+// ORIGINAL: 0x00495190 ??__Fg_QUAYLEWIN@@YAXXZ 0x00495190-0x0049519A BYTE_EXACT
 // symbol    ?destroy_quaylewin@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -5996,7 +5997,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_quaylewin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x00872CB0))->*QuayleWinDtorTarget)();
+    static_cast<QuayleWin *>(reinterpret_cast<void *>(0x00872CB0))->QuayleWin::~QuayleWin();
 }
 
 /*
