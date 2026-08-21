@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "heap.h"
 #include "general.h"
+#include "strings.h"  // StringTemp, say_num() - Heap::get()'s error message idiom
 
 /*
 // ORIGINAL: 0x005D4560 ??0Heap@@QAE@XZ 0x005D4560-0x005D4573 BYTE_EXACT
@@ -111,6 +112,18 @@ BOOL Heap::init(size_t req_size) {
 Purpose: Get the requested memory size. If there currently isn't enough memory to meet the request, 
          allocate additional memory in blocks of 1024 bytes until request is met.
 // ORIGINAL: 0x005D4680 ?get@Heap@@QAEPAXH@Z 0x005D4680-0x005D47CB
+// LEVER: call_diff showed FEWER (3 vs 15) - this body called sprintf_s,
+//        MessageBoxA and exit only. `osmx calls --all` on the image gives
+//        realloc, 7x strcat, 3x add_lf, 3x _itoa, MessageBoxA, exit, and
+//        `mov byte ptr [0x9b86a0], 0` - the same strcat/_itoa-into-a-GLOBAL
+//        idiom as name_base() (base.cpp) and say_num() (strings.h), not
+//        sprintf_s into a stack local. Rewrote to strcat/add_lf/say_num()
+//        into StringTemp (0x9B86A0, strings.h). Best similarity 0.896 ->
+//        0.943 (/O2 /Gy /GR- /GX) and call_diff now agrees exactly.
+// RULED-OUT: hand-inlining say_num's _itoa+strcat body at each of the three
+//        call sites instead of calling it - identical 0.943/15/104, so
+//        VC6 already folds say_num() the same way here. Reverted to the
+//        say_num() spelling as the more idiomatic match to its own lever.
 // symbol    ?get@Heap@@QAEPAXI@Z
 // size      331 bytes
 // prototype void* (__thiscall ?get@Heap@@QAEPAXH@Z)(Heap* this, int reqSize)
@@ -129,14 +142,26 @@ LPVOID Heap::get(size_t req_size) {
         }
         LPVOID new_addr = realloc(base_, base_size_ + 1024);
         if (!new_addr) {
-            char error[150]; // max size of string + three int(s) + extra padding
-            sprintf_s(error, 150,
-                "Aborting due to a heap shortage!\n"
-                "Base size: %d\n"
-                "Free size: %d\n"
-                "Requested size: %d",
-                base_size_, free_size_, req_size);
-            MessageBoxA(NULL, error, "Heap Notice!!", MB_OK);
+            // LEVER: image builds this message with strcat/say_num()/add_lf
+            // into the GLOBAL StringTemp buffer (0x9B86A0 -
+            // `mov byte ptr [0x9b86a0], 0`), not sprintf_s into a stack
+            // local - `osmx calls --all` shows realloc, then 7x strcat, 3x
+            // add_lf (general.h, appends '\n'), 3x _itoa, MessageBoxA, exit,
+            // and the disassembly's `_itoa` calls write into a stack buffer
+            // then strcat that onto StringTemp - exactly say_num()
+            // (strings.h). Same idiom as name_base() in base.cpp.
+            StringTemp[0] = 0;
+            strcat(StringTemp, "Aborting due to a heap shortage!");
+            add_lf(StringTemp);
+            strcat(StringTemp, "Base size: ");
+            say_num((int)base_size_);
+            add_lf(StringTemp);
+            strcat(StringTemp, "Free size: ");
+            say_num((int)free_size_);
+            add_lf(StringTemp);
+            strcat(StringTemp, "Requested size: ");
+            say_num((int)req_size);
+            MessageBoxA(NULL, StringTemp, "Heap Notice!!", MB_OK);
             exit(3);
         }
         base_ = new_addr;

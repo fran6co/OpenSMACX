@@ -135,6 +135,64 @@ int Path::zoc_path(int x, int y, int faction_id) {
 // calls     0x0046A550 0x00592140 0x00593510 0x0059A370 0x005BF1F0 0x005BFE90 0x005C0DB0 0x005C13B0 0x005FCB20 0x00644F3A 0x006465F0
  Return Value: TBD
  Status: WIP
+//
+// INVESTIGATION NOTE (2026-08-21), left as `return 0;` deliberately - this
+// is the tree's only remaining stub and no artifact exists anywhere for it
+// (confirmed: it was `return 0;` in the very first commit that introduced
+// Path, b152634e/dbfd210c, long before the decomp effort). 5845 bytes is
+// roughly 730 instructions; a wrong 700-instruction body would compile and
+// "look done" while being a different program, which the brief calls out
+// as worse than the honest stub. Recorded here instead, so the next pass
+// does not re-spend the same effort re-deriving these:
+//
+// CALLEES (call_diff names, all already real symbols in this tree):
+//   0x0046A550 MapWin::draw_map(int)   0x00592140 goody_at(x,y)
+//   0x00593510 hex_cost(proto_id, faction_id, x_src, y_src, x_dst, y_dst, toggle)
+//   0x0059A370 Path::zoc_path (this file, above)   0x005BF1F0 has_abil(proto_id, abil)
+//   0x005BFE90 veh_at(x,y)   0x005C0DB0 can_arty(proto_id, triad_sea_retn)
+//   0x005C13B0 speed_proto(proto_id)   0x00644F3A abs()
+//   0x006465F0 memset (ZeroMemory idiom, matches Path::init's own use)
+//
+// GLOBALS resolved by address (grep across already-recovered src/, all in
+// map.cpp/map.h/alpha.h): Rules=0x949738, MapLongitude=0x68faf0,
+// MapLongitudeBounds=0x949870, MapLatitudeBounds=0x949874, MapArea=0x949884,
+// MapIsFlat=0x94988c, map_tiles()=0x94a30c (map.h).
+//
+// STRUCTURE: the prologue is a CACHE check against this object's own
+// x_dst_/y_dst_/proto_id_/faction_id_2_/unk_ fields (path.h offsets
+// 0x18/0x1c/0x28/0x24/0x20) - if the new call's (x_dst,y_dst,proto triad,
+// unk1,faction_id) all match what is cached, and map_table_[x_src,y_src] is
+// already nonzero, it reuses the existing table instead of recomputing (a
+// path.cpp equivalent of `hex_cost`'s inlining pattern: the compiler wrote
+// this branch out at the ONE call site rather than as a helper). Otherwise
+// it memsets map_table_ back to 0 and restamps the five cache fields.
+//
+// The remaining ~85% of the body is an A*-shaped search: map_table_ is the
+// open/closed cost grid (int per tile), x_table_/y_table_ the coordinate
+// queue BasePop-style FIFO/priority arrays (path.h), walked from index1_
+// through index2_ (offsets 0xc/0x10). Each dequeued tile is expanded over
+// 8 directions using two tables at 0x0066EFBC/0x0066F440 (structurally
+// consistent with map.h's RadiusOffsetX/RadiusOffsetY by address arithmetic
+// - RadiusRange/RadiusBaseX/RadiusBaseY/RadiusOffsetX/RadiusOffsetY laid out
+// contiguously would put RadiusOffsetX exactly at 0x66efbc and RadiusOffsetY
+// exactly 0x484 (289 ints) later at 0x66f440 - NOT independently confirmed
+// by a symbol, so not renamed here on that alone).
+//
+// The costly part: an ~400-instruction "does any of my 8 neighbors satisfy
+// <bit tests on 0x96c9e0/0x96c9f8, a per-(faction,faction) table indexed
+// exactly like spying_recovery.h's SpyingStatusTable, plus hex_cost/hex
+// zoc_path/goody_at/can_arty calls>" block is NOT written once - it appears
+// at LEAST four times near-identically (0059A98A, 0059AF7E, 0059B49D,
+// 0059B80D) with small per-instance deltas, the shape this codebase
+// documents on Buffer::copy as "the image writes the same case four times ...
+// [it] repeats the whole clip/get_data/pointer-compute sequence inline"
+// rather than calling a shared helper. Reconstructing that block once with
+// confidence, then verifying it is the SAME at each of >=4 sites rather than
+// subtly different, is most of the remaining work and was not completed
+// this pass - the risk of a confidently-wrong transcription across ~700
+// instructions with a dozen never-named global tables (0x9ab88c/0x9ab892
+// proto-triad tables, 0x9a64e8/0x9a6800 faction bit tables, 0x952832/36/58
+// a per-veh or per-base struct) outweighs shipping it unverified.
 */
 int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int faction_id, int unk1,
                int unk2) {
@@ -176,15 +234,41 @@ int Path::move(int veh_id, int faction_id) {
     if ((Vehs[veh_id].state & (VSTATE_UNK_1000000 | VSTATE_UNK_200))
         == (VSTATE_UNK_1000000 | VSTATE_UNK_200)) {
         flags &= 0xBF;
-    } else {
-        uint32_t moves = veh_moves(veh_id);
-        if (moves <= Rules->move_rate_roads) {
-            flags |= 0x100;
-            if (moves <= (uint32_t)((Vehs[veh_id].proto_id != BSC_MIND_WORMS) + 1)) {
-                flags |= 0x100;
-            }
+    // LEVER: the image calls veh_moves(veh_id) (`speed(veh_id,false)` +
+    // clamp, veh.h) TWICE, not once - the disassembly's second `call speed`
+    // at 0x005C1540 has its own fresh `sub eax, moves_expended` and clamp,
+    // and it is gated behind the FIRST veh_moves() result (`jg` skips both
+    // the flags|=0x100 store AND the second call together), so a nested
+    // `else if` reproduces the image's single conditional jump instead of
+    // caching one value for both compares. The inner store is also
+    // `or ah, 0x10` (bit 12, 0x1000), not `or dh, 1` (bit 8, 0x100) again -
+    // a different bit than the outer one.
+    } else if (veh_moves(veh_id) <= Rules->move_rate_roads) {
+        flags |= 0x100;
+        if (veh_moves(veh_id) <= (uint32_t)((Vehs[veh_id].proto_id != BSC_MIND_WORMS) + 1)) {
+            flags |= 0x1000;
         }
     }
+    // STATUS: WIP past this point (0x0059BD73 in the image). Traced but not
+    // written, because it is the same duplicated-neighbour-scan shape
+    // documented on Path::find above, and reaches Path::find itself
+    // (0x0059A530 - still a stub) at 0x0059BE66:
+    //   - VehPrototypes[proto_id].weapon_id -> Weapon[weapon_id].offense_rating
+    //     (0x94ae68 = Weapon base 0x94ae60 + offsetof(offense_rating)==8);
+    //     if zero, reads a scalar at 0x009A6534 and, if non-negative,
+    //     indexes a dword table at 0x0097D044 with a stride of 77 elements
+    //     that this pass could not name - the only two addresses in this
+    //     function it could not resolve against already-recovered src/.
+    //   - VehPrototypes[proto_id].chassis_id -> Chassis[chassis_id].triad
+    //     (0x94a379 = Chassis base 0x94a330 + offsetof(triad)==0x49, stride
+    //     confirmed sizeof(RulesChassis)==0x90 via `lea eax,[eax+eax*8];
+    //     shl eax,4` == *144); triad==2 (air) skips straight past the
+    //     distance/hex_cost/Path::find block to the zoc_move call below.
+    //   - otherwise: x_dist/y_dist against the waypoint, hex_cost(),
+    //     Path::find(x_src=veh_x, y_src=veh_y, x_dst=waypoint, ...) at
+    //     0x0059BE66, then a sentinel-99999 8-direction cost scan (same
+    //     shape as Path::find's own inner loop) before calling
+    //     zoc_move(veh_x, veh_y, veh_faction_id) and veh_skip(veh_id).
     return 0;
 }
 

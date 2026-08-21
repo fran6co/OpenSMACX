@@ -1125,7 +1125,7 @@ void resume_wave(Wave *wave) {
     vtable_slot<wave_vfn>(wave, 0x8C)(wave);
 }
 
-void halt_wave(Wave *wave) {
+__forceinline void halt_wave(Wave *wave) {
     typedef void(__fastcall *wave_vfn)(void *);
     vtable_slot<wave_vfn>(wave, 0x14)(wave);
 }
@@ -1141,7 +1141,7 @@ struct WaveResumeLinks {
     char *fname;  // +0x4C
 };
 
-WaveResumeLinks *resume_links(Wave *wave) {
+__forceinline WaveResumeLinks *resume_links(Wave *wave) {
     return reinterpret_cast<WaveResumeLinks *>(
         reinterpret_cast<uint8_t *>(wave) + 0x44);
 }
@@ -1149,22 +1149,22 @@ WaveResumeLinks *resume_links(Wave *wave) {
 // The sound-side virtuals select dispatches through: the attribute word
 // (slot 0x70), the chain-next and chain-prev accessors (slots 0x64/0x68),
 // and load-by-name (slot 0x10).
-int wave_attrib(Wave *wave) {
+__forceinline int wave_attrib(Wave *wave) {
     typedef int(__fastcall *wave_query_fn)(void *);
     return vtable_slot<wave_query_fn>(wave, 0x70)(wave);
 }
 
-Wave *wave_chain_next(Wave *wave) {
+__forceinline Wave *wave_chain_next(Wave *wave) {
     typedef Wave *(__fastcall *wave_chain_fn)(void *);
     return vtable_slot<wave_chain_fn>(wave, 0x64)(wave);
 }
 
-Wave *wave_chain_prev(Wave *wave) {
+__forceinline Wave *wave_chain_prev(Wave *wave) {
     typedef Wave *(__fastcall *wave_chain_fn)(void *);
     return vtable_slot<wave_chain_fn>(wave, 0x68)(wave);
 }
 
-void load_wave_by_name(Wave *wave, char *fname) {
+__forceinline void load_wave_by_name(Wave *wave, char *fname) {
     typedef int (OriginalObject::*wave_load_fn)(char *fname);
     (ORIGINAL(wave)->*vtable_slot<wave_load_fn>(wave, 0x10))(fname);
 }
@@ -1279,6 +1279,15 @@ Purpose: Switch the wrapped device to another output. Every sound on the
          appended to the resume list keeps whatever its next link held until
          the replay clears it.
 // ORIGINAL: 0x004C5030 ?select@Wave_Device@@QAEHK@Z 0x004C5030-0x004C50EF
+// LEVER: call_diff showed 14 real calls to wave_attrib/wave_chain_next/
+//        halt_wave/resume_links/load_wave_by_name where the image has 0 -
+//        those anonymous-namespace one-liners were not being inlined at
+//        their direct call sites (this file's winning flags carry no
+//        /Ob0, so it is not that lever). Marking all five `__forceinline`
+//        dropped every one of those calls and moved best similarity 0.584
+//        -> 0.877 (/O2 /Gy /GR- /GX). The remaining gap is the same
+//        missing-ebp-frame register/scheduling plateau documented on the
+//        rest of this family; not chased further.
 // size      191 bytes
 // prototype int (__thiscall ?select@Wave_Device@@QAEHK@Z)(Wave_Device* this, unsigned int)
 // callers   0   call targets   0
