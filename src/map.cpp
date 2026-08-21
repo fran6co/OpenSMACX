@@ -709,6 +709,16 @@ void __cdecl alt_set_both(int x, int y, int altitude_natural) {
 /*
 Purpose: Get the bit shifted (down) altitude of the specified tile.
 // ORIGINAL: 0x00500150 ?alt_at@@YAHHH@Z 0x00500150-0x0050017B
+// RULED-OUT: best 12/16, 0.875 similar (MISMATCH) at every flag set - image
+//            schedules `xor ecx,ecx` (the future zero-extend register) right
+//            after computing the tile index, before loading the map_tiles()
+//            pointer into edx; this tree always loads the pointer first and
+//            zeroes the OTHER register later for the byte-load. Tried: a
+//            local `Map *tile` before the field read; a local `uint32_t
+//            climate` read before the shift. Neither moved the schedule -
+//            same plateau shape as abstract_at's register-tie, but here the
+//            mnemonics themselves differ (xor vs mov), not just the operand,
+//            so it does not qualify for `semantic` either.
 // size      43 bytes
 // prototype int (__cdecl ?alt_at@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   1   call targets   0
@@ -728,6 +738,10 @@ Status: Complete
 /*
 Purpose: Get the altitude details of the specified tile.
 // ORIGINAL: 0x00500180 ?alt_detail_at@@YAHHH@Z 0x00500180-0x005001A9
+// RULED-OUT: same plateau as `alt_at` - image schedules `xor ecx,ecx` before
+//            loading the map_tiles() pointer into edx; this tree loads the
+//            pointer into ecx first and zeroes edx later for the byte-load.
+//            Best 11/15, MISMATCH at every flag set.
 // size      41 bytes
 // prototype int (__cdecl ?alt_detail_at@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   1   call targets   0
@@ -810,6 +824,11 @@ void __cdecl site_set(int x, int y, int site) {
 /*
 Purpose: Get the region of the specified tile.
 // ORIGINAL: 0x00500220 ?region_at@@YAHHH@Z 0x00500220-0x00500249
+// RULED-OUT: same plateau as `alt_at` - image schedules `xor ecx,ecx` before
+//            loading the map_tiles() pointer into edx; this tree loads the
+//            pointer into ecx first and zeroes edx later for the byte-load.
+//            Tried a local `Map *tile` before the field read - no change.
+//            Best 11/15, MISMATCH at every flag set.
 // size      41 bytes
 // prototype int (__cdecl ?region_at@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   2   call targets   0
@@ -1375,6 +1394,13 @@ BOOL __cdecl is_coast(int x, int y, BOOL is_base_radius) {
 /*
 Purpose: Check whether the specified tile is part of an ocean.
 // ORIGINAL: 0x005001E0 ?is_ocean@@YAHHH@Z 0x005001E0-0x00500211
+// RULED-OUT: same root plateau as `alt_at` (image schedules `xor ecx,ecx`
+//            before loading the map_tiles() pointer; this tree loads the
+//            pointer first). Downstream that also means the image has a
+//            spare zeroed register (`eax`) to build the boolean with
+//            `setl al`, while this tree materialises it with `sbb eax,eax;
+//            neg eax` instead - a consequence of the same register-tie, not
+//            an independent divergence. Best 9/18, 0.800 similar, MISMATCH.
 // size      49 bytes
 // prototype int (__cdecl ?is_ocean@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   3   call targets   0

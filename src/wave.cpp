@@ -971,6 +971,15 @@ Purpose: Load the wave from its remembered filename. With no wrapped device
          the file, and on success the device reports the length in
          milliseconds through its slot 0xC4 into the field at 0x60.
 // ORIGINAL: 0x004C6CE0 ?load@Wave@@QAEHXZ 0x004C6CE0-0x004C6DAC
+// LEVER: `int attribs = 0;` declared as the FIRST statement, before even the
+//        `fname` null check - matches the image's `xor edi, edi` right after
+//        the prologue's `push edi`, which forces edi to be pushed/popped
+//        uniformly across every exit path. 7/88 -> 9/88 MISMATCH.
+// RULED-OUT: declaring `attribs` after the fname check but before the
+//            device check (partway) - identical to the original placement,
+//            no change (7/88); the image's shared tail between "no fname"
+//            and "load failed" needs edi live from function ENTRY, not just
+//            before the device branch.
 // size      204 bytes
 // prototype int (__thiscall ?load@Wave@@QAEHXZ)(Wave* this)
 // callers   3   call targets   1
@@ -983,6 +992,7 @@ Return Value: 0 on success, 8 with no filename, 1 with a dead creation hook,
 Status: Complete
 */
 int Wave::load() {
+    int attribs = 0;
     const char *const fname = static_cast<const char *>(fname_);
     if (!fname) {
         return 8;
@@ -996,7 +1006,6 @@ int Wave::load() {
             return created;
         }
     }
-    int attribs = 0;
     if (flags_54_ & 1) {
         attribs |= 1;
     }
@@ -1179,6 +1188,15 @@ Purpose: Load the wave from a caller-supplied filename. The guarded creation
          stored volume, pitch, and the dword at 0x08 through its slots
          0x40, 0x98, and 0x44.
 // ORIGINAL: 0x004C6C20 ?load@Wave@@QAEHPBD@Z 0x004C6C20-0x004C6CD8
+// LEVER: `int attribs = 0;` declared BEFORE the device-create block (not
+//        after) - matches the image's `xor ebx, ebx` at function entry,
+//        which is reused as the attribs accumulator only after the
+//        create/guard logic. Moved 22/79 to 57/79 MISMATCH.
+// RULED-OUT: hoisting the 0xC4 length read into a named local and deferring
+//            the `ms_length_ =` store past the volume dispatch, to match the
+//            image's `mov edx,[esi+4]; mov [esi+0x60],eax` order - no effect
+//            on codegen (still 57/79), so reverted; that ordering looks like
+//            pure instruction scheduling, not source order.
 // size      184 bytes
 // prototype int (__thiscall ?load@Wave@@QAEHPBD@Z)(Wave* this, int8*)
 // callers   4   call targets   1
@@ -1191,6 +1209,7 @@ Return Value: 0 on success, 1 with a dead creation hook, or the
 Status: Complete
 */
 int Wave::load(const char *a1) {
+    int attribs = 0;
     if (!device_) {
         if (!*WaveDeviceReleaseGuard) {
             return 1;
@@ -1200,7 +1219,6 @@ int Wave::load(const char *a1) {
             return created;
         }
     }
-    int attribs = 0;
     if (flags_54_ & 1) {
         attribs |= 1;
     }
