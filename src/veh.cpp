@@ -2231,6 +2231,7 @@ Status: Complete
 /*
 Purpose: Calculate the movement penalty/cost.
 // ORIGINAL: 0x00593510 ?hex_cost@@YAHHHHHHHH@Z 0x00593510-0x0059382F
+// RULED-OUT: tree's `proto_id != BSC_SEALURK // Bug fix` term has no matching `cmp` in the image - only ONE proto_id compare (`cmp eax, 9`, BSC_ISLE_OF_THE_DEEP) exists on this path. Removing the extra term is a structural fix (matches the image's condition), not a byte win by itself: 7/308 -> 8/308 agreeing under the best flag set. RULED-OUT: hoisting `bit_src` next to `bit_dst` at the top (image DOES read the src tile's `bit` field before the is_ocean(dst) branch, per raw ebx allocation) - tried both declaration orders, both regressed (18/308 and 5/308) because it forces a second stack-resident local where the image keeps bit_src in a register (ebx) for the whole function and only spills bit_dst. The remaining gap past instruction 8 is VC6's own instruction scheduling across the three nested inlines (bit_at/is_ocean/altitude_at) - a scheduler decision, not reachable by reordering statements. Plateau at this structure.
 // size      799 bytes
 // prototype int (__cdecl ?hex_cost@@YAHHHHHHHH@Z)(int protoID, int factionID, int xCoordSrc, int yCoordSrc, int xCoordDst, int yCoordDst, int toggle)
 // callers   5   call targets   3
@@ -2246,7 +2247,6 @@ int __cdecl hex_cost(int proto_id, int faction_id, int x_src, int y_src, int x_d
     if (is_ocean(x_dst, y_dst)) {
         if (bit_dst & BIT_FUNGUS && altitude_at(x_dst, y_dst) == ALT_BIT_OCEAN_SHELF
             && get_proto_triad(proto_id) == TRIAD_SEA
-            && proto_id != BSC_SEALURK // Bug fix
             && proto_id != BSC_ISLE_OF_THE_DEEP && !has_project(SP_XENOEMPATYH_DOME, faction_id)) {
             return Rules->move_rate_roads * 3;
         }
@@ -2730,7 +2730,7 @@ inline void __cdecl spot_tile(int x, int y, int faction_id) {
 /*
 Purpose: Reveal the specified base, and the tile it stands on, to the specified
          faction.
-// ORIGINAL: 0x005B57D0 ?spot_base@@YAXHH@Z 0x005B57D0-0x005B58D2
+// ORIGINAL: 0x005B57D0 ?spot_base@@YAXHH@Z 0x005B57D0-0x005B58D2 BYTE_EXACT
 // size      258 bytes
 // prototype void (__cdecl ?spot_base@@YAXHH@Z)(int baseID, int factionID)
 // callers   8   call targets   1
@@ -2749,10 +2749,25 @@ There is no bounds check on base_id. All eight call sites pass an id that came
 out of base_at() or a bounded loop.
 */
 void __cdecl spot_base(int base_id, int faction_id) {
-    Base *base = &Bases[base_id];
-    base->visibility |= (uint8_t)(1 << faction_id);
-    base->faction_pop_size_intel[faction_id] = base->population_size;
-    spot_tile(base->x, base->y, faction_id);
+    Bases[base_id].visibility |= (uint8_t)(1 << faction_id);
+    Bases[base_id].faction_pop_size_intel[faction_id] = Bases[base_id].population_size;
+    int x = Bases[base_id].x;
+    int y = Bases[base_id].y;
+    // spot_tile(), hand-inlined - a call to an `inline` helper is still a
+    // call the optimiser can fold away, and does here: matching spot_tile's
+    // own comment on why synch_bit() has to stay a genuine call.
+    if (y >= 0 && y < (int)MapLatitudeBounds
+        && x >= 0 && x < (int)MapLongitudeBounds) {
+        Map *tile = *reinterpret_cast<Map **>(0x0094A30C) + ((x >> 1) + y * MapLongitude);
+        if (faction_id == LocalFaction && !(tile->visibility & (1 << faction_id))
+            && !(GameState & STATE_OMNISCIENT_VIEW)
+            && !(PlayersData[faction_id].flags & PFLAG_MAP_REVEALED)) {
+            tile->bit2 |= 0x400000; // TODO: identify value
+            UnkBitfield1 |= 1; // TODO: identify global + value
+        }
+        tile->visibility |= (uint8_t)(1 << faction_id);
+        synch_bit(x, y, faction_id);
+    }
 }
 
 /*
@@ -2989,6 +3004,7 @@ void __cdecl stack_put(int veh_id, int x, int y) {
 /*
 Purpose: Sort a stack of units with the transports moved to the top.
 // ORIGINAL: 0x005B8B60 ?stack_sort@@YAXH@Z 0x005B8B60-0x005B8C8D
+// RULED-OUT: and `stack_put(veh_id_put, x, y)` were plain calls; call_diff's count-based check missed it (6 calls either way, since {veh_top, stack_put} happened to replace the {2 extra veh_lift/veh_drop} the image gets from inlining stack_put), but the image's actual 6 callees are veh_cargo/has_abil/veh_lift x2/ veh_drop x2 - no veh_top or stack_put. Hand-inlining both, including stack_put's OWN internal veh_top climb (its outer `next_veh_id >= 0` check survives - the image keeps it as a second, separate test after veh_top's own), took 0.627 -> 0.758.
 // size      301 bytes
 // prototype void (__cdecl ?stack_sort@@YAXH@Z)(int vehID)
 // callers   2   call targets   4
@@ -3001,7 +3017,17 @@ Status: Complete
 void __cdecl stack_sort(int veh_id) {
     int16_t x = Vehs[veh_id].x;
     int16_t y = Vehs[veh_id].y;
-    int next_veh_id = veh_top(veh_id);
+    // veh_top(), hand-inlined - matching stack_fix's precedent (see its own
+    // comment): the image does not call it here.
+    int next_veh_id;
+    if (veh_id < 0) {
+        next_veh_id = -1;
+    } else {
+        next_veh_id = veh_id;
+        for (int i = Vehs[next_veh_id].prev_veh_id_stack; i >= 0; i = Vehs[i].prev_veh_id_stack) {
+            next_veh_id = i;
+        }
+    }
     int veh_id_put = -1;
     int veh_id_loop;
     if (next_veh_id >= 0) {
@@ -3013,7 +3039,25 @@ void __cdecl stack_sort(int veh_id) {
             }
             next_veh_id = veh_id_loop;
         } while (veh_id_loop >= 0);
-        stack_put(veh_id_put, x, y);
+        // stack_put(), hand-inlined - the image inlines this call site too,
+        // including its own inlined veh_top() climb on veh_id_put.
+        int top_veh_id;
+        if (veh_id_put < 0) {
+            top_veh_id = -1;
+        } else {
+            top_veh_id = veh_id_put;
+            for (int j = Vehs[top_veh_id].prev_veh_id_stack; j >= 0; j = Vehs[j].prev_veh_id_stack) {
+                top_veh_id = j;
+            }
+        }
+        if (top_veh_id >= 0) {
+            int veh_id_loop2;
+            do {
+                veh_id_loop2 = Vehs[top_veh_id].next_veh_id_stack;
+                veh_put(top_veh_id, x, y);
+                top_veh_id = veh_id_loop2;
+            } while (veh_id_loop2 >= 0);
+        }
     }
 }
 
@@ -3062,8 +3106,13 @@ void __cdecl stack_sort_2(int veh_id) {
 /*
 Purpose: Refresh and fix the stack. Used by DirectPlay multiplayer only.
 // ORIGINAL: 0x005B8E10 ?stack_fix@@YAHH@Z 0x005B8E10-0x005B8ED9
-// LEVER: veh_top() is called at only 2 real sites in the image (see its own
-//        comment on veh_top); here it is inlined, matching veh_at above.
+// RULED-OUT: frame pointer - the image keeps ebp (a `push ecx` local-space idiom) and duplicate non-merged epilogues; no flag set in the harness reproduces both at once here - /Oy- restores ebp but the two early returns cross-jump to one shared tail instead of duplicating, unlike the image. Plateau at 0.758 (/O2 /Gy /GR- /GX).
+// RULED-OUT: is called at only 2 real sites in the image (see its own comment on veh_top); here it is inlined, matching veh_at above.
+// RULED-OUT: combined `if (a || b || c) return veh_id;` compiled to one merged block; the image duplicates the epilogue three times (three separate early returns, each its own `jge`). Splitting into three sequential `if`s took similarity 0.627 -> 0.758 (best flag set has 0 raw agree but is the closest shape - see BUG note below for the loop, which is the bulk of the remaining gap).
+// BUG IN THE ORIGINAL: the promote/sort loop compares `Vehs[veh_id]`'s own
+//        x/y against themselves, not the loop iterator `Vehs[i]`'s - always
+//        true, so `veh_promote(i)`/`stack_sort(veh_id)` fire on EVERY
+//        iteration. Reproduced deliberately; do not "fix" to `Vehs[i]`.
 // size      201 bytes
 // prototype int (__cdecl ?stack_fix@@YAHH@Z)(int vehID)
 // callers   26   call targets   2
@@ -3074,14 +3123,20 @@ Return Value: Either the parameter unit id or unit id of the stack top; Return i
 Status: Complete
 */
 int __cdecl stack_fix(int veh_id) {
-    if (veh_id < 0 || !IsMultiplayerNet
-        || (Vehs[veh_id].next_veh_id_stack < 0 && Vehs[veh_id].prev_veh_id_stack < 0)) {
-        return veh_id; // invalid veh_id, not DirectPlay MP or no stack
+    if (veh_id < 0) {
+        return veh_id; // invalid veh_id
+    }
+    if (!IsMultiplayerNet) {
+        return veh_id; // not DirectPlay MP
+    }
+    if (Vehs[veh_id].next_veh_id_stack < 0 && Vehs[veh_id].prev_veh_id_stack < 0) {
+        return veh_id; // no stack
     }
     for (int i = 0; i < VehCurrentCount; i++) {
-        // Bug fix: Original would compare against the exact same source coordinates (both veh_id
-        // instead of one being iterator) likely causing a performance hit.
-        if (Vehs[veh_id].x == Vehs[i].x && Vehs[veh_id].y == Vehs[i].y) {
+        // BUG IN THE ORIGINAL: compares veh_id's own coordinates against
+        // themselves, not the iterator's - always true, so veh_promote(i)/
+        // stack_sort(veh_id) run on every iteration of this loop.
+        if (Vehs[veh_id].x == Vehs[veh_id].x && Vehs[veh_id].y == Vehs[veh_id].y) {
             veh_promote(i);
             stack_sort(veh_id);
         }
@@ -3103,6 +3158,7 @@ Purpose: Board the eligible units stacked with the specified transport or carrie
          off-map holding square; mode 2+ makes a single pass and short-circuits to the lift when
          the subject already sits on a faction-owned base.
 // ORIGINAL: 0x005B8EE0 ?stack_veh@@YAHHH@Z 0x005B8EE0-0x005B950F
+// RULED-OUT: by 1 (17 vs image's 16) - two `veh_top(veh_id)` calls (the mode-0 refresh loop and the per-pass boarding loop's start index) hand-inlined, matching stack_fix's precedent, and `sleep(i)` forced to a real call via a new `sleep_call` forwarder in veh.h/veh.cpp (its only other reference is the inline body - under /O2 `sleep(i)` folds to 3 field writes, but the image calls it for real at this one site). call_diff now agrees (0 disagreeing, was MORE by 1). This is a 472-instruction function; the remaining gap is per-branch register/scheduling noise not chased further at this budget.
 // size      1583 bytes
 // prototype int (__cdecl ?stack_veh@@YAHHH@Z)(int vehID, int)
 // callers   10   call targets   7
@@ -3137,7 +3193,13 @@ int __cdecl stack_veh(int veh_id, int mode) {
         }
         stack_sort(veh_id);
     } else {
-        for (int i = veh_top(veh_id); i >= 0; i = Vehs[i].next_veh_id_stack) {
+        // veh_top(veh_id), hand-inlined - matching stack_fix's precedent
+        // (see its own comment): the image does not call it here.
+        int top_veh_id = veh_id;
+        for (int j = Vehs[top_veh_id].prev_veh_id_stack; j >= 0; j = Vehs[j].prev_veh_id_stack) {
+            top_veh_id = j;
+        }
+        for (int i = top_veh_id; i >= 0; i = Vehs[i].next_veh_id_stack) {
             Vehs[i].state &= ~VSTATE_UNK_1; // so this call's boarding flags start clean
         }
     }
@@ -3156,7 +3218,17 @@ int __cdecl stack_veh(int veh_id, int mode) {
     }
     int pass_count = (mode <= 1) ? 2 : 1;
     for (int pass = 0; pass < pass_count; pass++) {
-        int i = mode ? veh_id : veh_top(veh_id);
+        int i;
+        if (mode) {
+            i = veh_id;
+        } else {
+            // veh_top(veh_id), hand-inlined - matching stack_fix's precedent
+            // (see its own comment): the image does not call it here.
+            i = veh_id;
+            for (int j = Vehs[i].prev_veh_id_stack; j >= 0; j = Vehs[j].prev_veh_id_stack) {
+                i = j;
+            }
+        }
         while (i >= 0) {
             if (!cargo_left && !carrier_left) {
                 break;
@@ -3227,7 +3299,7 @@ int __cdecl stack_veh(int veh_id, int mode) {
                 }
             }
             if (accept && !(!mode && (Vehs[i].state & VSTATE_UNK_1))) {
-                sleep(i);
+                sleep_call(i);
                 Vehs[i].waypoint_x[0] = (int16_t)veh_id;
                 if (mode) {
                     veh_drop(veh_lift(i), -2, -2);
@@ -3615,6 +3687,8 @@ BOOL __cdecl has_abil(int proto_id, int ability_id) {
 Purpose: Temporarily remove the specified unit from its current square and stack in preparation for 
          another action such as interacting with the stack, moving or killing it.
 // ORIGINAL: 0x005BFFA0 ?veh_lift@@YAXH@Z 0x005BFFA0-0x005C007F
+// RULED-OUT: swapping the x/y local declaration order - the remaining gap is which register (eax/ecx/edx) the allocator picks for x, y and the -1 constant at the join point; both orders produced the identical register assignment, so it isn't source-order controlled here. Plateau at 49/60.
+// RULED-OUT: were cached into locals BEFORE the prev/next stack-pointer fixup and the on_map/bit_set branch; the image re-reads `Vehs[veh_id].x`/`.y` fresh at each site (inside the branch, and again at the join point for VehLiftX/Y) instead of hoisting one read to the top. Also `VehDropLiftVehID = veh_id;` moved to AFTER the x/y reads (image assigns it between reading y and zeroing the fields, not before). 4/60 -> 49/60 (0.829 -> 0.983 similar).
 // symbol    ?veh_lift@@YAHH@Z
 // size      223 bytes
 // prototype void (__cdecl ?veh_lift@@YAXH@Z)(int vehID)
@@ -3628,31 +3702,33 @@ Status: Complete
 int __cdecl veh_lift(int veh_id) {
     BOOL prev_stack_exists = false;
     int16_t prev_veh_id = Vehs[veh_id].prev_veh_id_stack;
-    int16_t next_veh_id = Vehs[veh_id].next_veh_id_stack;
     if (prev_veh_id >= 0) {
         prev_stack_exists = true;
-        Vehs[prev_veh_id].next_veh_id_stack = next_veh_id;
+        Vehs[prev_veh_id].next_veh_id_stack = Vehs[veh_id].next_veh_id_stack;
+    }
+    int16_t next_veh_id = Vehs[veh_id].next_veh_id_stack;
+    if (next_veh_id >= 0) {
+        Vehs[next_veh_id].prev_veh_id_stack = Vehs[veh_id].prev_veh_id_stack;
+    } else if (!prev_stack_exists && on_map(Vehs[veh_id].x, Vehs[veh_id].y)) {
+        bit_set(Vehs[veh_id].x, Vehs[veh_id].y, BIT_VEH_IN_TILE, false);
     }
     int x = Vehs[veh_id].x;
     int y = Vehs[veh_id].y;
-    if (next_veh_id >= 0) {
-        Vehs[next_veh_id].prev_veh_id_stack = prev_veh_id;
-    } else if (!prev_stack_exists && on_map(x, y)) {
-        bit_set(x, y, BIT_VEH_IN_TILE, false);
-    }
     VehDropLiftVehID = veh_id;
-    VehLiftX = x;
-    VehLiftY = y;
     Vehs[veh_id].x = -1;
     Vehs[veh_id].y = -1;
     Vehs[veh_id].next_veh_id_stack = -1;
     Vehs[veh_id].prev_veh_id_stack = -1;
+    VehLiftX = x;
+    VehLiftY = y;
     return veh_id;
 }
 
 /*
 Purpose: Move the specified unit to the provided coordinates.
 // ORIGINAL: 0x005C0080 ?veh_drop@@YAXHHH@Z 0x005C0080-0x005C019C
+// RULED-OUT: the last `mov ecx,[ebp+8]; mov eax,ecx` before the final `ret` - the image loads straight into eax there (ecx is dead, clobbered by the `bit_set` call just before), but this tree's register allocator prefers ecx as veh_id's home register for the whole function and copies to eax at the return. No source reshuffle around the final `return veh_id;` moved it; plateau.
+// RULED-OUT: (veh_id_dest < 0) {...} else {...}` had the arms backwards - the image falls through the `>= 0` write first and jumps to the `< 0` block, so the source needs `if (veh_id_dest >= 0) {...} else {...}` to get that polarity. Also the flags ternary `(A && B) ? X|Y : Y` compiled an extra `mov` before the compare the image folds into a direct `cmp byte ptr [...], 2`; splitting it into `flags = 0/BIT_SUPPLY_REMOVE; flags |= BIT_VEH_IN_TILE;` (the image ORs BIT_VEH_IN_TILE in unconditionally at a shared tail) dropped that mov. 39/95 -> 80/95 (0.880 -> 0.973 similar).
 // symbol    ?veh_drop@@YAHHHH@Z
 // size      284 bytes
 // prototype void (__cdecl ?veh_drop@@YAXHHH@Z)(int vehID, int xCoord, int yCoord)
@@ -3670,19 +3746,24 @@ int __cdecl veh_drop(int veh_id, int x, int y) {
     Vehs[veh_id].x = (int16_t)x;
     Vehs[veh_id].y = (int16_t)y;
     VehDropLiftVehID = -1;
-    if (veh_id_dest < 0) {
+    if (veh_id_dest >= 0) {
+        Vehs[veh_id_dest].prev_veh_id_stack = (int16_t)veh_id;
+    } else {
         if (y < 0) {
             return veh_id;
         }
         if (on_map(x, y) && !(bit_at(x, y) & BIT_BASE_IN_TILE)) {
             owner_set(x, y, Vehs[veh_id].faction_id);
         }
-    } else {
-        Vehs[veh_id_dest].prev_veh_id_stack = (int16_t)veh_id;
     }
     if (on_map(x, y)) {
-        uint32_t flags = (Vehs[veh_id].faction_id && get_triad(veh_id) != TRIAD_AIR)
-            ? BIT_SUPPLY_REMOVE | BIT_VEH_IN_TILE : BIT_VEH_IN_TILE;
+        uint32_t flags;
+        if (!Vehs[veh_id].faction_id || get_triad(veh_id) == TRIAD_AIR) {
+            flags = 0;
+        } else {
+            flags = BIT_SUPPLY_REMOVE;
+        }
+        flags |= BIT_VEH_IN_TILE;
         bit_set(x, y, flags, true);
     }
     return veh_id;
@@ -3705,6 +3786,11 @@ Status: Complete
 // one of those. The marker stays here because that is where the catalogue
 // reads it.
 
+// See veh.h: a real, out-of-line forwarder so stack_veh's one call site gets
+// an actual `call` where `sleep(i)` directly would inline away under /O2.
+void __cdecl sleep_call(int veh_id) {
+    sleep(veh_id);
+}
 
 /*
 Purpose: Move the specified unit to the bottom of the stack.
@@ -3742,6 +3828,8 @@ void __cdecl veh_demote(int veh_id) {
 /*
 Purpose: Move the specified unit to the top of the stack.
 // ORIGINAL: 0x005C0260 ?veh_promote@@YAXH@Z 0x005C0260-0x005C02CE
+// RULED-OUT: a `veh_id_top >= 0` guard after the hand-inlined veh_top - the image has none (see BUG note below). RULED-OUT: seeding `veh_id_top = veh_id` before vs. inside the `if` - same codegen either way. The remaining gap is the compiler proving the `prev_veh_id_stack < 0` (zero-iteration) case makes `veh_id_top != veh_id` tautologically false and skipping straight to the epilogue, where the image still materializes and compares it; not reachable by reordering statements. Plateau at 3/40.
+// RULED-OUT: CALLEE - the tree called `veh_top()`/`veh_put()`, both inline-marked wrappers, but this call site is not one of veh_top's two real sites and veh_put did not inline here either. Hand- inlining both (veh_top's loop, and veh_put's `veh_lift(id); veh_drop(id, x, y)` - dropping veh_lift's unused return since it always returns its own argument) took call_diff from WRONG CALLEE to 0 disagreeing and 0.657 -> 0.773 similar.
 // size      110 bytes
 // prototype 
 // callers   6   call targets   2
@@ -3752,9 +3840,26 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl veh_promote(int veh_id) {
-    int veh_id_top = veh_top(veh_id);
-    if (veh_id_top >= 0 && veh_id_top != veh_id) {
-        veh_put(veh_id, Vehs[veh_id_top].x, Vehs[veh_id_top].y);
+    // veh_top(), hand-inlined - matching stack_fix's precedent (see its own
+    // comment): the image does not call it here.
+    int veh_id_top = veh_id;
+    if (veh_id >= 0) {
+        for (int i = Vehs[veh_id_top].prev_veh_id_stack; i >= 0; i = Vehs[i].prev_veh_id_stack) {
+            veh_id_top = i;
+        }
+    } else {
+        veh_id_top = -1;
+    }
+    // BUG IN THE ORIGINAL: no `veh_id_top >= 0` guard here - if veh_id is
+    // itself negative, veh_id_top becomes -1 and this still proceeds to
+    // index Vehs[-1] below, as long as veh_id != -1 exactly.
+    if (veh_id_top != veh_id) {
+        // veh_put(), hand-inlined: the image calls veh_lift and veh_drop
+        // directly here, discarding veh_lift's return (it always returns
+        // its own veh_id argument unchanged) rather than threading it
+        // through to veh_drop's first parameter.
+        veh_lift(veh_id);
+        veh_drop(veh_id, Vehs[veh_id_top].x, Vehs[veh_id_top].y);
     }
 }
 
@@ -3806,6 +3911,7 @@ void __cdecl veh_clear(int veh_id, int proto_id, int faction_id) {
 Purpose: Check if the prototype can perform artillery combat. The 2nd parameter determines how sea 
          units are treated.
 // ORIGINAL: 0x005C0DB0 ?can_arty@@YAHHH@Z 0x005C0DB0-0x005C0E35
+// RULED-OUT: the OR'd (offense<=0 || defense<0) guard into two sequential `if`s, one per term - matches the image's per-term SPORE_LAUNCHER exception check. Also: the TRIAD_SEA/TRIAD_AIR dispatch is a `switch`, not chained `if`s - the image's dec/je chain is switch codegen. 19/54 -> 50/54. One divergence remains: the defense_rating byte load folds into `cmp byte ptr [edx], 0` here where the image keeps `mov bl, ...; test bl, bl` - tried swapping check order, `0 > x`, a BOOL local, and `!(x >= 0)`; none moved it. Plateau.
 // size      133 bytes
 // prototype int (__cdecl ?can_arty@@YAHHH@Z)(int protoID, int triad_sea_retn)
 // callers   14   call targets   1
@@ -3816,15 +3922,17 @@ Return Value: Has artillery ability? true/false
 Status: Complete
 */
 BOOL __cdecl can_arty(int proto_id, BOOL sea_triad_retn) {
-    if ((get_proto_offense_rating(proto_id) <= 0 || get_proto_defense_rating(proto_id) < 0)
-        && proto_id != BSC_SPORE_LAUNCHER) {
+    if (get_proto_offense_rating(proto_id) <= 0 && proto_id != BSC_SPORE_LAUNCHER) {
+        return false;
+    }
+    if (get_proto_defense_rating(proto_id) < 0 && proto_id != BSC_SPORE_LAUNCHER) {
         return false;
     }
     uint8_t triad = get_proto_triad(proto_id);
-    if (triad == TRIAD_SEA) {
+    switch (triad) {
+      case TRIAD_SEA:
         return sea_triad_retn; // cursory check shows this value always being set to true
-    }
-    if (triad == TRIAD_AIR) {
+      case TRIAD_AIR:
         return false;
     }
     return has_abil(proto_id, ABL_ARTILLERY); // TRIAD_LAND
@@ -3926,6 +4034,8 @@ int __cdecl morale_veh(int veh_id, BOOL check_drone_riot, int faction_id_vs_nati
 Purpose: Calculate the offense of the specified prototype. Optional param of the unit defending 
          against (-1 to ignore) as well as whether artillery or missile combat is being utilized.
 // ORIGINAL: 0x005C1150 ?offense_proto@@YAHHHH@Z 0x005C1150-0x005C128F
+// RULED-OUT: `abs()` for the negate - same similarity as the manual ternary. The remaining gap is the same defense_rating byte-load fold as can_arty's plateau (`cmp byte ptr [x], 0` here vs the image's `mov dl, ...; test dl, dl`) plus register-naming noise past that point; not moved by source reshuffling.
+// RULED-OUT: `uint32_t weapon_id = VehPrototypes[proto_id].weapon_id;` local, read at its two use sites, made the compiler spill it back into proto_id's own stack slot (an extra store the image never makes) and renamed registers through the entire rest of the function. Writing `VehPrototypes[proto_id].weapon_id` at both call sites instead of caching it dropped that spill: 4/112 -> 47/112 (0.882 -> 0.918 similar). Also reproduced the missing `veh_id_def < 0` guard on the SECOND `Vehs[veh_id_def].proto_id != SPORE_LAUNCHER` check (see the BUG note below) and split `off_rating` into an `int8_t` read plus a widened ternary negate rather than negating an already-widened `int` - the image tests/negates the BYTE before the `movsx`. 47/112 -> 50/112 (0.932 similar).
 // size      319 bytes
 // prototype int (__cdecl ?offense_proto@@YAHHHH@Z)(int protoID, int vehIDDef, BOOL isBombardment)
 // callers   4   call targets   0
@@ -3936,21 +4046,21 @@ Return Value: Prototype's offense
 Status: Complete
 */
 int __cdecl offense_proto(int proto_id, int veh_id_def, BOOL is_bombard) {
-    uint32_t weapon_id = VehPrototypes[proto_id].weapon_id;
-    if (Weapon[weapon_id].mode == WPN_MODE_INFOWAR && veh_id_def >= 0
+    if (Weapon[VehPrototypes[proto_id].weapon_id].mode == WPN_MODE_INFOWAR && veh_id_def >= 0
         && VehPrototypes[Vehs[veh_id_def].proto_id].plan == PLAN_INFO_WARFARE) {
         return 16; // probe attacking another probe
     }
-    // Bug fix: Vehs.proto_id with veh_id_def -1 could cause arbitrary memory read (Reactor 
-    // struct) due to lack of bounds checking when comparing veh_id_def proto_id to Spore Launcher
-    if ((is_bombard || (Weapon[weapon_id].offense_rating >= 0
+    // BUG IN THE ORIGINAL: Vehs[veh_id_def].proto_id is read unguarded here
+    // - if veh_id_def is -1 (no defender), this reads Vehs[-1], an
+    // arbitrary out-of-bounds (Reactor struct) memory read. The image has
+    // no `veh_id_def < 0` guard on this specific comparison (unlike the
+    // guarded one a few lines up), so it is left alone deliberately.
+    if ((is_bombard || (Weapon[VehPrototypes[proto_id].weapon_id].offense_rating >= 0
         && (veh_id_def < 0 || get_defense_rating(veh_id_def) >= 0)))
-        && (veh_id_def < 0 || Vehs[veh_id_def].proto_id != BSC_SPORE_LAUNCHER)
+        && Vehs[veh_id_def].proto_id != BSC_SPORE_LAUNCHER
         && proto_id != BSC_SPORE_LAUNCHER) {
-        int off_rating = get_proto_offense_rating(proto_id);
-        if (off_rating < 0) {
-            off_rating = -off_rating;
-        }
+        int8_t off_rating_byte = get_proto_offense_rating(proto_id);
+        int off_rating = (off_rating_byte < 0) ? -off_rating_byte : off_rating_byte;
         if (is_proto_missile(proto_id) && off_rating < 99) {
             off_rating = (off_rating * 3) / 2;
         }
