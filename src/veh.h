@@ -555,7 +555,6 @@ extern LPSTR VehBattleDisplayTerrain;
 void __cdecl say_morale(LPSTR morale_output, uint32_t veh_id, int faction_id_vs_native);
 void __cdecl say_morale(uint32_t veh_id, int faction_id_vs_native);
 int __cdecl drop_range(int faction_id);
-uint32_t __cdecl planet_buster(int veh_id);
 // `int` throughout, per the catalogue: the original exports this as
 // `?defense_value@@YAHHHHHH@Z` - all `H`, no `I`.
 int __cdecl defense_value(int faction_id, int x, int y, int veh_id_def,
@@ -655,36 +654,15 @@ int __cdecl compute_odds(int odds, int faction_id, int veh_id_atk, int veh_id_de
                                   int base_id);
 int __cdecl alien_base(int veh_id, int x, int y);
 
-/*
-Purpose: Check whether the specified prototype is a planet buster.
-// ORIGINAL: 0x005004F0 ?planet_buster2@@YAHH@Z 0x005004F0-0x00500518
-// symbol    ?planet_buster2@@YAIH@Z
-// size      40 bytes
-// prototype int (__cdecl ?planet_buster2@@YAHH@Z)(int protoID)
-// callers   2   call targets   0
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: Reactor id if planet buster, otherwise 0
-Status: Complete
-*/
 MEASURED inline uint32_t __cdecl planet_buster2(int proto_id) {
     return VehPrototypes[proto_id].plan == PLAN_PLANET_BUSTER 
         ? VehPrototypes[proto_id].reactor_id : 0;
 }
 
-/*
-Purpose: Initialize or reset the battle related global variables.
-// ORIGINAL: 0x00501D30 ?battle_init@@YAXXZ 0x00501D30-0x00501D47 BYTE_EXACT
-// size      23 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
+MEASURED inline uint32_t __cdecl planet_buster(int veh_id) {
+    return planet_buster2(Vehs[veh_id].proto_id);
+}
+
 MEASURED inline void __cdecl battle_init() {
     VehBattleModCount[0] = 0;
     VehBattleModCount[1] = 0;
@@ -692,34 +670,10 @@ MEASURED inline void __cdecl battle_init() {
     VehBattleUnkTgl[1] = false;
 }
 
-/*
-Purpose: Get the current moves left for the specified unit.
-// ORIGINAL: 0x00579960 ?veh_moves@@YAHH@Z 0x00579960-0x00579998
-// size      56 bytes
-// prototype int (__cdecl ?veh_moves@@YAHH@Z)(int vehID)
-// callers   1   call targets   1
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x005C1540
-Return Value: Remaining moves
-Status: Complete
-*/
 MEASURED inline int __cdecl veh_moves(int veh_id) {
     return range(speed(veh_id, false) - Vehs[veh_id].moves_expended, 0, 999);
 }
 
-/*
-Purpose: Get the index value of a particular ability's bitfield.
-// ORIGINAL: 0x00581170 ?abil_index@@YAHH@Z 0x00581170-0x00581187 BYTE_EXACT
-// size      23 bytes
-// prototype int (__cdecl ?abil_index@@YAHH@Z)(int abilityID)
-// callers   7   call targets   0
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     (none)
-Return Value: Ability index
-Status: Complete
-*/
 MEASURED inline int __cdecl abil_index(int ability_id) {
     int index = 0;
     for (int check = ability_id; !(check & 1); index++) {
@@ -728,87 +682,27 @@ MEASURED inline int __cdecl abil_index(int ability_id) {
     return index;
 }
 
-/*
-Purpose: Relocate an existing unit to the specified tile.
-// ORIGINAL: 0x005A59B0 ?veh_put@@YAXHHH@Z 0x005A59B0-0x005A59D2 BYTE_EXACT
-// size      34 bytes
-// prototype void (__cdecl ?veh_put@@YAXHHH@Z)(int vehID, int xCoord, int yCoord)
-// callers   1   call targets   2
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x005BFFA0 0x005C0080
-Return Value: n/a
-Status: Complete
-*/
 MEASURED inline void __cdecl veh_put(int veh_id, int x, int y) {
     veh_drop(veh_lift(veh_id), x, y);
 }
 
-/*
-Purpose: Calculates the base cost of the specified prototype.
-// ORIGINAL: 0x005A5D00 ?base_cost@@YAHH@Z 0x005A5D00-0x005A5D3F
-// size      63 bytes
-// prototype int (__cdecl ?base_cost@@YAHH@Z)(int protoID)
-// callers   1   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x005A5A60
-Return Value: Base cost of the prototype
-Status: Complete
-*/
 MEASURED inline int __cdecl base_cost(int proto_id) {
     return proto_cost(VehPrototypes[proto_id].chassis_id, VehPrototypes[proto_id].weapon_id,
         VehPrototypes[proto_id].armor_id, 0, VehPrototypes[proto_id].reactor_id);
 }
 
-/*
-Purpose: Set the unit's status to sentry/board.
-// ORIGINAL: 0x005C01A0 ?sleep@@YAXH@Z 0x005C01A0-0x005C01CA
-// size      42 bytes
-// prototype void (__cdecl ?sleep@@YAXH@Z)(int vehID)
-// callers   8   call targets   0
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
 MEASURED inline void __cdecl sleep(int veh_id) {
     Vehs[veh_id].order = ORDER_SENTRY_BOARD;
     Vehs[veh_id].waypoint_x[0] = -1;
     Vehs[veh_id].waypoint_y[0] = 0;
 }
 
-/*
-Purpose: Sets all moves for the specified unit as expended.
-// ORIGINAL: 0x005C1D20 ?veh_skip@@YAXH@Z 0x005C1D20-0x005C1D42
-// size      34 bytes
-// prototype void (__cdecl ?veh_skip@@YAXH@Z)(int vehID)
-// callers   19   call targets   1
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x005C1540
-Return Value: n/a
-Status: Complete
-*/
 MEASURED inline void __cdecl veh_skip(int veh_id) {
     // TODO Bug: Due to size of moves_expended, speeds over 255 will be incorrect. The speed()
     //           function can return a value from 1-999. Eventually increase size to 16 bits.
     Vehs[veh_id].moves_expended = (uint8_t)speed(veh_id, false);
 }
 
-/*
-Purpose: Initialize/reset the fake unit id (2048) used as a placeholder for various UI elements.
-// ORIGINAL: 0x005C1D50 ?veh_fake@@YAHHH@Z 0x005C1D50-0x005C1D6F BYTE_EXACT
-// size      31 bytes
-// prototype int (__cdecl ?veh_fake@@YAHHH@Z)(int protoID, int factionID)
-// callers   13   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x005C02D0
-Return Value: Fake unit id (2048)
-Status: Complete
-*/
 MEASURED inline int __cdecl veh_fake(int proto_id, int faction_id) {
     veh_clear(2048, proto_id, faction_id);
     return 2048;

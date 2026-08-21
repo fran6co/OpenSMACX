@@ -176,85 +176,25 @@ int __cdecl tech_val(int tech_id, int faction_id, BOOL simple_calc);
 int __cdecl tech_ai(int faction_id);
 int __cdecl tech_rate(int faction_id);
 
-/*
-Purpose: Get tech string for tech_id and store it into TechName buffer.
-// ORIGINAL: 0x005B9EF0 ?tech_name@@YAPADHH@Z 0x005B9EF0-0x005B9F16 BYTE_EXACT
-// size      38 bytes
-// prototype int8* (__cdecl ?tech_name@@YAPADHH@Z)(int techID, BOOL categoryLvl)
-// callers   9   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x005B9C40
-Return Value: Pointer to TechName
-Status: Complete
-*/
 MEASURED inline LPSTR __cdecl tech_name(int tech_id, BOOL category_lvl) {
     TechName[0] = 0;
     say_tech(TechName, tech_id, category_lvl);
     return TechName;
 }
 
-/*
-Purpose: Get power_value from technology struct for tech id.
-// ORIGINAL: 0x005BDD70 ?tech_mil@@YAHH@Z 0x005BDD70-0x005BDD8E
-// size      30 bytes
-// prototype 
-// callers   1   call targets   0
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     (none)
-Return Value: power_value or 0 if tech_id is greater than max
-Status: Complete
-*/
 MEASURED inline int __cdecl tech_mil(int tech_id) {
     // TODO: why only this one returns 0 with other three returning 1? typo/bug?
     return (tech_id >= MaxTechnologyNum) ? 0 : *(&Technology[tech_id].power_value);
 }
 
-/*
-Purpose: Get tech_value from technology struct for tech id.
-// ORIGINAL: 0x005BDD90 ?tech_tech@@YAHH@Z 0x005BDD90-0x005BDDB1
-// size      33 bytes
-// prototype 
-// callers   1   call targets   0
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: tech_value or 1 if tech_id is greater than max
-Status: Complete
-*/
 MEASURED inline int __cdecl tech_tech(int tech_id) {
     return (tech_id >= MaxTechnologyNum) ? 1 : *(&Technology[tech_id].tech_value);
 }
 
-/*
-Purpose: Get wealth_value from technology struct for tech id.
-// ORIGINAL: 0x005BDDC0 ?tech_infra@@YAHH@Z 0x005BDDC0-0x005BDDE1
-// size      33 bytes
-// prototype 
-// callers   1   call targets   0
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: wealth_value or 1 if tech_id is greater than max
-Status: Complete
-*/
 MEASURED inline int __cdecl tech_infra(int tech_id) {
     return (tech_id >= MaxTechnologyNum) ? 1 : *(&Technology[tech_id].wealth_value);
 }
 
-/*
-Purpose: Get growth_value from technology struct for tech id.
-// ORIGINAL: 0x005BDDF0 ?tech_colonize@@YAHH@Z 0x005BDDF0-0x005BDE11
-// size      33 bytes
-// prototype 
-// callers   1   call targets   0
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: growth_value or 1 if tech_id is greater than max
-Status: Complete
-*/
 MEASURED inline int __cdecl tech_colonize(int tech_id) {
     return (tech_id >= MaxTechnologyNum) ? 1 : *(&Technology[tech_id].growth_value);
 }

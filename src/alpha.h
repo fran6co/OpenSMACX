@@ -751,19 +751,6 @@ BOOL __cdecl labels_init();
 void __cdecl say_label(int label_offset);
 LPSTR __cdecl label_get(int label_offset);
 
-/*
-Purpose: Get the default value for the warning pop-up preferences.
-// ORIGINAL: 0x0059DB20 ?default_warn@@YAHXZ 0x0059DB20-0x0059DB26 BYTE_EXACT
-// symbol    ?default_warn@@YAIXZ
-// size      6 bytes
-// prototype 
-// callers   1   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: Default warning preferences
-Status: Complete
-*/
 MEASURED inline uint32_t __cdecl default_warn() {
     return WARN_STOP_RANDOM_EVENT | WARN_STOP_ENERGY_SHORTAGE | WARN_STOP_MINERAL_SHORTAGE
         | WARN_STOP_STARVATION | WARN_STOP_BUILD_OUT_OF_DATE | WARN_STOP_UNK_100
@@ -771,18 +758,6 @@ MEASURED inline uint32_t __cdecl default_warn() {
         | WARN_STOP_NEW_FAC_BUILT; // 0x3C3A9
 }
 
-/*
-Purpose: Shutdown or reset the labels global variable.
-// ORIGINAL: 0x006169D0 ?labels_shutdown@@YAXXZ 0x006169D0-0x006169F7 BYTE_EXACT
-// size      39 bytes
-// prototype 
-// callers   4   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00644EF2
-Return Value: n/a
-Status: Complete
-*/
 MEASURED inline void __cdecl labels_shutdown() {
     if (Labels->strings_ptr) {
         free(Labels->strings_ptr);
@@ -791,18 +766,6 @@ MEASURED inline void __cdecl labels_shutdown() {
     Labels->count = 0;
 }
 
-/*
-Purpose: Set the game's language.
-// ORIGINAL: 0x00627100 ?set_language@@YAXH@Z 0x00627100-0x0062710A BYTE_EXACT
-// size      10 bytes
-// prototype void (__cdecl ?set_language@@YAXH@Z)(int lang)
-// callers   2   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
 MEASURED inline void __cdecl set_language(int language) {
     Language = language;
 }

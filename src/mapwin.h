@@ -257,39 +257,6 @@ void __cdecl draw_map(int draw_type);
 typedef void (OriginalObject::*func_map_win_draw_map)(int draw_type);
 extern func_map_win_draw_map MapWinOriginalDrawMap;  // 0x0046A550
 
-/*
-Purpose: Broadcast a single-tile redraw to every live map window. Walks the
-         eight map-window slots at 0x007D3C3C, skips empty ones, and for every
-         slot past the first also skips windows whose 0x1DD74 activity dword is
-         clear - slot 0 is the primary map window and always draws. Each
-         surviving window is handed the tile through MapWin::draw_radius with a
-         radius argument of 0; ?draw_tiles@@YAXHHH@Z at 0x0046B140 is the same
-         body with a 1 there, and that single byte is the whole difference.
-         The original opens no exception frame; there is nothing to omit.
-
-         Kept as a full transcription rather than sharing a helper with
-         draw_tiles, even though the two bodies differ in one byte. The
-         originals are two separately compiled 70-byte functions, and
-         tools/mutate_and_verify.py only derives mutants from bodies carrying
-         an `Original Offset:` comment - and skips one-line bodies outright.
-         Folding the walk into a shared helper would therefore hide the slot
-         walk, the null guard, the slot-0 exemption, the activity gate and the
-         argument order from mutation testing entirely, leaving both functions
-         with zero mutants. The duplication buys verification.
-// ORIGINAL: 0x0046AF40 ?draw_tile@@YAXHHH@Z 0x0046AF40-0x0046AF86
-// size      70 bytes
-// prototype void (__cdecl ?draw_tile@@YAXHHH@Z)(int xCoord, int yCoord, int drawType)
-// callers   34   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x0046A2A0
-Return Value: n/a. EAX on return is path-dependent leftover (draw_radius's own
-              residue, the zero flag read at 0x0046AF5F, or a stale value when
-              the last slot is empty), not a computed result, so unlike
-              GraphicWin::close there is no residue to preserve and the void
-              return is faithful.
-Status: Complete with temporary MapWin::draw_radius original dependency
-*/
 MEASURED inline void __cdecl draw_tile(int x_coord, int y_coord, int draw_type) {
     for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
         // Re-read every iteration, as `mov ecx, dword ptr [esi]` at 0x0046AF51
@@ -320,25 +287,6 @@ MEASURED inline void __cdecl draw_tile(int x_coord, int y_coord, int draw_type) 
     }
 }
 
-/*
-Purpose: The radius-1 sibling of draw_tile - the identical 70-byte broadcast,
-         but each live map window redraws the tile together with its
-         surrounding ring rather than the single tile. The only difference in
-         the originals is `push 1` at 0x0046B16D against `push 0` at
-         0x0046AF6D; prologue, slot walk, null test, slot-0 exemption,
-         activity gate, argument order, loop bound and epilogue all match
-         instruction for instruction. Transcribed in full for the mutation
-         coverage reason recorded on draw_tile.
-// ORIGINAL: 0x0046B140 ?draw_tiles@@YAXHHH@Z 0x0046B140-0x0046B186
-// size      70 bytes
-// prototype 
-// callers   10   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x0046A2A0
-Return Value: n/a; same path-dependent EAX leftover as draw_tile.
-Status: Complete with temporary MapWin::draw_radius original dependency
-*/
 MEASURED inline void __cdecl draw_tiles(int x_coord, int y_coord, int draw_type) {
     for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
         // 0x0046B151, mirroring 0x0046AF51.
