@@ -61,6 +61,8 @@ def _marker_line(record: DecompilationState) -> str:
         line += f" EXCLUDED {record.exclusion or 'unspecified'}"
     if record.byte_exact:
         line += " BYTE_EXACT"
+    if record.semantic:
+        line += " SEMANTIC"
     return line
 
 

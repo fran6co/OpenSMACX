@@ -129,7 +129,7 @@ BOOL __cdecl has_fac(int facility_id, int base_id, int queue_count) {
 
 /*
 Purpose: Set the current base globals.
-// ORIGINAL: 0x004E39D0 ?set_base@@YAXH@Z 0x004E39D0-0x004E39F3
+// ORIGINAL: 0x004E39D0 ?set_base@@YAXH@Z 0x004E39D0-0x004E39F3 SEMANTIC
 // size      35 bytes
 // prototype void (__cdecl ?set_base@@YAXH@Z)(int baseID)
 // callers   40   call targets   0

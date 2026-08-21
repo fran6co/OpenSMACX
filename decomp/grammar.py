@@ -46,6 +46,13 @@ MARKER_KEYWORD = re.compile(r"^\s*(?P<kw>FILE|EXCLUDED)\b(?P<rest>.*)$", re.S)
 # edits the body and is believed anyway. The claim lives beside the body it
 # constrains, so deleting the body deletes the claim.
 MARKER_MATCHED = re.compile(r"(?<![A-Za-z0-9_])BYTE_EXACT(?![A-Za-z0-9_])")
+# THE SECOND RATCHET CLAIM, and it is a claim for exactly the same reason:
+# `SEMANTIC` means "this was proved to compile to the same INSTRUCTIONS as the
+# shipped bytes, differing only in register allocation or scheduling; fail if
+# it stops". It is re-proved by every run like BYTE_EXACT, so it is not the
+# stale status field this grammar refuses to carry - and it is counted apart
+# from BYTE_EXACT, so it can never inflate the ratchet it sits beside.
+MARKER_SEMANTIC = re.compile(r"(?<![A-Za-z0-9_])SEMANTIC(?![A-Za-z0-9_])")
 
 # -------------------------------------------------------- exclusion citations
 
