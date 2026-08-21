@@ -74,9 +74,14 @@ if __name__ == "__main__":
                       flags=re.S)
         return re.sub(r"//[^\n]*", "", text)
 
+    # `pending_bodies.cpp` IS EXCLUDED BY CONSTRUCTION. Every body in it is a
+    # forwarder aimed at an address this tree has NOT promoted - the opposite
+    # of "already defined" - and matching on it attributed fourteen bodies to
+    # the one file that proves they are missing.
     product_text = "\n".join(
         blanked(p.read_text(errors="replace"))
-        for p in sorted((REPO_ROOT / "src").glob("*.cpp")))
+        for p in sorted((REPO_ROOT / "src").glob("*.cpp"))
+        if p.name != "pending_bodies.cpp")
 
     def cpp_name(mangled: str | None) -> str | None:
         found = re.match(r"\?(\w+)@(\w+)@@", mangled or "")
@@ -85,11 +90,32 @@ if __name__ == "__main__":
         found = re.match(r"\?(\w+)@@", mangled or "")
         return found.group(1) if found else None
 
+    # A DEFINITION, NOT A MENTION. `\bName\s*\(` also matches every CALL, which
+    # attributed nineteen bodies to `adjustor_thunks.cpp` - a file that calls
+    # those methods and defines none of them.
+    #
+    # Checked by LOOKING AROUND each occurrence rather than with one anchored
+    # pattern: a `^[\w\s:*&<>,~]*` prefix over a few megabytes backtracks
+    # catastrophically and never returns. A definition has a `{` before the
+    # next `;`, and is not preceded on its line by `return`, `=`, `.` or `->`.
     unmarked = {}
     for address, record in orphan.items():
         name = cpp_name(record.name)
-        if name and re.search(rf"\b{re.escape(name)}\s*\(", product_text):
-            unmarked[address] = name
+        if not name:
+            continue
+        for hit in re.finditer(rf"\b{re.escape(name)}\s*\(", product_text):
+            line_start = product_text.rfind("\n", 0, hit.start()) + 1
+            before = product_text[line_start:hit.start()]
+            if re.search(r"(return|=|\.|->|\bnew\b)\s*$", before):
+                continue
+            after = product_text[hit.end():hit.end() + 400]
+            close = after.find(")")
+            if close < 0:
+                continue
+            tail = after[close + 1:close + 40]
+            if re.match(r"\s*(const\s*)?\{", tail):
+                unmarked[address] = name
+                break
 
     if "--unmarked" in sys.argv:
         for address in sorted(unmarked):
