@@ -734,6 +734,27 @@ Purpose: Give the buffer a size and the storage behind it - a DirectDraw
 // which expands ours to `rep stosd`. `#pragma function(memset)` is the only
 // lever VC6 offers for that, and it is deliberately NOT used here.
 //
+// RULED-OUT: the last six instructions, and they are NOT source-shaped.
+// Under `/O2 /Oi- /Gy /GR- /GX` this is 280/286 with every instruction from
+// 0x005D7930 to the epilogue identical and the two listings the SAME LENGTH.
+// The whole divergence is one six-instruction window at 0x005D7924, where the
+// image loads the counter into eax, loads hdc2_ through edi, increments, and
+// stores the counter AFTER both pushes; we load into ecx and store BEFORE the
+// hdc2_ load. Same instructions, different schedule and register.
+//
+// Seven spellings measured, all 280/286 to the instruction: `hdc_lock_count_++`,
+// `+= 1`, `= hdc_lock_count_ + 1`, a read-modify-write through `int *const`,
+// the HDC cached in a local before the increment, and the statements swapped
+// (that one is WORSE, 276). The interesting hypothesis was aliasing - the
+// image's order is the CONSERVATIVE one, which VC6 picks when the pointer has
+// escaped - so `HDC *const dc = &hdc2_` was threaded through the real
+// `GetDC(dc)` call so it genuinely escapes, both with and without the other
+// uses rewritten as `*dc`. VC6 emits byte-identical code for all of them.
+//
+// `osmx.py semantic` REFUSES this, correctly: "instruction 220: mov against
+// push" - the reorder means it is not allocation-only. Do not re-derive any of
+// the above; the next lever, if there is one, is not in this statement.
+//
 // Measured both ways, because the pragma was here and had to earn its
 // place: with it, similarity 0.859 and 69 instructions in position; without
 // it, 0.705 and 80. NEITHER IS BYTE-EXACT, so what the pragma bought was a
