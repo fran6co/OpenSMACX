@@ -381,7 +381,6 @@ void __cdecl lock_set(int x, int y, int faction_id);
 BOOL __cdecl lock_map(int x, int y, int faction_id);
 void __cdecl unlock_map(int x, int y, int faction_id);
 void __cdecl rocky_set(int x, int y, int rocky);
-int __cdecl bit_at(int x, int y);
 void __cdecl bit_put(int x, int y, int bit);
 void __cdecl bit_set(int x, int y, int bit, BOOL set);
 void __cdecl bit2_set(int x, int y, int bit2, BOOL set);
@@ -396,7 +395,6 @@ int __cdecl new_landmark(int x, int y, LPCSTR name);
 BOOL __cdecl valid_landmark(int x, int y, int faction_id);
 void __cdecl kill_landmark(int x, int y);
 BOOL __cdecl is_coast(int x, int y, BOOL is_base_radius);
-BOOL __cdecl is_ocean(int x, int y);
 int __cdecl veh_who(int x, int y);
 void __cdecl rebuild_vehicle_bits();
 void __cdecl rebuild_base_bits();
@@ -515,4 +513,17 @@ inline uint32_t __cdecl code_at(uint32_t x, uint32_t y) {
 // INLINE: the image has no cursor_dist - it open-codes what this names.
 inline int __cdecl cursor_dist(int x_point_a, int y_point_a, int x_point_b, int y_point_b) {
     return (x_dist(x_point_a, x_point_b) + abs(y_point_a - y_point_b)) / 2;
+}
+
+// IN THE HEADER, and `MEASURED` so they are still emitted standalone. Both are
+// real bodies in the image AND are inlined into their callers: `osmx calls
+// 0x00592140` reports that goody_at makes NO calls at all, and it reads a
+// tile's bits and tests whether the tile is ocean. A .cpp definition can only
+// ever be one of those two things.
+MEASURED inline int __cdecl bit_at(int x, int y) {
+    return map_loc(x, y)->bit;
+}
+
+MEASURED inline BOOL __cdecl is_ocean(int x, int y) {
+    return altitude_at(x, y) < ALT_BIT_SHORE_LINE;
 }
