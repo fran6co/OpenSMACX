@@ -1262,7 +1262,7 @@ void __cdecl wipe_goals(int faction_id) {
 
 /*
 Purpose: Initialize all goals for the specified faction.
-// ORIGINAL: 0x00579E00 ?init_goals@@YAXH@Z 0x00579E00-0x00579E66 SEMANTIC
+// ORIGINAL: 0x00579E00 ?init_goals@@YAXH@Z 0x00579E00-0x00579E66
 // size      102 bytes
 // prototype void (__cdecl ?init_goals@@YAXH@Z)(int factionID)
 // callers   1   call targets   0

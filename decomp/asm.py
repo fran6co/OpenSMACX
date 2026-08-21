@@ -200,6 +200,71 @@ def _operand_kinds(instruction) -> tuple:
     return tuple(kinds)
 
 
+def allocation_only(original: Listing, compiled: Listing) -> str:
+    """"" if the two differ ONLY in which registers hold what, else why not.
+
+    THE TEST A SEMANTIC CLAIM RESTS ON, and it has to be stricter than any
+    tier here. SHAPE_EXACT says "the instructions are right and a VALUE is
+    wrong" - a wrong field offset, a wrong loop bound - which is precisely a
+    semantic difference. MNEMONIC_ONLY allows both that and a different
+    addressing form. Neither supports "the same program, allocated
+    differently".
+
+    So this compares the mnemonic, the operand TYPES, and every immediate and
+    displacement, and permits a difference only in register numbers. What
+    survives is a body that computes the same values from the same places and
+    keeps them somewhere else.
+
+    A displacement is compared as it is WRITTEN, so `[eax-2]` and `[eax+4]`
+    differ even when the two bases make them the same address. That is
+    deliberate: proving those equal needs to know what the base holds, this
+    does not, and a claim that guessed would be worth nothing.
+    """
+    def relocated(instruction, listing) -> bool:
+        """Whether a relocation owns any of this instruction's bytes.
+
+        Those bytes are the linker's, so the operand VALUE on the object side
+        is a placeholder - `mov eax, [0]` against the image's
+        `mov eax, [0x68faf0]` is the same instruction. The byte comparison
+        already discounts them; this has to as well or every reference to a
+        global reads as a difference.
+        """
+        start = instruction.address - listing.base
+        return any(offset in listing.mask
+                   for offset in range(start, start + instruction.size))
+
+    left, right = original.instructions, compiled.instructions
+    if len(left) != len(right):
+        return (f"{len(right)} instructions against {len(left)} - a different "
+                f"program, not a different allocation")
+    for index, (a, b) in enumerate(zip(left, right)):
+        if _mnemonic_key(a) != _mnemonic_key(b):
+            return (f"instruction {index}: {_mnemonic_key(a)} against "
+                    f"{_mnemonic_key(b)}")
+        if len(a.operands) != len(b.operands):
+            return f"instruction {index}: {a.mnemonic} takes a different form"
+        masked = relocated(a, original) or relocated(b, compiled)
+        for one, two in zip(a.operands, b.operands):
+            if one.type != two.type:
+                return (f"instruction {index}: {a.mnemonic} operand is a "
+                        f"different KIND")
+            if masked:
+                continue
+            if masked:
+                continue
+            if one.type == x86.X86_OP_IMM and one.imm != two.imm:
+                return (f"instruction {index}: {a.mnemonic} immediate "
+                        f"0x{one.imm:x} against 0x{two.imm:x}")
+            if one.type == x86.X86_OP_MEM:
+                if one.mem.disp != two.mem.disp:
+                    return (f"instruction {index}: {a.mnemonic} displacement "
+                            f"0x{one.mem.disp:x} against 0x{two.mem.disp:x}")
+                if one.mem.scale != two.mem.scale:
+                    return (f"instruction {index}: {a.mnemonic} index scale "
+                            f"differs")
+    return ""
+
+
 def differing_constants(original: Listing, compiled: Listing) -> list:
     """Which operand values disagree in a SHAPE_EXACT pair.
 
@@ -775,6 +840,11 @@ class AsmComparison:
                                     # divergence, rendered as they REALLY are
     differing_constants: tuple = ()  # SHAPE_EXACT only: (index, mnemonic,
                                     # original, compiled) per wrong value
+    allocation_only: str = "?"      # "" when the two listings differ ONLY in
+                                    # which registers hold what, otherwise why
+                                    # not. See `allocation_only()`; this is
+                                    # what a SEMANTIC claim rests on, and it
+                                    # is stricter than every tier above.
 
     # THE DATA TAIL - a `/Gy` COMDAT's jump table, which belongs to the
     # function and is not in the catalogue's span. Zero for the bodies that
@@ -977,7 +1047,10 @@ def compare_asm(original: Listing, compiled: Listing) -> AsmComparison:
         original_instructions=n, compiled_instructions=m,
         matching_instructions=matching, mnemonic_similarity=similarity,
         first_divergence=first_divergence, context=context,
-        differing_constants=tuple(constants), flags=compiled.flags)
+        differing_constants=tuple(constants),
+        allocation_only=("" if verdict is Tier.BYTE_EXACT
+                         else allocation_only(original, compiled)),
+        flags=compiled.flags)
 
 
 def compare_subject(record: DecompilationState, exe: Path | str,

@@ -1638,7 +1638,7 @@ void __cdecl prefs_save(BOOL save_factions) {
 
 /*
 Purpose: Set the internal game preference globals from the ini setting globals.
-// ORIGINAL: 0x0059E950 ?prefs_use@@YAXXZ 0x0059E950-0x0059E973
+// ORIGINAL: 0x0059E950 ?prefs_use@@YAXXZ 0x0059E950-0x0059E973 SEMANTIC
 // size      35 bytes
 // prototype 
 // callers   6   call targets   0

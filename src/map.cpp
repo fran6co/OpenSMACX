@@ -710,7 +710,7 @@ Status: Complete
 
 /*
 Purpose: Set the altitude details for the specified tile.
-// ORIGINAL: 0x00591260 ?alt_put_detail@@YAXHHH@Z 0x00591260-0x00591288 SEMANTIC
+// ORIGINAL: 0x00591260 ?alt_put_detail@@YAXHHH@Z 0x00591260-0x00591288
 // size      40 bytes
 // prototype void (__cdecl ?alt_put_detail@@YAXHHH@Z)(int xCoord, int yCoord, int detail)
 // callers   5   call targets   0
@@ -747,7 +747,7 @@ void __cdecl owner_set(int x, int y, int faction_id) {
 
 /*
 Purpose: Set the site for the specified tile.
-// ORIGINAL: 0x00591B50 ?site_set@@YAXHHH@Z 0x00591B50-0x00591B86 SEMANTIC
+// ORIGINAL: 0x00591B50 ?site_set@@YAXHHH@Z 0x00591B50-0x00591B86
 // size      54 bytes
 // prototype void (__cdecl ?site_set@@YAXHHH@Z)(int xCoord, int yCoord, int site)
 // callers   9   call targets   0
@@ -915,7 +915,7 @@ Status: Complete
 
 /*
 Purpose: Set the bit for the specified tile.
-// ORIGINAL: 0x00591D30 ?bit_put@@YAXHHH@Z 0x00591D30-0x00591D58 SEMANTIC
+// ORIGINAL: 0x00591D30 ?bit_put@@YAXHHH@Z 0x00591D30-0x00591D58
 // size      40 bytes
 // prototype void (__cdecl ?bit_put@@YAXHHH@Z)(int xCoord, int yCoord, int bit)
 // callers   1   call targets   0
@@ -1598,7 +1598,7 @@ BOOL __cdecl map_read(FILE *map_file) {
 
 /*
 Purpose: Get the region value for the specified tile.
-// ORIGINAL: 0x00591210 ?abstract_at@@YAHHH@Z 0x00591210-0x00591230
+// ORIGINAL: 0x00591210 ?abstract_at@@YAHHH@Z 0x00591210-0x00591230 SEMANTIC
 // symbol    ?abstract_at@@YAEHH@Z
 // size      32 bytes
 // prototype int (__cdecl ?abstract_at@@YAHHH@Z)(int xCoord, int yCoord)
@@ -1617,7 +1617,7 @@ Status: Complete
 
 /*
 Purpose: Set the region value for the specified tile.
-// ORIGINAL: 0x00591230 ?abstract_set@@YAXHHE@Z 0x00591230-0x00591253
+// ORIGINAL: 0x00591230 ?abstract_set@@YAXHHE@Z 0x00591230-0x00591253 SEMANTIC
 // size      35 bytes
 // prototype void (__cdecl ?abstract_set@@YAXHHE@Z)(int xCoord, int yCoord, unsigned int8 val)
 // callers   1   call targets   0
