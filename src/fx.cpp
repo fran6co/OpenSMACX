@@ -20,11 +20,9 @@
 #include "vtable_shim.h"
 #include "hypothesis_layouts.h"
 
-func_thiscall_teardown EffectElementTeardown =
-    original_method<func_thiscall_teardown>(0x004482C0);
+const void *const EffectElementTeardown = (const void *)0x004482C0;
 
-func_thiscall_teardown EffectElementCtor =
-    original_method<func_thiscall_teardown>(0x004482D0);
+const void *const EffectElementCtor = (const void *)0x004482D0;
 
 /*
 Purpose: Build the effect bank: the mirror image of the destructor below, one

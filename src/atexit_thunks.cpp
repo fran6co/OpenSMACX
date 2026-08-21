@@ -54,22 +54,14 @@ func_wave_destructor WaveOriginalDestructor =
 // Per-element teardowns the array walks dispatch to. The Wave one binds
 // the same address as WaveOriginalDestructor deliberately: it is the same
 // original body, held separately so the array seam rebinds alone.
-func_thiscall_teardown BufferElementTeardown =
-    original_method<func_thiscall_teardown>(0x005D7410);
-func_thiscall_teardown CaviarDataElementTeardown =
-    original_method<func_thiscall_teardown>(0x00456100);
-func_thiscall_teardown FactionArtElementTeardown =
-    original_method<func_thiscall_teardown>(0x00456010);
-func_thiscall_teardown FontElementTeardown =
-    original_method<func_thiscall_teardown>(0x00618EE0);
-func_thiscall_teardown SpriteElementTeardown =
-    original_method<func_thiscall_teardown>(0x00406850);
-func_thiscall_teardown TextIndexElementTeardown =
-    original_method<func_thiscall_teardown>(0x005FDF60);
-func_thiscall_teardown TextureElementTeardown =
-    original_method<func_thiscall_teardown>(0x00619660);
-func_thiscall_teardown WaveElementTeardown =
-    original_method<func_thiscall_teardown>(0x004C67C0);
+const void *const BufferElementTeardown = (const void *)0x005D7410;
+const void *const CaviarDataElementTeardown = (const void *)0x00456100;
+const void *const FactionArtElementTeardown = (const void *)0x00456010;
+const void *const FontElementTeardown = (const void *)0x00618EE0;
+const void *const SpriteElementTeardown = (const void *)0x00406850;
+const void *const TextIndexElementTeardown = (const void *)0x005FDF60;
+const void *const TextureElementTeardown = (const void *)0x00619660;
+const void *const WaveElementTeardown = (const void *)0x004C67C0;
 
 // The opaque-storage teardowns, each defaulting to the
 // original destructor the thunk tail jumps to; the
