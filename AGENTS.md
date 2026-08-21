@@ -4,6 +4,28 @@
 
 Finish OpenSMACX as a standalone source-owned executable. Local proprietary x86 islands are only a temporary recovery mechanism. Final distributable builds must require no original executable, copied machine code, fixed-address redirects, or proprietary assembly.
 
+## What counts as an answer, worst last
+
+A body can be right in four different ways, and this project prefers them in
+this order:
+
+1. **Byte-exact C++.** The bytes agree and the source says what the original
+   said.
+2. **C++ that is SEMANTICALLY the same** - the same instruction sequence,
+   differing only in which register holds what. `osmx semantic <addr>` claims
+   it; `check` re-proves it every run and counts it apart from the byte-exact
+   number.
+3. **Byte-exact `__asm`.** A match that teaches nothing: it reproduces the
+   bytes by restating them. Acceptable as an INTERMEDIATE step while other
+   bodies are being finished, never as a destination. `check` reports these
+   under `RESTATED`.
+4. **Not matching yet.** Honest, and the starting point for iteration.
+
+A semantic C++ body is BETTER than a byte-exact `__asm` one, and rewriting an
+`__asm` body in C++ is worth doing even when it drops the claim from byte-exact
+to semantic. Nothing is ever EXCLUDED for being hard; a body that does not
+match is simply one that has not been finished.
+
 ## Start Here (read before doing anything)
 
 This file is the handoff, but it is not self-sufficient. A session starting

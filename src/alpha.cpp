@@ -85,6 +85,7 @@ int __cdecl tech_name(LPSTR name) {
 /*
 Purpose: Convert the chassis name string to a numeric chassis id.
 // ORIGINAL: 0x00584E40 ?chas_name@@YAHPAD@Z 0x00584E40-0x00584F33
+// RULED-OUT: a `purge_trailing(name)` call - the image hand-inlines a NAIVE trim that recomputes `strlen` on every access (4 calls: check, loop-top compare, store index, continue condition) instead of one cached-length pointer walk. Restoring that shape took the call count from 9 to the image's 12; still MISMATCH on register choice (`mov bl,0x20` vs an immediate compare) and downstream byte offsets - not chased further, see weap_name/arm_name (identical).
 // size      243 bytes
 // prototype 
 // callers   1   call targets   5
@@ -131,6 +132,7 @@ int __cdecl chas_name(LPSTR name) {
 /*
 Purpose: Convert the weapon name string to a numeric weapon id.
 // ORIGINAL: 0x00584F40 ?weap_name@@YAHPAD@Z 0x00584F40-0x00585030
+// RULED-OUT: as chas_name (0x00584E40) - the naive recomputed-`strlen` trim loop, not `purge_trailing`. Call count 9 -> 12, still MISMATCH (register choice for the space literal).
 // size      240 bytes
 // prototype 
 // callers   1   call targets   5
@@ -172,6 +174,7 @@ int __cdecl weap_name(LPSTR name) {
 /*
 Purpose: Convert the armor name string to a numeric armor id.
 // ORIGINAL: 0x00585030 ?arm_name@@YAHPAD@Z 0x00585030-0x00585120
+// RULED-OUT: as chas_name (0x00584E40) - the naive recomputed-`strlen` trim loop, not `purge_trailing`. Call count 9 -> 12, still MISMATCH (register choice for the space literal).
 // size      240 bytes
 // prototype 
 // callers   1   call targets   5
@@ -772,6 +775,7 @@ void __cdecl read_faction(Player *player, int toggle) {
 /*
 Purpose: Parse the #BONUSNAMES, #FACTIONS, and #NEWFACTIONS sections inside the alpha(x).txt.
 // ORIGINAL: 0x00586F30 ?read_factions@@YAHXZ 0x00586F30-0x005871C9
+// RULED-OUT: fixes, call count 23 -> 28-29 (image 31): 1. `rand() % faction_count`, not `random(0, faction_count)` - the image calls the C library `rand` (0x0064601D) directly, never the game's seeded PRNG. BUG IN THE ORIGINAL, preserved. 2. `load_faction_art` was a temp.h function POINTER, compiling an indirect call where the image has `call rel32` twice; promoted to a src/pending_bodies.cpp forwarder (see there and temp.h). 3. `strcpy_s(dest, src)`, not `strncpy_s(dest, src, 24)`, for BonusName[i].key and both Players[player] fields in the first two loops - the image pushes only 2 args (`call 0x00645460`), an unbounded copy, not a 3-arg bounded one. BUG IN THE ORIGINAL, preserved. Remaining gap: `text_open`/`text_get` each short by 1 (a ternary argument the image tail-merges two of its three arms for, not chased), and `load_faction_art` merges its two call sites into one physical `call` at the object level where the image keeps two.
 // size      665 bytes
 // prototype 
 // callers   1   call targets   9
@@ -1547,8 +1551,41 @@ void __cdecl prefs_fac_load() {
 }
 
 /*
+Purpose: Convert the specified value to a binary string for use by various preferences.
+Original Offset: n/a
+Return Value: Binary string
+Status: Complete
+*/
+// MOVED BEFORE prefs_load, and `inline`: VC6 only folds a same-TU call when
+// it has already seen the full definition, and prefs_load's four call sites
+// (0x0059DEFB-area, 0x0059E228, 0x0059E314, 0x0059E400 - all inlined in the
+// image, no `call` to a separate function at all) need the body available
+// beforehand.
+inline LPSTR __cdecl prefs_get_binary(int value) {
+    // NOT a local buffer/std::string: the image builds this directly into
+    // the global `StringTemp` (0x009B86A0) - `mov byte ptr [0x9b86a0], 0`
+    // then a `strcat` per bit at, e.g., 0x0059DEF8-0x0059DF58 - and the
+    // caller uses THAT buffer as the `default_value` argument to the
+    // (likewise inlined) string `prefs_get` immediately after. A
+    // std::string return here forces an SEH frame onto every caller that
+    // the image's plain `push ebp` prologue does not have.
+    StringTemp[0] = 0;
+    for (int shift = 31, non_pad = 0; shift >= 0; shift--) {
+        if ((1 << shift) & value) {
+            non_pad = 1;
+            strcat_s(StringTemp, sizeof(StringTemp), "1");
+        } else if (non_pad || shift < 8) {
+            strcat_s(StringTemp, sizeof(StringTemp), "0");
+        }
+    }
+    return StringTemp;
+}
+
+/*
 Purpose: Load the most common preferences from the game's ini to globals.
 // ORIGINAL: 0x0059DCF0 ?prefs_load@@YAXH@Z 0x0059DCF0-0x0059E502
+// RULED-OUT: `__forceinline` on the two helpers, zero measured effect under every flag set tried, reverted to plain `inline`.
+// RULED-OUT: dominant defect was std::string/std::stringstream (the "Custom World" default and `prefs_get_binary`'s return), which forces an SEH frame this function's actual `push ebp; sub esp, 0x54; push ebx/esi/edi` prologue does not have - first divergence was INSTRUCTION 0 before this. `prefs_get_binary` now writes directly into the global `StringTemp` (0x009B86A0), matching the image's `mov byte ptr [0x9b86a0], 0` + per-bit `strcat`, and the "Custom World" default is the same StringTemp+strcat loop with a SIGNED `int i` (image: `cmp esi, 7; jl`, not `jb`). Fixing this alone cannot get further: `prefs_get_binary` and both `prefs_get` overloads are `inline` (moved before first use where needed) since the image inlines them at MOST call sites, but the image's exact per-site mix (e.g. int-overload: 4 inlined + 3 real calls) is a VC6 codegen heuristic no source spelling reproduced here -
 // size      2066 bytes
 // prototype void (__cdecl ?prefs_load@@YAXH@Z)(BOOL useDefault)
 // callers   3   call targets   8
@@ -1706,32 +1743,6 @@ void __cdecl prefs_use() {
     GamePreferences = preferences;
     GameMorePreferences = more;
     GameWarnings = announce;
-}
-
-/*
-Purpose: Convert the specified value to a binary string for use by various preferences.
-Original Offset: n/a
-Return Value: Binary string
-Status: Complete
-*/
-LPSTR __cdecl prefs_get_binary(int value) {
-    // NOT a local buffer/std::string: the image builds this directly into
-    // the global `StringTemp` (0x009B86A0) - `mov byte ptr [0x9b86a0], 0`
-    // then a `strcat` per bit at, e.g., 0x0059DEF8-0x0059DF58 - and the
-    // caller uses THAT buffer as the `default_value` argument to the
-    // (likewise inlined) string `prefs_get` immediately after. A
-    // std::string return here forces an SEH frame onto every caller that
-    // the image's plain `push ebp` prologue does not have.
-    StringTemp[0] = 0;
-    for (int shift = 31, non_pad = 0; shift >= 0; shift--) {
-        if ((1 << shift) & value) {
-            non_pad = 1;
-            strcat_s(StringTemp, sizeof(StringTemp), "1");
-        } else if (non_pad || shift < 8) {
-            strcat_s(StringTemp, sizeof(StringTemp), "0");
-        }
-    }
-    return StringTemp;
 }
 
 /*
