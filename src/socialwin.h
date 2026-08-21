@@ -42,7 +42,7 @@ class SocialWin : public GraphicWin, public SubInterface {
  public:
   void hide();
   void show(int a1);
-  SocialWin() { ; }
+  SocialWin();
   // 0x004B3C80 is not recovered: a
   // pending_bodies forwarder, because an empty inline stub emits
   // nothing and the deleting destructor needs a `call rel32`.
@@ -253,6 +253,14 @@ class SocialWin : public GraphicWin, public SubInterface {
   Sprite socEffectOrig_;  // 0xD34, size == sizeof(Sprite)
   uint32_t netIncome_;  // 0xD60
   uint32_t breakthroughTurns_;  // 0xD64
+  // MEASURED against the constructor's own disassembly (0x004AE9E0): the
+  // vector ctor iterator builds this array at `self + 0xD6C`, not 0xD68 -
+  // and the constructor's LATER sub-object offsets land back on this
+  // header's existing numbers (e.g. the Sprite[0xA] run at 0x2C60), so the
+  // discrepancy is confined to this one boundary, not a uniform shift. Left
+  // as the header already had it - the constructor below reaches every
+  // sub-object at its own raw, disassembly-measured offset rather than
+  // through these names, so nothing here depends on resolving it.
   CheckButton energyLockButtons_[3];  // 0xD68, 3 * sizeof(CheckButton) == 0x1E84
   uint32_t field_2BEC_;  // 0x2BEC
   uint32_t field_2BF0_;  // 0x2BF0

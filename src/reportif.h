@@ -22,16 +22,19 @@
  /*
   * ReportIf class
   *
-  * Layout not established; its methods reach as far as 0x202E0, so the
-  * object is at least that large. The stubs recovered here are constant
-  * returns touching no field, so the opaque storage below is only an object
-  * for the canary to seed, not a modelled layout.
+  * The constructor's own disassembly (0x004AD170) and the destructor's
+  * (0x004ACDA0) between them place every sub-object below at an exact,
+  * cross-checked offset: the constructor placement-news each one in image
+  * order, the destructor tears the same run down in reverse, and the two
+  * agree on every boundary. The object's own last construction reaches
+  * 0x20304 (a Sprite[4] ending there); nothing past it is established, so
+  * there is no static_assert on sizeof(ReportIf).
   */
 class ReportIf : public SubInterface {
  public:
   void done();
-  ReportIf() { ; }
-  ~ReportIf() { ; }
+  ReportIf();
+  ~ReportIf();
   void close_energy();
   void close_intel();
   void on_iface_right_click(int, int);
@@ -86,146 +89,55 @@ class ReportIf : public SubInterface {
   uint32_t field_74_;  // 0x74
   uint32_t field_78_;  // 0x78
   uint32_t field_7C_;  // 0x7C
-  uint8_t field_80_[0x4F2C];  // 0x80
-  uint32_t field_4FAC_;  // 0x4FAC
-  uint32_t field_4FB0_;  // 0x4FB0
-  uint8_t field_4FB4_[0x52E4];  // 0x4FB4
-  uint32_t field_A298_;  // 0xA298
-  uint8_t field_A29C_[0x30];  // 0xA29C
-  uint32_t field_A2CC_;  // 0xA2CC
-  uint32_t field_A2D0_;  // 0xA2D0
-  uint8_t field_A2D4_[0xC];  // 0xA2D4
-  uint32_t field_A2E0_;  // 0xA2E0
-  uint32_t field_A2E4_;  // 0xA2E4
-  uint8_t field_A2E8_[0x14];  // 0xA2E8
-  uint32_t field_A2FC_;  // 0xA2FC
-  uint8_t field_A300_[0x4];  // 0xA300
-  uint32_t field_A304_;  // 0xA304
-  uint8_t field_A308_[0xB1C];  // 0xA308
-  uint32_t field_AE24_;  // 0xAE24
-  uint8_t field_AE28_[0xC];  // 0xAE28
-  uint32_t field_AE34_;  // 0xAE34
-  uint32_t field_AE38_;  // 0xAE38
-  uint8_t field_AE3C_[0x14];  // 0xAE3C
-  uint32_t field_AE50_;  // 0xAE50
-  uint8_t field_AE54_[0xBB8];  // 0xAE54
-  uint32_t field_BA0C_;  // 0xBA0C
-  uint8_t field_BA10_[0x440];  // 0xBA10
-  uint32_t field_BE50_;  // 0xBE50
-  uint8_t field_BE54_[0x704];  // 0xBE54
-  uint32_t field_C558_;  // 0xC558
-  uint8_t field_C55C_[0x440];  // 0xC55C
-  uint32_t field_C99C_;  // 0xC99C
-  uint8_t field_C9A0_[0x788];  // 0xC9A0
-  uint32_t field_D128_;  // 0xD128
-  uint8_t field_D12C_[0xC];  // 0xD12C
-  uint32_t field_D138_;  // 0xD138
-  uint8_t field_D13C_[0x440];  // 0xD13C
-  uint32_t field_D57C_;  // 0xD57C
-  uint8_t field_D580_[0x704];  // 0xD580
-  uint32_t field_DC84_;  // 0xDC84
-  uint8_t field_DC88_[0x440];  // 0xDC88
-  uint32_t field_E0C8_;  // 0xE0C8
-  uint8_t field_E0CC_[0x704];  // 0xE0CC
-  uint32_t field_E7D0_;  // 0xE7D0
-  uint8_t field_E7D4_[0x440];  // 0xE7D4
-  uint32_t field_EC14_;  // 0xEC14
-  uint8_t field_EC18_[0x704];  // 0xEC18
-  uint32_t field_F31C_;  // 0xF31C
-  uint8_t field_F320_[0x440];  // 0xF320
-  uint32_t field_F760_;  // 0xF760
-  uint8_t field_F764_[0x704];  // 0xF764
-  uint32_t field_FE68_;  // 0xFE68
-  uint8_t field_FE6C_[0x440];  // 0xFE6C
-  uint32_t field_102AC_;  // 0x102AC
-  uint8_t field_102B0_[0x704];  // 0x102B0
-  uint32_t field_109B4_;  // 0x109B4
-  uint8_t field_109B8_[0x440];  // 0x109B8
-  uint32_t field_10DF8_;  // 0x10DF8
-  uint8_t field_10DFC_[0x704];  // 0x10DFC
-  uint32_t field_11500_;  // 0x11500
-  uint8_t field_11504_[0x440];  // 0x11504
-  uint32_t field_11944_;  // 0x11944
-  uint8_t field_11948_[0x704];  // 0x11948
-  uint32_t field_1204C_;  // 0x1204C
-  uint8_t field_12050_[0x440];  // 0x12050
-  uint32_t field_12490_;  // 0x12490
-  uint8_t field_12494_[0x704];  // 0x12494
-  uint32_t field_12B98_;  // 0x12B98
-  uint8_t field_12B9C_[0x440];  // 0x12B9C
-  uint32_t field_12FDC_;  // 0x12FDC
-  uint8_t field_12FE0_[0x788];  // 0x12FE0
-  uint32_t field_13768_;  // 0x13768
-  uint8_t field_1376C_[0xC];  // 0x1376C
-  uint32_t field_13778_;  // 0x13778
-  uint8_t field_1377C_[0x4F94];  // 0x1377C
-  uint32_t field_18710_;  // 0x18710
-  uint8_t field_18714_[0xC];  // 0x18714
-  uint32_t field_18720_;  // 0x18720
-  uint8_t field_18724_[0x2D2C];  // 0x18724
-  uint32_t field_1B450_;  // 0x1B450
-  uint8_t field_1B454_[0xB48];  // 0x1B454
-  uint32_t field_1BF9C_;  // 0x1BF9C
-  uint8_t field_1BFA0_[0x440];  // 0x1BFA0
-  uint32_t field_1C3E0_;  // 0x1C3E0
-  uint8_t field_1C3E4_[0x704];  // 0x1C3E4
-  uint32_t field_1CAE8_;  // 0x1CAE8
-  uint8_t field_1CAEC_[0x440];  // 0x1CAEC
-  uint32_t field_1CF2C_;  // 0x1CF2C
-  uint8_t field_1CF30_[0x704];  // 0x1CF30
-  uint32_t field_1D634_;  // 0x1D634
-  uint8_t field_1D638_[0x440];  // 0x1D638
-  uint32_t field_1DA78_;  // 0x1DA78
-  uint8_t field_1DA7C_[0x704];  // 0x1DA7C
-  uint32_t field_1E180_;  // 0x1E180
-  uint32_t field_1E184_;  // 0x1E184
-  uint32_t field_1E188_;  // 0x1E188
-  uint32_t field_1E18C_;  // 0x1E18C
-  uint32_t field_1E190_;  // 0x1E190
-  uint32_t field_1E194_;  // 0x1E194
-  uint32_t field_1E198_;  // 0x1E198
-  uint32_t field_1E19C_;  // 0x1E19C
-  uint32_t field_1E1A0_;  // 0x1E1A0
-  uint32_t field_1E1A4_;  // 0x1E1A4
-  uint32_t field_1E1A8_;  // 0x1E1A8
-  uint32_t field_1E1AC_;  // 0x1E1AC
-  uint32_t field_1E1B0_;  // 0x1E1B0
-  uint32_t field_1E1B4_;  // 0x1E1B4
-  uint32_t field_1E1B8_;  // 0x1E1B8
-  uint8_t field_1E1BC_[0xC];  // 0x1E1BC
-  uint32_t field_1E1C8_;  // 0x1E1C8
-  uint32_t field_1E1CC_;  // 0x1E1CC
-  uint32_t field_1E1D0_;  // 0x1E1D0
-  uint32_t field_1E1D4_;  // 0x1E1D4
-  uint32_t field_1E1D8_;  // 0x1E1D8
-  uint32_t field_1E1DC_;  // 0x1E1DC
-  uint32_t field_1E1E0_;  // 0x1E1E0
-  uint8_t field_1E1E4_[0x3C];  // 0x1E1E4
-  uint32_t field_1E220_;  // 0x1E220
-  uint32_t field_1E224_;  // 0x1E224
-  uint32_t field_1E228_;  // 0x1E228
-  uint32_t field_1E22C_;  // 0x1E22C
-  uint32_t field_1E230_;  // 0x1E230
-  uint32_t field_1E234_;  // 0x1E234
-  uint32_t field_1E238_;  // 0x1E238
-  uint32_t field_1E23C_;  // 0x1E23C
-  uint32_t field_1E240_;  // 0x1E240
-  uint32_t field_1E244_;  // 0x1E244
-  uint32_t field_1E248_;  // 0x1E248
-  uint32_t field_1E24C_;  // 0x1E24C
-  uint32_t field_1E250_;  // 0x1E250
-  uint32_t field_1E254_;  // 0x1E254
-  uint32_t field_1E258_;  // 0x1E258
-  uint32_t field_1E25C_;  // 0x1E25C
-  uint32_t field_1E260_;  // 0x1E260
-  uint8_t field_1E264_[0x1FF8];  // 0x1E264
-  uint8_t field_2025C_;  // 0x2025C
-  uint8_t field_2025D_[0x93];  // 0x2025D
+
+  // Everything below is placement-new'd EXPLICITLY from the constructor
+  // body (0x004AD170), in image order, and torn down in the mirrored order
+  // by the destructor (0x004ACDA0) - the two cross-check every boundary
+  // here. Raw storage, not the real sub-object type: C++'s implicit member
+  // construction would build these all before the constructor body ever
+  // runs, which cannot reproduce the image's exact call order (SubInterface
+  // itself is the empty-inline base, and nothing here is built through it).
+  uint8_t flatButtonsA_[7 * 0xB4C];  // 0x80, 7 * sizeof(FlatButton), vector ctor iterator
+  uint8_t spritesA_[0x15 * 0x2C];  // 0x4F94, 0x15 * sizeof(Sprite), vector ctor iterator
+  uint8_t gap_5330_[0x54];  // 0x5330
+  uint8_t flatButtonsB_[7 * 0xB4C];  // 0x5384, 7 * sizeof(FlatButton), vector ctor iterator
+  uint8_t gap_A298_[0x38];  // 0xA298
+  // The two ListBox members below are constructed with a BOOL argument
+  // (`ListBox(1)` in the disassembly's call at 0x00609DB0) that has no
+  // declared overload yet - that recovery is out of this batch's scope, so
+  // the constructor reaches it at the raw image address, same as any other
+  // not-yet-promoted callee.
+  uint8_t listBox1_[0xB54];  // 0xA2D0, sizeof(ListBox)
+  uint8_t listBox2_[0xB54];  // 0xAE24, sizeof(ListBox)
+  uint8_t buttonGroup1_[0x94];  // 0xB978, sizeof(ButtonGroup)
+  uint8_t flatButton1_[0xB4C];  // 0xBA0C
+  uint8_t flatButton2_[0xB4C];  // 0xC558
+  uint8_t buttonGroup2_[0x94];  // 0xD0A4
+  uint8_t flatButton3_[0xB4C];  // 0xD138
+  uint8_t flatButton4_[0xB4C];  // 0xDC84
+  uint8_t flatButton5_[0xB4C];  // 0xE7D0
+  uint8_t flatButton6_[0xB4C];  // 0xF31C
+  uint8_t flatButton7_[0xB4C];  // 0xFE68
+  uint8_t flatButton8_[0xB4C];  // 0x109B4
+  uint8_t flatButton9_[0xB4C];  // 0x11500
+  uint8_t flatButton10_[0xB4C];  // 0x1204C
+  uint8_t flatButton11_[0xB4C];  // 0x12B98
+  uint8_t buttonGroup3_[0x94];  // 0x136E4
+  uint8_t flatButtonsC_[7 * 0xB4C];  // 0x13778, 7 * sizeof(FlatButton), vector ctor iterator
+  uint8_t buttonGroup4_[0x94];  // 0x1868C
+  uint8_t flatButtonsD_[5 * 0xB4C];  // 0x18720, 5 * sizeof(FlatButton), vector ctor iterator
+  uint8_t flatButton12_[0xB4C];  // 0x1BF9C
+  uint8_t flatButton13_[0xB4C];  // 0x1CAE8
+  uint8_t flatButton14_[0xB4C];  // 0x1D634
+  uint8_t gap_1E180_[0x3C];  // 0x1E180
+  uint8_t spot_[0xC];  // 0x1E1BC, sizeof(Spot)
+  uint8_t gap_1E1C8_[0x208C];  // 0x1E1C8
+  uint8_t spritesB_[4 * 0x2C];  // 0x20254, 4 * sizeof(Sprite), vector ctor iterator
 };
 
-// 0x8 + 0x202E8 == 0x202F0, the extent this header modelled as one blob, so
-// naming the head moved nothing. The size is a floor, not a pin: no
-// static_assert, because nothing establishes where ReportIf ends.
+// The constructor's own last store reaches 0x20254 + 0xB0 == 0x20304; there
+// is no static_assert on sizeof(ReportIf) because nothing establishes where
+// the object actually ends past that.
 
 // The energy report's third list box is a PROCESS-WIDE object at a fixed
 // address, not a subobject: close_energy closes it alongside the two this

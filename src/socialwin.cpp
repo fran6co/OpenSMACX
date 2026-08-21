@@ -19,6 +19,86 @@
 #include "socialwin.h"
 #include "win.h"
 #include "subinterface.h"
+#include "vector_teardown.h"
+
+const void *const SocialWinSpriteCtor = (const void *)0x005E37E0;
+const void *const SocialWinSpriteDtor = (const void *)0x00406850;
+const void *const SocialWinFlatButtonCtor = (const void *)0x00607CF0;
+const void *const SocialWinFlatButtonDtor = (const void *)0x00406880;
+const void *const SocialWinCheckButtonCtor = (const void *)0x004B3EC0;
+const void *const SocialWinCheckButtonDtor = (const void *)0x00633750;
+const void *const SocialWinBufferCtor = (const void *)0x005D7210;
+const void *const SocialWinBufferDtor = (const void *)0x005D7410;
+const void *const SocialWinButtonGroupCtor = (const void *)0x0062B7C0;
+const void *const SocialWinButtonGroupDtor = (const void *)0x004325B0;
+
+const uint32_t SocialWinSubInterfaceVtable = 0x0066A6E4;
+const uint32_t SocialWinPrimaryVtable = 0x0066DAA4;
+const uint32_t SocialWinBufferVtable = 0x0066DA9C;
+const uint32_t SocialWinSubInterfaceVtable2 = 0x0066DA50;
+
+/*
+Purpose: Install the SubInterface vftable, construct the Spot, nine runs of
+         further sub-objects (a CheckButton[3], four Sprite runs, a
+         Buffer[6], a FlatButton[35], a ButtonGroup[4] and one more
+         ButtonGroup, nine Fonts), then install SocialWin's own vftables and
+         set factionID_ to -1.
+// ORIGINAL: 0x004AE9E0 ??0SocialWin@@QAE@XZ 0x004AE9E0-0x004AEBE7;0x006598A0-0x00659A0A
+// RULED-OUT: register allocation - the SEH prologue agrees (7/7) then the
+//            compiled body reserves an extra `sub esp, 0xc` and an extra
+//            callee-save (ebx) the image does not. MISMATCH, 15/121
+//            instructions agree.
+// size      881 bytes
+// prototype void (__thiscall ??0SocialWin@@QAE@XZ)(SocialWin* this)
+// callers   1   call targets   6
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005D4CF0 0x005FA860 0x00618EA0 0x0062B7C0 0x006456E4 0x006457C2
+*/
+// Every sub-object is placement-new'd EXPLICITLY, in the exact order the
+// disassembly shows, at its raw offset rather than through a named member -
+// GraphicWin::construct() has to run first, which implicit member
+// construction cannot reproduce, and the header's own mid-section field
+// names are unverified guesses this constructor's own evidence disagrees
+// with in at least one place (see the note beside energyLockButtons_ in
+// socialwin.h). CheckButton's own recovery is out of this batch's scope, so
+// its constructor/destructor addresses are reached raw, same as every
+// other not-yet-promoted callee.
+SocialWin::SocialWin() {
+    GraphicWin::construct();
+    char *const self = reinterpret_cast<char *>(this);
+
+    uint32_t *const object = reinterpret_cast<uint32_t *>(this);
+    object[0xA14 / 4] = SocialWinSubInterfaceVtable;
+
+    new (self + 0xA20) Spot();
+
+    VectorCtorIterator(self + 0xD6C, 0xA2C, 3, SocialWinCheckButtonCtor, SocialWinCheckButtonDtor);
+    VectorCtorIterator(self + 0x2C60, 0x2C, 0xA, SocialWinSpriteCtor, SocialWinSpriteDtor);
+    VectorCtorIterator(self + 0x2E18, 0x2C, 0x5A, SocialWinSpriteCtor, SocialWinSpriteDtor);
+    VectorCtorIterator(self + 0x3D90, 0x2C, 2, SocialWinSpriteCtor, SocialWinSpriteDtor);
+    VectorCtorIterator(self + 0x3DE8, 0x2C, 6, SocialWinSpriteCtor, SocialWinSpriteDtor);
+    VectorCtorIterator(self + 0x3EF0, 0x588, 6, SocialWinBufferCtor, SocialWinBufferDtor);
+    VectorCtorIterator(self + 0x6020, 0xB4C, 0x23, SocialWinFlatButtonCtor, SocialWinFlatButtonDtor);
+    VectorCtorIterator(self + 0x1EB84, 0x94, 4, SocialWinButtonGroupCtor, SocialWinButtonGroupDtor);
+
+    new (self + 0x1EDD4) ButtonGroup();
+
+    new (self + 0x1EE68) Font();
+    new (self + 0x1EE90) Font();
+    new (self + 0x1EEB8) Font();
+    new (self + 0x1EEE0) Font();
+    new (self + 0x1EF08) Font();
+    new (self + 0x1EF30) Font();
+    new (self + 0x1EF58) Font();
+    new (self + 0x1EF80) Font();
+    new (self + 0x1EFA8) Font();
+
+    object[0x000 / 4] = SocialWinPrimaryVtable;
+    object[0x444 / 4] = SocialWinBufferVtable;
+    object[0xA14 / 4] = SocialWinSubInterfaceVtable2;
+    factionID_ = 0xFFFFFFFFU;
+}
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.

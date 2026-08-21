@@ -37,7 +37,7 @@
   */
 class PickWin : public GraphicWin {
  public:
-  PickWin() { ; }
+  PickWin();
   // 0x0048A8E0 is not recovered: a
   // pending_bodies forwarder, because an empty inline stub emits
   // nothing and the deleting destructor needs a `call rel32`.
@@ -52,7 +52,15 @@ class PickWin : public GraphicWin {
   uint32_t field_A18_;  // 0xA18
   uint32_t field_A1C_;  // 0xA1C
   uint32_t field_A20_;  // 0xA20
-  Popup popup_;  // 0xA24, declared Popup extent == sizeof(BasePop) + sizeof(Scroll)
+  // Every sub-object from here down is placement-new'd EXPLICITLY from the
+  // constructor body, in the exact order the disassembly shows -
+  // GraphicWin::construct() has to run first, and ordinary by-value members
+  // with a real constructor are default-constructed by C++ before the
+  // constructor BODY ever runs, which cannot reproduce that order. Raw
+  // storage; every offset above already lands on a 4-byte boundary from the
+  // field sizes alone, so a plain `uint8_t[]` needs no explicit alignment
+  // (VC6 has no `__declspec(align)` to give it one - see vc6_compat.h).
+  uint8_t popup_[0x537C];  // 0xA24, declared Popup extent == sizeof(BasePop) + sizeof(Scroll)
   uint32_t field_5DA0_;  // 0x5DA0
   uint32_t field_5DA4_;  // 0x5DA4
   uint32_t field_5DA8_;  // 0x5DA8
@@ -368,19 +376,19 @@ class PickWin : public GraphicWin {
   uint32_t field_6280_;  // 0x6280
   uint32_t field_6284_;  // 0x6284
   uint32_t field_6288_;  // 0x6288
-  FlatButton flatButton1_;  // 0x628C
-  FlatButton flatButton2_;  // 0x6DD8
-  FlatButton flatButton3_;  // 0x7924
-  Sprite sprites1_[3];  // 0x8470
-  Sprite sprites2_[3];  // 0x84F4
-  Sprite sprites3_[3];  // 0x8578
-  Sprite sprites4_[3];  // 0x85FC
-  Sprite sprite5_;  // 0x8680
+  uint8_t flatButton1_[0xB4C];  // 0x628C
+  uint8_t flatButton2_[0xB4C];  // 0x6DD8
+  uint8_t flatButton3_[0xB4C];  // 0x7924
+  uint8_t sprites1_[3 * 0x2C];  // 0x8470
+  uint8_t sprites2_[3 * 0x2C];  // 0x84F4
+  uint8_t sprites3_[3 * 0x2C];  // 0x8578
+  uint8_t sprites4_[3 * 0x2C];  // 0x85FC
+  uint8_t sprite5_[0x2C];  // 0x8680
   uint32_t field_86AC_;  // 0x86AC
   uint32_t field_86B0_;  // 0x86B0
   uint32_t field_86B4_;  // 0x86B4
   uint32_t field_86B8_;  // 0x86B8
-  ListBox listBox_;  // 0x86BC
+  uint8_t listBox_[0xB54];  // 0x86BC
   uint32_t field_9210_;  // 0x9210
   uint32_t field_9214_;  // 0x9214
   uint32_t field_9218_;  // 0x9218
@@ -405,12 +413,12 @@ class PickWin : public GraphicWin {
   uint32_t field_9264_;  // 0x9264
   uint32_t field_9268_;  // 0x9268
   uint32_t field_926C_;  // 0x926C
-  FlatButton flatButton4_;  // 0x9270
-  FlatButton flatButton5_;  // 0x9DBC
-  FlatButton flatButton6_;  // 0xA908
-  FlatButton flatButton7_;  // 0xB454
-  FlatButton flatButton8_;  // 0xBFA0
-  FlatButton flatButton9_;  // 0xCAEC
+  uint8_t flatButton4_[0xB4C];  // 0x9270
+  uint8_t flatButton5_[0xB4C];  // 0x9DBC
+  uint8_t flatButton6_[0xB4C];  // 0xA908
+  uint8_t flatButton7_[0xB4C];  // 0xB454
+  uint8_t flatButton8_[0xB4C];  // 0xBFA0
+  uint8_t flatButton9_[0xB4C];  // 0xCAEC
   uint32_t field_D638_;  // 0xD638
   uint32_t field_D63C_;  // 0xD63C
   uint32_t field_D640_;  // 0xD640
@@ -439,8 +447,11 @@ class PickWin : public GraphicWin {
   uint32_t field_D69C_;  // 0xD69C
   uint32_t field_D6A0_;  // 0xD6A0
   uint32_t field_D6A4_;  // 0xD6A4
-  FlatButton flatButtons10_[7];  // 0xD6A8
-  ButtonGroup buttonGroup_;  // 0x125BC, IDB `buttonGroup`, size == sizeof(ButtonGroup)
+  uint8_t flatButtons10_[7 * 0xB4C];  // 0xD6A8, 7 * sizeof(FlatButton), constructed as one array via the CRT vector ctor iterator
+  uint8_t buttonGroup_[0x94];  // 0x125BC, IDB `buttonGroup`, size == sizeof(ButtonGroup)
 };
+
+static_assert(sizeof(PickWin) == 0x12650,
+              "PickWin layout must match the legacy ABI");
 
 void __fastcall pick_win_on_button_passover_redirect(PickWin *self, void *, int a1, int a2);

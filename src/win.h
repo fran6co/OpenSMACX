@@ -525,12 +525,43 @@ int __fastcall win_is_descendant_redirect(Win *self, void *, Win *candidate);
 // still goes through `WinDisplayInit->init(...)`, a real member-function
 // call by name, so it still emits the image's `call rel32`. `init` itself
 // (0x00635510, 587 bytes: DirectDraw surface/window teardown and
-// re-creation) is still a pending_bodies forwarder - see
-// src/unrecovered/00635510.cpp for a working, unlanded transcription.
+// re-creation) is defined in win.cpp.
+//
+// FIELDS, in image order, from `sub_635450` (0x00635450, unreached in this
+// build but still in the image) reading the SAME five offsets off the
+// fixed `WinDisplayInit` address rather than off a `this`:
+//   0x0  hwnd_           the device window `init` creates and destroys
+//   0x4  surf_           the IDirectDraw device object DirectDrawCreate fills
+//   0x8  field_8_        never read or written by `init` or `sub_635450`
+//   0xC  locked_surface_ a secondary IDirectDrawSurface, locked elsewhere
+//   0x10 locked_bits_    the pointer `locked_surface_->Unlock` releases
+// `locked_surface_`/`locked_bits_` are proven by the vtable slot `init`
+// calls through them: offset 0x80 is index 32, which in the real
+// `IDirectDrawSurface` vtable (buffer.h's `#include <ddraw.h>`) is
+// `Unlock(LPVOID)` - one pointer argument, matching the single value
+// pushed beside the receiver.
 class DDInit { public:
   int init(int width, int height, int depth, int tgl);
+
+  // 0x00635870, 1691 bytes - a `switch` over ~99 `DDERR_*` codes that turns
+  // a failed HRESULT into a message box. Still a pending_bodies forwarder;
+  // `init`'s own call site proves the shape: `this` in ecx, one explicit
+  // stack argument, `call rel32`.
+  int report_error(int hr);
+
+  HWND hwnd_;
+  IDirectDraw *surf_;
+  uint32_t field_8_;
+  IDirectDrawSurface *locked_surface_;
+  LPVOID locked_bits_;
 };
 DDInit *const WinDisplayInit = reinterpret_cast<DDInit *>(0x009BE618);
+
+// 0x005EFD00, 27 bytes - refreshes `WinScreenWidth`/`WinScreenHeight` from
+// `GetSystemMetrics`. Already BYTE_EXACT in src/recovered/005efd00.cpp but
+// not promoted into this tree; `init` needs it, so it is forwarded here
+// rather than promoted, per the task that added this call site.
+extern "C" int __cdecl DDInitRefreshScreenMetrics();
 
 
 

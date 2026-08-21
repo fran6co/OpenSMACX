@@ -41,7 +41,7 @@
   */
 class ProdPicker : public GraphicWin {
  public:
-  ProdPicker() { ; }
+  ProdPicker();
   // 0x00421100 is not recovered: a
   // pending_bodies forwarder, because an empty inline stub emits
   // nothing and the deleting destructor needs a `call rel32`.
@@ -61,30 +61,29 @@ class ProdPicker : public GraphicWin {
   // Extent only - this class carries no size assertion, and the bound is a floor.
   // 22 member(s) from the IDA database, 18 named; it starts a member at 0xA18, which is where src/ ends.
 
-  Sprite sprite1_;  // 0xA18
-  Sprite sprite2_;  // 0xA44
-  Sprite sprite3_;  // 0xA70
-  Font font1_;  // 0xA9C
-  Font font2_;  // 0xAC4
-  Font font3_;  // 0xAEC
-  Font font4_;  // 0xB14
-  Time time_;  // 0xB3C
+  // The constructor placement-news every sub-object below EXPLICITLY, in the
+  // exact order the disassembly shows - GraphicWin::construct() has to run
+  // BEFORE any of them, and ordinary by-value members with a real constructor
+  // are default-constructed by C++ before the constructor BODY ever runs, so
+  // implicit member construction cannot reproduce this order. Raw storage
+  // placement-new'd from the .cpp; every offset above lands on a 4-byte
+  // boundary already, from the field sizes alone, so a plain `uint8_t[]`
+  // needs no explicit alignment (VC6 has no `__declspec(align)` to give it
+  // one - see vc6_compat.h).
+  uint8_t sprites_[3 * 0x2C];  // 0xA18, 3 * sizeof(Sprite)
+  uint8_t font1_[0x28];  // 0xA9C, sizeof(Font)
+  uint8_t font2_[0x28];  // 0xAC4, sizeof(Font)
+  uint8_t font3_[0x28];  // 0xAEC, sizeof(Font)
+  uint8_t font4_[0x28];  // 0xB14, sizeof(Font)
+  uint8_t time_[0x28];  // 0xB3C, sizeof(Time)
   uint32_t field_B64_;  // 0xB64
   uint32_t field_B68_;  // 0xB68
   uint32_t field_B6C_;  // 0xB6C
   uint32_t field_B70_;  // 0xB70
-  FlatButton flatButton1_;  // 0xB74
-  FlatButton flatButton2_;  // 0x16C0
-  FlatButton flatButton3_;  // 0x220C
-  FlatButton flatButton4_;  // 0x2D58
-  FlatButton flatButton5_;  // 0x38A4
-  FlatButton flatButton6_;  // 0x43F0
-  FlatButton flatButton7_;  // 0x4F3C
-  FlatButton flatButton8_;  // 0x5A88
-  FlatButton flatButton9_;  // 0x65D4
-  Scroll scroll_;  // 0x7120
+  uint8_t flatButtons_[9 * 0xB4C];  // 0xB74, 9 * sizeof(FlatButton)
+  uint8_t scroll_[0x214C];  // 0x7120, sizeof(Scroll)
 
-  Caviar caviar_;  // 0x926C, IDB `caviar`, size == sizeof(Caviar)
+  uint8_t caviar_[0x13D0];  // 0x926C, sizeof(Caviar)
 
   // Storage the image proves is here: its own methods reach 0xA840.
   // Extent only - this class carries no size assertion, and the bound is a floor.

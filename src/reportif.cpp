@@ -22,6 +22,165 @@
 #include "win.h"
 #include "spritebox.h"
 #include "net_class.h"
+#include "flatbutton.h"
+#include "sprite.h"
+#include "buttongroup.h"
+#include "spot.h"
+#include "vector_teardown.h"
+
+const void *const ReportIfSpriteCtor = (const void *)0x005E37E0;
+const void *const ReportIfSpriteDtor = (const void *)0x00406850;
+const void *const ReportIfFlatButtonCtor = (const void *)0x00607CF0;
+const void *const ReportIfFlatButtonDtor = (const void *)0x00406880;
+
+const uint32_t ReportIfSubInterfaceVtable = 0x0066A6E4;
+const uint32_t ReportIfPrimaryVtable = 0x0066D700;
+
+/*
+Purpose: Install the SubInterface vftable, then placement-new every
+         sub-object in image order - seven FlatButton runs, three Sprite
+         runs, two ListBox(1)s, four ButtonGroups and fourteen individual
+         FlatButtons, and a Spot - before installing ReportIf's own vftable.
+// ORIGINAL: 0x004AD170 ??0ReportIf@@QAE@XZ 0x004AD170-0x004AD3AA;0x00658F80-0x00659134
+// RULED-OUT: register allocation - the SEH prologue agrees (7/7) then the
+//            compiled body reserves an extra `sub esp, 8` the image does
+//            not. MISMATCH, 34/132 instructions agree - the best of this
+//            batch. Layout (offsets, sub-object sizes, construction order)
+//            cross-checked directly against the destructor at 0x004ACDA0,
+//            which tears the same run down in mirrored order.
+// size      1006 bytes
+// prototype void (__thiscall ??0ReportIf@@QAE@XZ)(ReportIf* this)
+// callers   1   call targets   6
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005FA860 0x00607CF0 0x00609DB0 0x0062B7C0 0x006456E4 0x006457C2
+*/
+// ListBox has no one-argument constructor declared - its own recovery
+// (0x00609DB0) is out of this batch's scope - so it is called directly at
+// its image address, the same treatment pending_bodies.cpp gives every
+// not-yet-promoted callee: a `reinterpret_cast` of the address, called
+// immediately, compiles the image's own `call rel32` rather than the
+// `call dword ptr [...]` a stored pointer would give.
+ReportIf::ReportIf() {
+    uint32_t *const object = reinterpret_cast<uint32_t *>(this);
+    object[0] = ReportIfSubInterfaceVtable;
+
+    VectorCtorIterator(flatButtonsA_, 0xB4C, 7, ReportIfFlatButtonCtor, ReportIfFlatButtonDtor);
+    VectorCtorIterator(spritesA_, 0x2C, 0x15, ReportIfSpriteCtor, ReportIfSpriteDtor);
+    VectorCtorIterator(flatButtonsB_, 0xB4C, 7, ReportIfFlatButtonCtor, ReportIfFlatButtonDtor);
+
+    typedef void(__fastcall *pending_listbox_ctor)(void *, void *, int);
+    reinterpret_cast<pending_listbox_ctor>(0x00609DB0)(listBox1_, nullptr, 1);
+    reinterpret_cast<pending_listbox_ctor>(0x00609DB0)(listBox2_, nullptr, 1);
+
+    new (buttonGroup1_) ButtonGroup();
+    new (flatButton1_) FlatButton();
+    new (flatButton2_) FlatButton();
+    new (buttonGroup2_) ButtonGroup();
+    new (flatButton3_) FlatButton();
+    new (flatButton4_) FlatButton();
+    new (flatButton5_) FlatButton();
+    new (flatButton6_) FlatButton();
+    new (flatButton7_) FlatButton();
+    new (flatButton8_) FlatButton();
+    new (flatButton9_) FlatButton();
+    new (flatButton10_) FlatButton();
+    new (flatButton11_) FlatButton();
+    new (buttonGroup3_) ButtonGroup();
+
+    VectorCtorIterator(flatButtonsC_, 0xB4C, 7, ReportIfFlatButtonCtor, ReportIfFlatButtonDtor);
+
+    new (buttonGroup4_) ButtonGroup();
+
+    VectorCtorIterator(flatButtonsD_, 0xB4C, 5, ReportIfFlatButtonCtor, ReportIfFlatButtonDtor);
+
+    new (flatButton12_) FlatButton();
+    new (flatButton13_) FlatButton();
+    new (flatButton14_) FlatButton();
+    new (spot_) Spot();
+
+    VectorCtorIterator(spritesB_, 0x2C, 4, ReportIfSpriteCtor, ReportIfSpriteDtor);
+
+    object[0] = ReportIfPrimaryVtable;
+}
+
+// The two ListBox sub-objects are torn down through their virtual bases at
+// raw addresses, not through a `ListBox` method: ListBox's own virtual-base
+// layout (a GraphicWin sub-object at +0x48, a Dialog sub-object at +0xA60,
+// per listbox.h) is out of this batch's scope, and the image calls three
+// distinct teardowns per ListBox - one at the GraphicWin-vbase-relative
+// address (0x00609EC0, ListBox's own destructor, called at that adjusted
+// `this`), then Dialog::~Dialog() (0x00608E10) at the Dialog sub-object, then
+// GraphicWin's real destructor (0x005D4DD0) back at the first address.
+typedef void(__fastcall *pending_listbox_vbase_dtor)(void *, void *);
+
+/*
+Purpose: Tear down every sub-object the constructor built, in exactly the
+         reverse order.
+// ORIGINAL: 0x004ACDA0 ??1ReportIf@@QAE@XZ 0x004ACDA0-0x004AD16C;0x00658D50-0x00658F74
+// RULED-OUT: SEH frame - the image has one (flags carry `frame`) but a body
+//            built entirely from plain `->method()`/`->~T()` calls at raw
+//            offsets never triggers VC6's unwind-protection scaffolding (no
+//            local object construction for it to protect), so this tree's
+//            compiled body has none. A prior attempt at this same address
+//            (src/unrecovered/004acda0.cpp, now deleted - superseded by
+//            this body) measured the identical finding in isolation.
+//            MISMATCH, 4/235 instructions agree; not chased further given
+//            the family-wide cap this batch's brief already names.
+// size      1520 bytes
+// prototype void (__thiscall ??1ReportIf@@QAE@XZ)(ReportIf* this)
+// callers   0   call targets   8
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D4DD0 0x005FA870 0x00607040 0x00607DA0 0x00608E10 0x00609EC0 0x0062B7F0 0x006456E4
+*/
+ReportIf::~ReportIf() {
+    VectorDtorIterator(spritesB_, 0x2C, 4, ReportIfSpriteDtor);
+
+    reinterpret_cast<Spot *>(spot_)->~Spot();
+
+    reinterpret_cast<FlatButton *>(flatButton14_)->destroy();
+    reinterpret_cast<FlatButton *>(flatButton13_)->destroy();
+    reinterpret_cast<FlatButton *>(flatButton12_)->destroy();
+
+    VectorDtorIterator(flatButtonsD_, 0xB4C, 5, ReportIfFlatButtonDtor);
+
+    reinterpret_cast<ButtonGroup *>(buttonGroup4_)->close();
+
+    VectorDtorIterator(flatButtonsC_, 0xB4C, 7, ReportIfFlatButtonDtor);
+
+    reinterpret_cast<ButtonGroup *>(buttonGroup3_)->close();
+
+    reinterpret_cast<FlatButton *>(flatButton11_)->destroy();
+    reinterpret_cast<FlatButton *>(flatButton10_)->destroy();
+    reinterpret_cast<FlatButton *>(flatButton9_)->destroy();
+    reinterpret_cast<FlatButton *>(flatButton8_)->destroy();
+    reinterpret_cast<FlatButton *>(flatButton7_)->destroy();
+    reinterpret_cast<FlatButton *>(flatButton6_)->destroy();
+    reinterpret_cast<FlatButton *>(flatButton5_)->destroy();
+    reinterpret_cast<FlatButton *>(flatButton4_)->destroy();
+    reinterpret_cast<FlatButton *>(flatButton3_)->destroy();
+
+    reinterpret_cast<ButtonGroup *>(buttonGroup2_)->close();
+
+    reinterpret_cast<FlatButton *>(flatButton2_)->destroy();
+    reinterpret_cast<FlatButton *>(flatButton1_)->destroy();
+
+    reinterpret_cast<ButtonGroup *>(buttonGroup1_)->close();
+
+    uint8_t *const self = reinterpret_cast<uint8_t *>(this);
+    reinterpret_cast<pending_listbox_vbase_dtor>(0x00609EC0)(self + 0xAE6C, nullptr);
+    reinterpret_cast<pending_listbox_vbase_dtor>(0x00608E10)(self + 0xB884, nullptr);
+    reinterpret_cast<pending_listbox_vbase_dtor>(0x005D4DD0)(self + 0xAE6C, nullptr);
+
+    reinterpret_cast<pending_listbox_vbase_dtor>(0x00609EC0)(self + 0xA318, nullptr);
+    reinterpret_cast<pending_listbox_vbase_dtor>(0x00608E10)(self + 0xAD30, nullptr);
+    reinterpret_cast<pending_listbox_vbase_dtor>(0x005D4DD0)(self + 0xA318, nullptr);
+
+    VectorDtorIterator(flatButtonsB_, 0xB4C, 7, ReportIfFlatButtonDtor);
+    VectorDtorIterator(spritesA_, 0x2C, 0x15, ReportIfSpriteDtor);
+    VectorDtorIterator(flatButtonsA_, 0xB4C, 7, ReportIfFlatButtonDtor);
+}
 
 
 /*

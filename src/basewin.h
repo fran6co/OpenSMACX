@@ -63,7 +63,7 @@ class BaseWin : public GraphicWin, public SubInterface {
   void garrison_click(int vehID, int a2, int a3, int a4);  // 0x0040B140
   void draw_facilities(int a1);                            // 0x0040FCC0
   void show(int a1);
-  BaseWin() { ; }
+  BaseWin();
   // 0x00420A70 is not recovered: a
   // pending_bodies forwarder, because an empty inline stub emits
   // nothing and the deleting destructor needs a `call rel32`.

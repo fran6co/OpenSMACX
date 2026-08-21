@@ -1378,13 +1378,23 @@ BasePop::BasePop() {
 // deleting its line here.
 // ---------------------------------------------------------------------------
 
-// ?init@DDInit@@QAEHHHHH@Z at 0x00635510 - DirectDraw surface/window
-// teardown and re-creation, reached from Win::set_display_mode. See the
-// note in win.h; src/unrecovered/00635510.cpp has a working, unlanded
-// transcription.
-int DDInit::init(int a1, int a2, int a3, int a4) {
-    typedef int(__fastcall *pending)(DDInit *, void *, int, int, int, int);
-    return PENDING_BODY(0x00635510, pending)(this, nullptr, a1, a2, a3, a4);
+// `DDInit::init` (0x00635510) is promoted into win.cpp. Its two callees
+// that are still unrecovered stay here as forwarders:
+
+// 0x005EFD00 - refreshes WinScreenWidth/WinScreenHeight from
+// GetSystemMetrics. BYTE_EXACT already, in src/recovered/005efd00.cpp, but
+// not promoted into this tree.
+extern "C" int __cdecl DDInitRefreshScreenMetrics() {
+    typedef int(__cdecl *pending)();
+    return PENDING_BODY(0x005EFD00, pending)();
+}
+
+// ?report_error@DDInit@@... at 0x00635870 - the DDERR_* -> message-box
+// switch `init` calls on failure. src/unrecovered/00635870.cpp has a
+// RULED-OUT transcription; still unrecovered.
+int DDInit::report_error(int hr) {
+    typedef int(__fastcall *pending)(DDInit *, void *, int);
+    return PENDING_BODY(0x00635870, pending)(this, nullptr, hr);
 }
 
 
