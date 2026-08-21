@@ -1,4 +1,5 @@
 // ORIGINAL: 0x004C7270 sub_4c7270 0x004C7270-0x004C729E BYTE_EXACT
+// symbol    ?initialize@Subject@@QAEPAV1@XZ
 // size      46 bytes
 // prototype 
 // callers   0   call targets   1

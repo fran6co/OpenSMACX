@@ -1,4 +1,5 @@
 // ORIGINAL: 0x006050F0 ?set_def_external_window@BasePop@@QAAXPAUGraphicWin@@HHHH@Z 0x006050F0-0x00605121 FILE BYTE_EXACT
+// symbol    ?fn_006050f0@@YAXPAUGraphicWin@@HHHH@Z
 // size      49 bytes
 // prototype 
 // callers   1   call targets   0

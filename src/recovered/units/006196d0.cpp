@@ -1,4 +1,5 @@
 // ORIGINAL: 0x006196D0 ?extract@Texture@@QAEHPAUBuffer@@PAURECT@@@Z 0x006196D0-0x00619706 FILE BYTE_EXACT
+// symbol    ?extract@TextureRectExtract@@QAEHPAUBuffer@@PAURECT@@H@Z
 // size      54 bytes
 // prototype int (__thiscall ?extract@Texture@@QAEHPAUBuffer@@PAURECT@@@Z)(Texture* this, Buffer*, RECT*)
 // callers   0   call targets   1

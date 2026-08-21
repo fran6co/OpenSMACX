@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00618E70 ?vx_seek@Caviar@@QAAXHJH@Z 0x00618E70-0x00618E88 BYTE_EXACT
+// symbol    ?fn_00618e70@@YAXPAUCaviar@@HHH@Z
 // size      24 bytes
 // prototype 
 // callers   0   call targets   1

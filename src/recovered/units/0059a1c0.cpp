@@ -1,4 +1,5 @@
 // ORIGINAL: 0x0059A1C0 ??__FPaths@@YAXXZ 0x0059A1C0-0x0059A215 FILE BYTE_EXACT
+// symbol    ?fn_0059a1c0@@YAXXZ
 // size      85 bytes
 // prototype 
 // callers   0   call targets   1

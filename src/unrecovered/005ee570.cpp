@@ -1,4 +1,5 @@
 // ORIGINAL: 0x005EE570 sub_5ee570 0x005EE570-0x005EE60E FILE BYTE_EXACT
+// symbol    ?handler@Sub5ee570Rec@@QAEXHHH@Z
 // working copy - scaffold materialised by --work
 // size      158 bytes
 // prototype 

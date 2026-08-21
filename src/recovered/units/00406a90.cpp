@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00406A90 sub_406a90 0x00406A90-0x00406AE3 FILE BYTE_EXACT
+// symbol    ?sub_406a90@sub_406a90_owner@@QAEXXZ
 // size      83 bytes
 // prototype 
 // callers   9   call targets   1

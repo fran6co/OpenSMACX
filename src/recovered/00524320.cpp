@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00524320 sub_524320 0x00524320-0x0052433B BYTE_EXACT
+// symbol    ?toggle_and_repaint@Base524320@@QAEHXZ
 // size      27 bytes
 // prototype 
 // callers   0   call targets   0

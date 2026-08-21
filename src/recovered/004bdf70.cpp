@@ -1,4 +1,5 @@
 // ORIGINAL: 0x004BDF70 ?veh_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z 0x004BDF70-0x004BDFA0 BYTE_EXACT
+// symbol    ?fn_004bdf70@@YAXPAUSprite@@PAUGraphicWin@@HHH@Z
 // size      48 bytes
 // prototype void (__cdecl ?veh_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z)(Sprite*, GraphicWin*, int vehID, int, int)
 // callers   0   call targets   1

@@ -1,4 +1,5 @@
 // ORIGINAL: 0x005F2C40 ?set_display_mode@Win@@QAAHHHHH@Z 0x005F2C40-0x005F2C5F FILE BYTE_EXACT
+// symbol    ?set_display_mode@@YAHHHHH@Z
 // size      31 bytes
 // prototype 
 // callers   2   call targets   1

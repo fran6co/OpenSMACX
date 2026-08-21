@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00644910 _inflate_codes_free 0x00644910-0x00644924 BYTE_EXACT
+// symbol    _sub_644910
 // CORRECTED from sub_644910
 //   zlib 1.0.2 infcodes.c, 20 bytes, byte-exact from upstream
 // size      20 bytes

@@ -1,4 +1,5 @@
 // ORIGINAL: 0x005F1420 ?OnNCHitTest@Win@@QAAJPAXHH@Z 0x005F1420-0x005F1471 FILE BYTE_EXACT
+// symbol    ?OnNCHitTest@@YAJPAXHH@Z
 // size      81 bytes
 // prototype LRESULT (__cdecl ?OnNCHitTest@Win@@QAAJPAXHH@Z)(HWND hWnd, int, int)
 // callers   0   call targets   0

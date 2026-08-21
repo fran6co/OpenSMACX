@@ -1,4 +1,5 @@
 // ORIGINAL: 0x005CE2F0 sub_5ce2f0 0x005CE2F0-0x005CE336 FILE BYTE_EXACT
+// symbol    ?release@SyncObject@@QAEHXZ
 // size      70 bytes
 // prototype 
 // callers   2   call targets   0

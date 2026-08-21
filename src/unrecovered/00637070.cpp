@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00637070 Video_unk6 0x00637070-0x006370D2 FILE BYTE_EXACT
+// symbol    ?unk6@VideoSelf@@QAEHHH@Z
 // working copy - scaffold materialised by --work
 // size      98 bytes
 // prototype 

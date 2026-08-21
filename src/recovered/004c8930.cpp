@@ -1,4 +1,5 @@
 // ORIGINAL: 0x004C8930 sub_4c8930 0x004C8930-0x004C8942 BYTE_EXACT
+// symbol    ?Call@S_004C8930@@QAEHXZ
 // size      18 bytes
 // prototype 
 // callers   0   call targets   0

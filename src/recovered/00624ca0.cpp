@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00624CA0 sub_624ca0 0x00624CA0-0x00624CC8 BYTE_EXACT
+// symbol    ?invoke@Subject@@QAEXHHHHHH@Z
 // size      40 bytes
 // prototype 
 // callers   0   call targets   1

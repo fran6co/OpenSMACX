@@ -1,4 +1,5 @@
 // ORIGINAL: 0x0063C340 sub_63c340 0x0063C340-0x0063C38F FILE BYTE_EXACT
+// symbol    ?sub_63c340@Win@@QAEHXZ
 // size      79 bytes
 // prototype 
 // callers   0   call targets   2

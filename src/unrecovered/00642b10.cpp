@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00642B10 _inflate_blocks_reset 0x00642B10-0x00642BA2 FILE BYTE_EXACT
+// symbol    _sub_642b10
 // working copy - scaffold materialised by --work
 // CORRECTED from sub_642b10
 //   zlib 1.0.2 infblock.c, 146 bytes, byte-exact from upstream

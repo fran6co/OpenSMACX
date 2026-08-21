@@ -1,4 +1,5 @@
 // ORIGINAL: 0x0051DD00 sub_51dd00 0x0051DD00-0x0051DDE0 FILE BYTE_EXACT
+// symbol    ?reset@Obj0051DD00@@QAEXXZ
 // working copy - scaffold materialised by --work
 // size      224 bytes
 // prototype 

@@ -1,4 +1,5 @@
 // ORIGINAL: 0x005CE620 sub_5ce620 0x005CE620-0x005CE63F BYTE_EXACT
+// symbol    ?method@Unk5ce620@@QAEHXZ
 // size      31 bytes
 // prototype 
 // callers   2   call targets   0

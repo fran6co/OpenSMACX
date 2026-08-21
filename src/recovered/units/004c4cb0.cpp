@@ -1,4 +1,5 @@
 // ORIGINAL: 0x004C4CB0 sub_4c4cb0 0x004C4CB0-0x004C4D01 FILE BYTE_EXACT
+// symbol    ?enqueue@Node@@QAEHXZ
 // size      81 bytes
 // prototype 
 // callers   0   call targets   0

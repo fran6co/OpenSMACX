@@ -1,4 +1,5 @@
 // ORIGINAL: 0x005ED700 sub_5ed700 0x005ED700-0x005ED7B4 FILE BYTE_EXACT
+// symbol    ?center_on_parent@WinCentering@@QAEHXZ
 // working copy - scaffold materialised by --work
 // size      180 bytes
 // prototype 

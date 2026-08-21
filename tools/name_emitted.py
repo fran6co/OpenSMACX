@@ -27,6 +27,7 @@ from __future__ import annotations
 import concurrent.futures
 import os
 import re
+import struct
 import sys
 from dataclasses import replace
 from pathlib import Path
@@ -43,33 +44,60 @@ BORROW = "src/buffer.cpp"
 FLAGS = "/c /O2 /Gy /GR- /GX"
 
 
-def _symbols_of(path: Path) -> list[str] | str:
-    """The object's `.text` symbols, or the reason there are none."""
+def _symbols_of(path: Path) -> dict[str, int] | str:
+    """The object's `.text` symbols and each one's byte count.
+
+    The SIZE is what tells two candidates apart when the name cannot. With
+    `/Gy` every function is its own COMDAT section, so a symbol's section
+    length is the function's length - and the record already knows how many
+    bytes the image spends on the body it claims.
+    """
     try:
         try:
             command = build_command(COMPILE_COMMANDS, path)
         except ValueError:
             command = build_command(COMPILE_COMMANDS, REPO_ROOT / BORROW)
-        return [name for name, _v, _s
-                in text_symbols(compile_unit(path, command, FLAGS))]
+        obj = compile_unit(path, command, FLAGS)
+        _machine, n_sections = struct.unpack_from("<HH", obj, 0)
+        raw = []
+        for index in range(n_sections):
+            off = 20 + index * 40
+            size, ptr = struct.unpack_from("<II", obj, off + 16)
+            raw.append((size, ptr))
+        out = {}
+        for name, value, section in text_symbols(obj):
+            size, ptr = raw[section]
+            code = obj[ptr + value:ptr + size]
+            while code and code[-1] in (0x90, 0xCC):
+                code = code[:-1]
+            out[name] = len(code)
+        return out
     except Exception as problem:                # noqa: BLE001 - reported
         return str(problem).splitlines()[0]
 
 
-def candidates(record, symbols: list[str]) -> list[str]:
+def candidates(record, symbols: dict[str, int]) -> list[str]:
     """The object symbols that could be this record, best evidence first."""
     if record.name in symbols:
         return [record.name]
     wanted, count = qualified_name(record.name), arity(record.name)
-    same = [s for s in symbols
-            if qualified_name(s) == wanted and wanted]
+    same = [s for s in symbols if wanted and qualified_name(s) == wanted]
     if len(same) == 1:
         return same
     if count is not None:
         narrowed = [s for s in same if arity(s) == count]
         if len(narrowed) == 1:
             return narrowed
-    return same
+    if same:
+        return same
+    # NAME EXHAUSTED, SO ASK THE SIZE. The emitter's artifacts spell their
+    # bodies under invented names - `fn_004bdf70`, `Sub4042b0::method` - that
+    # no rule can derive from `sub_4bdf70`. What they cannot fake is the byte
+    # count: a claim of 34 bytes is only answered by a 34-byte symbol, and
+    # only when exactly one in the file is.
+    size = record.size
+    return [s for s, length in symbols.items() if length == size] if size \
+        else []
 
 
 def _insert(facts: list[tuple]) -> None:
@@ -147,7 +175,7 @@ def main(apply: bool) -> int:
         for record in missing:
             found = candidates(record, symbols)
             if len(symbols) == 1 and len(missing) == 1:
-                found = symbols
+                found = list(symbols)
             if len(found) != 1:
                 print(f"  - {record.address_hex} {record.name} "
                       f"({path.name}): {len(found)} candidate(s) among "

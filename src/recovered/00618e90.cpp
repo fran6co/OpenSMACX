@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00618E90 ?vx_tell@Caviar@@QAAXH@Z 0x00618E90-0x00618E9E BYTE_EXACT
+// symbol    ?fn_00618e90@@YAHHH@Z
 // size      14 bytes
 // prototype 
 // callers   0   call targets   1

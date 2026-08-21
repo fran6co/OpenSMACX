@@ -1,4 +1,5 @@
 // ORIGINAL: 0x0063D4D0 _deflateEnd 0x0063D4D0-0x0063D55F FILE BYTE_EXACT
+// symbol    _sub_63d4d0
 // CORRECTED from sub_63d4d0
 //   zlib 1.0.2 deflate.c, 143 bytes, byte-exact from upstream
 // size      143 bytes

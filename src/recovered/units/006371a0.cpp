@@ -1,4 +1,5 @@
 // ORIGINAL: 0x006371A0 Video_unk8 0x006371A0-0x006371C2 FILE BYTE_EXACT
+// symbol    ?unk8@VideoObj@@QAEXXZ
 // size      34 bytes
 // prototype 
 // callers   0   call targets   0

@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00630980 sub_630980 0x00630980-0x006309BA FILE BYTE_EXACT
+// symbol    ?sub_630980@Net@@QAEHHH@Z
 // size      58 bytes
 // prototype 
 // callers   0   call targets   1

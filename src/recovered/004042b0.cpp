@@ -1,4 +1,5 @@
 // ORIGINAL: 0x004042B0 sub_4042b0 0x004042B0-0x004042B3 BYTE_EXACT
+// symbol    ?method@Sub4042b0@@QAEPAXXZ
 // size      3 bytes
 // prototype 
 // callers   0   call targets   0

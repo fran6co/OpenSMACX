@@ -1,4 +1,5 @@
 // ORIGINAL: 0x004E34B0 sub_4e34b0 0x004E34B0-0x004E34CB FILE BYTE_EXACT
+// symbol    ?method@Obj4e34b0@@QAEHXZ
 // size      27 bytes
 // prototype 
 // callers   1   call targets   1

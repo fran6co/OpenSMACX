@@ -1,4 +1,5 @@
 // ORIGINAL: 0x005F4CC0 ?redraw@Win@@QAAXXZ 0x005F4CC0-0x005F4CF1 FILE BYTE_EXACT
+// symbol    ?fn_005f4cc0@@YAXPAUWin@@@Z
 // size      49 bytes
 // prototype 
 // callers   0   call targets   1

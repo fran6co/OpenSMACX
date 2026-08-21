@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00505D60 ??__Eg_BOOM_BUFFERS2@@YAXXZ 0x00505D60-0x00505D77 FILE BYTE_EXACT
+// symbol    ?fn_00505d60@@YAXXZ
 // size      23 bytes
 // prototype 
 // callers   0   call targets   1

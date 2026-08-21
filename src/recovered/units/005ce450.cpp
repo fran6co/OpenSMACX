@@ -1,4 +1,5 @@
 // ORIGINAL: 0x005CE450 sub_5ce450 0x005CE450-0x005CE4A3 FILE BYTE_EXACT
+// symbol    ?call@Sub5ce450@@QAEHXZ
 // size      83 bytes
 // prototype 
 // callers   2   call targets   0

@@ -1,4 +1,5 @@
 // ORIGINAL: 0x005EE8B0 sub_5ee8b0 0x005EE8B0-0x005EE94E FILE BYTE_EXACT
+// symbol    ?run@Obj5ee8b0@@QAEXHHH@Z
 // working copy - scaffold materialised by --work
 // size      158 bytes
 // prototype 

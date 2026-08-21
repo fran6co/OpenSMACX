@@ -1,4 +1,5 @@
 // ORIGINAL: 0x005D4860 sub_5d4860 0x005D4860-0x005D4887 BYTE_EXACT
+// symbol    ?release_value@LegacyValue@@QAEXPAH@Z
 // size      39 bytes
 // prototype 
 // callers   0   call targets   1
