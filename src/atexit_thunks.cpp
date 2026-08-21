@@ -6079,7 +6079,7 @@ void __cdecl destroy_tutwin() {
 
 /*
 Purpose: Atexit teardown thunk for g_VEHDRAW_CAVIAR.
-// ORIGINAL: 0x004BF700 ??__Fg_VEHDRAW_CAVIAR@@YAXXZ 0x004BF700-0x004BF70A
+// ORIGINAL: 0x004BF700 ??__Fg_VEHDRAW_CAVIAR@@YAXXZ 0x004BF700-0x004BF70A BYTE_EXACT
 // symbol    ?destroy_vehdraw_caviar@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -6091,7 +6091,9 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_vehdraw_caviar() {
-    (ORIGINAL(reinterpret_cast<void *>(0x008CC828))->*CaviarCloseTarget)();
+    // A NAMED METHOD, not the seam. `Caviar::close` is in the tree now, at
+    // 0x00617020, and the image tail-jumps straight to it.
+    reinterpret_cast<Caviar *>(0x008CC828)->Caviar::close();
 }
 
 /*

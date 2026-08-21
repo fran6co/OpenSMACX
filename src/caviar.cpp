@@ -76,7 +76,7 @@ Status: Complete
 */
 Caviar::Caviar() {
     uint8_t *bytes = reinterpret_cast<uint8_t *>(this);
-    memset(bytes + 0x74C, 0, sizeof(CaviarData) * 200);
+    memset(slots_, 0, sizeof(slots_));
     const uint32_t distance_limit = 0x461C4000;
     const uint32_t default_scene_scale = 0x3F2AAAAB;
     const uint32_t zero = 0;
@@ -415,4 +415,56 @@ void Caviar::UNK11(int *out1, int *out2, int *out3) {
 void __fastcall caviar_unk11_redirect(Caviar *self, void *, int *out1,
                                       int *out2, int *out3) {
     self->UNK11(out1, out2, out3);
+}
+
+/*
+Purpose: Release every allocation the renderer holds and reset the scene.
+// ORIGINAL: 0x00617020 ?close@Caviar@@QAEXXZ 0x00617020-0x0061707F BYTE_EXACT
+// size      95 bytes
+// prototype void (__thiscall ?close@Caviar@@QAEXXZ)(Caviar* this)
+// callers   11   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00644EF2
+//
+// PROMOTED from src/recovered/00617020.cpp, which was byte-exact but not
+// compiled - so it proved the artifact and not this tree, and `class Caviar`
+// did not even declare `close`. Its body reached the slots as
+// `reinterpret_cast<char *>(this) + 0x750` walked by a raw `record += 0xc`;
+// `slots_` says the same thing in the type, and see the note on it in the
+// header for why the arithmetic reconciles.
+//
+// A DOWN-COUNTING do/while OVER A WALKING POINTER, because that is what the
+// image emits: it never materialises an index, and the loop cannot run zero
+// times.
+Return Value: n/a
+Status: Complete
+*/
+void Caviar::close() {
+    // THE CURSOR AIMS AT THE MIDDLE MEMBER. The image computes
+    // `lea esi, [ebp + 0x750]` - `fileDescriptor_` of slot zero, not
+    // `field_0_` at 0x74C - and reaches the other two as `[esi - 4]` and
+    // `[esi + 4]`. Walking from `slots_` bases at 0x74C instead and reads
+    // `[esi]`, `[esi+4]`, `[esi+8]`: the same three words, a different
+    // instruction at every site.
+    void **cursor = &slots_->fileDescriptor_;
+    int count = 0xc8;
+    do {
+        if (cursor[-1] != nullptr) {
+            free(cursor[-1]);
+            cursor[-1] = nullptr;
+        }
+        if (cursor[0] != nullptr) {
+            free(cursor[0]);
+            cursor[0] = nullptr;
+        }
+        if (cursor[1] != nullptr) {
+            free(cursor[1]);
+            cursor[1] = nullptr;
+        }
+        cursor += 3;
+    } while (--count);
+
+    field_4_ = 0;
+    scene_scale_ = 2.0f / 3.0f;
 }
