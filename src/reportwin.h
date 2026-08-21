@@ -69,7 +69,9 @@ class ReportWin : public GraphicWin {
   // ever runs, which cannot reproduce that order. Raw storage; every offset
   // above already lands on a 4-byte boundary from the field sizes alone, so
   // a plain `uint8_t[]` needs no explicit alignment.
-  uint8_t flatButtons1_[7 * 0xB4C];  // 0xA38
+  // MEASURED: flatButtons1_ and spot_ (the prefix before the irreducible
+  // listBox_) converted to real declared members, built implicitly.
+  FlatButton flatButtons1_[7];  // 0xA38
   uint32_t field_594C_;  // 0x594C
   uint32_t field_5950_;  // 0x5950
   uint32_t field_5954_;  // 0x5954
@@ -88,7 +90,7 @@ class ReportWin : public GraphicWin {
   uint32_t field_5988_;  // 0x5988
   uint32_t field_598C_;  // 0x598C
   uint32_t field_5990_;  // 0x5990
-  uint8_t spot_[0xC];  // 0x5994, sizeof(Spot)
+  Spot spot_;  // 0x5994
   uint32_t field_59A0_;  // 0x59A0
   uint32_t field_59A4_;  // 0x59A4
   uint32_t field_59A8_;  // 0x59A8

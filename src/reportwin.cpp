@@ -36,6 +36,14 @@ Purpose: Construct every sub-object in image order - a FlatButton[7] run, a
 // RULED-OUT: register allocation - the SEH prologue agrees (7/7) then the
 //            compiled body reserves an extra `sub esp, 8` the image does
 //            not. MISMATCH, 9/87 instructions agree.
+// LEVER: flatButtons1_ and spot_ (the whole prefix before the irreducible
+//        listBox_) converted to real declared members, built implicitly.
+//        9/87 -> 14/87 agreeing instructions - still MISMATCH, real
+//        improvement. Everything from listBox_ onward stays raw/explicit:
+//        listBox_ has no declared one-argument constructor and Flic's own
+//        recovery is out of this batch's scope, and real members declared
+//        after either would be hoisted into the same implicit preamble
+//        ahead of them, which the image does not do.
 // size      689 bytes
 // prototype void (__thiscall ??0ReportWin@@QAE@XZ)(ReportWin* this)
 // callers   1   call targets   11
@@ -50,9 +58,8 @@ Purpose: Construct every sub-object in image order - a FlatButton[7] run, a
 ReportWin::ReportWin() {
     GraphicWin::construct();
 
-    VectorCtorIterator(flatButtons1_, 0xB4C, 7, ReportWinFlatButtonCtor, ReportWinFlatButtonDtor);
-
-    new (spot_) Spot();
+    // flatButtons1_ and spot_ are real members now (see reportwin.h) and
+    // build implicitly, in declaration order, before this body runs.
 
     typedef void(__fastcall *pending_listbox_ctor)(void *, void *, int);
     reinterpret_cast<pending_listbox_ctor>(0x00609DB0)(listBox_, nullptr, 1);

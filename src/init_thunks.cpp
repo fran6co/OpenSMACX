@@ -6281,7 +6281,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_netmsg1() {
-    reinterpret_cast<NetMsg *>(0x00805338)->NetMsg::construct(4096, 8, 0);
+    reinterpret_cast<NetMsg *>(0x00805338)->NetMsg::NetMsg(4096, 8, 0);
     atexit(reinterpret_cast<func_atexit_callback *>(0x0047A790));
 }
 
@@ -6299,7 +6299,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_netmsg2() {
-    reinterpret_cast<NetMsg *>(0x007FFF80)->NetMsg::construct(-5, 40, 1);
+    reinterpret_cast<NetMsg *>(0x007FFF80)->NetMsg::NetMsg(-5, 40, 1);
     atexit(reinterpret_cast<func_atexit_callback *>(0x0047A7C0));
 }
 

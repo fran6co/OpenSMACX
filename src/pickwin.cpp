@@ -35,6 +35,18 @@ const uint32_t PickWinBufferVtable = 0x0066D134;
 //            ecx/a stack slot with less spill pressure. MISMATCH, 16/101
 //            instructions agree. Not chased further - a source-level rewrite
 //            to shed one register's worth of pressure was not found cheaply.
+// LEVER: popup_ (sizeof(Popup) == 0x537C matches exactly) and the
+//        flatButton1_/2_/3_/sprites1_../4_/sprite5_ run right after it -
+//        the whole prefix before the irreducible listBox_ - converted to
+//        real declared members, built implicitly. 16/101 -> 21/101; still
+//        MISMATCH but a real improvement, unlike the same lever tried on
+//        ProdPicker and ReportIf in this batch (both went WORSE - see their
+//        own files). listBox_ and everything from flatButton4_ onward stay
+//        raw/explicit: listBox_ has no declared one-argument constructor
+//        (out of this batch's scope), and real members declared after it
+//        would be hoisted into the same implicit preamble as the ones
+//        above it, ahead of listBox_'s explicit call, which the image does
+//        not do.
 // size      731 bytes
 // prototype void (__thiscall ??0PickWin@@QAE@XZ)(PickWin* this)
 // callers   1   call targets   8
@@ -57,18 +69,9 @@ const uint32_t PickWinBufferVtable = 0x0066D134;
 PickWin::PickWin() {
     GraphicWin::construct();
 
-    new (popup_) Popup();
-    new (flatButton1_) FlatButton();
-    new (flatButton2_) FlatButton();
-    new (flatButton3_) FlatButton();
-
-    VectorCtorIterator(sprites1_, 0x2C, 3, PickWinSpriteCtor, PickWinSpriteDtor);
-    VectorCtorIterator(sprites2_, 0x2C, 3, PickWinSpriteCtor, PickWinSpriteDtor);
-    VectorCtorIterator(sprites3_, 0x2C, 3, PickWinSpriteCtor, PickWinSpriteDtor);
-    VectorCtorIterator(sprites4_, 0x2C, 3, PickWinSpriteCtor, PickWinSpriteDtor);
-
-    new (sprite5_) Sprite();
-
+    // popup_, flatButton1_..flatButton3_, sprites1_..sprites4_ and sprite5_
+    // are REAL members now (see pickwin.h) and build implicitly, in
+    // declaration order, before this body runs.
     typedef void(__fastcall *pending_listbox_ctor)(void *, void *, int);
     reinterpret_cast<pending_listbox_ctor>(0x00609DB0)(listBox_, nullptr, 1);
 

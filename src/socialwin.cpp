@@ -71,28 +71,24 @@ SocialWin::SocialWin() {
     uint32_t *const object = reinterpret_cast<uint32_t *>(this);
     object[0xA14 / 4] = SocialWinSubInterfaceVtable;
 
-    new (self + 0xA20) Spot();
-
-    VectorCtorIterator(self + 0xD6C, 0xA2C, 3, SocialWinCheckButtonCtor, SocialWinCheckButtonDtor);
+    // spot_, socEffect_, socEffectOrig_, energyLockButtons_, flatButtons_,
+    // buttonGroups_, buttonGroup_ and font1_..font9_ are REAL members in
+    // socialwin.h already (not raw storage) - they build IMPLICITLY, in
+    // declaration order, before this body runs. The explicit placement-new
+    // calls that used to stand here duplicated that construction: since the
+    // header already types these as real classes, C++ constructs them
+    // whether or not the body also does, and the old explicit calls at the
+    // same raw offsets meant every one of these sub-objects was built TWICE.
+    // Only the sub-objects that are STILL raw storage (four Sprite runs the
+    // header cannot yet type - see socEngModifierNums_/effectIcons_/
+    // energyAllocLock_/energyAllocArrow_ - and the Buffer[6] run inside
+    // energyAllocSlider_, which is larger than 6 Buffers and not fully
+    // accounted for) stay explicit below.
     VectorCtorIterator(self + 0x2C60, 0x2C, 0xA, SocialWinSpriteCtor, SocialWinSpriteDtor);
     VectorCtorIterator(self + 0x2E18, 0x2C, 0x5A, SocialWinSpriteCtor, SocialWinSpriteDtor);
     VectorCtorIterator(self + 0x3D90, 0x2C, 2, SocialWinSpriteCtor, SocialWinSpriteDtor);
     VectorCtorIterator(self + 0x3DE8, 0x2C, 6, SocialWinSpriteCtor, SocialWinSpriteDtor);
     VectorCtorIterator(self + 0x3EF0, 0x588, 6, SocialWinBufferCtor, SocialWinBufferDtor);
-    VectorCtorIterator(self + 0x6020, 0xB4C, 0x23, SocialWinFlatButtonCtor, SocialWinFlatButtonDtor);
-    VectorCtorIterator(self + 0x1EB84, 0x94, 4, SocialWinButtonGroupCtor, SocialWinButtonGroupDtor);
-
-    new (self + 0x1EDD4) ButtonGroup();
-
-    new (self + 0x1EE68) Font();
-    new (self + 0x1EE90) Font();
-    new (self + 0x1EEB8) Font();
-    new (self + 0x1EEE0) Font();
-    new (self + 0x1EF08) Font();
-    new (self + 0x1EF30) Font();
-    new (self + 0x1EF58) Font();
-    new (self + 0x1EF80) Font();
-    new (self + 0x1EFA8) Font();
 
     object[0x000 / 4] = SocialWinPrimaryVtable;
     object[0x444 / 4] = SocialWinBufferVtable;

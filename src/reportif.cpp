@@ -48,6 +48,15 @@ Purpose: Install the SubInterface vftable, then placement-new every
 //            batch. Layout (offsets, sub-object sizes, construction order)
 //            cross-checked directly against the destructor at 0x004ACDA0,
 //            which tears the same run down in mirrored order.
+// RULED-OUT: real declared members (FlatButton[7]/Sprite[0x15]/FlatButton[7])
+//            for flatButtonsA_/spritesA_/flatButtonsB_, built implicitly -
+//            measured WORSE, 26/132 (compiled grew to 195 instructions). The
+//            `object[0] = vtable` store has to stay explicit body code (its
+//            base SubInterface is not parametrised per host class, and that
+//            header is out of this batch's scope), and standard C++ always
+//            runs implicit member construction before any body statement, so
+//            real members push that store after all three instead of ahead
+//            of them, unlike the image. Reverted.
 // size      1006 bytes
 // prototype void (__thiscall ??0ReportIf@@QAE@XZ)(ReportIf* this)
 // callers   1   call targets   6

@@ -38,12 +38,11 @@
   // seam that stood in for them cost the caller `call [ptr]`.
 class NetMsg : public Popup {
  public:
-  NetMsg() { ; }
+  NetMsg(int a1, int a2, int a3);
   // A `construct` method, not a constructor - see the note in `mapwin.h`. The
   // real body is 0x0047ACF0 and takes three ints; `??__Eg_NETMSG1` and
   // `??__Eg_NETMSG2` reach it, and a pointer-to-member seam cost both the
   // image's `E8`. Forwarded in `pending_bodies.cpp`.
-  void construct(int a1, int a2, int a3);
   // 0x0047ADA0 is not recovered: a
   // pending_bodies forwarder, because an empty inline stub emits
   // nothing and the deleting destructor needs a `call rel32`.

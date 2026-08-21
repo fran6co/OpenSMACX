@@ -30,44 +30,32 @@ const uint32_t NetMsgBufferVtable = 0x0066CB58;
 Purpose: Construct the Popup base and the embedded Time, then install
          NetMsg's own vtables and the three constructor arguments.
 // ORIGINAL: 0x0047ACF0 ??0NetMsg@@QAE@HHH@Z 0x0047ACF0-0x0047AD6E;0x00656440-0x00656452
-// symbol    ?construct@NetMsg@@QAEXHHH@Z
+// RULED-OUT: best reached is 11/31, 0.853 similar (best of 10 flag sets, `/c /O2 /Gy /GR- /Oy- /GX`) - up from an EARLIER candidate on this same address (see git history / the artifact this replaced) that matched the same lever and reached a similar ceiling. Divergence is at instruction 7: image has `push ecx` (spilling a register the prologue does not otherwise need) where this body has `sub esp, 8` - a stack-frame-size difference from how many spill slots the two placement-news plus the `object` local need, not a control-flow or field-order difference. Not chased further.
+// RULED-OUT: real `NetMsg(int, int, int)` constructor, MISMATCH 11/31 -> SHAPE_EXACT 27/31, because the placement-new null guard disappears - the same lever that took MultiDebug to BYTE_EXACT.
+// RULED-OUT: (this) Popup(); new (&timer_) Time();` - placement construction through an ordinary method (not a real ctor - see the note in netmsg.h), matching Win/GraphicWin's own `construct()` idiom. The SEH frame the image carries here comes along for free: placement- new onto a non-trivially-destructible Popup pulls one in (the same lever that makes it appear where it is NOT wanted elsewhere).
 // size      126 bytes
 // prototype void (__thiscall ??0NetMsg@@QAE@HHH@Z)(NetMsg* this, int, int, int)
 // callers   0   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok;frame
 // calls     0x004048A0 0x006161D0
-// RULED-OUT: converting this to a real `NetMsg(int, int, int)` constructor
-//        WORKS on its own terms and is still the wrong trade. Measured: this
-//        body goes MISMATCH 11/31 -> SHAPE_EXACT 27/31, because the
-//        placement-new null guard disappears - the same lever that took
-//        MultiDebug::construct() to BYTE_EXACT. But the two dynamic
-//        initialisers that build the NetMsg globals at fixed addresses
-//        (construct_netmsg1/2, init_thunks.cpp) can then only call it through
-//        placement new themselves, which moves the guard INTO them: 0x0047A7A0
-//        went BYTE_EXACT -> 1 of 9 agreeing, compiled 17 against an image of
-//        9. One tier gained, two byte-exact claims lost. Reverted.
-// LEVER: `new (this) Popup(); new (&timer_) Time();` - placement construction
-//        through an ordinary method (not a real ctor - see the note in
-//        netmsg.h), matching Win/GraphicWin's own `construct()` idiom. The
-//        SEH frame the image carries here comes along for free: placement-
-//        new onto a non-trivially-destructible Popup pulls one in (the same
-//        lever that makes it appear where it is NOT wanted elsewhere).
-// RULED-OUT: best reached is 11/31, 0.853 similar (best of 10 flag sets,
-//        `/c /O2 /Gy /GR- /Oy- /GX`) - up from an EARLIER candidate on this
-//        same address (see git history / the artifact this replaced) that
-//        matched the same lever and reached a similar ceiling. Divergence
-//        is at instruction 7: image has `push ecx` (spilling a register the
-//        prologue does not otherwise need) where this body has `sub esp, 8`
-//        - a stack-frame-size difference from how many spill slots the two
-//        placement-news plus the `object` local need, not a control-flow or
-//        field-order difference. Not chased further.
+//
+//        AND THE CALL SITES COST NOTHING, which took two attempts to get
+//        right and is the part worth remembering. Written
+//        `new (ptr) NetMsg(...)` in init_thunks.cpp, the two dynamic
+//        initialisers pay the guard instead: 0x0047A7A0 went BYTE_EXACT ->
+//        1 of 9 agreeing, 17 compiled instructions against an image of 9,
+//        and the whole conversion was reverted as a bad trade on that basis.
+//        It was not a bad trade, it was the wrong spelling. Written
+//        `ptr->NetMsg::NetMsg(...)` - explicit constructor call syntax, no
+//        new-expression, which is what every other initialiser in that file
+//        already uses - there is no guard and both initialisers stay
+//        BYTE_EXACT. `new (ptr) T()` and `ptr->T::T()` are not
+//        interchangeable here: only the second is free.
 Return Value: n/a
 Status: Complete
 */
-void NetMsg::construct(int a1, int a2, int a3) {
-    new (this) Popup();
-    new (&timer_) Time();
+NetMsg::NetMsg(int a1, int a2, int a3) {
     field_5380_ = a2;
     field_537C_ = a1;
     uint32_t *const object = reinterpret_cast<uint32_t *>(this);
