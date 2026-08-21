@@ -25,10 +25,11 @@
 #include "mapwin.h"
 #include "statuswin.h"
 #include "temp.h"
+#include "fx.h"
+#include "hypothesis_layouts.h"
 #include <cstring>
 
-func_pref_win_display ConsolePrefWinDisplay = original_method<func_pref_win_display>(0x0048FA00);
-void *ConsolePrefWin = reinterpret_cast<void *>(0x008578D8);
+PrefWin *ConsolePrefWin= (PrefWin *)(0x008578D8);
 func_get_key_state **ConsoleEditKeyStateSlot =
     reinterpret_cast<func_get_key_state **>(0x0066932C);
 
@@ -45,7 +46,7 @@ Return Value: n/a
 Status: Complete
 */
 void Console::set_preferences() {
-    (ORIGINAL(ConsolePrefWin)->*ConsolePrefWinDisplay)(0);
+    ConsolePrefWin->PrefWin::display(0);
 }
 
 /*
@@ -61,7 +62,7 @@ Return Value: n/a
 Status: Complete
 */
 void Console::set_auto_preferences() {
-    (ORIGINAL(ConsolePrefWin)->*ConsolePrefWinDisplay)(3);
+    ConsolePrefWin->PrefWin::display(3);
 }
 
 /*
@@ -77,7 +78,7 @@ Return Value: n/a
 Status: Complete
 */
 void Console::set_base_preferences() {
-    (ORIGINAL(ConsolePrefWin)->*ConsolePrefWinDisplay)(2);
+    ConsolePrefWin->PrefWin::display(2);
 }
 
 /*
@@ -93,7 +94,7 @@ Return Value: n/a
 Status: Complete
 */
 void Console::set_audiovisual() {
-    (ORIGINAL(ConsolePrefWin)->*ConsolePrefWinDisplay)(4);
+    ConsolePrefWin->PrefWin::display(4);
 }
 
 /*
@@ -109,7 +110,7 @@ Return Value: n/a
 Status: Complete
 */
 void Console::set_map_display() {
-    (ORIGINAL(ConsolePrefWin)->*ConsolePrefWinDisplay)(5);
+    ConsolePrefWin->PrefWin::display(5);
 }
 
 void __fastcall console_set_preferences_redirect(Console *self, void *) {
@@ -212,7 +213,7 @@ Return Value: n/a
 Status: Complete
 */
 void Console::set_adv_preferences() {
-    (ORIGINAL(ConsolePrefWin)->*ConsolePrefWinDisplay)(1);
+    ConsolePrefWin->PrefWin::display(1);
 }
 
 /*
@@ -240,10 +241,8 @@ void __fastcall console_editor_undo_redirect(Console *self, void *) {
     self->editor_undo();
 }
 
-func_status_win_redraw ConsoleOriginalStatusWinRedraw =
-    original_method<func_status_win_redraw>(0x004B9EA0);
 void *ConsoleInfoWin = reinterpret_cast<void *>(0x007AD2A0);
-void *ConsoleStatusWin = reinterpret_cast<void *>(0x008C5568);
+StatusWin *ConsoleStatusWin= (StatusWin *)(0x008C5568);
 void **ConsoleMapWinSlot = reinterpret_cast<void **>(0x007D3C3C);
 
 /*
@@ -280,7 +279,7 @@ void Console::update_data(int a1) {
     // 0x0051488B push eax / 0x0051488C call 0x458900.
     reinterpret_cast<InfoWin *>(ConsoleInfoWin)->change(a1);
     // 0x00514891 mov ecx,0x8c5568 / 0x00514896 call 0x4b9ea0.
-    (ORIGINAL(ConsoleStatusWin)->*ConsoleOriginalStatusWinRedraw)();
+    ConsoleStatusWin->StatusWin::redraw();
     // 0x0051489B mov ecx,[0x7d3c3c] - a load, not an address-of - then
     // 0x005148A1 call 0x46fb10. The slot is read here, never cached.
     reinterpret_cast<MapWin *>(*ConsoleMapWinSlot)->main_caption();
@@ -293,13 +292,11 @@ void __fastcall console_update_data_redirect(Console *self, void *, int a1) {
     self->update_data(a1);
 }
 
-func_console_cursor_next ConsoleOriginalCursorNext =
-    original_method<func_console_cursor_next>(0x005109B0);
 func_console_map_win_focus ConsoleOriginalMapWinFocus =
     original_method<func_console_map_win_focus>(0x0046B310);
 func_console_flush_input *ConsoleOriginalFlushInput =
     (func_console_flush_input *)0x005FD120;
-void *ConsoleGlobal = reinterpret_cast<void *>(0x009156B0);
+Console *ConsoleGlobal= (Console *)(0x009156B0);
 int32_t *ConsoleControlTurnActive = reinterpret_cast<int32_t *>(0x0093A938);
 int32_t *ConsoleExitTurnLoop = reinterpret_cast<int32_t *>(0x009B2068);
 func_main_menu_check ConsoleOriginalMainMenuCheck =
@@ -412,7 +409,7 @@ int Console::focus(int x_coord, int y_coord, int faction_id) {
             // 0x009156B0, NOT on `this`. Every call site happens to enter focus
             // with the same object, but the constant is in the instruction
             // stream and is transcribed as one.
-            (ORIGINAL(ConsoleGlobal)->*ConsoleOriginalCursorNext)(x_coord, y_coord);
+            ConsoleGlobal->cursor_next(x_coord, y_coord);
             // 0x0051092B reloads `this`, 0x0051092E reads the survey-overlay
             // latch. Read AFTER the call, do NOT hoist: this comes from `this`
             // while cursor_next was handed ConsoleGlobal, and cursor_next

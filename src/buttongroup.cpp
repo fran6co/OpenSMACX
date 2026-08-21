@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "original_seam.h"
 #include "buttongroup.h"
+#include "worldwin.h"
 
 #include <new>
 
@@ -136,13 +137,11 @@ int __fastcall button_group_init_redirect(
     return group_id;
 }
 
-func_button_group_click ButtonGroupOriginalButtonClick =
-    original_method<func_button_group_click>(0x0062B8A0);
 
 /*
 Purpose: Activate a button in the group, suppressing the group's own
          notification while the click is dispatched when notify is zero.
-// ORIGINAL: 0x0062B870 ?set@ButtonGroup@@QAEHHH@Z 0x0062B870-0x0062B89F
+// ORIGINAL: 0x0062B870 ?set@ButtonGroup@@QAEHHH@Z 0x0062B870-0x0062B89F BYTE_EXACT
 // size      47 bytes
 // prototype int (__thiscall ?set@ButtonGroup@@QAEHHH@Z)(ButtonGroup* this, int, int)
 // callers   35   call targets   1
@@ -156,7 +155,7 @@ int ButtonGroup::set(int button_id, int notify) {
     if (!notify) {
         field_90_ = 1;
     }
-    const int result = (ORIGINAL(this)->*ButtonGroupOriginalButtonClick)(button_id);
+    const int result = button_click(button_id);
     field_90_ = 0;
     return result;
 }

@@ -29,6 +29,10 @@
   */
 class FX {
  public:
+  // 0x00446A00, a pending_bodies forwarder.
+  void play(int effect);
+
+ public:
   void fade(int a1);
   void release(int a1);
   void stop(int a1);

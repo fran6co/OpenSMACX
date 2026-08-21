@@ -48,6 +48,10 @@ struct DatalinkID;
 
 class Datalink : GraphicWin {
  public:
+  // 0x00429180, a pending_bodies forwarder.
+  void exec(unsigned int topic, int index);
+
+ public:
   void hide();
   void show(int a1);
   void on_selected(int a1);
@@ -267,13 +271,11 @@ void __fastcall datalink_close_redirect(Datalink *self, void *);
 // yet source-owned; every help_* forwarder below dispatches through it
 // against the fixed-address Datalink singleton, so both the exec entry point
 // and the singleton object are seams here rather than baked-in literals.
-typedef void (OriginalObject::*func_datalink_exec)(unsigned int topic, int index);
-extern func_datalink_exec DatalinkExec;
 
 // The Datalink singleton the forwarders dispatch against - plain data, not a
 // call target, so it stays an unclassified rebindable seam rather than a
 // classified dependency.
-extern void *DatalinkMain;
+extern Datalink *DatalinkMain;
 
 // Datalink::draw_entry (0x0042BF10) is likewise unrecovered; on_selected calls
 // it, so its definition is a seam into the original image.

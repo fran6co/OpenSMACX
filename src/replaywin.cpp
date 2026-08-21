@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "replaywin.h"
+#include "worldwin.h"
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.

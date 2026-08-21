@@ -42,6 +42,17 @@
 #include "mapwin.h"
 #include "popup.h"
 #include "sound.h"
+#include "netdaemon.h"
+#include "fx.h"
+#include "hypothesis_layouts.h"
+#include "statuswin.h"
+#include "console.h"
+#include "buttongroup.h"
+#include "datalink.h"
+#include "gamma.h"
+#include "infowin.h"
+#include "stringbox.h"
+#include "worldwin.h"
 
 /*
  * THE FRONTIER.
@@ -283,6 +294,66 @@ void GraphicWin::compute_min_size() {  // 0x005D7030
 void Win::nonclient_to_client(int * a1, int * a2) {  // 0x005EEF60
     typedef void(__fastcall *pending)(Win *, void *, int *, int *);
     PENDING_BODY(0x005EEF60, pending)(this, nullptr, a1, a2);
+}
+
+void NetDaemon::process_message(char *message, unsigned long a, int b) {  // 0x00534400
+    typedef void(__fastcall *pending)(NetDaemon *, void *, char *, unsigned long, int);
+    PENDING_BODY(0x00534400, pending)(this, nullptr, message, a, b);
+}
+
+void NetDaemon::synch(int16_t opcode, int a, int b, int c, char *text, int d, int16_t flags) {  // 0x00532E00
+    typedef void(__fastcall *pending)(NetDaemon *, void *, int16_t, int, int, int, char *, int, int16_t);
+    PENDING_BODY(0x00532E00, pending)(this, nullptr, opcode, a, b, c, text, d, flags);
+}
+
+void FX::play(int effect) {  // 0x00446A00
+    typedef void(__fastcall *pending)(FX *, void *, int);
+    PENDING_BODY(0x00446A00, pending)(this, nullptr, effect);
+}
+
+void PrefWin::display(int page) {  // 0x0048FA00
+    typedef void(__fastcall *pending)(PrefWin *, void *, int);
+    PENDING_BODY(0x0048FA00, pending)(this, nullptr, page);
+}
+
+void StatusWin::redraw() {  // 0x004B9EA0
+    typedef void(__fastcall *pending)(StatusWin *, void *);
+    PENDING_BODY(0x004B9EA0, pending)(this, nullptr);
+}
+
+void Console::cursor_next(int x_coord, int y_coord) {  // 0x005109B0
+    typedef void(__fastcall *pending)(Console *, void *, int, int);
+    PENDING_BODY(0x005109B0, pending)(this, nullptr, x_coord, y_coord);
+}
+
+int ButtonGroup::button_click(int a1) {  // 0x0062B8A0
+    typedef int(__fastcall *pending)(ButtonGroup *, void *, int);
+    return PENDING_BODY(0x0062B8A0, pending)(this, nullptr, a1);
+}
+
+void Datalink::exec(unsigned int topic, int index) {  // 0x00429180
+    typedef void(__fastcall *pending)(Datalink *, void *, unsigned int, int);
+    PENDING_BODY(0x00429180, pending)(this, nullptr, topic, index);
+}
+
+void Gamma::adjust_palette() {  // 0x005C9520
+    typedef void(__fastcall *pending)(Gamma *, void *);
+    PENDING_BODY(0x005C9520, pending)(this, nullptr);
+}
+
+void InfoWin::timer_proc(int a1) {  // 0x00459150
+    typedef void(__fastcall *pending)(InfoWin *, void *, int);
+    PENDING_BODY(0x00459150, pending)(this, nullptr, a1);
+}
+
+void StringBox::add_fixup() {  // 0x00629490
+    typedef void(__fastcall *pending)(StringBox *, void *);
+    PENDING_BODY(0x00629490, pending)(this, nullptr);
+}
+
+void WorldWin::click(int a1, int a2, int button, int is_double) {  // 0x004C3D40
+    typedef void(__fastcall *pending)(WorldWin *, void *, int, int, int, int);
+    PENDING_BODY(0x004C3D40, pending)(this, nullptr, a1, a2, button, is_double);
 }
 
 // ?write_raw_l@Buffer@@QAEHPADHHH@Z at 0x005DBD00 - 1475 bytes, the raster

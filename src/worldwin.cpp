@@ -58,11 +58,10 @@ void __fastcall world_win_on_left_double_click_redirect(WorldWin *self, void *, 
     self->on_left_double_click(a1, a2);
 }
 
-func_world_win_click WorldWinClick = original_method<func_world_win_click>(0x004C3D40);
 
 /*
 Purpose: Report a left click to the world window's shared click handler.
-// ORIGINAL: 0x004C3E50 ?on_left_click@WorldWin@@QAEXHH@Z 0x004C3E50-0x004C3E68
+// ORIGINAL: 0x004C3E50 ?on_left_click@WorldWin@@QAEXHH@Z 0x004C3E50-0x004C3E68 BYTE_EXACT
 // size      24 bytes
 // prototype void (__thiscall ?on_left_click@WorldWin@@QAEXHH@Z)(WorldWin* this, int, int)
 // callers   0   call targets   1
@@ -73,12 +72,12 @@ Return Value: n/a
 Status: Complete
 */
 void WorldWin::on_left_click(int a1, int a2) {
-    (ORIGINAL(this)->*WorldWinClick)(a1, a2, 0, 0);
+    click(a1, a2, 0, 0);
 }
 
 /*
 Purpose: Report a right click to the world window's shared click handler.
-// ORIGINAL: 0x004C3E70 ?on_right_click@WorldWin@@QAEXHH@Z 0x004C3E70-0x004C3E88
+// ORIGINAL: 0x004C3E70 ?on_right_click@WorldWin@@QAEXHH@Z 0x004C3E70-0x004C3E88 BYTE_EXACT
 // size      24 bytes
 // prototype void (__thiscall ?on_right_click@WorldWin@@QAEXHH@Z)(WorldWin* this, int, int)
 // callers   0   call targets   1
@@ -89,7 +88,7 @@ Return Value: n/a
 Status: Complete
 */
 void WorldWin::on_right_click(int a1, int a2) {
-    (ORIGINAL(this)->*WorldWinClick)(a1, a2, 1, 0);
+    click(a1, a2, 1, 0);
 }
 
 void __fastcall world_win_on_left_click_redirect(WorldWin *self, void *, int a1, int a2) {

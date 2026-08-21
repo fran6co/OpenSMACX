@@ -32,6 +32,10 @@
 */
 class InfoWin {
  public:
+  // 0x00459150, a pending_bodies forwarder.
+  void timer_proc(int a1);
+
+ public:
   void on_right_click(int a1, int a2);
   // 0x004589C0  ?right_menu@InfoWin@@QAEXHH@Z - public, __thiscall,
   // void(int, int). Still an original body, so the definition at the END of
@@ -106,8 +110,6 @@ void __fastcall info_win_change_redirect(InfoWin *self, void *, int a1);
 void __fastcall info_win_unk3_redirect(InfoWin *self, void *, int a1, int a2);
 
 // InfoWin::timer_proc is not recovered yet.
-typedef void (OriginalObject::*func_info_win_timer_proc)(int);
-extern func_info_win_timer_proc InfoWinOriginalTimerProc;
 
 // InfoWin::right_menu is not recovered yet - 911 bytes that build and run the
 // tile context menu. Rebindable so tests can substitute a probe and so the

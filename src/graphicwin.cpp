@@ -22,6 +22,7 @@
 #include "scroll.h"
 #include "vector_teardown.h"
 #include "temp.h"  // HandleMain, the window the invalidate targets
+#include "statuswin.h"
 
 #include <cstring>
 

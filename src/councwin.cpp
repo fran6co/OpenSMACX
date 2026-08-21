@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "councwin.h"
 #include "subinterface.h"
+#include "worldwin.h"
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.

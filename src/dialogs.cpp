@@ -13,6 +13,7 @@
 #include "spritebox.h"    // the SpriteBox handlers this dispatches to
 #include "original_seam.h"
 #include "radiobutton.h"  // RadioButton::close (source-owned)
+#include "worldwin.h"
 #include <cstring>
 
 /*

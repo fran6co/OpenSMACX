@@ -17,6 +17,8 @@
  */
 #include "stdafx.h"
 #include "dipedit.h"
+#include "statuswin.h"
+#include "worldwin.h"
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.

@@ -38,6 +38,10 @@
   */
 class WorldWin : GraphicWin {
  public:
+  // 0x004C3D40, a pending_bodies forwarder.
+  void click(int a1, int a2, int button, int is_double);
+
+ public:
   void follow_center(int xCoord, int yCoord);
   void focus(int a1, int a2);
   void set_center(int a1, int a2);
@@ -73,8 +77,6 @@ void __fastcall world_win_clear_terrain_redirect(WorldWin *self, void *);
 void __fastcall world_win_on_left_double_click_redirect(WorldWin *self, void *, int a1, int a2);
 
 // WorldWin's shared click handler is not recovered.
-typedef void (OriginalObject::*func_world_win_click)(int a1, int a2, int button, int is_double);
-extern func_world_win_click WorldWinClick;
 
 void __fastcall world_win_on_left_click_redirect(WorldWin *self, void *, int a1, int a2);
 void __fastcall world_win_on_right_click_redirect(WorldWin *self, void *, int a1, int a2);

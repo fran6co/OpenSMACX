@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "gamma.h"
+#include "worldwin.h"
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 1.
@@ -38,11 +39,9 @@ int __fastcall gamma_on_key_click_redirect(Gamma *self, void *, int a1, int a2) 
     return self->on_key_click(a1, a2);
 }
 
-func_gamma_adjust_palette GammaOriginalAdjustPalette =
-    original_method<func_gamma_adjust_palette>(0x005C9520);
 
 /*
-// ORIGINAL: 0x005C9390 ?on_scrolled@Gamma@@QAEXHH@Z 0x005C9390-0x005C9398
+// ORIGINAL: 0x005C9390 ?on_scrolled@Gamma@@QAEXHH@Z 0x005C9390-0x005C9398 BYTE_EXACT
 // size      8 bytes
 // prototype void (__thiscall ?on_scrolled@Gamma@@QAEXHH@Z)(Gamma* this, int, int)
 // callers   0   call targets   1
@@ -52,7 +51,7 @@ func_gamma_adjust_palette GammaOriginalAdjustPalette =
 Status: Complete
 */
 void Gamma::on_scrolled(int a1, int a2) {
-    (ORIGINAL(this)->*GammaOriginalAdjustPalette)();
+    adjust_palette();
 }
 
 

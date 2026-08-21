@@ -20,6 +20,10 @@
 #include "original_seam.h"
 #include "mapwin.h"
 
+class StatusWin;
+
+class PrefWin;
+
  /*
   * Console class
   *
@@ -84,6 +88,10 @@
   * offset in the class.
   */
 class Console : MapWin {
+ public:
+  // 0x005109B0, a pending_bodies forwarder.
+  void cursor_next(int x_coord, int y_coord);
+
  public:
   void editor_polar();
   void on_sys_close();
@@ -168,9 +176,7 @@ static_assert(sizeof(Console) == 0x247A8, "Console layout must match terranx.exe
 
 // All five preference openers drive the one PrefWin the game keeps at a fixed
 // address, opening it to a different page. PrefWin::display is not recovered.
-typedef void (OriginalObject::*func_pref_win_display)(int page);
-extern func_pref_win_display ConsolePrefWinDisplay;
-extern void *ConsolePrefWin;
+extern PrefWin *ConsolePrefWin;
 
 void __fastcall console_set_preferences_redirect(Console *self, void *);
 void __fastcall console_set_auto_preferences_redirect(Console *self, void *);
@@ -213,10 +219,8 @@ void __fastcall console_editor_undo_redirect(Console *self, void *);
 // through the runtime slot at 0x00669328, and GraphicWin::soft_update - so it
 // is reached through a rebindable seam, exactly as ListBox reaches
 // Dialog::close.
-typedef void (OriginalObject::*func_status_win_redraw)();
-extern func_status_win_redraw ConsoleOriginalStatusWinRedraw;  // 0x004B9EA0
 extern void *ConsoleInfoWin;      // 0x007AD2A0, the process-wide InfoWin
-extern void *ConsoleStatusWin;    // 0x008C5568, the process-wide StatusWin
+extern StatusWin *ConsoleStatusWin;    // 0x008C5568, the process-wide StatusWin
 extern void **ConsoleMapWinSlot;  // 0x007D3C3C, holds the current MapWin *
 
 void __fastcall console_update_data_redirect(Console *self, void *, int a1);
@@ -233,7 +237,6 @@ void __fastcall console_update_data_redirect(Console *self, void *, int a1);
 // `this`. That object is bound separately so a test can hand focus a Console
 // that is NOT the process-wide one and observe which of the two each half of
 // the body touches.
-typedef void (OriginalObject::*func_console_cursor_next)(int x_coord, int y_coord);
 // MapWin::focus (0x0046B310, ret 8) reports whether it moved the view;
 // MapWin::draw_map (0x0046A550, ret 4) repaints one. Both are unrecovered -
 // focus reaches in_box and set_center, draw_map is 2049 bytes - so both stay
@@ -244,7 +247,6 @@ typedef int (OriginalObject::*func_console_map_win_focus)(int x_coord, int y_coo
 // pumps the message loop through check_net.
 typedef void(__cdecl func_console_flush_input)(void);
 
-extern func_console_cursor_next ConsoleOriginalCursorNext;          // 0x005109B0
 extern func_console_map_win_focus ConsoleOriginalMapWinFocus;       // 0x0046B310
 // 0x0046A550 is NOT bound here. It is MapWin::draw_map's own address and
 // src/mapwin.h owns the seam for it (MapWinOriginalDrawMap). Seams dedupe on
@@ -253,7 +255,7 @@ extern func_console_map_win_focus ConsoleOriginalMapWinFocus;       // 0x0046B31
 // the original image - which is why tools/test_generator_support.py refuses
 // a second binding, and it caught this one.
 extern func_console_flush_input *ConsoleOriginalFlushInput;          // 0x005FD120
-extern void *ConsoleGlobal;  // 0x009156B0, the process-wide Console
+extern Console *ConsoleGlobal;  // 0x009156B0, the process-wide Console
 
 // The dword at 0x0093A938 is set while a turn is played out under program
 // control rather than interactively. A linear scan of .text finds exactly four

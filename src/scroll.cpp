@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "original_seam.h"
 #include "scroll.h"
+#include "worldwin.h"
 
 Win **ScrollCurrentWin = reinterpret_cast<Win **>(0x009B7AB8);
 // AN OBJECT, NOT A POINTER TO A FIXED ADDRESS: the pointer form costs a
