@@ -76,6 +76,42 @@
   */
 class ListBox {
  public:
+  // 0x0060C6A0, a pending_bodies forwarder.
+  void on_scrolled(int a1, int a2);
+
+ public:
+  // 0x0060AA20, a pending_bodies forwarder.
+  void on_right_down(int a1, int a2);
+
+ public:
+  // 0x0060C6D0, a pending_bodies forwarder.
+  void on_right_double_click(int a1, int a2);
+
+ public:
+  // 0x0060C350, a pending_bodies forwarder.
+  void on_redraw();
+
+ public:
+  // 0x0060CBC0, a pending_bodies forwarder.
+  void on_mouse_move(int a1, int a2);
+
+ public:
+  // 0x0060AA60, a pending_bodies forwarder.
+  void on_left_down(int a1, int a2);
+
+ public:
+  // 0x0060C710, a pending_bodies forwarder.
+  void on_left_double_click(int a1, int a2);
+
+ public:
+  // 0x0060AF90, a pending_bodies forwarder.
+  void on_key_down(int a1);
+
+ public:
+  // 0x0060A670, a pending_bodies forwarder.
+  int attach(void * a1, int a2, int a3, int a4);
+
+ public:
   // 0x0060C5D0, a pending_bodies forwarder.
   void on_scrolling(int a, int b);
   // 0x0060CB70, a pending_bodies forwarder.

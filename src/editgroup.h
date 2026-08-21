@@ -58,6 +58,22 @@
   */
 class EditGroup {
  public:
+  // 0x006126C0, a pending_bodies forwarder.
+  void pass_dialog_focus();
+
+ public:
+  // 0x00612450, a pending_bodies forwarder.
+  void on_redraw();
+
+ public:
+  // 0x00612670, a pending_bodies forwarder.
+  void on_dialog_focus(int a1);
+
+ public:
+  // 0x00611AF0, a pending_bodies forwarder.
+  int attach(void * a1, int a2, int a3, int a4);
+
+ public:
   EditGroup() { ; }
   ~EditGroup() { ; }
   void set_text_limits(int limit);

@@ -29,6 +29,30 @@
   */
 class SpriteBox {
  public:
+  // 0x00611380, a pending_bodies forwarder.
+  void on_redraw();
+
+ public:
+  // 0x00611150, a pending_bodies forwarder.
+  void on_left_down(int a1, int a2);
+
+ public:
+  // 0x006112E0, a pending_bodies forwarder.
+  void on_left_double_click(int a1, int a2);
+
+ public:
+  // 0x00611060, a pending_bodies forwarder.
+  void on_left_click(int a1, int a2);
+
+ public:
+  // 0x00611400, a pending_bodies forwarder.
+  int on_key_down(int a1);
+
+ public:
+  // 0x00610540, a pending_bodies forwarder.
+  int attach(void * a1, int a2, int a3, int a4);
+
+ public:
   // 0x00611240, a pending_bodies forwarder.
   void on_right_down(int a, int b);
   // 0x00611330, a pending_bodies forwarder.

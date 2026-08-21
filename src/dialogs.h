@@ -15,6 +15,54 @@
 
 class Dialogs {
  public:
+  // 0x00613180, a pending_bodies forwarder.
+  void pass_dialog_focus();
+
+ public:
+  // 0x00613260, a pending_bodies forwarder.
+  int on_scroll_delete(void * a1);
+
+ public:
+  // 0x00613220, a pending_bodies forwarder.
+  void on_scroll_create();
+
+ public:
+  // 0x00612E00, a pending_bodies forwarder.
+  void on_redraw();
+
+ public:
+  // 0x00612B80, a pending_bodies forwarder.
+  void on_mouse_move(int a1, int a2);
+
+ public:
+  // 0x00612AE0, a pending_bodies forwarder.
+  void on_mouse_leave(int a1, int a2);
+
+ public:
+  // 0x00612C20, a pending_bodies forwarder.
+  void on_left_down(int a1, int a2);
+
+ public:
+  // 0x00612D60, a pending_bodies forwarder.
+  void on_left_double_click(int a1, int a2);
+
+ public:
+  // 0x00612E80, a pending_bodies forwarder.
+  void on_left_click(int a1, int a2);
+
+ public:
+  // 0x00612CC0, a pending_bodies forwarder.
+  int on_key_down(int a1);
+
+ public:
+  // 0x006130E0, a pending_bodies forwarder.
+  void on_dialog_focus(int a1);
+
+ public:
+  // 0x00612FE0, a pending_bodies forwarder.
+  int attach(void * a1, int a2, int a3, int a4);
+
+ public:
   void close();
   // The recovered complete-object destructor body (0x00406910), modelled on
   // the primary this (the allocation base); the original enters at

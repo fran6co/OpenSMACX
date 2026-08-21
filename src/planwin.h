@@ -64,6 +64,10 @@
   */
 class PlanWin : public MapWin {
  public:
+  // 0x0048AF30, a pending_bodies forwarder.
+  void on_redraw();
+
+ public:
   PlanWin() { ; }
   ~PlanWin() { ; }
   void clear_lines();

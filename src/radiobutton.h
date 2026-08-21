@@ -54,6 +54,30 @@
   */
 class RadioButton {
  public:
+  // 0x0060E220, a pending_bodies forwarder.
+  void on_redraw();
+
+ public:
+  // 0x0060E320, a pending_bodies forwarder.
+  void on_mouse_move(int a1, int a2);
+
+ public:
+  // 0x0060DE10, a pending_bodies forwarder.
+  void on_left_down(int a1, int a2);
+
+ public:
+  // 0x0060E1E0, a pending_bodies forwarder.
+  void on_left_double_click(int a1, int a2);
+
+ public:
+  // 0x0060E020, a pending_bodies forwarder.
+  int on_key_down(int a1);
+
+ public:
+  // 0x0060D1F0, a pending_bodies forwarder.
+  int attach(void * a1, int a2, int a3, int a4);
+
+ public:
   // `static`: the image's name ends in `QAA` - a public member declared
   // __cdecl, taking no receiver - and jackal_init_real calls it with no
   // ecx set up, so `Class::method()` is the only legal spelling.

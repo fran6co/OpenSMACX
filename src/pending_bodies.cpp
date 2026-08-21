@@ -84,6 +84,8 @@
 #include "editbox.h"
 #include "wave.h"
 #include "wave_device.h"
+#include "editgroup.h"
+#include "planwin.h"
 
 /*
  * THE FRONTIER.
@@ -850,6 +852,296 @@ Effect::~Effect() {  // ??1Effect@@QAE@XZ at 0x004482C0
 int MapWin::focus(int x_coord, int y_coord) {  // 0x0046B310
     typedef int(__fastcall *pending)(MapWin *, void *, int, int);
     return PENDING_BODY(0x0046B310, pending)(this, nullptr, x_coord, y_coord);
+}
+
+int CheckBox::attach(void * a1, int a2, int a3, int a4) {  // 0x0060E800
+    typedef int(__fastcall *pending)(CheckBox *, void *, void *, int, int, int);
+    return PENDING_BODY(0x0060E800, pending)(this, nullptr, a1, a2, a3, a4);
+}
+
+int CheckBox::on_key_down(int a1) {  // 0x0060F8B0
+    typedef int(__fastcall *pending)(CheckBox *, void *, int);
+    return PENDING_BODY(0x0060F8B0, pending)(this, nullptr, a1);
+}
+
+void CheckBox::on_left_double_click(int a1, int a2) {  // 0x0060FA80
+    typedef void(__fastcall *pending)(CheckBox *, void *, int, int);
+    PENDING_BODY(0x0060FA80, pending)(this, nullptr, a1, a2);
+}
+
+void CheckBox::on_left_down(int a1, int a2) {  // 0x0060F700
+    typedef void(__fastcall *pending)(CheckBox *, void *, int, int);
+    PENDING_BODY(0x0060F700, pending)(this, nullptr, a1, a2);
+}
+
+void CheckBox::on_mouse_move(int a1, int a2) {  // 0x0060FBB0
+    typedef void(__fastcall *pending)(CheckBox *, void *, int, int);
+    PENDING_BODY(0x0060FBB0, pending)(this, nullptr, a1, a2);
+}
+
+void CheckBox::on_redraw() {  // 0x0060FAB0
+    typedef void(__fastcall *pending)(CheckBox *, void *);
+    PENDING_BODY(0x0060FAB0, pending)(this, nullptr);
+}
+
+int Console::on_key_click(int a1, int a2) {  // 0x005178C0
+    typedef int(__fastcall *pending)(Console *, void *, int, int);
+    return PENDING_BODY(0x005178C0, pending)(this, nullptr, a1, a2);
+}
+
+void Console::on_nc_hittest(int a1, int a2) {  // 0x0050F680
+    typedef void(__fastcall *pending)(Console *, void *, int, int);
+    PENDING_BODY(0x0050F680, pending)(this, nullptr, a1, a2);
+}
+
+void Console::on_nc_left_down(int a1, int a2) {  // 0x0050FB10
+    typedef void(__fastcall *pending)(Console *, void *, int, int);
+    PENDING_BODY(0x0050FB10, pending)(this, nullptr, a1, a2);
+}
+
+void Console::on_nc_left_up(int a1, int a2) {  // 0x0050FE70
+    typedef void(__fastcall *pending)(Console *, void *, int, int);
+    PENDING_BODY(0x0050FE70, pending)(this, nullptr, a1, a2);
+}
+
+void Console::on_nc_mouse_move(int a1, int a2) {  // 0x00510110
+    typedef void(__fastcall *pending)(Console *, void *, int, int);
+    PENDING_BODY(0x00510110, pending)(this, nullptr, a1, a2);
+}
+
+void Console::on_post_redraw_nc_buffer(void * a1, int a2) {  // 0x0050F960
+    typedef void(__fastcall *pending)(Console *, void *, void *, int);
+    PENDING_BODY(0x0050F960, pending)(this, nullptr, a1, a2);
+}
+
+int Dialogs::attach(void * a1, int a2, int a3, int a4) {  // 0x00612FE0
+    typedef int(__fastcall *pending)(Dialogs *, void *, void *, int, int, int);
+    return PENDING_BODY(0x00612FE0, pending)(this, nullptr, a1, a2, a3, a4);
+}
+
+void Dialogs::on_dialog_focus(int a1) {  // 0x006130E0
+    typedef void(__fastcall *pending)(Dialogs *, void *, int);
+    PENDING_BODY(0x006130E0, pending)(this, nullptr, a1);
+}
+
+int Dialogs::on_key_down(int a1) {  // 0x00612CC0
+    typedef int(__fastcall *pending)(Dialogs *, void *, int);
+    return PENDING_BODY(0x00612CC0, pending)(this, nullptr, a1);
+}
+
+void Dialogs::on_left_click(int a1, int a2) {  // 0x00612E80
+    typedef void(__fastcall *pending)(Dialogs *, void *, int, int);
+    PENDING_BODY(0x00612E80, pending)(this, nullptr, a1, a2);
+}
+
+void Dialogs::on_left_double_click(int a1, int a2) {  // 0x00612D60
+    typedef void(__fastcall *pending)(Dialogs *, void *, int, int);
+    PENDING_BODY(0x00612D60, pending)(this, nullptr, a1, a2);
+}
+
+void Dialogs::on_left_down(int a1, int a2) {  // 0x00612C20
+    typedef void(__fastcall *pending)(Dialogs *, void *, int, int);
+    PENDING_BODY(0x00612C20, pending)(this, nullptr, a1, a2);
+}
+
+void Dialogs::on_mouse_leave(int a1, int a2) {  // 0x00612AE0
+    typedef void(__fastcall *pending)(Dialogs *, void *, int, int);
+    PENDING_BODY(0x00612AE0, pending)(this, nullptr, a1, a2);
+}
+
+void Dialogs::on_mouse_move(int a1, int a2) {  // 0x00612B80
+    typedef void(__fastcall *pending)(Dialogs *, void *, int, int);
+    PENDING_BODY(0x00612B80, pending)(this, nullptr, a1, a2);
+}
+
+void Dialogs::on_redraw() {  // 0x00612E00
+    typedef void(__fastcall *pending)(Dialogs *, void *);
+    PENDING_BODY(0x00612E00, pending)(this, nullptr);
+}
+
+void Dialogs::on_scroll_create() {  // 0x00613220
+    typedef void(__fastcall *pending)(Dialogs *, void *);
+    PENDING_BODY(0x00613220, pending)(this, nullptr);
+}
+
+int Dialogs::on_scroll_delete(void * a1) {  // 0x00613260
+    typedef int(__fastcall *pending)(Dialogs *, void *, void *);
+    return PENDING_BODY(0x00613260, pending)(this, nullptr, a1);
+}
+
+void Dialogs::pass_dialog_focus() {  // 0x00613180
+    typedef void(__fastcall *pending)(Dialogs *, void *);
+    PENDING_BODY(0x00613180, pending)(this, nullptr);
+}
+
+int EditGroup::attach(void * a1, int a2, int a3, int a4) {  // 0x00611AF0
+    typedef int(__fastcall *pending)(EditGroup *, void *, void *, int, int, int);
+    return PENDING_BODY(0x00611AF0, pending)(this, nullptr, a1, a2, a3, a4);
+}
+
+void EditGroup::on_dialog_focus(int a1) {  // 0x00612670
+    typedef void(__fastcall *pending)(EditGroup *, void *, int);
+    PENDING_BODY(0x00612670, pending)(this, nullptr, a1);
+}
+
+void EditGroup::on_redraw() {  // 0x00612450
+    typedef void(__fastcall *pending)(EditGroup *, void *);
+    PENDING_BODY(0x00612450, pending)(this, nullptr);
+}
+
+void EditGroup::pass_dialog_focus() {  // 0x006126C0
+    typedef void(__fastcall *pending)(EditGroup *, void *);
+    PENDING_BODY(0x006126C0, pending)(this, nullptr);
+}
+
+int ListBox::attach(void * a1, int a2, int a3, int a4) {  // 0x0060A670
+    typedef int(__fastcall *pending)(ListBox *, void *, void *, int, int, int);
+    return PENDING_BODY(0x0060A670, pending)(this, nullptr, a1, a2, a3, a4);
+}
+
+void ListBox::on_key_down(int a1) {  // 0x0060AF90
+    typedef void(__fastcall *pending)(ListBox *, void *, int);
+    PENDING_BODY(0x0060AF90, pending)(this, nullptr, a1);
+}
+
+void ListBox::on_left_double_click(int a1, int a2) {  // 0x0060C710
+    typedef void(__fastcall *pending)(ListBox *, void *, int, int);
+    PENDING_BODY(0x0060C710, pending)(this, nullptr, a1, a2);
+}
+
+void ListBox::on_left_down(int a1, int a2) {  // 0x0060AA60
+    typedef void(__fastcall *pending)(ListBox *, void *, int, int);
+    PENDING_BODY(0x0060AA60, pending)(this, nullptr, a1, a2);
+}
+
+void ListBox::on_mouse_move(int a1, int a2) {  // 0x0060CBC0
+    typedef void(__fastcall *pending)(ListBox *, void *, int, int);
+    PENDING_BODY(0x0060CBC0, pending)(this, nullptr, a1, a2);
+}
+
+void ListBox::on_redraw() {  // 0x0060C350
+    typedef void(__fastcall *pending)(ListBox *, void *);
+    PENDING_BODY(0x0060C350, pending)(this, nullptr);
+}
+
+void ListBox::on_right_double_click(int a1, int a2) {  // 0x0060C6D0
+    typedef void(__fastcall *pending)(ListBox *, void *, int, int);
+    PENDING_BODY(0x0060C6D0, pending)(this, nullptr, a1, a2);
+}
+
+void ListBox::on_right_down(int a1, int a2) {  // 0x0060AA20
+    typedef void(__fastcall *pending)(ListBox *, void *, int, int);
+    PENDING_BODY(0x0060AA20, pending)(this, nullptr, a1, a2);
+}
+
+void ListBox::on_scrolled(int a1, int a2) {  // 0x0060C6A0
+    typedef void(__fastcall *pending)(ListBox *, void *, int, int);
+    PENDING_BODY(0x0060C6A0, pending)(this, nullptr, a1, a2);
+}
+
+void MapWin::on_button_clicked(int a1) {  // 0x0046F8C0
+    typedef void(__fastcall *pending)(MapWin *, void *, int);
+    PENDING_BODY(0x0046F8C0, pending)(this, nullptr, a1);
+}
+
+void MapWin::on_left_down(int a1, int a2) {  // 0x0046ED30
+    typedef void(__fastcall *pending)(MapWin *, void *, int, int);
+    PENDING_BODY(0x0046ED30, pending)(this, nullptr, a1, a2);
+}
+
+void MapWin::on_lose_mouse_capture() {  // 0x0046EB90
+    typedef void(__fastcall *pending)(MapWin *, void *);
+    PENDING_BODY(0x0046EB90, pending)(this, nullptr);
+}
+
+void MapWin::on_mouse_move(int a1, int a2) {  // 0x0046F000
+    typedef void(__fastcall *pending)(MapWin *, void *, int, int);
+    PENDING_BODY(0x0046F000, pending)(this, nullptr, a1, a2);
+}
+
+void MapWin::on_nc_hittest(int a1, int a2) {  // 0x0046F660
+    typedef void(__fastcall *pending)(MapWin *, void *, int, int);
+    PENDING_BODY(0x0046F660, pending)(this, nullptr, a1, a2);
+}
+
+void MapWin::on_nc_left_down(int a1, int a2) {  // 0x0046F700
+    typedef void(__fastcall *pending)(MapWin *, void *, int, int);
+    PENDING_BODY(0x0046F700, pending)(this, nullptr, a1, a2);
+}
+
+void MapWin::on_right_down(int a1, int a2) {  // 0x0046EC10
+    typedef void(__fastcall *pending)(MapWin *, void *, int, int);
+    PENDING_BODY(0x0046EC10, pending)(this, nullptr, a1, a2);
+}
+
+void MapWin::on_sys_close() {  // 0x0046F880
+    typedef void(__fastcall *pending)(MapWin *, void *);
+    PENDING_BODY(0x0046F880, pending)(this, nullptr);
+}
+
+void PlanWin::on_redraw() {  // 0x0048AF30
+    typedef void(__fastcall *pending)(PlanWin *, void *);
+    PENDING_BODY(0x0048AF30, pending)(this, nullptr);
+}
+
+int RadioButton::attach(void * a1, int a2, int a3, int a4) {  // 0x0060D1F0
+    typedef int(__fastcall *pending)(RadioButton *, void *, void *, int, int, int);
+    return PENDING_BODY(0x0060D1F0, pending)(this, nullptr, a1, a2, a3, a4);
+}
+
+int RadioButton::on_key_down(int a1) {  // 0x0060E020
+    typedef int(__fastcall *pending)(RadioButton *, void *, int);
+    return PENDING_BODY(0x0060E020, pending)(this, nullptr, a1);
+}
+
+void RadioButton::on_left_double_click(int a1, int a2) {  // 0x0060E1E0
+    typedef void(__fastcall *pending)(RadioButton *, void *, int, int);
+    PENDING_BODY(0x0060E1E0, pending)(this, nullptr, a1, a2);
+}
+
+void RadioButton::on_left_down(int a1, int a2) {  // 0x0060DE10
+    typedef void(__fastcall *pending)(RadioButton *, void *, int, int);
+    PENDING_BODY(0x0060DE10, pending)(this, nullptr, a1, a2);
+}
+
+void RadioButton::on_mouse_move(int a1, int a2) {  // 0x0060E320
+    typedef void(__fastcall *pending)(RadioButton *, void *, int, int);
+    PENDING_BODY(0x0060E320, pending)(this, nullptr, a1, a2);
+}
+
+void RadioButton::on_redraw() {  // 0x0060E220
+    typedef void(__fastcall *pending)(RadioButton *, void *);
+    PENDING_BODY(0x0060E220, pending)(this, nullptr);
+}
+
+int SpriteBox::attach(void * a1, int a2, int a3, int a4) {  // 0x00610540
+    typedef int(__fastcall *pending)(SpriteBox *, void *, void *, int, int, int);
+    return PENDING_BODY(0x00610540, pending)(this, nullptr, a1, a2, a3, a4);
+}
+
+int SpriteBox::on_key_down(int a1) {  // 0x00611400
+    typedef int(__fastcall *pending)(SpriteBox *, void *, int);
+    return PENDING_BODY(0x00611400, pending)(this, nullptr, a1);
+}
+
+void SpriteBox::on_left_click(int a1, int a2) {  // 0x00611060
+    typedef void(__fastcall *pending)(SpriteBox *, void *, int, int);
+    PENDING_BODY(0x00611060, pending)(this, nullptr, a1, a2);
+}
+
+void SpriteBox::on_left_double_click(int a1, int a2) {  // 0x006112E0
+    typedef void(__fastcall *pending)(SpriteBox *, void *, int, int);
+    PENDING_BODY(0x006112E0, pending)(this, nullptr, a1, a2);
+}
+
+void SpriteBox::on_left_down(int a1, int a2) {  // 0x00611150
+    typedef void(__fastcall *pending)(SpriteBox *, void *, int, int);
+    PENDING_BODY(0x00611150, pending)(this, nullptr, a1, a2);
+}
+
+void SpriteBox::on_redraw() {  // 0x00611380
+    typedef void(__fastcall *pending)(SpriteBox *, void *);
+    PENDING_BODY(0x00611380, pending)(this, nullptr);
 }
 
 // ?write_raw_l@Buffer@@QAEHPADHHH@Z at 0x005DBD00 - 1475 bytes, the raster

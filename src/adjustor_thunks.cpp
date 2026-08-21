@@ -19,6 +19,15 @@
 #include "stdafx.h"
 #include "original_seam.h"
 #include "adjustor_thunks.h"
+#include "checkbox.h"
+#include "console.h"
+#include "dialogs.h"
+#include "editgroup.h"
+#include "listbox.h"
+#include "mapwin.h"
+#include "planwin.h"
+#include "radiobutton.h"
+#include "spritebox.h"
 
 /*
 Verification note: the generated leaf suite proves that each body reads its
@@ -42,194 +51,16 @@ is not built here.
 // Each seam defaults to the original method the thunk tail
 // jumps to; the hybrid redirects it to the recovered body at
 // run time, and the leaf suite rebinds it to a recorder.
-func_adjustor_i_piii CheckBoxAttachTarget =
-    original_method<func_adjustor_i_piii>(0x0060E800);
-func_adjustor_v_i CheckBoxOnDialogFocusTarget =
-    original_method<func_adjustor_v_i>(0x0060FB90);
-func_adjustor_i_i CheckBoxOnKeyDownTarget =
-    original_method<func_adjustor_i_i>(0x0060F8B0);
-func_adjustor_v_ii CheckBoxOnLeftDoubleClickTarget =
-    original_method<func_adjustor_v_ii>(0x0060FA80);
-func_adjustor_v_ii CheckBoxOnLeftDownTarget =
-    original_method<func_adjustor_v_ii>(0x0060F700);
-func_adjustor_v_ii CheckBoxOnMouseLeaveTarget =
-    original_method<func_adjustor_v_ii>(0x0060FC30);
-func_adjustor_v_ii CheckBoxOnMouseMoveTarget =
-    original_method<func_adjustor_v_ii>(0x0060FBB0);
-func_adjustor_v CheckBoxOnRedrawTarget =
-    original_method<func_adjustor_v>(0x0060FAB0);
-func_adjustor_i_ii ConsoleOnKeyClickTarget =
-    original_method<func_adjustor_i_ii>(0x005178C0);
-func_adjustor_v_ii ConsoleOnNcHittestTarget =
-    original_method<func_adjustor_v_ii>(0x0050F680);
-func_adjustor_v_ii ConsoleOnNcLeftDownTarget =
-    original_method<func_adjustor_v_ii>(0x0050FB10);
-func_adjustor_v_ii ConsoleOnNcLeftUpTarget =
-    original_method<func_adjustor_v_ii>(0x0050FE70);
-func_adjustor_v_ii ConsoleOnNcMouseMoveTarget =
-    original_method<func_adjustor_v_ii>(0x00510110);
-func_adjustor_v_pi ConsoleOnPostRedrawNcBufferTarget =
-    original_method<func_adjustor_v_pi>(0x0050F960);
-func_adjustor_v ConsoleOnSysCloseTarget =
-    original_method<func_adjustor_v>(0x0051D7C0);
 func_adjustor_p_u ConsoleScalarDeleteTarget =
     original_method<func_adjustor_p_u>(0x0051DDF0);
-func_adjustor_i_piii DialogsAttachTarget =
-    original_method<func_adjustor_i_piii>(0x00612FE0);
-func_adjustor_v_i DialogsOnDialogFocusTarget =
-    original_method<func_adjustor_v_i>(0x006130E0);
-func_adjustor_i_i DialogsOnKeyDownTarget =
-    original_method<func_adjustor_i_i>(0x00612CC0);
-func_adjustor_v_ii DialogsOnLeftClickTarget =
-    original_method<func_adjustor_v_ii>(0x00612E80);
-func_adjustor_v_ii DialogsOnLeftDoubleClickTarget =
-    original_method<func_adjustor_v_ii>(0x00612D60);
-func_adjustor_v_ii DialogsOnLeftDownTarget =
-    original_method<func_adjustor_v_ii>(0x00612C20);
-func_adjustor_v_ii DialogsOnLeftUpTarget =
-    original_method<func_adjustor_v_ii>(0x00612F10);
-func_adjustor_v_ii DialogsOnMouseLeaveTarget =
-    original_method<func_adjustor_v_ii>(0x00612AE0);
-func_adjustor_v_ii DialogsOnMouseMoveTarget =
-    original_method<func_adjustor_v_ii>(0x00612B80);
-func_adjustor_v_i DialogsOnMousewheelTarget =
-    original_method<func_adjustor_v_i>(0x00612FC0);
-func_adjustor_v DialogsOnRedrawTarget =
-    original_method<func_adjustor_v>(0x00612E00);
-func_adjustor_v_ii DialogsOnRightClickTarget =
-    original_method<func_adjustor_v_ii>(0x00612F60);
-func_adjustor_v_ii DialogsOnRightDoubleClickTarget =
-    original_method<func_adjustor_v_ii>(0x00612EF0);
-func_adjustor_v_ii DialogsOnRightDownTarget =
-    original_method<func_adjustor_v_ii>(0x00612ED0);
-func_adjustor_v_ii DialogsOnRightUpTarget =
-    original_method<func_adjustor_v_ii>(0x00612F40);
-func_adjustor_v DialogsOnScrollCreateTarget =
-    original_method<func_adjustor_v>(0x00613220);
-func_adjustor_i_p DialogsOnScrollDeleteTarget =
-    original_method<func_adjustor_i_p>(0x00613260);
-func_adjustor_v_ii DialogsOnScrolledTarget =
-    original_method<func_adjustor_v_ii>(0x00612F80);
-func_adjustor_v_ii DialogsOnScrollingTarget =
-    original_method<func_adjustor_v_ii>(0x00612FA0);
-func_adjustor_v DialogsPassDialogFocusTarget =
-    original_method<func_adjustor_v>(0x00613180);
 func_adjustor_p_u DialogsScalarDeleteTarget =
     original_method<func_adjustor_p_u>(0x00407100);
-func_adjustor_i_piii EditGroupAttachTarget =
-    original_method<func_adjustor_i_piii>(0x00611AF0);
-func_adjustor_v_i EditGroupOnDialogFocusTarget =
-    original_method<func_adjustor_v_i>(0x00612670);
-func_adjustor_v EditGroupOnRedrawTarget =
-    original_method<func_adjustor_v>(0x00612450);
-func_adjustor_v EditGroupPassDialogFocusTarget =
-    original_method<func_adjustor_v>(0x006126C0);
-func_adjustor_i_piii ListBoxAttachTarget =
-    original_method<func_adjustor_i_piii>(0x0060A670);
-func_adjustor_v_i ListBoxOnDialogFocusTarget =
-    original_method<func_adjustor_v_i>(0x0060C7C0);
-func_adjustor_v_i ListBoxOnKeyDownTarget =
-    original_method<func_adjustor_v_i>(0x0060AF90);
-func_adjustor_v_ii ListBoxOnLeftDoubleClickTarget =
-    original_method<func_adjustor_v_ii>(0x0060C710);
-func_adjustor_v_ii ListBoxOnLeftDownTarget =
-    original_method<func_adjustor_v_ii>(0x0060AA60);
-func_adjustor_v_ii ListBoxOnMouseLeaveTarget =
-    original_method<func_adjustor_v_ii>(0x0060CE10);
-func_adjustor_v_ii ListBoxOnMouseMoveTarget =
-    original_method<func_adjustor_v_ii>(0x0060CBC0);
-func_adjustor_v_i ListBoxOnMousewheelTarget =
-    original_method<func_adjustor_v_i>(0x0060CB70);
-func_adjustor_v ListBoxOnRedrawTarget =
-    original_method<func_adjustor_v>(0x0060C350);
-func_adjustor_v_ii ListBoxOnRightDoubleClickTarget =
-    original_method<func_adjustor_v_ii>(0x0060C6D0);
-func_adjustor_v_ii ListBoxOnRightDownTarget =
-    original_method<func_adjustor_v_ii>(0x0060AA20);
-func_adjustor_v_ii ListBoxOnScrolledTarget =
-    original_method<func_adjustor_v_ii>(0x0060C6A0);
-func_adjustor_v_ii ListBoxOnScrollingTarget =
-    original_method<func_adjustor_v_ii>(0x0060C5D0);
-func_adjustor_v_i MapWinOnButtonClickedTarget =
-    original_method<func_adjustor_v_i>(0x0046F8C0);
-func_adjustor_v_ii MapWinOnLeftClickTarget =
-    original_method<func_adjustor_v_ii>(0x0046EBA0);
-func_adjustor_v_ii MapWinOnLeftDoubleClickTarget =
-    original_method<func_adjustor_v_ii>(0x0046EBD0);
-func_adjustor_v_ii MapWinOnLeftDownTarget =
-    original_method<func_adjustor_v_ii>(0x0046ED30);
-func_adjustor_v_ii MapWinOnLeftUpTarget =
-    original_method<func_adjustor_v_ii>(0x0046EFF0);
-func_adjustor_v MapWinOnLoseMouseCaptureTarget =
-    original_method<func_adjustor_v>(0x0046EB90);
-func_adjustor_v_ii MapWinOnMouseMoveTarget =
-    original_method<func_adjustor_v_ii>(0x0046F000);
-func_adjustor_v_ii MapWinOnNcHittestTarget =
-    original_method<func_adjustor_v_ii>(0x0046F660);
-func_adjustor_v_ii MapWinOnNcLeftDownTarget =
-    original_method<func_adjustor_v_ii>(0x0046F700);
-func_adjustor_v MapWinOnRedrawTarget =
-    original_method<func_adjustor_v>(0x0046B1D0);
-func_adjustor_v_ii MapWinOnResizeTarget =
-    original_method<func_adjustor_v_ii>(0x0046FA00);
-func_adjustor_v_ii MapWinOnRightClickTarget =
-    original_method<func_adjustor_v_ii>(0x0046EBE0);
-func_adjustor_v_ii MapWinOnRightDownTarget =
-    original_method<func_adjustor_v_ii>(0x0046EC10);
-func_adjustor_v MapWinOnSysCloseTarget =
-    original_method<func_adjustor_v>(0x0046F880);
 func_adjustor_p_u MapWinScalarDeleteTarget =
     original_method<func_adjustor_p_u>(0x00421830);
-func_adjustor_v PlanWinOnRedrawTarget =
-    original_method<func_adjustor_v>(0x0048AF30);
 func_adjustor_p_u PlanWinScalarDeleteTarget =
     original_method<func_adjustor_p_u>(0x0048BF20);
-func_adjustor_i_piii RadioButtonAttachTarget =
-    original_method<func_adjustor_i_piii>(0x0060D1F0);
 func_adjustor_v_i RadioButtonDtorTarget =
     original_method<func_adjustor_v_i>(0x00406F60);
-func_adjustor_v_i RadioButtonOnDialogFocusTarget =
-    original_method<func_adjustor_v_i>(0x0060E300);
-func_adjustor_i_i RadioButtonOnKeyDownTarget =
-    original_method<func_adjustor_i_i>(0x0060E020);
-func_adjustor_v_ii RadioButtonOnLeftDoubleClickTarget =
-    original_method<func_adjustor_v_ii>(0x0060E1E0);
-func_adjustor_v_ii RadioButtonOnLeftDownTarget =
-    original_method<func_adjustor_v_ii>(0x0060DE10);
-func_adjustor_v_ii RadioButtonOnMouseLeaveTarget =
-    original_method<func_adjustor_v_ii>(0x0060E4A0);
-func_adjustor_v_ii RadioButtonOnMouseMoveTarget =
-    original_method<func_adjustor_v_ii>(0x0060E320);
-func_adjustor_v RadioButtonOnRedrawTarget =
-    original_method<func_adjustor_v>(0x0060E220);
-func_adjustor_i_piii SpriteBoxAttachTarget =
-    original_method<func_adjustor_i_piii>(0x00610540);
-func_adjustor_v_i SpriteBoxOnDialogFocusTarget =
-    original_method<func_adjustor_v_i>(0x006115E0);
-func_adjustor_i_i SpriteBoxOnKeyDownTarget =
-    original_method<func_adjustor_i_i>(0x00611400);
-func_adjustor_v_ii SpriteBoxOnLeftClickTarget =
-    original_method<func_adjustor_v_ii>(0x00611060);
-func_adjustor_v_ii SpriteBoxOnLeftDoubleClickTarget =
-    original_method<func_adjustor_v_ii>(0x006112E0);
-func_adjustor_v_ii SpriteBoxOnLeftDownTarget =
-    original_method<func_adjustor_v_ii>(0x00611150);
-func_adjustor_v_ii SpriteBoxOnLeftUpTarget =
-    original_method<func_adjustor_v_ii>(0x006111A0);
-func_adjustor_v_ii SpriteBoxOnMouseLeaveTarget =
-    original_method<func_adjustor_v_ii>(0x00611050);
-func_adjustor_v_ii SpriteBoxOnMouseMoveTarget =
-    original_method<func_adjustor_v_ii>(0x00611040);
-func_adjustor_v SpriteBoxOnRedrawTarget =
-    original_method<func_adjustor_v>(0x00611380);
-func_adjustor_v_ii SpriteBoxOnRightClickTarget =
-    original_method<func_adjustor_v_ii>(0x006111F0);
-func_adjustor_v_ii SpriteBoxOnRightDoubleClickTarget =
-    original_method<func_adjustor_v_ii>(0x00611330);
-func_adjustor_v_ii SpriteBoxOnRightDownTarget =
-    original_method<func_adjustor_v_ii>(0x00611240);
-func_adjustor_v_ii SpriteBoxOnRightUpTarget =
-    original_method<func_adjustor_v_ii>(0x00611290);
 
 /*
 Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
@@ -255,7 +86,7 @@ void __fastcall adjust_radio_button1_dtor(void *self, void *, int arg0) {
 /*
 Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
          RadioButton::on_redraw expects, then forward unchanged.
-// ORIGINAL: 0x00406FF0 ?on_redraw@thunk1_RadioButton@@QAEXXZ 0x00406FF0-0x00406FF8
+// ORIGINAL: 0x00406FF0 ?on_redraw@thunk1_RadioButton@@QAEXXZ 0x00406FF0-0x00406FF8 BYTE_EXACT
 // symbol    ?adjust_radio_button1_on_redraw@@YIXPAX0@Z
 // size      8 bytes
 // prototype void (__thiscall ?on_redraw@thunk1_RadioButton@@QAEXXZ)(RadioButton* this)
@@ -270,7 +101,7 @@ void __fastcall adjust_radio_button1_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*RadioButtonOnRedrawTarget)();
+    reinterpret_cast<RadioButton *>(object - vtordisp)->RadioButton::on_redraw();
 }
 
 /*
@@ -292,7 +123,7 @@ void __fastcall adjust_radio_button1_on_mouse_move(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*RadioButtonOnMouseMoveTarget)(arg0, arg1);
+    reinterpret_cast<RadioButton *>(object - vtordisp)->RadioButton::on_mouse_move(arg0, arg1);
 }
 
 /*
@@ -314,7 +145,7 @@ void __fastcall adjust_radio_button1_on_mouse_leave(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*RadioButtonOnMouseLeaveTarget)(arg0, arg1);
+    reinterpret_cast<RadioButton *>(object - vtordisp)->RadioButton::on_mouse_leave(arg0, arg1);
 }
 
 /*
@@ -336,7 +167,7 @@ void __fastcall adjust_radio_button1_on_left_down(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*RadioButtonOnLeftDownTarget)(arg0, arg1);
+    reinterpret_cast<RadioButton *>(object - vtordisp)->RadioButton::on_left_down(arg0, arg1);
 }
 
 /*
@@ -357,7 +188,7 @@ int __fastcall adjust_radio_button1_on_key_down(void *self, void *, int arg0) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    return (ORIGINAL(object - vtordisp)->*RadioButtonOnKeyDownTarget)(arg0);
+    return reinterpret_cast<RadioButton *>(object - vtordisp)->RadioButton::on_key_down(arg0);
 }
 
 /*
@@ -379,7 +210,7 @@ void __fastcall adjust_radio_button1_on_left_double_click(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*RadioButtonOnLeftDoubleClickTarget)(arg0, arg1);
+    reinterpret_cast<RadioButton *>(object - vtordisp)->RadioButton::on_left_double_click(arg0, arg1);
 }
 
 /*
@@ -401,7 +232,7 @@ void __fastcall adjust_radio_button1_on_dialog_focus(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*RadioButtonOnDialogFocusTarget)(arg0);
+    reinterpret_cast<RadioButton *>(object - vtordisp)->RadioButton::on_dialog_focus(arg0);
 }
 
 /*
@@ -465,13 +296,13 @@ int __fastcall adjust_radio_button1_attach(void *self, void *, void *arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    return (ORIGINAL(object - vtordisp)->*RadioButtonAttachTarget)(arg0, arg1, arg2, arg3);
+    return reinterpret_cast<RadioButton *>(object - vtordisp)->RadioButton::attach(arg0, arg1, arg2, arg3);
 }
 
 /*
 Purpose: Adjust the receiver from RadioButton's thunk3 subobject to the one
          RadioButton::on_redraw expects, then forward unchanged.
-// ORIGINAL: 0x004070A0 ?on_redraw@thunk3_RadioButton@@QAEXXZ 0x004070A0-0x004070AE
+// ORIGINAL: 0x004070A0 ?on_redraw@thunk3_RadioButton@@QAEXXZ 0x004070A0-0x004070AE BYTE_EXACT
 // symbol    ?adjust_radio_button3_on_redraw@@YIXPAX0@Z
 // size      14 bytes
 // prototype void (__thiscall ?on_redraw@thunk3_RadioButton@@QAEXXZ)(RadioButton* this)
@@ -486,7 +317,7 @@ void __fastcall adjust_radio_button3_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp - 2584)->*RadioButtonOnRedrawTarget)();
+    reinterpret_cast<RadioButton *>(object - vtordisp - 2584)->RadioButton::on_redraw();
 }
 
 /*
@@ -514,7 +345,7 @@ void * __fastcall adjust_dialogs1_scalar_delete(void *self, void *,
 /*
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::on_scroll_create expects, then forward unchanged.
-// ORIGINAL: 0x00407150 ?on_scroll_create@thunk1_Dialogs@@QAEXXZ 0x00407150-0x00407158
+// ORIGINAL: 0x00407150 ?on_scroll_create@thunk1_Dialogs@@QAEXXZ 0x00407150-0x00407158 BYTE_EXACT
 // symbol    ?adjust_dialogs1_on_scroll_create@@YIXPAX0@Z
 // size      8 bytes
 // prototype void (__thiscall ?on_scroll_create@thunk1_Dialogs@@QAEXXZ)(Dialogs* this)
@@ -529,7 +360,7 @@ void __fastcall adjust_dialogs1_on_scroll_create(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*DialogsOnScrollCreateTarget)();
+    reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_scroll_create();
 }
 
 /*
@@ -551,13 +382,13 @@ int __fastcall adjust_dialogs1_on_scroll_delete(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    return (ORIGINAL(object - vtordisp)->*DialogsOnScrollDeleteTarget)(arg0);
+    return reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_scroll_delete(arg0);
 }
 
 /*
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::on_redraw expects, then forward unchanged.
-// ORIGINAL: 0x00407170 ?on_redraw@thunk1_Dialogs@@QAEXXZ 0x00407170-0x00407178
+// ORIGINAL: 0x00407170 ?on_redraw@thunk1_Dialogs@@QAEXXZ 0x00407170-0x00407178 BYTE_EXACT
 // symbol    ?adjust_dialogs1_on_redraw@@YIXPAX0@Z
 // size      8 bytes
 // prototype void (__thiscall ?on_redraw@thunk1_Dialogs@@QAEXXZ)(Dialogs* this)
@@ -572,7 +403,7 @@ void __fastcall adjust_dialogs1_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*DialogsOnRedrawTarget)();
+    reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_redraw();
 }
 
 /*
@@ -593,7 +424,7 @@ void __fastcall adjust_dialogs1_on_mousewheel(void *self, void *, int arg0) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*DialogsOnMousewheelTarget)(arg0);
+    reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_mousewheel(arg0);
 }
 
 /*
@@ -615,7 +446,7 @@ void __fastcall adjust_dialogs1_on_mouse_move(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*DialogsOnMouseMoveTarget)(arg0, arg1);
+    reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_mouse_move(arg0, arg1);
 }
 
 /*
@@ -637,7 +468,7 @@ void __fastcall adjust_dialogs1_on_mouse_leave(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*DialogsOnMouseLeaveTarget)(arg0, arg1);
+    reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_mouse_leave(arg0, arg1);
 }
 
 /*
@@ -659,7 +490,7 @@ void __fastcall adjust_dialogs1_on_left_click(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*DialogsOnLeftClickTarget)(arg0, arg1);
+    reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_left_click(arg0, arg1);
 }
 
 /*
@@ -681,7 +512,7 @@ void __fastcall adjust_dialogs1_on_left_down(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*DialogsOnLeftDownTarget)(arg0, arg1);
+    reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_left_down(arg0, arg1);
 }
 
 /*
@@ -703,7 +534,7 @@ void __fastcall adjust_dialogs1_on_left_up(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*DialogsOnLeftUpTarget)(arg0, arg1);
+    reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_left_up(arg0, arg1);
 }
 
 /*
@@ -725,7 +556,7 @@ void __fastcall adjust_dialogs1_on_right_click(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*DialogsOnRightClickTarget)(arg0, arg1);
+    reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_right_click(arg0, arg1);
 }
 
 /*
@@ -747,7 +578,7 @@ void __fastcall adjust_dialogs1_on_right_down(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*DialogsOnRightDownTarget)(arg0, arg1);
+    reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_right_down(arg0, arg1);
 }
 
 /*
@@ -769,7 +600,7 @@ void __fastcall adjust_dialogs1_on_right_up(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*DialogsOnRightUpTarget)(arg0, arg1);
+    reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_right_up(arg0, arg1);
 }
 
 /*
@@ -790,7 +621,7 @@ int __fastcall adjust_dialogs1_on_key_down(void *self, void *, int arg0) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    return (ORIGINAL(object - vtordisp)->*DialogsOnKeyDownTarget)(arg0);
+    return reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_key_down(arg0);
 }
 
 /*
@@ -812,7 +643,7 @@ void __fastcall adjust_dialogs1_on_left_double_click(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*DialogsOnLeftDoubleClickTarget)(arg0, arg1);
+    reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_left_double_click(arg0, arg1);
 }
 
 /*
@@ -834,7 +665,7 @@ void __fastcall adjust_dialogs1_on_right_double_click(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*DialogsOnRightDoubleClickTarget)(arg0, arg1);
+    reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_right_double_click(arg0, arg1);
 }
 
 /*
@@ -856,7 +687,7 @@ void __fastcall adjust_dialogs1_on_scrolled(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*DialogsOnScrolledTarget)(arg0, arg1);
+    reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_scrolled(arg0, arg1);
 }
 
 /*
@@ -878,7 +709,7 @@ void __fastcall adjust_dialogs1_on_scrolling(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*DialogsOnScrollingTarget)(arg0, arg1);
+    reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_scrolling(arg0, arg1);
 }
 
 /*
@@ -899,13 +730,13 @@ void __fastcall adjust_dialogs1_on_dialog_focus(void *self, void *, int arg0) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*DialogsOnDialogFocusTarget)(arg0);
+    reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_dialog_focus(arg0);
 }
 
 /*
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::pass_dialog_focus expects, then forward unchanged.
-// ORIGINAL: 0x00407270 ?pass_dialog_focus@thunk1_Dialogs@@QAEXXZ 0x00407270-0x00407278
+// ORIGINAL: 0x00407270 ?pass_dialog_focus@thunk1_Dialogs@@QAEXXZ 0x00407270-0x00407278 BYTE_EXACT
 // symbol    ?adjust_dialogs1_pass_dialog_focus@@YIXPAX0@Z
 // size      8 bytes
 // prototype void (__thiscall ?pass_dialog_focus@thunk1_Dialogs@@QAEXXZ)(Dialogs* this)
@@ -920,7 +751,7 @@ void __fastcall adjust_dialogs1_pass_dialog_focus(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*DialogsPassDialogFocusTarget)();
+    reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::pass_dialog_focus();
 }
 
 /*
@@ -986,13 +817,13 @@ int __fastcall adjust_dialogs1_attach(void *self, void *, void *arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    return (ORIGINAL(object - vtordisp)->*DialogsAttachTarget)(arg0, arg1, arg2, arg3);
+    return reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::attach(arg0, arg1, arg2, arg3);
 }
 
 /*
 Purpose: Adjust the receiver from Dialogs's thunk3 subobject to the one
          Dialogs::on_redraw expects, then forward unchanged.
-// ORIGINAL: 0x004072C0 ?on_redraw@thunk3_Dialogs@@QAEXXZ 0x004072C0-0x004072CE
+// ORIGINAL: 0x004072C0 ?on_redraw@thunk3_Dialogs@@QAEXXZ 0x004072C0-0x004072CE BYTE_EXACT
 // symbol    ?adjust_dialogs3_on_redraw@@YIXPAX0@Z
 // size      14 bytes
 // prototype void (__thiscall ?on_redraw@thunk3_Dialogs@@QAEXXZ)(Dialogs* this)
@@ -1007,7 +838,7 @@ void __fastcall adjust_dialogs3_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp - 2584)->*DialogsOnRedrawTarget)();
+    reinterpret_cast<Dialogs *>(object - vtordisp - 2584)->Dialogs::on_redraw();
 }
 
 /*
@@ -1035,7 +866,7 @@ void * __fastcall adjust_map_win1_scalar_delete(void *self, void *,
 /*
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
          MapWin::on_lose_mouse_capture expects, then forward unchanged.
-// ORIGINAL: 0x00421870 ?on_lose_mouse_capture@thunk1_MapWin@@QAEXXZ 0x00421870-0x00421878
+// ORIGINAL: 0x00421870 ?on_lose_mouse_capture@thunk1_MapWin@@QAEXXZ 0x00421870-0x00421878 BYTE_EXACT
 // symbol    ?adjust_map_win1_on_lose_mouse_capture@@YIXPAX0@Z
 // size      8 bytes
 // prototype void (__thiscall ?on_lose_mouse_capture@thunk1_MapWin@@QAEXXZ)(MapWin* this)
@@ -1050,13 +881,13 @@ void __fastcall adjust_map_win1_on_lose_mouse_capture(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*MapWinOnLoseMouseCaptureTarget)();
+    reinterpret_cast<MapWin *>(object - vtordisp)->MapWin::on_lose_mouse_capture();
 }
 
 /*
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
          MapWin::on_redraw expects, then forward unchanged.
-// ORIGINAL: 0x00421880 ?on_redraw@thunk1_MapWin@@QAEXXZ 0x00421880-0x00421888
+// ORIGINAL: 0x00421880 ?on_redraw@thunk1_MapWin@@QAEXXZ 0x00421880-0x00421888 BYTE_EXACT
 // symbol    ?adjust_map_win1_on_redraw@@YIXPAX0@Z
 // size      8 bytes
 // prototype void (__thiscall ?on_redraw@thunk1_MapWin@@QAEXXZ)(MapWin* this)
@@ -1071,7 +902,7 @@ void __fastcall adjust_map_win1_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*MapWinOnRedrawTarget)();
+    reinterpret_cast<MapWin *>(object - vtordisp)->MapWin::on_redraw();
 }
 
 /*
@@ -1093,13 +924,13 @@ void __fastcall adjust_map_win1_on_resize(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*MapWinOnResizeTarget)(arg0, arg1);
+    reinterpret_cast<MapWin *>(object - vtordisp)->MapWin::on_resize(arg0, arg1);
 }
 
 /*
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
          MapWin::on_sys_close expects, then forward unchanged.
-// ORIGINAL: 0x004218A0 ?on_sys_close@thunk1_MapWin@@QAEXXZ 0x004218A0-0x004218A8
+// ORIGINAL: 0x004218A0 ?on_sys_close@thunk1_MapWin@@QAEXXZ 0x004218A0-0x004218A8 BYTE_EXACT
 // symbol    ?adjust_map_win1_on_sys_close@@YIXPAX0@Z
 // size      8 bytes
 // prototype void (__thiscall ?on_sys_close@thunk1_MapWin@@QAEXXZ)(MapWin* this)
@@ -1114,7 +945,7 @@ void __fastcall adjust_map_win1_on_sys_close(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*MapWinOnSysCloseTarget)();
+    reinterpret_cast<MapWin *>(object - vtordisp)->MapWin::on_sys_close();
 }
 
 /*
@@ -1136,7 +967,7 @@ void __fastcall adjust_map_win1_on_mouse_move(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*MapWinOnMouseMoveTarget)(arg0, arg1);
+    reinterpret_cast<MapWin *>(object - vtordisp)->MapWin::on_mouse_move(arg0, arg1);
 }
 
 /*
@@ -1158,7 +989,7 @@ void __fastcall adjust_map_win1_on_left_click(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*MapWinOnLeftClickTarget)(arg0, arg1);
+    reinterpret_cast<MapWin *>(object - vtordisp)->MapWin::on_left_click(arg0, arg1);
 }
 
 /*
@@ -1180,7 +1011,7 @@ void __fastcall adjust_map_win1_on_left_down(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*MapWinOnLeftDownTarget)(arg0, arg1);
+    reinterpret_cast<MapWin *>(object - vtordisp)->MapWin::on_left_down(arg0, arg1);
 }
 
 /*
@@ -1202,7 +1033,7 @@ void __fastcall adjust_map_win1_on_left_up(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*MapWinOnLeftUpTarget)(arg0, arg1);
+    reinterpret_cast<MapWin *>(object - vtordisp)->MapWin::on_left_up(arg0, arg1);
 }
 
 /*
@@ -1224,7 +1055,7 @@ void __fastcall adjust_map_win1_on_right_click(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*MapWinOnRightClickTarget)(arg0, arg1);
+    reinterpret_cast<MapWin *>(object - vtordisp)->MapWin::on_right_click(arg0, arg1);
 }
 
 /*
@@ -1246,7 +1077,7 @@ void __fastcall adjust_map_win1_on_right_down(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*MapWinOnRightDownTarget)(arg0, arg1);
+    reinterpret_cast<MapWin *>(object - vtordisp)->MapWin::on_right_down(arg0, arg1);
 }
 
 /*
@@ -1268,7 +1099,7 @@ void __fastcall adjust_map_win1_on_left_double_click(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*MapWinOnLeftDoubleClickTarget)(arg0, arg1);
+    reinterpret_cast<MapWin *>(object - vtordisp)->MapWin::on_left_double_click(arg0, arg1);
 }
 
 /*
@@ -1290,7 +1121,7 @@ void __fastcall adjust_map_win1_on_nc_left_down(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*MapWinOnNcLeftDownTarget)(arg0, arg1);
+    reinterpret_cast<MapWin *>(object - vtordisp)->MapWin::on_nc_left_down(arg0, arg1);
 }
 
 /*
@@ -1312,7 +1143,7 @@ void __fastcall adjust_map_win1_on_button_clicked(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*MapWinOnButtonClickedTarget)(arg0);
+    reinterpret_cast<MapWin *>(object - vtordisp)->MapWin::on_button_clicked(arg0);
 }
 
 /*
@@ -1334,7 +1165,7 @@ void __fastcall adjust_map_win1_on_nc_hittest(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*MapWinOnNcHittestTarget)(arg0, arg1);
+    reinterpret_cast<MapWin *>(object - vtordisp)->MapWin::on_nc_hittest(arg0, arg1);
 }
 
 /*
@@ -1362,7 +1193,7 @@ void * __fastcall adjust_map_win2_scalar_delete(void *self, void *,
 /*
 Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
          MapWin::on_lose_mouse_capture expects, then forward unchanged.
-// ORIGINAL: 0x0048BF60 ?on_lose_mouse_capture@thunk5_MapWin@@QAEXXZ 0x0048BF60-0x0048BF6E
+// ORIGINAL: 0x0048BF60 ?on_lose_mouse_capture@thunk5_MapWin@@QAEXXZ 0x0048BF60-0x0048BF6E BYTE_EXACT
 // symbol    ?adjust_map_win5_on_lose_mouse_capture@@YIXPAX0@Z
 // size      14 bytes
 // prototype void (__thiscall ?on_lose_mouse_capture@thunk5_MapWin@@QAEXXZ)(MapWin* this)
@@ -1377,13 +1208,13 @@ void __fastcall adjust_map_win5_on_lose_mouse_capture(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp - 1508)->*MapWinOnLoseMouseCaptureTarget)();
+    reinterpret_cast<MapWin *>(object - vtordisp - 1508)->MapWin::on_lose_mouse_capture();
 }
 
 /*
 Purpose: Adjust the receiver from PlanWin's thunk1 subobject to the one
          PlanWin::on_redraw expects, then forward unchanged.
-// ORIGINAL: 0x0048BF70 ?on_redraw@thunk1_PlanWin@@QAEXXZ 0x0048BF70-0x0048BF78
+// ORIGINAL: 0x0048BF70 ?on_redraw@thunk1_PlanWin@@QAEXXZ 0x0048BF70-0x0048BF78 BYTE_EXACT
 // symbol    ?adjust_plan_win1_on_redraw@@YIXPAX0@Z
 // size      8 bytes
 // prototype void (__thiscall ?on_redraw@thunk1_PlanWin@@QAEXXZ)(PlanWin* this)
@@ -1398,7 +1229,7 @@ void __fastcall adjust_plan_win1_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*PlanWinOnRedrawTarget)();
+    reinterpret_cast<PlanWin *>(object - vtordisp)->PlanWin::on_redraw();
 }
 
 /*
@@ -1420,13 +1251,13 @@ void __fastcall adjust_map_win5_on_resize(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp - 1508)->*MapWinOnResizeTarget)(arg0, arg1);
+    reinterpret_cast<MapWin *>(object - vtordisp - 1508)->MapWin::on_resize(arg0, arg1);
 }
 
 /*
 Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
          MapWin::on_sys_close expects, then forward unchanged.
-// ORIGINAL: 0x0048BF90 ?on_sys_close@thunk5_MapWin@@QAEXXZ 0x0048BF90-0x0048BF9E
+// ORIGINAL: 0x0048BF90 ?on_sys_close@thunk5_MapWin@@QAEXXZ 0x0048BF90-0x0048BF9E BYTE_EXACT
 // symbol    ?adjust_map_win5_on_sys_close@@YIXPAX0@Z
 // size      14 bytes
 // prototype void (__thiscall ?on_sys_close@thunk5_MapWin@@QAEXXZ)(MapWin* this)
@@ -1441,7 +1272,7 @@ void __fastcall adjust_map_win5_on_sys_close(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp - 1508)->*MapWinOnSysCloseTarget)();
+    reinterpret_cast<MapWin *>(object - vtordisp - 1508)->MapWin::on_sys_close();
 }
 
 /*
@@ -1463,7 +1294,7 @@ void __fastcall adjust_map_win5_on_mouse_move(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp - 1508)->*MapWinOnMouseMoveTarget)(arg0, arg1);
+    reinterpret_cast<MapWin *>(object - vtordisp - 1508)->MapWin::on_mouse_move(arg0, arg1);
 }
 
 /*
@@ -1485,7 +1316,7 @@ void __fastcall adjust_map_win5_on_left_click(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp - 1508)->*MapWinOnLeftClickTarget)(arg0, arg1);
+    reinterpret_cast<MapWin *>(object - vtordisp - 1508)->MapWin::on_left_click(arg0, arg1);
 }
 
 /*
@@ -1507,7 +1338,7 @@ void __fastcall adjust_map_win5_on_left_down(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp - 1508)->*MapWinOnLeftDownTarget)(arg0, arg1);
+    reinterpret_cast<MapWin *>(object - vtordisp - 1508)->MapWin::on_left_down(arg0, arg1);
 }
 
 /*
@@ -1529,7 +1360,7 @@ void __fastcall adjust_map_win5_on_left_up(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp - 1508)->*MapWinOnLeftUpTarget)(arg0, arg1);
+    reinterpret_cast<MapWin *>(object - vtordisp - 1508)->MapWin::on_left_up(arg0, arg1);
 }
 
 /*
@@ -1551,7 +1382,7 @@ void __fastcall adjust_map_win5_on_right_click(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp - 1508)->*MapWinOnRightClickTarget)(arg0, arg1);
+    reinterpret_cast<MapWin *>(object - vtordisp - 1508)->MapWin::on_right_click(arg0, arg1);
 }
 
 /*
@@ -1573,7 +1404,7 @@ void __fastcall adjust_map_win5_on_right_down(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp - 1508)->*MapWinOnRightDownTarget)(arg0, arg1);
+    reinterpret_cast<MapWin *>(object - vtordisp - 1508)->MapWin::on_right_down(arg0, arg1);
 }
 
 /*
@@ -1595,7 +1426,7 @@ void __fastcall adjust_map_win5_on_left_double_click(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp - 1508)->*MapWinOnLeftDoubleClickTarget)(arg0, arg1);
+    reinterpret_cast<MapWin *>(object - vtordisp - 1508)->MapWin::on_left_double_click(arg0, arg1);
 }
 
 /*
@@ -1617,7 +1448,7 @@ void __fastcall adjust_map_win5_on_nc_left_down(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp - 1508)->*MapWinOnNcLeftDownTarget)(arg0, arg1);
+    reinterpret_cast<MapWin *>(object - vtordisp - 1508)->MapWin::on_nc_left_down(arg0, arg1);
 }
 
 /*
@@ -1639,7 +1470,7 @@ void __fastcall adjust_map_win5_on_button_clicked(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp - 1508)->*MapWinOnButtonClickedTarget)(arg0);
+    reinterpret_cast<MapWin *>(object - vtordisp - 1508)->MapWin::on_button_clicked(arg0);
 }
 
 /*
@@ -1661,7 +1492,7 @@ void __fastcall adjust_map_win5_on_nc_hittest(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp - 1508)->*MapWinOnNcHittestTarget)(arg0, arg1);
+    reinterpret_cast<MapWin *>(object - vtordisp - 1508)->MapWin::on_nc_hittest(arg0, arg1);
 }
 
 /*
@@ -1711,7 +1542,7 @@ void * __fastcall adjust_console1_scalar_delete(void *self, void *,
 /*
 Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
          MapWin::on_lose_mouse_capture expects, then forward unchanged.
-// ORIGINAL: 0x0051DE30 ?on_lose_mouse_capture@thunk4_MapWin@@QAEXXZ 0x0051DE30-0x0051DE3E
+// ORIGINAL: 0x0051DE30 ?on_lose_mouse_capture@thunk4_MapWin@@QAEXXZ 0x0051DE30-0x0051DE3E BYTE_EXACT
 // symbol    ?adjust_map_win4_on_lose_mouse_capture@@YIXPAX0@Z
 // size      14 bytes
 // prototype void (__thiscall ?on_lose_mouse_capture@thunk4_MapWin@@QAEXXZ)(MapWin* this)
@@ -1726,13 +1557,13 @@ void __fastcall adjust_map_win4_on_lose_mouse_capture(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp - 9000)->*MapWinOnLoseMouseCaptureTarget)();
+    reinterpret_cast<MapWin *>(object - vtordisp - 9000)->MapWin::on_lose_mouse_capture();
 }
 
 /*
 Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
          MapWin::on_redraw expects, then forward unchanged.
-// ORIGINAL: 0x0051DE40 ?on_redraw@thunk4_MapWin@@QAEXXZ 0x0051DE40-0x0051DE4E
+// ORIGINAL: 0x0051DE40 ?on_redraw@thunk4_MapWin@@QAEXXZ 0x0051DE40-0x0051DE4E BYTE_EXACT
 // symbol    ?adjust_map_win4_on_redraw@@YIXPAX0@Z
 // size      14 bytes
 // prototype void (__thiscall ?on_redraw@thunk4_MapWin@@QAEXXZ)(MapWin* this)
@@ -1747,7 +1578,7 @@ void __fastcall adjust_map_win4_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp - 9000)->*MapWinOnRedrawTarget)();
+    reinterpret_cast<MapWin *>(object - vtordisp - 9000)->MapWin::on_redraw();
 }
 
 /*
@@ -1769,13 +1600,13 @@ void __fastcall adjust_map_win4_on_resize(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp - 9000)->*MapWinOnResizeTarget)(arg0, arg1);
+    reinterpret_cast<MapWin *>(object - vtordisp - 9000)->MapWin::on_resize(arg0, arg1);
 }
 
 /*
 Purpose: Adjust the receiver from Console's thunk1 subobject to the one
          Console::on_sys_close expects, then forward unchanged.
-// ORIGINAL: 0x0051DE60 ?on_sys_close@thunk1_Console@@QAEXXZ 0x0051DE60-0x0051DE68
+// ORIGINAL: 0x0051DE60 ?on_sys_close@thunk1_Console@@QAEXXZ 0x0051DE60-0x0051DE68 BYTE_EXACT
 // symbol    ?adjust_console1_on_sys_close@@YIXPAX0@Z
 // size      8 bytes
 // prototype void (__thiscall ?on_sys_close@thunk1_Console@@QAEXXZ)(Console* this)
@@ -1790,7 +1621,7 @@ void __fastcall adjust_console1_on_sys_close(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*ConsoleOnSysCloseTarget)();
+    reinterpret_cast<Console *>(object - vtordisp)->Console::on_sys_close();
 }
 
 /*
@@ -1812,7 +1643,7 @@ void __fastcall adjust_map_win4_on_mouse_move(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp - 9000)->*MapWinOnMouseMoveTarget)(arg0, arg1);
+    reinterpret_cast<MapWin *>(object - vtordisp - 9000)->MapWin::on_mouse_move(arg0, arg1);
 }
 
 /*
@@ -1834,7 +1665,7 @@ void __fastcall adjust_map_win4_on_left_click(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp - 9000)->*MapWinOnLeftClickTarget)(arg0, arg1);
+    reinterpret_cast<MapWin *>(object - vtordisp - 9000)->MapWin::on_left_click(arg0, arg1);
 }
 
 /*
@@ -1856,7 +1687,7 @@ void __fastcall adjust_map_win4_on_left_down(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp - 9000)->*MapWinOnLeftDownTarget)(arg0, arg1);
+    reinterpret_cast<MapWin *>(object - vtordisp - 9000)->MapWin::on_left_down(arg0, arg1);
 }
 
 /*
@@ -1878,7 +1709,7 @@ void __fastcall adjust_map_win4_on_left_up(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp - 9000)->*MapWinOnLeftUpTarget)(arg0, arg1);
+    reinterpret_cast<MapWin *>(object - vtordisp - 9000)->MapWin::on_left_up(arg0, arg1);
 }
 
 /*
@@ -1900,7 +1731,7 @@ void __fastcall adjust_map_win4_on_right_click(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp - 9000)->*MapWinOnRightClickTarget)(arg0, arg1);
+    reinterpret_cast<MapWin *>(object - vtordisp - 9000)->MapWin::on_right_click(arg0, arg1);
 }
 
 /*
@@ -1922,7 +1753,7 @@ void __fastcall adjust_map_win4_on_right_down(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp - 9000)->*MapWinOnRightDownTarget)(arg0, arg1);
+    reinterpret_cast<MapWin *>(object - vtordisp - 9000)->MapWin::on_right_down(arg0, arg1);
 }
 
 /*
@@ -1944,7 +1775,7 @@ int __fastcall adjust_console1_on_key_click(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    return (ORIGINAL(object - vtordisp)->*ConsoleOnKeyClickTarget)(arg0, arg1);
+    return reinterpret_cast<Console *>(object - vtordisp)->Console::on_key_click(arg0, arg1);
 }
 
 /*
@@ -1966,7 +1797,7 @@ void __fastcall adjust_map_win4_on_left_double_click(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp - 9000)->*MapWinOnLeftDoubleClickTarget)(arg0, arg1);
+    reinterpret_cast<MapWin *>(object - vtordisp - 9000)->MapWin::on_left_double_click(arg0, arg1);
 }
 
 /*
@@ -1988,7 +1819,7 @@ void __fastcall adjust_console1_on_nc_mouse_move(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*ConsoleOnNcMouseMoveTarget)(arg0, arg1);
+    reinterpret_cast<Console *>(object - vtordisp)->Console::on_nc_mouse_move(arg0, arg1);
 }
 
 /*
@@ -2010,7 +1841,7 @@ void __fastcall adjust_console1_on_nc_left_down(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*ConsoleOnNcLeftDownTarget)(arg0, arg1);
+    reinterpret_cast<Console *>(object - vtordisp)->Console::on_nc_left_down(arg0, arg1);
 }
 
 /*
@@ -2032,7 +1863,7 @@ void __fastcall adjust_console1_on_nc_left_up(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*ConsoleOnNcLeftUpTarget)(arg0, arg1);
+    reinterpret_cast<Console *>(object - vtordisp)->Console::on_nc_left_up(arg0, arg1);
 }
 
 /*
@@ -2054,7 +1885,7 @@ void __fastcall adjust_map_win4_on_button_clicked(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp - 9000)->*MapWinOnButtonClickedTarget)(arg0);
+    reinterpret_cast<MapWin *>(object - vtordisp - 9000)->MapWin::on_button_clicked(arg0);
 }
 
 /*
@@ -2077,7 +1908,7 @@ void __fastcall adjust_console1_on_post_redraw_nc_buffer(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*ConsoleOnPostRedrawNcBufferTarget)(arg0, arg1);
+    reinterpret_cast<Console *>(object - vtordisp)->Console::on_post_redraw_nc_buffer(arg0, arg1);
 }
 
 /*
@@ -2099,7 +1930,7 @@ void __fastcall adjust_console1_on_nc_hittest(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*ConsoleOnNcHittestTarget)(arg0, arg1);
+    reinterpret_cast<Console *>(object - vtordisp)->Console::on_nc_hittest(arg0, arg1);
 }
 
 /*
@@ -2127,7 +1958,7 @@ void * __fastcall adjust_console2_scalar_delete(void *self, void *,
 /*
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
          ListBox::on_redraw expects, then forward unchanged.
-// ORIGINAL: 0x0060CF50 ?on_redraw@thunk1_ListBox@@QAEXXZ 0x0060CF50-0x0060CF58
+// ORIGINAL: 0x0060CF50 ?on_redraw@thunk1_ListBox@@QAEXXZ 0x0060CF50-0x0060CF58 BYTE_EXACT
 // symbol    ?adjust_list_box1_on_redraw@@YIXPAX0@Z
 // size      8 bytes
 // prototype void (__thiscall ?on_redraw@thunk1_ListBox@@QAEXXZ)(ListBox* this)
@@ -2142,7 +1973,7 @@ void __fastcall adjust_list_box1_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*ListBoxOnRedrawTarget)();
+    reinterpret_cast<ListBox *>(object - vtordisp)->ListBox::on_redraw();
 }
 
 /*
@@ -2163,7 +1994,7 @@ void __fastcall adjust_list_box1_on_mousewheel(void *self, void *, int arg0) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*ListBoxOnMousewheelTarget)(arg0);
+    reinterpret_cast<ListBox *>(object - vtordisp)->ListBox::on_mousewheel(arg0);
 }
 
 /*
@@ -2185,7 +2016,7 @@ void __fastcall adjust_list_box1_on_mouse_move(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*ListBoxOnMouseMoveTarget)(arg0, arg1);
+    reinterpret_cast<ListBox *>(object - vtordisp)->ListBox::on_mouse_move(arg0, arg1);
 }
 
 /*
@@ -2207,7 +2038,7 @@ void __fastcall adjust_list_box1_on_mouse_leave(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*ListBoxOnMouseLeaveTarget)(arg0, arg1);
+    reinterpret_cast<ListBox *>(object - vtordisp)->ListBox::on_mouse_leave(arg0, arg1);
 }
 
 /*
@@ -2229,7 +2060,7 @@ void __fastcall adjust_list_box1_on_left_down(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*ListBoxOnLeftDownTarget)(arg0, arg1);
+    reinterpret_cast<ListBox *>(object - vtordisp)->ListBox::on_left_down(arg0, arg1);
 }
 
 /*
@@ -2251,7 +2082,7 @@ void __fastcall adjust_list_box1_on_right_down(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*ListBoxOnRightDownTarget)(arg0, arg1);
+    reinterpret_cast<ListBox *>(object - vtordisp)->ListBox::on_right_down(arg0, arg1);
 }
 
 /*
@@ -2272,7 +2103,7 @@ void __fastcall adjust_list_box1_on_key_down(void *self, void *, int arg0) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*ListBoxOnKeyDownTarget)(arg0);
+    reinterpret_cast<ListBox *>(object - vtordisp)->ListBox::on_key_down(arg0);
 }
 
 /*
@@ -2294,7 +2125,7 @@ void __fastcall adjust_list_box1_on_left_double_click(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*ListBoxOnLeftDoubleClickTarget)(arg0, arg1);
+    reinterpret_cast<ListBox *>(object - vtordisp)->ListBox::on_left_double_click(arg0, arg1);
 }
 
 /*
@@ -2316,7 +2147,7 @@ void __fastcall adjust_list_box1_on_right_double_click(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*ListBoxOnRightDoubleClickTarget)(arg0, arg1);
+    reinterpret_cast<ListBox *>(object - vtordisp)->ListBox::on_right_double_click(arg0, arg1);
 }
 
 /*
@@ -2338,7 +2169,7 @@ void __fastcall adjust_list_box1_on_scrolled(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*ListBoxOnScrolledTarget)(arg0, arg1);
+    reinterpret_cast<ListBox *>(object - vtordisp)->ListBox::on_scrolled(arg0, arg1);
 }
 
 /*
@@ -2360,7 +2191,7 @@ void __fastcall adjust_list_box1_on_scrolling(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*ListBoxOnScrollingTarget)(arg0, arg1);
+    reinterpret_cast<ListBox *>(object - vtordisp)->ListBox::on_scrolling(arg0, arg1);
 }
 
 /*
@@ -2382,7 +2213,7 @@ void __fastcall adjust_list_box1_on_dialog_focus(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*ListBoxOnDialogFocusTarget)(arg0);
+    reinterpret_cast<ListBox *>(object - vtordisp)->ListBox::on_dialog_focus(arg0);
 }
 
 /*
@@ -2404,13 +2235,13 @@ int __fastcall adjust_list_box1_attach(void *self, void *, void *arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    return (ORIGINAL(object - vtordisp)->*ListBoxAttachTarget)(arg0, arg1, arg2, arg3);
+    return reinterpret_cast<ListBox *>(object - vtordisp)->ListBox::attach(arg0, arg1, arg2, arg3);
 }
 
 /*
 Purpose: Adjust the receiver from ListBox's thunk3 subobject to the one
          ListBox::on_redraw expects, then forward unchanged.
-// ORIGINAL: 0x0060D050 ?on_redraw@thunk3_ListBox@@QAEXXZ 0x0060D050-0x0060D05E
+// ORIGINAL: 0x0060D050 ?on_redraw@thunk3_ListBox@@QAEXXZ 0x0060D050-0x0060D05E BYTE_EXACT
 // symbol    ?adjust_list_box3_on_redraw@@YIXPAX0@Z
 // size      14 bytes
 // prototype void (__thiscall ?on_redraw@thunk3_ListBox@@QAEXXZ)(ListBox* this)
@@ -2425,13 +2256,13 @@ void __fastcall adjust_list_box3_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp - 2584)->*ListBoxOnRedrawTarget)();
+    reinterpret_cast<ListBox *>(object - vtordisp - 2584)->ListBox::on_redraw();
 }
 
 /*
 Purpose: Adjust the receiver from CheckBox's thunk1 subobject to the one
          CheckBox::on_redraw expects, then forward unchanged.
-// ORIGINAL: 0x0060FE40 ?on_redraw@thunk1_CheckBox@@QAEXXZ 0x0060FE40-0x0060FE48
+// ORIGINAL: 0x0060FE40 ?on_redraw@thunk1_CheckBox@@QAEXXZ 0x0060FE40-0x0060FE48 BYTE_EXACT
 // symbol    ?adjust_check_box1_on_redraw@@YIXPAX0@Z
 // size      8 bytes
 // prototype void (__thiscall ?on_redraw@thunk1_CheckBox@@QAEXXZ)(CheckBox* this)
@@ -2446,7 +2277,7 @@ void __fastcall adjust_check_box1_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*CheckBoxOnRedrawTarget)();
+    reinterpret_cast<CheckBox *>(object - vtordisp)->CheckBox::on_redraw();
 }
 
 /*
@@ -2468,7 +2299,7 @@ void __fastcall adjust_check_box1_on_mouse_move(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*CheckBoxOnMouseMoveTarget)(arg0, arg1);
+    reinterpret_cast<CheckBox *>(object - vtordisp)->CheckBox::on_mouse_move(arg0, arg1);
 }
 
 /*
@@ -2490,7 +2321,7 @@ void __fastcall adjust_check_box1_on_mouse_leave(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*CheckBoxOnMouseLeaveTarget)(arg0, arg1);
+    reinterpret_cast<CheckBox *>(object - vtordisp)->CheckBox::on_mouse_leave(arg0, arg1);
 }
 
 /*
@@ -2512,7 +2343,7 @@ void __fastcall adjust_check_box1_on_left_down(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*CheckBoxOnLeftDownTarget)(arg0, arg1);
+    reinterpret_cast<CheckBox *>(object - vtordisp)->CheckBox::on_left_down(arg0, arg1);
 }
 
 /*
@@ -2533,7 +2364,7 @@ int __fastcall adjust_check_box1_on_key_down(void *self, void *, int arg0) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    return (ORIGINAL(object - vtordisp)->*CheckBoxOnKeyDownTarget)(arg0);
+    return reinterpret_cast<CheckBox *>(object - vtordisp)->CheckBox::on_key_down(arg0);
 }
 
 /*
@@ -2555,7 +2386,7 @@ void __fastcall adjust_check_box1_on_left_double_click(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*CheckBoxOnLeftDoubleClickTarget)(arg0, arg1);
+    reinterpret_cast<CheckBox *>(object - vtordisp)->CheckBox::on_left_double_click(arg0, arg1);
 }
 
 /*
@@ -2577,7 +2408,7 @@ void __fastcall adjust_check_box1_on_dialog_focus(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*CheckBoxOnDialogFocusTarget)(arg0);
+    reinterpret_cast<CheckBox *>(object - vtordisp)->CheckBox::on_dialog_focus(arg0);
 }
 
 /*
@@ -2599,13 +2430,13 @@ int __fastcall adjust_check_box1_attach(void *self, void *, void *arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    return (ORIGINAL(object - vtordisp)->*CheckBoxAttachTarget)(arg0, arg1, arg2, arg3);
+    return reinterpret_cast<CheckBox *>(object - vtordisp)->CheckBox::attach(arg0, arg1, arg2, arg3);
 }
 
 /*
 Purpose: Adjust the receiver from CheckBox's thunk3 subobject to the one
          CheckBox::on_redraw expects, then forward unchanged.
-// ORIGINAL: 0x0060FEF0 ?on_redraw@thunk3_CheckBox@@QAEXXZ 0x0060FEF0-0x0060FEFE
+// ORIGINAL: 0x0060FEF0 ?on_redraw@thunk3_CheckBox@@QAEXXZ 0x0060FEF0-0x0060FEFE BYTE_EXACT
 // symbol    ?adjust_check_box3_on_redraw@@YIXPAX0@Z
 // size      14 bytes
 // prototype void (__thiscall ?on_redraw@thunk3_CheckBox@@QAEXXZ)(CheckBox* this)
@@ -2620,13 +2451,13 @@ void __fastcall adjust_check_box3_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp - 2584)->*CheckBoxOnRedrawTarget)();
+    reinterpret_cast<CheckBox *>(object - vtordisp - 2584)->CheckBox::on_redraw();
 }
 
 /*
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::on_redraw expects, then forward unchanged.
-// ORIGINAL: 0x00611820 ?on_redraw@thunk1_SpriteBox@@QAEXXZ 0x00611820-0x00611828
+// ORIGINAL: 0x00611820 ?on_redraw@thunk1_SpriteBox@@QAEXXZ 0x00611820-0x00611828 BYTE_EXACT
 // symbol    ?adjust_sprite_box1_on_redraw@@YIXPAX0@Z
 // size      8 bytes
 // prototype void (__thiscall ?on_redraw@thunk1_SpriteBox@@QAEXXZ)(SpriteBox* this)
@@ -2641,7 +2472,7 @@ void __fastcall adjust_sprite_box1_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*SpriteBoxOnRedrawTarget)();
+    reinterpret_cast<SpriteBox *>(object - vtordisp)->SpriteBox::on_redraw();
 }
 
 /*
@@ -2663,7 +2494,7 @@ void __fastcall adjust_sprite_box1_on_mouse_move(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*SpriteBoxOnMouseMoveTarget)(arg0, arg1);
+    reinterpret_cast<SpriteBox *>(object - vtordisp)->SpriteBox::on_mouse_move(arg0, arg1);
 }
 
 /*
@@ -2685,7 +2516,7 @@ void __fastcall adjust_sprite_box1_on_mouse_leave(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*SpriteBoxOnMouseLeaveTarget)(arg0, arg1);
+    reinterpret_cast<SpriteBox *>(object - vtordisp)->SpriteBox::on_mouse_leave(arg0, arg1);
 }
 
 /*
@@ -2707,7 +2538,7 @@ void __fastcall adjust_sprite_box1_on_left_click(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*SpriteBoxOnLeftClickTarget)(arg0, arg1);
+    reinterpret_cast<SpriteBox *>(object - vtordisp)->SpriteBox::on_left_click(arg0, arg1);
 }
 
 /*
@@ -2729,7 +2560,7 @@ void __fastcall adjust_sprite_box1_on_left_down(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*SpriteBoxOnLeftDownTarget)(arg0, arg1);
+    reinterpret_cast<SpriteBox *>(object - vtordisp)->SpriteBox::on_left_down(arg0, arg1);
 }
 
 /*
@@ -2751,7 +2582,7 @@ void __fastcall adjust_sprite_box1_on_left_up(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*SpriteBoxOnLeftUpTarget)(arg0, arg1);
+    reinterpret_cast<SpriteBox *>(object - vtordisp)->SpriteBox::on_left_up(arg0, arg1);
 }
 
 /*
@@ -2773,7 +2604,7 @@ void __fastcall adjust_sprite_box1_on_right_click(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*SpriteBoxOnRightClickTarget)(arg0, arg1);
+    reinterpret_cast<SpriteBox *>(object - vtordisp)->SpriteBox::on_right_click(arg0, arg1);
 }
 
 /*
@@ -2795,7 +2626,7 @@ void __fastcall adjust_sprite_box1_on_right_down(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*SpriteBoxOnRightDownTarget)(arg0, arg1);
+    reinterpret_cast<SpriteBox *>(object - vtordisp)->SpriteBox::on_right_down(arg0, arg1);
 }
 
 /*
@@ -2817,7 +2648,7 @@ void __fastcall adjust_sprite_box1_on_right_up(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*SpriteBoxOnRightUpTarget)(arg0, arg1);
+    reinterpret_cast<SpriteBox *>(object - vtordisp)->SpriteBox::on_right_up(arg0, arg1);
 }
 
 /*
@@ -2838,7 +2669,7 @@ int __fastcall adjust_sprite_box1_on_key_down(void *self, void *, int arg0) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    return (ORIGINAL(object - vtordisp)->*SpriteBoxOnKeyDownTarget)(arg0);
+    return reinterpret_cast<SpriteBox *>(object - vtordisp)->SpriteBox::on_key_down(arg0);
 }
 
 /*
@@ -2860,7 +2691,7 @@ void __fastcall adjust_sprite_box1_on_left_double_click(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*SpriteBoxOnLeftDoubleClickTarget)(arg0, arg1);
+    reinterpret_cast<SpriteBox *>(object - vtordisp)->SpriteBox::on_left_double_click(arg0, arg1);
 }
 
 /*
@@ -2882,7 +2713,7 @@ void __fastcall adjust_sprite_box1_on_right_double_click(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*SpriteBoxOnRightDoubleClickTarget)(arg0, arg1);
+    reinterpret_cast<SpriteBox *>(object - vtordisp)->SpriteBox::on_right_double_click(arg0, arg1);
 }
 
 /*
@@ -2904,7 +2735,7 @@ void __fastcall adjust_sprite_box1_on_dialog_focus(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*SpriteBoxOnDialogFocusTarget)(arg0);
+    reinterpret_cast<SpriteBox *>(object - vtordisp)->SpriteBox::on_dialog_focus(arg0);
 }
 
 /*
@@ -2926,13 +2757,13 @@ int __fastcall adjust_sprite_box1_attach(void *self, void *, void *arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    return (ORIGINAL(object - vtordisp)->*SpriteBoxAttachTarget)(arg0, arg1, arg2, arg3);
+    return reinterpret_cast<SpriteBox *>(object - vtordisp)->SpriteBox::attach(arg0, arg1, arg2, arg3);
 }
 
 /*
 Purpose: Adjust the receiver from SpriteBox's thunk3 subobject to the one
          SpriteBox::on_redraw expects, then forward unchanged.
-// ORIGINAL: 0x00611930 ?on_redraw@thunk3_SpriteBox@@QAEXXZ 0x00611930-0x0061193E
+// ORIGINAL: 0x00611930 ?on_redraw@thunk3_SpriteBox@@QAEXXZ 0x00611930-0x0061193E BYTE_EXACT
 // symbol    ?adjust_sprite_box3_on_redraw@@YIXPAX0@Z
 // size      14 bytes
 // prototype void (__thiscall ?on_redraw@thunk3_SpriteBox@@QAEXXZ)(SpriteBox* this)
@@ -2947,13 +2778,13 @@ void __fastcall adjust_sprite_box3_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp - 2584)->*SpriteBoxOnRedrawTarget)();
+    reinterpret_cast<SpriteBox *>(object - vtordisp - 2584)->SpriteBox::on_redraw();
 }
 
 /*
 Purpose: Adjust the receiver from EditGroup's thunk1 subobject to the one
          EditGroup::on_redraw expects, then forward unchanged.
-// ORIGINAL: 0x006127B0 ?on_redraw@thunk1_EditGroup@@QAEXXZ 0x006127B0-0x006127B8
+// ORIGINAL: 0x006127B0 ?on_redraw@thunk1_EditGroup@@QAEXXZ 0x006127B0-0x006127B8 BYTE_EXACT
 // symbol    ?adjust_edit_group1_on_redraw@@YIXPAX0@Z
 // size      8 bytes
 // prototype void (__thiscall ?on_redraw@thunk1_EditGroup@@QAEXXZ)(EditGroup* this)
@@ -2968,7 +2799,7 @@ void __fastcall adjust_edit_group1_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*EditGroupOnRedrawTarget)();
+    reinterpret_cast<EditGroup *>(object - vtordisp)->EditGroup::on_redraw();
 }
 
 /*
@@ -2990,13 +2821,13 @@ void __fastcall adjust_edit_group1_on_dialog_focus(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*EditGroupOnDialogFocusTarget)(arg0);
+    reinterpret_cast<EditGroup *>(object - vtordisp)->EditGroup::on_dialog_focus(arg0);
 }
 
 /*
 Purpose: Adjust the receiver from EditGroup's thunk1 subobject to the one
          EditGroup::pass_dialog_focus expects, then forward unchanged.
-// ORIGINAL: 0x006127D0 ?pass_dialog_focus@thunk1_EditGroup@@QAEXXZ 0x006127D0-0x006127D8
+// ORIGINAL: 0x006127D0 ?pass_dialog_focus@thunk1_EditGroup@@QAEXXZ 0x006127D0-0x006127D8 BYTE_EXACT
 // symbol    ?adjust_edit_group1_pass_dialog_focus@@YIXPAX0@Z
 // size      8 bytes
 // prototype void (__thiscall ?pass_dialog_focus@thunk1_EditGroup@@QAEXXZ)(EditGroup* this)
@@ -3011,7 +2842,7 @@ void __fastcall adjust_edit_group1_pass_dialog_focus(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*EditGroupPassDialogFocusTarget)();
+    reinterpret_cast<EditGroup *>(object - vtordisp)->EditGroup::pass_dialog_focus();
 }
 
 /*
@@ -3033,13 +2864,13 @@ int __fastcall adjust_edit_group1_attach(void *self, void *, void *arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    return (ORIGINAL(object - vtordisp)->*EditGroupAttachTarget)(arg0, arg1, arg2, arg3);
+    return reinterpret_cast<EditGroup *>(object - vtordisp)->EditGroup::attach(arg0, arg1, arg2, arg3);
 }
 
 /*
 Purpose: Adjust the receiver from EditGroup's thunk3 subobject to the one
          EditGroup::on_redraw expects, then forward unchanged.
-// ORIGINAL: 0x00612820 ?on_redraw@thunk3_EditGroup@@QAEXXZ 0x00612820-0x0061282E
+// ORIGINAL: 0x00612820 ?on_redraw@thunk3_EditGroup@@QAEXXZ 0x00612820-0x0061282E BYTE_EXACT
 // symbol    ?adjust_edit_group3_on_redraw@@YIXPAX0@Z
 // size      14 bytes
 // prototype void (__thiscall ?on_redraw@thunk3_EditGroup@@QAEXXZ)(EditGroup* this)
@@ -3054,5 +2885,5 @@ void __fastcall adjust_edit_group3_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp - 2584)->*EditGroupOnRedrawTarget)();
+    reinterpret_cast<EditGroup *>(object - vtordisp - 2584)->EditGroup::on_redraw();
 }

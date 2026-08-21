@@ -54,6 +54,38 @@
   */
 class MapWin : protected virtual GraphicWin {
  public:
+  // 0x0046F880, a pending_bodies forwarder.
+  void on_sys_close();
+
+ public:
+  // 0x0046EC10, a pending_bodies forwarder.
+  void on_right_down(int a1, int a2);
+
+ public:
+  // 0x0046F700, a pending_bodies forwarder.
+  void on_nc_left_down(int a1, int a2);
+
+ public:
+  // 0x0046F660, a pending_bodies forwarder.
+  void on_nc_hittest(int a1, int a2);
+
+ public:
+  // 0x0046F000, a pending_bodies forwarder.
+  void on_mouse_move(int a1, int a2);
+
+ public:
+  // 0x0046EB90, a pending_bodies forwarder.
+  void on_lose_mouse_capture();
+
+ public:
+  // 0x0046ED30, a pending_bodies forwarder.
+  void on_left_down(int a1, int a2);
+
+ public:
+  // 0x0046F8C0, a pending_bodies forwarder.
+  void on_button_clicked(int a1);
+
+ public:
   // 0x0046B310, a pending_bodies forwarder.
   int focus(int x_coord, int y_coord);
 
