@@ -70,6 +70,15 @@ LEVERS THAT HAVE PAID, most productive first
   scope `const` has internal linkage and folds to the immediate. Worth 202 claims
   in one change on 2026-08-21, plus the whole message-pump family.
 
+- A CONSTRUCTOR CALL IS NOT THE WAY TO REACH A CONSTRUCTOR. When a `??__E`
+  initialiser dispatches through a `func_opaque_ctor_*` seam, the fix is a
+  `construct` METHOD on the class, not a real constructor: VC6 adds its hidden
+  most-derived flag to an explicit `->Class::Class(n)` call, so the site pushes
+  the argument TWICE. `Win::construct` is the existing idiom, and its marker
+  carries a `symbol` fact naming it. The call target is a relocation on both
+  sides, so the method's own name costs nothing. Five initialisers went
+  byte-exact this way on 2026-08-21; the constructor spelling made them worse.
+
 - THE IMAGE PEELS ITS LOOPS. `do { B } while (C);` compiles one copy of the body;
   the image runs `B; while (C) { B }` - same program, and the difference was four
   instructions on each of three message pumps. If the image's loop has TWO calls
