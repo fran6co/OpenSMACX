@@ -1126,7 +1126,7 @@ Purpose: Parse in all the game rules via alpha/x.txt. If the toggle param is set
 // ORIGINAL: 0x005873C0 ?read_rules@@YAHH@Z 0x005873C0-0x0058829C
 // LEVER: the #TERRAIN loop's `order_str` is copied into a 256-byte LOCAL
 //        buffer (`strcpy` at 0x005874AE into `[ebp-0x114]`) before being
-//        handed to `parse_string_OG` - not held as a bare `LPSTR`. That
+//        handed to `parse_string` - not held as a bare `LPSTR`. That
 //        local is almost the entire gap between this tree's frame and the
 //        image's (`sub esp, 0x114` vs a bare-pointer version's far smaller
 //        one); after adding it the frame is 0x11c against the image's
@@ -1174,14 +1174,14 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
         // NOT held as a bare pointer: the image copies `text_item()`'s
         // result into a 256-byte LOCAL buffer first (`strcpy` at
         // 0x005874AE, into `[ebp-0x114]`) before handing it to
-        // `parse_string_OG` - that local is why the image's frame is
+        // `parse_string` - that local is why the image's frame is
         // 0x114 bytes against a bare-pointer version's much smaller one.
         char order_buf[256];
         strcpy(order_buf, text_item());
         for (j = 0; j < 2; j++) {
             parse_say(0, (int)*(&Terraforming[i].name + j), -1, -1);
             StringTemp[0] = 0;
-            parse_string_OG(order_buf, StringTemp);
+            parse_string(order_buf, StringTemp);
             *(&Order[i + 4].order + j) = StringTable->put(StringTemp);
         }
         Order[i + 4].letter = text_item_string();

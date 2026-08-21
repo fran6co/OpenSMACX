@@ -617,7 +617,7 @@ void tech_calc_output() {
         for (int j = 0; j < MaxTechnologyNum; j++) {
             for (int k = 0; k < 2; k++) {
                 int techVal1 = tech_val(j, i, k);
-                int techVal2 = tech_val_OG(j, i, k);
+                int techVal2 = tech_val(j, i, k);
                 if (techVal1 != techVal2) {
                     log_say("tech_val error: ", j, i, k);
                     log_say("good:", techVal2, 0, 0);
@@ -630,7 +630,7 @@ void tech_calc_output() {
         }
         for (j = 89; j < 609; j++) {
             int techVal1 = tech_val(j, i, 0);
-            int techVal2 = tech_val_OG(j, i, 0);
+            int techVal2 = tech_val(j, i, 0);
             if (techVal1 != techVal2) {
                 log_say("tech_val error: ", j, i, 0);
                 if (j < 97) {

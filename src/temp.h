@@ -83,7 +83,6 @@ func30 *const turn_timer = (func30 *)0x0050EF10;
 
 // testing
 typedef int *func8(LPSTR, LPSTR);
-func8 *const parse_string_OG = (func8 *)0x00625880;
 char256 *const ParseStrBuffer = (char256 *)0x009BB5E8;
 
 extern int BufferStrHeight;
@@ -112,7 +111,6 @@ int __cdecl tester();
 
 // tech_val output
 typedef int func13(int, int, BOOL);
-func13 *const tech_val_OG = (func13 *)0x005BCBE0;
 void __cdecl tech_calc_output();
 
 // The message-loop pumps, DECLARED RATHER THAN BOUND. As `func_msg *const`
