@@ -326,7 +326,7 @@ extern uint32_t WorldBuildVal1; // TODO: more descriptive variable name
 Continent *const Continents = (Continent *)0x009AA730;
 RulesNatural *const Natural = (RulesNatural *)0x0094ADE0;
 extern uint32_t MapLongitude; // halve of MapLongitudeBounds
-extern uint32_t *AltNatural; // Default: { 0, 15, 32, 45, 60,  75,  80, 100, 100, 100, 100 };
+uint32_t *const AltNatural = (uint32_t *)0x0068FB4C; // Default: { 0, 15, 32, 45, 60,  75,  80, 100, 100, 100, 100 };
 
 // `int` throughout, matching both the definition in src/map.cpp and the
 // catalogue's ?whose_territory@@YAHHHHPAHH@Z. The header said `uint32_t`,
