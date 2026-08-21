@@ -50,7 +50,7 @@ class InfoWin {
   // placed after on_right_click so /Ob2 cannot inline it back in.
   void right_menu(int a1, int a2);
   InfoWin();
-  ~InfoWin() { ; }
+  ~InfoWin();
   void UNK1();
   void on_redraw();
   void reset();

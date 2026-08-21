@@ -52,6 +52,15 @@ class Caviar {
   void close();   // 0x00617020
   void UNK11(int *out1, int *out2, int *out3);
   Caviar();
+  // No `??1Caviar@@...` is catalogued anywhere in the image; every embedding
+  // class's own teardown (StatusWin::~StatusWin, and the still-forwarded
+  // BaseWin/DesignWin/ProdPicker destructors) reaches Caviar through
+  // close() instead of a destructor call. Giving Caviar member subobjects a
+  // real (not raw-storage) presence needs SOME destructor for the compiler
+  // to invoke automatically in reverse declaration order, so this one
+  // forwards to the same close() the image itself calls - not a
+  // byte-matching trick, a real reading of how Caviar tears down.
+  ~Caviar() { close(); }
   void set_camera_direct(const VOX_Vect *camera, const VOX_Matrix *matrix);
   void set_scaling(float scaling);
   void set_scaling_bits(uint32_t scaling_bits);

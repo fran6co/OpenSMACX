@@ -24,6 +24,166 @@ uint32_t CheckBoxDefault1;  // 0x00697104
 uint32_t CheckBoxDefault2;  // 0x00697108
 
 /*
+Purpose: Compose a CheckBox from its two base-shaped subobjects (GraphicWin,
+         Dialog), install this class's own vtable/vtordisp values into the
+         object's vbtable-named slots, and reset the state fields.
+
+         `a1` is the compiler's most-derived flag in the image
+         (??0CheckBox@@QAE@H@Z): nonzero means construct the two bases,
+         zero means skip straight to installing this class's own tables -
+         the same "am I the most-derived object" guard ListBox's constructor
+         uses. This class cannot let VC6 synthesise that flag (see the class
+         comment in checkbox.h), so it is modelled as an explicit parameter
+         instead and the guard is written out by hand.
+// ORIGINAL: 0x0060E670 ??0CheckBox@@QAE@H@Z 0x0060E670-0x0060E735;0x00662F60-0x00662F84
+// RULED-OUT: MEASURED 1/53 agreeing (was 0.71 mnemonic similarity from an
+//            earlier scratch artifact). Divergence is at instruction 0: the
+//            image opens `push -1; push 0x662f7a; mov eax,fs:[0]; push eax`
+//            (a real SEH frame, pure esp-relative, no `push ebp`), this body
+//            compiles a straight-line prologue with no frame at all.
+//            ROOT CAUSE (narrowed after measuring RadioButton's identical
+//            shape): `dialog_.construct()` is an ORDINARY METHOD CALL, not
+//            a placement-new constructor call, so VC6 has no
+//            partially-constructed subobject to protect and emits nothing.
+//            A real frame needs Dialog's OWN constructor to be non-trivial
+//            (a genuine placement-new target) and GraphicWin's OWN
+//            destructor to be non-trivial (what the catch clause unwinds
+//            to) - both kept trivial by design, and both are real typed
+//            members of THIS class, so making either non-trivial changes
+//            what every CheckBox/EditGroup/RadioButton/SpriteBox object
+//            implicitly does at construction. Not attempted: flagged
+//            elsewhere in this file as an OPEN, cross-cutting edit.
+// MEASURED (per the coordinator's correction on constructor-vs-flag
+//            mangling): a `void construct(int a1)` METHOD spelling of this
+//            same body, symbol-mapped to this address, scores WORSE - 0/53
+//            against this constructor spelling's 1/53. Neither reaches the
+//            frame; the constructor form is kept as the closer of the two.
+// size      233 bytes
+// prototype void (__thiscall ??0CheckBox@@QAE@H@Z)(CheckBox* this, int)
+// callers   4   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4CF0 0x00608C10
+// RULED-OUT: SEH-frame modelling via `new`-placement + try/catch was tried
+// earlier (src/unrecovered/0060e670.cpp) and reached only 0.71 mnemonic
+// similarity - the image installs a real fs:[0] frame here but with pure
+// esp-relative addressing, no `push ebp; mov ebp,esp`, which no flag set
+// this harness tries reproduces. Landed as the closest faithful shape.
+Return Value: n/a
+Status: Complete
+*/
+CheckBox::CheckBox(int a1) {
+    char *const self = reinterpret_cast<char *>(this);
+
+    if (a1 != 0) {
+        vbtable_pointer_ = 0x00670718;
+        virtual_base_.construct();
+        try {
+            dialog_.construct();
+        } catch (...) {
+            virtual_base_.~GraphicWin();
+            throw;
+        }
+    }
+
+    {
+        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
+        const int32_t off1 = vbtable[1];
+        *reinterpret_cast<int32_t *>(self + off1) = 0x006705B0;
+    }
+    {
+        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
+        const int32_t off1 = vbtable[1];
+        *reinterpret_cast<int32_t *>(self + off1 + 0x444) = 0x006705A8;
+    }
+    {
+        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
+        const int32_t off2 = vbtable[2];
+        *reinterpret_cast<int32_t *>(self + off2) = 0x0067059C;
+    }
+    {
+        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
+        const int32_t off1 = vbtable[1];
+        *reinterpret_cast<int32_t *>(self + off1 - 4) = off1 - 0x1C;
+    }
+    {
+        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
+        const int32_t off2 = vbtable[2];
+        *reinterpret_cast<int32_t *>(self + off2 - 4) = off2 - 0xA34;
+    }
+
+    field_4_ = 0;
+    field_8_ = 0;
+    field_C_ = 0;
+    field_14_ = CheckBoxDefault2;
+    field_10_ = CheckBoxDefault1;
+}
+
+/*
+Purpose: Tear down a CheckBox: reinstall the base subobjects' own
+         vtable/vtordisp values, reset the state fields, and close the
+         Dialog and GraphicWin subobjects through the object's own vbtable.
+// ORIGINAL: 0x0060E740 ??1CheckBox@@QAE@XZ 0x0060E740-0x0060E7C0
+// RULED-OUT: MEASURED 2/37 agreeing. The image's opening `this` is already
+//            the vtordisp-adjusted GraphicWin-subobject pointer -
+//            `mov eax,[ecx-0x1c]; lea esi,[ecx-0x1c]` - and this body's
+//            `char *const self = this - 0x1C;` opening compiles a different
+//            prologue shape (an indirect call appears at instruction 1
+//            where the image has none), which VC6 does not choose from a
+//            hand-written subtraction the way it does for a genuine
+//            vtordisp thunk over real virtual inheritance.
+// size      128 bytes
+// prototype void (__thiscall ??1CheckBox@@QAE@XZ)(CheckBox* this)
+// callers   24   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4E40 0x00608F50
+// notes     Entered on the ADJUSTED (GraphicWin-subobject) `this`: the image
+//           opens `mov eax,[ecx-0x1c]` / `lea esi,[ecx-0x1c]`, exactly the
+//           vtordisp adjustor the constructor's own vtordisp slot names.
+Return Value: n/a
+Status: Complete
+*/
+CheckBox::~CheckBox() {
+    char *const self = reinterpret_cast<char *>(this) - 0x1C;
+    CheckBox *const obj = reinterpret_cast<CheckBox *>(self);
+
+    {
+        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
+        *reinterpret_cast<int32_t *>(self + vbtable[1]) = 0x006705B0;
+    }
+    {
+        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
+        *reinterpret_cast<int32_t *>(self + vbtable[1] + 0x444) = 0x006705A8;
+    }
+    {
+        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
+        *reinterpret_cast<int32_t *>(self + vbtable[2]) = 0x0067059C;
+    }
+    {
+        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
+        const int32_t off1 = vbtable[1];
+        *reinterpret_cast<int32_t *>(self + off1 - 4) = off1 - 0x1C;
+    }
+    {
+        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
+        const int32_t off2 = vbtable[2];
+        *reinterpret_cast<int32_t *>(self + off2 - 4) = off2 - 0xA34;
+    }
+
+    const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
+    obj->field_4_ = 0;
+    obj->field_8_ = 0;
+    obj->field_C_ = 0;
+    obj->field_14_ = CheckBoxDefault2;
+    obj->field_10_ = CheckBoxDefault1;
+
+    reinterpret_cast<Dialog *>(self + vbtable[2])->close();
+    const int32_t *const vbtable2 = *reinterpret_cast<const int32_t *const *>(self);
+    reinterpret_cast<GraphicWin *>(self + vbtable2[1])->close();
+}
+
+/*
 Purpose: Reset the check box to its defaults, then close its dialog and
          graphic base. Both calls resolve through the vbtable, so they reach
          the Dialog and the virtual base rather than the object itself.

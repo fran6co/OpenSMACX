@@ -18,6 +18,9 @@
 #pragma once
 #include "original_seam.h"
 #include "heap.h"
+#include "graphicwin.h"
+#include "dialog.h"
+#include "spot.h"
 
  /*
   * SpriteBox class
@@ -73,17 +76,28 @@ class SpriteBox {
   // overload, recovered and byte-exact. It was the only one of the four with
   // no declaration, which is why its body could not be integrated.
   int init(int a1, int a2, int a3, int a4, Heap *a5);
-  SpriteBox() { ; }
-  ~SpriteBox() { ; }
+  // ??0SpriteBox@@QAE@H@Z at 0x0060FF00. The `int` is NOT a user parameter -
+  // SpriteBox's layout is composed by hand (see the class comment above), so
+  // VC6 cannot inject the most-derived flag the way it would for a real
+  // `: virtual GraphicWin, virtual Dialog` declaration; this constructor
+  // takes an explicit flag instead and mirrors what the image's own guard
+  // does with it.
+  SpriteBox(int a1);
+  ~SpriteBox();
   uint32_t id_to_pos(int id);
   void on_mouse_move(int, int);
   void on_mouse_leave(int, int);
 
  private:
-  uint32_t field_0_;  // 0x0
+  uint32_t field_0_;  // 0x0, this object's own vbtable pointer
   uint32_t field_4_;  // 0x4
   uint32_t field_8_;  // 0x8
-  uint8_t field_C_[0x10];  // 0xC
+  uint8_t field_C_[0x4];  // 0xC
+  // Placement-new'd unconditionally by the constructor (`new (self+0x10)
+  // Spot();`), raw storage rather than a real member so its construction
+  // stays exactly where the disassembly puts it rather than moving into
+  // the compiler's own implicit member-init prologue.
+  uint8_t spot_storage_[0xC];  // 0x10, sizeof(Spot)
   uint32_t field_1C_;  // 0x1C
   uint32_t field_20_;  // 0x20
   uint32_t field_24_;  // 0x24
@@ -115,17 +129,26 @@ class SpriteBox {
   uint32_t field_7C_;  // 0x7C
   uint32_t field_80_;  // 0x80
   uint32_t field_84_;  // 0x84
-  uint8_t field_88_[0x3D8];  // 0x88
+  uint32_t field_88_;  // 0x88
 
-  // 0x2C + 0x10 + 0x424 == 0x460, so nothing moves. The body keeps its
-  // offset casts: SpriteBox has no size assertion, so it is absent from
-  // docs/recovery/verified-layouts.txt and the scaffolding a measured body
-  // compiles in gives it an opaque shell where these names do not exist.
+  // The constructor placement-news a GraphicWin at +0x8C and a Dialog at
+  // +0xAA4 (`new (self+0x8c) GraphicWin(); new (self+0xaa4) Dialog();`),
+  // the same two-virtual-base shape CheckBox/EditGroup/RadioButton use -
+  // field_0_ above IS this object's own vbtable pointer, read at run time
+  // by id_to_pos's siblings (`*reinterpret_cast<char**>(this)+8` reaches
+  // Dialog through vtbl[2], matching `init`'s own existing bodies). Sizing
+  // these as real GraphicWin/Dialog subobjects is what makes the previous
+  // field_88_[0x3D8] wrong: SpriteBox has no size assertion, so nothing else
+  // in this file depended on the old (too-small) extent.
+  GraphicWin virtual_base_;  // 0x8C
+  uint8_t gap_AA0_[4];       // 0xAA0
+  Dialog dialog_;            // 0xAA4, ends 0xB98
 };
 
 uint32_t __fastcall sprite_box_id_to_pos_redirect(SpriteBox *self, void *, int id);
 void __fastcall sprite_box_on_mouse_move_redirect(SpriteBox *self, void *, int a1, int a2);
 void __fastcall sprite_box_on_mouse_leave_redirect(SpriteBox *self, void *, int a1, int a2);
 
-// ?close@SpriteBox@@QAEXXZ - public, __thiscall, void(void) - is not
-// recovered, and the three init overloads above open by calling it.
+// ?close@SpriteBox@@QAEXXZ (0x00610280) - not recovered; forwarded in
+// pending_bodies.cpp. The destructor and the three init overloads above all
+// call it.

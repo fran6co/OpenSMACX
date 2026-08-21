@@ -205,3 +205,31 @@ InfoWin::InfoWin() {
     new (self + 0x58) Font();
     new (self + 0x9D0) PushButton();
 }
+
+/*
+Purpose: Tear down an InfoWin: destroy the PushButton, Font and Time
+         subobjects in reverse construction order.
+// ORIGINAL: 0x004594A0 ??1InfoWin@@QAE@XZ 0x004594A0-0x004594FB;0x00655240-0x00655260
+// RULED-OUT: MEASURED 0/26 agreeing. The image opens `push ebp; mov
+//            ebp,esp; push -1; push 0x655256` - a real SEH frame - which
+//            this straight-line body does not reproduce; every instruction
+//            is offset from #0. Time/Font/PushButton here are all raw
+//            offsets (not real typed members, per the constructor's own
+//            `new (self+off) T()` shape), so there is no member for the
+//            compiler to hang automatic unwind protection on the way
+//            UV2Player::~UV2Player's real `Buffer buffer_` member does.
+// size      123 bytes
+// prototype void (__thiscall ??1InfoWin@@QAE@XZ)(InfoWin* this)
+// callers   0   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00616200 0x00618EE0 0x0062C010
+Return Value: n/a
+Status: Complete
+*/
+InfoWin::~InfoWin() {
+    char *const self = reinterpret_cast<char *>(this);
+    reinterpret_cast<PushButton *>(self + 0x9D0)->~PushButton();
+    reinterpret_cast<Font *>(self + 0x58)->~Font();
+    reinterpret_cast<Time *>(self + 0x30)->~Time();
+}

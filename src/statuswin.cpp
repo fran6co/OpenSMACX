@@ -21,6 +21,47 @@
 #include "spritebox.h"
 
 /*
+Purpose: Compose a StatusWin from its Caviar, three Font and one Spot
+         subobjects. All four are ordinary typed members now (see the class
+         comment in statuswin.h), so the implicit member-init sequence -
+         built in declaration order, with no null-pointer guard around any
+         of it - reproduces the image's four real constructor calls with an
+         empty body.
+// ORIGINAL: 0x004BA1A0 ??0StatusWin@@QAE@XZ 0x004BA1A0-0x004BA217;0x00659A60-0x00659A9F BYTE_EXACT
+// LEVER: a placement-new version of this body (since replaced) measured 7/32 - matching the SEH prologue through instruction 6, then diverging on register allocation. Every `new (self+off) T()` VC6 guards with a null-pointer `cmp`/`je`, which the image's real member-init sequence never emits; real typed members in declaration order drop the guard entirely.
+// size      182 bytes
+// prototype void (__thiscall ??0StatusWin@@QAE@XZ)(StatusWin* this)
+// callers   1   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005FA860 0x00616DA0 0x00618EA0
+Return Value: n/a
+Status: Complete
+*/
+StatusWin::StatusWin() {
+}
+
+/*
+Purpose: Tear down a StatusWin. All five subobjects are ordinary typed
+         members (see the class comment in statuswin.h), so the implicit
+         destruction sequence - reverse declaration order: Spot, font3,
+         font2, font1, then Caviar's own destructor, which forwards to
+         close() - reproduces the image's exact five-call sequence with an
+         empty body.
+// ORIGINAL: 0x004BA120 ??1StatusWin@@QAE@XZ 0x004BA120-0x004BA19E BYTE_EXACT
+// LEVER: an explicit-call version of this body (since replaced) measured 0/32 - the image opens `push ebp; mov ebp,esp; push -1; push 0x659a55`, a real SEH frame protecting the four-subobject unwind, which straight-line explicit `~Font()`/`~Spot()`/`close()` calls never reproduced. The compiler's own implicit per-member destruction gets that protection for free.
+// size      126 bytes
+// prototype void (__thiscall ??1StatusWin@@QAE@XZ)(StatusWin* this)
+// callers   0   call targets   5
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+Return Value: n/a
+Status: Complete
+*/
+StatusWin::~StatusWin() {
+}
+
+/*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
 // ORIGINAL: 0x004B9F80 ?close@StatusWin@@QAEXXZ 0x004B9F80-0x004B9F81 BYTE_EXACT
 // size      1 bytes

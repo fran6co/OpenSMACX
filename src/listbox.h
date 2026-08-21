@@ -124,6 +124,12 @@ class ListBox {
   void on_mouse_leave(int a1, int a2);
   ListBox() { ; }
   ~ListBox() { ; }
+  // A `construct` METHOD, NOT A CONSTRUCTOR - the `Win::construct` idiom.
+  // The real body (??0ListBox@@QAE@H@Z, 0x00609DB0) is not promoted yet;
+  // FileWin::FileWin placement-news a most-derived ListBox member and
+  // reaches it by name so that call emits the image's `E8`. Forwarded in
+  // pending_bodies.cpp.
+  void construct(int a1);
   // close() and destroy() are void in the mangled names but are modelled as
   // uint32_t to preserve the EAX residue (both leave EAX = 0), as GraphicWin
   // and Scroll do for their teardown pair.

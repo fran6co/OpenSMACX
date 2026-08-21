@@ -59,6 +59,12 @@ class Dialog {
   static int set_def_dialog_font(Font *font1, Font *font2, Font *font3);
   Dialog() { ; }
   ~Dialog() { ; }
+  // A `construct` METHOD, NOT A CONSTRUCTOR - the `Win::construct` idiom.
+  // The real body (??0Dialog@@QAE@XZ, 0x00608C10) is not promoted yet;
+  // classes that hold a Dialog as a virtual-base-shaped subobject (CheckBox,
+  // RadioButton, EditGroup, SpriteBox) reach it by name so their own
+  // constructors emit the image's `E8` here. Forwarded in pending_bodies.cpp.
+  void construct();
 
   // The recovered complete-object destructor body (0x00608E10); the inline
   // ~Dialog stays trivial so classes embedding a Dialog keep their layout-only

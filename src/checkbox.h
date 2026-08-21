@@ -89,8 +89,20 @@ class CheckBox {
   static int init_class();   // 0060FC60
   void on_mouse_leave(int a1, int a2);
   void on_dialog_focus(int a1);
+  // ??0CheckBox@@QAE@H@Z at 0x0060E670. The `int` is NOT a user parameter -
+  // CheckBox's layout is composed by hand (see the class comment above), so
+  // VC6 cannot inject the most-derived flag the way it would for a real
+  // `: virtual GraphicWin, virtual Dialog` declaration; this constructor
+  // takes an explicit flag instead and mirrors what the image's own guard
+  // does with it.
+  CheckBox(int a1);
+  // Trivial default, kept ONLY so an embedding class that has not itself
+  // been recovered to call the flag-taking constructor (NetWin::checkBox_,
+  // see the note in netwin.cpp) still compiles. The image has no
+  // `??0CheckBox@@QAE@XZ` of its own - every construction goes through the
+  // address above.
   CheckBox() { ; }
-  ~CheckBox() { ; }
+  ~CheckBox();
   void close();
   void UNK1(int pos);
   int UNK2(int pos);
