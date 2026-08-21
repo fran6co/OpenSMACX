@@ -19,6 +19,7 @@ A store is any `mov`/`and`/`or` whose destination is memory. Reads are ignored.
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -31,8 +32,15 @@ from decomp.asm import (build_command, compile_unit, original_asm,
                         shared_spans, span_refusal, subject_asm)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-IMAGE = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
-COMPILE_COMMANDS = REPO_ROOT / "build" / "compile_commands.json"
+# HONOURS `OPENSMACX_IMAGE`, because `.opensmacx/` is gitignored and a
+# worktree does not have it - an agent working in one must be able to
+# point every tool back at the root copy. osmx.py has always taken it;
+# these did not, and an agent had to symlink the image to work around it.
+IMAGE = Path(os.environ.get(
+    "OPENSMACX_IMAGE",
+    REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"))
+COMPILE_COMMANDS = Path(os.environ.get(
+    "OPENSMACX_COMPILE_COMMANDS", REPO_ROOT / "build" / "compile_commands.json"))
 BORROW = REPO_ROOT / "src" / "buffer.cpp"
 FLAGS = ("/c /O2 /Gy /GR- /Oy- /GX", "/c /O2 /Gy /GR- /GX",
          "/c /O1 /Gy /GR- /Oy- /GX", "/c /O1 /Gy /GR- /GX")

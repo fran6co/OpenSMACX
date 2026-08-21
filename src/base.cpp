@@ -965,6 +965,12 @@ static int yield_tile_owner(const Map *tile) {
 /*
 Purpose: Calculate the nutrients produced by a single map square.
 // ORIGINAL: 0x004E6E50 ?crop_yield@@YAHHHHHH@Z 0x004E6E50-0x004E7306
+// RULED-OUT: caching bit2 to a named local before the landmark_bonus jungle/
+//            fresh check (image re-reads tile->climate twice there instead
+//            of the cached is_ocean_tile - now written that way, but score
+//            unchanged: 0x8-vs-0xC sub esp gap under /Oy- is unexplained,
+//            one 4-byte stack slot short of the image with no candidate
+//            local found for it in the time spent).
 // size      1206 bytes
 // prototype int (__cdecl ?crop_yield@@YAHHHHHH@Z)(int factionID, int, int, int, int)
 // callers   10   call targets   3
@@ -987,12 +993,16 @@ int __cdecl crop_yield(int faction_id, int base_id, int x, int y,
     BOOL has_base_in_tile = yield_tile_owner(tile) >= 0;
     // Bonus id 1 is the nutrient bonus.
     BOOL has_nutrient_bonus = bonus_at(x, y, 0) == 1;
-    uint32_t bit2 = tile->bit2;
-    // Nutrient landmarks: Jungle counts on land, Freshwater Sea on ocean.
+    // Nutrient landmarks: Jungle counts on land, Freshwater Sea on ocean. Not
+    // cached to a local: bit2 is read once here (reused via register across
+    // both disjuncts within this one expression), and both arms re-test
+    // climate directly off tile->climate rather than reusing the cached
+    // is_ocean_tile above - the image re-reads that byte twice here instead
+    // of referencing the earlier local.
     BOOL landmark_bonus =
-        (((bit2 & (BIT2_UNK_80000000 | BIT2_JUNGLE)) == BIT2_JUNGLE)
-            && !is_ocean_tile)
-        || ((bit2 & BIT2_FRESH) && is_ocean_tile);
+        (((tile->bit2 & (BIT2_UNK_80000000 | BIT2_JUNGLE)) == BIT2_JUNGLE)
+            && (tile->climate & 0xE0) >= ALT_BIT_SHORE_LINE)
+        || ((tile->bit2 & BIT2_FRESH) && (tile->climate & 0xE0) < ALT_BIT_SHORE_LINE);
     int crop;
 
     if (has_base_in_tile) {
@@ -1131,6 +1141,18 @@ int __cdecl crop_yield(int faction_id, int base_id, int x, int y,
 /*
 Purpose: Calculate the minerals produced by a single map square.
 // ORIGINAL: 0x004E7310 ?mine_yield@@YAHHHHHH@Z 0x004E7310-0x004E7748
+// LEVER: bit2 was cached to a named local and read once; the image reads
+//        tile->bit2 fresh at each of the two use sites (code=bit2>>24, then
+//        again for the landmark_bonus mask) because it does not survive the
+//        bonus_at() call. Also is_ocean_tile was hoisted; the image computes
+//        it lazily, right at its one `else if`, not up front. Both fixed:
+//        agreeing instructions 2->5 of 355 (/Oy-), similarity 0.379->0.407.
+// RULED-OUT: the image needs ZERO stack (reuses the dead x/y/base_id/
+//            assume_improved parameter slots as scratch throughout); this
+//            tree's body still needs sub esp 0xc for ~8 live locals across
+//            the branch chain. That reuse is a VC6 liveness heuristic, not
+//            something reachable by reordering source further in the time
+//            spent here.
 // size      1080 bytes
 // prototype int (__cdecl ?mine_yield@@YAHHHHHH@Z)(int factionID, int, int, int, int)
 // callers   6   call targets   3
@@ -1146,23 +1168,23 @@ at sea, and suppresses the roadless-mine mineral limit.
 int __cdecl mine_yield(int faction_id, int base_id, int x, int y,
                        BOOL assume_improved) {
     Map *tile = yield_tile(x, y);
-    uint32_t bit = tile->bit;
-    uint32_t bit2 = tile->bit2;
     // Landmark sequence code, signed exactly as `sar edi, 0x18`. Bit 31 of bit2
     // is required clear by every test below, so the sign only decides branches
-    // that are not taken.
-    int code = (int)bit2 >> 24;
-    BOOL is_ocean_tile = (tile->climate & 0xE0) < ALT_BIT_SHORE_LINE;
+    // that are not taken. Read directly off tile->bit2, not a cached local:
+    // the image re-reads bit2 from memory for the landmark_bonus mask below,
+    // rather than keeping this value live across the bonus_at() call.
+    int code = (int)tile->bit2 >> 24;
+    uint32_t bit = tile->bit;
     // Bonus id 2 is the mineral bonus.
     BOOL has_mineral_bonus = bonus_at(x, y, 0) == 2;
     BOOL landmark_bonus =
-        (((bit2 & (BIT2_UNK_80000000 | BIT2_VOLCANO)) == BIT2_VOLCANO)
+        (((tile->bit2 & (BIT2_UNK_80000000 | BIT2_VOLCANO)) == BIT2_VOLCANO)
             && code < 9)
-        || (((bit2 & (BIT2_UNK_80000000 | BIT2_CRATER)) == BIT2_CRATER)
+        || (((tile->bit2 & (BIT2_UNK_80000000 | BIT2_CRATER)) == BIT2_CRATER)
             && code < 9)
-        || (((bit2 & (BIT2_UNK_80000000 | BIT2_FOSSIL)) == BIT2_FOSSIL)
+        || (((tile->bit2 & (BIT2_UNK_80000000 | BIT2_FOSSIL)) == BIT2_FOSSIL)
             && code < 6)
-        || ((bit2 & (BIT2_UNK_80000000 | BIT2_CANYON)) == BIT2_CANYON);
+        || ((tile->bit2 & (BIT2_UNK_80000000 | BIT2_CANYON)) == BIT2_CANYON);
     int mineral = (has_mineral_bonus ? ResourceInfo[RSCINFO_BONUS_SQ].minerals
                                      : 0)
                   + (landmark_bonus ? 1 : 0);
@@ -1204,7 +1226,10 @@ int __cdecl mine_yield(int faction_id, int base_id, int x, int y,
         if (has_project(SP_MANIFOLD_HARMONICS, faction_id) && planet > 1) {
             mineral++;
         }
-    } else if (is_ocean_tile) {
+    } else if ((tile->climate & 0xE0) < ALT_BIT_SHORE_LINE) {
+        // Not hoisted: the image computes this test lazily, right here, rather
+        // than caching it in a local up front (unlike crop_yield/energy_yield,
+        // which read climate for is_ocean_tile before this branch chain).
         restrict_yield = true;
         mineral += ResourceInfo[RSCINFO_OCEAN_SQ].minerals;
         // Legacy: the aquatic bonus keys off the faction owning BASE_ID, not off
@@ -1272,6 +1297,20 @@ int __cdecl mine_yield(int faction_id, int base_id, int x, int y,
 /*
 Purpose: Calculate the energy produced by a single map square.
 // ORIGINAL: 0x004E7750 ?energy_yield@@YAHHHHHH@Z 0x004E7750-0x004E7DA3
+// LEVER: same bit2 shape as mine_yield - cached to a named local, but the
+//        image re-reads tile->bit2 from memory for the landmark_bonus mask
+//        (the register holding it was already destroyed by the >>24 shift
+//        for `code`, and does not survive the bonus_at() call either way).
+//        Fixed: agreeing instructions 4->5 of 536 (/Oy-), and `sub esp,0x18`
+//        now matches the image exactly (both sides, 6 stack-resident
+//        locals) - the frame allocation itself is no longer the gap here.
+// RULED-OUT: the remaining divergence (instr 3) is prologue INSTRUCTION
+//            SCHEDULING - the image multiplies width by a direct memory
+//            operand on y (`imul eax, [ebp+0x14]`) and only loads y into a
+//            register later, right before the bonus_at() call; this tree's
+//            body loads y into a register immediately. Not reachable from
+//            C source order in the time spent; it is a backend scheduling
+//            choice, not a statement-order one.
 // size      1619 bytes
 // prototype int (__cdecl ?energy_yield@@YAHHHHHH@Z)(int factionID, int, int, int, int)
 // callers   8   call targets   3
@@ -1293,18 +1332,22 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
                          BOOL assume_improved) {
     Map *tile = yield_tile(x, y);
     uint32_t bit = tile->bit;
-    uint32_t bit2 = tile->bit2;
-    int code = (int)bit2 >> 24;
+    // Not cached: bit2 is read directly off tile->bit2 at both use sites
+    // below (here, shifted for `code`, and again in landmark_bonus). The
+    // image re-reads it from memory the second time rather than keeping the
+    // pre-shift value live across the bonus_at() call - same shape as
+    // mine_yield's borehole/landmark computation.
+    int code = (int)tile->bit2 >> 24;
     BOOL is_ocean_tile = (tile->climate & 0xE0) < ALT_BIT_SHORE_LINE;
     BOOL has_base_in_tile = yield_tile_owner(tile) >= 0;
     // Bonus id 3 is the energy bonus.
     BOOL has_energy_bonus = bonus_at(x, y, 0) == 3;
     BOOL landmark_bonus =
-        (((bit2 & (BIT2_UNK_80000000 | BIT2_VOLCANO)) == BIT2_VOLCANO)
+        (((tile->bit2 & (BIT2_UNK_80000000 | BIT2_VOLCANO)) == BIT2_VOLCANO)
             && code < 9)
-        || ((bit2 & (BIT2_UNK_80000000 | BIT2_URANIUM)) == BIT2_URANIUM)
-        || ((bit2 & (BIT2_UNK_80000000 | BIT2_GEOTHERMAL)) == BIT2_GEOTHERMAL)
-        || ((bit2 & (BIT2_UNK_80000000 | BIT2_RIDGE)) == BIT2_RIDGE);
+        || ((tile->bit2 & (BIT2_UNK_80000000 | BIT2_URANIUM)) == BIT2_URANIUM)
+        || ((tile->bit2 & (BIT2_UNK_80000000 | BIT2_GEOTHERMAL)) == BIT2_GEOTHERMAL)
+        || ((tile->bit2 & (BIT2_UNK_80000000 | BIT2_RIDGE)) == BIT2_RIDGE);
     int energy = 0;
     BOOL skip_shared_tail = false;
 
@@ -1495,6 +1538,15 @@ Purpose: Tally what the current base's forces cost it: the resources its supply
          convoys move in and out, the units it supports, the minerals their
          maintenance takes, and the pacifism drones they cause.
 // ORIGINAL: 0x004E9550 ?base_support@@YAXXZ 0x004E9550-0x004E9B4A
+// RULED-OUT: hoisting `Base *base_current = BaseCurrent();` above the loop -
+//            already ruled out for a sibling function a few hundred lines up
+//            in this file (see the RULED-OUT note near line 396): the image
+//            re-reads the BaseCurrent() global fresh at every use, so this
+//            was not retried here. Under /Oy-, `sub esp` is 0x34 against the
+//            image's 0x3c (one 8-byte gap, i.e. two stack slots) - closer
+//            than the auto-picked flag set's 0x2c, but no specific local was
+//            identified as the source of the gap in the time spent on a
+//            465-instruction body with ~20 live locals across the veh loop.
 // size      1530 bytes
 // prototype 
 // callers   7   call targets   6
