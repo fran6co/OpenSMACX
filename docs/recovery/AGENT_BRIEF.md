@@ -188,6 +188,21 @@ LEVERS THAT HAVE PAID, most productive first
   `mov eax, esi` - if the image returns `this`, say so in the signature, which
   closed the last instruction on four Ambience constructors.
 
+- A LOCAL MUST MATCH THE WIDTH IT READS FROM. `guard_check` was byte-exact the
+  moment `plan_region` became `uint8_t` - the element type of the
+  `region_base_plan[128]` it is assigned from - instead of `uint32_t`. The wider
+  type forces an `xor edx, edx` zero-extend and word-form compares where the
+  image has `cmp dl, N`. Check every local against the array or field it is
+  loaded from, not against what looks tidy.
+
+- DO NOT CACHE WHAT THE IMAGE RE-READS - but cache what it reads ONCE. Both
+  directions are real and both were measured on 2026-08-21. `veh_lift` went
+  4/60 to 49/60 because the image re-reads `Vehs[veh_id].x` at every use;
+  0x005BF130 went 51/70 to 65/70 because caching `map_loc(x, y)->bit2` once
+  lets VC6 fold the `Map` stride into the load's SIB addressing, where two
+  accessor calls could not. Caching a `Map *tile` POINTER instead is worse
+  still, 65 back to 21. Read the listing; do not assume either way.
+
 - THE IMAGE PEELS ITS LOOPS. `do { B } while (C);` compiles one copy of the body;
   the image runs `B; while (C) { B }` - same program, and the difference was four
   instructions on each of three message pumps. If the image's loop has TWO calls
