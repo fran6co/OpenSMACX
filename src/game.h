@@ -118,7 +118,7 @@ extern uint32_t VictoryAchieveBonusPts;
 extern uint32_t MissionYearCurrent;
 extern uint32_t StartingMissionYear;
 extern uint32_t EndingMissionYear;
-extern uint32_t *TectonicDetonationCount;
+uint32_t *const TectonicDetonationCount = (uint32_t *)0x00946138;
 extern int SunspotDuration;
 extern uint32_t MountPlanetX;
 extern uint32_t MountPlanetY;

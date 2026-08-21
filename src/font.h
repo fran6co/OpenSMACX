@@ -91,8 +91,8 @@ static_assert(sizeof(Font) == 0x28, "Font layout must match the legacy ABI");
 
 // Twelve candidate point sizes and the Font table they index, both owned by
 // the original image.
-extern int *FontSizeTable;
-extern Font *FontTable;
+int *const FontSizeTable = (int *)0x0068F220;
+Font *const FontTable = (Font *)0x0093FC58;
 static const size_t FontSizeTableCount = 12;
 
 /*

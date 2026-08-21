@@ -126,7 +126,7 @@ extern uint32_t ScrollCloseDynamicDefaults;
 extern const uint32_t ScrollPrimaryVtable;
 extern const uint32_t ScrollBufferVtable;
 typedef void(__cdecl func_operator_delete)(void *block);
-extern func_operator_delete *ScrollOperatorDelete;
+func_operator_delete *const ScrollOperatorDelete = (func_operator_delete *)0x0064557F;
 
 RECT *__cdecl expand_rect(RECT *rect, int horizontal, int vertical);
 uint32_t __fastcall scroll_close_redirect(Scroll *self, void *);

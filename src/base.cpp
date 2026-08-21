@@ -28,7 +28,6 @@
 #include "veh.h"
 
 RulesFacility *Facility = (RulesFacility *)0x009A4B68;
-RulesCitizen *Citizen = (RulesCitizen *)0x00946020;
 Base *Bases = (Base *)0x0097D040; // [512]
 BaseSecretProject *SecretProject = (BaseSecretProject *)0x009A6514; // [64]
 int BaseIDCurrentSelected;  // 0x00689370
@@ -37,8 +36,6 @@ int BaseFindDist;  // 0x0090EA04
 Base **BaseCurrent = (Base **)0x0090EA30;
 uint32_t ScnVictFacilityObj;  // 0x009A6814
 uint32_t BaseUpkeepStage;  // 0x0090EA34
-uint32_t *BaseCurrentConvoyFrom = (uint32_t *)0x0090E904; // [4]
-uint32_t *BaseCurrentConvoyTo = (uint32_t *)0x0090E93C; // [4]
 int BaseCurrentGrowthRate;  // 0x0090E918
 uint32_t BaseCurrentVehPacifismCount;  // 0x0090E980
 uint32_t BaseCurrentForcesSupported;  // 0x0090E8FC

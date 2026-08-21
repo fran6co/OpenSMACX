@@ -42,15 +42,7 @@ LPCSTR AlphaxFileID = "ALPHAX";
 LPCSTR ScriptTxtID = "SCRIPT";
 LPSTR *Compass = (LPSTR *)0x00945D48;
 LPSTR *Difficulty = (LPSTR *)0x0096C85C;
-Label *Labels = (Label *)0x009B90F8;
-RulesResourceinfo *ResourceInfo = (RulesResourceinfo *)0x00945F50; // see resource_info_id
-RulesTimeControl *TimeControl = (RulesTimeControl *)0x0094F1B8;
-RulesResource *Resource = (RulesResource *)0x00946158;
-RulesEnergy *Energy = (RulesEnergy *)0x0094A318;
 RulesBasic *Rules = (RulesBasic *)0x00949738;
-RulesWorldbuilder *WorldBuilder = (RulesWorldbuilder *)0x009502A8;
-AlphaIniPref *AlphaIniPrefs = (AlphaIniPref *)0x0094B464;
-DefaultPref *DefaultPrefs = (DefaultPref *)0x0094B350;
 // AN OBJECT, NOT A POINTER TO A FIXED ADDRESS: the pointer form costs a
 // load at every use where the image addresses the storage directly, and
 // the address is terranx.exe's data, unmapped in a standalone build.
@@ -1710,7 +1702,7 @@ BOOL __cdecl labels_init() {
 
 /*
 Purpose: Shutdown or reset the labels global variable.
-// ORIGINAL: 0x006169D0 ?labels_shutdown@@YAXXZ 0x006169D0-0x006169F7
+// ORIGINAL: 0x006169D0 ?labels_shutdown@@YAXXZ 0x006169D0-0x006169F7 BYTE_EXACT
 // size      39 bytes
 // prototype 
 // callers   4   call targets   1

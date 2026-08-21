@@ -158,7 +158,7 @@ static const int MaxMandateNum = 4;
 
 extern RulesTechnology *Technology; // [89]
 extern uint8_t *GameTechAchieved; // [89]
-extern RulesMandate *Mandate; // [4]
+RulesMandate *const Mandate = (RulesMandate *)0x0094B4A0; // [4]
 extern int TechValidCount;
 extern int TechCommerceCount;
 extern char TechName[80];

@@ -345,8 +345,6 @@ int __cdecl dialog_set_def_dialog_font_redirect(
 }
 
 func_dialog_close DialogOriginalClose = original_method<func_dialog_close>(0x00608F50);
-func_operator_delete *DialogOperatorDelete =
-    (func_operator_delete *)0x0064557F;
 
 const uint32_t DialogPrimaryVtable = 0x006703FC;
 uint32_t DialogListDerivedVtable = 0x006698C4;

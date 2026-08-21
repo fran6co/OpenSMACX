@@ -263,7 +263,6 @@ typedef void * (OriginalObject::*func_graphic_win_parent_query)();
 // Virtual slot 0x30, the window's own paint.
 typedef void (OriginalObject::*func_graphic_win_paint)();
 
-void **GraphicWinColorMapTable = reinterpret_cast<void **>(0x009B3390);
 // USER32!InvalidateRect, read out of the executable's import table. This is
 // resolved on FIRST USE rather than by a dynamic initializer, because the
 // initializer runs in every binary that links this translation unit and only
@@ -440,7 +439,6 @@ void __fastcall graphic_win_redraw_redirect(GraphicWin *self, void *) {
 // Buffer::init is DirectDraw/GDI surface creation; all four stay at their
 // original addresses until that closure is source-owned. Tests rebind them.
 
-uint32_t *GraphicWinInitDefaults = reinterpret_cast<uint32_t *>(0x009B3394);
 
 /*
 Purpose: Initialise a GraphicWin. Reset the window, republish the eleven

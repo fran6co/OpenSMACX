@@ -231,7 +231,7 @@ class ReportIf : SubInterface {
 // address, not a subobject: close_energy closes it alongside the two this
 // object owns. Named here so the address appears once, the way
 // ConsoleGlobal does for 0x009156B0, and so a fixture can repoint it.
-extern ListBox *ReportIfEnergyListBox;  // 0x0087BE84
+ListBox *const ReportIfEnergyListBox = (ListBox *)0x0087BE84;  // 0x0087BE84
 
 void __fastcall report_if_close_energy_redirect(ReportIf *self, void *);
 void __fastcall report_if_close_intel_redirect(ReportIf *self, void *);

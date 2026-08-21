@@ -34,14 +34,14 @@
  * fault the moment a leaf test called it.
  */
 
-extern int32_t *GlobalSlot00686B6C;
-extern int32_t *GlobalSlot00686B70;
-extern int32_t *GlobalSlot00686B74;
-extern int32_t *GlobalSlot00686B78;
-extern int32_t *GlobalSlot00686B7C;
-extern int32_t *GlobalSlot00686B80;
-extern int32_t *GlobalSlot00686B84;
-extern int32_t *GlobalSlot00686B8C;
+int32_t *const GlobalSlot00686B6C = (int32_t *)0x00686B6C;
+int32_t *const GlobalSlot00686B70 = (int32_t *)0x00686B70;
+int32_t *const GlobalSlot00686B74 = (int32_t *)0x00686B74;
+int32_t *const GlobalSlot00686B78 = (int32_t *)0x00686B78;
+int32_t *const GlobalSlot00686B7C = (int32_t *)0x00686B7C;
+int32_t *const GlobalSlot00686B80 = (int32_t *)0x00686B80;
+int32_t *const GlobalSlot00686B84 = (int32_t *)0x00686B84;
+int32_t *const GlobalSlot00686B8C = (int32_t *)0x00686B8C;
 extern int32_t *GlobalSlot007591C4;
 extern int32_t *GlobalSlot008577D8;
 extern int32_t *GlobalSlot008577DC;
@@ -58,7 +58,7 @@ extern int32_t *GlobalSlot00857898;
 extern int32_t *GlobalSlot0085789C;
 extern int32_t *GlobalSlot008578A0;
 extern int32_t *GlobalSlot008578A4;
-extern int32_t *GlobalSlot008578A8;
+int32_t *const GlobalSlot008578A8 = (int32_t *)0x008578A8;
 extern int32_t *GlobalSlot008578AC;
 extern int32_t *GlobalSlot008578B0;
 extern int32_t *GlobalSlot008578B4;

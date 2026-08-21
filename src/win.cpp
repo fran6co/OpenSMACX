@@ -29,8 +29,6 @@
 
 const uint32_t WinPrimaryVtable = 0x0066FDD0;
 const uint32_t WinSecondaryVtable = 0x0066FF30;
-uint32_t *WinStaticDefaults = reinterpret_cast<uint32_t *>(0x00696D34);
-uint32_t *WinDynamicDefaults = reinterpret_cast<uint32_t *>(0x009B7AF0);
 
 /*
 Purpose: Construct a Win from its AutoSound subobject and the process window
@@ -661,8 +659,6 @@ void __cdecl win_release_hdc_redirect() {
     Win::release_hdc();
 }
 
-func_win_update_cursor *WinUpdateCursorOriginal =
-    (func_win_update_cursor *)0x005F1820;
 
 /*
 Purpose: Select a system cursor by name and refresh the displayed cursor.
@@ -699,7 +695,6 @@ int __fastcall win_set_cursor_redirect(Win *self, void *, int name) {
 
 int *WinBubbleActive = reinterpret_cast<int *>(0x009B7A50);
 int *WinBubbleCompanion = reinterpret_cast<int *>(0x009B7A4C);
-RECT *WinBubbleRect = reinterpret_cast<RECT *>(0x009B6E38);
 
 // The globals `Win::flip` reaches, all of them past `.data`'s stored bytes
 // and so zero-fill - real objects for the same reason `WinHdcRefCount` and
@@ -730,9 +725,6 @@ int WinFlipClipped;
 IDirectDrawSurface *DirectDrawBackBuffer;
 // 0x009BC2D0. The rectangle a clipped flip intersects against.
 RECT DirectDrawClipRect;
-func_win_update_screen *WinUpdateScreenOriginal =
-    (func_win_update_screen *)0x005F7320;
-func_win_flip *WinFlipOriginal = (func_win_flip *)0x005EFD20;
 
 /*
 Purpose: Present the screen buffer: draw the bubble text over it, flip or
@@ -1214,7 +1206,6 @@ int __fastcall win_on_sys_command_redirect(Win *self, void *, unsigned int a1, i
 
 // The active palette lives at a fixed address; the same seam basebutton.cpp
 // uses. Its most-recently-set window generation counter is at 0x400.
-Palette **WinActivePalette = reinterpret_cast<Palette **>(0x009B8180);
 
 /*
 Purpose: Bring this window's palette into step with the active one, but only

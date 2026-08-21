@@ -121,7 +121,6 @@ void __fastcall map_win_close_redirect(MapWin *self, void *) {
 }
 
 func_map_win_click MapWinClick = original_method<func_map_win_click>(0x0046D5D0);
-int32_t *MapWinInputEnabled = reinterpret_cast<int32_t *>(0x0090D938);
 
 /*
 Purpose: Report a left click on the map, but only when map input is enabled.
@@ -234,7 +233,6 @@ int __fastcall map_win_unk2_redirect(MapWin *self, void *) {
     return self->UNK2();
 }
 
-MapWin **MapWinTable = reinterpret_cast<MapWin **>(0x007D3C3C);
 func_map_win_draw_radius MapWinOriginalDrawRadius =
     original_method<func_map_win_draw_radius>(0x0046A2A0);
 

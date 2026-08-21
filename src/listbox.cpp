@@ -42,7 +42,6 @@ void __fastcall list_box_on_dialog_focus_redirect(ListBox *self, void *, int a1)
 
 func_dialog_close ListBoxOriginalDialogClose =
     original_method<func_dialog_close>(0x00608F50);
-uint32_t *ListBoxCloseStaticDefaults = (uint32_t *)0x006970E0;
 uint32_t ListBoxCloseDynamicDefault;  // 0x009B8EE0
 
 namespace {

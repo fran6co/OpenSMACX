@@ -178,7 +178,7 @@ typedef void (OriginalObject::*func_dialogs_teardown)();
 extern func_dialogs_teardown DialogsEditGroupDestructor;  // 0x00611A20
 extern func_dialogs_teardown DialogsSpriteBoxDestructor;  // 0x00610120
 extern func_dialogs_teardown DialogsCheckBoxDestructor;   // 0x0060E740
-extern func_operator_delete *DialogsOperatorDelete;        // 0x0064557F
+func_operator_delete *const DialogsOperatorDelete = (func_operator_delete *)0x0064557F;        // 0x0064557F
 
 // Virtual tables ~Dialogs stages: three into the GraphicWin/Win virtual base,
 // three into the embedded RadioButton, every slot located through the

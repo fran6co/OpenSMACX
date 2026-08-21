@@ -1489,7 +1489,6 @@ int __fastcall image_button_init_redirect(
 // The text sub_59d230 hands to Dialogs::item. It is a REBINDABLE pointer, not
 // a constant: the callee dereferences it, so a fixture that could not swap it
 // would fault on the original image's address rather than test anything.
-char *DialogsItemText6900C4 = reinterpret_cast<char *>(0x006900C4);
 
 /*
 Purpose: Add one fixed item to the Dialogs at 0x21d0.
@@ -1505,7 +1504,7 @@ Purpose: Add one fixed item to the Dialogs at 0x21d0.
          which is the sort of thing that gets "tidied" to 2 or 0 by someone
          reading quickly.
 
-// ORIGINAL: 0x0059D230 sub_59d230 0x0059D230-0x0059D243
+// ORIGINAL: 0x0059D230 sub_59d230 0x0059D230-0x0059D243 BYTE_EXACT
 // symbol    ?leaf_0059d230_redirect@@YIHPAX0@Z
 // size      19 bytes
 // prototype 

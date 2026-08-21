@@ -475,7 +475,6 @@ void __fastcall base_pop_set_button_color3_redirect(
     self->set_button_color3(c1, c2, c3, c4);
 }
 
-int *BasePopFalloutGate = reinterpret_cast<int *>(0x009B8D00);
 int *BasePopFalloutFlag = reinterpret_cast<int *>(0x009B8CFC);
 
 /*
@@ -520,7 +519,6 @@ void __fastcall base_pop_write_check_redirect(BasePop *self, void *, long value)
     self->write_check(value);
 }
 
-int32_t *BasePopScreenWidth = reinterpret_cast<int32_t *>(0x009B7B1C);
 
 /*
 Purpose: Set the dialog width, scaled to three-halves in the high-resolution

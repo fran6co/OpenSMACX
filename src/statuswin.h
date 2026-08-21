@@ -19,6 +19,7 @@
 
 #include "original_seam.h"
 #include "caviar.h"
+#include "subinterface.h"
 
  /*
   * StatusWin class
@@ -100,7 +101,11 @@ void __fastcall status_win_set_loc_redirect(StatusWin *self, void *, int x, int 
 // acts on is a global the original reaches at a fixed address. Both are
 // rebindable so the reset can be observed without either being present.
 typedef void (OriginalObject::*func_release_iface_mode)();
-extern func_release_iface_mode SubInterfaceOriginalReleaseIfaceMode;
-extern void *SubInterfaceGlobal;
+// The process-wide SubInterface at 0x006EEED8, as a CONSTANT rather than a
+// pointer variable: the image's `mov ecx, 0x6eeed8` is an immediate, and a
+// variable costs the load it does not make. Same object as `g_BattleWin`.
+inline SubInterface *sub_interface_global() {
+  return reinterpret_cast<SubInterface *>(0x006EEED8);
+}
 
 void __fastcall status_win_reset_redirect(StatusWin *self, void *);

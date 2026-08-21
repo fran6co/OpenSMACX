@@ -148,7 +148,7 @@ typedef void (OriginalObject::*func_graphic_win_overlay_nonclient)(RECT *);
 
 // The translation table fill consults before remapping. A null table means
 // the plain blit is the whole operation, which is the common case.
-extern void **GraphicWinColorMapTable;
+void **const GraphicWinColorMapTable = (void **)0x009B3390;
 // USER32!InvalidateRect through the import at 0x00669304.
 typedef BOOL(__stdcall func_graphic_win_invalidate_rect)(HWND, const RECT *,
                                                           BOOL);
@@ -182,7 +182,7 @@ extern func_buffer_init BufferOriginalInit;
 // The eleven process window defaults init republishes, at 0x009B3394 - one
 // contiguous block between the colour-map slot GraphicWinColorMapTable
 // already binds at 0x009B3390 and GraphicWinFieldA0CDefault at 0x009B33C0.
-extern uint32_t *GraphicWinInitDefaults;
+uint32_t *const GraphicWinInitDefaults = (uint32_t *)0x009B3394;
 
 int __fastcall graphic_win_init_redirect(GraphicWin *self, void *,
                                          int x, int y, int width, int height,

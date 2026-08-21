@@ -245,8 +245,8 @@ static_assert(sizeof(Win) == 0x444, "Win layout must match the legacy ABI");
 
 extern const uint32_t WinPrimaryVtable;
 extern const uint32_t WinSecondaryVtable;
-extern uint32_t *WinStaticDefaults;
-extern uint32_t *WinDynamicDefaults;
+uint32_t *const WinStaticDefaults = (uint32_t *)0x00696D34;
+uint32_t *const WinDynamicDefaults = (uint32_t *)0x009B7AF0;
 Win *__fastcall win_construct_redirect(Win *self, void *);
 int __fastcall win_move_redirect(Win *self, void *, int x, int y);
 int __fastcall win_is_visible_redirect(Win *self, void *);
@@ -445,7 +445,7 @@ int __fastcall win_set_cursor_redirect(Win *self, void *, int name);
 // The cursor refresh this setter triggers is a 2528-byte body with six call
 // targets, still an original dependency. Tests rebind this seam.
 typedef int(__cdecl func_win_update_cursor)(Win *, int);
-extern func_win_update_cursor *WinUpdateCursorOriginal;
+func_win_update_cursor *const WinUpdateCursorOriginal = (func_win_update_cursor *)0x005F1820;
 
 void __cdecl win_clear_bubble_text_redirect();
 
@@ -464,14 +464,14 @@ extern IDirectDrawSurface *DirectDrawBackBuffer;  // 0x009BC49C
 extern RECT DirectDrawClipRect;        // 0x009BC2D0
 extern int *WinBubbleActive;
 extern int *WinBubbleCompanion;
-extern RECT *WinBubbleRect;
+RECT *const WinBubbleRect = (RECT *)0x009B6E38;
 
 // Both refresh bodies remain original dependencies: update_screen is 383
 // bytes with four call targets, flip 1223 bytes with fourteen.
 typedef int(__cdecl func_win_update_screen)(RECT *, Win *);
 typedef void(__cdecl func_win_flip)(RECT *);
-extern func_win_update_screen *WinUpdateScreenOriginal;
-extern func_win_flip *WinFlipOriginal;
+func_win_update_screen *const WinUpdateScreenOriginal = (func_win_update_screen *)0x005F7320;
+func_win_flip *const WinFlipOriginal = (func_win_flip *)0x005EFD20;
 
 int __fastcall win_unk1_redirect(
     Win *self, void *, int a, int b, int c, int d, int e, int f, int g, int h, int i);
@@ -495,7 +495,7 @@ int __fastcall win_on_sys_command_redirect(Win *self, void *, unsigned int a1, i
 
 // The active palette lives at a fixed address; rebindable so tests can
 // point it at a local rather than requiring the mapped global.
-extern Palette **WinActivePalette;
+Palette **const WinActivePalette = (Palette **)0x009B8180;
 
 void __fastcall win_sync_palette_redirect(Win *self, void *);
 

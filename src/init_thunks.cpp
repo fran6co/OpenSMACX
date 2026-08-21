@@ -38,8 +38,6 @@
 // registrations live in, so recovered initializers must
 // register there too or teardown order would split across
 // two CRTs. Rebindable so tests can observe registration.
-func_game_atexit *GameAtexit =
-    (func_game_atexit *)0x00645398;
 
 // Per-element constructors the array walks dispatch
 // to, bound at the original addresses the ??_L call
@@ -209,21 +207,6 @@ func_thiscall_teardown MultiDebugCtorTarget =
 func_thiscall_teardown PaletteCtorTarget =
     original_method<func_thiscall_teardown>(0x005FE2A0);
 
-Sprite *g_NEWTECHWIN_SPRITES = (Sprite *)0x00822610;
-Caviar *g_VEHDRAW_CAVIAR = (Caviar *)0x008CC828;
-Wave_Device *g_WAVE_DEVICE = (Wave_Device *)0x0090D978;
-Time *g_CONSOLE_TIMER = (Time *)0x00939E88;
-Sprite *g_BUFFER_SPRITE = (Sprite *)0x009B3A50;
-Buffer *g_WIN_BUFFER = (Buffer *)0x009B6F08;
-Sprite *g_RADIOBUTTON_SPRITE_1 = (Sprite *)0x009B8EF8;
-Sprite *g_RADIOBUTTON_SPRITE_2 = (Sprite *)0x009B8F28;
-Sprite *g_CHECKBOX_SPRITE_1 = (Sprite *)0x009B8F60;
-Sprite *g_CHECKBOX_SPRITE_2 = (Sprite *)0x009B8F90;
-Sprite *g_FILEWIN_SPRITE_1 = (Sprite *)0x009B9048;
-Sprite *g_FILEWIN_SPRITE_2 = (Sprite *)0x009B9018;
-Sprite *g_FILEWIN_SPRITE_3 = (Sprite *)0x009B9078;
-Buffer *g_CAVIAR_BUFFER_1 = (Buffer *)0x009B9108;
-Buffer *g_CAVIAR_BUFFER_2 = (Buffer *)0x009B96B0;
 
 /*
 Purpose: Dynamic initializer for g_ALPHAMENU_WAVE; registers its ??__F teardown.

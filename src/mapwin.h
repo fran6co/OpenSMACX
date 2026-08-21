@@ -199,7 +199,7 @@ int __fastcall map_win_unk2_redirect(MapWin *self, void *);
 // recovered; the flag lives at a fixed address and is rebindable for tests.
 typedef void (OriginalObject::*func_map_win_click)(int a1, int a2, int button);
 extern func_map_win_click MapWinClick;
-extern int32_t *MapWinInputEnabled;
+int32_t *const MapWinInputEnabled = (int32_t *)0x0090D938;
 
 void __fastcall map_win_on_left_click_redirect(MapWin *self, void *, int a1, int a2);
 void __fastcall map_win_on_right_click_redirect(MapWin *self, void *, int a1, int a2);
@@ -214,7 +214,7 @@ void __fastcall map_win_on_left_up_redirect(MapWin *self, void *, int a1, int a2
 // `mov ecx, dword ptr [esi*4 + 0x7d3c3c]`, and by ?zoom@BaseWin@@QAEXHH@Z at
 // 0x0041AAC3, which walks slot 0's vbtable. Populated at run time, so this is
 // a mutable global; rebindable so leaf tests can seed a controlled table.
-extern MapWin **MapWinTable;                  // 0x007D3C3C
+MapWin **const MapWinTable = (MapWin **)0x007D3C3C;                  // 0x007D3C3C
 static const size_t MapWinTableSlots = 8;        // (0x007D3C5C - 0x007D3C3C) / 4
 
 // Per-window "this window is live" dword. The MapWin constructor clears it

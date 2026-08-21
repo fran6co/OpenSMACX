@@ -63,14 +63,11 @@ void __fastcall status_win_set_loc_redirect(StatusWin *self, void *, int x, int 
     self->set_loc(x, y);
 }
 
-func_release_iface_mode SubInterfaceOriginalReleaseIfaceMode =
-    original_method<func_release_iface_mode>(0x0045D380);
-void *SubInterfaceGlobal = (void *)0x006EEED8;
 
 /*
 Purpose: Release the status window's hold on the interface mode, if it holds
          one. The original tail-jumps into the release, so nothing follows it.
-// ORIGINAL: 0x004B8970 ?reset@StatusWin@@QAEXXZ 0x004B8970-0x004B898F
+// ORIGINAL: 0x004B8970 ?reset@StatusWin@@QAEXXZ 0x004B8970-0x004B898F BYTE_EXACT
 // size      31 bytes
 // prototype void (__thiscall ?reset@StatusWin@@QAEXXZ)(StatusWin* this)
 // callers   8   call targets   0
@@ -83,7 +80,7 @@ Status: Complete
 void StatusWin::reset() {
     if (field_15D4_) {
         field_15D4_ = 0;
-        (ORIGINAL(SubInterfaceGlobal)->*SubInterfaceOriginalReleaseIfaceMode)();
+        sub_interface_global()->release_iface_mode();
     }
 }
 

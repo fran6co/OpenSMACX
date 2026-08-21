@@ -861,6 +861,15 @@ def _unnamed(target: int, row: dict, neighbours: list) -> dict:
     return row
 
 
+def _record_one(job: tuple) -> tuple:
+    """Measure one piece in a worker. Returns (piece, result) or (piece, None)."""
+    piece, exe, command, shared = job
+    try:
+        return piece, compare_record(piece, exe, command, FLAG_SETS, shared)
+    except (ValueError, CompileFailed) as problem:
+        return piece, str(problem)
+
+
 @app.command()
 def record(
     targets: Annotated[list[str], typer.Argument(
@@ -916,14 +925,23 @@ def record(
     # at a time re-reads its file, and a first write may canonicalise a
     # wrapped lesson onto one line - which moves every line below it and
     # leaves the records read before it pointing at the wrong ones.
+    # IN PARALLEL, because a `sweep` hands this hundreds of addresses at once
+    # and one compile is a wine invocation: 236 of them serially is the best
+    # part of an hour, and the work is independent until the WRITE.
+    work = [(piece, exe, _command_for(compile_commands, piece.path, borrow),
+             shared) for piece in chosen]
+    jobs = max(1, min(os.cpu_count() or 1, WINE_CEILING))
+    if len(work) > 1 and jobs > 1:
+        pool = concurrent.futures.ProcessPoolExecutor(max_workers=jobs)
+        with pool:
+            measured = list(pool.map(_record_one, work))
+    else:
+        measured = [_record_one(job) for job in work]
+
     updated, regressed, results = [], [], []
-    for piece in chosen:
-        command = _command_for(compile_commands, piece.path, borrow)
-        try:
-            result = compare_record(piece, exe, command, FLAG_SETS, shared)
-        except (ValueError, CompileFailed) as problem:
-            typer.secho(f"{piece.address_hex}: {problem}",
-                        fg=typer.colors.RED)
+    for piece, result in measured:
+        if isinstance(result, str):
+            typer.secho(f"{piece.address_hex}: {result}", fg=typer.colors.RED)
             raise typer.Exit(2) from None
         results.append((piece, result))
         after = stamped(piece, result, demote)

@@ -30,7 +30,7 @@ typedef void (OriginalObject::*func_thiscall_teardown)();
 typedef void(__stdcall func_vector_dtor_iterator)(
     void *array, unsigned int element_size, int count,
     func_thiscall_teardown teardown);
-extern func_vector_dtor_iterator *VectorDtorIterator;
+func_vector_dtor_iterator *const VectorDtorIterator = (func_vector_dtor_iterator *)0x006456E4;
 
 // Its construction-side companion: walk an array calling one constructor per
 // element, with the destructor along for exception unwind (unreachable here,
@@ -38,7 +38,7 @@ extern func_vector_dtor_iterator *VectorDtorIterator;
 typedef void(__stdcall func_vector_ctor_iterator)(
     void *array, unsigned int element_size, int count,
     func_thiscall_teardown ctor, func_thiscall_teardown dtor);
-extern func_vector_ctor_iterator *VectorCtorIterator;
+func_vector_ctor_iterator *const VectorCtorIterator = (func_vector_ctor_iterator *)0x006457C2;
 
 // The game's own operator new, ??2@YAPAXI@Z at 0x0064558A - a 14-byte
 // _nh_malloc(size, 1) forwarder that answers null rather than raising.
@@ -49,4 +49,4 @@ extern func_vector_ctor_iterator *VectorCtorIterator;
 // audio closure into their link. The name records the recovery that first
 // bound it, not an ownership claim - it is the process-wide allocator.
 typedef void *(__cdecl func_operator_new)(unsigned int size);
-extern func_operator_new *WaveOperatorNew;
+func_operator_new *const WaveOperatorNew = (func_operator_new *)0x0064558A;

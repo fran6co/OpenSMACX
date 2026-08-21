@@ -19,14 +19,10 @@
 #include "original_seam.h"
 #include "lock.h"
 
-int32_t *LockMapCount = reinterpret_cast<int32_t *>(0x00949884);
-uint8_t *LockMapTable = reinterpret_cast<uint8_t *>(0x0094A30C);
-uint32_t *LockEnableMask = reinterpret_cast<uint32_t *>(0x009A64E8);
 func_square_lock_unlock LockSquareUnlock =
     original_method<func_square_lock_unlock>(0x0058FD90);
 func_square_lock_lock LockSquareLock = original_method<func_square_lock_lock>(0x0058FE80);
 func_current_server *LockCurrentServer = (func_current_server *)0x0052DBA0;
-func_message_data *LockMessageData = (func_message_data *)0x00592EE0;
 
 /*
 Purpose: Drop the movement bits (0x38) from the flag byte at offset 5 of every

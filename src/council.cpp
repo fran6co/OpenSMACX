@@ -20,7 +20,6 @@
 #include "council.h"
 #include "base.h"
 
-RulesProposal *Proposal = (RulesProposal *)0x009A6828;
 
 /*
 Purpose: Calculate faction's vote count. Used for Planetary Governor and Supreme Leader.

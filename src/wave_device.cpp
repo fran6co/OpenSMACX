@@ -1304,10 +1304,6 @@ int __fastcall wave_device_select_redirect(Wave_Device *self, void *,
     return self->select(a1);
 }
 
-func_wave_device_factory **WaveDeviceFactorySlot =
-    reinterpret_cast<func_wave_device_factory **>(0x0090DB34);
-func_wave_device_destroy **WaveDeviceDestroySlot =
-    reinterpret_cast<func_wave_device_destroy **>(0x0090DB38);
 
 /*
 Purpose: Build the wrapped device of the requested kind through the factory

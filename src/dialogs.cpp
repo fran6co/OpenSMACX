@@ -387,8 +387,6 @@ func_dialogs_teardown DialogsSpriteBoxDestructor =
     original_method<func_dialogs_teardown>(0x00610120);
 func_dialogs_teardown DialogsCheckBoxDestructor =
     original_method<func_dialogs_teardown>(0x0060E740);
-func_operator_delete *DialogsOperatorDelete =
-    (func_operator_delete *)0x0064557F;
 
 const uint32_t DialogsVbaseGraphicWinVtable = 0x00669BE8;
 const uint32_t DialogsVbaseBufferVtable = 0x00669BE0;

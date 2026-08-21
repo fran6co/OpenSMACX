@@ -29,8 +29,6 @@
 
 const uint32_t BaseButtonPrimaryVtable = 0x00670290;
 const uint32_t BaseButtonBufferVtable = 0x00670288;
-uint32_t *BaseButtonStaticDefaults = (uint32_t *)0x0069704C;
-uint32_t *BaseButtonDynamicDefaults = (uint32_t *)0x009B8E2C;
 
 /*
 Purpose: Construct the GraphicWin base and two Time members, then install the
@@ -243,9 +241,7 @@ int BaseButton::set_name(LPCSTR input) {
 
 // The three default colour tiers interleave within one table: slot s and
 // tier t live at 0x00697060 + s * 0xC + t * 4, so each setter strides 0xC.
-uint32_t *BaseButtonDefaultTextColors = reinterpret_cast<uint32_t *>(0x00697060);
 // Default font1/font2/font3 at 0x009B8E34, 0x009B8E38 and 0x009B8E3C.
-Font **BaseButtonDefaultFonts = reinterpret_cast<Font **>(0x009B8E34);
 
 namespace {
 
@@ -360,7 +356,6 @@ int __cdecl base_button_set_def_font_redirect(
 // The active palette these setters publish before recolouring. This is a
 // different global from `PaletteCurrent` at 0x009B8174, which is what
 // Buffer's constructor reads.
-Palette **BaseButtonActivePalette = reinterpret_cast<Palette **>(0x009B8180);
 
 namespace {
 

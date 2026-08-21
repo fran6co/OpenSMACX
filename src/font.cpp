@@ -397,13 +397,11 @@ void __fastcall font_queue_dtor_redirect(FontQueue *self, void *) {
 // it - 42 references. Past `.data`'s stored bytes, so there is no
 // initialiser to preserve and a real object is the whole of it.
 Font *FontDefault;
-int *FontSizeTable = (int *)0x0068F220;
-Font *FontTable = (Font *)0x0093FC58;
 
 /*
 Purpose: Select the Font whose point size is closest to the requested one,
          then index that size's row by style.
-// ORIGINAL: 0x005882F0 ?find_font@@YAHHH@Z 0x005882F0-0x0058833B
+// ORIGINAL: 0x005882F0 ?find_font@@YAHHH@Z 0x005882F0-0x0058833B BYTE_EXACT
 // symbol    ?find_font@@YAPAVFont@@HH@Z
 // size      75 bytes
 // prototype 

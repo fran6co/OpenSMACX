@@ -24,61 +24,29 @@
 #include "base.h"
 
 // built-in functions > used to prevent crash from mixed alloc/free SDKs
-func1 *_malloc = (func1 *)0x006470A6;
-func2 *_free = (func2 *)0x00644EF2;
-func3 *_fopen = (func3 *)0x00645646;
-func4 *_srand = (func4 *)0x00646010;
-func10 *_fread = (func10 *)0x00646178;
 func10 *_fwrite = (func10 *)0x0064603F;
-func17 *_fgetc = (func17 *)0x00646855;
-func18 *_fputc = (func18 *)0x00646886;
 //func12 *_realloc = (func12 *)0x00647132;
 //func18 *_fclose = (func18 *)0x00645598;
 //func19 *_fgets = (func19 *)0x0064726A;
 
 // other
-func5 *load_faction_art = (func5 *)0x00453710;
-func5 *wave_it = (func5 *)0x004455F0;
 // TODO: crash bug; X_pop > . > BasePop::start > text_close > NULLs 009B7CF4 (FILE *Txt.text_file_)
 // Next call to text_get() tries to access 009B7CF4 and the game crashes.
-func6 *X_pop = (func6 *)0x005BF310;
-func7 *popp = (func7 *)0x0048C0A0;
-func9 *fixup_landmarks = (func9 *)0x00592940;
-func9 *mapwin_terrain_fixup = (func9 *)0x00471240;
-func9 *world_rainfall = (func9 *)0x005C4470;
-func11 *wants_to_attack_ = (func11 *)0x0055BC80;
-func15 *save_daemon = (func15 *)0x005A94F0;
-func16 *load_daemon = (func16 *)0x005A9760;
-func19 *social_set = (func19 *)0x005B4600;
-func19 *consider_designs = (func19 *)0x00581260;
-func20 *popb = (func20 *)0x0048C650;
-func21 *draw_radius = (func21 *)0x0046AEF0;
-func22 *alt_set = (func22 *)0x00591290;
 
 // Time
-func30 *blink_timer = (func30 *)0x0050EA40;
-func30 *blink2_timer = (func30 *)0x0050EE30;
-func30 *line_timer = (func30 *)0x0050EE80;
-func30 *turn_timer = (func30 *)0x0050EF10;
 
 // testing
-func8 *parse_string_OG = (func8 *)0x00625880;
-char256 *ParseStrBuffer = (char256 *)0x009BB5E8;
 
 //  ; int
 // AN OBJECT, NOT A POINTER TO A FIXED ADDRESS: the pointer form costs a
 // load at every use where the image addresses the storage directly, and
 // the address is terranx.exe's data, unmapped in a standalone build.
 int BufferStrHeight;  // 0x009B3A9C
-int *ParseNumTable = (int *)0x009BB598;
-int *ParseStrPlurality = (int *)0x009BB570;
-int *ParseStrGender = (int *)0x009BB5C0;
 HWND HandleMain;  // 0x009B7B28
 
 uint32_t UnkBitfield1;  // 0x0090D91C
 
 Filefind FilefindPath;  // 0x009B8198
-MainInterface *MainInterfaceVar = (MainInterface *)0x007AE820;
 
 int __cdecl tester() {
     log_set_state(true);
@@ -645,7 +613,6 @@ int __cdecl tester() {
 }
 
 // tech_val output
-func13 *tech_val_OG = (func13 *)0x005BCBE0;
 void tech_calc_output() {
     for (int i = 0; i < MaxPlayerNum; i++) {
         for (int j = 0; j < MaxTechnologyNum; j++) {
@@ -688,10 +655,6 @@ void tech_calc_output() {
 
 // message handling testing
 // possible issues different SDKs?
-func_msg *do_video = (func_msg *)0x00636300;
-func_msg *check_net = (func_msg *)0x0062D5D0;
-func_msg *do_net = (func_msg *)0x0062D5B0;
-func_msg *do_non_input_ = (func_msg *)0x005FCA30;
 
 uint32_t MsgStatus;  // 0x009B7B9C
 

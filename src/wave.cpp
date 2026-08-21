@@ -281,8 +281,6 @@ int __fastcall wave_get_ms_length_redirect(Wave *self, void *) {
 // on an import slot, so the seam is the address of that slot rather than the
 // function: it reads the live pointer at run time exactly as the original
 // does, and stays rebindable without linking winmm into the leaf tests.
-func_time_get_time **WaveTimeGetTimeSlot =
-    reinterpret_cast<func_time_get_time **>(0x00669368);
 
 /*
 Purpose: Report whether the wave is still sounding. A wrapped device answers
@@ -821,7 +819,6 @@ int __fastcall wave_get_attrib_redirect(Wave *self, void *) {
     return self->get_attrib();
 }
 
-uint32_t *WaveDeviceGroupVolumes = reinterpret_cast<uint32_t *>(0x0090D9A0);
 
 /*
 Purpose: Set the wave's volume. The low seven bits of the argument are stored
@@ -956,8 +953,6 @@ int __fastcall wave_play_empty_redirect(Wave *self, void *) {
     return self->play();
 }
 
-func_wave_device_create **WaveDeviceCreateSlot =
-    reinterpret_cast<func_wave_device_create **>(0x0090DB24);
 
 /*
 Purpose: Load the wave from its remembered filename. With no wrapped device
@@ -1424,12 +1419,6 @@ void *__fastcall wave_scalar_dtor_redirect(Wave *self, void *,
 // allocated it; the release hook is an indirect call on the slot at 0x0090DB28
 // guarded by the dword at 0x0090DB7C; the chain end slots are the dwords the
 // unlink falls back to when a neighbour is null.
-Wave_Device *WaveDeviceGlobal =
-    reinterpret_cast<Wave_Device *>(0x0090D978);
-func_operator_delete *WaveOperatorDelete = (func_operator_delete *)0x0064557F;
-func_wave_device_release **WaveDeviceReleaseSlot =
-    reinterpret_cast<func_wave_device_release **>(0x0090DB28);
-int *WaveDeviceReleaseGuard = reinterpret_cast<int *>(0x0090DB7C);
 Wave **WaveChainHead = reinterpret_cast<Wave **>(0x0090DB20);
 Wave **WaveChainTail = reinterpret_cast<Wave **>(0x0090DB1C);
 

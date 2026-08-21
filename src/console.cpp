@@ -32,8 +32,6 @@
 #include <cstring>
 
 PrefWin *ConsolePrefWin= (PrefWin *)(0x008578D8);
-func_get_key_state **ConsoleEditKeyStateSlot =
-    reinterpret_cast<func_get_key_state **>(0x0066932C);
 
 /*
 Purpose: Open the shared preferences window to the preferences page.
@@ -135,13 +133,11 @@ void __fastcall console_set_map_display_redirect(Console *self, void *) {
     self->set_map_display();
 }
 
-int32_t *ConsoleGroupCount = reinterpret_cast<int32_t *>(0x009A64C8);
-uint8_t *ConsoleGroupTable = reinterpret_cast<uint8_t *>(0x0095282C);
 
 /*
 Purpose: Clear the console's active-group field and drop the highlight bit
          (0x08000000) from every entry of the group table, at its 0x34 stride.
-// ORIGINAL: 0x0050F650 ?clear_group@Console@@QAEXXZ 0x0050F650-0x0050F67B
+// ORIGINAL: 0x0050F650 ?clear_group@Console@@QAEXXZ 0x0050F650-0x0050F67B BYTE_EXACT
 // size      43 bytes
 // prototype void (__thiscall ?clear_group@Console@@QAEXXZ)(Console* this)
 // callers   1   call targets   0
@@ -243,9 +239,7 @@ void __fastcall console_editor_undo_redirect(Console *self, void *) {
     self->editor_undo();
 }
 
-void *ConsoleInfoWin = reinterpret_cast<void *>(0x007AD2A0);
 StatusWin *ConsoleStatusWin= (StatusWin *)(0x008C5568);
-void **ConsoleMapWinSlot = reinterpret_cast<void **>(0x007D3C3C);
 
 /*
 Purpose: Refresh everything the console shows after a selection or turn change:
@@ -296,10 +290,7 @@ void __fastcall console_update_data_redirect(Console *self, void *, int a1) {
 
 func_console_map_win_focus ConsoleOriginalMapWinFocus =
     original_method<func_console_map_win_focus>(0x0046B310);
-func_console_flush_input *ConsoleOriginalFlushInput =
-    (func_console_flush_input *)0x005FD120;
 Console *ConsoleGlobal= (Console *)(0x009156B0);
-int32_t *ConsoleControlTurnActive = reinterpret_cast<int32_t *>(0x0093A938);
 int32_t *ConsoleExitTurnLoop = reinterpret_cast<int32_t *>(0x009B2068);
 func_main_menu_check ConsoleOriginalMainMenuCheck =
     original_method<func_main_menu_check>(0x00460DD0);

@@ -218,17 +218,17 @@ static_assert(offsetof(PopupWave, armed_108_) == 0x108,
 typedef int (OriginalObject::*func_popup_wave_query)();
 typedef unsigned long(__stdcall func_popup_time_source)(void);
 
-extern uint32_t *PopupWaveFlags;
-extern void **PopupWaveContext;
-extern Wave *PopupWaveVoice;
-extern Wave *PopupWaveBank;
+uint32_t *const PopupWaveFlags = (uint32_t *)0x009A6490;
+void **const PopupWaveContext = (void **)0x0090EA30;
+Wave *const PopupWaveVoice = (Wave *)0x00945ED0;
+Wave *const PopupWaveBank = (Wave *)0x0074C5F0;
 extern int32_t *PopupWaveLastIndex;
-extern void **PopupWaveOwnerSlot;
-extern FX *PopupWaveFx;
+void **const PopupWaveOwnerSlot = (void **)0x0074DAA0;
+FX *const PopupWaveFx = (FX *)0x00749CF8;
 extern func_popup_wave_query PopupWaveIsPlaying;
 extern func_popup_wave_query PopupWaveLoad;
 extern func_popup_wave_query PopupWavePlay;
-extern func_popup_time_source **PopupWaveTimeSlot;
+func_popup_time_source **const PopupWaveTimeSlot = (func_popup_time_source **)0x00669368;
 
 void __cdecl popup_wave_callback(PopupWave *popup, int);
 void __cdecl popup_wave_callback_redirect(PopupWave *popup, int a2);

@@ -710,15 +710,15 @@ static const int MaxDiffNum = 6;
 
 extern LPCSTR AlphaxFileID;
 extern LPCSTR ScriptTxtID;
-extern Label *Labels;
-extern RulesResourceinfo *ResourceInfo;
-extern RulesTimeControl *TimeControl;
-extern RulesResource *Resource;
-extern RulesEnergy *Energy;
+Label *const Labels = (Label *)0x009B90F8;
+RulesResourceinfo *const ResourceInfo = (RulesResourceinfo *)0x00945F50;
+RulesTimeControl *const TimeControl = (RulesTimeControl *)0x0094F1B8;
+RulesResource *const Resource = (RulesResource *)0x00946158;
+RulesEnergy *const Energy = (RulesEnergy *)0x0094A318;
 extern RulesBasic *Rules;
-extern RulesWorldbuilder *WorldBuilder;
-extern AlphaIniPref *AlphaIniPrefs;
-extern DefaultPref *DefaultPrefs;
+RulesWorldbuilder *const WorldBuilder = (RulesWorldbuilder *)0x009502A8;
+AlphaIniPref *const AlphaIniPrefs = (AlphaIniPref *)0x0094B464;
+DefaultPref *const DefaultPrefs = (DefaultPref *)0x0094B350;
 extern uint32_t Language;
 
 int __cdecl tech_name(LPSTR name);

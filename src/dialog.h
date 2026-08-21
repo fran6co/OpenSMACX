@@ -174,7 +174,7 @@ typedef void(__cdecl func_operator_delete)(void *block);
 // ~Dialog's own body reaches Dialog::close through a rebindable seam, and the
 // scalar deleting destructor frees through the executable's operator delete.
 extern func_dialog_close DialogOriginalClose;          // default 0x00608F50
-extern func_operator_delete *DialogOperatorDelete;      // default 0x0064557F
+func_operator_delete *const DialogOperatorDelete = (func_operator_delete *)0x0064557F;      // default 0x0064557F
 
 // Virtual tables the destructor stages. The Dialog primary table and the
 // list virtual base's final table are written but never dispatched, so they
