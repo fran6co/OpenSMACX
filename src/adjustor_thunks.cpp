@@ -59,6 +59,23 @@ func_adjustor_p_u MapWinScalarDeleteTarget =
     original_method<func_adjustor_p_u>(0x00421830);
 func_adjustor_p_u PlanWinScalarDeleteTarget =
     original_method<func_adjustor_p_u>(0x0048BF20);
+// RULED-OUT for the whole vtordisp family, and the blocker is NOT this seam.
+// The image's thunk is two instructions - `sub ecx, [ecx-4]` then a TAIL JUMP
+// to 0x00406F60 - and VC6 does generate the folded `sub ecx, [ecx-4]` from
+// `object - *(int32_t *)(object - 4)`. What it will not do is reuse the
+// caller's pushed argument across the jump: ours emits `push [esp+4]` first,
+// four instructions against two.
+//
+// That argument is MSVC's hidden vbase-destructor flag - 0x00406F60 ends
+// `ret 4` - and it only appears when the class really declares virtual
+// inheritance. `radiobutton.h` explains why it cannot yet: GraphicWin and
+// Dialog model their vtable as an opaque dword the original installs by hand,
+// so neither declares a virtual, and giving them real virtual destructors is a
+// coupled edit. So this family is capped there, not here.
+//
+// MEASURED: declaring `~RadioButton()` for real and forwarding it to
+// 0x00406F60 changes NOTHING - 0 of 2 either way, four compiled instructions
+// either way. The seam is not what costs the match.
 func_adjustor_v_i RadioButtonDtorTarget =
     original_method<func_adjustor_v_i>(0x00406F60);
 
