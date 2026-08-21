@@ -258,13 +258,6 @@ void *__cdecl WaveOperatorNew(unsigned int size) {
     return PENDING_BODY(0x0064558A, pending)(size);
 }
 
-// ??0Scroll@@QAE@XZ at 0x006051D0 - constructed as a member of Popup and
-// others. See the note in `scroll.h`.
-Scroll::Scroll() {
-    typedef void(__fastcall *pending)(Scroll *, void *);
-    PENDING_BODY(0x006051D0, pending)(this, nullptr);
-}
-
 // ?set_text@EditBox@@QAEXPAD@Z at 0x006151E0 - reached from
 // `EditGroup::set_text`. See the note in `editbox.h`.
 void EditBox::set_text(char *text) {
@@ -1385,10 +1378,13 @@ BasePop::BasePop() {
 // deleting its line here.
 // ---------------------------------------------------------------------------
 
-// ?set_display_mode@Win@@QAAHHHHH@Z at 0x005F2C40
-int Win::set_display_mode(int width, int height, int depth, int tgl) {
-    typedef int(__cdecl *pending)(int, int, int, int);
-    return PENDING_BODY(0x005F2C40, pending)(width, height, depth, tgl);
+// ?init@DDInit@@QAEHHHHH@Z at 0x00635510 - DirectDraw surface/window
+// teardown and re-creation, reached from Win::set_display_mode. See the
+// note in win.h; src/unrecovered/00635510.cpp has a working, unlanded
+// transcription.
+int DDInit::init(int a1, int a2, int a3, int a4) {
+    typedef int(__fastcall *pending)(DDInit *, void *, int, int, int, int);
+    return PENDING_BODY(0x00635510, pending)(this, nullptr, a1, a2, a3, a4);
 }
 
 
