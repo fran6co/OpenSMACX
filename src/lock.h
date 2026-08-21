@@ -18,6 +18,7 @@
 #pragma once
 
 #include "original_seam.h"
+#include "squarelock.h"
 
  /*
   * Lock class
@@ -43,11 +44,11 @@ class Lock {
   int lock(int slot, int flags, int a3, int a4, int a5, int a6, int a7);
 
  private:
-  struct Entry {
-    int32_t first;
-    int32_t second;
-    int32_t flag;
-  };
+  // A SquareLock, and not a look-alike. Both are {first, second, flag} at
+  // 12 bytes, and every `Entry` this class holds is handed to
+  // `SquareLock::lock` and `SquareLock::unlock` - which the tree reached
+  // through a pointer-to-member because the types did not admit the call.
+  typedef SquareLock Entry;
   struct Record {
     uint8_t flag;
     uint8_t pad[3];
@@ -72,13 +73,9 @@ uint32_t *const LockEnableMask = (uint32_t *)0x009A64E8;
 
 // SquareLock::unlock is 231 bytes of coordinate wrapping over several
 // globals and is not recovered; unlock forwards each record entry to it.
-typedef void (OriginalObject::*func_square_lock_unlock)(int slot);
-extern func_square_lock_unlock LockSquareUnlock;
 
 // SquareLock::lock owns the same map-coordinate logic as unlock and is not
 // recovered; add_lock forwards one record entry to it.
-typedef int (OriginalObject::*func_square_lock_lock)(int a1, int a2, int a3, int a4);
-extern func_square_lock_lock LockSquareLock;
 
 // current_server reports whether this machine is the game server; not
 // recovered, so check_global_2 reaches it through a rebindable seam.

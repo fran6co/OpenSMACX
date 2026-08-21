@@ -31,10 +31,15 @@ class SquareLock {
   void unlock(int factionID);
   int lock(int factionID, int flags, int x, int y);
 
- private:
-  int32_t first_;
-  int32_t second_;
-  int32_t flag_;
+ public:
+  // PUBLIC, and without the trailing underscore, because `Lock::Entry` and
+  // `PlayerLock::Entry` ARE SquareLocks - the same three fields at the same
+  // offsets - and both classes read and write them directly. Naming them
+  // privately here is what forced those files to reach `SquareLock::lock`
+  // through a pointer-to-member.
+  int32_t first;
+  int32_t second;
+  int32_t flag;
 };
 
 static_assert(sizeof(SquareLock) == 0xC,

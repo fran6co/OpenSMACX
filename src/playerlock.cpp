@@ -94,7 +94,7 @@ Purpose: Lock the second square entry for a faction, forcing the 0x10 flag on.
          for the identical shape: PlayerLock::Entry and SquareLock are the same
          three-int triple, and routing through the seam is what lets a fixture
          observe the call rather than the map it would otherwise walk.
-// ORIGINAL: 0x005900A0 ?add_lock@PlayerLock@@QAEHHHHH@Z 0x005900A0-0x005900C1
+// ORIGINAL: 0x005900A0 ?add_lock@PlayerLock@@QAEHHHHH@Z 0x005900A0-0x005900C1 BYTE_EXACT
 // size      33 bytes
 // prototype int (__thiscall ?add_lock@PlayerLock@@QAEHHHHH@Z)(PlayerLock* this, int, int, int, int)
 // callers   0   call targets   1
@@ -105,7 +105,7 @@ Return Value: whatever SquareLock::lock returns
 Status: Complete
 */
 int PlayerLock::add_lock(int factionID, int flags, int x, int y) {
-    return (ORIGINAL(&entries_[1])->*LockSquareLock)(factionID, flags | 0x10, x, y);
+    return entries_[1].lock(factionID, flags | 0x10, x, y);
 }
 
 int __fastcall player_lock_add_lock_redirect(PlayerLock *self, void *,
@@ -121,7 +121,7 @@ Purpose: Release both square entries for a faction and clear the active byte.
          in steps of twelve, then stores zero at `this+0` AFTER the loop - the
          byte write is the last thing it does, which is the ordering a fixture
          has to hold it to.
-// ORIGINAL: 0x0058FFC0 ?unlock@PlayerLock@@QAEXH@Z 0x0058FFC0-0x0058FFF2
+// ORIGINAL: 0x0058FFC0 ?unlock@PlayerLock@@QAEXH@Z 0x0058FFC0-0x0058FFF2 BYTE_EXACT
 // size      50 bytes
 // prototype void (__thiscall ?unlock@PlayerLock@@QAEXH@Z)(PlayerLock* this, int)
 // callers   0   call targets   1
@@ -133,7 +133,7 @@ Status: Complete
 */
 void PlayerLock::unlock(int factionID) {
     for (int entry = 0; entry < 2; ++entry) {
-        (ORIGINAL(&entries_[entry])->*LockSquareUnlock)(factionID);
+        entries_[entry].unlock(factionID);
     }
     active_ = 0;
 }

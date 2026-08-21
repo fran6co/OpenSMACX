@@ -17,6 +17,8 @@
  */
 #pragma once
 
+#include "squarelock.h"
+
  /*
   * PlayerLock class
   *
@@ -35,11 +37,7 @@ class PlayerLock {
   int active();
 
  private:
-  struct Entry {
-    int32_t first;
-    int32_t second;
-    int32_t flag;
-  };
+  typedef SquareLock Entry;
   uint8_t active_;
   uint8_t pad_1_[3];
   Entry entries_[2];
