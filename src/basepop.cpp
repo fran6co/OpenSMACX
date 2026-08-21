@@ -22,6 +22,8 @@
 #include "general.h"  // mem_get in init_class
 #include "datalink.h"
 #include "worldwin.h"
+#include "dipedit.h"
+#include "filewin.h"
 #include <cstring>
 
 /*

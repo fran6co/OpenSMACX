@@ -112,5 +112,3 @@ void __fastcall replay_win_on_left_up_redirect(ReplayWin *self, void *, int a1, 
 // body lands.
 //   ?timer_callback@ReplayWin@@QAEXXZ  0x005AD9E0
 //     public, __thiscall, void(void)
-typedef void (OriginalObject::*func_replay_win_timer_callback)();
-extern func_replay_win_timer_callback ReplayWinTimerCallback;

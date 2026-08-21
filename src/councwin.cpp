@@ -19,6 +19,7 @@
 #include "councwin.h"
 #include "subinterface.h"
 #include "worldwin.h"
+#include "menu.h"
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -352,14 +353,6 @@ int CouncWin::show(int a1) {
 // an inlined `mov ecx / call [seam]` would break them. OPENSMACX_NOINLINE is
 // the tree's spelling for this, but it expands to nothing on VC6 - the pragma
 // is the only form cl 12.00 honours.
-#pragma auto_inline(off)
-func_counc_win_draw_leader CouncWinOriginalDrawLeader =
-    original_method<func_counc_win_draw_leader>(0x00425DB0);
-
-void CouncWin::draw_leader(int factionID) {
-    (ORIGINAL(this)->*CouncWinOriginalDrawLeader)(factionID);
-}
-#pragma auto_inline(on)
 
 
 // ---------------------------------------------------------------------------

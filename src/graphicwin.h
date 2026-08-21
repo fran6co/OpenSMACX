@@ -194,6 +194,3 @@ int __fastcall graphic_win_init_redirect(GraphicWin *self, void *,
 // MapWin::draw_radius, WorldWin and StatusWin::redraw all reach it - so it is
 // forwarded. Rebindable so tests can substitute a probe and so the seam can
 // later point at a recovered body.
-typedef void (OriginalObject::*func_graphic_win_soft_update)();
-typedef void (OriginalObject::*func_graphic_win_update)(GraphicWin *);
-extern func_graphic_win_soft_update GraphicWinOriginalSoftUpdate;

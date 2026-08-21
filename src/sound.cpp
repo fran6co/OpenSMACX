@@ -23,6 +23,8 @@
 #include "wave_device.h"    // Wave_Device in init_sound
 #include "sounddevice.h"    // Midi_Device / Wave_In_Device in init_sound
 #include "fx.h"
+#include "dialog.h"
+#include "sounddevice.h"
 #include <cstring>
 
 /*

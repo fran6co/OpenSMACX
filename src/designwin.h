@@ -395,5 +395,3 @@ void __fastcall design_win_on_mouse_leave_redirect(DesignWin *self, void *, int 
 // the class is no longer `__declspec(dllexport)`. The `H` in
 // ?select_special@DesignWin@@QAEXH@Z is the one int both select_special_N
 // thunks pass.
-typedef void (OriginalObject::*func_design_win_select_special)(int);
-extern func_design_win_select_special DesignWinSelectSpecial;  // 0x0043AC70

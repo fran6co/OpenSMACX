@@ -20,6 +20,8 @@
 #include "general.h"
 #include "wave.h"
 #include "fx.h"
+#include "dialog.h"
+#include "sounddevice.h"
 
 /*
 Purpose: Returns a fixed 11; the legacy implementation is a single constant load.

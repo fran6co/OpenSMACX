@@ -51,7 +51,10 @@ TYPEDEF = re.compile(
     r"typedef\s+(?P<ret>[\w:*&\s]+?)\s*\(\s*OriginalObject::\*\s*"
     r"(?P<alias>\w+)\s*\)\s*\((?P<params>[^)]*)\)\s*;")
 BINDING = re.compile(
-    r"(?P<indent>[ \t]*)(?P<alias>\w+)\s+(?P<name>\w+)\s*=\s*\n?\s*"
+    # `static` and `const` are part of the binding: leaving either behind
+    # turns the next definition in the file into a file-scope static member.
+    r"(?P<indent>[ \t]*)(?:static\s+|const\s+)*(?P<alias>\w+)\s+"
+    r"(?P<name>\w+)\s*=\s*\n?\s*"
     r"original_method<(?P=alias)>\(\s*(?P<address>0x[0-9A-Fa-f]+)\s*\)\s*;\n")
 EXTERN = re.compile(r"^extern\s+[\w*&\s]+?\b(?P<name>\w+)\s*;[^\n]*\n", re.M)
 
@@ -137,6 +140,13 @@ def _split_params(params: str) -> list[str]:
     return [p for p in out if p not in ("void", "")]
 
 
+# Words that end a TYPE and can never be the parameter's name. `unsigned long`
+# is two of them, and taking the last word as a name left the forwarder
+# passing a literal `long` as an argument.
+TYPE_WORDS = frozenset("""void bool char short int long float double signed
+unsigned const volatile struct class union enum""".split())
+
+
 def _argument_names(params: list[str]) -> list[str]:
     """The trailing identifier of each declaration, or a positional name."""
     out = []
@@ -145,7 +155,8 @@ def _argument_names(params: list[str]) -> list[str]:
         name = match.group(1) if match else ""
         # A trailing identifier is only a NAME if something is left when it
         # goes. `LPSTR` and `int` are whole declarations; `LPSTR text` is not.
-        if name and not param[:match.start(1)].strip():
+        if name in TYPE_WORDS or (name and
+                                  not param[:match.start(1)].strip()):
             name = ""
         if not name:
             name = f"a{index + 1}"
@@ -265,6 +276,33 @@ def _retype_receiver(expression: str, klass: str) -> None:
         RETYPED[name.group(0)] = klass
 
 
+def _signature(params: str | list[str]) -> tuple[str, ...]:
+    """A parameter list reduced to comparable types.
+
+    ARITY is not enough to tell overloads apart: Dialog has an `init(int)` and
+    an `init(Heap *)`, and matching by count handed the int seam the Heap
+    body's definition - so no forwarder was emitted and the link failed on a
+    symbol the tree had just started calling.
+    """
+    if isinstance(params, str):
+        params = _split_params(params)
+    out = []
+    for param in params:
+        text = re.sub(r"\b(const|volatile|struct|class)\b", " ",
+                      _type_of(param))
+        out.append(re.sub(r"\s+", "", text))
+    return tuple(out)
+
+
+def _type_of(param: str) -> str:
+    """A parameter declaration with its name removed, if it has one."""
+    match = re.search(r"(\w+)\s*(\[\s*\])?$", param)
+    if match is None or match.group(1) in TYPE_WORDS:
+        return param
+    stripped = param[:match.start(1)].strip()
+    return stripped or param
+
+
 class Seam:
     def __init__(self, source: Path, header: Path, match: re.Match,
                  typedef: re.Match, symbol: str | None):
@@ -284,7 +322,7 @@ class Seam:
         return f"{self.returns} {self.method}({', '.join(self.params)});"
 
     def forwarder(self) -> str:
-        types = ", ".join(re.sub(r"\s*\w+\s*$", "", p) or p for p in self.params)
+        types = ", ".join(_type_of(p) for p in self.params)
         signature = f"{self.klass} *, void *" + (f", {types}" if types else "")
         passed = "this, nullptr" + (
             ", " + ", ".join(self.arguments) if self.arguments else "")
@@ -347,8 +385,11 @@ class Seam:
                     enclosing, self.klass) is False:
                 out.append(f"{enclosing} inherits {self.klass} privately, so "
                            f"a direct call needs the hierarchy widened")
+        if _wrapper_span(body(self.source), self.klass, self.method,
+                         self.pointer):
+            return out
         if re.search(rf"\b{re.escape(self.klass)}::{self.method}\s*\(",
-                     body(self.source)):
+                     _code(body(self.source))):
             out.append(f"{self.klass}::{self.method} already has a body in "
                        f"{self.source.name} - is it the wrapper this replaces, "
                        f"or a recovery?")
@@ -386,7 +427,7 @@ def _class_body(text: str, klass: str) -> tuple[int, int] | None:
 
 
 def _declaring_header(klass: str, method: str,
-                      arity: int) -> tuple[Path, bool] | None:
+                      signature: tuple[str, ...]) -> tuple[Path, bool] | None:
     """The header that declares `class klass`, and whether `method` is in it.
 
     Searched across the whole tree, not just the source's own header: a seam
@@ -403,7 +444,7 @@ def _declaring_header(klass: str, method: str,
         # wants `init(int, int)`. Treating the name as enough leaves the
         # overload undeclared and the call site failing on argument count.
         declared = any(
-            len(_split_params(m.group(1))) == arity
+            _signature(m.group(1)) == signature
             for m in re.finditer(rf"\b{re.escape(method)}\s*\(([^)]*)\)",
                                  inside))
         return header, declared
@@ -423,7 +464,44 @@ def _code(text: str) -> str:
     return COMMENT.sub(lambda m: re.sub(r"[^\n]", " ", m.group(0)), text)
 
 
-def _defined_in_build(klass: str, method: str) -> Path | None:
+def _wrapper_span(text: str, klass: str, method: str,
+                  pointer: str) -> tuple[int, int] | None:
+    """The span of a body whose whole job is to call the seam.
+
+    A same-named body in the file is normally a reason to STOP - it is either
+    the wrapper this conversion replaces or a real recovery, and getting that
+    backwards makes the function call itself, which compiles. But one shape is
+    not ambiguous: a body that does nothing except the seam call is the
+    wrapper, and it goes.
+    """
+    opening = re.search(
+        rf"^(?:#pragma[^\n]*\n)?[\w:<>,*&\s]*?\b{re.escape(klass)}::"
+        rf"{re.escape(method)}\s*\([^;{{}}]*\)\s*\{{", _code(text), re.M)
+    if opening is None:
+        return None
+    depth, index = 1, opening.end()
+    while index < len(text) and depth:
+        depth += {"{": 1, "}": -1}.get(text[index], 0)
+        index += 1
+    inside = _code(text[opening.end():index - 1]).strip()
+    if not re.fullmatch(
+            rf"(return\s+)?\(\s*ORIGINAL\([^()]*\)\s*->\*\s*"
+            rf"{re.escape(pointer)}\s*\)\s*\([^;]*\)\s*;", inside):
+        return None
+    start = opening.start()
+    # A `#pragma auto_inline(off)` above and its `(on)` below belong to the
+    # wrapper, not to whatever surrounds it.
+    before = text.rfind("#pragma auto_inline(off)", 0, start)
+    if before >= 0 and not text[before:start].strip().count("\n\n"):
+        start = before
+    after = text.find("#pragma auto_inline(on)", index)
+    if 0 <= after <= index + 2:
+        index = text.index("\n", after) + 1
+    return start, index
+
+
+def _defined_in_build(klass: str, method: str,
+                      signature: tuple[str, ...]) -> Path | None:
     """The build input that already defines `klass::method`, if any.
 
     A seam whose target is ALREADY RECOVERED needs no forwarder - only the
@@ -434,10 +512,13 @@ def _defined_in_build(klass: str, method: str) -> Path | None:
     for path in sorted(p for p in tree() if p.suffix == ".cpp"):
         if path == PENDING:
             continue
-        if re.search(rf"\b{re.escape(klass)}::{re.escape(method)}\s*"
-                     rf"\([^;{{}}]*\)\s*(const\s*)?\{{",
-                     _code(body(path))):
-            return path
+        for match in re.finditer(
+                rf"\b{re.escape(klass)}::{re.escape(method)}\s*"
+                rf"\(([^;{{}}]*)\)\s*(?:const\s*)?\{{", _code(body(path))):
+            # By ARITY: Dialog defines one `init` and the seams want three
+            # more, and a name match hands all four to the same definition.
+            if _signature(match.group(1)) == signature:
+                return path
     return None
 
 
@@ -454,11 +535,17 @@ def convert(source: Path, apply: bool) -> int:
             continue
 
         found = _declaring_header(seam.klass, seam.method,
-                                  len(seam.params))
+                                  _signature(seam.params))
         if found is None:
             print(f"  - {seam.pointer}: no `class {seam.klass}` under src/")
             continue
         owner, already = found
+
+        # 0. A pure forwarding wrapper is what this conversion replaces.
+        span = _wrapper_span(body(source), seam.klass, seam.method,
+                             seam.pointer)
+        if span:
+            rewrite(source, body(source)[:span[0]] + body(source)[span[1]:])
 
         # 1. The binding goes.
         rewrite(source, body(source).replace(seam.match.group(0), ""))
@@ -518,7 +605,8 @@ def convert(source: Path, apply: bool) -> int:
             rewrite(path, text[:end] + include + text[end:])
 
         # 6. An unrecovered target gets a forwarder; a recovered one must not.
-        defined = _defined_in_build(seam.klass, seam.method)
+        defined = _defined_in_build(seam.klass, seam.method,
+                                    _signature(seam.params))
         if defined is None:
             rewrite(PENDING, body(PENDING).replace(
                 PENDING_ANCHOR, seam.forwarder() + PENDING_ANCHOR))

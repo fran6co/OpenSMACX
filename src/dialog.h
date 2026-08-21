@@ -194,11 +194,6 @@ extern uint32_t *DialogPublishedGlobal;                 // 0x009B3374
 
 // ?init@Dialog@@QAEHH@Z (0x006095F0), the one-int init overload. Unrecovered;
 // SpriteBox forwards to it, so its definition is a seam into the original.
-typedef int (OriginalObject::*func_dialog_init_int)(int a1);
-typedef int (OriginalObject::*func_dialog_init_rect)(RECT *, int);
-typedef int (OriginalObject::*func_dialog_init_heap)(Heap *);
-typedef int (OriginalObject::*func_dialog_init_five)(int, int, int, int, Heap *);
-extern func_dialog_init_int DialogInitInt;
 
 void __fastcall dialog_destructor_redirect(Dialog *self, void *);
 void *__fastcall dialog_scalar_dtor_redirect(

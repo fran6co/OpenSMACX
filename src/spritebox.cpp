@@ -19,6 +19,9 @@
 #include "spritebox.h"
 #include "dialog.h"
 #include "vtable_shim.h"
+#include "sounddevice.h"
+#include "menu.h"
+#include "win.h"
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
@@ -203,19 +206,7 @@ int SpriteBox::init(Heap *a1) {
         + *reinterpret_cast<int *>(*reinterpret_cast<char **>(this) + 8))->init(a1);
 }
 
-func_sprite_box_close SpriteBoxClose =
-    original_method<func_sprite_box_close>(0x00610280);
 
-/*
-Purpose: Tear the sprite box's entry list down and close the dialog.
-         Body unrecovered; forwards to the original image.
-Forwards To: 00610280
-Return Value: n/a
-Status: Forwarder
-*/
-void SpriteBox::close() {
-    (ORIGINAL(this)->*SpriteBoxClose)();
-}
 
 /*
 // ORIGINAL: 0x006104D0 ?init@SpriteBox@@QAEHHHHHPAUHeap@@@Z 0x006104D0-0x00610501 BYTE_EXACT

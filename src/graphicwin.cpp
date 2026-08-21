@@ -23,6 +23,11 @@
 #include "vector_teardown.h"
 #include "temp.h"  // HandleMain, the window the invalidate targets
 #include "statuswin.h"
+#include "dialog.h"
+#include "sounddevice.h"
+#include "menu.h"
+#include "win.h"
+#include "spritebox.h"
 
 #include <cstring>
 
@@ -618,30 +623,11 @@ void GraphicWin::on_mouse_move(int a1, int a2, unsigned int a3, int a4) {
     reinterpret_cast<Win *>(this)->on_mouse_move(a1, a2, a3, a4);
 }
 
-func_graphic_win_soft_update GraphicWinOriginalSoftUpdate =
-    original_method<func_graphic_win_soft_update>(0x005D5890);
 
-/*
-Purpose: Blit the window's own buffer to the screen without running the full
-         repaint path.
-Forwards To: 005D5890
-Return Value: n/a
-Status: Original dependency - forwards to the original image.
-*/
-void GraphicWin::soft_update() {
-    (ORIGINAL(this)->*GraphicWinOriginalSoftUpdate)();
-}
 
-func_graphic_win_update GraphicWinOriginalUpdate =
-    original_method<func_graphic_win_update>(0x005D56B0);
 
 /*
  * A forwarder, not a recovery: ?update@GraphicWin@@QAEXPAUGraphicWin@@@Z at
  * 0x005D56B0, the one-argument overload of three. See soft_update above for
  * the auto_inline reasoning.
  */
-#pragma auto_inline(off)
-void GraphicWin::update(GraphicWin *target) {
-    (ORIGINAL(this)->*GraphicWinOriginalUpdate)(target);
-}
-#pragma auto_inline(on)

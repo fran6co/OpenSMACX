@@ -251,5 +251,3 @@ int __fastcall report_if_on_iface_dialog_item_back_draw_redirect(
 // forwards through this seam. leaf_recoveries.cpp calls it, which is what
 // keeps the definition: `__declspec(dllexport)` on the class once demanded a
 // definition for every member, and that demand is gone.
-typedef void (OriginalObject::*func_report_if_bl_anim)();
-extern func_report_if_bl_anim ReportIfBlAnim;  // 0x004A4060

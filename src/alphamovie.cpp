@@ -18,6 +18,9 @@
 #include "stdafx.h"
 #include "original_seam.h"
 #include "alphamovie.h"
+#include "graphicwin.h"
+#include "filewin.h"
+#include "spritebox.h"
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.

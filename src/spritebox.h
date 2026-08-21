@@ -105,5 +105,3 @@ void __fastcall sprite_box_on_mouse_leave_redirect(SpriteBox *self, void *, int 
 
 // ?close@SpriteBox@@QAEXXZ - public, __thiscall, void(void) - is not
 // recovered, and the three init overloads above open by calling it.
-typedef void (OriginalObject::*func_sprite_box_close)();
-extern func_sprite_box_close SpriteBoxClose;

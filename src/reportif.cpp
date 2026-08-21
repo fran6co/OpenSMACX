@@ -18,6 +18,9 @@
 #include "stdafx.h"
 #include "reportif.h"
 #include "worldwin.h"
+#include "menu.h"
+#include "win.h"
+#include "spritebox.h"
 
 ListBox *ReportIfEnergyListBox = reinterpret_cast<ListBox *>(0x0087BE84);
 
@@ -308,20 +311,7 @@ void ReportIf::done() {
 // defined earlier. Measured - without the pragma cl reports C4711 at
 // reportif.cpp(219), which is the release_iface_mode call inside ReportIf::done,
 // and done's 22-byte BYTE_EXACT match is a `call rel32` there.
-#pragma auto_inline(off)
-func_report_if_bl_anim ReportIfBlAnim =
-    original_method<func_report_if_bl_anim>(0x004A4060);
 
-/*
-Purpose: Step the report interface's blink animation. The body at 0x004A4060 is
-         NOT recovered; this is a seam to the original image, not a recovery,
-         and deliberately carries no `Original Offset:` line so the catalogue
-         does not mistake it for one.
-Status: Forwarded to the original image
-*/
-void ReportIf::bl_anim() {
-    (ORIGINAL(this)->*ReportIfBlAnim)();
-}
 
 /*
  * SubInterface's two called methods, hosted here for the reason spelled out in

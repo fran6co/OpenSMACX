@@ -20,6 +20,8 @@
 #include "popup.h"
 #include "wave.h"
 #include "fx.h"
+#include "win.h"
+#include "spritebox.h"
 
 
 /*

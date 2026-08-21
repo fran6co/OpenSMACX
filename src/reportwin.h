@@ -194,6 +194,3 @@ void __fastcall report_win_on_mouse_leave_redirect(ReportWin *self, void *, int 
 // Neither animation tick is recovered; both forward to the original image.
 // ?sat_anim@ReportWin@@QAEXXZ and ?exp_anim@ReportWin@@QAEXXZ are public,
 // __thiscall, void(void), so one pointer-to-member shape serves both.
-typedef void (OriginalObject::*func_report_win_anim)();
-extern func_report_win_anim ReportWinSatAnim;
-extern func_report_win_anim ReportWinExpAnim;

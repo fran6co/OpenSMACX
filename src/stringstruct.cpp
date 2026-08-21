@@ -11,6 +11,7 @@
 #include "original_seam.h"
 
 #include "stringstruct.h"
+#include "spritebox.h"
 
 #include <cstring>
 
