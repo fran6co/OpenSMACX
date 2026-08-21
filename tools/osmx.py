@@ -1274,6 +1274,13 @@ def asm_matches(src: Path) -> list:
             if found:
                 marker = (found.group(1), "BYTE_EXACT" in found.group(2),
                           number)
+            elif line.startswith("}"):
+                # END OF A TOP-LEVEL DEFINITION. Without this the scan
+                # attributes the NEXT `__asm` in the file to the last marker
+                # it saw, however many C++ bodies intervene - which reported
+                # StringStruct::seek_id, whose own body is C++, because a
+                # helper below it is not.
+                marker = None
             elif "__asm" in line and not line.lstrip().startswith("//"):
                 if marker and marker[1]:
                     out.append(f"{path.name}:{marker[2]}: {marker[0]} matches "
