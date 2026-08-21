@@ -28,6 +28,10 @@
   */
 class BasePop : GraphicWin {
  public:
+  // 0x006015B0, a pending_bodies forwarder.
+  int init(int a1, long a2);
+
+ public:
   // STATIC, AND THE CATALOGUED NAME IS WRONG. It reads
   // `?set_def_ok_text@BasePop@@QAAHPAD@Z` - QAA, a `__cdecl` MEMBER, which
   // would push `this` as the first argument. The image reads its string from

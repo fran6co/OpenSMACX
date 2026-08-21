@@ -15,6 +15,7 @@
 #include "radiobutton.h"  // RadioButton::close (source-owned)
 #include "worldwin.h"
 #include "spritebox.h"
+#include "net_class.h"
 #include <cstring>
 
 /*

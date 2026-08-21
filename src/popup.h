@@ -30,7 +30,16 @@
   * between. Both are pinned here, at 0x3230 and 0x214C, so this much of the
   * layout is exact; where the object ends is not established.
   */
-class Popup : BasePop {
+  // PUBLIC: access specifiers change nothing about layout, and this
+  // tree's bodies reach base methods the image reaches with a direct
+  // `call rel32`. Spelled `class X : Base` - private, since that is
+  // what `class` means - those calls do not compile at all, and the
+  // seam that stood in for them cost the caller `call [ptr]`.
+class Popup : public BasePop {
+ public:
+  // 0x00404A80, a pending_bodies forwarder.
+  void hide();
+
  public:
   int on_nc_hittest(int a1, int a2);
 

@@ -20,6 +20,7 @@
 #include "planwin.h"
 #include "mapwin.h"
 #include "spritebox.h"
+#include "net_class.h"
 #include <cstring>
 
 /*

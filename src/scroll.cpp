@@ -22,6 +22,8 @@
 #include "dialog.h"
 #include "sounddevice.h"
 #include "spritebox.h"
+#include "net_class.h"
+#include "basepop.h"
 
 // AN OBJECT, NOT A POINTER TO A FIXED ADDRESS: the pointer form costs a
 // load at every use where the image addresses the storage directly, and

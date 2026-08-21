@@ -19,8 +19,8 @@
 #include "original_seam.h"
 #include "netdaemon.h"
 #include "log.h"  // log_say, source-owned at 0x006262F0
+#include "net_class.h"
 
-func_net_get NetDaemonNetGet = original_method<func_net_get>(0x00630A00);
 NetDaemon *NetDaemonNet= (NetDaemon *)(0x0093CD90);
 int NetDaemonIsMultiplayerNet;  // 0x0093F660
 int NetDaemonLocalFaction;  // 0x00939284
@@ -46,7 +46,7 @@ sweep's surviving constant mutants on them are equivalent by construction.
 int NetDaemon::receive() {
     unsigned long first = 0;
     unsigned long second = 0;
-    const int result = (ORIGINAL(NetDaemonNet)->*NetDaemonNetGet)(&first, &second);
+    const int result = NetDaemonNet->Net::get(&first, &second);
     if (result == 0) {
         return 0;
     }

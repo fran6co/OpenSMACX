@@ -31,7 +31,12 @@
   *
   * Nothing pins this class's sizeof.
   */
-class NetMsg : Popup {
+  // PUBLIC: access specifiers change nothing about layout, and this
+  // tree's bodies reach base methods the image reaches with a direct
+  // `call rel32`. Spelled `class X : Base` - private, since that is
+  // what `class` means - those calls do not compile at all, and the
+  // seam that stood in for them cost the caller `call [ptr]`.
+class NetMsg : public Popup {
  public:
   NetMsg() { ; }
   ~NetMsg() { ; }
@@ -46,7 +51,5 @@ class NetMsg : Popup {
 };
 
 // Popup::hide is not recovered yet.
-typedef void (OriginalObject::*func_popup_hide)();
-extern func_popup_hide PopupOriginalHide;
 
 void __fastcall net_msg_close_redirect(NetMsg *self, void *);

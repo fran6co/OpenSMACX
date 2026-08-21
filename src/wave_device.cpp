@@ -21,6 +21,7 @@
 #include "wave_device.h"
 #include "dialog.h"
 #include "sounddevice.h"
+#include "basepop.h"
 #include <cstring>
 
 /*

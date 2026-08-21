@@ -71,7 +71,12 @@
   * for verify_subobjects.py to see - so this class still carries no size
   * assertion and 0x62BC is a floor.
   */
-class PopMenu : Popup {
+  // PUBLIC: access specifiers change nothing about layout, and this
+  // tree's bodies reach base methods the image reaches with a direct
+  // `call rel32`. Spelled `class X : Base` - private, since that is
+  // what `class` means - those calls do not compile at all, and the
+  // seam that stood in for them cost the caller `call [ptr]`.
+class PopMenu : public Popup {
  public:
   PopMenu() { ; }
   ~PopMenu() { ; }
@@ -82,7 +87,5 @@ class PopMenu : Popup {
 };
 
 // BasePop::init is not recovered yet.
-typedef int (OriginalObject::*func_base_pop_init)(int, long);
-extern func_base_pop_init BasePopOriginalInit;
 
 int __fastcall pop_menu_init_redirect(PopMenu *self, void *);

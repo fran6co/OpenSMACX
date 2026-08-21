@@ -25,6 +25,8 @@
 #include "fx.h"
 #include "dialog.h"
 #include "sounddevice.h"
+#include "net_class.h"
+#include "basepop.h"
 #include <cstring>
 
 /*

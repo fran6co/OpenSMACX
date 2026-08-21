@@ -12,6 +12,7 @@
 
 #include "stringstruct.h"
 #include "spritebox.h"
+#include "net_class.h"
 
 #include <cstring>
 

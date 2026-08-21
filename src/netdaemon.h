@@ -35,7 +35,12 @@
   * tail (0x1B78, 0x1BAC, 0x1BB0, 0x1BC4, 0x1BC8, 0x1BCC) through raw volatile
   * offsets rather than through invented placeholder fields.
   */
-class NetDaemon : AlphaNet {
+  // PUBLIC: access specifiers change nothing about layout, and this
+  // tree's bodies reach base methods the image reaches with a direct
+  // `call rel32`. Spelled `class X : Base` - private, since that is
+  // what `class` means - those calls do not compile at all, and the
+  // seam that stood in for them cost the caller `call [ptr]`.
+class NetDaemon : public AlphaNet {
  public:
   // 0x00532E00, a pending_bodies forwarder.
   void synch(int16_t opcode, int a, int b, int c, char *text, int d, int16_t flags);
@@ -106,8 +111,6 @@ class NetDaemon : AlphaNet {
 
 // Net::get and NetDaemon::process_message are not recovered yet; the Net the
 // daemon reads from lives at a fixed address.
-typedef int (OriginalObject::*func_net_get)(unsigned long *a, unsigned long *b);
-extern func_net_get NetDaemonNetGet;
 extern NetDaemon *NetDaemonNet;
 
 int __fastcall net_daemon_receive_redirect(NetDaemon *self, void *);
