@@ -444,8 +444,6 @@ int __fastcall win_set_cursor_redirect(Win *self, void *, int name);
 
 // The cursor refresh this setter triggers is a 2528-byte body with six call
 // targets, still an original dependency. Tests rebind this seam.
-typedef int(__cdecl func_win_update_cursor)(Win *, int);
-func_win_update_cursor *const WinUpdateCursorOriginal = (func_win_update_cursor *)0x005F1820;
 
 void __cdecl win_clear_bubble_text_redirect();
 
@@ -468,10 +466,6 @@ RECT *const WinBubbleRect = (RECT *)0x009B6E38;
 
 // Both refresh bodies remain original dependencies: update_screen is 383
 // bytes with four call targets, flip 1223 bytes with fourteen.
-typedef int(__cdecl func_win_update_screen)(RECT *, Win *);
-typedef void(__cdecl func_win_flip)(RECT *);
-func_win_update_screen *const WinUpdateScreenOriginal = (func_win_update_screen *)0x005F7320;
-func_win_flip *const WinFlipOriginal = (func_win_flip *)0x005EFD20;
 
 int __fastcall win_unk1_redirect(
     Win *self, void *, int a, int b, int c, int d, int e, int f, int g, int h, int i);
