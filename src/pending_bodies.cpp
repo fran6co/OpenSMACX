@@ -1144,6 +1144,11 @@ void SpriteBox::on_redraw() {  // 0x00611380
     PENDING_BODY(0x00611380, pending)(this, nullptr);
 }
 
+void MainMenu::check(int veh_id) {  // 0x00460DD0
+    typedef void(__fastcall *pending)(MainMenu *, void *, int);
+    PENDING_BODY(0x00460DD0, pending)(this, nullptr, veh_id);
+}
+
 // ?write_raw_l@Buffer@@QAEHPADHHH@Z at 0x005DBD00 - 1475 bytes, the raster
 // writer that puts one single-font run on the surface. Called by name from
 // `write_multi_font_raw_l`, which is promoted; a pointer here would cost that

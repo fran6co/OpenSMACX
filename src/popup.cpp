@@ -625,7 +625,6 @@ int __cdecl pops_no_flags(char *caption, char *label, int value, char *text,
                             callback);
 }
 
-func_popup_wave_query PopupWaveIsPlaying = original_method<func_popup_wave_query>(0x004C6B10);
 func_popup_wave_query PopupWavePlay = original_method<func_popup_wave_query>(0x004C6920);
 
 /*
@@ -678,8 +677,8 @@ void __cdecl popup_wave_callback(PopupWave *popup, int) {
     }
     const int32_t chosen = popup->wave_index_;
     if (*PopupWaveFlags & 0x400) {
-        if (!(ORIGINAL(PopupWaveVoice)->*PopupWaveIsPlaying)() &&
-            !(ORIGINAL(PopupWaveBank + *PopupWaveLastIndex)->*PopupWaveIsPlaying)()) {
+        if (!PopupWaveVoice->Wave::is_playing() &&
+            !reinterpret_cast<Wave *>(PopupWaveBank + *PopupWaveLastIndex)->Wave::is_playing()) {
             *PopupWaveLastIndex = chosen;
             Wave *const wave = PopupWaveBank + chosen;
             wave->Wave::load();
