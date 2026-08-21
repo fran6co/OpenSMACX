@@ -1055,7 +1055,7 @@ def sweep(
     if verdicts:
         order = {"BYTE_EXACT": 0, "SHAPE_EXACT": 1, "MNEMONIC_ONLY": 2,
                  "MISMATCH": 3}
-        rows = sorted(((order.get(verdict, 4), -_matching(notes.get(key, "")),
+        rows = sorted(((order.get(verdict, 4), -_agreeing(notes.get(key, "")),
                         verdict, by_claim[key], key)
                        for key, verdict in measured.items() if key in by_claim),
                       key=lambda row: row[:2])
@@ -1340,7 +1340,8 @@ def _rank(verdict: str) -> int:
     return TIER_ORDER.get(verdict, 9)
 
 
-def _matching(note: str) -> int:
+def _agreeing(note: str) -> int:
+    """The matching-instruction count a scorer put in a claim's note."""
     found = re.match(r"(\d+)/", note or "")
     return int(found.group(1)) if found else -1
 
@@ -1400,7 +1401,7 @@ def _check_one_file(job: tuple) -> list[tuple[tuple, str, str]]:
                           or _rank(verdict) < _rank(previous[0])
                           or (_rank(verdict) == _rank(previous[0])
                               and result.matching_instructions
-                              > _matching(previous[1])))
+                              > _agreeing(previous[1])))
                 if better:
                     best[key] = (verdict, score)
             if verdict == "BYTE_EXACT":
