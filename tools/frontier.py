@@ -15,6 +15,12 @@ WHAT "REACHABLE" MEANS HERE. Direct and tail calls only. An indirect call
 through a vtable or a bound slot is a runtime fact this cannot resolve, so a
 node reached ONLY that way does not appear - the frontier is a lower bound on
 the work, never an upper one, and the count is printed so that is visible.
+
+WORKED BODIES ARE MARKED, because handing out eight already-exhausted addresses
+costs a whole agent. A body carrying `RULED-OUT:` notes has had someone attack
+it and write down what failed; a batch of those comes back "no change, already
+plateaued" eight times over, which is exactly what happened to a faction.cpp
+batch picked off the raw depth order. `--fresh` drops them.
 """
 
 from __future__ import annotations
@@ -93,9 +99,24 @@ if __name__ == "__main__":
         print(json.dumps([{"address": r.address_hex, "name": r.name,
                            "file": str(r.path)} for r in pending], indent=2))
         sys.exit(0)
+    # How many `RULED-OUT:` notes sit under each marker. The reader already
+    # parses lesson lines, so this is the record's own evidence of prior work
+    # rather than anything maintained by hand.
+    # NO `getattr` DEFAULT. The first draft guessed the field name, and a
+    # default of `()` turned the miss into "nothing is worked" - every row
+    # unmarked, which reads exactly like a correct answer. Name the field and
+    # let a wrong one raise.
+    def ruled_out(record) -> int:
+        return len(record.ruled_out)
+
+    if "--fresh" in sys.argv:
+        pending = [r for r in pending if not ruled_out(r)]
+
     for depth, record in enumerate(pending):
+        worked = ruled_out(record)
+        mark = f"  [{worked} ruled-out]" if worked else ""
         print(f"{depth:4d}  {record.address_hex}  {record.path.name:24s} "
-              f"{record.name}")
+              f"{record.name}{mark}")
     print(f"{len(order):,} reachable and catalogued, {len(pending):,} not yet "
           f"byte exact; {unnamed:,} direct edges name nothing in the catalogue "
           f"({edges:,} edges walked, indirect ones not followed)")
