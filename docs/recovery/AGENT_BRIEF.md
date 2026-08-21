@@ -28,6 +28,25 @@ uncommitted work, and the fix is to hand that diff back first.
 Working in a worktree is why you can edit freely: nothing you touch collides
 with another agent.
 
+VTABLE STORES GO FIRST IN A CONSTRUCTOR BODY
+- Nothing in the GraphicWin/Win chain is declared `virtual`, deliberately, so
+  a constructor's vtable stores are EXPLICIT assignments rather than something
+  VC6 generates. The idiom is `GraphicWin::construct` (src/graphicwin.cpp:87):
+  `uint32_t *const object = reinterpret_cast<uint32_t *>(this);` then
+  `object[0x000 / 4]` and `object[0x444 / 4]`, primary and Buffer-subobject.
+  Read the two constants off the image's own `mov dword ptr [esi], 0x...` and
+  `mov dword ptr [esi + 0x444], 0x...`. A compiled body missing exactly those
+  two stores is missing them for this reason.
+- Write them BEFORE any member assignment in the body. This reads backwards
+  until measured: the image appears to store the low half of a `double`, then
+  both vtables, then the high half - the vtables landing INSIDE a member,
+  which no source can express. It is the reverse. VC6 hoists the double's ZERO
+  half ahead of whatever precedes it, so putting the vtable stores first is
+  what produces the image's own interleaving. Measured on `Gamma::Gamma`:
+  stores after the assignment gives SHAPE_EXACT 39/42, before it gives 42/42.
+- If you are stuck at "everything agrees except the order of the trailing
+  stores", try the reorder before concluding anything about the body.
+
 A CONSTRUCTOR MAY BE AN EMPTY INLINE OVER A REAL BODY
 - `uv run tools/hollow_bodies.py --stubbed` lists 43 classes whose method is
   `{ ; }` in a header while the image has a real body and an artifact holds a
