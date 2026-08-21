@@ -35,7 +35,7 @@ uint32_t GameRules;  // 0x009A649C
 uint32_t GameState;  // 0x009A64C0
 int DiffLevelCurrent;  // 0x009A64C4
 int TurnCurrentNum;  // 0x009A64D4
-uint32_t ObjectiveReqVictory;  // 0x0094B4C0
+int ObjectiveReqVictory;  // 0x0094B4C0
 uint32_t ObjectivesSuddenDeathVictory;  // 0x0094B4C4
 uint32_t ObjectiveAchievePts;  // 0x0094B4C8
 uint32_t VictoryAchieveBonusPts;  // 0x0094B4CC
