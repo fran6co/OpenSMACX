@@ -48,6 +48,28 @@ MEASURING
   instructions, STOP: the span is not being replaced and every result is meaningless.
 
 LEVERS THAT HAVE PAID, most productive first
+
+- A CALLEE BOUND AS A POINTER costs its caller the `E8`. `T *const F = (T *)0x...`
+  compiles `call dword ptr [F]` where the image emits `call rel32`. Declare it as
+  an ordinary function and add a forwarder in `src/pending_bodies.cpp`; the target
+  of an `E8` is a relocation on both sides and is discounted, so any symbol
+  matches. Same defect for a CALLBACK bound as `extern const void *const C;`
+  defined in a .cpp - it compiles `push dword ptr [C]` against the image's
+  `push 0xADDR`, and the fix is to DEFINE it in the header, where a namespace
+  scope `const` has internal linkage and folds to the immediate. Worth 202 claims
+  in one change on 2026-08-21, plus the whole message-pump family.
+
+- THE IMAGE PEELS ITS LOOPS. `do { B } while (C);` compiles one copy of the body;
+  the image runs `B; while (C) { B }` - same program, and the difference was four
+  instructions on each of three message pumps. If the image's loop has TWO calls
+  to the condition where you have one, this is why.
+
+- BRANCH POLARITY IS SOURCE-SHAPED. `if (x) { work; return true; } return false;`
+  and `if (!x) { return false; } work; return true;` are not the same codegen.
+  The image often jumps TO the work and falls through to the early return, which
+  means it never emits the `xor eax, eax` the first form needs. If your listing
+  has an extra `xor eax, eax` and an inverted jump, rewrite it as a guard clause.
+
 1. A helper the image INLINES that this tree defines in a .cpp. `osmx calls` shows no
    call to it. Move the body to the header - `inline` if it has no ORIGINAL marker,
    `MEASURED inline` if it does (that keeps its own claim measurable) - and LEAVE THE
