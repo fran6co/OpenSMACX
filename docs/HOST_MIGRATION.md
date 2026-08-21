@@ -15,7 +15,7 @@ than trusting the move:
 uv sync
 cmake -S . -B build -G Ninja
 cmake --build build
-uv run tools/decomp_status.py --check
+uv run tools/osmx.py check
 ```
 
 The last command is the ratchet: it compiles every BYTE_EXACT claim in `src/`
@@ -100,7 +100,7 @@ for now, with its routes recorded in docs/RETIRED_ROUTES.md.
 
 Do not trust a number from the new host until these pass:
 
-1. **The ratchet reproduces.** `uv run tools/decomp_status.py --check`
+1. **The ratchet reproduces.** `uv run tools/osmx.py check`
    compiles every BYTE_EXACT claim in `src/` against the shipped image and
    fails if one no longer reproduces. The claims live in the tree, not in
    anything the old host carried, so a host where the ratchet passes is a
@@ -113,9 +113,14 @@ Do not trust a number from the new host until these pass:
    2026-08-19; that entry point held assertions the test module was already
    importing, so it became tests and there is one way to run them.)
 
-3. **The exclusions still measure.** `uv run tools/measure_exclusions.py
-   --check` re-derives every figure in docs/EXCLUSIONS.md from the image and
-   fails if the document and the bytes disagree.
+3. **Nothing instructs the reader to run a tool that is gone.**
+   `uv run tools/stale_references.py` checks every `tools/*.py` path named by
+   an instruction in `src/` and `docs/` and fails if it is not there.
+
+   This replaced "the exclusions still measure", which named
+   `tools/measure_exclusions.py` - itself retired. There are no exclusions
+   left in `src/` to measure: the standing instruction is to mark a body as
+   not-yet-matching rather than exclude it.
 
 The checks this section used to carry — sweep summaries, undefined-flag
 masks, three-fill arbitration — policed a comparison harness that is retired
