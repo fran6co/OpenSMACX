@@ -76,7 +76,9 @@ static int *const GenderDefault = (int *)0x009BBFEC;
 static BOOL *const PluralityDefault = (BOOL *)0x009BBFF0;
 
 void __cdecl purge_trailing(LPSTR input);
-void __cdecl purge_leading(LPSTR input);
+// Returns the advanced pointer, which the catalogued name spells `X`
+// (void) - see the body. Callers that ignore it are the image's own.
+LPSTR __cdecl purge_leading(LPSTR input);
 void __cdecl purge_spaces(LPSTR input);
 void __cdecl kill_lf(LPSTR str);
 void __cdecl kill_nl(LPSTR str);
