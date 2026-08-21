@@ -46,6 +46,14 @@
 #include "tutwin.h"
 #include "worldwin.h"
 #include "hypothesis_layouts.h"
+#include "infowin.h"
+#include "messagewin.h"
+#include "reportif.h"
+#include "statuswin.h"
+#include "wave_device.h"
+#include "sounddevice.h"
+#include "netdaemon.h"
+#include "strings.h"
 
 func_wave_destructor WaveOriginalDestructor =
     original_method<func_wave_destructor>(0x004C67C0);
@@ -95,7 +103,7 @@ Font g_JACKAL_FONT;  // 0x007D3948
 
 /*
 Purpose: Atexit teardown thunk for g_ALPHAMENU_WAVE.
-// ORIGINAL: 0x00402F30 ??__Fg_ALPHAMENU_WAVE@@YAXXZ 0x00402F30-0x00402F3A
+// ORIGINAL: 0x00402F30 ??__Fg_ALPHAMENU_WAVE@@YAXXZ 0x00402F30-0x00402F3A BYTE_EXACT
 // symbol    ?destroy_alphamenu_wave@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -107,7 +115,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_alphamenu_wave() {
-    (ORIGINAL(g_ALPHAMENU_WAVE)->*WaveOriginalDestructor)();
+    g_ALPHAMENU_WAVE->Wave::~Wave();
 }
 
 /*
@@ -503,7 +511,7 @@ void __cdecl destroy_basewin() {
 
 /*
 Purpose: Atexit teardown thunk for g_BASEWIN_WAVE.
-// ORIGINAL: 0x00408400 ??__Fg_BASEWIN_WAVE@@YAXXZ 0x00408400-0x0040840A
+// ORIGINAL: 0x00408400 ??__Fg_BASEWIN_WAVE@@YAXXZ 0x00408400-0x0040840A BYTE_EXACT
 // symbol    ?destroy_basewin_wave@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -515,7 +523,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_basewin_wave() {
-    (ORIGINAL(g_BASEWIN_WAVE)->*WaveOriginalDestructor)();
+    g_BASEWIN_WAVE->Wave::~Wave();
 }
 
 /*
@@ -554,7 +562,7 @@ void __cdecl destroy_councwin() {
 
 /*
 Purpose: Atexit teardown thunk for g_CREDITS_WAVE.
-// ORIGINAL: 0x00428770 ??__Fg_CREDITS_WAVE@@YAXXZ 0x00428770-0x0042877A
+// ORIGINAL: 0x00428770 ??__Fg_CREDITS_WAVE@@YAXXZ 0x00428770-0x0042877A BYTE_EXACT
 // symbol    ?destroy_credits_wave@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -566,7 +574,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_credits_wave() {
-    (ORIGINAL(g_CREDITS_WAVE)->*WaveOriginalDestructor)();
+    g_CREDITS_WAVE->Wave::~Wave();
 }
 
 /*
@@ -605,7 +613,7 @@ void __cdecl destroy_designwin() {
 
 /*
 Purpose: Atexit teardown thunk for g_DESIGNWIN_WAVE.
-// ORIGINAL: 0x004328A0 ??__Fg_DESIGNWIN_WAVE@@YAXXZ 0x004328A0-0x004328AA
+// ORIGINAL: 0x004328A0 ??__Fg_DESIGNWIN_WAVE@@YAXXZ 0x004328A0-0x004328AA BYTE_EXACT
 // symbol    ?destroy_designwin_wave@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -617,7 +625,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_designwin_wave() {
-    (ORIGINAL(g_DESIGNWIN_WAVE)->*WaveOriginalDestructor)();
+    g_DESIGNWIN_WAVE->Wave::~Wave();
 }
 
 /*
@@ -673,7 +681,7 @@ void __cdecl destroy_cpu_waves() {
 
 /*
 Purpose: Atexit teardown thunk for g_MENU_UP_WAVE.
-// ORIGINAL: 0x004454C0 ??__Fg_MENU_UP_WAVE@@YAXXZ 0x004454C0-0x004454CA
+// ORIGINAL: 0x004454C0 ??__Fg_MENU_UP_WAVE@@YAXXZ 0x004454C0-0x004454CA BYTE_EXACT
 // symbol    ?destroy_menu_up_wave@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -685,12 +693,12 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_menu_up_wave() {
-    (ORIGINAL(g_MENU_UP_WAVE)->*WaveOriginalDestructor)();
+    g_MENU_UP_WAVE->Wave::~Wave();
 }
 
 /*
 Purpose: Atexit teardown thunk for g_MENU_DOWN_WAVE.
-// ORIGINAL: 0x004454F0 ??__Fg_MENU_DOWN_WAVE@@YAXXZ 0x004454F0-0x004454FA
+// ORIGINAL: 0x004454F0 ??__Fg_MENU_DOWN_WAVE@@YAXXZ 0x004454F0-0x004454FA BYTE_EXACT
 // symbol    ?destroy_menu_down_wave@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -702,12 +710,12 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_menu_down_wave() {
-    (ORIGINAL(g_MENU_DOWN_WAVE)->*WaveOriginalDestructor)();
+    g_MENU_DOWN_WAVE->Wave::~Wave();
 }
 
 /*
 Purpose: Atexit teardown thunk for g_SCOOT_WAVE.
-// ORIGINAL: 0x00445520 ??__Fg_SCOOT_WAVE@@YAXXZ 0x00445520-0x0044552A
+// ORIGINAL: 0x00445520 ??__Fg_SCOOT_WAVE@@YAXXZ 0x00445520-0x0044552A BYTE_EXACT
 // symbol    ?destroy_scoot_wave@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -719,12 +727,12 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_scoot_wave() {
-    (ORIGINAL(g_SCOOT_WAVE)->*WaveOriginalDestructor)();
+    g_SCOOT_WAVE->Wave::~Wave();
 }
 
 /*
 Purpose: Atexit teardown thunk for g_OK_WAVE.
-// ORIGINAL: 0x00445550 ??__Fg_OK_WAVE@@YAXXZ 0x00445550-0x0044555A
+// ORIGINAL: 0x00445550 ??__Fg_OK_WAVE@@YAXXZ 0x00445550-0x0044555A BYTE_EXACT
 // symbol    ?destroy_ok_wave@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -736,12 +744,12 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_ok_wave() {
-    (ORIGINAL(g_OK_WAVE)->*WaveOriginalDestructor)();
+    g_OK_WAVE->Wave::~Wave();
 }
 
 /*
 Purpose: Atexit teardown thunk for g_PASSOVER_WAVE.
-// ORIGINAL: 0x00445580 ??__Fg_PASSOVER_WAVE@@YAXXZ 0x00445580-0x0044558A
+// ORIGINAL: 0x00445580 ??__Fg_PASSOVER_WAVE@@YAXXZ 0x00445580-0x0044558A BYTE_EXACT
 // symbol    ?destroy_passover_wave@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -753,7 +761,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_passover_wave() {
-    (ORIGINAL(g_PASSOVER_WAVE)->*WaveOriginalDestructor)();
+    g_PASSOVER_WAVE->Wave::~Wave();
 }
 
 /*
@@ -5705,7 +5713,7 @@ void __cdecl destroy_basewin_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_INFOWIN.
-// ORIGINAL: 0x004562E0 ??__Fg_INFOWIN@@YAXXZ 0x004562E0-0x004562EA
+// ORIGINAL: 0x004562E0 ??__Fg_INFOWIN@@YAXXZ 0x004562E0-0x004562EA BYTE_EXACT
 // symbol    ?destroy_infowin@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -5717,7 +5725,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_infowin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x007AD2A0))->*InfoWinDtorTarget)();
+    reinterpret_cast<InfoWin *>(0x007AD2A0)->InfoWin::~InfoWin();
 }
 
 /*
@@ -5739,7 +5747,7 @@ void __cdecl destroy_maininterface() {
 
 /*
 Purpose: Atexit teardown thunk for g_MAININTERFACE_WAVE.
-// ORIGINAL: 0x004595B0 ??__Fg_MAININTERFACE_WAVE@@YAXXZ 0x004595B0-0x004595BA
+// ORIGINAL: 0x004595B0 ??__Fg_MAININTERFACE_WAVE@@YAXXZ 0x004595B0-0x004595BA BYTE_EXACT
 // symbol    ?destroy_maininterface_wave@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -5751,7 +5759,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_maininterface_wave() {
-    (ORIGINAL(g_MAININTERFACE_WAVE)->*WaveOriginalDestructor)();
+    g_MAININTERFACE_WAVE->Wave::~Wave();
 }
 
 /*
@@ -5773,7 +5781,7 @@ void __cdecl destroy_jackal_font() {
 
 /*
 Purpose: Atexit teardown thunk for g_MESSAGEWIN.
-// ORIGINAL: 0x00471340 ??__Fg_MESSAGEWIN@@YAXXZ 0x00471340-0x0047134A
+// ORIGINAL: 0x00471340 ??__Fg_MESSAGEWIN@@YAXXZ 0x00471340-0x0047134A BYTE_EXACT
 // symbol    ?destroy_messagewin@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -5785,7 +5793,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_messagewin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x007F67F8))->*MessageWinDtorTarget)();
+    reinterpret_cast<MessageWin *>(0x007F67F8)->MessageWin::~MessageWin();
 }
 
 /*
@@ -5841,7 +5849,7 @@ void __cdecl destroy_multiwin() {
 
 /*
 Purpose: Atexit teardown thunk for g_MULTIWIN_WAVE.
-// ORIGINAL: 0x00477E60 ??__Fg_MULTIWIN_WAVE@@YAXXZ 0x00477E60-0x00477E6A
+// ORIGINAL: 0x00477E60 ??__Fg_MULTIWIN_WAVE@@YAXXZ 0x00477E60-0x00477E6A BYTE_EXACT
 // symbol    ?destroy_multiwin_wave@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -5853,7 +5861,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_multiwin_wave() {
-    (ORIGINAL(g_MULTIWIN_WAVE)->*WaveOriginalDestructor)();
+    g_MULTIWIN_WAVE->Wave::~Wave();
 }
 
 /*
@@ -5994,7 +6002,7 @@ void __cdecl destroy_quaylewin() {
 
 /*
 Purpose: Atexit teardown thunk for g_REPORTIF.
-// ORIGINAL: 0x00496920 ??__Fg_REPORTIF@@YAXXZ 0x00496920-0x0049692A
+// ORIGINAL: 0x00496920 ??__Fg_REPORTIF@@YAXXZ 0x00496920-0x0049692A BYTE_EXACT
 // symbol    ?destroy_reportif@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -6006,7 +6014,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_reportif() {
-    (ORIGINAL(reinterpret_cast<void *>(0x00885F38))->*ReportIfDtorTarget)();
+    reinterpret_cast<ReportIf *>(0x00885F38)->ReportIf::~ReportIf();
 }
 
 /*
@@ -6045,7 +6053,7 @@ void __cdecl destroy_socialwinparent() {
 
 /*
 Purpose: Atexit teardown thunk for g_STATUSWIN.
-// ORIGINAL: 0x004B3FC0 ??__Fg_STATUSWIN@@YAXXZ 0x004B3FC0-0x004B3FCA
+// ORIGINAL: 0x004B3FC0 ??__Fg_STATUSWIN@@YAXXZ 0x004B3FC0-0x004B3FCA BYTE_EXACT
 // symbol    ?destroy_statuswin@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -6057,7 +6065,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_statuswin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x008C5568))->*StatusWinDtorTarget)();
+    reinterpret_cast<StatusWin *>(0x008C5568)->StatusWin::~StatusWin();
 }
 
 /*
@@ -6130,7 +6138,7 @@ void __cdecl destroy_worldwin() {
 
 /*
 Purpose: Atexit teardown thunk for g_WAVE_DEVICE.
-// ORIGINAL: 0x004C5C70 ??__Fg_WAVE_DEVICE@@YAXXZ 0x004C5C70-0x004C5C7A
+// ORIGINAL: 0x004C5C70 ??__Fg_WAVE_DEVICE@@YAXXZ 0x004C5C70-0x004C5C7A BYTE_EXACT
 // symbol    ?destroy_wave_device@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -6142,12 +6150,12 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_wave_device() {
-    (ORIGINAL(reinterpret_cast<void *>(0x0090D978))->*Wave_DeviceDtorTarget)();
+    reinterpret_cast<Wave_Device *>(0x0090D978)->Wave_Device::~Wave_Device();
 }
 
 /*
 Purpose: Atexit teardown thunk for g_MIDI_DEVICE.
-// ORIGINAL: 0x004C5CA0 ??__Fg_MIDI_DEVICE@@YAXXZ 0x004C5CA0-0x004C5CAA
+// ORIGINAL: 0x004C5CA0 ??__Fg_MIDI_DEVICE@@YAXXZ 0x004C5CA0-0x004C5CAA BYTE_EXACT
 // symbol    ?destroy_midi_device@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -6159,12 +6167,12 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_midi_device() {
-    (ORIGINAL(reinterpret_cast<void *>(0x0090D950))->*Midi_DeviceDtorTarget)();
+    reinterpret_cast<Midi_Device *>(0x0090D950)->Midi_Device::~Midi_Device();
 }
 
 /*
 Purpose: Atexit teardown thunk for g_WAVE_IN_DEVICE.
-// ORIGINAL: 0x004C5CD0 ??__Fg_WAVE_IN_DEVICE@@YAXXZ 0x004C5CD0-0x004C5CDA
+// ORIGINAL: 0x004C5CD0 ??__Fg_WAVE_IN_DEVICE@@YAXXZ 0x004C5CD0-0x004C5CDA BYTE_EXACT
 // symbol    ?destroy_wave_in_device@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -6176,12 +6184,12 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_wave_in_device() {
-    (ORIGINAL(reinterpret_cast<void *>(0x0090DB50))->*Wave_In_DeviceDtorTarget)();
+    reinterpret_cast<Wave_In_Device *>(0x0090DB50)->Wave_In_Device::~Wave_In_Device();
 }
 
 /*
 Purpose: Atexit teardown thunk for g_CONSOLE_TIMER.
-// ORIGINAL: 0x0050E9A0 ??__Fg_CONSOLE_TIMER@@YAXXZ 0x0050E9A0-0x0050E9AA
+// ORIGINAL: 0x0050E9A0 ??__Fg_CONSOLE_TIMER@@YAXXZ 0x0050E9A0-0x0050E9AA BYTE_EXACT
 // symbol    ?destroy_console_timer@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -6193,7 +6201,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_console_timer() {
-    (ORIGINAL(reinterpret_cast<void *>(0x00939E88))->*TimeDtorTarget)();
+    reinterpret_cast<Time *>(0x00939E88)->Time::~Time();
 }
 
 /*
@@ -6215,7 +6223,7 @@ void __cdecl destroy_cursor_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_NETDAEMON.
-// ORIGINAL: 0x0052DB30 ??__Fg_NETDAEMON@@YAXXZ 0x0052DB30-0x0052DB3A
+// ORIGINAL: 0x0052DB30 ??__Fg_NETDAEMON@@YAXXZ 0x0052DB30-0x0052DB3A BYTE_EXACT
 // symbol    ?destroy_netdaemon@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -6227,7 +6235,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_netdaemon() {
-    (ORIGINAL(reinterpret_cast<void *>(0x0093CD90))->*NetDaemonDtorTarget)();
+    reinterpret_cast<NetDaemon *>(0x0093CD90)->NetDaemon::~NetDaemon();
 }
 
 /*
@@ -6266,7 +6274,7 @@ void __cdecl destroy_fontqueue_val1() {
 
 /*
 Purpose: Atexit teardown thunk for g_TOP_MENU_WAVE.
-// ORIGINAL: 0x00584D20 ??__Fg_TOP_MENU_WAVE@@YAXXZ 0x00584D20-0x00584D2A
+// ORIGINAL: 0x00584D20 ??__Fg_TOP_MENU_WAVE@@YAXXZ 0x00584D20-0x00584D2A BYTE_EXACT
 // symbol    ?destroy_top_menu_wave@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -6278,7 +6286,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_top_menu_wave() {
-    (ORIGINAL(g_TOP_MENU_WAVE)->*WaveOriginalDestructor)();
+    g_TOP_MENU_WAVE->Wave::~Wave();
 }
 
 /*
@@ -6300,7 +6308,7 @@ void __cdecl destroy_fonts() {
 
 /*
 Purpose: Atexit teardown thunk for g_CRASH_LANDING_WAVE.
-// ORIGINAL: 0x005AE110 ??__Fg_CRASH_LANDING_WAVE@@YAXXZ 0x005AE110-0x005AE11A
+// ORIGINAL: 0x005AE110 ??__Fg_CRASH_LANDING_WAVE@@YAXXZ 0x005AE110-0x005AE11A BYTE_EXACT
 // symbol    ?destroy_crash_landing_wave@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -6312,12 +6320,12 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_crash_landing_wave() {
-    (ORIGINAL(g_CRASH_LANDING_WAVE)->*WaveOriginalDestructor)();
+    g_CRASH_LANDING_WAVE->Wave::~Wave();
 }
 
 /*
 Purpose: Atexit teardown thunk for g_WAVE_GENERAL.
-// ORIGINAL: 0x005B9C30 ??__Fg_WAVE_GENERAL@@YAXXZ 0x005B9C30-0x005B9C3A
+// ORIGINAL: 0x005B9C30 ??__Fg_WAVE_GENERAL@@YAXXZ 0x005B9C30-0x005B9C3A BYTE_EXACT
 // symbol    ?destroy_wave_general@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -6329,12 +6337,12 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_wave_general() {
-    (ORIGINAL(g_WAVE_GENERAL)->*WaveOriginalDestructor)();
+    g_WAVE_GENERAL->Wave::~Wave();
 }
 
 /*
 Purpose: Atexit teardown thunk for g_PALETTE1.
-// ORIGINAL: 0x005BEC60 ??__Fg_PALETTE1@@YAXXZ 0x005BEC60-0x005BEC6A
+// ORIGINAL: 0x005BEC60 ??__Fg_PALETTE1@@YAXXZ 0x005BEC60-0x005BEC6A BYTE_EXACT
 // symbol    ?destroy_palette1@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -6346,12 +6354,12 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_palette1() {
-    (ORIGINAL(reinterpret_cast<void *>(0x0094C590))->*PaletteDtorTarget)();
+    reinterpret_cast<Palette *>(0x0094C590)->Palette::~Palette();
 }
 
 /*
 Purpose: Atexit teardown thunk for g_PALETTE2.
-// ORIGINAL: 0x005BEC90 ??__Fg_PALETTE2@@YAXXZ 0x005BEC90-0x005BEC9A
+// ORIGINAL: 0x005BEC90 ??__Fg_PALETTE2@@YAXXZ 0x005BEC90-0x005BEC9A BYTE_EXACT
 // symbol    ?destroy_palette2@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -6363,7 +6371,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_palette2() {
-    (ORIGINAL(reinterpret_cast<void *>(0x009523A0))->*PaletteDtorTarget)();
+    reinterpret_cast<Palette *>(0x009523A0)->Palette::~Palette();
 }
 
 /*
@@ -6419,7 +6427,7 @@ void __cdecl destroy_txtindex() {
 
 /*
 Purpose: Atexit teardown thunk for StringTable.
-// ORIGINAL: 0x006168C0 ??__FStringTable@@YAXXZ 0x006168C0-0x006168CA
+// ORIGINAL: 0x006168C0 ??__FStringTable@@YAXXZ 0x006168C0-0x006168CA BYTE_EXACT
 // symbol    ?destroy_stringtable@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -6431,5 +6439,5 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_stringtable() {
-    (ORIGINAL(reinterpret_cast<void *>(0x009B90D8))->*StringsDtorTarget)();
+    reinterpret_cast<Strings *>(0x009B90D8)->Strings::~Strings();
 }
