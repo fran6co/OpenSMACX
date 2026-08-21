@@ -128,9 +128,11 @@ extern int NetDaemonLocalFaction;
 // ?message_data@@YAXHHHHHH@Z: unlock_veh's own EAX residue on the announce
 // path IS this call's EAX, so the value has to be passed through rather than
 // discarded.
-typedef uint32_t(__cdecl func_net_message_data)(int a1, int a2, int a3, int a4,
-                                                int a5, int a6);
-func_net_message_data *const NetDaemonMessageData = (func_net_message_data *)0x00592EE0;
+// 0x00592EE0, a pending_bodies forwarder. The catalogued name spells the
+// return `X` - void - but the body leaves a value in EAX that unlock_veh
+// returns, so the forwarder is typed `uint32_t` and callers that do not want
+// it discard it.
+uint32_t __cdecl message_data(int a1, int a2, int a3, int a4, int a5, int a6);
 
 // unlock_veh is entered on an unadjusted `this` (the original does a plain
 // `mov esi, ecx`), so the adapter forwards without displacement.
