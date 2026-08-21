@@ -210,7 +210,7 @@ func_thiscall_teardown PaletteCtorTarget =
 
 /*
 Purpose: Dynamic initializer for g_ALPHAMENU_WAVE; registers its ??__F teardown.
-// ORIGINAL: 0x00402F10 ??__Eg_ALPHAMENU_WAVE@@YAXXZ 0x00402F10-0x00402F26
+// ORIGINAL: 0x00402F10 ??__Eg_ALPHAMENU_WAVE@@YAXXZ 0x00402F10-0x00402F26 BYTE_EXACT
 // symbol    ?construct_alphamenu_wave@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -222,13 +222,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_alphamenu_wave() {
-    (ORIGINAL(g_ALPHAMENU_WAVE)->*WaveInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00402F30));
+    g_ALPHAMENU_WAVE->Wave::Wave();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00402F30));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR02; registers its ??__F teardown.
-// ORIGINAL: 0x00404440 ??__Eg_UNUSED_SPRITE_VAR02@@YAXXZ 0x00404440-0x00404456
+// ORIGINAL: 0x00404440 ??__Eg_UNUSED_SPRITE_VAR02@@YAXXZ 0x00404440-0x00404456 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var02@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -240,13 +240,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var02() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR02)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00404460));
+    g_UNUSED_SPRITE_VAR02->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00404460));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR11; registers its ??__F teardown.
-// ORIGINAL: 0x00404470 ??__Eg_UNUSED_SPRITE_VAR11@@YAXXZ 0x00404470-0x00404486
+// ORIGINAL: 0x00404470 ??__Eg_UNUSED_SPRITE_VAR11@@YAXXZ 0x00404470-0x00404486 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var11@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -258,13 +258,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var11() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR11)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00404490));
+    g_UNUSED_SPRITE_VAR11->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00404490));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR06; registers its ??__F teardown.
-// ORIGINAL: 0x004044A0 ??__Eg_UNUSED_SPRITE_VAR06@@YAXXZ 0x004044A0-0x004044B6
+// ORIGINAL: 0x004044A0 ??__Eg_UNUSED_SPRITE_VAR06@@YAXXZ 0x004044A0-0x004044B6 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var06@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -276,13 +276,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var06() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR06)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004044C0));
+    g_UNUSED_SPRITE_VAR06->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004044C0));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR09; registers its ??__F teardown.
-// ORIGINAL: 0x004044D0 ??__Eg_UNUSED_SPRITE_VAR09@@YAXXZ 0x004044D0-0x004044E6
+// ORIGINAL: 0x004044D0 ??__Eg_UNUSED_SPRITE_VAR09@@YAXXZ 0x004044D0-0x004044E6 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var09@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -294,13 +294,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var09() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR09)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004044F0));
+    g_UNUSED_SPRITE_VAR09->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004044F0));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR21; registers its ??__F teardown.
-// ORIGINAL: 0x00404500 ??__Eg_UNUSED_SPRITE_VAR21@@YAXXZ 0x00404500-0x00404516
+// ORIGINAL: 0x00404500 ??__Eg_UNUSED_SPRITE_VAR21@@YAXXZ 0x00404500-0x00404516 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var21@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -312,13 +312,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var21() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR21)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00404520));
+    g_UNUSED_SPRITE_VAR21->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00404520));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR05; registers its ??__F teardown.
-// ORIGINAL: 0x00404530 ??__Eg_UNUSED_SPRITE_VAR05@@YAXXZ 0x00404530-0x00404546
+// ORIGINAL: 0x00404530 ??__Eg_UNUSED_SPRITE_VAR05@@YAXXZ 0x00404530-0x00404546 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var05@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -330,13 +330,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var05() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR05)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00404550));
+    g_UNUSED_SPRITE_VAR05->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00404550));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR08; registers its ??__F teardown.
-// ORIGINAL: 0x00404560 ??__Eg_UNUSED_SPRITE_VAR08@@YAXXZ 0x00404560-0x00404576
+// ORIGINAL: 0x00404560 ??__Eg_UNUSED_SPRITE_VAR08@@YAXXZ 0x00404560-0x00404576 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var08@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -348,13 +348,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var08() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR08)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00404580));
+    g_UNUSED_SPRITE_VAR08->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00404580));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR04; registers its ??__F teardown.
-// ORIGINAL: 0x00404590 ??__Eg_UNUSED_SPRITE_VAR04@@YAXXZ 0x00404590-0x004045A6
+// ORIGINAL: 0x00404590 ??__Eg_UNUSED_SPRITE_VAR04@@YAXXZ 0x00404590-0x004045A6 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var04@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -366,13 +366,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var04() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR04)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004045B0));
+    g_UNUSED_SPRITE_VAR04->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004045B0));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR01; registers its ??__F teardown.
-// ORIGINAL: 0x004045C0 ??__Eg_UNUSED_SPRITE_VAR01@@YAXXZ 0x004045C0-0x004045D6
+// ORIGINAL: 0x004045C0 ??__Eg_UNUSED_SPRITE_VAR01@@YAXXZ 0x004045C0-0x004045D6 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var01@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -384,13 +384,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var01() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR01)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004045E0));
+    g_UNUSED_SPRITE_VAR01->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004045E0));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR18; registers its ??__F teardown.
-// ORIGINAL: 0x004045F0 ??__Eg_UNUSED_SPRITE_VAR18@@YAXXZ 0x004045F0-0x00404606
+// ORIGINAL: 0x004045F0 ??__Eg_UNUSED_SPRITE_VAR18@@YAXXZ 0x004045F0-0x00404606 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var18@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -402,13 +402,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var18() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR18)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00404610));
+    g_UNUSED_SPRITE_VAR18->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00404610));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR03; registers its ??__F teardown.
-// ORIGINAL: 0x00404620 ??__Eg_UNUSED_SPRITE_VAR03@@YAXXZ 0x00404620-0x00404636
+// ORIGINAL: 0x00404620 ??__Eg_UNUSED_SPRITE_VAR03@@YAXXZ 0x00404620-0x00404636 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var03@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -420,13 +420,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var03() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR03)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00404640));
+    g_UNUSED_SPRITE_VAR03->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00404640));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR20; registers its ??__F teardown.
-// ORIGINAL: 0x00404650 ??__Eg_UNUSED_SPRITE_VAR20@@YAXXZ 0x00404650-0x00404666
+// ORIGINAL: 0x00404650 ??__Eg_UNUSED_SPRITE_VAR20@@YAXXZ 0x00404650-0x00404666 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var20@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -438,13 +438,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var20() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR20)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00404670));
+    g_UNUSED_SPRITE_VAR20->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00404670));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR16; registers its ??__F teardown.
-// ORIGINAL: 0x00404680 ??__Eg_UNUSED_SPRITE_VAR16@@YAXXZ 0x00404680-0x00404696
+// ORIGINAL: 0x00404680 ??__Eg_UNUSED_SPRITE_VAR16@@YAXXZ 0x00404680-0x00404696 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var16@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -456,13 +456,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var16() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR16)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004046A0));
+    g_UNUSED_SPRITE_VAR16->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004046A0));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR14; registers its ??__F teardown.
-// ORIGINAL: 0x004046B0 ??__Eg_UNUSED_SPRITE_VAR14@@YAXXZ 0x004046B0-0x004046C6
+// ORIGINAL: 0x004046B0 ??__Eg_UNUSED_SPRITE_VAR14@@YAXXZ 0x004046B0-0x004046C6 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var14@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -474,13 +474,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var14() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR14)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004046D0));
+    g_UNUSED_SPRITE_VAR14->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004046D0));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR22; registers its ??__F teardown.
-// ORIGINAL: 0x004046E0 ??__Eg_UNUSED_SPRITE_VAR22@@YAXXZ 0x004046E0-0x004046F6
+// ORIGINAL: 0x004046E0 ??__Eg_UNUSED_SPRITE_VAR22@@YAXXZ 0x004046E0-0x004046F6 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var22@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -492,13 +492,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var22() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR22)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00404700));
+    g_UNUSED_SPRITE_VAR22->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00404700));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR10; registers its ??__F teardown.
-// ORIGINAL: 0x00404710 ??__Eg_UNUSED_SPRITE_VAR10@@YAXXZ 0x00404710-0x00404726
+// ORIGINAL: 0x00404710 ??__Eg_UNUSED_SPRITE_VAR10@@YAXXZ 0x00404710-0x00404726 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var10@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -510,13 +510,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var10() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR10)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00404730));
+    g_UNUSED_SPRITE_VAR10->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00404730));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR15; registers its ??__F teardown.
-// ORIGINAL: 0x00404740 ??__Eg_UNUSED_SPRITE_VAR15@@YAXXZ 0x00404740-0x00404756
+// ORIGINAL: 0x00404740 ??__Eg_UNUSED_SPRITE_VAR15@@YAXXZ 0x00404740-0x00404756 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var15@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -528,13 +528,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var15() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR15)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00404760));
+    g_UNUSED_SPRITE_VAR15->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00404760));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR13; registers its ??__F teardown.
-// ORIGINAL: 0x00404770 ??__Eg_UNUSED_SPRITE_VAR13@@YAXXZ 0x00404770-0x00404786
+// ORIGINAL: 0x00404770 ??__Eg_UNUSED_SPRITE_VAR13@@YAXXZ 0x00404770-0x00404786 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var13@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -546,13 +546,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var13() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR13)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00404790));
+    g_UNUSED_SPRITE_VAR13->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00404790));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR17; registers its ??__F teardown.
-// ORIGINAL: 0x004047A0 ??__Eg_UNUSED_SPRITE_VAR17@@YAXXZ 0x004047A0-0x004047B6
+// ORIGINAL: 0x004047A0 ??__Eg_UNUSED_SPRITE_VAR17@@YAXXZ 0x004047A0-0x004047B6 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var17@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -564,13 +564,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var17() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR17)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004047C0));
+    g_UNUSED_SPRITE_VAR17->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004047C0));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR19; registers its ??__F teardown.
-// ORIGINAL: 0x004047D0 ??__Eg_UNUSED_SPRITE_VAR19@@YAXXZ 0x004047D0-0x004047E6
+// ORIGINAL: 0x004047D0 ??__Eg_UNUSED_SPRITE_VAR19@@YAXXZ 0x004047D0-0x004047E6 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var19@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -582,13 +582,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var19() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR19)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004047F0));
+    g_UNUSED_SPRITE_VAR19->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004047F0));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR12; registers its ??__F teardown.
-// ORIGINAL: 0x00404800 ??__Eg_UNUSED_SPRITE_VAR12@@YAXXZ 0x00404800-0x00404816
+// ORIGINAL: 0x00404800 ??__Eg_UNUSED_SPRITE_VAR12@@YAXXZ 0x00404800-0x00404816 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var12@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -600,13 +600,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var12() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR12)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00404820));
+    g_UNUSED_SPRITE_VAR12->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00404820));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR07; registers its ??__F teardown.
-// ORIGINAL: 0x00404830 ??__Eg_UNUSED_SPRITE_VAR07@@YAXXZ 0x00404830-0x00404846
+// ORIGINAL: 0x00404830 ??__Eg_UNUSED_SPRITE_VAR07@@YAXXZ 0x00404830-0x00404846 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var07@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -618,8 +618,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var07() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR07)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00404850));
+    g_UNUSED_SPRITE_VAR07->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00404850));
 }
 
 /*
@@ -637,12 +637,12 @@ Status: Complete
 */
 void __cdecl construct_basewin() {
     (ORIGINAL(reinterpret_cast<void *>(0x006A7628))->*BaseWinCtorTarget)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004083D0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004083D0));
 }
 
 /*
 Purpose: Dynamic initializer for g_BASEWIN_WAVE; registers its ??__F teardown.
-// ORIGINAL: 0x004083E0 ??__Eg_BASEWIN_WAVE@@YAXXZ 0x004083E0-0x004083F6
+// ORIGINAL: 0x004083E0 ??__Eg_BASEWIN_WAVE@@YAXXZ 0x004083E0-0x004083F6 BYTE_EXACT
 // symbol    ?construct_basewin_wave@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -654,8 +654,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_basewin_wave() {
-    (ORIGINAL(g_BASEWIN_WAVE)->*WaveInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00408400));
+    g_BASEWIN_WAVE->Wave::Wave();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00408400));
 }
 
 /*
@@ -673,7 +673,7 @@ Status: Complete
 */
 void __cdecl construct_battlewin() {
     (ORIGINAL(reinterpret_cast<void *>(0x006EEED8))->*BattleWinCtorTarget)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004219D0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004219D0));
 }
 
 /*
@@ -691,12 +691,12 @@ Status: Complete
 */
 void __cdecl construct_councwin() {
     (ORIGINAL(reinterpret_cast<void *>(0x006FEC80))->*CouncWinCtorTarget)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004243C0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004243C0));
 }
 
 /*
 Purpose: Dynamic initializer for g_CREDITS_WAVE; registers its ??__F teardown.
-// ORIGINAL: 0x00428750 ??__Eg_CREDITS_WAVE@@YAXXZ 0x00428750-0x00428766
+// ORIGINAL: 0x00428750 ??__Eg_CREDITS_WAVE@@YAXXZ 0x00428750-0x00428766 BYTE_EXACT
 // symbol    ?construct_credits_wave@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -708,8 +708,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_credits_wave() {
-    (ORIGINAL(g_CREDITS_WAVE)->*WaveInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00428770));
+    g_CREDITS_WAVE->Wave::Wave();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00428770));
 }
 
 /*
@@ -727,7 +727,7 @@ Status: Complete
 */
 void __cdecl construct_datalink() {
     (ORIGINAL(reinterpret_cast<void *>(0x00703EA0))->*DatalinkCtorTarget)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00428FB0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00428FB0));
 }
 
 /*
@@ -745,12 +745,12 @@ Status: Complete
 */
 void __cdecl construct_designwin() {
     (ORIGINAL(reinterpret_cast<void *>(0x0071F2B0))->*DesignWinCtorTarget)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00432870));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00432870));
 }
 
 /*
 Purpose: Dynamic initializer for g_DESIGNWIN_WAVE; registers its ??__F teardown.
-// ORIGINAL: 0x00432880 ??__Eg_DESIGNWIN_WAVE@@YAXXZ 0x00432880-0x00432896
+// ORIGINAL: 0x00432880 ??__Eg_DESIGNWIN_WAVE@@YAXXZ 0x00432880-0x00432896 BYTE_EXACT
 // symbol    ?construct_designwin_wave@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -762,8 +762,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_designwin_wave() {
-    (ORIGINAL(g_DESIGNWIN_WAVE)->*WaveInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004328A0));
+    g_DESIGNWIN_WAVE->Wave::Wave();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004328A0));
 }
 
 /*
@@ -781,7 +781,7 @@ Status: Complete
 */
 void __cdecl construct_diplopop() {
     (ORIGINAL(reinterpret_cast<void *>(0x00733990))->*DiploPopCtorTarget)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0043EFE0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0043EFE0));
 }
 
 /*
@@ -799,7 +799,7 @@ Status: Complete
 */
 void __cdecl construct_diplowin() {
     (ORIGINAL(reinterpret_cast<void *>(0x0073ACD8))->*DiploWinCtorTarget)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00440F20));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00440F20));
 }
 
 /*
@@ -817,12 +817,12 @@ Status: Complete
 */
 void __cdecl construct_cpu_waves() {
     VectorCtorIterator(g_CPU_WAVES, 0x6C, 45, WaveElementCtor, WaveElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00445480));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00445480));
 }
 
 /*
 Purpose: Dynamic initializer for g_MENU_UP_WAVE; registers its ??__F teardown.
-// ORIGINAL: 0x004454A0 ??__Eg_MENU_UP_WAVE@@YAXXZ 0x004454A0-0x004454B6
+// ORIGINAL: 0x004454A0 ??__Eg_MENU_UP_WAVE@@YAXXZ 0x004454A0-0x004454B6 BYTE_EXACT
 // symbol    ?construct_menu_up_wave@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -834,13 +834,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_menu_up_wave() {
-    (ORIGINAL(g_MENU_UP_WAVE)->*WaveInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004454C0));
+    g_MENU_UP_WAVE->Wave::Wave();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004454C0));
 }
 
 /*
 Purpose: Dynamic initializer for g_MENU_DOWN_WAVE; registers its ??__F teardown.
-// ORIGINAL: 0x004454D0 ??__Eg_MENU_DOWN_WAVE@@YAXXZ 0x004454D0-0x004454E6
+// ORIGINAL: 0x004454D0 ??__Eg_MENU_DOWN_WAVE@@YAXXZ 0x004454D0-0x004454E6 BYTE_EXACT
 // symbol    ?construct_menu_down_wave@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -852,13 +852,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_menu_down_wave() {
-    (ORIGINAL(g_MENU_DOWN_WAVE)->*WaveInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004454F0));
+    g_MENU_DOWN_WAVE->Wave::Wave();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004454F0));
 }
 
 /*
 Purpose: Dynamic initializer for g_SCOOT_WAVE; registers its ??__F teardown.
-// ORIGINAL: 0x00445500 ??__Eg_SCOOT_WAVE@@YAXXZ 0x00445500-0x00445516
+// ORIGINAL: 0x00445500 ??__Eg_SCOOT_WAVE@@YAXXZ 0x00445500-0x00445516 BYTE_EXACT
 // symbol    ?construct_scoot_wave@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -870,13 +870,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_scoot_wave() {
-    (ORIGINAL(g_SCOOT_WAVE)->*WaveInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00445520));
+    g_SCOOT_WAVE->Wave::Wave();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00445520));
 }
 
 /*
 Purpose: Dynamic initializer for g_OK_WAVE; registers its ??__F teardown.
-// ORIGINAL: 0x00445530 ??__Eg_OK_WAVE@@YAXXZ 0x00445530-0x00445546
+// ORIGINAL: 0x00445530 ??__Eg_OK_WAVE@@YAXXZ 0x00445530-0x00445546 BYTE_EXACT
 // symbol    ?construct_ok_wave@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -888,13 +888,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ok_wave() {
-    (ORIGINAL(g_OK_WAVE)->*WaveInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00445550));
+    g_OK_WAVE->Wave::Wave();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00445550));
 }
 
 /*
 Purpose: Dynamic initializer for g_PASSOVER_WAVE; registers its ??__F teardown.
-// ORIGINAL: 0x00445560 ??__Eg_PASSOVER_WAVE@@YAXXZ 0x00445560-0x00445576
+// ORIGINAL: 0x00445560 ??__Eg_PASSOVER_WAVE@@YAXXZ 0x00445560-0x00445576 BYTE_EXACT
 // symbol    ?construct_passover_wave@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -906,13 +906,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_passover_wave() {
-    (ORIGINAL(g_PASSOVER_WAVE)->*WaveInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00445580));
+    g_PASSOVER_WAVE->Wave::Wave();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00445580));
 }
 
 /*
 Purpose: Dynamic initializer for g_FX; registers its ??__F teardown.
-// ORIGINAL: 0x00445590 ??__Eg_FX@@YAXXZ 0x00445590-0x004455A6
+// ORIGINAL: 0x00445590 ??__Eg_FX@@YAXXZ 0x00445590-0x004455A6 BYTE_EXACT
 // symbol    ?construct_fx@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -924,8 +924,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_fx() {
-    (ORIGINAL(g_FX)->*FXInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004455B0));
+    g_FX->FX::FX();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004455B0));
 }
 
 /*
@@ -942,8 +942,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ambience() {
-    (ORIGINAL(g_AMBIENCE)->*AmbienceInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004455E0));
+    g_AMBIENCE->Ambience::Ambience();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004455E0));
 }
 
 /*
@@ -961,12 +961,12 @@ Status: Complete
 */
 void __cdecl construct_famewin() {
     (ORIGINAL(reinterpret_cast<void *>(0x0074DAF8))->*FameWinCtorTarget)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004483F0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004483F0));
 }
 
 /*
 Purpose: Dynamic initializer for g_PCX_PARSE_TEMP_BUFFER1; registers its ??__F teardown.
-// ORIGINAL: 0x0044CC20 ??__Eg_PCX_PARSE_TEMP_BUFFER1@@YAXXZ 0x0044CC20-0x0044CC36
+// ORIGINAL: 0x0044CC20 ??__Eg_PCX_PARSE_TEMP_BUFFER1@@YAXXZ 0x0044CC20-0x0044CC36 BYTE_EXACT
 // symbol    ?construct_pcx_parse_temp_buffer1@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -978,8 +978,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_pcx_parse_temp_buffer1() {
-    (ORIGINAL(g_PCX_PARSE_TEMP_BUFFER1)->*BufferInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044CC40));
+    g_PCX_PARSE_TEMP_BUFFER1->Buffer::Buffer();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044CC40));
 }
 
 /*
@@ -998,7 +998,7 @@ Status: Complete
 void __cdecl construct_factionart() {
     VectorCtorIterator(reinterpret_cast<void *>(0x0078E978), 0x65C, 8,
                        FactionArtCtorTarget, FactionArtElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044CC80));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044CC80));
 }
 
 /*
@@ -1016,7 +1016,7 @@ Status: Complete
 */
 void __cdecl construct_iface_close_x_sprites() {
     VectorCtorIterator(g_IFACE_CLOSE_X_SPRITES, 0x2C, 3, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044CCD0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044CCD0));
 }
 
 /*
@@ -1034,7 +1034,7 @@ Status: Complete
 */
 void __cdecl construct_iface_box_sprites1() {
     VectorCtorIterator(g_IFACE_BOX_SPRITES1, 0x2C, 51, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044CD20));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044CD20));
 }
 
 /*
@@ -1052,7 +1052,7 @@ Status: Complete
 */
 void __cdecl construct_iface_box_sprites2() {
     VectorCtorIterator(g_IFACE_BOX_SPRITES2, 0x2C, 51, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044CD70));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044CD70));
 }
 
 /*
@@ -1070,7 +1070,7 @@ Status: Complete
 */
 void __cdecl construct_iface_box_sprites3() {
     VectorCtorIterator(g_IFACE_BOX_SPRITES3, 0x2C, 51, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044CDC0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044CDC0));
 }
 
 /*
@@ -1088,7 +1088,7 @@ Status: Complete
 */
 void __cdecl construct_iface_box_sprites4() {
     VectorCtorIterator(g_IFACE_BOX_SPRITES4, 0x2C, 51, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044CE10));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044CE10));
 }
 
 /*
@@ -1106,7 +1106,7 @@ Status: Complete
 */
 void __cdecl construct_iface_box_sprites5() {
     VectorCtorIterator(g_IFACE_BOX_SPRITES5, 0x2C, 51, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044CE60));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044CE60));
 }
 
 /*
@@ -1124,7 +1124,7 @@ Status: Complete
 */
 void __cdecl construct_iface_box_sprites6() {
     VectorCtorIterator(g_IFACE_BOX_SPRITES6, 0x2C, 51, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044CEB0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044CEB0));
 }
 
 /*
@@ -1142,7 +1142,7 @@ Status: Complete
 */
 void __cdecl construct_iface_box_sprites7() {
     VectorCtorIterator(g_IFACE_BOX_SPRITES7, 0x2C, 51, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044CF00));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044CF00));
 }
 
 /*
@@ -1160,7 +1160,7 @@ Status: Complete
 */
 void __cdecl construct_iface_box_sprites8() {
     VectorCtorIterator(g_IFACE_BOX_SPRITES8, 0x2C, 51, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044CF50));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044CF50));
 }
 
 /*
@@ -1178,12 +1178,12 @@ Status: Complete
 */
 void __cdecl construct_iface_box_sprite_buffers() {
     VectorCtorIterator(g_IFACE_BOX_SPRITE_BUFFERS, 0x588, 51, BufferElementCtor, BufferElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044CFA0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044CFA0));
 }
 
 /*
 Purpose: Dynamic initializer for g_IFACE_STD_POPUPS_TOP_LEFT_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044CFC0 ??__Eg_IFACE_STD_POPUPS_TOP_LEFT_SPRITE@@YAXXZ 0x0044CFC0-0x0044CFD6
+// ORIGINAL: 0x0044CFC0 ??__Eg_IFACE_STD_POPUPS_TOP_LEFT_SPRITE@@YAXXZ 0x0044CFC0-0x0044CFD6 BYTE_EXACT
 // symbol    ?construct_iface_std_popups_top_left_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1195,13 +1195,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_std_popups_top_left_sprite() {
-    (ORIGINAL(g_IFACE_STD_POPUPS_TOP_LEFT_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044CFE0));
+    g_IFACE_STD_POPUPS_TOP_LEFT_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044CFE0));
 }
 
 /*
 Purpose: Dynamic initializer for g_IFACE_STD_POPUPS_TOP_RIGHT_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044CFF0 ??__Eg_IFACE_STD_POPUPS_TOP_RIGHT_SPRITE@@YAXXZ 0x0044CFF0-0x0044D006
+// ORIGINAL: 0x0044CFF0 ??__Eg_IFACE_STD_POPUPS_TOP_RIGHT_SPRITE@@YAXXZ 0x0044CFF0-0x0044D006 BYTE_EXACT
 // symbol    ?construct_iface_std_popups_top_right_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1213,13 +1213,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_std_popups_top_right_sprite() {
-    (ORIGINAL(g_IFACE_STD_POPUPS_TOP_RIGHT_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D010));
+    g_IFACE_STD_POPUPS_TOP_RIGHT_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D010));
 }
 
 /*
 Purpose: Dynamic initializer for g_IFACE_STD_POPUPS_BOT_LEFT_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044D020 ??__Eg_IFACE_STD_POPUPS_BOT_LEFT_SPRITE@@YAXXZ 0x0044D020-0x0044D036
+// ORIGINAL: 0x0044D020 ??__Eg_IFACE_STD_POPUPS_BOT_LEFT_SPRITE@@YAXXZ 0x0044D020-0x0044D036 BYTE_EXACT
 // symbol    ?construct_iface_std_popups_bot_left_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1231,13 +1231,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_std_popups_bot_left_sprite() {
-    (ORIGINAL(g_IFACE_STD_POPUPS_BOT_LEFT_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D040));
+    g_IFACE_STD_POPUPS_BOT_LEFT_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D040));
 }
 
 /*
 Purpose: Dynamic initializer for g_IFACE_STD_POPUPS_BOT_RIGHT_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044D050 ??__Eg_IFACE_STD_POPUPS_BOT_RIGHT_SPRITE@@YAXXZ 0x0044D050-0x0044D066
+// ORIGINAL: 0x0044D050 ??__Eg_IFACE_STD_POPUPS_BOT_RIGHT_SPRITE@@YAXXZ 0x0044D050-0x0044D066 BYTE_EXACT
 // symbol    ?construct_iface_std_popups_bot_right_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1249,13 +1249,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_std_popups_bot_right_sprite() {
-    (ORIGINAL(g_IFACE_STD_POPUPS_BOT_RIGHT_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D070));
+    g_IFACE_STD_POPUPS_BOT_RIGHT_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D070));
 }
 
 /*
 Purpose: Dynamic initializer for g_IFACE_STD_POPUPS_TOP_MID_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044D080 ??__Eg_IFACE_STD_POPUPS_TOP_MID_SPRITE@@YAXXZ 0x0044D080-0x0044D096
+// ORIGINAL: 0x0044D080 ??__Eg_IFACE_STD_POPUPS_TOP_MID_SPRITE@@YAXXZ 0x0044D080-0x0044D096 BYTE_EXACT
 // symbol    ?construct_iface_std_popups_top_mid_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1267,13 +1267,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_std_popups_top_mid_sprite() {
-    (ORIGINAL(g_IFACE_STD_POPUPS_TOP_MID_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D0A0));
+    g_IFACE_STD_POPUPS_TOP_MID_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D0A0));
 }
 
 /*
 Purpose: Dynamic initializer for g_IFACE_STD_POPUPS_BOT_MID_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044D0B0 ??__Eg_IFACE_STD_POPUPS_BOT_MID_SPRITE@@YAXXZ 0x0044D0B0-0x0044D0C6
+// ORIGINAL: 0x0044D0B0 ??__Eg_IFACE_STD_POPUPS_BOT_MID_SPRITE@@YAXXZ 0x0044D0B0-0x0044D0C6 BYTE_EXACT
 // symbol    ?construct_iface_std_popups_bot_mid_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1285,13 +1285,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_std_popups_bot_mid_sprite() {
-    (ORIGINAL(g_IFACE_STD_POPUPS_BOT_MID_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D0D0));
+    g_IFACE_STD_POPUPS_BOT_MID_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D0D0));
 }
 
 /*
 Purpose: Dynamic initializer for g_IFACE_STD_POPUPS_MID_LEFT_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044D0E0 ??__Eg_IFACE_STD_POPUPS_MID_LEFT_SPRITE@@YAXXZ 0x0044D0E0-0x0044D0F6
+// ORIGINAL: 0x0044D0E0 ??__Eg_IFACE_STD_POPUPS_MID_LEFT_SPRITE@@YAXXZ 0x0044D0E0-0x0044D0F6 BYTE_EXACT
 // symbol    ?construct_iface_std_popups_mid_left_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1303,13 +1303,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_std_popups_mid_left_sprite() {
-    (ORIGINAL(g_IFACE_STD_POPUPS_MID_LEFT_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D100));
+    g_IFACE_STD_POPUPS_MID_LEFT_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D100));
 }
 
 /*
 Purpose: Dynamic initializer for g_IFACE_STD_POPUPS_MID_RIGHT_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044D110 ??__Eg_IFACE_STD_POPUPS_MID_RIGHT_SPRITE@@YAXXZ 0x0044D110-0x0044D126
+// ORIGINAL: 0x0044D110 ??__Eg_IFACE_STD_POPUPS_MID_RIGHT_SPRITE@@YAXXZ 0x0044D110-0x0044D126 BYTE_EXACT
 // symbol    ?construct_iface_std_popups_mid_right_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1321,13 +1321,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_std_popups_mid_right_sprite() {
-    (ORIGINAL(g_IFACE_STD_POPUPS_MID_RIGHT_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D130));
+    g_IFACE_STD_POPUPS_MID_RIGHT_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D130));
 }
 
 /*
 Purpose: Dynamic initializer for g_IFACE_STD_POPUPS_MIDDLE_BUFFER; registers its ??__F teardown.
-// ORIGINAL: 0x0044D140 ??__Eg_IFACE_STD_POPUPS_MIDDLE_BUFFER@@YAXXZ 0x0044D140-0x0044D156
+// ORIGINAL: 0x0044D140 ??__Eg_IFACE_STD_POPUPS_MIDDLE_BUFFER@@YAXXZ 0x0044D140-0x0044D156 BYTE_EXACT
 // symbol    ?construct_iface_std_popups_middle_buffer@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1339,13 +1339,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_std_popups_middle_buffer() {
-    (ORIGINAL(g_IFACE_STD_POPUPS_MIDDLE_BUFFER)->*BufferInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D160));
+    g_IFACE_STD_POPUPS_MIDDLE_BUFFER->Buffer::Buffer();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D160));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_CAVIARDATA_VAR1; registers its ??__F teardown.
-// ORIGINAL: 0x0044D170 ??__Eg_UNUSED_CAVIARDATA_VAR1@@YAXXZ 0x0044D170-0x0044D186
+// ORIGINAL: 0x0044D170 ??__Eg_UNUSED_CAVIARDATA_VAR1@@YAXXZ 0x0044D170-0x0044D186 BYTE_EXACT
 // symbol    ?construct_unused_caviardata_var1@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1357,13 +1357,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_caviardata_var1() {
-    (ORIGINAL(g_UNUSED_CAVIARDATA_VAR1)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D190));
+    g_UNUSED_CAVIARDATA_VAR1->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D190));
 }
 
 /*
 Purpose: Dynamic initializer for g_SSF_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D1A0 ??__Eg_SSF_CAVIARDATA@@YAXXZ 0x0044D1A0-0x0044D1B6
+// ORIGINAL: 0x0044D1A0 ??__Eg_SSF_CAVIARDATA@@YAXXZ 0x0044D1A0-0x0044D1B6 BYTE_EXACT
 // symbol    ?construct_ssf_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1375,13 +1375,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ssf_caviardata() {
-    (ORIGINAL(g_SSF_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D1C0));
+    g_SSF_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D1C0));
 }
 
 /*
 Purpose: Dynamic initializer for g_SDP_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D1D0 ??__Eg_SDP_CAVIARDATA@@YAXXZ 0x0044D1D0-0x0044D1E6
+// ORIGINAL: 0x0044D1D0 ??__Eg_SDP_CAVIARDATA@@YAXXZ 0x0044D1D0-0x0044D1E6 BYTE_EXACT
 // symbol    ?construct_sdp_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1393,13 +1393,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_sdp_caviardata() {
-    (ORIGINAL(g_SDP_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D1F0));
+    g_SDP_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D1F0));
 }
 
 /*
 Purpose: Dynamic initializer for g_SAS_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D200 ??__Eg_SAS_CAVIARDATA@@YAXXZ 0x0044D200-0x0044D216
+// ORIGINAL: 0x0044D200 ??__Eg_SAS_CAVIARDATA@@YAXXZ 0x0044D200-0x0044D216 BYTE_EXACT
 // symbol    ?construct_sas_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1411,13 +1411,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_sas_caviardata() {
-    (ORIGINAL(g_SAS_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D220));
+    g_SAS_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D220));
 }
 
 /*
 Purpose: Dynamic initializer for g_SCD_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D230 ??__Eg_SCD_CAVIARDATA@@YAXXZ 0x0044D230-0x0044D246
+// ORIGINAL: 0x0044D230 ??__Eg_SCD_CAVIARDATA@@YAXXZ 0x0044D230-0x0044D246 BYTE_EXACT
 // symbol    ?construct_scd_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1429,13 +1429,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_scd_caviardata() {
-    (ORIGINAL(g_SCD_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D250));
+    g_SCD_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D250));
 }
 
 /*
 Purpose: Dynamic initializer for g_SCJ_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D260 ??__Eg_SCJ_CAVIARDATA@@YAXXZ 0x0044D260-0x0044D276
+// ORIGINAL: 0x0044D260 ??__Eg_SCJ_CAVIARDATA@@YAXXZ 0x0044D260-0x0044D276 BYTE_EXACT
 // symbol    ?construct_scj_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1447,13 +1447,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_scj_caviardata() {
-    (ORIGINAL(g_SCJ_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D280));
+    g_SCJ_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D280));
 }
 
 /*
 Purpose: Dynamic initializer for g_SAGS_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D290 ??__Eg_SAGS_CAVIARDATA@@YAXXZ 0x0044D290-0x0044D2A6
+// ORIGINAL: 0x0044D290 ??__Eg_SAGS_CAVIARDATA@@YAXXZ 0x0044D290-0x0044D2A6 BYTE_EXACT
 // symbol    ?construct_sags_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1465,13 +1465,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_sags_caviardata() {
-    (ORIGINAL(g_SAGS_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D2B0));
+    g_SAGS_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D2B0));
 }
 
 /*
 Purpose: Dynamic initializer for g_SFT_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D2C0 ??__Eg_SFT_CAVIARDATA@@YAXXZ 0x0044D2C0-0x0044D2D6
+// ORIGINAL: 0x0044D2C0 ??__Eg_SFT_CAVIARDATA@@YAXXZ 0x0044D2C0-0x0044D2D6 BYTE_EXACT
 // symbol    ?construct_sft_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1483,13 +1483,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_sft_caviardata() {
-    (ORIGINAL(g_SFT_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D2E0));
+    g_SFT_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D2E0));
 }
 
 /*
 Purpose: Dynamic initializer for g_VHR_CAVIARDATA1; registers its ??__F teardown.
-// ORIGINAL: 0x0044D2F0 ??__Eg_VHR_CAVIARDATA1@@YAXXZ 0x0044D2F0-0x0044D306
+// ORIGINAL: 0x0044D2F0 ??__Eg_VHR_CAVIARDATA1@@YAXXZ 0x0044D2F0-0x0044D306 BYTE_EXACT
 // symbol    ?construct_vhr_caviardata1@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1501,13 +1501,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vhr_caviardata1() {
-    (ORIGINAL(g_VHR_CAVIARDATA1)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D310));
+    g_VHR_CAVIARDATA1->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D310));
 }
 
 /*
 Purpose: Dynamic initializer for g_SHT_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D320 ??__Eg_SHT_CAVIARDATA@@YAXXZ 0x0044D320-0x0044D336
+// ORIGINAL: 0x0044D320 ??__Eg_SHT_CAVIARDATA@@YAXXZ 0x0044D320-0x0044D336 BYTE_EXACT
 // symbol    ?construct_sht_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1519,13 +1519,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_sht_caviardata() {
-    (ORIGINAL(g_SHT_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D340));
+    g_SHT_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D340));
 }
 
 /*
 Purpose: Dynamic initializer for g_SRB_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D350 ??__Eg_SRB_CAVIARDATA@@YAXXZ 0x0044D350-0x0044D366
+// ORIGINAL: 0x0044D350 ??__Eg_SRB_CAVIARDATA@@YAXXZ 0x0044D350-0x0044D366 BYTE_EXACT
 // symbol    ?construct_srb_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1537,13 +1537,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_srb_caviardata() {
-    (ORIGINAL(g_SRB_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D370));
+    g_SRB_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D370));
 }
 
 /*
 Purpose: Dynamic initializer for g_ASAS_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D380 ??__Eg_ASAS_CAVIARDATA@@YAXXZ 0x0044D380-0x0044D396
+// ORIGINAL: 0x0044D380 ??__Eg_ASAS_CAVIARDATA@@YAXXZ 0x0044D380-0x0044D396 BYTE_EXACT
 // symbol    ?construct_asas_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1555,13 +1555,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_asas_caviardata() {
-    (ORIGINAL(g_ASAS_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D3A0));
+    g_ASAS_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D3A0));
 }
 
 /*
 Purpose: Dynamic initializer for g_RESLASER_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D3B0 ??__Eg_RESLASER_CAVIARDATA@@YAXXZ 0x0044D3B0-0x0044D3C6
+// ORIGINAL: 0x0044D3B0 ??__Eg_RESLASER_CAVIARDATA@@YAXXZ 0x0044D3B0-0x0044D3C6 BYTE_EXACT
 // symbol    ?construct_reslaser_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1573,13 +1573,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_reslaser_caviardata() {
-    (ORIGINAL(g_RESLASER_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D3D0));
+    g_RESLASER_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D3D0));
 }
 
 /*
 Purpose: Dynamic initializer for g_RESBOLT_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D3E0 ??__Eg_RESBOLT_CAVIARDATA@@YAXXZ 0x0044D3E0-0x0044D3F6
+// ORIGINAL: 0x0044D3E0 ??__Eg_RESBOLT_CAVIARDATA@@YAXXZ 0x0044D3E0-0x0044D3F6 BYTE_EXACT
 // symbol    ?construct_resbolt_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1591,13 +1591,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_resbolt_caviardata() {
-    (ORIGINAL(g_RESBOLT_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D400));
+    g_RESBOLT_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D400));
 }
 
 /*
 Purpose: Dynamic initializer for g_FUNLOAD_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D410 ??__Eg_FUNLOAD_CAVIARDATA@@YAXXZ 0x0044D410-0x0044D426
+// ORIGINAL: 0x0044D410 ??__Eg_FUNLOAD_CAVIARDATA@@YAXXZ 0x0044D410-0x0044D426 BYTE_EXACT
 // symbol    ?construct_funload_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1609,13 +1609,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_funload_caviardata() {
-    (ORIGINAL(g_FUNLOAD_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D430));
+    g_FUNLOAD_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D430));
 }
 
 /*
 Purpose: Dynamic initializer for g_TECLOAD_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D440 ??__Eg_TECLOAD_CAVIARDATA@@YAXXZ 0x0044D440-0x0044D456
+// ORIGINAL: 0x0044D440 ??__Eg_TECLOAD_CAVIARDATA@@YAXXZ 0x0044D440-0x0044D456 BYTE_EXACT
 // symbol    ?construct_tecload_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1627,13 +1627,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_tecload_caviardata() {
-    (ORIGINAL(g_TECLOAD_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D460));
+    g_TECLOAD_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D460));
 }
 
 /*
 Purpose: Dynamic initializer for g_SP_DISSWAVE_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D470 ??__Eg_SP_DISSWAVE_CAVIARDATA@@YAXXZ 0x0044D470-0x0044D486
+// ORIGINAL: 0x0044D470 ??__Eg_SP_DISSWAVE_CAVIARDATA@@YAXXZ 0x0044D470-0x0044D486 BYTE_EXACT
 // symbol    ?construct_sp_disswave_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1645,13 +1645,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_sp_disswave_caviardata() {
-    (ORIGINAL(g_SP_DISSWAVE_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D490));
+    g_SP_DISSWAVE_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D490));
 }
 
 /*
 Purpose: Dynamic initializer for g_SP_MARINED_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D4A0 ??__Eg_SP_MARINED_CAVIARDATA@@YAXXZ 0x0044D4A0-0x0044D4B6
+// ORIGINAL: 0x0044D4A0 ??__Eg_SP_MARINED_CAVIARDATA@@YAXXZ 0x0044D4A0-0x0044D4B6 BYTE_EXACT
 // symbol    ?construct_sp_marined_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1663,13 +1663,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_sp_marined_caviardata() {
-    (ORIGINAL(g_SP_MARINED_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D4C0));
+    g_SP_MARINED_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D4C0));
 }
 
 /*
 Purpose: Dynamic initializer for g_SP_NANOO_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D4D0 ??__Eg_SP_NANOO_CAVIARDATA@@YAXXZ 0x0044D4D0-0x0044D4E6
+// ORIGINAL: 0x0044D4D0 ??__Eg_SP_NANOO_CAVIARDATA@@YAXXZ 0x0044D4D0-0x0044D4E6 BYTE_EXACT
 // symbol    ?construct_sp_nanoo_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1681,13 +1681,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_sp_nanoo_caviardata() {
-    (ORIGINAL(g_SP_NANOO_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D4F0));
+    g_SP_NANOO_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D4F0));
 }
 
 /*
 Purpose: Dynamic initializer for g_SP_SOPORIFIC_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D500 ??__Eg_SP_SOPORIFIC_CAVIARDATA@@YAXXZ 0x0044D500-0x0044D516
+// ORIGINAL: 0x0044D500 ??__Eg_SP_SOPORIFIC_CAVIARDATA@@YAXXZ 0x0044D500-0x0044D516 BYTE_EXACT
 // symbol    ?construct_sp_soporific_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1699,13 +1699,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_sp_soporific_caviardata() {
-    (ORIGINAL(g_SP_SOPORIFIC_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D520));
+    g_SP_SOPORIFIC_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D520));
 }
 
 /*
 Purpose: Dynamic initializer for g_AA01_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D530 ??__Eg_AA01_CAVIARDATA@@YAXXZ 0x0044D530-0x0044D546
+// ORIGINAL: 0x0044D530 ??__Eg_AA01_CAVIARDATA@@YAXXZ 0x0044D530-0x0044D546 BYTE_EXACT
 // symbol    ?construct_aa01_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1717,13 +1717,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_aa01_caviardata() {
-    (ORIGINAL(g_AA01_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D550));
+    g_AA01_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D550));
 }
 
 /*
 Purpose: Dynamic initializer for g_AA_ROVER_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D560 ??__Eg_AA_ROVER_CAVIARDATA@@YAXXZ 0x0044D560-0x0044D576
+// ORIGINAL: 0x0044D560 ??__Eg_AA_ROVER_CAVIARDATA@@YAXXZ 0x0044D560-0x0044D576 BYTE_EXACT
 // symbol    ?construct_aa_rover_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1735,8 +1735,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_aa_rover_caviardata() {
-    (ORIGINAL(g_AA_ROVER_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D580));
+    g_AA_ROVER_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D580));
 }
 
 /*
@@ -1754,7 +1754,7 @@ Status: Complete
 */
 void __cdecl construct_aa_wing_caviardata() {
     VectorCtorIterator(g_AA_WING_CAVIARDATA, 0xC, 2, CaviarDataElementCtor, CaviarDataElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D5C0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D5C0));
 }
 
 /*
@@ -1772,12 +1772,12 @@ Status: Complete
 */
 void __cdecl construct_acp_caviardata() {
     VectorCtorIterator(g_ACP_CAVIARDATA, 0xC, 4, CaviarDataElementCtor, CaviarDataElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D610));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D610));
 }
 
 /*
 Purpose: Dynamic initializer for g_AX_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D630 ??__Eg_AX_CAVIARDATA@@YAXXZ 0x0044D630-0x0044D646
+// ORIGINAL: 0x0044D630 ??__Eg_AX_CAVIARDATA@@YAXXZ 0x0044D630-0x0044D646 BYTE_EXACT
 // symbol    ?construct_ax_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1789,13 +1789,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ax_caviardata() {
-    (ORIGINAL(g_AX_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D650));
+    g_AX_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D650));
 }
 
 /*
 Purpose: Dynamic initializer for g_AA_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D660 ??__Eg_AA_CAVIARDATA@@YAXXZ 0x0044D660-0x0044D676
+// ORIGINAL: 0x0044D660 ??__Eg_AA_CAVIARDATA@@YAXXZ 0x0044D660-0x0044D676 BYTE_EXACT
 // symbol    ?construct_aa_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1807,13 +1807,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_aa_caviardata() {
-    (ORIGINAL(g_AA_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D680));
+    g_AA_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D680));
 }
 
 /*
 Purpose: Dynamic initializer for g_ACOLPOD_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D690 ??__Eg_ACOLPOD_CAVIARDATA@@YAXXZ 0x0044D690-0x0044D6A6
+// ORIGINAL: 0x0044D690 ??__Eg_ACOLPOD_CAVIARDATA@@YAXXZ 0x0044D690-0x0044D6A6 BYTE_EXACT
 // symbol    ?construct_acolpod_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1825,13 +1825,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_acolpod_caviardata() {
-    (ORIGINAL(g_ACOLPOD_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D6B0));
+    g_ACOLPOD_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D6B0));
 }
 
 /*
 Purpose: Dynamic initializer for g_AT_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D6C0 ??__Eg_AT_CAVIARDATA@@YAXXZ 0x0044D6C0-0x0044D6D6
+// ORIGINAL: 0x0044D6C0 ??__Eg_AT_CAVIARDATA@@YAXXZ 0x0044D6C0-0x0044D6D6 BYTE_EXACT
 // symbol    ?construct_at_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1843,13 +1843,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_at_caviardata() {
-    (ORIGINAL(g_AT_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D6E0));
+    g_AT_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D6E0));
 }
 
 /*
 Purpose: Dynamic initializer for g_VTA_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D6F0 ??__Eg_VTA_CAVIARDATA@@YAXXZ 0x0044D6F0-0x0044D706
+// ORIGINAL: 0x0044D6F0 ??__Eg_VTA_CAVIARDATA@@YAXXZ 0x0044D6F0-0x0044D706 BYTE_EXACT
 // symbol    ?construct_vta_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1861,13 +1861,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vta_caviardata() {
-    (ORIGINAL(g_VTA_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D710));
+    g_VTA_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D710));
 }
 
 /*
 Purpose: Dynamic initializer for g_ATP_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D720 ??__Eg_ATP_CAVIARDATA@@YAXXZ 0x0044D720-0x0044D736
+// ORIGINAL: 0x0044D720 ??__Eg_ATP_CAVIARDATA@@YAXXZ 0x0044D720-0x0044D736 BYTE_EXACT
 // symbol    ?construct_atp_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1879,13 +1879,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_atp_caviardata() {
-    (ORIGINAL(g_ATP_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D740));
+    g_ATP_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D740));
 }
 
 /*
 Purpose: Dynamic initializer for g_SSFA_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D750 ??__Eg_SSFA_CAVIARDATA@@YAXXZ 0x0044D750-0x0044D766
+// ORIGINAL: 0x0044D750 ??__Eg_SSFA_CAVIARDATA@@YAXXZ 0x0044D750-0x0044D766 BYTE_EXACT
 // symbol    ?construct_ssfa_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1897,13 +1897,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ssfa_caviardata() {
-    (ORIGINAL(g_SSFA_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D770));
+    g_SSFA_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D770));
 }
 
 /*
 Purpose: Dynamic initializer for g_SFTA_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D780 ??__Eg_SFTA_CAVIARDATA@@YAXXZ 0x0044D780-0x0044D796
+// ORIGINAL: 0x0044D780 ??__Eg_SFTA_CAVIARDATA@@YAXXZ 0x0044D780-0x0044D796 BYTE_EXACT
 // symbol    ?construct_sfta_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1915,13 +1915,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_sfta_caviardata() {
-    (ORIGINAL(g_SFTA_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D7A0));
+    g_SFTA_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D7A0));
 }
 
 /*
 Purpose: Dynamic initializer for g_VW00_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D7B0 ??__Eg_VW00_CAVIARDATA@@YAXXZ 0x0044D7B0-0x0044D7C6
+// ORIGINAL: 0x0044D7B0 ??__Eg_VW00_CAVIARDATA@@YAXXZ 0x0044D7B0-0x0044D7C6 BYTE_EXACT
 // symbol    ?construct_vw00_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1933,13 +1933,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vw00_caviardata() {
-    (ORIGINAL(g_VW00_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D7D0));
+    g_VW00_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D7D0));
 }
 
 /*
 Purpose: Dynamic initializer for g_VIPTAWL_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D7E0 ??__Eg_VIPTAWL_CAVIARDATA@@YAXXZ 0x0044D7E0-0x0044D7F6
+// ORIGINAL: 0x0044D7E0 ??__Eg_VIPTAWL_CAVIARDATA@@YAXXZ 0x0044D7E0-0x0044D7F6 BYTE_EXACT
 // symbol    ?construct_viptawl_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1951,13 +1951,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_viptawl_caviardata() {
-    (ORIGINAL(g_VIPTAWL_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D800));
+    g_VIPTAWL_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D800));
 }
 
 /*
 Purpose: Dynamic initializer for g_VIPTASGN_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D810 ??__Eg_VIPTASGN_CAVIARDATA@@YAXXZ 0x0044D810-0x0044D826
+// ORIGINAL: 0x0044D810 ??__Eg_VIPTASGN_CAVIARDATA@@YAXXZ 0x0044D810-0x0044D826 BYTE_EXACT
 // symbol    ?construct_viptasgn_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1969,13 +1969,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_viptasgn_caviardata() {
-    (ORIGINAL(g_VIPTASGN_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D830));
+    g_VIPTASGN_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D830));
 }
 
 /*
 Purpose: Dynamic initializer for g_VIPTAPSI_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D840 ??__Eg_VIPTAPSI_CAVIARDATA@@YAXXZ 0x0044D840-0x0044D856
+// ORIGINAL: 0x0044D840 ??__Eg_VIPTAPSI_CAVIARDATA@@YAXXZ 0x0044D840-0x0044D856 BYTE_EXACT
 // symbol    ?construct_viptapsi_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -1987,8 +1987,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_viptapsi_caviardata() {
-    (ORIGINAL(g_VIPTAPSI_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D860));
+    g_VIPTAPSI_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D860));
 }
 
 /*
@@ -2006,7 +2006,7 @@ Status: Complete
 */
 void __cdecl construct_viptr_caviardata() {
     VectorCtorIterator(g_VIPTR_CAVIARDATA, 0xC, 4, CaviarDataElementCtor, CaviarDataElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D8A0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D8A0));
 }
 
 /*
@@ -2024,12 +2024,12 @@ Status: Complete
 */
 void __cdecl construct_vipta_caviardata() {
     VectorCtorIterator(g_VIPTA_CAVIARDATA, 0xC, 2, CaviarDataElementCtor, CaviarDataElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D8F0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D8F0));
 }
 
 /*
 Purpose: Dynamic initializer for g_PTMOD_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D910 ??__Eg_PTMOD_CAVIARDATA@@YAXXZ 0x0044D910-0x0044D926
+// ORIGINAL: 0x0044D910 ??__Eg_PTMOD_CAVIARDATA@@YAXXZ 0x0044D910-0x0044D926 BYTE_EXACT
 // symbol    ?construct_ptmod_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2041,13 +2041,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ptmod_caviardata() {
-    (ORIGINAL(g_PTMOD_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D930));
+    g_PTMOD_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D930));
 }
 
 /*
 Purpose: Dynamic initializer for g_VB_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D940 ??__Eg_VB_CAVIARDATA@@YAXXZ 0x0044D940-0x0044D956
+// ORIGINAL: 0x0044D940 ??__Eg_VB_CAVIARDATA@@YAXXZ 0x0044D940-0x0044D956 BYTE_EXACT
 // symbol    ?construct_vb_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2059,13 +2059,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vb_caviardata() {
-    (ORIGINAL(g_VB_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D960));
+    g_VB_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D960));
 }
 
 /*
 Purpose: Dynamic initializer for g_VBP_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D970 ??__Eg_VBP_CAVIARDATA@@YAXXZ 0x0044D970-0x0044D986
+// ORIGINAL: 0x0044D970 ??__Eg_VBP_CAVIARDATA@@YAXXZ 0x0044D970-0x0044D986 BYTE_EXACT
 // symbol    ?construct_vbp_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2077,13 +2077,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vbp_caviardata() {
-    (ORIGINAL(g_VBP_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D990));
+    g_VBP_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D990));
 }
 
 /*
 Purpose: Dynamic initializer for g_VGMC_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D9A0 ??__Eg_VGMC_CAVIARDATA@@YAXXZ 0x0044D9A0-0x0044D9B6
+// ORIGINAL: 0x0044D9A0 ??__Eg_VGMC_CAVIARDATA@@YAXXZ 0x0044D9A0-0x0044D9B6 BYTE_EXACT
 // symbol    ?construct_vgmc_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2095,13 +2095,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vgmc_caviardata() {
-    (ORIGINAL(g_VGMC_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D9C0));
+    g_VGMC_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D9C0));
 }
 
 /*
 Purpose: Dynamic initializer for g_VGMCP_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D9D0 ??__Eg_VGMCP_CAVIARDATA@@YAXXZ 0x0044D9D0-0x0044D9E6
+// ORIGINAL: 0x0044D9D0 ??__Eg_VGMCP_CAVIARDATA@@YAXXZ 0x0044D9D0-0x0044D9E6 BYTE_EXACT
 // symbol    ?construct_vgmcp_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2113,13 +2113,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vgmcp_caviardata() {
-    (ORIGINAL(g_VGMCP_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044D9F0));
+    g_VGMCP_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D9F0));
 }
 
 /*
 Purpose: Dynamic initializer for g_VLIGHTS_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044DA00 ??__Eg_VLIGHTS_CAVIARDATA@@YAXXZ 0x0044DA00-0x0044DA16
+// ORIGINAL: 0x0044DA00 ??__Eg_VLIGHTS_CAVIARDATA@@YAXXZ 0x0044DA00-0x0044DA16 BYTE_EXACT
 // symbol    ?construct_vlights_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2131,13 +2131,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vlights_caviardata() {
-    (ORIGINAL(g_VLIGHTS_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DA20));
+    g_VLIGHTS_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DA20));
 }
 
 /*
 Purpose: Dynamic initializer for g_VPT_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044DA30 ??__Eg_VPT_CAVIARDATA@@YAXXZ 0x0044DA30-0x0044DA46
+// ORIGINAL: 0x0044DA30 ??__Eg_VPT_CAVIARDATA@@YAXXZ 0x0044DA30-0x0044DA46 BYTE_EXACT
 // symbol    ?construct_vpt_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2149,13 +2149,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vpt_caviardata() {
-    (ORIGINAL(g_VPT_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DA50));
+    g_VPT_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DA50));
 }
 
 /*
 Purpose: Dynamic initializer for g_A_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044DA60 ??__Eg_A_CAVIARDATA@@YAXXZ 0x0044DA60-0x0044DA76
+// ORIGINAL: 0x0044DA60 ??__Eg_A_CAVIARDATA@@YAXXZ 0x0044DA60-0x0044DA76 BYTE_EXACT
 // symbol    ?construct_a_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2167,13 +2167,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_a_caviardata() {
-    (ORIGINAL(g_A_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DA80));
+    g_A_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DA80));
 }
 
 /*
 Purpose: Dynamic initializer for g_APWALL_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044DA90 ??__Eg_APWALL_CAVIARDATA@@YAXXZ 0x0044DA90-0x0044DAA6
+// ORIGINAL: 0x0044DA90 ??__Eg_APWALL_CAVIARDATA@@YAXXZ 0x0044DA90-0x0044DAA6 BYTE_EXACT
 // symbol    ?construct_apwall_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2185,13 +2185,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_apwall_caviardata() {
-    (ORIGINAL(g_APWALL_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DAB0));
+    g_APWALL_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DAB0));
 }
 
 /*
 Purpose: Dynamic initializer for g_ASGEN_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044DAC0 ??__Eg_ASGEN_CAVIARDATA@@YAXXZ 0x0044DAC0-0x0044DAD6
+// ORIGINAL: 0x0044DAC0 ??__Eg_ASGEN_CAVIARDATA@@YAXXZ 0x0044DAC0-0x0044DAD6 BYTE_EXACT
 // symbol    ?construct_asgen_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2203,13 +2203,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_asgen_caviardata() {
-    (ORIGINAL(g_ASGEN_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DAE0));
+    g_ASGEN_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DAE0));
 }
 
 /*
 Purpose: Dynamic initializer for g_APSID_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044DAF0 ??__Eg_APSID_CAVIARDATA@@YAXXZ 0x0044DAF0-0x0044DB06
+// ORIGINAL: 0x0044DAF0 ??__Eg_APSID_CAVIARDATA@@YAXXZ 0x0044DAF0-0x0044DB06 BYTE_EXACT
 // symbol    ?construct_apsid_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2221,13 +2221,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_apsid_caviardata() {
-    (ORIGINAL(g_APSID_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DB10));
+    g_APSID_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DB10));
 }
 
 /*
 Purpose: Dynamic initializer for g_VA01_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044DB20 ??__Eg_VA01_CAVIARDATA@@YAXXZ 0x0044DB20-0x0044DB36
+// ORIGINAL: 0x0044DB20 ??__Eg_VA01_CAVIARDATA@@YAXXZ 0x0044DB20-0x0044DB36 BYTE_EXACT
 // symbol    ?construct_va01_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2239,8 +2239,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_va01_caviardata() {
-    (ORIGINAL(g_VA01_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DB40));
+    g_VA01_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DB40));
 }
 
 /*
@@ -2258,12 +2258,12 @@ Status: Complete
 */
 void __cdecl construct_vr_caviardata() {
     VectorCtorIterator(g_VR_CAVIARDATA, 0xC, 4, CaviarDataElementCtor, CaviarDataElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DB80));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DB80));
 }
 
 /*
 Purpose: Dynamic initializer for g_VHR_CAVIARDATA2; registers its ??__F teardown.
-// ORIGINAL: 0x0044DBA0 ??__Eg_VHR_CAVIARDATA2@@YAXXZ 0x0044DBA0-0x0044DBB6
+// ORIGINAL: 0x0044DBA0 ??__Eg_VHR_CAVIARDATA2@@YAXXZ 0x0044DBA0-0x0044DBB6 BYTE_EXACT
 // symbol    ?construct_vhr_caviardata2@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2275,8 +2275,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vhr_caviardata2() {
-    (ORIGINAL(g_VHR_CAVIARDATA2)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DBC0));
+    g_VHR_CAVIARDATA2->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DBC0));
 }
 
 /*
@@ -2294,12 +2294,12 @@ Status: Complete
 */
 void __cdecl construct_vrc_caviardata() {
     VectorCtorIterator(g_VRC_CAVIARDATA, 0xC, 4, CaviarDataElementCtor, CaviarDataElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DC00));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DC00));
 }
 
 /*
 Purpose: Dynamic initializer for g_VI_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044DC20 ??__Eg_VI_CAVIARDATA@@YAXXZ 0x0044DC20-0x0044DC36
+// ORIGINAL: 0x0044DC20 ??__Eg_VI_CAVIARDATA@@YAXXZ 0x0044DC20-0x0044DC36 BYTE_EXACT
 // symbol    ?construct_vi_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2311,13 +2311,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vi_caviardata() {
-    (ORIGINAL(g_VI_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DC40));
+    g_VI_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DC40));
 }
 
 /*
 Purpose: Dynamic initializer for g_VGMT_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044DC50 ??__Eg_VGMT_CAVIARDATA@@YAXXZ 0x0044DC50-0x0044DC66
+// ORIGINAL: 0x0044DC50 ??__Eg_VGMT_CAVIARDATA@@YAXXZ 0x0044DC50-0x0044DC66 BYTE_EXACT
 // symbol    ?construct_vgmt_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2329,13 +2329,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vgmt_caviardata() {
-    (ORIGINAL(g_VGMT_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DC70));
+    g_VGMT_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DC70));
 }
 
 /*
 Purpose: Dynamic initializer for g_VGMTP_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044DC80 ??__Eg_VGMTP_CAVIARDATA@@YAXXZ 0x0044DC80-0x0044DC96
+// ORIGINAL: 0x0044DC80 ??__Eg_VGMTP_CAVIARDATA@@YAXXZ 0x0044DC80-0x0044DC96 BYTE_EXACT
 // symbol    ?construct_vgmtp_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2347,13 +2347,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vgmtp_caviardata() {
-    (ORIGINAL(g_VGMTP_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DCA0));
+    g_VGMTP_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DCA0));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_CAVIARDATA_VAR2; registers its ??__F teardown.
-// ORIGINAL: 0x0044DCB0 ??__Eg_UNUSED_CAVIARDATA_VAR2@@YAXXZ 0x0044DCB0-0x0044DCC6
+// ORIGINAL: 0x0044DCB0 ??__Eg_UNUSED_CAVIARDATA_VAR2@@YAXXZ 0x0044DCB0-0x0044DCC6 BYTE_EXACT
 // symbol    ?construct_unused_caviardata_var2@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2365,13 +2365,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_caviardata_var2() {
-    (ORIGINAL(g_UNUSED_CAVIARDATA_VAR2)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DCD0));
+    g_UNUSED_CAVIARDATA_VAR2->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DCD0));
 }
 
 /*
 Purpose: Dynamic initializer for g_VWNTU_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044DCE0 ??__Eg_VWNTU_CAVIARDATA@@YAXXZ 0x0044DCE0-0x0044DCF6
+// ORIGINAL: 0x0044DCE0 ??__Eg_VWNTU_CAVIARDATA@@YAXXZ 0x0044DCE0-0x0044DCF6 BYTE_EXACT
 // symbol    ?construct_vwntu_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2383,13 +2383,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vwntu_caviardata() {
-    (ORIGINAL(g_VWNTU_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DD00));
+    g_VWNTU_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DD00));
 }
 
 /*
 Purpose: Dynamic initializer for g_VT_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044DD10 ??__Eg_VT_CAVIARDATA@@YAXXZ 0x0044DD10-0x0044DD26
+// ORIGINAL: 0x0044DD10 ??__Eg_VT_CAVIARDATA@@YAXXZ 0x0044DD10-0x0044DD26 BYTE_EXACT
 // symbol    ?construct_vt_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2401,13 +2401,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vt_caviardata() {
-    (ORIGINAL(g_VT_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DD30));
+    g_VT_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DD30));
 }
 
 /*
 Purpose: Dynamic initializer for g_DROP_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044DD40 ??__Eg_DROP_CAVIARDATA@@YAXXZ 0x0044DD40-0x0044DD56
+// ORIGINAL: 0x0044DD40 ??__Eg_DROP_CAVIARDATA@@YAXXZ 0x0044DD40-0x0044DD56 BYTE_EXACT
 // symbol    ?construct_drop_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2419,13 +2419,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_drop_caviardata() {
-    (ORIGINAL(g_DROP_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DD60));
+    g_DROP_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DD60));
 }
 
 /*
 Purpose: Dynamic initializer for g_DROPLET_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044DD70 ??__Eg_DROPLET_CAVIARDATA@@YAXXZ 0x0044DD70-0x0044DD86
+// ORIGINAL: 0x0044DD70 ??__Eg_DROPLET_CAVIARDATA@@YAXXZ 0x0044DD70-0x0044DD86 BYTE_EXACT
 // symbol    ?construct_droplet_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2437,13 +2437,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_droplet_caviardata() {
-    (ORIGINAL(g_DROPLET_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DD90));
+    g_DROPLET_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DD90));
 }
 
 /*
 Purpose: Dynamic initializer for g_VCL_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044DDA0 ??__Eg_VCL_CAVIARDATA@@YAXXZ 0x0044DDA0-0x0044DDB6
+// ORIGINAL: 0x0044DDA0 ??__Eg_VCL_CAVIARDATA@@YAXXZ 0x0044DDA0-0x0044DDB6 BYTE_EXACT
 // symbol    ?construct_vcl_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2455,8 +2455,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vcl_caviardata() {
-    (ORIGINAL(g_VCL_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DDC0));
+    g_VCL_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DDC0));
 }
 
 /*
@@ -2474,12 +2474,12 @@ Status: Complete
 */
 void __cdecl construct_unused_caviardata_var3() {
     VectorCtorIterator(g_UNUSED_CAVIARDATA_VAR3, 0xC, 2, CaviarDataElementCtor, CaviarDataElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DE00));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DE00));
 }
 
 /*
 Purpose: Dynamic initializer for g_VCLT00_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044DE20 ??__Eg_VCLT00_CAVIARDATA@@YAXXZ 0x0044DE20-0x0044DE36
+// ORIGINAL: 0x0044DE20 ??__Eg_VCLT00_CAVIARDATA@@YAXXZ 0x0044DE20-0x0044DE36 BYTE_EXACT
 // symbol    ?construct_vclt00_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2491,13 +2491,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vclt00_caviardata() {
-    (ORIGINAL(g_VCLT00_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DE40));
+    g_VCLT00_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DE40));
 }
 
 /*
 Purpose: Dynamic initializer for g_VHT_VBP_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044DE50 ??__Eg_VHT_VBP_CAVIARDATA@@YAXXZ 0x0044DE50-0x0044DE66
+// ORIGINAL: 0x0044DE50 ??__Eg_VHT_VBP_CAVIARDATA@@YAXXZ 0x0044DE50-0x0044DE66 BYTE_EXACT
 // symbol    ?construct_vht_vbp_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2509,13 +2509,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vht_vbp_caviardata() {
-    (ORIGINAL(g_VHT_VBP_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DE70));
+    g_VHT_VBP_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DE70));
 }
 
 /*
 Purpose: Dynamic initializer for g_VHTP_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044DE80 ??__Eg_VHTP_CAVIARDATA@@YAXXZ 0x0044DE80-0x0044DE96
+// ORIGINAL: 0x0044DE80 ??__Eg_VHTP_CAVIARDATA@@YAXXZ 0x0044DE80-0x0044DE96 BYTE_EXACT
 // symbol    ?construct_vhtp_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2527,8 +2527,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vhtp_caviardata() {
-    (ORIGINAL(g_VHTP_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DEA0));
+    g_VHTP_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DEA0));
 }
 
 /*
@@ -2546,12 +2546,12 @@ Status: Complete
 */
 void __cdecl construct_vhta0_caviardata() {
     VectorCtorIterator(g_VHTA0_CAVIARDATA, 0xC, 2, CaviarDataElementCtor, CaviarDataElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DEE0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DEE0));
 }
 
 /*
 Purpose: Dynamic initializer for g_VHTTP_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044DF00 ??__Eg_VHTTP_CAVIARDATA@@YAXXZ 0x0044DF00-0x0044DF16
+// ORIGINAL: 0x0044DF00 ??__Eg_VHTTP_CAVIARDATA@@YAXXZ 0x0044DF00-0x0044DF16 BYTE_EXACT
 // symbol    ?construct_vhttp_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2563,8 +2563,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vhttp_caviardata() {
-    (ORIGINAL(g_VHTTP_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DF20));
+    g_VHTTP_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DF20));
 }
 
 /*
@@ -2582,12 +2582,12 @@ Status: Complete
 */
 void __cdecl construct_vhttpa0_caviardata() {
     VectorCtorIterator(g_VHTTPA0_CAVIARDATA, 0xC, 3, CaviarDataElementCtor, CaviarDataElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DF60));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DF60));
 }
 
 /*
 Purpose: Dynamic initializer for g_VSP_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044DF80 ??__Eg_VSP_CAVIARDATA@@YAXXZ 0x0044DF80-0x0044DF96
+// ORIGINAL: 0x0044DF80 ??__Eg_VSP_CAVIARDATA@@YAXXZ 0x0044DF80-0x0044DF96 BYTE_EXACT
 // symbol    ?construct_vsp_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2599,8 +2599,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vsp_caviardata() {
-    (ORIGINAL(g_VSP_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DFA0));
+    g_VSP_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DFA0));
 }
 
 /*
@@ -2618,12 +2618,12 @@ Status: Complete
 */
 void __cdecl construct_vspa0_caviardata() {
     VectorCtorIterator(g_VSPA0_CAVIARDATA, 0xC, 2, CaviarDataElementCtor, CaviarDataElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044DFE0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DFE0));
 }
 
 /*
 Purpose: Dynamic initializer for g_VSPTF_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044E000 ??__Eg_VSPTF_CAVIARDATA@@YAXXZ 0x0044E000-0x0044E016
+// ORIGINAL: 0x0044E000 ??__Eg_VSPTF_CAVIARDATA@@YAXXZ 0x0044E000-0x0044E016 BYTE_EXACT
 // symbol    ?construct_vsptf_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2635,13 +2635,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vsptf_caviardata() {
-    (ORIGINAL(g_VSPTF_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E020));
+    g_VSPTF_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E020));
 }
 
 /*
 Purpose: Dynamic initializer for g_VSPTB_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044E030 ??__Eg_VSPTB_CAVIARDATA@@YAXXZ 0x0044E030-0x0044E046
+// ORIGINAL: 0x0044E030 ??__Eg_VSPTB_CAVIARDATA@@YAXXZ 0x0044E030-0x0044E046 BYTE_EXACT
 // symbol    ?construct_vsptb_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2653,13 +2653,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vsptb_caviardata() {
-    (ORIGINAL(g_VSPTB_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E050));
+    g_VSPTB_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E050));
 }
 
 /*
 Purpose: Dynamic initializer for g_VFL_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044E060 ??__Eg_VFL_CAVIARDATA@@YAXXZ 0x0044E060-0x0044E076
+// ORIGINAL: 0x0044E060 ??__Eg_VFL_CAVIARDATA@@YAXXZ 0x0044E060-0x0044E076 BYTE_EXACT
 // symbol    ?construct_vfl_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2671,13 +2671,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vfl_caviardata() {
-    (ORIGINAL(g_VFL_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E080));
+    g_VFL_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E080));
 }
 
 /*
 Purpose: Dynamic initializer for g_VGS_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044E090 ??__Eg_VGS_CAVIARDATA@@YAXXZ 0x0044E090-0x0044E0A6
+// ORIGINAL: 0x0044E090 ??__Eg_VGS_CAVIARDATA@@YAXXZ 0x0044E090-0x0044E0A6 BYTE_EXACT
 // symbol    ?construct_vgs_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2689,13 +2689,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vgs_caviardata() {
-    (ORIGINAL(g_VGS_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E0B0));
+    g_VGS_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E0B0));
 }
 
 /*
 Purpose: Dynamic initializer for g_VGSP_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044E0C0 ??__Eg_VGSP_CAVIARDATA@@YAXXZ 0x0044E0C0-0x0044E0D6
+// ORIGINAL: 0x0044E0C0 ??__Eg_VGSP_CAVIARDATA@@YAXXZ 0x0044E0C0-0x0044E0D6 BYTE_EXACT
 // symbol    ?construct_vgsp_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2707,13 +2707,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vgsp_caviardata() {
-    (ORIGINAL(g_VGSP_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E0E0));
+    g_VGSP_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E0E0));
 }
 
 /*
 Purpose: Dynamic initializer for g_VJTP_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044E0F0 ??__Eg_VJTP_CAVIARDATA@@YAXXZ 0x0044E0F0-0x0044E106
+// ORIGINAL: 0x0044E0F0 ??__Eg_VJTP_CAVIARDATA@@YAXXZ 0x0044E0F0-0x0044E106 BYTE_EXACT
 // symbol    ?construct_vjtp_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2725,8 +2725,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vjtp_caviardata() {
-    (ORIGINAL(g_VJTP_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E110));
+    g_VJTP_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E110));
 }
 
 /*
@@ -2744,12 +2744,12 @@ Status: Complete
 */
 void __cdecl construct_vjt0_caviardata() {
     VectorCtorIterator(g_VJT0_CAVIARDATA, 0xC, 2, CaviarDataElementCtor, CaviarDataElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E150));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E150));
 }
 
 /*
 Purpose: Dynamic initializer for g_VCU_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044E170 ??__Eg_VCU_CAVIARDATA@@YAXXZ 0x0044E170-0x0044E186
+// ORIGINAL: 0x0044E170 ??__Eg_VCU_CAVIARDATA@@YAXXZ 0x0044E170-0x0044E186 BYTE_EXACT
 // symbol    ?construct_vcu_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2761,13 +2761,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vcu_caviardata() {
-    (ORIGINAL(g_VCU_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E190));
+    g_VCU_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E190));
 }
 
 /*
 Purpose: Dynamic initializer for g_VCUP_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044E1A0 ??__Eg_VCUP_CAVIARDATA@@YAXXZ 0x0044E1A0-0x0044E1B6
+// ORIGINAL: 0x0044E1A0 ??__Eg_VCUP_CAVIARDATA@@YAXXZ 0x0044E1A0-0x0044E1B6 BYTE_EXACT
 // symbol    ?construct_vcup_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2779,8 +2779,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vcup_caviardata() {
-    (ORIGINAL(g_VCUP_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E1C0));
+    g_VCUP_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E1C0));
 }
 
 /*
@@ -2798,12 +2798,12 @@ Status: Complete
 */
 void __cdecl construct_vcua0_caviardata() {
     VectorCtorIterator(g_VCUA0_CAVIARDATA, 0xC, 2, CaviarDataElementCtor, CaviarDataElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E200));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E200));
 }
 
 /*
 Purpose: Dynamic initializer for g_VCUW_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044E220 ??__Eg_VCUW_CAVIARDATA@@YAXXZ 0x0044E220-0x0044E236
+// ORIGINAL: 0x0044E220 ??__Eg_VCUW_CAVIARDATA@@YAXXZ 0x0044E220-0x0044E236 BYTE_EXACT
 // symbol    ?construct_vcuw_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2815,13 +2815,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vcuw_caviardata() {
-    (ORIGINAL(g_VCUW_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E240));
+    g_VCUW_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E240));
 }
 
 /*
 Purpose: Dynamic initializer for g_VCT_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044E250 ??__Eg_VCT_CAVIARDATA@@YAXXZ 0x0044E250-0x0044E266
+// ORIGINAL: 0x0044E250 ??__Eg_VCT_CAVIARDATA@@YAXXZ 0x0044E250-0x0044E266 BYTE_EXACT
 // symbol    ?construct_vct_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2833,13 +2833,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vct_caviardata() {
-    (ORIGINAL(g_VCT_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E270));
+    g_VCT_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E270));
 }
 
 /*
 Purpose: Dynamic initializer for g_VCTP_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044E280 ??__Eg_VCTP_CAVIARDATA@@YAXXZ 0x0044E280-0x0044E296
+// ORIGINAL: 0x0044E280 ??__Eg_VCTP_CAVIARDATA@@YAXXZ 0x0044E280-0x0044E296 BYTE_EXACT
 // symbol    ?construct_vctp_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2851,13 +2851,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vctp_caviardata() {
-    (ORIGINAL(g_VCTP_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E2A0));
+    g_VCTP_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E2A0));
 }
 
 /*
 Purpose: Dynamic initializer for g_VCTB_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044E2B0 ??__Eg_VCTB_CAVIARDATA@@YAXXZ 0x0044E2B0-0x0044E2C6
+// ORIGINAL: 0x0044E2B0 ??__Eg_VCTB_CAVIARDATA@@YAXXZ 0x0044E2B0-0x0044E2C6 BYTE_EXACT
 // symbol    ?construct_vctb_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2869,8 +2869,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vctb_caviardata() {
-    (ORIGINAL(g_VCTB_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E2D0));
+    g_VCTB_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E2D0));
 }
 
 /*
@@ -2888,12 +2888,12 @@ Status: Complete
 */
 void __cdecl construct_vct0_caviardata() {
     VectorCtorIterator(g_VCT0_CAVIARDATA, 0xC, 2, CaviarDataElementCtor, CaviarDataElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E310));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E310));
 }
 
 /*
 Purpose: Dynamic initializer for g_VWNTT_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044E330 ??__Eg_VWNTT_CAVIARDATA@@YAXXZ 0x0044E330-0x0044E346
+// ORIGINAL: 0x0044E330 ??__Eg_VWNTT_CAVIARDATA@@YAXXZ 0x0044E330-0x0044E346 BYTE_EXACT
 // symbol    ?construct_vwntt_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2905,13 +2905,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vwntt_caviardata() {
-    (ORIGINAL(g_VWNTT_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E350));
+    g_VWNTT_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E350));
 }
 
 /*
 Purpose: Dynamic initializer for g_VWNST_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044E360 ??__Eg_VWNST_CAVIARDATA@@YAXXZ 0x0044E360-0x0044E376
+// ORIGINAL: 0x0044E360 ??__Eg_VWNST_CAVIARDATA@@YAXXZ 0x0044E360-0x0044E376 BYTE_EXACT
 // symbol    ?construct_vwnst_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2923,13 +2923,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vwnst_caviardata() {
-    (ORIGINAL(g_VWNST_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E380));
+    g_VWNST_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E380));
 }
 
 /*
 Purpose: Dynamic initializer for g_VWNAA_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044E390 ??__Eg_VWNAA_CAVIARDATA@@YAXXZ 0x0044E390-0x0044E3A6
+// ORIGINAL: 0x0044E390 ??__Eg_VWNAA_CAVIARDATA@@YAXXZ 0x0044E390-0x0044E3A6 BYTE_EXACT
 // symbol    ?construct_vwnaa_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2941,8 +2941,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vwnaa_caviardata() {
-    (ORIGINAL(g_VWNAA_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E3B0));
+    g_VWNAA_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E3B0));
 }
 
 /*
@@ -2960,12 +2960,12 @@ Status: Complete
 */
 void __cdecl construct_vw_caviardata() {
     VectorCtorIterator(g_VW_CAVIARDATA, 0xC, 16, CaviarDataElementCtor, CaviarDataElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E3F0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E3F0));
 }
 
 /*
 Purpose: Dynamic initializer for g_VM_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044E410 ??__Eg_VM_CAVIARDATA@@YAXXZ 0x0044E410-0x0044E426
+// ORIGINAL: 0x0044E410 ??__Eg_VM_CAVIARDATA@@YAXXZ 0x0044E410-0x0044E426 BYTE_EXACT
 // symbol    ?construct_vm_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2977,13 +2977,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vm_caviardata() {
-    (ORIGINAL(g_VM_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E430));
+    g_VM_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E430));
 }
 
 /*
 Purpose: Dynamic initializer for g_VM13_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044E440 ??__Eg_VM13_CAVIARDATA@@YAXXZ 0x0044E440-0x0044E456
+// ORIGINAL: 0x0044E440 ??__Eg_VM13_CAVIARDATA@@YAXXZ 0x0044E440-0x0044E456 BYTE_EXACT
 // symbol    ?construct_vm13_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -2995,8 +2995,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vm13_caviardata() {
-    (ORIGINAL(g_VM13_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E460));
+    g_VM13_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E460));
 }
 
 /*
@@ -3014,7 +3014,7 @@ Status: Complete
 */
 void __cdecl construct_vpbr0_caviardata() {
     VectorCtorIterator(g_VPBR0_CAVIARDATA, 0xC, 4, CaviarDataElementCtor, CaviarDataElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E4A0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E4A0));
 }
 
 /*
@@ -3032,12 +3032,12 @@ Status: Complete
 */
 void __cdecl construct_unused_caviardata_var4() {
     VectorCtorIterator(g_UNUSED_CAVIARDATA_VAR4, 0xC, 2, CaviarDataElementCtor, CaviarDataElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E4F0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E4F0));
 }
 
 /*
 Purpose: Dynamic initializer for g_NW_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044E510 ??__Eg_NW_CAVIARDATA@@YAXXZ 0x0044E510-0x0044E526
+// ORIGINAL: 0x0044E510 ??__Eg_NW_CAVIARDATA@@YAXXZ 0x0044E510-0x0044E526 BYTE_EXACT
 // symbol    ?construct_nw_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -3049,13 +3049,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_nw_caviardata() {
-    (ORIGINAL(g_NW_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E530));
+    g_NW_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E530));
 }
 
 /*
 Purpose: Dynamic initializer for g_NI_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044E540 ??__Eg_NI_CAVIARDATA@@YAXXZ 0x0044E540-0x0044E556
+// ORIGINAL: 0x0044E540 ??__Eg_NI_CAVIARDATA@@YAXXZ 0x0044E540-0x0044E556 BYTE_EXACT
 // symbol    ?construct_ni_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -3067,13 +3067,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ni_caviardata() {
-    (ORIGINAL(g_NI_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E560));
+    g_NI_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E560));
 }
 
 /*
 Purpose: Dynamic initializer for g_NLC_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044E570 ??__Eg_NLC_CAVIARDATA@@YAXXZ 0x0044E570-0x0044E586
+// ORIGINAL: 0x0044E570 ??__Eg_NLC_CAVIARDATA@@YAXXZ 0x0044E570-0x0044E586 BYTE_EXACT
 // symbol    ?construct_nlc_caviardata@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -3085,8 +3085,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_nlc_caviardata() {
-    (ORIGINAL(g_NLC_CAVIARDATA)->*CaviarDataInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E590));
+    g_NLC_CAVIARDATA->CaviarData::CaviarData();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E590));
 }
 
 /*
@@ -3104,12 +3104,12 @@ Status: Complete
 */
 void __cdecl construct_unused_caviardata_var5() {
     VectorCtorIterator(g_UNUSED_CAVIARDATA_VAR5, 0xC, 5, CaviarDataElementCtor, CaviarDataElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E5D0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E5D0));
 }
 
 /*
 Purpose: Dynamic initializer for g_RADIUS1_TEXTURE; registers its ??__F teardown.
-// ORIGINAL: 0x0044E5F0 ??__Eg_RADIUS1_TEXTURE@@YAXXZ 0x0044E5F0-0x0044E606
+// ORIGINAL: 0x0044E5F0 ??__Eg_RADIUS1_TEXTURE@@YAXXZ 0x0044E5F0-0x0044E606 BYTE_EXACT
 // symbol    ?construct_radius1_texture@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -3121,13 +3121,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_radius1_texture() {
-    (ORIGINAL(g_RADIUS1_TEXTURE)->*TextureInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E610));
+    g_RADIUS1_TEXTURE->Texture::Texture();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E610));
 }
 
 /*
 Purpose: Dynamic initializer for g_RADIUS2_TEXTURE; registers its ??__F teardown.
-// ORIGINAL: 0x0044E620 ??__Eg_RADIUS2_TEXTURE@@YAXXZ 0x0044E620-0x0044E636
+// ORIGINAL: 0x0044E620 ??__Eg_RADIUS2_TEXTURE@@YAXXZ 0x0044E620-0x0044E636 BYTE_EXACT
 // symbol    ?construct_radius2_texture@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -3139,8 +3139,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_radius2_texture() {
-    (ORIGINAL(g_RADIUS2_TEXTURE)->*TextureInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E640));
+    g_RADIUS2_TEXTURE->Texture::Texture();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E640));
 }
 
 /*
@@ -3158,7 +3158,7 @@ Status: Complete
 */
 void __cdecl construct_rocky_textures() {
     VectorCtorIterator(g_ROCKY_TEXTURES, 0x70, 4, TextureElementCtor, TextureElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E680));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E680));
 }
 
 /*
@@ -3176,12 +3176,12 @@ Status: Complete
 */
 void __cdecl construct_ocean_textures() {
     VectorCtorIterator(g_OCEAN_TEXTURES, 0x70, 2, TextureElementCtor, TextureElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E6D0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E6D0));
 }
 
 /*
 Purpose: Dynamic initializer for g_FLAT_ARID_LAND_TEXTURE; registers its ??__F teardown.
-// ORIGINAL: 0x0044E6F0 ??__Eg_FLAT_ARID_LAND_TEXTURE@@YAXXZ 0x0044E6F0-0x0044E706
+// ORIGINAL: 0x0044E6F0 ??__Eg_FLAT_ARID_LAND_TEXTURE@@YAXXZ 0x0044E6F0-0x0044E706 BYTE_EXACT
 // symbol    ?construct_flat_arid_land_texture@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -3193,8 +3193,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_flat_arid_land_texture() {
-    (ORIGINAL(g_FLAT_ARID_LAND_TEXTURE)->*TextureInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E710));
+    g_FLAT_ARID_LAND_TEXTURE->Texture::Texture();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E710));
 }
 
 /*
@@ -3212,7 +3212,7 @@ Status: Complete
 */
 void __cdecl construct_moist_land_textures() {
     VectorCtorIterator(g_MOIST_LAND_TEXTURES, 0x70, 16, TextureElementCtor, TextureElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E750));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E750));
 }
 
 /*
@@ -3230,7 +3230,7 @@ Status: Complete
 */
 void __cdecl construct_rainy_land_textures() {
     VectorCtorIterator(g_RAINY_LAND_TEXTURES, 0x70, 16, TextureElementCtor, TextureElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E7A0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E7A0));
 }
 
 /*
@@ -3248,12 +3248,12 @@ Status: Complete
 */
 void __cdecl construct_jungle_land_textures() {
     VectorCtorIterator(g_JUNGLE_LAND_TEXTURES, 0x70, 15, TextureElementCtor, TextureElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E7F0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E7F0));
 }
 
 /*
 Purpose: Dynamic initializer for g_DUNE_LAND_TEXTURE; registers its ??__F teardown.
-// ORIGINAL: 0x0044E810 ??__Eg_DUNE_LAND_TEXTURE@@YAXXZ 0x0044E810-0x0044E826
+// ORIGINAL: 0x0044E810 ??__Eg_DUNE_LAND_TEXTURE@@YAXXZ 0x0044E810-0x0044E826 BYTE_EXACT
 // symbol    ?construct_dune_land_texture@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -3265,8 +3265,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_dune_land_texture() {
-    (ORIGINAL(g_DUNE_LAND_TEXTURE)->*TextureInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E830));
+    g_DUNE_LAND_TEXTURE->Texture::Texture();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E830));
 }
 
 /*
@@ -3284,7 +3284,7 @@ Status: Complete
 */
 void __cdecl construct_sunny_mesa_textures() {
     VectorCtorIterator(g_SUNNY_MESA_TEXTURES, 0x70, 8, TextureElementCtor, TextureElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E870));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E870));
 }
 
 /*
@@ -3302,7 +3302,7 @@ Status: Complete
 */
 void __cdecl construct_rainfall_single_tile_textures() {
     VectorCtorIterator(g_RAINFALL_SINGLE_TILE_TEXTURES, 0x70, 2, TextureElementCtor, TextureElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E8C0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E8C0));
 }
 
 /*
@@ -3320,7 +3320,7 @@ Status: Complete
 */
 void __cdecl construct_road_textures() {
     VectorCtorIterator(g_ROAD_TEXTURES, 0x70, 9, TextureElementCtor, TextureElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E910));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E910));
 }
 
 /*
@@ -3338,7 +3338,7 @@ Status: Complete
 */
 void __cdecl construct_magtube_textures() {
     VectorCtorIterator(g_MAGTUBE_TEXTURES, 0x70, 9, TextureElementCtor, TextureElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E960));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E960));
 }
 
 /*
@@ -3356,7 +3356,7 @@ Status: Complete
 */
 void __cdecl construct_river_textures() {
     VectorCtorIterator(g_RIVER_TEXTURES, 0x70, 16, TextureElementCtor, TextureElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044E9B0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E9B0));
 }
 
 /*
@@ -3374,7 +3374,7 @@ Status: Complete
 */
 void __cdecl construct_mount_planet_textures() {
     VectorCtorIterator(g_MOUNT_PLANET_TEXTURES, 0x70, 3, TextureElementCtor, TextureElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044EA00));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044EA00));
 }
 
 /*
@@ -3392,7 +3392,7 @@ Status: Complete
 */
 void __cdecl construct_garland_crater_textures() {
     VectorCtorIterator(g_GARLAND_CRATER_TEXTURES, 0x70, 3, TextureElementCtor, TextureElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044EA50));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044EA50));
 }
 
 /*
@@ -3410,7 +3410,7 @@ Status: Complete
 */
 void __cdecl construct_fungus_textures() {
     VectorCtorIterator(g_FUNGUS_TEXTURES, 0x70, 30, TextureElementCtor, TextureElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044EAA0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044EAA0));
 }
 
 /*
@@ -3428,7 +3428,7 @@ Status: Complete
 */
 void __cdecl construct_farm_textures() {
     VectorCtorIterator(g_FARM_TEXTURES, 0x70, 9, TextureElementCtor, TextureElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044EAF0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044EAF0));
 }
 
 /*
@@ -3446,12 +3446,12 @@ Status: Complete
 */
 void __cdecl construct_forest_textures() {
     VectorCtorIterator(g_FOREST_TEXTURES, 0x70, 16, TextureElementCtor, TextureElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044EB40));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044EB40));
 }
 
 /*
 Purpose: Dynamic initializer for g_RAINFALL_SINGLE_TILE_TEXTURE; registers its ??__F teardown.
-// ORIGINAL: 0x0044EB60 ??__Eg_RAINFALL_SINGLE_TILE_TEXTURE@@YAXXZ 0x0044EB60-0x0044EB76
+// ORIGINAL: 0x0044EB60 ??__Eg_RAINFALL_SINGLE_TILE_TEXTURE@@YAXXZ 0x0044EB60-0x0044EB76 BYTE_EXACT
 // symbol    ?construct_rainfall_single_tile_texture@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -3463,8 +3463,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_rainfall_single_tile_texture() {
-    (ORIGINAL(g_RAINFALL_SINGLE_TILE_TEXTURE)->*TextureInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044EB80));
+    g_RAINFALL_SINGLE_TILE_TEXTURE->Texture::Texture();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044EB80));
 }
 
 /*
@@ -3482,7 +3482,7 @@ Status: Complete
 */
 void __cdecl construct_ter1_white_org_yel_tile_sprites() {
     VectorCtorIterator(g_TER1_WHITE_ORG_YEL_TILE_SPRITES, 0x2C, 6, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044EBC0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044EBC0));
 }
 
 /*
@@ -3500,7 +3500,7 @@ Status: Complete
 */
 void __cdecl construct_ter1_bottom_left_tile_sprites() {
     VectorCtorIterator(g_TER1_BOTTOM_LEFT_TILE_SPRITES, 0x2C, 9, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044EC10));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044EC10));
 }
 
 /*
@@ -3518,12 +3518,12 @@ Status: Complete
 */
 void __cdecl construct_ter1_unused_sprites2() {
     VectorCtorIterator(g_TER1_UNUSED_SPRITES2, 0x2C, 2, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044EC60));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044EC60));
 }
 
 /*
 Purpose: Dynamic initializer for g_TER1_MINE_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044EC80 ??__Eg_TER1_MINE_SPRITE@@YAXXZ 0x0044EC80-0x0044EC96
+// ORIGINAL: 0x0044EC80 ??__Eg_TER1_MINE_SPRITE@@YAXXZ 0x0044EC80-0x0044EC96 BYTE_EXACT
 // symbol    ?construct_ter1_mine_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -3535,13 +3535,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ter1_mine_sprite() {
-    (ORIGINAL(g_TER1_MINE_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044ECA0));
+    g_TER1_MINE_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044ECA0));
 }
 
 /*
 Purpose: Dynamic initializer for g_TER1_SOLAR_COLLECTOR_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044ECB0 ??__Eg_TER1_SOLAR_COLLECTOR_SPRITE@@YAXXZ 0x0044ECB0-0x0044ECC6
+// ORIGINAL: 0x0044ECB0 ??__Eg_TER1_SOLAR_COLLECTOR_SPRITE@@YAXXZ 0x0044ECB0-0x0044ECC6 BYTE_EXACT
 // symbol    ?construct_ter1_solar_collector_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -3553,13 +3553,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ter1_solar_collector_sprite() {
-    (ORIGINAL(g_TER1_SOLAR_COLLECTOR_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044ECD0));
+    g_TER1_SOLAR_COLLECTOR_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044ECD0));
 }
 
 /*
 Purpose: Dynamic initializer for g_TER1_TIDAL_HARNESS_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044ECE0 ??__Eg_TER1_TIDAL_HARNESS_SPRITE@@YAXXZ 0x0044ECE0-0x0044ECF6
+// ORIGINAL: 0x0044ECE0 ??__Eg_TER1_TIDAL_HARNESS_SPRITE@@YAXXZ 0x0044ECE0-0x0044ECF6 BYTE_EXACT
 // symbol    ?construct_ter1_tidal_harness_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -3571,13 +3571,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ter1_tidal_harness_sprite() {
-    (ORIGINAL(g_TER1_TIDAL_HARNESS_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044ED00));
+    g_TER1_TIDAL_HARNESS_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044ED00));
 }
 
 /*
 Purpose: Dynamic initializer for g_TER1_MINING_PLATFORM_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044ED10 ??__Eg_TER1_MINING_PLATFORM_SPRITE@@YAXXZ 0x0044ED10-0x0044ED26
+// ORIGINAL: 0x0044ED10 ??__Eg_TER1_MINING_PLATFORM_SPRITE@@YAXXZ 0x0044ED10-0x0044ED26 BYTE_EXACT
 // symbol    ?construct_ter1_mining_platform_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -3589,13 +3589,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ter1_mining_platform_sprite() {
-    (ORIGINAL(g_TER1_MINING_PLATFORM_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044ED30));
+    g_TER1_MINING_PLATFORM_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044ED30));
 }
 
 /*
 Purpose: Dynamic initializer for g_TER1_TUT_BLANK_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044ED40 ??__Eg_TER1_TUT_BLANK_SPRITE@@YAXXZ 0x0044ED40-0x0044ED56
+// ORIGINAL: 0x0044ED40 ??__Eg_TER1_TUT_BLANK_SPRITE@@YAXXZ 0x0044ED40-0x0044ED56 BYTE_EXACT
 // symbol    ?construct_ter1_tut_blank_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -3607,13 +3607,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ter1_tut_blank_sprite() {
-    (ORIGINAL(g_TER1_TUT_BLANK_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044ED60));
+    g_TER1_TUT_BLANK_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044ED60));
 }
 
 /*
 Purpose: Dynamic initializer for g_TER1_KELP_FARM_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044ED70 ??__Eg_TER1_KELP_FARM_SPRITE@@YAXXZ 0x0044ED70-0x0044ED86
+// ORIGINAL: 0x0044ED70 ??__Eg_TER1_KELP_FARM_SPRITE@@YAXXZ 0x0044ED70-0x0044ED86 BYTE_EXACT
 // symbol    ?construct_ter1_kelp_farm_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -3625,13 +3625,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ter1_kelp_farm_sprite() {
-    (ORIGINAL(g_TER1_KELP_FARM_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044ED90));
+    g_TER1_KELP_FARM_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044ED90));
 }
 
 /*
 Purpose: Dynamic initializer for g_TER1_CONDENSER_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044EDA0 ??__Eg_TER1_CONDENSER_SPRITE@@YAXXZ 0x0044EDA0-0x0044EDB6
+// ORIGINAL: 0x0044EDA0 ??__Eg_TER1_CONDENSER_SPRITE@@YAXXZ 0x0044EDA0-0x0044EDB6 BYTE_EXACT
 // symbol    ?construct_ter1_condenser_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -3643,13 +3643,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ter1_condenser_sprite() {
-    (ORIGINAL(g_TER1_CONDENSER_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044EDC0));
+    g_TER1_CONDENSER_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044EDC0));
 }
 
 /*
 Purpose: Dynamic initializer for g_TER1_ECHELON_MIRROR_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044EDD0 ??__Eg_TER1_ECHELON_MIRROR_SPRITE@@YAXXZ 0x0044EDD0-0x0044EDE6
+// ORIGINAL: 0x0044EDD0 ??__Eg_TER1_ECHELON_MIRROR_SPRITE@@YAXXZ 0x0044EDD0-0x0044EDE6 BYTE_EXACT
 // symbol    ?construct_ter1_echelon_mirror_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -3661,13 +3661,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ter1_echelon_mirror_sprite() {
-    (ORIGINAL(g_TER1_ECHELON_MIRROR_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044EDF0));
+    g_TER1_ECHELON_MIRROR_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044EDF0));
 }
 
 /*
 Purpose: Dynamic initializer for g_TER1_BOREHOLE_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044EE00 ??__Eg_TER1_BOREHOLE_SPRITE@@YAXXZ 0x0044EE00-0x0044EE16
+// ORIGINAL: 0x0044EE00 ??__Eg_TER1_BOREHOLE_SPRITE@@YAXXZ 0x0044EE00-0x0044EE16 BYTE_EXACT
 // symbol    ?construct_ter1_borehole_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -3679,13 +3679,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ter1_borehole_sprite() {
-    (ORIGINAL(g_TER1_BOREHOLE_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044EE20));
+    g_TER1_BOREHOLE_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044EE20));
 }
 
 /*
 Purpose: Dynamic initializer for g_TER1_BOREHOLE_CLUSTER_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044EE30 ??__Eg_TER1_BOREHOLE_CLUSTER_SPRITE@@YAXXZ 0x0044EE30-0x0044EE46
+// ORIGINAL: 0x0044EE30 ??__Eg_TER1_BOREHOLE_CLUSTER_SPRITE@@YAXXZ 0x0044EE30-0x0044EE46 BYTE_EXACT
 // symbol    ?construct_ter1_borehole_cluster_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -3697,8 +3697,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ter1_borehole_cluster_sprite() {
-    (ORIGINAL(g_TER1_BOREHOLE_CLUSTER_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044EE50));
+    g_TER1_BOREHOLE_CLUSTER_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044EE50));
 }
 
 /*
@@ -3716,7 +3716,7 @@ Status: Complete
 */
 void __cdecl construct_ter1_manifold_nexus_sprites() {
     VectorCtorIterator(g_TER1_MANIFOLD_NEXUS_SPRITES, 0x2C, 6, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044EE90));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044EE90));
 }
 
 /*
@@ -3734,7 +3734,7 @@ Status: Complete
 */
 void __cdecl construct_ter1wreck_unity_wreckage_sprites() {
     VectorCtorIterator(g_TER1WRECK_UNITY_WRECKAGE_SPRITES, 0x2C, 15, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044EEE0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044EEE0));
 }
 
 /*
@@ -3752,7 +3752,7 @@ Status: Complete
 */
 void __cdecl construct_ter1wreck_unity_wreckage_alt_sprites() {
     VectorCtorIterator(g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES, 0x2C, 4, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044EF30));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044EF30));
 }
 
 /*
@@ -3770,7 +3770,7 @@ Status: Complete
 */
 void __cdecl construct_fossil_field_ridge_sprites() {
     VectorCtorIterator(g_FOSSIL_FIELD_RIDGE_SPRITES, 0x2C, 6, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044EF80));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044EF80));
 }
 
 /*
@@ -3788,7 +3788,7 @@ Status: Complete
 */
 void __cdecl construct_ter1_unused_sprites1() {
     VectorCtorIterator(g_TER1_UNUSED_SPRITES1, 0x2C, 5, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044EFD0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044EFD0));
 }
 
 /*
@@ -3806,7 +3806,7 @@ Status: Complete
 */
 void __cdecl construct_ter1_farm_sprites() {
     VectorCtorIterator(g_TER1_FARM_SPRITES, 0x2C, 5, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F020));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F020));
 }
 
 /*
@@ -3824,7 +3824,7 @@ Status: Complete
 */
 void __cdecl construct_ter1_soil_enricher_sprites() {
     VectorCtorIterator(g_TER1_SOIL_ENRICHER_SPRITES, 0x2C, 5, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F070));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F070));
 }
 
 /*
@@ -3842,7 +3842,7 @@ Status: Complete
 */
 void __cdecl construct_ter1_sea_land_resource_sprites() {
     VectorCtorIterator(g_TER1_SEA_LAND_RESOURCE_SPRITES, 0x2C, 12, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F0C0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F0C0));
 }
 
 /*
@@ -3860,7 +3860,7 @@ Status: Complete
 */
 void __cdecl construct_ter1_landmark_resource_sprites() {
     VectorCtorIterator(g_TER1_LANDMARK_RESOURCE_SPRITES, 0x2C, 6, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F110));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F110));
 }
 
 /*
@@ -3878,7 +3878,7 @@ Status: Complete
 */
 void __cdecl construct_glow_sprites() {
     VectorCtorIterator(g_GLOW_SPRITES, 0x2C, 2, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F160));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F160));
 }
 
 /*
@@ -3896,12 +3896,12 @@ Status: Complete
 */
 void __cdecl construct_ter1_unity_pod_sprites() {
     VectorCtorIterator(g_TER1_UNITY_POD_SPRITES, 0x2C, 6, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F1B0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F1B0));
 }
 
 /*
 Purpose: Dynamic initializer for g_TER1_MONOLITH_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044F1D0 ??__Eg_TER1_MONOLITH_SPRITE@@YAXXZ 0x0044F1D0-0x0044F1E6
+// ORIGINAL: 0x0044F1D0 ??__Eg_TER1_MONOLITH_SPRITE@@YAXXZ 0x0044F1D0-0x0044F1E6 BYTE_EXACT
 // symbol    ?construct_ter1_monolith_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -3913,13 +3913,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ter1_monolith_sprite() {
-    (ORIGINAL(g_TER1_MONOLITH_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F1F0));
+    g_TER1_MONOLITH_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F1F0));
 }
 
 /*
 Purpose: Dynamic initializer for g_TER1_BUNKER_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044F200 ??__Eg_TER1_BUNKER_SPRITE@@YAXXZ 0x0044F200-0x0044F216
+// ORIGINAL: 0x0044F200 ??__Eg_TER1_BUNKER_SPRITE@@YAXXZ 0x0044F200-0x0044F216 BYTE_EXACT
 // symbol    ?construct_ter1_bunker_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -3931,13 +3931,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ter1_bunker_sprite() {
-    (ORIGINAL(g_TER1_BUNKER_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F220));
+    g_TER1_BUNKER_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F220));
 }
 
 /*
 Purpose: Dynamic initializer for g_TER1_AIRBASE_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044F230 ??__Eg_TER1_AIRBASE_SPRITE@@YAXXZ 0x0044F230-0x0044F246
+// ORIGINAL: 0x0044F230 ??__Eg_TER1_AIRBASE_SPRITE@@YAXXZ 0x0044F230-0x0044F246 BYTE_EXACT
 // symbol    ?construct_ter1_airbase_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -3949,13 +3949,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ter1_airbase_sprite() {
-    (ORIGINAL(g_TER1_AIRBASE_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F250));
+    g_TER1_AIRBASE_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F250));
 }
 
 /*
 Purpose: Dynamic initializer for g_TER1_SENSOR_ARRAY_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044F260 ??__Eg_TER1_SENSOR_ARRAY_SPRITE@@YAXXZ 0x0044F260-0x0044F276
+// ORIGINAL: 0x0044F260 ??__Eg_TER1_SENSOR_ARRAY_SPRITE@@YAXXZ 0x0044F260-0x0044F276 BYTE_EXACT
 // symbol    ?construct_ter1_sensor_array_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -3967,8 +3967,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_ter1_sensor_array_sprite() {
-    (ORIGINAL(g_TER1_SENSOR_ARRAY_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F280));
+    g_TER1_SENSOR_ARRAY_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F280));
 }
 
 /*
@@ -3986,7 +3986,7 @@ Status: Complete
 */
 void __cdecl construct_rainfall_double_tile_sprites() {
     VectorCtorIterator(g_RAINFALL_DOUBLE_TILE_SPRITES, 0x2C, 2, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F2C0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F2C0));
 }
 
 /*
@@ -4004,7 +4004,7 @@ Status: Complete
 */
 void __cdecl construct_veh_sprites() {
     VectorCtorIterator(g_VEH_SPRITES, 0x2C, 152, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F310));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F310));
 }
 
 /*
@@ -4022,7 +4022,7 @@ Status: Complete
 */
 void __cdecl construct_flags_veh_sprites() {
     VectorCtorIterator(g_FLAGS_VEH_SPRITES, 0x2C, 112, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F360));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F360));
 }
 
 /*
@@ -4040,7 +4040,7 @@ Status: Complete
 */
 void __cdecl construct_icons_general_sprites() {
     VectorCtorIterator(g_ICONS_GENERAL_SPRITES, 0x2C, 16, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F3B0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F3B0));
 }
 
 /*
@@ -4058,7 +4058,7 @@ Status: Complete
 */
 void __cdecl construct_resource_icon_sprites() {
     VectorCtorIterator(g_RESOURCE_ICON_SPRITES, 0x2C, 32, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F400));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F400));
 }
 
 /*
@@ -4076,7 +4076,7 @@ Status: Complete
 */
 void __cdecl construct_citizen_lg_cursor_sprites() {
     VectorCtorIterator(g_CITIZEN_LG_CURSOR_SPRITES, 0x2C, 8, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F450));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F450));
 }
 
 /*
@@ -4094,7 +4094,7 @@ Status: Complete
 */
 void __cdecl construct_specialist_lg_cursor_sprites() {
     VectorCtorIterator(g_SPECIALIST_LG_CURSOR_SPRITES, 0x2C, 7, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F4A0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F4A0));
 }
 
 /*
@@ -4112,7 +4112,7 @@ Status: Complete
 */
 void __cdecl construct_citizen_sm_cursor_sprites() {
     VectorCtorIterator(g_CITIZEN_SM_CURSOR_SPRITES, 0x2C, 8, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F4F0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F4F0));
 }
 
 /*
@@ -4130,7 +4130,7 @@ Status: Complete
 */
 void __cdecl construct_specialist_sm_cursor_sprites() {
     VectorCtorIterator(g_SPECIALIST_SM_CURSOR_SPRITES, 0x2C, 7, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F540));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F540));
 }
 
 /*
@@ -4148,7 +4148,7 @@ Status: Complete
 */
 void __cdecl construct_al_citizen_lg_cursor_sprites() {
     VectorCtorIterator(g_AL_CITIZEN_LG_CURSOR_SPRITES, 0x2C, 4, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F590));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F590));
 }
 
 /*
@@ -4166,7 +4166,7 @@ Status: Complete
 */
 void __cdecl construct_al_specialist_lg_cursor_sprites() {
     VectorCtorIterator(g_AL_SPECIALIST_LG_CURSOR_SPRITES, 0x2C, 7, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F5E0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F5E0));
 }
 
 /*
@@ -4184,7 +4184,7 @@ Status: Complete
 */
 void __cdecl construct_al_citizen_sm_cursor_sprites() {
     VectorCtorIterator(g_AL_CITIZEN_SM_CURSOR_SPRITES, 0x2C, 4, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F630));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F630));
 }
 
 /*
@@ -4202,12 +4202,12 @@ Status: Complete
 */
 void __cdecl construct_al_specialist_sm_cursor_sprites() {
     VectorCtorIterator(g_AL_SPECIALIST_SM_CURSOR_SPRITES, 0x2C, 7, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F680));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F680));
 }
 
 /*
 Purpose: Dynamic initializer for g_RED_ALIEN_HEAD_ICON_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044F6A0 ??__Eg_RED_ALIEN_HEAD_ICON_SPRITE@@YAXXZ 0x0044F6A0-0x0044F6B6
+// ORIGINAL: 0x0044F6A0 ??__Eg_RED_ALIEN_HEAD_ICON_SPRITE@@YAXXZ 0x0044F6A0-0x0044F6B6 BYTE_EXACT
 // symbol    ?construct_red_alien_head_icon_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -4219,8 +4219,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_red_alien_head_icon_sprite() {
-    (ORIGINAL(g_RED_ALIEN_HEAD_ICON_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F6C0));
+    g_RED_ALIEN_HEAD_ICON_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F6C0));
 }
 
 /*
@@ -4238,7 +4238,7 @@ Status: Complete
 */
 void __cdecl construct_silver_menu_icon_sprites() {
     VectorCtorIterator(g_SILVER_MENU_ICON_SPRITES, 0x2C, 4, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F700));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F700));
 }
 
 /*
@@ -4256,12 +4256,12 @@ Status: Complete
 */
 void __cdecl construct_silver_checkbox_icon_sprites() {
     VectorCtorIterator(g_SILVER_CHECKBOX_ICON_SPRITES, 0x2C, 2, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F750));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F750));
 }
 
 /*
 Purpose: Dynamic initializer for g_RED_MALE_HEAD_ICON_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044F770 ??__Eg_RED_MALE_HEAD_ICON_SPRITE@@YAXXZ 0x0044F770-0x0044F786
+// ORIGINAL: 0x0044F770 ??__Eg_RED_MALE_HEAD_ICON_SPRITE@@YAXXZ 0x0044F770-0x0044F786 BYTE_EXACT
 // symbol    ?construct_red_male_head_icon_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -4273,13 +4273,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_red_male_head_icon_sprite() {
-    (ORIGINAL(g_RED_MALE_HEAD_ICON_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F790));
+    g_RED_MALE_HEAD_ICON_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F790));
 }
 
 /*
 Purpose: Dynamic initializer for g_NULL_RESOURCE_ICON_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044F7A0 ??__Eg_NULL_RESOURCE_ICON_SPRITE@@YAXXZ 0x0044F7A0-0x0044F7B6
+// ORIGINAL: 0x0044F7A0 ??__Eg_NULL_RESOURCE_ICON_SPRITE@@YAXXZ 0x0044F7A0-0x0044F7B6 BYTE_EXACT
 // symbol    ?construct_null_resource_icon_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -4291,8 +4291,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_null_resource_icon_sprite() {
-    (ORIGINAL(g_NULL_RESOURCE_ICON_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F7C0));
+    g_NULL_RESOURCE_ICON_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F7C0));
 }
 
 /*
@@ -4310,12 +4310,12 @@ Status: Complete
 */
 void __cdecl construct_peace_sign_sprites() {
     VectorCtorIterator(g_PEACE_SIGN_SPRITES, 0x2C, 2, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F800));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F800));
 }
 
 /*
 Purpose: Dynamic initializer for g_ICON_TILE_SQUARE_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044F820 ??__Eg_ICON_TILE_SQUARE_SPRITE@@YAXXZ 0x0044F820-0x0044F836
+// ORIGINAL: 0x0044F820 ??__Eg_ICON_TILE_SQUARE_SPRITE@@YAXXZ 0x0044F820-0x0044F836 BYTE_EXACT
 // symbol    ?construct_icon_tile_square_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -4327,8 +4327,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_icon_tile_square_sprite() {
-    (ORIGINAL(g_ICON_TILE_SQUARE_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F840));
+    g_ICON_TILE_SQUARE_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F840));
 }
 
 /*
@@ -4346,7 +4346,7 @@ Status: Complete
 */
 void __cdecl construct_xi_boom_veh_sprites() {
     VectorCtorIterator(g_XI_BOOM_VEH_SPRITES, 0x2C, 144, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F880));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F880));
 }
 
 /*
@@ -4364,12 +4364,12 @@ Status: Complete
 */
 void __cdecl construct_xf_boom_veh_sprites() {
     VectorCtorIterator(g_XF_BOOM_VEH_SPRITES, 0x2C, 64, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F8D0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F8D0));
 }
 
 /*
 Purpose: Dynamic initializer for g_BATTLE_MIND_WORM_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044F8F0 ??__Eg_BATTLE_MIND_WORM_SPRITE@@YAXXZ 0x0044F8F0-0x0044F906
+// ORIGINAL: 0x0044F8F0 ??__Eg_BATTLE_MIND_WORM_SPRITE@@YAXXZ 0x0044F8F0-0x0044F906 BYTE_EXACT
 // symbol    ?construct_battle_mind_worm_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -4381,13 +4381,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_battle_mind_worm_sprite() {
-    (ORIGINAL(g_BATTLE_MIND_WORM_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F910));
+    g_BATTLE_MIND_WORM_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F910));
 }
 
 /*
 Purpose: Dynamic initializer for g_BATTLE_ISLE_DEEP_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044F920 ??__Eg_BATTLE_ISLE_DEEP_SPRITE@@YAXXZ 0x0044F920-0x0044F936
+// ORIGINAL: 0x0044F920 ??__Eg_BATTLE_ISLE_DEEP_SPRITE@@YAXXZ 0x0044F920-0x0044F936 BYTE_EXACT
 // symbol    ?construct_battle_isle_deep_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -4399,13 +4399,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_battle_isle_deep_sprite() {
-    (ORIGINAL(g_BATTLE_ISLE_DEEP_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F940));
+    g_BATTLE_ISLE_DEEP_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F940));
 }
 
 /*
 Purpose: Dynamic initializer for g_BATTLE_LOCUSTS_CHIRON_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044F950 ??__Eg_BATTLE_LOCUSTS_CHIRON_SPRITE@@YAXXZ 0x0044F950-0x0044F966
+// ORIGINAL: 0x0044F950 ??__Eg_BATTLE_LOCUSTS_CHIRON_SPRITE@@YAXXZ 0x0044F950-0x0044F966 BYTE_EXACT
 // symbol    ?construct_battle_locusts_chiron_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -4417,13 +4417,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_battle_locusts_chiron_sprite() {
-    (ORIGINAL(g_BATTLE_LOCUSTS_CHIRON_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F970));
+    g_BATTLE_LOCUSTS_CHIRON_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F970));
 }
 
 /*
 Purpose: Dynamic initializer for g_BATTLE_FUNGAL_TOWER_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044F980 ??__Eg_BATTLE_FUNGAL_TOWER_SPRITE@@YAXXZ 0x0044F980-0x0044F996
+// ORIGINAL: 0x0044F980 ??__Eg_BATTLE_FUNGAL_TOWER_SPRITE@@YAXXZ 0x0044F980-0x0044F996 BYTE_EXACT
 // symbol    ?construct_battle_fungal_tower_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -4435,13 +4435,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_battle_fungal_tower_sprite() {
-    (ORIGINAL(g_BATTLE_FUNGAL_TOWER_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F9A0));
+    g_BATTLE_FUNGAL_TOWER_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F9A0));
 }
 
 /*
 Purpose: Dynamic initializer for g_BATTLE_SPORE_LAUNCHER_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044F9B0 ??__Eg_BATTLE_SPORE_LAUNCHER_SPRITE@@YAXXZ 0x0044F9B0-0x0044F9C6
+// ORIGINAL: 0x0044F9B0 ??__Eg_BATTLE_SPORE_LAUNCHER_SPRITE@@YAXXZ 0x0044F9B0-0x0044F9C6 BYTE_EXACT
 // symbol    ?construct_battle_spore_launcher_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -4453,13 +4453,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_battle_spore_launcher_sprite() {
-    (ORIGINAL(g_BATTLE_SPORE_LAUNCHER_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044F9D0));
+    g_BATTLE_SPORE_LAUNCHER_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F9D0));
 }
 
 /*
 Purpose: Dynamic initializer for g_BATTLE_SEALURK_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044F9E0 ??__Eg_BATTLE_SEALURK_SPRITE@@YAXXZ 0x0044F9E0-0x0044F9F6
+// ORIGINAL: 0x0044F9E0 ??__Eg_BATTLE_SEALURK_SPRITE@@YAXXZ 0x0044F9E0-0x0044F9F6 BYTE_EXACT
 // symbol    ?construct_battle_sealurk_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -4471,8 +4471,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_battle_sealurk_sprite() {
-    (ORIGINAL(g_BATTLE_SEALURK_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FA00));
+    g_BATTLE_SEALURK_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FA00));
 }
 
 /*
@@ -4490,7 +4490,7 @@ Status: Complete
 */
 void __cdecl construct_tech_icon_sprites() {
     VectorCtorIterator(g_TECH_ICON_SPRITES, 0x2C, 89, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FA40));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FA40));
 }
 
 /*
@@ -4508,7 +4508,7 @@ Status: Complete
 */
 void __cdecl construct_facility_icon_sprites() {
     VectorCtorIterator(g_FACILITY_ICON_SPRITES, 0x2C, 70, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FA90));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FA90));
 }
 
 /*
@@ -4526,7 +4526,7 @@ Status: Complete
 */
 void __cdecl construct_secret_project_icon_sprites() {
     VectorCtorIterator(g_SECRET_PROJECT_ICON_SPRITES, 0x2C, 64, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FAE0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FAE0));
 }
 
 /*
@@ -4544,7 +4544,7 @@ Status: Complete
 */
 void __cdecl construct_iface_mp_combo_arrow_sprites() {
     VectorCtorIterator(g_IFACE_MP_COMBO_ARROW_SPRITES, 0x2C, 3, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FB30));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FB30));
 }
 
 /*
@@ -4562,7 +4562,7 @@ Status: Complete
 */
 void __cdecl construct_scroll_bar_arrow_icon_sprites() {
     VectorCtorIterator(g_SCROLL_BAR_ARROW_ICON_SPRITES, 0x2C, 12, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FB80));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FB80));
 }
 
 /*
@@ -4580,12 +4580,12 @@ Status: Complete
 */
 void __cdecl construct_scroll_bar_small_arrow_icon_sprites() {
     VectorCtorIterator(g_SCROLL_BAR_SMALL_ARROW_ICON_SPRITES, 0x2C, 12, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FBD0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FBD0));
 }
 
 /*
 Purpose: Dynamic initializer for g_SCROLL_BAR_FILLER_ICON_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044FBF0 ??__Eg_SCROLL_BAR_FILLER_ICON_SPRITES@@YAXXZ 0x0044FBF0-0x0044FC06
+// ORIGINAL: 0x0044FBF0 ??__Eg_SCROLL_BAR_FILLER_ICON_SPRITES@@YAXXZ 0x0044FBF0-0x0044FC06 BYTE_EXACT
 // symbol    ?construct_scroll_bar_filler_icon_sprites@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -4597,13 +4597,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_scroll_bar_filler_icon_sprites() {
-    (ORIGINAL(g_SCROLL_BAR_FILLER_ICON_SPRITES)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FC10));
+    g_SCROLL_BAR_FILLER_ICON_SPRITES->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FC10));
 }
 
 /*
 Purpose: Dynamic initializer for g_SCROLL_BAR_SMALL_FILLER_ICON_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044FC20 ??__Eg_SCROLL_BAR_SMALL_FILLER_ICON_SPRITE@@YAXXZ 0x0044FC20-0x0044FC36
+// ORIGINAL: 0x0044FC20 ??__Eg_SCROLL_BAR_SMALL_FILLER_ICON_SPRITE@@YAXXZ 0x0044FC20-0x0044FC36 BYTE_EXACT
 // symbol    ?construct_scroll_bar_small_filler_icon_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -4615,8 +4615,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_scroll_bar_small_filler_icon_sprite() {
-    (ORIGINAL(g_SCROLL_BAR_SMALL_FILLER_ICON_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FC40));
+    g_SCROLL_BAR_SMALL_FILLER_ICON_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FC40));
 }
 
 /*
@@ -4634,7 +4634,7 @@ Status: Complete
 */
 void __cdecl construct_iface_lock_sprites() {
     VectorCtorIterator(g_IFACE_LOCK_SPRITES, 0x2C, 2, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FC80));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FC80));
 }
 
 /*
@@ -4652,12 +4652,12 @@ Status: Complete
 */
 void __cdecl construct_unused_sprites_var01() {
     VectorCtorIterator(g_UNUSED_SPRITES_VAR01, 0x2C, 8, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FCD0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FCD0));
 }
 
 /*
 Purpose: Dynamic initializer for g_IFACE_GENERAL_WINDOWS_TOP_LEFT_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044FCF0 ??__Eg_IFACE_GENERAL_WINDOWS_TOP_LEFT_SPRITE@@YAXXZ 0x0044FCF0-0x0044FD06
+// ORIGINAL: 0x0044FCF0 ??__Eg_IFACE_GENERAL_WINDOWS_TOP_LEFT_SPRITE@@YAXXZ 0x0044FCF0-0x0044FD06 BYTE_EXACT
 // symbol    ?construct_iface_general_windows_top_left_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -4669,13 +4669,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_general_windows_top_left_sprite() {
-    (ORIGINAL(g_IFACE_GENERAL_WINDOWS_TOP_LEFT_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FD10));
+    g_IFACE_GENERAL_WINDOWS_TOP_LEFT_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FD10));
 }
 
 /*
 Purpose: Dynamic initializer for g_IFACE_GENERAL_WINDOWS_TOP_RIGHT_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044FD20 ??__Eg_IFACE_GENERAL_WINDOWS_TOP_RIGHT_SPRITE@@YAXXZ 0x0044FD20-0x0044FD36
+// ORIGINAL: 0x0044FD20 ??__Eg_IFACE_GENERAL_WINDOWS_TOP_RIGHT_SPRITE@@YAXXZ 0x0044FD20-0x0044FD36 BYTE_EXACT
 // symbol    ?construct_iface_general_windows_top_right_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -4687,13 +4687,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_general_windows_top_right_sprite() {
-    (ORIGINAL(g_IFACE_GENERAL_WINDOWS_TOP_RIGHT_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FD40));
+    g_IFACE_GENERAL_WINDOWS_TOP_RIGHT_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FD40));
 }
 
 /*
 Purpose: Dynamic initializer for g_IFACE_GENERAL_WINDOWS_BOT_LEFT_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044FD50 ??__Eg_IFACE_GENERAL_WINDOWS_BOT_LEFT_SPRITE@@YAXXZ 0x0044FD50-0x0044FD66
+// ORIGINAL: 0x0044FD50 ??__Eg_IFACE_GENERAL_WINDOWS_BOT_LEFT_SPRITE@@YAXXZ 0x0044FD50-0x0044FD66 BYTE_EXACT
 // symbol    ?construct_iface_general_windows_bot_left_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -4705,13 +4705,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_general_windows_bot_left_sprite() {
-    (ORIGINAL(g_IFACE_GENERAL_WINDOWS_BOT_LEFT_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FD70));
+    g_IFACE_GENERAL_WINDOWS_BOT_LEFT_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FD70));
 }
 
 /*
 Purpose: Dynamic initializer for g_IFACE_GENERAL_WINDOWS_BOT_RIGHT_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044FD80 ??__Eg_IFACE_GENERAL_WINDOWS_BOT_RIGHT_SPRITE@@YAXXZ 0x0044FD80-0x0044FD96
+// ORIGINAL: 0x0044FD80 ??__Eg_IFACE_GENERAL_WINDOWS_BOT_RIGHT_SPRITE@@YAXXZ 0x0044FD80-0x0044FD96 BYTE_EXACT
 // symbol    ?construct_iface_general_windows_bot_right_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -4723,13 +4723,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_general_windows_bot_right_sprite() {
-    (ORIGINAL(g_IFACE_GENERAL_WINDOWS_BOT_RIGHT_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FDA0));
+    g_IFACE_GENERAL_WINDOWS_BOT_RIGHT_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FDA0));
 }
 
 /*
 Purpose: Dynamic initializer for g_IFACE_GENERAL_WINDOWS_MID_LEFT_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044FDB0 ??__Eg_IFACE_GENERAL_WINDOWS_MID_LEFT_SPRITE@@YAXXZ 0x0044FDB0-0x0044FDC6
+// ORIGINAL: 0x0044FDB0 ??__Eg_IFACE_GENERAL_WINDOWS_MID_LEFT_SPRITE@@YAXXZ 0x0044FDB0-0x0044FDC6 BYTE_EXACT
 // symbol    ?construct_iface_general_windows_mid_left_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -4741,13 +4741,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_general_windows_mid_left_sprite() {
-    (ORIGINAL(g_IFACE_GENERAL_WINDOWS_MID_LEFT_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FDD0));
+    g_IFACE_GENERAL_WINDOWS_MID_LEFT_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FDD0));
 }
 
 /*
 Purpose: Dynamic initializer for g_IFACE_GENERAL_WINDOWS_MID_RIGHT_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044FDE0 ??__Eg_IFACE_GENERAL_WINDOWS_MID_RIGHT_SPRITE@@YAXXZ 0x0044FDE0-0x0044FDF6
+// ORIGINAL: 0x0044FDE0 ??__Eg_IFACE_GENERAL_WINDOWS_MID_RIGHT_SPRITE@@YAXXZ 0x0044FDE0-0x0044FDF6 BYTE_EXACT
 // symbol    ?construct_iface_general_windows_mid_right_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -4759,13 +4759,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_general_windows_mid_right_sprite() {
-    (ORIGINAL(g_IFACE_GENERAL_WINDOWS_MID_RIGHT_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FE00));
+    g_IFACE_GENERAL_WINDOWS_MID_RIGHT_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FE00));
 }
 
 /*
 Purpose: Dynamic initializer for g_IFACE_GENERAL_WINDOWS_TOP_MID_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044FE10 ??__Eg_IFACE_GENERAL_WINDOWS_TOP_MID_SPRITE@@YAXXZ 0x0044FE10-0x0044FE26
+// ORIGINAL: 0x0044FE10 ??__Eg_IFACE_GENERAL_WINDOWS_TOP_MID_SPRITE@@YAXXZ 0x0044FE10-0x0044FE26 BYTE_EXACT
 // symbol    ?construct_iface_general_windows_top_mid_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -4777,13 +4777,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_general_windows_top_mid_sprite() {
-    (ORIGINAL(g_IFACE_GENERAL_WINDOWS_TOP_MID_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FE30));
+    g_IFACE_GENERAL_WINDOWS_TOP_MID_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FE30));
 }
 
 /*
 Purpose: Dynamic initializer for g_IFACE_GENERAL_WINDOWS_BOT_MID_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044FE40 ??__Eg_IFACE_GENERAL_WINDOWS_BOT_MID_SPRITE@@YAXXZ 0x0044FE40-0x0044FE56
+// ORIGINAL: 0x0044FE40 ??__Eg_IFACE_GENERAL_WINDOWS_BOT_MID_SPRITE@@YAXXZ 0x0044FE40-0x0044FE56 BYTE_EXACT
 // symbol    ?construct_iface_general_windows_bot_mid_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -4795,13 +4795,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_general_windows_bot_mid_sprite() {
-    (ORIGINAL(g_IFACE_GENERAL_WINDOWS_BOT_MID_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FE60));
+    g_IFACE_GENERAL_WINDOWS_BOT_MID_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FE60));
 }
 
 /*
 Purpose: Dynamic initializer for g_IFACE_GENERAL_WINDOWS_NONCAP_MID_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044FE70 ??__Eg_IFACE_GENERAL_WINDOWS_NONCAP_MID_SPRITE@@YAXXZ 0x0044FE70-0x0044FE86
+// ORIGINAL: 0x0044FE70 ??__Eg_IFACE_GENERAL_WINDOWS_NONCAP_MID_SPRITE@@YAXXZ 0x0044FE70-0x0044FE86 BYTE_EXACT
 // symbol    ?construct_iface_general_windows_noncap_mid_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -4813,13 +4813,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_general_windows_noncap_mid_sprite() {
-    (ORIGINAL(g_IFACE_GENERAL_WINDOWS_NONCAP_MID_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FE90));
+    g_IFACE_GENERAL_WINDOWS_NONCAP_MID_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FE90));
 }
 
 /*
 Purpose: Dynamic initializer for g_IFACE_GENERAL_WINDOWS_NONCAP_LEFT_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044FEA0 ??__Eg_IFACE_GENERAL_WINDOWS_NONCAP_LEFT_SPRITE@@YAXXZ 0x0044FEA0-0x0044FEB6
+// ORIGINAL: 0x0044FEA0 ??__Eg_IFACE_GENERAL_WINDOWS_NONCAP_LEFT_SPRITE@@YAXXZ 0x0044FEA0-0x0044FEB6 BYTE_EXACT
 // symbol    ?construct_iface_general_windows_noncap_left_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -4831,13 +4831,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_general_windows_noncap_left_sprite() {
-    (ORIGINAL(g_IFACE_GENERAL_WINDOWS_NONCAP_LEFT_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FEC0));
+    g_IFACE_GENERAL_WINDOWS_NONCAP_LEFT_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FEC0));
 }
 
 /*
 Purpose: Dynamic initializer for g_IFACE_GENERAL_WINDOWS_NONCAP_RIGHT_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x0044FED0 ??__Eg_IFACE_GENERAL_WINDOWS_NONCAP_RIGHT_SPRITE@@YAXXZ 0x0044FED0-0x0044FEE6
+// ORIGINAL: 0x0044FED0 ??__Eg_IFACE_GENERAL_WINDOWS_NONCAP_RIGHT_SPRITE@@YAXXZ 0x0044FED0-0x0044FEE6 BYTE_EXACT
 // symbol    ?construct_iface_general_windows_noncap_right_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -4849,13 +4849,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_iface_general_windows_noncap_right_sprite() {
-    (ORIGINAL(g_IFACE_GENERAL_WINDOWS_NONCAP_RIGHT_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FEF0));
+    g_IFACE_GENERAL_WINDOWS_NONCAP_RIGHT_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FEF0));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR23; registers its ??__F teardown.
-// ORIGINAL: 0x0044FF00 ??__Eg_UNUSED_SPRITE_VAR23@@YAXXZ 0x0044FF00-0x0044FF16
+// ORIGINAL: 0x0044FF00 ??__Eg_UNUSED_SPRITE_VAR23@@YAXXZ 0x0044FF00-0x0044FF16 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var23@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -4867,13 +4867,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var23() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR23)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FF20));
+    g_UNUSED_SPRITE_VAR23->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FF20));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR24; registers its ??__F teardown.
-// ORIGINAL: 0x0044FF30 ??__Eg_UNUSED_SPRITE_VAR24@@YAXXZ 0x0044FF30-0x0044FF46
+// ORIGINAL: 0x0044FF30 ??__Eg_UNUSED_SPRITE_VAR24@@YAXXZ 0x0044FF30-0x0044FF46 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var24@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -4885,13 +4885,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var24() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR24)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FF50));
+    g_UNUSED_SPRITE_VAR24->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FF50));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR25; registers its ??__F teardown.
-// ORIGINAL: 0x0044FF60 ??__Eg_UNUSED_SPRITE_VAR25@@YAXXZ 0x0044FF60-0x0044FF76
+// ORIGINAL: 0x0044FF60 ??__Eg_UNUSED_SPRITE_VAR25@@YAXXZ 0x0044FF60-0x0044FF76 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var25@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -4903,13 +4903,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var25() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR25)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FF80));
+    g_UNUSED_SPRITE_VAR25->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FF80));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR26; registers its ??__F teardown.
-// ORIGINAL: 0x0044FF90 ??__Eg_UNUSED_SPRITE_VAR26@@YAXXZ 0x0044FF90-0x0044FFA6
+// ORIGINAL: 0x0044FF90 ??__Eg_UNUSED_SPRITE_VAR26@@YAXXZ 0x0044FF90-0x0044FFA6 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var26@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -4921,13 +4921,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var26() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR26)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FFB0));
+    g_UNUSED_SPRITE_VAR26->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FFB0));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR27; registers its ??__F teardown.
-// ORIGINAL: 0x0044FFC0 ??__Eg_UNUSED_SPRITE_VAR27@@YAXXZ 0x0044FFC0-0x0044FFD6
+// ORIGINAL: 0x0044FFC0 ??__Eg_UNUSED_SPRITE_VAR27@@YAXXZ 0x0044FFC0-0x0044FFD6 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var27@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -4939,13 +4939,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var27() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR27)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0044FFE0));
+    g_UNUSED_SPRITE_VAR27->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FFE0));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR28; registers its ??__F teardown.
-// ORIGINAL: 0x0044FFF0 ??__Eg_UNUSED_SPRITE_VAR28@@YAXXZ 0x0044FFF0-0x00450006
+// ORIGINAL: 0x0044FFF0 ??__Eg_UNUSED_SPRITE_VAR28@@YAXXZ 0x0044FFF0-0x00450006 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var28@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -4957,13 +4957,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var28() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR28)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450010));
+    g_UNUSED_SPRITE_VAR28->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450010));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR29; registers its ??__F teardown.
-// ORIGINAL: 0x00450020 ??__Eg_UNUSED_SPRITE_VAR29@@YAXXZ 0x00450020-0x00450036
+// ORIGINAL: 0x00450020 ??__Eg_UNUSED_SPRITE_VAR29@@YAXXZ 0x00450020-0x00450036 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var29@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -4975,13 +4975,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var29() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR29)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450040));
+    g_UNUSED_SPRITE_VAR29->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450040));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR30; registers its ??__F teardown.
-// ORIGINAL: 0x00450050 ??__Eg_UNUSED_SPRITE_VAR30@@YAXXZ 0x00450050-0x00450066
+// ORIGINAL: 0x00450050 ??__Eg_UNUSED_SPRITE_VAR30@@YAXXZ 0x00450050-0x00450066 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var30@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -4993,13 +4993,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var30() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR30)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450070));
+    g_UNUSED_SPRITE_VAR30->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450070));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR31; registers its ??__F teardown.
-// ORIGINAL: 0x00450080 ??__Eg_UNUSED_SPRITE_VAR31@@YAXXZ 0x00450080-0x00450096
+// ORIGINAL: 0x00450080 ??__Eg_UNUSED_SPRITE_VAR31@@YAXXZ 0x00450080-0x00450096 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var31@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5011,13 +5011,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var31() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR31)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004500A0));
+    g_UNUSED_SPRITE_VAR31->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004500A0));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR32; registers its ??__F teardown.
-// ORIGINAL: 0x004500B0 ??__Eg_UNUSED_SPRITE_VAR32@@YAXXZ 0x004500B0-0x004500C6
+// ORIGINAL: 0x004500B0 ??__Eg_UNUSED_SPRITE_VAR32@@YAXXZ 0x004500B0-0x004500C6 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var32@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5029,13 +5029,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var32() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR32)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004500D0));
+    g_UNUSED_SPRITE_VAR32->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004500D0));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR33; registers its ??__F teardown.
-// ORIGINAL: 0x004500E0 ??__Eg_UNUSED_SPRITE_VAR33@@YAXXZ 0x004500E0-0x004500F6
+// ORIGINAL: 0x004500E0 ??__Eg_UNUSED_SPRITE_VAR33@@YAXXZ 0x004500E0-0x004500F6 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var33@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5047,13 +5047,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var33() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR33)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450100));
+    g_UNUSED_SPRITE_VAR33->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450100));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR34; registers its ??__F teardown.
-// ORIGINAL: 0x00450110 ??__Eg_UNUSED_SPRITE_VAR34@@YAXXZ 0x00450110-0x00450126
+// ORIGINAL: 0x00450110 ??__Eg_UNUSED_SPRITE_VAR34@@YAXXZ 0x00450110-0x00450126 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var34@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5065,13 +5065,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var34() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR34)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450130));
+    g_UNUSED_SPRITE_VAR34->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450130));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR35; registers its ??__F teardown.
-// ORIGINAL: 0x00450140 ??__Eg_UNUSED_SPRITE_VAR35@@YAXXZ 0x00450140-0x00450156
+// ORIGINAL: 0x00450140 ??__Eg_UNUSED_SPRITE_VAR35@@YAXXZ 0x00450140-0x00450156 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var35@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5083,13 +5083,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var35() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR35)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450160));
+    g_UNUSED_SPRITE_VAR35->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450160));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR36; registers its ??__F teardown.
-// ORIGINAL: 0x00450170 ??__Eg_UNUSED_SPRITE_VAR36@@YAXXZ 0x00450170-0x00450186
+// ORIGINAL: 0x00450170 ??__Eg_UNUSED_SPRITE_VAR36@@YAXXZ 0x00450170-0x00450186 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var36@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5101,13 +5101,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var36() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR36)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450190));
+    g_UNUSED_SPRITE_VAR36->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450190));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR37; registers its ??__F teardown.
-// ORIGINAL: 0x004501A0 ??__Eg_UNUSED_SPRITE_VAR37@@YAXXZ 0x004501A0-0x004501B6
+// ORIGINAL: 0x004501A0 ??__Eg_UNUSED_SPRITE_VAR37@@YAXXZ 0x004501A0-0x004501B6 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var37@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5119,13 +5119,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var37() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR37)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004501C0));
+    g_UNUSED_SPRITE_VAR37->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004501C0));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR38; registers its ??__F teardown.
-// ORIGINAL: 0x004501D0 ??__Eg_UNUSED_SPRITE_VAR38@@YAXXZ 0x004501D0-0x004501E6
+// ORIGINAL: 0x004501D0 ??__Eg_UNUSED_SPRITE_VAR38@@YAXXZ 0x004501D0-0x004501E6 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var38@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5137,13 +5137,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var38() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR38)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004501F0));
+    g_UNUSED_SPRITE_VAR38->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004501F0));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR39; registers its ??__F teardown.
-// ORIGINAL: 0x00450200 ??__Eg_UNUSED_SPRITE_VAR39@@YAXXZ 0x00450200-0x00450216
+// ORIGINAL: 0x00450200 ??__Eg_UNUSED_SPRITE_VAR39@@YAXXZ 0x00450200-0x00450216 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var39@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5155,13 +5155,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var39() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR39)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450220));
+    g_UNUSED_SPRITE_VAR39->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450220));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR40; registers its ??__F teardown.
-// ORIGINAL: 0x00450230 ??__Eg_UNUSED_SPRITE_VAR40@@YAXXZ 0x00450230-0x00450246
+// ORIGINAL: 0x00450230 ??__Eg_UNUSED_SPRITE_VAR40@@YAXXZ 0x00450230-0x00450246 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var40@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5173,13 +5173,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var40() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR40)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450250));
+    g_UNUSED_SPRITE_VAR40->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450250));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR41; registers its ??__F teardown.
-// ORIGINAL: 0x00450260 ??__Eg_UNUSED_SPRITE_VAR41@@YAXXZ 0x00450260-0x00450276
+// ORIGINAL: 0x00450260 ??__Eg_UNUSED_SPRITE_VAR41@@YAXXZ 0x00450260-0x00450276 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var41@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5191,13 +5191,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var41() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR41)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450280));
+    g_UNUSED_SPRITE_VAR41->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450280));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR42; registers its ??__F teardown.
-// ORIGINAL: 0x00450290 ??__Eg_UNUSED_SPRITE_VAR42@@YAXXZ 0x00450290-0x004502A6
+// ORIGINAL: 0x00450290 ??__Eg_UNUSED_SPRITE_VAR42@@YAXXZ 0x00450290-0x004502A6 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var42@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5209,13 +5209,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var42() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR42)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004502B0));
+    g_UNUSED_SPRITE_VAR42->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004502B0));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR43; registers its ??__F teardown.
-// ORIGINAL: 0x004502C0 ??__Eg_UNUSED_SPRITE_VAR43@@YAXXZ 0x004502C0-0x004502D6
+// ORIGINAL: 0x004502C0 ??__Eg_UNUSED_SPRITE_VAR43@@YAXXZ 0x004502C0-0x004502D6 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var43@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5227,13 +5227,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var43() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR43)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004502E0));
+    g_UNUSED_SPRITE_VAR43->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004502E0));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR44; registers its ??__F teardown.
-// ORIGINAL: 0x004502F0 ??__Eg_UNUSED_SPRITE_VAR44@@YAXXZ 0x004502F0-0x00450306
+// ORIGINAL: 0x004502F0 ??__Eg_UNUSED_SPRITE_VAR44@@YAXXZ 0x004502F0-0x00450306 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var44@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5245,13 +5245,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var44() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR44)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450310));
+    g_UNUSED_SPRITE_VAR44->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450310));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR45; registers its ??__F teardown.
-// ORIGINAL: 0x00450320 ??__Eg_UNUSED_SPRITE_VAR45@@YAXXZ 0x00450320-0x00450336
+// ORIGINAL: 0x00450320 ??__Eg_UNUSED_SPRITE_VAR45@@YAXXZ 0x00450320-0x00450336 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var45@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5263,13 +5263,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var45() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR45)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450340));
+    g_UNUSED_SPRITE_VAR45->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450340));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR46; registers its ??__F teardown.
-// ORIGINAL: 0x00450350 ??__Eg_UNUSED_SPRITE_VAR46@@YAXXZ 0x00450350-0x00450366
+// ORIGINAL: 0x00450350 ??__Eg_UNUSED_SPRITE_VAR46@@YAXXZ 0x00450350-0x00450366 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var46@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5281,8 +5281,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var46() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR46)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450370));
+    g_UNUSED_SPRITE_VAR46->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450370));
 }
 
 /*
@@ -5300,12 +5300,12 @@ Status: Complete
 */
 void __cdecl construct_iface_tech_tree_arrow_sprites() {
     VectorCtorIterator(g_IFACE_TECH_TREE_ARROW_SPRITES, 0x2C, 3, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004503B0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004503B0));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR47; registers its ??__F teardown.
-// ORIGINAL: 0x004503D0 ??__Eg_UNUSED_SPRITE_VAR47@@YAXXZ 0x004503D0-0x004503E6
+// ORIGINAL: 0x004503D0 ??__Eg_UNUSED_SPRITE_VAR47@@YAXXZ 0x004503D0-0x004503E6 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var47@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5317,13 +5317,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var47() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR47)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004503F0));
+    g_UNUSED_SPRITE_VAR47->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004503F0));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR48; registers its ??__F teardown.
-// ORIGINAL: 0x00450400 ??__Eg_UNUSED_SPRITE_VAR48@@YAXXZ 0x00450400-0x00450416
+// ORIGINAL: 0x00450400 ??__Eg_UNUSED_SPRITE_VAR48@@YAXXZ 0x00450400-0x00450416 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var48@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5335,13 +5335,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var48() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR48)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450420));
+    g_UNUSED_SPRITE_VAR48->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450420));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR49; registers its ??__F teardown.
-// ORIGINAL: 0x00450430 ??__Eg_UNUSED_SPRITE_VAR49@@YAXXZ 0x00450430-0x00450446
+// ORIGINAL: 0x00450430 ??__Eg_UNUSED_SPRITE_VAR49@@YAXXZ 0x00450430-0x00450446 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var49@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5353,13 +5353,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var49() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR49)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450450));
+    g_UNUSED_SPRITE_VAR49->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450450));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR50; registers its ??__F teardown.
-// ORIGINAL: 0x00450460 ??__Eg_UNUSED_SPRITE_VAR50@@YAXXZ 0x00450460-0x00450476
+// ORIGINAL: 0x00450460 ??__Eg_UNUSED_SPRITE_VAR50@@YAXXZ 0x00450460-0x00450476 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var50@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5371,13 +5371,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var50() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR50)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450480));
+    g_UNUSED_SPRITE_VAR50->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450480));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR51; registers its ??__F teardown.
-// ORIGINAL: 0x00450490 ??__Eg_UNUSED_SPRITE_VAR51@@YAXXZ 0x00450490-0x004504A6
+// ORIGINAL: 0x00450490 ??__Eg_UNUSED_SPRITE_VAR51@@YAXXZ 0x00450490-0x004504A6 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var51@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5389,13 +5389,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var51() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR51)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004504B0));
+    g_UNUSED_SPRITE_VAR51->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004504B0));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR52; registers its ??__F teardown.
-// ORIGINAL: 0x004504C0 ??__Eg_UNUSED_SPRITE_VAR52@@YAXXZ 0x004504C0-0x004504D6
+// ORIGINAL: 0x004504C0 ??__Eg_UNUSED_SPRITE_VAR52@@YAXXZ 0x004504C0-0x004504D6 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var52@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5407,13 +5407,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var52() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR52)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004504E0));
+    g_UNUSED_SPRITE_VAR52->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004504E0));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR53; registers its ??__F teardown.
-// ORIGINAL: 0x004504F0 ??__Eg_UNUSED_SPRITE_VAR53@@YAXXZ 0x004504F0-0x00450506
+// ORIGINAL: 0x004504F0 ??__Eg_UNUSED_SPRITE_VAR53@@YAXXZ 0x004504F0-0x00450506 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var53@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5425,13 +5425,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var53() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR53)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450510));
+    g_UNUSED_SPRITE_VAR53->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450510));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR54; registers its ??__F teardown.
-// ORIGINAL: 0x00450520 ??__Eg_UNUSED_SPRITE_VAR54@@YAXXZ 0x00450520-0x00450536
+// ORIGINAL: 0x00450520 ??__Eg_UNUSED_SPRITE_VAR54@@YAXXZ 0x00450520-0x00450536 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var54@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5443,13 +5443,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var54() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR54)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450540));
+    g_UNUSED_SPRITE_VAR54->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450540));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR55; registers its ??__F teardown.
-// ORIGINAL: 0x00450550 ??__Eg_UNUSED_SPRITE_VAR55@@YAXXZ 0x00450550-0x00450566
+// ORIGINAL: 0x00450550 ??__Eg_UNUSED_SPRITE_VAR55@@YAXXZ 0x00450550-0x00450566 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var55@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5461,13 +5461,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var55() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR55)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450570));
+    g_UNUSED_SPRITE_VAR55->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450570));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR56; registers its ??__F teardown.
-// ORIGINAL: 0x00450580 ??__Eg_UNUSED_SPRITE_VAR56@@YAXXZ 0x00450580-0x00450596
+// ORIGINAL: 0x00450580 ??__Eg_UNUSED_SPRITE_VAR56@@YAXXZ 0x00450580-0x00450596 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var56@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5479,13 +5479,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var56() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR56)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004505A0));
+    g_UNUSED_SPRITE_VAR56->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004505A0));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR57; registers its ??__F teardown.
-// ORIGINAL: 0x004505B0 ??__Eg_UNUSED_SPRITE_VAR57@@YAXXZ 0x004505B0-0x004505C6
+// ORIGINAL: 0x004505B0 ??__Eg_UNUSED_SPRITE_VAR57@@YAXXZ 0x004505B0-0x004505C6 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var57@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5497,13 +5497,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var57() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR57)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004505D0));
+    g_UNUSED_SPRITE_VAR57->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004505D0));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR58; registers its ??__F teardown.
-// ORIGINAL: 0x004505E0 ??__Eg_UNUSED_SPRITE_VAR58@@YAXXZ 0x004505E0-0x004505F6
+// ORIGINAL: 0x004505E0 ??__Eg_UNUSED_SPRITE_VAR58@@YAXXZ 0x004505E0-0x004505F6 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var58@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5515,13 +5515,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var58() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR58)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450600));
+    g_UNUSED_SPRITE_VAR58->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450600));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR59; registers its ??__F teardown.
-// ORIGINAL: 0x00450610 ??__Eg_UNUSED_SPRITE_VAR59@@YAXXZ 0x00450610-0x00450626
+// ORIGINAL: 0x00450610 ??__Eg_UNUSED_SPRITE_VAR59@@YAXXZ 0x00450610-0x00450626 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var59@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5533,13 +5533,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var59() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR59)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450630));
+    g_UNUSED_SPRITE_VAR59->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450630));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR60; registers its ??__F teardown.
-// ORIGINAL: 0x00450640 ??__Eg_UNUSED_SPRITE_VAR60@@YAXXZ 0x00450640-0x00450656
+// ORIGINAL: 0x00450640 ??__Eg_UNUSED_SPRITE_VAR60@@YAXXZ 0x00450640-0x00450656 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var60@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5551,13 +5551,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var60() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR60)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450660));
+    g_UNUSED_SPRITE_VAR60->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450660));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR61; registers its ??__F teardown.
-// ORIGINAL: 0x00450670 ??__Eg_UNUSED_SPRITE_VAR61@@YAXXZ 0x00450670-0x00450686
+// ORIGINAL: 0x00450670 ??__Eg_UNUSED_SPRITE_VAR61@@YAXXZ 0x00450670-0x00450686 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var61@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5569,13 +5569,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var61() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR61)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450690));
+    g_UNUSED_SPRITE_VAR61->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450690));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR62; registers its ??__F teardown.
-// ORIGINAL: 0x004506A0 ??__Eg_UNUSED_SPRITE_VAR62@@YAXXZ 0x004506A0-0x004506B6
+// ORIGINAL: 0x004506A0 ??__Eg_UNUSED_SPRITE_VAR62@@YAXXZ 0x004506A0-0x004506B6 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var62@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5587,13 +5587,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var62() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR62)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004506C0));
+    g_UNUSED_SPRITE_VAR62->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004506C0));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR63; registers its ??__F teardown.
-// ORIGINAL: 0x004506D0 ??__Eg_UNUSED_SPRITE_VAR63@@YAXXZ 0x004506D0-0x004506E6
+// ORIGINAL: 0x004506D0 ??__Eg_UNUSED_SPRITE_VAR63@@YAXXZ 0x004506D0-0x004506E6 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var63@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5605,13 +5605,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var63() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR63)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004506F0));
+    g_UNUSED_SPRITE_VAR63->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004506F0));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR64; registers its ??__F teardown.
-// ORIGINAL: 0x00450700 ??__Eg_UNUSED_SPRITE_VAR64@@YAXXZ 0x00450700-0x00450716
+// ORIGINAL: 0x00450700 ??__Eg_UNUSED_SPRITE_VAR64@@YAXXZ 0x00450700-0x00450716 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var64@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5623,13 +5623,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var64() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR64)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450720));
+    g_UNUSED_SPRITE_VAR64->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450720));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR65; registers its ??__F teardown.
-// ORIGINAL: 0x00450730 ??__Eg_UNUSED_SPRITE_VAR65@@YAXXZ 0x00450730-0x00450746
+// ORIGINAL: 0x00450730 ??__Eg_UNUSED_SPRITE_VAR65@@YAXXZ 0x00450730-0x00450746 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var65@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5641,13 +5641,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var65() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR65)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450750));
+    g_UNUSED_SPRITE_VAR65->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450750));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR66; registers its ??__F teardown.
-// ORIGINAL: 0x00450760 ??__Eg_UNUSED_SPRITE_VAR66@@YAXXZ 0x00450760-0x00450776
+// ORIGINAL: 0x00450760 ??__Eg_UNUSED_SPRITE_VAR66@@YAXXZ 0x00450760-0x00450776 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var66@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5659,13 +5659,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var66() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR66)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450780));
+    g_UNUSED_SPRITE_VAR66->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450780));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR67; registers its ??__F teardown.
-// ORIGINAL: 0x00450790 ??__Eg_UNUSED_SPRITE_VAR67@@YAXXZ 0x00450790-0x004507A6
+// ORIGINAL: 0x00450790 ??__Eg_UNUSED_SPRITE_VAR67@@YAXXZ 0x00450790-0x004507A6 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var67@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5677,13 +5677,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var67() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR67)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004507B0));
+    g_UNUSED_SPRITE_VAR67->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004507B0));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR68; registers its ??__F teardown.
-// ORIGINAL: 0x004507C0 ??__Eg_UNUSED_SPRITE_VAR68@@YAXXZ 0x004507C0-0x004507D6
+// ORIGINAL: 0x004507C0 ??__Eg_UNUSED_SPRITE_VAR68@@YAXXZ 0x004507C0-0x004507D6 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var68@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5695,13 +5695,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var68() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR68)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004507E0));
+    g_UNUSED_SPRITE_VAR68->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004507E0));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR69; registers its ??__F teardown.
-// ORIGINAL: 0x004507F0 ??__Eg_UNUSED_SPRITE_VAR69@@YAXXZ 0x004507F0-0x00450806
+// ORIGINAL: 0x004507F0 ??__Eg_UNUSED_SPRITE_VAR69@@YAXXZ 0x004507F0-0x00450806 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var69@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5713,13 +5713,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var69() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR69)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450810));
+    g_UNUSED_SPRITE_VAR69->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450810));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR70; registers its ??__F teardown.
-// ORIGINAL: 0x00450820 ??__Eg_UNUSED_SPRITE_VAR70@@YAXXZ 0x00450820-0x00450836
+// ORIGINAL: 0x00450820 ??__Eg_UNUSED_SPRITE_VAR70@@YAXXZ 0x00450820-0x00450836 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var70@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5731,13 +5731,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var70() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR70)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450840));
+    g_UNUSED_SPRITE_VAR70->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450840));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR71; registers its ??__F teardown.
-// ORIGINAL: 0x00450850 ??__Eg_UNUSED_SPRITE_VAR71@@YAXXZ 0x00450850-0x00450866
+// ORIGINAL: 0x00450850 ??__Eg_UNUSED_SPRITE_VAR71@@YAXXZ 0x00450850-0x00450866 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var71@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5749,13 +5749,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var71() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR71)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450870));
+    g_UNUSED_SPRITE_VAR71->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450870));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR72; registers its ??__F teardown.
-// ORIGINAL: 0x00450880 ??__Eg_UNUSED_SPRITE_VAR72@@YAXXZ 0x00450880-0x00450896
+// ORIGINAL: 0x00450880 ??__Eg_UNUSED_SPRITE_VAR72@@YAXXZ 0x00450880-0x00450896 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var72@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5767,13 +5767,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var72() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR72)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004508A0));
+    g_UNUSED_SPRITE_VAR72->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004508A0));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR73; registers its ??__F teardown.
-// ORIGINAL: 0x004508B0 ??__Eg_UNUSED_SPRITE_VAR73@@YAXXZ 0x004508B0-0x004508C6
+// ORIGINAL: 0x004508B0 ??__Eg_UNUSED_SPRITE_VAR73@@YAXXZ 0x004508B0-0x004508C6 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var73@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5785,13 +5785,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var73() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR73)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004508D0));
+    g_UNUSED_SPRITE_VAR73->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004508D0));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR74; registers its ??__F teardown.
-// ORIGINAL: 0x004508E0 ??__Eg_UNUSED_SPRITE_VAR74@@YAXXZ 0x004508E0-0x004508F6
+// ORIGINAL: 0x004508E0 ??__Eg_UNUSED_SPRITE_VAR74@@YAXXZ 0x004508E0-0x004508F6 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var74@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5803,8 +5803,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var74() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR74)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450900));
+    g_UNUSED_SPRITE_VAR74->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450900));
 }
 
 /*
@@ -5822,7 +5822,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprites_var02() {
     VectorCtorIterator(g_UNUSED_SPRITES_VAR02, 0x2C, 3, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450940));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450940));
 }
 
 /*
@@ -5840,7 +5840,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprites_var03() {
     VectorCtorIterator(g_UNUSED_SPRITES_VAR03, 0x2C, 3, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450990));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450990));
 }
 
 /*
@@ -5858,7 +5858,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprites_var04() {
     VectorCtorIterator(g_UNUSED_SPRITES_VAR04, 0x2C, 3, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004509E0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004509E0));
 }
 
 /*
@@ -5876,7 +5876,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprites_var05() {
     VectorCtorIterator(g_UNUSED_SPRITES_VAR05, 0x2C, 3, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450A30));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450A30));
 }
 
 /*
@@ -5894,7 +5894,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprites_var06() {
     VectorCtorIterator(g_UNUSED_SPRITES_VAR06, 0x2C, 3, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450A80));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450A80));
 }
 
 /*
@@ -5912,7 +5912,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprites_var07() {
     VectorCtorIterator(g_UNUSED_SPRITES_VAR07, 0x2C, 3, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450AD0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450AD0));
 }
 
 /*
@@ -5930,7 +5930,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprites_var08() {
     VectorCtorIterator(g_UNUSED_SPRITES_VAR08, 0x2C, 3, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450B20));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450B20));
 }
 
 /*
@@ -5948,7 +5948,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprites_var09() {
     VectorCtorIterator(g_UNUSED_SPRITES_VAR09, 0x2C, 3, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450B70));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450B70));
 }
 
 /*
@@ -5966,12 +5966,12 @@ Status: Complete
 */
 void __cdecl construct_unused_sprites_var10() {
     VectorCtorIterator(g_UNUSED_SPRITES_VAR10, 0x2C, 3, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450BC0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450BC0));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR75; registers its ??__F teardown.
-// ORIGINAL: 0x00450BE0 ??__Eg_UNUSED_SPRITE_VAR75@@YAXXZ 0x00450BE0-0x00450BF6
+// ORIGINAL: 0x00450BE0 ??__Eg_UNUSED_SPRITE_VAR75@@YAXXZ 0x00450BE0-0x00450BF6 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var75@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -5983,13 +5983,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var75() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR75)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450C00));
+    g_UNUSED_SPRITE_VAR75->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450C00));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR76; registers its ??__F teardown.
-// ORIGINAL: 0x00450C10 ??__Eg_UNUSED_SPRITE_VAR76@@YAXXZ 0x00450C10-0x00450C26
+// ORIGINAL: 0x00450C10 ??__Eg_UNUSED_SPRITE_VAR76@@YAXXZ 0x00450C10-0x00450C26 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var76@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6001,13 +6001,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var76() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR76)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450C30));
+    g_UNUSED_SPRITE_VAR76->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450C30));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR77; registers its ??__F teardown.
-// ORIGINAL: 0x00450C40 ??__Eg_UNUSED_SPRITE_VAR77@@YAXXZ 0x00450C40-0x00450C56
+// ORIGINAL: 0x00450C40 ??__Eg_UNUSED_SPRITE_VAR77@@YAXXZ 0x00450C40-0x00450C56 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var77@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6019,13 +6019,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var77() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR77)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450C60));
+    g_UNUSED_SPRITE_VAR77->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450C60));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR78; registers its ??__F teardown.
-// ORIGINAL: 0x00450C70 ??__Eg_UNUSED_SPRITE_VAR78@@YAXXZ 0x00450C70-0x00450C86
+// ORIGINAL: 0x00450C70 ??__Eg_UNUSED_SPRITE_VAR78@@YAXXZ 0x00450C70-0x00450C86 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var78@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6037,13 +6037,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var78() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR78)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450C90));
+    g_UNUSED_SPRITE_VAR78->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450C90));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR79; registers its ??__F teardown.
-// ORIGINAL: 0x00450CA0 ??__Eg_UNUSED_SPRITE_VAR79@@YAXXZ 0x00450CA0-0x00450CB6
+// ORIGINAL: 0x00450CA0 ??__Eg_UNUSED_SPRITE_VAR79@@YAXXZ 0x00450CA0-0x00450CB6 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var79@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6055,13 +6055,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var79() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR79)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450CC0));
+    g_UNUSED_SPRITE_VAR79->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450CC0));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR80; registers its ??__F teardown.
-// ORIGINAL: 0x00450CD0 ??__Eg_UNUSED_SPRITE_VAR80@@YAXXZ 0x00450CD0-0x00450CE6
+// ORIGINAL: 0x00450CD0 ??__Eg_UNUSED_SPRITE_VAR80@@YAXXZ 0x00450CD0-0x00450CE6 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var80@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6073,13 +6073,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var80() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR80)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450CF0));
+    g_UNUSED_SPRITE_VAR80->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450CF0));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR81; registers its ??__F teardown.
-// ORIGINAL: 0x00450D00 ??__Eg_UNUSED_SPRITE_VAR81@@YAXXZ 0x00450D00-0x00450D16
+// ORIGINAL: 0x00450D00 ??__Eg_UNUSED_SPRITE_VAR81@@YAXXZ 0x00450D00-0x00450D16 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var81@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6091,13 +6091,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var81() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR81)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450D20));
+    g_UNUSED_SPRITE_VAR81->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450D20));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR82; registers its ??__F teardown.
-// ORIGINAL: 0x00450D30 ??__Eg_UNUSED_SPRITE_VAR82@@YAXXZ 0x00450D30-0x00450D46
+// ORIGINAL: 0x00450D30 ??__Eg_UNUSED_SPRITE_VAR82@@YAXXZ 0x00450D30-0x00450D46 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var82@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6109,13 +6109,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var82() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR82)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450D50));
+    g_UNUSED_SPRITE_VAR82->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450D50));
 }
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR83; registers its ??__F teardown.
-// ORIGINAL: 0x00450D60 ??__Eg_UNUSED_SPRITE_VAR83@@YAXXZ 0x00450D60-0x00450D76
+// ORIGINAL: 0x00450D60 ??__Eg_UNUSED_SPRITE_VAR83@@YAXXZ 0x00450D60-0x00450D76 BYTE_EXACT
 // symbol    ?construct_unused_sprite_var83@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6127,8 +6127,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_unused_sprite_var83() {
-    (ORIGINAL(g_UNUSED_SPRITE_VAR83)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450D80));
+    g_UNUSED_SPRITE_VAR83->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450D80));
 }
 
 /*
@@ -6146,7 +6146,7 @@ Status: Complete
 */
 void __cdecl construct_basewin_sprites() {
     VectorCtorIterator(g_BASEWIN_SPRITES, 0x2C, 27, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00450DC0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00450DC0));
 }
 
 /*
@@ -6164,7 +6164,7 @@ Status: Complete
 */
 void __cdecl construct_infowin() {
     (ORIGINAL(reinterpret_cast<void *>(0x007AD2A0))->*InfoWinCtorTarget)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004562E0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004562E0));
 }
 
 /*
@@ -6182,12 +6182,12 @@ Status: Complete
 */
 void __cdecl construct_maininterface() {
     (ORIGINAL(reinterpret_cast<void *>(0x007AE820))->*MainInterfaceCtorTarget)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00459580));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00459580));
 }
 
 /*
 Purpose: Dynamic initializer for g_MAININTERFACE_WAVE; registers its ??__F teardown.
-// ORIGINAL: 0x00459590 ??__Eg_MAININTERFACE_WAVE@@YAXXZ 0x00459590-0x004595A6
+// ORIGINAL: 0x00459590 ??__Eg_MAININTERFACE_WAVE@@YAXXZ 0x00459590-0x004595A6 BYTE_EXACT
 // symbol    ?construct_maininterface_wave@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6199,8 +6199,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_maininterface_wave() {
-    (ORIGINAL(g_MAININTERFACE_WAVE)->*WaveInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004595B0));
+    g_MAININTERFACE_WAVE->Wave::Wave();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004595B0));
 }
 
 /*
@@ -6218,7 +6218,7 @@ Status: Complete
 */
 void __cdecl construct_jackal_font() {
     (ORIGINAL(&g_JACKAL_FONT)->*FontInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0045F940));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0045F940));
 }
 
 /*
@@ -6236,7 +6236,7 @@ Status: Complete
 */
 void __cdecl construct_mapwin() {
     (ORIGINAL(reinterpret_cast<void *>(0x007D4060))->*MapWinCtorTarget)(1);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004620A0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004620A0));
 }
 
 /*
@@ -6254,7 +6254,7 @@ Status: Complete
 */
 void __cdecl construct_messagewin() {
     (ORIGINAL(reinterpret_cast<void *>(0x007F67F8))->*MessageWinCtorTarget)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00471340));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00471340));
 }
 
 /*
@@ -6272,7 +6272,7 @@ Status: Complete
 */
 void __cdecl construct_iface_green_right_arrow_sprite() {
     VectorCtorIterator(g_IFACE_GREEN_RIGHT_ARROW_SPRITE, 0x2C, 1, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00471380));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00471380));
 }
 
 /*
@@ -6290,7 +6290,7 @@ Status: Complete
 */
 void __cdecl construct_monuwin() {
     (ORIGINAL(reinterpret_cast<void *>(0x007F9F58))->*MonuWinCtorTarget)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00472220));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00472220));
 }
 
 /*
@@ -6308,12 +6308,12 @@ Status: Complete
 */
 void __cdecl construct_multiwin() {
     (ORIGINAL(reinterpret_cast<void *>(0x007FD648))->*MultiWinCtorTarget)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00477E30));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00477E30));
 }
 
 /*
 Purpose: Dynamic initializer for g_MULTIWIN_WAVE; registers its ??__F teardown.
-// ORIGINAL: 0x00477E40 ??__Eg_MULTIWIN_WAVE@@YAXXZ 0x00477E40-0x00477E56
+// ORIGINAL: 0x00477E40 ??__Eg_MULTIWIN_WAVE@@YAXXZ 0x00477E40-0x00477E56 BYTE_EXACT
 // symbol    ?construct_multiwin_wave@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6325,8 +6325,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_multiwin_wave() {
-    (ORIGINAL(g_MULTIWIN_WAVE)->*WaveInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00477E60));
+    g_MULTIWIN_WAVE->Wave::Wave();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00477E60));
 }
 
 /*
@@ -6344,7 +6344,7 @@ Status: Complete
 */
 void __cdecl construct_netmsg1() {
     (ORIGINAL(reinterpret_cast<void *>(0x00805338))->*NetMsgCtorTarget)(4096, 8, 0);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0047A790));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0047A790));
 }
 
 /*
@@ -6362,7 +6362,7 @@ Status: Complete
 */
 void __cdecl construct_netmsg2() {
     (ORIGINAL(reinterpret_cast<void *>(0x007FFF80))->*NetMsgCtorTarget)(-5, 40, 1);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0047A7C0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0047A7C0));
 }
 
 /*
@@ -6380,7 +6380,7 @@ Status: Complete
 */
 void __cdecl construct_netwin() {
     (ORIGINAL(reinterpret_cast<void *>(0x0080A6F8))->*NetWinCtorTarget)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0047B010));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0047B010));
 }
 
 /*
@@ -6398,7 +6398,7 @@ Status: Complete
 */
 void __cdecl construct_newtechwin() {
     (ORIGINAL(reinterpret_cast<void *>(0x00811E40))->*NewTechWinCtorTarget)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00483870));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00483870));
 }
 
 /*
@@ -6416,7 +6416,7 @@ Status: Complete
 */
 void __cdecl construct_newtechwin_sprites() {
     VectorCtorIterator(g_NEWTECHWIN_SPRITES, 0x2C, 6, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004838B0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004838B0));
 }
 
 /*
@@ -6434,7 +6434,7 @@ Status: Complete
 */
 void __cdecl construct_pickwin() {
     (ORIGINAL(reinterpret_cast<void *>(0x00822718))->*PickWinCtorTarget)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00488770));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00488770));
 }
 
 /*
@@ -6452,7 +6452,7 @@ Status: Complete
 */
 void __cdecl construct_planwin() {
     (ORIGINAL(reinterpret_cast<void *>(0x00834D70))->*PlanWinCtorTarget)(1);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0048AE20));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0048AE20));
 }
 
 /*
@@ -6470,12 +6470,12 @@ Status: Complete
 */
 void __cdecl construct_prefwin() {
     (ORIGINAL(reinterpret_cast<void *>(0x008578D8))->*PrefWinCtorTarget)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0048D510));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0048D510));
 }
 
 /*
 Purpose: Dynamic initializer for g_PREFWIN_BUTTONGROUP; registers its ??__F teardown.
-// ORIGINAL: 0x0048D520 ??__Eg_PREFWIN_BUTTONGROUP@@YAXXZ 0x0048D520-0x0048D536
+// ORIGINAL: 0x0048D520 ??__Eg_PREFWIN_BUTTONGROUP@@YAXXZ 0x0048D520-0x0048D536 BYTE_EXACT
 // symbol    ?construct_prefwin_buttongroup@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6487,8 +6487,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_prefwin_buttongroup() {
-    (ORIGINAL(g_PREFWIN_BUTTONGROUP)->*ButtonGroupInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0048D540));
+    g_PREFWIN_BUTTONGROUP->ButtonGroup::ButtonGroup();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0048D540));
 }
 
 /*
@@ -6506,7 +6506,7 @@ Status: Complete
 */
 void __cdecl construct_quaylewin() {
     (ORIGINAL(reinterpret_cast<void *>(0x00872CB0))->*QuayleWinCtorTarget)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00495190));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00495190));
 }
 
 /*
@@ -6524,7 +6524,7 @@ Status: Complete
 */
 void __cdecl construct_reportif() {
     (ORIGINAL(reinterpret_cast<void *>(0x00885F38))->*ReportIfCtorTarget)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00496920));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00496920));
 }
 
 /*
@@ -6542,7 +6542,7 @@ Status: Complete
 */
 void __cdecl construct_reportwin() {
     (ORIGINAL(reinterpret_cast<void *>(0x00876478))->*ReportWinCtorTarget)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00496950));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00496950));
 }
 
 /*
@@ -6560,7 +6560,7 @@ Status: Complete
 */
 void __cdecl construct_socialwinparent() {
     (ORIGINAL(reinterpret_cast<void *>(0x008A6270))->*SocialWinCtorTarget)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004AE9D0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004AE9D0));
 }
 
 /*
@@ -6578,7 +6578,7 @@ Status: Complete
 */
 void __cdecl construct_statuswin() {
     (ORIGINAL(reinterpret_cast<void *>(0x008C5568))->*StatusWinCtorTarget)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004B3FC0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004B3FC0));
 }
 
 /*
@@ -6596,12 +6596,12 @@ Status: Complete
 */
 void __cdecl construct_tutwin() {
     (ORIGINAL(reinterpret_cast<void *>(0x008C6E68))->*TutWinCtorTarget)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004BA5E0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004BA5E0));
 }
 
 /*
 Purpose: Dynamic initializer for g_VEHDRAW_CAVIAR; registers its ??__F teardown.
-// ORIGINAL: 0x004BF6E0 ??__Eg_VEHDRAW_CAVIAR@@YAXXZ 0x004BF6E0-0x004BF6F6
+// ORIGINAL: 0x004BF6E0 ??__Eg_VEHDRAW_CAVIAR@@YAXXZ 0x004BF6E0-0x004BF6F6 BYTE_EXACT
 // symbol    ?construct_vehdraw_caviar@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6613,13 +6613,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vehdraw_caviar() {
-    (ORIGINAL(g_VEHDRAW_CAVIAR)->*CaviarInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004BF700));
+    g_VEHDRAW_CAVIAR->Caviar::Caviar();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004BF700));
 }
 
 /*
 Purpose: Dynamic initializer for g_VEHDRAW_BUFFER; registers its ??__F teardown.
-// ORIGINAL: 0x004BF710 ??__Eg_VEHDRAW_BUFFER@@YAXXZ 0x004BF710-0x004BF726
+// ORIGINAL: 0x004BF710 ??__Eg_VEHDRAW_BUFFER@@YAXXZ 0x004BF710-0x004BF726 BYTE_EXACT
 // symbol    ?construct_vehdraw_buffer@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6631,8 +6631,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vehdraw_buffer() {
-    (ORIGINAL(g_VEHDRAW_BUFFER)->*BufferInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004BF730));
+    g_VEHDRAW_BUFFER->Buffer::Buffer();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004BF730));
 }
 
 /*
@@ -6650,12 +6650,12 @@ Status: Complete
 */
 void __cdecl construct_worldwin() {
     (ORIGINAL(reinterpret_cast<void *>(0x008E9F60))->*WorldWinCtorTarget)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004C38D0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004C38D0));
 }
 
 /*
 Purpose: Dynamic initializer for g_WAVE_DEVICE; registers its ??__F teardown.
-// ORIGINAL: 0x004C5C50 ??__Eg_WAVE_DEVICE@@YAXXZ 0x004C5C50-0x004C5C66
+// ORIGINAL: 0x004C5C50 ??__Eg_WAVE_DEVICE@@YAXXZ 0x004C5C50-0x004C5C66 BYTE_EXACT
 // symbol    ?construct_wave_device@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6667,8 +6667,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_wave_device() {
-    (ORIGINAL(g_WAVE_DEVICE)->*WaveDeviceInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004C5C70));
+    g_WAVE_DEVICE->Wave_Device::Wave_Device();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004C5C70));
 }
 
 /*
@@ -6686,7 +6686,7 @@ Status: Complete
 */
 void __cdecl construct_midi_device() {
     (ORIGINAL(reinterpret_cast<void *>(0x0090D950))->*Midi_DeviceCtorTarget)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004C5CA0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004C5CA0));
 }
 
 /*
@@ -6704,7 +6704,7 @@ Status: Complete
 */
 void __cdecl construct_wave_in_device() {
     (ORIGINAL(reinterpret_cast<void *>(0x0090DB50))->*Wave_In_DeviceCtorTarget)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x004C5CD0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x004C5CD0));
 }
 
 /*
@@ -6722,12 +6722,12 @@ Status: Complete
 */
 void __cdecl construct_console() {
     (ORIGINAL(reinterpret_cast<void *>(0x009156B0))->*ConsoleCtorTarget)(1);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0050E870));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0050E870));
 }
 
 /*
 Purpose: Dynamic initializer for g_CONSOLE_TIMER; registers its ??__F teardown.
-// ORIGINAL: 0x0050E980 ??__Eg_CONSOLE_TIMER@@YAXXZ 0x0050E980-0x0050E996
+// ORIGINAL: 0x0050E980 ??__Eg_CONSOLE_TIMER@@YAXXZ 0x0050E980-0x0050E996 BYTE_EXACT
 // symbol    ?construct_console_timer@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6739,8 +6739,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_console_timer() {
-    (ORIGINAL(g_CONSOLE_TIMER)->*TimeInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0050E9A0));
+    g_CONSOLE_TIMER->Time::Time();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0050E9A0));
 }
 
 /*
@@ -6758,7 +6758,7 @@ Status: Complete
 */
 void __cdecl construct_cursor_sprites() {
     VectorCtorIterator(g_CURSOR_SPRITES, 0x2C, 12, SpriteElementCtor, SpriteElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0052DAF0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0052DAF0));
 }
 
 /*
@@ -6776,7 +6776,7 @@ Status: Complete
 */
 void __cdecl construct_netdaemon() {
     (ORIGINAL(reinterpret_cast<void *>(0x0093CD90))->*NetDaemonCtorTarget)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0052DB30));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0052DB30));
 }
 
 /*
@@ -6794,7 +6794,7 @@ Status: Complete
 */
 void __cdecl construct_fontqueue_val2() {
     (ORIGINAL(reinterpret_cast<void *>(0x0093FB88))->*FontQueueCtorTarget)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00559250));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00559250));
 }
 
 /*
@@ -6812,12 +6812,12 @@ Status: Complete
 */
 void __cdecl construct_fontqueue_val1() {
     (ORIGINAL(reinterpret_cast<void *>(0x0093FAE8))->*FontQueueCtorTarget)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00559280));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00559280));
 }
 
 /*
 Purpose: Dynamic initializer for g_TOP_MENU_WAVE; registers its ??__F teardown.
-// ORIGINAL: 0x00584D00 ??__Eg_TOP_MENU_WAVE@@YAXXZ 0x00584D00-0x00584D16
+// ORIGINAL: 0x00584D00 ??__Eg_TOP_MENU_WAVE@@YAXXZ 0x00584D00-0x00584D16 BYTE_EXACT
 // symbol    ?construct_top_menu_wave@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6829,8 +6829,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_top_menu_wave() {
-    (ORIGINAL(g_TOP_MENU_WAVE)->*WaveInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00584D20));
+    g_TOP_MENU_WAVE->Wave::Wave();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00584D20));
 }
 
 /*
@@ -6848,12 +6848,12 @@ Status: Complete
 */
 void __cdecl construct_fonts() {
     VectorCtorIterator(g_FONTS, 0x28, 48, FontElementCtor, FontElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x005882D0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x005882D0));
 }
 
 /*
 Purpose: Dynamic initializer for g_CRASH_LANDING_WAVE; registers its ??__F teardown.
-// ORIGINAL: 0x005AE0F0 ??__Eg_CRASH_LANDING_WAVE@@YAXXZ 0x005AE0F0-0x005AE106
+// ORIGINAL: 0x005AE0F0 ??__Eg_CRASH_LANDING_WAVE@@YAXXZ 0x005AE0F0-0x005AE106 BYTE_EXACT
 // symbol    ?construct_crash_landing_wave@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6865,13 +6865,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_crash_landing_wave() {
-    (ORIGINAL(g_CRASH_LANDING_WAVE)->*WaveInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x005AE110));
+    g_CRASH_LANDING_WAVE->Wave::Wave();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x005AE110));
 }
 
 /*
 Purpose: Dynamic initializer for g_WAVE_GENERAL; registers its ??__F teardown.
-// ORIGINAL: 0x005B9C10 ??__Eg_WAVE_GENERAL@@YAXXZ 0x005B9C10-0x005B9C26
+// ORIGINAL: 0x005B9C10 ??__Eg_WAVE_GENERAL@@YAXXZ 0x005B9C10-0x005B9C26 BYTE_EXACT
 // symbol    ?construct_wave_general@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6883,8 +6883,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_wave_general() {
-    (ORIGINAL(g_WAVE_GENERAL)->*WaveInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x005B9C30));
+    g_WAVE_GENERAL->Wave::Wave();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x005B9C30));
 }
 
 /*
@@ -6902,7 +6902,7 @@ Status: Complete
 */
 void __cdecl construct_palette1() {
     (ORIGINAL(reinterpret_cast<void *>(0x0094C590))->*PaletteCtorTarget)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x005BEC60));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x005BEC60));
 }
 
 /*
@@ -6920,7 +6920,7 @@ Status: Complete
 */
 void __cdecl construct_palette2() {
     (ORIGINAL(reinterpret_cast<void *>(0x009523A0))->*PaletteCtorTarget)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x005BEC90));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x005BEC90));
 }
 
 /*
@@ -6938,12 +6938,12 @@ Status: Complete
 */
 void __cdecl construct_multidebug() {
     (ORIGINAL(reinterpret_cast<void *>(0x009B22F0))->*MultiDebugCtorTarget)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x005C97E0));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x005C97E0));
 }
 
 /*
 Purpose: Dynamic initializer for g_BUFFER_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x005D71D0 ??__Eg_BUFFER_SPRITE@@YAXXZ 0x005D71D0-0x005D71E6
+// ORIGINAL: 0x005D71D0 ??__Eg_BUFFER_SPRITE@@YAXXZ 0x005D71D0-0x005D71E6 BYTE_EXACT
 // symbol    ?construct_buffer_sprite@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6955,13 +6955,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_buffer_sprite() {
-    (ORIGINAL(g_BUFFER_SPRITE)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x005D71F0));
+    g_BUFFER_SPRITE->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x005D71F0));
 }
 
 /*
 Purpose: Dynamic initializer for g_BUFFER; registers its ??__F teardown.
-// ORIGINAL: 0x005E37B0 ??__Eg_BUFFER@@YAXXZ 0x005E37B0-0x005E37C6
+// ORIGINAL: 0x005E37B0 ??__Eg_BUFFER@@YAXXZ 0x005E37B0-0x005E37C6 BYTE_EXACT
 // symbol    ?construct_buffer@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6973,13 +6973,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_buffer() {
-    (ORIGINAL(g_BUFFER)->*BufferInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x005E37D0));
+    g_BUFFER->Buffer::Buffer();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x005E37D0));
 }
 
 /*
 Purpose: Dynamic initializer for g_WIN_BUFFER; registers its ??__F teardown.
-// ORIGINAL: 0x005EB350 ??__Eg_WIN_BUFFER@@YAXXZ 0x005EB350-0x005EB366
+// ORIGINAL: 0x005EB350 ??__Eg_WIN_BUFFER@@YAXXZ 0x005EB350-0x005EB366 BYTE_EXACT
 // symbol    ?construct_win_buffer@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6991,8 +6991,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_win_buffer() {
-    (ORIGINAL(g_WIN_BUFFER)->*BufferInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x005EB370));
+    g_WIN_BUFFER->Buffer::Buffer();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x005EB370));
 }
 
 /*
@@ -7010,12 +7010,12 @@ Status: Complete
 */
 void __cdecl construct_txtindex() {
     VectorCtorIterator(TxtIndexGlobal, 0x118, 4, TextIndexElementCtor, TextIndexElementTeardown);
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x005FD510));
+    atexit(reinterpret_cast<func_atexit_callback *>(0x005FD510));
 }
 
 /*
 Purpose: Dynamic initializer for g_RADIOBUTTON_SPRITE_1; registers its ??__F teardown.
-// ORIGINAL: 0x0060D060 ??__Eg_RADIOBUTTON_SPRITE_1@@YAXXZ 0x0060D060-0x0060D076
+// ORIGINAL: 0x0060D060 ??__Eg_RADIOBUTTON_SPRITE_1@@YAXXZ 0x0060D060-0x0060D076 BYTE_EXACT
 // symbol    ?construct_radiobutton_sprite_1@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -7027,13 +7027,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_radiobutton_sprite_1() {
-    (ORIGINAL(g_RADIOBUTTON_SPRITE_1)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0060D080));
+    g_RADIOBUTTON_SPRITE_1->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0060D080));
 }
 
 /*
 Purpose: Dynamic initializer for g_RADIOBUTTON_SPRITE_2; registers its ??__F teardown.
-// ORIGINAL: 0x0060D0A0 ??__Eg_RADIOBUTTON_SPRITE_2@@YAXXZ 0x0060D0A0-0x0060D0B6
+// ORIGINAL: 0x0060D0A0 ??__Eg_RADIOBUTTON_SPRITE_2@@YAXXZ 0x0060D0A0-0x0060D0B6 BYTE_EXACT
 // symbol    ?construct_radiobutton_sprite_2@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -7045,13 +7045,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_radiobutton_sprite_2() {
-    (ORIGINAL(g_RADIOBUTTON_SPRITE_2)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0060D0C0));
+    g_RADIOBUTTON_SPRITE_2->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0060D0C0));
 }
 
 /*
 Purpose: Dynamic initializer for g_CHECKBOX_SPRITE_1; registers its ??__F teardown.
-// ORIGINAL: 0x0060E5F0 ??__Eg_CHECKBOX_SPRITE_1@@YAXXZ 0x0060E5F0-0x0060E606
+// ORIGINAL: 0x0060E5F0 ??__Eg_CHECKBOX_SPRITE_1@@YAXXZ 0x0060E5F0-0x0060E606 BYTE_EXACT
 // symbol    ?construct_checkbox_sprite_1@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -7063,13 +7063,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_checkbox_sprite_1() {
-    (ORIGINAL(g_CHECKBOX_SPRITE_1)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0060E610));
+    g_CHECKBOX_SPRITE_1->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0060E610));
 }
 
 /*
 Purpose: Dynamic initializer for g_CHECKBOX_SPRITE_2; registers its ??__F teardown.
-// ORIGINAL: 0x0060E630 ??__Eg_CHECKBOX_SPRITE_2@@YAXXZ 0x0060E630-0x0060E646
+// ORIGINAL: 0x0060E630 ??__Eg_CHECKBOX_SPRITE_2@@YAXXZ 0x0060E630-0x0060E646 BYTE_EXACT
 // symbol    ?construct_checkbox_sprite_2@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -7081,13 +7081,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_checkbox_sprite_2() {
-    (ORIGINAL(g_CHECKBOX_SPRITE_2)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0060E650));
+    g_CHECKBOX_SPRITE_2->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x0060E650));
 }
 
 /*
 Purpose: Dynamic initializer for g_FILEWIN_SPRITE_1; registers its ??__F teardown.
-// ORIGINAL: 0x00613790 ??__Eg_FILEWIN_SPRITE_1@@YAXXZ 0x00613790-0x006137A6
+// ORIGINAL: 0x00613790 ??__Eg_FILEWIN_SPRITE_1@@YAXXZ 0x00613790-0x006137A6 BYTE_EXACT
 // symbol    ?construct_filewin_sprite_1@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -7099,13 +7099,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_filewin_sprite_1() {
-    (ORIGINAL(g_FILEWIN_SPRITE_1)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x006137B0));
+    g_FILEWIN_SPRITE_1->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x006137B0));
 }
 
 /*
 Purpose: Dynamic initializer for g_FILEWIN_SPRITE_2; registers its ??__F teardown.
-// ORIGINAL: 0x006137D0 ??__Eg_FILEWIN_SPRITE_2@@YAXXZ 0x006137D0-0x006137E6
+// ORIGINAL: 0x006137D0 ??__Eg_FILEWIN_SPRITE_2@@YAXXZ 0x006137D0-0x006137E6 BYTE_EXACT
 // symbol    ?construct_filewin_sprite_2@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -7117,13 +7117,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_filewin_sprite_2() {
-    (ORIGINAL(g_FILEWIN_SPRITE_2)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x006137F0));
+    g_FILEWIN_SPRITE_2->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x006137F0));
 }
 
 /*
 Purpose: Dynamic initializer for g_FILEWIN_SPRITE_3; registers its ??__F teardown.
-// ORIGINAL: 0x00613810 ??__Eg_FILEWIN_SPRITE_3@@YAXXZ 0x00613810-0x00613826
+// ORIGINAL: 0x00613810 ??__Eg_FILEWIN_SPRITE_3@@YAXXZ 0x00613810-0x00613826 BYTE_EXACT
 // symbol    ?construct_filewin_sprite_3@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -7135,13 +7135,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_filewin_sprite_3() {
-    (ORIGINAL(g_FILEWIN_SPRITE_3)->*SpriteInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00613830));
+    g_FILEWIN_SPRITE_3->Sprite::Sprite();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00613830));
 }
 
 /*
 Purpose: Dynamic initializer for StringTable; registers its ??__F teardown.
-// ORIGINAL: 0x006168A0 ??__EStringTable@@YAXXZ 0x006168A0-0x006168B6
+// ORIGINAL: 0x006168A0 ??__EStringTable@@YAXXZ 0x006168A0-0x006168B6 BYTE_EXACT
 // symbol    ?construct_stringtable@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -7153,13 +7153,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_stringtable() {
-    (ORIGINAL(StringTable)->*StringsInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x006168C0));
+    StringTable->Strings::Strings();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x006168C0));
 }
 
 /*
 Purpose: Dynamic initializer for g_CAVIAR_BUFFER_1; registers its ??__F teardown.
-// ORIGINAL: 0x00616AA0 ??__Eg_CAVIAR_BUFFER_1@@YAXXZ 0x00616AA0-0x00616AB6
+// ORIGINAL: 0x00616AA0 ??__Eg_CAVIAR_BUFFER_1@@YAXXZ 0x00616AA0-0x00616AB6 BYTE_EXACT
 // symbol    ?construct_caviar_buffer_1@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -7171,13 +7171,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_caviar_buffer_1() {
-    (ORIGINAL(g_CAVIAR_BUFFER_1)->*BufferInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00616AC0));
+    g_CAVIAR_BUFFER_1->Buffer::Buffer();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00616AC0));
 }
 
 /*
 Purpose: Dynamic initializer for g_CAVIAR_BUFFER_2; registers its ??__F teardown.
-// ORIGINAL: 0x00616AE0 ??__Eg_CAVIAR_BUFFER_2@@YAXXZ 0x00616AE0-0x00616AF6
+// ORIGINAL: 0x00616AE0 ??__Eg_CAVIAR_BUFFER_2@@YAXXZ 0x00616AE0-0x00616AF6 BYTE_EXACT
 // symbol    ?construct_caviar_buffer_2@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -7189,6 +7189,6 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_caviar_buffer_2() {
-    (ORIGINAL(g_CAVIAR_BUFFER_2)->*BufferInitCtor)();
-    GameAtexit(reinterpret_cast<func_atexit_callback *>(0x00616B00));
+    g_CAVIAR_BUFFER_2->Buffer::Buffer();
+    atexit(reinterpret_cast<func_atexit_callback *>(0x00616B00));
 }

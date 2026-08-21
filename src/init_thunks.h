@@ -40,18 +40,21 @@ class Wave_Device;
  *
  * One ??__E thunk per dynamically-initialized global: construct the object at
  * its fixed address through the recovered constructor, then register its
- * catalogued ??__F teardown with the game CRT's atexit - through the
- * GameAtexit seam, because the game CRT's exit list must own the registration
- * so teardown order stays inside its LIFO walk. The registered value is the
- * ORIGINAL ??__F address, which the hybrid redirects to the recovered
- * destroy_* twin at run time. Globals shared with the teardown side stay
+ * catalogued ??__F teardown with `atexit`.
+ *
+ * IT USED TO GO THROUGH A `GameAtexit` SEAM, so that the GAME's CRT exit list
+ * owned the registration and teardown order stayed inside its LIFO walk. That
+ * mattered when this tree was staged as a DLL inside the original process,
+ * where the two CRTs keep separate lists. There is no such build any more -
+ * CMakeLists.txt produces one executable and the staging tools are gone - and
+ * this build links the same VC6 CRT the image statically linked, so `atexit`
+ * IS 0x00645398's counterpart. The seam cost every thunk a `call dword ptr`
+ * where the image has `call rel32`. Globals shared with the teardown side stay
  * declared in atexit_thunks.h; only the ones the teardown side does not bind
  * appear here.
  */
 
 typedef void(__cdecl func_atexit_callback)();
-typedef int(__cdecl func_game_atexit)(func_atexit_callback *callback);
-func_game_atexit *const GameAtexit = (func_game_atexit *)0x00645398;   // 0x00645398
 
 #include "vector_teardown.h"
 extern func_thiscall_teardown BufferElementCtor;
