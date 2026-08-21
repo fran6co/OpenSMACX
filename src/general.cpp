@@ -1631,6 +1631,14 @@ Purpose: For the count, sort both id and value arrays by the least to greatest v
 Return Value: n/a
 Status: Complete
 */
+// RULED-OUT: writing the loop bound inline - `i < count - 1` instead of the
+// hoisted `int bounds = count - 1` - on the theory that the image's
+// per-iteration `mov ecx, [ebp+8]; dec ecx` means it does not hoist. It changes
+// NOTHING measurable: 5 of 47 at `/c /O2 /Ob0 /Gy /GR- /GX` either way, and the
+// compiled instruction count was already exactly the image's 47 before the
+// edit, so there was no gap of that shape to close. Checked across all ten
+// flag sets. The remaining divergence is the frame pointer and the
+// `has_swapped` register, which are separate.
 void __cdecl sort(int count, int *id, int *value) {
     int bounds = count - 1;
     // `int`, not `BOOL`. Identical type, but the verification scaffolding
