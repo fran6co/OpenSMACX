@@ -1776,9 +1776,10 @@ extern "C" int __stdcall sub_401520(int a1) {
 }
 
 /*
-// ORIGINAL: 0x00401BE0 sub_401be0 0x00401BE0-0x00401C79 BYTE_EXACT
+// ORIGINAL: 0x00401BE0 sub_401be0 0x00401BE0-0x00401C79
+// symbol    @sub_401be0@8
 // size      153 bytes
-// prototype 
+// prototype
 // callers   3   call targets   0
 // kind      game
 // flags     frame;sp_ready;purged_ok
@@ -1786,78 +1787,92 @@ extern "C" int __stdcall sub_401520(int a1) {
 // indirect  0x00401C22 0x00401C34 0x00401C50
 Status: Complete
 */
-extern "C" __declspec(naked) int __cdecl sub_401be0() {
-    __asm {
-        push ebp
-        mov ebp, esp
-        push ecx
-        push ebx
-        push esi
-        lea esi, [ecx - 0x1c]
-        xor ebx, ebx
-        mov dword ptr [esi], 0x6693f4
-        mov eax, dword ptr [ecx - 0x18]
-        mov edx, dword ptr [eax + 4]
-        mov dword ptr [edx + ecx - 0x18], 0x6693f0
-        mov eax, dword ptr [esi + 8]
-        cmp eax, ebx
-        je end_lbl
-        mov eax, dword ptr [esi + 0x10]
-        mov dword ptr [ebp - 4], ebx
-        cmp eax, ebx
-        jle skip_loop
-        push edi
-loop_lbl:
-        mov eax, dword ptr [esi + 8]
-        mov edx, dword ptr [esi]
-        mov ecx, dword ptr [eax + 0xc]
-        mov dword ptr [esi + 0xc], ecx
-        mov edi, dword ptr [eax + 8]
-        push edi
-        mov ecx, esi
-        call dword ptr [edx + 4]
-        cmp edi, ebx
-        je skip1
-        mov eax, dword ptr [edi]
-        push 1
-        mov ecx, dword ptr [eax + 4]
-        add ecx, edi
-        mov edx, dword ptr [ecx]
-        call dword ptr [edx]
-skip1:
-        mov eax, dword ptr [esi + 8]
-        mov dword ptr [eax + 8], ebx
-        mov eax, dword ptr [esi + 8]
-        cmp eax, ebx
-        je skip2
-        mov ecx, dword ptr [eax]
-        push 1
-        mov edx, dword ptr [ecx + 4]
-        lea ecx, [edx + eax]
-        mov eax, dword ptr [edx + eax]
-        call dword ptr [eax]
-skip2:
-        mov ecx, dword ptr [esi + 0xc]
-        mov eax, dword ptr [ebp - 4]
-        mov dword ptr [esi + 8], ecx
-        mov ecx, dword ptr [esi + 0x10]
-        inc eax
-        cmp eax, ecx
-        mov dword ptr [ebp - 4], eax
-        jl loop_lbl
-        pop edi
-skip_loop:
-        mov dword ptr [esi + 8], ebx
-        mov dword ptr [esi + 0x14], ebx
-        mov dword ptr [esi + 0x10], ebx
-end_lbl:
-        mov dword ptr [esi + 0x14], ebx
-        pop esi
-        pop ebx
-        mov esp, ebp
-        pop ebp
-        ret
+// The receiver arrives in ECX pointing 0x1c into the real object - a
+// virtual-base subobject - so the body first recovers the object's own
+// start (`self`). It then writes two vtable pointers: its own, and a
+// second one reached through a displacement read out of a small table at
+// self+4 (a vbtable: entry [1] holds the byte offset from self+4 to the
+// virtual base's vtable slot, because that offset is only known once the
+// most-derived class is). The same "read a vtable, take its [1] entry as
+// a THIS-adjustment rather than a function, add it to the pointer, then
+// call through the adjusted object's own vtable[0]" shape recurs for
+// every node torn down in the loop below - that is the scalar deleting
+// destructor called through a pointer typed as a virtual base, which is
+// why the adjustment has to be data instead of a compile-time constant.
+//
+// MISMATCH, 52/64 (0.984 similar), best over every flag set this tree
+// tries. The one surviving divergence is the SECOND per-node teardown
+// call (deleting the list node itself, `node` below): the image computes
+// the adjusted `this` with `lea ecx,[edx+eax]` and then re-derives the
+// target vtable via `[edx+eax]` addressing instead of reading `[ecx]`,
+// where the FIRST teardown call (on `sub_obj`, same shape) compiles
+// byte-exact with `add`+`[ecx]`. RULED-OUT: a named `int *vtbl`/`int
+// disp` pair, a fused single expression, and routing the call through
+// `vtable_method` all reproduce the identical `add`+`[ecx]` form as the
+// first call - the allocator's choice between the two forms tracks
+// register pressure at the call site, not source spelling, and no
+// spelling tried moves it. Everything else - both vtable-pointer writes,
+// the loop's trip count re-read each iteration, the first per-node call,
+// and the trailing field clears - is byte-exact.
+class SubBase401be0 { public:
+    virtual void slot0(int);   // vtable[0]: scalar-deleting-destructor style
+    virtual void slot1(int);   // vtable[4]: notifies `self` a node is going
+};
+
+extern "C" void __fastcall sub_401be0(void *receiver, void *) {
+    char *self = static_cast<char *>(receiver) - 0x1c;
+    char *vbase_slot = static_cast<char *>(receiver) - 0x18;
+
+    *reinterpret_cast<int *>(self) = 0x6693f4;
+    {
+        int *vbtable = *reinterpret_cast<int **>(vbase_slot);
+        int disp = vbtable[1];
+        *reinterpret_cast<int *>(vbase_slot + disp) = 0x6693f0;
     }
+
+    if (*reinterpret_cast<void **>(self + 8) != 0) {
+        int count = *reinterpret_cast<int *>(self + 0x10);
+        int i = 0;
+        if (count > 0) {
+            do {
+                char *node = *reinterpret_cast<char **>(self + 8);
+                int next = *reinterpret_cast<int *>(node + 0xc);
+                *reinterpret_cast<int *>(self + 0xc) = next;
+                int sub_obj = *reinterpret_cast<int *>(node + 8);
+
+                reinterpret_cast<SubBase401be0 *>(self)->slot1(sub_obj);
+
+                if (sub_obj != 0) {
+                    int *vtbl = *reinterpret_cast<int **>(sub_obj);
+                    int disp = vtbl[1];
+                    void *adjusted = reinterpret_cast<char *>(sub_obj) + disp;
+                    reinterpret_cast<SubBase401be0 *>(adjusted)->slot0(1);
+                }
+
+                node = *reinterpret_cast<char **>(self + 8);
+                *reinterpret_cast<int *>(node + 8) = 0;
+
+                node = *reinterpret_cast<char **>(self + 8);
+                if (node != 0) {
+                    int *vtbl = *reinterpret_cast<int **>(node);
+                    int disp = vtbl[1];
+                    void *adjusted = node + disp;
+                    reinterpret_cast<SubBase401be0 *>(adjusted)->slot0(1);
+                }
+
+                *reinterpret_cast<int *>(self + 8) =
+                    *reinterpret_cast<int *>(self + 0xc);
+                count = *reinterpret_cast<int *>(self + 0x10);
+                ++i;
+            } while (i < count);
+        }
+
+        *reinterpret_cast<int *>(self + 8) = 0;
+        *reinterpret_cast<int *>(self + 0x14) = 0;
+        *reinterpret_cast<int *>(self + 0x10) = 0;
+    }
+
+    *reinterpret_cast<int *>(self + 0x14) = 0;
 }
 
 /*

@@ -1401,7 +1401,7 @@ Status: Complete
 
 /*
 Purpose: Get the default value for the 1st set of preferences.
-// ORIGINAL: 0x0059DA20 ?default_prefs@@YAHXZ 0x0059DA20-0x0059DA99
+// ORIGINAL: 0x0059DA20 ?default_prefs@@YAHXZ 0x0059DA20-0x0059DA99 BYTE_EXACT
 // symbol    ?default_prefs@@YAIXZ
 // size      121 bytes
 // prototype 
@@ -1428,7 +1428,7 @@ uint32_t __cdecl default_prefs() {
 
 /*
 Purpose: Get the default value for the 2nd set of preferences.
-// ORIGINAL: 0x0059DAA0 ?default_prefs2@@YAHXZ 0x0059DAA0-0x0059DB19
+// ORIGINAL: 0x0059DAA0 ?default_prefs2@@YAHXZ 0x0059DAA0-0x0059DB19 BYTE_EXACT
 // symbol    ?default_prefs2@@YAIXZ
 // size      121 bytes
 // prototype 

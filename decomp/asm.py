@@ -284,6 +284,12 @@ def allocation_only(original: Listing, compiled: Listing) -> str:
     if len(left) != len(right):
         return (f"{len(right)} instructions against {len(left)} - a different "
                 f"program, not a different allocation")
+    # A BRANCH IS COMPARED BY WHERE IT LANDS, NOT BY ITS ADDRESS. One extra
+    # byte anywhere shifts every later target, so comparing the immediates
+    # reports every jump in the body as a difference and hides the one real
+    # cause. The same jump to the same INSTRUCTION is the same control flow.
+    index_of = ({i.address: n for n, i in enumerate(left)},
+                {i.address: n for n, i in enumerate(right)})
     # A BASE REGISTER MAY HOLD A DIFFERENT VALUE, and then every displacement
     # off it differs by the SAME delta - `init_goals` bases its loop on
     # `&goal.priority` where this tree bases it on `&goal.x`, so every offset
@@ -321,6 +327,9 @@ def allocation_only(original: Listing, compiled: Listing) -> str:
             if masked:
                 continue
             if one.type == x86.X86_OP_IMM and one.imm != two.imm:
+                inside = (index_of[0].get(one.imm), index_of[1].get(two.imm))
+                if inside[0] is not None and inside[0] == inside[1]:
+                    continue        # same target instruction, shifted address
                 return (f"instruction {index}: {a.mnemonic} immediate "
                         f"0x{one.imm:x} against 0x{two.imm:x}")
             if one.type == x86.X86_OP_MEM:
