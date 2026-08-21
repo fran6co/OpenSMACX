@@ -42,6 +42,14 @@ LPSTR VehBattleDisplayTerrain;
 /*
 Purpose: Generate an output string for the specified unit's morale.
 // ORIGINAL: 0x004B3FD0 ?say_morale@@YAXPADHH@Z 0x004B3FD0-0x004B43BF
+// LEVER: std::string -> strcat, matching the say_stats family (calls went
+//        from 16, mostly basic_string internals, to 10; strcat count now
+//        exactly 7, matching the image). RULED-OUT: crèche/brood-pit was
+//        already the correct asymmetric if/else-if here, unlike
+//        get_basic_offense - no change needed. Still open: the ternary
+//        Strings::get() call - image has 2 static call sites (one per
+//        branch), this tree's compile merges them to 1; and the usual
+//        bitmask() x3 auto-inline wall (see get_basic_offense).
 // size      1007 bytes
 // prototype void (__cdecl ?say_morale@@YAXPADHH@Z)(int8* moraleOutput, int vehID, int factionIDvsNative)
 // callers   2   call targets   5
@@ -56,16 +64,21 @@ void __cdecl say_morale(LPSTR morale_output, int veh_id, int faction_id_vs_nativ
     uint32_t morale = morale_veh(veh_id, false, faction_id_vs_native);
     uint32_t faction_id = Vehs[veh_id].faction_id;
     int proto_id = Vehs[veh_id].proto_id;
-    std::string output = (proto_id < MaxVehProtoFactionNum &&
-        (get_proto_offense_rating(proto_id) < 0 || proto_id == BSC_SPORE_LAUNCHER)) 
+    // LEVER: std::string -> raw strcat() straight onto morale_output, per
+    // the say_stats family above. The image's own `calls` list is 7 strcat
+    // sites, not a string builder: this fill, the drone-riot " (-)", " "
+    // and "(" as TWO separate strcat calls (not one " (" literal), the
+    // "+" loop body, ")", and the designate-defender "(d)".
+    strcat(morale_output, (proto_id < MaxVehProtoFactionNum &&
+        (get_proto_offense_rating(proto_id) < 0 || proto_id == BSC_SPORE_LAUNCHER))
         ? StringTable->get((int)Morale[morale].name_lifecycle)
-        : StringTable->get((int)Morale[morale].name);
+        : StringTable->get((int)Morale[morale].name));
     if (VehPrototypes[proto_id].plan < PLAN_COLONIZATION) {
         uint32_t morale_penalty = 0;
         int home_base_id = Vehs[veh_id].home_base_id;
         if (home_base_id >= 0 && Bases[home_base_id].state & BSTATE_DRONE_RIOTS_ACTIVE && morale > 0
             && !(Players[faction_id].rule_flags & RFLAG_MORALE)) {
-            output += " (-)";
+            strcat(morale_output, " (-)");
             morale_penalty = 1;
         }
         VehMoraleModifierCount = 0;
@@ -121,19 +134,19 @@ void __cdecl say_morale(LPSTR morale_output, int veh_id, int faction_id_vs_nativ
             VehMoraleModifierCount = 1;
         }
         if(VehMoraleModifierCount) {
-            output += " (";
+            strcat(morale_output, " ");
+            strcat(morale_output, "(");
             for (int i = 0; i < VehMoraleModifierCount; i++) {
-                output += "+";
+                strcat(morale_output, "+");
             }
-            output += ")";
+            strcat(morale_output, ")");
         }
         VehMoraleModifierCount -= morale_penalty;
         if (Vehs[veh_id].state & VSTATE_DESIGNATE_DEFENDER) {
-            output += "(d)";
+            strcat(morale_output, "(d)");
         }
     }
     // TODO: assumes at least 1032 char nulled buffer (stringTemp), eventually remove
-    strcat_s(morale_output, 1032, output.c_str());
 }
 
 /*
@@ -477,6 +490,12 @@ int __cdecl psi_factor(int combat_ratio, int faction_id, BOOL is_attack, BOOL is
 /*
 Purpose: Get the basic offense value for an attacking unit with an optional defender unit parameter.
 // ORIGINAL: 0x005015B0 ?get_basic_offense@@YAHHHHHH@Z 0x005015B0-0x00501940
+// LEVER: crèche/brood-pit was `if/else if` with the SAME body on both arms;
+//        the disassembly's 3rd bitmask() call proves the crèche-true arm
+//        also runs a nested, BARE `morale++` brood-pit check (no range()/cap
+//        loop) - only the `else if` arm has the full adjustment. Structural
+//        fix only: `has_fac_built`'s own bitmask() calls still fully inline
+//        away under every flag set tried, so `calls` still reads 7 vs 9.
 // size      912 bytes
 // prototype int (__cdecl ?get_basic_offense@@YAHHHHHH@Z)(int vehIDAtk, int vehIDDef, uint32_t psiCombatType, BOOL isBombardment, int isUnkTgl)
 // callers   2   call targets   6
@@ -501,6 +520,14 @@ int __cdecl get_basic_offense(int veh_id_atk, int veh_id_def, int psi_combat_typ
                 morale_active++;
             }
             morale -= morale_active;
+            // The disassembly calls bitmask() a 3rd time: on the crèche-true
+            // fallthrough, a brood pit check ALSO runs, but only as a bare
+            // `morale++` - the full range()/cap adjustment below it belongs
+            // only to the crèche-false (`else if`) arm.
+            if (has_fac_built(FAC_BROOD_PIT, base_id_atk) && proto_id_atk < MaxVehProtoFactionNum
+                && (get_proto_offense_rating(proto_id_atk) < 0 || proto_id_atk == BSC_SPORE_LAUNCHER)) {
+                morale++;
+            }
         } else if (has_fac_built(FAC_BROOD_PIT, base_id_atk) && proto_id_atk < MaxVehProtoFactionNum
             && (get_proto_offense_rating(proto_id_atk) < 0 || proto_id_atk == BSC_SPORE_LAUNCHER)) {
             morale++;
@@ -545,6 +572,8 @@ int __cdecl get_basic_offense(int veh_id_atk, int veh_id_def, int psi_combat_typ
 /*
 Purpose: Get the basic defense value for a defending unit with an optional attacker unit parameter.
 // ORIGINAL: 0x00501940 ?get_basic_defense@@YAHHHHH@Z 0x00501940-0x00501D26
+// LEVER: same asymmetric crèche/brood-pit fix as get_basic_offense above -
+//        see its comment for the disassembly evidence.
 // size      998 bytes
 // prototype int (__cdecl ?get_basic_defense@@YAHHHHH@Z)(int vehIDDef, int vehIDAtk, uint32_t psiCombatType, BOOL isBombardment)
 // callers   1   call targets   6
@@ -569,7 +598,16 @@ int __cdecl get_basic_defense(int veh_id_def, int veh_id_atk, int psi_combat_typ
                 morale_active++;
             }
             morale -= morale_active;
-        } else if (has_fac_built(FAC_BROOD_PIT, base_id_def) 
+            // Asymmetric with the `else if` below - see get_basic_offense
+            // above for the disassembly evidence: the crèche-true fallthrough
+            // only bumps morale by 1 for a brood pit, the full range()/cap
+            // adjustment belongs to the crèche-false arm only.
+            if (has_fac_built(FAC_BROOD_PIT, base_id_def)
+                &&  proto_id_def < MaxVehProtoFactionNum
+                && (get_proto_offense_rating(proto_id_def) < 0 || proto_id_def == BSC_SPORE_LAUNCHER)) {
+                morale++;
+            }
+        } else if (has_fac_built(FAC_BROOD_PIT, base_id_def)
             &&  proto_id_def < MaxVehProtoFactionNum
             && (get_proto_offense_rating(proto_id_def) < 0 || proto_id_def == BSC_SPORE_LAUNCHER)) {
             morale++;
@@ -1272,15 +1310,10 @@ Purpose: Direct the unit to start moving automatically towards the specified til
 Return Value: n/a
 Status: Complete
 */
-void __cdecl go_to(int veh_id, char type, int x, int y) {
-    Vehs[veh_id].order = ORDER_MOVE_TO;
-    Vehs[veh_id].move_to_ai_type = type;
-    Vehs[veh_id].waypoint_x[0] = (int16_t)x;
-    Vehs[veh_id].waypoint_y[0] = (int16_t)y;
-    if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_COLONIZATION) {
-        Vehs[veh_id].terraforming_turns = 0;
-    }
-}
+// BODY IN veh.h, as `MEASURED inline`: set_course's two calls to go_to are
+// both inlined in the image (its own `calls` list has neither), while
+// scenario.cpp's single call stays real - `osmx calls` on set_course names
+// no go_to among its targets. LEVER: matches bitmask/battle_init above.
 
 /*
 Purpose: Wrap an x coordinate on a round map, as set_course does it.
@@ -1293,7 +1326,7 @@ set_course reads the low BYTE and tests bit zero (`mov cl, byte ptr [94988Ch] / 
 the same reading valid_patrol above and reset_territory use. The two agree on the 0 and 1 the
 game stores there and disagree on everything else.
 */
-static int course_xrange(int x) {
+static inline int course_xrange(int x) {
     if (!(MapIsFlat & 1)) {
         if (x >= 0) {
             if (x >= MapLongitudeBounds) {
@@ -2054,6 +2087,10 @@ int __cdecl weapon_budget(int faction_id, int condition, BOOL check_mode) {
 Purpose: Check against the faction's available tech for the best available armor meeting the cost 
          requirement.
 // ORIGINAL: 0x0057F150 ?armor_budget@@YAHHH@Z 0x0057F150-0x0057F1CF
+// LEVER: store order - best_defense=-1 before armor_id=0, opposite of
+//        declaration order (0.9524 -> 0.971 similar). RULED-OUT: remaining
+//        divergence starts at the has_tech() call site (instr 17); not
+//        chased further.
 // size      127 bytes
 // prototype int (__cdecl ?armor_budget@@YAHHH@Z)(int factionID, int maxCost)
 // callers   0   call targets   1
@@ -2064,8 +2101,8 @@ Return Value: Best armor available (0-13)
 Status: Complete
 */
 int __cdecl armor_budget(int faction_id, int max_cost) {
-    int armor_id = 0;
     int best_defense = -1;
+    int armor_id = 0;
     for (int i = 0; i < MaxArmorNum; i++) {
         if (has_tech(Armor[i].preq_tech, faction_id) && Armor[i].cost <= max_cost
             && Armor[i].defense_rating >= 0) { // excludes PSI
@@ -2578,7 +2615,7 @@ which between them mean it is the interactive map's repaint hint rather than
 game state. `bit2 |= 0x400000` and `UnkBitfield1 |= 1` are the same pair
 climate_set() sets at 00591A80 and carry the same unidentified meaning.
 */
-void __cdecl spot_tile(int x, int y, int faction_id) {
+inline void __cdecl spot_tile(int x, int y, int faction_id) {
     if (!on_map(x, y)) {
         return;
     }
@@ -2657,12 +2694,27 @@ The original tests on_map() twice before revealing the tile: once for the guard
 written out below, and once inside the inlined spot_tile(). It is a pure
 predicate over two globals and the same two coordinates, so the second test
 cannot disagree with the first.
+
+LEVER: `calls` disagreed (2 here vs the image's 1: synch_bit only) because
+spot_tile() and veh_top() were both left as real calls despite the comment
+above already establishing both are inlined. spot_tile is now plain `inline`
+(its only callers are spot_base/spot_stack/spot_loc, all in this file); the
+veh_top climb below is hand-inlined, matching veh_at's precedent.
 */
 void __cdecl spot_stack(int veh_id, int faction_id) {
     if (veh_id >= 0 && on_map(Vehs[veh_id].x, Vehs[veh_id].y)) {
         spot_tile(Vehs[veh_id].x, Vehs[veh_id].y, faction_id);
     }
-    for (int id = veh_top(veh_id); id >= 0; id = Vehs[id].next_veh_id_stack) {
+    int top_veh_id;
+    if (veh_id < 0) {
+        top_veh_id = -1;
+    } else {
+        top_veh_id = veh_id;
+        for (int j = Vehs[top_veh_id].prev_veh_id_stack; j >= 0; j = Vehs[j].prev_veh_id_stack) {
+            top_veh_id = j;
+        }
+    }
+    for (int id = top_veh_id; id >= 0; id = Vehs[id].next_veh_id_stack) {
         Vehs[id].visibility |= (uint8_t)(1 << faction_id);
         if (faction_id) {
             Vehs[id].flags &= (uint16_t)~(VFLAG_LURKER | VFLAG_INVISIBLE);
@@ -2779,6 +2831,8 @@ BOOL __cdecl want_to_wake(int faction_id, int veh_id, int spotted_veh_id) {
 /*
 Purpose: Wake up units meeting specific conditions from the stack where specified unit is located.
 // ORIGINAL: 0x005B6060 ?wake_stack@@YAXH@Z 0x005B6060-0x005B619A
+// LEVER: veh_top() is called at only 2 real sites in the image (see its own
+//        comment on veh_top); here it is inlined, matching veh_at above.
 // size      314 bytes
 // prototype void (__cdecl ?wake_stack@@YAXH@Z)(int vehID)
 // callers   1   call targets   0
@@ -2789,7 +2843,14 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl wake_stack(int veh_id) {
-    for (int i = veh_top(veh_id); i >= 0; i = Vehs[i].next_veh_id_stack) {
+    if (veh_id < 0) {
+        return;
+    }
+    int top_veh_id = veh_id;
+    for (int j = Vehs[top_veh_id].prev_veh_id_stack; j >= 0; j = Vehs[j].prev_veh_id_stack) {
+        top_veh_id = j;
+    }
+    for (int i = top_veh_id; i >= 0; i = Vehs[i].next_veh_id_stack) {
         int veh_id_way_point;
         int x;
         int y;
@@ -2904,6 +2965,8 @@ void __cdecl stack_sort_2(int veh_id) {
 /*
 Purpose: Refresh and fix the stack. Used by DirectPlay multiplayer only.
 // ORIGINAL: 0x005B8E10 ?stack_fix@@YAHH@Z 0x005B8E10-0x005B8ED9
+// LEVER: veh_top() is called at only 2 real sites in the image (see its own
+//        comment on veh_top); here it is inlined, matching veh_at above.
 // size      201 bytes
 // prototype int (__cdecl ?stack_fix@@YAHH@Z)(int vehID)
 // callers   26   call targets   2
@@ -2926,7 +2989,14 @@ int __cdecl stack_fix(int veh_id) {
             stack_sort(veh_id);
         }
     }
-    return veh_top(veh_id);
+    if (veh_id < 0) {
+        return -1;
+    }
+    int top_veh_id = veh_id;
+    for (int j = Vehs[top_veh_id].prev_veh_id_stack; j >= 0; j = Vehs[j].prev_veh_id_stack) {
+        top_veh_id = j;
+    }
+    return top_veh_id;
 }
 
 /*
