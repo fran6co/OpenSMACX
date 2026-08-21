@@ -1717,6 +1717,13 @@ void __cdecl say_defense(LPSTR stat, int proto_id) {
 Purpose: Generate stats string for specified prototype. Replaced existing non-safe strcat with 
          string. Reworked to integrate with existing C code.
 // ORIGINAL: 0x0057D7D0 ?say_stats_3@@YAXPADH@Z 0x0057D7D0-0x0057D8D3
+// RULED-OUT: else-if branch order off_rating<0/off_rating<99/else folded the "?"
+//            and "*" strcat tails together (29/92); reordering to
+//            off_rating<0/off_rating>=99/else (matching the disasm's own branch
+//            order) got to 51/92. def_rating stored to a named int8_t local, or
+//            inlined as Armor[...].armor_id].defense_rating, made no further
+//            difference; plateaus on the def_rating address computation
+//            (shl 4 + disp vs add const + shl 4), 4 spellings tried.
 // size      259 bytes
 // prototype void (__cdecl ?say_stats_3@@YAXPADH@Z)(int8*, int protoID)
 // callers   13   call targets   5
@@ -1731,10 +1738,10 @@ void __cdecl say_stats_3(LPSTR stat, int proto_id) {
     int8_t off_rating = get_proto_offense_rating(proto_id);
     if (off_rating < 0) {
         strcat(stat, "?"); // PSI
-    } else if (off_rating < 99) {
-        say_offense(stat, proto_id);
-    } else {
+    } else if (off_rating >= 99) {
         strcat(stat, "*");
+    } else {
+        say_offense(stat, proto_id);
     }
     strcat(stat, "-");
     if (get_proto_defense_rating(proto_id) < 0) {
@@ -1773,6 +1780,12 @@ void __cdecl say_stats_3(int proto_id) {
 Purpose: Generate stats string for specified prototype. List whether prototype is psi, sea or air.
          Replaced existing non-safe strcat with string. Reworked to integrate with existing C code.
 // ORIGINAL: 0x0057D8E0 ?say_stats_2@@YAXPADH@Z 0x0057D8E0-0x0057DA94
+// RULED-OUT: label_get(196/163/162) calls (25/140); open-coding
+//            StringTable->get((int)*((LPSTR*)Labels->strings_ptr + N)) plus the
+//            off_rating<0/>=99/else branch order got to 58/140. def_rating via
+//            get_proto_defense_rating() vs inlined Armor[...] made no further
+//            difference; plateaus on the same shl-vs-add-const address split
+//            seen at 0x0057D7D0.
 // size      436 bytes
 // prototype void (__cdecl ?say_stats_2@@YAXPADH@Z)(int8*, int protoID)
 // callers   4   call targets   6
@@ -1784,17 +1797,18 @@ Status: Complete
 */
 void __cdecl say_stats_2(LPSTR stat, int proto_id) {
     char num_buf[80];
-    int off_rating = get_proto_offense_rating(proto_id);
+    int8_t off_rating = get_proto_offense_rating(proto_id);
     if (off_rating < 0) {
-        strcat(stat, label_get(196)); // 'Psi'
-    } else if (off_rating < 99) {
-        say_offense(stat, proto_id);
-    } else {
+        // INLINE: the image open-codes label_get(196) here rather than calling it.
+        strcat(stat, StringTable->get((int)*((LPSTR *)Labels->strings_ptr + 196))); // 'Psi'
+    } else if (off_rating >= 99) {
         strcat(stat, "*");
+    } else {
+        say_offense(stat, proto_id);
     }
     strcat(stat, "-");
     if (get_proto_defense_rating(proto_id) < 0) {
-        strcat(stat, label_get(196)); // 'Psi'
+        strcat(stat, StringTable->get((int)*((LPSTR *)Labels->strings_ptr + 196))); // 'Psi'
     } else {
         say_defense(stat, proto_id);
     }
@@ -1804,10 +1818,10 @@ void __cdecl say_stats_2(LPSTR stat, int proto_id) {
     uint32_t triad = get_proto_triad(proto_id);
     if (triad == TRIAD_SEA) {
         strcat(stat, " ");
-        strcat(stat, label_get(163)); // 'Sea'
+        strcat(stat, StringTable->get((int)*((LPSTR *)Labels->strings_ptr + 163))); // 'Sea'
     } else if (triad == TRIAD_AIR) {
         strcat(stat, " ");
-        strcat(stat, label_get(162)); // 'Air'
+        strcat(stat, StringTable->get((int)*((LPSTR *)Labels->strings_ptr + 162))); // 'Air'
     }
     uint32_t reactor = VehPrototypes[proto_id].reactor_id;
     if (reactor > 1) {
@@ -1838,24 +1852,28 @@ void __cdecl say_stats(LPSTR stat, int proto_id, LPSTR custom_spacer) {
     uint8_t chas = VehPrototypes[proto_id].chassis_id;
     uint8_t triad = Chassis[chas].triad;
     uint8_t mode = Weapon[VehPrototypes[proto_id].weapon_id].mode;
-    int off_rating = get_proto_offense_rating(proto_id);
-    int def_rating = get_proto_defense_rating(proto_id);
+    int8_t off_rating = get_proto_offense_rating(proto_id);
+    int8_t def_rating = get_proto_defense_rating(proto_id);
     if (plan == PLAN_RECONNAISANCE && triad == TRIAD_LAND && off_rating == 1 && def_rating == 1
         && !VehPrototypes[proto_id].ability_flags) {
         strcat(stat, StringTable->get((int)PlansFullName[3])); // 'Explore/Defense'
         strcat(stat, ", ");
     } else if (mode < 3) { // Projectile, energy, missile
         strcat(stat, (plan != PLAN_DEFENSIVE || (off_rating >= 0 && off_rating <= def_rating))
-            ? StringTable->get((int)PlansShortName[plan]) : label_get(312)); // 'Combat'
+            ? StringTable->get((int)PlansShortName[plan]) : StringTable->get((int)*((LPSTR *)Labels->strings_ptr + 312))); // 'Combat'
         strcat(stat, ", ");
     }
     if (off_rating < 0 || mode < 3) {
         if (off_rating < 0) {
-            strcat(stat, label_get(196)); // 'Psi'
+            strcat(stat, StringTable->get((int)*((LPSTR *)Labels->strings_ptr + 196))); // 'Psi'
         } else {
             say_offense(stat, proto_id);
         }
-        strcat(stat, custom_spacer ? custom_spacer : "/");
+        if (custom_spacer) {
+            strcat(stat, custom_spacer);
+        } else {
+            strcat(stat, "/");
+        }
         goto append_defense_tail;
     } else if (def_rating != 1 || VehPrototypes[proto_id].ability_flags || (Chassis[chas].speed != 1
         && (mode != WPN_MODE_TRANSPORT || chas != CHSI_FOIL))) {
@@ -1869,7 +1887,7 @@ void __cdecl say_stats(LPSTR stat, int proto_id, LPSTR custom_spacer) {
         strcat(stat, ", ");
 append_defense_tail:
         if (def_rating < 0) {
-            strcat(stat, label_get(196)); // 'Psi'
+            strcat(stat, StringTable->get((int)*((LPSTR *)Labels->strings_ptr + 196))); // 'Psi'
         } else {
             say_defense(stat, proto_id);
         }
@@ -1890,10 +1908,10 @@ append_defense_tail:
     }
     if (triad == TRIAD_SEA) {
         strcat(stat, " ");
-        strcat(stat, label_get(163)); // 'Sea'
+        strcat(stat, StringTable->get((int)*((LPSTR *)Labels->strings_ptr + 163))); // 'Sea'
     } else if (triad == TRIAD_AIR) {
         strcat(stat, " ");
-        strcat(stat, label_get(162)); // 'Air'
+        strcat(stat, StringTable->get((int)*((LPSTR *)Labels->strings_ptr + 162))); // 'Air'
     }
     uint32_t reactor = VehPrototypes[proto_id].reactor_id;
     if (reactor > 1) {

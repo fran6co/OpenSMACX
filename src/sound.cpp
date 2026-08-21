@@ -84,22 +84,30 @@ namespace {
 // Sound wraps its device at 0x3C and asks it these questions through the
 // device's own vtable; the original tail-jumps, so the device's answer is the
 // caller's, and with no device wrapped the answer is zero.
-typedef int (OriginalObject::*sound_device_query)();
+// ONE parameter, `__fastcall`: the receiver goes in ecx and edx is left
+// alone. A second would cost a `xor edx, edx` the image does not have.
+typedef int(__fastcall *sound_device_query)(void *);
 
-int query_sound_device(Sound *self, int vtable_offset) {
+__forceinline int query_sound_device(Sound *self, int vtable_offset) {
     void *device = *reinterpret_cast<void **>(
         reinterpret_cast<uint8_t *>(self) + 0x3C);
-    if (!device) {
-        return 0;
+    // THE ZERO PATH LAST, as the image lays it out: `je` jumps FORWARD to
+    // `xor eax, eax; ret` at 0x004C64CC. A guard clause puts it first and
+    // inverts the branch.
+    //
+    // CALLED WHERE THE SLOT LIVES: the image tail-jumps through it -
+    // `jmp dword ptr [eax+0x5c]` at 0x004C64C9 - and reading the slot into a
+    // pointer-to-member first costs a `mov` before the call.
+    if (device) {
+        return vtable_slot<sound_device_query>(device, vtable_offset)(device);
     }
-    uint8_t *vtable = *reinterpret_cast<uint8_t **>(device);
-    return (ORIGINAL(device)->*original_slot<sound_device_query>(vtable + vtable_offset))();
+    return 0;
 }
 }  // namespace
 
 /*
 Purpose: Ask the wrapped device whether it is playing, through vtable slot 0x5C.
-// ORIGINAL: 0x004C64C0 ?is_playing@Sound@@QAEHXZ 0x004C64C0-0x004C64CF
+// ORIGINAL: 0x004C64C0 ?is_playing@Sound@@QAEHXZ 0x004C64C0-0x004C64CF BYTE_EXACT
 // size      15 bytes
 // prototype int (__thiscall ?is_playing@Sound@@QAEHXZ)(Sound* this)
 // callers   0   call targets   0
@@ -115,7 +123,7 @@ int Sound::is_playing() {
 
 /*
 Purpose: Ask the wrapped device whether it is looping, through vtable slot 0x58.
-// ORIGINAL: 0x004C6690 ?is_looping@Sound@@QAEHXZ 0x004C6690-0x004C669F
+// ORIGINAL: 0x004C6690 ?is_looping@Sound@@QAEHXZ 0x004C6690-0x004C669F BYTE_EXACT
 // size      15 bytes
 // prototype int (__thiscall ?is_looping@Sound@@QAEHXZ)(Sound* this)
 // callers   0   call targets   0
@@ -131,7 +139,7 @@ int Sound::is_looping() {
 
 /*
 Purpose: Ask the wrapped device for its play position, through vtable slot 0x74.
-// ORIGINAL: 0x004C66A0 ?get_time@Sound@@QAEHXZ 0x004C66A0-0x004C66AF
+// ORIGINAL: 0x004C66A0 ?get_time@Sound@@QAEHXZ 0x004C66A0-0x004C66AF BYTE_EXACT
 // size      15 bytes
 // prototype int (__thiscall ?get_time@Sound@@QAEHXZ)(Sound* this)
 // callers   0   call targets   0
@@ -171,15 +179,22 @@ int forward_sound_device(Sound *self, int vtable_offset, int a1,
     return (ORIGINAL(device)->*original_slot<sound_device_arg>(vtable + vtable_offset))(a1);
 }
 
-int query_sound_device_default(Sound *self, int vtable_offset,
+__forceinline int query_sound_device_default(Sound *self, int vtable_offset,
                                int no_device_result) {
     void *device = *reinterpret_cast<void **>(
         reinterpret_cast<uint8_t *>(self) + 0x3C);
-    if (!device) {
-        return no_device_result;
+    // THE DEFAULT IS LOADED BEFORE THE TEST, and the zero path is LAST: the
+    // image does `mov eax, 0x14` at 0x004C64D3 before `test ecx, ecx`, and
+    // `je` jumps forward to a bare `ret`. A guard clause reverses both.
+    // THE ZERO PATH LAST, as the image lays it out. What is still unmatched
+    // is WHERE the default is loaded: the image sets `eax` to it at
+    // 0x004C64D3, before `test ecx, ecx`, on a path the tail jump then
+    // discards. A named result across the branch and a ternary both compile
+    // to the same thing as this - VC6 sinks the constant either way.
+    if (device) {
+        return vtable_slot<sound_device_query>(device, vtable_offset)(device);
     }
-    uint8_t *vtable = *reinterpret_cast<uint8_t **>(device);
-    return (ORIGINAL(device)->*original_slot<sound_device_query>(vtable + vtable_offset))();
+    return no_device_result;
 }
 }  // namespace
 
@@ -329,8 +344,10 @@ int guarded_query_sound_device(Sound *self, int vtable_offset) {
     if (!device) {
         return 0x13;
     }
-    uint8_t *vtable = *reinterpret_cast<uint8_t **>(device);
-    return (ORIGINAL(device)->*original_slot<sound_device_query>(vtable + vtable_offset))();
+    // CALLED WHERE THE SLOT LIVES. The image tail-jumps through it -
+    // `jmp dword ptr [eax+0x5c]` at 0x004C64C9 - and reading the slot into a
+    // pointer-to-member first costs a `mov` before the call.
+    return vtable_slot<sound_device_query>(device, vtable_offset)(device);
 }
 }  // namespace
 
