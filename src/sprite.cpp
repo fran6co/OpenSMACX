@@ -68,7 +68,7 @@ Sprite *__fastcall sprite_construct_redirect(Sprite *self, void *) {
 /*
 Purpose: Release a sprite's allocations, discount its pixel memory, and clear
          every field except the type byte.
-// ORIGINAL: 0x005E3820 ?close@Sprite@@QAEXXZ 0x005E3820-0x005E3884
+// ORIGINAL: 0x005E3820 ?close@Sprite@@QAEXXZ 0x005E3820-0x005E3884 SEMANTIC
 // size      100 bytes
 // prototype void (__thiscall ?close@Sprite@@QAEXXZ)(Sprite* this)
 // callers   111   call targets   1
@@ -79,29 +79,41 @@ Purpose: Release a sprite's allocations, discount its pixel memory, and clear
 Status: Complete
 */
 void Sprite::close() {
-    volatile uint32_t *ordered = reinterpret_cast<volatile uint32_t *>(this);
+    // REAL MEMBERS, NOT A `volatile uint32_t *` ALIAS. Reading the object
+    // through a volatile handle blocks VC6's memory-operand folding: the image
+    // emits `cmp dword ptr [esi+0x28], edi` and `imul eax, dword ptr [esi+0x10]`
+    // where an aliased read forces `mov` into a register first, which was four
+    // extra instructions across this body.
+    //
     // The pixel buffer is only owned, accounted, and released while the
     // borrowed flag at 0x28 is clear.
-    if (ordered[0x28 / 4] == 0 && ordered[0x04 / 4] != 0) {
+    if (fObj1Exists_ == 0 && pcBits_ != 0) {
         *SpriteMemoryUsed = static_cast<int>(
             static_cast<uint32_t>(*SpriteMemoryUsed)
-            - ordered[0x14 / 4] * ordered[0x10 / 4]);
-        free(reinterpret_cast<void *>(ordered[0x04 / 4]));
-        ordered[0x04 / 4] = 0;
+            - static_cast<uint32_t>(iSpriteHeight_)
+                  * static_cast<uint32_t>(iSpriteWidth_));
+        // A SECOND TEST OF THE SAME POINTER, which the image really does: it
+        // re-tests `[esi+4]` at 0x005E3845 before the free, even though the
+        // outer condition already proved it non-zero, and the `je` target is
+        // the zero-store - so that store sits OUTSIDE the inner guard.
+        if (pcBits_ != 0) {
+            free(reinterpret_cast<void *>(pcBits_));
+        }
+        pcBits_ = 0;
     }
-    if (ordered[0x00 / 4] != 0) {
-        free(reinterpret_cast<void *>(ordered[0x00 / 4]));
-        ordered[0x00 / 4] = 0;
+    if (ppszFileName_ != 0) {
+        free(reinterpret_cast<void *>(ppszFileName_));
+        ppszFileName_ = 0;
     }
     // The type byte at 0x08 is deliberately preserved.
-    ordered[0x0C / 4] = 0;
-    ordered[0x10 / 4] = 0;
-    ordered[0x14 / 4] = 0;
-    ordered[0x18 / 4] = 0;
-    ordered[0x1C / 4] = 0;
-    ordered[0x20 / 4] = 0;
-    ordered[0x24 / 4] = 0;
-    ordered[0x28 / 4] = 0;
+    iSpriteWidth2_ = 0;
+    iSpriteWidth_ = 0;
+    iSpriteHeight_ = 0;
+    iWidth_ = 0;
+    iHeight_ = 0;
+    iLeftOffset_ = 0;
+    iTopOffset_ = 0;
+    fObj1Exists_ = 0;
 }
 
 void __fastcall sprite_close_redirect(Sprite *self, void *) {
