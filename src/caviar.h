@@ -112,6 +112,20 @@ class Caviar {
   uint32_t field_9C_;  // 0x9C
   uint32_t field_A0_;  // 0xA0
   uint8_t field_A4_;  // 0xA4
+  // RULED-OUT: naming what is in here. The arithmetic is known -
+  // `set_camera_direct` memcpys a `VOX_Vect` to 0xA5 and a `VOX_Matrix` to
+  // 0xB1, and 0xA5 + 12 is 0xB1 while 0xB1 + 36 is 0xD5, exactly where
+  // `get_scaling` reads its float - so the temptation is to declare
+  // `VOX_Vect camera_; VOX_Matrix camera_matrix_; float scaling_;` and let
+  // `get_scaling` return the member, which is what the image does with one
+  // `fld dword ptr [ecx + 0xd5]` against our five-instruction stack dance.
+  //
+  // IT DOES NOT COMPILE. 0xA5 is not 4-aligned and those types are, so VC6
+  // pads and `sizeof(Caviar)` stops being 0x13D0 - caught by the static_assert
+  // below, which is what that assert is for. The `uint8_t` blob is the tree's
+  // way of holding unaligned data, and `memcpy` is the only portable way in
+  // and out of it. Closing this would need `#pragma pack`, which changes the
+  // whole class.
   uint8_t field_A5_[0x63];  // 0xA5
   int32_t field_108_;
   uint8_t field_10C_[0x640];  // 0x10C

@@ -265,6 +265,13 @@ Scroll::Scroll() {
     PENDING_BODY(0x006051D0, pending)(this, nullptr);
 }
 
+// ?set_text@EditBox@@QAEXPAD@Z at 0x006151E0 - reached from
+// `EditGroup::set_text`. See the note in `editbox.h`.
+void EditBox::set_text(char *text) {
+    typedef void(__fastcall *pending)(EditBox *, void *, char *);
+    PENDING_BODY(0x006151E0, pending)(this, nullptr, text);
+}
+
 // ?message_data@@YAXHHHHHH@Z at 0x00592EE0 - broadcasts a game event. Two
 // files bound it as a pointer, with disagreeing return types; one forwarder.
 uint32_t __cdecl message_data(int a1, int a2, int a3, int a4, int a5, int a6) {
