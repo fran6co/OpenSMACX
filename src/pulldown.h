@@ -37,6 +37,11 @@ class PullDown : public GraphicWin {
   PullDown() { ; }
   ~PullDown() { ; }
 
+  // The recovered complete-object destructor body (0x005F88A0); the inline
+  // ~PullDown stays trivial so the layout-only semantics match, exactly as
+  // Dialog::destroy and Scroll::destroy do.
+  void destroy();
+
   int hide_item(int id);
   int show_item(int id);
   int disable_item(int id);

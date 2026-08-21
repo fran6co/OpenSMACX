@@ -306,6 +306,16 @@ Purpose: Destroy a most-derived StringList: run the source-owned two-stage
          derived close, then hand the virtual base back its own vtable and
          republish the pending-allocation owner the constructor captured.
 // ORIGINAL: 0x00406820 sub_406820 0x00406820-0x0040683B
+// RULED-OUT: dropping `volatile` on virtual_base_slots (plain
+//   `uint32_t *`) measured byte-identical to the volatile version, 2/9
+//   agreeing both ways - the divergence is at instruction 2, an extra
+//   `xor edx, edx` before the derived-close call (a two-parameter
+//   redirect signature vs the image's single-arg call), never reaching
+//   the aliased offsets. Named members (`allocation_owner_`,
+//   `allocation_base_abi_word_`) made it WORSE (1/9, 13 compiled
+//   instructions vs 10) because they force the compiler to keep a
+//   second `this`-relative register alive instead of reusing the
+//   `virtual_base` register the redirect call already computed. Reverted.
 // symbol    ?destroy@StringList@@QAEIXZ
 // size      27 bytes
 // prototype 

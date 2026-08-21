@@ -247,6 +247,7 @@ Purpose: Destroy a PullDown by releasing every item's text pair, resetting
          the trailing fields from their global defaults, and delegating to
          the GraphicWin destructor.
 // ORIGINAL: 0x005F88A0 ??1PullDown@@QAE@XZ 0x005F88A0-0x005F891B
+// symbol    ?destroy@PullDown@@QAEXXZ
 // size      123 bytes
 // prototype void (__thiscall ??1PullDown@@QAE@XZ)(PullDown* this)
 // callers   27   call targets   2
@@ -258,33 +259,37 @@ Verification note: the two virtual-table stores are dead - the GraphicWin
 delegation unconditionally overwrites both slots with its own tables - so
 they mirror the original's transient writes and no suite can observe them.
 */
-PullDown *__fastcall pull_down_destructor_redirect(PullDown *self, void *) {
-    volatile uint32_t *const ordered = reinterpret_cast<volatile uint32_t *>(self);
+void PullDown::destroy() {
+    // 0x000 and 0x444 are the Win and Buffer vtable slots GraphicWin
+    // installs; they are compiler-managed, not ordinary members, so they
+    // stay at their raw offset. They are also dead stores here - the
+    // GraphicWin delegation below unconditionally overwrites both.
+    uint32_t *const ordered = reinterpret_cast<uint32_t *>(this);
     ordered[0x000 / 4] = PullDownPrimaryVtable;
     ordered[0x444 / 4] = PullDownBufferVtable;
 
-    // Sixty-four items with two owned strings each: the text at 0xA18 and the
-    // right-hand text at 0xA1C, stride 0x14. The mnemonic pointer at 0xA28 is
-    // deliberately left alone, exactly as the legacy body leaves it.
+    // Sixty-four items with two owned strings each, released directly
+    // through items_'s own named fields.
     for (size_t index = 0; index < 64; ++index) {
-        volatile uint32_t *const text = ordered + (0xA18 / 4) + index * 5;
-        volatile uint32_t *const right_text = text + 1;
-        if (*text != 0) {
-            free(reinterpret_cast<void *>(*text));
-            *text = 0;
+        if (items_[index].text != nullptr) {
+            free(items_[index].text);
+            items_[index].text = nullptr;
         }
-        if (*right_text != 0) {
-            free(reinterpret_cast<void *>(*right_text));
-            *right_text = 0;
+        if (items_[index].right_text != nullptr) {
+            free(items_[index].right_text);
+            items_[index].right_text = nullptr;
         }
     }
 
-    *reinterpret_cast<volatile uint8_t *>(
-        reinterpret_cast<uint8_t *>(self) + 0xF34) = 1;
-    ordered[0xF38 / 4] = PullDownFieldF38Default;
-    ordered[0xF3C / 4] = PullDownFieldF3CDefault;
+    dirty_ = 1;
+    field_F38_ = PullDownFieldF38Default;
+    field_F3C_ = PullDownFieldF3CDefault;
     graphic_win_destructor_redirect(
-        reinterpret_cast<GraphicWin *>(self), nullptr);
+        reinterpret_cast<GraphicWin *>(this), nullptr);
+}
+
+PullDown *__fastcall pull_down_destructor_redirect(PullDown *self, void *) {
+    self->destroy();
     return self;
 }
 

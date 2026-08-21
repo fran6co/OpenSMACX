@@ -366,6 +366,7 @@ Purpose: Destroy a Dialog. Install the Dialog table, run Dialog::close, then
          frame targets __CxxFrameHandler and is omitted as unreachable per
          policy.
 // ORIGINAL: 0x00608E10 ??1Dialog@@QAE@XZ 0x00608E10-0x00608F41;0x00662EC0-0x00662EEE
+// symbol    ?destroy@Dialog@@QAEXXZ
 // size      351 bytes
 // prototype void (__thiscall ??1Dialog@@QAE@XZ)(Dialog* this)
 // callers   116   call targets   3
@@ -385,8 +386,7 @@ disjoint, so the original's read-before-install order is unobservable and the
 mutant is equivalent by construction.
 */
 void Dialog::destroy() {
-    volatile uint32_t *const object = reinterpret_cast<volatile uint32_t *>(this);
-    object[0x000 / 4] = DialogPrimaryVtable;
+    vtable_ = reinterpret_cast<LPVOID>(static_cast<uintptr_t>(DialogPrimaryVtable));
     (ORIGINAL(this)->*DialogOriginalClose)();
 
     // The derived-close chain at 0x004066C0, inlined by the original: each
@@ -403,11 +403,11 @@ void Dialog::destroy() {
     // The list virtual base's subobject destructor. ??1Dialog is the
     // complete-object destructor, so the original addresses it at the fixed
     // most-derived this+0xE4 rather than through the vbtable; reproduce that.
-    // Read the context word before installing the final table, then publish.
-    volatile uint32_t *const virtual_base = reinterpret_cast<volatile uint32_t *>(
-        reinterpret_cast<uint8_t *>(this) + 0xE4);
-    const uint32_t published = virtual_base[1];
-    virtual_base[0] = DialogVirtualBaseFinalVtable;
+    // field_E4_/field_E8_ are exactly those two slots, so they are read and
+    // written directly. Read the context word before installing the final
+    // table, then publish.
+    const uint32_t published = field_E8_;
+    field_E4_ = DialogVirtualBaseFinalVtable;
     *DialogPublishedGlobal = published;
 
     heap_.shutdown();
