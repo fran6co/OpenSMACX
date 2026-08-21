@@ -66,6 +66,7 @@
 #include "scroll.h"
 #include "replaywin.h"
 #include "net_class.h"
+#include "temp.h"
 
 /*
  * THE FRONTIER.
@@ -239,6 +240,11 @@ int __cdecl X_pops(char *caption, const char *label, int a3, char *a4, int a5,
                                   Sprite *, int, int, int (__cdecl *)());
     return PENDING_BODY(0x005BF930, pending)(caption, label, a3, a4, a5,
                                              sprite, a7, a8, callback);
+}
+
+int __cdecl X_pop(const char *label, int (__cdecl *callback)()) {  // 0x005BF310
+    typedef int(__cdecl *pending)(const char *, int (__cdecl *)());
+    return PENDING_BODY(0x005BF310, pending)(label, callback);
 }
 
 int __cdecl X_pop(char *caption, const char *label, int a3, char *a4, int a5,
@@ -567,6 +573,31 @@ int Net::get(unsigned long *a, unsigned long *b) {  // 0x00630A00
 int BasePop::init(int a1, long a2) {  // 0x006015B0
     typedef int(__fastcall *pending)(BasePop *, void *, int, long);
     return PENDING_BODY(0x006015B0, pending)(this, nullptr, a1, a2);
+}
+
+uint32_t __cdecl save_daemon(LPCSTR a1) {  // 0x005A94F0
+    typedef uint32_t(__cdecl *pending)(LPCSTR);
+    return PENDING_BODY(0x005A94F0, pending)(a1);
+}
+
+uint32_t __cdecl load_daemon(LPCSTR a1, BOOL a2) {  // 0x005A9760
+    typedef uint32_t(__cdecl *pending)(LPCSTR, BOOL);
+    return PENDING_BODY(0x005A9760, pending)(a1, a2);
+}
+
+int __cdecl popb(LPCSTR a1, int a2, int a3, LPCSTR a4, Sprite * a5) {  // 0x0048C650
+    typedef int(__cdecl *pending)(LPCSTR, int, int, LPCSTR, Sprite *);
+    return PENDING_BODY(0x0048C650, pending)(a1, a2, a3, a4, a5);
+}
+
+void __cdecl draw_radius(int a1, int a2, int a3, int a4) {  // 0x0046AEF0
+    typedef void(__cdecl *pending)(int, int, int, int);
+    PENDING_BODY(0x0046AEF0, pending)(a1, a2, a3, a4);
+}
+
+void __cdecl alt_set(int a1, int a2, uint32_t a3) {  // 0x00591290
+    typedef void(__cdecl *pending)(int, int, uint32_t);
+    PENDING_BODY(0x00591290, pending)(a1, a2, a3);
 }
 
 // ?write_raw_l@Buffer@@QAEHPADHHH@Z at 0x005DBD00 - 1475 bytes, the raster

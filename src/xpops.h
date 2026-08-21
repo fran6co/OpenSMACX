@@ -45,6 +45,11 @@ int __cdecl x_pops_minimal(const char *label, Sprite *sprite,
  * original call site did not need.
  */
 // 0x005BF480, likewise.
+// 0x005BF310, a pending_bodies forwarder. The two-argument overload, which
+// temp.h bound as a POINTER named `X_pop` - a variable cannot share a scope
+// with the function overload below it, so the binding hid this one entirely.
+int __cdecl X_pop(const char *label, int (__cdecl *callback)());
+
 int __cdecl X_pop(char *caption, const char *label, int a3, char *a4, int a5,
                   int (__cdecl *callback)());
 

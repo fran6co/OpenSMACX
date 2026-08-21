@@ -56,7 +56,6 @@ typedef void func5(int);
 func5 *const load_faction_art = (func5 *)0x00453710;
 func5 *const wave_it = (func5 *)0x004455F0;
 typedef void *func6(char const *, int(*)(void));
-func6 *const X_pop = (func6 *)0x005BF310;
 typedef int func7(LPCSTR, LPCSTR, int, LPCSTR, int(__cdecl *)());
 func7 *const popp = (func7 *)0x0048C0A0;
 typedef void *func9(void);
@@ -74,18 +73,23 @@ func9 *const world_rainfall = (func9 *)0x005C4470;
 typedef BOOL func11(int, int, int);
 func11 *const wants_to_attack_ = (func11 *)0x0055BC80;
 typedef uint32_t func15(LPCSTR);
-func15 *const save_daemon = (func15 *)0x005A94F0;
+// 0x005A94F0, a pending_bodies forwarder.
+uint32_t __cdecl save_daemon(LPCSTR a1);
 typedef uint32_t func16(LPCSTR, BOOL);
-func16 *const load_daemon = (func16 *)0x005A9760;
+// 0x005A9760, a pending_bodies forwarder.
+uint32_t __cdecl load_daemon(LPCSTR a1, BOOL a2);
 typedef void func19(uint32_t);
 func19 *const social_set = (func19 *)0x005B4600;
 func19 *const consider_designs = (func19 *)0x00581260;
 typedef int func20(LPCSTR, int, int, LPCSTR, Sprite *);
-func20 *const popb = (func20 *)0x0048C650;
+// 0x0048C650, a pending_bodies forwarder.
+int __cdecl popb(LPCSTR a1, int a2, int a3, LPCSTR a4, Sprite * a5);
 typedef void func21(int, int, int, int);
-func21 *const draw_radius = (func21 *)0x0046AEF0;
+// 0x0046AEF0, a pending_bodies forwarder.
+void __cdecl draw_radius(int a1, int a2, int a3, int a4);
 typedef void func22(int, int, uint32_t);
-func22 *const alt_set = (func22 *)0x00591290;
+// 0x00591290, a pending_bodies forwarder.
+void __cdecl alt_set(int a1, int a2, uint32_t a3);
 
 // Time
 typedef void func30(int);
