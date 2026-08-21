@@ -171,12 +171,14 @@ int Path::zoc_path(int x, int y, int faction_id) {
 // open/closed cost grid (int per tile), x_table_/y_table_ the coordinate
 // queue BasePop-style FIFO/priority arrays (path.h), walked from index1_
 // through index2_ (offsets 0xc/0x10). Each dequeued tile is expanded over
-// 8 directions using two tables at 0x0066EFBC/0x0066F440 (structurally
-// consistent with map.h's RadiusOffsetX/RadiusOffsetY by address arithmetic
-// - RadiusRange/RadiusBaseX/RadiusBaseY/RadiusOffsetX/RadiusOffsetY laid out
-// contiguously would put RadiusOffsetX exactly at 0x66efbc and RadiusOffsetY
-// exactly 0x484 (289 ints) later at 0x66f440 - NOT independently confirmed
-// by a symbol, so not renamed here on that alone).
+// 8 directions using two tables at 0x0066EFBC/0x0066F440, and those ARE
+// map.h's RadiusOffsetX and RadiusOffsetY - CONFIRMED 2026-08-21 by DATA
+// IDENTITY rather than by the address arithmetic this note used to rest on.
+// All 289 ints at each address were read out of the image and compared with
+// the arrays map.h declares: identical, element for element, both of them.
+// They cannot be confirmed by a symbol - map.h declares them `const int[]`,
+// so this tree materialises its own copy and there is no address binding to
+// compare - which is exactly why data identity is the right test here.
 //
 // The costly part: an ~400-instruction "does any of my 8 neighbors satisfy
 // <bit tests on 0x96c9e0/0x96c9f8, a per-(faction,faction) table indexed
@@ -189,10 +191,27 @@ int Path::zoc_path(int x, int y, int faction_id) {
 // rather than calling a shared helper. Reconstructing that block once with
 // confidence, then verifying it is the SAME at each of >=4 sites rather than
 // subtly different, is most of the remaining work and was not completed
-// this pass - the risk of a confidently-wrong transcription across ~700
-// instructions with a dozen never-named global tables (0x9ab88c/0x9ab892
-// proto-triad tables, 0x9a64e8/0x9a6800 faction bit tables, 0x952832/36/58
-// a per-veh or per-base struct) outweighs shipping it unverified.
+// this pass.
+//
+// THE "DOZEN NEVER-NAMED GLOBAL TABLES" ARE NONE OF THEM, which removes the
+// stated reason this was left alone. Resolved 2026-08-21, all seven:
+//   0x009A64E8  LockEnableMask      lock.h - not a faction bit table
+//   0x009A6800  SunspotDuration     game.cpp - one int, not a table at all
+//   0x0096C9E0  PlayersData         faction.h
+//   0x0096C9F8  SpyingStatusTable   spying_recovery.h - this note guessed it
+// and the last three are not tables either. They are FIELD OFFSETS into
+// arrays this tree already models, which is precisely why no symbol sits at
+// them and why they read as anonymous bases:
+//   0x009AB88C = VehPrototypes (0x009AB868) + 0x24  ->  chassis_id
+//   0x009AB892 = VehPrototypes              + 0x2A  ->  plan
+//   0x00952832 = Vehs          (0x00952828) + 0x0A  ->  proto_id
+// `chassis_id` is the "proto-triad" this note reached for: it indexes
+// Chassis[].triad, the relation batch A recorded separately the same day.
+//
+// So what remains is transcription risk alone - ~700 instructions with the
+// same ~400-instruction neighbour block repeated at four sites - against
+// named globals throughout. Still real, and still a reason to be careful,
+// but no longer compounded by operands nobody can name.
 */
 int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int faction_id, int unk1,
                int unk2) {
