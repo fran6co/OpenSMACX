@@ -111,7 +111,7 @@ class NetDaemon : public AlphaNet {
 
 // Net::get and NetDaemon::process_message are not recovered yet; the Net the
 // daemon reads from lives at a fixed address.
-extern NetDaemon *NetDaemonNet;
+NetDaemon *const NetDaemonNet = (NetDaemon *)0x0093CD90;
 
 int __fastcall net_daemon_receive_redirect(NetDaemon *self, void *);
 

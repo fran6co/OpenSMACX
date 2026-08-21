@@ -176,7 +176,7 @@ static_assert(sizeof(Console) == 0x247A8, "Console layout must match terranx.exe
 
 // All five preference openers drive the one PrefWin the game keeps at a fixed
 // address, opening it to a different page. PrefWin::display is not recovered.
-extern PrefWin *ConsolePrefWin;
+PrefWin *const ConsolePrefWin = (PrefWin *)0x008578D8;
 
 void __fastcall console_set_preferences_redirect(Console *self, void *);
 void __fastcall console_set_auto_preferences_redirect(Console *self, void *);
@@ -220,7 +220,7 @@ void __fastcall console_editor_undo_redirect(Console *self, void *);
 // is reached through a rebindable seam, exactly as ListBox reaches
 // Dialog::close.
 void *const ConsoleInfoWin = (void *)0x007AD2A0;      // 0x007AD2A0, the process-wide InfoWin
-extern StatusWin *ConsoleStatusWin;    // 0x008C5568, the process-wide StatusWin
+StatusWin *const ConsoleStatusWin = (StatusWin *)0x008C5568;    // 0x008C5568, the process-wide StatusWin
 void **const ConsoleMapWinSlot = (void **)0x007D3C3C;  // 0x007D3C3C, holds the current MapWin *
 
 void __fastcall console_update_data_redirect(Console *self, void *, int a1);
@@ -254,7 +254,7 @@ typedef void(__cdecl func_console_flush_input)(void);
 // a second binding, and it caught this one.
 // 0x005FD120, a pending_bodies forwarder.
 void __cdecl flush_input();
-extern Console *ConsoleGlobal;  // 0x009156B0, the process-wide Console
+Console *const ConsoleGlobal = (Console *)0x009156B0;  // 0x009156B0, the process-wide Console
 
 // The dword at 0x0093A938 is set while a turn is played out under program
 // control rather than interactively. A linear scan of .text finds exactly four

@@ -278,7 +278,7 @@ void __fastcall datalink_close_redirect(Datalink *self, void *);
 // The Datalink singleton the forwarders dispatch against - plain data, not a
 // call target, so it stays an unclassified rebindable seam rather than a
 // classified dependency.
-extern Datalink *DatalinkMain;
+Datalink *const DatalinkMain = (Datalink *)0x00703EA0;
 
 // Datalink::draw_entry (0x0042BF10) is likewise unrecovered; on_selected calls
 // it, so its definition is a seam into the original image.

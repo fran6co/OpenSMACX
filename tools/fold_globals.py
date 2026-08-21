@@ -36,8 +36,11 @@ SRC = REPO_ROOT / "src"
 BINDING = re.compile(
     r"^(?P<type>[A-Za-z_]\w*(?:\s*::\s*\w+)*)\s*(?P<stars>\*+)\s*"
     r"(?P<name>\w+)\s*=\s*"
+    # The address may be parenthesised in its own right - datalink.cpp writes
+    # `(Datalink *)(0x00703EA0)` - so allow a bracket on either side of it.
     r"(?:\((?P<cast>[^)]*)\)|reinterpret_cast<(?P<rcast>[^>]*)>\()"
-    r"\s*(?P<address>0x[0-9A-Fa-f]+)\s*\)?\s*;[^\n]*\n", re.M)
+    r"\s*\(?\s*(?P<address>0x[0-9A-Fa-f]+)\s*\)?\s*\)?\s*;[^\n]*\n",
+    re.M)
 
 
 def _code(text: str) -> str:
