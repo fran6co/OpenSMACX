@@ -11,6 +11,15 @@ an empty body under an 87-byte marker reads as finished and is not, and the
 catalogue counts it among the bodies that exist.
 
     uv run tools/hollow_bodies.py [--min-bytes N]
+    uv run tools/hollow_bodies.py --stubbed
+
+`--stubbed` finds the SAME defect one step further out: a class whose method is
+`{ ; }` in a header while the only marker for its address lives in an artifact.
+Those fall between both detectors - this one needs a product-tree marker and
+`promotable.py` only reports artifacts that already reproduce - so
+`StringBox::StringBox` (266 image bytes) and `MainInterface::MainInterface`
+(1,185) were invisible to both while being the two bodies that stop the built
+executable reaching `WinMain`.
 
 EMPTY OR A BARE RETURN, not merely "thin". A ratio test on statement count
 against image bytes reports 35 markers and most are correct: `log_say` is one
@@ -140,13 +149,77 @@ def _trivial(record) -> bool:
     return False
 
 
+def _cpp_name(mangled: str | None) -> str | None:
+    """The C++ spelling a header would use for this mangled symbol."""
+    mangled = mangled or ""
+    for pattern, build in (
+            (r"\?\?0(\w+)@@", lambda m: m.group(1)),
+            (r"\?\?1(\w+)@@", lambda m: "~" + m.group(1)),
+            (r"\?(\w+)@(\w+)@@", lambda m: m.group(1)),
+            (r"\?(\w+)@@", lambda m: m.group(1))):
+        found = re.match(pattern, mangled)
+        if found:
+            return build(found)
+    return None
+
+
+def stubbed(records) -> list:
+    """Artifact-only bodies whose product-side definition does nothing.
+
+    An empty inline in a header is not a transcription of a 1,185-byte
+    constructor, and when the marker lives only in an artifact NEITHER other
+    check sees it: this file's main mode wants a product marker, and
+    `promotable.py` wants the artifact to be BYTE_EXACT already.
+    """
+    product = {r.address for r in records
+               if "/recovered/" not in str(r.path)
+               and "/unrecovered/" not in str(r.path)}
+    headers = {}
+    for header in sorted((REPO_ROOT / "src").glob("*.h")):
+        try:
+            headers[header] = blanked(header.read_text(errors="replace"))
+        except OSError:
+            continue
+
+    rows = []
+    for record in records:
+        whole = sum(high - low for low, high in record.image_spans)
+        if record.address in product or not whole:
+            continue
+        where = str(record.path)
+        if "/recovered/" not in where and "/unrecovered/" not in where:
+            continue
+        name = _cpp_name(record.name)
+        if not name:
+            continue
+        # An empty body: `Name() { ; }` or `Name() {}`, with anything for args.
+        empty = re.compile(
+            rf"\b{re.escape(name)}\s*\([^;{{}}]*\)\s*(?:const\s*)?\{{\s*;?\s*\}}")
+        for header, text in headers.items():
+            if empty.search(text):
+                rows.append((whole, record, header))
+                break
+    return rows
+
+
 if __name__ == "__main__":
     floor = MIN_BYTES
     if "--min-bytes" in sys.argv:
         floor = int(sys.argv[sys.argv.index("--min-bytes") + 1])
 
+    all_records = read(REPO_ROOT / "src")
+    if "--stubbed" in sys.argv:
+        found = sorted(stubbed(all_records), key=lambda r: -r[0])
+        for size, record, header in found:
+            print(f"  {record.address_hex}  {size:5,}b image   "
+                  f"{header.name:20s} {record.name}")
+            print(f"      transcription in {record.path.relative_to(REPO_ROOT / 'src')}")
+        print(f"\n{len(found)} artifact-only body(s) whose product-side "
+              f"definition is an empty inline")
+        sys.exit(0)
+
     rows = []
-    for record in read(REPO_ROOT / "src"):
+    for record in all_records:
         where = str(record.path)
         if "/recovered/" in where or "/unrecovered/" in where:
             continue
