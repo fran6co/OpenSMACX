@@ -468,9 +468,6 @@ int __cdecl text_item_hex() { return text_item_hex_source(&Txt); }
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005FD570 0x005FD740
 // notes     Staged hybrid export redirect calls the source-owned wrapper
-int __cdecl text_get_number(int min, int max) {
-    return text_get_number_source(&Txt, min, max);
-}
 
 // ---------------------------------------------------------------------------
 // Merged from the retired src/text_recovery.cpp on 2026-08-15. It held the

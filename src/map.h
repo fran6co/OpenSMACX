@@ -429,7 +429,6 @@ BOOL __cdecl world_validate();
 void __cdecl world_temperature();
 int __cdecl world_site(int x, int y, BOOL is_ocean_site);
 void __cdecl world_analysis();
-void __cdecl world_alt_put_detail(int x, int y);
 void __cdecl world_polar_caps();
 // ?world_climate@@YAXXZ at 0x005C5A30 - still an original body, behind a
 // forwarder in src/pending_bodies.cpp. See draw_map in mapwin.h.
@@ -526,4 +525,11 @@ MEASURED inline int __cdecl bit_at(int x, int y) {
 
 MEASURED inline BOOL __cdecl is_ocean(int x, int y) {
     return altitude_at(x, y) < ALT_BIT_SHORE_LINE;
+}
+
+// Nothing in the image calls world_alt_put_detail: `inline_candidates` found no
+// direct edge to it anywhere in the shipped bytes, so every caller has
+// it written out. `MEASURED` keeps the standalone body measurable.
+MEASURED inline void __cdecl world_alt_put_detail(int x, int y) {
+    alt_put_detail(x, y, (uint8_t)AltNatural[3]);
 }

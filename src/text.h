@@ -160,7 +160,6 @@ LPSTR __cdecl text_item_string();
 int __cdecl text_item_number();
 int __cdecl text_item_binary();
 int __cdecl text_item_hex();
-int __cdecl text_get_number(int min, int max);
 
 // Recovered free functions, formerly declared in the retired
 // text_recovery.h. They are the image's own shapes - free functions taking
@@ -184,3 +183,10 @@ int __cdecl text_item_number_source(Text *text);
 int __cdecl text_item_binary_source(Text *text);
 int __cdecl text_item_hex_source(Text *text);
 int __cdecl text_get_number_source(Text *text, int min, int max);
+
+// Nothing in the image calls text_get_number: `inline_candidates` found no
+// direct edge to it anywhere in the shipped bytes, so every caller has
+// it written out. `MEASURED` keeps the standalone body measurable.
+MEASURED inline int __cdecl text_get_number(int min, int max) {
+    return text_get_number_source(&Txt, min, max);
+}

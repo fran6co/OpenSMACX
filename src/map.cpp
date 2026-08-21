@@ -2733,9 +2733,6 @@ Purpose: Set the default altitude details for the specified tile.
 Return Value: n/a
 Status: Complete
 */
-void __cdecl world_alt_put_detail(int x, int y) {
-    alt_put_detail(x, y, (uint8_t)AltNatural[3]);
-}
 
 /*
 Purpose: Set up the world polar caps.
@@ -3778,7 +3775,7 @@ int __cdecl zoc_sea(int x, int y, int faction_id) {
 
 /*
 Purpose: Check for unit related zone of control conflicts when moving to a non-base tile.
-// ORIGINAL: 0x005C8D40 ?zoc_move@@YAHHHH@Z 0x005C8D40-0x005C8D96
+// ORIGINAL: 0x005C8D40 ?zoc_move@@YAHHHH@Z 0x005C8D40-0x005C8D96 BYTE_EXACT
 // size      86 bytes
 // prototype int (__cdecl ?zoc_move@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)
 // callers   6   call targets   1
