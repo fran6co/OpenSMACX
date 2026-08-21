@@ -76,6 +76,21 @@ VTABLE STORES GO FIRST IN A CONSTRUCTOR BODY
 - If you are stuck at "everything agrees except the order of the trailing
   stores", try the reorder before concluding anything about the body.
 
+FOR THE COORDINATOR: COLLECTING A FINISHED AGENT
+- `uv run tools/collect_agent.py <agent-id>` does the whole sequence, and
+  exists because doing it by hand went wrong twice in one day. It never pipes
+  `git apply` (git prints per-file success BEFORE writing, so a `| head`
+  closing the pipe kills it in between - it says "Applied cleanly" and writes
+  nothing), and it never trusts `git apply --check --3way`, which EXITS 0 FOR
+  PATCHES THAT CONFLICT: four in a row reported "applies" and then produced
+  `UU`. It reads the index afterwards instead.
+- It refuses outright if the main checkout is dirty, because collecting on
+  top of uncommitted work makes the two indistinguishable when the gate fails.
+- `--resolve-ours` keeps this checkout's side and PRINTS every discarded line.
+  Agents branch before later corrections land, so their side is usually the
+  superseded one - but read them. Three of four discards checked that way were
+  correct, and reading them is the only thing that established it.
+
 A CONSTRUCTOR MAY BE AN EMPTY INLINE OVER A REAL BODY
 - `uv run tools/hollow_bodies.py --stubbed` lists 43 classes whose method is
   `{ ; }` in a header while the image has a real body and an artifact holds a
