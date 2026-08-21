@@ -90,8 +90,6 @@ FILE *__cdecl env_open(LPCSTR source, LPCSTR mode);
 int __cdecl parse_num(int id, int value);
 int __cdecl parse_say(int id, int input, int gender, int pluralality);
 int __cdecl parse_says(int id, LPCSTR input, int gender, int pluralality);
-int __cdecl btoi(LPCSTR str);
-int __cdecl htoi(LPCSTR str);
 int __cdecl stoi(LPCSTR str);
 LPSTR __cdecl findnum(LPSTR str);
 BOOL __cdecl jackal_version_check(LPCSTR version);
@@ -178,4 +176,26 @@ MEASURED inline void __cdecl swap(int *var1, int *var2) {
 MEASURED inline void __cdecl bitmask(int input, int *offset, int *mask) {
     *offset = input / 8;
     *mask = 1 << (input & 7);
+}
+
+MEASURED inline int __cdecl btoi(LPCSTR str) {
+    int result = 0;
+    while (*str == '0' || *str == '1') {
+        result = *str++ - '0' + 2 * result;
+    }
+    return result;
+}
+
+MEASURED inline int __cdecl htoi(LPCSTR str) {
+    int result = 0;
+    while (isxdigit(*str)) {
+        result *= 16;
+        if (isdigit(*str)) {
+            result += *str - '0';
+        } else {
+            result += toupper(*str) - '7';
+        }
+        *str++;
+    }
+    return result;
 }
