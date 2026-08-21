@@ -144,11 +144,26 @@ typedef uint32_t (OriginalObject::*func_scalar_deleting_destructor)(uint32_t);
 
 }  // namespace
 
+// Win::close is not source-owned yet (0x005EB640, still 1610 bytes of
+// verbatim teardown). The image's own GraphicWin::close calls it with a
+// plain `call rel32` and no null check, so the null-checked runtime seam has
+// to move OFF the call site and into a one-argument `__fastcall` forwarder:
+// a single-parameter `__fastcall` receives its argument in ECX only, which
+// is the same encoding as a zero-argument `__thiscall`, so the call site
+// itself compiles to the direct, unconditional call the image has. The
+// pointer stays bindable inside the forwarder for hybrid-process tests.
+void __fastcall win_close_original(Win *self) {
+    if (WinOriginalClose) {
+        (ORIGINAL(self)->*WinOriginalClose)();
+    }
+}
+
 /*
 Purpose: Close a GraphicWin by closing its Win base and Buffer subobject,
          resetting its window-specific state, and deleting the trailing
          owned interface when present.
-// ORIGINAL: 0x005D4E40 ?close@GraphicWin@@QAEXXZ 0x005D4E40-0x005D4EE6
+// ORIGINAL: 0x005D4E40 ?close@GraphicWin@@QAEXXZ 0x005D4E40-0x005D4EE6 SEMANTIC
+// RULED-OUT: image calls both 0x5EB640 (Win::close) and 0x5D7470 (Buffer::close) directly with no null check - the null-checked `if (WinOriginalClose) (ORIGINAL(this)->*WinOriginalClose)();` form at the call site compiled an extra load/compare/branch/ indirect-call the image never has (0/37 agreeing, diverging at instruction 0). Moving the null check into `win_close_original` (a real function, so the call site is a direct E8) and calling the already-recovered `buffer_.close()` in place of the second seam fixed both calls at once.
 // symbol    ?close@GraphicWin@@QAEIXZ
 // size      166 bytes
 // prototype void (__thiscall ?close@GraphicWin@@QAEXXZ)(GraphicWin* this)
@@ -163,12 +178,8 @@ Return Value: field_A0C_ default when no interface is present; otherwise the
 Status: Complete with temporary Win close dependency
 */
 uint32_t GraphicWin::close() {
-    if (WinOriginalClose) {
-        (ORIGINAL(this)->*WinOriginalClose)();
-    }
-    if (BufferSubobjectClose) {
-        (ORIGINAL(reinterpret_cast<uint8_t *>(this) + 0x444)->*BufferSubobjectClose)();
-    }
+    win_close_original(this);
+    buffer_.close();
 
     // Win's own field_134_/field_138_ are private to Win, unreachable from
     // GraphicWin except at their raw offset; everything else here is
@@ -201,8 +212,11 @@ uint32_t GraphicWin::close() {
     }
 
     // Slot 0, called where it lives: `vtable_method` leaves the call operand
-    // at `[vtable]` so VC6 emits one `call dword ptr [edx]` rather than
+    // at `[vtable]` so VC6 emits one `call dword ptr [reg]` rather than
     // loading the slot into a register first.
+    // RULED-OUT: inlining the `vtable_method<...>(...)` call directly into
+    // the `->*` expression instead of naming it `deleting_destructor` first -
+    // no change, still `eax` where the image has `edx` for this one slot.
     func_scalar_deleting_destructor &deleting_destructor =
         vtable_method<func_scalar_deleting_destructor>(release_target, 0);
     const uint32_t result = (ORIGINAL(release_target)->*deleting_destructor)(1);
