@@ -317,10 +317,11 @@ Purpose: Check whether the specified prototype is a planet buster.
 Return Value: Reactor id if planet buster, otherwise 0
 Status: Complete
 */
-uint32_t __cdecl planet_buster2(int proto_id) {
-    return VehPrototypes[proto_id].plan == PLAN_PLANET_BUSTER 
-        ? VehPrototypes[proto_id].reactor_id : 0;
-}
+// BODY IN veh.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Check whether the specified unit is a planet buster.
@@ -631,12 +632,11 @@ Purpose: Initialize or reset the battle related global variables.
 Return Value: n/a
 Status: Complete
 */
-void __cdecl battle_init() {
-    VehBattleModCount[0] = 0;
-    VehBattleModCount[1] = 0;
-    VehBattleUnkTgl[0] = false;
-    VehBattleUnkTgl[1] = false;
-}
+// BODY IN veh.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Add combat battle modifier for type (offense, defense).
@@ -1453,9 +1453,11 @@ Purpose: Get the current moves left for the specified unit.
 Return Value: Remaining moves
 Status: Complete
 */
-int __cdecl veh_moves(int veh_id) {
-    return range(speed(veh_id, false) - Vehs[veh_id].moves_expended, 0, 999);
-}
+// BODY IN veh.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Get the specified unit's reactor power value from its prototype.
@@ -2028,13 +2030,11 @@ Purpose: Get the index value of a particular ability's bitfield.
 Return Value: Ability index
 Status: Complete
 */
-int __cdecl abil_index(int ability_id) {
-    int index = 0;
-    for (int check = ability_id; !(check & 1); index++) {
-        check >>= 1;
-    }
-    return index;
-}
+// BODY IN veh.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Calculate the movement penalty/cost.
@@ -2123,9 +2123,11 @@ Purpose: Relocate an existing unit to the specified tile.
 Return Value: n/a
 Status: Complete
 */
-void __cdecl veh_put(int veh_id, int x, int y) {
-    veh_drop(veh_lift(veh_id), x, y);
-}
+// BODY IN veh.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Get the current health of the specified unit factoring in damage.
@@ -2286,10 +2288,11 @@ Purpose: Calculates the base cost of the specified prototype.
 Return Value: Base cost of the prototype
 Status: Complete
 */
-int __cdecl base_cost(int proto_id) {
-    return proto_cost(VehPrototypes[proto_id].chassis_id, VehPrototypes[proto_id].weapon_id,
-        VehPrototypes[proto_id].armor_id, 0, VehPrototypes[proto_id].reactor_id);
-}
+// BODY IN veh.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Create a new prototype. Sets initial values for everything except veh_name and preq_tech.
@@ -3422,11 +3425,11 @@ Purpose: Set the unit's status to sentry/board.
 Return Value: n/a
 Status: Complete
 */
-void __cdecl sleep(int veh_id) {
-    Vehs[veh_id].order = ORDER_SENTRY_BOARD;
-    Vehs[veh_id].waypoint_x[0] = -1;
-    Vehs[veh_id].waypoint_y[0] = 0;
-}
+// BODY IN veh.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Move the specified unit to the bottom of the stack.
@@ -3909,11 +3912,11 @@ Purpose: Sets all moves for the specified unit as expended.
 Return Value: n/a
 Status: Complete
 */
-void __cdecl veh_skip(int veh_id) {
-    // TODO Bug: Due to size of moves_expended, speeds over 255 will be incorrect. The speed()
-    //           function can return a value from 1-999. Eventually increase size to 16 bits.
-    Vehs[veh_id].moves_expended = (uint8_t)speed(veh_id, false);
-}
+// BODY IN veh.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Initialize/reset the fake unit id (2048) used as a placeholder for various UI elements.
@@ -3927,10 +3930,11 @@ Purpose: Initialize/reset the fake unit id (2048) used as a placeholder for vari
 Return Value: Fake unit id (2048)
 Status: Complete
 */
-int __cdecl veh_fake(int proto_id, int faction_id) {
-    veh_clear(2048, proto_id, faction_id);
-    return 2048;
-}
+// BODY IN veh.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Activate the specified unit and clear the current action.

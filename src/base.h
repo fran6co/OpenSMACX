@@ -522,7 +522,6 @@ extern int GlobalEnergyEventState; // energy tripling state driven by random_eve
 extern int UnkGlobal0093A934; // TODO: identify global; selects the bit above
 
 BOOL __cdecl has_fac(int facility_id, int base_id, int queue_count);
-void __cdecl set_base(int base_id);
 void __cdecl say_base(LPSTR base_str, int base_id);
 int __cdecl base_at(int x, int y);
 int __cdecl base_find(int x, int y);
@@ -563,14 +562,12 @@ void __cdecl base_energy_costs();
 int __cdecl fac_maint(int facility_id, int faction_id);
 void __cdecl base_maint();
 void __cdecl make_base_unique(int base_id);
-BOOL __cdecl has_project(int project_id, int faction_id);
 // ?has_fac_built@@YA_NH@Z. `_N` is bool, not BOOL: the catalogue spells a
 // genuine one-byte bool, and per tools/catalogue_corrections.py that width is
 // byte-visible - a bool return clears with `xor al, al` (32 C0) where an int
 // uses `xor eax, eax` (33 C0). The two-argument overload is not catalogued.
 bool __cdecl has_fac_built(int facility_id);
 bool __cdecl has_fac_built(int facility_id, int base_id);
-int __cdecl base_project(int project_id);
 int __cdecl attack_from(int base_id_to_atk, int faction_id);
 int __cdecl value_of_base(int base_id, uint32_t faction_id_req, uint32_t faction_id_res, 
                                     uint32_t overmatch_deg, BOOL tgl);
@@ -588,3 +585,53 @@ BOOL __cdecl facility_avail(int facility_id, int faction_id, int base_id,
                                       int queue_count);
 int __cdecl facility_offset(LPCSTR facil_search);
 int __cdecl suggest_plan(int faction_id, int faction_id_2);
+
+/*
+Purpose: Set the current base globals.
+// ORIGINAL: 0x004E39D0 ?set_base@@YAXH@Z 0x004E39D0-0x004E39F3
+// size      35 bytes
+// prototype void (__cdecl ?set_base@@YAXH@Z)(int baseID)
+// callers   40   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+MEASURED inline void __cdecl set_base(int base_id) {
+    BaseIDCurrentSelected = base_id;
+    BaseCurrent() = &Bases[base_id];
+}
+
+/*
+Purpose: Get the current status of the specified project.
+// ORIGINAL: 0x005002E0 ?base_project@@YAHH@Z 0x005002E0-0x005002EF
+// size      15 bytes
+// prototype int (__cdecl ?base_project@@YAHH@Z)(int projectID)
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: Base id, if not built (-1) or destroyed (-2)
+Status: Complete
+*/
+MEASURED inline int __cdecl base_project(int project_id) {
+    return *(&SecretProject->human_genome_project + project_id);
+}
+
+/*
+Purpose: Check if a faction has the specified secret project built in a base they control.
+// ORIGINAL: 0x004F80D0 ?has_project@@YAHHH@Z 0x004F80D0-0x004F8103
+// size      51 bytes
+// prototype int (__cdecl ?has_project@@YAHHH@Z)(int projectID, int factionID)
+// callers   8   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: Does faction have Secret Project? true/false
+Status: Complete
+*/
+MEASURED inline BOOL __cdecl has_project(int project_id, int faction_id) {
+    int base_id = base_project(project_id);
+    return (base_id < 0) ? false : (Bases[base_id].faction_id_current == faction_id);
+}

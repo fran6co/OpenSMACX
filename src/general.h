@@ -81,12 +81,10 @@ void __cdecl purge_spaces(LPSTR input);
 void __cdecl kill_lf(LPSTR str);
 void __cdecl kill_nl(LPSTR str);
 void __cdecl add_lf(LPSTR str);
-int __cdecl range(int input, int min, int max);
 LPVOID __cdecl mem_get_old(size_t size);
 LPVOID __cdecl mem_get(size_t size);
 FILE *__cdecl env_open_old(LPCSTR source, LPCSTR mode);
 FILE *__cdecl env_open(LPCSTR source, LPCSTR mode);
-void __cdecl parse_set(int gender, BOOL plurality);
 int __cdecl parse_num(int id, int value);
 int __cdecl parse_say(int id, int input, int gender, int pluralality);
 int __cdecl parse_says(int id, LPCSTR input, int gender, int pluralality);
@@ -126,12 +124,9 @@ LPSTR __cdecl filefind_get(LPCSTR file_name);
 int __cdecl bit_count(int bitfield);
 uint32_t __cdecl bit_count_signed(int bitfield);
 void __cdecl my_srand(int reseed);
-void __cdecl swap(int *var1, int *var2);
-void __cdecl swap(uint8_t *var1, uint8_t *var2);
 int __cdecl fixed_div(int numerator, int denominator);
 const char *__cdecl memrchr(LPCSTR start, LPCSTR end, char value);
 int __cdecl quick_root(int input);
-void __cdecl bitmask(int input, int *offset, int *mask);
 uint8_t __cdecl checksum(char *input, int length, uint8_t seed);
 uint32_t __cdecl checksum_password(LPCSTR password);
 uint32_t __cdecl rnd(int bounds, LPSTR UNUSED(input) input);
@@ -150,3 +145,100 @@ void __cdecl sort_descending(uint32_t count, int *id, int *value);
 // WIP
 int __cdecl filefind_init(LPCSTR file_check, BOOL is_complete);
 int __cdecl parse_string(LPSTR input, LPSTR output);
+
+/*
+Purpose: Use the min and max parameters to bound the input.
+// ORIGINAL: 0x00422F00 ?range@@YAHHHH@Z 0x00422F00-0x00422F1E BYTE_EXACT
+// size      30 bytes
+// prototype int (__cdecl ?range@@YAHHHH@Z)(int input, int min, int max)
+// callers   10   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: Bounded input
+Status: Complete
+*/
+MEASURED inline int __cdecl range(int input, int min, int max) {
+    if (input < min || max < min) {
+        return min;
+    }
+    if (input > max) {
+        return max;
+    }
+    return input;
+}
+
+/*
+Purpose: Set the global gender and plurality variables used by various parse functions.
+// ORIGINAL: 0x005A58E0 ?parse_set@@YAXHH@Z 0x005A58E0-0x005A58F6 BYTE_EXACT
+// size      22 bytes
+// prototype 
+// callers   1   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+MEASURED inline void __cdecl parse_set(int gender, BOOL plurality) {
+    *GenderDefault = gender;
+    *PluralityDefault = plurality;
+}
+
+/*
+Purpose: Swap the values of two 8-bit variables. Added an additional check when swapping the same
+         memory location.
+// ORIGINAL: 0x00628A80 ?swap@@YAXPAEPAE@Z 0x00628A80-0x00628AA3 BYTE_EXACT
+// symbol    ?swap@@YAXPAE0@Z
+// size      35 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+MEASURED inline void __cdecl swap(uint8_t *var1, uint8_t *var2) {
+    *var1 ^= *var2;
+    *var2 ^= *var1;
+    *var1 ^= *var2;
+}
+
+/*
+Purpose: Swap the values of two 32-bit variables. Added an additional check when swapping the same
+         memory location.
+// ORIGINAL: 0x00628A50 ?swap@@YAXPAHPAH@Z 0x00628A50-0x00628A73 BYTE_EXACT
+// symbol    ?swap@@YAXPAH0@Z
+// size      35 bytes
+// prototype 
+// callers   14   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+MEASURED inline void __cdecl swap(int *var1, int *var2) {
+    *var1 ^= *var2;
+    *var2 ^= *var1;
+    *var1 ^= *var2;
+}
+
+/*
+Purpose: Calculate the offset and bitmask for the specified input.
+// ORIGINAL: 0x0050BA00 ?bitmask@@YAXHPAHPAH@Z 0x0050BA00-0x0050BA27 BYTE_EXACT
+// symbol    ?bitmask@@YAXHPAH0@Z
+// size      39 bytes
+// prototype void (__cdecl ?bitmask@@YAXHPAHPAH@Z)(int input, int* offset, int* mask)
+// callers   103   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+MEASURED inline void __cdecl bitmask(int input, int *offset, int *mask) {
+    *offset = input / 8;
+    *mask = 1 << (input & 7);
+}

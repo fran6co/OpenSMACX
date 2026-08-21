@@ -147,8 +147,28 @@ func_msg *const do_non_input_ = (func_msg *)0x005FCA30;
 extern uint32_t MsgStatus;
 
 BOOL __cdecl do_non_input();
-void __cdecl do_all_non_input();
 BOOL __cdecl do_draw();
 void __cdecl do_all_draws();
 BOOL __cdecl do_keyboard();
 void __cdecl do_all_keyboard();
+
+/*
+Purpose: Process all non-input related messages.
+// ORIGINAL: 0x005FCB20 ?do_all_non_input@@YAXXZ 0x005FCB20-0x005FCB5A
+// size      58 bytes
+// prototype 
+// callers   27   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FCA30 0x0062D5B0
+Return Value: n/a
+Status: Complete - testing
+*/
+MEASURED inline void __cdecl do_all_non_input() {
+    do {
+        MsgStatus = 32;
+    } while (do_non_input_());
+    MsgStatus = 0;
+    do_net();
+    check_net();
+}

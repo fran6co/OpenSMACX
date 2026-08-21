@@ -380,12 +380,11 @@ Purpose: Stop global timers.
 Return Value: n/a
 Status: Complete
 */
-void __cdecl stop_timers() {
-    Blink2Timer->close();
-    BlinkTimer->close();
-    LineTimer->close();
-    // missing MP TurnTimer. TODO: In future determine if timer should be closed on stop
-}
+// BODY IN time.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Clear timer message queue.

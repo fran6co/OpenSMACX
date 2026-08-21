@@ -148,5 +148,23 @@ Time *const GoTimer = (Time *)0x00939E60;
 Time *const ConsoleTimer = (Time *)0x00939E88;
 
 void __cdecl start_timers();
-void __cdecl stop_timers();
 void __cdecl flush_timer();
+
+/*
+Purpose: Stop global timers.
+// ORIGINAL: 0x0050F440 ?stop_timers@@YAXXZ 0x0050F440-0x0050F45E BYTE_EXACT
+// size      30 bytes
+// prototype 
+// callers   6   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00616780
+Return Value: n/a
+Status: Complete
+*/
+MEASURED inline void __cdecl stop_timers() {
+    Blink2Timer->close();
+    BlinkTimer->close();
+    LineTimer->close();
+    // missing MP TurnTimer. TODO: In future determine if timer should be closed on stop
+}

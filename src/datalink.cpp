@@ -404,9 +404,11 @@ Purpose: Show the weapon help topic for the given id.
 Return Value: n/a
 Status: Complete
 */
-void __cdecl help_weapon(int id) {
-    DatalinkMain->exec(0x6, id);
-}
+// BODY IN datalink.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Show the armor help topic for the given id.
@@ -420,9 +422,11 @@ Purpose: Show the armor help topic for the given id.
 Return Value: n/a
 Status: Complete
 */
-void __cdecl help_armor(int id) {
-    DatalinkMain->exec(0x7, id);
-}
+// BODY IN datalink.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Show the chassis help topic for the given id.
@@ -436,9 +440,11 @@ Purpose: Show the chassis help topic for the given id.
 Return Value: n/a
 Status: Complete
 */
-void __cdecl help_chassis(int id) {
-    DatalinkMain->exec(0x4, id);
-}
+// BODY IN datalink.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Show the facility help topic for the given id.
@@ -452,9 +458,11 @@ Purpose: Show the facility help topic for the given id.
 Return Value: n/a
 Status: Complete
 */
-void __cdecl help_facility(int id) {
-    DatalinkMain->exec(0xA, id);
-}
+// BODY IN datalink.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Show the secret project/ability help topic for the given id.
@@ -468,9 +476,11 @@ Purpose: Show the secret project/ability help topic for the given id.
 Return Value: n/a
 Status: Complete
 */
-void __cdecl help_abil(int id) {
-    DatalinkMain->exec(0x8, id);
-}
+// BODY IN datalink.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Show the social engineering help topic for the given id.
@@ -484,9 +494,11 @@ Purpose: Show the social engineering help topic for the given id.
 Return Value: n/a
 Status: Complete
 */
-void __cdecl help_social(int id) {
-    DatalinkMain->exec(0xC, id);
-}
+// BODY IN datalink.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Show the faction help topic for the given id.
@@ -500,9 +512,11 @@ Purpose: Show the faction help topic for the given id.
 Return Value: n/a
 Status: Complete
 */
-void __cdecl help_faction(int id) {
-    DatalinkMain->exec(0xF, id);
-}
+// BODY IN datalink.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Show the vehicle help topic for the given id.
@@ -516,9 +530,11 @@ Purpose: Show the vehicle help topic for the given id.
 Return Value: n/a
 Status: Complete
 */
-void __cdecl help_veh(int id) {
-    DatalinkMain->exec(0x3, id);
-}
+// BODY IN datalink.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Show an arbitrary help topic/index pair, for callers that already
@@ -534,9 +550,11 @@ Purpose: Show an arbitrary help topic/index pair, for callers that already
 Return Value: n/a
 Status: Complete
 */
-void __cdecl help_topic(unsigned int topic, int index) {
-    DatalinkMain->exec(topic, index);
-}
+// BODY IN datalink.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Combine two values as `a1 * 10000 + a2`.
