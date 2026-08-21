@@ -1555,9 +1555,9 @@ Return Value: Did an error occur? true/false
 Status: Complete
 */
 BOOL __cdecl map_write(FILE *map_file) {
-    if (_fwrite(&MapLongitudeBounds, 2724, 1, map_file)
-        && _fwrite(map_tiles(), MapArea * sizeof(Map), 1, map_file)
-        && _fwrite(MapAbstract(), MapAbstractArea, 1, map_file)) {
+    if (fwrite(&MapLongitudeBounds, 2724, 1, map_file)
+        && fwrite(map_tiles(), MapArea * sizeof(Map), 1, map_file)
+        && fwrite(MapAbstract(), MapAbstractArea, 1, map_file)) {
         return false;
     }
     return true;
@@ -1578,7 +1578,7 @@ Status: Complete
 */
 BOOL __cdecl map_read(FILE *map_file) {
     map_shutdown();
-    if (!_fread(&MapLongitudeBounds, 2724, 1, map_file)) {
+    if (!fread(&MapLongitudeBounds, 2724, 1, map_file)) {
         return true;
     }
     map_tiles() = 0;
@@ -1586,8 +1586,8 @@ BOOL __cdecl map_read(FILE *map_file) {
     if (map_init()) {
         return true;
     }
-    if (!_fread(map_tiles(), MapArea * sizeof(Map), 1, map_file)
-        || !_fread(MapAbstract(), MapAbstractArea, 1, map_file)) {
+    if (!fread(map_tiles(), MapArea * sizeof(Map), 1, map_file)
+        || !fread(MapAbstract(), MapAbstractArea, 1, map_file)) {
         return true;
     }
     fixup_landmarks();

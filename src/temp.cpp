@@ -24,7 +24,6 @@
 #include "base.h"
 
 // built-in functions > used to prevent crash from mixed alloc/free SDKs
-func10 *_fwrite = (func10 *)0x0064603F;
 //func12 *_realloc = (func12 *)0x00647132;
 //func18 *_fclose = (func18 *)0x00645598;
 //func19 *_fgets = (func19 *)0x0064726A;
