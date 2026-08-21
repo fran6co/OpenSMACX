@@ -657,7 +657,6 @@ void __cdecl compute_faction_modifiers(int faction_id);
 void __cdecl social_calc(SocialCategory *category, SocialEffect *effect, 
                                    uint32_t faction_id, BOOL toggle, BOOL is_quick_calc);
 void __cdecl social_upkeep(int faction_id);
-uint32_t __cdecl social_upheaval(int faction_id, SocialCategory *category_new);
 BOOL __cdecl society_avail(int soc_category, int soc_model, int faction_id);
 void __cdecl social_ai(uint32_t faction_id, int growth_val, int tech_val, int wealth_val, 
                                  int power_val, SocialCategory *output);
@@ -684,4 +683,29 @@ inline BOOL __cdecl is_alive(uint32_t faction_id) {
 
 inline BOOL __cdecl is_alien_faction(uint32_t faction_id) {
     return ExpansionEnabled && (Players[faction_id].rule_flags & RFLAG_ALIEN);
+}
+
+// MEASURED inline: social_ai's two call sites do not reach a `call` to
+// social_upheaval in the image - it is inlined there, even though it also
+// keeps its own out-of-line body (0x005B4550, in faction.cpp) for other
+// callers. See faction.cpp for the ORIGINAL marker; this definition is only
+// what lets social_ai's own translation unit fold the two call sites.
+MEASURED inline uint32_t __cdecl social_upheaval(int faction_id, SocialCategory *category_new) {
+    uint32_t change_count = 0;
+    for (int i = 0; i < MaxSocialCatNum; i++) {
+        if (*(&category_new->politics + i) !=
+            *(&PlayersData[faction_id].soc_category_active.politics + i)) {
+            change_count++;
+        }
+    }
+    if (!change_count) {
+        return 0;
+    }
+    change_count++;
+    uint32_t diff_lvl = is_human(faction_id) ? PlayersData[faction_id].diff_level : DLVL_LIBRARIAN;
+    uint32_t cost = change_count * change_count * change_count * diff_lvl;
+    if (is_alien_faction(faction_id)) {
+        cost += cost / 2;
+    }
+    return cost;
 }

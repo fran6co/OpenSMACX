@@ -78,7 +78,15 @@ Status: Complete
 
 /*
 Purpose: Bounds check and handling of x coordinate for round maps.
-// ORIGINAL: 0x0048BEE0 ?xrange@@YAHH@Z 0x0048BEE0-0x0048BF05
+// ORIGINAL: 0x0048BEE0 ?xrange@@YAHH@Z 0x0048BEE0-0x0048BF05 BYTE_EXACT
+// LEVER: `!(MapIsFlat & 1)`, not `!MapIsFlat` - the image reads the low BYTE
+//   and tests bit zero, matching every other MapIsFlat site in the tree
+//   (game.cpp, veh.cpp, terraforming.cpp already do this). Also, the guard's
+//   two arms are written `if (x < 0) {...} else if (x >= bounds) {...}`, NOT
+//   `if (x >= 0) {...} else {...}` - same condition, but the image's jge
+//   falls through to the negative-x arm, which only the swapped polarity
+//   reproduces. Fixed xrange itself plus two callers, `site_radius` (this
+//   batch) and `SquareLock::unlock` (bonus, out of batch).
 // size      37 bytes
 // prototype 
 // callers   4   call targets   0
@@ -678,19 +686,22 @@ Purpose: Calculate the natural altitude of the specified tile.
 Return Value: Natural altitude on a scale from 0 (ocean trench) to 6 (mountain tops)
 Status: Complete
 */
-int __cdecl alt_natural(int x, int y) {
-    uint32_t contour = alt_detail_at(x, y) - MapSeaLevel;
-    uint32_t natural = ALT_3_LEVELS_ABOVE_SEA;
-    while (contour < AltNatural[natural] && natural) {
-        natural--;
-    }
-    return natural;
-}
+// BODY IN map.h, as `MEASURED inline`: the image calls it as a real function
+// from world_linearize_contours but inlines it in alt_set_both, and a .cpp
+// definition can only ever be one of those.
 
 /*
 Purpose: Set both the altitude and natural altitude for the specified tile. The altitude_natural
          parameter can be between 0 to 9.
 // ORIGINAL: 0x005918F0 ?alt_set_both@@YAXHHH@Z 0x005918F0-0x005919C0
+// LEVER: call_diff had this 3-calls-vs-2 (MORE): `alt_natural` moved to
+//   `MEASURED inline` in map.h (image calls it for real from
+//   world_linearize_contours but inlines it here) and the `rnd()` call
+//   replaced with its own body, since a cross-TU call can never inline.
+//   0.513 -> 0.843 similar. RULED-OUT beyond that: `Map*`/pointer hoists for
+//   AltNatural[altitude_natural] (no change); rewriting alt_natural's
+//   `while (cond && natural) natural--;` as a decrement-then-clamp loop to
+//   chase the image's pointer-walk shape (made both worse, 0.843->0.817).
 // size      208 bytes
 // prototype void (__cdecl ?alt_set_both@@YAXHHH@Z)(int xCoord, int yCoord, int altitude)
 // callers   2   call targets   2
@@ -703,8 +714,13 @@ Status: Complete
 void __cdecl alt_set_both(int x, int y, int altitude_natural) {
     alt_set(x, y, altitude_natural);
     if (alt_natural(x, y) != altitude_natural) {
-        alt_put_detail(x, y, (uint8_t)(AltNatural[altitude_natural] + MapSeaLevel
-            + rnd(AltNatural[altitude_natural + 1] - AltNatural[altitude_natural], NULL)));
+        // `rnd()`'s own body, written out: it is a real function used
+        // elsewhere (general.cpp), so a cross-TU call to it cannot inline -
+        // the image's `call 0x0064601D` is straight to the CRT `rand`.
+        uint32_t *const base = &AltNatural[altitude_natural];
+        int bounds = base[1] - base[0];
+        int roll = (bounds - 1 > 0) ? rand() % bounds : 0;
+        alt_put_detail(x, y, (uint8_t)(base[0] + MapSeaLevel + roll));
     }
 }
 
@@ -849,6 +865,13 @@ Status: Complete
 /*
 Purpose: Set the using faction id for the specified tile.
 // ORIGINAL: 0x00591C10 ?using_set@@YAXHHH@Z 0x00591C10-0x00591C48
+// RULED-OUT: 12/20 plateau. Image reads tile->val3 TWICE (once via the
+//   pre-offset [ecx+eax*4+5] load, once again via [eax+5] after computing
+//   the plain tile pointer); this tree's `&=0xF8; |=faction&7;` compiles the
+//   same XOR-merge trick but CSEs the two reads into one, one instruction
+//   short. Tried: single `(v&0xF8)|(f&7)` assignment, explicit
+//   `v ^= (v^f)&7`, splitting map_loc() per statement, a `uint8_t v = ...`
+//   temp, casts to uint8_t/uint32_t on either side - all equal or worse.
 // size      56 bytes
 // prototype void (__cdecl ?using_set@@YAXHHH@Z)(int xCoord, int yCoord, int factionID)
 // callers   4   call targets   0
@@ -909,7 +932,10 @@ BOOL __cdecl lock_map(int x, int y, int faction_id) {
 
 /*
 Purpose: Unlock the specified tile for faction id.
-// ORIGINAL: 0x00591CF0 ?unlock_map@@YAXHHH@Z 0x00591CF0-0x00591D29
+// ORIGINAL: 0x00591CF0 ?unlock_map@@YAXHHH@Z 0x00591CF0-0x00591D29 BYTE_EXACT
+// LEVER: the `Map *tile = map_loc(x, y);` local must be declared INSIDE the
+//        if-block, after the lock_at() check, not hoisted above it - the
+//        image computes the tile pointer only on the taken branch.
 // size      57 bytes
 // prototype void (__cdecl ?unlock_map@@YAXHHH@Z)(int xCoord, int yCoord, int factionID)
 // callers   1   call targets   0
@@ -921,7 +947,8 @@ Status: Complete
 */
 void __cdecl unlock_map(int x, int y, int faction_id) {
     if (lock_at(x, y) == faction_id) {
-        map_loc(x, y)->val3 &= 0xC7;
+        Map *tile = map_loc(x, y);
+        tile->val3 &= 0xC7;
     }
 }
 
@@ -1040,7 +1067,10 @@ void __cdecl code_set(int x, int y, int code) {
 
 /*
 Purpose: Synchronize the actual tile bit with the faction visible bit.
-// ORIGINAL: 0x00591E50 ?synch_bit@@YAXHHH@Z 0x00591E50-0x00591E82
+// ORIGINAL: 0x00591E50 ?synch_bit@@YAXHHH@Z 0x00591E50-0x00591E82 BYTE_EXACT
+// LEVER: `Map *tile = map_loc(x, y);` shared between the read of `tile->bit`
+//        and the write to `tile->bit_visible[...]`, instead of two separate
+//        `map_loc()`/`bit_at()` calls, so the address is computed once.
 // size      50 bytes
 // prototype void (__cdecl ?synch_bit@@YAXHHH@Z)(int xCoord, int yCoord, int factionID)
 // callers   24   call targets   0
@@ -1175,7 +1205,9 @@ int __cdecl goody_at(int x, int y) {
 
 /*
 Purpose: Clear the map's site values in a radius from the tile.
-// ORIGINAL: 0x00592400 ?site_radius@@YAXHHH@Z 0x00592400-0x00592480
+// ORIGINAL: 0x00592400 ?site_radius@@YAXHHH@Z 0x00592400-0x00592480 BYTE_EXACT
+// LEVER: fixed by fixing `xrange()` itself (see 0x0048BEE0, same file) -
+//   `MapIsFlat & 1` and the swapped if/else polarity. No change needed here.
 // size      128 bytes
 // prototype void (__cdecl ?site_radius@@YAXHHH@Z)(int xCoord, int yCoord, int)
 // callers   2   call targets   0
@@ -2037,6 +2069,14 @@ BOOL __cdecl has_temple(int faction_id) {
 /*
 Purpose: Handle setting the world altitude.
 // ORIGINAL: 0x005C2020 ?world_alt_set@@YAXHHHH@Z 0x005C2020-0x005C2374
+// RULED-OUT: MISMATCH plateau, not chased to BYTE_EXACT (852-byte function,
+//   282 image instructions, best 48/282 similar 0.298 at /c /O2 /Gy /GR-
+//   /Oy- /GX). call_diff agrees on call count. The compiled body runs 396
+//   instructions against the image's 282 from early on (RadiusRange/
+//   RadiusOffsetX array reads land in a different register, and the loop
+//   guard around `alt_at` pulls in two extra real calls the image's copy
+//   doesn't show at that point) - a deep restructuring, not a 2-3 candidate
+//   fix, so left at the pre-existing body.
 // size      852 bytes
 // prototype void (__cdecl ?world_alt_set@@YAXHHHH@Z)(int xCoord, int yCoord, int altitude, int isSetBoth)
 // callers   23   call targets   4
@@ -2143,6 +2183,14 @@ void __cdecl world_lower_alt(int x, int y) {
 /*
 Purpose: Set up the brush for creating world terrain.
 // ORIGINAL: 0x005C2440 ?brush@@YAXHHH@Z 0x005C2440-0x005C27E1
+// RULED-OUT: MISMATCH plateau, not chased to BYTE_EXACT (929-byte function,
+//   304 image instructions, best 8/304 similar 0.370 at /c /O1 /Ob0 /Gy
+//   /GR- /Oy- /GX). call_diff agrees on call count. Diverges from the first
+//   loop iteration on: which register RadiusOffsetX[i]/y_radius land in
+//   (matches the file's known ebx/edi plateau), and the `on_map()` +
+//   `alt_at()` guard is ordered/interleaved differently than this tree's
+//   compile produces - a deep restructuring, not a 2-3 candidate fix, so
+//   left at the pre-existing body.
 // size      929 bytes
 // prototype void (__cdecl ?brush@@YAXHHH@Z)(int xCoord, int yCoord, int altitude)
 // callers   1   call targets   3
@@ -2452,6 +2500,15 @@ BOOL __cdecl world_validate() {
 /*
 Purpose: Set up the world temperature.
 // ORIGINAL: 0x005C4170 ?world_temperature@@YAXXZ 0x005C4170-0x005C4401
+// RULED-OUT: MISMATCH plateau, not chased to BYTE_EXACT (657-byte function,
+//   226 image instructions). LEVER that DID help: `MapLatitudeBounds /
+//   WorldBuilder->solar_energy` (and the three siblings) is `int / uint32_t`,
+//   which promotes to an UNSIGNED `div`; the image uses signed `idiv` at all
+//   four, so each RHS is cast `(int)`. Raised best similarity 0.611 -> 0.654
+//   (best flags /c /O2 /Ob0 /Gy /GR- /GX). Remaining gap starts at the
+//   `bit2_at`/`code_at` pair in the loop guard: the image inlines both, this
+//   tree's compile keeps them as real calls at this nesting depth - an
+//   inlining-heuristic difference, not chased further.
 // size      657 bytes
 // prototype 
 // callers   2   call targets   4
@@ -2463,10 +2520,13 @@ Status: Complete - testing
 */
 void __cdecl world_temperature() {
     random_reseed(MapRandSeed + 17);
-    int temp_heat = MapLatitudeBounds / WorldBuilder->solar_energy;
-    int thermal_banding = MapLatitudeBounds / WorldBuilder->thermal_band;
-    int thermal_deviance = MapLatitudeBounds / WorldBuilder->thermal_deviance;
-    int global_warming = MapLatitudeBounds / WorldBuilder->global_warming;
+    // SIGNED DIVISION: `WorldBuilder`'s fields are `uint32_t`, and dividing
+    // `int / uint32_t` promotes to an UNSIGNED `div`; the image uses `idiv`
+    // at all four, so the RHS is cast back to `int` to match.
+    int temp_heat = MapLatitudeBounds / (int)WorldBuilder->solar_energy;
+    int thermal_banding = MapLatitudeBounds / (int)WorldBuilder->thermal_band;
+    int thermal_deviance = MapLatitudeBounds / (int)WorldBuilder->thermal_deviance;
+    int global_warming = MapLatitudeBounds / (int)WorldBuilder->global_warming;
     for (int y = 0; y < MapLatitudeBounds; y++) {
         for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
             if ((bit2_at(x, y) & (BIT2_UNK_80000000 | BIT2_CRATER)) != BIT2_CRATER

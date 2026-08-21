@@ -50,7 +50,7 @@ Purpose: Release the square this lock holds and every tile in its footprint.
          tiles (81 when the 0x8 flag is also set) walked through the shared
          RadiusOffset tables and wrapped in x by xrange. The record is reset to
          its unset sentinels on the way out.
-// ORIGINAL: 0x0058FD90 ?unlock@SquareLock@@QAEXH@Z 0x0058FD90-0x0058FE77
+// ORIGINAL: 0x0058FD90 ?unlock@SquareLock@@QAEXH@Z 0x0058FD90-0x0058FE77 BYTE_EXACT
 // size      231 bytes
 // prototype void (__thiscall ?unlock@SquareLock@@QAEXH@Z)(SquareLock* this, int)
 // callers   4   call targets   1
