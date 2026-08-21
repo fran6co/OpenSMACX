@@ -277,19 +277,11 @@ Return Value: TRUE only in a net game that is handing the turn around and whose
               active faction is not the local one
 Status: Complete
 */
-BOOL __cdecl not_my_turn() {
-    // Both guards return before the comparison, so a non-net game and a net
-    // game that is not currently passing the turn are both "my turn".
-    if (!IsMultiplayerNet) {
-        return false;
-    }
-    if (!(NetTurnFlags & 0x10)) {
-        return false;
-    }
-    // `cmp ecx, edx` / `setne al`: the result is the inequality itself, not a
-    // normalised flag, and the faction identity is what decides it.
-    return NetTurnFaction != LocalFaction;
-}
+// BODY IN game.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Handle creation of pop-up message on Planetfall.
@@ -365,13 +357,15 @@ Purpose: Calculate game year from start date and turn number.
 Return Value: Game year
 Status: Complete
 */
-uint32_t __cdecl game_year(int turn) {
-    return StartingMissionYear + turn;
-}
+// BODY IN game.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Craft game year string. Assume buffer of at least 80. Revisit and convert to std::string.
-// ORIGINAL: 0x005C89B0 ?say_year@@YAXPAD@Z 0x005C89B0-0x005C89E4
+// ORIGINAL: 0x005C89B0 ?say_year@@YAXPAD@Z 0x005C89B0-0x005C89E4 BYTE_EXACT
 // size      52 bytes
 // prototype 
 // callers   19   call targets   2
@@ -695,6 +689,8 @@ Purpose: The ceiling on a single energy allocation slider. The legacy
 Return Value: 10
 Status: Complete
 */
-int __cdecl energy_limit(int) {
-    return 10;
-}
+// BODY IN game.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+

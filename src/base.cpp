@@ -142,10 +142,11 @@ Purpose: Set the current base globals.
 Return Value: n/a
 Status: Complete
 */
-void __cdecl set_base(int base_id) {
-    BaseIDCurrentSelected = base_id;
-    BaseCurrent() = &Bases[base_id];
-}
+// BODY IN base.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Get base name string from base id and store it in base_str. If base id is -1, use 'NONE'.
@@ -2191,10 +2192,11 @@ Purpose: Check if a faction has the specified secret project built in a base the
 Return Value: Does faction have Secret Project? true/false
 Status: Complete
 */
-BOOL __cdecl has_project(int project_id, int faction_id) {
-    int base_id = base_project(project_id);
-    return (base_id < 0) ? false : (Bases[base_id].faction_id_current == faction_id);
-}
+// BODY IN base.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Checks whether the facility (non-SP) has been build in the currently selected base.
@@ -2238,9 +2240,11 @@ Purpose: Get the current status of the specified project.
 Return Value: Base id, if not built (-1) or destroyed (-2)
 Status: Complete
 */
-int __cdecl base_project(int project_id) {
-    return *(&SecretProject->human_genome_project + project_id);
-}
+// BODY IN base.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Suggest the base the specified pair of factions should agree to attack together.

@@ -164,15 +164,11 @@ Purpose: Use the min and max parameters to bound the input.
 Return Value: Bounded input
 Status: Complete
 */
-int __cdecl range(int input, int min, int max) {
-    if (input < min || max < min) {
-        return min;
-    }
-    if (input > max) {
-        return max;
-    }
-    return input;
-}
+// BODY IN general.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Allocate memory with error checking.
@@ -258,10 +254,11 @@ Purpose: Set the global gender and plurality variables used by various parse fun
 Return Value: n/a
 Status: Complete
 */
-void __cdecl parse_set(int gender, BOOL plurality) {
-    *GenderDefault = gender;
-    *PluralityDefault = plurality;
-}
+// BODY IN general.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Copies the value into a number global message buffer using id.
@@ -1016,11 +1013,11 @@ Purpose: Swap the values of two 32-bit variables. Added an additional check when
 Return Value: n/a
 Status: Complete
 */
-void __cdecl swap(int *var1, int *var2) {
-    *var1 ^= *var2;
-    *var2 ^= *var1;
-    *var1 ^= *var2;
-}
+// BODY IN general.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Swap the values of two 8-bit variables. Added an additional check when swapping the same
@@ -1036,11 +1033,11 @@ Purpose: Swap the values of two 8-bit variables. Added an additional check when 
 Return Value: n/a
 Status: Complete
 */
-void __cdecl swap(uint8_t *var1, uint8_t *var2) {
-    *var1 ^= *var2;
-    *var2 ^= *var1;
-    *var1 ^= *var2;
-}
+// BODY IN general.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Shift the numerator to the left by 16 then divide by the denominator. Added a check to 
@@ -1123,10 +1120,11 @@ Purpose: Calculate the offset and bitmask for the specified input.
 Return Value: n/a
 Status: Complete
 */
-void __cdecl bitmask(int input, int *offset, int *mask) {
-    *offset = input / 8;
-    *mask = 1 << (input & 7);
-}
+// BODY IN general.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Calculate a basic XOR checksum for the data buffer.

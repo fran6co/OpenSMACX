@@ -144,11 +144,11 @@ Purpose: Get tech string for tech_id and store it into TechName buffer.
 Return Value: Pointer to TechName
 Status: Complete
 */
-LPSTR __cdecl tech_name(int tech_id, BOOL category_lvl) {
-    TechName[0] = 0;
-    say_tech(TechName, tech_id, category_lvl);
-    return TechName;
-}
+// BODY IN technology.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Check whether faction has a particular tech or not.
@@ -643,10 +643,11 @@ Purpose: Get power_value from technology struct for tech id.
 Return Value: power_value or 0 if tech_id is greater than max
 Status: Complete
 */
-int __cdecl tech_mil(int tech_id) {
-    // TODO: why only this one returns 0 with other three returning 1? typo/bug?
-    return (tech_id >= MaxTechnologyNum) ? 0 : *(&Technology[tech_id].power_value);
-}
+// BODY IN technology.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Get tech_value from technology struct for tech id.
@@ -660,9 +661,11 @@ Purpose: Get tech_value from technology struct for tech id.
 Return Value: tech_value or 1 if tech_id is greater than max
 Status: Complete
 */
-int __cdecl tech_tech(int tech_id) {
-    return (tech_id >= MaxTechnologyNum) ? 1 : *(&Technology[tech_id].tech_value);
-}
+// BODY IN technology.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Get wealth_value from technology struct for tech id.
@@ -676,9 +679,11 @@ Purpose: Get wealth_value from technology struct for tech id.
 Return Value: wealth_value or 1 if tech_id is greater than max
 Status: Complete
 */
-int __cdecl tech_infra(int tech_id) {
-    return (tech_id >= MaxTechnologyNum) ? 1 : *(&Technology[tech_id].wealth_value);
-}
+// BODY IN technology.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Get growth_value from technology struct for tech id.
@@ -692,9 +697,11 @@ Purpose: Get growth_value from technology struct for tech id.
 Return Value: growth_value or 1 if tech_id is greater than max
 Status: Complete
 */
-int __cdecl tech_colonize(int tech_id) {
-    return (tech_id >= MaxTechnologyNum) ? 1 : *(&Technology[tech_id].growth_value);
-}
+// BODY IN technology.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Calculate how much researching a tech will cost the specified faction.

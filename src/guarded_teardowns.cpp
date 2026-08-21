@@ -104,9 +104,11 @@ Purpose: ?passover_callback@@YAXXZ - run 1 (ORIGINAL(s)->*teardown)() on fixed g
 Return Value: n/a
 Status: Complete
 */
-void __cdecl teardown_004456a0() {
-    (ORIGINAL(g_PASSOVER_WAVE)->*original_method<func_thiscall_teardown>(original_address(PopupWavePlay)))();
-}
+// BODY IN guarded_teardowns.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: ??__Fg_MAPWIN@@YAXXZ - run 2 (ORIGINAL(s)->*teardown)() on fixed globals,

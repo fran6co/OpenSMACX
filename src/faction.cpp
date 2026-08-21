@@ -96,9 +96,11 @@ Purpose: Check whether the primary faction has at least one of the specified tre
 Return Value: Treaty status between the two factions, generally treated as a boolean
 Status: Complete
 */
-int __cdecl has_treaty(int faction_id, int faction_id_with, int treaty) {
-    return PlayersData[faction_id].diplo_treaties[faction_id_with] & treaty;
-}
+// BODY IN faction.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Get the faction's name adjective.
@@ -113,9 +115,11 @@ Purpose: Get the faction's name adjective.
 Return Value: Faction name adjective
 Status: Complete
 */
-LPSTR __cdecl get_adjective(int faction_id) {
-    return Players[faction_id].adj_name_faction;
-}
+// BODY IN faction.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Get the faction's noun.

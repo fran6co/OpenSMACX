@@ -709,14 +709,11 @@ Purpose: Process all non-input related messages.
 Return Value: n/a
 Status: Complete - testing
 */
-void __cdecl do_all_non_input() {
-    do {
-        MsgStatus = 32;
-    } while (do_non_input_());
-    MsgStatus = 0;
-    do_net();
-    check_net();
-}
+// BODY IN temp.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Process draw related message.

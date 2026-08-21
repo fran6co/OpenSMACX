@@ -134,16 +134,75 @@ extern uint8_t NetTurnFlags;
 extern int NetTurnFaction;
 extern int LocalFaction;
 
-int __cdecl energy_limit(int);
 
 void __cdecl reset_territory();
-BOOL __cdecl not_my_turn();
 void __cdecl planetfall(int faction_id);
 void __cdecl clear_scenario();
-uint32_t __cdecl game_year(int turn);
 void __cdecl say_year(LPSTR output);
 void __cdecl repair_phase(int faction_id);
 
 // The game's main loop, called once from WinMain between Jackal bring-up and
 // teardown. Everything the player ever sees happens inside this call.
 void __cdecl control_game();
+
+/*
+Purpose: Determine whether the turn currently belongs to another faction in a
+         networked game, which is what gates local input.
+// ORIGINAL: 0x0052DC70 ?not_my_turn@@YAHXZ 0x0052DC70-0x0052DC9C BYTE_EXACT
+// size      44 bytes
+// prototype 
+// callers   8   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: TRUE only in a net game that is handing the turn around and whose
+              active faction is not the local one
+Status: Complete
+*/
+MEASURED inline BOOL __cdecl not_my_turn() {
+    // Both guards return before the comparison, so a non-net game and a net
+    // game that is not currently passing the turn are both "my turn".
+    if (!IsMultiplayerNet) {
+        return false;
+    }
+    if (!(NetTurnFlags & 0x10)) {
+        return false;
+    }
+    // `cmp ecx, edx` / `setne al`: the result is the inequality itself, not a
+    // normalised flag, and the faction identity is what decides it.
+    return NetTurnFaction != LocalFaction;
+}
+
+/*
+Purpose: Calculate game year from start date and turn number.
+// ORIGINAL: 0x005C89A0 ?game_year@@YAHH@Z 0x005C89A0-0x005C89B0 BYTE_EXACT
+// symbol    ?game_year@@YAIH@Z
+// size      16 bytes
+// prototype int (__cdecl ?game_year@@YAHH@Z)(int turn)
+// callers   30   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: Game year
+Status: Complete
+*/
+MEASURED inline uint32_t __cdecl game_year(int turn) {
+    return StartingMissionYear + turn;
+}
+
+/*
+Purpose: The ceiling on a single energy allocation slider. The legacy
+         implementation is a constant return.
+// ORIGINAL: 0x00445440 ?energy_limit@@YAHH@Z 0x00445440-0x00445446 BYTE_EXACT
+// size      6 bytes
+// prototype int (__cdecl ?energy_limit@@YAHH@Z)(int factionID)
+// callers   3   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: 10
+Status: Complete
+*/
+MEASURED inline int __cdecl energy_limit(int) {
+    return 10;
+}

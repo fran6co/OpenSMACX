@@ -65,7 +65,6 @@ extern func_thiscall_teardown TeardownTarget005E3820;
 
 void __cdecl teardown_00422eb0();
 void __cdecl teardown_00422ec0();
-void __cdecl teardown_004456a0();
 void __cdecl teardown_g_mapwin();
 void __cdecl teardown_g_planwin();
 void __cdecl teardown_00505d20();
@@ -88,3 +87,22 @@ void __cdecl teardown_g_caviar_buffer_1();
 void __cdecl teardown_g_caviar_buffer_2();
 void __cdecl teardown_0063bb00();
 void __cdecl teardown_0063cef0();
+
+/*
+Purpose: ?passover_callback@@YAXXZ - run 1 (ORIGINAL(s)->*teardown)() on fixed globals,
+         unguarded. The last is a tail jump in the original, so its
+         return goes straight to this function's caller.
+// ORIGINAL: 0x004456A0 ?passover_callback@@YAXXZ 0x004456A0-0x004456AA
+// symbol    ?teardown_004456a0@@YAXXZ
+// size      10 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+MEASURED inline void __cdecl teardown_004456a0() {
+    (ORIGINAL(g_PASSOVER_WAVE)->*original_method<func_thiscall_teardown>(original_address(PopupWavePlay)))();
+}

@@ -328,8 +328,6 @@ RulesNatural *const Natural = (RulesNatural *)0x0094ADE0;
 extern uint32_t MapLongitude; // halve of MapLongitudeBounds
 extern uint32_t *AltNatural; // Default: { 0, 15, 32, 45, 60,  75,  80, 100, 100, 100, 100 };
 
-BOOL __cdecl on_map(int x, int y);
-int __cdecl xrange(int x);
 // `int` throughout, matching both the definition in src/map.cpp and the
 // catalogue's ?whose_territory@@YAHHHHPAHH@Z. The header said `uint32_t`,
 // so callers emitted ...@@YAHIIIPAHH@Z and found no definition.
@@ -348,7 +346,6 @@ BOOL __cdecl port_to_port(int base_id_src, int base_id_dst);
 BOOL __cdecl transport_base(int base_id);
 BOOL __cdecl naval_base(int base_id);
 BOOL __cdecl convoy(int veh_id, int base_id);
-BOOL __cdecl bad_reg(int region);
 BOOL __cdecl get_there(int veh_id, int x_dst, int y_dst);
 BOOL __cdecl coast_or_border(uint32_t x_point_a, uint32_t y_point_a, uint32_t x_point_b, 
                                        uint32_t y_point_b, uint32_t faction_id);
@@ -368,24 +365,15 @@ void __cdecl climate_set(int x, int y, int climate);
 int __cdecl elev_at(int x, int y);
 int __cdecl alt_natural(int x, int y);
 void __cdecl alt_set_both(int x, int y, int altitude_natural);
-int __cdecl alt_at(int x, int y);
-int __cdecl alt_detail_at(int x, int y);
 int __cdecl alt_get_ocean_detail(int x, int y, int corner, int point);
-void __cdecl alt_put_detail(int x, int y, int detail);
 void __cdecl owner_set(int x, int y, int faction_id);
 void __cdecl site_set(int x, int y, int site);
-int __cdecl region_at(int x, int y);
-void __cdecl region_set(int x, int y, int region);
 void __cdecl using_set(int x, int y, int faction_id);
 void __cdecl lock_set(int x, int y, int faction_id);
 BOOL __cdecl lock_map(int x, int y, int faction_id);
 void __cdecl unlock_map(int x, int y, int faction_id);
 void __cdecl rocky_set(int x, int y, int rocky);
-void __cdecl bit_put(int x, int y, int bit);
-void __cdecl bit_set(int x, int y, int bit, BOOL set);
-void __cdecl bit2_set(int x, int y, int bit2, BOOL set);
 void __cdecl code_set(int x, int y, int code);
-void __cdecl synch_bit(int x, int y, int faction_id);
 int __cdecl minerals_at(int x, int y);
 int __cdecl bonus_at(int x, int y, int UNUSED(unk_val) unk_val);
 int __cdecl goody_at(int x, int y);
@@ -395,10 +383,8 @@ int __cdecl new_landmark(int x, int y, LPCSTR name);
 BOOL __cdecl valid_landmark(int x, int y, int faction_id);
 void __cdecl kill_landmark(int x, int y);
 BOOL __cdecl is_coast(int x, int y, BOOL is_base_radius);
-int __cdecl veh_who(int x, int y);
 void __cdecl rebuild_vehicle_bits();
 void __cdecl rebuild_base_bits();
-int __cdecl x_dist(int x_point_a, int x_point_b);
 BOOL __cdecl is_known(int x, int y, int faction_id);
 int __cdecl base_who(int x, int y);
 int __cdecl anything_at(int x, int y);
@@ -407,11 +393,8 @@ BOOL __cdecl map_init();
 void __cdecl map_wipe();
 BOOL __cdecl map_write(FILE *map_file);
 BOOL __cdecl map_read(FILE *map_file);
-uint8_t __cdecl abstract_at(int x, int y);
-void __cdecl abstract_set(int x, int y, uint8_t region);
 void __cdecl quick_zoc(uint32_t x_src, uint32_t y_src, uint32_t faction_id, int x_dst,
                                  int y_dst, int *x_zoc, int *y_zoc);
-int __cdecl radius_move(int x_radius_off, int y_radius_off, int range);
  int __cdecl radius_move(int x_src, int y_src, int x_dst, int y_dst, int range);
 int __cdecl compass_move(int x_src, int y_src, int x_dst, int y_dst);
 int __cdecl is_sensor(int x, int y);
@@ -464,6 +447,323 @@ int __cdecl mandate_color(int mandate);
 int __cdecl mandate_color_redirect(int mandate);
 uint32_t *const MandateColors = (uint32_t *)0x008C6DE4;
 
+/*
+Purpose: Check whether the coordinates are on the map.
+// ORIGINAL: 0x004712A0 ?on_map@@YAHHH@Z 0x004712A0-0x004712CC BYTE_EXACT
+// size      44 bytes
+// prototype BOOL (__cdecl ?on_map@@YAHHH@Z)(int xCoord, int yCoord)
+// callers   7   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: Are the coordinates on the map? true/false
+Status: Complete
+*/
+MEASURED inline BOOL __cdecl on_map(int x, int y) {
+    return y >= 0 && y < (int)MapLatitudeBounds && x >= 0 && x < (int)MapLongitudeBounds;
+}
+
+/*
+Purpose: Bounds check and handling of x coordinate for round maps.
+// ORIGINAL: 0x0048BEE0 ?xrange@@YAHH@Z 0x0048BEE0-0x0048BF05
+// size      37 bytes
+// prototype 
+// callers   4   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+Return Value: X coordinate
+Status: Complete
+*/
+MEASURED inline int __cdecl xrange(int x) {
+    if (!MapIsFlat) {
+        if (x >= 0) {
+            if (x >= (int)MapLongitudeBounds) {
+                x -= MapLongitudeBounds;
+            }
+        } else {
+            x += MapLongitudeBounds;
+        }
+    }
+    return x;
+}
+
+/*
+Purpose: Validate region bounds. Bad regions include: 0, 63, 64, 127, 128.
+// ORIGINAL: 0x005591C0 ?bad_reg@@YAHH@Z 0x005591C0-0x005591DD BYTE_EXACT
+// size      29 bytes
+// prototype 
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: Is region bad? true/false
+Status: Complete
+*/
+MEASURED inline BOOL __cdecl bad_reg(int region) {
+    return (region & RegionBounds) == RegionBounds || !(region & RegionBounds);
+}
+
+/*
+Purpose: Get the bit shifted (down) altitude of the specified tile.
+// ORIGINAL: 0x00500150 ?alt_at@@YAHHH@Z 0x00500150-0x0050017B
+// size      43 bytes
+// prototype int (__cdecl ?alt_at@@YAHHH@Z)(int xCoord, int yCoord)
+// callers   1   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+Return Value: Altitude
+Status: Complete
+*/
+MEASURED inline int __cdecl alt_at(int x, int y) {
+    return map_loc(x, y)->climate >> 5;
+}
+
+/*
+Purpose: Get the altitude details of the specified tile.
+// ORIGINAL: 0x00500180 ?alt_detail_at@@YAHHH@Z 0x00500180-0x005001A9
+// size      41 bytes
+// prototype int (__cdecl ?alt_detail_at@@YAHHH@Z)(int xCoord, int yCoord)
+// callers   1   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+Return Value: Altitude detail
+Status: Complete
+*/
+MEASURED inline int __cdecl alt_detail_at(int x, int y) {
+    return map_loc(x, y)->contour;
+}
+
+/*
+Purpose: Set the altitude details for the specified tile.
+// ORIGINAL: 0x00591260 ?alt_put_detail@@YAXHHH@Z 0x00591260-0x00591288
+// size      40 bytes
+// prototype void (__cdecl ?alt_put_detail@@YAXHHH@Z)(int xCoord, int yCoord, int detail)
+// callers   5   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+MEASURED inline void __cdecl alt_put_detail(int x, int y, int detail) {
+    map_loc(x, y)->contour = detail;
+}
+
+/*
+Purpose: Get the region of the specified tile.
+// ORIGINAL: 0x00500220 ?region_at@@YAHHH@Z 0x00500220-0x00500249
+// size      41 bytes
+// prototype int (__cdecl ?region_at@@YAHHH@Z)(int xCoord, int yCoord)
+// callers   2   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: Region
+Status: Complete
+*/
+MEASURED inline int __cdecl region_at(int x, int y) {
+    return map_loc(x, y)->region;
+}
+
+/*
+Purpose: Set the region for the specified tile.
+// ORIGINAL: 0x00591B90 ?region_set@@YAXHHH@Z 0x00591B90-0x00591BB8
+// size      40 bytes
+// prototype void (__cdecl ?region_set@@YAXHHH@Z)(int xCoord, int yCoord, int region)
+// callers   2   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+MEASURED inline void __cdecl region_set(int x, int y, int region) {
+    map_loc(x, y)->region = region;
+}
+
+/*
+Purpose: Set the bit for the specified tile.
+// ORIGINAL: 0x00591D30 ?bit_put@@YAXHHH@Z 0x00591D30-0x00591D58
+// size      40 bytes
+// prototype void (__cdecl ?bit_put@@YAXHHH@Z)(int xCoord, int yCoord, int bit)
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+MEASURED inline void __cdecl bit_put(int x, int y, int bit) {
+    map_loc(x, y)->bit = bit;
+}
+
+/*
+Purpose: Set or unset bit for the specified tile.
+// ORIGINAL: 0x00591D60 ?bit_set@@YAXHHHH@Z 0x00591D60-0x00591DA2
+// size      66 bytes
+// prototype void (__cdecl ?bit_set@@YAXHHHH@Z)(int xCoord, int yCoord, int bit, int)
+// callers   32   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+MEASURED inline void __cdecl bit_set(int x, int y, int bit, BOOL set) {
+    if (set) {
+        map_loc(x, y)->bit |= bit;
+    } else {
+        map_loc(x, y)->bit &= ~bit;
+    }
+}
+
+/*
+Purpose: Set or unset bit2 for the specified tile.
+// ORIGINAL: 0x00591DB0 ?bit2_set@@YAXHHHH@Z 0x00591DB0-0x00591DF2
+// size      66 bytes
+// prototype void (__cdecl ?bit2_set@@YAXHHHH@Z)(int xCoord, int yCoord, int bit2, int)
+// callers   19   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+MEASURED inline void __cdecl bit2_set(int x, int y, int bit2, BOOL set) {
+    if (set) {
+        map_loc(x, y)->bit2 |= bit2;
+    } else {
+        map_loc(x, y)->bit2 &= ~bit2;
+    }
+}
+
+// IN THE HEADER, and `MEASURED` so they are still emitted standalone. Both are
+// real bodies in the image AND are inlined into their callers: `osmx calls
+// 0x00592140` reports that goody_at makes NO calls at all, and it reads a
+// tile's bits and tests whether the tile is ocean. A .cpp definition can only
+// ever be one of those two things.
+MEASURED inline int __cdecl bit_at(int x, int y) {
+    return map_loc(x, y)->bit;
+}
+
+/*
+Purpose: Synchronize the actual tile bit with the faction visible bit.
+// ORIGINAL: 0x00591E50 ?synch_bit@@YAXHHH@Z 0x00591E50-0x00591E82
+// size      50 bytes
+// prototype void (__cdecl ?synch_bit@@YAXHHH@Z)(int xCoord, int yCoord, int factionID)
+// callers   24   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+MEASURED inline void __cdecl synch_bit(int x, int y, int faction_id) {
+    if (faction_id) {
+        map_loc(x, y)->bit_visible[faction_id - 1] = bit_at(x, y);
+    }
+}
+
+/*
+Purpose: Get the owner of the specified tile if there is a unit in it.
+// ORIGINAL: 0x00500250 ?veh_who@@YAHHH@Z 0x00500250-0x00500288
+// size      56 bytes
+// prototype int (__cdecl ?veh_who@@YAHHH@Z)(int xCoord, int yCoord)
+// callers   3   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: Owner (faction id) or -1
+Status: Complete
+*/
+MEASURED inline int __cdecl veh_who(int x, int y) {
+    Map *tile = map_loc(x, y);
+    if (tile->bit & BIT_VEH_IN_TILE) {
+        uint32_t owner = tile->val2 & 0xF;
+        if (owner < 8) {
+            return owner;
+        }
+    }
+    return -1;
+}
+
+/*
+Purpose: Calculate the distance between two x coordinates with handling for round maps.
+// ORIGINAL: 0x00579790 ?x_dist@@YAHHH@Z 0x00579790-0x005797C7
+// size      55 bytes
+// prototype 
+// callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00644F3A
+Return Value: Distance
+Status: Complete
+*/
+MEASURED inline int __cdecl x_dist(int x_point_a, int x_point_b) {
+    int dist = abs(x_point_a - x_point_b);
+    if (!MapIsFlat && dist > (int)MapLongitude) {
+        dist = MapLongitudeBounds - dist;
+    }
+    return dist;
+}
+
+/*
+Purpose: Get the region value for the specified tile.
+// ORIGINAL: 0x00591210 ?abstract_at@@YAHHH@Z 0x00591210-0x00591230
+// symbol    ?abstract_at@@YAEHH@Z
+// size      32 bytes
+// prototype int (__cdecl ?abstract_at@@YAHHH@Z)(int xCoord, int yCoord)
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: Abstract value (region)
+Status: Complete
+*/
+MEASURED inline uint8_t __cdecl abstract_at(int x, int y) {
+    return (MapAbstract())[(x >> 1) + y * (MapAbstractLongBounds >> 1)];
+}
+
+/*
+Purpose: Set the region value for the specified tile.
+// ORIGINAL: 0x00591230 ?abstract_set@@YAXHHE@Z 0x00591230-0x00591253
+// size      35 bytes
+// prototype void (__cdecl ?abstract_set@@YAXHHE@Z)(int xCoord, int yCoord, unsigned int8 val)
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+MEASURED inline void __cdecl abstract_set(int x, int y, uint8_t region) {
+    (MapAbstract())[(x >> 1) + y * (MapAbstractLongBounds >> 1)] = region;
+}
+
+/*
+Purpose: Determine if the specified offsets are within the range radius.
+// ORIGINAL: 0x005A65A0 ?radius_move@@YAHHHH@Z 0x005A65A0-0x005A65D0 BYTE_EXACT
+// size      48 bytes
+// prototype int (__cdecl ?radius_move@@YAHHHH@Z)(int xCoord, int yCoord, int range)
+// callers   1   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+Return Value: Range radius, otherwise -1 if not within range
+Status: Complete
+*/
+MEASURED inline int __cdecl radius_move(int x_radius_off, int y_radius_off, int range) {
+    for (int i = 0; i < range; i++) {
+        if (x_radius_off == RadiusOffsetX[i] && y_radius_off == RadiusOffsetY[i]) {
+            return i; // radius
+        }
+    }
+    return -1;
+}
+
 // INLINE: the image has no temp_at - it open-codes what this names.
 inline uint32_t __cdecl temp_at(uint32_t x, uint32_t y) {
     return map_loc(x, y)->climate & 7;
@@ -512,15 +812,6 @@ inline uint32_t __cdecl code_at(uint32_t x, uint32_t y) {
 // INLINE: the image has no cursor_dist - it open-codes what this names.
 inline int __cdecl cursor_dist(int x_point_a, int y_point_a, int x_point_b, int y_point_b) {
     return (x_dist(x_point_a, x_point_b) + abs(y_point_a - y_point_b)) / 2;
-}
-
-// IN THE HEADER, and `MEASURED` so they are still emitted standalone. Both are
-// real bodies in the image AND are inlined into their callers: `osmx calls
-// 0x00592140` reports that goody_at makes NO calls at all, and it reads a
-// tile's bits and tests whether the tile is ocean. A .cpp definition can only
-// ever be one of those two things.
-MEASURED inline int __cdecl bit_at(int x, int y) {
-    return map_loc(x, y)->bit;
 }
 
 MEASURED inline BOOL __cdecl is_ocean(int x, int y) {

@@ -73,9 +73,11 @@ Purpose: Check whether the coordinates are on the map.
 Return Value: Are the coordinates on the map? true/false
 Status: Complete
 */
-BOOL __cdecl on_map(int x, int y) {
-    return y >= 0 && y < (int)MapLatitudeBounds && x >= 0 && x < (int)MapLongitudeBounds;
-}
+// BODY IN map.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Bounds check and handling of x coordinate for round maps.
@@ -89,18 +91,11 @@ Purpose: Bounds check and handling of x coordinate for round maps.
 Return Value: X coordinate
 Status: Complete
 */
-int __cdecl xrange(int x) {
-    if (!MapIsFlat) {
-        if (x >= 0) {
-            if (x >= (int)MapLongitudeBounds) {
-                x -= MapLongitudeBounds;
-            }
-        } else {
-            x += MapLongitudeBounds;
-        }
-    }
-    return x;
-}
+// BODY IN map.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Check who owns a tile. Optional parameter to get closest base.
@@ -499,9 +494,11 @@ Purpose: Validate region bounds. Bad regions include: 0, 63, 64, 127, 128.
 Return Value: Is region bad? true/false
 Status: Complete
 */
-BOOL __cdecl bad_reg(int region) {
-    return (region & RegionBounds) == RegionBounds || !(region & RegionBounds);
-}
+// BODY IN map.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Determine whether specified unit can physically reach the destination coordinates.
@@ -689,9 +686,11 @@ Purpose: Get the bit shifted (down) altitude of the specified tile.
 Return Value: Altitude
 Status: Complete
 */
-int __cdecl alt_at(int x, int y) {
-    return map_loc(x, y)->climate >> 5;
-}
+// BODY IN map.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 
 /*
@@ -706,9 +705,11 @@ Purpose: Get the altitude details of the specified tile.
 Return Value: Altitude detail
 Status: Complete
 */
-int __cdecl alt_detail_at(int x, int y) {
-    return map_loc(x, y)->contour;
-}
+// BODY IN map.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Set the altitude details for the specified tile.
@@ -722,9 +723,11 @@ Purpose: Set the altitude details for the specified tile.
 Return Value: n/a
 Status: Complete
 */
-void __cdecl alt_put_detail(int x, int y, int detail) {
-    map_loc(x, y)->contour = detail;
-}
+// BODY IN map.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 
 /*
@@ -775,9 +778,11 @@ Purpose: Get the region of the specified tile.
 Return Value: Region
 Status: Complete
 */
-int __cdecl region_at(int x, int y) {
-    return map_loc(x, y)->region;
-}
+// BODY IN map.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Set the region for the specified tile.
@@ -791,9 +796,11 @@ Purpose: Set the region for the specified tile.
 Return Value: n/a
 Status: Complete
 */
-void __cdecl region_set(int x, int y, int region) {
-    map_loc(x, y)->region = region;
-}
+// BODY IN map.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 
 /*
@@ -921,9 +928,11 @@ Purpose: Set the bit for the specified tile.
 Return Value: n/a
 Status: Complete
 */
-void __cdecl bit_put(int x, int y, int bit) {
-    map_loc(x, y)->bit = bit;
-}
+// BODY IN map.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Set or unset bit for the specified tile.
@@ -937,13 +946,11 @@ Purpose: Set or unset bit for the specified tile.
 Return Value: n/a
 Status: Complete
 */
-void __cdecl bit_set(int x, int y, int bit, BOOL set) {
-    if (set) {
-        map_loc(x, y)->bit |= bit;
-    } else {
-        map_loc(x, y)->bit &= ~bit;
-    }
-}
+// BODY IN map.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 
 /*
@@ -958,13 +965,11 @@ Purpose: Set or unset bit2 for the specified tile.
 Return Value: n/a
 Status: Complete
 */
-void __cdecl bit2_set(int x, int y, int bit2, BOOL set) {
-    if (set) {
-        map_loc(x, y)->bit2 |= bit2;
-    } else {
-        map_loc(x, y)->bit2 &= ~bit2;
-    }
-}
+// BODY IN map.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 
 /*
@@ -998,11 +1003,11 @@ Purpose: Synchronize the actual tile bit with the faction visible bit.
 Return Value: n/a
 Status: Complete
 */
-void __cdecl synch_bit(int x, int y, int faction_id) {
-    if (faction_id) {
-        map_loc(x, y)->bit_visible[faction_id - 1] = bit_at(x, y);
-    }
-}
+// BODY IN map.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Determine the tile's mineral count that translates to rockiness.
@@ -1306,16 +1311,11 @@ Purpose: Get the owner of the specified tile if there is a unit in it.
 Return Value: Owner (faction id) or -1
 Status: Complete
 */
-int __cdecl veh_who(int x, int y) {
-    Map *tile = map_loc(x, y);
-    if (tile->bit & BIT_VEH_IN_TILE) {
-        uint32_t owner = tile->val2 & 0xF;
-        if (owner < 8) {
-            return owner;
-        }
-    }
-    return -1;
-}
+// BODY IN map.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Rebuild the Map's unit related values.
@@ -1385,13 +1385,11 @@ Purpose: Calculate the distance between two x coordinates with handling for roun
 Return Value: Distance
 Status: Complete
 */
-int __cdecl x_dist(int x_point_a, int x_point_b) {
-    int dist = abs(x_point_a - x_point_b);
-    if (!MapIsFlat && dist > (int)MapLongitude) {
-        dist = MapLongitudeBounds - dist;
-    }
-    return dist;
-}
+// BODY IN map.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Check whether a faction can see the specified tile.
@@ -1609,9 +1607,11 @@ Purpose: Get the region value for the specified tile.
 Return Value: Abstract value (region)
 Status: Complete
 */
-uint8_t __cdecl abstract_at(int x, int y) {
-    return (MapAbstract())[(x >> 1) + y * (MapAbstractLongBounds >> 1)];
-}
+// BODY IN map.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Set the region value for the specified tile.
@@ -1625,9 +1625,11 @@ Purpose: Set the region value for the specified tile.
 Return Value: n/a
 Status: Complete
 */
-void __cdecl abstract_set(int x, int y, uint8_t region) {
-    (MapAbstract())[(x >> 1) + y * (MapAbstractLongBounds >> 1)] = region;
-}
+// BODY IN map.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Quickly check for unit related zone of control conflicts. If a ZOC conflict is found, store
@@ -1678,14 +1680,11 @@ Purpose: Determine if the specified offsets are within the range radius.
 Return Value: Range radius, otherwise -1 if not within range
 Status: Complete
 */
-int __cdecl radius_move(int x_radius_off, int y_radius_off, int range) {
-    for (int i = 0; i < range; i++) {
-        if (x_radius_off == RadiusOffsetX[i] && y_radius_off == RadiusOffsetY[i]) {
-            return i; // radius
-        }
-    }
-    return -1;
-}
+// BODY IN map.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Determine if the specified two tiles are within the range radius of each other.

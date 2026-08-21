@@ -269,35 +269,11 @@ Return Value: n/a. EAX on return is path-dependent leftover (draw_radius's own
               return is faithful.
 Status: Complete with temporary MapWin::draw_radius original dependency
 */
-void __cdecl draw_tile(int x_coord, int y_coord, int draw_type) {
-    for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
-        // Re-read every iteration, as `mov ecx, dword ptr [esi]` at 0x0046AF51
-        // does: a callee that rewrites the table is seen by later slots.
-        MapWin *const window = MapWinTable[slot];
-        // 0x0046AF53 test / 0x0046AF55 je - the null test comes first, so an
-        // empty slot 0 draws nothing despite the exemption below.
-        if (window == nullptr) {
-            continue;
-        }
-        // 0x0046AF57 `cmp esi, 0x7d3c3c` / 0x0046AF5D je. The cursor only ever
-        // walks forward from the table base, so comparing it against that base
-        // is exactly "is this slot index 0?" - the primary map window is
-        // exempt from the activity gate.
-        if (slot != 0) {
-            const uint32_t active = *reinterpret_cast<const volatile uint32_t *>(
-                reinterpret_cast<const uint8_t *>(window) + MapWinActiveOffset);
-            if (active == 0) {
-                continue;
-            }
-        }
-        // 0x0046AF71: __thiscall on the slot value still live in ECX, with the
-        // pushes at 0x0046AF6C..0x0046AF70 giving the stack order
-        // (x_coord, y_coord, 0, draw_type) - the pushes run right to left, so
-        // the last one (`push eax`, [ebp+8]) is the first stack argument. The
-        // literal 0 is this function's discriminator; see draw_tiles.
-        (ORIGINAL(window)->*MapWinOriginalDrawRadius)(x_coord, y_coord, 0, draw_type);
-    }
-}
+// BODY IN mapwin.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: The radius-1 sibling of draw_tile - the identical 70-byte broadcast,
@@ -318,26 +294,11 @@ Purpose: The radius-1 sibling of draw_tile - the identical 70-byte broadcast,
 Return Value: n/a; same path-dependent EAX leftover as draw_tile.
 Status: Complete with temporary MapWin::draw_radius original dependency
 */
-void __cdecl draw_tiles(int x_coord, int y_coord, int draw_type) {
-    for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
-        // 0x0046B151, mirroring 0x0046AF51.
-        MapWin *const window = MapWinTable[slot];
-        // 0x0046B153 test / 0x0046B155 je.
-        if (window == nullptr) {
-            continue;
-        }
-        // 0x0046B157 `cmp esi, 0x7d3c3c` / 0x0046B15D je.
-        if (slot != 0) {
-            const uint32_t active = *reinterpret_cast<const volatile uint32_t *>(
-                reinterpret_cast<const uint8_t *>(window) + MapWinActiveOffset);
-            if (active == 0) {
-                continue;
-            }
-        }
-        // 0x0046B171, with `push 1` at 0x0046B16D supplying the radius.
-        (ORIGINAL(window)->*MapWinOriginalDrawRadius)(x_coord, y_coord, 1, draw_type);
-    }
-}
+// BODY IN mapwin.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 // No redirect adapter for either. The original entry convention is __cdecl with
 // three stack arguments and a caller-cleaned stack, and there is no

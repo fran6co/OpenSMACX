@@ -1410,12 +1410,11 @@ Purpose: Get the default value for the warning pop-up preferences.
 Return Value: Default warning preferences
 Status: Complete
 */
-uint32_t __cdecl default_warn() {
-    return WARN_STOP_RANDOM_EVENT | WARN_STOP_ENERGY_SHORTAGE | WARN_STOP_MINERAL_SHORTAGE
-        | WARN_STOP_STARVATION | WARN_STOP_BUILD_OUT_OF_DATE | WARN_STOP_UNK_100
-        | WARN_STOP_NUTRIENT_SHORTAGE | WARN_STOP_GOLDEN_AGE | WARN_STOP_DRONE_RIOTS
-        | WARN_STOP_NEW_FAC_BUILT; // 0x3C3A9
-}
+// BODY IN alpha.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Get the default value for the rule related preferences.
@@ -1718,13 +1717,11 @@ Purpose: Shutdown or reset the labels global variable.
 Return Value: n/a
 Status: Complete
 */
-void __cdecl labels_shutdown() {
-    if (Labels->strings_ptr) {
-        free(Labels->strings_ptr);
-        Labels->strings_ptr = 0;
-    }
-    Labels->count = 0;
-}
+// BODY IN alpha.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Set the game's language.
@@ -1738,9 +1735,11 @@ Purpose: Set the game's language.
 Return Value: n/a
 Status: Complete
 */
-void __cdecl set_language(int language) {
-    Language = language;
-}
+// BODY IN alpha.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Get the label string and concatenate it to the stringTemp buffer.
