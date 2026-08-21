@@ -1,4 +1,5 @@
 // ORIGINAL: 0x006142D0 ?set_directory@FileWin@@QAEHPAD@Z 0x006142D0-0x0061431E FILE BYTE_EXACT
+// symbol    ?set_directory@FileWin@@QAEHPAUint8@@@Z
 // size      78 bytes
 // prototype int (__thiscall ?set_directory@FileWin@@QAEHPAD@Z)(FileWin* this, int8*)
 // callers   0   call targets   2

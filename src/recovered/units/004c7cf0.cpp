@@ -1,4 +1,5 @@
 // ORIGINAL: 0x004C7CF0 ?set_fname@Midi@@QAEHPBD@Z 0x004C7CF0-0x004C7D42 FILE BYTE_EXACT
+// symbol    ?set_fname@Midi@@QAEHPAC@Z
 // size      82 bytes
 // prototype int (__thiscall ?set_fname@Midi@@QAEHPBD@Z)(Midi* this, int8*)
 // callers   0   call targets   4

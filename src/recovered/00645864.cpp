@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00645864 nullsub_18 0x00645864-0x00645865 BYTE_EXACT
+// symbol    ?nullsub_18@@YAXXZ
 // size      1 bytes
 // prototype 
 // callers   0   call targets   0

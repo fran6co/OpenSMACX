@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00627190 ?pop@@YAHPADPADPADHP6AHXZ@Z 0x00627190-0x006271CA BYTE_EXACT
+// symbol    ?pop@@YAHPAD00HP6AHXZ@Z
 // size      58 bytes
 // prototype 
 // callers   0   call targets   2

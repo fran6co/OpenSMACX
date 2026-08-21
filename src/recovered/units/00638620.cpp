@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00638620 sub_638620 0x00638620-0x0063864E FILE BYTE_EXACT
+// symbol    ?sub_638620@@YAHHPAPAX@Z
 // size      46 bytes
 // prototype 
 // callers   8   call targets   1

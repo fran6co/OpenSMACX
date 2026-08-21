@@ -1,4 +1,5 @@
 // ORIGINAL: 0x005FE2F0 ?__as@Palette@@QAEHQAUPalette@@@Z 0x005FE2F0-0x005FE32F FILE BYTE_EXACT
+// symbol    ?__as@Palette@@QAEHPAV1@@Z
 // size      63 bytes
 // prototype int (__thiscall ?__as@Palette@@QAEHQAUPalette@@@Z)(Palette* this, Palette*)
 // callers   2   call targets   2

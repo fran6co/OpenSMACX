@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00404860 ?sprite_draw_func@@YAXPAUSprite@@PAUGraphicWin@@HHH@Z 0x00404860-0x00404896 FILE BYTE_EXACT
+// symbol    ?sprite_draw_func@@YAXPAVSprite@@PAUGraphicWin@@HHH@Z
 // size      54 bytes
 // prototype 
 // callers   0   call targets   1

@@ -1,4 +1,5 @@
 // ORIGINAL: 0x005EC740 ?set_cursor@Win@@QAEHPAVSprite@@HH@Z 0x005EC740-0x005EC773 FILE BYTE_EXACT
+// symbol    ?set_cursor@Win@@QAEHPAUSprite@@HH@Z
 // size      51 bytes
 // prototype int (__thiscall ?set_cursor@Win@@QAEHPAVSprite@@HH@Z)(Win* this, Sprite*, int, int)
 // callers   6   call targets   1

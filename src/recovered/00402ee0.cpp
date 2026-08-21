@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00402EE0 sub_402ee0 0x00402EE0-0x00402F08 BYTE_EXACT
+// symbol    _sub_402ee0@16
 // size      40 bytes
 // prototype 
 // callers   1   call targets   0

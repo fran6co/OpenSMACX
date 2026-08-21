@@ -1,4 +1,5 @@
 // ORIGINAL: 0x005D5500 ?load_pcx@GraphicWin@@QAEHPADPAUPalette@@HH@Z 0x005D5500-0x005D5536 FILE BYTE_EXACT
+// symbol    ?load_pcx@GraphicWin@@QAEHPADPAVPalette@@HH@Z
 // size      54 bytes
 // prototype int (__thiscall ?load_pcx@GraphicWin@@QAEHPADPAUPalette@@HH@Z)(GraphicWin* this, int8* lpszFileName, Palette*, int, int)
 // callers   2   call targets   1

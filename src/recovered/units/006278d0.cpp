@@ -1,4 +1,5 @@
 // ORIGINAL: 0x006278D0 ?pop_ask@@YAHPADPADP6AHXZH@Z 0x006278D0-0x00627904 FILE BYTE_EXACT
+// symbol    ?pop_ask@@YAHPAD0P6AHXZH@Z
 // size      52 bytes
 // prototype int (__cdecl ?pop_ask@@YAHPADPADP6AHXZH@Z)(int8* sectionID, int8*, int (__cdecl *)(), int)
 // callers   0   call targets   2

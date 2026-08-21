@@ -1,4 +1,5 @@
 // ORIGINAL: 0x005C9860 ?init@MultiDebug@@QAEHPAUNet@@PAUWin@@PAE@Z 0x005C9860-0x005C98DB FILE BYTE_EXACT
+// symbol    ?init@MultiDebug@@QAEHPAVNet@@PAVWin@@PAE@Z
 // LEVER: the scaffold's `GraphicWin::init` is declared `void` (a stale prototype - src/graphicwin.cpp's real recovery is `int`), but the disassembly tests its return value. Cannot redeclare GraphicWin (duplicate class), so a same-layout `GraphicWinInitShim` with the correct `int` return gets the same call site.
 // working copy - scaffold materialised by --work
 // size      123 bytes

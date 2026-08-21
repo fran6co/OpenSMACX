@@ -1,4 +1,5 @@
 // ORIGINAL: 0x004396B0 ?bubble_me_elmo2@DesignWin@@QAGXPADHH@Z 0x004396B0-0x004396F2 FILE BYTE_EXACT
+// symbol    ?bubble_me_elmo2@DesignWin@@QAEXPADHH@Z
 // size      66 bytes
 // prototype void (__stdcall ?bubble_me_elmo2@DesignWin@@QAGXPADHH@Z)(DesignWin* this, LPCSTR, int, int)
 // callers   0   call targets   2

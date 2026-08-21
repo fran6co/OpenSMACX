@@ -1,4 +1,5 @@
 // ORIGINAL: 0x004C5A10 ?init@Wave_In_Device@@QAEHPAXK@Z 0x004C5A10-0x004C5A4D FILE BYTE_EXACT
+// symbol    ?init@Wave_In_Device@@QAEHPAXI@Z
 // size      61 bytes
 // prototype int (__thiscall ?init@Wave_In_Device@@QAEHPAXK@Z)(Wave_In_Device* this, void*, unsigned int)
 // callers   1   call targets   0

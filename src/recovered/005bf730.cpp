@@ -1,4 +1,5 @@
 // ORIGINAL: 0x005BF730 ?X_pops@@YAHPADPBDPADHPAUSprite@@HHP6AHXZ@Z 0x005BF730-0x005BF770 BYTE_EXACT
+// symbol    ?X_pops@@YAHPADPBD0HPAUSprite@@HHP6AHXZ@Z
 // size      64 bytes
 // prototype 
 // callers   0   call targets   2

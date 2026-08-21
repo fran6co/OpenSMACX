@@ -1,4 +1,5 @@
 // ORIGINAL: 0x004BDFA0 ?base_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z 0x004BDFA0-0x004BDFDD FILE BYTE_EXACT
+// symbol    ?base_draw@TutWin@@QAAXPAVSprite@@PAVGraphicWin@@HHH@Z
 // size      61 bytes
 // prototype 
 // callers   0   call targets   1

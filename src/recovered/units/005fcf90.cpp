@@ -1,4 +1,5 @@
 // ORIGINAL: 0x005FCF90 ?do_char@@YAXXZ 0x005FCF90-0x005FCFDD FILE BYTE_EXACT
+// symbol    ?do_char@@YAHXZ
 // size      77 bytes
 // prototype 
 // callers   0   call targets   2

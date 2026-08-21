@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00584D30 sub_584d30 0x00584D30-0x00584D52 BYTE_EXACT
+// symbol    ?sub_584d30@@YAPADPAD0I@Z
 // size      34 bytes
 // prototype 
 // callers   0   call targets   1

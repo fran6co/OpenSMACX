@@ -1,4 +1,5 @@
 // ORIGINAL: 0x005396D0 ?net_withdrawal@@YAXHHH@Z 0x005396D0-0x00539738 FILE BYTE_EXACT
+// symbol    ?net_withdrawal@@YAHHHH@Z
 // size      104 bytes
 // prototype 
 // callers   0   call targets   4

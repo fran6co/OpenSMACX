@@ -1,4 +1,5 @@
 // ORIGINAL: 0x005EC630 ?init@Win@@QAEHPAURECT@@PADHPAVWin@@PAVMenu@@PAUBorderSizing@@@Z 0x005EC630-0x005EC678 FILE BYTE_EXACT
+// symbol    ?init@Win@@QAEHPAURECT@@PAUint8@@HPAV1@PAUMenu@@PAUBorderSizing@@@Z
 // size      72 bytes
 // prototype int (__thiscall ?init@Win@@QAEHPAURECT@@PADHPAVWin@@PAVMenu@@PAUBorderSizing@@@Z)(Win* this, RECT*, int8*, int, Win*, Menu*, BorderSizing*)
 // callers   0   call targets   1

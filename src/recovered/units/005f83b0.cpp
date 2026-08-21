@@ -1,4 +1,5 @@
 // ORIGINAL: 0x005F83B0 sub_5f83b0 0x005F83B0-0x005F83C5 FILE BYTE_EXACT
+// symbol    ?sub_5f83b0@@YAXXZ
 // size      21 bytes
 // prototype 
 // callers   0   call targets   1

@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00634ED0 ?set_def_name@FileBox@@QAEHPAD@Z 0x00634ED0-0x00634F1E FILE BYTE_EXACT
+// symbol    ?set_def_name@FileBox@@QAEHPAUint8@@@Z
 // size      78 bytes
 // prototype int (__thiscall ?set_def_name@FileBox@@QAEHPAD@Z)(FileBox* this, int8*)
 // callers   3   call targets   2

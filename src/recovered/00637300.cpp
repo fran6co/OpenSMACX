@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00637300 Video_unk11 0x00637300-0x00637308 BYTE_EXACT
+// symbol    ?Video_unk11@@YAHXZ
 // size      8 bytes
 // prototype 
 // callers   0   call targets   1

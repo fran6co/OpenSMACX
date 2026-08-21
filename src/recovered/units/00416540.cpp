@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00416540 ?bubble_me_elmo2@BaseWin@@QAEXPADHH@Z 0x00416540-0x00416580 FILE BYTE_EXACT
+// symbol    ?bubble_me_elmo2@BaseWin@@QAEXPAUint8@@HH@Z
 // size      64 bytes
 // prototype void (__thiscall ?bubble_me_elmo2@BaseWin@@QAEXPADHH@Z)(BaseWin* this, int8*, int, int)
 // callers   0   call targets   2

@@ -1,4 +1,5 @@
 // ORIGINAL: 0x005E73CC ?draw_dest_unk1@Sprite@@QAEHPAUBuffer@@HHHHPAE@Z 0x005E73CC-0x005E7417 FILE BYTE_EXACT
+// symbol    ?draw_dest_unk1@Sprite@@QAEHPAVBuffer@@HHHHPAE@Z
 // LEVER: save/restore two globals around a call to the 4-arg sibling overload, matching the Ghidra hypothesis directly
 // working copy - scaffold materialised by --work
 // size      75 bytes

@@ -1,4 +1,5 @@
 // ORIGINAL: 0x004C85F0 ?unload@Ambience@@QAEXXZ 0x004C85F0-0x004C861C FILE BYTE_EXACT
+// symbol    ?unload@Ambience@@QAEHXZ
 // size      44 bytes
 // prototype void (__thiscall ?unload@Ambience@@QAEXXZ)(Ambience* this)
 // callers   0   call targets   0

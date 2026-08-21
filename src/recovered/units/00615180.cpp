@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00615180 ?UNK1@EditBox@@QAEHPAUFont@@HHHPAUWin@@@Z 0x00615180-0x006151D6 FILE BYTE_EXACT
+// symbol    ?UNK1@EditBox@@QAEHPAUFont@@HHHPAUWin@@H@Z
 // size      86 bytes
 // prototype int (__thiscall ?UNK1@EditBox@@QAEHPAUFont@@HHHPAUWin@@@Z)(EditBox* this, Font*, int, int, int, Win*)
 // callers   0   call targets   3

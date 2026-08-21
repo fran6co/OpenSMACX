@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00612970 ?attach@Dialogs@@QAEHHPAUGraphicWin@@HHH@Z 0x00612970-0x00612A48 FILE BYTE_EXACT
+// symbol    ?attach@Dialogs@@QAEHHPAVGraphicWin@@HHH@Z
 // LEVER: switch case DECLARATION ORDER matched the jump-table's physical block layout (0x10, 2, 1, 8, 4, default) - not case-value order and not Ghidra's own printed order (1, 2, default, 4, 8, 0x10).
 // working copy - scaffold materialised by --work
 // size      216 bytes
