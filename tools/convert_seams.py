@@ -670,11 +670,15 @@ def widen(apply: bool) -> int:
 
 
 FREE = re.compile(
-    r"^(?P<alias>func_\w+)\s*\*const\s+(?P<name>\w+)\s*=\s*"
+    r"^(?P<alias>func\w*)\s*\*const\s+(?P<name>\w+)\s*=\s*"
     r"\((?P=alias)\s*\*\)\s*(?P<address>0x[0-9A-Fa-f]+)\s*;[^\n]*\n", re.M)
+# temp.h numbers its typedefs (`func5`) and omits `__cdecl`, so both are
+# optional here; the file is the tree's oldest and its shapes are not the ones
+# the newer headers use.
 FREE_TYPEDEF = re.compile(
-    r"typedef\s+(?P<ret>[\w:*&\s]+?)\s*\(\s*__cdecl\s+(?P<alias>func_\w+)"
-    r"\s*\)\s*\((?P<params>[^)]*)\)\s*;\n")
+    r"typedef\s+(?P<ret>[\w:*&\s]+?)\s*(?:\(\s*(?:__cdecl\s+)?"
+    r"(?P<alias>func\w*)\s*\)|(?:__cdecl\s+)?(?P<alias2>func\w*))"
+    r"\s*\((?P<params>[^)]*)\)\s*;\n")
 
 
 def free(apply: bool) -> int:
@@ -703,10 +707,22 @@ def free(apply: bool) -> int:
             ident = qualified_name(symbol)
             typedef = FREE_TYPEDEF.search(
                 "\n".join(files.values()).replace("\r", ""))
-            typedef = next((m for m in FREE_TYPEDEF.finditer(
-                "\n".join(files.values())) if m.group("alias") == alias), None)
+            typedef = next(
+                (m for m in FREE_TYPEDEF.finditer("\n".join(files.values()))
+                 if (m.group("alias") or m.group("alias2")) == alias), None)
             if typedef is None:
                 print(f"  - {pointer}: no `typedef ... (__cdecl {alias})`")
+                continue
+            # A TYPEDEF SHARED BY SEVERAL BINDINGS IS NOT EVIDENCE. temp.h
+            # reuses `func5`, `func13` and friends across functions whose
+            # signatures differ, so the typedef describes one of them and lies
+            # about the rest - `social_set(faction_id)` compiled against a
+            # three-parameter declaration.
+            sharing = sum(1 for m in FREE.finditer("\n".join(files.values()))
+                          if m.group("alias") == alias)
+            if sharing > 1:
+                print(f"  - {pointer}: {alias} is shared by {sharing} "
+                      f"bindings, so it describes at most one of them")
                 continue
             params = _split_params(typedef.group("params"))
             arguments = _argument_names(params)

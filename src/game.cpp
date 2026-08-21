@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "temp.h"
+#include "xpops.h"  // X_pop
 #include "game.h"
 #include "alpha.h"
 #include "base.h"
