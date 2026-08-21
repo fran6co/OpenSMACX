@@ -173,6 +173,14 @@ def why_not(entry: dict, dirty_here: set) -> str | None:
         if experiment:
             continue
         theirs, ours = path / name, REPO_ROOT / name
+        if not theirs.exists() and not ours.exists():
+            # BOTH SIDES DELETED IT, so they agree and there is nothing to
+            # collect. Reading `ours.exists()` alone got this exactly
+            # backwards: a deletion fired "exists only in the worktree" for a
+            # file that exists NOWHERE, and named it, which sent me looking
+            # for something that was not there. Every promotion deletes the
+            # artifact it supersedes, so this pinned worktrees permanently.
+            continue
         if not ours.exists():
             return f"{name} exists only in the worktree - uncollected"
         if name in dirty_here:
