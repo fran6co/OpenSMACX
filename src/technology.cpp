@@ -616,10 +616,10 @@ int __cdecl tech_val(int tech_id, int faction_id, BOOL simple_calc) {
     } else if (tech_id < 97) { // factions
         uint32_t factor = 1;
         uint32_t faction_id_2 = tech_id - MaxTechnologyNum;
-        if (!wants_to_attack_(faction_id, faction_id_2, 0)) {
+        if (!wants_to_attack(faction_id, faction_id_2, 0)) {
             factor = 2;
         }
-        if (!wants_to_attack_(faction_id_2, faction_id, 0)) {
+        if (!wants_to_attack(faction_id_2, faction_id, 0)) {
             factor++;
         }
         value_ret = factor * (factor / (PlayersData[faction_id].ai_fight + 2));
