@@ -632,8 +632,13 @@ void __cdecl set_agenda(uint32_t faction_id, uint32_t faction_id_with, uint32_t 
                                   BOOL set);
 uint32_t __cdecl has_agenda(uint32_t faction_id, uint32_t faction_id_with, 
                                       uint32_t agenda);
-BOOL __cdecl wants_to_attack(uint32_t faction_id, uint32_t faction_id_tgt,
-                                       int faction_id_unk);
+// `int`, NOT `uint32_t`. The image's symbol is `?wants_to_attack@@YAHHHH@Z` -
+// three H, three ints - and `faction.cpp` defines it that way. This declared a
+// `uint32_t` overload nothing defined, which stayed latent only because
+// nothing called it through the header; the moment technology.cpp did, it was
+// LNK2001.
+BOOL __cdecl wants_to_attack(int faction_id, int faction_id_tgt,
+                             int faction_id_unk);
 int __cdecl territory(int faction_id, int faction_id_with, int flags, int *base_id_out,
                                 int *count_out);
 void __cdecl rankings(int apply_ranks);

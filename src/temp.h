@@ -43,15 +43,11 @@ typedef void func5(int);
 // rel32`, which cost read_factions (0x00586F30) two call edges. See
 // pending_bodies.cpp.
 void __cdecl load_faction_art(int player_id);
-func5 *const wave_it = (func5 *)0x004455F0;
 typedef void *func6(char const *, int(*)(void));
 typedef int func7(LPCSTR, LPCSTR, int, LPCSTR, int(__cdecl *)());
 // 0x0048C0A0, a pending_bodies forwarder.
 int __cdecl popp(LPCSTR a1, LPCSTR a2, int a3, LPCSTR a4, int(__cdecl *a5)());
 typedef void *func9(void);
-func9 *const fixup_landmarks = (func9 *)0x00592940;
-func9 *const mapwin_terrain_fixup = (func9 *)0x00471240;
-func9 *const world_rainfall = (func9 *)0x005C4470;
 // A POINTER BINDING COSTS ITS CALLERS THE RATCHET. It compiles
 // `call dword ptr [name]` where the image has `call rel32`, so every caller
 // reads as a mismatch however right its body is - which is what held both of
@@ -61,7 +57,6 @@ func9 *const world_rainfall = (func9 *)0x005C4470;
 // the `E8`. Prefer a forwarder to a pointer for anything a recovered body
 // calls BY NAME; a pointer is only right for a genuine indirection.
 typedef BOOL func11(int, int, int);
-func11 *const wants_to_attack_ = (func11 *)0x0055BC80;
 typedef uint32_t func15(LPCSTR);
 // 0x005A94F0, a pending_bodies forwarder.
 uint32_t __cdecl save_daemon(LPCSTR a1);
@@ -69,8 +64,6 @@ typedef uint32_t func16(LPCSTR, BOOL);
 // 0x005A9760, a pending_bodies forwarder.
 uint32_t __cdecl load_daemon(LPCSTR a1, BOOL a2);
 typedef void func19(uint32_t);
-func19 *const social_set = (func19 *)0x005B4600;
-func19 *const consider_designs = (func19 *)0x00581260;
 typedef int func20(LPCSTR, int, int, LPCSTR, Sprite *);
 // 0x0048C650, a pending_bodies forwarder.
 int __cdecl popb(LPCSTR a1, int a2, int a3, LPCSTR a4, Sprite * a5);
@@ -192,3 +185,15 @@ MEASURED inline void __cdecl do_all_non_input() {
     do_net();
     check_net();
 }
+
+// DECLARED, NOT BOUND. A `T *const` binding compiles `call dword ptr [...]` at
+// every call site where the image emits `call rel32`, which costs the CALLER
+// its claim - see the pump family in this file, and the vector iterators in
+// `vector_teardown.h`. Each of these is forwarded in `pending_bodies.cpp`
+// until its body lands.
+void __cdecl wave_it(int a1);
+void __cdecl fixup_landmarks();
+void __cdecl mapwin_terrain_fixup();
+void __cdecl world_rainfall();
+void __cdecl social_set(uint32_t faction_id);
+void __cdecl consider_designs(uint32_t faction_id);

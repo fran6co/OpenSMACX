@@ -162,6 +162,38 @@ void __cdecl do_net() {
     PENDING_BODY(0x0062D5B0, pending)();
 }
 
+// Six callees `temp.h` bound as pointers. Each one cost its callers the image's
+// `E8`; see the note there.
+void __cdecl wave_it(int a1) {
+    typedef void(__cdecl *pending)(int);
+    PENDING_BODY(0x004455F0, pending)(a1);
+}
+
+void __cdecl fixup_landmarks() {
+    typedef void(__cdecl *pending)();
+    PENDING_BODY(0x00592940, pending)();
+}
+
+void __cdecl mapwin_terrain_fixup() {
+    typedef void(__cdecl *pending)();
+    PENDING_BODY(0x00471240, pending)();
+}
+
+void __cdecl world_rainfall() {
+    typedef void(__cdecl *pending)();
+    PENDING_BODY(0x005C4470, pending)();
+}
+
+void __cdecl social_set(uint32_t faction_id) {
+    typedef void(__cdecl *pending)(uint32_t);
+    PENDING_BODY(0x005B4600, pending)(faction_id);
+}
+
+void __cdecl consider_designs(uint32_t faction_id) {
+    typedef void(__cdecl *pending)(uint32_t);
+    PENDING_BODY(0x00581260, pending)(faction_id);
+}
+
 // ?message_data@@YAXHHHHHH@Z at 0x00592EE0 - broadcasts a game event. Two
 // files bound it as a pointer, with disagreeing return types; one forwarder.
 uint32_t __cdecl message_data(int a1, int a2, int a3, int a4, int a5, int a6) {
