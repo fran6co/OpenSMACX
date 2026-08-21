@@ -740,9 +740,9 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl owner_set(int x, int y, int faction_id) {
-    Map *tile = map_loc(x, y);
-    tile->val2 &= 0xF0;
-    tile->val2 |= faction_id & 0xF;
+    // Through a pointer to the field; see `code_set` for why.
+    uint8_t *const field = &map_loc(x, y)->val2;
+    *field = static_cast<uint8_t>((*field & 0xF0) | (faction_id & 0xF));
 }
 
 /*
@@ -758,9 +758,9 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl site_set(int x, int y, int site) {
-    Map *tile = map_loc(x, y);
-    tile->val2 &= 0x0F;
-    tile->val2 |= site << 4;
+    // Through a pointer to the field; see `code_set` for why.
+    uint8_t *const field = &map_loc(x, y)->val2;
+    *field = static_cast<uint8_t>((*field & 0x0F) | (site << 4));
 }
 
 /*
@@ -971,7 +971,7 @@ Status: Complete
 
 /*
 Purpose: Set the code for the specified tile which keeps track of tile sequence order for landmarks.
-// ORIGINAL: 0x00591E00 ?code_set@@YAXHHH@Z 0x00591E00-0x00591E45
+// ORIGINAL: 0x00591E00 ?code_set@@YAXHHH@Z 0x00591E00-0x00591E45 BYTE_EXACT
 // size      69 bytes
 // prototype void (__cdecl ?code_set@@YAXHHH@Z)(int xCoord, int yCoord, int)
 // callers   16   call targets   0
@@ -982,9 +982,12 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl code_set(int x, int y, int code) {
-    Map *tile = map_loc(x, y);
-    tile->bit2 &= 0xFFFFFF;
-    tile->bit2 |= code << 24;
+    // THROUGH A POINTER TO THE FIELD. The image folds the member offset into
+    // the address computation - `lea eax, [ecx + eax*4 + 0xc]` at 0x00591E29 -
+    // and reading and writing `tile->bit2` twice puts the 0xc on the `mov`
+    // instead. Taking `&tile->bit2` once is what produces the image's lea.
+    uint32_t *const field = &map_loc(x, y)->bit2;
+    *field = (*field & 0xFFFFFF) | (code << 24);
     UnkBitfield1 |= 4; // TODO: identify variable + value
 }
 
