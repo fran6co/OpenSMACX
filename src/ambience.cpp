@@ -728,6 +728,11 @@ Purpose: Run the shared Ambience constructor, publish this variant's vtable,
          the storage held survives there.
 
 // ORIGINAL: 0x004471F0 ??0FactionAmbience@@QAE@XZ 0x004471F0-0x00447219
+// symbol    ?construct@FactionAmbience@@QAEPAV1@XZ
+//   The catalogued name is the mangled CONSTRUCTOR, `??0FactionAmbience@@QAE@XZ`,
+//   but this tree spells the body as a `construct()` METHOD - see
+//   `Win::construct`, the idiom it follows. Without this fact `measure`
+//   cannot find the body in the object at all and refuses.
 // size      41 bytes
 // prototype void (__thiscall ??0FactionAmbience@@QAE@XZ)(FactionAmbience* this)
 // callers   1   call targets   1
@@ -737,8 +742,11 @@ Purpose: Run the shared Ambience constructor, publish this variant's vtable,
 Return Value: `this`
 Status: Complete
 */
-void FactionAmbience::construct() {
-    ambience_construct_redirect(reinterpret_cast<Ambience *>(this), nullptr);
+FactionAmbience *FactionAmbience::construct() {
+    // THE METHOD, not the two-argument redirect: passing `nullptr` for the
+    // redirect's unused second argument materialises `xor edx, edx`, one
+    // instruction the image does not have.
+    reinterpret_cast<Ambience *>(this)->Ambience::construct();
     *reinterpret_cast<volatile uint32_t *>(this) = FactionAmbienceVtable;
     field_58_ = 0;
     field_5C_ = 0;
@@ -747,6 +755,7 @@ void FactionAmbience::construct() {
     field_6C_ = 0;
     field_6D_ = 0;
     field_68_ = 0;
+    return this;
 }
 
 FactionAmbience *__fastcall faction_ambience_construct_redirect(
@@ -758,6 +767,11 @@ FactionAmbience *__fastcall faction_ambience_construct_redirect(
 /*
 Purpose: As 004471F0, with the MAmbience vtable and one more field.
 // ORIGINAL: 0x00447310 ??0MAmbience@@QAE@XZ 0x00447310-0x0044733C
+// symbol    ?construct@MAmbience@@QAEPAV1@XZ
+//   The catalogued name is the mangled CONSTRUCTOR, `??0MAmbience@@QAE@XZ`,
+//   but this tree spells the body as a `construct()` METHOD - see
+//   `Win::construct`, the idiom it follows. Without this fact `measure`
+//   cannot find the body in the object at all and refuses.
 // size      44 bytes
 // prototype void (__thiscall ??0MAmbience@@QAE@XZ)(MAmbience* this)
 // callers   0   call targets   1
@@ -767,8 +781,11 @@ Purpose: As 004471F0, with the MAmbience vtable and one more field.
 Return Value: `this`
 Status: Complete
 */
-void MAmbience::construct() {
-    ambience_construct_redirect(reinterpret_cast<Ambience *>(this), nullptr);
+MAmbience *MAmbience::construct() {
+    // THE METHOD, not the two-argument redirect: passing `nullptr` for the
+    // redirect's unused second argument materialises `xor edx, edx`, one
+    // instruction the image does not have.
+    reinterpret_cast<Ambience *>(this)->Ambience::construct();
     *reinterpret_cast<volatile uint32_t *>(this) = MAmbienceVtable;
     field_58_ = 0;
     field_5C_ = 0;
@@ -778,6 +795,7 @@ void MAmbience::construct() {
     field_6D_ = 0;
     field_68_ = 0;
     field_70_ = 0;
+    return this;
 }
 
 MAmbience *__fastcall m_ambience_construct_redirect(MAmbience *self, void *) {
@@ -788,6 +806,11 @@ MAmbience *__fastcall m_ambience_construct_redirect(MAmbience *self, void *) {
 /*
 Purpose: As 004471F0, with the SAmbience vtable and two more fields.
 // ORIGINAL: 0x00447850 ??0SAmbience@@QAE@XZ 0x00447850-0x0044787F
+// symbol    ?construct@SAmbience@@QAEPAV1@XZ
+//   The catalogued name is the mangled CONSTRUCTOR, `??0SAmbience@@QAE@XZ`,
+//   but this tree spells the body as a `construct()` METHOD - see
+//   `Win::construct`, the idiom it follows. Without this fact `measure`
+//   cannot find the body in the object at all and refuses.
 // size      47 bytes
 // prototype void (__thiscall ??0SAmbience@@QAE@XZ)(SAmbience* this)
 // callers   0   call targets   1
@@ -797,8 +820,11 @@ Purpose: As 004471F0, with the SAmbience vtable and two more fields.
 Return Value: `this`
 Status: Complete
 */
-void SAmbience::construct() {
-    ambience_construct_redirect(reinterpret_cast<Ambience *>(this), nullptr);
+SAmbience *SAmbience::construct() {
+    // THE METHOD, not the two-argument redirect: passing `nullptr` for the
+    // redirect's unused second argument materialises `xor edx, edx`, one
+    // instruction the image does not have.
+    reinterpret_cast<Ambience *>(this)->Ambience::construct();
     *reinterpret_cast<volatile uint32_t *>(this) = SAmbienceVtable;
     field_58_ = 0;
     field_5C_ = 0;
@@ -809,6 +835,7 @@ void SAmbience::construct() {
     field_68_ = 0;
     field_70_ = 0;
     field_74_ = 0;
+    return this;
 }
 
 SAmbience *__fastcall s_ambience_construct_redirect(SAmbience *self, void *) {
@@ -819,6 +846,11 @@ SAmbience *__fastcall s_ambience_construct_redirect(SAmbience *self, void *) {
 /*
 Purpose: As 004471F0, with the GAmbience vtable and one more field.
 // ORIGINAL: 0x00447B90 ??0GAmbience@@QAE@XZ 0x00447B90-0x00447BBC
+// symbol    ?construct@GAmbience@@QAEPAV1@XZ
+//   The catalogued name is the mangled CONSTRUCTOR, `??0GAmbience@@QAE@XZ`,
+//   but this tree spells the body as a `construct()` METHOD - see
+//   `Win::construct`, the idiom it follows. Without this fact `measure`
+//   cannot find the body in the object at all and refuses.
 // size      44 bytes
 // prototype void (__thiscall ??0GAmbience@@QAE@XZ)(GAmbience* this)
 // callers   0   call targets   1
@@ -828,8 +860,11 @@ Purpose: As 004471F0, with the GAmbience vtable and one more field.
 Return Value: `this`
 Status: Complete
 */
-void GAmbience::construct() {
-    ambience_construct_redirect(reinterpret_cast<Ambience *>(this), nullptr);
+GAmbience *GAmbience::construct() {
+    // THE METHOD, not the two-argument redirect: passing `nullptr` for the
+    // redirect's unused second argument materialises `xor edx, edx`, one
+    // instruction the image does not have.
+    reinterpret_cast<Ambience *>(this)->Ambience::construct();
     *reinterpret_cast<volatile uint32_t *>(this) = GAmbienceVtable;
     field_58_ = 0;
     field_5C_ = 0;
@@ -839,6 +874,7 @@ void GAmbience::construct() {
     field_6D_ = 0;
     field_68_ = 0;
     field_70_ = 0;
+    return this;
 }
 
 GAmbience *__fastcall g_ambience_construct_redirect(GAmbience *self, void *) {
