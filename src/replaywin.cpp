@@ -18,6 +18,9 @@
 #include "stdafx.h"
 #include "replaywin.h"
 #include "worldwin.h"
+#include "basebutton.h"
+#include "menu.h"
+#include "win.h"
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
@@ -150,16 +153,4 @@ void __cdecl fn_005adbd0(ReplayWin* a1) {
     }
 }
 
-func_replay_win_timer_callback ReplayWinTimerCallback =
-    original_method<func_replay_win_timer_callback>(0x005AD9E0);
 
-/*
-Purpose: Advance the replay one tick. The body at 0x005AD9E0 is NOT recovered;
-         this is a seam to the original image, not a recovery, and
-         deliberately carries no `Original Offset:` line so the catalogue does
-         not mistake it for one.
-Status: Forwarded to the original image
-*/
-void ReplayWin::timer_callback() {
-    (ORIGINAL(this)->*ReplayWinTimerCallback)();
-}

@@ -335,5 +335,3 @@ int __fastcall main_interface_on_iface_button_pressed_redirect(MainInterface *se
 // The click handler noted on the declaration above is not recovered; it
 // forwards to the original image. ?on_iface_button_clicked@MainInterface@@QAEXH@Z
 // is public, __thiscall, void(int).
-typedef void (OriginalObject::*func_main_interface_on_iface_button_clicked)(int);
-extern func_main_interface_on_iface_button_clicked MainInterfaceOnIfaceButtonClicked;

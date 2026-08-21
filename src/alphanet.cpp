@@ -10,6 +10,7 @@
 #include "stdafx.h"
 #include "original_seam.h"
 #include "alphanet.h"
+#include "spritebox.h"
 
 /*
 Purpose: Convert a multiplayer process ID to its one-based player index.

@@ -126,5 +126,3 @@ void __fastcall menu_on_adjust_pulldown_pos_redirect(Menu *self, void *, int *a1
 // the DLL has nothing to link that call against. It stands in with a forward
 // to the original image until the body lands.
 //   ?mouse_move@Menu@@QAEXHH@Z  0x005FBDB0  public, __thiscall, void(int, int)
-typedef void (OriginalObject::*func_menu_mouse_move)(int a1, int a2);
-extern func_menu_mouse_move MenuMouseMove;

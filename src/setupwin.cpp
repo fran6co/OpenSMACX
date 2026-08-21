@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "setupwin.h"
+#include "filewin.h"
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
@@ -152,16 +153,4 @@ int SetupWin::do_menu(char* a1, int a2, int a3) {
     }
 }
 
-func_setup_win_do_menu_rightside SetupWinDoMenuRightside =
-    original_method<func_setup_win_do_menu_rightside>(0x004ADB70);
 
-/*
-Purpose: Run the right-hand side of the setup menu. The body at 0x004ADB70 is
-         NOT recovered; this is a seam to the original image, not a recovery,
-         and deliberately carries no `Original Offset:` line so the catalogue
-         does not mistake it for one.
-Status: Forwarded to the original image
-*/
-int SetupWin::do_menu_rightside(char* a1, int a2) {
-    return (ORIGINAL(this)->*SetupWinDoMenuRightside)(a1, a2);
-}

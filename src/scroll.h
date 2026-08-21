@@ -177,6 +177,3 @@ int __fastcall scroll_on_left_click_redirect(Scroll *self, void *, int a1, int a
 // are public, __thiscall, void(int), and both are forwarded to the original
 // image. Bound through rebindable seams so tests can substitute probes and so
 // each seam can later be repointed at a recovered body.
-typedef void (OriginalObject::*func_scroll_on_mousewheel)(int);
-extern func_scroll_on_mousewheel ScrollOriginalOnMousewheelDown;  // 0x00606320
-extern func_scroll_on_mousewheel ScrollOriginalOnMousewheelUp;    // 0x00606440

@@ -18,6 +18,8 @@
 #include "stdafx.h"
 #include "original_seam.h"
 #include "popmenu.h"
+#include "dialog.h"
+#include "sounddevice.h"
 
 func_base_pop_init BasePopOriginalInit = original_method<func_base_pop_init>(0x006015B0);
 

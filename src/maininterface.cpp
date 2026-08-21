@@ -18,6 +18,8 @@
 #include "stdafx.h"
 #include "maininterface.h"
 #include "worldwin.h"
+#include "graphicwin.h"
+#include "filewin.h"
 
  /*
  Purpose: Set the flat button's bubble text.
@@ -237,16 +239,4 @@ int __fastcall main_interface_on_iface_button_pressed_redirect(MainInterface *se
     return self->on_iface_button_pressed(a1);
 }
 
-func_main_interface_on_iface_button_clicked MainInterfaceOnIfaceButtonClicked =
-    original_method<func_main_interface_on_iface_button_clicked>(0x0045D170);
 
-/*
-Purpose: Act on a click of the interface button `a1`.
-         Body unrecovered; forwards to the original image.
-Forwards To: 0045D170
-Return Value: n/a
-Status: Forwarder
-*/
-void MainInterface::on_iface_button_clicked(int a1) {
-    (ORIGINAL(this)->*MainInterfaceOnIfaceButtonClicked)(a1);
-}

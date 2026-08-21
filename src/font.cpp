@@ -20,6 +20,9 @@
 #include "font.h"
 #include "general.h"
 #include "vector_teardown.h"
+#include "dialog.h"
+#include "sounddevice.h"
+#include "spritebox.h"
 
 HDC Font::FontHDC;
 int Font::FontInitCount;

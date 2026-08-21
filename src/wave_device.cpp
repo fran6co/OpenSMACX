@@ -19,6 +19,8 @@
 #include "original_seam.h"
 #include "wave.h"
 #include "wave_device.h"
+#include "dialog.h"
+#include "sounddevice.h"
 #include <cstring>
 
 /*

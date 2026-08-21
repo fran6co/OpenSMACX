@@ -19,6 +19,7 @@
 #include "original_seam.h"
 #include "planwin.h"
 #include "mapwin.h"
+#include "spritebox.h"
 #include <cstring>
 
 /*

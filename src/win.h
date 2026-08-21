@@ -517,15 +517,6 @@ int __fastcall win_is_descendant_redirect(Win *self, void *, Win *candidate);
 //   ?on_mouse_move@Win@@QAEXHHIH@Z  void(int, int, unsigned int, int)
 //   ?on_nc_hittest@Win@@QAEHHH@Z    int(int, int)
 //   ?release_modal@Win@@QAEXXZ  void()
-typedef void (OriginalObject::*func_win_hide)();
-extern func_win_hide WinOriginalHide;  // 0x005EDCD0
 
-typedef void (OriginalObject::*func_win_on_mouse_move)(
-    int a1, int a2, unsigned int a3, int a4);
-extern func_win_on_mouse_move WinOriginalOnMouseMove;  // 0x005F6320
 
-typedef int (OriginalObject::*func_win_on_nc_hittest)(int a1, int a2);
-extern func_win_on_nc_hittest WinOriginalOnNcHittest;  // 0x005F5AD0
 
-typedef void (OriginalObject::*func_win_release_modal)();
-extern func_win_release_modal WinOriginalReleaseModal;  // 0x005EE280

@@ -23,6 +23,10 @@
 // must be complete.
 #include "subinterface.h"
 #include "worldwin.h"
+#include "menu.h"
+#include "maininterface.h"
+#include "win.h"
+#include "spritebox.h"
 
 // Unclassified data seam: the Datalink singleton object, not a call target.
 Datalink *DatalinkMain= (Datalink *)(0x00703EA0);
@@ -662,16 +666,4 @@ void Datalink::hide() {
     }
 }
 
-func_datalink_draw_entry DatalinkDrawEntry =
-    original_method<func_datalink_draw_entry>(0x0042BF10);
 
-/*
- * A forwarder, not a recovery. on_selected above reaches draw_entry with a
- * direct `call rel32`, so the DLL must resolve the symbol, but the body at
- * 0x0042BF10 is not decoded yet. No `Original Offset:` line by design - that
- * annotation marks a recovered body and is indexed by address, so claiming it
- * here would aim the census at a seam.
- */
-void Datalink::draw_entry() {
-    (ORIGINAL(this)->*DatalinkDrawEntry)();
-}

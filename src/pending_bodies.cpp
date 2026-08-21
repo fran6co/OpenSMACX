@@ -53,6 +53,18 @@
 #include "infowin.h"
 #include "stringbox.h"
 #include "worldwin.h"
+#include "basebutton.h"
+#include "dipedit.h"
+#include "designwin.h"
+#include "councwin.h"
+#include "graphicwin.h"
+#include "sounddevice.h"
+#include "menu.h"
+#include "reportwin.h"
+#include "reportif.h"
+#include "setupwin.h"
+#include "scroll.h"
+#include "replaywin.h"
 
 /*
  * THE FRONTIER.
@@ -354,6 +366,156 @@ void StringBox::add_fixup() {  // 0x00629490
 void WorldWin::click(int a1, int a2, int button, int is_double) {  // 0x004C3D40
     typedef void(__fastcall *pending)(WorldWin *, void *, int, int, int, int);
     PENDING_BODY(0x004C3D40, pending)(this, nullptr, a1, a2, button, is_double);
+}
+
+void BaseButton::timer_callback(int a1) {  // 0x00607B30
+    typedef void(__fastcall *pending)(BaseButton *, void *, int);
+    PENDING_BODY(0x00607B30, pending)(this, nullptr, a1);
+}
+
+void DipEdit::read_check() {  // 0x004DA990
+    typedef void(__fastcall *pending)(DipEdit *, void *);
+    PENDING_BODY(0x004DA990, pending)(this, nullptr);
+}
+
+void DipEdit::do_check() {  // 0x004DADA0
+    typedef void(__fastcall *pending)(DipEdit *, void *);
+    PENDING_BODY(0x004DADA0, pending)(this, nullptr);
+}
+
+int Dialog::init(int a1) {  // 0x006095F0
+    typedef int(__fastcall *pending)(Dialog *, void *, int);
+    return PENDING_BODY(0x006095F0, pending)(this, nullptr, a1);
+}
+
+int Dialog::init(RECT * a1, int a2) {  // 0x00609470
+    typedef int(__fastcall *pending)(Dialog *, void *, RECT *, int);
+    return PENDING_BODY(0x00609470, pending)(this, nullptr, a1, a2);
+}
+
+int Dialog::init(Heap * a1) {  // 0x006098D0
+    typedef int(__fastcall *pending)(Dialog *, void *, Heap *);
+    return PENDING_BODY(0x006098D0, pending)(this, nullptr, a1);
+}
+
+int Dialog::init(int a1, int a2, int a3, int a4, Heap * a5) {  // 0x00609730
+    typedef int(__fastcall *pending)(Dialog *, void *, int, int, int, int, Heap *);
+    return PENDING_BODY(0x00609730, pending)(this, nullptr, a1, a2, a3, a4, a5);
+}
+
+void Datalink::draw_entry() {  // 0x0042BF10
+    typedef void(__fastcall *pending)(Datalink *, void *);
+    PENDING_BODY(0x0042BF10, pending)(this, nullptr);
+}
+
+void DesignWin::select_special(int a1) {  // 0x0043AC70
+    typedef void(__fastcall *pending)(DesignWin *, void *, int);
+    PENDING_BODY(0x0043AC70, pending)(this, nullptr, a1);
+}
+
+void CouncWin::draw_leader(int factionID) {  // 0x00425DB0
+    typedef void(__fastcall *pending)(CouncWin *, void *, int);
+    PENDING_BODY(0x00425DB0, pending)(this, nullptr, factionID);
+}
+
+void GraphicWin::soft_update() {  // 0x005D5890
+    typedef void(__fastcall *pending)(GraphicWin *, void *);
+    PENDING_BODY(0x005D5890, pending)(this, nullptr);
+}
+
+void GraphicWin::update(GraphicWin * a1) {  // 0x005D56B0
+    typedef void(__fastcall *pending)(GraphicWin *, void *, GraphicWin *);
+    PENDING_BODY(0x005D56B0, pending)(this, nullptr, a1);
+}
+
+void FileWin::UNK4() {  // 0x006146A0
+    typedef void(__fastcall *pending)(FileWin *, void *);
+    PENDING_BODY(0x006146A0, pending)(this, nullptr);
+}
+
+int Midi_Device::init(void * a1, unsigned long a2) {  // 0x004C57A0
+    typedef int(__fastcall *pending)(Midi_Device *, void *, void *, unsigned long);
+    return PENDING_BODY(0x004C57A0, pending)(this, nullptr, a1, a2);
+}
+
+int Wave_In_Device::init(void * a1, unsigned long a2) {  // 0x004C5A10
+    typedef int(__fastcall *pending)(Wave_In_Device *, void *, void *, unsigned long);
+    return PENDING_BODY(0x004C5A10, pending)(this, nullptr, a1, a2);
+}
+
+void Menu::mouse_move(int a1, int a2) {  // 0x005FBDB0
+    typedef void(__fastcall *pending)(Menu *, void *, int, int);
+    PENDING_BODY(0x005FBDB0, pending)(this, nullptr, a1, a2);
+}
+
+int Sprite::extract(Buffer * a1, int a2, int a3, int a4, int a5, int a6, TexHeap * a7) {  // 0x005E39A0
+    typedef int(__fastcall *pending)(Sprite *, void *, Buffer *, int, int, int, int, int, TexHeap *);
+    return PENDING_BODY(0x005E39A0, pending)(this, nullptr, a1, a2, a3, a4, a5, a6, a7);
+}
+
+void ReportWin::sat_anim() {  // 0x0049FE40
+    typedef void(__fastcall *pending)(ReportWin *, void *);
+    PENDING_BODY(0x0049FE40, pending)(this, nullptr);
+}
+
+void ReportWin::exp_anim() {  // 0x004A0100
+    typedef void(__fastcall *pending)(ReportWin *, void *);
+    PENDING_BODY(0x004A0100, pending)(this, nullptr);
+}
+
+void MainInterface::on_iface_button_clicked(int a1) {  // 0x0045D170
+    typedef void(__fastcall *pending)(MainInterface *, void *, int);
+    PENDING_BODY(0x0045D170, pending)(this, nullptr, a1);
+}
+
+void ReportIf::bl_anim() {  // 0x004A4060
+    typedef void(__fastcall *pending)(ReportIf *, void *);
+    PENDING_BODY(0x004A4060, pending)(this, nullptr);
+}
+
+void Win::hide() {  // 0x005EDCD0
+    typedef void(__fastcall *pending)(Win *, void *);
+    PENDING_BODY(0x005EDCD0, pending)(this, nullptr);
+}
+
+void Win::on_mouse_move(int a1, int a2, unsigned int a3, int a4) {  // 0x005F6320
+    typedef void(__fastcall *pending)(Win *, void *, int, int, unsigned int, int);
+    PENDING_BODY(0x005F6320, pending)(this, nullptr, a1, a2, a3, a4);
+}
+
+int Win::on_nc_hittest(int a1, int a2) {  // 0x005F5AD0
+    typedef int(__fastcall *pending)(Win *, void *, int, int);
+    return PENDING_BODY(0x005F5AD0, pending)(this, nullptr, a1, a2);
+}
+
+void Win::release_modal() {  // 0x005EE280
+    typedef void(__fastcall *pending)(Win *, void *);
+    PENDING_BODY(0x005EE280, pending)(this, nullptr);
+}
+
+int SetupWin::do_menu_rightside(char *a1, int a2) {  // 0x004ADB70
+    typedef int(__fastcall *pending)(SetupWin *, void *, char *, int);
+    return PENDING_BODY(0x004ADB70, pending)(this, nullptr, a1, a2);
+}
+
+void SpriteBox::close() {  // 0x00610280
+    typedef void(__fastcall *pending)(SpriteBox *, void *);
+    PENDING_BODY(0x00610280, pending)(this, nullptr);
+}
+
+void Scroll::on_mousewheel_down(int a1) {  // 0x00606320
+    typedef void(__fastcall *pending)(Scroll *, void *, int);
+    PENDING_BODY(0x00606320, pending)(this, nullptr, a1);
+}
+
+void Scroll::on_mousewheel_up(int a1) {  // 0x00606440
+    typedef void(__fastcall *pending)(Scroll *, void *, int);
+    PENDING_BODY(0x00606440, pending)(this, nullptr, a1);
+}
+
+void ReplayWin::timer_callback() {  // 0x005AD9E0
+    typedef void(__fastcall *pending)(ReplayWin *, void *);
+    PENDING_BODY(0x005AD9E0, pending)(this, nullptr);
 }
 
 // ?write_raw_l@Buffer@@QAEHPADHHH@Z at 0x005DBD00 - 1475 bytes, the raster

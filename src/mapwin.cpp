@@ -21,6 +21,7 @@
 #include "console.h"
 #include "statuswin.h"
 #include "worldwin.h"
+#include "spritebox.h"
 #include <cstring>
 
 /*

@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "original_seam.h"
 #include "netmsg.h"
+#include "spritebox.h"
 
 func_popup_hide PopupOriginalHide = original_method<func_popup_hide>(0x00404A80);
 

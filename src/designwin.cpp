@@ -237,18 +237,3 @@ void DesignWin::select_special_2() {
 // defined earlier. Measured - without the pragma cl reports C4711 at
 // designwin.cpp(153) and (161), the two select_special_N thunks, and each is
 // an 8-byte BYTE_EXACT `call rel32` today.
-#pragma auto_inline(off)
-func_design_win_select_special DesignWinSelectSpecial =
-    original_method<func_design_win_select_special>(0x0043AC70);
-
-/*
-Purpose: Select one of the design workshop's special abilities. The body at
-         0x0043AC70 is NOT recovered; this is a seam to the original image, not
-         a recovery, and deliberately carries no `Original Offset:` line so the
-         catalogue does not mistake it for one.
-Status: Forwarded to the original image
-*/
-void DesignWin::select_special(int a1) {
-    (ORIGINAL(this)->*DesignWinSelectSpecial)(a1);
-}
-#pragma auto_inline(on)

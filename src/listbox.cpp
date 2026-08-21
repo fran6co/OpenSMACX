@@ -19,6 +19,7 @@
 #include "original_seam.h"
 #include "listbox.h"
 #include "vtable_shim.h"
+#include "spritebox.h"
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.

@@ -22,6 +22,8 @@
 
 #include <new>
 #include "general.h"   // mem_get, for the placeholder pixel
+#include "filewin.h"
+#include "spritebox.h"
 
 int *SpriteMemoryUsed = reinterpret_cast<int *>(0x009B6618);
 func_sprite_free *SpriteFree = (func_sprite_free *)0x00644EF2;
@@ -258,13 +260,7 @@ int __cdecl sub_63ce20() {
 // Sheet extraction reached by the per-control init_class bodies. Not yet
 // recovered; it forwards through the seam. `create_blank` used to sit
 // here beside it and is promoted below.
-typedef int (OriginalObject::*func_sprite_extract)(Buffer *, int, int, int, int, int, TexHeap *);
-static func_sprite_extract SpriteExtractOriginal = original_method<func_sprite_extract>(0x005E39A0);
 
-int Sprite::extract(Buffer *buffer, int a, int b, int c, int width, int height,
-                    TexHeap *heap) {
-    return (ORIGINAL(this)->*SpriteExtractOriginal)(buffer, a, b, c, width, height, heap);
-}
 
 
 

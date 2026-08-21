@@ -143,5 +143,3 @@ void __fastcall base_button_on_key_up_redirect(
 
 // The timer tick declared above is not recovered; it forwards to the original
 // image. ?timer_callback@BaseButton@@QAEXH@Z is public, __thiscall, void(int).
-typedef void (OriginalObject::*func_base_button_timer_callback)(int);
-extern func_base_button_timer_callback BaseButtonTimerCallback;

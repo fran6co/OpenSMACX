@@ -19,6 +19,9 @@
 #include "original_seam.h"
 #include "scroll.h"
 #include "worldwin.h"
+#include "dialog.h"
+#include "sounddevice.h"
+#include "spritebox.h"
 
 Win **ScrollCurrentWin = reinterpret_cast<Win **>(0x009B7AB8);
 // AN OBJECT, NOT A POINTER TO A FIXED ADDRESS: the pointer form costs a
@@ -997,27 +1000,4 @@ void *__fastcall scroll_scalar_dtor_redirect(Scroll *self, void *,
     return self;
 }
 
-func_scroll_on_mousewheel ScrollOriginalOnMousewheelDown =
-    original_method<func_scroll_on_mousewheel>(0x00606320);
-func_scroll_on_mousewheel ScrollOriginalOnMousewheelUp =
-    original_method<func_scroll_on_mousewheel>(0x00606440);
 
-/*
-Purpose: Page the scrollbar one wheel notch towards its maximum.
-Forwards To: 00606320
-Return Value: n/a
-Status: Original dependency - forwards to the original image.
-*/
-void Scroll::on_mousewheel_down(int a1) {
-    (ORIGINAL(this)->*ScrollOriginalOnMousewheelDown)(a1);
-}
-
-/*
-Purpose: Page the scrollbar one wheel notch towards its minimum.
-Forwards To: 00606440
-Return Value: n/a
-Status: Original dependency - forwards to the original image.
-*/
-void Scroll::on_mousewheel_up(int a1) {
-    (ORIGINAL(this)->*ScrollOriginalOnMousewheelUp)(a1);
-}

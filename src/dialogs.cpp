@@ -14,6 +14,7 @@
 #include "original_seam.h"
 #include "radiobutton.h"  // RadioButton::close (source-owned)
 #include "worldwin.h"
+#include "spritebox.h"
 #include <cstring>
 
 /*

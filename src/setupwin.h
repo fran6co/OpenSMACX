@@ -164,5 +164,3 @@ int __fastcall setup_win_unk4_redirect(SetupWin *self, void *, int a1);
 // with a forward to the original image until the body lands.
 //   ?do_menu_rightside@SetupWin@@QAEHPADH@Z  0x004ADB70
 //     public, __thiscall, int(char *, int)
-typedef int (OriginalObject::*func_setup_win_do_menu_rightside)(char *a1, int a2);
-extern func_setup_win_do_menu_rightside SetupWinDoMenuRightside;

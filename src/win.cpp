@@ -22,6 +22,9 @@
 #include "palette.h"
 #include "general.h"
 #include "temp.h"
+#include "dialog.h"
+#include "sounddevice.h"
+#include "menu.h"
 #include <ddraw.h>  // IDirectDrawSurface::GetDC / ReleaseDC in the hdc pair
 
 const uint32_t WinPrimaryVtable = 0x0066FDD0;
@@ -1545,39 +1548,7 @@ void Win::on_mousewheel_up_vert(int a1) {
 // the direct calls from the derived windows something to link against. Kept
 // at the end of the file so nothing above - every body here carries an
 // Original Offset the census reads by line number - moves.
-func_win_hide WinOriginalHide = original_method<func_win_hide>(0x005EDCD0);
-func_win_on_mouse_move WinOriginalOnMouseMove =
-    original_method<func_win_on_mouse_move>(0x005F6320);
-func_win_on_nc_hittest WinOriginalOnNcHittest =
-    original_method<func_win_on_nc_hittest>(0x005F5AD0);
-func_win_release_modal WinOriginalReleaseModal =
-    original_method<func_win_release_modal>(0x005EE280);
 
-void Win::hide() {
-    (ORIGINAL(this)->*WinOriginalHide)();
-}
-
-/*
-// ORIGINAL: 0x005F6320 ?on_mouse_move@Win@@QAEXHHIH@Z 0x005F6320-0x005F63BB
-// size      155 bytes
-// prototype void (__thiscall ?on_mouse_move@Win@@QAEXHHIH@Z)(Win* this, int, int, unsigned int, int)
-// callers   1   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// indirect  0x005F6360 0x005F636B 0x005F637B 0x005F6386 0x005F639B 0x005F63A9 0x005F63B4
-*/
-void Win::on_mouse_move(int a1, int a2, unsigned int a3, int a4) {
-    (ORIGINAL(this)->*WinOriginalOnMouseMove)(a1, a2, a3, a4);
-}
-
-int Win::on_nc_hittest(int a1, int a2) {
-    return (ORIGINAL(this)->*WinOriginalOnNcHittest)(a1, a2);
-}
-
-void Win::release_modal() {
-    (ORIGINAL(this)->*WinOriginalReleaseModal)();
-}
 
 /*
 Purpose: Route a left button press - find the window under the pointer, ask

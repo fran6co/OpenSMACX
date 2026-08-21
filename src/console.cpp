@@ -27,6 +27,8 @@
 #include "temp.h"
 #include "fx.h"
 #include "hypothesis_layouts.h"
+#include "graphicwin.h"
+#include "spritebox.h"
 #include <cstring>
 
 PrefWin *ConsolePrefWin= (PrefWin *)(0x008578D8);
