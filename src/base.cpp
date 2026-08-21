@@ -33,7 +33,6 @@ BaseSecretProject *SecretProject = (BaseSecretProject *)0x009A6514; // [64]
 int BaseIDCurrentSelected;  // 0x00689370
 int BaseCurrentCount;  // 0x009A64CC
 int BaseFindDist;  // 0x0090EA04
-Base **BaseCurrent = (Base **)0x0090EA30;
 uint32_t ScnVictFacilityObj;  // 0x009A6814
 uint32_t BaseUpkeepStage;  // 0x0090EA34
 int BaseCurrentGrowthRate;  // 0x0090E918

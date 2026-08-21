@@ -693,8 +693,6 @@ int __fastcall win_set_cursor_redirect(Win *self, void *, int name) {
     return self->set_cursor(name);
 }
 
-int *WinBubbleActive = reinterpret_cast<int *>(0x009B7A50);
-int *WinBubbleCompanion = reinterpret_cast<int *>(0x009B7A4C);
 
 // The globals `Win::flip` reaches, all of them past `.data`'s stored bytes
 // and so zero-fill - real objects for the same reason `WinHdcRefCount` and
@@ -1031,11 +1029,10 @@ int __fastcall win_on_set_cursor_redirect(
     return self->on_set_cursor(a, b, c);
 }
 
-int *WinDefaultFocus = reinterpret_cast<int *>(0x009B7AEC);
 
 /*
 Purpose: Record the window that receives focus by default.
-// ORIGINAL: 0x005F2CE0 ?set_def_focus@Win@@QAAXPAUWin@@@Z 0x005F2CE0-0x005F2CEA
+// ORIGINAL: 0x005F2CE0 ?set_def_focus@Win@@QAAXPAUWin@@@Z 0x005F2CE0-0x005F2CEA BYTE_EXACT
 // symbol    ?set_def_focus@Win@@SAXH@Z
 // size      10 bytes
 // prototype 

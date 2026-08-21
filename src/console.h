@@ -268,7 +268,7 @@ int32_t *const ConsoleControlTurnActive = (int32_t *)0x0093A938;  // 0x0093A938
 
 // on_sys_close raises the flag the turn loop watches. The dword at 0x009B2068
 // is the same one src/scenario.cpp binds as `ExitTurnLoopAddress`.
-extern int32_t *ConsoleExitTurnLoop;  // 0x009B2068
+int32_t *const ConsoleExitTurnLoop = (int32_t *)0x009B2068;  // 0x009B2068
 
 // menu_update hands the console's selected-vehicle id to the MainMenu the
 // original embeds at +0x22A2C. MainMenu::check (0x00460DD0, 4782 bytes) is

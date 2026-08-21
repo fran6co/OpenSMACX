@@ -23,7 +23,6 @@
 #include "sounddevice.h"
 #include "spritebox.h"
 
-Win **ScrollCurrentWin = reinterpret_cast<Win **>(0x009B7AB8);
 // AN OBJECT, NOT A POINTER TO A FIXED ADDRESS: the pointer form costs a
 // load at every use where the image addresses the storage directly, and
 // the address is terranx.exe's data, unmapped in a standalone build.

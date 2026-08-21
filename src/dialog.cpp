@@ -353,7 +353,6 @@ uint32_t DialogListVtable = 0x006693A4;
 uint32_t DialogListVirtualBaseVtable = 0x006693A0;
 const uint32_t DialogVirtualBaseFinalVtable = 0x006693AC;
 
-uint32_t *DialogPublishedGlobal = reinterpret_cast<uint32_t *>(0x009B3374);
 
 /*
 Purpose: Destroy a Dialog. Install the Dialog table, run Dialog::close, then

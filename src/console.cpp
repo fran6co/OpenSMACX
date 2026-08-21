@@ -291,7 +291,6 @@ void __fastcall console_update_data_redirect(Console *self, void *, int a1) {
 func_console_map_win_focus ConsoleOriginalMapWinFocus =
     original_method<func_console_map_win_focus>(0x0046B310);
 Console *ConsoleGlobal= (Console *)(0x009156B0);
-int32_t *ConsoleExitTurnLoop = reinterpret_cast<int32_t *>(0x009B2068);
 func_main_menu_check ConsoleOriginalMainMenuCheck =
     original_method<func_main_menu_check>(0x00460DD0);
 
@@ -464,7 +463,7 @@ int __fastcall console_focus_redirect(Console *self, void *, int x_coord,
 /*
 Purpose: Record that the console was closed from the system menu, by raising
          the flag the turn loop watches.
-// ORIGINAL: 0x0051D7C0 ?on_sys_close@Console@@QAEXXZ 0x0051D7C0-0x0051D7CB
+// ORIGINAL: 0x0051D7C0 ?on_sys_close@Console@@QAEXXZ 0x0051D7C0-0x0051D7CB BYTE_EXACT
 // size      11 bytes
 // prototype void (__thiscall ?on_sys_close@Console@@QAEXXZ)(Console* this)
 // callers   0   call targets   0

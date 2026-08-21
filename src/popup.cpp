@@ -624,7 +624,6 @@ int __cdecl pops_no_flags(char *caption, char *label, int value, char *text,
                             callback);
 }
 
-int32_t *PopupWaveLastIndex = reinterpret_cast<int32_t *>(0x0074DAA4);
 func_popup_wave_query PopupWaveIsPlaying = original_method<func_popup_wave_query>(0x004C6B10);
 func_popup_wave_query PopupWaveLoad = original_method<func_popup_wave_query>(0x004C6CE0);
 func_popup_wave_query PopupWavePlay = original_method<func_popup_wave_query>(0x004C6920);

@@ -190,7 +190,7 @@ extern uint32_t DialogListVirtualBaseVtable;            // this+0xE4 = 0x006693A
 extern const uint32_t DialogVirtualBaseFinalVtable;     // this+0xE4 = 0x006693AC
 
 // The list virtual base's context word is published here on teardown.
-extern uint32_t *DialogPublishedGlobal;                 // 0x009B3374
+uint32_t *const DialogPublishedGlobal = (uint32_t *)0x009B3374;                 // 0x009B3374
 
 // ?init@Dialog@@QAEHH@Z (0x006095F0), the one-int init overload. Unrecovered;
 // SpriteBox forwards to it, so its definition is a seam into the original.

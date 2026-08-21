@@ -35,32 +35,6 @@
  * fault the moment a leaf test called it.
  */
 
-int32_t *GlobalSlot007591C4 = reinterpret_cast<int32_t *>(0x007591C4);
-int32_t *GlobalSlot008577D8 = reinterpret_cast<int32_t *>(0x008577D8);
-int32_t *GlobalSlot008577DC = reinterpret_cast<int32_t *>(0x008577DC);
-int32_t *GlobalSlot008577E0 = reinterpret_cast<int32_t *>(0x008577E0);
-int32_t *GlobalSlot008577E4 = reinterpret_cast<int32_t *>(0x008577E4);
-int32_t *GlobalSlot008577E8 = reinterpret_cast<int32_t *>(0x008577E8);
-int32_t *GlobalSlot008577EC = reinterpret_cast<int32_t *>(0x008577EC);
-int32_t *GlobalSlot00857884 = reinterpret_cast<int32_t *>(0x00857884);
-int32_t *GlobalSlot00857888 = reinterpret_cast<int32_t *>(0x00857888);
-int32_t *GlobalSlot0085788C = reinterpret_cast<int32_t *>(0x0085788C);
-int32_t *GlobalSlot00857890 = reinterpret_cast<int32_t *>(0x00857890);
-int32_t *GlobalSlot00857894 = reinterpret_cast<int32_t *>(0x00857894);
-int32_t *GlobalSlot00857898 = reinterpret_cast<int32_t *>(0x00857898);
-int32_t *GlobalSlot0085789C = reinterpret_cast<int32_t *>(0x0085789C);
-int32_t *GlobalSlot008578A0 = reinterpret_cast<int32_t *>(0x008578A0);
-int32_t *GlobalSlot008578A4 = reinterpret_cast<int32_t *>(0x008578A4);
-int32_t *GlobalSlot008578AC = reinterpret_cast<int32_t *>(0x008578AC);
-int32_t *GlobalSlot008578B0 = reinterpret_cast<int32_t *>(0x008578B0);
-int32_t *GlobalSlot008578B4 = reinterpret_cast<int32_t *>(0x008578B4);
-int32_t *GlobalSlot008578BC = reinterpret_cast<int32_t *>(0x008578BC);
-int32_t *GlobalSlot008578C0 = reinterpret_cast<int32_t *>(0x008578C0);
-int32_t *GlobalSlot008578C4 = reinterpret_cast<int32_t *>(0x008578C4);
-int32_t *GlobalSlot008578C8 = reinterpret_cast<int32_t *>(0x008578C8);
-int32_t *GlobalSlot008578CC = reinterpret_cast<int32_t *>(0x008578CC);
-int32_t *GlobalSlot008578D0 = reinterpret_cast<int32_t *>(0x008578D0);
-int32_t *GlobalSlot009B3A54 = reinterpret_cast<int32_t *>(0x009B3A54);
 
 /*
 Purpose: sub_44c870 - arithmetic over 1 fixed global(s), one
@@ -83,7 +57,7 @@ void __fastcall global_arith_0044c870_redirect(void *, void *) {
 /*
 Purpose: sub_48d550 - arithmetic over 2 fixed global(s), one
          statement per original instruction.
-// ORIGINAL: 0x0048D550 sub_48d550 0x0048D550-0x0048D55E
+// ORIGINAL: 0x0048D550 sub_48d550 0x0048D550-0x0048D55E BYTE_EXACT
 // symbol    ?global_arith_0048d550_redirect@@YIXPAX0@Z
 // size      14 bytes
 // prototype 
@@ -103,7 +77,7 @@ void __fastcall global_arith_0048d550_redirect(void *, void *) {
 /*
 Purpose: sub_48d560 - arithmetic over 2 fixed global(s), one
          statement per original instruction.
-// ORIGINAL: 0x0048D560 sub_48d560 0x0048D560-0x0048D56B
+// ORIGINAL: 0x0048D560 sub_48d560 0x0048D560-0x0048D56B BYTE_EXACT
 // symbol    ?global_arith_0048d560_redirect@@YIXPAX0@Z
 // size      11 bytes
 // prototype 
@@ -424,7 +398,7 @@ void __fastcall global_arith_0048d730_redirect(void *, void *) {
 /*
 Purpose: sub_48d750 - arithmetic over 2 fixed global(s), one
          statement per original instruction.
-// ORIGINAL: 0x0048D750 sub_48d750 0x0048D750-0x0048D75B
+// ORIGINAL: 0x0048D750 sub_48d750 0x0048D750-0x0048D75B BYTE_EXACT
 // symbol    ?global_arith_0048d750_redirect@@YIXPAX0@Z
 // size      11 bytes
 // prototype 
@@ -443,7 +417,7 @@ void __fastcall global_arith_0048d750_redirect(void *, void *) {
 /*
 Purpose: sub_48d760 - arithmetic over 2 fixed global(s), one
          statement per original instruction.
-// ORIGINAL: 0x0048D760 sub_48d760 0x0048D760-0x0048D770
+// ORIGINAL: 0x0048D760 sub_48d760 0x0048D760-0x0048D770 BYTE_EXACT
 // symbol    ?global_arith_0048d760_redirect@@YIXPAX0@Z
 // size      16 bytes
 // prototype 
@@ -485,7 +459,7 @@ void __fastcall global_arith_0048d770_redirect(void *, void *) {
 /*
 Purpose: sub_48d790 - arithmetic over 4 fixed global(s), one
          statement per original instruction.
-// ORIGINAL: 0x0048D790 sub_48d790 0x0048D790-0x0048D7AB
+// ORIGINAL: 0x0048D790 sub_48d790 0x0048D790-0x0048D7AB BYTE_EXACT
 // symbol    ?global_arith_0048d790_redirect@@YIXPAX0@Z
 // size      27 bytes
 // prototype 
@@ -593,7 +567,7 @@ void __fastcall global_arith_0048d810_redirect(void *, void *) {
 /*
 Purpose: sub_5d8360 - arithmetic over 1 fixed global(s), one
          statement per original instruction.
-// ORIGINAL: 0x005D8360 sub_5d8360 0x005D8360-0x005D836B
+// ORIGINAL: 0x005D8360 sub_5d8360 0x005D8360-0x005D836B BYTE_EXACT
 // symbol    ?global_arith_005d8360_redirect@@YIXPAX0@Z
 // size      11 bytes
 // prototype 

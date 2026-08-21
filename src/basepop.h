@@ -513,7 +513,7 @@ void __cdecl base_pop_fallout_redirect();
 
 // Set when the fallout flag is raised, but only while the gate global is set.
 int *const BasePopFalloutGate = (int *)0x009B8D00;
-extern int *BasePopFalloutFlag;
+int *const BasePopFalloutFlag = (int *)0x009B8CFC;
 
 // The two default button captions, heap copies the class owns. `init_class`
 // seeds them from the literals "OK" and "Cancel"; the two setters below

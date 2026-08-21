@@ -221,8 +221,8 @@ Wave_Device *const WaveDeviceGlobal = (Wave_Device *)0x0090D978;
 func_operator_delete *const WaveOperatorDelete = (func_operator_delete *)0x0064557F;
 func_wave_device_release **const WaveDeviceReleaseSlot = (func_wave_device_release **)0x0090DB28;
 int *const WaveDeviceReleaseGuard = (int *)0x0090DB7C;
-extern Wave **WaveChainHead;
-extern Wave **WaveChainTail;
+Wave **const WaveChainHead = (Wave **)0x0090DB20;
+Wave **const WaveChainTail = (Wave **)0x0090DB1C;
 
 // The rest of the Wave dependency surface. The filename copy is allocated on
 // the game CRT heap (the destructor and set_fname free it there, so the new
