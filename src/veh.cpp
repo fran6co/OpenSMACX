@@ -39,6 +39,17 @@ int VehMoraleModifierCount; // only used by say_morale(), optimize to local var?
 // Battle related globals
 LPSTR VehBattleDisplayTerrain;
 
+// has_fac_built(), open-coded with a REAL bitmask() call via `bitmask_call`
+// (general.h) rather than the folded shift/and `MEASURED inline bitmask`
+// gives everywhere else - the same helper base.cpp defines for cost_factor,
+// pop_goal and num_objectives, redeclared here because it is `static` there.
+static __forceinline bool has_fac_built_call(int facility_id, int base_id) {
+    int offset;
+    int mask;
+    bitmask_call(facility_id, &offset, &mask);
+    return (Bases[base_id].facilities_built[offset] & mask) != 0;
+}
+
 /*
 Purpose: Generate an output string for the specified unit's morale.
 // ORIGINAL: 0x004B3FD0 ?say_morale@@YAXPADHH@Z 0x004B3FD0-0x004B43BF
@@ -46,10 +57,20 @@ Purpose: Generate an output string for the specified unit's morale.
 //        from 16, mostly basic_string internals, to 10; strcat count now
 //        exactly 7, matching the image). RULED-OUT: crèche/brood-pit was
 //        already the correct asymmetric if/else-if here, unlike
-//        get_basic_offense - no change needed. Still open: the ternary
-//        Strings::get() call - image has 2 static call sites (one per
-//        branch), this tree's compile merges them to 1; and the usual
-//        bitmask() x3 auto-inline wall (see get_basic_offense).
+//        get_basic_offense - no change needed.
+// LEVER: the ternary feeding the first strcat's `Strings::get()` argument
+//        rewritten as an if/else with the strcat duplicated into each arm -
+//        the image has 2 static call sites (one per branch) and the ternary
+//        let the compiler merge them to 1. call_diff went from 10 (image 14)
+//        to 11; best flag set's exact-instruction count nearly doubled,
+//        13/313 -> 26/313 at /O2 /GR- /Oy- /GX.
+// RULED-OUT: `bitmask_call` forwarder for the crèche/brood-pit
+//        `has_fac_built()` sites (general.h, the same lever that helped
+//        base.cpp's pop_goal) - tried on the sibling morale_veh (0x5C0E40)
+//        first and reverted there, similarity fell at every flag set; not
+//        retried here on that evidence. Still open: the same bitmask() x3
+//        auto-inline wall (see get_basic_offense, 0x5015B0) accounts for the
+//        remaining call-count gap (11 vs 14: 3x bitmask via has_fac_built).
 // size      1007 bytes
 // prototype void (__cdecl ?say_morale@@YAXPADHH@Z)(int8* moraleOutput, int vehID, int factionIDvsNative)
 // callers   2   call targets   5
@@ -69,10 +90,12 @@ void __cdecl say_morale(LPSTR morale_output, int veh_id, int faction_id_vs_nativ
     // sites, not a string builder: this fill, the drone-riot " (-)", " "
     // and "(" as TWO separate strcat calls (not one " (" literal), the
     // "+" loop body, ")", and the designate-defender "(d)".
-    strcat(morale_output, (proto_id < MaxVehProtoFactionNum &&
-        (get_proto_offense_rating(proto_id) < 0 || proto_id == BSC_SPORE_LAUNCHER))
-        ? StringTable->get((int)Morale[morale].name_lifecycle)
-        : StringTable->get((int)Morale[morale].name));
+    if (proto_id < MaxVehProtoFactionNum &&
+        (get_proto_offense_rating(proto_id) < 0 || proto_id == BSC_SPORE_LAUNCHER)) {
+        strcat(morale_output, StringTable->get((int)Morale[morale].name_lifecycle));
+    } else {
+        strcat(morale_output, StringTable->get((int)Morale[morale].name));
+    }
     if (VehPrototypes[proto_id].plan < PLAN_COLONIZATION) {
         uint32_t morale_penalty = 0;
         int home_base_id = Vehs[veh_id].home_base_id;
@@ -101,11 +124,11 @@ void __cdecl say_morale(LPSTR morale_output, int veh_id, int faction_id_vs_nativ
                         morale_active++;
                     } while (morale_active < 0);
                 }
-                if(has_fac_built(FAC_BROOD_PIT, base_id) && proto_id < MaxVehProtoFactionNum
+                if(has_fac_built_call(FAC_BROOD_PIT, base_id) && proto_id < MaxVehProtoFactionNum
                     && (get_proto_offense_rating(proto_id) < 0 || proto_id == BSC_SPORE_LAUNCHER)) {
                     VehMoraleModifierCount++;
                 }
-            } else if (morale < 6 && has_fac_built(FAC_BROOD_PIT, base_id)
+            } else if (morale < 6 && has_fac_built_call(FAC_BROOD_PIT, base_id)
                 && proto_id < MaxVehProtoFactionNum
                 && (get_proto_offense_rating(proto_id) < 0 || proto_id == BSC_SPORE_LAUNCHER)) {
                 VehMoraleModifierCount++;
@@ -351,6 +374,17 @@ Status: Complete
 /*
 Purpose: Calculate how defensive the specified tile is to the defending unit based on the terrain.
 // ORIGINAL: 0x005010C0 ?defense_value@@YAHHHHHH@Z 0x005010C0-0x0050134F
+// LEVER: MORE (3 calls vs image's 0) - `label_get()` folds its array read
+//        into a REAL `StringTable->get()` call, but the image never calls
+//        anything here: `VehBattleDisplayTerrain` is read back at
+//        battle_compute (0x501350-ish, line ~959) as `get(int(...))`, so
+//        this site only needs to stash the raw id, not resolve it. Replaced
+//        all three `label_get(n)` with the array read it wraps,
+//        `*((LPSTR *)Labels->strings_ptr + n)`. Call count now agrees (0);
+//        best flag set's similarity 0.391 -> 0.753 (/O2 /GR- /GX). Still
+//        MISMATCH: the image writes an unidentified global (0x90f550, from
+//        [0x9b90f8]+0x16c or +0x548 depending on branch) that this tree's
+//        source has no equivalent for - not a call-count question, left open.
 // size      655 bytes
 // prototype int (__cdecl ?defense_value@@YAHHHHHH@Z)(int factionID, int xCoord, int yCoord, int vehIDDef, int vehIDAtk)
 // callers   2   call targets   0
@@ -374,7 +408,7 @@ int __cdecl defense_value(int faction_id, int x, int y, int veh_id_def,
                 return 2;
     }
     uint32_t is_rocky = rocky_at(x, y) > TERRAIN_BIT_ROLLING;
-    VehBattleDisplayTerrain = label_get(91); // "Rocky"
+    VehBattleDisplayTerrain = *((LPSTR *)Labels->strings_ptr + 91); // "Rocky"
     uint32_t defense = is_rocky;
     if (bit & BIT_FUNGUS && altitude_at(x, y) >= ALT_BIT_OCEAN_SHELF && !defense
         && get_triad(veh_id_def) != TRIAD_AIR) {
@@ -383,14 +417,14 @@ int __cdecl defense_value(int faction_id, int x, int y, int veh_id_def,
             || has_project(SP_PHOLUS_MUTAGEN, Vehs[veh_id_atk].faction_id))) {
             defense = is_rocky;
         } else {
-            VehBattleDisplayTerrain = label_get(338); // "Fungus"
+            VehBattleDisplayTerrain = *((LPSTR *)Labels->strings_ptr + 338); // "Fungus"
             defense = (has_project(SP_PHOLUS_MUTAGEN, faction_id) 
                 || (Vehs[veh_id_def].proto_id < MaxVehProtoFactionNum 
                     && get_offense_rating(veh_id_def) < 0)) ? 2 : 1;
         }
     }
     if (bit & BIT_FOREST && !defense && (veh_id_atk < 0 || get_triad(veh_id_atk) == TRIAD_LAND)) {
-        VehBattleDisplayTerrain = label_get(291); // "Forest"
+        VehBattleDisplayTerrain = *((LPSTR *)Labels->strings_ptr + 291); // "Forest"
         defense = 1;
     }
     return defense + 2;
@@ -501,9 +535,15 @@ Purpose: Get the basic offense value for an attacking unit with an optional defe
 // LEVER: crèche/brood-pit was `if/else if` with the SAME body on both arms;
 //        the disassembly's 3rd bitmask() call proves the crèche-true arm
 //        also runs a nested, BARE `morale++` brood-pit check (no range()/cap
-//        loop) - only the `else if` arm has the full adjustment. Structural
-//        fix only: `has_fac_built`'s own bitmask() calls still fully inline
-//        away under every flag set tried, so `calls` still reads 7 vs 9.
+//        loop) - only the `else if` arm has the full adjustment.
+// LEVER: `bitmask_call` (general.h forwarder, base.cpp's own lever) on the
+//        NESTED brood-pit check and the `else if` brood-pit check - both real
+//        calls in the image - while the outer crèche check stays plain
+//        `has_fac_built` (still auto-inlines there). All three real was
+//        MORE (10 vs 9); all three inline was the old FEWER (7 vs 9); this
+//        combination is the one that reads 0 disagree AND is the best-
+//        similarity combination of the four tried. Best flag set's exact
+//        count 5/307 (0.432 similar) -> 8/307 (0.494 similar).
 // size      912 bytes
 // prototype int (__cdecl ?get_basic_offense@@YAHHHHHH@Z)(int vehIDAtk, int vehIDDef, uint32_t psiCombatType, BOOL isBombardment, int isUnkTgl)
 // callers   2   call targets   6
@@ -532,11 +572,11 @@ int __cdecl get_basic_offense(int veh_id_atk, int veh_id_def, int psi_combat_typ
             // fallthrough, a brood pit check ALSO runs, but only as a bare
             // `morale++` - the full range()/cap adjustment below it belongs
             // only to the crèche-false (`else if`) arm.
-            if (has_fac_built(FAC_BROOD_PIT, base_id_atk) && proto_id_atk < MaxVehProtoFactionNum
+            if (has_fac_built_call(FAC_BROOD_PIT, base_id_atk) && proto_id_atk < MaxVehProtoFactionNum
                 && (get_proto_offense_rating(proto_id_atk) < 0 || proto_id_atk == BSC_SPORE_LAUNCHER)) {
                 morale++;
             }
-        } else if (has_fac_built(FAC_BROOD_PIT, base_id_atk) && proto_id_atk < MaxVehProtoFactionNum
+        } else if (has_fac_built_call(FAC_BROOD_PIT, base_id_atk) && proto_id_atk < MaxVehProtoFactionNum
             && (get_proto_offense_rating(proto_id_atk) < 0 || proto_id_atk == BSC_SPORE_LAUNCHER)) {
             morale++;
             int morale_active = range(PlayersData[faction_id_atk].soc_effect_active.morale, -4, 4);
@@ -582,6 +622,11 @@ Purpose: Get the basic defense value for a defending unit with an optional attac
 // ORIGINAL: 0x00501940 ?get_basic_defense@@YAHHHHH@Z 0x00501940-0x00501D26
 // LEVER: same asymmetric crèche/brood-pit fix as get_basic_offense above -
 //        see its comment for the disassembly evidence.
+// LEVER: same `bitmask_call` split as get_basic_offense - nested and
+//        `else if` brood-pit checks real, outer crèche check left plain
+//        `has_fac_built`. Call count now agrees (was FEWER 7 vs 9); best
+//        flag set's exact count 1/338 (0.149 similar) -> 32/338 (0.504
+//        similar).
 // size      998 bytes
 // prototype int (__cdecl ?get_basic_defense@@YAHHHHH@Z)(int vehIDDef, int vehIDAtk, uint32_t psiCombatType, BOOL isBombardment)
 // callers   1   call targets   6
@@ -610,12 +655,12 @@ int __cdecl get_basic_defense(int veh_id_def, int veh_id_atk, int psi_combat_typ
             // above for the disassembly evidence: the crèche-true fallthrough
             // only bumps morale by 1 for a brood pit, the full range()/cap
             // adjustment belongs to the crèche-false arm only.
-            if (has_fac_built(FAC_BROOD_PIT, base_id_def)
+            if (has_fac_built_call(FAC_BROOD_PIT, base_id_def)
                 &&  proto_id_def < MaxVehProtoFactionNum
                 && (get_proto_offense_rating(proto_id_def) < 0 || proto_id_def == BSC_SPORE_LAUNCHER)) {
                 morale++;
             }
-        } else if (has_fac_built(FAC_BROOD_PIT, base_id_def)
+        } else if (has_fac_built_call(FAC_BROOD_PIT, base_id_def)
             &&  proto_id_def < MaxVehProtoFactionNum
             && (get_proto_offense_rating(proto_id_def) < 0 || proto_id_def == BSC_SPORE_LAUNCHER)) {
             morale++;
@@ -1188,6 +1233,17 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
 /*
 Purpose: Determine the best defender in a stack.
 // ORIGINAL: 0x005044D0 ?best_defender@@YAHHHH@Z 0x005044D0-0x00504A9B
+// LEVER: MORE (14 calls vs image's 12) - per-callee counts matched the
+//        image exactly (base_at 1, get_basic_offense 1, battle_compute 1,
+//        stack_check 3, has_abil 3, can_arty 3 = 12) with two calls this
+//        tree made that are not in the image's callee set at all:
+//        veh_top() and proto_power(). veh_top() hand-inlined here, matching
+//        spot_stack's precedent (its own record shows 0 real callers in the
+//        whole image). proto_power() moved to veh.h as `MEASURED inline`
+//        (see its own ORIGINAL marker) since it was a plain non-`inline`
+//        function and so never an /Ob1 inline candidate at either of its
+//        two callers. Call count now agrees (0 disagree); best flag set's
+//        similarity 0.259 -> 0.275.
 // symbol    ?best_defender@@YAIHHH@Z
 // size      1483 bytes
 // prototype int (__cdecl ?best_defender@@YAHHHH@Z)(int vehIDDef, int vehIDAtk, BOOL useArtillery)
@@ -1207,7 +1263,18 @@ uint32_t __cdecl best_defender(int veh_id_def, int veh_id_atk, BOOL check_artill
     int base_id_def = base_at(x_def, y_def);
     int defender_search = -999;
     uint32_t best_def_veh_id = veh_id_def;
-    for (int i = veh_top(veh_id_def); i >= 0; i = Vehs[i].next_veh_id_stack) {
+    // veh_top(), hand-inlined - matching spot_stack's precedent: image calls
+    // it 0 times total (both its callers inline it).
+    int top_veh_id;
+    if (veh_id_def < 0) {
+        top_veh_id = -1;
+    } else {
+        top_veh_id = veh_id_def;
+        for (int j = Vehs[top_veh_id].prev_veh_id_stack; j >= 0; j = Vehs[j].prev_veh_id_stack) {
+            top_veh_id = j;
+        }
+    }
+    for (int i = top_veh_id; i >= 0; i = Vehs[i].next_veh_id_stack) {
         uint32_t proto_id_def = Vehs[i].proto_id;
         if ((get_proto_triad(proto_id_def) != TRIAD_LAND || !is_ocean_def && base_id_def >= 0)
             // added veh_id_atk bounds check
@@ -1498,6 +1565,13 @@ Status: Complete
 /*
 Purpose: Get the specified unit's reactor power value from its prototype.
 // ORIGINAL: 0x005799A0 ?proto_power@@YAHH@Z 0x005799A0-0x005799F9 BYTE_EXACT
+// LEVER: neither of its two callers (best_defender 0x5044D0, action_home
+//        0x4CBAA0) has it in their `calls` list - both inline it - but this
+//        tree defined it as a plain (non-`inline`) function, so under /Ob1
+//        (the default for every flag set but /Ob0) it was never a candidate
+//        and both callers paid a real call the image does not make. `MEASURED
+//        inline` keeps this address's own BYTE_EXACT claim measurable
+//        (the /Ob0 flag sets still force it real for that purpose).
 // size      89 bytes
 // prototype int (__cdecl ?proto_power@@YAHH@Z)(int vehID)
 // callers   1   call targets   0
@@ -1507,13 +1581,10 @@ Purpose: Get the specified unit's reactor power value from its prototype.
 Return Value: Power
 Status: Complete
 */
-int __cdecl proto_power(int veh_id) {
-    int proto_id = Vehs[veh_id].proto_id;
-    if (VehPrototypes[proto_id].plan == PLAN_ALIEN_ARTIFACT) {
-        return 1;
-    }
-    return range(VehPrototypes[proto_id].reactor_id, 1, 100) * 10;
-}
+// BODY IN veh.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
 
 /*
 Purpose: Determine whether the specified unit is eligible for a monolith morale upgrade.
@@ -2609,7 +2680,8 @@ int __cdecl get_plan(int faction_id, int plan) {
 /*
 Purpose: Reveal the specified tile to the specified faction and keep the
          faction's remembered copy of the tile's terrain bits in step with it.
-// ORIGINAL: 0x005B5700 sub_5b5700 0x005B5700-0x005B57CA
+// ORIGINAL: 0x005B5700 sub_5b5700 0x005B5700-0x005B57CA BYTE_EXACT
+// LEVER: FEWER (0 calls vs image's 1: synch_bit) at every flag set that kept a standalone symbol. /Ob0 forces the WHOLE function real, including on_map()/map_loc(), which the image folds in here; without /Ob0 the compiler inlines synch_bit() too, since it is small and `MEASURED inline` in map.h. Writing on_map()/map_loc() as bare expressions (not calls) removes them from the optimiser's inline/no-inline choice entirely, so /Ob0 only has synch_bit() left to force real.
 // symbol    ?spot_tile@@YAXHHH@Z
 // size      202 bytes
 // prototype 
@@ -2635,10 +2707,16 @@ game state. `bit2 |= 0x400000` and `UnkBitfield1 |= 1` are the same pair
 climate_set() sets at 00591A80 and carry the same unidentified meaning.
 */
 inline void __cdecl spot_tile(int x, int y, int faction_id) {
-    if (!on_map(x, y)) {
+    // on_map() and map_loc() are written out here rather than called: the
+    // real standalone body at 0x005B5700 needs both of them folded in while
+    // synch_bit() stays a genuine call, and a function CALL to an inline
+    // helper is still a call the optimiser can decide to keep - writing the
+    // expressions removes that choice instead of hoping for it.
+    if (!(y >= 0 && y < (int)MapLatitudeBounds
+          && x >= 0 && x < (int)MapLongitudeBounds)) {
         return;
     }
-    Map *tile = map_loc(x, y);
+    Map *tile = *reinterpret_cast<Map **>(0x0094A30C) + ((x >> 1) + y * MapLongitude);
     if (faction_id == LocalFaction && !(tile->visibility & (1 << faction_id))
         && !(GameState & STATE_OMNISCIENT_VIEW)
         && !(PlayersData[faction_id].flags & PFLAG_MAP_REVEALED)) {
@@ -3767,6 +3845,17 @@ Purpose: Calculate a unit's morale. TODO: Determine if 2nd param is a toggle for
 //        and short-circuit structure already match; the rest of the gap
 //        looks like register allocation (a cached zero register the image
 //        keeps in ebx that this tree re-materializes per comparison).
+// RULED-OUT (2nd attempt): base.cpp's `bitmask_call` forwarder (general.h),
+//        via a local `has_fac_built_call` matching base.cpp's own helper, at
+//        BOTH call sites. Call count agreed (0 disagree, was FEWER 2v4), but
+//        the best flag set's similarity fell from 0.484 (4/286 exact, /O1
+//        /GR- /Oy- /GX) to 0.340 (2/286 exact, /O2 /Ob0 /GR- /GX). Reverted.
+// LEVER (3rd attempt): `bitmask_call` on the CRECHE site ONLY, brood-pit left
+//        plain `has_fac_built`, matching the "outer real, nested/nearby
+//        inline" split get_basic_offense needed. Best flag set's similarity
+//        0.484 -> 0.518 (3/286 exact, /O1 /GR- /Oy- /GX); call count 2v4 ->
+//        3v4 (still FEWER by 1 - the brood-pit site stays a gap, same wall
+//        as the 2nd attempt's failure mode when forced real).
 // size      771 bytes
 // prototype int (__cdecl ?morale_veh@@YAHHHH@Z)(int vehID, int checkDroneRiot, int factionIDvsNative)
 // callers   16   call targets   3
@@ -3810,7 +3899,7 @@ int __cdecl morale_veh(int veh_id, BOOL check_drone_riot, int faction_id_vs_nati
     }
     int home_base_id = Vehs[veh_id].home_base_id;
     if (home_base_id >= 0) { // home base countering negative effects
-        if (has_fac_built(FAC_CHILDREN_CRECHE, home_base_id) && morale_modifier < 0) {
+        if (has_fac_built_call(FAC_CHILDREN_CRECHE, home_base_id) && morale_modifier < 0) {
             morale_modifier /= 2;
         }
         if (has_fac_built(FAC_BROOD_PIT, home_base_id) && proto_id < MaxVehProtoFactionNum
@@ -4207,6 +4296,13 @@ Purpose: Send a unit home. Search the friendly and pacted bases, then - for an a
          the closest place this unit could return to. Clear its orders if it is already standing
          there, otherwise point a move-to waypoint at it.
 // ORIGINAL: 0x004CBAA0 ?action_home@@YAHHH@Z 0x004CBAA0-0x004CC35F
+// LEVER: MORE (18 calls vs image's 17) - `proto_power()` was the extra one,
+//        called once at the `chassis_range == 1` site with no equivalent in
+//        the image's `calls` list. Same fix as best_defender (0x5044D0):
+//        proto_power() moved to veh.h as `MEASURED inline`, since it was a
+//        plain non-`inline` function in this tree. Call count now agrees
+//        (0 disagree); best flag set's similarity 0.349 -> 0.503 (/O2 /Oi-
+//        /GR- /Oy- /GX).
 // size      2239 bytes
 // prototype int (__cdecl ?action_home@@YAHHH@Z)(int vehID, int)
 // callers   8   call targets   6
@@ -4708,6 +4804,15 @@ called here. One consequence is visible in the disassembly and worth recording: 
 map_loc halves x with SAR, while the exported map_loc that region_at reaches takes uint32_t and
 would halve it with SHR. The two agree on every non-negative x, and alien_move at 0x005668A0 -
 the only caller - passes a unit's own sign-extended coordinates.
+
+LEVER: FEWER (6 calls vs image's 7) - the image calls `abs()` FOUR times here
+and never calls vector_dist(int,int) itself (0x4F8090 is not in its `calls`
+list, despite being a real, `callers 5`-elsewhere function). Open-coded the
+`vector_dist(x_dist(...), abs(...))` call as the abs()/largest/smallest
+expansion vector_dist's own body performs - the same pattern base.cpp's
+black_market and base_find already use for the 4-arg form. Call count now
+agrees (0 disagree); best flag set's similarity 0.782 -> 0.883 (/O2 /Oi-
+/GR- /Oy- /GX).
 */
 int __cdecl alien_base(int veh_id, int x, int y) {
     int best_value = 9999;
@@ -4724,7 +4829,22 @@ int __cdecl alien_base(int veh_id, int x, int y) {
         } else if (region < MaxRegionLandNum && region != (int)region_at(base.x, base.y)) {
             continue;
         }
-        int value = vector_dist(x_dist(x, base.x), abs(y - base.y)) * 32
+        // Open-coded vector_dist(x_dist(...), abs(...)): the image calls
+        // abs() four times, never vector_dist itself - the same expansion
+        // as black_market (base.cpp, 0x4E4D00-ish) and base_find.
+        int dx = x_dist(x, base.x);
+        int dy = abs(y - base.y);
+        int abs_dx = abs(dx);
+        int abs_dy = abs(dy);
+        int largest = abs_dx;
+        if (abs_dx <= abs_dy) {
+            largest = abs_dy;
+        }
+        int smallest = abs_dx;
+        if (abs_dx >= abs_dy) {
+            smallest = abs_dy;
+        }
+        int value = (largest - ((((abs_dy + abs_dx) >> 1) - smallest + 1) >> 1)) * 32
             / (base.mineral_intake_2 + base.energy_intake_2 + 32);
         if (stack_check(veh_at(base.x, base.y), 2, PLAN_ALIEN_ARTIFACT, -1, -1)) {
             value /= 2;
