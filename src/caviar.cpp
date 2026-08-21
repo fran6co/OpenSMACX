@@ -101,9 +101,8 @@ Status: Complete
 */
 void Caviar::set_camera_direct(const VOX_Vect *camera, const VOX_Matrix *matrix) {
     if (camera && matrix) {
-        uint8_t *bytes = reinterpret_cast<uint8_t *>(this);
-        memcpy(bytes + 0xA5, camera, sizeof(*camera));
-        memcpy(bytes + 0xB1, matrix, sizeof(*matrix));
+        camera_.position = *camera;
+        camera_.rotation = *matrix;
     }
 }
 
@@ -125,13 +124,12 @@ void Caviar::set_scaling(float scaling) {
 }
 
 void Caviar::set_scaling_bits(uint32_t scaling_bits) {
-    memcpy(reinterpret_cast<uint8_t *>(this) + 0xD5,
-           &scaling_bits, sizeof(scaling_bits));
+    memcpy(&camera_.scaling, &scaling_bits, sizeof(scaling_bits));
 }
 
 /*
 Purpose: Read the Caviar renderer scaling factor.
-// ORIGINAL: 0x006183C0 ?get_scaling@Caviar@@QAEMXZ 0x006183C0-0x006183C7
+// ORIGINAL: 0x006183C0 ?get_scaling@Caviar@@QAEMXZ 0x006183C0-0x006183C7 BYTE_EXACT
 // size      7 bytes
 // prototype float (__thiscall ?get_scaling@Caviar@@QAEMXZ)(Caviar* this)
 // callers   1   call targets   0
@@ -143,9 +141,7 @@ Return Value: Current scaling factor
 Status: Complete
 */
 float Caviar::get_scaling() {
-    float scaling;
-    memcpy(&scaling, reinterpret_cast<uint8_t *>(this) + 0xD5, sizeof(scaling));
-    return scaling;
+    return camera_.scaling;
 }
 
 void __fastcall caviar_data_close_redirect(CaviarData *self, void *) {

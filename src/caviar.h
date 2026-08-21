@@ -17,6 +17,17 @@ struct VOX_Matrix {
   float values[3][3];
 };
 
+// UNALIGNED BY CONSTRUCTION: this group lives at 0xA5 inside `Caviar`, so it
+// must have alignment 1 or the class grows. `pack(1)` is scoped to the struct
+// and does not touch anything else.
+#pragma pack(push, 1)
+struct CaviarCamera {
+  VOX_Vect position;    // +0  (0xA5)
+  VOX_Matrix rotation;  // +12 (0xB1)
+  float scaling;        // +48 (0xD5)
+};
+#pragma pack(pop)
+
 class CaviarData {
  public:
   CaviarData();
@@ -112,21 +123,19 @@ class Caviar {
   uint32_t field_9C_;  // 0x9C
   uint32_t field_A0_;  // 0xA0
   uint8_t field_A4_;  // 0xA4
-  // RULED-OUT: naming what is in here. The arithmetic is known -
-  // `set_camera_direct` memcpys a `VOX_Vect` to 0xA5 and a `VOX_Matrix` to
-  // 0xB1, and 0xA5 + 12 is 0xB1 while 0xB1 + 36 is 0xD5, exactly where
-  // `get_scaling` reads its float - so the temptation is to declare
-  // `VOX_Vect camera_; VOX_Matrix camera_matrix_; float scaling_;` and let
-  // `get_scaling` return the member, which is what the image does with one
-  // `fld dword ptr [ecx + 0xd5]` against our five-instruction stack dance.
+  // NAMED THROUGH A PACKED STRUCT, because 0xA5 is not 4-aligned. The
+  // arithmetic is exact: `set_camera_direct` memcpys a `VOX_Vect` to 0xA5 and
+  // a `VOX_Matrix` to 0xB1, 0xA5 + 12 is 0xB1, and 0xB1 + 36 is 0xD5, which is
+  // where `get_scaling` reads its float - the image does it in one
+  // `fld dword ptr [ecx + 0xd5]`.
   //
-  // IT DOES NOT COMPILE. 0xA5 is not 4-aligned and those types are, so VC6
-  // pads and `sizeof(Caviar)` stops being 0x13D0 - caught by the static_assert
-  // below, which is what that assert is for. The `uint8_t` blob is the tree's
-  // way of holding unaligned data, and `memcpy` is the only portable way in
-  // and out of it. Closing this would need `#pragma pack`, which changes the
-  // whole class.
-  uint8_t field_A5_[0x63];  // 0xA5
+  // Declaring those three as ordinary members makes VC6 pad to their natural
+  // 4-byte alignment and `sizeof(Caviar)` stops being 0x13D0. `#pragma pack(1)`
+  // on the group alone gives it alignment 1, so it sits at 0xA5 with no
+  // padding and the class size is unchanged - which the static_assert below
+  // checks rather than takes on trust.
+  CaviarCamera camera_;      // 0xA5, 52 bytes: vector, matrix, scaling
+  uint8_t field_D9_[0x2F];   // 0xD9
   int32_t field_108_;
   uint8_t field_10C_[0x640];  // 0x10C
   // THE OBJECT-DATA ARRAY, and the constructor already said so: it does
