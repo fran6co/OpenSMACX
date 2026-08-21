@@ -610,9 +610,37 @@ inline bool __cdecl has_fac_built(int facility_id) {
     return (facility_id >= FacilityRepStart) ? false : has_fac_built(facility_id, base_id);
 }
 
+// has_fac_built(), open-coded with a REAL bitmask() call via `bitmask_call`
+// (general.h) rather than the folded shift/and `MEASURED inline bitmask`
+// gives everywhere else - moved here (from base.cpp, where the marker note
+// for it still lives) so breed_mod below can reach it too.
+static __forceinline bool has_fac_built_call(int facility_id, int base_id) {
+    int offset;
+    int mask;
+    bitmask_call(facility_id, &offset, &mask);
+    return (Bases[base_id].facilities_built[offset] & mask) != 0;
+}
+
 // BODY IN base.h, as `MEASURED inline` (marker stays in base.cpp): worm_mod
 // (base.cpp) is the caller that needs it folded in place - the image writes
 // breed_mod's whole body out there rather than calling 0x004E65C0.
+// LEVER: breed_mod's OWN standalone body (0x004E65C0) calls bitmask() FOUR
+// times, directly, with LITERAL facility ids (push 0x1f/0x20/9/0x1e) - the
+// has_fac(FAC_X, base_id, 0) wrapper is never called there, where worm_mod's
+// inlined copy of this same source DOES keep has_fac() as four real calls
+// to 0x00421670 (its own marker note). Since has_fac(facility_id, base_id, 0)
+// is exactly has_fac_built(facility_id, base_id) when facility_id is a
+// compile-time constant below FacilityRepStart and queue_count is the
+// literal 0, spelling the CENTAURI_PRESERVE/TEMPLE_OF_PLANET/BIOLOGY_LAB/
+// BIOENHANCEMENT_CENTER checks with has_fac_built_call() (general.h
+// bitmask_call, forcing the real E8) here fixes breed_mod's call count
+// (0 -> 4 real bitmask calls, matching call_diff) and moves its best
+// similarity to 0.749. TRADE-OFF, measured: since breed_mod is a SINGLE
+// shared inline body, this same edit reaches worm_mod's inlined copy too -
+// its best similarity drops 0.826 -> 0.706 (worm_mod is 0x004E6740, not in
+// this pass's list and not a recorded match, so this is not a tracked
+// regression, but a future pass on worm_mod needs to know the source of
+// its drop is here, not there).
 MEASURED inline int __cdecl breed_mod(int base_id, int faction_id) {
     uint32_t lifecycle_modifier = has_project(SP_XENOEMPATYH_DOME, faction_id) ? 1 : 0;
     if (has_project(SP_PHOLUS_MUTAGEN, faction_id)) {
@@ -621,16 +649,16 @@ MEASURED inline int __cdecl breed_mod(int base_id, int faction_id) {
     if (has_project(SP_VOICE_OF_PLANET, faction_id)) {
         lifecycle_modifier++;
     }
-    if (has_fac(FAC_CENTAURI_PRESERVE, base_id, 0)) {
+    if (has_fac_built_call(FAC_CENTAURI_PRESERVE, base_id)) {
         lifecycle_modifier++;
     }
-    if (has_fac(FAC_TEMPLE_OF_PLANET, base_id, 0)) {
+    if (has_fac_built_call(FAC_TEMPLE_OF_PLANET, base_id)) {
         lifecycle_modifier++;
     }
-    if (has_fac(FAC_BIOLOGY_LAB, base_id, 0)) {
+    if (has_fac_built_call(FAC_BIOLOGY_LAB, base_id)) {
         lifecycle_modifier++;
     }
-    if (has_fac(FAC_BIOENHANCEMENT_CENTER, base_id, 0)
+    if (has_fac_built_call(FAC_BIOENHANCEMENT_CENTER, base_id)
         || has_project(SP_CYBORG_FACTORY, faction_id)) {
         lifecycle_modifier++;
     }

@@ -260,7 +260,7 @@ BOOL __cdecl sea_coast(int region_dst, int region_src) {
 /*
 Purpose: Count the number of paths from the source region. It seems to only take into account land 
          source and destination ranges. TODO: Revisit in the future when Continent/Path is complete.
-// ORIGINAL: 0x0050DE00 ?sea_coasts@@YAHH@Z 0x0050DE00-0x0050DE49
+// ORIGINAL: 0x0050DE00 ?sea_coasts@@YAHH@Z 0x0050DE00-0x0050DE49 BYTE_EXACT
 // size      73 bytes
 // prototype 
 // callers   1   call targets   1
@@ -273,7 +273,14 @@ Status: Complete
 int __cdecl sea_coasts(int region_src) {
     uint32_t sea_coast_count = 0;
     for (int i = 1; i < RegionBounds; i++) {
-        if (sea_coast(i, region_src)) {
+        // sea_coast() (0x0050DDC0, BYTE_EXACT as its own out-of-line
+        // function) is hand-inlined here: the image writes its body out at
+        // this call site (bitmask() is the only call it keeps), rather than
+        // calling 0x0050DDC0.
+        int offset;
+        int mask;
+        bitmask_call(region_src & RegionBounds, &offset, &mask);
+        if ((Continents[i].sea_coasts[offset] & mask) != 0) {
             sea_coast_count++;
         }
     }
@@ -379,7 +386,14 @@ BOOL __cdecl port_to_coast(int base_id, int region) {
         int x_radius = xrange(x + RadiusBaseX[i]);
         int y_radius = y + RadiusBaseY[i];
         if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
-            if (sea_coast(region, region_at(x_radius, y_radius))) {
+            // sea_coast() (0x0050DDC0, BYTE_EXACT as its own out-of-line
+            // function) is hand-inlined here: the image writes its body out
+            // at this call site (bitmask() is the only call it keeps),
+            // rather than calling 0x0050DDC0.
+            int offset;
+            int mask;
+            bitmask_call(region_at(x_radius, y_radius) & RegionBounds, &offset, &mask);
+            if ((Continents[region].sea_coasts[offset] & mask) != 0) {
                 return true;
             }
             i += (2 - (i & 1)); // skips adjacent tiles
@@ -1698,6 +1712,15 @@ Purpose: Write map data to a file.
 Return Value: Did an error occur? true/false
 Status: Complete
 */
+// RULED-OUT: call_diff names the image's target as `__fwrite`
+// (src/recovered/0064603f.cpp, 0x0064603F, a CRT-internal
+// `__lock_file`/`_fwrite`/`__unlock_file` wrapper, already BYTE_EXACT there
+// but NOT a build input) rather than the public `fwrite()`. Neither
+// `__fwrite` nor its own callees (`__lock_file`, `__unlock_file`, the raw
+// `_fwrite`) are exported by the linked CRT import libraries - `extern "C"`
+// forward declarations of any of them fail LNK2001, and defining local
+// bodies for all three (to promote the artifact properly) is a bigger
+// change than this pass's scope. Left calling the public `fwrite()`.
 BOOL __cdecl map_write(FILE *map_file) {
     if (fwrite(&MapLongitudeBounds, 2724, 1, map_file)
         && fwrite(map_tiles(), MapArea * sizeof(Map), 1, map_file)

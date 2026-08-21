@@ -47,20 +47,26 @@ BOOL Strings::init(size_t mem_size) {
 
 /*
 Purpose: Shutdown the class instance.
-// ORIGINAL: 0x00616950 ?shutdown@Strings@@QAEHXZ 0x00616950-0x00616963
-// symbol    ?shutdown@Strings@@QAEXXZ
+// ORIGINAL: 0x00616950 ?shutdown@Strings@@QAEHXZ 0x00616950-0x00616963 BYTE_EXACT
 // size      19 bytes
 // prototype int (__thiscall ?shutdown@Strings@@QAEHXZ)(Strings* this)
 // callers   4   call targets   1
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D4580
-Return Value: n/a
+Return Value: Always zero (the mangled name decorates an `int` return; the
+    image's tail is `xor eax, eax; ret`, not a bare `ret`)
 Status: Complete
 */
-void Strings::shutdown() {
-    Heap::shutdown();
+int Strings::shutdown() {
+    // WRONG CALLEE fix: the image's one call here targets 0x005D4580,
+    // ~Heap (in-class MEASURED body, heap.h), not Heap::shutdown()
+    // (0x005D45B0) - identical logic, different symbol. Explicit
+    // pseudo-destructor call reaches the same COMDAT as a real call rather
+    // than inlining it here.
+    Heap::~Heap();
     is_populated_ = false;
+    return 0;
 }
 
 /*

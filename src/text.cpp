@@ -51,7 +51,7 @@ int Text::init(size_t size) {
 
 /*
 Purpose: Shutdown the class instance.
-// ORIGINAL: 0x005FD970 ?shutdown@Text@@QAEXXZ 0x005FD970-0x005FD9CC
+// ORIGINAL: 0x005FD970 ?shutdown@Text@@QAEXXZ 0x005FD970-0x005FD9CC BYTE_EXACT
 // size      92 bytes
 // prototype void (__thiscall ?shutdown@Text@@QAEXXZ)(_Text* this)
 // callers   1   call targets   2
@@ -62,7 +62,14 @@ Return Value: n/a
 Status: Complete
 */
 void Text::shutdown() {
-    close();
+    // close() (0x005FD9D0, BYTE_EXACT as its own out-of-line function) is
+    // hand-inlined here: the image writes its one-line body out at this
+    // call site (fclose() is a real call, matching close()'s own body),
+    // rather than calling 0x005FD9D0.
+    if (text_file_) {
+        fclose(text_file_);
+        text_file_ = 0;
+    }
     if (buffer_get_) {
         free(buffer_get_);
         buffer_get_ = 0;

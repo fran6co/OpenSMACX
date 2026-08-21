@@ -659,18 +659,11 @@ void __cdecl base_mark(int base_id) {
     }
 }
 
-// has_fac_built(), open-coded with a REAL bitmask() call via `bitmask_call`
-// (general.h) rather than the folded shift/and `MEASURED inline bitmask`
-// gives everywhere else. cost_factor, pop_goal and num_objectives are sites
-// where the image genuinely emits `call 0x50ba00` for a literal facility id
-// - most has_fac_built() call sites in this file do NOT need this; see the
-// systemic RULED-OUT note on has_fac (base.cpp:104).
-static __forceinline bool has_fac_built_call(int facility_id, int base_id) {
-    int offset;
-    int mask;
-    bitmask_call(facility_id, &offset, &mask);
-    return (Bases[base_id].facilities_built[offset] & mask) != 0;
-}
+// has_fac_built_call(), open-coded with a REAL bitmask() call via
+// `bitmask_call` (general.h) rather than the folded shift/and `MEASURED
+// inline bitmask` gives everywhere else, MOVED TO base.h (still `static
+// __forceinline`, one copy per TU) so breed_mod there can reach it too -
+// see the LEVER note at breed_mod's definition.
 
 /*
 Purpose: Calculate the cost factor for the specified faction and resource type. Optional base param.
@@ -754,24 +747,32 @@ Purpose: Determine if the specified base has any restrictions around production 
 // LEVER: `int retool` rather than `uint32_t retool` (lever 4) so `retool >=
 //        1` compiles a signed compare like the image's, kept WITHOUT
 //        touching the guard. Best similarity 0.546 -> 0.555.
-// RULED-OUT: additionally dropping the RFLAG_FREEPROTO/
-//            facility_offset("Skunkworks")/has_tech disjunct (the source's
-//            own "bug fix" comment) so the guard is just
-//            `has_fac_built(FAC_SKUNKWORKS, base_id) && retool >= 1` -
-//            measured on top of the signedness fix, this only moved best
-//            similarity 0.555 -> 0.549 (WORSE), for a real behavioural
-//            change (RFLAG_FREEPROTO bases would stop getting the retool-1
-//            treatment). Not worth it; kept the bug-fix disjunct.
+// LEVER: WRONG CALLEE - the image's two calls are both to bitmask (0x50ba00,
+//        push 0xa then a dynamic id), never to facility_offset or has_tech.
+//        The RFLAG_FREEPROTO/facility_offset("Skunkworks")/has_tech disjunct
+//        was this tree's own invention (facility_offset is a project helper,
+//        "Original Offset: n/a") - the image's guard is plainly
+//        `has_fac_built(FAC_SKUNKWORKS, base_id) && retool >= 1`, first push
+//        is the literal 0xa (FAC_SKUNKWORKS). Dropping the disjunct AND
+//        switching both has_fac_built() calls in this function to
+//        has_fac_built_call() (general.h bitmask_call, forcing the real
+//        E8 the image emits instead of the folded shift/and) moved best
+//        similarity 0.555 -> 0.652, 30/120 agreeing. A prior pass dropped
+//        the disjunct alone (without forcing the real bitmask call) and saw
+//        0.549, WORSE - that was the wrong half of this fix, not proof the
+//        disjunct belongs.
+// RULED-OUT: remaining divergence is the switch(retool) codegen - image
+//            compiles it as a compare chain, this tree's /O2 default emits a
+//            jump table (`jmp dword ptr [ebx*4]`), plus an omit-frame-pointer
+//            stack layout (esp-relative) vs the image's ebp frame. Neither
+//            responded to the flag sweep (--all-flags best is this same
+//            0.652 set); left as source-shaped register/codegen noise.
 Return Value: Fixed value (-1, 0, 1, 2, 3, -70) or productionID
 Status: Complete
 */
 int __cdecl base_making(int production_id, int base_id) {
     int retool = Rules->retool_strictness;
-    int skn_off = facility_offset("Skunkworks");
-    if ((has_fac_built(FAC_SKUNKWORKS, base_id) // has Skunkworks
-        || (Players[Bases[base_id].faction_id_current].rule_flags & RFLAG_FREEPROTO // bug fix
-            && skn_off >= 0 
-            && has_tech(Facility[skn_off].preq_tech, Bases[base_id].faction_id_current)))
+    if (has_fac_built_call(FAC_SKUNKWORKS, base_id) // has Skunkworks
         && retool >= 1) { // don't override if retool strictness is already set to always free (0)
         retool = 1; // Skunkworks or FREEPROTO + prerequisite tech > 'Free in Category'
     }
@@ -779,7 +780,7 @@ int __cdecl base_making(int production_id, int base_id) {
         int queue_id = Bases[base_id].queue_production_id[0]; // current production item
         if (queue_id < 0) { // non-Veh
             queue_id = -queue_id;
-            if (queue_id < FacilityRepStart && has_fac_built(queue_id, base_id)) {
+            if (queue_id < FacilityRepStart && has_fac_built_call(queue_id, base_id)) {
                 return -1; // facility completed outside normal process, no retool penalty to change
             }
         }
@@ -1025,6 +1026,12 @@ Purpose: Calculate the count of lifecycle/psi bonuses that are provided by a bas
 //        and swapped breed_mod's has_fac_built(FAC_X, base_id) tests for
 //        has_fac(FAC_X, base_id, 0) so those four calls actually appear.
 //        Best similarity 0.826, agreeing instructions 3->13 of 140.
+// REGRESSED BY A SIBLING FIX, not yet re-chased: breed_mod's OWN address
+// (0x004E65C0) needed those four has_fac() calls hand-inlined to
+// has_fac_built_call() instead (see the LEVER at breed_mod's definition,
+// base.h) - since breed_mod is one shared body, that same edit reaches
+// worm_mod's inlined copy and drops its best similarity 0.826 -> 0.706.
+// Not fixed here: worm_mod was not in the batch that made this trade.
 Return Value: Native life modifier count
 Status: Complete
 */
@@ -2085,6 +2092,16 @@ Purpose: Calculate the current base's energy loss/inefficiency for an amount of 
 //   both facility ids are literal; this tree's toolchain always folds
 //   them. Not re-derived further here; still a 0x1c vs 0xc stack-size gap
 //   (the two ebp-relative bitmask out-params never materialise).
+// RULED-OUT (measured): swapping both of those has_fac_built() calls for
+//   has_fac_built_call() (the general.h bitmask_call forwarder, base.h) to
+//   force the real E8 the image emits. This function's best-scoring flag
+//   set has no /Ob0 - plain /O2 implies /Ob2 auto-inline, which folds the
+//   supposedly-non-inline bitmask_call() forwarder away too (it is a
+//   trivial one-liner, exactly what /Ob2 auto-inlines regardless of the
+//   `inline` keyword), so call_diff still reports the same wrong-callee
+//   shape under a different name and the byte match gets WORSE across every
+//   flag set: best similarity 0.772 (/Oi- /Gy /GR- /Oy- /GX) -> 0.608 (best
+//   moves to /O1 /Gy /GR- /Oy- /GX). Reverted to has_fac_built().
 // symbol    ?black_market@@YAIH@Z
 // size      677 bytes
 // prototype 
