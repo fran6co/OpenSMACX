@@ -28,6 +28,18 @@ uncommitted work, and the fix is to hand that diff back first.
 Working in a worktree is why you can edit freely: nothing you touch collides
 with another agent.
 
+A BODY MAY ALREADY BE WRITTEN, SOMEWHERE THAT IS NOT COMPILED
+- `uv run tools/promotable.py` lists byte-exact bodies that exist only in
+  `src/recovered/`, `src/recovered/units/` or `src/unrecovered/`. There are 878,
+  and 36 are called by code the build compiles. A claim in one of those files
+  proves the ARTIFACT, not this tree: nothing links them, and the product source
+  often does not declare the function at all.
+- Promoting one is not copying it. The artifact reaches its fields through
+  `reinterpret_cast<char *>(this) + 0x...`; you have to model the layout,
+  declare the member, delete the artifact, and delete any `pending_bodies.cpp`
+  forwarder it had. The linker catches the last one for you - two definitions
+  of a symbol is LNK2005.
+
 BEFORE YOU GRIND A BODY
 - `uv run tools/handwritten_asm.py` lists bodies whose shipped bytes use
   opcodes VC6 never emits - `loop`, bare `lodsb`, `xlatb`. Those were inline
