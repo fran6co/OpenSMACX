@@ -34,7 +34,7 @@ Purpose: Build the effect bank: the mirror image of the destructor below, one
          immediates at 0x004482AD and 0x004482AF - note the original pushes
          them count-then-size, so they arrive at the callee in the opposite
          order from the way they are written here.
-// ORIGINAL: 0x004482A0 ??0FX@@QAE@XZ 0x004482A0-0x004482BB
+// ORIGINAL: 0x004482A0 ??0FX@@QAE@XZ 0x004482A0-0x004482BB BYTE_EXACT
 // size      27 bytes
 // prototype void (__thiscall ??0FX@@QAE@XZ)(FX* this)
 // callers   1   call targets   1
@@ -58,7 +58,7 @@ FX *__fastcall fx_ctor_redirect(FX *self, void *) {
 Purpose: Destroy the effect bank: hand the whole 0x61-element walk to the CRT
          vector iterator with the bank itself as the array base. Everything
          else is the per-element destructor's business.
-// ORIGINAL: 0x00448290 ??1FX@@QAE@XZ 0x00448290-0x004482A0
+// ORIGINAL: 0x00448290 ??1FX@@QAE@XZ 0x00448290-0x004482A0 BYTE_EXACT
 // size      16 bytes
 // prototype void (__thiscall ??1FX@@QAE@XZ)(FX* this)
 // callers   0   call targets   1

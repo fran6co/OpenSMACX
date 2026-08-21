@@ -86,6 +86,7 @@
 #include "wave_device.h"
 #include "editgroup.h"
 #include "planwin.h"
+#include "vector_teardown.h"
 
 /*
  * THE FRONTIER.
@@ -122,6 +123,25 @@
 
 #define PENDING_BODY(address, signature) \
     reinterpret_cast<signature>(static_cast<unsigned long>(address))
+
+// ??_M@YGXPAXIHP6EX0@Z@Z at 0x006456E4 and ??_L@YGXPAXIHP6EX0@Z1@Z at
+// 0x006457C2 - the CRT's vector destructor and constructor iterators, reached
+// by 204 array-thunk call sites. They were bound as `*const` pointers, which
+// costs every one of those sites the `E8` the image emits; see the note in
+// `vector_teardown.h`. They cannot be PROMOTED, because no declaration can
+// carry a `??_` mangling - so unlike every other forwarder here, these two
+// never leave.
+void __stdcall VectorDtorIterator(void *array, unsigned int element_size, int count,
+                                  const void *teardown) {
+    typedef void(__stdcall *pending)(void *, unsigned int, int, const void *);
+    PENDING_BODY(0x006456E4, pending)(array, element_size, count, teardown);
+}
+
+void __stdcall VectorCtorIterator(void *array, unsigned int element_size, int count,
+                                  const void *ctor, const void *dtor) {
+    typedef void(__stdcall *pending)(void *, unsigned int, int, const void *, const void *);
+    PENDING_BODY(0x006457C2, pending)(array, element_size, count, ctor, dtor);
+}
 
 // ?message_data@@YAXHHHHHH@Z at 0x00592EE0 - broadcasts a game event. Two
 // files bound it as a pointer, with disagreeing return types; one forwarder.

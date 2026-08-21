@@ -30,7 +30,8 @@ typedef void (OriginalObject::*func_thiscall_teardown)();
 typedef void(__stdcall func_vector_dtor_iterator)(
     void *array, unsigned int element_size, int count,
     const void *teardown);
-func_vector_dtor_iterator *const VectorDtorIterator = (func_vector_dtor_iterator *)0x006456E4;
+void __stdcall VectorDtorIterator(void *array, unsigned int element_size, int count,
+                                  const void *teardown);
 
 // Its construction-side companion: walk an array calling one constructor per
 // element, with the destructor along for exception unwind (unreachable here,
@@ -42,7 +43,8 @@ func_vector_dtor_iterator *const VectorDtorIterator = (func_vector_dtor_iterator
 typedef void(__stdcall func_vector_ctor_iterator)(
     void *array, unsigned int element_size, int count,
     const void *ctor, const void *dtor);
-func_vector_ctor_iterator *const VectorCtorIterator = (func_vector_ctor_iterator *)0x006457C2;
+void __stdcall VectorCtorIterator(void *array, unsigned int element_size, int count,
+                                  const void *ctor, const void *dtor);
 
 // THE LAST TWO INSTRUCTIONS OF EVERY ARRAY THUNK, and there is no C++ for
 // them. `??_L@YGXPAXIHP6EX0@Z1@Z` and `??_M@...` are the compiler's own vector
@@ -52,8 +54,16 @@ func_vector_ctor_iterator *const VectorCtorIterator = (func_vector_ctor_iterator
 // is not equivalent because MSVC stores a count cookie ahead of the array and
 // returns a shifted pointer.
 //
-// So the pointer stays, and 101 array thunks are capped two instructions short
-// of the image. What was fixable IS fixed: the element callbacks below are
+// The POINTER was the problem, not the name. A `*const` bound to 0x006457C2
+// compiles `call dword ptr [...]` where the image has `call rel32`, which is
+// the two-instruction cap, and nothing about it needed the `??_` spelling:
+// what a call site needs is a DIRECT call, and its target is a relocation on
+// both sides, so it is discounted from the comparison. These are declared as
+// ordinary functions here and forwarded in `pending_bodies.cpp`, which is the
+// same treatment every other not-yet-promoted callee gets.
+//
+// The earlier note said "nothing a program can WRITE names them", which is
+// true and was the wrong question. What was fixable IS fixed: the element callbacks below are
 // addresses rather than pointer-to-member variables, because the image pushes
 // them as immediates - `push 0x4c67c0` - and a variable built by
 // `original_method` at load time pushed `dword ptr [...]` instead.
