@@ -98,6 +98,29 @@ LEVERS THAT HAVE PAID, most productive first
   sides, so the method's own name costs nothing. Five initialisers went
   byte-exact this way on 2026-08-21; the constructor spelling made them worse.
 
+- A `volatile` POINTER ALIAS IS A WALL. `volatile Font **const fonts` read
+  through, instead of three independent absolute lvalues, cost five
+  basebutton.cpp bodies their match on 2026-08-21 - `set_text_color` x3,
+  `set_def_font` and `init` all went byte-exact the moment the alias came out.
+  If a body reads several fixed globals through one `volatile` handle, write
+  each as its own lvalue and re-measure before anything else.
+
+- A CLAMP MAY BE A MACRO, and a macro re-evaluates. `Font::width`'s image calls
+  `strlen` TWICE - `call strlen; cmp; jl; call strlen` - because its `min` is a
+  macro, and caching the length in a local collapsed six instructions into
+  three. If `call_diff` says FEWER and the missing callee is something cheap
+  you hoisted into a local, put it back at every use. Watch the signedness at
+  the same time: `size_t` gives `jbe` where the image has `jl`.
+
+- SIGNED `/ 2` IS NOT `>> 1`. VC6 emits a round-toward-zero fixup
+  (`cdq; sub eax, edx`) before each `sar`. Where the value cannot be negative -
+  a sum of `abs()` results, a count, a length - they mean the same and the
+  fixup is pure loss: `vector_dist` went byte-exact on it alone, `base_find`
+  31/79 -> 53/79, `del_site` 36/95 -> 61/95. `uv run tools/signed_divide.py`
+  finds bodies emitting a fixup the image does not. A fixup BOTH sides emit is
+  correct - the value really can go negative there - so never "fix" one of
+  those.
+
 - THE IMAGE PEELS ITS LOOPS. `do { B } while (C);` compiles one copy of the body;
   the image runs `B; while (C) { B }` - same program, and the difference was four
   instructions on each of three message pumps. If the image's loop has TWO calls
