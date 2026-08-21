@@ -1523,7 +1523,10 @@ void __cdecl set_course(int veh_id, char type, int x, int y) {
 
 /*
 Purpose: Get the unit on the top of the stack.
-// ORIGINAL: 0x00579920 ?veh_top@@YAHH@Z 0x00579920-0x0057995A
+// ORIGINAL: 0x00579920 ?veh_top@@YAHH@Z 0x00579920-0x0057995A BYTE_EXACT
+// LEVER: the climb loop's induction variable is int16_t, not int - the field
+//   (prev_veh_id_stack) is int16_t, and declaring the loop variable int forces
+//   an immediate movsx the image defers until the value is used as an index.
 // size      58 bytes
 // prototype int (__cdecl ?veh_top@@YAHH@Z)(int vehID)
 // callers   2   call targets   0
@@ -1538,7 +1541,7 @@ int __cdecl veh_top(int veh_id) {
         return -1;
     }
     int top_veh_id = veh_id;
-    for (int i = Vehs[top_veh_id].prev_veh_id_stack; i >= 0; i = Vehs[i].prev_veh_id_stack) {
+    for (int16_t i = Vehs[top_veh_id].prev_veh_id_stack; i >= 0; i = Vehs[i].prev_veh_id_stack) {
         top_veh_id = i;
     }
     return top_veh_id;
@@ -2095,7 +2098,17 @@ uint32_t __cdecl best_reactor(int faction_id) {
 
 /*
 Purpose: Check against faction's available tech for best available chassis meeting requirements.
-// ORIGINAL: 0x0057EFF0 ?pick_chassis@@YAHHHH@Z 0x0057EFF0-0x0057F0A1
+// ORIGINAL: 0x0057EFF0 ?pick_chassis@@YAHHHH@Z 0x0057EFF0-0x0057F0A1 BYTE_EXACT
+// LEVER: declaration/store order (best_speed before chassis_id); comparison operand
+//   order (`Chassis[i].triad == triad_chk`, not the reverse - the `cmp` LHS follows
+//   source LHS); swapped the `speed_chk > 0`/`speed_chk <= 0` if/else so the `>0`
+//   arm is checked first, matching the image's fallthrough; `continue` in place of
+//   each branch's own duplicated `if (speed_compare > best_speed)` so the check
+//   merges into the ONE shared block the image jumps to from both arms; and the
+//   `speed_chk <= 0` arm rewritten as the image's own fallback chain (TRIAD_AIR /
+//   -1-needs-missile / -2-needs-range==1 / else-compute) instead of a flat `||` -
+//   the image has no explicit `!speed_chk` test, it just falls through once -1 and
+//   -2 are ruled out.
 // size      177 bytes
 // prototype int (__cdecl ?pick_chassis@@YAHHHH@Z)(int factionID, int triadChk, int speedChk)
 // callers   1   call targets   1
@@ -2106,29 +2119,47 @@ Return Value: Best chassis available (0-8)
 Status: Complete
 */
 int __cdecl pick_chassis(int faction_id, int triad_chk, int speed_chk) {
-    int chassis_id = -1;
     int best_speed = 0;
+    int chassis_id = -1;
     for (int i = 0; i < MaxChassisNum; i++) {
-        if (has_tech(Chassis[i].preq_tech, faction_id) && (triad_chk < 0 
-            || triad_chk == Chassis[i].triad) && (!Chassis[i].missile || speed_chk == -1)) {
+        if (has_tech(Chassis[i].preq_tech, faction_id) && (triad_chk < 0
+            || Chassis[i].triad == triad_chk) && (!Chassis[i].missile || speed_chk == -1)) {
             int speed_compare = 1;
-            if (speed_chk <= 0) { // 0, -1, -2
-                if (!speed_chk || triad_chk != TRIAD_AIR || (speed_chk == -1 && Chassis[i].missile)
-                    || (speed_chk == -2 && Chassis[i].range == 1)) {
-                    speed_compare = Chassis[i].speed + 1;
-                    if (speed_compare > best_speed) {
-                        best_speed = speed_compare;
-                        chassis_id = i;
+            // The image reaches the best_speed check below through ONE shared block, from
+            // either branch; where the source used to duplicate the check in each branch
+            // (forcing the compiler to regenerate it twice, with different registers each
+            // time), `continue` on the branch's own failure reproduces the image's direct
+            // jump straight to the loop increment, letting the check merge into one copy.
+            if (speed_chk > 0) { // 1, 2, 3
+                if (Chassis[i].speed >= speed_chk) {
+                    if (Chassis[i].speed == speed_chk) {
+                        speed_compare = 2;
+                    }
+                } else {
+                    continue;
+                }
+            } else { // 0, -1, -2
+                // Written as the image's own fallback chain, not a flat `||`: when
+                // triad_chk == TRIAD_AIR, speed_chk == -1 needs Chassis[i].missile and
+                // speed_chk == -2 needs Chassis[i].range == 1; anything else (including
+                // the assumed speed_chk == 0) falls through to compute unconditionally,
+                // with no explicit `!speed_chk` test.
+                if (triad_chk == TRIAD_AIR) {
+                    if (speed_chk == -1) {
+                        if (!Chassis[i].missile) {
+                            continue;
+                        }
+                    } else if (speed_chk == -2) {
+                        if (Chassis[i].range != 1) {
+                            continue;
+                        }
                     }
                 }
-            } else if (Chassis[i].speed >= speed_chk) { // 1, 2, 3
-                if (Chassis[i].speed == speed_chk) {
-                    speed_compare = 2;
-                }
-                if (speed_compare > best_speed) {
-                    best_speed = speed_compare;
-                    chassis_id = i;
-                }
+                speed_compare = Chassis[i].speed + 1;
+            }
+            if (speed_compare > best_speed) {
+                best_speed = speed_compare;
+                chassis_id = i;
             }
         }
     }
@@ -2139,7 +2170,13 @@ int __cdecl pick_chassis(int faction_id, int triad_chk, int speed_chk) {
 Purpose: Check against faction's available tech for the best available weapon meeting requirements.
          The condition variable has a dual purpose of either max cost or search for 1st instance of
          a particular weapon mode.
-// ORIGINAL: 0x0057F0B0 ?weapon_budget@@YAHHHH@Z 0x0057F0B0-0x0057F142
+// ORIGINAL: 0x0057F0B0 ?weapon_budget@@YAHHHH@Z 0x0057F0B0-0x0057F142 BYTE_EXACT
+// LEVER: declaration/store order (best_offense before weapon_id, mirroring
+//   pick_chassis's best_speed/chassis_id pair); swapped the `condition >= 0`/
+//   `condition < 0` if/else so the `< 0` (break) arm is checked first, matching
+//   the image's fallthrough; and `Weapon[i].mode < 2` spelled as `<= 1` - both
+//   compile to the same `cmp byte, 1`, but only the `<=` spelling picks the `ja`
+//   the image emits instead of `jae`.
 // size      146 bytes
 // prototype int (__cdecl ?weapon_budget@@YAHHHH@Z)(int factionID, int condition, BOOL checkMode)
 // callers   2   call targets   1
@@ -2150,12 +2187,17 @@ Return Value: Best weapon available (0-25)
 Status: Complete
 */
 int __cdecl weapon_budget(int faction_id, int condition, BOOL check_mode) {
-    int weapon_id = 0;
     int best_offense = -1;
+    int weapon_id = 0;
     for (int i = 0; i < MaxWeaponNum; i++) {
         if (has_tech(Weapon[i].preq_tech, faction_id)) {
-            if (condition >= 0) {
-                if ((!check_mode || Weapon[i].mode < 2) && Weapon[i].cost <= condition
+            if (condition < 0) {
+                if (Weapon[i].mode == -condition) {
+                    weapon_id = i;
+                    break;
+                }
+            } else {
+                if ((!check_mode || Weapon[i].mode <= 1) && Weapon[i].cost <= condition
                     && Weapon[i].mode < 3 && Weapon[i].offense_rating < 99
                     && i != 23) { // Exclude Conventional Payload
                     int offense_compare = Weapon[i].offense_rating * 2;
@@ -2164,9 +2206,6 @@ int __cdecl weapon_budget(int faction_id, int condition, BOOL check_mode) {
                         weapon_id = i;
                     }
                 }
-            } else if (Weapon[i].mode == -condition) {
-                weapon_id = i;
-                break;
             }
         }
     }
@@ -2944,7 +2983,18 @@ BOOL __cdecl want_to_wake(int faction_id, int veh_id, int spotted_veh_id) {
 Purpose: Wake up units meeting specific conditions from the stack where specified unit is located.
 // ORIGINAL: 0x005B6060 ?wake_stack@@YAXH@Z 0x005B6060-0x005B619A
 // LEVER: veh_top() is called at only 2 real sites in the image (see its own
-//        comment on veh_top); here it is inlined, matching veh_at above.
+//        comment on veh_top); here it is inlined, matching veh_at above. The
+//        climb's induction variable is int16_t (prev_veh_id_stack's own type),
+//        matching veh_top's own lever. is_ocean()/base_who()/bit_at() are hand-
+//        inlined sharing ONE tile pointer, and map_loc()'s two globals
+//        (map_tiles(), MapLongitude) are hoisted out of the `i` loop into locals
+//        BEFORE it - the image reads them once, kept live in registers across
+//        every iteration, rather than re-reading them on each tile lookup a
+//        plain per-iteration map_loc(x, y) call would. Together: 0.836 -> 0.955.
+// RULED-OUT: an `int altitude = tile->climate & 0xE0;` local still narrows to a
+//   byte compare (`cmp al`/`jb`) where the image has `cmp eax`/`jl` - VC6 proves
+//   the range from the `& 0xE0` mask regardless of the local's declared width;
+//   not reachable by re-typing. Left as the last four-instruction gap.
 // size      314 bytes
 // prototype void (__cdecl ?wake_stack@@YAXH@Z)(int vehID)
 // callers   1   call targets   0
@@ -2959,18 +3009,36 @@ void __cdecl wake_stack(int veh_id) {
         return;
     }
     int top_veh_id = veh_id;
-    for (int j = Vehs[top_veh_id].prev_veh_id_stack; j >= 0; j = Vehs[j].prev_veh_id_stack) {
+    for (int16_t j = Vehs[top_veh_id].prev_veh_id_stack; j >= 0; j = Vehs[j].prev_veh_id_stack) {
         top_veh_id = j;
     }
+    if (top_veh_id < 0) {
+        return;
+    }
+    // map_loc()'s two globals (map_tiles(), MapLongitude), hand-hoisted out of the loop
+    // below: the image reads them ONCE, before the loop even starts (kept live in
+    // registers across every iteration), rather than re-reading them on every tile
+    // lookup the way a plain per-iteration map_loc(x, y) call would.
+    Map *const map_base = map_tiles();
+    const int map_width = MapLongitude;
     for (int i = top_veh_id; i >= 0; i = Vehs[i].next_veh_id_stack) {
         int veh_id_way_point;
         int x;
         int y;
-        if (Vehs[i].order == ORDER_SENTRY_BOARD 
-            && (get_triad(i) || (x = Vehs[i].x, y = Vehs[i].y, !is_ocean(x, y)
+        // is_ocean()/base_who()/bit_at(), hand-inlined and sharing ONE tile pointer -
+        // the image computes it once (kept live across the waypoint/get_triad checks
+        // in between) and reads climate/val2/bit off it, rather than recomputing
+        // map_loc() independently in each helper.
+        Map *tile;
+        int altitude;
+        if (Vehs[i].order == ORDER_SENTRY_BOARD
+            && (get_triad(i) || (x = Vehs[i].x, y = Vehs[i].y,
+                tile = map_base + ((x >> 1) + y * map_width), altitude = tile->climate & 0xE0,
+            altitude >= ALT_BIT_SHORE_LINE
             && ((veh_id_way_point = Vehs[i].waypoint_x[0], veh_id_way_point < 0)
-                || get_triad(veh_id_way_point) != TRIAD_AIR || base_who(x, y) >= 0
-                || bit_at(x, y) & BIT_AIRBASE)))) {
+                || get_triad(veh_id_way_point) != TRIAD_AIR
+                || ((tile->bit & BIT_BASE_IN_TILE) && (tile->val2 & 0xF) < MaxPlayerNum)
+                || (tile->bit & BIT_AIRBASE))))) {
             Vehs[i].order = ORDER_NONE;
             Vehs[i].state &= ~VSTATE_EXPLORE;
         }
@@ -3063,7 +3131,17 @@ void __cdecl stack_sort(int veh_id) {
 
 /*
 Purpose: Sort a stack of units with colony pods at the top followed by combat/offensive units.
-// ORIGINAL: 0x005B8C90 ?stack_sort_2@@YAXH@Z 0x005B8C90-0x005B8E0A
+// ORIGINAL: 0x005B8C90 ?stack_sort_2@@YAXH@Z 0x005B8C90-0x005B8E0A BYTE_EXACT
+// LEVER: hand-inlined veh_top()'s climb and stack_put()'s call+its own veh_top()
+//   climb, matching stack_sort's precedent (veh_put() itself stays a real call,
+//   it MEASURED-inlines to veh_lift/veh_drop on its own). Moved veh_id_put's
+//   declaration to the top of the function, matching store order in the image.
+//   The image re-derives `next_veh_id_stack` through a `(id < 0) ? id :
+//   Vehs[id].next_veh_id_stack` ternary even though the guard is provably true
+//   at every use - reproduced verbatim, at all three next_veh_id_stack reads.
+//   The two prev_veh_id_stack climb loops' induction variables are int16_t. not
+//   int: the field is int16_t, and declaring the induction var int forces an
+//   immediate movsx the image defers until the value is used as an array index.
 // size      378 bytes
 // prototype void (__cdecl ?stack_sort_2@@YAXH@Z)(int vehID)
 // callers   2   call targets   3
@@ -3074,14 +3152,27 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl stack_sort_2(int veh_id) {
-    int16_t x = Vehs[veh_id].x;
-    int16_t y = Vehs[veh_id].y;
-    int next_veh_id = veh_top(veh_id);
     int veh_id_put = -1;
+    int x = Vehs[veh_id].x;
+    int y = Vehs[veh_id].y;
+    // veh_top(), hand-inlined - matching stack_sort's precedent (see its own
+    // comment): the image does not call it here.
+    int next_veh_id;
+    if (veh_id < 0) {
+        next_veh_id = -1;
+    } else {
+        next_veh_id = veh_id;
+        for (int16_t i = Vehs[next_veh_id].prev_veh_id_stack; i >= 0; i = Vehs[i].prev_veh_id_stack) {
+            next_veh_id = i;
+        }
+    }
     int veh_id_loop;
     if (next_veh_id >= 0) {
         do {
-            veh_id_loop = Vehs[next_veh_id].next_veh_id_stack; // removed redundant < 0 check
+            // The image re-guards `next_veh_id < 0` here even though it is provably
+            // true from the loop's own entry/continuation test; reproduced as the
+            // same ternary the compiler folded into this exact branch shape.
+            veh_id_loop = (next_veh_id < 0) ? next_veh_id : Vehs[next_veh_id].next_veh_id_stack;
             if (VehPrototypes[Vehs[next_veh_id].proto_id].plan == PLAN_COLONIZATION) { // Colony Pod
                 veh_id_put = next_veh_id;
                 veh_put(next_veh_id, -3, -3);
@@ -3092,7 +3183,7 @@ void __cdecl stack_sort_2(int veh_id) {
     next_veh_id = veh_at(x, y);
     if (next_veh_id >= 0) {
         do {
-            veh_id_loop = Vehs[next_veh_id].next_veh_id_stack; // removed redundant < 0 check
+            veh_id_loop = (next_veh_id < 0) ? next_veh_id : Vehs[next_veh_id].next_veh_id_stack;
             if (VehPrototypes[Vehs[next_veh_id].proto_id].plan <= PLAN_COMBAT) {
                 veh_id_put = next_veh_id;
                 veh_put(next_veh_id, -3, -3);
@@ -3100,7 +3191,25 @@ void __cdecl stack_sort_2(int veh_id) {
             next_veh_id = veh_id_loop;
         } while (veh_id_loop >= 0);
     }
-    stack_put(veh_id_put, x, y);
+    // stack_put(), hand-inlined - the image inlines this call site too,
+    // including its own inlined veh_top() climb on veh_id_put.
+    int top_veh_id;
+    if (veh_id_put < 0) {
+        top_veh_id = -1;
+    } else {
+        top_veh_id = veh_id_put;
+        for (int16_t j = Vehs[top_veh_id].prev_veh_id_stack; j >= 0; j = Vehs[j].prev_veh_id_stack) {
+            top_veh_id = j;
+        }
+    }
+    if (top_veh_id >= 0) {
+        int veh_id_loop2;
+        do {
+            veh_id_loop2 = (top_veh_id < 0) ? top_veh_id : Vehs[top_veh_id].next_veh_id_stack;
+            veh_put(top_veh_id, x, y);
+            top_veh_id = veh_id_loop2;
+        } while (veh_id_loop2 >= 0);
+    }
 }
 
 /*
@@ -3486,6 +3595,16 @@ int __cdecl stack_check(int veh_id, int type, int cond1, int cond2, int cond3) {
 Purpose: Check to see whether provided faction and base can build a specific prototype. Checks are
          included to prevent SMACX specific units from being built in SMAC mode.
 // ORIGINAL: 0x005BA910 ?veh_avail@@YAHHHH@Z 0x005BA910-0x005BAB39
+// LEVER: WRONG CALLEE - is_port(base_id, false) hand-inlined to
+//   is_coast(Bases[base_id].x, Bases[base_id].y, false); the image never calls is_port.
+//   Split every `||`-combined early return (PROTO_ACTIVE/obsolete_factions, and the
+//   whole 18-way !ExpansionEnabled SMAC-mode block) into sequential `if (...) return
+//   false;` statements - the image gives each condition its own duplicated epilogue
+//   rather than sharing one merged branch. The ability_flags checks are bitwise
+//   (`abil_flag & ABL_X`), not equality - the image emits `test`, not `cmp`. Together
+//   0.538 -> 0.996 similar; RULED-OUT: the last ~6-instruction gap is register
+//   allocation inside has_tech()/is_coast()'s own inlined bodies (shared MEASURED
+//   inline helpers) - did not chase further to avoid touching their other callers.
 // size      553 bytes
 // prototype int (__cdecl ?veh_avail@@YAHHHH@Z)(int protoID, int factionID, int baseID)
 // callers   7   call targets   1
@@ -3496,8 +3615,12 @@ Return Value: Is unit available to faction/base? true/false
 Status: Complete
 */
 BOOL __cdecl veh_avail(int proto_id, int faction_id, int base_id) {
-    if (!(VehPrototypes[proto_id].flags & PROTO_ACTIVE)
-        || (VehPrototypes[proto_id].obsolete_factions & (1 << faction_id))) {
+    // The image gives PROTO_ACTIVE and obsolete_factions separate early returns, each
+    // with its own epilogue, rather than one merged `||` - reproduced as sequential ifs.
+    if (!(VehPrototypes[proto_id].flags & PROTO_ACTIVE)) {
+        return false;
+    }
+    if (VehPrototypes[proto_id].obsolete_factions & (1 << faction_id)) {
         return false;
     }
     if (proto_id < MaxVehProtoFactionNum) {
@@ -3505,27 +3628,77 @@ BOOL __cdecl veh_avail(int proto_id, int faction_id, int base_id) {
             return false;
         }
     }
-    if (VehPrototypes[proto_id].plan == PLAN_COLONIZATION 
+    if (VehPrototypes[proto_id].plan == PLAN_COLONIZATION
         && GameRules & RULES_SCN_NO_COLONY_PODS) {
         return false;
     }
-    if (base_id >= 0 && get_proto_triad(proto_id) == TRIAD_SEA && !is_port(base_id, false)) {
+    // is_port(), hand-inlined - the image calls is_coast() directly here, not is_port().
+    if (base_id >= 0 && get_proto_triad(proto_id) == TRIAD_SEA
+        && !is_coast(Bases[base_id].x, Bases[base_id].y, false)) {
         return false;
     }
-    uint8_t weap_id;
-    uint32_t abil_flag;
-    if (!ExpansionEnabled && (VehPrototypes[proto_id].armor_id > ARM_PSI_DEFENSE
-        || (weap_id = VehPrototypes[proto_id].weapon_id, weap_id == WPN_RESONANCE_LASER
-            || weap_id == WPN_RESONANCE_BOLT || weap_id == WPN_STRING_DISRUPTOR
-            || weap_id == WPN_TECTONIC_PAYLOAD || weap_id == WPN_FUNGAL_PAYLOAD)
-        || (abil_flag = VehPrototypes[proto_id].ability_flags, abil_flag == ABL_SOPORIFIC_GAS
-            || abil_flag == ABL_DISSOCIATIVE_WAVE || abil_flag == ABL_MARINE_DETACHMENT
-            || abil_flag == ABL_FUEL_NANOCELLS || abil_flag == ABL_ALGO_ENHANCEMENT)
-        || proto_id == BSC_SEALURK || proto_id == BSC_SPORE_LAUNCHER
-        || proto_id == BSC_BATTLE_OGRE_MK1 || proto_id == BSC_BATTLE_OGRE_MK2
-        || proto_id == BSC_BATTLE_OGRE_MK3 || proto_id == BSC_FUNGAL_TOWER
-        || proto_id == BSC_UNITY_MINING_LASER)) {
-        return false;
+    // The image splits this whole SMAC-mode block into eighteen separate early
+    // returns, each with its own epilogue, rather than one merged `||` chain -
+    // reproduced as sequential ifs. The ability_flags checks are bitwise (`test`
+    // against a single flag bit), not equality - `abil_flag == ABL_X` would only
+    // fire for a unit with exactly that one ability and nothing else.
+    if (!ExpansionEnabled) {
+        if (VehPrototypes[proto_id].armor_id > ARM_PSI_DEFENSE) {
+            return false;
+        }
+        uint8_t weap_id = VehPrototypes[proto_id].weapon_id;
+        if (weap_id == WPN_RESONANCE_LASER) {
+            return false;
+        }
+        if (weap_id == WPN_RESONANCE_BOLT) {
+            return false;
+        }
+        if (weap_id == WPN_STRING_DISRUPTOR) {
+            return false;
+        }
+        if (weap_id == WPN_TECTONIC_PAYLOAD) {
+            return false;
+        }
+        if (weap_id == WPN_FUNGAL_PAYLOAD) {
+            return false;
+        }
+        uint32_t abil_flag = VehPrototypes[proto_id].ability_flags;
+        if (abil_flag & ABL_SOPORIFIC_GAS) {
+            return false;
+        }
+        if (abil_flag & ABL_DISSOCIATIVE_WAVE) {
+            return false;
+        }
+        if (abil_flag & ABL_MARINE_DETACHMENT) {
+            return false;
+        }
+        if (abil_flag & ABL_FUEL_NANOCELLS) {
+            return false;
+        }
+        if (abil_flag & ABL_ALGO_ENHANCEMENT) {
+            return false;
+        }
+        if (proto_id == BSC_SEALURK) {
+            return false;
+        }
+        if (proto_id == BSC_SPORE_LAUNCHER) {
+            return false;
+        }
+        if (proto_id == BSC_BATTLE_OGRE_MK1) {
+            return false;
+        }
+        if (proto_id == BSC_BATTLE_OGRE_MK2) {
+            return false;
+        }
+        if (proto_id == BSC_BATTLE_OGRE_MK3) {
+            return false;
+        }
+        if (proto_id == BSC_FUNGAL_TOWER) {
+            return false;
+        }
+        if (proto_id == BSC_UNITY_MINING_LASER) {
+            return false;
+        }
     }
     if (proto_id < MaxVehProtoFactionNum) {
         return true;
@@ -4080,6 +4253,10 @@ Purpose: Calculate the defense of the specified prototype. Optional param if uni
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     (none)
+// LEVER: the first if() had a fabricated `veh_id_atk < 0 ||` guard the image never checks
+//   before reading Vehs[veh_id_atk].proto_id (unlike the guarded get_offense_rating() check
+//   further down); removing it moved 2/97 -> 35/97 agreeing at /Oy-. Remainder looks like
+//   register allocation across the shared early-return tail, not a structural difference.
 Return Value: Prototype's defense
 Status: Complete
 */
@@ -4088,10 +4265,12 @@ int __cdecl armor_proto(int proto_id, int veh_id_atk, BOOL is_bombard) {
         && VehPrototypes[Vehs[veh_id_atk].proto_id].plan == PLAN_INFO_WARFARE) {
         return 16; // probe defending against another probe
     }
-    // Bug fix: Vehs[].proto_id with veh_id_atk -1 could cause arbitrary memory read (Reactor 
-    // struct) due to lack of bounds checking when comparing veh_id_atk prototype to Spore Launcher
-    if (is_bombard && (veh_id_atk < 0 || Vehs[veh_id_atk].proto_id != BSC_SPORE_LAUNCHER)
-        && proto_id != BSC_SPORE_LAUNCHER || (get_proto_defense_rating(proto_id) >= 0 
+    // BUG IN THE ORIGINAL: this branch reads Vehs[veh_id_atk].proto_id with no veh_id_atk >= 0
+    // guard, unlike the get_offense_rating() check a few lines below which does guard it. When
+    // is_bombard is set and veh_id_atk is -1 (no attacker), the image reads Vehs[-1], an
+    // out-of-bounds array access. Left as shipped rather than adding the missing guard.
+    if (is_bombard && Vehs[veh_id_atk].proto_id != BSC_SPORE_LAUNCHER
+        && proto_id != BSC_SPORE_LAUNCHER || (get_proto_defense_rating(proto_id) >= 0
             && (veh_id_atk < 0 || get_offense_rating(veh_id_atk) >= 0))) {
         uint32_t def_rating = range(get_proto_defense_rating(proto_id), 1, 9999);
         return (veh_id_atk < 0) ? def_rating : def_rating * 8; // conventional
