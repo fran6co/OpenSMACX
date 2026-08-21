@@ -26,6 +26,8 @@ from typing import Annotated
 
 import typer
 
+from dataclasses import replace
+
 from decomp import DecompilationState, State, mangled, read, write_file
 from decomp.mangled import qualified_name
 from decomp.calls import CallSite, call_sites, imported_names
@@ -981,6 +983,97 @@ def record(
 
 
 @app.command()
+def semantic(
+    targets: Annotated[list[str], typer.Argument(
+        help="Addresses in hex, or names.")],
+    in_file: Annotated[str, typer.Option("--in")] = "",
+    src: Annotated[Path, typer.Option(
+        envvar="OPENSMACX_SRC")] = REPO_ROOT / "src",
+    exe: Annotated[Path, typer.Option(
+        envvar="OPENSMACX_IMAGE",
+    )] = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe",
+    compile_commands: Annotated[Path, typer.Option(
+        envvar="OPENSMACX_COMPILE_COMMANDS",
+    )] = REPO_ROOT / "build" / "compile_commands.json",
+    borrow: Annotated[str, typer.Option()] = "src/buffer.cpp",
+    withdraw: Annotated[bool, typer.Option(
+        "--withdraw", help="Remove the claim instead of granting it.")] = False,
+) -> None:
+    """Claim that a body is SEMANTICALLY the same as the shipped bytes.
+
+    THE SECOND HALF OF THE GOAL. Some bodies compile to the image's exact
+    instruction sequence - same count, same mnemonics, same order - anddiffer only
+    in which register holds what. Nothing about the source can move that: every
+    processor and optimisation flag VC6 has was measured against ten of them
+    and not one changed a single instruction. They are as finished as a source
+    tree can make them, and with only BYTE_EXACT to write down they counted as
+    unstarted forever.
+
+    GRANTED DELIBERATELY, NEVER SWEPT. `sweep` cannot hand these out, because a
+    tier a machine awards to whatever it cannot improve is a place to hide, and
+    this tree has been bitten by exactly that. The test is strict and stated:
+    identical instruction COUNT, mnemonic similarity of exactly 1.000, and no
+    byte-level agreement possible under any flag set - if a body could be
+    BYTE_EXACT it must be, and this refuses to cover for it.
+
+    `check` re-proves every one of these and REGRESSES it if it stops holding,
+    exactly like a BYTE_EXACT claim. It is reported and counted apart from
+    them, so the ratchet's own number never moves because of this command.
+    """
+    _fresh_compile_commands(compile_commands, False)
+    records = read(src)
+    shared = shared_spans(records)
+    chosen = []
+    for target in targets:
+        claimants = _in_file(_matching(records, target), in_file)
+        if len(claimants) != 1:
+            _ambiguous(claimants, target, "semantic", in_file)
+        chosen.append(claimants[0])
+
+    updated = []
+    for piece in chosen:
+        if withdraw:
+            if piece.semantic:
+                updated.append(replace(piece, semantic=False))
+                typer.echo(f"{piece.address_hex}  withdrawn")
+            continue
+        command = _command_for(compile_commands, piece.path, borrow)
+        try:
+            result = compare_record(piece, exe, command, FLAG_SETS, shared)
+        except (ValueError, CompileFailed) as problem:
+            typer.secho(f"{piece.address_hex}: {problem}", fg=typer.colors.RED)
+            raise typer.Exit(2) from None
+        why = _not_semantic(result)
+        if why:
+            typer.secho(f"{piece.address_hex}  REFUSED: {why}",
+                        fg=typer.colors.RED)
+            continue
+        typer.echo(f"{piece.address_hex}  {result.matching_instructions} of "
+                   f"{result.original_instructions} instructions byte "
+                   f"identical, the rest allocated differently")
+        if not piece.semantic:
+            updated.append(replace(piece, semantic=True))
+    if updated:
+        write_file(updated)
+    typer.echo(f"\n{len(updated)} annotation(s) rewritten")
+
+
+def _not_semantic(result) -> str:
+    """Why this measurement does not support a SEMANTIC claim, or ""."""
+    if str(result.verdict) == "BYTE_EXACT":
+        return ("it is BYTE_EXACT - claim that instead, a weaker claim would "
+                "cover for a stronger one")
+    if result.original_instructions != result.compiled_instructions:
+        return (f"{result.compiled_instructions} instructions against the "
+                f"image's {result.original_instructions} - a different "
+                f"program, not a different allocation")
+    if result.mnemonic_similarity < 1.0:
+        return (f"mnemonic similarity {result.mnemonic_similarity:.3f}, not "
+                f"1.000 - the operations themselves differ")
+    return ""
+
+
+@app.command()
 def sweep(
     src: Annotated[Path, typer.Option(envvar="OPENSMACX_SRC")] = REPO_ROOT / "src",
     exe: Annotated[Path, typer.Option(
@@ -1305,9 +1398,14 @@ def _named_file(record: DecompilationState) -> str | None:
 
 
 def _claims_by_file(records: list) -> dict:
+    """Every RATCHET CLAIM, grouped by file - byte-exact and semantic alike.
+
+    Both are claims re-proved on every run; the difference is what they claim,
+    not whether they are checked.
+    """
     grouped: dict = {}
     for record in records:
-        if record.byte_exact:
+        if record.byte_exact or record.semantic:
             grouped.setdefault(record.path, []).append(record)
     return grouped
 
@@ -1338,6 +1436,20 @@ TIER_ORDER = {"BYTE_EXACT": 0, "SHAPE_EXACT": 1, "MNEMONIC_ONLY": 2,
 
 def _rank(verdict: str) -> int:
     return TIER_ORDER.get(verdict, 9)
+
+
+def _semantic_note_holds(note: str) -> bool:
+    """Whether a scorer's note still supports a SEMANTIC claim.
+
+    The note carries what the claim rests on: `<m>/<n> instructions, <s>
+    similar`, plus `, <c> compiled` WHEN THE COUNTS DIFFER. So a claim holds
+    when the similarity is 1.000 and no compiled count was printed - the
+    absence of that clause is the counts agreeing.
+    """
+    if ", " in note and "compiled" in note:
+        return False
+    found = re.search(r"([\d.]+) similar", note or "")
+    return bool(found) and float(found.group(1)) >= 1.0
 
 
 def _agreeing(note: str) -> int:
@@ -1393,7 +1505,10 @@ def _check_one_file(job: tuple) -> list[tuple[tuple, str, str]]:
             # nobody has started.
             score = (f"{result.matching_instructions}/"
                      f"{result.original_instructions} instructions, "
-                     f"{result.mnemonic_similarity:.3f} similar")
+                     f"{result.mnemonic_similarity:.3f} similar"
+                     + (f", {result.compiled_instructions} compiled"
+                        if result.compiled_instructions
+                        != result.original_instructions else ""))
             key = _claim_key(record)
             if key not in best or best[key][0] != "BYTE_EXACT":
                 previous = best.get(key)
@@ -1532,12 +1647,31 @@ def check(
             return record.path.resolve() not in built
         return False
 
+    def holds(record: DecompilationState, verdict: str, note: str) -> bool:
+        """Does the measurement still support the claim this record makes?
+
+        TWO CLAIMS, TWO TESTS. A BYTE_EXACT record needs the bytes. A SEMANTIC
+        record needs the same instruction COUNT and a mnemonic similarity of
+        1.000 - and BYTE_EXACT satisfies it too, since a body that got better
+        has not stopped holding.
+        """
+        if verdict == "BYTE_EXACT":
+            return True
+        if not record.semantic:
+            return False
+        return _semantic_note_holds(note)
+
     regressed = [(by_claim[k], v, n)
                  for k, (v, n) in sorted(measured.items())
-                 if v != "BYTE_EXACT" and not unasked_here(by_claim[k], v)]
+                 if not holds(by_claim[k], v, n)
+                 and not unasked_here(by_claim[k], v)]
     unasked = [(by_claim[k], v, n)
                for k, (v, n) in sorted(measured.items())
-               if v != "BYTE_EXACT" and unasked_here(by_claim[k], v)]
+               if not holds(by_claim[k], v, n)
+               and unasked_here(by_claim[k], v)]
+    semantic_held = [by_claim[k] for k, (v, n) in measured.items()
+                     if by_claim[k].semantic and v != "BYTE_EXACT"
+                     and holds(by_claim[k], v, n)]
     broken = regressed + unasked
 
     if as_json:
@@ -1548,6 +1682,8 @@ def check(
         typer.echo(json.dumps({
             "claims": claims,
             "reproduced": claims - len(broken),
+            "semantic": [{"address": r.address_hex, "name": r.name}
+                         for r in semantic_held],
             "regressed": rows(regressed),
             "unverifiable": rows(unasked),
             "dangling_bodies": [{"address": r.address_hex,
@@ -1556,7 +1692,9 @@ def check(
         }, indent=2))
     else:
         for record, verdict, note in regressed:
-            typer.secho(f"REGRESSED {record.address_hex} claims BYTE_EXACT, "
+            claimed = "SEMANTIC" if record.semantic and not record.byte_exact \
+                else "BYTE_EXACT"
+            typer.secho(f"REGRESSED {record.address_hex} claims {claimed}, "
                         f"measured {verdict} - {record.location}",
                         fg=typer.colors.RED)
             if note:
@@ -1569,8 +1707,16 @@ def check(
                 "  unverifiable: "
                 + ", ".join(f"{n} {v}" for v, n in sorted(causes.items())),
                 fg=typer.colors.YELLOW)
+        # COUNTED APART. A semantic claim is re-proved like any other, but it
+        # is a weaker statement and must never be added into the number the
+        # ratchet is measured by.
+        if semantic_held:
+            typer.secho(
+                f"  {len(semantic_held):,} semantic: same instructions, "
+                f"different registers", fg=typer.colors.CYAN)
         typer.secho(
-            f"{claims - len(broken):,} verified, {len(regressed):,} "
+            f"{claims - len(broken) - len(semantic_held):,} verified, "
+            f"{len(semantic_held):,} semantic, {len(regressed):,} "
             f"REGRESSED, {len(unasked):,} unverifiable, of {claims:,} claims",
             fg=typer.colors.RED if regressed else
             typer.colors.YELLOW if unasked else typer.colors.GREEN, bold=True)

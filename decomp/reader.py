@@ -21,7 +21,8 @@ from .grammar import (DEFINITION_HEAD, DEFINITION_KEYWORDS,
                       EXCLUSION_TOKEN, FACT_LINE, LESSON_CONTINUED,
                       LESSON_DEFERRED,
                       LESSON_LEVER, LESSON_RULED_OUT, LESSON_UNRECOVERABLE,
-                      MARKER, MARKER_KEYWORD, MARKER_MATCHED, MARKER_TAIL,
+                      MARKER, MARKER_KEYWORD, MARKER_MATCHED,
+                      MARKER_SEMANTIC, MARKER_TAIL,
                       NEXT_MARKER, SENTINEL, _MANGLED_BASE)
 from .model import DecompilationState, Mode, Recipe, State
 
@@ -72,7 +73,7 @@ def _block_state_after(line: str, in_block: bool) -> bool:
 
 
 def _parse_marker(line: str, in_block: bool) -> tuple | None:
-    """(address, keyword, rest, matched, name, spans) for a marker IN A
+    """(address, keyword, rest, matched, name, spans, semantic) for a marker IN A
     COMMENT.
 
     The marker names the piece before saying how to read it: name and
@@ -98,10 +99,13 @@ def _parse_marker(line: str, in_block: bool) -> tuple | None:
     else:
         name, spans = "", ()
     matched = bool(MARKER_MATCHED.search(tail))
-    keyword_hit = MARKER_KEYWORD.match(MARKER_MATCHED.sub("", tail))
+    semantic = bool(MARKER_SEMANTIC.search(tail))
+    stripped = MARKER_SEMANTIC.sub("", MARKER_MATCHED.sub("", tail))
+    keyword_hit = MARKER_KEYWORD.match(stripped)
     keyword = keyword_hit.group("kw") if keyword_hit else None
     rest = keyword_hit.group("rest") if keyword_hit else ""
-    return int(match.group("addr"), 16), keyword, rest, matched, name, spans
+    return (int(match.group("addr"), 16), keyword, rest, matched, name, spans,
+            semantic)
 
 
 def _lessons(lines: list[str], index: int,
@@ -552,7 +556,7 @@ def _read_text(text: str, path: Path | str,
         in_block = _block_state_after(line, in_block)
         if parsed is None:
             continue
-        address, keyword, rest, matched, name, spans = parsed
+        address, keyword, rest, matched, name, spans, semantic = parsed
         found_levers, found_ruled, found_dead, found_later = \
             _lessons(lines, index)
         emitted = _token_fact(lines, index, "symbol")
@@ -565,7 +569,8 @@ def _read_text(text: str, path: Path | str,
                 state=_state_of(region, ""), path=_abs(path),
                 line=index + 1, name=name, image_spans=spans, region=region,
                 symbol=emitted, kind=catalogued_kind, body=defined_in, recipe=Recipe.VERBATIM,
-                byte_exact=matched, levers=found_levers,
+                byte_exact=matched, semantic=semantic,
+                levers=found_levers,
                 ruled_out=found_ruled, unrecoverable=found_dead,
                 deferred=found_later))
         elif keyword == "EXCLUDED":
@@ -574,6 +579,7 @@ def _read_text(text: str, path: Path | str,
                 path=_abs(path), line=index + 1, name=name, image_spans=spans,
                 symbol=emitted, kind=catalogued_kind, body=defined_in,
                 exclusion=_exclusion_citation(rest), byte_exact=matched,
+                semantic=semantic,
                 levers=found_levers, ruled_out=found_ruled,
                 unrecoverable=found_dead, deferred=found_later))
         else:
@@ -595,7 +601,7 @@ def _read_text(text: str, path: Path | str,
                 state=_state_of(region, ""), path=_abs(path),
                 line=index + 1, name=name, image_spans=spans, region=region,
                 symbol=emitted, kind=catalogued_kind, body=defined_in, extract_error=error, recipe=recipe,
-                byte_exact=matched,
+                byte_exact=matched, semantic=semantic,
                 levers=found_levers, ruled_out=found_ruled,
                 unrecoverable=found_dead, deferred=found_later))
 

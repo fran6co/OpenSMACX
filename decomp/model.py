@@ -140,6 +140,14 @@ class DecompilationState:
                                  # claim lives beside the body it constrains
                                  # and is re-proved by every ratchet run,
                                  # while states are derived from the region.
+    semantic: bool = False       # carries a SEMANTIC ratchet claim: this
+                                 # piece was proved to compile to the same
+                                 # instruction sequence as the shipped bytes -
+                                 # same count, same mnemonics in the same
+                                 # order - and to differ only in which
+                                 # registers hold what. Re-proved every run,
+                                 # like `byte_exact`, and counted separately
+                                 # from it so it cannot inflate that number.
     recipe: Recipe = Recipe.CENSUS
                                  # how a scoreable unit is built - see Recipe
     levers: tuple[tuple[str, str], ...] = ()

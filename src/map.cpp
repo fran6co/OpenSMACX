@@ -710,7 +710,7 @@ Status: Complete
 
 /*
 Purpose: Set the altitude details for the specified tile.
-// ORIGINAL: 0x00591260 ?alt_put_detail@@YAXHHH@Z 0x00591260-0x00591288
+// ORIGINAL: 0x00591260 ?alt_put_detail@@YAXHHH@Z 0x00591260-0x00591288 SEMANTIC
 // size      40 bytes
 // prototype void (__cdecl ?alt_put_detail@@YAXHHH@Z)(int xCoord, int yCoord, int detail)
 // callers   5   call targets   0
@@ -747,7 +747,7 @@ void __cdecl owner_set(int x, int y, int faction_id) {
 
 /*
 Purpose: Set the site for the specified tile.
-// ORIGINAL: 0x00591B50 ?site_set@@YAXHHH@Z 0x00591B50-0x00591B86
+// ORIGINAL: 0x00591B50 ?site_set@@YAXHHH@Z 0x00591B50-0x00591B86 SEMANTIC
 // size      54 bytes
 // prototype void (__cdecl ?site_set@@YAXHHH@Z)(int xCoord, int yCoord, int site)
 // callers   9   call targets   0
@@ -915,7 +915,7 @@ Status: Complete
 
 /*
 Purpose: Set the bit for the specified tile.
-// ORIGINAL: 0x00591D30 ?bit_put@@YAXHHH@Z 0x00591D30-0x00591D58
+// ORIGINAL: 0x00591D30 ?bit_put@@YAXHHH@Z 0x00591D30-0x00591D58 SEMANTIC
 // size      40 bytes
 // prototype void (__cdecl ?bit_put@@YAXHHH@Z)(int xCoord, int yCoord, int bit)
 // callers   1   call targets   0
