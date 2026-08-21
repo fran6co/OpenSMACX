@@ -294,7 +294,7 @@ Purpose: Release the vehicle lock this client is holding. In a net game, tell
          four announce-side fields; in every game, clear the locked vehicle
          record at 0x1B78 and the flag at 0x1BC4. Only the transport flag at
          0x0093F660 gates the announce; any nonzero value is a net game.
-// ORIGINAL: 0x005310F0 ?unlock_veh@NetDaemon@@QAEXXZ 0x005310F0-0x0053114A
+// ORIGINAL: 0x005310F0 ?unlock_veh@NetDaemon@@QAEXXZ 0x005310F0-0x0053114A BYTE_EXACT
 // symbol    ?unlock_veh@NetDaemon@@QAEIXZ
 // size      90 bytes
 // prototype void (__thiscall ?unlock_veh@NetDaemon@@QAEXXZ)(NetDaemon* this)
@@ -322,7 +322,7 @@ uint32_t NetDaemon::unlock_veh() {
     if (residue != 0) {
         // `cmp eax, edi` against a zeroed edi: any nonzero flag announces.
         log_say("Client releasing lock", NetDaemonLocalFaction, 0, 0);
-        residue = NetDaemonMessageData(0x2212, 0, 0, 0, 0, 0);
+        residue = message_data(0x2212, 0, 0, 0, 0, 0);
         object[0x1BB0 / 4] = 0;
         object[0x1BAC / 4] = 0;
         object[0x1BCC / 4] = 0;

@@ -87,9 +87,7 @@ extern func_current_server *LockCurrentServer;
 
 // message_data broadcasts a game event; not recovered, so check_global
 // reaches it through a rebindable seam.
-typedef void (__cdecl func_message_data)(int a1, int a2, int a3, int a4,
-                                         int a5, int a6);
-func_message_data *const LockMessageData = (func_message_data *)0x00592EE0;
+#include "netdaemon.h"  // message_data, the same 0x00592EE0
 
 void __fastcall lock_reset_map_redirect(Lock *self, void *);
 void __fastcall lock_clear_redirect(Lock *self, void *);
