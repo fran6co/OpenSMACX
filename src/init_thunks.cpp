@@ -6140,7 +6140,7 @@ void __cdecl construct_maininterface_wave() {
 
 /*
 Purpose: Dynamic initializer for g_JACKAL_FONT; registers its ??__F teardown.
-// ORIGINAL: 0x0045F920 ??__Eg_JACKAL_FONT@@YAXXZ 0x0045F920-0x0045F936
+// ORIGINAL: 0x0045F920 ??__Eg_JACKAL_FONT@@YAXXZ 0x0045F920-0x0045F936 BYTE_EXACT
 // symbol    ?construct_jackal_font@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6152,7 +6152,10 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_jackal_font() {
-    (ORIGINAL(&g_JACKAL_FONT)->*FontInitCtor)();
+    // A NAMED CONSTRUCTOR, not the seam. `Font::Font()` is recovered, at
+    // 0x00618EA0, which is exactly what the image calls here; the
+    // pointer-to-member seam could only emit `call dword ptr [...]`.
+    g_JACKAL_FONT.Font::Font();
     atexit(reinterpret_cast<func_atexit_callback *>(0x0045F940));
 }
 

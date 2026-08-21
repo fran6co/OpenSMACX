@@ -23,13 +23,22 @@ class CaviarData {
   void close();
 
  private:
-  uint32_t field_0_;
-  uint32_t fileDescriptor_;
+  // ALL THREE ARE OWNED ALLOCATIONS. `Caviar::close` frees and nulls every one
+  // of them for all 200 slots - `[esi-4]`, `[esi]`, `[esi+4]` around 0x750 -
+  // so modelling the first two as `uint32_t` said less than the image does.
+  // `CaviarData::close` still only releases `record_`, through the helper;
+  // the two teardowns are genuinely different and both are in the image.
+  void *field_0_;
+  void *fileDescriptor_;
   void *record_;   // 0x8, the renderer record close releases
+
+  // The renderer owns these slots and tears them down in bulk.
+  friend class Caviar;
 };
 
 class Caviar {
  public:
+  void close();   // 0x00617020
   void UNK11(int *out1, int *out2, int *out3);
   Caviar();
   void set_camera_direct(const VOX_Vect *camera, const VOX_Matrix *matrix);
@@ -106,10 +115,14 @@ class Caviar {
   uint8_t field_A5_[0x63];  // 0xA5
   int32_t field_108_;
   uint8_t field_10C_[0x640];  // 0x10C
-  uint32_t field_74C_;  // 0x74C
-  uint32_t field_750_;  // 0x750
-  uint32_t field_754_;  // 0x754
-  uint8_t field_758_[0xC74];  // 0x758
+  // THE OBJECT-DATA ARRAY, and the constructor already said so: it does
+  // `memset(bytes + 0x74C, 0, sizeof(CaviarData) * 200)`. Declaring it means
+  // neither that nor `Caviar::close` has to reach it through a cast.
+  // The arithmetic reconciles exactly: 200 * 0xC is 0x960, from 0x74C to
+  // 0x10AC, and 0x960 + 0x320 is 0xC80, which is what the four fields this
+  // replaces occupied (4 + 4 + 4 + 0xC74).
+  CaviarData slots_[200];       // 0x74C
+  uint8_t field_10AC_[0x320];   // 0x10AC
   uint32_t field_13CC_;  // 0x13CC
 };
 
