@@ -1226,6 +1226,31 @@ def redundant_artifacts(records: list) -> list:
     return redundant
 
 
+def unread_markers(src: Path) -> list:
+    """Markers in files `decomp`'s reader never globs.
+
+    THE FAILURE THIS CATCHES IS SILENCE. The reader takes `*.cpp` and `*.c`;
+    a marker written into a header is not a broken claim, it is a claim that
+    stops being CHECKED - `check` reported 1,938 of them while the tree held
+    1,959, exit 0, nothing red. Moving a body into a header is legitimate and
+    now common (`MEASURED inline`); moving its marker is not.
+    """
+    out = []
+    for path in sorted(src.rglob("*")):
+        if path.suffix not in (".h", ".hpp", ".hh", ".inl"):
+            continue
+        for number, line in enumerate(path.read_text().splitlines(), 1):
+            match = re.match(r"\s*(?://|\*)\s*ORIGINAL:\s*(0x[0-9A-Fa-f]+)",
+                             line)
+            if match:
+                out.append(
+                    f"{path}:{number}: {match.group(1)} is annotated in a "
+                    f"header, which the reader does not glob - the claim is "
+                    f"not checked by anything. Leave the marker in the .cpp "
+                    f"and move only the body.")
+    return out
+
+
 def dangling_bodies(records: list) -> list:
     """Every `body` fact that does not lead to a definition.
 
@@ -1401,6 +1426,7 @@ def check(
     dangling = (dangling_bodies(records)
                 + duplicated_markers(records)
                 + redundant_artifacts(records))
+    unread = unread_markers(src)
     grouped = _claims_by_file(records)
     claims = sum(len(v) for v in grouped.values())
     if not claims:
@@ -1522,6 +1548,9 @@ def check(
     # way it was built. Passing the second silently would leave 534 claims
     # unchecked behind a green gate, which is the shape this whole ratchet
     # exists to prevent.
+    if unread and not as_json:
+        for note in unread:
+            typer.secho(f"UNREAD    {note}", fg=typer.colors.RED)
     if dangling and not as_json:
         for record, note in dangling:
             typer.secho(f"DUPLICATE {record.address_hex} {note} - "
@@ -1529,7 +1558,8 @@ def check(
                         else
                         f"DANGLING  {record.address_hex} body fact: {note} - "
                         f"{record.location}", fg=typer.colors.RED)
-    raise typer.Exit(1 if regressed or dangling else 3 if unasked else 0)
+    raise typer.Exit(1 if regressed or dangling or unread
+                     else 3 if unasked else 0)
 
 
 if __name__ == "__main__":

@@ -282,148 +282,38 @@ extern Datalink *DatalinkMain;
 
 void __cdecl help_tech(int id);
 
-/*
-Purpose: Show the weapon help topic for the given id.
-// ORIGINAL: 0x0044C910 ?help_weapon@@YAXH@Z 0x0044C910-0x0044C925
-// size      21 bytes
-// prototype 
-// callers   0   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x00429180
-Return Value: n/a
-Status: Complete
-*/
 MEASURED inline void __cdecl help_weapon(int id) {
     DatalinkMain->exec(0x6, id);
 }
 
-/*
-Purpose: Show the armor help topic for the given id.
-// ORIGINAL: 0x0044C940 ?help_armor@@YAXH@Z 0x0044C940-0x0044C955
-// size      21 bytes
-// prototype 
-// callers   0   call targets   1
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x00429180
-Return Value: n/a
-Status: Complete
-*/
 MEASURED inline void __cdecl help_armor(int id) {
     DatalinkMain->exec(0x7, id);
 }
 
-/*
-Purpose: Show the chassis help topic for the given id.
-// ORIGINAL: 0x0044C980 ?help_chassis@@YAXH@Z 0x0044C980-0x0044C995
-// size      21 bytes
-// prototype 
-// callers   0   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x00429180
-Return Value: n/a
-Status: Complete
-*/
 MEASURED inline void __cdecl help_chassis(int id) {
     DatalinkMain->exec(0x4, id);
 }
 
-/*
-Purpose: Show the facility help topic for the given id.
-// ORIGINAL: 0x0044C9B0 ?help_facility@@YAXH@Z 0x0044C9B0-0x0044C9C5
-// size      21 bytes
-// prototype 
-// callers   0   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x00429180
-Return Value: n/a
-Status: Complete
-*/
 MEASURED inline void __cdecl help_facility(int id) {
     DatalinkMain->exec(0xA, id);
 }
 
-/*
-Purpose: Show the secret project/ability help topic for the given id.
-// ORIGINAL: 0x0044CA10 ?help_abil@@YAXH@Z 0x0044CA10-0x0044CA25
-// size      21 bytes
-// prototype 
-// callers   0   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x00429180
-Return Value: n/a
-Status: Complete
-*/
 MEASURED inline void __cdecl help_abil(int id) {
     DatalinkMain->exec(0x8, id);
 }
 
-/*
-Purpose: Show the social engineering help topic for the given id.
-// ORIGINAL: 0x0044CA40 ?help_social@@YAXH@Z 0x0044CA40-0x0044CA55
-// size      21 bytes
-// prototype 
-// callers   0   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x00429180
-Return Value: n/a
-Status: Complete
-*/
 MEASURED inline void __cdecl help_social(int id) {
     DatalinkMain->exec(0xC, id);
 }
 
-/*
-Purpose: Show the faction help topic for the given id.
-// ORIGINAL: 0x0044CA70 ?help_faction@@YAXH@Z 0x0044CA70-0x0044CA85
-// size      21 bytes
-// prototype 
-// callers   0   call targets   1
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x00429180
-Return Value: n/a
-Status: Complete
-*/
 MEASURED inline void __cdecl help_faction(int id) {
     DatalinkMain->exec(0xF, id);
 }
 
-/*
-Purpose: Show the vehicle help topic for the given id.
-// ORIGINAL: 0x0044CAD0 ?help_veh@@YAXH@Z 0x0044CAD0-0x0044CAE5
-// size      21 bytes
-// prototype 
-// callers   0   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x00429180
-Return Value: n/a
-Status: Complete
-*/
 MEASURED inline void __cdecl help_veh(int id) {
     DatalinkMain->exec(0x3, id);
 }
 
-/*
-Purpose: Show an arbitrary help topic/index pair, for callers that already
-         hold the topic id rather than going through one of the typed
-         help_* wrappers above.
-// ORIGINAL: 0x0044CB60 ?help_topic@@YAXIH@Z 0x0044CB60-0x0044CB77
-// size      23 bytes
-// prototype void (__cdecl ?help_topic@@YAXIH@Z)(DatalinkID id, int entryID)
-// callers   9   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x00429180
-Return Value: n/a
-Status: Complete
-*/
 MEASURED inline void __cdecl help_topic(unsigned int topic, int index) {
     DatalinkMain->exec(topic, index);
 }

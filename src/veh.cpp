@@ -336,9 +336,11 @@ Purpose: Check whether the specified unit is a planet buster.
 Return Value: Reactor id if planet buster, otherwise 0
 Status: Complete
 */
-uint32_t __cdecl planet_buster(int veh_id) {
-    return planet_buster2(Vehs[veh_id].proto_id);
-}
+// BODY IN veh.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
+
 
 /*
 Purpose: Calculate how defensive the specified tile is to the defending unit based on the terrain.

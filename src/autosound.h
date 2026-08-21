@@ -92,21 +92,6 @@ void *__fastcall auto_sound_scalar_dtor_redirect(AutoSound *self, void *,
 // function would emit `ret` alone. Corrected in tools/catalogue_corrections.py.
 int __cdecl do_sound_redirect();
 
-/*
-Purpose: Legacy sound processing hook retained as a no-op.
-// ORIGINAL: 0x005FD2B0 ?do_sound@@YAHXZ 0x005FD2B0-0x005FD2B3 BYTE_EXACT
-// CORRECTED from ?do_sound@@YAXXZ
-//   body is `xor eax, eax; ret` - a void function would emit `ret` alone
-// size      3 bytes
-// prototype 
-// callers   21   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// notes     Runtime redirect installed by DllMain after byte-signature validation
-Return Value: zero
-Status: Complete
-*/
 MEASURED inline int __cdecl do_sound() {
     return 0;
 }

@@ -658,36 +658,10 @@ void __cdecl social_ai(uint32_t faction_id, int growth_val, int tech_val, int we
 void __cdecl enemy_capabilities(int faction_id);
 void __cdecl enemy_capabilities_t(uint32_t faction_id);
 
-/*
-Purpose: Check whether the primary faction has at least one of the specified treaties (bitfield) 
-         with the secondary faction.
-// ORIGINAL: 0x005002F0 ?has_treaty@@YAHHHH@Z 0x005002F0-0x00500319
-// size      41 bytes
-// prototype int (__cdecl ?has_treaty@@YAHHHH@Z)(int factionID, int factionIDWith, int treaty)
-// callers   4   call targets   0
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     (none)
-Return Value: Treaty status between the two factions, generally treated as a boolean
-Status: Complete
-*/
 MEASURED inline int __cdecl has_treaty(int faction_id, int faction_id_with, int treaty) {
     return PlayersData[faction_id].diplo_treaties[faction_id_with] & treaty;
 }
 
-/*
-Purpose: Get the faction's name adjective.
-// ORIGINAL: 0x0050B910 ?get_adjective@@YAHH@Z 0x0050B910-0x0050B92A
-// symbol    ?get_adjective@@YAPADH@Z
-// size      26 bytes
-// prototype int (__cdecl ?get_adjective@@YAHH@Z)(int factionID)
-// callers   3   call targets   0
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     (none)
-Return Value: Faction name adjective
-Status: Complete
-*/
 MEASURED inline LPSTR __cdecl get_adjective(int faction_id) {
     return Players[faction_id].adj_name_faction;
 }

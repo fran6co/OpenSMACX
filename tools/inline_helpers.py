@@ -200,8 +200,11 @@ def measured(apply: bool, limit: int) -> int:
                 continue
             block = match.group(0)
             keep = block[:block.index("*/\n") + 3]
-            inline = keep + (f"MEASURED inline {sig} {{\n"
-                             f"{match.group('body')}}}\n")
+            # THE DOC BLOCK AND ITS MARKER STAY IN THE .cpp: `decomp`'s reader
+            # globs `*.cpp` and `*.c` only, so a marker in a header is not a
+            # broken claim but an UNCHECKED one - and `osmx check` now refuses
+            # exactly that.
+            inline = f"MEASURED inline {sig} {{\n{match.group('body')}}}\n"
             if re.search(rf"^(?:MEASURED )?inline [^\n]*\b{ident}\s*\(",
                          files[header], re.M):
                 print(f"  - {ident}: {header.name} already defines it inline")
