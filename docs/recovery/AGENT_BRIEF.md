@@ -57,6 +57,28 @@ THE `int` IN `??0Class@@QAE@H@Z` IS NOT AN ARGUMENT
   broken working code. Nine are confirmed: CheckBox, Console, Dialogs,
   EditGroup, ListBox, PlanWin, RadioButton (both ctor and dtor) and SpriteBox.
 
+A `construct()` METHOD IS HOW THE SEH FRAME IS AVOIDED
+- The SEH-frame family (flatbutton.cpp documents it at length) is a real
+  ceiling for REAL CONSTRUCTORS: a GraphicWin-derived class whose constructor
+  calls a base `construct()` picks up an unwind frame under `/GX` that the
+  image does not pay for. Swapping members for raw storage does not drop it.
+- But many of these classes did not HAVE a real constructor in the original.
+  `CheckButton::construct()` at 0x00633750 is BYTE_EXACT precisely because it
+  is a `construct()` method rather than a constructor: there is no base
+  construction to protect, so no frame is emitted. If the image's body is
+  reached with an already-built object and does not construct its bases, model
+  it as a method and the frame problem disappears.
+- The catalogued name is not the authority here. `??0Class@@QAE@XZ` says
+  "constructor", but what matters is whether the BODY constructs bases. Where
+  it does not, give the method a `// symbol` fact recording what this tree
+  emits instead of forcing a constructor spelling to match a catalogue label.
+- Do not reach for `/GX-`. It was added as a per-function flag axis and scored
+  against every other set on 2026-08-21, and it LOSES: FlatButton stays best
+  at `/O1 /GX` (0.565) against 0.440-0.513 for the `/GX-` variants, and Scroll
+  scores 0.848 against 0.959 even though `/GX-` brings its instruction count
+  from 99 down to 79 against an image of 83. Fewer instructions is not a
+  better match - dropping the frame shifts everything after it.
+
 VTABLE STORES GO FIRST IN A CONSTRUCTOR BODY
 - Nothing in the GraphicWin/Win chain is declared `virtual`, deliberately, so
   a constructor's vtable stores are EXPLICIT assignments rather than something
