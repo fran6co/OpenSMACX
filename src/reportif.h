@@ -97,6 +97,16 @@ class ReportIf : public SubInterface {
   // construction would build these all before the constructor body ever
   // runs, which cannot reproduce the image's exact call order (SubInterface
   // itself is the empty-inline base, and nothing here is built through it).
+  // MEASURED: real declared members (FlatButton[7], Sprite[0x15],
+  // FlatButton[7]) built implicitly instead of placement-new - made this
+  // WORSE, 26/132 against this baseline's 34/132, and grew the compiled
+  // instruction count (189 -> 195). The base's `object[0] = vtable` store
+  // must run explicitly in this body (SubInterface's own ctor is not
+  // parametrised per host class, and that header is out of this batch's
+  // scope), and standard C++ always runs implicit member construction
+  // BEFORE any body statement, so converting these three pushes that store
+  // after all three members instead of interleaved with the first - which is
+  // not what the image does. Reverted.
   uint8_t flatButtonsA_[7 * 0xB4C];  // 0x80, 7 * sizeof(FlatButton), vector ctor iterator
   uint8_t spritesA_[0x15 * 0x2C];  // 0x4F94, 0x15 * sizeof(Sprite), vector ctor iterator
   uint8_t gap_5330_[0x54];  // 0x5330

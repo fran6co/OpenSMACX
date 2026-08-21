@@ -60,7 +60,10 @@ class PickWin : public GraphicWin {
   // storage; every offset above already lands on a 4-byte boundary from the
   // field sizes alone, so a plain `uint8_t[]` needs no explicit alignment
   // (VC6 has no `__declspec(align)` to give it one - see vc6_compat.h).
-  uint8_t popup_[0x537C];  // 0xA24, declared Popup extent == sizeof(BasePop) + sizeof(Scroll)
+  // MEASURED: popup_ converted to a real `Popup` member (sizeof(Popup) ==
+  // 0x537C matches exactly), built implicitly. See flatButton1_ etc below
+  // for the rest of the prefix this enabled.
+  Popup popup_;  // 0xA24
   uint32_t field_5DA0_;  // 0x5DA0
   uint32_t field_5DA4_;  // 0x5DA4
   uint32_t field_5DA8_;  // 0x5DA8
@@ -376,14 +379,14 @@ class PickWin : public GraphicWin {
   uint32_t field_6280_;  // 0x6280
   uint32_t field_6284_;  // 0x6284
   uint32_t field_6288_;  // 0x6288
-  uint8_t flatButton1_[0xB4C];  // 0x628C
-  uint8_t flatButton2_[0xB4C];  // 0x6DD8
-  uint8_t flatButton3_[0xB4C];  // 0x7924
-  uint8_t sprites1_[3 * 0x2C];  // 0x8470
-  uint8_t sprites2_[3 * 0x2C];  // 0x84F4
-  uint8_t sprites3_[3 * 0x2C];  // 0x8578
-  uint8_t sprites4_[3 * 0x2C];  // 0x85FC
-  uint8_t sprite5_[0x2C];  // 0x8680
+  FlatButton flatButton1_;  // 0x628C
+  FlatButton flatButton2_;  // 0x6DD8
+  FlatButton flatButton3_;  // 0x7924
+  Sprite sprites1_[3];  // 0x8470
+  Sprite sprites2_[3];  // 0x84F4
+  Sprite sprites3_[3];  // 0x8578
+  Sprite sprites4_[3];  // 0x85FC
+  Sprite sprite5_;  // 0x8680
   uint32_t field_86AC_;  // 0x86AC
   uint32_t field_86B0_;  // 0x86B0
   uint32_t field_86B4_;  // 0x86B4

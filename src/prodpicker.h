@@ -70,6 +70,17 @@ class ProdPicker : public GraphicWin {
   // boundary already, from the field sizes alone, so a plain `uint8_t[]`
   // needs no explicit alignment (VC6 has no `__declspec(align)` to give it
   // one - see vc6_compat.h).
+  //
+  // MEASURED: converting these to real declared members (Sprite[3], Font x4,
+  // Time, FlatButton[9], Scroll, Caviar), built implicitly, was tried and
+  // made this WORSE - 8/127 agreeing instructions against this baseline's
+  // 11/127. The image's own `sub esp, 8` at instruction 7 (matching what
+  // explicit placement-new already reproduces here) is NOT the null-guard
+  // spill slot the PLACEMENT-NEW-COSTS-A-NULL-GUARD lever targets elsewhere
+  // in this batch (ReportIf, SocialWin, PickWin, ReportWin): this
+  // constructor's SEH prologue already agrees with the image 7/7 either way,
+  // and real members instead cost the push ebx/esi/edi register-save order
+  // the image actually has. Reverted.
   uint8_t sprites_[3 * 0x2C];  // 0xA18, 3 * sizeof(Sprite)
   uint8_t font1_[0x28];  // 0xA9C, sizeof(Font)
   uint8_t font2_[0x28];  // 0xAC4, sizeof(Font)
