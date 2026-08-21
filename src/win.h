@@ -547,7 +547,7 @@ class DDInit { public:
   // a failed HRESULT into a message box. Still a pending_bodies forwarder;
   // `init`'s own call site proves the shape: `this` in ecx, one explicit
   // stack argument, `call rel32`.
-  int report_error(int hr);
+  int report_error(int hr);   // 0x00635870, defined in win.cpp
 
   HWND hwnd_;
   IDirectDraw *surf_;
@@ -561,6 +561,11 @@ DDInit *const WinDisplayInit = reinterpret_cast<DDInit *>(0x009BE618);
 // `GetSystemMetrics`. Defined in win.cpp; it was a forwarder until the body
 // it already had, byte-exact and owned by no file, was promoted.
 extern "C" int __cdecl DDInitRefreshScreenMetrics();
+
+// 0x00628F30, a pending_bodies forwarder. `DDInit::report_error` tails into
+// it once its popup is dismissed: the install-media check, 432 bytes against
+// fixed-slot GetDriveTypeA/FindFirstFileA pointers, two callers, unrecovered.
+int __cdecl cd_check();
 
 
 

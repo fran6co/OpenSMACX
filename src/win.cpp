@@ -25,6 +25,7 @@
 #include "dialog.h"
 #include "sounddevice.h"
 #include "menu.h"
+#include "popup.h"   // pop_caption_title, for DDInit::report_error
 #include <ddraw.h>  // IDirectDrawSurface::GetDC / ReleaseDC in the hdc pair
 // `DirectDrawCreate` itself (DDInit::init) is the one symbol this tree needs
 // out of ddraw.lib rather than dxguid.lib's IIDs; CMakeLists.txt links
@@ -2674,4 +2675,351 @@ Status: Complete
 extern "C" int __cdecl DDInitRefreshScreenMetrics() {
     WinScreenWidth = GetSystemMetrics(SM_CXSCREEN);
     return (WinScreenHeight = GetSystemMetrics(SM_CYSCREEN));
+}
+
+/*
+Purpose: Name the DirectDraw error and put it in front of the user.
+// ORIGINAL: 0x00635870 sub_635870 0x00635870-0x00635F0B
+// symbol    ?report_error@DDInit@@QAEHH@Z
+// size      1691 bytes
+// callers   2   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00625EC0 0x00627260 0x00628F30
+//
+// A MEMBER, despite the catalogue calling it `sub_635870` and the old
+// transcription spelling it `__stdcall sub_635870(int)`. The caller settles
+// it: `DDInit::init` does `push eax; mov ecx, edi; call 0x635870` at
+// 0x0063564D, and edi is `this`. The body never reads ecx, which is why the
+// free-function spelling appeared to work.
+//
+// EVERY CASE IS CHECKED, not transcribed on trust. Each of the 99 codes was
+// read out of the image's own jump chain, and the string it selects was read
+// from the image at the address the case pushes - and every one of those
+// strings is the name of the DDERR_ macro whose value equals that code, all
+// 99 agreeing with the SDK's DDRAW.H. So the case labels below are the
+// macros rather than the raw HRESULTs, and the strings are what shipped.
+//
+// RULED-OUT: byte-exactness, and it is the lowering rather than the mapping.
+// A flat switch over all 99 cases reaches instruction #22 before diverging
+// (`push` against `mov`): MSVC re-groups this case set into different
+// sub-tables than the original's five, and which case maps to which string
+// is not in dispute - it is verified above.
+Return Value: 0 if the popup was dismissed, otherwise whatever the media
+              check returns.
+Status: Complete
+*/
+int DDInit::report_error(int hr) {
+    const char *message;
+    switch (hr) {
+    case DDERR_SURFACEALREADYATTACHED:
+        message = "DDERR_SURFACEALREADYATTACHED";
+        break;
+    case DDERR_NOCOLORKEY:
+        message = "DDERR_NOCOLORKEY";
+        break;
+    case DDERR_INVALIDCAPS:
+        message = "DDERR_INVALIDCAPS";
+        break;
+    case DDERR_CANNOTATTACHSURFACE:
+        message = "DDERR_CANNOTATTACHSURFACE";
+        break;
+    case DDERR_OUTOFMEMORY:
+        message = "DDERR_OUTOFMEMORY";
+        break;
+    case DDERR_UNSUPPORTED:
+        message = "DDERR_UNSUPPORTED";
+        break;
+    case DDERR_GENERIC:
+        message = "DDERR_GENERIC";
+        break;
+    case DDERR_NOTINITIALIZED:
+        message = "DDERR_NOTINITIALIZED";
+        break;
+    case DDERR_INVALIDPARAMS:
+        message = "DDERR_INVALIDPARAMS";
+        break;
+    case DDERR_ALREADYINITIALIZED:
+        message = "DDERR_ALREADYINITIALIZED";
+        break;
+    case DDERR_CANNOTDETACHSURFACE:
+        message = "DDERR_CANNOTDETACHSURFACE";
+        break;
+    case DDERR_CURRENTLYNOTAVAIL:
+        message = "DDERR_CURRENTLYNOTAVAIL";
+        break;
+    case DDERR_EXCEPTION:
+        message = "DDERR_EXCEPTION";
+        break;
+    case DDERR_HEIGHTALIGN:
+        message = "DDERR_HEIGHTALIGN";
+        break;
+    case DDERR_INCOMPATIBLEPRIMARY:
+        message = "DDERR_INCOMPATIBLEPRIMARY";
+        break;
+    case DDERR_INVALIDCLIPLIST:
+        message = "DDERR_INVALIDCLIPLIST";
+        break;
+    case DDERR_INVALIDMODE:
+        message = "DDERR_INVALIDMODE";
+        break;
+    case DDERR_INVALIDOBJECT:
+        message = "DDERR_INVALIDOBJECT";
+        break;
+    case DDERR_INVALIDPIXELFORMAT:
+        message = "DDERR_INVALIDPIXELFORMAT";
+        break;
+    case DDERR_INVALIDRECT:
+        message = "DDERR_INVALIDRECT";
+        break;
+    case DDERR_LOCKEDSURFACES:
+        message = "DDERR_LOCKEDSURFACES";
+        break;
+    case DDERR_NO3D:
+        message = "DDERR_NO3D";
+        break;
+    case DDERR_NOALPHAHW:
+        message = "DDERR_NOALPHAHW";
+        break;
+    case DDERR_NOCLIPLIST:
+        message = "DDERR_NOCLIPLIST";
+        break;
+    case DDERR_NOCOLORCONVHW:
+        message = "DDERR_NOCOLORCONVHW";
+        break;
+    case DDERR_NOCOOPERATIVELEVELSET:
+        message = "DDERR_NOCOOPERATIVELEVELSET";
+        break;
+    case DDERR_NOCOLORKEYHW:
+        message = "DDERR_NOCOLORKEYHW";
+        break;
+    case DDERR_NODIRECTDRAWSUPPORT:
+        message = "DDERR_NODIRECTDRAWSUPPORT";
+        break;
+    case DDERR_NOEXCLUSIVEMODE:
+        message = "DDERR_NOEXCLUSIVEMODE";
+        break;
+    case DDERR_NOFLIPHW:
+        message = "DDERR_NOFLIPHW";
+        break;
+    case DDERR_NOGDI:
+        message = "DDERR_NOGDI";
+        break;
+    case DDERR_NOMIRRORHW:
+        message = "DDERR_NOMIRRORHW";
+        break;
+    case DDERR_NOTFOUND:
+        message = "DDERR_NOTFOUND";
+        break;
+    case DDERR_NOOVERLAYHW:
+        message = "DDERR_NOOVERLAYHW";
+        break;
+    case DDERR_NORASTEROPHW:
+        message = "DDERR_NORASTEROPHW";
+        break;
+    case DDERR_NOROTATIONHW:
+        message = "DDERR_NOROTATIONHW";
+        break;
+    case DDERR_NOSTRETCHHW:
+        message = "DDERR_NOSTRETCHHW";
+        break;
+    case DDERR_NOT4BITCOLOR:
+        message = "DDERR_NOT4BITCOLOR";
+        break;
+    case DDERR_NOT4BITCOLORINDEX:
+        message = "DDERR_NOT4BITCOLORINDEX";
+        break;
+    case DDERR_NOT8BITCOLOR:
+        message = "DDERR_NOT8BITCOLOR";
+        break;
+    case DDERR_NOTEXTUREHW:
+        message = "DDERR_NOTEXTUREHW";
+        break;
+    case DDERR_NOVSYNCHW:
+        message = "DDERR_NOVSYNCHW";
+        break;
+    case DDERR_NOZBUFFERHW:
+        message = "DDERR_NOZBUFFERHW";
+        break;
+    case DDERR_NOZOVERLAYHW:
+        message = "DDERR_NOZOVERLAYHW";
+        break;
+    case DDERR_OUTOFCAPS:
+        message = "DDERR_OUTOFCAPS";
+        break;
+    case DDERR_OUTOFVIDEOMEMORY:
+        message = "DDERR_OUTOFVIDEOMEMORY";
+        break;
+    case DDERR_OVERLAYCANTCLIP:
+        message = "DDERR_OVERLAYCANTCLIP";
+        break;
+    case DDERR_OVERLAYCOLORKEYONLYONEACTIVE:
+        message = "DDERR_OVERLAYCOLORKEYONLYONEACTIVE";
+        break;
+    case DDERR_PALETTEBUSY:
+        message = "DDERR_PALETTEBUSY";
+        break;
+    case DDERR_COLORKEYNOTSET:
+        message = "DDERR_COLORKEYNOTSET";
+        break;
+    case DDERR_HWNDALREADYSET:
+        message = "DDERR_HWNDALREADYSET";
+        break;
+    case DDERR_SURFACEALREADYDEPENDENT:
+        message = "DDERR_SURFACEALREADYDEPENDENT";
+        break;
+    case DDERR_SURFACEBUSY:
+        message = "DDERR_SURFACEBUSY";
+        break;
+    case DDERR_CANTLOCKSURFACE:
+        message = "DDERR_CANTLOCKSURFACE";
+        break;
+    case DDERR_SURFACEISOBSCURED:
+        message = "DDERR_SURFACEISOBSCURED";
+        break;
+    case DDERR_SURFACELOST:
+        message = "DDERR_SURFACELOST";
+        break;
+    case DDERR_SURFACENOTATTACHED:
+        message = "DDERR_SURFACENOTATTACHED";
+        break;
+    case DDERR_TOOBIGHEIGHT:
+        message = "DDERR_TOOBIGHEIGHT";
+        break;
+    case DDERR_TOOBIGSIZE:
+        message = "DDERR_TOOBIGSIZE";
+        break;
+    case DDERR_TOOBIGWIDTH:
+        message = "DDERR_TOOBIGWIDTH";
+        break;
+    case DDERR_UNSUPPORTEDFORMAT:
+        message = "DDERR_UNSUPPORTEDFORMAT";
+        break;
+    case DDERR_UNSUPPORTEDMASK:
+        message = "DDERR_UNSUPPORTEDMASK";
+        break;
+    case DDERR_VERTICALBLANKINPROGRESS:
+        message = "DDERR_VERTICALBLANKINPROGRESS";
+        break;
+    case DDERR_WASSTILLDRAWING:
+        message = "DDERR_WASSTILLDRAWING";
+        break;
+    case DDERR_XALIGN:
+        message = "DDERR_XALIGN";
+        break;
+    case DDERR_INVALIDDIRECTDRAWGUID:
+        message = "DDERR_INVALIDDIRECTDRAWGUID";
+        break;
+    case DDERR_DIRECTDRAWALREADYCREATED:
+        message = "DDERR_DIRECTDRAWALREADYCREATED";
+        break;
+    case DDERR_NODIRECTDRAWHW:
+        message = "DDERR_NODIRECTDRAWHW";
+        break;
+    case DDERR_PRIMARYSURFACEALREADYEXISTS:
+        message = "DDERR_PRIMARYSURFACEALREADYEXISTS";
+        break;
+    case DDERR_NOEMULATION:
+        message = "DDERR_NOEMULATION";
+        break;
+    case DDERR_REGIONTOOSMALL:
+        message = "DDERR_REGIONTOOSMALL";
+        break;
+    case DDERR_CLIPPERISUSINGHWND:
+        message = "DDERR_CLIPPERISUSINGHWND";
+        break;
+    case DDERR_NOCLIPPERATTACHED:
+        message = "DDERR_NOCLIPPERATTACHED";
+        break;
+    case DDERR_NOHWND:
+        message = "DDERR_NOHWND";
+        break;
+    case DDERR_HWNDSUBCLASSED:
+        message = "DDERR_HWNDSUBCLASSED";
+        break;
+    case DDERR_NOPALETTEATTACHED:
+        message = "DDERR_NOPALETTEATTACHED";
+        break;
+    case DDERR_NOPALETTEHW:
+        message = "DDERR_NOPALETTEHW";
+        break;
+    case DDERR_BLTFASTCANTCLIP:
+        message = "DDERR_BLTFASTCANTCLIP";
+        break;
+    case DDERR_NOBLTHW:
+        message = "DDERR_NOBLTHW";
+        break;
+    case DDERR_NODDROPSHW:
+        message = "DDERR_NODDROPSHW";
+        break;
+    case DDERR_OVERLAYNOTVISIBLE:
+        message = "DDERR_OVERLAYNOTVISIBLE";
+        break;
+    case DDERR_NOOVERLAYDEST:
+        message = "DDERR_NOOVERLAYDEST";
+        break;
+    case DDERR_INVALIDPOSITION:
+        message = "DDERR_INVALIDPOSITION";
+        break;
+    case DDERR_NOTAOVERLAYSURFACE:
+        message = "DDERR_NOTAOVERLAYSURFACE";
+        break;
+    case DDERR_EXCLUSIVEMODEALREADYSET:
+        message = "DDERR_EXCLUSIVEMODEALREADYSET";
+        break;
+    case DDERR_NOTFLIPPABLE:
+        message = "DDERR_NOTFLIPPABLE";
+        break;
+    case DDERR_CANTDUPLICATE:
+        message = "DDERR_CANTDUPLICATE";
+        break;
+    case DDERR_NOTLOCKED:
+        message = "DDERR_NOTLOCKED";
+        break;
+    case DDERR_CANTCREATEDC:
+        message = "DDERR_CANTCREATEDC";
+        break;
+    case DDERR_NODC:
+        message = "DDERR_NODC";
+        break;
+    case DDERR_WRONGMODE:
+        message = "DDERR_WRONGMODE";
+        break;
+    case DDERR_IMPLICITLYCREATED:
+        message = "DDERR_IMPLICITLYCREATED";
+        break;
+    case DDERR_NOTPALETTIZED:
+        message = "DDERR_NOTPALETTIZED";
+        break;
+    case DDERR_UNSUPPORTEDMODE:
+        message = "DDERR_UNSUPPORTEDMODE";
+        break;
+    case DDERR_NOMIPMAPHW:
+        message = "DDERR_NOMIPMAPHW";
+        break;
+    case DDERR_INVALIDSURFACETYPE:
+        message = "DDERR_INVALIDSURFACETYPE";
+        break;
+    case DDERR_CANTPAGELOCK:
+        message = "DDERR_CANTPAGELOCK";
+        break;
+    case DDERR_CANTPAGEUNLOCK:
+        message = "DDERR_CANTPAGEUNLOCK";
+        break;
+    case DDERR_NOTPAGELOCKED:
+        message = "DDERR_NOTPAGELOCKED";
+        break;
+    default:
+        message = nullptr;
+        break;
+    }
+    if (message) {
+        parse_says(0, message, -1, -1);
+    }
+    if (pop_caption_title(const_cast<char *>("jackal"),
+                          const_cast<char *>("DDRAWERROR"), 0x10040,
+                          nullptr) == -1) {
+        return 0;
+    }
+    return cd_check();
 }
