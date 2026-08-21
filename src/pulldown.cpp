@@ -17,18 +17,6 @@ namespace {
 
 static const int ItemNotFound = 11;
 
-PullDownItem *find_item(PullDownItem *items, int id) {
-    for (int index = 0; index < 64; ++index) {
-        if (items[index].id == -1) {
-            break;
-        }
-        if (items[index].id == id) {
-            return &items[index];
-        }
-    }
-    return nullptr;
-}
-
 __forceinline int int_from_bits(uint32_t bits) {
     int value;
     static_assert(sizeof(value) == sizeof(bits), "PullDown requires 32-bit int");
@@ -40,7 +28,8 @@ __forceinline int int_from_bits(uint32_t bits) {
 
 /*
 Purpose: Hide the first item with the requested ID.
-// ORIGINAL: 0x005F8CB0 ?hide_item@PullDown@@QAEHH@Z 0x005F8CB0-0x005F8D1F
+// ORIGINAL: 0x005F8CB0 ?hide_item@PullDown@@QAEHH@Z 0x005F8CB0-0x005F8D1F BYTE_EXACT
+// LEVER: find_item moved to pulldown.h (inline, no ORIGINAL marker) and made index-returning: image recomputes the item address from the loop index at each field access instead of caching a pointer.
 // size      111 bytes
 // prototype int (__thiscall ?hide_item@PullDown@@QAEHH@Z)(PullDown* this, int)
 // callers   1   call targets   0
@@ -51,12 +40,12 @@ Purpose: Hide the first item with the requested ID.
 Status: Complete
 */
 int PullDown::hide_item(int id) {
-    PullDownItem *item = find_item(items_, id);
-    if (!item) {
+    int index = find_item(items_, id);
+    if (index == -1) {
         return ItemNotFound;
     }
-    if (item->flags & 1U) {
-        item->flags &= ~1U;
+    if (items_[index].flags & 1U) {
+        items_[index].flags &= ~1U;
         visible_count_ = int_from_bits(
             static_cast<uint32_t>(visible_count_) - 1U);
     }
@@ -66,7 +55,8 @@ int PullDown::hide_item(int id) {
 
 /*
 Purpose: Show the first item with the requested ID.
-// ORIGINAL: 0x005F8D20 ?show_item@PullDown@@QAEHH@Z 0x005F8D20-0x005F8D8F
+// ORIGINAL: 0x005F8D20 ?show_item@PullDown@@QAEHH@Z 0x005F8D20-0x005F8D8F BYTE_EXACT
+// LEVER: find_item moved to pulldown.h (inline, no ORIGINAL marker) and made index-returning: image recomputes the item address from the loop index at each field access instead of caching a pointer.
 // size      111 bytes
 // prototype int (__thiscall ?show_item@PullDown@@QAEHH@Z)(PullDown* this, int)
 // callers   1   call targets   0
@@ -77,12 +67,12 @@ Purpose: Show the first item with the requested ID.
 Status: Complete
 */
 int PullDown::show_item(int id) {
-    PullDownItem *item = find_item(items_, id);
-    if (!item) {
+    int index = find_item(items_, id);
+    if (index == -1) {
         return ItemNotFound;
     }
-    if (!(item->flags & 1U)) {
-        item->flags |= 1U;
+    if (!(items_[index].flags & 1U)) {
+        items_[index].flags |= 1U;
         visible_count_ = int_from_bits(
             static_cast<uint32_t>(visible_count_) + 1U);
     }
@@ -92,7 +82,8 @@ int PullDown::show_item(int id) {
 
 /*
 Purpose: Disable the first item with the requested ID.
-// ORIGINAL: 0x005F8D90 ?disable_item@PullDown@@QAEHH@Z 0x005F8D90-0x005F8DEF
+// ORIGINAL: 0x005F8D90 ?disable_item@PullDown@@QAEHH@Z 0x005F8D90-0x005F8DEF BYTE_EXACT
+// LEVER: find_item moved to pulldown.h (inline, no ORIGINAL marker) and made index-returning: image recomputes the item address from the loop index at each field access instead of caching a pointer.
 // size      95 bytes
 // prototype int (__thiscall ?disable_item@PullDown@@QAEHH@Z)(PullDown* this, int)
 // callers   2   call targets   0
@@ -103,18 +94,19 @@ Purpose: Disable the first item with the requested ID.
 Status: Complete
 */
 int PullDown::disable_item(int id) {
-    PullDownItem *item = find_item(items_, id);
-    if (!item) {
+    int index = find_item(items_, id);
+    if (index == -1) {
         return ItemNotFound;
     }
-    item->flags |= 2U;
+    items_[index].flags |= 2U;
     dirty_ = 1;
     return 0;
 }
 
 /*
 Purpose: Enable the first item with the requested ID.
-// ORIGINAL: 0x005F8DF0 ?enable_item@PullDown@@QAEHH@Z 0x005F8DF0-0x005F8E4F
+// ORIGINAL: 0x005F8DF0 ?enable_item@PullDown@@QAEHH@Z 0x005F8DF0-0x005F8E4F BYTE_EXACT
+// LEVER: find_item moved to pulldown.h (inline, no ORIGINAL marker) and made index-returning: image recomputes the item address from the loop index at each field access instead of caching a pointer.
 // size      95 bytes
 // prototype int (__thiscall ?enable_item@PullDown@@QAEHH@Z)(PullDown* this, int)
 // callers   1   call targets   0
@@ -125,18 +117,19 @@ Purpose: Enable the first item with the requested ID.
 Status: Complete
 */
 int PullDown::enable_item(int id) {
-    PullDownItem *item = find_item(items_, id);
-    if (!item) {
+    int index = find_item(items_, id);
+    if (index == -1) {
         return ItemNotFound;
     }
-    item->flags &= ~2U;
+    items_[index].flags &= ~2U;
     dirty_ = 1;
     return 0;
 }
 
 /*
 Purpose: Check the first item with the requested ID.
-// ORIGINAL: 0x005F9040 ?check_item@PullDown@@QAEHH@Z 0x005F9040-0x005F909F
+// ORIGINAL: 0x005F9040 ?check_item@PullDown@@QAEHH@Z 0x005F9040-0x005F909F BYTE_EXACT
+// LEVER: find_item moved to pulldown.h (inline, no ORIGINAL marker) and made index-returning: image recomputes the item address from the loop index at each field access instead of caching a pointer.
 // size      95 bytes
 // prototype int (__thiscall ?check_item@PullDown@@QAEHH@Z)(PullDown* this, int)
 // callers   1   call targets   0
@@ -147,18 +140,19 @@ Purpose: Check the first item with the requested ID.
 Status: Complete
 */
 int PullDown::check_item(int id) {
-    PullDownItem *item = find_item(items_, id);
-    if (!item) {
+    int index = find_item(items_, id);
+    if (index == -1) {
         return ItemNotFound;
     }
-    item->flags |= 8U;
+    items_[index].flags |= 8U;
     dirty_ = 1;
     return 0;
 }
 
 /*
 Purpose: Uncheck the first item with the requested ID.
-// ORIGINAL: 0x005F90A0 ?uncheck_item@PullDown@@QAEHH@Z 0x005F90A0-0x005F90FF
+// ORIGINAL: 0x005F90A0 ?uncheck_item@PullDown@@QAEHH@Z 0x005F90A0-0x005F90FF BYTE_EXACT
+// LEVER: find_item moved to pulldown.h (inline, no ORIGINAL marker) and made index-returning: image recomputes the item address from the loop index at each field access instead of caching a pointer.
 // size      95 bytes
 // prototype int (__thiscall ?uncheck_item@PullDown@@QAEHH@Z)(PullDown* this, int)
 // callers   1   call targets   0
@@ -169,11 +163,11 @@ Purpose: Uncheck the first item with the requested ID.
 Status: Complete
 */
 int PullDown::uncheck_item(int id) {
-    PullDownItem *item = find_item(items_, id);
-    if (!item) {
+    int index = find_item(items_, id);
+    if (index == -1) {
         return ItemNotFound;
     }
-    item->flags &= ~8U;
+    items_[index].flags &= ~8U;
     dirty_ = 1;
     return 0;
 }
