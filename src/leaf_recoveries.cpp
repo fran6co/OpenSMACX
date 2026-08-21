@@ -1438,7 +1438,7 @@ Purpose: Clear the field, then close as a BaseButton.
          void to match the name, and the value is discarded rather than
          quietly re-typed.
 
-// ORIGINAL: 0x00625330 ?close@ImageButton@@QAEXXZ 0x00625330-0x0062533F
+// ORIGINAL: 0x00625330 ?close@ImageButton@@QAEXXZ 0x00625330-0x0062533F BYTE_EXACT
 // symbol    ?image_button_close_redirect@@YIXPAX0@Z
 // size      15 bytes
 // prototype void (__thiscall ?close@ImageButton@@QAEXXZ)(ImageButton* this)
@@ -1450,8 +1450,12 @@ Return Value: n/a
 Status: Complete
 */
 void __fastcall image_button_close_redirect(void *self, void *) {
+    // THE METHOD, not the two-argument redirect. `base_button_close_redirect`
+    // is `__fastcall(BaseButton *, void *)`, so passing `nullptr` for the
+    // unused second argument materialises `xor edx, edx` - one instruction the
+    // image does not have. It tail-jumps straight to 0x006070C0.
     store32(self, 0xAB8, 0);
-    base_button_close_redirect(reinterpret_cast<BaseButton *>(self), nullptr);
+    reinterpret_cast<BaseButton *>(self)->BaseButton::close();
 }
 
 /*

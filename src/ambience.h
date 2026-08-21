@@ -86,7 +86,9 @@ class FactionAmbience : public Ambience {
   void basewin_hide();
   void design_window_show();
   void design_window_hide();
-  void construct();
+  // RETURNS `this`: the image ends `mov eax, esi; ret`, which a `void`
+  // construct never emits. Callers ignore the result.
+  FactionAmbience *construct();
 
  private:
   uint32_t field_58_;
@@ -130,7 +132,8 @@ class MAmbience : public Ambience {
  public:
   MAmbience() { ; }
   ~MAmbience() { ; }
-  void construct();
+  // Returns `this`; see FactionAmbience.
+  MAmbience *construct();
 
  private:
   uint32_t field_58_;
@@ -151,7 +154,8 @@ class SAmbience : public Ambience {
  public:
   SAmbience() { ; }
   ~SAmbience() { ; }
-  void construct();
+  // Returns `this`; see FactionAmbience.
+  SAmbience *construct();
 
  private:
   uint32_t field_58_;
@@ -173,7 +177,8 @@ class GAmbience : public Ambience {
  public:
   GAmbience() { ; }
   ~GAmbience() { ; }
-  void construct();
+  // Returns `this`; see FactionAmbience.
+  GAmbience *construct();
   void tech();
   void production();
   void popup1();
