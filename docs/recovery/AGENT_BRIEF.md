@@ -179,10 +179,12 @@ LEVERS THAT HAVE PAID, most productive first
   correct as they stand and must be left alone.
 
 - `nullptr` TO A `__fastcall` REDIRECT COSTS AN INSTRUCTION. A
-  `..._redirect(Thing *, void *)` called with `nullptr` for the unused second
-  argument materialises `xor edx, edx`, which the image does not emit. Call the
-  METHOD instead. Five bodies so far, `ImageButton::close` byte-exact on it
-  alone. Related: a `void construct()` never emits the image's closing
+  `..._redirect(Thing *, void *, ...)` called with `nullptr` for the unused
+  second argument materialises `xor edx, edx`, which the image does not emit.
+  Call the METHOD instead. SIX bodies so far - `ImageButton::close`,
+  `ImageButton::init` and `PickTech::close` byte-exact on it alone. Search for
+  it as `_redirect\([^;]*, *nullptr[,)]`: a pattern matching only TWO-argument
+  redirects missed three of the six. Related: a `void construct()` never emits the image's closing
   `mov eax, esi` - if the image returns `this`, say so in the signature, which
   closed the last instruction on four Ambience constructors.
 
