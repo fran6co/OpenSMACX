@@ -1,4 +1,10 @@
 // ORIGINAL: 0x005E741C ?draw_dest_source@Sprite@@QAEHPAUBuffer@@HHHPAE@Z 0x005E741C-0x005E811C FILE
+// HAND-WRITTEN ASSEMBLY IN THE ORIGINAL: the shipped bytes save and restore
+// the FLAGS around a block - `pushf` ... `popf` - which a compiler has no
+// reason to emit, because it owns the flags between setting them and reading
+// them. Byte-exactness is NOT reachable from C++ here; the honest ceiling is
+// semantic equivalence, and the answer is NOT `__asm`.
+// Found by `tools/handwritten_asm.py`.
 // RULED-OUT: exact Duff's-device unrolled blit (jmp through a stored code address / jmp edx) is not reproducible without inline asm; landed the setup/validation/clip-table calls faithfully (get_data, fill_scaling_table, IntersectRect, get_clipped_x/y_ table_shrink/expand in the right order with the right early-outs) and replaced all three unrolled transparency-tested copy loops with a single plain nearest-neighbor loop that performs the same per-pixel operation. Diverges early (#5) given the wholesale loop-shape difference; not chased further.
 // working copy - scaffold materialised by --work
 // size      3328 bytes

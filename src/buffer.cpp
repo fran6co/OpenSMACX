@@ -943,6 +943,15 @@ int Buffer::init(int width, int height, int tgl, ExtDirectDraw *direct_draw) {
 Purpose: Flood the whole buffer with one colour - through DirectDraw when
          there is a surface, and by writing the mapped bits when there is
          not.
+// HAND-WRITTEN ASSEMBLY IN THE ORIGINAL, so byte-exactness is NOT reachable
+// from C++ and the honest ceiling is semantic equivalence. The shipped bytes
+// save and restore the FLAGS around a block - `pushf` ... `popf` - things a compiler has no reason to emit, because it owns the flags
+// between setting and reading them.
+//
+// Found by `tools/handwritten_asm.py`. Do NOT grind spellings here, and do NOT
+// answer it with `__asm`: a semantic C++ body is worth more than a byte-exact
+// assembly one.
+//
 // ORIGINAL: 0x005DFB50 ?fill@Buffer@@QAEHH@Z 0x005DFB50-0x005DFCCD
 // size      381 bytes
 // prototype int (__thiscall ?fill@Buffer@@QAEHH@Z)(Buffer* this, int)
@@ -1082,6 +1091,15 @@ int Buffer::fill(int color) {
 Purpose: Fill a rectangle of this buffer with a single colour, through
          DirectDraw when there is a surface and by writing the mapped bits
          when there is not.
+// HAND-WRITTEN ASSEMBLY IN THE ORIGINAL, so byte-exactness is NOT reachable
+// from C++ and the honest ceiling is semantic equivalence. The shipped bytes
+// save and restore the FLAGS around a block - `pushf` ... `popf` - things a compiler has no reason to emit, because it owns the flags
+// between setting and reading them.
+//
+// Found by `tools/handwritten_asm.py`. Do NOT grind spellings here, and do NOT
+// answer it with `__asm`: a semantic C++ body is worth more than a byte-exact
+// assembly one.
+//
 // ORIGINAL: 0x005DFCD0 ?fill@Buffer@@QAEHPAURECT@@H@Z 0x005DFCD0-0x005DFEFC
 // symbol    ?fill@Buffer@@QAEHPAUtagRECT@@H@Z
 // size      556 bytes
@@ -1340,6 +1358,15 @@ Purpose: THE BLITTER. Copy a rectangle out of this buffer into `buffer`,
          clipping the read against this buffer's own extent and the write
          against the destination's clip rectangle, and handling the case
          where source and destination are the same object.
+// HAND-WRITTEN ASSEMBLY IN THE ORIGINAL, so byte-exactness is NOT reachable
+// from C++ and the honest ceiling is semantic equivalence. The shipped bytes
+// save and restore the FLAGS around a block - `pushf` ... `popf` - things a compiler has no reason to emit, because it owns the flags
+// between setting and reading them.
+//
+// Found by `tools/handwritten_asm.py`. Do NOT grind spellings here, and do NOT
+// answer it with `__asm`: a semantic C++ body is worth more than a byte-exact
+// assembly one.
+//
 // ORIGINAL: 0x005DFF00 ?copy@Buffer@@QAEHPAVBuffer@@HHHHHH@Z 0x005DFF00-0x005E079B
 // symbol    ?copy@Buffer@@QAEHPAV1@HHHHHH@Z
 // size      2203 bytes

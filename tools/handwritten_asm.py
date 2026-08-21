@@ -41,8 +41,22 @@ IMAGE = Path(os.environ.get(
     REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"))
 
 STRONG = {"loop", "loope", "loopne", "loopz", "loopnz",
-          "lodsb", "lodsw", "lodsd", "scasb", "scasw", "scasd", "xlatb", "xlat"}
-WEAK = {"sahf", "lahf", "pushf", "pushfd", "popf", "popfd",
+          "lodsb", "lodsw", "lodsd", "scasb", "scasw", "scasd", "xlatb", "xlat",
+          # SAVING THE FLAGS is something a compiler never needs to do: it owns
+          # the flags between the instruction that sets them and the one that
+          # reads them. `pushf`/`popf` means a human wrote a block and defended
+          # it. These were filed WEAK at first and `Buffer::fill` slipped
+          # through - its image body is an `__asm` block at 0x005DFC43 that
+          # does `pushf`, `cld`, `rep stosd`, `popf` and clobbers ebx, a
+          # callee-saved register, without saving it. The body's own comment
+          # said so; the tool did not.
+          # NOT `sahf`/`lahf`: those ARE standard in floating-point compares
+          # and promoting them buried the real hits under twenty CRT math
+          # helpers - `__powhlp`, `__hypothlp`, `__fpclass` and friends, where
+          # Microsoft's own hand-written assembly is not this recovery's
+          # problem. They stay weak.
+          "pushf", "pushfd", "popf", "popfd"}
+WEAK = {"sahf", "lahf",
         "xchg", "bswap", "cbw", "cwde", "cdq", "cwd", "salc", "aaa", "aad"}
 
 

@@ -1,4 +1,10 @@
 // ORIGINAL: 0x005E4B9A ?draw@Sprite@@QAEHPAUBuffer@@HHH@Z 0x005E4B9A-0x005E5833 FILE
+// HAND-WRITTEN ASSEMBLY IN THE ORIGINAL: the shipped bytes save and restore
+// the FLAGS around a block - `pushf` ... `popf` - which a compiler has no
+// reason to emit, because it owns the flags between setting them and reading
+// them. Byte-exactness is NOT reachable from C++ here; the honest ceiling is
+// semantic equivalence, and the answer is NOT `__asm`.
+// Found by `tools/handwritten_asm.py`.
 // RULED-OUT: this is a hand-tuned pixel blitter with THREE Duff's-device unrolled copy loops (1:1, shrink-via-per-column int step table at g_009b606c + per-row repeat-count table at g_009b3ab8, expand-via-analogous tables) that Ghidra could not decompile at all (no pseudocode section in the brief). Landed body keeps the faithful, disasm-verified parts (load_pcx/get_data/free_data guards, the g_00696d18/1c/20/24 scale-factor cache + threshold check against g_0066fdc8, IntersectRect clipping against (Buffer*)a1+0x20) but replaces all three unrolled table-driven loops with ONE nearest-neighbour scaled copy loop using the scale ratio directly instead of the precomputed x/y tables from get_clipped_x/y_table_shrink/expand (declared but not called).
 // working copy - scaffold materialised by --work
 // size      3225 bytes
