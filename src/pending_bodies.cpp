@@ -835,6 +835,11 @@ VoiceTx::~VoiceTx() {  // ??1VoiceTx@@QAE@XZ at 0x004C8DB0
     PENDING_BODY(0x004C8DB0, pending)(this, nullptr);
 }
 
+Effect::~Effect() {  // ??1Effect@@QAE@XZ at 0x004482C0
+    typedef void(__fastcall *pending)(Effect *, void *);
+    PENDING_BODY(0x004482C0, pending)(this, nullptr);
+}
+
 // ?write_raw_l@Buffer@@QAEHPADHHH@Z at 0x005DBD00 - 1475 bytes, the raster
 // writer that puts one single-font run on the surface. Called by name from
 // `write_multi_font_raw_l`, which is promoted; a pointer here would cost that
