@@ -18,6 +18,7 @@
 #pragma once
 #include "graphicwin.h"
 #include "font.h"
+#include "time.h"
 
  /*
   * MultiDebug class
@@ -34,6 +35,10 @@ class MultiDebug : public GraphicWin {
  public:
   void __cdecl timer_callback_daemon(int a2);
   MultiDebug() { ; }
+  // NOT a constructor: see the "NOT a constructor" note in log.h - an
+  // ordinary method drops the SEH frame a real derived GraphicWin
+  // constructor picks up under /GX (FlatButton's/PullDown's own notes).
+  MultiDebug *construct();
   // 0x005C9E00 is not recovered: a
   // pending_bodies forwarder, because an empty inline stub emits
   // nothing and the deleting destructor needs a `call rel32`.
@@ -42,7 +47,11 @@ class MultiDebug : public GraphicWin {
 
  private:
   Font font_;  // 0xA14, the IDB's 40-byte member covering 0xA14..0xA3C
-  int32_t field_A3C_;
+  int32_t field_A3C_;  // 0xA3C
+  // The constructor places a Time HERE (`lea ecx,[esi+0xa40]; call
+  // ??0Time@@QAE@XZ`), right after field_A3C_, before ever storing to
+  // field_A3C_ itself - see MultiDebug::construct() in multidebug.cpp.
+  Time timer_;  // 0xA40
 };
 
 void __fastcall multi_debug_close_redirect(MultiDebug *self, void *);

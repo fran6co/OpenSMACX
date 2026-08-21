@@ -46,6 +46,12 @@ class WorldWin : public GraphicWin {
   void focus(int a1, int a2);
   void set_center(int a1, int a2);
   WorldWin() { ; }
+  // NOT a constructor: mapWin_'s own construction is `MapWin::construct(1)`
+  // (see the note in mapwin.h - a real `MapWin(int)` pushes the argument
+  // TWICE, VC6's hidden most-derived flag), so this cannot rely on
+  // automatic member construction either. An ordinary method matches the
+  // same idiom as Win/GraphicWin/MapWin.
+  WorldWin *construct();
   // 0x004C4A70 is not recovered: a
   // pending_bodies forwarder, because an empty inline stub emits
   // nothing and the deleting destructor needs a `call rel32`.

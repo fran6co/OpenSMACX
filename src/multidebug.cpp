@@ -19,6 +19,45 @@
 #include "multidebug.h"
 #include "vtable_shim.h"
 
+const uint32_t MultiDebugPrimaryVtable = 0x0066FA88;
+const uint32_t MultiDebugBufferVtable = 0x0066FA80;
+
+/*
+Purpose: Construct the GraphicWin base, the embedded Font and Time, then
+         install MultiDebug's own vtables and zero the flag field.
+// ORIGINAL: 0x005C97F0 ??0MultiDebug@@QAE@XZ 0x005C97F0-0x005C9860;0x00662AF0-0x00662B10
+// symbol    ?construct@MultiDebug@@QAEPAV1@XZ
+// size      112 bytes
+// prototype void (__thiscall ??0MultiDebug@@QAE@XZ)(MultiDebug* this)
+// callers   0   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok;frame
+// calls     0x005D4CF0 0x00618EA0 0x006161D0
+// LEVER: `new (&font_) Font(); new (&timer_) Time();` - a `new`-expression,
+//        not the member-function-call syntax used elsewhere (MCIVideo's
+//        Palette) - is what picks up the image's SEH frame here; the
+//        member-call-syntax spelling compiled with NO frame at all
+//        (0/28 agreeing, diverging at instruction 0).
+// RULED-OUT: best reached past that is 13/28, 0.871 similar (best of 10
+//        flag sets). Same residual as NetMsg::construct() (netmsg.cpp):
+//        image has `push ecx` at instruction 7 where this body has
+//        `sub esp, 8` - a stack-frame-size difference from spill-slot
+//        count with three placement-worthy calls in the body plus the
+//        `object` local. Not chased further.
+Return Value: n/a
+Status: Complete
+*/
+MultiDebug *MultiDebug::construct() {
+    GraphicWin::construct();
+    new (&font_) Font();
+    new (&timer_) Time();
+    uint32_t *const object = reinterpret_cast<uint32_t *>(this);
+    object[0x000 / 4] = MultiDebugPrimaryVtable;
+    object[0x444 / 4] = MultiDebugBufferVtable;
+    field_A3C_ = 0;
+    return this;
+}
+
 /*
 Purpose: Close the debug window by clearing its single active flag.
 // ORIGINAL: 0x005C98E0 ?close@MultiDebug@@QAEXXZ 0x005C98E0-0x005C98EB BYTE_EXACT

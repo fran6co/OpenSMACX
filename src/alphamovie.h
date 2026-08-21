@@ -30,6 +30,7 @@
   */
 class MCIVideo {
  public:
+  MCIVideo();  // ??0MCIVideo@@QAE@XZ  0x005FFD80
   void close();  // ?close@MCIVideo@@QAEXXZ  0x005FFDB0
 
   // Storage the image proves is here: its own methods reach 0x474.
@@ -37,10 +38,18 @@ class MCIVideo {
   // 7 member(s) from the IDA database, 2 named; it starts a member at 0x0, which is where src/ ends.
 
   uint32_t field_0_;  // 0x0
+  // The constructor only zeroes the LOW 16 bits at this offset
+  // (`mov word ptr [esi+4], ax`), not the whole dword, so `mciId_` is
+  // written through a 16-bit alias there rather than assigned directly -
+  // see MCIVideo::MCIVideo() in alphamovie.cpp.
   uint32_t mciId_;  // 0x4
   uint32_t field_8_;  // 0x8
   uint32_t field_C_;  // 0xC
-  uint8_t palette_[0x454];  // 0x10
+  // Sized and pinned: sizeof(Palette) == 0x454 (palette.h), exactly the
+  // extent this field already carried as raw bytes. The constructor at
+  // 0x005FFD80 placement-constructs a real Palette here (`call 0x5FE2A0`
+  // on `this + 0x10`).
+  Palette palette_;  // 0x10
   uint32_t field_464_;  // 0x464
   uint32_t field_468_;  // 0x468
   uint32_t field_46C_;  // 0x46C
@@ -65,7 +74,7 @@ class AlphaMovie : public GraphicWin {
  public:
   void update();
   void close();
-  AlphaMovie() { ; }
+  AlphaMovie();
   // 0x00404310 is not recovered: a
   // pending_bodies forwarder, because an empty inline stub emits
   // nothing and the deleting destructor needs a `call rel32`.

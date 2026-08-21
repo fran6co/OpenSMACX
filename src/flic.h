@@ -21,11 +21,17 @@
 
  /*
   * Flic class
+  *
+  * No base class: the constructor's first call is straight to
+  * `??0Buffer@@QAE@XZ` on `this + 4`, and its second is to
+  * `??0Palette@@QAE@XZ` on `this + 0x5BC` - both ordinary members
+  * auto-constructing in declaration order, not a base-class chain.
   */
 class Flic {
  public:
-  Flic() { ; }
-  ~Flic() { ; }
+  Flic();
+  ~Flic();
+  void close();
   void UNK4();
   void UNK5();
   void UNK6();
@@ -33,8 +39,9 @@ class Flic {
   void UNK8();
 
  private:
-  uint32_t field_0_;
-  Buffer buffer_;
+  // Only the low byte is ever stored (`mov byte ptr [esi], bl`).
+  uint8_t field_0_;  // 0x0
+  Buffer buffer_;    // 0x4
   uint32_t field_58C_;
   uint32_t field_590_;
   uint32_t field_594_;
@@ -47,8 +54,15 @@ class Flic {
   uint32_t field_5B0_;
   uint32_t field_5B4_;
   FILE *file_;
-  Palette *palette_;
-  uint32_t field_5C0_[329];
+  // A REAL embedded Palette, not a pointer: the constructor
+  // placement-constructs it (`lea ecx,[esi+0x5bc]; call ??0Palette@@QAE@XZ`)
+  // and the destructor tears it down the same way
+  // (`call ??1Palette@@QAE@XZ`), both on `this + 0x5BC` directly.
+  Palette palette_;  // 0x5BC, spans to 0xA10 (sizeof(Palette) == 0x454)
+  // Was `field_5C0_[329]` before `palette_` became a real object; shifted by
+  // sizeof(Palette) - 4 so the total extent this class already claimed
+  // (0x5C0 + 329*4 == 0xAE4) is unchanged: 0xA10 + 53*4 == 0xAE4.
+  uint32_t field_A10_[53];
 };
 
 void __fastcall flic_unk4_redirect(Flic *self, void *);

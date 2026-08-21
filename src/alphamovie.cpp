@@ -23,6 +23,66 @@
 #include "spritebox.h"
 #include "net_class.h"
 
+// Not independently claimed here (0x005FFD80 is not in this batch; a
+// staged, unclaimed transcription already exists at
+// src/recovered/005ffd80.cpp - left as-is). This definition exists so
+// AlphaMovie::AlphaMovie(), below, has something to auto-construct
+// `mciVideo_` through: `palette_.Palette::Palette();` is the explicit
+// member-function-call placement syntax already established elsewhere
+// (init_thunks.cpp's fixed-address Palette placements) rather than a
+// `new`-expression, which pulls in an SEH frame the image does not have
+// here.
+MCIVideo::MCIVideo() {
+    palette_.Palette::Palette();
+    *reinterpret_cast<short *>(&mciId_) = 0;
+    field_8_ = 0;
+    field_C_ = 0;
+    field_468_ = 0;
+}
+
+const uint32_t AlphaMoviePrimaryVtable = 0x00669458;
+const uint32_t AlphaMovieBufferVtable = 0x00669450;
+
+/*
+Purpose: Construct the GraphicWin base and the embedded MCIVideo, then
+         install AlphaMovie's own vtables.
+// ORIGINAL: 0x00404010 ??0AlphaMovie@@QAE@XZ 0x00404010-0x00404067;0x006506DC-0x006506EE
+// size      87 bytes
+// prototype void (__thiscall ??0AlphaMovie@@QAE@XZ)(AlphaMovie* this)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok;frame
+// calls     0x005D4CF0 0x005FFD80
+// RULED-OUT: best reached is 15/24 instructions, 0.941 similar (best of all
+//        10 measured flag sets, `/c /O2 /Ob0 /Gy /GR- /Oy- /GX`), a REAL
+//        derived constructor with `mciVideo_` as an ordinary member so its
+//        automatic construction lands between the two explicit calls, same
+//        as the image. The residual: `tools/osmx.py calls` on this body
+//        shows THREE calls - `??0GraphicWin@@QAE@XZ`, `??0MCIVideo@@QAE@XZ`,
+//        `?construct@GraphicWin@@QAEXXZ` - where the image has only two.
+//        `GraphicWin::GraphicWin()` is `{ ; }` (this tree's own split of the
+//        base's real logic into `construct()`, not the original's shape),
+//        and under /Ob0 VC6 does not fold that empty call away once a
+//        SECOND auto-constructed subobject (`mciVideo_`) also needs EH
+//        unwind-state bookkeeping - it emits a real `call` to the trivial
+//        base ctor, scheduled AFTER `mciVideo_`'s construction rather than
+//        before. Every other measured flag set (with inlining enabled)
+//        drops the extra call but also drops the SEH frame and several
+//        other instructions the image has, scoring worse overall (<=0.83).
+//        Same class of wall as FlatButton's/PullDown's own real-constructor
+//        SEH-frame notes (flatbutton.cpp, pulldown.cpp): a codegen quirk
+//        this tree's split of GraphicWin's construction into `construct()`
+//        exposes, not reachable from src/ alone.
+Return Value: n/a
+Status: Complete
+*/
+AlphaMovie::AlphaMovie() {
+    GraphicWin::construct();
+    uint32_t *const object = reinterpret_cast<uint32_t *>(this);
+    object[0x000 / 4] = AlphaMoviePrimaryVtable;
+    object[0x444 / 4] = AlphaMovieBufferVtable;
+}
+
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
 // ORIGINAL: 0x00404280 ?UNK7@AlphaMovie@@QAEXXZ 0x00404280-0x00404281 BYTE_EXACT

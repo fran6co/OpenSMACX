@@ -413,6 +413,33 @@ Font::~Font() {
 // under its own name so this file needs nothing from the generated thunk
 // family. atexit_thunks.cpp binds the same address as FontElementTeardown.
 const void *const FontQueueElementTeardown = (const void *)0x00618EE0;
+// Its construction-side companion, likewise bound locally rather than
+// pulling in init_thunks.h; init_thunks.cpp binds the same address as
+// FontElementCtor.
+const void *const FontQueueElementCtor = (const void *)0x00618EA0;
+
+/*
+Purpose: Construct the queue: hand the three-slot walk to the CRT vector
+         iterator with the Font constructor/destructor pair, then seed the
+         three parallel per-slot arrays that follow the Font storage.
+// ORIGINAL: 0x00559290 ??0FontQueue@@QAE@XZ 0x00559290-0x005592CD BYTE_EXACT
+// size      61 bytes
+// prototype void (__thiscall ??0FontQueue@@QAE@XZ)(FontQueue* this)
+// callers   2   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006457C2
+Return Value: n/a
+Status: Complete
+*/
+FontQueue::FontQueue() {
+    VectorCtorIterator(this, 0x28, 3, FontQueueElementCtor, FontQueueElementTeardown);
+    for (int i = 0; i < 3; i++) {
+        slot_age_[i] = -999;
+        slot_unused_[i] = 0;
+        slot_index_[i] = i;
+    }
+}
 
 /*
 Purpose: Destroy the queue: hand the three-slot walk to the CRT vector

@@ -190,6 +190,20 @@ void __cdecl log_set_state(BOOL state) { Logging->set_state(state); }
 */
 
 /*
+// ORIGINAL: 0x00625FC0 ??0Log@@QAE@PAD@Z 0x00625FC0-0x00626016 BYTE_EXACT
+// LEVER: not a constructor - see the "NOT a constructor" note in log.h. `Logging->construct(input)` is an ordinary method (`??__ELogging` reaches it that way, not through a `new`-expression), which drops the SEH frame VC6 wraps around a placement-new'd non-trivial destructor. Inlines env_open/fclose directly on `input` rather than calling `reset()`, because the image keeps the incoming pointer live in edi and reopens THAT, not a reload of log_file_.
+// body      src/log.h
+// symbol    ?construct@Log@@QAEPAV1@PBD@Z
+// size      86 bytes
+// prototype Log* (__thiscall ??0Log@@QAE@PAD@Z)(Log* this, int8*)
+// callers   0   call targets   5
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005D4510 0x00634BB0 0x006453E0 0x00645470 0x00645598
+// notes     Staged hybrid export redirect calls the source-owned filename constructor
+*/
+
+/*
 // ORIGINAL: 0x00626020 ??1Log@@QAE@XZ 0x00626020-0x0062603A BYTE_EXACT
 // body      src/log.h
 // size      26 bytes
