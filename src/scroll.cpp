@@ -138,6 +138,89 @@ uint32_t signed_divide(uint32_t dividend_bits, uint32_t divisor_bits) {
 
 
 /*
+Purpose: Construct a Scroll: run the GraphicWin base construction, install
+         the Scroll virtual tables, and load the same fixed/dynamic
+         process-default fields that Scroll::close() resets, in the same
+         order. The two FlatButton members construct through the compiler's
+         own base-then-member sequencing rather than an explicit placement
+         call.
+// ORIGINAL: 0x006051D0 ??0Scroll@@QAE@XZ 0x006051D0-0x00605367;0x00662E30-0x00662E50
+// RULED-OUT: SEH frame divergence at instruction 0, same family as
+//   FlatButton::FlatButton() (flatbutton.cpp) and PullDown::PullDown()
+//   (pulldown.cpp) - a REAL derived-class constructor calling a base's
+//   `construct()` method under `/GX` gets VC6's unwind scaffolding. Unlike
+//   those two, the IMAGE here also carries an SEH prologue of its own
+//   (`push -1 / push 0x662e46 / mov eax,fs:[0] / push eax / mov
+//   fs:[0],esp`), so this is not the same "we have one where they have
+//   none" defect - not re-derived per policy either way.
+// RULED-OUT: named FlatButton members over placement-new at a fixed offset.
+//   The image calls GraphicWin::construct() BEFORE the two FlatButton
+//   constructors (0x6051ee then 0x6051ff/0x60520f); ordinary C++ member
+//   construction always runs the member ctors before the constructor BODY
+//   starts, so with flat_button_left_/flat_button_right_ declared as real
+//   members (as scroll.h already does, and as close()/destroy() already
+//   rely on) the two FlatButton() calls compile BEFORE this body's
+//   GraphicWin::construct() call - call TARGETS match, call ORDER does not.
+//   Reordering would mean storing them as raw bytes and placement-new'ing
+//   at the right point in the body instead, which moves scroll.h's layout
+//   out from under close()/destroy()'s existing `flat_button_left_.close()`
+//   / `.destroy()` calls; left with the named members.
+// symbol    ??0Scroll@@QAE@XZ
+// size      439 bytes
+// prototype Scroll* (__thiscall ??0Scroll@@QAE@XZ)(Scroll* this)
+// callers   13   call targets   2
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005D4CF0 0x00607CF0
+Return Value: Instance pointer in EAX
+Status: Complete
+*/
+Scroll::Scroll() {
+    GraphicWin::construct();
+
+    uint32_t *const object = reinterpret_cast<uint32_t *>(this);
+    object[0x000 / 4] = ScrollPrimaryVtable;
+    object[0x444 / 4] = ScrollBufferVtable;
+
+    uint32_t *const fixed = &ScrollCloseStaticDefaults;
+    uint32_t *const dynamic = &ScrollCloseDynamicDefaults;
+
+    object[0xA14 / 4] = dynamic[0];
+    object[0xA1C / 4] = fixed[3];
+    object[0xA28 / 4] = 0;
+    object[0xA20 / 4] = dynamic[1];
+    object[0xA24 / 4] = fixed[4];
+    object[0xA2C / 4] = dynamic[1];
+    object[0xA3C / 4] = 0xFFFFFFFFU;
+    object[0xA38 / 4] = 0;
+    object[0xA30 / 4] = fixed[2];
+    object[0xA34 / 4] = fixed[1];
+    object[0xA40 / 4] = fixed[0];
+    object[0xA44 / 4] = 0;
+    object[0xA4C / 4] = 0;
+    object[0xA50 / 4] = 0;
+    object[0xA54 / 4] = 0;
+    object[0xA58 / 4] = 0;
+    object[0xA48 / 4] = fixed[5];
+    object[0xA5C / 4] = fixed[6];
+    object[0xA64 / 4] = fixed[7];
+    object[0xA68 / 4] = fixed[8];
+    object[0xA6C / 4] = fixed[9];
+    object[0xA70 / 4] = fixed[10];
+
+    for (size_t index = 0; index < 3; ++index) {
+        object[(0xA7C / 4) + index] = dynamic[2 + index];
+        object[(0xA88 / 4) + index] = dynamic[5 + index];
+        object[(0xA94 / 4) + index] = dynamic[8 + index];
+        object[(0xAA0 / 4) + index] = dynamic[11 + index];
+    }
+    object[0xA74 / 4] = dynamic[15];
+    object[0xA78 / 4] = dynamic[16];
+    object[0x2144 / 4] = 0;
+    object[0x2148 / 4] = 0;
+}
+
+/*
 Purpose: Reset Scroll-owned state from the process defaults, close the two
          embedded FlatButtons through their virtual close slots, then close
          the source-owned GraphicWin base.

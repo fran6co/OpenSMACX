@@ -518,5 +518,19 @@ int __fastcall win_is_descendant_redirect(Win *self, void *, Win *candidate);
 //   ?on_nc_hittest@Win@@QAEHHH@Z    int(int, int)
 //   ?release_modal@Win@@QAEXXZ  void()
 
+// The single DirectDraw device object Win::set_display_mode dispatches to.
+// 0x009BE618 IS the object's address - the image loads it straight into ecx
+// (`mov ecx, 0x9be618`) rather than reading a pointer stored there - so this
+// is a `T *const` object handle, not a callee bound as a pointer: the CALL
+// still goes through `WinDisplayInit->init(...)`, a real member-function
+// call by name, so it still emits the image's `call rel32`. `init` itself
+// (0x00635510, 587 bytes: DirectDraw surface/window teardown and
+// re-creation) is still a pending_bodies forwarder - see
+// src/unrecovered/00635510.cpp for a working, unlanded transcription.
+class DDInit { public:
+  int init(int width, int height, int depth, int tgl);
+};
+DDInit *const WinDisplayInit = reinterpret_cast<DDInit *>(0x009BE618);
+
 
 

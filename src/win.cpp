@@ -2324,6 +2324,28 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
     return 0;
 }
 
+/*
+Purpose: Forward to the fixed DirectDraw device object's own init, in
+         argument order.
+// ORIGINAL: 0x005F2C40 ?set_display_mode@Win@@QAAHHHHH@Z 0x005F2C40-0x005F2C5F BYTE_EXACT
+// symbol    ?set_display_mode@Win@@SAHHHHH@Z
+// size      31 bytes
+// prototype
+// callers   2   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00635510
+//
+// `static`, because the catalogued name ends in `QAA` - a public member
+// declared __cdecl, taking no receiver.
+Return Value: DDInit::init's own return
+Status: Complete; DDInit::init (0x00635510) is itself still a
+        pending_bodies forwarder - see the note in win.h.
+*/
+int __cdecl Win::set_display_mode(int width, int height, int depth, int tgl) {
+    return WinDisplayInit->init(width, height, depth, tgl);
+}
+
 // `JackalClass` is at 0x00696DC8 and again at 0x00696DD4 - the image holds
 // two copies, one for the registration and one for the creation, and the
 // operand is relocated either way, so the literal is the honest spelling.
