@@ -82,6 +82,7 @@
 #include "pushbutton.h"
 #include "socialwin.h"
 #include "editbox.h"
+#include "wave.h"
 
 /*
  * THE FRONTIER.
@@ -843,6 +844,11 @@ VoiceTx::~VoiceTx() {  // ??1VoiceTx@@QAE@XZ at 0x004C8DB0
 Effect::~Effect() {  // ??1Effect@@QAE@XZ at 0x004482C0
     typedef void(__fastcall *pending)(Effect *, void *);
     PENDING_BODY(0x004482C0, pending)(this, nullptr);
+}
+
+int MapWin::focus(int x_coord, int y_coord) {  // 0x0046B310
+    typedef int(__fastcall *pending)(MapWin *, void *, int, int);
+    return PENDING_BODY(0x0046B310, pending)(this, nullptr, x_coord, y_coord);
 }
 
 // ?write_raw_l@Buffer@@QAEHPADHHH@Z at 0x005DBD00 - 1475 bytes, the raster

@@ -289,8 +289,6 @@ void __fastcall console_update_data_redirect(Console *self, void *, int a1) {
     self->update_data(a1);
 }
 
-func_console_map_win_focus ConsoleOriginalMapWinFocus =
-    original_method<func_console_map_win_focus>(0x0046B310);
 Console *ConsoleGlobal= (Console *)(0x009156B0);
 func_main_menu_check ConsoleOriginalMainMenuCheck =
     original_method<func_main_menu_check>(0x00460DD0);
@@ -421,7 +419,7 @@ int Console::focus(int x_coord, int y_coord, int faction_id) {
                 // index, and as a fresh load. Do NOT reuse `window`:
                 // cursor_next may have republished the table.
                 MapWin *const primary = MapWinTable[0];
-                if ((ORIGINAL(primary)->*ConsoleOriginalMapWinFocus)(x_coord, y_coord) != 0) {
+                if (primary->MapWin::focus(x_coord, y_coord) != 0) {
                     focused = 1;
                     continue;
                 }
@@ -443,7 +441,7 @@ int Console::focus(int x_coord, int y_coord, int faction_id) {
         MapWin *const target = MapWinTable[slot];
         // Specialisation 4: a successful focus on slots 1..7 is discarded; only
         // the primary window raises the flag.
-        if ((ORIGINAL(target)->*ConsoleOriginalMapWinFocus)(x_coord, y_coord) != 0
+        if (target->MapWin::focus(x_coord, y_coord) != 0
             && slot == 0) {
             focused = 1;
         }
