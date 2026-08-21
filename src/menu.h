@@ -61,7 +61,7 @@ class Menu : public GraphicWin {
   int UNK8(int menu_id);
   int UNK9(int menu_id);
   int UNK4(int a, int b, int c);
-  Menu() { ; }
+  Menu();
   // NOT a constructor: see the "NOT a constructor" note in log.h - an
   // ordinary method drops the SEH frame a real derived GraphicWin
   // constructor picks up under /GX (FlatButton's/PullDown's own notes).

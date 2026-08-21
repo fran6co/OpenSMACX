@@ -37,6 +37,16 @@ Purpose: Construct the Popup base and the embedded Time, then install
 // kind      game
 // flags     hidden;sp_ready;purged_ok;frame
 // calls     0x004048A0 0x006161D0
+// RULED-OUT: converting this to a real `NetMsg(int, int, int)` constructor
+//        WORKS on its own terms and is still the wrong trade. Measured: this
+//        body goes MISMATCH 11/31 -> SHAPE_EXACT 27/31, because the
+//        placement-new null guard disappears - the same lever that took
+//        MultiDebug::construct() to BYTE_EXACT. But the two dynamic
+//        initialisers that build the NetMsg globals at fixed addresses
+//        (construct_netmsg1/2, init_thunks.cpp) can then only call it through
+//        placement new themselves, which moves the guard INTO them: 0x0047A7A0
+//        went BYTE_EXACT -> 1 of 9 agreeing, compiled 17 against an image of
+//        9. One tier gained, two byte-exact claims lost. Reverted.
 // LEVER: `new (this) Popup(); new (&timer_) Time();` - placement construction
 //        through an ordinary method (not a real ctor - see the note in
 //        netmsg.h), matching Win/GraphicWin's own `construct()` idiom. The
