@@ -89,6 +89,30 @@ class PrefWin;
   */
 class Console : public MapWin {
  public:
+  // 0x0050F960, a pending_bodies forwarder.
+  void on_post_redraw_nc_buffer(void * a1, int a2);
+
+ public:
+  // 0x00510110, a pending_bodies forwarder.
+  void on_nc_mouse_move(int a1, int a2);
+
+ public:
+  // 0x0050FE70, a pending_bodies forwarder.
+  void on_nc_left_up(int a1, int a2);
+
+ public:
+  // 0x0050FB10, a pending_bodies forwarder.
+  void on_nc_left_down(int a1, int a2);
+
+ public:
+  // 0x0050F680, a pending_bodies forwarder.
+  void on_nc_hittest(int a1, int a2);
+
+ public:
+  // 0x005178C0, a pending_bodies forwarder.
+  int on_key_click(int a1, int a2);
+
+ public:
   // 0x005109B0, a pending_bodies forwarder.
   void cursor_next(int x_coord, int y_coord);
 

@@ -102,6 +102,9 @@ SCOPE: set[Path] = set()
 # receiver, which is a question for a person and not for a rewrite.
 RETYPED: dict[str, str] = {}
 
+# (class, method, signature) this run has already forwarded.
+EMITTED: set = set()
+
 
 def elsewhere(source: Path) -> str:
     """The tree minus every file this run may rewrite.
@@ -226,6 +229,19 @@ def _enclosing_class(text: str, index: int) -> str:
     return found
 
 
+def _cast_receiver(expression: str, klass: str) -> str:
+    """`expression` as something `->method()` can be applied to."""
+    expression = expression.strip()
+    if expression == "this":
+        return ""
+    if re.fullmatch(r"[A-Za-z_]\w*", expression):
+        return expression + "->"
+    if expression.startswith("&") and re.fullmatch(r"&\s*[A-Za-z_]\w*",
+                                                   expression):
+        return expression[1:].strip() + "."
+    return f"reinterpret_cast<{klass} *>({expression})->"
+
+
 def _receiver(expression: str) -> str:
     """How to reach the method from what `ORIGINAL(...)` was handed.
 
@@ -344,6 +360,21 @@ class Seam:
             return [f"{self.address} is in no annotation"]
         if not self.klass:
             out.append(f"{self.symbol} names no class")
+        # A COMPILER-GENERATED NAME IS NOT AN IDENTIFIER. `??_G` demangles to
+        # `` `scalar deleting destructor' ``, which cannot be declared - the
+        # tool wrote it into a header verbatim and CL reported an unknown
+        # character.
+        if self.method and not re.fullmatch(r"~?[A-Za-z_]\w*", self.method):
+            out.append(f"`{self.method}` is a compiler-generated name, not "
+                       f"something a declaration can spell")
+        # A DESTRUCTOR TAKES NOTHING AND RETURNS NOTHING, whatever the seam's
+        # typedef says. The typedefs here describe the ADJUSTOR - which takes
+        # the flags word a deleting destructor is passed - so declaring from
+        # them produced `void ~RadioButton(int)`, which is two hard errors.
+        if self.method.startswith("~") and (self.params
+                                            or self.returns != "void"):
+            out.append(f"{self.klass}::{self.method} is a destructor and the "
+                       f"seam's typedef gives it a signature")
         outside = sum(len(re.findall(rf"\b{self.pointer}\b", text))
                       for path, text in tree().items()
                       if path not in SCOPE and self.pointer in text)
@@ -370,8 +401,14 @@ class Seam:
             # editgroup.cpp hands it a `void *const` LOCAL, which no
             # declaration rewrite can reach.
             if not re.fullmatch(r"this|[A-Za-z_]\w*", receiver):
-                out.append(f"the receiver `{expression.strip()}` is an "
-                           f"expression, not a name")
+                # AN EXPRESSION IS FINE IF IT CAN BE CAST. `ORIGINAL()`
+                # swallowed it by erasing the type; a `reinterpret_cast` to
+                # the class puts the type back, which is what the adjustor
+                # thunks need - they compute `object - vtordisp` and had no
+                # other way to name the receiver.
+                if re.search(r"[;{}]", expression):
+                    out.append(f"the receiver `{expression.strip()}` is not "
+                               f"an expression this can cast")
                 continue
             # A LOCAL ALREADY OF THE RIGHT TYPE NEEDS NO RETYPE. mapwin.cpp
             # computes `MapWin *const base = ...` and calls through it; the
@@ -567,7 +604,8 @@ def convert(source: Path, apply: bool) -> int:
         def substitute(match: re.Match, text: str = "") -> str:
             enclosing = _enclosing_class(text, match.start())
             qualifier = "" if enclosing == seam.klass else f"{seam.klass}::"
-            return _receiver(match.group(1).strip()) + qualifier + seam.method
+            return (_cast_receiver(match.group(1), seam.klass)
+                    + qualifier + seam.method)
         for path in sorted(SCOPE):
             if seam.pointer not in body(path):
                 continue
@@ -617,8 +655,19 @@ def convert(source: Path, apply: bool) -> int:
             rewrite(path, text[:end] + include + text[end:])
 
         # 6. An unrecovered target gets a forwarder; a recovered one must not.
-        defined = _defined_in_build(seam.klass, seam.method,
-                                    _signature(seam.params))
+        # WHAT THIS RUN HAS ALREADY WRITTEN counts as defined. Two adjustor
+        # thunks routinely target ONE method - `thunk1_MapWin::on_redraw` and
+        # `thunk3_MapWin::on_redraw` both reach `MapWin::on_redraw` - and
+        # `_defined_in_build` cannot see a forwarder added minutes ago because
+        # it skips pending_bodies.cpp by design.
+        key = (seam.klass, seam.method, _signature(seam.params))
+        already = re.search(
+            rf"\b{re.escape(seam.klass)}::{re.escape(seam.method)}\s*"
+            rf"\([^;{{}}]*\)\s*\{{", _code(body(PENDING)))
+        defined = (PENDING if (key in EMITTED or already) else
+                   _defined_in_build(seam.klass, seam.method,
+                                     _signature(seam.params)))
+        EMITTED.add(key)
         if defined is None:
             rewrite(PENDING, body(PENDING).replace(
                 PENDING_ANCHOR, seam.forwarder() + PENDING_ANCHOR))
