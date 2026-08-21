@@ -342,6 +342,11 @@ int __cdecl base_territory(int faction_id, int x, int y);
 int __cdecl crappy(int x, int y);
 int __cdecl vector_dist(int x_distance, int y_distance);
 int __cdecl vector_dist(int x_point_a, int y_point_a, int x_point_b, int y_point_b);
+// Non-inline forwarder to `bit_set` below: base_mark (base.cpp) is the one
+// call site where the image emits a real `call 0x591D60` rather than
+// inlining the bit test/set - every other bit_set() caller genuinely
+// inlines it, so `bit_set` itself stays `MEASURED inline`.
+void __cdecl bit_set_call(int x, int y, int bit, BOOL set);
 BOOL __cdecl sea_coast(int region_dst, int region_src);
 int __cdecl sea_coasts(int region_src);
 BOOL __cdecl base_on_sea(int base_id, int region_sea);

@@ -1164,6 +1164,14 @@ Status: Complete
 // BODY IN map.h, as `MEASURED inline`: seven bodies call it where the
 // image calls nothing - `call_diff` names it - and 0x00592030 is a real
 // body of its own, so a .cpp definition is only one of the two.
+// RULED-OUT: a non-inline `bonus_at_call` forwarder, routed through from
+//            crop_yield/mine_yield/energy_yield (base.cpp) so bonus_at(x,y,0)
+//            would emit `call 0x592030` there - measured NO improvement to
+//            the best-across-flags similarity for any of the three (each
+//            tied exactly with not using it: crop_yield 0.292, mine_yield
+//            0.388, energy_yield 0.137), because their winning flag set is
+//            /Ob0-based and bonus_at's body already does not get folded in
+//            there regardless of the forwarder. Not added.
 
 /*
 Purpose: Determine if the tile has a supply pod and if so what type.
@@ -4176,4 +4184,13 @@ int __cdecl alt_get_ocean_detail(int x, int y, int corner, int point) {
         return 79;
     }
     return detail;
+}
+
+// Non-inline forwarder to `bit_set` (map.h): base_mark (base.cpp) is the one
+// call site where the image emits a real `call 0x591D60` for BIT_BASE_RADIUS
+// rather than inlining the bit test/set that every other caller gets. The
+// E8 target is a relocation on both sides and is discounted, so this
+// symbol's own name costs nothing.
+void __cdecl bit_set_call(int x, int y, int bit, BOOL set) {
+    bit_set(x, y, bit, set);
 }

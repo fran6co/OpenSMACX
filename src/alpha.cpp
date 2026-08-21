@@ -2052,6 +2052,6 @@ Original Offset: n/a
 Return Value: Pointer to label string
 Status: Complete
 */
-LPSTR __cdecl label_get(int label_offset) {
-    return StringTable->get((int)*((LPSTR *)Labels->strings_ptr + label_offset));
-}
+// BODY IN alpha.h, as plain `inline` (no ORIGINAL marker of its own - "Original
+// Offset: n/a"): say_base (base.cpp) needs it folded to `StringTable->get(...)`
+// the way the image does.

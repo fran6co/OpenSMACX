@@ -128,10 +128,8 @@ Purpose: Get the faction's noun.
 Return Value: Faction noun
 Status: Complete
 */
-LPSTR __cdecl get_noun(int faction_id) {
-    parse_set(Players[faction_id].noun_gender, Players[faction_id].is_noun_plural);
-    return Players[faction_id].noun_faction;
-}
+// BODY IN faction.h, as `MEASURED inline`: name_base (base.cpp) is the caller
+// that needs it folded in place, matching the image.
 
 /*
 Purpose: Determine whether automatic contact is enabled for net or PBEM games.
