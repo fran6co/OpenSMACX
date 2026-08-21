@@ -1322,7 +1322,10 @@ void __fastcall leaf_00432970_redirect(void *self, void *) {
     store32(self, 0x2B80, 0);
     store32(self, 0x2B68, 0xFFFFFFFFU);
     store32(self, 0x4648, 0);
-    graphic_win_close_redirect(reinterpret_cast<GraphicWin *>(self), nullptr);
+    // THE METHOD, not the redirect: `nullptr` for the redirect's unused
+    // second argument materialises `xor edx, edx`, which the image does not
+    // emit. Same fix as `ImageButton::close` and `ImageButton::init`.
+    reinterpret_cast<GraphicWin *>(self)->GraphicWin::close();
     buffer_close_redirect(
         reinterpret_cast<Buffer *>(static_cast<uint8_t *>(self) + 0x406C),
         nullptr);
@@ -1470,7 +1473,7 @@ Purpose: Keep the first argument, hand the other eight to BaseButton::init.
          arguments and re-push them in order. Nine arguments in (`ret 0x24`),
          the first kept at 0xab8 and the remaining eight passed straight on.
 
-// ORIGINAL: 0x00625340 ?init@ImageButton@@QAEHHPADHHHHHPAUWin@@H@Z 0x00625340-0x0062537A
+// ORIGINAL: 0x00625340 ?init@ImageButton@@QAEHHPADHHHHHPAUWin@@H@Z 0x00625340-0x0062537A BYTE_EXACT
 // symbol    ?image_button_init_redirect@@YIHPAX0HPBDHHHHHPAVWin@@H@Z
 // size      58 bytes
 // prototype int (__thiscall ?init@ImageButton@@QAEHHPADHHHHHPAUWin@@H@Z)(ImageButton* this, int, int8*, int, int, int, int, int, Win*, int)
@@ -1484,10 +1487,13 @@ Status: Complete
 int __fastcall image_button_init_redirect(
         void *self, void *, int image, LPCSTR name, int id, int x, int y,
         int width, int height, Win *parent, int style_flag) {
+    // THE METHOD, not the redirect: `base_button_init_redirect` is
+    // `__fastcall(BaseButton *, void *, ...)`, so `nullptr` for its unused
+    // second argument materialises `xor edx, edx`, one instruction the image
+    // does not have. Same fix as `ImageButton::close` next door.
     store32(self, 0xAB8, static_cast<uint32_t>(image));
-    return base_button_init_redirect(
-        reinterpret_cast<BaseButton *>(self), nullptr, name, id, x, y, width,
-        height, parent, style_flag);
+    return reinterpret_cast<BaseButton *>(self)->BaseButton::init(
+        name, id, x, y, width, height, parent, style_flag);
 }
 
 // The text sub_59d230 hands to Dialogs::item. It is a REBINDABLE pointer, not
@@ -1537,7 +1543,7 @@ Purpose: Clear four fields, then close as a GraphicWin.
          return is this function's, and the mangled name says void, so nothing
          reads it.
 
-// ORIGINAL: 0x00484B60 ?close@PickTech@@QAEXXZ 0x00484B60-0x00484B7F
+// ORIGINAL: 0x00484B60 ?close@PickTech@@QAEXXZ 0x00484B60-0x00484B7F BYTE_EXACT
 // symbol    ?pick_tech_close_redirect@@YIXPAX0@Z
 // size      31 bytes
 // prototype void (__thiscall ?close@PickTech@@QAEXXZ)(PickTech* this)
@@ -1553,7 +1559,10 @@ void __fastcall pick_tech_close_redirect(void *self, void *) {
     store32(self, 0xA28, 0);
     store32(self, 0xA38, 0);
     store32(self, 0xA3C, 0);
-    graphic_win_close_redirect(reinterpret_cast<GraphicWin *>(self), nullptr);
+    // THE METHOD, not the redirect: `nullptr` for the redirect's unused
+    // second argument materialises `xor edx, edx`, which the image does not
+    // emit. Same fix as `ImageButton::close` and `ImageButton::init`.
+    reinterpret_cast<GraphicWin *>(self)->GraphicWin::close();
 }
 
 
