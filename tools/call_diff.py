@@ -42,7 +42,13 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 IMAGE = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
 COMPILE_COMMANDS = REPO_ROOT / "build" / "compile_commands.json"
 BORROW = REPO_ROOT / "src" / "buffer.cpp"
-FLAGS = "/c /O2 /Gy /GR- /Oy- /GX"
+# EVERY SET, NOT ONE. `memset` and `strcat` are INTRINSICS under `/Oi`, so a
+# body the image calls them from reads as "makes no calls" under the default
+# set and as a false positive here. A disagreement is only real when NO
+# invocation reproduces the image's count.
+FLAG_SETS = ("/c /O2 /Gy /GR- /Oy- /GX", "/c /O2 /Gy /GR- /GX",
+             "/c /O2 /Oi- /Gy /GR- /Oy- /GX", "/c /O2 /Oi- /Gy /GR- /GX",
+             "/c /O2 /Ob0 /Gy /GR- /Oy- /GX", "/c /O1 /Gy /GR- /Oy- /GX")
 
 
 def _targets(listing) -> collections.Counter:
@@ -55,17 +61,33 @@ def _targets(listing) -> collections.Counter:
 
 def _one(job: tuple) -> list[tuple]:
     path, records, command = job
-    try:
-        obj = compile_unit(path, command, FLAGS)
-    except Exception:                           # noqa: BLE001 - reported as 0
+    objects = []
+    for flags in FLAG_SETS:
+        try:
+            objects.append((flags, compile_unit(path, command, flags)))
+        except Exception:                       # noqa: BLE001 - try the next
+            continue
+    if not objects:
         return []
     out = []
     for record in records:
         try:
-            here = subject_asm(obj, record, FLAGS)
             image = original_asm(record, IMAGE)
         except Exception:                       # noqa: BLE001 - skip this one
             continue
+        best = None
+        for flags, obj in objects:
+            try:
+                candidate = subject_asm(obj, record, flags)
+            except Exception:                   # noqa: BLE001 - next set
+                continue
+            gap = abs(sum(_targets(candidate).values())
+                      - sum(_targets(image).values()))
+            if best is None or gap < best[0]:
+                best = (gap, candidate, obj)
+        if best is None:
+            continue
+        _gap, here, obj = best
         # RELOCATED TARGETS ARE UNKNOWABLE on the object side: the linker
         # writes them. So the tree's call COUNT is comparable but not its
         # addresses, and the useful statement is about how many.
