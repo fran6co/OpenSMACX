@@ -51,6 +51,19 @@ BEFORE YOU GRIND A BODY
   relocation-masked. `measure` reports only the first, which on `Buffer::hline`
   was a jump whose target had moved because of something 70 instructions later.
 
+COLLECTING A WORKTREE'S WORK (for whoever hands one out)
+- From the WORKTREE: `git diff -- src/ > patch`. From the ROOT:
+  `git apply --3way patch`. Check `git branch --show-current` before any git
+  write - a `cd` into a worktree persists across commands.
+- NEVER PIPE `git apply` INTO `head`. It prints "Applied patch to 'x' cleanly"
+  for every file BEFORE it writes them; `head` closes the pipe, SIGPIPE kills
+  git between the message and the write, and you get a success report over a
+  completely unchanged tree. This silently discarded a merge twice on
+  2026-08-21. Verify the side effect independently - `git status --short`, or
+  grep the file for the change - rather than trusting the report.
+- `uv run tools/reap_worktrees.py` after collecting. `--experiments` also
+  clears `refute-*` scratch worktrees, which a Workflow leaves by the dozen.
+
 PICKING A BATCH (for whoever hands one out)
 - `uv run tools/frontier.py --fresh` lists WinMain-reachable bodies with no
   `RULED-OUT:` notes on them. Rows without `--fresh` carry `[N ruled-out]`.
