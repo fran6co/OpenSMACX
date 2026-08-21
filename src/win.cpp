@@ -128,20 +128,20 @@ Win *__fastcall win_construct_redirect(Win *self, void *) {
 
 namespace {
 
-LONG long_from_bits(uint32_t bits) {
+__forceinline LONG long_from_bits(uint32_t bits) {
     LONG value;
     static_assert(sizeof(value) == sizeof(bits), "Win geometry requires 32-bit LONG");
     memcpy(&value, &bits, sizeof(value));
     return value;
 }
 
-uint32_t long_bits(LONG value) {
+__forceinline uint32_t long_bits(LONG value) {
     uint32_t bits;
     memcpy(&bits, &value, sizeof(bits));
     return bits;
 }
 
-int int_from_bits(uint32_t bits) {
+__forceinline int int_from_bits(uint32_t bits) {
     int value;
     static_assert(sizeof(value) == sizeof(bits), "Win geometry requires 32-bit int");
     memcpy(&value, &bits, sizeof(value));

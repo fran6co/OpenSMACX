@@ -29,7 +29,7 @@ PullDownItem *find_item(PullDownItem *items, int id) {
     return nullptr;
 }
 
-int int_from_bits(uint32_t bits) {
+__forceinline int int_from_bits(uint32_t bits) {
     int value;
     static_assert(sizeof(value) == sizeof(bits), "PullDown requires 32-bit int");
     memcpy(&value, &bits, sizeof(value));
