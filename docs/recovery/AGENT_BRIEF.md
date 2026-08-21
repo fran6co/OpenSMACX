@@ -21,6 +21,16 @@ uncommitted work, and the fix is to hand that diff back first.
 Working in a worktree is why you can edit freely: nothing you touch collides
 with another agent.
 
+PICKING A BATCH (for whoever hands one out)
+- `uv run tools/frontier.py --fresh` lists WinMain-reachable bodies with no
+  `RULED-OUT:` notes on them. Rows without `--fresh` carry `[N ruled-out]`.
+  A batch picked off the raw depth order sent one agent eight bodies that were
+  already exhausted, and it correctly reported eight no-changes.
+- `uv run tools/call_diff.py --all` ranks bodies whose CALL COUNT disagrees
+  with the image. Those are structural defects, not register noise, and they
+  are the highest-yield rows on the board: the FEWER direction means this tree
+  skips work the image does.
+
 MEASURING
 - `uv run tools/osmx.py measure <addr>` scores one body. `--all-flags` scores every
   flag set; the winner is picked on similarity across sets that answer different
