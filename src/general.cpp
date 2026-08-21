@@ -1059,7 +1059,7 @@ uint32_t __cdecl bit_count_signed(int input) {
 
 /*
 Purpose: Initialize the pseudo-random number generator.
-// ORIGINAL: 0x00538FB0 ?my_srand@@YAHH@Z 0x00538FB0-0x00538FD2
+// ORIGINAL: 0x00538FB0 ?my_srand@@YAHH@Z 0x00538FB0-0x00538FD2 BYTE_EXACT
 // symbol    ?my_srand@@YAXH@Z
 // size      34 bytes
 // prototype int (__cdecl ?my_srand@@YAHH@Z)(int reseed)
@@ -1071,8 +1071,11 @@ Return Value: n/a
 Status: Complete with built in version of srand(). Revisit once more code is redirected to dll.
 */
 void __cdecl my_srand(int reseed) {
+    // ONE `srand`, not two. The image's `add esp, 0x14` accounts for exactly
+    // log_say's four arguments and one seed; ours was `add esp, 0x18`, four
+    // bytes and one `push`/`call` more. Seeding twice with the same value is
+    // the same as seeding once, so nothing about the game changes.
     log_say("Reseed to", reseed, 0, 0);
-    srand(reseed);
     srand(reseed);
 }
 

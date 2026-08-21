@@ -76,5 +76,8 @@ void __stdcall VectorCtorIterator(void *array, unsigned int element_size, int co
 // GraphicWin::init, and it must reach every one of them without dragging the
 // audio closure into their link. The name records the recovery that first
 // bound it, not an ownership claim - it is the process-wide allocator.
-typedef void *(__cdecl func_operator_new)(unsigned int size);
-func_operator_new *const WaveOperatorNew = (func_operator_new *)0x0064558A;
+// DECLARED, NOT BOUND. As a `func_operator_new *const` every call site emitted
+// `call dword ptr [...]` where the image emits `call rel32`; the target of an
+// `E8` is a relocation on both sides and is discounted, so an ordinary
+// declaration plus a forwarder in `pending_bodies.cpp` is all this needs.
+void *__cdecl WaveOperatorNew(unsigned int size);
