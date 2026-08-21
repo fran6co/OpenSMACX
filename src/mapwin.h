@@ -221,11 +221,24 @@ void __fastcall map_win_on_left_up_redirect(MapWin *self, void *, int a1, int a2
 // `mov ecx, dword ptr [esi*4 + 0x7d3c3c]`, and by ?zoom@BaseWin@@QAEXHH@Z at
 // 0x0041AAC3, which walks slot 0's vbtable. Populated at run time, so this is
 // a mutable global; rebindable so leaf tests can seed a controlled table.
-// RULED-OUT: spelling this as an accessor returning
-// `reinterpret_cast<MapWin **>(0x007D3C3C)` - to stop VC6 hoisting the base
-// into a register across `Console::focus`'s loop, which the image never does -
-// measures WORSE there, 19 of 85 instructions against 29.
-MapWin **const MapWinTable = (MapWin **)0x007D3C3C;                  // 0x007D3C3C
+// A REFERENCE TO THE ARRAY, not a pointer to its first element. The image
+// indexes it absolutely - `mov eax, [esi*4 + 0x7d3c3c]` at 0x005108DE, one
+// instruction per read - and any spelling that yields a POINTER VALUE lets
+// VC6 park the base in a register across a loop, which the image never does.
+// An array reference has no value to park: the subscript folds the address in.
+//
+// RULED-OUT: an accessor returning `reinterpret_cast<MapWin **>(0x007D3C3C)`
+// is a pointer value and measures WORSE than the `MapWin **const` it replaced
+// - 19 of 85 instructions in `Console::focus` against 29.
+typedef MapWin *MapWinSlots[8];
+inline MapWinSlots &map_win_table() {
+  // THROUGH A NAMED POINTER. VC6 rejects dereferencing a cast integer literal
+  // of array-pointer type outright - `C2101: '&' on constant` - so the cast
+  // lands in a variable first, which it accepts and folds.
+  MapWinSlots *const table = (MapWinSlots *)0x007D3C3C;
+  return *table;
+}
+#define MapWinTable (map_win_table())
 static const size_t MapWinTableSlots = 8;        // (0x007D3C5C - 0x007D3C3C) / 4
 
 // Per-window "this window is live" dword. The MapWin constructor clears it

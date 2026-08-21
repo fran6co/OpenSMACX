@@ -746,7 +746,7 @@ void __cdecl prefs_put(LPCSTR key_name, LPCSTR value);
 void __cdecl prefs_put(LPCSTR key_name, int value, BOOL tgl_binary);
 void __cdecl prefs_save(BOOL save_factions);
 void __cdecl prefs_use();
-std::string __cdecl prefs_get_binary(int value);
+LPSTR __cdecl prefs_get_binary(int value);
 BOOL __cdecl labels_init();
 void __cdecl say_label(int label_offset);
 LPSTR __cdecl label_get(int label_offset);

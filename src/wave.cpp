@@ -218,8 +218,11 @@ void Wave::set_pitch(int a1) {
     }
     pitch_ = pitch;
     if (device_) {
-        typedef void(__fastcall *set_pitch_fn)(void *, int);
-        vtable_slot<set_pitch_fn>(device_, 0x98)(device_, pitch);
+        // The int argument is passed ON THE STACK by the device's own
+        // calling convention, not in edx as a second `__fastcall` parameter
+        // would be; the pointer-to-member type keeps that thiscall shape.
+        typedef void (OriginalObject::*set_pitch_fn)(int pitch);
+        (ORIGINAL(device_)->*vtable_slot<set_pitch_fn>(device_, 0x98))(pitch);
     }
 }
 
@@ -227,7 +230,7 @@ void Wave::set_pitch(int a1) {
 Purpose: Load a wave. The object's own vtable slot 0x88 does the loading; unless
          bit 2 of the second argument says otherwise, its own slot 0x8C then
          runs as the follow-up and supplies the result.
-// ORIGINAL: 0x004C6DB0 ?load@Wave@@QAEHPADK@Z 0x004C6DB0-0x004C6DE6
+// ORIGINAL: 0x004C6DB0 ?load@Wave@@QAEHPADK@Z 0x004C6DB0-0x004C6DE6 SEMANTIC
 // size      54 bytes
 // prototype int (__thiscall ?load@Wave@@QAEHPADK@Z)(Wave* this, int8*, unsigned int)
 // callers   5   call targets   0
@@ -239,10 +242,13 @@ Return Value: slot 0x8C's result, or 0 when bit 2 of a2 skipped it
 Status: Complete
 */
 int Wave::load(char *a1, unsigned long a2) {
-    typedef void(__fastcall *load_fn)(void *, char *, unsigned long);
+    // Both arguments here are passed ON THE STACK by the device's own
+    // calling convention, not in ecx/edx as `__fastcall` parameters would
+    // be; the pointer-to-member type keeps that thiscall shape.
+    typedef void (OriginalObject::*load_fn)(char *a1, unsigned long a2);
     typedef int(__fastcall *follow_fn)(void *);
 
-    vtable_slot<load_fn>(this, 0x88)(this, a1, a2);
+    (ORIGINAL(this)->*vtable_slot<load_fn>(this, 0x88))(a1, a2);
     if (a2 & 4) {
         return 0;
     }
@@ -334,7 +340,7 @@ Purpose: Start the wave playing. A wrapped device answers through its own
          vtable slot 0x94, as the receiver, with the play argument passed on;
          its result is returned verbatim. With no device the answer is a
          fixed 0x14.
-// ORIGINAL: 0x004C68F0 ?play@Wave@@QAEHH@Z 0x004C68F0-0x004C6913
+// ORIGINAL: 0x004C68F0 ?play@Wave@@QAEHH@Z 0x004C68F0-0x004C6913 BYTE_EXACT
 // size      35 bytes
 // prototype int (__thiscall ?play@Wave@@QAEHH@Z)(Wave* this, int)
 // callers   0   call targets   0
@@ -346,9 +352,9 @@ Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
 int Wave::play(int a1) {
-    typedef int(__fastcall *device_play_fn)(void *, int);
+    typedef int (OriginalObject::*device_play_fn)(int a1);
     if (device_) {
-        return vtable_slot<device_play_fn>(device_, 0x94)(device_, a1);
+        return (ORIGINAL(device_)->*vtable_slot<device_play_fn>(device_, 0x94))(a1);
     }
     return 0x14;
 }
@@ -390,7 +396,7 @@ int __fastcall wave_is_hwbuffer_redirect(Wave *self, void *) {
 /*
 Purpose: Ask the wrapped device for a time value through its vtable slot 0xB4,
          passing the query argument on.
-// ORIGINAL: 0x004C6FD0 ?get_time@Wave@@QAEHI@Z 0x004C6FD0-0x004C6FF0
+// ORIGINAL: 0x004C6FD0 ?get_time@Wave@@QAEHI@Z 0x004C6FD0-0x004C6FF0 BYTE_EXACT
 // size      32 bytes
 // prototype int (__thiscall ?get_time@Wave@@QAEHI@Z)(Wave* this, unsigned int)
 // callers   0   call targets   0
@@ -402,9 +408,9 @@ Return Value: the device's answer, or 0 when no device is wrapped
 Status: Complete
 */
 int Wave::get_time(uint32_t a1) {
-    typedef int(__fastcall *device_fn)(void *, uint32_t);
+    typedef int (OriginalObject::*device_fn)(uint32_t a1);
     if (device_) {
-        return vtable_slot<device_fn>(device_, 0xB4)(device_, a1);
+        return (ORIGINAL(device_)->*vtable_slot<device_fn>(device_, 0xB4))(a1);
     }
     return 0;
 }
@@ -545,7 +551,7 @@ int __fastcall wave_set_reverb_mix_redirect(Wave *self, void *, float a1) {
 /*
 Purpose: Ask the wrapped device, through its vtable slot 0xDC, whether the
          wave is 3D positioned.
-// ORIGINAL: 0x004C7250 ?is_3d@Wave@@QAEHXZ 0x004C7250-0x004C7262
+// ORIGINAL: 0x004C7250 ?is_3d@Wave@@QAEHXZ 0x004C7250-0x004C7262 SEMANTIC
 // size      18 bytes
 // prototype int (__thiscall ?is_3d@Wave@@QAEHXZ)(Wave* this)
 // callers   0   call targets   0
@@ -576,7 +582,7 @@ Purpose: Describe a device into the caller's buffer through the wrapped
          device's vtable slot 0xC0. With no device the buffer is terminated
          to an empty string - but only when the third argument is nonzero,
          and without any null check on the buffer - and the answer is 1.
-// ORIGINAL: 0x004C7040 ?get_device_description@Wave@@QAEHPADHH@Z 0x004C7040-0x004C7078
+// ORIGINAL: 0x004C7040 ?get_device_description@Wave@@QAEHPADHH@Z 0x004C7040-0x004C7078 BYTE_EXACT
 // size      56 bytes
 // prototype int (__thiscall ?get_device_description@Wave@@QAEHPADHH@Z)(Wave* this, int8*, int, int)
 // callers   0   call targets   0
@@ -588,9 +594,9 @@ Return Value: the device's answer, or 1 when no device is wrapped
 Status: Complete
 */
 int Wave::get_device_description(char *a1, int a2, int a3) {
-    typedef int(__fastcall *device_fn)(void *, char *, int, int);
+    typedef int (OriginalObject::*device_fn)(char *a1, int a2, int a3);
     if (device_) {
-        return vtable_slot<device_fn>(device_, 0xC0)(device_, a1, a2, a3);
+        return (ORIGINAL(device_)->*vtable_slot<device_fn>(device_, 0xC0))(a1, a2, a3);
     }
     if (a3) {
         *a1 = '\0';
@@ -727,7 +733,7 @@ Return Value: n/a
 Status: Complete
 */
 void Wave::set_attrib(unsigned long a1) {
-    typedef int(__fastcall *device_fn)(void *, uint32_t);
+    typedef int (OriginalObject::*device_fn)(uint32_t a1);
     if (a1 & 2) {
         field_30_ = 1;
     }
@@ -750,7 +756,7 @@ void Wave::set_attrib(unsigned long a1) {
         flags_54_ |= 0x20;
     }
     if (device_) {
-        vtable_slot<device_fn>(device_, 0x6C)(device_, a1);
+        (ORIGINAL(device_)->*vtable_slot<device_fn>(device_, 0x6C))(a1);
     }
 }
 
@@ -842,8 +848,8 @@ void Wave::set_volume(int a1) {
             group));
     }
     if (device_) {
-        typedef void(__fastcall *device_fn)(void *, int);
-        vtable_slot<device_fn>(device_, 0x40)(device_, level);
+        typedef void (OriginalObject::*device_fn)(int level);
+        (ORIGINAL(device_)->*vtable_slot<device_fn>(device_, 0x40))(level);
     }
 }
 
@@ -894,7 +900,7 @@ Purpose: Start the wave. While it holds a device group slot, a disabled group
          0x14. Finally a clocked wave stamps the start time from the game's
          timeGetTime import, runs its own vtable slot 0x80, and forgets the
          device.
-// ORIGINAL: 0x004C6920 ?play@Wave@@QAEHXZ 0x004C6920-0x004C69AD
+// ORIGINAL: 0x004C6920 ?play@Wave@@QAEHXZ 0x004C6920-0x004C69AD SEMANTIC
 // size      141 bytes
 // prototype int (__thiscall ?play@Wave@@QAEHXZ)(Wave* this)
 // callers   20   call targets   2
@@ -907,7 +913,7 @@ Return Value: the device's start answer, 0x14 when disabled or unstartable,
 Status: Complete
 */
 int Wave::play() {
-    typedef void(__fastcall *wave_volume_fn)(void *, uint32_t);
+    typedef void (OriginalObject::*wave_volume_fn)(uint32_t volume);
     typedef int(__fastcall *device_start_fn)(void *);
     typedef void(__fastcall *wave_vfn)(void *);
 
@@ -918,7 +924,7 @@ int Wave::play() {
             return 0x14;
         }
         if (flags_54_ & 0x10) {
-            vtable_slot<wave_volume_fn>(this, 0x40)(this, volume_);
+            (ORIGINAL(this)->*vtable_slot<wave_volume_fn>(this, 0x40))(volume_);
         }
     }
     if (device_) {
@@ -1006,8 +1012,8 @@ int Wave::load() {
         attribs |= 0x100;
     }
     {
-        typedef void(__fastcall *device_attrib_fn)(void *, int);
-        vtable_slot<device_attrib_fn>(device_, 0x6C)(device_, attribs);
+        typedef void (OriginalObject::*device_attrib_fn)(int attribs);
+        (ORIGINAL(device_)->*vtable_slot<device_attrib_fn>(device_, 0x6C))(attribs);
     }
     const int loaded = this->load(fname);
     if (loaded) {
@@ -1067,8 +1073,8 @@ int Wave::reload() {
         }
     }
     {
-        typedef void(__fastcall *device_attrib_fn)(void *, int);
-        vtable_slot<device_attrib_fn>(device_, 0x6C)(device_, attribs);
+        typedef void (OriginalObject::*device_attrib_fn)(int attribs);
+        (ORIGINAL(device_)->*vtable_slot<device_attrib_fn>(device_, 0x6C))(attribs);
     }
     typedef int(__fastcall *device_reload_fn)(void *);
     const int reloaded = vtable_slot<device_reload_fn>(device_, 0x84)(device_);
@@ -1082,8 +1088,8 @@ int Wave::reload() {
             vtable_slot<wave_vfn>(this, 0x7C)(this);
         }
         if (field_30_) {
-            typedef void(__fastcall *device_loop_fn)(void *, int);
-            vtable_slot<device_loop_fn>(device_, 0x48)(device_, 1);
+            typedef void (OriginalObject::*device_loop_fn)(int on);
+            (ORIGINAL(device_)->*vtable_slot<device_loop_fn>(device_, 0x48))(1);
         }
     }
     return reloaded;
@@ -1130,8 +1136,10 @@ int Wave::dyna_load(char *a1) {
     typedef int(__fastcall *wave_query_fn)(void *);
     const int attribs = vtable_slot<wave_query_fn>(this, 0x70)(this);
     {
-        typedef void(__fastcall *device_attrib_fn)(void *, int);
-        (*reinterpret_cast<device_attrib_fn *>(device_vtable + 0x6C))(device_, attribs);
+        // The int argument is passed on the stack, not in edx; the
+        // pointer-to-member type keeps the thiscall shape.
+        typedef void (OriginalObject::*device_attrib_fn)(int attribs);
+        (ORIGINAL(device_)->*(*reinterpret_cast<device_attrib_fn *>(device_vtable + 0x6C)))(attribs);
     }
     typedef void(__fastcall *wave_vfn)(void *);
     vtable_slot<wave_vfn>(this, 0x7C)(this);
@@ -1191,8 +1199,8 @@ int Wave::load(const char *a1) {
         attribs |= 0x80;
     }
     {
-        typedef void(__fastcall *device_attrib_fn)(void *, int);
-        vtable_slot<device_attrib_fn>(device_, 0x6C)(device_, attribs);
+        typedef void (OriginalObject::*device_attrib_fn)(int attribs);
+        (ORIGINAL(device_)->*vtable_slot<device_attrib_fn>(device_, 0x6C))(attribs);
     }
     const int loaded = this->load(a1);
     if (loaded) {
@@ -1203,15 +1211,15 @@ int Wave::load(const char *a1) {
         ms_length_ = vtable_slot<device_length_fn>(device_, 0xC4)(device_);
     }
     {
-        typedef void(__fastcall *device_level_fn)(void *, uint32_t);
-        vtable_slot<device_level_fn>(device_, 0x40)(device_, volume_);
+        typedef void (OriginalObject::*device_level_fn)(uint32_t v);
+        (ORIGINAL(device_)->*vtable_slot<device_level_fn>(device_, 0x40))(volume_);
     }
     {
-        typedef void(__fastcall *device_pitch_fn)(void *, int);
-        vtable_slot<device_pitch_fn>(device_, 0x98)(device_, pitch_);
+        typedef void (OriginalObject::*device_pitch_fn)(int pitch);
+        (ORIGINAL(device_)->*vtable_slot<device_pitch_fn>(device_, 0x98))(pitch_);
     }
-    typedef void(__fastcall *device_pan_fn)(void *, uint32_t);
-    vtable_slot<device_pan_fn>(device_, 0x44)(device_, field_8_);
+    typedef void (OriginalObject::*device_pan_fn)(uint32_t v);
+    (ORIGINAL(device_)->*vtable_slot<device_pan_fn>(device_, 0x44))(field_8_);
     return 0;
 }
 
@@ -1342,17 +1350,19 @@ void Wave::init(char *a1, unsigned long a2) {
                 typedef int(__fastcall *wave_query_fn)(void *);
                 const int attribs = vtable_slot<wave_query_fn>(this, 0x70)(this);
                 {
-                    typedef void(__fastcall *device_attrib_fn)(void *, int);
-                    (*reinterpret_cast<device_attrib_fn *>(device_vtable + 0x6C))(
-                        device_, attribs);
+                    // The int argument is passed on the stack, not in edx;
+                    // the pointer-to-member type keeps the thiscall shape.
+                    typedef void (OriginalObject::*device_attrib_fn)(int attribs);
+                    (ORIGINAL(device_)->*(*reinterpret_cast<device_attrib_fn *>(device_vtable + 0x6C)))(
+                        attribs);
                 }
                 typedef void(__fastcall *wave_vfn)(void *);
                 vtable_slot<wave_vfn>(this, 0x7C)(this);
             }
         }
         if (device_) {
-            typedef void(__fastcall *device_mode_fn)(void *, uint32_t);
-            vtable_slot<device_mode_fn>(device_, 0x6C)(device_, a2);
+            typedef void (OriginalObject::*device_mode_fn)(uint32_t mode);
+            (ORIGINAL(device_)->*vtable_slot<device_mode_fn>(device_, 0x6C))(a2);
         }
     }
     if (a2 & 1) {
@@ -1362,8 +1372,8 @@ void Wave::init(char *a1, unsigned long a2) {
         flags_54_ |= 4;
     }
     if (a2 & 2) {
-        typedef void(__fastcall *wave_loop_fn)(void *, int);
-        vtable_slot<wave_loop_fn>(this, 0x48)(this, 1);
+        typedef void (OriginalObject::*wave_loop_fn)(int on);
+        (ORIGINAL(this)->*vtable_slot<wave_loop_fn>(this, 0x48))(1);
     }
     if (a2 & 0x40) {
         flags_54_ |= 8;

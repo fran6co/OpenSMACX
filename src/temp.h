@@ -38,7 +38,11 @@ typedef struct char256 { char str[256]; } char256;
 
 // other
 typedef void func5(int);
-func5 *const load_faction_art = (func5 *)0x00453710;
+// PROMOTED to a pending_bodies.cpp forwarder: a `temp.h` pointer binding
+// compiles `call dword ptr [load_faction_art]` where the image has `call
+// rel32`, which cost read_factions (0x00586F30) two call edges. See
+// pending_bodies.cpp.
+void __cdecl load_faction_art(int player_id);
 func5 *const wave_it = (func5 *)0x004455F0;
 typedef void *func6(char const *, int(*)(void));
 typedef int func7(LPCSTR, LPCSTR, int, LPCSTR, int(__cdecl *)());
