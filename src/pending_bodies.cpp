@@ -81,6 +81,7 @@
 #include "prodpicker.h"
 #include "pushbutton.h"
 #include "socialwin.h"
+#include "editbox.h"
 
 /*
  * THE FRONTIER.
@@ -767,6 +768,71 @@ TutWin::~TutWin() {  // ??1TutWin@@QAE@XZ at 0x004BE7D0
 WorldWin::~WorldWin() {  // ??1WorldWin@@QAE@XZ at 0x004C4A70
     typedef void(__fastcall *pending)(WorldWin *, void *);
     PENDING_BODY(0x004C4A70, pending)(this, nullptr);
+}
+
+AlphaSave::~AlphaSave() {  // ??1AlphaSave@@QAE@XZ at 0x00408170
+    typedef void(__fastcall *pending)(AlphaSave *, void *);
+    PENDING_BODY(0x00408170, pending)(this, nullptr);
+}
+
+EditBox::~EditBox() {  // ??1EditBox@@QAE@XZ at 0x00408010
+    typedef void(__fastcall *pending)(EditBox *, void *);
+    PENDING_BODY(0x00408010, pending)(this, nullptr);
+}
+
+FameWin::~FameWin() {  // ??1FameWin@@QAE@XZ at 0x0044B100
+    typedef void(__fastcall *pending)(FameWin *, void *);
+    PENDING_BODY(0x0044B100, pending)(this, nullptr);
+}
+
+ImageButton::~ImageButton() {  // ??1ImageButton@@QAE@XZ at 0x00625310
+    typedef void(__fastcall *pending)(ImageButton *, void *);
+    PENDING_BODY(0x00625310, pending)(this, nullptr);
+}
+
+Interlude::~Interlude() {  // ??1Interlude@@QAE@XZ at 0x0045F740
+    typedef void(__fastcall *pending)(Interlude *, void *);
+    PENDING_BODY(0x0045F740, pending)(this, nullptr);
+}
+
+MonuWin::~MonuWin() {  // ??1MonuWin@@QAE@XZ at 0x00477B10
+    typedef void(__fastcall *pending)(MonuWin *, void *);
+    PENDING_BODY(0x00477B10, pending)(this, nullptr);
+}
+
+MultiWin::~MultiWin() {  // ??1MultiWin@@QAE@XZ at 0x0047A430
+    typedef void(__fastcall *pending)(MultiWin *, void *);
+    PENDING_BODY(0x0047A430, pending)(this, nullptr);
+}
+
+PickTech::~PickTech() {  // ??1PickTech@@QAE@XZ at 0x00488690
+    typedef void(__fastcall *pending)(PickTech *, void *);
+    PENDING_BODY(0x00488690, pending)(this, nullptr);
+}
+
+PrefWin::~PrefWin() {  // ??1PrefWin@@QAE@XZ at 0x00491DF0
+    typedef void(__fastcall *pending)(PrefWin *, void *);
+    PENDING_BODY(0x00491DF0, pending)(this, nullptr);
+}
+
+QuayleWin::~QuayleWin() {  // ??1QuayleWin@@QAE@XZ at 0x00496710
+    typedef void(__fastcall *pending)(QuayleWin *, void *);
+    PENDING_BODY(0x00496710, pending)(this, nullptr);
+}
+
+SelectPartWin::~SelectPartWin() {  // ??1SelectPartWin@@QAE@XZ at 0x0043EE10
+    typedef void(__fastcall *pending)(SelectPartWin *, void *);
+    PENDING_BODY(0x0043EE10, pending)(this, nullptr);
+}
+
+VoiceRx::~VoiceRx() {  // ??1VoiceRx@@QAE@XZ at 0x004C8A50
+    typedef void(__fastcall *pending)(VoiceRx *, void *);
+    PENDING_BODY(0x004C8A50, pending)(this, nullptr);
+}
+
+VoiceTx::~VoiceTx() {  // ??1VoiceTx@@QAE@XZ at 0x004C8DB0
+    typedef void(__fastcall *pending)(VoiceTx *, void *);
+    PENDING_BODY(0x004C8DB0, pending)(this, nullptr);
 }
 
 // ?write_raw_l@Buffer@@QAEHPADHHH@Z at 0x005DBD00 - 1475 bytes, the raster

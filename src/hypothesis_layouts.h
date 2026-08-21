@@ -63,6 +63,12 @@ class AAmbience {
 /* 0x6058 bytes, 8 member(s), 8 named. From the IDB. 19 function(s) in the image. */
 class AlphaSave {
  public:
+  // 0x00408170 is not recovered: a pending_bodies forwarder, because
+  // an empty inline stub emits nothing and the deleting destructor
+  // needs a `call rel32`.
+  ~AlphaSave();
+
+ public:
   uint8_t graphicWin_[0xA14];  // 0x0
   uint8_t fileWin_[0x33C4];  // 0xA14
   uint8_t scroll_[0x214C];  // 0x3DD8
@@ -1171,6 +1177,12 @@ struct Faction {
 /* 0xB69C bytes, 49 member(s), 10 named. From the IDB. 13 function(s) in the image. */
 class FameWin {
  public:
+  // 0x0044B100 is not recovered: a pending_bodies forwarder, because
+  // an empty inline stub emits nothing and the deleting destructor
+  // needs a `call rel32`.
+  ~FameWin();
+
+ public:
   uint8_t graphicWin_[0xA14];  // 0x0
   uint32_t field_A14_;  // 0xA14
   uint32_t field_A18_;  // 0xA18
@@ -1252,12 +1264,24 @@ class Fractal {
 /* 0xABC bytes, 2 member(s), 1 named. From the IDB. 7 function(s) in the image. */
 class ImageButton {
  public:
+  // 0x00625310 is not recovered: a pending_bodies forwarder, because
+  // an empty inline stub emits nothing and the deleting destructor
+  // needs a `call rel32`.
+  ~ImageButton();
+
+ public:
   uint8_t baseButton_[0xAB8];  // 0x0
   uint32_t field_AB8_;  // 0xAB8
 };
 
 /* 0xFDC bytes, 18 member(s), 2 named. From the IDB. 9 function(s) in the image. */
 class Interlude {
+ public:
+  // 0x0045F740 is not recovered: a pending_bodies forwarder, because
+  // an empty inline stub emits nothing and the deleting destructor
+  // needs a `call rel32`.
+  ~Interlude();
+
  public:
   uint8_t graphicWin_[0xA14];  // 0x0
   uint32_t field_A14_;  // 0xA14
@@ -1410,6 +1434,12 @@ class Midi {
 /* 0x36DC bytes, 123 member(s), 13 named. From the IDB, extended to the access bound. 11 function(s) in the image. */
 class MonuWin {
  public:
+  // 0x00477B10 is not recovered: a pending_bodies forwarder, because
+  // an empty inline stub emits nothing and the deleting destructor
+  // needs a `call rel32`.
+  ~MonuWin();
+
+ public:
   uint8_t graphicWin_[0xA14];  // 0x0
   uint32_t field_A14_;  // 0xA14
   uint32_t field_A18_;  // 0xA18
@@ -1543,6 +1573,12 @@ struct Monument {
 /* 0x28B8 bytes, 31 member(s), 14 named. From the IDB. 20 function(s) in the image. */
 class MultiWin {
  public:
+  // 0x0047A430 is not recovered: a pending_bodies forwarder, because
+  // an empty inline stub emits nothing and the deleting destructor
+  // needs a `call rel32`.
+  ~MultiWin();
+
+ public:
   uint8_t graphicWin_[0xA14];  // 0x0
   uint32_t field_A14_;  // 0xA14
   uint32_t field_A18_;  // 0xA18
@@ -1649,6 +1685,12 @@ class Patch {
 
 /* 0xC5C bytes, 111 member(s), 5 named. From the IDB. 13 function(s) in the image. */
 class PickTech {
+ public:
+  // 0x00488690 is not recovered: a pending_bodies forwarder, because
+  // an empty inline stub emits nothing and the deleting destructor
+  // needs a `call rel32`.
+  ~PickTech();
+
  public:
   uint8_t graphicWin_[0xA14];  // 0x0
   uint32_t field_A14_;  // 0xA14
@@ -1772,6 +1814,12 @@ struct Point {
 /* 0x1B3D0 bytes, 55 member(s), 50 named. From the IDB. 20 function(s) in the image. */
 class PrefWin {
  public:
+  // 0x00491DF0 is not recovered: a pending_bodies forwarder, because
+  // an empty inline stub emits nothing and the deleting destructor
+  // needs a `call rel32`.
+  ~PrefWin();
+
+ public:
   // 0x0048FA00, a pending_bodies forwarder.
   void display(int page);
 
@@ -1835,6 +1883,12 @@ class PrefWin {
 
 /* 0x37BC bytes, 47 member(s), 9 named. From the IDB. 11 function(s) in the image. */
 class QuayleWin {
+ public:
+  // 0x00496710 is not recovered: a pending_bodies forwarder, because
+  // an empty inline stub emits nothing and the deleting destructor
+  // needs a `call rel32`.
+  ~QuayleWin();
+
  public:
   uint8_t graphicWin_[0xA14];  // 0x0
   uint32_t field_A14_;  // 0xA14
@@ -1999,6 +2053,12 @@ struct ResValue {
 
 /* 0x464C bytes, 87 member(s), 6 named. From the IDB. 17 function(s) in the image. */
 class SelectPartWin {
+ public:
+  // 0x0043EE10 is not recovered: a pending_bodies forwarder, because
+  // an empty inline stub emits nothing and the deleting destructor
+  // needs a `call rel32`.
+  ~SelectPartWin();
+
  public:
   uint8_t graphicWin_[0xA14];  // 0x0
   uint8_t scroll_[0x214C];  // 0xA14
@@ -2584,6 +2644,12 @@ class Video {
 
 /* 0x54 bytes, 21 member(s), 0 named. From the IDB. 10 function(s) in the image. */
 class VoiceRx {
+ public:
+  // 0x004C8A50 is not recovered: a pending_bodies forwarder, because
+  // an empty inline stub emits nothing and the deleting destructor
+  // needs a `call rel32`.
+  ~VoiceRx();
+
  public:
   uint32_t field_0_;  // 0x0
   uint32_t field_4_;  // 0x4

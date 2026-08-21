@@ -669,11 +669,14 @@ def dtors(apply: bool) -> int:
         if header is None:
             print(f"  - {pointer}: no `class {klass}` under src/")
             continue
-        stub = next((m for m in STUB_DTOR.finditer(files[header])
+        span = _class_body(files[header], klass)
+        inside = files[header][span[0]:span[1]]
+        stub = next((m for m in STUB_DTOR.finditer(inside)
                      if m.group("klass") == klass), None)
-        if stub is None:
-            print(f"  - {pointer}: {klass}'s destructor is not an empty stub "
-                  f"in {header.name} - it may be a real body")
+        declared = re.search(rf"~{klass}\s*\(", inside)
+        if stub is None and declared:
+            print(f"  - {pointer}: {klass}'s destructor in {header.name} is a "
+                  f"real body, not an empty stub")
             continue
         if re.search(rf"\b{klass}::~{klass}\s*\(", _code(body(PENDING))):
             print(f"  - {pointer}: {klass}::~{klass} is already forwarded")
@@ -689,14 +692,18 @@ def dtors(apply: bool) -> int:
             print(f"  - {pointer}: {indirect[0].name} reads it as a value "
                   f"through original_address()")
             continue
-        rewrite(header, files[header].replace(
-            stub.group(0),
-            f"{stub.group('indent')}// {address} is not recovered: a\n"
-            f"{stub.group('indent')}// pending_bodies forwarder, because an "
-            f"empty inline stub emits\n"
-            f"{stub.group('indent')}// nothing and the deleting destructor "
-            f"needs a `call rel32`.\n"
-            f"{stub.group('indent')}~{klass}();\n"))
+        note = (f"  // {address} is not recovered: a pending_bodies "
+                f"forwarder, because\n  // an empty inline stub emits nothing "
+                f"and the deleting destructor\n  // needs a `call rel32`.\n"
+                f"  ~{klass}();\n")
+        if stub is not None:
+            rewrite(header, files[header].replace(stub.group(0), note))
+        else:
+            # NO DESTRUCTOR AT ALL. hypothesis_layouts.h describes layouts and
+            # declares no members, so there is nothing to replace - the
+            # declaration is added, public, at the top of the class body.
+            rewrite(header, files[header][:span[0]]
+                    + f"\n public:\n{note}" + files[header][span[0]:])
         rewrite(PENDING, body(PENDING).replace(
             PENDING_ANCHOR,
             f"{klass}::~{klass}() {{  // ??1{klass}@@QAE@XZ at {address}\n"
