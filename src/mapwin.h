@@ -221,6 +221,10 @@ void __fastcall map_win_on_left_up_redirect(MapWin *self, void *, int a1, int a2
 // `mov ecx, dword ptr [esi*4 + 0x7d3c3c]`, and by ?zoom@BaseWin@@QAEXHH@Z at
 // 0x0041AAC3, which walks slot 0's vbtable. Populated at run time, so this is
 // a mutable global; rebindable so leaf tests can seed a controlled table.
+// RULED-OUT: spelling this as an accessor returning
+// `reinterpret_cast<MapWin **>(0x007D3C3C)` - to stop VC6 hoisting the base
+// into a register across `Console::focus`'s loop, which the image never does -
+// measures WORSE there, 19 of 85 instructions against 29.
 MapWin **const MapWinTable = (MapWin **)0x007D3C3C;                  // 0x007D3C3C
 static const size_t MapWinTableSlots = 8;        // (0x007D3C5C - 0x007D3C3C) / 4
 
