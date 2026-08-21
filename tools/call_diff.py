@@ -39,8 +39,15 @@ from decomp.asm import (build_command, build_inputs, call_symbols,
 from decomp.calls import call_sites
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-IMAGE = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
-COMPILE_COMMANDS = REPO_ROOT / "build" / "compile_commands.json"
+# HONOURS `OPENSMACX_IMAGE`, because `.opensmacx/` is gitignored and a
+# worktree does not have it - an agent working in one must be able to
+# point every tool back at the root copy. osmx.py has always taken it;
+# these did not, and an agent had to symlink the image to work around it.
+IMAGE = Path(os.environ.get(
+    "OPENSMACX_IMAGE",
+    REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"))
+COMPILE_COMMANDS = Path(os.environ.get(
+    "OPENSMACX_COMPILE_COMMANDS", REPO_ROOT / "build" / "compile_commands.json"))
 BORROW = REPO_ROOT / "src" / "buffer.cpp"
 # EVERY SET, NOT ONE. `memset` and `strcat` are INTRINSICS under `/Oi`, so a
 # body the image calls them from reads as "makes no calls" under the default
