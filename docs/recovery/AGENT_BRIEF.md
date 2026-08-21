@@ -28,6 +28,23 @@ uncommitted work, and the fix is to hand that diff back first.
 Working in a worktree is why you can edit freely: nothing you touch collides
 with another agent.
 
+A CONSTRUCTOR MAY BE AN EMPTY INLINE OVER A REAL BODY
+- `uv run tools/hollow_bodies.py --stubbed` lists 43 classes whose method is
+  `{ ; }` in a header while the image has a real body and an artifact holds a
+  transcription of it. These are NOT the same as the promotable list above:
+  their artifacts do not reproduce yet, so promoting one means writing the
+  body, not moving it.
+- Do it anyway when one is handed to you. `{ ; }` is not a stub the way a
+  `pending_bodies.cpp` forwarder is - the forwarder is honest and faults
+  loudly, whereas an empty inline SILENTLY constructs nothing. Measured: the
+  built executable faulted in `_initterm` before ever reaching `WinMain`
+  because `MainInterface::MainInterface` was `{ ; }` and so never built its
+  `StringBox`, which never built its `Scroll`.
+- Expect the promotion to make the runtime WORSE before better, and let it.
+  Giving a class a real constructor is what makes `_initterm` actually run it,
+  so faults appear that an empty inline was hiding. That is the defect
+  surfacing, not the promotion causing it.
+
 A BODY MAY ALREADY BE WRITTEN, SOMEWHERE THAT IS NOT COMPILED
 - `uv run tools/promotable.py` lists byte-exact bodies that exist only in
   `src/recovered/`, `src/recovered/units/` or `src/unrecovered/`. There are 878,
