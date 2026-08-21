@@ -333,7 +333,13 @@ int __cdecl parse_says(int id, LPCSTR input, int gender, int pluralality) {
         pluralality = *PluralityDefault;
     }
     ParseStrPlurality[id] = pluralality;
-    strcpy_s(ParseStrBuffer[id].str, 256, input);
+    // THE IMAGE TRUNCATES FIRST: `mov byte ptr [eax], 0` at 0x00625F06,
+    // pointless before a `strcpy` and in the shipped bytes. That is the whole
+    // of what was missing - `strcpy_s` measures the same as `strcpy` here,
+    // because vc6_compat.h's shim inlines to exactly it.
+    char *const dest = ParseStrBuffer[id].str;
+    dest[0] = 0;
+    strcpy(dest, input);
     return 0;
 }
 
