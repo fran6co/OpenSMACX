@@ -1026,7 +1026,15 @@ int Wave::load() {
         typedef void (OriginalObject::*device_attrib_fn)(int attribs);
         (ORIGINAL(device_)->*vtable_slot<device_attrib_fn>(device_, 0x6C))(attribs);
     }
-    const int loaded = this->load(fname);
+    // `Sound::load`, NOT `this->load`. Both of these sit INSIDE a `Wave::load`
+    // overload, so `this->load(...)` resolved to the same function and recursed
+    // without bound - a real runtime defect the byte comparison cannot see,
+    // because a call target is a discounted relocation. The image calls
+    // 0x004C6280, which is `?load@Sound@@QAEHPBD@Z`, and this marker's own
+    // `// calls` fact says so. `Wave` is spelled flat rather than `: Sound`
+    // (see the note in `wave.h` for why), so the Sound subobject at offset 0
+    // is reached by cast.
+    const int loaded = reinterpret_cast<Sound *>(this)->Sound::load(fname);
     if (loaded) {
         return loaded;
     }
@@ -1213,7 +1221,15 @@ int Wave::load(const char *a1) {
         typedef void (OriginalObject::*device_attrib_fn)(int attribs);
         (ORIGINAL(device_)->*vtable_slot<device_attrib_fn>(device_, 0x6C))(attribs);
     }
-    const int loaded = this->load(a1);
+    // `Sound::load`, NOT `this->load`. Both of these sit INSIDE a `Wave::load`
+    // overload, so `this->load(...)` resolved to the same function and recursed
+    // without bound - a real runtime defect the byte comparison cannot see,
+    // because a call target is a discounted relocation. The image calls
+    // 0x004C6280, which is `?load@Sound@@QAEHPBD@Z`, and this marker's own
+    // `// calls` fact says so. `Wave` is spelled flat rather than `: Sound`
+    // (see the note in `wave.h` for why), so the Sound subobject at offset 0
+    // is reached by cast.
+    const int loaded = reinterpret_cast<Sound *>(this)->Sound::load(a1);
     if (loaded) {
         return loaded;
     }
