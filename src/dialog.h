@@ -169,12 +169,10 @@ extern Font *DialogDefaultFonts[3];
 // Every teardown that reaches the still-original Dialog::close (0x00608F50)
 // binds it through this signature; RadioButton/CheckBox/ListBox share it.
 typedef void (OriginalObject::*func_dialog_close)();
-typedef void(__cdecl func_operator_delete)(void *block);
 
 // ~Dialog's own body reaches Dialog::close through a rebindable seam, and the
 // scalar deleting destructor frees through the executable's operator delete.
 extern func_dialog_close DialogOriginalClose;          // default 0x00608F50
-func_operator_delete *const DialogOperatorDelete = (func_operator_delete *)0x0064557F;      // default 0x0064557F
 
 // Virtual tables the destructor stages. The Dialog primary table and the
 // list virtual base's final table are written but never dispatched, so they

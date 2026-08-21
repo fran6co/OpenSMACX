@@ -620,9 +620,96 @@ def convert(source: Path, apply: bool) -> int:
     return done
 
 
+FREE = re.compile(
+    r"^(?P<alias>func_\w+)\s*\*const\s+(?P<name>\w+)\s*=\s*"
+    r"\((?P=alias)\s*\*\)\s*(?P<address>0x[0-9A-Fa-f]+)\s*;[^\n]*\n", re.M)
+FREE_TYPEDEF = re.compile(
+    r"typedef\s+(?P<ret>[\w:*&\s]+?)\s*\(\s*__cdecl\s+(?P<alias>func_\w+)"
+    r"\s*\)\s*\((?P<params>[^)]*)\)\s*;\n")
+
+
+def free(apply: bool) -> int:
+    """Convert `func_X *const P = (func_X *)0x...` bindings to real calls.
+
+    THE SAME COST AS A MEMBER SEAM, in a different spelling: a call through
+    the pointer compiles `call dword ptr [P]` where the image has `call rel32`.
+    0x00592EE0 was bound in two headers at once, with disagreeing return types,
+    and both files' callers paid for it.
+
+    A free function, so there is no receiver to get wrong and no class to find
+    - the whole conversion is a forwarder, a declaration and a rename.
+    """
+    names = _names_by_address()
+    files = tree()
+    changed = 0
+    for header in sorted(p for p in files if p.suffix == ".h"):
+        for match in list(FREE.finditer(body(header))):
+            alias, pointer = match.group("alias"), match.group("name")
+            address = int(match.group("address"), 16)
+            symbol = names.get(address, "")
+            if not symbol.startswith("?") or "@@Y" not in symbol:
+                print(f"  - {pointer}: {match.group('address')} is "
+                      f"{symbol or 'in no annotation'}, not a free function")
+                continue
+            ident = qualified_name(symbol)
+            typedef = FREE_TYPEDEF.search(
+                "\n".join(files.values()).replace("\r", ""))
+            typedef = next((m for m in FREE_TYPEDEF.finditer(
+                "\n".join(files.values())) if m.group("alias") == alias), None)
+            if typedef is None:
+                print(f"  - {pointer}: no `typedef ... (__cdecl {alias})`")
+                continue
+            params = _split_params(typedef.group("params"))
+            arguments = _argument_names(params)
+            returns = typedef.group("ret").strip()
+            declaration = (f"{returns} __cdecl {ident}"
+                           f"({', '.join(params)});")
+            if re.search(rf"(?<![\w:]){re.escape(ident)}\s*\(",
+                         _code("\n".join(v for k, v in files.items()
+                                         if k.suffix == ".h"))):
+                print(f"  - {pointer}: {ident} is already declared somewhere")
+                continue
+            forwarder = (
+                f"{returns} __cdecl {ident}({', '.join(params)}) {{"
+                f"  // {match.group('address')}\n"
+                f"    typedef {returns}(__cdecl *pending)"
+                f"({', '.join(_type_of(p) for p in params)});\n"
+                f"    {'' if returns == 'void' else 'return '}"
+                f"PENDING_BODY({match.group('address')}, pending)"
+                f"({', '.join(arguments)});\n}}\n\n")
+            rewrite(header, body(header).replace(
+                match.group(0),
+                f"// {match.group('address')}, a pending_bodies forwarder.\n"
+                f"{declaration}\n"))
+            for path in sorted(files):
+                if pointer in body(path):
+                    rewrite(path, re.sub(rf"(?<![\w:])\b{pointer}\s*\(",
+                                         f"{ident}(", body(path)))
+            rewrite(PENDING, body(PENDING).replace(
+                PENDING_ANCHOR, forwarder + PENDING_ANCHOR))
+            include = f'#include "{header.name}"\n'
+            if include not in body(PENDING):
+                last = body(PENDING).rfind('#include "')
+                end = body(PENDING).index("\n", last) + 1
+                rewrite(PENDING, body(PENDING)[:end] + include
+                        + body(PENDING)[end:])
+            print(f"  + {pointer} -> {ident} ({match.group('address')})")
+            changed += 1
+    if apply:
+        for path, text in files.items():
+            if text != path.read_text():
+                path.write_text(text)
+    return changed
+
+
 if __name__ == "__main__":
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     apply = "--apply" in sys.argv
+    if "--free" in sys.argv:
+        count = free("--apply" in sys.argv)
+        print(f"{count} free-function binding(s) "
+              f"{'converted' if '--apply' in sys.argv else 'convertible'}")
+        raise SystemExit(0)
     SCOPE.update(Path(a).resolve() for a in args)
     SCOPE.update(Path(a).resolve().with_suffix(".h") for a in args)
     SCOPE.intersection_update(tree())

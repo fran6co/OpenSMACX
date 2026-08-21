@@ -978,7 +978,7 @@ Scroll *__fastcall scroll_destructor_redirect(Scroll *self, void *) {
 Purpose: The compiler-generated scalar deleting destructor: run the complete
          destructor and, when bit 0 of the mode asks, free the storage to the
          game heap.
-// ORIGINAL: 0x00406F20 ??_GScroll@@UAEPAXI@Z 0x00406F20-0x00406F41
+// ORIGINAL: 0x00406F20 ??_GScroll@@UAEPAXI@Z 0x00406F20-0x00406F41 BYTE_EXACT
 // symbol    ?scroll_scalar_dtor_redirect@@YIPAXPAVScroll@@PAXI@Z
 // size      33 bytes
 // prototype 
@@ -993,7 +993,7 @@ void *__fastcall scroll_scalar_dtor_redirect(Scroll *self, void *,
                                              unsigned int mode) {
     self->destroy();
     if (mode & 1) {
-        ScrollOperatorDelete(self);
+        operator delete(self);
     }
     return self;
 }

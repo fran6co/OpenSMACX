@@ -79,8 +79,6 @@ uint32_t *const AutoSoundDefaults = (uint32_t *)0x009BC080;
 // The game CRT operator delete the scalar deleting destructor frees the
 // object through; bound here rather than through wave.h so this file's
 // link closure stays self-contained.
-typedef void(__cdecl func_auto_sound_delete)(void *block);
-func_auto_sound_delete *const AutoSoundOperatorDelete = (func_auto_sound_delete *)0x0064557F;
 AutoSound *__fastcall auto_sound_construct_redirect(AutoSound *self, void *);
 void __fastcall auto_sound_close_redirect(AutoSound *self, void *);
 void __fastcall auto_sound_close2_redirect(AutoSound *self, void *);

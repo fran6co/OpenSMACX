@@ -407,7 +407,7 @@ Ambience::~Ambience() {
     {
         void *const name = self->fname_;
         if (name) {
-            WaveOperatorDelete(name);
+            operator delete(name);
         }
     }
     // One statement: nothing can observe the order of the device fetch and
@@ -422,7 +422,7 @@ Ambience::~Ambience() {
     {
         void *const name = self->fname_;
         if (name) {
-            WaveOperatorDelete(name);
+            operator delete(name);
             self->fname_ = nullptr;
         }
     }

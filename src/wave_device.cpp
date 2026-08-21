@@ -612,7 +612,7 @@ int Wave_Device::pull_from_group(Wave *a1) {
             // the tail steps back second, exactly the original's store order.
             group.tail = (group.cursor = nullptr, node->prev);
         }
-        WaveOperatorDelete(node);
+        operator delete(node);
         group.count -= 1;
     }
     *slot_field = 0x10;
@@ -1500,7 +1500,7 @@ void __fastcall wave_control_group_dtor_redirect(WaveControlGroup *self,
             self->head = (self->tail = nullptr);
         }
         Wave *const wave = node->wave;
-        WaveOperatorDelete(node);
+        operator delete(node);
         self->count -= 1;
         if (!wave) {
             break;

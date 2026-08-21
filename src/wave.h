@@ -211,14 +211,12 @@ void __fastcall wave_init_redirect(Wave *self, void *, char *a1, uint32_t a2);
 // Which end is "head" is inferred from the unlink shape (the slot written
 // when the 0x44 neighbour is null); nothing else pins the labels.
 typedef int (OriginalObject::*func_wave_device_pull_from_group)(Wave *wave);
-typedef void(__cdecl func_operator_delete)(void *block);
 typedef void(__cdecl func_wave_device_release)(void *device);
 extern func_wave_device_pull_from_group WaveDevicePullFromGroup;
 // TYPED, not `void *`: it is the process Wave_Device at 0x0090D978 -
 // the same object init_thunks.cpp calls `g_WAVE_DEVICE` - and the call
 // sites in wave.cpp reach its methods by name.
 Wave_Device *const WaveDeviceGlobal = (Wave_Device *)0x0090D978;
-func_operator_delete *const WaveOperatorDelete = (func_operator_delete *)0x0064557F;
 inline func_wave_device_release *&WaveDeviceReleaseSlot() { return *reinterpret_cast<func_wave_device_release **>(0x0090DB28); }
 int *const WaveDeviceReleaseGuard = (int *)0x0090DB7C;
 inline Wave *&WaveChainHead() { return *reinterpret_cast<Wave **>(0x0090DB20); }

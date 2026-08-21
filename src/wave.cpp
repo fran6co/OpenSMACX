@@ -881,7 +881,7 @@ int Wave::set_fname(const char *a1) {
         return 0xA;
     }
     if (fname_) {
-        WaveOperatorDelete(fname_);
+        operator delete(fname_);
     }
     fname_ = WaveOperatorNew(strlen(a1) + 1);
     strcpy(static_cast<char *>(fname_), a1);
@@ -1333,7 +1333,7 @@ void Wave::init(char *a1, unsigned long a2) {
         return;
     }
     if (fname_) {
-        WaveOperatorDelete(fname_);
+        operator delete(fname_);
     }
     fname_ = WaveOperatorNew(strlen(resolved) + 1);
     strcpy(static_cast<char *>(fname_), resolved);
@@ -1393,7 +1393,7 @@ void __fastcall wave_init_redirect(Wave *self, void *, char *a1, uint32_t a2) {
 Purpose: The compiler-generated scalar deleting destructor: destroy the wave
          and, when bit 0 of the mode argument asks for it, return the storage
          to the game CRT heap.
-// ORIGINAL: 0x004C9300 ??_GWave@@UAEPAXI@Z 0x004C9300-0x004C9321
+// ORIGINAL: 0x004C9300 ??_GWave@@UAEPAXI@Z 0x004C9300-0x004C9321 BYTE_EXACT
 // symbol    ?wave_scalar_dtor_redirect@@YIPAXPAVWave@@PAXI@Z
 // size      33 bytes
 // prototype void* (__thiscall ??_GWave@@UAEPAXI@Z)(Wave* this, unsigned int)
@@ -1408,7 +1408,7 @@ void *__fastcall wave_scalar_dtor_redirect(Wave *self, void *,
                                            unsigned int mode) {
     self->~Wave();
     if (mode & 1) {
-        WaveOperatorDelete(self);
+        operator delete(self);
     }
     return self;
 }
@@ -1457,7 +1457,7 @@ Wave::~Wave() {
     }
     void *const block = self->fname_;
     if (block) {
-        WaveOperatorDelete(block);
+        operator delete(block);
     }
     self->fname_ = nullptr;
     if (self->field_40_ & 2) {
@@ -1490,7 +1490,7 @@ Wave::~Wave() {
     // unlink above re-populated the slot through an aliased neighbour.
     void *const late_block = self->fname_;
     if (late_block) {
-        WaveOperatorDelete(late_block);
+        operator delete(late_block);
         self->fname_ = nullptr;
     }
     void *const device = self->device_;

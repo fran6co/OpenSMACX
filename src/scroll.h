@@ -125,8 +125,6 @@ extern uint32_t ScrollCloseDynamicDefaults;
 // The two virtual tables the destructor stages before running close.
 extern const uint32_t ScrollPrimaryVtable;
 extern const uint32_t ScrollBufferVtable;
-typedef void(__cdecl func_operator_delete)(void *block);
-func_operator_delete *const ScrollOperatorDelete = (func_operator_delete *)0x0064557F;
 
 RECT *__cdecl expand_rect(RECT *rect, int horizontal, int vertical);
 uint32_t __fastcall scroll_close_redirect(Scroll *self, void *);

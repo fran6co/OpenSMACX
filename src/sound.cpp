@@ -521,7 +521,7 @@ int Sound::load(const char *a1) {
         static_cast<char *>(WaveOperatorNew(strlen(resolved) + 1));
     strcpy(copy, resolved);
     if (fname_) {
-        WaveOperatorDelete(fname_);
+        operator delete(fname_);
     }
     fname_ = copy;
     return result;
@@ -744,7 +744,7 @@ Sound::~Sound() {
     {
         void *const name = self->fname_;
         if (name) {
-            WaveOperatorDelete(name);
+            operator delete(name);
             self->fname_ = nullptr;
         }
     }
@@ -785,7 +785,7 @@ void __fastcall sound_dtor_redirect(Sound *self, void *) {
 Purpose: The compiler-generated scalar deleting destructor: destroy the
          sound and, when bit 0 of the mode asks, free the storage to the
          game heap.
-// ORIGINAL: 0x004C92D0 ??_GSound@@UAEPAXI@Z 0x004C92D0-0x004C92F1
+// ORIGINAL: 0x004C92D0 ??_GSound@@UAEPAXI@Z 0x004C92D0-0x004C92F1 BYTE_EXACT
 // symbol    ?sound_scalar_dtor_redirect@@YIPAXPAVSound@@PAXI@Z
 // size      33 bytes
 // prototype void* (__thiscall ??_GSound@@UAEPAXI@Z)(Sound* this, unsigned int)
@@ -800,7 +800,7 @@ void *__fastcall sound_scalar_dtor_redirect(Sound *self, void *,
                                             unsigned int mode) {
     self->~Sound();
     if (mode & 1) {
-        WaveOperatorDelete(self);
+        operator delete(self);
     }
     return self;
 }

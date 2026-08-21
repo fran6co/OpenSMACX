@@ -528,7 +528,7 @@ void *__fastcall dialogs_scalar_dtor_redirect(void *adjusted, void *,
     graphic_win_destructor_redirect(
         reinterpret_cast<GraphicWin *>(base + 0x188), nullptr);
     if (mode & 1) {
-        DialogsOperatorDelete(base);
+        operator delete(base);
     }
     return base;
 }

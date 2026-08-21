@@ -254,7 +254,8 @@ extern func_console_map_win_focus ConsoleOriginalMapWinFocus;       // 0x0046B31
 // error, so a fixture rebinding one would leave the other still pointing at
 // the original image - which is why tools/test_generator_support.py refuses
 // a second binding, and it caught this one.
-func_console_flush_input *const ConsoleOriginalFlushInput = (func_console_flush_input *)0x005FD120;          // 0x005FD120
+// 0x005FD120, a pending_bodies forwarder.
+void __cdecl flush_input();
 extern Console *ConsoleGlobal;  // 0x009156B0, the process-wide Console
 
 // The dword at 0x0093A938 is set while a turn is played out under program
