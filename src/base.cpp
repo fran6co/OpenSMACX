@@ -26,6 +26,9 @@
 #include "text.h"
 #include "technology.h"
 #include "veh.h"
+#include "console.h"
+#include "netdaemon.h"
+#include "xpops.h"
 
 int BaseIDCurrentSelected;  // 0x00689370
 int BaseCurrentCount;  // 0x009A64CC
@@ -165,7 +168,7 @@ void __cdecl say_base(LPSTR base_str, int base_id) {
 
 /*
 Purpose: Return the base at the specified map coordinates and repair stale base map bits.
-// ORIGINAL: 0x004E3A50 ?base_at@@YAHHH@Z 0x004E3A50-0x004E3B7F
+// ORIGINAL: 0x004E3A50 ?base_at@@YAHHH@Z 0x004E3A50-0x004E3B7F BYTE_EXACT
 // size      303 bytes
 // prototype int (__cdecl ?base_at@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   62   call targets   5
@@ -174,23 +177,59 @@ Purpose: Return the base at the specified map coordinates and repair stale base 
 // calls     0x005108A0 0x00532B70 0x005BF310 0x00625E30 0x006262F0
 // indirect  0x004E3B59
 // notes     Runtime redirect installed by DllMain after byte-signature validation
+// LEVER: the missing debug path (STATE_DEBUG_MODE gate, reentrancy guard, BASEBIT
+//        popup, GetAsyncKeyState(VK_CONTROL) poll, Console::focus) was the whole
+//        call-count gap. Once restored, a pointer walk over Bases (lever 7) -
+//        `Base *base = Bases; ...; base_id++, base++` instead of `&Bases[base_id]`
+//        each iteration - closed the last two instructions.
 Return Value: Base id or -1 when no base is present
 Status: Complete - testing
 
-The original also displays a debug-only BASEBIT popup and focuses the internal console when the map
-bit has no matching base. The state repair behavior is retained without those UI diagnostics.
+The original does display the debug-only BASEBIT popup and focus the internal console when the map
+bit has no matching base, gated by STATE_DEBUG_MODE and a reentrancy guard; that path is reproduced
+below. BaseAtDebugPopupFlag and BaseAtKeyPollFlag gate a parse_num/X_pop popup and a
+GetAsyncKeyState(VK_CONTROL) poll respectively - purpose inferred only from this one call site, the
+executable does not name either.
 */
+// Reentrancy guard for the debug block below: set while it runs, so a callee
+// that re-enters base_at() (e.g. via rebuild_base_bits or Console::focus)
+// while it is busy skips straight to returning -1.
+int BaseAtErrorGuard;  // 0x0090EA38
+int BaseAtDebugPopupFlag;  // 0x0093A94C
+int BaseAtKeyPollFlag;  // 0x009BC070
+
 int __cdecl base_at(int x, int y) {
     if (!on_map(x, y) || !(bit_at(x, y) & BIT_BASE_IN_TILE)) {
         return -1;
     }
-    for (int base_id = 0; base_id < BaseCurrentCount; base_id++) {
-        if (Bases[base_id].x == x && Bases[base_id].y == y) {
+    Base *base = Bases;
+    for (int base_id = 0; base_id < BaseCurrentCount; base_id++, base++) {
+        if (base->x == x && base->y == y) {
             return base_id;
         }
     }
-    log_say("Base Bits Error  (x, y)", x, y, 0);
+    if (!BaseAtErrorGuard) {
+        log_say("Base Bits Error  (x, y)", x, y, 0);
+    }
+    if (!(GameState & STATE_DEBUG_MODE)) {
+        rebuild_base_bits();
+        return -1;
+    }
+    if (BaseAtErrorGuard) {
+        return -1;
+    }
+    BaseAtErrorGuard = 1;
+    if (BaseAtDebugPopupFlag) {
+        parse_num(0, x);
+        parse_num(1, y);
+        X_pop("BASEBIT", NULL);
+    }
+    BaseAtErrorGuard = 0;
+    if (!BaseAtKeyPollFlag) {
+        GetAsyncKeyState(VK_CONTROL);
+    }
     rebuild_base_bits();
+    ConsoleGlobal->focus(x, y, NetDaemonLocalFaction);
     return -1;
 }
 
@@ -203,17 +242,38 @@ Purpose: Find the base id closest to the specified coordinates.
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x00644F3A
-Return Value: Base id or -1 if not found 
+// RULED-OUT: vector_dist(x, y, Bases[i].x, Bases[i].y) - the image never calls
+//            vector_dist, only abs() x4 (see del_site 0x00579E70 for the same
+//            expansion); open-coding it moved the mismatch from the whole
+//            function to a prologue scheduling difference (/O2 /Oi- gets the
+//            first 9 instructions and the push/pop shape byte-exact) and one
+//            residual +4 byte size difference in the loop body, not chased
+//            further - del_site's own comment records the same plateau.
+//            Indexing Bases[i] directly (not a walking Base* - lever 7)
+//            scored higher here; the two functions disagree on that lever.
+Return Value: Base id or -1 if not found
 Status: Complete
 */
 int __cdecl base_find(int x, int y) {
-    if (BaseCurrentCount <= 0) {
-        return -1;
-    }
     int proximity = 9999;
     int base_id = -1;
     for (int i = 0; i < BaseCurrentCount; i++) {
-        int dist = vector_dist(x, y, Bases[i].x, Bases[i].y);
+        // Open-coded vector_dist(x, y, Bases[i].x, Bases[i].y): the image calls
+        // abs() four times (never vector_dist itself) - see del_site
+        // (0x00579E70) for the same expansion.
+        int dx = x_dist(x, Bases[i].x);
+        int dy = abs(y - Bases[i].y);
+        int abs_dx = abs(dx);
+        int abs_dy = abs(dy);
+        int largest = abs_dx;
+        if (abs_dx <= abs_dy) {
+            largest = abs_dy;
+        }
+        int smallest = abs_dx;
+        if (abs_dx >= abs_dy) {
+            smallest = abs_dy;
+        }
+        int dist = largest - (((abs_dy + abs_dx) / 2) - smallest + 1) / 2;
         if (dist <= proximity) {
             proximity = dist;
             base_id = i;
@@ -267,6 +327,14 @@ Purpose: Find the base id closest to the specified coordinates meeting various c
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00644F3A
+// LEVER: same vector_dist -> abs()x4 open-coding as base_find(x,y) 0x004E3B80.
+//        A `Base *base = Bases; ...base++` walk (lever 7) reused across the
+//        whole loop body (matching ebx-relative offsets in the disasm) ties
+//        with plain `Bases[i]` indexing here - no measured difference either
+//        way, kept for the offset match to the disassembly's ebx addressing.
+//        /O2 /Oi- gets the first 11 instructions and the push order
+//        byte-exact; the rest is a 1-byte body-size difference cascading
+//        through every later jump target, not chased further given size.
 Return Value: Base id or -1 if not found
 Status: Complete
 */
@@ -275,18 +343,32 @@ int __cdecl base_find(int x, int y, int faction_id, int region, int faction_id_2
     int proximity = 9999;
     int base_id = -1;
     BaseFindDist = 9999; // difference from other two functions where this is reset at start
-    if (BaseCurrentCount <= 0) {
-        return -1;
-    }
-    for (int i = 0; i < BaseCurrentCount; i++) {
-        if (region < 0 || region_at(Bases[i].x, Bases[i].y) == (uint32_t)region) {
-            if (faction_id < 0 ? (faction_id_2 < 0 || Bases[i].faction_id_current != faction_id_2)
-                : (faction_id == Bases[i].faction_id_current || (faction_id_2 == -2
-                    ? has_treaty(faction_id, Bases[i].faction_id_current, DTREATY_PACT)
-                    : (faction_id_2 >= 0 && faction_id_2 == Bases[i].faction_id_current)))) {
-                if (faction_id_3 < 0 || Bases[i].faction_id_current == faction_id_3
-                    || ((1 << faction_id_3) & Bases[i].visibility)) {
-                    int dist = vector_dist(x, y, Bases[i].x, Bases[i].y);
+    Base *base = Bases;
+    for (int i = 0; i < BaseCurrentCount; i++, base++) {
+        if (region < 0 || region_at(base->x, base->y) == (uint32_t)region) {
+            if (faction_id < 0 ? (faction_id_2 < 0 || base->faction_id_current != faction_id_2)
+                : (faction_id == base->faction_id_current || (faction_id_2 == -2
+                    ? has_treaty(faction_id, base->faction_id_current, DTREATY_PACT)
+                    : (faction_id_2 >= 0 && faction_id_2 == base->faction_id_current)))) {
+                if (faction_id_3 < 0 || base->faction_id_current == faction_id_3
+                    || ((1 << faction_id_3) & base->visibility)) {
+                    // Open-coded vector_dist(x, y, base->x, base->y): the
+                    // image calls abs() four times, never vector_dist itself -
+                    // see del_site (0x00579E70) and base_find(x,y) (0x004E3B80)
+                    // for the same expansion.
+                    int dx = x_dist(x, base->x);
+                    int dy = abs(y - base->y);
+                    int abs_dx = abs(dx);
+                    int abs_dy = abs(dy);
+                    int largest = abs_dx;
+                    if (abs_dx <= abs_dy) {
+                        largest = abs_dy;
+                    }
+                    int smallest = abs_dx;
+                    if (abs_dx >= abs_dy) {
+                        smallest = abs_dy;
+                    }
+                    int dist = largest - (((abs_dy + abs_dx) / 2) - smallest + 1) / 2;
                     if (dist <= proximity) {
                         proximity = dist;
                         base_id = i;

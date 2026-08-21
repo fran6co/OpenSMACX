@@ -486,7 +486,7 @@ void dispatch_midi_device(Midi_Device *self, int vtable_offset) {
         reinterpret_cast<uint8_t *>(self) + 0x14);
     if (device) {
         uint8_t *vtable = *reinterpret_cast<uint8_t **>(device);
-        (ORIGINAL(device)->*original_slot<midi_device_vfn>(vtable + vtable_offset))();
+        (ORIGINAL(device)->*vtable_method<midi_device_vfn>(device, vtable_offset))();
     }
 }
 }  // namespace
@@ -546,7 +546,7 @@ int query_device_at_14(void *self, int vtable_offset, int no_device_result) {
         return no_device_result;
     }
     uint8_t *vtable = *reinterpret_cast<uint8_t **>(device);
-    return (ORIGINAL(device)->*original_slot<device_query_vfn>(vtable + vtable_offset))();
+    return (ORIGINAL(device)->*vtable_method<device_query_vfn>(device, vtable_offset))();
 }
 }  // namespace
 

@@ -187,6 +187,9 @@ Purpose: Determine if the specified faction is considered a threat based on the 
 //        of calling great_beelzebub(); moved from 1/113 (wrong shape, esp-frame,
 //        real call) to 9/113 agreeing. RULED-OUT: open-coding is_human's bit
 //        test directly instead of the call did not move the tier further.
+//        RULED-OUT: `PlayerData *p = &PlayersData[faction_id];` before the
+//        repeated `.current_num_bases`/`.diff_level` reads - dropped to 4/113;
+//        the image keeps faction_id itself live across the whole body instead.
 // size      315 bytes
 // prototype 
 // callers   20   call targets   2
@@ -382,7 +385,9 @@ Purpose: Add friction between the two specified factions.
 //            (`mov ecx,[edx*4+base]; ...; mov [edx*4+base],ecx`), while this
 //            tree's compile folds the *4 into the addressing mode on the
 //            store and recomputes it with `lea`/`mov` split differently.
-//            Plateaus at 13/33 agreeing across tried flag sets.
+//            Plateaus at 13/33 agreeing across tried flag sets. A
+//            `PlayerData *p = &PlayersData[faction_id]` wrapper around the
+//            existing `*diplo_friction` pointer ties at 13/33, no change.
 // size      93 bytes
 // prototype void (__cdecl ?cause_friction@@YAXHHH@Z)(int factionID, int factionIDWith, int friction)
 // callers   8   call targets   0
@@ -1133,6 +1138,8 @@ Purpose: Add the specific goal to the faction's goals for the specified tile. Op
 //        registers and reuses the (dead, post-use) faction_id parameter slot
 //        at [ebp+8] as a spill for priority_search; this tree's compile still
 //        pushes an extra ecx for a fourth save. Not chased further.
+//        RULED-OUT: `PlayerData *p = &PlayersData[faction_id];` before both
+//        loops - ties at 11/104, no change either way.
 // size      308 bytes
 // prototype void (__cdecl ?add_goal@@YAXHHHHHH@Z)(int factionID, int type, int priority, int xCoord, int yCoord, int baseID)
 // callers   12   call targets   0
@@ -1193,6 +1200,8 @@ Purpose: Add the specific site to the faction's site goals for the specified til
 //            [ebp-4], site_id) and keeps priority_search live only in a
 //            register across the second loop; this tree's compile reserves
 //            two (`sub esp,8`). Plateaus at 17/116 agreeing.
+//            `PlayerData *p = &PlayersData[faction_id];` before both loops
+//            also worse (16/116).
 // size      325 bytes
 // prototype void (__cdecl ?add_site@@YAXHHHHH@Z)(int factionID, int type, int priority, int xCoord, int yCoord)
 // callers   4   call targets   2
@@ -1370,6 +1379,8 @@ Purpose: Delete sites of the specified type within proximity of the tile along w
 //        taking the Goal& reference - no change. Remaining divergence is a
 //        `lea` vs `add`/offset-by-4 choice for the sites[i] base pointer used
 //        for the type field read; not chased further.
+//        RULED-OUT: `PlayerData *p = &PlayersData[faction_id];` in place of
+//        the two PlayersData[faction_id] subscripts - dropped to 33/95.
 // size      259 bytes
 // prototype void (__cdecl ?del_site@@YAXHHHHH@Z)(int factionID, int type, int xCoord, int yCoord, int proximity)
 // callers   5   call targets   1

@@ -1785,7 +1785,10 @@ Purpose: Generate stats string for specified prototype. List whether prototype i
 //            off_rating<0/>=99/else branch order got to 58/140. def_rating via
 //            get_proto_defense_rating() vs inlined Armor[...] made no further
 //            difference; plateaus on the same shl-vs-add-const address split
-//            seen at 0x0057D7D0.
+//            seen at 0x0057D7D0. Call count is 19/21 (call_diff): same
+//            get(Labels[196])+strcat 'Psi' CSE across the off_rating<0 and
+//            def_rating<0 arms as 0x0057DAA0 - the compiler shares the pair,
+//            the image keeps two call sites.
 // size      436 bytes
 // prototype void (__cdecl ?say_stats_2@@YAXPADH@Z)(int8*, int protoID)
 // callers   4   call targets   6
@@ -1837,6 +1840,26 @@ Purpose: Generate verbose stats string for specified prototype. Used by Design W
          existing C code.
 // ORIGINAL: 0x0057DAA0 ?say_stats@@YAXPADHPAD@Z 0x0057DAA0-0x0057DED8
 // symbol    ?say_stats@@YAXPADH0@Z
+// RULED-OUT: std::string body called 82 vs the image's 44 (call_diff); rebuilt
+//            as char pointer + strcat/sprintf in the image's own branch shape (goto
+//            shared "defense+spacer+speed" tail, matching the two physical
+//            jumps into 0x57dd70) got the call count to 42/44. label_get(N)
+//            calls had to become the open-coded
+//            StringTable->get((int)*((LPSTR*)Labels->strings_ptr + N)) - the
+//            image never calls a separate label helper here. The
+//            `custom_spacer ? custom_spacer : "/"` after the offense append
+//            is two strcat call sites in the image (if/else, not a ternary
+//            merged into one call); the same spacer after the defense append
+//            IS one call site (a shared "push ebx or literal, then push+call"
+//            tail) - only the first needed splitting.
+//            Still 2 calls short: the compiler CSEs the two identical
+//            `StringTable->get(Labels[196])` + strcat 'Psi' pairs (one on the
+//            off_rating<0 arm, one on the def_rating<0 arm) into one shared
+//            block, where the image keeps them as two separate call sites.
+//            No source spelling tried defeated that merge. Also plateaus on
+//            prologue shape (push ebp/mov ebp,esp/sub esp,0x50 vs an
+//            esp-relative frame) picked by the flag search's own similarity
+//            metric; forcing /Oy- narrows but does not close it.
 // size      1080 bytes
 // prototype void (__cdecl ?say_stats@@YAXPADHPAD@Z)(int8*, int protoID, int8*)
 // callers   2   call targets   6
@@ -1859,8 +1882,8 @@ void __cdecl say_stats(LPSTR stat, int proto_id, LPSTR custom_spacer) {
         strcat(stat, StringTable->get((int)PlansFullName[3])); // 'Explore/Defense'
         strcat(stat, ", ");
     } else if (mode < 3) { // Projectile, energy, missile
-        strcat(stat, (plan != PLAN_DEFENSIVE || (off_rating >= 0 && off_rating <= def_rating))
-            ? StringTable->get((int)PlansShortName[plan]) : StringTable->get((int)*((LPSTR *)Labels->strings_ptr + 312))); // 'Combat'
+        strcat(stat, StringTable->get((plan != PLAN_DEFENSIVE || (off_rating >= 0 && off_rating <= def_rating))
+            ? (int)PlansShortName[plan] : (int)*((LPSTR *)Labels->strings_ptr + 312))); // 'Combat'
         strcat(stat, ", ");
     }
     if (off_rating < 0 || mode < 3) {
