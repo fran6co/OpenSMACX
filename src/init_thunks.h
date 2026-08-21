@@ -51,7 +51,7 @@ class Wave_Device;
 
 typedef void(__cdecl func_atexit_callback)();
 typedef int(__cdecl func_game_atexit)(func_atexit_callback *callback);
-extern func_game_atexit *GameAtexit;   // 0x00645398
+func_game_atexit *const GameAtexit = (func_game_atexit *)0x00645398;   // 0x00645398
 
 #include "vector_teardown.h"
 extern func_thiscall_teardown BufferElementCtor;
@@ -126,21 +126,25 @@ extern func_thiscall_teardown FontQueueCtorTarget;   // 0x00559290
 extern func_thiscall_teardown MultiDebugCtorTarget;   // 0x005C97F0
 extern func_thiscall_teardown PaletteCtorTarget;   // 0x005FE2A0
 
-extern Sprite *g_NEWTECHWIN_SPRITES;
-extern Caviar *g_VEHDRAW_CAVIAR;
-extern Wave_Device *g_WAVE_DEVICE;
-extern Time *g_CONSOLE_TIMER;
-extern Sprite *g_BUFFER_SPRITE;
-extern Buffer *g_WIN_BUFFER;
-extern Sprite *g_RADIOBUTTON_SPRITE_1;
-extern Sprite *g_RADIOBUTTON_SPRITE_2;
-extern Sprite *g_CHECKBOX_SPRITE_1;
-extern Sprite *g_CHECKBOX_SPRITE_2;
-extern Sprite *g_FILEWIN_SPRITE_1;
-extern Sprite *g_FILEWIN_SPRITE_2;
-extern Sprite *g_FILEWIN_SPRITE_3;
-extern Buffer *g_CAVIAR_BUFFER_1;
-extern Buffer *g_CAVIAR_BUFFER_2;
+Sprite *const g_NEWTECHWIN_SPRITES = (Sprite *)0x00822610;
+Caviar *const g_VEHDRAW_CAVIAR = (Caviar *)0x008CC828;
+Wave_Device *const g_WAVE_DEVICE = (Wave_Device *)0x0090D978;
+Time *const g_CONSOLE_TIMER = (Time *)0x00939E88;
+Sprite *const g_BUFFER_SPRITE = (Sprite *)0x009B3A50;
+Buffer *const g_WIN_BUFFER = (Buffer *)0x009B6F08;
+Sprite *const g_RADIOBUTTON_SPRITE_1 = (Sprite *)0x009B8EF8;
+Sprite *const g_RADIOBUTTON_SPRITE_2 = (Sprite *)0x009B8F28;
+// DEFINED HERE, not declared. A namespace-scope `const` pointer has internal
+// linkage, so every translation unit folds it to the immediate the image uses
+// - `mov ecx, 0x9b8f60` - where an `extern` variable costs a load from a slot
+// the image never reads.
+Sprite *const g_CHECKBOX_SPRITE_1 = (Sprite *)0x009B8F60;
+Sprite *const g_CHECKBOX_SPRITE_2 = (Sprite *)0x009B8F90;
+Sprite *const g_FILEWIN_SPRITE_1 = (Sprite *)0x009B9048;
+Sprite *const g_FILEWIN_SPRITE_2 = (Sprite *)0x009B9018;
+Sprite *const g_FILEWIN_SPRITE_3 = (Sprite *)0x009B9078;
+Buffer *const g_CAVIAR_BUFFER_1 = (Buffer *)0x009B9108;
+Buffer *const g_CAVIAR_BUFFER_2 = (Buffer *)0x009B96B0;
 
 void __cdecl construct_alphamenu_wave();
 void __cdecl construct_unused_sprite_var02();

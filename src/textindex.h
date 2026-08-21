@@ -55,7 +55,7 @@ static_assert(sizeof(TextIndex) == 0x118, "TextIndex layout must match the legac
 * void __cdecl `dynamic atexit destructor for 'TxtIndex''(): 005FD510
 */
 static const int MaxTextIndexNum = 4;
-extern TextIndex *TxtIndex;
+TextIndex *const TxtIndex = (TextIndex *)0x009B7D08;
 void __cdecl text_make_index(LPCSTR source_txt);
 int __cdecl text_search_index(LPCSTR source_txt, LPCSTR section_txt);
 void __cdecl text_clear_index();

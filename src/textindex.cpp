@@ -105,7 +105,6 @@ int TextIndex::search_index(LPCSTR source_txt, LPCSTR section_txt) {
 }
 
 // global
-TextIndex *TxtIndex = (TextIndex *)0x009B7D08;
 
 // ORIGINAL: 0x005FE270 ?text_clear_index@@YAXXZ 0x005FE270-0x005FE299
 // size      41 bytes
@@ -172,7 +171,7 @@ void text_clear_index_source(TextIndex *indexes) {
     }
 }
 
-// ORIGINAL: 0x005FE1F0 ?text_make_index@@YAXPAD@Z 0x005FE1F0-0x005FE228
+// ORIGINAL: 0x005FE1F0 ?text_make_index@@YAXPAD@Z 0x005FE1F0-0x005FE228 BYTE_EXACT
 // symbol    ?text_make_index@@YAXPBD@Z
 // size      56 bytes
 // prototype 
@@ -190,7 +189,7 @@ void __cdecl text_make_index(LPCSTR source_txt) {
     }
 }
 
-// ORIGINAL: 0x005FE230 ?text_search_index@@YAHPAD0@Z 0x005FE230-0x005FE26C
+// ORIGINAL: 0x005FE230 ?text_search_index@@YAHPAD0@Z 0x005FE230-0x005FE26C BYTE_EXACT
 // symbol    ?text_search_index@@YAHPBD0@Z
 // size      60 bytes
 // prototype 

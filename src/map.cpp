@@ -48,7 +48,6 @@ uint32_t MapErosiveForces;  // 0x0094A2AC
 uint32_t MapPlanetaryOrbit;  // 0x0094A2B0
 uint32_t MapCloudCover;  // 0x0094A2B4
 uint32_t MapNativeLifeForms;  // 0x0094A2B8
-LPSTR *MapFilePath = (LPSTR *)0x0094A2BC;
 Map **MapTiles = (Map **)0x0094A30C;
 uint8_t **MapAbstract = (uint8_t **)0x0094A310;
 // EIGHT OF THEM, one per player: the two sites below clear
@@ -60,7 +59,6 @@ uint32_t BrushVal2;  // 0x009B22B8
 uint32_t WorldBuildVal1;  // 0x009B22B4
 
 Continent *Continents = (Continent *)0x009AA730; // [128]
-RulesNatural *Natural = (RulesNatural *)0x0094ADE0;
 uint32_t MapLongitude;  // 0x0068FAF0 // default set to 1
 uint32_t *AltNatural = (uint32_t *)0x0068FB4C;
 LPCSTR MapExtension = "MP";

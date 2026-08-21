@@ -41,7 +41,6 @@ uint32_t VictoryAchieveBonusPts;  // 0x0094B4CC
 uint32_t MissionYearCurrent;  // 0x009A64D8
 uint32_t StartingMissionYear;  // 0x0094B4D0
 uint32_t EndingMissionYear;  // 0x0094B4D4
-uint32_t *TectonicDetonationCount = (uint32_t *)0x00946138; // [8]; value for each faction
 int SunspotDuration;  // 0x009A6800
 uint32_t MountPlanetX;  // 0x009A6804
 uint32_t MountPlanetY;  // 0x009A6808

@@ -309,7 +309,7 @@ extern uint32_t MapErosiveForces;
 extern uint32_t MapPlanetaryOrbit; // affects temp
 extern uint32_t MapCloudCover; // affects rainfall, rivers
 extern uint32_t MapNativeLifeForms;
-extern LPSTR *MapFilePath;
+LPSTR *const MapFilePath = (LPSTR *)0x0094A2BC;
 extern Map **MapTiles;
 extern uint8_t **MapAbstract;
 extern int MapBaseSubmergedCount[8];
@@ -319,7 +319,7 @@ extern uint32_t BrushVal2; // TODO: more descriptive variable name
 extern uint32_t WorldBuildVal1; // TODO: more descriptive variable name
 
 extern Continent *Continents;
-extern RulesNatural *Natural;
+RulesNatural *const Natural = (RulesNatural *)0x0094ADE0;
 extern uint32_t MapLongitude; // halve of MapLongitudeBounds
 extern uint32_t *AltNatural; // Default: { 0, 15, 32, 45, 60,  75,  80, 100, 100, 100, 100 };
 
@@ -460,4 +460,4 @@ int __cdecl zoc_move(int x, int y, int faction_id);
 int __cdecl cursor_dist(int x_point_a, int y_point_a, int x_point_b, int y_point_b);
 int __cdecl mandate_color(int mandate);
 int __cdecl mandate_color_redirect(int mandate);
-extern uint32_t *MandateColors;
+uint32_t *const MandateColors = (uint32_t *)0x008C6DE4;

@@ -187,8 +187,8 @@ void __fastcall console_set_map_display_redirect(Console *self, void *);
 // clear_group masks a bit in each entry of a group table the game keeps at a
 // fixed address, counted by another fixed-address field; both are rebindable
 // so tests drive them against a local table.
-extern int32_t *ConsoleGroupCount;
-extern uint8_t *ConsoleGroupTable;
+int32_t *const ConsoleGroupCount = (int32_t *)0x009A64C8;
+uint8_t *const ConsoleGroupTable = (uint8_t *)0x0095282C;
 
 void __fastcall console_clear_group_redirect(Console *self, void *);
 
@@ -197,7 +197,7 @@ void __fastcall console_clear_group_redirect(Console *self, void *);
 // original calls indirectly), so it reads the live pointer at run time and
 // stays rebindable for tests.
 typedef SHORT(__stdcall func_get_key_state)(int virtual_key);
-extern func_get_key_state **ConsoleEditKeyStateSlot;
+func_get_key_state **const ConsoleEditKeyStateSlot = (func_get_key_state **)0x0066932C;
 
 int __fastcall console_edit_lock_redirect(Console *self, void *);
 void __fastcall console_set_adv_preferences_redirect(Console *self, void *);
@@ -219,9 +219,9 @@ void __fastcall console_editor_undo_redirect(Console *self, void *);
 // through the runtime slot at 0x00669328, and GraphicWin::soft_update - so it
 // is reached through a rebindable seam, exactly as ListBox reaches
 // Dialog::close.
-extern void *ConsoleInfoWin;      // 0x007AD2A0, the process-wide InfoWin
+void *const ConsoleInfoWin = (void *)0x007AD2A0;      // 0x007AD2A0, the process-wide InfoWin
 extern StatusWin *ConsoleStatusWin;    // 0x008C5568, the process-wide StatusWin
-extern void **ConsoleMapWinSlot;  // 0x007D3C3C, holds the current MapWin *
+void **const ConsoleMapWinSlot = (void **)0x007D3C3C;  // 0x007D3C3C, holds the current MapWin *
 
 void __fastcall console_update_data_redirect(Console *self, void *, int a1);
 
@@ -254,7 +254,7 @@ extern func_console_map_win_focus ConsoleOriginalMapWinFocus;       // 0x0046B31
 // error, so a fixture rebinding one would leave the other still pointing at
 // the original image - which is why tools/test_generator_support.py refuses
 // a second binding, and it caught this one.
-extern func_console_flush_input *ConsoleOriginalFlushInput;          // 0x005FD120
+func_console_flush_input *const ConsoleOriginalFlushInput = (func_console_flush_input *)0x005FD120;          // 0x005FD120
 extern Console *ConsoleGlobal;  // 0x009156B0, the process-wide Console
 
 // The dword at 0x0093A938 is set while a turn is played out under program
@@ -264,7 +264,7 @@ extern Console *ConsoleGlobal;  // 0x009156B0, the process-wide Console
 // 0x0052A301 and 0 at 0x0052A4ED. Over a hundred sites read it, always as a
 // plain zero/non-zero gate. focus consults it only at 0x00510910, to decide
 // whether an untagged primary window still gets the cursor path.
-extern int32_t *ConsoleControlTurnActive;  // 0x0093A938
+int32_t *const ConsoleControlTurnActive = (int32_t *)0x0093A938;  // 0x0093A938
 
 // on_sys_close raises the flag the turn loop watches. The dword at 0x009B2068
 // is the same one src/scenario.cpp binds as `ExitTurnLoopAddress`.

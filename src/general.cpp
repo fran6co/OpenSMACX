@@ -265,7 +265,7 @@ void __cdecl parse_set(int gender, BOOL plurality) {
 
 /*
 Purpose: Copies the value into a number global message buffer using id.
-// ORIGINAL: 0x00625E30 ?parse_num@@YAHHH@Z 0x00625E30-0x00625E4D
+// ORIGINAL: 0x00625E30 ?parse_num@@YAHHH@Z 0x00625E30-0x00625E4D BYTE_EXACT
 // size      29 bytes
 // prototype 
 // callers   87   call targets   0

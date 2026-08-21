@@ -29,19 +29,10 @@
 
 Player *Players = (Player *)0x00946A50;
 PlayerData *PlayersData = (PlayerData *)0x0096C9E0;
-FactionArt *FactionsArt = (FactionArt *)0x0078E978;
 RulesSocialCategory *SocialCategories = (RulesSocialCategory *)0x0094B000;
-RulesSocialEffect *SocialEffects = (RulesSocialEffect *)0x00946580;
-LPSTR *Mood = (LPSTR *)0x0094C9E4;
-LPSTR *Repute = (LPSTR *)0x00946A30;
-RulesMight *Might = (RulesMight *)0x0094C558;
-RulesBonusName *BonusName = (RulesBonusName *)0x009461A8;
-uint8_t *FactionsStatus = (uint8_t *)0x009A64E8;
 uint32_t *FactionRankings = (uint32_t *)0x009A64EC; // [8]
-uint16_t *FactionRankingHistory = (uint16_t *)0x009A68AC; // [1000][8]
 uint32_t RankingFactionIDUnk1;  // 0x009A650C
 uint32_t RankingFactionIDUnk2;  // 0x009A6510
-uint32_t *FactionRankingsUnk = (uint32_t *)0x00945DD8; // [8]
 int DiploFriction;  // 0x0093FA74 // not always bounded, should it be 0-20?
 uint32_t DiploFrictionFactionIDWith;  // 0x0093FABC
 uint32_t DiploFrictionFactionID;  // 0x0093FAC0

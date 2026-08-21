@@ -449,7 +449,7 @@ int __fastcall base_pop_exec_callback_redirect(BasePop *self, void *,
 
 // The screen width the high-resolution scaling switches on, read at a
 // fixed address. Rebindable so tests can drive both sides of the branch.
-extern int32_t *BasePopScreenWidth;
+int32_t *const BasePopScreenWidth = (int32_t *)0x009B7B1C;
 
 void __fastcall base_pop_set_width_redirect(BasePop *self, void *, int width);
 
@@ -512,7 +512,7 @@ void __fastcall base_pop_set_button_color3_redirect(
 void __cdecl base_pop_fallout_redirect();
 
 // Set when the fallout flag is raised, but only while the gate global is set.
-extern int *BasePopFalloutGate;
+int *const BasePopFalloutGate = (int *)0x009B8D00;
 extern int *BasePopFalloutFlag;
 
 // The two default button captions, heap copies the class owns. `init_class`

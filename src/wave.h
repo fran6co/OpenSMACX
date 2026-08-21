@@ -170,7 +170,7 @@ int __fastcall wave_get_ms_length_redirect(Wave *self, void *);
 // the IAT entry the original calls indirectly - so it reads the live pointer
 // at run time and stays rebindable for tests.
 typedef DWORD(__stdcall func_time_get_time)(void);
-extern func_time_get_time **WaveTimeGetTimeSlot;
+func_time_get_time **const WaveTimeGetTimeSlot = (func_time_get_time **)0x00669368;
 
 int __fastcall wave_is_playing_redirect(Wave *self, void *);
 int __fastcall wave_play_redirect(Wave *self, void *, int a1);
@@ -217,10 +217,10 @@ extern func_wave_device_pull_from_group WaveDevicePullFromGroup;
 // TYPED, not `void *`: it is the process Wave_Device at 0x0090D978 -
 // the same object init_thunks.cpp calls `g_WAVE_DEVICE` - and the call
 // sites in wave.cpp reach its methods by name.
-extern Wave_Device *WaveDeviceGlobal;
-extern func_operator_delete *WaveOperatorDelete;
-extern func_wave_device_release **WaveDeviceReleaseSlot;
-extern int *WaveDeviceReleaseGuard;
+Wave_Device *const WaveDeviceGlobal = (Wave_Device *)0x0090D978;
+func_operator_delete *const WaveOperatorDelete = (func_operator_delete *)0x0064557F;
+func_wave_device_release **const WaveDeviceReleaseSlot = (func_wave_device_release **)0x0090DB28;
+int *const WaveDeviceReleaseGuard = (int *)0x0090DB7C;
 extern Wave **WaveChainHead;
 extern Wave **WaveChainTail;
 
@@ -232,7 +232,7 @@ extern Wave **WaveChainTail;
 // is the not-yet-recovered Wave::load() that play falls back to.
 // WaveOperatorNew and its typedef now live in "vector_teardown.h" above -
 // the seam outgrew this header once GraphicWin::init needed it too.
-extern uint32_t *WaveDeviceGroupVolumes;
+uint32_t *const WaveDeviceGroupVolumes = (uint32_t *)0x0090D9A0;
 typedef int (OriginalObject::*func_wave_device_is_group_disabled)(uint32_t slot);
 typedef int (OriginalObject::*func_wave_original_load)();
 extern func_wave_device_is_group_disabled WaveDeviceIsGroupDisabled;
@@ -245,7 +245,7 @@ extern func_wave_original_load WaveOriginalLoad;
 // vtable descent walks - and it is not yet source-owned.
 typedef int(__cdecl func_wave_device_create)(void **device_slot,
                                              const char *fname, int mode);
-extern func_wave_device_create **WaveDeviceCreateSlot;
+func_wave_device_create **const WaveDeviceCreateSlot = (func_wave_device_create **)0x0090DB24;
 typedef int (OriginalObject::*func_sound_original_load)(const char *fname);
 extern func_sound_original_load SoundOriginalLoad;
 typedef void (OriginalObject::*func_sound_set_type)(uint32_t type);

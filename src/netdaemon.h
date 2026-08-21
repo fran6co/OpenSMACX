@@ -130,7 +130,7 @@ extern int NetDaemonLocalFaction;
 // discarded.
 typedef uint32_t(__cdecl func_net_message_data)(int a1, int a2, int a3, int a4,
                                                 int a5, int a6);
-extern func_net_message_data *NetDaemonMessageData;
+func_net_message_data *const NetDaemonMessageData = (func_net_message_data *)0x00592EE0;
 
 // unlock_veh is entered on an unadjusted `this` (the original does a plain
 // `mov esi, ecx`), so the adapter forwards without displacement.

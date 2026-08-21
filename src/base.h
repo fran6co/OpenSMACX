@@ -499,7 +499,7 @@ static const int SP_Unbuilt = -1;
 static const int SP_Destroyed = -2;
 
 extern RulesFacility *Facility;
-extern RulesCitizen *Citizen;
+RulesCitizen *const Citizen = (RulesCitizen *)0x00946020;
 extern Base *Bases;
 extern BaseSecretProject *SecretProject;
 extern int BaseIDCurrentSelected;
@@ -508,8 +508,8 @@ extern int BaseFindDist;
 extern Base **BaseCurrent;
 extern uint32_t ScnVictFacilityObj;
 extern uint32_t BaseUpkeepStage;
-extern uint32_t *BaseCurrentConvoyFrom; // resources convoyed from base
-extern uint32_t *BaseCurrentConvoyTo; // resources convoyed/extracted to base
+uint32_t *const BaseCurrentConvoyFrom = (uint32_t *)0x0090E904; // resources convoyed from base
+uint32_t *const BaseCurrentConvoyTo = (uint32_t *)0x0090E93C; // resources convoyed/extracted to base
 extern int BaseCurrentGrowthRate;
 extern uint32_t BaseCurrentVehPacifismCount;
 extern uint32_t BaseCurrentForcesSupported; // Forces Supported by Base

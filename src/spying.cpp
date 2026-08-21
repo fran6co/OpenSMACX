@@ -10,12 +10,9 @@
 #include "stdafx.h"
 #include "spying_recovery.h"
 
-uint32_t *SpyingStatusTable = (uint32_t *)0x0096C9F8;
 int SpyingCurrentFaction;  // 0x00939284
 int SpyingBaseIndex;  // 0x009A6524
-uint8_t *SpyingBaseFactionBytes = (uint8_t *)0x0097D044;
 int SpyingObserverFaction;  // 0x009A6614
-uint8_t *SpyingFactionFlagBytes = (uint8_t *)0x00946F58;
 
 /*
 Purpose: Determine whether the current faction has intelligence visibility of

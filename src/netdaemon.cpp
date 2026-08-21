@@ -24,8 +24,6 @@ func_net_get NetDaemonNetGet = original_method<func_net_get>(0x00630A00);
 NetDaemon *NetDaemonNet= (NetDaemon *)(0x0093CD90);
 int NetDaemonIsMultiplayerNet;  // 0x0093F660
 int NetDaemonLocalFaction;  // 0x00939284
-func_net_message_data *NetDaemonMessageData =
-    (func_net_message_data *)0x00592EE0;
 
 /*
 Purpose: Poll the network for one message; dispatch it when one arrives and

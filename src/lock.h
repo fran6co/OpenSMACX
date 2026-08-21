@@ -63,12 +63,12 @@ static_assert(sizeof(Lock) == 0xEC,
               "Lock layout must match the original executable");
 
 // The map table and its count live at fixed addresses; rebindable for tests.
-extern int32_t *LockMapCount;
-extern uint8_t *LockMapTable;
+int32_t *const LockMapCount = (int32_t *)0x00949884;
+uint8_t *const LockMapTable = (uint8_t *)0x0094A30C;
 
 // A per-slot enable mask any_locks gates its record scan on, at a fixed
 // address; rebindable for tests.
-extern uint32_t *LockEnableMask;
+uint32_t *const LockEnableMask = (uint32_t *)0x009A64E8;
 
 // SquareLock::unlock is 231 bytes of coordinate wrapping over several
 // globals and is not recovered; unlock forwards each record entry to it.
@@ -89,7 +89,7 @@ extern func_current_server *LockCurrentServer;
 // reaches it through a rebindable seam.
 typedef void (__cdecl func_message_data)(int a1, int a2, int a3, int a4,
                                          int a5, int a6);
-extern func_message_data *LockMessageData;
+func_message_data *const LockMessageData = (func_message_data *)0x00592EE0;
 
 void __fastcall lock_reset_map_redirect(Lock *self, void *);
 void __fastcall lock_clear_redirect(Lock *self, void *);

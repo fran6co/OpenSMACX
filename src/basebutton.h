@@ -96,8 +96,8 @@ static_assert(sizeof(BaseButton) == 0xAB8,
 
 extern const uint32_t BaseButtonPrimaryVtable;
 extern const uint32_t BaseButtonBufferVtable;
-extern uint32_t *BaseButtonStaticDefaults;
-extern uint32_t *BaseButtonDynamicDefaults;
+uint32_t *const BaseButtonStaticDefaults = (uint32_t *)0x0069704C;
+uint32_t *const BaseButtonDynamicDefaults = (uint32_t *)0x009B8E2C;
 
 BaseButton *__fastcall base_button_destructor_redirect(BaseButton *self, void *);
 BaseButton *__fastcall base_button_construct_redirect(BaseButton *self, void *);
@@ -120,8 +120,8 @@ int __cdecl base_button_set_def_font_redirect(
 
 // Interleaved 3x4 default colour table and the three default font slots the
 // setters publish; tests outside the hybrid process rebind them.
-extern uint32_t *BaseButtonDefaultTextColors;
-extern Font **BaseButtonDefaultFonts;
+uint32_t *const BaseButtonDefaultTextColors = (uint32_t *)0x00697060;
+Font **const BaseButtonDefaultFonts = (Font **)0x009B8E34;
 
 void __fastcall base_button_set_text_color_redirect(
     BaseButton *self, void *, int color1, int color2, int color3, int color4);
@@ -132,7 +132,7 @@ void __fastcall base_button_set_text_color3_redirect(
 
 // The palette these setters publish before recolouring. Distinct from
 // `PaletteCurrent` at 0x009B8174; tests outside the hybrid process rebind it.
-extern Palette **BaseButtonActivePalette;
+Palette **const BaseButtonActivePalette = (Palette **)0x009B8180;
 
 void __fastcall base_button_on_key_click_redirect(
     BaseButton *self, void *, int a, int b);

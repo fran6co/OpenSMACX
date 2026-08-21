@@ -29,21 +29,21 @@ typedef struct char256 { char str[256]; } char256;
 
 // built-in functions
 typedef void *func1(size_t);
-extern func1 *_malloc;
+func1 *const _malloc = (func1 *)0x006470A6;
 typedef void *func2(void *);
-extern func2 *_free;
+func2 *const _free = (func2 *)0x00644EF2;
 typedef FILE *func3(LPCSTR, LPCSTR);
-extern func3 *_fopen;
+func3 *const _fopen = (func3 *)0x00645646;
 typedef void *func4(unsigned int);
-extern func4 *_srand;
+func4 *const _srand = (func4 *)0x00646010;
 
 typedef int *func10(void *, size_t, size_t, FILE *);
-extern func10 *_fread;
+func10 *const _fread = (func10 *)0x00646178;
 extern func10 *_fwrite;
 typedef int func17(FILE *);
-extern func17 *_fgetc;
+func17 *const _fgetc = (func17 *)0x00646855;
 typedef int func18(int, FILE *);
-extern func18 *_fputc;
+func18 *const _fputc = (func18 *)0x00646886;
 //typedef void *func12(void *, size_t);
 //extern func12 *_realloc;
 //typedef int *func18(FILE *);
@@ -53,16 +53,16 @@ extern func18 *_fputc;
 
 // other
 typedef void func5(int);
-extern func5 *load_faction_art;
-extern func5 *wave_it;
+func5 *const load_faction_art = (func5 *)0x00453710;
+func5 *const wave_it = (func5 *)0x004455F0;
 typedef void *func6(char const *, int(*)(void));
-extern func6 *X_pop;
+func6 *const X_pop = (func6 *)0x005BF310;
 typedef int func7(LPCSTR, LPCSTR, int, LPCSTR, int(__cdecl *)());
-extern func7 *popp;
+func7 *const popp = (func7 *)0x0048C0A0;
 typedef void *func9(void);
-extern func9 *fixup_landmarks;
-extern func9 *mapwin_terrain_fixup;
-extern func9 *world_rainfall;
+func9 *const fixup_landmarks = (func9 *)0x00592940;
+func9 *const mapwin_terrain_fixup = (func9 *)0x00471240;
+func9 *const world_rainfall = (func9 *)0x005C4470;
 // A POINTER BINDING COSTS ITS CALLERS THE RATCHET. It compiles
 // `call dword ptr [name]` where the image has `call rel32`, so every caller
 // reads as a mismatch however right its body is - which is what held both of
@@ -72,37 +72,37 @@ extern func9 *world_rainfall;
 // the `E8`. Prefer a forwarder to a pointer for anything a recovered body
 // calls BY NAME; a pointer is only right for a genuine indirection.
 typedef BOOL func11(int, int, int);
-extern func11 *wants_to_attack_;
+func11 *const wants_to_attack_ = (func11 *)0x0055BC80;
 typedef uint32_t func15(LPCSTR);
-extern func15 *save_daemon;
+func15 *const save_daemon = (func15 *)0x005A94F0;
 typedef uint32_t func16(LPCSTR, BOOL);
-extern func16 *load_daemon;
+func16 *const load_daemon = (func16 *)0x005A9760;
 typedef void func19(uint32_t);
-extern func19 *social_set;
-extern func19 *consider_designs;
+func19 *const social_set = (func19 *)0x005B4600;
+func19 *const consider_designs = (func19 *)0x00581260;
 typedef int func20(LPCSTR, int, int, LPCSTR, Sprite *);
-extern func20 *popb;
+func20 *const popb = (func20 *)0x0048C650;
 typedef void func21(int, int, int, int);
-extern func21 *draw_radius;
+func21 *const draw_radius = (func21 *)0x0046AEF0;
 typedef void func22(int, int, uint32_t);
-extern func22 *alt_set;
+func22 *const alt_set = (func22 *)0x00591290;
 
 // Time
 typedef void func30(int);
-extern func30 *blink_timer;
-extern func30 *blink2_timer;
-extern func30 *line_timer;
-extern func30 *turn_timer;
+func30 *const blink_timer = (func30 *)0x0050EA40;
+func30 *const blink2_timer = (func30 *)0x0050EE30;
+func30 *const line_timer = (func30 *)0x0050EE80;
+func30 *const turn_timer = (func30 *)0x0050EF10;
 
 // testing
 typedef int *func8(LPSTR, LPSTR);
-extern func8 *parse_string_OG;
-extern char256 *ParseStrBuffer;
+func8 *const parse_string_OG = (func8 *)0x00625880;
+char256 *const ParseStrBuffer = (char256 *)0x009BB5E8;
 
 extern int BufferStrHeight;
-extern int *ParseNumTable;
-extern int *ParseStrPlurality;
-extern int *ParseStrGender;
+int *const ParseNumTable = (int *)0x009BB598;
+int *const ParseStrPlurality = (int *)0x009BB570;
+int *const ParseStrGender = (int *)0x009BB5C0;
 // The main window. AN OBJECT, for the reason in game.h on
 // ExpansionEnabled: 0x009B7B28 is zero-fill, so the pointer form carried
 // no information and cost a load at every use.
@@ -119,21 +119,21 @@ extern uint32_t UnkBitfield1;
  * path this tree read through it was a wild pointer.
  */
 extern Filefind FilefindPath;
-extern MainInterface *MainInterfaceVar;
+MainInterface *const MainInterfaceVar = (MainInterface *)0x007AE820;
 
 int __cdecl tester();
 
 // tech_val output
 typedef int func13(int, int, BOOL);
-extern func13 *tech_val_OG;
+func13 *const tech_val_OG = (func13 *)0x005BCBE0;
 void __cdecl tech_calc_output();
 
 // message handling testing
 typedef void *func_msg(void);
-extern func_msg *do_video;
-extern func_msg *check_net;
-extern func_msg *do_net;
-extern func_msg *do_non_input_;
+func_msg *const do_video = (func_msg *)0x00636300;
+func_msg *const check_net = (func_msg *)0x0062D5D0;
+func_msg *const do_net = (func_msg *)0x0062D5B0;
+func_msg *const do_non_input_ = (func_msg *)0x005FCA30;
 
 /*
  * AN OBJECT, NOT A `uint32_t *` TO A FIXED ADDRESS. The pointer form costs a

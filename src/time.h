@@ -140,12 +140,12 @@ static_assert(sizeof(Time) == 0x28, "Time layout must match the legacy ABI");
 #endif
 
 // global
-extern Time *TurnTimer;
-extern Time *LineTimer;
-extern Time *BlinkTimer;
-extern Time *Blink2Timer;
-extern Time *GoTimer;
-extern Time *ConsoleTimer;
+Time *const TurnTimer = (Time *)0x00915628;
+Time *const LineTimer = (Time *)0x00915658;
+Time *const BlinkTimer = (Time *)0x00915688;
+Time *const Blink2Timer = (Time *)0x00939EB0;
+Time *const GoTimer = (Time *)0x00939E60;
+Time *const ConsoleTimer = (Time *)0x00939E88;
 
 void __cdecl start_timers();
 void __cdecl stop_timers();

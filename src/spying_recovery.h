@@ -2,12 +2,12 @@
 #include "stdafx.h"
 
 // Globals the spying check reads, all owned by the original image.
-extern uint32_t *SpyingStatusTable;      // [faction * 2099 + subject]
+uint32_t *const SpyingStatusTable = (uint32_t *)0x0096C9F8;      // [faction * 2099 + subject]
 extern int SpyingCurrentFaction;
 extern int SpyingBaseIndex;
-extern uint8_t *SpyingBaseFactionBytes;  // Bases[index] + 4
+uint8_t *const SpyingBaseFactionBytes = (uint8_t *)0x0097D044;  // Bases[index] + 4
 extern int SpyingObserverFaction;
-extern uint8_t *SpyingFactionFlagBytes;  // Factions[index] + 0
+uint8_t *const SpyingFactionFlagBytes = (uint8_t *)0x00946F58;  // Factions[index] + 0
 
 static const size_t SpyingStatusStride = 2099;
 static const size_t SpyingBaseStride = 0x134;

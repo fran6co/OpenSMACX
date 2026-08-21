@@ -942,7 +942,6 @@ int __fastcall scroll_on_left_click_redirect(Scroll *self, void *, int a1, int a
 
 const uint32_t ScrollPrimaryVtable = 0x00669D58;
 const uint32_t ScrollBufferVtable = 0x00669D50;
-func_operator_delete *ScrollOperatorDelete = (func_operator_delete *)0x0064557F;
 
 /*
 Purpose: Destroy a Scroll: stage its two virtual tables, run close, destroy

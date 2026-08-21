@@ -21,7 +21,6 @@
 // Four mandate colours, one dword every eight bytes; index 3 is the default.
 // Isolated from map.cpp so the leaf-test target can compile it without map's
 // whole gameplay closure, mirroring src/basepop_font.cpp.
-uint32_t *MandateColors = reinterpret_cast<uint32_t *>(0x008C6DE4);
 
 /*
 Purpose: Return the display colour for a mandate selector. Selectors 0, 1, and 2

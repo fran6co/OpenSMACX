@@ -19,8 +19,6 @@
 #include "autosound.h"
 
 const uint32_t AutoSoundVtable = 0x0066FF34;
-uint32_t *AutoSoundDefaults = reinterpret_cast<uint32_t *>(0x009BC080);
-func_auto_sound_delete *AutoSoundOperatorDelete = (func_auto_sound_delete *)0x0064557F;
 
 /*
 Purpose: Construct an AutoSound by installing its virtual table and copying

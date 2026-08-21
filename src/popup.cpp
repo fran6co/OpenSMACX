@@ -624,17 +624,10 @@ int __cdecl pops_no_flags(char *caption, char *label, int value, char *text,
                             callback);
 }
 
-uint32_t *PopupWaveFlags = reinterpret_cast<uint32_t *>(0x009A6490);
-void **PopupWaveContext = reinterpret_cast<void **>(0x0090EA30);
-Wave *PopupWaveVoice = reinterpret_cast<Wave *>(0x00945ED0);
-Wave *PopupWaveBank = reinterpret_cast<Wave *>(0x0074C5F0);
 int32_t *PopupWaveLastIndex = reinterpret_cast<int32_t *>(0x0074DAA4);
-void **PopupWaveOwnerSlot = reinterpret_cast<void **>(0x0074DAA0);
-FX *PopupWaveFx = reinterpret_cast<FX *>(0x00749CF8);
 func_popup_wave_query PopupWaveIsPlaying = original_method<func_popup_wave_query>(0x004C6B10);
 func_popup_wave_query PopupWaveLoad = original_method<func_popup_wave_query>(0x004C6CE0);
 func_popup_wave_query PopupWavePlay = original_method<func_popup_wave_query>(0x004C6920);
-func_popup_time_source **PopupWaveTimeSlot = (func_popup_time_source **)0x00669368;
 
 /*
 Purpose: Sound a popup's wave. Nothing sounds unless bit 0x400 of the flag

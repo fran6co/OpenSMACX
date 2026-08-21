@@ -138,8 +138,8 @@ extern func_wave_group_insert WaveDeviceGroupInsert;
 typedef int(__cdecl func_wave_device_factory)(void **device_slot,
                                               unsigned long kind);
 typedef void(__cdecl func_wave_device_destroy)(void);
-extern func_wave_device_factory **WaveDeviceFactorySlot;
-extern func_wave_device_destroy **WaveDeviceDestroySlot;
+func_wave_device_factory **const WaveDeviceFactorySlot = (func_wave_device_factory **)0x0090DB34;
+func_wave_device_destroy **const WaveDeviceDestroySlot = (func_wave_device_destroy **)0x0090DB38;
 
 // The per-group construct/teardown pair the device's own lifetime hands to
 // the CRT vector iterators; both stay rebindable while they double as the

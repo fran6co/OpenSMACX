@@ -549,7 +549,6 @@ BOOL Path::sensors(int faction_id, int *x_sensor, int *y_sensor) {
 }
 
 // global
-Path *Paths = (Path *)0x00945B00;
 
 
 // ---------------------------------------------------------------------------

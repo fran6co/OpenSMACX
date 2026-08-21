@@ -35,14 +35,6 @@
  * fault the moment a leaf test called it.
  */
 
-int32_t *GlobalSlot00686B6C = reinterpret_cast<int32_t *>(0x00686B6C);
-int32_t *GlobalSlot00686B70 = reinterpret_cast<int32_t *>(0x00686B70);
-int32_t *GlobalSlot00686B74 = reinterpret_cast<int32_t *>(0x00686B74);
-int32_t *GlobalSlot00686B78 = reinterpret_cast<int32_t *>(0x00686B78);
-int32_t *GlobalSlot00686B7C = reinterpret_cast<int32_t *>(0x00686B7C);
-int32_t *GlobalSlot00686B80 = reinterpret_cast<int32_t *>(0x00686B80);
-int32_t *GlobalSlot00686B84 = reinterpret_cast<int32_t *>(0x00686B84);
-int32_t *GlobalSlot00686B8C = reinterpret_cast<int32_t *>(0x00686B8C);
 int32_t *GlobalSlot007591C4 = reinterpret_cast<int32_t *>(0x007591C4);
 int32_t *GlobalSlot008577D8 = reinterpret_cast<int32_t *>(0x008577D8);
 int32_t *GlobalSlot008577DC = reinterpret_cast<int32_t *>(0x008577DC);
@@ -59,7 +51,6 @@ int32_t *GlobalSlot00857898 = reinterpret_cast<int32_t *>(0x00857898);
 int32_t *GlobalSlot0085789C = reinterpret_cast<int32_t *>(0x0085789C);
 int32_t *GlobalSlot008578A0 = reinterpret_cast<int32_t *>(0x008578A0);
 int32_t *GlobalSlot008578A4 = reinterpret_cast<int32_t *>(0x008578A4);
-int32_t *GlobalSlot008578A8 = reinterpret_cast<int32_t *>(0x008578A8);
 int32_t *GlobalSlot008578AC = reinterpret_cast<int32_t *>(0x008578AC);
 int32_t *GlobalSlot008578B0 = reinterpret_cast<int32_t *>(0x008578B0);
 int32_t *GlobalSlot008578B4 = reinterpret_cast<int32_t *>(0x008578B4);

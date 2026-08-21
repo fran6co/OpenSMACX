@@ -34,27 +34,15 @@ Veh *Vehs = (Veh *)0x00952828; // [2049]
 RulesChassis *Chassis = (RulesChassis *)0x0094A330; // [9]
 RulesWeapon *Weapon = (RulesWeapon *)0x0094AE60; // [26]
 RulesArmor *Armor = (RulesArmor *)0x0094F278; // [14]
-RulesReactor *Reactor = (RulesReactor *)0x009527F8; // [4]
-RulesAbility *Ability = (RulesAbility *)0x009AB538; // [29]
-RulesMorale *Morale = (RulesMorale *)0x00952328; // [7]
-RulesCombatMode *DefenseModes = (RulesCombatMode *)0x00946A00; // [3]
-RulesCombatMode *OffenseModes = (RulesCombatMode *)0x00946178; // [3]
 RulesOrder *Order = (RulesOrder *)0x0096C878; // [9]
-LPSTR *PlansShortName = (LPSTR *)0x00945FE0; // [15]
-LPSTR *PlansFullName = (LPSTR *)0x00952360; // [15]
-LPSTR *Triad = (LPSTR *)0x0094F1A8; // [3]
 
 int VehCurrentCount;  // 0x009A64C8
 int VehDropLiftVehID;  // 0x009B2280
 int VehLiftX;  // 0x009B2278
 int VehLiftY;  // 0x009B2284
 BOOL VehBitError;  // 0x009B228C
-uint32_t *VehBasicBattleMorale = (uint32_t *)0x00912420; // [2] ; [0] offense, [1] defense?
 int VehMoraleModifierCount; // only used by say_morale(), optimize to local var?
 // Battle related globals
-uint32_t *VehBattleModCount = (uint32_t *)0x00915614; // [2]
-BOOL *VehBattleUnkTgl = (BOOL *)0x0091561C; // [2] ; planet_busting() + boom() + timers
-int *VehBattleModifier = (int *)0x009155F0; // [2][4]
 LPSTR *VehBattleDisplay = (LPSTR *)0x0090F554; // [2][4][80]
 LPSTR VehBattleDisplayTerrain;
 
@@ -633,7 +621,7 @@ int __cdecl get_basic_defense(int veh_id_def, int veh_id_atk, int psi_combat_typ
 
 /*
 Purpose: Initialize or reset the battle related global variables.
-// ORIGINAL: 0x00501D30 ?battle_init@@YAXXZ 0x00501D30-0x00501D47
+// ORIGINAL: 0x00501D30 ?battle_init@@YAXXZ 0x00501D30-0x00501D47 BYTE_EXACT
 // size      23 bytes
 // prototype 
 // callers   0   call targets   0
@@ -1895,7 +1883,7 @@ void __cdecl say_stats(LPSTR stat, int proto_id, LPSTR custom_spacer) {
 
 /*
 Purpose: Check against faction's available tech for best available reactor.
-// ORIGINAL: 0x0057EFA0 ?best_reactor@@YAHH@Z 0x0057EFA0-0x0057EFE2
+// ORIGINAL: 0x0057EFA0 ?best_reactor@@YAHH@Z 0x0057EFA0-0x0057EFE2 BYTE_EXACT
 // symbol    ?best_reactor@@YAIH@Z
 // size      66 bytes
 // prototype int (__cdecl ?best_reactor@@YAHH@Z)(int factionID)

@@ -348,12 +348,6 @@ void Time::MultimediaProc(uint32_t UNUSED(timer_id), uint32_t UNUSED(msg), DWORD
 }
 
 // global
-Time *TurnTimer = (Time *)0x00915628;
-Time *LineTimer = (Time *)0x00915658;
-Time *BlinkTimer = (Time *)0x00915688;
-Time *Blink2Timer = (Time *)0x00939EB0;
-Time *GoTimer = (Time *)0x00939E60;
-Time *ConsoleTimer = (Time *)0x00939E88;
 
 /*
 Purpose: Start global timers.
@@ -376,7 +370,7 @@ void __cdecl start_timers() {
 
 /*
 Purpose: Stop global timers.
-// ORIGINAL: 0x0050F440 ?stop_timers@@YAXXZ 0x0050F440-0x0050F45E
+// ORIGINAL: 0x0050F440 ?stop_timers@@YAXXZ 0x0050F440-0x0050F45E BYTE_EXACT
 // size      30 bytes
 // prototype 
 // callers   6   call targets   1

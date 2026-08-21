@@ -89,7 +89,6 @@ void __fastcall tut_win_unk3_redirect(TutWin *self, void *, int a1) {
  * bit carried back over the shift.
  */
 
-Win *TutWinIfaceWindow = reinterpret_cast<Win *>(0x007AE820);
 
 /*
 Purpose: Centre the rectangle on both axes and convert the result to screen
@@ -127,7 +126,6 @@ void __fastcall tut_win_iface_rect_redirect(
     self->iface_rect(rect, x, y);
 }
 
-Win *TutWinBaseWindow = reinterpret_cast<Win *>(0x006A7628);
 
 /*
 Purpose: Centre the rectangle on both axes and convert the result to screen
@@ -165,7 +163,6 @@ void __fastcall tut_win_base_rect_redirect(
     self->base_rect(rect, x, y);
 }
 
-Win *TutWinSocWindow = reinterpret_cast<Win *>(0x008A6270);
 
 /*
 Purpose: Centre the rectangle on both axes and convert the result to screen
@@ -203,7 +200,6 @@ void __fastcall tut_win_soc_rect_redirect(
     self->soc_rect(rect, x, y);
 }
 
-Win *TutWinDesWindow = reinterpret_cast<Win *>(0x0071F2B0);
 
 /*
 Purpose: Centre the rectangle on both axes and convert the result to screen

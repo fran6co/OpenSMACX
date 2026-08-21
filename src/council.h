@@ -41,7 +41,7 @@ struct RulesProposal {
 
 static const int MaxProposalNum = 11;
 
-extern RulesProposal *Proposal;
+RulesProposal *const Proposal = (RulesProposal *)0x009A6828;
 
 int __cdecl council_votes(int faction_id);
 BOOL __cdecl eligible(int faction_id);

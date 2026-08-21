@@ -114,7 +114,6 @@ int __fastcall menu_unk4_redirect(
     return self->UNK4(a, b, c);
 }
 
-Font **MenuFont = reinterpret_cast<Font **>(0x009B7B94);
 
 /*
 Purpose: Report the height a menu requests, two lines of its font.

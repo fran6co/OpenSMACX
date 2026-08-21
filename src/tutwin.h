@@ -110,13 +110,13 @@ void __fastcall tut_win_unk1_redirect(TutWin *self, void *);
 void __fastcall tut_win_unk3_redirect(TutWin *self, void *, int a1);
 
 // The fixed window iface_rect centres onto, at 0x007AE820.
-extern Win *TutWinIfaceWindow;
+Win *const TutWinIfaceWindow = (Win *)0x007AE820;
 // The fixed window base_rect centres onto, at 0x006A7628.
-extern Win *TutWinBaseWindow;
+Win *const TutWinBaseWindow = (Win *)0x006A7628;
 // The fixed window soc_rect centres onto, at 0x008A6270.
-extern Win *TutWinSocWindow;
+Win *const TutWinSocWindow = (Win *)0x008A6270;
 // The fixed window des_rect centres onto, at 0x0071F2B0.
-extern Win *TutWinDesWindow;
+Win *const TutWinDesWindow = (Win *)0x0071F2B0;
 
 void __fastcall tut_win_iface_rect_redirect(
     TutWin *self, void *, RECT *rect, int *x, int *y);

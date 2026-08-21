@@ -22,7 +22,6 @@
 #include "win.h"
 #include "spritebox.h"
 
-ListBox *ReportIfEnergyListBox = reinterpret_cast<ListBox *>(0x0087BE84);
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
@@ -266,7 +265,7 @@ Purpose: Close the energy report's three list boxes.
          needs no row in recovery-binding-classifications.csv: that file
          classifies original FUNCTION bindings, and ConsoleGlobal - the same
          shape, a named pointer to a process object - carries none either.
-// ORIGINAL: 0x004A9020 ?close_energy@ReportIf@@QAEXXZ 0x004A9020-0x004A9045
+// ORIGINAL: 0x004A9020 ?close_energy@ReportIf@@QAEXXZ 0x004A9020-0x004A9045 BYTE_EXACT
 // size      37 bytes
 // prototype void (__thiscall ?close_energy@ReportIf@@QAEXXZ)(ReportIf* this)
 // callers   0   call targets   1
