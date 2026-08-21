@@ -193,8 +193,19 @@ def stubbed(records) -> list:
         if not name:
             continue
         # An empty body: `Name() { ; }` or `Name() {}`, with anything for args.
+        #
+        # The `~` is load-bearing IN BOTH DIRECTIONS. `\bScroll` matches inside
+        # `~Scroll`, because there is a word boundary between the tilde and the
+        # S - so without the lookbehind a class with a correctly declared
+        # constructor and a stubbed DESTRUCTOR reads as a stubbed constructor.
+        # `Scroll` was exactly that: `Scroll();` on one line and
+        # `~Scroll() { ; }` on the next.
+        if name.startswith("~"):
+            head = r"~\s*" + re.escape(name[1:])
+        else:
+            head = r"(?<![~\w])" + re.escape(name)
         empty = re.compile(
-            rf"\b{re.escape(name)}\s*\([^;{{}}]*\)\s*(?:const\s*)?\{{\s*;?\s*\}}")
+            rf"{head}\s*\([^;{{}}]*\)\s*(?:const\s*)?\{{\s*;?\s*\}}")
         for header, text in headers.items():
             if empty.search(text):
                 rows.append((whole, record, header))
