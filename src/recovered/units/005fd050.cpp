@@ -1,4 +1,5 @@
 // ORIGINAL: 0x005FD050 ?do_mouse@@YAXXZ 0x005FD050-0x005FD09D FILE BYTE_EXACT
+// symbol    ?do_mouse@@YAHXZ
 // size      77 bytes
 // prototype 
 // callers   0   call targets   2

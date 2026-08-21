@@ -1,4 +1,5 @@
 // ORIGINAL: 0x006019F0 ?button@BasePop@@QAEHPAD@Z 0x006019F0-0x00601A3B FILE BYTE_EXACT
+// symbol    ?button@BasePop@@QAEHPAUint8@@@Z
 // size      75 bytes
 // prototype int (__thiscall ?button@BasePop@@QAEHPAD@Z)(BasePop* this, int8*)
 // callers   4   call targets   1

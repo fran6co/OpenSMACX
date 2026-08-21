@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00630A00 ?get@Net@@QAEHPAKPAK@Z 0x00630A00-0x00630A3A FILE BYTE_EXACT
+// symbol    ?get@Net@@QAEHPAI0@Z
 // size      58 bytes
 // prototype int (__thiscall ?get@Net@@QAEHPAKPAK@Z)(Net* this, unsigned int*, unsigned int*)
 // callers   18   call targets   1

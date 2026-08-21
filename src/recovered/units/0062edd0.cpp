@@ -1,4 +1,5 @@
 // ORIGINAL: 0x0062EDD0 ?add_to_group@Net@@QAEHJK@Z 0x0062EDD0-0x0062EDFA FILE BYTE_EXACT
+// symbol    ?add_to_group@Net@@QAEHHI@Z
 // size      42 bytes
 // prototype int (__thiscall ?add_to_group@Net@@QAEHJK@Z)(Net* this, int, unsigned int)
 // callers   1   call targets   0

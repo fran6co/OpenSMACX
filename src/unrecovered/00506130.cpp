@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00506130 ?battle_kill_stack@@YAXHPAHPAHPAHHH@Z 0x00506130-0x005061AE FILE BYTE_EXACT
+// symbol    ?battle_kill_stack@@YAXHPAH00HH@Z
 // working copy - scaffold materialised by --work
 // size      126 bytes
 // prototype void (__cdecl ?battle_kill_stack@@YAXHPAHPAHPAHHH@Z)(int vehID1, int*, int*, int*, int vehID2, int)

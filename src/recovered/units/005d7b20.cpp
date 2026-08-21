@@ -1,4 +1,5 @@
 // ORIGINAL: 0x005D7B20 ?load_tga@Buffer@@QAGHPBD@Z 0x005D7B20-0x005D7B36 FILE BYTE_EXACT
+// symbol    ?load_tga@Buffer@@QAEHPBD@Z
 // size      22 bytes
 // prototype int (__stdcall ?load_tga@Buffer@@QAGHPBD@Z)(Buffer* this, int8*)
 // callers   0   call targets   1

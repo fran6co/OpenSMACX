@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00618520 ?UNK13@Caviar@@QAEXXZ 0x00618520-0x00618556 FILE BYTE_EXACT
+// symbol    ?UNK13@Caviar@@QAEPAXXZ
 // size      54 bytes
 // prototype void (__thiscall ?UNK13@Caviar@@QAEXXZ)(Caviar* this)
 // callers   0   call targets   0

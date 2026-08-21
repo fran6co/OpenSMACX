@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00403620 ?on_adjust_pulldown_pos@AlphaMenu@@QAEXPAHPAH@Z 0x00403620-0x00403677 FILE BYTE_EXACT
+// symbol    ?on_adjust_pulldown_pos@AlphaMenu@@QAEXPAH0@Z
 // size      87 bytes
 // prototype void (__thiscall ?on_adjust_pulldown_pos@AlphaMenu@@QAEXPAHPAH@Z)(AlphaMenu* this, int*, int*)
 // callers   0   call targets   0

@@ -1,4 +1,5 @@
 // ORIGINAL: 0x006136B0 ?init@Dialogs@@QAEHPAUHeap@@@Z 0x006136B0-0x00613734 FILE BYTE_EXACT
+// symbol    ?init@Dialogs@@QAEHPAVHeap@@@Z
 // working copy - scaffold materialised by --work
 // size      132 bytes
 // prototype int (__thiscall ?init@Dialogs@@QAEHPAUHeap@@@Z)(Dialogs* this, Heap*)

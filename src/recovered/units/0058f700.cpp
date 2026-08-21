@@ -1,4 +1,5 @@
 // ORIGINAL: 0x0058F700 ?say_fac_special@@YAXPADPADH@Z 0x0058F700-0x0058F80A FILE BYTE_EXACT
+// symbol    ?say_fac_special@@YAXPAD0H@Z
 // size      266 bytes
 // prototype 
 // callers   1   call targets   2

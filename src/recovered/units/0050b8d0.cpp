@@ -1,4 +1,5 @@
 // ORIGINAL: 0x0050B8D0 ?POP3@@YAXPBDHHH@Z 0x0050B8D0-0x0050B8EF FILE BYTE_EXACT
+// symbol    ?POP3@@YAXPAUint8@@HHH@Z
 // size      31 bytes
 // prototype 
 // callers   1   call targets   1

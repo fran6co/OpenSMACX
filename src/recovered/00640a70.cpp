@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00640A70 sub_640a70 0x00640A70-0x00640A7C BYTE_EXACT
+// symbol    ?sub_640a70@@YAXHPAX@Z
 // size      12 bytes
 // prototype 
 // callers   0   call targets   1

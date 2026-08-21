@@ -1,4 +1,5 @@
 // ORIGINAL: 0x0042A0B0 ?UNK2@Datalink@@QAEXPADPAHPAH@Z 0x0042A0B0-0x0042A0F1 FILE BYTE_EXACT
+// symbol    ?UNK2@Datalink@@QAEXPADPAH1@Z
 // size      65 bytes
 // prototype void (__thiscall ?UNK2@Datalink@@QAEXPADPAHPAH@Z)(Datalink* this, int8*, int*, int*)
 // callers   0   call targets   1

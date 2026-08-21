@@ -1,4 +1,5 @@
 // ORIGINAL: 0x0064D725 sub_64d725 0x0064D725-0x0064D73B BYTE_EXACT
+// symbol    ?sub_64d725@@YAHHH@Z
 // size      22 bytes
 // prototype 
 // callers   1   call targets   1

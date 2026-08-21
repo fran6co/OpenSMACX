@@ -1,4 +1,5 @@
 // ORIGINAL: 0x005D56B0 ?update@GraphicWin@@QAEXPAUGraphicWin@@@Z 0x005D56B0-0x005D571D FILE BYTE_EXACT
+// symbol    ?update@GraphicWin@@QAEXPAV1@@Z
 // size      109 bytes
 // prototype void (__thiscall ?update@GraphicWin@@QAEXPAUGraphicWin@@@Z)(GraphicWin* this, GraphicWin*)
 // callers   8   call targets   4

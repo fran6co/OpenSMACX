@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00610510 ?init@SpriteBox@@QAEHPAUHeap@@PAUHeap@@@Z 0x00610510-0x00610532 FILE BYTE_EXACT
+// symbol    ?init@SpriteBox@@QAEHPAURECT@@PAUHeap@@@Z
 // size      34 bytes
 // prototype int (__thiscall ?init@SpriteBox@@QAEHPAUHeap@@PAUHeap@@@Z)(SpriteBox* this, RECT*, Heap*)
 // callers   1   call targets   2

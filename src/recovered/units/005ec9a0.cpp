@@ -1,4 +1,5 @@
 // ORIGINAL: 0x005EC9A0 ?set_parent_dialog@Win@@QAEXPAVWin@@@Z 0x005EC9A0-0x005ECB58 FILE BYTE_EXACT
+// symbol    ?set_parent_dialog@Win@@QAEXPAV1@@Z
 // size      440 bytes
 // prototype void (__thiscall ?set_parent_dialog@Win@@QAEXPAVWin@@@Z)(Win* this, Win*)
 // callers   0   call targets   2

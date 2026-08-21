@@ -1006,6 +1006,7 @@ void __cdecl my_srand(int reseed) {
 Purpose: Swap the values of two 32-bit variables. Added an additional check when swapping the same
          memory location.
 // ORIGINAL: 0x00628A50 ?swap@@YAXPAHPAH@Z 0x00628A50-0x00628A73 BYTE_EXACT
+// symbol    ?swap@@YAXPAH0@Z
 // size      35 bytes
 // prototype 
 // callers   14   call targets   0
@@ -1025,6 +1026,7 @@ void __cdecl swap(int *var1, int *var2) {
 Purpose: Swap the values of two 8-bit variables. Added an additional check when swapping the same
          memory location.
 // ORIGINAL: 0x00628A80 ?swap@@YAXPAEPAE@Z 0x00628A80-0x00628AA3 BYTE_EXACT
+// symbol    ?swap@@YAXPAE0@Z
 // size      35 bytes
 // prototype 
 // callers   0   call targets   0

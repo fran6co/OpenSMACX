@@ -1,4 +1,5 @@
 // ORIGINAL: 0x0048A840 ?on_dialog_item_back_draw@PickWin@@QAEHPAUGraphicWin@@HHPAURECT@@@Z 0x0048A840-0x0048A8D3 FILE BYTE_EXACT
+// symbol    ?on_dialog_item_back_draw@PickWin@@QAEHPAVGraphicWin@@HHPAURECT@@@Z
 // working copy - scaffold materialised by --work
 // size      147 bytes
 // prototype int (__thiscall ?on_dialog_item_back_draw@PickWin@@QAEHPAUGraphicWin@@HHPAURECT@@@Z)(PickWin* this, GraphicWin*, int, int, RECT*)

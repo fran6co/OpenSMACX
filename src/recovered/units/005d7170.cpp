@@ -1,4 +1,5 @@
 // ORIGINAL: 0x005D7170 sub_5d7170 0x005D7170-0x005D7194 FILE BYTE_EXACT
+// symbol    ?sub_5d7170@@YAXXZ
 // size      36 bytes
 // prototype 
 // callers   0   call targets   2

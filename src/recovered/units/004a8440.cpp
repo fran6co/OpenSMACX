@@ -1,4 +1,5 @@
 // ORIGINAL: 0x004A8440 ?labs_write@@YAXPAUGraphicWin@@HHPAURECT@@PAD@Z 0x004A8440-0x004A846E FILE BYTE_EXACT
+// symbol    ?labs_write@@YAHPAUGraphicWin@@HHPAURECT@@PAD@Z
 // size      46 bytes
 // prototype 
 // callers   0   call targets   3

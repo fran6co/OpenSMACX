@@ -1,4 +1,5 @@
 // ORIGINAL: 0x005ED9C0 ?on_redraw@Win@@QAEHXZ 0x005ED9C0-0x005ED9C5 FILE BYTE_EXACT
+// symbol    ?on_redraw@Win@@QAEHHH@Z
 // size      5 bytes
 // prototype int (__thiscall ?on_redraw@Win@@QAEHXZ)(Win* this)
 // callers   0   call targets   0

@@ -1,4 +1,5 @@
 // ORIGINAL: 0x005ED2D0 ?screen_to_client@Win@@QAEXPAHPAH@Z 0x005ED2D0-0x005ED355 FILE BYTE_EXACT
+// symbol    ?screen_to_client@Win@@QAEXPAH0@Z
 // working copy - scaffold materialised by --work
 // size      133 bytes
 // prototype void (__thiscall ?screen_to_client@Win@@QAEXPAHPAH@Z)(Win* this, int*, int*)

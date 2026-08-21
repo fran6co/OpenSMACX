@@ -1,4 +1,5 @@
 // ORIGINAL: 0x0060ECE0 ?set_state_flag@CheckBox@@QAEXJ@Z 0x0060ECE0-0x0060ED03 FILE BYTE_EXACT
+// symbol    ?set_state_flag@CheckBox@@QAEXH@Z
 // size      35 bytes
 // prototype void (__thiscall ?set_state_flag@CheckBox@@QAEXJ@Z)(CheckBox* this, int)
 // callers   1   call targets   0

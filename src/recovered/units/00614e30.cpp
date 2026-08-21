@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00614E30 ?close_class@FileWin@@QAAXXZ 0x00614E30-0x00614E4D FILE BYTE_EXACT
+// symbol    ?close_class@FileWin@@QAEXXZ
 // size      29 bytes
 // prototype 
 // callers   1   call targets   1

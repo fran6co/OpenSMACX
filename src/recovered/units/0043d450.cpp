@@ -1,4 +1,5 @@
 // ORIGINAL: 0x0043D450 ?on_iface_button_pressed@DesignWin@@QAEXH@Z 0x0043D450-0x0043D46F FILE BYTE_EXACT
+// symbol    ?on_iface_button_pressed@DesignWin@@QAEHH@Z
 // size      31 bytes
 // prototype void (__thiscall ?on_iface_button_pressed@DesignWin@@QAEXH@Z)(DesignWin* this, int)
 // callers   0   call targets   0

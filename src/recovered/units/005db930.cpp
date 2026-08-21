@@ -1,4 +1,5 @@
 // ORIGINAL: 0x005DB930 ?write_right_l@Buffer@@QAEHPAVFont@@PADPAURECT@@H@Z 0x005DB930-0x005DB984 FILE BYTE_EXACT
+// symbol    ?write_right_l@Buffer@@QAEHPAUFont@@PACPAURECT@@H@Z
 // size      84 bytes
 // prototype int (__thiscall ?write_right_l@Buffer@@QAEHPAVFont@@PADPAURECT@@H@Z)(Buffer* this, Font*, int8*, RECT*, int)
 // callers   0   call targets   1

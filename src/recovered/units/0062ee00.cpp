@@ -1,4 +1,5 @@
 // ORIGINAL: 0x0062EE00 sub_62ee00 0x0062EE00-0x0062EE1C FILE BYTE_EXACT
+// symbol    ?sub_62ee00@@YGHHH@Z
 // size      28 bytes
 // prototype 
 // callers   0   call targets   0

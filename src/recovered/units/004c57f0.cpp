@@ -1,4 +1,5 @@
 // ORIGINAL: 0x004C57F0 ?release@Midi_Device@@QAEXXZ 0x004C57F0-0x004C5823 FILE BYTE_EXACT
+// symbol    ?release@Midi_Device@@QAEHXZ
 // size      51 bytes
 // prototype void (__thiscall ?release@Midi_Device@@QAEXXZ)(Midi_Device* this)
 // callers   1   call targets   0

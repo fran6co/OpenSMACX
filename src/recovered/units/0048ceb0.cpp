@@ -1,4 +1,5 @@
 // ORIGINAL: 0x0048CEB0 ?veh_sprite_draw@@YAHPAUSprite@@PAUGraphicWin@@HHH@Z 0x0048CEB0-0x0048CEF2 FILE BYTE_EXACT
+// symbol    ?veh_sprite_draw@@YAHPAVSprite@@PAVGraphicWin@@HHH@Z
 // size      66 bytes
 // prototype int (__cdecl ?veh_sprite_draw@@YAHPAUSprite@@PAUGraphicWin@@HHH@Z)(Sprite*, GraphicWin*, int vehID, int, int)
 // callers   0   call targets   1

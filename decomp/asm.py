@@ -591,17 +591,25 @@ def compile_unit(source: Path, command: list[str], flags: str) -> bytes:
         return obj.read_bytes()
 
 
-def _coff_function_masked(obj: bytes, symbol: str, emitted: str = "",
-                          ) -> tuple[bytes, frozenset[int]]:
-    """The symbol's code out of a COFF object - the `.text` section named
-    by the symbol, from the symbol's value to the section's end, trailing
-    NOP/INT3 padding stripped. With `/Gy` each function is its own COMDAT
-    section, so the section end is the function end."""
+def text_symbols(obj: bytes) -> list[tuple[str, int, int]]:
+    """Every external `.text` symbol in a COFF object: (name, value, section).
+
+    PUBLIC BECAUSE THE LOOKUP'S FAILURE NEEDS AN ANSWER. When a record's
+    catalogued name is not among these, `_coff_function_masked` refuses and
+    says the fix is a `symbol` fact - and writing that fact means knowing
+    what the object DOES define. This is that list, and nothing here decides
+    which entry is right: guessing belongs in the migration that writes the
+    fact, never in what measures.
+    """
     machine, n_sections, _ts, sym_ptr, n_syms, _opt, _ch = \
         struct.unpack_from("<HHIIIHH", obj, 0)
     if machine != 0x14C:
         raise ValueError("not an i386 COFF object")
     str_ptr = sym_ptr + n_syms * 18
+    names = []
+    for index in range(n_sections):
+        off = 20 + index * 40
+        names.append(obj[off:off + 8].rstrip(b"\x00").decode())
 
     def sym_name(field: bytes) -> str:
         if field[:4] == b"\x00\x00\x00\x00":
@@ -610,6 +618,26 @@ def _coff_function_masked(obj: bytes, symbol: str, emitted: str = "",
             return obj[str_ptr + off:end].decode()
         return field.rstrip(b"\x00").decode()
 
+    out, i = [], 0
+    while i < n_syms:
+        off = sym_ptr + i * 18
+        name = sym_name(obj[off:off + 8])
+        value, section_no, _type, storage, n_aux = \
+            struct.unpack_from("<IhHBB", obj, off + 8)
+        if storage == 2 and 0 < section_no <= len(names) \
+                and names[section_no - 1] == ".text":
+            out.append((name, value, section_no - 1))
+        i += 1 + n_aux
+    return out
+
+
+def _coff_function_masked(obj: bytes, symbol: str, emitted: str = "",
+                          ) -> tuple[bytes, frozenset[int]]:
+    """The symbol's code out of a COFF object - the `.text` section named
+    by the symbol, from the symbol's value to the section's end, trailing
+    NOP/INT3 padding stripped. With `/Gy` each function is its own COMDAT
+    section, so the section end is the function end."""
+    _machine, n_sections = struct.unpack_from("<HH", obj, 0)
     sections = []
     for i in range(n_sections):
         off = 20 + i * 40
@@ -619,17 +647,7 @@ def _coff_function_masked(obj: bytes, symbol: str, emitted: str = "",
         n_relocs, = struct.unpack_from("<H", obj, off + 32)
         sections.append((name, raw_size, raw_ptr, reloc_ptr, n_relocs))
 
-    externals = []
-    i = 0
-    while i < n_syms:
-        off = sym_ptr + i * 18
-        name = sym_name(obj[off:off + 8])
-        value, section_no, _type, storage, n_aux = \
-            struct.unpack_from("<IhHBB", obj, off + 8)
-        if storage == 2 and 0 < section_no <= len(sections) \
-                and sections[section_no - 1][0] == ".text":
-            externals.append((name, value, section_no - 1))
-        i += 1 + n_aux
+    externals = text_symbols(obj)
 
     # ONE RULE, AND IT READS A FACT. `emitted` is what the annotation says
     # this tree's compiler produces for the piece; `name` is what the IMAGE

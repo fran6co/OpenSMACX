@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00432720 ?on_link_clicked@StringBox@@QAEXHPAD@Z 0x00432720-0x00432761 FILE BYTE_EXACT
+// symbol    ?on_link_clicked@StringBox@@QAEXHPAUint8@@@Z
 // size      65 bytes
 // prototype void (__thiscall ?on_link_clicked@StringBox@@QAEXHPAD@Z)(StringBox* this, int, int8*)
 // callers   0   call targets   0
