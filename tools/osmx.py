@@ -1831,8 +1831,25 @@ def check(
                         else
                         f"DANGLING  {record.address_hex} body fact: {note} - "
                         f"{record.location}", fg=typer.colors.RED)
-    raise typer.Exit(1 if regressed or dangling or unread
-                     else 3 if unasked else 0)
+    code = 1 if regressed or dangling or unread else 3 if unasked else 0
+    # THE VERDICT GOES IN THE OUTPUT, not only in the exit code. The brief has
+    # told agents for a long time never to pipe this to `tail`, because `cmd |
+    # tail` reports TAIL's status and `echo $?` after it is always 0 - and an
+    # agent was caught running exactly `osmx.py check 2>&1 | tail -5; echo
+    # "EXIT:$?"` anyway, which would have called a red gate green. A rule
+    # someone has to remember is not a check. This line is LAST, so it survives
+    # any `tail`, and it states the verdict in words rather than leaving it to
+    # a status nobody can see through a pipe.
+    if not as_json:
+        typer.secho(
+            f"GATE EXIT {code} - "
+            + ("FAILED: regressed, dangling or unread claims" if code == 1
+               else "OK, with unverifiable claims present" if code == 3
+               else "CLEAN"),
+            fg=typer.colors.RED if code == 1 else
+            typer.colors.YELLOW if code == 3 else typer.colors.GREEN,
+            bold=True)
+    raise typer.Exit(code)
 
 
 if __name__ == "__main__":
