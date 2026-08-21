@@ -191,7 +191,6 @@ void __fastcall map_win_main_caption_redirect(MapWin *self, void *);
 // The heap pointer at 0x4 is freed through the game's CRT boundary, the same
 // address buffer.cpp frees through. Rebindable so tests observe it.
 typedef void *func_map_win_free(void *);
-extern func_map_win_free *MapWinFree;
 
 void __fastcall map_win_close_redirect(MapWin *self, void *);
 int __fastcall map_win_unk2_redirect(MapWin *self, void *);

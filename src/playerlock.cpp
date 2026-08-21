@@ -23,7 +23,7 @@
 /*
 Purpose: Reset both lock entries to their unset sentinels and mark the lock
          inactive.
-// ORIGINAL: 0x0058FF70 ?clear@PlayerLock@@QAEXXZ 0x0058FF70-0x0058FF96
+// ORIGINAL: 0x0058FF70 ?clear@PlayerLock@@QAEXXZ 0x0058FF70-0x0058FF96 BYTE_EXACT
 // size      38 bytes
 // prototype void (__thiscall ?clear@PlayerLock@@QAEXXZ)(PlayerLock* this)
 // callers   3   call targets   0
@@ -34,10 +34,14 @@ Return Value: n/a
 Status: Complete
 */
 void PlayerLock::clear() {
+    // IN THE IMAGE'S ORDER, which is the reverse of the declaration order:
+    // `[eax+4]=0` then `[eax]=-1` then `[eax-4]=-1` at 0x0058FF78. VC6 emits
+    // assignments where they are written, so the loop body has to be written
+    // upside down to match.
     for (size_t index = 0; index < 2; ++index) {
-        entries_[index].first = -1;
-        entries_[index].second = -1;
         entries_[index].flag = 0;
+        entries_[index].second = -1;
+        entries_[index].first = -1;
     }
     active_ = 0;
 }

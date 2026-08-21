@@ -24,10 +24,9 @@
 #include "general.h"   // mem_get, for the placeholder pixel
 #include "filewin.h"
 #include "spritebox.h"
+#include <stdlib.h>
 
 int *SpriteMemoryUsed = reinterpret_cast<int *>(0x009B6618);
-func_sprite_free *SpriteFree = (func_sprite_free *)0x00644EF2;
-
 /*
 Purpose: Initialize an empty sprite and charge its own size to the sprite
          memory total.
@@ -88,11 +87,11 @@ void Sprite::close() {
         *SpriteMemoryUsed = static_cast<int>(
             static_cast<uint32_t>(*SpriteMemoryUsed)
             - ordered[0x14 / 4] * ordered[0x10 / 4]);
-        SpriteFree(reinterpret_cast<void *>(ordered[0x04 / 4]));
+        free(reinterpret_cast<void *>(ordered[0x04 / 4]));
         ordered[0x04 / 4] = 0;
     }
     if (ordered[0x00 / 4] != 0) {
-        SpriteFree(reinterpret_cast<void *>(ordered[0x00 / 4]));
+        free(reinterpret_cast<void *>(ordered[0x00 / 4]));
         ordered[0x00 / 4] = 0;
     }
     // The type byte at 0x08 is deliberately preserved.

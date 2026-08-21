@@ -11,6 +11,7 @@
 #include "temp.h"  // do_all_draws
 #include "pulldown.h"
 #include "vtable_shim.h"
+#include <stdlib.h>
 
 namespace {
 
@@ -236,7 +237,6 @@ int __fastcall pull_down_get_selected_redirect(PullDown *self, void *) {
     return self->get_selected();
 }
 
-func_sprite_free *PullDownFree = (func_sprite_free *)0x00644EF2;
 const uint32_t PullDownPrimaryVtable = 0x0066FF40;
 const uint32_t PullDownBufferVtable = 0x0066FF38;
 uint32_t PullDownFieldF38Default;  // 0x009B7B58
@@ -270,11 +270,11 @@ PullDown *__fastcall pull_down_destructor_redirect(PullDown *self, void *) {
         volatile uint32_t *const text = ordered + (0xA18 / 4) + index * 5;
         volatile uint32_t *const right_text = text + 1;
         if (*text != 0) {
-            PullDownFree(reinterpret_cast<void *>(*text));
+            free(reinterpret_cast<void *>(*text));
             *text = 0;
         }
         if (*right_text != 0) {
-            PullDownFree(reinterpret_cast<void *>(*right_text));
+            free(reinterpret_cast<void *>(*right_text));
             *right_text = 0;
         }
     }

@@ -71,7 +71,6 @@ class TextureStore {
 TextureStore *__fastcall texture_store_construct_redirect(TextureStore *self, void *);
 
 typedef void *func_texture_free(void *);
-extern func_texture_free *TextureFree;
 
 void __fastcall texture_dtor_redirect(Texture *self, void *);
 
