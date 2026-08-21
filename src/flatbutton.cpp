@@ -149,7 +149,21 @@ FlatButton *__fastcall flat_button_destructor_redirect(
 // either (measured both ways); VC6 does not appear to trust a caller-side
 // nothrow annotation for this decision.
 //
-// `/GX-` is not reachable from here: it is a whole-translation-unit flag,
+// `/GX-` WOULD NOT HELP EVEN IF IT WERE REACHABLE, which is a stronger
+// statement than the one this note used to make, and it is measured rather
+// than argued. Added as a per-function flag axis and scored against every
+// other set: this body's best remains `/O1 /GX` at 0.565 similar, while the
+// four `/GX-` variants land at 0.440, 0.465, 0.482 and 0.513. Removing the
+// frame moves every later instruction, so positional agreement gets WORSE
+// even though the instruction count gets closer - 50 against the image's 41
+// under `/GX-`, where `/GX` overshoots. `Scroll::Scroll` (0x006051D0) says
+// the same thing more sharply: `/GX-` compiles 79 instructions against an
+// image of 83 and still scores 0.848, against 0.959 for `/O2 /Ob0 /GX`.
+// Fewer instructions is not a better match. The axis was reverted rather
+// than kept, because it costs 40% more measurement on every gate run and
+// wins nothing.
+//
+// `/GX-` is also not reachable from here: it is a whole-translation-unit flag,
 // outside `src/`, and it is not free even in principle. `Buffer::~Buffer()`
 // (0x005D7410, `buffer.h`, inline `MEASURED virtual ~Buffer() { close(); }`)
 // is currently BYTE_EXACT (20/20 instructions) specifically because the
