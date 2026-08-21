@@ -351,16 +351,16 @@ int Console::focus(int x_coord, int y_coord, int faction_id) {
     // one equality into a constant, giving 0x40000000 for a different faction
     // and 0x20000000 for the local one. LocalFaction is read only on the
     // non-negative path, exactly as the original's branch structure has it.
+    // 0x005108B3 `mov [ebp-4], esi` with ESI zero. The literal 1 at 0x0051097A
+    // is the ONLY store into that slot, so this is a plain 0/1 flag and the
+    // returns are exactly 0 and 1, never a callee's residue.
+    int focused = 0;
     uint32_t mask;
     if (faction_id < 0) {
         mask = 0x60000000U;
     } else {
         mask = (faction_id != LocalFaction) ? 0x40000000U : 0x20000000U;
     }
-    // 0x005108B3 `mov [ebp-4], esi` with ESI zero. The literal 1 at 0x0051097A
-    // is the ONLY store into that slot, so this is a plain 0/1 flag and the
-    // returns are exactly 0 and 1, never a callee's residue.
-    int focused = 0;
     for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
         // 0x005108DE `mov eax, [esi*4 + 0x7d3c3c]`. Re-read every iteration,
         // do NOT hoist: cursor_next, MapWin::focus and MapWin::draw_map below
