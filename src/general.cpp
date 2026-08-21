@@ -376,13 +376,9 @@ Purpose: Convert the binary string to an integer.
 Return Value: Integer value of the string
 Status: Complete
 */
-int __cdecl btoi(LPCSTR str) {
-    int result = 0;
-    while (*str == '0' || *str == '1') {
-        result = *str++ - '0' + 2 * result;
-    }
-    return result;
-}
+// BODY IN general.h, as `MEASURED inline`: `stoi` at 0x00628950
+// makes no call to it - the image writes it out inside the jump
+// table's arms - while 0x006288D0 is a real body of its own.
 
 /*
 Purpose: Convert the hex string to an integer.
@@ -397,23 +393,13 @@ Purpose: Convert the hex string to an integer.
 Return Value: Integer value of the string
 Status: Complete
 */
-int __cdecl htoi(LPCSTR str) {
-    int result = 0;
-    while (isxdigit(*str)) {
-        result *= 16;
-        if (isdigit(*str)) {
-            result += *str - '0';
-        } else {
-            result += toupper(*str) - '7';
-        }
-        *str++;
-    }
-    return result;
-}
+// BODY IN general.h, as `MEASURED inline`: `stoi` at 0x00628950
+// makes no call to it - the image writes it out inside the jump
+// table's arms - while 0x00628910 is a real body of its own.
 
 /*
 Purpose: Converts a binary, hex or decimal string to an integer.
-// ORIGINAL: 0x00628950 ?stoi@@YAHPAD@Z 0x00628950-0x006289FE
+// ORIGINAL: 0x00628950 ?stoi@@YAHPAD@Z 0x00628950-0x006289FE BYTE_EXACT
 // symbol    ?stoi@@YAHPBD@Z
 // size      174 bytes
 // prototype int (__cdecl ?stoi@@YAHPAD@Z)(int8* input)
