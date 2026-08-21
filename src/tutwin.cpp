@@ -130,7 +130,7 @@ void __fastcall tut_win_iface_rect_redirect(
 /*
 Purpose: Centre the rectangle on both axes and convert the result to screen
          coordinates through the base window.
-// ORIGINAL: 0x004BC5F0 ?base_rect@TutWin@@QAEXPAURECT@@PAH1@Z 0x004BC5F0-0x004BC633
+// ORIGINAL: 0x004BC5F0 ?base_rect@TutWin@@QAEXPAURECT@@PAH1@Z 0x004BC5F0-0x004BC633 BYTE_EXACT
 // symbol    ?base_rect@TutWin@@QAEXPAUtagRECT@@PAH1@Z
 // size      67 bytes
 // prototype void (__thiscall ?base_rect@TutWin@@QAEXPAURECT@@PAH1@Z)(TutWin* this, RECT*, int*, int*)
@@ -145,16 +145,10 @@ Verification note: client_to_screen is entered on the FIXED window at 0x006A7628
          TutWin receiver is not read by this body at all.
 */
 void TutWin::base_rect(RECT *rect, int *x, int *y) {
-    const uint32_t left = static_cast<uint32_t>(rect->left);
-    const uint32_t width = static_cast<uint32_t>(rect->right) - left;
-    const uint32_t width_adjusted = width + (width >> 31);
-    *x = static_cast<int>(
-        left + ((width_adjusted >> 1) | (width_adjusted & 0x80000000U)));
-    const uint32_t top = static_cast<uint32_t>(rect->top);
-    const uint32_t height = static_cast<uint32_t>(rect->bottom) - top;
-    const uint32_t height_adjusted = height + (height >> 31);
-    *y = static_cast<int>(
-        top + ((height_adjusted >> 1) | (height_adjusted & 0x80000000U)));
+    // Plain signed division: the image emits `cdq; sub eax,edx; sar eax,1`
+    // (round-toward-zero) for each half, not a rounding bit-trick.
+    *x = rect->left + (rect->right - rect->left) / 2;
+    *y = rect->top + (rect->bottom - rect->top) / 2;
     TutWinBaseWindow->client_to_screen(x, y);
 }
 
@@ -167,7 +161,7 @@ void __fastcall tut_win_base_rect_redirect(
 /*
 Purpose: Centre the rectangle on both axes and convert the result to screen
          coordinates through the soc window.
-// ORIGINAL: 0x004BC640 ?soc_rect@TutWin@@QAEXPAURECT@@PAH1@Z 0x004BC640-0x004BC683
+// ORIGINAL: 0x004BC640 ?soc_rect@TutWin@@QAEXPAURECT@@PAH1@Z 0x004BC640-0x004BC683 BYTE_EXACT
 // symbol    ?soc_rect@TutWin@@QAEXPAUtagRECT@@PAH1@Z
 // size      67 bytes
 // prototype void (__thiscall ?soc_rect@TutWin@@QAEXPAURECT@@PAH1@Z)(TutWin* this, RECT*, int*, int*)
@@ -182,16 +176,10 @@ Verification note: client_to_screen is entered on the FIXED window at 0x008A6270
          TutWin receiver is not read by this body at all.
 */
 void TutWin::soc_rect(RECT *rect, int *x, int *y) {
-    const uint32_t left = static_cast<uint32_t>(rect->left);
-    const uint32_t width = static_cast<uint32_t>(rect->right) - left;
-    const uint32_t width_adjusted = width + (width >> 31);
-    *x = static_cast<int>(
-        left + ((width_adjusted >> 1) | (width_adjusted & 0x80000000U)));
-    const uint32_t top = static_cast<uint32_t>(rect->top);
-    const uint32_t height = static_cast<uint32_t>(rect->bottom) - top;
-    const uint32_t height_adjusted = height + (height >> 31);
-    *y = static_cast<int>(
-        top + ((height_adjusted >> 1) | (height_adjusted & 0x80000000U)));
+    // Plain signed division: the image emits `cdq; sub eax,edx; sar eax,1`
+    // (round-toward-zero) for each half, not a rounding bit-trick.
+    *x = rect->left + (rect->right - rect->left) / 2;
+    *y = rect->top + (rect->bottom - rect->top) / 2;
     TutWinSocWindow->client_to_screen(x, y);
 }
 
@@ -204,7 +192,7 @@ void __fastcall tut_win_soc_rect_redirect(
 /*
 Purpose: Centre the rectangle on both axes and convert the result to screen
          coordinates through the des window.
-// ORIGINAL: 0x004BC690 ?des_rect@TutWin@@QAEXPAURECT@@PAH1@Z 0x004BC690-0x004BC6D3
+// ORIGINAL: 0x004BC690 ?des_rect@TutWin@@QAEXPAURECT@@PAH1@Z 0x004BC690-0x004BC6D3 BYTE_EXACT
 // symbol    ?des_rect@TutWin@@QAEXPAUtagRECT@@PAH1@Z
 // size      67 bytes
 // prototype void (__thiscall ?des_rect@TutWin@@QAEXPAURECT@@PAH1@Z)(TutWin* this, RECT*, int*, int*)
@@ -219,16 +207,10 @@ Verification note: client_to_screen is entered on the FIXED window at 0x0071F2B0
          TutWin receiver is not read by this body at all.
 */
 void TutWin::des_rect(RECT *rect, int *x, int *y) {
-    const uint32_t left = static_cast<uint32_t>(rect->left);
-    const uint32_t width = static_cast<uint32_t>(rect->right) - left;
-    const uint32_t width_adjusted = width + (width >> 31);
-    *x = static_cast<int>(
-        left + ((width_adjusted >> 1) | (width_adjusted & 0x80000000U)));
-    const uint32_t top = static_cast<uint32_t>(rect->top);
-    const uint32_t height = static_cast<uint32_t>(rect->bottom) - top;
-    const uint32_t height_adjusted = height + (height >> 31);
-    *y = static_cast<int>(
-        top + ((height_adjusted >> 1) | (height_adjusted & 0x80000000U)));
+    // Plain signed division: the image emits `cdq; sub eax,edx; sar eax,1`
+    // (round-toward-zero) for each half, not a rounding bit-trick.
+    *x = rect->left + (rect->right - rect->left) / 2;
+    *y = rect->top + (rect->bottom - rect->top) / 2;
     TutWinDesWindow->client_to_screen(x, y);
 }
 

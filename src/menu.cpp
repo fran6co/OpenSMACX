@@ -260,6 +260,22 @@ Purpose: Find the menu whose id matches and forward the item id to its
          PullDown. An unknown menu answers 0xB, and so does a table that runs
          out before matching.
 // ORIGINAL: 0x005FB300 ?hide_menu_item@Menu@@QAEHHH@Z 0x005FB300-0x005FB354
+// RULED-OUT: shared defect across the whole seven-clone family (UNK3,
+//        hide/show/disable/enable/check/uncheck_menu_item all measure
+//        1/32, 0.754 similar at their best flag set). Every one of them
+//        diverges starting at INSTRUCTION 0: this tree's compile hoists a
+//        read of entries_[0].id (`mov eax,[ecx+0xa38]`) and the loop-index
+//        zeroing ahead of the `push esi`/`push edi` prologue and the
+//        edi=menu_id load, which the image never does - VC6 loop-rotating
+//        the `for(;;) { if(first-check) ...}` shape to peel the first
+//        iteration's read before the callee-saved pushes. Tried: a genuine
+//        `do { } while(++index < 15)` (worse, 1/32 best, 0.746 similar -
+//        still peels); a raw `MenuEntry *entry` pointer walk instead of
+//        `entries_[index]` (worse, 0/32 at every flag set tried, still
+//        peels and also loses the /Oy- frame). `--all-flags` on the
+//        committed `for(;;)` form plateaus at 5/32 (0.738) with /Oy- kept,
+//        1/32 (0.754, best similarity) with it omitted - the hoist happens
+//        at every flag set tried. Not a source-shape lever found so far.
 // size      84 bytes
 // prototype int (__thiscall ?hide_menu_item@Menu@@QAEHHH@Z)(Menu* this, int, int)
 // callers   2   call targets   1
@@ -346,6 +362,11 @@ Purpose: Find the menu whose id matches and forward the item id to its
          PullDown. An unknown menu answers 0xB, and so does a table that runs
          out before matching.
 // ORIGINAL: 0x005FB480 ?disable_menu_item@Menu@@QAEHHH@Z 0x005FB480-0x005FB4D4
+// RULED-OUT: same shared-family defect as ?hide_menu_item@Menu@@QAEHHH@Z
+//        (0x005FB300, see its note) - a `do { } while(++index < 15)` and a
+//        raw `MenuEntry *` pointer walk were both tried there and both
+//        measured worse than the committed `for(;;)` form; not repeated
+//        per-clone. Plateaus at 1/32, 0.754 similar.
 // size      84 bytes
 // prototype int (__thiscall ?disable_menu_item@Menu@@QAEHHH@Z)(Menu* this, int, int)
 // callers   2   call targets   1
