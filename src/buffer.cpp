@@ -2698,6 +2698,12 @@ int Buffer::write_cent_l(LPSTR text, int x_coord, int y_coord, int width,
     // and its `jne` at 0x005DD088 both reach the SAME epilogue at
     // 0x005DD08A. Two separate `if (...) return x_coord;` statements make
     // VC6 emit that epilogue twice; a short-circuit `||` gives it one.
+    // RULED-OUT: splitting this into two guard clauses - `if (MIN < 0) return;`
+    // then `const int limit = MIN; if (!limit) return;` - on the theory that
+    // the image's separate return block at instruction 41 wants two distinct
+    // early exits. It is WORSE: 39 of 76 agreeing becomes 34, and the compiled
+    // body grows from 70 instructions to 80 against the image's 76. The merged
+    // `||` is the right shape; the remaining divergence is elsewhere.
     int limit;
     if (BUFFER_MIN(static_cast<int>(strlen(text)), len) < 0 ||
         (limit = BUFFER_MIN(static_cast<int>(strlen(text)), len)) == 0) {
