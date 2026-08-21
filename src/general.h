@@ -75,7 +75,8 @@ extern uint32_t ScenEditorUndoPosition;
 static int *const GenderDefault = (int *)0x009BBFEC;
 static BOOL *const PluralityDefault = (BOOL *)0x009BBFF0;
 
-void __cdecl purge_trailing(LPSTR input);
+// purge_trailing(LPSTR input) is defined at the end of this header - see the
+// LEVER note there.
 // Returns the advanced pointer, which the catalogued name spells `X`
 // (void) - see the body. Callers that ignore it are the image's own.
 LPSTR __cdecl purge_leading(LPSTR input);
@@ -198,4 +199,29 @@ MEASURED inline int __cdecl htoi(LPCSTR str) {
         *str++;
     }
     return result;
+}
+
+// LEVER: this had a `// ORIGINAL:` marker and was `__forceinline` but defined
+// in general.cpp, so it never satisfies `inline` for callers in OTHER
+// translation units (alpha.cpp) - VC6 still emits a real `call` there. Moved
+// here (MEASURED inline keeps its own claim measurable) so chas_name,
+// weap_name and arm_name fold it in place, matching the image's inlined
+// four-`strlen`-call body. See general.cpp for the ORIGINAL marker.
+MEASURED inline void __cdecl purge_trailing(LPSTR input) {
+    // IT OVERWRITES EACH TRAILING SPACE, walking back, rather than placing a
+    // single terminator: `mov byte ptr [eax], 0` at 0x006007A1 is inside the
+    // loop. The empty string leaves early - `test eax, eax; je` at 0x0060078E
+    // - and the `p == input` test comes AFTER the store.
+    const size_t length = strlen(input);
+    if (length == 0) {
+        return;
+    }
+    char *end = input + length - 1;
+    while (end >= input && *end == ' ') {
+        *end = 0;
+        if (end == input) {
+            return;
+        }
+        --end;
+    }
 }

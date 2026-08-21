@@ -95,7 +95,21 @@ Return Value: Chassis id; 'None' (-1); 'Disabled' (-2); or error (0)
 Status: Complete
 */
 int __cdecl chas_name(LPSTR name) {
-    purge_trailing(name);
+    // NOT `purge_trailing(name)`: the image inlines a NAIVE trim here that
+    // recomputes `strlen(name)` on every access instead of caching it - four
+    // `strlen` calls (0x00584E4A, 0x00584E59, 0x00584E6A, 0x00584E75)
+    // against `purge_trailing`'s single cached-length pointer walk (compare
+    // 0x006007B0's `purge_spaces`, which DOES call `purge_trailing` and
+    // shows only one `strlen`). weap_name and arm_name repeat this same
+    // hand-written loop verbatim.
+    if (strlen(name) != 0) {
+        do {
+            if (name[strlen(name) - 1] != ' ') {
+                break;
+            }
+            name[strlen(name) - 1] = 0;
+        } while (strlen(name) != 0);
+    }
     if (!_stricmp(name, "None")) {
         return NoneValue;
     }

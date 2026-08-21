@@ -59,19 +59,26 @@ namespace {
 // The wrapped device is driven through its own vtable; enable and disable call
 // two adjacent slots on it. A raw dispatch is used because the device is an
 // opaque object with no source-owned type.
-typedef void (OriginalObject::*device_vfn)();
-typedef int (OriginalObject::*device_query_vfn)();
+//
+// CALLED WHERE THE SLOT LIVES: the image dispatches through the vtable slot
+// directly (`call`/`jmp dword ptr [vtable+N]`), one instruction; reading the
+// slot into a pointer-to-member first costs a `mov` before it. `__fastcall`
+// with the RECEIVER AS THE ONLY PARAMETER puts it in ecx and leaves edx
+// alone, matching the thiscall the image dispatches through.
+typedef void(__fastcall *device_vfn)(void *);
+typedef int(__fastcall *device_query_vfn)(void *);
 
-void *wrapped_device(Wave_Device *self) {
+__forceinline void *wrapped_device(Wave_Device *self) {
     return *reinterpret_cast<void **>(reinterpret_cast<uint8_t *>(self) + 0x14);
 }
 
-void dispatch_wrapped_device(Wave_Device *self, int vtable_offset) {
+// `__forceinline`: the image inlines this dispatch at every call site rather
+// than making a real call to it; a plain out-of-line definition compiles a
+// call the image does not make.
+__forceinline void dispatch_wrapped_device(Wave_Device *self, int vtable_offset) {
     void *device = wrapped_device(self);
     if (device) {
-        uint8_t *vtable = *reinterpret_cast<uint8_t **>(device);
-        device_vfn fn = *reinterpret_cast<device_vfn *>(vtable + vtable_offset);
-        (ORIGINAL(device)->*fn)();
+        vtable_slot<device_vfn>(device, vtable_offset)(device);
     }
 }
 
@@ -79,31 +86,36 @@ void dispatch_wrapped_device(Wave_Device *self, int vtable_offset) {
 // device's method, so that method's result is the caller's; with no device
 // wrapped the answer is whatever the original loads into eax on that path,
 // which is usually but not always zero.
-int query_wrapped_device(Wave_Device *self, int vtable_offset,
+__forceinline int query_wrapped_device(Wave_Device *self, int vtable_offset,
                          int no_device_result = 0) {
     void *device = wrapped_device(self);
-    if (!device) {
-        return no_device_result;
+    // The zero/default path runs LAST in the image: `test ecx, ecx; je
+    // <default>` falls through to the dispatch, rather than a guard clause
+    // that jumps away from it.
+    if (device) {
+        return vtable_slot<device_query_vfn>(device, vtable_offset)(device);
     }
-    uint8_t *vtable = *reinterpret_cast<uint8_t **>(device);
-    device_query_vfn fn =
-        *reinterpret_cast<device_query_vfn *>(vtable + vtable_offset);
-    return (ORIGINAL(device)->*fn)();
+    return no_device_result;
 }
 
 // The one-argument members of the family. The original passes the argument
 // straight through and, where it returns at all, answers a fixed value when no
 // device is wrapped.
+//
+// The argument is passed ON THE STACK by the device's own calling convention,
+// not in edx as a second `__fastcall` parameter would be; the pointer-to-
+// member type keeps that thiscall shape, and `vtable_slot` still returns a
+// REFERENCE to the slot so the call stays the single `call dword ptr
+// [vtable+N]` the image makes.
 typedef int (OriginalObject::*device_arg_vfn)(int a1);
 
-int forward_to_wrapped_device(Wave_Device *self, int vtable_offset, int a1,
+__forceinline int forward_to_wrapped_device(Wave_Device *self, int vtable_offset, int a1,
                               int no_device_result = 0) {
     void *device = wrapped_device(self);
     if (!device) {
         return no_device_result;
     }
-    uint8_t *vtable = *reinterpret_cast<uint8_t **>(device);
-    return (ORIGINAL(device)->*original_slot<device_arg_vfn>(vtable + vtable_offset))(a1);
+    return (ORIGINAL(device)->*vtable_slot<device_arg_vfn>(device, vtable_offset))(a1);
 }
 }  // namespace
 
@@ -121,11 +133,7 @@ Return Value: n/a
 Status: Complete
 */
 void Wave_Device::enable() {
-    void *device = device_14_;
-    if (device) {
-        device_vfn *vtable = *reinterpret_cast<device_vfn **>(device);
-        (ORIGINAL(device)->*vtable[0x18])();
-    }
+    dispatch_wrapped_device(this, 0x60);
 }
 
 /*
@@ -142,12 +150,7 @@ Return Value: n/a
 Status: Complete
 */
 void Wave_Device::disable() {
-    void *device = device_14_;
-    if (device) {
-        uint8_t *vtable = *reinterpret_cast<uint8_t **>(device);
-        device_vfn fn = *reinterpret_cast<device_vfn *>(vtable + 0x64);
-        (ORIGINAL(device)->*fn)();
-    }
+    dispatch_wrapped_device(this, 0x64);
 }
 
 void __fastcall wave_device_set_pan_redirect(Wave_Device *self, void *, int a1) {
@@ -223,7 +226,7 @@ void Wave_Device::suspend() {
     if (device) {
         uint8_t *vtable = *reinterpret_cast<uint8_t **>(device);
         device_vfn fn = *reinterpret_cast<device_vfn *>(vtable + 0x48);
-        (ORIGINAL(device)->*fn)();
+        fn(device);
     }
 }
 
@@ -244,13 +247,13 @@ void Wave_Device::restart() {
     if (device) {
         uint8_t *vtable = *reinterpret_cast<uint8_t **>(device);
         device_vfn fn = *reinterpret_cast<device_vfn *>(vtable + 0x4C);
-        (ORIGINAL(device)->*fn)();
+        fn(device);
     }
 }
 
 /*
 Purpose: Poll the wrapped device, through its vtable slot 0x34.
-// ORIGINAL: 0x004C4FE0 ?update_sound@Wave_Device@@QAEXXZ 0x004C4FE0-0x004C4FED
+// ORIGINAL: 0x004C4FE0 ?update_sound@Wave_Device@@QAEXXZ 0x004C4FE0-0x004C4FED BYTE_EXACT
 // size      13 bytes
 // prototype void (__thiscall ?update_sound@Wave_Device@@QAEXXZ)(Wave_Device* this)
 // callers   0   call targets   0
@@ -267,7 +270,7 @@ void Wave_Device::update_sound() {
 /*
 Purpose: Ask the wrapped device how many devices it offers, through its vtable
          slot 0x14.
-// ORIGINAL: 0x004C4FF0 ?get_ndevices@Wave_Device@@QAEHXZ 0x004C4FF0-0x004C4FFF
+// ORIGINAL: 0x004C4FF0 ?get_ndevices@Wave_Device@@QAEHXZ 0x004C4FF0-0x004C4FFF BYTE_EXACT
 // size      15 bytes
 // prototype int (__thiscall ?get_ndevices@Wave_Device@@QAEHXZ)(Wave_Device* this)
 // callers   0   call targets   0
@@ -284,7 +287,7 @@ int Wave_Device::get_ndevices() {
 /*
 Purpose: Ask the wrapped device for its hardware memory size, through its
          vtable slot 0x58.
-// ORIGINAL: 0x004C5020 ?get_hw_mem_size@Wave_Device@@QAEHXZ 0x004C5020-0x004C502F
+// ORIGINAL: 0x004C5020 ?get_hw_mem_size@Wave_Device@@QAEHXZ 0x004C5020-0x004C502F BYTE_EXACT
 // size      15 bytes
 // prototype int (__thiscall ?get_hw_mem_size@Wave_Device@@QAEHXZ)(Wave_Device* this)
 // callers   0   call targets   0
@@ -301,7 +304,7 @@ int Wave_Device::get_hw_mem_size() {
 /*
 Purpose: Ask the wrapped device for its sample rate, through its vtable
          slot 0x3C.
-// ORIGINAL: 0x004C5140 ?get_rate@Wave_Device@@QAEHXZ 0x004C5140-0x004C514F
+// ORIGINAL: 0x004C5140 ?get_rate@Wave_Device@@QAEHXZ 0x004C5140-0x004C514F BYTE_EXACT
 // size      15 bytes
 // prototype int (__thiscall ?get_rate@Wave_Device@@QAEHXZ)(Wave_Device* this)
 // callers   0   call targets   0
@@ -329,12 +332,7 @@ Return Value: the device's answer, or 0 when none is wrapped
 Status: Complete
 */
 int Wave_Device::get_ds() {
-    void *device = device_14_;
-    if (device) {
-        device_query_vfn *vtable = *reinterpret_cast<device_query_vfn **>(device);
-        return (ORIGINAL(device)->*vtable[0x1C])();
-    }
-    return 0;
+    return query_wrapped_device(this, 0x70);
 }
 
 /*
@@ -390,7 +388,7 @@ int __fastcall wave_device_is_eax_redirect(Wave_Device *self, void *) {
 /*
 Purpose: Ask the wrapped device whether it is disabled, through vtable slot
          0x68. With no device wrapped the answer is yes.
-// ORIGINAL: 0x004C51E0 ?is_disabled@Wave_Device@@QAEHXZ 0x004C51E0-0x004C51F2
+// ORIGINAL: 0x004C51E0 ?is_disabled@Wave_Device@@QAEHXZ 0x004C51E0-0x004C51F2 BYTE_EXACT
 // size      18 bytes
 // prototype int (__thiscall ?is_disabled@Wave_Device@@QAEHXZ)(Wave_Device* this)
 // callers   0   call targets   0
@@ -407,7 +405,7 @@ int Wave_Device::is_disabled() {
 /*
 Purpose: Ask the wrapped device to stop dumping raw audio, through vtable slot
          0x54.
-// ORIGINAL: 0x004C5220 ?stop_raw_dump@Wave_Device@@QAEHXZ 0x004C5220-0x004C5232
+// ORIGINAL: 0x004C5220 ?stop_raw_dump@Wave_Device@@QAEHXZ 0x004C5220-0x004C5232 BYTE_EXACT
 // size      18 bytes
 // prototype int (__thiscall ?stop_raw_dump@Wave_Device@@QAEHXZ)(Wave_Device* this)
 // callers   0   call targets   0
@@ -743,9 +741,8 @@ Status: Complete
 */
 void Wave_Device::get_description(unsigned long a1, char *a2, unsigned long a3) {
     if (device_14_) {
-        typedef void (OriginalObject::*device_fn)(unsigned long a1, char *a2, unsigned long a3);
-        (ORIGINAL(device_14_)->*original_slot<device_fn>(*reinterpret_cast<uint8_t **>(device_14_) + 0x1c))(
-            a1, a2, a3);
+        typedef void(__fastcall *device_fn)(void *, unsigned long, char *, unsigned long);
+        vtable_slot<device_fn>(device_14_, 0x1c)(device_14_, a1, a2, a3);
     }
 }
 
@@ -756,7 +753,7 @@ void __fastcall wave_device_get_description_redirect(Wave_Device *self, void *, 
 /*
 Purpose: Forward start_raw_dump to the wrapped device through its vtable slot
          0x50.
-// ORIGINAL: 0x004C5200 ?start_raw_dump@Wave_Device@@QAEHPAD@Z 0x004C5200-0x004C5220
+// ORIGINAL: 0x004C5200 ?start_raw_dump@Wave_Device@@QAEHPAD@Z 0x004C5200-0x004C5220 BYTE_EXACT
 // size      32 bytes
 // prototype int (__thiscall ?start_raw_dump@Wave_Device@@QAEHPAD@Z)(Wave_Device* this, int8*)
 // callers   0   call targets   0
@@ -769,9 +766,13 @@ Status: Complete
 */
 int Wave_Device::start_raw_dump(char *a1) {
     if (device_14_) {
+        // A pointer argument beyond the receiver is passed ON THE STACK by
+        // the device's own calling convention, not in edx as a second
+        // `__fastcall` parameter would; the pointer-to-member type keeps
+        // that thiscall shape, and `vtable_slot` still returns a REFERENCE
+        // to the slot so the call is the single `call dword ptr [vtable+N]`.
         typedef int (OriginalObject::*device_fn)(char *a1);
-        return (ORIGINAL(device_14_)->*original_slot<device_fn>(*reinterpret_cast<uint8_t **>(device_14_) + 0x50))(
-            a1);
+        return (ORIGINAL(device_14_)->*vtable_slot<device_fn>(device_14_, 0x50))(a1);
     }
     return 3;
 }
@@ -796,9 +797,8 @@ Status: Complete
 */
 int Wave_Device::set_eax(EAX_REVERB_PROPERTIES *a1) {
     if (device_14_) {
-        typedef int (OriginalObject::*device_fn)(EAX_REVERB_PROPERTIES *a1);
-        return (ORIGINAL(device_14_)->*original_slot<device_fn>(*reinterpret_cast<uint8_t **>(device_14_) + 0x7c))(
-            a1);
+        typedef int(__fastcall *device_fn)(void *, EAX_REVERB_PROPERTIES *);
+        return vtable_slot<device_fn>(device_14_, 0x7c)(device_14_, a1);
     }
     return 0x14;
 }
@@ -823,9 +823,8 @@ Status: Complete
 */
 int Wave_Device::set_eax(unsigned long a1) {
     if (device_14_) {
-        typedef int (OriginalObject::*device_fn)(unsigned long a1);
-        return (ORIGINAL(device_14_)->*original_slot<device_fn>(*reinterpret_cast<uint8_t **>(device_14_) + 0x78))(
-            a1);
+        typedef int(__fastcall *device_fn)(void *, unsigned long);
+        return vtable_slot<device_fn>(device_14_, 0x78)(device_14_, a1);
     }
     return 0x14;
 }
@@ -837,7 +836,7 @@ int __fastcall wave_device_set_eax_redirect(Wave_Device *self, void *, unsigned 
 /*
 Purpose: Forward set_eax_mix to the wrapped device through its vtable slot
          0x80.
-// ORIGINAL: 0x004C5500 ?set_eax_mix@Wave_Device@@QAEHM@Z 0x004C5500-0x004C5523
+// ORIGINAL: 0x004C5500 ?set_eax_mix@Wave_Device@@QAEHM@Z 0x004C5500-0x004C5523 BYTE_EXACT
 // size      35 bytes
 // prototype int (__thiscall ?set_eax_mix@Wave_Device@@QAEHM@Z)(Wave_Device* this, float)
 // callers   0   call targets   0
@@ -850,9 +849,8 @@ Status: Complete
 */
 int Wave_Device::set_eax_mix(float a1) {
     if (device_14_) {
-        typedef int (OriginalObject::*device_fn)(float a1);
-        return (ORIGINAL(device_14_)->*original_slot<device_fn>(*reinterpret_cast<uint8_t **>(device_14_) + 0x80))(
-            a1);
+        typedef int(__fastcall *device_fn)(void *, float);
+        return vtable_slot<device_fn>(device_14_, 0x80)(device_14_, a1);
     }
     return 0x14;
 }
@@ -864,7 +862,7 @@ int __fastcall wave_device_set_eax_mix_redirect(Wave_Device *self, void *, float
 /*
 Purpose: Forward set_listener_position to the wrapped device through its vtable slot
          0x88.
-// ORIGINAL: 0x004C5550 ?set_listener_position@Wave_Device@@QAEHMMM@Z 0x004C5550-0x004C557B
+// ORIGINAL: 0x004C5550 ?set_listener_position@Wave_Device@@QAEHMMM@Z 0x004C5550-0x004C557B BYTE_EXACT
 // size      43 bytes
 // prototype int (__thiscall ?set_listener_position@Wave_Device@@QAEHMMM@Z)(Wave_Device* this, float, float, float)
 // callers   0   call targets   0
@@ -877,9 +875,8 @@ Status: Complete
 */
 int Wave_Device::set_listener_position(float a1, float a2, float a3) {
     if (device_14_) {
-        typedef int (OriginalObject::*device_fn)(float a1, float a2, float a3);
-        return (ORIGINAL(device_14_)->*original_slot<device_fn>(*reinterpret_cast<uint8_t **>(device_14_) + 0x88))(
-            a1, a2, a3);
+        typedef int(__fastcall *device_fn)(void *, float, float, float);
+        return vtable_slot<device_fn>(device_14_, 0x88)(device_14_, a1, a2, a3);
     }
     return 0x14;
 }
@@ -904,9 +901,8 @@ Status: Complete
 */
 int Wave_Device::get_listener_position(float *a1, float *a2, float *a3) {
     if (device_14_) {
-        typedef int (OriginalObject::*device_fn)(float *a1, float *a2, float *a3);
-        return (ORIGINAL(device_14_)->*original_slot<device_fn>(*reinterpret_cast<uint8_t **>(device_14_) + 0x8c))(
-            a1, a2, a3);
+        typedef int(__fastcall *device_fn)(void *, float *, float *, float *);
+        return vtable_slot<device_fn>(device_14_, 0x8c)(device_14_, a1, a2, a3);
     }
     return 0x14;
 }
@@ -918,7 +914,7 @@ int __fastcall wave_device_get_listener_position_redirect(Wave_Device *self, voi
 /*
 Purpose: Forward set_listener_xpos to the wrapped device through its vtable slot
          0x90.
-// ORIGINAL: 0x004C55B0 ?set_listener_xpos@Wave_Device@@QAEHM@Z 0x004C55B0-0x004C55D3
+// ORIGINAL: 0x004C55B0 ?set_listener_xpos@Wave_Device@@QAEHM@Z 0x004C55B0-0x004C55D3 BYTE_EXACT
 // size      35 bytes
 // prototype int (__thiscall ?set_listener_xpos@Wave_Device@@QAEHM@Z)(Wave_Device* this, float)
 // callers   0   call targets   0
@@ -931,9 +927,8 @@ Status: Complete
 */
 int Wave_Device::set_listener_xpos(float a1) {
     if (device_14_) {
-        typedef int (OriginalObject::*device_fn)(float a1);
-        return (ORIGINAL(device_14_)->*original_slot<device_fn>(*reinterpret_cast<uint8_t **>(device_14_) + 0x90))(
-            a1);
+        typedef int(__fastcall *device_fn)(void *, float);
+        return vtable_slot<device_fn>(device_14_, 0x90)(device_14_, a1);
     }
     return 0x14;
 }
@@ -958,9 +953,8 @@ Status: Complete
 */
 int Wave_Device::get_listener_xpos(float *a1) {
     if (device_14_) {
-        typedef int (OriginalObject::*device_fn)(float *a1);
-        return (ORIGINAL(device_14_)->*original_slot<device_fn>(*reinterpret_cast<uint8_t **>(device_14_) + 0x94))(
-            a1);
+        typedef int(__fastcall *device_fn)(void *, float *);
+        return vtable_slot<device_fn>(device_14_, 0x94)(device_14_, a1);
     }
     return 0x14;
 }
@@ -972,7 +966,7 @@ int __fastcall wave_device_get_listener_xpos_redirect(Wave_Device *self, void *,
 /*
 Purpose: Forward set_listener_ypos to the wrapped device through its vtable slot
          0x98.
-// ORIGINAL: 0x004C5610 ?set_listener_ypos@Wave_Device@@QAEHM@Z 0x004C5610-0x004C5633
+// ORIGINAL: 0x004C5610 ?set_listener_ypos@Wave_Device@@QAEHM@Z 0x004C5610-0x004C5633 BYTE_EXACT
 // size      35 bytes
 // prototype int (__thiscall ?set_listener_ypos@Wave_Device@@QAEHM@Z)(Wave_Device* this, float)
 // callers   0   call targets   0
@@ -985,9 +979,8 @@ Status: Complete
 */
 int Wave_Device::set_listener_ypos(float a1) {
     if (device_14_) {
-        typedef int (OriginalObject::*device_fn)(float a1);
-        return (ORIGINAL(device_14_)->*original_slot<device_fn>(*reinterpret_cast<uint8_t **>(device_14_) + 0x98))(
-            a1);
+        typedef int(__fastcall *device_fn)(void *, float);
+        return vtable_slot<device_fn>(device_14_, 0x98)(device_14_, a1);
     }
     return 0x14;
 }
@@ -1012,9 +1005,8 @@ Status: Complete
 */
 int Wave_Device::get_listener_ypos(float *a1) {
     if (device_14_) {
-        typedef int (OriginalObject::*device_fn)(float *a1);
-        return (ORIGINAL(device_14_)->*original_slot<device_fn>(*reinterpret_cast<uint8_t **>(device_14_) + 0x9c))(
-            a1);
+        typedef int(__fastcall *device_fn)(void *, float *);
+        return vtable_slot<device_fn>(device_14_, 0x9c)(device_14_, a1);
     }
     return 0x14;
 }
@@ -1026,7 +1018,7 @@ int __fastcall wave_device_get_listener_ypos_redirect(Wave_Device *self, void *,
 /*
 Purpose: Forward set_listener_zpos to the wrapped device through its vtable slot
          0xa0.
-// ORIGINAL: 0x004C5670 ?set_listener_zpos@Wave_Device@@QAEHM@Z 0x004C5670-0x004C5693
+// ORIGINAL: 0x004C5670 ?set_listener_zpos@Wave_Device@@QAEHM@Z 0x004C5670-0x004C5693 BYTE_EXACT
 // size      35 bytes
 // prototype int (__thiscall ?set_listener_zpos@Wave_Device@@QAEHM@Z)(Wave_Device* this, float)
 // callers   0   call targets   0
@@ -1039,9 +1031,8 @@ Status: Complete
 */
 int Wave_Device::set_listener_zpos(float a1) {
     if (device_14_) {
-        typedef int (OriginalObject::*device_fn)(float a1);
-        return (ORIGINAL(device_14_)->*original_slot<device_fn>(*reinterpret_cast<uint8_t **>(device_14_) + 0xa0))(
-            a1);
+        typedef int(__fastcall *device_fn)(void *, float);
+        return vtable_slot<device_fn>(device_14_, 0xa0)(device_14_, a1);
     }
     return 0x14;
 }
@@ -1066,9 +1057,8 @@ Status: Complete
 */
 int Wave_Device::get_listener_zpos(float *a1) {
     if (device_14_) {
-        typedef int (OriginalObject::*device_fn)(float *a1);
-        return (ORIGINAL(device_14_)->*original_slot<device_fn>(*reinterpret_cast<uint8_t **>(device_14_) + 0xa4))(
-            a1);
+        typedef int(__fastcall *device_fn)(void *, float *);
+        return vtable_slot<device_fn>(device_14_, 0xa4)(device_14_, a1);
     }
     return 0x14;
 }
@@ -1116,18 +1106,20 @@ void walk_group_waves(WaveControlGroup &group, void (*visit)(Wave *wave)) {
 // slot 0x40, resume through slot 0x8C, halt through slot 0x14. The volume
 // field is private to Wave and read by offset, as the original does.
 void replay_wave_volume(Wave *wave) {
+    typedef void(__fastcall *wave_volume_fn)(void *, uint32_t);
     uint32_t vol;
     std::memcpy(&vol, reinterpret_cast<uint8_t *>(wave) + 4, 4);
-    (ORIGINAL(wave)->*original_method<void (OriginalObject::*)(uint32_t) >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(wave) + 0x40)))(
-        vol);
+    vtable_slot<wave_volume_fn>(wave, 0x40)(wave, vol);
 }
 
 void resume_wave(Wave *wave) {
-    (ORIGINAL(wave)->*original_method<void (OriginalObject::*)() >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(wave) + 0x8C)))();
+    typedef void(__fastcall *wave_vfn)(void *);
+    vtable_slot<wave_vfn>(wave, 0x8C)(wave);
 }
 
 void halt_wave(Wave *wave) {
-    (ORIGINAL(wave)->*original_method<void (OriginalObject::*)() >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(wave) + 0x14)))();
+    typedef void(__fastcall *wave_vfn)(void *);
+    vtable_slot<wave_vfn>(wave, 0x14)(wave);
 }
 
 // The chain-link view select repurposes: once a sound is halted off the
@@ -1150,20 +1142,23 @@ WaveResumeLinks *resume_links(Wave *wave) {
 // (slot 0x70), the chain-next and chain-prev accessors (slots 0x64/0x68),
 // and load-by-name (slot 0x10).
 int wave_attrib(Wave *wave) {
-    return (ORIGINAL(wave)->*original_method<int (OriginalObject::*)() >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(wave) + 0x70)))();
+    typedef int(__fastcall *wave_query_fn)(void *);
+    return vtable_slot<wave_query_fn>(wave, 0x70)(wave);
 }
 
 Wave *wave_chain_next(Wave *wave) {
-    return (ORIGINAL(wave)->*original_method<Wave * (OriginalObject::*)() >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(wave) + 0x64)))();
+    typedef Wave *(__fastcall *wave_chain_fn)(void *);
+    return vtable_slot<wave_chain_fn>(wave, 0x64)(wave);
 }
 
 Wave *wave_chain_prev(Wave *wave) {
-    return (ORIGINAL(wave)->*original_method<Wave * (OriginalObject::*)() >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(wave) + 0x68)))();
+    typedef Wave *(__fastcall *wave_chain_fn)(void *);
+    return vtable_slot<wave_chain_fn>(wave, 0x68)(wave);
 }
 
 void load_wave_by_name(Wave *wave, char *fname) {
-    (ORIGINAL(wave)->*original_method<int (OriginalObject::*)(char *) >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(wave) + 0x10)))(
-        fname);
+    typedef int(__fastcall *wave_load_fn)(void *, char *);
+    vtable_slot<wave_load_fn>(wave, 0x10)(wave, fname);
 }
 
 }  // namespace
@@ -1309,8 +1304,10 @@ int Wave_Device::select(unsigned long a1) {
             sound = wave_chain_next(sound);
         }
     }
-    (ORIGINAL(device_14_)->*original_method<int (OriginalObject::*)(unsigned long) >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(device_14_) + 0x18)))(
-        a1);
+    {
+        typedef int(__fastcall *device_fn)(void *, unsigned long);
+        vtable_slot<device_fn>(device_14_, 0x18)(device_14_, a1);
+    }
     for (Wave *replay = resume_tail; replay;) {
         char *const fname = resume_links(replay)->fname;
         Wave *const prev = wave_chain_prev(replay);
@@ -1450,8 +1447,8 @@ void Wave_Device::release() {
         return;
     }
     {
-        typedef void (OriginalObject::*device_down_fn)();
-        (ORIGINAL(device_14_)->*original_slot<device_down_fn>(*reinterpret_cast<uint8_t **>(device_14_) + 0x10))();
+        typedef void(__fastcall *device_down_fn)(void *);
+        vtable_slot<device_down_fn>(device_14_, 0x10)(device_14_);
     }
     if (device_14_ && WaveDeviceDestroySlot()) {
         (WaveDeviceDestroySlot())();
@@ -1595,8 +1592,8 @@ Wave_Device::~Wave_Device() {
     {
         void *const device = self->device_14_;
         if (device) {
-            typedef void (OriginalObject::*device_down_fn)();
-            (ORIGINAL(device)->*original_slot<device_down_fn>(*reinterpret_cast<uint8_t **>(device) + 0x10))();
+            typedef void(__fastcall *device_down_fn)(void *);
+            vtable_slot<device_down_fn>(device, 0x10)(device);
         }
     }
 }

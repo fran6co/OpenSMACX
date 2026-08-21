@@ -1166,6 +1166,12 @@ int __cdecl find_landmark(int x, int y, int radius_range_offset) {
 /*
 Purpose: Set up a new landmark with the provided name at the specified tile.
 // ORIGINAL: 0x00592600 ?new_landmark@@YAHHHPAD@Z 0x00592600-0x0059264B
+// RULED-OUT: strcpy_s(dst,32,src) vs strcpy(dst,src) - vc6_compat.h's strcpy_s already
+//            inlines to a plain strcpy call, so this was a source-clarity change only; both
+//            spellings already made the single call the image makes (osmx calls confirms 1
+//            call to 0x00645460 either way). call_diff's "0 vs 1" was a false positive.
+// RULED-OUT: remaining mismatch is esi vs eax register allocation for MapLandmarkCount, a
+//            stack-frame plateau per prior pass's note, not a source shape
 // symbol    ?new_landmark@@YAHHHPBD@Z
 // size      75 bytes
 // prototype int (__cdecl ?new_landmark@@YAHHHPAD@Z)(int xCoord, int yCoord, int8* name)
@@ -1185,7 +1191,7 @@ int __cdecl new_landmark(int x, int y, LPCSTR name) {
     Landmark *lm = &MapLandmark[landmark_offset];
     lm->x = x;
     lm->y = y;
-    strcpy_s(lm->name, 32, name);
+    strcpy(lm->name, name);
     return landmark_offset;
 }
 
@@ -1724,7 +1730,7 @@ game stores there and disagree on everything else, and the difference is in the
 original rather than in the transcription. game.cpp's territory_xrange() carries
 the same distinction for reset_territory().
 */
-static int site_xrange(int x) {
+__forceinline static int site_xrange(int x) {
     if (!(MapIsFlat & 1)) {
         if (x >= 0) {
             if (x >= MapLongitudeBounds) {
@@ -2417,13 +2423,18 @@ logically, while world_site() inlines this with `sar` on x - and its centre
 tile, unlike the twenty-eight and twenty-one radius tiles, is never bounds
 checked, so a negative x reaches the shift.
 */
-static Map *site_tile(int x, int y) {
+__forceinline static Map *site_tile(int x, int y) {
     return &map_tiles()[(x >> 1) + y * (int)MapLongitude];
 }
 
 /*
 Purpose: Score the specified tile as a site for a new base.
 // ORIGINAL: 0x005C4FD0 ?world_site@@YAHHHH@Z 0x005C4FD0-0x005C55B5
+// RULED-OUT: site_tile/site_xrange were being emitted as real calls; __forceinline on both
+//            (site_tile at 2423, site_xrange at 1730) brought the call count from 9 down to
+//            the image's 3 (2x bonus_at, 1x goody_at) but did not reach BYTE_EXACT.
+// RULED-OUT: remaining mismatch is register allocation across a 1509-byte body, the prior
+//            pass's noted plateau for this family - not chased further.
 // size      1509 bytes
 // prototype 
 // callers   8   call targets   2
@@ -2712,6 +2723,10 @@ Purpose: Set up the world polar caps.
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00591260 0x0064601D
+// RULED-OUT: call_diff's "4 vs 10" undercounts by excluding rand() as hidden; `osmx calls
+//            --all` already shows 6 alt_put_detail + 4 rand = 10, matching the image. The
+//            remaining mismatch is the image omitting the ebp frame this tree keeps under
+//            every flag set tried - a stack-frame plateau, not a source shape.
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2769,6 +2784,11 @@ Purpose: Determine if the specified tile is near a landmark.
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     (none)
+// RULED-OUT: call shape already matches - `osmx calls` shows 0 calls, same as the image,
+//            so xrange/on_map/code_at are already inlined here. Best flag set still only
+//            reaches 17/56 agreeing instructions; the divergence starts at the prologue's
+//            register assignment (ebx loaded from MapIsFlat before the frame push order this
+//            tree emits), the stack-frame/register-allocation plateau noted for this family.
 Return Value: Is the tile near a landmark? true/false
 Status: Complete
 */
