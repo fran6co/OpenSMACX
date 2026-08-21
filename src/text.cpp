@@ -228,7 +228,23 @@ Return Value: Pointer to string table
 Status: Complete
 */
 LPSTR Text::string() {
-    return StringTable->put(get());
+    // LEVER: the image's call list is purge_spaces/kill_lf/put/fgets - get()
+    // is hand-inlined here, not called out of line (its own body's real
+    // calls appear directly in string()'s listing), and `put()` is called
+    // THREE times, once per exit path - the image has three separate
+    // `call 0x616970; pop esi; ret` tails rather than one shared epilogue.
+    if (feof(text_file_)) {
+        buffer_get_[0] = 0;
+        return StringTable->put(NULL);
+    }
+    if (!fgets(buffer_get_, 511, text_file_)) {
+        buffer_get_[0] = 0;
+        return StringTable->put(buffer_get_);
+    }
+    kill_lf(buffer_get_);
+    purge_spaces(buffer_get_);
+    current_pos_ = buffer_get_;
+    return StringTable->put(buffer_get_);
 }
 
 /*

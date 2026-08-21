@@ -441,9 +441,11 @@ int __cdecl tech_val(int tech_id, int faction_id, BOOL simple_calc) {
         }
         BOOL is_human_player = is_human(faction_id);
         if (!is_human_player && !has_tech(tech_id, faction_id) && simple_calc) {
-            uint32_t achieved_count = bit_count(GameTechAchieved[tech_id]);
-            if (achieved_count > 1) {
-                value_ret += 2 - 2 * achieved_count; // increase priority if more factions have tech
+            // LEVER: the image's two adjacent bit_count() calls (0x005BCEC7,
+            // 0x005BCEDD, 22 bytes apart) are this test and this expression
+            // each evaluating bit_count() separately, not a cached local.
+            if (bit_count(GameTechAchieved[tech_id]) > 1) {
+                value_ret += 2 - 2 * bit_count(GameTechAchieved[tech_id]); // increase priority if more factions have tech
             }
             int search_lvl = 1;
             for (int i = 0; i < MaxTechnologyNum; i++) {

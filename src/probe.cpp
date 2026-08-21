@@ -21,6 +21,8 @@
 #include "base.h"
 #include "game.h"
 #include "veh.h"
+#include "strings.h"
+#include "map.h"
 
 BOOL ProbeHasAlgoEnhancement;  // 0x00945B30
 uint32_t ProbeTargetFactionID;  // 0x00945B34
@@ -55,19 +57,21 @@ Purpose: Calculate the cost for the faction to be able to mind control the speci
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x00421670 0x004F8090 0x0050BA00 0x005B8E10 0x005B9580 0x005BFE90 0x00644F3A
-// RULED-OUT: switching the three `has_fac_built(FAC_X, base_id)` calls
-//            (GENEJACK_FACTORY, CHILDREN_CRECHE, PUNISHMENT_SPHERE) to
-//            `has_fac_built_call` - unlike energy_yield/crop_yield/
-//            mine_yield, this REGRESSED both axes: call_diff flipped from
-//            MORE (15 vs image's 12) to FEWER (9 vs 12, has_treaty/
-//            is_human/stack_check's real calls stopped appearing), and
-//            best-across-flags similarity dropped 0.546 -> 0.136. The
-//            image's own `vulnerable()` call (0x0059E980, this function's
-//            immediate predecessor) does not appear in this tree's compiled
-//            call list at all under any flag set tried, which is the more
-//            likely source of the image's `has_fac`/`vector_dist`/one
-//            `bitmask` calls - not reachable by touching this function's
-//            own three has_fac_built sites. Reverted.
+// LEVER: the image never calls `vulnerable()` (0x0059E980) here at all - it
+//        is hand-inlined into mind_control, and at THIS call site the
+//        compiler keeps `has_fac(FAC_HEADQUARTERS, i, 0)` (0x00421670) and
+//        `vector_dist(dx, dy)` (0x004F8090) as REAL calls, unlike
+//        vulnerable()'s own standalone body (which folds has_fac_built's
+//        bitmask() and open-codes vector_dist's abs/largest/smallest math
+//        instead - see that function's own LEVER note). Hand-inlining the
+//        loop here, using has_fac (not has_fac_built) for the HQ check and
+//        the real 2-arg vector_dist(dx, dy) call, is what reaches the
+//        image's has_fac/abs/abs/vector_dist call sequence; a plain call to
+//        vulnerable() never appears in the image's call list for this
+//        function under any flag set. `is_human`/`has_treaty` are likewise
+//        hand-inlined at each use - both are already header `inline`, but
+//        VC6 declines to fold them into a function this large, so a plain
+//        call to either stood where the image has none.
 Return Value: Mind control cost
 Status: Complete
 */
@@ -75,20 +79,28 @@ int __cdecl mind_control(int base_id, int faction_id, BOOL is_corner_market) {
     uint32_t target_faction_id = Bases[base_id].faction_id_current;
     int target_x = Bases[base_id].x;
     int target_y = Bases[base_id].y;
-    int cost = vulnerable(target_faction_id, target_x, target_y);
+    int cost = 12; // vulnerable(): default when faction has no HQ
+    for (int i = 0; i < BaseCurrentCount; i++) {
+        if (Bases[i].faction_id_current == target_faction_id && has_fac(FAC_HEADQUARTERS, i, 0)) {
+            int dx = x_dist(target_x, Bases[i].x);
+            int dy = abs(target_y - Bases[i].y);
+            cost = vector_dist(dx, dy);
+            break;
+        }
+    }
     if (cost <= 0) {
         if (!is_corner_market) {
             return -1;
         }
         cost = 1;
     }
-    if (has_fac_built(FAC_GENEJACK_FACTORY, base_id)) {
+    if (has_fac_built_call(FAC_GENEJACK_FACTORY, base_id)) {
         cost *= 2;
     }
-    if (has_fac_built(FAC_CHILDREN_CRECHE, base_id)) {
+    if (has_fac_built_call(FAC_CHILDREN_CRECHE, base_id)) {
         cost /= 2; // Reduces base's vulnerability to enemy mind control
     }
-    if (has_fac_built(FAC_PUNISHMENT_SPHERE, base_id)) {
+    if (has_fac_built_call(FAC_PUNISHMENT_SPHERE, base_id)) {
         cost /= 2;
     }
     if (Bases[base_id].nerve_staple_turns_left) {
@@ -101,18 +113,18 @@ int __cdecl mind_control(int base_id, int faction_id, BOOL is_corner_market) {
         + PlayersData[faction_id].mind_control_total / 4 + Bases[base_id].population_size)
         * ((PlayersData[target_faction_id].corner_market_active
             + PlayersData[target_faction_id].energy_reserves + 1200) / (cost + 4));
-    if (!is_human(faction_id) && is_human(target_faction_id)) {
+    if (!(FactionsStatus[0] & (1 << faction_id)) && (FactionsStatus[0] & (1 << target_faction_id))) {
         int diff = PlayersData[target_faction_id].diff_level;
         if (diff > DLVL_LIBRARIAN) {
             cost = (cost * 3) / diff;
         }
     }
-    BOOL has_pact = has_treaty(faction_id, target_faction_id, DTREATY_PACT);
+    BOOL has_pact = PlayersData[faction_id].diplo_treaties[target_faction_id] & DTREATY_PACT;
     if (is_corner_market) {
         if (has_pact) {
             cost /= 2;
         }
-        if (has_treaty(faction_id, target_faction_id, DTREATY_TREATY)) {
+        if (PlayersData[faction_id].diplo_treaties[target_faction_id] & DTREATY_TREATY) {
             cost /= 2;
         }
         int tech_comm_target = PlayersData[target_faction_id].tech_commerce_bonus;
@@ -133,9 +145,9 @@ int __cdecl mind_control(int base_id, int faction_id, BOOL is_corner_market) {
     if (base_state & BSTATE_GOLDEN_AGE_ACTIVE) {
         cost *= 2;
     }
-    if (has_treaty(target_faction_id, faction_id, DTREATY_ATROCITY_VICTIM)) {
+    if (PlayersData[target_faction_id].diplo_treaties[faction_id] & DTREATY_ATROCITY_VICTIM) {
         cost *= 2;
-    } else if (has_treaty(target_faction_id, faction_id, DTREATY_WANT_REVENGE)) {
+    } else if (PlayersData[target_faction_id].diplo_treaties[faction_id] & DTREATY_WANT_REVENGE) {
         cost += cost / 2;
     }
     return cost;
@@ -156,19 +168,24 @@ Return Value: Success rate of probe
 Status: Complete
 */
 int __cdecl success_rates(int id, int morale, int diff_modifier, int base_id) {
-    char probe_chances[25];
+    if (morale < 1) {
+        morale = 1;
+    }
+    StringTemp[0] = '\0';
     int success_rate;
     if (diff_modifier < 0) {
-        strcpy_s(probe_chances, 25, "100%");
+        strcat(StringTemp, "100%");
         success_rate = diff_modifier;
     } else {
-        if (morale < 1) {
-            morale = 1;
-        }
-        int prb_defense = (base_id != -1 && has_fac_built(FAC_COVERT_OPS_CENTER, base_id)) ? 2 : 0;
-        prb_defense = range(PlayersData[ProbeTargetFactionID].soc_effect_active.probe 
+        // The image evaluates prb_defense twice, once for failure_rate and again
+        // for loss_rate - it never caches it in a shared local, and each use
+        // makes its own real has_fac_built() call (via has_fac_built_call's
+        // bitmask() E8, matching the image's two `call 0x50ba00` sites).
+        int prb_defense = (base_id != -1 && has_fac_built_call(FAC_COVERT_OPS_CENTER, base_id))
+            ? 2 : 0;
+        prb_defense = range(PlayersData[ProbeTargetFactionID].soc_effect_active.probe
             + prb_defense, -2, 0);
-        uint32_t failure_rate = (diff_modifier * 100) / ((morale / 2) - prb_defense + 1);
+        int failure_rate = (diff_modifier * 100) / ((morale / 2) - prb_defense + 1);
         if (ProbeHasAlgoEnhancement && !ProbeTargetHasHSA) {
             failure_rate /= 2; // Algo Ench: failure cut in half when acting against normal targets
         }
@@ -176,18 +193,32 @@ int __cdecl success_rates(int id, int morale, int diff_modifier, int base_id) {
         if (ProbeTargetHasHSA) {
             success_rate /= 2; // Chance of success is half what the chance would have been w/o HSA
         }
-        uint32_t loss_rate = ((diff_modifier + 1) * 100) / (morale - prb_defense);
+        say_num(success_rate);
+        strcat(StringTemp, "%");
+
+        int prb_defense_2 = (base_id != -1 && has_fac_built_call(FAC_COVERT_OPS_CENTER, base_id))
+            ? 2 : 0;
+        prb_defense_2 = range(PlayersData[ProbeTargetFactionID].soc_effect_active.probe
+            + prb_defense_2, -2, 0);
+        int loss_rate = ((diff_modifier + 1) * 100) / (morale - prb_defense_2);
         if (ProbeHasAlgoEnhancement && !ProbeTargetHasHSA) {
             loss_rate /= 2;
         }
         int survival_rate = 100 - loss_rate;
         if (ProbeTargetHasHSA) {
-            survival_rate /= 2; // bug fix: original had an erroneous 2nd hit to successRate
+            // BUG IN THE ORIGINAL: this hits success_rate a second time instead
+            // of halving survival_rate - the image's ProbeTargetHasHSA branch
+            // here divides edi (still holding success_rate) rather than esi
+            // (survival_rate). Reproduced deliberately; a "fixed" version that
+            // divides survival_rate here does not match the shipped bytes.
+            success_rate /= 2;
         }
-        // this check was removed in my unofficial patch, leaving it as is
-        (survival_rate == success_rate) ? sprintf_s(probe_chances, 25, "%d%%", success_rate)
-            : sprintf_s(probe_chances, 25, "%d%%, %d%%", success_rate, survival_rate);
+        if (survival_rate != success_rate) {
+            strcat(StringTemp, ", ");
+            say_num(survival_rate);
+            strcat(StringTemp, "%");
+        }
     }
-    parse_says(id, probe_chances, -1, -1);
+    parse_says(id, StringTemp, -1, -1);
     return success_rate;
 }

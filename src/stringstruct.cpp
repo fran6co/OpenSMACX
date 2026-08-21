@@ -195,7 +195,14 @@ Purpose: Release every entry in the list, notifying the owner about each
 //        call_diff to 0 disagreeing.
 Status: Complete
 */
-void StringStruct::remove_all() {
+// inline: sub_4066c0 (0x004066C0) calls this twice through
+// close_with_tables/close and makes NO real calls at all in the image, so
+// this must fold there too. Plain `inline` (not MEASURED/dllexport), since
+// `remove_all` has external linkage as a public member either way - the
+// out-of-line 0x00402970 body stays reachable through the other callers in
+// this file, and `MEASURED` here would force a matching dllexport onto the
+// header declaration this file shares with unrelated translation units.
+inline void StringStruct::remove_all() {
     if (!head_) {
         return;
     }
@@ -246,7 +253,7 @@ Purpose: Reset the list to its constructed state, installing both virtual
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
-void StringStruct::close_with_tables(uint32_t primary, uint32_t virtual_base) {
+inline void StringStruct::close_with_tables(uint32_t primary, uint32_t virtual_base) {
     uint8_t *const base = reinterpret_cast<uint8_t *>(this);
     *reinterpret_cast<volatile uint32_t *>(base) = primary;
     // The virtual base's table is reached through the displacement held in the
@@ -266,7 +273,10 @@ void StringStruct::close_with_tables(uint32_t primary, uint32_t virtual_base) {
     current_position_ = 0;
 }
 
-void StringStruct::close() {
+// inline: sub_4066c0 (0x004066C0) calls this and makes NO real calls at all
+// in the image, so this must fold there too - same reasoning as
+// remove_all() above (plain `inline`, not MEASURED).
+inline void StringStruct::close() {
     close_with_tables(StringStructVtable, StringStructVirtualBaseVtable);
 }
 
