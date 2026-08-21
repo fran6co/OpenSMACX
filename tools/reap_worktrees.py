@@ -9,6 +9,17 @@ each a full checkout of the tree.
 
     uv run tools/reap_worktrees.py            # report only
     uv run tools/reap_worktrees.py --reap     # actually remove
+    uv run tools/reap_worktrees.py --experiments --reap   # also refute-*
+
+`--experiments` additionally reaps `refute-*` worktrees whose files differ from
+the main checkout. Those are EXPERIMENTS BY CONSTRUCTION: a Workflow refute
+agent is told to apply a proposed fix in its own worktree in order to MEASURE
+it, and the measurement comes back in its verdict - the diff is scratch. 57 of
+them survived one run, each a full checkout, because the fourth refusal cannot
+tell a scratch edit from uncollected work.
+
+It is deliberately not the default and deliberately narrow: `agent-*` worktrees
+are where real recovery happens and are never covered by it.
 
 FOUR REFUSALS, and they are the point. A worktree is reaped only when all four
 pass:
@@ -20,7 +31,8 @@ pass:
     regardless.
   * NOT AHEAD of master. A branch carrying its own commits has work that was
     never collected, whatever its working tree looks like.
-  * every DIRTY file is byte-identical to the main checkout's copy. That is
+  * every DIRTY file is byte-identical to the main checkout's copy - unless
+    `--experiments` is given and the worktree is a `refute-*` one, see above. That is
     what "already collected" means here: the coordinator applied the diff and
     committed it, so the two files agree. A dirty file that DIFFERS is
     uncollected work and stops the whole worktree from being reaped.
@@ -111,8 +123,12 @@ def why_not(entry: dict, dirty_here: set) -> str | None:
     ahead = git("rev-list", "--count", "master..HEAD", cwd=path).strip()
     if ahead != "0":
         return f"branch is {ahead} commit(s) ahead of master - uncollected"
+    experiment = (Path(entry["worktree"]).name.startswith("refute-")
+                  and "--experiments" in sys.argv)
     for line in git("status", "--porcelain", cwd=path).splitlines():
         name = line[3:].strip().strip('"')
+        if experiment:
+            continue
         theirs, ours = path / name, REPO_ROOT / name
         if not ours.exists():
             return f"{name} exists only in the worktree - uncollected"
