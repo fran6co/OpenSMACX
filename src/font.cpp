@@ -42,6 +42,19 @@ Purpose: Initialize the class using the font name, height and style.
 // flags     sp_ready;purged_ok
 // calls     0x00644EF2 0x00645470
 // indirect  0x00618F83 0x00618F94 0x00618FC3 0x00619043 0x0061906C 0x0061907A 0x006190AB 0x006190B9
+// LEVER: WRONG CALLEE, three parts. (1) close() (0x00619230, in-class
+//        MEASURED method) hand-inlined at the `else` site - the image's
+//        only calls here are free() (0x00644EF2, inside close()'s body)
+//        and strcat (0x00645470), never a call to close() itself.
+//        (2) strcat, not strcpy_s: the image zeroes lfFaceName[0] then
+//        strcat()s font_name onto the empty string. (3) branch polarity -
+//        the image falls THROUGH into the close()-teardown arm and jumps
+//        to skip it, i.e. `if (!(is_fot_set_ & 1)) { close-teardown }
+//        else { simple }`, not the other way around. All three together:
+//        best similarity 0.958 (95/130), up from a WRONG CALLEE baseline.
+// RULED-OUT: residual gap is LOGFONT bitfield computation order
+//        (lfUnderline/lfItalic extraction, ascent_/height_/descent_ store
+//        order) - register-scheduling noise not chased further here.
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -49,7 +62,30 @@ int Font::init(LPCSTR font_name, int height, int style) {
     if (!font_name) {
         return 3;
     }
-    if (is_fot_set_ & 1) {
+    if (!(is_fot_set_ & 1)) {
+        // close() (0x00619230, in-class MEASURED method) is hand-inlined
+        // here: the image writes its whole body out at this call site
+        // (free(), the only call it makes, is the one it keeps), rather
+        // than calling out to it. LEVER: guard clause polarity - the image
+        // falls through into this (the `else` arm originally) rather than
+        // jumping to it, so the condition is inverted to match.
+        unk_1_ = -1;
+        height_ = 0;
+        line_height_ = 0;
+        ascent_ = 0;
+        descent_ = 0;
+        if (font_obj_) {
+            DeleteObject(font_obj_);
+            font_obj_ = 0;
+        }
+        if (fot_file_name_) {
+            RemoveFontResourceA(fot_file_name_);
+            if (fot_file_name_) {
+                free(fot_file_name_);
+            }
+            fot_file_name_ = 0;
+        }
+    } else {
         line_height_ = 0;
         height_ = 0;
         ascent_ = 0;
@@ -58,8 +94,6 @@ int Font::init(LPCSTR font_name, int height, int style) {
             DeleteObject(font_obj_);
             font_obj_ = 0;
         }
-    } else {
-        close();
     }
     LOGFONT lf;
     lf.lfHeight = -height;
@@ -75,7 +109,11 @@ int Font::init(LPCSTR font_name, int height, int style) {
     lf.lfClipPrecision = 0;
     lf.lfQuality = 0;
     lf.lfPitchAndFamily = 0;
-    strcpy_s(lf.lfFaceName, 32, font_name);
+    // WRONG CALLEE: the image calls strcat (0x00645470), not strcpy - it
+    // zeroes lfFaceName[0] first (an empty string) and strcat()s onto it,
+    // rather than strcpy_s()-ing directly.
+    lf.lfFaceName[0] = 0;
+    strcat(lf.lfFaceName, font_name);
     font_obj_ = CreateFontIndirectA(&lf);
     if (!font_obj_) {
         return 13;

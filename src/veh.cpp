@@ -39,16 +39,9 @@ int VehMoraleModifierCount; // only used by say_morale(), optimize to local var?
 // Battle related globals
 LPSTR VehBattleDisplayTerrain;
 
-// has_fac_built(), open-coded with a REAL bitmask() call via `bitmask_call`
-// (general.h) rather than the folded shift/and `MEASURED inline bitmask`
-// gives everywhere else - the same helper base.cpp defines for cost_factor,
-// pop_goal and num_objectives, redeclared here because it is `static` there.
-static __forceinline bool has_fac_built_call(int facility_id, int base_id) {
-    int offset;
-    int mask;
-    bitmask_call(facility_id, &offset, &mask);
-    return (Bases[base_id].facilities_built[offset] & mask) != 0;
-}
+// has_fac_built_call() (real bitmask() call, general.h bitmask_call) is now
+// declared in base.h, which this file already includes - no local
+// redeclaration needed.
 
 /*
 Purpose: Generate an output string for the specified unit's morale.
@@ -1673,7 +1666,7 @@ int __cdecl weap_strat(int weapon_id, int faction_id) {
 
 /*
 Purpose: Calculate the weapon value for the specified prototype.
-// ORIGINAL: 0x0057D360 ?weap_val@@YAHHH@Z 0x0057D360-0x0057D3ED
+// ORIGINAL: 0x0057D360 ?weap_val@@YAHHH@Z 0x0057D360-0x0057D3ED BYTE_EXACT
 // size      141 bytes
 // prototype int (__cdecl ?weap_val@@YAHHH@Z)(int protoID, int factionID)
 // callers   5   call targets   1
@@ -1684,7 +1677,29 @@ Return Value: Weapon value
 Status: Complete
 */
 int __cdecl weap_val(int proto_id, int faction_id) {
-    return weap_strat(VehPrototypes[proto_id].weapon_id, faction_id);
+    // weap_strat() (0x0057D2E0, BYTE_EXACT as its own out-of-line function)
+    // is hand-inlined here: the image writes its whole body out at this
+    // call site (psi_factor() is the only call it keeps), rather than
+    // calling 0x0057D2E0.
+    int weapon_id = VehPrototypes[proto_id].weapon_id;
+    if (!ExpansionEnabled) {
+        if (weapon_id == WPN_RESONANCE_LASER) {
+            return 1;
+        }
+        if (weapon_id == WPN_RESONANCE_BOLT) {
+            return 1;
+        }
+        if (weapon_id == WPN_STRING_DISRUPTOR) {
+            return 1;
+        }
+    }
+    int8_t offense_rating = Weapon[weapon_id].offense_rating;
+    if (offense_rating < 0) {
+        return psi_factor(((int)Rules->psi_combat_ratio_atk[TRIAD_LAND]
+            * PlayersData[faction_id].enemy_best_armor_value)
+            / (int)Rules->psi_combat_ratio_def[TRIAD_LAND], faction_id, true, false);
+    }
+    return offense_rating;
 }
 
 /*
@@ -1696,12 +1711,41 @@ Purpose: Calculate the armor value for the specified armor id.
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x00501500
+// LEVER: WRONG CALLEE - arm_strat() (0x0057D270, own out-of-line function)
+//        is hand-inlined at this site, matching the image's one call
+//        (psi_factor), not arm_strat. Best similarity 0.980 (14->44 of 48).
+// RULED-OUT: the residual 2-instruction gap is the SAME `Armor[armor_id]
+//        .defense_rating` base-fold quirk already documented and left as-is
+//        on arm_strat itself (0x0057D270) - the image folds
+//        `armor_id*16 + 0x94F280` into `shl eax,4` + a displaced `mov`,
+//        this tree's toolchain pre-adds the base under every flag set.
+//        Carried into this hand-inlined copy for free; not re-chased here.
 Return Value: Armor value
 Status: Complete
 */
 int __cdecl arm_val(int armor_id, int faction_id) {
-    return ((faction_id >= 0) ? arm_strat(armor_id, faction_id) : Armor[armor_id].defense_rating)
-        * 2;
+    // arm_strat() (0x0057D270, own out-of-line function) is hand-inlined
+    // here: the image writes its whole body out at this call site
+    // (psi_factor() is the only call it keeps), rather than calling
+    // 0x0057D270.
+    int defense;
+    if (faction_id >= 0) {
+        if (!ExpansionEnabled && armor_id > ARM_PSI_DEFENSE) {
+            defense = 1;
+        } else {
+            int8_t defense_rating = Armor[armor_id].defense_rating;
+            if (defense_rating < 0) {
+                defense = psi_factor(((int)Rules->psi_combat_ratio_def[TRIAD_LAND]
+                    * PlayersData[faction_id].enemy_best_weapon_value)
+                    / (int)Rules->psi_combat_ratio_atk[TRIAD_LAND], faction_id, false, false);
+            } else {
+                defense = defense_rating;
+            }
+        }
+    } else {
+        defense = Armor[armor_id].defense_rating;
+    }
+    return defense * 2;
 }
 
 /*
@@ -1713,11 +1757,39 @@ Purpose: Calculate the armor value for the specified prototype.
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x00501500
+// LEVER: WRONG CALLEE - arm_val() (0x0057D3F0) and arm_strat() (0x0057D270)
+//        are both hand-inlined at this site, matching the image's one call
+//        (psi_factor), not arm_val. Best similarity 0.981.
+// RULED-OUT: same `Armor[armor_id].defense_rating` base-fold quirk as
+//        arm_strat/arm_val (see arm_val's own note above) - not re-chased
+//        here either.
 Return Value: Armor value
 Status: Complete
 */
 int __cdecl armor_val(int proto_id, int faction_id) {
-    return arm_val(VehPrototypes[proto_id].armor_id, faction_id);
+    // arm_val() (0x0057D3F0) and arm_strat() (0x0057D270) are both
+    // hand-inlined here: the image writes the whole chain out at this call
+    // site (psi_factor() is the only call it keeps), rather than calling
+    // 0x0057D3F0.
+    int armor_id = VehPrototypes[proto_id].armor_id;
+    int defense;
+    if (faction_id >= 0) {
+        if (!ExpansionEnabled && armor_id > ARM_PSI_DEFENSE) {
+            defense = 1;
+        } else {
+            int8_t defense_rating = Armor[armor_id].defense_rating;
+            if (defense_rating < 0) {
+                defense = psi_factor(((int)Rules->psi_combat_ratio_def[TRIAD_LAND]
+                    * PlayersData[faction_id].enemy_best_weapon_value)
+                    / (int)Rules->psi_combat_ratio_atk[TRIAD_LAND], faction_id, false, false);
+            } else {
+                defense = defense_rating;
+            }
+        }
+    } else {
+        defense = Armor[armor_id].defense_rating;
+    }
+    return defense * 2;
 }
 
 /*

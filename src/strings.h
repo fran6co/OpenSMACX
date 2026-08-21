@@ -61,7 +61,10 @@ class Strings : public Heap {
   MEASURED ~Strings() { }              // 006169C0
 
   BOOL init(size_t mem_size);
-  void shutdown();
+  // CORRECTED: the image's mangled name decorates an `int` return
+  // (?shutdown@Strings@@QAEHXZ) and its tail is `xor eax, eax; ret`, not a
+  // bare `ret` - see strings.cpp's marker.
+  int shutdown();
   LPSTR put(LPCSTR input);
   LPSTR get(int address);
 

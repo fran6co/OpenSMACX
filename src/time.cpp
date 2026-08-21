@@ -96,11 +96,39 @@ Purpose: Start an instance of the class with a single parameter callback.
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005FD370
 // indirect  0x0061636E 0x0061637C 0x006163D8 0x006163ED
+// LEVER: WRONG CALLEE - init() (0x00616260, BYTE_EXACT as its own
+//        out-of-line function) is hand-inlined here: the image writes its
+//        whole body out at this call site (flush_timer(), reached via
+//        stop(), is the only call it keeps), rather than calling
+//        0x00616260. MNEMONIC_ONLY, 65/69, 1.000 similar under /c /O2 /Gy
+//        /GR- /GX - `semantic` REFUSES on a displacement, not a register.
+// RULED-OUT: store_order.py shows the image storing cb_param1_ (offset
+//        0x14) BEFORE oneshot_state_/tick_posted_/unk_2_/callback1_ here -
+//        a DIFFERENT order than the declaration order that keeps init()
+//        itself BYTE_EXACT. Reordering this copy's assignments to match
+//        (cb_param1_ first) made it WORSE (MISMATCH, 57/69, best 0.971
+//        similar) - the compiler's actual scheduling here is driven by
+//        operand availability at this specific inlined call site, not
+//        source order, and is not reachable by reordering the source.
+//        Left in init()'s own declaration order.
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
 uint32_t Time::start(void(__cdecl *callback)(int), int param, uint32_t cnt, uint32_t res) {
-    init(callback, param, cnt, res);
+    // init() (0x00616260, BYTE_EXACT as its own out-of-line function) is
+    // hand-inlined here: the image writes its whole body out at this call
+    // site (init() itself inlines stop(), whose flush_timer() call is the
+    // only one that survives), rather than calling 0x00616260.
+    stop();
+    callback1_ = callback;
+    oneshot_state_ = 0;
+    tick_posted_ = 0;
+    unk_2_ = 0;
+    callback2_ = 0;
+    cb_param2_ = 0;
+    cb_param1_ = param;
+    count_ = cnt;
+    resolution_ = res;
     if (!callback) {
         return 7;
     }
@@ -158,11 +186,28 @@ Purpose: Start a pulse instance of the class with a single parameter callback.
 // flags     sp_ready;purged_ok
 // calls     0x005FD370
 // indirect  0x006164EE 0x006164FC 0x00616558 0x0061656D
+// LEVER: WRONG CALLEE - same fix as the `start` sibling immediately above:
+//        init() hand-inlined here. MNEMONIC_ONLY, 63/69, 1.000 similar.
+//        See that note for the store-order RULED-OUT (measured identically
+//        here).
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
 uint32_t Time::pulse(void(__cdecl *callback)(int), int param, uint32_t cnt, uint32_t res) {
-    init(callback, param, cnt, res);
+    // init() (0x00616260, BYTE_EXACT as its own out-of-line function) is
+    // hand-inlined here: the image writes its whole body out at this call
+    // site (init() itself inlines stop(), whose flush_timer() call is the
+    // only one that survives), rather than calling 0x00616260.
+    stop();
+    callback1_ = callback;
+    oneshot_state_ = 0;
+    tick_posted_ = 0;
+    unk_2_ = 0;
+    callback2_ = 0;
+    cb_param2_ = 0;
+    cb_param1_ = param;
+    count_ = cnt;
+    resolution_ = res;
     if (!callback) {
         return 7;
     }
