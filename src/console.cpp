@@ -450,7 +450,7 @@ int Console::focus(int x_coord, int y_coord, int faction_id) {
     // 0x00510991 test / 0x00510993 je / 0x00510995 call - once, after the whole
     // eight-slot walk, never inside it.
     if (focused != 0) {
-        ConsoleOriginalFlushInput();
+        flush_input();
     }
     return focused;
 }

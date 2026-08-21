@@ -180,7 +180,7 @@ void __fastcall auto_sound_init_redirect(AutoSound *self, void *) {
 Purpose: The compiler-generated scalar deleting destructor: re-install the
          virtual table, reset the fields through close, and, when bit 0 of
          the mode asks, free the storage to the game heap.
-// ORIGINAL: 0x005F8640 ??_GAutoSound@@UAEPAXI@Z 0x005F8640-0x005F8664
+// ORIGINAL: 0x005F8640 ??_GAutoSound@@UAEPAXI@Z 0x005F8640-0x005F8664 BYTE_EXACT
 // symbol    ?auto_sound_scalar_dtor_redirect@@YIPAXPAVAutoSound@@PAXI@Z
 // size      36 bytes
 // prototype void* (__thiscall ??_GAutoSound@@UAEPAXI@Z)(AutoSound* this, unsigned int)
@@ -196,7 +196,7 @@ void *__fastcall auto_sound_scalar_dtor_redirect(AutoSound *self, void *,
     *reinterpret_cast<volatile uint32_t *>(self) = AutoSoundVtable;
     self->close();
     if (mode & 1) {
-        AutoSoundOperatorDelete(self);
+        operator delete(self);
     }
     return self;
 }

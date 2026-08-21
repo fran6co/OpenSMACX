@@ -421,7 +421,7 @@ void __fastcall dialog_destructor_redirect(Dialog *self, void *) {
 Purpose: The compiler-generated scalar deleting destructor: run the complete
          destructor and free the storage through the executable's operator
          delete only when bit 0 of the mode asks. Always returns the object.
-// ORIGINAL: 0x00609D90 ??_GDialog@@UAEPAXI@Z 0x00609D90-0x00609DAE
+// ORIGINAL: 0x00609D90 ??_GDialog@@UAEPAXI@Z 0x00609D90-0x00609DAE BYTE_EXACT
 // symbol    ?dialog_scalar_dtor_redirect@@YIPAXPAVDialog@@PAXI@Z
 // size      30 bytes
 // prototype void* (__thiscall ??_GDialog@@UAEPAXI@Z)(Dialog* this, unsigned int)
@@ -436,7 +436,7 @@ void *__fastcall dialog_scalar_dtor_redirect(
         Dialog *self, void *, unsigned int mode) {
     self->destroy();
     if (mode & 1) {
-        DialogOperatorDelete(self);
+        operator delete(self);
     }
     return self;
 }

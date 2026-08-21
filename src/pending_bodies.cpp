@@ -543,6 +543,11 @@ void CheckBox::set_state_flag(long value) {  // 0x0060ECE0
     PENDING_BODY(0x0060ECE0, pending)(this, nullptr, value);
 }
 
+void __cdecl flush_input() {  // 0x005FD120
+    typedef void(__cdecl *pending)();
+    PENDING_BODY(0x005FD120, pending)();
+}
+
 // ?write_raw_l@Buffer@@QAEHPADHHH@Z at 0x005DBD00 - 1475 bytes, the raster
 // writer that puts one single-font run on the surface. Called by name from
 // `write_multi_font_raw_l`, which is promoted; a pointer here would cost that
