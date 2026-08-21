@@ -107,6 +107,15 @@ class Net {
   void close();
 
  public:
+  // 0x00631A60 and 0x006320E0, pending_bodies forwarders. `do_net` and
+  // `check_net` TAIL JUMP to these - `jmp 0x631a60` and `jmp 0x6320e0`, read
+  // off the image rather than guessed; my first pass wrote two addresses that
+  // were nothing. Neither body is recovered yet, but naming them is what lets
+  // those two emit the image's `E8`.
+  void process_voice();
+  void check_polling();
+
+ public:
   Net() { ; }
   ~Net() { ; }
   int poll_players(int);
@@ -198,3 +207,15 @@ class Net {
 int __fastcall net_poll_players_redirect(Net *self, void *, int a1);
 char *__fastcall net_get_player_name_redirect(
     Net *self, void *, unsigned long key);
+
+// THE LIVE NET AND THE FLAG THAT GATES IT. `do_net` and `check_net` both read
+// 0x009BE608 for the object and 0x009BE600 for the enable flag, and do nothing
+// unless both are set. Defined here rather than declared `extern`, so each
+// unit folds them to the image's absolute operand - see the note in
+// `init_thunks.h`.
+// AN `inline T *&` ACCESSOR, not a `Net **const`. The latter is a variable
+// holding the address, so `*NetCurrent` compiles TWO loads - `mov eax, [addr];
+// mov ecx, [eax]` - where the image has one, `mov ecx, [0x9be608]`. This is
+// the same form `BaseCurrent()` and `console_map_win()` already use.
+inline Net *&NetCurrent() { return *reinterpret_cast<Net **>(0x009BE608); }
+uint32_t *const NetEnabled = (uint32_t *)0x009BE600;
