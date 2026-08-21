@@ -127,4 +127,21 @@ Fn &vtable_slot(const void *object, unsigned long offset) {
   return *reinterpret_cast<Fn *>(const_cast<unsigned char *>(vtable) + offset);
 }
 
+/*
+ * The same slot as a POINTER-TO-MEMBER REFERENCE, for a dispatch that takes
+ * arguments. `vtable_slot` above needs a `__fastcall` shim, and VC6 puts the
+ * second parameter in edx - so a two-argument dispatch pays a `xor edx, edx`
+ * the image does not have, and `__thiscall` is not spellable on a free
+ * function pointer (C4234). A pointer-to-member IS `__thiscall`, and taking
+ * the slot by reference rather than by value leaves the call operand where it
+ * lives, which is what removes the `mov`.
+ */
+template <class Method>
+Method &vtable_method(const void *object, unsigned long offset) {
+  const unsigned char *const vtable =
+      *reinterpret_cast<const unsigned char *const *>(object);
+  return *reinterpret_cast<Method *>(const_cast<unsigned char *>(vtable)
+                                     + offset);
+}
+
 #define ORIGINAL(pointer) (reinterpret_cast<OriginalObject *>(pointer))
