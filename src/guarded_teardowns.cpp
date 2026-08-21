@@ -219,7 +219,7 @@ void __cdecl teardown_g_console() {
 Purpose: sub_589890 - run 1 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
-// ORIGINAL: 0x00589890 sub_589890 0x00589890-0x0058989A
+// ORIGINAL: 0x00589890 sub_589890 0x00589890-0x0058989A BYTE_EXACT
 // symbol    ?teardown_00589890@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -231,7 +231,10 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl teardown_00589890() {
-    (ORIGINAL(TeardownObject009403E0)->*original_method<func_thiscall_teardown>(original_address(PopupDtorTarget)))();
+    // THIS SITE is why `convert_seams --dtors` refused PopupDtorTarget: it read
+    // the seam as a VALUE through `original_address`, so the pointer could not
+    // be retired while it stood. It is a named destructor call now.
+    reinterpret_cast<Popup *>(TeardownObject009403E0)->Popup::~Popup();
 }
 
 /*
