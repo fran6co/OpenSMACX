@@ -1411,6 +1411,10 @@ struct MFaction {
 /* 0x4 bytes, 1 member(s), 0 named. From its own code, which reaches that far. 2 function(s) in the image. */
 class MainMenu {
  public:
+  // 0x00460DD0, a pending_bodies forwarder.
+  void check(int veh_id);
+
+ public:
   uint32_t field_0_;  // 0x0
 };
 

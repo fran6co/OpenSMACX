@@ -302,8 +302,6 @@ int32_t *const ConsoleExitTurnLoop = (int32_t *)0x009B2068;  // 0x009B2068
 // original embeds at +0x22A2C. MainMenu::check (0x00460DD0, 4782 bytes) is
 // unrecovered and MainMenu has no header in src/, so this is a seam rather
 // than a declared type.
-typedef void (OriginalObject::*func_main_menu_check)(int veh_id);
-extern func_main_menu_check ConsoleOriginalMainMenuCheck;  // 0x00460DD0
 
 int __fastcall console_focus_redirect(Console *self, void *, int x_coord,
                                       int y_coord, int faction_id);

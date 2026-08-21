@@ -287,8 +287,6 @@ void __fastcall console_update_data_redirect(Console *self, void *, int a1) {
     self->update_data(a1);
 }
 
-func_main_menu_check ConsoleOriginalMainMenuCheck =
-    original_method<func_main_menu_check>(0x00460DD0);
 
 /*
 Purpose: Point the map windows at one tile on behalf of one faction. Build a
@@ -510,7 +508,7 @@ void Console::editor_redo() {
 }
 
 /*
-// ORIGINAL: 0x0051D740 ?menu_update@Console@@QAEXXZ 0x0051D740-0x0051D753
+// ORIGINAL: 0x0051D740 ?menu_update@Console@@QAEXXZ 0x0051D740-0x0051D753 BYTE_EXACT
 // size      19 bytes
 // prototype void (__thiscall ?menu_update@Console@@QAEXXZ)(Console* this)
 // callers   0   call targets   1
@@ -522,7 +520,7 @@ Status: Complete
 void Console::menu_update() {
     char *self = reinterpret_cast<char *>(this);
     int v = *reinterpret_cast<int *>(self + 0x23bdc);
-    (ORIGINAL(self + 0x22a2c)->*ConsoleOriginalMainMenuCheck)(v);
+    reinterpret_cast<MainMenu *>(self + 0x22a2c)->MainMenu::check(v);
 }
 
 /*
