@@ -130,6 +130,22 @@ Status: Complete
 */
 // BODY IN faction.h, as `MEASURED inline`: name_base (base.cpp) is the caller
 // that needs it folded in place, matching the image.
+// LEVER: calling `parse_set(...)` grouped the two field reads together (matching
+//        the image's read/read/store/store order) but gave the temps the wrong
+//        registers (edx for gender, ecx for plurality). Assigning `*GenderDefault`
+//        and `*PluralityDefault` directly, without going through parse_set, keeps
+//        the image's register choice (ecx for gender, edx for plurality) - moved
+//        10/15 -> 12/15. Remaining divergence: the image computes the
+//        `noun_faction` return pointer (`lea eax,[eax+0x946d34]`) only after BOTH
+//        stores; this tree's O2 hoists that address computation right after the
+//        first read and reaches the second field off the new eax
+//        (`mov edx,[eax+0x1c]`) instead of off the original one - scheduling only.
+// RULED-OUT: `Player *player = &Players[faction_id];` then player->field (4/15,
+//            worse - address-of-record defeats the folded multiply); hoisting
+//            the two reads into named `int`/`BOOL` locals before both stores
+//            (10/15, worse - same register/ordering issue as the parse_set call);
+//            storing plurality before gender (still 12/15, no change - the
+//            compiler canonicalizes either source order the same way).
 
 /*
 Purpose: Determine whether automatic contact is enabled for net or PBEM games.
@@ -1177,7 +1193,13 @@ int __cdecl territory(int faction_id, int faction_id_with, int flags, int *base_
 
 /*
 Purpose: Determine the ideal unit count to protect a faction's bases in the specified land region.
-// ORIGINAL: 0x00560D50 ?guard_check@@YAHHH@Z 0x00560D50-0x00560DC3
+// ORIGINAL: 0x00560D50 ?guard_check@@YAHHH@Z 0x00560D50-0x00560DC3 BYTE_EXACT
+// LEVER: `plan_region` as `uint32_t` forced the image's byte load into a
+//        zero-extend (`xor edx,edx; mov dl,...`) followed by 32-bit `cmp edx,N`;
+//        the field is `uint8_t region_base_plan[128]`, and typing the local
+//        `uint8_t` drops the `xor` and compares `dl` directly, matching the
+//        image byte-for-byte. Also needed `--flags` with `/Oy-` to see the kept
+//        frame pointer - the tool's own default flag set omits it.
 // size      115 bytes
 // prototype int (__cdecl ?guard_check@@YAHHH@Z)(int factionID, int region)
 // callers   1   call targets   0
@@ -1192,7 +1214,7 @@ int __cdecl guard_check(int faction_id, int region) {
         return 0;
     }
     int factor = 2 - PlayersData[faction_id].ai_fight;
-    uint32_t plan_region = PlayersData[faction_id].region_base_plan[region];
+    uint8_t plan_region = PlayersData[faction_id].region_base_plan[region];
     if (plan_region == PLAN_COLONIZATION) {
         factor += 2;
     } else if (plan_region == PLAN_DEFENSIVE) {
