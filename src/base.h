@@ -543,7 +543,6 @@ BOOL __cdecl has_fac_announced(uint32_t faction_id, uint32_t facility_id);
 void __cdecl set_fac_announced(uint32_t faction_id, uint32_t facility_id, BOOL set);
 void __cdecl base_first(int base_id);
 int __cdecl morale_mod(int base_id, int faction_id, int triad);
-int __cdecl breed_mod(int base_id, int faction_id);
 int __cdecl worm_mod(int base_id, int faction_id);
 int __cdecl crop_yield(int faction_id, int base_id, int x, int y,
                                  BOOL assume_improved);
@@ -578,7 +577,6 @@ int __cdecl vulnerable(int faction_id, int x, int y);
 BOOL __cdecl is_objective(int base_id);
 int __cdecl num_objectives(int faction_id, BOOL count_pact_factions);
 BOOL __cdecl transcending(int faction_id);
-BOOL __cdecl ascending(int UNUSED(faction_id) faction_id);
 BOOL __cdecl redundant(int facility_id, int faction_id);
 // ?facility_avail@@YAHHHHH@Z - the definition already takes int.
 BOOL __cdecl facility_avail(int facility_id, int faction_id, int base_id,
@@ -608,6 +606,41 @@ inline bool __cdecl has_fac_built(int facility_id, int base_id) {
 }
 
 inline bool __cdecl has_fac_built(int facility_id) {
-    return (facility_id >= FacilityRepStart) ? false
-        : has_fac_built(facility_id, BaseIDCurrentSelected);
+    int base_id = BaseIDCurrentSelected;
+    return (facility_id >= FacilityRepStart) ? false : has_fac_built(facility_id, base_id);
+}
+
+// BODY IN base.h, as `MEASURED inline` (marker stays in base.cpp): worm_mod
+// (base.cpp) is the caller that needs it folded in place - the image writes
+// breed_mod's whole body out there rather than calling 0x004E65C0.
+MEASURED inline int __cdecl breed_mod(int base_id, int faction_id) {
+    uint32_t lifecycle_modifier = has_project(SP_XENOEMPATYH_DOME, faction_id) ? 1 : 0;
+    if (has_project(SP_PHOLUS_MUTAGEN, faction_id)) {
+        lifecycle_modifier++;
+    }
+    if (has_project(SP_VOICE_OF_PLANET, faction_id)) {
+        lifecycle_modifier++;
+    }
+    if (has_fac(FAC_CENTAURI_PRESERVE, base_id, 0)) {
+        lifecycle_modifier++;
+    }
+    if (has_fac(FAC_TEMPLE_OF_PLANET, base_id, 0)) {
+        lifecycle_modifier++;
+    }
+    if (has_fac(FAC_BIOLOGY_LAB, base_id, 0)) {
+        lifecycle_modifier++;
+    }
+    if (has_fac(FAC_BIOENHANCEMENT_CENTER, base_id, 0)
+        || has_project(SP_CYBORG_FACTORY, faction_id)) {
+        lifecycle_modifier++;
+    }
+    return lifecycle_modifier;
+}
+
+// BODY IN base.h, as `MEASURED inline` (marker stays in base.cpp, where it
+// is already recorded BYTE_EXACT as a standalone function): facility_avail
+// (base.cpp) is the caller that needs it folded in place instead of calling
+// out to 0x005AC680.
+MEASURED inline BOOL __cdecl ascending(int UNUSED(faction_id) faction_id) {
+    return base_project(SP_VOICE_OF_PLANET) != SP_Unbuilt;
 }

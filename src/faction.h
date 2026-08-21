@@ -18,6 +18,7 @@
 #pragma once
 
 #include "game.h"  // ExpansionEnabled, which is_alien_faction inlines
+#include "general.h"  // parse_set, which get_noun below inlines
 #include "sprite.h"
 #include "stdafx.h"
 
@@ -613,7 +614,6 @@ void __cdecl psych_check(int faction_id, int *drones, int *talents);
 // while the definition in faction.cpp:113 kept the catalogued `int` form - so
 // the two were separate overloads and every call was `C2666: 2 overloads have
 // similar conversions`, 33 of them. AGENTS.md:85 states the rule.
-LPSTR __cdecl get_noun(int faction_id);
 BOOL __cdecl auto_contact();
 BOOL __cdecl great_beelzebub(int faction_id, BOOL is_aggressive);
 BOOL __cdecl great_satan(int faction_id, BOOL is_aggressive);
@@ -708,4 +708,12 @@ MEASURED inline uint32_t __cdecl social_upheaval(int faction_id, SocialCategory 
         cost += cost / 2;
     }
     return cost;
+}
+
+// BODY IN faction.h, as `MEASURED inline` (marker stays in faction.cpp):
+// name_base (base.cpp) needs this folded in place - the image never calls
+// get_noun out of line there.
+MEASURED inline LPSTR __cdecl get_noun(int faction_id) {
+    parse_set(Players[faction_id].noun_gender, Players[faction_id].is_noun_plural);
+    return Players[faction_id].noun_faction;
 }

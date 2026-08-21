@@ -179,6 +179,14 @@ MEASURED inline void __cdecl bitmask(int input, int *offset, int *mask) {
     *mask = 1 << (input & 7);
 }
 
+// Non-inline forwarder to `bitmask` above: a handful of call sites in
+// base.cpp (cost_factor, pop_goal, num_objectives) need a real
+// `call 0x50ba00` the way the image emits there, unlike the rest of
+// bitmask's 103 callers, most of which genuinely inline it. The E8 target
+// is a relocation on both sides and is discounted, so this symbol's own
+// name costs nothing.
+void __cdecl bitmask_call(int input, int *offset, int *mask);
+
 MEASURED inline int __cdecl btoi(LPCSTR str) {
     int result = 0;
     while (*str == '0' || *str == '1') {

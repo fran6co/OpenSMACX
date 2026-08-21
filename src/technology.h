@@ -166,7 +166,11 @@ extern char TechName[80];
 void __cdecl say_tech(int tech_id, BOOL category_lvl);
 BOOL __cdecl valid_tech_leap(int tech_id, int faction_id);
 void __cdecl say_tech(LPSTR output, int tech_id, BOOL category_lvl);
-BOOL __cdecl has_tech(int tech_id, int faction_id);
+// `has_tech` and `tech_recurse` are DEFINED below, both as `MEASURED inline`,
+// so neither carries a bare declaration here - an `extern` one alongside an
+// inline definition is C2375, "redefinition; different linkage". Two agents
+// moved one function each into this header from opposite sides of a merge,
+// which is how both declarations survived their own removals.
 int __cdecl tech_category(int tech_id);
 BOOL __cdecl tech_avail(int tech_id, int faction_id);
 void __cdecl tech_effects(int faction_id);
@@ -228,4 +232,28 @@ MEASURED inline BOOL __cdecl tech_is_preq(int preq_tech_id, int parent_tech_id, 
     }
     return tech_is_preq(preq_tech_id, Technology[parent_tech_id].preq_tech_1, range - 1)
         || tech_is_preq(preq_tech_id, Technology[parent_tech_id].preq_tech_2, range - 1);
+}
+
+// BODY IN technology.h, as `MEASURED inline` (marker stays in
+// technology.cpp): `__forceinline` in the .cpp only satisfies inlining
+// within that one translation unit - callers elsewhere (e.g. facility_avail
+// in base.cpp) got a real out-of-line call, where the image open-codes the
+// whole preq_tech walk at every one of its 109 call sites.
+MEASURED inline BOOL __cdecl has_tech(int tech_id, int faction_id) {
+    if (faction_id <= 0) {
+        return false;
+    }
+    if (tech_id == TechNone) {
+        return true;
+    }
+    if (tech_id < 0 || tech_id >= (MaxTechnologyNum - 1)) { // excludes 'Transcendent Thought'
+        return false;
+    }
+    RulesTechnology *tech = &Technology[tech_id];
+    if (tech->preq_tech_1 < TechNone
+        || (tech->preq_tech_2 < TechNone && tech->preq_tech_1 != TechNone)) {
+        // "none, disable" ; valid #TECH preq_tech entry
+        return false;
+    }
+    return ((1 << faction_id) & GameTechAchieved[tech_id]) != 0;
 }

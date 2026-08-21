@@ -17,6 +17,7 @@
  */
 #pragma once
 #include "faction.h"
+#include "strings.h"  // StringTable, which label_get below inlines
 
  /*
   * Parsing alpha/x.txt, 'Alpha Centauri.ini' and labels.txt
@@ -798,4 +799,11 @@ MEASURED inline void __cdecl clear_faction(Player *player) {
     player->rule_psi = 0;
     player->rule_sharetech = 0;
     player->rule_commerce = 0;
+}
+
+// BODY IN alpha.h: "Original Offset: n/a" - a helper the recovery added, not
+// a function the image has its own address for. `say_base` (base.cpp) needs
+// it to fold to `StringTable->get(...)` the way the image does.
+__forceinline LPSTR __cdecl label_get(int label_offset) {
+    return StringTable->get((int)*((LPSTR *)Labels->strings_ptr + label_offset));
 }

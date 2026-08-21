@@ -189,24 +189,10 @@ Purpose: Check whether faction has a particular tech or not.
 Return Value: Faction has tech? true/false
 Status: Complete
 */
-__forceinline BOOL __cdecl has_tech(int tech_id, int faction_id) {
-    if (faction_id <= 0) {
-        return false;
-    }
-    if (tech_id == TechNone) {
-        return true;
-    }
-    if (tech_id < 0 || tech_id >= (MaxTechnologyNum - 1)) { // excludes 'Transcendent Thought'
-        return false;
-    }
-    RulesTechnology *tech = &Technology[tech_id];
-    if (tech->preq_tech_1 < TechNone
-        || (tech->preq_tech_2 < TechNone && tech->preq_tech_1 != TechNone)) {
-        // "none, disable" ; valid #TECH preq_tech entry
-        return false;
-    }
-    return ((1 << faction_id) & GameTechAchieved[tech_id]) != 0;
-}
+// BODY IN technology.h, as `MEASURED inline`: `__forceinline` here only
+// satisfied inlining within this one translation unit - callers in OTHER
+// units (facility_avail in base.cpp) got a real out-of-line call where the
+// image open-codes the whole preq_tech walk at all 109 call sites.
 
 /*
 Purpose: Determine technology level for tech_id.

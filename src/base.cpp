@@ -122,6 +122,13 @@ Purpose: Check if the base already has a particular facility built or if it's in
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x0050BA00
+// LEVER: deleted the added `queue_count > 10` upper-bounds guard (see the
+//        BUG IN THE ORIGINAL comment at the site) - the image has no such
+//        check, only the for-loop's own entry test. Best similarity 0.755 ->
+//        0.779 (2/54 agreeing either way). This is a behavioural change, not
+//        just a byte-match one: a caller passing queue_count > 10 now walks
+//        past the end of queue_production_id, matching the original's own
+//        defect.
 Return Value: Does base already have or planning on building facility? true/false
 Status: Complete
 */
@@ -133,9 +140,12 @@ BOOL __cdecl has_fac(int facility_id, int base_id, int queue_count) {
     if (is_built || !queue_count) {
         return is_built;
     }
-    if (queue_count <= 0 || queue_count > 10) { // added upper bounds check for queueCount
-        return false;
-    }
+    // BUG IN THE ORIGINAL: no upper bound on queue_count. A caller passing
+    // queue_count > 10 (the queue_production_id array's real length) walks
+    // past the end of it. Reproduced deliberately - the image has no such
+    // guard, only the for-loop's own entry test (which is why queue_count
+    // <= 0 needed no separate check either: a negative count just never
+    // enters the loop).
     for (int i = 0; i < queue_count; i++) {
         if (Bases[base_id].queue_production_id[i] == -facility_id) {
             return true;
@@ -171,13 +181,23 @@ Purpose: Get base name string from base id and store it in base_str. If base id 
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x006169A0 0x00645470
+// LEVER: dropped std::string entirely for the image's two-branch form - a
+//        real strcat() call in each branch rather than selecting a pointer
+//        and calling once - and made label_get __forceinline (alpha.h) so it
+//        folds to `StringTable->get(...)` the way the image does. Best
+//        similarity 0.964 (16/28 agreeing, /c /O2 /Gy /GR- /Oy- /GX), up
+//        from 2/28. Residual: the image keeps a full ebp frame here and
+//        this tree's winning flag set omits it despite /Oy-, not chased
+//        further.
 Return Value: n/a
 Status: Complete
 */
 void __cdecl say_base(LPSTR base_str, int base_id) {
-    std::string output = (base_id >= 0) ? Bases[base_id].name_string : label_get(25); // 'NONE'
-    // assumes 1032 char buffer via stringTemp, eventually remove
-    strcat_s(base_str, 1032, output.c_str());
+    if (base_id < 0) {
+        strcat(base_str, label_get(25)); // 'NONE'
+    } else {
+        strcat(base_str, Bases[base_id].name_string);
+    }
 }
 
 /*
@@ -308,6 +328,13 @@ Purpose: Find the base id closest to the specified coordinates owned by faction.
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00644F3A
+// LEVER: open-coded the vector_dist(x, y, Bases[i].x, Bases[i].y) call as the
+//        x_dist()+abs()x4 expansion (same shape as the sibling base_find
+//        overloads) - the image never calls vector_dist, only abs() x4. Best
+//        similarity across flag sets moved 0.551 -> 0.920 (/c /O2 /Oi- /Gy
+//        /GR- /Oy- /GX, 5/84 agreeing), though the tool's auto-picked flag
+//        set only shows 5/84 vs the prior 4/84 - the similarity gain is the
+//        real signal.
 Return Value: Base id or -1 if not found
 Status: Complete
 */
@@ -319,7 +346,23 @@ int __cdecl base_find(int x, int y, int faction_id) {
     int base_id = -1;
     for (int i = 0; i < BaseCurrentCount; i++) {
         if (Bases[i].faction_id_current == faction_id) {
-            int dist = vector_dist(x, y, Bases[i].x, Bases[i].y);
+            // Open-coded vector_dist(x, y, Bases[i].x, Bases[i].y): the
+            // image calls abs() four times, never vector_dist itself - see
+            // del_site (0x00579E70) and base_find(x,y) (0x004E3B80) for the
+            // same expansion.
+            int dx = x_dist(x, Bases[i].x);
+            int dy = abs(y - Bases[i].y);
+            int abs_dx = abs(dx);
+            int abs_dy = abs(dy);
+            int largest = abs_dx;
+            if (abs_dx <= abs_dy) {
+                largest = abs_dy;
+            }
+            int smallest = abs_dx;
+            if (abs_dx >= abs_dy) {
+                smallest = abs_dy;
+            }
+            int dist = largest - ((((abs_dy + abs_dx) >> 1) - smallest + 1) >> 1);
             if (dist <= proximity) {
                 proximity = dist;
                 base_id = i;
@@ -447,6 +490,17 @@ Purpose: Generate a base name. Added some minor randomization for sea bases and 
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x005FD530 0x005FD550 0x005FD570 0x005FD670 0x006453E0 0x00645470 0x00645E90 0x0064FC88 0x0064FDF0
+// LEVER: replaced sprintf_s(name_out, 25, "%s %d", get_noun(faction_id), offset)
+//        with the image's strcat/_itoa idiom - name_out[0]=0, strcat the
+//        noun, strcat " ", _itoa the offset into a stack buffer, strcat that
+//        - and swapped both strncpy_s(name_out, 25, text_item(), 24) calls
+//        (water-base and land-base copy paths) for plain 3-argument
+//        strncpy(0x00645E90) + name_out[23]=0, and made get_noun
+//        `MEASURED inline` at the end of faction.h (it has its own ORIGINAL
+//        marker at faction.cpp:120) so it folds to parse_set()+field read in
+//        place. Best similarity moved 0.110 -> 0.183 - still far from a
+//        match; this function's #END-scan/PRNG-reseed loops account for
+//        most of the remaining 236 instructions and were not touched.
 Return Value: n/a
 Status: Complete
 */
@@ -483,7 +537,7 @@ void __cdecl name_base(int faction_id, LPSTR name_out, BOOL is_final, BOOL is_se
             }
             if (count == offset_sea) {
                 // water base name available
-                strncpy_s(name_out, 25, text_item(), 24);
+                strncpy(name_out, text_item(), 24);
                 name_out[23] = 0;
                 if (is_final) {
                     PlayersData[faction_id].base_sea_name_offset++;
@@ -496,7 +550,13 @@ void __cdecl name_base(int faction_id, LPSTR name_out, BOOL is_final, BOOL is_se
     }
     // Land base names or generic
     uint32_t offset = PlayersData[faction_id].base_name_offset + 1;
-    sprintf_s(name_out, 25, "%s %d", get_noun(faction_id), offset); // default if names exhausted
+    // default if names exhausted
+    name_out[0] = 0;
+    strcat(name_out, get_noun(faction_id));
+    strcat(name_out, " ");
+    char digits[0x54];
+    _itoa(offset, digits, 10);
+    strcat(name_out, digits);
     if (is_final) {
         PlayersData[faction_id].base_name_offset++;
     }
@@ -541,7 +601,7 @@ void __cdecl name_base(int faction_id, LPSTR name_out, BOOL is_final, BOOL is_se
                     count++;
                 }
             }
-            strncpy_s(name_out, 25, text_item(), 24);
+            strncpy(name_out, text_item(), 24);
             name_out[23] = 0;
         }
         text_close();
@@ -557,6 +617,16 @@ Purpose: TBD
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00579E70 0x00591B50 0x00591C10 0x00591D60
+// LEVER: two changes. (1) the BIT_BASE_RADIUS site now calls the new
+//        `bit_set_call` non-inline forwarder (map.h/map.cpp) instead of the
+//        `MEASURED inline bit_set` every other caller uses, matching the
+//        image's real `call 0x591D60` here. (2) the radius loop bound is
+//        the literal `49` (image `cmp ebx, 0xc4`, a byte-offset stride)
+//        instead of `RadiusRange[3]`, which the compiler had to reload from
+//        the global every iteration and which blocked the walking-byte-
+//        offset strength reduction. Best similarity 0.662 -> 0.805; agreeing
+//        count unchanged at 2/81 but compiled size moved from 96 to 83
+//        instructions against the image's 81.
 Return Value: n/a
 Status: Complete - testing
 */
@@ -566,12 +636,12 @@ void __cdecl base_mark(int base_id) {
     int x_radius = 0;
     int y_radius = 0;
     uint32_t faction_id = Bases[base_id].faction_id_current;
-    for (int i = 0; i < RadiusRange[3]; i++) {
+    for (int i = 0; i < 49; i++) {
         x_radius = xrange(x + RadiusOffsetX[i]);
         y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius)) {
             if (i < 21) {
-                bit_set(x_radius, y_radius, BIT_BASE_RADIUS, true);
+                bit_set_call(x_radius, y_radius, BIT_BASE_RADIUS, true);
                 using_set(x_radius, y_radius, faction_id); // rolled this into one conditional check
             } else {
                 site_set(x_radius, y_radius, 0);
@@ -583,6 +653,19 @@ void __cdecl base_mark(int base_id) {
         // It would seem using the Base coordinates would be better suited versus radius
         del_site(f, AI_GOAL_COLONIZE, x_radius, y_radius, 3);
     }
+}
+
+// has_fac_built(), open-coded with a REAL bitmask() call via `bitmask_call`
+// (general.h) rather than the folded shift/and `MEASURED inline bitmask`
+// gives everywhere else. cost_factor, pop_goal and num_objectives are sites
+// where the image genuinely emits `call 0x50ba00` for a literal facility id
+// - most has_fac_built() call sites in this file do NOT need this; see the
+// systemic RULED-OUT note on has_fac (base.cpp:104).
+static __forceinline bool has_fac_built_call(int facility_id, int base_id) {
+    int offset;
+    int mask;
+    bitmask_call(facility_id, &offset, &mask);
+    return (Bases[base_id].facilities_built[offset] & mask) != 0;
 }
 
 /*
@@ -598,11 +681,11 @@ Return Value: Cost factor
 Status: Complete
 */
 int __cdecl cost_factor(int faction_id, int rsc_type, int base_id) {
-    const uint32_t diff_cost_base[] = { 13, 12, 11, 10, 8, 7 };
-    uint32_t factor = is_human(faction_id) ? 10 : diff_cost_base[DiffLevelCurrent]
+    static const int diff_cost_base[] = { 13, 12, 11, 10, 8, 7 };
+    int factor = is_human(faction_id) ? 10 : diff_cost_base[DiffLevelCurrent]
         - great_satan(FactionRankings[7], false)
         - (!IsMultiplayerNet && is_human(FactionRankings[7]));
-    uint32_t cost_multiplier = rsc_type ? Rules->mineral_cost_multi : Rules->nutrient_cost_multi;
+    int cost_multiplier = rsc_type ? Rules->mineral_cost_multi : Rules->nutrient_cost_multi;
     if (cost_multiplier != 10) {
         factor = (factor * cost_multiplier) / 10;
     }
@@ -643,7 +726,7 @@ int __cdecl cost_factor(int faction_id, int rsc_type, int base_id) {
     } else { // nutrient
         int growth_factor = PlayersData[faction_id].soc_effect_pending.growth;
         if (base_id >= 0) {
-            if (has_fac_built(FAC_CHILDREN_CRECHE, base_id)) {
+            if (has_fac_built_call(FAC_CHILDREN_CRECHE, base_id)) {
                 growth_factor += 2; // +2 on growth scale
             }
             if (Bases[base_id].state & BSTATE_GOLDEN_AGE_ACTIVE) {
@@ -664,11 +747,22 @@ Purpose: Determine if the specified base has any restrictions around production 
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x0050BA00
+// LEVER: `int retool` rather than `uint32_t retool` (lever 4) so `retool >=
+//        1` compiles a signed compare like the image's, kept WITHOUT
+//        touching the guard. Best similarity 0.546 -> 0.555.
+// RULED-OUT: additionally dropping the RFLAG_FREEPROTO/
+//            facility_offset("Skunkworks")/has_tech disjunct (the source's
+//            own "bug fix" comment) so the guard is just
+//            `has_fac_built(FAC_SKUNKWORKS, base_id) && retool >= 1` -
+//            measured on top of the signedness fix, this only moved best
+//            similarity 0.555 -> 0.549 (WORSE), for a real behavioural
+//            change (RFLAG_FREEPROTO bases would stop getting the retool-1
+//            treatment). Not worth it; kept the bug-fix disjunct.
 Return Value: Fixed value (-1, 0, 1, 2, 3, -70) or productionID
 Status: Complete
 */
 int __cdecl base_making(int production_id, int base_id) {
-    uint32_t retool = Rules->retool_strictness;
+    int retool = Rules->retool_strictness;
     int skn_off = facility_offset("Skunkworks");
     if ((has_fac_built(FAC_SKUNKWORKS, base_id) // has Skunkworks
         || (Players[Bases[base_id].faction_id_current].rule_flags & RFLAG_FREEPROTO // bug fix
@@ -713,6 +807,11 @@ Purpose: Calculate the mineral loss if production were to changed at the specifi
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x004E4700
+// LEVER: signedness on the /100 divide. `retool_pct_pen_prod_chg` and
+//        `retool_exemption` are declared uint32_t in alpha.h, so the return
+//        expression was an unsigned division; casting both operands to
+//        `(int)` restores the image's signed magic-multiply/sar sequence.
+//        41/60 agreeing, up from 10/60.
 Return Value: Minerals that would be lost or 0 if not applicable.
 Status: Complete
 */
@@ -723,8 +822,8 @@ int __cdecl base_lose_minerals(int base_id, int UNUSED(production_id)) {
         != base_making(Bases[base_id].queue_production_id[0], base_id)
         && (min_accum = Bases[base_id].minerals_accumulated_2, 
             min_accum > (int)Rules->retool_exemption)) {
-        return min_accum - (100 - Rules->retool_pct_pen_prod_chg)
-            * (min_accum - Rules->retool_exemption) / 100 - Rules->retool_exemption;
+        return min_accum - (100 - (int)Rules->retool_pct_pen_prod_chg)
+            * (min_accum - (int)Rules->retool_exemption) / 100 - (int)Rules->retool_exemption;
     }
     return 0;
 }
@@ -754,7 +853,8 @@ void __cdecl set_fac(int facility_id, int base_id, BOOL set) {
 
 /*
 Purpose: Check whether the facility audio blurb announcement has played for the faction.
-// ORIGINAL: 0x004E4900 has_fac_announced 0x004E4900-0x004E4952
+// ORIGINAL: 0x004E4900 has_fac_announced 0x004E4900-0x004E4952 BYTE_EXACT
+// LEVER: signedness. `facility_id` is uint32_t, so `facility_id > FacilitySPStart` forced an unsigned `jbe`; casting to `(int)facility_id` before the compare, without changing the parameter's mangled type, restores the image's signed `jle`. BYTE_EXACT.
 // symbol    ?has_fac_announced@@YAHII@Z
 // size      82 bytes
 // prototype int (__cdecl has_fac_announced)(int factionID, int facilityID)
@@ -766,7 +866,7 @@ Return Value: Has the facility audio blurb played? true/false
 Status: Complete
 */
 BOOL __cdecl has_fac_announced(uint32_t faction_id, uint32_t facility_id) {
-    if (facility_id > FacilitySPStart) {
+    if ((int)facility_id > FacilitySPStart) {
         return true;
     }
     int offset, mask;
@@ -807,6 +907,12 @@ Purpose: Determine what unit the specified base should start building 1st then a
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x005BA910
+// RULED-OUT: pre-storing `Bases[base_id].queue_production_id[0] = proto_id;`
+//            before the loop (to match the image's early store at
+//            0x004E4AA0 instr 7) and reading VehPrototypes[i].plan directly
+//            at each compare instead of hoisting it into a local both
+//            measured WORSE - best flag set /c /O2 /Gy /GR- /Oy- /GX dropped
+//            from 0.912 to 0.883 similar (agreeing stays 4/78 either way).
 Return Value: n/a
 Status: Complete
 */
@@ -892,29 +998,13 @@ Purpose: Calculate the new native unit lifecycle bonus modifier provided by a ba
 Return Value: Lifecycle bonus
 Status: Complete
 */
-int __cdecl breed_mod(int base_id, int faction_id) {
-    uint32_t lifecycle_modifier = has_project(SP_XENOEMPATYH_DOME, faction_id) ? 1 : 0;
-    if (has_project(SP_PHOLUS_MUTAGEN, faction_id)) {
-        lifecycle_modifier++;
-    }
-    if (has_project(SP_VOICE_OF_PLANET, faction_id)) {
-        lifecycle_modifier++;
-    }
-    if (has_fac_built(FAC_CENTAURI_PRESERVE, base_id)) {
-        lifecycle_modifier++;
-    }
-    if (has_fac_built(FAC_TEMPLE_OF_PLANET, base_id)) {
-        lifecycle_modifier++;
-    }
-    if (has_fac_built(FAC_BIOLOGY_LAB, base_id)) {
-        lifecycle_modifier++;
-    }
-    if (has_fac_built(FAC_BIOENHANCEMENT_CENTER, base_id)
-        || has_project(SP_CYBORG_FACTORY, faction_id)) {
-        lifecycle_modifier++;
-    }
-    return lifecycle_modifier;
-}
+// BODY IN base.h, as `MEASURED inline`: worm_mod (base.cpp) needs it folded
+// in place, matching the image, which writes breed_mod's whole body out at
+// its one call site rather than calling 0x004E65C0. LEVER: also swapped
+// the four has_fac_built(FAC_X, base_id) facility tests for
+// has_fac(FAC_X, base_id, 0) - the recorded LEVER on base_minerals
+// (base.cpp:1820, at the time of writing) found the same swap moved that
+// body's call count from 1 to 6 of 7.
 
 /*
 Purpose: Calculate the count of lifecycle/psi bonuses that are provided by a base and faction.
@@ -925,6 +1015,12 @@ Purpose: Calculate the count of lifecycle/psi bonuses that are provided by a bas
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x00421670
+// LEVER: made breed_mod `MEASURED inline` at the end of base.h (lever 1) so
+//        worm_mod open-codes it as the image does - the image's only calls
+//        here are four has_fac (0x421670), never breed_mod out of line -
+//        and swapped breed_mod's has_fac_built(FAC_X, base_id) tests for
+//        has_fac(FAC_X, base_id, 0) so those four calls actually appear.
+//        Best similarity 0.826, agreeing instructions 3->13 of 140.
 Return Value: Native life modifier count
 Status: Complete
 */
@@ -954,7 +1050,7 @@ arithmetic - `imul` against y and `sar esi, 1` on x. map_loc() takes unsigned
 coordinates and therefore shifts x logically, which differs for a negative x.
 Neither form bounds-checks, exactly as the original does not.
 */
-static Map *yield_tile(int x, int y) {
+static __forceinline Map *yield_tile(int x, int y) {
     return &map_tiles()[(x >> 1) + y * (int)MapLongitude];
 }
 
@@ -968,7 +1064,7 @@ All three yield functions inline this same sequence: the tile's low `bit` flag
 selects it, the owner nibble of val2 supplies the id, and an id at or above
 MaxPlayerNum - 0xF is the "unoccupied" marker - is rejected.
 */
-static int yield_tile_owner(const Map *tile) {
+static __forceinline int yield_tile_owner(const Map *tile) {
     if (!(tile->bit & BIT_BASE_IN_TILE)) {
         return -1;
     }
@@ -991,6 +1087,17 @@ Purpose: Calculate the nutrients produced by a single map square.
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x0050BA00 0x00592030 0x005B9F20
+// LEVER: yield_tile/yield_tile_owner (this file) marked `static __forceinline`
+//        - shared with mine_yield/energy_yield/base_support, and a clear win
+//        for base_support (0.160 -> 0.371 best similarity there). Tied here:
+//        this function's own best-across-flags similarity is unchanged
+//        (0.292, its winning flag set is /Ob0-based, where yield_tile was
+//        already being folded in regardless of the marker) - kept anyway
+//        since it does not regress and helps the sibling.
+// RULED-OUT: a `bonus_at_call` non-inline forwarder (map.h/map.cpp, since
+//            removed) so bonus_at(x, y, 0) would emit `call 0x592030` as
+//            the image does - measured NO improvement to best-across-flags
+//            similarity (stayed at 0.292) on top of the forceinline change.
 Return Value: Nutrients from the square
 Status: Complete
 
@@ -1173,6 +1280,14 @@ Purpose: Calculate the minerals produced by a single map square.
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x0050BA00 0x00592030 0x005B9F20
+// LEVER: yield_tile/yield_tile_owner (this file) marked `static __forceinline`
+//        - shared with crop_yield/energy_yield/base_support, a clear win for
+//        base_support (0.160 -> 0.371). Tied here (best-across-flags stays
+//        0.388, won by an /Ob0 flag set where yield_tile already folded
+//        regardless) - kept anyway since it does not regress.
+// RULED-OUT: a `bonus_at_call` non-inline forwarder (map.h/map.cpp, since
+//            removed) so bonus_at(x, y, 0) would emit `call 0x592030` -
+//            measured no improvement on top of the forceinline change.
 Return Value: Minerals from the square
 Status: Complete
 
@@ -1331,6 +1446,14 @@ Purpose: Calculate the energy produced by a single map square.
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x0050BA00 0x00592030 0x005B9F20
+// LEVER: yield_tile/yield_tile_owner (this file) marked `static __forceinline`
+//        - shared with crop_yield/mine_yield/base_support, a clear win for
+//        base_support (0.160 -> 0.371). Tied here (best-across-flags stays
+//        0.137, won by an /Ob0 flag set where yield_tile already folded
+//        regardless) - kept anyway since it does not regress.
+// RULED-OUT: a `bonus_at_call` non-inline forwarder (map.h/map.cpp, since
+//            removed) so bonus_at(x, y, 0) would emit `call 0x592030` -
+//            measured no improvement on top of the forceinline change.
 Return Value: Energy from the square
 Status: Complete
 
@@ -1567,6 +1690,14 @@ Purpose: Tally what the current base's forces cost it: the resources its supply
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x004E3EF0 0x004E6E50 0x004E7310 0x004E7750 0x0050BA00 0x005BF1F0
+// LEVER: unrolled the `for (rsc=0..3) { ConvoyTo[rsc]=0; ConvoyFrom[rsc]=0; }`
+//        loop into eight explicit assignments, keeping the pair order
+//        (ConvoyTo before ConvoyFrom) the loop already used - the image
+//        writes [0x90e93c] before [0x90e904], [0x90e940] before [0x90e908],
+//        and so on, fully unrolled. Combined with yield_tile/yield_tile_owner
+//        becoming `static __forceinline` (this file, shared with
+//        crop_yield/mine_yield/energy_yield), best similarity moved 0.129 ->
+//        0.371 and agreeing instructions 9->14 of 465.
 Return Value: n/a
 Status: Complete
 
@@ -1589,10 +1720,17 @@ therefore observable.
 */
 void __cdecl base_support() {
     int faction_id = (BaseCurrent())->faction_id_current;
-    for (int rsc = 0; rsc < 4; rsc++) {
-        BaseCurrentConvoyTo[rsc] = 0;
-        BaseCurrentConvoyFrom[rsc] = 0;
-    }
+    // Unrolled (image writes each ConvoyTo/ConvoyFrom pair explicitly, not
+    // as a loop): [0x90e93c] before [0x90e904], then [0x90e940]/[0x90e908],
+    // and so on.
+    BaseCurrentConvoyTo[0] = 0;
+    BaseCurrentConvoyFrom[0] = 0;
+    BaseCurrentConvoyTo[1] = 0;
+    BaseCurrentConvoyFrom[1] = 0;
+    BaseCurrentConvoyTo[2] = 0;
+    BaseCurrentConvoyFrom[2] = 0;
+    BaseCurrentConvoyTo[3] = 0;
+    BaseCurrentConvoyFrom[3] = 0;
     BaseCurrentVehPacifismCount = 0;
     BaseCurrentForcesMaintCount = 0;
     BaseCurrentForcesSupported = 0;
@@ -2121,15 +2259,9 @@ void __cdecl base_psych() {
 
 /*
 Purpose: Determine the faction's base with the specified position sorted by the most energy output.
-// ORIGINAL: 0x004EB490 ?base_rank@@YAHHH@Z 0x004EB490-0x004EB551
-// LEVER: the image never calls sort_descending() - it inlines the bubble
-//   sort loop directly (two swap() calls, matching general.cpp's body).
-//   Writing that loop out here instead of calling sort_descending() took
-//   the call set from {sort_descending, __alloca_probe} to {swap x2,
-//   __alloca_probe}, matching the image's (call_diff now agrees). Best
-//   flag set moved from 0.645 to 0.847 similar. Remaining divergence is
-//   instruction-order/register-scheduling around the parameter loads, not
-//   chased further.
+// ORIGINAL: 0x004EB490 ?base_rank@@YAHHH@Z 0x004EB490-0x004EB551 BYTE_EXACT
+// LEVER: the image never calls sort_descending() - it inlines the bubble sort loop directly (two swap() calls, matching general.cpp's body). Writing that loop out here instead of calling sort_descending() took the call set from {sort_descending, __alloca_probe} to {swap x2, __alloca_probe}, matching the image's (call_diff now agrees). Best flag set moved from 0.645 to 0.847 similar. Remaining divergence is instruction-order/register-scheduling around the parameter loads, not chased further.
+// LEVER: branch polarity. Deleted the two added bounds-check guards (`rank_position < 0` and `!bases_found`) and replaced them with the image's single guard clause `if (rank_position >= bases_found) return -1;` written immediately after the collection loop - VC6 compiles a guard clause by testing the ORIGINAL condition and jumping forward to the work (jl to the sort), falling through into the early return, which is what the image does; the equivalent `if (rank_position < bases_found) {work} return -1;` form emits the opposite polarity (jge past the work) and does not match. Also reproduces the original's lack of a `rank_position < 0` bounds check - see the BUG IN THE ORIGINAL comment below. Took this body to BYTE_EXACT (70/70), from 4/70.
 // size      193 bytes
 // prototype int (__cdecl ?base_rank@@YAHHH@Z)(int factionID, int minBasesToRank)
 // callers   1   call targets   2
@@ -2140,9 +2272,12 @@ Return Value: Base id for the specified rank position or -1 for invalid requests
 Status: Complete
 */
 int __cdecl base_rank(int faction_id, int rank_position) {
-    if (rank_position < 0) { // Added parameter bounds check
-        return -1;
-    }
+    // BUG IN THE ORIGINAL: the shipped code never bounds-checks rank_position
+    // against 0, only against bases_found below - a negative rank_position
+    // with at least one matching base reads base_id[rank_position] out of
+    // bounds. Reproduced deliberately: the added guard here scored worse
+    // (see LEVER below), because the image loads rank_position from memory
+    // only once, at the single `cmp .../jl` test after the collection loop.
     int base_id[MaxBaseNum];
     int base_energy[MaxBaseNum];
     int bases_found = 0;
@@ -2152,11 +2287,11 @@ int __cdecl base_rank(int faction_id, int rank_position) {
             base_energy[bases_found++] = (Bases[i].energy_intake_1 * 512) + i;
         }
     }
-    if (!bases_found || rank_position >= bases_found) { // Added check to skip if no bases are found
+    if (rank_position >= bases_found) {
         return -1;
     }
-    // Open-coded sort_descending() (see general.cpp): the image never calls
-    // it, only swap() twice per inner-loop swap.
+    // Open-coded sort_descending() (see general.cpp): the image never
+    // calls it, only swap() twice per inner-loop swap.
     int bounds = bases_found - 1;
     BOOL has_swapped;
     do {
@@ -2208,6 +2343,14 @@ Purpose: Calculate population goal for a base.
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x0050BA00
+// LEVER: both has_fac_built(FAC_HAB_COMPLEX/FAC_HABITATION_DOME, base_id)
+//        sites routed through the new `has_fac_built_call` helper (this
+//        file, near cost_factor) so bitmask() emits a real `call 0x50ba00`
+//        with an [ebp-4]/[ebp-8] offset/mask local pair, matching the
+//        image's two `push 0x18`/`push 0x19` + call sequences instead of
+//        folding to a byte test. Best similarity 0.910 (38/105 agreeing,
+//        /c /O2 /Gy /GR- /Oy- /GX) - the largest jump of the bitmask-call
+//        family (cost_factor RULED-OUT the same lever; see that note).
 Return Value: Goal population
 Status: Complete
 */
@@ -2218,15 +2361,15 @@ int __cdecl pop_goal(int base_id) {
     if (goal <= 6) {
         goal = 6;
     }
-    if (!has_fac_built(FAC_HAB_COMPLEX, base_id)) {
-        int compare = Rules->pop_limit_sans_hab_complex - Players[faction_id].rule_population 
+    if (!has_fac_built_call(FAC_HAB_COMPLEX, base_id)) {
+        int compare = Rules->pop_limit_sans_hab_complex - Players[faction_id].rule_population
             + limit_mod;
         if (goal >= compare) {
             goal = compare;
         }
     }
-    if (!has_fac_built(FAC_HABITATION_DOME, base_id)) {
-        int compare = Rules->pop_limit_sans_hab_dome - Players[faction_id].rule_population 
+    if (!has_fac_built_call(FAC_HABITATION_DOME, base_id)) {
+        int compare = Rules->pop_limit_sans_hab_dome - Players[faction_id].rule_population
             + limit_mod;
         if (goal >= compare) {
             goal = compare;
@@ -2308,24 +2451,33 @@ Purpose: Calculate facility maintenance cost for specified faction.
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x0057EFA0 0x005B9F20
+// LEVER: three changes. (1) walking pointers `bonus_id`/`bonus_val` over
+//        Players[faction_id].faction_bonus_id/faction_bonus_val1, stepped
+//        alongside `i`, instead of re-indexing the arrays each access
+//        (lever 7). (2) dropped the `bonus_count` local so the loop bound
+//        re-reads Players[faction_id].faction_bonus_count from the global
+//        every iteration, matching the image. (3) compute diff_factor
+//        before calling best_reactor(), matching the image's instruction
+//        order. Best similarity 0.820 -> 0.924 (agreeing count drops 8->4,
+//        but similarity - the tool's real tiebreak - is higher).
 Return Value: Facility maintenance cost
 Status: Complete
 */
 int __cdecl fac_maint(int facility_id, int faction_id) {
     if (facility_id == FAC_COMMAND_CENTER) {
-        int reactor = best_reactor(faction_id);
         int diff_factor = (PlayersData[faction_id].diff_level + 1) / 2;
+        int reactor = best_reactor(faction_id);
         if (reactor < 0 || diff_factor < 0) {
             return 0;
         }
         return (reactor > diff_factor) ? diff_factor : reactor;
     }
-    int bonus_count = Players[faction_id].faction_bonus_count;
-    for (int i = 0; i < bonus_count; i++) {
-        int bonus_id = Players[faction_id].faction_bonus_id[i];
-        if ((bonus_id == RULE_FACILITY || (bonus_id == RULE_FREEFAC
-            && has_tech(Facility[Players[faction_id].faction_bonus_val1[i]].preq_tech, faction_id)))
-            && Players[faction_id].faction_bonus_val1[i] == (int)facility_id) {
+    int *bonus_id = &Players[faction_id].faction_bonus_id[0];
+    int *bonus_val = &Players[faction_id].faction_bonus_val1[0];
+    for (int i = 0; i < Players[faction_id].faction_bonus_count; i++, bonus_id++, bonus_val++) {
+        if ((*bonus_id == RULE_FACILITY || (*bonus_id == RULE_FREEFAC
+            && has_tech(Facility[*bonus_val].preq_tech, faction_id)))
+            && *bonus_val == (int)facility_id) {
             return 0;
         }
     }
@@ -2388,22 +2540,34 @@ Purpose: Check if the initial base name is unique. If not, append a sequential n
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00645470 0x00645660 0x0064FC88
+// LEVER: dropped std::string entirely for the image's strcat/_itoa idiom
+//        operating directly on Bases[base_id].name_string (no separate core
+//        copy) - the image has no C++ library here. Took the body from
+//        0/61 to 3/61 agreeing and removed the whole SEH prologue
+//        (push -1/push 0/mov eax,fs:[0]) the std::string version needed.
 Return Value: n/a
 Status: Complete
 */
 void __cdecl make_base_unique(int base_id) {
     purge_spaces(Bases[base_id].name_string); // added to remove extraneous whitespace
     uint32_t found = 0;
-    std::string core_unique_name;
     for (int i = 0; i < BaseCurrentCount; i++) {
         if (base_id != (uint32_t)i && !strcmp(Bases[i].name_string, Bases[base_id].name_string)) {
+            // BUG IN THE ORIGINAL: only the FIRST collision truncates
+            // name_string back to its 21-character core; a second collision
+            // against the renamed base appends another "-N" onto the
+            // already-suffixed name instead of restarting from the core, so
+            // repeated collisions compound ("Name-2-3" rather than
+            // "Name-3"). Reproduced deliberately - this is what the shipped
+            // bytes do, even though the file's own Purpose comment says a
+            // later pass "rewrote [this] to work as intended".
             if (!found) { // only create core part of base name on first collision
                 Bases[base_id].name_string[21] = 0;
-                core_unique_name = Bases[base_id].name_string;
             }
-            std::string unique_name = core_unique_name;
-            unique_name += "-" + std::to_string(++found + 1); // start with appending "-2"
-            strcpy_s(Bases[base_id].name_string, 25, unique_name.c_str());
+            strcat(Bases[base_id].name_string, "-");
+            char digits[0x54];
+            _itoa(++found + 1, digits, 10); // start with appending "-2"
+            strcat(Bases[base_id].name_string, digits);
             i = 0; // reset loop to verify base name is still unique
         }
     }
@@ -2436,6 +2600,21 @@ Purpose: Checks whether the facility (non-SP) has been build in the currently se
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x0050BA00
+// LEVER: body in base.h hoists `int base_id = BaseIDCurrentSelected;` above the
+//        ternary guard so the global is read unconditionally, before the
+//        `facility_id >= FacilityRepStart` early-out - the image does the
+//        same (its `mov esi,[0x689370]` precedes the `cmp/jl`). The tool's
+//        agreeing-instruction count is pinned at 2/34 either way because
+//        `measure` can only isolate this address by forcing /Ob0, which also
+//        disables inlining the has_fac_built(facility_id,base_id) callee and
+//        so never reaches the image's real bitmask-call shape; but similarity
+//        at that flag set moved 0.571 -> 0.612, confirming the reorder is
+//        real. Two divergences remain, not fixable from this call site: the
+//        image's early return clears full `eax` (int width) where a `bool`
+//        return clears only `al`, and the callee's bitmask() is a real call
+//        in the image but constant-folds here - both are the documented
+//        systemic gaps (return-width note above; bitmask folding RULED-OUT
+//        on has_fac base.cpp:104).
 Return Value: Does current base have facility? true/false
 Status: Complete
 */
@@ -2516,6 +2695,13 @@ two-argument vector_dist (0x004F8090), reached together through the four-argumen
 region_at (0x00500220), which the original expands three separate times. The inlined map_loc
 halves x with SAR where the exported region_at takes uint32_t and would use SHR; the two agree for
 every non-negative coordinate, which is all a base or a target tile can hold.
+
+RULED-OUT: open-coding the x_target/y_target vector_dist call as the x_dist()+abs()x4 expansion
+(the same shape that works on base_find and black_market) measured WORSE here: best similarity
+across all flag sets dropped from 0.728 (/c /O2 /Gy /GR- /Oy- /GX, 6/233 agreeing) to 0.689
+(/c /O2 /Ob0 /Gy /GR- /Oy- /GX, 6/233 agreeing) - same agreeing count, lower similarity, and the
+default-flags similarity at the SAME flag set collapsed to 0.354. Left as a real vector_dist(...)
+call.
 */
 int __cdecl suggest_plan(int faction_id, int faction_id_2) {
     PopupDialogFactionID = faction_id_2;
@@ -2574,7 +2760,14 @@ Purpose: Determine the faction's best base to attack the specified base from.
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00644F3A
-Return Value: Base id to attack from or 0 
+// LEVER: open-coded the vector_dist(x, y, Bases[base_id_to_atk].x,
+//        Bases[base_id_to_atk].y) ternary branch as the x_dist()+abs()x4
+//        expansion (same shape as base_find 0x004E3B80/0x004E3D50) - the
+//        image never calls vector_dist, only abs() x4. Took best similarity
+//        from 3/135 to 4/135 agreeing (0.714 similar, /c /O2 /Oi- /Gy /GR-
+//        /Oy- /GX). Unlike suggest_plan (RULED-OUT above), this one measured
+//        better, not worse - the two bodies disagree on the lever.
+Return Value: Base id to attack from or 0
 Status: Complete
 */
 int __cdecl attack_from(int base_id_to_atk, int faction_id) {
@@ -2585,9 +2778,29 @@ int __cdecl attack_from(int base_id_to_atk, int faction_id) {
         if (Bases[i].faction_id_current == faction_id) {
             int x = Bases[i].x;
             int y = Bases[i].y;
-            int compare = (x == PlayersData[faction_id].x_target
-                && y == PlayersData[faction_id].y_target) 
-                ? 0 : vector_dist(x, y, Bases[base_id_to_atk].x, Bases[base_id_to_atk].y);
+            int compare;
+            if (x == PlayersData[faction_id].x_target && y == PlayersData[faction_id].y_target) {
+                compare = 0;
+            } else {
+                // Open-coded vector_dist(x, y, Bases[base_id_to_atk].x,
+                // Bases[base_id_to_atk].y): the image calls abs() four
+                // times, never vector_dist itself - see del_site
+                // (0x00579E70) and base_find (0x004E3B80) for the same
+                // expansion.
+                int dx = x_dist(x, Bases[base_id_to_atk].x);
+                int dy = abs(y - Bases[base_id_to_atk].y);
+                int abs_dx = abs(dx);
+                int abs_dy = abs(dy);
+                int largest = abs_dx;
+                if (abs_dx <= abs_dy) {
+                    largest = abs_dy;
+                }
+                int smallest = abs_dx;
+                if (abs_dx >= abs_dy) {
+                    smallest = abs_dy;
+                }
+                compare = largest - ((((abs_dy + abs_dx) >> 1) - smallest + 1) >> 1);
+            }
             if (region_at(x, y) != region_src) {
                 compare += 1000;
             }
@@ -2610,6 +2823,13 @@ Purpose: Determine the value of the specified base between the requester and the
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x004E3A50 0x0050BA00 0x0059E980 0x005AC060 0x005B8E10 0x005BFE90 0x00645660
+// RULED-OUT: widening `value`, `base_pop_factor`, `res_base_count_region`,
+//            `req_base_count_region` and `facil_count` from uint32_t to int
+//            (to get signed cdq/sar and jge/jl instead of shr/jae) measured
+//            WORSE at every flag set - best case dropped from 9/337 agreeing
+//            (0.226 similar, /c /O2 /Gy /GR- /Oy- /GX) to 5/337 (0.218
+//            similar). Left as uint32_t; the "Bug fix: treat value as
+//            unsigned" comment stays.
 Return Value: Value of base or -1 for invalid requests
 Status: Complete - testing
 */
@@ -2726,6 +2946,13 @@ Purpose: Determine ideal non-offense (defense, combat, recon) unit count for the
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x0050BA00 0x005AC060 0x005C8BA0
+// LEVER: deleted the `BOOL is_obj = is_objective(base_id);` local and wrote
+//        is_objective(base_id) at both use sites - the image calls
+//        0x5AC060 (is_objective) twice, not once with a cached result. Best
+//        similarity 0.763 -> 0.809; agreeing count unchanged at 4/170. The
+//        bitmask() half of the evidence (has_fac_built folding to a byte
+//        test) is the documented systemic gap - RULED-OUT on has_fac
+//        base.cpp:104 - and not fixable here.
 Return Value: Amount of non-offensive units needed (1-10)
 Status: Complete
 */
@@ -2740,11 +2967,11 @@ int __cdecl garrison_check(int base_id) {
         }
     }
     int garrison = (sp_count + 2) / 3 + (Bases[base_id].population_size + 1) / 4 + 1;
-    BOOL is_obj = is_objective(base_id);
-    if (has_fac_built(FAC_HEADQUARTERS, base_id) || bit_at(x, y) & BIT_UNK_40000000 || is_obj) {
+    if (has_fac_built(FAC_HEADQUARTERS, base_id) || bit_at(x, y) & BIT_UNK_40000000
+        || is_objective(base_id)) {
         garrison++;
     }
-    if (is_obj && PlayersData[faction_id].flags & PFLAG_STRAT_DEF_OBJECTIVES) {
+    if (is_objective(base_id) && PlayersData[faction_id].flags & PFLAG_STRAT_DEF_OBJECTIVES) {
         garrison++;
     }
     if (PlayersData[faction_id].region_base_plan[region_at(x, y)] == PLAN_COLONIZATION) {
@@ -2816,6 +3043,13 @@ Purpose: Calculate how vulnerable the coordinates are for the specified faction 
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x0050BA00 0x00644F3A
+// LEVER: open-coded the vector_dist(x, y, Bases[i].x, Bases[i].y) call as the
+//        x_dist()+abs()x4 expansion (same shape as base_find). Best
+//        similarity moved 0.595 -> 0.805 (/c /O2 /Oi- /Gy /GR- /Oy- /GX).
+//        The bitmask side of the evidence (has_fac_built(FAC_HEADQUARTERS,i)
+//        folding away the image's real bitmask() call) is the documented
+//        systemic gap - RULED-OUT on has_fac base.cpp:104 - and not
+//        addressed here.
 Return Value: Radial distance between coordinates and faction's HQ or 12 if no HQ/bases
 Status: Complete
 */
@@ -2823,7 +3057,23 @@ int __cdecl vulnerable(int faction_id, int x, int y) {
     int dist = 12; // default value for no bases or no HQ
     for (int i = 0; i < BaseCurrentCount; i++) {
         if (Bases[i].faction_id_current == faction_id && has_fac_built(FAC_HEADQUARTERS, i)) {
-            dist = vector_dist(x, y, Bases[i].x, Bases[i].y);
+            // Open-coded vector_dist(x, y, Bases[i].x, Bases[i].y): the
+            // image calls abs() four times, never vector_dist itself - see
+            // del_site (0x00579E70) and base_find(x,y) (0x004E3B80) for the
+            // same expansion.
+            int dx = x_dist(x, Bases[i].x);
+            int dy = abs(y - Bases[i].y);
+            int abs_dx = abs(dx);
+            int abs_dy = abs(dy);
+            int largest = abs_dx;
+            if (abs_dx <= abs_dy) {
+                largest = abs_dy;
+            }
+            int smallest = abs_dx;
+            if (abs_dx >= abs_dy) {
+                smallest = abs_dy;
+            }
+            dist = largest - ((((abs_dy + abs_dx) >> 1) - smallest + 1) >> 1);
             break;
         }
     }
@@ -2842,10 +3092,18 @@ Purpose: Determine whether the specified base is considered an objective.
 // LEVER: splitting `GameRules & X || Bases[base_id].event & Y` into two
 //        separate `if` statements (matching the image's two separate
 //        short-circuit branches instead of one `||`) moved 0.586 -> 0.762
-//        similar. has_fac()'s queue_count==0 argument already folds it down
-//        to the bitmask()+has_fac_built() call the image makes - `calls`
-//        agrees at exactly 1 (0x0050BA00, bitmask). Remaining divergence is
-//        prologue/epilogue register scheduling, not chased further.
+//        similar. CORRECTION to the note this replaces: `calls agrees at
+//        exactly 1 (0x0050BA00, bitmask)` was wrong - the one call this tree
+//        made was to has_fac (out-of-line), not bitmask; the image inlines
+//        has_fac itself (its `cmp eax,0x41/jge` IS has_fac's own
+//        FacilityRepStart guard) and keeps ONLY the bitmask call inside
+//        that. Open-coding has_fac(ScnVictFacilityObj, base_id, 0) as its
+//        own `< FacilityRepStart` guard + has_fac_built() at the site
+//        removed the out-of-line has_fac call and moved best similarity
+//        0.762 -> 0.783. It does not reach the bitmask call itself -
+//        has_fac_built(runtime-facility_id, base_id) still constant-folds
+//        bitmask() here, the same systemic gap RULED-OUT on has_fac
+//        base.cpp:104.
 Return Value: Is base an objective? true/false
 Status: Complete
 */
@@ -2863,9 +3121,16 @@ BOOL __cdecl is_objective(int base_id) {
             }
         }
     }
-    if (GameState & STATE_SCN_VICT_BASE_FACIL_COUNT_OBJ
-        && has_fac(ScnVictFacilityObj, base_id, 0)) {
-        return true;
+    if (GameState & STATE_SCN_VICT_BASE_FACIL_COUNT_OBJ) {
+        // Open-coded has_fac(ScnVictFacilityObj, base_id, 0): with
+        // queue_count == 0 it reduces to has_fac's own early-out guard
+        // followed by has_fac_built(), and the image inlines exactly that
+        // (its `cmp eax, 0x41 / jge` IS has_fac's `facility_id >=
+        // FacilityRepStart` guard) rather than calling has_fac out of line.
+        if (ScnVictFacilityObj < FacilityRepStart
+            && has_fac_built(ScnVictFacilityObj, base_id)) {
+            return true;
+        }
     }
     return false;
 }
@@ -2880,6 +3145,17 @@ Purpose: Count how far the specified faction has got towards the scenario's
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x004E3A50 0x0050BA00 0x0050BA30 0x005AC110 0x005B9F20
+// RULED-OUT: routing has_fac_built(FAC_HEADQUARTERS, base_id) and/or
+//            has_fac_built(ScnVictFacilityObj, base_id) through the new
+//            `has_fac_built_call` helper (real bitmask() call, same lever
+//            that won on pop_goal) measured WORSE here in all three
+//            combinations tried (both sites, HQ only, ScnVictFacilityObj
+//            only): best similarity across flag sets dropped from 0.201
+//            (baseline, /c /O2 /Gy /GR- /Oy- /GX, 14/367 agreeing) to at
+//            best 0.147. This function's size (1161 bytes, ~20 live locals
+//            across two loops) likely means the extra out-of-line calls
+//            shift register allocation enough to lose more than the call
+//            shape gains. Left calling has_fac_built (folded) at both sites.
 Return Value: Objective count, or zero for an eliminated faction
 Status: Complete
 
@@ -3053,9 +3329,8 @@ Purpose: Check if Voice of Planet has been built that starts the Ascent to Trans
 Return Value: Has Voice of Planet been built? true/false
 Status: Complete
 */
-BOOL __cdecl ascending(int UNUSED(faction_id)) {
-    return base_project(SP_VOICE_OF_PLANET) != SP_Unbuilt;
-}
+// BODY IN base.h, as `MEASURED inline`: facility_avail (base.cpp) needs it
+// folded in place - the image never calls 0x005AC680 there.
 
 /*
 Purpose: Determine if the facility is redundant due to a Secret Project counting as that facility.
@@ -3111,6 +3386,18 @@ Purpose: Determine if the provided faction can build a specific facility or Secr
 // flags     frame;sp_ready;purged_ok
 // calls     0x00421670 0x004E49D0 0x004F80D0 0x0050BA00 0x00645470 0x00645660
 // indirect  0x005BA213
+// LEVER: has_tech's body moved from technology.cpp to the end of
+//        technology.h, and ascending's from base.cpp to the end of base.h,
+//        both as `MEASURED inline` - both already had their own bodies
+//        (`__forceinline` for has_tech, a plain out-of-line BYTE_EXACT
+//        function for ascending), but neither satisfied inlining for a
+//        caller in a DIFFERENT translation unit, and the image open-codes
+//        both of them here (has_tech's whole preq_tech walk, and
+//        ascending's single base_project() != SP_Unbuilt compare). Best
+//        similarity 0.137, agreeing instructions 20->25 of 742. The ten
+//        `call 0x50ba00` (bitmask) sites the image keeps are the documented
+//        systemic has_fac_built(literal,...) folding, RULED-OUT on has_fac
+//        base.cpp:104, and are not fixable from this site.
 Return Value: Is facility or Secret Project available to faction, base and game mode? true/false
 Status: Complete
 */

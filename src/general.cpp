@@ -1251,6 +1251,13 @@ Status: Complete
 // one of those. The marker stays here because that is where the catalogue
 // reads it.
 
+// Non-inline forwarder for the OTHER callers - cost_factor, pop_goal,
+// num_objectives (base.cpp) - where the image genuinely emits
+// `call 0x50ba00` rather than folding bitmask's shift/and in place.
+void __cdecl bitmask_call(int input, int *offset, int *mask) {
+    bitmask(input, offset, mask);
+}
+
 
 /*
 Purpose: Calculate a basic XOR checksum for the data buffer.
