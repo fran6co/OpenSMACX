@@ -576,16 +576,6 @@ BOOL __cdecl coast_or_border(int x_point_a, int y_point_a, int x_point_b,
 }
 
 /*
-Purpose: Get the map tile for the specified coordinates.
-Original Offset: n/a
-Return Value: Pointer to map tile
-Status: Complete
-*/
-Map *__cdecl map_loc(uint32_t x, uint32_t y) {
-    return &((*MapTiles)[(x >> 1) + y * MapLongitude]);
-}
-
-/*
 Purpose: Get the temperature of the specified tile.
 Original Offset: n/a
 Return Value: Temperature
@@ -597,7 +587,7 @@ uint32_t __cdecl temp_at(uint32_t x, uint32_t y) {
 
 /*
 Purpose: Set the temperature for the specified tile.
-// ORIGINAL: 0x00591AD0 ?temp_set@@YAXHHH@Z 0x00591AD0-0x00591B05
+// ORIGINAL: 0x00591AD0 ?temp_set@@YAXHHH@Z 0x00591AD0-0x00591B05 BYTE_EXACT
 // size      53 bytes
 // prototype 
 // callers   4   call targets   0
@@ -625,7 +615,7 @@ uint32_t __cdecl climate_at(uint32_t x, uint32_t y) {
 
 /*
 Purpose: Set the rainfall (climate) for the specified tile.
-// ORIGINAL: 0x00591A80 ?climate_set@@YAXHHH@Z 0x00591A80-0x00591ACE
+// ORIGINAL: 0x00591A80 ?climate_set@@YAXHHH@Z 0x00591A80-0x00591ACE BYTE_EXACT
 // size      78 bytes
 // prototype void (__cdecl ?climate_set@@YAXHHH@Z)(int xCoord, int yCoord, int climate)
 // callers   2   call targets   0
@@ -881,7 +871,7 @@ uint32_t __cdecl lock_at(uint32_t x, uint32_t y) {
 
 /*
 Purpose: Set the lock faction id for the specified tile.
-// ORIGINAL: 0x00591C50 ?lock_set@@YAHHHH@Z 0x00591C50-0x00591C88
+// ORIGINAL: 0x00591C50 ?lock_set@@YAHHHH@Z 0x00591C50-0x00591C88 BYTE_EXACT
 // symbol    ?lock_set@@YAXHHH@Z
 // size      56 bytes
 // prototype int (__cdecl ?lock_set@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)
@@ -971,7 +961,7 @@ void __cdecl rocky_set(int x, int y, int rocky) {
 
 /*
 Purpose: Get the bit of the specified tile.
-// ORIGINAL: 0x005001B0 ?bit_at@@YAHHH@Z 0x005001B0-0x005001D5
+// ORIGINAL: 0x005001B0 ?bit_at@@YAHHH@Z 0x005001B0-0x005001D5 BYTE_EXACT
 // size      37 bytes
 // prototype int (__cdecl ?bit_at@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   1   call targets   0
@@ -1566,13 +1556,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl map_shutdown() {
-    if (*MapTiles) {
-        free(*MapTiles);
+    if (map_tiles()) {
+        free(map_tiles());
     }
     if (*MapAbstract) {
         free(*MapAbstract);
     }
-    *MapTiles = 0;
+    map_tiles() = 0;
     *MapAbstract = 0;
 }
 
@@ -1594,9 +1584,9 @@ BOOL __cdecl map_init() {
     MapLongitude = MapLongitudeBounds / 2;
     MapArea = MapLongitude * MapLatitudeBounds;
     MapAreaSqRoot = quick_root(MapArea);
-    *MapTiles = 0;
-    *MapTiles = (Map *)mem_get(MapArea * sizeof(Map));
-    if (*MapTiles) {
+    map_tiles() = 0;
+    map_tiles() = (Map *)mem_get(MapArea * sizeof(Map));
+    if (map_tiles()) {
         MapAbstractLongBounds = (MapLongitudeBounds + 4) / 5;
         MapAbstractLatBounds = (MapLatitudeBounds + 4) / 5;
         MapAbstractArea = MapAbstractLatBounds * ((MapAbstractLongBounds + 1) / 2);
@@ -1628,15 +1618,15 @@ void __cdecl map_wipe() {
     MapLandmarkCount = 0;
     MapRandSeed = random(0, 0x7FFF) + 1;
     for (uint32_t i = 0; i < MapArea; i++) {
-        (*MapTiles)[i].climate = ALT_BIT_OCEAN;
-        (*MapTiles)[i].contour = 20;
-        (*MapTiles)[i].val2 = 0xF;
-        (*MapTiles)[i].region = 0;
-        (*MapTiles)[i].visibility = 0;
-        (*MapTiles)[i].val3 = 0;
-        (*MapTiles)[i].bit = 0;
-        (*MapTiles)[i].bit2 = 0;
-        ZeroMemory((*MapTiles)[i].bit_visible, sizeof((*MapTiles)[i].bit_visible));
+        map_tiles()[i].climate = ALT_BIT_OCEAN;
+        map_tiles()[i].contour = 20;
+        map_tiles()[i].val2 = 0xF;
+        map_tiles()[i].region = 0;
+        map_tiles()[i].visibility = 0;
+        map_tiles()[i].val3 = 0;
+        map_tiles()[i].bit = 0;
+        map_tiles()[i].bit2 = 0;
+        ZeroMemory(map_tiles()[i].bit_visible, sizeof(map_tiles()[i].bit_visible));
     }
 }
 
@@ -1655,7 +1645,7 @@ Status: Complete
 */
 BOOL __cdecl map_write(FILE *map_file) {
     if (_fwrite(&MapLongitudeBounds, 2724, 1, map_file)
-        && _fwrite(*MapTiles, MapArea * sizeof(Map), 1, map_file)
+        && _fwrite(map_tiles(), MapArea * sizeof(Map), 1, map_file)
         && _fwrite(*MapAbstract, MapAbstractArea, 1, map_file)) {
         return false;
     }
@@ -1680,12 +1670,12 @@ BOOL __cdecl map_read(FILE *map_file) {
     if (!_fread(&MapLongitudeBounds, 2724, 1, map_file)) {
         return true;
     }
-    *MapTiles = 0;
+    map_tiles() = 0;
     *MapAbstract = 0;
     if (map_init()) {
         return true;
     }
-    if (!_fread(*MapTiles, MapArea * sizeof(Map), 1, map_file)
+    if (!_fread(map_tiles(), MapArea * sizeof(Map), 1, map_file)
         || !_fread(*MapAbstract, MapAbstractArea, 1, map_file)) {
         return true;
     }
@@ -2286,7 +2276,7 @@ Status: Complete - testing
 */
 void __cdecl build_continent(int size) {
     for (uint32_t i = 0; i < MapArea; i++) {
-        (*MapTiles)[i].region = 0;
+        map_tiles()[i].region = 0;
     }
     int coverage = MapLandCoverage;
     if (coverage && BrushVal1 >= WorldBuildVal1) {
@@ -2401,7 +2391,7 @@ Status: Complete - testing
 */
 void __cdecl world_riverbeds() {
     for (uint32_t i = 0; i < MapArea; i++) {
-        (*MapTiles)[i].bit &= ~(BIT_RIVERBED);
+        map_tiles()[i].bit &= ~(BIT_RIVERBED);
     }
     uint32_t riverbed_count = 0;
     uint32_t max_riverbeds = (MapArea * ((4 - MapOceanCoverage) * (WorldBuilder->rivers_base 
@@ -2546,7 +2536,7 @@ tile, unlike the twenty-eight and twenty-one radius tiles, is never bounds
 checked, so a negative x reaches the shift.
 */
 static Map *site_tile(int x, int y) {
-    return &(*MapTiles)[(x >> 1) + y * (int)MapLongitude];
+    return &map_tiles()[(x >> 1) + y * (int)MapLongitude];
 }
 
 /*
@@ -2814,7 +2804,7 @@ void __cdecl world_analysis() {
         do_all_non_input();
     }
     for (i = 0; i < MapArea; i++) {
-        (*MapTiles)[i].val2 &= 0xF; // clear map sites
+        map_tiles()[i].val2 &= 0xF; // clear map sites
     }
 }
 

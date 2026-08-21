@@ -852,7 +852,7 @@ coordinates and therefore shifts x logically, which differs for a negative x.
 Neither form bounds-checks, exactly as the original does not.
 */
 static Map *yield_tile(int x, int y) {
-    return &(*MapTiles)[(x >> 1) + y * (int)MapLongitude];
+    return &map_tiles()[(x >> 1) + y * (int)MapLongitude];
 }
 
 /*
@@ -2739,7 +2739,7 @@ int __cdecl num_objectives(int faction_id, BOOL count_pact_factions) {
     * pointer is not reset between rows.
     */
     if (GameState & STATE_SCN_VICT_TERRAIN_ENH_COUNT_OBJ) {
-        Map *tile = *MapTiles;
+        Map *tile = map_tiles();
         for (int y = 0; y < MapLatitudeBounds; y++) {
             for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
                 if (tile->territory == faction_id) {
@@ -2750,7 +2750,7 @@ int __cdecl num_objectives(int faction_id, BOOL count_pact_factions) {
         }
     }
     if (GameState & STATE_SCN_VICT_TERRITORY_COUNT_OBJ) {
-        Map *tile = *MapTiles;
+        Map *tile = map_tiles();
         for (int y = 0; y < MapLatitudeBounds; y++) {
             for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
                 if (tile->territory == faction_id) {

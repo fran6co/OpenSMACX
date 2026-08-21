@@ -310,7 +310,12 @@ extern uint32_t MapPlanetaryOrbit; // affects temp
 extern uint32_t MapCloudCover; // affects rainfall, rivers
 extern uint32_t MapNativeLifeForms;
 LPSTR *const MapFilePath = (LPSTR *)0x0094A2BC;
-Map **const MapTiles = (Map **)0x0094A30C;
+// AN LVALUE AT A FIXED ADDRESS, not a pointer to one. The tile array's base
+// lives AT 0x0094A30C and the image reads it with a single absolute
+// `mov ecx, [0x94a30c]`. Spelled `Map **const MapTiles = (Map **)0x0094A30C`
+// it took TWO loads - VC6 keeps storage for the constant, reads that, then
+// dereferences it - and every tile access in the tree paid for the extra one.
+inline Map *&map_tiles() { return *reinterpret_cast<Map **>(0x0094A30C); }
 uint8_t **const MapAbstract = (uint8_t **)0x0094A310;
 extern int MapBaseSubmergedCount[8];
 extern int MapBaseIdClosestSubmergedVeh[8];
@@ -347,7 +352,17 @@ BOOL __cdecl bad_reg(int region);
 BOOL __cdecl get_there(int veh_id, int x_dst, int y_dst);
 BOOL __cdecl coast_or_border(uint32_t x_point_a, uint32_t y_point_a, uint32_t x_point_b, 
                                        uint32_t y_point_b, uint32_t faction_id);
-Map *__cdecl map_loc(uint32_t x, uint32_t y);
+// INLINE, AND IN THE HEADER. The image has no `map_loc` - every caller
+// computes the tile address itself, because this is a helper the tree
+// invented to name what the original open-coded. Defined in a .cpp, VC6
+// cannot inline it and every one of its callers pays a `call` the image
+// does not make; there are more than a hundred of them under map.cpp alone.
+// `int`, not `uint32_t`: the image shifts x with `sar ecx, 1` at 0x005001BF,
+// which is the arithmetic shift a SIGNED right-shift compiles to. Unsigned
+// gives `shr` and is one byte different in every caller.
+inline Map *__cdecl map_loc(int x, int y) {
+  return &map_tiles()[(x >> 1) + y * MapLongitude];
+}
 uint32_t __cdecl temp_at(uint32_t x, uint32_t y);
 void __cdecl temp_set(int x, int y, int temperature);
 uint32_t __cdecl climate_at(uint32_t x, uint32_t y);
