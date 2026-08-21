@@ -206,6 +206,18 @@ void move_rect(RECT &rect, int x, int y) {
 /*
 Purpose: Move the active window rectangle while preserving its dimensions.
 // ORIGINAL: 0x005ED7D0 ?move@Win@@QAEHHH@Z 0x005ED7D0-0x005ED877
+// RULED-OUT: reordering the field stores to left,right,top,bottom (matching
+//   the image's actual store order per `store_order.py`) with dy computed
+//   before dx - regressed, 4/43 -> 1/43 (an extra `push edi`/`pop edi`
+//   appeared, similarity 0.795 -> 0.522). Left,right,top,bottom with the
+//   ORIGINAL dx-before-dy compute order - no change at all, still 4/43,
+//   0.795 similar (identical codegen to left,top,right,bottom). The image
+//   RE-READS each field's old value from memory right before storing it
+//   back (e.g. re-loading `top` a second time rather than keeping the first
+//   read live across the `left`/`right` updates), trading a memory read for
+//   a register - that is a backend spill decision, not something a source
+//   reordering can force. Reverted to the original left,top,right,bottom.
+//   Plateau at 4/43 MISMATCH.
 // size      167 bytes
 // prototype int (__thiscall ?move@Win@@QAEHHH@Z)(Win* this, int, int)
 // callers   15   call targets   0
@@ -265,7 +277,8 @@ int Win::is_visible() {
 /*
 Purpose: Translate a client-relative point into screen coordinates by walking
          the parent chain.
-// ORIGINAL: 0x005ED240 ?client_to_screen@Win@@QAEXPAH0@Z 0x005ED240-0x005ED2C5
+// ORIGINAL: 0x005ED240 ?client_to_screen@Win@@QAEXPAH0@Z 0x005ED240-0x005ED2C5 BYTE_EXACT
+// LEVER: plain signed `+`/`-` instead of the `int_from_bits`/`long_bits` bit-cast chain - the image is straight `add`/`sub`, no cast dance. 21/44 MISMATCH -> BYTE_EXACT.
 // size      133 bytes
 // prototype void (__thiscall ?client_to_screen@Win@@QAEXPAH0@Z)(Win* this, int*, int*)
 // callers   71   call targets   1
@@ -275,8 +288,8 @@ Purpose: Translate a client-relative point into screen coordinates by walking
 Status: Complete
 */
 void Win::client_to_screen(int *x, int *y) {
-    *x = int_from_bits(static_cast<uint32_t>(*x) + long_bits(client_rect_.left) + long_bits(outer_rect_.left));
-    *y = int_from_bits(static_cast<uint32_t>(*y) + long_bits(client_rect_.top) + long_bits(outer_rect_.top));
+    *x = *x + client_rect_.left + outer_rect_.left;
+    *y = *y + client_rect_.top + outer_rect_.top;
     // Bit 5 marks a window whose coordinates are relative to its parent, so
     // the walk continues only while both that flag and a parent are present.
     if ((iFlags_ & 0x20U) == 0 || !win_parent_) {
@@ -288,8 +301,8 @@ void Win::client_to_screen(int *x, int *y) {
     if ((iFlags_ & 0x8000U) == 0) {
         return;
     }
-    *x = int_from_bits(static_cast<uint32_t>(*x) - long_bits(win_parent_->outer_rect_.left));
-    *y = int_from_bits(static_cast<uint32_t>(*y) - long_bits(win_parent_->outer_rect_.top));
+    *x = *x - win_parent_->outer_rect_.left;
+    *y = *y - win_parent_->outer_rect_.top;
 }
 
 /*
@@ -526,7 +539,8 @@ RECT *__cdecl make_rect(RECT *rect, int x, int y, int width, int height) {
 
 /*
 Purpose: Determine whether a point is inside an origin-and-dimensions rectangle.
-// ORIGINAL: 0x005FA7A0 ?in_box@@YAHHHHHHH@Z 0x005FA7A0-0x005FA7DB
+// ORIGINAL: 0x005FA7A0 ?in_box@@YAHHHHHHH@Z 0x005FA7A0-0x005FA7DB BYTE_EXACT
+// LEVER: four SEPARATE early-return guards (`if (x<left) return 0; ... if (x>=right) return 0; if (y<top) return 0; ...`) instead of the merged `x>=right || y<top`, and plain signed `+` instead of the `int_from_bits`/`uint32_t` bit-cast - the image never combines the two mid checks and never needs the cast. 0/25 -> BYTE_EXACT.
 // size      59 bytes
 // prototype 
 // callers   1   call targets   0
@@ -540,13 +554,14 @@ int __cdecl in_box(int x, int y, int left, int top, int width, int height) {
     if (x < left) {
         return 0;
     }
-    const int right = int_from_bits(
-        static_cast<uint32_t>(left) + static_cast<uint32_t>(width));
-    if (x >= right || y < top) {
+    const int right = left + width;
+    if (x >= right) {
         return 0;
     }
-    const int bottom = int_from_bits(
-        static_cast<uint32_t>(top) + static_cast<uint32_t>(height));
+    if (y < top) {
+        return 0;
+    }
+    const int bottom = top + height;
     return y < bottom;
 }
 
