@@ -1063,6 +1063,14 @@ int __cdecl minerals_at(int x, int y) {
 Purpose: Determine if the tile has a resource bonus. While the last parameter is unused, it's set to
          1 by two calls inside world_site(). Otherwise, all other calls have it set to 0.
 // ORIGINAL: 0x00592030 ?bonus_at@@YAHHHH@Z 0x00592030-0x00592135
+// RULED-OUT (body is in map.h): the image reads the climate byte (alt_at) before the bit
+//            dword (bit_at) at the shared `site_tile`-style address, while map.h's body
+//            declares `bit` before `alt`. Swapping the declaration order to match the
+//            image's read order made it WORSE (25/117 -> 17/117), so the declaration
+//            order already in the header is the closer one; the remaining gap is the
+//            image folding the bit-field load into the SIB-addressed `mov` where this
+//            tree materialises the tile address into a register first - the same
+//            register-allocation plateau as the rest of this family.
 // size      261 bytes
 // prototype int (__cdecl ?bonus_at@@YAHHHH@Z)(int xCoord, int yCoord, int unkVal)
 // callers   17   call targets   0
@@ -1079,6 +1087,12 @@ Status: Complete
 /*
 Purpose: Determine if the tile has a supply pod and if so what type.
 // ORIGINAL: 0x00592140 ?goody_at@@YAHHH@Z 0x00592140-0x00592248
+// RULED-OUT: --all-flags's winner (39/114, the default set) already beats every other set
+//            by a wide margin; the divergence is in the prologue - the image delays
+//            loading x (`mov esi,[ebp+8]`) until after the `y * MapLongitude` multiply and
+//            the callee-saved pushes, this tree loads x into edx immediately before the
+//            multiply. Same register/instruction-scheduling plateau as bonus_at and the
+//            rest of this family.
 // size      264 bytes
 // prototype int (__cdecl ?goody_at@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   14   call targets   0
@@ -1303,6 +1317,17 @@ Status: Complete
 /*
 Purpose: Rebuild the Map's unit related values.
 // ORIGINAL: 0x00532A90 ?rebuild_vehicle_bits@@YAXXZ 0x00532A90-0x00532B63
+// RULED-OUT: bit_set/bit_at/owner_set with (x,y) never spilled a 3rd stack
+//            slot (image is `sub esp, 0xc`) - a raw `Map *tile` walked by
+//            sizeof(Map), re-reading tile->bit at each of its three sites
+//            rather than caching it in a local, reaches the same frame size
+//            and 27/74 agreeing. A cached `int bit`/`uint32_t bit` local
+//            reused across the sites undersizes the frame to `sub esp, 8`
+//            and drops to 3/74 - the image does NOT cache this value in a
+//            register across the veh_id search loop. Remaining mismatch
+//            past instruction 3 is the same eax/ecx invariant-load swap as
+//            0x00532B70 (tried y-before-tile, no change) - register
+//            allocation, not a source shape.
 // size      211 bytes
 // prototype 
 // callers   3   call targets   0
@@ -1313,14 +1338,15 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl rebuild_vehicle_bits() {
+    Map *tile = map_tiles();
     for (int y = 0; y < MapLatitudeBounds; y++) {
-        for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
-            bit_set(x, y, BIT_VEH_IN_TILE, false);
+        for (int x = y & 1; x < MapLongitudeBounds; x += 2, tile++) {
+            tile->bit &= ~BIT_VEH_IN_TILE;
             for (int veh_id = 0; veh_id < VehCurrentCount; veh_id++) {
-                if (Vehs[veh_id].x == (int)x && Vehs[veh_id].y == (int)y) {
-                    bit_set(x, y, BIT_VEH_IN_TILE, true);
-                    if (!(bit_at(x, y) & BIT_BASE_IN_TILE)) {
-                        owner_set(x, y, Vehs[veh_id].faction_id);
+                if (Vehs[veh_id].x == x && Vehs[veh_id].y == y) {
+                    tile->bit |= BIT_VEH_IN_TILE;
+                    if (!(tile->bit & BIT_BASE_IN_TILE)) {
+                        tile->val2 = (tile->val2 & 0xF0) | (Vehs[veh_id].faction_id & 0xF);
                     }
                     break;
                 }
@@ -1332,8 +1358,19 @@ void __cdecl rebuild_vehicle_bits() {
 /*
 Purpose: Rebuild the Map's base related values.
 // ORIGINAL: 0x00532B70 ?rebuild_base_bits@@YAXXZ 0x00532B70-0x00532C2B
+// RULED-OUT: bit_set/owner_set called with (x,y) recomputed map_loc each time
+//            and never reduced to the image's single walking pointer (0/66
+//            agreeing). A raw `Map *tile` incremented by `sizeof(Map)` once
+//            per x-step - since consecutive same-parity tiles are contiguous
+//            and a row boundary lands on the next tile exactly - reaches
+//            22/66: the whole body matches except the first two invariant
+//            loads (MapLatitudeBounds, MapTiles) landing in eax/ecx swapped
+//            from the image's ecx/eax. Tried: y declared before tile, a
+//            named `int lat = MapLatitudeBounds` local, and a while-loop in
+//            place of the for - none change which register either load gets.
+//            Register-allocation plateau, not a source shape.
 // size      187 bytes
-// prototype 
+// prototype
 // callers   3   call targets   0
 // kind      game
 // flags     frame;sp_ready;purged_ok
@@ -1342,13 +1379,14 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl rebuild_base_bits() {
+    Map *tile = map_tiles();
     for (int y = 0; y < MapLatitudeBounds; y++) {
-        for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
-            bit_set(x, y, BIT_BASE_IN_TILE, false);
+        for (int x = y & 1; x < MapLongitudeBounds; x += 2, tile++) {
+            tile->bit &= ~BIT_BASE_IN_TILE;
             for (int base_id = 0; base_id < BaseCurrentCount; base_id++) {
-                if (Bases[base_id].x == (int)x && Bases[base_id].y == (int)y) {
-                    bit_set(x, y, BIT_BASE_IN_TILE, true);
-                    owner_set(x, y, Bases[base_id].faction_id_current);
+                if (Bases[base_id].x == x && Bases[base_id].y == y) {
+                    tile->bit |= BIT_BASE_IN_TILE;
+                    tile->val2 = (tile->val2 & 0xF0) | (Bases[base_id].faction_id_current & 0xF);
                     break;
                 }
             }
@@ -1746,6 +1784,16 @@ __forceinline static int site_xrange(int x) {
 /*
 Purpose: Check whether there is a sensor available in the specified tile.
 // ORIGINAL: 0x005BF010 ?is_sensor@@YAHHH@Z 0x005BF010-0x005BF12D
+// LEVER: a prior pass's comment read "removed unnecessary duplicate calculation of distX",
+//        caching `x_dist(x, Bases[base_id].x)` into a local before the `!dist_x || dist_x
+//        == 2` check. The image calls `x_dist` (0x00644F3A, abs()) TWICE - once per side of
+//        the `||`, with no CSE across it - while `dist_y` (a plain `abs()`, not `x_dist`) IS
+//        computed once and cached, exactly as this tree already had it. Restoring the
+//        second `x_dist` call moved the compiled instruction count from 73 toward the
+//        image's 102 (73 -> 87).
+// RULED-OUT: remaining divergence starts in the prologue - `mov ecx,[ebp+0xc]` (image) vs
+//            this tree spilling y to ebx (`push ebx; mov ebx,[ebp+0xc]`) - the same
+//            register-allocation plateau as the rest of this family.
 // size      285 bytes
 // prototype int (__cdecl ?is_sensor@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   8   call targets   3
@@ -1761,8 +1809,7 @@ int __cdecl is_sensor(int x, int y) {
     }
     int base_id = base_find(x, y);
     if (base_id != -1) {
-        int dist_x = x_dist(x, Bases[base_id].x);
-        if (!dist_x || dist_x == 2) { // removed unnecessary duplicate calculation of distX
+        if (!x_dist(x, Bases[base_id].x) || x_dist(x, Bases[base_id].x) == 2) {
             int dist_y = abs((int)y - Bases[base_id].y);
             if (!dist_y || dist_y == 2) {
                 if (has_fac_built(FAC_GEOSYNC_SURVEY_POD, base_id)) {
@@ -3806,7 +3853,7 @@ The four tables hold only two distinct values between them, 57 at 00462684 and
 collapse to one rule: coast above the corner reads 67, coast below it reads 57.
 That is the same 60 +7 / -3 shading the corner arm applies arithmetically.
 */
-static int alt_shore_detail(int corner, int west, int north, int east, int south) {
+__forceinline static int alt_shore_detail(int corner, int west, int north, int east, int south) {
     switch (corner) {
       case 0:
         return west;
@@ -3825,6 +3872,16 @@ Purpose: Interpolate the rendered altitude detail at one point of a tile's
          terrain polygon, so that the map renderer can slope the tile towards
          its neighbours and break the contour at the water's edge.
 // ORIGINAL: 0x00462190 ?alt_get_ocean_detail@@YAHHHHH@Z 0x00462190-0x00462699
+// LEVER: call_diff --all flagged this body as making 1 call the image does not
+//        (`0 vs 1 - MORE`) - `alt_shore_detail`'s switch has a jump table, which VC6's
+//        automatic /Ob2 inlining did not fold at all four call sites without an explicit
+//        hint. `__forceinline` on `alt_shore_detail` brought call_diff back to agreement
+//        (image and tree both make 0 direct calls, 4 indirect jumps apiece) and moved
+//        6/431 agreeing instructions to 9/431.
+// RULED-OUT: remaining mismatch starts at the prologue - image is `sub esp, 0xc` (3
+//            spill slots), this tree is `sub esp, 8` (2) - the same "image spills a
+//            local the tree keeps in a register" shape as 0x00532A90/0x00532B70, on a
+//            431-instruction body. Not chased further at this size.
 // size      1289 bytes
 // prototype 
 // callers   1   call targets   0
