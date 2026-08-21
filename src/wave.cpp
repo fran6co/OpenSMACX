@@ -1335,7 +1335,12 @@ void Wave::init(char *a1, unsigned long a2) {
     // The original's `memset(this + 0x54, 0, 4)` at 0x004C6A1A. This used to be
     // a byte loop, the only way to spell a four-byte clear while the header
     // declared a byte and three pad bytes at 0x54.
-    flags_54_ = 0;
+    // `memset(&flags_54_, 0, 4)`, not a store. The image clears it that
+    // way - `lea esi, [edi+0x54]; push 4; push 0; push esi; call` - and
+    // keeps `&flags_54_` in esi afterwards, so every later flag update is
+    // one `or dword ptr [esi], imm`. A plain store costs three
+    // instructions at each of those six sites.
+    memset(&flags_54_, 0, 4);
     if (streaming) {
         flags_54_ |= 2;
         if (!device_ && *WaveDeviceReleaseGuard) {

@@ -251,6 +251,13 @@ void PlanWin::construct(int a1) {
     PENDING_BODY(0x0048BCD0, pending)(this, nullptr, a1);
 }
 
+// The game's own `operator new` at 0x0064558A, reached from `Wave::init` and
+// `Wave::load`. See the note in `vector_teardown.h`.
+void *__cdecl WaveOperatorNew(unsigned int size) {
+    typedef void *(__cdecl *pending)(unsigned int);
+    return PENDING_BODY(0x0064558A, pending)(size);
+}
+
 // ?message_data@@YAXHHHHHH@Z at 0x00592EE0 - broadcasts a game event. Two
 // files bound it as a pointer, with disagreeing return types; one forwarder.
 uint32_t __cdecl message_data(int a1, int a2, int a3, int a4, int a5, int a6) {
