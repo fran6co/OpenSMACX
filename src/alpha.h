@@ -725,7 +725,6 @@ int __cdecl tech_name(LPSTR name);
 int __cdecl chas_name(LPSTR name);
 int __cdecl weap_name(LPSTR name);
 int __cdecl arm_name(LPSTR name);
-int __cdecl tech_item();
 BOOL __cdecl read_basic_rules();
 BOOL __cdecl read_tech();
 void __cdecl clear_faction(Player *player);
@@ -768,4 +767,15 @@ MEASURED inline void __cdecl labels_shutdown() {
 
 MEASURED inline void __cdecl set_language(int language) {
     Language = language;
+}
+
+// Forward declarations from text.h: alpha.h is included before text.h at
+// most of its call sites (e.g. alpha.cpp itself), so tech_item below needs
+// these visible without pulling in the whole header.
+LPSTR __cdecl text_get();
+LPSTR __cdecl text_item();
+
+MEASURED inline int __cdecl tech_item() {
+    text_get();
+    return tech_name(text_item());
 }
