@@ -55,7 +55,7 @@ Purpose: Trim the trailing spaces in-line from the end of the string.
 Return Value: n/a
 Status: Complete
 */
-void __cdecl purge_trailing(LPSTR input) {
+__forceinline void __cdecl purge_trailing(LPSTR input) {
     // IT OVERWRITES EACH TRAILING SPACE, walking back, rather than placing a
     // single terminator: `mov byte ptr [eax], 0` at 0x006007A1 is inside the
     // loop. The empty string leaves early - `test eax, eax; je` at 0x0060078E
@@ -87,7 +87,7 @@ Purpose: Trim the leading spaces in-line from the start of the string.
 Return Value: n/a
 Status: Complete
 */
-LPSTR __cdecl purge_leading(LPSTR input) {
+__forceinline LPSTR __cdecl purge_leading(LPSTR input) {
     // IT DOES NOT COPY. The shipped body is eight instructions - advance past
     // the leading spaces and `ret` - with no `strcpy` and nothing written
     // back, so the skipped prefix survives in the caller's buffer and the
@@ -102,7 +102,7 @@ LPSTR __cdecl purge_leading(LPSTR input) {
 
 /*
 Purpose: Trim the leading and trailing spaces from the string.
-// ORIGINAL: 0x006007B0 ?purge_spaces@@YAXPAD@Z 0x006007B0-0x00600817
+// ORIGINAL: 0x006007B0 ?purge_spaces@@YAXPAD@Z 0x006007B0-0x00600817 BYTE_EXACT
 // size      103 bytes
 // prototype void (__cdecl ?purge_spaces@@YAXPAD@Z)(int8* input)
 // callers   20   call targets   2
@@ -113,8 +113,15 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl purge_spaces(LPSTR input) {
-    purge_leading(input);
+    // THE COPY LIVES HERE, not in `purge_leading` - which is why that one is
+    // eight instructions that return a pointer. The image reserves 0x200
+    // bytes at 0x006007B0, walks the trailing spaces off FIRST, scans past
+    // the leading ones, then copies through the buffer and back.
+    char temp[512];
     purge_trailing(input);
+    LPSTR start = purge_leading(input);
+    strcpy(temp, start);
+    strcpy(input, temp);
 }
 
 /*
@@ -324,7 +331,11 @@ int __cdecl parse_say(int id, int input, int gender, int pluralality) {
         pluralality = *PluralityDefault;
     }
     ParseStrPlurality[id] = pluralality;
-    strcpy_s(ParseStrBuffer[id].str, 256, StringTable->get(input));
+    // TRUNCATED FIRST, exactly as `parse_says` is: `mov byte ptr [esi], 0` at
+    // 0x00625E9D, before the `get` and the copy.
+    char *const dest = ParseStrBuffer[id].str;
+    dest[0] = 0;
+    strcpy(dest, StringTable->get(input));
     return 0;
 }
 
