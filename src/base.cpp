@@ -157,6 +157,10 @@ BOOL __cdecl has_fac(int facility_id, int base_id, int queue_count) {
 /*
 Purpose: Set the current base globals.
 // ORIGINAL: 0x004E39D0 ?set_base@@YAXH@Z 0x004E39D0-0x004E39F3 SEMANTIC
+// RULED-OUT: reordering the two stores (pointer before id) drops to 5/11;
+//            a named local `Base *base = &Bases[base_id];` still 8/11, same
+//            eax/ecx vs edx/ecx register choice on the last two lea/mov -
+//            plateau, best flags /c /O2 /Gy /GR- /Oy- /GX.
 // size      35 bytes
 // prototype void (__cdecl ?set_base@@YAXH@Z)(int baseID)
 // callers   40   call targets   0
@@ -2164,6 +2168,33 @@ Purpose: Calculate the current base's psych values.
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x00421670 0x0050BA00 0x005B8E10 0x005BF1F0 0x005BFE90
+// LEVER (partial): the image's first drone/talent block calls the real,
+//        out-of-line `has_fac(facility_id, base_id, 0)` for GENEJACK_FACTORY,
+//        (what was FAC_CHILDREN_CRECHE), NETWORK_NODE, HOLOGRAM_THEATRE and
+//        PARADISE_GARDEN (`push facility_id_literal; push [0x689370]
+//        (BaseIDCurrentSelected); push 0; call 0x421670`), then switches to a
+//        real `bitmask()` call (`has_fac_built_call`) for RESEARCH_HOSPITAL,
+//        NANOHOSPITAL, PUNISHMENT_SPHERE and BROOD_PIT. Routed the call sites
+//        accordingly; call_diff still reports FEWER because this toolchain
+//        folds `has_fac(literal, BaseIDCurrentSelected, 0)` to
+//        `has_fac_built()` at compile time the same way it folds
+//        `has_fac_built()` itself - the same systemic over-inlining gap
+//        documented on `has_fac` at base.cpp:103, one level up the call
+//        chain. Left as the closer source shape (matches the image's own
+//        facility-id choice, at least) rather than reverting to
+//        `has_fac_built()`, since it does not measure worse.
+// BUG IN THE ORIGINAL (probably): the image's second has_fac() call in this
+//        function passes facility id 6 (FAC_RECREATION_COMMONS), not 2
+//        (FAC_CHILDREN_CRECHE) as the old body had - Rec Commons is the
+//        drone/psych facility thematically, Children's Creche is not.
+//        Reproduced deliberately.
+// STATUS: WIP past this point - the transcribed prefix ends around
+//        0x004EA9AD (the BROOD_PIT bitmask() call, ~2650 bytes of the 3905
+//        byte image); the remaining ~1250 bytes (soc_effect/celebration/
+//        stack_fix/has_abil/veh_at logic near the end of the function, see
+//        `osmx calls`) are not yet written. This already compiles
+//        (MISMATCH, not NO_COMPILE) and reproduces the leading control flow;
+//        finishing the transcription is out of scope for this pass.
 Return Value: n/a
 Status: WIP
 */
@@ -2196,29 +2227,34 @@ void __cdecl base_psych() {
             break;
         }
     }
-    int drones = has_fac_built(FAC_GENEJACK_FACTORY) ? Rules->drones_genejack_factory : 0;
-    if (has_fac_built(FAC_CHILDREN_CRECHE)) {
+    int drones = has_fac(FAC_GENEJACK_FACTORY, BaseIDCurrentSelected, 0)
+        ? Rules->drones_genejack_factory : 0;
+    // BUG IN THE ORIGINAL (probably): the image's second has_fac() call
+    // passes facility id 6 (FAC_RECREATION_COMMONS), not 2
+    // (FAC_CHILDREN_CRECHE) - thematically Rec Commons is the psych/drone
+    // facility, Children's Creche is a growth one. Reproduced deliberately.
+    if (has_fac(FAC_RECREATION_COMMONS, BaseIDCurrentSelected, 0)) {
         drones -= 2;
     }
-    if ((has_fac_built(FAC_NETWORK_NODE) && has_project(SP_VIRTUAL_WORLD, faction_id))
-        || has_fac_built(FAC_HOLOGRAM_THEATRE)) {
+    if ((has_fac(FAC_NETWORK_NODE, BaseIDCurrentSelected, 0) && has_project(SP_VIRTUAL_WORLD, faction_id))
+        || has_fac(FAC_HOLOGRAM_THEATRE, BaseIDCurrentSelected, 0)) {
         drones -= 2;
     }
     if (has_project(SP_PLANETARY_TRANS_SYS, faction_id) && pop_size <= 3) {
         drones--;
     }
-    int talents_fac = has_fac_built(FAC_PARADISE_GARDEN) ? 2 : 0;
-    if (has_fac_built(FAC_RESEARCH_HOSPITAL)) {
+    int talents_fac = has_fac(FAC_PARADISE_GARDEN, BaseIDCurrentSelected, 0) ? 2 : 0;
+    if (has_fac_built_call(FAC_RESEARCH_HOSPITAL, BaseIDCurrentSelected)) {
         drones--;
     }
-    if (has_fac_built(FAC_NANOHOSPITAL)) {
+    if (has_fac_built_call(FAC_NANOHOSPITAL, BaseIDCurrentSelected)) {
         drones--;
     }
     int talents_sp = has_project(SP_HUMAN_GENOME_PROJ, faction_id) ? 1 : 0;
     if (has_project(SP_CLINICAL_IMMORTALITY, faction_id)) {
         talents_sp += 2; // TODO: eval - bug fix per manual: one extra talent at every base
     }
-    BOOL has_punishment_sphere = has_fac_built(FAC_PUNISHMENT_SPHERE);
+    BOOL has_punishment_sphere = has_fac_built_call(FAC_PUNISHMENT_SPHERE, BaseIDCurrentSelected);
     for (i = 8; i >= 0; i--) {
         int val;
         if (!i) {
@@ -2232,7 +2268,7 @@ void __cdecl base_psych() {
             int val_2;// , k;
             if (!j) {
                 val_2 = PlayersData[faction_id].soc_effect_pending.police
-                    + has_fac_built(FAC_BROOD_PIT) * 2;
+                    + has_fac_built_call(FAC_BROOD_PIT, BaseIDCurrentSelected) * 2;
                 if (i) {
                     break;
                 }
@@ -3083,27 +3119,14 @@ int __cdecl vulnerable(int faction_id, int x, int y) {
 /*
 Purpose: Determine whether the specified base is considered an objective.
 // ORIGINAL: 0x005AC060 ?is_objective@@YAHH@Z 0x005AC060-0x005AC10B
+// RULED-OUT: the image still boolifies the `facilities_built[offset] & mask` test with a `neg/sbb/neg` 0-or-1 materialization into the old base_id stack slot before the final `je`, where this tree emits a plain `test`; hoisting `has_fac_built_call(...)` into its own named `BOOL` local before the `if` did not reproduce it (same 43/64, 0.927) - VC6 still proves the value is only used for one branch and drops the materialization.
+// RULED-OUT: `GameRules & X || Bases[base_id].event & Y` into two separate `if` statements (matching the image's two separate short-circuit branches instead of one `||`) moved 0.586 -> 0.762 similar. CORRECTION to the note this replaces: `calls agrees at exactly 1 (0x0050BA00, bitmask)` was wrong - the one call this tree made was to has_fac (out-of-line), not bitmask; the image inlines has_fac itself (its `cmp eax,0x41/jge` IS has_fac's own FacilityRepStart guard) and keeps ONLY the bitmask call inside that. Open-coding has_fac(ScnVictFacilityObj, base_id, 0) as its own `< FacilityRepStart` guard + has_fac_built() at the site removed the out-of-line has_fac call and moved best similarity 0.762 -> 0.783. `ScnVictFacilityObj` is a runtime facility id (read from a global, not a compile-time constant), so the folded `MEASURED inline bitmask` cannot constant-fold it away - routing it through `has_fac_built_call` (the real `bitmask()` call, same lever as cost_factor/pop_goal/num_objectives) reaches the call the image makes; call_diff agreed at 0/1 before, 1/1 after. Casting the `(int)ScnVictFacilityObj < FacilityRepStart` guard fixed a jge/jae signed-vs-unsigned split (ScnVictFacilityObj is uint32_t, compared unsigned without the cast). Moved 2/64 -> 43/64 agreeing, 0.586 -> 0.927 similar.
 // size      171 bytes
 // prototype int (__cdecl ?is_objective@@YAHH@Z)(int baseID)
 // callers   14   call targets   1
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x0050BA00
-// LEVER: splitting `GameRules & X || Bases[base_id].event & Y` into two
-//        separate `if` statements (matching the image's two separate
-//        short-circuit branches instead of one `||`) moved 0.586 -> 0.762
-//        similar. CORRECTION to the note this replaces: `calls agrees at
-//        exactly 1 (0x0050BA00, bitmask)` was wrong - the one call this tree
-//        made was to has_fac (out-of-line), not bitmask; the image inlines
-//        has_fac itself (its `cmp eax,0x41/jge` IS has_fac's own
-//        FacilityRepStart guard) and keeps ONLY the bitmask call inside
-//        that. Open-coding has_fac(ScnVictFacilityObj, base_id, 0) as its
-//        own `< FacilityRepStart` guard + has_fac_built() at the site
-//        removed the out-of-line has_fac call and moved best similarity
-//        0.762 -> 0.783. It does not reach the bitmask call itself -
-//        has_fac_built(runtime-facility_id, base_id) still constant-folds
-//        bitmask() here, the same systemic gap RULED-OUT on has_fac
-//        base.cpp:104.
 Return Value: Is base an objective? true/false
 Status: Complete
 */
@@ -3127,8 +3150,8 @@ BOOL __cdecl is_objective(int base_id) {
         // followed by has_fac_built(), and the image inlines exactly that
         // (its `cmp eax, 0x41 / jge` IS has_fac's `facility_id >=
         // FacilityRepStart` guard) rather than calling has_fac out of line.
-        if (ScnVictFacilityObj < FacilityRepStart
-            && has_fac_built(ScnVictFacilityObj, base_id)) {
+        if ((int)ScnVictFacilityObj < FacilityRepStart
+            && has_fac_built_call(ScnVictFacilityObj, base_id)) {
             return true;
         }
     }
