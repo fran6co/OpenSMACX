@@ -160,7 +160,12 @@ def _argument_names(params: list[str]) -> list[str]:
             name = ""
         if not name:
             name = f"a{index + 1}"
-            param = f"{param} {name}"
+            # A FUNCTION-POINTER PARAMETER NAMES ITSELF INSIDE THE PARENS.
+            # `int(__cdecl *)() a5` is not a declaration; `int(__cdecl *a5)()`
+            # is, and appending blindly produced the former.
+            pointer = re.match(r"(.*\*)\s*(\)\s*\(.*\))\s*$", param)
+            param = (f"{pointer.group(1)}{name}{pointer.group(2)}"
+                     if pointer else f"{param} {name}")
             params[index] = param
         out.append(name)
     return out
@@ -678,7 +683,11 @@ FREE = re.compile(
 FREE_TYPEDEF = re.compile(
     r"typedef\s+(?P<ret>[\w:*&\s]+?)\s*(?:\(\s*(?:__cdecl\s+)?"
     r"(?P<alias>func\w*)\s*\)|(?:__cdecl\s+)?(?P<alias2>func\w*))"
-    r"\s*\((?P<params>[^)]*)\)\s*;\n")
+    # `[^)]*` for the parameters stops at the FIRST `)`, and a callback
+    # parameter has one - `typedef int func7(LPCSTR, ..., int(__cdecl *)())`
+    # read as taking two. `_split_params` counts depth, so hand it everything
+    # up to the last `)` on the line.
+    r"\s*\((?P<params>[^;]*)\)\s*;\n")
 
 
 def free(apply: bool) -> int:
