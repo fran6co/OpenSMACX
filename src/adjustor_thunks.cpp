@@ -30,6 +30,37 @@
 #include "spritebox.h"
 
 /*
+ * WHY 106 OF THESE SIT TWO OR THREE INSTRUCTIONS SHORT, and what would
+ * actually close it.
+ *
+ * The image's thunk is three instructions - `sub ecx, [ecx-4]`,
+ * `sub ecx, <fixed>`, then a TAIL JUMP to the target. Ours is seven: the
+ * vtordisp load does not fold into the `sub`, and VC6 emits `push arg; call;
+ * ret 4` where the image jumps and lets the target reuse the caller's pushed
+ * argument.
+ *
+ * MEASURED, so this is not a guess. The target is ALREADY a named method -
+ * `reinterpret_cast<MapWin *>(...)->MapWin::on_button_clicked(arg0)` - so
+ * "call through a seam blocks the tail call" is not the explanation, and
+ * declaring the destructor for real and forwarding it changes nothing at all
+ * (0 of 2 either way on `??1thunk1_RadioButton`). VC6 1998 does not do
+ * sibling-call optimisation for a `__fastcall` free function calling a
+ * `__thiscall` member with a stack argument, and no spelling asks it to.
+ *
+ * THE PATH THROUGH IS NOT TO WRITE THESE AT ALL. MSVC GENERATES adjustor
+ * thunks itself, byte-exact by construction, when a class really declares
+ * virtual inheritance and overrides through it. These are hand-written because
+ * the window hierarchy models its vtable as an opaque dword the original
+ * installs by hand, so no class here declares a virtual - see the long note in
+ * `radiobutton.h`, which measures what that costs and states that giving
+ * GraphicWin and Dialog real virtual destructors is a coupled edit rather than
+ * an impossible one.
+ *
+ * So: do not grind these individually. The whole family falls out of that one
+ * structural change, or it does not fall out at all.
+ */
+
+/*
 Verification note: the generated leaf suite proves that each body reads its
 vtordisp from the displacement recorded for it, subtracts the adjustment
 recorded for it, and forwards its arguments and its result untouched. It does

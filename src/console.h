@@ -123,6 +123,9 @@ class Console : public MapWin {
   void editor_redo();
   void editor_climate();
   Console() { ; }
+  // See the note in `mapwin.h`: a `construct` method rather than a real
+  // constructor, because VC6's hidden most-derived flag doubles the push.
+  void construct(int a1);
   ~Console() { ; }
   void clear_group();
   void set_preferences();

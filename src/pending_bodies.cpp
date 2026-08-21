@@ -221,6 +221,31 @@ void __fastcall sub_633010(void *self) {
     PENDING_BODY(0x00633010, pending)(self);
 }
 
+// ??0MapWin@@QAE@H@Z at 0x004626E0 and ??0Console@@QAE@H@Z at 0x0050F460 -
+// the constructors their `??__E` initialisers call. Bound as pointer-to-member
+// seams they cost each initialiser the image's `E8`.
+void MapWin::construct(int a1) {
+    typedef void(__fastcall *pending)(MapWin *, void *, int);
+    PENDING_BODY(0x004626E0, pending)(this, nullptr, a1);
+}
+
+void Console::construct(int a1) {
+    typedef void(__fastcall *pending)(Console *, void *, int);
+    PENDING_BODY(0x0050F460, pending)(this, nullptr, a1);
+}
+
+// ??0NetMsg@@QAE@HHH@Z at 0x0047ACF0 and ??0PlanWin@@QAE@H@Z at 0x0048BCD0 -
+// reached by their `??__E` initialisers. See the note in `mapwin.h`.
+void NetMsg::construct(int a1, int a2, int a3) {
+    typedef void(__fastcall *pending)(NetMsg *, void *, int, int, int);
+    PENDING_BODY(0x0047ACF0, pending)(this, nullptr, a1, a2, a3);
+}
+
+void PlanWin::construct(int a1) {
+    typedef void(__fastcall *pending)(PlanWin *, void *, int);
+    PENDING_BODY(0x0048BCD0, pending)(this, nullptr, a1);
+}
+
 // ?message_data@@YAXHHHHHH@Z at 0x00592EE0 - broadcasts a game event. Two
 // files bound it as a pointer, with disagreeing return types; one forwarder.
 uint32_t __cdecl message_data(int a1, int a2, int a3, int a4, int a5, int a6) {

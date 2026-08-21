@@ -20,6 +20,10 @@
 #include "original_seam.h"
 #include <new>
 #include "init_thunks.h"
+#include "console.h"
+#include "netmsg.h"
+#include "planwin.h"
+#include "mapwin.h"
 #include "atexit_thunks.h"
 #include "ambience.h"
 #include "buffer.h"
@@ -6154,7 +6158,7 @@ void __cdecl construct_jackal_font() {
 
 /*
 Purpose: Dynamic initializer for g_MAPWIN; registers its ??__F teardown.
-// ORIGINAL: 0x00462080 ??__Eg_MAPWIN@@YAXXZ 0x00462080-0x00462098
+// ORIGINAL: 0x00462080 ??__Eg_MAPWIN@@YAXXZ 0x00462080-0x00462098 BYTE_EXACT
 // symbol    ?construct_mapwin@@YAXXZ
 // size      24 bytes
 // prototype 
@@ -6166,7 +6170,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_mapwin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x007D4060))->*MapWinCtorTarget)(1);
+    reinterpret_cast<MapWin *>(0x007D4060)->MapWin::construct(1);
     atexit(reinterpret_cast<func_atexit_callback *>(0x004620A0));
 }
 
@@ -6262,7 +6266,7 @@ void __cdecl construct_multiwin_wave() {
 
 /*
 Purpose: Dynamic initializer for g_NETMSG1; registers its ??__F teardown.
-// ORIGINAL: 0x0047A770 ??__Eg_NETMSG1@@YAXXZ 0x0047A770-0x0047A78F
+// ORIGINAL: 0x0047A770 ??__Eg_NETMSG1@@YAXXZ 0x0047A770-0x0047A78F BYTE_EXACT
 // symbol    ?construct_netmsg1@@YAXXZ
 // size      31 bytes
 // prototype 
@@ -6274,13 +6278,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_netmsg1() {
-    (ORIGINAL(reinterpret_cast<void *>(0x00805338))->*NetMsgCtorTarget)(4096, 8, 0);
+    reinterpret_cast<NetMsg *>(0x00805338)->NetMsg::construct(4096, 8, 0);
     atexit(reinterpret_cast<func_atexit_callback *>(0x0047A790));
 }
 
 /*
 Purpose: Dynamic initializer for g_NETMSG2; registers its ??__F teardown.
-// ORIGINAL: 0x0047A7A0 ??__Eg_NETMSG2@@YAXXZ 0x0047A7A0-0x0047A7BC
+// ORIGINAL: 0x0047A7A0 ??__Eg_NETMSG2@@YAXXZ 0x0047A7A0-0x0047A7BC BYTE_EXACT
 // symbol    ?construct_netmsg2@@YAXXZ
 // size      28 bytes
 // prototype 
@@ -6292,7 +6296,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_netmsg2() {
-    (ORIGINAL(reinterpret_cast<void *>(0x007FFF80))->*NetMsgCtorTarget)(-5, 40, 1);
+    reinterpret_cast<NetMsg *>(0x007FFF80)->NetMsg::construct(-5, 40, 1);
     atexit(reinterpret_cast<func_atexit_callback *>(0x0047A7C0));
 }
 
@@ -6370,7 +6374,7 @@ void __cdecl construct_pickwin() {
 
 /*
 Purpose: Dynamic initializer for g_PLANWIN; registers its ??__F teardown.
-// ORIGINAL: 0x0048AE00 ??__Eg_PLANWIN@@YAXXZ 0x0048AE00-0x0048AE18
+// ORIGINAL: 0x0048AE00 ??__Eg_PLANWIN@@YAXXZ 0x0048AE00-0x0048AE18 BYTE_EXACT
 // symbol    ?construct_planwin@@YAXXZ
 // size      24 bytes
 // prototype 
@@ -6382,7 +6386,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_planwin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x00834D70))->*PlanWinCtorTarget)(1);
+    reinterpret_cast<PlanWin *>(0x00834D70)->PlanWin::construct(1);
     atexit(reinterpret_cast<func_atexit_callback *>(0x0048AE20));
 }
 
@@ -6640,7 +6644,7 @@ void __cdecl construct_wave_in_device() {
 
 /*
 Purpose: Dynamic initializer for g_CONSOLE; registers its ??__F teardown.
-// ORIGINAL: 0x0050E850 ??__Eg_CONSOLE@@YAXXZ 0x0050E850-0x0050E868
+// ORIGINAL: 0x0050E850 ??__Eg_CONSOLE@@YAXXZ 0x0050E850-0x0050E868 BYTE_EXACT
 // symbol    ?construct_console@@YAXXZ
 // size      24 bytes
 // prototype 
@@ -6652,7 +6656,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_console() {
-    (ORIGINAL(reinterpret_cast<void *>(0x009156B0))->*ConsoleCtorTarget)(1);
+    reinterpret_cast<Console *>(0x009156B0)->Console::construct(1);
     atexit(reinterpret_cast<func_atexit_callback *>(0x0050E870));
 }
 
