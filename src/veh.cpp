@@ -2881,7 +2881,7 @@ int __cdecl stack_veh(int veh_id, int mode) {
             // Unguarded on purpose: the original reads this tile without an on_map() check and
             // halves x with an arithmetic shift, so map_loc()'s uint32_t parameter would send a
             // negative x roughly a gigabyte away. Same for the two other unguarded reads below.
-            const Map *tile = &(*MapTiles)[(Vehs[veh_id].x >> 1)
+            const Map *tile = &map_tiles()[(Vehs[veh_id].x >> 1)
                 + Vehs[veh_id].y * (int)MapLongitude];
             // The original also compares the masked nibble against 0, which is vacuous.
             if ((tile->bit & BIT_BASE_IN_TILE) && (tile->val2 & 0xF) < MaxPlayerNum) {
@@ -2940,7 +2940,7 @@ int __cdecl stack_veh(int veh_id, int mode) {
             } else {
                 accept = true;
                 if (subject_is_air) {
-                    const Map *tile = &(*MapTiles)[(Vehs[veh_id].x >> 1)
+                    const Map *tile = &map_tiles()[(Vehs[veh_id].x >> 1)
                         + Vehs[veh_id].y * (int)MapLongitude];
                     uint32_t owner = tile->val2 & 0xF;
                     // Note the > 0 here: unlike the two other owner tests, faction 0 is rejected.
@@ -2957,7 +2957,7 @@ int __cdecl stack_veh(int veh_id, int mode) {
                         ? (Vehs[i].waypoint_x[0] < 0) : is_open_ocean;
                 } else if (accept) {
                     if (Vehs[i].state & VSTATE_UNK_40000) {
-                        const Map *tile = &(*MapTiles)[(Vehs[i].x >> 1)
+                        const Map *tile = &map_tiles()[(Vehs[i].x >> 1)
                             + Vehs[i].y * (int)MapLongitude];
                         accept = ((Vehs[i].state & VSTATE_UNK_20000)
                                   && PlayersData[unit_faction].region_base_plan[tile->region]

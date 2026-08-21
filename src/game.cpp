@@ -148,7 +148,7 @@ void __cdecl reset_territory() {
         Continents[region].pods = 0;
         Continents[region].unk_3 = 0;
     }
-    Map *tile = *MapTiles;
+    Map *tile = map_tiles();
     for (int y = 0; y < MapLatitudeBounds; y++) {
         for (int x = y & 1; x < MapLongitudeBounds; x += 2, tile++) {
             int region = tile->region;

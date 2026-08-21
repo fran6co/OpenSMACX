@@ -233,8 +233,8 @@ void Path::merge(int region_old, int region_new) {
     Continents[region_new].tile_count += Continents[region_old].tile_count;
     Continents[region_old].tile_count = 0;
     for (uint32_t i = 0; i < MapArea; i++) {
-        if ((uint32_t)(*MapTiles)[i].region == region_old) {
-            (*MapTiles)[i].region = (uint8_t)region_new;
+        if ((uint32_t)map_tiles()[i].region == region_old) {
+            map_tiles()[i].region = (uint8_t)region_new;
         }
     }
 }
@@ -348,7 +348,7 @@ void Path::continent(int x, int y, int region) {
 */
 void Path::continents() {
     for (uint32_t i = 0; i < MapArea; i++) {
-        (*MapTiles)[i].region = 0;
+        map_tiles()[i].region = 0;
     }
     int y_south_pole = MapLatitudeBounds - 1;
     int ocean_region = 64;
