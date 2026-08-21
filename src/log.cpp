@@ -19,8 +19,6 @@
 #include "temp.h"
 #include "log.h"
 
-#include <new>
-
 /*
 Purpose: Initialize a log file.
 // ORIGINAL: 0x00626040 ?init@Log@@QAEHPAD@Z 0x00626040-0x006260C3
@@ -53,75 +51,6 @@ int Log::init(LPCSTR input) {
     return 0;
 }
 
-/*
-Purpose: Reset the log file.
-// ORIGINAL: 0x006260D0 ?reset@Log@@QAEXXZ 0x006260D0-0x006260EC BYTE_EXACT
-// size      28 bytes
-// prototype void (__thiscall ?reset@Log@@QAEXXZ)(Log* this)
-// callers   2   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00634BB0 0x00645598
-Return Value: n/a
-Status: Complete
-*/
-void Log::reset() {
-    FILE *file = env_open(log_file_, "wt");
-    if (file) {
-        fclose(file);
-    }
-}
-
-/*
-Purpose: Write to the log file with the numbers displayed in base 10.
-// ORIGINAL: 0x006260F0 ?say@Log@@QAEXPADPADHHH@Z 0x006260F0-0x0062618B BYTE_EXACT
-// symbol    ?say@Log@@QAEXPBD0HHH@Z
-// size      155 bytes
-// prototype void (__thiscall ?say@Log@@QAEXPADPADHHH@Z)(Log* this, int8*, int8*, int, int, int)
-// callers   1   call targets   3
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x00634BB0 0x00645598 0x00647815
-Return Value: n/a
-Status: Complete
-*/
-void Log::say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
-    if (!log_file_ || is_disabled_ || IsLoggingDisabled) {
-        return;
-    }
-    FILE *file = env_open(log_file_, "at");
-    if (file) {
-        str2 ? fprintf_s(file, "%s %s %d %d %d\n", str1, str2, num1, num2, num3) 
-            : fprintf_s(file, "%s %d %d %d\n", str1, num1, num2, num3);
-        fclose(file);
-    }
-}
-
-/*
-Purpose: Write to the log file with the numbers displayed in base 16.
-// ORIGINAL: 0x00626190 ?say_hex@Log@@QAEXPADPADHHH@Z 0x00626190-0x0062622B BYTE_EXACT
-// symbol    ?say_hex@Log@@QAEXPBD0HHH@Z
-// size      155 bytes
-// prototype void (__thiscall ?say_hex@Log@@QAEXPADPADHHH@Z)(Log* this, int8*, int8*, int, int, int)
-// callers   0   call targets   3
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00634BB0 0x00645598 0x00647815
-Return Value: n/a
-Status: Complete
-*/
-void Log::say_hex(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
-    if (!log_file_ || is_disabled_ || IsLoggingDisabled) {
-        return;
-    }
-    FILE *file = env_open(log_file_, "at");
-    if (file) {
-        str2 ? fprintf_s(file, "%s %s %04x %04x %04x\n", str1, str2, num1, num2, num3) 
-            : fprintf_s(file, "%s %04x %04x %04x\n", str1, num1, num2, num3);
-        fclose(file);
-    }
-}
-
 // global
 // AN OBJECT, NOT A POINTER TO A FIXED ADDRESS: the pointer form costs a
 // load at every use where the image addresses the storage directly, and
@@ -137,8 +66,11 @@ BOOL IsLoggingDisabled;  // 0x009BC004
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D4510 0x00634BB0 0x00645398 0x006453E0 0x00645470 0x00645598
 // notes     Staged hybrid export redirect calls the source-owned initializer
+// LEVER: `Logging->construct("logfile.txt")` (an ordinary method, see
+//        log.h) rather than `new (Logging) Log(...)` - the constructor
+//        spelling wraps the body in an SEH frame the image does not have.
 void __cdecl log_logging() {
-    new (Logging) Log("logfile.txt");
+    Logging->construct("logfile.txt");
     atexit(log_logging_exit);
 }
 
@@ -153,7 +85,7 @@ void __cdecl log_logging() {
 // notes     Staged hybrid export redirect calls the source-owned exit cleanup
 void __cdecl log_logging_exit() { Logging->~Log(); }
 
-// ORIGINAL: 0x00626230 ?log_reset@@YAXXZ 0x00626230-0x0062624F
+// ORIGINAL: 0x00626230 ?log_reset@@YAXXZ 0x00626230-0x0062624F BYTE_EXACT
 // size      31 bytes
 // prototype 
 // callers   2   call targets   2
@@ -164,6 +96,7 @@ void __cdecl log_logging_exit() { Logging->~Log(); }
 void __cdecl log_reset() { Logging->reset(); }
 
 // ORIGINAL: 0x00626250 ?log_say@@YAXPADPADHHH@Z 0x00626250-0x006262E9
+// RULED-OUT: separate `if` guards instead of the `||` chain; `reinterpret_cast<Log*>(0x9BBFF8)->say(...)` instead of `Logging->`; all 10 FLAG_SETS via --all-flags. Structural fix (call count now matches the image; previously this tree inlined nothing and called Log::say/say_hex as a real function). Residual: the FIRST field read (log_file_) through the constant `this` materializes it into a register (`mov eax,0x9bbff8; mov eax,[eax]`) where the image folds base+offset directly (`mov eax,[0x9bbff8]`) - matches Log::reset's same pattern when log_file_ is a push-argument, not a boolean test.
 // symbol    ?log_say@@YAXPBD0HHH@Z
 // size      153 bytes
 // prototype 
@@ -177,6 +110,7 @@ void __cdecl log_say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
 }
 
 // ORIGINAL: 0x006262F0 ?log_say@@YAXPADHHH@Z 0x006262F0-0x0062634C
+// RULED-OUT: separate `if` guards instead of the `||` chain; `reinterpret_cast<Log*>(0x9BBFF8)->say(...)` instead of `Logging->`; all 10 FLAG_SETS via --all-flags. Structural fix (call count now matches the image; previously this tree inlined nothing and called Log::say/say_hex as a real function). Residual: the FIRST field read (log_file_) through the constant `this` materializes it into a register (`mov eax,0x9bbff8; mov eax,[eax]`) where the image folds base+offset directly (`mov eax,[0x9bbff8]`) - matches Log::reset's same pattern when log_file_ is a push-argument, not a boolean test.
 // symbol    ?log_say@@YAXPBDHHH@Z
 // size      92 bytes
 // prototype 
@@ -190,6 +124,7 @@ void __cdecl log_say(LPCSTR str1, int num1, int num2, int num3) {
 }
 
 // ORIGINAL: 0x00626350 ?log_say_hex@@YAXPADPADHHH@Z 0x00626350-0x006263E9
+// RULED-OUT: separate `if` guards instead of the `||` chain; `reinterpret_cast<Log*>(0x9BBFF8)->say(...)` instead of `Logging->`; all 10 FLAG_SETS via --all-flags. Structural fix (call count now matches the image; previously this tree inlined nothing and called Log::say/say_hex as a real function). Residual: the FIRST field read (log_file_) through the constant `this` materializes it into a register (`mov eax,0x9bbff8; mov eax,[eax]`) where the image folds base+offset directly (`mov eax,[0x9bbff8]`) - matches Log::reset's same pattern when log_file_ is a push-argument, not a boolean test.
 // symbol    ?log_say_hex@@YAXPBD0HHH@Z
 // size      153 bytes
 // prototype 
@@ -203,6 +138,7 @@ void __cdecl log_say_hex(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3)
 }
 
 // ORIGINAL: 0x006263F0 ?log_say_hex@@YAXPADHHH@Z 0x006263F0-0x0062644C
+// RULED-OUT: separate `if` guards instead of the `||` chain; `reinterpret_cast<Log*>(0x9BBFF8)->say(...)` instead of `Logging->`; all 10 FLAG_SETS via --all-flags. Structural fix (call count now matches the image; previously this tree inlined nothing and called Log::say/say_hex as a real function). Residual: the FIRST field read (log_file_) through the constant `this` materializes it into a register (`mov eax,0x9bbff8; mov eax,[eax]`) where the image folds base+offset directly (`mov eax,[0x9bbff8]`) - matches Log::reset's same pattern when log_file_ is a push-argument, not a boolean test.
 // symbol    ?log_say_hex@@YAXPBDHHH@Z
 // size      92 bytes
 // prototype 
@@ -263,4 +199,51 @@ void __cdecl log_set_state(BOOL state) { Logging->set_state(state); }
 // flags     sp_ready;purged_ok
 // calls     0x00644EF2
 // notes     Staged hybrid export redirect calls the source-owned destructor
+*/
+
+/*
+Purpose: Reset the log file.
+// ORIGINAL: 0x006260D0 ?reset@Log@@QAEXXZ 0x006260D0-0x006260EC BYTE_EXACT
+// body      src/log.h
+// LEVER: moved in-class (MEASURED) - the free-function wrappers in this file
+//        inline it, matching the image's own inlining at those call sites.
+// size      28 bytes
+// prototype void (__thiscall ?reset@Log@@QAEXXZ)(Log* this)
+// callers   2   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00634BB0 0x00645598
+Return Value: n/a
+*/
+
+/*
+Purpose: Write to the log file with the numbers displayed in base 10.
+// ORIGINAL: 0x006260F0 ?say@Log@@QAEXPADPADHHH@Z 0x006260F0-0x0062618B BYTE_EXACT
+// body      src/log.h
+// LEVER: moved in-class (MEASURED) - the free-function wrappers in this file
+//        inline it, matching the image's own inlining at those call sites.
+// symbol    ?say@Log@@QAEXPBD0HHH@Z
+// size      155 bytes
+// prototype void (__thiscall ?say@Log@@QAEXPADPADHHH@Z)(Log* this, int8*, int8*, int, int, int)
+// callers   1   call targets   3
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00634BB0 0x00645598 0x00647815
+Return Value: n/a
+*/
+
+/*
+Purpose: Write to the log file with the numbers displayed in base 16.
+// ORIGINAL: 0x00626190 ?say_hex@Log@@QAEXPADPADHHH@Z 0x00626190-0x0062622B BYTE_EXACT
+// body      src/log.h
+// LEVER: moved in-class (MEASURED) - the free-function wrappers in this file
+//        inline it, matching the image's own inlining at those call sites.
+// symbol    ?say_hex@Log@@QAEXPBD0HHH@Z
+// size      155 bytes
+// prototype void (__thiscall ?say_hex@Log@@QAEXPADPADHHH@Z)(Log* this, int8*, int8*, int, int, int)
+// callers   0   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00634BB0 0x00645598 0x00647815
+Return Value: n/a
 */

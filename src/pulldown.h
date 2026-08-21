@@ -112,3 +112,25 @@ int __fastcall pull_down_unk6_redirect(
 void __fastcall pull_down_on_mouse_leave_redirect(PullDown *self, void *, int a1, int a2);
 
 int __fastcall pull_down_id_to_index_redirect(PullDown *self, void *, int id);
+
+// The image inlines this scan at every hide_item/show_item/disable_item/
+// enable_item/check_item/uncheck_item call site rather than emitting a
+// helper call; defined here, at the end of the header, so it can see
+// PullDownItem, and inline so pulldown.cpp reproduces that.
+//
+// Returns an INDEX, not a pointer: the image recomputes the item's address
+// from `index` at each field access (lea eax,[eax+eax*4]; lea ...+0xa24)
+// rather than caching a pointer across the whole body.
+inline int find_item(PullDownItem *items, int id) {
+    int index = -1;
+    for (int i = 0; i < 64; ++i) {
+        if (items[i].id == -1) {
+            break;
+        }
+        if (items[i].id == id) {
+            index = i;
+            break;
+        }
+    }
+    return index;
+}

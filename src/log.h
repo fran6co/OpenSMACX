@@ -18,6 +18,8 @@
 #pragma once
 #include "general.h"
 
+extern BOOL IsLoggingDisabled;
+
  /*
   * Log class: Handles debug logging.
   */
@@ -25,12 +27,21 @@ class Log {
  public:
   MEASURED Log() : log_file_(nullptr), is_disabled_(false) {
   } // 00625FB0
-  Log(LPCSTR input) : log_file_(nullptr) { // 00625FC0
+  // NOT a constructor: `??__ELogging` reaches this through an ordinary
+  // method call (`Logging->construct(...)`), not a `new`-expression. VC6
+  // wraps a placement-new'd, non-trivially-destructible object in an SEH
+  // frame when its constructor calls an external (non-intrinsic) function,
+  // to run the destructor if construction throws - the image has none, so
+  // the original reached this some other way. An ordinary member function
+  // is just a call, and drops the frame entirely. // 00625FC0
+  void construct(LPCSTR input) {
+      log_file_ = nullptr;
       if (input) {
           size_t len = strlen(input) + 1;
           log_file_ = (LPSTR)mem_get(len);
           if (log_file_) {
-              strcpy_s(log_file_, len, input);
+              log_file_[0] = '\0';
+              strcat(log_file_, input);
               reset();
           }
       }
@@ -43,9 +54,39 @@ class Log {
   } // 00626020
 
   int init(LPCSTR input);
-  void reset();
-  void say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3);
-  void say_hex(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3);
+  // The image inlines reset/say/say_hex into every `Logging->...()` caller
+  // in log.cpp rather than emitting a call to these; defined in-class so
+  // this unit's own callers reproduce that. Each still carries its own
+  // ORIGINAL marker, moved to log.cpp below the class (see "DEFINED IN THE
+  // HEADER, CLAIMED HERE").
+  MEASURED void reset() {         // 006260D0
+      FILE *file = env_open(log_file_, "wt");
+      if (file) {
+          fclose(file);
+      }
+  }
+  MEASURED void say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {   // 006260F0
+      if (!log_file_ || is_disabled_ || IsLoggingDisabled) {
+          return;
+      }
+      FILE *file = env_open(log_file_, "at");
+      if (file) {
+          str2 ? fprintf_s(file, "%s %s %d %d %d\n", str1, str2, num1, num2, num3)
+              : fprintf_s(file, "%s %d %d %d\n", str1, num1, num2, num3);
+          fclose(file);
+      }
+  }
+  MEASURED void say_hex(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {   // 00626190
+      if (!log_file_ || is_disabled_ || IsLoggingDisabled) {
+          return;
+      }
+      FILE *file = env_open(log_file_, "at");
+      if (file) {
+          str2 ? fprintf_s(file, "%s %s %04x %04x %04x\n", str1, str2, num1, num2, num3)
+              : fprintf_s(file, "%s %04x %04x %04x\n", str1, num1, num2, num3);
+          fclose(file);
+      }
+  }
   // additional functions to assist with encapsulation
   void set_state(BOOL state) { is_disabled_ = state ? false : true; }
 
@@ -60,7 +101,6 @@ static_assert(sizeof(Log) == 8, "Log layout must match the legacy ABI");
 
 // global
 Log *const Logging = (Log *)0x009BBFF8;
-extern BOOL IsLoggingDisabled;
 
 void __cdecl log_logging();
 void __cdecl log_logging_exit();
