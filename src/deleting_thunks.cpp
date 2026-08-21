@@ -92,12 +92,8 @@ func_deleting_dtor PopupDtorTarget =
     original_method<func_deleting_dtor>(0x00406C00);
 func_deleting_forward_nullary Sub004042B0Target =
     original_method<func_deleting_forward_nullary>(0x004042B0);
-func_deleting_dtor Sub004C86D0Target =
-    original_method<func_deleting_dtor>(0x004C86D0);
 func_deleting_forward Sub00612710Target =
     original_method<func_deleting_forward>(0x00612710);
-func_deleting_dtor Sub00633010Target =
-    original_method<func_deleting_dtor>(0x00633010);
 func_deleting_forward Sub006336D0Target =
     original_method<func_deleting_forward>(0x006336D0);
 
@@ -226,7 +222,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GPopup@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-// ORIGINAL: 0x00406BD0 ??_GPopup@@UAEPAXI@Z 0x00406BD0-0x00406BF1
+// ORIGINAL: 0x00406BD0 ??_GPopup@@UAEPAXI@Z 0x00406BD0-0x00406BF1 BYTE_EXACT
 // symbol    ?scalar_delete_popup@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype 
@@ -238,7 +234,8 @@ Return Value: the object pointer
 Status: Complete
 */
 void *__fastcall scalar_delete_popup(void *self, void *, unsigned int arg0) {
-    (ORIGINAL(self)->*PopupDtorTarget)();
+    // A NAMED DESTRUCTOR, not the seam - the image emits `call rel32`.
+    reinterpret_cast<Popup *>(self)->Popup::~Popup();
     if (arg0 & 1) {
         operator delete(self);
     }
@@ -2059,7 +2056,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GVideo@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-// ORIGINAL: 0x004C9360 ??_GVideo@@UAEPAXI@Z 0x004C9360-0x004C9381
+// ORIGINAL: 0x004C9360 ??_GVideo@@UAEPAXI@Z 0x004C9360-0x004C9381 BYTE_EXACT
 // symbol    ?scalar_delete_video@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype void* (__thiscall ??_GVideo@@UAEPAXI@Z)(Video* this, int8)
@@ -2071,7 +2068,7 @@ Return Value: the object pointer
 Status: Complete
 */
 void *__fastcall scalar_delete_video(void *self, void *, unsigned int arg0) {
-    (ORIGINAL(self)->*Sub004C86D0Target)();
+    sub_4c86d0(self);
     if (arg0 & 1) {
         operator delete(self);
     }
@@ -2407,7 +2404,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-// ORIGINAL: 0x005F8610 ??_GWin@@UAEPAXI@Z 0x005F8610-0x005F862E
+// ORIGINAL: 0x005F8610 ??_GWin@@UAEPAXI@Z 0x005F8610-0x005F862E BYTE_EXACT
 // symbol    ?scalar_delete_win@@YIPAXPAX0I@Z
 // size      30 bytes
 // prototype void* (__thiscall ??_GWin@@UAEPAXI@Z)(Win* this, unsigned int)
@@ -2419,7 +2416,9 @@ Return Value: the object pointer
 Status: Complete
 */
 void *__fastcall scalar_delete_win(void *self, void *, unsigned int arg0) {
-    (ORIGINAL(self)->*WinOriginalDestructor)();
+    // A NAMED DESTRUCTOR, not the seam: the image emits `call rel32` here and
+    // a pointer-to-member variable can only emit `call dword ptr [...]`.
+    reinterpret_cast<Win *>(self)->Win::~Win();
     if (arg0 & 1) {
         operator delete(self);
     }
@@ -2701,7 +2700,7 @@ void *__fastcall adjust_this_push_button(void *self, void *,
 Purpose: The compiler-generated scalar deleting destructor at sub_633160: run
          the complete destructor, then release the storage through the
          executable's operator delete only when bit 0 of the flags asks.
-// ORIGINAL: 0x00633160 sub_633160 0x00633160-0x0063317E
+// ORIGINAL: 0x00633160 sub_633160 0x00633160-0x0063317E BYTE_EXACT
 // symbol    ?scalar_delete_sub_633160@@YIPAXPAX0I@Z
 // size      30 bytes
 // prototype 
@@ -2714,7 +2713,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_sub_633160(void *self, void *,
                                           unsigned int arg0) {
-    (ORIGINAL(self)->*Sub00633010Target)();
+    sub_633010(self);
     if (arg0 & 1) {
         operator delete(self);
     }

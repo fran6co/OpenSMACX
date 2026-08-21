@@ -194,6 +194,33 @@ void __cdecl consider_designs(uint32_t faction_id) {
     PENDING_BODY(0x00581260, pending)(faction_id);
 }
 
+// ??1Win@@UAE@XZ at 0x005EBC90 - the destructor the scalar deleting thunks
+// call. See the note in `win.h`.
+Win::~Win() {
+    typedef void(__fastcall *pending)(Win *, void *);
+    PENDING_BODY(0x005EBC90, pending)(this, nullptr);
+}
+
+// ??1Popup@@UAE@XZ at 0x00406C00 - reached by `??_GPopup` and by one guarded
+// teardown. See the note in `popup.h`.
+Popup::~Popup() {
+    typedef void(__fastcall *pending)(Popup *, void *);
+    PENDING_BODY(0x00406C00, pending)(this, nullptr);
+}
+
+// sub_4c86d0 at 0x004C86D0 and sub_633010 at 0x00633010 - the teardowns the
+// Video and 0x633160 deleting thunks call. See the note in
+// `deleting_thunks.h`.
+void __fastcall sub_4c86d0(void *self) {
+    typedef void(__fastcall *pending)(void *);
+    PENDING_BODY(0x004C86D0, pending)(self);
+}
+
+void __fastcall sub_633010(void *self) {
+    typedef void(__fastcall *pending)(void *);
+    PENDING_BODY(0x00633010, pending)(self);
+}
+
 // ?message_data@@YAXHHHHHH@Z at 0x00592EE0 - broadcasts a game event. Two
 // files bound it as a pointer, with disagreeing return types; one forwarder.
 uint32_t __cdecl message_data(int a1, int a2, int a3, int a4, int a5, int a6) {

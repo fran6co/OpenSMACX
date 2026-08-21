@@ -51,7 +51,11 @@ class Popup : public BasePop {
   static int alloc();
 
   Popup() { ; }
-  ~Popup() { ; }
+  // DECLARED, NOT DEFINED EMPTY. The real destructor is 0x00406C00 and ends
+  // `ret`, not `ret 4`, so it takes no vbase flag and a direct call reaches
+  // it. An empty inline body compiles `??_GPopup`'s call away. Forwarded in
+  // `pending_bodies.cpp`.
+  ~Popup();
   void close();
   void on_adjust_button_width();
   // 0x00406380, still a pending_bodies forwarder: the three overloads
