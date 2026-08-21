@@ -11,12 +11,20 @@ class with VIRTUAL BASES: "construct the virtual bases only if I am the
 most-derived object". A destructor carries it too, for the same reason in
 reverse.
 
-The consequence is that the recovery is a DECLARATION, not a body. If the
-class is declared with no base class, or with ordinary inheritance, its
-constructor cannot reproduce anything - the image's body reads the flag,
-branches on it, reaches every vtable through the vbtable rather than a fixed
-offset, and writes a vtordisp. Declare the virtual inheritance and VC6 emits
-all of that by itself.
+The consequence is that part of the recovery is a DECLARATION rather than a
+body: a class declared with no base, or with ordinary inheritance, cannot
+produce the vbtable-relative vtable stores or the vtordisp its image body
+writes. Declaring the virtual inheritance is what gives those.
+
+WHAT DECLARING IT DOES NOT GIVE YOU IS THE CONSTRUCTOR. Measured with `nm`
+and `objdump` on VC6 12.00.8168: a constructor with no explicit parameter
+compiles to `??0Class@@QAE@XZ`, with no `H` - the hidden flag is a separate
+stack parameter and never appears in the mangled name. Written to take an
+`int` it does mangle `@H@Z`, but then reads that int from [ebp+8] and the
+hidden flag from [ebp+0xc], and its call site pushes the value TWICE where
+the image's `??__E` initialisers push once. So these constructors have to
+stay `construct(int a1)` METHODS, which never receive the flag. Destructors
+are the opposite case and are safe as real C++ destructors.
 
     uv run tools/most_derived_flag.py
 

@@ -30,9 +30,27 @@ with another agent.
 
 THE `int` IN `??0Class@@QAE@H@Z` IS NOT AN ARGUMENT
 - It is MSVC's compiler-injected MOST-DERIVED FLAG, and its presence means the
-  class has VIRTUAL BASES. Do not model it as a parameter and do not write a
-  constructor that takes one - declare the virtual inheritance and VC6 emits
-  the flag, its guard, and everything that follows, by itself.
+  class has VIRTUAL BASES.
+- BUT YOU CANNOT REACH IT WITH A REAL CONSTRUCTOR, and an earlier version of
+  this section said you could. Measured with `nm` and `objdump` on VC6
+  12.00.8168, 2026-08-21:
+    * a constructor with NO explicit parameter, on a class with a genuine
+      virtual base, compiles to `??0Class@@QAE@XZ` - no `H` at all. The hidden
+      flag is a separate stack parameter and is NEVER part of the mangled name.
+    * a constructor written to take `int a1` does mangle to `@H@Z`, but reads
+      a1 from [ebp+8] and the hidden flag from [ebp+0xc], and a call site
+      written `->Class::Class(1)` pushes `1` TWICE. The image's own `??__E`
+      initialisers push it exactly ONCE.
+  So the `construct(int a1)` METHOD spelling is the right one for these: a
+  plain method never receives the hidden flag, and its call site pushes once.
+  Where the tree already has `construct(int)`, KEEP IT.
+- The virtual inheritance itself is still real and still worth declaring - it
+  is what gives the LAYOUT, the vbtable-relative vtable stores and the
+  vtordisp. It is only the constructor spelling that cannot follow.
+- DESTRUCTORS are the opposite case and ARE safe as real C++ destructors: they
+  never carry the flag. For this family `this` is the address of the embedded
+  GraphicWin virtual base rather than the class's own front, which
+  guarded_teardowns.cpp's already-byte-exact calls prove.
 - The body tells you the same thing three times over. `ListBox::ListBox`
   (0x00609DB0) reads the parameter, compares it to zero, and SKIPS its base
   construction when it is zero - that is the flag's whole meaning, "construct
