@@ -558,9 +558,8 @@ class DDInit { public:
 DDInit *const WinDisplayInit = reinterpret_cast<DDInit *>(0x009BE618);
 
 // 0x005EFD00, 27 bytes - refreshes `WinScreenWidth`/`WinScreenHeight` from
-// `GetSystemMetrics`. Already BYTE_EXACT in src/recovered/005efd00.cpp but
-// not promoted into this tree; `init` needs it, so it is forwarded here
-// rather than promoted, per the task that added this call site.
+// `GetSystemMetrics`. Defined in win.cpp; it was a forwarder until the body
+// it already had, byte-exact and owned by no file, was promoted.
 extern "C" int __cdecl DDInitRefreshScreenMetrics();
 
 
