@@ -2923,10 +2923,30 @@ spot_tile() and veh_top() were both left as real calls despite the comment
 above already establishing both are inlined. spot_tile is now plain `inline`
 (its only callers are spot_base/spot_stack/spot_loc, all in this file); the
 veh_top climb below is hand-inlined, matching veh_at's precedent.
+// RULED-OUT: calling the `inline` spot_tile() directly - the optimiser did
+// NOT fold it away here (unlike in spot_base), so the call to spot_tile
+// survived and call_diff still reported WRONG CALLEE (spot_tile instead of
+// synch_bit). Hand-inlining spot_tile's body, matching spot_base's own
+// precedent, is what removes the call.
 */
 void __cdecl spot_stack(int veh_id, int faction_id) {
     if (veh_id >= 0 && on_map(Vehs[veh_id].x, Vehs[veh_id].y)) {
-        spot_tile(Vehs[veh_id].x, Vehs[veh_id].y, faction_id);
+        // spot_tile(), hand-inlined - see spot_base's precedent above; a call
+        // to `inline` spot_tile survived the optimiser here.
+        int x = Vehs[veh_id].x;
+        int y = Vehs[veh_id].y;
+        if (y >= 0 && y < (int)MapLatitudeBounds
+            && x >= 0 && x < (int)MapLongitudeBounds) {
+            Map *tile = *reinterpret_cast<Map **>(0x0094A30C) + ((x >> 1) + y * MapLongitude);
+            if (faction_id == LocalFaction && !(tile->visibility & (1 << faction_id))
+                && !(GameState & STATE_OMNISCIENT_VIEW)
+                && !(PlayersData[faction_id].flags & PFLAG_MAP_REVEALED)) {
+                tile->bit2 |= 0x400000; // TODO: identify value
+                UnkBitfield1 |= 1; // TODO: identify global + value
+            }
+            tile->visibility |= (uint8_t)(1 << faction_id);
+            synch_bit(x, y, faction_id);
+        }
     }
     int top_veh_id;
     if (veh_id < 0) {
@@ -3126,17 +3146,37 @@ Purpose: Move a stack of units in the same stack as the specified unit to a dest
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x005BFFA0 0x005C0080
+// RULED-OUT: `veh_top()`/`veh_put()` as plain calls - both are inline-marked
+// wrappers, but this call site is not one of veh_top's real sites and
+// veh_put did not fold here either, so call_diff reported WRONG CALLEE
+// (veh_put/veh_top instead of veh_lift/veh_drop). Hand-inlining both,
+// matching veh_promote's precedent, is what removes the mismatch.
 Return Value: n/a
 Status: Complete
 */
 void __cdecl stack_put(int veh_id, int x, int y) {
-    int next_veh_id = veh_top(veh_id);
+    // veh_top(), hand-inlined - matching veh_promote's precedent (see its own
+    // comment): the image does not call it here.
+    int top_veh_id;
+    if (veh_id < 0) {
+        top_veh_id = -1;
+    } else {
+        top_veh_id = veh_id;
+        for (int j = Vehs[top_veh_id].prev_veh_id_stack; j >= 0; j = Vehs[j].prev_veh_id_stack) {
+            top_veh_id = j;
+        }
+    }
     int veh_id_loop;
-    if (next_veh_id >= 0) {
+    if (top_veh_id >= 0) {
         do {
-            veh_id_loop = Vehs[next_veh_id].next_veh_id_stack;
-            veh_put(next_veh_id, x, y);
-            next_veh_id = veh_id_loop;
+            veh_id_loop = Vehs[top_veh_id].next_veh_id_stack;
+            // veh_put(), hand-inlined: the image calls veh_lift and veh_drop
+            // directly here, discarding veh_lift's return (it always returns
+            // its own veh_id argument unchanged) rather than threading it
+            // through to veh_drop's first parameter.
+            veh_lift(top_veh_id);
+            veh_drop(top_veh_id, x, y);
+            top_veh_id = veh_id_loop;
         } while (veh_id_loop >= 0);
     }
 }

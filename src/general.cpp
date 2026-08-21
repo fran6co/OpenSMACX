@@ -1503,9 +1503,10 @@ void __cdecl load_undo(int type) {
 
 /*
 Purpose: Remove all the existing Scenario Editor undo auto-saves.
-// ORIGINAL: 0x005ABEC0 ?wipe_undo@@YAXXZ 0x005ABEC0-0x005ABF14
+// ORIGINAL: 0x005ABEC0 ?wipe_undo@@YAXXZ 0x005ABEC0-0x005ABF14 BYTE_EXACT
+// LEVER: WRONG CALLEE - `sprintf_s` is not in the image at all (the image has no C++/CRT sprintf for paths here); it builds the name with `strcat`/`_itoa`/`strcat` into the global `StringTemp` buffer (0x009B86A0) and calls `remove()` directly, with no ".SAV" extension appended - matching auto_undo's own documented idiom immediately below.
 // size      84 bytes
-// prototype 
+// prototype
 // callers   1   call targets   3
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
@@ -1514,10 +1515,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl wipe_undo() {
-    char undo_path[38];
     for (int i = 9; i >= 1; i--) {
-        sprintf_s(undo_path, 38, "saves\\auto\\Scenario Editor Undo %d.SAV", i);
-        remove(undo_path);
+        StringTemp[0] = 0;
+        strcat(StringTemp, "saves\\auto\\Scenario Editor Undo ");
+        char number[80];
+        _itoa(i, number, 10);
+        strcat(StringTemp, number);
+        remove(StringTemp);
     }
 }
 

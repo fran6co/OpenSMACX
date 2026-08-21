@@ -55,6 +55,19 @@ Purpose: Calculate the cost for the faction to be able to mind control the speci
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x00421670 0x004F8090 0x0050BA00 0x005B8E10 0x005B9580 0x005BFE90 0x00644F3A
+// RULED-OUT: switching the three `has_fac_built(FAC_X, base_id)` calls
+//            (GENEJACK_FACTORY, CHILDREN_CRECHE, PUNISHMENT_SPHERE) to
+//            `has_fac_built_call` - unlike energy_yield/crop_yield/
+//            mine_yield, this REGRESSED both axes: call_diff flipped from
+//            MORE (15 vs image's 12) to FEWER (9 vs 12, has_treaty/
+//            is_human/stack_check's real calls stopped appearing), and
+//            best-across-flags similarity dropped 0.546 -> 0.136. The
+//            image's own `vulnerable()` call (0x0059E980, this function's
+//            immediate predecessor) does not appear in this tree's compiled
+//            call list at all under any flag set tried, which is the more
+//            likely source of the image's `has_fac`/`vector_dist`/one
+//            `bitmask` calls - not reachable by touching this function's
+//            own three has_fac_built sites. Reverted.
 Return Value: Mind control cost
 Status: Complete
 */

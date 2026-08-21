@@ -1109,6 +1109,12 @@ Purpose: Calculate the nutrients produced by a single map square.
 //            removed) so bonus_at(x, y, 0) would emit `call 0x592030` as
 //            the image does - measured NO improvement to best-across-flags
 //            similarity (stayed at 0.292) on top of the forceinline change.
+// LEVER: FEWER (2 calls vs image's 7: 5 bitmask() + bonus_at + has_tech) -
+//        all five `has_fac_built(FAC_X, base_id)` sites constant-fold their
+//        offset/mask math away here, unlike the image, which keeps
+//        bitmask() out-of-line at every one. Switching all five to
+//        `has_fac_built_call` took call_diff to 0 disagreeing with no
+//        similarity regression (still 0.292 best-across-flags).
 Return Value: Nutrients from the square
 Status: Complete
 
@@ -1148,8 +1154,8 @@ int __cdecl crop_yield(int faction_id, int base_id, int x, int y,
         if (base_id < 0) {
             return crop; // the original returns here rather than reaching the tail
         }
-        if (has_fac_built(FAC_RECYCLING_TANKS, base_id)
-            || has_fac_built(FAC_PRESSURE_DOME, base_id)) {
+        if (has_fac_built_call(FAC_RECYCLING_TANKS, base_id)
+            || has_fac_built_call(FAC_PRESSURE_DOME, base_id)) {
             crop += ResourceInfo[RSCINFO_RECYCLING_TANKS].nutrients;
         }
     } else if (bit & BIT_THERMAL_BORE) {
@@ -1195,7 +1201,7 @@ int __cdecl crop_yield(int faction_id, int base_id, int x, int y,
                     // Legacy: unguarded for base_id < 0, exactly as 0x004E7150.
                     // Bases[(uint32_t)-1] and Bases[-1] are the same address on
                     // 32-bit x86, so this reproduces the original's read.
-                    if (has_fac_built(FAC_AQUAFARM, (uint32_t)base_id)) {
+                    if (has_fac_built_call(FAC_AQUAFARM, (uint32_t)base_id)) {
                         crop++;
                     }
                 }
@@ -1209,10 +1215,10 @@ int __cdecl crop_yield(int faction_id, int base_id, int x, int y,
                 crop += ResourceInfo[RSCINFO_BONUS_SQ].nutrients;
             }
             if (base_id >= 0) {
-                if (has_fac_built(FAC_HYBRID_FOREST, base_id)) {
+                if (has_fac_built_call(FAC_HYBRID_FOREST, base_id)) {
                     crop++;
                 }
-                if (has_fac_built(FAC_TREE_FARM, base_id)) {
+                if (has_fac_built_call(FAC_TREE_FARM, base_id)) {
                     crop++;
                 }
             }
@@ -1299,6 +1305,12 @@ Purpose: Calculate the minerals produced by a single map square.
 // RULED-OUT: a `bonus_at_call` non-inline forwarder (map.h/map.cpp, since
 //            removed) so bonus_at(x, y, 0) would emit `call 0x592030` -
 //            measured no improvement on top of the forceinline change.
+// LEVER: FEWER (3 calls vs image's 6: 3 bitmask() + bonus_at + 2 has_tech) -
+//        all three `has_fac_built(FAC_X, base_id)` sites constant-fold their
+//        offset/mask math away here, unlike the image, which keeps
+//        bitmask() out-of-line at every one. Switching all three to
+//        `has_fac_built_call` took call_diff to 0 disagreeing with no
+//        similarity regression (still 0.388 best-across-flags).
 Return Value: Minerals from the square
 Status: Complete
 
@@ -1335,8 +1347,8 @@ int __cdecl mine_yield(int faction_id, int base_id, int x, int y,
         if (base_id < 0) {
             return mineral; // the original returns here rather than reaching the tail
         }
-        if (has_fac_built(FAC_RECYCLING_TANKS, base_id)
-            || has_fac_built(FAC_PRESSURE_DOME, base_id)) {
+        if (has_fac_built_call(FAC_RECYCLING_TANKS, base_id)
+            || has_fac_built_call(FAC_PRESSURE_DOME, base_id)) {
             mineral += ResourceInfo[RSCINFO_RECYCLING_TANKS].minerals;
         }
     } else if (bit & BIT_MONOLITH) {
@@ -1386,7 +1398,7 @@ int __cdecl mine_yield(int faction_id, int base_id, int x, int y,
                     mineral++;
                 }
                 // Legacy: unguarded for base_id < 0, exactly as 0x004E765F.
-                if (has_fac_built(FAC_SUBSEA_TRUNKLINE, (uint32_t)base_id)) {
+                if (has_fac_built_call(FAC_SUBSEA_TRUNKLINE, (uint32_t)base_id)) {
                     mineral++;
                 }
             }
@@ -1465,6 +1477,13 @@ Purpose: Calculate the energy produced by a single map square.
 // RULED-OUT: a `bonus_at_call` non-inline forwarder (map.h/map.cpp, since
 //            removed) so bonus_at(x, y, 0) would emit `call 0x592030` -
 //            measured no improvement on top of the forceinline change.
+// LEVER: FEWER (2 calls vs image's 8: 6 bitmask() + bonus_at + has_tech) -
+//        all six `has_fac_built(FAC_X, base_id)` sites constant-fold their
+//        offset/mask math away under this toolchain, unlike the image, which
+//        keeps bitmask() out-of-line at every one. Switching all six to
+//        `has_fac_built_call` (base.h's bitmask_call-forcing sibling) took
+//        call_diff to 0 disagreeing with no similarity regression (still
+//        0.137 best-across-flags, matching the tied score noted above).
 Return Value: Energy from the square
 Status: Complete
 
@@ -1503,13 +1522,13 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
         energy = ResourceInfo[RSCINFO_BASE_SQ].energy;
         // Legacy: read BEFORE the base_id sign check at 0x004E7896, so a base_id
         // of -1 reads one Base entry below the array, exactly as the original.
-        if (has_fac_built(FAC_HEADQUARTERS, (uint32_t)base_id)) {
+        if (has_fac_built_call(FAC_HEADQUARTERS, (uint32_t)base_id)) {
             energy++;
         }
         int golden_age = 0;
         if (base_id >= 0) {
-            if (has_fac_built(FAC_RECYCLING_TANKS, base_id)
-                || has_fac_built(FAC_PRESSURE_DOME, base_id)) {
+            if (has_fac_built_call(FAC_RECYCLING_TANKS, base_id)
+                || has_fac_built_call(FAC_PRESSURE_DOME, base_id)) {
                 energy += ResourceInfo[RSCINFO_RECYCLING_TANKS].energy;
             }
             if (Bases[base_id].state & BSTATE_GOLDEN_AGE_ACTIVE) {
@@ -1521,7 +1540,7 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
         if (economy < 0) {
             // The original asks for Headquarters again here rather than reusing
             // the answer above.
-            if (!has_fac_built(FAC_HEADQUARTERS, (uint32_t)base_id)
+            if (!has_fac_built_call(FAC_HEADQUARTERS, (uint32_t)base_id)
                 || economy < -1
                 || PlayersData[faction_id].current_num_bases == 1u) {
                 economy++;
@@ -1570,7 +1589,7 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
             if ((bit & BIT_SOLAR_TIDAL) || assume_improved) {
                 energy += ResourceInfo[RSCINFO_IMPROVED_SEA].energy;
                 // Legacy: unguarded for base_id < 0, exactly as 0x004E7B19.
-                if (has_fac_built(FAC_THERMOCLINE_TRANSDUCER,
+                if (has_fac_built_call(FAC_THERMOCLINE_TRANSDUCER,
                                   (uint32_t)base_id)) {
                     energy++;
                 }
@@ -1581,7 +1600,7 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
         }
     } else if (bit & BIT_FOREST) {
         energy = ResourceInfo[RSCINFO_FOREST_SQ].energy;
-        if (base_id >= 0 && has_fac_built(FAC_HYBRID_FOREST, base_id)) {
+        if (base_id >= 0 && has_fac_built_call(FAC_HYBRID_FOREST, base_id)) {
             energy++;
         }
     } else {

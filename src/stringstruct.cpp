@@ -152,7 +152,11 @@ typedef void (OriginalObject::*func_scalar_deleting_destructor)(int);
 // in the object's second vtable slot: the displacement selects a subobject
 // whose own first vtable slot is the scalar deleting destructor, invoked with
 // the deleting flag set.
-void destroy_virtual_base(void *object) {
+// `inline`: the image never calls this as a standalone function - every call
+// site (remove_all, twice) has the vtable-adjustor dispatch written out in
+// place, with no real call to a shared helper. A non-inline definition here
+// costs the caller a real out-of-line call the image does not make.
+inline void destroy_virtual_base(void *object) {
     uint32_t *const vtable = *reinterpret_cast<uint32_t **>(object);
     uint8_t *const subobject =
         static_cast<uint8_t *>(object) + vtable[1];
@@ -160,7 +164,9 @@ void destroy_virtual_base(void *object) {
     (ORIGINAL(subobject)->*original_method<func_scalar_deleting_destructor>(static_cast<unsigned long>(subobject_vtable[0])))(1);
 }
 
-void *payload_pointer(int payload) {
+// `inline`: the image reads entry->payload directly with no call at all - a
+// pure identity cast, which only disappears when this folds into its caller.
+inline void *payload_pointer(int payload) {
     return reinterpret_cast<void *>(
         static_cast<uintptr_t>(static_cast<uint32_t>(payload)));
 }
@@ -180,6 +186,13 @@ Purpose: Release every entry in the list, notifying the owner about each
 // calls     (none)
 // indirect  0x00402992 0x004029A4 0x004029C4
 // notes     Runtime redirect installed by DllMain after byte-signature validation
+// LEVER: MORE (3 calls vs image's 0 real calls, all 3 indirect) -
+//        destroy_virtual_base and payload_pointer were plain (non-inline)
+//        helper functions, so calling them from here cost a real
+//        out-of-line call the image never makes; marking both `inline`
+//        folds their bodies (and destroy_virtual_base's own indirect
+//        vtable-adjustor dispatch) directly into this call site, taking
+//        call_diff to 0 disagreeing.
 Status: Complete
 */
 void StringStruct::remove_all() {

@@ -567,12 +567,9 @@ int __cdecl in_box(int x, int y, int left, int top, int width, int height) {
 
 /*
 Purpose: Compute a rectangle center with wrapping subtraction and truncation toward zero.
-// ORIGINAL: 0x004BA830 ?UNK2@TutWin@@QAEXPAURECT@@PAHPAH@Z 0x004BA830-0x004BA863
-// RULED-OUT: dropping `volatile` from `ordered` (plain `RECT *ordered = rect;`):
-//   no change, still 2/25 - the divergence starts at instruction 2, before any
-//   field of `ordered` is touched (image loads `this`/rect args in a different
-//   order than this __cdecl body does), so it is not the volatile-alias defect.
-// symbol    ?rect_center@@YAHPAUtagRECT@@PAH1@Z
+// ORIGINAL: 0x004BA830 ?UNK2@TutWin@@QAEXPAURECT@@PAHPAH@Z 0x004BA830-0x004BA863 BYTE_EXACT
+// LEVER: MORE (2 calls vs image's 0: midpoint/int_from_bits helpers never inline) - the image writes the signed halving directly (`sub;cdq;sub;sar;add`), not through any helper, and the tail is `ret 0xc` (callee-cleans), not `ret` - the ORIGINAL is a thiscall member ignoring `this` entirely, and this free-function stand-in needs `__stdcall` (not `__cdecl`) to match that stack cleanup. Rewriting the body as plain field arithmetic and switching the calling convention took 0/25 (0.553 best) to 24/25 (0.960 best, /Oy- flag set) with 0 calls disagreeing.
+// symbol    ?rect_center@@YGHPAUtagRECT@@PAH1@Z
 // size      51 bytes
 // prototype void (__thiscall ?UNK2@TutWin@@QAEXPAURECT@@PAHPAH@Z)(TutWin* this, RECT*, int*, int*)
 // callers   0   call targets   0
@@ -582,17 +579,10 @@ Purpose: Compute a rectangle center with wrapping subtraction and truncation tow
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
-int __cdecl rect_center(RECT *rect, int *x, int *y) {
-    volatile RECT *ordered = rect;
-    const uint32_t left = static_cast<uint32_t>(ordered->left);
-    const uint32_t right = static_cast<uint32_t>(ordered->right);
-    const int center_x = int_from_bits(midpoint(left, right));
-    memcpy(x, &center_x, sizeof(center_x));
-
-    const uint32_t top = static_cast<uint32_t>(ordered->top);
-    const uint32_t bottom = static_cast<uint32_t>(ordered->bottom);
-    const int center_y = int_from_bits(midpoint(top, bottom));
-    memcpy(y, &center_y, sizeof(center_y));
+int __stdcall rect_center(RECT *rect, int *x, int *y) {
+    *x = rect->left + (rect->right - rect->left) / 2;
+    int center_y = rect->top + (rect->bottom - rect->top) / 2;
+    *y = center_y;
     return center_y;
 }
 

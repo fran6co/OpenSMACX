@@ -269,7 +269,7 @@ int __cdecl in_box(
     int x, int y, int left, int top, int width, int height);
 void __cdecl offset_rect(RECT *rect, int dx, int dy);
 RECT *__cdecl make_rect(RECT *rect, int x, int y, int width, int height);
-int __cdecl rect_center(RECT *rect, int *x, int *y);
+int __stdcall rect_center(RECT *rect, int *x, int *y);
 int __fastcall tutwin_rect_center_redirect(
     void *self, void *, RECT *rect, int *x, int *y);
 
