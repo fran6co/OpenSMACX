@@ -57,6 +57,29 @@ THE `int` IN `??0Class@@QAE@H@Z` IS NOT AN ARGUMENT
   broken working code. Nine are confirmed: CheckBox, Console, Dialogs,
   EditGroup, ListBox, PlanWin, RadioButton (both ctor and dtor) and SpriteBox.
 
+PLACEMENT NEW COSTS A NULL GUARD, EVERY TIME
+- VC6 guards every placement new-expression with a null test on the pointer -
+  `cmp ecx, ebx; je` - because `operator new` may return null. The guard needs
+  a spill slot, which is why a body doing `new (&member_) T()` emits
+  `sub esp, 8` where the image emits `push ecx`.
+- That single defect wore a disguise for a long time, refused across four
+  bodies as "a stack-frame-size difference from spill-slot count, not control
+  flow". It is control flow, and the frame size is downstream of it.
+- The fix is an ordinary member of a REAL constructor: built implicitly, in
+  declaration order, with no guard. `MultiDebug` went 13/28 to BYTE_EXACT 28/28
+  on exactly this, and `Menu` went 10/38 to 15/38.
+- WEIGH IT AT THE CALL SITES BEFORE CONVERTING. If the object is built at a
+  fixed address by a dynamic initialiser, that initialiser can then only reach
+  a real constructor through placement new ITSELF, which moves the guard into
+  it. `NetMsg` gains a tier that way (11/31 -> SHAPE_EXACT 27/31) and costs two
+  BYTE_EXACT initialiser claims (0x0047A7A0 went to 1 of 9). Measured, and
+  reverted; check `init_thunks.cpp` for your class before converting.
+- And it interacts with the construct()-method rule below: use a method where
+  the image does NOT construct its bases, and a real constructor where it does.
+  Menu's image calls GraphicWin's real constructor at 0x005D4CF0 and then
+  Spot's at 0x005FA860 - base then member, in declaration order - which is a
+  real constructor and nothing else.
+
 A `construct()` METHOD IS HOW THE SEH FRAME IS AVOIDED
 - The SEH-frame family (flatbutton.cpp documents it at length) is a real
   ceiling for REAL CONSTRUCTORS: a GraphicWin-derived class whose constructor
