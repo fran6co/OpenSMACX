@@ -310,8 +310,8 @@ extern uint32_t MapPlanetaryOrbit; // affects temp
 extern uint32_t MapCloudCover; // affects rainfall, rivers
 extern uint32_t MapNativeLifeForms;
 LPSTR *const MapFilePath = (LPSTR *)0x0094A2BC;
-extern Map **MapTiles;
-extern uint8_t **MapAbstract;
+Map **const MapTiles = (Map **)0x0094A30C;
+uint8_t **const MapAbstract = (uint8_t **)0x0094A310;
 extern int MapBaseSubmergedCount[8];
 extern int MapBaseIdClosestSubmergedVeh[8];
 extern uint32_t BrushVal1; // TODO: more descriptive variable name

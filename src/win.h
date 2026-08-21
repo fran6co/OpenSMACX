@@ -462,8 +462,8 @@ extern int WinFlipSpriteX;             // 0x009B7A34
 extern int WinFlipClipped;             // 0x009B7AD8
 extern IDirectDrawSurface *DirectDrawBackBuffer;  // 0x009BC49C
 extern RECT DirectDrawClipRect;        // 0x009BC2D0
-extern int *WinBubbleActive;
-extern int *WinBubbleCompanion;
+int *const WinBubbleActive = (int *)0x009B7A50;
+int *const WinBubbleCompanion = (int *)0x009B7A4C;
 RECT *const WinBubbleRect = (RECT *)0x009B6E38;
 
 // Both refresh bodies remain original dependencies: update_screen is 383
@@ -483,7 +483,7 @@ int __fastcall win_on_set_cursor_redirect(
     Win *self, void *, void *a, unsigned int b, unsigned int c);
 
 void __cdecl win_set_def_focus_redirect(int focus);
-extern int *WinDefaultFocus;
+int *const WinDefaultFocus = (int *)0x009B7AEC;
 
 void __fastcall win_unk8_redirect(Win *self, void *, int value);
 void __fastcall win_unk9_redirect(Win *self, void *, int value);

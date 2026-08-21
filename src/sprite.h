@@ -69,7 +69,7 @@ static_assert(sizeof(Sprite) == 0x2C, "Sprite layout must match the legacy ABI")
 
 // Running total of Sprite-owned bytes. The constructor adds one object; the
 // release paths subtract the object plus its pixel buffer.
-extern int *SpriteMemoryUsed;
+int *const SpriteMemoryUsed = (int *)0x009B6618;
 
 // Sprite allocations come from the executable's CRT, so they must be released
 // through its free rather than this module's. Tests outside the hybrid process

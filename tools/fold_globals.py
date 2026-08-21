@@ -62,7 +62,12 @@ def main(apply: bool) -> int:
             if header is None:
                 continue
             # WRITTEN THROUGH, or its address taken: the slot is storage.
-            writes = re.findall(rf"(?<![=!<>])\b{re.escape(name)}\s*=(?!=)", whole)
+            # `*X = v` writes the POINTEE, which a folded constant still
+            # allows; only `X = v` writes the variable. Missing that
+            # distinction refused every flag byte the teardowns set.
+            writes = re.findall(
+                rf"(?<![=!<>*])\s*\b{re.escape(name)}\s*=(?!=)", whole)
+            writes = [w for w in writes if not w.lstrip().startswith("*")]
             if len(writes) > 1 or re.search(rf"&\s*{re.escape(name)}\b", whole):
                 print(f"  - {name}: written through or address-taken")
                 continue

@@ -37,13 +37,6 @@
  * image and are unmapped in a standalone test process.
  */
 
-uint8_t *TeardownFlags009B37CC = reinterpret_cast<uint8_t *>(0x009B37CC);
-uint8_t *TeardownFlags009B6E30 = reinterpret_cast<uint8_t *>(0x009B6E30);
-uint8_t *TeardownFlags009B8EF0 = reinterpret_cast<uint8_t *>(0x009B8EF0);
-uint8_t *TeardownFlags009B8F58 = reinterpret_cast<uint8_t *>(0x009B8F58);
-uint8_t *TeardownFlags009B9014 = reinterpret_cast<uint8_t *>(0x009B9014);
-uint8_t *TeardownFlags009B9104 = reinterpret_cast<uint8_t *>(0x009B9104);
-uint8_t *TeardownFlags009BEAE0 = reinterpret_cast<uint8_t *>(0x009BEAE0);
 func_thiscall_teardown TeardownTarget00420F90 =
     original_method<func_thiscall_teardown>(0x00420F90);
 func_thiscall_teardown TeardownTarget004327A0 =
@@ -57,8 +50,6 @@ func_thiscall_teardown TeardownTarget005D4DD0 =
 void __fastcall sprite_close_default(void *object) {
     static_cast<Sprite *>(object)->close();
 }
-func_thiscall_teardown TeardownTarget005E3820 = original_method<func_thiscall_teardown>(
-    reinterpret_cast<unsigned long>(&sprite_close_default));
 
 /*
 Purpose: ?timer_callback_daemon@BattleWin@@QAAXHH@Z - run 1 (ORIGINAL(s)->*teardown)() on fixed globals,
@@ -161,7 +152,7 @@ void __cdecl teardown_g_planwin() {
 Purpose: ??__Eg_BOOM_BUFFER1@@YAXXZ - run 1 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
-// ORIGINAL: 0x00505D20 ??__Eg_BOOM_BUFFER1@@YAXXZ 0x00505D20-0x00505D2A
+// ORIGINAL: 0x00505D20 ??__Eg_BOOM_BUFFER1@@YAXXZ 0x00505D20-0x00505D2A BYTE_EXACT
 // symbol    ?teardown_00505d20@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -173,7 +164,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl teardown_00505d20() {
-    (ORIGINAL(TeardownObject00915068)->*original_method<func_thiscall_teardown>(original_address(BufferElementTeardown)))();
+    TeardownObject00915068->Buffer::~Buffer();
 }
 
 /*
@@ -257,7 +248,7 @@ void __cdecl teardown_g_buffer_sprite() {
     // Set BEFORE the teardown, not after: the original stores at the
     // instruction preceding its tail jump.
     *TeardownFlags009B37CC = static_cast<uint8_t>(flags | 2);
-    (ORIGINAL(g_BUFFER_SPRITE)->*TeardownTarget005E3820)();
+    g_BUFFER_SPRITE->close();
 }
 
 /*
@@ -283,7 +274,7 @@ void __cdecl teardown_g_win_buffer() {
     // Set BEFORE the teardown, not after: the original stores at the
     // instruction preceding its tail jump.
     *TeardownFlags009B6E30 = static_cast<uint8_t>(flags | 1);
-    (ORIGINAL(g_WIN_BUFFER)->*original_method<func_thiscall_teardown>(original_address(BufferElementTeardown)))();
+    g_WIN_BUFFER->Buffer::~Buffer();
 }
 
 /*
@@ -309,7 +300,7 @@ void __cdecl teardown_005eb3b0() {
     // Set BEFORE the teardown, not after: the original stores at the
     // instruction preceding its tail jump.
     *TeardownFlags009B6E30 = static_cast<uint8_t>(flags | 2);
-    (ORIGINAL(TeardownObject009B7490)->*original_method<func_thiscall_teardown>(original_address(BufferElementTeardown)))();
+    TeardownObject009B7490->Buffer::~Buffer();
 }
 
 /*
@@ -335,7 +326,7 @@ void __cdecl teardown_g_radiobutton_sprite_1() {
     // Set BEFORE the teardown, not after: the original stores at the
     // instruction preceding its tail jump.
     *TeardownFlags009B8EF0 = static_cast<uint8_t>(flags | 1);
-    (ORIGINAL(g_RADIOBUTTON_SPRITE_1)->*TeardownTarget005E3820)();
+    g_RADIOBUTTON_SPRITE_1->close();
 }
 
 /*
@@ -361,14 +352,14 @@ void __cdecl teardown_g_radiobutton_sprite_2() {
     // Set BEFORE the teardown, not after: the original stores at the
     // instruction preceding its tail jump.
     *TeardownFlags009B8EF0 = static_cast<uint8_t>(flags | 2);
-    (ORIGINAL(g_RADIOBUTTON_SPRITE_2)->*TeardownTarget005E3820)();
+    g_RADIOBUTTON_SPRITE_2->close();
 }
 
 /*
 Purpose: ?close_class@RadioButton@@QAAXXZ - run 2 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
-// ORIGINAL: 0x0060E5D0 ?close_class@RadioButton@@QAAXXZ 0x0060E5D0-0x0060E5E4
+// ORIGINAL: 0x0060E5D0 ?close_class@RadioButton@@QAAXXZ 0x0060E5D0-0x0060E5E4 BYTE_EXACT
 // symbol    ?teardown_0060e5d0@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -380,8 +371,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl teardown_0060e5d0() {
-    (ORIGINAL(g_RADIOBUTTON_SPRITE_2)->*TeardownTarget005E3820)();
-    (ORIGINAL(g_RADIOBUTTON_SPRITE_1)->*TeardownTarget005E3820)();
+    g_RADIOBUTTON_SPRITE_2->close();
+    g_RADIOBUTTON_SPRITE_1->close();
 }
 
 /*
@@ -479,7 +470,7 @@ void __cdecl teardown_g_filewin_sprite_1() {
     // Set BEFORE the teardown, not after: the original stores at the
     // instruction preceding its tail jump.
     *TeardownFlags009B9014 = static_cast<uint8_t>(flags | 1);
-    (ORIGINAL(g_FILEWIN_SPRITE_1)->*TeardownTarget005E3820)();
+    g_FILEWIN_SPRITE_1->close();
 }
 
 /*
@@ -505,7 +496,7 @@ void __cdecl teardown_g_filewin_sprite_2() {
     // Set BEFORE the teardown, not after: the original stores at the
     // instruction preceding its tail jump.
     *TeardownFlags009B9014 = static_cast<uint8_t>(flags | 2);
-    (ORIGINAL(g_FILEWIN_SPRITE_2)->*TeardownTarget005E3820)();
+    g_FILEWIN_SPRITE_2->close();
 }
 
 /*
@@ -531,7 +522,7 @@ void __cdecl teardown_g_filewin_sprite_3() {
     // Set BEFORE the teardown, not after: the original stores at the
     // instruction preceding its tail jump.
     *TeardownFlags009B9014 = static_cast<uint8_t>(flags | 4);
-    (ORIGINAL(g_FILEWIN_SPRITE_3)->*TeardownTarget005E3820)();
+    g_FILEWIN_SPRITE_3->close();
 }
 
 /*
@@ -557,7 +548,7 @@ void __cdecl teardown_g_caviar_buffer_1() {
     // Set BEFORE the teardown, not after: the original stores at the
     // instruction preceding its tail jump.
     *TeardownFlags009B9104 = static_cast<uint8_t>(flags | 1);
-    (ORIGINAL(g_CAVIAR_BUFFER_1)->*original_method<func_thiscall_teardown>(original_address(BufferElementTeardown)))();
+    g_CAVIAR_BUFFER_1->Buffer::~Buffer();
 }
 
 /*
@@ -583,7 +574,7 @@ void __cdecl teardown_g_caviar_buffer_2() {
     // Set BEFORE the teardown, not after: the original stores at the
     // instruction preceding its tail jump.
     *TeardownFlags009B9104 = static_cast<uint8_t>(flags | 2);
-    (ORIGINAL(g_CAVIAR_BUFFER_2)->*original_method<func_thiscall_teardown>(original_address(BufferElementTeardown)))();
+    g_CAVIAR_BUFFER_2->Buffer::~Buffer();
 }
 
 /*
@@ -609,14 +600,14 @@ void __cdecl teardown_0063bb00() {
     // Set BEFORE the teardown, not after: the original stores at the
     // instruction preceding its tail jump.
     *TeardownFlags009BEAE0 = static_cast<uint8_t>(flags | 1);
-    (ORIGINAL(TeardownObject009BEAE8)->*TeardownTarget005E3820)();
+    TeardownObject009BEAE8->close();
 }
 
 /*
 Purpose: sub_63cef0 - run 1 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
-// ORIGINAL: 0x0063CEF0 sub_63cef0 0x0063CEF0-0x0063CEFA
+// ORIGINAL: 0x0063CEF0 sub_63cef0 0x0063CEF0-0x0063CEFA BYTE_EXACT
 // symbol    ?teardown_0063cef0@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -628,5 +619,5 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl teardown_0063cef0() {
-    (ORIGINAL(TeardownObject009BEAE8)->*TeardownTarget005E3820)();
+    TeardownObject009BEAE8->close();
 }

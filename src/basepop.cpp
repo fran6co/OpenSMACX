@@ -475,11 +475,10 @@ void __fastcall base_pop_set_button_color3_redirect(
     self->set_button_color3(c1, c2, c3, c4);
 }
 
-int *BasePopFalloutFlag = reinterpret_cast<int *>(0x009B8CFC);
 
 /*
 Purpose: Raise the fallout flag, but only while the gate is set.
-// ORIGINAL: 0x00604A90 ?fallout@BasePop@@QAAXXZ 0x00604A90-0x00604AA4
+// ORIGINAL: 0x00604A90 ?fallout@BasePop@@QAAXXZ 0x00604A90-0x00604AA4 BYTE_EXACT
 // symbol    ?fallout@BasePop@@SAXXZ
 // size      20 bytes
 // prototype 

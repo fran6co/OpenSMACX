@@ -1419,8 +1419,6 @@ void *__fastcall wave_scalar_dtor_redirect(Wave *self, void *,
 // allocated it; the release hook is an indirect call on the slot at 0x0090DB28
 // guarded by the dword at 0x0090DB7C; the chain end slots are the dwords the
 // unlink falls back to when a neighbour is null.
-Wave **WaveChainHead = reinterpret_cast<Wave **>(0x0090DB20);
-Wave **WaveChainTail = reinterpret_cast<Wave **>(0x0090DB1C);
 
 /*
 Purpose: Destroy the wave. The original is a three-stage teardown of an

@@ -48,8 +48,6 @@ uint32_t MapErosiveForces;  // 0x0094A2AC
 uint32_t MapPlanetaryOrbit;  // 0x0094A2B0
 uint32_t MapCloudCover;  // 0x0094A2B4
 uint32_t MapNativeLifeForms;  // 0x0094A2B8
-Map **MapTiles = (Map **)0x0094A30C;
-uint8_t **MapAbstract = (uint8_t **)0x0094A310;
 // EIGHT OF THEM, one per player: the two sites below clear
 // `sizeof(int) * MaxPlayerNum` bytes, which is what the extent is.
 int MapBaseSubmergedCount[8];  // 0x009B2290

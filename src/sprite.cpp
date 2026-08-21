@@ -26,11 +26,10 @@
 #include "spritebox.h"
 #include <stdlib.h>
 
-int *SpriteMemoryUsed = reinterpret_cast<int *>(0x009B6618);
 /*
 Purpose: Initialize an empty sprite and charge its own size to the sprite
          memory total.
-// ORIGINAL: 0x005E37E0 ??0Sprite@@QAE@XZ 0x005E37E0-0x005E3815
+// ORIGINAL: 0x005E37E0 ??0Sprite@@QAE@XZ 0x005E37E0-0x005E3815 BYTE_EXACT
 // size      53 bytes
 // prototype void (__thiscall ??0Sprite@@QAE@XZ)(Sprite* this)
 // callers   154   call targets   0

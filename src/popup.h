@@ -222,7 +222,7 @@ uint32_t *const PopupWaveFlags = (uint32_t *)0x009A6490;
 void **const PopupWaveContext = (void **)0x0090EA30;
 Wave *const PopupWaveVoice = (Wave *)0x00945ED0;
 Wave *const PopupWaveBank = (Wave *)0x0074C5F0;
-extern int32_t *PopupWaveLastIndex;
+int32_t *const PopupWaveLastIndex = (int32_t *)0x0074DAA4;
 void **const PopupWaveOwnerSlot = (void **)0x0074DAA0;
 FX *const PopupWaveFx = (FX *)0x00749CF8;
 extern func_popup_wave_query PopupWaveIsPlaying;
