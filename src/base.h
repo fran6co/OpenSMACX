@@ -17,6 +17,8 @@
  */
 #pragma once
 
+#include "general.h"  // bitmask, which has_fac_built below inlines
+
  /*
   * Base related objects, variables and functions.
   */
@@ -566,8 +568,6 @@ void __cdecl make_base_unique(int base_id);
 // genuine one-byte bool, and per tools/catalogue_corrections.py that width is
 // byte-visible - a bool return clears with `xor al, al` (32 C0) where an int
 // uses `xor eax, eax` (33 C0). The two-argument overload is not catalogued.
-bool __cdecl has_fac_built(int facility_id);
-bool __cdecl has_fac_built(int facility_id, int base_id);
 int __cdecl attack_from(int base_id_to_atk, int faction_id);
 int __cdecl value_of_base(int base_id, uint32_t faction_id_req, uint32_t faction_id_res, 
                                     uint32_t overmatch_deg, BOOL tgl);
@@ -598,4 +598,16 @@ MEASURED inline int __cdecl base_project(int project_id) {
 MEASURED inline BOOL __cdecl has_project(int project_id, int faction_id) {
     int base_id = base_project(project_id);
     return (base_id < 0) ? false : (Bases[base_id].faction_id_current == faction_id);
+}
+
+inline bool __cdecl has_fac_built(int facility_id, int base_id) {
+    int offset;
+    int mask;
+    bitmask(facility_id, &offset, &mask);
+    return (Bases[base_id].facilities_built[offset] & mask) != 0;
+}
+
+inline bool __cdecl has_fac_built(int facility_id) {
+    return (facility_id >= FacilityRepStart) ? false
+        : has_fac_built(facility_id, BaseIDCurrentSelected);
 }

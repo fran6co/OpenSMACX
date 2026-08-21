@@ -2207,10 +2207,6 @@ Purpose: Checks whether the facility (non-SP) has been build in the currently se
 Return Value: Does current base have facility? true/false
 Status: Complete
 */
-bool __cdecl has_fac_built(int facility_id) {
-    return (facility_id >= FacilityRepStart) ? false
-        : has_fac_built(facility_id, BaseIDCurrentSelected);
-}
 
 /*
 Purpose: Check if the base already has a particular facility built.
@@ -2218,12 +2214,8 @@ Original Offset: n/a
 Return Value: Does base have facility built? true/false
 Status: Complete
 */
-bool __cdecl has_fac_built(int facility_id, int base_id) {
-    int offset;
-    int mask;
-    bitmask(facility_id, &offset, &mask);
-    return (Bases[base_id].facilities_built[offset] & mask) != 0;
-}
+// BODY IN base.h: eleven bodies call it where the image calls nothing -
+// `call_diff` names it - so VC6 has to be able to inline it.
 
 /*
 Purpose: Get the current status of the specified project.
