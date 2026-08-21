@@ -1200,7 +1200,7 @@ uint32_t __cdecl rnd(int bounds, LPSTR UNUSED(input)) {
 
 /*
 Purpose: Create a debug error pop-up then write all the parameters to the log file.
-// ORIGINAL: 0x00538F30 ?danger@@YAXPADPADHHH@Z 0x00538F30-0x00538FAA
+// ORIGINAL: 0x00538F30 ?danger@@YAXPADPADHHH@Z 0x00538F30-0x00538FAA BYTE_EXACT
 // symbol    ?danger@@YAXPBD0HHH@Z
 // size      122 bytes
 // prototype 

@@ -40,7 +40,7 @@ uint32_t DiploFrictionFactionID;  // 0x0093FAC0
 int BestProtoForTrade;  // 0x0093F804
 int BestProtoToMention;  // 0x0093FA40
 // The faction whose voice the next popup speaks in. Popup::start (0x00406380)
-// and popp (0x0048C0A0) are the only readers: each bounds it to 1..7 and, when
+// and popp(0x0048C0A0) are the only readers: each bounds it to 1..7 and, when
 // Players[it].rule_flags has RFLAG_ALIEN, reads the dialogue out of
 // alienuscript.txt instead of the ordinary script. Thirty-odd diplomacy entry
 // points publish their counterpart faction here before opening a popup, which

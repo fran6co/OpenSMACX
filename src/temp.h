@@ -42,7 +42,8 @@ func5 *const load_faction_art = (func5 *)0x00453710;
 func5 *const wave_it = (func5 *)0x004455F0;
 typedef void *func6(char const *, int(*)(void));
 typedef int func7(LPCSTR, LPCSTR, int, LPCSTR, int(__cdecl *)());
-func7 *const popp = (func7 *)0x0048C0A0;
+// 0x0048C0A0, a pending_bodies forwarder.
+int __cdecl popp(LPCSTR a1, LPCSTR a2, int a3, LPCSTR a4, int(__cdecl *a5)());
 typedef void *func9(void);
 func9 *const fixup_landmarks = (func9 *)0x00592940;
 func9 *const mapwin_terrain_fixup = (func9 *)0x00471240;

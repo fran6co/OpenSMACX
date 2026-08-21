@@ -600,6 +600,11 @@ void __cdecl alt_set(int a1, int a2, uint32_t a3) {  // 0x00591290
     PENDING_BODY(0x00591290, pending)(a1, a2, a3);
 }
 
+int __cdecl popp(LPCSTR a1, LPCSTR a2, int a3, LPCSTR a4, int(__cdecl *a5)()) {  // 0x0048C0A0
+    typedef int(__cdecl *pending)(LPCSTR, LPCSTR, int, LPCSTR, int(__cdecl *a5)());
+    return PENDING_BODY(0x0048C0A0, pending)(a1, a2, a3, a4, a5);
+}
+
 // ?write_raw_l@Buffer@@QAEHPADHHH@Z at 0x005DBD00 - 1475 bytes, the raster
 // writer that puts one single-font run on the surface. Called by name from
 // `write_multi_font_raw_l`, which is promoted; a pointer here would cost that
