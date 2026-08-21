@@ -15,7 +15,13 @@ Both are visible without any byte comparison - disassemble each side, collect
 the direct call targets, and subtract. This reports them, ranked by how many
 edges disagree, and names the callee where the catalogue can.
 
-    uv run tools/call_diff.py [--all]
+    uv run tools/call_diff.py [<addr> ...] [--all]
+
+Given addresses, ONLY those bodies are examined, and only their files are
+compiled. This mattered: the first version silently ignored an address and
+scanned the whole tree, so the four agents the brief had sent here each paid a
+full-tree compile and then read a 40-row report that did not mention the body
+they asked about.
 
 Only DIRECT calls, on both sides. An indirect call through a vtable or a bound
 slot is a runtime fact neither side can resolve, so it is counted and excluded
@@ -121,13 +127,43 @@ if __name__ == "__main__":
     for record in records:
         named.setdefault(record.address, record.name)
 
+    wanted = set()
+    for argument in sys.argv[1:]:
+        if argument.startswith("--"):
+            continue
+        try:
+            wanted.add(int(argument, 16))
+        except ValueError:
+            raise SystemExit(f"call_diff: {argument!r} is not an address")
+
     grouped: dict = {}
     for record in records:
+        if wanted and record.address not in wanted:
+            continue
         if record.byte_exact or record.path not in built or not record.name:
             continue
         if span_refusal(record, IMAGE, shared):
             continue
         grouped.setdefault(record.path, []).append(record)
+
+    # An address that survives to nothing is a QUESTION ANSWERED WRONG, not an
+    # empty report: it is claimed byte-exact already, or its file is not a
+    # build input, or its span is shared. Say which, rather than printing zero
+    # rows and letting the caller read that as "no disagreement".
+    missing = wanted - {r.address for group in grouped.values() for r in group}
+    for address in sorted(missing):
+        known = [r for r in records if r.address == address]
+        if not known:
+            reason = "not in the catalogue"
+        elif known[0].byte_exact:
+            reason = "already claimed BYTE_EXACT, so there is nothing to diff"
+        elif known[0].path not in built:
+            reason = f"{known[0].path.name} is not a build input"
+        elif not known[0].name:
+            reason = "has no `symbol` fact, so its callee cannot be resolved"
+        else:
+            reason = "span is shared with another body (COMDAT or jump table)"
+        print(f"  0x{address:08X}  SKIPPED: {reason}")
 
     work = []
     for path, mine in sorted(grouped.items()):
@@ -146,8 +182,8 @@ if __name__ == "__main__":
 
     rows = [row for batch in batches for row in batch]
     rows.sort(key=lambda row: (-abs(row[1] - row[2]), row[0].address))
-    for record, theirs, mine, targets, calling in (rows if "--all" in sys.argv
-                                                   else rows[:40]):
+    shown = rows if ("--all" in sys.argv or wanted) else rows[:40]
+    for record, theirs, mine, targets, calling in shown:
         where = "MORE" if mine > theirs else "FEWER"
         names = ", ".join(named.get(t, f"0x{t:08X}") or f"0x{t:08X}"
                           for t in targets[:4])
