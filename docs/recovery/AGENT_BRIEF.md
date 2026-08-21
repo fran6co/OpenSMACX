@@ -188,12 +188,15 @@ LEVERS THAT HAVE PAID, most productive first
   `mov eax, esi` - if the image returns `this`, say so in the signature, which
   closed the last instruction on four Ambience constructors.
 
-- A LOCAL MUST MATCH THE WIDTH IT READS FROM. `guard_check` was byte-exact the
-  moment `plan_region` became `uint8_t` - the element type of the
-  `region_base_plan[128]` it is assigned from - instead of `uint32_t`. The wider
-  type forces an `xor edx, edx` zero-extend and word-form compares where the
-  image has `cmp dl, N`. Check every local against the array or field it is
-  loaded from, not against what looks tidy.
+- A LOCAL MUST MATCH THE WIDTH IT READS FROM. This is the most reliable lever
+  in the tree and it has now taken FOUR bodies byte-exact on its own.
+  `guard_check` needed `plan_region` as `uint8_t`, the element type of the
+  `region_base_plan[128]` it is assigned from: `uint32_t` forces an
+  `xor edx, edx` zero-extend and word-form compares where the image has
+  `cmp dl, N`. A stack-climb induction variable needs `int16_t` where the field
+  it walks is `int16_t`: `int` forces an early `movsx` the image DEFERS, keeping
+  the 16-bit value in a register and widening only at the indexing.
+  Check EVERY local against the field or array element it is loaded from.
 
 - DO NOT CACHE WHAT THE IMAGE RE-READS - but cache what it reads ONCE. Both
   directions are real and both were measured on 2026-08-21. `veh_lift` went
