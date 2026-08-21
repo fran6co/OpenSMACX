@@ -56,7 +56,6 @@ uint32_t BrushVal2;  // 0x009B22B8
 uint32_t WorldBuildVal1;  // 0x009B22B4
 
 uint32_t MapLongitude;  // 0x0068FAF0 // default set to 1
-uint32_t *AltNatural = (uint32_t *)0x0068FB4C;
 LPCSTR MapExtension = "MP";
 
 /*
@@ -2780,7 +2779,12 @@ void __cdecl world_linearize_contours() {
         }
         do_all_non_input();
     }
-    memcpy_s(&AltNatural, sizeof(uint32_t) * 11, &ElevDetail, sizeof(uint32_t) * 11);
+    // `memcpy`, and the ARRAYS, not their addresses. The image ends with
+    // `mov ecx, 0xb; mov esi, 0x68fb20; mov edi, 0x68fb4c; rep movsd` - the
+    // intrinsic, copying ElevDetail over AltNatural. `memcpy_s` emits a call
+    // with four arguments, and `&AltNatural` wrote over the POINTER rather
+    // than the array it names.
+    memcpy(AltNatural, ElevDetail, sizeof(uint32_t) * 11);
 }
 
 /*

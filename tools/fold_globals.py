@@ -40,6 +40,16 @@ BINDING = re.compile(
     r"\s*(?P<address>0x[0-9A-Fa-f]+)\s*\)?\s*;[^\n]*\n", re.M)
 
 
+def _code(text: str) -> str:
+    """`text` with comments blanked.
+
+    Every prose block in this tree names what it discusses, so a comment
+    explaining why `&AltNatural` was wrong is enough to make the
+    address-taken test refuse AltNatural forever.
+    """
+    return re.sub(r"/\*.*?\*/|//[^\n]*", " ", text, flags=re.S)
+
+
 def _declaration(name: str) -> re.Pattern:
     return re.compile(rf"^extern\s+[\w:]+\s*\*+\s*{re.escape(name)}\s*;"
                       rf"(?P<trailing>[^\n]*)\n", re.M)
@@ -49,7 +59,7 @@ def main(apply: bool) -> int:
     files = {path: path.read_text()
              for path in sorted(SRC.glob("*.[ch]*"))
              if path.suffix in (".c", ".h", ".cpp", ".hpp")}
-    whole = "\n".join(files.values())
+    whole = _code("\n".join(files.values()))
     folded = 0
     for path, text in list(files.items()):
         if path.suffix != ".cpp":
@@ -122,7 +132,7 @@ def lvalues(apply: bool) -> int:
             continue
         for match in list(LVALUE.finditer(text)):
             name, kind = match.group("name"), match.group("type")
-            whole = "\n".join(files.values())
+            whole = _code("\n".join(files.values()))
             bare = len(re.findall(rf"(?<![\w*])\b{re.escape(name)}\b", whole))
             # One bare mention is the declaration itself.
             if bare > 1:
