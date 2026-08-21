@@ -2370,6 +2370,15 @@ Purpose: Create a new prototype. Sets initial values for everything except veh_n
 // callers   4   call targets   4
 // kind      game
 // flags     frame;sp_ready;purged_ok
+// RULED-OUT: nothing tried yet beyond inspection - call_diff agrees on call count/targets,
+//   so the divergence (5/361 agreeing, ~0.14 similar) is all in the opening loop. The image
+//   computes `i % MaxVehProtoFactionNum` there with the full MSVC signed-modulo-by-constant
+//   sign-correction sequence (`and 0x8000003f; jns; dec; or 0xffffffc0; inc`), which this
+//   loop's straightforward `i % MaxVehProtoFactionNum` on a provably-nonnegative `i` does not
+//   emit - the compiler proves `i>=0` and just masks. Left as MISMATCH; the loop bound/shape
+//   likely needs rewriting closer to the disassembly's own register-level computation
+//   (proto_id itself, not `i`, appears to be the value being modulo'd in several places) to
+//   close this, and that is a bigger rewrite than this pass budgeted for one function.
 // calls     0x0057D510 0x005A5A60 0x005B9F20 0x005BF1F0
 Return Value: n/a
 Status: Complete
@@ -3831,6 +3840,7 @@ Purpose: Calculate the speed of a unit on roads taking into consideration protot
          elite morale, if the unit is damaged and other factors. The skip_morale parameter seems to 
          only be set to true for certain combat calculations in battle_fight().
 // ORIGINAL: 0x005C1540 ?speed@@YAHHH@Z 0x005C1540-0x005C1752
+// RULED-OUT: is called UNCONDITIONALLY in the image - `!skip_morale` is tested only AFTER the call and its MORALE_ELITE comparison, not before it (short-circuit order swapped: `morale_veh(...) == MORALE_ELITE && !skip_morale && (...)` instead of `!skip_morale && morale_veh(...) == MORALE_ELITE && (...)`). Confirmed against the disassembly: `call 0x5c0e40` at 0x5C15CB has no guard before it, and the skip_morale parameter isn't read until 0x5C15D8, after the MORALE_ELITE compare at 0x5C15D3.
 // size      530 bytes
 // prototype int (__cdecl ?speed@@YAHHH@Z)(int vehID, int toggle)
 // callers   27   call targets   2
@@ -3850,7 +3860,7 @@ int __cdecl speed(int veh_id, BOOL skip_morale) {
     if (triad == TRIAD_SEA && has_project(SP_MARITIME_CONTROL_CENTER, Vehs[veh_id].faction_id)) {
         speed_val += Rules->move_rate_roads * 2;
     }
-    if (!skip_morale && morale_veh(veh_id, true, 0) == MORALE_ELITE
+    if (morale_veh(veh_id, true, 0) == MORALE_ELITE && !skip_morale
         && (proto_id >= MaxVehProtoFactionNum || get_proto_offense_rating(proto_id) >= 0)) {
         speed_val += Rules->move_rate_roads;
     }
