@@ -81,14 +81,19 @@ if __name__ == "__main__":
         # A POSITIVE CONTROL, first, because every candidate scoring exactly
         # what the committed body scores is the signature of a span that was
         # never replaced - and it reads as "nothing helped".
-        source.write_text(original[:start] + "\n    return;\n"
+        # `for (;;) {}` RATHER THAN `return;`, because the control has to
+        # compile whatever the function returns - `return;` is a hard error in
+        # a non-void one, and a control that fails to compile proves nothing
+        # while looking like it ran. This compiles for every signature and
+        # cannot resemble a real body.
+        source.write_text(original[:start] + "\n    for (;;) {\n    }\n"
                           + original[end:])
         control = measure(address)
         if control[1] == baseline[1]:
             raise SystemExit(
                 f"{address}: emptying the body changed nothing, so the span "
                 f"this tool replaces is not the body being measured")
-        print(f"  {'(control: empty body)':28s} {control[1]}")
+        print(f"  {'(control: no real body)':28s} {control[1]}")
         for name, replacement in candidates.items():
             source.write_text(original[:start] + replacement + original[end:])
             verdict, detail = measure(address)
