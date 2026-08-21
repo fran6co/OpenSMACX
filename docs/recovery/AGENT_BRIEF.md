@@ -85,6 +85,13 @@ COLLECTING A WORKTREE'S WORK (for whoever hands one out)
   clears `refute-*` scratch worktrees, which a Workflow leaves by the dozen.
 
 PICKING A BATCH (for whoever hands one out)
+- DO NOT SELECT BY SIZE ALONE. Asking for the ten smallest fresh map.cpp bodies
+  returned ten instances of ONE problem: `alt_at`, `alt_detail_at`,
+  `region_at`, `is_ocean` and their neighbours are a single accessor family
+  sharing a single register-allocation plateau, and the whole pass produced
+  only RULED-OUT notes. Spread a batch across FILES, or select by defect shape
+  from `call_diff --all` / `hollow_bodies.py`, which name a cause rather than a
+  size.
 - `uv run tools/frontier.py --fresh` lists WinMain-reachable bodies with no
   `RULED-OUT:` notes on them. Rows without `--fresh` carry `[N ruled-out]`.
   A batch picked off the raw depth order sent one agent eight bodies that were
