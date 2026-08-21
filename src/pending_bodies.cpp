@@ -65,6 +65,7 @@
 #include "setupwin.h"
 #include "scroll.h"
 #include "replaywin.h"
+#include "net_class.h"
 
 /*
  * THE FRONTIER.
@@ -546,6 +547,26 @@ void CheckBox::set_state_flag(long value) {  // 0x0060ECE0
 void __cdecl flush_input() {  // 0x005FD120
     typedef void(__cdecl *pending)();
     PENDING_BODY(0x005FD120, pending)();
+}
+
+void Net::close() {  // 0x0062E010
+    typedef void(__fastcall *pending)(Net *, void *);
+    PENDING_BODY(0x0062E010, pending)(this, nullptr);
+}
+
+void Popup::hide() {  // 0x00404A80
+    typedef void(__fastcall *pending)(Popup *, void *);
+    PENDING_BODY(0x00404A80, pending)(this, nullptr);
+}
+
+int Net::get(unsigned long *a, unsigned long *b) {  // 0x00630A00
+    typedef int(__fastcall *pending)(Net *, void *, unsigned long *, unsigned long *);
+    return PENDING_BODY(0x00630A00, pending)(this, nullptr, a, b);
+}
+
+int BasePop::init(int a1, long a2) {  // 0x006015B0
+    typedef int(__fastcall *pending)(BasePop *, void *, int, long);
+    return PENDING_BODY(0x006015B0, pending)(this, nullptr, a1, a2);
 }
 
 // ?write_raw_l@Buffer@@QAEHPADHHH@Z at 0x005DBD00 - 1475 bytes, the raster

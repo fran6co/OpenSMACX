@@ -24,6 +24,8 @@
 #include "sounddevice.h"
 #include "spritebox.h"
 #include "replaywin.h"
+#include "net_class.h"
+#include "basepop.h"
 
 #include <new>
 

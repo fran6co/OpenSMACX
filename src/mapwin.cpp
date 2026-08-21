@@ -22,6 +22,7 @@
 #include "statuswin.h"
 #include "worldwin.h"
 #include "spritebox.h"
+#include "net_class.h"
 #include <cstring>
 #include <stdlib.h>
 

@@ -50,7 +50,12 @@
  * offset is borrowed, and the static_assert is what will notice if
  * sizeof(Net) is ever corrected.
  */
-class AlphaNet : Net {
+  // PUBLIC: access specifiers change nothing about layout, and this
+  // tree's bodies reach base methods the image reaches with a direct
+  // `call rel32`. Spelled `class X : Base` - private, since that is
+  // what `class` means - those calls do not compile at all, and the
+  // seam that stood in for them cost the caller `call [ptr]`.
+class AlphaNet : public Net {
  public:
   int pid_2_idx(uint32_t process_id);
   int pid_2_who(uint32_t process_id);
@@ -78,5 +83,3 @@ void __fastcall alpha_net_close_redirect(AlphaNet *self, void *);
 
 // The legacy body tail-jumps into Net::close with this unchanged; that body
 // is 570 bytes with three call targets and remains an original dependency.
-typedef void (OriginalObject::*func_net_close)();
-extern func_net_close NetCloseOriginal;

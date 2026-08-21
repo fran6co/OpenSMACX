@@ -20,6 +20,7 @@
 #include "listbox.h"
 #include "vtable_shim.h"
 #include "spritebox.h"
+#include "net_class.h"
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.

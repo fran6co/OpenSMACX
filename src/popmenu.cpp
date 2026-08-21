@@ -20,12 +20,12 @@
 #include "popmenu.h"
 #include "dialog.h"
 #include "sounddevice.h"
+#include "basepop.h"
 
-func_base_pop_init BasePopOriginalInit = original_method<func_base_pop_init>(0x006015B0);
 
 /*
 Purpose: Initialise the pop-up menu with the base defaults.
-// ORIGINAL: 0x0059D3A0 ?init@PopMenu@@QAEHXZ 0x0059D3A0-0x0059D3AA
+// ORIGINAL: 0x0059D3A0 ?init@PopMenu@@QAEHXZ 0x0059D3A0-0x0059D3AA BYTE_EXACT
 // size      10 bytes
 // prototype int (__thiscall ?init@PopMenu@@QAEHXZ)(PopMenu* this)
 // callers   14   call targets   1
@@ -36,7 +36,7 @@ Return Value: whatever BasePop::init returns
 Status: Complete
 */
 int PopMenu::init() {
-    return (ORIGINAL(this)->*BasePopOriginalInit)(0, 0);
+    return BasePop::init(0, 0);
 }
 
 int __fastcall pop_menu_init_redirect(PopMenu *self, void *) {

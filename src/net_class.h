@@ -93,6 +93,14 @@ static_assert(sizeof(VoiceTx) == 0x58,
   */
 class Net {
  public:
+  // 0x00630A00, a pending_bodies forwarder.
+  int get(unsigned long *a, unsigned long *b);
+
+ public:
+  // 0x0062E010, a pending_bodies forwarder.
+  void close();
+
+ public:
   Net() { ; }
   ~Net() { ; }
   int poll_players(int);

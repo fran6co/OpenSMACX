@@ -23,6 +23,8 @@
 #include "dialog.h"
 #include "sounddevice.h"
 #include "spritebox.h"
+#include "net_class.h"
+#include "basepop.h"
 
 HDC Font::FontHDC;
 int Font::FontInitCount;

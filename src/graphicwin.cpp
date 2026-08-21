@@ -28,6 +28,8 @@
 #include "menu.h"
 #include "win.h"
 #include "spritebox.h"
+#include "net_class.h"
+#include "basepop.h"
 
 #include <cstring>
 

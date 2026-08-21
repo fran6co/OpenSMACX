@@ -19,13 +19,14 @@
 #include "original_seam.h"
 #include "netmsg.h"
 #include "spritebox.h"
+#include "net_class.h"
+#include "popup.h"
 
-func_popup_hide PopupOriginalHide = original_method<func_popup_hide>(0x00404A80);
 
 /*
 Purpose: Close an outstanding network message - stop its timer and hide the
          popup - doing nothing when none is showing.
-// ORIGINAL: 0x0047A7D0 ?close@NetMsg@@QAEXXZ 0x0047A7D0-0x0047A7FB
+// ORIGINAL: 0x0047A7D0 ?close@NetMsg@@QAEXXZ 0x0047A7D0-0x0047A7FB BYTE_EXACT
 // size      43 bytes
 // prototype void (__thiscall ?close@NetMsg@@QAEXXZ)(NetMsg* this)
 // callers   20   call targets   2
@@ -39,7 +40,7 @@ void NetMsg::close() {
     if (field_5384_) {
         field_5384_ = 0;
         timer_.close();
-        (ORIGINAL(this)->*PopupOriginalHide)();
+        Popup::hide();
     }
 }
 

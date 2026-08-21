@@ -21,6 +21,7 @@
 #include "graphicwin.h"
 #include "filewin.h"
 #include "spritebox.h"
+#include "net_class.h"
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.

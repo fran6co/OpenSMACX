@@ -22,6 +22,7 @@
 #include "fx.h"
 #include "win.h"
 #include "spritebox.h"
+#include "net_class.h"
 
 
 /*

@@ -11,6 +11,7 @@
 #include "original_seam.h"
 #include "alphanet.h"
 #include "spritebox.h"
+#include "net_class.h"
 
 /*
 Purpose: Convert a multiplayer process ID to its one-based player index.
@@ -139,11 +140,10 @@ int __fastcall alpha_net_who_to_idx_redirect(
     return self->who_2_idx(identity);
 }
 
-func_net_close NetCloseOriginal = original_method<func_net_close>(0x0062E010);
 
 /*
 Purpose: Clear every player's process slot and hand off to the network close.
-// ORIGINAL: 0x004E25B0 ?close@AlphaNet@@QAEXXZ 0x004E25B0-0x004E25D8
+// ORIGINAL: 0x004E25B0 ?close@AlphaNet@@QAEXXZ 0x004E25B0-0x004E25D8 BYTE_EXACT
 // size      40 bytes
 // prototype void (__thiscall ?close@AlphaNet@@QAEXXZ)(AlphaNet* this)
 // callers   14   call targets   0
@@ -163,7 +163,7 @@ void AlphaNet::close() {
     memcpy(bytes + 0x768, &zero, sizeof(zero));
     // The legacy body tail-jumps here with this unchanged, so the network
     // close runs against the same object.
-    (ORIGINAL(this)->*NetCloseOriginal)();
+    Net::close();
 }
 
 void __fastcall alpha_net_close_redirect(AlphaNet *self, void *) {
