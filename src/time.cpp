@@ -303,8 +303,8 @@ Status: Complete
 
 /*
 Purpose: Callback function that processes WM_TIMER messages (SetTimer).
-// ORIGINAL: 0x006167E0 ?TimerProc@Time@@QAEXPAXIIK@Z 0x006167E0-0x0061681C
-// symbol    ?TimerProc@Time@@SAXPAUHWND__@@IKK@Z
+// ORIGINAL: 0x006167E0 ?TimerProc@Time@@QAEXPAXIIK@Z 0x006167E0-0x0061681C BYTE_EXACT
+// symbol    ?TimerProc@Time@@SGXPAUHWND__@@IKK@Z
 // size      60 bytes
 // prototype void (__thiscall ?TimerProc@Time@@QAEXPAXIIK@Z)(Time* this, HWND hwnd, uint32_t msg, uint32_t* idEvent, uint32_t dwTime)
 // callers   0   call targets   0
@@ -315,7 +315,7 @@ Purpose: Callback function that processes WM_TIMER messages (SetTimer).
 Return Value: n/a
 Status: Complete
 */
-void Time::TimerProc(HWND UNUSED(hwnd), uint32_t UNUSED(msg), UINT_PTR id_timer, 
+void CALLBACK Time::TimerProc(HWND UNUSED(hwnd), uint32_t UNUSED(msg), UINT_PTR id_timer, 
                      DWORD UNUSED(elapsed)) {
     if (id_timer && (!TimeModal || id_timer == (UINT_PTR)TimeModal)
         && !reinterpret_cast<Time *>(id_timer)->tick_posted_) {
@@ -326,8 +326,8 @@ void Time::TimerProc(HWND UNUSED(hwnd), uint32_t UNUSED(msg), UINT_PTR id_timer,
 
 /*
 Purpose: Callback function for the timeSetEvent. Effectively the same as TimerProc.
-// ORIGINAL: 0x00616820 ?MultimediaProc@Time@@QAEXIIKKK@Z 0x00616820-0x0061685C
-// symbol    ?MultimediaProc@Time@@SAXIIKKK@Z
+// ORIGINAL: 0x00616820 ?MultimediaProc@Time@@QAEXIIKKK@Z 0x00616820-0x0061685C BYTE_EXACT
+// symbol    ?MultimediaProc@Time@@SGXIIKKK@Z
 // size      60 bytes
 // prototype void (__thiscall ?MultimediaProc@Time@@QAEXIIKKK@Z)(Time* this, UINT uTimerID, UINT uMsg, DWORD dwUser, DWORD dw1, unsigned int)
 // callers   0   call targets   0
@@ -338,7 +338,7 @@ Purpose: Callback function for the timeSetEvent. Effectively the same as TimerPr
 Return Value: n/a
 Status: Complete
 */
-void Time::MultimediaProc(uint32_t UNUSED(timer_id), uint32_t UNUSED(msg), DWORD_PTR user,
+void CALLBACK Time::MultimediaProc(uint32_t UNUSED(timer_id), uint32_t UNUSED(msg), DWORD_PTR user,
                           DWORD_PTR UNUSED(dw1), DWORD_PTR UNUSED(dw2)) {
     if (user && (!TimeModal || user == (DWORD_PTR)TimeModal) 
         && !reinterpret_cast<Time *>(user)->tick_posted_) {

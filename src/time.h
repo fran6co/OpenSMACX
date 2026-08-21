@@ -95,9 +95,16 @@ class Time {
   // eventually make atomic for thread safety
   static Time *TimeModal;
   static int TimeInitCount;
-  static void TimerProc(HWND UNUSED(hwnd) hwnd, uint32_t msg, UINT_PTR id_timer, DWORD elapsed);
-  static void MultimediaProc(uint32_t timer_id, uint32_t msg, DWORD_PTR dw_user, DWORD_PTR dw1,
-                             DWORD_PTR dw2);
+  // `CALLBACK`, i.e. __stdcall. These are handed to `SetTimer` and
+  // `timeSetEvent`, which require it, and the image agrees: both end
+  // `ret 0x10` and `ret 0x14`, cleaning their own arguments. Declared
+  // `static` alone they are __cdecl and end a bare `ret`, which was the one
+  // instruction each was short.
+  static void CALLBACK TimerProc(HWND UNUSED(hwnd) hwnd, uint32_t msg,
+                                 UINT_PTR id_timer, DWORD elapsed);
+  static void CALLBACK MultimediaProc(uint32_t timer_id, uint32_t msg,
+                                      DWORD_PTR dw_user, DWORD_PTR dw1,
+                                      DWORD_PTR dw2);
   static int __cdecl init_class();  // 00616880
   static void __cdecl close_class(); // 00616890
 
