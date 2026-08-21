@@ -143,6 +143,25 @@ void __stdcall VectorCtorIterator(void *array, unsigned int element_size, int co
     PENDING_BODY(0x006457C2, pending)(array, element_size, count, ctor, dtor);
 }
 
+// ?do_video@@YAXXZ at 0x00636300, ?check_net@@YAXXZ at 0x0062D5D0 and
+// ?do_net@@YAXXZ at 0x0062D5B0 - the message-loop pumps, called from four
+// sites in temp.cpp. See the note in `temp.h`: they were bound as pointers,
+// which cost every site the image's `E8`.
+void __cdecl do_video() {
+    typedef void(__cdecl *pending)();
+    PENDING_BODY(0x00636300, pending)();
+}
+
+void __cdecl check_net() {
+    typedef void(__cdecl *pending)();
+    PENDING_BODY(0x0062D5D0, pending)();
+}
+
+void __cdecl do_net() {
+    typedef void(__cdecl *pending)();
+    PENDING_BODY(0x0062D5B0, pending)();
+}
+
 // ?message_data@@YAXHHHHHH@Z at 0x00592EE0 - broadcasts a game event. Two
 // files bound it as a pointer, with disagreeing return types; one forwarder.
 uint32_t __cdecl message_data(int a1, int a2, int a3, int a4, int a5, int a6) {

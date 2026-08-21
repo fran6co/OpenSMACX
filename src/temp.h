@@ -122,12 +122,20 @@ typedef int func13(int, int, BOOL);
 func13 *const tech_val_OG = (func13 *)0x005BCBE0;
 void __cdecl tech_calc_output();
 
-// message handling testing
-typedef void *func_msg(void);
-func_msg *const do_video = (func_msg *)0x00636300;
-func_msg *const check_net = (func_msg *)0x0062D5D0;
-func_msg *const do_net = (func_msg *)0x0062D5B0;
-func_msg *const do_non_input_ = (func_msg *)0x005FCA30;
+// The message-loop pumps, DECLARED RATHER THAN BOUND. As `func_msg *const`
+// these compiled `call dword ptr [...]` at every site where the image emits
+// `call rel32` - `do_draw` alone disagreed with the image on three edges. They
+// are forwarded in `pending_bodies.cpp` until their bodies land. Their mangled
+// names are `?do_net@@YAXXZ` and friends, so they return void, not the `void *`
+// the shared typedef claimed; nothing ever read the result.
+//
+// `do_non_input_` is GONE. It bound 0x005FCA30, which `temp.cpp` already
+// recovers as `do_non_input` - so the pointer was a second, indirect spelling
+// of a function this tree HAS. `do_all_non_input` below drove its loop off it
+// and now calls the recovered one.
+void __cdecl do_video();
+void __cdecl check_net();
+void __cdecl do_net();
 
 /*
  * AN OBJECT, NOT A `uint32_t *` TO A FIXED ADDRESS. The pointer form costs a
@@ -141,15 +149,45 @@ func_msg *const do_non_input_ = (func_msg *)0x005FCA30;
 extern uint32_t MsgStatus;
 
 BOOL __cdecl do_non_input();
-BOOL __cdecl do_draw();
 void __cdecl do_all_draws();
-BOOL __cdecl do_keyboard();
 void __cdecl do_all_keyboard();
 
+// BODIES HERE, as `MEASURED inline`, because `do_all_draws` and
+// `do_all_keyboard` INLINE them - the image's `do_all_draws` is 34
+// instructions with `PeekMessage`/`TranslateMessage`/`DispatchMessage` open-
+// coded inside its loop, against 6 for a version that calls out. Standalone
+// copies exist too, at 0x005FCB60 and 0x005FCC30, so the markers stay in
+// `temp.cpp` where the catalogue reads them.
+MEASURED inline BOOL __cdecl do_draw() {
+    do_video();
+    check_net();
+    do_net();
+    MSG msg;
+    if (!PeekMessage(&msg, NULL, WM_PAINT, WM_PAINT, WM_CREATE)) {
+        return false;
+    }
+    TranslateMessage(&msg);
+    DispatchMessage(&msg);
+    return true;
+}
+
+MEASURED inline BOOL __cdecl do_keyboard() {
+    do_video();
+    check_net();
+    MSG msg;
+    if (!PeekMessage(&msg, NULL, WM_KEYDOWN, WM_KEYLAST, WM_CREATE)) {
+        return false;
+    }
+    TranslateMessage(&msg);
+    DispatchMessage(&msg);
+    return true;
+}
+
 MEASURED inline void __cdecl do_all_non_input() {
-    do {
+    MsgStatus = 32;
+    while (do_non_input()) {
         MsgStatus = 32;
-    } while (do_non_input_());
+    }
     MsgStatus = 0;
     do_net();
     check_net();
