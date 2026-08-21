@@ -111,7 +111,9 @@ extern uint32_t GameRules; // bitfield
 extern uint32_t GameState; // bitfield
 extern int DiffLevelCurrent;
 extern int TurnCurrentNum;
-extern uint32_t ObjectiveReqVictory;
+// `int`: great_beelzebub compares it with `<= 1000` and the image's
+// branch is `jle`, the signed test.
+extern int ObjectiveReqVictory;
 extern uint32_t ObjectivesSuddenDeathVictory;
 extern uint32_t ObjectiveAchievePts;
 extern uint32_t VictoryAchieveBonusPts;
