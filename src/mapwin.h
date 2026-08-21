@@ -100,16 +100,21 @@ class MapWin : protected virtual GraphicWin {
   // ?draw_map@MapWin@@QAEXH@Z at 0x0046A550, still an original body: declared
   // here so on_redraw's direct call compiles, resolved at link time.
   void draw_map(int draw_type);
-  MapWin() { ; }
-  // A `construct` METHOD, NOT A CONSTRUCTOR - the same idiom `Win` already
-  // uses. The real body at 0x004626E0 takes an int and is reached by
-  // `??__Eg_MAPWIN`; binding it as a pointer-to-member seam cost that
-  // initialiser the image's `E8`. Spelling it as a real constructor does not
-  // work: VC6 adds its hidden most-derived flag, so the call site emitted
-  // `push 1` TWICE where the image pushes it once. Forwarded in
-  // `pending_bodies.cpp`.
+  // MEASURED: a genuine `MapWin(int a1)` constructor was tried first, on the
+  // theory the mangled `H` on `??0MapWin@@QAE@H@Z` is VC6's own
+  // most-derived flag for the virtual `GraphicWin` base declared above,
+  // needing no parameter here at all. Built and disassembled with this
+  // project's own `cl`: a class that genuinely has a virtual base gets the
+  // hidden flag INSTEAD of a name change, not IN ADDITION to one - a bare
+  // `MapWin()` mangles `??0MapWin@@QAE@XZ` (no `H`), and adding an explicit
+  // `int a1` alongside the real virtual base makes VC6 emit BOTH: the flag
+  // arrives at [ebp+0xc], a1 at [ebp+8], and a caller doing
+  // `->MapWin::MapWin(1)` pushes 1 twice - the exact defect this file used
+  // to warn about, now reproduced and confirmed rather than assumed. So: no
+  // constructor here at all (the implicit default is never called), and
+  // `construct` below carries the recovered body by hand.
   void construct(int a1);
-  ~MapWin() { ; }
+  ~MapWin();
   int UNK1();
   void UNK3();
   void do_image_buttons();
@@ -120,6 +125,11 @@ class MapWin : protected virtual GraphicWin {
   void on_left_up(int, int);
   void close();
   int UNK2();
+  // Resets the "this window is live" flag (MapWinActiveOffset) and other
+  // per-window state; called by this class's own destructor and, directly,
+  // by PlanWin's and Console's (they never call MapWin::~MapWin() - see
+  // mapwin.cpp).
+  void clear(int a1);
 
  private:
   // The vbtable pointer opens the object; a heap pointer close() frees sits at

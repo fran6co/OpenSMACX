@@ -21,7 +21,108 @@
 #include "mapwin.h"
 #include "spritebox.h"
 #include "net_class.h"
+#include "texture.h"
+#include "vector_teardown.h"
 #include <cstring>
+
+// The vbtable PlanWin stores at its own front when it is the one building
+// the embedded GraphicWin, and the two hand-maintained "vtable" pointers
+// `GraphicWin::construct`'s own idiom writes when GraphicWin is directly
+// the most-derived object (see graphicwin.cpp) - PlanWin has to repeat the
+// latter pair on its own embedded GraphicWin, because nothing in this chain
+// declares a single `virtual` and so VC6 never refreshes them on its own.
+static void *const g_0066d414 = reinterpret_cast<void *>(0x0066D414);
+static void *const g_0066d2ac = reinterpret_cast<void *>(0x0066D2AC);
+static void *const g_0066d2a4 = reinterpret_cast<void *>(0x0066D2A4);
+
+/*
+Purpose: Build a plan window - attach its embedded GraphicWin, the MapWin
+         base beneath it, and its own Buffer.
+// ORIGINAL: 0x0048BCD0 ??0PlanWin@@QAE@H@Z 0x0048BCD0-0x0048BD7E;0x006581D0-0x00658205
+// symbol    ?construct@PlanWin@@QAEXH@Z
+// size      227 bytes
+// prototype void (__thiscall ??0PlanWin@@QAE@H@Z)(PlanWin* this, int)
+// callers   1   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004626E0 0x005D4CF0 0x005D7210
+Return Value: this
+
+MEASURED: not spelled as a real constructor - see the note in `planwin.h`. A
+plain method never gets VC6's own most-derived-flag treatment, so the single
+`a1` here is read and branched on exactly as the image's `[ebp+8]` is, with
+no second, compiler-inserted flag arriving alongside it.
+*/
+void PlanWin::construct(int a1) {
+    char *const self = reinterpret_cast<char *>(this);
+
+    if (a1) {
+        *reinterpret_cast<void **>(self) = g_0066d414;
+        reinterpret_cast<GraphicWin *>(self + 0x22050)->construct();
+    }
+
+    MapWin::construct(0);
+    buffer_.Buffer::Buffer();
+
+    char *const graphic_win = self + 0x22050;
+    *reinterpret_cast<void **>(graphic_win) = g_0066d2ac;
+    *reinterpret_cast<void **>(graphic_win + 0x444) = g_0066d2a4;
+    *reinterpret_cast<int32_t *>(graphic_win - 4) = 0;
+    field_21A6C_ = 0;
+    field_21A68_ = 0;
+}
+
+/*
+Purpose: Tear down a plan window's own buffer and the MapWin fields it holds
+         directly, without a separate call into MapWin's own destructor.
+// ORIGINAL: 0x0048BD80 ??1PlanWin@@QAE@XZ 0x0048BD80-0x0048BED6;0x00658210-0x006582DE
+// size      548 bytes
+// prototype void (__thiscall ??1PlanWin@@QAE@XZ)(PlanWin* this)
+// callers   2   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00462870 0x005D7410 0x00618EE0 0x006252B0 0x006456E4
+Return Value: n/a
+
+`this` IS NOT PlanWin's own front: `guarded_teardowns.cpp` already calls
+`reinterpret_cast<PlanWin *>(TeardownObject00856DC0)->PlanWin::~PlanWin()`
+with the address of the embedded GraphicWin virtual base
+(front + 0x22050 - `TeardownObject00856DC0` minus `g_PLANWIN`'s own
+0x00834D70 is exactly that), matching what this body's own arithmetic reads
+throughout. That is the image's own convention, not a bug reproduced here -
+`??__Fg_PLANWIN` calls this and then `GraphicWin::~GraphicWin()` on the same
+address, in that order.
+
+KNOWN DIVERGENCE, not chased further here: `PlanWin` publicly inherits
+`MapWin`, and `MapWin` now has a genuine `~MapWin()` (needed so
+`guarded_teardowns.cpp`'s own already-matching `->MapWin::~MapWin()` keeps
+compiling), so this destructor's epilogue gets an EXTRA, compiler-inserted
+call into `MapWin::~MapWin()` that the image does not make. The image tears
+down MapWin's own fields here directly, calling `MapWin::clear` for the
+"this window is live" flag - PlanWin's destructor never calls MapWin's own
+separate destructor at 0x00420F90.
+*/
+PlanWin::~PlanWin() {
+    char *const self = reinterpret_cast<char *>(this);
+    reinterpret_cast<Buffer *>(self - 0x5e0)->~Buffer();
+
+    char *const base = self - 0x5e4;
+    reinterpret_cast<MapWin *>(base - 0x21a6c)->clear(0);
+
+    VectorDtorIterator(base - 0x2b18, 0xabc, 4,
+                        reinterpret_cast<const void *>(0x00625310));
+    reinterpret_cast<Font *>(base - 0x2b4c)->~Font();
+    reinterpret_cast<Font *>(base - 0x2b78)->~Font();
+    reinterpret_cast<Font *>(base - 0x2ba4)->~Font();
+    reinterpret_cast<Buffer *>(base - 0x3134)->~Buffer();
+    reinterpret_cast<Buffer *>(base - 0x36bc)->~Buffer();
+    reinterpret_cast<Buffer *>(base - 0x3c44)->~Buffer();
+    reinterpret_cast<TextureStore *>(base - 0x3f60)->~TextureStore();
+    VectorDtorIterator(base - 0x210e0, 0x260, 0xc4,
+                        reinterpret_cast<const void *>(0x006252B0));
+    VectorDtorIterator(base - 0x21a60, 0x260, 4,
+                        reinterpret_cast<const void *>(0x006252B0));
+}
 
 /*
 Purpose: Clear the plan window's line count.
@@ -140,7 +241,7 @@ void PlanWin::UNK1() {
     int32_t height;
     std::memcpy(&width, base + 0x4C4, sizeof(width));
     std::memcpy(&height, base + 0x4C8, sizeof(height));
-    window_buffer->copy(reinterpret_cast<Buffer *>(buffer_), 0, 0, width,
+    window_buffer->copy(&buffer_, 0, 0, width,
                         -height);
 }
 

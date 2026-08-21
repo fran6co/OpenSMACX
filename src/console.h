@@ -126,7 +126,11 @@ class Console : public MapWin {
   // See the note in `mapwin.h`: a `construct` method rather than a real
   // constructor, because VC6's hidden most-derived flag doubles the push.
   void construct(int a1);
-  ~Console() { ; }
+  // A genuine destructor is safe here (unlike the constructor): destructors
+  // never carry the most-derived flag - `guarded_teardowns.cpp`'s own
+  // already-matching `->Console::~Console()` proves it, the same way it did
+  // for MapWin's and PlanWin's.
+  ~Console();
   void clear_group();
   void set_preferences();
   void set_auto_preferences();

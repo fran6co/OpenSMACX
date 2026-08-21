@@ -45,6 +45,8 @@
   */
 class VoiceTx {
  public:
+  // 0x004C8CC0, a pending_bodies forwarder - not this batch's address.
+  VoiceTx();
   // 0x004C8DB0 is not recovered: a pending_bodies forwarder, because
   // an empty inline stub emits nothing and the deleting destructor
   // needs a `call rel32`.
@@ -116,8 +118,8 @@ class Net {
   void check_polling();
 
  public:
-  Net() { ; }
-  ~Net() { ; }
+  Net();
+  ~Net();
   int poll_players(int);
   // `K`, not `I`. MSVC decorates `unsigned long` K and `unsigned int` I,
   // and this tree spells uint32_t as unsigned int - same width, different

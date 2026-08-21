@@ -226,24 +226,12 @@ void __fastcall sub_633010(void *self) {
     PENDING_BODY(0x00633010, pending)(self);
 }
 
-// ??0MapWin@@QAE@H@Z at 0x004626E0 and ??0Console@@QAE@H@Z at 0x0050F460 -
-// the constructors their `??__E` initialisers call. Bound as pointer-to-member
-// seams they cost each initialiser the image's `E8`.
-void MapWin::construct(int a1) {
+// ?clear@MapWin@@QAEXH@Z at 0x00462870 - not this batch's address (still
+// RULED-OUT at 97.7% in `src/unrecovered/00462870.cpp`), but MapWin's own
+// destructor and PlanWin's/Console's each reach it directly.
+void MapWin::clear(int a1) {
     typedef void(__fastcall *pending)(MapWin *, void *, int);
-    PENDING_BODY(0x004626E0, pending)(this, nullptr, a1);
-}
-
-void Console::construct(int a1) {
-    typedef void(__fastcall *pending)(Console *, void *, int);
-    PENDING_BODY(0x0050F460, pending)(this, nullptr, a1);
-}
-
-// ??0PlanWin@@QAE@H@Z at 0x0048BCD0 - reached by its `??__E` initialiser.
-// See the note in `mapwin.h`.
-void PlanWin::construct(int a1) {
-    typedef void(__fastcall *pending)(PlanWin *, void *, int);
-    PENDING_BODY(0x0048BCD0, pending)(this, nullptr, a1);
+    PENDING_BODY(0x00462870, pending)(this, nullptr, a1);
 }
 
 // The game's own `operator new` at 0x0064558A, reached from `Wave::init` and
@@ -979,6 +967,12 @@ VoiceRx::~VoiceRx() {  // ??1VoiceRx@@QAE@XZ at 0x004C8A50
 VoiceTx::~VoiceTx() {  // ??1VoiceTx@@QAE@XZ at 0x004C8DB0
     typedef void(__fastcall *pending)(VoiceTx *, void *);
     PENDING_BODY(0x004C8DB0, pending)(this, nullptr);
+}
+
+VoiceTx::VoiceTx() {  // ??0VoiceTx@@QAE@XZ at 0x004C8CC0 - not this batch's
+                       // address; Net::Net (0x0062D6A0) reaches it directly.
+    typedef void(__fastcall *pending)(VoiceTx *, void *);
+    PENDING_BODY(0x004C8CC0, pending)(this, nullptr);
 }
 
 int MapWin::focus(int x_coord, int y_coord) {  // 0x0046B310

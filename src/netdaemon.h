@@ -50,8 +50,8 @@ class NetDaemon : public AlphaNet {
   void process_message(char *message, unsigned long a, int b);
 
  public:
-  NetDaemon() { ; }
-  ~NetDaemon() { ; }
+  NetDaemon();
+  ~NetDaemon();
   int receive();
   uint32_t unlock_veh();
 

@@ -20,9 +20,196 @@
 #include "netdaemon.h"
 #include "log.h"  // log_say, source-owned at 0x006262F0
 #include "net_class.h"
+#include "lock.h"
+#include "playerlock.h"
 
 int NetDaemonIsMultiplayerNet;  // 0x0093F660
 int NetDaemonLocalFaction;  // 0x00939284
+
+// Two nameless __thiscall helpers the catalogue has no mangled name for -
+// the call sites set up a `this` pointer first. Shims only, the same
+// reasoning as the FileWin/BasePop recoveries' casts: the symbol they
+// resolve to is a relocation on both sides and is masked out of the
+// comparison the same way an address literal is.
+class RemoveAllShim {
+ public:
+  void remove_all();  // 0x00402970
+};
+void RemoveAllShim::remove_all() {
+    typedef void(__fastcall *pending)(RemoveAllShim *, void *);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x00402970))(this, nullptr);
+}
+class Sub401be0Shim {
+ public:
+  void run();  // 0x00401BE0
+};
+void Sub401be0Shim::run() {
+    typedef void(__fastcall *pending)(Sub401be0Shim *, void *);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x00401BE0))(this, nullptr);
+}
+// A Heap, reached only by raw offset here - see the note on the destructor.
+class HeapShim {
+ public:
+  void shutdown();  // 0x005D45B0
+};
+void HeapShim::shutdown() {
+    typedef void(__fastcall *pending)(HeapShim *, void *);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x005D45B0))(this, nullptr);
+}
+// The JackalVoiceRx-shaped container at self+0xb0 - `Net::~Net` (net_class.cpp)
+// models the same container's teardown loop explicitly; this destructor
+// reaches a genuinely different, COMDAT-shared helper for it instead
+// (0x00538EC0, local to this address's own cold region), so it is left a
+// shim rather than duplicated as a second copy of that loop.
+class JackalVoiceRxShim {
+ public:
+  ~JackalVoiceRxShim();
+};
+JackalVoiceRxShim::~JackalVoiceRxShim() {
+    typedef void(__fastcall *pending)(JackalVoiceRxShim *, void *);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x00538EC0))(this, nullptr);
+}
+class NetFifoShim {
+ public:
+  ~NetFifoShim();
+};
+NetFifoShim::~NetFifoShim() {
+    typedef void(__fastcall *pending)(NetFifoShim *, void *);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x006339E0))(this, nullptr);
+}
+
+static int32_t *const g_009b3374 = reinterpret_cast<int32_t *>(0x009B3374);
+
+/*
+Purpose: Build a network daemon - its AlphaNet base, then its own eight
+         PlayerLocks and 0x18-entry lock table.
+// ORIGINAL: 0x005389F0 ??0NetDaemon@@QAE@XZ 0x005389F0-0x00538B58;0x0065DF50-0x0065DF62
+// size      360 bytes
+// prototype void (__thiscall ??0NetDaemon@@QAE@XZ)(NetDaemon* this)
+// callers   1   call targets   4
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E2490 0x0058FF70 0x005900D0 0x004E25B0
+Return Value: this
+
+NetDaemon has no virtual base anywhere in this chain, so a genuine
+constructor is safe (unlike MapWin/PlanWin/Console - see the note in
+`mapwin.h`), and the image's own SEH frame here is what a real constructor
+with a real destructible base earns. NetDaemon's own fields past AlphaNet
+are still opaque storage (see the class declaration), so the eight
+PlayerLocks and the 0x18-entry lock table reach their elements by raw
+offset rather than through invented array members.
+*/
+NetDaemon::NetDaemon() : AlphaNet() {
+    char *const self = reinterpret_cast<char *>(this);
+
+    char *p = self + 0x14a0;
+    for (int32_t n = 8; n != 0; --n) {
+        reinterpret_cast<PlayerLock *>(p)->clear();
+        p += 0x1c;
+    }
+
+    reinterpret_cast<Lock *>(self + 0x14a0)->clear();
+
+    char *q = self + 0x158c;
+    for (int32_t m = 0x18; m != 0; --m) {
+        *reinterpret_cast<uint8_t *>(q) = 0xff;
+        *reinterpret_cast<int16_t *>(q + 8) = 0;
+        *reinterpret_cast<int32_t *>(q + 0x5a0) = 0;
+        q += 0x3c;
+    }
+
+    field_1B30_ = 0;
+    field_1B34_ = 0;
+    field_1B38_ = 0;
+    field_1B3C_ = 0;
+    field_1B60_ = 0;
+    field_1B5C_ = 0;
+    field_1B6C_ = 0;
+    field_1B68_ = 0;
+    field_1B7C_ = 0;
+    field_1BA8_ = 0;
+    field_1BA0_ = 0;
+    field_1BA4_ = 0;
+    field_1BCC_ = 0;
+    field_1BC8_ = 0;
+    field_1B50_ = 0;
+    field_1B54_ = 0;
+    field_1B58_ = 0;
+    field_1BC4_ = 0;
+    field_1BC0_ = 0;
+    field_1BB0_ = 0;
+    field_1BAC_ = 0;
+    field_1BB4_ = 0;
+    field_1B40_ = 0;
+    field_1B44_ = 0;
+    field_1BD8_ = 0;
+    field_1BD4_ = 0;
+    field_1B48_ = 0;
+    field_1B4C_ = 0;
+    field_1B78_ = 0;
+
+    *reinterpret_cast<void **>(self) = reinterpret_cast<void *>(0x0066EF0C);
+    field_1BD0_ = 0xff;
+    for (int32_t i = 0; i < 8; i++) {
+        reinterpret_cast<int32_t *>(self + 0x1b80)[i] = 0;
+    }
+
+    reinterpret_cast<Lock *>(self + 0x14a0)->clear();
+    AlphaNet::close();
+}
+
+/*
+Purpose: Tear down a network daemon - its own lock table, then AlphaNet's
+         and Net's fields, directly (no separate calls into their own
+         destructors).
+// ORIGINAL: 0x00538D10 ??1NetDaemon@@QAE@XZ 0x00538D10-0x00538EBE;0x004E3710-0x004E372B;0x0065E010-0x0065E0A5
+// size      430 bytes
+// prototype void (__thiscall ??1NetDaemon@@QAE@XZ)(NetDaemon* this)
+// callers   0   call targets   9
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00401BE0 0x00402970 0x00402DD0 0x004C8DB0 0x004E25B0 0x00538EC0 0x005D45B0 0x0062E010 0x006339E0
+Return Value: n/a
+
+MEASURED SHARED_TAIL in the artifact this was transcribed from: one span is
+COMDAT-folded with another function, so no per-instruction verdict is well
+defined there regardless of spelling. Kept as the faithful coverage
+translation anyway. Before several of these calls the image also resets one
+or two hand-maintained "vtable" pointers through the same vbtable-relative
+pattern `GraphicWin::construct` uses (see graphicwin.cpp) - not reproduced
+here field-by-field; the shims above carry the call sequence instead.
+*/
+NetDaemon::~NetDaemon() {
+    char *const self = reinterpret_cast<char *>(this);
+
+    AlphaNet::close();
+    reinterpret_cast<HeapShim *>(self + 0x148c)->shutdown();
+
+    reinterpret_cast<RemoveAllShim *>(self + 0x144c)->remove_all();
+    *reinterpret_cast<int32_t *>(self + 0x1460) = 0;
+    reinterpret_cast<RemoveAllShim *>(self + 0x144c)->remove_all();
+    *reinterpret_cast<int32_t *>(self + 0x1460) = 0;
+    *g_009b3374 = *reinterpret_cast<int32_t *>(self + 0x1488);
+
+    Net::close();
+
+    reinterpret_cast<RemoveAllShim *>(self + 0x72c)->remove_all();
+    *reinterpret_cast<int32_t *>(self + 0x740) = 0;
+    reinterpret_cast<Sub401be0Shim *>(self + 0x748)->run();
+    *g_009b3374 = *reinterpret_cast<int32_t *>(self + 0x754);
+    *g_009b3374 = *reinterpret_cast<int32_t *>(self + 0x75c);
+
+    reinterpret_cast<NetFifoShim *>(self + 0x130)->~NetFifoShim();
+    reinterpret_cast<NetFifoShim *>(self + 0x10c)->~NetFifoShim();
+    reinterpret_cast<NetFifoShim *>(self + 0xe8)->~NetFifoShim();
+
+    reinterpret_cast<JackalVoiceRxShim *>(self + 0xb0)->~JackalVoiceRxShim();
+    *reinterpret_cast<int32_t *>(self + 0xc4) = 0;
+    *g_009b3374 = *reinterpret_cast<int32_t *>(self + 0xd0);
+
+    reinterpret_cast<VoiceTx *>(self + 0x58)->~VoiceTx();
+}
 
 /*
 Purpose: Poll the network for one message; dispatch it when one arrives and
