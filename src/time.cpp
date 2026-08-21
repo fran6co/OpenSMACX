@@ -464,11 +464,42 @@ void Time::release_modal() {
     TimeModal = nullptr;
 }
 
+/*
+Purpose: Count one more user of the timer class.
+// ORIGINAL: 0x00616880 ?init_class@Time@@QAAHXZ 0x00616880-0x0061688E BYTE_EXACT
+// symbol    ?init_class@Time@@SAHXZ
+// size      15 bytes
+// prototype int (__cdecl ?init_class@Time@@QAAHXZ)()
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+//
+// THE BODY WAS ALREADY HERE and carried no marker, so the catalogue only knew
+// it through `src/unrecovered/00616880.cpp` - an artifact the build does not
+// compile. That is a third shape of the same defect: not a missing body, a
+// missing CLAIM on a body that was always in the tree.
+Return Value: 0, always
+Status: Complete
+*/
 int __cdecl Time::init_class() {
     TimeInitCount = static_cast<int>(static_cast<uint32_t>(TimeInitCount) + 1U);
     return 0;
 }
 
+/*
+Purpose: Count one fewer user of the timer class.
+// ORIGINAL: 0x00616890 ?close_class@Time@@QAAXXZ 0x00616890-0x00616897 BYTE_EXACT
+// symbol    ?close_class@Time@@SAXXZ
+// size      7 bytes
+// prototype void (__cdecl ?close_class@Time@@QAAXXZ)()
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+//
+// Same as `init_class` above: the body was always here, the claim was not.
+Return Value: n/a
+Status: Complete
+*/
 void __cdecl Time::close_class() {
     TimeInitCount = static_cast<int>(static_cast<uint32_t>(TimeInitCount) - 1U);
 }
