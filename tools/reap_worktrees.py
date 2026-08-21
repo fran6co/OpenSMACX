@@ -104,6 +104,49 @@ def worktrees() -> list[dict]:
     return keep
 
 
+def uncollected_lines(worktree: Path, name: str) -> list[str]:
+    """The agent's own added lines that the main checkout does not have.
+
+    NOT a whole-file comparison. Comparing the two files outright asks "has
+    master changed since this worktree branched", which is a different and
+    much weaker question - every worktree fails it the moment any commit
+    lands, whether or not the agent's own work was taken. Measured
+    2026-08-21: it held nine worktrees whose recoveries were ALREADY in
+    master, and the four it flagged loudest turned out to differ only in
+    superseded prose.
+
+    So ask what the agent actually contributed: the lines its diff ADDS.
+    Comments are ignored deliberately - a note master has since corrected is
+    not a reason to keep 600MB on disk, and keeping the stale one would be
+    the wrong outcome anyway. Markers and code must be present SOMEWHERE
+    under src/, not necessarily in the same file, because promotion moves
+    bodies between files by design.
+    """
+    diff = git("diff", "--unified=0", "--", name, cwd=worktree).splitlines()
+    added = []
+    for line in diff:
+        if not line.startswith("+") or line.startswith("+++"):
+            continue
+        text = line[1:].strip()
+        if not text:
+            continue
+        marker = "ORIGINAL: 0x" in text
+        if text.startswith("//") and not marker:
+            continue                      # prose; master may have corrected it
+        added.append(text)
+    if not added:
+        return []
+    haystack = []
+    for source in sorted((REPO_ROOT / "src").rglob("*")):
+        if source.is_file() and source.suffix in (".cpp", ".h"):
+            try:
+                haystack.append(source.read_text(errors="replace"))
+            except OSError:
+                continue
+    blob = "\n".join(haystack)
+    return [text for text in added if text not in blob]
+
+
 def why_not(entry: dict, dirty_here: set) -> str | None:
     """The reason this worktree must be kept, or None if it can go."""
     path = Path(entry["worktree"])
@@ -135,8 +178,11 @@ def why_not(entry: dict, dirty_here: set) -> str | None:
         if name in dirty_here:
             return (f"{name} is uncommitted in the main checkout too, so "
                     f"comparing them proves nothing")
-        if not filecmp.cmp(theirs, ours, shallow=False):
-            return f"{name} differs from the main checkout - UNCOLLECTED"
+        missing = uncollected_lines(path, name)
+        if missing:
+            first = missing[0][:64]
+            return (f"{name} - {len(missing)} line(s) the agent wrote are "
+                    f"nowhere in src/: {first!r} - UNCOLLECTED")
     return None
 
 
