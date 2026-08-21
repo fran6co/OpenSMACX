@@ -391,7 +391,7 @@ BOOL __cdecl read_tech() {
 
 /*
 Purpose: Clear the rule values for the specified player.
-// ORIGINAL: 0x00585FE0 ?clear_faction@@YAXPAUPlayer@@@Z 0x00585FE0-0x00586049
+// ORIGINAL: 0x00585FE0 ?clear_faction@@YAXPAUPlayer@@@Z 0x00585FE0-0x00586049 BYTE_EXACT
 // size      105 bytes
 // prototype void (__cdecl ?clear_faction@@YAXPAUPlayer@@@Z)(Player* player)
 // callers   0   call targets   0
@@ -410,13 +410,16 @@ void __cdecl clear_faction(Player *player) {
     player->rule_energy = 0;
     player->rule_interest = 0;
     player->rule_population = 0;
+    // THE LAST FIVE ARE NOT IN DECLARATION ORDER. The image writes 0x508 and
+    // 0x50C - rule_flags and faction_bonus_count - before 0x4FC, 0x500 and
+    // 0x504, at 0x00586029.
     player->rule_hurry = 100;
     player->rule_techcost = 100;
+    player->rule_flags = 0;
+    player->faction_bonus_count = 0;
     player->rule_psi = 0;
     player->rule_sharetech = 0;
     player->rule_commerce = 0;
-    player->rule_flags = 0;
-    player->faction_bonus_count = 0;
 }
 
 /*
