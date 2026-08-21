@@ -132,6 +132,11 @@ void __cdecl caviar_apply_rotation(float *angles, void *matrix) {
     PENDING_BODY(0x00627D00, pending)(angles, matrix);
 }
 
+void MapWin::click(int a1, int a2, int a3) {  // 0x0046D5D0
+    typedef void(__fastcall *pending)(MapWin *, void *, int, int, int);
+    PENDING_BODY(0x0046D5D0, pending)(this, nullptr, a1, a2, a3);
+}
+
 // sub_638430 at 0x00638430 - the helper that walks a Caviar record and frees
 // its members. A free function, so the forwarder is one too.
 void __cdecl caviar_free_record(void *record) {
