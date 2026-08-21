@@ -2151,6 +2151,18 @@ void Buffer::hline(int x1, int x2, int y, int color) {
     // second `test eax, eax; je`, four bytes, which is exactly what this
     // body was short by. The sum of a non-null base and an offset cannot be
     // null, so the check is unreachable; it is in the shipped bytes.
+    // RULED-OUT: the check IS here and VC6 still folds it away. The image
+    // emits `add eax, edx; test eax, eax; je`, keeping a `test` that the add's
+    // own flags already answer; ours emits `add eax, edx; je`. One instruction
+    // in 131, and the body is otherwise identical - 0.996 similar, the only
+    // other difference being edx against ecx, which is allocation.
+    //
+    // Four spellings measured, all byte-identical to each other: the sum in two
+    // steps through a named base, `== 0`, `!dest`, and the offset hoisted into
+    // its own `const int`. VC6 folds the comparison into the add's flags every
+    // time, because it is a dead null test on a sum it can see is non-null.
+    // Nothing short of a barrier would keep it, and that would cost more than
+    // the instruction is worth. Do not re-derive this.
     // THE BASE IS ADDED LAST - `imul eax, ebp; add eax, ebx; add eax, edx` -
     // so the offsets sum first and the pointer joins at the end.
     char *const dest = stride_ * y + x1 + static_cast<char *>(locked_bits_);
