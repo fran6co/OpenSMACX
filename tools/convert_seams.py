@@ -373,11 +373,18 @@ class Seam:
                 out.append(f"the receiver `{expression.strip()}` is an "
                            f"expression, not a name")
                 continue
-            if receiver != "this" and not re.search(
+            # A LOCAL ALREADY OF THE RIGHT TYPE NEEDS NO RETYPE. mapwin.cpp
+            # computes `MapWin *const base = ...` and calls through it; the
+            # file-scope test refused that, and the only thing it actually
+            # needed was the method declared.
+            local = re.search(
+                rf"\b{re.escape(self.klass)}\s*\*+\s*(?:const\s+)?"
+                rf"{receiver}\s*[;=]", _code(body(self.source)))
+            if receiver != "this" and not local and not re.search(
                     rf"^(extern\s+)?[\w:]+\s*\*+\s*(const\s+)?{receiver}\s*[;=]",
                     "\n".join(body(p) for p in tree()), re.M):
-                out.append(f"`{receiver}` is not a file-scope declaration - "
-                           f"a local cannot be retyped from here")
+                out.append(f"`{receiver}` is neither a file-scope declaration "
+                           f"nor a local already typed {self.klass} *")
                 continue
             seen = RETYPED.get(receiver)
             if seen and seen != self.klass:

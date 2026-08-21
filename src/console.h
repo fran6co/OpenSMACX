@@ -241,13 +241,11 @@ void __fastcall console_update_data_redirect(Console *self, void *, int a1);
 // MapWin::draw_map (0x0046A550, ret 4) repaints one. Both are unrecovered -
 // focus reaches in_box and set_center, draw_map is 2049 bytes - so both stay
 // original behind a seam.
-typedef int (OriginalObject::*func_console_map_win_focus)(int x_coord, int y_coord);
 // ?flush_input@@YAXXZ at 0x005FD120 - __cdecl, no arguments - drains the queued
 // input once the focus walk actually moved the primary view. Still original; it
 // pumps the message loop through check_net.
 typedef void(__cdecl func_console_flush_input)(void);
 
-extern func_console_map_win_focus ConsoleOriginalMapWinFocus;       // 0x0046B310
 // 0x0046A550 is NOT bound here. It is MapWin::draw_map's own address and
 // src/mapwin.h owns the seam for it (MapWinOriginalDrawMap). Seams dedupe on
 // the ADDRESS, never the name: two variables for one address is not a link

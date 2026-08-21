@@ -54,6 +54,10 @@
   */
 class MapWin : protected virtual GraphicWin {
  public:
+  // 0x0046B310, a pending_bodies forwarder.
+  int focus(int x_coord, int y_coord);
+
+ public:
   // 0x0046D5D0, a pending_bodies forwarder. The two click handlers reach it
   // on a virtual-base-adjusted receiver and used to do so through a pointer.
   void click(int a1, int a2, int a3);

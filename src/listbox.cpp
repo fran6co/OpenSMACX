@@ -21,6 +21,7 @@
 #include "vtable_shim.h"
 #include "spritebox.h"
 #include "net_class.h"
+#include "mapwin.h"
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
