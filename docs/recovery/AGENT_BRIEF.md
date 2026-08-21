@@ -75,6 +75,20 @@ THE `int` IN `??0Class@@QAE@H@Z` IS NOT AN ARGUMENT
   broken working code. Nine are confirmed: CheckBox, Console, Dialogs,
   EditGroup, ListBox, PlanWin, RadioButton (both ctor and dtor) and SpriteBox.
 
+DO NOT BUILD A MEMBER THE COMPILER ALREADY BUILT
+- `uv run tools/double_construction.py`. In a REAL CONSTRUCTOR the compiler
+  has already built every declared member before the body runs, so a
+  `new (&member_) T()` or `new (self + 0xNNN) T()` in the body builds it a
+  second time on top of itself. The program survives it - the second
+  construction overwrites a freshly built object with an identical one - which
+  is exactly why nobody notices.
+- It is not free. `SocialWin::SocialWin` was doing it to eleven members and
+  compiled to 232 instructions against an image of 121; removing the
+  redundant construction dropped it to 133.
+- In a `construct()` METHOD the same code is correct and necessary - the
+  object exists but its members were never implicitly built. The check knows
+  the difference; do not "fix" a construct() method on its say-so.
+
 PLACEMENT NEW COSTS A NULL GUARD, EVERY TIME
 - VC6 guards every placement new-expression with a null test on the pointer -
   `cmp ecx, ebx; je` - because `operator new` may return null. The guard needs
