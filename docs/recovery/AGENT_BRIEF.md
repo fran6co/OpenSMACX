@@ -154,6 +154,23 @@ LEVERS THAT HAVE PAID, most productive first
   correct - the value really can go negative there - so never "fix" one of
   those.
 
+- PLACEMENT-NEW PULLS IN AN SEH FRAME. `new (obj) Class(...)` makes VC6 emit
+  unwind-protection scaffolding when the class has a non-trivial destructor and
+  the inlined constructor calls a non-intrinsic function. The image has no such
+  frame, so the divergence starts at INSTRUCTION 0 and reads as a total
+  mismatch. An ordinary `construct(...)` method - no `new`-expression - drops
+  it; that is the `Win::construct` idiom. `uv run tools/placement_new.py` lists
+  the 28 sites and flags the 5 in bodies that already reproduce, which are
+  correct as they stand and must be left alone.
+
+- `nullptr` TO A `__fastcall` REDIRECT COSTS AN INSTRUCTION. A
+  `..._redirect(Thing *, void *)` called with `nullptr` for the unused second
+  argument materialises `xor edx, edx`, which the image does not emit. Call the
+  METHOD instead. Five bodies so far, `ImageButton::close` byte-exact on it
+  alone. Related: a `void construct()` never emits the image's closing
+  `mov eax, esi` - if the image returns `this`, say so in the signature, which
+  closed the last instruction on four Ambience constructors.
+
 - THE IMAGE PEELS ITS LOOPS. `do { B } while (C);` compiles one copy of the body;
   the image runs `B; while (C) { B }` - same program, and the difference was four
   instructions on each of three message pumps. If the image's loop has TWO calls
