@@ -100,6 +100,13 @@ Purpose: Craft an output string related to a specific technology. For techIDs ou
 //   through ecx=0x9b90d8 into 0x6169a0) rather than pushing a literal constant the way
 //   `label_get(310)` compiles to here. Worth checking whether `label_get`'s argument in that
 //   branch should be a field read (e.g. off a Rules-like global) instead of the literal 310.
+// LEVER: the sprintf_s(&output[strlen(output)], 80, ...) calls replaced with the image's
+//   strcat/_itoa idiom (a `char num_buf[80];` local, one strcat per literal/string piece, and
+//   `_itoa(value, num_buf, 10); strcat(output, num_buf);` for the numeric field), and
+//   tech_recurse given a `MEASURED inline` body (see its own marker) so its call site here
+//   expands one level. call_diff now agrees on the call count (9 calls, matching the image);
+//   moved 7/221 -> 12/221 agreeing. Remaining divergence starts at instruction 3 with register
+//   allocation (esi vs eax + push order), not chased further this pass.
 // size      688 bytes
 // prototype void (__cdecl ?say_tech@@YAXPADHH@Z)(int8* output, int techID, int categoryLvl)
 // callers   30   call targets   4
@@ -110,6 +117,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl say_tech(LPSTR output, int tech_id, BOOL category_lvl) {
+    char num_buf[80];
     if (tech_id < -1) {
         strcat_s(output, 80, label_get(310)); // "Not Available"
     } else if (tech_id < 0) {
@@ -119,21 +127,27 @@ void __cdecl say_tech(LPSTR output, int tech_id, BOOL category_lvl) {
     } else if (tech_id < MaxTechnologyNum) {
         strcat_s(output, 80, StringTable->get((int)Technology[tech_id].name));
         if (category_lvl) {
-            sprintf_s(&output[strlen(output)], 80, " (%s%d)", // 'E#', 'D#', 'B#', 'C#'
-                label_get(629 + tech_category(tech_id)), tech_recurse(tech_id, 0));
+            strcat(output, " (");
+            strcat(output, label_get(629 + tech_category(tech_id))); // 'E#', 'D#', 'B#', 'C#'
+            _itoa(tech_recurse(tech_id, 0), num_buf, 10);
+            strcat(output, num_buf);
+            strcat(output, ")");
         }
     } else if (tech_id < 97) {
         if (Language) {
-            sprintf_s(&output[strlen(output)], 80, "%s (%s)", label_get(487), // 'Comm Frequency'
-                get_noun(tech_id - MaxTechnologyNum));
+            strcat(output, label_get(487)); // 'Comm Frequency'
+            strcat(output, " (");
+            strcat(output, get_noun(tech_id - MaxTechnologyNum));
+            strcat(output, ")");
         } else {
-            sprintf_s(&output[strlen(output)], 80, "%s %s", 
-                Players[tech_id - MaxTechnologyNum].adj_name_faction,
-                label_get(487)); // 'Comm Frequency'
+            strcat(output, Players[tech_id - MaxTechnologyNum].adj_name_faction);
+            strcat(output, " ");
+            strcat(output, label_get(487)); // 'Comm Frequency'
         }
     } else {
-        sprintf_s(&output[strlen(output)], 80, "%s %s", VehPrototypes[tech_id - 97].veh_name,
-            label_get(185)); // 'Prototype'
+        strcat(output, VehPrototypes[tech_id - 97].veh_name);
+        strcat(output, " ");
+        strcat(output, label_get(185)); // 'Prototype'
     }
 }
 
@@ -199,6 +213,12 @@ Purpose: Determine technology level for tech_id.
 // ORIGINAL: 0x005B9F90 ?tech_recurse@@YAHHH@Z 0x005B9F90-0x005B9FE0
 // LEVER: same as has_tech - `RulesTechnology *tech = &Technology[tech_id];` before the two
 //   recursive calls, instead of two `Technology[tech_id].preq_tech_N` subscripts. 4/36 -> 22/36.
+// LEVER: `MEASURED inline` in technology.h - the image expands a recursive inline exactly one
+//   level and leaves the inner recursive calls as real calls to the out-of-line body, which is
+//   why say_tech/tech_val/tech_ai each show a paired tech_recurse call at their tech_recurse
+//   call sites instead of one. Moving the body out of this .cpp reproduces that at every caller
+//   without costing tech_recurse its own out-of-line copy (the image still has one, at this
+//   address).
 // size      80 bytes
 // prototype int (__cdecl ?tech_recurse@@YAHHH@Z)(int techID, int ret)
 // callers   7   call targets   1
@@ -208,15 +228,7 @@ Purpose: Determine technology level for tech_id.
 Return Value: Level
 Status: Complete
 */
-int __cdecl tech_recurse(int tech_id, int base_lvl) {
-    if (tech_id < 0 || tech_id >= MaxTechnologyNum) {
-        return base_lvl;
-    }
-    RulesTechnology *tech = &Technology[tech_id];
-    int val1 = tech_recurse(tech->preq_tech_1, base_lvl + 1);
-    int val2 = tech_recurse(tech->preq_tech_2, base_lvl + 1);
-    return (val1 > val2) ? val1 : val2;
-}
+// BODY IN technology.h, as `MEASURED inline`: see the LEVER note above.
 
 /*
 Purpose: Determine what category is dominate for tech_id. If there is a tie, the order of precedence
@@ -297,6 +309,15 @@ Purpose: Calculate faction's tech related bonuses for commerce and resource prod
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     (none)
+// LEVER: faction_bonus loop - hoisted `int bonus_count = Players[faction_id].faction_bonus_count;`
+//   out of the loop condition and read `faction_bonus_val1[i]` once at the top instead of in each
+//   of the three arms, matching the image's single stepped pointer. Clamp loop - a counted
+//   `for (int n = 0; n < 4; n++)` over `(&tech_fungus_nutrient)[n]` instead of the pointer-bounded
+//   `<=` walk, matching the image's `mov esi,4 ... dec esi; jne` branchless clamp. Under the
+//   default-picked flag set (no /Oy-) the raw agreeing count is unchanged at 3/133 - that flag set
+//   never keeps the frame pointer regardless of loop shape, so instruction 0 always diverges there.
+//   Under /Oy- (which does keep it) this moved 12-14/133 -> 17/133; compiled instruction count also
+//   moved closer to the image's 133 (149 -> 122). Left in; not chased further.
 Return Value: n/a
 Status: Complete
 */
@@ -320,23 +341,22 @@ void __cdecl tech_effects(int faction_id) {
             }
         }
     }
-    for (int i = 0; i < Players[faction_id].faction_bonus_count; i++) {
+    int bonus_count = Players[faction_id].faction_bonus_count;
+    for (int i = 0; i < bonus_count; i++) {
+        int bonus_val = Players[faction_id].faction_bonus_val1[i];
         if (Players[faction_id].faction_bonus_id[i] == RULE_FUNGNUTRIENT) {
-            PlayersData[faction_id].tech_fungus_nutrient 
-                += Players[faction_id].faction_bonus_val1[i];
+            PlayersData[faction_id].tech_fungus_nutrient += bonus_val;
         } else if (Players[faction_id].faction_bonus_id[i] == RULE_FUNGMINERALS) {
-            PlayersData[faction_id].tech_fungus_mineral 
-                += Players[faction_id].faction_bonus_val1[i];
+            PlayersData[faction_id].tech_fungus_mineral += bonus_val;
         } else if (Players[faction_id].faction_bonus_id[i] == RULE_FUNGENERGY) {
-            PlayersData[faction_id].tech_fungus_energy 
-                += Players[faction_id].faction_bonus_val1[i];
+            PlayersData[faction_id].tech_fungus_energy += bonus_val;
         }
     }
     // if values are below zero, cap at zero
-    for (int *tech_fungus = &PlayersData[faction_id].tech_fungus_nutrient,
-        *end = &PlayersData[faction_id].tech_fungus_unk; tech_fungus <= end; tech_fungus++) {
-        if (*tech_fungus < 0) {
-            *tech_fungus = 0;
+    int *tech_fungus = &PlayersData[faction_id].tech_fungus_nutrient;
+    for (int n = 0; n < 4; n++) {
+        if (tech_fungus[n] < 0) {
+            tech_fungus[n] = 0;
         }
     }
     if (PlayersData[faction_id].soc_effect_pending.economy > 2) {
@@ -358,6 +378,10 @@ Purpose: Determine if preqTechID is a prerequisite of parentTechID within descen
 //   two early `return false;` guards (preq_tech_id<0, parent_tech_id<0) into one shared
 //   epilogue the image does not use. Left as plain `Technology[parent_tech_id].preq_tech_N`.
 //   Still MISMATCH at 9/63; unexplored beyond that.
+// LEVER: `MEASURED inline` in technology.h - the image expands tech_is_preq one recursion
+//   level at each call site (20 tight pairs of calls to this address in tech_val alone); moving
+//   the body out of this .cpp reproduces that without costing tech_is_preq its own out-of-line
+//   copy, which the image still emits here.
 // size      123 bytes
 // prototype int (__cdecl ?tech_is_preq@@YAHHHH@Z)(int preqTechID, int parentTechID, unsigned int range)
 // callers   3   call targets   1
@@ -367,19 +391,7 @@ Purpose: Determine if preqTechID is a prerequisite of parentTechID within descen
 Return Value: Is preqTechID prerequisite of parentTechID? true/false
 Status: Complete
 */
-BOOL __cdecl tech_is_preq(int preq_tech_id, int parent_tech_id, int range) {
-    if (preq_tech_id < 0 || parent_tech_id < 0) {
-        return false;
-    }
-    if (preq_tech_id == parent_tech_id) {
-        return true;
-    }
-    if (!range) {
-        return false;
-    }
-    return tech_is_preq(preq_tech_id, Technology[parent_tech_id].preq_tech_1, range - 1)
-        || tech_is_preq(preq_tech_id, Technology[parent_tech_id].preq_tech_2, range - 1);
-}
+// BODY IN technology.h, as `MEASURED inline`: see the LEVER note above.
 
 /*
 Purpose: Determine how valuable the specified techID is to a faction. This id either corresponds to
@@ -394,6 +406,13 @@ Purpose: Determine how valuable the specified techID is to a faction. This id ei
 //   the growth/power/wealth/tech reads (the same shape that helped has_tech/tech_avail)
 //   REGRESSES this function (26/1361 -> 16/1361); left as four separate `Technology[tech_id].*`
 //   reads.
+// LEVER: tech_is_preq and tech_recurse moved to `MEASURED inline` in technology.h (their own
+//   markers carry the detail) - the image expands each one recursion level at every call site
+//   (20 tech_is_preq pairs, 3 tech_recurse pairs), which this source's plain calls did not
+//   reproduce. call_diff now agrees on all 40 tech_is_preq calls; bit_count/climactic_battle/
+//   wants_to_attack/tech_recurse still short by 3 calls total, not chased further this pass -
+//   the divergence starts at instruction 0 (image keeps ebp frame, the picked flag set does not)
+//   and cascades. Moved 26/1361 -> 29/1361 agreeing.
 // size      4133 bytes
 // prototype int (__cdecl ?tech_val@@YAHHHH@Z)(int techID, int factionID, BOOL simpleCalc)
 // callers   14   call targets   5
@@ -636,6 +655,12 @@ int __cdecl tech_val(int tech_id, int faction_id, BOOL simple_calc) {
 /*
 Purpose: Determine a tech the specified faction should research.
 // ORIGINAL: 0x005BDC10 ?tech_ai@@YAHH@Z 0x005BDC10-0x005BDD64
+// LEVER: tech_recurse moved to `MEASURED inline` in technology.h (see its own marker) - the
+//   image expands `tech_recurse(i, 0)` one level inside this function's main loop, which is
+//   what turns the loop's integer index into the image's pointer stepping by 0x2C. Moved
+//   4/124 -> 10/124 agreeing; the induction-variable strength reduction itself did not fall out
+//   automatically (i is also used for tech_avail/tech_val/the Formers compare/the return value),
+//   not chased further this pass.
 // size      340 bytes
 // prototype int (__cdecl ?tech_ai@@YAHH@Z)(int factionID)
 // callers   3   call targets   5
@@ -675,7 +700,7 @@ int __cdecl tech_ai(int faction_id) {
 
 /*
 Purpose: Get power_value from technology struct for tech id.
-// ORIGINAL: 0x005BDD70 ?tech_mil@@YAHH@Z 0x005BDD70-0x005BDD8E
+// ORIGINAL: 0x005BDD70 ?tech_mil@@YAHH@Z 0x005BDD70-0x005BDD8E BYTE_EXACT
 // size      30 bytes
 // prototype 
 // callers   1   call targets   0
@@ -689,11 +714,17 @@ Status: Complete
 // some call sites and calls it at others, and a .cpp definition is only ever
 // one of those. The marker stays here because that is where the catalogue
 // reads it.
+// LEVER: branch polarity - guard clause 'if (tech_id < MaxTechnologyNum) return
+//        Technology[tech_id].power_value; return 0;' instead of the
+//        '(tech_id >= MaxTechnologyNum) ? 0 : ...' ternary. The ternary put the
+//        constant-return block first; the guard clause falls through to the
+//        work and tails the constant return, matching the image's jge-past-work
+//        layout.
 
 
 /*
 Purpose: Get tech_value from technology struct for tech id.
-// ORIGINAL: 0x005BDD90 ?tech_tech@@YAHH@Z 0x005BDD90-0x005BDDB1
+// ORIGINAL: 0x005BDD90 ?tech_tech@@YAHH@Z 0x005BDD90-0x005BDDB1 BYTE_EXACT
 // size      33 bytes
 // prototype 
 // callers   1   call targets   0
@@ -707,6 +738,7 @@ Status: Complete
 // some call sites and calls it at others, and a .cpp definition is only ever
 // one of those. The marker stays here because that is where the catalogue
 // reads it.
+// LEVER: branch polarity - same guard-clause rewrite as tech_mil.
 
 
 /*
@@ -729,7 +761,7 @@ Status: Complete
 
 /*
 Purpose: Get growth_value from technology struct for tech id.
-// ORIGINAL: 0x005BDDF0 ?tech_colonize@@YAHH@Z 0x005BDDF0-0x005BDE11
+// ORIGINAL: 0x005BDDF0 ?tech_colonize@@YAHH@Z 0x005BDDF0-0x005BDE11 BYTE_EXACT
 // size      33 bytes
 // prototype 
 // callers   1   call targets   0
@@ -743,6 +775,7 @@ Status: Complete
 // some call sites and calls it at others, and a .cpp definition is only ever
 // one of those. The marker stays here because that is where the catalogue
 // reads it.
+// LEVER: branch polarity - same guard-clause rewrite as tech_mil.
 
 
 /*
@@ -752,6 +785,14 @@ Purpose: Calculate how much researching a tech will cost the specified faction.
 //   (best found still omits the frame pointer the image keeps), and the compiled body is 182
 //   instructions against the image's 234. A big arithmetic function; needs the same kind of
 //   per-expression source-form search done here for has_tech/tech_avail, not attempted this pass.
+// LEVER: signedness - player_factor, top_factor, compare, diff_factor, diff_lvl,
+//   tech_stagnation, rule_factor, fin_factor, discovery_rate and cost changed from uint32_t to
+//   int so the image's signed sar/cdq/idiv/jl/setl forms come out instead of shr/div/jbe. Under
+//   /c /O2 /Gy /GR- /Oy- /GX (the flag set that keeps the frame pointer) this moved the raw
+//   agreeing count from ~17/234 to 71/234; osmx's own similarity-picked flag set still lands on
+//   a small mismatch (it never picks /Oy- for this function), so `measure`'s default output does
+//   not show the size of this win. tools/signedness.py now reports 0 remaining pure-signedness
+//   claims on this body. Still deep MISMATCH beyond that; not chased further.
 // size      641 bytes
 // prototype int (__cdecl ?tech_rate@@YAHH@Z)(int factionID)
 // callers   6   call targets   0
@@ -768,11 +809,11 @@ int __cdecl tech_rate(int faction_id) {
     if (!Rules->tech_discovery_rate_pct_std) {
         return 999999999; // max cost
     }
-    uint32_t player_factor = range(PlayersData[faction_id].earned_techs_saved * 2
+    int player_factor = range(PlayersData[faction_id].earned_techs_saved * 2
         - PlayersData[faction_id].unk_26 + PlayersData[faction_id].tech_ranking, 2, 9999);
-    uint32_t top_factor = 0;
+    int top_factor = 0;
     for (uint32_t i = 1; i < MaxPlayerNum; i++) {
-        uint32_t compare = PlayersData[i].earned_techs_saved * 2 + PlayersData[i].tech_ranking;
+        int compare = PlayersData[i].earned_techs_saved * 2 + PlayersData[i].tech_ranking;
         if (compare > top_factor) {
             top_factor = compare;
         }
@@ -780,17 +821,17 @@ int __cdecl tech_rate(int faction_id) {
     player_factor /= 2;
     top_factor /= 2;
     BOOL is_human_player = is_human(faction_id);
-    uint32_t diff_factor = is_human_player ? PlayersData[faction_id].diff_level : DiffLevelCurrent;
+    int diff_factor = is_human_player ? PlayersData[faction_id].diff_level : DiffLevelCurrent;
     diff_factor += (diff_factor < DLVL_LIBRARIAN);
-    uint32_t diff_lvl = !is_human_player ? DiffLevelCurrent : DLVL_LIBRARIAN;
+    int diff_lvl = !is_human_player ? DiffLevelCurrent : DLVL_LIBRARIAN;
     diff_factor = is_human_player ? diff_factor * 4 + 8 : 29 - diff_factor * 3;
     diff_factor = range(diff_factor, 12 - player_factor, player_factor + 12);
-    uint32_t tech_stagnation = GameRules & RULES_TECH_STAGNATION;
-    uint32_t rule_factor = tech_stagnation | 0x40; // 64 or 96
-    uint32_t fin_factor = range(player_factor - (TurnCurrentNum / (rule_factor >> 3)),
+    int tech_stagnation = GameRules & RULES_TECH_STAGNATION;
+    int rule_factor = tech_stagnation | 0x40; // 64 or 96
+    int fin_factor = range(player_factor - (TurnCurrentNum / (rule_factor >> 3)),
         0, (diff_factor * (rule_factor >> 5)) >> 1) + diff_factor;
     int resch_base = range(PlayersData[faction_id].soc_effect_base.research, -1, 1);
-    uint32_t discovery_rate = (fin_factor
+    int discovery_rate = (fin_factor
         - range((top_factor - diff_lvl - player_factor + 7) / (8 - diff_lvl),
             0, diff_lvl * fin_factor / 10 + 1))
         * range(player_factor - resch_base, 1, 99999);
@@ -800,7 +841,7 @@ int __cdecl tech_rate(int faction_id) {
     if (Players[faction_id].rule_techcost != 100) {
         discovery_rate = discovery_rate * Players[faction_id].rule_techcost / 100;
     }
-    uint32_t cost = (discovery_rate * MapAreaSqRoot) / 56;
+    int cost = (discovery_rate * MapAreaSqRoot) / 56;
     if (tech_stagnation) {
         cost += cost / 2; // Slower Rate of Research Discoveries
     }

@@ -167,11 +167,9 @@ void __cdecl say_tech(int tech_id, BOOL category_lvl);
 BOOL __cdecl valid_tech_leap(int tech_id, int faction_id);
 void __cdecl say_tech(LPSTR output, int tech_id, BOOL category_lvl);
 BOOL __cdecl has_tech(int tech_id, int faction_id);
-int __cdecl tech_recurse(int tech_id, int base_lvl);
 int __cdecl tech_category(int tech_id);
 BOOL __cdecl tech_avail(int tech_id, int faction_id);
 void __cdecl tech_effects(int faction_id);
-BOOL __cdecl tech_is_preq(int preq_tech_id, int parent_tech_id, int range);
 int __cdecl tech_val(int tech_id, int faction_id, BOOL simple_calc);
 int __cdecl tech_ai(int faction_id);
 int __cdecl tech_rate(int faction_id);
@@ -184,11 +182,17 @@ MEASURED inline LPSTR __cdecl tech_name(int tech_id, BOOL category_lvl) {
 
 MEASURED inline int __cdecl tech_mil(int tech_id) {
     // TODO: why only this one returns 0 with other three returning 1? typo/bug?
-    return (tech_id >= MaxTechnologyNum) ? 0 : *(&Technology[tech_id].power_value);
+    if (tech_id < MaxTechnologyNum) {
+        return Technology[tech_id].power_value;
+    }
+    return 0;
 }
 
 MEASURED inline int __cdecl tech_tech(int tech_id) {
-    return (tech_id >= MaxTechnologyNum) ? 1 : *(&Technology[tech_id].tech_value);
+    if (tech_id < MaxTechnologyNum) {
+        return Technology[tech_id].tech_value;
+    }
+    return 1;
 }
 
 MEASURED inline int __cdecl tech_infra(int tech_id) {
@@ -196,5 +200,32 @@ MEASURED inline int __cdecl tech_infra(int tech_id) {
 }
 
 MEASURED inline int __cdecl tech_colonize(int tech_id) {
-    return (tech_id >= MaxTechnologyNum) ? 1 : *(&Technology[tech_id].growth_value);
+    if (tech_id < MaxTechnologyNum) {
+        return Technology[tech_id].growth_value;
+    }
+    return 1;
+}
+
+MEASURED inline int __cdecl tech_recurse(int tech_id, int base_lvl) {
+    if (tech_id < 0 || tech_id >= MaxTechnologyNum) {
+        return base_lvl;
+    }
+    RulesTechnology *tech = &Technology[tech_id];
+    int val1 = tech_recurse(tech->preq_tech_1, base_lvl + 1);
+    int val2 = tech_recurse(tech->preq_tech_2, base_lvl + 1);
+    return (val1 > val2) ? val1 : val2;
+}
+
+MEASURED inline BOOL __cdecl tech_is_preq(int preq_tech_id, int parent_tech_id, int range) {
+    if (preq_tech_id < 0 || parent_tech_id < 0) {
+        return false;
+    }
+    if (preq_tech_id == parent_tech_id) {
+        return true;
+    }
+    if (!range) {
+        return false;
+    }
+    return tech_is_preq(preq_tech_id, Technology[parent_tech_id].preq_tech_1, range - 1)
+        || tech_is_preq(preq_tech_id, Technology[parent_tech_id].preq_tech_2, range - 1);
 }

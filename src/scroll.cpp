@@ -89,16 +89,7 @@ uint32_t redraw_from_vtable(void *self, uint32_t vtable_bits) {
     return result;
 }
 
-OPENSMACX_NOINLINE
-uint32_t call_noarg_virtual(void *self, size_t slot) {
-    const uint32_t vtable_bits = read_volatile_bits(self, 0);
-    const uint32_t target_bits = read_volatile_bits(
-        reinterpret_cast<const void *>(static_cast<uintptr_t>(vtable_bits)),
-        slot);
-    return (ORIGINAL(self)->*original_method<func_noarg_virtual>(static_cast<unsigned long>(static_cast<uintptr_t>(target_bits))))();
-}
-
-void set_sprite_triplet(void *object, Sprite *volatile *primary,
+__forceinline void set_sprite_triplet(void *object, Sprite *volatile *primary,
                         size_t button_offset, bool horizontal, Sprite *sprite1,
                         Sprite *sprite2, Sprite *sprite3) {
     primary[0] = sprite1;
@@ -164,6 +155,10 @@ Purpose: Reset Scroll-owned state from the process defaults, close the two
 //   dword index 2 is read by both the first and second window. The
 //   loop needs rewriting around that windowing, not the current stride-3
 //   indexing, to match structurally.
+// LEVER: dropped the OPENSMACX_NOINLINE call_noarg_virtual helper and
+//   expanded both FlatButton close dispatches inline via
+//   read_volatile_bits/original_slot<func_noarg_virtual> at slot 0x168,
+//   removing both E8 calls to the helper.
 // symbol    ?close@Scroll@@QAEIXZ
 // size      350 bytes
 // prototype void (__thiscall ?close@Scroll@@QAEXXZ)(Scroll* this)
@@ -216,8 +211,10 @@ uint32_t Scroll::close() {
     object[0x2144 / 4] = 0;
     object[0x2148 / 4] = 0;
 
-    call_noarg_virtual(reinterpret_cast<uint8_t *>(this) + 0xAAC, 0x168);
-    call_noarg_virtual(reinterpret_cast<uint8_t *>(this) + 0x15F8, 0x168);
+    (ORIGINAL(&flat_button_left_)->*original_slot<func_noarg_virtual>(
+        reinterpret_cast<const uint8_t *>(read_volatile_bits(&flat_button_left_, 0)) + 0x168))();
+    (ORIGINAL(&flat_button_right_)->*original_slot<func_noarg_virtual>(
+        reinterpret_cast<const uint8_t *>(read_volatile_bits(&flat_button_right_, 0)) + 0x168))();
     return GraphicWin::close();
 }
 
@@ -342,6 +339,10 @@ Purpose: Set the signed scrollbar range and redraw it at the lower endpoint.
 //   through the branch and both stores (15/24) but the call target itself
 //   doesn't resolve to 0x628A50 in this harness - store order/offsets confirmed
 //   correct via tools/store_order.py.
+// LEVER: replaced the cached-vtable-bits/redraw_from_vtable(__asm helper)
+//   tail with the inline read_volatile_bits/original_slot<func_noarg_virtual>
+//   dispatch 0x00605A10 uses - 15/24 to 17/24 agreeing (best flags /Ob0).
+//   The swap defect above is the remaining structural cause.
 // symbol    ?set_range@Scroll@@QAEIHH@Z
 // size      93 bytes
 // prototype void (__thiscall ?set_range@Scroll@@QAEXHH@Z)(Scroll* this, int, int)
@@ -362,9 +363,9 @@ uint32_t Scroll::set_range(int minimum, int maximum) {
     }
     range_minimum_ = minimum;
     position_ = minimum;
-    const uint32_t vtable_bits = read_volatile_bits(this, 0);
     range_maximum_ = maximum;
-    return redraw_from_vtable(this, vtable_bits);
+    return (ORIGINAL(this)->*original_slot<func_noarg_virtual>(
+        reinterpret_cast<const uint8_t *>(read_volatile_bits(this, 0)) + 0xF8))();
 }
 
 /*
@@ -404,6 +405,12 @@ uint32_t Scroll::set_button_color(int color) {
 /*
 Purpose: Set the bevel thickness shared by the scrollbar and both end buttons.
 // ORIGINAL: 0x00605A50 ?set_bevel_thickness@Scroll@@QAEXH@Z 0x00605A50-0x00605A8D
+// LEVER: replaced both redraw_from_vtable(__asm helper) calls with the
+//   inline read_volatile_bits/original_slot<func_noarg_virtual> dispatch
+//   0x00605A10 already uses - 4/14 to 7/14 agreeing. First dispatch now
+//   matches the image's single `call dword ptr [reg+0xf8]`; the second still
+//   schedules as `mov eax,[obj]; mov eax,[eax+0xf8]; call eax` - the same
+//   residual 0x00605A10's own RULED-OUT note already gives up on.
 // symbol    ?set_bevel_thickness@Scroll@@QAEIH@Z
 // size      61 bytes
 // prototype void (__thiscall ?set_bevel_thickness@Scroll@@QAEXH@Z)(Scroll* this, int)
@@ -420,15 +427,17 @@ uint32_t Scroll::set_bevel_thickness(int thickness) {
     bevel_thickness_ = value;
     flat_button_left_.bevel_thickness_ = value;
     flat_button_right_.bevel_thickness_ = value;
-    redraw_from_vtable(&flat_button_left_,
-                       read_volatile_bits(&flat_button_left_, 0));
-    return redraw_from_vtable(&flat_button_right_,
-                              read_volatile_bits(&flat_button_right_, 0));
+    (ORIGINAL(&flat_button_left_)->*original_slot<func_noarg_virtual>(
+        reinterpret_cast<const uint8_t *>(read_volatile_bits(&flat_button_left_, 0)) + 0xF8))();
+    return (ORIGINAL(&flat_button_right_)->*original_slot<func_noarg_virtual>(
+        reinterpret_cast<const uint8_t *>(read_volatile_bits(&flat_button_right_, 0)) + 0xF8))();
 }
 
 /*
 Purpose: Set the upper bevel color shared by the scrollbar and both end buttons.
 // ORIGINAL: 0x00605A90 ?set_bevel_upper@Scroll@@QAEXH@Z 0x00605A90-0x00605ACD
+// LEVER: same substitution as 0x00605A50 - 4/14 to 7/14 agreeing, same
+//   second-call residual.
 // symbol    ?set_bevel_upper@Scroll@@QAEIH@Z
 // size      61 bytes
 // prototype void (__thiscall ?set_bevel_upper@Scroll@@QAEXH@Z)(Scroll* this, int)
@@ -445,15 +454,17 @@ uint32_t Scroll::set_bevel_upper(int color) {
     bevel_upper_ = value;
     flat_button_left_.bevel_upper_ = value;
     flat_button_right_.bevel_upper_ = value;
-    redraw_from_vtable(&flat_button_left_,
-                       read_volatile_bits(&flat_button_left_, 0));
-    return redraw_from_vtable(&flat_button_right_,
-                              read_volatile_bits(&flat_button_right_, 0));
+    (ORIGINAL(&flat_button_left_)->*original_slot<func_noarg_virtual>(
+        reinterpret_cast<const uint8_t *>(read_volatile_bits(&flat_button_left_, 0)) + 0xF8))();
+    return (ORIGINAL(&flat_button_right_)->*original_slot<func_noarg_virtual>(
+        reinterpret_cast<const uint8_t *>(read_volatile_bits(&flat_button_right_, 0)) + 0xF8))();
 }
 
 /*
 Purpose: Set the lower bevel color shared by the scrollbar and both end buttons.
 // ORIGINAL: 0x00605AD0 ?set_bevel_lower@Scroll@@QAEXH@Z 0x00605AD0-0x00605B0D
+// LEVER: same substitution as 0x00605A50 - 4/14 to 7/14 agreeing, same
+//   second-call residual.
 // symbol    ?set_bevel_lower@Scroll@@QAEIH@Z
 // size      61 bytes
 // prototype void (__thiscall ?set_bevel_lower@Scroll@@QAEXH@Z)(Scroll* this, int)
@@ -470,10 +481,10 @@ uint32_t Scroll::set_bevel_lower(int color) {
     bevel_lower_ = value;
     flat_button_left_.bevel_lower_ = value;
     flat_button_right_.bevel_lower_ = value;
-    redraw_from_vtable(&flat_button_left_,
-                       read_volatile_bits(&flat_button_left_, 0));
-    return redraw_from_vtable(&flat_button_right_,
-                              read_volatile_bits(&flat_button_right_, 0));
+    (ORIGINAL(&flat_button_left_)->*original_slot<func_noarg_virtual>(
+        reinterpret_cast<const uint8_t *>(read_volatile_bits(&flat_button_left_, 0)) + 0xF8))();
+    return (ORIGINAL(&flat_button_right_)->*original_slot<func_noarg_virtual>(
+        reinterpret_cast<const uint8_t *>(read_volatile_bits(&flat_button_right_, 0)) + 0xF8))();
 }
 
 /*
@@ -582,6 +593,10 @@ RECT *__cdecl expand_rect(RECT *rect, int horizontal, int vertical) {
 /*
 Purpose: Set the left scrollbar sprites and horizontal button sprites.
 // ORIGINAL: 0x00605BE0 ?set_sprite_left@Scroll@@QAEXPAUSprite@@PAUSprite@@PAUSprite@@@Z 0x00605BE0-0x00605C2B
+// LEVER: marking the shared set_sprite_triplet helper __forceinline removed
+//   the 7-argument push sequence and the E8 call, taking this from 0/21 to
+//   5/21 agreeing (0.905 similar) - same fix as the other three sprite
+//   setters, which share the one helper.
 // symbol    ?set_sprite_left@Scroll@@QAEXPAVSprite@@00@Z
 // size      75 bytes
 // prototype void (__thiscall ?set_sprite_left@Scroll@@QAEXPAUSprite@@PAUSprite@@PAUSprite@@@Z)(Scroll* this, Sprite*, Sprite*, Sprite*)
@@ -601,6 +616,8 @@ void Scroll::set_sprite_left(
 /*
 Purpose: Set the right scrollbar sprites and horizontal button sprites.
 // ORIGINAL: 0x00605C30 ?set_sprite_right@Scroll@@QAEXPAUSprite@@PAUSprite@@PAUSprite@@@Z 0x00605C30-0x00605C7B
+// LEVER: same __forceinline on set_sprite_triplet as 0x00605BE0 - 0/21 to
+//   5/21 agreeing (0.905 similar).
 // symbol    ?set_sprite_right@Scroll@@QAEXPAVSprite@@00@Z
 // size      75 bytes
 // prototype void (__thiscall ?set_sprite_right@Scroll@@QAEXPAUSprite@@PAUSprite@@PAUSprite@@@Z)(Scroll* this, Sprite*, Sprite*, Sprite*)
@@ -664,6 +681,12 @@ Purpose: Clamp, optionally reverse, and redraw the scrollbar position.
 //   `jne`+immediate `ret` first). Tried if/else, nested-if without else, and
 //   goto-to-label; all three either reproduce the same layout or add a second
 //   epilogue. Everything past the guard already matches in shape (8/29).
+// RULED-OUT: replacing the redraw_from_vtable(__asm helper) tail with the
+//   inline read_volatile_bits/original_slot<func_noarg_virtual> dispatch -
+//   still 8/29, no measured improvement, so reverted. The inline form emits
+//   `mov eax,[ecx]; mov eax,[eax+0xf8]; call eax` (3 insns) against the
+//   image's `mov edx,[ecx]; call dword ptr [edx+0xf8]` (2), the same
+//   second-dispatch scheduling gap 0x00605A10's own note gives up on.
 // symbol    ?set_pos@Scroll@@QAEIH@Z
 // size      106 bytes
 // prototype void (__thiscall ?set_pos@Scroll@@QAEXH@Z)(Scroll* this, int position)
@@ -995,6 +1018,7 @@ Purpose: Destroy a Scroll: stage its two virtual tables, run close, destroy
          GraphicWin base teardown. The original's exception frame is omitted
          as unreachable per policy.
 // ORIGINAL: 0x00406E60 ??1Scroll@@QAE@XZ 0x00406E60-0x00406F1A;0x00650BB0-0x00650BEE
+// symbol    ?destroy@Scroll@@QAEPAV1@XZ
 // size      248 bytes
 // prototype void (__thiscall ??1Scroll@@QAE@XZ)(Scroll* this)
 // callers   41   call targets   4

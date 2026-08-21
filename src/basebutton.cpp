@@ -36,6 +36,7 @@ const uint32_t BaseButtonBufferVtable = 0x00670288;
 Purpose: Construct the GraphicWin base and two Time members, then install the
          BaseButton tables and process defaults.
 // ORIGINAL: 0x00606F30 ??0BaseButton@@QAE@XZ 0x00606F30-0x00607033;0x00662E50-0x00662E70
+// symbol    ?construct@BaseButton@@QAEXXZ
 // size      291 bytes
 // prototype void (__thiscall ??0BaseButton@@QAE@XZ)(BaseButton* this)
 // callers   3   call targets   2
@@ -89,6 +90,12 @@ BaseButton *__fastcall base_button_construct_redirect(
 Purpose: Close the GraphicWin base, reset BaseButton-owned state from the
          process defaults, then release the owned name and bubble strings.
 // ORIGINAL: 0x006070C0 ?close@BaseButton@@QAEXXZ 0x006070C0-0x00607190
+// RULED-OUT: hoisting `0xFFFFFFFFU` into a named local before the stores -
+//   no effect; the `or eax, 0xffffffff` for A44/A48 still schedules 4
+//   instructions later than the image (41/47 agreeing either way). The
+//   fixed/dynamic absolute-lvalue rewrite (LEVER, see body) fixed the other
+//   39 instructions; this residual plus the documented free-residue tail are
+//   what remain.
 // symbol    ?close@BaseButton@@QAEIXZ
 // size      208 bytes
 // prototype void (__thiscall ?close@BaseButton@@QAEXXZ)(BaseButton* this)
@@ -105,10 +112,10 @@ uint32_t BaseButton::close() {
 
     volatile uint32_t *const object =
         reinterpret_cast<volatile uint32_t *>(this);
-    volatile uint32_t *const fixed =
-        reinterpret_cast<volatile uint32_t *>(BaseButtonStaticDefaults);
-    volatile uint32_t *const dynamic =
-        reinterpret_cast<volatile uint32_t *>(BaseButtonDynamicDefaults);
+    // Read each default through its own absolute lvalue rather than a named
+    // `fixed`/`dynamic` pointer alias - the alias materialises the table's
+    // base address into a register before indexing element 0, where the
+    // image folds every element, including 0, straight into the operand.
     object[0xA74 / 4] = 0;
     object[0xA9C / 4] = 0;
     object[0xA78 / 4] = 0;
@@ -117,14 +124,14 @@ uint32_t BaseButton::close() {
     object[0xAAC / 4] = 0;
     object[0xAB0 / 4] = 0;
     object[0xAB4 / 4] = 0;
-    object[0xA94 / 4] = dynamic[0];
-    object[0xA84 / 4] = fixed[0];
-    object[0xA88 / 4] = fixed[1];
-    object[0xA8C / 4] = fixed[2];
-    object[0xA90 / 4] = fixed[3];
-    object[0xA98 / 4] = dynamic[1];
+    object[0xA94 / 4] = *reinterpret_cast<const uint32_t *>(0x009B8E2C);
+    object[0xA84 / 4] = *reinterpret_cast<const uint32_t *>(0x0069704C);
+    object[0xA88 / 4] = *reinterpret_cast<const uint32_t *>(0x00697050);
+    object[0xA8C / 4] = *reinterpret_cast<const uint32_t *>(0x00697054);
+    object[0xA90 / 4] = *reinterpret_cast<const uint32_t *>(0x00697058);
+    object[0xA98 / 4] = *reinterpret_cast<const uint32_t *>(0x009B8E30);
     object[0xAA4 / 4] = 0;
-    object[0xAA0 / 4] = fixed[4];
+    object[0xAA0 / 4] = *reinterpret_cast<const uint32_t *>(0x0069705C);
 
     const uint32_t name = object[0xA7C / 4];
     if (name != 0) {
@@ -154,6 +161,7 @@ uint32_t __fastcall base_button_close_redirect(BaseButton *self, void *) {
 Purpose: Destroy a BaseButton by installing its two virtual tables, closing
          it, destroying Time2 then Time1, and finally destroying GraphicWin.
 // ORIGINAL: 0x00607040 ??1BaseButton@@QAE@XZ 0x00607040-0x006070B9;0x00662E70-0x00662E9E
+// symbol    ?destroy@BaseButton@@QAEPAV1@XZ
 // size      167 bytes
 // prototype void (__thiscall ??1BaseButton@@QAE@XZ)(BaseButton* this)
 // callers   134   call targets   3
@@ -183,7 +191,7 @@ BaseButton *__fastcall base_button_destructor_redirect(
 
 /*
 Purpose: Set the button's bubble text.
-// ORIGINAL: 0x00607550 ?set_bubble_text@BaseButton@@QAEHPAD@Z 0x00607550-0x006075B7
+// ORIGINAL: 0x00607550 ?set_bubble_text@BaseButton@@QAEHPAD@Z 0x00607550-0x006075B7 BYTE_EXACT
 // symbol    ?set_bubble_text@BaseButton@@QAEHPBD@Z
 // size      103 bytes
 // prototype int (__thiscall ?set_bubble_text@BaseButton@@QAEHPAD@Z)(BaseButton* this, int8*)
@@ -203,11 +211,16 @@ int BaseButton::set_bubble_text(LPCSTR input) {
     }
     if (input) {
         size_t len = strlen(input) + 1;
-        bubble_text_ = (LPSTR)mem_get_old(len);
-        if (!bubble_text_) {
+        LPSTR const allocated = (LPSTR)mem_get_old(len);
+        bubble_text_ = allocated;
+        if (!allocated) {
             return 4;
         }
-        strcpy_s(bubble_text_, len, input);
+        // Empty then concatenate, the same idiom BaseButton::init uses - the
+        // image empties through the allocation register still live in EAX,
+        // then re-reads the field for the strcat destination.
+        allocated[0] = '\0';
+        strcat_s(bubble_text_, len, input);
     }
     return 0;
 }
@@ -215,6 +228,12 @@ int BaseButton::set_bubble_text(LPCSTR input) {
 /*
 Purpose: Set the button's name string.
 // ORIGINAL: 0x006074E0 ?set_name@BaseButton@@QAEHPAD@Z 0x006074E0-0x0060754D
+// LEVER: empty-then-concatenate through the field (name_[0]='\0'; strcat_s)
+//   instead of strcpy_s brought this from 25/37 to 26/37 agreeing at
+//   /c /O2 /Oi- /Gy /GR- /GX. Residual: the image re-reads 0xA7C into a
+//   SECOND register (ecx) for the strcat destination; this tree's compiler
+//   reuses the eax already holding the zeroed pointer instead of reloading -
+//   not reproduced by any spelling tried.
 // symbol    ?set_name@BaseButton@@QAEHPBD@Z
 // size      109 bytes
 // prototype int (__thiscall ?set_name@BaseButton@@QAEHPAD@Z)(BaseButton* this, int8*)
@@ -240,7 +259,12 @@ int BaseButton::set_name(LPCSTR input) {
         if (!name_) {
             return 4;
         }
-        strcpy_s(name_, len, input);
+        // Empty then concatenate, both through the field - the image re-reads
+        // 0xA7C twice, once for the zeroing and once for the strcat
+        // destination, unlike set_bubble_text which zeroes through the
+        // allocation register. Do not collapse the two reads into one local.
+        name_[0] = '\0';
+        strcat_s(name_, len, input);
     }
     return 0;
 }
@@ -249,25 +273,12 @@ int BaseButton::set_name(LPCSTR input) {
 // tier t live at 0x00697060 + s * 0xC + t * 4, so each setter strides 0xC.
 // Default font1/font2/font3 at 0x009B8E34, 0x009B8E38 and 0x009B8E3C.
 
-namespace {
-
-void store_default_text_colors(size_t tier, int color1, int color2,
-                               int color3, int color4) {
-    volatile uint32_t *const table = BaseButtonDefaultTextColors;
-    const int colors[4] = {color1, color2, color3, color4};
-    for (size_t slot = 0; slot < 4; ++slot) {
-        table[(slot * 0xC + tier * 4) / 4] = static_cast<uint32_t>(colors[slot]);
-    }
-}
-
-}  // namespace
-
 /*
 Purpose: Set the primary default text colours shared by every button.
-// ORIGINAL: 0x00607420 ?set_def_text_color@BaseButton@@QAAXHHHH@Z 0x00607420-0x00607447
+// ORIGINAL: 0x00607420 ?set_def_text_color@BaseButton@@QAAXHHHH@Z 0x00607420-0x00607447 BYTE_EXACT
 // symbol    ?set_def_text_color@BaseButton@@SAXHHHH@Z
 // size      39 bytes
-// prototype 
+// prototype
 // callers   3   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -275,12 +286,15 @@ Purpose: Set the primary default text colours shared by every button.
 Status: Complete
 */
 void BaseButton::set_def_text_color(int color1, int color2, int color3, int color4) {
-    store_default_text_colors(0, color1, color2, color3, color4);
+    BaseButtonDefaultTextColors[(0 * 0xC + 0 * 4) / 4] = static_cast<uint32_t>(color1);
+    BaseButtonDefaultTextColors[(1 * 0xC + 0 * 4) / 4] = static_cast<uint32_t>(color2);
+    BaseButtonDefaultTextColors[(2 * 0xC + 0 * 4) / 4] = static_cast<uint32_t>(color3);
+    BaseButtonDefaultTextColors[(3 * 0xC + 0 * 4) / 4] = static_cast<uint32_t>(color4);
 }
 
 /*
 Purpose: Set the secondary default text colours shared by every button.
-// ORIGINAL: 0x00607450 ?set_def_text_color2@BaseButton@@QAAXHHHH@Z 0x00607450-0x00607477
+// ORIGINAL: 0x00607450 ?set_def_text_color2@BaseButton@@QAAXHHHH@Z 0x00607450-0x00607477 BYTE_EXACT
 // symbol    ?set_def_text_color2@BaseButton@@SAXHHHH@Z
 // size      39 bytes
 // prototype 
@@ -291,12 +305,15 @@ Purpose: Set the secondary default text colours shared by every button.
 Status: Complete
 */
 void BaseButton::set_def_text_color2(int color1, int color2, int color3, int color4) {
-    store_default_text_colors(1, color1, color2, color3, color4);
+    BaseButtonDefaultTextColors[(0 * 0xC + 1 * 4) / 4] = static_cast<uint32_t>(color1);
+    BaseButtonDefaultTextColors[(1 * 0xC + 1 * 4) / 4] = static_cast<uint32_t>(color2);
+    BaseButtonDefaultTextColors[(2 * 0xC + 1 * 4) / 4] = static_cast<uint32_t>(color3);
+    BaseButtonDefaultTextColors[(3 * 0xC + 1 * 4) / 4] = static_cast<uint32_t>(color4);
 }
 
 /*
 Purpose: Set the tertiary default text colours shared by every button.
-// ORIGINAL: 0x00607480 ?set_def_text_color3@BaseButton@@QAAXHHHH@Z 0x00607480-0x006074A7
+// ORIGINAL: 0x00607480 ?set_def_text_color3@BaseButton@@QAAXHHHH@Z 0x00607480-0x006074A7 BYTE_EXACT
 // symbol    ?set_def_text_color3@BaseButton@@SAXHHHH@Z
 // size      39 bytes
 // prototype 
@@ -307,12 +324,15 @@ Purpose: Set the tertiary default text colours shared by every button.
 Status: Complete
 */
 void BaseButton::set_def_text_color3(int color1, int color2, int color3, int color4) {
-    store_default_text_colors(2, color1, color2, color3, color4);
+    BaseButtonDefaultTextColors[(0 * 0xC + 2 * 4) / 4] = static_cast<uint32_t>(color1);
+    BaseButtonDefaultTextColors[(1 * 0xC + 2 * 4) / 4] = static_cast<uint32_t>(color2);
+    BaseButtonDefaultTextColors[(2 * 0xC + 2 * 4) / 4] = static_cast<uint32_t>(color3);
+    BaseButtonDefaultTextColors[(3 * 0xC + 2 * 4) / 4] = static_cast<uint32_t>(color4);
 }
 
 /*
 Purpose: Set the default fonts shared by every button.
-// ORIGINAL: 0x006074B0 ?set_def_font@BaseButton@@QAAHPAUFont@@PAUFont@@PAUFont@@@Z 0x006074B0-0x006074E0
+// ORIGINAL: 0x006074B0 ?set_def_font@BaseButton@@QAAHPAUFont@@PAUFont@@PAUFont@@@Z 0x006074B0-0x006074E0 BYTE_EXACT
 // symbol    ?set_def_font@BaseButton@@SAHPAVFont@@00@Z
 // size      48 bytes
 // prototype 
@@ -327,15 +347,15 @@ int BaseButton::set_def_font(Font *font1, Font *font2, Font *font3) {
     if (!font1) {
         return 3;
     }
-    volatile Font **const fonts =
-        const_cast<volatile Font **>(BaseButtonDefaultFonts);
     // Only an initialized primary font is published, but the secondary and
-    // tertiary slots are stored either way and the call still succeeds.
+    // tertiary slots are stored either way and the call still succeeds. Each
+    // slot is an independent absolute lvalue - a named `Font **const` alias
+    // reloads the pointer at every use instead of folding to the immediate.
     if (font1->is_initialized()) {
-        fonts[0] = font1;
+        *reinterpret_cast<Font **>(0x009B8E34) = font1;
     }
-    fonts[1] = font2;
-    fonts[2] = font3;
+    *reinterpret_cast<Font **>(0x009B8E38) = font2;
+    *reinterpret_cast<Font **>(0x009B8E3C) = font3;
     return 0;
 }
 
@@ -369,7 +389,7 @@ namespace {
 // republishes the active palette first so the new colours resolve against it.
 typedef void (Buffer::*BufferColourSetter)(int, int, int, int);
 
-void recolour(Buffer &buffer, BufferColourSetter setter,
+__forceinline void recolour(Buffer &buffer, BufferColourSetter setter,
               int c1, int c2, int c3, int c4) {
     buffer.sync_to_palette(BaseButtonActivePalette());
     (buffer.*setter)(c1, c2, c3, c4);
@@ -379,7 +399,7 @@ void recolour(Buffer &buffer, BufferColourSetter setter,
 
 /*
 Purpose: Set the button's primary text colours.
-// ORIGINAL: 0x00607360 ?set_text_color@BaseButton@@QAEXHHHH@Z 0x00607360-0x0060739D
+// ORIGINAL: 0x00607360 ?set_text_color@BaseButton@@QAEXHHHH@Z 0x00607360-0x0060739D BYTE_EXACT
 // size      61 bytes
 // prototype void (__thiscall ?set_text_color@BaseButton@@QAEXHHHH@Z)(BaseButton* this, int, int, int, int)
 // callers   11   call targets   2
@@ -405,7 +425,7 @@ void BaseButton::set_text_color(int color1, int color2, int color3, int color4) 
 
 /*
 Purpose: Set the button's secondary text colours.
-// ORIGINAL: 0x006073A0 ?set_text_color2@BaseButton@@QAEXHHHH@Z 0x006073A0-0x006073DD
+// ORIGINAL: 0x006073A0 ?set_text_color2@BaseButton@@QAEXHHHH@Z 0x006073A0-0x006073DD BYTE_EXACT
 // size      61 bytes
 // prototype void (__thiscall ?set_text_color2@BaseButton@@QAEXHHHH@Z)(BaseButton* this, int, int, int, int)
 // callers   1   call targets   2
@@ -423,7 +443,7 @@ void BaseButton::set_text_color2(int color1, int color2, int color3, int color4)
 
 /*
 Purpose: Set the button's tertiary text colours.
-// ORIGINAL: 0x006073E0 ?set_text_color3@BaseButton@@QAEXHHHH@Z 0x006073E0-0x0060741D
+// ORIGINAL: 0x006073E0 ?set_text_color3@BaseButton@@QAEXHHHH@Z 0x006073E0-0x0060741D BYTE_EXACT
 // size      61 bytes
 // prototype void (__thiscall ?set_text_color3@BaseButton@@QAEXHHHH@Z)(BaseButton* this, int, int, int, int)
 // callers   1   call targets   2
@@ -597,7 +617,7 @@ Purpose: Reinitialise a button - close whatever it currently holds, take a
          private copy of its name, build the GraphicWin base with the button
          style word, publish the shared default colours and fonts into the
          window buffer, then show it.
-// ORIGINAL: 0x00607210 ?init@BaseButton@@QAEHPADHHHHHPAUWin@@H@Z 0x00607210-0x00607352
+// ORIGINAL: 0x00607210 ?init@BaseButton@@QAEHPADHHHHHPAUWin@@H@Z 0x00607210-0x00607352 BYTE_EXACT
 // symbol    ?init@BaseButton@@QAEHPBDHHHHHPAVWin@@H@Z
 // size      322 bytes
 // prototype int (__thiscall ?init@BaseButton@@QAEHPADHHHHHPAUWin@@H@Z)(BaseButton* this, int8*, int, int, int, int, int, Win*, int)
@@ -676,7 +696,7 @@ int BaseButton::init(LPCSTR name, int id, int x, int y, int width, int height,
     // 0x00697078 and 0x00697084. The table is read here rather than cached at
     // construction, so a set_def_text_color issued between construct and init
     // is the one that lands.
-    volatile const uint32_t *const colors = BaseButtonDefaultTextColors;
+    const uint32_t *const colors = BaseButtonDefaultTextColors;
     buffer_.set_text_color(
         static_cast<int>(colors[0]), static_cast<int>(colors[3]),
         static_cast<int>(colors[6]), static_cast<int>(colors[9]));
@@ -689,9 +709,12 @@ int BaseButton::init(LPCSTR name, int id, int x, int y, int width, int height,
 
     // The fourth font slot is a literal null pushed at 0x00607335, not a
     // fourth default. set_font's result is discarded, so an uninitialised
-    // primary font - its code 3 - does not fail init.
-    Font **const fonts = BaseButtonDefaultFonts;
-    buffer_.set_font(fonts[0], fonts[1], fonts[2], nullptr);
+    // primary font - its code 3 - does not fail init. Each slot is read as
+    // its own absolute lvalue - the named `Font **const` alias reloads the
+    // pointer at every use instead of folding to the immediate.
+    buffer_.set_font(*reinterpret_cast<Font **>(0x009B8E34),
+                      *reinterpret_cast<Font **>(0x009B8E38),
+                      *reinterpret_cast<Font **>(0x009B8E3C), nullptr);
 
     // Re-read, do NOT hoist onto the close dispatch above: the original
     // reloads the vtable pointer at 0x00607341, so a GraphicWin::init or a
