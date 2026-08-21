@@ -40,6 +40,21 @@ A BODY MAY ALREADY BE WRITTEN, SOMEWHERE THAT IS NOT COMPILED
   forwarder it had. The linker catches the last one for you - two definitions
   of a symbol is LNK2005.
 
+DEFECTS THAT ARE NOT MATCHING DEFECTS
+- The recovered program can be WRONG, not merely spelled differently, and no
+  similarity score points at that. Three found on 2026-08-21: `Wave::load`
+  called ITSELF without bound where the image calls `Sound::load`;
+  `world_geothermal` carried a FABRICATED duplicate call block a prior pass
+  invented, with `LM_GEOTHERMAL` where the argument is `BIT2_GEOTHERMAL`; and
+  0x005C55C0 had `if (i >= 32)` inside a loop bounded `i < 20`, because the
+  image's `cmp esi, 0x20` is the counter strength-reduced by four and the real
+  threshold is 8.
+- `uv run tools/call_diff.py --all` finds the first two: MORE means you call
+  something the image never calls, WRONG CALLEE means same count and different
+  target. `uv run tools/dead_branches.py` finds the third.
+- Fixing these moves no claim. Do it anyway and say so in the report - the
+  recovery is supposed to produce a program that RUNS.
+
 BEFORE YOU GRIND A BODY
 - `uv run tools/handwritten_asm.py` lists bodies whose shipped bytes use
   opcodes VC6 never emits - `loop`, bare `lodsb`, `xlatb`. Those were inline
