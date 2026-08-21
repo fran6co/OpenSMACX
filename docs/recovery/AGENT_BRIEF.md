@@ -48,9 +48,14 @@ THE `int` IN `??0Class@@QAE@H@Z` IS NOT AN ARGUMENT
   `SpriteBox` are all declared with NO BASE CLASS AT ALL, which is why their
   constructors cannot currently reproduce anything. Fixing the declaration is
   the recovery; the body is usually short once the inheritance is right.
-- Which bodies: any catalogued name ending `@H@Z` where the `H` has no
-  business being there. In the stubbed set that is SpriteBox, Console, MapWin,
-  ListBox, EditGroup, CheckBox, RadioButton and PlanWin.
+- `uv run tools/most_derived_flag.py` finds them, and does NOT trust the name
+  to decide: a most-derived flag and a real `int` parameter mangle identically,
+  so it confirms each one against the BODY - the vbtable-relative store
+  `mov [reg + <this>], <vtable>` that only virtual inheritance produces. That
+  check demoted 7 of 17 candidates on its first run; `StringStruct` and `Text`
+  really do take an int, and adding virtual inheritance to them would have
+  broken working code. Nine are confirmed: CheckBox, Console, Dialogs,
+  EditGroup, ListBox, PlanWin, RadioButton (both ctor and dtor) and SpriteBox.
 
 VTABLE STORES GO FIRST IN A CONSTRUCTOR BODY
 - Nothing in the GraphicWin/Win chain is declared `virtual`, deliberately, so
