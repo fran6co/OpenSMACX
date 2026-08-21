@@ -20,6 +20,8 @@
 #include "basepop.h"
 #include "dialogs.h"
 #include "general.h"  // mem_get in init_class
+#include "datalink.h"
+#include "worldwin.h"
 #include <cstring>
 
 /*

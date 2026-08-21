@@ -33,6 +33,10 @@
 */
 class StatusWin {
  public:
+  // 0x004B9EA0, a pending_bodies forwarder.
+  void redraw();
+
+ public:
   StatusWin() { ; }
   ~StatusWin() { ; }
   void close();

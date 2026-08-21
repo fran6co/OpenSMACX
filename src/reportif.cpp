@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "reportif.h"
+#include "worldwin.h"
 
 ListBox *ReportIfEnergyListBox = reinterpret_cast<ListBox *>(0x0087BE84);
 

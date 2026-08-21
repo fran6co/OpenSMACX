@@ -19,6 +19,7 @@
 #include "original_seam.h"
 #include "popup.h"
 #include "wave.h"
+#include "fx.h"
 
 
 /*
@@ -631,7 +632,6 @@ FX *PopupWaveFx = reinterpret_cast<FX *>(0x00749CF8);
 func_popup_wave_query PopupWaveIsPlaying = original_method<func_popup_wave_query>(0x004C6B10);
 func_popup_wave_query PopupWaveLoad = original_method<func_popup_wave_query>(0x004C6CE0);
 func_popup_wave_query PopupWavePlay = original_method<func_popup_wave_query>(0x004C6920);
-func_popup_fx_play PopupFxPlay = original_method<func_popup_fx_play>(0x00446A00);
 func_popup_time_source **PopupWaveTimeSlot = (func_popup_time_source **)0x00669368;
 
 /*
@@ -699,7 +699,7 @@ void __cdecl popup_wave_callback(PopupWave *popup, int) {
         }
     }
     if (popup->wave_index_ == 0x10) {
-        (ORIGINAL(PopupWaveFx)->*PopupFxPlay)(0x38);
+        PopupWaveFx->FX::play(0x38);
     }
 }
 

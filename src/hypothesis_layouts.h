@@ -1772,6 +1772,10 @@ struct Point {
 /* 0x1B3D0 bytes, 55 member(s), 50 named. From the IDB. 20 function(s) in the image. */
 class PrefWin {
  public:
+  // 0x0048FA00, a pending_bodies forwarder.
+  void display(int page);
+
+ public:
   uint8_t graphicWin_[0xA14];  // 0x0
   uint32_t field_A14_;  // 0xA14
   uint32_t field_A18_;  // 0xA18

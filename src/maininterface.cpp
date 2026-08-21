@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "maininterface.h"
+#include "worldwin.h"
 
  /*
  Purpose: Set the flat button's bubble text.

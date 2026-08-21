@@ -25,6 +25,10 @@
   */
 class ButtonGroup {
  public:
+  // 0x0062B8A0, a pending_bodies forwarder.
+  int button_click(int a1);
+
+ public:
   ButtonGroup();
   ~ButtonGroup();
   void close();
@@ -54,8 +58,6 @@ int __fastcall button_group_init_redirect(
 // button vtables and is not recovered yet, so set() reaches it at its
 // canonical address. Rebindable so tests can observe the call without the
 // original being present.
-typedef int (OriginalObject::*func_button_group_click)(int);
-extern func_button_group_click ButtonGroupOriginalButtonClick;
 
 int __fastcall button_group_set_redirect(ButtonGroup *self, void *,
                                          int button_id, int notify);

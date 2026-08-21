@@ -19,6 +19,7 @@
 #include "original_seam.h"
 #include "temp.h"
 #include "basebutton.h"
+#include "worldwin.h"
 
 #include <new>
 

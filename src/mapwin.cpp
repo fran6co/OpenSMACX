@@ -19,6 +19,8 @@
 #include "original_seam.h"
 #include "mapwin.h"
 #include "console.h"
+#include "statuswin.h"
+#include "worldwin.h"
 #include <cstring>
 
 /*

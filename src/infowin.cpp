@@ -18,6 +18,8 @@
 #include "stdafx.h"
 #include "original_seam.h"
 #include "infowin.h"
+#include "statuswin.h"
+#include "worldwin.h"
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
@@ -95,12 +97,10 @@ void __fastcall info_win_unk3_redirect(InfoWin *self, void *, int a1, int a2) {
     self->UNK3(a1, a2);
 }
 
-func_info_win_timer_proc InfoWinOriginalTimerProc =
-    original_method<func_info_win_timer_proc>(0x00459150);
 
 /*
 Purpose: Cancel the pending info-window timer, if one is outstanding.
-// ORIGINAL: 0x00459280 ?reset@InfoWin@@QAEXXZ 0x00459280-0x0045929C
+// ORIGINAL: 0x00459280 ?reset@InfoWin@@QAEXXZ 0x00459280-0x0045929C BYTE_EXACT
 // size      28 bytes
 // prototype void (__thiscall ?reset@InfoWin@@QAEXXZ)(InfoWin* this)
 // callers   7   call targets   1
@@ -113,7 +113,7 @@ Status: Complete
 void InfoWin::reset() {
     if (field_A8_) {
         field_A8_ = 0;
-        (ORIGINAL(this)->*InfoWinOriginalTimerProc)(1);
+        timer_proc(1);
     }
 }
 

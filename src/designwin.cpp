@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "designwin.h"
 #include "win.h"
+#include "worldwin.h"
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.

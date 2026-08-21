@@ -216,7 +216,6 @@ static_assert(offsetof(PopupWave, armed_108_) == 0x108,
 // the owner whose virtual at 0x138 fires after wave 0x19, and the FX bank
 // that plays effect 0x38 after wave 0x10.
 typedef int (OriginalObject::*func_popup_wave_query)();
-typedef void (OriginalObject::*func_popup_fx_play)(int effect);
 typedef unsigned long(__stdcall func_popup_time_source)(void);
 
 extern uint32_t *PopupWaveFlags;
@@ -229,7 +228,6 @@ extern FX *PopupWaveFx;
 extern func_popup_wave_query PopupWaveIsPlaying;
 extern func_popup_wave_query PopupWaveLoad;
 extern func_popup_wave_query PopupWavePlay;
-extern func_popup_fx_play PopupFxPlay;
 extern func_popup_time_source **PopupWaveTimeSlot;
 
 void __cdecl popup_wave_callback(PopupWave *popup, int);
