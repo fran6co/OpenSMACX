@@ -121,13 +121,12 @@ void __fastcall map_win_close_redirect(MapWin *self, void *) {
     self->close();
 }
 
-func_map_win_click MapWinClick = original_method<func_map_win_click>(0x0046D5D0);
 
 /*
 Purpose: Report a left click on the map, but only when map input is enabled.
          Reached through the GraphicWin virtual base, so `this` points there
          and is adjusted back 0x21A6C to the MapWin before dispatching.
-// ORIGINAL: 0x0046EBA0 ?on_left_click@MapWin@@QAEXHH@Z 0x0046EBA0-0x0046EBC5
+// ORIGINAL: 0x0046EBA0 ?on_left_click@MapWin@@QAEXHH@Z 0x0046EBA0-0x0046EBC5 BYTE_EXACT
 // size      37 bytes
 // prototype void (__thiscall ?on_left_click@MapWin@@QAEXHH@Z)(MapWin* this, int, int)
 // callers   0   call targets   1
@@ -143,13 +142,13 @@ void MapWin::on_left_click(int a1, int a2) {
     }
     MapWin *const base = reinterpret_cast<MapWin *>(
         reinterpret_cast<uint8_t *>(this) - 0x21A6C);
-    (ORIGINAL(base)->*MapWinClick)(a1, a2, 0);
+    base->click(a1, a2, 0);
 }
 
 /*
 Purpose: Report a right click on the map, but only when map input is enabled.
          Same virtual-base adjustment as the left click.
-// ORIGINAL: 0x0046EBE0 ?on_right_click@MapWin@@QAEXHH@Z 0x0046EBE0-0x0046EC05
+// ORIGINAL: 0x0046EBE0 ?on_right_click@MapWin@@QAEXHH@Z 0x0046EBE0-0x0046EC05 BYTE_EXACT
 // size      37 bytes
 // prototype void (__thiscall ?on_right_click@MapWin@@QAEXHH@Z)(MapWin* this, int, int)
 // callers   0   call targets   1
@@ -165,7 +164,7 @@ void MapWin::on_right_click(int a1, int a2) {
     }
     MapWin *const base = reinterpret_cast<MapWin *>(
         reinterpret_cast<uint8_t *>(this) - 0x21A6C);
-    (ORIGINAL(base)->*MapWinClick)(a1, a2, 1);
+    base->click(a1, a2, 1);
 }
 
 void __fastcall map_win_on_left_click_redirect(MapWin *self, void *, int a1, int a2) {

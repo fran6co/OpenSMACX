@@ -54,6 +54,11 @@
   */
 class MapWin : protected virtual GraphicWin {
  public:
+  // 0x0046D5D0, a pending_bodies forwarder. The two click handlers reach it
+  // on a virtual-base-adjusted receiver and used to do so through a pointer.
+  void click(int a1, int a2, int a3);
+
+ public:
   void on_resize(int a1, int a2);
   void on_redraw();
   // ?draw_map@MapWin@@QAEXH@Z at 0x0046A550, still an original body: declared
@@ -197,8 +202,6 @@ int __fastcall map_win_unk2_redirect(MapWin *self, void *);
 
 // MapWin's click handler and the input-enable flag it gates on are not
 // recovered; the flag lives at a fixed address and is rebindable for tests.
-typedef void (OriginalObject::*func_map_win_click)(int a1, int a2, int button);
-extern func_map_win_click MapWinClick;
 int32_t *const MapWinInputEnabled = (int32_t *)0x0090D938;
 
 void __fastcall map_win_on_left_click_redirect(MapWin *self, void *, int a1, int a2);
