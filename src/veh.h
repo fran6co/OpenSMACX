@@ -643,6 +643,10 @@ int __cdecl speed_proto(int proto_id);
 int __cdecl valid_patrol(int veh_id, int x, int y);
 int __cdecl speed(int veh_id, BOOL skip_morale);
 int __cdecl veh_cargo(int veh_id);
+// A REAL, out-of-line forwarder to the `MEASURED inline sleep()` below - its
+// one caller (stack_veh, 0x005B8EE0) is a genuine `call` in the image, not
+// the folded field writes every other spot gets from `sleep` inlining.
+void __cdecl sleep_call(int veh_id);
 int __cdecl prototype_factor(int proto_id);
 int __cdecl veh_cost(int proto_id, int base_id, BOOL *has_proto_cost);
 BOOL __cdecl veh_jail(int veh_id);
