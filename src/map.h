@@ -496,10 +496,11 @@ MEASURED inline void __cdecl bit_put(int x, int y, int bit) {
 }
 
 MEASURED inline void __cdecl bit_set(int x, int y, int bit, BOOL set) {
+    uint32_t *const field = &map_loc(x, y)->bit;
     if (set) {
-        map_loc(x, y)->bit |= bit;
+        *field |= bit;
     } else {
-        map_loc(x, y)->bit &= ~bit;
+        *field &= ~bit;
     }
 }
 

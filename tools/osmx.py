@@ -1435,6 +1435,18 @@ def _agreeing(note: str) -> int:
     return int(found.group(1)) if found else -1
 
 
+# How many instructions short a body may be and still be worth listing as
+# nearly done. Three, because two is where the array thunks sat before the
+# vector-iterator fix and one is where `Buffer::hline` sits now.
+NEAR_MISS = 3
+
+
+def _agreement(note: str) -> tuple[int, int]:
+    """(agreeing, total) from a scorer's note, or (-1, -1)."""
+    found = re.match(r"(\d+)/(\d+)", note or "")
+    return (int(found.group(1)), int(found.group(2))) if found else (-1, -1)
+
+
 def _check_one_file(job: tuple) -> list[tuple[tuple, str, str]]:
     """Score every record in one file - claimed and unclaimed alike.
 
@@ -1671,6 +1683,24 @@ def check(
                          if k not in claimed and v != "BYTE_EXACT"
                          and _semantic_note_holds(n)),
                         key=lambda r: r.address)
+    # NEAR MISSES, which this pass already measured and used to throw away.
+    # Every unclaimed body is scored here to find the free ones; a body one or
+    # two instructions short is the cheapest work on the board and nothing was
+    # reporting it. Ranked by how many instructions are missing, then by size,
+    # so a 2-instruction gap in a 200-instruction body ranks above the same gap
+    # in a 4-instruction thunk - the big one is nearly done, the small one is
+    # barely started.
+    near = []
+    for k, (v, n) in measured.items():
+        if k in claimed or v == "BYTE_EXACT" or not n:
+            continue
+        agreeing, total = _agreement(n)
+        if total <= 0 or agreeing < 0:
+            continue
+        short = total - agreeing
+        if 0 < short <= NEAR_MISS:
+            near.append((short, -total, by_claim[k], n))
+    near.sort(key=lambda row: (row[0], row[1]))
     broken = regressed + unasked
 
     if as_json:
@@ -1685,6 +1715,9 @@ def check(
                          for r in semantic_held],
             "free": [{"address": r.address_hex, "name": r.name,
                       "file": str(r.path)} for r in free],
+            "near_miss": [{"address": r.address_hex, "name": r.name,
+                           "file": str(r.path), "short": short, "note": n}
+                          for short, _, r, n in near],
             "allocation_only": [{"address": r.address_hex, "name": r.name,
                                  "file": str(r.path)} for r in allocation],
             "regressed": rows(regressed),
@@ -1719,6 +1752,15 @@ def check(
                 f"different registers", fg=typer.colors.CYAN)
         # WHAT THE SAME PASS FOUND WITHOUT BEING ASKED. Printed, never
         # written: `record` and `semantic` are the commands that write.
+        if near:
+            typer.echo("")
+            typer.echo(f"  {len(near):,} unclaimed body(s) within "
+                       f"{NEAR_MISS} instruction(s) of the image:")
+            for short, _, record, note in near[:25]:
+                typer.echo(f"    {record.address_hex}  {short} short   "
+                           f"{record.path.name:22s} {record.name or '?'}")
+            if len(near) > 25:
+                typer.echo(f"    ... and {len(near) - 25:,} more")
         if free:
             typer.secho(
                 f"  {len(free):,} unclaimed body(s) already reproduce:",

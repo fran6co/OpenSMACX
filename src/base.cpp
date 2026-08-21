@@ -101,6 +101,20 @@ int UnkGlobal0093A934;  // 0x0093A934
 /*
 Purpose: Check if the base already has a particular facility built or if it's in the queue.
 // ORIGINAL: 0x00421670 ?has_fac@@YA_NHHH@Z 0x00421670-0x004216E9
+// RULED-OUT: bitmask() call count now agrees (1), but the image's
+//   has_fac_built(facility_id, base_id) - facility_id a genuine runtime
+//   parameter here, not a literal - still keeps bitmask() as a real
+//   out-of-line call (`lea eax,[ebp-4]; lea ecx,[ebp+8]; push facility_id;
+//   call bitmask`, reusing the dead facility_id parameter slot at [ebp+8]
+//   as the "offset" out-param). This tree's toolchain instead always
+//   substitutes bitmask's body (shift/and on `input`) at the call site
+//   regardless of whether the input is a literal - same systemic gap as
+//   base_nutrient (0x004E9B70) and base_minerals's CENTAURI_PRESERVE/
+//   TEMPLE_OF_PLANET checks (0x004E9CB0): every has_fac_built() call site
+//   examined in base.cpp inlines bitmask() here where the image keeps a
+//   call, not just the literal-facility ones. Left as-is; getting VC6 to
+//   stop treating bitmask() as an inline candidate is an open question
+//   bigger than this one function.
 // symbol    ?has_fac@@YAHHHH@Z
 // size      121 bytes
 // prototype bool (__cdecl ?has_fac@@YA_NHHH@Z)(int facilityID, int baseID, int queueCount)
@@ -1751,6 +1765,19 @@ void __cdecl base_support() {
 /*
 Purpose: Calculate nutrients and growth for the current base.
 // ORIGINAL: 0x004E9B70 ?base_nutrient@@YAXXZ 0x004E9B70-0x004E9CAD
+// RULED-OUT: the image's single call is bitmask() with two ebp-relative
+//   out-params (the has_fac_built(FAC_CHILDREN_CRECHE,...) shape - an
+//   ebp-based frame exists ONLY to hold those two locals). Under this
+//   tree's toolchain, has_fac_built(literal, base_id) always constant-folds
+//   the offset/mask math to a direct `test byte ptr [...], imm` with no
+//   call and no frame at all (same defect as base_minerals's
+//   CENTAURI_PRESERVE/TEMPLE_OF_PLANET checks - see its note). Writing the
+//   bitmask()+manual bit-test out by hand instead of through has_fac_built
+//   folds identically. No flag set in --all-flags keeps the call: /Ob0
+//   forces an actual call but to has_fac_built (not bitmask), which the
+//   image never makes either. Left as has_fac_built(...); getting bitmask()
+//   itself to stay out-of-line here looks like the same open question as
+//   base_minerals, not a distinct bug in this function's body.
 // size      317 bytes
 // prototype 
 // callers   7   call targets   1
@@ -1790,6 +1817,21 @@ void __cdecl base_nutrient() {
 /*
 Purpose: Calculate minerals and ecological damage for the current base.
 // ORIGINAL: 0x004E9CB0 ?base_minerals@@YAXXZ 0x004E9CB0-0x004EA1EF
+// LEVER: the image calls has_fac(facility,base,0) - not has_fac_built - for
+//   5 of 7 facility checks (QUANTUM_CONVERTER, ROBOTIC_ASSEMBLY_PLANT,
+//   GENEJACK_FACTORY, both NANOREPLICATOR checks); switching those 5 from
+//   has_fac_built(...) to has_fac(...,0) took the call count from 1 to 6 of 7.
+// RULED-OUT: CENTAURI_PRESERVE/TEMPLE_OF_PLANET still short one real bitmask()
+//   call each (6 vs 7). has_fac_built(literal,...) here fully constant-folds
+//   under this tree's VC6 (offset/mask collapse to a direct bit test, no
+//   call at all) instead of leaving bitmask() out-of-line as the image does;
+//   an explicit local `int offset,mask; bitmask(...)` folds identically.
+//   Routing them through has_fac(literal,base,0) instead (matching the other
+//   5) makes it WORSE: all 7 become real has_fac calls and a downstream
+//   ascending() call that was inlined stops being inlined (8 total, MORE).
+//   Left as has_fac_built(...) (closest structural match, FEWER by 2 calls);
+//   whatever source shape keeps only bitmask() out-of-line for just these
+//   two literals is still open.
 // size      1343 bytes
 // prototype 
 // callers   7   call targets   2
@@ -1802,15 +1844,15 @@ Status: Complete
 void __cdecl base_minerals() {
     uint32_t faction_id = (BaseCurrent())->faction_id_current;
     (BaseCurrent())->mineral_intake_2 += BaseCurrentConvoyTo[RSC_MINERALS];
-    uint32_t mineral_bonus = (has_fac_built(FAC_QUANTUM_CONVERTER, BaseIDCurrentSelected)
+    uint32_t mineral_bonus = (has_fac(FAC_QUANTUM_CONVERTER, BaseIDCurrentSelected, 0)
         || has_project(SP_SINGULARITY_INDUCTOR, faction_id)) ? 1 : 0;
-    if (has_fac_built(FAC_ROBOTIC_ASSEMBLY_PLANT, BaseIDCurrentSelected)) {
+    if (has_fac(FAC_ROBOTIC_ASSEMBLY_PLANT, BaseIDCurrentSelected, 0)) {
         mineral_bonus++;
     }
-    if (has_fac_built(FAC_GENEJACK_FACTORY, BaseIDCurrentSelected)) {
+    if (has_fac(FAC_GENEJACK_FACTORY, BaseIDCurrentSelected, 0)) {
         mineral_bonus++;
     }
-    if (has_fac_built(FAC_NANOREPLICATOR, BaseIDCurrentSelected)) {
+    if (has_fac(FAC_NANOREPLICATOR, BaseIDCurrentSelected, 0)) {
         mineral_bonus++;
     }
     if (has_project(SP_BULK_MATTER_TRANSMITTER, faction_id)) {
@@ -1834,7 +1876,7 @@ void __cdecl base_minerals() {
         planet_eco_factor -= planet_modifier;
         (BaseCurrent())->eco_damage -= planet_modifier;
     }
-    int eco_dmg_reduction = (has_fac_built(FAC_NANOREPLICATOR, BaseIDCurrentSelected)
+    int eco_dmg_reduction = (has_fac(FAC_NANOREPLICATOR, BaseIDCurrentSelected, 0)
         || has_project(SP_SINGULARITY_INDUCTOR, faction_id)) ? 2 : 1;
     if (has_fac_built(FAC_CENTAURI_PRESERVE, BaseIDCurrentSelected)) {
         eco_dmg_reduction++;
@@ -1889,6 +1931,18 @@ void __cdecl base_minerals() {
 /*
 Purpose: Calculate the current base's energy loss/inefficiency for an amount of energy.
 // ORIGINAL: 0x004EA1F0 ?black_market@@YAHH@Z 0x004EA1F0-0x004EA495
+// LEVER: the HQ-distance check called vector_dist(4 args) as a real
+//   function; the image never calls it - it open-codes x_dist()+abs()x3,
+//   same shape as base_find (0x004E3D50), AND re-reads
+//   (BaseCurrent())->x/y fresh inside the loop rather than hoisting them
+//   to locals before it. Both fixed together: agreeing went 4/233 -> 8/233.
+// RULED-OUT: the remaining gap is the same has_fac_built(literal,...)
+//   systemic issue documented on has_fac (0x00421670) and base_minerals
+//   (0x004E9CB0) - the image keeps a real bitmask() call for
+//   FAC_HEADQUARTERS (inside the loop) and FAC_CHILDREN_CRECHE even though
+//   both facility ids are literal; this tree's toolchain always folds
+//   them. Not re-derived further here; still a 0x1c vs 0xc stack-size gap
+//   (the two ebp-relative bitmask out-params never materialise).
 // symbol    ?black_market@@YAIH@Z
 // size      677 bytes
 // prototype 
@@ -1904,12 +1958,26 @@ uint32_t __cdecl black_market(int energy) {
         return 0;
     }
     uint32_t faction_id = (BaseCurrent())->faction_id_current;
-    int x = (BaseCurrent())->x;
-    int y = (BaseCurrent())->y;
     int dist_hq = 999;
     for (int i = 0; i < BaseCurrentCount; i++) { // modified version of vulnerable()
         if (Bases[i].faction_id_current == faction_id && has_fac_built(FAC_HEADQUARTERS, i)) {
-            int dist = vector_dist(Bases[i].x, Bases[i].y, x, y);
+            // Open-coded vector_dist(x,y,a,b): the image calls abs() four
+            // times, never vector_dist itself - see base_find (0x004E3D50)
+            // for the same expansion. (BaseCurrent())->x/y are re-read here,
+            // not hoisted, matching the image reading the global fresh.
+            int dx = x_dist(Bases[i].x, (BaseCurrent())->x);
+            int dy = abs(Bases[i].y - (BaseCurrent())->y);
+            int abs_dx = abs(dx);
+            int abs_dy = abs(dy);
+            int largest = abs_dx;
+            if (abs_dx <= abs_dy) {
+                largest = abs_dy;
+            }
+            int smallest = abs_dx;
+            if (abs_dx >= abs_dy) {
+                smallest = abs_dy;
+            }
+            int dist = largest - (((abs_dy + abs_dx) / 2) - smallest + 1) / 2;
             if (dist < dist_hq) {
                 dist_hq = dist;
             }
@@ -2054,6 +2122,14 @@ void __cdecl base_psych() {
 /*
 Purpose: Determine the faction's base with the specified position sorted by the most energy output.
 // ORIGINAL: 0x004EB490 ?base_rank@@YAHHH@Z 0x004EB490-0x004EB551
+// LEVER: the image never calls sort_descending() - it inlines the bubble
+//   sort loop directly (two swap() calls, matching general.cpp's body).
+//   Writing that loop out here instead of calling sort_descending() took
+//   the call set from {sort_descending, __alloca_probe} to {swap x2,
+//   __alloca_probe}, matching the image's (call_diff now agrees). Best
+//   flag set moved from 0.645 to 0.847 similar. Remaining divergence is
+//   instruction-order/register-scheduling around the parameter loads, not
+//   chased further.
 // size      193 bytes
 // prototype int (__cdecl ?base_rank@@YAHHH@Z)(int factionID, int minBasesToRank)
 // callers   1   call targets   2
@@ -2079,7 +2155,20 @@ int __cdecl base_rank(int faction_id, int rank_position) {
     if (!bases_found || rank_position >= bases_found) { // Added check to skip if no bases are found
         return -1;
     }
-    sort_descending(bases_found, base_id, base_energy);
+    // Open-coded sort_descending() (see general.cpp): the image never calls
+    // it, only swap() twice per inner-loop swap.
+    int bounds = bases_found - 1;
+    BOOL has_swapped;
+    do {
+        has_swapped = false;
+        for (int i = 0; i < bounds; i++) {
+            if (base_energy[i] < base_energy[i + 1]) {
+                has_swapped = true;
+                swap(&base_energy[i], &base_energy[i + 1]);
+                swap(&base_id[i], &base_id[i + 1]);
+            }
+        }
+    } while (has_swapped);
     return base_id[rank_position];
 }
 
