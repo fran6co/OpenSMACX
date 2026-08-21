@@ -579,7 +579,6 @@ uint32_t __cdecl best_defender(int veh_id_def, int veh_id_atk, BOOL check_artill
 void __cdecl invasions(int base_id);
 void __cdecl set_course(int veh_id, char type, int x, int y);
 int __cdecl veh_top(int veh_id);
-int __cdecl proto_power(int veh_id);
 BOOL __cdecl want_monolith(int veh_id);
 int __cdecl arm_strat(int armor_id, int faction_id);
 int __cdecl weap_strat(int weapon_id, int faction_id);
@@ -715,6 +714,18 @@ MEASURED inline void __cdecl veh_skip(int veh_id) {
 MEASURED inline int __cdecl veh_fake(int proto_id, int faction_id) {
     veh_clear(2048, proto_id, faction_id);
     return 2048;
+}
+
+// BODY HERE (was a plain, non-`inline` function in veh.cpp): neither of its
+// two callers (best_defender, action_home) has it in their `calls` list -
+// both inline it - and a plain function is never an /Ob1 inline candidate.
+// The `// ORIGINAL:` marker stays in veh.cpp.
+MEASURED inline int __cdecl proto_power(int veh_id) {
+    int proto_id = Vehs[veh_id].proto_id;
+    if (VehPrototypes[proto_id].plan == PLAN_ALIEN_ARTIFACT) {
+        return 1;
+    }
+    return range(VehPrototypes[proto_id].reactor_id, 1, 100) * 10;
 }
 
 // INLINE: the image has no get_proto_triad - it open-codes what this names.
