@@ -2175,6 +2175,17 @@ void Buffer::hline(int x1, int x2, int y, int color) {
 
 /*
 Purpose: Fill one vertical run of pixels, clipped to the buffer's rectangle.
+// HAND-WRITTEN ASSEMBLY IN THE ORIGINAL, so byte-exactness is NOT reachable
+// from C++ and the honest ceiling here is semantic equivalence. The shipped
+// bytes use the `loop` instruction, which VC6 never emits - it counts down
+// with `dec`/`jne` - and it writes the colour through `ah`, which is
+// a hand-assembly idiom rather than a compiler's. Found by
+// `tools/handwritten_asm.py`, which scans every unclaimed body for opcodes
+// this compiler does not generate; there are seven in the game code.
+//
+// Do NOT grind spellings here, and do NOT write `__asm`: a semantic C++ body
+// is worth more than a byte-exact assembly one. `Buffer::vline` reached 0.925
+// similar before this was noticed.
 // ORIGINAL: 0x005E1BF0 ?vline@Buffer@@QAEXHHHH@Z 0x005E1BF0-0x005E1D68
 // size      376 bytes
 // prototype void (__thiscall ?vline@Buffer@@QAEXHHHH@Z)(Buffer* this, int, int, int, int)

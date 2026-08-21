@@ -1,3 +1,13 @@
+// HAND-WRITTEN ASSEMBLY IN THE ORIGINAL, so byte-exactness is NOT reachable
+// from C++ and the honest ceiling here is semantic equivalence. The shipped
+// bytes use the `loop` instruction, which VC6 never emits - it counts down
+// with `dec`/`jne` - Found by
+// `tools/handwritten_asm.py`, which scans every unclaimed body for opcodes
+// this compiler does not generate; there are seven in the game code.
+//
+// Do NOT grind spellings here, and do NOT write `__asm`: a semantic C++ body
+// is worth more than a byte-exact assembly one. `Buffer::vline` reached 0.925
+// similar before this was noticed.
 // ORIGINAL: 0x005EAD9F ?change_color@Sprite@@QAEHHH@Z 0x005EAD9F-0x005EAE4E FILE
 // working copy - scaffold materialised by --work
 // size      175 bytes
