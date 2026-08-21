@@ -17,6 +17,8 @@
  */
 #pragma once
 
+#include "game.h"  // GameRules and its flags, which bonus_at inlines
+
  /*
   * Map related objects, variables and functions.
   */
@@ -377,7 +379,6 @@ void __cdecl unlock_map(int x, int y, int faction_id);
 void __cdecl rocky_set(int x, int y, int rocky);
 void __cdecl code_set(int x, int y, int code);
 int __cdecl minerals_at(int x, int y);
-int __cdecl bonus_at(int x, int y, int UNUSED(unk_val) unk_val);
 int __cdecl goody_at(int x, int y);
 void __cdecl site_radius(int x, int y, int UNUSED(unk_val) unk_val);
 int __cdecl find_landmark(int x, int y, int radius_range_offset);
@@ -626,4 +627,31 @@ MEASURED inline BOOL __cdecl is_ocean(int x, int y) {
 // it written out. `MEASURED` keeps the standalone body measurable.
 MEASURED inline void __cdecl world_alt_put_detail(int x, int y) {
     alt_put_detail(x, y, (uint8_t)AltNatural[3]);
+}
+
+MEASURED inline int __cdecl bonus_at(int x, int y, int UNUSED(unk_val)) {
+    uint32_t bit = bit_at(x, y);
+    uint32_t alt = alt_at(x, y);
+    BOOL has_rsc_bonus = bit & BIT_RSC_BONUS;
+    if (!has_rsc_bonus && (!MapRandSeed
+        || (alt >= ALT_SHORE_LINE && !(GameRules & RULES_NO_UNITY_SCATTERING)))) {
+        return 0;
+    }
+    uint32_t avg = (x + y) >> 1;
+    x -= avg;
+    uint32_t chk = (avg & 3) + 4 * (x & 3);
+    if (!has_rsc_bonus && chk != ((MapRandSeed + (-5 * (avg >> 2)) - 3 * (x >> 2)) & 0xF)) {
+        return 0;
+    }
+    if (alt < ALT_OCEAN_SHELF) {
+        return 0;
+    }
+    uint32_t ret = (alt < ALT_SHORE_LINE) ? chk % 3 + 1 : (chk % 5) & 3;
+    if (!ret || bit & BIT_NUTRIENT_RSC) {
+        if (bit & BIT_ENERGY_RSC) {
+            return 3; // energy
+        }
+        return ((bit & BIT_MINERAL_RSC) != 0) + 1; // nutrient or mineral
+    }
+    return ret;
 }
