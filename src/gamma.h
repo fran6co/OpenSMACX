@@ -42,7 +42,7 @@ class Gamma : public GraphicWin {
 
  public:
   void on_scrolled(int a1, int a2);
-  Gamma() { ; }
+  Gamma();
   // 0x00456110 is not recovered: a
   // pending_bodies forwarder, because an empty inline stub emits
   // nothing and the deleting destructor needs a `call rel32`.
@@ -108,22 +108,19 @@ class Gamma : public GraphicWin {
   EditBox editBox_;  // 0x303C, IDB `editBox`, size == sizeof(EditBox)
   PushButton pushButton1_;  // 0x3BB0, IDB `pushButton1`, 0xB00
 
-  // Storage the image proves is here: its own methods reach 0x46B4.
-  // Extent only - this class carries no size assertion, and the bound is a floor.
-  // The IDB additionally claims pushButton2 (0xB00) at 0x46B0, beyond the
-  // proven extent; it is not declared until a body reaches it. (?exec@Gamma@@
-  // constructs a BaseButton there at 0x005C91E5/0x005C91F8 with id -2, so it
-  // is a button; the extent, not the identity, is what is missing.)
+  // A BODY NOW REACHES IT, which is the condition the note here used to set
+  // for declaring this. `??0Gamma@@QAE@XZ` constructs a PushButton at 0x46B0
+  // outright - `lea ecx, [esi + 0x46b0]; call 0x62bf20` at 0x005C8E12, the
+  // same 0x62BF20 it calls for pushButton1_ eight bytes earlier - so the IDB's
+  // `pushButton2` claim is no longer beyond the proven extent. `?exec@Gamma@@`
+  // then drives it at 0x005C91E5/0x005C91F8 with id -2, the dialog's cancel,
+  // which is what `initialGamma_` above exists to restore.
   //
-  // sizeof(Gamma) is 0x46B8, not 0x46B4: `double gamma_` above makes the class
-  // 8-byte aligned, and the floor this placeholder ends at is not a multiple
-  // of 8, so VC6 adds four bytes of tail padding. That is an artefact of where
-  // the DECLARATIONS stop, not of the object - with pushButton2 declared the
-  // class would end at 0x51B0, which is already 8-aligned and needs no
-  // padding. Measured: no other member moved (all 120 shared offsets identical
-  // before and after), and the only recorded floor, access-lower-bounds.csv's
-  // Gamma >= 0x46B4, is still met.
-  uint8_t field_46B0_[0x4];  // 0x46B0
+  // This also removes the four bytes of tail padding the placeholder forced:
+  // `double gamma_` makes the class 8-byte aligned and 0x46B4 is not a
+  // multiple of 8, so sizeof(Gamma) was 0x46B8. It now ends at 0x51B0, which
+  // is 8-aligned and needs none - exactly as the withdrawn note predicted.
+  PushButton pushButton2_;  // 0x46B0, IDB `pushButton2`, 0xB00
 };
 
 int __fastcall gamma_on_key_click_redirect(Gamma *self, void *, int a1, int a2);

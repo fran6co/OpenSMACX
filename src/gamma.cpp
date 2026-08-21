@@ -80,3 +80,43 @@ void Gamma::on_scrolled(int a1, int a2) {
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
 */
+
+// Gamma's own virtual table addresses, installed by the constructor. The pair
+// mirrors GraphicWin's exactly - primary at +0, the Buffer subobject's at
+// +0x444, eight bytes apart - because Gamma inherits that layout unchanged.
+const uint32_t GammaPrimaryVtable = 0x0066C3D8;
+const uint32_t GammaBufferVtable = 0x0066C3D0;
+
+/*
+Purpose: Construct the gamma-correction dialog.
+// ORIGINAL: 0x005C8DA0 ??0Gamma@@QAE@XZ 0x005C8DA0-0x005C8E60;0x00662A70-0x00662AC8 BYTE_EXACT
+// size      280 bytes
+// prototype void (__thiscall ??0Gamma@@QAE@XZ)(Gamma* this)
+// callers   2   call targets   6
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005D4CF0 0x005FE2A0 0x006051D0 0x00614E50 0x00618EA0 0x0062BF20
+Return Value: None
+Status: Complete
+*/
+Gamma::Gamma() {
+    // The vtable slots are compiler-managed, not ordinary members a class can
+    // name - the same reason GraphicWin::construct writes its own pair at
+    // these exact two offsets. Gamma has its own vtable because it overrides;
+    // nothing in this chain is declared `virtual`, so the store is explicit
+    // rather than emitted by a constructor VC6 would generate.
+    //
+    // LEVER: these two stores must come FIRST, before `gamma_ = 1.0`. Written
+    //   after it the body is SHAPE_EXACT at 39/42; written before it, 42/42.
+    //   The image interleaves them - `[esi+0xee8] = 0`, both vtables, then
+    //   `[esi+0xeec] = 0x3ff00000` - which reads like the vtable stores land
+    //   in the middle of the double, impossible to write as source. It is the
+    //   other way round: VC6 hoists the double's ZERO half ahead of whatever
+    //   precedes it and leaves the 0x3ff00000 half in place, so putting the
+    //   vtable stores first is what produces the image's own order.
+    uint32_t *const object = reinterpret_cast<uint32_t *>(this);
+    object[0x000 / 4] = GammaPrimaryVtable;
+    object[0x444 / 4] = GammaBufferVtable;
+    gamma_ = 1.0;
+    field_A64_ = 0;
+}
