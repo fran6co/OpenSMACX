@@ -141,7 +141,16 @@ Return Value: Weapon id; 'None' (-1); 'Disabled' (-2); or error (0)
 Status: Complete
 */
 int __cdecl weap_name(LPSTR name) {
-    purge_trailing(name);
+    // NOT `purge_trailing(name)` - see chas_name's comment; this repeats the
+    // same hand-written, non-cached-length trim loop verbatim.
+    if (strlen(name) != 0) {
+        do {
+            if (name[strlen(name) - 1] != ' ') {
+                break;
+            }
+            name[strlen(name) - 1] = 0;
+        } while (strlen(name) != 0);
+    }
     if (!_stricmp(name, "None")) {
         return NoneValue;
     }
@@ -173,7 +182,16 @@ Return Value: Armor id; 'None' (-1); 'Disabled' (-2); or error (0)
 Status: Complete
 */
 int __cdecl arm_name(LPSTR name) {
-    purge_trailing(name);
+    // NOT `purge_trailing(name)` - see chas_name's comment; this repeats the
+    // same hand-written, non-cached-length trim loop verbatim.
+    if (strlen(name) != 0) {
+        do {
+            if (name[strlen(name) - 1] != ' ') {
+                break;
+            }
+            name[strlen(name) - 1] = 0;
+        } while (strlen(name) != 0);
+    }
     if (!_stricmp(name, "None")) {
         return NoneValue;
     }
@@ -440,7 +458,7 @@ void __cdecl clear_faction(Player *player) {
 
 /*
 Purpose: Parse the faction's file and art for the specified player id.
-// ORIGINAL: 0x00586050 ?read_faction@@YAXH@Z 0x00586050-0x00586081
+// ORIGINAL: 0x00586050 ?read_faction@@YAXH@Z 0x00586050-0x00586081 BYTE_EXACT
 // size      49 bytes
 // prototype 
 // callers   3   call targets   2
@@ -771,15 +789,20 @@ BOOL __cdecl read_factions() {
         if (!(i % 8)) { // 8 entries per line
             text_get();
         }
-        strncpy_s(BonusName[i].key, text_item(), 24);
+        // BUG IN THE ORIGINAL (preserved): `call 0x00645460` at 0x00586F63
+        // pushes only the two arguments - plain unbounded `strcpy`, not a
+        // 24-byte-bounded copy. Same for both `Players[player]` fields just
+        // below (0x00586FD2, 0x00586FDE); the length-checked calls only
+        // start at the `strcpy_s(..., 24, ...)` further down this function.
+        strcpy_s(BonusName[i].key, text_item());
     }
     if (text_open(AlphaxFileID, ExpansionEnabled ? "NEWFACTIONS" : "FACTIONS")) {
         return true;
     }
     for (int player = 1; player < MaxPlayerNum; player++) {
         text_get();
-        strncpy_s(Players[player].filename, text_item(), 24);
-        strncpy_s(Players[player].search_key, text_item(), 24);
+        strcpy_s(Players[player].filename, text_item());
+        strcpy_s(Players[player].search_key, text_item());
     }
     // SMACX only: Will override any values parsed from alphax.txt #NEWFACTIONS if set in ini;
     prefs_fac_load(); // Removed an extra SMACX_Enabled check around call since there is one inside
@@ -795,7 +818,13 @@ BOOL __cdecl read_factions() {
         if (!strcmp(Players[player].filename, "JENN282")) {
             int faction_id;
             do {
-                int rand_val = random(0, faction_count); // replaced rand()
+                // BUG IN THE ORIGINAL (preserved): this calls the C library
+                // `rand()` directly - `call 0x0064601D` at 0x00587066 - and
+                // takes the remainder mod `faction_count`, NOT the game's
+                // seeded `random()` PRNG (0x00625810, which never appears in
+                // this function's call list). That means custom-faction
+                // selection here does not respect `random_reseed`.
+                int rand_val = rand() % faction_count;
                 uint32_t faction_set = rand_val / 7; // 0: SMAC; 1: SMACX; 2+: custom
                 if (text_open(AlphaxFileID, !faction_set ? "FACTIONS" : (faction_set == 1)
                     ? "NEWFACTIONS" : "CUSTOMFACTIONS")) {
@@ -1343,7 +1372,7 @@ Purpose: Attempt to read the setting's value from the ini file.
 Return Value: Key's string value from the ini or default if not set
 Status: Complete
 */
-LPSTR __cdecl prefs_get(LPCSTR key_name, LPCSTR default_value, BOOL use_default) {
+inline LPSTR __cdecl prefs_get(LPCSTR key_name, LPCSTR default_value, BOOL use_default) {
     if (use_default ||
         (GetPrivateProfileStringA(PrefsSection, "Prefs Format", "0", TextBufferGetPtr, 256,
             PrefsFile), atoi(TextBufferGetPtr) != 12)) {
@@ -1467,7 +1496,7 @@ Purpose: Attempt to read the setting's value from the ini file.
 Return Value: Key's integer value from the ini or default if not set
 Status: Complete
 */
-int __cdecl prefs_get(LPCSTR key_name, int default_value, BOOL use_default) {
+inline int __cdecl prefs_get(LPCSTR key_name, int default_value, BOOL use_default) {
     StringTemp[0] = 0;
     say_num(default_value);
     if (use_default) {
@@ -1544,24 +1573,29 @@ void __cdecl prefs_load(BOOL use_default) {
     if (DefaultPrefs->difficulty < DLVL_TALENT) {
         prefs |= PREF_BSC_TUTORIAL_MSGS;
     }
-    prefs_get("Preferences", prefs_get_binary(prefs).c_str(), use_default);
+    prefs_get("Preferences", prefs_get_binary(prefs), use_default);
     AlphaIniPrefs->preferences = text_item_binary();
-    prefs_get("More Preferences", prefs_get_binary(default_prefs2()).c_str(), use_default);
+    prefs_get("More Preferences", prefs_get_binary(default_prefs2()), use_default);
     AlphaIniPrefs->more_preferences = text_item_binary();
     prefs_get("Semaphore", "00000000", use_default);
     AlphaIniPrefs->semaphore = text_item_binary();
     prefs_get("Customize", 0, false);
     AlphaIniPrefs->customize = text_item_number();
-    prefs_get("Rules", prefs_get_binary(default_rules()).c_str(), use_default);
+    prefs_get("Rules", prefs_get_binary(default_rules()), use_default);
     AlphaIniPrefs->rules = text_item_binary();
-    prefs_get("Announce", prefs_get_binary(default_warn()).c_str(), use_default);
+    prefs_get("Announce", prefs_get_binary(default_warn()), use_default);
     AlphaIniPrefs->announce = text_item_binary();
-    std::stringstream ss;
-    for (uint32_t i = 0; i < 7; i++) {
-        ss << (i ? "1, " : "2, ");
+    // NOT std::stringstream: the image builds this directly into the global
+    // `StringTemp`, exactly like `prefs_get_binary` above - `mov byte ptr
+    // [0x9b86a0], 0` at 0x0059E405, then a `strcat` per entry at
+    // 0x0059E423, `cmp esi, 7; jl` (SIGNED) at 0x0059E42C. Any std::string
+    // or std::stringstream local here forces the SEH frame the image's
+    // plain `push ebp` prologue does not have.
+    StringTemp[0] = 0;
+    for (int i = 0; i < 7; i++) {
+        strcat_s(StringTemp, sizeof(StringTemp), i ? "1, " : "2, ");
     }
-    std::string custom_world_def = ss.str();
-    prefs_get("Custom World", custom_world_def.c_str(), use_default);
+    prefs_get("Custom World", StringTemp, use_default);
     for (i = 0; i < 7; i++) {
         AlphaIniPrefs->custom_world[i] = text_item_number();
     }
@@ -1603,7 +1637,7 @@ Status: Complete
 */
 void __cdecl prefs_put(LPCSTR key_name, int value, BOOL tgl_binary) {
     char temp[33];
-    tgl_binary ? strcpy_s(temp, 33, prefs_get_binary(value).c_str()) : _itoa_s(value, temp, 33, 10);
+    tgl_binary ? strcpy_s(temp, 33, prefs_get_binary(value)) : _itoa_s(value, temp, 33, 10);
     WritePrivateProfileStringA(PrefsSection, key_name, temp, PrefsFile);
 }
 
@@ -1680,18 +1714,24 @@ Original Offset: n/a
 Return Value: Binary string
 Status: Complete
 */
-std::string __cdecl prefs_get_binary(int value) {
-    char temp[33];
-    temp[0] = 0;
+LPSTR __cdecl prefs_get_binary(int value) {
+    // NOT a local buffer/std::string: the image builds this directly into
+    // the global `StringTemp` (0x009B86A0) - `mov byte ptr [0x9b86a0], 0`
+    // then a `strcat` per bit at, e.g., 0x0059DEF8-0x0059DF58 - and the
+    // caller uses THAT buffer as the `default_value` argument to the
+    // (likewise inlined) string `prefs_get` immediately after. A
+    // std::string return here forces an SEH frame onto every caller that
+    // the image's plain `push ebp` prologue does not have.
+    StringTemp[0] = 0;
     for (int shift = 31, non_pad = 0; shift >= 0; shift--) {
         if ((1 << shift) & value) {
             non_pad = 1;
-            strcat_s(temp, 33, "1");
+            strcat_s(StringTemp, sizeof(StringTemp), "1");
         } else if (non_pad || shift < 8) {
-            strcat_s(temp, 33, "0");
+            strcat_s(StringTemp, sizeof(StringTemp), "0");
         }
     }
-    return temp;
+    return StringTemp;
 }
 
 /*

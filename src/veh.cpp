@@ -1596,7 +1596,8 @@ int __cdecl armor_val(int proto_id, int faction_id) {
 
 /*
 Purpose: Calculate the carrying/transport capacity for the specified chassis, abilities and reactor.
-// ORIGINAL: 0x0057D510 ?transport_val@@YAHHHH@Z 0x0057D510-0x0057D556
+// ORIGINAL: 0x0057D510 ?transport_val@@YAHHHH@Z 0x0057D510-0x0057D556 BYTE_EXACT
+// LEVER: uint32_t -> int; image uses signed division (cdq/sub/sar) for `/2`, not shr
 // size      70 bytes
 // prototype int (__cdecl ?transport_val@@YAHHHH@Z)(int chassis, int ability, int reactor)
 // callers   2   call targets   0
@@ -1607,7 +1608,7 @@ Return Value: Transport capacity
 Status: Complete
 */
 int __cdecl transport_val(int chassis_id, int ability, int reactor_id) {
-    uint32_t transport = Chassis[chassis_id].cargo;
+    int transport = Chassis[chassis_id].cargo;
     if (Chassis[chassis_id].triad == TRIAD_SEA) {
         transport *= reactor_id;
     }
@@ -2223,21 +2224,28 @@ Purpose: Calculates cost of the prototype based on various factors. Optimized lo
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     (none)
+// RULED-OUT: reordering the checks to the ORIGINAL's actual sequence (missile check AFTER
+//   the triad-based armor/speed adjustments, not before; the AFLAG_COST_INC_LAND_UNIT
+//   check as a second standalone loop over Ability[] that only runs for TRIAD_LAND,
+//   not folded into the main loop; the all-four-costs==1 override applied at the very
+//   END overriding a fully-computed proto_mod, not as an early-out) - confirmed by
+//   reading the full disassembly instruction-by-instruction and cross-referencing struct
+//   offsets (RulesChassis.missile @0x4D, RulesAbility.cost_factor via a pointer walked by
+//   sizeof(RulesAbility)=0x1C). This IS the original's control flow, but agreement is
+//   still only ~3/247 instructions: the image reserves locals with `sub esp,0x14` and
+//   reuses parameter/local stack slots for later values (armor_id's slot becomes
+//   speed_cost; weap_cost's slot becomes combat_mod) in a way this tree's compiler does
+//   not reproduce from equivalent-looking C. Left at MISMATCH; the control-flow structure
+//   is now faithful even though the byte encoding is not.
 Return Value: Cost of prototype
 Status: Complete
 */
 uint32_t __cdecl proto_cost(int chassis_id, int weapon_id, int armor_id, 
                             int ability, int reactor_id) {
     uint8_t weap_cost = Weapon[weapon_id].cost;
-    // PB check: moved to start vs after 1st triad checks in original > no difference in logic
-    if (Chassis[chassis_id].missile && Weapon[weapon_id].offense_rating >= 99) {
-        return weap_cost;
-    }
-    uint8_t triad = Chassis[chassis_id].triad;
-    uint32_t armor_cost = Armor[armor_id].cost;
-    uint32_t speed_cost = Chassis[chassis_id].cost;
+    uint8_t armor_cost = Armor[armor_id].cost;
+    int speed_cost = Chassis[chassis_id].cost;
     int abil_modifier = 0;
-    int flags_modifier = 0;
     if (ability) {
         for (int i = 0; i < MaxAbilityNum; i++) {
             if ((1 << i) & ability) {
@@ -2249,13 +2257,9 @@ uint32_t __cdecl proto_cost(int chassis_id, int weapon_id, int armor_id,
                     abil_modifier += factor;
                 } else {
                     switch (factor) {
-                      case 0: // None
-                      default:
-                        break;
-                        // Increases w/ ratio of weapon to armor: 0, 1, or 2. Rounded DOWN.
-                        // Never higher than 2.
+                      // Increases w/ ratio of weapon to armor: 0, 1, or 2. Rounded DOWN.
+                      // Never higher than 2.
                       case -1:
-                        // fixed potential crash: will never trigger in vanilla but could with mods
                         if (armor_cost) {
                             abil_modifier += range(weap_cost / armor_cost, 0, 2);
                         }
@@ -2278,64 +2282,64 @@ uint32_t __cdecl proto_cost(int chassis_id, int weapon_id, int armor_id,
                       case -7: // Increases w/ armor+speed value
                         abil_modifier += armor_cost + speed_cost - 2;
                         break;
+                      case 0: // None
+                      default:
+                        break;
                     }
-                }
-                // 010000000000 - Cost increased for land units; Deep Radar
-                // Shifted flag check into main ability loop rather than its
-                // own loop at 1st triad checks
-                if (Ability[i].flags & AFLAG_COST_INC_LAND_UNIT && triad == TRIAD_LAND) {
-                    // separate variable keeps logic same (two abilities, both with cost 0,
-                    // one with cost increase flag will trigger above "if (abil_modifier)" if
-                    // this is directly abil_modifier++)
-                    flags_modifier++;
                 }
             }
         }
-        abil_modifier += flags_modifier; // adding here keeps logic consistent after optimization
     }
+    uint8_t triad = Chassis[chassis_id].triad;
     if (triad == TRIAD_SEA) {
         armor_cost /= 2;
         speed_cost += reactor_id;
     } else if (triad == TRIAD_AIR) {
+        speed_cost += reactor_id * 2;
         if (armor_cost > 1) {
             armor_cost *= reactor_id * 2;
         }
-        speed_cost += reactor_id * 2;
-    } // TRIAD_LAND ability flag check moved into ability loop above
+    } else {
+        // 010000000000 - Cost increased for land units; Deep Radar
+        for (int i = 0; i < MaxAbilityNum; i++) {
+            if ((1 << i) & ability) {
+                if (Ability[i].flags & AFLAG_COST_INC_LAND_UNIT) {
+                    abil_modifier++;
+                }
+            }
+        }
+    }
+    if (Chassis[chassis_id].missile && Weapon[weapon_id].offense_rating >= 99) {
+        return weap_cost;
+    }
     uint32_t combat_mod = armor_cost / 2 + 1;
     if (combat_mod < weap_cost) { // which ever is greater
         combat_mod = weap_cost;
     }
-    int proto_mod;
-    // shifted this check to top vs at end > no difference in logic
+    // (2 << n) == 2^(n + 1) ; (2 << n) / 2 == 2 ^ n;
+    int proto_mod = ((speed_cost + armor_cost) * combat_mod + ((2 << reactor_id) / 2))
+        / (2 << reactor_id);
+    if (speed_cost == 1) {
+        proto_mod = (proto_mod / 2) + 1;
+    }
+    if (Weapon[weapon_id].cost > 1 && Armor[armor_id].cost > 1) {
+        proto_mod++;
+        if (triad == TRIAD_LAND && speed_cost > 1) {
+            proto_mod++;
+        }
+    }
+    // excludes sea probes
+    if (triad == TRIAD_SEA && Weapon[weapon_id].mode != WPN_MODE_INFOWAR) {
+        proto_mod = (proto_mod + 1) / 2;
+    } else if (triad == TRIAD_AIR) {
+        proto_mod /= (Weapon[weapon_id].mode > WPN_MODE_MISSILE) ? 2 : 4; // Non-combat : Combat
+    }
+    int reactor_mod = (reactor_id * 3 + 1) / 2;
+    if (proto_mod < reactor_mod) { // which ever is greater
+        proto_mod = reactor_mod;
+    }
     if (combat_mod == 1 && armor_cost == 1 && speed_cost == 1 && reactor_id == RECT_FISSION) {
         proto_mod = 1;
-    } else {
-        // (2 << n) == 2^(n + 1) ; (2 << n) / 2 == 2 ^ n;
-        // will crash if reactor_id is 0xFF > divide by zero; not putting in error checking
-        // since this is unlikely even with modding however noting for future
-        proto_mod = ((speed_cost + armor_cost) * combat_mod + ((2 << reactor_id) / 2))
-            / (2 << reactor_id);
-        if (speed_cost == 1) {
-            proto_mod = (proto_mod / 2) + 1;
-        }
-        if (weap_cost > 1 && Armor[armor_id].cost > 1) {
-            proto_mod++;
-            // moved inside nested check vs separate triad checks below > no difference in logic
-            if (triad == TRIAD_LAND && speed_cost > 1) {
-                proto_mod++;
-            }
-        }
-        // excludes sea probes
-        if (triad == TRIAD_SEA && Weapon[weapon_id].mode != WPN_MODE_INFOWAR) {
-            proto_mod = (proto_mod + 1) / 2;
-        } else if (triad == TRIAD_AIR) {
-            proto_mod /= (Weapon[weapon_id].mode > WPN_MODE_MISSILE) ? 2 : 4; // Non-combat : Combat
-        }
-        int reactor_mod = (reactor_id * 3 + 1) / 2;
-        if (proto_mod < reactor_mod) { // which ever is greater
-            proto_mod = reactor_mod;
-        }
     }
     return (proto_mod * (abil_modifier + 4) + 2) / 4;
 }
@@ -3329,13 +3333,23 @@ Purpose: Check the coordinates for units and if at least one is found return the
 Return Value: Unit id or -1 if nothing is found/error
 Status: Complete
 */
+// LEVER: veh_top() is called at only 2 real sites in the image (see its own comment);
+//   here it is inlined - call_diff flagged the `call veh_top` this tree was making that
+//   the image does not. Inlined the body by hand instead of `return veh_top(veh_id);`.
 int __cdecl veh_at(int x, int y) {
     if (on_map(x, y) && !(bit_at(x, y) & BIT_VEH_IN_TILE)) {
         return -1; // not found
     }
     for (int veh_id = 0; veh_id < VehCurrentCount; veh_id++) {
         if (Vehs[veh_id].x == x && Vehs[veh_id].y == y) {
-            return veh_top(veh_id);
+            if (veh_id < 0) {
+                return -1;
+            }
+            int top_veh_id = veh_id;
+            for (int i = Vehs[top_veh_id].prev_veh_id_stack; i >= 0; i = Vehs[i].prev_veh_id_stack) {
+                top_veh_id = i;
+            }
+            return top_veh_id;
         }
     }
     if (!on_map(x, y)) {
@@ -3357,6 +3371,7 @@ int __cdecl veh_at(int x, int y) {
 /*
 Purpose: Check whether the prototype has a specific ability.
 // ORIGINAL: 0x005BF1F0 ?has_abil@@YAHHH@Z 0x005BF1F0-0x005BF310
+// RULED-OUT: a negative-proto_id guard clause (with its log_say call) that call_diff flagged as an extra call the image does not make; now 13/109 instructions agree, 0.825 similar (best flags), up from a structurally-unrelated function body before
 // size      288 bytes
 // prototype int (__cdecl ?has_abil@@YAHHH@Z)(int protoID, int abilityID)
 // callers   54   call targets   1
@@ -3367,12 +3382,11 @@ Return Value: Does prototype have ability? true/false
 Status: Complete
 */
 BOOL __cdecl has_abil(int proto_id, int ability_id) {
-    if ((int)proto_id < 0) { 
-        // TODO: Remove eventually, temp workaround fix for bug in base_build
-        //       that incorrectly uses negative queue id
-        log_say("Skipping has_abil negative prototype param", (int)proto_id, ability_id, 0);
-        return false;
-    }
+    // BUG IN THE ORIGINAL: no guard against a negative proto_id here - it flows straight
+    // into `proto_id / MaxVehProtoFactionNum` and an out-of-bounds VehPrototypes[] read.
+    // A prior pass added a guard clause (with a log_say call) that is NOT in the image;
+    // call_diff flagged the extra call, and the disassembly at 0x005BF1F0 confirms the
+    // first instructions compute proto_id*sizeof(VehPrototype) directly, no branch first.
     if (VehPrototypes[proto_id].ability_flags & ability_id) {
         return true;
     }
@@ -3766,6 +3780,11 @@ Purpose: Calculate the speed of the specified prototype on roads.
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x005BF1F0
+// RULED-OUT: nothing changed - traced the full disassembly instruction-by-instruction
+//   against this body (struct offsets, ABL_* constant values, WPN_MODE_TRANSPORT==7,
+//   the TRIAD_AIR-only tail) and the control flow order already matches the image
+//   exactly. Best flags give 0.81-0.82 similar; remainder looks like register
+//   allocation / frame-pointer choice, not a structural difference.
 Return Value: Prototype's speed on roads
 Status: Complete
 */
@@ -3949,6 +3968,10 @@ Purpose: Check if the land unit inside an air transport can disembark. The trans
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     (none)
+// RULED-OUT: splitting the one big && chain into sequential early-return ifs; hoisting
+//   Vehs[veh_id].x/y into locals; mixing split-return with the || form - all measured
+//   worse or equal. Committed form already gets 6/63 agreeing, 0.800 similar; remaining
+//   divergence is register naming only (ecx/edx swapped on otherwise identical opcodes)
 Return Value: Can the specified unit disembark? true/false
 Status: Complete
 */

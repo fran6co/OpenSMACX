@@ -910,6 +910,14 @@ int __cdecl custom_planet(int a, int b) {
     return PENDING_BODY(0x0058C2A0, pending)(a, b);
 }
 
+// load_faction_art at 0x00453710 - body in src/unrecovered/00453710.cpp.
+// Was a temp.h function POINTER (`func5 *const load_faction_art`); see the
+// note above draw_map.
+void __cdecl load_faction_art(int player_id) {
+    typedef void(__cdecl *pending)(int);
+    PENDING_BODY(0x00453710, pending)(player_id);
+}
+
 // ?control_game@@YAXXZ at 0x0052AA30 - body in src/unrecovered/0052aa30.cpp
 void __cdecl control_game() {
     typedef void(__cdecl *pending)();
