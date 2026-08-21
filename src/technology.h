@@ -156,8 +156,8 @@ static const int TechNone = -1;
 static const int TechDisabled = -2;
 static const int MaxMandateNum = 4;
 
-extern RulesTechnology *Technology; // [89]
-extern uint8_t *GameTechAchieved; // [89]
+RulesTechnology *const Technology = (RulesTechnology *)0x0094F358; // [89]
+uint8_t *const GameTechAchieved = (uint8_t *)0x009A6670; // [89]
 RulesMandate *const Mandate = (RulesMandate *)0x0094B4A0; // [4]
 extern int TechValidCount;
 extern int TechCommerceCount;

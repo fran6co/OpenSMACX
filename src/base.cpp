@@ -27,9 +27,6 @@
 #include "technology.h"
 #include "veh.h"
 
-RulesFacility *Facility = (RulesFacility *)0x009A4B68;
-Base *Bases = (Base *)0x0097D040; // [512]
-BaseSecretProject *SecretProject = (BaseSecretProject *)0x009A6514; // [64]
 int BaseIDCurrentSelected;  // 0x00689370
 int BaseCurrentCount;  // 0x009A64CC
 int BaseFindDist;  // 0x0090EA04
@@ -629,7 +626,7 @@ int __cdecl base_lose_minerals(int base_id, int UNUSED(production_id)) {
 
 /*
 Purpose: Set or unset the specified base's facility.
-// ORIGINAL: 0x004E48B0 ?set_fac@@YAXHHH@Z 0x004E48B0-0x004E48FA
+// ORIGINAL: 0x004E48B0 ?set_fac@@YAXHHH@Z 0x004E48B0-0x004E48FA BYTE_EXACT
 // size      74 bytes
 // prototype void (__cdecl ?set_fac@@YAXHHH@Z)(int facilityID, int baseID, BOOL set)
 // callers   10   call targets   1
@@ -674,7 +671,7 @@ BOOL __cdecl has_fac_announced(uint32_t faction_id, uint32_t facility_id) {
 
 /*
 Purpose: Set or unset whether a particular facility audio blurb has played for specified faction.
-// ORIGINAL: 0x004E4960 set_fac_announced 0x004E4960-0x004E49CA
+// ORIGINAL: 0x004E4960 set_fac_announced 0x004E4960-0x004E49CA BYTE_EXACT
 // symbol    ?set_fac_announced@@YAXIIH@Z
 // size      106 bytes
 // prototype int (__cdecl set_fac_announced)(int factionID, int facilityID, int set)
@@ -2182,7 +2179,7 @@ void __cdecl make_base_unique(int base_id) {
 
 /*
 Purpose: Check if a faction has the specified secret project built in a base they control.
-// ORIGINAL: 0x004F80D0 ?has_project@@YAHHH@Z 0x004F80D0-0x004F8103
+// ORIGINAL: 0x004F80D0 ?has_project@@YAHHH@Z 0x004F80D0-0x004F8103 BYTE_EXACT
 // size      51 bytes
 // prototype int (__cdecl ?has_project@@YAHHH@Z)(int projectID, int factionID)
 // callers   8   call targets   0
@@ -2230,7 +2227,7 @@ bool __cdecl has_fac_built(int facility_id, int base_id) {
 
 /*
 Purpose: Get the current status of the specified project.
-// ORIGINAL: 0x005002E0 ?base_project@@YAHH@Z 0x005002E0-0x005002EF
+// ORIGINAL: 0x005002E0 ?base_project@@YAHH@Z 0x005002E0-0x005002EF BYTE_EXACT
 // size      15 bytes
 // prototype int (__cdecl ?base_project@@YAHH@Z)(int projectID)
 // callers   1   call targets   0
@@ -2571,7 +2568,7 @@ int __cdecl defensive_check(int base_id) {
 
 /*
 Purpose: Determine if base is a port.
-// ORIGINAL: 0x00579A00 ?is_port@@YAHHH@Z 0x00579A00-0x00579A30
+// ORIGINAL: 0x00579A00 ?is_port@@YAHHH@Z 0x00579A00-0x00579A30 BYTE_EXACT
 // size      48 bytes
 // prototype int (__cdecl ?is_port@@YAHHH@Z)(int baseID, int isBaseRadius)
 // callers   2   call targets   1
@@ -2812,7 +2809,7 @@ BOOL __cdecl transcending(int faction_id) {
 
 /*
 Purpose: Check if Voice of Planet has been built that starts the Ascent to Transcendence sequence.
-// ORIGINAL: 0x005AC680 ?ascending@@YAHH@Z 0x005AC680-0x005AC68F
+// ORIGINAL: 0x005AC680 ?ascending@@YAHH@Z 0x005AC680-0x005AC68F BYTE_EXACT
 // size      15 bytes
 // prototype int (__cdecl ?ascending@@YAHH@Z)(int factionID)
 // callers   4   call targets   0

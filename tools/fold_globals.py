@@ -68,7 +68,13 @@ def main(apply: bool) -> int:
             writes = re.findall(
                 rf"(?<![=!<>*])\s*\b{re.escape(name)}\s*=(?!=)", whole)
             writes = [w for w in writes if not w.lstrip().startswith("*")]
-            if len(writes) > 1 or re.search(rf"&\s*{re.escape(name)}\b", whole):
+            # `&X->member` takes the MEMBER's address, which a folded
+            # constant still allows; only a bare `&X` needs storage. Missing
+            # that refused SecretProject, and with it every `base_project`
+            # caller.
+            taken = re.search(
+                rf"&\s*{re.escape(name)}\b\s*(?![-.\[])", whole)
+            if len(writes) > 1 or taken:
                 print(f"  - {name}: written through or address-taken")
                 continue
             stars = match.group("stars")

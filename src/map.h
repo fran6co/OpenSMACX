@@ -298,7 +298,7 @@ extern uint32_t MapArea;
 extern uint32_t MapAreaSqRoot;
 extern BOOL MapIsFlat;
 extern int MapLandmarkCount;
-extern Landmark *MapLandmark;
+Landmark *const MapLandmark = (Landmark *)0x00949894;
 extern uint32_t MapAbstractLongBounds; // abstract x
 extern uint32_t MapAbstractLatBounds; // abstract y
 extern uint32_t MapAbstractArea;
@@ -323,7 +323,7 @@ extern uint32_t BrushVal1; // TODO: more descriptive variable name
 extern uint32_t BrushVal2; // TODO: more descriptive variable name
 extern uint32_t WorldBuildVal1; // TODO: more descriptive variable name
 
-extern Continent *Continents;
+Continent *const Continents = (Continent *)0x009AA730;
 RulesNatural *const Natural = (RulesNatural *)0x0094ADE0;
 extern uint32_t MapLongitude; // halve of MapLongitudeBounds
 extern uint32_t *AltNatural; // Default: { 0, 15, 32, 45, 60,  75,  80, 100, 100, 100, 100 };

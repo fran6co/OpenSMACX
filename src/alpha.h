@@ -715,7 +715,7 @@ RulesResourceinfo *const ResourceInfo = (RulesResourceinfo *)0x00945F50;
 RulesTimeControl *const TimeControl = (RulesTimeControl *)0x0094F1B8;
 RulesResource *const Resource = (RulesResource *)0x00946158;
 RulesEnergy *const Energy = (RulesEnergy *)0x0094A318;
-extern RulesBasic *Rules;
+RulesBasic *const Rules = (RulesBasic *)0x00949738;
 RulesWorldbuilder *const WorldBuilder = (RulesWorldbuilder *)0x009502A8;
 AlphaIniPref *const AlphaIniPrefs = (AlphaIniPref *)0x0094B464;
 DefaultPref *const DefaultPrefs = (DefaultPref *)0x0094B350;

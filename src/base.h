@@ -498,10 +498,10 @@ static const int MaxSpecialistNum = 7;
 static const int SP_Unbuilt = -1;
 static const int SP_Destroyed = -2;
 
-extern RulesFacility *Facility;
+RulesFacility *const Facility = (RulesFacility *)0x009A4B68;
 RulesCitizen *const Citizen = (RulesCitizen *)0x00946020;
-extern Base *Bases;
-extern BaseSecretProject *SecretProject;
+Base *const Bases = (Base *)0x0097D040;
+BaseSecretProject *const SecretProject = (BaseSecretProject *)0x009A6514;
 extern int BaseIDCurrentSelected;
 extern int BaseCurrentCount;
 extern int BaseFindDist;

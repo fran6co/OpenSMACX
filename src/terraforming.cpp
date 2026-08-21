@@ -26,7 +26,6 @@
 #include "technology.h"
 #include "veh.h"
 
-RulesTerraforming *Terraforming = (RulesTerraforming *)0x00691878;
 
 /*
 Purpose: Calculate the credit cost to lower or raise the tile's terrain for the specified faction.

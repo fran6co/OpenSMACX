@@ -88,7 +88,7 @@ const uint32_t TerraformingBits[20][2] = { // terrain enhancement, incompatible 
 
 static const int MaxTerrainNum = 20;
 
-extern RulesTerraforming *Terraforming;
+RulesTerraforming *const Terraforming = (RulesTerraforming *)0x00691878;
 
 int __cdecl terraform_cost(int x, int y, int faction_id);
 int __cdecl contribution(int veh_id, int terraform_id);

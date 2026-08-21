@@ -37,7 +37,6 @@ uint32_t MapArea;  // 0x00949884
 uint32_t MapAreaSqRoot;  // 0x00949888
 BOOL MapIsFlat;  // 0x0094988C
 int MapLandmarkCount;  // 0x00949890
-Landmark *MapLandmark = (Landmark *)0x00949894; // [64]
 uint32_t MapAbstractLongBounds;  // 0x0094A294
 uint32_t MapAbstractLatBounds;  // 0x0094A298
 uint32_t MapAbstractArea;  // 0x0094A29C
@@ -56,7 +55,6 @@ uint32_t BrushVal1;  // 0x009B22B0
 uint32_t BrushVal2;  // 0x009B22B8
 uint32_t WorldBuildVal1;  // 0x009B22B4
 
-Continent *Continents = (Continent *)0x009AA730; // [128]
 uint32_t MapLongitude;  // 0x0068FAF0 // default set to 1
 uint32_t *AltNatural = (uint32_t *)0x0068FB4C;
 LPCSTR MapExtension = "MP";
@@ -225,7 +223,7 @@ int __cdecl vector_dist(int x_point_a, int y_point_a, int x_point_b, int y_point
 /*
 Purpose: Check whether there is a path between two regions. It seems to only take into account land
          destinations. TODO: Revisit in the future when Continent/Path is complete.
-// ORIGINAL: 0x0050DDC0 ?sea_coast@@YAHHH@Z 0x0050DDC0-0x0050DE00
+// ORIGINAL: 0x0050DDC0 ?sea_coast@@YAHHH@Z 0x0050DDC0-0x0050DE00 BYTE_EXACT
 // size      64 bytes
 // prototype int (__cdecl ?sea_coast@@YAHHH@Z)(int regionDst, int regionSrc)
 // callers   2   call targets   1
@@ -1214,7 +1212,7 @@ int __cdecl new_landmark(int x, int y, LPCSTR name) {
 
 /*
 Purpose: Check whether the specified faction has permission to name a landmark on the provided tile.
-// ORIGINAL: 0x00592650 ?valid_landmark@@YAHHHH@Z 0x00592650-0x005926EF
+// ORIGINAL: 0x00592650 ?valid_landmark@@YAHHHH@Z 0x00592650-0x005926EF BYTE_EXACT
 // size      159 bytes
 // prototype int (__cdecl ?valid_landmark@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)
 // callers   2   call targets   2

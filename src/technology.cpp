@@ -27,8 +27,6 @@
 #include "strings.h"
 #include "veh.h"
 
-RulesTechnology *Technology = (RulesTechnology *)0x0094F358;
-uint8_t *GameTechAchieved = (uint8_t *)0x009A6670;
 int TechValidCount;  // 0x00949730
 int TechCommerceCount;  // 0x00949734
 char TechName[80];
@@ -204,7 +202,7 @@ int __cdecl tech_recurse(int tech_id, int base_lvl) {
 /*
 Purpose: Determine what category is dominate for tech_id. If there is a tie, the order of precedence
          is as follows: growth > tech > wealth > power.
-// ORIGINAL: 0x005B9FE0 ?tech_category@@YAHH@Z 0x005B9FE0-0x005BA02C
+// ORIGINAL: 0x005B9FE0 ?tech_category@@YAHH@Z 0x005B9FE0-0x005BA02C BYTE_EXACT
 // size      76 bytes
 // prototype int (__cdecl ?tech_category@@YAHH@Z)(int techID)
 // callers   6   call targets   0

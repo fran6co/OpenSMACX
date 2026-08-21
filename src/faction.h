@@ -579,17 +579,17 @@ static const int MaxRankingHistoryTurns = 1000;
 static const int MaxGoalsNum = 75;
 static const int MaxSitesNum = 25;
 
-extern RulesSocialCategory *SocialCategories;
+RulesSocialCategory *const SocialCategories = (RulesSocialCategory *)0x0094B000;
 RulesSocialEffect *const SocialEffects = (RulesSocialEffect *)0x00946580;
 LPSTR *const Mood = (LPSTR *)0x0094C9E4;
 LPSTR *const Repute = (LPSTR *)0x00946A30;
 RulesMight *const Might = (RulesMight *)0x0094C558;
 RulesBonusName *const BonusName = (RulesBonusName *)0x009461A8;
-extern Player *Players; // Players[0] is AI native life faction
-extern PlayerData *PlayersData;
+Player *const Players = (Player *)0x00946A50; // Players[0] is AI native life faction
+PlayerData *const PlayersData = (PlayerData *)0x0096C9E0;
 FactionArt *const FactionsArt = (FactionArt *)0x0078E978;
 uint8_t *const FactionsStatus = (uint8_t *)0x009A64E8;
-extern uint32_t *FactionRankings;
+uint32_t *const FactionRankings = (uint32_t *)0x009A64EC;
 // Per-turn archive of every faction's power score, written by rankings() for the first
 // MaxRankingHistoryTurns turns and indexed faction + turn * MaxPlayerNum. Sixteen bits per
 // entry, which is why a score above 65535 wraps in the graph and not in the ranking.

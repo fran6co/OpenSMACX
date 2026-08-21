@@ -28,7 +28,7 @@ BOOL ProbeTargetHasHSA;  // 0x00945B38
 
 /*
 Purpose: Calculate the amount of energy that can be stolen from a base based on its population.
-// ORIGINAL: 0x0050C4B0 ?steal_energy@@YAHH@Z 0x0050C4B0-0x0050C504
+// ORIGINAL: 0x0050C4B0 ?steal_energy@@YAHH@Z 0x0050C4B0-0x0050C504 BYTE_EXACT
 // size      84 bytes
 // prototype int (__cdecl ?steal_energy@@YAHH@Z)(int baseID)
 // callers   1   call targets   0
