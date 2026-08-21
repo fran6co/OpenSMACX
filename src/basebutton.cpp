@@ -128,14 +128,18 @@ uint32_t BaseButton::close() {
 
     const uint32_t name = object[0xA7C / 4];
     if (name != 0) {
-        _free(reinterpret_cast<void *>(static_cast<uintptr_t>(name)));
+        free(reinterpret_cast<void *>(static_cast<uintptr_t>(name)));
         object[0xA7C / 4] = 0;
     }
+    // THE RESIDUE IS NOT MODELLED. The image returns whatever `free` left in
+    // EAX at 0x00607179 - it is `?close@BaseButton@@QAEXXZ`, declared void, so
+    // nothing reads it. The tree used to capture it by declaring `free` as
+    // returning `void *`, which is what kept the CRT's own `free` out of this
+    // file.
     uint32_t result = 0;
     const uint32_t bubble = object[0xA80 / 4];
     if (bubble != 0) {
-        result = reinterpret_cast<uintptr_t>(_free(
-            reinterpret_cast<void *>(static_cast<uintptr_t>(bubble))));
+        free(reinterpret_cast<void *>(static_cast<uintptr_t>(bubble)));
         object[0xA80 / 4] = 0;
     }
     object[0xAA8 / 4] = 0;
@@ -194,7 +198,7 @@ Status: Complete with redirect for free to prevent hang/freeze. Incompatibility 
 */
 int BaseButton::set_bubble_text(LPCSTR input) {
     if (bubble_text_) {
-        _free(bubble_text_);
+        free(bubble_text_);
         bubble_text_ = 0;
     }
     if (input) {
@@ -227,7 +231,7 @@ int BaseButton::set_name(LPCSTR input) {
     // Bug fix: Fixed crash if input parameter was null. Original code had string copy outside last 
     // if statement causing potential write to null name variable.
     if (name_) {
-        _free(name_);
+        free(name_);
         name_ = 0;
     }
     if (input) {

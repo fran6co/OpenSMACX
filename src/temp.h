@@ -28,22 +28,7 @@
 typedef struct char256 { char str[256]; } char256;
 
 // built-in functions
-typedef void *func1(size_t);
-func1 *const _malloc = (func1 *)0x006470A6;
-typedef void *func2(void *);
-func2 *const _free = (func2 *)0x00644EF2;
-typedef FILE *func3(LPCSTR, LPCSTR);
-func3 *const _fopen = (func3 *)0x00645646;
-typedef void *func4(unsigned int);
-func4 *const _srand = (func4 *)0x00646010;
 
-typedef int *func10(void *, size_t, size_t, FILE *);
-func10 *const _fread = (func10 *)0x00646178;
-extern func10 *_fwrite;
-typedef int func17(FILE *);
-func17 *const _fgetc = (func17 *)0x00646855;
-typedef int func18(int, FILE *);
-func18 *const _fputc = (func18 *)0x00646886;
 //typedef void *func12(void *, size_t);
 //extern func12 *_realloc;
 //typedef int *func18(FILE *);

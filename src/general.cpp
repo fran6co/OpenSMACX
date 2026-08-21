@@ -186,7 +186,7 @@ Status: Complete with two versions of malloc to prevent crash. Incompatibility w
         version of malloc CRT. Revisit once more code is redirected to dll.
 */
 LPVOID __cdecl mem_get_old(size_t size) {
-    LPVOID result = _malloc(size);
+    LPVOID result = malloc(size);
     if (!result) {
         MessageBoxA(NULL,
             "Windows has run out of virtual memory; the game will exit. "
@@ -229,7 +229,7 @@ FILE *__cdecl env_open_old(LPCSTR source, LPCSTR mode) {
     if (!src_check) {
         src_check = source;
     }
-    return _fopen(src_check, mode);
+    return fopen(src_check, mode);
 }
 
 FILE *__cdecl env_open(LPCSTR source, LPCSTR mode) {
@@ -996,7 +996,7 @@ Status: Complete with built in version of srand(). Revisit once more code is red
 void __cdecl my_srand(int reseed) {
     log_say("Reseed to", reseed, 0, 0);
     srand(reseed);
-    _srand(reseed);
+    srand(reseed);
 }
 
 /*
@@ -1408,7 +1408,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl header_check(LPSTR header, FILE *file) {
-    int header_chr = _fgetc(file);
+    int header_chr = fgetc(file);
     *header++ = (char)header_chr;
     if (header_chr) {
         int i = 0;
@@ -1416,11 +1416,11 @@ void __cdecl header_check(LPSTR header, FILE *file) {
             if (++i >= 256) {
                 break;
             }
-            header_chr = _fgetc(file);
+            header_chr = fgetc(file);
             *header++ = (char)header_chr;
         } while (header_chr);
     }
-    _fgetc(file);
+    fgetc(file);
 }
 
 /*
@@ -1440,9 +1440,9 @@ void __cdecl header_write(LPCSTR header, FILE *file) {
     int header_chr;
     do {
         header_chr = *header++;
-        _fputc(header_chr, file);
+        fputc(header_chr, file);
     } while (header_chr);
-    _fputc(0x1A, file);
+    fputc(0x1A, file);
 }
 
 /*
