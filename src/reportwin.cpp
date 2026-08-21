@@ -19,6 +19,68 @@
 #include "reportwin.h"
 #include "menu.h"
 #include "win.h"
+#include "vector_teardown.h"
+
+const void *const ReportWinFlatButtonCtor = (const void *)0x00607CF0;
+const void *const ReportWinFlatButtonDtor = (const void *)0x00406880;
+
+const uint32_t ReportWinPrimaryVtable = 0x0066D754;
+const uint32_t ReportWinBufferVtable = 0x0066D74C;
+
+/*
+Purpose: Construct every sub-object in image order - a FlatButton[7] run, a
+         Spot, a ListBox(1), nine individually-constructed FlatButtons split
+         by two ButtonGroups, a Scroll, three Times, two Buffers and a Flic -
+         then install ReportWin's own vftables.
+// ORIGINAL: 0x004AD6B0 ??0ReportWin@@QAE@XZ 0x004AD6B0-0x004AD838;0x006592F0-0x00659419
+// RULED-OUT: register allocation - the SEH prologue agrees (7/7) then the
+//            compiled body reserves an extra `sub esp, 8` the image does
+//            not. MISMATCH, 9/87 instructions agree.
+// size      689 bytes
+// prototype void (__thiscall ??0ReportWin@@QAE@XZ)(ReportWin* this)
+// callers   1   call targets   11
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005D4CF0 0x005D7210 0x005FA860 0x006051D0 0x00607CF0 0x00609DB0 0x006161D0 0x00629D60 0x0062B7C0 0x006456E4 0x006457C2
+*/
+// ListBox has no one-argument constructor declared and Flic's own recovery
+// (0x00629D60) is out of this batch's scope, so both are called directly at
+// their image address, the same treatment pending_bodies.cpp gives every
+// not-yet-promoted callee.
+ReportWin::ReportWin() {
+    GraphicWin::construct();
+
+    VectorCtorIterator(flatButtons1_, 0xB4C, 7, ReportWinFlatButtonCtor, ReportWinFlatButtonDtor);
+
+    new (spot_) Spot();
+
+    typedef void(__fastcall *pending_listbox_ctor)(void *, void *, int);
+    reinterpret_cast<pending_listbox_ctor>(0x00609DB0)(listBox_, nullptr, 1);
+
+    new (flatButton2_) FlatButton();
+    new (flatButton3_) FlatButton();
+    new (buttonGroup1_) ButtonGroup();
+    new (flatButton4_) FlatButton();
+    new (flatButton5_) FlatButton();
+    new (flatButton6_) FlatButton();
+    new (buttonGroup2_) ButtonGroup();
+    new (flatButton7_) FlatButton();
+    new (flatButton8_) FlatButton();
+    new (flatButton9_) FlatButton();
+    new (scroll_) Scroll();
+    new (time1_) Time();
+    new (time2_) Time();
+    new (time3_) Time();
+    new (buffer1_) Buffer();
+    new (buffer2_) Buffer();
+
+    typedef void(__fastcall *pending_flic_ctor)(void *, void *);
+    reinterpret_cast<pending_flic_ctor>(0x00629D60)(flic_, nullptr);
+
+    uint32_t *const object = reinterpret_cast<uint32_t *>(this);
+    object[0x000 / 4] = ReportWinPrimaryVtable;
+    object[0x444 / 4] = ReportWinBufferVtable;
+}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.

@@ -23,6 +23,57 @@
 #include <cstdint>
 #include <cstring>
 
+const uint32_t BaseWinSubInterfaceVtableInitial = 0x0066A6E4;
+const uint32_t BaseWinSubInterfaceVtable = 0x0066A3B8;
+const uint32_t BaseWinPrimaryVtable = 0x0066A40C;
+const uint32_t BaseWinBufferVtable = 0x0066A404;
+
+/*
+Purpose: Construct BaseWin's large aggregate of sub-windows: a ProdPicker, a
+         second GraphicWin, several Sprite runs, a FlatButton, a Buffer, a
+         FlatButton[22], a Time, a Caviar, a MapWin, a Font, two Spots, a
+         second Buffer and three Scrolls.
+// ORIGINAL: 0x00408490 ??0BaseWin@@QAE@XZ 0x00408490-0x0040870D;0x004210D0-0x004210E7;0x00651380-0x00651567
+// LEVER: real, correctly-offset, correctly-typed members (already modelled
+//        in basewin.h) constructed IMPLICITLY, in declaration order, took
+//        this from a SHARED_TAIL isolated-scaffold measurement straight to
+//        120/144 agreeing instructions here - far better than the explicit
+//        raw-offset placement-new this batch's other five constructors
+//        needed for ordering control. First divergence at instruction 10:
+//        this compiled body reserves an extra `push edi` and calls through
+//        an extra local thunk where the image calls GraphicWin::construct
+//        directly - not chased further given the SHARED_TAIL caveat above.
+// size      1147 bytes
+// prototype void (__thiscall ??0BaseWin@@QAE@XZ)(BaseWin* this)
+// callers   1   call targets   15
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00420F90 0x004626E0 0x00492420 0x005D4CF0 0x005D4DD0 0x005D7210 0x005E37E0 0x005FA860 0x006051D0 0x00607CF0 0x006161D0 0x00616DA0 0x00618EA0 0x006456E4 0x006457C2
+*/
+// This address is catalogued SHARED_TAIL: its cleanup path runs through an
+// EH-funclet cluster shared with other functions (COMDAT-folded), so no
+// per-function byte verdict is well defined here regardless of source form -
+// see the deleted src/recovered/units/00408490.cpp, which measured the same
+// finding from an isolated scaffold. Bodied for COVERAGE: every sub-object
+// below is a real, correctly-offset, correctly-typed member already modelled
+// in basewin.h, constructed implicitly in declaration order (matching the
+// image's own order field-for-field) except MapWin, whose own constructor
+// is the empty inline stub - its real work is `MapWin::construct(int)`,
+// the established seam for a virtual-base constructor reached through a
+// pointer-to-member elsewhere in this tree.
+BaseWin::BaseWin() {
+    GraphicWin::construct();
+
+    uint32_t *const object = reinterpret_cast<uint32_t *>(this);
+    object[0xA14 / 4] = BaseWinSubInterfaceVtableInitial;
+
+    mapWin_.construct(1);
+
+    object[0x000 / 4] = BaseWinPrimaryVtable;
+    object[0x444 / 4] = BaseWinBufferVtable;
+    object[0xA14 / 4] = BaseWinSubInterfaceVtable;
+}
+
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
 // ORIGINAL: 0x00408710 ?close@BaseWin@@QAEXXZ 0x00408710-0x00408711 BYTE_EXACT

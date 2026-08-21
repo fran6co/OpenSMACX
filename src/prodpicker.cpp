@@ -17,7 +17,105 @@
  */
 #include "stdafx.h"
 #include "prodpicker.h"
+#include "vector_teardown.h"
 #include <cstring>
+
+// Sprite and FlatButton are constructed in a loop through the CRT's own
+// vector constructor iterator - see vector_teardown.h. The addresses are the
+// two element types' own real constructor/destructor.
+const void *const ProdPickerSpriteCtor = (const void *)0x005E37E0;
+const void *const ProdPickerSpriteDtor = (const void *)0x00406850;
+const void *const ProdPickerFlatButtonCtor = (const void *)0x00607CF0;
+const void *const ProdPickerFlatButtonDtor = (const void *)0x00406880;
+
+const uint32_t ProdPickerPrimaryVtable = 0x0066A250;
+const uint32_t ProdPickerBufferVtable = 0x0066A248;
+
+// The three 0x30-byte blocks at 0xA780/0xA7B0/0xA7E0 are unnamed: each
+// installs a vtable pair through a computed adjustor offset (the second
+// dword of the object at +4 is itself a small vbtable-shaped blob whose
+// second entry is the byte offset to re-stamp), the same "construct a
+// generic sub-object, then immediately overwrite its vtable with the real
+// one" shape GraphicWin::construct()/FlatButton use, just for something this
+// header does not otherwise model. Reproduced at the raw offset because
+// nothing establishes what class it is.
+static void prod_picker_unknown_a7_block(char *self, unsigned int offset) {
+    uint32_t *const global_sequence = reinterpret_cast<uint32_t *>(0x009B3374);
+    *reinterpret_cast<uint32_t *>(self + offset + 0x04) = 0x0066B0EC;
+    *reinterpret_cast<uint32_t *>(self + offset + 0x28) = 0x006693AC;
+    *reinterpret_cast<uint32_t *>(self + offset + 0x2C) = *global_sequence;
+    *global_sequence = 0;
+
+    uint32_t vtbl = *reinterpret_cast<uint32_t *>(self + offset + 0x04);
+    *reinterpret_cast<uint32_t *>(self + offset) = 0x006693A4;
+    int adj = *reinterpret_cast<int *>(reinterpret_cast<char *>(vtbl) + 4);
+    *reinterpret_cast<uint32_t *>(self + offset + 0x04 + adj) = 0x006693A0;
+
+    vtbl = *reinterpret_cast<uint32_t *>(self + offset + 0x04);
+    *reinterpret_cast<uint32_t *>(self + offset) = 0x006698C4;
+    *reinterpret_cast<uint32_t *>(self + offset + 0x08) = 0;
+    *reinterpret_cast<uint32_t *>(self + offset + 0x0C) = 0;
+    *reinterpret_cast<uint32_t *>(self + offset + 0x10) = 0;
+    *reinterpret_cast<uint32_t *>(self + offset + 0x14) = 0;
+    *reinterpret_cast<uint32_t *>(self + offset + 0x18) = 0;
+    adj = *reinterpret_cast<int *>(reinterpret_cast<char *>(vtbl) + 4);
+    *reinterpret_cast<uint32_t *>(self + offset + 0x04 + adj) = 0x006698C0;
+}
+
+/*
+// ORIGINAL: 0x00492420 ??0ProdPicker@@QAE@XZ 0x00492420-0x004926AD;0x00658B70-0x00658C09
+// RULED-OUT: register allocation - compiled body agrees on the SEH prologue
+//            (7/7) then diverges at the push ebx/esi/edi save order; VC6
+//            chose a different callee-save order for this body's register
+//            pressure. MISMATCH, 11/127 instructions agree. The three
+//            0x30-byte "mystery" sub-objects at 0xA780/0xA7B0/0xA7E0 are
+//            reproduced at their raw offset (prod_picker_unknown_a7_block) -
+//            nothing in this header names what class they are, and the
+//            per-block instruction SCHEDULING (which register holds the
+//            vtable pointer, when it gets reloaded) varies between the three
+//            in the image in a way plain repeated C++ does not reproduce.
+// size      806 bytes
+// prototype void (__thiscall ??0ProdPicker@@QAE@XZ)(ProdPicker* this)
+// callers   1   call targets   7
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005D4CF0 0x006051D0 0x006161D0 0x00616DA0 0x00618EA0 0x006456E4 0x006457C2
+*/
+// The construction chain is GraphicWin::construct(), not a base constructor
+// call - GraphicWin's own constructor is the empty inline stub, and every
+// sub-object below is placement-new'd explicitly, in the exact order the
+// disassembly shows, because C++'s implicit member construction would run
+// them all BEFORE this body - and GraphicWin::construct() has to be first.
+ProdPicker::ProdPicker() {
+    GraphicWin::construct();
+    char *const self = reinterpret_cast<char *>(this);
+
+    VectorCtorIterator(sprites_, 0x2C, 3, ProdPickerSpriteCtor, ProdPickerSpriteDtor);
+
+    new (font1_) Font();
+    new (font2_) Font();
+    new (font3_) Font();
+    new (font4_) Font();
+    new (time_) Time();
+
+    VectorCtorIterator(flatButtons_, 0xB4C, 9, ProdPickerFlatButtonCtor, ProdPickerFlatButtonDtor);
+
+    new (scroll_) Scroll();
+    new (caviar_) Caviar();
+
+    prod_picker_unknown_a7_block(self, 0xA780);
+    prod_picker_unknown_a7_block(self, 0xA7B0);
+    prod_picker_unknown_a7_block(self, 0xA7E0);
+
+    field_A830_ = 0x86;
+    field_A834_ = 0x86;
+    field_A14_ = 0;
+    uint32_t *const object = reinterpret_cast<uint32_t *>(this);
+    object[0x000 / 4] = ProdPickerPrimaryVtable;
+    object[0x444 / 4] = ProdPickerBufferVtable;
+    field_A838_ = 0x6C;
+    field_A83C_ = 0x5E;
+}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 1.

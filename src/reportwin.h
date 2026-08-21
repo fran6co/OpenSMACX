@@ -40,7 +40,7 @@
   */
 class ReportWin : public GraphicWin {
  public:
-  ReportWin() { ; }
+  ReportWin();
   // 0x004AD3B0 is not recovered: a
   // pending_bodies forwarder, because an empty inline stub emits
   // nothing and the deleting destructor needs a `call rel32`.
@@ -62,7 +62,14 @@ class ReportWin : public GraphicWin {
   uint32_t field_A2C_;  // 0xA2C
   uint32_t field_A30_;  // 0xA30
   uint32_t field_A34_;  // 0xA34
-  FlatButton flatButtons1_[7];  // 0xA38
+  // The constructor placement-news every sub-object below EXPLICITLY, in the
+  // exact order the disassembly shows - GraphicWin::construct() has to run
+  // BEFORE any of them, and ordinary by-value members with a real
+  // constructor are default-constructed by C++ before the constructor BODY
+  // ever runs, which cannot reproduce that order. Raw storage; every offset
+  // above already lands on a 4-byte boundary from the field sizes alone, so
+  // a plain `uint8_t[]` needs no explicit alignment.
+  uint8_t flatButtons1_[7 * 0xB4C];  // 0xA38
   uint32_t field_594C_;  // 0x594C
   uint32_t field_5950_;  // 0x5950
   uint32_t field_5954_;  // 0x5954
@@ -81,7 +88,7 @@ class ReportWin : public GraphicWin {
   uint32_t field_5988_;  // 0x5988
   uint32_t field_598C_;  // 0x598C
   uint32_t field_5990_;  // 0x5990
-  Spot spot_;  // 0x5994
+  uint8_t spot_[0xC];  // 0x5994, sizeof(Spot)
   uint32_t field_59A0_;  // 0x59A0
   uint32_t field_59A4_;  // 0x59A4
   uint32_t field_59A8_;  // 0x59A8
@@ -109,27 +116,27 @@ class ReportWin : public GraphicWin {
   uint32_t field_5A00_;  // 0x5A00
   uint32_t field_5A04_;  // 0x5A04
   uint32_t field_5A08_;  // 0x5A08
-  ListBox listBox_;  // 0x5A0C
-  FlatButton flatButton2_;  // 0x6560
-  FlatButton flatButton3_;  // 0x70AC
+  uint8_t listBox_[0xB54];  // 0x5A0C, sizeof(ListBox)
+  uint8_t flatButton2_[0xB4C];  // 0x6560
+  uint8_t flatButton3_[0xB4C];  // 0x70AC
   uint32_t field_7BF8_;  // 0x7BF8
   uint32_t field_7BFC_;  // 0x7BFC
   uint32_t field_7C00_;  // 0x7C00
   uint32_t field_7C04_;  // 0x7C04
-  ButtonGroup buttonGroup1_;  // 0x7C08
-  FlatButton flatButton4_;  // 0x7C9C
-  FlatButton flatButton5_;  // 0x87E8
-  FlatButton flatButton6_;  // 0x9334
-  ButtonGroup buttonGroup2_;  // 0x9E80
-  FlatButton flatButton7_;  // 0x9F14
-  FlatButton flatButton8_;  // 0xAA60
-  FlatButton flatButton9_;  // 0xB5AC
+  uint8_t buttonGroup1_[0x94];  // 0x7C08, sizeof(ButtonGroup)
+  uint8_t flatButton4_[0xB4C];  // 0x7C9C
+  uint8_t flatButton5_[0xB4C];  // 0x87E8
+  uint8_t flatButton6_[0xB4C];  // 0x9334
+  uint8_t buttonGroup2_[0x94];  // 0x9E80, sizeof(ButtonGroup)
+  uint8_t flatButton7_[0xB4C];  // 0x9F14
+  uint8_t flatButton8_[0xB4C];  // 0xAA60
+  uint8_t flatButton9_[0xB4C];  // 0xB5AC
   uint32_t field_C0F8_;  // 0xC0F8
   uint32_t field_C0FC_;  // 0xC0FC
   uint32_t field_C100_;  // 0xC100
   uint32_t field_C104_;  // 0xC104
   uint32_t field_C108_;  // 0xC108
-  Scroll scroll_;  // 0xC10C, size == sizeof(Scroll)
+  uint8_t scroll_[0x214C];  // 0xC10C, sizeof(Scroll)
   uint32_t field_E258_;  // 0xE258
   uint32_t field_E25C_;  // 0xE25C
   uint32_t field_E260_;  // 0xE260
@@ -137,7 +144,7 @@ class ReportWin : public GraphicWin {
   uint32_t field_E268_;  // 0xE268
   uint32_t field_E26C_;  // 0xE26C
   uint32_t field_E270_;  // 0xE270
-  Time time1_;  // 0xE274
+  uint8_t time1_[0x28];  // 0xE274, sizeof(Time)
   uint32_t field_E29C_;  // 0xE29C
   uint32_t field_E2A0_;  // 0xE2A0
   uint32_t field_E2A4_;  // 0xE2A4
@@ -147,14 +154,14 @@ class ReportWin : public GraphicWin {
   uint32_t field_E2B4_;  // 0xE2B4
   uint32_t field_E2B8_;  // 0xE2B8
   uint32_t field_E2BC_;  // 0xE2BC
-  Time time2_;  // 0xE2C0
-  Time time3_;  // 0xE2E8
+  uint8_t time2_[0x28];  // 0xE2C0, sizeof(Time)
+  uint8_t time3_[0x28];  // 0xE2E8, sizeof(Time)
   uint32_t field_E310_;  // 0xE310
   uint32_t field_E314_;  // 0xE314
   uint32_t field_E318_;  // 0xE318
   uint32_t field_E31C_;  // 0xE31C
-  Buffer buffer1_;  // 0xE320
-  Buffer buffer2_;  // 0xE8A8
+  uint8_t buffer1_[0x588];  // 0xE320, sizeof(Buffer)
+  uint8_t buffer2_[0x588];  // 0xE8A8, sizeof(Buffer)
   // 0xEE30 is a float of ReportWin's own, NOT the head of the Flic. The Flic
   // starts four bytes later, and the image says so four separate times:
   //   ?sat_anim@ReportWin@@QAEXXZ multiplies by 0xEE30 as a scalar
@@ -173,7 +180,7 @@ class ReportWin : public GraphicWin {
   // That row is four bytes early, and the receiver of ??0Flic@@QAE@XZ
   // withdraws it - an IDB member row is a name, not a measurement.
   float field_EE30_;  // 0xEE30, x87 dword load -> float
-  Flic flic_;  // 0xEE34, declared Flic extent == 0xAE4, so it ends at 0xF918
+  uint8_t flic_[0xAE4];  // 0xEE34, declared Flic extent == 0xAE4, so it ends at 0xF918
   // 0xF918, not 0xF914. The first own-access past the Flic is
   // mov eax, dword ptr [esi + 0xf918] at 0x0049FFF4 in
   // ?start_attack@ReportWin@@QAEXHHHH@Z, which then writes 0xF91C..0xF934;
@@ -190,6 +197,9 @@ class ReportWin : public GraphicWin {
   uint8_t field_F938_[0x180];  // 0xF938
   uint32_t field_FAB8_;  // 0xFAB8
 };
+
+static_assert(sizeof(ReportWin) == 0xFABC,
+              "ReportWin layout must match the legacy ABI");
 
 void __fastcall report_win_on_mouse_move_redirect(ReportWin *self, void *, int a1, int a2);
 void __fastcall report_win_on_mouse_leave_redirect(ReportWin *self, void *, int a1, int a2);

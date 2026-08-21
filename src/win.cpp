@@ -26,6 +26,11 @@
 #include "sounddevice.h"
 #include "menu.h"
 #include <ddraw.h>  // IDirectDrawSurface::GetDC / ReleaseDC in the hdc pair
+// `DirectDrawCreate` itself (DDInit::init) is the one symbol this tree needs
+// out of ddraw.lib rather than dxguid.lib's IIDs; CMakeLists.txt links
+// neither by name, so the dependency has to sit beside the code that needs
+// it the way `dxguid` used to before it was measured into the CMake line.
+#pragma comment(lib, "ddraw.lib")
 
 const uint32_t WinPrimaryVtable = 0x0066FDD0;
 const uint32_t WinSecondaryVtable = 0x0066FF30;
@@ -2339,11 +2344,142 @@ Purpose: Forward to the fixed DirectDraw device object's own init, in
 // `static`, because the catalogued name ends in `QAA` - a public member
 // declared __cdecl, taking no receiver.
 Return Value: DDInit::init's own return
-Status: Complete; DDInit::init (0x00635510) is itself still a
-        pending_bodies forwarder - see the note in win.h.
+Status: Complete.
 */
 int __cdecl Win::set_display_mode(int width, int height, int depth, int tgl) {
     return WinDisplayInit->init(width, height, depth, tgl);
+}
+
+// The class name `UnregisterClassA` is handed at teardown - a THIRD copy of
+// a window-class-name literal, distinct from `WinClassName` below. Read out
+// of the image at 0x00697F3C rather than assumed.
+static const char DDInitClassName[] = "DirectDClass";
+
+/*
+Purpose: Tear down whatever DirectDraw surface and device window this
+         object is already holding, then (unless `depth` is zero) bring up
+         a new one at the requested size, and paint the splash logo onto
+         `ScreenBuffer` once the new mode is live.
+// ORIGINAL: 0x00635510 ?init@DDInit@@QAEHHHHH@Z 0x00635510-0x00635746;0x00663870-0x00663885
+// size      587 bytes
+// prototype int (__thiscall ?init@DDInit@@QAEHHHHH@Z)(DDInit *this, int width, int height, int depth, int tgl)
+// callers   2   call targets   10
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D44FC 0x005D7210 0x005D7410 0x005D7670 0x005D7DE0 0x005DFB50 0x005DFF00 0x005EFD00 0x005EFD20 0x00635870
+//
+// TWO SPANS, and the second is a 21-byte EH funclet the linker lays away
+// from the body - the same shape `Buffer::load_pcx` and `Win::init_class`
+// already reproduce byte-exact from nothing more than a local `Buffer`
+// with a non-trivial destructor. `buf` here is that local: VC6 emits the
+// SEH frame (`push -1; push <handler>; mov fs:[0]...`) and the three
+// `buf.~Buffer()` calls at every return path (7, 0x12 and the two shared
+// at the bottom) purely because `buf` is in scope, not because anything
+// here spells them out.
+//
+// `surf_` is `IDirectDraw *`, not the `IDirectDrawSurface *` the field
+// name in early transcriptions guessed: `DirectDrawCreate`'s second
+// argument is `LPDIRECTDRAW *`, and the two vtable slots it dispatches
+// through afterwards - offset 0x4C (index 19) and 0x50 (index 20) in the
+// real `IDirectDraw` vtable - are `RestoreDisplayMode()` and
+// `SetCooperativeLevel(HWND, DWORD)`, not anything `IDirectDrawSurface`
+// declares at those slots.
+//
+// `locked_surface_`/`locked_bits_` (offsets 0xC/0x10) are proven the same
+// way: slot 0x80 (index 32) is `IDirectDrawSurface::Unlock(LPVOID)`, one
+// pointer argument, which is exactly what the image pushes beside the
+// receiver. Nothing in this function ever sets either field, so whatever
+// locks that surface is a sibling method this recovery does not need.
+//
+// `buf.copy(&ScreenBuffer, ...)` at the end is `Win::init_class`'s own
+// splash-centring call with `buf` standing in for `logo` - same six-argument
+// overload, same halves-rounded-toward-zero division on both axes.
+//
+// Two callees stay pending_bodies forwarders: 0x005EFD00 (already
+// BYTE_EXACT in src/recovered/005efd00.cpp, unpromoted) and 0x00635870
+// (a 1691-byte DDERR_* switch, unrecovered). Neither is this recovery's
+// job; see the notes beside their forwarders in pending_bodies.cpp.
+//
+// MISMATCH under `/c /O2 /Ob0 /Gy /GR- /GX` (the flag set `measure` picks),
+// 96/178 instructions positionally, 0.986 similar - every call, branch and
+// field access agrees; what does not is which callee-saved register holds
+// `this` and which holds the constant zero. The image keeps `this` in edi
+// and the zero it stores into cleared fields and compares pointers against
+// in ebp; this body's register allocator gives `this` to ebp and the zero
+// to ebx instead, which is the same register-allocation-order puzzle
+// `Win::init_class` documents above at length and never fully resolves -
+// no field order, `nullptr`-vs-`0` spelling or flag set tried here moves
+// it. Left as the correct shape rather than ground further, per the task
+// that added this call site: a running program past this point is the
+// deliverable, not the last two registers.
+Status: Complete
+*/
+int DDInit::init(int width, int height, int depth, int tgl) {
+    Buffer buf;
+
+    if (depth == 0) {
+        return 0;
+    }
+    if (HandleMain == nullptr) {
+        return 7;
+    }
+
+    if (locked_surface_ != nullptr && locked_bits_ != nullptr) {
+        locked_surface_->Unlock(locked_bits_);
+        locked_bits_ = nullptr;
+    }
+    if (surf_ != nullptr) {
+        surf_->RestoreDisplayMode();
+        surf_->Release();
+        surf_ = nullptr;
+    }
+    if (hwnd_ != nullptr) {
+        DestroyWindow(hwnd_);
+        hwnd_ = nullptr;
+        UnregisterClassA(DDInitClassName, WinInstance);
+    }
+    locked_surface_ = nullptr;
+    DDInitRefreshScreenMetrics();
+
+    if (width == 0 || height == 0) {
+        width = GetSystemMetrics(SM_CXSCREEN);
+        height = GetSystemMetrics(SM_CYSCREEN);
+    }
+
+    HRESULT hr = (surf_ == nullptr)
+        ? DirectDrawCreate(nullptr, reinterpret_cast<LPDIRECTDRAW *>(&surf_), nullptr)
+        : DD_OK;
+    if (hr == DD_OK) {
+        hr = surf_->SetCooperativeLevel(HandleMain, DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE);
+    }
+    if (hr == DD_OK) {
+        hr = surf_->SetDisplayMode(width, height, depth);
+    }
+    if (hr == DD_OK) {
+        hr = surf_->SetCooperativeLevel(nullptr, DDSCL_NORMAL);
+    }
+    if (hr != DD_OK) {
+        report_error(hr);
+        return 0x12;
+    }
+
+    WinScreenWidth = width;
+    WinScreenHeight = height;
+
+    if (tgl != 0) {
+        ScreenBuffer.init(width, height, 0, 0);
+        ScreenBuffer.fill(0);
+        if (buf.load_pcx("logo.pcx", PaletteActive, 10, 0xEC) == 0) {
+            buf.copy(&ScreenBuffer, 0, 0,
+                     (ScreenBuffer.dib_.bmiHeader.biWidth - buf.dib_.bmiHeader.biWidth) / 2,
+                     (buf.dib_.bmiHeader.biHeight - ScreenBuffer.dib_.bmiHeader.biHeight) / 2,
+                     buf.dib_.bmiHeader.biWidth,
+                     -buf.dib_.bmiHeader.biHeight);
+        }
+    }
+
+    Win::flip(nullptr);
+    return 0;
 }
 
 // `JackalClass` is at 0x00696DC8 and again at 0x00696DD4 - the image holds
