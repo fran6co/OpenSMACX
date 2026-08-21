@@ -1,17 +1,22 @@
 Working rules and the levers this tree has already measured. Read before starting.
 
 IF YOU ARE IN A GIT WORKTREE (your own copy of the repo, not
-/home/fran6co/code/OpenSMACX), two things are different and BOTH are required
-before any measurement will work:
+/home/fran6co/code/OpenSMACX), run this FIRST, before anything else:
 
-    export OPENSMACX_IMAGE=/home/fran6co/code/OpenSMACX/.opensmacx/game/terranx_original.exe
+    eval "$(bash /home/fran6co/code/OpenSMACX/tools/agent_setup.sh /home/fran6co/code/OpenSMACX)"
     uv run tools/osmx.py configure          # builds this worktree's own build/
 
-`.opensmacx/` is gitignored, so the pinned image is NOT in your worktree - every
-tool takes its path from that variable and will fail without it. `configure`
-writes `build/compile_commands.json`, which every measurement reads. Both were
-run end to end in a probe worktree before this brief was written; `measure`
-answered BYTE_EXACT there.
+`agent_setup.sh` exists because two agents in a row lost time to what this
+paragraph used to merely ASSERT. It fast-forwards your worktree to the root's
+HEAD - one worktree was branched 911 commits back and had none of the tools
+named below - and it exports `OPENSMACX_IMAGE`, because `.opensmacx/` is
+gitignored and the pinned image is therefore NOT in your worktree. `configure`
+then writes this worktree's OWN `build/compile_commands.json`, which every
+measurement reads; do not point that at the root's copy, because it names the
+root's paths and nothing in your worktree will match them.
+
+If `agent_setup.sh` refuses, read what it says: it will not fast-forward over
+uncommitted work, and the fix is to hand that diff back first.
 
 Working in a worktree is why you can edit freely: nothing you touch collides
 with another agent.
