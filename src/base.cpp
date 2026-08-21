@@ -393,6 +393,15 @@ Purpose: Find the best specialist available to the current base with more weight
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x005B9F20
+// RULED-OUT: `Base *base_current = BaseCurrent();` hoisted once above the loop
+//            - costs an extra stack slot (`sub esp, 8` instead of `push ecx`),
+//            which is worse (5/44 -> 6/44 agreeing but lower total similarity).
+//            The image re-reads BaseCurrent() from the global twice per
+//            iteration (before and after the has_tech call, since ecx isn't
+//            preserved across it) exactly as the two `(BaseCurrent())->`
+//            expressions already do; only the FIRST read is hoisted above the
+//            loop in the image, which no source reshuffle reproduced. Left at
+//            5/44 (0.889 similar, /O2 /Gy /GR- /Oy- /GX).
 Return Value: Best citizen id (always going to be 1, 4, or 6 based on default weights)
 Status: Complete
 */
@@ -2689,11 +2698,21 @@ Purpose: Determine whether the specified base is considered an objective.
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x0050BA00
+// LEVER: splitting `GameRules & X || Bases[base_id].event & Y` into two
+//        separate `if` statements (matching the image's two separate
+//        short-circuit branches instead of one `||`) moved 0.586 -> 0.762
+//        similar. has_fac()'s queue_count==0 argument already folds it down
+//        to the bitmask()+has_fac_built() call the image makes - `calls`
+//        agrees at exactly 1 (0x0050BA00, bitmask). Remaining divergence is
+//        prologue/epilogue register scheduling, not chased further.
 Return Value: Is base an objective? true/false
 Status: Complete
 */
 BOOL __cdecl is_objective(int base_id) {
-    if (GameRules & RULES_SCN_VICT_ALL_BASE_COUNT_OBJ || Bases[base_id].event & BEVENT_OBJECTIVE) {
+    if (GameRules & RULES_SCN_VICT_ALL_BASE_COUNT_OBJ) {
+        return true;
+    }
+    if (Bases[base_id].event & BEVENT_OBJECTIVE) {
         return true;
     }
     if (GameRules & RULES_SCN_VICT_SP_COUNT_OBJ) {
