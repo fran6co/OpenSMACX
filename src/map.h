@@ -368,7 +368,6 @@ inline Map *__cdecl map_loc(int x, int y) {
 void __cdecl temp_set(int x, int y, int temperature);
 void __cdecl climate_set(int x, int y, int climate);
 int __cdecl elev_at(int x, int y);
-int __cdecl alt_natural(int x, int y);
 void __cdecl alt_set_both(int x, int y, int altitude_natural);
 int __cdecl alt_get_ocean_detail(int x, int y, int corner, int point);
 void __cdecl owner_set(int x, int y, int faction_id);
@@ -455,13 +454,11 @@ MEASURED inline BOOL __cdecl on_map(int x, int y) {
 }
 
 MEASURED inline int __cdecl xrange(int x) {
-    if (!MapIsFlat) {
-        if (x >= 0) {
-            if (x >= (int)MapLongitudeBounds) {
-                x -= MapLongitudeBounds;
-            }
-        } else {
+    if (!(MapIsFlat & 1)) {
+        if (x < 0) {
             x += MapLongitudeBounds;
+        } else if (x >= (int)MapLongitudeBounds) {
+            x -= MapLongitudeBounds;
         }
     }
     return x;
@@ -481,6 +478,15 @@ MEASURED inline int __cdecl alt_detail_at(int x, int y) {
 
 MEASURED inline void __cdecl alt_put_detail(int x, int y, int detail) {
     map_loc(x, y)->contour = detail;
+}
+
+MEASURED inline int __cdecl alt_natural(int x, int y) {
+    uint32_t contour = alt_detail_at(x, y) - MapSeaLevel;
+    uint32_t natural = ALT_3_LEVELS_ABOVE_SEA;
+    while (contour < AltNatural[natural] && natural) {
+        natural--;
+    }
+    return natural;
 }
 
 MEASURED inline int __cdecl region_at(int x, int y) {
@@ -523,7 +529,8 @@ MEASURED inline int __cdecl bit_at(int x, int y) {
 
 MEASURED inline void __cdecl synch_bit(int x, int y, int faction_id) {
     if (faction_id) {
-        map_loc(x, y)->bit_visible[faction_id - 1] = bit_at(x, y);
+        Map *tile = map_loc(x, y);
+        tile->bit_visible[faction_id - 1] = tile->bit;
     }
 }
 

@@ -153,6 +153,17 @@ BOOL __cdecl auto_contact() {
 /*
 Purpose: Determine if the overall dominant human faction is a minor threat based on base count.
 // ORIGINAL: 0x00539B70 ?great_beelzebub@@YAHHH@Z 0x00539B70-0x00539BF2
+// LEVER: bases_threat was uint32_t; the image's `cmp edx,4; jge` and
+//        `cmp [current_num_bases],edx; jle` are both SIGNED compares. Made
+//        bases_threat `int` and cast `(int)current_num_bases` at its one use
+//        here (left the shared PlayerData field uint32_t - too many other
+//        callers to retype safely) - moved 35/43 -> 37/43 agreeing.
+//        RULED-OUT: splitting `int t=TurnCurrentNum; t=(t+25)/50;` and
+//        `(25+TurnCurrentNum)/50` to break the compiler's mov+lea fold of the
+//        image's separate `mov edx,[TurnCurrentNum]; add edx,0x19` - both tie
+//        at 37/43, no change. Remaining divergence is `test al,dl` vs
+//        `test dl,al` (is_human's bit test, register/operand-order only) and
+//        the mov+lea fold itself - not chased per the no-register-only rule.
 // size      130 bytes
 // prototype BOOL (__cdecl ?great_beelzebub@@YAHHH@Z)(int factionID, int tgl)
 // callers   2   call targets   0
@@ -164,11 +175,11 @@ Status: Complete
 */
 BOOL __cdecl great_beelzebub(int faction_id, BOOL is_aggressive) {
     if (is_human(faction_id) && FactionRankings[7] == faction_id) {
-        uint32_t bases_threat = (TurnCurrentNum + 25) / 50;
+        int bases_threat = (TurnCurrentNum + 25) / 50;
         if (bases_threat < 4) {
             bases_threat = 4;
         }
-        if (PlayersData[faction_id].current_num_bases > bases_threat
+        if ((int)PlayersData[faction_id].current_num_bases > bases_threat
             && (PlayersData[faction_id].diff_level > DLVL_SPECIALIST
                 || GameRules & RULES_INTENSE_RIVALRY || is_aggressive)) {
             return true;
@@ -178,7 +189,7 @@ BOOL __cdecl great_beelzebub(int faction_id, BOOL is_aggressive) {
 }
 
 /*
-Purpose: Determine if the specified faction is considered a threat based on the game state and 
+Purpose: Determine if the specified faction is considered a threat based on the game state and
          ranking.
 // ORIGINAL: 0x00539C00 ?great_satan@@YAHHH@Z 0x00539C00-0x00539D3B
 // LEVER: the image never calls great_beelzebub - its whole body is open-coded
@@ -249,6 +260,21 @@ Purpose: Check whether the specified faction is nearing the diplomatic victory r
          able to call a Supreme Leader vote. Optional 2nd parameter (0/-1 to disable) that specifies
          a faction to skip if they have a pact with faction from the 1st parameter.
 // ORIGINAL: 0x00539D40 ?aah_ooga@@YAHHH@Z 0x00539D40-0x00539E3E
+// LEVER: the image calls council_votes(player) UNCONDITIONALLY at the top of
+//        each second-loop iteration and stores its result into the recycled
+//        `faction_id` stack slot, before testing `player != pact_faction_id`
+//        - the source must hoist `int votes = council_votes(player);` out of
+//        the `&&` chain, not call it inline inside the condition. Also fixed
+//        `pact_faction_id <= 0` -> `!pact_faction_id` (image tests only
+//        equality: `test esi,esi; je`, never a signed range check) and made
+//        the loop counters/`votes_total` plain `int` to match the image's
+//        signed `jl` compares (was `uint32_t`, gave `jb`/`jge`->`jae`).
+//        Moved 25/94 -> 34/94 agreeing. Remaining divergence is the image
+//        caching `faction_id` in ebx across the whole function (this tree
+//        re-reads it from the stack each use) and a has_tech/Technology[]
+//        address strength-reduction (lea+shl pointer walk) the image performs
+//        that this tree's O2 does differently - both register-allocation /
+//        instruction-selection only, not chased per the no-register-only rule.
 // symbol    ?aah_ooga@@YAIHH@Z
 // size      254 bytes
 // prototype 
@@ -263,21 +289,22 @@ uint32_t __cdecl aah_ooga(int faction_id, int pact_faction_id) {
     if (!(GameRules & RULES_VICTORY_DIPLOMATIC)) {
         return 0; // Diplomatic Victory not allowed
     }
-    uint32_t votes_total = 0;
-    for (uint32_t i = 1; i < MaxPlayerNum; i++) {
+    int votes_total = 0;
+    for (int i = 1; i < MaxPlayerNum; i++) {
         votes_total += council_votes(i);
     }
     uint32_t faction_id_ret = 0;
     for (int player = 1; player < MaxPlayerNum; player++) {
+        int votes = council_votes(player);
         if (player != pact_faction_id
-            && (pact_faction_id <= 0 || !has_treaty(player, pact_faction_id, DTREATY_PACT)
+            && (!pact_faction_id || !has_treaty(player, pact_faction_id, DTREATY_PACT)
                 || !(GameRules & RULES_VICTORY_COOPERATIVE))) {
             int proposal_preq = Proposal[PROP_UNITE_SUPREME_LEADER].preq_tech;
             if ((has_tech(proposal_preq, faction_id)
-                || (proposal_preq >= 0 
+                || (proposal_preq >= 0
                     && (has_tech(Technology[proposal_preq].preq_tech_1, faction_id)
                     || has_tech(Technology[proposal_preq].preq_tech_2, faction_id))))
-                && council_votes(player) * 2 >= votes_total && (!faction_id_ret || player == faction_id)) {
+                && votes * 2 >= votes_total && (!faction_id_ret || player == faction_id)) {
                 faction_id_ret = player;
             }
         }
@@ -336,6 +363,20 @@ BOOL __cdecl climactic_battle() {
 /*
 Purpose: Determine if the specified AI faction is at the game climax based on certain conditions.
 // ORIGINAL: 0x00539EF0 ?at_climax@@YAHH@Z 0x00539EF0-0x0053A022
+// LEVER: the first loop's corner_market_turn/has_treaty check read
+//        `PlayersData[faction_id].corner_market_turn`, a loop-invariant that
+//        made the image's per-i pointer walk (add ecx,0x20cc each iteration,
+//        matching climactic_battle's sibling loop) unreachable from this
+//        source. Fixed to `PlayersData[i].corner_market_turn`, matching
+//        climactic_battle's `is_human(i) && PlayersData[i].corner_market_turn`
+//        shape - similarity rose 0.888->0.957 (bytes 241/306 vs relocations).
+//        RULED-OUT: hoisting `!(GameRules & RULES_VICTORY_COOPERATIVE)` into
+//        a local before the loop, to match the image's `mov edx,[GameRules]`
+//        once before the loop reused via `test dh,0x10` inside it - tied at
+//        5/105 agreeing, no change. Remaining divergence is a near-total
+//        register swap (image keeps faction_id in edi/loop-i in esi, this
+//        tree the reverse) cascading from instruction 4 - register
+//        allocation only, not chased per the no-register-only rule.
 // size      306 bytes
 // prototype 
 // callers   6   call targets   3
@@ -354,7 +395,7 @@ BOOL __cdecl at_climax(int faction_id) {
         return true;
     }
     for (uint32_t i = 1; i < MaxPlayerNum; i++) {
-        if (i != faction_id && PlayersData[faction_id].corner_market_turn > TurnCurrentNum
+        if (i != faction_id && PlayersData[i].corner_market_turn > TurnCurrentNum
             && (!has_treaty(faction_id, i, DTREATY_PACT)
                 || !(GameRules & RULES_VICTORY_COOPERATIVE))) {
             return true;
@@ -699,6 +740,16 @@ void __cdecl set_treaty(int faction_id, int faction_id_with, int treaty, BOOL se
 /*
 Purpose: Set or unset the diplomatic agenda for the specified faction with another faction.
 // ORIGINAL: 0x0055BBA0 ?set_agenda@@YAXHHHH@Z 0x0055BBA0-0x0055BBF1
+// RULED-OUT: the image folds `diplo_agenda[faction_id_with] |= agenda` into
+//            one `or dword ptr [eax*4+addr], ecx`; this tree's O2 always
+//            splits it into load/lea/or/store even with a cached
+//            `int *diplo = &PlayersData[faction_id].diplo_agenda[...]`
+//            pointer (worse: 2/31) or an explicit `x = x | y` assignment
+//            (ties at 14/31, no change) or a ternary/single-line if form
+//            (2/31). Plateaus at 14/31 agreeing (0.912 similar); the direct
+//            memory-operand fold looks like a register-allocation/addressing-
+//            mode choice this tree's compile does not make, not chased
+//            further per the no-register-only rule.
 // size      81 bytes
 // prototype void (__cdecl ?set_agenda@@YAXHHHH@Z)(int factionID, int factionIDWith, int agenda, int set)
 // callers   10   call targets   0
@@ -736,6 +787,20 @@ int __cdecl has_agenda(int faction_id, int faction_id_with, int agenda) {
 /*
 Purpose: Determine if the specified faction want to attack the target faction.
 // ORIGINAL: 0x0055BC80 ?wants_to_attack@@YAHHHH@Z 0x0055BC80-0x0055C42B
+// LEVER: the image's `sub esp, 0x134` (308 bytes) did not fit the committed
+//        `region_top_base_count[8]` (32 bytes) plus the ~52 bytes of scalar
+//        locals seen elsewhere in the frame - 256 + 52 = 308 only if the
+//        array is sized MaxRegionLandNum (64), matching a stray copy-paste
+//        of the outer loop bound into the array size. Resized the array (see
+//        the BUG IN THE ORIGINAL comment at its declaration) and dropped the
+//        prior `= {0}` zero-init the same comment had added, since the image
+//        never zeroes it either - moved this tree's own frame from 0x58 to
+//        0x138 (4 bytes over the image's 0x134, not chased). Not otherwise
+//        landed close to byte-exact: this is a 650-instruction function and
+//        a near-total register-role swap (faction_id in edi vs this tree's
+//        ebx) cascades from instruction 4 onward: MISMATCH, left for a
+//        dedicated pass. call_diff agrees (0x0050BA00/great_beelzebub/
+//        great_satan call counts all match).
 // size      1963 bytes
 // prototype int (__cdecl ?wants_to_attack@@YAHHHH@Z)(uint32_t factionID, uint32_t factionIDTarget, int factionIDUnk)
 // callers   9   call targets   3
@@ -818,8 +883,13 @@ BOOL __cdecl wants_to_attack(int faction_id, int faction_id_tgt, int faction_id_
     if (PlayersData[faction_id].ai_fight < 0 && !unk_tgl && FactionRankings[7] != faction_id_tgt) {
         return false;
     }
-    uint32_t region_top_base_count[8] = { 0 }; // bug fix: initialize to zero, original doesn't and
-    for (int region = 1; region < MaxRegionLandNum; region++) { // compares arbitrary data on stack
+    // BUG IN THE ORIGINAL: this array is sized by MaxRegionLandNum (matching the stack frame's
+    // 0x134-byte allocation) even though only indices 1..MaxPlayerNum-1 are ever written by the
+    // loop below, and it is never zero-initialized - reproduced here rather than fixed, since the
+    // shipped code reads whatever was on the stack for region_top_base_count[0] and any faction_id
+    // that is compared before this array is populated for that index.
+    uint32_t region_top_base_count[MaxRegionLandNum];
+    for (int region = 1; region < MaxRegionLandNum; region++) {
         for (uint32_t f = 1; f < MaxPlayerNum; f++) {
             uint32_t total_bases = PlayersData[f].region_total_bases[region];
             if (total_bases > region_top_base_count[f]) {
@@ -1768,6 +1838,21 @@ void __cdecl compute_faction_modifiers(int faction_id) {
 /*
 Purpose: Calculate the social engineering effect modifiers for the specified faction.
 // ORIGINAL: 0x005B4210 ?social_calc@@YAXPAHPAHHHH@Z 0x005B4210-0x005B44C9
+// RULED-OUT: hoisting `base_project(SP_NETWORK_BACKBONE)`/`base_project(
+//            SP_CLONING_VATS)` into locals ahead of the loop, keeping the
+//            per-branch `Bases[base_id].faction_id_current == faction_id`
+//            checks in place (the image loads both project base ids ONCE
+//            via `mov ecx,[0x9a6574]`/`mov esi,[0x9a6568]` before the cat/eff
+//            loop, then reuses them at both the SE_THOUGHT_CONTROL and
+//            SOCIAL_CAT_VALUES/SE_POWER sites, but re-checks Bases[]/
+//            faction_id_current locally each time) - agreeing dropped 4->3,
+//            no improvement. `store_order` shows this tree spills 24 locals
+//            to the stack against the image's 16, so every jump target
+//            downstream of instruction ~10 is offset and reads as a
+//            mismatch even where the branch shape matches - a stack-layout/
+//            register-pressure divergence, not a single fixable bug found so
+//            far. Plateaus at 10/244 agreeing (0.155 similar); not chased
+//            further given the size of the function.
 // symbol    ?social_calc@@YAXPAUSocialCategory@@PAUSocialEffect@@HHH@Z
 // size      697 bytes
 // prototype void (__cdecl ?social_calc@@YAXPAHPAHHHH@Z)(social_category* category, social_effect* effect, uint32_t factionID, BOOL toggle, BOOL isQuickCalc)
@@ -1887,25 +1972,12 @@ Purpose: Calculate the cost of the social upheaval for the specified faction.
 Return Value: Social upheaval cost
 Status: Complete
 */
-uint32_t __cdecl social_upheaval(int faction_id, SocialCategory *category_new) {
-    uint32_t change_count = 0;
-    for (int i = 0; i < MaxSocialCatNum; i++) {
-        if (*(&category_new->politics + i) != 
-            *(&PlayersData[faction_id].soc_category_active.politics + i)) {
-            change_count++;
-        }
-    }
-    if (!change_count) {
-        return 0;
-    }
-    change_count++;
-    uint32_t diff_lvl = is_human(faction_id) ? PlayersData[faction_id].diff_level : DLVL_LIBRARIAN;
-    uint32_t cost = change_count * change_count * change_count * diff_lvl;
-    if (is_alien_faction(faction_id)) {
-        cost += cost / 2;
-    }
-    return cost;
-}
+// BODY IN faction.h, as `MEASURED inline`: social_ai's own `calls` list
+// (0x004EF090 0x00539D40 0x00581260 0x005B4210 0x005B4600 0x005B9F20
+// 0x005FCB20) has no 0x005B4550 in it, so both of its call sites are
+// inlined in the image, not real calls - even though this address is a
+// real out-of-line body in its own right. The marker stays here because
+// that is where the catalogue reads it.
 
 /*
 Purpose: Check to see whether the faction can utilize a specific social category and model.
@@ -1930,6 +2002,20 @@ BOOL __cdecl society_avail(int soc_category, int soc_model, int faction_id) {
 /*
 Purpose: Calculate an AI faction's social engineering.
 // ORIGINAL: 0x005B4790 ?social_ai@@YAXHHHHHPAH@Z 0x005B4790-0x005B5612
+// LEVER: call_diff showed 9 vs the image's 7 - this body's two calls to
+//        social_upheaval() are not in the image's own `calls` list below
+//        (no 0x005B4550), so both are inlined there even though 0x005B4550
+//        also exists as a real out-of-line body. Moved social_upheaval to
+//        faction.h as `MEASURED inline` (see its ORIGINAL marker, which now
+//        points there) per the "helper the image inlines" lever.
+//        RULED-OUT: `MEASURED __forceinline` on the same definition - call
+//        count stayed 9 vs 7 under every flag set `call_diff` tries, so this
+//        tree's O2 will not fold social_upheaval's 4-iteration loop in
+//        either spelling; reverted to plain `MEASURED inline` since it did
+//        not help. This is a 1353-instruction function ("likely has multiple
+//        issues due to length + complexity" per its own status line);
+//        MISMATCH at 24/1353 agreeing, left for a dedicated pass rather than
+//        chased further here.
 // symbol    ?social_ai@@YAXHHHHHPAUSocialCategory@@@Z
 // size      3714 bytes
 // prototype void (__cdecl ?social_ai@@YAXHHHHHPAH@Z)(int factionID, int growthVal, int techVal, int wealthVal, int powerVal, social_category* output)
@@ -2463,6 +2549,24 @@ Purpose: Calculate specified faction's best available weapon and armor ratings a
          fastest moving ground Veh chassis. Compare these capabilities to faction's best opponent
          capabilities based on current diplomacy.
 // ORIGINAL: 0x00560DD0 ?enemy_capabilities@@YAXH@Z 0x00560DD0-0x00561076
+// LEVER: call_diff showed this tree FEWER (8 vs 9) - the image calls
+//        veh_avail(BSC_MIND_WORMS,...) TWICE, once for the best_psi_offense
+//        ternary and again for best_psi_defense, rather than caching the
+//        result in one `has_worms` local and reusing it. Un-cached both call
+//        sites to match. Also every "keep the running max" comparison in the
+//        function compiles non-strict in the image (`jl`/`jg` skip-the-store,
+//        i.e. store on >=/<=) where this tree had strict `>`/`<`: fixed
+//        weap_val/best_psi_offense, weap_val/best_weapon_value, arm_val/
+//        best_psi_defense, arm_val/best_armor_value, Chassis[i].speed/
+//        best_land_speed, and all five enemy_best_X vs PlayersData[j].best_X
+//        comparisons in the closing loop (storing the same value back on a
+//        tie is behaviourally inert, so this only affects codegen). Moved
+//        0.430 -> 0.606 similar at the winning flag set. Remaining
+//        divergence is the closing loop's has_treaty(i,j,*) reuse: the image
+//        loads `PlayersData[i].diplo_treaties[j]` ONCE and reuses the byte
+//        for all four DTREATY_* bit tests plus a `+=4`-per-j pointer walk;
+//        this tree's O2 recomputes the address per has_treaty() call site -
+//        register/CSE allocation, not chased per the no-register-only rule.
 // size      678 bytes
 // prototype void (__cdecl ?enemy_capabilities@@YAXH@Z)(int factionID)
 // callers   3   call targets   4
@@ -2473,32 +2577,31 @@ Return Value: n/a
 Status: Complete - testing / WIP
 */
 void __cdecl enemy_capabilities(int faction_id) {
-    BOOL has_worms = veh_avail(BSC_MIND_WORMS, faction_id, -1);
-    PlayersData[faction_id].best_psi_offense = has_worms 
+    PlayersData[faction_id].best_psi_offense = veh_avail(BSC_MIND_WORMS, faction_id, -1)
         ? weap_strat(WPN_PSI_ATTACK, faction_id) : 0;
     PlayersData[faction_id].best_weapon_value = 1;
     for (int i = 0; i < MaxWeaponNum; i++) {
         if (has_tech(Weapon[i].preq_tech, faction_id) && Weapon[i].offense_rating < 99) {
             int weap_val = weap_strat(i, faction_id);
-            if (Weapon[i].offense_rating < 0 && weap_val 
-                > PlayersData[faction_id].best_psi_offense) {
+            if (Weapon[i].offense_rating < 0 && weap_val
+                >= PlayersData[faction_id].best_psi_offense) {
                 PlayersData[faction_id].best_psi_offense = weap_val;
             }
-            if (weap_val > PlayersData[faction_id].best_weapon_value) {
+            if (weap_val >= PlayersData[faction_id].best_weapon_value) {
                 PlayersData[faction_id].best_weapon_value = weap_val;
             }
         }
     }
-    PlayersData[faction_id].best_psi_defense = has_worms 
+    PlayersData[faction_id].best_psi_defense = veh_avail(BSC_MIND_WORMS, faction_id, -1)
         ? arm_strat(ARM_PSI_DEFENSE, faction_id) : 0;
     PlayersData[faction_id].best_armor_value = 1;
     for (i = 0; i < MaxArmorNum; i++) {
         if (has_tech(Armor[i].preq_tech, faction_id)) {
             int arm_val = arm_strat(i, faction_id);
-            if (Armor[i].defense_rating < 0 && arm_val > PlayersData[faction_id].best_psi_defense) {
+            if (Armor[i].defense_rating < 0 && arm_val >= PlayersData[faction_id].best_psi_defense) {
                 PlayersData[faction_id].best_psi_defense = arm_val;
             }
-            if (arm_val > PlayersData[faction_id].best_armor_value) {
+            if (arm_val >= PlayersData[faction_id].best_armor_value) {
                 PlayersData[faction_id].best_armor_value = arm_val;
             }
         }
@@ -2506,7 +2609,7 @@ void __cdecl enemy_capabilities(int faction_id) {
     PlayersData[faction_id].best_land_speed = 1;
     for (i = 0; i < MaxChassisNum; i++) {
         if (has_tech(Chassis[i].preq_tech, faction_id) && Chassis[i].triad == TRIAD_LAND) {
-            if (Chassis[i].speed > PlayersData[faction_id].best_land_speed) {
+            if (Chassis[i].speed >= PlayersData[faction_id].best_land_speed) {
                 PlayersData[faction_id].best_land_speed = Chassis[i].speed;
             }
         }
@@ -2529,28 +2632,28 @@ void __cdecl enemy_capabilities(int faction_id) {
                     || (i == 1 && !has_treaty(i, j, DTREATY_TREATY) 
                         && has_treaty(i, j, DTREATY_COMMLINK))
                     || (i == 2 && has_treaty(i, j, DTREATY_COMMLINK)) || (i == 3))) {
-                if (PlayersData[faction_id].enemy_best_weapon_value 
-                    < PlayersData[j].best_weapon_value) {
-                    PlayersData[faction_id].enemy_best_weapon_value 
+                if (PlayersData[faction_id].enemy_best_weapon_value
+                    <= PlayersData[j].best_weapon_value) {
+                    PlayersData[faction_id].enemy_best_weapon_value
                         = PlayersData[j].best_weapon_value;
                 }
-                if (PlayersData[faction_id].enemy_best_armor_value 
-                    < PlayersData[j].best_armor_value) {
-                    PlayersData[faction_id].enemy_best_armor_value 
+                if (PlayersData[faction_id].enemy_best_armor_value
+                    <= PlayersData[j].best_armor_value) {
+                    PlayersData[faction_id].enemy_best_armor_value
                         = PlayersData[j].best_armor_value;
                 }
-                if (PlayersData[faction_id].enemy_best_land_speed 
-                    < PlayersData[j].best_land_speed) {
+                if (PlayersData[faction_id].enemy_best_land_speed
+                    <= PlayersData[j].best_land_speed) {
                     PlayersData[faction_id].enemy_best_land_speed = PlayersData[j].best_land_speed;
                 }
-                if (PlayersData[faction_id].enemy_best_psi_offense 
-                    < PlayersData[j].best_psi_offense) {
-                    PlayersData[faction_id].enemy_best_psi_offense 
+                if (PlayersData[faction_id].enemy_best_psi_offense
+                    <= PlayersData[j].best_psi_offense) {
+                    PlayersData[faction_id].enemy_best_psi_offense
                         = PlayersData[j].best_psi_offense;
                 }
-                if (PlayersData[faction_id].enemy_best_psi_defense 
-                    < PlayersData[j].best_psi_defense) {
-                    PlayersData[faction_id].enemy_best_psi_defense 
+                if (PlayersData[faction_id].enemy_best_psi_defense
+                    <= PlayersData[j].best_psi_defense) {
+                    PlayersData[faction_id].enemy_best_psi_defense
                         = PlayersData[j].best_psi_defense;
                 }
             }
