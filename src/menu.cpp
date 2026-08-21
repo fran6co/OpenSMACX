@@ -22,6 +22,52 @@
 #include "filewin.h"
 #include "win.h"
 
+const uint32_t MenuPrimaryVtable = 0x006700B0;
+const uint32_t MenuBufferVtable = 0x006700A8;
+
+/*
+Purpose: Construct the GraphicWin base and the embedded Spot, install
+         Menu's own vtables, then zero the scalar fields and the 15-entry
+         entries_ table.
+// ORIGINAL: 0x005FAC60 ??0Menu@@QAE@XZ 0x005FAC60-0x005FACF6;0x00662CF0-0x00662D02
+// symbol    ?construct@Menu@@QAEPAV1@XZ
+// size      150 bytes
+// prototype void (__thiscall ??0Menu@@QAE@XZ)(Menu* this)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok;frame
+// calls     0x005D4CF0 0x005FA860
+// notes     field_A1C_ and field_A28_ are never touched by this constructor
+//        (the image writes proc_, count_, field_A20_ and field_A24_ only).
+// RULED-OUT: best reached is 10/38, 0.900 similar (best of 10 flag sets,
+//        `/c /O2 /Gy /GR- /GX`). Same residual as NetMsg::construct(),
+//        MultiDebug::construct() and WorldWin::construct(): image has
+//        `push ecx` at the same position this body has `sub esp, 8` - a
+//        stack-frame-size difference from spill-slot count, not control
+//        flow or field order. Not chased further.
+Return Value: n/a
+Status: Complete
+*/
+Menu *Menu::construct() {
+    GraphicWin::construct();
+    new (&spot_) Spot();
+    uint32_t *const object = reinterpret_cast<uint32_t *>(this);
+    object[0x000 / 4] = MenuPrimaryVtable;
+    object[0x444 / 4] = MenuBufferVtable;
+    proc_ = nullptr;
+    count_ = 0;
+    field_A20_ = 0;
+    field_A24_ = 0xFFFFFFFF;
+    for (int i = 0; i < 15; i++) {
+        entries_[i].id = -1;
+        entries_[i].text = nullptr;
+        entries_[i].flags = 0;
+        entries_[i].mnemonic = nullptr;
+        entries_[i].pull_down = nullptr;
+    }
+    return this;
+}
+
 /*
 Purpose: Set the callback invoked for menu events.
 // ORIGINAL: 0x005FB820 ?set_menu_proc@Menu@@QAEXP6AXH@Z@Z 0x005FB820-0x005FB82D BYTE_EXACT

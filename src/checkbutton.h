@@ -32,6 +32,12 @@
 class CheckButton : public GraphicWin {
  public:
   CheckButton() { ; }
+  // NOT a constructor: the image carries no SEH frame at 0x00633750 (no
+  // `frame` flag), whereas a REAL derived-class constructor calling
+  // `GraphicWin::construct()` picks one up under /GX - see FlatButton's
+  // and PullDown's own notes (flatbutton.cpp, pulldown.cpp) for the full
+  // measurement. An ordinary method drops it, same as Win/GraphicWin/Log.
+  CheckButton *construct();
   // 0x004B3EC0 is not recovered: a
   // pending_bodies forwarder, because an empty inline stub emits
   // nothing and the deleting destructor needs a `call rel32`.

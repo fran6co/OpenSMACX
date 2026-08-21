@@ -51,10 +51,12 @@ class NetMsg : public Popup {
   void close();
 
  private:
-  uint32_t field_537C_;  // 0x537C
-  uint32_t field_5380_;  // 0x5380
-  int32_t field_5384_;
-  uint8_t unmapped_5388_[0x538C - 0x5388];
+  uint32_t field_537C_;  // 0x537C, seeded from the constructor's a1
+  uint32_t field_5380_;  // 0x5380, seeded from the constructor's a2
+  int32_t field_5384_;   // 0x5384, seeded 0
+  int32_t field_5388_;   // 0x5388, seeded from the constructor's a3 - was
+                          // `unmapped_5388_[4]`; the constructor stores a
+                          // real dword there (`mov [esi+0x5388], edx`).
   Time timer_;
 };
 

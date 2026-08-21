@@ -105,26 +105,25 @@ static const size_t FontSizeTableCount = 12;
  */
 class FontQueue {
  public:
-  FontQueue() { ; }
+  FontQueue();
   ~FontQueue();
 
  private:
   uint8_t fonts_[3 * 0x28];
 
-  // Storage the image proves is here: its own methods reach 0x9C.
-  // Extent only - this class carries no size assertion, and the bound is a floor.
-  // 9 member(s) from the IDA database, 0 named; it starts a member at 0x78, which is where src/ ends.
-
-  uint32_t field_78_;  // 0x78
-  uint32_t field_7C_;  // 0x7C
-  uint32_t field_80_;  // 0x80
-  uint32_t field_84_;  // 0x84
-  uint32_t field_88_;  // 0x88
-  uint32_t field_8C_;  // 0x8C
-  uint32_t field_90_;  // 0x90
-  uint32_t field_94_;  // 0x94
-  uint32_t field_98_;  // 0x98
+  // Three parallel per-slot arrays, not 9 scalars: the constructor at
+  // 0x00559290 walks them with ONE index and a single stride-4 pointer -
+  // `base = this + 0x84; for (i = 0; i < 3; i++) { base[-0xc] = -999;
+  // base[0] = 0; base[0xc] = i; base += 4; }` - which only makes sense as
+  // three int[3] arrays 0xC (3 * sizeof(int)) apart, at 0x78/0x84/0x90.
+  int slot_age_[3];         // 0x78, seeded -999 (never-used sentinel)
+  uint32_t slot_unused_[3]; // 0x84, seeded 0
+  uint32_t slot_index_[3];  // 0x90, seeded to its own slot index
 };
+
+#if defined(_M_IX86) || defined(__i386__)
+static_assert(sizeof(FontQueue) == 0x9C, "FontQueue layout must match the legacy ABI");
+#endif
 
 #include "vector_teardown.h"
 extern const void *const FontQueueElementTeardown;

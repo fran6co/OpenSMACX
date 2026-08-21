@@ -34,17 +34,21 @@ class Log {
   // to run the destructor if construction throws - the image has none, so
   // the original reached this some other way. An ordinary member function
   // is just a call, and drops the frame entirely. // 00625FC0
-  void construct(LPCSTR input) {
+  Log *construct(LPCSTR input) {
       log_file_ = nullptr;
       if (input) {
-          size_t len = strlen(input) + 1;
-          log_file_ = (LPSTR)mem_get(len);
-          if (log_file_) {
-              log_file_[0] = '\0';
+          void *buf = mem_get(strlen(input) + 1);
+          log_file_ = (LPSTR)buf;
+          if (buf) {
+              *(char *)buf = '\0';
               strcat(log_file_, input);
-              reset();
+              FILE *file = env_open(input, "wt");
+              if (file) {
+                  fclose(file);
+              }
           }
       }
+      return this;
   }
   MEASURED ~Log() {
       if (log_file_) {

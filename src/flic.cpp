@@ -19,6 +19,92 @@
 #include "flic.h"
 
 /*
+Purpose: Construct the embedded Buffer and Palette (the class's only two
+         non-POD members, in declaration order - no explicit statement
+         reaches either), then zero every scalar/pointer field the image
+         zeroes.
+// ORIGINAL: 0x00629D60 ??0Flic@@QAE@XZ 0x00629D60-0x00629DE2;0x00663320-0x00663335 BYTE_EXACT
+// size      130 bytes
+// prototype void (__thiscall ??0Flic@@QAE@XZ)(Flic* this)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok;frame
+// calls     0x005D7210 0x005FE2A0
+Return Value: n/a
+Status: Complete
+*/
+Flic::Flic() {
+    field_5AC_ = 0;
+    field_5B0_ = 0;
+    field_5B4_ = 0;
+    file_ = nullptr;
+    field_A10_[0] = 0;
+    buffer2_ = nullptr;
+    field_0_ = 0;
+    field_5A4_ = 0;
+    field_59C_ = 0;
+    field_5A0_ = 0;
+}
+
+/*
+Purpose: Release the open file (if any) and zero the same fields close()
+         zeroes.
+// ORIGINAL: 0x00629DF0 ?close@Flic@@QAEXXZ 0x00629DF0-0x00629E44 BYTE_EXACT
+// size      84 bytes
+// prototype void (__thiscall ?close@Flic@@QAEXXZ)(Flic* this)
+// callers   11   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00645598
+Return Value: n/a
+Status: Complete
+*/
+void Flic::close() {
+    FILE *file = file_;
+    field_5AC_ = 0;
+    field_5B0_ = 0;
+    field_5B4_ = 0;
+    field_A10_[0] = 0;
+    buffer2_ = nullptr;
+    field_0_ = 0;
+    field_5A4_ = 0;
+    field_59C_ = 0;
+    field_5A0_ = 0;
+    if (file) {
+        fclose(file);
+        file_ = nullptr;
+    }
+}
+
+/*
+Purpose: Close the file, then tear down the embedded Palette and Buffer in
+         reverse declaration order - both automatic, no explicit statement
+         but the `close()` call.
+// ORIGINAL: 0x004327A0 ??1Flic@@QAE@XZ 0x004327A0-0x004327F8;0x00653420-0x00653443
+// size      88 bytes
+// prototype void (__thiscall ??1Flic@@QAE@XZ)(Flic* this)
+// callers   0   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok;frame
+// calls     0x00629DF0 0x005D7410 0x005FE2E0
+// RULED-OUT: best reached is 13/25 instructions, 0.980 similar (best of 10
+//        flag sets, `/c /O2 /Ob0 /Gy /GR- /Oy- /GX`) - one single missing
+//        instruction (`tools/listing_diff.py`): the image stores a SECOND
+//        EH unwind-state byte (`mov byte ptr [ebp-4], 0`) right after
+//        `close()` returns, transitioning from "everything still needs
+//        teardown" to "only the two subobjects do". This tree's compiled
+//        body never emits that second transition - compiler-generated EH
+//        bookkeeping with no corresponding source statement to write, not
+//        reachable by changing the body. Left as `close();`, the direct
+//        transcription of the one real call in this function.
+Return Value: n/a
+Status: Complete
+*/
+Flic::~Flic() {
+    close();
+}
+
+/*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
 // ORIGINAL: 0x0062A710 ?UNK4@Flic@@QAEXXZ 0x0062A710-0x0062A711 BYTE_EXACT
 // size      1 bytes

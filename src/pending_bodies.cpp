@@ -239,13 +239,8 @@ void Console::construct(int a1) {
     PENDING_BODY(0x0050F460, pending)(this, nullptr, a1);
 }
 
-// ??0NetMsg@@QAE@HHH@Z at 0x0047ACF0 and ??0PlanWin@@QAE@H@Z at 0x0048BCD0 -
-// reached by their `??__E` initialisers. See the note in `mapwin.h`.
-void NetMsg::construct(int a1, int a2, int a3) {
-    typedef void(__fastcall *pending)(NetMsg *, void *, int, int, int);
-    PENDING_BODY(0x0047ACF0, pending)(this, nullptr, a1, a2, a3);
-}
-
+// ??0PlanWin@@QAE@H@Z at 0x0048BCD0 - reached by its `??__E` initialiser.
+// See the note in `mapwin.h`.
 void PlanWin::construct(int a1) {
     typedef void(__fastcall *pending)(PlanWin *, void *, int);
     PENDING_BODY(0x0048BCD0, pending)(this, nullptr, a1);

@@ -20,6 +20,40 @@
 #include "worldwin.h"
 #include "vtable_shim.h"
 
+const uint32_t WorldWinPrimaryVtable = 0x0066DF30;
+const uint32_t WorldWinBufferVtable = 0x0066DF28;
+
+/*
+Purpose: Construct the GraphicWin base and the three embedded subobjects
+         (buffer1_, buffer2_, mapWin_), then install WorldWin's own vtables.
+// ORIGINAL: 0x004C4BF0 ??0WorldWin@@QAE@XZ 0x004C4BF0-0x004C4C67;0x00659E50-0x00659E7E
+// symbol    ?construct@WorldWin@@QAEPAV1@XZ
+// size      119 bytes
+// prototype void (__thiscall ??0WorldWin@@QAE@XZ)(WorldWin* this)
+// callers   0   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok;frame
+// calls     0x005D4CF0 0x005D7210 0x004626E0
+// RULED-OUT: best reached is 13/31, 0.882 similar (best of 10 flag sets).
+//        Same residual as NetMsg::construct() and MultiDebug::construct()
+//        (netmsg.cpp, multidebug.cpp): image has `push ecx` at instruction
+//        7 where this body has `sub esp, 8` - a stack-frame-size
+//        difference from spill-slot count, not control flow or field
+//        order. Not chased further.
+Return Value: n/a
+Status: Complete
+*/
+WorldWin *WorldWin::construct() {
+    GraphicWin::construct();
+    new (&buffer1_) Buffer();
+    new (&buffer2_) Buffer();
+    mapWin_.construct(1);
+    uint32_t *const object = reinterpret_cast<uint32_t *>(this);
+    object[0x000 / 4] = WorldWinPrimaryVtable;
+    object[0x444 / 4] = WorldWinBufferVtable;
+    return this;
+}
+
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
 // ORIGINAL: 0x004C45E0 ?clear_terrain@WorldWin@@QAEXXZ 0x004C45E0-0x004C45E1 BYTE_EXACT

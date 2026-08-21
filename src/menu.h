@@ -62,6 +62,10 @@ class Menu : public GraphicWin {
   int UNK9(int menu_id);
   int UNK4(int a, int b, int c);
   Menu() { ; }
+  // NOT a constructor: see the "NOT a constructor" note in log.h - an
+  // ordinary method drops the SEH frame a real derived GraphicWin
+  // constructor picks up under /GX (FlatButton's/PullDown's own notes).
+  Menu *construct();
   // 0x005FAD00 is not recovered: a
   // pending_bodies forwarder, because an empty inline stub emits
   // nothing and the deleting destructor needs a `call rel32`.

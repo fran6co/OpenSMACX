@@ -18,6 +18,41 @@
 #include "stdafx.h"
 #include "checkbutton.h"
 
+const uint32_t CheckButtonPrimaryVtable = 0x0066DC14;
+const uint32_t CheckButtonBufferVtable = 0x0066DC0C;
+// The two defaults the constructor reads once and copies into the object:
+// unnamed globals the image reads by fixed address and never writes back.
+static int *const g_00697f20 = (int *)0x00697F20;
+static int *const g_00697f24 = (int *)0x00697F24;
+
+/*
+Purpose: Construct the GraphicWin base, then install CheckButton's own
+         vtables and the trailing toggle-state fields.
+// ORIGINAL: 0x00633750 ??0CheckButton@@QAE@XZ 0x00633750-0x0063379D BYTE_EXACT
+// symbol    ?construct@CheckButton@@QAEPAV1@XZ
+// size      77 bytes
+// prototype void (__thiscall ??0CheckButton@@QAE@XZ)(CheckButton* this)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4CF0
+Return Value: n/a
+Status: Complete
+*/
+CheckButton *CheckButton::construct() {
+    GraphicWin::construct();
+    uint32_t *const object = reinterpret_cast<uint32_t *>(this);
+    object[0x000 / 4] = CheckButtonPrimaryVtable;
+    object[0x444 / 4] = CheckButtonBufferVtable;
+    field_A14_ = 0;
+    isToggled_ = 0;
+    field_A1C_ = 0;
+    field_A20_ = 0;
+    field_A28_ = *g_00697f24;
+    field_A24_ = *g_00697f20;
+    return this;
+}
+
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
 // ORIGINAL: 0x006339B0 ?close_class@CheckButton@@QAAXXZ 0x006339B0-0x006339B1 BYTE_EXACT
