@@ -571,12 +571,24 @@ int Buffer::load_pcx(BYTE *data, DWORD size, Palette *palette,
         return 3;
     }
 
+    // RULED-OUT for now, and it is the whole remaining gap: the image is 374
+    // instructions and we compile 288. The missing 86 are `sync_to_palette`,
+    // which the image OPEN-CODES here - `Palette::get_rgbquad` at 0x005E2A1C
+    // and `SetDIBColorTable` through [0x006690B4] at 0x005E2A7C are emitted
+    // inline - while we call it. `sync_to_palette` is itself BYTE_EXACT at
+    // 0x005DE8F0, so the move is `MEASURED inline`, keeping the standalone
+    // copy; that is a larger change than this pass, and the call graph is
+    // correct either way.
     // The shipped assets carry a watermark ahead of the PCX itself.
-    const size_t prefix = strlen(PcxAssetPrefix);
+    //
+    // `strlen` THREE TIMES, not hoisted. The image calls it at 0x005E26B7,
+    // 0x005E26D4 and 0x005E26E9 - once per use - and a `const size_t prefix`
+    // collapses all three into one, which is two calls the image makes and we
+    // did not.
     if (strncmp(reinterpret_cast<const char *>(data), PcxAssetPrefix,
-                prefix) == 0) {
-        data += prefix + 1;
-        size -= static_cast<DWORD>(prefix + 1);
+                strlen(PcxAssetPrefix)) == 0) {
+        data += strlen(PcxAssetPrefix) + 1;
+        size -= static_cast<DWORD>(strlen(PcxAssetPrefix) + 1);
     }
 
     BYTE header[PcxHeaderSize];
@@ -679,7 +691,7 @@ int __fastcall buffer_copy_redirect(Buffer *self, void *, Buffer *buffer,
 /*
 Purpose: Copy the region a rectangle describes out of another buffer into the
          same position in this one.
-// ORIGINAL: 0x005D95E0 ?copy@Buffer@@QAEHPAVBuffer@@PAURECT@@@Z 0x005D95E0-0x005D960A
+// ORIGINAL: 0x005D95E0 ?copy@Buffer@@QAEHPAVBuffer@@PAURECT@@@Z 0x005D95E0-0x005D960A BYTE_EXACT
 // symbol    ?copy@Buffer@@QAEHPAV1@PAUtagRECT@@@Z
 // size      42 bytes
 // prototype int (__thiscall ?copy@Buffer@@QAEHPAVBuffer@@PAURECT@@@Z)(Buffer* this, Buffer*, RECT*)
@@ -696,8 +708,11 @@ the five-argument overload it hands the corner over twice, once as the
 destination and once as the source.
 */
 int Buffer::copy(Buffer *buffer, RECT *rect) {
-    const int left = rect->left;
+    // TOP FIRST. The image loads `[eax+4]` before `[eax]`, which puts top in
+    // edx and left in esi; reading left first swaps both registers and every
+    // use downstream, including the argument push order.
     const int top = rect->top;
+    const int left = rect->left;
     return copy(buffer, left, top, left, top,
                 rect->right - left, rect->bottom - top);
 }
@@ -1750,12 +1765,14 @@ Return Value: The font's height
 Status: Complete
 */
 int Buffer::text_height() {
-    // The legacy body loads the default before testing the cached font, so the
-    // fallback it returns is the value it just stored.
-    Font *const fallback = FontDefault;
+    // CORRECTED. This used to say the legacy body loads the default BEFORE
+    // testing the cached font, and hoisted `FontDefault` accordingly. The
+    // shipped bytes say the opposite: `mov eax, [ecx+0x52c] / test eax, eax /
+    // jne` comes first and `mov eax, [0x9bb484]` only after the branch is not
+    // taken. The hoist put the load ahead of the test and cost the match.
     if (!font1_) {
-        font1_ = fallback;
-        return fallback->height_;
+        font1_ = FontDefault;
+        return font1_->height_;
     }
     return font1_->height_;
 }
