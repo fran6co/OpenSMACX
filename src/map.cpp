@@ -1581,6 +1581,18 @@ Status: Complete
 /*
 Purpose: Initialize map variables.
 // ORIGINAL: 0x00590ED0 ?map_init@@YAXXZ 0x00590ED0-0x00591036
+// LEVER: `sprintf_s(MapFilePath, 80, "maps\\%s.%s", label_get(676), MapExtension)`
+//        was ONE call the image never makes - it builds the path by hand into
+//        StringTemp ("no C++ library" idiom): StringTemp[0]=0; strcat "maps\\";
+//        strcat label_get(676); strcat "."; then strcpy StringTemp into
+//        MapFilePath and strcat MapExtension onto that. Took this from 5/105
+//        (0.745 similar) to 25/105 (0.919 similar). RULED-OUT beyond this
+//        point: the image pins ebx=0/edi=1 in registers across the whole
+//        function (push edi; mov edi,1 at entry; cmp eax,ebx instead of
+//        test eax,eax at every null-check; mov eax,edi at the return-true
+//        tail) - a VC6 register-allocation heuristic, not a source shape;
+//        no rewrite of the two null-checks (`!= 0`, ternary, guard clause)
+//        changed which register VC6 picked.
 // symbol    ?map_init@@YAHXZ
 // size      358 bytes
 // prototype 
@@ -1592,7 +1604,12 @@ Return Value: n/a
 Status: Complete
 */
 BOOL __cdecl map_init() {
-    sprintf_s((LPSTR)MapFilePath, 80, "maps\\%s.%s", label_get(676), MapExtension);
+    StringTemp[0] = 0;
+    strcat(StringTemp, "maps\\");
+    strcat(StringTemp, label_get(676));
+    strcat(StringTemp, ".");
+    strcpy((LPSTR)MapFilePath, StringTemp);
+    strcat((LPSTR)MapFilePath, MapExtension);
     MapLongitude = MapLongitudeBounds / 2;
     MapArea = MapLongitude * MapLatitudeBounds;
     MapAreaSqRoot = quick_root(MapArea);
@@ -2071,6 +2088,20 @@ int __cdecl good_sensor(int faction_id, int x, int y) {
 /*
 Purpose: Check if faction controls the initial tile (code offset 0) of the Manifold Nexus.
 // ORIGINAL: 0x005BF130 ?has_temple@@YAHH@Z 0x005BF130-0x005BF1EE
+// LEVER: needs /Oy- (the marker's own `frame` flag) to even form the ebp-frame
+//        prologue the image has; that alone was 3/70 -> 51/70. Caching
+//        `uint32_t bit2 = map_loc(x, y)->bit2;` once and testing
+//        `bit2 & MASK` / `!(bit2 >> 24)` against the LOCAL (rather than
+//        `bit2_at(x, y)` / `code_at(x, y)` as two separate inline calls) let
+//        VC6 fold the `*sizeof(Map)` scale into the load's own SIB addressing
+//        the way the image does, taking it to 65/70, 0.986 similar.
+//        RULED-OUT: caching a `Map *tile` pointer instead of the `bit2` value
+//        (65->21/70 - the pointer materialises with its own `lea` first,
+//        which the image never does); swapping the final visibility test's
+//        `&` operand order (no change, still 65/70) - the one remaining
+//        differing run (`map_loc(x, y)->visibility & (1 << faction_id)`,
+//        register choice only: esi/edx/eax vs image's eax/ecx/edx for the
+//        same three values) did not move under either.
 // size      190 bytes
 // prototype int (__cdecl ?has_temple@@YAHH@Z)(int factionID)
 // callers   1   call targets   1
@@ -2083,8 +2114,9 @@ Status: Complete
 BOOL __cdecl has_temple(int faction_id) {
     for (int y = 0; y < MapLatitudeBounds; y++) {
         for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
-            if ((bit2_at(x, y) & (BIT2_UNK_80000000 | BIT2_NEXUS)) == BIT2_NEXUS
-                && !code_at(x, y) 
+            uint32_t bit2 = map_loc(x, y)->bit2;
+            if ((bit2 & (BIT2_UNK_80000000 | BIT2_NEXUS)) == BIT2_NEXUS
+                && !(bit2 >> 24)
                 && faction_id == whose_territory(faction_id, x, y, NULL, false)
                 && map_loc(x, y)->visibility & (1 << faction_id)) { // tile visible
                 return true;
