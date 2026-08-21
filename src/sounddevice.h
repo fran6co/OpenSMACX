@@ -77,7 +77,9 @@ static_assert(sizeof(Midi_Device) == 0x20,
 
 class Wave_In_Device {
  public:
-  Wave_In_Device() { ; }
+  // DEFINED IN sounddevice.cpp, not empty - the same shape as
+  // Midi_Device::Midi_Device() next door.
+  Wave_In_Device();
   ~Wave_In_Device() { ; }
   int init(void *window, unsigned long backends);  // 004C5A10
   void update_sound();

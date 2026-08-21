@@ -197,7 +197,6 @@ void __fastcall net_win_unk5_redirect(NetWin *self, void *) {
 
 /*
 // ORIGINAL: 0x00481C50 ??0NetWin@@QAE@XZ 0x00481C50-0x00481D08;0x00657491-0x006574E9
-// body      src/netwin.h
 // size      272 bytes
 // prototype void (__thiscall ??0NetWin@@QAE@XZ)(NetWin* this)
 // callers   1   call targets   6
@@ -205,3 +204,28 @@ void __fastcall net_win_unk5_redirect(NetWin *self, void *) {
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005D4CF0 0x005FA860 0x00607CF0 0x0060E670 0x00614E50 0x00629110
 */
+
+// The six subobjects (GraphicWin base, then spot_/stringBox_/editBox_/
+// checkBox_/flatButton1_/flatButton2_, in declaration order) construct via
+// the implicit base+member-init sequence; 0x005D4CF0 is `?construct@
+// GraphicWin@@QAEXXZ`, a construct() method (see basebutton.cpp's own
+// `?construct@BaseButton@@QAEXXZ`), which the trivial `GraphicWin() { ; }`
+// base ctor cannot reach implicitly, so it is called explicitly here.
+//
+// RULED-OUT: byte-exact is not reachable from this marker alone.
+// StringBox()/CheckBox() are still trivial stubs (0x00629110/0x0060E670
+// unfilled) and EditBox() has no declared constructor at all - none of the
+// three are among this pass's seven targets, so the image's calls to them
+// cannot be reproduced from here. CheckBox's own call also pushes an extra
+// `1` (a virtually-inherited GraphicWin's hidden most-derived flag, added
+// automatically by the compiler once CheckBox::CheckBox() takes it - not
+// reachable while checkBox_'s constructor is the current no-arg stub).
+NetWin::NetWin() {
+    GraphicWin::construct();
+    volatile uint32_t *const object =
+        reinterpret_cast<volatile uint32_t *>(this);
+    object[0x000 / 4] = 0x0066CCEC;
+    object[0x444 / 4] = 0x0066CCE4;
+    object[0x772C / 4] = 0;
+    object[0x7730 / 4] = 0;
+}

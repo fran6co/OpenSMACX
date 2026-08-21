@@ -664,7 +664,7 @@ Midi_Device::Midi_Device() {
 }
 
 /*
-// ORIGINAL: 0x004C5940 ??0Wave_In_Device@@QAE@XZ 0x004C5940-0x004C597C
+// ORIGINAL: 0x004C5940 ??0Wave_In_Device@@QAE@XZ 0x004C5940-0x004C597C BYTE_EXACT
 // body      src/sounddevice.h
 // size      60 bytes
 // prototype void (__thiscall ??0Wave_In_Device@@QAE@XZ)(Wave_In_Device* this)
@@ -673,6 +673,23 @@ Midi_Device::Midi_Device() {
 // flags     sp_ready;purged_ok
 // calls     0x006465F0
 */
+
+// LEVER: same shape as Midi_Device::Midi_Device() above - the BASE vtable
+// goes in FIRST and the DERIVED one is written over it LAST, with the
+// scalar fields settled OUT of declaration order in between, and
+// `memset(&field_4_, 0, 4)` is a real `memset` CALL in the image
+// (`push 4; push 0; push esi+4; call 0x6465f0`), not a store.
+Wave_In_Device::Wave_In_Device() {
+    vtable_storage_ = 0x0066E098;
+    memset(&field_4_, 0, 4);
+    field_C_ = 0;
+    field_18_ = 0;
+    field_1C_ = 0;
+    field_10_ = 0;
+    field_14_ = 0;
+    field_8_ = 0x7F;
+    vtable_storage_ = 0x0066E1F0;
+}
 
 /*
 // ORIGINAL: 0x004C5780 ??1Midi_Device@@QAE@XZ 0x004C5780-0x004C5793

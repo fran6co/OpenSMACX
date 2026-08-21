@@ -50,7 +50,7 @@ class Popup : public BasePop {
   // rather than a load of a constant a header made up.
   static int alloc();
 
-  Popup() { ; }
+  Popup();
   // DECLARED, NOT DEFINED EMPTY. The real destructor is 0x00406C00 and ends
   // `ret`, not `ret 4`, so it takes no vbase flag and a direct call reaches
   // it. An empty inline body compiles `??_GPopup`'s call away. Forwarded in

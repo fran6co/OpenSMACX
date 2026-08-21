@@ -34,7 +34,7 @@ class PullDown : public GraphicWin {
   int UNK3(int a, int b, int c);
   int UNK5();
   int UNK6();
-  PullDown() { ; }
+  PullDown();
   ~PullDown() { ; }
 
   // The recovered complete-object destructor body (0x005F88A0); the inline

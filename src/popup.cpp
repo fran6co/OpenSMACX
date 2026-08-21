@@ -811,7 +811,7 @@ int __cdecl Popup::alloc() {
 // ---------------------------------------------------------------------------
 
 /*
-// ORIGINAL: 0x004048A0 ??0Popup@@QAE@XZ 0x004048A0-0x004048F7;0x00650760-0x00650772
+// ORIGINAL: 0x004048A0 ??0Popup@@QAE@XZ 0x004048A0-0x004048F7;0x00650760-0x00650772 BYTE_EXACT
 // body      src/popup.h
 // size      105 bytes
 // prototype void (__thiscall ??0Popup@@QAE@XZ)(Popup* this)
@@ -820,3 +820,20 @@ int __cdecl Popup::alloc() {
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00600860 0x006051D0
 */
+
+// LEVER: 0x00600860 is `??0BasePop@@QAE@XZ`, a REAL constructor (unlike
+// GraphicWin/BaseButton's `construct()` seam), and 0x006051D0 is
+// `??0Scroll@@QAE@XZ` for the real `scroll_` member at 0x3230 - so both
+// calls are the ordinary implicit base+member construction sequence, not
+// explicit body-level calls. This is why the image needs an SEH frame here
+// (Scroll's construction must be able to unwind the already-built BasePop
+// base) where FlatButton/PullDown/NetWin - which only call a construct()
+// METHOD from the body - do not pay for one at all.
+static const uint32_t PopupPrimaryVtable = 0x006695C8;
+static const uint32_t PopupBufferVtable = 0x006695C0;
+
+Popup::Popup() {
+    uint32_t *const object = reinterpret_cast<uint32_t *>(this);
+    object[0x000 / 4] = PopupPrimaryVtable;
+    object[0x444 / 4] = PopupBufferVtable;
+}
