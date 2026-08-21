@@ -53,6 +53,13 @@ uint32_t Language;  // 0x009BC054
 /*
 Purpose: Convert the tech name string to a numeric tech id.
 // ORIGINAL: 0x00584D60 ?tech_name@@YAHPAD@Z 0x00584D60-0x00584E3B
+// LEVER: same defect as chas_name/weap_name/arm_name (0x00584E40 etc.) -
+//        `purge_trailing` is not in this function's own call list either;
+//        the image hand-inlines the naive recomputed-`strlen` trim loop.
+//        8/88 -> 27/88.
+// RULED-OUT: same plateau as chas_name - `mov bl, 0x20` (image) vs an
+//            immediate compare, first divergence right where the trim loop
+//            starts. Best across every flag set tried.
 // size      219 bytes
 // prototype int (__cdecl ?tech_name@@YAHPAD@Z)(int8* techID)
 // callers   6   call targets   4
@@ -63,7 +70,18 @@ Return Value: Tech id; 'None' (-1); 'Disabled' (-2); or error (-2)
 Status: Complete
 */
 int __cdecl tech_name(LPSTR name) {
-    purge_trailing(name);
+    // NOT `purge_trailing(name)`: same naive, recomputed-`strlen` trim loop
+    // as chas_name/weap_name/arm_name (see chas_name's comment) - the image
+    // never calls a trim helper here either (not in this function's own
+    // call list).
+    if (strlen(name) != 0) {
+        do {
+            if (name[strlen(name) - 1] != ' ') {
+                break;
+            }
+            name[strlen(name) - 1] = 0;
+        } while (strlen(name) != 0);
+    }
     if (!_stricmp(name, "None")) {
         return NoneValue;
     }
@@ -216,8 +234,13 @@ int __cdecl arm_name(LPSTR name) {
 /*
 Purpose: Parse the current tech name inside the Txt item buffer into a tech id.
 // ORIGINAL: 0x00585150 ?tech_item@@YAHXZ 0x00585150-0x00585164 BYTE_EXACT
+// LEVER: `osmx calls` on 0x00585170 (read_basic_rules) shows this tree
+//        calling `tech_item` where the image calls `tech_name` directly at
+//        all ten sites - `callers 0` above already said the image never
+//        `call`s this address. Moved to alpha.h as `MEASURED inline` so
+//        every call site expands in place, matching read_basic_rules.
 // size      20 bytes
-// prototype 
+// prototype
 // callers   0   call targets   3
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -225,14 +248,18 @@ Purpose: Parse the current tech name inside the Txt item buffer into a tech id.
 Return Value: Tech id
 Status: Complete
 */
-int __cdecl tech_item() {
-    text_get();
-    return tech_name(text_item());
-}
+// BODY IN alpha.h, as `MEASURED inline`: see LEVER above.
 
 /*
 Purpose: Parse the #RULES & #WORLDBUILDER sections inside the alpha(x).txt.
 // ORIGINAL: 0x00585170 ?read_basic_rules@@YAHXZ 0x00585170-0x00585E26
+// LEVER: the ten `Rules->tech_* = tech_item();` sites now match the image's
+//        call pattern (`text_get; text_item; tech_name` per site, confirmed
+//        against `osmx calls`) now that `tech_item` is `MEASURED inline` in
+//        alpha.h - it was a call the image never makes (see its own
+//        `callers 0`). Landed as a real structural fix; this function is
+//        883 image instructions across ~40 unrelated #SECTIONs and stays
+//        MISMATCH on everything else - not chased further this pass.
 // size      3254 bytes
 // prototype 
 // callers   1   call targets   6
@@ -369,6 +396,24 @@ BOOL __cdecl read_basic_rules() {
 /*
 Purpose: Parse the #TECHNOLOGY section inside the alpha(x).txt with a duplicate entry check.
 // ORIGINAL: 0x00585E30 ?read_tech@@YAHXZ 0x00585E30-0x00585FDB
+// LEVER: the `id` copy is `strncpy(dest, TextBufferItemPtr, 8)` at 0x00585E78
+//        (3 args, no `strlen` call in the image's own call list) - the tree
+//        had `strncpy_s(Technology[i].id, 8, TextBufferItemPtr,
+//        strlen(TextBufferItemPtr))`, an extra call and a wrong count.
+//        Fixed to a literal 8; 13/139 -> 20/139 (best across every flag set).
+// RULED-OUT: the remaining gap is instruction 5 - the image callee-saves ESI
+//            alone in the shared prologue (popped on both the early-return
+//            and the loop path) and defers EBX/EDI to just before the loop
+//            body (popped only on that path); this tree's /O2 output saves
+//            EDI there instead of ESI. Tried: raw pointer walk (`RulesTechnology
+//            *tech = Technology; tech < &Technology[MaxTechnologyNum]`, which
+//            DOES reproduce the image's `cmp esi, 0x9502ac` bound via strength
+//            reduction on `&tech->id`, confirming the algorithm read is right)
+//            with a second pointer `dup` for the inner loop spilling to the
+//            same `[ebp-4]` slot the image uses - scored WORSE (14/139); declaring
+//            `tech` before the first `text_open`; swapping `i++,tech++` order.
+//            Plain `Technology[i]` indexing measures best. Register-save
+//            ordering, not addressing mode.
 // size      427 bytes
 // prototype 
 // callers   1   call targets   12
@@ -386,7 +431,7 @@ BOOL __cdecl read_tech() {
         text_get();
         text_item();
         text_item();
-        strncpy_s(Technology[i].id, 8, TextBufferItemPtr, strlen(TextBufferItemPtr));
+        strncpy_s(Technology[i].id, 8, TextBufferItemPtr, 8);
         Technology[i].id[7] = 0;
         for (int j = 0; j < i; j++) {
             if (!strcmp(Technology[i].id, Technology[j].id)) {
@@ -904,6 +949,23 @@ void __cdecl noun_item(int *gender, int *plurality) {
 /*
 Purpose: Parse the #UNITS section inside the alpha(x).txt.
 // ORIGINAL: 0x00587240 ?read_units@@YAHXZ 0x00587240-0x005873B1
+// LEVER: 0x00645460 is plain `strcpy` (2 args - confirmed at its call site,
+//        `push name; push &veh_name; call`, no length/size pushed anywhere
+//        nearby) not `strncpy_s`; the tree's `strncpy_s(veh_name, 32, name,
+//        strlen(name))` was an extra `strlen` call the image never makes.
+//        17/134 -> 22/134.
+// RULED-OUT: not chased further - the image never reads a "reactor" field at
+//            all (only 4 `text_item_number` calls: plan, cost, carry, icon;
+//            `ability`'s `text_item_binary` result stays live in EAX straight
+//            into the proto_id switch that always computes reactor_id, no
+//            gating check). This tree's `int reactor_id = text_item_number();
+//            // Add ability to read reactor for #UNITS` is a DELIBERATE
+//            project enhancement (own comment says so) that consumes one more
+//            token per unit than the original parser ever did - the extra
+//            local is why `sub esp` is 0x20 here against the image's 0x1c,
+//            and everything downstream is offset by it. Left in place: this
+//            is a feature the reimplementation adds on purpose, not a
+//            recoverable divergence.
 // size      369 bytes
 // prototype 
 // callers   1   call targets   11
@@ -921,7 +983,7 @@ BOOL __cdecl read_units() {
     for (int proto_id = 0; proto_id < total_units; proto_id++) {
         text_get();
         LPSTR name = text_item();
-        strncpy_s(VehPrototypes[proto_id].veh_name, 32, name, strlen(name));
+        strcpy(VehPrototypes[proto_id].veh_name, name);
         int chas_id = chas_name(text_item());
         int weap_id = weap_name(text_item());
         int armor_id = arm_name(text_item());
@@ -967,6 +1029,22 @@ BOOL __cdecl read_units() {
 Purpose: Parse in all the game rules via alpha/x.txt. If the toggle param is set to true, parse the
          #UNITS & #FACTIONS sections. Otherwise, skip both. New game vs reload?
 // ORIGINAL: 0x005873C0 ?read_rules@@YAHH@Z 0x005873C0-0x0058829C
+// LEVER: the #TERRAIN loop's `order_str` is copied into a 256-byte LOCAL
+//        buffer (`strcpy` at 0x005874AE into `[ebp-0x114]`) before being
+//        handed to `parse_string_OG` - not held as a bare `LPSTR`. That
+//        local is almost the entire gap between this tree's frame and the
+//        image's (`sub esp, 0x114` vs a bare-pointer version's far smaller
+//        one); after adding it the frame is 0x11c against the image's
+//        0x114, 8 bytes (two DWORDs) still unaccounted for somewhere else
+//        in this ~40-#SECTION function. 51/1217 -> 65/1217.
+// RULED-OUT: the rest of this function - it is 883 image instructions across
+//            dozens of independent #SECTION loops (most already
+//            array-indexed field-for-field against the shipped struct
+//            layouts); several read like the read_tech pointer-walk (e.g.
+//            the #CHASSIS/#TERRAIN loops advance a struct pointer + a
+//            parallel int index) but confirming and rewriting each one is
+//            out of scope for this pass. Left as a faithful, compiling
+//            transcription; not chased to byte-exact.
 // size      3804 bytes
 // prototype BOOL (__cdecl ?read_rules@@YAHH@Z)(BOOL tglAllRules)
 // callers   3   call targets   23
@@ -998,11 +1076,17 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
         }
         Terraforming[i].rate = text_item_number();
         // Land + sea orders
-        LPSTR order_str = text_item();
+        // NOT held as a bare pointer: the image copies `text_item()`'s
+        // result into a 256-byte LOCAL buffer first (`strcpy` at
+        // 0x005874AE, into `[ebp-0x114]`) before handing it to
+        // `parse_string_OG` - that local is why the image's frame is
+        // 0x114 bytes against a bare-pointer version's much smaller one.
+        char order_buf[256];
+        strcpy(order_buf, text_item());
         for (j = 0; j < 2; j++) {
             parse_say(0, (int)*(&Terraforming[i].name + j), -1, -1);
             StringTemp[0] = 0;
-            parse_string_OG(order_str, StringTemp); // TODO: replace
+            parse_string_OG(order_buf, StringTemp);
             *(&Order[i + 4].order + j) = StringTable->put(StringTemp);
         }
         Order[i + 4].letter = text_item_string();
@@ -1660,7 +1744,7 @@ void __cdecl prefs_put(LPCSTR key_name, LPCSTR value) {
 
 /*
 Purpose: Write the value as either an integer or a binary string to the pref key inside the ini.
-// ORIGINAL: 0x0059E530 ?prefs_put@@YAXPADHH@Z 0x0059E530-0x0059E5CD
+// ORIGINAL: 0x0059E530 ?prefs_put@@YAXPADHH@Z 0x0059E530-0x0059E5CD BYTE_EXACT
 // symbol    ?prefs_put@@YAXPBDHH@Z
 // size      157 bytes
 // prototype void (__cdecl ?prefs_put@@YAXPADHH@Z)(int8* lpKeyName, int, int)
@@ -1673,9 +1757,29 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl prefs_put(LPCSTR key_name, int value, BOOL tgl_binary) {
-    char temp[33];
-    tgl_binary ? strcpy_s(temp, 33, prefs_get_binary(value)) : _itoa_s(value, temp, 33, 10);
-    WritePrivateProfileStringA(PrefsSection, key_name, temp, PrefsFile);
+    // NOT a local buffer: like `prefs_get_binary`, the image builds the
+    // value string directly into the global `StringTemp` (0x009B86A0) -
+    // `mov byte ptr [0x9b86a0], 0` at 0x0059E539 runs UNCONDITIONALLY
+    // before the branch on `tgl_binary` - and passes that buffer straight
+    // to WritePrivateProfileStringA, not a copy. The binary loop is the
+    // same shape as `prefs_get_binary`, hand-inlined here rather than
+    // called (no third call target besides strcat/itoa in the image).
+    StringTemp[0] = 0;
+    if (tgl_binary) {
+        for (int non_pad = 0, shift = 31; shift >= 0; shift--) {
+            if ((1 << shift) & value) {
+                non_pad = 1;
+                strcat_s(StringTemp, sizeof(StringTemp), "1");
+            } else if (non_pad || shift < 8) {
+                strcat_s(StringTemp, sizeof(StringTemp), "0");
+            }
+        }
+    } else {
+        char num_buf[80];
+        _itoa(value, num_buf, 10);
+        strcat_s(StringTemp, sizeof(StringTemp), num_buf);
+    }
+    WritePrivateProfileStringA(PrefsSection, key_name, StringTemp, PrefsFile);
 }
 
 /*
@@ -1748,6 +1852,14 @@ void __cdecl prefs_use() {
 /*
 Purpose: Parse the #LABELS section inside the labels.txt file.
 // ORIGINAL: 0x00616A00 ?labels_init@@YAHXZ 0x00616A00-0x00616A93
+// RULED-OUT: 40/45 plateau - the image stores `Labels->count` THEN reuses the
+//            same register for `shl eax,2` (no reload); every source form
+//            tried instead computes `count*4` into a second register (`lea
+//            ecx,[eax*4]`) before the store: local `int count`, a separate
+//            `int byte_count = count*4;` statement, `<<2` instead of `*4`,
+//            and a nested `(Labels->count = text_item_number()) * 4` all
+//            produced the identical `lea`+deferred-store shape. VC6
+//            scheduling choice, not a source-form lever found here.
 // size      147 bytes
 // prototype 
 // callers   3   call targets   7
