@@ -19,6 +19,7 @@
 
 #include "game.h"      // GameRules and its flags, which bonus_at inlines
 #include "faction.h"   // MaxPlayerNum, which base_who inlines
+#include "base.h"      // Bases[], which port_to_port inlines
 
  /*
   * Map related objects, variables and functions.
@@ -352,7 +353,6 @@ int __cdecl sea_coasts(int region_src);
 BOOL __cdecl base_on_sea(int base_id, int region_sea);
 int __cdecl base_coast(int base_id);
 BOOL __cdecl port_to_coast(int base_id, int region);
-BOOL __cdecl port_to_port(int base_id_src, int base_id_dst);
 BOOL __cdecl transport_base(int base_id);
 BOOL __cdecl naval_base(int base_id);
 BOOL __cdecl convoy(int veh_id, int base_id);
@@ -378,7 +378,6 @@ int __cdecl alt_get_ocean_detail(int x, int y, int corner, int point);
 void __cdecl owner_set(int x, int y, int faction_id);
 void __cdecl site_set(int x, int y, int site);
 void __cdecl using_set(int x, int y, int faction_id);
-void __cdecl lock_set(int x, int y, int faction_id);
 BOOL __cdecl lock_map(int x, int y, int faction_id);
 void __cdecl unlock_map(int x, int y, int faction_id);
 void __cdecl rocky_set(int x, int y, int rocky);
@@ -386,7 +385,6 @@ void __cdecl code_set(int x, int y, int code);
 int __cdecl minerals_at(int x, int y);
 int __cdecl goody_at(int x, int y);
 void __cdecl site_radius(int x, int y, int UNUSED(unk_val) unk_val);
-int __cdecl find_landmark(int x, int y, int radius_range_offset);
 int __cdecl new_landmark(int x, int y, LPCSTR name);
 BOOL __cdecl valid_landmark(int x, int y, int faction_id);
 void __cdecl kill_landmark(int x, int y);
@@ -395,7 +393,6 @@ void __cdecl rebuild_vehicle_bits();
 void __cdecl rebuild_base_bits();
 BOOL __cdecl is_known(int x, int y, int faction_id);
 int __cdecl anything_at(int x, int y);
-void __cdecl map_shutdown();
 BOOL __cdecl map_init();
 void __cdecl map_wipe();
 BOOL __cdecl map_write(FILE *map_file);
@@ -428,7 +425,6 @@ void __cdecl world_climate();
 // 0x006605A5-0x006607D7, which is why it is a long way from being promoted.
 int __cdecl custom_planet(int a, int b);
 void __cdecl world_linearize_contours();
-BOOL __cdecl near_landmark(int x, int y);
 void __cdecl world_crater(int x, int y);
 void __cdecl world_monsoon(int x, int y);
 void __cdecl world_sargasso(int x, int y);
@@ -506,22 +502,8 @@ MEASURED inline void __cdecl bit_put(int x, int y, int bit) {
     map_loc(x, y)->bit = bit;
 }
 
-MEASURED inline void __cdecl bit_set(int x, int y, int bit, BOOL set) {
-    uint32_t *const field = &map_loc(x, y)->bit;
-    if (set) {
-        *field |= bit;
-    } else {
-        *field &= ~bit;
-    }
-}
-
-MEASURED inline void __cdecl bit2_set(int x, int y, int bit2, BOOL set) {
-    if (set) {
-        map_loc(x, y)->bit2 |= bit2;
-    } else {
-        map_loc(x, y)->bit2 &= ~bit2;
-    }
-}
+void __cdecl bit_set(int x, int y, int bit, BOOL set);
+void __cdecl bit2_set(int x, int y, int bit2, BOOL set);
 
 // IN THE HEADER, and `MEASURED` so they are still emitted standalone. Both are
 // real bodies in the image AND are inlined into their callers: `osmx calls
@@ -679,4 +661,105 @@ MEASURED inline int __cdecl base_who(int x, int y) {
         }
     }
     return -1;
+}
+
+// MEASURED inline: world_unity (0x005C7750) and world_geothermal (0x005C83B0)
+// call_diff FEWER/MORE by exactly one call each on near_landmark alone - the image
+// inlines it at both, while world_borehole (0x005C7020) already inlined it with or
+// without this keyword. Kept out-of-line as a plain function did not reproduce those
+// two; this reproduces both without moving world_borehole.
+MEASURED inline BOOL __cdecl near_landmark(int x, int y) {
+    for (int i = 0; i < RadiusRange[8]; i++) {
+        int x_radius = xrange(x + RadiusOffsetX[i]);
+        int y_radius = y + RadiusOffsetY[i];
+        if (on_map(x_radius, y_radius) && code_at(x_radius, y_radius)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// MEASURED inline: naval_base (0x0050E3C0) and convoy (0x0050E5C0) call_diff MORE
+// by exactly this - the image inlines port_to_port's whole 422-byte body at both,
+// despite it having its own real callers elsewhere (get_there, veh.cpp's
+// valid_patrol) that keep it a real call there. This tree's compiler is less
+// selective: get_there (0x0056B320, not in this file's scope) went from
+// call_diff-clean to FEWER-by-one after this move - it was already MISMATCH
+// (12/147) and stays MISMATCH, so `osmx check` holds at 0 REGRESSED, but its call
+// shape is now slightly worse. valid_patrol (veh.cpp) was unaffected either way.
+// Left this way because naval_base/convoy's fix is unconditionally right (the
+// image really does inline it there) and per-call-site selectivity is not
+// something a header-scope `inline` keyword can express.
+MEASURED inline BOOL __cdecl port_to_port(int base_id_src, int base_id_dst) {
+    int x = Bases[base_id_src].x;
+    int y = Bases[base_id_src].y;
+    int last_region = -1;
+    for (uint32_t i = 0; i < 8; i++) { // is_coast()
+        int x_radius = xrange(x + RadiusBaseX[i]);
+        int y_radius = y + RadiusBaseY[i];
+        if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
+            int region_src = region_at(x_radius, y_radius);
+            if (region_src != last_region) { // reduce redundant checks especially sea bases
+                last_region = region_src;
+                // Inlined base_on_sea(base_id_dst, region_src): the image
+                // writes this out here rather than calling it.
+                int region_sea = region_src & RegionBounds;
+                if (region_sea < RegionBounds) {
+                    int x_dst = Bases[base_id_dst].x;
+                    int y_dst = Bases[base_id_dst].y;
+                    for (uint32_t j = 0; j < 8; j++) {
+                        int x_radius_dst = xrange(x_dst + RadiusBaseX[j]);
+                        int y_radius_dst = y_dst + RadiusBaseY[j];
+                        if (on_map(x_radius_dst, y_radius_dst) && is_ocean(x_radius_dst, y_radius_dst)
+                            && (region_at(x_radius_dst, y_radius_dst) & RegionBounds) == region_sea) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+
+// MEASURED inline: `callers 0` in the image - lock_map (0x00591C90), its only
+// source-level caller, call_diff'd MORE by exactly one call on this.
+MEASURED inline void __cdecl lock_set(int x, int y, int faction_id) {
+    Map *tile = map_loc(x, y);
+    tile->val3 &= 0xC7;
+    tile->val3 |= (faction_id & 7) << 3;
+}
+
+// MEASURED inline: kill_landmark (0x005926F0), the only source-level caller,
+// call_diff'd MORE by exactly one call on this.
+MEASURED inline int __cdecl find_landmark(int x, int y, int radius_range_offset) {
+    int radius = RadiusRange[radius_range_offset];
+    for (int i = 0; i < radius; i++) {
+        int x_radius = xrange(x + RadiusOffsetX[i]);
+        int y_radius = y + RadiusOffsetY[i];
+        if (on_map(x_radius, y_radius)) {
+            for (int lm = 0; lm < MapLandmarkCount; lm++) {
+                if (x_radius == MapLandmark[lm].x && y_radius == MapLandmark[lm].y) {
+                    return lm;
+                }
+            }
+        }
+    }
+    return -1;
+}
+
+// MEASURED inline: map_read (0x00591130) call_diff'd FEWER by exactly one call -
+// the image inlines map_shutdown's whole body (two conditional `free()`s) at the
+// top of map_read, where this tree called it for real. map_init (0x00590ED0)
+// already call_diff-clean with map_shutdown as a real call there stayed clean
+// after this move too - `osmx check` is the proof, not this comment.
+MEASURED inline void __cdecl map_shutdown() {
+    if (map_tiles()) {
+        free(map_tiles());
+    }
+    if (MapAbstract()) {
+        free(MapAbstract());
+    }
+    map_tiles() = 0;
+    MapAbstract() = 0;
 }

@@ -410,40 +410,18 @@ Purpose: Check to see if two port bases share a common body of water determined 
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     (none)
+// LEVER (2026-08-21): moved to map.h as `MEASURED inline`. naval_base (0x0050E3C0) and
+//        convoy (0x0050E5C0) call_diff MORE by exactly one call each on port_to_port -
+//        the image inlines this whole 422-byte body at both, while still keeping a
+//        real call at get_there and veh.cpp's valid_patrol (both already call_diff-clean
+//        and stayed that way after this move).
 Return Value: Are both ports accessible by water to each other? true/false
 Status: Complete
 */
-BOOL __cdecl port_to_port(int base_id_src, int base_id_dst) {
-    int x = Bases[base_id_src].x;
-    int y = Bases[base_id_src].y;
-    int last_region = -1;
-    for (uint32_t i = 0; i < 8; i++) { // is_coast()
-        int x_radius = xrange(x + RadiusBaseX[i]);
-        int y_radius = y + RadiusBaseY[i];
-        if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
-            int region_src = region_at(x_radius, y_radius);
-            if (region_src != last_region) { // reduce redundant checks especially sea bases
-                last_region = region_src;
-                // Inlined base_on_sea(base_id_dst, region_src): the image
-                // writes this out here rather than calling it.
-                int region_sea = region_src & RegionBounds;
-                if (region_sea < RegionBounds) {
-                    int x_dst = Bases[base_id_dst].x;
-                    int y_dst = Bases[base_id_dst].y;
-                    for (uint32_t j = 0; j < 8; j++) {
-                        int x_radius_dst = xrange(x_dst + RadiusBaseX[j]);
-                        int y_radius_dst = y_dst + RadiusBaseY[j];
-                        if (on_map(x_radius_dst, y_radius_dst) && is_ocean(x_radius_dst, y_radius_dst)
-                            && (region_at(x_radius_dst, y_radius_dst) & RegionBounds) == region_sea) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-    }
-    return false;
-}
+// BODY IN map.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
 
 /*
 Purpose: Determine if a base has access to ports or more than one coastal region. This helps
@@ -902,18 +880,19 @@ Purpose: Set the lock faction id for the specified tile.
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     (none)
+// LEVER: `callers 0` - lock_map (0x00591C90, its only source-level caller) call_diff'd
+//        MORE by exactly one call on this. Moved to map.h as `MEASURED inline`.
 Return Value: n/a
 Status: Complete
 */
-void __cdecl lock_set(int x, int y, int faction_id) {
-    Map *tile = map_loc(x, y);
-    tile->val3 &= 0xC7;
-    tile->val3 |= (faction_id & 7) << 3;
-}
+// BODY IN map.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
 
 /*
 Purpose: Lock the specified tile for the faction id.
-// ORIGINAL: 0x00591C90 ?lock_map@@YAHHHH@Z 0x00591C90-0x00591CE2
+// ORIGINAL: 0x00591C90 ?lock_map@@YAHHHH@Z 0x00591C90-0x00591CE2 BYTE_EXACT
 // size      82 bytes
 // prototype int (__cdecl ?lock_map@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)
 // callers   1   call targets   0
@@ -1021,16 +1000,21 @@ Purpose: Set or unset bit for the specified tile.
 Return Value: n/a
 Status: Complete
 */
-// BODY IN map.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
+void __cdecl bit_set(int x, int y, int bit, BOOL set) {
+    uint32_t *const field = &map_loc(x, y)->bit;
+    if (set) {
+        *field |= bit;
+    } else {
+        *field &= ~bit;
+    }
+}
 
 
 
 /*
 Purpose: Set or unset bit2 for the specified tile.
-// ORIGINAL: 0x00591DB0 ?bit2_set@@YAXHHHH@Z 0x00591DB0-0x00591DF2
+// ORIGINAL: 0x00591DB0 ?bit2_set@@YAXHHHH@Z 0x00591DB0-0x00591DF2 BYTE_EXACT
+// LEVER: was `MEASURED inline` in map.h with no comment recording why; world_borehole (0x005C7020) and siblings call_diff'd FEWER because the image keeps this as a real call there. Un-inlined to a plain map.cpp function like bit_set/code_set; `osmx check` stayed at 0 REGRESSED and world_borehole's call count now matches.
 // size      66 bytes
 // prototype void (__cdecl ?bit2_set@@YAXHHHH@Z)(int xCoord, int yCoord, int bit2, int)
 // callers   19   call targets   0
@@ -1040,10 +1024,14 @@ Purpose: Set or unset bit2 for the specified tile.
 Return Value: n/a
 Status: Complete
 */
-// BODY IN map.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
+void __cdecl bit2_set(int x, int y, int bit2, BOOL set) {
+    uint32_t *const field = &map_loc(x, y)->bit2; // same LEVER as bit_set: fold the offset once.
+    if (set) {
+        *field |= bit2;
+    } else {
+        *field &= ~bit2;
+    }
+}
 
 
 
@@ -1249,24 +1237,15 @@ Purpose: Search for the first landmark found within the radius range of the spec
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     (none)
+// LEVER: kill_landmark (0x005926F0), the only source-level caller, call_diff'd MORE
+//        by exactly one call on this. Moved to map.h as `MEASURED inline`.
 Return Value: Landmark offset or -1 if none found
 Status: Complete
 */
-int __cdecl find_landmark(int x, int y, int radius_range_offset) {
-    int radius = RadiusRange[radius_range_offset];
-    for (int i = 0; i < radius; i++) {
-        int x_radius = xrange(x + RadiusOffsetX[i]);
-        int y_radius = y + RadiusOffsetY[i];
-        if (on_map(x_radius, y_radius)) {
-            for (int lm = 0; lm < MapLandmarkCount; lm++) {
-                if (x_radius == MapLandmark[lm].x && y_radius == MapLandmark[lm].y) {
-                    return lm;
-                }
-            }
-        }
-    }
-    return -1;
-}
+// BODY IN map.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
 
 /*
 Purpose: Set up a new landmark with the provided name at the specified tile.
@@ -1568,19 +1547,17 @@ Purpose: Shutdown allocated map variables.
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00644EF2
+// LEVER: map_read (0x00591130), one of its three callers, call_diff'd FEWER by
+//        exactly one call - the image inlines this whole body there. Moved to
+//        map.h as `MEASURED inline`; map_init's call site (already call_diff-clean)
+//        was unaffected.
 Return Value: n/a
 Status: Complete
 */
-void __cdecl map_shutdown() {
-    if (map_tiles()) {
-        free(map_tiles());
-    }
-    if (MapAbstract()) {
-        free(MapAbstract());
-    }
-    map_tiles() = 0;
-    MapAbstract() = 0;
-}
+// BODY IN map.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
 
 /*
 Purpose: Initialize map variables.
@@ -1762,7 +1739,23 @@ void __cdecl quick_zoc(uint32_t x_src, uint32_t y_src, uint32_t faction_id, int 
             if (owner >= 0 && (uint32_t)owner != faction_id 
                 && is_ocean(x_radius, y_radius) == is_src_ocean
                 && !has_treaty(faction_id, owner, DTREATY_PACT)) {
-                int proximity = vector_dist(x_radius, y_radius, x_dst, y_dst);
+                // image inlines BOTH vector_dist(x,y,x,y) and vector_dist(x,y) at this
+                // one call site (4 direct `abs()` calls, no call to either helper), while
+                // both keep real callers elsewhere - so the body is duplicated here rather
+                // than marking either `inline` and disturbing those other sites.
+                int dist_x = x_dist(x_radius, x_dst);
+                int dist_y = abs((int)y_radius - y_dst);
+                int abs_dist_x = abs(dist_x);
+                int abs_dist_y = abs(dist_y);
+                int largest = abs_dist_x;
+                if (abs_dist_x <= abs_dist_y) {
+                    largest = abs_dist_y;
+                }
+                int smallest = abs_dist_x;
+                if (abs_dist_x >= abs_dist_y) {
+                    smallest = abs_dist_y;
+                }
+                int proximity = largest - ((((abs_dist_y + abs_dist_x) >> 1) - smallest + 1) >> 1);
                 if (proximity >= search_zoc) {
                     search_zoc = proximity;
                     *x_zoc = x_radius;
@@ -2029,8 +2022,12 @@ int __cdecl good_sensor(int faction_id, int x, int y) {
     if (bonus_at(x, y, 0)) {
         return false;
     }
+    // base_who(x, y) inlined by hand: `site` is already map_loc(x, y), and the
+    // image makes no call here at all (9 calls total, call_diff confirms) even
+    // though base_who is `MEASURED inline` and does inline at its OTHER call
+    // sites - this one specific site is where this tree's compiler keeps it real.
     Map *site = map_loc(x, y);
-    if (base_who(x, y) >= 0) {
+    if (site->bit & BIT_BASE_IN_TILE && (site->val2 & 0xF) < MaxPlayerNum) {
         return false;
     }
     uint32_t bit = site->bit;
@@ -2956,19 +2953,18 @@ Purpose: Determine if the specified tile is near a landmark.
 //            reaches 17/56 agreeing instructions; the divergence starts at the prologue's
 //            register assignment (ebx loaded from MapIsFlat before the frame push order this
 //            tree emits), the stack-frame/register-allocation plateau noted for this family.
+// LEVER (2026-08-21): moved to map.h as `MEASURED inline`. world_unity (0x005C7750) and
+//            world_geothermal (0x005C83B0) call_diff'd off by exactly one call each, and
+//            in both cases it was this: a real call to near_landmark where the image has
+//            it inlined. world_borehole (0x005C7020) already inlined it either way, so
+//            this is additive there, and `osmx check` stayed at 0 REGRESSED.
 Return Value: Is the tile near a landmark? true/false
 Status: Complete
 */
-BOOL __cdecl near_landmark(int x, int y) {
-    for (int i = 0; i < RadiusRange[8]; i++) {
-        int x_radius = xrange(x + RadiusOffsetX[i]);
-        int y_radius = y + RadiusOffsetY[i];
-        if (on_map(x_radius, y_radius) && code_at(x_radius, y_radius)) {
-            return true;
-        }
-    }
-    return false;
-}
+// BODY IN map.h, as `MEASURED inline`: the image writes it out at
+// some call sites and calls it at others, and a .cpp definition is only ever
+// one of those. The marker stays here because that is where the catalogue
+// reads it.
 
 /*
 Purpose: Setup the 'Garland Crater' landmark.
@@ -3393,6 +3389,18 @@ Purpose: Setup the 'Borehole Cluster' landmark. Added to SMAC in 3.0 patch.
 // flags     frame;sp_ready;purged_ok
 // calls     0x004712A0 0x00591D60 0x00591DB0 0x00591E00 0x00592600 0x005C2020 0x006169A0 0x0064601D
 // indirect  0x005C7145
+// RULED-OUT (2026-08-21): call_diff says 12 calls here vs the image's 14 (missing
+//            on_map/bit_set/bit2_set/code_set instances). on_map, bit_set, bit2_set and
+//            code_set are all `MEASURED inline` in map.h already - each is called from
+//            dozens of sites across map.cpp, and the image itself keeps SOME of those
+//            calls real while inlining others per call site (on_map has `callers 1` on
+//            its OWN listing even though this function alone names it 5 times in source).
+//            Un-inlining any of them here would touch every OTHER caller map.h shares
+//            them with; `osmx check` has no way to hold those fixed while this one
+//            function moves. Tried un-inlining near_landmark (its ORIGINAL marker, right
+//            above world_crater below) on the same theory - zero effect, reverted there.
+//            Left as MISMATCH; the register-allocation plateau this file already notes
+//            for xrange/on_map loop bodies applies here too once the call shape is fixed.
 Return Value: n/a
 Status: Complete - testing
 */
@@ -3788,6 +3796,15 @@ void __cdecl world_geothermal(int x, int y) {
             return;
         }
     }
+    // LEVER: this is the ONLY calls block - the image has exactly one
+    // world_alt_set/bit2_set/code_set per iteration, gated by BOTH conditions below,
+    // with a plain `has_skipped = true;` (no calls at all) on the else side. The prior
+    // recovery invented a second, unconditional set of the same three calls after the
+    // if/else, which the disassembly does not have - `uv run tools/call_diff.py
+    // 0x005C83B0` is what caught it (this tree made 13 calls against the image's 9),
+    // and walking 0x005C83B0's raw bytes end to end confirmed the single-block shape.
+    // The bit2_set argument is BIT2_GEOTHERMAL (0x400), not LM_GEOTHERMAL (10) - the
+    // image pushes 0x400.
     BOOL has_skipped = false;
     for (int i = 0; i < RadiusRange[2]; i++) {
         int x_radius = xrange(x + RadiusOffsetX[i]);
@@ -3795,14 +3812,11 @@ void __cdecl world_geothermal(int x, int y) {
         if (on_map(x_radius, y_radius) && (is_ocean(x_radius, y_radius) || i < 9)) {
             if ((has_skipped || !i || rand() % 25) && (i < 9 || rand() % 3)) {
                 world_alt_set(x_radius, y_radius, ALT_OCEAN_SHELF, true);
-                bit2_set(x_radius, y_radius, LM_GEOTHERMAL, true);
+                bit2_set(x_radius, y_radius, BIT2_GEOTHERMAL, true);
                 code_set(x_radius, y_radius, i);
             } else {
                 has_skipped = true;
             }
-            world_alt_set(x_radius, y_radius, (i < RadiusRange[2]) + ALT_SHORE_LINE, true);
-            bit2_set(x_radius, y_radius, LM_MESA, true);
-            code_set(x_radius, y_radius, i);
         }
     }
     new_landmark(x, y, StringTable->get((int)Natural[LM_GEOTHERMAL].name));
