@@ -108,7 +108,7 @@ void Caviar::set_camera_direct(const VOX_Vect *camera, const VOX_Matrix *matrix)
 
 /*
 Purpose: Set the Caviar renderer scaling factor.
-// ORIGINAL: 0x006183B0 ?set_scaling@Caviar@@QAEXM@Z 0x006183B0-0x006183BD
+// ORIGINAL: 0x006183B0 ?set_scaling@Caviar@@QAEXM@Z 0x006183B0-0x006183BD BYTE_EXACT
 // size      13 bytes
 // prototype void (__thiscall ?set_scaling@Caviar@@QAEXM@Z)(Caviar* this, float)
 // callers   24   call targets   0
@@ -120,7 +120,7 @@ Return Value: n/a
 Status: Complete
 */
 void Caviar::set_scaling(float scaling) {
-    set_scaling_bits(load_scaling_bits(&scaling));
+    memcpy(&camera_.scaling, &scaling, sizeof(scaling));
 }
 
 void Caviar::set_scaling_bits(uint32_t scaling_bits) {

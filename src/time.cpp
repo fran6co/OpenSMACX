@@ -153,12 +153,31 @@ Purpose: Start an instance of the class with a two parameter callback.
 // flags     sp_ready;purged_ok
 // calls     0x005FD370
 // indirect  0x0061642E 0x0061643C 0x0061649C 0x006164B2
+// LEVER: WRONG CALLEE - init() (the two-parameter-callback overload,
+//        BYTE_EXACT as its own out-of-line function) is hand-inlined here:
+//        the image writes its whole body out at this call site (stop()'s
+//        flush_timer() call is the only one that survives), rather than
+//        calling init(), matching the single-parameter `start` sibling above.
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
-uint32_t Time::start(void(__cdecl *callback)(int, int), int param, int param2, uint32_t cnt, 
+uint32_t Time::start(void(__cdecl *callback)(int, int), int param, int param2, uint32_t cnt,
                      uint32_t res) {
-    init(callback, param, param2, cnt, res);
+    // init() (the two-parameter-callback overload, BYTE_EXACT as its own
+    // out-of-line function) is hand-inlined here: the image writes its whole
+    // body out at this call site (init() itself inlines stop(), whose
+    // flush_timer() call is the only one that survives), rather than calling
+    // it as init(callback, param, param2, cnt, res).
+    stop();
+    callback2_ = callback;
+    cb_param2_ = param2;
+    oneshot_state_ = 0;
+    tick_posted_ = 0;
+    unk_2_ = 0;
+    callback1_ = 0;
+    cb_param1_ = param;
+    count_ = cnt;
+    resolution_ = res;
     if (!callback) {
         return 7;
     }
@@ -235,12 +254,27 @@ Purpose: Start a pulse instance of the class with a two parameter callback.
 // flags     sp_ready;purged_ok
 // calls     0x005FD370
 // indirect  0x006165AE 0x006165BC 0x00616619 0x00616635
+// LEVER: WRONG CALLEE - init() (the two-parameter-callback overload,
+//        BYTE_EXACT as its own out-of-line function) is hand-inlined here,
+//        matching Time::start's two-parameter-callback overload above.
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
-uint32_t Time::pulse(void(__cdecl *callback)(int, int), int param, int param2, uint32_t cnt, 
+uint32_t Time::pulse(void(__cdecl *callback)(int, int), int param, int param2, uint32_t cnt,
                      uint32_t res) {
-    init(callback, param, param2, cnt, res);
+    // init() (the two-parameter-callback overload, BYTE_EXACT as its own
+    // out-of-line function) is hand-inlined here: the image writes its whole
+    // body out at this call site, rather than calling it directly.
+    stop();
+    callback2_ = callback;
+    cb_param2_ = param2;
+    oneshot_state_ = 0;
+    tick_posted_ = 0;
+    unk_2_ = 0;
+    callback1_ = 0;
+    cb_param1_ = param;
+    count_ = cnt;
+    resolution_ = res;
     if (!callback) {
         return 7;
     }
