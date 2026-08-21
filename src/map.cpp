@@ -575,15 +575,6 @@ BOOL __cdecl coast_or_border(int x_point_a, int y_point_a, int x_point_b,
     return false;
 }
 
-/*
-Purpose: Get the temperature of the specified tile.
-Original Offset: n/a
-Return Value: Temperature
-Status: Complete
-*/
-uint32_t __cdecl temp_at(uint32_t x, uint32_t y) {
-    return map_loc(x, y)->climate & 7;
-}
 
 /*
 Purpose: Set the temperature for the specified tile.
@@ -603,15 +594,6 @@ void __cdecl temp_set(int x, int y, int temperature) {
     tile->climate |= temperature & 7;
 }
 
-/*
-Purpose: Get the rainfall (climate) of the specified tile.
-Original Offset: n/a
-Return Value: Rainfall (climate)
-Status: Complete
-*/
-uint32_t __cdecl climate_at(uint32_t x, uint32_t y) {
-    return map_loc(x, y)->climate & (RAINFALL_RAINY | RAINFALL_MOIST);
-}
 
 /*
 Purpose: Set the rainfall (climate) for the specified tile.
@@ -711,15 +693,6 @@ int __cdecl alt_at(int x, int y) {
     return map_loc(x, y)->climate >> 5;
 }
 
-/*
-Purpose: Get the non-shifted altitude of the specified tile.
-Original Offset: n/a
-Return Value: Altitude
-Status: Complete
-*/
-int __cdecl altitude_at(uint32_t x, uint32_t y) {
-    return map_loc(x, y)->climate & 0xE0;
-}
 
 /*
 Purpose: Get the altitude details of the specified tile.
@@ -753,15 +726,6 @@ void __cdecl alt_put_detail(int x, int y, int detail) {
     map_loc(x, y)->contour = detail;
 }
 
-/*
-Purpose: Get the faction owner of the specified tile.
-Original Offset: n/a
-Return Value: Faction id
-Status: Complete
-*/
-uint32_t __cdecl owner_at(uint32_t x, uint32_t y) {
-    return map_loc(x, y)->val2 & 0xF;
-}
 
 /*
 Purpose: Set the faction owner for the specified tile.
@@ -831,15 +795,6 @@ void __cdecl region_set(int x, int y, int region) {
     map_loc(x, y)->region = region;
 }
 
-/*
-Purpose: Get the using faction id of the specified tile.
-Original Offset: n/a
-Return Value: Faction id
-Status: Complete
-*/
-uint32_t __cdecl using_at(uint32_t x, uint32_t y) {
-    return map_loc(x, y)->val3 & 7;
-}
 
 /*
 Purpose: Set the using faction id for the specified tile.
@@ -859,15 +814,6 @@ void __cdecl using_set(int x, int y, int faction_id) {
     tile->val3 |= faction_id & 7;
 }
 
-/*
-Purpose: Get the lock faction id of the specified tile.
-Original Offset: n/a
-Return Value: Faction id
-Status: Complete
-*/
-uint32_t __cdecl lock_at(uint32_t x, uint32_t y) {
-    return (map_loc(x, y)->val3 >> 3) & 7;
-}
 
 /*
 Purpose: Set the lock faction id for the specified tile.
@@ -929,15 +875,6 @@ void __cdecl unlock_map(int x, int y, int faction_id) {
     }
 }
 
-/*
-Purpose: Get the rockiness of the specified tile.
-Original Offset: n/a
-Return Value: Rockiness
-Status: Complete
-*/
-uint32_t __cdecl rocky_at(uint32_t x, uint32_t y) {
-    return map_loc(x, y)->val3 & 0xC0;
-}
 
 /*
 Purpose: Set the rockiness for the specified tile.
@@ -1011,15 +948,6 @@ void __cdecl bit_set(int x, int y, int bit, BOOL set) {
     }
 }
 
-/*
-Purpose: Get the bit2 of the specified tile.
-Original Offset: n/a
-Return Value: Bitfield
-Status: Complete
-*/
-uint32_t __cdecl bit2_at(uint32_t x, uint32_t y) {
-    return map_loc(x, y)->bit2;
-}
 
 /*
 Purpose: Set or unset bit2 for the specified tile.
@@ -1041,15 +969,6 @@ void __cdecl bit2_set(int x, int y, int bit2, BOOL set) {
     }
 }
 
-/*
-Purpose: Get the code of the specified tile which keeps track of tile sequence order for landmarks.
-Original Offset: n/a
-Return Value: Code
-Status: Complete
-*/
-uint32_t __cdecl code_at(uint32_t x, uint32_t y) {
-    return map_loc(x, y)->bit2 >> 24;
-}
 
 /*
 Purpose: Set the code for the specified tile which keeps track of tile sequence order for landmarks.
@@ -3884,15 +3803,6 @@ int __cdecl zoc_move(int x, int y, int faction_id) {
     return 0;
 }
 
-/*
-Purpose: Take two points and calculate the cursor distance between them.
-Original Offset: n/a
-Return Value: Cursor distance
-Status: Complete
-*/
-int __cdecl cursor_dist(int x_point_a, int y_point_a, int x_point_b, int y_point_b) {
-    return (x_dist(x_point_a, x_point_b) + abs(y_point_a - y_point_b)) / 2;
-}
 
 /*
 Purpose: Shore-edge detail for one corner of a tile whose scan found the coast.

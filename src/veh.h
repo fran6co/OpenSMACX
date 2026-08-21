@@ -655,15 +655,47 @@ BOOL __cdecl veh_jail(int veh_id);
 void __cdecl veh_skip(int veh_id);
 int __cdecl veh_fake(int proto_id, int faction_id);
 int __cdecl veh_wake(int veh_id);
-uint8_t __cdecl get_proto_triad(uint32_t proto_id);
-uint8_t __cdecl get_triad(uint32_t veh_id);
-int8_t __cdecl get_proto_offense_rating(uint32_t proto_id);
-int8_t __cdecl get_offense_rating(uint32_t veh_id);
-int8_t __cdecl get_proto_defense_rating(uint32_t proto_id);
-int8_t __cdecl get_defense_rating(uint32_t veh_id);
-BOOL __cdecl is_proto_missile(uint32_t proto_id);
-BOOL __cdecl is_missile(uint32_t veh_id);
 int __cdecl action_home(int veh_id, int flags);
 int __cdecl compute_odds(int odds, int faction_id, int veh_id_atk, int veh_id_def,
                                   int base_id);
 int __cdecl alien_base(int veh_id, int x, int y);
+
+// INLINE: the image has no get_proto_triad - it open-codes what this names.
+inline uint8_t __cdecl get_proto_triad(uint32_t proto_id) {
+    return Chassis[VehPrototypes[proto_id].chassis_id].triad;
+}
+
+// INLINE: the image has no get_triad - it open-codes what this names.
+inline uint8_t __cdecl get_triad(uint32_t veh_id) {
+    return get_proto_triad(Vehs[veh_id].proto_id);
+}
+
+// INLINE: the image has no get_proto_offense_rating - it open-codes what this names.
+inline int8_t __cdecl get_proto_offense_rating(uint32_t proto_id) {
+    return Weapon[VehPrototypes[proto_id].weapon_id].offense_rating;
+}
+
+// INLINE: the image has no get_offense_rating - it open-codes what this names.
+inline int8_t __cdecl get_offense_rating(uint32_t veh_id) {
+    return get_proto_offense_rating(Vehs[veh_id].proto_id);
+}
+
+// INLINE: the image has no get_proto_defense_rating - it open-codes what this names.
+inline int8_t __cdecl get_proto_defense_rating(uint32_t proto_id) {
+    return Armor[VehPrototypes[proto_id].armor_id].defense_rating;
+}
+
+// INLINE: the image has no get_defense_rating - it open-codes what this names.
+inline int8_t __cdecl get_defense_rating(uint32_t veh_id) {
+    return get_proto_defense_rating(Vehs[veh_id].proto_id);
+}
+
+// INLINE: the image has no is_proto_missile - it open-codes what this names.
+inline BOOL __cdecl is_proto_missile(uint32_t proto_id) {
+    return Chassis[VehPrototypes[proto_id].chassis_id].missile;
+}
+
+// INLINE: the image has no is_missile - it open-codes what this names.
+inline BOOL __cdecl is_missile(uint32_t veh_id) {
+    return is_proto_missile(Vehs[veh_id].proto_id);
+}

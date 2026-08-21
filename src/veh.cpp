@@ -3969,85 +3969,13 @@ int __cdecl veh_wake(int veh_id) {
     return veh_id;
 }
 
-/*
-Purpose: Get the triad for the specified prototype.
-Original Offset: n/a
-Return Value: Triad (see VehTriad)
-Status: Complete
-*/
-uint8_t __cdecl get_proto_triad(uint32_t proto_id) {
-    return Chassis[VehPrototypes[proto_id].chassis_id].triad;
-}
 
-/*
-Purpose: Get the triad for the specified unit.
-Original Offset: n/a
-Return Value: Triad (see VehTriad)
-Status: Complete
-*/
-uint8_t __cdecl get_triad(uint32_t veh_id) {
-    return get_proto_triad(Vehs[veh_id].proto_id);
-}
 
-/*
-Purpose: Get the offense rating for the specified prototype.
-Original Offset: n/a
-Return Value: Offense rating
-Status: Complete
-*/
-int8_t __cdecl get_proto_offense_rating(uint32_t proto_id) {
-    return Weapon[VehPrototypes[proto_id].weapon_id].offense_rating;
-}
 
-/*
-Purpose: Get the offense rating for the specified unit.
-Original Offset: n/a
-Return Value: Offense rating
-Status: Complete
-*/
-int8_t __cdecl get_offense_rating(uint32_t veh_id) {
-    return get_proto_offense_rating(Vehs[veh_id].proto_id);
-}
 
-/*
-Purpose: Get the defense rating for the specified prototype.
-Original Offset: n/a
-Return Value: Defense rating
-Status: Complete
-*/
-int8_t __cdecl get_proto_defense_rating(uint32_t proto_id) {
-    return Armor[VehPrototypes[proto_id].armor_id].defense_rating;
-}
 
-/*
-Purpose: Get the defense rating for the specified unit.
-Original Offset: n/a
-Return Value: Defense rating
-Status: Complete
-*/
-int8_t __cdecl get_defense_rating(uint32_t veh_id) {
-    return get_proto_defense_rating(Vehs[veh_id].proto_id);
-}
 
-/*
-Purpose: Determine if the specified prototype is a missile.
-Original Offset: n/a
-Return Value: Is prototype a missile? true/false
-Status: Complete
-*/
-BOOL __cdecl is_proto_missile(uint32_t proto_id) {
-    return Chassis[VehPrototypes[proto_id].chassis_id].missile;
-}
 
-/*
-Purpose: Determine if the specified unit is a missile.
-Original Offset: n/a
-Return Value: Is unit a missile? true/false
-Status: Complete
-*/
-BOOL __cdecl is_missile(uint32_t veh_id) {
-    return is_proto_missile(Vehs[veh_id].proto_id);
-}
 
 /*
 Purpose: Send a unit home. Search the friendly and pacted bases, then - for an air unit - the
