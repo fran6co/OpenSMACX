@@ -45,7 +45,7 @@ uint32_t ScenEditorUndoPosition = 1; // 0x00690D7C
 
 /*
 Purpose: Trim the trailing spaces in-line from the end of the string.
-// ORIGINAL: 0x00600780 ?purge_trailing@@YAXPAD@Z 0x00600780-0x006007AD
+// ORIGINAL: 0x00600780 ?purge_trailing@@YAXPAD@Z 0x00600780-0x006007AD BYTE_EXACT
 // size      45 bytes
 // prototype 
 // callers   0   call targets   1
@@ -56,16 +56,28 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl purge_trailing(LPSTR input) {
-    LPSTR trim = input + strlen(input);
-    while ((*(trim - 1) - ' ') == 0 && (trim != input)) {
-        *trim--;
+    // IT OVERWRITES EACH TRAILING SPACE, walking back, rather than placing a
+    // single terminator: `mov byte ptr [eax], 0` at 0x006007A1 is inside the
+    // loop. The empty string leaves early - `test eax, eax; je` at 0x0060078E
+    // - and the `p == input` test comes AFTER the store.
+    const size_t length = strlen(input);
+    if (length == 0) {
+        return;
     }
-    input[(trim - input)] = 0;
+    char *end = input + length - 1;
+    while (end >= input && *end == ' ') {
+        *end = 0;
+        if (end == input) {
+            return;
+        }
+        --end;
+    }
 }
 
 /*
 Purpose: Trim the leading spaces in-line from the start of the string.
-// ORIGINAL: 0x00600760 ?purge_leading@@YAXPAD@Z 0x00600760-0x00600773
+// ORIGINAL: 0x00600760 ?purge_leading@@YAXPAD@Z 0x00600760-0x00600773 BYTE_EXACT
+// symbol    ?purge_leading@@YAPADPAD@Z
 // size      19 bytes
 // prototype 
 // callers   2   call targets   0
@@ -75,12 +87,17 @@ Purpose: Trim the leading spaces in-line from the start of the string.
 Return Value: n/a
 Status: Complete
 */
-void __cdecl purge_leading(LPSTR input) {
+LPSTR __cdecl purge_leading(LPSTR input) {
+    // IT DOES NOT COPY. The shipped body is eight instructions - advance past
+    // the leading spaces and `ret` - with no `strcpy` and nothing written
+    // back, so the skipped prefix survives in the caller's buffer and the
+    // advanced pointer is left in EAX. The catalogued name spells the return
+    // `X`, void; the `symbol` fact records what this tree emits instead.
     LPSTR trim = input;
-    while ((*trim - ' ') == 0 && *trim != 0) {
-        *trim++;
+    while (*trim == ' ') {
+        trim++;
     }
-    strcpy_s(input, strlen(input) + 1, trim);
+    return trim;
 }
 
 /*
@@ -147,9 +164,12 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl add_lf(LPSTR str) {
-    size_t len = strlen(str);
-    str[len] = '\n';
-    str[len + 1] = 0;
+    // A POINTER, not an index. The image adds the length to the base at
+    // 0x0060084B and stores through `[eax]` and `[eax+1]`; indexing keeps
+    // both operands live and stores through `[eax+esi]`.
+    char *const end = str + strlen(str);
+    end[0] = '\n';
+    end[1] = 0;
 }
 
 /*
