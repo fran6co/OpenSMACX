@@ -109,4 +109,22 @@ Method original_slot(const void *slot) {
   return original_method<Method>(*reinterpret_cast<const unsigned long *>(slot));
 }
 
+/*
+ * A vtable slot CALLED WHERE IT LIVES. `original_slot` reads the slot into a
+ * pointer-to-member, and calling that emits `mov reg, [vtable+N]; call reg` -
+ * two instructions where the image has one, `call dword ptr [vtable+N]`.
+ * Measured on `Wave::unload` at 0x004C6EA0: the shipped code calls straight
+ * through the slot.
+ *
+ * `Fn` is a plain `__thiscall`-shaped function pointer whose first parameter
+ * is the receiver; the slot is dereferenced AS one, so the call operand is
+ * the memory location and VC6 emits the single indirect call.
+ */
+template <class Fn>
+Fn &vtable_slot(const void *object, unsigned long offset) {
+  const unsigned char *const vtable =
+      *reinterpret_cast<const unsigned char *const *>(object);
+  return *reinterpret_cast<Fn *>(const_cast<unsigned char *>(vtable) + offset);
+}
+
 #define ORIGINAL(pointer) (reinterpret_cast<OriginalObject *>(pointer))

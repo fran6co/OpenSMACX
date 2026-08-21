@@ -710,7 +710,7 @@ Status: Complete
 
 /*
 Purpose: Set the altitude details for the specified tile.
-// ORIGINAL: 0x00591260 ?alt_put_detail@@YAXHHH@Z 0x00591260-0x00591288
+// ORIGINAL: 0x00591260 ?alt_put_detail@@YAXHHH@Z 0x00591260-0x00591288 SEMANTIC
 // size      40 bytes
 // prototype void (__cdecl ?alt_put_detail@@YAXHHH@Z)(int xCoord, int yCoord, int detail)
 // callers   5   call targets   0
@@ -747,7 +747,7 @@ void __cdecl owner_set(int x, int y, int faction_id) {
 
 /*
 Purpose: Set the site for the specified tile.
-// ORIGINAL: 0x00591B50 ?site_set@@YAXHHH@Z 0x00591B50-0x00591B86
+// ORIGINAL: 0x00591B50 ?site_set@@YAXHHH@Z 0x00591B50-0x00591B86 SEMANTIC
 // size      54 bytes
 // prototype void (__cdecl ?site_set@@YAXHHH@Z)(int xCoord, int yCoord, int site)
 // callers   9   call targets   0
@@ -783,7 +783,7 @@ Status: Complete
 
 /*
 Purpose: Set the region for the specified tile.
-// ORIGINAL: 0x00591B90 ?region_set@@YAXHHH@Z 0x00591B90-0x00591BB8
+// ORIGINAL: 0x00591B90 ?region_set@@YAXHHH@Z 0x00591B90-0x00591BB8 SEMANTIC
 // size      40 bytes
 // prototype void (__cdecl ?region_set@@YAXHHH@Z)(int xCoord, int yCoord, int region)
 // callers   2   call targets   0
@@ -915,7 +915,7 @@ Status: Complete
 
 /*
 Purpose: Set the bit for the specified tile.
-// ORIGINAL: 0x00591D30 ?bit_put@@YAXHHH@Z 0x00591D30-0x00591D58
+// ORIGINAL: 0x00591D30 ?bit_put@@YAXHHH@Z 0x00591D30-0x00591D58 SEMANTIC
 // size      40 bytes
 // prototype void (__cdecl ?bit_put@@YAXHHH@Z)(int xCoord, int yCoord, int bit)
 // callers   1   call targets   0
@@ -1397,17 +1397,8 @@ Purpose: If a base exists, get the owner of the specified tile.
 Return Value: Owner (faction id) or -1
 Status: Complete
 */
-int __cdecl base_who(int x, int y) {
-    Map *tile = map_loc(x, y);
-    if (tile->bit & BIT_BASE_IN_TILE) {
-        // `int`, as in veh_who: the image's test is `jl`.
-        int owner = tile->val2 & 0xF;
-        if (owner < MaxPlayerNum) {
-            return owner;
-        }
-    }
-    return -1;
-}
+// BODY IN map.h, as `MEASURED inline`: six bodies call it where the image
+// calls nothing - `call_diff` names it - and 0x005798A0 is a real body.
 
 /*
 Purpose: If a base or unit exists, get the owner of the specified tile.

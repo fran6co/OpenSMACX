@@ -93,6 +93,13 @@ BOOL __cdecl valid_tech_leap(int tech_id, int faction_id) {
 Purpose: Craft an output string related to a specific technology. For techIDs outside the standard
          range, craft a string related to world map, comm links or prototypes.
 // ORIGINAL: 0x005B9C40 ?say_tech@@YAXPADHH@Z 0x005B9C40-0x005B9EF0
+// UNEXPLORED: left untouched - MISMATCH at instruction 2, compiled body is 133 instructions
+//   against the image's 221, a size gap much bigger than a register-allocation difference
+//   accounts for. The `tech_id < -1` branch here is suspect: the image reads a label id out of
+//   a runtime struct (`mov eax,[0x9b90f8]; mov eax,[eax+0x4d8]`, then an apparent __thiscall
+//   through ecx=0x9b90d8 into 0x6169a0) rather than pushing a literal constant the way
+//   `label_get(310)` compiles to here. Worth checking whether `label_get`'s argument in that
+//   branch should be a field read (e.g. off a Rules-like global) instead of the literal 310.
 // size      688 bytes
 // prototype void (__cdecl ?say_tech@@YAXPADHH@Z)(int8* output, int techID, int categoryLvl)
 // callers   30   call targets   4
@@ -151,6 +158,13 @@ Status: Complete
 /*
 Purpose: Check whether faction has a particular tech or not.
 // ORIGINAL: 0x005B9F20 ?has_tech@@YA_NHH@Z 0x005B9F20-0x005B9F89
+// LEVER: `RulesTechnology *tech = &Technology[tech_id];` then `tech->preq_tech_1`/`tech->preq_tech_2`
+//   forces the compiler to keep BOTH tech_id and faction_id live in callee-saved registers
+//   (matching the image's edi/esi) instead of re-deriving the field address per access;
+//   two direct `Technology[tech_id].field` reads in one condition compile to a completely
+//   different (and much longer) address recomputation. Moved 8/46 -> 32/46 agreeing.
+// RULED-OUT: `== TechDisabled` for the preq checks compiles to `cmp/je -2`; the image is
+//   `cmp/jl -1` (i.e. `< TechNone`), which is what preq_tech_1/preq_tech_2 use now.
 // symbol    ?has_tech@@YAHHH@Z
 // size      105 bytes
 // prototype bool (__cdecl ?has_tech@@YA_NHH@Z)(int techID, int factionID)
@@ -161,17 +175,19 @@ Purpose: Check whether faction has a particular tech or not.
 Return Value: Faction has tech? true/false
 Status: Complete
 */
-BOOL __cdecl has_tech(int tech_id, int faction_id) {
+__forceinline BOOL __cdecl has_tech(int tech_id, int faction_id) {
     if (faction_id <= 0) {
         return false;
     }
     if (tech_id == TechNone) {
         return true;
     }
-    if (tech_id < 0 || tech_id >= (MaxTechnologyNum - 1) // excludes 'Transcendent Thought'
-        || Technology[tech_id].preq_tech_1 == TechDisabled
-        || (Technology[tech_id].preq_tech_2 == TechDisabled
-            && Technology[tech_id].preq_tech_1 != TechNone)) {
+    if (tech_id < 0 || tech_id >= (MaxTechnologyNum - 1)) { // excludes 'Transcendent Thought'
+        return false;
+    }
+    RulesTechnology *tech = &Technology[tech_id];
+    if (tech->preq_tech_1 < TechNone
+        || (tech->preq_tech_2 < TechNone && tech->preq_tech_1 != TechNone)) {
         // "none, disable" ; valid #TECH preq_tech entry
         return false;
     }
@@ -181,6 +197,8 @@ BOOL __cdecl has_tech(int tech_id, int faction_id) {
 /*
 Purpose: Determine technology level for tech_id.
 // ORIGINAL: 0x005B9F90 ?tech_recurse@@YAHHH@Z 0x005B9F90-0x005B9FE0
+// LEVER: same as has_tech - `RulesTechnology *tech = &Technology[tech_id];` before the two
+//   recursive calls, instead of two `Technology[tech_id].preq_tech_N` subscripts. 4/36 -> 22/36.
 // size      80 bytes
 // prototype int (__cdecl ?tech_recurse@@YAHHH@Z)(int techID, int ret)
 // callers   7   call targets   1
@@ -194,8 +212,9 @@ int __cdecl tech_recurse(int tech_id, int base_lvl) {
     if (tech_id < 0 || tech_id >= MaxTechnologyNum) {
         return base_lvl;
     }
-    int val1 = tech_recurse(Technology[tech_id].preq_tech_1, base_lvl + 1);
-    int val2 = tech_recurse(Technology[tech_id].preq_tech_2, base_lvl + 1);
+    RulesTechnology *tech = &Technology[tech_id];
+    int val1 = tech_recurse(tech->preq_tech_1, base_lvl + 1);
+    int val2 = tech_recurse(tech->preq_tech_2, base_lvl + 1);
     return (val1 > val2) ? val1 : val2;
 }
 
@@ -230,6 +249,12 @@ int __cdecl tech_category(int tech_id) {
 Purpose: Check to see whether provided faction can research a specific technology. Checks are
          included to prevent SMACX specific Veh from being built in SMAC mode.
 // ORIGINAL: 0x005BAC20 ?tech_avail@@YAHHH@Z 0x005BAC20-0x005BADBF
+// LEVER: has_tech marked `__forceinline` (it is defined earlier in the file, so every caller
+//   below it CAN inline it; the image inlines it here and in tech_effects/tech_val, but calls it
+//   for real in valid_tech_leap, which is defined ABOVE has_tech and so cannot see its body -
+//   matches the image's own "calls (none)" vs "calls ... 0x005B9F20" split exactly).
+//   Plus the same `RulesTechnology *tech = &Technology[tech_id];` pointer lever as has_tech,
+//   applied to this function's own preq_tech_1/preq_tech_2 reads. 6/130 -> 78/130 agreeing.
 // size      415 bytes
 // prototype int (__cdecl ?tech_avail@@YAHHH@Z)(int techID, int factionID)
 // callers   6   call targets   0
@@ -246,8 +271,9 @@ BOOL __cdecl tech_avail(int tech_id, int faction_id) {
             || tech_id == TECH_SECMANI || tech_id == TECH_NEWMISS || tech_id == TECH_BFG9000))) {
         return false;
     }
-    int preq_tech_1 = Technology[tech_id].preq_tech_1;
-    int preq_tech_2 = Technology[tech_id].preq_tech_2;
+    RulesTechnology *tech = &Technology[tech_id];
+    int preq_tech_1 = tech->preq_tech_1;
+    int preq_tech_2 = tech->preq_tech_2;
     if (preq_tech_1 < TechNone || preq_tech_2 < TechNone) {
         return false; // if either prerequisite tech is set to disabled (-2)
     }
@@ -257,6 +283,14 @@ BOOL __cdecl tech_avail(int tech_id, int faction_id) {
 /*
 Purpose: Calculate faction's tech related bonuses for commerce and resource production in fungus.
 // ORIGINAL: 0x005BAE60 ?tech_effects@@YAXH@Z 0x005BAE60-0x005BAFFB
+// LEVER: `memset(&PlayersData[faction_id].tech_fungus_nutrient, 0, 4 * sizeof(int))` for the
+//   four contiguous `tech_fungus_*` zero-inits reproduces the image's single-base-pointer
+//   4x `mov [reg+N], 0` (0/4/8/0xc); four separate `= 0;` statements each re-derive the field
+//   address instead of sharing one. has_tech forceinline (see tech_avail) also applies here,
+//   since this function's own tech loop calls has_tech; net effect on THIS function's raw
+//   agreeing count was roughly flat (register allocation inside the loop still differs from
+//   the image - same open plateau as has_tech/tech_recurse) but it is the semantically correct
+//   shape (the image inlines has_tech here too - "calls (none)").
 // size      411 bytes
 // prototype void (__cdecl ?tech_effects@@YAXH@Z)(int factionID)
 // callers   2   call targets   0
@@ -268,10 +302,7 @@ Status: Complete
 */
 void __cdecl tech_effects(int faction_id) {
     PlayersData[faction_id].tech_commerce_bonus = Players[faction_id].rule_commerce;
-    PlayersData[faction_id].tech_fungus_nutrient = 0;
-    PlayersData[faction_id].tech_fungus_mineral = 0;
-    PlayersData[faction_id].tech_fungus_energy = 0;
-    PlayersData[faction_id].tech_fungus_unk = 0;
+    memset(&PlayersData[faction_id].tech_fungus_nutrient, 0, 4 * sizeof(int));
     for (uint32_t tech_id = 0; tech_id < MaxTechnologyNum; tech_id++) {
         if (has_tech(tech_id, faction_id)) {
             uint32_t flags = Technology[tech_id].flags;
@@ -322,6 +353,11 @@ void __cdecl tech_effects(int faction_id) {
 /*
 Purpose: Determine if preqTechID is a prerequisite of parentTechID within descending range.
 // ORIGINAL: 0x005BCB60 ?tech_is_preq@@YAHHHH@Z 0x005BCB60-0x005BCBDB
+// RULED-OUT: the `RulesTechnology *tech = &Technology[parent_tech_id];` pointer lever that
+//   helped has_tech/tech_recurse/tech_avail REGRESSES this one (9/63 -> 5/63): it merges the
+//   two early `return false;` guards (preq_tech_id<0, parent_tech_id<0) into one shared
+//   epilogue the image does not use. Left as plain `Technology[parent_tech_id].preq_tech_N`.
+//   Still MISMATCH at 9/63; unexplored beyond that.
 // size      123 bytes
 // prototype int (__cdecl ?tech_is_preq@@YAHHHH@Z)(int preqTechID, int parentTechID, unsigned int range)
 // callers   3   call targets   1
@@ -350,6 +386,14 @@ Purpose: Determine how valuable the specified techID is to a faction. This id ei
          a technology (0-88), another faction (89-96) or a prototype (97-608). The 3rd parameter
          determines whether a simplistic or extended calculation is required for a technology id.
 // ORIGINAL: 0x005BCBE0 ?tech_val@@YAHHHH@Z 0x005BCBE0-0x005BDC05
+// LEVER: has_tech `__forceinline` (see tech_avail) applies here too - the image's own "calls"
+//   list has no 0x005B9F20, so it inlines has_tech at every one of this function's several
+//   call sites. Moved 21/1361 -> 26/1361 agreeing; still deep MISMATCH, unexplored past that -
+//   4133 bytes is far past what a source-form search covers in one pass.
+// RULED-OUT: applying the `RulesTechnology *tech_ptr = &Technology[tech_id];` pointer lever to
+//   the growth/power/wealth/tech reads (the same shape that helped has_tech/tech_avail)
+//   REGRESSES this function (26/1361 -> 16/1361); left as four separate `Technology[tech_id].*`
+//   reads.
 // size      4133 bytes
 // prototype int (__cdecl ?tech_val@@YAHHHH@Z)(int techID, int factionID, BOOL simpleCalc)
 // callers   14   call targets   5
@@ -704,6 +748,10 @@ Status: Complete
 /*
 Purpose: Calculate how much researching a tech will cost the specified faction.
 // ORIGINAL: 0x005BE6B0 ?tech_rate@@YAHH@Z 0x005BE6B0-0x005BE931
+// UNEXPLORED: left untouched - MISMATCH at instruction 0 under every flag set the search tries
+//   (best found still omits the frame pointer the image keeps), and the compiled body is 182
+//   instructions against the image's 234. A big arithmetic function; needs the same kind of
+//   per-expression source-form search done here for has_tech/tech_avail, not attempted this pass.
 // size      641 bytes
 // prototype int (__cdecl ?tech_rate@@YAHH@Z)(int factionID)
 // callers   6   call targets   0

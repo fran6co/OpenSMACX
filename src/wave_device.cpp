@@ -121,7 +121,11 @@ Return Value: n/a
 Status: Complete
 */
 void Wave_Device::enable() {
-    dispatch_wrapped_device(this, 0x60);
+    void *device = device_14_;
+    if (device) {
+        device_vfn *vtable = *reinterpret_cast<device_vfn **>(device);
+        (ORIGINAL(device)->*vtable[0x18])();
+    }
 }
 
 /*
@@ -138,7 +142,12 @@ Return Value: n/a
 Status: Complete
 */
 void Wave_Device::disable() {
-    dispatch_wrapped_device(this, 0x64);
+    void *device = device_14_;
+    if (device) {
+        uint8_t *vtable = *reinterpret_cast<uint8_t **>(device);
+        device_vfn fn = *reinterpret_cast<device_vfn *>(vtable + 0x64);
+        (ORIGINAL(device)->*fn)();
+    }
 }
 
 void __fastcall wave_device_set_pan_redirect(Wave_Device *self, void *, int a1) {
@@ -299,7 +308,7 @@ int Wave_Device::get_rate() {
 /*
 Purpose: Ask the wrapped device for its DirectSound interface, through its
          vtable slot 0x70.
-// ORIGINAL: 0x004C5190 ?get_ds@Wave_Device@@QAEHXZ 0x004C5190-0x004C519F
+// ORIGINAL: 0x004C5190 ?get_ds@Wave_Device@@QAEHXZ 0x004C5190-0x004C519F BYTE_EXACT
 // size      15 bytes
 // prototype int (__thiscall ?get_ds@Wave_Device@@QAEHXZ)(Wave_Device* this)
 // callers   1   call targets   0
@@ -310,7 +319,12 @@ Return Value: the device's answer, or 0 when none is wrapped
 Status: Complete
 */
 int Wave_Device::get_ds() {
-    return query_wrapped_device(this, 0x70);
+    void *device = device_14_;
+    if (device) {
+        device_query_vfn *vtable = *reinterpret_cast<device_query_vfn **>(device);
+        return (ORIGINAL(device)->*vtable[0x1C])();
+    }
+    return 0;
 }
 
 /*
@@ -526,8 +540,6 @@ int __fastcall wave_device_get_group_volume_redirect(Wave_Device *self, void *,
     return self->get_group_volume(a1);
 }
 
-func_wave_group_insert WaveDeviceGroupInsert = original_method<func_wave_group_insert>(0x004C5BF0);
-
 /*
 Purpose: Put a wave into one of the sixteen groups. The list-insert helper
          threads it through the group's node list, and the wave's own group
@@ -548,7 +560,7 @@ int Wave_Device::add_to_group(unsigned int a1, Wave *a2) {
     if (a1 > 0xF || !a2) {
         return 0xA;
     }
-    (ORIGINAL(&groups_[a1].head)->*WaveDeviceGroupInsert)(a2);
+    reinterpret_cast<WaveGroupList *>(&groups_[a1].head)->insert(a2);
     // The slot field is private to Wave and written here by offset, exactly
     // as the original stores through [wave+0x68].
     *reinterpret_cast<uint32_t *>(reinterpret_cast<uint8_t *>(a2) + 0x68) =
@@ -1387,16 +1399,16 @@ Status: Complete
 */
 int Wave_Device::init(void *a1, unsigned long a2) {
     typedef int (OriginalObject::*own_mode_fn)(unsigned long mode);
-    const int staged = (ORIGINAL(this)->*original_slot<own_mode_fn>(*reinterpret_cast<uint8_t **>(this) + 0))(
-        a2);
+    const int staged = (ORIGINAL(this)->*(*reinterpret_cast<own_mode_fn **>(this))[0])(a2);
     if (staged) {
         return staged;
     }
     typedef int (OriginalObject::*device_init_fn)(void *a1, unsigned long a2);
-    const int result = (ORIGINAL(device_14_)->*original_slot<device_init_fn>(*reinterpret_cast<uint8_t **>(device_14_) + 0xC))(
-        a1, a2);
+    void *device = device_14_;
+    const int result = (ORIGINAL(device)->*(*reinterpret_cast<device_init_fn **>(device))[3])(a1, a2);
     if (result) {
-        (ORIGINAL(this)->*original_method<void (OriginalObject::*)() >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(this) + 4)))();
+        typedef void (OriginalObject::*own_fail_fn)();
+        (ORIGINAL(this)->*(*reinterpret_cast<own_fail_fn **>(this))[1])();
         return result;
     }
     return 0;

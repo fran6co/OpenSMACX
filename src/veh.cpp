@@ -1624,8 +1624,7 @@ int __cdecl transport_val(int chassis_id, int ability, int reactor_id) {
 Purpose: Generate offensive display string for the specified prototype. Replaced existing non-safe
          strcat with string. Original function took a 2nd parameter with char buffer and didn't
          return anything.
-// ORIGINAL: 0x0057D560 ?say_offense@@YAXPADH@Z 0x0057D560-0x0057D6C5
-// symbol    ?say_offense@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@I@Z
+// ORIGINAL: 0x0057D560 ?say_offense@@YAXPADH@Z 0x0057D560-0x0057D6C5 BYTE_EXACT
 // size      357 bytes
 // prototype void (__cdecl ?say_offense@@YAXPADH@Z)(int8*, int protoID)
 // callers   3   call targets   5
@@ -1635,44 +1634,49 @@ Purpose: Generate offensive display string for the specified prototype. Replaced
 Return Value: Offensive display string
 Status: Complete
 */
-std::string __cdecl say_offense(uint32_t proto_id) {
-    std::string output = std::to_string(offense_proto(proto_id, -1, 0));
-    if (has_abil(proto_id, ABL_DROP_POD)) {
-        output += "^";
-    }
-    if (has_abil(proto_id, ABL_AMPHIBIOUS)) {
-        output += "~";
-    }
-    if (has_abil(proto_id, ABL_NERVE_GAS)) {
-        output += "x";
-    }
-    if (has_abil(proto_id, ABL_EMPATHIC)) {
-        output += "e";
-    }
-    if (has_abil(proto_id, ABL_BLINK_DISPLACER)) {
-        output += "!";
+void __cdecl say_offense(LPSTR stat, int proto_id) {
+    char num_buf[80];
+    if (has_abil(proto_id, ABL_AIR_SUPERIORITY)) {
+        strcat(stat, "<");
     }
     if (can_arty(proto_id, true)) {
-        output.insert(output.begin(), '(');
-        output += ")";
+        strcat(stat, "(");
+    }
+    int off_rating = offense_proto(proto_id, -1, 0);
+    _itoa(off_rating, num_buf, 10);
+    strcat(stat, num_buf);
+    if (has_abil(proto_id, ABL_DROP_POD)) {
+        strcat(stat, "^");
+    }
+    if (has_abil(proto_id, ABL_AMPHIBIOUS)) {
+        strcat(stat, "~");
+    }
+    if (has_abil(proto_id, ABL_NERVE_GAS)) {
+        strcat(stat, "x");
+    }
+    if (has_abil(proto_id, ABL_EMPATHIC)) {
+        strcat(stat, "e");
+    }
+    if (has_abil(proto_id, ABL_BLINK_DISPLACER)) {
+        strcat(stat, "!");
+    }
+    if (can_arty(proto_id, true)) {
+        strcat(stat, ")");
     }
     if (has_abil(proto_id, ABL_AIR_SUPERIORITY)) {
-        output.insert(output.begin(), '<');
-        output += ">";
+        strcat(stat, ">");
     }
-    uint32_t weapon_id = VehPrototypes[proto_id].weapon_id;
+    uint8_t weapon_id = VehPrototypes[proto_id].weapon_id;
     if (weapon_id == WPN_RESONANCE_LASER || weapon_id == WPN_RESONANCE_BOLT) {
-        output += "r";
+        strcat(stat, "r");
     }
-    return output;
 }
 
 /*
 Purpose: Generate defense display string for the specified prototype. Replaced existing non-safe 
          strcat with string. Original function took a 2nd parameter with char buffer and didn't 
          return anything.
-// ORIGINAL: 0x0057D6D0 ?say_defense@@YAXPADH@Z 0x0057D6D0-0x0057D7C4
-// symbol    ?say_defense@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@I@Z
+// ORIGINAL: 0x0057D6D0 ?say_defense@@YAXPADH@Z 0x0057D6D0-0x0057D7C4 BYTE_EXACT
 // size      244 bytes
 // prototype void (__cdecl ?say_defense@@YAXPADH@Z)(int8*, int protoID)
 // callers   3   call targets   4
@@ -1682,25 +1686,31 @@ Purpose: Generate defense display string for the specified prototype. Replaced e
 Return Value: Defense display string
 Status: Complete
 */
-std::string __cdecl say_defense(uint32_t proto_id) {
-    std::string output = std::to_string(armor_proto(proto_id, -1, 0));
+void __cdecl say_defense(LPSTR stat, int proto_id) {
+    char num_buf[80];
+    if (has_abil(proto_id, ABL_AAA)) {
+        strcat(stat, "<");
+    }
+    int def_rating = armor_proto(proto_id, -1, 0);
+    _itoa(def_rating, num_buf, 10);
+    strcat(stat, num_buf);
     if (has_abil(proto_id, ABL_COMM_JAMMER)) {
-        output += "+";
+        strcat(stat, "+");
     }
     if (has_abil(proto_id, ABL_TRANCE)) {
-        output += "t";
+        strcat(stat, "t");
     }
     if (has_abil(proto_id, ABL_AAA)) {
-        output.insert(output.begin(), '<');
-        output += ">";
+        strcat(stat, ">");
     }
-    uint32_t armor_id = VehPrototypes[proto_id].armor_id;
-    if (armor_id == ARM_PULSE_3_ARMOR || armor_id == ARM_PULSE_8_ARMOR) {
-        output += "p";
-    } else if (armor_id == ARM_RESONANCE_3_ARMOR || armor_id == ARM_RESONANCE_8_ARMOR) {
-        output += "r";
+    if (VehPrototypes[proto_id].armor_id == ARM_PULSE_3_ARMOR
+        || VehPrototypes[proto_id].armor_id == ARM_PULSE_8_ARMOR) {
+        strcat(stat, "p");
     }
-    return output;
+    if (VehPrototypes[proto_id].armor_id == ARM_RESONANCE_3_ARMOR
+        || VehPrototypes[proto_id].armor_id == ARM_RESONANCE_8_ARMOR) {
+        strcat(stat, "r");
+    }
 }
 
 /*
@@ -1717,26 +1727,30 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl say_stats_3(LPSTR stat, int proto_id) {
-    std::string output;
-    int off_rating = get_proto_offense_rating(proto_id);
-    if (off_rating >= 0) {
-        output = (off_rating < 99) ? say_offense(proto_id) : "*";
+    char num_buf[80];
+    int8_t off_rating = get_proto_offense_rating(proto_id);
+    if (off_rating < 0) {
+        strcat(stat, "?"); // PSI
+    } else if (off_rating < 99) {
+        say_offense(stat, proto_id);
     } else {
-        output = "?"; // PSI
+        strcat(stat, "*");
     }
-    output += "-";
-    output += get_proto_defense_rating(proto_id) >= 0 ? say_defense(proto_id) : "?";
-    output += "-";
-    output += std::to_string(speed_proto(proto_id) / Rules->move_rate_roads);
+    strcat(stat, "-");
+    if (get_proto_defense_rating(proto_id) < 0) {
+        strcat(stat, "?");
+    } else {
+        say_defense(stat, proto_id);
+    }
+    strcat(stat, "-");
+    _itoa(speed_proto(proto_id) / Rules->move_rate_roads, num_buf, 10);
+    strcat(stat, num_buf);
     uint8_t reactor = VehPrototypes[proto_id].reactor_id;
     if (reactor > RECT_FISSION) {
-        output += "*";
-        output += std::to_string(reactor);
+        strcat(stat, "*");
+        _itoa(reactor, num_buf, 10);
+        strcat(stat, num_buf);
     }
-    // assumes at least 256 char buffer, eventually remove
-    // all calls but one use stringTemp (1032 buffer) > ProdPicker::calculate uses local 256 buffer
-    // TODO: Eventually remove LPSTR stat param and return std::string instead
-    strcat_s(stat, 256, output.c_str());
 }
 
 /*
@@ -1769,39 +1783,43 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl say_stats_2(LPSTR stat, int proto_id) {
-    std::string output;
+    char num_buf[80];
     int off_rating = get_proto_offense_rating(proto_id);
-    if (off_rating >= 0) {
-        output = (off_rating < 99) ? say_offense(proto_id) : "*";
+    if (off_rating < 0) {
+        strcat(stat, label_get(196)); // 'Psi'
+    } else if (off_rating < 99) {
+        say_offense(stat, proto_id);
     } else {
-        output = label_get(196); // 'Psi'
+        strcat(stat, "*");
     }
-    output += "-";
-    output += get_proto_defense_rating(proto_id) >= 0 ? say_defense(proto_id) 
-        : label_get(196); // 'Psi'
-    output += "-";
-    output += std::to_string(speed_proto(proto_id) / Rules->move_rate_roads);
+    strcat(stat, "-");
+    if (get_proto_defense_rating(proto_id) < 0) {
+        strcat(stat, label_get(196)); // 'Psi'
+    } else {
+        say_defense(stat, proto_id);
+    }
+    strcat(stat, "-");
+    _itoa(speed_proto(proto_id) / Rules->move_rate_roads, num_buf, 10);
+    strcat(stat, num_buf);
     uint32_t triad = get_proto_triad(proto_id);
     if (triad == TRIAD_SEA) {
-        output += " ";
-        output += label_get(163); // 'Sea'
+        strcat(stat, " ");
+        strcat(stat, label_get(163)); // 'Sea'
     } else if (triad == TRIAD_AIR) {
-        output += " ";
-        output += label_get(162); // 'Air'
+        strcat(stat, " ");
+        strcat(stat, label_get(162)); // 'Air'
     }
     uint32_t reactor = VehPrototypes[proto_id].reactor_id;
     if (reactor > 1) {
-        output += "*";
-        output += std::to_string(reactor);
+        strcat(stat, "*");
+        _itoa(reactor, num_buf, 10);
+        strcat(stat, num_buf);
     }
-    // assumes at least 1032 char buffer (stringTemp), eventually remove
-    // TODO: Eventually remove LPSTR stat param and return std::string instead
-    strcat_s(stat, 1032, output.c_str());
 }
 
 /*
 Purpose: Generate verbose stats string for specified prototype. Used by Design Workshop and Military
-         Command Nexus. Replaced existing non-safe strcat with string. Reworked to integrate with 
+         Command Nexus. Replaced existing non-safe strcat with string. Reworked to integrate with
          existing C code.
 // ORIGINAL: 0x0057DAA0 ?say_stats@@YAXPADHPAD@Z 0x0057DAA0-0x0057DED8
 // symbol    ?say_stats@@YAXPADH0@Z
@@ -1815,7 +1833,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl say_stats(LPSTR stat, int proto_id, LPSTR custom_spacer) {
-    std::string output;
+    char num_buf[80];
     uint8_t plan = VehPrototypes[proto_id].plan;
     uint8_t chas = VehPrototypes[proto_id].chassis_id;
     uint8_t triad = Chassis[chas].triad;
@@ -1824,58 +1842,68 @@ void __cdecl say_stats(LPSTR stat, int proto_id, LPSTR custom_spacer) {
     int def_rating = get_proto_defense_rating(proto_id);
     if (plan == PLAN_RECONNAISANCE && triad == TRIAD_LAND && off_rating == 1 && def_rating == 1
         && !VehPrototypes[proto_id].ability_flags) {
-        output = StringTable->get((int)PlansFullName[3]); // 'Explore/Defense'
-        output += ", ";
+        strcat(stat, StringTable->get((int)PlansFullName[3])); // 'Explore/Defense'
+        strcat(stat, ", ");
     } else if (mode < 3) { // Projectile, energy, missile
-        output = (plan != PLAN_DEFENSIVE || (off_rating >= 0 && off_rating <= def_rating))
-            ? StringTable->get((int)PlansShortName[plan]) : label_get(312); // 'Combat'
-        output += ", ";
+        strcat(stat, (plan != PLAN_DEFENSIVE || (off_rating >= 0 && off_rating <= def_rating))
+            ? StringTable->get((int)PlansShortName[plan]) : label_get(312)); // 'Combat'
+        strcat(stat, ", ");
     }
     if (off_rating < 0 || mode < 3) {
-        output += (off_rating < 0) ? label_get(196) : say_offense(proto_id); // 'Psi'
-        output += custom_spacer ? custom_spacer : "/";
-        output += (def_rating < 0) ? label_get(196) : say_defense(proto_id); // 'Psi'
-        output += custom_spacer ? custom_spacer : "/";
-        output += std::to_string(speed_proto(proto_id) / Rules->move_rate_roads);
+        if (off_rating < 0) {
+            strcat(stat, label_get(196)); // 'Psi'
+        } else {
+            say_offense(stat, proto_id);
+        }
+        strcat(stat, custom_spacer ? custom_spacer : "/");
+        goto append_defense_tail;
     } else if (def_rating != 1 || VehPrototypes[proto_id].ability_flags || (Chassis[chas].speed != 1
         && (mode != WPN_MODE_TRANSPORT || chas != CHSI_FOIL))) {
-        output += StringTable->get(int(PlansShortName[mode]));
+        strcat(stat, StringTable->get(int(PlansShortName[mode])));
         if (plan == PLAN_NAVAL_TRANSPORT) {
-            output += "(";
-            output += std::to_string(VehPrototypes[proto_id].carry_capacity);
-            output += ")";
+            strcat(stat, "(");
+            _itoa(VehPrototypes[proto_id].carry_capacity, num_buf, 10);
+            strcat(stat, num_buf);
+            strcat(stat, ")");
         }
-        output += ", ";
-        output += (def_rating < 0) ? label_get(196) : say_defense(proto_id); // 'Psi'
-        output += custom_spacer ? custom_spacer : "/";
-        output += std::to_string(speed_proto(proto_id) / Rules->move_rate_roads);
+        strcat(stat, ", ");
+append_defense_tail:
+        if (def_rating < 0) {
+            strcat(stat, label_get(196)); // 'Psi'
+        } else {
+            say_defense(stat, proto_id);
+        }
+        strcat(stat, custom_spacer ? custom_spacer : "/");
+        _itoa(speed_proto(proto_id) / Rules->move_rate_roads, num_buf, 10);
+        strcat(stat, num_buf);
     } else {
-        output += StringTable->get((int)PlansFullName[mode]);
+        strcat(stat, StringTable->get((int)PlansFullName[mode]));
         if (plan == PLAN_NAVAL_TRANSPORT) {
-            output += "(";
-            output += std::to_string(VehPrototypes[proto_id].carry_capacity);
-            output += ")";
+            strcat(stat, "(");
+            _itoa(VehPrototypes[proto_id].carry_capacity, num_buf, 10);
+            strcat(stat, num_buf);
+            strcat(stat, ")");
         }
         if (triad) { // sea, air
-            output += ","; // Bug fix: removed extra space
+            strcat(stat, ","); // Bug fix: removed extra space
         }
     }
     if (triad == TRIAD_SEA) {
-        output += " ";
-        output += label_get(163); // 'Sea'
+        strcat(stat, " ");
+        strcat(stat, label_get(163)); // 'Sea'
     } else if (triad == TRIAD_AIR) {
-        output += " ";
-        output += label_get(162); // 'Air'
+        strcat(stat, " ");
+        strcat(stat, label_get(162)); // 'Air'
     }
     uint32_t reactor = VehPrototypes[proto_id].reactor_id;
     if (reactor > 1) {
-        output += " (*";
-        output += std::to_string(reactor);
-        output += ")";
+        strcat(stat, " ");
+        strcat(stat, "(");
+        strcat(stat, "*");
+        _itoa(reactor, num_buf, 10);
+        strcat(stat, num_buf);
+        strcat(stat, ")");
     }
-    // assumes at least 1032 char buffer (stringTemp), eventually remove
-    // TODO: Eventually remove LPSTR stat param and return std::string instead
-    strcat_s(stat, 1032, output.c_str());
 }
 
 /*

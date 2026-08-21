@@ -284,6 +284,27 @@ def allocation_only(original: Listing, compiled: Listing) -> str:
     if len(left) != len(right):
         return (f"{len(right)} instructions against {len(left)} - a different "
                 f"program, not a different allocation")
+    # A BASE REGISTER MAY HOLD A DIFFERENT VALUE, and then every displacement
+    # off it differs by the SAME delta - `init_goals` bases its loop on
+    # `&goal.priority` where this tree bases it on `&goal.x`, so every offset
+    # is two apart and every effective address agrees. One delta per base is
+    # provable; two deltas off one base is a real value difference, which is
+    # what SHAPE_EXACT means and is not an allocation.
+    deltas: dict = {}
+    for a, b in zip(left, right):
+        if _mnemonic_key(a) != _mnemonic_key(b):
+            continue
+        for one, two in zip(a.operands, b.operands):
+            if one.type != two.type or one.type != x86.X86_OP_MEM:
+                continue
+            if one.mem.disp == two.mem.disp:
+                continue
+            if relocated(a, original) or relocated(b, compiled):
+                continue
+            deltas.setdefault(one.mem.base, set()).add(
+                two.mem.disp - one.mem.disp)
+    shifted = {base for base, seen in deltas.items() if len(seen) == 1}
+
     for index, (a, b) in enumerate(zip(left, right)):
         if _mnemonic_key(a) != _mnemonic_key(b):
             return (f"instruction {index}: {_mnemonic_key(a)} against "
@@ -303,7 +324,8 @@ def allocation_only(original: Listing, compiled: Listing) -> str:
                 return (f"instruction {index}: {a.mnemonic} immediate "
                         f"0x{one.imm:x} against 0x{two.imm:x}")
             if one.type == x86.X86_OP_MEM:
-                if one.mem.disp != two.mem.disp:
+                if (one.mem.disp != two.mem.disp
+                        and one.mem.base not in shifted):
                     return (f"instruction {index}: {a.mnemonic} displacement "
                             f"0x{one.mem.disp:x} against 0x{two.mem.disp:x}")
                 if one.mem.scale != two.mem.scale:

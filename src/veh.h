@@ -589,8 +589,8 @@ int __cdecl arm_val(int armor_id, int faction_id);
 int __cdecl armor_val(int proto_id, int faction_id);
 uint32_t __cdecl transport_val(uint32_t chassis_id, uint32_t ability, 
                                          uint32_t reactor_id);
-std::string __cdecl say_offense(uint32_t proto_id);
-std::string __cdecl say_defense(uint32_t proto_id);
+void __cdecl say_offense(LPSTR stat, int proto_id);
+void __cdecl say_defense(LPSTR stat, int proto_id);
 void __cdecl say_stats_3(LPSTR stat, uint32_t proto_id);
 void __cdecl say_stats_3(uint32_t proto_id);
 void __cdecl say_stats_2(LPSTR stat, int proto_id);

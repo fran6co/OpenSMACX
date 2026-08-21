@@ -24,6 +24,7 @@
 #include "spritebox.h"
 #include "net_class.h"
 #include "basepop.h"
+#include "general.h"
 
 // AN OBJECT, NOT A POINTER TO A FIXED ADDRESS: the pointer form costs a
 // load at every use where the image addresses the storage directly, and
@@ -39,24 +40,24 @@ typedef uint32_t (OriginalObject::*func_noarg_virtual)();
 
 
 
-LONG long_from_bits(uint32_t bits) {
+inline LONG long_from_bits(uint32_t bits) {
     LONG value;
     static_assert(sizeof(value) == sizeof(bits), "Scroll geometry requires 32-bit LONG");
     memcpy(&value, &bits, sizeof(value));
     return value;
 }
 
-uint32_t read_bits(const void *object, size_t offset) {
+inline uint32_t read_bits(const void *object, size_t offset) {
     uint32_t value;
     memcpy(&value, static_cast<const uint8_t *>(object) + offset, sizeof(value));
     return value;
 }
 
-void write_bits(void *object, size_t offset, uint32_t value) {
+inline void write_bits(void *object, size_t offset, uint32_t value) {
     memcpy(static_cast<uint8_t *>(object) + offset, &value, sizeof(value));
 }
 
-void write_sprite(void *object, size_t offset, Sprite *sprite) {
+inline void write_sprite(void *object, size_t offset, Sprite *sprite) {
     static_assert(sizeof(uintptr_t) == sizeof(uint32_t),
                   "Scroll sprite pointers require the 32-bit legacy ABI");
     const uintptr_t bits = reinterpret_cast<uintptr_t>(sprite);
@@ -64,7 +65,7 @@ void write_sprite(void *object, size_t offset, Sprite *sprite) {
         static_cast<uint8_t *>(object) + offset) = bits;
 }
 
-uint32_t read_volatile_bits(const void *object, size_t offset) {
+inline uint32_t read_volatile_bits(const void *object, size_t offset) {
     return *reinterpret_cast<const volatile uint32_t *>(
         static_cast<const uint8_t *>(object) + offset);
 }
@@ -150,6 +151,19 @@ Purpose: Reset Scroll-owned state from the process defaults, close the two
          embedded FlatButtons through their virtual close slots, then close
          the source-owned GraphicWin base.
 // ORIGINAL: 0x00605370 ?close@Scroll@@QAEXXZ 0x00605370-0x006054CE
+// LEVER: `fixed`/`dynamic` were reinterpret_cast<...>(ScrollCloseStaticDefaults)
+//   - casting the VALUE stored in the global to a pointer, an indirect load the
+//   image never does. `&ScrollCloseStaticDefaults`/`&ScrollCloseDynamicDefaults`
+//   (the object IS the table base) matches the image's direct fixed-address
+//   loads and took this from 0/71 to 42/71.
+// BLOCKED for a further pass: the `for (index<3)` loop over `dynamic[]` here
+//   assumes one contiguous 17-slot table read with a fixed +3 stride between
+//   the four destinations; the image's loop (0x605453-0x60547F) instead reads
+//   four OVERLAPPING 3-element windows of that table at dword offsets
+//   0,2,5,8 into four separate destination fields (esi+0xa7c/a88/a94/aa0) -
+//   dword index 2 is read by both the first and second window. The
+//   loop needs rewriting around that windowing, not the current stride-3
+//   indexing, to match structurally.
 // symbol    ?close@Scroll@@QAEIXZ
 // size      350 bytes
 // prototype void (__thiscall ?close@Scroll@@QAEXXZ)(Scroll* this)
@@ -165,10 +179,8 @@ Status: Complete; embedded FlatButton close redirects are source-owned
 uint32_t Scroll::close() {
     volatile uint32_t *const object =
         reinterpret_cast<volatile uint32_t *>(this);
-    volatile uint32_t *const fixed =
-        reinterpret_cast<volatile uint32_t *>(ScrollCloseStaticDefaults);
-    volatile uint32_t *const dynamic =
-        reinterpret_cast<volatile uint32_t *>(ScrollCloseDynamicDefaults);
+    volatile uint32_t *const fixed = &ScrollCloseStaticDefaults;
+    volatile uint32_t *const dynamic = &ScrollCloseDynamicDefaults;
 
     object[0xA14 / 4] = dynamic[0];
     object[0xA1C / 4] = fixed[3];
@@ -279,7 +291,8 @@ int Scroll::init_horz(
 
 /*
 Purpose: Initialize a vertical nonclient scrollbar.
-// ORIGINAL: 0x00605910 ?init_vert_nc@Scroll@@QAEHHHHPAUWin@@H@Z 0x00605910-0x00605955
+// ORIGINAL: 0x00605910 ?init_vert_nc@Scroll@@QAEHHHHPAUWin@@H@Z 0x00605910-0x00605955 BYTE_EXACT
+// LEVER: ScrollNonClientInit is the object itself, not a pointer to it; drop the reinterpret_cast indirection
 // symbol    ?init_vert_nc@Scroll@@QAEHHHHPAVWin@@H@Z
 // size      69 bytes
 // prototype int (__thiscall ?init_vert_nc@Scroll@@QAEHHHHPAUWin@@H@Z)(Scroll* this, int, int, int, Win*, int)
@@ -292,7 +305,7 @@ Status: Complete
 */
 int Scroll::init_vert_nc(
         int x, int y, int length, Win *parent, int setting) {
-    *reinterpret_cast<volatile int *>(ScrollNonClientInit) = 1;
+    ScrollNonClientInit = 1;
     if (!parent || length == 0) {
         return 3;
     }
@@ -301,7 +314,8 @@ int Scroll::init_vert_nc(
 
 /*
 Purpose: Initialize a horizontal nonclient scrollbar.
-// ORIGINAL: 0x00605960 ?init_horz_nc@Scroll@@QAEHHHHPAUWin@@H@Z 0x00605960-0x006059A6
+// ORIGINAL: 0x00605960 ?init_horz_nc@Scroll@@QAEHHHHPAUWin@@H@Z 0x00605960-0x006059A6 BYTE_EXACT
+// LEVER: ScrollNonClientInit is the object itself, not a pointer to it; drop the reinterpret_cast indirection
 // symbol    ?init_horz_nc@Scroll@@QAEHHHHPAVWin@@H@Z
 // size      70 bytes
 // prototype int (__thiscall ?init_horz_nc@Scroll@@QAEHHHHPAUWin@@H@Z)(Scroll* this, int, int, int, Win*, int)
@@ -314,7 +328,7 @@ Status: Complete
 */
 int Scroll::init_horz_nc(
         int x, int y, int length, Win *parent, int setting) {
-    *reinterpret_cast<volatile int *>(ScrollNonClientInit) = 1;
+    ScrollNonClientInit = 1;
     if (!parent || length == 0) {
         return 3;
     }
@@ -324,6 +338,10 @@ int Scroll::init_horz_nc(
 /*
 Purpose: Set the signed scrollbar range and redraw it at the lower endpoint.
 // ORIGINAL: 0x006059B0 ?set_range@Scroll@@QAEXHH@Z 0x006059B0-0x00605A0D
+// RULED-OUT: manual temp-swap (3/24 agreeing); swap() by name matches structure
+//   through the branch and both stores (15/24) but the call target itself
+//   doesn't resolve to 0x628A50 in this harness - store order/offsets confirmed
+//   correct via tools/store_order.py.
 // symbol    ?set_range@Scroll@@QAEIHH@Z
 // size      93 bytes
 // prototype void (__thiscall ?set_range@Scroll@@QAEXHH@Z)(Scroll* this, int, int)
@@ -336,25 +354,29 @@ Purpose: Set the signed scrollbar range and redraw it at the lower endpoint.
 Status: Complete
 */
 uint32_t Scroll::set_range(int minimum, int maximum) {
-    volatile uint32_t *const reversed = &range_reversed_;
     if (minimum < maximum) {
-        *reversed = 0U;
+        range_reversed_ = 0U;
     } else {
-        *reversed = 1U;
-        const int temporary = minimum;
-        minimum = maximum;
-        maximum = temporary;
+        range_reversed_ = 1U;
+        swap(&minimum, &maximum);
     }
-    *reinterpret_cast<volatile int *>(&range_minimum_) = minimum;
-    *reinterpret_cast<volatile int *>(&position_) = minimum;
+    range_minimum_ = minimum;
+    position_ = minimum;
     const uint32_t vtable_bits = read_volatile_bits(this, 0);
-    *reinterpret_cast<volatile int *>(&range_maximum_) = maximum;
+    range_maximum_ = maximum;
     return redraw_from_vtable(this, vtable_bits);
 }
 
 /*
 Purpose: Set the color shared by the scrollbar and both end buttons.
 // ORIGINAL: 0x00605A10 ?set_button_color@Scroll@@QAEXH@Z 0x00605A10-0x00605A4D
+// LEVER: read_volatile_bits/original_slot inline (not the redraw_from_vtable __asm
+//   helper, and the shared helpers marked `inline`) gets the vtable dispatch inlined
+//   in place, matching the image's direct load+call; a volatile store on the first
+//   field write fixes its scheduling relative to the following `lea`.
+// RULED-OUT: the second call's vtable-load/call still schedules differently
+//   (edx direct-load + call [edx+0xf8] vs our eax materialised then call eax);
+//   tried this+0x15F8 addressing and evaluation-order changes, no effect.
 // symbol    ?set_button_color@Scroll@@QAEIH@Z
 // size      61 bytes
 // prototype void (__thiscall ?set_button_color@Scroll@@QAEXH@Z)(Scroll* this, int)
@@ -368,13 +390,15 @@ Status: Complete
 */
 uint32_t Scroll::set_button_color(int color) {
     const uint32_t value = static_cast<uint32_t>(color);
-    color_ = value;
+    *reinterpret_cast<volatile uint32_t *>(&color_) = value;
     flat_button_left_.color_ = value;
     flat_button_right_.color_ = value;
-    redraw_from_vtable(&flat_button_left_,
-                       read_volatile_bits(&flat_button_left_, 0));
-    return redraw_from_vtable(&flat_button_right_,
-                              read_volatile_bits(&flat_button_right_, 0));
+
+    (ORIGINAL(&flat_button_left_)->*original_slot<func_noarg_virtual>(
+        reinterpret_cast<const uint8_t *>(read_volatile_bits(&flat_button_left_, 0)) + 0xF8))();
+
+    return (ORIGINAL(&flat_button_right_)->*original_slot<func_noarg_virtual>(
+        reinterpret_cast<const uint8_t *>(read_volatile_bits(&flat_button_right_, 0)) + 0xF8))();
 }
 
 /*
@@ -492,6 +516,12 @@ uint32_t Scroll::set_bar_thickness(int thickness) {
 /*
 Purpose: Set the border color and reset the scrollbar thumb rectangle.
 // ORIGINAL: 0x00605B10 ?set_border_color@Scroll@@QAEXH@Z 0x00605B10-0x00605B74
+// LEVER: image writes defaults unconditionally then overwrites in the branch;
+//   ternary/direct-assign forms let the optimizer prove the first write dead and
+//   drop it. A `volatile RECT*` keeps both writes, and re-reading `border_color_`
+//   (not the `color` parameter) for the branch condition matches the image, which
+//   reloads from the just-stored field instead of keeping color live (1/22 -> 9/22).
+// RULED-OUT: forcing the thickness read through a volatile cast, no further gain.
 // size      100 bytes
 // prototype void (__thiscall ?set_border_color@Scroll@@QAEXH@Z)(Scroll* this, int)
 // callers   1   call targets   0
@@ -502,20 +532,34 @@ Purpose: Set the border color and reset the scrollbar thumb rectangle.
 Status: Complete
 */
 void Scroll::set_border_color(int color) {
-    border_color_ = color;
-    const bool borderless = color == -1;
+    *reinterpret_cast<volatile int *>(&border_color_) = color;
     const uint32_t thickness = static_cast<uint32_t>(bar_thickness_);
-    const LONG inset = borderless ? 0 : 1;
-    const LONG extent = long_from_bits(borderless ? thickness : thickness - 1U);
-    thumb_rect_.left = inset;
-    thumb_rect_.top = inset;
-    thumb_rect_.right = extent;
-    thumb_rect_.bottom = extent;
+    volatile RECT *const thumb = &thumb_rect_;
+    thumb->left = 0;
+    thumb->top = 0;
+    thumb->right = long_from_bits(thickness);
+    thumb->bottom = long_from_bits(thickness);
+    if (border_color_ != -1) {
+        const uint32_t right = static_cast<uint32_t>(thumb->right) - 1U;
+        thumb->left = 1;
+        const uint32_t top = static_cast<uint32_t>(thumb->top) + 1U;
+        thumb->right = long_from_bits(right);
+        const uint32_t bottom = static_cast<uint32_t>(thumb->bottom) - 1U;
+        thumb->top = long_from_bits(top);
+        thumb->bottom = long_from_bits(bottom);
+    }
 }
 
 /*
 Purpose: Expand a rectangle horizontally and vertically.
 // ORIGINAL: 0x00606F00 sub_606f00 0x00606F00-0x00606F2B
+// LEVER: the long_from_bits/uint32_t round trip on plain LONG subtraction was
+//   dead weight the image never does (no overflow-defined behavior needed for
+//   these fields); direct `RECT` member arithmetic on the `volatile RECT*`
+//   matches the mnemonics exactly (2/16 -> 11/16).
+// RULED-OUT: naming the params as separate int locals to coax the load order
+//   of param-before-field (image loads the int arg into ecx before the field
+//   into edx; this tree loads the field first) - no effect.
 // symbol    ?expand_rect@@YAPAUtagRECT@@PAU1@HH@Z
 // size      43 bytes
 // prototype 
@@ -528,16 +572,10 @@ Status: Complete
 */
 RECT *__cdecl expand_rect(RECT *rect, int horizontal, int vertical) {
     volatile RECT *ordered_rect = rect;
-    const uint32_t horizontal_bits = static_cast<uint32_t>(horizontal);
-    const uint32_t vertical_bits = static_cast<uint32_t>(vertical);
-    ordered_rect->left = long_from_bits(
-        static_cast<uint32_t>(ordered_rect->left) - horizontal_bits);
-    ordered_rect->right = long_from_bits(
-        static_cast<uint32_t>(ordered_rect->right) + horizontal_bits);
-    ordered_rect->top = long_from_bits(
-        static_cast<uint32_t>(ordered_rect->top) - vertical_bits);
-    ordered_rect->bottom = long_from_bits(
-        static_cast<uint32_t>(ordered_rect->bottom) + vertical_bits);
+    ordered_rect->left = ordered_rect->left - horizontal;
+    ordered_rect->right = ordered_rect->right + horizontal;
+    ordered_rect->top = ordered_rect->top - vertical;
+    ordered_rect->bottom = ordered_rect->bottom + vertical;
     return rect;
 }
 
@@ -620,6 +658,12 @@ void Scroll::set_sprite_down(
 /*
 Purpose: Clamp, optionally reverse, and redraw the scrollbar position.
 // ORIGINAL: 0x00605D20 ?set_pos@Scroll@@QAEXH@Z 0x00605D20-0x00605D8A
+// RULED-OUT: the guard clause's branch polarity (image falls through to the
+//   continue path and jumps forward to a shared `ret` for the early return;
+//   this tree's `if(!parent) return 0;` gets compiled the other way around,
+//   `jne`+immediate `ret` first). Tried if/else, nested-if without else, and
+//   goto-to-label; all three either reproduce the same layout or add a second
+//   epilogue. Everything past the guard already matches in shape (8/29).
 // symbol    ?set_pos@Scroll@@QAEIH@Z
 // size      106 bytes
 // prototype void (__thiscall ?set_pos@Scroll@@QAEXH@Z)(Scroll* this, int position)
@@ -636,6 +680,7 @@ uint32_t Scroll::set_pos(int position) {
     if (!parent) {
         return 0U;
     }
+
     ScrollCurrentWin() = parent;
 
     const int minimum = *reinterpret_cast<volatile int *>(&range_minimum_);

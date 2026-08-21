@@ -17,7 +17,8 @@
  */
 #pragma once
 
-#include "game.h"  // GameRules and its flags, which bonus_at inlines
+#include "game.h"      // GameRules and its flags, which bonus_at inlines
+#include "faction.h"   // MaxPlayerNum, which base_who inlines
 
  /*
   * Map related objects, variables and functions.
@@ -389,7 +390,6 @@ BOOL __cdecl is_coast(int x, int y, BOOL is_base_radius);
 void __cdecl rebuild_vehicle_bits();
 void __cdecl rebuild_base_bits();
 BOOL __cdecl is_known(int x, int y, int faction_id);
-int __cdecl base_who(int x, int y);
 int __cdecl anything_at(int x, int y);
 void __cdecl map_shutdown();
 BOOL __cdecl map_init();
@@ -654,4 +654,16 @@ MEASURED inline int __cdecl bonus_at(int x, int y, int UNUSED(unk_val)) {
         return ((bit & BIT_MINERAL_RSC) != 0) + 1; // nutrient or mineral
     }
     return ret;
+}
+
+MEASURED inline int __cdecl base_who(int x, int y) {
+    Map *tile = map_loc(x, y);
+    if (tile->bit & BIT_BASE_IN_TILE) {
+        // `int`, as in veh_who: the image's test is `jl`.
+        int owner = tile->val2 & 0xF;
+        if (owner < MaxPlayerNum) {
+            return owner;
+        }
+    }
+    return -1;
 }

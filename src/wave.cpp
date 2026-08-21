@@ -151,7 +151,7 @@ Purpose: Release the loaded wave. The wrapped device, if there is one, is asked
          return value; the device is then forgotten. Unless bit 1 of the flag
          dword at 0x54 suppresses it, the object's own vtable slot 0x80 is run,
          and the loaded bit (bit 0) of the flag dword at 0x40 is cleared.
-// ORIGINAL: 0x004C6EA0 ?unload@Wave@@QAEXXZ 0x004C6EA0-0x004C6ED9
+// ORIGINAL: 0x004C6EA0 ?unload@Wave@@QAEXXZ 0x004C6EA0-0x004C6ED9 SEMANTIC
 // symbol    ?unload@Wave@@QAEHXZ
 // size      57 bytes
 // prototype void (__thiscall ?unload@Wave@@QAEXXZ)(Wave* this)
@@ -166,21 +166,25 @@ Status: Complete
 int Wave::unload() {
     // Both dispatches read the live vtable pointer at run time rather than
     // being declared virtual, so neither can disagree with the original layout.
-    typedef int (OriginalObject::*device_unload_fn)();
+    // ONE parameter, so `__fastcall` puts the receiver in ecx and leaves
+    // edx alone; a second would cost a `xor edx, edx` the image has not.
+    typedef int(__fastcall *device_unload_fn)(void *);
+    typedef void(__fastcall *wave_self_fn)(void *);
     typedef void (OriginalObject::*wave_vfn)();
 
     int result = 0;
     if (device_) {
-        uint8_t *const device_vtable = *reinterpret_cast<uint8_t **>(device_);
-        result = (ORIGINAL(device_)->*original_slot<device_unload_fn>(device_vtable + 0x14))();
+        // CALLED WHERE THE SLOT LIVES: the image's `call dword ptr [eax+0x14]`
+        // at 0x004C6EAF is one instruction, and reading the slot into a
+        // pointer-to-member first costs a `mov` before it.
+        result = vtable_slot<device_unload_fn>(device_, 0x14)(device_);
     }
     // `mov al, byte ptr [esi+0x54]` at 0x004C6EB4: unload is the one place
     // that narrows the 0x54 dword, and only bit 1 is wanted.
     const uint8_t flags = static_cast<uint8_t>(flags_54_);
     device_ = nullptr;
     if (!(flags & 2)) {
-        uint8_t *const vtable = *reinterpret_cast<uint8_t **>(this);
-        (ORIGINAL(this)->*original_slot<wave_vfn>(vtable + 0x80))();
+        vtable_slot<wave_self_fn>(this, 0x80)(this);
     }
     field_40_ &= 0xFFFFFFFEu;
     return result;
