@@ -90,3 +90,51 @@ char *__fastcall net_get_player_name_redirect(
         Net *self, void *, unsigned long key) {
     return self->get_player_name(key);
 }
+
+/*
+Purpose: Give the network layer a slice of time to move voice traffic.
+// ORIGINAL: 0x0062D5B0 ?do_net@@YAXXZ 0x0062D5B0-0x0062D5C9 BYTE_EXACT
+// size      25 bytes
+// callers   12   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+//
+// PROMOTED from src/recovered/0062d5b0.cpp, which was byte-exact but never
+// compiled - and while it sat there `temp.h` bound this address as a
+// `func_msg *const`, so every one of its twelve callers emitted
+// `call dword ptr [...]` where the image emits `call rel32`.
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl do_net() {
+    if (NetCurrent() && *NetEnabled) {
+        NetCurrent()->process_voice();
+    }
+}
+
+/*
+Purpose: Let the network layer poll, if there is one and it is enabled.
+// ORIGINAL: 0x0062D5D0 ?check_net@@YAXXZ 0x0062D5D0-0x0062D5E9 BYTE_EXACT
+// size      25 bytes
+// callers   21   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+//
+// PROMOTED from src/recovered/0062d5d0.cpp. TWO SEPARATE EARLY RETURNS, not
+// one `&&`: that is the shape the artifact carried and the shape the image
+// has, and `do_net` above genuinely uses the other one.
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl check_net() {
+    Net *net = NetCurrent();
+    if (net == nullptr) {
+        return;
+    }
+    if (*NetEnabled == 0) {
+        return;
+    }
+    net->check_polling();
+}
