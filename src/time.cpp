@@ -456,10 +456,39 @@ Time::~Time() {
     close();
 }
 
+/*
+Purpose: Make this timer the modal one.
+// ORIGINAL: 0x00616860 ?set_modal@Time@@QAAXXZ 0x00616860-0x00616867 BYTE_EXACT
+// symbol    ?set_modal@Time@@QAEXXZ
+// size      7 bytes
+// prototype void (__thiscall ?set_modal@Time@@QAAXXZ)(Time* this)
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+//
+// `QAE`, not the catalogued `QAA`: this takes a receiver, and the tree emits
+// the thiscall spelling. See `init_class` below for the same correction.
+Return Value: n/a
+Status: Complete
+*/
 void Time::set_modal() {
     TimeModal = this;
 }
 
+/*
+Purpose: Clear the modal timer.
+// ORIGINAL: 0x00616870 ?release_modal@Time@@QAAXXZ 0x00616870-0x0061687B BYTE_EXACT
+// symbol    ?release_modal@Time@@QAEXXZ
+// size      11 bytes
+// prototype void (__thiscall ?release_modal@Time@@QAAXXZ)(Time* this)
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+//
+// The body was already here and carried no marker.
+Return Value: n/a
+Status: Complete
+*/
 void Time::release_modal() {
     TimeModal = nullptr;
 }
