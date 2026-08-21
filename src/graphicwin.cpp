@@ -59,6 +59,7 @@ uint32_t GraphicWinFieldA0CDefault;  // 0x009B33C0
 Purpose: Construct the Win base and Buffer subobject, then install GraphicWin
          tables and initialize its trailing window state.
 // ORIGINAL: 0x005D4CF0 ??0GraphicWin@@QAE@XZ 0x005D4CF0-0x005D4DC4;0x00662B10-0x00662B22
+// symbol    ?construct@GraphicWin@@QAEXXZ
 // size      230 bytes
 // prototype void (__thiscall ??0GraphicWin@@QAE@XZ)(GraphicWin* this)
 // callers   52   call targets   2
@@ -76,17 +77,35 @@ disjoint regions.
 void GraphicWin::construct() {
     static_cast<Win *>(this)->construct();
     new (&buffer_) Buffer();
-    volatile uint32_t *const object =
-        reinterpret_cast<volatile uint32_t *>(this);
+
+    // Win's own vtable slot and the Buffer subobject's vtable slot are
+    // compiler-managed, not ordinary members a derived class can name; Win's
+    // own field_134_/field_138_ are private to Win, unreachable from
+    // GraphicWin except at their raw offset. Everything else below is
+    // GraphicWin's own field, written directly.
+    uint32_t *const object = reinterpret_cast<uint32_t *>(this);
     object[0x000 / 4] = GraphicWinPrimaryVtable;
     object[0x444 / 4] = GraphicWinBufferVtable;
-    object[0xA10 / 4] = 0;
+    field_A10_ = 0;
     object[0x134 / 4] = 0;
     object[0x138 / 4] = 0;
-    for (size_t offset = 0x9CC; offset <= 0xA08; offset += 4) {
-        object[offset / 4] = 0;
-    }
-    object[0xA0C / 4] = GraphicWinFieldA0CDefault;
+    field_9CC_ = 0;
+    field_9D0_ = 0;
+    field_9D4_ = 0;
+    field_9D8_ = 0;
+    field_9DC_ = 0;
+    field_9E0_ = 0;
+    field_9E4_ = 0;
+    field_9E8_ = 0;
+    field_9EC_ = 0;
+    field_9F0_ = 0;
+    field_9F4_ = 0;
+    field_9F8_ = 0;
+    field_9FC_ = 0;
+    field_A00_ = 0;
+    field_A04_ = 0;
+    poCanvas_ = 0;
+    field_A0C_ = GraphicWinFieldA0CDefault;
 }
 
 GraphicWin *__fastcall graphic_win_construct_redirect(
@@ -151,37 +170,43 @@ uint32_t GraphicWin::close() {
         (ORIGINAL(reinterpret_cast<uint8_t *>(this) + 0x444)->*BufferSubobjectClose)();
     }
 
-    volatile uint32_t *const ordered =
-        reinterpret_cast<volatile uint32_t *>(this);
-    void *const release_target = reinterpret_cast<void *>(
-        static_cast<uintptr_t>(ordered[0xA08 / 4]));
-    ordered[0xA10 / 4] = 0;
-    ordered[0x134 / 4] = 0;
-    ordered[0x138 / 4] = 0;
-    ordered[0x9CC / 4] = 0;
-    ordered[0x9D0 / 4] = 0;
-    ordered[0x9D4 / 4] = 0;
-    ordered[0x9D8 / 4] = 0;
-    ordered[0x9DC / 4] = 0;
-    ordered[0x9E0 / 4] = 0;
-    ordered[0x9E4 / 4] = 0;
-    ordered[0x9E8 / 4] = 0;
-    ordered[0x9EC / 4] = 0;
-    ordered[0x9F0 / 4] = 0;
-    ordered[0x9F4 / 4] = 0;
-    ordered[0x9F8 / 4] = 0;
-    ordered[0x9FC / 4] = 0;
-    ordered[0xA00 / 4] = 0;
-    ordered[0xA04 / 4] = 0;
+    // Win's own field_134_/field_138_ are private to Win, unreachable from
+    // GraphicWin except at their raw offset; everything else here is
+    // GraphicWin's own field, written directly.
+    void *const release_target =
+        reinterpret_cast<void *>(static_cast<uintptr_t>(poCanvas_));
+    field_A10_ = 0;
+    uint32_t *const object = reinterpret_cast<uint32_t *>(this);
+    object[0x134 / 4] = 0;
+    object[0x138 / 4] = 0;
+    field_9CC_ = 0;
+    field_9D0_ = 0;
+    field_9D4_ = 0;
+    field_9D8_ = 0;
+    field_9DC_ = 0;
+    field_9E0_ = 0;
+    field_9E4_ = 0;
+    field_9E8_ = 0;
+    field_9EC_ = 0;
+    field_9F0_ = 0;
+    field_9F4_ = 0;
+    field_9F8_ = 0;
+    field_9FC_ = 0;
+    field_A00_ = 0;
+    field_A04_ = 0;
     const uint32_t default_value = GraphicWinFieldA0CDefault;
-    ordered[0xA0C / 4] = default_value;
+    field_A0C_ = default_value;
     if (!release_target) {
         return default_value;
     }
 
-    void **const vtable = *reinterpret_cast<void ***>(release_target);
-    const uint32_t result = (ORIGINAL(release_target)->*original_method<func_scalar_deleting_destructor>(reinterpret_cast<unsigned long>(vtable[0])))(1);
-    ordered[0xA08 / 4] = 0;
+    // Slot 0, called where it lives: `vtable_method` leaves the call operand
+    // at `[vtable]` so VC6 emits one `call dword ptr [edx]` rather than
+    // loading the slot into a register first.
+    func_scalar_deleting_destructor &deleting_destructor =
+        vtable_method<func_scalar_deleting_destructor>(release_target, 0);
+    const uint32_t result = (ORIGINAL(release_target)->*deleting_destructor)(1);
+    poCanvas_ = 0;
     return result;
 }
 
@@ -194,6 +219,7 @@ Purpose: Destroy a GraphicWin by installing the original virtual tables,
          clearing the trailing field, and destroying the Buffer subobject
          before the Win base.
 // ORIGINAL: 0x005D4DD0 ??1GraphicWin@@QAE@XZ 0x005D4DD0-0x005D4E37;0x00662B22-0x00662B34
+// symbol    ?graphic_win_destructor_redirect@@YIPAVGraphicWin@@PAV1@PAX@Z
 // size      121 bytes
 // prototype void (__thiscall ??1GraphicWin@@QAE@XZ)(GraphicWin* this)
 // callers   185   call targets   2
@@ -211,7 +237,7 @@ GraphicWin *__fastcall graphic_win_destructor_redirect(GraphicWin *self, void *)
     if (!base) {
         return self;
     }
-    volatile uint32_t *ordered = reinterpret_cast<volatile uint32_t *>(base);
+    uint32_t *const ordered = reinterpret_cast<uint32_t *>(base);
     ordered[0x000 / 4] = GraphicWinPrimaryVtable;
     ordered[0x444 / 4] = GraphicWinBufferVtable;
     ordered[0xA10 / 4] = 0;
@@ -511,14 +537,11 @@ int GraphicWin::init(int x, int y, int width, int height, LPSTR title,
     // discarded: init on a live window tears the old one down first.
     close();
 
-    volatile uint32_t *const object =
-        reinterpret_cast<volatile uint32_t *>(this);
-
     // One `test edi, 0x30000000` at 0x005D4F12 covers both style bits: either
     // one republishes the whole block.
     if ((flags & 0x30000000) != 0) {
-        volatile uint32_t *const defaults =
-            reinterpret_cast<volatile uint32_t *>(GraphicWinInitDefaults);
+        uint32_t *const defaults =
+            reinterpret_cast<uint32_t *>(GraphicWinInitDefaults);
         // The most error-prone part of the function, because the table slot
         // and the destination field are two different permutations. Read
         // straight off the stores at 0x005D4F1E through 0x005D4F98, the
@@ -531,17 +554,19 @@ int GraphicWin::init(int x, int y, int width, int height, LPSTR title,
         // additionally the original's own, which visits the slots
         // 0, 2, 1, 3, 4, 5, 6, 7, 9, 8, 10 - note that the 1/2 inversion is
         // scheduling only, since both of those slots map to their own field.
-        object[0x9CC / 4] = defaults[0];
-        object[0x9D4 / 4] = defaults[2];
-        object[0x9D0 / 4] = defaults[1];
-        object[0x9D8 / 4] = defaults[3];
-        object[0x9E8 / 4] = defaults[4];
-        object[0x9E4 / 4] = defaults[5];
-        object[0x9DC / 4] = defaults[6];
-        object[0x9E0 / 4] = defaults[7];
-        object[0x9EC / 4] = defaults[9];
-        object[0x9F0 / 4] = defaults[8];
-        object[0x9F4 / 4] = defaults[10];
+        // Every destination is GraphicWin's own field, so it is written
+        // directly rather than through an aliased pointer into `this`.
+        field_9CC_ = defaults[0];
+        field_9D4_ = defaults[2];
+        field_9D0_ = defaults[1];
+        field_9D8_ = defaults[3];
+        field_9E8_ = defaults[4];
+        field_9E4_ = defaults[5];
+        field_9DC_ = defaults[6];
+        field_9E0_ = defaults[7];
+        field_9EC_ = defaults[9];
+        field_9F0_ = defaults[8];
+        field_9F4_ = defaults[10];
     }
 
     // 0x588 is sizeof(Buffer). The allocation goes through the executable's
@@ -555,8 +580,7 @@ int GraphicWin::init(int x, int y, int width, int height, LPSTR title,
         if (block != nullptr) {
             owned = new (block) Buffer();
         }
-        object[0xA08 / 4] =
-            static_cast<uint32_t>(reinterpret_cast<uintptr_t>(owned));
+        poCanvas_ = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(owned));
     }
 
     // All nine arguments go straight through in order.
@@ -567,9 +591,13 @@ int GraphicWin::init(int x, int y, int width, int height, LPSTR title,
 
     // The window's own Buffer keeps a back pointer to the window in its field
     // at 0x4, written as `mov [esi+0x448], esi` at 0x005D5012 - before the
-    // minimum-size computation, in the original's order.
-    object[0x448 / 4] =
-        static_cast<uint32_t>(reinterpret_cast<uintptr_t>(this));
+    // minimum-size computation, in the original's order. That field
+    // (Buffer::poOwner_) is private to Buffer and friended only to Win, not
+    // to GraphicWin, so it is reached at its raw offset rather than through
+    // `buffer_.poOwner_`.
+    uint32_t *const buffer_owner_slot =
+        reinterpret_cast<uint32_t *>(reinterpret_cast<uint8_t *>(this) + 0x448);
+    *buffer_owner_slot = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(this));
     compute_min_size();
 
     if ((flags & 0x800) == 0) {
@@ -582,7 +610,10 @@ int GraphicWin::init(int x, int y, int width, int height, LPSTR title,
         // bit 2 with the height. Both the flag dword and the thickness are
         // loaded once, at 0x005D5038 and 0x005D503E, ahead of either test;
         // the original tests only AL, which is equivalent for bits 2 and 3.
-        const uint32_t nonclient_flags = object[0x98 / 4];
+        // 0x98 is Win's own private iFlags_, unreachable from GraphicWin
+        // except at its raw offset.
+        const uint32_t nonclient_flags =
+            *reinterpret_cast<uint32_t *>(reinterpret_cast<uint8_t *>(this) + 0x98);
         const int thickness = ScrollDefaultThickness;
         if ((nonclient_flags & 8) != 0) {
             width += thickness;
