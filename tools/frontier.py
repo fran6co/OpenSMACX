@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -47,6 +48,61 @@ IMAGE = Path(os.environ.get(
     "OPENSMACX_IMAGE",
     REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"))
 ROOT = 0x0045F950  # _WinMain@16
+
+
+def _blanked(text: str) -> str:
+    """Comments replaced by spaces, so brace matching stays honest.
+
+    ORDER MATTERS. Stripping comments AFTER finding the opening brace finds a
+    brace inside a comment instead of the function's - a first draft of this
+    reported 486 of 487 frontier bodies as stubs, including `read_rules`, which
+    is 883 image instructions.
+    """
+    text = re.sub(r"/\*.*?\*/", lambda m: re.sub(r"[^\n]", " ", m.group(0)),
+                  text, flags=re.S)
+    return re.sub(r"//[^\n]*", lambda m: " " * len(m.group(0)), text)
+
+
+_BLANK_CACHE: dict = {}
+
+
+def body_text(record) -> str | None:
+    """The braces-matched source body following a record's marker."""
+    where = str(record.location)
+    path, _, line = where.rpartition(":")
+    path = Path(path)
+    if path not in _BLANK_CACHE:
+        try:
+            _BLANK_CACHE[path] = _blanked(
+                path.read_text(errors="replace")).splitlines()
+        except OSError:
+            _BLANK_CACHE[path] = []
+    lines = _BLANK_CACHE[path]
+    text = "\n".join(lines[int(line) - 1: int(line) + 600])
+    start = text.find("{")
+    if start < 0:
+        return None
+    depth = 0
+    for i in range(start, len(text)):
+        if text[i] == "{":
+            depth += 1
+        elif text[i] == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start + 1:i]
+    return None
+
+
+STUB = re.compile(r"(return\s*(-?\d+|nullptr|false|true)?\s*;)?")
+
+
+def is_stub(record) -> bool:
+    """Empty, or a single bare `return`: a placeholder, not a transcription."""
+    inner = body_text(record)
+    if inner is None:
+        return False
+    statements = [s.strip() for s in inner.split("\n") if s.strip()]
+    return len(statements) <= 1 and bool(STUB.fullmatch(" ".join(statements)))
 
 
 def walk(records: list, exe: Path, root: int) -> tuple[list, int, int]:
@@ -117,6 +173,24 @@ if __name__ == "__main__":
         mark = f"  [{worked} ruled-out]" if worked else ""
         print(f"{depth:4d}  {record.address_hex}  {record.path.name:24s} "
               f"{record.name}{mark}")
+    if "--semantic" in sys.argv:
+        stubs = [r for r in pending if is_stub(r)]
+        granted = [r for r in pending if r.semantic]
+        print(f"\n  {len(pending):,} reachable and not byte exact")
+        print(f"    {len(pending) - len(stubs):,} carry a real transcription")
+        print(f"    {len(stubs):,} are STUBS - empty, or a bare return")
+        for record in stubs:
+            print(f"      {record.address_hex}  {record.size or 0:,} image "
+                  f"bytes   {record.name}")
+        print(f"    {len(granted):,} carry a PROVED semantic claim "
+              f"(same instructions, different registers)")
+        print("\n  A transcription is EVIDENCE of equivalence, not proof. The"
+              "\n  proof this tree can give is `osmx semantic`, and the"
+              "\n  strongest cheap check is `call_diff`: a body calling"
+              "\n  something the image does not is not equivalent, whatever"
+              "\n  its similarity score says.")
+        sys.exit(0)
+
     print(f"{len(order):,} reachable and catalogued, {len(pending):,} not yet "
           f"byte exact; {unnamed:,} direct edges name nothing in the catalogue "
           f"({edges:,} edges walked, indirect ones not followed)")

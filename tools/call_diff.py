@@ -55,13 +55,17 @@ IMAGE = Path(os.environ.get(
 COMPILE_COMMANDS = Path(os.environ.get(
     "OPENSMACX_COMPILE_COMMANDS", REPO_ROOT / "build" / "compile_commands.json"))
 BORROW = REPO_ROOT / "src" / "buffer.cpp"
-# EVERY SET, NOT ONE. `memset` and `strcat` are INTRINSICS under `/Oi`, so a
-# body the image calls them from reads as "makes no calls" under the default
-# set and as a false positive here. A disagreement is only real when NO
-# invocation reproduces the image's count.
-FLAG_SETS = ("/c /O2 /Gy /GR- /Oy- /GX", "/c /O2 /Gy /GR- /GX",
-             "/c /O2 /Oi- /Gy /GR- /Oy- /GX", "/c /O2 /Oi- /Gy /GR- /GX",
-             "/c /O2 /Ob0 /Gy /GR- /Oy- /GX", "/c /O1 /Gy /GR- /Oy- /GX")
+# EVERY SET, AND FROM THE ONE PLACE THEY LIVE. `memset` and `strcat` are
+# INTRINSICS under `/Oi`, so a body the image calls them from reads as "makes
+# no calls" under the default set and as a false positive here. A disagreement
+# is only real when NO invocation reproduces the image's count - which means
+# this has to search the SAME ten sets `measure` does.
+#
+# It searched six. A hand-copied subset omitted `/O2 /Ob0` without `/Oy-`
+# among others, so `Win::init_class` was reported as calling MORE than the
+# image while the flag set `measure` actually picks agreed with it exactly.
+# An agent had to disassemble the object's relocation table to disprove it.
+from osmx import FLAG_SETS
 
 
 def _targets(listing) -> collections.Counter:

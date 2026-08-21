@@ -34,6 +34,7 @@ const uint32_t WinSecondaryVtable = 0x0066FF30;
 Purpose: Construct a Win from its AutoSound subobject and the process window
          defaults, preserving every sparse write and legacy return residue.
 // ORIGINAL: 0x005EB3D0 ??0Win@@QAE@XZ 0x005EB3D0-0x005EB63D
+// symbol    ?construct@Win@@QAEXXZ
 // size      621 bytes
 // prototype void (__thiscall ??0Win@@QAE@XZ)(Win* this)
 // callers   1   call targets   1
@@ -101,9 +102,20 @@ void Win::construct() {
     object[0x160 / 4] = 0;
     object[0x164 / 4] = 0;
     object[0x168 / 4] = 0;
-    for (size_t offset = 0x13C; offset <= 0x158; offset += 4) {
-        object[offset / 4] = 0;
-    }
+    // UNROLLED, not a loop: the image is a straight run of `mov [esi+X],
+    // eax`, 0x13C through 0x158 by 4, with no loop counter at all. A `for`
+    // here gives the compiler an index variable that outlives its loop -
+    // VC6 then wants a THIRD callee-saved register (edi) and pushes it up
+    // front, which the image never does (only `push esi`). Spelling every
+    // store out cost nothing and dropped the extra push.
+    object[0x13C / 4] = 0;
+    object[0x140 / 4] = 0;
+    object[0x144 / 4] = 0;
+    object[0x148 / 4] = 0;
+    object[0x14C / 4] = 0;
+    object[0x150 / 4] = 0;
+    object[0x154 / 4] = 0;
+    object[0x158 / 4] = 0;
     object[0x0B4 / 4] = 0;
     object[0x0C0 / 4] = 0;
     object[0x0BC / 4] = 0;
@@ -111,9 +123,22 @@ void Win::construct() {
     object[0x16C / 4] = 0;
     object[0x170 / 4] = 0;
     object[0x098 / 4] = 0;
-    for (offset = 0x400; offset <= 0x438; offset += 4) {
-        object[offset / 4] = 0;
-    }
+    // Same defect, same fix: 0x400 through 0x438 by 4, unrolled.
+    object[0x400 / 4] = 0;
+    object[0x404 / 4] = 0;
+    object[0x408 / 4] = 0;
+    object[0x40C / 4] = 0;
+    object[0x410 / 4] = 0;
+    object[0x414 / 4] = 0;
+    object[0x418 / 4] = 0;
+    object[0x41C / 4] = 0;
+    object[0x420 / 4] = 0;
+    object[0x424 / 4] = 0;
+    object[0x428 / 4] = 0;
+    object[0x42C / 4] = 0;
+    object[0x430 / 4] = 0;
+    object[0x434 / 4] = 0;
+    object[0x438 / 4] = 0;
     object[0x174 / 4] = 1;
     object[0x178 / 4] = 1;
     object[0x17C / 4] = 1;
@@ -399,7 +424,7 @@ void __fastcall win_set_horz_paging_redirect(Win *self, void *, int paging) {
 
 /*
 Purpose: Determine whether a point is inside a rectangle using Win32 edge semantics.
-// ORIGINAL: 0x005FA7E0 ?in_box@@YAHHHPAURECT@@@Z 0x005FA7E0-0x005FA814
+// ORIGINAL: 0x005FA7E0 ?in_box@@YAHHHPAURECT@@@Z 0x005FA7E0-0x005FA814 BYTE_EXACT
 // symbol    ?in_box@@YAHHHPBUtagRECT@@@Z
 // size      52 bytes
 // prototype 
@@ -410,9 +435,24 @@ Purpose: Determine whether a point is inside a rectangle using Win32 edge semant
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: Is the point inside the rectangle? true/false
 Status: Complete
+
+// LEVER: guard clauses, not one `&&` chain. The image is four independent
+// tests, each with its OWN `xor eax,eax; ret` on failure - not a shared
+// early-return block - and the last comparison returns straight out of a
+// `setl` with no branch at all. A single boolean expression folds the four
+// tests into shared control flow the image does not have.
 */
 BOOL __cdecl in_box(int x, int y, const RECT *rect) {
-    return x >= rect->left && x < rect->right && y >= rect->top && y < rect->bottom;
+    if (x < rect->left) {
+        return FALSE;
+    }
+    if (x >= rect->right) {
+        return FALSE;
+    }
+    if (y < rect->top) {
+        return FALSE;
+    }
+    return y < rect->bottom;
 }
 
 /*
@@ -603,7 +643,7 @@ void(__cdecl *WinKeyHook)(WPARAM key);                      // 0x009B7A8C
 
 /*
 Purpose: Acquire the process-wide device context, taking one reference.
-// ORIGINAL: 0x005EC690 ?get_hdc@Win@@QAGPAUHDC__@@XZ 0x005EC690-0x005EC6E1
+// ORIGINAL: 0x005EC690 ?get_hdc@Win@@QAGPAUHDC__@@XZ 0x005EC690-0x005EC6E1 BYTE_EXACT
 // symbol    ?get_hdc@Win@@SAPAUHDC__@@XZ
 // size      81 bytes
 // prototype 
@@ -614,6 +654,13 @@ Purpose: Acquire the process-wide device context, taking one reference.
 // indirect  0x005EC6B6 0x005EC6C7
 Return Value: The shared device context, or zero when none could be obtained
 Status: Complete
+
+// LEVER: branch polarity. The image falls through to the vtable `GetDC`
+// call when `DirectDrawSurface` IS set and jumps away to the plain `GetDC`
+// import only when it is null - `if (DirectDrawSurface != nullptr) {
+// DirectDrawSurface->GetDC(...) } else { GetDC(HandleMain) }`, arms
+// swapped from the natural null-check-first reading. Moved 13/24 (0.917)
+// to BYTE_EXACT.
 */
 HDC Win::get_hdc() {
     // A context already held is simply counted again; only the first
@@ -622,10 +669,10 @@ HDC Win::get_hdc() {
         ++WinHdcRefCount;
         return WinSharedHdc;
     }
-    if (DirectDrawSurface == nullptr) {
-        WinSharedHdc = GetDC(HandleMain);
-    } else {
+    if (DirectDrawSurface != nullptr) {
         DirectDrawSurface->GetDC(&WinSharedHdc);
+    } else {
+        WinSharedHdc = GetDC(HandleMain);
     }
     // A failed acquire leaves the count at zero so the next call retries.
     if (WinSharedHdc != nullptr) {
@@ -682,7 +729,7 @@ void __cdecl win_release_hdc_redirect() {
 
 /*
 Purpose: Select a system cursor by name and refresh the displayed cursor.
-// ORIGINAL: 0x005EC7C0 ?set_cursor@Win@@QAEHH@Z 0x005EC7C0-0x005EC7FE
+// ORIGINAL: 0x005EC7C0 ?set_cursor@Win@@QAEHH@Z 0x005EC7C0-0x005EC7FE BYTE_EXACT
 // size      62 bytes
 // prototype int (__thiscall ?set_cursor@Win@@QAEHH@Z)(Win* this, int nCursorName)
 // callers   13   call targets   1
@@ -695,11 +742,17 @@ Verification note: ordering the cursor_handle_ clear against the refresh is
 not observable here - the refresh is passed a null window, so it cannot read
 this object's state through the seam a fixture can see. The store order is
 kept as the legacy body has it rather than because a test distinguishes it.
+
+// LEVER: `<= 0x7EFF` / `>= 0x7F8B` and `< 0x7F00` / `> 0x7F8A` are the same
+// range but not the same codegen - the image is `cmp eax,0x7f00; jl` and
+// `cmp eax,0x7f8a; jg`, this was `cmp eax,0x7eff; jle` and `cmp
+// eax,0x7f8b; jge`. Spelling the boundary the way the image does moved
+// 13/17 (0.882) to BYTE_EXACT.
 */
 int Win::set_cursor(int name) {
     // Only the system cursor range is accepted; anything else is rejected
     // before any field is touched.
-    if (name <= 0x7EFF || name >= 0x7F8B) {
+    if (name < 0x7F00 || name > 0x7F8A) {
         return 3;
     }
     cursor_sprite_ = nullptr;
@@ -935,6 +988,12 @@ void __cdecl Win::flip(RECT *area) {
         }
         WinSharedHdc = nullptr;
     }
+    // The reference `Buffer::get_hdc()` took above (`source`) is dropped
+    // here, unconditionally, right before the return - a call this tree
+    // was missing entirely. `call_diff.py` flags it as one of the FEWER
+    // calls; the image's own `push 1; call 0x5e3563` sits right after the
+    // ReleaseDC block, both branches of which converge into it.
+    ScreenBuffer.release_hdc(1);
 }
 
 
@@ -1430,6 +1489,23 @@ Verification note: hoisting the count out of the loop is an EQUIVALENT mutant
          The absent null check on children_[index] is likewise faithful: the
          original dereferences the slot unconditionally at 0x005ECE2E, so a
          null slot faults in both.
+
+// LEVER: the image walks `children_` with an incrementing POINTER
+// (`lea esi, [ebx+0x1a4]` once, `add esi, 4` per iteration, `mov ecx,[esi]`)
+// rather than re-deriving `children_[index]` from a scaled index each time.
+// Spelling it as `Win *const *child = children_; ... ++child;` instead of
+// `children_[index]` moved agreement from 2/37 to 17/37 (0.691 -> 0.727
+// similar) at `/c /O2 /Gy /GR- /GX`. `index` is kept only for the trailing
+// `index >= count` bound check, which the image still does with `cmp
+// edi, eax` against a separately-incremented edi.
+//
+// RULED-OUT: hoisting `int index = 0;` to sit between the `count =
+// child_count_` load and the `count <= 0` check (matching the image's
+// `xor edi, edi` appearing before `test eax, eax`) - this makes VC6 pick
+// edi instead of ebx for `this` and is WORSE (10/37). The remaining
+// divergence (a missing early `xor edi, edi` and the resulting jump-target
+// shift) did not yield to reordering the two post-count-check statements
+// either; both orders compile identically.
 */
 int Win::is_descendant(Win *candidate) {
     if (!candidate) {
@@ -1439,12 +1515,13 @@ int Win::is_descendant(Win *candidate) {
     if (count <= 0) {
         return 0;
     }
-    for (int index = 0; ; ++index) {
-        Win *const child = children_[index];
-        if (child == candidate) {
+    Win *const *child = children_;
+    int index = 0;
+    for (;;) {
+        if (*child == candidate) {
             return 1;
         }
-        if (child->is_descendant(candidate)) {
+        if ((*child)->is_descendant(candidate)) {
             return 1;
         }
         // Re-read, do NOT hoist. The original reloads the count at 0x005ECE50
@@ -1452,7 +1529,9 @@ int Win::is_descendant(Win *candidate) {
         // removes children is seen by the very next iteration. A loop-invariant
         // count is the obvious tidy-up and it changes behaviour.
         count = child_count_;
-        if (index + 1 >= count) {
+        ++index;
+        ++child;
+        if (index >= count) {
             return 0;
         }
     }
@@ -1695,6 +1774,26 @@ Purpose: Decide which window a screen position belongs to, translating the
 // FIRST that is visible wins; one that is not is nulled on the way past.
 // Owners 2 and 4 set `WinMouseDirect`, and that is what the tail reads to
 // decide between returning the window and returning its `poWinBase_`.
+//
+// STRUCTURE ALREADY MATCHES: the field offsets, the test/continue/break
+// chain, and its ORDER (Owner1, then 2, then 3, then 4 - confirmed by
+// reading the compiled object's own DIR32 relocation symbols, since the
+// byte comparison masks the addresses) all line up with the image
+// instruction-for-instruction through the whole owner loop. What differs,
+// starting at instruction 4, is WHICH TWO of the four globals the image
+// preloads into registers before the test chain even starts (`ebp` =
+// Owner2, `edx` = Owner4; Owner1 and Owner3 are loaded lazily, inside the
+// chain, right before their own test) - this tree's compile preloads
+// Owner1/2/3 eagerly and Owner4 late. Both are legal schedules of the same
+// four independent loads; nothing in the source controls which two VC6's
+// allocator decides to hoist.
+//
+// RULED-OUT, MEASURED: touching `WinPointerOwner2`/`WinPointerOwner4` with
+// a no-op read at the top of the function (before Owner1's check) to see
+// whether an earlier textual mention changes which two get preloaded -
+// 13/304 -> 14/304. The instruction that appears is the touch itself; the
+// image's own choice of ebp/edx for those two globals over ecx/ebx for
+// Owner1/3 did not follow.
 Status: WIP
 */
 Win *Win::get_mouse_window(int *x, int *y) {
@@ -2270,6 +2369,17 @@ static const char WinClassName[] = "JackalClass";
 // which is where the image has them - it stores all four from a zeroed eax
 // and only then makes the call. Worth 0.882 -> 0.887, and it is what the
 // image does regardless of what it is worth.
+//
+// `call_diff.py` reports 10 calls here against the image's 9 and names
+// `??1Spot@@QAE@XZ`/`?close@Buffer@@QAEXXZ` as extras - a FALSE ALARM from
+// its own flag search, not this body. Its FLAG_SETS list `/Ob0 /Oy-` but
+// never plain `/Ob0` (no `/Oy-`); under the flags `osmx measure` actually
+// picks (`/c /O2 /Ob0 /Gy /GR- /GX`), the compiled object calls exactly the
+// same 9 symbols in the same order as the image: Buffer ctor once, Buffer
+// dtor 3 times (both early returns plus the normal exit), then init, fill,
+// load_pcx, copy, flip - confirmed by reading the object's own relocation
+// symbol table directly. So the call graph already agrees; the divergence
+// is purely the register-save order documented above.
 Status: Complete
 */
 int __cdecl Win::init_class(LPSTR window_name) {

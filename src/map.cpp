@@ -97,6 +97,12 @@ Status: Complete
 /*
 Purpose: Check who owns a tile. Optional parameter to get closest base.
 // ORIGINAL: 0x004E3EF0 ?whose_territory@@YAHHHHPAHH@Z 0x004E3EF0-0x004E3F9D
+// RULED-OUT: hoisting `Map *tile = map_loc(x, y)` before the territory read
+//            (compiler already CSEs it, identical bytes); flattening the
+//            nested owner==faction_id check into an early-return guard
+//            clause. Both plateau at 0.944 sim / 34 of 74 instructions;
+//            divergence starts in the prologue (image keeps x in edi, this
+//            tree picks ebx) - a pure register-allocation difference.
 // size      173 bytes
 // prototype int (__cdecl ?whose_territory@@YAHHHHPAHH@Z)(int factionID, int xCoord, int yCoord, int* baseID, int ignoreComm)
 // callers   40   call targets   1
@@ -267,6 +273,12 @@ Purpose: Check to see whether base is within a one tile radius of a sea tile wit
          If you pass a land region (<63) as the 2nd parameter, it is possible to get collision
          behavior due to region bounding. TODO: Revisit in the future to see whether to remove them.
 // ORIGINAL: 0x0050DE50 ?base_on_sea@@YAHHH@Z 0x0050DE50-0x0050DF28
+// RULED-OUT: --all-flags's winner (23/81, the default set) already beats every other set;
+//            first divergence is the prologue's two globals (MapIsFlat at 0x94988c,
+//            MapLongitudeBounds at 0x949870) loading into ebx/edi in the opposite order
+//            from the image - same register-allocation swap seen on base_coast
+//            (0x0050DF30) and the rest of this xrange/on_map-loop family
+//            (bonus_at, goody_at already carry the same note).
 // size      216 bytes
 // prototype int (__cdecl ?base_on_sea@@YAHHH@Z)(int baseID, int region)
 // callers   10   call targets   0
@@ -367,6 +379,19 @@ BOOL __cdecl port_to_coast(int base_id, int region) {
 /*
 Purpose: Check to see if two port bases share a common body of water determined by region.
 // ORIGINAL: 0x0050E160 ?port_to_port@@YAHHH@Z 0x0050E160-0x0050E306
+// LEVER: call_diff showed this tree calling base_on_sea where the image makes
+//        no calls at all - the image inlines base_on_sea's whole body into
+//        the loop instead. Manually inlining it (guard clause on
+//        `region_sea >= RegionBounds`, then the destination-base radius
+//        loop) took this from 5/141 to 12/141 instructions agreeing
+//        (0.587 -> 0.785 similarity); still MISMATCH, the remaining gap
+//        looks like register/stack-slot allocation (image reserves
+//        `sub esp, 0x18`, this tree `0x10`) rather than another structural
+//        difference.
+// RULED-OUT: the same inline rewritten as early-return guard clauses
+//            (`if (!on_map(...)) continue;` etc.) instead of nested `if` -
+//            scored identically (12/141), so the remaining gap is not
+//            branch polarity.
 // size      422 bytes
 // prototype int (__cdecl ?port_to_port@@YAHHH@Z)(int baseIDSrc, int baseIDDst)
 // callers   7   call targets   0
@@ -387,8 +412,20 @@ BOOL __cdecl port_to_port(int base_id_src, int base_id_dst) {
             int region_src = region_at(x_radius, y_radius);
             if (region_src != last_region) { // reduce redundant checks especially sea bases
                 last_region = region_src;
-                if (base_on_sea(base_id_dst, region_src)) {
-                    return true;
+                // Inlined base_on_sea(base_id_dst, region_src): the image
+                // writes this out here rather than calling it.
+                int region_sea = region_src & RegionBounds;
+                if (region_sea < RegionBounds) {
+                    int x_dst = Bases[base_id_dst].x;
+                    int y_dst = Bases[base_id_dst].y;
+                    for (uint32_t j = 0; j < 8; j++) {
+                        int x_radius_dst = xrange(x_dst + RadiusBaseX[j]);
+                        int y_radius_dst = y_dst + RadiusBaseY[j];
+                        if (on_map(x_radius_dst, y_radius_dst) && is_ocean(x_radius_dst, y_radius_dst)
+                            && (region_at(x_radius_dst, y_radius_dst) & RegionBounds) == region_sea) {
+                            return true;
+                        }
+                    }
                 }
             }
         }
@@ -730,6 +767,15 @@ Status: Complete
 /*
 Purpose: Set the faction owner for the specified tile.
 // ORIGINAL: 0x00591B10 ?owner_set@@YAXHHH@Z 0x00591B10-0x00591B48
+// RULED-OUT: direct `tile->val2` read/write (no pointer hoist) - worse (0.857 vs 0.895).
+//            Rewriting the RHS as the explicit XOR-merge identity
+//            (`*field ^ ((*field ^ faction_id) & 0xF)`, which is what the image's
+//            `xor/and/xor` sequence computes for `(*field & 0xF0) | (faction_id & 0xF)`)
+//            scored identically to the plain OR-of-ANDs (0.895/8 of 20) - the compiler
+//            already finds that transform on its own. The image factors the record-index
+//            multiply as `lea x11` + implicit SIB scale-4 (`[ecx+eax*4+2]`); this tree's
+//            imul-by-0x2c/lea-plus-ecx form is the same "multiply factoring" plateau as
+//            whose_territory, not something the RHS shape changes.
 // size      56 bytes
 // prototype void (__cdecl ?owner_set@@YAXHHH@Z)(int xCoord, int yCoord, int factionID)
 // callers   13   call targets   0
@@ -933,7 +979,8 @@ Status: Complete
 
 /*
 Purpose: Set or unset bit for the specified tile.
-// ORIGINAL: 0x00591D60 ?bit_set@@YAXHHHH@Z 0x00591D60-0x00591DA2
+// ORIGINAL: 0x00591D60 ?bit_set@@YAXHHHH@Z 0x00591D60-0x00591DA2 BYTE_EXACT
+// LEVER: the image computes the tile's `&bit` address ONCE, unconditionally, before testing `set` - this tree's `if (set) map_loc(x,y)->bit |= bit; else map_loc(x,y)->bit &= ~bit;` let the compiler test `set` FIRST and compute the address separately in each arm instead. Hoisting `uint32_t *const field = &map_loc(x, y)->bit;` above the `if` (see map.h) is BYTE_EXACT.
 // size      66 bytes
 // prototype void (__cdecl ?bit_set@@YAXHHHH@Z)(int xCoord, int yCoord, int bit, int)
 // callers   32   call targets   0
@@ -1725,7 +1772,8 @@ int __cdecl radius_move(int x_src, int y_src, int x_dst, int y_dst, int range) {
 
 /*
 Purpose: Determine if the specified two tiles are within the radius directionally of each other.
-// ORIGINAL: 0x005A6630 ?compass_move@@YAHHHHH@Z 0x005A6630-0x005A66E0
+// ORIGINAL: 0x005A6630 ?compass_move@@YAHHHHH@Z 0x005A6630-0x005A66E0 BYTE_EXACT
+// LEVER: this body had been copy-adapted from radius_move's wraparound test (compare against MapLongitude, adjust by MapLongitudeBounds), but the image never loads MapLongitudeBounds here at all - it computes `MapLongitude / 2` (a signed `cdq; sub; sar` halving, done twice) as the threshold AND adjusts by the un-halved `MapLongitude` itself. Matching that literally (`x_radius_off < -(ML/2)` / `+= ML`, and the mirrored upper bound) is BYTE_EXACT.
 // size      176 bytes
 // prototype int (__cdecl ?compass_move@@YAHHHHH@Z)(int xCoordSrc, int yCoordSrc, int xCoordDst, int yCoordDst)
 // callers   1   call targets   0
@@ -1737,11 +1785,11 @@ Status: Complete
 */
 int __cdecl compass_move(int x_src, int y_src, int x_dst, int y_dst) {
     int x_radius_off = x_dst - x_src;
-    if (x_radius_off < (-(int)MapLongitude)) {
-        x_radius_off += MapLongitudeBounds;
+    if (x_radius_off < -((int)MapLongitude / 2)) {
+        x_radius_off += MapLongitude;
     }
-    if (x_radius_off > ((int)MapLongitude)) {
-        x_radius_off -= MapLongitudeBounds;
+    if (x_radius_off > ((int)MapLongitude / 2)) {
+        x_radius_off -= MapLongitude;
     }
     int y_radius_off = y_dst - y_src;
     int direction_x = (x_radius_off > 0) ? 1 : (x_radius_off >= 0) - 1;
