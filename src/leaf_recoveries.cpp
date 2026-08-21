@@ -52,14 +52,14 @@ namespace {
 //
 // `memcpy` has no such licence: it aliases everything, and gcc still lowers
 // these to a single `mov`.
-uint32_t load32(const void *base, size_t offset) {
+__forceinline uint32_t load32(const void *base, size_t offset) {
     uint32_t value;
     std::memcpy(&value, static_cast<const uint8_t *>(base) + offset,
                 sizeof(value));
     return value;
 }
 
-void store32(void *base, size_t offset, uint32_t value) {
+__forceinline void store32(void *base, size_t offset, uint32_t value) {
     std::memcpy(static_cast<uint8_t *>(base) + offset, &value, sizeof(value));
 }
 
@@ -1200,7 +1200,7 @@ Purpose: Initialise 24 sixty-byte slots and the count that follows them.
 
          EAX still holds `this` at the `ret`.
 
-// ORIGINAL: 0x0052DCA0 ??0DeletionList@@QAE@XZ 0x0052DCA0-0x0052DCC1
+// ORIGINAL: 0x0052DCA0 ??0DeletionList@@QAE@XZ 0x0052DCA0-0x0052DCC1 BYTE_EXACT
 // symbol    ?leaf_0052dca0_redirect@@YIPAXPAX0@Z
 // size      33 bytes
 // prototype void (__thiscall ??0DeletionList@@QAE@XZ)(DeletionList* this)
