@@ -28,6 +28,30 @@ uncommitted work, and the fix is to hand that diff back first.
 Working in a worktree is why you can edit freely: nothing you touch collides
 with another agent.
 
+THE `int` IN `??0Class@@QAE@H@Z` IS NOT AN ARGUMENT
+- It is MSVC's compiler-injected MOST-DERIVED FLAG, and its presence means the
+  class has VIRTUAL BASES. Do not model it as a parameter and do not write a
+  constructor that takes one - declare the virtual inheritance and VC6 emits
+  the flag, its guard, and everything that follows, by itself.
+- The body tells you the same thing three times over. `ListBox::ListBox`
+  (0x00609DB0) reads the parameter, compares it to zero, and SKIPS its base
+  construction when it is zero - that is the flag's whole meaning, "construct
+  the virtual bases only if I am the most-derived object". Then every vtable
+  store goes through the vbtable rather than to a fixed offset:
+  `mov eax, [esi]` / `mov ecx, [eax + 4]` / `mov [ecx + esi], <vtable>`. And
+  `lea ecx, [eax - 0x48]; mov [eax + esi - 4], ecx` writes a vtordisp. None of
+  those three shapes can occur without virtual inheritance.
+- Destructors carry it too: `??1RadioButton@@QAE@H@Z` at 0x00406F60 takes the
+  same flag, for the same reason in reverse.
+- `src/mapwin.h` already declares `class MapWin : protected virtual GraphicWin`
+  and is the worked example. But `ListBox`, `CheckBox`, `Dialog` and
+  `SpriteBox` are all declared with NO BASE CLASS AT ALL, which is why their
+  constructors cannot currently reproduce anything. Fixing the declaration is
+  the recovery; the body is usually short once the inheritance is right.
+- Which bodies: any catalogued name ending `@H@Z` where the `H` has no
+  business being there. In the stubbed set that is SpriteBox, Console, MapWin,
+  ListBox, EditGroup, CheckBox, RadioButton and PlanWin.
+
 VTABLE STORES GO FIRST IN A CONSTRUCTOR BODY
 - Nothing in the GraphicWin/Win chain is declared `virtual`, deliberately, so
   a constructor's vtable stores are EXPLICIT assignments rather than something
