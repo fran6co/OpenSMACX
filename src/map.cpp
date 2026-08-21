@@ -192,7 +192,7 @@ int __cdecl crappy(int x, int y) {
 Purpose: Take the absolute distance between two points as parameters to calculate how far out they
          radiate. This is mainly used to determine proximity or how far away the two points are from
          each other in a rough circle shape (see RadiusOffsetX[]/RadiusOffsetY[]).
-// ORIGINAL: 0x004F8090 ?vector_dist@@YAHHH@Z 0x004F8090-0x004F80CB
+// ORIGINAL: 0x004F8090 ?vector_dist@@YAHHH@Z 0x004F8090-0x004F80CB BYTE_EXACT
 // size      59 bytes
 // prototype int (__cdecl ?vector_dist@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   5   call targets   1
@@ -213,7 +213,11 @@ int __cdecl vector_dist(int x_distance, int y_distance) {
     if (x_distance >= y_distance) {
         smallest = y_distance;
     }
-    return largest - (((y_distance + x_distance) / 2) - smallest + 1) / 2;
+    // `>> 1`, NOT `/ 2`. Both operands are `abs()` results, so nothing here is
+    // ever negative and the two mean the same - but signed `/ 2` makes VC6 emit
+    // the round-toward-zero fixup (`cdq; sub eax, edx`) before each `sar`, and
+    // the image has neither. Two instructions per divide, four here.
+    return largest - ((((y_distance + x_distance) >> 1) - smallest + 1) >> 1);
 }
 
 /*
