@@ -77,7 +77,9 @@ def _targets(listing) -> collections.Counter:
 
 
 def _one(job: tuple) -> list[tuple]:
-    path, records, command = job
+    # `named` is passed IN, not read from module scope: `_one` runs in a worker
+    # process and cannot see what `__main__` built.
+    path, records, command, named, by_symbol = job
     objects = []
     for flags in FLAG_SETS:
         try:
@@ -109,6 +111,38 @@ def _one(job: tuple) -> list[tuple]:
         # writes them. So the tree's call COUNT is comparable but not its
         # addresses, and the useful statement is about how many.
         theirs, mine = _targets(image), _targets(here)
+        # SAME COUNT, DIFFERENT CALLEE, which counting alone cannot see. A body
+        # calling ITSELF where the image calls a base-class method has exactly
+        # one call on each side and is unboundedly recursive - `Wave::load` was
+        # written `this->load(a1)` inside `Wave::load` and resolved to itself,
+        # while the image calls `?load@Sound@@QAEHPBD@Z`. A byte comparison
+        # cannot catch it either: a call target is a relocation on both sides
+        # and is discounted, so `call rel32` matches `call rel32` whatever it
+        # aims at. Compare the NAMES the catalogue gives the image's targets
+        # against the symbols our object calls.
+        if sum(theirs.values()) == sum(mine.values()) and sum(mine.values()):
+            try:
+                calling = set(call_symbols(obj, record.name, record.symbol))
+            except Exception:                   # noqa: BLE001
+                calling = set()
+            # RESOLVE OUR SYMBOLS BACK TO ADDRESSES and compare ADDRESSES.
+            # Comparing names cannot work: this tree renames what it recovers -
+            # `scalar_delete_popup` IS `??_GPopup`, `..._redirect` IS the method
+            # it forwards - and it declares parameters differently, so
+            # `?attach@RadioButton@@QAEHPAUGraphicWin@@HHH@Z` and
+            # `?attach@RadioButton@@QAEHPAXHHH@Z` are one method. Both were
+            # false positives, and between them they were most of a 140-row
+            # report. The catalogue already maps every symbol it knows - the
+            # marker's own name and its `symbol` fact - back to an address, so
+            # that is the comparison that means something.
+            ours = {by_symbol[x] for x in calling if x in by_symbol}
+            unknown = [x for x in calling if x not in by_symbol]
+            # Say nothing when we cannot resolve what we call: an unmapped
+            # symbol is a gap in the catalogue, not evidence about this body.
+            if ours and not unknown and theirs and not (set(theirs) & ours):
+                out.append((record, sum(theirs.values()), sum(mine.values()),
+                            list(theirs), sorted(calling), "TARGETS"))
+                continue
         if sum(theirs.values()) != sum(mine.values()):
             # WHICH ONES, on the tree's side. The object's call target is a
             # relocation, so the SYMBOL is the only thing that names it - and
@@ -128,8 +162,12 @@ if __name__ == "__main__":
     shared = shared_spans(records)
     built = build_inputs(COMPILE_COMMANDS)
     named = {}
+    by_symbol: dict = {}
     for record in records:
         named.setdefault(record.address, record.name)
+        for spelling in (record.name, record.symbol):
+            if spelling:
+                by_symbol.setdefault(spelling, record.address)
 
     wanted = set()
     for argument in sys.argv[1:]:
@@ -175,7 +213,7 @@ if __name__ == "__main__":
             command = build_command(COMPILE_COMMANDS, path)
         except ValueError:
             command = build_command(COMPILE_COMMANDS, BORROW)
-        work.append((path, mine, command))
+        work.append((path, mine, command, named, by_symbol))
 
     jobs = max(1, min(os.cpu_count() or 1, 8))
     print(f"{sum(len(v) for v in grouped.values()):,} unclaimed bodies in "
@@ -185,9 +223,23 @@ if __name__ == "__main__":
         batches = list(pool.map(_one, work))
 
     rows = [row for batch in batches for row in batch]
-    rows.sort(key=lambda row: (-abs(row[1] - row[2]), row[0].address))
+    # Wrong-callee rows first: a body calling the wrong thing is a semantic
+    # defect, and a count disagreement is only evidence of one.
+    rows.sort(key=lambda row: (len(row) < 6, -abs(row[1] - row[2]),
+                               row[0].address))
     shown = rows if ("--all" in sys.argv or wanted) else rows[:40]
-    for record, theirs, mine, targets, calling in shown:
+    for row in shown:
+        record, theirs, mine, targets, calling = row[:5]
+        kind = row[5] if len(row) > 5 else None
+        if kind == "TARGETS":
+            names = ", ".join(named.get(t, f"0x{t:08X}") or f"0x{t:08X}"
+                              for t in targets[:4])
+            print(f"  {record.address_hex}  {mine} call(s) on each side, but "
+                  f"NONE of the image's callees - WRONG CALLEE")
+            print(f"      {record.path.name:22s} {record.name}")
+            print(f"      image calls: {names}")
+            print(f"      this tree calls: {', '.join(calling[:4])}")
+            continue
         where = "MORE" if mine > theirs else "FEWER"
         names = ", ".join(named.get(t, f"0x{t:08X}") or f"0x{t:08X}"
                           for t in targets[:4])
