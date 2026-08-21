@@ -14,6 +14,10 @@ FOUR REFUSALS, and they are the point. A worktree is reaped only when all four
 pass:
 
   * NOT LOCKED. A locked worktree has a live agent in it.
+  * NOT RECENTLY TOUCHED. Locking is not universal - a Workflow's refute
+    worktrees are not locked, and reaping one mid-run would break the run - so
+    a worktree with a file modified in the last RECENT_MINUTES is left alone
+    regardless.
   * NOT AHEAD of master. A branch carrying its own commits has work that was
     never collected, whatever its working tree looks like.
   * every DIRTY file is byte-identical to the main checkout's copy. That is
@@ -35,9 +39,14 @@ from __future__ import annotations
 import filecmp
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+# How recently a worktree must have been written to count as live. Fifteen
+# minutes is longer than any gap between an agent's edits and much shorter than
+# the time these sit around afterwards.
+RECENT_MINUTES = 15
 
 
 def git(*args: str, cwd: Path | None = None) -> str:
@@ -61,18 +70,23 @@ def worktrees() -> list[dict]:
         current[key] = value or True
     if current.get("worktree"):
         found.append(current)
-    # AGENT WORKTREES ONLY. The first draft returned every non-main worktree,
-    # so a scratch checkout made somewhere else - or one the user made for
-    # their own work - was listed as "ready to reap". This tool removes
-    # checkouts and deletes branches; it has no business touching anything it
-    # did not come here to manage.
-    agents = (REPO_ROOT / ".claude" / "worktrees").resolve()
+    # `.claude/worktrees/` ONLY. The first draft returned every non-main
+    # worktree, so a scratch checkout made somewhere else - or one the user
+    # made for their own work - was listed as "ready to reap". This tool
+    # removes checkouts and deletes branches; it has no business touching
+    # anything it did not come here to manage.
+    #
+    # The whole directory, not just `agent-*`: Workflow runs put their agents
+    # in `wf_*` and their own named worktrees alongside them, and those
+    # accumulate exactly the same way. Everything under here is harness
+    # scaffolding.
+    managed = (REPO_ROOT / ".claude" / "worktrees").resolve()
     keep = []
     for entry in found:
         path = Path(entry["worktree"]).resolve()
         if path == REPO_ROOT.resolve():
             continue
-        if path.parent != agents or not path.name.startswith("agent-"):
+        if path.parent != managed:
             continue
         keep.append(entry)
     return keep
@@ -83,6 +97,17 @@ def why_not(entry: dict, dirty_here: set) -> str | None:
     path = Path(entry["worktree"])
     if entry.get("locked"):
         return "LOCKED - an agent is working in it"
+    newest = 0.0
+    for child in path.rglob("*"):
+        if ".git" in child.parts or "build" in child.parts:
+            continue
+        try:
+            newest = max(newest, child.stat().st_mtime)
+        except OSError:
+            continue
+    age = (time.time() - newest) / 60 if newest else 1e9
+    if age < RECENT_MINUTES:
+        return f"touched {age:.0f} minute(s) ago - looks live"
     ahead = git("rev-list", "--count", "master..HEAD", cwd=path).strip()
     if ahead != "0":
         return f"branch is {ahead} commit(s) ahead of master - uncollected"
