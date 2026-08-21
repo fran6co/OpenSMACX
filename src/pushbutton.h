@@ -30,7 +30,10 @@
 class PushButton : public BaseButton {
  public:
   PushButton() { ; }
-  ~PushButton() { ; }
+  // 0x0062C010 is not recovered: a
+  // pending_bodies forwarder, because an empty inline stub emits
+  // nothing and the deleting destructor needs a `call rel32`.
+  ~PushButton();
 
  private:
   uint32_t field_AB8_;  // 0xAB8

@@ -32,7 +32,10 @@
 class CheckButton : public GraphicWin {
  public:
   CheckButton() { ; }
-  ~CheckButton() { ; }
+  // 0x004B3EC0 is not recovered: a
+  // pending_bodies forwarder, because an empty inline stub emits
+  // nothing and the deleting destructor needs a `call rel32`.
+  ~CheckButton();
   static void close_class();
   static int init_class();
 

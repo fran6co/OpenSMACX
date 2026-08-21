@@ -41,7 +41,10 @@
 class ReportWin : public GraphicWin {
  public:
   ReportWin() { ; }
-  ~ReportWin() { ; }
+  // 0x004AD3B0 is not recovered: a
+  // pending_bodies forwarder, because an empty inline stub emits
+  // nothing and the deleting destructor needs a `call rel32`.
+  ~ReportWin();
   void on_mouse_move(int a1, int a2);
   void on_mouse_leave(int a1, int a2);
   // The two animation ticks the daemons in leaf_recoveries.cpp drive. Public,

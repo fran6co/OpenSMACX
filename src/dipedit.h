@@ -59,7 +59,10 @@ class DipEdit : public GraphicWin {
   void read_check();
   void do_check();
   DipEdit() { ; }
-  ~DipEdit() { ; }
+  // 0x004E2240 is not recovered: a
+  // pending_bodies forwarder, because an empty inline stub emits
+  // nothing and the deleting destructor needs a `call rel32`.
+  ~DipEdit();
   void on_left_click(int, int);
   void on_redraw();
 

@@ -41,7 +41,10 @@ class SetupWin : public GraphicWin {
   // direct `call rel32`, can name it.
   int do_menu_rightside(char* a1, int a2);
   SetupWin() { ; }
-  ~SetupWin() { ; }
+  // 0x004AE790 is not recovered: a
+  // pending_bodies forwarder, because an empty inline stub emits
+  // nothing and the deleting destructor needs a `call rel32`.
+  ~SetupWin();
   int UNK1(int a1);
   int UNK2(int a1);
   int UNK3(int a1);

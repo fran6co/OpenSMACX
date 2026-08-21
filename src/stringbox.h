@@ -31,7 +31,10 @@ class StringBox : public GraphicWin {
  public:
   void on_scrolled(int a1, int a2);
   StringBox() { ; }
-  ~StringBox() { ; }
+  // 0x004325C0 is not recovered: a
+  // pending_bodies forwarder, because an empty inline stub emits
+  // nothing and the deleting destructor needs a `call rel32`.
+  ~StringBox();
   void add(char *text, int index, int flag);
 
  private:

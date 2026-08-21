@@ -36,7 +36,10 @@
 class NewTechWin : public GraphicWin {
  public:
   NewTechWin() { ; }
-  ~NewTechWin() { ; }
+  // 0x00484810 is not recovered: a
+  // pending_bodies forwarder, because an empty inline stub emits
+  // nothing and the deleting destructor needs a `call rel32`.
+  ~NewTechWin();
   void on_left_click(int a1, int a2);
   int on_key_click(int a1, int a2);
 

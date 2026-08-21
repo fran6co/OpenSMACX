@@ -44,7 +44,10 @@ class CouncWin : public GraphicWin, public SubInterface {
   void draw_all_leaders();
   void on_mouse_leave(int a1, int a2);
   CouncWin() { ; }
-  ~CouncWin() { ; }
+  // 0x00428550 is not recovered: a
+  // pending_bodies forwarder, because an empty inline stub emits
+  // nothing and the deleting destructor needs a `call rel32`.
+  ~CouncWin();
   void on_group_clicked(int a1, int a2);
   void on_button_passover(int a1, int a2);
   void on_iface_left_click(int a1, int a2);

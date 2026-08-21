@@ -625,6 +625,114 @@ def convert(source: Path, apply: bool) -> int:
     return done
 
 
+DTOR_BINDING = re.compile(
+    r"^func_deleting_dtor\s+(?P<name>\w+)\s*=\s*\n?\s*"
+    r"original_method<func_deleting_dtor>\(\s*(?P<address>0x[0-9A-Fa-f]+)"
+    r"\s*\)\s*;\n", re.M)
+STUB_DTOR = re.compile(r"^(?P<indent>\s*)~(?P<klass>\w+)\(\)\s*\{\s*;?\s*\}"
+                       r"[^\n]*\n", re.M)
+
+
+def dtors(apply: bool) -> int:
+    """Convert scalar deleting destructors to real destructor calls.
+
+    THE SHAPE. `deleting_thunks.cpp` models each `??_GClass@@UAEPAXI@Z` as
+    `(ORIGINAL(self)->*ClassDtorTarget)()` followed by a guarded
+    `operator delete`. The pointer costs the `call rel32` the image makes to
+    `??1Class@@QAE@XZ`, and there are 48 of them.
+
+    THE HALF THAT IS NOT OBVIOUS. Simply calling `~Class()` makes it WORSE,
+    because most of these classes carry an empty inline stub - `~Class() { ; }`
+    - which emits nothing at all, so the call disappears instead of becoming
+    direct. The stub has to become a DECLARATION with a pending_bodies
+    forwarder behind it, and then the qualified call reaches the image's body.
+
+    Qualified - `p->Class::~Class()` - because these destructors are virtual
+    and the image's call is not.
+    """
+    names = _names_by_address()
+    files = tree()
+    changed = 0
+    source = (REPO_ROOT / "src" / "deleting_thunks.cpp").resolve()
+    for match in list(DTOR_BINDING.finditer(body(source))):
+        pointer, address = match.group("name"), match.group("address")
+        symbol = names.get(int(address, 16), "")
+        found = re.fullmatch(r"\?\?1(\w+)@@QAE@XZ", symbol)
+        if not found:
+            print(f"  - {pointer}: {address} is {symbol or 'in no annotation'}"
+                  f", not a `??1Class@@QAE@XZ`")
+            continue
+        klass = found.group(1)
+        header = next((h for h in sorted(files)
+                       if h.suffix == ".h" and _class_body(files[h], klass)),
+                      None)
+        if header is None:
+            print(f"  - {pointer}: no `class {klass}` under src/")
+            continue
+        stub = next((m for m in STUB_DTOR.finditer(files[header])
+                     if m.group("klass") == klass), None)
+        if stub is None:
+            print(f"  - {pointer}: {klass}'s destructor is not an empty stub "
+                  f"in {header.name} - it may be a real body")
+            continue
+        if re.search(rf"\b{klass}::~{klass}\s*\(", _code(body(PENDING))):
+            print(f"  - {pointer}: {klass}::~{klass} is already forwarded")
+            continue
+        users = [p for p in sorted(files) if pointer in body(p)]
+        # `original_address(P)` reads the pointer as a VALUE to rebind another
+        # seam with; there is no call to rewrite and removing the binding
+        # breaks it.
+        indirect = [p for p in users
+                    if re.search(rf"original_address\(\s*{pointer}\s*\)",
+                                 body(p))]
+        if indirect:
+            print(f"  - {pointer}: {indirect[0].name} reads it as a value "
+                  f"through original_address()")
+            continue
+        rewrite(header, files[header].replace(
+            stub.group(0),
+            f"{stub.group('indent')}// {address} is not recovered: a\n"
+            f"{stub.group('indent')}// pending_bodies forwarder, because an "
+            f"empty inline stub emits\n"
+            f"{stub.group('indent')}// nothing and the deleting destructor "
+            f"needs a `call rel32`.\n"
+            f"{stub.group('indent')}~{klass}();\n"))
+        rewrite(PENDING, body(PENDING).replace(
+            PENDING_ANCHOR,
+            f"{klass}::~{klass}() {{  // ??1{klass}@@QAE@XZ at {address}\n"
+            f"    typedef void(__fastcall *pending)({klass} *, void *);\n"
+            f"    PENDING_BODY({address}, pending)(this, nullptr);\n}}\n\n"
+            + PENDING_ANCHOR))
+        rewrite(source, body(source).replace(match.group(0), ""))
+        # EVERY USE, NOT JUST THE THUNK'S. atexit_thunks.cpp reaches the same
+        # pointers on fixed addresses - `ORIGINAL(reinterpret_cast<void *>
+        # (0x006A7628))->*BaseWinDtorTarget` - and removing the binding without
+        # rewriting those leaves an unresolved symbol.
+        call = re.compile(rf"\(\s*ORIGINAL\((?P<receiver>[^;]*?)\)\s*->\*"
+                          rf"\s*{pointer}\s*\)\s*\(\s*\)")
+        for path in users:
+            rewrite(path, call.sub(
+                lambda m: f"static_cast<{klass} *>({m.group('receiver')})"
+                          f"->{klass}::~{klass}()",
+                body(path)))
+            rewrite(path, EXTERN.sub(
+                lambda m: "" if m.group("name") == pointer else m.group(0),
+                body(path)))
+        for path in (source, PENDING, *users):
+            include = f'#include "{header.name}"\n'
+            if include not in body(path):
+                last = body(path).rfind('#include "')
+                end = body(path).index("\n", last) + 1
+                rewrite(path, body(path)[:end] + include + body(path)[end:])
+        print(f"  + {pointer} -> {klass}::~{klass} ({address})")
+        changed += 1
+    if apply:
+        for path, text in files.items():
+            if text != path.read_text():
+                path.write_text(text)
+    return changed
+
+
 PRIVATE_BASE = re.compile(
     r"^class\s+(?P<name>\w+)\s*:\s*(?P<bases>[^{;]+)\{", re.M)
 
@@ -779,6 +887,11 @@ def free(apply: bool) -> int:
 if __name__ == "__main__":
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     apply = "--apply" in sys.argv
+    if "--dtors" in sys.argv:
+        count = dtors("--apply" in sys.argv)
+        print(f"{count} deleting destructor(s) "
+              f"{'converted' if '--apply' in sys.argv else 'convertible'}")
+        raise SystemExit(0)
     if "--widen" in sys.argv:
         count = widen("--apply" in sys.argv)
         print(f"{count} base(s) "

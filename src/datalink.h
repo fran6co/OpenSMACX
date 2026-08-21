@@ -60,7 +60,10 @@ class Datalink : public GraphicWin {
   // `call rel32` on an unadjusted `this`, can name it.
   void draw_entry();
   Datalink() { ; }
-  ~Datalink() { ; }
+  // 0x00432290 is not recovered: a
+  // pending_bodies forwarder, because an empty inline stub emits
+  // nothing and the deleting destructor needs a `call rel32`.
+  ~Datalink();
   int UNK1(int a1, int a2);
   void parse_id(int id, DatalinkID *out_id, int *out_remainder);
   void UNK6();

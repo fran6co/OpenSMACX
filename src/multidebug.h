@@ -34,7 +34,10 @@ class MultiDebug : public GraphicWin {
  public:
   void __cdecl timer_callback_daemon(int a2);
   MultiDebug() { ; }
-  ~MultiDebug() { ; }
+  // 0x005C9E00 is not recovered: a
+  // pending_bodies forwarder, because an empty inline stub emits
+  // nothing and the deleting destructor needs a `call rel32`.
+  ~MultiDebug();
   void close();
 
  private:

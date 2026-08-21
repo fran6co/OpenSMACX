@@ -35,7 +35,10 @@
 class AlphaMenu {
  public:
   AlphaMenu() { ; }
-  ~AlphaMenu() { ; }
+  // 0x0051DC10 is not recovered: a
+  // pending_bodies forwarder, because an empty inline stub emits
+  // nothing and the deleting destructor needs a `call rel32`.
+  ~AlphaMenu();
   int requested_height();
 
   Menu menu_;  // 0x0, IDB `menu`, size == sizeof(Menu)
