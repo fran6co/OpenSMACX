@@ -30,7 +30,6 @@ Purpose: Construct the GraphicWin base and the embedded Spot, install
          Menu's own vtables, then zero the scalar fields and the 15-entry
          entries_ table.
 // ORIGINAL: 0x005FAC60 ??0Menu@@QAE@XZ 0x005FAC60-0x005FACF6;0x00662CF0-0x00662D02
-// symbol    ?construct@Menu@@QAEPAV1@XZ
 // size      150 bytes
 // prototype void (__thiscall ??0Menu@@QAE@XZ)(Menu* this)
 // callers   0   call targets   2
@@ -39,18 +38,30 @@ Purpose: Construct the GraphicWin base and the embedded Spot, install
 // calls     0x005D4CF0 0x005FA860
 // notes     field_A1C_ and field_A28_ are never touched by this constructor
 //        (the image writes proc_, count_, field_A20_ and field_A24_ only).
-// RULED-OUT: best reached is 10/38, 0.900 similar (best of 10 flag sets,
-//        `/c /O2 /Gy /GR- /GX`). Same residual as NetMsg::construct(),
-//        MultiDebug::construct() and WorldWin::construct(): image has
-//        `push ecx` at the same position this body has `sub esp, 8` - a
-//        stack-frame-size difference from spill-slot count, not control
-//        flow or field order. Not chased further.
+// LEVER: a REAL CONSTRUCTOR, not a `construct()` method. This was
+//        `Menu *Menu::construct()` doing `new (&spot_) Spot()`, and the
+//        placement-new is what cost it. VC6 guards a placement new-expression
+//        with a null test on the pointer - `cmp ecx, ebx; je` - because
+//        `operator new` may return null, and the guard needs a spill slot.
+//        That is where `sub esp, 8` came from against the image's `push ecx`.
+//        The earlier note called this "a stack-frame-size difference from
+//        spill-slot count, not control flow", which had the cause backwards:
+//        there IS control flow, and the frame size is downstream of it.
+//        As an ordinary member of a real constructor, `spot_` is constructed
+//        implicitly with no guard at all - and the image agrees, calling
+//        GraphicWin's real constructor at 0x005D4CF0 and then Spot's at
+//        0x005FA860, which is exactly base-then-member in declaration order.
+//        10/38 -> 15/38, and the compiled body drops from 42 instructions to
+//        39 against the image's 38.
+// RULED-OUT: the last gap is one hoisted constant. VC6 puts -1 in edx
+//        (`or edx, 0xffffffff`) because `field_A24_` and the fifteen
+//        `entries_[i].id` share it, where the image writes the immediate
+//        straight to `[esi + 0xa24]`. Not reachable by reordering the
+//        assignments; not chased further.
 Return Value: n/a
 Status: Complete
 */
-Menu *Menu::construct() {
-    GraphicWin::construct();
-    new (&spot_) Spot();
+Menu::Menu() {
     uint32_t *const object = reinterpret_cast<uint32_t *>(this);
     object[0x000 / 4] = MenuPrimaryVtable;
     object[0x444 / 4] = MenuBufferVtable;
@@ -65,7 +76,6 @@ Menu *Menu::construct() {
         entries_[i].mnemonic = nullptr;
         entries_[i].pull_down = nullptr;
     }
-    return this;
 }
 
 /*

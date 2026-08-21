@@ -35,6 +35,13 @@ Purpose: Construct the GraphicWin base and the three embedded subobjects
 // flags     hidden;sp_ready;purged_ok;frame
 // calls     0x005D4CF0 0x005D7210 0x004626E0
 // RULED-OUT: best reached is 13/31, 0.882 similar (best of 10 flag sets).
+//        The residual is placement-new's null guard - see
+//        multidebug.cpp, where converting to a real constructor closed it
+//        outright. NOT APPLIED HERE: `mapWin_` is built with
+//        `MapWin::construct(1)`, and as an ordinary member of a real
+//        constructor it would be built by `MapWin`'s own constructor instead,
+//        which is blocked on the hidden most-derived flag
+//        (tools/most_derived_flag.py names it). The lever needs that first.
 //        Same residual as NetMsg::construct() and MultiDebug::construct()
 //        (netmsg.cpp, multidebug.cpp): image has `push ecx` at instruction
 //        7 where this body has `sub esp, 8` - a stack-frame-size
