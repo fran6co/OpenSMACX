@@ -19,14 +19,17 @@ Read the grounds, not just the list. Three different things are called
   are excluded from the proof mechanism, and their acceptance is behavioural.
 
 An exclusion is a promise about a population, and a population is a number.
-Every figure below is re-derived by `tools/measure_exclusions.py`, and
-`--check` fails when this document and the image disagree:
+Every figure below WAS re-derived by `measure_exclusions --check`, which failed
+when this document and the image disagreed.
 
-```
-uv run tools/measure_exclusions.py --check
-```
+THAT TOOL IS GONE, and so is the practice. `src/` carries no EXCLUDED marker
+today: the standing instruction is to leave a body that does not match as
+ordinary unfinished work with a note, so that it can be iterated on, rather
+than excluding it from the proof. Read what follows as a record of what was
+once excluded and why - the figures in it are no longer checked against
+anything, and should not be quoted as current.
 
-The `measured` block at the bottom of this file is what it checks. Do not edit
+The `measured` block at the bottom of this file is what it checked. Do not edit
 a number there by hand to make the check pass; re-run the tool.
 
 ## 1. The MSVC 6 CRT — availability, and now nearly moot

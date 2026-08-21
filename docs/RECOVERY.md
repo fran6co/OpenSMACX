@@ -79,10 +79,11 @@ cannot silently drift after database changes.
 
 Ghidra 12.1 or newer can analyze the original executable and export address-keyed metadata:
 
-```sh
-uv run the retired `run_ghidra_analysis` --exe /path/to/terranx.exe
-uv run tools/export_idb_members.py
-```
+THIS ROUTE IS RETIRED and none of its tools are in the tree. It ran
+`run_ghidra_analysis --exe /path/to/terranx.exe` and then `export_idb_members`.
+Kept as a record of where the metadata came from, NOT as something to run - an
+earlier pass rewrote the tool names into prose but left them inside a shell
+block, so they read as commands and are not.
 
 The correlation step that consumed these - and the three files it wrote under
 `docs/recovery` - is retired; see `docs/RETIRED_ROUTES.md` for what it measured
@@ -107,13 +108,9 @@ disassembly, game text, or derived assembly.
 Fetch the exact cataloged snapshots into ignored local storage, then correlate either the Yitzi
 function notebook or Dio address labels:
 
-```sh
-uv run tools/fetch_external_analysis.py
-uv run the retired `correlate_external_analysis` \
-  --source-path Information/Yitzi/functionlisting.txt
-uv run the retired `correlate_external_analysis` \
-  --source-path "Information/Dio/Label addresses in assembly code.txt"
-```
+ALSO RETIRED, same reason. It ran `fetch_external_analysis` and then
+`correlate_external_analysis` once per source, against the Yitzi function
+listing and the Dio address labels.
 
 The tools validate cataloged sizes and SHA-256 values. Correlation outputs contain only source line
 numbers, addresses, canonical function identities, and per-function lead counts under ignored
