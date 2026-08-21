@@ -172,7 +172,7 @@ void __fastcall console_clear_group_redirect(Console *self, void *) {
 Purpose: Report whether editing is locked out. Only meaningful in the scenario
          editor; there editing is locked whenever Scroll Lock is toggled on or
          the game is in editor-only mode.
-// ORIGINAL: 0x004E1F40 ?edit_lock@Console@@QAEHXZ 0x004E1F40-0x004E1F70
+// ORIGINAL: 0x004E1F40 ?edit_lock@Console@@QAEHXZ 0x004E1F40-0x004E1F70 BYTE_EXACT
 // size      48 bytes
 // prototype int (__thiscall ?edit_lock@Console@@QAEHXZ)(Console* this)
 // callers   8   call targets   0
@@ -187,7 +187,7 @@ int Console::edit_lock() {
     if (!(GameState & STATE_SCENARIO_EDITOR)) {
         return 0;
     }
-    if (((*ConsoleEditKeyStateSlot)(VK_SCROLL) & 1) ||
+    if (((ConsoleEditKeyStateSlot())(VK_SCROLL) & 1) ||
         (GameState & STATE_EDITOR_ONLY_MODE)) {
         return 1;
     }
@@ -244,7 +244,7 @@ void __fastcall console_editor_undo_redirect(Console *self, void *) {
 Purpose: Refresh everything the console shows after a selection or turn change:
          hand the change code to the shared InfoWin, redraw the shared
          StatusWin, then push the map's caption into the main interface.
-// ORIGINAL: 0x00514880 ?update_data@Console@@QAEXH@Z 0x00514880-0x005148AA
+// ORIGINAL: 0x00514880 ?update_data@Console@@QAEXH@Z 0x00514880-0x005148AA BYTE_EXACT
 // size      42 bytes
 // prototype void (__thiscall ?update_data@Console@@QAEXH@Z)(Console* this, int)
 // callers   33   call targets   3
@@ -277,7 +277,7 @@ void Console::update_data(int a1) {
     ConsoleStatusWin->StatusWin::redraw();
     // 0x0051489B mov ecx,[0x7d3c3c] - a load, not an address-of - then
     // 0x005148A1 call 0x46fb10. The slot is read here, never cached.
-    reinterpret_cast<MapWin *>(*ConsoleMapWinSlot)->main_caption();
+    console_map_win()->main_caption();
 }
 
 // `ret 4` on the original: one 4-byte stack argument plus the ecx `this`. The

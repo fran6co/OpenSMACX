@@ -197,7 +197,7 @@ void __fastcall console_clear_group_redirect(Console *self, void *);
 // original calls indirectly), so it reads the live pointer at run time and
 // stays rebindable for tests.
 typedef SHORT(__stdcall func_get_key_state)(int virtual_key);
-func_get_key_state **const ConsoleEditKeyStateSlot = (func_get_key_state **)0x0066932C;
+inline func_get_key_state *&ConsoleEditKeyStateSlot() { return *reinterpret_cast<func_get_key_state **>(0x0066932C); }
 
 int __fastcall console_edit_lock_redirect(Console *self, void *);
 void __fastcall console_set_adv_preferences_redirect(Console *self, void *);
@@ -221,7 +221,12 @@ void __fastcall console_editor_undo_redirect(Console *self, void *);
 // Dialog::close.
 void *const ConsoleInfoWin = (void *)0x007AD2A0;      // 0x007AD2A0, the process-wide InfoWin
 StatusWin *const ConsoleStatusWin = (StatusWin *)0x008C5568;    // 0x008C5568, the process-wide StatusWin
-void **const ConsoleMapWinSlot = (void **)0x007D3C3C;  // 0x007D3C3C, holds the current MapWin *
+// AN LVALUE AT A FIXED ADDRESS. The MapWin POINTER lives at 0x007D3C3C and
+// the image reads it with one absolute `mov ecx, [0x7d3c3c]`; spelled
+// `void **const` it took two loads - the constant, then the pointer.
+inline MapWin *&console_map_win() {
+  return *reinterpret_cast<MapWin **>(0x007D3C3C);
+}
 
 void __fastcall console_update_data_redirect(Console *self, void *, int a1);
 

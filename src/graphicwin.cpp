@@ -340,7 +340,7 @@ void GraphicWin::fill(int color) {
     reinterpret_cast<Buffer *>(parent + 0x444)->copy(
         reinterpret_cast<Buffer *>(surface), outer_x + inner_x,
         outer_y + inner_y, 0, 0, width, -height);
-    void *const table = *GraphicWinColorMapTable;
+    void *const table = GraphicWinColorMapTable();
     if (table == nullptr) {
         return;
     }
