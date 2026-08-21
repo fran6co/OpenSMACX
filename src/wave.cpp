@@ -306,6 +306,13 @@ Purpose: Report whether the wave is still sounding. A wrapped device answers
 Return Value: nonzero while playing, 0 once finished or when not started
 Status: Complete
 */
+// RULED-OUT: inverting the guard so the CLOCK path is the fall-through and the
+// device dispatch is the merged tail - which is the shape the image's forward
+// `jne` suggests - scores WORSE, 2 of 30 against the current 4 of 30, and
+// compiles 28 instructions against the image's 30. Spelling the flag test as
+// `(flags_54_ >> 4) & 1` and returning a literal 1 instead of the ternary was
+// part of the same attempt and did not rescue it. The branch-polarity lever is
+// real elsewhere in this tree; it does not apply here.
 int Wave::is_playing() {
     // The device answers through its live vtable rather than a C++ virtual
     // call, and it is the receiver of that call - the original loads it into
@@ -836,16 +843,20 @@ Return Value: n/a
 Status: Complete
 */
 void Wave::set_volume(int a1) {
-    const uint32_t vol = static_cast<uint32_t>(a1) & 0x7F;
-    volume_ = vol;
-    int level = static_cast<int>(vol);
+    // MASKED IN PLACE, no `vol` local: the image masks the incoming argument
+    // and masks again for the field.
+    a1 &= 0x7F;
+    volume_ = a1 & 0x7F;
+    int level = a1;
     if (group_slot_ < 0x10) {
-        // The original loads the group dword zero-extended through a 64-bit
-        // fild, so the scale is the UNSIGNED value of the table entry.
-        const double group = static_cast<double>(WaveDeviceGroupVolumes[group_slot_ * 6]);
+        // The group entry is the LAST factor, so the level's own
+        // `fild dword ptr [ebp+8]` is emitted first and the group arrives as a
+        // `fild qword` + `fmulp st(1)` rather than an `fimul`. The original
+        // loads that dword zero-extended through a 64-bit fild, so the scale
+        // is the UNSIGNED value of the table entry.
         level = static_cast<int>(static_cast<int64_t>(
-            static_cast<double>(static_cast<int>(vol)) * (1.0 / 127.0) *
-            group));
+            static_cast<double>(a1) * (1.0 / 127.0) *
+            static_cast<double>(WaveDeviceGroupVolumes[group_slot_ * 6])));
     }
     if (device_) {
         typedef void (OriginalObject::*device_fn)(int level);
