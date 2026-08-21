@@ -375,7 +375,7 @@ const void *const FontQueueElementTeardown = (const void *)0x00618EE0;
 Purpose: Destroy the queue: hand the three-slot walk to the CRT vector
          iterator with the queue itself as the array base and the Font
          destructor as the per-element teardown.
-// ORIGINAL: 0x0055B740 ??1FontQueue@@QAE@XZ 0x0055B740-0x0055B750
+// ORIGINAL: 0x0055B740 ??1FontQueue@@QAE@XZ 0x0055B740-0x0055B750 BYTE_EXACT
 // size      16 bytes
 // prototype void (__thiscall ??1FontQueue@@QAE@XZ)(FontQueue* this)
 // callers   0   call targets   1

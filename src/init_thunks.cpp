@@ -50,14 +50,6 @@
 // to, bound at the original addresses the ??_L call
 // sites pass; the hybrid redirects each to its
 // recovered body at run time.
-const void *const FactionArtCtorTarget = (const void *)0x00455F10;
-const void *const BufferElementCtor = (const void *)0x005D7210;
-const void *const CaviarDataElementCtor = (const void *)0x00616BC0;
-const void *const FontElementCtor = (const void *)0x00618EA0;
-const void *const SpriteElementCtor = (const void *)0x005E37E0;
-const void *const TextIndexElementCtor = (const void *)0x005FDF40;
-const void *const TextureElementCtor = (const void *)0x00619650;
-const void *const WaveElementCtor = (const void *)0x004C66E0;
 
 namespace {
 
@@ -743,7 +735,7 @@ void __cdecl construct_diplowin() {
 
 /*
 Purpose: Dynamic initializer for g_CPU_WAVES; registers its ??__F teardown.
-// ORIGINAL: 0x00445450 ??__Eg_CPU_WAVES@@YAXXZ 0x00445450-0x00445474
+// ORIGINAL: 0x00445450 ??__Eg_CPU_WAVES@@YAXXZ 0x00445450-0x00445474 BYTE_EXACT
 // symbol    ?construct_cpu_waves@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -923,7 +915,7 @@ void __cdecl construct_pcx_parse_temp_buffer1() {
 
 /*
 Purpose: Dynamic initializer for FactionArt; registers its ??__F teardown.
-// ORIGINAL: 0x0044CC50 ??__EFactionArt@@YAXXZ 0x0044CC50-0x0044CC77
+// ORIGINAL: 0x0044CC50 ??__EFactionArt@@YAXXZ 0x0044CC50-0x0044CC77 BYTE_EXACT
 // symbol    ?construct_factionart@@YAXXZ
 // size      39 bytes
 // prototype 
@@ -942,7 +934,7 @@ void __cdecl construct_factionart() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_CLOSE_X_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044CCA0 ??__Eg_IFACE_CLOSE_X_SPRITES@@YAXXZ 0x0044CCA0-0x0044CCC4
+// ORIGINAL: 0x0044CCA0 ??__Eg_IFACE_CLOSE_X_SPRITES@@YAXXZ 0x0044CCA0-0x0044CCC4 BYTE_EXACT
 // symbol    ?construct_iface_close_x_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -960,7 +952,7 @@ void __cdecl construct_iface_close_x_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_BOX_SPRITES1; registers its ??__F teardown.
-// ORIGINAL: 0x0044CCF0 ??__Eg_IFACE_BOX_SPRITES1@@YAXXZ 0x0044CCF0-0x0044CD14
+// ORIGINAL: 0x0044CCF0 ??__Eg_IFACE_BOX_SPRITES1@@YAXXZ 0x0044CCF0-0x0044CD14 BYTE_EXACT
 // symbol    ?construct_iface_box_sprites1@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -978,7 +970,7 @@ void __cdecl construct_iface_box_sprites1() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_BOX_SPRITES2; registers its ??__F teardown.
-// ORIGINAL: 0x0044CD40 ??__Eg_IFACE_BOX_SPRITES2@@YAXXZ 0x0044CD40-0x0044CD64
+// ORIGINAL: 0x0044CD40 ??__Eg_IFACE_BOX_SPRITES2@@YAXXZ 0x0044CD40-0x0044CD64 BYTE_EXACT
 // symbol    ?construct_iface_box_sprites2@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -996,7 +988,7 @@ void __cdecl construct_iface_box_sprites2() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_BOX_SPRITES3; registers its ??__F teardown.
-// ORIGINAL: 0x0044CD90 ??__Eg_IFACE_BOX_SPRITES3@@YAXXZ 0x0044CD90-0x0044CDB4
+// ORIGINAL: 0x0044CD90 ??__Eg_IFACE_BOX_SPRITES3@@YAXXZ 0x0044CD90-0x0044CDB4 BYTE_EXACT
 // symbol    ?construct_iface_box_sprites3@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -1014,7 +1006,7 @@ void __cdecl construct_iface_box_sprites3() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_BOX_SPRITES4; registers its ??__F teardown.
-// ORIGINAL: 0x0044CDE0 ??__Eg_IFACE_BOX_SPRITES4@@YAXXZ 0x0044CDE0-0x0044CE04
+// ORIGINAL: 0x0044CDE0 ??__Eg_IFACE_BOX_SPRITES4@@YAXXZ 0x0044CDE0-0x0044CE04 BYTE_EXACT
 // symbol    ?construct_iface_box_sprites4@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -1032,7 +1024,7 @@ void __cdecl construct_iface_box_sprites4() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_BOX_SPRITES5; registers its ??__F teardown.
-// ORIGINAL: 0x0044CE30 ??__Eg_IFACE_BOX_SPRITES5@@YAXXZ 0x0044CE30-0x0044CE54
+// ORIGINAL: 0x0044CE30 ??__Eg_IFACE_BOX_SPRITES5@@YAXXZ 0x0044CE30-0x0044CE54 BYTE_EXACT
 // symbol    ?construct_iface_box_sprites5@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -1050,7 +1042,7 @@ void __cdecl construct_iface_box_sprites5() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_BOX_SPRITES6; registers its ??__F teardown.
-// ORIGINAL: 0x0044CE80 ??__Eg_IFACE_BOX_SPRITES6@@YAXXZ 0x0044CE80-0x0044CEA4
+// ORIGINAL: 0x0044CE80 ??__Eg_IFACE_BOX_SPRITES6@@YAXXZ 0x0044CE80-0x0044CEA4 BYTE_EXACT
 // symbol    ?construct_iface_box_sprites6@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -1068,7 +1060,7 @@ void __cdecl construct_iface_box_sprites6() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_BOX_SPRITES7; registers its ??__F teardown.
-// ORIGINAL: 0x0044CED0 ??__Eg_IFACE_BOX_SPRITES7@@YAXXZ 0x0044CED0-0x0044CEF4
+// ORIGINAL: 0x0044CED0 ??__Eg_IFACE_BOX_SPRITES7@@YAXXZ 0x0044CED0-0x0044CEF4 BYTE_EXACT
 // symbol    ?construct_iface_box_sprites7@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -1086,7 +1078,7 @@ void __cdecl construct_iface_box_sprites7() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_BOX_SPRITES8; registers its ??__F teardown.
-// ORIGINAL: 0x0044CF20 ??__Eg_IFACE_BOX_SPRITES8@@YAXXZ 0x0044CF20-0x0044CF44
+// ORIGINAL: 0x0044CF20 ??__Eg_IFACE_BOX_SPRITES8@@YAXXZ 0x0044CF20-0x0044CF44 BYTE_EXACT
 // symbol    ?construct_iface_box_sprites8@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -1104,7 +1096,7 @@ void __cdecl construct_iface_box_sprites8() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_BOX_SPRITE_BUFFERS; registers its ??__F teardown.
-// ORIGINAL: 0x0044CF70 ??__Eg_IFACE_BOX_SPRITE_BUFFERS@@YAXXZ 0x0044CF70-0x0044CF97
+// ORIGINAL: 0x0044CF70 ??__Eg_IFACE_BOX_SPRITE_BUFFERS@@YAXXZ 0x0044CF70-0x0044CF97 BYTE_EXACT
 // symbol    ?construct_iface_box_sprite_buffers@@YAXXZ
 // size      39 bytes
 // prototype 
@@ -1680,7 +1672,7 @@ void __cdecl construct_aa_rover_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_AA_WING_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D590 ??__Eg_AA_WING_CAVIARDATA@@YAXXZ 0x0044D590-0x0044D5B4
+// ORIGINAL: 0x0044D590 ??__Eg_AA_WING_CAVIARDATA@@YAXXZ 0x0044D590-0x0044D5B4 BYTE_EXACT
 // symbol    ?construct_aa_wing_caviardata@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -1698,7 +1690,7 @@ void __cdecl construct_aa_wing_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_ACP_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D5E0 ??__Eg_ACP_CAVIARDATA@@YAXXZ 0x0044D5E0-0x0044D604
+// ORIGINAL: 0x0044D5E0 ??__Eg_ACP_CAVIARDATA@@YAXXZ 0x0044D5E0-0x0044D604 BYTE_EXACT
 // symbol    ?construct_acp_caviardata@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -1932,7 +1924,7 @@ void __cdecl construct_viptapsi_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VIPTR_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D870 ??__Eg_VIPTR_CAVIARDATA@@YAXXZ 0x0044D870-0x0044D894
+// ORIGINAL: 0x0044D870 ??__Eg_VIPTR_CAVIARDATA@@YAXXZ 0x0044D870-0x0044D894 BYTE_EXACT
 // symbol    ?construct_viptr_caviardata@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -1950,7 +1942,7 @@ void __cdecl construct_viptr_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VIPTA_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044D8C0 ??__Eg_VIPTA_CAVIARDATA@@YAXXZ 0x0044D8C0-0x0044D8E4
+// ORIGINAL: 0x0044D8C0 ??__Eg_VIPTA_CAVIARDATA@@YAXXZ 0x0044D8C0-0x0044D8E4 BYTE_EXACT
 // symbol    ?construct_vipta_caviardata@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -2184,7 +2176,7 @@ void __cdecl construct_va01_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VR_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044DB50 ??__Eg_VR_CAVIARDATA@@YAXXZ 0x0044DB50-0x0044DB74
+// ORIGINAL: 0x0044DB50 ??__Eg_VR_CAVIARDATA@@YAXXZ 0x0044DB50-0x0044DB74 BYTE_EXACT
 // symbol    ?construct_vr_caviardata@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -2220,7 +2212,7 @@ void __cdecl construct_vhr_caviardata2() {
 
 /*
 Purpose: Dynamic initializer for g_VRC_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044DBD0 ??__Eg_VRC_CAVIARDATA@@YAXXZ 0x0044DBD0-0x0044DBF4
+// ORIGINAL: 0x0044DBD0 ??__Eg_VRC_CAVIARDATA@@YAXXZ 0x0044DBD0-0x0044DBF4 BYTE_EXACT
 // symbol    ?construct_vrc_caviardata@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -2400,7 +2392,7 @@ void __cdecl construct_vcl_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_CAVIARDATA_VAR3; registers its ??__F teardown.
-// ORIGINAL: 0x0044DDD0 ??__Eg_UNUSED_CAVIARDATA_VAR3@@YAXXZ 0x0044DDD0-0x0044DDF4
+// ORIGINAL: 0x0044DDD0 ??__Eg_UNUSED_CAVIARDATA_VAR3@@YAXXZ 0x0044DDD0-0x0044DDF4 BYTE_EXACT
 // symbol    ?construct_unused_caviardata_var3@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -2472,7 +2464,7 @@ void __cdecl construct_vhtp_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VHTA0_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044DEB0 ??__Eg_VHTA0_CAVIARDATA@@YAXXZ 0x0044DEB0-0x0044DED4
+// ORIGINAL: 0x0044DEB0 ??__Eg_VHTA0_CAVIARDATA@@YAXXZ 0x0044DEB0-0x0044DED4 BYTE_EXACT
 // symbol    ?construct_vhta0_caviardata@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -2508,7 +2500,7 @@ void __cdecl construct_vhttp_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VHTTPA0_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044DF30 ??__Eg_VHTTPA0_CAVIARDATA@@YAXXZ 0x0044DF30-0x0044DF54
+// ORIGINAL: 0x0044DF30 ??__Eg_VHTTPA0_CAVIARDATA@@YAXXZ 0x0044DF30-0x0044DF54 BYTE_EXACT
 // symbol    ?construct_vhttpa0_caviardata@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -2544,7 +2536,7 @@ void __cdecl construct_vsp_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VSPA0_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044DFB0 ??__Eg_VSPA0_CAVIARDATA@@YAXXZ 0x0044DFB0-0x0044DFD4
+// ORIGINAL: 0x0044DFB0 ??__Eg_VSPA0_CAVIARDATA@@YAXXZ 0x0044DFB0-0x0044DFD4 BYTE_EXACT
 // symbol    ?construct_vspa0_caviardata@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -2670,7 +2662,7 @@ void __cdecl construct_vjtp_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VJT0_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044E120 ??__Eg_VJT0_CAVIARDATA@@YAXXZ 0x0044E120-0x0044E144
+// ORIGINAL: 0x0044E120 ??__Eg_VJT0_CAVIARDATA@@YAXXZ 0x0044E120-0x0044E144 BYTE_EXACT
 // symbol    ?construct_vjt0_caviardata@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -2724,7 +2716,7 @@ void __cdecl construct_vcup_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VCUA0_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044E1D0 ??__Eg_VCUA0_CAVIARDATA@@YAXXZ 0x0044E1D0-0x0044E1F4
+// ORIGINAL: 0x0044E1D0 ??__Eg_VCUA0_CAVIARDATA@@YAXXZ 0x0044E1D0-0x0044E1F4 BYTE_EXACT
 // symbol    ?construct_vcua0_caviardata@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -2814,7 +2806,7 @@ void __cdecl construct_vctb_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VCT0_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044E2E0 ??__Eg_VCT0_CAVIARDATA@@YAXXZ 0x0044E2E0-0x0044E304
+// ORIGINAL: 0x0044E2E0 ??__Eg_VCT0_CAVIARDATA@@YAXXZ 0x0044E2E0-0x0044E304 BYTE_EXACT
 // symbol    ?construct_vct0_caviardata@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -2886,7 +2878,7 @@ void __cdecl construct_vwnaa_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VW_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044E3C0 ??__Eg_VW_CAVIARDATA@@YAXXZ 0x0044E3C0-0x0044E3E4
+// ORIGINAL: 0x0044E3C0 ??__Eg_VW_CAVIARDATA@@YAXXZ 0x0044E3C0-0x0044E3E4 BYTE_EXACT
 // symbol    ?construct_vw_caviardata@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -2940,7 +2932,7 @@ void __cdecl construct_vm13_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VPBR0_CAVIARDATA; registers its ??__F teardown.
-// ORIGINAL: 0x0044E470 ??__Eg_VPBR0_CAVIARDATA@@YAXXZ 0x0044E470-0x0044E494
+// ORIGINAL: 0x0044E470 ??__Eg_VPBR0_CAVIARDATA@@YAXXZ 0x0044E470-0x0044E494 BYTE_EXACT
 // symbol    ?construct_vpbr0_caviardata@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -2958,7 +2950,7 @@ void __cdecl construct_vpbr0_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_CAVIARDATA_VAR4; registers its ??__F teardown.
-// ORIGINAL: 0x0044E4C0 ??__Eg_UNUSED_CAVIARDATA_VAR4@@YAXXZ 0x0044E4C0-0x0044E4E4
+// ORIGINAL: 0x0044E4C0 ??__Eg_UNUSED_CAVIARDATA_VAR4@@YAXXZ 0x0044E4C0-0x0044E4E4 BYTE_EXACT
 // symbol    ?construct_unused_caviardata_var4@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -3030,7 +3022,7 @@ void __cdecl construct_nlc_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_CAVIARDATA_VAR5; registers its ??__F teardown.
-// ORIGINAL: 0x0044E5A0 ??__Eg_UNUSED_CAVIARDATA_VAR5@@YAXXZ 0x0044E5A0-0x0044E5C4
+// ORIGINAL: 0x0044E5A0 ??__Eg_UNUSED_CAVIARDATA_VAR5@@YAXXZ 0x0044E5A0-0x0044E5C4 BYTE_EXACT
 // symbol    ?construct_unused_caviardata_var5@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -3084,7 +3076,7 @@ void __cdecl construct_radius2_texture() {
 
 /*
 Purpose: Dynamic initializer for g_ROCKY_TEXTURES; registers its ??__F teardown.
-// ORIGINAL: 0x0044E650 ??__Eg_ROCKY_TEXTURES@@YAXXZ 0x0044E650-0x0044E674
+// ORIGINAL: 0x0044E650 ??__Eg_ROCKY_TEXTURES@@YAXXZ 0x0044E650-0x0044E674 BYTE_EXACT
 // symbol    ?construct_rocky_textures@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -3102,7 +3094,7 @@ void __cdecl construct_rocky_textures() {
 
 /*
 Purpose: Dynamic initializer for g_OCEAN_TEXTURES; registers its ??__F teardown.
-// ORIGINAL: 0x0044E6A0 ??__Eg_OCEAN_TEXTURES@@YAXXZ 0x0044E6A0-0x0044E6C4
+// ORIGINAL: 0x0044E6A0 ??__Eg_OCEAN_TEXTURES@@YAXXZ 0x0044E6A0-0x0044E6C4 BYTE_EXACT
 // symbol    ?construct_ocean_textures@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -3138,7 +3130,7 @@ void __cdecl construct_flat_arid_land_texture() {
 
 /*
 Purpose: Dynamic initializer for g_MOIST_LAND_TEXTURES; registers its ??__F teardown.
-// ORIGINAL: 0x0044E720 ??__Eg_MOIST_LAND_TEXTURES@@YAXXZ 0x0044E720-0x0044E744
+// ORIGINAL: 0x0044E720 ??__Eg_MOIST_LAND_TEXTURES@@YAXXZ 0x0044E720-0x0044E744 BYTE_EXACT
 // symbol    ?construct_moist_land_textures@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -3156,7 +3148,7 @@ void __cdecl construct_moist_land_textures() {
 
 /*
 Purpose: Dynamic initializer for g_RAINY_LAND_TEXTURES; registers its ??__F teardown.
-// ORIGINAL: 0x0044E770 ??__Eg_RAINY_LAND_TEXTURES@@YAXXZ 0x0044E770-0x0044E794
+// ORIGINAL: 0x0044E770 ??__Eg_RAINY_LAND_TEXTURES@@YAXXZ 0x0044E770-0x0044E794 BYTE_EXACT
 // symbol    ?construct_rainy_land_textures@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -3174,7 +3166,7 @@ void __cdecl construct_rainy_land_textures() {
 
 /*
 Purpose: Dynamic initializer for g_JUNGLE_LAND_TEXTURES; registers its ??__F teardown.
-// ORIGINAL: 0x0044E7C0 ??__Eg_JUNGLE_LAND_TEXTURES@@YAXXZ 0x0044E7C0-0x0044E7E4
+// ORIGINAL: 0x0044E7C0 ??__Eg_JUNGLE_LAND_TEXTURES@@YAXXZ 0x0044E7C0-0x0044E7E4 BYTE_EXACT
 // symbol    ?construct_jungle_land_textures@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -3210,7 +3202,7 @@ void __cdecl construct_dune_land_texture() {
 
 /*
 Purpose: Dynamic initializer for g_SUNNY_MESA_TEXTURES; registers its ??__F teardown.
-// ORIGINAL: 0x0044E840 ??__Eg_SUNNY_MESA_TEXTURES@@YAXXZ 0x0044E840-0x0044E864
+// ORIGINAL: 0x0044E840 ??__Eg_SUNNY_MESA_TEXTURES@@YAXXZ 0x0044E840-0x0044E864 BYTE_EXACT
 // symbol    ?construct_sunny_mesa_textures@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -3228,7 +3220,7 @@ void __cdecl construct_sunny_mesa_textures() {
 
 /*
 Purpose: Dynamic initializer for g_RAINFALL_SINGLE_TILE_TEXTURES; registers its ??__F teardown.
-// ORIGINAL: 0x0044E890 ??__Eg_RAINFALL_SINGLE_TILE_TEXTURES@@YAXXZ 0x0044E890-0x0044E8B4
+// ORIGINAL: 0x0044E890 ??__Eg_RAINFALL_SINGLE_TILE_TEXTURES@@YAXXZ 0x0044E890-0x0044E8B4 BYTE_EXACT
 // symbol    ?construct_rainfall_single_tile_textures@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -3246,7 +3238,7 @@ void __cdecl construct_rainfall_single_tile_textures() {
 
 /*
 Purpose: Dynamic initializer for g_ROAD_TEXTURES; registers its ??__F teardown.
-// ORIGINAL: 0x0044E8E0 ??__Eg_ROAD_TEXTURES@@YAXXZ 0x0044E8E0-0x0044E904
+// ORIGINAL: 0x0044E8E0 ??__Eg_ROAD_TEXTURES@@YAXXZ 0x0044E8E0-0x0044E904 BYTE_EXACT
 // symbol    ?construct_road_textures@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -3264,7 +3256,7 @@ void __cdecl construct_road_textures() {
 
 /*
 Purpose: Dynamic initializer for g_MAGTUBE_TEXTURES; registers its ??__F teardown.
-// ORIGINAL: 0x0044E930 ??__Eg_MAGTUBE_TEXTURES@@YAXXZ 0x0044E930-0x0044E954
+// ORIGINAL: 0x0044E930 ??__Eg_MAGTUBE_TEXTURES@@YAXXZ 0x0044E930-0x0044E954 BYTE_EXACT
 // symbol    ?construct_magtube_textures@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -3282,7 +3274,7 @@ void __cdecl construct_magtube_textures() {
 
 /*
 Purpose: Dynamic initializer for g_RIVER_TEXTURES; registers its ??__F teardown.
-// ORIGINAL: 0x0044E980 ??__Eg_RIVER_TEXTURES@@YAXXZ 0x0044E980-0x0044E9A4
+// ORIGINAL: 0x0044E980 ??__Eg_RIVER_TEXTURES@@YAXXZ 0x0044E980-0x0044E9A4 BYTE_EXACT
 // symbol    ?construct_river_textures@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -3300,7 +3292,7 @@ void __cdecl construct_river_textures() {
 
 /*
 Purpose: Dynamic initializer for g_MOUNT_PLANET_TEXTURES; registers its ??__F teardown.
-// ORIGINAL: 0x0044E9D0 ??__Eg_MOUNT_PLANET_TEXTURES@@YAXXZ 0x0044E9D0-0x0044E9F4
+// ORIGINAL: 0x0044E9D0 ??__Eg_MOUNT_PLANET_TEXTURES@@YAXXZ 0x0044E9D0-0x0044E9F4 BYTE_EXACT
 // symbol    ?construct_mount_planet_textures@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -3318,7 +3310,7 @@ void __cdecl construct_mount_planet_textures() {
 
 /*
 Purpose: Dynamic initializer for g_GARLAND_CRATER_TEXTURES; registers its ??__F teardown.
-// ORIGINAL: 0x0044EA20 ??__Eg_GARLAND_CRATER_TEXTURES@@YAXXZ 0x0044EA20-0x0044EA44
+// ORIGINAL: 0x0044EA20 ??__Eg_GARLAND_CRATER_TEXTURES@@YAXXZ 0x0044EA20-0x0044EA44 BYTE_EXACT
 // symbol    ?construct_garland_crater_textures@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -3336,7 +3328,7 @@ void __cdecl construct_garland_crater_textures() {
 
 /*
 Purpose: Dynamic initializer for g_FUNGUS_TEXTURES; registers its ??__F teardown.
-// ORIGINAL: 0x0044EA70 ??__Eg_FUNGUS_TEXTURES@@YAXXZ 0x0044EA70-0x0044EA94
+// ORIGINAL: 0x0044EA70 ??__Eg_FUNGUS_TEXTURES@@YAXXZ 0x0044EA70-0x0044EA94 BYTE_EXACT
 // symbol    ?construct_fungus_textures@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -3354,7 +3346,7 @@ void __cdecl construct_fungus_textures() {
 
 /*
 Purpose: Dynamic initializer for g_FARM_TEXTURES; registers its ??__F teardown.
-// ORIGINAL: 0x0044EAC0 ??__Eg_FARM_TEXTURES@@YAXXZ 0x0044EAC0-0x0044EAE4
+// ORIGINAL: 0x0044EAC0 ??__Eg_FARM_TEXTURES@@YAXXZ 0x0044EAC0-0x0044EAE4 BYTE_EXACT
 // symbol    ?construct_farm_textures@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -3372,7 +3364,7 @@ void __cdecl construct_farm_textures() {
 
 /*
 Purpose: Dynamic initializer for g_FOREST_TEXTURES; registers its ??__F teardown.
-// ORIGINAL: 0x0044EB10 ??__Eg_FOREST_TEXTURES@@YAXXZ 0x0044EB10-0x0044EB34
+// ORIGINAL: 0x0044EB10 ??__Eg_FOREST_TEXTURES@@YAXXZ 0x0044EB10-0x0044EB34 BYTE_EXACT
 // symbol    ?construct_forest_textures@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -3408,7 +3400,7 @@ void __cdecl construct_rainfall_single_tile_texture() {
 
 /*
 Purpose: Dynamic initializer for g_TER1_WHITE_ORG_YEL_TILE_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044EB90 ??__Eg_TER1_WHITE_ORG_YEL_TILE_SPRITES@@YAXXZ 0x0044EB90-0x0044EBB4
+// ORIGINAL: 0x0044EB90 ??__Eg_TER1_WHITE_ORG_YEL_TILE_SPRITES@@YAXXZ 0x0044EB90-0x0044EBB4 BYTE_EXACT
 // symbol    ?construct_ter1_white_org_yel_tile_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -3426,7 +3418,7 @@ void __cdecl construct_ter1_white_org_yel_tile_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_TER1_BOTTOM_LEFT_TILE_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044EBE0 ??__Eg_TER1_BOTTOM_LEFT_TILE_SPRITES@@YAXXZ 0x0044EBE0-0x0044EC04
+// ORIGINAL: 0x0044EBE0 ??__Eg_TER1_BOTTOM_LEFT_TILE_SPRITES@@YAXXZ 0x0044EBE0-0x0044EC04 BYTE_EXACT
 // symbol    ?construct_ter1_bottom_left_tile_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -3444,7 +3436,7 @@ void __cdecl construct_ter1_bottom_left_tile_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_TER1_UNUSED_SPRITES2; registers its ??__F teardown.
-// ORIGINAL: 0x0044EC30 ??__Eg_TER1_UNUSED_SPRITES2@@YAXXZ 0x0044EC30-0x0044EC54
+// ORIGINAL: 0x0044EC30 ??__Eg_TER1_UNUSED_SPRITES2@@YAXXZ 0x0044EC30-0x0044EC54 BYTE_EXACT
 // symbol    ?construct_ter1_unused_sprites2@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -3642,7 +3634,7 @@ void __cdecl construct_ter1_borehole_cluster_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_TER1_MANIFOLD_NEXUS_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044EE60 ??__Eg_TER1_MANIFOLD_NEXUS_SPRITES@@YAXXZ 0x0044EE60-0x0044EE84
+// ORIGINAL: 0x0044EE60 ??__Eg_TER1_MANIFOLD_NEXUS_SPRITES@@YAXXZ 0x0044EE60-0x0044EE84 BYTE_EXACT
 // symbol    ?construct_ter1_manifold_nexus_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -3660,7 +3652,7 @@ void __cdecl construct_ter1_manifold_nexus_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_TER1WRECK_UNITY_WRECKAGE_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044EEB0 ??__Eg_TER1WRECK_UNITY_WRECKAGE_SPRITES@@YAXXZ 0x0044EEB0-0x0044EED4
+// ORIGINAL: 0x0044EEB0 ??__Eg_TER1WRECK_UNITY_WRECKAGE_SPRITES@@YAXXZ 0x0044EEB0-0x0044EED4 BYTE_EXACT
 // symbol    ?construct_ter1wreck_unity_wreckage_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -3678,7 +3670,7 @@ void __cdecl construct_ter1wreck_unity_wreckage_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044EF00 ??__Eg_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES@@YAXXZ 0x0044EF00-0x0044EF24
+// ORIGINAL: 0x0044EF00 ??__Eg_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES@@YAXXZ 0x0044EF00-0x0044EF24 BYTE_EXACT
 // symbol    ?construct_ter1wreck_unity_wreckage_alt_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -3696,7 +3688,7 @@ void __cdecl construct_ter1wreck_unity_wreckage_alt_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_FOSSIL_FIELD_RIDGE_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044EF50 ??__Eg_FOSSIL_FIELD_RIDGE_SPRITES@@YAXXZ 0x0044EF50-0x0044EF74
+// ORIGINAL: 0x0044EF50 ??__Eg_FOSSIL_FIELD_RIDGE_SPRITES@@YAXXZ 0x0044EF50-0x0044EF74 BYTE_EXACT
 // symbol    ?construct_fossil_field_ridge_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -3714,7 +3706,7 @@ void __cdecl construct_fossil_field_ridge_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_TER1_UNUSED_SPRITES1; registers its ??__F teardown.
-// ORIGINAL: 0x0044EFA0 ??__Eg_TER1_UNUSED_SPRITES1@@YAXXZ 0x0044EFA0-0x0044EFC4
+// ORIGINAL: 0x0044EFA0 ??__Eg_TER1_UNUSED_SPRITES1@@YAXXZ 0x0044EFA0-0x0044EFC4 BYTE_EXACT
 // symbol    ?construct_ter1_unused_sprites1@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -3732,7 +3724,7 @@ void __cdecl construct_ter1_unused_sprites1() {
 
 /*
 Purpose: Dynamic initializer for g_TER1_FARM_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044EFF0 ??__Eg_TER1_FARM_SPRITES@@YAXXZ 0x0044EFF0-0x0044F014
+// ORIGINAL: 0x0044EFF0 ??__Eg_TER1_FARM_SPRITES@@YAXXZ 0x0044EFF0-0x0044F014 BYTE_EXACT
 // symbol    ?construct_ter1_farm_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -3750,7 +3742,7 @@ void __cdecl construct_ter1_farm_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_TER1_SOIL_ENRICHER_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044F040 ??__Eg_TER1_SOIL_ENRICHER_SPRITES@@YAXXZ 0x0044F040-0x0044F064
+// ORIGINAL: 0x0044F040 ??__Eg_TER1_SOIL_ENRICHER_SPRITES@@YAXXZ 0x0044F040-0x0044F064 BYTE_EXACT
 // symbol    ?construct_ter1_soil_enricher_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -3768,7 +3760,7 @@ void __cdecl construct_ter1_soil_enricher_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_TER1_SEA_LAND_RESOURCE_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044F090 ??__Eg_TER1_SEA_LAND_RESOURCE_SPRITES@@YAXXZ 0x0044F090-0x0044F0B4
+// ORIGINAL: 0x0044F090 ??__Eg_TER1_SEA_LAND_RESOURCE_SPRITES@@YAXXZ 0x0044F090-0x0044F0B4 BYTE_EXACT
 // symbol    ?construct_ter1_sea_land_resource_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -3786,7 +3778,7 @@ void __cdecl construct_ter1_sea_land_resource_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_TER1_LANDMARK_RESOURCE_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044F0E0 ??__Eg_TER1_LANDMARK_RESOURCE_SPRITES@@YAXXZ 0x0044F0E0-0x0044F104
+// ORIGINAL: 0x0044F0E0 ??__Eg_TER1_LANDMARK_RESOURCE_SPRITES@@YAXXZ 0x0044F0E0-0x0044F104 BYTE_EXACT
 // symbol    ?construct_ter1_landmark_resource_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -3804,7 +3796,7 @@ void __cdecl construct_ter1_landmark_resource_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_GLOW_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044F130 ??__Eg_GLOW_SPRITES@@YAXXZ 0x0044F130-0x0044F154
+// ORIGINAL: 0x0044F130 ??__Eg_GLOW_SPRITES@@YAXXZ 0x0044F130-0x0044F154 BYTE_EXACT
 // symbol    ?construct_glow_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -3822,7 +3814,7 @@ void __cdecl construct_glow_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_TER1_UNITY_POD_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044F180 ??__Eg_TER1_UNITY_POD_SPRITES@@YAXXZ 0x0044F180-0x0044F1A4
+// ORIGINAL: 0x0044F180 ??__Eg_TER1_UNITY_POD_SPRITES@@YAXXZ 0x0044F180-0x0044F1A4 BYTE_EXACT
 // symbol    ?construct_ter1_unity_pod_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -3912,7 +3904,7 @@ void __cdecl construct_ter1_sensor_array_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_RAINFALL_DOUBLE_TILE_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044F290 ??__Eg_RAINFALL_DOUBLE_TILE_SPRITES@@YAXXZ 0x0044F290-0x0044F2B4
+// ORIGINAL: 0x0044F290 ??__Eg_RAINFALL_DOUBLE_TILE_SPRITES@@YAXXZ 0x0044F290-0x0044F2B4 BYTE_EXACT
 // symbol    ?construct_rainfall_double_tile_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -3930,7 +3922,7 @@ void __cdecl construct_rainfall_double_tile_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_VEH_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044F2E0 ??__Eg_VEH_SPRITES@@YAXXZ 0x0044F2E0-0x0044F307
+// ORIGINAL: 0x0044F2E0 ??__Eg_VEH_SPRITES@@YAXXZ 0x0044F2E0-0x0044F307 BYTE_EXACT
 // symbol    ?construct_veh_sprites@@YAXXZ
 // size      39 bytes
 // prototype 
@@ -3948,7 +3940,7 @@ void __cdecl construct_veh_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_FLAGS_VEH_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044F330 ??__Eg_FLAGS_VEH_SPRITES@@YAXXZ 0x0044F330-0x0044F354
+// ORIGINAL: 0x0044F330 ??__Eg_FLAGS_VEH_SPRITES@@YAXXZ 0x0044F330-0x0044F354 BYTE_EXACT
 // symbol    ?construct_flags_veh_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -3966,7 +3958,7 @@ void __cdecl construct_flags_veh_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_ICONS_GENERAL_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044F380 ??__Eg_ICONS_GENERAL_SPRITES@@YAXXZ 0x0044F380-0x0044F3A4
+// ORIGINAL: 0x0044F380 ??__Eg_ICONS_GENERAL_SPRITES@@YAXXZ 0x0044F380-0x0044F3A4 BYTE_EXACT
 // symbol    ?construct_icons_general_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -3984,7 +3976,7 @@ void __cdecl construct_icons_general_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_RESOURCE_ICON_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044F3D0 ??__Eg_RESOURCE_ICON_SPRITES@@YAXXZ 0x0044F3D0-0x0044F3F4
+// ORIGINAL: 0x0044F3D0 ??__Eg_RESOURCE_ICON_SPRITES@@YAXXZ 0x0044F3D0-0x0044F3F4 BYTE_EXACT
 // symbol    ?construct_resource_icon_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -4002,7 +3994,7 @@ void __cdecl construct_resource_icon_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_CITIZEN_LG_CURSOR_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044F420 ??__Eg_CITIZEN_LG_CURSOR_SPRITES@@YAXXZ 0x0044F420-0x0044F444
+// ORIGINAL: 0x0044F420 ??__Eg_CITIZEN_LG_CURSOR_SPRITES@@YAXXZ 0x0044F420-0x0044F444 BYTE_EXACT
 // symbol    ?construct_citizen_lg_cursor_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -4020,7 +4012,7 @@ void __cdecl construct_citizen_lg_cursor_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_SPECIALIST_LG_CURSOR_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044F470 ??__Eg_SPECIALIST_LG_CURSOR_SPRITES@@YAXXZ 0x0044F470-0x0044F494
+// ORIGINAL: 0x0044F470 ??__Eg_SPECIALIST_LG_CURSOR_SPRITES@@YAXXZ 0x0044F470-0x0044F494 BYTE_EXACT
 // symbol    ?construct_specialist_lg_cursor_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -4038,7 +4030,7 @@ void __cdecl construct_specialist_lg_cursor_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_CITIZEN_SM_CURSOR_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044F4C0 ??__Eg_CITIZEN_SM_CURSOR_SPRITES@@YAXXZ 0x0044F4C0-0x0044F4E4
+// ORIGINAL: 0x0044F4C0 ??__Eg_CITIZEN_SM_CURSOR_SPRITES@@YAXXZ 0x0044F4C0-0x0044F4E4 BYTE_EXACT
 // symbol    ?construct_citizen_sm_cursor_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -4056,7 +4048,7 @@ void __cdecl construct_citizen_sm_cursor_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_SPECIALIST_SM_CURSOR_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044F510 ??__Eg_SPECIALIST_SM_CURSOR_SPRITES@@YAXXZ 0x0044F510-0x0044F534
+// ORIGINAL: 0x0044F510 ??__Eg_SPECIALIST_SM_CURSOR_SPRITES@@YAXXZ 0x0044F510-0x0044F534 BYTE_EXACT
 // symbol    ?construct_specialist_sm_cursor_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -4074,7 +4066,7 @@ void __cdecl construct_specialist_sm_cursor_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_AL_CITIZEN_LG_CURSOR_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044F560 ??__Eg_AL_CITIZEN_LG_CURSOR_SPRITES@@YAXXZ 0x0044F560-0x0044F584
+// ORIGINAL: 0x0044F560 ??__Eg_AL_CITIZEN_LG_CURSOR_SPRITES@@YAXXZ 0x0044F560-0x0044F584 BYTE_EXACT
 // symbol    ?construct_al_citizen_lg_cursor_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -4092,7 +4084,7 @@ void __cdecl construct_al_citizen_lg_cursor_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_AL_SPECIALIST_LG_CURSOR_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044F5B0 ??__Eg_AL_SPECIALIST_LG_CURSOR_SPRITES@@YAXXZ 0x0044F5B0-0x0044F5D4
+// ORIGINAL: 0x0044F5B0 ??__Eg_AL_SPECIALIST_LG_CURSOR_SPRITES@@YAXXZ 0x0044F5B0-0x0044F5D4 BYTE_EXACT
 // symbol    ?construct_al_specialist_lg_cursor_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -4110,7 +4102,7 @@ void __cdecl construct_al_specialist_lg_cursor_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_AL_CITIZEN_SM_CURSOR_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044F600 ??__Eg_AL_CITIZEN_SM_CURSOR_SPRITES@@YAXXZ 0x0044F600-0x0044F624
+// ORIGINAL: 0x0044F600 ??__Eg_AL_CITIZEN_SM_CURSOR_SPRITES@@YAXXZ 0x0044F600-0x0044F624 BYTE_EXACT
 // symbol    ?construct_al_citizen_sm_cursor_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -4128,7 +4120,7 @@ void __cdecl construct_al_citizen_sm_cursor_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_AL_SPECIALIST_SM_CURSOR_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044F650 ??__Eg_AL_SPECIALIST_SM_CURSOR_SPRITES@@YAXXZ 0x0044F650-0x0044F674
+// ORIGINAL: 0x0044F650 ??__Eg_AL_SPECIALIST_SM_CURSOR_SPRITES@@YAXXZ 0x0044F650-0x0044F674 BYTE_EXACT
 // symbol    ?construct_al_specialist_sm_cursor_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -4164,7 +4156,7 @@ void __cdecl construct_red_alien_head_icon_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_SILVER_MENU_ICON_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044F6D0 ??__Eg_SILVER_MENU_ICON_SPRITES@@YAXXZ 0x0044F6D0-0x0044F6F4
+// ORIGINAL: 0x0044F6D0 ??__Eg_SILVER_MENU_ICON_SPRITES@@YAXXZ 0x0044F6D0-0x0044F6F4 BYTE_EXACT
 // symbol    ?construct_silver_menu_icon_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -4182,7 +4174,7 @@ void __cdecl construct_silver_menu_icon_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_SILVER_CHECKBOX_ICON_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044F720 ??__Eg_SILVER_CHECKBOX_ICON_SPRITES@@YAXXZ 0x0044F720-0x0044F744
+// ORIGINAL: 0x0044F720 ??__Eg_SILVER_CHECKBOX_ICON_SPRITES@@YAXXZ 0x0044F720-0x0044F744 BYTE_EXACT
 // symbol    ?construct_silver_checkbox_icon_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -4236,7 +4228,7 @@ void __cdecl construct_null_resource_icon_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_PEACE_SIGN_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044F7D0 ??__Eg_PEACE_SIGN_SPRITES@@YAXXZ 0x0044F7D0-0x0044F7F4
+// ORIGINAL: 0x0044F7D0 ??__Eg_PEACE_SIGN_SPRITES@@YAXXZ 0x0044F7D0-0x0044F7F4 BYTE_EXACT
 // symbol    ?construct_peace_sign_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -4272,7 +4264,7 @@ void __cdecl construct_icon_tile_square_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_XI_BOOM_VEH_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044F850 ??__Eg_XI_BOOM_VEH_SPRITES@@YAXXZ 0x0044F850-0x0044F877
+// ORIGINAL: 0x0044F850 ??__Eg_XI_BOOM_VEH_SPRITES@@YAXXZ 0x0044F850-0x0044F877 BYTE_EXACT
 // symbol    ?construct_xi_boom_veh_sprites@@YAXXZ
 // size      39 bytes
 // prototype 
@@ -4290,7 +4282,7 @@ void __cdecl construct_xi_boom_veh_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_XF_BOOM_VEH_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044F8A0 ??__Eg_XF_BOOM_VEH_SPRITES@@YAXXZ 0x0044F8A0-0x0044F8C4
+// ORIGINAL: 0x0044F8A0 ??__Eg_XF_BOOM_VEH_SPRITES@@YAXXZ 0x0044F8A0-0x0044F8C4 BYTE_EXACT
 // symbol    ?construct_xf_boom_veh_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -4416,7 +4408,7 @@ void __cdecl construct_battle_sealurk_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_TECH_ICON_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044FA10 ??__Eg_TECH_ICON_SPRITES@@YAXXZ 0x0044FA10-0x0044FA34
+// ORIGINAL: 0x0044FA10 ??__Eg_TECH_ICON_SPRITES@@YAXXZ 0x0044FA10-0x0044FA34 BYTE_EXACT
 // symbol    ?construct_tech_icon_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -4434,7 +4426,7 @@ void __cdecl construct_tech_icon_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_FACILITY_ICON_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044FA60 ??__Eg_FACILITY_ICON_SPRITES@@YAXXZ 0x0044FA60-0x0044FA84
+// ORIGINAL: 0x0044FA60 ??__Eg_FACILITY_ICON_SPRITES@@YAXXZ 0x0044FA60-0x0044FA84 BYTE_EXACT
 // symbol    ?construct_facility_icon_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -4452,7 +4444,7 @@ void __cdecl construct_facility_icon_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_SECRET_PROJECT_ICON_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044FAB0 ??__Eg_SECRET_PROJECT_ICON_SPRITES@@YAXXZ 0x0044FAB0-0x0044FAD4
+// ORIGINAL: 0x0044FAB0 ??__Eg_SECRET_PROJECT_ICON_SPRITES@@YAXXZ 0x0044FAB0-0x0044FAD4 BYTE_EXACT
 // symbol    ?construct_secret_project_icon_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -4470,7 +4462,7 @@ void __cdecl construct_secret_project_icon_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_MP_COMBO_ARROW_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044FB00 ??__Eg_IFACE_MP_COMBO_ARROW_SPRITES@@YAXXZ 0x0044FB00-0x0044FB24
+// ORIGINAL: 0x0044FB00 ??__Eg_IFACE_MP_COMBO_ARROW_SPRITES@@YAXXZ 0x0044FB00-0x0044FB24 BYTE_EXACT
 // symbol    ?construct_iface_mp_combo_arrow_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -4488,7 +4480,7 @@ void __cdecl construct_iface_mp_combo_arrow_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_SCROLL_BAR_ARROW_ICON_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044FB50 ??__Eg_SCROLL_BAR_ARROW_ICON_SPRITES@@YAXXZ 0x0044FB50-0x0044FB74
+// ORIGINAL: 0x0044FB50 ??__Eg_SCROLL_BAR_ARROW_ICON_SPRITES@@YAXXZ 0x0044FB50-0x0044FB74 BYTE_EXACT
 // symbol    ?construct_scroll_bar_arrow_icon_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -4506,7 +4498,7 @@ void __cdecl construct_scroll_bar_arrow_icon_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_SCROLL_BAR_SMALL_ARROW_ICON_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044FBA0 ??__Eg_SCROLL_BAR_SMALL_ARROW_ICON_SPRITES@@YAXXZ 0x0044FBA0-0x0044FBC4
+// ORIGINAL: 0x0044FBA0 ??__Eg_SCROLL_BAR_SMALL_ARROW_ICON_SPRITES@@YAXXZ 0x0044FBA0-0x0044FBC4 BYTE_EXACT
 // symbol    ?construct_scroll_bar_small_arrow_icon_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -4560,7 +4552,7 @@ void __cdecl construct_scroll_bar_small_filler_icon_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_LOCK_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0044FC50 ??__Eg_IFACE_LOCK_SPRITES@@YAXXZ 0x0044FC50-0x0044FC74
+// ORIGINAL: 0x0044FC50 ??__Eg_IFACE_LOCK_SPRITES@@YAXXZ 0x0044FC50-0x0044FC74 BYTE_EXACT
 // symbol    ?construct_iface_lock_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -4578,7 +4570,7 @@ void __cdecl construct_iface_lock_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITES_VAR01; registers its ??__F teardown.
-// ORIGINAL: 0x0044FCA0 ??__Eg_UNUSED_SPRITES_VAR01@@YAXXZ 0x0044FCA0-0x0044FCC4
+// ORIGINAL: 0x0044FCA0 ??__Eg_UNUSED_SPRITES_VAR01@@YAXXZ 0x0044FCA0-0x0044FCC4 BYTE_EXACT
 // symbol    ?construct_unused_sprites_var01@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -5226,7 +5218,7 @@ void __cdecl construct_unused_sprite_var46() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_TECH_TREE_ARROW_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x00450380 ??__Eg_IFACE_TECH_TREE_ARROW_SPRITES@@YAXXZ 0x00450380-0x004503A4
+// ORIGINAL: 0x00450380 ??__Eg_IFACE_TECH_TREE_ARROW_SPRITES@@YAXXZ 0x00450380-0x004503A4 BYTE_EXACT
 // symbol    ?construct_iface_tech_tree_arrow_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -5748,7 +5740,7 @@ void __cdecl construct_unused_sprite_var74() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITES_VAR02; registers its ??__F teardown.
-// ORIGINAL: 0x00450910 ??__Eg_UNUSED_SPRITES_VAR02@@YAXXZ 0x00450910-0x00450934
+// ORIGINAL: 0x00450910 ??__Eg_UNUSED_SPRITES_VAR02@@YAXXZ 0x00450910-0x00450934 BYTE_EXACT
 // symbol    ?construct_unused_sprites_var02@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -5766,7 +5758,7 @@ void __cdecl construct_unused_sprites_var02() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITES_VAR03; registers its ??__F teardown.
-// ORIGINAL: 0x00450960 ??__Eg_UNUSED_SPRITES_VAR03@@YAXXZ 0x00450960-0x00450984
+// ORIGINAL: 0x00450960 ??__Eg_UNUSED_SPRITES_VAR03@@YAXXZ 0x00450960-0x00450984 BYTE_EXACT
 // symbol    ?construct_unused_sprites_var03@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -5784,7 +5776,7 @@ void __cdecl construct_unused_sprites_var03() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITES_VAR04; registers its ??__F teardown.
-// ORIGINAL: 0x004509B0 ??__Eg_UNUSED_SPRITES_VAR04@@YAXXZ 0x004509B0-0x004509D4
+// ORIGINAL: 0x004509B0 ??__Eg_UNUSED_SPRITES_VAR04@@YAXXZ 0x004509B0-0x004509D4 BYTE_EXACT
 // symbol    ?construct_unused_sprites_var04@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -5802,7 +5794,7 @@ void __cdecl construct_unused_sprites_var04() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITES_VAR05; registers its ??__F teardown.
-// ORIGINAL: 0x00450A00 ??__Eg_UNUSED_SPRITES_VAR05@@YAXXZ 0x00450A00-0x00450A24
+// ORIGINAL: 0x00450A00 ??__Eg_UNUSED_SPRITES_VAR05@@YAXXZ 0x00450A00-0x00450A24 BYTE_EXACT
 // symbol    ?construct_unused_sprites_var05@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -5820,7 +5812,7 @@ void __cdecl construct_unused_sprites_var05() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITES_VAR06; registers its ??__F teardown.
-// ORIGINAL: 0x00450A50 ??__Eg_UNUSED_SPRITES_VAR06@@YAXXZ 0x00450A50-0x00450A74
+// ORIGINAL: 0x00450A50 ??__Eg_UNUSED_SPRITES_VAR06@@YAXXZ 0x00450A50-0x00450A74 BYTE_EXACT
 // symbol    ?construct_unused_sprites_var06@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -5838,7 +5830,7 @@ void __cdecl construct_unused_sprites_var06() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITES_VAR07; registers its ??__F teardown.
-// ORIGINAL: 0x00450AA0 ??__Eg_UNUSED_SPRITES_VAR07@@YAXXZ 0x00450AA0-0x00450AC4
+// ORIGINAL: 0x00450AA0 ??__Eg_UNUSED_SPRITES_VAR07@@YAXXZ 0x00450AA0-0x00450AC4 BYTE_EXACT
 // symbol    ?construct_unused_sprites_var07@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -5856,7 +5848,7 @@ void __cdecl construct_unused_sprites_var07() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITES_VAR08; registers its ??__F teardown.
-// ORIGINAL: 0x00450AF0 ??__Eg_UNUSED_SPRITES_VAR08@@YAXXZ 0x00450AF0-0x00450B14
+// ORIGINAL: 0x00450AF0 ??__Eg_UNUSED_SPRITES_VAR08@@YAXXZ 0x00450AF0-0x00450B14 BYTE_EXACT
 // symbol    ?construct_unused_sprites_var08@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -5874,7 +5866,7 @@ void __cdecl construct_unused_sprites_var08() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITES_VAR09; registers its ??__F teardown.
-// ORIGINAL: 0x00450B40 ??__Eg_UNUSED_SPRITES_VAR09@@YAXXZ 0x00450B40-0x00450B64
+// ORIGINAL: 0x00450B40 ??__Eg_UNUSED_SPRITES_VAR09@@YAXXZ 0x00450B40-0x00450B64 BYTE_EXACT
 // symbol    ?construct_unused_sprites_var09@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -5892,7 +5884,7 @@ void __cdecl construct_unused_sprites_var09() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITES_VAR10; registers its ??__F teardown.
-// ORIGINAL: 0x00450B90 ??__Eg_UNUSED_SPRITES_VAR10@@YAXXZ 0x00450B90-0x00450BB4
+// ORIGINAL: 0x00450B90 ??__Eg_UNUSED_SPRITES_VAR10@@YAXXZ 0x00450B90-0x00450BB4 BYTE_EXACT
 // symbol    ?construct_unused_sprites_var10@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -6072,7 +6064,7 @@ void __cdecl construct_unused_sprite_var83() {
 
 /*
 Purpose: Dynamic initializer for g_BASEWIN_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x00450D90 ??__Eg_BASEWIN_SPRITES@@YAXXZ 0x00450D90-0x00450DB4
+// ORIGINAL: 0x00450D90 ??__Eg_BASEWIN_SPRITES@@YAXXZ 0x00450D90-0x00450DB4 BYTE_EXACT
 // symbol    ?construct_basewin_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -6198,7 +6190,7 @@ void __cdecl construct_messagewin() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_GREEN_RIGHT_ARROW_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x00471350 ??__Eg_IFACE_GREEN_RIGHT_ARROW_SPRITE@@YAXXZ 0x00471350-0x00471374
+// ORIGINAL: 0x00471350 ??__Eg_IFACE_GREEN_RIGHT_ARROW_SPRITE@@YAXXZ 0x00471350-0x00471374 BYTE_EXACT
 // symbol    ?construct_iface_green_right_arrow_sprite@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -6342,7 +6334,7 @@ void __cdecl construct_newtechwin() {
 
 /*
 Purpose: Dynamic initializer for g_NEWTECHWIN_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x00483880 ??__Eg_NEWTECHWIN_SPRITES@@YAXXZ 0x00483880-0x004838A4
+// ORIGINAL: 0x00483880 ??__Eg_NEWTECHWIN_SPRITES@@YAXXZ 0x00483880-0x004838A4 BYTE_EXACT
 // symbol    ?construct_newtechwin_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -6684,7 +6676,7 @@ void __cdecl construct_console_timer() {
 
 /*
 Purpose: Dynamic initializer for g_CURSOR_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x0052DAC0 ??__Eg_CURSOR_SPRITES@@YAXXZ 0x0052DAC0-0x0052DAE4
+// ORIGINAL: 0x0052DAC0 ??__Eg_CURSOR_SPRITES@@YAXXZ 0x0052DAC0-0x0052DAE4 BYTE_EXACT
 // symbol    ?construct_cursor_sprites@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -6774,7 +6766,7 @@ void __cdecl construct_top_menu_wave() {
 
 /*
 Purpose: Dynamic initializer for g_FONTS; registers its ??__F teardown.
-// ORIGINAL: 0x005882A0 ??__Eg_FONTS@@YAXXZ 0x005882A0-0x005882C4
+// ORIGINAL: 0x005882A0 ??__Eg_FONTS@@YAXXZ 0x005882A0-0x005882C4 BYTE_EXACT
 // symbol    ?construct_fonts@@YAXXZ
 // size      36 bytes
 // prototype 
@@ -6936,7 +6928,7 @@ void __cdecl construct_win_buffer() {
 
 /*
 Purpose: Dynamic initializer for TxtIndex; registers its ??__F teardown.
-// ORIGINAL: 0x005FD4E0 ??__ETxtIndex@@YAXXZ 0x005FD4E0-0x005FD507
+// ORIGINAL: 0x005FD4E0 ??__ETxtIndex@@YAXXZ 0x005FD4E0-0x005FD507 BYTE_EXACT
 // symbol    ?construct_txtindex@@YAXXZ
 // size      39 bytes
 // prototype 

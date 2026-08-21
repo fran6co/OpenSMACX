@@ -56,14 +56,24 @@ class Wave_Device;
 
 typedef void(__cdecl func_atexit_callback)();
 
+// DEFINED HERE, NOT `extern`. These are pushed as IMMEDIATES by the image -
+// `push 0x4c67c0` - and an `extern const void *const` defined in another
+// translation unit can only be reached as `push dword ptr [...]`. A namespace-
+// scope `const` has internal linkage, so a definition in the header gives each
+// unit its own copy and VC6 folds it to the immediate. This was visible as a
+// split: the ctor seams live in `init_thunks.cpp` and folded for thunks in
+// that file, while the matching teardown seams live in `atexit_thunks.cpp` and
+// did not.
+
+
 #include "vector_teardown.h"
-extern const void *const BufferElementCtor;
-extern const void *const CaviarDataElementCtor;
-extern const void *const FontElementCtor;
-extern const void *const SpriteElementCtor;
-extern const void *const TextIndexElementCtor;
-extern const void *const TextureElementCtor;
-extern const void *const WaveElementCtor;
+const void *const BufferElementCtor = (const void *)0x005D7210;
+const void *const CaviarDataElementCtor = (const void *)0x00616BC0;
+const void *const FontElementCtor = (const void *)0x00618EA0;
+const void *const SpriteElementCtor = (const void *)0x005E37E0;
+const void *const TextIndexElementCtor = (const void *)0x005FDF40;
+const void *const TextureElementCtor = (const void *)0x00619650;
+const void *const WaveElementCtor = (const void *)0x004C66E0;
 
 // Per-kind scalar construction seams, defaulting to
 // source-owned trampolines over the recovered
@@ -506,3 +516,4 @@ void __cdecl construct_filewin_sprite_3();
 void __cdecl construct_stringtable();
 void __cdecl construct_caviar_buffer_1();
 void __cdecl construct_caviar_buffer_2();
+const void *const FactionArtCtorTarget = (const void *)0x00455F10;

@@ -62,14 +62,6 @@ func_wave_destructor WaveOriginalDestructor =
 // Per-element teardowns the array walks dispatch to. The Wave one binds
 // the same address as WaveOriginalDestructor deliberately: it is the same
 // original body, held separately so the array seam rebinds alone.
-const void *const BufferElementTeardown = (const void *)0x005D7410;
-const void *const CaviarDataElementTeardown = (const void *)0x00456100;
-const void *const FactionArtElementTeardown = (const void *)0x00456010;
-const void *const FontElementTeardown = (const void *)0x00618EE0;
-const void *const SpriteElementTeardown = (const void *)0x00406850;
-const void *const TextIndexElementTeardown = (const void *)0x005FDF60;
-const void *const TextureElementTeardown = (const void *)0x00619660;
-const void *const WaveElementTeardown = (const void *)0x004C67C0;
 
 // The opaque-storage teardowns, each defaulting to the
 // original destructor the thunk tail jumps to; the
@@ -664,7 +656,7 @@ void __cdecl destroy_diplowin() {
 
 /*
 Purpose: Atexit teardown thunk for g_CPU_WAVES.
-// ORIGINAL: 0x00445480 ??__Fg_CPU_WAVES@@YAXXZ 0x00445480-0x00445494
+// ORIGINAL: 0x00445480 ??__Fg_CPU_WAVES@@YAXXZ 0x00445480-0x00445494 BYTE_EXACT
 // symbol    ?destroy_cpu_waves@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -834,7 +826,7 @@ void __cdecl destroy_pcx_parse_temp_buffer1() {
 
 /*
 Purpose: Atexit teardown thunk for FactionArt.
-// ORIGINAL: 0x0044CC80 ??__FFactionArt@@YAXXZ 0x0044CC80-0x0044CC97
+// ORIGINAL: 0x0044CC80 ??__FFactionArt@@YAXXZ 0x0044CC80-0x0044CC97 BYTE_EXACT
 // symbol    ?destroy_factionart@@YAXXZ
 // size      23 bytes
 // prototype 
@@ -851,7 +843,7 @@ void __cdecl destroy_factionart() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_CLOSE_X_SPRITES.
-// ORIGINAL: 0x0044CCD0 ??__Fg_IFACE_CLOSE_X_SPRITES@@YAXXZ 0x0044CCD0-0x0044CCE4
+// ORIGINAL: 0x0044CCD0 ??__Fg_IFACE_CLOSE_X_SPRITES@@YAXXZ 0x0044CCD0-0x0044CCE4 BYTE_EXACT
 // symbol    ?destroy_iface_close_x_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -868,7 +860,7 @@ void __cdecl destroy_iface_close_x_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_BOX_SPRITES1.
-// ORIGINAL: 0x0044CD20 ??__Fg_IFACE_BOX_SPRITES1@@YAXXZ 0x0044CD20-0x0044CD34
+// ORIGINAL: 0x0044CD20 ??__Fg_IFACE_BOX_SPRITES1@@YAXXZ 0x0044CD20-0x0044CD34 BYTE_EXACT
 // symbol    ?destroy_iface_box_sprites1@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -885,7 +877,7 @@ void __cdecl destroy_iface_box_sprites1() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_BOX_SPRITES2.
-// ORIGINAL: 0x0044CD70 ??__Fg_IFACE_BOX_SPRITES2@@YAXXZ 0x0044CD70-0x0044CD84
+// ORIGINAL: 0x0044CD70 ??__Fg_IFACE_BOX_SPRITES2@@YAXXZ 0x0044CD70-0x0044CD84 BYTE_EXACT
 // symbol    ?destroy_iface_box_sprites2@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -902,7 +894,7 @@ void __cdecl destroy_iface_box_sprites2() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_BOX_SPRITES3.
-// ORIGINAL: 0x0044CDC0 ??__Fg_IFACE_BOX_SPRITES3@@YAXXZ 0x0044CDC0-0x0044CDD4
+// ORIGINAL: 0x0044CDC0 ??__Fg_IFACE_BOX_SPRITES3@@YAXXZ 0x0044CDC0-0x0044CDD4 BYTE_EXACT
 // symbol    ?destroy_iface_box_sprites3@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -919,7 +911,7 @@ void __cdecl destroy_iface_box_sprites3() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_BOX_SPRITES4.
-// ORIGINAL: 0x0044CE10 ??__Fg_IFACE_BOX_SPRITES4@@YAXXZ 0x0044CE10-0x0044CE24
+// ORIGINAL: 0x0044CE10 ??__Fg_IFACE_BOX_SPRITES4@@YAXXZ 0x0044CE10-0x0044CE24 BYTE_EXACT
 // symbol    ?destroy_iface_box_sprites4@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -936,7 +928,7 @@ void __cdecl destroy_iface_box_sprites4() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_BOX_SPRITES5.
-// ORIGINAL: 0x0044CE60 ??__Fg_IFACE_BOX_SPRITES5@@YAXXZ 0x0044CE60-0x0044CE74
+// ORIGINAL: 0x0044CE60 ??__Fg_IFACE_BOX_SPRITES5@@YAXXZ 0x0044CE60-0x0044CE74 BYTE_EXACT
 // symbol    ?destroy_iface_box_sprites5@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -953,7 +945,7 @@ void __cdecl destroy_iface_box_sprites5() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_BOX_SPRITES6.
-// ORIGINAL: 0x0044CEB0 ??__Fg_IFACE_BOX_SPRITES6@@YAXXZ 0x0044CEB0-0x0044CEC4
+// ORIGINAL: 0x0044CEB0 ??__Fg_IFACE_BOX_SPRITES6@@YAXXZ 0x0044CEB0-0x0044CEC4 BYTE_EXACT
 // symbol    ?destroy_iface_box_sprites6@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -970,7 +962,7 @@ void __cdecl destroy_iface_box_sprites6() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_BOX_SPRITES7.
-// ORIGINAL: 0x0044CF00 ??__Fg_IFACE_BOX_SPRITES7@@YAXXZ 0x0044CF00-0x0044CF14
+// ORIGINAL: 0x0044CF00 ??__Fg_IFACE_BOX_SPRITES7@@YAXXZ 0x0044CF00-0x0044CF14 BYTE_EXACT
 // symbol    ?destroy_iface_box_sprites7@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -987,7 +979,7 @@ void __cdecl destroy_iface_box_sprites7() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_BOX_SPRITES8.
-// ORIGINAL: 0x0044CF50 ??__Fg_IFACE_BOX_SPRITES8@@YAXXZ 0x0044CF50-0x0044CF64
+// ORIGINAL: 0x0044CF50 ??__Fg_IFACE_BOX_SPRITES8@@YAXXZ 0x0044CF50-0x0044CF64 BYTE_EXACT
 // symbol    ?destroy_iface_box_sprites8@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -1004,7 +996,7 @@ void __cdecl destroy_iface_box_sprites8() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_BOX_SPRITE_BUFFERS.
-// ORIGINAL: 0x0044CFA0 ??__Fg_IFACE_BOX_SPRITE_BUFFERS@@YAXXZ 0x0044CFA0-0x0044CFB7
+// ORIGINAL: 0x0044CFA0 ??__Fg_IFACE_BOX_SPRITE_BUFFERS@@YAXXZ 0x0044CFA0-0x0044CFB7 BYTE_EXACT
 // symbol    ?destroy_iface_box_sprite_buffers@@YAXXZ
 // size      23 bytes
 // prototype 
@@ -1548,7 +1540,7 @@ void __cdecl destroy_aa_rover_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_AA_WING_CAVIARDATA.
-// ORIGINAL: 0x0044D5C0 ??__Fg_AA_WING_CAVIARDATA@@YAXXZ 0x0044D5C0-0x0044D5D4
+// ORIGINAL: 0x0044D5C0 ??__Fg_AA_WING_CAVIARDATA@@YAXXZ 0x0044D5C0-0x0044D5D4 BYTE_EXACT
 // symbol    ?destroy_aa_wing_caviardata@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -1565,7 +1557,7 @@ void __cdecl destroy_aa_wing_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_ACP_CAVIARDATA.
-// ORIGINAL: 0x0044D610 ??__Fg_ACP_CAVIARDATA@@YAXXZ 0x0044D610-0x0044D624
+// ORIGINAL: 0x0044D610 ??__Fg_ACP_CAVIARDATA@@YAXXZ 0x0044D610-0x0044D624 BYTE_EXACT
 // symbol    ?destroy_acp_caviardata@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -1786,7 +1778,7 @@ void __cdecl destroy_viptapsi_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VIPTR_CAVIARDATA.
-// ORIGINAL: 0x0044D8A0 ??__Fg_VIPTR_CAVIARDATA@@YAXXZ 0x0044D8A0-0x0044D8B4
+// ORIGINAL: 0x0044D8A0 ??__Fg_VIPTR_CAVIARDATA@@YAXXZ 0x0044D8A0-0x0044D8B4 BYTE_EXACT
 // symbol    ?destroy_viptr_caviardata@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -1803,7 +1795,7 @@ void __cdecl destroy_viptr_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VIPTA_CAVIARDATA.
-// ORIGINAL: 0x0044D8F0 ??__Fg_VIPTA_CAVIARDATA@@YAXXZ 0x0044D8F0-0x0044D904
+// ORIGINAL: 0x0044D8F0 ??__Fg_VIPTA_CAVIARDATA@@YAXXZ 0x0044D8F0-0x0044D904 BYTE_EXACT
 // symbol    ?destroy_vipta_caviardata@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -2024,7 +2016,7 @@ void __cdecl destroy_va01_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VR_CAVIARDATA.
-// ORIGINAL: 0x0044DB80 ??__Fg_VR_CAVIARDATA@@YAXXZ 0x0044DB80-0x0044DB94
+// ORIGINAL: 0x0044DB80 ??__Fg_VR_CAVIARDATA@@YAXXZ 0x0044DB80-0x0044DB94 BYTE_EXACT
 // symbol    ?destroy_vr_caviardata@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -2058,7 +2050,7 @@ void __cdecl destroy_vhr_caviardata2() {
 
 /*
 Purpose: Atexit teardown thunk for g_VRC_CAVIARDATA.
-// ORIGINAL: 0x0044DC00 ??__Fg_VRC_CAVIARDATA@@YAXXZ 0x0044DC00-0x0044DC14
+// ORIGINAL: 0x0044DC00 ??__Fg_VRC_CAVIARDATA@@YAXXZ 0x0044DC00-0x0044DC14 BYTE_EXACT
 // symbol    ?destroy_vrc_caviardata@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -2228,7 +2220,7 @@ void __cdecl destroy_vcl_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_CAVIARDATA_VAR3.
-// ORIGINAL: 0x0044DE00 ??__Fg_UNUSED_CAVIARDATA_VAR3@@YAXXZ 0x0044DE00-0x0044DE14
+// ORIGINAL: 0x0044DE00 ??__Fg_UNUSED_CAVIARDATA_VAR3@@YAXXZ 0x0044DE00-0x0044DE14 BYTE_EXACT
 // symbol    ?destroy_unused_caviardata_var3@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -2296,7 +2288,7 @@ void __cdecl destroy_vhtp_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VHTA0_CAVIARDATA.
-// ORIGINAL: 0x0044DEE0 ??__Fg_VHTA0_CAVIARDATA@@YAXXZ 0x0044DEE0-0x0044DEF4
+// ORIGINAL: 0x0044DEE0 ??__Fg_VHTA0_CAVIARDATA@@YAXXZ 0x0044DEE0-0x0044DEF4 BYTE_EXACT
 // symbol    ?destroy_vhta0_caviardata@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -2330,7 +2322,7 @@ void __cdecl destroy_vhttp_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VHTTPA0_CAVIARDATA.
-// ORIGINAL: 0x0044DF60 ??__Fg_VHTTPA0_CAVIARDATA@@YAXXZ 0x0044DF60-0x0044DF74
+// ORIGINAL: 0x0044DF60 ??__Fg_VHTTPA0_CAVIARDATA@@YAXXZ 0x0044DF60-0x0044DF74 BYTE_EXACT
 // symbol    ?destroy_vhttpa0_caviardata@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -2364,7 +2356,7 @@ void __cdecl destroy_vsp_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VSPA0_CAVIARDATA.
-// ORIGINAL: 0x0044DFE0 ??__Fg_VSPA0_CAVIARDATA@@YAXXZ 0x0044DFE0-0x0044DFF4
+// ORIGINAL: 0x0044DFE0 ??__Fg_VSPA0_CAVIARDATA@@YAXXZ 0x0044DFE0-0x0044DFF4 BYTE_EXACT
 // symbol    ?destroy_vspa0_caviardata@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -2483,7 +2475,7 @@ void __cdecl destroy_vjtp_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VJT0_CAVIARDATA.
-// ORIGINAL: 0x0044E150 ??__Fg_VJT0_CAVIARDATA@@YAXXZ 0x0044E150-0x0044E164
+// ORIGINAL: 0x0044E150 ??__Fg_VJT0_CAVIARDATA@@YAXXZ 0x0044E150-0x0044E164 BYTE_EXACT
 // symbol    ?destroy_vjt0_caviardata@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -2534,7 +2526,7 @@ void __cdecl destroy_vcup_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VCUA0_CAVIARDATA.
-// ORIGINAL: 0x0044E200 ??__Fg_VCUA0_CAVIARDATA@@YAXXZ 0x0044E200-0x0044E214
+// ORIGINAL: 0x0044E200 ??__Fg_VCUA0_CAVIARDATA@@YAXXZ 0x0044E200-0x0044E214 BYTE_EXACT
 // symbol    ?destroy_vcua0_caviardata@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -2619,7 +2611,7 @@ void __cdecl destroy_vctb_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VCT0_CAVIARDATA.
-// ORIGINAL: 0x0044E310 ??__Fg_VCT0_CAVIARDATA@@YAXXZ 0x0044E310-0x0044E324
+// ORIGINAL: 0x0044E310 ??__Fg_VCT0_CAVIARDATA@@YAXXZ 0x0044E310-0x0044E324 BYTE_EXACT
 // symbol    ?destroy_vct0_caviardata@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -2687,7 +2679,7 @@ void __cdecl destroy_vwnaa_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VW_CAVIARDATA.
-// ORIGINAL: 0x0044E3F0 ??__Fg_VW_CAVIARDATA@@YAXXZ 0x0044E3F0-0x0044E404
+// ORIGINAL: 0x0044E3F0 ??__Fg_VW_CAVIARDATA@@YAXXZ 0x0044E3F0-0x0044E404 BYTE_EXACT
 // symbol    ?destroy_vw_caviardata@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -2738,7 +2730,7 @@ void __cdecl destroy_vm13_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_VPBR0_CAVIARDATA.
-// ORIGINAL: 0x0044E4A0 ??__Fg_VPBR0_CAVIARDATA@@YAXXZ 0x0044E4A0-0x0044E4B4
+// ORIGINAL: 0x0044E4A0 ??__Fg_VPBR0_CAVIARDATA@@YAXXZ 0x0044E4A0-0x0044E4B4 BYTE_EXACT
 // symbol    ?destroy_vpbr0_caviardata@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -2755,7 +2747,7 @@ void __cdecl destroy_vpbr0_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_CAVIARDATA_VAR4.
-// ORIGINAL: 0x0044E4F0 ??__Fg_UNUSED_CAVIARDATA_VAR4@@YAXXZ 0x0044E4F0-0x0044E504
+// ORIGINAL: 0x0044E4F0 ??__Fg_UNUSED_CAVIARDATA_VAR4@@YAXXZ 0x0044E4F0-0x0044E504 BYTE_EXACT
 // symbol    ?destroy_unused_caviardata_var4@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -2823,7 +2815,7 @@ void __cdecl destroy_nlc_caviardata() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_CAVIARDATA_VAR5.
-// ORIGINAL: 0x0044E5D0 ??__Fg_UNUSED_CAVIARDATA_VAR5@@YAXXZ 0x0044E5D0-0x0044E5E4
+// ORIGINAL: 0x0044E5D0 ??__Fg_UNUSED_CAVIARDATA_VAR5@@YAXXZ 0x0044E5D0-0x0044E5E4 BYTE_EXACT
 // symbol    ?destroy_unused_caviardata_var5@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -2874,7 +2866,7 @@ void __cdecl destroy_radius2_texture() {
 
 /*
 Purpose: Atexit teardown thunk for g_ROCKY_TEXTURES.
-// ORIGINAL: 0x0044E680 ??__Fg_ROCKY_TEXTURES@@YAXXZ 0x0044E680-0x0044E694
+// ORIGINAL: 0x0044E680 ??__Fg_ROCKY_TEXTURES@@YAXXZ 0x0044E680-0x0044E694 BYTE_EXACT
 // symbol    ?destroy_rocky_textures@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -2891,7 +2883,7 @@ void __cdecl destroy_rocky_textures() {
 
 /*
 Purpose: Atexit teardown thunk for g_OCEAN_TEXTURES.
-// ORIGINAL: 0x0044E6D0 ??__Fg_OCEAN_TEXTURES@@YAXXZ 0x0044E6D0-0x0044E6E4
+// ORIGINAL: 0x0044E6D0 ??__Fg_OCEAN_TEXTURES@@YAXXZ 0x0044E6D0-0x0044E6E4 BYTE_EXACT
 // symbol    ?destroy_ocean_textures@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -2925,7 +2917,7 @@ void __cdecl destroy_flat_arid_land_texture() {
 
 /*
 Purpose: Atexit teardown thunk for g_MOIST_LAND_TEXTURES.
-// ORIGINAL: 0x0044E750 ??__Fg_MOIST_LAND_TEXTURES@@YAXXZ 0x0044E750-0x0044E764
+// ORIGINAL: 0x0044E750 ??__Fg_MOIST_LAND_TEXTURES@@YAXXZ 0x0044E750-0x0044E764 BYTE_EXACT
 // symbol    ?destroy_moist_land_textures@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -2942,7 +2934,7 @@ void __cdecl destroy_moist_land_textures() {
 
 /*
 Purpose: Atexit teardown thunk for g_RAINY_LAND_TEXTURES.
-// ORIGINAL: 0x0044E7A0 ??__Fg_RAINY_LAND_TEXTURES@@YAXXZ 0x0044E7A0-0x0044E7B4
+// ORIGINAL: 0x0044E7A0 ??__Fg_RAINY_LAND_TEXTURES@@YAXXZ 0x0044E7A0-0x0044E7B4 BYTE_EXACT
 // symbol    ?destroy_rainy_land_textures@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -2959,7 +2951,7 @@ void __cdecl destroy_rainy_land_textures() {
 
 /*
 Purpose: Atexit teardown thunk for g_JUNGLE_LAND_TEXTURES.
-// ORIGINAL: 0x0044E7F0 ??__Fg_JUNGLE_LAND_TEXTURES@@YAXXZ 0x0044E7F0-0x0044E804
+// ORIGINAL: 0x0044E7F0 ??__Fg_JUNGLE_LAND_TEXTURES@@YAXXZ 0x0044E7F0-0x0044E804 BYTE_EXACT
 // symbol    ?destroy_jungle_land_textures@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -2993,7 +2985,7 @@ void __cdecl destroy_dune_land_texture() {
 
 /*
 Purpose: Atexit teardown thunk for g_SUNNY_MESA_TEXTURES.
-// ORIGINAL: 0x0044E870 ??__Fg_SUNNY_MESA_TEXTURES@@YAXXZ 0x0044E870-0x0044E884
+// ORIGINAL: 0x0044E870 ??__Fg_SUNNY_MESA_TEXTURES@@YAXXZ 0x0044E870-0x0044E884 BYTE_EXACT
 // symbol    ?destroy_sunny_mesa_textures@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3010,7 +3002,7 @@ void __cdecl destroy_sunny_mesa_textures() {
 
 /*
 Purpose: Atexit teardown thunk for g_RAINFALL_SINGLE_TILE_TEXTURES.
-// ORIGINAL: 0x0044E8C0 ??__Fg_RAINFALL_SINGLE_TILE_TEXTURES@@YAXXZ 0x0044E8C0-0x0044E8D4
+// ORIGINAL: 0x0044E8C0 ??__Fg_RAINFALL_SINGLE_TILE_TEXTURES@@YAXXZ 0x0044E8C0-0x0044E8D4 BYTE_EXACT
 // symbol    ?destroy_rainfall_single_tile_textures@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3027,7 +3019,7 @@ void __cdecl destroy_rainfall_single_tile_textures() {
 
 /*
 Purpose: Atexit teardown thunk for g_ROAD_TEXTURES.
-// ORIGINAL: 0x0044E910 ??__Fg_ROAD_TEXTURES@@YAXXZ 0x0044E910-0x0044E924
+// ORIGINAL: 0x0044E910 ??__Fg_ROAD_TEXTURES@@YAXXZ 0x0044E910-0x0044E924 BYTE_EXACT
 // symbol    ?destroy_road_textures@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3044,7 +3036,7 @@ void __cdecl destroy_road_textures() {
 
 /*
 Purpose: Atexit teardown thunk for g_MAGTUBE_TEXTURES.
-// ORIGINAL: 0x0044E960 ??__Fg_MAGTUBE_TEXTURES@@YAXXZ 0x0044E960-0x0044E974
+// ORIGINAL: 0x0044E960 ??__Fg_MAGTUBE_TEXTURES@@YAXXZ 0x0044E960-0x0044E974 BYTE_EXACT
 // symbol    ?destroy_magtube_textures@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3061,7 +3053,7 @@ void __cdecl destroy_magtube_textures() {
 
 /*
 Purpose: Atexit teardown thunk for g_RIVER_TEXTURES.
-// ORIGINAL: 0x0044E9B0 ??__Fg_RIVER_TEXTURES@@YAXXZ 0x0044E9B0-0x0044E9C4
+// ORIGINAL: 0x0044E9B0 ??__Fg_RIVER_TEXTURES@@YAXXZ 0x0044E9B0-0x0044E9C4 BYTE_EXACT
 // symbol    ?destroy_river_textures@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3078,7 +3070,7 @@ void __cdecl destroy_river_textures() {
 
 /*
 Purpose: Atexit teardown thunk for g_MOUNT_PLANET_TEXTURES.
-// ORIGINAL: 0x0044EA00 ??__Fg_MOUNT_PLANET_TEXTURES@@YAXXZ 0x0044EA00-0x0044EA14
+// ORIGINAL: 0x0044EA00 ??__Fg_MOUNT_PLANET_TEXTURES@@YAXXZ 0x0044EA00-0x0044EA14 BYTE_EXACT
 // symbol    ?destroy_mount_planet_textures@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3095,7 +3087,7 @@ void __cdecl destroy_mount_planet_textures() {
 
 /*
 Purpose: Atexit teardown thunk for g_GARLAND_CRATER_TEXTURES.
-// ORIGINAL: 0x0044EA50 ??__Fg_GARLAND_CRATER_TEXTURES@@YAXXZ 0x0044EA50-0x0044EA64
+// ORIGINAL: 0x0044EA50 ??__Fg_GARLAND_CRATER_TEXTURES@@YAXXZ 0x0044EA50-0x0044EA64 BYTE_EXACT
 // symbol    ?destroy_garland_crater_textures@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3112,7 +3104,7 @@ void __cdecl destroy_garland_crater_textures() {
 
 /*
 Purpose: Atexit teardown thunk for g_FUNGUS_TEXTURES.
-// ORIGINAL: 0x0044EAA0 ??__Fg_FUNGUS_TEXTURES@@YAXXZ 0x0044EAA0-0x0044EAB4
+// ORIGINAL: 0x0044EAA0 ??__Fg_FUNGUS_TEXTURES@@YAXXZ 0x0044EAA0-0x0044EAB4 BYTE_EXACT
 // symbol    ?destroy_fungus_textures@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3129,7 +3121,7 @@ void __cdecl destroy_fungus_textures() {
 
 /*
 Purpose: Atexit teardown thunk for g_FARM_TEXTURES.
-// ORIGINAL: 0x0044EAF0 ??__Fg_FARM_TEXTURES@@YAXXZ 0x0044EAF0-0x0044EB04
+// ORIGINAL: 0x0044EAF0 ??__Fg_FARM_TEXTURES@@YAXXZ 0x0044EAF0-0x0044EB04 BYTE_EXACT
 // symbol    ?destroy_farm_textures@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3146,7 +3138,7 @@ void __cdecl destroy_farm_textures() {
 
 /*
 Purpose: Atexit teardown thunk for g_FOREST_TEXTURES.
-// ORIGINAL: 0x0044EB40 ??__Fg_FOREST_TEXTURES@@YAXXZ 0x0044EB40-0x0044EB54
+// ORIGINAL: 0x0044EB40 ??__Fg_FOREST_TEXTURES@@YAXXZ 0x0044EB40-0x0044EB54 BYTE_EXACT
 // symbol    ?destroy_forest_textures@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3180,7 +3172,7 @@ void __cdecl destroy_rainfall_single_tile_texture() {
 
 /*
 Purpose: Atexit teardown thunk for g_TER1_WHITE_ORG_YEL_TILE_SPRITES.
-// ORIGINAL: 0x0044EBC0 ??__Fg_TER1_WHITE_ORG_YEL_TILE_SPRITES@@YAXXZ 0x0044EBC0-0x0044EBD4
+// ORIGINAL: 0x0044EBC0 ??__Fg_TER1_WHITE_ORG_YEL_TILE_SPRITES@@YAXXZ 0x0044EBC0-0x0044EBD4 BYTE_EXACT
 // symbol    ?destroy_ter1_white_org_yel_tile_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3197,7 +3189,7 @@ void __cdecl destroy_ter1_white_org_yel_tile_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_TER1_BOTTOM_LEFT_TILE_SPRITES.
-// ORIGINAL: 0x0044EC10 ??__Fg_TER1_BOTTOM_LEFT_TILE_SPRITES@@YAXXZ 0x0044EC10-0x0044EC24
+// ORIGINAL: 0x0044EC10 ??__Fg_TER1_BOTTOM_LEFT_TILE_SPRITES@@YAXXZ 0x0044EC10-0x0044EC24 BYTE_EXACT
 // symbol    ?destroy_ter1_bottom_left_tile_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3214,7 +3206,7 @@ void __cdecl destroy_ter1_bottom_left_tile_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_TER1_UNUSED_SPRITES2.
-// ORIGINAL: 0x0044EC60 ??__Fg_TER1_UNUSED_SPRITES2@@YAXXZ 0x0044EC60-0x0044EC74
+// ORIGINAL: 0x0044EC60 ??__Fg_TER1_UNUSED_SPRITES2@@YAXXZ 0x0044EC60-0x0044EC74 BYTE_EXACT
 // symbol    ?destroy_ter1_unused_sprites2@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3401,7 +3393,7 @@ void __cdecl destroy_ter1_borehole_cluster_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_TER1_MANIFOLD_NEXUS_SPRITES.
-// ORIGINAL: 0x0044EE90 ??__Fg_TER1_MANIFOLD_NEXUS_SPRITES@@YAXXZ 0x0044EE90-0x0044EEA4
+// ORIGINAL: 0x0044EE90 ??__Fg_TER1_MANIFOLD_NEXUS_SPRITES@@YAXXZ 0x0044EE90-0x0044EEA4 BYTE_EXACT
 // symbol    ?destroy_ter1_manifold_nexus_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3418,7 +3410,7 @@ void __cdecl destroy_ter1_manifold_nexus_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_TER1WRECK_UNITY_WRECKAGE_SPRITES.
-// ORIGINAL: 0x0044EEE0 ??__Fg_TER1WRECK_UNITY_WRECKAGE_SPRITES@@YAXXZ 0x0044EEE0-0x0044EEF4
+// ORIGINAL: 0x0044EEE0 ??__Fg_TER1WRECK_UNITY_WRECKAGE_SPRITES@@YAXXZ 0x0044EEE0-0x0044EEF4 BYTE_EXACT
 // symbol    ?destroy_ter1wreck_unity_wreckage_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3435,7 +3427,7 @@ void __cdecl destroy_ter1wreck_unity_wreckage_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES.
-// ORIGINAL: 0x0044EF30 ??__Fg_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES@@YAXXZ 0x0044EF30-0x0044EF44
+// ORIGINAL: 0x0044EF30 ??__Fg_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES@@YAXXZ 0x0044EF30-0x0044EF44 BYTE_EXACT
 // symbol    ?destroy_ter1wreck_unity_wreckage_alt_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3452,7 +3444,7 @@ void __cdecl destroy_ter1wreck_unity_wreckage_alt_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_FOSSIL_FIELD_RIDGE_SPRITES.
-// ORIGINAL: 0x0044EF80 ??__Fg_FOSSIL_FIELD_RIDGE_SPRITES@@YAXXZ 0x0044EF80-0x0044EF94
+// ORIGINAL: 0x0044EF80 ??__Fg_FOSSIL_FIELD_RIDGE_SPRITES@@YAXXZ 0x0044EF80-0x0044EF94 BYTE_EXACT
 // symbol    ?destroy_fossil_field_ridge_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3469,7 +3461,7 @@ void __cdecl destroy_fossil_field_ridge_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_TER1_UNUSED_SPRITES1.
-// ORIGINAL: 0x0044EFD0 ??__Fg_TER1_UNUSED_SPRITES1@@YAXXZ 0x0044EFD0-0x0044EFE4
+// ORIGINAL: 0x0044EFD0 ??__Fg_TER1_UNUSED_SPRITES1@@YAXXZ 0x0044EFD0-0x0044EFE4 BYTE_EXACT
 // symbol    ?destroy_ter1_unused_sprites1@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3486,7 +3478,7 @@ void __cdecl destroy_ter1_unused_sprites1() {
 
 /*
 Purpose: Atexit teardown thunk for g_TER1_FARM_SPRITES.
-// ORIGINAL: 0x0044F020 ??__Fg_TER1_FARM_SPRITES@@YAXXZ 0x0044F020-0x0044F034
+// ORIGINAL: 0x0044F020 ??__Fg_TER1_FARM_SPRITES@@YAXXZ 0x0044F020-0x0044F034 BYTE_EXACT
 // symbol    ?destroy_ter1_farm_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3503,7 +3495,7 @@ void __cdecl destroy_ter1_farm_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_TER1_SOIL_ENRICHER_SPRITES.
-// ORIGINAL: 0x0044F070 ??__Fg_TER1_SOIL_ENRICHER_SPRITES@@YAXXZ 0x0044F070-0x0044F084
+// ORIGINAL: 0x0044F070 ??__Fg_TER1_SOIL_ENRICHER_SPRITES@@YAXXZ 0x0044F070-0x0044F084 BYTE_EXACT
 // symbol    ?destroy_ter1_soil_enricher_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3520,7 +3512,7 @@ void __cdecl destroy_ter1_soil_enricher_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_TER1_SEA_LAND_RESOURCE_SPRITES.
-// ORIGINAL: 0x0044F0C0 ??__Fg_TER1_SEA_LAND_RESOURCE_SPRITES@@YAXXZ 0x0044F0C0-0x0044F0D4
+// ORIGINAL: 0x0044F0C0 ??__Fg_TER1_SEA_LAND_RESOURCE_SPRITES@@YAXXZ 0x0044F0C0-0x0044F0D4 BYTE_EXACT
 // symbol    ?destroy_ter1_sea_land_resource_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3537,7 +3529,7 @@ void __cdecl destroy_ter1_sea_land_resource_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_TER1_LANDMARK_RESOURCE_SPRITES.
-// ORIGINAL: 0x0044F110 ??__Fg_TER1_LANDMARK_RESOURCE_SPRITES@@YAXXZ 0x0044F110-0x0044F124
+// ORIGINAL: 0x0044F110 ??__Fg_TER1_LANDMARK_RESOURCE_SPRITES@@YAXXZ 0x0044F110-0x0044F124 BYTE_EXACT
 // symbol    ?destroy_ter1_landmark_resource_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3554,7 +3546,7 @@ void __cdecl destroy_ter1_landmark_resource_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_GLOW_SPRITES.
-// ORIGINAL: 0x0044F160 ??__Fg_GLOW_SPRITES@@YAXXZ 0x0044F160-0x0044F174
+// ORIGINAL: 0x0044F160 ??__Fg_GLOW_SPRITES@@YAXXZ 0x0044F160-0x0044F174 BYTE_EXACT
 // symbol    ?destroy_glow_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3571,7 +3563,7 @@ void __cdecl destroy_glow_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_TER1_UNITY_POD_SPRITES.
-// ORIGINAL: 0x0044F1B0 ??__Fg_TER1_UNITY_POD_SPRITES@@YAXXZ 0x0044F1B0-0x0044F1C4
+// ORIGINAL: 0x0044F1B0 ??__Fg_TER1_UNITY_POD_SPRITES@@YAXXZ 0x0044F1B0-0x0044F1C4 BYTE_EXACT
 // symbol    ?destroy_ter1_unity_pod_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3656,7 +3648,7 @@ void __cdecl destroy_ter1_sensor_array_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_RAINFALL_DOUBLE_TILE_SPRITES.
-// ORIGINAL: 0x0044F2C0 ??__Fg_RAINFALL_DOUBLE_TILE_SPRITES@@YAXXZ 0x0044F2C0-0x0044F2D4
+// ORIGINAL: 0x0044F2C0 ??__Fg_RAINFALL_DOUBLE_TILE_SPRITES@@YAXXZ 0x0044F2C0-0x0044F2D4 BYTE_EXACT
 // symbol    ?destroy_rainfall_double_tile_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3673,7 +3665,7 @@ void __cdecl destroy_rainfall_double_tile_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_VEH_SPRITES.
-// ORIGINAL: 0x0044F310 ??__Fg_VEH_SPRITES@@YAXXZ 0x0044F310-0x0044F327
+// ORIGINAL: 0x0044F310 ??__Fg_VEH_SPRITES@@YAXXZ 0x0044F310-0x0044F327 BYTE_EXACT
 // symbol    ?destroy_veh_sprites@@YAXXZ
 // size      23 bytes
 // prototype 
@@ -3690,7 +3682,7 @@ void __cdecl destroy_veh_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_FLAGS_VEH_SPRITES.
-// ORIGINAL: 0x0044F360 ??__Fg_FLAGS_VEH_SPRITES@@YAXXZ 0x0044F360-0x0044F374
+// ORIGINAL: 0x0044F360 ??__Fg_FLAGS_VEH_SPRITES@@YAXXZ 0x0044F360-0x0044F374 BYTE_EXACT
 // symbol    ?destroy_flags_veh_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3707,7 +3699,7 @@ void __cdecl destroy_flags_veh_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_ICONS_GENERAL_SPRITES.
-// ORIGINAL: 0x0044F3B0 ??__Fg_ICONS_GENERAL_SPRITES@@YAXXZ 0x0044F3B0-0x0044F3C4
+// ORIGINAL: 0x0044F3B0 ??__Fg_ICONS_GENERAL_SPRITES@@YAXXZ 0x0044F3B0-0x0044F3C4 BYTE_EXACT
 // symbol    ?destroy_icons_general_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3724,7 +3716,7 @@ void __cdecl destroy_icons_general_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_RESOURCE_ICON_SPRITES.
-// ORIGINAL: 0x0044F400 ??__Fg_RESOURCE_ICON_SPRITES@@YAXXZ 0x0044F400-0x0044F414
+// ORIGINAL: 0x0044F400 ??__Fg_RESOURCE_ICON_SPRITES@@YAXXZ 0x0044F400-0x0044F414 BYTE_EXACT
 // symbol    ?destroy_resource_icon_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3741,7 +3733,7 @@ void __cdecl destroy_resource_icon_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_CITIZEN_LG_CURSOR_SPRITES.
-// ORIGINAL: 0x0044F450 ??__Fg_CITIZEN_LG_CURSOR_SPRITES@@YAXXZ 0x0044F450-0x0044F464
+// ORIGINAL: 0x0044F450 ??__Fg_CITIZEN_LG_CURSOR_SPRITES@@YAXXZ 0x0044F450-0x0044F464 BYTE_EXACT
 // symbol    ?destroy_citizen_lg_cursor_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3758,7 +3750,7 @@ void __cdecl destroy_citizen_lg_cursor_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_SPECIALIST_LG_CURSOR_SPRITES.
-// ORIGINAL: 0x0044F4A0 ??__Fg_SPECIALIST_LG_CURSOR_SPRITES@@YAXXZ 0x0044F4A0-0x0044F4B4
+// ORIGINAL: 0x0044F4A0 ??__Fg_SPECIALIST_LG_CURSOR_SPRITES@@YAXXZ 0x0044F4A0-0x0044F4B4 BYTE_EXACT
 // symbol    ?destroy_specialist_lg_cursor_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3775,7 +3767,7 @@ void __cdecl destroy_specialist_lg_cursor_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_CITIZEN_SM_CURSOR_SPRITES.
-// ORIGINAL: 0x0044F4F0 ??__Fg_CITIZEN_SM_CURSOR_SPRITES@@YAXXZ 0x0044F4F0-0x0044F504
+// ORIGINAL: 0x0044F4F0 ??__Fg_CITIZEN_SM_CURSOR_SPRITES@@YAXXZ 0x0044F4F0-0x0044F504 BYTE_EXACT
 // symbol    ?destroy_citizen_sm_cursor_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3792,7 +3784,7 @@ void __cdecl destroy_citizen_sm_cursor_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_SPECIALIST_SM_CURSOR_SPRITES.
-// ORIGINAL: 0x0044F540 ??__Fg_SPECIALIST_SM_CURSOR_SPRITES@@YAXXZ 0x0044F540-0x0044F554
+// ORIGINAL: 0x0044F540 ??__Fg_SPECIALIST_SM_CURSOR_SPRITES@@YAXXZ 0x0044F540-0x0044F554 BYTE_EXACT
 // symbol    ?destroy_specialist_sm_cursor_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3809,7 +3801,7 @@ void __cdecl destroy_specialist_sm_cursor_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_AL_CITIZEN_LG_CURSOR_SPRITES.
-// ORIGINAL: 0x0044F590 ??__Fg_AL_CITIZEN_LG_CURSOR_SPRITES@@YAXXZ 0x0044F590-0x0044F5A4
+// ORIGINAL: 0x0044F590 ??__Fg_AL_CITIZEN_LG_CURSOR_SPRITES@@YAXXZ 0x0044F590-0x0044F5A4 BYTE_EXACT
 // symbol    ?destroy_al_citizen_lg_cursor_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3826,7 +3818,7 @@ void __cdecl destroy_al_citizen_lg_cursor_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_AL_SPECIALIST_LG_CURSOR_SPRITES.
-// ORIGINAL: 0x0044F5E0 ??__Fg_AL_SPECIALIST_LG_CURSOR_SPRITES@@YAXXZ 0x0044F5E0-0x0044F5F4
+// ORIGINAL: 0x0044F5E0 ??__Fg_AL_SPECIALIST_LG_CURSOR_SPRITES@@YAXXZ 0x0044F5E0-0x0044F5F4 BYTE_EXACT
 // symbol    ?destroy_al_specialist_lg_cursor_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3843,7 +3835,7 @@ void __cdecl destroy_al_specialist_lg_cursor_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_AL_CITIZEN_SM_CURSOR_SPRITES.
-// ORIGINAL: 0x0044F630 ??__Fg_AL_CITIZEN_SM_CURSOR_SPRITES@@YAXXZ 0x0044F630-0x0044F644
+// ORIGINAL: 0x0044F630 ??__Fg_AL_CITIZEN_SM_CURSOR_SPRITES@@YAXXZ 0x0044F630-0x0044F644 BYTE_EXACT
 // symbol    ?destroy_al_citizen_sm_cursor_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3860,7 +3852,7 @@ void __cdecl destroy_al_citizen_sm_cursor_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_AL_SPECIALIST_SM_CURSOR_SPRITES.
-// ORIGINAL: 0x0044F680 ??__Fg_AL_SPECIALIST_SM_CURSOR_SPRITES@@YAXXZ 0x0044F680-0x0044F694
+// ORIGINAL: 0x0044F680 ??__Fg_AL_SPECIALIST_SM_CURSOR_SPRITES@@YAXXZ 0x0044F680-0x0044F694 BYTE_EXACT
 // symbol    ?destroy_al_specialist_sm_cursor_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3894,7 +3886,7 @@ void __cdecl destroy_red_alien_head_icon_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_SILVER_MENU_ICON_SPRITES.
-// ORIGINAL: 0x0044F700 ??__Fg_SILVER_MENU_ICON_SPRITES@@YAXXZ 0x0044F700-0x0044F714
+// ORIGINAL: 0x0044F700 ??__Fg_SILVER_MENU_ICON_SPRITES@@YAXXZ 0x0044F700-0x0044F714 BYTE_EXACT
 // symbol    ?destroy_silver_menu_icon_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3911,7 +3903,7 @@ void __cdecl destroy_silver_menu_icon_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_SILVER_CHECKBOX_ICON_SPRITES.
-// ORIGINAL: 0x0044F750 ??__Fg_SILVER_CHECKBOX_ICON_SPRITES@@YAXXZ 0x0044F750-0x0044F764
+// ORIGINAL: 0x0044F750 ??__Fg_SILVER_CHECKBOX_ICON_SPRITES@@YAXXZ 0x0044F750-0x0044F764 BYTE_EXACT
 // symbol    ?destroy_silver_checkbox_icon_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3962,7 +3954,7 @@ void __cdecl destroy_null_resource_icon_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_PEACE_SIGN_SPRITES.
-// ORIGINAL: 0x0044F800 ??__Fg_PEACE_SIGN_SPRITES@@YAXXZ 0x0044F800-0x0044F814
+// ORIGINAL: 0x0044F800 ??__Fg_PEACE_SIGN_SPRITES@@YAXXZ 0x0044F800-0x0044F814 BYTE_EXACT
 // symbol    ?destroy_peace_sign_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -3996,7 +3988,7 @@ void __cdecl destroy_icon_tile_square_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_XI_BOOM_VEH_SPRITES.
-// ORIGINAL: 0x0044F880 ??__Fg_XI_BOOM_VEH_SPRITES@@YAXXZ 0x0044F880-0x0044F897
+// ORIGINAL: 0x0044F880 ??__Fg_XI_BOOM_VEH_SPRITES@@YAXXZ 0x0044F880-0x0044F897 BYTE_EXACT
 // symbol    ?destroy_xi_boom_veh_sprites@@YAXXZ
 // size      23 bytes
 // prototype 
@@ -4013,7 +4005,7 @@ void __cdecl destroy_xi_boom_veh_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_XF_BOOM_VEH_SPRITES.
-// ORIGINAL: 0x0044F8D0 ??__Fg_XF_BOOM_VEH_SPRITES@@YAXXZ 0x0044F8D0-0x0044F8E4
+// ORIGINAL: 0x0044F8D0 ??__Fg_XF_BOOM_VEH_SPRITES@@YAXXZ 0x0044F8D0-0x0044F8E4 BYTE_EXACT
 // symbol    ?destroy_xf_boom_veh_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -4132,7 +4124,7 @@ void __cdecl destroy_battle_sealurk_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_TECH_ICON_SPRITES.
-// ORIGINAL: 0x0044FA40 ??__Fg_TECH_ICON_SPRITES@@YAXXZ 0x0044FA40-0x0044FA54
+// ORIGINAL: 0x0044FA40 ??__Fg_TECH_ICON_SPRITES@@YAXXZ 0x0044FA40-0x0044FA54 BYTE_EXACT
 // symbol    ?destroy_tech_icon_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -4149,7 +4141,7 @@ void __cdecl destroy_tech_icon_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_FACILITY_ICON_SPRITES.
-// ORIGINAL: 0x0044FA90 ??__Fg_FACILITY_ICON_SPRITES@@YAXXZ 0x0044FA90-0x0044FAA4
+// ORIGINAL: 0x0044FA90 ??__Fg_FACILITY_ICON_SPRITES@@YAXXZ 0x0044FA90-0x0044FAA4 BYTE_EXACT
 // symbol    ?destroy_facility_icon_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -4166,7 +4158,7 @@ void __cdecl destroy_facility_icon_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_SECRET_PROJECT_ICON_SPRITES.
-// ORIGINAL: 0x0044FAE0 ??__Fg_SECRET_PROJECT_ICON_SPRITES@@YAXXZ 0x0044FAE0-0x0044FAF4
+// ORIGINAL: 0x0044FAE0 ??__Fg_SECRET_PROJECT_ICON_SPRITES@@YAXXZ 0x0044FAE0-0x0044FAF4 BYTE_EXACT
 // symbol    ?destroy_secret_project_icon_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -4183,7 +4175,7 @@ void __cdecl destroy_secret_project_icon_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_MP_COMBO_ARROW_SPRITES.
-// ORIGINAL: 0x0044FB30 ??__Fg_IFACE_MP_COMBO_ARROW_SPRITES@@YAXXZ 0x0044FB30-0x0044FB44
+// ORIGINAL: 0x0044FB30 ??__Fg_IFACE_MP_COMBO_ARROW_SPRITES@@YAXXZ 0x0044FB30-0x0044FB44 BYTE_EXACT
 // symbol    ?destroy_iface_mp_combo_arrow_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -4200,7 +4192,7 @@ void __cdecl destroy_iface_mp_combo_arrow_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_SCROLL_BAR_ARROW_ICON_SPRITES.
-// ORIGINAL: 0x0044FB80 ??__Fg_SCROLL_BAR_ARROW_ICON_SPRITES@@YAXXZ 0x0044FB80-0x0044FB94
+// ORIGINAL: 0x0044FB80 ??__Fg_SCROLL_BAR_ARROW_ICON_SPRITES@@YAXXZ 0x0044FB80-0x0044FB94 BYTE_EXACT
 // symbol    ?destroy_scroll_bar_arrow_icon_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -4217,7 +4209,7 @@ void __cdecl destroy_scroll_bar_arrow_icon_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_SCROLL_BAR_SMALL_ARROW_ICON_SPRITES.
-// ORIGINAL: 0x0044FBD0 ??__Fg_SCROLL_BAR_SMALL_ARROW_ICON_SPRITES@@YAXXZ 0x0044FBD0-0x0044FBE4
+// ORIGINAL: 0x0044FBD0 ??__Fg_SCROLL_BAR_SMALL_ARROW_ICON_SPRITES@@YAXXZ 0x0044FBD0-0x0044FBE4 BYTE_EXACT
 // symbol    ?destroy_scroll_bar_small_arrow_icon_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -4268,7 +4260,7 @@ void __cdecl destroy_scroll_bar_small_filler_icon_sprite() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_LOCK_SPRITES.
-// ORIGINAL: 0x0044FC80 ??__Fg_IFACE_LOCK_SPRITES@@YAXXZ 0x0044FC80-0x0044FC94
+// ORIGINAL: 0x0044FC80 ??__Fg_IFACE_LOCK_SPRITES@@YAXXZ 0x0044FC80-0x0044FC94 BYTE_EXACT
 // symbol    ?destroy_iface_lock_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -4285,7 +4277,7 @@ void __cdecl destroy_iface_lock_sprites() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITES_VAR01.
-// ORIGINAL: 0x0044FCD0 ??__Fg_UNUSED_SPRITES_VAR01@@YAXXZ 0x0044FCD0-0x0044FCE4
+// ORIGINAL: 0x0044FCD0 ??__Fg_UNUSED_SPRITES_VAR01@@YAXXZ 0x0044FCD0-0x0044FCE4 BYTE_EXACT
 // symbol    ?destroy_unused_sprites_var01@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -4897,7 +4889,7 @@ void __cdecl destroy_unused_sprite_var46() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_TECH_TREE_ARROW_SPRITES.
-// ORIGINAL: 0x004503B0 ??__Fg_IFACE_TECH_TREE_ARROW_SPRITES@@YAXXZ 0x004503B0-0x004503C4
+// ORIGINAL: 0x004503B0 ??__Fg_IFACE_TECH_TREE_ARROW_SPRITES@@YAXXZ 0x004503B0-0x004503C4 BYTE_EXACT
 // symbol    ?destroy_iface_tech_tree_arrow_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -5390,7 +5382,7 @@ void __cdecl destroy_unused_sprite_var74() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITES_VAR02.
-// ORIGINAL: 0x00450940 ??__Fg_UNUSED_SPRITES_VAR02@@YAXXZ 0x00450940-0x00450954
+// ORIGINAL: 0x00450940 ??__Fg_UNUSED_SPRITES_VAR02@@YAXXZ 0x00450940-0x00450954 BYTE_EXACT
 // symbol    ?destroy_unused_sprites_var02@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -5407,7 +5399,7 @@ void __cdecl destroy_unused_sprites_var02() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITES_VAR03.
-// ORIGINAL: 0x00450990 ??__Fg_UNUSED_SPRITES_VAR03@@YAXXZ 0x00450990-0x004509A4
+// ORIGINAL: 0x00450990 ??__Fg_UNUSED_SPRITES_VAR03@@YAXXZ 0x00450990-0x004509A4 BYTE_EXACT
 // symbol    ?destroy_unused_sprites_var03@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -5424,7 +5416,7 @@ void __cdecl destroy_unused_sprites_var03() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITES_VAR04.
-// ORIGINAL: 0x004509E0 ??__Fg_UNUSED_SPRITES_VAR04@@YAXXZ 0x004509E0-0x004509F4
+// ORIGINAL: 0x004509E0 ??__Fg_UNUSED_SPRITES_VAR04@@YAXXZ 0x004509E0-0x004509F4 BYTE_EXACT
 // symbol    ?destroy_unused_sprites_var04@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -5441,7 +5433,7 @@ void __cdecl destroy_unused_sprites_var04() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITES_VAR05.
-// ORIGINAL: 0x00450A30 ??__Fg_UNUSED_SPRITES_VAR05@@YAXXZ 0x00450A30-0x00450A44
+// ORIGINAL: 0x00450A30 ??__Fg_UNUSED_SPRITES_VAR05@@YAXXZ 0x00450A30-0x00450A44 BYTE_EXACT
 // symbol    ?destroy_unused_sprites_var05@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -5458,7 +5450,7 @@ void __cdecl destroy_unused_sprites_var05() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITES_VAR06.
-// ORIGINAL: 0x00450A80 ??__Fg_UNUSED_SPRITES_VAR06@@YAXXZ 0x00450A80-0x00450A94
+// ORIGINAL: 0x00450A80 ??__Fg_UNUSED_SPRITES_VAR06@@YAXXZ 0x00450A80-0x00450A94 BYTE_EXACT
 // symbol    ?destroy_unused_sprites_var06@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -5475,7 +5467,7 @@ void __cdecl destroy_unused_sprites_var06() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITES_VAR07.
-// ORIGINAL: 0x00450AD0 ??__Fg_UNUSED_SPRITES_VAR07@@YAXXZ 0x00450AD0-0x00450AE4
+// ORIGINAL: 0x00450AD0 ??__Fg_UNUSED_SPRITES_VAR07@@YAXXZ 0x00450AD0-0x00450AE4 BYTE_EXACT
 // symbol    ?destroy_unused_sprites_var07@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -5492,7 +5484,7 @@ void __cdecl destroy_unused_sprites_var07() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITES_VAR08.
-// ORIGINAL: 0x00450B20 ??__Fg_UNUSED_SPRITES_VAR08@@YAXXZ 0x00450B20-0x00450B34
+// ORIGINAL: 0x00450B20 ??__Fg_UNUSED_SPRITES_VAR08@@YAXXZ 0x00450B20-0x00450B34 BYTE_EXACT
 // symbol    ?destroy_unused_sprites_var08@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -5509,7 +5501,7 @@ void __cdecl destroy_unused_sprites_var08() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITES_VAR09.
-// ORIGINAL: 0x00450B70 ??__Fg_UNUSED_SPRITES_VAR09@@YAXXZ 0x00450B70-0x00450B84
+// ORIGINAL: 0x00450B70 ??__Fg_UNUSED_SPRITES_VAR09@@YAXXZ 0x00450B70-0x00450B84 BYTE_EXACT
 // symbol    ?destroy_unused_sprites_var09@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -5526,7 +5518,7 @@ void __cdecl destroy_unused_sprites_var09() {
 
 /*
 Purpose: Atexit teardown thunk for g_UNUSED_SPRITES_VAR10.
-// ORIGINAL: 0x00450BC0 ??__Fg_UNUSED_SPRITES_VAR10@@YAXXZ 0x00450BC0-0x00450BD4
+// ORIGINAL: 0x00450BC0 ??__Fg_UNUSED_SPRITES_VAR10@@YAXXZ 0x00450BC0-0x00450BD4 BYTE_EXACT
 // symbol    ?destroy_unused_sprites_var10@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -5696,7 +5688,7 @@ void __cdecl destroy_unused_sprite_var83() {
 
 /*
 Purpose: Atexit teardown thunk for g_BASEWIN_SPRITES.
-// ORIGINAL: 0x00450DC0 ??__Fg_BASEWIN_SPRITES@@YAXXZ 0x00450DC0-0x00450DD4
+// ORIGINAL: 0x00450DC0 ??__Fg_BASEWIN_SPRITES@@YAXXZ 0x00450DC0-0x00450DD4 BYTE_EXACT
 // symbol    ?destroy_basewin_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -5798,7 +5790,7 @@ void __cdecl destroy_messagewin() {
 
 /*
 Purpose: Atexit teardown thunk for g_IFACE_GREEN_RIGHT_ARROW_SPRITE.
-// ORIGINAL: 0x00471380 ??__Fg_IFACE_GREEN_RIGHT_ARROW_SPRITE@@YAXXZ 0x00471380-0x00471394
+// ORIGINAL: 0x00471380 ??__Fg_IFACE_GREEN_RIGHT_ARROW_SPRITE@@YAXXZ 0x00471380-0x00471394 BYTE_EXACT
 // symbol    ?destroy_iface_green_right_arrow_sprite@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -6206,7 +6198,7 @@ void __cdecl destroy_console_timer() {
 
 /*
 Purpose: Atexit teardown thunk for g_CURSOR_SPRITES.
-// ORIGINAL: 0x0052DAF0 ??__Fg_CURSOR_SPRITES@@YAXXZ 0x0052DAF0-0x0052DB04
+// ORIGINAL: 0x0052DAF0 ??__Fg_CURSOR_SPRITES@@YAXXZ 0x0052DAF0-0x0052DB04 BYTE_EXACT
 // symbol    ?destroy_cursor_sprites@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -6291,7 +6283,7 @@ void __cdecl destroy_top_menu_wave() {
 
 /*
 Purpose: Atexit teardown thunk for g_FONTS.
-// ORIGINAL: 0x005882D0 ??__Fg_FONTS@@YAXXZ 0x005882D0-0x005882E4
+// ORIGINAL: 0x005882D0 ??__Fg_FONTS@@YAXXZ 0x005882D0-0x005882E4 BYTE_EXACT
 // symbol    ?destroy_fonts@@YAXXZ
 // size      20 bytes
 // prototype 
@@ -6410,7 +6402,7 @@ void __cdecl destroy_buffer() {
 
 /*
 Purpose: Atexit teardown thunk for TxtIndex.
-// ORIGINAL: 0x005FD510 ??__FTxtIndex@@YAXXZ 0x005FD510-0x005FD527
+// ORIGINAL: 0x005FD510 ??__FTxtIndex@@YAXXZ 0x005FD510-0x005FD527 BYTE_EXACT
 // symbol    ?destroy_txtindex@@YAXXZ
 // size      23 bytes
 // prototype 
