@@ -184,6 +184,30 @@ if __name__ == "__main__":
                   f"bytes   {record.name}")
         print(f"    {len(granted):,} carry a PROVED semantic claim "
               f"(same instructions, different registers)")
+
+        # WHAT IS NOT REACHABLE AT ALL, so the goal's completion criterion can
+        # be read honestly. A body whose image bytes are hand-written assembly
+        # can never be byte-exact from C++, and `osmx semantic` cannot certify
+        # it either - that tier requires the SAME instruction sequence, and a
+        # `rep stosd` block is not the sequence any C++ compiles to. Those
+        # bodies can only ever be semantically equivalent in the ordinary
+        # sense, argued from the source rather than proved by the tool.
+        try:
+            from subprocess import run
+            done = run(["uv", "run", "tools/handwritten_asm.py"],
+                       cwd=str(REPO_ROOT), capture_output=True, text=True,
+                       timeout=900)
+            hand = {int(line.split()[0], 16)
+                    for line in done.stdout.splitlines()
+                    if line.startswith("  0x")}
+        except Exception:                                # noqa: BLE001
+            hand = set()
+        blocked = [r for r in pending if r.address in hand]
+        if blocked:
+            print(f"    {len(blocked):,} are HAND-WRITTEN ASSEMBLY in the "
+                  f"image - neither tier is reachable:")
+            for record in blocked:
+                print(f"      {record.address_hex}  {record.name}")
         print("\n  A transcription is EVIDENCE of equivalence, not proof. The"
               "\n  proof this tree can give is `osmx semantic`, and the"
               "\n  strongest cheap check is `call_diff`: a body calling"
