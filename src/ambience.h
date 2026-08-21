@@ -65,7 +65,7 @@ extern const uint32_t MAmbienceVtable;
 extern const uint32_t SAmbienceVtable;
 extern const uint32_t GAmbienceVtable;
 
-class FactionAmbience : Ambience {
+class FactionAmbience : public Ambience {
  public:
   FactionAmbience() { ; }
   ~FactionAmbience() { ; }
@@ -98,7 +98,7 @@ class FactionAmbience : Ambience {
   uint8_t field_6D_;
 };
 
-class UAmbience : Ambience {
+class UAmbience : public Ambience {
  public:
   UAmbience() { ; }
   ~UAmbience() { ; }
@@ -126,7 +126,7 @@ class UAmbience : Ambience {
 // recovered method, so these fields and nothing beyond them are what the image
 // establishes - the same rule the file header sets out, applied to two more
 // variants rather than relaxed for them.
-class MAmbience : Ambience {
+class MAmbience : public Ambience {
  public:
   MAmbience() { ; }
   ~MAmbience() { ; }
@@ -147,7 +147,7 @@ class MAmbience : Ambience {
 static_assert(sizeof(MAmbience) == 0x74,
               "MAmbience layout must match the original executable");
 
-class SAmbience : Ambience {
+class SAmbience : public Ambience {
  public:
   SAmbience() { ; }
   ~SAmbience() { ; }
@@ -169,7 +169,7 @@ class SAmbience : Ambience {
 static_assert(sizeof(SAmbience) == 0x78,
               "SAmbience layout must match the original executable");
 
-class GAmbience : Ambience {
+class GAmbience : public Ambience {
  public:
   GAmbience() { ; }
   ~GAmbience() { ; }

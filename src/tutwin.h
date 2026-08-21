@@ -53,7 +53,7 @@
   * `reached TutWin 0x53D8 image reaches 0x53D8`, so the static_assert below
   * is reached by the image's own widest access.
   */
-class TutWin : Popup {
+class TutWin : public Popup {
  public:
   // 0x004BDFE0, a pending_bodies forwarder.
   // The owner arrives as a raw address computed off a vbtable, which is

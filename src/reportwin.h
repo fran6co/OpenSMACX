@@ -38,7 +38,7 @@
   * The methods below ignore their arguments and return a constant, which is
   * why they can be replaced ahead of that mapping.
   */
-class ReportWin : GraphicWin {
+class ReportWin : public GraphicWin {
  public:
   ReportWin() { ; }
   ~ReportWin() { ; }

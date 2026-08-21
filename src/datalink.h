@@ -46,7 +46,7 @@
 // one-int struct would state a size the evidence does not support.
 struct DatalinkID;
 
-class Datalink : GraphicWin {
+class Datalink : public GraphicWin {
  public:
   // 0x00429180, a pending_bodies forwarder.
   void exec(unsigned int topic, int index);

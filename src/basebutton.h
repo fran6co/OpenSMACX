@@ -25,7 +25,7 @@ class Scroll; // forward declaration
  /*
   * BaseButton class
   */
-class BaseButton : GraphicWin {
+class BaseButton : public GraphicWin {
   friend class ButtonGroup;
   friend class FlatButton;
   friend class Scroll;

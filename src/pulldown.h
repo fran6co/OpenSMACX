@@ -27,7 +27,7 @@ static_assert(offsetof(PullDownItem, id) == 0x8,
 static_assert(offsetof(PullDownItem, flags) == 0xC,
               "PullDownItem flags offset must match the legacy ABI");
 
-class PullDown : GraphicWin {
+class PullDown : public GraphicWin {
  public:
   void hide();
   int UNK2(int a);

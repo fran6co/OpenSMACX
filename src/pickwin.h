@@ -35,7 +35,7 @@
   * The methods below ignore their arguments and return a constant, which is
   * why they can be replaced ahead of that mapping.
   */
-class PickWin : GraphicWin {
+class PickWin : public GraphicWin {
  public:
   PickWin() { ; }
   ~PickWin() { ; }

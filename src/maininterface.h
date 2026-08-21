@@ -26,7 +26,7 @@
  /*
   * MainInterface class
   */
-class MainInterface : GraphicWin {
+class MainInterface : public GraphicWin {
  public:
   // 0x0045BE80, a pending_bodies forwarder.
   void set_date(char *text);

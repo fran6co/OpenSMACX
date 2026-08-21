@@ -51,7 +51,7 @@
   * replaced without that mapping - the opaque storage below is only large
   * enough to give the canary an object to seed.
   */
-class ReplayWin : GraphicWin {
+class ReplayWin : public GraphicWin {
  public:
   // 0x005AD9E0  ?timer_callback@ReplayWin@@QAEXXZ - public, __thiscall,
   // void(void), unrecovered. Declared so timer_callback_daemon, the free

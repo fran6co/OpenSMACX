@@ -50,7 +50,7 @@ MEASURED inline void __cdecl say_num(int value) {   // 0050B8A0
   strcat(StringTemp, text);
 }
 
-class Strings : Heap {
+class Strings : public Heap {
  public:
   MEASURED Strings() : is_populated_(false) {
   } // 006168D0
