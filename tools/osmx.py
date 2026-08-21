@@ -1045,27 +1045,31 @@ def sweep(
                        concurrent.futures.as_completed(
                            [pool.submit(_check_one_file, job)
                             for job in work])]
+    notes: dict = {}
     for batch in batches:
         for key, verdict, note in batch:
             measured[key] = verdict
+            notes[key] = note
 
     by_claim = {_claim_key(r): r for group in grouped.values() for r in group}
     if verdicts:
         order = {"BYTE_EXACT": 0, "SHAPE_EXACT": 1, "MNEMONIC_ONLY": 2,
                  "MISMATCH": 3}
-        rows = sorted(((order.get(verdict, 4), by_claim[key].address,
-                        verdict, by_claim[key])
+        rows = sorted(((order.get(verdict, 4), -_matching(notes.get(key, "")),
+                        verdict, by_claim[key], key)
                        for key, verdict in measured.items() if key in by_claim),
                       key=lambda row: row[:2])
         if as_json:
             typer.echo(json.dumps([{"address": r.address_hex,
                                     "verdict": verdict, "name": r.name,
+                                    "score": notes.get(key, ""),
                                     "file": str(r.path)}
-                                   for _, _, verdict, r in rows], indent=2))
+                                   for _, _, verdict, r, key in rows],
+                                  indent=2))
             raise typer.Exit(0)
-        for _, _, verdict, r in rows:
+        for _, _, verdict, r, key in rows:
             typer.echo(f"  {r.address_hex}  {verdict:14s} "
-                       f"{r.path.name:24s} {r.name}")
+                       f"{notes.get(key, ''):28s} {r.path.name:22s} {r.name}")
         tally: dict = {}
         for _, _, verdict, _r in rows:
             tally[verdict] = tally.get(verdict, 0) + 1
@@ -1328,6 +1332,19 @@ def _claim_key(record: DecompilationState) -> tuple:
     return (record.path, record.address, record.line)
 
 
+TIER_ORDER = {"BYTE_EXACT": 0, "SHAPE_EXACT": 1, "MNEMONIC_ONLY": 2,
+              "MISMATCH": 3, "UNRESOLVED": 4, "NO_COMPILE": 5}
+
+
+def _rank(verdict: str) -> int:
+    return TIER_ORDER.get(verdict, 9)
+
+
+def _matching(note: str) -> int:
+    found = re.match(r"(\d+)/", note or "")
+    return int(found.group(1)) if found else -1
+
+
 def _check_one_file(job: tuple) -> list[tuple[tuple, str, str]]:
     """Score every claim in one file. Runs in a worker process.
 
@@ -1369,9 +1386,23 @@ def _check_one_file(job: tuple) -> list[tuple[tuple, str, str]]:
                 continue
             result = compare_subject(record, exe, compiled)
             verdict = str(result.verdict)
-            if (_claim_key(record) not in best
-                    or best[_claim_key(record)][0] != "BYTE_EXACT"):
-                best[_claim_key(record)] = (verdict, "")
+            # THE NOTE CARRIES THE AGREEMENT, so `sweep --verdicts` can rank
+            # within a tier. Most of the remaining work is MISMATCHes, and the
+            # word alone cannot tell one that is two instructions out from one
+            # nobody has started.
+            score = (f"{result.matching_instructions}/"
+                     f"{result.original_instructions} instructions, "
+                     f"{result.mnemonic_similarity:.3f} similar")
+            key = _claim_key(record)
+            if key not in best or best[key][0] != "BYTE_EXACT":
+                previous = best.get(key)
+                better = (previous is None
+                          or _rank(verdict) < _rank(previous[0])
+                          or (_rank(verdict) == _rank(previous[0])
+                              and result.matching_instructions
+                              > _matching(previous[1])))
+                if better:
+                    best[key] = (verdict, score)
             if verdict == "BYTE_EXACT":
                 outstanding.remove(record)
     for record in outstanding:
