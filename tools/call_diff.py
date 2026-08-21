@@ -137,11 +137,23 @@ def _one(job: tuple) -> list[tuple]:
             # that is the comparison that means something.
             ours = {by_symbol[x] for x in calling if x in by_symbol}
             unknown = [x for x in calling if x not in by_symbol]
-            # Say nothing when we cannot resolve what we call: an unmapped
-            # symbol is a gap in the catalogue, not evidence about this body.
-            if ours and not unknown and theirs and not (set(theirs) & ours):
+            # THE RESOLVED SUBSET, not all-or-nothing. Requiring EVERY called
+            # symbol to resolve made this silent whenever one CRT call was
+            # unmapped - and `stack_sort` slipped through exactly that way: six
+            # calls on each side, and the image's real callees are
+            # `veh_cargo`/`has_abil`/`veh_lift`/`veh_drop` where the tree called
+            # `veh_top`/`stack_put`. An agent found it by reading the
+            # disassembly, which is the work this check exists to save.
+            #
+            # The unresolved names are PRINTED with the row, because they are
+            # the reason to doubt it: if one of them is the image's callee under
+            # a name the catalogue does not know, the row is a false positive
+            # and the reader can see that.
+            if ours and theirs and not (set(theirs) & ours):
                 out.append((record, sum(theirs.values()), sum(mine.values()),
-                            list(theirs), sorted(calling), "TARGETS"))
+                            list(theirs), sorted(calling),
+                            "TARGETS" if not unknown
+                            else f"TARGETS/{len(unknown)}-unresolved"))
                 continue
         if sum(theirs.values()) != sum(mine.values()):
             # WHICH ONES, on the tree's side. The object's call target is a
@@ -231,11 +243,13 @@ if __name__ == "__main__":
     for row in shown:
         record, theirs, mine, targets, calling = row[:5]
         kind = row[5] if len(row) > 5 else None
-        if kind == "TARGETS":
+        if kind and kind.startswith("TARGETS"):
             names = ", ".join(named.get(t, f"0x{t:08X}") or f"0x{t:08X}"
                               for t in targets[:4])
+            doubt = ("" if kind == "TARGETS"
+                     else f"  ({kind.split('/')[1]}, see below)")
             print(f"  {record.address_hex}  {mine} call(s) on each side, but "
-                  f"NONE of the image's callees - WRONG CALLEE")
+                  f"NONE of the image's callees - WRONG CALLEE{doubt}")
             print(f"      {record.path.name:22s} {record.name}")
             print(f"      image calls: {names}")
             print(f"      this tree calls: {', '.join(calling[:4])}")
