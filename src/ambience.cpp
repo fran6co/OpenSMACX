@@ -529,11 +529,10 @@ void Ambience::construct() {
     volatile uint8_t *const bytes = reinterpret_cast<volatile uint8_t *>(this);
     object[0x04 / 4] = 0x7F;
     object[0x08 / 4] = 0;
-    // memset(this + 0x0C, 0, 0x24) at 0x004C849A. The region is dword aligned
-    // and 0x24 is a multiple of four, so a dword fill reaches the same bytes.
-    for (size_t offset = 0x0C; offset < 0x30; offset += 4) {
-        object[offset / 4] = 0;
-    }
+    // LEVER: real `call memset` in the image (0x004C849A), not a store loop -
+    // same shape as Wave's constructor. Cast away `volatile` only for the
+    // memset argument; the re-loads below still go through `object`/`bytes`.
+    memset(const_cast<uint32_t *>(&object[0x0C / 4]), 0, 0x24);
     object[0x30 / 4] = 0;
     object[0x44 / 4] = 0;
     object[0x48 / 4] = 0;
@@ -542,12 +541,13 @@ void Ambience::construct() {
     // memset to zero at 0x004C84BE, then the loaded bit cleared at 0x004C84C8
     // - a no-op on the zero just stored - then bit 3 set below: net 8, where
     // Wave nets 4.
-    object[0x40 / 4] = 0;
+    memset(const_cast<uint32_t *>(&object[0x40 / 4]), 0, 4);
+    object[0x40 / 4] &= ~1u;
     object[0x38 / 4] = 0x3E8;
     object[0x50 / 4] = 0;
     // memset(this + 0x54, 0, 1) at 0x004C84F5: one byte, not Wave's four. The
     // original leaves 0x55..0x57 alone, so no defensive widening here.
-    bytes[0x54] = 0;
+    memset(const_cast<uint8_t *>(&bytes[0x54]), 0, 1);
     // Re-read, do NOT fold into the stores above: the original reloads the
     // flag dword at 0x004C84FA and the flag byte at 0x004C84FC after their own
     // zeroing, and stores them back at 0x004C8507 and 0x004C850D in that

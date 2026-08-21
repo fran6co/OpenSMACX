@@ -2633,17 +2633,24 @@ int Buffer::write_l(LPSTR text, RECT *rect, int len) {
     if (!font1_ || !font1_->is_initialized()) {
         return 0;
     }
-    const int measured = static_cast<int>(strlen(text));
-    const int limit = (measured < len) ? measured : len;
-    if (limit <= 0) {
+    // FOUR STRLEN CALLS - the image's `MIN` macro, used twice, each use
+    // evaluating its argument twice - same shape as write_cent_l/
+    // write_cent_l(rect) below: `< 0` and `== 0` as two separate guards
+    // sharing this body's one epilogue.
+    int limit;
+    if (BUFFER_MIN(static_cast<int>(strlen(text)), len) < 0 ||
+        (limit = BUFFER_MIN(static_cast<int>(strlen(text)), len)) == 0) {
         return 0;
     }
-    const uint32_t left = edge_bits(rect->left);
-    const uint32_t top = edge_bits(rect->top);
-    const uint32_t bottom = edge_bits(rect->bottom);
-    const int y_span = edge_int(bottom - edge_bits(font1_->height_) - top);
-    const int y_coord = edge_int(top + edge_bits(y_span / 2));
-    return write_multi_font_raw_l(text, edge_int(left), y_coord, limit);
+    // LEVER: the image's call list for this body is just
+    // write_multi_font_raw_l + strlen - no edge_bits/edge_int round trip
+    // (image never calls anything for the vertical-centre math, it is plain
+    // wrapping int arithmetic). Using rect->left/top/bottom and
+    // font1_->height_ directly, without the memcpy bit-cast, drops the two
+    // extra calls the image does not make.
+    const int y_span = (rect->bottom - font1_->height_) - rect->top;
+    const int y_coord = rect->top + y_span / 2;
+    return write_multi_font_raw_l(text, rect->left, y_coord, limit);
 }
 
 int __fastcall buffer_write_l_rect_redirect(Buffer *self, void *, LPSTR text,

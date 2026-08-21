@@ -899,7 +899,12 @@ void Scroll::compute_thumb_rect(RECT *rect) {
         if (maximum != minimum) {
             const uint32_t numerator = (read_bits(this, 0xA2C) - minimum)
                 * (axis_length + adjustment);
-            thumb_offset += signed_divide(numerator, maximum - minimum);
+            // LEVER: the image makes NO calls at all in this body -
+            // signed_divide/arithmetic_shift_right_one/signed_min are
+            // hand-inlined here rather than called, matching call_diff's
+            // "this tree 3, image 0" gap.
+            thumb_offset += static_cast<uint32_t>(
+                long_from_bits(numerator) / long_from_bits(maximum - minimum));
         }
         if (horizontal) {
             write_bits(rect, 0, read_bits(rect, 0) + thumb_offset);
@@ -912,7 +917,7 @@ void Scroll::compute_thumb_rect(RECT *rect) {
         const bool no_end_buttons = (read_bits(this, 0xA14) & 2U) != 0;
         const uint32_t far_edge = left + extent;
         const uint32_t candidate = drag_coordinate
-            + arithmetic_shift_right_one(extent);
+            + ((extent >> 1U) | (extent & 0x80000000U));
         write_bits(this, 0xA3C, candidate);
         const uint32_t height = 0U - read_bits(this, 0x4C8);
         const uint32_t width = read_bits(this, 0x4C4);
@@ -920,7 +925,8 @@ void Scroll::compute_thumb_rect(RECT *rect) {
         const uint32_t axis_length = horizontal ? width : height;
         const uint32_t upper = axis_length - (no_end_buttons
             ? far_edge : far_edge * 2U);
-        const uint32_t limited = signed_min(candidate, upper);
+        const uint32_t limited =
+            (long_from_bits(candidate) < long_from_bits(upper)) ? candidate : upper;
         if (no_end_buttons) {
             thumb_offset = long_from_bits(limited) < 0 ? 0U : limited;
         } else if (long_from_bits(far_edge) > long_from_bits(limited)) {

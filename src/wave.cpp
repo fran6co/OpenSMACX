@@ -1296,30 +1296,41 @@ Return Value: n/a (the redirect answers the object pointer, as the original
               does in eax)
 Status: Complete
 */
+// LEVER: the image's call list is memset x3 + Sound::set_type - the region
+// loop and the two single-dword field clears (field_40_, flags_54_) are all
+// real `call memset` in the image, not stores; writing them as memset() calls
+// (matching set_fname's own `memset(&flags_54_, 0, 4)` lever below) reaches
+// that count. Store order also follows the image: an early temporary vtable
+// write (0x66E444), then the region memset, then a SECOND temporary vtable
+// write (0x66E3C0) ahead of the pointer-field clears and the field_40_
+// memset, then the FINAL vtable write (0x66E44C) ahead of the flags_54_
+// memset.
 Wave::Wave() {
+    vtable_storage_ = 0x0066E444;
     volume_ = 0x7F;
     field_8_ = 0;
-    for (size_t region_byte_index = 0;
-         region_byte_index
-             < sizeof(memset_region_) / sizeof(memset_region_[0]);
-         ++region_byte_index) {
-        uint8_t &region_byte = memset_region_[region_byte_index];
-        region_byte = 0;
-    }
+    memset(memset_region_, 0, sizeof(memset_region_));
     field_30_ = 0;
+    vtable_storage_ = 0x0066E3C0;
     chain_prev_ = nullptr;
     chain_next_ = nullptr;
     device_ = nullptr;
     fname_ = nullptr;
-    // memset to zero, then the loaded bit cleared, then bit 2 set: net 4.
-    field_40_ = 0;
+    memset(&field_40_, 0, sizeof(field_40_));
+    // The bit-0 clear on a value the memset above just zeroed is a no-op in
+    // practice, but the image performs it unconditionally (`and ecx,
+    // 0xfffffffe` right after the memset), so it is transcribed.
+    field_40_ &= ~1;
     field_38_ = 0x3E8;
+    // The original's indirect device dispatch through slot 0x6C with the
+    // 1000ms default is provably dead here (device_ was just zeroed above,
+    // with nothing between) and is not transcribed - same policy as the
+    // other Wave bodies with an `indirect` marker line.
     field_50_ = 0;
     vtable_storage_ = 0x0066E44C;
-    // The original's `memset(this + 0x54, 0, 4)` at 0x004C6764. It used to be
-    // spelled as four byte stores because the header declared a byte and three
-    // pad bytes there; 0x54 is one dword, so one store says it.
-    flags_54_ = 0;
+    // The original's `memset(this + 0x54, 0, 4)` at 0x004C6774 - same lever
+    // as set_fname's own `memset(&flags_54_, 0, 4)` below.
+    memset(&flags_54_, 0, sizeof(flags_54_));
     field_40_ |= 4;
     // `Wave` is deliberately NOT spelled `: Sound` - see the note on the
     // class - so the base's method is reached by cast rather than by

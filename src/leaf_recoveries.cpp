@@ -1615,12 +1615,19 @@ Purpose: Destroy the ListBox at 0x48, the Dialog at 0xa60, and the GraphicWin
 Return Value: n/a
 Status: Complete
 */
+// LEVER: the image's three calls are direct E8s to the destructors
+// themselves - going through the `Leaf*Destructor` pointer variables compiles
+// `call dword ptr [...]` and call_diff reports 0 real calls for it. Every
+// OTHER caller of these redirects (basebutton.cpp, dialogs.cpp, pulldown.cpp,
+// scroll.cpp) already calls them by name; doing the same here reaches the
+// image's call sequence. The `Leaf*Destructor` globals stay declared for the
+// fixture use the comment above describes - nothing currently reads them.
 void __fastcall leaf_004080b0_redirect(void *self, void *) {
     uint8_t *const bytes = static_cast<uint8_t *>(self);
     uint8_t *const inner = bytes + ListBoxDestructorAdjustment;
-    LeafListBoxDestructor(inner, nullptr);
-    LeafDialogDestructor(reinterpret_cast<Dialog *>(bytes + 0xA60), nullptr);
-    LeafGraphicWinDestructor(reinterpret_cast<GraphicWin *>(inner), nullptr);
+    list_box_destructor_redirect(inner, nullptr);
+    dialog_destructor_redirect(reinterpret_cast<Dialog *>(bytes + 0xA60), nullptr);
+    graphic_win_destructor_redirect(reinterpret_cast<GraphicWin *>(inner), nullptr);
 }
 
 /*
@@ -1642,12 +1649,14 @@ Purpose: Destroy the Dialogs at 0x188, the Dialog at 0xba0, and the GraphicWin
 Return Value: n/a
 Status: Complete
 */
+// LEVER: same fix as leaf_004080b0_redirect above - direct calls to the
+// named redirects, not through the `Leaf*Destructor` pointer variables.
 void __fastcall leaf_00406af0_redirect(void *self, void *) {
     uint8_t *const bytes = static_cast<uint8_t *>(self);
     uint8_t *const inner = bytes + DialogsDestructorAdjustment;
-    LeafDialogsDestructor(inner, nullptr);
-    LeafDialogDestructor(reinterpret_cast<Dialog *>(bytes + 0xBA0), nullptr);
-    LeafGraphicWinDestructor(reinterpret_cast<GraphicWin *>(inner), nullptr);
+    dialogs_destructor_redirect(inner, nullptr);
+    dialog_destructor_redirect(reinterpret_cast<Dialog *>(bytes + 0xBA0), nullptr);
+    graphic_win_destructor_redirect(reinterpret_cast<GraphicWin *>(inner), nullptr);
 }
 
 // load_deswin_sprites' two callees, seams for the same reason the destructor
