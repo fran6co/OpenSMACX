@@ -21,6 +21,17 @@ uncommitted work, and the fix is to hand that diff back first.
 Working in a worktree is why you can edit freely: nothing you touch collides
 with another agent.
 
+BEFORE YOU GRIND A BODY
+- `uv run tools/handwritten_asm.py` lists bodies whose shipped bytes use
+  opcodes VC6 never emits - `loop`, bare `lodsb`, `xlatb`. Those were inline
+  assembly in the original, byte-exactness is NOT reachable from C++, and the
+  ceiling is semantic equivalence. Seven are already marked in the tree.
+  DO NOT answer one of these with `__asm`: a semantic C++ body is worth more
+  than a byte-exact assembly one.
+- `uv run tools/listing_diff.py <addr>` prints EVERY divergence, aligned and
+  relocation-masked. `measure` reports only the first, which on `Buffer::hline`
+  was a jump whose target had moved because of something 70 instructions later.
+
 PICKING A BATCH (for whoever hands one out)
 - `uv run tools/frontier.py --fresh` lists WinMain-reachable bodies with no
   `RULED-OUT:` notes on them. Rows without `--fresh` carry `[N ruled-out]`.
