@@ -18,8 +18,7 @@
 #include "stdafx.h"
 #include "texture.h"
 #include <new>
-
-func_texture_free *TextureFree = (func_texture_free *)0x00644EF2;
+#include <stdlib.h>
 
 /*
 Purpose: Start an empty texture - no pixels, no descriptors, not borrowed.
@@ -57,7 +56,7 @@ Status: Complete
 */
 Texture::~Texture() {
     if (pixels_ && !borrowed_) {
-        TextureFree(pixels_);
+        free(pixels_);
         // Written through a volatile view for the same reason
         // TextureStore::~TextureStore does: this is the last store of a
         // destructor, so nothing in C++ can observe it and an optimising
@@ -86,7 +85,7 @@ Status: Complete
 */
 void Texture::close() {
     if (pixels_ && !borrowed_) {
-        TextureFree(pixels_);
+        free(pixels_);
         pixels_ = nullptr;
     }
     iWidth_ = 0;

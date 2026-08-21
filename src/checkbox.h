@@ -56,6 +56,9 @@
   */
 class CheckBox {
  public:
+  // 0x0060ECE0, a pending_bodies forwarder. BasePop::write_check reaches it
+  // on the CheckBox at its own +0x2228.
+  void set_state_flag(long value);
   // `static`: the image's name ends in `QAA` - a public member declared
   // __cdecl, taking no receiver - and jackal_init_real calls it with no
   // ecx set up, so `Class::method()` is the only legal spelling.

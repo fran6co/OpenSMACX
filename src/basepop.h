@@ -20,6 +20,7 @@
 #include "original_seam.h"
 #include "graphicwin.h"
 #include "dialogs.h"
+#include "checkbox.h"
 #include "flatbutton.h"
 
  /*
@@ -173,6 +174,20 @@ class BasePop : GraphicWin {
   uint32_t field_21C8_;
   uint32_t field_21CC_;
   uint8_t dialogs_[0xC94];
+
+ public:
+  // The CheckBox subobject at 0x2228, which is INSIDE `dialogs_` above. Not
+  // carved out as a member: CheckBox has virtual bases, so declaring one here
+  // would give BasePop a generated constructor writing vbtables the image's
+  // does not write. Until the block is split this is the one place the
+  // address arithmetic lives, and it is typed - the call it feeds compiles
+  // `call rel32` like the image's, which a pointer-to-member could not.
+  CheckBox *check_box() {
+    return reinterpret_cast<CheckBox *>(
+        reinterpret_cast<uint8_t *>(this) + 0x2228);
+  }
+
+ private:
   uint32_t field_2E64_;
   uint32_t field_2E68_;
   uint32_t field_2E6C_;
@@ -422,10 +437,6 @@ class BasePop : GraphicWin {
   uint32_t field_322C_;
 };
 
-// CheckBox::set_state_flag is not recovered; write_check reaches it on the
-// CheckBox member at 0x2228.
-typedef void (OriginalObject::*func_set_state_flag)(long);
-extern func_set_state_flag CheckBoxOriginalSetStateFlag;
 
 void __fastcall base_pop_write_check_redirect(BasePop *self, void *, long value);
 

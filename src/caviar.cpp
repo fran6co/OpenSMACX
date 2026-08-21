@@ -39,15 +39,12 @@ Status: Complete
 CaviarData::CaviarData() : field_0_(0), fileDescriptor_(0), record_(nullptr) {
 }
 
-func_caviar_free_record *CaviarDataFreeRecord =
-    (func_caviar_free_record *)0x00638430;
-
 /*
 Purpose: Release the record this data slot owns. A slot with no record is left
          entirely untouched; otherwise the helper walks the record and frees
          its members, and the slot forgets it. The two leading fields keep
          whatever they held either way.
-// ORIGINAL: 0x00616C60 ?close@CaviarData@@QAEXXZ 0x00616C60-0x00616C7C
+// ORIGINAL: 0x00616C60 ?close@CaviarData@@QAEXXZ 0x00616C60-0x00616C7C BYTE_EXACT
 // size      28 bytes
 // prototype void (__thiscall ?close@CaviarData@@QAEXXZ)(CaviarData* this)
 // callers   1   call targets   1
@@ -59,7 +56,7 @@ Status: Complete
 */
 void CaviarData::close() {
     if (record_) {
-        CaviarDataFreeRecord(record_);
+        caviar_free_record(record_);
         record_ = nullptr;
     }
 }
@@ -355,13 +352,10 @@ void __fastcall caviar_unk10_redirect(Caviar *self, void *, int a1, int a2, int 
     self->UNK10(a1, a2, a3);
 }
 
-func_apply_rotation *CaviarOriginalApplyRotation =
-    (func_apply_rotation *)0x00627D00;
-
 /*
 Purpose: Set the scene's rotation, handing the three angles and the matrix at
          0x38 to the helper that applies them.
-// ORIGINAL: 0x00618370 ?set_scene_rotation@Caviar@@QAEXMMM@Z 0x00618370-0x0061839F
+// ORIGINAL: 0x00618370 ?set_scene_rotation@Caviar@@QAEXMMM@Z 0x00618370-0x0061839F BYTE_EXACT
 // size      47 bytes
 // prototype void (__thiscall ?set_scene_rotation@Caviar@@QAEXMMM@Z)(Caviar* this, float, float, float)
 // callers   13   call targets   1
@@ -373,8 +367,7 @@ Status: Complete
 */
 void Caviar::set_scene_rotation(float x, float y, float z) {
     float angles[3] = {x, y, z};
-    CaviarOriginalApplyRotation(angles,
-                                reinterpret_cast<uint8_t *>(this) + 0x38);
+    caviar_apply_rotation(angles, reinterpret_cast<uint8_t *>(this) + 0x38);
 }
 
 void __fastcall caviar_set_scene_rotation_redirect(Caviar *self, void *,

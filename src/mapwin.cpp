@@ -23,6 +23,7 @@
 #include "worldwin.h"
 #include "spritebox.h"
 #include <cstring>
+#include <stdlib.h>
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
@@ -90,13 +91,11 @@ void __fastcall map_win_main_caption_redirect(MapWin *self, void *) {
     self->main_caption();
 }
 
-func_map_win_free *MapWinFree = (func_map_win_free *)0x00644EF2;
-
 /*
 Purpose: Close the map window - free the buffer it owns at 0x4, then close its
          graphic base. The base is located through the object's own vbtable,
          not a fixed offset, so an embedded MapWin closes its own base.
-// ORIGINAL: 0x00470F70 ?close@MapWin@@QAEXXZ 0x00470F70-0x00470F98
+// ORIGINAL: 0x00470F70 ?close@MapWin@@QAEXXZ 0x00470F70-0x00470F98 BYTE_EXACT
 // size      40 bytes
 // prototype void (__thiscall ?close@MapWin@@QAEXXZ)(MapWin* this)
 // callers   4   call targets   2
@@ -108,7 +107,7 @@ Status: Complete
 */
 void MapWin::close() {
     if (owned_) {
-        MapWinFree(owned_);
+        free(owned_);
         owned_ = nullptr;
     }
     const int32_t *const vbtable =

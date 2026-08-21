@@ -102,6 +102,19 @@
 #define PENDING_BODY(address, signature) \
     reinterpret_cast<signature>(static_cast<unsigned long>(address))
 
+// sub_627d00 at 0x00627D00 - applies three Euler angles to a matrix.
+void __cdecl caviar_apply_rotation(float *angles, void *matrix) {
+    typedef void(__cdecl *pending)(float *, void *);
+    PENDING_BODY(0x00627D00, pending)(angles, matrix);
+}
+
+// sub_638430 at 0x00638430 - the helper that walks a Caviar record and frees
+// its members. A free function, so the forwarder is one too.
+void __cdecl caviar_free_record(void *record) {
+    typedef void(__cdecl *pending)(void *);
+    PENDING_BODY(0x00638430, pending)(record);
+}
+
 // ?draw@Sprite@@QAEHPAUBuffer@@HHH@Z at 0x005E4B9A - 3225 bytes, the blitter
 // the six-argument overload wraps with a substituted origin. Called by name,
 // so it gets a forwarder rather than a pointer.
@@ -516,6 +529,11 @@ void Scroll::on_mousewheel_up(int a1) {  // 0x00606440
 void ReplayWin::timer_callback() {  // 0x005AD9E0
     typedef void(__fastcall *pending)(ReplayWin *, void *);
     PENDING_BODY(0x005AD9E0, pending)(this, nullptr);
+}
+
+void CheckBox::set_state_flag(long value) {  // 0x0060ECE0
+    typedef void(__fastcall *pending)(CheckBox *, void *, long);
+    PENDING_BODY(0x0060ECE0, pending)(this, nullptr, value);
 }
 
 // ?write_raw_l@Buffer@@QAEHPADHHH@Z at 0x005DBD00 - 1475 bytes, the raster

@@ -124,8 +124,9 @@ void __fastcall caviar_data_close_redirect(CaviarData *self, void *);
 
 // The 413-byte helper that walks the record and frees its members is not yet
 // source-owned, so close reaches it through a rebindable dependency.
-typedef void(__cdecl func_caviar_free_record)(void *record);
-extern func_caviar_free_record *CaviarDataFreeRecord;
+// 0x00638430, a pending_bodies forwarder. A POINTER here cost CaviarData::close
+// a `call dword ptr [...]` where the image has `call rel32`.
+void __cdecl caviar_free_record(void *record);
 Caviar *__fastcall caviar_construct_redirect(Caviar *self, void *);
 void __fastcall caviar_set_camera_direct_redirect(
     Caviar *self, void *, const VOX_Vect *camera, const VOX_Matrix *matrix);
@@ -143,8 +144,9 @@ void __fastcall caviar_unk8_redirect(Caviar *self, void *, int a1);
 void __fastcall caviar_unk10_redirect(Caviar *self, void *, int a1, int a2, int a3);
 
 // The rotation is applied by a helper that is not recovered yet.
-typedef void (__cdecl func_apply_rotation)(float *, void *);
-extern func_apply_rotation *CaviarOriginalApplyRotation;
+// 0x00627D00, a pending_bodies forwarder, for the same reason as
+// `caviar_free_record` above.
+void __cdecl caviar_apply_rotation(float *angles, void *matrix);
 
 void __fastcall caviar_set_scene_rotation_redirect(Caviar *self, void *,
                                                    float x, float y, float z);

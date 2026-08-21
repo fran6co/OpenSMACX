@@ -24,7 +24,7 @@ int Time::TimeInitCount;
 
 /*
 Purpose: Initialize an instance of the class with a single parameter callback.
-// ORIGINAL: 0x00616260 ?init@Time@@QAEXP6AXH@ZHHH@Z 0x00616260-0x006162CE
+// ORIGINAL: 0x00616260 ?init@Time@@QAEXP6AXH@ZHHH@Z 0x00616260-0x006162CE BYTE_EXACT
 // symbol    ?init@Time@@QAEXP6AXH@ZHII@Z
 // size      110 bytes
 // prototype void (__thiscall ?init@Time@@QAEXP6AXH@ZHHH@Z)(Time* this, void (__cdecl *)(int this), int, int, int)
@@ -37,21 +37,24 @@ Return Value: n/a
 Status: Complete
 */
 void Time::init(void(__cdecl *callback)(int), int param, uint32_t cnt, uint32_t res) {
+    // IN THE IMAGE'S STORE ORDER at 0x006162AA: callback1_, then the four
+    // zeroed fields out of declaration order (oneshot_state_, tick_posted_,
+    // unk_2_, callback2_, cb_param2_), then the three arguments.
     stop();
-    oneshot_state_ = 0;
     callback1_ = callback;
+    oneshot_state_ = 0;
+    tick_posted_ = 0;
+    unk_2_ = 0;
     callback2_ = 0;
     cb_param2_ = 0;
     cb_param1_ = param;
     count_ = cnt;
-    tick_posted_ = 0;
     resolution_ = res;
-    unk_2_ = 0;
 }
 
 /*
 Purpose: Initialize an instance of the class with a two parameter callback.
-// ORIGINAL: 0x006162D0 ?init@Time@@QAEXP6AXHH@ZHHHH@Z 0x006162D0-0x00616342
+// ORIGINAL: 0x006162D0 ?init@Time@@QAEXP6AXHH@ZHHHH@Z 0x006162D0-0x00616342 BYTE_EXACT
 // symbol    ?init@Time@@QAEXP6AXHH@ZHHII@Z
 // size      114 bytes
 // prototype void (__thiscall ?init@Time@@QAEXP6AXHH@ZHHHH@Z)(Time* this, void (__cdecl *)(int this, int), int, int, int, int)
@@ -65,16 +68,18 @@ Status: Complete
 */
 void Time::init(void(__cdecl *callback)(int, int), int param, int param2, uint32_t cnt, 
                 uint32_t res) {
+    // IN THE IMAGE'S STORE ORDER at 0x0061631A, which is not the one-argument
+    // overload's: the two callback fields come first here.
     stop();
-    oneshot_state_ = 0;
-    callback1_ = 0;
     callback2_ = callback;
     cb_param2_ = param2;
+    oneshot_state_ = 0;
+    tick_posted_ = 0;
+    unk_2_ = 0;
+    callback1_ = 0;
     cb_param1_ = param;
     count_ = cnt;
-    tick_posted_ = 0;
     resolution_ = res;
-    unk_2_ = 0;
 }
 
 /*

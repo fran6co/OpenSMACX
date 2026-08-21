@@ -69,7 +69,6 @@ static_assert(sizeof(PullDown) == 0xF40,
 // Item text allocations come from the executable's CRT, so the destructor
 // must release them through its free rather than this module's. Tests
 // outside the hybrid process rebind this.
-extern func_sprite_free *PullDownFree;
 
 // Original virtual table addresses the destructor installs before delegating
 // to the GraphicWin destructor (which then overwrites both with its own).
