@@ -52,14 +52,8 @@ uint32_t Language;  // 0x009BC054
 
 /*
 Purpose: Convert the tech name string to a numeric tech id.
-// ORIGINAL: 0x00584D60 ?tech_name@@YAHPAD@Z 0x00584D60-0x00584E3B
-// LEVER: same defect as chas_name/weap_name/arm_name (0x00584E40 etc.) -
-//        `purge_trailing` is not in this function's own call list either;
-//        the image hand-inlines the naive recomputed-`strlen` trim loop.
-//        8/88 -> 27/88.
-// RULED-OUT: same plateau as chas_name - `mov bl, 0x20` (image) vs an
-//            immediate compare, first divergence right where the trim loop
-//            starts. Best across every flag set tried.
+// ORIGINAL: 0x00584D60 ?tech_name@@YAHPAD@Z 0x00584D60-0x00584E3B BYTE_EXACT
+// LEVER: same defect as chas_name/weap_name/arm_name (0x00584E40 etc.) - `purge_trailing` is not in this function's own call list either; the image hand-inlines the naive recomputed-`strlen` trim loop. 8/88 -> 27/88.
 // size      219 bytes
 // prototype int (__cdecl ?tech_name@@YAHPAD@Z)(int8* techID)
 // callers   6   call targets   4
@@ -74,13 +68,11 @@ int __cdecl tech_name(LPSTR name) {
     // as chas_name/weap_name/arm_name (see chas_name's comment) - the image
     // never calls a trim helper here either (not in this function's own
     // call list).
-    if (strlen(name) != 0) {
-        do {
-            if (name[strlen(name) - 1] != ' ') {
-                break;
-            }
-            name[strlen(name) - 1] = 0;
-        } while (strlen(name) != 0);
+    while (strlen(name) != 0) {
+        if (name[strlen(name) - 1] != ' ') {
+            break;
+        }
+        name[strlen(name) - 1] = 0;
     }
     if (!_stricmp(name, "None")) {
         return NoneValue;
@@ -104,6 +96,15 @@ int __cdecl tech_name(LPSTR name) {
 Purpose: Convert the chassis name string to a numeric chassis id.
 // ORIGINAL: 0x00584E40 ?chas_name@@YAHPAD@Z 0x00584E40-0x00584F33
 // RULED-OUT: a `purge_trailing(name)` call - the image hand-inlines a NAIVE trim that recomputes `strlen` on every access (4 calls: check, loop-top compare, store index, continue condition) instead of one cached-length pointer walk. Restoring that shape took the call count from 9 to the image's 12; still MISMATCH on register choice (`mov bl,0x20` vs an immediate compare) and downstream byte offsets - not chased further, see weap_name/arm_name (identical).
+// LEVER: the trim loop was `if (strlen(name) != 0) { do {...} while (strlen(name) != 0); }`,
+//   which VC6 compiles as one copy of the head duplicated at the bottom (+6 instructions past the
+//   image's single `jne` backedge). A plain `while (strlen(name) != 0) { if (...) break; ...; }`
+//   is the image's rotated-while shape with one head. Moved 20/98 -> 55/98 agreeing.
+// RULED-OUT (still open): the chas_id loop's `_stricmp(name, Chassis[chas_id].offsv_1_name)`
+//   diverges at instruction 53 - the image resolves the comparison string through
+//   `StringTable->get(...)` (`call 0x6169a0`, the same idiom say_tech uses for label lookups)
+//   before the ecx pointer switches over; this tree compares the field directly. Not chased -
+//   may mean a different field or a `Strings::get` indirection is missing here.
 // size      243 bytes
 // prototype 
 // callers   1   call targets   5
@@ -121,13 +122,11 @@ int __cdecl chas_name(LPSTR name) {
     // 0x006007B0's `purge_spaces`, which DOES call `purge_trailing` and
     // shows only one `strlen`). weap_name and arm_name repeat this same
     // hand-written loop verbatim.
-    if (strlen(name) != 0) {
-        do {
-            if (name[strlen(name) - 1] != ' ') {
-                break;
-            }
-            name[strlen(name) - 1] = 0;
-        } while (strlen(name) != 0);
+    while (strlen(name) != 0) {
+        if (name[strlen(name) - 1] != ' ') {
+            break;
+        }
+        name[strlen(name) - 1] = 0;
     }
     if (!_stricmp(name, "None")) {
         return NoneValue;
@@ -151,6 +150,11 @@ int __cdecl chas_name(LPSTR name) {
 Purpose: Convert the weapon name string to a numeric weapon id.
 // ORIGINAL: 0x00584F40 ?weap_name@@YAHPAD@Z 0x00584F40-0x00585030
 // RULED-OUT: as chas_name (0x00584E40) - the naive recomputed-`strlen` trim loop, not `purge_trailing`. Call count 9 -> 12, still MISMATCH (register choice for the space literal).
+// LEVER: same as chas_name - `if (strlen != 0) { do {...} while; }` duplicated the loop head;
+//   a plain `while (strlen(name) != 0) { if (...) break; ...; }` matches the image's single
+//   backedge. Moved 20/98 -> 55/98 agreeing.
+// RULED-OUT (still open): same weap_id-loop StringTable->get() divergence as chas_name, not
+//   chased further this pass.
 // size      240 bytes
 // prototype 
 // callers   1   call targets   5
@@ -163,13 +167,11 @@ Status: Complete
 int __cdecl weap_name(LPSTR name) {
     // NOT `purge_trailing(name)` - see chas_name's comment; this repeats the
     // same hand-written, non-cached-length trim loop verbatim.
-    if (strlen(name) != 0) {
-        do {
-            if (name[strlen(name) - 1] != ' ') {
-                break;
-            }
-            name[strlen(name) - 1] = 0;
-        } while (strlen(name) != 0);
+    while (strlen(name) != 0) {
+        if (name[strlen(name) - 1] != ' ') {
+            break;
+        }
+        name[strlen(name) - 1] = 0;
     }
     if (!_stricmp(name, "None")) {
         return NoneValue;
@@ -193,6 +195,15 @@ int __cdecl weap_name(LPSTR name) {
 Purpose: Convert the armor name string to a numeric armor id.
 // ORIGINAL: 0x00585030 ?arm_name@@YAHPAD@Z 0x00585030-0x00585120
 // RULED-OUT: as chas_name (0x00584E40) - the naive recomputed-`strlen` trim loop, not `purge_trailing`. Call count 9 -> 12, still MISMATCH (register choice for the space literal).
+// LEVER: same as chas_name - the `if (strlen != 0) { do {...} while; }` duplicated-head shape
+//   became a plain `while (strlen(name) != 0) { if (...) break; ...; }`. PLUS a second, distinct
+//   defect: the final `return DisabledValue;` (-2) after X_pop("BADARMKEY",...) should be
+//   `return 0;` - the image's epilogue there is `xor eax,eax` (0x00585112), matching this
+//   function's own documented "error (0)" return and chas_name/weap_name's `return 0;`. Because
+//   the old -2 return matched the earlier 'Disable' early return, VC6 had merged the two exits;
+//   fixing the constant also restored the image's separate epilogue. Moved 24/98 -> 55/98.
+// RULED-OUT (still open): same arm_id-loop StringTable->get() divergence as chas_name, not
+//   chased further this pass.
 // size      240 bytes
 // prototype 
 // callers   1   call targets   5
@@ -205,13 +216,11 @@ Status: Complete
 int __cdecl arm_name(LPSTR name) {
     // NOT `purge_trailing(name)` - see chas_name's comment; this repeats the
     // same hand-written, non-cached-length trim loop verbatim.
-    if (strlen(name) != 0) {
-        do {
-            if (name[strlen(name) - 1] != ' ') {
-                break;
-            }
-            name[strlen(name) - 1] = 0;
-        } while (strlen(name) != 0);
+    while (strlen(name) != 0) {
+        if (name[strlen(name) - 1] != ' ') {
+            break;
+        }
+        name[strlen(name) - 1] = 0;
     }
     if (!_stricmp(name, "None")) {
         return NoneValue;
@@ -228,7 +237,7 @@ int __cdecl arm_name(LPSTR name) {
     parse_says(1, name, -1, -1);
     parse_says(2, TextBufferGetPtr, -1, -1);
     X_pop("BADARMKEY", NULL); // TODO: Fix crash bug if BADTECHKEY is triggered.
-    return DisabledValue;
+    return 0;
 }
 
 /*
@@ -260,6 +269,16 @@ Purpose: Parse the #RULES & #WORLDBUILDER sections inside the alpha(x).txt.
 //        `callers 0`). Landed as a real structural fix; this function is
 //        883 image instructions across ~40 unrelated #SECTIONs and stays
 //        MISMATCH on everything else - not chased further this pass.
+// LEVER: all 83 `X = text_get_number(lo, hi);` sites rewritten as the image's
+//        two-statement `text_get(); X = range(text_item_number(), lo, hi);`
+//        (text_get_number is `MEASURED inline` and expands to the same thing
+//        through text_get_source/text_item_number_source, but the image calls
+//        the zero-arg text_get()/text_item_number() wrappers, not those). Under
+//        the /Ob0 flag set this moved 70/883 -> 129/883 agreeing; osmx's own
+//        similarity-picked flag set switches away from /Ob0 on this larger body
+//        (53/883), so `measure`'s default output understates the win - see
+//        AGENT_BRIEF's MEASURING section on this exact artifact. Still deep
+//        MISMATCH; not chased further this pass.
 // size      3254 bytes
 // prototype 
 // callers   1   call targets   6
@@ -273,25 +292,41 @@ BOOL __cdecl read_basic_rules() {
     if (text_open(AlphaxFileID, "RULES")) {
         return true;
     }
-    Rules->move_rate_roads = text_get_number(1, 100);
-    Rules->nutrient_req_citizen = text_get_number(0, 100);
+    text_get();
+    Rules->move_rate_roads = range(text_item_number(), 1, 100);
+    text_get();
+    Rules->nutrient_req_citizen = range(text_item_number(), 0, 100);
     text_get();
     Rules->artillery_dmg_num = range(text_item_number(), 1, 1000);
     Rules->artillery_dmg_denom = range(text_item_number(), 1, 1000);
-    Rules->artillery_max_rng = text_get_number(1, 8);
-    Rules->max_airdrop_sans_orb_insert = text_get_number(1, 500);
-    Rules->nutrient_cost_multi = text_get_number(1, 100);
-    Rules->mineral_cost_multi = text_get_number(1, 100);
-    Rules->tech_discovery_rate_pct_std = text_get_number(0, 1000);
-    Rules->limit_mineral_mine_sans_road = text_get_number(0, 100);
-    Rules->tgl_nutrient_effect_with_mine = text_get_number(-1, 0); // Weird logic behind -1/0 value
-    Rules->min_base_size_specialists = text_get_number(0, 100);
-    Rules->drones_genejack_factory = text_get_number(0, 100);
-    Rules->pop_limit_sans_hab_complex = text_get_number(1, 100);
-    Rules->pop_limit_sans_hab_dome = text_get_number(1, 100);
-    Rules->extra_pct_cost_proto_land = text_get_number(0, 500);
-    Rules->extra_pct_cost_proto_sea = text_get_number(0, 500);
-    Rules->extra_pct_cost_proto_air = text_get_number(0, 500);
+    text_get();
+    Rules->artillery_max_rng = range(text_item_number(), 1, 8);
+    text_get();
+    Rules->max_airdrop_sans_orb_insert = range(text_item_number(), 1, 500);
+    text_get();
+    Rules->nutrient_cost_multi = range(text_item_number(), 1, 100);
+    text_get();
+    Rules->mineral_cost_multi = range(text_item_number(), 1, 100);
+    text_get();
+    Rules->tech_discovery_rate_pct_std = range(text_item_number(), 0, 1000);
+    text_get();
+    Rules->limit_mineral_mine_sans_road = range(text_item_number(), 0, 100);
+    text_get();
+    Rules->tgl_nutrient_effect_with_mine = range(text_item_number(), -1, 0); // Weird logic behind -1/0 value
+    text_get();
+    Rules->min_base_size_specialists = range(text_item_number(), 0, 100);
+    text_get();
+    Rules->drones_genejack_factory = range(text_item_number(), 0, 100);
+    text_get();
+    Rules->pop_limit_sans_hab_complex = range(text_item_number(), 1, 100);
+    text_get();
+    Rules->pop_limit_sans_hab_dome = range(text_item_number(), 1, 100);
+    text_get();
+    Rules->extra_pct_cost_proto_land = range(text_item_number(), 0, 500);
+    text_get();
+    Rules->extra_pct_cost_proto_sea = range(text_item_number(), 0, 500);
+    text_get();
+    Rules->extra_pct_cost_proto_air = range(text_item_number(), 0, 500);
     text_get();
     Rules->psi_combat_ratio_atk[TRIAD_LAND] = range(text_item_number(), 1, 1000);
     Rules->psi_combat_ratio_def[TRIAD_LAND] = range(text_item_number(), 1, 1000);
@@ -301,35 +336,64 @@ BOOL __cdecl read_basic_rules() {
     text_get();
     Rules->psi_combat_ratio_atk[TRIAD_AIR] = range(text_item_number(), 1, 1000);
     Rules->psi_combat_ratio_def[TRIAD_AIR] = range(text_item_number(), 1, 1000);
-    Rules->player_start_energy_reserve = text_get_number(0, 1000);
-    Rules->combat_pct_base_def = text_get_number(-100, 1000);
-    Rules->combat_pct_atk_road = text_get_number(-100, 1000);
-    Rules->combat_pct_atk_higher_elev = text_get_number(-100, 1000);
-    Rules->combat_pen_pct_atk_lwr_elev = text_get_number(-100, 1000);
-    Rules->combat_pct_mobile_open_ground = text_get_number(-100, 1000);
-    Rules->combat_pct_def_vs_mobile_rough = text_get_number(-100, 1000);
-    Rules->combat_pct_infantry_vs_base = text_get_number(-100, 1000);
-    Rules->combat_pen_pct_atk_airdrop = text_get_number(-100, 1000);
-    Rules->combat_pct_fanatic_atk_bonus = text_get_number(-100, 1000);
-    Rules->combat_pct_land_gun_vs_ship_art = text_get_number(-100, 1000);
-    Rules->combat_pct_art_bonus_lvl_alt = text_get_number(-100, 1000);
-    Rules->combat_pct_trance_def_vs_psi = text_get_number(-100, 1000);
-    Rules->combat_pct_emp_song_atk_vs_psi = text_get_number(-100, 1000);
-    Rules->combat_pen_pct_air_supr_vs_grnd = text_get_number(-100, 1000);
-    Rules->combat_pct_air_supr_vs_air = text_get_number(-100, 1000);
-    Rules->combat_pen_pct_non_cbt_def_vs_cbt = text_get_number(-100, 1000);
-    Rules->combat_pct_com_jam_def_vs_mobl = text_get_number(-100, 1000);
-    Rules->combat_pct_bonus_vs_ship_port = text_get_number(-100, 1000);
-    Rules->combat_pct_aaa_bonus_vs_air = text_get_number(-100, 1000);
-    Rules->combat_pct_def_range_sensor = text_get_number(-100, 1000);
-    Rules->combat_pct_psi_atk_bonus_planet = text_get_number(-100, 1000);
-    Rules->retool_pct_pen_prod_chg = text_get_number(0, 100);
-    Rules->retool_strictness = text_get_number(0, 3); // Bug fix: increased max param to 3
-    Rules->retool_exemption = text_get_number(0, 1000);
-    Rules->min_turns_councils = text_get_number(0, 1000);
-    Rules->minerals_harvesting_forest = text_get_number(0, 100);
-    Rules->territory_max_dist_base = text_get_number(0, 100);
-    Rules->turns_corner_gbl_energy_mrkt = text_get_number(1, 100);
+    text_get();
+    Rules->player_start_energy_reserve = range(text_item_number(), 0, 1000);
+    text_get();
+    Rules->combat_pct_base_def = range(text_item_number(), -100, 1000);
+    text_get();
+    Rules->combat_pct_atk_road = range(text_item_number(), -100, 1000);
+    text_get();
+    Rules->combat_pct_atk_higher_elev = range(text_item_number(), -100, 1000);
+    text_get();
+    Rules->combat_pen_pct_atk_lwr_elev = range(text_item_number(), -100, 1000);
+    text_get();
+    Rules->combat_pct_mobile_open_ground = range(text_item_number(), -100, 1000);
+    text_get();
+    Rules->combat_pct_def_vs_mobile_rough = range(text_item_number(), -100, 1000);
+    text_get();
+    Rules->combat_pct_infantry_vs_base = range(text_item_number(), -100, 1000);
+    text_get();
+    Rules->combat_pen_pct_atk_airdrop = range(text_item_number(), -100, 1000);
+    text_get();
+    Rules->combat_pct_fanatic_atk_bonus = range(text_item_number(), -100, 1000);
+    text_get();
+    Rules->combat_pct_land_gun_vs_ship_art = range(text_item_number(), -100, 1000);
+    text_get();
+    Rules->combat_pct_art_bonus_lvl_alt = range(text_item_number(), -100, 1000);
+    text_get();
+    Rules->combat_pct_trance_def_vs_psi = range(text_item_number(), -100, 1000);
+    text_get();
+    Rules->combat_pct_emp_song_atk_vs_psi = range(text_item_number(), -100, 1000);
+    text_get();
+    Rules->combat_pen_pct_air_supr_vs_grnd = range(text_item_number(), -100, 1000);
+    text_get();
+    Rules->combat_pct_air_supr_vs_air = range(text_item_number(), -100, 1000);
+    text_get();
+    Rules->combat_pen_pct_non_cbt_def_vs_cbt = range(text_item_number(), -100, 1000);
+    text_get();
+    Rules->combat_pct_com_jam_def_vs_mobl = range(text_item_number(), -100, 1000);
+    text_get();
+    Rules->combat_pct_bonus_vs_ship_port = range(text_item_number(), -100, 1000);
+    text_get();
+    Rules->combat_pct_aaa_bonus_vs_air = range(text_item_number(), -100, 1000);
+    text_get();
+    Rules->combat_pct_def_range_sensor = range(text_item_number(), -100, 1000);
+    text_get();
+    Rules->combat_pct_psi_atk_bonus_planet = range(text_item_number(), -100, 1000);
+    text_get();
+    Rules->retool_pct_pen_prod_chg = range(text_item_number(), 0, 100);
+    text_get();
+    Rules->retool_strictness = range(text_item_number(), 0, 3); // Bug fix: increased max param to 3
+    text_get();
+    Rules->retool_exemption = range(text_item_number(), 0, 1000);
+    text_get();
+    Rules->min_turns_councils = range(text_item_number(), 0, 1000);
+    text_get();
+    Rules->minerals_harvesting_forest = range(text_item_number(), 0, 100);
+    text_get();
+    Rules->territory_max_dist_base = range(text_item_number(), 0, 100);
+    text_get();
+    Rules->turns_corner_gbl_energy_mrkt = range(text_item_number(), 1, 100);
     Rules->tech_improve_fungus_sqr = tech_item();
     Rules->tech_ease_fungus_movement = tech_item();
     Rules->tech_build_roads_fungus = tech_item();
@@ -340,80 +404,105 @@ BOOL __cdecl read_basic_rules() {
     Rules->tech_orb_insert_sans_spc_elev = tech_item();
     Rules->tech_mining_platform_bonus = tech_item();
     Rules->tech_economic_victory = tech_item();
-    Rules->tgl_probe_can_steal_tech = text_get_number(0, 1); // Fix: Set min param to 0
-    Rules->tgl_human_always_contact_net = text_get_number(0, 1); // Fix: Set min param to 0
-    Rules->tgl_humans_always_contact_pbem = text_get_number(0, 1); // Fix: Set min param to 0
-    Rules->max_pct_dmg_art_vs_unit_base_bnkr = text_get_number(10, 100);
-    Rules->max_pct_dmg_art_vs_units_open = text_get_number(10, 100);
-    Rules->max_pct_dmg_art_vs_units_sea = text_get_number(10, 100);
+    text_get();
+    Rules->tgl_probe_can_steal_tech = range(text_item_number(), 0, 1); // Fix: Set min param to 0
+    text_get();
+    Rules->tgl_human_always_contact_net = range(text_item_number(), 0, 1); // Fix: Set min param to 0
+    text_get();
+    Rules->tgl_humans_always_contact_pbem = range(text_item_number(), 0, 1); // Fix: Set min param to 0
+    text_get();
+    Rules->max_pct_dmg_art_vs_unit_base_bnkr = range(text_item_number(), 10, 100);
+    text_get();
+    Rules->max_pct_dmg_art_vs_units_open = range(text_item_number(), 10, 100);
+    text_get();
+    Rules->max_pct_dmg_art_vs_units_sea = range(text_item_number(), 10, 100);
     text_get();
     Rules->freq_global_warming_num = range(text_item_number(), 0, 1000);
     Rules->freq_global_warming_denom = range(text_item_number(), 1, 1000);
-    Rules->normal_starting_year = text_get_number(0, 999999);
-    Rules->normal_end_year_low_three_diff = text_get_number(0, 999999);
-    Rules->normal_end_year_high_three_diff = text_get_number(0, 999999);
-    Rules->tgl_oblit_base_atrocity = text_get_number(0, 1); // Fix: Set min param to 0
-    Rules->size_base_subspace_gen = text_get_number(1, 999); // SMACX only
-    Rules->subspace_generators_needed = text_get_number(1, 999); // SMACX only
+    text_get();
+    Rules->normal_starting_year = range(text_item_number(), 0, 999999);
+    text_get();
+    Rules->normal_end_year_low_three_diff = range(text_item_number(), 0, 999999);
+    text_get();
+    Rules->normal_end_year_high_three_diff = range(text_item_number(), 0, 999999);
+    text_get();
+    Rules->tgl_oblit_base_atrocity = range(text_item_number(), 0, 1); // Fix: Set min param to 0
+    text_get();
+    Rules->size_base_subspace_gen = range(text_item_number(), 1, 999); // SMACX only
+    text_get();
+    Rules->subspace_generators_needed = range(text_item_number(), 1, 999); // SMACX only
     if (text_open(AlphaxFileID, "WORLDBUILDER")) {
         return 1;
     }
-    WorldBuilder->land_base = text_get_number(50, 4000);
-    WorldBuilder->land_mod = text_get_number(0, 2000);
-    WorldBuilder->continent_base = text_get_number(5, 1000);
-    WorldBuilder->continent_mod = text_get_number(5, 1000);
-    WorldBuilder->hills_base = text_get_number(0, 100);
-    WorldBuilder->hills_mod = text_get_number(0, 100);
-    WorldBuilder->plateau_base = text_get_number(0, 500);
-    WorldBuilder->plateau_mod = text_get_number(0, 500);
-    WorldBuilder->rivers_base = text_get_number(0, 100);
-    WorldBuilder->rivers_rain_mod = text_get_number(0, 100);
-    WorldBuilder->solar_energy = text_get_number(1, 64);
-    WorldBuilder->thermal_band = text_get_number(1, 64);
-    WorldBuilder->thermal_deviance = text_get_number(1, 64);
-    WorldBuilder->global_warming = text_get_number(1, 64);
-    WorldBuilder->sea_level_rises = text_get_number(1, 100);
-    WorldBuilder->cloudmass_peaks = text_get_number(0, 20);
-    WorldBuilder->cloudmass_hills = text_get_number(0, 20);
-    WorldBuilder->rainfall_coeff = text_get_number(0, 8);
-    WorldBuilder->deep_water = text_get_number(-100, 100);
-    WorldBuilder->shelf = text_get_number(-100, 100);
-    WorldBuilder->plains = text_get_number(-100, 100);
-    WorldBuilder->beach = text_get_number(-100, 100);
-    WorldBuilder->hills = text_get_number(0, 100);
-    WorldBuilder->peaks = text_get_number(-100, 100);
-    WorldBuilder->fungus = text_get_number(0, 5);
+    text_get();
+    WorldBuilder->land_base = range(text_item_number(), 50, 4000);
+    text_get();
+    WorldBuilder->land_mod = range(text_item_number(), 0, 2000);
+    text_get();
+    WorldBuilder->continent_base = range(text_item_number(), 5, 1000);
+    text_get();
+    WorldBuilder->continent_mod = range(text_item_number(), 5, 1000);
+    text_get();
+    WorldBuilder->hills_base = range(text_item_number(), 0, 100);
+    text_get();
+    WorldBuilder->hills_mod = range(text_item_number(), 0, 100);
+    text_get();
+    WorldBuilder->plateau_base = range(text_item_number(), 0, 500);
+    text_get();
+    WorldBuilder->plateau_mod = range(text_item_number(), 0, 500);
+    text_get();
+    WorldBuilder->rivers_base = range(text_item_number(), 0, 100);
+    text_get();
+    WorldBuilder->rivers_rain_mod = range(text_item_number(), 0, 100);
+    text_get();
+    WorldBuilder->solar_energy = range(text_item_number(), 1, 64);
+    text_get();
+    WorldBuilder->thermal_band = range(text_item_number(), 1, 64);
+    text_get();
+    WorldBuilder->thermal_deviance = range(text_item_number(), 1, 64);
+    text_get();
+    WorldBuilder->global_warming = range(text_item_number(), 1, 64);
+    text_get();
+    WorldBuilder->sea_level_rises = range(text_item_number(), 1, 100);
+    text_get();
+    WorldBuilder->cloudmass_peaks = range(text_item_number(), 0, 20);
+    text_get();
+    WorldBuilder->cloudmass_hills = range(text_item_number(), 0, 20);
+    text_get();
+    WorldBuilder->rainfall_coeff = range(text_item_number(), 0, 8);
+    text_get();
+    WorldBuilder->deep_water = range(text_item_number(), -100, 100);
+    text_get();
+    WorldBuilder->shelf = range(text_item_number(), -100, 100);
+    text_get();
+    WorldBuilder->plains = range(text_item_number(), -100, 100);
+    text_get();
+    WorldBuilder->beach = range(text_item_number(), -100, 100);
+    text_get();
+    WorldBuilder->hills = range(text_item_number(), 0, 100);
+    text_get();
+    WorldBuilder->peaks = range(text_item_number(), -100, 100);
+    text_get();
+    WorldBuilder->fungus = range(text_item_number(), 0, 5);
     text_get();
     WorldBuilder->cont_size_ratio1 = text_item_number();
     WorldBuilder->cont_size_ratio2 = text_item_number();
     WorldBuilder->cont_size_ratio3 = text_item_number();
     WorldBuilder->cont_size_ratio4 = text_item_number();
     WorldBuilder->cont_size_ratio5 = text_item_number();
-    WorldBuilder->islands = text_get_number(1, 500);
+    text_get();
+    WorldBuilder->islands = range(text_item_number(), 1, 500);
     return false;
 }
 
 /*
 Purpose: Parse the #TECHNOLOGY section inside the alpha(x).txt with a duplicate entry check.
-// ORIGINAL: 0x00585E30 ?read_tech@@YAHXZ 0x00585E30-0x00585FDB
-// LEVER: the `id` copy is `strncpy(dest, TextBufferItemPtr, 8)` at 0x00585E78
-//        (3 args, no `strlen` call in the image's own call list) - the tree
-//        had `strncpy_s(Technology[i].id, 8, TextBufferItemPtr,
-//        strlen(TextBufferItemPtr))`, an extra call and a wrong count.
-//        Fixed to a literal 8; 13/139 -> 20/139 (best across every flag set).
-// RULED-OUT: the remaining gap is instruction 5 - the image callee-saves ESI
-//            alone in the shared prologue (popped on both the early-return
-//            and the loop path) and defers EBX/EDI to just before the loop
-//            body (popped only on that path); this tree's /O2 output saves
-//            EDI there instead of ESI. Tried: raw pointer walk (`RulesTechnology
-//            *tech = Technology; tech < &Technology[MaxTechnologyNum]`, which
-//            DOES reproduce the image's `cmp esi, 0x9502ac` bound via strength
-//            reduction on `&tech->id`, confirming the algorithm read is right)
-//            with a second pointer `dup` for the inner loop spilling to the
-//            same `[ebp-4]` slot the image uses - scored WORSE (14/139); declaring
-//            `tech` before the first `text_open`; swapping `i++,tech++` order.
-//            Plain `Technology[i]` indexing measures best. Register-save
-//            ordering, not addressing mode.
+// ORIGINAL: 0x00585E30 ?read_tech@@YAHXZ 0x00585E30-0x00585FDB BYTE_EXACT
+// LEVER: the `id` copy is `strncpy(dest, TextBufferItemPtr, 8)` at 0x00585E78 (3 args, no `strlen` call in the image's own call list) - the tree had `strncpy_s(Technology[i].id, 8, TextBufferItemPtr, strlen(TextBufferItemPtr))`, an extra call and a wrong count. Fixed to a literal 8; 13/139 -> 20/139 (best across every flag set).
+// LEVER: the TechValidCount guard was `preq_tech_1 != DisabledValue && preq_tech_2 != DisabledValue`
+//   (an equality test against -2, which materialised -2 in a register and forced extra push/pop
+//   shuffles); the image is a SIGNED `>= -1` test (`or ecx,0xffffffff; cmp; jl`). Rewriting as
+//   `preq_tech_1 >= NoneValue && preq_tech_2 >= NoneValue` moved 20/139 -> 139/139, BYTE_EXACT.
 // size      427 bytes
 // prototype 
 // callers   1   call targets   12
@@ -460,8 +549,8 @@ BOOL __cdecl read_tech() {
         Technology[i].preq_tech_1 = tech_name(text_item());
         Technology[i].preq_tech_2 = tech_name(text_item());
         Technology[i].flags = text_item_binary();
-        if (Technology[i].preq_tech_1 != DisabledValue
-            && Technology[i].preq_tech_2 != DisabledValue) {
+        if (Technology[i].preq_tech_1 >= NoneValue
+            && Technology[i].preq_tech_2 >= NoneValue) {
             TechValidCount += 1;
             if (Technology[i].flags & TFLAG_INC_COMMERCE) {
                 TechCommerceCount += 1;
@@ -474,6 +563,10 @@ BOOL __cdecl read_tech() {
 /*
 Purpose: Clear the rule values for the specified player.
 // ORIGINAL: 0x00585FE0 ?clear_faction@@YAXPAUPlayer@@@Z 0x00585FE0-0x00586049 BYTE_EXACT
+// LEVER: `MEASURED inline` in alpha.h - `callers 0` above already says the image never `call`s
+//   this address; read_faction (0x00586090) writes all 15 stores out inline instead
+//   ('mov dword ptr [esi+0x4d4],eax' etc., no call to 0x585fe0 anywhere in its own call list).
+//   Moving the body out of this .cpp reproduces that at its one caller.
 // size      105 bytes
 // prototype void (__cdecl ?clear_faction@@YAXPAUPlayer@@@Z)(Player* player)
 // callers   0   call targets   0
@@ -483,26 +576,7 @@ Purpose: Clear the rule values for the specified player.
 Return Value: n/a
 Status: Complete
 */
-void __cdecl clear_faction(Player *player) {
-    player->rule_tech_selected = 0;
-    player->rule_morale = 0;
-    player->rule_research = 0;
-    player->rule_drone = 0;
-    player->rule_talent = 0;
-    player->rule_energy = 0;
-    player->rule_interest = 0;
-    player->rule_population = 0;
-    // THE LAST FIVE ARE NOT IN DECLARATION ORDER. The image writes 0x508 and
-    // 0x50C - rule_flags and faction_bonus_count - before 0x4FC, 0x500 and
-    // 0x504, at 0x00586029.
-    player->rule_hurry = 100;
-    player->rule_techcost = 100;
-    player->rule_flags = 0;
-    player->faction_bonus_count = 0;
-    player->rule_psi = 0;
-    player->rule_sharetech = 0;
-    player->rule_commerce = 0;
-}
+// BODY IN alpha.h, as `MEASURED inline`: see the LEVER note above.
 
 /*
 Purpose: Parse the faction's file and art for the specified player id.
@@ -527,6 +601,15 @@ void __cdecl read_faction(int player_id) {
 Purpose: Parse the 1st eight lines of the specified faction's file into a player structure. The 
          toggle parameter will end the function early if set to 2 (original code never uses this).
 // ORIGINAL: 0x00586090 ?read_faction@@YAXPAUPlayer@@H@Z 0x00586090-0x00586F2B
+// LEVER: clear_faction moved to `MEASURED inline` in alpha.h (see its own marker) - the image
+//   writes its 15 stores out inline here instead of calling it. Moved 44/985 -> 101/985.
+// LEVER: the faction-bonus rule parser's `LPSTR parse_rule = new char[len + 1]; strcpy_s(...);
+//   ...; delete [] parse_rule;` was a heap allocation per rule token; the image copies into a
+//   fixed 256-byte LOCAL buffer instead (`sub esp, 0x104`), the same idiom as read_rules'
+//   `order_buf`. Rewritten as `char parse_rule[256]; strcpy(parse_rule, parse_rule_check);` with
+//   no delete. call_diff's extra `operator new`/`operator delete` edges are gone. Moved
+//   101/985 -> 196/985 agreeing. Still deep MISMATCH (short 5 calls: tech_name/X_pop/text_open/
+//   text_get); not chased further this pass.
 // size      3739 bytes
 // prototype void (__cdecl ?read_faction@@YAXPAUPlayer@@H@Z)(Player* player, int type)
 // callers   4   call targets   15
@@ -576,8 +659,10 @@ void __cdecl read_faction(Player *player, int toggle) {
     LPSTR parse_rule_check = text_item();
     size_t len = strlen(parse_rule_check);
     while (len) {
-        LPSTR parse_rule = new char[len + 1];
-        strcpy_s(parse_rule, len + 1, parse_rule_check);
+        // NOT a heap allocation: the image copies into a fixed 256-byte LOCAL
+        // buffer (`sub esp, 0x104`), same idiom as read_rules' `order_buf`.
+        char parse_rule[256];
+        strcpy(parse_rule, parse_rule_check);
         LPSTR parse_param = text_item();
         if (!_stricmp(parse_rule, BonusName[0].key)) { // TECH
             // will have issues if custom tech abbreviations starting with numbers are used
@@ -751,7 +836,6 @@ void __cdecl read_faction(Player *player, int toggle) {
         }
         parse_rule_check = text_item();
         len = strlen(parse_rule_check);
-        delete [] parse_rule;
     }
     // Societal Ideology + Anti-Ideology
     for (int i = 0; i < 2; i++) {
@@ -821,6 +905,11 @@ void __cdecl read_faction(Player *player, int toggle) {
 Purpose: Parse the #BONUSNAMES, #FACTIONS, and #NEWFACTIONS sections inside the alpha(x).txt.
 // ORIGINAL: 0x00586F30 ?read_factions@@YAHXZ 0x00586F30-0x005871C9
 // RULED-OUT: fixes, call count 23 -> 28-29 (image 31): 1. `rand() % faction_count`, not `random(0, faction_count)` - the image calls the C library `rand` (0x0064601D) directly, never the game's seeded PRNG. BUG IN THE ORIGINAL, preserved. 2. `load_faction_art` was a temp.h function POINTER, compiling an indirect call where the image has `call rel32` twice; promoted to a src/pending_bodies.cpp forwarder (see there and temp.h). 3. `strcpy_s(dest, src)`, not `strncpy_s(dest, src, 24)`, for BonusName[i].key and both Players[player] fields in the first two loops - the image pushes only 2 args (`call 0x00645460`), an unbounded copy, not a 3-arg bounded one. BUG IN THE ORIGINAL, preserved. Remaining gap: `text_open`/`text_get` each short by 1 (a ternary argument the image tail-merges two of its three arms for, not chased), and `load_faction_art` merges its two call sites into one physical `call` at the object level where the image keeps two.
+// LEVER: signedness at the JENN282 reroll - `uint32_t faction_count = 14;` and `uint32_t
+//        faction_set = rand_val / 7;` made `rand() % faction_count` compile as an unsigned
+//        div and the /7 as an unsigned magic-multiply; the image uses `cdq; idiv` for the
+//        modulo and the signed magic-multiply sequence for /7. Both changed to plain `int`.
+//        Moved 44/214 -> 46/214 agreeing.
 // size      665 bytes
 // prototype 
 // callers   1   call targets   9
@@ -855,7 +944,7 @@ BOOL __cdecl read_factions() {
     }
     // SMACX only: Will override any values parsed from alphax.txt #NEWFACTIONS if set in ini;
     prefs_fac_load(); // Removed an extra SMACX_Enabled check around call since there is one inside
-    uint32_t faction_count = 14;
+    int faction_count = 14;
     if (!text_open(AlphaxFileID, "CUSTOMFACTIONS")) { // get count of custom factions
         text_get();
         for (LPSTR custom = text_item(); *custom; custom = text_item()) {
@@ -874,7 +963,7 @@ BOOL __cdecl read_factions() {
                 // this function's call list). That means custom-faction
                 // selection here does not respect `random_reseed`.
                 int rand_val = rand() % faction_count;
-                uint32_t faction_set = rand_val / 7; // 0: SMAC; 1: SMACX; 2+: custom
+                int faction_set = rand_val / 7; // 0: SMAC; 1: SMACX; 2+: custom
                 if (text_open(AlphaxFileID, !faction_set ? "FACTIONS" : (faction_set == 1)
                     ? "NEWFACTIONS" : "CUSTOMFACTIONS")) {
                     return true;
@@ -954,6 +1043,11 @@ Purpose: Parse the #UNITS section inside the alpha(x).txt.
 //        nearby) not `strncpy_s`; the tree's `strncpy_s(veh_name, 32, name,
 //        strlen(name))` was an extra `strlen` call the image never makes.
 //        17/134 -> 22/134.
+// LEVER: `int total_units = text_get_number(0, MaxVehProtoFactionNum);` rewritten as the
+//        image's two-statement `text_get(); int total_units = range(text_item_number(), 0,
+//        MaxVehProtoFactionNum);` (same defect as read_basic_rules - text_get_number inlines
+//        through text_get_source/text_item_number_source, but the image calls the zero-arg
+//        text_get()/text_item_number() wrappers). Moved 22/134 -> 48/134 agreeing.
 // RULED-OUT: not chased further - the image never reads a "reactor" field at
 //            all (only 4 `text_item_number` calls: plan, cost, carry, icon;
 //            `ability`'s `text_item_binary` result stays live in EAX straight
@@ -979,7 +1073,8 @@ BOOL __cdecl read_units() {
     if (text_open(AlphaxFileID, "UNITS")) {
         return true;
     }
-    int total_units = text_get_number(0, MaxVehProtoFactionNum);
+    text_get();
+    int total_units = range(text_item_number(), 0, MaxVehProtoFactionNum);
     for (int proto_id = 0; proto_id < total_units; proto_id++) {
         text_get();
         LPSTR name = text_item();
@@ -1601,6 +1696,17 @@ Purpose: Read the faction filenames and search for keys from the ini file (SMACX
          the added effect of forcing the player's search_key to be set to the filename value. 
          Rewrote almost the entire function because of how terrible the original code logic was.
 // ORIGINAL: 0x0059DBD0 ?prefs_fac_load@@YAXXZ 0x0059DBD0-0x0059DCE8
+// LEVER: dropped `std::string faction = "Faction "; faction += std::to_string(i);` for the
+//        image's own idiom - `StringTemp[0] = 0; strcat(StringTemp, "Faction "); say_num(i);`
+//        (say_num is the existing `char text[0x50]; _itoa(...); strcat(StringTemp, text);`
+//        helper this same file already uses in prefs_get_binary/prefs_get; 0x50 == 80, so it
+//        reproduces the image's `sub esp, 0x50` local exactly). Removes the __EH_prolog and the
+//        four basic_string edges; call_diff moved from 10 calls (image 8, MORE) to 7 (image 8,
+//        FEWER - short by one). Moved 3/83 -> 8/83 agreeing. NOT attempted: the image's larger
+//        restructure - ExpansionEnabled and the "Prefs Format" GetPrivateProfileStringA query
+//        both re-run INSIDE a single per-player loop (`je` to the loop increment when
+//        ExpansionEnabled is false), sharing an unnamed global 256-byte buffer at 0x9b7d00
+//        across both queries instead of a local `returned_string[256]` - not chased this pass.
 // size      280 bytes
 // prototype 
 // callers   1   call targets   4
@@ -1618,9 +1724,10 @@ void __cdecl prefs_fac_load() {
             PrefsFile);
         if (atoi(returned_string) == 12) {
             for (int i = 1; i < MaxPlayerNum; i++) {
-                std::string faction = "Faction ";
-                faction += std::to_string(i);
-                GetPrivateProfileStringA(PrefsSection, faction.c_str(), Players[i].filename,
+                StringTemp[0] = 0;
+                strcat(StringTemp, "Faction ");
+                say_num(i);
+                GetPrivateProfileStringA(PrefsSection, StringTemp, Players[i].filename,
                     returned_string, 256, PrefsFile);
                 strncpy_s(Players[i].filename, returned_string, 24);
                 strncpy_s(Players[i].search_key, returned_string, 24);

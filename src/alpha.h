@@ -727,7 +727,6 @@ int __cdecl weap_name(LPSTR name);
 int __cdecl arm_name(LPSTR name);
 BOOL __cdecl read_basic_rules();
 BOOL __cdecl read_tech();
-void __cdecl clear_faction(Player *player);
 void __cdecl read_faction(uint32_t player_id);
 void __cdecl read_faction(Player *player, int toggle);
 BOOL __cdecl read_factions();
@@ -778,4 +777,25 @@ LPSTR __cdecl text_item();
 MEASURED inline int __cdecl tech_item() {
     text_get();
     return tech_name(text_item());
+}
+
+MEASURED inline void __cdecl clear_faction(Player *player) {
+    player->rule_tech_selected = 0;
+    player->rule_morale = 0;
+    player->rule_research = 0;
+    player->rule_drone = 0;
+    player->rule_talent = 0;
+    player->rule_energy = 0;
+    player->rule_interest = 0;
+    player->rule_population = 0;
+    // THE LAST FIVE ARE NOT IN DECLARATION ORDER. The image writes 0x508 and
+    // 0x50C - rule_flags and faction_bonus_count - before 0x4FC, 0x500 and
+    // 0x504, at 0x00586029.
+    player->rule_hurry = 100;
+    player->rule_techcost = 100;
+    player->rule_flags = 0;
+    player->faction_bonus_count = 0;
+    player->rule_psi = 0;
+    player->rule_sharetech = 0;
+    player->rule_commerce = 0;
 }
