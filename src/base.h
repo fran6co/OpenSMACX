@@ -505,7 +505,7 @@ extern BaseSecretProject *SecretProject;
 extern int BaseIDCurrentSelected;
 extern int BaseCurrentCount;
 extern int BaseFindDist;
-Base **const BaseCurrent = (Base **)0x0090EA30;
+inline Base *&BaseCurrent() { return *reinterpret_cast<Base **>(0x0090EA30); }
 extern uint32_t ScnVictFacilityObj;
 extern uint32_t BaseUpkeepStage;
 uint32_t *const BaseCurrentConvoyFrom = (uint32_t *)0x0090E904; // resources convoyed from base

@@ -365,7 +365,7 @@ typedef void (Buffer::*BufferColourSetter)(int, int, int, int);
 
 void recolour(Buffer &buffer, BufferColourSetter setter,
               int c1, int c2, int c3, int c4) {
-    buffer.sync_to_palette(*BaseButtonActivePalette);
+    buffer.sync_to_palette(BaseButtonActivePalette());
     (buffer.*setter)(c1, c2, c3, c4);
 }
 

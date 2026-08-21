@@ -634,7 +634,7 @@ uint32_t Scroll::set_pos(int position) {
     if (!parent) {
         return 0U;
     }
-    *ScrollCurrentWin = parent;
+    ScrollCurrentWin() = parent;
 
     const int minimum = *reinterpret_cast<volatile int *>(&range_minimum_);
     volatile int *const current = &position_;

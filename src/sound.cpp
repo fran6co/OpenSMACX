@@ -488,7 +488,7 @@ int Sound::load(const char *a1) {
         return 1;
     }
     if (!device_) {
-        const int created = (*WaveDeviceCreateSlot)(&device_, resolved, 1);
+        const int created = (WaveDeviceCreateSlot())(&device_, resolved, 1);
         if (created) {
             return created;
         }
@@ -751,7 +751,7 @@ Sound::~Sound() {
     void *const device = self->device_;
     if (device) {
         if (*WaveDeviceReleaseGuard) {
-            (*WaveDeviceReleaseSlot)(device);
+            (WaveDeviceReleaseSlot())(device);
         }
         self->device_ = nullptr;
     }
@@ -761,14 +761,14 @@ Sound::~Sound() {
             reinterpret_cast<Sound volatile *>(prev)->chain_next_ =
                 self->chain_next_;
         } else {
-            *WaveChainHead = reinterpret_cast<Wave *>(self->chain_next_);
+            WaveChainHead() = reinterpret_cast<Wave *>(self->chain_next_);
         }
         Sound *const next = self->chain_next_;
         if (next) {
             reinterpret_cast<Sound volatile *>(next)->chain_prev_ =
                 self->chain_prev_;
         } else {
-            *WaveChainTail = reinterpret_cast<Wave *>(self->chain_prev_);
+            WaveChainTail() = reinterpret_cast<Wave *>(self->chain_prev_);
         }
         self->chain_next_ = nullptr;
         self->chain_prev_ = nullptr;
@@ -827,14 +827,14 @@ int Sound::attach() {
     }
     // The original re-zeroes both links in each arm; the guard above proves
     // they are already null, so those stores are omitted as unobservable.
-    if (!*WaveChainTail) {
-        *WaveChainHead = reinterpret_cast<Wave *>(this);
-        *WaveChainTail = reinterpret_cast<Wave *>(this);
+    if (!WaveChainTail()) {
+        WaveChainHead() = reinterpret_cast<Wave *>(this);
+        WaveChainTail() = reinterpret_cast<Wave *>(this);
         flags_40_ |= 2;
         return 0;
     }
-    chain_prev_ = reinterpret_cast<Sound *>(*WaveChainTail);
-    *WaveChainTail = reinterpret_cast<Wave *>(this);
+    chain_prev_ = reinterpret_cast<Sound *>(WaveChainTail());
+    WaveChainTail() = reinterpret_cast<Wave *>(this);
     chain_prev_->chain_next_ = this;
     flags_40_ |= 2;
     return 0;
@@ -849,7 +849,7 @@ Purpose: Leave the sound chain: nothing at all for an unchained sound;
          otherwise the standard unlink with the head and tail slots
          maintained at the ends, both links cleared, and the chained bit
          dropped.
-// ORIGINAL: 0x004C63D0 ?detach@Sound@@QAEHXZ 0x004C63D0-0x004C642C
+// ORIGINAL: 0x004C63D0 ?detach@Sound@@QAEHXZ 0x004C63D0-0x004C642C BYTE_EXACT
 // size      92 bytes
 // prototype int (__thiscall ?detach@Sound@@QAEHXZ)(Sound* this)
 // callers   0   call targets   0
@@ -867,13 +867,13 @@ int Sound::detach() {
     if (prev) {
         prev->chain_next_ = chain_next_;
     } else {
-        *WaveChainHead = reinterpret_cast<Wave *>(chain_next_);
+        WaveChainHead() = reinterpret_cast<Wave *>(chain_next_);
     }
     Sound *const next = chain_next_;
     if (next) {
         next->chain_prev_ = chain_prev_;
     } else {
-        *WaveChainTail = reinterpret_cast<Wave *>(chain_prev_);
+        WaveChainTail() = reinterpret_cast<Wave *>(chain_prev_);
     }
     chain_next_ = nullptr;
     flags_40_ &= ~2u;

@@ -117,7 +117,7 @@ int __fastcall menu_unk4_redirect(
 
 /*
 Purpose: Report the height a menu requests, two lines of its font.
-// ORIGINAL: 0x005FC6A0 ?requested_height@Menu@@QAEHXZ 0x005FC6A0-0x005FC6B4
+// ORIGINAL: 0x005FC6A0 ?requested_height@Menu@@QAEHXZ 0x005FC6A0-0x005FC6B4 BYTE_EXACT
 // size      20 bytes
 // prototype int (__thiscall ?requested_height@Menu@@QAEHXZ)(Menu* this)
 // callers   0   call targets   0
@@ -130,7 +130,7 @@ Status: Complete
 int Menu::requested_height() {
     // The menu's own font wins when set; otherwise the process default is
     // resolved at the point of use rather than cached.
-    Font *font = *MenuFont;
+    Font *font = MenuFont();
     if (!font) {
         font = FontDefault;
     }

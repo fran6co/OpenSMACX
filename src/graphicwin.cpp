@@ -388,7 +388,7 @@ void GraphicWin::redraw() {
     }
     state |= 1;
     std::memcpy(object + 0x1A0, &state, sizeof(state));
-    *ScrollCurrentWin = static_cast<Win *>(this);
+    ScrollCurrentWin() = static_cast<Win *>(this);
 
     func_graphic_win_paint_hook *hook;
     std::memcpy(&hook, object + 0xA10, sizeof(hook));
@@ -596,7 +596,7 @@ int GraphicWin::init(int x, int y, int width, int height, LPSTR title,
         return surface_result;
     }
     // Return discarded: the original zeroes EAX at 0x005D5081 straight after.
-    buffer_.sync_to_palette(*WinActivePalette);
+    buffer_.sync_to_palette(WinActivePalette());
     return 0;
 }
 

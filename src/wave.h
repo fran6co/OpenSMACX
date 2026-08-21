@@ -170,7 +170,7 @@ int __fastcall wave_get_ms_length_redirect(Wave *self, void *);
 // the IAT entry the original calls indirectly - so it reads the live pointer
 // at run time and stays rebindable for tests.
 typedef DWORD(__stdcall func_time_get_time)(void);
-func_time_get_time **const WaveTimeGetTimeSlot = (func_time_get_time **)0x00669368;
+inline func_time_get_time *&WaveTimeGetTimeSlot() { return *reinterpret_cast<func_time_get_time **>(0x00669368); }
 
 int __fastcall wave_is_playing_redirect(Wave *self, void *);
 int __fastcall wave_play_redirect(Wave *self, void *, int a1);
@@ -219,10 +219,10 @@ extern func_wave_device_pull_from_group WaveDevicePullFromGroup;
 // sites in wave.cpp reach its methods by name.
 Wave_Device *const WaveDeviceGlobal = (Wave_Device *)0x0090D978;
 func_operator_delete *const WaveOperatorDelete = (func_operator_delete *)0x0064557F;
-func_wave_device_release **const WaveDeviceReleaseSlot = (func_wave_device_release **)0x0090DB28;
+inline func_wave_device_release *&WaveDeviceReleaseSlot() { return *reinterpret_cast<func_wave_device_release **>(0x0090DB28); }
 int *const WaveDeviceReleaseGuard = (int *)0x0090DB7C;
-Wave **const WaveChainHead = (Wave **)0x0090DB20;
-Wave **const WaveChainTail = (Wave **)0x0090DB1C;
+inline Wave *&WaveChainHead() { return *reinterpret_cast<Wave **>(0x0090DB20); }
+inline Wave *&WaveChainTail() { return *reinterpret_cast<Wave **>(0x0090DB1C); }
 
 // The rest of the Wave dependency surface. The filename copy is allocated on
 // the game CRT heap (the destructor and set_fname free it there, so the new
@@ -245,7 +245,7 @@ extern func_wave_original_load WaveOriginalLoad;
 // vtable descent walks - and it is not yet source-owned.
 typedef int(__cdecl func_wave_device_create)(void **device_slot,
                                              const char *fname, int mode);
-func_wave_device_create **const WaveDeviceCreateSlot = (func_wave_device_create **)0x0090DB24;
+inline func_wave_device_create *&WaveDeviceCreateSlot() { return *reinterpret_cast<func_wave_device_create **>(0x0090DB24); }
 typedef int (OriginalObject::*func_sound_original_load)(const char *fname);
 extern func_sound_original_load SoundOriginalLoad;
 typedef void (OriginalObject::*func_sound_set_type)(uint32_t type);

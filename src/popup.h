@@ -219,16 +219,16 @@ typedef int (OriginalObject::*func_popup_wave_query)();
 typedef unsigned long(__stdcall func_popup_time_source)(void);
 
 uint32_t *const PopupWaveFlags = (uint32_t *)0x009A6490;
-void **const PopupWaveContext = (void **)0x0090EA30;
+inline void *&PopupWaveContext() { return *reinterpret_cast<void **>(0x0090EA30); }
 Wave *const PopupWaveVoice = (Wave *)0x00945ED0;
 Wave *const PopupWaveBank = (Wave *)0x0074C5F0;
 int32_t *const PopupWaveLastIndex = (int32_t *)0x0074DAA4;
-void **const PopupWaveOwnerSlot = (void **)0x0074DAA0;
+inline void *&PopupWaveOwnerSlot() { return *reinterpret_cast<void **>(0x0074DAA0); }
 FX *const PopupWaveFx = (FX *)0x00749CF8;
 extern func_popup_wave_query PopupWaveIsPlaying;
 extern func_popup_wave_query PopupWaveLoad;
 extern func_popup_wave_query PopupWavePlay;
-func_popup_time_source **const PopupWaveTimeSlot = (func_popup_time_source **)0x00669368;
+inline func_popup_time_source *&PopupWaveTimeSlot() { return *reinterpret_cast<func_popup_time_source **>(0x00669368); }
 
 void __cdecl popup_wave_callback(PopupWave *popup, int);
 void __cdecl popup_wave_callback_redirect(PopupWave *popup, int a2);

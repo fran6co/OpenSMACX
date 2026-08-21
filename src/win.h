@@ -495,7 +495,7 @@ int __fastcall win_on_sys_command_redirect(Win *self, void *, unsigned int a1, i
 
 // The active palette lives at a fixed address; rebindable so tests can
 // point it at a local rather than requiring the mapped global.
-Palette **const WinActivePalette = (Palette **)0x009B8180;
+inline Palette *&WinActivePalette() { return *reinterpret_cast<Palette **>(0x009B8180); }
 
 void __fastcall win_sync_palette_redirect(Win *self, void *);
 

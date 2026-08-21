@@ -668,12 +668,12 @@ void __cdecl popup_wave_callback(PopupWave *popup, int) {
     }
     if (index == 0x19) {
         const uint8_t *const context =
-            static_cast<const uint8_t *>(*PopupWaveContext);
+            static_cast<const uint8_t *>(PopupWaveContext());
         if (*reinterpret_cast<const int32_t *>(context + 0x50) < -0x46) {
             popup->wave_index_ = 0x25;
         }
     }
-    if (popup->wave_index_ == 0x2B && (*PopupWaveTimeSlot)() % 3 != 1) {
+    if (popup->wave_index_ == 0x2B && (PopupWaveTimeSlot())() % 3 != 1) {
         return;
     }
     const int32_t chosen = popup->wave_index_;
@@ -687,7 +687,7 @@ void __cdecl popup_wave_callback(PopupWave *popup, int) {
         }
     }
     if (popup->wave_index_ == 0x19) {
-        void *const owner = *PopupWaveOwnerSlot;
+        void *const owner = PopupWaveOwnerSlot();
         if (owner) {
             (ORIGINAL(owner)->*original_method<void (OriginalObject::*)() >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(owner) + 0x138)))();
         }
