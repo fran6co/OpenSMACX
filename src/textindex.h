@@ -57,5 +57,19 @@ static_assert(sizeof(TextIndex) == 0x118, "TextIndex layout must match the legac
 static const int MaxTextIndexNum = 4;
 TextIndex *const TxtIndex = (TextIndex *)0x009B7D08;
 void __cdecl text_make_index(LPCSTR source_txt);
-int __cdecl text_search_index(LPCSTR source_txt, LPCSTR section_txt);
+// INLINE: `Text::open` (0x005FDA00) carries this whole loop rather than a
+// `call 0x5fe230` - only `TextIndex::search_index` (0x005FE120) shows up in
+// its own call list. Body claimed at 0x005FE230 in textindex.cpp, same
+// pattern as Text's destructor in text.h.
+MEASURED inline int __cdecl text_search_index(LPCSTR source_txt, LPCSTR section_txt) {
+    for (int i = 0; i < MaxTextIndexNum; ++i) {
+        if (TxtIndex[i].get_count()) {
+            const int address = TxtIndex[i].search_index(source_txt, section_txt);
+            if (address >= 0) {
+                return address;
+            }
+        }
+    }
+    return -1;
+}
 void __cdecl text_clear_index();

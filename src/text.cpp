@@ -102,6 +102,22 @@ Purpose: Open the specified text file and copy the section into the buffer for p
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     0x005FE120 0x006007B0 0x00600820 0x00626250 0x00634BB0 0x00645460 0x00645470 0x00645598 0x00645DD0 0x0064726A 0x006472CC 0x00647330 0x0064FD20
+// RULED-OUT: std::string for sect_header - it pulls an SEH frame (`mov eax,
+//            fs:[0]`) the image's `sub esp, 0x54` prologue does not have;
+//            replaced with a plain char buffer built by strcpy_s/strcat_s
+//            (fixed at 80 bytes - matches the image's `sub esp, 0x54` frame
+//            size once text_search_index is inlined, see textindex.h).
+//            text_search_index() called out-of-line - the image carries the
+//            whole loop inline (only 0x005FE120 shows in this function's own
+//            call list); moved to textindex.h as MEASURED inline.
+//            Remaining divergence: the image caches a zeroed `edi` once at
+//            entry and reuses it as both the FALSE constant and later
+//            accumulators (`cmp eax, edi` instead of `test eax, eax`, `mov
+//            [esp+0x10], edi` instead of a literal 0 store) - a register-
+//            allocation choice tied to the whole function's shape that
+//            FALSE/NULL-spelling variants (BOOL/TRUE/FALSE vs bool/true/
+//            false, `!= NULL` vs implicit) did not reproduce. Best reached:
+//            0.848 similar, 7/170 raw instructions at /O2 /Oi- /Gy /GR- /GX.
 Return Value: Was there an error? true/false
 Status: Complete
 */
@@ -136,8 +152,12 @@ BOOL Text::open(LPCSTR src_file_id, LPCSTR section_id) {
         fseek(text_file_, seek_addr, SEEK_SET);
         is_file_open = true;
     }
-    std::string sect_header("#");
-    sect_header += section_id;
+    // NOT std::string: the image builds this with plain strcpy/strcat, and
+    // std::string's constructor/destructor pull in an SEH frame (`mov eax,
+    // fs:[0]` in the prologue) the image's `sub esp, 0x54` does not have.
+    char sect_header[80];
+    strcpy_s(sect_header, "#");
+    strcat_s(sect_header, section_id);
     do {
         if (feof(text_file_)) {
             if (is_file_open) {
@@ -154,7 +174,7 @@ BOOL Text::open(LPCSTR src_file_id, LPCSTR section_id) {
         }
         kill_lf(buffer_get_);
         purge_spaces(buffer_get_);
-    } while (_stricmp(sect_header.c_str(), buffer_get_));
+    } while (_stricmp(sect_header, buffer_get_));
     current_pos_ = buffer_get_;
     return false;
 }
@@ -378,7 +398,7 @@ void __cdecl text_set_item_ptr() {
     text_set_item_ptr_source(&Txt, &TextBufferItemPtr);
 }
 
-// ORIGINAL: 0x005FD530 ?text_close@@YAXXZ 0x005FD530-0x005FD54D
+// ORIGINAL: 0x005FD530 ?text_close@@YAXXZ 0x005FD530-0x005FD54D BYTE_EXACT
 // size      29 bytes
 // prototype 
 // callers   22   call targets   1
@@ -388,7 +408,7 @@ void __cdecl text_set_item_ptr() {
 // notes     Staged hybrid export redirect calls the source-owned wrapper
 void __cdecl text_close() { text_close_source(&Txt); }
 
-// ORIGINAL: 0x005FD570 ?text_get@@YAPADXZ 0x005FD570-0x005FD5D2
+// ORIGINAL: 0x005FD570 ?text_get@@YAPADXZ 0x005FD570-0x005FD5D2 BYTE_EXACT
 // size      98 bytes
 // prototype 
 // callers   54   call targets   3
@@ -398,7 +418,7 @@ void __cdecl text_close() { text_close_source(&Txt); }
 // notes     Staged hybrid export redirect calls the source-owned wrapper
 LPSTR __cdecl text_get() { return text_get_source(&Txt); }
 
-// ORIGINAL: 0x005FD5E0 ?text_string@@YAPADXZ 0x005FD5E0-0x005FD663
+// ORIGINAL: 0x005FD5E0 ?text_string@@YAPADXZ 0x005FD5E0-0x005FD663 BYTE_EXACT
 // size      131 bytes
 // prototype 
 // callers   1   call targets   4
@@ -408,7 +428,7 @@ LPSTR __cdecl text_get() { return text_get_source(&Txt); }
 // notes     Staged hybrid export redirect calls the source-owned wrapper
 LPSTR __cdecl text_string() { return text_string_source(&Txt, StringTable); }
 
-// ORIGINAL: 0x005FD670 ?text_item@@YAPADXZ 0x005FD670-0x005FD6C7
+// ORIGINAL: 0x005FD670 ?text_item@@YAPADXZ 0x005FD670-0x005FD6C7 BYTE_EXACT
 // size      87 bytes
 // prototype 
 // callers   20   call targets   1
@@ -418,7 +438,7 @@ LPSTR __cdecl text_string() { return text_string_source(&Txt, StringTable); }
 // notes     Staged hybrid export redirect calls the source-owned wrapper
 LPSTR __cdecl text_item() { return text_item_source(&Txt); }
 
-// ORIGINAL: 0x005FD6D0 ?text_item_string@@YAPADXZ 0x005FD6D0-0x005FD732
+// ORIGINAL: 0x005FD6D0 ?text_item_string@@YAPADXZ 0x005FD6D0-0x005FD732 BYTE_EXACT
 // size      98 bytes
 // prototype 
 // callers   2   call targets   2
@@ -430,7 +450,7 @@ LPSTR __cdecl text_item_string() {
     return text_item_string_source(&Txt, StringTable);
 }
 
-// ORIGINAL: 0x005FD740 ?text_item_number@@YAHXZ 0x005FD740-0x005FD79D
+// ORIGINAL: 0x005FD740 ?text_item_number@@YAHXZ 0x005FD740-0x005FD79D BYTE_EXACT
 // size      93 bytes
 // prototype 
 // callers   18   call targets   2
@@ -440,7 +460,8 @@ LPSTR __cdecl text_item_string() {
 // notes     Staged hybrid export redirect calls the source-owned wrapper
 int __cdecl text_item_number() { return text_item_number_source(&Txt); }
 
-// ORIGINAL: 0x005FD7A0 ?text_item_binary@@YAHXZ 0x005FD7A0-0x005FD7FD
+// ORIGINAL: 0x005FD7A0 ?text_item_binary@@YAHXZ 0x005FD7A0-0x005FD7FD BYTE_EXACT
+// LEVER: `btoi(text_item_source(&Txt))` inlines BOTH - two inlines stacked
 // size      93 bytes
 // prototype 
 // callers   4   call targets   2
@@ -448,7 +469,15 @@ int __cdecl text_item_number() { return text_item_number_source(&Txt); }
 // flags     hidden;sp_ready;purged_ok
 // calls     0x006007B0 0x006288D0
 // notes     Staged hybrid export redirect calls the source-owned wrapper
-int __cdecl text_item_binary() { return text_item_binary_source(&Txt); }
+// on this call site folded the second `buffer_item_` read to an absolute
+// `[0x15c]` rather than `Txt`'s real address (25/30, plateaued across every
+// /O flag set). A function pointer through `btoi` forces the real
+// `call 0x6288d0` the image has, while `text_item_source` still inlines -
+// 30/30.
+int __cdecl text_item_binary() {
+    int(__cdecl *const btoi_fn)(LPCSTR) = btoi;
+    return btoi_fn(text_item_source(&Txt));
+}
 
 // ORIGINAL: 0x005FD800 ?text_item_hex@@YAHXZ 0x005FD800-0x005FD85D
 // size      93 bytes
@@ -541,73 +570,15 @@ BOOL __cdecl text_open(LPCSTR src_id, LPCSTR section_id) {
     return Txt.open(src_id, section_id);
 }
 
-void __cdecl text_close_source(Text *text) {
-    Text *const value = text;
-    if (value->text_file_) {
-        fclose(value->text_file_);
-        value->text_file_ = nullptr;
-    }
-}
-
-
-
-
-
-LPSTR __cdecl text_get_source(Text *text) {
-    Text *const value = text;
-    if (feof(value->text_file_)) {
-        value->buffer_get_[0] = 0;
-        return nullptr;
-    }
-    if (!fgets(value->buffer_get_, 511, value->text_file_)) {
-        value->buffer_get_[0] = 0;
-        return value->buffer_get_;
-    }
-    kill_lf(value->buffer_get_);
-    purge_spaces(value->buffer_get_);
-    value->current_pos_ = value->buffer_get_;
-    return value->buffer_get_;
-}
-
-LPSTR __cdecl text_string_source(Text *text, Strings *strings) {
-    return strings->put(text_get_source(text));
-}
-
-LPSTR __cdecl text_item_source(Text *text) {
-    Text *const value = text;
-    LPSTR parse = value->buffer_item_;
-    while (*value->current_pos_ != 0 && *value->current_pos_ != ',') {
-        *parse++ = *value->current_pos_++;
-    }
-    *parse = 0;
-    if (*value->current_pos_ != 0) {
-        ++value->current_pos_;
-    }
-    purge_spaces(value->buffer_item_);
-    return value->buffer_item_;
-}
-
-LPSTR __cdecl text_item_string_source(Text *text, Strings *strings) {
-    return strings->put(text_item_source(text));
-}
-
-int __cdecl text_item_number_source(Text *text) {
-    return stoi(text_item_source(text));
-}
-
-int __cdecl text_item_binary_source(Text *text) {
-    return btoi(text_item_source(text));
-}
-
-int __cdecl text_item_hex_source(Text *text) {
-    return htoi(text_item_source(text));
-}
-
-int __cdecl text_get_number_source(Text *text, int min, int max) {
-    text_get_source(text);
-    return range(text_item_number_source(text), min, max);
-}
-
+// text_close_source, text_get_source, text_string_source, text_item_source,
+// text_item_string_source, text_item_number_source, text_item_binary_source,
+// text_item_hex_source and text_get_number_source moved to text.h, INLINE:
+// the image folds each into every one of its callers rather than sharing one
+// out-of-line copy (see LEVER on text_get() and neighbours below). None of
+// them carries its own ORIGINAL marker - they are this tree's own shared
+// shape for logic the image duplicates at each call site, not an image
+// function - so there is nothing to claim here; the header definitions are
+// still reached by this unit's own `#include "text.h"`.
 
 // ---------------------------------------------------------------------------
 // DEFINED IN THE HEADER, CLAIMED HERE.

@@ -17,6 +17,9 @@
  */
 #pragma once
 
+#include "general.h"
+#include "strings.h"
+
  /*
   * Text class: Handles basic text operations.
   */
@@ -164,8 +167,20 @@ int __cdecl text_item_hex();
 // Recovered free functions, formerly declared in the retired
 // text_recovery.h. They are the image's own shapes - free functions taking
 // a `Text *` - and several are friends of the class above.
-class Strings;
-void __cdecl text_close_source(Text *text);
+// INLINE, because the image folds each of these into every one of ITS
+// callers: `text_get` (0x005FD570) and `text_string` (0x005FD5E0) each carry
+// the full feof/fgets/kill_lf/purge_spaces body of `text_get_source`, not a
+// `call` to a shared routine, and `text_item`, `text_item_string`,
+// `text_item_number`, `text_item_binary` each carry the full parse loop of
+// `text_item_source`. A single out-of-line copy called from every site is a
+// different program - one with N calls where the image has N copies.
+inline void __cdecl text_close_source(Text *text) {
+  Text *const value = text;
+  if (value->text_file_) {
+    fclose(value->text_file_);
+    value->text_file_ = nullptr;
+  }
+}
 // INLINE, because the image folds it: `text_set_get_ptr` is three
 // instructions - load the field, store it, return - where a call leaves
 // five. Same reason as Spot::shutdown and Font::close.
@@ -175,14 +190,53 @@ inline void __cdecl text_set_get_ptr_source(Text *text, LPSTR *output) {
 inline void __cdecl text_set_item_ptr_source(Text *text, LPSTR *output) {
   *output = text->buffer_item_;
 }
-LPSTR __cdecl text_get_source(Text *text);
-LPSTR __cdecl text_string_source(Text *text, Strings *strings);
-LPSTR __cdecl text_item_source(Text *text);
-LPSTR __cdecl text_item_string_source(Text *text, Strings *strings);
-int __cdecl text_item_number_source(Text *text);
-int __cdecl text_item_binary_source(Text *text);
-int __cdecl text_item_hex_source(Text *text);
-int __cdecl text_get_number_source(Text *text, int min, int max);
+inline LPSTR __cdecl text_get_source(Text *text) {
+  Text *const value = text;
+  if (feof(value->text_file_)) {
+    value->buffer_get_[0] = 0;
+    return nullptr;
+  }
+  if (!fgets(value->buffer_get_, 511, value->text_file_)) {
+    value->buffer_get_[0] = 0;
+    return value->buffer_get_;
+  }
+  kill_lf(value->buffer_get_);
+  purge_spaces(value->buffer_get_);
+  value->current_pos_ = value->buffer_get_;
+  return value->buffer_get_;
+}
+inline LPSTR __cdecl text_string_source(Text *text, Strings *strings) {
+  return strings->put(text_get_source(text));
+}
+inline LPSTR __cdecl text_item_source(Text *text) {
+  Text *const value = text;
+  LPSTR parse = value->buffer_item_;
+  while (*value->current_pos_ != 0 && *value->current_pos_ != ',') {
+    *parse++ = *value->current_pos_++;
+  }
+  *parse = 0;
+  if (*value->current_pos_ != 0) {
+    ++value->current_pos_;
+  }
+  purge_spaces(value->buffer_item_);
+  return value->buffer_item_;
+}
+inline LPSTR __cdecl text_item_string_source(Text *text, Strings *strings) {
+  return strings->put(text_item_source(text));
+}
+inline int __cdecl text_item_number_source(Text *text) {
+  return stoi(text_item_source(text));
+}
+inline int __cdecl text_item_binary_source(Text *text) {
+  return btoi(text_item_source(text));
+}
+inline int __cdecl text_item_hex_source(Text *text) {
+  return htoi(text_item_source(text));
+}
+inline int __cdecl text_get_number_source(Text *text, int min, int max) {
+  text_get_source(text);
+  return range(text_item_number_source(text), min, max);
+}
 
 // Nothing in the image calls text_get_number: `inline_candidates` found no
 // direct edge to it anywhere in the shipped bytes, so every caller has

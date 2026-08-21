@@ -55,24 +55,10 @@ Purpose: Trim the trailing spaces in-line from the end of the string.
 Return Value: n/a
 Status: Complete
 */
-__forceinline void __cdecl purge_trailing(LPSTR input) {
-    // IT OVERWRITES EACH TRAILING SPACE, walking back, rather than placing a
-    // single terminator: `mov byte ptr [eax], 0` at 0x006007A1 is inside the
-    // loop. The empty string leaves early - `test eax, eax; je` at 0x0060078E
-    // - and the `p == input` test comes AFTER the store.
-    const size_t length = strlen(input);
-    if (length == 0) {
-        return;
-    }
-    char *end = input + length - 1;
-    while (end >= input && *end == ' ') {
-        *end = 0;
-        if (end == input) {
-            return;
-        }
-        --end;
-    }
-}
+// LEVER: definition moved to general.h (MEASURED inline) so callers in
+// alpha.cpp fold it in place instead of emitting a `call`; chas_name,
+// weap_name and arm_name each showed a real `call` to this address where the
+// image inlines the four-`strlen`-call body directly. See general.h.
 
 /*
 Purpose: Trim the leading spaces in-line from the start of the string.
@@ -331,11 +317,11 @@ int __cdecl parse_say(int id, int input, int gender, int pluralality) {
         pluralality = *PluralityDefault;
     }
     ParseStrPlurality[id] = pluralality;
-    // TRUNCATED FIRST, exactly as `parse_says` is: `mov byte ptr [esi], 0` at
-    // 0x00625E9D, before the `get` and the copy.
+    // Truncate then `strcat`, exactly as `parse_says` does: `mov byte ptr
+    // [esi], 0` at 0x00625E9D and `call 0x645470`, which is `strcat`.
     char *const dest = ParseStrBuffer[id].str;
     dest[0] = 0;
-    strcpy(dest, StringTable->get(input));
+    strcat(dest, StringTable->get(input));
     return 0;
 }
 
@@ -364,13 +350,14 @@ int __cdecl parse_says(int id, LPCSTR input, int gender, int pluralality) {
         pluralality = *PluralityDefault;
     }
     ParseStrPlurality[id] = pluralality;
-    // THE IMAGE TRUNCATES FIRST: `mov byte ptr [eax], 0` at 0x00625F06,
-    // pointless before a `strcpy` and in the shipped bytes. That is the whole
-    // of what was missing - `strcpy_s` measures the same as `strcpy` here,
-    // because vc6_compat.h's shim inlines to exactly it.
+    // TRUNCATE THEN APPEND, which is what the image does: `mov byte ptr
+    // [eax], 0` at 0x00625F06 and then `call 0x645470` - which is `strcat`,
+    // not `strcpy`. The two are behaviourally identical after a truncation and
+    // the relocation hides the difference in the bytes, so only the CALL
+    // SYMBOL tells them apart.
     char *const dest = ParseStrBuffer[id].str;
     dest[0] = 0;
-    strcpy(dest, input);
+    strcat(dest, input);
     return 0;
 }
 
@@ -1391,7 +1378,7 @@ void __cdecl wipe_undo() {
 
 /*
 Purpose: Handle the creation of an undo auto-save when certain Scenario Editor changes are made.
-// ORIGINAL: 0x005ABF20 ?auto_undo@@YAXXZ 0x005ABF20-0x005ABFEF
+// ORIGINAL: 0x005ABF20 ?auto_undo@@YAXXZ 0x005ABF20-0x005ABFEF BYTE_EXACT
 // size      207 bytes
 // prototype 
 // callers   32   call targets   7
@@ -1402,18 +1389,43 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl auto_undo() {
-    if (GamePreferences & PREF_BSC_AUTOSAVE_EACH_TURN) {
-        ScenEditorUndoPosition = 1;
-        remove("saves\\auto\\Scenario Editor Undo 9.SAV");
-        char save_path_new[38];
-        char save_path_old[38];
-        for (int i = 9; i >= 2; i--) {
-            sprintf_s(save_path_old, 38, "saves\\auto\\Scenario Editor Undo %d.SAV", i - 1);
-            sprintf_s(save_path_new, 38, "saves\\auto\\Scenario Editor Undo %d.SAV", i);
-            rename(save_path_old, save_path_new);
-        }
-        save_daemon("saves\\auto\\Scenario Editor Undo 1");
+    if (!(GamePreferences & PREF_BSC_AUTOSAVE_EACH_TURN)) {
+        return;
     }
+    // THREE 0x100 BUFFERS AND THE PRE-sprintf IDIOM. The image reserves 0x250
+    // bytes at 0x005ABF23 and builds each name with `strcat`, `_itoa`,
+    // `strcat` - no `sprintf` anywhere. It also carries the PREVIOUS name
+    // forward rather than formatting it twice, and decides between `remove`
+    // and `rename` on whether that carried name is empty, which is what makes
+    // the first pass delete rather than rename.
+    ScenEditorUndoPosition = 1;
+    // 0x100, 0x100 and 0x50: the image's three locals sit at [ebp-0x250],
+    // [ebp-0x150] and [ebp-0x50], which is where `sub esp, 0x250` comes from.
+    char previous[256];
+    char current[256];
+    char number[80];
+    previous[0] = 0;
+    for (int i = 9; i >= 1; i--) {
+        current[0] = 0;
+        strcat(current, "saves\\auto\\Scenario Editor Undo ");
+        _itoa(i, number, 10);
+        strcat(current, number);
+        if (strlen(previous) == 0) {
+            remove(current);
+        } else {
+            // (previous, current), in that order: the image pushes the
+            // current name and then the carried one, so the CARRIED name is
+            // the first argument - it renames the name it built last pass
+            // onto the one it just built, which collapses the history rather
+            // than rotating it. That is what the shipped code does.
+            rename(previous, current);
+        }
+        strcpy(previous, current);
+    }
+    // THE BUILT PATH, not a literal: the image pushes [ebp-0x250] at
+    // 0x005ABFE1. The loop's last pass builds "Undo 1" and carries it there,
+    // so the name is already in hand.
+    save_daemon(previous);
 }
 
 /*
