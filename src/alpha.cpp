@@ -1645,9 +1645,15 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl prefs_use() {
-    GamePreferences = AlphaIniPrefs->preferences;
-    GameMorePreferences = AlphaIniPrefs->more_preferences;
-    GameWarnings = AlphaIniPrefs->announce;
+    // ALL THREE LOADS BEFORE ANY STORE, which is what the image does at
+    // 0x0059E950 - three `mov reg, [...]` then three `mov [...], reg`.
+    // Written as three assignments the compiler interleaves them.
+    const uint32_t preferences = AlphaIniPrefs->preferences;
+    const uint32_t more = AlphaIniPrefs->more_preferences;
+    const uint32_t announce = AlphaIniPrefs->announce;
+    GamePreferences = preferences;
+    GameMorePreferences = more;
+    GameWarnings = announce;
 }
 
 /*

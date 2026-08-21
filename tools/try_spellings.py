@@ -42,6 +42,11 @@ def _body_span(text: str, address: str) -> tuple[int, int]:
     return opening + 1, index - 1
 
 
+def _agreeing(detail: str) -> int:
+    match = re.search(r"agreeing (\d+) of", detail)
+    return int(match.group(1)) if match else 0
+
+
 def measure(address: str) -> tuple[str, str]:
     """(verdict, detail) for one address, or ("", reason) if it cannot say."""
     done = subprocess.run(
@@ -87,13 +92,18 @@ if __name__ == "__main__":
         for name, replacement in candidates.items():
             source.write_text(original[:start] + replacement + original[end:])
             verdict, detail = measure(address)
-            results.append((TIERS.index(verdict), name, detail))
+            results.append((TIERS.index(verdict), -_agreeing(detail), name,
+                            detail))
             print(f"  {name:28s} {detail}")
     finally:
         source.write_text(original)
     results.sort()
     print(f"{len(results)} candidate(s); the file is back as it was")
-    if results and results[0][0] < TIERS.index(baseline[0] or ""):
-        print(f"best: {results[0][1]}")
+    # RANKED ON THE COUNT TOO, not the tier alone: a search is mostly a walk
+    # through MISMATCHes, and "nothing beat it" is a useless answer when one
+    # candidate agreed on twenty more instructions than the others.
+    here = (TIERS.index(baseline[0] or ""), -_agreeing(baseline[1]))
+    if results and results[0][:2] < here:
+        print(f"best: {results[0][2]}")
     else:
         print("none beat what is committed")
