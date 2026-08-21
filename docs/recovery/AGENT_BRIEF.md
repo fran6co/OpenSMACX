@@ -98,12 +98,27 @@ LEVERS THAT HAVE PAID, most productive first
   sides, so the method's own name costs nothing. Five initialisers went
   byte-exact this way on 2026-08-21; the constructor spelling made them worse.
 
-- A `volatile` POINTER ALIAS IS A WALL. `volatile Font **const fonts` read
-  through, instead of three independent absolute lvalues, cost five
-  basebutton.cpp bodies their match on 2026-08-21 - `set_text_color` x3,
-  `set_def_font` and `init` all went byte-exact the moment the alias came out.
-  If a body reads several fixed globals through one `volatile` handle, write
-  each as its own lvalue and re-measure before anything else.
+- `volatile` CUTS BOTH WAYS, and you must MEASURE which way before touching it.
+
+  As an ALIAS it is a wall: `volatile Font **const fonts` read through, instead
+  of three independent absolute lvalues, cost five basebutton.cpp bodies their
+  match - `set_text_color` x3, `set_def_font` and `init` all went byte-exact the
+  moment it came out, and `Sprite::close` went 4/38 to 35/38. Reading an object
+  through a volatile handle blocks VC6's memory-operand folding, so where the
+  image emits `cmp dword ptr [esi+0x28], edi` you get a `mov` into a register
+  first, at every site.
+
+  As a STORE QUALIFIER it is the fix: `Scroll::set_border_color` and
+  `expand_rect` KEEP their `volatile` deliberately, because without it VC6
+  proves the unconditional RECT writes dead and eliminates stores the image
+  performs. Removing it there took `set_bar_thickness` from 7/22 to 8/22 while
+  deleting four instructions the image has, and `set_thumb_rect` from 12/20
+  down to 7/20.
+
+  The distinction is what the volatile is DOING: hiding a field behind a raw
+  offset (remove it, and name the field) versus keeping a store alive (leave
+  it). `uv run tools/volatile_aliases.py` lists them; it flags bodies that
+  already reproduce, and those are never to be touched on this evidence.
 
 - A CLAMP MAY BE A MACRO, and a macro re-evaluates. `Font::width`'s image calls
   `strlen` TWICE - `call strlen; cmp; jl; call strlen` - because its `min` is a

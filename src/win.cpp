@@ -34,6 +34,15 @@ const uint32_t WinSecondaryVtable = 0x0066FF30;
 Purpose: Construct a Win from its AutoSound subobject and the process window
          defaults, preserving every sparse write and legacy return residue.
 // ORIGINAL: 0x005EB3D0 ??0Win@@QAE@XZ 0x005EB3D0-0x005EB63D
+// LEVER: `object`/`fixed`/`dynamic` were `volatile` pointers over a straight
+//   run of field-default copies - no rereads, nothing to guard against
+//   reordering. Dropping `volatile` (same raw-offset shape) took this from
+//   100/107 to 104/107 and the compiled instruction count now matches the
+//   image's 107 exactly. The remaining 3-instruction gap is the epilogue:
+//   the image's real `??0Win@@QAE@XZ` constructor sets `eax = this` before
+//   `pop esi; ret`, and this body's `void construct()` idiom never does -
+//   same cost the "construct method, not a constructor" lever elsewhere
+//   accepts, out of scope for the volatile fix.
 // symbol    ?construct@Win@@QAEXXZ
 // size      621 bytes
 // prototype void (__thiscall ??0Win@@QAE@XZ)(Win* this)
@@ -46,10 +55,10 @@ Status: Complete
 */
 void Win::construct() {
     auto_sound_.construct();
-    volatile uint32_t *const object =
-        reinterpret_cast<volatile uint32_t *>(this);
-    volatile const uint32_t *const fixed = WinStaticDefaults;
-    volatile const uint32_t *const dynamic = WinDynamicDefaults;
+    uint32_t *const object =
+        reinterpret_cast<uint32_t *>(this);
+    const uint32_t *const fixed = WinStaticDefaults;
+    const uint32_t *const dynamic = WinDynamicDefaults;
 
     object[0x0C8 / 4] = WinSecondaryVtable;
     object[0x0CC / 4] = 0;
@@ -544,6 +553,10 @@ int __cdecl in_box(int x, int y, int left, int top, int width, int height) {
 /*
 Purpose: Compute a rectangle center with wrapping subtraction and truncation toward zero.
 // ORIGINAL: 0x004BA830 ?UNK2@TutWin@@QAEXPAURECT@@PAHPAH@Z 0x004BA830-0x004BA863
+// RULED-OUT: dropping `volatile` from `ordered` (plain `RECT *ordered = rect;`):
+//   no change, still 2/25 - the divergence starts at instruction 2, before any
+//   field of `ordered` is touched (image loads `this`/rect args in a different
+//   order than this __cdecl body does), so it is not the volatile-alias defect.
 // symbol    ?rect_center@@YAHPAUtagRECT@@PAH1@Z
 // size      51 bytes
 // prototype void (__thiscall ?UNK2@TutWin@@QAEXPAURECT@@PAHPAH@Z)(TutWin* this, RECT*, int*, int*)

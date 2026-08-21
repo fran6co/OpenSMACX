@@ -159,6 +159,14 @@ Purpose: Reset Scroll-owned state from the process defaults, close the two
 //   expanded both FlatButton close dispatches inline via
 //   read_volatile_bits/original_slot<func_noarg_virtual> at slot 0x168,
 //   removing both E8 calls to the helper.
+// LEVER: `object`/`fixed`/`dynamic` were `volatile uint32_t *` - every one of
+//   these is a straight-line copy (no aliasing hazard to guard, nothing
+//   reread), so `volatile` bought nothing but forced extra register loads.
+//   Plain (non-volatile) pointers, same raw-offset shape, took this from
+//   47/71 to 65/71 - and the compiled instruction count now matches the
+//   image's 71 exactly. The remaining 6-instruction gap starts exactly at
+//   the dynamic[] loop the BLOCKED note above already names; unaffected by
+//   this change.
 // symbol    ?close@Scroll@@QAEIXZ
 // size      350 bytes
 // prototype void (__thiscall ?close@Scroll@@QAEXXZ)(Scroll* this)
@@ -172,10 +180,10 @@ Return Value: GraphicWin::close return residue
 Status: Complete; embedded FlatButton close redirects are source-owned
 */
 uint32_t Scroll::close() {
-    volatile uint32_t *const object =
-        reinterpret_cast<volatile uint32_t *>(this);
-    volatile uint32_t *const fixed = &ScrollCloseStaticDefaults;
-    volatile uint32_t *const dynamic = &ScrollCloseDynamicDefaults;
+    uint32_t *const object =
+        reinterpret_cast<uint32_t *>(this);
+    uint32_t *const fixed = &ScrollCloseStaticDefaults;
+    uint32_t *const dynamic = &ScrollCloseDynamicDefaults;
 
     object[0xA14 / 4] = dynamic[0];
     object[0xA1C / 4] = fixed[3];
@@ -490,6 +498,12 @@ uint32_t Scroll::set_bevel_lower(int color) {
 /*
 Purpose: Set the scrollbar thickness and reset its thumb rectangle.
 // ORIGINAL: 0x00605B80 ?set_bar_thickness@Scroll@@QAEXH@Z 0x00605B80-0x00605BE0
+// RULED-OUT: dropping the `volatile` casts on `bar_thickness_`, `border_color_`
+//   and the `thumb` RECT alias (plain assignments/reads to the named fields
+//   instead): 7/22 -> 8/22 but the compiler now folds the border-color guard
+//   into an `or eax, edx` the image never has and drops 4 instructions the
+//   image keeps (23 -> 19 compiled) - same dead-store-elimination hazard
+//   `set_border_color` below already measured and rejected. Reverted.
 // symbol    ?set_bar_thickness@Scroll@@QAEIH@Z
 // size      96 bytes
 // prototype void (__thiscall ?set_bar_thickness@Scroll@@QAEXH@Z)(Scroll* this, int)
@@ -687,6 +701,11 @@ Purpose: Clamp, optionally reverse, and redraw the scrollbar position.
 //   `mov eax,[ecx]; mov eax,[eax+0xf8]; call eax` (3 insns) against the
 //   image's `mov edx,[ecx]; call dword ptr [edx+0xf8]` (2), the same
 //   second-dispatch scheduling gap 0x00605A10's own note gives up on.
+// LEVER: `parent`/`minimum`/`current`/`maximum`/`range_reversed_` reads were
+//   each cast through `volatile` to a single already-named field - no raw
+//   offsets, so nothing to rename, just the qualifier to drop. Plain reads
+//   took this from 8/29 to 11/29. The branch-polarity gap above is
+//   unaffected: it is still the first divergence, at instruction 2.
 // symbol    ?set_pos@Scroll@@QAEIH@Z
 // size      106 bytes
 // prototype void (__thiscall ?set_pos@Scroll@@QAEXH@Z)(Scroll* this, int position)
@@ -699,24 +718,23 @@ Purpose: Clamp, optionally reverse, and redraw the scrollbar position.
 Status: Complete
 */
 uint32_t Scroll::set_pos(int position) {
-    ::Win *const parent = *reinterpret_cast<::Win *volatile *>(&win_parent_);
+    ::Win *const parent = win_parent_;
     if (!parent) {
         return 0U;
     }
 
     ScrollCurrentWin() = parent;
 
-    const int minimum = *reinterpret_cast<volatile int *>(&range_minimum_);
-    volatile int *const current = &position_;
+    const int minimum = range_minimum_;
+    int *const current = &position_;
     if (position < minimum) {
         *current = minimum;
     } else {
-        const int maximum = *reinterpret_cast<volatile int *>(&range_maximum_);
+        const int maximum = range_maximum_;
         *current = position > maximum ? maximum : position;
     }
-    if (*reinterpret_cast<volatile uint32_t *>(&range_reversed_) != 0U) {
-        const uint32_t maximum = static_cast<uint32_t>(
-            *reinterpret_cast<volatile int *>(&range_maximum_));
+    if (range_reversed_ != 0U) {
+        const uint32_t maximum = static_cast<uint32_t>(range_maximum_);
         const uint32_t clamped = static_cast<uint32_t>(*current);
         *current = long_from_bits(
             maximum - clamped + static_cast<uint32_t>(minimum));
@@ -846,6 +864,12 @@ void Scroll::compute_thumb_rect(RECT *rect) {
 /*
 Purpose: Reset the scrollbar thumb rectangle from its stored thickness.
 // ORIGINAL: 0x00606EA0 ?set_thumb_rect@Scroll@@QAEXXZ 0x00606EA0-0x00606EF8
+// RULED-OUT: dropping the `volatile` casts on `bar_thickness_`, `border_color_`
+//   and the `thumb` RECT alias: 12/20 -> 7/20, a clear regression. Without
+//   `volatile` the optimizer proves the unconditional 0/0/thickness/thickness
+//   rect writes are dead when the branch below overwrites them and elides
+//   them, which the image does not do - same shape as `set_border_color`'s
+//   already-documented dead-store hazard. Reverted.
 // symbol    ?set_thumb_rect@Scroll@@QAEIXZ
 // size      88 bytes
 // prototype void (__thiscall ?set_thumb_rect@Scroll@@QAEXXZ)(Scroll* this)
@@ -1018,6 +1042,12 @@ Purpose: Destroy a Scroll: stage its two virtual tables, run close, destroy
          GraphicWin base teardown. The original's exception frame is omitted
          as unreachable per policy.
 // ORIGINAL: 0x00406E60 ??1Scroll@@QAE@XZ 0x00406E60-0x00406F1A;0x00650BB0-0x00650BEE
+// RULED-OUT: dropping `volatile` from `object` (plain `uint32_t *`, same raw
+//   offsets): no change, still 0/46. The image's prologue is an SEH frame
+//   (`push ebp; mov ebp,esp; push -1; push handler; ...`) that this body's
+//   policy-omitted frame (see Purpose above) never reproduces, so every
+//   instruction is misaligned from #0 - the divergence is the missing frame,
+//   not the volatile.
 // symbol    ?destroy@Scroll@@QAEPAV1@XZ
 // size      248 bytes
 // prototype void (__thiscall ??1Scroll@@QAE@XZ)(Scroll* this)
