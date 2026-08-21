@@ -57,13 +57,13 @@ class Wave_Device;
 typedef void(__cdecl func_atexit_callback)();
 
 #include "vector_teardown.h"
-extern func_thiscall_teardown BufferElementCtor;
-extern func_thiscall_teardown CaviarDataElementCtor;
-extern func_thiscall_teardown FontElementCtor;
-extern func_thiscall_teardown SpriteElementCtor;
-extern func_thiscall_teardown TextIndexElementCtor;
-extern func_thiscall_teardown TextureElementCtor;
-extern func_thiscall_teardown WaveElementCtor;
+extern const void *const BufferElementCtor;
+extern const void *const CaviarDataElementCtor;
+extern const void *const FontElementCtor;
+extern const void *const SpriteElementCtor;
+extern const void *const TextIndexElementCtor;
+extern const void *const TextureElementCtor;
+extern const void *const WaveElementCtor;
 
 // Per-kind scalar construction seams, defaulting to
 // source-owned trampolines over the recovered
@@ -93,41 +93,10 @@ typedef void (OriginalObject::*func_opaque_ctor_iii)(int a0, int a1, int a2);
 // rather than naming a type. Seams are deduped on the ADDRESS
 // they default to; one already bound at the same address
 // elsewhere is reused, never redefined here.
-extern func_thiscall_teardown BaseWinCtorTarget;   // 0x00408490
-extern func_thiscall_teardown BattleWinCtorTarget;   // 0x00422EE0
-extern func_thiscall_teardown CouncWinCtorTarget;   // 0x00428620
-extern func_thiscall_teardown DatalinkCtorTarget;   // 0x00428FC0
-extern func_thiscall_teardown DesignWinCtorTarget;   // 0x00434480
-extern func_thiscall_teardown DiploPopCtorTarget;   // 0x0043EFF0
-extern func_thiscall_teardown DiploWinCtorTarget;   // 0x00444FC0
-extern func_thiscall_teardown FameWinCtorTarget;   // 0x0044B200
-extern func_thiscall_teardown FactionArtCtorTarget;   // 0x00455F10
-extern func_thiscall_teardown InfoWinCtorTarget;   // 0x00459500
-extern func_thiscall_teardown MainInterfaceCtorTarget;   // 0x0045EF10
 extern func_opaque_ctor_i MapWinCtorTarget;   // 0x004626E0
-extern func_thiscall_teardown MessageWinCtorTarget;   // 0x00472190
-extern func_thiscall_teardown MonuWinCtorTarget;   // 0x00477C80
-extern func_thiscall_teardown MultiWinCtorTarget;   // 0x0047A590
 extern func_opaque_ctor_iii NetMsgCtorTarget;   // 0x0047ACF0
-extern func_thiscall_teardown NetWinCtorTarget;   // 0x00481C50
-extern func_thiscall_teardown NewTechWinCtorTarget;   // 0x004849D0
-extern func_thiscall_teardown PickWinCtorTarget;   // 0x0048AC10
 extern func_opaque_ctor_i PlanWinCtorTarget;   // 0x0048BCD0
-extern func_thiscall_teardown PrefWinCtorTarget;   // 0x004921E0
-extern func_thiscall_teardown QuayleWinCtorTarget;   // 0x00496810
-extern func_thiscall_teardown ReportIfCtorTarget;   // 0x004AD170
-extern func_thiscall_teardown ReportWinCtorTarget;   // 0x004AD6B0
-extern func_thiscall_teardown SocialWinCtorTarget;   // 0x004AE9E0
-extern func_thiscall_teardown StatusWinCtorTarget;   // 0x004BA1A0
-extern func_thiscall_teardown TutWinCtorTarget;   // 0x004BA6B0
-extern func_thiscall_teardown WorldWinCtorTarget;   // 0x004C4BF0
-extern func_thiscall_teardown Midi_DeviceCtorTarget;   // 0x004C5740
-extern func_thiscall_teardown Wave_In_DeviceCtorTarget;   // 0x004C5940
 extern func_opaque_ctor_i ConsoleCtorTarget;   // 0x0050F460
-extern func_thiscall_teardown NetDaemonCtorTarget;   // 0x005389F0
-extern func_thiscall_teardown FontQueueCtorTarget;   // 0x00559290
-extern func_thiscall_teardown MultiDebugCtorTarget;   // 0x005C97F0
-extern func_thiscall_teardown PaletteCtorTarget;   // 0x005FE2A0
 
 Sprite *const g_NEWTECHWIN_SPRITES = (Sprite *)0x00822610;
 Caviar *const g_VEHDRAW_CAVIAR = (Caviar *)0x008CC828;

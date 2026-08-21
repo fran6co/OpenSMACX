@@ -127,7 +127,7 @@ class FontQueue {
 };
 
 #include "vector_teardown.h"
-extern func_thiscall_teardown FontQueueElementTeardown;
+extern const void *const FontQueueElementTeardown;
 
 void __fastcall font_queue_dtor_redirect(FontQueue *self, void *);
 

@@ -1468,10 +1468,8 @@ void __fastcall wave_device_release_redirect(Wave_Device *self, void *) {
     self->release();
 }
 
-func_thiscall_teardown WaveControlGroupOriginalCtor =
-    original_method<func_thiscall_teardown>(0x004C5490);
-func_thiscall_teardown WaveControlGroupOriginalDtor =
-    original_method<func_thiscall_teardown>(0x004C5B80);
+const void *const WaveControlGroupOriginalCtor = (const void *)0x004C5490;
+const void *const WaveControlGroupOriginalDtor = (const void *)0x004C5B80;
 
 /*
 Purpose: Construct one control group: the list fields - head, tail, cursor,

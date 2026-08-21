@@ -50,14 +50,14 @@ typedef void (OriginalObject::*func_wave_destructor)();
 extern func_wave_destructor WaveOriginalDestructor;
 
 #include "vector_teardown.h"
-extern func_thiscall_teardown BufferElementTeardown;
-extern func_thiscall_teardown CaviarDataElementTeardown;
-extern func_thiscall_teardown FactionArtElementTeardown;
-extern func_thiscall_teardown FontElementTeardown;
-extern func_thiscall_teardown SpriteElementTeardown;
-extern func_thiscall_teardown TextIndexElementTeardown;
-extern func_thiscall_teardown TextureElementTeardown;
-extern func_thiscall_teardown WaveElementTeardown;
+extern const void *const BufferElementTeardown;
+extern const void *const CaviarDataElementTeardown;
+extern const void *const FactionArtElementTeardown;
+extern const void *const FontElementTeardown;
+extern const void *const SpriteElementTeardown;
+extern const void *const TextIndexElementTeardown;
+extern const void *const TextureElementTeardown;
+extern const void *const WaveElementTeardown;
 
 #include "deleting_thunks.h"
 

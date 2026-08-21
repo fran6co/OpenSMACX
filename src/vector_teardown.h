@@ -29,16 +29,34 @@
 typedef void (OriginalObject::*func_thiscall_teardown)();
 typedef void(__stdcall func_vector_dtor_iterator)(
     void *array, unsigned int element_size, int count,
-    func_thiscall_teardown teardown);
+    const void *teardown);
 func_vector_dtor_iterator *const VectorDtorIterator = (func_vector_dtor_iterator *)0x006456E4;
 
 // Its construction-side companion: walk an array calling one constructor per
 // element, with the destructor along for exception unwind (unreachable here,
 // but passed faithfully).
+// THE CALLBACKS ARE ADDRESSES, not pointer-to-member VARIABLES. The image
+// pushes them as immediates - `push 0x4c67c0` at 0x00445450 - and a
+// `func_thiscall_teardown` built by `original_method` at load time is a
+// variable, so every caller pushed `dword ptr [...]` instead.
 typedef void(__stdcall func_vector_ctor_iterator)(
     void *array, unsigned int element_size, int count,
-    func_thiscall_teardown ctor, func_thiscall_teardown dtor);
+    const void *ctor, const void *dtor);
 func_vector_ctor_iterator *const VectorCtorIterator = (func_vector_ctor_iterator *)0x006457C2;
+
+// THE LAST TWO INSTRUCTIONS OF EVERY ARRAY THUNK, and there is no C++ for
+// them. `??_L@YGXPAXIHP6EX0@Z1@Z` and `??_M@...` are the compiler's own vector
+// constructor and destructor iterators: VC6 emits a `call rel32` to them when
+// it generates an array construction, and nothing a program can WRITE names
+// them - a declaration cannot carry a `??_` mangling, and array placement new
+// is not equivalent because MSVC stores a count cookie ahead of the array and
+// returns a shifted pointer.
+//
+// So the pointer stays, and 101 array thunks are capped two instructions short
+// of the image. What was fixable IS fixed: the element callbacks below are
+// addresses rather than pointer-to-member variables, because the image pushes
+// them as immediates - `push 0x4c67c0` - and a variable built by
+// `original_method` at load time pushed `dword ptr [...]` instead.
 
 // The game's own operator new, ??2@YAPAXI@Z at 0x0064558A - a 14-byte
 // _nh_malloc(size, 1) forwarder that answers null rather than raising.

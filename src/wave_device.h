@@ -142,8 +142,8 @@ inline func_wave_device_destroy *&WaveDeviceDestroySlot() { return *reinterpret_
 // The per-group construct/teardown pair the device's own lifetime hands to
 // the CRT vector iterators; both stay rebindable while they double as the
 // iterator arguments.
-extern func_thiscall_teardown WaveControlGroupOriginalCtor;
-extern func_thiscall_teardown WaveControlGroupOriginalDtor;
+extern const void *const WaveControlGroupOriginalCtor;
+extern const void *const WaveControlGroupOriginalDtor;
 
 void __fastcall wave_control_group_ctor_redirect(WaveControlGroup *self,
                                                  void *);

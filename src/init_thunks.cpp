@@ -50,20 +50,14 @@
 // to, bound at the original addresses the ??_L call
 // sites pass; the hybrid redirects each to its
 // recovered body at run time.
-func_thiscall_teardown BufferElementCtor =
-    original_method<func_thiscall_teardown>(0x005D7210);
-func_thiscall_teardown CaviarDataElementCtor =
-    original_method<func_thiscall_teardown>(0x00616BC0);
-func_thiscall_teardown FontElementCtor =
-    original_method<func_thiscall_teardown>(0x00618EA0);
-func_thiscall_teardown SpriteElementCtor =
-    original_method<func_thiscall_teardown>(0x005E37E0);
-func_thiscall_teardown TextIndexElementCtor =
-    original_method<func_thiscall_teardown>(0x005FDF40);
-func_thiscall_teardown TextureElementCtor =
-    original_method<func_thiscall_teardown>(0x00619650);
-func_thiscall_teardown WaveElementCtor =
-    original_method<func_thiscall_teardown>(0x004C66E0);
+const void *const FactionArtCtorTarget = (const void *)0x00455F10;
+const void *const BufferElementCtor = (const void *)0x005D7210;
+const void *const CaviarDataElementCtor = (const void *)0x00616BC0;
+const void *const FontElementCtor = (const void *)0x00618EA0;
+const void *const SpriteElementCtor = (const void *)0x005E37E0;
+const void *const TextIndexElementCtor = (const void *)0x005FDF40;
+const void *const TextureElementCtor = (const void *)0x00619650;
+const void *const WaveElementCtor = (const void *)0x004C66E0;
 
 namespace {
 
@@ -143,76 +137,14 @@ func_thiscall_teardown WaveInitCtor = original_method<func_thiscall_teardown>(
 // The opaque-storage constructors, each defaulting to
 // the original the thunk calls; the hybrid redirects
 // it to a recovered body at run time.
-func_thiscall_teardown BaseWinCtorTarget =
-    original_method<func_thiscall_teardown>(0x00408490);
-func_thiscall_teardown BattleWinCtorTarget =
-    original_method<func_thiscall_teardown>(0x00422EE0);
-func_thiscall_teardown CouncWinCtorTarget =
-    original_method<func_thiscall_teardown>(0x00428620);
-func_thiscall_teardown DatalinkCtorTarget =
-    original_method<func_thiscall_teardown>(0x00428FC0);
-func_thiscall_teardown DesignWinCtorTarget =
-    original_method<func_thiscall_teardown>(0x00434480);
-func_thiscall_teardown DiploPopCtorTarget =
-    original_method<func_thiscall_teardown>(0x0043EFF0);
-func_thiscall_teardown DiploWinCtorTarget =
-    original_method<func_thiscall_teardown>(0x00444FC0);
-func_thiscall_teardown FameWinCtorTarget =
-    original_method<func_thiscall_teardown>(0x0044B200);
-func_thiscall_teardown FactionArtCtorTarget =
-    original_method<func_thiscall_teardown>(0x00455F10);
-func_thiscall_teardown InfoWinCtorTarget =
-    original_method<func_thiscall_teardown>(0x00459500);
-func_thiscall_teardown MainInterfaceCtorTarget =
-    original_method<func_thiscall_teardown>(0x0045EF10);
 func_opaque_ctor_i MapWinCtorTarget =
     original_method<func_opaque_ctor_i>(0x004626E0);
-func_thiscall_teardown MessageWinCtorTarget =
-    original_method<func_thiscall_teardown>(0x00472190);
-func_thiscall_teardown MonuWinCtorTarget =
-    original_method<func_thiscall_teardown>(0x00477C80);
-func_thiscall_teardown MultiWinCtorTarget =
-    original_method<func_thiscall_teardown>(0x0047A590);
 func_opaque_ctor_iii NetMsgCtorTarget =
     original_method<func_opaque_ctor_iii>(0x0047ACF0);
-func_thiscall_teardown NetWinCtorTarget =
-    original_method<func_thiscall_teardown>(0x00481C50);
-func_thiscall_teardown NewTechWinCtorTarget =
-    original_method<func_thiscall_teardown>(0x004849D0);
-func_thiscall_teardown PickWinCtorTarget =
-    original_method<func_thiscall_teardown>(0x0048AC10);
 func_opaque_ctor_i PlanWinCtorTarget =
     original_method<func_opaque_ctor_i>(0x0048BCD0);
-func_thiscall_teardown PrefWinCtorTarget =
-    original_method<func_thiscall_teardown>(0x004921E0);
-func_thiscall_teardown QuayleWinCtorTarget =
-    original_method<func_thiscall_teardown>(0x00496810);
-func_thiscall_teardown ReportIfCtorTarget =
-    original_method<func_thiscall_teardown>(0x004AD170);
-func_thiscall_teardown ReportWinCtorTarget =
-    original_method<func_thiscall_teardown>(0x004AD6B0);
-func_thiscall_teardown SocialWinCtorTarget =
-    original_method<func_thiscall_teardown>(0x004AE9E0);
-func_thiscall_teardown StatusWinCtorTarget =
-    original_method<func_thiscall_teardown>(0x004BA1A0);
-func_thiscall_teardown TutWinCtorTarget =
-    original_method<func_thiscall_teardown>(0x004BA6B0);
-func_thiscall_teardown WorldWinCtorTarget =
-    original_method<func_thiscall_teardown>(0x004C4BF0);
-func_thiscall_teardown Midi_DeviceCtorTarget =
-    original_method<func_thiscall_teardown>(0x004C5740);
-func_thiscall_teardown Wave_In_DeviceCtorTarget =
-    original_method<func_thiscall_teardown>(0x004C5940);
 func_opaque_ctor_i ConsoleCtorTarget =
     original_method<func_opaque_ctor_i>(0x0050F460);
-func_thiscall_teardown NetDaemonCtorTarget =
-    original_method<func_thiscall_teardown>(0x005389F0);
-func_thiscall_teardown FontQueueCtorTarget =
-    original_method<func_thiscall_teardown>(0x00559290);
-func_thiscall_teardown MultiDebugCtorTarget =
-    original_method<func_thiscall_teardown>(0x005C97F0);
-func_thiscall_teardown PaletteCtorTarget =
-    original_method<func_thiscall_teardown>(0x005FE2A0);
 
 
 /*
