@@ -1,4 +1,10 @@
 // ORIGINAL: 0x005E9D44 ?draw@Sprite@@QAEHPAUBuffer@@HHHPAE@Z 0x005E9D44-0x005EAAFF FILE
+// HAND-WRITTEN ASSEMBLY IN THE ORIGINAL: the shipped bytes save and restore
+// the FLAGS around a block - `pushf` ... `popf` - which a compiler has no
+// reason to emit, because it owns the flags between setting them and reading
+// them. Byte-exactness is NOT reachable from C++ here; the honest ceiling is
+// semantic equivalence, and the answer is NOT `__asm`.
+// Found by `tools/handwritten_asm.py`.
 // RULED-OUT: literal computed-jump dispatch (register/global holds a label address, re-jumped every outer row) - not reachable from C; reproduced as switch-based Duff's device per row instead.
 // working copy - scaffold materialised by --work
 // size      3515 bytes

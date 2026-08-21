@@ -1,4 +1,10 @@
 // ORIGINAL: 0x005E8FF5 ?draw_multi_table_dest@Sprite@@QAEHPAUBuffer@@HHHPAE@Z 0x005E8FF5-0x005E9D44 FILE
+// HAND-WRITTEN ASSEMBLY IN THE ORIGINAL: the shipped bytes save and restore
+// the FLAGS around a block - `pushf` ... `popf` - which a compiler has no
+// reason to emit, because it owns the flags between setting them and reading
+// them. Byte-exactness is NOT reachable from C++ here; the honest ceiling is
+// semantic equivalence, and the answer is NOT `__asm`.
+// Found by `tools/handwritten_asm.py`.
 // RULED-OUT: the original's inner blit loop is a hand-unrolled Duff's device that computes and indirect-calls its own re-entry address (four labels stored through a global function pointer) - not representable in standard C++. Guard clauses, the scale-ratio gate, and the rect intersection are transcribed faithfully; the pixel copy itself (both the 1:1 and the scaled paths) is a plain nested loop performing the same per-pixel remap/skip operation rather than the original's self-modifying unroll.
 // working copy - scaffold materialised by --work
 // size      3407 bytes

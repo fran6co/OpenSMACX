@@ -1,4 +1,10 @@
 // ORIGINAL: 0x005E66A2 ?draw_dest_unk1@Sprite@@QAEHPAUBuffer@@HHPAE@Z 0x005E66A2-0x005E73CC FILE
+// HAND-WRITTEN ASSEMBLY IN THE ORIGINAL: the shipped bytes save and restore
+// the FLAGS around a block - `pushf` ... `popf` - which a compiler has no
+// reason to emit, because it owns the flags between setting them and reading
+// them. Byte-exactness is NOT reachable from C++ here; the honest ceiling is
+// semantic equivalence, and the answer is NOT `__asm`.
+// Found by `tools/handwritten_asm.py`.
 // RULED-OUT: the original's inner blit loops are Duff's-device unrolled (mod-4 remainder jumps into a 4x-unrolled copy, per-row "self-call" that Ghidra mis-read as recursion but is really a loop back-edge); reproduced the same stencil semantics (dest = table[dest] where the mask byte is 0) with plain nested for-loops instead of the unrolled form, for all three paths (1:1, magnify via get_clipped_*_table_expand, minify via get_clipped_*_table_shrink + row-repeat counts). Compiles, diverges at instr #4 (prologue-adjacent).
 // working copy - scaffold materialised by --work
 // size      3370 bytes

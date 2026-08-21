@@ -1,4 +1,10 @@
 // ORIGINAL: 0x005E81BC ?draw_dest_unk2@Sprite@@QAEHPAUBuffer@@HHHPAE@Z 0x005E81BC-0x005E8FA5 FILE
+// HAND-WRITTEN ASSEMBLY IN THE ORIGINAL: the shipped bytes save and restore
+// the FLAGS around a block - `pushf` ... `popf` - which a compiler has no
+// reason to emit, because it owns the flags between setting them and reading
+// them. Byte-exactness is NOT reachable from C++ here; the honest ceiling is
+// semantic equivalence, and the answer is NOT `__asm`.
+// Found by `tools/handwritten_asm.py`.
 // RULED-OUT: two indirect back-edges (jmp edx @0x5E8420, jmp [0x9B3AC4] @0x5E8766) are Duff's-device dispatch through a computed label; rewritten as switch(remainder){...} on the loop-invariant state instead of a real indirect jump - semantically faithful, not byte-exact. Row-repeat count loop @0x5E87F8-0x5E8817 (esi += stride, N-1 times from a y-table byte) is a case Ghidra silently dropped (its pseudocode shows a no-op decrement loop with no esi update); reconstructed from raw bytes instead.
 // working copy - scaffold materialised by --work
 // size      3561 bytes

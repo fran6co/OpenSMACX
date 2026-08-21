@@ -1,4 +1,10 @@
 // ORIGINAL: 0x005E3E50 ?draw_mono@Sprite@@QAEHPAUBuffer@@HHHH@Z 0x005E3E50-0x005E4ADA FILE
+// HAND-WRITTEN ASSEMBLY IN THE ORIGINAL: the shipped bytes save and restore
+// the FLAGS around a block - `pushf` ... `popf` - which a compiler has no
+// reason to emit, because it owns the flags between setting them and reading
+// them. Byte-exactness is NOT reachable from C++ here; the honest ceiling is
+// semantic equivalence, and the answer is NOT `__asm`.
+// Found by `tools/handwritten_asm.py`.
 // RULED-OUT: the pixel copy is a hand-unrolled, self-computed-goto (Duff's Device style) loop jumping into the middle of an unrolled 4-wide copy based on `count & 3`; replaced with a plain nested loop that is semantically equivalent (skip the transparent key byte, else write the fill color, honoring the row/column repeat counts the four get_clipped_*_table_* helpers hand back) rather than the exact unrolled shape.
 // working copy - scaffold materialised by --work
 // size      3210 bytes
