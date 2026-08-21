@@ -634,7 +634,7 @@ int __fastcall wave_in_device_end_record_redirect(Wave_In_Device *self, void *) 
 // ---------------------------------------------------------------------------
 
 /*
-// ORIGINAL: 0x004C5740 ??0Midi_Device@@QAE@XZ 0x004C5740-0x004C577C
+// ORIGINAL: 0x004C5740 ??0Midi_Device@@QAE@XZ 0x004C5740-0x004C577C BYTE_EXACT
 // body      src/sounddevice.h
 // size      60 bytes
 // prototype void (__thiscall ??0Midi_Device@@QAE@XZ)(Midi_Device* this)
@@ -643,6 +643,25 @@ int __fastcall wave_in_device_end_record_redirect(Wave_In_Device *self, void *) 
 // flags     hidden;sp_ready;purged_ok
 // calls     0x006465F0
 */
+
+Midi_Device::Midi_Device() {
+    // THE BASE VTABLE FIRST, THE DERIVED ONE LAST, with every scalar settled
+    // in between - the same shape `Wave_Device::Wave_Device` next door already
+    // reproduces. The image writes 0x0066E098, then the fields OUT of
+    // declaration order, then 0x0066E190 over the top.
+    vtable_storage_ = 0x0066E098;
+    // A REAL `memset` CALL, not a store: the image emits
+    // `push 4; push 0; push esi+4; call 0x6465f0` at 0x004C5753. The same
+    // shape `Wave::init` needed for its own flag field.
+    memset(&field_4_, 0, 4);
+    field_C_ = 0;
+    field_18_ = 0;
+    field_1C_ = 0;
+    field_10_ = 0;
+    field_14_ = 0;
+    field_8_ = 0x7F;
+    vtable_storage_ = 0x0066E190;
+}
 
 /*
 // ORIGINAL: 0x004C5940 ??0Wave_In_Device@@QAE@XZ 0x004C5940-0x004C597C

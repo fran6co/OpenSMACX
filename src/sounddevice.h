@@ -38,7 +38,10 @@
   */
 class Midi_Device {
  public:
-  Midi_Device() { ; }
+  // DEFINED IN sounddevice.cpp, not empty. Its marker claims 60 image bytes
+  // and the body was `{ ; }` - the image writes nine fields and both vtable
+  // pointers. Promoted from src/recovered/units/004c5740.cpp.
+  Midi_Device();
   ~Midi_Device() { ; }
   int init(void *window, unsigned long backends);  // 004C57A0
   void update_sound();
