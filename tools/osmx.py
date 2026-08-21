@@ -1248,6 +1248,42 @@ def redundant_artifacts(records: list) -> list:
     return redundant
 
 
+def asm_matches(src: Path) -> list:
+    """Bodies that match only because they are written in `__asm`.
+
+    THE ORDER THIS PROJECT WANTS, worst last: byte-exact C++, then C++ that is
+    semantically identical, then a byte-exact `__asm` body, then one that does
+    not match. A hand-written assembly body is a MATCH but not an ANSWER - it
+    reproduces the bytes by restating them, and teaches nothing about what the
+    original source said.
+
+    So this does not fail the gate: the claim is true. It reports, so the
+    number cannot quietly grow and so each one stays on a list to be rewritten
+    in C++ - even at the cost of dropping to a semantic claim, which is the
+    trade this project prefers.
+    """
+    out = []
+    for path in sorted(src.glob("*.cpp")):
+        text = path.read_text()
+        if "__asm" not in text:
+            continue
+        lines = text.splitlines()
+        marker = None
+        for number, line in enumerate(lines, 1):
+            found = re.match(r"//\s*ORIGINAL:\s*(0x[0-9A-Fa-f]+)(.*)", line)
+            if found:
+                marker = (found.group(1), "BYTE_EXACT" in found.group(2),
+                          number)
+            elif "__asm" in line and not line.lstrip().startswith("//"):
+                if marker and marker[1]:
+                    out.append(f"{path.name}:{marker[2]}: {marker[0]} matches "
+                               f"in `__asm`, which is a restatement rather "
+                               f"than a recovery - rewrite it in C++ even if "
+                               f"that costs the byte match")
+                    marker = None
+    return out
+
+
 def unread_markers(src: Path) -> list:
     """Markers in files `decomp`'s reader never globs.
 
@@ -1514,6 +1550,7 @@ def check(
                 + duplicated_markers(records)
                 + redundant_artifacts(records))
     unread = unread_markers(src)
+    restated = asm_matches(src)
 
     # THE BUILD DATABASE IS THE AUTHORITY ON WHOSE FAULT A WALL IS - see
     # `unasked_here` below - and on which unclaimed bodies are worth measuring.
@@ -1699,6 +1736,9 @@ def check(
     # way it was built. Passing the second silently would leave 534 claims
     # unchecked behind a green gate, which is the shape this whole ratchet
     # exists to prevent.
+    if restated and not as_json:
+        for note in restated:
+            typer.secho(f"RESTATED  {note}", fg=typer.colors.YELLOW)
     if unread and not as_json:
         for note in unread:
             typer.secho(f"UNREAD    {note}", fg=typer.colors.RED)
