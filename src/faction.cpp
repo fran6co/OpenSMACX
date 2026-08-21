@@ -190,6 +190,13 @@ Purpose: Determine if the specified faction is considered a threat based on the 
 //        RULED-OUT: `PlayerData *p = &PlayersData[faction_id];` before the
 //        repeated `.current_num_bases`/`.diff_level` reads - dropped to 4/113;
 //        the image keeps faction_id itself live across the whole body instead.
+//        RULED-OUT: the image never materializes an is_minor_threat flag - all
+//        four guard conditions are separate early `return false` sites, no
+//        variable. Rewrote as guard clauses instead of the flag+outer-if; ties
+//        at 9/113 (identical codegen), kept for shape. Remaining divergence at
+//        instruction 9 is `test byte ptr [mem],al` (image) vs `mov cl,[mem];
+//        test cl,al` (this tree) for is_human's bit test - register/instruction
+//        selection only, not chased per the no-register-only-diffs rule.
 // size      315 bytes
 // prototype 
 // callers   20   call targets   2
@@ -200,44 +207,41 @@ Return Value: Is the specified faction a threat? true/false
 Status: Complete
 */
 BOOL __cdecl great_satan(int faction_id, BOOL is_aggressive) {
-    BOOL is_minor_threat = false;
-    if (is_human(faction_id) && FactionRankings[7] == faction_id) {
-        uint32_t bases_threat = (TurnCurrentNum + 25) / 50;
-        if (bases_threat < 4) {
-            bases_threat = 4;
-        }
-        if (PlayersData[faction_id].current_num_bases > bases_threat
-            && (PlayersData[faction_id].diff_level > DLVL_SPECIALIST
-                || GameRules & RULES_INTENSE_RIVALRY || is_aggressive)) {
-            is_minor_threat = true;
-        }
+    if (!is_human(faction_id) || FactionRankings[7] != faction_id) {
+        return false;
     }
-    if (is_minor_threat) {
-        BOOL has_intense_riv = (GameRules & RULES_INTENSE_RIVALRY);
-        if (TurnCurrentNum <= ((has_intense_riv ? 0 
-            : (DLVL_TRANSCEND - PlayersData[faction_id].diff_level) * 50) + 100)) {
-            return false;
-        }
-        if (climactic_battle() && aah_ooga(faction_id, -1) == faction_id) {
-            return true;
-        }
-        uint32_t diff_factor;
-        uint32_t factor;
-        if (has_intense_riv) {
-            factor = 4;
-            diff_factor = DLVL_TRANSCEND;
-        } else if (PlayersData[faction_id].diff_level >= DLVL_LIBRARIAN 
-            || GameRules & RULES_VICTORY_CONQUEST || ObjectiveReqVictory <= 1000) {
-            factor = 2;
-            diff_factor = DLVL_LIBRARIAN;
-        } else {
-            factor = 1;
-            diff_factor = DLVL_TALENT;
-        }
-        return (factor * FactionRankingsUnk[FactionRankings[7]] 
-            >= diff_factor * FactionRankingsUnk[FactionRankings[6]]);
+    uint32_t bases_threat = (TurnCurrentNum + 25) / 50;
+    if (bases_threat < 4) {
+        bases_threat = 4;
     }
-    return false;
+    if (PlayersData[faction_id].current_num_bases <= bases_threat
+        || !(PlayersData[faction_id].diff_level > DLVL_SPECIALIST
+            || GameRules & RULES_INTENSE_RIVALRY || is_aggressive)) {
+        return false;
+    }
+    BOOL has_intense_riv = (GameRules & RULES_INTENSE_RIVALRY);
+    if (TurnCurrentNum <= ((has_intense_riv ? 0
+        : (DLVL_TRANSCEND - PlayersData[faction_id].diff_level) * 50) + 100)) {
+        return false;
+    }
+    if (climactic_battle() && aah_ooga(faction_id, -1) == faction_id) {
+        return true;
+    }
+    uint32_t diff_factor;
+    uint32_t factor;
+    if (has_intense_riv) {
+        factor = 4;
+        diff_factor = DLVL_TRANSCEND;
+    } else if (PlayersData[faction_id].diff_level >= DLVL_LIBRARIAN
+        || GameRules & RULES_VICTORY_CONQUEST || ObjectiveReqVictory <= 1000) {
+        factor = 2;
+        diff_factor = DLVL_LIBRARIAN;
+    } else {
+        factor = 1;
+        diff_factor = DLVL_TALENT;
+    }
+    return (factor * FactionRankingsUnk[FactionRankings[7]]
+        >= diff_factor * FactionRankingsUnk[FactionRankings[6]]);
 }
 
 /*
@@ -293,6 +297,12 @@ Purpose: Check if the human controlled player is nearing the endgame.
 //        incrementing pointer through the first loop; this tree's compile
 //        still indexes by `i` and schedules differently from instruction 0.
 //        Plateaus here after the ascending() fix; not chased further.
+//        RULED-OUT: `PlayerData *player = &PlayersData[1];` walked with
+//        `player++` alongside `i` for the first loop, to mimic the image's
+//        raw pointer walk - dropped to 15/56 (the &-of-array-element address
+//        is not a link-time constant the way `FactionsStatus`/`PlayersData`
+//        base pointers are, so the compiler emits a relocation load instead
+//        of folding the walk); reverted.
 // size      164 bytes
 // prototype 
 // callers   7   call targets   2
