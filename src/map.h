@@ -626,7 +626,7 @@ MEASURED inline void __cdecl world_alt_put_detail(int x, int y) {
 
 MEASURED inline int __cdecl bonus_at(int x, int y, int UNUSED(unk_val)) {
     uint32_t bit = bit_at(x, y);
-    uint32_t alt = alt_at(x, y);
+    int alt = alt_at(x, y);
     BOOL has_rsc_bonus = bit & BIT_RSC_BONUS;
     if (!has_rsc_bonus && (!MapRandSeed
         || (alt >= ALT_SHORE_LINE && !(GameRules & RULES_NO_UNITY_SCATTERING)))) {
@@ -634,14 +634,14 @@ MEASURED inline int __cdecl bonus_at(int x, int y, int UNUSED(unk_val)) {
     }
     uint32_t avg = (x + y) >> 1;
     x -= avg;
-    uint32_t chk = (avg & 3) + 4 * (x & 3);
+    int chk = (avg & 3) + 4 * (x & 3);
     if (!has_rsc_bonus && chk != ((MapRandSeed + (-5 * (avg >> 2)) - 3 * (x >> 2)) & 0xF)) {
         return 0;
     }
     if (alt < ALT_OCEAN_SHELF) {
         return 0;
     }
-    uint32_t ret = (alt < ALT_SHORE_LINE) ? chk % 3 + 1 : (chk % 5) & 3;
+    int ret = (alt < ALT_SHORE_LINE) ? chk % 3 + 1 : (chk % 5) & 3;
     if (!ret || bit & BIT_NUTRIENT_RSC) {
         if (bit & BIT_ENERGY_RSC) {
             return 3; // energy

@@ -939,6 +939,16 @@ void __cdecl unlock_map(int x, int y, int faction_id) {
 /*
 Purpose: Set the rockiness for the specified tile.
 // ORIGINAL: 0x00591BC0 ?rocky_set@@YAXHHH@Z 0x00591BC0-0x00591C0E
+// LEVER: `uint8_t *const field = &tile->val3;` plus a local for the masked read, same idiom
+//            as owner_set/site_set - the image reads `val3` and masks it BEFORE it evaluates
+//            `rocky << 6`, where `tile->val3 = (tile->val3 & 0x3F) | (rocky << 6)` in one
+//            statement (either operand order) evaluated the shift first regardless. 0.920 ->
+//            0.960 best-across-flags similarity.
+// RULED-OUT: delaying the `val3` store until after computing `tile->bit2 | 0x400000` into a
+//            local (matching the image's read-both-then-store-both order for the two fields)
+//            made it WORSE (0.960 -> 0.885) - the local for `bit2` changes the image's
+//            `mov ecx,[eax+0xc]/or ecx,.../mov [eax+0xc],ecx` register-folded shape into
+//            something that costs more elsewhere. Left storing `val3` immediately.
 // size      78 bytes
 // prototype void (__cdecl ?rocky_set@@YAXHHH@Z)(int xCoord, int yCoord, int rocky)
 // callers   11   call targets   0
@@ -950,8 +960,9 @@ Status: Complete
 */
 void __cdecl rocky_set(int x, int y, int rocky) {
     Map *tile = map_loc(x, y);
-    tile->val3 &= 0x3F;
-    tile->val3 |= rocky << 6;
+    uint8_t *const field = &tile->val3;
+    uint8_t masked = *field & 0x3F;
+    *field = masked | (rocky << 6);
     tile->bit2 |= 0x400000; // TODO: identify value
     UnkBitfield1 |= 1; // TODO: identify variable + value
 }
@@ -1140,6 +1151,14 @@ Purpose: Determine if the tile has a resource bonus. While the last parameter is
 //            image folding the bit-field load into the SIB-addressed `mov` where this
 //            tree materialises the tile address into a register first - the same
 //            register-allocation plateau as the rest of this family.
+// LEVER: `alt` and `chk` typed `int` instead of `uint32_t` - the image compares
+//            them against ALT_OCEAN_SHELF/ALT_SHORE_LINE with `jl`/`jge` and divides
+//            `chk` with `idiv`, both signed forms; the tree's `uint32_t` locals were
+//            producing `jb`/`jae`/`div`. 25/117 (0.800 similar) -> 20/117 (0.856
+//            similar) across --all-flags.
+// RULED-OUT: `avg` typed `int` to match - the image's one remaining `avg >> 2` uses
+//            `sar`, which `int` does reproduce, but it costs agreement elsewhere and
+//            the best-flags similarity drops to 0.825. Left `uint32_t`.
 // size      261 bytes
 // prototype int (__cdecl ?bonus_at@@YAHHHH@Z)(int xCoord, int yCoord, int unkVal)
 // callers   17   call targets   0
@@ -2149,7 +2168,11 @@ void __cdecl world_alt_set(int x, int y, int altitude, BOOL is_set_both) {
 
 /*
 Purpose: Handle raising the altitude of the specified tile.
-// ORIGINAL: 0x005C2380 ?world_raise_alt@@YAXHH@Z 0x005C2380-0x005C23DE
+// ORIGINAL: 0x005C2380 ?world_raise_alt@@YAXHH@Z 0x005C2380-0x005C23DE BYTE_EXACT
+// LEVER: the image `inc eax`s BEFORE the push, so the argument is `altitude + 1`, not the
+//            original value - `altitude++` (post-increment) pushed the pre-increment value;
+//            `++altitude` fixed it. Also `int altitude`, not `uint32_t`: the image's `< 6`
+//            compare is `jge`/signed, `uint32_t` gave `jae`. Both together: 0.961 -> BYTE_EXACT.
 // size      94 bytes
 // prototype void (__cdecl ?world_raise_alt@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   4   call targets   1
@@ -2161,16 +2184,20 @@ Status: Complete - testing
 */
 void __cdecl world_raise_alt(int x, int y) {
     if (on_map(x, y)) {
-        uint32_t altitude = alt_at(x, y);
+        int altitude = alt_at(x, y);
         if (altitude < 6) {
-            world_alt_set(x, y, altitude++, true);
+            world_alt_set(x, y, ++altitude, true);
         }
     }
 }
 
 /*
 Purpose: Handle lowering the altitude of the specified tile.
-// ORIGINAL: 0x005C23E0 ?world_lower_alt@@YAXHH@Z 0x005C23E0-0x005C243B
+// ORIGINAL: 0x005C23E0 ?world_lower_alt@@YAXHH@Z 0x005C23E0-0x005C243B BYTE_EXACT
+// LEVER: same as world_raise_alt (0x005C2380) - the image `dec eax`s BEFORE the push, so
+//            the pushed argument is `altitude - 1`; `altitude--` (post-decrement) pushed the
+//            pre-decrement value, `--altitude` fixed it. `int altitude`, not `uint32_t`, to
+//            match.
 // size      91 bytes
 // prototype 
 // callers   3   call targets   1
@@ -2182,9 +2209,9 @@ Status: Complete - testing
 */
 void __cdecl world_lower_alt(int x, int y) {
     if (on_map(x, y)) {
-        uint32_t altitude = alt_at(x, y);
+        int altitude = alt_at(x, y);
         if (altitude) {
-            world_alt_set(x, y, altitude--, true);
+            world_alt_set(x, y, --altitude, true);
         }
     }
 }
@@ -2797,6 +2824,23 @@ int __cdecl world_site(int x, int y, BOOL is_ocean_site) {
 /*
 Purpose: Analysis of the world map.
 // ORIGINAL: 0x005C55C0 ?world_analysis@@YAXXZ 0x005C55C0-0x005C58B8
+// LEVER: call_diff had this MORE by 3 calls: the inner loop's three `bit_set(x, y, ...)`
+//            calls were real calls where the image writes bit_set's body out inline and
+//            reuses ONE tile pointer for all three (the image keeps a running `Map*` in
+//            ebx, bumped by sizeof(Map) once per x-loop iteration, instead of recomputing
+//            map_loc(x, y) at each site) - replaced with `uint32_t *const tile_bit =
+//            &map_loc(x, y)->bit;` hoisted once, then `*tile_bit`. Also fixed `i >= 32` /
+//            `i == 32` to `i >= 8` / `i == 8`: the image's `cmp esi, 0x20` is the SAME
+//            loop counter strength-reduced to a byte offset for RadiusOffsetX/Y addressing
+//            (esi = 4*i), so the comparison the source made was against `i`, not against
+//            that scaled induction variable - at `i < 20` the old `>= 32` could never be
+//            true, so the region_radius/BIT_UNK_4000 branch was dead code. 0.454 -> 0.484
+//            best-across-flags similarity; call_diff now agrees (0 vs 1 became 1 vs 1).
+// RULED-OUT (not attempted further): the remaining gap is the `imul 0x2c` vs
+//            `lea`+SIB-scale-4 Map-stride plateau this file's other bodies already hit,
+//            compounded by a prologue register-scheduling difference (ebx/edi assignment
+//            order) at the very first divergence - both are the documented
+//            register-allocation plateau for this family, not a source-shape defect.
 // size      760 bytes
 // prototype 
 // callers   1   call targets   1
@@ -2819,7 +2863,8 @@ void __cdecl world_analysis() {
                 && (!(bit_at(x, y) & BIT_FUNGUS || altitude_at(x, y) < ALT_BIT_OCEAN_SHELF))) {
                 Continents[region].open_terrain++;
             }
-            bit_set(x, y, BIT_UNK_40000000 | BIT_UNK_4000, false); // verify map is being iterated 
+            uint32_t *const tile_bit = &map_loc(x, y)->bit; // bit_set, inlined: the image writes
+            *tile_bit &= ~(BIT_UNK_40000000 | BIT_UNK_4000); // it out here, not a call
             if (!is_ocean_tile) {                                  // correctly for all bit_*
                 int search_val = -1;
                 uint32_t count_val1 = 0;
@@ -2829,8 +2874,8 @@ void __cdecl world_analysis() {
                     int y_radius = y + RadiusOffsetY[i + 1];
                     if (on_map(x_radius, y_radius)) {
                         BOOL is_ocean_radius = is_ocean(x_radius, y_radius);
-                        if (i >= 32) {
-                            if (is_ocean_radius != search_val || i == 32) {
+                        if (i >= 8) {
+                            if (is_ocean_radius != search_val || i == 8) {
                                 search_val = is_ocean_radius;
                                 count_val1++;
                             }
@@ -2840,21 +2885,21 @@ void __cdecl world_analysis() {
                                     region_radius < MaxRegionLandNum && region != region_radius
                                     && Continents[region].tile_count > 40
                                     && Continents[region_radius].tile_count > 40)) {
-                                bit_set(x, y, BIT_UNK_4000, true); // here
+                                *tile_bit |= BIT_UNK_4000; // bit_set, inlined
                             }
                         } else {
                             if (is_ocean_radius != search_val) {
                                 search_val = is_ocean_radius;
                                 count_val2++;
                                 if (count_val2 >= 4 && Continents[region].tile_count >= 80) {
-                                    bit_set(x, y, BIT_UNK_40000000, true); // here
+                                    *tile_bit |= BIT_UNK_40000000; // bit_set, inlined
                                 }
                             }
                         }
                     }
                 }
                 if (count_val1 < 4) {
-                    bit_set(x, y, BIT_UNK_40000000, false); // here
+                    *tile_bit &= ~BIT_UNK_40000000; // bit_set, inlined
                 }
             }
         }
