@@ -1,4 +1,5 @@
 // ORIGINAL: 0x005CAE00 sub_5cae00 0x005CAE00-0x005CAE79 FILE BYTE_EXACT
+// symbol    ?sub_5cae00@Src5cae00@@QAEHXZ
 // working copy - scaffold materialised by --work
 // size      121 bytes
 // prototype 

@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00643EB0 _inflate_trees_dynamic 0x00643EB0-0x00643F98 FILE BYTE_EXACT
+// symbol    _sub_643eb0
 // LEVER: `if (rc != 0) { ...; return; } continue;` early-return guard for the FIRST huft_build check, not `if (rc == 0) {success} else {error}` - the if/else form placed the error block at the end of the function (wrong fall-through), the early return puts it right after the call, matching. The nullary-declared huft_build/sub_644100 callees needed differently-named `extern "C"` redeclarations with the real (8-arg / 2-arg) signatures.
 // working copy - scaffold materialised by --work
 // CORRECTED from sub_643eb0

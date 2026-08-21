@@ -1,4 +1,5 @@
 // ORIGINAL: 0x005D91D0 sub_5d91d0 0x005D91D0-0x005D92BE FILE BYTE_EXACT
+// symbol    ?sub_5d91d0@BufferSelf@@QAEHHHHHH@Z
 // LEVER: byte-identical in structure to the six Buffer::draw_* siblings at
 // size      238 bytes
 // prototype

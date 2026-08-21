@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00448340 sub_448340 0x00448340-0x0044834F BYTE_EXACT
+// symbol    ?Method@S_00448340@@QAEHXZ
 // size      15 bytes
 // prototype 
 // callers   0   call targets   0

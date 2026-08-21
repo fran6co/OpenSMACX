@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00635840 sub_635840 0x00635840-0x00635864 BYTE_EXACT
+// symbol    ?flush@Handler@@QAEXXZ
 // size      36 bytes
 // prototype 
 // callers   0   call targets   0

@@ -1,4 +1,5 @@
 // ORIGINAL: 0x005D4990 sub_5d4990 0x005D4990-0x005D49CE BYTE_EXACT
+// symbol    ?call@Sub5d4990@@QAEXPAX@Z
 // size      62 bytes
 // prototype 
 // callers   0   call targets   1

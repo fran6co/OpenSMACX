@@ -1,4 +1,5 @@
 // ORIGINAL: 0x005EE610 sub_5ee610 0x005EE610-0x005EE6AE FILE BYTE_EXACT
+// symbol    ?sub_5ee610@Sub5ee610Recv@@QAEXHHH@Z
 // LEVER: void return (eax never set before ret) + own VCall2 shim for slot023 (int return, tested) and slots 29/39 ((int,int)), not the file's nullary VCall
 // working copy - scaffold materialised by --work
 // size      158 bytes

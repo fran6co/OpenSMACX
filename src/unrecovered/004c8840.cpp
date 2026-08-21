@@ -1,4 +1,5 @@
 // ORIGINAL: 0x004C8840 sub_4c8840 0x004C8840-0x004C8888 FILE BYTE_EXACT
+// symbol    ?method@Obj4C8840@@QAEHXZ
 // LEVER: the g_0090db28 function pointer is __cdecl, not __stdcall - the original has `add esp,4` after that call; __stdcall dropped it and cost a MISMATCH at the trailing `add`/`jmp`.
 // working copy - scaffold materialised by --work
 // size      72 bytes

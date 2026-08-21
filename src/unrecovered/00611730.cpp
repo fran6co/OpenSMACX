@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00611730 sub_611730 0x00611730-0x006117C3 FILE BYTE_EXACT
+// symbol    ?run@Obj611730@@QAEXXZ
 // size      147 bytes
 // prototype 
 // callers   3   call targets   0

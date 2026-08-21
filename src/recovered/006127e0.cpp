@@ -1,4 +1,5 @@
 // ORIGINAL: 0x006127E0 sub_6127e0 0x006127E0-0x006127F1 BYTE_EXACT
+// symbol    ?Forward@S_006127E0@@QAEHXZ
 // size      17 bytes
 // prototype 
 // callers   0   call targets   0

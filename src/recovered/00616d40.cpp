@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00616D40 sub_616d40 0x00616D40-0x00616D66 BYTE_EXACT
+// symbol    ?release@Subject@@QAEXXZ
 // size      38 bytes
 // prototype 
 // callers   0   call targets   1

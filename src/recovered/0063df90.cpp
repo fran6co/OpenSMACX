@@ -1,4 +1,5 @@
 // ORIGINAL: 0x0063DF90 _inflateEnd 0x0063DF90-0x0063DFDD BYTE_EXACT
+// symbol    _sub_63df90
 // CORRECTED from sub_63df90
 //   zlib 1.0.2 inflate.c, 77 bytes, byte-exact from upstream
 // size      77 bytes

@@ -1,4 +1,5 @@
 // ORIGINAL: 0x005F16D0 ?OnSysKey@Win@@QAAXPAXIJHI@Z 0x005F16D0-0x005F1745 FILE BYTE_EXACT
+// symbol    ?OnSysKey@@YAXPAXIJHI@Z
 // size      117 bytes
 // prototype 
 // callers   0   call targets   1

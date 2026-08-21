@@ -1,4 +1,5 @@
 // ORIGINAL: 0x004C72A0 sub_4c72a0 0x004C72A0-0x004C72F5 FILE BYTE_EXACT
+// symbol    ?init@Sub4c72a0Owner@@QAEPAXXZ
 // size      85 bytes
 // prototype 
 // callers   0   call targets   1

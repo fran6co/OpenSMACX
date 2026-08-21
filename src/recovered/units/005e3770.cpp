@@ -1,4 +1,5 @@
 // ORIGINAL: 0x005E3770 sub_5e3770 0x005E3770-0x005E37A9 FILE BYTE_EXACT
+// symbol    ?method@Sub5E3770Owner@@QAEHPAUint8@@H@Z
 // size      57 bytes
 // prototype int (__stdcall sub_5E3770)(LPCSTR lpString, int)
 // callers   1   call targets   2

@@ -1,4 +1,5 @@
 // ORIGINAL: 0x0063D450 _flush_pending 0x0063D450-0x0063D4C2 FILE BYTE_EXACT
+// symbol    _sub_63d450
 // LEVER: `rep movsd`/`rep movsb` is VC6's /Oi expansion of memcpy(dst, src, n) for a runtime-determined n, not a hand-rolled loop (matches the strcpy lesson already in src/recovered/00639390.cpp). Catalogued as nullary returning int; the disassembly reads a real stack argument at [esp+4] and never sets eax on purpose, so it is a one-`int`-parameter `void` function instead. Min-of-two-sizes has to be spelled `if (count > mySize) count = mySize;` (condition polarity `>`, not `<` on the flipped operands) to get the original's `jbe`; the algebraically-equivalent `if (mySize < count)` compiles to `jae`, and a `cond ? a : b` ternary compiles to `ja` - same logic, three different branch mnemonics.
 // CORRECTED from sub_63d450
 //   zlib 1.0.2 deflate.c, 114 bytes, byte-exact from upstream

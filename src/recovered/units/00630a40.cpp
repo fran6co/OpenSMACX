@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00630A40 sub_630a40 0x00630A40-0x00630A7D FILE BYTE_EXACT
+// symbol    ?sub_630a40@NetHost@@QAEHHH@Z
 // size      61 bytes
 // prototype 
 // callers   0   call targets   1

@@ -1,4 +1,5 @@
 // ORIGINAL: 0x004C8110 sub_4c8110 0x004C8110-0x004C813B BYTE_EXACT
+// symbol    ??0LegacyBlock@@QAE@XZ
 // size      43 bytes
 // prototype 
 // callers   0   call targets   1

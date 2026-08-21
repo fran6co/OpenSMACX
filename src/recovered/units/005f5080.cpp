@@ -1,4 +1,5 @@
 // ORIGINAL: 0x005F5080 ?add_parent@Win@@QAAXPAUWin@@@Z 0x005F5080-0x005F50D5 FILE BYTE_EXACT
+// symbol    ?add_parent@@YAXPAVWin@@@Z
 // size      85 bytes
 // prototype 
 // callers   0   call targets   0

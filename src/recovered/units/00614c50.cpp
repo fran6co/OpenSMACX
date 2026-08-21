@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00614C50 ?filebox_draw@FileWin@@QAAXPAUGraphicWin@@HHHHH@Z 0x00614C50-0x00614D84 FILE BYTE_EXACT
+// symbol    ?filebox_draw@@YAXPAVGraphicWin@@HHHHH@Z
 // size      308 bytes
 // prototype 
 // callers   1   call targets   1

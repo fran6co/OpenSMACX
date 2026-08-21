@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00612800 sub_612800 0x00612800-0x0061280E BYTE_EXACT
+// symbol    ?Method@S_00612800@@QAEXXZ
 // size      14 bytes
 // prototype 
 // callers   0   call targets   0

@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00635750 sub_635750 0x00635750-0x006357C1 FILE BYTE_EXACT
+// symbol    ?teardown@TeardownObj@@QAEXXZ
 // LEVER: __cdecl callback typedef -> __stdcall; the two extra `add esp,N` instructions were cdecl caller-side stack cleanup the original (callee-cleans) convention never performs.
 // working copy - scaffold materialised by --work
 // size      113 bytes

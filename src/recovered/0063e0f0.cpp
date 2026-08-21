@@ -1,4 +1,5 @@
 // ORIGINAL: 0x0063E0F0 _inflateInit_ 0x0063E0F0-0x0063E10A BYTE_EXACT
+// symbol    ?sub_63e0f0@@YAHHHH@Z
 // CORRECTED from sub_63e0f0
 //   zlib 1.0.2 inflate.c, 26 bytes, byte-exact from upstream
 // size      26 bytes

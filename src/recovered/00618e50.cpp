@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00618E50 ?vx_write@Caviar@@SAXHPAXJ@Z 0x00618E50-0x00618E68 BYTE_EXACT
+// symbol    ?fn_00618e50@@YAXHPAXH@Z
 // CORRECTED from ?vx_write@Caviar@@QAAXHPAXJ@Z
 //   same +4 shift as vx_read, mirrored; pure stack-operand forwarding
 //   with zero ecx-as-receiver use

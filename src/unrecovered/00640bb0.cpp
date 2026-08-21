@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00640BB0 __tr_init 0x00640BB0-0x00640C22 FILE BYTE_EXACT
+// symbol    _sub_640bb0
 // LEVER: no explicit `eax` set before `ret` -> `void`, not `int`; the contract's `int` plus a `return 0` adds a spurious `xor eax,eax`
 // working copy - scaffold materialised by --work
 // CORRECTED from sub_640bb0

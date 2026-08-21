@@ -1,4 +1,5 @@
 // ORIGINAL: 0x005F5F60 ?on_char@Win@@QAAHDH@Z 0x005F5F60-0x005F5FA1 FILE BYTE_EXACT
+// symbol    ?on_char@@YAHPADH@Z
 // size      65 bytes
 // prototype 
 // callers   0   call targets   0

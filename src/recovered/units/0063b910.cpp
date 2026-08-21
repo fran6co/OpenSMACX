@@ -1,4 +1,5 @@
 // ORIGINAL: 0x0063B910 ?init_cursor_class@Cursor@@QAAHXZ 0x0063B910-0x0063B92D FILE BYTE_EXACT
+// symbol    ?fn_0063b910@@YAHPAUCursor@@@Z
 // CORRECTED from ?init_cursor_class@Cursor@@QAAXXZ
 //   The old name returns `X` - void. Two independent bytes say `H` - int:
 //   the BYTE_EXACT body below is `return 0;` in a function typed `int`, and

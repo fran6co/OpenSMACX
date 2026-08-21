@@ -1,4 +1,5 @@
 // ORIGINAL: 0x004C4D10 sub_4c4d10 0x004C4D10-0x004C4D6C FILE BYTE_EXACT
+// symbol    ?unlink@ListNode4C4D10@@QAEHXZ
 // working copy - scaffold materialised by --work
 // size      92 bytes
 // prototype 

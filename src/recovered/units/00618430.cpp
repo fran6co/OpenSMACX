@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00618430 ?set_shadow_table@Caviar@@QAEHPAE@Z 0x00618430-0x00618468 FILE BYTE_EXACT
+// symbol    ?set_shadow_table@CaviarShadow@@QAEHPAE@Z
 // size      56 bytes
 // prototype int (__thiscall ?set_shadow_table@Caviar@@QAEHPAE@Z)(Caviar* this, LPBYTE)
 // callers   4   call targets   1

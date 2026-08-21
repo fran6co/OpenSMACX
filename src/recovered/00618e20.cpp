@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00618E20 ?vx_free@Caviar@@QAAXPAX@Z 0x00618E20-0x00618E30 BYTE_EXACT
+// symbol    ?vx_free@@YAXPAX@Z
 // size      16 bytes
 // prototype 
 // callers   0   call targets   1

@@ -1,4 +1,5 @@
 // ORIGINAL: 0x00640E50 _init_block 0x00640E50-0x00640EB6 FILE BYTE_EXACT
+// symbol    _sub_640e50
 // CORRECTED from sub_640e50
 //   zlib 1.0.2 trees.c, 102 bytes, byte-exact from upstream
 // size      102 bytes
