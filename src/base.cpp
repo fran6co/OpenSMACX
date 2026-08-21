@@ -287,7 +287,7 @@ int __cdecl base_find(int x, int y) {
         if (abs_dx >= abs_dy) {
             smallest = abs_dy;
         }
-        int dist = largest - (((abs_dy + abs_dx) / 2) - smallest + 1) / 2;
+        int dist = largest - ((((abs_dy + abs_dx) >> 1) - smallest + 1) >> 1);
         if (dist <= proximity) {
             proximity = dist;
             base_id = i;
@@ -382,7 +382,7 @@ int __cdecl base_find(int x, int y, int faction_id, int region, int faction_id_2
                     if (abs_dx >= abs_dy) {
                         smallest = abs_dy;
                     }
-                    int dist = largest - (((abs_dy + abs_dx) / 2) - smallest + 1) / 2;
+                    int dist = largest - ((((abs_dy + abs_dx) >> 1) - smallest + 1) >> 1);
                     if (dist <= proximity) {
                         proximity = dist;
                         base_id = i;
@@ -1977,7 +1977,7 @@ uint32_t __cdecl black_market(int energy) {
             if (abs_dx >= abs_dy) {
                 smallest = abs_dy;
             }
-            int dist = largest - (((abs_dy + abs_dx) / 2) - smallest + 1) / 2;
+            int dist = largest - ((((abs_dy + abs_dx) >> 1) - smallest + 1) >> 1);
             if (dist < dist_hq) {
                 dist_hq = dist;
             }

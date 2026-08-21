@@ -1486,7 +1486,7 @@ void __cdecl del_site(int faction_id, int type, int x, int y, int proximity) {
             if (abs_dx >= abs_dy) {
                 smallest = abs_dy;
             }
-            int dist = largest - (((abs_dy + abs_dx) / 2) - smallest + 1) / 2;
+            int dist = largest - ((((abs_dy + abs_dx) >> 1) - smallest + 1) >> 1);
             if (dist <= proximity) {
                 sites.type = AI_GOAL_UNUSED;
                 sites.priority = 0;
