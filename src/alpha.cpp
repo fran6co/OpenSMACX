@@ -2032,7 +2032,7 @@ Status: Complete
 
 /*
 Purpose: Get the label string and concatenate it to the stringTemp buffer.
-// ORIGINAL: 0x005A5880 ?say_label@@YAXH@Z 0x005A5880-0x005A58AA
+// ORIGINAL: 0x005A5880 ?say_label@@YAXH@Z 0x005A5880-0x005A58AA SEMANTIC
 // size      42 bytes
 // prototype void (__cdecl ?say_label@@YAXH@Z)(int labelID)
 // callers   1   call targets   2
