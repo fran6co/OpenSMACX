@@ -69,6 +69,9 @@ class PlanWin : public MapWin {
 
  public:
   PlanWin() { ; }
+  // A `construct` method, not a constructor - see the note in `mapwin.h`.
+  // The real body is 0x0048BCD0. Forwarded in `pending_bodies.cpp`.
+  void construct(int a1);
   ~PlanWin() { ; }
   void clear_lines();
   void close();

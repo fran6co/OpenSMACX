@@ -101,6 +101,14 @@ class MapWin : protected virtual GraphicWin {
   // here so on_redraw's direct call compiles, resolved at link time.
   void draw_map(int draw_type);
   MapWin() { ; }
+  // A `construct` METHOD, NOT A CONSTRUCTOR - the same idiom `Win` already
+  // uses. The real body at 0x004626E0 takes an int and is reached by
+  // `??__Eg_MAPWIN`; binding it as a pointer-to-member seam cost that
+  // initialiser the image's `E8`. Spelling it as a real constructor does not
+  // work: VC6 adds its hidden most-derived flag, so the call site emitted
+  // `push 1` TWICE where the image pushes it once. Forwarded in
+  // `pending_bodies.cpp`.
+  void construct(int a1);
   ~MapWin() { ; }
   int UNK1();
   void UNK3();
