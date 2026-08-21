@@ -577,7 +577,6 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out,
                                       int *defense_out, int combat_type);
 uint32_t __cdecl best_defender(int veh_id_def, int veh_id_atk, BOOL check_artillery);
 void __cdecl invasions(int base_id);
-void __cdecl go_to(int veh_id, char type, int x, int y);
 void __cdecl set_course(int veh_id, char type, int x, int y);
 int __cdecl veh_top(int veh_id);
 int __cdecl proto_power(int veh_id);
@@ -689,6 +688,16 @@ MEASURED inline void __cdecl veh_put(int veh_id, int x, int y) {
 MEASURED inline int __cdecl base_cost(int proto_id) {
     return proto_cost(VehPrototypes[proto_id].chassis_id, VehPrototypes[proto_id].weapon_id,
         VehPrototypes[proto_id].armor_id, 0, VehPrototypes[proto_id].reactor_id);
+}
+
+MEASURED inline void __cdecl go_to(int veh_id, char type, int x, int y) {
+    Vehs[veh_id].order = ORDER_MOVE_TO;
+    Vehs[veh_id].move_to_ai_type = type;
+    Vehs[veh_id].waypoint_x[0] = (int16_t)x;
+    Vehs[veh_id].waypoint_y[0] = (int16_t)y;
+    if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_COLONIZATION) {
+        Vehs[veh_id].terraforming_turns = 0;
+    }
 }
 
 MEASURED inline void __cdecl sleep(int veh_id) {
