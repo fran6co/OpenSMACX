@@ -108,11 +108,11 @@ Status: Complete
 */
 int __cdecl whose_territory(int faction_id, int x, int y, int *base_id, 
                             BOOL ignore_comm) {
-    int owner = map_loc(x, y)->territory;
+    int owner = (int)map_loc(x, y)->territory;
     if (owner <= 0) {
         return -1; // no owner
     }
-    if (faction_id != (uint32_t)owner) {
+    if ((uint32_t)owner != faction_id) {
         if (!ignore_comm && !(GameState & STATE_OMNISCIENT_VIEW)
             && has_treaty(faction_id, owner, DTREATY_COMMLINK | DTREATY_UNK_8000000)
                 != (DTREATY_COMMLINK | DTREATY_UNK_8000000)) {
@@ -1072,32 +1072,9 @@ Purpose: Determine if the tile has a resource bonus. While the last parameter is
 Return Value: 0 (no bonus), 1 (nutrient), 2 (mineral), 3 (energy)
 Status: Complete
 */
-int __cdecl bonus_at(int x, int y, int UNUSED(unk_val)) {
-    uint32_t bit = bit_at(x, y);
-    uint32_t alt = alt_at(x, y);
-    BOOL has_rsc_bonus = bit & BIT_RSC_BONUS;
-    if (!has_rsc_bonus && (!MapRandSeed
-        || (alt >= ALT_SHORE_LINE && !(GameRules & RULES_NO_UNITY_SCATTERING)))) {
-        return 0;
-    }
-    uint32_t avg = (x + y) >> 1;
-    x -= avg;
-    uint32_t chk = (avg & 3) + 4 * (x & 3);
-    if (!has_rsc_bonus && chk != ((MapRandSeed + (-5 * (avg >> 2)) - 3 * (x >> 2)) & 0xF)) {
-        return 0;
-    }
-    if (alt < ALT_OCEAN_SHELF) {
-        return 0;
-    }
-    uint32_t ret = (alt < ALT_SHORE_LINE) ? chk % 3 + 1 : (chk % 5) & 3;
-    if (!ret || bit & BIT_NUTRIENT_RSC) {
-        if (bit & BIT_ENERGY_RSC) {
-            return 3; // energy
-        }
-        return ((bit & BIT_MINERAL_RSC) != 0) + 1; // nutrient or mineral
-    }
-    return ret;
-}
+// BODY IN map.h, as `MEASURED inline`: seven bodies call it where the
+// image calls nothing - `call_diff` names it - and 0x00592030 is a real
+// body of its own, so a .cpp definition is only one of the two.
 
 /*
 Purpose: Determine if the tile has a supply pod and if so what type.
