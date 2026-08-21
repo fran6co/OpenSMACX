@@ -526,7 +526,10 @@ MEASURED inline void __cdecl synch_bit(int x, int y, int faction_id) {
 MEASURED inline int __cdecl veh_who(int x, int y) {
     Map *tile = map_loc(x, y);
     if (tile->bit & BIT_VEH_IN_TILE) {
-        uint32_t owner = tile->val2 & 0xF;
+        // `int`: the image branches with `jl` at 0x00500281 - the SIGNED
+        // test - and `uint32_t` gives `jb`, one opcode different in each of
+        // the three siblings that share this shape.
+        int owner = tile->val2 & 0xF;
         if (owner < 8) {
             return owner;
         }
@@ -575,8 +578,11 @@ inline int __cdecl altitude_at(uint32_t x, uint32_t y) {
 }
 
 // INLINE: the image has no owner_at - it open-codes what this names.
-inline uint32_t __cdecl owner_at(uint32_t x, uint32_t y) {
-    return map_loc(x, y)->val2 & 0xF;
+// `int`, not `uint32_t`: its callers compare the result against 8, and the
+// image branches with `jl` - the SIGNED test - at 0x00500281 and in two
+// siblings. Unsigned gives `jb`, one opcode different in each of them.
+inline int __cdecl owner_at(int x, int y) {
+  return map_loc(x, y)->val2 & 0xF;
 }
 
 // INLINE: the image has no using_at - it open-codes what this names.
