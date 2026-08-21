@@ -49,6 +49,7 @@
  */
 
 #include "stdafx.h"
+#include "wave.h"   // Effect derives from Wave
 
 /* 0x72 bytes, 9 member(s), 1 named. From the IDB. 3 function(s) in the image. */
 class AAmbience {
@@ -1040,15 +1041,19 @@ struct CWorldbuilder {
 
 /* Derives from Wave: its constructor builds one on an unadjusted `this`. See docs/recovery/base-edges.csv. */
 /* 0x6C bytes, 1 member(s), 1 named. From the IDB. 4 function(s) in the image. */
-class Effect {
+// A REAL BASE, not a 0x6C blob. The image's `~Effect` is five bytes - one
+// `jmp` straight into `??1Wave@@QAE@XZ` - so Effect derives from Wave, adds
+// nothing, and has nothing of its own to tear down. `sizeof(Wave)` is 0x6C,
+// which the array thunks confirm: `VectorCtorIterator(g_CPU_WAVES, 0x6C, 45,
+// ...)`. So this is layout-neutral and says what the bytes say.
+//
+// NOTE the contrast with `wave.h`, which deliberately keeps Wave FLAT rather
+// than deriving from Sound: there, a real base would make `~Wave` emit a call
+// the image does not have. Here a real base is what PRODUCES the image's jump.
+// The rule is not "prefer flat", it is "match the destructor the image emits".
+class Effect : public Wave {
  public:
-  // 0x004482C0 is not recovered: a pending_bodies forwarder, because
-  // an empty inline stub emits nothing and the deleting destructor
-  // needs a `call rel32`.
   ~Effect();
-
- public:
-  uint8_t wave_[0x6C];  // 0x0
 };
 
 /* 0x4 bytes, 1 member(s), 0 named. From its own code, which reaches that far. 1 function(s) in the image. */

@@ -1528,3 +1528,26 @@ Wave::~Wave() {
 void __fastcall wave_dtor_redirect(Wave *self, void *) {
     self->~Wave();
 }
+
+/*
+Purpose: Tear down an Effect, which is a Wave and nothing more.
+// ORIGINAL: 0x004482C0 ??1Effect@@QAE@XZ 0x004482C0-0x004482C5 BYTE_EXACT
+// CORRECTED from 0x004482C0-0x004482C4, which the artifact carried: the body
+//   is one `E9 rel32`, five bytes, and a four-byte span cannot decode a single
+//   instruction - `measure` read "0 of 0 instructions, 4 discounted as
+//   relocations", which is what a span one byte short looks like.
+// size      5 bytes
+// prototype void (__thiscall ??1Effect@@QAE@XZ)(Effect* this)
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004C6920
+//
+// PROMOTED from src/recovered/units/004482c0.cpp. The whole body is the tail
+// jump into `??1Wave@@QAE@XZ` that a trivial derived destructor emits, which
+// is why `class Effect : public Wave` is the fix and an empty inline stub is
+// not - that compiles to nothing at all.
+Return Value: n/a
+Status: Complete
+*/
+Effect::~Effect() {
+}
