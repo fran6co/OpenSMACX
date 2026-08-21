@@ -37,7 +37,7 @@ uint32_t MapArea;  // 0x00949884
 uint32_t MapAreaSqRoot;  // 0x00949888
 BOOL MapIsFlat;  // 0x0094988C
 int MapLandmarkCount;  // 0x00949890
-uint32_t MapAbstractLongBounds;  // 0x0094A294
+int MapAbstractLongBounds;  // 0x0094A294
 uint32_t MapAbstractLatBounds;  // 0x0094A298
 uint32_t MapAbstractArea;  // 0x0094A29C
 uint32_t MapSizePlanet;  // 0x0094A2A0
