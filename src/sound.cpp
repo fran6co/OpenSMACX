@@ -894,7 +894,7 @@ int __cdecl load_sound_dll() {
 }
 
 /*
-// ORIGINAL: 0x004C5CE0 ?init_sound@@YAHPAXK@Z 0x004C5CE0-0x004C5D8E
+// ORIGINAL: 0x004C5CE0 ?init_sound@@YAHPAXK@Z 0x004C5CE0-0x004C5D8E BYTE_EXACT
 // size      174 bytes
 // prototype
 // callers   1   call targets   4
@@ -931,9 +931,13 @@ int __cdecl init_sound(void *a1, unsigned long a2) {
     Wave_Device *waveDevice = reinterpret_cast<Wave_Device *>(g_0090d978);
     int result = waveDevice->init(a1, a2);
     if (result != 0) {
+        // THE GUARD IS READ BEFORE THE STORE. The image loads [0x90db78]
+        // at 0x004C5D21 and only then writes 0 to [0x90db7c]; the two are
+        // different addresses, so the order is free and the image picked one.
+        const int module = *g_0090db78;
         *g_0090db7c = 0;
-        if (*g_0090db78 != 0) {
-            (*reinterpret_cast<FreeLibraryFn *>(g_00669128))(*g_0090db78);
+        if (module != 0) {
+            (*reinterpret_cast<FreeLibraryFn *>(g_00669128))(module);
             *g_0090db78 = 0;
         }
         memset(g_0090db24, 0, 0xb * 4);
