@@ -299,7 +299,9 @@ extern uint32_t MapAreaSqRoot;
 extern BOOL MapIsFlat;
 extern int MapLandmarkCount;
 Landmark *const MapLandmark = (Landmark *)0x00949894;
-extern uint32_t MapAbstractLongBounds; // abstract x
+// `int`: `abstract_at` shifts it right and the image's shift is
+// `sar eax, 1` at 0x0059121B - arithmetic, so the value is signed.
+extern int MapAbstractLongBounds; // abstract x
 extern uint32_t MapAbstractLatBounds; // abstract y
 extern uint32_t MapAbstractArea;
 extern uint32_t MapSizePlanet;
