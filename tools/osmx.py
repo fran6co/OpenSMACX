@@ -1429,6 +1429,33 @@ def _semantic_note_holds(note: str) -> bool:
     return "[allocation-only]" in (note or "")
 
 
+def _report_stale_worktrees() -> None:
+    """Name agent worktrees whose agent has finished, if any.
+
+    ADVISORY AND FAILURE-PROOF: this is a convenience on the ratchet's output,
+    so anything going wrong with git must leave the gate's verdict untouched.
+    It counts only; `tools/reap_worktrees.py` owns the four refusals that
+    decide what is actually safe to remove.
+    """
+    try:
+        listing = subprocess.run(
+            ("git", "worktree", "list", "--porcelain"),
+            cwd=str(REPO_ROOT), capture_output=True, text=True, timeout=20)
+        if listing.returncode:
+            return
+        blocks = listing.stdout.split("\n\n")
+        finished = [b for b in blocks
+                    if "worktrees/agent-" in b and "locked" not in b]
+        if finished:
+            typer.secho(
+                f"  {len(finished):,} finished agent worktree(s) still on "
+                f"disk:", fg=typer.colors.YELLOW)
+            typer.echo("    uv run tools/reap_worktrees.py"
+                       "        # then --reap")
+    except Exception:                                    # noqa: BLE001
+        return
+
+
 def _agreeing(note: str) -> int:
     """The matching-instruction count a scorer put in a claim's note."""
     found = re.match(r"(\d+)/", note or "")
@@ -1773,6 +1800,12 @@ def check(
                 f"register allocation:", fg=typer.colors.CYAN)
             typer.echo("    osmx semantic "
                        + " ".join(r.address_hex for r in allocation))
+        # FINISHED AGENT WORKTREES, reported HERE because this is the command
+        # that always runs. Twelve of them accumulated - nine belonging to
+        # agents that had finished hours earlier, each a full checkout - and
+        # nothing named them, because reaping them was something the
+        # coordinator had to REMEMBER. The gate does not forget.
+        _report_stale_worktrees()
         typer.secho(
             f"{claims - len(broken) - len(semantic_held):,} verified, "
             f"{len(semantic_held):,} semantic, {len(regressed):,} "
