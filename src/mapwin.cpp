@@ -320,7 +320,7 @@ Purpose: Report whether this object IS the process-wide Console.
          this adds no NEW fixed-address binding, it reuses the one the Console
          recovery already declared, and the comparison is written against the
          name rather than the literal.
-// ORIGINAL: 0x00462960 ?UNK1@MapWin@@QAEHXZ 0x00462960-0x0046296C
+// ORIGINAL: 0x00462960 ?UNK1@MapWin@@QAEHXZ 0x00462960-0x0046296C BYTE_EXACT
 // size      12 bytes
 // prototype int (__thiscall ?UNK1@MapWin@@QAEHXZ)(MapWin* this)
 // callers   0   call targets   0

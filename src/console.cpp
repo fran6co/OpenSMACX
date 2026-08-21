@@ -32,11 +32,10 @@
 #include "net_class.h"
 #include <cstring>
 
-PrefWin *ConsolePrefWin= (PrefWin *)(0x008578D8);
 
 /*
 Purpose: Open the shared preferences window to the preferences page.
-// ORIGINAL: 0x00514EF0 ?set_preferences@Console@@QAEXXZ 0x00514EF0-0x00514EFD
+// ORIGINAL: 0x00514EF0 ?set_preferences@Console@@QAEXXZ 0x00514EF0-0x00514EFD BYTE_EXACT
 // size      13 bytes
 // prototype void (__thiscall ?set_preferences@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   1
@@ -52,7 +51,7 @@ void Console::set_preferences() {
 
 /*
 Purpose: Open the shared preferences window to the automation page.
-// ORIGINAL: 0x00514F10 ?set_auto_preferences@Console@@QAEXXZ 0x00514F10-0x00514F1D
+// ORIGINAL: 0x00514F10 ?set_auto_preferences@Console@@QAEXXZ 0x00514F10-0x00514F1D BYTE_EXACT
 // size      13 bytes
 // prototype void (__thiscall ?set_auto_preferences@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   1
@@ -68,7 +67,7 @@ void Console::set_auto_preferences() {
 
 /*
 Purpose: Open the shared preferences window to the base page.
-// ORIGINAL: 0x00514F20 ?set_base_preferences@Console@@QAEXXZ 0x00514F20-0x00514F2D
+// ORIGINAL: 0x00514F20 ?set_base_preferences@Console@@QAEXXZ 0x00514F20-0x00514F2D BYTE_EXACT
 // size      13 bytes
 // prototype void (__thiscall ?set_base_preferences@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   1
@@ -84,7 +83,7 @@ void Console::set_base_preferences() {
 
 /*
 Purpose: Open the shared preferences window to the audiovisual page.
-// ORIGINAL: 0x00514F30 ?set_audiovisual@Console@@QAEXXZ 0x00514F30-0x00514F3D
+// ORIGINAL: 0x00514F30 ?set_audiovisual@Console@@QAEXXZ 0x00514F30-0x00514F3D BYTE_EXACT
 // size      13 bytes
 // prototype void (__thiscall ?set_audiovisual@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   1
@@ -100,7 +99,7 @@ void Console::set_audiovisual() {
 
 /*
 Purpose: Open the shared preferences window to the map-display page.
-// ORIGINAL: 0x00514F40 ?set_map_display@Console@@QAEXXZ 0x00514F40-0x00514F4D
+// ORIGINAL: 0x00514F40 ?set_map_display@Console@@QAEXXZ 0x00514F40-0x00514F4D BYTE_EXACT
 // size      13 bytes
 // prototype void (__thiscall ?set_map_display@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   1
@@ -201,7 +200,7 @@ int __fastcall console_edit_lock_redirect(Console *self, void *) {
 
 /*
 Purpose: Open the shared preferences window to the advanced page.
-// ORIGINAL: 0x00514F00 ?set_adv_preferences@Console@@QAEXXZ 0x00514F00-0x00514F0D
+// ORIGINAL: 0x00514F00 ?set_adv_preferences@Console@@QAEXXZ 0x00514F00-0x00514F0D BYTE_EXACT
 // size      13 bytes
 // prototype void (__thiscall ?set_adv_preferences@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   1
@@ -240,7 +239,6 @@ void __fastcall console_editor_undo_redirect(Console *self, void *) {
     self->editor_undo();
 }
 
-StatusWin *ConsoleStatusWin= (StatusWin *)(0x008C5568);
 
 /*
 Purpose: Refresh everything the console shows after a selection or turn change:
@@ -289,7 +287,6 @@ void __fastcall console_update_data_redirect(Console *self, void *, int a1) {
     self->update_data(a1);
 }
 
-Console *ConsoleGlobal= (Console *)(0x009156B0);
 func_main_menu_check ConsoleOriginalMainMenuCheck =
     original_method<func_main_menu_check>(0x00460DD0);
 

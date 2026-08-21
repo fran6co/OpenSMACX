@@ -21,7 +21,6 @@
 #include "log.h"  // log_say, source-owned at 0x006262F0
 #include "net_class.h"
 
-NetDaemon *NetDaemonNet= (NetDaemon *)(0x0093CD90);
 int NetDaemonIsMultiplayerNet;  // 0x0093F660
 int NetDaemonLocalFaction;  // 0x00939284
 
@@ -62,7 +61,7 @@ int __fastcall net_daemon_receive_redirect(NetDaemon *self, void *) {
 Purpose: Announce a vehicle's synched state to the network. All four "no
          text, one repeated flag" parameters are fixed by the caller, so only
          the opcode and the id vary across this family.
-// ORIGINAL: 0x00593220 ?synch_veh@@YAXH@Z 0x00593220-0x00593242
+// ORIGINAL: 0x00593220 ?synch_veh@@YAXH@Z 0x00593220-0x00593242 BYTE_EXACT
 // size      34 bytes
 // prototype void (__cdecl ?synch_veh@@YAXH@Z)(int vehID)
 // callers   32   call targets   1
@@ -78,7 +77,7 @@ void __cdecl synch_veh(int id) {
 
 /*
 Purpose: Announce a base's synched state to the network.
-// ORIGINAL: 0x00593250 ?synch_base@@YAXH@Z 0x00593250-0x00593272
+// ORIGINAL: 0x00593250 ?synch_base@@YAXH@Z 0x00593250-0x00593272 BYTE_EXACT
 // size      34 bytes
 // prototype 
 // callers   6   call targets   1
@@ -94,7 +93,7 @@ void __cdecl synch_base(int id) {
 
 /*
 Purpose: Announce a faction's energy synched state to the network.
-// ORIGINAL: 0x00593280 ?synch_energy@@YAXH@Z 0x00593280-0x005932A2
+// ORIGINAL: 0x00593280 ?synch_energy@@YAXH@Z 0x00593280-0x005932A2 BYTE_EXACT
 // size      34 bytes
 // prototype 
 // callers   3   call targets   1
@@ -110,7 +109,7 @@ void __cdecl synch_energy(int id) {
 
 /*
 Purpose: Announce a faction's current research target to the network.
-// ORIGINAL: 0x005932B0 ?synch_researching@@YAXH@Z 0x005932B0-0x005932D2
+// ORIGINAL: 0x005932B0 ?synch_researching@@YAXH@Z 0x005932B0-0x005932D2 BYTE_EXACT
 // size      34 bytes
 // prototype void (__cdecl ?synch_researching@@YAXH@Z)(int factionID)
 // callers   1   call targets   1
@@ -126,7 +125,7 @@ void __cdecl synch_researching(int id) {
 
 /*
 Purpose: Announce a faction's leader to the network.
-// ORIGINAL: 0x005932E0 ?synch_leader@@YAXH@Z 0x005932E0-0x00593302
+// ORIGINAL: 0x005932E0 ?synch_leader@@YAXH@Z 0x005932E0-0x00593302 BYTE_EXACT
 // size      34 bytes
 // prototype 
 // callers   3   call targets   1
@@ -142,7 +141,7 @@ void __cdecl synch_leader(int id) {
 
 /*
 Purpose: Announce a faction's AI state to the network.
-// ORIGINAL: 0x00593310 ?synch_ai@@YAXH@Z 0x00593310-0x00593332
+// ORIGINAL: 0x00593310 ?synch_ai@@YAXH@Z 0x00593310-0x00593332 BYTE_EXACT
 // size      34 bytes
 // prototype 
 // callers   3   call targets   1
@@ -158,7 +157,7 @@ void __cdecl synch_ai(int id) {
 
 /*
 Purpose: Announce a faction's completed research to the network.
-// ORIGINAL: 0x00593340 ?synch_research@@YAXH@Z 0x00593340-0x00593362
+// ORIGINAL: 0x00593340 ?synch_research@@YAXH@Z 0x00593340-0x00593362 BYTE_EXACT
 // size      34 bytes
 // prototype 
 // callers   1   call targets   1
@@ -175,7 +174,7 @@ void __cdecl synch_research(int id) {
 /*
 Purpose: Announce a faction's social/resource allocation state to the
          network.
-// ORIGINAL: 0x00593390 ?synch_alloc@@YAXH@Z 0x00593390-0x005933B2
+// ORIGINAL: 0x00593390 ?synch_alloc@@YAXH@Z 0x00593390-0x005933B2 BYTE_EXACT
 // size      34 bytes
 // prototype 
 // callers   1   call targets   1
@@ -191,7 +190,7 @@ void __cdecl synch_alloc(int id) {
 
 /*
 Purpose: Announce a faction's social engineering state to the network.
-// ORIGINAL: 0x005933C0 ?synch_soc@@YAXH@Z 0x005933C0-0x005933E2
+// ORIGINAL: 0x005933C0 ?synch_soc@@YAXH@Z 0x005933C0-0x005933E2 BYTE_EXACT
 // size      34 bytes
 // prototype 
 // callers   2   call targets   1
@@ -207,7 +206,7 @@ void __cdecl synch_soc(int id) {
 
 /*
 Purpose: Announce a faction's protocol/pact state to the network.
-// ORIGINAL: 0x005933F0 ?synch_proto@@YAXH@Z 0x005933F0-0x00593412
+// ORIGINAL: 0x005933F0 ?synch_proto@@YAXH@Z 0x005933F0-0x00593412 BYTE_EXACT
 // size      34 bytes
 // prototype 
 // callers   4   call targets   1
@@ -223,7 +222,7 @@ void __cdecl synch_proto(int id) {
 
 /*
 Purpose: Announce an observer's state to the network.
-// ORIGINAL: 0x00593420 ?synch_obs@@YAXH@Z 0x00593420-0x00593442
+// ORIGINAL: 0x00593420 ?synch_obs@@YAXH@Z 0x00593420-0x00593442 BYTE_EXACT
 // size      34 bytes
 // prototype 
 // callers   3   call targets   1
@@ -241,7 +240,7 @@ void __cdecl synch_obs(int id) {
 Purpose: Announce a diplomatic state change between two factions to the
          network. Unlike the rest of this family, both leading arguments
          come from the caller instead of the second being a fixed zero.
-// ORIGINAL: 0x00593450 ?synch_diplo@@YAXHH@Z 0x00593450-0x00593474
+// ORIGINAL: 0x00593450 ?synch_diplo@@YAXHH@Z 0x00593450-0x00593474 BYTE_EXACT
 // size      36 bytes
 // prototype void (__cdecl ?synch_diplo@@YAXHH@Z)(int factionID, int)
 // callers   1   call targets   1
@@ -257,7 +256,7 @@ void __cdecl synch_diplo(int a, int b) {
 
 /*
 Purpose: Announce a faction's template/design state to the network.
-// ORIGINAL: 0x005934B0 ?synch_template@@YAXH@Z 0x005934B0-0x005934D2
+// ORIGINAL: 0x005934B0 ?synch_template@@YAXH@Z 0x005934B0-0x005934D2 BYTE_EXACT
 // size      34 bytes
 // prototype 
 // callers   1   call targets   1
@@ -273,7 +272,7 @@ void __cdecl synch_template(int id) {
 
 /*
 Purpose: Announce a faction's sensor/territory radius state to the network.
-// ORIGINAL: 0x005934E0 ?synch_radius@@YAXH@Z 0x005934E0-0x00593502
+// ORIGINAL: 0x005934E0 ?synch_radius@@YAXH@Z 0x005934E0-0x00593502 BYTE_EXACT
 // size      34 bytes
 // prototype 
 // callers   1   call targets   1

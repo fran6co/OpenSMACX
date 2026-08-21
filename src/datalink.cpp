@@ -29,7 +29,6 @@
 #include "spritebox.h"
 
 // Unclassified data seam: the Datalink singleton object, not a call target.
-Datalink *DatalinkMain= (Datalink *)(0x00703EA0);
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
@@ -378,7 +377,7 @@ void __fastcall datalink_close_redirect(Datalink *self, void *) {
 
 /*
 Purpose: Show the technology help topic for the given id.
-// ORIGINAL: 0x0044C880 ?help_tech@@YAXH@Z 0x0044C880-0x0044C895
+// ORIGINAL: 0x0044C880 ?help_tech@@YAXH@Z 0x0044C880-0x0044C895 BYTE_EXACT
 // size      21 bytes
 // prototype 
 // callers   0   call targets   1
@@ -394,7 +393,7 @@ void __cdecl help_tech(int id) {
 
 /*
 Purpose: Show the weapon help topic for the given id.
-// ORIGINAL: 0x0044C910 ?help_weapon@@YAXH@Z 0x0044C910-0x0044C925
+// ORIGINAL: 0x0044C910 ?help_weapon@@YAXH@Z 0x0044C910-0x0044C925 BYTE_EXACT
 // size      21 bytes
 // prototype 
 // callers   0   call targets   1
@@ -412,7 +411,7 @@ Status: Complete
 
 /*
 Purpose: Show the armor help topic for the given id.
-// ORIGINAL: 0x0044C940 ?help_armor@@YAXH@Z 0x0044C940-0x0044C955
+// ORIGINAL: 0x0044C940 ?help_armor@@YAXH@Z 0x0044C940-0x0044C955 BYTE_EXACT
 // size      21 bytes
 // prototype 
 // callers   0   call targets   1
@@ -430,7 +429,7 @@ Status: Complete
 
 /*
 Purpose: Show the chassis help topic for the given id.
-// ORIGINAL: 0x0044C980 ?help_chassis@@YAXH@Z 0x0044C980-0x0044C995
+// ORIGINAL: 0x0044C980 ?help_chassis@@YAXH@Z 0x0044C980-0x0044C995 BYTE_EXACT
 // size      21 bytes
 // prototype 
 // callers   0   call targets   1
@@ -448,7 +447,7 @@ Status: Complete
 
 /*
 Purpose: Show the facility help topic for the given id.
-// ORIGINAL: 0x0044C9B0 ?help_facility@@YAXH@Z 0x0044C9B0-0x0044C9C5
+// ORIGINAL: 0x0044C9B0 ?help_facility@@YAXH@Z 0x0044C9B0-0x0044C9C5 BYTE_EXACT
 // size      21 bytes
 // prototype 
 // callers   0   call targets   1
@@ -466,7 +465,7 @@ Status: Complete
 
 /*
 Purpose: Show the secret project/ability help topic for the given id.
-// ORIGINAL: 0x0044CA10 ?help_abil@@YAXH@Z 0x0044CA10-0x0044CA25
+// ORIGINAL: 0x0044CA10 ?help_abil@@YAXH@Z 0x0044CA10-0x0044CA25 BYTE_EXACT
 // size      21 bytes
 // prototype 
 // callers   0   call targets   1
@@ -484,7 +483,7 @@ Status: Complete
 
 /*
 Purpose: Show the social engineering help topic for the given id.
-// ORIGINAL: 0x0044CA40 ?help_social@@YAXH@Z 0x0044CA40-0x0044CA55
+// ORIGINAL: 0x0044CA40 ?help_social@@YAXH@Z 0x0044CA40-0x0044CA55 BYTE_EXACT
 // size      21 bytes
 // prototype 
 // callers   0   call targets   1
@@ -502,7 +501,7 @@ Status: Complete
 
 /*
 Purpose: Show the faction help topic for the given id.
-// ORIGINAL: 0x0044CA70 ?help_faction@@YAXH@Z 0x0044CA70-0x0044CA85
+// ORIGINAL: 0x0044CA70 ?help_faction@@YAXH@Z 0x0044CA70-0x0044CA85 BYTE_EXACT
 // size      21 bytes
 // prototype 
 // callers   0   call targets   1
@@ -520,7 +519,7 @@ Status: Complete
 
 /*
 Purpose: Show the vehicle help topic for the given id.
-// ORIGINAL: 0x0044CAD0 ?help_veh@@YAXH@Z 0x0044CAD0-0x0044CAE5
+// ORIGINAL: 0x0044CAD0 ?help_veh@@YAXH@Z 0x0044CAD0-0x0044CAE5 BYTE_EXACT
 // size      21 bytes
 // prototype 
 // callers   0   call targets   1
@@ -540,7 +539,7 @@ Status: Complete
 Purpose: Show an arbitrary help topic/index pair, for callers that already
          hold the topic id rather than going through one of the typed
          help_* wrappers above.
-// ORIGINAL: 0x0044CB60 ?help_topic@@YAXIH@Z 0x0044CB60-0x0044CB77
+// ORIGINAL: 0x0044CB60 ?help_topic@@YAXIH@Z 0x0044CB60-0x0044CB77 BYTE_EXACT
 // size      23 bytes
 // prototype void (__cdecl ?help_topic@@YAXIH@Z)(DatalinkID id, int entryID)
 // callers   9   call targets   1
