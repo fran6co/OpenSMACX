@@ -399,6 +399,8 @@ int __cdecl defense_value(int faction_id, int x, int y, int veh_id_def,
 /*
 Purpose: Calculate the lifecycle (morale) of the specified native life unit.
 // ORIGINAL: 0x00501350 ?morale_alien@@YAHHH@Z 0x00501350-0x005014F1
+// RULED-OUT: still MISMATCH (~0.72 similar, up from ~0.46) - most of the remaining divergence is register allocation the compiler picked differently around the atrocities/veh-flags block and the two `range()` call sites, which every flag set tried left in place.
+// RULED-OUT: source had the Fungal Tower special case as the OUTER `if`, guarded by `veh_id >= 0`, with the turn-ladder as its `else` - the image runs the turn-ladder/atrocities/veh-flags computation FIRST, UNCONDITIONALLY, then reads `Vehs[veh_id].x/.y/.proto_id` with NO veh_id guard (an out-of-bounds `Vehs[-1]` read - reproduced deliberately, see the BUG comment at the site) and only THEN branches on proto_id, overwriting `morale` if it is the Fungal Tower. Each branch ends in its OWN `return range(morale, 0, 6);` (not a shared tail after the `if`) - `int x`/`int y` locals (not `int16_t`) match the image's `movsx` at the point of assignment.
 // symbol    ?morale_alien@@YAIHH@Z
 // size      417 bytes
 // prototype int (__cdecl ?morale_alien@@YAHHH@Z)(int vehID, int factionIDvsNative)
@@ -411,11 +413,41 @@ Status: Complete
 */
 uint32_t __cdecl morale_alien(int veh_id, int faction_id_vs_native) {
     int morale;
-    // Fungal Tower specific code, shifted to start and added veh_id check to prevent crash
-    if (veh_id >= 0 && Vehs[veh_id].proto_id == BSC_FUNGAL_TOWER) {
+    if (TurnCurrentNum < 45) {
         morale = 0;
-        int16_t x = Vehs[veh_id].x;
-        int16_t y = Vehs[veh_id].y;
+    } else if (TurnCurrentNum < 90) {
+        morale = 1;
+    } else if (TurnCurrentNum < 170) {
+        morale = 2;
+    } else if (TurnCurrentNum < 250) {
+        morale = 3;
+    } else if (TurnCurrentNum < 330) {
+        morale = 4;
+    } else { // 330+
+        morale = 6;
+    }
+    if (faction_id_vs_native > 0) {
+        morale += (PlayersData[faction_id_vs_native].major_atrocities != 0)
+            + (TectonicDetonationCount[faction_id_vs_native] != 0);
+    }
+    if (veh_id >= 0) {
+        if (Vehs[veh_id].state & VSTATE_MONOLITH_UPGRADED) {
+            morale++;
+        }
+        if (Vehs[veh_id].proto_id == BSC_LOCUSTS_OF_CHIRON) {
+            morale++;
+        }
+        morale += (Vehs[veh_id].flags >> 3) & 3; // 0x8|0x10 > +1, +2, or +3; TODO: id unk flags
+    }
+    // BUG IN THE ORIGINAL: Vehs[veh_id].x/.y/.proto_id are read here with no
+    // veh_id >= 0 guard, unlike the block just above - Vehs[-1] is read out
+    // of bounds whenever the caller passes a negative veh_id. Reproduced
+    // deliberately: the image has no such check either.
+    int x = Vehs[veh_id].x;
+    int y = Vehs[veh_id].y;
+    // Fungal Tower specific code: overrides the morale computed above entirely.
+    if (Vehs[veh_id].proto_id == BSC_FUNGAL_TOWER) {
+        morale = 0;
         // similar to is_coast() > except with fungus check + Ocean Shelf included
         for (int i = RadiusRange[0]; i < RadiusRange[1]; i++) {
             int x_radius = xrange(x + RadiusOffsetX[i]);
@@ -426,40 +458,15 @@ uint32_t __cdecl morale_alien(int veh_id, int faction_id_vs_native) {
             }
         }
         morale -= 2;
-    } else { // everything else
-        if (TurnCurrentNum < 45) {
-            morale = 0;
-        } else if (TurnCurrentNum < 90) {
-            morale = 1;
-        } else if (TurnCurrentNum < 170) {
-            morale = 2;
-        } else if (TurnCurrentNum < 250) {
-            morale = 3;
-        } else if (TurnCurrentNum < 330) {
-            morale = 4;
-        } else { // 330+
-            morale = 6;
-        }
-        if (faction_id_vs_native > 0) {
-            morale += (PlayersData[faction_id_vs_native].major_atrocities != 0)
-                + (TectonicDetonationCount[faction_id_vs_native] != 0);
-        }
-        if (veh_id >= 0) {
-            if (Vehs[veh_id].state & VSTATE_MONOLITH_UPGRADED) {
-                morale++;
-            }
-            if (Vehs[veh_id].proto_id == BSC_LOCUSTS_OF_CHIRON) {
-                morale++;
-            }
-            morale += (Vehs[veh_id].flags >> 3) & 3; // 0x8|0x10 > +1, +2, or +3; TODO: id unk flags
-        }
+        return range(morale, 0, 6);
     }
     return range(morale, 0, 6);
 }
 
 /*
 Purpose: Calculate the psi combat factor for an attacking or defending unit.
-// ORIGINAL: 0x00501500 ?psi_factor@@YAHHHHH@Z 0x00501500-0x005015AB
+// ORIGINAL: 0x00501500 ?psi_factor@@YAHHHHH@Z 0x00501500-0x005015AB BYTE_EXACT
+// LEVER: each `if (has_project(...)) factor += factor/2;`/`if (is_fungal_twr) ...` stores its condition to a shared `add_half` local BEFORE the `if`, even the one used only once - the image tail-merges the attack and defense arms into one shared "if(add_half) factor+=factor/2; return factor;" block, and only materialising every condition into the same local (not just the ones that need to survive a branch) lets the compiler recognise the shared tail.
 // size      171 bytes
 // prototype int (__cdecl ?psi_factor@@YAHHHHH@Z)(int combatRatio, int factionID, BOOL isAttack, BOOL isFungalTower)
 // callers   7   call targets   0
@@ -472,17 +479,18 @@ Status: Complete
 int __cdecl psi_factor(int combat_ratio, int faction_id, BOOL is_attack, BOOL is_fungal_twr) {
     int rule_psi = Players[faction_id].rule_psi;
     int factor = rule_psi ? ((rule_psi + 100) * combat_ratio) / 100 : combat_ratio;
+    BOOL add_half;
     if (is_attack) {
-        if (has_project(SP_DREAM_TWISTER, faction_id)) {
-            factor += factor / 2; // Psi Attack +50%
-        }
+        add_half = has_project(SP_DREAM_TWISTER, faction_id); // Psi Attack +50%
     } else {
-        if (has_project(SP_NEURAL_AMPLIFIER, faction_id)) {
+        add_half = has_project(SP_NEURAL_AMPLIFIER, faction_id);
+        if (add_half) {
             factor += factor / 2; // Psi Defense +50%s
         }
-        if (is_fungal_twr) {
-            factor += factor / 2; // SMACX only: likely +50% Fungal Tower defense bonus
-        }
+        add_half = is_fungal_twr; // SMACX only: likely +50% Fungal Tower defense bonus
+    }
+    if (add_half) {
+        factor += factor / 2;
     }
     return factor;
 }
@@ -1531,6 +1539,8 @@ BOOL __cdecl want_monolith(int veh_id) {
 /*
 Purpose: Calculate the armor strategy for the specified armor id.
 // ORIGINAL: 0x0057D270 ?arm_strat@@YAHHH@Z 0x0057D270-0x0057D2D5
+// RULED-OUT: still 0.987 similar, one instruction short of exact - the image folds `armor_id*16 + 0x94F280` into `shl eax,4` plus a displaced `mov`; this tree pre-adds the base (`add eax,0x94F28` then `shl eax,4`) under every flag set tried. `(Armor+armor_id)->defense_rating`, a local `RulesArmor *`, and explicit pointer-arithmetic-plus-cast all produced the identical extra `add`.
+// RULED-OUT: defense_rating` (not `int`) matches the image's lazy sign-extension - it tests the byte directly and only does `movsx eax, al` right before the final return; casting both `Rules->psi_combat_ratio_*` operands to `(int)` at the call site gets the `idiv`/`cdq` the image uses instead of unsigned `div` (both fields are `uint32_t` in the header, out of scope for this file).
 // size      101 bytes
 // prototype int (__cdecl ?arm_strat@@YAHHH@Z)(int armorID, int factionID)
 // callers   7   call targets   1
@@ -1544,18 +1554,19 @@ int __cdecl arm_strat(int armor_id, int faction_id) {
     if (!ExpansionEnabled && armor_id > ARM_PSI_DEFENSE) {
         return 1;
     }
-    int defense_rating = Armor[armor_id].defense_rating;
+    int8_t defense_rating = Armor[armor_id].defense_rating;
     if (defense_rating < 0) {
-        return psi_factor((Rules->psi_combat_ratio_def[TRIAD_LAND]
-            * PlayersData[faction_id].enemy_best_weapon_value) 
-            / Rules->psi_combat_ratio_atk[TRIAD_LAND], faction_id, false, false);
+        return psi_factor(((int)Rules->psi_combat_ratio_def[TRIAD_LAND]
+            * PlayersData[faction_id].enemy_best_weapon_value)
+            / (int)Rules->psi_combat_ratio_atk[TRIAD_LAND], faction_id, false, false);
     }
     return defense_rating;
 }
 
 /*
 Purpose: Calculate the weapon strategy for the specified weapon id.
-// ORIGINAL: 0x0057D2E0 ?weap_strat@@YAHHH@Z 0x0057D2E0-0x0057D35D
+// ORIGINAL: 0x0057D2E0 ?weap_strat@@YAHHH@Z 0x0057D2E0-0x0057D35D BYTE_EXACT
+// LEVER: the `!ExpansionEnabled && (a || b || c)` guard was three SEPARATE early-return `if`s under one outer `if (!ExpansionEnabled)`, not one `||` chain - the image has THREE distinct `mov eax,1; pop ebp; ret` blocks (no shared tail), which VC6 only emits for three genuinely separate `return` statements. Same `int8_t` / `(int)` cast pair as arm_strat for the byte read and the signed division.
 // size      125 bytes
 // prototype int (__cdecl ?weap_strat@@YAHHH@Z)(int weaponID, int factionID)
 // callers   7   call targets   1
@@ -1566,14 +1577,22 @@ Return Value: Weapon strategy
 Status: Complete
 */
 int __cdecl weap_strat(int weapon_id, int faction_id) {
-    if (!ExpansionEnabled && (weapon_id == WPN_RESONANCE_LASER || weapon_id == WPN_RESONANCE_BOLT
-        || weapon_id == WPN_STRING_DISRUPTOR))
-        return 1;
-    int offense_rating = Weapon[weapon_id].offense_rating;
+    if (!ExpansionEnabled) {
+        if (weapon_id == WPN_RESONANCE_LASER) {
+            return 1;
+        }
+        if (weapon_id == WPN_RESONANCE_BOLT) {
+            return 1;
+        }
+        if (weapon_id == WPN_STRING_DISRUPTOR) {
+            return 1;
+        }
+    }
+    int8_t offense_rating = Weapon[weapon_id].offense_rating;
     if (offense_rating < 0) {
-        return psi_factor((Rules->psi_combat_ratio_atk[TRIAD_LAND]
-            * PlayersData[faction_id].enemy_best_armor_value) 
-            / Rules->psi_combat_ratio_def[TRIAD_LAND], faction_id, true, false);
+        return psi_factor(((int)Rules->psi_combat_ratio_atk[TRIAD_LAND]
+            * PlayersData[faction_id].enemy_best_armor_value)
+            / (int)Rules->psi_combat_ratio_def[TRIAD_LAND], faction_id, true, false);
     }
     return offense_rating;
 }
@@ -3157,6 +3176,8 @@ int __cdecl stack_veh(int veh_id, int mode) {
 /*
 Purpose: Various unit stack related calculations based on type parameter (0-19) and conditions.
 // ORIGINAL: 0x005B9580 ?stack_check@@YAHHHHHH@Z 0x005B9580-0x005B9BB8
+// RULED-OUT: call_diff still FEWER by one - case 12's `weap_strat(...)` call gets auto-inlined by this tree (weap_strat is small/BYTE_EXACT after this same pass) where the image keeps it a real `call`. `#pragma auto_inline(off)` around weap_strat's OWN definition would fix this call site but also stops weap_val (0x0057D360, not in this batch) from inlining it, which the image DOES do there - out of scope to touch a function outside this batch to fix this one. Still MISMATCH overall (~0.28 similar best) - a 20-case switch this size has per-case register allocation/instruction-scheduling noise that dwarfs the two structural fixes above.
+// RULED-OUT: MORE - this tree called `veh_top(veh_id)` and (case 8) `veh_cargo(i)`, neither of which the image calls (both fully inlined here, matching veh_at's precedent on veh_top and veh_cargo's own inline expansion for case 8).
 // size      1592 bytes
 // prototype int (__cdecl ?stack_check@@YAHHHHHH@Z)(int vehID, int type, int cond1, int cond2, int cond3)
 // callers   39   call targets   5
@@ -3170,7 +3191,14 @@ int __cdecl stack_check(int veh_id, int type, int cond1, int cond2, int cond3) {
     int retn_val = 0;
     uint32_t plan;
     uint32_t chas;
-    for (int i = veh_top(veh_id); i >= 0; i = Vehs[i].next_veh_id_stack) {
+    int top_veh_id = -1;
+    if (veh_id >= 0) {
+        top_veh_id = veh_id;
+        for (int j = Vehs[top_veh_id].prev_veh_id_stack; j >= 0; j = Vehs[j].prev_veh_id_stack) {
+            top_veh_id = j;
+        }
+    }
+    for (int i = top_veh_id; i >= 0; i = Vehs[i].next_veh_id_stack) {
         switch (type) {
           case 0:
             if ((cond2 < 0 || Vehs[i].faction_id == cond2) && Vehs[i].proto_id == cond1) {
@@ -3219,7 +3247,13 @@ int __cdecl stack_check(int veh_id, int type, int cond1, int cond2, int cond3) {
                 if (triad == TRIAD_LAND) {
                     retn_val--;
                 } else if (triad == TRIAD_SEA) {
-                    retn_val += veh_cargo(i);
+                    // inlined veh_cargo(i): the image has no call here, see veh_cargo's own comment
+                    int16_t proto_id_cargo = Vehs[i].proto_id;
+                    uint32_t cargo = VehPrototypes[proto_id_cargo].carry_capacity;
+                    retn_val += (cargo && proto_id_cargo < MaxVehProtoFactionNum
+                        && (get_proto_offense_rating(proto_id_cargo) < 0
+                            || proto_id_cargo == BSC_SPORE_LAUNCHER))
+                        ? Vehs[i].morale + 1 : cargo;
                 }
             }
             break;
@@ -3403,6 +3437,12 @@ BOOL __cdecl wants_prototype(int proto_id, int faction_id) {
 /*
 Purpose: Check the coordinates for units and if at least one is found return the top most id.
 // ORIGINAL: 0x005BFE90 ?veh_at@@YAHHH@Z 0x005BFE90-0x005BFF9E
+// RULED-OUT: 0.937 similar under every flag set tried - the control flow and
+//        field reads already match; what's left is register allocation (the
+//        image hoists `MapLatitudeBounds`/`MapLongitudeBounds` into ebx/edi
+//        ONCE and reuses them for both `on_map()` call sites, this tree
+//        re-reads them at the second site) plus esi/edi swaps throughout.
+//        Left as-is per "do not chase register-allocation differences."
 // size      270 bytes
 // prototype int (__cdecl ?veh_at@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   61   call targets   2
@@ -3716,6 +3756,17 @@ BOOL __cdecl can_arty(int proto_id, BOOL sea_triad_retn) {
 Purpose: Calculate a unit's morale. TODO: Determine if 2nd param is a toggle for display vs actual 
          morale.
 // ORIGINAL: 0x005C0E40 ?morale_veh@@YAHHHH@Z 0x005C0E40-0x005C1143
+// RULED-OUT: call_diff FEWER (2 vs image's 4: morale_alien, has_tech, and
+//        `bitmask` TWICE) - the two `has_fac_built(FAC_CHILDREN_CRECHE/
+//        FAC_BROOD_PIT, home_base_id)` calls each keep `bitmask()` as a real
+//        `call 0x50ba00` in the image, but this tree fully inlines it under
+//        every flag set tried, same as the already-documented case on
+//        get_basic_offense (0x5015B0). Bypassing `has_fac_built` and calling
+//        `bitmask()` directly (with `int offset, mask;` locals) did not stop
+//        it inlining either. Otherwise the control-flow order, field offsets
+//        and short-circuit structure already match; the rest of the gap
+//        looks like register allocation (a cached zero register the image
+//        keeps in ebx that this tree re-materializes per comparison).
 // size      771 bytes
 // prototype int (__cdecl ?morale_veh@@YAHHHH@Z)(int vehID, int checkDroneRiot, int factionIDvsNative)
 // callers   16   call targets   3
@@ -3955,6 +4006,8 @@ int __cdecl speed(int veh_id, BOOL skip_morale) {
 Purpose: Calculate the cargo capacity of a unit. It seems Spore Launchers were considered to have 
          cargo capacity at one time.
 // ORIGINAL: 0x005C1760 ?veh_cargo@@YAHH@Z 0x005C1760-0x005C17C4
+// RULED-OUT: still MISMATCH (0.853 similar) - the image computes `proto_id*sizeof(VehPrototype)` ONCE and reuses it for both the `carry_capacity` and `weapon_id` field reads (same array element, two fields); this tree recomputes it for the second read under every flag set tried. A local `VehPrototype *proto = &VehPrototypes[proto_id]` used for both field reads did not change the codegen. Also see the `add`-before-`shl` base-folding note on arm_strat (0x0057D270) - same class of divergence on the `carry_capacity` read itself.
+// RULED-OUT: proto_id` (not `uint32_t`/`int`) matches the image, which keeps the 16-bit `proto_id` in `si` for the `< MaxVehProtoFactionNum` and `== BSC_SPORE_LAUNCHER` compares and only does `movsx eax,si` at the array-indexing use sites.
 // size      100 bytes
 // prototype int (__cdecl ?veh_cargo@@YAHH@Z)(int vehID)
 // callers   19   call targets   0
@@ -3965,7 +4018,7 @@ Return Value: Cargo capacity
 Status: Complete
 */
 int __cdecl veh_cargo(int veh_id) {
-    uint32_t proto_id = Vehs[veh_id].proto_id;
+    int16_t proto_id = Vehs[veh_id].proto_id;
     uint32_t cargo = VehPrototypes[proto_id].carry_capacity;
     return (cargo && proto_id < MaxVehProtoFactionNum && (get_proto_offense_rating(proto_id) < 0 
         || proto_id == BSC_SPORE_LAUNCHER)) ? Vehs[veh_id].morale + 1 : cargo;
