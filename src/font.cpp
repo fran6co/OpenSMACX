@@ -189,9 +189,14 @@ int Font::width(LPSTR input, size_t max_len) {
     if (!input) {
         return 0;
     }
-    size_t len = strlen(input);
-    if (len > max_len) {
-        len = max_len;
+    // `strlen` TWICE, and SIGNED. The image's clamp is a min MACRO that
+    // re-evaluates its argument - `call strlen; cmp ebx, eax; jl; call strlen`
+    // at 0x0061930B and 0x0061931C - so caching it in a local collapses six
+    // instructions into three. `jl`, not `jbe`, because both operands are int
+    // there; a `size_t` comparison emits the unsigned branch.
+    int len = static_cast<int>(max_len);
+    if (len >= static_cast<int>(strlen(input))) {
+        len = static_cast<int>(strlen(input));
     }
     SelectObject(FontHDC, font_obj_);
     SIZE size;
