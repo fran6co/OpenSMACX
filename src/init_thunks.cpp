@@ -33,6 +33,13 @@
 #include "time.h"
 #include "wave.h"
 #include "wave_device.h"
+#include "battlewin.h"
+#include "infowin.h"
+#include "messagewin.h"
+#include "netdaemon.h"
+#include "reportif.h"
+#include "sounddevice.h"
+#include "statuswin.h"
 
 // The game CRT's atexit: the exit list the original
 // registrations live in, so recovered initializers must
@@ -624,7 +631,7 @@ void __cdecl construct_unused_sprite_var07() {
 
 /*
 Purpose: Dynamic initializer for g_BASEWIN; registers its ??__F teardown.
-// ORIGINAL: 0x004083B0 ??__Eg_BASEWIN@@YAXXZ 0x004083B0-0x004083C6
+// ORIGINAL: 0x004083B0 ??__Eg_BASEWIN@@YAXXZ 0x004083B0-0x004083C6 BYTE_EXACT
 // symbol    ?construct_basewin@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -636,7 +643,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_basewin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x006A7628))->*BaseWinCtorTarget)();
+    reinterpret_cast<BaseWin *>(0x006A7628)->BaseWin::BaseWin();
     atexit(reinterpret_cast<func_atexit_callback *>(0x004083D0));
 }
 
@@ -660,7 +667,7 @@ void __cdecl construct_basewin_wave() {
 
 /*
 Purpose: Dynamic initializer for g_BattleWin; registers its ??__F teardown.
-// ORIGINAL: 0x004219B0 ??__Eg_BattleWin@@YAXXZ 0x004219B0-0x004219C6
+// ORIGINAL: 0x004219B0 ??__Eg_BattleWin@@YAXXZ 0x004219B0-0x004219C6 BYTE_EXACT
 // symbol    ?construct_battlewin@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -672,13 +679,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_battlewin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x006EEED8))->*BattleWinCtorTarget)();
+    reinterpret_cast<BattleWin *>(0x006EEED8)->BattleWin::BattleWin();
     atexit(reinterpret_cast<func_atexit_callback *>(0x004219D0));
 }
 
 /*
 Purpose: Dynamic initializer for g_COUNCWIN; registers its ??__F teardown.
-// ORIGINAL: 0x004243A0 ??__Eg_COUNCWIN@@YAXXZ 0x004243A0-0x004243B6
+// ORIGINAL: 0x004243A0 ??__Eg_COUNCWIN@@YAXXZ 0x004243A0-0x004243B6 BYTE_EXACT
 // symbol    ?construct_councwin@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -690,7 +697,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_councwin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x006FEC80))->*CouncWinCtorTarget)();
+    reinterpret_cast<CouncWin *>(0x006FEC80)->CouncWin::CouncWin();
     atexit(reinterpret_cast<func_atexit_callback *>(0x004243C0));
 }
 
@@ -714,7 +721,7 @@ void __cdecl construct_credits_wave() {
 
 /*
 Purpose: Dynamic initializer for g_DATALINK; registers its ??__F teardown.
-// ORIGINAL: 0x00428F90 ??__Eg_DATALINK@@YAXXZ 0x00428F90-0x00428FA6
+// ORIGINAL: 0x00428F90 ??__Eg_DATALINK@@YAXXZ 0x00428F90-0x00428FA6 BYTE_EXACT
 // symbol    ?construct_datalink@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -726,13 +733,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_datalink() {
-    (ORIGINAL(reinterpret_cast<void *>(0x00703EA0))->*DatalinkCtorTarget)();
+    reinterpret_cast<Datalink *>(0x00703EA0)->Datalink::Datalink();
     atexit(reinterpret_cast<func_atexit_callback *>(0x00428FB0));
 }
 
 /*
 Purpose: Dynamic initializer for g_DESIGNWIN; registers its ??__F teardown.
-// ORIGINAL: 0x00432850 ??__Eg_DESIGNWIN@@YAXXZ 0x00432850-0x00432866
+// ORIGINAL: 0x00432850 ??__Eg_DESIGNWIN@@YAXXZ 0x00432850-0x00432866 BYTE_EXACT
 // symbol    ?construct_designwin@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -744,7 +751,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_designwin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x0071F2B0))->*DesignWinCtorTarget)();
+    reinterpret_cast<DesignWin *>(0x0071F2B0)->DesignWin::DesignWin();
     atexit(reinterpret_cast<func_atexit_callback *>(0x00432870));
 }
 
@@ -768,7 +775,7 @@ void __cdecl construct_designwin_wave() {
 
 /*
 Purpose: Dynamic initializer for g_DIPLOPOP; registers its ??__F teardown.
-// ORIGINAL: 0x0043EFC0 ??__Eg_DIPLOPOP@@YAXXZ 0x0043EFC0-0x0043EFD6
+// ORIGINAL: 0x0043EFC0 ??__Eg_DIPLOPOP@@YAXXZ 0x0043EFC0-0x0043EFD6 BYTE_EXACT
 // symbol    ?construct_diplopop@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -780,13 +787,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_diplopop() {
-    (ORIGINAL(reinterpret_cast<void *>(0x00733990))->*DiploPopCtorTarget)();
+    reinterpret_cast<DiploPop *>(0x00733990)->DiploPop::DiploPop();
     atexit(reinterpret_cast<func_atexit_callback *>(0x0043EFE0));
 }
 
 /*
 Purpose: Dynamic initializer for g_DIPLOWIN; registers its ??__F teardown.
-// ORIGINAL: 0x00440F00 ??__Eg_DIPLOWIN@@YAXXZ 0x00440F00-0x00440F16
+// ORIGINAL: 0x00440F00 ??__Eg_DIPLOWIN@@YAXXZ 0x00440F00-0x00440F16 BYTE_EXACT
 // symbol    ?construct_diplowin@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -798,7 +805,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_diplowin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x0073ACD8))->*DiploWinCtorTarget)();
+    reinterpret_cast<DiploWin *>(0x0073ACD8)->DiploWin::DiploWin();
     atexit(reinterpret_cast<func_atexit_callback *>(0x00440F20));
 }
 
@@ -960,7 +967,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_famewin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x0074DAF8))->*FameWinCtorTarget)();
+    reinterpret_cast<FameWin *>(0x0074DAF8)->FameWin::FameWin();
     atexit(reinterpret_cast<func_atexit_callback *>(0x004483F0));
 }
 
@@ -6151,7 +6158,7 @@ void __cdecl construct_basewin_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_INFOWIN; registers its ??__F teardown.
-// ORIGINAL: 0x004562C0 ??__Eg_INFOWIN@@YAXXZ 0x004562C0-0x004562D6
+// ORIGINAL: 0x004562C0 ??__Eg_INFOWIN@@YAXXZ 0x004562C0-0x004562D6 BYTE_EXACT
 // symbol    ?construct_infowin@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6163,13 +6170,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_infowin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x007AD2A0))->*InfoWinCtorTarget)();
+    reinterpret_cast<InfoWin *>(0x007AD2A0)->InfoWin::InfoWin();
     atexit(reinterpret_cast<func_atexit_callback *>(0x004562E0));
 }
 
 /*
 Purpose: Dynamic initializer for g_MAININTERFACE; registers its ??__F teardown.
-// ORIGINAL: 0x00459560 ??__Eg_MAININTERFACE@@YAXXZ 0x00459560-0x00459576
+// ORIGINAL: 0x00459560 ??__Eg_MAININTERFACE@@YAXXZ 0x00459560-0x00459576 BYTE_EXACT
 // symbol    ?construct_maininterface@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6181,7 +6188,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_maininterface() {
-    (ORIGINAL(reinterpret_cast<void *>(0x007AE820))->*MainInterfaceCtorTarget)();
+    reinterpret_cast<MainInterface *>(0x007AE820)->MainInterface::MainInterface();
     atexit(reinterpret_cast<func_atexit_callback *>(0x00459580));
 }
 
@@ -6241,7 +6248,7 @@ void __cdecl construct_mapwin() {
 
 /*
 Purpose: Dynamic initializer for g_MESSAGEWIN; registers its ??__F teardown.
-// ORIGINAL: 0x00471320 ??__Eg_MESSAGEWIN@@YAXXZ 0x00471320-0x00471336
+// ORIGINAL: 0x00471320 ??__Eg_MESSAGEWIN@@YAXXZ 0x00471320-0x00471336 BYTE_EXACT
 // symbol    ?construct_messagewin@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6253,7 +6260,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_messagewin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x007F67F8))->*MessageWinCtorTarget)();
+    reinterpret_cast<MessageWin *>(0x007F67F8)->MessageWin::MessageWin();
     atexit(reinterpret_cast<func_atexit_callback *>(0x00471340));
 }
 
@@ -6289,7 +6296,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_monuwin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x007F9F58))->*MonuWinCtorTarget)();
+    reinterpret_cast<MonuWin *>(0x007F9F58)->MonuWin::MonuWin();
     atexit(reinterpret_cast<func_atexit_callback *>(0x00472220));
 }
 
@@ -6307,7 +6314,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_multiwin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x007FD648))->*MultiWinCtorTarget)();
+    reinterpret_cast<MultiWin *>(0x007FD648)->MultiWin::MultiWin();
     atexit(reinterpret_cast<func_atexit_callback *>(0x00477E30));
 }
 
@@ -6367,7 +6374,7 @@ void __cdecl construct_netmsg2() {
 
 /*
 Purpose: Dynamic initializer for g_NETWIN; registers its ??__F teardown.
-// ORIGINAL: 0x0047AFF0 ??__Eg_NETWIN@@YAXXZ 0x0047AFF0-0x0047B006
+// ORIGINAL: 0x0047AFF0 ??__Eg_NETWIN@@YAXXZ 0x0047AFF0-0x0047B006 BYTE_EXACT
 // symbol    ?construct_netwin@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6379,13 +6386,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_netwin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x0080A6F8))->*NetWinCtorTarget)();
+    reinterpret_cast<NetWin *>(0x0080A6F8)->NetWin::NetWin();
     atexit(reinterpret_cast<func_atexit_callback *>(0x0047B010));
 }
 
 /*
 Purpose: Dynamic initializer for g_NEWTECHWIN; registers its ??__F teardown.
-// ORIGINAL: 0x00483850 ??__Eg_NEWTECHWIN@@YAXXZ 0x00483850-0x00483866
+// ORIGINAL: 0x00483850 ??__Eg_NEWTECHWIN@@YAXXZ 0x00483850-0x00483866 BYTE_EXACT
 // symbol    ?construct_newtechwin@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6397,7 +6404,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_newtechwin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x00811E40))->*NewTechWinCtorTarget)();
+    reinterpret_cast<NewTechWin *>(0x00811E40)->NewTechWin::NewTechWin();
     atexit(reinterpret_cast<func_atexit_callback *>(0x00483870));
 }
 
@@ -6421,7 +6428,7 @@ void __cdecl construct_newtechwin_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_PICKWIN; registers its ??__F teardown.
-// ORIGINAL: 0x00488750 ??__Eg_PICKWIN@@YAXXZ 0x00488750-0x00488766
+// ORIGINAL: 0x00488750 ??__Eg_PICKWIN@@YAXXZ 0x00488750-0x00488766 BYTE_EXACT
 // symbol    ?construct_pickwin@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6433,7 +6440,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_pickwin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x00822718))->*PickWinCtorTarget)();
+    reinterpret_cast<PickWin *>(0x00822718)->PickWin::PickWin();
     atexit(reinterpret_cast<func_atexit_callback *>(0x00488770));
 }
 
@@ -6469,7 +6476,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_prefwin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x008578D8))->*PrefWinCtorTarget)();
+    reinterpret_cast<PrefWin *>(0x008578D8)->PrefWin::PrefWin();
     atexit(reinterpret_cast<func_atexit_callback *>(0x0048D510));
 }
 
@@ -6505,13 +6512,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_quaylewin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x00872CB0))->*QuayleWinCtorTarget)();
+    reinterpret_cast<QuayleWin *>(0x00872CB0)->QuayleWin::QuayleWin();
     atexit(reinterpret_cast<func_atexit_callback *>(0x00495190));
 }
 
 /*
 Purpose: Dynamic initializer for g_REPORTIF; registers its ??__F teardown.
-// ORIGINAL: 0x00496900 ??__Eg_REPORTIF@@YAXXZ 0x00496900-0x00496916
+// ORIGINAL: 0x00496900 ??__Eg_REPORTIF@@YAXXZ 0x00496900-0x00496916 BYTE_EXACT
 // symbol    ?construct_reportif@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6523,13 +6530,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_reportif() {
-    (ORIGINAL(reinterpret_cast<void *>(0x00885F38))->*ReportIfCtorTarget)();
+    reinterpret_cast<ReportIf *>(0x00885F38)->ReportIf::ReportIf();
     atexit(reinterpret_cast<func_atexit_callback *>(0x00496920));
 }
 
 /*
 Purpose: Dynamic initializer for g_REPORTWIN; registers its ??__F teardown.
-// ORIGINAL: 0x00496930 ??__Eg_REPORTWIN@@YAXXZ 0x00496930-0x00496946
+// ORIGINAL: 0x00496930 ??__Eg_REPORTWIN@@YAXXZ 0x00496930-0x00496946 BYTE_EXACT
 // symbol    ?construct_reportwin@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6541,13 +6548,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_reportwin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x00876478))->*ReportWinCtorTarget)();
+    reinterpret_cast<ReportWin *>(0x00876478)->ReportWin::ReportWin();
     atexit(reinterpret_cast<func_atexit_callback *>(0x00496950));
 }
 
 /*
 Purpose: Dynamic initializer for SocialWinParent; registers its ??__F teardown.
-// ORIGINAL: 0x004AE9B0 ??__ESocialWinParent@@YAXXZ 0x004AE9B0-0x004AE9C6
+// ORIGINAL: 0x004AE9B0 ??__ESocialWinParent@@YAXXZ 0x004AE9B0-0x004AE9C6 BYTE_EXACT
 // symbol    ?construct_socialwinparent@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6559,13 +6566,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_socialwinparent() {
-    (ORIGINAL(reinterpret_cast<void *>(0x008A6270))->*SocialWinCtorTarget)();
+    reinterpret_cast<SocialWin *>(0x008A6270)->SocialWin::SocialWin();
     atexit(reinterpret_cast<func_atexit_callback *>(0x004AE9D0));
 }
 
 /*
 Purpose: Dynamic initializer for g_STATUSWIN; registers its ??__F teardown.
-// ORIGINAL: 0x004B3FA0 ??__Eg_STATUSWIN@@YAXXZ 0x004B3FA0-0x004B3FB6
+// ORIGINAL: 0x004B3FA0 ??__Eg_STATUSWIN@@YAXXZ 0x004B3FA0-0x004B3FB6 BYTE_EXACT
 // symbol    ?construct_statuswin@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6577,13 +6584,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_statuswin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x008C5568))->*StatusWinCtorTarget)();
+    reinterpret_cast<StatusWin *>(0x008C5568)->StatusWin::StatusWin();
     atexit(reinterpret_cast<func_atexit_callback *>(0x004B3FC0));
 }
 
 /*
 Purpose: Dynamic initializer for g_TUTWIN; registers its ??__F teardown.
-// ORIGINAL: 0x004BA5C0 ??__Eg_TUTWIN@@YAXXZ 0x004BA5C0-0x004BA5D6
+// ORIGINAL: 0x004BA5C0 ??__Eg_TUTWIN@@YAXXZ 0x004BA5C0-0x004BA5D6 BYTE_EXACT
 // symbol    ?construct_tutwin@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6595,7 +6602,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_tutwin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x008C6E68))->*TutWinCtorTarget)();
+    reinterpret_cast<TutWin *>(0x008C6E68)->TutWin::TutWin();
     atexit(reinterpret_cast<func_atexit_callback *>(0x004BA5E0));
 }
 
@@ -6637,7 +6644,7 @@ void __cdecl construct_vehdraw_buffer() {
 
 /*
 Purpose: Dynamic initializer for g_WORLDWIN; registers its ??__F teardown.
-// ORIGINAL: 0x004C38B0 ??__Eg_WORLDWIN@@YAXXZ 0x004C38B0-0x004C38C6
+// ORIGINAL: 0x004C38B0 ??__Eg_WORLDWIN@@YAXXZ 0x004C38B0-0x004C38C6 BYTE_EXACT
 // symbol    ?construct_worldwin@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6649,7 +6656,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_worldwin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x008E9F60))->*WorldWinCtorTarget)();
+    reinterpret_cast<WorldWin *>(0x008E9F60)->WorldWin::WorldWin();
     atexit(reinterpret_cast<func_atexit_callback *>(0x004C38D0));
 }
 
@@ -6673,7 +6680,7 @@ void __cdecl construct_wave_device() {
 
 /*
 Purpose: Dynamic initializer for g_MIDI_DEVICE; registers its ??__F teardown.
-// ORIGINAL: 0x004C5C80 ??__Eg_MIDI_DEVICE@@YAXXZ 0x004C5C80-0x004C5C96
+// ORIGINAL: 0x004C5C80 ??__Eg_MIDI_DEVICE@@YAXXZ 0x004C5C80-0x004C5C96 BYTE_EXACT
 // symbol    ?construct_midi_device@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6685,13 +6692,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_midi_device() {
-    (ORIGINAL(reinterpret_cast<void *>(0x0090D950))->*Midi_DeviceCtorTarget)();
+    reinterpret_cast<Midi_Device *>(0x0090D950)->Midi_Device::Midi_Device();
     atexit(reinterpret_cast<func_atexit_callback *>(0x004C5CA0));
 }
 
 /*
 Purpose: Dynamic initializer for g_WAVE_IN_DEVICE; registers its ??__F teardown.
-// ORIGINAL: 0x004C5CB0 ??__Eg_WAVE_IN_DEVICE@@YAXXZ 0x004C5CB0-0x004C5CC6
+// ORIGINAL: 0x004C5CB0 ??__Eg_WAVE_IN_DEVICE@@YAXXZ 0x004C5CB0-0x004C5CC6 BYTE_EXACT
 // symbol    ?construct_wave_in_device@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6703,7 +6710,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_wave_in_device() {
-    (ORIGINAL(reinterpret_cast<void *>(0x0090DB50))->*Wave_In_DeviceCtorTarget)();
+    reinterpret_cast<Wave_In_Device *>(0x0090DB50)->Wave_In_Device::Wave_In_Device();
     atexit(reinterpret_cast<func_atexit_callback *>(0x004C5CD0));
 }
 
@@ -6763,7 +6770,7 @@ void __cdecl construct_cursor_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_NETDAEMON; registers its ??__F teardown.
-// ORIGINAL: 0x0052DB10 ??__Eg_NETDAEMON@@YAXXZ 0x0052DB10-0x0052DB26
+// ORIGINAL: 0x0052DB10 ??__Eg_NETDAEMON@@YAXXZ 0x0052DB10-0x0052DB26 BYTE_EXACT
 // symbol    ?construct_netdaemon@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6775,13 +6782,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_netdaemon() {
-    (ORIGINAL(reinterpret_cast<void *>(0x0093CD90))->*NetDaemonCtorTarget)();
+    reinterpret_cast<NetDaemon *>(0x0093CD90)->NetDaemon::NetDaemon();
     atexit(reinterpret_cast<func_atexit_callback *>(0x0052DB30));
 }
 
 /*
 Purpose: Dynamic initializer for g_FONTQUEUE_VAL2; registers its ??__F teardown.
-// ORIGINAL: 0x00559230 ??__Eg_FONTQUEUE_VAL2@@YAXXZ 0x00559230-0x00559246
+// ORIGINAL: 0x00559230 ??__Eg_FONTQUEUE_VAL2@@YAXXZ 0x00559230-0x00559246 BYTE_EXACT
 // symbol    ?construct_fontqueue_val2@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6793,13 +6800,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_fontqueue_val2() {
-    (ORIGINAL(reinterpret_cast<void *>(0x0093FB88))->*FontQueueCtorTarget)();
+    reinterpret_cast<FontQueue *>(0x0093FB88)->FontQueue::FontQueue();
     atexit(reinterpret_cast<func_atexit_callback *>(0x00559250));
 }
 
 /*
 Purpose: Dynamic initializer for g_FONTQUEUE_VAL1; registers its ??__F teardown.
-// ORIGINAL: 0x00559260 ??__Eg_FONTQUEUE_VAL1@@YAXXZ 0x00559260-0x00559276
+// ORIGINAL: 0x00559260 ??__Eg_FONTQUEUE_VAL1@@YAXXZ 0x00559260-0x00559276 BYTE_EXACT
 // symbol    ?construct_fontqueue_val1@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6811,7 +6818,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_fontqueue_val1() {
-    (ORIGINAL(reinterpret_cast<void *>(0x0093FAE8))->*FontQueueCtorTarget)();
+    reinterpret_cast<FontQueue *>(0x0093FAE8)->FontQueue::FontQueue();
     atexit(reinterpret_cast<func_atexit_callback *>(0x00559280));
 }
 
@@ -6889,7 +6896,7 @@ void __cdecl construct_wave_general() {
 
 /*
 Purpose: Dynamic initializer for g_PALETTE1; registers its ??__F teardown.
-// ORIGINAL: 0x005BEC40 ??__Eg_PALETTE1@@YAXXZ 0x005BEC40-0x005BEC56
+// ORIGINAL: 0x005BEC40 ??__Eg_PALETTE1@@YAXXZ 0x005BEC40-0x005BEC56 BYTE_EXACT
 // symbol    ?construct_palette1@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6901,13 +6908,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_palette1() {
-    (ORIGINAL(reinterpret_cast<void *>(0x0094C590))->*PaletteCtorTarget)();
+    reinterpret_cast<Palette *>(0x0094C590)->Palette::Palette();
     atexit(reinterpret_cast<func_atexit_callback *>(0x005BEC60));
 }
 
 /*
 Purpose: Dynamic initializer for g_PALETTE2; registers its ??__F teardown.
-// ORIGINAL: 0x005BEC70 ??__Eg_PALETTE2@@YAXXZ 0x005BEC70-0x005BEC86
+// ORIGINAL: 0x005BEC70 ??__Eg_PALETTE2@@YAXXZ 0x005BEC70-0x005BEC86 BYTE_EXACT
 // symbol    ?construct_palette2@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6919,13 +6926,13 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_palette2() {
-    (ORIGINAL(reinterpret_cast<void *>(0x009523A0))->*PaletteCtorTarget)();
+    reinterpret_cast<Palette *>(0x009523A0)->Palette::Palette();
     atexit(reinterpret_cast<func_atexit_callback *>(0x005BEC90));
 }
 
 /*
 Purpose: Dynamic initializer for g_MULTIDEBUG; registers its ??__F teardown.
-// ORIGINAL: 0x005C97C0 ??__Eg_MULTIDEBUG@@YAXXZ 0x005C97C0-0x005C97D6
+// ORIGINAL: 0x005C97C0 ??__Eg_MULTIDEBUG@@YAXXZ 0x005C97C0-0x005C97D6 BYTE_EXACT
 // symbol    ?construct_multidebug@@YAXXZ
 // size      22 bytes
 // prototype 
@@ -6937,7 +6944,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_multidebug() {
-    (ORIGINAL(reinterpret_cast<void *>(0x009B22F0))->*MultiDebugCtorTarget)();
+    reinterpret_cast<MultiDebug *>(0x009B22F0)->MultiDebug::MultiDebug();
     atexit(reinterpret_cast<func_atexit_callback *>(0x005C97E0));
 }
 
