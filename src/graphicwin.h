@@ -148,7 +148,7 @@ typedef void (OriginalObject::*func_graphic_win_overlay_nonclient)(RECT *);
 
 // The translation table fill consults before remapping. A null table means
 // the plain blit is the whole operation, which is the common case.
-void **const GraphicWinColorMapTable = (void **)0x009B3390;
+inline void *&GraphicWinColorMapTable() { return *reinterpret_cast<void **>(0x009B3390); }
 // USER32!InvalidateRect through the import at 0x00669304.
 typedef BOOL(__stdcall func_graphic_win_invalidate_rect)(HWND, const RECT *,
                                                           BOOL);
