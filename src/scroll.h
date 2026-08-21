@@ -27,7 +27,11 @@
   */
 class Scroll : public GraphicWin {
  public:
-  Scroll() { ; }
+  // DECLARED, NOT DEFINED EMPTY. The real constructor is 0x006051D0, and an
+  // empty inline one emits nothing - so `Popup`, which holds a `Scroll` at
+  // 0x3230, never constructed its member at all while the image calls
+  // `Scroll::Scroll` on `this + 0x3230`. Forwarded in `pending_bodies.cpp`.
+  Scroll();
   ~Scroll() { ; }
 
   uint32_t close();
