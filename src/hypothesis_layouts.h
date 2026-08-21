@@ -1038,6 +1038,12 @@ struct CWorldbuilder {
 /* 0x6C bytes, 1 member(s), 1 named. From the IDB. 4 function(s) in the image. */
 class Effect {
  public:
+  // 0x004482C0 is not recovered: a pending_bodies forwarder, because
+  // an empty inline stub emits nothing and the deleting destructor
+  // needs a `call rel32`.
+  ~Effect();
+
+ public:
   uint8_t wave_[0x6C];  // 0x0
 };
 

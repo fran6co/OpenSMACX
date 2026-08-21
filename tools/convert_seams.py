@@ -625,10 +625,16 @@ def convert(source: Path, apply: bool) -> int:
     return done
 
 
+# The thunks reach a destructor under two names - `...DtorTarget` bound with
+# `func_deleting_dtor`, and `...ElementTeardown` bound with
+# `func_thiscall_teardown` in the owning class's own file. The shape at the
+# CALL SITE is identical; only the binding's spelling and home differ.
+DTOR_CALL = re.compile(
+    r"\(\s*ORIGINAL\(self\)\s*->\*\s*(?P<name>\w+)\s*\)\s*\(\s*\)\s*;")
 DTOR_BINDING = re.compile(
-    r"^func_deleting_dtor\s+(?P<name>\w+)\s*=\s*\n?\s*"
-    r"original_method<func_deleting_dtor>\(\s*(?P<address>0x[0-9A-Fa-f]+)"
-    r"\s*\)\s*;\n", re.M)
+    r"^(?:func_deleting_dtor|func_thiscall_teardown)\s+(?P<name>\w+)\s*=\s*"
+    r"\n?\s*original_method<(?:func_deleting_dtor|func_thiscall_teardown)>"
+    r"\(\s*(?P<address>0x[0-9A-Fa-f]+)\s*\)\s*;\n", re.M)
 STUB_DTOR = re.compile(r"^(?P<indent>\s*)~(?P<klass>\w+)\(\)\s*\{\s*;?\s*\}"
                        r"[^\n]*\n", re.M)
 
@@ -654,7 +660,16 @@ def dtors(apply: bool) -> int:
     files = tree()
     changed = 0
     source = (REPO_ROOT / "src" / "deleting_thunks.cpp").resolve()
-    for match in list(DTOR_BINDING.finditer(body(source))):
+    # EVERY POINTER THE THUNKS CALL, wherever it is bound. The binding for
+    # `EffectElementTeardown` lives in fx.cpp, not beside the thunk that uses
+    # it, so looking only in deleting_thunks.cpp missed a dozen.
+    wanted = {m.group("name") for m in DTOR_CALL.finditer(body(source))}
+    bindings = []
+    for path in sorted(files):
+        for m in DTOR_BINDING.finditer(body(path)):
+            if m.group("name") in wanted:
+                bindings.append((path, m))
+    for home, match in bindings:
         pointer, address = match.group("name"), match.group("address")
         symbol = names.get(int(address, 16), "")
         found = re.fullmatch(r"\?\?1(\w+)@@QAE@XZ", symbol)
@@ -682,6 +697,15 @@ def dtors(apply: bool) -> int:
             print(f"  - {pointer}: {klass}::~{klass} is already forwarded")
             continue
         users = [p for p in sorted(files) if pointer in body(p)]
+        # A pointer the owning file also PASSES somewhere - fx.cpp hands
+        # `EffectElementTeardown` to a vector teardown - is storage, not just
+        # a call.
+        # A pointer the owning file also PASSES somewhere - fx.cpp hands
+        # `EffectElementTeardown` to a vector teardown iterator - is real
+        # storage and must stay. The thunk's CALL still converts; only the
+        # binding survives.
+        passed = [p for p in users
+                  if re.search(rf"[(,]\s*{pointer}\s*[),]", body(p))]
         # `original_address(P)` reads the pointer as a VALUE to rebind another
         # seam with; there is no call to rewrite and removing the binding
         # breaks it.
@@ -710,28 +734,31 @@ def dtors(apply: bool) -> int:
             f"    typedef void(__fastcall *pending)({klass} *, void *);\n"
             f"    PENDING_BODY({address}, pending)(this, nullptr);\n}}\n\n"
             + PENDING_ANCHOR))
-        rewrite(source, body(source).replace(match.group(0), ""))
+        if not passed:
+            rewrite(home, body(home).replace(match.group(0), ""))
         # EVERY USE, NOT JUST THE THUNK'S. atexit_thunks.cpp reaches the same
         # pointers on fixed addresses - `ORIGINAL(reinterpret_cast<void *>
         # (0x006A7628))->*BaseWinDtorTarget` - and removing the binding without
         # rewriting those leaves an unresolved symbol.
         call = re.compile(rf"\(\s*ORIGINAL\((?P<receiver>[^;]*?)\)\s*->\*"
                           rf"\s*{pointer}\s*\)\s*\(\s*\)")
-        for path in users:
+        for path in (users if not passed else [source]):
             rewrite(path, call.sub(
                 lambda m: f"static_cast<{klass} *>({m.group('receiver')})"
                           f"->{klass}::~{klass}()",
                 body(path)))
-            rewrite(path, EXTERN.sub(
-                lambda m: "" if m.group("name") == pointer else m.group(0),
-                body(path)))
+            if not passed:
+                rewrite(path, EXTERN.sub(
+                    lambda m: "" if m.group("name") == pointer else m.group(0),
+                    body(path)))
         for path in (source, PENDING, *users):
             include = f'#include "{header.name}"\n'
             if include not in body(path):
                 last = body(path).rfind('#include "')
                 end = body(path).index("\n", last) + 1
                 rewrite(path, body(path)[:end] + include + body(path)[end:])
-        print(f"  + {pointer} -> {klass}::~{klass} ({address})")
+        print(f"  + {pointer} -> {klass}::~{klass} ({address})"
+              + ("  [binding kept: it is passed elsewhere]" if passed else ""))
         changed += 1
     if apply:
         for path, text in files.items():

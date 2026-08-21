@@ -17,6 +17,7 @@
  */
 #pragma once
 #include "vector_teardown.h"
+#include "hypothesis_layouts.h"
 
  /*
   * FX class - the sound-effect bank.

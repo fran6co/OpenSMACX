@@ -1025,7 +1025,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GEffect@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-// ORIGINAL: 0x00448350 ??_GEffect@@UAEPAXI@Z 0x00448350-0x00448371
+// ORIGINAL: 0x00448350 ??_GEffect@@UAEPAXI@Z 0x00448350-0x00448371 BYTE_EXACT
 // symbol    ?scalar_delete_effect@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype void* (__thiscall ??_GEffect@@UAEPAXI@Z)(Effect* this, unsigned int)
@@ -1037,7 +1037,7 @@ Return Value: the object pointer
 Status: Complete
 */
 void *__fastcall scalar_delete_effect(void *self, void *, unsigned int arg0) {
-    (ORIGINAL(self)->*EffectElementTeardown)();
+    static_cast<Effect *>(self)->Effect::~Effect();
     if (arg0 & 1) {
         operator delete(self);
     }
