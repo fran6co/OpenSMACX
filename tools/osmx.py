@@ -486,6 +486,11 @@ def measure(
         "--reconfigure",
         help="Clear the cmake cache and regenerate the build database "
              "first, whether or not it looks stale.")] = False,
+    every_flag_set: Annotated[bool, typer.Option(
+        "--all-flags",
+        help="Score EVERY flag set instead of reporting the best. A source "
+             "change can improve one set while the winner comes from "
+             "another; this is where that shows.")] = False,
     as_json: Annotated[bool, typer.Option("--json")] = False,
 ) -> None:
     """Does this body reproduce the shipped bytes?
@@ -532,6 +537,25 @@ def measure(
         return
 
     source = body if body is not None else record.path
+    if every_flag_set:
+        # EVERY SET, NOT THE WINNER. `compare_source` ranks on similarity
+        # first and agreement second, across flag sets that answer different
+        # questions - so a source change can improve the set where the image's
+        # helpers are inlined while the winner comes from the set where they
+        # are not, and the verdict does not move. That reads as "nothing
+        # happened" when something did.
+        for flags in FLAG_SETS:
+            try:
+                one = compare_source(record, exe, source, command, (flags,),
+                                     shared)
+            except (ValueError, CompileFailed) as problem:
+                typer.echo(f"  {flags:34s} {str(problem).splitlines()[0][:60]}")
+                continue
+            typer.echo(f"  {flags:34s} {str(one.verdict):14s} "
+                       f"{one.matching_instructions}/"
+                       f"{one.original_instructions} instructions, "
+                       f"{one.mnemonic_similarity:.3f} similar")
+        raise typer.Exit(0)
     try:
         result = compare_source(record, exe, source, command, FLAG_SETS,
                                 shared)
