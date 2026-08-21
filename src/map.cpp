@@ -908,9 +908,6 @@ Purpose: Get the bit of the specified tile.
 Return Value: Bitfield
 Status: Complete
 */
-int __cdecl bit_at(int x, int y) {
-    return map_loc(x, y)->bit;
-}
 
 /*
 Purpose: Set the bit for the specified tile.
@@ -1296,9 +1293,6 @@ Purpose: Check whether the specified tile is part of an ocean.
 Return Value: Is tile ocean? true/false
 Status: Complete
 */
-BOOL __cdecl is_ocean(int x, int y) {
-    return altitude_at(x, y) < ALT_BIT_SHORE_LINE;
-}
 
 /*
 Purpose: Get the owner of the specified tile if there is a unit in it.
