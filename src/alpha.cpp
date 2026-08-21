@@ -41,8 +41,10 @@ const char *PrefsSection = "Alpha Centauri";       // 0x006900D0
 
 LPCSTR AlphaxFileID = "ALPHAX";
 LPCSTR ScriptTxtID = "SCRIPT";
-LPSTR *Compass = (LPSTR *)0x00945D48;
-LPSTR *Difficulty = (LPSTR *)0x0096C85C;
+// `const`: nothing outside this file names them, so internal
+// linkage folds the address into every subscript.
+LPSTR *const Compass = (LPSTR *)0x00945D48;
+LPSTR *const Difficulty = (LPSTR *)0x0096C85C;
 // AN OBJECT, NOT A POINTER TO A FIXED ADDRESS: the pointer form costs a
 // load at every use where the image addresses the storage directly, and
 // the address is terranx.exe's data, unmapped in a standalone build.
