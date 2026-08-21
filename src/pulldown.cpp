@@ -464,12 +464,24 @@ void PullDown::hide() {
 // calls     0x005D4CF0
 */
 
-// RULED-OUT (SEH frame): same root cause as FlatButton::FlatButton() (see
-// flatbutton.cpp) - GraphicWin's own `Buffer buffer_` etc. are non-trivial
-// value members, so VC6 wraps any throwable call in a derived constructor's
-// body with unwind protection the image does not pay for calling
-// GraphicWin::construct() alone. Left as a MISMATCH; fixing it needs a
-// layout change to GraphicWin/Win outside this marker's scope.
+// RULED-OUT: SEH frame - same symptom as FlatButton::FlatButton() (see
+// flatbutton.cpp for the full measurement) - PullDown : public GraphicWin
+// is a REAL constructor calling `GraphicWin::construct()`, and this tree's
+// compiled body gets an unwind frame (`push -1 / push handler / mov eax,
+// fs:[0] / push eax / mov fs:[0], esp`) the image does not have (flags
+// carry no `frame`).
+//
+// MEASURED 2026-08-21: this is NOT `GraphicWin`'s `Buffer buffer_` etc.
+// being held by value - swapping every by-value member up the whole
+// GraphicWin/Win/BaseButton chain for raw storage of the same size does
+// not drop the frame. Only compiling with `/GX-` does (confirmed on
+// FlatButton's identical shape), and `/GX-` is not reachable from `src/`:
+// it is a whole-translation-unit flag, and `Buffer::~Buffer()`
+// (0x005D7410, `buffer.h`) is currently BYTE_EXACT specifically because
+// the image's own destructor carries this same SEH prologue - turning
+// `/GX` off would regress that claim. `__declspec(nothrow)` / `throw()`
+// on `GraphicWin::construct()`'s declaration does not suppress the frame
+// either. Left as a MISMATCH; see flatbutton.cpp for the full note.
 PullDown::PullDown() {
     GraphicWin::construct();
     uint32_t *const ordered = reinterpret_cast<uint32_t *>(this);

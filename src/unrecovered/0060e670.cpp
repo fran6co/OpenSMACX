@@ -1,5 +1,6 @@
 // ORIGINAL: 0x0060E670 ??0CheckBox@@QAE@H@Z 0x0060E670-0x0060E735;0x00662F60-0x00662F84 FILE
 // RULED-OUT: no `__try`/SEH-frame modelling attempted - the constructor installs a real fs:[0] frame (push -1; push handler; ...) that a plain body cannot reproduce, plus a multi-inheritance adjustor-thunk vtable poke computed from *(vtbl+4)/*(vtbl+8). Landed body uses placement-new for the GraphicWin/Dialog subobjects and transcribes the thunk stores from Ghidra; 0.71 mnemonic similarity, first divergence in the prologue.
+// RULED-OUT: NOT the FlatButton/PullDown/PushButton phantom-frame family (MEASURED 2026-08-21, see flatbutton.cpp) - `osmx show 0x0060E670` confirms the IMAGE itself carries the SEH prologue at instruction 0, and its one visible call at 0x60e6a7 targets `0x5d4cf0` = `??0GraphicWin@@QAE@XZ`, the REAL constructor (implicit base construction, like Popup::Popup()/TutWin::TutWin()), not a `construct()`-method seam. So the frame here is CORRECT and belongs in a landed body; the obstacle is reproducing it (plus the adjustor-thunk vtable poke) from real C++, not removing an unwanted one.
 // working copy - scaffold materialised by --work
 // size      233 bytes
 // prototype void (__thiscall ??0CheckBox@@QAE@H@Z)(CheckBox* this, int)
