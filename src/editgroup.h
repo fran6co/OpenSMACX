@@ -74,8 +74,17 @@ class EditGroup {
   int attach(void * a1, int a2, int a3, int a4);
 
  public:
-  EditGroup() { ; }
-  ~EditGroup() { ; }
+  // ??0EditGroup@@QAE@H@Z at 0x00611940. The `int` is NOT a user parameter -
+  // EditGroup's layout is composed by hand (see the class comment above), so
+  // VC6 cannot inject the most-derived flag the way it would for a real
+  // `: virtual GraphicWin, virtual Dialog` declaration; this constructor
+  // takes an explicit flag instead and mirrors what the image's own guard
+  // does with it.
+  EditGroup(int a1);
+  ~EditGroup();
+  // 0x00611A90, a pending_bodies forwarder. ~EditGroup calls it on the
+  // adjusted (true) object pointer.
+  void close();
   void set_text_limits(int limit);
   char *get_text(int index);
   void set_text(char *text, int index);

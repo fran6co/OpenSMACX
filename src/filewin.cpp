@@ -18,6 +18,115 @@
 #include "stdafx.h"
 #include "filewin.h"
 #include "text.h"
+#include "dialog.h"
+#include "basebutton.h"
+
+static const uint32_t EditBoxPrimaryVtable = 0x0066A038;
+static const uint32_t EditBoxBufferVtable = 0x0066A030;
+
+// The default file-name suffix appended to field_531_ at construction.
+static char *const FileWinTextTableDefault = (char *)0x00697118;
+
+/*
+Purpose: Compose a FileWin from four member subobjects (two FlatButtons, an
+         EditBox, a most-derived ListBox), then clear the window's own
+         name-buffer/selection fields and append one text-table entry.
+// ORIGINAL: 0x00613850 ??0FileWin@@QAE@XZ 0x00613850-0x006138F9;0x006630E0-0x00663114
+// size      221 bytes
+// prototype void (__thiscall ??0FileWin@@QAE@XZ)(FileWin* this)
+// callers   1   call targets   4
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00607CF0 0x00609DB0 0x00614E50 0x00645470
+// RULED-OUT: MEASURED 8/42 agreeing - the SEH prologue itself matches
+//            (`push -1/handler; mov eax,fs:[0]; push eax; mov fs:[0],esp`,
+//            instructions 0-6 all agree), so this is NOT the CheckBox/
+//            EditGroup family's esp-vs-ebp divergence. The first mismatch is
+//            register allocation for the four member pointers (`push
+//            esi/mov esi,ecx` vs this body's extra `push ebp`), which
+//            plain member declarations (relying on FlatButton's own real
+//            ctor for implicit construction) did not converge on.
+Return Value: n/a
+Status: Complete
+*/
+FileWin::FileWin() {
+    // flat_button2_ and flat_button1_ construct through the ordinary
+    // implicit member sequence: FlatButton::FlatButton() is a real
+    // recovered body (0x00607CF0) and ~FlatButton() stays trivial, so
+    // declaring the members is enough to reproduce the image's two calls
+    // with no null-pointer guard and no unwanted automatic-destructor
+    // side effect either way.
+    //
+    // edit_box_ stays a `construct()` method call rather than a real
+    // constructor, even though ??0EditBox@@QAE@XZ could legally be spelled
+    // that way: EditBox's OWN destructor is real (0x00408010, needed as-is
+    // by deleting_thunks.cpp's already-BYTE_EXACT scalar_delete_edit_box),
+    // so a real edit_box_ member would get an automatic ~EditBox() call
+    // here that the image's own destructor never makes. See the note in
+    // editbox.h.
+    //
+    // list_box_'s own default constructor stays a trivial stub - it needs
+    // the most-derived flag ListBox cannot get VC6 to synthesise (see the
+    // note on CheckBox's constructor) - so its real body is reached
+    // explicitly below.
+    edit_box_.construct();
+    list_box_.construct(1);
+
+    field_208_ = 0;
+    field_30C_ = 0;
+    field_410_ = 0;
+    field_514_ = 0;
+    field_531_ = 0;
+    strcat(reinterpret_cast<char *>(&field_531_), FileWinTextTableDefault);
+    field_63C_ = 0;
+    field_33C0_ = 0;
+}
+
+/*
+Purpose: Tear down a FileWin: close it, then destroy the ListBox, EditBox and
+         two FlatButton member subobjects in reverse declaration order,
+         restaging each one's vtable/Buffer-vtable pair and its GraphicWin
+         base by hand rather than through that member's own destructor.
+// ORIGINAL: 0x00407F00 ??1FileWin@@QAE@XZ 0x00407F00-0x00408003;0x00650C80-0x00650CE8
+// size      363 bytes
+// prototype void (__thiscall ??1FileWin@@QAE@XZ)(FileWin* this)
+// callers   2   call targets   8
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D4DD0 0x00607040 0x00607DA0 0x00608E10 0x00609EC0 0x00613900 0x00614F30 0x00616200
+// RULED-OUT: MEASURED 14/62 agreeing with named members - better than the
+//            preserved artifact's raw-offset form (src/recovered/units/
+//            00407f00.cpp, since deleted, reported divergence 1 against a
+//            DIFFERENT flag set/scaffold). First mismatch is again register
+//            allocation (`sub esp,8` vs `,0xc`; `push esi` vs `push ebx`)
+//            starting right after the SEH prologue, which matches through
+//            instruction 6.
+Return Value: n/a
+Status: Complete
+*/
+FileWin::~FileWin() {
+    close();
+
+    list_box_.destroy();
+    reinterpret_cast<Dialog *>(reinterpret_cast<char *>(&list_box_) + 0xA60)->destroy();
+    graphic_win_destructor_redirect(reinterpret_cast<GraphicWin *>(&list_box_), nullptr);
+
+    reinterpret_cast<uint32_t *>(&edit_box_)[0x000 / 4] = EditBoxPrimaryVtable;
+    reinterpret_cast<uint32_t *>(&edit_box_)[0x444 / 4] = EditBoxBufferVtable;
+    edit_box_.close();
+    edit_box_.time_.~Time();
+    graphic_win_destructor_redirect(reinterpret_cast<GraphicWin *>(&edit_box_), nullptr);
+
+    reinterpret_cast<uint32_t *>(&flat_button1_)[0x000 / 4] = FlatButtonPrimaryVtable;
+    reinterpret_cast<uint32_t *>(&flat_button1_)[0x444 / 4] = FlatButtonBufferVtable;
+    flat_button1_.close();
+    flat_button1_.BaseButton::destroy();
+
+    reinterpret_cast<uint32_t *>(&flat_button2_)[0x000 / 4] = FlatButtonPrimaryVtable;
+    reinterpret_cast<uint32_t *>(&flat_button2_)[0x444 / 4] = FlatButtonBufferVtable;
+    flat_button2_.close();
+    flat_button2_.BaseButton::destroy();
+}
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.

@@ -42,10 +42,33 @@ class EditBox {
   // needs a `call rel32`.
   ~EditBox();
 
+  // A `construct` METHOD, NOT A CONSTRUCTOR - the `Win::construct` idiom.
+  // The real body (??0EditBox@@QAE@XZ, 0x00614E50) is not promoted yet;
+  // FileWin::FileWin placement-news an EditBox member and reaches it by
+  // name so that call emits the image's `E8`. Forwarded in
+  // pending_bodies.cpp.
+  //
+  // NOT a real constructor, on purpose, even though ??0EditBox@@QAE@XZ has
+  // no most-derived flag and could legally be spelled that way: EditBox's
+  // OWN destructor (below) is real and non-trivial (0x00408010, needed
+  // as-is by the already-BYTE_EXACT scalar_delete_edit_box in
+  // deleting_thunks.cpp), so a real EditBox member gets its automatic
+  // destruction from the compiler regardless of what FileWin::~FileWin
+  // writes - and the image's FileWin destructor does NOT call 0x00408010
+  // at all, it inlines EditBox's teardown through different addresses.
+  // Measured: making this a real constructor moved FileWin's own
+  // constructor closer but cost the destructor an extra, wrong call.
+  void construct();
+
   // 0x006151E0, a pending_bodies forwarder. `EditGroup::set_text` reached it
   // through a `func_edit_box_set_text` pointer-to-member seam, which emits
   // `call dword ptr [...]` where the image emits `call rel32`.
   void set_text(char *text);
+
+  // 0x00614F30, a pending_bodies forwarder. FileWin::~FileWin calls it
+  // directly (inlining EditBox's own teardown rather than going through
+  // EditBox's destructor at 0x00408010).
+  void close();
 
  public:
   uint8_t graphicWin_[0xA14];  // 0x0, GraphicWin-shaped base storage

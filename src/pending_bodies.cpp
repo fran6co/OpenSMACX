@@ -86,6 +86,7 @@
 #include "wave_device.h"
 #include "editgroup.h"
 #include "planwin.h"
+#include "uv2player.h"
 #include "vector_teardown.h"
 
 /*
@@ -233,6 +234,52 @@ void MapWin::clear(int a1) {
     typedef void(__fastcall *pending)(MapWin *, void *, int);
     PENDING_BODY(0x00462870, pending)(this, nullptr, a1);
 }
+
+// ??0Dialog@@QAE@XZ at 0x00608C10 - the Dialog subobject constructor that
+// CheckBox, RadioButton, EditGroup and SpriteBox each reach by name from
+// their own hand-composed constructors. See the note in dialog.h.
+void Dialog::construct() {
+    typedef void(__fastcall *pending)(Dialog *, void *);
+    PENDING_BODY(0x00608C10, pending)(this, nullptr);
+}
+
+// ??0EditBox@@QAE@XZ at 0x00614E50 - the EditBox subobject constructor
+// FileWin::FileWin reaches by name. See the note in editbox.h.
+void EditBox::construct() {
+    typedef void(__fastcall *pending)(EditBox *, void *);
+    PENDING_BODY(0x00614E50, pending)(this, nullptr);
+}
+
+// ??0ListBox@@QAE@H@Z at 0x00609DB0 - the ListBox subobject constructor
+// FileWin::FileWin reaches by name. See the note in listbox.h.
+void ListBox::construct(int a1) {
+    typedef void(__fastcall *pending)(ListBox *, void *, int);
+    PENDING_BODY(0x00609DB0, pending)(this, nullptr, a1);
+}
+
+// ?close@FileWin@@QAEXXZ at 0x00613900 - FileWin's own close(), which its
+// destructor calls first. See the note in filewin.h.
+void FileWin::close() {
+    typedef void(__fastcall *pending)(FileWin *, void *);
+    PENDING_BODY(0x00613900, pending)(this, nullptr);
+}
+
+// ?close@EditBox@@QAEXXZ at 0x00614F30 - reached directly by
+// FileWin::~FileWin. See the note in editbox.h.
+void EditBox::close() {
+    typedef void(__fastcall *pending)(EditBox *, void *);
+    PENDING_BODY(0x00614F30, pending)(this, nullptr);
+}
+
+// ?close@UV2Player@@QAEXXZ at 0x004BF400 - reached by ~UV2Player. See the
+// note in uv2player.h.
+void UV2Player::close() {
+    typedef void(__fastcall *pending)(UV2Player *, void *);
+    PENDING_BODY(0x004BF400, pending)(this, nullptr);
+}
+
+// ?close@SpriteBox@@QAEXXZ at 0x00610280 already has a forwarder below
+// (added when the on_* thunks were promoted); ~SpriteBox reaches it there.
 
 // The game's own `operator new` at 0x0064558A, reached from `Wave::init` and
 // `Wave::load`. See the note in `vector_teardown.h`.
@@ -1118,6 +1165,11 @@ void EditGroup::on_redraw() {  // 0x00612450
 void EditGroup::pass_dialog_focus() {  // 0x006126C0
     typedef void(__fastcall *pending)(EditGroup *, void *);
     PENDING_BODY(0x006126C0, pending)(this, nullptr);
+}
+
+void EditGroup::close() {  // 0x00611A90
+    typedef void(__fastcall *pending)(EditGroup *, void *);
+    PENDING_BODY(0x00611A90, pending)(this, nullptr);
 }
 
 int ListBox::attach(void * a1, int a2, int a3, int a4) {  // 0x0060A670

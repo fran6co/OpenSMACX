@@ -20,6 +20,8 @@
 #include "original_seam.h"
 #include "caviar.h"
 #include "subinterface.h"
+#include "font.h"
+#include "spot.h"
 
  /*
   * StatusWin class
@@ -38,8 +40,8 @@ class StatusWin {
   void redraw();
 
  public:
-  StatusWin() { ; }
-  ~StatusWin() { ; }
+  StatusWin();
+  ~StatusWin();
   void close();
   void set_loc(int x, int y);
   void reset();
@@ -51,13 +53,20 @@ class StatusWin {
   // something else. What matters for set_loc is only that the four fields
   // below sit where the original puts them, which the unmapped span holds in
   // place and the test checks directly.
-  uint8_t field_0_[0x9C];  // 0x0
-  uint32_t field_9C_;  // 0x9C
-  uint32_t field_A0_;  // 0xA0
-  uint32_t field_A4_;  // 0xA4
-  uint8_t field_A8_[0x2C];  // 0xA8
-  uint8_t field_D4_;  // 0xD4
-  uint8_t field_D5_[0x142B];  // 0xD5
+  uint8_t field_0_[0x30];  // 0x0
+
+  // Caviar, Font x3 and Spot are ordinary typed members, in declaration
+  // order matching the image's own construction order exactly (Caviar,
+  // then the three Fonts, then Spot) and matching the DESTRUCTION order in
+  // reverse (Spot, font3, font2, font1, then Caviar's own destructor, which
+  // forwards to close() - see the note on Caviar's destructor). A real
+  // member built implicitly gets no null-pointer guard around it; a
+  // placement-new expression does (VC6 guards every `new (p) T()` with a
+  // `cmp/je` on the pointer, since `operator new` may return null), which
+  // is what an earlier raw-storage version of this class paid for no
+  // reason - construction here never actually uses `operator new`.
+  Caviar caviar_;  // 0x30, sizeof(Caviar)
+  uint8_t field_1400_[0x100];  // 0x1400
   uint32_t field_1500_;  // 0x1500
   uint32_t field_1504_;  // 0x1504
   uint32_t field_1508_;  // 0x1508
@@ -65,14 +74,9 @@ class StatusWin {
   float field_1524_;  // 0x1524
   float field_1528_;  // 0x1528
   float field_152C_;  // 0x152C
-  uint32_t field_1530_;  // 0x1530
-  uint8_t field_1534_[0xC];  // 0x1534
-  uint32_t field_1540_;  // 0x1540
-  uint8_t field_1544_[0x14];  // 0x1544
-  uint32_t field_1558_;  // 0x1558
-  uint8_t field_155C_[0x24];  // 0x155C
-  uint32_t field_1580_;  // 0x1580
-  uint8_t field_1584_[0x24];  // 0x1584
+  Font font1_;  // 0x1530
+  Font font2_;  // 0x1558
+  Font font3_;  // 0x1580
   uint32_t field_15A8_;  // 0x15A8
   uint32_t field_15AC_;  // 0x15AC
   uint8_t field_15B0_[0x4];  // 0x15B0
@@ -86,12 +90,12 @@ class StatusWin {
   uint32_t field_15D0_;  // 0x15D0
   int32_t field_15D4_;
 
-  // Storage the image proves is here: its own methods reach 0x15E0.
-  // Extent only - this class carries no size assertion, and the bound is a floor.
-  // 2 member(s) from the IDA database, 0 named; it starts a member at 0x15D8, which is where src/ ends.
-
   uint32_t fInOnClick_;  // 0x15D8
   uint32_t field_15DC_;  // 0x15DC
+
+  // The image proves this is here: the constructor builds a Spot at exactly
+  // this offset, right where the previously-mapped span ended.
+  Spot spot_;  // 0x15E0
 };
 
 void __fastcall status_win_close_redirect(StatusWin *self, void *);

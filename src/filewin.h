@@ -18,6 +18,9 @@
 #pragma once
 
 #include "original_seam.h"
+#include "flatbutton.h"
+#include "editbox.h"
+#include "listbox.h"
 
  /*
   * FileWin class
@@ -37,8 +40,8 @@ class FileWin {
   // ecx set up, so `Class::method()` is the only legal spelling.
   static int init_class();   // 00614D90
   void on_double_clicked(int a1);
-  FileWin() { ; }
-  ~FileWin() { ; }
+  FileWin();
+  ~FileWin();
   void UNK6();
   void UNK1();
   void UNK2(int a1);
@@ -46,6 +49,8 @@ class FileWin {
   // unrecovered; declared because the recovered on_double_clicked calls it
   // with a direct `call rel32`, which is what makes that body byte-exact.
   void UNK4();
+  // 0x00613900, a pending_bodies forwarder. ~FileWin calls it first.
+  void close();
 
  private:
   // Not a base class: the constructor builds a FlatButton at +0x660 on an
@@ -75,27 +80,15 @@ class FileWin {
   uint32_t field_654_;  // 0x654
   uint32_t field_658_;  // 0x658
   uint32_t field_65C_;  // 0x65C
-  uint32_t field_660_;  // 0x660
-  uint8_t field_664_[0xB48];  // 0x664
-  uint32_t field_11AC_;  // 0x11AC
-  uint8_t field_11B0_[0x440];  // 0x11B0
-  uint32_t field_15F0_;  // 0x15F0
-  uint8_t field_15F4_[0x704];  // 0x15F4
-  uint32_t field_1CF8_;  // 0x1CF8
-  uint8_t field_1CFC_[0x440];  // 0x1CFC
-  uint32_t field_213C_;  // 0x213C
-  uint8_t field_2140_[0x6CC];  // 0x2140
-  uint32_t field_280C_;  // 0x280C
-  uint8_t field_2810_[0x28];  // 0x2810
-  uint32_t field_2838_;  // 0x2838
-  uint32_t field_283C_;  // 0x283C
-  uint8_t field_2840_[0x2C];  // 0x2840
-  uint32_t field_286C_;  // 0x286C
-  uint8_t field_2870_[0x4];  // 0x2870
-  uint32_t field_2874_;  // 0x2874
-  uint8_t field_2878_[0x24];  // 0x2878
-  uint32_t field_289C_;  // 0x289C
-  uint8_t field_28A0_[0xB20];  // 0x28A0
+  // Four member subobjects, evidenced by the constructor's placement-new
+  // sites and the destructor's teardown sequence (0x00611940-family:
+  // FlatButton@0x660/0x11AC, EditBox@0x1CF8, ListBox@0x286C - each span
+  // exactly matches that member type's own established sizeof, which is
+  // what pins these offsets rather than the IDB alone).
+  FlatButton flat_button2_;  // 0x660, sizeof 0xB4C, ends 0x11AC
+  FlatButton flat_button1_;  // 0x11AC, sizeof 0xB4C, ends 0x1CF8
+  EditBox edit_box_;  // 0x1CF8, sizeof 0xB74, ends 0x286C
+  ListBox list_box_;  // 0x286C, sizeof 0xB54, ends 0x33C0
   uint32_t field_33C0_;  // 0x33C0
 };
 

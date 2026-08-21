@@ -84,7 +84,13 @@ class RadioButton {
   static int init_class();   // 0060E4D0
   void on_mouse_leave(int a1, int a2);
   void on_dialog_focus(int a1);
-  RadioButton() { ; }
+  // ??0RadioButton@@QAE@H@Z at 0x0060D0E0. The `int` is NOT a user
+  // parameter - RadioButton's layout is composed by hand (see the class
+  // comment above), so VC6 cannot inject the most-derived flag the way it
+  // would for a real `: virtual GraphicWin, virtual Dialog` declaration;
+  // this constructor takes an explicit flag instead and mirrors what the
+  // image's own guard does with it.
+  RadioButton(int a1);
   ~RadioButton() { ; }
   void close();
 
@@ -107,3 +113,16 @@ extern uint32_t RadioButtonDefault1;
 extern uint32_t RadioButtonDefault2;
 
 void __fastcall radio_button_close_redirect(RadioButton *self, void *);
+
+// ??1RadioButton@@QAE@H@Z at 0x00406F60 - the DESTRUCTOR entry that also
+// conditionally frees the storage. C++ forbids a user-declared destructor
+// from taking a parameter (that spelling is reserved for the compiler's own
+// virtual-base-destroy flag, and RadioButton cannot get VC6 to synthesise
+// one - see the constructor's own note above), so this is an ordinary
+// __fastcall free function with the same (adjusted-this, unused, mode) shape
+// dialogs_scalar_dtor_redirect (src/dialogs.cpp) already uses for the
+// identical situation on a real `??_G` scalar deleting destructor. Entered
+// on `this - 0x18` (the GraphicWin-subobject-adjusted pointer), matching
+// close()'s own vbtable-relative arithmetic.
+RadioButton *__fastcall radio_button_teardown_redirect(void *adjusted, void *,
+                                                        unsigned int mode);

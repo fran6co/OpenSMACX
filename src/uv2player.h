@@ -29,7 +29,12 @@
 class UV2Player {
  public:
   UV2Player() { ; }
-  ~UV2Player() { ; }
+  ~UV2Player();
+  // 0x004BF400, a pending_bodies forwarder. ~UV2Player calls it; buffer_
+  // being a real member gives the compiler its own automatic unwind
+  // protection around that call, matching the image's SEH-wrapped close()
+  // before the Buffer subobject's destructor runs.
+  void close();
   int UNK4();
 
   // Storage the image proves is here: its own methods reach 0xE68.

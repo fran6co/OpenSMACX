@@ -22,6 +22,225 @@
 #include "sounddevice.h"
 #include "menu.h"
 #include "win.h"
+#include "buffer.h"
+
+// SpriteBox's own vbtable {0, 0x8C, 0xAA4} and the vtables it installs into
+// the two virtual-base slots. Same idiom as CheckBoxDefault1/2 - a plain
+// literal, since these are byte-visible immediates in the image, not
+// runtime-read globals.
+static const uint32_t SpriteBoxVbtable = 0x006708B4;
+
+/*
+Purpose: Compose a SpriteBox from its GraphicWin and Dialog virtual-base-
+         shaped subobjects (both constructed only when most-derived) and an
+         unconditional Spot, install this class's own vtable/vtordisp
+         values and a secondary "field_28_" table's own slot, clear the
+         intrusive-list fields, and set the buffer's default text colours
+         and font.
+
+         `a1` is the compiler's most-derived flag in the image
+         (??0SpriteBox@@QAE@H@Z): nonzero means construct the two bases,
+         zero means skip both - the same guard CheckBox/EditGroup/
+         RadioButton use. This class cannot let VC6 synthesise that flag
+         (see the class comment in spritebox.h), so it is modelled as an
+         explicit parameter instead.
+// ORIGINAL: 0x0060FF00 ??0SpriteBox@@QAE@H@Z 0x0060FF00-0x0061011B;0x006116C0-0x006116DB;0x00662FA0-0x00662FFA
+// size      656 bytes
+// prototype void (__thiscall ??0SpriteBox@@QAE@H@Z)(SpriteBox* this, int)
+// callers   1   call targets   8
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4CF0 0x005DAC70 0x005DACB0 0x005DACE0 0x005DAD10 0x005FA860 0x00608C10 0x00611730
+// RULED-OUT: promoted from the preserved artifact
+//            src/recovered/units/0060ff00.cpp (since deleted), which
+//            measured SHARED_TAIL (its own cold-code span is COMDAT-folded
+//            with another function, so no per-function verdict exists
+//            there). Same `dialog_.construct()`-is-not-a-placement-new
+//            frame gap as CheckBox/EditGroup/RadioButton - see the note on
+//            those constructors.
+Return Value: n/a
+Status: Complete
+*/
+SpriteBox::SpriteBox(int a1) {
+    char *const self = reinterpret_cast<char *>(this);
+
+    if (a1 != 0) {
+        field_0_ = SpriteBoxVbtable;
+        virtual_base_.construct();
+        try {
+            dialog_.construct();
+        } catch (...) {
+            virtual_base_.~GraphicWin();
+            throw;
+        }
+    }
+
+    new (self + 0x10) Spot();
+
+    field_28_ = 0x006708AC;
+    field_4C_ = 0x006693AC;
+    field_50_ = *reinterpret_cast<int *>(0x009B3374);
+    *reinterpret_cast<int *>(0x009B3374) = 0;
+
+    field_24_ = 0x0066943C;
+    {
+        const int32_t *const table = reinterpret_cast<const int32_t *>(field_28_);
+        const int32_t voff = table[1];
+        *reinterpret_cast<int32_t *>(self + 0x28 + voff) = 0x00669438;
+    }
+
+    field_2C_ = 0;
+    field_30_ = 0;
+    field_34_ = 0;
+    field_38_ = 0;
+    field_3C_ = 0;
+
+    field_24_ = 0x006708A4;
+    {
+        const int32_t *const table = reinterpret_cast<const int32_t *>(field_28_);
+        const int32_t voff = table[1];
+        *reinterpret_cast<int32_t *>(self + 0x28 + voff) = 0x006708A0;
+    }
+
+    {
+        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
+        const int32_t off1 = vbtable[1];
+        *reinterpret_cast<int32_t *>(self + off1) = 0x00670738;
+    }
+    {
+        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
+        const int32_t off1 = vbtable[1];
+        *reinterpret_cast<int32_t *>(self + off1 + 0x444) = 0x00670730;
+    }
+    {
+        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
+        const int32_t off2 = vbtable[2];
+        *reinterpret_cast<int32_t *>(self + off2) = 0x00670724;
+    }
+    {
+        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
+        const int32_t off1 = vbtable[1];
+        *reinterpret_cast<int32_t *>(self + off1 - 4) = off1 - 0x8C;
+    }
+    {
+        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
+        const int32_t off2 = vbtable[2];
+        *reinterpret_cast<int32_t *>(self + off2 - 4) = off2 - 0xAA4;
+    }
+
+    field_4_ = 0;
+    field_1C_ = 1;
+    field_20_ = 1;
+    field_54_ = 0;
+    field_58_ = 0;
+    field_5C_ = 0;
+    field_60_ = 0;
+    field_64_ = 0;
+    field_68_ = 0;
+    field_6C_ = 0;
+    field_70_ = 0;
+    field_74_ = 0;
+    field_78_ = 0;
+    field_7C_ = 0;
+    field_80_ = 0;
+    field_84_ = 0;
+
+    field_8_ = *reinterpret_cast<int *>(0x009B8FC4);
+
+    {
+        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
+        const int32_t off1 = vbtable[1];
+        Buffer *const buf = reinterpret_cast<Buffer *>(self + off1 + 0x444);
+        buf->set_text_color(*reinterpret_cast<int *>(0x006970AC),
+                             *reinterpret_cast<int *>(0x006970B8),
+                             *reinterpret_cast<int *>(0x006970C4),
+                             *reinterpret_cast<int *>(0x006970D0));
+    }
+    {
+        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
+        const int32_t off1 = vbtable[1];
+        Buffer *const buf = reinterpret_cast<Buffer *>(self + off1 + 0x444);
+        buf->set_text_color2(*reinterpret_cast<int *>(0x006970B0),
+                              *reinterpret_cast<int *>(0x006970BC),
+                              *reinterpret_cast<int *>(0x006970C8),
+                              *reinterpret_cast<int *>(0x006970D4));
+    }
+    {
+        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
+        const int32_t off1 = vbtable[1];
+        Buffer *const buf = reinterpret_cast<Buffer *>(self + off1 + 0x444);
+        buf->set_text_color3(*reinterpret_cast<int *>(0x006970B4),
+                              *reinterpret_cast<int *>(0x006970C0),
+                              *reinterpret_cast<int *>(0x006970CC),
+                              *reinterpret_cast<int *>(0x006970D8));
+    }
+    {
+        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
+        const int32_t off1 = vbtable[1];
+        Buffer *const buf = reinterpret_cast<Buffer *>(self + off1 + 0x444);
+        buf->set_font(*reinterpret_cast<Font **>(0x009B8EC0),
+                      *reinterpret_cast<Font **>(0x009B8EC4),
+                      *reinterpret_cast<Font **>(0x009B8EC8),
+                      0);
+    }
+}
+
+/*
+Purpose: Tear down a SpriteBox: reinstall the base subobjects' own
+         vtable/vtordisp values, close it, then destroy the Spot member.
+// ORIGINAL: 0x00610120 ??1SpriteBox@@QAE@XZ 0x00610120-0x00610274;0x006116C0-0x006116DB;0x00662FFA-0x0066301A
+// size      399 bytes
+// prototype void (__thiscall ??1SpriteBox@@QAE@XZ)(SpriteBox* this)
+// callers   23   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FA870 0x00610280 0x00611730
+// indirect  0x006101ED 0x00610202 0x0061021D
+// NOT REPRODUCED: between close() and the Spot teardown, the image walks a
+//                 vector of polymorphic pointers at this-0x68 (count at
+//                 +0xC, capacity at +0x10), rewrites ITS OWN vtable pointer
+//                 the same vbtable-relative way as the block above, then
+//                 for each live element calls a virtual "clear" through the
+//                 element's own vtable and a second virtual call through a
+//                 vtable-relative adjustor - undeclared-virtual-base
+//                 dispatch, compounded by per-element dynamic dispatch with
+//                 no element TYPE recovered. Left out rather than guessed,
+//                 matching the preserved artifact this was promoted from
+//                 (src/recovered/units/00610120.cpp, since deleted, itself
+//                 measured SHARED_TAIL and carried the identical gap).
+Return Value: n/a
+Status: Complete
+*/
+SpriteBox::~SpriteBox() {
+    char *const self = reinterpret_cast<char *>(this) - 0x8C;
+
+    {
+        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
+        *reinterpret_cast<int32_t *>(self + vbtable[1]) = 0x00670738;
+    }
+    {
+        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
+        *reinterpret_cast<int32_t *>(self + vbtable[1] + 0x444) = 0x00670730;
+    }
+    {
+        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
+        *reinterpret_cast<int32_t *>(self + vbtable[2]) = 0x00670724;
+    }
+    {
+        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
+        const int32_t off1 = vbtable[1];
+        *reinterpret_cast<int32_t *>(self + off1 - 4) = off1 - 0x8C;
+    }
+    {
+        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
+        const int32_t off2 = vbtable[2];
+        *reinterpret_cast<int32_t *>(self + off2 - 4) = off2 - 0xAA4;
+    }
+
+    reinterpret_cast<SpriteBox *>(self)->close();
+
+    reinterpret_cast<Spot *>(self + 0x10)->~Spot();
+}
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
