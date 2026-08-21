@@ -1275,18 +1275,20 @@ Status: Complete
 void __cdecl init_goals(int faction_id) {
     for (int i = 0; i < MaxGoalsNum; i++) {
         Goal &goals = PlayersData[faction_id].goals[i];
+        // y BEFORE x: `store_order 0x00579E00` shows the image writing @+8
+        // before @+4 in both loops.
         goals.type = -1;
         goals.priority = 0;
-        goals.x = 0;
         goals.y = 0;
+        goals.x = 0;
         goals.base_id = 0;
     }
     for (i = 0; i < MaxSitesNum; i++) {
         Goal &sites = PlayersData[faction_id].sites[i];
         sites.type = -1;
         sites.priority = 0;
-        sites.x = 0;
         sites.y = 0;
+        sites.x = 0;
         sites.base_id = 0;
     }
 }
