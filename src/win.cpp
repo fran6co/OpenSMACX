@@ -156,14 +156,15 @@ uint32_t midpoint(uint32_t near_edge, uint32_t far_edge) {
 }
 
 void move_rect(RECT &rect, int x, int y) {
-    const uint32_t x_bits = static_cast<uint32_t>(x);
-    const uint32_t y_bits = static_cast<uint32_t>(y);
-    const uint32_t dx = x_bits - long_bits(rect.left);
-    const uint32_t dy = y_bits - long_bits(rect.top);
-    rect.left = long_from_bits(long_bits(rect.left) + dx);
-    rect.top = long_from_bits(long_bits(rect.top) + dy);
-    rect.right = long_from_bits(long_bits(rect.right) + dx);
-    rect.bottom = long_from_bits(long_bits(rect.bottom) + dy);
+    // PLAIN ARITHMETIC. The bit-cast chain made this too big for VC6 to
+    // inline, and `Win::move` at 0x005ED7D0 has it written out in BOTH arms
+    // of its ternary - 43 instructions where a call is 14.
+    const int dx = x - rect.left;
+    const int dy = y - rect.top;
+    rect.left += dx;
+    rect.top += dy;
+    rect.right += dx;
+    rect.bottom += dy;
 }
 
 }  // namespace
@@ -181,7 +182,25 @@ Purpose: Move the active window rectangle while preserving its dimensions.
 Status: Complete
 */
 int Win::move(int x, int y) {
-    move_rect((iSomeFlag_ & 2U) ? client_rect_ : outer_rect_, x, y);
+    // WRITTEN OUT IN BOTH ARMS, because the image is: 43 instructions with no
+    // call, where a shared helper compiles to 14 and a reference bound to the
+    // ternary compiles to the same. Reaching each rectangle by name is what
+    // gives VC6 the two straight-line arms the image has.
+    if (iSomeFlag_ & 2U) {
+        const int dx = x - client_rect_.left;
+        const int dy = y - client_rect_.top;
+        client_rect_.left += dx;
+        client_rect_.top += dy;
+        client_rect_.right += dx;
+        client_rect_.bottom += dy;
+    } else {
+        const int dx = x - outer_rect_.left;
+        const int dy = y - outer_rect_.top;
+        outer_rect_.left += dx;
+        outer_rect_.top += dy;
+        outer_rect_.right += dx;
+        outer_rect_.bottom += dy;
+    }
     return 0;
 }
 
@@ -405,7 +424,7 @@ Purpose: Slide a rectangle by a delta on each axis, the wrapping counterpart of
          rectangle pointer at the return because nothing overwrites it after
          the load at 0x005F8670, but that is a residue and not a value: the
          one caller clobbers EAX two instructions later at 0x005EDC95.
-// ORIGINAL: 0x005F8670 sub_5f8670 0x005F8670-0x005F869B
+// ORIGINAL: 0x005F8670 sub_5f8670 0x005F8670-0x005F869B BYTE_EXACT
 // symbol    ?offset_rect@@YAXPAUtagRECT@@HH@Z
 // size      43 bytes
 // prototype 
@@ -422,18 +441,18 @@ Verification note: the original writes left, right, top, bottom in that
          keep matching the original, exactly as make_rect does.
 */
 void __cdecl offset_rect(RECT *rect, int dx, int dy) {
-    volatile RECT *ordered = rect;
-    const uint32_t x_bits = static_cast<uint32_t>(dx);
-    const uint32_t y_bits = static_cast<uint32_t>(dy);
-    ordered->left = long_from_bits(long_bits(ordered->left) + x_bits);
-    ordered->right = long_from_bits(long_bits(ordered->right) + x_bits);
-    ordered->top = long_from_bits(long_bits(ordered->top) + y_bits);
-    ordered->bottom = long_from_bits(long_bits(ordered->bottom) + y_bits);
+    // PLAIN `+=`, in the image's order. The `volatile` was there to pin that
+    // order and the bit-casts to pin the wrapping; neither is needed, and
+    // together they made a 16-instruction body compile to 37.
+    rect->left += dx;
+    rect->right += dx;
+    rect->top += dy;
+    rect->bottom += dy;
 }
 
 /*
 Purpose: Build a rectangle from an origin and dimensions using wrapping coordinates.
-// ORIGINAL: 0x005F86C0 sub_5f86c0 0x005F86C0-0x005F86E6
+// ORIGINAL: 0x005F86C0 sub_5f86c0 0x005F86C0-0x005F86E6 BYTE_EXACT
 // symbol    ?make_rect@@YAPAUtagRECT@@PAU1@HHHH@Z
 // size      38 bytes
 // prototype 
@@ -445,13 +464,14 @@ Purpose: Build a rectangle from an origin and dimensions using wrapping coordina
 Status: Complete
 */
 RECT *__cdecl make_rect(RECT *rect, int x, int y, int width, int height) {
-    volatile RECT *ordered = rect;
-    const uint32_t x_bits = static_cast<uint32_t>(x);
-    const uint32_t y_bits = static_cast<uint32_t>(y);
-    ordered->left = long_from_bits(x_bits);
-    ordered->top = long_from_bits(y_bits);
-    ordered->right = long_from_bits(x_bits + static_cast<uint32_t>(width));
-    ordered->bottom = long_from_bits(y_bits + static_cast<uint32_t>(height));
+    // PLAIN ASSIGNMENTS. The `volatile RECT *` and the `long_from_bits`
+    // bit-cast were written to pin the store order and the signedness; both
+    // are things VC6 cannot fold, and together they doubled the body. The
+    // image's order IS declaration order, so nothing had to be pinned.
+    rect->left = x;
+    rect->top = y;
+    rect->right = x + width;
+    rect->bottom = y + height;
     return rect;
 }
 
