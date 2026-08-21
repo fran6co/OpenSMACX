@@ -13,13 +13,32 @@ seam because there was nothing to call.
     uv run tools/promotable.py --all      # every artifact-only byte-exact body
     uv run tools/promotable.py --unmarked # bodies already IN the tree, unclaimed
 
-THREE SHAPES, and `--unmarked` is much the cheapest. Some of these bodies are
-already DEFINED in product source and simply carry no `// ORIGINAL:` marker, so
-the catalogue knows them only through the artifact - `Time::init_class` had been
-correct in `time.cpp` all along. Those are not promotions, they are missing
-claims on finished work: read the true span with `osmx show`, get the emitted
-symbol (the catalogued name is often `QAA`, a non-static member, where the tree
-emits `SA`), write the marker, and `osmx record` it.
+THREE SHAPES, and `--unmarked` is much the cheapest WHEN IT IS RIGHT. Some of
+these bodies are already DEFINED in product source and simply carry no
+`// ORIGINAL:` marker, so the catalogue knows them only through the artifact -
+`Time::init_class`, `close_class`, `set_modal` and `release_modal` had all been
+correct in `time.cpp` all along, and cost one marker each.
+
+`--unmarked` LISTS CANDIDATES, NOT FACTS, and you must check each one. It
+matches a name against product source, and four separate things fool that:
+
+  * a FORWARDER in `pending_bodies.cpp` - excluded by construction now, but it
+    once attributed fourteen bodies to the file that proves they are missing;
+  * a CALL, which `\bName\s*\(` matches as readily as a definition - nineteen
+    bodies were attributed to `adjustor_thunks.cpp`, which defines none of them;
+  * an OVERLOAD - `Win::set_cursor(int)` is defined and claimed, and its
+    `Sprite *` and `HCURSOR *` siblings are neither;
+  * a FREE function sharing a member's name - `?draw_map@@YAXH@Z` is not
+    `MapWin::draw_map`, and no amount of name matching can tell them apart.
+
+The first two are handled. The last two need the mangled signature compared
+against the definition's parameters, which this does not do. 67 candidates
+became 13 after two fixes, and several of those 13 are still overloads.
+
+To finish one: read the true span with `osmx show` - do not trust the size you
+assume - get the emitted symbol (the catalogued name is often `QAA`, a
+non-static member, where the tree emits `QAE` or `SA`), write the marker with a
+`symbol` fact, and `osmx record` it.
 
 RANKED BY WHETHER IT MATTERS. An artifact body some compiled body CALLS is worth
 promoting now: it removes a `pending_bodies.cpp` forwarder, turns an indirect
@@ -122,8 +141,10 @@ if __name__ == "__main__":
             record = orphan[address]
             print(f"  0x{address:08X}  {record.size or 0:6,}b  "
                   f"{unmarked[address]}")
-        print(f"\n{len(unmarked):,} byte-exact bodies are ALREADY DEFINED in "
-              f"product source and merely unmarked")
+        print(f"\n{len(unmarked):,} CANDIDATE(S) - a name in product source "
+              f"matched a definition. Overloads and free-vs-member name\n"
+              f"collisions still get through; check each against the mangled "
+              f"signature before believing it.")
         sys.exit(0)
 
     wanted = sorted(a for a in orphan if a in called)
