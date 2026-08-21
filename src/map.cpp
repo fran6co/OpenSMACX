@@ -1301,7 +1301,7 @@ Status: Complete
 
 /*
 Purpose: Get the owner of the specified tile if there is a unit in it.
-// ORIGINAL: 0x00500250 ?veh_who@@YAHHH@Z 0x00500250-0x00500288
+// ORIGINAL: 0x00500250 ?veh_who@@YAHHH@Z 0x00500250-0x00500288 BYTE_EXACT
 // size      56 bytes
 // prototype int (__cdecl ?veh_who@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   3   call targets   0
@@ -1410,7 +1410,7 @@ BOOL __cdecl is_known(int x, int y, int faction_id) {
 
 /*
 Purpose: If a base exists, get the owner of the specified tile.
-// ORIGINAL: 0x005798A0 ?base_who@@YAHHH@Z 0x005798A0-0x005798D8
+// ORIGINAL: 0x005798A0 ?base_who@@YAHHH@Z 0x005798A0-0x005798D8 BYTE_EXACT
 // size      56 bytes
 // prototype 
 // callers   2   call targets   0
@@ -1423,7 +1423,8 @@ Status: Complete
 int __cdecl base_who(int x, int y) {
     Map *tile = map_loc(x, y);
     if (tile->bit & BIT_BASE_IN_TILE) {
-        uint32_t owner = tile->val2 & 0xF;
+        // `int`, as in veh_who: the image's test is `jl`.
+        int owner = tile->val2 & 0xF;
         if (owner < MaxPlayerNum) {
             return owner;
         }
@@ -1433,7 +1434,7 @@ int __cdecl base_who(int x, int y) {
 
 /*
 Purpose: If a base or unit exists, get the owner of the specified tile.
-// ORIGINAL: 0x005798E0 ?anything_at@@YAHHH@Z 0x005798E0-0x00579918
+// ORIGINAL: 0x005798E0 ?anything_at@@YAHHH@Z 0x005798E0-0x00579918 BYTE_EXACT
 // size      56 bytes
 // prototype int (__cdecl ?anything_at@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   1   call targets   0
@@ -1446,7 +1447,8 @@ Status: Complete
 int __cdecl anything_at(int x, int y) {
     Map *tile = map_loc(x, y);
     if (tile->bit & (BIT_VEH_IN_TILE | BIT_BASE_IN_TILE)) {
-        uint32_t owner = tile->val2 & 0xF;
+        // `int`, as in veh_who: the image's test is `jl`.
+        int owner = tile->val2 & 0xF;
         if (owner < MaxPlayerNum) {
             return owner;
         }
