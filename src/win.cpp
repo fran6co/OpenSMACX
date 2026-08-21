@@ -685,7 +685,7 @@ int Win::set_cursor(int name) {
     cursor_sprite_ = nullptr;
     cursor_name_ = name;
     cursor_handle_ = nullptr;
-    WinUpdateCursorOriginal(nullptr, 1);
+    Win::update_cursor(nullptr, 1);
     return 0;
 }
 
@@ -937,8 +937,8 @@ void Win::clear_bubble_text() {
     }
     *WinBubbleCompanion = 0;
     *WinBubbleActive = 0;
-    WinUpdateScreenOriginal(WinBubbleRect, nullptr);
-    WinFlipOriginal(WinBubbleRect);
+    Win::update_screen(WinBubbleRect, nullptr);
+    Win::flip(WinBubbleRect);
 }
 
 void __cdecl win_clear_bubble_text_redirect() {
