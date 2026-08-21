@@ -316,7 +316,7 @@ LPSTR *const MapFilePath = (LPSTR *)0x0094A2BC;
 // it took TWO loads - VC6 keeps storage for the constant, reads that, then
 // dereferences it - and every tile access in the tree paid for the extra one.
 inline Map *&map_tiles() { return *reinterpret_cast<Map **>(0x0094A30C); }
-uint8_t **const MapAbstract = (uint8_t **)0x0094A310;
+inline uint8_t *&MapAbstract() { return *reinterpret_cast<uint8_t **>(0x0094A310); }
 extern int MapBaseSubmergedCount[8];
 extern int MapBaseIdClosestSubmergedVeh[8];
 extern uint32_t BrushVal1; // TODO: more descriptive variable name

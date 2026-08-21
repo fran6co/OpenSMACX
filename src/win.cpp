@@ -1219,7 +1219,7 @@ Return Value: n/a
 Status: Complete
 */
 void Win::sync_palette() {
-    Palette *const active = *WinActivePalette;
+    Palette *const active = WinActivePalette();
     uint32_t generation;
     std::memcpy(&generation,
                 reinterpret_cast<uint8_t *>(active) + 0x400, sizeof(generation));
@@ -1228,7 +1228,7 @@ void Win::sync_palette() {
     }
     Palette::set_active_window(this);
     std::memcpy(&generation,
-                reinterpret_cast<uint8_t *>(*WinActivePalette) + 0x400,
+                reinterpret_cast<uint8_t *>(WinActivePalette()) + 0x400,
                 sizeof(generation));
     field_184_ = generation;
 }
@@ -2071,7 +2071,7 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
                     DefWindowProcA(window, WM_SYSCOMMAND, wparam, lparam);
                     return 0;
                 }
-                *ScrollCurrentWin = owner;
+                ScrollCurrentWin() = owner;
                 {
                     typedef void(__cdecl * func_win_closed)();
                     func_win_closed closed = *reinterpret_cast<func_win_closed *>(

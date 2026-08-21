@@ -132,7 +132,7 @@ void __fastcall base_button_set_text_color3_redirect(
 
 // The palette these setters publish before recolouring. Distinct from
 // `PaletteCurrent` at 0x009B8174; tests outside the hybrid process rebind it.
-Palette **const BaseButtonActivePalette = (Palette **)0x009B8180;
+inline Palette *&BaseButtonActivePalette() { return *reinterpret_cast<Palette **>(0x009B8180); }
 
 void __fastcall base_button_on_key_click_redirect(
     BaseButton *self, void *, int a, int b);

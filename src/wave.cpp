@@ -317,7 +317,7 @@ int Wave::is_playing() {
     if (start_time_ == 0) {
         return 0;
     }
-    const uint32_t elapsed = (*WaveTimeGetTimeSlot)() - start_time_;
+    const uint32_t elapsed = (WaveTimeGetTimeSlot())() - start_time_;
     // `cmp ecx, eax` / `jbe`: the length is compared unsigned, so a negative
     // stored length reads as a very long one rather than as already finished.
     return static_cast<uint32_t>(ms_length_) > elapsed ? 1 : 0;
@@ -942,7 +942,7 @@ int Wave::play() {
         result = 0x14;
     }
     if (flags_54_ & 0x10) {
-        start_time_ = (*WaveTimeGetTimeSlot)();
+        start_time_ = (WaveTimeGetTimeSlot())();
         (ORIGINAL(this)->*original_method<void (OriginalObject::*)() >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(this) + 0x80)))();
         device_ = nullptr;
     }
@@ -984,7 +984,7 @@ int Wave::load() {
         if (!*WaveDeviceReleaseGuard) {
             return 1;
         }
-        const int created = (*WaveDeviceCreateSlot)(&device_, fname, 1);
+        const int created = (WaveDeviceCreateSlot())(&device_, fname, 1);
         if (created) {
             return created;
         }
@@ -1062,7 +1062,7 @@ int Wave::reload() {
         if (!*WaveDeviceReleaseGuard) {
             return 1;
         }
-        const int created = (*WaveDeviceCreateSlot)(&device_, fname, 1);
+        const int created = (WaveDeviceCreateSlot())(&device_, fname, 1);
         if (created) {
             return created;
         }
@@ -1132,7 +1132,7 @@ int Wave::dyna_load(char *a1) {
     if (!*WaveDeviceReleaseGuard) {
         return 1;
     }
-    const int created = (*WaveDeviceCreateSlot)(&device_, a1, 1);
+    const int created = (WaveDeviceCreateSlot())(&device_, a1, 1);
     if (created) {
         return created;
     }
@@ -1177,7 +1177,7 @@ int Wave::load(const char *a1) {
         if (!*WaveDeviceReleaseGuard) {
             return 1;
         }
-        const int created = (*WaveDeviceCreateSlot)(&device_, a1, 1);
+        const int created = (WaveDeviceCreateSlot())(&device_, a1, 1);
         if (created) {
             return created;
         }
@@ -1344,7 +1344,7 @@ void Wave::init(char *a1, unsigned long a2) {
     if (streaming) {
         flags_54_ |= 2;
         if (!device_ && *WaveDeviceReleaseGuard) {
-            const int created = (*WaveDeviceCreateSlot)(&device_, resolved, 1);
+            const int created = (WaveDeviceCreateSlot())(&device_, resolved, 1);
             if (!created) {
                 uint8_t *const device_vtable =
                     *reinterpret_cast<uint8_t **>(device_);
@@ -1472,14 +1472,14 @@ Wave::~Wave() {
             reinterpret_cast<Wave volatile *>(prev)->chain_next_ =
                 self->chain_next_;
         } else {
-            *WaveChainHead = self->chain_next_;
+            WaveChainHead() = self->chain_next_;
         }
         Wave *const next = self->chain_next_;
         if (next) {
             reinterpret_cast<Wave volatile *>(next)->chain_prev_ =
                 self->chain_prev_;
         } else {
-            *WaveChainTail = self->chain_prev_;
+            WaveChainTail() = self->chain_prev_;
         }
         self->chain_next_ = nullptr;
         self->chain_prev_ = nullptr;
@@ -1496,7 +1496,7 @@ Wave::~Wave() {
     void *const device = self->device_;
     if (device) {
         if (*WaveDeviceReleaseGuard) {
-            (*WaveDeviceReleaseSlot)(device);
+            (WaveDeviceReleaseSlot())(device);
         }
         self->device_ = nullptr;
     }
@@ -1508,14 +1508,14 @@ Wave::~Wave() {
             reinterpret_cast<Wave volatile *>(prev)->chain_next_ =
                 self->chain_next_;
         } else {
-            *WaveChainHead = self->chain_next_;
+            WaveChainHead() = self->chain_next_;
         }
         Wave *const next = self->chain_next_;
         if (next) {
             reinterpret_cast<Wave volatile *>(next)->chain_prev_ =
                 self->chain_prev_;
         } else {
-            *WaveChainTail = self->chain_prev_;
+            WaveChainTail() = self->chain_prev_;
         }
         self->chain_next_ = nullptr;
         self->chain_prev_ = nullptr;

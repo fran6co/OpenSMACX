@@ -89,7 +89,69 @@ def main(apply: bool) -> int:
     return folded
 
 
+LVALUE = re.compile(
+    r"^(?P<type>[A-Za-z_]\w*(?:\s*::\s*\w+)*)\s*\*\*const\s+(?P<name>\w+)"
+    r"\s*=\s*\([^)]*\)\s*(?P<address>0x[0-9A-Fa-f]+)\s*;[^\n]*\n", re.M)
+
+
+def lvalues(apply: bool) -> int:
+    """Turn `T **const X = (T **)addr` into an lvalue accessor `X()`.
+
+    A DIFFERENT FACT FROM THE ONE ABOVE. `T *const X = (T *)addr` says the
+    OBJECT is at that address and folds to an immediate. `T **const X` says a
+    POINTER is at it, read at runtime - and reading it through a folded
+    constant costs two loads, because VC6 keeps storage for the constant,
+    reads that, and dereferences it. The image has one absolute
+    `mov ecx, [addr]`, which is what a reference to that address compiles to.
+
+    Only when every use is a dereference: a name also used bare is being
+    indexed or passed as a `T **`, and that is a different shape.
+    """
+    files = {path: path.read_text()
+             for path in sorted(SRC.glob("*.[ch]*"))
+             if path.suffix in (".c", ".h", ".cpp", ".hpp")}
+    changed = 0
+    for path, text in list(files.items()):
+        if path.suffix != ".h":
+            continue
+        for match in list(LVALUE.finditer(text)):
+            name, kind = match.group("name"), match.group("type")
+            whole = "\n".join(files.values())
+            bare = len(re.findall(rf"(?<![\w*])\b{re.escape(name)}\b", whole))
+            # One bare mention is the declaration itself.
+            if bare > 1:
+                print(f"  - {name}: used {bare - 1} time(s) without a `*`")
+                continue
+            accessor = (
+                f"inline {kind} *&{name}() {{ return "
+                f"*reinterpret_cast<{kind} **>({match.group('address')}); }}\n")
+            files[path] = files[path].replace(match.group(0), accessor)
+            for other, body in list(files.items()):
+                if name not in body:
+                    continue
+                files[other] = re.sub(rf"\*\s*{re.escape(name)}\b",
+                                      f"{name}()", body)
+            files[path] = files[path].replace(f"*{name}()", f"{name}()")
+            files[path] = files[path].replace(
+                f"inline {kind} *&{name}() {{ return "
+                f"{name}();", accessor.split("return ")[0] + "return "
+                f"*reinterpret_cast<{kind} **>({match.group('address')});")
+            text = files[path]
+            print(f"  + {name} -> {name}()")
+            changed += 1
+    if apply:
+        for path, body in files.items():
+            if body != path.read_text():
+                path.write_text(body)
+    return changed
+
+
 if __name__ == "__main__":
+    if "--lvalues" in sys.argv:
+        count = lvalues("--apply" in sys.argv)
+        print(f"{count} pointer slot(s) "
+              f"{'converted' if '--apply' in sys.argv else 'convertible'}")
+        raise SystemExit(0)
     count = main("--apply" in sys.argv)
     print(f"{count} binding(s) "
           f"{'folded' if '--apply' in sys.argv else 'foldable'}")

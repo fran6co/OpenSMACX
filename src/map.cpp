@@ -1545,7 +1545,7 @@ int __cdecl anything_at(int x, int y) {
 
 /*
 Purpose: Shutdown allocated map variables.
-// ORIGINAL: 0x00590E90 ?map_shutdown@@YAXXZ 0x00590E90-0x00590EC5
+// ORIGINAL: 0x00590E90 ?map_shutdown@@YAXXZ 0x00590E90-0x00590EC5 BYTE_EXACT
 // size      53 bytes
 // prototype 
 // callers   3   call targets   1
@@ -1559,11 +1559,11 @@ void __cdecl map_shutdown() {
     if (map_tiles()) {
         free(map_tiles());
     }
-    if (*MapAbstract) {
-        free(*MapAbstract);
+    if (MapAbstract()) {
+        free(MapAbstract());
     }
     map_tiles() = 0;
-    *MapAbstract = 0;
+    MapAbstract() = 0;
 }
 
 /*
@@ -1590,8 +1590,8 @@ BOOL __cdecl map_init() {
         MapAbstractLongBounds = (MapLongitudeBounds + 4) / 5;
         MapAbstractLatBounds = (MapLatitudeBounds + 4) / 5;
         MapAbstractArea = MapAbstractLatBounds * ((MapAbstractLongBounds + 1) / 2);
-        *MapAbstract = (uint8_t *)mem_get(MapAbstractArea);
-        if (*MapAbstract) {
+        MapAbstract() = (uint8_t *)mem_get(MapAbstractArea);
+        if (MapAbstract()) {
             mapwin_terrain_fixup();
             return false;
         }
@@ -1646,7 +1646,7 @@ Status: Complete
 BOOL __cdecl map_write(FILE *map_file) {
     if (_fwrite(&MapLongitudeBounds, 2724, 1, map_file)
         && _fwrite(map_tiles(), MapArea * sizeof(Map), 1, map_file)
-        && _fwrite(*MapAbstract, MapAbstractArea, 1, map_file)) {
+        && _fwrite(MapAbstract(), MapAbstractArea, 1, map_file)) {
         return false;
     }
     return true;
@@ -1671,12 +1671,12 @@ BOOL __cdecl map_read(FILE *map_file) {
         return true;
     }
     map_tiles() = 0;
-    *MapAbstract = 0;
+    MapAbstract() = 0;
     if (map_init()) {
         return true;
     }
     if (!_fread(map_tiles(), MapArea * sizeof(Map), 1, map_file)
-        || !_fread(*MapAbstract, MapAbstractArea, 1, map_file)) {
+        || !_fread(MapAbstract(), MapAbstractArea, 1, map_file)) {
         return true;
     }
     fixup_landmarks();
@@ -1697,7 +1697,7 @@ Return Value: Abstract value (region)
 Status: Complete
 */
 uint8_t __cdecl abstract_at(int x, int y) {
-    return (*MapAbstract)[(x >> 1) + y * (MapAbstractLongBounds >> 1)];
+    return (MapAbstract())[(x >> 1) + y * (MapAbstractLongBounds >> 1)];
 }
 
 /*
@@ -1713,7 +1713,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl abstract_set(int x, int y, uint8_t region) {
-    (*MapAbstract)[(x >> 1) + y * (MapAbstractLongBounds >> 1)] = region;
+    (MapAbstract())[(x >> 1) + y * (MapAbstractLongBounds >> 1)] = region;
 }
 
 /*

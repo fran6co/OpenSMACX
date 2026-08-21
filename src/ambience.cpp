@@ -415,7 +415,7 @@ Ambience::~Ambience() {
     // breed an equivalent swap mutant.
     void *const device = (self->fname_ = nullptr, self->device_);
     if (device && *WaveDeviceReleaseGuard) {
-        (*WaveDeviceReleaseSlot)(device);
+        (WaveDeviceReleaseSlot())(device);
     }
     self->device_ = nullptr;
     self->vtable_storage_ = 0x0066E3C0;
@@ -429,7 +429,7 @@ Ambience::~Ambience() {
     void *const device2 = self->device_;
     if (device2) {
         if (*WaveDeviceReleaseGuard) {
-            (*WaveDeviceReleaseSlot)(device2);
+            (WaveDeviceReleaseSlot())(device2);
         }
         self->device_ = nullptr;
     }
@@ -439,14 +439,14 @@ Ambience::~Ambience() {
             reinterpret_cast<AmbienceSoundView volatile *>(prev)->chain_next_ =
                 self->chain_next_;
         } else {
-            *WaveChainHead = reinterpret_cast<Wave *>(self->chain_next_);
+            WaveChainHead() = reinterpret_cast<Wave *>(self->chain_next_);
         }
         AmbienceSoundView *const next = self->chain_next_;
         if (next) {
             reinterpret_cast<AmbienceSoundView volatile *>(next)->chain_prev_ =
                 self->chain_prev_;
         } else {
-            *WaveChainTail = reinterpret_cast<Wave *>(self->chain_prev_);
+            WaveChainTail() = reinterpret_cast<Wave *>(self->chain_prev_);
         }
         self->chain_next_ = nullptr;
         self->chain_prev_ = nullptr;

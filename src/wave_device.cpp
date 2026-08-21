@@ -1268,7 +1268,7 @@ int Wave_Device::select(unsigned long a1) {
         return 2;
     }
     Wave *resume_tail = nullptr;
-    Wave *sound = *WaveChainHead;
+    Wave *sound = WaveChainHead();
     while (sound) {
         if ((wave_attrib(sound) & 1) && !(wave_attrib(sound) & 4)) {
             Wave *const next = wave_chain_next(sound);
@@ -1325,10 +1325,10 @@ int Wave_Device::create_device(unsigned long a1) {
     if (device_14_) {
         return 0xC;
     }
-    if (!*WaveDeviceFactorySlot) {
+    if (!WaveDeviceFactorySlot()) {
         return 0x14;
     }
-    return (*WaveDeviceFactorySlot)(&device_14_, a1);
+    return (WaveDeviceFactorySlot())(&device_14_, a1);
 }
 
 int __fastcall wave_device_create_device_redirect(Wave_Device *self, void *,
@@ -1354,10 +1354,10 @@ int Wave_Device::delete_device() {
     if (!device_14_) {
         return 0x14;
     }
-    if (!*WaveDeviceDestroySlot) {
+    if (!WaveDeviceDestroySlot()) {
         return 0x14;
     }
-    (*WaveDeviceDestroySlot)();
+    (WaveDeviceDestroySlot())();
     device_14_ = nullptr;
     return 0;
 }
@@ -1430,8 +1430,8 @@ void Wave_Device::release() {
         typedef void (OriginalObject::*device_down_fn)();
         (ORIGINAL(device_14_)->*original_slot<device_down_fn>(*reinterpret_cast<uint8_t **>(device_14_) + 0x10))();
     }
-    if (device_14_ && *WaveDeviceDestroySlot) {
-        (*WaveDeviceDestroySlot)();
+    if (device_14_ && WaveDeviceDestroySlot()) {
+        (WaveDeviceDestroySlot())();
     }
     device_14_ = nullptr;
 }
