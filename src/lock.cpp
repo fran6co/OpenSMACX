@@ -19,9 +19,6 @@
 #include "original_seam.h"
 #include "lock.h"
 
-func_square_lock_unlock LockSquareUnlock =
-    original_method<func_square_lock_unlock>(0x0058FD90);
-func_square_lock_lock LockSquareLock = original_method<func_square_lock_lock>(0x0058FE80);
 func_current_server *LockCurrentServer = (func_current_server *)0x0052DBA0;
 
 /*
@@ -127,7 +124,7 @@ int __fastcall lock_any_locks_redirect(Lock *self, void *) {
 Purpose: Release the lock on one slot - forget it as the active lock if it was,
          unlock both of the slot record's square entries, and clear the
          record's flag byte.
-// ORIGINAL: 0x00590170 ?unlock@Lock@@QAEXH@Z 0x00590170-0x005901C3
+// ORIGINAL: 0x00590170 ?unlock@Lock@@QAEXH@Z 0x00590170-0x005901C3 BYTE_EXACT
 // size      83 bytes
 // prototype void (__thiscall ?unlock@Lock@@QAEXH@Z)(Lock* this, int)
 // callers   1   call targets   1
@@ -144,7 +141,7 @@ void Lock::unlock(int slot) {
     }
     Record &record = records_[slot];
     for (int entry = 0; entry < 2; ++entry) {
-        (ORIGINAL(&record.entries[entry])->*LockSquareUnlock)(slot);
+        record.entries[entry].unlock(slot);
     }
     record.flag = 0;
 }
@@ -260,7 +257,7 @@ void __fastcall lock_check_global_redirect(Lock *self, void *) {
 Purpose: Add a lock on one slot - forward to SquareLock::lock on the slot
          record's second square entry, with the mask bit 0x10 forced into the
          flags argument.
-// ORIGINAL: 0x00590470 ?add_lock@Lock@@QAEHHHHH@Z 0x00590470-0x0059049B
+// ORIGINAL: 0x00590470 ?add_lock@Lock@@QAEHHHHH@Z 0x00590470-0x0059049B BYTE_EXACT
 // size      43 bytes
 // prototype int (__thiscall ?add_lock@Lock@@QAEHHHHH@Z)(Lock* this, int, int, int, int)
 // callers   1   call targets   1
@@ -271,7 +268,7 @@ Return Value: whatever SquareLock::lock returns
 Status: Complete
 */
 int Lock::add_lock(int slot, int flags, int a3, int a4) {
-    return (ORIGINAL(&records_[slot].entries[1])->*LockSquareLock)(slot, flags | 0x10, a3, a4);
+    return records_[slot].entries[1].lock(slot, flags | 0x10, a3, a4);
 }
 
 int __fastcall lock_add_lock_redirect(Lock *self, void *, int slot, int flags,
@@ -323,8 +320,8 @@ int Lock::lock(int slot, int flags, int a3, int a4, int a5, int a6, int a7) {
     }
     record.flag = 0;
 
-    if ((ORIGINAL(&record.entries[0])->*LockSquareLock)(slot, flags, a3, a4) == 0 &&
-        (ORIGINAL(&record.entries[1])->*LockSquareLock)(slot, a5, a6, a7) == 0) {
+    if (record.entries[0].lock(slot, flags, a3, a4) == 0 &&
+        record.entries[1].lock(slot, a5, a6, a7) == 0) {
         if (take_global && LockCurrentServer() != 0 && field_E4_ != 0) {
             const uint32_t owner = field_E0_;
             for (int index = 1; index < 8; ++index) {
@@ -346,7 +343,7 @@ int Lock::lock(int slot, int flags, int a3, int a4, int a5, int a6, int a7) {
     // A square failed: unlock both entries, clear the record, and drop the
     // global lock if this slot holds it.
     for (entry = 0; entry < 2; ++entry) {
-        (ORIGINAL(&record.entries[entry])->*LockSquareUnlock)(slot);
+        record.entries[entry].unlock(slot);
     }
     record.flag = 0;
     if (field_E0_ == static_cast<uint32_t>(slot)) {

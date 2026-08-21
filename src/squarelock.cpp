@@ -32,9 +32,9 @@ Return Value: n/a
 Status: Complete
 */
 void SquareLock::clear() {
-    flag_ = 0;
-    second_ = -1;
-    first_ = -1;
+    flag = 0;
+    second = -1;
+    first = -1;
 }
 
 void __fastcall square_lock_clear_redirect(SquareLock *self, void *) {
@@ -61,30 +61,30 @@ Return Value: n/a
 Status: Complete
 */
 void SquareLock::unlock(int factionID) {
-    if (!(flag_ & 1)) {
+    if (!(flag & 1)) {
         return;
     }
-    const int x = first_;
-    const int y = second_;
+    const int x = first;
+    const int y = second;
     if (y >= 0 && y < MapLatitudeBounds && x >= 0 && x < MapLongitudeBounds) {
         int count;
-        if ((flag_ & 4) && !(flag_ & 0x10)) {
-            count = (flag_ & 8) ? 81 : 25;   // RadiusRange[4] or RadiusRange[2]
+        if ((flag & 4) && !(flag & 0x10)) {
+            count = (flag & 8) ? 81 : 25;   // RadiusRange[4] or RadiusRange[2]
         } else {
             count = 1;
         }
         for (int i = 0; i < count; ++i) {
-            const int nx = xrange(RadiusOffsetX[i] + first_);
-            const int ny = RadiusOffsetY[i] + second_;
+            const int nx = xrange(RadiusOffsetX[i] + first);
+            const int ny = RadiusOffsetY[i] + second;
             if (ny >= 0 && ny < MapLatitudeBounds &&
                 nx >= 0 && nx < MapLongitudeBounds) {
                 unlock_map(nx, ny, factionID);
             }
         }
     }
-    flag_ = 0;
-    second_ = -1;
-    first_ = -1;
+    flag = 0;
+    second = -1;
+    first = -1;
 }
 
 void __fastcall square_lock_unlock_redirect(SquareLock *self, void *,
@@ -113,21 +113,21 @@ Return Value: 1 when a footprint tile is already locked by another faction,
 Status: Complete
 */
 int SquareLock::lock(int factionID, int flags, int x, int y) {
-    first_ = x;
-    second_ = y;
-    flag_ = flags | 1;
+    first = x;
+    second = y;
+    flag = flags | 1;
     if (y < 0 || y >= MapLatitudeBounds || x < 0 || x >= MapLongitudeBounds) {
         return 0;
     }
     int count;
-    if ((flag_ & 4) && !(flag_ & 0x10)) {
-        count = (flag_ & 8) ? 81 : 25;   // RadiusRange[4] or RadiusRange[2]
+    if ((flag & 4) && !(flag & 0x10)) {
+        count = (flag & 8) ? 81 : 25;   // RadiusRange[4] or RadiusRange[2]
     } else {
         count = 1;
     }
     for (int i = 0; i < count; ++i) {
-        const int nx = xrange(RadiusOffsetX[i] + first_);
-        const int ny = RadiusOffsetY[i] + second_;
+        const int nx = xrange(RadiusOffsetX[i] + first);
+        const int ny = RadiusOffsetY[i] + second;
         if (ny >= 0 && ny < MapLatitudeBounds &&
             nx >= 0 && nx < MapLongitudeBounds) {
             if (lock_map(nx, ny, factionID)) {
