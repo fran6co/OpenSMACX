@@ -68,11 +68,23 @@ class PlanWin : public MapWin {
   void on_redraw();
 
  public:
-  PlanWin() { ; }
-  // A `construct` method, not a constructor - see the note in `mapwin.h`.
-  // The real body is 0x0048BCD0. Forwarded in `pending_bodies.cpp`.
+  // MEASURED: a genuine `PlanWin(int a1)` constructor was tried first, on
+  // the theory the mangled `H` on `??0PlanWin@@QAE@H@Z` is VC6's own
+  // most-derived flag for the virtual `GraphicWin` base MapWin declares,
+  // needing no parameter here at all. Built and disassembled with this
+  // project's own `cl`: a class that genuinely has a virtual base gets the
+  // hidden flag INSTEAD of a name change, not IN ADDITION to one - a bare
+  // `PlanWin()` mangles `??0PlanWin@@QAE@XZ` (no `H`), and adding an
+  // explicit `int a1` alongside the real virtual base makes VC6 emit BOTH:
+  // the flag arrives at [ebp+0xc], a1 at [ebp+8], and a caller doing
+  // `->PlanWin::PlanWin(1)` pushes 1 twice - the exact defect this file
+  // used to warn about, now reproduced and confirmed rather than assumed.
+  // The image's own `??__Eg_PLANWIN` (0x0048AE00) pushes ONE 1. So: no
+  // constructor here at all (the implicit default is never called), and
+  // `construct` below carries the recovered body by hand, exactly as
+  // `mapwin.h`'s `MapWin::construct` already does for the same reason.
   void construct(int a1);
-  ~PlanWin() { ; }
+  ~PlanWin();
   void clear_lines();
   void close();
   void blink();
@@ -81,10 +93,11 @@ class PlanWin : public MapWin {
  private:
   int32_t field_21A6C_;  // 0x21A6C
   // PlanWin's own Buffer, constructed at 0x21A70 by the constructor
-  // (`lea ecx, [esi + 0x21a70]` at 0x0048BD21). It is held as raw storage
-  // rather than a Buffer member because nothing recovered so far needs to
-  // reach into it - UNK1 only ever passes its address.
-  uint8_t buffer_[sizeof(Buffer)];  // 0x21A70
+  // (`lea ecx, [esi + 0x21a70]` at 0x0048BD21). A real member now: its own
+  // constructor/destructor are already recovered, and declaring it lets the
+  // compiler emit that call the same way it emits every other base/member
+  // subobject construction.
+  Buffer buffer_;  // 0x21A70
   // No `derived_head_` here: 0x21FF8 - 0x21A70 is exactly
   // sizeof(Buffer) (0x588, pinned in buffer.h), so the array was
   // zero-length. VC6 rejects that - it is an MSVC extension - and a

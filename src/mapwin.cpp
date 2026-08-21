@@ -23,8 +23,128 @@
 #include "worldwin.h"
 #include "spritebox.h"
 #include "net_class.h"
+#include "texture.h"
+#include "vector_teardown.h"
 #include <cstring>
 #include <stdlib.h>
+
+// The vbtable MapWin stores at its own front when it is the one building
+// the embedded GraphicWin, and the two hand-maintained "vtable" pointers
+// `GraphicWin::construct`'s own idiom writes when GraphicWin is directly
+// the most-derived object (see graphicwin.cpp) - MapWin has to repeat the
+// latter pair on its own embedded GraphicWin, because nothing in this chain
+// declares a single `virtual` and so VC6 never refreshes them on its own.
+static void *const g_0066c870 = reinterpret_cast<void *>(0x0066C870);
+static void *const g_0066a57c = reinterpret_cast<void *>(0x0066A57C);
+static void *const g_0066a574 = reinterpret_cast<void *>(0x0066A574);
+
+/*
+Purpose: Build a map window - attach its embedded GraphicWin virtual base,
+         then its own TextureStore/Buffer/Font/ImageButton members.
+// ORIGINAL: 0x004626E0 ??0MapWin@@QAE@H@Z 0x004626E0-0x00462868;0x00655860-0x00655920
+// symbol    ?construct@MapWin@@QAEXH@Z
+// size      584 bytes
+// prototype void (__thiscall ??0MapWin@@QAE@H@Z)(MapWin* this, int)
+// callers   3   call targets   9
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005D4CF0 0x006252A0 0x005D7210 0x00618EA0 0x006456E4 0x006457C2
+Return Value: this
+
+MEASURED: not spelled as a real constructor - see the note in `mapwin.h`. A
+plain method never gets VC6's own most-derived-flag treatment, so the single
+`a1` here is read and branched on exactly as the image's `[ebp+8]` is, with
+no second, compiler-inserted flag arriving alongside it. What is left, since
+MapWin's own members are still opaque storage (see the class declaration),
+is: the two array-of-TextureStore member ranges (via the CRT's own vector
+constructor iterator, `VectorCtorIterator` - see `vector_teardown.h`), the
+single TextureStore/Buffer/Buffer/Buffer/Font/Font/Font members, the
+array-of-4 ImageButton range, and the manual vtable-pointer stores plus
+vtordisp on the embedded GraphicWin.
+*/
+void MapWin::construct(int a1) {
+    char *const self = reinterpret_cast<char *>(this);
+
+    if (a1) {
+        *reinterpret_cast<void **>(self) = g_0066c870;
+        reinterpret_cast<GraphicWin *>(self + 0x21a6c)->construct();
+    }
+
+    VectorCtorIterator(self + 0xc, 0x260, 4,
+                        reinterpret_cast<const void *>(0x006252A0),
+                        reinterpret_cast<const void *>(0x006252B0));
+    VectorCtorIterator(self + 0x98c, 0x260, 0xc4,
+                        reinterpret_cast<const void *>(0x006252A0),
+                        reinterpret_cast<const void *>(0x006252B0));
+
+    reinterpret_cast<TextureStore *>(self + 0x1db0c)->TextureStore::TextureStore();
+    reinterpret_cast<Buffer *>(self + 0x1de28)->Buffer::Buffer();
+    reinterpret_cast<Buffer *>(self + 0x1e3b0)->Buffer::Buffer();
+    reinterpret_cast<Buffer *>(self + 0x1e938)->Buffer::Buffer();
+    reinterpret_cast<Font *>(self + 0x1eec8)->Font::Font();
+    reinterpret_cast<Font *>(self + 0x1eef4)->Font::Font();
+    reinterpret_cast<Font *>(self + 0x1ef20)->Font::Font();
+
+    VectorCtorIterator(self + 0x1ef54, 0xabc, 4,
+                        reinterpret_cast<const void *>(0x006252E0),
+                        reinterpret_cast<const void *>(0x00625310));
+
+    char *const graphic_win = self + 0x21a6c;
+    *reinterpret_cast<void **>(graphic_win) = g_0066a57c;
+    *reinterpret_cast<void **>(graphic_win + 0x444) = g_0066a574;
+    *reinterpret_cast<int32_t *>(graphic_win - 4) = 0;
+
+    field_1DD74_ = 0;
+    owned_ = 0;
+    field_1DD80_ = 0;
+    field_1DD8C_ = 0;
+    field_21A44_ = 0;
+    field_1EF4C_ = 0;
+    field_1EEC0_ = static_cast<uint32_t>(0xffffd8f1);
+    field_1EEC4_ = 0xffffffff;
+}
+
+/*
+Purpose: Tear down a map window's own members. Nothing here calls
+         MapWin::clear as MapWin - it is reached by name.
+// ORIGINAL: 0x00420F90 ??1MapWin@@QAE@XZ 0x00420F90-0x004210CB;0x00651190-0x00651250
+// size      315 bytes
+// prototype void (__thiscall ??1MapWin@@QAE@XZ)(MapWin* this)
+// callers   1   call targets   6
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00462870 0x005D7410 0x00618EE0 0x006252B0 0x006456E4
+Return Value: n/a
+
+`this` IS NOT MapWin's own front, matching `guarded_teardowns.cpp`'s
+`reinterpret_cast<MapWin *>(TeardownObject007F5ACC)->MapWin::~MapWin()`:
+`TeardownObject007F5ACC` is `g_MAPWIN`'s own front (0x007D4060) plus
+0x21A6C, the offset of MapWin's own embedded GraphicWin virtual base. The
+destructor re-stores the same manual vtable pointers the constructor wrote,
+then reaches its own front (`self - 0x21a6c`) only to call `clear(0)`.
+*/
+MapWin::~MapWin() {
+    char *const self = reinterpret_cast<char *>(this);
+    *reinterpret_cast<void **>(self) = g_0066a57c;
+    *reinterpret_cast<void **>(self + 0x444) = g_0066a574;
+    *reinterpret_cast<int32_t *>(self - 4) = 0;
+
+    reinterpret_cast<MapWin *>(self - 0x21a6c)->clear(0);
+
+    VectorDtorIterator(self - 0x2b18, 0xabc, 4,
+                        reinterpret_cast<const void *>(0x00625310));
+    reinterpret_cast<Font *>(self - 0x2b4c)->~Font();
+    reinterpret_cast<Font *>(self - 0x2b78)->~Font();
+    reinterpret_cast<Font *>(self - 0x2ba4)->~Font();
+    reinterpret_cast<Buffer *>(self - 0x3134)->~Buffer();
+    reinterpret_cast<Buffer *>(self - 0x36bc)->~Buffer();
+    reinterpret_cast<Buffer *>(self - 0x3c44)->~Buffer();
+    reinterpret_cast<TextureStore *>(self - 0x3f60)->~TextureStore();
+    VectorDtorIterator(self - 0x210e0, 0x260, 0xc4,
+                        reinterpret_cast<const void *>(0x006252B0));
+    VectorDtorIterator(self - 0x21a60, 0x260, 4,
+                        reinterpret_cast<const void *>(0x006252B0));
+}
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.

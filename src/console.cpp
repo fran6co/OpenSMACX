@@ -30,8 +30,210 @@
 #include "graphicwin.h"
 #include "spritebox.h"
 #include "net_class.h"
+#include "menu.h"
+#include "sprite.h"
+#include "time.h"
+#include "texture.h"
+#include "vector_teardown.h"
 #include <cstring>
 
+// The manual "vtable" pointers `GraphicWin::construct`'s own idiom writes
+// when GraphicWin is directly the most-derived object (see graphicwin.cpp),
+// repeated here on Console's own embedded Menu and on its virtual base -
+// nothing in this chain declares a single `virtual`, so VC6 never refreshes
+// them on its own.
+static void *const g_0066ef04 = reinterpret_cast<void *>(0x0066EF04);
+static void *const g_0066ed88 = reinterpret_cast<void *>(0x0066ED88);
+static void *const g_0066ed80 = reinterpret_cast<void *>(0x0066ED80);
+static void *const g_0066ec18 = reinterpret_cast<void *>(0x0066EC18);
+static void *const g_0066ec10 = reinterpret_cast<void *>(0x0066EC10);
+static void *const g_005e37e0 = reinterpret_cast<void *>(0x005E37E0);
+static void *const g_00406850 = reinterpret_cast<void *>(0x00406850);
+static void *const g_0066a57c = reinterpret_cast<void *>(0x0066A57C);
+static void *const g_0066a574 = reinterpret_cast<void *>(0x0066A574);
+
+/*
+Purpose: Build the game console - its virtual GraphicWin base, its MapWin
+         base, its own extra (non-virtual) embedded GraphicWin, and its own
+         Buffer/Time/Menu/Sprite members.
+// ORIGINAL: 0x0050F460 ??0Console@@QAE@H@Z 0x0050F460-0x0050F629;0x0065D250-0x0065D2EF
+// symbol    ?construct@Console@@QAEXH@Z
+// size      616 bytes
+// prototype void (__thiscall ??0Console@@QAE@H@Z)(Console* this, int)
+// callers   1   call targets   7
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004626E0 0x005D4CF0 0x005D7210 0x005E37E0 0x005FAC60 0x006161D0 0x006457C2
+Return Value: this
+
+MEASURED: not spelled as a real constructor - see the note in `console.h`
+and `mapwin.h`. A plain method never gets VC6's own most-derived-flag
+treatment, so the single `a1` here is read and branched on exactly as the
+image's `[ebp+8]` is, with no second, compiler-inserted flag arriving
+alongside it. Console's own fields past the MapWin base are still opaque
+storage (see the class declaration), so everything below reaches its
+sub-objects by raw offset.
+*/
+void Console::construct(int a1) {
+    char *const self = reinterpret_cast<char *>(this);
+
+    if (a1) {
+        *reinterpret_cast<void **>(self) = g_0066ef04;
+        reinterpret_cast<GraphicWin *>(self + 0x23d94)->construct();
+    }
+
+    MapWin::construct(0);
+
+    reinterpret_cast<GraphicWin *>(self + 0x21a68)->construct();
+    reinterpret_cast<Buffer *>(self + 0x2247c)->Buffer::Buffer();
+    reinterpret_cast<Time *>(self + 0x22a04)->Time::Time();
+
+    char *const menu = self + 0x22a2c;
+    reinterpret_cast<Menu *>(menu)->Menu::Menu();
+
+    reinterpret_cast<Buffer *>(menu + 0xb64)->Buffer::Buffer();
+    reinterpret_cast<Sprite *>(menu + 0x10ec)->Sprite::Sprite();
+
+    VectorCtorIterator(menu + 0x1118, 0x2c, 3, g_005e37e0, g_00406850);
+
+    *reinterpret_cast<void **>(menu) = g_0066ed88;
+    *reinterpret_cast<void **>(menu + 0x444) = g_0066ed80;
+
+    reinterpret_cast<Sprite *>(self + 0x23d28)->Sprite::Sprite();
+    reinterpret_cast<Sprite *>(self + 0x23d54)->Sprite::Sprite();
+
+    {
+        int32_t *const vtbl = *reinterpret_cast<int32_t **>(self);
+        int32_t const off = vtbl[1];
+        *reinterpret_cast<void **>(self + off) = g_0066ec18;
+    }
+    {
+        int32_t *const vtbl = *reinterpret_cast<int32_t **>(self);
+        int32_t const off = vtbl[1];
+        *reinterpret_cast<void **>(self + off + 0x444) = g_0066ec10;
+    }
+    {
+        int32_t *const vtbl = *reinterpret_cast<int32_t **>(self);
+        int32_t const off = vtbl[1];
+        *reinterpret_cast<int32_t *>(self + off - 4) = off - 0x23d94;
+    }
+
+    field_23BC8_ = static_cast<uint32_t>(-1);
+    field_23BD8_ = 0;
+    field_23BE4_ = 0;
+    field_23BE8_ = 0;
+    field_23BF0_ = 0;
+    field_23BF4_ = 0;
+    field_23C00_ = 0;
+    field_23C04_ = 0;
+    field_23BFC_ = 0;
+    field_23BF8_ = 0;
+    field_23C08_ = 0;
+
+    for (int32_t i = 0x20; i != 0; i--) {
+        int32_t idx = field_23C08_;
+        *reinterpret_cast<int32_t *>(self + 0x23c10 + idx * 4) = 0;
+        idx = field_23C08_;
+        *reinterpret_cast<int32_t *>(self + 0x23c90 + idx * 4) = 0;
+    }
+
+    field_23D10_ = 0;
+    field_23D18_ = 0;
+    field_23D88_ = 0;
+    field_23D80_ = 0;
+    field_23D8C_ = 0;
+    field_23D84_ = 0;
+}
+
+/*
+Purpose: Tear down the game console - its own Buffer/Time/Menu/Sprite
+         members, its own extra embedded GraphicWin, then the MapWin
+         fields it holds directly (no separate call into MapWin's own
+         destructor).
+// ORIGINAL: 0x0051D9F0 ??1Console@@QAE@XZ 0x0051D9F0-0x0051DC10;0x0065D0E0-0x0065D220
+// size      864 bytes
+// prototype void (__thiscall ??1Console@@QAE@XZ)(Console* this)
+// callers   2   call targets   10
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00462870 0x0051D7D0 0x005D4DD0 0x005D7410 0x005E3820 0x005FAD00 0x00616200 0x00618EE0 0x006252B0 0x006456E4
+Return Value: n/a
+
+`this` IS NOT Console's own front, matching `guarded_teardowns.cpp`'s
+already-matching `->Console::~Console()` on `TeardownObject00939444` -
+`g_CONSOLE`'s front plus 0x23D94, the offset of the embedded virtual-base
+GraphicWin, the same convention PlanWin's and MapWin's destructors use (see
+the note in `planwin.cpp`).
+*/
+Console::~Console() {
+    char *const self = reinterpret_cast<char *>(this);
+
+    // Console's own tail, ahead of the virtual base at `self`.
+    char *const front = self - 0x23d94;
+    {
+        int32_t *const vtbl = *reinterpret_cast<int32_t **>(front);
+        int32_t const off = vtbl[1];
+        *reinterpret_cast<void **>(front + off) = g_0066ec18;
+    }
+    {
+        int32_t *const vtbl = *reinterpret_cast<int32_t **>(front);
+        int32_t const off = vtbl[1];
+        *reinterpret_cast<void **>(self - 0x23950 + off) = g_0066ec10;
+    }
+    {
+        int32_t *const vtbl = *reinterpret_cast<int32_t **>(front);
+        int32_t const off = vtbl[1];
+        *reinterpret_cast<int32_t *>(self - 0x23d98 + off) = off - 0x23d94;
+    }
+
+    close();
+
+    reinterpret_cast<Sprite *>(self - 0x40)->close();
+    reinterpret_cast<Sprite *>(self - 0x6c)->close();
+
+    char *const menu = self - 0x1368;
+    VectorDtorIterator(menu + 0x1118, 0x2c, 3, g_00406850);
+    reinterpret_cast<Sprite *>(menu + 0x10ec)->close();
+    reinterpret_cast<Buffer *>(menu + 0xb64)->~Buffer();
+    reinterpret_cast<Menu *>(menu)->Menu::~Menu();
+
+    reinterpret_cast<Time *>(self - 0x1390)->~Time();
+    reinterpret_cast<Buffer *>(self - 0x1918)->~Buffer();
+    reinterpret_cast<GraphicWin *>(self - 0x232c)->GraphicWin::~GraphicWin();
+
+    // Rebase onto the MapWin base's own embedded (virtual) GraphicWin.
+    char *const mapwin_vbase = self - 0x2328;
+    {
+        int32_t *const vtbl = *reinterpret_cast<int32_t **>(mapwin_vbase - 0x21a6c);
+        int32_t const off = vtbl[1];
+        *reinterpret_cast<void **>(mapwin_vbase - 0x21a6c + off) = g_0066a57c;
+    }
+    {
+        int32_t *const vtbl = *reinterpret_cast<int32_t **>(mapwin_vbase - 0x21a6c);
+        int32_t const off = vtbl[1];
+        *reinterpret_cast<void **>(mapwin_vbase - 0x21628 + off) = g_0066a574;
+    }
+    {
+        int32_t *const vtbl = *reinterpret_cast<int32_t **>(mapwin_vbase - 0x21a6c);
+        int32_t const off = vtbl[1];
+        *reinterpret_cast<int32_t *>(mapwin_vbase - 0x21a70 + off) = off - 0x21a6c;
+    }
+
+    reinterpret_cast<MapWin *>(mapwin_vbase)->clear(0);
+
+    VectorDtorIterator(mapwin_vbase - 0x2b18, 0xabc, 4, reinterpret_cast<const void *>(0x00625310));
+
+    reinterpret_cast<Font *>(mapwin_vbase - 0x2b4c)->~Font();
+    reinterpret_cast<Font *>(mapwin_vbase - 0x2b78)->~Font();
+    reinterpret_cast<Font *>(mapwin_vbase - 0x2ba4)->~Font();
+    reinterpret_cast<Buffer *>(mapwin_vbase - 0x3134)->~Buffer();
+    reinterpret_cast<Buffer *>(mapwin_vbase - 0x36bc)->~Buffer();
+    reinterpret_cast<Buffer *>(mapwin_vbase - 0x3c44)->~Buffer();
+    reinterpret_cast<TextureStore *>(mapwin_vbase - 0x3f60)->~TextureStore();
+
+    VectorDtorIterator(mapwin_vbase - 0x210e0, 0x260, 0xc4, reinterpret_cast<const void *>(0x006252B0));
+    VectorDtorIterator(mapwin_vbase - 0x21a60, 0x260, 4, reinterpret_cast<const void *>(0x006252B0));
+}
 
 /*
 Purpose: Open the shared preferences window to the preferences page.
