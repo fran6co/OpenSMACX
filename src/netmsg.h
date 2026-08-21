@@ -39,7 +39,10 @@
 class NetMsg : public Popup {
  public:
   NetMsg() { ; }
-  ~NetMsg() { ; }
+  // 0x0047ADA0 is not recovered: a
+  // pending_bodies forwarder, because an empty inline stub emits
+  // nothing and the deleting destructor needs a `call rel32`.
+  ~NetMsg();
   void close();
 
  private:

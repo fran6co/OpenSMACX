@@ -46,7 +46,10 @@ class WorldWin : public GraphicWin {
   void focus(int a1, int a2);
   void set_center(int a1, int a2);
   WorldWin() { ; }
-  ~WorldWin() { ; }
+  // 0x004C4A70 is not recovered: a
+  // pending_bodies forwarder, because an empty inline stub emits
+  // nothing and the deleting destructor needs a `call rel32`.
+  ~WorldWin();
   void clear_terrain();
   void on_left_double_click(int a1, int a2);
   void on_left_click(int a1, int a2);

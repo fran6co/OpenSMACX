@@ -42,7 +42,10 @@ class DiploWin : public GraphicWin {
   void hide();
   void show(int a1);
   DiploWin() { ; }
-  ~DiploWin() { ; }
+  // 0x00444DB0 is not recovered: a
+  // pending_bodies forwarder, because an empty inline stub emits
+  // nothing and the deleting destructor needs a `call rel32`.
+  ~DiploWin();
   void UNK3(int a1);
   void UNK5();
   void UNK2();

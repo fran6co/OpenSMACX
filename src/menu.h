@@ -62,7 +62,10 @@ class Menu : public GraphicWin {
   int UNK9(int menu_id);
   int UNK4(int a, int b, int c);
   Menu() { ; }
-  ~Menu() { ; }
+  // 0x005FAD00 is not recovered: a
+  // pending_bodies forwarder, because an empty inline stub emits
+  // nothing and the deleting destructor needs a `call rel32`.
+  ~Menu();
 
   void on_adjust_pulldown_pos(int *a1, int *a2);
   void set_menu_proc(MenuProc proc);

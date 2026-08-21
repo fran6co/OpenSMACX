@@ -29,6 +29,22 @@
 #include "sprite.h"
 #include "texture.h"
 #include "wave.h"
+#include "basewin.h"
+#include "councwin.h"
+#include "datalink.h"
+#include "designwin.h"
+#include "diplopop.h"
+#include "diplowin.h"
+#include "maininterface.h"
+#include "multidebug.h"
+#include "netmsg.h"
+#include "netwin.h"
+#include "newtechwin.h"
+#include "pickwin.h"
+#include "reportwin.h"
+#include "socialwin.h"
+#include "tutwin.h"
+#include "worldwin.h"
 
 func_wave_destructor WaveOriginalDestructor =
     original_method<func_wave_destructor>(0x004C67C0);
@@ -477,7 +493,7 @@ void __cdecl destroy_unused_sprite_var07() {
 
 /*
 Purpose: Atexit teardown thunk for g_BASEWIN.
-// ORIGINAL: 0x004083D0 ??__Fg_BASEWIN@@YAXXZ 0x004083D0-0x004083DA
+// ORIGINAL: 0x004083D0 ??__Fg_BASEWIN@@YAXXZ 0x004083D0-0x004083DA BYTE_EXACT
 // symbol    ?destroy_basewin@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -489,7 +505,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_basewin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x006A7628))->*BaseWinDtorTarget)();
+    static_cast<BaseWin *>(reinterpret_cast<void *>(0x006A7628))->BaseWin::~BaseWin();
 }
 
 /*
@@ -528,7 +544,7 @@ void __cdecl destroy_battlewin() {
 
 /*
 Purpose: Atexit teardown thunk for g_COUNCWIN.
-// ORIGINAL: 0x004243C0 ??__Fg_COUNCWIN@@YAXXZ 0x004243C0-0x004243CA
+// ORIGINAL: 0x004243C0 ??__Fg_COUNCWIN@@YAXXZ 0x004243C0-0x004243CA BYTE_EXACT
 // symbol    ?destroy_councwin@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -540,7 +556,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_councwin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x006FEC80))->*CouncWinDtorTarget)();
+    static_cast<CouncWin *>(reinterpret_cast<void *>(0x006FEC80))->CouncWin::~CouncWin();
 }
 
 /*
@@ -562,7 +578,7 @@ void __cdecl destroy_credits_wave() {
 
 /*
 Purpose: Atexit teardown thunk for g_DATALINK.
-// ORIGINAL: 0x00428FB0 ??__Fg_DATALINK@@YAXXZ 0x00428FB0-0x00428FBA
+// ORIGINAL: 0x00428FB0 ??__Fg_DATALINK@@YAXXZ 0x00428FB0-0x00428FBA BYTE_EXACT
 // symbol    ?destroy_datalink@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -574,12 +590,12 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_datalink() {
-    (ORIGINAL(reinterpret_cast<void *>(0x00703EA0))->*DatalinkDtorTarget)();
+    static_cast<Datalink *>(reinterpret_cast<void *>(0x00703EA0))->Datalink::~Datalink();
 }
 
 /*
 Purpose: Atexit teardown thunk for g_DESIGNWIN.
-// ORIGINAL: 0x00432870 ??__Fg_DESIGNWIN@@YAXXZ 0x00432870-0x0043287A
+// ORIGINAL: 0x00432870 ??__Fg_DESIGNWIN@@YAXXZ 0x00432870-0x0043287A BYTE_EXACT
 // symbol    ?destroy_designwin@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -591,7 +607,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_designwin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x0071F2B0))->*DesignWinDtorTarget)();
+    static_cast<DesignWin *>(reinterpret_cast<void *>(0x0071F2B0))->DesignWin::~DesignWin();
 }
 
 /*
@@ -613,7 +629,7 @@ void __cdecl destroy_designwin_wave() {
 
 /*
 Purpose: Atexit teardown thunk for g_DIPLOPOP.
-// ORIGINAL: 0x0043EFE0 ??__Fg_DIPLOPOP@@YAXXZ 0x0043EFE0-0x0043EFEA
+// ORIGINAL: 0x0043EFE0 ??__Fg_DIPLOPOP@@YAXXZ 0x0043EFE0-0x0043EFEA BYTE_EXACT
 // symbol    ?destroy_diplopop@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -625,12 +641,12 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_diplopop() {
-    (ORIGINAL(reinterpret_cast<void *>(0x00733990))->*DiploPopDtorTarget)();
+    static_cast<DiploPop *>(reinterpret_cast<void *>(0x00733990))->DiploPop::~DiploPop();
 }
 
 /*
 Purpose: Atexit teardown thunk for g_DIPLOWIN.
-// ORIGINAL: 0x00440F20 ??__Fg_DIPLOWIN@@YAXXZ 0x00440F20-0x00440F2A
+// ORIGINAL: 0x00440F20 ??__Fg_DIPLOWIN@@YAXXZ 0x00440F20-0x00440F2A BYTE_EXACT
 // symbol    ?destroy_diplowin@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -642,7 +658,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_diplowin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x0073ACD8))->*DiploWinDtorTarget)();
+    static_cast<DiploWin *>(reinterpret_cast<void *>(0x0073ACD8))->DiploWin::~DiploWin();
 }
 
 /*
@@ -5713,7 +5729,7 @@ void __cdecl destroy_infowin() {
 
 /*
 Purpose: Atexit teardown thunk for g_MAININTERFACE.
-// ORIGINAL: 0x00459580 ??__Fg_MAININTERFACE@@YAXXZ 0x00459580-0x0045958A
+// ORIGINAL: 0x00459580 ??__Fg_MAININTERFACE@@YAXXZ 0x00459580-0x0045958A BYTE_EXACT
 // symbol    ?destroy_maininterface@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -5725,7 +5741,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_maininterface() {
-    (ORIGINAL(reinterpret_cast<void *>(0x007AE820))->*MainInterfaceDtorTarget)();
+    static_cast<MainInterface *>(reinterpret_cast<void *>(0x007AE820))->MainInterface::~MainInterface();
 }
 
 /*
@@ -5849,7 +5865,7 @@ void __cdecl destroy_multiwin_wave() {
 
 /*
 Purpose: Atexit teardown thunk for g_NETMSG1.
-// ORIGINAL: 0x0047A790 ??__Fg_NETMSG1@@YAXXZ 0x0047A790-0x0047A79A
+// ORIGINAL: 0x0047A790 ??__Fg_NETMSG1@@YAXXZ 0x0047A790-0x0047A79A BYTE_EXACT
 // symbol    ?destroy_netmsg1@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -5861,12 +5877,12 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_netmsg1() {
-    (ORIGINAL(reinterpret_cast<void *>(0x00805338))->*NetMsgDtorTarget)();
+    static_cast<NetMsg *>(reinterpret_cast<void *>(0x00805338))->NetMsg::~NetMsg();
 }
 
 /*
 Purpose: Atexit teardown thunk for g_NETMSG2.
-// ORIGINAL: 0x0047A7C0 ??__Fg_NETMSG2@@YAXXZ 0x0047A7C0-0x0047A7CA
+// ORIGINAL: 0x0047A7C0 ??__Fg_NETMSG2@@YAXXZ 0x0047A7C0-0x0047A7CA BYTE_EXACT
 // symbol    ?destroy_netmsg2@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -5878,12 +5894,12 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_netmsg2() {
-    (ORIGINAL(reinterpret_cast<void *>(0x007FFF80))->*NetMsgDtorTarget)();
+    static_cast<NetMsg *>(reinterpret_cast<void *>(0x007FFF80))->NetMsg::~NetMsg();
 }
 
 /*
 Purpose: Atexit teardown thunk for g_NETWIN.
-// ORIGINAL: 0x0047B010 ??__Fg_NETWIN@@YAXXZ 0x0047B010-0x0047B01A
+// ORIGINAL: 0x0047B010 ??__Fg_NETWIN@@YAXXZ 0x0047B010-0x0047B01A BYTE_EXACT
 // symbol    ?destroy_netwin@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -5895,12 +5911,12 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_netwin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x0080A6F8))->*NetWinDtorTarget)();
+    static_cast<NetWin *>(reinterpret_cast<void *>(0x0080A6F8))->NetWin::~NetWin();
 }
 
 /*
 Purpose: Atexit teardown thunk for g_NEWTECHWIN.
-// ORIGINAL: 0x00483870 ??__Fg_NEWTECHWIN@@YAXXZ 0x00483870-0x0048387A
+// ORIGINAL: 0x00483870 ??__Fg_NEWTECHWIN@@YAXXZ 0x00483870-0x0048387A BYTE_EXACT
 // symbol    ?destroy_newtechwin@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -5912,12 +5928,12 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_newtechwin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x00811E40))->*NewTechWinDtorTarget)();
+    static_cast<NewTechWin *>(reinterpret_cast<void *>(0x00811E40))->NewTechWin::~NewTechWin();
 }
 
 /*
 Purpose: Atexit teardown thunk for g_PICKWIN.
-// ORIGINAL: 0x00488770 ??__Fg_PICKWIN@@YAXXZ 0x00488770-0x0048877A
+// ORIGINAL: 0x00488770 ??__Fg_PICKWIN@@YAXXZ 0x00488770-0x0048877A BYTE_EXACT
 // symbol    ?destroy_pickwin@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -5929,7 +5945,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_pickwin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x00822718))->*PickWinDtorTarget)();
+    static_cast<PickWin *>(reinterpret_cast<void *>(0x00822718))->PickWin::~PickWin();
 }
 
 /*
@@ -6002,7 +6018,7 @@ void __cdecl destroy_reportif() {
 
 /*
 Purpose: Atexit teardown thunk for g_REPORTWIN.
-// ORIGINAL: 0x00496950 ??__Fg_REPORTWIN@@YAXXZ 0x00496950-0x0049695A
+// ORIGINAL: 0x00496950 ??__Fg_REPORTWIN@@YAXXZ 0x00496950-0x0049695A BYTE_EXACT
 // symbol    ?destroy_reportwin@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -6014,12 +6030,12 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_reportwin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x00876478))->*ReportWinDtorTarget)();
+    static_cast<ReportWin *>(reinterpret_cast<void *>(0x00876478))->ReportWin::~ReportWin();
 }
 
 /*
 Purpose: Atexit teardown thunk for SocialWinParent.
-// ORIGINAL: 0x004AE9D0 ??__FSocialWinParent@@YAXXZ 0x004AE9D0-0x004AE9DA
+// ORIGINAL: 0x004AE9D0 ??__FSocialWinParent@@YAXXZ 0x004AE9D0-0x004AE9DA BYTE_EXACT
 // symbol    ?destroy_socialwinparent@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -6031,7 +6047,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_socialwinparent() {
-    (ORIGINAL(reinterpret_cast<void *>(0x008A6270))->*SocialWinDtorTarget)();
+    static_cast<SocialWin *>(reinterpret_cast<void *>(0x008A6270))->SocialWin::~SocialWin();
 }
 
 /*
@@ -6053,7 +6069,7 @@ void __cdecl destroy_statuswin() {
 
 /*
 Purpose: Atexit teardown thunk for g_TUTWIN.
-// ORIGINAL: 0x004BA5E0 ??__Fg_TUTWIN@@YAXXZ 0x004BA5E0-0x004BA5EA
+// ORIGINAL: 0x004BA5E0 ??__Fg_TUTWIN@@YAXXZ 0x004BA5E0-0x004BA5EA BYTE_EXACT
 // symbol    ?destroy_tutwin@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -6065,7 +6081,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_tutwin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x008C6E68))->*TutWinDtorTarget)();
+    static_cast<TutWin *>(reinterpret_cast<void *>(0x008C6E68))->TutWin::~TutWin();
 }
 
 /*
@@ -6104,7 +6120,7 @@ void __cdecl destroy_vehdraw_buffer() {
 
 /*
 Purpose: Atexit teardown thunk for g_WORLDWIN.
-// ORIGINAL: 0x004C38D0 ??__Fg_WORLDWIN@@YAXXZ 0x004C38D0-0x004C38DA
+// ORIGINAL: 0x004C38D0 ??__Fg_WORLDWIN@@YAXXZ 0x004C38D0-0x004C38DA BYTE_EXACT
 // symbol    ?destroy_worldwin@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -6116,7 +6132,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_worldwin() {
-    (ORIGINAL(reinterpret_cast<void *>(0x008E9F60))->*WorldWinDtorTarget)();
+    static_cast<WorldWin *>(reinterpret_cast<void *>(0x008E9F60))->WorldWin::~WorldWin();
 }
 
 /*
@@ -6359,7 +6375,7 @@ void __cdecl destroy_palette2() {
 
 /*
 Purpose: Atexit teardown thunk for g_MULTIDEBUG.
-// ORIGINAL: 0x005C97E0 ??__Fg_MULTIDEBUG@@YAXXZ 0x005C97E0-0x005C97EA
+// ORIGINAL: 0x005C97E0 ??__Fg_MULTIDEBUG@@YAXXZ 0x005C97E0-0x005C97EA BYTE_EXACT
 // symbol    ?destroy_multidebug@@YAXXZ
 // size      10 bytes
 // prototype 
@@ -6371,7 +6387,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_multidebug() {
-    (ORIGINAL(reinterpret_cast<void *>(0x009B22F0))->*MultiDebugDtorTarget)();
+    static_cast<MultiDebug *>(reinterpret_cast<void *>(0x009B22F0))->MultiDebug::~MultiDebug();
 }
 
 /*

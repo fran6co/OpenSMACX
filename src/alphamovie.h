@@ -66,7 +66,10 @@ class AlphaMovie : public GraphicWin {
   void update();
   void close();
   AlphaMovie() { ; }
-  ~AlphaMovie() { ; }
+  // 0x00404310 is not recovered: a
+  // pending_bodies forwarder, because an empty inline stub emits
+  // nothing and the deleting destructor needs a `call rel32`.
+  ~AlphaMovie();
   void UNK7();
   int UNK2(int a1, int a2, int a3);
   int UNK4(int a1, int a2, int a3, int a4);

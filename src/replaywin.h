@@ -59,7 +59,10 @@ class ReplayWin : public GraphicWin {
   // can name it.
   void timer_callback();
   ReplayWin() { ; }
-  ~ReplayWin() { ; }
+  // 0x005ADF10 is not recovered: a
+  // pending_bodies forwarder, because an empty inline stub emits
+  // nothing and the deleting destructor needs a `call rel32`.
+  ~ReplayWin();
   void on_left_double_click(int, int);
   void on_right_double_click(int, int);
   void on_mouse_move(int, int);

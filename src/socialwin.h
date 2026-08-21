@@ -43,7 +43,10 @@ class SocialWin : public GraphicWin, public SubInterface {
   void hide();
   void show(int a1);
   SocialWin() { ; }
-  ~SocialWin() { ; }
+  // 0x004B3C80 is not recovered: a
+  // pending_bodies forwarder, because an empty inline stub emits
+  // nothing and the deleting destructor needs a `call rel32`.
+  ~SocialWin();
   void UNK2();
   void UNK3();
   void on_iface_left_down(int a1, int a2);

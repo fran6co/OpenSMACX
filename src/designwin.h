@@ -52,7 +52,10 @@ class DesignWin : public GraphicWin, public SubInterface {
   void select_special_2();
   void select_special_1();
   DesignWin() { ; }
-  ~DesignWin() { ; }
+  // 0x0043ECB0 is not recovered: a
+  // pending_bodies forwarder, because an empty inline stub emits
+  // nothing and the deleting destructor needs a `call rel32`.
+  ~DesignWin();
   void UNK1();
   void on_iface_left_down(int a1, int a2);
   void on_mouse_leave(int a1, int a2);

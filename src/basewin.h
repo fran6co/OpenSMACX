@@ -64,7 +64,10 @@ class BaseWin : public GraphicWin, public SubInterface {
   void draw_facilities(int a1);                            // 0x0040FCC0
   void show(int a1);
   BaseWin() { ; }
-  ~BaseWin() { ; }
+  // 0x00420A70 is not recovered: a
+  // pending_bodies forwarder, because an empty inline stub emits
+  // nothing and the deleting destructor needs a `call rel32`.
+  ~BaseWin();
   void close();
   void UNK4();
   void UNK6();

@@ -31,7 +31,10 @@ class MainInterface : public GraphicWin {
   // 0x0045BE80, a pending_bodies forwarder.
   void set_date(char *text);
   MainInterface() { ; }
-  ~MainInterface() { ; }
+  // 0x0045EB80 is not recovered: a
+  // pending_bodies forwarder, because an empty inline stub emits
+  // nothing and the deleting destructor needs a `call rel32`.
+  ~MainInterface();
 
   int set_bubble_text(uint32_t button_id, LPCSTR text);
   void clear_message();

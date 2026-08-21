@@ -43,7 +43,10 @@ class Gamma : public GraphicWin {
  public:
   void on_scrolled(int a1, int a2);
   Gamma() { ; }
-  ~Gamma() { ; }
+  // 0x00456110 is not recovered: a
+  // pending_bodies forwarder, because an empty inline stub emits
+  // nothing and the deleting destructor needs a `call rel32`.
+  ~Gamma();
   int on_key_click(int a1, int a2);
 
   // Storage the image proves is here: its own methods reach 0x1920.

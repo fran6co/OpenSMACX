@@ -39,7 +39,10 @@ class DiploPop : public GraphicWin, public SubInterface {
  public:
   void hide();
   DiploPop() { ; }
-  ~DiploPop() { ; }
+  // 0x00440D50 is not recovered: a
+  // pending_bodies forwarder, because an empty inline stub emits
+  // nothing and the deleting destructor needs a `call rel32`.
+  ~DiploPop();
   void on_iface_left_click(int a1, int a2);
   void on_iface_right_click(int a1, int a2);
   void on_iface_left_down(int a1, int a2);

@@ -67,6 +67,20 @@
 #include "replaywin.h"
 #include "net_class.h"
 #include "temp.h"
+#include "alphamenu.h"
+#include "alphamovie.h"
+#include "credits.h"
+#include "diplopop.h"
+#include "diplowin.h"
+#include "multidebug.h"
+#include "netmsg.h"
+#include "netwin.h"
+#include "newtechwin.h"
+#include "pickwin.h"
+#include "popmenu.h"
+#include "prodpicker.h"
+#include "pushbutton.h"
+#include "socialwin.h"
 
 /*
  * THE FRONTIER.
@@ -603,6 +617,156 @@ void __cdecl alt_set(int a1, int a2, uint32_t a3) {  // 0x00591290
 int __cdecl popp(LPCSTR a1, LPCSTR a2, int a3, LPCSTR a4, int(__cdecl *a5)()) {  // 0x0048C0A0
     typedef int(__cdecl *pending)(LPCSTR, LPCSTR, int, LPCSTR, int(__cdecl *a5)());
     return PENDING_BODY(0x0048C0A0, pending)(a1, a2, a3, a4, a5);
+}
+
+AlphaMenu::~AlphaMenu() {  // ??1AlphaMenu@@QAE@XZ at 0x0051DC10
+    typedef void(__fastcall *pending)(AlphaMenu *, void *);
+    PENDING_BODY(0x0051DC10, pending)(this, nullptr);
+}
+
+AlphaMovie::~AlphaMovie() {  // ??1AlphaMovie@@QAE@XZ at 0x00404310
+    typedef void(__fastcall *pending)(AlphaMovie *, void *);
+    PENDING_BODY(0x00404310, pending)(this, nullptr);
+}
+
+BasePop::~BasePop() {  // ??1BasePop@@QAE@XZ at 0x004064D0
+    typedef void(__fastcall *pending)(BasePop *, void *);
+    PENDING_BODY(0x004064D0, pending)(this, nullptr);
+}
+
+BaseWin::~BaseWin() {  // ??1BaseWin@@QAE@XZ at 0x00420A70
+    typedef void(__fastcall *pending)(BaseWin *, void *);
+    PENDING_BODY(0x00420A70, pending)(this, nullptr);
+}
+
+CheckButton::~CheckButton() {  // ??1CheckButton@@QAE@XZ at 0x004B3EC0
+    typedef void(__fastcall *pending)(CheckButton *, void *);
+    PENDING_BODY(0x004B3EC0, pending)(this, nullptr);
+}
+
+CouncWin::~CouncWin() {  // ??1CouncWin@@QAE@XZ at 0x00428550
+    typedef void(__fastcall *pending)(CouncWin *, void *);
+    PENDING_BODY(0x00428550, pending)(this, nullptr);
+}
+
+Credits::~Credits() {  // ??1Credits@@QAE@XZ at 0x00428E90
+    typedef void(__fastcall *pending)(Credits *, void *);
+    PENDING_BODY(0x00428E90, pending)(this, nullptr);
+}
+
+Datalink::~Datalink() {  // ??1Datalink@@QAE@XZ at 0x00432290
+    typedef void(__fastcall *pending)(Datalink *, void *);
+    PENDING_BODY(0x00432290, pending)(this, nullptr);
+}
+
+DesignWin::~DesignWin() {  // ??1DesignWin@@QAE@XZ at 0x0043ECB0
+    typedef void(__fastcall *pending)(DesignWin *, void *);
+    PENDING_BODY(0x0043ECB0, pending)(this, nullptr);
+}
+
+DipEdit::~DipEdit() {  // ??1DipEdit@@QAE@XZ at 0x004E2240
+    typedef void(__fastcall *pending)(DipEdit *, void *);
+    PENDING_BODY(0x004E2240, pending)(this, nullptr);
+}
+
+DiploPop::~DiploPop() {  // ??1DiploPop@@QAE@XZ at 0x00440D50
+    typedef void(__fastcall *pending)(DiploPop *, void *);
+    PENDING_BODY(0x00440D50, pending)(this, nullptr);
+}
+
+DiploWin::~DiploWin() {  // ??1DiploWin@@QAE@XZ at 0x00444DB0
+    typedef void(__fastcall *pending)(DiploWin *, void *);
+    PENDING_BODY(0x00444DB0, pending)(this, nullptr);
+}
+
+Gamma::~Gamma() {  // ??1Gamma@@QAE@XZ at 0x00456110
+    typedef void(__fastcall *pending)(Gamma *, void *);
+    PENDING_BODY(0x00456110, pending)(this, nullptr);
+}
+
+MainInterface::~MainInterface() {  // ??1MainInterface@@QAE@XZ at 0x0045EB80
+    typedef void(__fastcall *pending)(MainInterface *, void *);
+    PENDING_BODY(0x0045EB80, pending)(this, nullptr);
+}
+
+Menu::~Menu() {  // ??1Menu@@QAE@XZ at 0x005FAD00
+    typedef void(__fastcall *pending)(Menu *, void *);
+    PENDING_BODY(0x005FAD00, pending)(this, nullptr);
+}
+
+MultiDebug::~MultiDebug() {  // ??1MultiDebug@@QAE@XZ at 0x005C9E00
+    typedef void(__fastcall *pending)(MultiDebug *, void *);
+    PENDING_BODY(0x005C9E00, pending)(this, nullptr);
+}
+
+NetMsg::~NetMsg() {  // ??1NetMsg@@QAE@XZ at 0x0047ADA0
+    typedef void(__fastcall *pending)(NetMsg *, void *);
+    PENDING_BODY(0x0047ADA0, pending)(this, nullptr);
+}
+
+NetWin::~NetWin() {  // ??1NetWin@@QAE@XZ at 0x004834E0
+    typedef void(__fastcall *pending)(NetWin *, void *);
+    PENDING_BODY(0x004834E0, pending)(this, nullptr);
+}
+
+NewTechWin::~NewTechWin() {  // ??1NewTechWin@@QAE@XZ at 0x00484810
+    typedef void(__fastcall *pending)(NewTechWin *, void *);
+    PENDING_BODY(0x00484810, pending)(this, nullptr);
+}
+
+PickWin::~PickWin() {  // ??1PickWin@@QAE@XZ at 0x0048A8E0
+    typedef void(__fastcall *pending)(PickWin *, void *);
+    PENDING_BODY(0x0048A8E0, pending)(this, nullptr);
+}
+
+PopMenu::~PopMenu() {  // ??1PopMenu@@QAE@XZ at 0x00421400
+    typedef void(__fastcall *pending)(PopMenu *, void *);
+    PENDING_BODY(0x00421400, pending)(this, nullptr);
+}
+
+ProdPicker::~ProdPicker() {  // ??1ProdPicker@@QAE@XZ at 0x00421100
+    typedef void(__fastcall *pending)(ProdPicker *, void *);
+    PENDING_BODY(0x00421100, pending)(this, nullptr);
+}
+
+PushButton::~PushButton() {  // ??1PushButton@@QAE@XZ at 0x0062C010
+    typedef void(__fastcall *pending)(PushButton *, void *);
+    PENDING_BODY(0x0062C010, pending)(this, nullptr);
+}
+
+ReplayWin::~ReplayWin() {  // ??1ReplayWin@@QAE@XZ at 0x005ADF10
+    typedef void(__fastcall *pending)(ReplayWin *, void *);
+    PENDING_BODY(0x005ADF10, pending)(this, nullptr);
+}
+
+ReportWin::~ReportWin() {  // ??1ReportWin@@QAE@XZ at 0x004AD3B0
+    typedef void(__fastcall *pending)(ReportWin *, void *);
+    PENDING_BODY(0x004AD3B0, pending)(this, nullptr);
+}
+
+SetupWin::~SetupWin() {  // ??1SetupWin@@QAE@XZ at 0x004AE790
+    typedef void(__fastcall *pending)(SetupWin *, void *);
+    PENDING_BODY(0x004AE790, pending)(this, nullptr);
+}
+
+SocialWin::~SocialWin() {  // ??1SocialWin@@QAE@XZ at 0x004B3C80
+    typedef void(__fastcall *pending)(SocialWin *, void *);
+    PENDING_BODY(0x004B3C80, pending)(this, nullptr);
+}
+
+StringBox::~StringBox() {  // ??1StringBox@@QAE@XZ at 0x004325C0
+    typedef void(__fastcall *pending)(StringBox *, void *);
+    PENDING_BODY(0x004325C0, pending)(this, nullptr);
+}
+
+TutWin::~TutWin() {  // ??1TutWin@@QAE@XZ at 0x004BE7D0
+    typedef void(__fastcall *pending)(TutWin *, void *);
+    PENDING_BODY(0x004BE7D0, pending)(this, nullptr);
+}
+
+WorldWin::~WorldWin() {  // ??1WorldWin@@QAE@XZ at 0x004C4A70
+    typedef void(__fastcall *pending)(WorldWin *, void *);
+    PENDING_BODY(0x004C4A70, pending)(this, nullptr);
 }
 
 // ?write_raw_l@Buffer@@QAEHPADHHH@Z at 0x005DBD00 - 1475 bytes, the raster

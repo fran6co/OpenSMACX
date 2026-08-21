@@ -62,7 +62,10 @@ class TutWin : public Popup {
               Sprite *sprite, int a6, int a7, int a8);
   void on_move(int a1, int a2);
   TutWin() { ; }
-  ~TutWin() { ; }
+  // 0x004BE7D0 is not recovered: a
+  // pending_bodies forwarder, because an empty inline stub emits
+  // nothing and the deleting destructor needs a `call rel32`.
+  ~TutWin();
   void UNK1();
   void UNK3(int a1);
   void do_base(RECT *rect, const char *text, int flag);

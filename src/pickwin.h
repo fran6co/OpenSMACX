@@ -38,7 +38,10 @@
 class PickWin : public GraphicWin {
  public:
   PickWin() { ; }
-  ~PickWin() { ; }
+  // 0x0048A8E0 is not recovered: a
+  // pending_bodies forwarder, because an empty inline stub emits
+  // nothing and the deleting destructor needs a `call rel32`.
+  ~PickWin();
   void on_button_passover(int a1, int a2);
 
   // Storage the image proves is here: its own methods reach 0x12644.

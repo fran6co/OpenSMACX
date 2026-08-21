@@ -107,7 +107,10 @@ class BasePop : public GraphicWin {
   // src/*.h has 145 empty inline constructors and destructors across 75
   // classes, so the same question is waiting on most of them.
   BasePop();
-  ~BasePop() { ; }
+  // 0x004064D0 is not recovered: a
+  // pending_bodies forwarder, because an empty inline stub emits
+  // nothing and the deleting destructor needs a `call rel32`.
+  ~BasePop();
   void set_loc(int x, int y);
   void set_width(int width);
   void write_check(long value);

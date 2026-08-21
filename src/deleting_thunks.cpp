@@ -28,6 +28,36 @@
 #include "graphicwin.h"
 #include "pulldown.h"
 #include "scroll.h"
+#include "alphamenu.h"
+#include "alphamovie.h"
+#include "basepop.h"
+#include "basewin.h"
+#include "checkbutton.h"
+#include "councwin.h"
+#include "credits.h"
+#include "datalink.h"
+#include "designwin.h"
+#include "dipedit.h"
+#include "diplopop.h"
+#include "diplowin.h"
+#include "gamma.h"
+#include "maininterface.h"
+#include "menu.h"
+#include "multidebug.h"
+#include "netmsg.h"
+#include "netwin.h"
+#include "newtechwin.h"
+#include "pickwin.h"
+#include "popmenu.h"
+#include "prodpicker.h"
+#include "pushbutton.h"
+#include "replaywin.h"
+#include "reportwin.h"
+#include "setupwin.h"
+#include "socialwin.h"
+#include "stringbox.h"
+#include "tutwin.h"
+#include "worldwin.h"
 
 /*
 Verification note: the generated leaf suite proves that each scalar deleting
@@ -55,86 +85,30 @@ the destructor patched to record its receiver. That is not built here.
 // Each seam defaults to the original body the thunk
 // reached; the hybrid redirects it to a recovered one at run
 // time, and the leaf suite rebinds it to a recorder.
-func_deleting_dtor AlphaMenuDtorTarget =
-    original_method<func_deleting_dtor>(0x0051DC10);
-func_deleting_dtor AlphaMovieDtorTarget =
-    original_method<func_deleting_dtor>(0x00404310);
 func_deleting_dtor AlphaSaveDtorTarget =
     original_method<func_deleting_dtor>(0x00408170);
-func_deleting_dtor BasePopDtorTarget =
-    original_method<func_deleting_dtor>(0x004064D0);
-func_deleting_dtor BaseWinDtorTarget =
-    original_method<func_deleting_dtor>(0x00420A70);
-func_deleting_dtor CheckButtonDtorTarget =
-    original_method<func_deleting_dtor>(0x004B3EC0);
-func_deleting_dtor CouncWinDtorTarget =
-    original_method<func_deleting_dtor>(0x00428550);
-func_deleting_dtor CreditsDtorTarget =
-    original_method<func_deleting_dtor>(0x00428E90);
-func_deleting_dtor DatalinkDtorTarget =
-    original_method<func_deleting_dtor>(0x00432290);
-func_deleting_dtor DesignWinDtorTarget =
-    original_method<func_deleting_dtor>(0x0043ECB0);
-func_deleting_dtor DipEditDtorTarget =
-    original_method<func_deleting_dtor>(0x004E2240);
-func_deleting_dtor DiploPopDtorTarget =
-    original_method<func_deleting_dtor>(0x00440D50);
-func_deleting_dtor DiploWinDtorTarget =
-    original_method<func_deleting_dtor>(0x00444DB0);
 func_deleting_dtor EditBoxDtorTarget =
     original_method<func_deleting_dtor>(0x00408010);
 func_deleting_dtor FameWinDtorTarget =
     original_method<func_deleting_dtor>(0x0044B100);
-func_deleting_dtor GammaDtorTarget =
-    original_method<func_deleting_dtor>(0x00456110);
 func_deleting_dtor ImageButtonDtorTarget =
     original_method<func_deleting_dtor>(0x00625310);
 func_deleting_dtor InterludeDtorTarget =
     original_method<func_deleting_dtor>(0x0045F740);
-func_deleting_dtor MainInterfaceDtorTarget =
-    original_method<func_deleting_dtor>(0x0045EB80);
-func_deleting_dtor MenuDtorTarget =
-    original_method<func_deleting_dtor>(0x005FAD00);
 func_deleting_dtor MonuWinDtorTarget =
     original_method<func_deleting_dtor>(0x00477B10);
-func_deleting_dtor MultiDebugDtorTarget =
-    original_method<func_deleting_dtor>(0x005C9E00);
 func_deleting_dtor MultiWinDtorTarget =
     original_method<func_deleting_dtor>(0x0047A430);
-func_deleting_dtor NetMsgDtorTarget =
-    original_method<func_deleting_dtor>(0x0047ADA0);
-func_deleting_dtor NetWinDtorTarget =
-    original_method<func_deleting_dtor>(0x004834E0);
-func_deleting_dtor NewTechWinDtorTarget =
-    original_method<func_deleting_dtor>(0x00484810);
 func_deleting_dtor PickTechDtorTarget =
     original_method<func_deleting_dtor>(0x00488690);
-func_deleting_dtor PickWinDtorTarget =
-    original_method<func_deleting_dtor>(0x0048A8E0);
-func_deleting_dtor PopMenuDtorTarget =
-    original_method<func_deleting_dtor>(0x00421400);
 func_deleting_dtor PopupDtorTarget =
     original_method<func_deleting_dtor>(0x00406C00);
 func_deleting_dtor PrefWinDtorTarget =
     original_method<func_deleting_dtor>(0x00491DF0);
-func_deleting_dtor ProdPickerDtorTarget =
-    original_method<func_deleting_dtor>(0x00421100);
-func_deleting_dtor PushButtonDtorTarget =
-    original_method<func_deleting_dtor>(0x0062C010);
 func_deleting_dtor QuayleWinDtorTarget =
     original_method<func_deleting_dtor>(0x00496710);
-func_deleting_dtor ReplayWinDtorTarget =
-    original_method<func_deleting_dtor>(0x005ADF10);
-func_deleting_dtor ReportWinDtorTarget =
-    original_method<func_deleting_dtor>(0x004AD3B0);
 func_deleting_dtor SelectPartWinDtorTarget =
     original_method<func_deleting_dtor>(0x0043EE10);
-func_deleting_dtor SetupWinDtorTarget =
-    original_method<func_deleting_dtor>(0x004AE790);
-func_deleting_dtor SocialWinDtorTarget =
-    original_method<func_deleting_dtor>(0x004B3C80);
-func_deleting_dtor StringBoxDtorTarget =
-    original_method<func_deleting_dtor>(0x004325C0);
 func_deleting_forward_nullary Sub004042B0Target =
     original_method<func_deleting_forward_nullary>(0x004042B0);
 func_deleting_dtor Sub004C86D0Target =
@@ -145,21 +119,17 @@ func_deleting_dtor Sub00633010Target =
     original_method<func_deleting_dtor>(0x00633010);
 func_deleting_forward Sub006336D0Target =
     original_method<func_deleting_forward>(0x006336D0);
-func_deleting_dtor TutWinDtorTarget =
-    original_method<func_deleting_dtor>(0x004BE7D0);
 func_deleting_dtor VoiceRxDtorTarget =
     original_method<func_deleting_dtor>(0x004C8A50);
 func_deleting_dtor VoiceTxDtorTarget =
     original_method<func_deleting_dtor>(0x004C8DB0);
-func_deleting_dtor WorldWinDtorTarget =
-    original_method<func_deleting_dtor>(0x004C4A70);
 
 /*
 Purpose: The compiler-generated scalar deleting destructor at
          ??_GAlphaMovie@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-// ORIGINAL: 0x004043A0 ??_GAlphaMovie@@UAEPAXI@Z 0x004043A0-0x004043C1
+// ORIGINAL: 0x004043A0 ??_GAlphaMovie@@UAEPAXI@Z 0x004043A0-0x004043C1 BYTE_EXACT
 // symbol    ?scalar_delete_alpha_movie@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype 
@@ -172,7 +142,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_alpha_movie(void *self, void *,
                                            unsigned int arg0) {
-    (ORIGINAL(self)->*AlphaMovieDtorTarget)();
+    static_cast<AlphaMovie *>(self)->AlphaMovie::~AlphaMovie();
     if (arg0 & 1) {
         operator delete(self);
     }
@@ -254,7 +224,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GBasePop@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-// ORIGINAL: 0x00406B40 ??_GBasePop@@UAEPAXI@Z 0x00406B40-0x00406B61
+// ORIGINAL: 0x00406B40 ??_GBasePop@@UAEPAXI@Z 0x00406B40-0x00406B61 BYTE_EXACT
 // symbol    ?scalar_delete_base_pop@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype 
@@ -267,7 +237,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_base_pop(void *self, void *,
                                         unsigned int arg0) {
-    (ORIGINAL(self)->*BasePopDtorTarget)();
+    static_cast<BasePop *>(self)->BasePop::~BasePop();
     if (arg0 & 1) {
         operator delete(self);
     }
@@ -500,7 +470,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GProdPicker@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-// ORIGINAL: 0x004213A0 ??_GProdPicker@@UAEPAXI@Z 0x004213A0-0x004213C1
+// ORIGINAL: 0x004213A0 ??_GProdPicker@@UAEPAXI@Z 0x004213A0-0x004213C1 BYTE_EXACT
 // symbol    ?scalar_delete_prod_picker@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype 
@@ -513,7 +483,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_prod_picker(void *self, void *,
                                            unsigned int arg0) {
-    (ORIGINAL(self)->*ProdPickerDtorTarget)();
+    static_cast<ProdPicker *>(self)->ProdPicker::~ProdPicker();
     if (arg0 & 1) {
         operator delete(self);
     }
@@ -525,7 +495,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GBaseWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-// ORIGINAL: 0x004213D0 ??_GBaseWin@@UAEPAXI@Z 0x004213D0-0x004213F1
+// ORIGINAL: 0x004213D0 ??_GBaseWin@@UAEPAXI@Z 0x004213D0-0x004213F1 BYTE_EXACT
 // symbol    ?scalar_delete_base_win@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype 
@@ -538,7 +508,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_base_win(void *self, void *,
                                         unsigned int arg0) {
-    (ORIGINAL(self)->*BaseWinDtorTarget)();
+    static_cast<BaseWin *>(self)->BaseWin::~BaseWin();
     if (arg0 & 1) {
         operator delete(self);
     }
@@ -550,7 +520,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GPopMenu@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-// ORIGINAL: 0x00421640 ??_GPopMenu@@UAEPAXI@Z 0x00421640-0x00421661
+// ORIGINAL: 0x00421640 ??_GPopMenu@@UAEPAXI@Z 0x00421640-0x00421661 BYTE_EXACT
 // symbol    ?scalar_delete_pop_menu@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype 
@@ -563,7 +533,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_pop_menu(void *self, void *,
                                         unsigned int arg0) {
-    (ORIGINAL(self)->*PopMenuDtorTarget)();
+    static_cast<PopMenu *>(self)->PopMenu::~PopMenu();
     if (arg0 & 1) {
         operator delete(self);
     }
@@ -684,7 +654,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GCouncWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-// ORIGINAL: 0x00428710 ??_GCouncWin@@UAEPAXI@Z 0x00428710-0x00428731
+// ORIGINAL: 0x00428710 ??_GCouncWin@@UAEPAXI@Z 0x00428710-0x00428731 BYTE_EXACT
 // symbol    ?scalar_delete_counc_win@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype void* (__thiscall ??_GCouncWin@@UAEPAXI@Z)(CouncWin* this, unsigned int)
@@ -697,7 +667,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_counc_win(void *self, void *,
                                          unsigned int arg0) {
-    (ORIGINAL(self)->*CouncWinDtorTarget)();
+    static_cast<CouncWin *>(self)->CouncWin::~CouncWin();
     if (arg0 & 1) {
         operator delete(self);
     }
@@ -733,7 +703,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GCredits@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-// ORIGINAL: 0x00428E60 ??_GCredits@@UAEPAXI@Z 0x00428E60-0x00428E81
+// ORIGINAL: 0x00428E60 ??_GCredits@@UAEPAXI@Z 0x00428E60-0x00428E81 BYTE_EXACT
 // symbol    ?scalar_delete_credits@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype 
@@ -745,7 +715,7 @@ Return Value: the object pointer
 Status: Complete
 */
 void *__fastcall scalar_delete_credits(void *self, void *, unsigned int arg0) {
-    (ORIGINAL(self)->*CreditsDtorTarget)();
+    static_cast<Credits *>(self)->Credits::~Credits();
     if (arg0 & 1) {
         operator delete(self);
     }
@@ -781,7 +751,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GStringBox@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-// ORIGINAL: 0x00432770 ??_GStringBox@@UAEPAXI@Z 0x00432770-0x00432791
+// ORIGINAL: 0x00432770 ??_GStringBox@@UAEPAXI@Z 0x00432770-0x00432791 BYTE_EXACT
 // symbol    ?scalar_delete_string_box@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype void* (__thiscall ??_GStringBox@@UAEPAXI@Z)(StringBox* this, unsigned int)
@@ -794,7 +764,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_string_box(void *self, void *,
                                           unsigned int arg0) {
-    (ORIGINAL(self)->*StringBoxDtorTarget)();
+    static_cast<StringBox *>(self)->StringBox::~StringBox();
     if (arg0 & 1) {
         operator delete(self);
     }
@@ -806,7 +776,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GDatalink@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-// ORIGINAL: 0x00432800 ??_GDatalink@@UAEPAXI@Z 0x00432800-0x00432821
+// ORIGINAL: 0x00432800 ??_GDatalink@@UAEPAXI@Z 0x00432800-0x00432821 BYTE_EXACT
 // symbol    ?scalar_delete_datalink@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype void* (__thiscall ??_GDatalink@@UAEPAXI@Z)(Datalink* this, unsigned int)
@@ -819,7 +789,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_datalink(void *self, void *,
                                         unsigned int arg0) {
-    (ORIGINAL(self)->*DatalinkDtorTarget)();
+    static_cast<Datalink *>(self)->Datalink::~Datalink();
     if (arg0 & 1) {
         operator delete(self);
     }
@@ -880,7 +850,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GDesignWin@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-// ORIGINAL: 0x0043EDB0 ??_GDesignWin@@UAEPAXI@Z 0x0043EDB0-0x0043EDD1
+// ORIGINAL: 0x0043EDB0 ??_GDesignWin@@UAEPAXI@Z 0x0043EDB0-0x0043EDD1 BYTE_EXACT
 // symbol    ?scalar_delete_design_win@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype 
@@ -893,7 +863,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_design_win(void *self, void *,
                                           unsigned int arg0) {
-    (ORIGINAL(self)->*DesignWinDtorTarget)();
+    static_cast<DesignWin *>(self)->DesignWin::~DesignWin();
     if (arg0 & 1) {
         operator delete(self);
     }
@@ -980,7 +950,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GDiploPop@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-// ORIGINAL: 0x00440EC0 ??_GDiploPop@@UAEPAXI@Z 0x00440EC0-0x00440EE1
+// ORIGINAL: 0x00440EC0 ??_GDiploPop@@UAEPAXI@Z 0x00440EC0-0x00440EE1 BYTE_EXACT
 // symbol    ?scalar_delete_diplo_pop@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype void* (__thiscall ??_GDiploPop@@UAEPAXI@Z)(DiploPop* this, unsigned int)
@@ -993,7 +963,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_diplo_pop(void *self, void *,
                                          unsigned int arg0) {
-    (ORIGINAL(self)->*DiploPopDtorTarget)();
+    static_cast<DiploPop *>(self)->DiploPop::~DiploPop();
     if (arg0 & 1) {
         operator delete(self);
     }
@@ -1029,7 +999,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GDiploWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-// ORIGINAL: 0x00445080 ??_GDiploWin@@UAEPAXI@Z 0x00445080-0x004450A1
+// ORIGINAL: 0x00445080 ??_GDiploWin@@UAEPAXI@Z 0x00445080-0x004450A1 BYTE_EXACT
 // symbol    ?scalar_delete_diplo_win@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype void* (__thiscall ??_GDiploWin@@UAEPAXI@Z)(DiploWin* this, unsigned int)
@@ -1042,7 +1012,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_diplo_win(void *self, void *,
                                          unsigned int arg0) {
-    (ORIGINAL(self)->*DiploWinDtorTarget)();
+    static_cast<DiploWin *>(self)->DiploWin::~DiploWin();
     if (arg0 & 1) {
         operator delete(self);
     }
@@ -1176,7 +1146,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GGamma@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-// ORIGINAL: 0x00456280 ??_GGamma@@UAEPAXI@Z 0x00456280-0x004562A1
+// ORIGINAL: 0x00456280 ??_GGamma@@UAEPAXI@Z 0x00456280-0x004562A1 BYTE_EXACT
 // symbol    ?scalar_delete_gamma@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype void* (__thiscall ??_GGamma@@UAEPAXI@Z)(Gamma* this, unsigned int)
@@ -1188,7 +1158,7 @@ Return Value: the object pointer
 Status: Complete
 */
 void *__fastcall scalar_delete_gamma(void *self, void *, unsigned int arg0) {
-    (ORIGINAL(self)->*GammaDtorTarget)();
+    static_cast<Gamma *>(self)->Gamma::~Gamma();
     if (arg0 & 1) {
         operator delete(self);
     }
@@ -1224,7 +1194,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GMainInterface@@UAEPAXI@Z: run the complete destructor, then
          release the storage through the executable's operator delete only when
          bit 0 of the flags asks.
-// ORIGINAL: 0x0045F1C0 ??_GMainInterface@@UAEPAXI@Z 0x0045F1C0-0x0045F1E1
+// ORIGINAL: 0x0045F1C0 ??_GMainInterface@@UAEPAXI@Z 0x0045F1C0-0x0045F1E1 BYTE_EXACT
 // symbol    ?scalar_delete_main_interface@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype 
@@ -1237,7 +1207,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_main_interface(void *self, void *,
                                               unsigned int arg0) {
-    (ORIGINAL(self)->*MainInterfaceDtorTarget)();
+    static_cast<MainInterface *>(self)->MainInterface::~MainInterface();
     if (arg0 & 1) {
         operator delete(self);
     }
@@ -1421,7 +1391,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GNetMsg@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-// ORIGINAL: 0x0047AD70 ??_GNetMsg@@UAEPAXI@Z 0x0047AD70-0x0047AD91
+// ORIGINAL: 0x0047AD70 ??_GNetMsg@@UAEPAXI@Z 0x0047AD70-0x0047AD91 BYTE_EXACT
 // symbol    ?scalar_delete_net_msg@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype void* (__thiscall ??_GNetMsg@@UAEPAXI@Z)(NetMsg* this, unsigned int)
@@ -1433,7 +1403,7 @@ Return Value: the object pointer
 Status: Complete
 */
 void *__fastcall scalar_delete_net_msg(void *self, void *, unsigned int arg0) {
-    (ORIGINAL(self)->*NetMsgDtorTarget)();
+    static_cast<NetMsg *>(self)->NetMsg::~NetMsg();
     if (arg0 & 1) {
         operator delete(self);
     }
@@ -1469,7 +1439,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GNetWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-// ORIGINAL: 0x004837C0 ??_GNetWin@@UAEPAXI@Z 0x004837C0-0x004837E1
+// ORIGINAL: 0x004837C0 ??_GNetWin@@UAEPAXI@Z 0x004837C0-0x004837E1 BYTE_EXACT
 // symbol    ?scalar_delete_net_win@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype void* (__thiscall ??_GNetWin@@UAEPAXI@Z)(NetWin* this, unsigned int)
@@ -1481,7 +1451,7 @@ Return Value: the object pointer
 Status: Complete
 */
 void *__fastcall scalar_delete_net_win(void *self, void *, unsigned int arg0) {
-    (ORIGINAL(self)->*NetWinDtorTarget)();
+    static_cast<NetWin *>(self)->NetWin::~NetWin();
     if (arg0 & 1) {
         operator delete(self);
     }
@@ -1517,7 +1487,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GNewTechWin@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-// ORIGINAL: 0x00484A80 ??_GNewTechWin@@UAEPAXI@Z 0x00484A80-0x00484AA1
+// ORIGINAL: 0x00484A80 ??_GNewTechWin@@UAEPAXI@Z 0x00484A80-0x00484AA1 BYTE_EXACT
 // symbol    ?scalar_delete_new_tech_win@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype void* (__thiscall ??_GNewTechWin@@UAEPAXI@Z)(NewTechWin* this, unsigned int)
@@ -1530,7 +1500,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_new_tech_win(void *self, void *,
                                             unsigned int arg0) {
-    (ORIGINAL(self)->*NewTechWinDtorTarget)();
+    static_cast<NewTechWin *>(self)->NewTechWin::~NewTechWin();
     if (arg0 & 1) {
         operator delete(self);
     }
@@ -1616,7 +1586,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GPickWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-// ORIGINAL: 0x0048ADC0 ??_GPickWin@@UAEPAXI@Z 0x0048ADC0-0x0048ADE1
+// ORIGINAL: 0x0048ADC0 ??_GPickWin@@UAEPAXI@Z 0x0048ADC0-0x0048ADE1 BYTE_EXACT
 // symbol    ?scalar_delete_pick_win@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype void* (__thiscall ??_GPickWin@@UAEPAXI@Z)(PickWin* this, unsigned int)
@@ -1629,7 +1599,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_pick_win(void *self, void *,
                                         unsigned int arg0) {
-    (ORIGINAL(self)->*PickWinDtorTarget)();
+    static_cast<PickWin *>(self)->PickWin::~PickWin();
     if (arg0 & 1) {
         operator delete(self);
     }
@@ -1790,7 +1760,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GReportWin@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-// ORIGINAL: 0x004AD840 ??_GReportWin@@UAEPAXI@Z 0x004AD840-0x004AD861
+// ORIGINAL: 0x004AD840 ??_GReportWin@@UAEPAXI@Z 0x004AD840-0x004AD861 BYTE_EXACT
 // symbol    ?scalar_delete_report_win@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype void* (__thiscall ??_GReportWin@@UAEPAXI@Z)(ReportWin* this, unsigned int)
@@ -1803,7 +1773,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_report_win(void *self, void *,
                                           unsigned int arg0) {
-    (ORIGINAL(self)->*ReportWinDtorTarget)();
+    static_cast<ReportWin *>(self)->ReportWin::~ReportWin();
     if (arg0 & 1) {
         operator delete(self);
     }
@@ -1840,7 +1810,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GSetupWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-// ORIGINAL: 0x004AE760 ??_GSetupWin@@UAEPAXI@Z 0x004AE760-0x004AE781
+// ORIGINAL: 0x004AE760 ??_GSetupWin@@UAEPAXI@Z 0x004AE760-0x004AE781 BYTE_EXACT
 // symbol    ?scalar_delete_setup_win@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype void* (__thiscall ??_GSetupWin@@UAEPAXI@Z)(SetupWin* this, unsigned int)
@@ -1853,7 +1823,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_setup_win(void *self, void *,
                                          unsigned int arg0) {
-    (ORIGINAL(self)->*SetupWinDtorTarget)();
+    static_cast<SetupWin *>(self)->SetupWin::~SetupWin();
     if (arg0 & 1) {
         operator delete(self);
     }
@@ -1889,7 +1859,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GCheckButton@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-// ORIGINAL: 0x004B3F20 ??_GCheckButton@@UAEPAXI@Z 0x004B3F20-0x004B3F41
+// ORIGINAL: 0x004B3F20 ??_GCheckButton@@UAEPAXI@Z 0x004B3F20-0x004B3F41 BYTE_EXACT
 // symbol    ?scalar_delete_check_button@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype void* (__thiscall ??_GCheckButton@@UAEPAXI@Z)(CheckButton* this, unsigned int)
@@ -1902,7 +1872,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_check_button(void *self, void *,
                                             unsigned int arg0) {
-    (ORIGINAL(self)->*CheckButtonDtorTarget)();
+    static_cast<CheckButton *>(self)->CheckButton::~CheckButton();
     if (arg0 & 1) {
         operator delete(self);
     }
@@ -1914,7 +1884,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GSocialWin@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-// ORIGINAL: 0x004B3F50 ??_GSocialWin@@UAEPAXI@Z 0x004B3F50-0x004B3F71
+// ORIGINAL: 0x004B3F50 ??_GSocialWin@@UAEPAXI@Z 0x004B3F50-0x004B3F71 BYTE_EXACT
 // symbol    ?scalar_delete_social_win@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype 
@@ -1927,7 +1897,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_social_win(void *self, void *,
                                           unsigned int arg0) {
-    (ORIGINAL(self)->*SocialWinDtorTarget)();
+    static_cast<SocialWin *>(self)->SocialWin::~SocialWin();
     if (arg0 & 1) {
         operator delete(self);
     }
@@ -1989,7 +1959,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GTutWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-// ORIGINAL: 0x004BE9F0 ??_GTutWin@@UAEPAXI@Z 0x004BE9F0-0x004BEA11
+// ORIGINAL: 0x004BE9F0 ??_GTutWin@@UAEPAXI@Z 0x004BE9F0-0x004BEA11 BYTE_EXACT
 // symbol    ?scalar_delete_tut_win@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype void* (__thiscall ??_GTutWin@@UAEPAXI@Z)(TutWin* this, unsigned int)
@@ -2001,7 +1971,7 @@ Return Value: the object pointer
 Status: Complete
 */
 void *__fastcall scalar_delete_tut_win(void *self, void *, unsigned int arg0) {
-    (ORIGINAL(self)->*TutWinDtorTarget)();
+    static_cast<TutWin *>(self)->TutWin::~TutWin();
     if (arg0 & 1) {
         operator delete(self);
     }
@@ -2037,7 +2007,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GWorldWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-// ORIGINAL: 0x004C4C70 ??_GWorldWin@@UAEPAXI@Z 0x004C4C70-0x004C4C91
+// ORIGINAL: 0x004C4C70 ??_GWorldWin@@UAEPAXI@Z 0x004C4C70-0x004C4C91 BYTE_EXACT
 // symbol    ?scalar_delete_world_win@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype void* (__thiscall ??_GWorldWin@@UAEPAXI@Z)(WorldWin* this, unsigned int)
@@ -2050,7 +2020,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_world_win(void *self, void *,
                                          unsigned int arg0) {
-    (ORIGINAL(self)->*WorldWinDtorTarget)();
+    static_cast<WorldWin *>(self)->WorldWin::~WorldWin();
     if (arg0 & 1) {
         operator delete(self);
     }
@@ -2186,7 +2156,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GDipEdit@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-// ORIGINAL: 0x004E23C0 ??_GDipEdit@@UAEPAXI@Z 0x004E23C0-0x004E23E1
+// ORIGINAL: 0x004E23C0 ??_GDipEdit@@UAEPAXI@Z 0x004E23C0-0x004E23E1 BYTE_EXACT
 // symbol    ?scalar_delete_dip_edit@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype void* (__thiscall ??_GDipEdit@@UAEPAXI@Z)(DipEdit* this, unsigned int)
@@ -2199,7 +2169,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_dip_edit(void *self, void *,
                                         unsigned int arg0) {
-    (ORIGINAL(self)->*DipEditDtorTarget)();
+    static_cast<DipEdit *>(self)->DipEdit::~DipEdit();
     if (arg0 & 1) {
         operator delete(self);
     }
@@ -2235,7 +2205,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GAlphaMenu@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-// ORIGINAL: 0x0051DC90 ??_GAlphaMenu@@UAEPAXI@Z 0x0051DC90-0x0051DCB1
+// ORIGINAL: 0x0051DC90 ??_GAlphaMenu@@UAEPAXI@Z 0x0051DC90-0x0051DCB1 BYTE_EXACT
 // symbol    ?scalar_delete_alpha_menu@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype void* (__thiscall ??_GAlphaMenu@@UAEPAXI@Z)(AlphaMenu* this, unsigned int)
@@ -2248,7 +2218,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_alpha_menu(void *self, void *,
                                           unsigned int arg0) {
-    (ORIGINAL(self)->*AlphaMenuDtorTarget)();
+    static_cast<AlphaMenu *>(self)->AlphaMenu::~AlphaMenu();
     if (arg0 & 1) {
         operator delete(self);
     }
@@ -2285,7 +2255,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GReplayWin@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-// ORIGINAL: 0x005AE0B0 ??_GReplayWin@@UAEPAXI@Z 0x005AE0B0-0x005AE0D1
+// ORIGINAL: 0x005AE0B0 ??_GReplayWin@@UAEPAXI@Z 0x005AE0B0-0x005AE0D1 BYTE_EXACT
 // symbol    ?scalar_delete_replay_win@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype void* (__thiscall ??_GReplayWin@@UAEPAXI@Z)(ReplayWin* this, unsigned int)
@@ -2298,7 +2268,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_replay_win(void *self, void *,
                                           unsigned int arg0) {
-    (ORIGINAL(self)->*ReplayWinDtorTarget)();
+    static_cast<ReplayWin *>(self)->ReplayWin::~ReplayWin();
     if (arg0 & 1) {
         operator delete(self);
     }
@@ -2335,7 +2305,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GMultiDebug@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-// ORIGINAL: 0x005C9E80 ??_GMultiDebug@@UAEPAXI@Z 0x005C9E80-0x005C9EA1
+// ORIGINAL: 0x005C9E80 ??_GMultiDebug@@UAEPAXI@Z 0x005C9E80-0x005C9EA1 BYTE_EXACT
 // symbol    ?scalar_delete_multi_debug@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype void* (__thiscall ??_GMultiDebug@@UAEPAXI@Z)(MultiDebug* this, unsigned int)
@@ -2348,7 +2318,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_multi_debug(void *self, void *,
                                            unsigned int arg0) {
-    (ORIGINAL(self)->*MultiDebugDtorTarget)();
+    static_cast<MultiDebug *>(self)->MultiDebug::~MultiDebug();
     if (arg0 & 1) {
         operator delete(self);
     }
@@ -2534,7 +2504,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GMenu@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-// ORIGINAL: 0x005FC6D0 ??_GMenu@@UAEPAXI@Z 0x005FC6D0-0x005FC6EE
+// ORIGINAL: 0x005FC6D0 ??_GMenu@@UAEPAXI@Z 0x005FC6D0-0x005FC6EE BYTE_EXACT
 // symbol    ?scalar_delete_menu@@YIPAXPAX0I@Z
 // size      30 bytes
 // prototype void* (__thiscall ??_GMenu@@UAEPAXI@Z)(Menu* this, unsigned int)
@@ -2546,7 +2516,7 @@ Return Value: the object pointer
 Status: Complete
 */
 void *__fastcall scalar_delete_menu(void *self, void *, unsigned int arg0) {
-    (ORIGINAL(self)->*MenuDtorTarget)();
+    static_cast<Menu *>(self)->Menu::~Menu();
     if (arg0 & 1) {
         operator delete(self);
     }
@@ -2705,7 +2675,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GPushButton@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-// ORIGINAL: 0x0062C830 ??_GPushButton@@UAEPAXI@Z 0x0062C830-0x0062C84E
+// ORIGINAL: 0x0062C830 ??_GPushButton@@UAEPAXI@Z 0x0062C830-0x0062C84E BYTE_EXACT
 // symbol    ?scalar_delete_push_button@@YIPAXPAX0I@Z
 // size      30 bytes
 // prototype void* (__thiscall ??_GPushButton@@UAEPAXI@Z)(PushButton* this, unsigned int)
@@ -2718,7 +2688,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_push_button(void *self, void *,
                                            unsigned int arg0) {
-    (ORIGINAL(self)->*PushButtonDtorTarget)();
+    static_cast<PushButton *>(self)->PushButton::~PushButton();
     if (arg0 & 1) {
         operator delete(self);
     }
