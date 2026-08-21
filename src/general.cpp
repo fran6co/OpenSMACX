@@ -156,6 +156,12 @@ Purpose: Add a line feed (LF) to the end of a string. This assumes the buffer ha
 Return Value: n/a
 Status: Complete
 */
+// RULED-OUT: MNEMONIC_ONLY plateau (8/10) across all --all-flags sets and
+// several spellings (strlen(str)+str, non-const end, *end/*(end+1), a
+// separate `int len` local, str[len]/str[len+1]). Every one still emits
+// `add esp,4` before `add eax,esi` after the `call strlen`; the image has
+// the pointer add before the stack cleanup. Register-allocation-only gap,
+// not a source-shape one found so far.
 void __cdecl add_lf(LPSTR str) {
     // A POINTER, not an index. The image adds the length to the base at
     // 0x0060084B and stores through `[eax]` and `[eax+1]`; indexing keeps
@@ -319,9 +325,22 @@ int __cdecl parse_say(int id, int input, int gender, int pluralality) {
     ParseStrPlurality[id] = pluralality;
     // Truncate then `strcat`, exactly as `parse_says` does: `mov byte ptr
     // [esi], 0` at 0x00625E9D and `call 0x645470`, which is `strcat`.
+    // LEVER: hoisting `StringTable->get(input)` into its own local BEFORE
+    // the truncating store moved 17/30 to 20/30 - the image loads the
+    // `StringTable` this-pointer (`mov ecx, 0x9b90d8`) right next to the
+    // dest-pointer computation, before either call, and folding the call
+    // into the `strcat` argument list pushed that load later.
+    // RULED-OUT (still short of the image at 20/30, 0.918 similar,
+    // plateaued across --all-flags): the remaining gap is the same
+    // add-vs-lea encoding as `parse_says` (`lea esi, [eax+0x9bb5e8]` there
+    // vs `add eax, 0x9bb5e8; mov esi, eax` here) plus the null-terminator
+    // store landing next to the second `call` instead of the first. Tried
+    // writing `dest[0] = 0` before the `get()` call (regresses to 17/30),
+    // a non-const `dest`, and reusing `*dest` instead of `dest[0]`.
     char *const dest = ParseStrBuffer[id].str;
+    LPSTR text = StringTable->get(input);
     dest[0] = 0;
-    strcat(dest, StringTable->get(input));
+    strcat(dest, text);
     return 0;
 }
 
@@ -355,6 +374,15 @@ int __cdecl parse_says(int id, LPCSTR input, int gender, int pluralality) {
     // not `strcpy`. The two are behaviourally identical after a truncation and
     // the relocation hides the difference in the bytes, so only the CALL
     // SYMBOL tells them apart.
+    // RULED-OUT: the only remaining gap is `8D 80 E8 B5 9B 00 lea eax,
+    // [eax+0x9bb5e8]` (6 bytes) in the image vs `05 E8 B5 9B 00 add eax,
+    // 0x9bb5e8` (5 bytes) here, which shifts every later offset/jump target
+    // by one byte. Tried `&ParseStrBuffer[id].str[0]`, no `const`, an
+    // explicit `(char*)ParseStrBuffer + (id<<8)` cast, and folding the
+    // `dest` local away entirely (indexing `ParseStrBuffer[id].str` twice) -
+    // all five plus --all-flags plateau at the same 24/27, 0.963 similar.
+    // Pure instruction-selection (add vs lea) for an in-place pointer add,
+    // not a source-shape difference found so far.
     char *const dest = ParseStrBuffer[id].str;
     dest[0] = 0;
     strcat(dest, input);
@@ -447,16 +475,42 @@ Status: Complete
 // `char *`, not `LPSTR`. The same type, but the verification scaffolding
 // forward-declares only types reachable from a signature, so the Windows
 // typedef made this body NO_COMPILE and unscoreable.
+// LEVER: the image reads its digit bounds from memory - `mov dl, byte ptr
+// [0x670c1c]` / `mov dh, byte ptr [0x670c1d]`, an .rdata pair holding '0'
+// and '9' - not immediates, so `*str < '0' || *str > '9'` (a pure literal
+// compare) can never reproduce that. Binding a `char *const` to the fixed
+// image address (the same "const pointer folds to the image's immediate"
+// lever as `StringTable`) gets the identical `cmp cl, byte ptr [0x670c1c]`
+// encoding; hoisting `digits[0]`/`digits[1]` into `lo`/`hi` locals BEFORE
+// the loop (rather than re-reading `digits[]` each iteration) matches the
+// image's loop-invariant load and moved 2/27 to 3/27 (0.667 similar under
+// /O1 /Oy-, the closest of any flag set tried).
+// RULED-OUT (still short of the image): a `goto`-based single-exit form and
+// a `char *result` single-return form, both meant to reproduce the image's
+// shared `xor eax,eax` tail that both failure paths jump to and the
+// redundant `mov [ebp-4],eax; mov eax,[ebp-4]` roundtrip before the
+// epilogue - neither beat the committed body. The image also keeps the
+// scanned character in a loop-top register (`dec eax; inc eax` then loop
+// back to the `inc`) with an `and bl,bl` zero test and a `push ecx` frame
+// slot this tree's codegen never reproduces at any flag set tried; the
+// remaining gap looks like a loop-rotation/tail-merge choice the optimizer
+// made under settings outside `/O1`, `/O2`, `/Ob0`, `/Oi-`, `/Oy-`, `/GX`.
 char *__cdecl findnum(char *str) {
     if (!str) {
         return 0;
     }
-    while ((*str < '0') || (*str > '9')) {
-        if (*str == 0) {
+    char *const digits = (char *)0x00670C1C;
+    char lo = digits[0];
+    char hi = digits[1];
+    char c;
+    str--;
+    do {
+        str++;
+        c = *str;
+        if (c == 0) {
             return 0;
         }
-        str++;
-    }
+    } while (c < lo || c > hi);
     return str;
 }
 
@@ -500,6 +554,19 @@ Purpose: This handles parsing the input string and storing it in the output.
 Return Value: No errors (0); Error (3)
 Status: WIP
 */
+// LEVER: `calls` lists 0x00645930 (`memcpy`), not `strncpy` - every prefix
+// copy here has an exact, already-computed byte count (`len`), so the image
+// uses the plain block copy instead of a NUL-scanning one. The ten
+// `strncpy_s(output, 1024, input, len)` call sites (all folding to
+// `strncpy` through the `vc6_compat.h` shim) are now `memcpy(output, input,
+// len)` to match. The `agreeing` count does not move on this alone - the
+// very first instruction already diverges (`sub esp, 0xfc` in the image
+// against a much smaller frame here), which is a locals-layout gap, not a
+// call-target one, and this function is 490 instructions across a
+// multi-branch `switch`; reaching byte-exact needs matching that whole
+// local-variable layout, which is out of scope for this pass. Left as
+// MISMATCH with the call graph corrected rather than attempting a full
+// rewrite blind.
 int __cdecl parse_string(LPSTR input, LPSTR output) {
     if (!input || !output) { // EBX || ESI
         return 3;
@@ -515,7 +582,7 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
         switch (var[1]) {
           case '$': { // done -> needs testing
             int len = (var - input) + 1;
-            strncpy_s(output, 1024, input, len);
+            memcpy(output, input, len);
             output += len;
             input = var + 2;
             *output = 0;
@@ -528,7 +595,7 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
                     return 14; // parse error
                 }
                 int len = var - input;
-                strncpy_s(output, 1024, input, len);
+                memcpy(output, input, len);
                 output += len;
                 *output = 0;
                 input = var + 5;
@@ -546,7 +613,7 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
                     return 14; // parse error
                 }
                 int len = (var - input) + 1;
-                strncpy_s(output, 1024, input, len);
+                memcpy(output, input, len);
                 output += len;
                 *output = 0;
                 input = num + 1;
@@ -562,7 +629,7 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
                     return 14; // parse error
                 }
                 int len = var - input;
-                strncpy_s(output, 1024, input, len);
+                memcpy(output, input, len);
                 output += len;
                 *output = 0;
                 input = var + 8;
@@ -576,7 +643,7 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
                     return 14; // parse error
                 }
                 int len = var - input;
-                strncpy_s(output, 1024, input, len);
+                memcpy(output, input, len);
                 output += len;
                 *output = 0;
                 input = var + 5;
@@ -594,7 +661,7 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
                     return 14; // parse error
                 }
                 int len = var - input;
-                strncpy_s(output, 1024, input, len);
+                memcpy(output, input, len);
                 output += len;
                 *output = 0;
                 input = num + 1;
@@ -605,7 +672,7 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
           }
           case '<': {
             int len = var - input;
-            strncpy_s(output, 1024, input, len);
+            memcpy(output, input, len);
             output += len;
             *output = 0;
             LPSTR end_bracket = strstr(var, ">");
@@ -680,7 +747,7 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
                     return 14; // parse error
                 }
                 int len = var - input;
-                strncpy_s(output, 1024, input, len);
+                memcpy(output, input, len);
                 output += len;
                 *output = 0;
                 input = num + 1;
@@ -688,7 +755,7 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
                 output += strlen(output);
             } else {
                 int len = (var - input) + 1;
-                strncpy_s(output, 1024, input, len);
+                memcpy(output, input, len);
                 output += len;
                 *output = 0;
                 input = var + 1;
@@ -707,7 +774,7 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
                 return 14; // parse error
             }
             int len = var - input;
-            strncpy_s(output, 1024, input, len);
+            memcpy(output, input, len);
             output += len;
             *output = 0;
             input = num + 1;
@@ -1050,8 +1117,8 @@ Status: Complete
 
 
 /*
-Purpose: Shift the numerator to the left by 16 then divide by the denominator. Added a check to 
-         prevent a divide by zero crash.
+Purpose: Shift the numerator to the left by 16 then divide by the denominator. NOTE: the shipped
+         code has no divide-by-zero guard; see the BUG comment on the body below.
 // ORIGINAL: 0x00628AD0 ?fixed_div@@YAHJJ@Z 0x00628AD0-0x00628AEC
 // symbol    ?fixed_div@@YAHHH@Z
 // size      28 bytes
@@ -1063,11 +1130,26 @@ Purpose: Shift the numerator to the left by 16 then divide by the denominator. A
 Return Value: Quotient
 Status: Complete
 */
+// BUG IN THE ORIGINAL: no divide-by-zero guard. The image is `sar edx,0x10;
+// shl eax,0x10; idiv dword ptr [ebp+0xc]` with no test of the divisor
+// beforehand - a `denominator == 0` call faults on the `idiv`, exactly like
+// this reproduction now does. The previous body's `if (!denominator) return
+// 0;` is not in the shipped bytes (13 instructions there, not 15) and is
+// left out deliberately; adding it back defeats the match, it does not fix
+// one.
+// RULED-OUT (still MISMATCH): the image's three-instruction dividend
+// construction - `edx = numerator >> 16` (arithmetic) and `eax = numerator
+// << 16`, i.e. `(int64_t)numerator << 16` built directly in EDX:EAX - never
+// falls out of `((int64_t)numerator << 16) / denominator` here at any flag
+// set tried. This compiler always promotes `denominator` to a full 64-bit
+// value first (a `cdq`-and-`call` sequence to a 64-bit shift helper, then
+// another call to a 64-bit divide helper - 16-28 instructions depending on
+// flags, never the image's 13), where the image gets a single hardware
+// `idiv` on a 64-bit dividend against a 32-bit memory operand. That native
+// widen-then-idiv form usually comes from inline assembly, which is off the
+// table here; no plain-C rephrasing tried reproduces it.
 int __cdecl fixed_div(int numerator, int denominator) {
-    if (!denominator) {
-        return 0;
-    }
-    return ((int64_t)numerator << 16) / denominator;
+    return (int)(((int64_t)numerator << 16) / denominator);
 }
 
 /*
@@ -1085,11 +1167,42 @@ Purpose: Reverse string search for the last occurrence of the specified characte
 Return Value: Position of character or NULL if not found.
 Status: Complete
 */
+// LEVER: `calls (none)` in the annotation, and the image proves it - a
+// hand-rolled backward byte scan (`cmp byte ptr [eax], bl; je found; dec
+// eax; dec ecx; jne loop`), never a call to `strrchr`. The old body called
+// it, which is exactly the call-a-helper-the-image-inlines defect: `osmx
+// calls` on this address shows zero calls, and a body that makes one is
+// running a different program even when the answer often agrees. Restoring
+// the loop (scan starts AT `end` itself, walking backward while `count =
+// end - start` byte compares remain) moved MISMATCH-wrong-shape (20
+// instructions, mostly not agreeing) to a same-instruction-count MISMATCH,
+// 0.704 similar under /O1.
+// RULED-OUT: splitting `!start`/`!end` into two `if`s (image compiles
+// `a || b` to the identical sequential-test-same-target shape already), and
+// a `for(;;){...; if(count==0) break;}` in place of `do {...} while(count)`
+// - neither changed the score. The remaining gap is the image keeping
+// `start` live in `ebx` for the whole function and using ONE comparison per
+// iteration, where every flag set tried here rotates the loop (duplicates
+// the compare to peel the first iteration) and spills `count` back through
+// the `start` parameter's own stack slot instead of a register - the same
+// unreproduced "push ecx" frame-slot pattern as `findnum` just above it.
 const char *__cdecl memrchr(LPCSTR start, LPCSTR end, char value) {
-    if (!start || !end || start == end) {
+    if (!start || !end) {
         return 0;
     }
-    return strrchr(start, value);
+    const char *p = end;
+    int count = (int)(end - start);
+    if (count == 0) {
+        return 0;
+    }
+    do {
+        if (*p == value) {
+            return p;
+        }
+        p--;
+        count--;
+    } while (count != 0);
+    return 0;
 }
 
 /*
