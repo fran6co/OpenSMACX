@@ -1031,17 +1031,31 @@ def semantic(
         chosen.append(claimants[0])
 
     updated = []
-    for piece in chosen:
-        if withdraw:
+    if withdraw:
+        for piece in chosen:
             if piece.semantic:
                 updated.append(replace(piece, semantic=False))
                 typer.echo(f"{piece.address_hex}  withdrawn")
-            continue
-        command = _command_for(compile_commands, piece.path, borrow)
-        try:
-            result = compare_record(piece, exe, command, FLAG_SETS, shared)
-        except (ValueError, CompileFailed) as problem:
-            typer.secho(f"{piece.address_hex}: {problem}", fg=typer.colors.RED)
+        if updated:
+            write_file(updated)
+        typer.echo(f"\n{len(updated)} annotation(s) rewritten")
+        return
+
+    # IN PARALLEL, for the same reason `record` is: `sweep --semantic` hands
+    # this a list, and one compile is a wine invocation.
+    work = [(piece, exe, _command_for(compile_commands, piece.path, borrow),
+             shared) for piece in chosen]
+    jobs = max(1, min(os.cpu_count() or 1, WINE_CEILING))
+    if len(work) > 1 and jobs > 1:
+        pool = concurrent.futures.ProcessPoolExecutor(max_workers=jobs)
+        with pool:
+            measured = list(pool.map(_record_one, work))
+    else:
+        measured = [_record_one(job) for job in work]
+
+    for piece, result in measured:
+        if isinstance(result, str):
+            typer.secho(f"{piece.address_hex}: {result}", fg=typer.colors.RED)
             raise typer.Exit(2) from None
         why = _not_semantic(result)
         if why:
@@ -1063,125 +1077,12 @@ def _not_semantic(result) -> str:
     if str(result.verdict) == "BYTE_EXACT":
         return ("it is BYTE_EXACT - claim that instead, a weaker claim would "
                 "cover for a stronger one")
-    if result.original_instructions != result.compiled_instructions:
-        return (f"{result.compiled_instructions} instructions against the "
-                f"image's {result.original_instructions} - a different "
-                f"program, not a different allocation")
-    if result.mnemonic_similarity < 1.0:
-        return (f"mnemonic similarity {result.mnemonic_similarity:.3f}, not "
-                f"1.000 - the operations themselves differ")
-    return ""
-
-
-@app.command()
-def sweep(
-    src: Annotated[Path, typer.Option(envvar="OPENSMACX_SRC")] = REPO_ROOT / "src",
-    exe: Annotated[Path, typer.Option(
-        envvar="OPENSMACX_IMAGE",
-    )] = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe",
-    compile_commands: Annotated[Path, typer.Option(
-        envvar="OPENSMACX_COMPILE_COMMANDS",
-    )] = REPO_ROOT / "build" / "compile_commands.json",
-    borrow: Annotated[str, typer.Option(
-        help="Compile a file the build does not name with THIS file's "
-             "command.")] = "src/buffer.cpp",
-    jobs: Annotated[int, typer.Option(
-        help=f"Concurrent compiles. Capped at {WINE_CEILING}: one shared "
-             f"wine prefix.")] = 0,
-    verdicts: Annotated[bool, typer.Option(
-        "--verdicts",
-        help="Print EVERY unclaimed body's verdict, worst last, not just "
-             "the ones that reproduce. This is the only way to see which "
-             "of them are close.")] = False,
-    as_json: Annotated[bool, typer.Option("--json")] = False,
-) -> None:
-    """WHICH UNCLAIMED BODIES ALREADY REPRODUCE.
-
-    A body goes byte exact because of a change somewhere else - a global that
-    stopped being a pointer, a helper that moved in-class, a seam that was
-    deleted - and nothing tells its annotation. `check` cannot find those: it
-    only re-measures what already claims to be exact.
-
-    Prints the addresses to hand to `record`. It writes nothing itself,
-    because a sweep that stamped its own findings would be a `check` that
-    could never fail.
-    """
-    _fresh_compile_commands(compile_commands, False)
-    records = read(src)
-    built = build_inputs(compile_commands)
-    grouped: dict = {}
-    for record in records:
-        if record.byte_exact or record.path not in built:
-            continue
-        if not record.image_spans or not record.name:
-            continue
-        grouped.setdefault(record.path, []).append(record)
-    candidates = sum(len(v) for v in grouped.values())
-    if not candidates:
-        typer.echo("no unclaimed bodies in the build's own files")
-        raise typer.Exit(0)
-
-    jobs = max(1, min(jobs or (os.cpu_count() or 1), WINE_CEILING))
-    work = [(path, mine, exe, _command_for(compile_commands, path, borrow),
-             FLAG_SETS) for path, mine in grouped.items()]
-    if not as_json:
-        typer.echo(f"{candidates:,} unclaimed bodies in {len(grouped):,} "
-                   f"files, {jobs} at a time")
-
-    measured: dict = {}
-    if jobs == 1:
-        batches = (_check_one_file(job) for job in work)
-    else:
-        pool = concurrent.futures.ProcessPoolExecutor(max_workers=jobs)
-        with pool:
-            batches = [done.result() for done in
-                       concurrent.futures.as_completed(
-                           [pool.submit(_check_one_file, job)
-                            for job in work])]
-    notes: dict = {}
-    for batch in batches:
-        for key, verdict, note in batch:
-            measured[key] = verdict
-            notes[key] = note
-
-    by_claim = {_claim_key(r): r for group in grouped.values() for r in group}
-    if verdicts:
-        order = {"BYTE_EXACT": 0, "SHAPE_EXACT": 1, "MNEMONIC_ONLY": 2,
-                 "MISMATCH": 3}
-        rows = sorted(((order.get(verdict, 4), -_agreeing(notes.get(key, "")),
-                        verdict, by_claim[key], key)
-                       for key, verdict in measured.items() if key in by_claim),
-                      key=lambda row: row[:2])
-        if as_json:
-            typer.echo(json.dumps([{"address": r.address_hex,
-                                    "verdict": verdict, "name": r.name,
-                                    "score": notes.get(key, ""),
-                                    "file": str(r.path)}
-                                   for _, _, verdict, r, key in rows],
-                                  indent=2))
-            raise typer.Exit(0)
-        for _, _, verdict, r, key in rows:
-            typer.echo(f"  {r.address_hex}  {verdict:14s} "
-                       f"{notes.get(key, ''):28s} {r.path.name:22s} {r.name}")
-        tally: dict = {}
-        for _, _, verdict, _r in rows:
-            tally[verdict] = tally.get(verdict, 0) + 1
-        typer.echo("  ".join(f"{v}: {n:,}" for v, n in sorted(tally.items())))
-        raise typer.Exit(0)
-    found = sorted((by_claim[key] for key, verdict in measured.items()
-                    if verdict == "BYTE_EXACT" and key in by_claim),
-                   key=lambda r: r.address)
-    if as_json:
-        typer.echo(json.dumps([{"address": r.address_hex, "name": r.name,
-                                "file": str(r.path)} for r in found], indent=2))
-        raise typer.Exit(0)
-    for record in found:
-        typer.secho(f"  {record.address_hex}  {record.name}  "
-                    f"{record.path.name}", fg=typer.colors.GREEN)
-    typer.echo(f"{len(found):,} of {candidates:,} unclaimed bodies already "
-               f"reproduce")
-    if found:
-        typer.echo("  osmx record " + " ".join(r.address_hex for r in found))
+    # `decomp.asm.allocation_only` IS the test, and it is stricter than any
+    # tier: SHAPE_EXACT means a VALUE is wrong, which is a semantic difference
+    # and not an allocation. An earlier version of this asked for mnemonic
+    # similarity of 1.000 instead, and would have granted the claim to a body
+    # with a wrong loop bound.
+    return result.allocation_only
 
 
 # WHAT THE BUILD IS CONFIGURED WITH, read off the cache the first time and
@@ -1397,16 +1298,29 @@ def _named_file(record: DecompilationState) -> str | None:
     return None
 
 
-def _claims_by_file(records: list) -> dict:
-    """Every RATCHET CLAIM, grouped by file - byte-exact and semantic alike.
+def _claims_by_file(records: list, built: set | None = None) -> dict:
+    """Every record worth scoring, grouped by file.
 
-    Both are claims re-proved on every run; the difference is what they claim,
-    not whether they are checked.
+    THE CLAIMS AND THE CANDIDATES IN ONE PASS. A claim - byte-exact or
+    semantic - is re-proved; an unclaimed body in a file the build compiles is
+    measured to see whether it has started reproducing, which used to be a
+    second command that compiled the whole tree again.
+
+    What must NOT follow is stamping: a run that recorded its own findings
+    would be a `check` that could never fail. It reports them; `record` writes
+    them.
     """
     grouped: dict = {}
     for record in records:
-        if record.byte_exact or record.semantic:
+        claimed = record.byte_exact or record.semantic
+        if claimed:
             grouped.setdefault(record.path, []).append(record)
+            continue
+        if built is None or record.path not in built:
+            continue
+        if not record.image_spans or not record.name:
+            continue
+        grouped.setdefault(record.path, []).append(record)
     return grouped
 
 
@@ -1441,15 +1355,11 @@ def _rank(verdict: str) -> int:
 def _semantic_note_holds(note: str) -> bool:
     """Whether a scorer's note still supports a SEMANTIC claim.
 
-    The note carries what the claim rests on: `<m>/<n> instructions, <s>
-    similar`, plus `, <c> compiled` WHEN THE COUNTS DIFFER. So a claim holds
-    when the similarity is 1.000 and no compiled count was printed - the
-    absence of that clause is the counts agreeing.
+    The scorer stamps `[allocation-only]` when `decomp.asm.allocation_only`
+    found nothing but register numbers between the two listings. That is the
+    whole test, and it is the same one `osmx semantic` applies when granting.
     """
-    if ", " in note and "compiled" in note:
-        return False
-    found = re.search(r"([\d.]+) similar", note or "")
-    return bool(found) and float(found.group(1)) >= 1.0
+    return "[allocation-only]" in (note or "")
 
 
 def _agreeing(note: str) -> int:
@@ -1459,12 +1369,14 @@ def _agreeing(note: str) -> int:
 
 
 def _check_one_file(job: tuple) -> list[tuple[tuple, str, str]]:
-    """Score every claim in one file. Runs in a worker process.
+    """Score every record in one file - claimed and unclaimed alike.
 
-    ONE COMPILE PER FLAG SET, NOT PER RECORD, and it stops as soon as every
-    claim in the file has been proved: this tree's claims are 626 across 96
-    files, so per record is 2,504 compiles and per file is at most 384 -
-    usually far fewer, because most bodies settle on the first invocation.
+    ONE COMPILE PER FLAG SET, NOT PER RECORD: this tree's records are ~2,100
+    across ~90 files, so per record is thousands of compiles and per file is
+    at most ten. It stops as soon as every record in the file is BYTE_EXACT,
+    which is almost never now that unclaimed bodies are included - the early
+    exit was worth more when only claims were scored, and scoring everything
+    in ONE pass is worth more than the exit was.
     """
     path, records, exe, command, flag_sets = job
     best: dict = {}
@@ -1503,12 +1415,16 @@ def _check_one_file(job: tuple) -> list[tuple[tuple, str, str]]:
             # within a tier. Most of the remaining work is MISMATCHes, and the
             # word alone cannot tell one that is two instructions out from one
             # nobody has started.
+            # THE NOTE CARRIES WHAT A SEMANTIC CLAIM RESTS ON as well as the
+            # agreement, because `check` re-proves both from it.
             score = (f"{result.matching_instructions}/"
                      f"{result.original_instructions} instructions, "
                      f"{result.mnemonic_similarity:.3f} similar"
                      + (f", {result.compiled_instructions} compiled"
                         if result.compiled_instructions
-                        != result.original_instructions else ""))
+                        != result.original_instructions else "")
+                     + (" [allocation-only]" if result.allocation_only == ""
+                        else ""))
             key = _claim_key(record)
             if key not in best or best[key][0] != "BYTE_EXACT":
                 previous = best.get(key)
@@ -1574,18 +1490,22 @@ def check(
                 + duplicated_markers(records)
                 + redundant_artifacts(records))
     unread = unread_markers(src)
-    grouped = _claims_by_file(records)
-    claims = sum(len(v) for v in grouped.values())
+
+    # THE BUILD DATABASE IS THE AUTHORITY ON WHOSE FAULT A WALL IS - see
+    # `unasked_here` below - and on which unclaimed bodies are worth measuring.
+    # Read once, not once per file.
+    built = build_inputs(compile_commands)
+    grouped = _claims_by_file(records, built)
+    claimed = {_claim_key(r) for group in grouped.values() for r in group
+               if r.byte_exact or r.semantic}
+    claims = len(claimed)
+    scored = sum(len(v) for v in grouped.values())
     if not claims:
         typer.secho(f"no BYTE_EXACT claims under {src}",
                     fg=typer.colors.RED)
         raise typer.Exit(2)
 
     jobs = max(1, min(jobs or (os.cpu_count() or 1), WINE_CEILING))
-
-    # THE BUILD DATABASE IS THE AUTHORITY ON WHOSE FAULT A WALL IS; see
-    # `unasked_here` below. Read once, not once per file.
-    built = build_inputs(compile_commands)
 
     work = []
     for path, mine in grouped.items():
@@ -1595,7 +1515,8 @@ def check(
     if not as_json:
         # `--json` must emit JSON and nothing else, or it is not
         # machine-readable - which is the only reason it exists.
-        typer.echo(f"{claims:,} claims in {len(grouped):,} files, "
+        typer.echo(f"{scored:,} bodies ({claims:,} claimed) in "
+                   f"{len(grouped):,} files, "
                    f"{jobs} at a time")
     measured: dict = {}
     if jobs == 1:
@@ -1663,15 +1584,25 @@ def check(
 
     regressed = [(by_claim[k], v, n)
                  for k, (v, n) in sorted(measured.items())
-                 if not holds(by_claim[k], v, n)
+                 if k in claimed and not holds(by_claim[k], v, n)
                  and not unasked_here(by_claim[k], v)]
     unasked = [(by_claim[k], v, n)
                for k, (v, n) in sorted(measured.items())
-               if not holds(by_claim[k], v, n)
+               if k in claimed and not holds(by_claim[k], v, n)
                and unasked_here(by_claim[k], v)]
     semantic_held = [by_claim[k] for k, (v, n) in measured.items()
-                     if by_claim[k].semantic and v != "BYTE_EXACT"
-                     and holds(by_claim[k], v, n)]
+                     if k in claimed and by_claim[k].semantic
+                     and v != "BYTE_EXACT" and holds(by_claim[k], v, n)]
+    # THE OTHER HALF OF THE PASS: bodies nobody has claimed that now
+    # reproduce, and bodies that would support a semantic claim. Reported,
+    # never stamped - see `_claims_by_file`.
+    free = sorted((by_claim[k] for k, (v, _n) in measured.items()
+                   if k not in claimed and v == "BYTE_EXACT"),
+                  key=lambda r: r.address)
+    allocation = sorted((by_claim[k] for k, (v, n) in measured.items()
+                         if k not in claimed and v != "BYTE_EXACT"
+                         and _semantic_note_holds(n)),
+                        key=lambda r: r.address)
     broken = regressed + unasked
 
     if as_json:
@@ -1684,6 +1615,10 @@ def check(
             "reproduced": claims - len(broken),
             "semantic": [{"address": r.address_hex, "name": r.name}
                          for r in semantic_held],
+            "free": [{"address": r.address_hex, "name": r.name,
+                      "file": str(r.path)} for r in free],
+            "allocation_only": [{"address": r.address_hex, "name": r.name,
+                                 "file": str(r.path)} for r in allocation],
             "regressed": rows(regressed),
             "unverifiable": rows(unasked),
             "dangling_bodies": [{"address": r.address_hex,
@@ -1714,6 +1649,20 @@ def check(
             typer.secho(
                 f"  {len(semantic_held):,} semantic: same instructions, "
                 f"different registers", fg=typer.colors.CYAN)
+        # WHAT THE SAME PASS FOUND WITHOUT BEING ASKED. Printed, never
+        # written: `record` and `semantic` are the commands that write.
+        if free:
+            typer.secho(
+                f"  {len(free):,} unclaimed body(s) already reproduce:",
+                fg=typer.colors.GREEN)
+            typer.echo("    osmx record "
+                       + " ".join(r.address_hex for r in free))
+        if allocation:
+            typer.secho(
+                f"  {len(allocation):,} unclaimed body(s) differ only in "
+                f"register allocation:", fg=typer.colors.CYAN)
+            typer.echo("    osmx semantic "
+                       + " ".join(r.address_hex for r in allocation))
         typer.secho(
             f"{claims - len(broken) - len(semantic_held):,} verified, "
             f"{len(semantic_held):,} semantic, {len(regressed):,} "

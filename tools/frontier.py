@@ -4,8 +4,9 @@
 WHY. The standing goal is to walk depth first from WinMain until everything
 reachable is byte exact or semantically equivalent, and nothing in the tree
 answers "what is reachable and not yet exact, nearest the root first". `check`
-re-measures claims, `sweep` measures unclaimed bodies - both are flat lists
-over the whole tree, so neither says which of 1,900 candidates is ON THE PATH.
+scores every body in the build's own files - claims and candidates alike -
+but as a flat list over the whole tree, so it cannot say which of them is ON
+THE PATH.
 
 The edges come from the shipped bytes, not from any annotation's `calls` fact,
 which is a sorted set produced by a pass that no longer runs.

@@ -228,7 +228,7 @@ Purpose: Follow a two-link chain, or return zero when the first link is unset.
          DIFFERENT fields, which is easy to lose when transcribing and produces
          a body that works whenever the two happen to agree.
 
-// ORIGINAL: 0x005E3630 sub_5e3630 0x005E3630-0x005E3644
+// ORIGINAL: 0x005E3630 sub_5e3630 0x005E3630-0x005E3644 SEMANTIC
 // symbol    ?leaf_005e3630_redirect@@YIIPAX0@Z
 // size      20 bytes
 // prototype 

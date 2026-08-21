@@ -140,7 +140,7 @@ void __fastcall global_arith_0048d590_redirect(void *, void *) {
 /*
 Purpose: sub_48d5b0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-// ORIGINAL: 0x0048D5B0 sub_48d5b0 0x0048D5B0-0x0048D5C4
+// ORIGINAL: 0x0048D5B0 sub_48d5b0 0x0048D5B0-0x0048D5C4 SEMANTIC
 // symbol    ?global_arith_0048d5b0_redirect@@YIXPAX0@Z
 // size      20 bytes
 // prototype 
@@ -161,7 +161,7 @@ void __fastcall global_arith_0048d5b0_redirect(void *, void *) {
 /*
 Purpose: sub_48d5d0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-// ORIGINAL: 0x0048D5D0 sub_48d5d0 0x0048D5D0-0x0048D5E4
+// ORIGINAL: 0x0048D5D0 sub_48d5d0 0x0048D5D0-0x0048D5E4 SEMANTIC
 // symbol    ?global_arith_0048d5d0_redirect@@YIXPAX0@Z
 // size      20 bytes
 // prototype 
@@ -204,7 +204,7 @@ void __fastcall global_arith_0048d5f0_redirect(void *, void *) {
 /*
 Purpose: sub_48d610 - arithmetic over 4 fixed global(s), one
          statement per original instruction.
-// ORIGINAL: 0x0048D610 sub_48d610 0x0048D610-0x0048D62B
+// ORIGINAL: 0x0048D610 sub_48d610 0x0048D610-0x0048D62B SEMANTIC
 // symbol    ?global_arith_0048d610_redirect@@YIXPAX0@Z
 // size      27 bytes
 // prototype 
@@ -227,7 +227,7 @@ void __fastcall global_arith_0048d610_redirect(void *, void *) {
 /*
 Purpose: sub_48d630 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-// ORIGINAL: 0x0048D630 sub_48d630 0x0048D630-0x0048D644
+// ORIGINAL: 0x0048D630 sub_48d630 0x0048D630-0x0048D644 SEMANTIC
 // symbol    ?global_arith_0048d630_redirect@@YIXPAX0@Z
 // size      20 bytes
 // prototype 
@@ -270,7 +270,7 @@ void __fastcall global_arith_0048d670_redirect(void *, void *) {
 /*
 Purpose: sub_48d690 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-// ORIGINAL: 0x0048D690 sub_48d690 0x0048D690-0x0048D6A4
+// ORIGINAL: 0x0048D690 sub_48d690 0x0048D690-0x0048D6A4 SEMANTIC
 // symbol    ?global_arith_0048d690_redirect@@YIXPAX0@Z
 // size      20 bytes
 // prototype 
@@ -291,7 +291,7 @@ void __fastcall global_arith_0048d690_redirect(void *, void *) {
 /*
 Purpose: sub_48d6b0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-// ORIGINAL: 0x0048D6B0 sub_48d6b0 0x0048D6B0-0x0048D6C4
+// ORIGINAL: 0x0048D6B0 sub_48d6b0 0x0048D6B0-0x0048D6C4 SEMANTIC
 // symbol    ?global_arith_0048d6b0_redirect@@YIXPAX0@Z
 // size      20 bytes
 // prototype 
@@ -334,7 +334,7 @@ void __fastcall global_arith_0048d6d0_redirect(void *, void *) {
 /*
 Purpose: sub_48d6f0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-// ORIGINAL: 0x0048D6F0 sub_48d6f0 0x0048D6F0-0x0048D704
+// ORIGINAL: 0x0048D6F0 sub_48d6f0 0x0048D6F0-0x0048D704 SEMANTIC
 // symbol    ?global_arith_0048d6f0_redirect@@YIXPAX0@Z
 // size      20 bytes
 // prototype 
@@ -355,7 +355,7 @@ void __fastcall global_arith_0048d6f0_redirect(void *, void *) {
 /*
 Purpose: sub_48d710 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-// ORIGINAL: 0x0048D710 sub_48d710 0x0048D710-0x0048D724
+// ORIGINAL: 0x0048D710 sub_48d710 0x0048D710-0x0048D724 SEMANTIC
 // symbol    ?global_arith_0048d710_redirect@@YIXPAX0@Z
 // size      20 bytes
 // prototype 
@@ -482,7 +482,7 @@ void __fastcall global_arith_0048d790_redirect(void *, void *) {
 /*
 Purpose: sub_48d7b0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-// ORIGINAL: 0x0048D7B0 sub_48d7b0 0x0048D7B0-0x0048D7C4
+// ORIGINAL: 0x0048D7B0 sub_48d7b0 0x0048D7B0-0x0048D7C4 SEMANTIC
 // symbol    ?global_arith_0048d7b0_redirect@@YIXPAX0@Z
 // size      20 bytes
 // prototype 
@@ -503,7 +503,7 @@ void __fastcall global_arith_0048d7b0_redirect(void *, void *) {
 /*
 Purpose: sub_48d7d0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-// ORIGINAL: 0x0048D7D0 sub_48d7d0 0x0048D7D0-0x0048D7E4
+// ORIGINAL: 0x0048D7D0 sub_48d7d0 0x0048D7D0-0x0048D7E4 SEMANTIC
 // symbol    ?global_arith_0048d7d0_redirect@@YIXPAX0@Z
 // size      20 bytes
 // prototype 
@@ -524,7 +524,7 @@ void __fastcall global_arith_0048d7d0_redirect(void *, void *) {
 /*
 Purpose: sub_48d7f0 - arithmetic over 4 fixed global(s), one
          statement per original instruction.
-// ORIGINAL: 0x0048D7F0 sub_48d7f0 0x0048D7F0-0x0048D80B
+// ORIGINAL: 0x0048D7F0 sub_48d7f0 0x0048D7F0-0x0048D80B SEMANTIC
 // symbol    ?global_arith_0048d7f0_redirect@@YIXPAX0@Z
 // size      27 bytes
 // prototype 
