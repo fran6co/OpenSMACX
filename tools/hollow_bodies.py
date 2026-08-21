@@ -160,9 +160,31 @@ if __name__ == "__main__":
         if count == 0 or (count == 1 and _trivial(record)):
             rows.append((record.size, count, record))
 
+    # AND WHETHER THE REAL BODY ALREADY EXISTS. `Midi_Device`'s constructor was
+    # `{ ; }` under a 60-byte marker while a BYTE_EXACT transcription of it sat
+    # in `src/recovered/units/004c5740.cpp` - so the work was not "write this
+    # body" but "promote the one already written". Eight of the nine had one.
+    # Promoting is still not copying: the artifact reaches its fields through
+    # `reinterpret_cast<char *>(this) + 0x18` and the class usually names them.
+    def artifact_for(address: int) -> Path | None:
+        stem = f"{address:08x}"
+        for where in ("recovered", "recovered/units", "unrecovered"):
+            candidate = REPO_ROOT / "src" / where / f"{stem}.cpp"
+            if candidate.exists():
+                return candidate
+        return None
+
     rows.sort(key=lambda r: -r[0])
+    have = 0
     for size, count, record in rows:
+        art = artifact_for(record.address)
+        if art:
+            have += 1
+        where = (f"  <- {art.relative_to(REPO_ROOT / 'src')}"
+                 if art else "  (no artifact - must be written)")
         print(f"  {record.address_hex}  {size:5,}b image, {count:2d} "
               f"statement(s)   {record.path.name:20s} {record.name}")
+        print(f"      {where}")
     print(f"\n{len(rows)} marker(s) with an EMPTY or bare-return body over "
-          f">= {floor} image bytes")
+          f">= {floor} image bytes; {have} have a transcription in an artifact "
+          f"waiting to be promoted")
