@@ -1251,6 +1251,17 @@ Status: Complete
 
 /*
 Purpose: Calculate a basic XOR checksum for the data buffer.
+// HAND-WRITTEN ASSEMBLY IN THE ORIGINAL, so byte-exactness is NOT reachable
+// from C++ and the honest ceiling here is semantic equivalence. The shipped
+// bytes use the `loop` instruction, which VC6 never emits - it counts down
+// with `dec`/`jne` - and it uses `lodsb` bare, which the compiler
+// only emits under a `rep` prefix. Found by
+// `tools/handwritten_asm.py`, which scans every unclaimed body for opcodes
+// this compiler does not generate; there are seven in the game code.
+//
+// Do NOT grind spellings here, and do NOT write `__asm`: a semantic C++ body
+// is worth more than a byte-exact assembly one. `Buffer::vline` reached 0.925
+// similar before this was noticed.
 // ORIGINAL: 0x00539090 ?checksum@@YAEPADHE@Z 0x00539090-0x005390B4
 // size      36 bytes
 // prototype 
@@ -1276,6 +1287,17 @@ uint8_t __cdecl checksum(char *buffer, int size, uint8_t seed) {
 
 /*
 Purpose: Calculate a basic XOR checksum for a password string.
+// HAND-WRITTEN ASSEMBLY IN THE ORIGINAL, so byte-exactness is NOT reachable
+// from C++ and the honest ceiling here is semantic equivalence. The shipped
+// bytes use the `loop` instruction, which VC6 never emits - it counts down
+// with `dec`/`jne` - and it uses `lodsb` bare, which the compiler
+// only emits under a `rep` prefix. Found by
+// `tools/handwritten_asm.py`, which scans every unclaimed body for opcodes
+// this compiler does not generate; there are seven in the game code.
+//
+// Do NOT grind spellings here, and do NOT write `__asm`: a semantic C++ body
+// is worth more than a byte-exact assembly one. `Buffer::vline` reached 0.925
+// similar before this was noticed.
 // ORIGINAL: 0x005390C0 ?checksum_password@@YAHPAD@Z 0x005390C0-0x00539157
 // symbol    ?checksum_password@@YAIPBD@Z
 // size      151 bytes
