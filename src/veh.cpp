@@ -29,12 +29,6 @@
 #include "technology.h"
 #include "terraforming.h"
 
-VehPrototype *VehPrototypes = (VehPrototype *)0x009AB868; // [512]
-Veh *Vehs = (Veh *)0x00952828; // [2049]
-RulesChassis *Chassis = (RulesChassis *)0x0094A330; // [9]
-RulesWeapon *Weapon = (RulesWeapon *)0x0094AE60; // [26]
-RulesArmor *Armor = (RulesArmor *)0x0094F278; // [14]
-RulesOrder *Order = (RulesOrder *)0x0096C878; // [9]
 
 int VehCurrentCount;  // 0x009A64C8
 int VehDropLiftVehID;  // 0x009B2280
@@ -43,7 +37,6 @@ int VehLiftY;  // 0x009B2284
 BOOL VehBitError;  // 0x009B228C
 int VehMoraleModifierCount; // only used by say_morale(), optimize to local var?
 // Battle related globals
-LPSTR *VehBattleDisplay = (LPSTR *)0x0090F554; // [2][4][80]
 LPSTR VehBattleDisplayTerrain;
 
 /*
@@ -306,7 +299,7 @@ int __cdecl drop_range(int faction_id) {
 
 /*
 Purpose: Check whether the specified prototype is a planet buster.
-// ORIGINAL: 0x005004F0 ?planet_buster2@@YAHH@Z 0x005004F0-0x00500518
+// ORIGINAL: 0x005004F0 ?planet_buster2@@YAHH@Z 0x005004F0-0x00500518 BYTE_EXACT
 // symbol    ?planet_buster2@@YAIH@Z
 // size      40 bytes
 // prototype int (__cdecl ?planet_buster2@@YAHH@Z)(int protoID)
@@ -325,7 +318,7 @@ Status: Complete
 
 /*
 Purpose: Check whether the specified unit is a planet buster.
-// ORIGINAL: 0x00500520 ?planet_buster@@YAHH@Z 0x00500520-0x00500556
+// ORIGINAL: 0x00500520 ?planet_buster@@YAHH@Z 0x00500520-0x00500556 BYTE_EXACT
 // symbol    ?planet_buster@@YAIH@Z
 // size      54 bytes
 // prototype int (__cdecl ?planet_buster@@YAHH@Z)(int vehID)
@@ -1269,7 +1262,7 @@ void __cdecl invasions(int base_id) {
 
 /*
 Purpose: Direct the unit to start moving automatically towards the specified tile.
-// ORIGINAL: 0x00560AD0 ?go_to@@YAXHDHH@Z 0x00560AD0-0x00560B25
+// ORIGINAL: 0x00560AD0 ?go_to@@YAXHDHH@Z 0x00560AD0-0x00560B25 BYTE_EXACT
 // size      85 bytes
 // prototype void (__cdecl ?go_to@@YAXHDHH@Z)(int vehID, int8 type, int xCoord, int yCoord)
 // callers   1   call targets   0
@@ -1445,7 +1438,7 @@ int __cdecl veh_top(int veh_id) {
 
 /*
 Purpose: Get the current moves left for the specified unit.
-// ORIGINAL: 0x00579960 ?veh_moves@@YAHH@Z 0x00579960-0x00579998
+// ORIGINAL: 0x00579960 ?veh_moves@@YAHH@Z 0x00579960-0x00579998 BYTE_EXACT
 // size      56 bytes
 // prototype int (__cdecl ?veh_moves@@YAHH@Z)(int vehID)
 // callers   1   call targets   1
@@ -1463,7 +1456,7 @@ Status: Complete
 
 /*
 Purpose: Get the specified unit's reactor power value from its prototype.
-// ORIGINAL: 0x005799A0 ?proto_power@@YAHH@Z 0x005799A0-0x005799F9
+// ORIGINAL: 0x005799A0 ?proto_power@@YAHH@Z 0x005799A0-0x005799F9 BYTE_EXACT
 // size      89 bytes
 // prototype int (__cdecl ?proto_power@@YAHH@Z)(int vehID)
 // callers   1   call targets   0
@@ -1483,7 +1476,7 @@ int __cdecl proto_power(int veh_id) {
 
 /*
 Purpose: Determine whether the specified unit is eligible for a monolith morale upgrade.
-// ORIGINAL: 0x00579F80 ?want_monolith@@YAHH@Z 0x00579F80-0x00579FE6
+// ORIGINAL: 0x00579F80 ?want_monolith@@YAHH@Z 0x00579F80-0x00579FE6 BYTE_EXACT
 // size      102 bytes
 // prototype int (__cdecl ?want_monolith@@YAHH@Z)(int vehID)
 // callers   2   call targets   1
@@ -2280,7 +2273,7 @@ uint32_t __cdecl proto_cost(int chassis_id, int weapon_id, int armor_id,
 
 /*
 Purpose: Calculates the base cost of the specified prototype.
-// ORIGINAL: 0x005A5D00 ?base_cost@@YAHH@Z 0x005A5D00-0x005A5D3F
+// ORIGINAL: 0x005A5D00 ?base_cost@@YAHH@Z 0x005A5D00-0x005A5D3F BYTE_EXACT
 // size      63 bytes
 // prototype int (__cdecl ?base_cost@@YAHH@Z)(int protoID)
 // callers   1   call targets   1
@@ -3417,7 +3410,7 @@ int __cdecl veh_drop(int veh_id, int x, int y) {
 
 /*
 Purpose: Set the unit's status to sentry/board.
-// ORIGINAL: 0x005C01A0 ?sleep@@YAXH@Z 0x005C01A0-0x005C01CA
+// ORIGINAL: 0x005C01A0 ?sleep@@YAXH@Z 0x005C01A0-0x005C01CA BYTE_EXACT
 // size      42 bytes
 // prototype void (__cdecl ?sleep@@YAXH@Z)(int vehID)
 // callers   8   call targets   0
@@ -3904,7 +3897,7 @@ BOOL __cdecl veh_jail(int veh_id) {
 
 /*
 Purpose: Sets all moves for the specified unit as expended.
-// ORIGINAL: 0x005C1D20 ?veh_skip@@YAXH@Z 0x005C1D20-0x005C1D42
+// ORIGINAL: 0x005C1D20 ?veh_skip@@YAXH@Z 0x005C1D20-0x005C1D42 BYTE_EXACT
 // size      34 bytes
 // prototype void (__cdecl ?veh_skip@@YAXH@Z)(int vehID)
 // callers   19   call targets   1

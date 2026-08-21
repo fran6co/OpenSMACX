@@ -27,10 +27,6 @@
 #include "technology.h"
 #include "veh.h"
 
-Player *Players = (Player *)0x00946A50;
-PlayerData *PlayersData = (PlayerData *)0x0096C9E0;
-RulesSocialCategory *SocialCategories = (RulesSocialCategory *)0x0094B000;
-uint32_t *FactionRankings = (uint32_t *)0x009A64EC; // [8]
 uint32_t RankingFactionIDUnk1;  // 0x009A650C
 uint32_t RankingFactionIDUnk2;  // 0x009A6510
 int DiploFriction;  // 0x0093FA74 // not always bounded, should it be 0-20?
@@ -86,7 +82,7 @@ void __cdecl psych_check(int faction_id, int *drones, int *talents) {
 /*
 Purpose: Check whether the primary faction has at least one of the specified treaties (bitfield) 
          with the secondary faction.
-// ORIGINAL: 0x005002F0 ?has_treaty@@YAHHHH@Z 0x005002F0-0x00500319
+// ORIGINAL: 0x005002F0 ?has_treaty@@YAHHHH@Z 0x005002F0-0x00500319 BYTE_EXACT
 // size      41 bytes
 // prototype int (__cdecl ?has_treaty@@YAHHHH@Z)(int factionID, int factionIDWith, int treaty)
 // callers   4   call targets   0
@@ -104,7 +100,7 @@ Status: Complete
 
 /*
 Purpose: Get the faction's name adjective.
-// ORIGINAL: 0x0050B910 ?get_adjective@@YAHH@Z 0x0050B910-0x0050B92A
+// ORIGINAL: 0x0050B910 ?get_adjective@@YAHH@Z 0x0050B910-0x0050B92A BYTE_EXACT
 // symbol    ?get_adjective@@YAPADH@Z
 // size      26 bytes
 // prototype int (__cdecl ?get_adjective@@YAHH@Z)(int factionID)
@@ -141,7 +137,7 @@ LPSTR __cdecl get_noun(int faction_id) {
 
 /*
 Purpose: Determine whether automatic contact is enabled for net or PBEM games.
-// ORIGINAL: 0x00539160 ?auto_contact@@YAHXZ 0x00539160-0x00539193
+// ORIGINAL: 0x00539160 ?auto_contact@@YAHXZ 0x00539160-0x00539193 BYTE_EXACT
 // size      51 bytes
 // prototype 
 // callers   3   call targets   0
@@ -410,7 +406,7 @@ uint32_t __cdecl get_mood(int friction) {
 
 /*
 Purpose: Calculate the negative reputation the specified faction has with another.
-// ORIGINAL: 0x0053A100 ?reputation@@YAHHH@Z 0x0053A100-0x0053A14D
+// ORIGINAL: 0x0053A100 ?reputation@@YAHHH@Z 0x0053A100-0x0053A14D BYTE_EXACT
 // size      77 bytes
 // prototype 
 // callers   4   call targets   0
@@ -427,7 +423,7 @@ int __cdecl reputation(int faction_id, int faction_id_with) {
 
 /*
 Purpose: Calculate the amount of patience the specified faction has with another.
-// ORIGINAL: 0x0053A150 ?get_patience@@YAHHH@Z 0x0053A150-0x0053A1B8
+// ORIGINAL: 0x0053A150 ?get_patience@@YAHHH@Z 0x0053A150-0x0053A1B8 BYTE_EXACT
 // size      104 bytes
 // prototype int (__cdecl ?get_patience@@YAHHH@Z)(int factionIDWith, int factionID)
 // callers   1   call targets   0
@@ -668,7 +664,7 @@ void __cdecl set_agenda(int faction_id, int faction_id_with, int agenda, BOOL se
 /*
 Purpose: Check whether the primary faction has at least one of the specified agendas (bitfield)
          with the secondary faction.
-// ORIGINAL: 0x005591E0 ?has_agenda@@YAHHHH@Z 0x005591E0-0x00559209
+// ORIGINAL: 0x005591E0 ?has_agenda@@YAHHHH@Z 0x005591E0-0x00559209 BYTE_EXACT
 // size      41 bytes
 // prototype int (__cdecl ?has_agenda@@YAHHHH@Z)(int factionID, int factionIDWith, int agenda)
 // callers   1   call targets   0
@@ -1235,7 +1231,7 @@ BOOL __cdecl at_site(int faction_id, int type, int x, int y) {
 
 /*
 Purpose: Wipe all goals for the specified faction then recreate any active site related goals.
-// ORIGINAL: 0x00579D80 ?wipe_goals@@YAXH@Z 0x00579D80-0x00579DFC
+// ORIGINAL: 0x00579D80 ?wipe_goals@@YAXH@Z 0x00579D80-0x00579DFC BYTE_EXACT
 // size      124 bytes
 // prototype void (__cdecl ?wipe_goals@@YAXH@Z)(int factionID)
 // callers   1   call targets   1
@@ -1329,7 +1325,7 @@ void __cdecl del_site(int faction_id, int type, int x, int y, int proximity) {
 
 /*
 Purpose: Calculate the cost for the faction to corner the Global Energy Market (Economic Victory).
-// ORIGINAL: 0x0059EE50 ?corner_market@@YAHH@Z 0x0059EE50-0x0059EEDD
+// ORIGINAL: 0x0059EE50 ?corner_market@@YAHH@Z 0x0059EE50-0x0059EEDD BYTE_EXACT
 // size      141 bytes
 // prototype int (__cdecl ?corner_market@@YAHH@Z)(int factionID)
 // callers   2   call targets   1
@@ -1747,7 +1743,7 @@ void __cdecl social_calc(SocialCategory *category, SocialEffect *effect, int fac
 
 /*
 Purpose: Handle the social engineering turn upkeep for the specified faction.
-// ORIGINAL: 0x005B44D0 ?social_upkeep@@YAXH@Z 0x005B44D0-0x005B4550
+// ORIGINAL: 0x005B44D0 ?social_upkeep@@YAXH@Z 0x005B44D0-0x005B4550 BYTE_EXACT
 // size      128 bytes
 // prototype void (__cdecl ?social_upkeep@@YAXH@Z)(int factionID)
 // callers   2   call targets   1
@@ -1804,7 +1800,7 @@ uint32_t __cdecl social_upheaval(int faction_id, SocialCategory *category_new) {
 
 /*
 Purpose: Check to see whether the faction can utilize a specific social category and model.
-// ORIGINAL: 0x005B4730 ?society_avail@@YAHHHH@Z 0x005B4730-0x005B4786
+// ORIGINAL: 0x005B4730 ?society_avail@@YAHHHH@Z 0x005B4730-0x005B4786 BYTE_EXACT
 // size      86 bytes
 // prototype int (__cdecl ?society_avail@@YAHHHH@Z)(int socCategory, int socModel, int factionID)
 // callers   5   call targets   1

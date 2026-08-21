@@ -324,7 +324,7 @@ void __cdecl planetfall(int faction_id) {
 
 /*
 Purpose: Clear and reset scenario game variables.
-// ORIGINAL: 0x005B38D0 ?clear_scenario@@YAXXZ 0x005B38D0-0x005B3919
+// ORIGINAL: 0x005B38D0 ?clear_scenario@@YAXXZ 0x005B38D0-0x005B3919 BYTE_EXACT
 // size      73 bytes
 // prototype 
 // callers   1   call targets   0

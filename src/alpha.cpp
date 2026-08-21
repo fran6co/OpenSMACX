@@ -42,7 +42,6 @@ LPCSTR AlphaxFileID = "ALPHAX";
 LPCSTR ScriptTxtID = "SCRIPT";
 LPSTR *Compass = (LPSTR *)0x00945D48;
 LPSTR *Difficulty = (LPSTR *)0x0096C85C;
-RulesBasic *Rules = (RulesBasic *)0x00949738;
 // AN OBJECT, NOT A POINTER TO A FIXED ADDRESS: the pointer form costs a
 // load at every use where the image addresses the storage directly, and
 // the address is terranx.exe's data, unmapped in a standalone build.
