@@ -488,7 +488,7 @@ void TutWin::on_move(int a1, int a2) {
 // ---------------------------------------------------------------------------
 
 /*
-// ORIGINAL: 0x004BA6B0 ??0TutWin@@QAE@XZ 0x004BA6B0-0x004BA71E
+// ORIGINAL: 0x004BA6B0 ??0TutWin@@QAE@XZ 0x004BA6B0-0x004BA71E BYTE_EXACT
 // body      src/tutwin.h
 // size      110 bytes
 // prototype void (__thiscall ??0TutWin@@QAE@XZ)(TutWin* this)
@@ -497,3 +497,29 @@ void TutWin::on_move(int a1, int a2) {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x004048A0
 */
+
+// LEVER: `: public Popup` real inheritance, so the single call is the
+// implicit base constructor (now BYTE_EXACT, see popup.cpp) - no explicit
+// `Popup::Popup()` call needed, and (matching Popup's own fix) the trailing
+// stores use a non-volatile pointer.
+static const uint32_t TutWinPrimaryVtable = 0x0066DD84;
+static const uint32_t TutWinBufferVtable = 0x0066DD7C;
+
+TutWin::TutWin() {
+    uint32_t *const object = reinterpret_cast<uint32_t *>(this);
+    object[0x000 / 4] = TutWinPrimaryVtable;
+    object[0x444 / 4] = TutWinBufferVtable;
+    field_53B4_ = 0;
+    field_53C0_ = 0;
+    field_53D0_ = 0;
+    field_53D4_ = 0;
+    field_53A4_ = 0;
+    field_5380_ = -1;
+    field_537C_ = -1;
+    field_539C_ = -1;
+    field_53A8_ = 0;
+    field_53AC_ = -1;
+    field_53B8_ = 0;
+    field_53C4_ = 0;
+    TutWinShownFlag = 0;
+}

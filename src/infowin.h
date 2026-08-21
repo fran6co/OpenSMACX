@@ -49,7 +49,7 @@ class InfoWin {
   // forwarder keeps on_right_click's `call rel32` intact; the forwarder is
   // placed after on_right_click so /Ob2 cannot inline it back in.
   void right_menu(int a1, int a2);
-  InfoWin() { ; }
+  InfoWin();
   ~InfoWin() { ; }
   void UNK1();
   void on_redraw();

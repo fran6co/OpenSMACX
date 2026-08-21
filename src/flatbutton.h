@@ -24,7 +24,7 @@
   */
 class FlatButton : public BaseButton {
  public:
-  FlatButton() { ; }
+  FlatButton();
   ~FlatButton() { ; }
 
   uint32_t close();

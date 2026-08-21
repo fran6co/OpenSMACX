@@ -20,6 +20,10 @@
 #include "infowin.h"
 #include "statuswin.h"
 #include "worldwin.h"
+#include "time.h"
+#include "font.h"
+#include "pushbutton.h"
+#include <new>
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
@@ -181,7 +185,6 @@ void InfoWin::right_menu(int a1, int a2) {
 
 /*
 // ORIGINAL: 0x00459500 ??0InfoWin@@QAE@XZ 0x00459500-0x00459556;0x00655260-0x00655280
-// body      src/infowin.h
 // size      118 bytes
 // prototype void (__thiscall ??0InfoWin@@QAE@XZ)(InfoWin* this)
 // callers   1   call targets   3
@@ -189,3 +192,16 @@ void InfoWin::right_menu(int a1, int a2) {
 // flags     frame;sp_ready;purged_ok
 // calls     0x006161D0 0x00618EA0 0x0062BF20
 */
+
+// RULED-OUT: byte-exact is not reachable from this marker alone.
+// PushButton::PushButton() (0x0062BF20, at field_9D0_) is still an
+// unrecovered stub (src/unrecovered/0062bf20.cpp), so the image's third
+// call cannot be reproduced from here; not one of this pass's seven
+// targets. Time (0x006161D0) and Font (0x00618EA0) are both already
+// CLAIMED, so those two placement-new calls should match.
+InfoWin::InfoWin() {
+    char *const self = reinterpret_cast<char *>(this);
+    new (self + 0x30) Time();
+    new (self + 0x58) Font();
+    new (self + 0x9D0) PushButton();
+}

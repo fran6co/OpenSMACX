@@ -456,7 +456,6 @@ void PullDown::hide() {
 
 /*
 // ORIGINAL: 0x005F8800 ??0PullDown@@QAE@XZ 0x005F8800-0x005F8893
-// body      src/pulldown.h
 // size      147 bytes
 // prototype void (__thiscall ??0PullDown@@QAE@XZ)(PullDown* this)
 // callers   26   call targets   1
@@ -464,3 +463,39 @@ void PullDown::hide() {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D4CF0
 */
+
+// RULED-OUT (SEH frame): same root cause as FlatButton::FlatButton() (see
+// flatbutton.cpp) - GraphicWin's own `Buffer buffer_` etc. are non-trivial
+// value members, so VC6 wraps any throwable call in a derived constructor's
+// body with unwind protection the image does not pay for calling
+// GraphicWin::construct() alone. Left as a MISMATCH; fixing it needs a
+// layout change to GraphicWin/Win outside this marker's scope.
+PullDown::PullDown() {
+    GraphicWin::construct();
+    uint32_t *const ordered = reinterpret_cast<uint32_t *>(this);
+    ordered[0x000 / 4] = PullDownPrimaryVtable;
+    ordered[0x444 / 4] = PullDownBufferVtable;
+
+    for (size_t index = 0; index < 64; ++index) {
+        items_[index].text = nullptr;
+        items_[index].right_text = nullptr;
+        items_[index].id = -1;
+        items_[index].flags = 0;
+        items_[index].mnemonic = nullptr;
+    }
+
+    // STORE ORDER, NOT DECLARATION ORDER: the image writes menu_ (0xF30)
+    // before visible_count_ (0xF2C), and field_A14_ (0xA14, the class's
+    // FIRST declared field) dead last, after dirty_.
+    field_F18_ = 0;
+    field_F1C_ = 0;
+    item_count_ = 0;
+    width_ = 0;
+    selected_ = -1;
+    menu_ = nullptr;
+    visible_count_ = 0;
+    dirty_ = 1;
+    field_A14_ = 0;
+    field_F38_ = PullDownFieldF38Default;
+    field_F3C_ = PullDownFieldF3CDefault;
+}
