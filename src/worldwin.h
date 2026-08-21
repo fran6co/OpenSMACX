@@ -36,7 +36,7 @@
   * methods recovered here are bare returns that touch no field, which is why
   * they can be replaced ahead of that mapping.
   */
-class WorldWin : GraphicWin {
+class WorldWin : public GraphicWin {
  public:
   // 0x004C3D40, a pending_bodies forwarder.
   void click(int a1, int a2, int button, int is_double);

@@ -29,7 +29,7 @@
   * The methods recovered here are bare returns or a bare constant, touching
   * no field, which is why they can be replaced ahead of that mapping.
   */
-class CheckButton : GraphicWin {
+class CheckButton : public GraphicWin {
  public:
   CheckButton() { ; }
   ~CheckButton() { ; }

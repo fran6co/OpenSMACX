@@ -61,7 +61,7 @@ class MCIVideo {
   * methods recovered here are bare returns that touch no field, which is why
   * they can be replaced ahead of that mapping.
   */
-class AlphaMovie : GraphicWin {
+class AlphaMovie : public GraphicWin {
  public:
   void update();
   void close();

@@ -62,7 +62,7 @@
   * and 0x22050 rather than appended: appending would move the virtual base
   * and break every offset in the class.
   */
-class PlanWin : MapWin {
+class PlanWin : public MapWin {
  public:
   PlanWin() { ; }
   ~PlanWin() { ; }

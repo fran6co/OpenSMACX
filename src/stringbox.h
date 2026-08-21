@@ -23,7 +23,7 @@
  /*
   * StringBox class
   */
-class StringBox : GraphicWin {
+class StringBox : public GraphicWin {
  public:
   // 0x00629490, a pending_bodies forwarder.
   void add_fixup();

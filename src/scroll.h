@@ -25,7 +25,7 @@
  /*
   * Scroll class
   */
-class Scroll : GraphicWin {
+class Scroll : public GraphicWin {
  public:
   Scroll() { ; }
   ~Scroll() { ; }

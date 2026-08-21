@@ -32,7 +32,7 @@
   * The methods below ignore their arguments and return a constant, which is
   * why they can be replaced ahead of that mapping.
   */
-class Credits : GraphicWin {
+class Credits : public GraphicWin {
  public:
   Credits() { ; }
   ~Credits() { ; }

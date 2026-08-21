@@ -35,7 +35,7 @@
   * The methods below ignore their arguments and return a constant, which is
   * why they can be replaced ahead of that mapping.
   */
-class Gamma : GraphicWin {
+class Gamma : public GraphicWin {
  public:
   // 0x005C9520, a pending_bodies forwarder.
   void adjust_palette();

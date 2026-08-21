@@ -26,7 +26,7 @@
  /*
   * BasePop class
   */
-class BasePop : GraphicWin {
+class BasePop : public GraphicWin {
  public:
   // 0x006015B0, a pending_bodies forwarder.
   int init(int a1, long a2);

@@ -39,7 +39,7 @@
   * at 0xA14 is ProdPicker's own first field, which is exact rather than a
   * guess. Nothing past it is established.
   */
-class ProdPicker : GraphicWin {
+class ProdPicker : public GraphicWin {
  public:
   ProdPicker() { ; }
   ~ProdPicker() { ; }

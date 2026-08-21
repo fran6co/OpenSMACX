@@ -27,7 +27,7 @@
   * returns touching no field, so the opaque storage below is only an object
   * for the canary to seed, not a modelled layout.
   */
-class ReportIf : SubInterface {
+class ReportIf : public SubInterface {
  public:
   void done();
   ReportIf() { ; }

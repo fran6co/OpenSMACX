@@ -43,7 +43,7 @@
   * methods recovered here touch no field, which is why they could be replaced
   * ahead of the mapping.
   */
-class DesignWin : GraphicWin, SubInterface {
+class DesignWin : public GraphicWin, public SubInterface {
  public:
   // The shared body both select_special_N thunks tail into:
   // ?select_special@DesignWin@@QAEXH@Z at 0x0043AC70, still an original body,

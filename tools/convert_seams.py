@@ -620,6 +620,55 @@ def convert(source: Path, apply: bool) -> int:
     return done
 
 
+PRIVATE_BASE = re.compile(
+    r"^class\s+(?P<name>\w+)\s*:\s*(?P<bases>[^{;]+)\{", re.M)
+
+
+def widen(apply: bool) -> int:
+    """Make every implicit base `public`.
+
+    `class Popup : BasePop` is PRIVATE, because that is what `class` means, and
+    this tree wrote every hierarchy that way. A body that needs to reach a base
+    method the image reaches with a direct `call rel32` then cannot compile the
+    call at all, and stands in a function-pointer seam instead - which is the
+    single largest reason convert_seams refuses.
+
+    Access specifiers change nothing about layout, so this is free. It only
+    adds the keyword where NONE is written; `private` and `protected` spelled
+    out are decisions and are left alone.
+    """
+    changed = 0
+    for path in sorted(p for p in tree() if p.suffix == ".h"):
+        text = body(path)
+        out = []
+        for match in PRIVATE_BASE.finditer(text):
+            bases = []
+            for spec in match.group("bases").split(","):
+                spec = spec.strip()
+                if not spec:
+                    continue
+                if re.match(r"(public|private|protected|virtual\s+(public|"
+                            r"private|protected))\b", spec):
+                    bases.append(spec)
+                    continue
+                bases.append(re.sub(r"^virtual\s+", "virtual public ", spec)
+                             if spec.startswith("virtual")
+                             else f"public {spec}")
+                changed += 1
+            out.append((match.group(0),
+                        f"class {match.group('name')} : "
+                        f"{', '.join(bases)} {{"))
+        for old, new in out:
+            if old != new:
+                text = text.replace(old, new)
+        rewrite(path, text)
+    if apply:
+        for path, text in tree().items():
+            if text != path.read_text():
+                path.write_text(text)
+    return changed
+
+
 FREE = re.compile(
     r"^(?P<alias>func_\w+)\s*\*const\s+(?P<name>\w+)\s*=\s*"
     r"\((?P=alias)\s*\*\)\s*(?P<address>0x[0-9A-Fa-f]+)\s*;[^\n]*\n", re.M)
@@ -705,6 +754,11 @@ def free(apply: bool) -> int:
 if __name__ == "__main__":
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     apply = "--apply" in sys.argv
+    if "--widen" in sys.argv:
+        count = widen("--apply" in sys.argv)
+        print(f"{count} base(s) "
+              f"{'widened' if '--apply' in sys.argv else 'widenable'}")
+        raise SystemExit(0)
     if "--free" in sys.argv:
         count = free("--apply" in sys.argv)
         print(f"{count} free-function binding(s) "

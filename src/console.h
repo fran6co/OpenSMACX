@@ -87,7 +87,7 @@ class PrefWin;
   * the total fixed. Appending would move the virtual base and break every
   * offset in the class.
   */
-class Console : MapWin {
+class Console : public MapWin {
  public:
   // 0x005109B0, a pending_bodies forwarder.
   void cursor_next(int x_coord, int y_coord);
