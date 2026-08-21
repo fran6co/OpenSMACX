@@ -122,24 +122,50 @@ FlatButton *__fastcall flat_button_destructor_redirect(
 // stubs (the "construct method" idiom), and the image's single `call`
 // targets 0x00606F30, which is `?construct@BaseButton@@QAEXXZ`.
 //
-// RULED-OUT (SEH frame): the image has NO unwind frame here (flags carry
-// no `frame`... wait, no `frame` isn't the tell; the tell is the absence of
-// a `push -1 / push handler / mov fs:[0]` prologue the way NetWin's own
-// ctor has one). This tree's compiled body gets one anyway: `BaseButton`'s
-// chain embeds `Buffer buffer_` / `Heap heap_` / `AutoSound auto_sound_` by
-// VALUE, and Buffer's dtor is `virtual` and non-trivial (calls close()), so
-// once BaseButton()/GraphicWin()/Win()'s (empty-bodied but still real)
-// default construction of those members completes, VC6 must protect any
-// later throwable call in this constructor's body against needing to run
-// their destructors on unwind - unconditionally, regardless of whether
-// `BaseButton::construct()` can really throw. The image proves the
-// ORIGINAL source did not pay this: its ONLY call is to construct() (no
-// separate call to Buffer's own real constructor at 0x005D7210 appears
-// either), so those members were not real C++ value-subobjects there.
-// Reworking `Buffer buffer_`/`Heap heap_`/`AutoSound auto_sound_` to
-// pointer or raw-storage members to fix this is a layout change to
-// GraphicWin/Win/BaseButton far outside this marker's scope, and risks
-// regressing every already-measured method on those classes - left alone.
+// RULED-OUT: SEH frame - the image has NO unwind frame here (flags carry
+// no `frame`, unlike Popup::Popup() at 0x004048A0 which does). This tree's
+// compiled body gets one anyway - `push -1 / push handler / mov eax,
+// fs:[0] / push eax / mov fs:[0], esp` at instruction 0.
+//
+// MEASURED 2026-08-21, correcting an earlier version of this note that
+// blamed `Buffer buffer_` / `Heap heap_` / `AutoSound auto_sound_` being
+// held BY VALUE. That is not it: swapping all three (plus BaseButton's own
+// `Time time1_`/`time2_`) for raw `unsigned char[sizeof(T)]` storage the
+// whole way up the chain - GraphicWin, Win, BaseButton at once - does NOT
+// drop the frame. It is still there, byte for byte, with every by-value
+// member gone.
+//
+// What actually does it, isolated with a direct `/GX-` recompile of this
+// file (`tools/listing_diff.py 0x00607CF0 --flags '/c /O2 /Gy /GR- /GX-'`):
+// disabling C++ EH removes the frame outright (45 instructions instead of
+// 62, first divergence moves from instruction 0 to instruction 1). So the
+// trigger is `/GX` plus a REAL derived-class constructor whose base
+// (`BaseButton`, transitively `Win`) has a destructor the compiler cannot
+// see is trivial - `Win::~Win()` is declared, not `{ ; }`, and does real
+// external teardown at 0x005EBC90, so it can never BE trivial - combined
+// with a call in the constructor body (`BaseButton::construct()`) that VC6
+// assumes can throw. Declaring that call `__declspec(nothrow)` or
+// `throw()` at its `basebutton.h` declaration does NOT suppress the frame
+// either (measured both ways); VC6 does not appear to trust a caller-side
+// nothrow annotation for this decision.
+//
+// `/GX-` is not reachable from here: it is a whole-translation-unit flag,
+// outside `src/`, and it is not free even in principle. `Buffer::~Buffer()`
+// (0x005D7410, `buffer.h`, inline `MEASURED virtual ~Buffer() { close(); }`)
+// is currently BYTE_EXACT (20/20 instructions) specifically because the
+// IMAGE's own `??1Buffer@@QAE@XZ` carries this exact SEH prologue; a direct
+// `/GX-` recompile of that same address drops it from 20/20 agreeing to a
+// near-total mismatch (image 20 instructions, compiled 8). So the ORIGINAL
+// project genuinely needs `/GX` elsewhere in this same header's closure,
+// and turning it off to fix this constructor would regress an existing
+// claim. Left as a MISMATCH; the ORIGINAL's own FlatButton constructor must
+// have reached `BaseButton::construct()` some other way that avoids this
+// entirely - not found by any of the above. Contrast Popup::Popup() at
+// 0x004048A0 (see popup.cpp): real implicit base+member construction
+// (`BasePop::BasePop()`, `Scroll::Scroll()`), and the image DOES carry a
+// frame there, correctly reproduced. FlatButton/PullDown's constructors
+// are catalogued WITHOUT one, and that absence is not reproduced by any
+// src/-only change tried here.
 static int *const g_009b8e44 = (int *)0x009B8E44;
 
 FlatButton::FlatButton() {
