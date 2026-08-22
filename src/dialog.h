@@ -75,9 +75,21 @@ class Dialog {
   // thunks the compiler now generates, so each emits one instruction too many:
   // the model does `sub ecx, [ecx-4]` itself and the compiler then adds its
   // own `add ecx, 0xa60`. The image's thunk is two instructions; ours becomes
-  // three. The right end state is to delete the hand-written models and let
-  // the markers name the compiler's `$4` thunks through a `// symbol` fact -
-  // a coupled edit across twelve functions in one file, not a spelling fix.
+  // three.
+  //
+  // AND THE OBVIOUS FIX DOES NOT EXIST - measured, correcting what this note
+  // claimed an hour earlier. "Delete the models and let the markers name the
+  // compiler's `$4` thunks" assumes those thunks are emitted. Declaring both
+  // virtuals and searching every object finds ZERO of them. The reason is
+  // upstream of the thunks: these classes install their vtable BY HAND as an
+  // opaque dword, so VC6 emits no vtable for them at all - and with no vtable
+  // there are no slots to hold an adjustor and no symbol to name. The compiler
+  // still emits the vtordisp FIELDS, which is why the sizes grow; it just
+  // never emits the thunks that read them.
+  //
+  // So the blocker is the HAND-INSTALLED VTABLE, not the twelve models, and it
+  // is a far larger edit than this note first said. Nothing here is reachable
+  // until these classes stop modelling their vtable as a dword.
   //
   // Until then `item` stays virtual because it PRODUCES the proven layout for
   // ListBox, and it is not the image's override: ListBox::item (0x0060C920)
