@@ -89,7 +89,7 @@ def declaration_of(name: str, headers: dict) -> tuple[str, str]:
         bases = (found.group(1) or "").strip(": \n\t")
         bases = " ".join(bases.split())
         if not bases:
-            return header.name, "NO BASE CLASS - declaration must be fixed"
+            return header.name, "NO BASE CLASS - layout needs one"
         if "virtual" not in bases:
             return header.name, f"non-virtual `{bases[:56]}` - check it"
         return header.name, f"virtual: {bases[:56]}"
@@ -128,6 +128,17 @@ if __name__ == "__main__":
     unproven = sum(1 for r in rows if not r[6].startswith("CONFIRMED"))
     print(f"\n{len(rows)} name(s) end @H@Z; {broken} are a CONFIRMED virtual "
           f"base whose declaration cannot produce one")
+    print("\nWHAT 'needs one' MEANS, AND WHAT IT DOES NOT. The vbtable stores prove\n"
+          "the LAYOUT has a virtual base. They do NOT mean declaring\n"
+          "`: public virtual Base` will produce this symbol, and on this compiler it\n"
+          "cannot: a constructor on a class with a genuine virtual base mangles to\n"
+          "`??0Class@@QAE@XZ`, with the most-derived flag a hidden stack parameter that\n"
+          "is never part of the name - while every row above ends `@H@Z`. Measured on\n"
+          "VC6 12.00.8168 with nm and objdump, 2026-08-21, and re-checked against\n"
+          "CheckBox on 2026-08-22: the real declaration does not compile to the image's\n"
+          "symbol, and the hand-composed layout it replaces is the workaround, not an\n"
+          "oversight. Fix the LAYOUT here; reach the symbol with a `construct(int)`\n"
+          "METHOD, whose call site pushes the flag exactly once.")
     if unproven:
         print(f"{unproven} could not be confirmed from the body - those `int`s "
               f"may be real parameters, do not assume")
