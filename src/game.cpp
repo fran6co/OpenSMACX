@@ -294,6 +294,16 @@ Purpose: Handle creation of pop-up message on Planetfall.
 // flags     frame;sp_ready;purged_ok
 // calls     0x005BF310 0x00625E30 0x00625E50 0x00625EC0 0x00645470 0x00645660
 // indirect  0x0058923D
+// RULED-OUT: not resolved this pass. The image's FOUR `parse_says`
+//        (0x00625EC0) call sites write the gender/plurality arguments to
+//        FIXED GLOBALS (0x9bbfec/0x9bbff0) individually before each call
+//        rather than through `parse_set`, in an ORDER that does not match
+//        this body's own call order (id 2, then 3, then 0, then 1 - not
+//        0, 2, 3, 1), and the calls list also names 0x00625E30 (parse_num)
+//        AND 0x00625E50 (parse_say, the int-input overload) - this body
+//        calls parse_num once and never parse_say, so one of its calls is
+//        the wrong callee. Left at 11/125 for a pass that can trace which
+//        source line the int-input `parse_say` belongs to.
 Return Value: n/a
 Status: Complete
 */

@@ -44,6 +44,7 @@
 #include "popup.h"
 #include "sound.h"
 #include "netdaemon.h"
+#include "lock.h"
 #include "fx.h"
 #include "hypothesis_layouts.h"
 #include "statuswin.h"
@@ -304,6 +305,14 @@ void EditBox::set_text(char *text) {
 uint32_t __cdecl message_data(int a1, int a2, int a3, int a4, int a5, int a6) {
     typedef uint32_t(__cdecl *pending)(int, int, int, int, int, int);
     return PENDING_BODY(0x00592EE0, pending)(a1, a2, a3, a4, a5, a6);
+}
+
+// current_server at 0x0052DBA0 - reports whether this machine is the game
+// server. Lock bound it as a `func_current_server *` pointer, which cost
+// every caller a `call dword ptr [...]` where the image emits `call rel32`.
+int __cdecl current_server() {
+    typedef int (__cdecl *pending)();
+    return PENDING_BODY(0x0052DBA0, pending)();
 }
 
 // sub_627d00 at 0x00627D00 - applies three Euler angles to a matrix.

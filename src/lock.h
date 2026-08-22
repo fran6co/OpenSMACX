@@ -63,7 +63,19 @@ class Lock {
 static_assert(sizeof(Lock) == 0xEC,
               "Lock layout must match the original executable");
 
-// The map table and its count live at fixed addresses; rebindable for tests.
+// The map table's COUNT lives at a fixed address holding the int directly;
+// the table ITSELF lives at a fixed address holding a POINTER to it (the
+// image dereferences the address `mov eax, dword ptr [0x94a30c]` to load the
+// table pointer's VALUE before indexing it, it does not use 0x94A30C as the
+// table's own base). Both rebindable for tests.
+//
+// LockMapTable stays a SINGLE star, not `uint8_t **const`: a namespace-scope
+// `T *const` folds to the bare immediate at every use (same as
+// LockMapCount), but VC6 does NOT fold a `T **const` the same way - it
+// materialises it as a real CONST-segment slot and loads it before the
+// dereference, costing a whole extra `mov`. Casting the folded immediate to
+// a pointer-to-pointer AT THE USE SITE keeps the fold and reaches the same
+// address.
 int32_t *const LockMapCount = (int32_t *)0x00949884;
 uint8_t *const LockMapTable = (uint8_t *)0x0094A30C;
 
@@ -78,9 +90,11 @@ uint32_t *const LockEnableMask = (uint32_t *)0x009A64E8;
 // recovered; add_lock forwards one record entry to it.
 
 // current_server reports whether this machine is the game server; not
-// recovered, so check_global_2 reaches it through a rebindable seam.
-typedef int (__cdecl func_current_server)();
-extern func_current_server *LockCurrentServer;
+// recovered. Declared as an ordinary function with a pending_bodies.cpp
+// forwarder to 0x0052DBA0 - LEVER: bound as a `func_current_server *`
+// pointer, this compiled `call dword ptr [...]` where the image's callers
+// emit `call rel32`; an ordinary declaration gets the E8 back.
+int __cdecl current_server();
 
 // message_data broadcasts a game event; not recovered, so check_global
 // reaches it through a rebindable seam.

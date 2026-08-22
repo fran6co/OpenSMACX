@@ -319,6 +319,12 @@ Purpose: Find the menu whose id matches and forward the item id to its
          PullDown. An unknown menu answers 0xB, and so does a table that runs
          out before matching.
 // ORIGINAL: 0x005FB3C0 ?show_menu_item@Menu@@QAEHHH@Z 0x005FB3C0-0x005FB414
+// RULED-OUT: shared defect across the whole seven-clone family (UNK3,
+//        hide/show/disable/enable/check/uncheck_menu_item all measure
+//        1/32, 0.754 similar at their best flag set) - see
+//        ?hide_menu_item@Menu@@QAEHHH@Z (0x005FB300) for the full
+//        investigation (loop-rotation hoist, do/while and raw-pointer
+//        forms both tried and both worse). Not repeated per-clone.
 // size      84 bytes
 // prototype int (__thiscall ?show_menu_item@Menu@@QAEHHH@Z)(Menu* this, int, int)
 // callers   1   call targets   1
@@ -410,6 +416,12 @@ Purpose: Find the menu whose id matches and forward the item id to its
          PullDown. An unknown menu answers 0xB, and so does a table that runs
          out before matching.
 // ORIGINAL: 0x005FB540 ?enable_menu_item@Menu@@QAEHHH@Z 0x005FB540-0x005FB594
+// RULED-OUT: shared defect across the whole seven-clone family (UNK3,
+//        hide/show/disable/enable/check/uncheck_menu_item all measure
+//        1/32, 0.754 similar at their best flag set) - see
+//        ?hide_menu_item@Menu@@QAEHHH@Z (0x005FB300) for the full
+//        investigation (loop-rotation hoist, do/while and raw-pointer
+//        forms both tried and both worse). Not repeated per-clone.
 // size      84 bytes
 // prototype int (__thiscall ?enable_menu_item@Menu@@QAEHHH@Z)(Menu* this, int, int)
 // callers   1   call targets   1
@@ -453,6 +465,12 @@ Purpose: Find the menu whose id matches and forward the item id to its
          PullDown. An unknown menu answers 0xB, and so does a table that runs
          out before matching.
 // ORIGINAL: 0x005FB760 ?check_menu_item@Menu@@QAEHHH@Z 0x005FB760-0x005FB7B4
+// RULED-OUT: shared defect across the whole seven-clone family (UNK3,
+//        hide/show/disable/enable/check/uncheck_menu_item all measure
+//        1/32, 0.754 similar at their best flag set) - see
+//        ?hide_menu_item@Menu@@QAEHHH@Z (0x005FB300) for the full
+//        investigation (loop-rotation hoist, do/while and raw-pointer
+//        forms both tried and both worse). Not repeated per-clone.
 // size      84 bytes
 // prototype int (__thiscall ?check_menu_item@Menu@@QAEHHH@Z)(Menu* this, int, int)
 // callers   5   call targets   1
@@ -496,6 +514,12 @@ Purpose: Find the menu whose id matches and forward the item id to its
          PullDown. An unknown menu answers 0xB, and so does a table that runs
          out before matching.
 // ORIGINAL: 0x005FB7C0 ?uncheck_menu_item@Menu@@QAEHHH@Z 0x005FB7C0-0x005FB814
+// RULED-OUT: shared defect across the whole seven-clone family (UNK3,
+//        hide/show/disable/enable/check/uncheck_menu_item all measure
+//        1/32, 0.754 similar at their best flag set) - see
+//        ?hide_menu_item@Menu@@QAEHHH@Z (0x005FB300) for the full
+//        investigation (loop-rotation hoist, do/while and raw-pointer
+//        forms both tried and both worse). Not repeated per-clone.
 // size      84 bytes
 // prototype int (__thiscall ?uncheck_menu_item@Menu@@QAEHHH@Z)(Menu* this, int, int)
 // callers   5   call targets   1

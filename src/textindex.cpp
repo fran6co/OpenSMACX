@@ -32,6 +32,14 @@ Purpose: Read the specified file and create an index of section headers ("#EXAMP
 // flags     sp_ready;purged_ok
 // calls     0x005D4580 0x005D45E0 0x005D4620 0x005D4680 0x006007B0 0x00600820 0x00628380 0x006283E0 0x00628430 0x006287C0 0x006453E0 0x00645460 0x00645470 0x00645930 0x00645DD0 0x0064697A 0x006473F0
 // indirect  0x005FE007
+// RULED-OUT: the image opens a real SEH frame (`mov eax, fs:[0]; push eax;
+//            mov fs:[0], esp` before `sub esp, 0x218`, and the second span
+//            0x00662D40-0x00662D52 is its unwind handler) - expected, since
+//            the local `Filemap txt_file_map` has a real destructor. This
+//            tree's compile never emits one at any of the 10 flag sets in
+//            FLAG_SETS (best 0.892 similar, /O2 /Oi- /GX, no /Oy-). Not
+//            resolved this pass - the frame's absence, not the body logic,
+//            is the ceiling.
 Return Value: n/a
 Status: Complete
 */
@@ -71,7 +79,7 @@ void TextIndex::make_index(LPCSTR source_txt) {
 
 /*
 Purpose: Search the source text file for a section header.
-// ORIGINAL: 0x005FE120 ?search_index@TextIndex@@QAEHPAD0@Z 0x005FE120-0x005FE1E1
+// ORIGINAL: 0x005FE120 ?search_index@TextIndex@@QAEHPAD0@Z 0x005FE120-0x005FE1E1 BYTE_EXACT
 // symbol    ?search_index@TextIndex@@QAEHPBD0@Z
 // size      193 bytes
 // prototype int (__thiscall ?search_index@TextIndex@@QAEHPAD0@Z)(TextIndex* this, int8*, int8*)
@@ -83,21 +91,45 @@ Return Value: File offset if found, otherwise -1
 Status: Complete
 */
 int TextIndex::search_index(LPCSTR source_txt, LPCSTR section_txt) {
-    char file_name_check[MAX_PATH];
-    strcpy_s(file_name_check, MAX_PATH, source_txt);
+    // WRONG CALLEE: the image calls plain strcpy/strchr/strcat (0x00645460,
+    // 0x00645DD0, 0x00645470), not the bounded `_s` variants - an unbounded
+    // copy into a 512-byte stack buffer, not MAX_PATH(260). BUG IN THE
+    // ORIGINAL, preserved.
+    char file_name_check[512];
+    strcpy(file_name_check, source_txt);
     if (!strchr(file_name_check, '.')) {
-        strcat_s(file_name_check, MAX_PATH, ".txt"); // append extension if missing
+        strcat(file_name_check, ".txt"); // append extension if missing
     }
     if (!_stricmp(file_name_check, file_name_)) {
         if (section_txt[0] == '#') {
             section_txt++;
         }
-        LPSTR cmp_addr = LPSTR(heap_.get_base()) + 4;
-        for (int i = section_count_; i; i--) {
-            if (!_stricmp(cmp_addr, section_txt)) {
-                return *LPDWORD(cmp_addr - 4);
+        // NO UPFRONT GUARD: the image never tests section_count_ before the
+        // first comparison. `record_start` mirrors the image's own EDI - a
+        // pointer to the record's leading offset field, kept alongside
+        // `cmp_addr` (its ESI) rather than recomputed as `cmp_addr - 4` at
+        // the return - and the advance to the NEXT record happens only
+        // after the decrement-and-test, not before it.
+        int i = section_count_;
+        LPSTR cmp_addr = LPSTR(heap_.get_base());
+        LPSTR record_start = cmp_addr;
+        cmp_addr += 4;
+        for (;;) {
+            if (!_stricmp(section_txt, cmp_addr)) {
+                return *LPDWORD(record_start);
             }
-            while (*cmp_addr++);
+            // PRE-TEST, THEN A FINAL SKIP: the image tests `*cmp_addr`
+            // before ever advancing, walking to the terminator with
+            // `++cmp_addr` inside the loop and one more `++cmp_addr` after
+            // it, rather than testing the post-incremented read each time.
+            while (*cmp_addr) {
+                ++cmp_addr;
+            }
+            ++cmp_addr;
+            if (--i == 0) {
+                break;
+            }
+            record_start = cmp_addr;
             cmp_addr += 4;
         }
     }
@@ -106,7 +138,7 @@ int TextIndex::search_index(LPCSTR source_txt, LPCSTR section_txt) {
 
 // global
 
-// ORIGINAL: 0x005FE270 ?text_clear_index@@YAXXZ 0x005FE270-0x005FE299
+// ORIGINAL: 0x005FE270 ?text_clear_index@@YAXXZ 0x005FE270-0x005FE299 BYTE_EXACT
 // size      41 bytes
 // prototype 
 // callers   1   call targets   1
@@ -160,15 +192,6 @@ TextIndex::~TextIndex() {
     // well emitted the shutdown twice.
     section_count_ = 0;
     file_name_[0] = 0;
-}
-
-void text_clear_index_source(TextIndex *indexes) {
-    for (int i = 0; i < MaxTextIndexNum; ++i) {
-        if (indexes[i].section_count_ != 0) {
-            indexes[i].heap_.shutdown();
-            indexes[i].section_count_ = 0;
-        }
-    }
 }
 
 // ORIGINAL: 0x005FE1F0 ?text_make_index@@YAXPAD@Z 0x005FE1F0-0x005FE228 BYTE_EXACT

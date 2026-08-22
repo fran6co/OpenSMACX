@@ -55,7 +55,28 @@ class Font {
     }
   }
   int width(LPSTR input);
-  int width(LPSTR input, size_t max_len);
+  // IN-CLASS so `find_line_break_l` inlines it twice - the image's own
+  // `calls` list never names 0x006192F0, only the WinAPI it reaches
+  // through and the two `strlen` calls its own clamp makes.
+  MEASURED int width(LPSTR input, size_t max_len) {   // 006192F0
+    if (!input) {
+      return 0;
+    }
+    // `strlen` TWICE, and SIGNED. The image's clamp is a min MACRO that
+    // re-evaluates its argument - `call strlen; cmp ebx, eax; jl;
+    // call strlen` - so caching it in a local collapses six instructions
+    // into three. `jl`, not `jbe`, because both operands are int there; a
+    // `size_t` comparison emits the unsigned branch.
+    int len = static_cast<int>(max_len);
+    if (len >= static_cast<int>(strlen(input))) {
+      len = static_cast<int>(strlen(input));
+    }
+    SelectObject(FontHDC, font_obj_);
+    SIZE size;
+    GetTextExtentPoint32A(FontHDC, input, len, &size);
+    SelectObject(FontHDC, GetStockObject(SYSTEM_FONT));
+    return size.cx;
+  }
   LPSTR find_line_break_l(LPSTR input, int *break_len, size_t len);
   bool is_initialized() const { return font_obj_ != NULL; }
 

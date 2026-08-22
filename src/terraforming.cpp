@@ -85,16 +85,37 @@ Purpose: Calculate the Former rate to perform terrain enhancements.
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005BF1F0
+// LEVER: `faction_id` cached in a local (the image loads it once alongside
+//        `proto_id` and reuses it for both `has_project` calls, this body
+//        was re-reading `Vehs[veh_id].faction_id` at each site).
+// RULED-OUT: `if/else` in place of the `? 4 : 2` ternary for the has_abil
+//        result - VC6 compiles BOTH forms to the same branchless
+//        `neg/sbb/and/add` idiom (any zero/nonzero boolean qualifies, not
+//        just exactly-0-or-1), where the image keeps two real branches
+//        with separate `mov edi, N` stores. Not a source-shape question.
+//        The two inlined `has_project` sites also keep a `sete`+`test`+`je`
+//        shape the image uses that this body's direct `cmp`/`jne` does not
+//        reproduce. Best reached this pass: 3/66, MISMATCH.
 Return Value: Terraforming speed
 Status: Complete
 */
 int __cdecl contribution(int veh_id, int terraform_id) {
-    uint32_t rate = has_abil(Vehs[veh_id].proto_id, ABL_SUPER_TERRAFORMER) ? 4 : 2;
+    // CACHED, NOT RE-READ: the image loads Vehs[veh_id].faction_id ONCE,
+    // alongside proto_id, and reuses it for both has_project() calls below.
+    uint8_t faction_id = Vehs[veh_id].faction_id;
+    int rate;
+    // AN IF, NOT A TERNARY: the image branches to two separate `mov edi, N`
+    // stores rather than computing 2/4 branchlessly.
+    if (has_abil(Vehs[veh_id].proto_id, ABL_SUPER_TERRAFORMER)) {
+        rate = 4;
+    } else {
+        rate = 2;
+    }
     if (terraform_id == (ORDER_REMOVE_FUNGUS - 4) || terraform_id == (ORDER_PLANT_FUNGUS - 4)) {
-        if (has_project(SP_XENOEMPATYH_DOME, Vehs[veh_id].faction_id)) {
+        if (has_project(SP_XENOEMPATYH_DOME, faction_id)) {
             rate *= 2; // Doubled
         }
-    } else if (has_project(SP_WEATHER_PARADIGM, Vehs[veh_id].faction_id)) {
+    } else if (has_project(SP_WEATHER_PARADIGM, faction_id)) {
         rate = (rate * 3) / 2; // +50%
     }
     return rate;
@@ -109,6 +130,16 @@ Purpose: Check to see whether the specified faction can construct a specific ter
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     (none)
+// RULED-OUT: the base-address split for `&Terraforming[terraform_id]
+//        .preq_tech + is_sea` - the image computes `(is_sea + id*8)` as an
+//        INDEX first, then a separate `[index*4 + 0x691880]` load; this
+//        tree's `lea` folds the base INTO the index before the implied
+//        `*4` (0x1a4620*4 == 0x691880, so it is the same address, just
+//        computed with the constant added before the scale rather than
+//        after). Tried the equivalent `reinterpret_cast<int*>(...)
+//        [is_sea]` array-subscript spelling - VC6 canonicalises both to
+//        the identical folded `lea`. Not a source-shape question found
+//        this pass; best 3/86.
 Return Value: Is terrain enhancement available to faction? true/false
 Status: Complete
 */

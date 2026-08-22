@@ -33,6 +33,19 @@ Purpose: Update the seed value. The original code had some convoluted XORs that 
 // calls     (none)
 Return Value: n/a
 Status: Complete
+// RULED-OUT: literal `a^=b;b^=a;a^=b;` xor-swap source - VC6 folds it to the
+//            identical plain `mov`/`mov` the simple assignment already
+//            compiles to, so it cannot recover the image's redundant
+//            intermediate store either way.
+// RULED-OUT: the frame-pointer prologue (`push ebp; mov ebp, esp`) this tree
+//            emits for EVERY member of `Random` under /GX, once the class
+//            carries a real (non-trivial) constructor/destructor - confirmed
+//            by isolating a minimal class with the same shape outside this
+//            tree: adding a plain (non-dllexport) ctor/dtor is what turns it
+//            on, and it fires for every stack-parameter member regardless of
+//            body. None of the 10 flag sets in FLAG_SETS carry /GX-, so this
+//            is a REAL CEILING for this address under the current tree, not
+//            a source-form question.
 */
 
 /*
@@ -108,6 +121,11 @@ void __cdecl random_rand_exit() { Rand.~Random(); }
 // flags     sp_ready;purged_ok
 // calls     (none)
 // notes     Staged hybrid export redirect calls the source-owned reseed wrapper
+// RULED-OUT: same class-wide SEH-frame ceiling as reseed() above - `Random`
+//            carries a real ctor/dtor, so under /GX this tree's compiler
+//            gives every function that touches a `Random` a `push
+//            ebp`/`mov ebp, esp` prologue the image does not pay. None of
+//            FLAG_SETS carries /GX-. Not a source-form question.
 void __cdecl random_reseed(uint32_t new_seed) { Rand.reseed(new_seed); }
 
 // ORIGINAL: 0x00625800 ?random_get@@YAIXZ 0x00625800-0x00625806 BYTE_EXACT

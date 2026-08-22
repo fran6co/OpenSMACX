@@ -65,6 +65,15 @@ Note:    `output` is the hidden return-object slot of `Vector operator-`, not
 // calls     (none)
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
+// RULED-OUT: this catalogued `void __mi(Vector&, Vector&)` signature, tried
+//            as-is - MISMATCH from instruction 0 (`sub esp, 0x10` against
+//            this tree's `sub esp, 0xc`). The image's extra 4 bytes and the
+//            `mov dword ptr [esp], 0` right after are the /GX return-object
+//            constructed flag for a BY-VALUE `Vector operator-` return - see
+//            "why two are adopted and two are not" in vector.h, which names
+//            this a REAL CEILING in `tools/emit_translation_unit.py` (never
+//            declares the destructor a rebuilt verification unit would need
+//            to reproduce the flag), not a source-form question for this body.
 */
 void Vector::__mi(Vector &output, Vector &right) {
     Vector result;
@@ -142,6 +151,14 @@ Note:    The original scales `this` IN PLACE and then copies it out; `output`
 // calls     (none)
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
+// RULED-OUT: this catalogued `void scale(Vector&, float)` signature, tried
+//            as-is - MISMATCH from instruction 0 (image opens `push ecx`
+//            with no frame; this tree's `push ebp; mov ebp, esp`). Same
+//            /GX return-object-flag ceiling as __mi above: `scale` is really
+//            `Vector scale(float)` returning by value, and
+//            `tools/emit_translation_unit.py` cannot rebuild a verification
+//            unit that declares the destructor the flag depends on. See
+//            "why two are adopted and two are not" in vector.h.
 */
 void Vector::scale(Vector &output, float scalar) {
     x_ *= scalar;
@@ -186,7 +203,7 @@ Vector *__fastcall vector_scale_redirect(
 
 /*
 Purpose: Add two vectors component-wise into an output vector.
-// ORIGINAL: 0x00628150 sub_628150 0x00628150-0x00628175
+// ORIGINAL: 0x00628150 sub_628150 0x00628150-0x00628175 BYTE_EXACT
 // symbol    ?vector_add@@YAXPAVVector@@00@Z
 // size      37 bytes
 // prototype 
@@ -198,7 +215,8 @@ Purpose: Add two vectors component-wise into an output vector.
 Status: Complete
 */
 void __cdecl vector_add(Vector *left, Vector *right, Vector *output) {
-    output->x_ = left->x_ + right->x_;
+    float rx = right->x_;
+    output->x_ = rx + left->x_;
     output->y_ = left->y_ + right->y_;
     output->z_ = left->z_ + right->z_;
 }

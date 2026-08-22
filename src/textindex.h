@@ -18,9 +18,6 @@
 #pragma once
 #include "heap.h"
 
-class TextIndex;
-void text_clear_index_source(TextIndex *indexes);
-
 /*
 * TextIndex class: Designed to speed up the time it takes to find string resources in text files by 
 * creating an index of the file sections prefixed by '#'.
@@ -73,3 +70,15 @@ MEASURED inline int __cdecl text_search_index(LPCSTR source_txt, LPCSTR section_
     return -1;
 }
 void __cdecl text_clear_index();
+
+// INLINE: `text_clear_index` (0x005FE270) carries this whole loop - `osmx
+// calls` shows only 0x005D4580 (Heap::shutdown), never a call to this
+// helper. Body claimed at 0x005FE270 in textindex.cpp.
+inline void text_clear_index_source(TextIndex *indexes) {
+    for (int i = 0; i < MaxTextIndexNum; ++i) {
+        if (indexes[i].section_count_ != 0) {
+            indexes[i].heap_.shutdown();
+            indexes[i].section_count_ = 0;
+        }
+    }
+}
