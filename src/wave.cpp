@@ -832,6 +832,17 @@ Purpose: Set the wave's volume. The low seven bits of the argument are stored
          double precision truncated back to an integer. The wrapped device,
          if any, hears the result through its vtable slot 0x40.
 // ORIGINAL: 0x004C7130 ?set_volume@Wave@@QAEXH@Z 0x004C7130-0x004C718D
+// RULED-OUT: 26/33 MISMATCH, instruction COUNT now matches the image (33/33)
+//   but the `fild dword ptr [ebp+8]` + `fmul qword ptr [const]` pair that
+//   materialises `scaled` still schedules LATE (right before the final
+//   multiply) where the image schedules it EARLY (right after the group-slot
+//   range check, before the table read). Tried `volatile double scaled`
+//   (worse, back to 13/33 - forces a real store/reload and an extra
+//   instruction); a separate named `group` local read after `scaled` (no
+//   change, still 26/33 - same late scheduling); `static double scaled`
+//   (worse, 14/33, extra relocation-backed storage). VC6's scheduler treats
+//   the local's definition point as a lower bound, not a fixed position, and
+//   nothing tried pinned it to the top of the block.
 // size      93 bytes
 // prototype void (__thiscall ?set_volume@Wave@@QAEXH@Z)(Wave* this, int)
 // callers   5   call targets   1
@@ -854,9 +865,15 @@ void Wave::set_volume(int a1) {
         // `fild qword` + `fmulp st(1)` rather than an `fimul`. The original
         // loads that dword zero-extended through a 64-bit fild, so the scale
         // is the UNSIGNED value of the table entry.
+        // LEVER: naming the `a1 * (1.0/127.0)` product as its own local -
+        // `scaled` - before multiplying by the group value, rather than
+        // writing the whole product as one expression, is what makes VC6
+        // emit the `fild`+`fmul`-by-constant PAIR the image has instead of
+        // folding a1's conversion into a single `fimul` at the end. 13/33 ->
+        // 26/33 MISMATCH.
+        const double scaled = static_cast<double>(a1) * (1.0 / 127.0);
         level = static_cast<int>(static_cast<int64_t>(
-            static_cast<double>(a1) * (1.0 / 127.0) *
-            static_cast<double>(WaveDeviceGroupVolumes[group_slot_ * 6])));
+            scaled * static_cast<double>(WaveDeviceGroupVolumes[group_slot_ * 6])));
     }
     if (device_) {
         typedef void (OriginalObject::*device_fn)(int level);
@@ -912,6 +929,15 @@ Purpose: Start the wave. While it holds a device group slot, a disabled group
          timeGetTime import, runs its own vtable slot 0x80, and forgets the
          device.
 // ORIGINAL: 0x004C6920 ?play@Wave@@QAEHXZ 0x004C6920-0x004C69AD SEMANTIC
+// RULED-OUT: 52/54 MNEMONIC_ONLY; sole divergence is the vtable-pointer
+//   register (edx vs eax) at the FIRST `vtable_slot<device_start_fn>(device_,
+//   0x1C)(device_)` call site only - the second, identical call already
+//   matches. Tried: a named `device_start_fn fn = vtable_slot<...>(...)`
+//   temp at the first site only (worse, 26/54); restructuring the
+//   device_/flags_54_ branch as `if (!device_) {...} else {...}` with a
+//   ternary on the reload path (worse, 2/54). Plain register-allocation
+//   divergence between two textually-identical call expressions; no source
+//   reshaping tried closed it.
 // size      141 bytes
 // prototype int (__thiscall ?play@Wave@@QAEHXZ)(Wave* this)
 // callers   20   call targets   2
@@ -1361,6 +1387,22 @@ Purpose: Initialise the wave from a filename and a mode mask. Streaming waves
          (bit 4 suppressed for streaming waves, bit 8 unsuppressed here), and
          bit 1 of the mode runs the wave's own vtable slot 0x48 with 1.
 // ORIGINAL: 0x004C69B0 ?init@Wave@@QAEXPADK@Z 0x004C69B0-0x004C6AD5
+// RULED-OUT: best flag set /c /O2 /Oi- /Gy /GR- /Oy- /GX reaches 13/122
+//   (0.975 similar); `listing_diff` at those flags shows the structure and
+//   control flow already match - 23 differing runs, nearly all the SAME
+//   global register swap: the image keeps `this` in edi and the resolved
+//   filename / later `&flags_54_` pointer in esi (reused once the filename
+//   is done with), while this tree keeps `this` in esi and the other value
+//   in edi throughout. Tried reassigning the resolved path back onto the
+//   `a1` parameter slot itself (`a1 = filefind_get(a1);`, matching the
+//   image's `mov [ebp+8], esi` reuse of the a1 stack slot) instead of a
+//   separate `resolved` local - byte-identical output, no effect on the
+//   allocator's choice. Also present: the image issues the `a2 & 0x10` and
+//   `a2 & 0x80` streaming guards as two SEPARATE `test al, N` probes re-
+//   testing `streaming` each time, where this tree's compiled output merges
+//   them into one `test al, 0x90`, saving 4 instructions (118 vs image's
+//   122) - a legal optimization of the identical-`return;` arms that no
+//   restructuring tried suppressed.
 // size      293 bytes
 // prototype void (__thiscall ?init@Wave@@QAEXPADK@Z)(Wave* this, int8*, unsigned int)
 // callers   5   call targets   6
