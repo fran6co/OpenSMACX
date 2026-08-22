@@ -1905,16 +1905,14 @@ def check(
         for line in unlinked[:6]:
             typer.secho(f"  {line.strip()[:150]}", fg=typer.colors.RED)
 
-    # HAND-INSTALLED VTABLES, which are a modelling choice that BLOCKS
-    # recovery rather than a matter of taste. A class that stores its own
-    # vtable dword gets no compiler-emitted vtable, and therefore none of the
-    # adjustor thunks that live in one - measured, when converting GraphicWin's
-    # Buffer member to a base produced zero of the 46 `??_G...@@W...` thunks
-    # because the hand-installed vtable was the real blocker. The rule has been
-    # given in prose more than once and the population still grew, so it is a
-    # ratchet here instead.
+    # WORK THE COMPILER SHOULD BE DOING, eight shapes of it. A hand-installed
+    # vtable, a `construct()` standing in for a constructor, an explicit base
+    # destructor call, a placement new where a base would do - each is the tree
+    # doing VC6's job, and doing it somewhere VC6 would not have put it, which
+    # is why they cost bytes rather than taste. Every large gain on 2026-08-22
+    # came from deleting one. Ratcheted per shape; none may grow.
     vtables = subprocess.run(
-        [sys.executable, str(REPO_ROOT / "tools" / "handwritten_vtables.py"),
+        [sys.executable, str(REPO_ROOT / "tools" / "compiler_work.py"),
          "--check"], cwd=REPO_ROOT, capture_output=True, text=True)
     if not as_json:
         typer.secho("  " + vtables.stdout.strip(),
@@ -1936,7 +1934,7 @@ def check(
         typer.secho(
             f"GATE EXIT {code} - "
             + ("FAILED: THE TREE DOES NOT LINK" if link.returncode
-               else "FAILED: hand-installed vtables grew" if vtables.returncode
+               else "FAILED: the tree does more of the compiler's work" if vtables.returncode
                else "FAILED: regressed, dangling or unread claims" if code == 1
                else "OK, with unverifiable claims present" if code == 3
                else "CLEAN"),

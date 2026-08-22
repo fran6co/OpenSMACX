@@ -145,6 +145,14 @@ Purpose: Construct a Scroll: run the GraphicWin base construction, install
          own base-then-member sequencing rather than an explicit placement
          call.
 // ORIGINAL: 0x006051D0 ??0Scroll@@QAE@XZ 0x006051D0-0x00605367;0x00662E30-0x00662E50
+// TRIED: hoisting the four source runs of the 0xA7C/0xA88/0xA94/0xAA0 loop
+//   into `const uint32_t *const d5 = dynamic + 5;` and friends, to make
+//   the induction variable start at zero the way the image's `xor eax,
+//   eax` does. It goes the wrong way: 81 of 83 down to 75. Indexed as
+//   `dynamic[5 + index]` VC6 folds the 5 into the counter and opens with
+//   `mov eax, 0x14`, which is one of the two remaining divergences, but
+//   hoisting costs six more. The other divergence is the `[0x697048]`
+//   load at 0x006052EF reading `fixed[10]`.
 // LEVER: base-ctor ordering  the image runs GraphicWin::construct() BEFORE the
 //   two FlatButton members, and a call in the constructor BODY can never get
 //   there - member ctors always run first. Moving it into a base subobject
