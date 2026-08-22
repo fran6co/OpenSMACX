@@ -25,7 +25,7 @@ agent runs, and matching only `.py` would not have noticed it going missing.
 
     uv run tools/stale_references.py
 
-Exit 0 clean, 1 if any referenced tool is missing.
+Exit 0 clean, 1 if any referenced tool or source file is missing.
 """
 
 from __future__ import annotations
@@ -36,6 +36,24 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 MENTION = re.compile(r"\btools/[a-z0-9_]+\.(?:py|sh)\b")
+# SOURCE PATHS TOO, and they need the opposite default. A retired tool named in
+# `docs/RETIRED_ROUTES.md` is a catalogue entry and must not fail; a source file
+# named in a marker's prose is a CLAIM about code the reader can go and read, so
+# a path that is not there is a defect unless the prose says it went away.
+#
+# The distinction is worth the second pattern. `src/main.cpp` argued for fifty
+# lines that a call site could only be spelled as a literal address, and cited
+# "it is BYTE_EXACT in src/unrecovered/00604e40.cpp" as the evidence - a file
+# that had been deleted when the body was promoted into `src/basepop.cpp`. Both
+# halves were stale and the gate could not see either, because this check
+# scanned tool names only.
+SOURCE = re.compile(r"\bsrc/[A-Za-z0-9_/]+\.(?:cpp|h)\b")
+# Measured against the tree: 83 references name a source path that is gone, and
+# 58 of them already say so. Prose that records where a body CAME FROM is
+# history and stays true - what is left is the live claims.
+GONE = re.compile(
+    r"deleted|retired|promoted|merged from|moved here from|went into|"
+    r"no longer|used to|was replaced|scratch artifact|earlier", re.I)
 # A mention is IMPERATIVE when its line tells the reader to do something with
 # the tool. That distinction is the whole point: `docs/RETIRED_ROUTES.md`
 # naming a retired tool is correct and must not fail this check, while
@@ -83,16 +101,20 @@ if __name__ == "__main__":
                 continue
             lines = text.splitlines()
             for number, line in enumerate(lines):
+                window = "\n".join(lines[max(0, number - 6):number + 7])
+                where = str(path.relative_to(REPO_ROOT))
                 for tool in set(MENTION.findall(line)):
                     if (REPO_ROOT / tool).exists():
                         continue
-                    where = str(path.relative_to(REPO_ROOT))
-                    window = "\n".join(
-                        lines[max(0, number - 6):number + 7])
                     imperative = (IMPERATIVE.search(line)
                                   and not RETRACTED.search(window))
                     bucket = missing if imperative else mentioned
                     bucket.setdefault(tool, set()).add(where)
+                for ref in set(SOURCE.findall(line)):
+                    if (REPO_ROOT / ref).exists():
+                        continue
+                    bucket = mentioned if GONE.search(window) else missing
+                    bucket.setdefault(ref, set()).add(where)
 
     # A COUNT AND THREE EXAMPLES, not every file. The first draft listed every
     # reference and produced 186KB, because `src/recovered/units/` carries a
@@ -106,9 +128,10 @@ if __name__ == "__main__":
         if len(wheres) > 3:
             print(f"      ... and {len(wheres) - 3:,} more")
     if not missing:
-        print("  no instruction names a tool that is not there")
-    print(f"\n{scanned:,} file(s) scanned; {len(missing)} missing tool(s) named by an "
-          f"INSTRUCTION, {len(mentioned)} more merely mentioned")
+        print("  no instruction names a tool, and no live claim names a source "
+              "file, that is not there")
+    print(f"\n{scanned:,} file(s) scanned; {len(missing)} missing path(s) named by a "
+          f"LIVE reference, {len(mentioned)} more merely mentioned as history")
     if mentioned and "--all" in sys.argv:
         print("\nMentioned but not instructed - history, and fine:")
         for tool in sorted(mentioned):

@@ -603,7 +603,7 @@ confirmed by it.
 | --- | --- | --- |
 | `legacy_leaf_island` | 32 | `docs/recovery/proven.csv` |
 | `hybrid_runtime`, hand-written | 17 | `src/*_oracle.cpp` markers |
-| `hybrid_runtime`, generated | 4 | `src/generated_signature_oracle.cpp` |
+| `hybrid_runtime`, generated | 4 | `src/generated_signature_oracle.cpp`, since deleted |
 
 After this session: `proven_recovered` **53 fn / 6,086 B**; `unproven_recovered`
 **2,499 fn / 190,037 B**. Unrecovered: 2,808 fn / 2,012,914 B.
@@ -641,7 +641,7 @@ the name and flushes before each call. Run 1's log contained exactly one
 | after: + `__thiscall` members, staged receiver | **108** (103 members, 5 free), 6,839 B, after the lifecycle and crash exclusions |
 
 Reach of the route as a whole, from `docs/recovery/functions.csv` against the
-`specs[]` table in `src/dllmain.cpp`: 1,994 redirected functions are unproven;
+`specs[]` table in `src/dllmain.cpp` (that file has since been deleted; this is the session's own record): 1,994 redirected functions are unproven;
 815 are `@@Q` members (25,393 B); **543 are `__thiscall` with arguments (17,803
 B)** — the ceiling. 108 is what is buildable today; the gap to 543 is class
 sizes, since only 38 classes have a `sizeof` pinned by a `static_assert` in

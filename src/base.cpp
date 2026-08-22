@@ -71,10 +71,10 @@ int BaseSquareEnergy;  // 0x0090E914
  * wants_prop, num_objectives and the council windows. energy_yield grants it a
  * point of energy on a base square.
  *
- * NOTE: src/spying_recovery.cpp already binds this same address as
+ * NOTE: src/spying.cpp already binds this same address as
  * `SpyingObserverFaction` - the Governor is the faction that may view any other
  * faction's bases, so the two names describe one datum. They are deliberately
- * NOT unified here: spying_recovery.cpp belongs to OPENSMACX_LEAF_SRC_CLOSURE,
+ * NOT unified here: spying.cpp belongs to OPENSMACX_LEAF_SRC_CLOSURE,
  * which does not link base.cpp, so neither file can host the other's
  * definition without moving a translation unit between suites. Two pointer
  * variables onto one address are correct at run time; the hazard is that a test

@@ -80,46 +80,30 @@
  */
 
 /*
- * THE TWO POPUP ALLOCATORS, and why only one of them is a symbol.
+ * THE TWO POPUP ALLOCATORS, and the receiver one of them never had.
  *
- *   0x00404FB0  ?alloc@Popup@@QAAHXZ           declared in popup.h
- *   0x00604E40  ?basepop_alloc@BasePop@@QAEHXZ an address, below
+ *   0x00404FB0  ?alloc@Popup@@QAAHXZ
+ *   0x00604E40  ?basepop_alloc@BasePop@@SAHXZ
  *
- * The difference is the letter before the return type. `QAA` is a PUBLIC
- * member declared `__cdecl` - no receiver in ecx, every argument on the stack
- * - so it is legally declarable `static`, its address is an ordinary
- * `int (*)()`, and `&Popup::alloc` is a compile-time constant the compiler
- * emits as `mov eax, OFFSET`. That is the emitter's own rule for `QAA`
- * callees (tools/emit_translation_unit.static_for).
+ * Both are taken by ADDRESS here, and for the same reason: neither reads a
+ * receiver, so both are declarable `static` and `&Class::method` is a
+ * compile-time constant the compiler emits as `mov eax, OFFSET`.
  *
- * `QAE` is `__thiscall`. C++ has no way to take a plain code address of a
- * non-static member function - `&BasePop::basepop_alloc` is a
- * pointer-to-member, a different type with a different representation, and
- * the union in src/original_seam.h that converts one to an address is a
- * RUNTIME read. The image stores an immediate here:
+ * THIS FILE USED TO SAY THAT WAS IMPOSSIBLE. It argued from the census name
+ * `?basepop_alloc@BasePop@@QAEHXZ` - `QAE` is `__thiscall`, C++ cannot take a
+ * plain code address of a non-static member, therefore the call site had to
+ * spell 0x00604E40 as a literal behind a macro, therefore "what cannot be
+ * recovered is the NAME at this call site". Every step followed from the
+ * first, and the first was wrong: the image is stripped, so `QAE` is a
+ * RECONSTRUCTION, and the bytes deny it. `push ecx` at 0x00604E55 is VC6
+ * reserving four stack bytes and `mov [esp], eax` overwrites it two
+ * instructions later; all seven `call dword ptr [0x696ecc]` sites set up no
+ * ecx at all. basepop.cpp records the correction, and the name is `SA`.
  *
- *     mov dword ptr [0x696ecc], 0x604e40
- *
- * and a runtime read compiles to a load and a store, which is two
- * instructions where the image has one.
- *
- * SO THE ORIGINAL DID THIS TOO. One hook holds both at different times, and
- * no C++ type holds the address of a `__cdecl` member AND of a `__thiscall`
- * member - they are unrelated types. Whatever `0x00696ECC` is declared as in
- * the original, it is not a pointer to either function, and the two stores
- * into it cannot both have been written as `&Class::method`. The address
- * below is the faithful spelling rather than a shortcut around one.
- *
- * The recovery of 0x00604E40 itself is DONE and unaffected: it is BYTE_EXACT
- * in src/unrecovered/00604e40.cpp, whose LEVER records that `new BasePop()`
- * reproduces the whole /GX operator-new and SEH sequence verbatim. What
- * cannot be recovered is the NAME at this call site, not the function.
- *
- * A MACRO rather than a `const` variable, because the store has to be an
- * immediate: through a file-scope variable VC6 loads it first and the one
- * instruction becomes two.
+ * So the store below is `&BasePop::basepop_alloc` and WinMain is still
+ * BYTE_EXACT. The macro that stood here is gone, and with it the claim that
+ * a name in this tree could be unrecoverable.
  */
-#define BASEPOP_ALLOC reinterpret_cast<func_popup_alloc *>(0x00604E40)
 
 char CommandLineText[0x108];  // 0x007D3970
 func_popup_alloc *PopupAllocHook;  // 0x00696ECC
