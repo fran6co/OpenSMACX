@@ -253,8 +253,15 @@ GraphicWin::~GraphicWin() {
     field_A10_ = 0;
 }
 
-// The DllMain seam still needs a free function to install; it forwards to the
-// real destructor rather than modelling one.
+// ONLY BECAUSE C++ CANNOT TAKE A DESTRUCTOR'S ADDRESS. Every ordinary call
+// site calls `->~GraphicWin()` directly now; what is left is
+// src/leaf_recoveries.cpp, which stores this in a function-pointer slot and
+// casts it to SingleArgDtor. That is the whole reason a free function still
+// exists, and it forwards rather than modelling anything.
+//
+// THE NULL GUARD IS NOT THE IMAGE'S. ??1GraphicWin@@UAE@XZ is BYTE_EXACT
+// with no guard at all; this one protects the pointer slot's callers, which
+// the old free-function model used to protect from inside.
 GraphicWin *__fastcall graphic_win_destructor_redirect(GraphicWin *self, void *) {
     if (self) {
         self->~GraphicWin();

@@ -284,8 +284,7 @@ PullDown *PullDown::destroy() {
     dirty_ = 1;
     field_F38_ = PullDownFieldF38Default;
     field_F3C_ = PullDownFieldF3CDefault;
-    graphic_win_destructor_redirect(
-        reinterpret_cast<GraphicWin *>(this), nullptr);
+    reinterpret_cast<GraphicWin *>(this)->~GraphicWin();
     return this;
 }
 

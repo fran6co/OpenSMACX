@@ -167,7 +167,7 @@ RadioButton *__fastcall radio_button_teardown_redirect(void *adjusted, void *,
 
     reinterpret_cast<RadioButton *>(self)->close();
     reinterpret_cast<Dialog *>(self + 0xA30)->destroy();
-    graphic_win_destructor_redirect(reinterpret_cast<GraphicWin *>(self + 0x18), nullptr);
+    reinterpret_cast<GraphicWin *>(self + 0x18)->~GraphicWin();
 
     if (mode & 1) {
         operator delete(self);

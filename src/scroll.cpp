@@ -1206,8 +1206,7 @@ Scroll *Scroll::destroy() {
     close();
     flat_button_right_.destroy();
     flat_button_left_.destroy();
-    graphic_win_destructor_redirect(
-        static_cast<GraphicWin *>(this), nullptr);
+    static_cast<GraphicWin *>(this)->~GraphicWin();
     return this;
 }
 
