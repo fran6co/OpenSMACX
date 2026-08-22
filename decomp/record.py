@@ -63,10 +63,26 @@ def stamped(record: DecompilationState, verdict: AsmComparison,
     # says it has looked. The LESSONS move either way, because a `LEVER` the
     # measurement contradicts is wrong whether or not anyone has decided
     # what to do about the claim.
+    if not record.byte_exact:
+        # A BODY THAT NEVER MATCHED KEEPS ITS LEVERS. They say "this spelling
+        # moved this body toward the image", which is true at any tier - 119
+        # of the tree's 248 lever lines sit on bodies that do not reproduce,
+        # so this is what the tree actually does, whatever the grammar above
+        # says a lever is for. Converting them here turned every one into a
+        # `RULED-OUT` reading "this does not work" the first time anyone ran
+        # `record` on the body: the exact reverse of what was measured. One of
+        # them recorded 4/36 -> 22/36.
+        return replace(record, byte_exact=False)
     return replace(record, byte_exact=record.byte_exact and not demote,
                    levers=(),
+                   # `f"{key} {prose}"`, NOT `prose`. A lever is stored split
+                   # into a leading key and the rest, and dropping the key
+                   # ATE THE FIRST WORD of every migrated line: "same as
+                   # has_tech" became "as has_tech", "`MEASURED inline`"
+                   # became "inline`", "signedness - player_factor" became
+                   # "- player_factor".
                    ruled_out=record.ruled_out
-                   + tuple(prose for _key, prose in record.levers))
+                   + tuple(f"{key} {prose}" for key, prose in record.levers))
 
 
 def record_match(record: DecompilationState, exe: Path | str,

@@ -149,7 +149,7 @@ int __cdecl chas_name(LPSTR name) {
 /*
 Purpose: Convert the weapon name string to a numeric weapon id.
 // ORIGINAL: 0x00584F40 ?weap_name@@YAHPAD@Z 0x00584F40-0x00585030
-// RULED-OUT: as chas_name (0x00584E40) - the naive recomputed-`strlen` trim loop, not `purge_trailing`. Call count 9 -> 12, still MISMATCH (register choice for the space literal).
+// LEVER: same as chas_name (0x00584E40) - the naive recomputed-`strlen` trim loop, not `purge_trailing`. Call count 9 -> 12, still MISMATCH (register choice for the space literal).
 // LEVER: same as chas_name - `if (strlen != 0) { do {...} while; }` duplicated the loop head;
 //   a plain `while (strlen(name) != 0) { if (...) break; ...; }` matches the image's single
 //   backedge. Moved 20/98 -> 55/98 agreeing.
@@ -194,7 +194,7 @@ int __cdecl weap_name(LPSTR name) {
 /*
 Purpose: Convert the armor name string to a numeric armor id.
 // ORIGINAL: 0x00585030 ?arm_name@@YAHPAD@Z 0x00585030-0x00585120
-// RULED-OUT: as chas_name (0x00584E40) - the naive recomputed-`strlen` trim loop, not `purge_trailing`. Call count 9 -> 12, still MISMATCH (register choice for the space literal).
+// LEVER: same as chas_name (0x00584E40) - the naive recomputed-`strlen` trim loop, not `purge_trailing`. Call count 9 -> 12, still MISMATCH (register choice for the space literal).
 // LEVER: same as chas_name - the `if (strlen != 0) { do {...} while; }` duplicated-head shape
 //   became a plain `while (strlen(name) != 0) { if (...) break; ...; }`. PLUS a second, distinct
 //   defect: the final `return DisabledValue;` (-2) after X_pop("BADARMKEY",...) should be
