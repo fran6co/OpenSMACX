@@ -56,7 +56,12 @@ class Dialog {
   // Static default shared by every dialog; __cdecl in the original.
   static int set_def_dialog_font(Font *font1, Font *font2, Font *font3);
   Dialog() { ; }
-  ~Dialog() { ; }
+  // VIRTUAL, so VC6 emits the vfptr the image has at offset 0 instead of the
+  // hand-modelled `LPVOID vtable_` this replaces. That vfptr is the 4 of the
+  // 8 bytes `: virtual GraphicWin, virtual Dialog` came up short by on
+  // CheckBox/RadioButton/EditGroup/ListBox/SpriteBox/Dialogs - see
+  // radiobutton.h, which measured the shortfall and named this as the cause.
+  virtual ~Dialog() { ; }
   // A `construct` METHOD, NOT A CONSTRUCTOR - the `Win::construct` idiom.
   // The real body (??0Dialog@@QAE@XZ, 0x00608C10) is not promoted yet;
   // classes that hold a Dialog as a virtual-base-shaped subobject (CheckBox,
@@ -88,7 +93,9 @@ class Dialog {
   // ?init@Dialog@@QAEHHHHHPAUHeap@@@Z  0x00609730
 
  private:
-  LPVOID vtable_;
+  // The vfptr is EMITTED by the compiler now - see the virtual destructor
+  // above. It occupies the same four bytes at offset 0 that `LPVOID vtable_`
+  // modelled, which is what keeps sizeof(Dialog) at 0xF4.
   Heap heap_;
   Heap *heap_ptr_;
   uint32_t field_1C_;

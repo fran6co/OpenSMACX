@@ -452,7 +452,9 @@ disjoint, so the original's read-before-install order is unobservable and the
 mutant is equivalent by construction.
 */
 void Dialog::destroy() {
-    vtable_ = reinterpret_cast<LPVOID>(static_cast<uintptr_t>(DialogPrimaryVtable));
+    // The vtable slot is no longer a declared member; reach the same four
+    // bytes the compiler's vfptr occupies.
+    *reinterpret_cast<uint32_t *>(this) = DialogPrimaryVtable;
     (ORIGINAL(this)->*DialogOriginalClose)();
 
     // The derived-close chain at 0x004066C0, inlined by the original: each
