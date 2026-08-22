@@ -25,7 +25,7 @@ Purpose: Construct an AutoSound by installing its virtual table and copying
          the complete process-default block in legacy store order.
 // ORIGINAL: 0x0062BA80 ??0AutoSound@@QAE@XZ 0x0062BA80-0x0062BBE8 BYTE_EXACT
 // LEVER: TWO changes, both needed: (1) `construct()` returns `this` rather than void, and (2) the 33-element tail is unrolled into named field assignments. MISMATCH 0/77 -> BYTE_EXACT 77/77. Measured separately: unrolling alone still scores 0 of 77 with 76 compiled instructions, because a void __thiscall keeps the object base in ECX and uses EAX/EDX as the load scratch, where the image opens `mov eax, ecx` and threads every one of the 38 stores through EAX with ECX/EDX as scratch - the register assignment a __thiscall that must leave `this` in EAX produces. The missing 77th instruction is that opening `mov eax, ecx`. Same unroll finding as init() and close() in this file.
-// symbol    ?construct@AutoSound@@QAEPAV1@XZ
+// symbol    ??0AutoSound@@QAE@XZ
 // size      360 bytes
 // prototype void (__thiscall ??0AutoSound@@QAE@XZ)(AutoSound* this)
 // callers   1   call targets   0
@@ -35,8 +35,7 @@ Purpose: Construct an AutoSound by installing its virtual table and copying
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
-AutoSound *AutoSound::construct() {
-    *reinterpret_cast<uint32_t *>(this) = AutoSoundVtable;
+AutoSound::AutoSound() {
     val_1_ = static_cast<int>(AutoSoundDefaults[0]);
     val_3_ = static_cast<int>(AutoSoundDefaults[1]);
     val_4_ = static_cast<int>(AutoSoundDefaults[2]);
@@ -74,11 +73,10 @@ AutoSound *AutoSound::construct() {
     val_35_ = static_cast<int>(AutoSoundDefaults[34]);
     val_36_ = static_cast<int>(AutoSoundDefaults[35]);
     val_37_ = static_cast<int>(AutoSoundDefaults[36]);
-    return this;
 }
 
 AutoSound *__fastcall auto_sound_construct_redirect(AutoSound *self, void *) {
-    return self->construct();
+    return new (self) AutoSound();
 }
 
 /*

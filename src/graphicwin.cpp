@@ -96,7 +96,7 @@ disjoint regions.
 //            reason.
 */
 GraphicWin *GraphicWin::construct() {
-    static_cast<Win *>(this)->construct();
+    new (static_cast<Win *>(this)) Win();
 
     // Win's own vtable slot and the Buffer subobject's vtable slot are
     // compiler-managed, not ordinary members a derived class can name; Win's

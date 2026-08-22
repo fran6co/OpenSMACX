@@ -32,8 +32,9 @@ regression hides inside a number that still passes.
 import argparse, pathlib, re, sys
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
-# Measured 2026-08-22 on a clean tree. Lower it when the count falls.
-CEILING = 72
+# Measured 2026-08-22. Lower it when the count falls; it started at 72 and
+# fell to 69 when Win and AutoSound became real constructors.
+CEILING = 69
 
 # A store of a `*Vtable` constant through an object pointer, in any of the
 # spellings this tree has used.
