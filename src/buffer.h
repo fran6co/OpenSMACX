@@ -272,8 +272,8 @@ class Buffer {
   int init(int width, int height, int tgl, ExtDirectDraw *direct_draw);
   int fill(int color);
   int fill(RECT *area, int color);  // 005DFCD0
-  // 0x005D8240, a pending_bodies forwarder: the five-argument fill
-  // graphicwin.cpp reached through `BufferOriginalFill`.
+  // 0x005D8240 - builds a RECT from the four coordinates and forwards to
+  // the RECT overload above.
   int fill(int left, int top, int width, int height, int color);
   // 0x005DA330, a pending_bodies forwarder.
   int map_colors(int a1, int a2, int a3, int a4, void *table);

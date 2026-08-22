@@ -53,11 +53,11 @@
 class DipEdit : public GraphicWin {
  public:
   void on_selected(int a1);
-  // Siblings on_selected calls. Bodies unrecovered - 0x004DA990 (?read_check@
-  // DipEdit@@QAEXXZ) and 0x004DADA0 (?do_check@DipEdit@@QAEXXZ) - so these are
-  // declarations only, resolved at link time like the other unrecovered methods.
+  // 0x004DA990 (?read_check@DipEdit@@QAEXXZ) - a pending_bodies forwarder;
+  // still a declaration only, resolved at link time like the other
+  // unrecovered methods.
   void read_check();
-  void do_check();
+  void do_check();  // 0x004DADA0, defined in src/dipedit.cpp
   DipEdit() { ; }
   // 0x004E2240 is not recovered: a
   // pending_bodies forwarder, because an empty inline stub emits

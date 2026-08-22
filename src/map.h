@@ -417,6 +417,11 @@ void __cdecl world_temperature();
 int __cdecl world_site(int x, int y, BOOL is_ocean_site);
 void __cdecl world_analysis();
 void __cdecl world_polar_caps();
+// Not yet recovered - pending_bodies forwarders. world_climate calls each
+// BY NAME.
+void __cdecl do_checksums(int type);           // 0x0051E760
+void __cdecl world_shorelines();                // 0x005C3F70
+void __cdecl world_rivers();                    // 0x005C38B0
 // ?world_climate@@YAXXZ at 0x005C5A30 - still an original body, behind a
 // forwarder in src/pending_bodies.cpp. See draw_map in mapwin.h.
 void __cdecl world_climate();

@@ -37,6 +37,7 @@
 #include "filewin.h"
 #include "cursor.h"
 #include "time.h"
+#include "guarded_teardowns.h"  // teardown_0063cef0, jackal_close's callee
 
 uint32_t ScenEditorUndoPosition = 1; // 0x00690D7C
 // GenderDefault (0x009BBFEC) and PluralityDefault (0x009BBFF0) are defined in
@@ -1798,4 +1799,38 @@ int __cdecl jackal_init_real(Palette *palette, Font *font, LPSTR window_name,
 
     JackalInitFlags |= 1;
     return 0;
+}
+
+/*
+Purpose: Tear down every subsystem jackal_init_real brought up, in the
+         image's own order, then clear the "initialised" bit.
+// ORIGINAL: 0x0062D500 ?jackal_close@@YAXXZ 0x0062D500-0x0062D562 BYTE_EXACT
+// size      98 bytes
+// prototype void (__cdecl ?jackal_close@@YAXXZ)()
+// callers   1   call targets   15
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DF580 0x005F04E0 0x005FECF0 0x00604680 0x0060E5D0 0x0060FD60
+//           0x00614E30 0x00616890 0x00616950 0x00619610 0x0062D100 0x006339B0
+//           0x00635750 0x0063B930 0x0063CEF0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl jackal_close() {
+    sub_62d100();
+    Time::close_class();
+    reinterpret_cast<Unk9BE618 *>(0x009BE618)->unk_call();
+    CheckButton::close_class();
+    buffer_close_class_redirect();
+    teardown_0060fd60();
+    teardown_0060e5d0();
+    Font::close_font_class();
+    teardown_0063cef0();
+    filewin_close_class();
+    basepop_close_class();
+    Cursor::close_cursor_class();
+    win_close_class();
+    palette_close_palette_class();
+    StringTable->shutdown();
+    JackalInitFlags &= ~1;
 }

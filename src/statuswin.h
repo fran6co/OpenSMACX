@@ -36,8 +36,10 @@
 */
 class StatusWin {
  public:
-  // 0x004B9EA0, a pending_bodies forwarder.
   void redraw();
+  // 0x004B6570, 8885 bytes - still an original body, a pending_bodies
+  // forwarder. redraw() calls it BY NAME.
+  void draw_status(int a1, int a2, int a3, int a4, int a5);
 
  public:
   StatusWin();

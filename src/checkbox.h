@@ -80,8 +80,8 @@ class CheckBox {
   int attach(void * a1, int a2, int a3, int a4);
 
  public:
-  // 0x0060ECE0, a pending_bodies forwarder. BasePop::write_check reaches it
-  // on the CheckBox at its own +0x2228.
+  // 0x0060ECE0. BasePop::write_check reaches it on the CheckBox at its own
+  // +0x2228.
   void set_state_flag(long value);
   // `static`: the image's name ends in `QAA` - a public member declared
   // __cdecl, taking no receiver - and jackal_init_real calls it with no
@@ -107,6 +107,9 @@ class CheckBox {
   void UNK1(int pos);
   int UNK2(int pos);
   void set_state_pos(int pos, int state);
+  // 0x0060EB80, not yet recovered - a pending_bodies forwarder.
+  // DipEdit::do_check calls it BY NAME.
+  void set_state_id(int id, int value);
 
  private:
   uint32_t vbtable_pointer_;

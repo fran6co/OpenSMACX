@@ -30,6 +30,7 @@
 #include "buffer.h"
 #include "graphicwin.h"
 #include "basebutton.h"
+#include "hypothesis_layouts.h"
 #include "dialogs.h"
 #include "listbox.h"
 #include "dialog.h"
@@ -1459,6 +1460,34 @@ void __fastcall image_button_close_redirect(void *self, void *) {
     // image does not have. It tail-jumps straight to 0x006070C0.
     store32(self, 0xAB8, 0);
     reinterpret_cast<BaseButton *>(self)->BaseButton::close();
+}
+
+/*
+Purpose: Re-install this class's two vtables - its own and the secondary base
+         subobject's at +0x444 - then run the base destructor, `destroy()`,
+         which is a plain method rather than a real C++ destructor for the
+         same reason BaseButton's own is (see basebutton.cpp) - a real
+         `~BaseButton()` pulls in SEH scaffolding the image does not have.
+
+             mov [ecx],0x670a94 / mov [ecx+0x444],0x670a8c
+             jmp ?destroy@BaseButton@@QAEPAV1@XZ
+
+// ORIGINAL: 0x00625310 ??1ImageButton@@QAE@XZ 0x00625310-0x00625325 BYTE_EXACT
+// size      21 bytes
+// prototype void (__thiscall ??1ImageButton@@QAE@XZ)(ImageButton* this)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+ImageButton::~ImageButton() {
+    volatile uint32_t *const object =
+        reinterpret_cast<volatile uint32_t *>(this);
+    object[0x000 / 4] = ImageButtonPrimaryVtable;
+    object[0x444 / 4] = ImageButtonBufferVtable;
+    reinterpret_cast<BaseButton *>(this)->BaseButton::destroy();
 }
 
 /*

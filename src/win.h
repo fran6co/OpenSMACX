@@ -129,7 +129,14 @@ class Win {
   static HDC get_hdc();
   static void release_hdc();
   void client_to_screen(int *x, int *y);
+  // ?client_to_screen@Win@@QAEXPAURECT@@@Z at 0x005ECFE0 - the RECT
+  // overload, distinct from the (int*, int*) one above. Not yet recovered,
+  // a pending_bodies forwarder.
+  void client_to_screen(RECT *area);
   void screen_to_client(int *x, int *y);  // 005ED2D0
+  // ?update_window@Win@@QAEHPAURECT@@@Z at 0x005F74A0. Not yet recovered,
+  // a pending_bodies forwarder.
+  int update_window(RECT *area);
   int on_query_new_palette();
   int get_vert_pos();
   int get_horz_pos();

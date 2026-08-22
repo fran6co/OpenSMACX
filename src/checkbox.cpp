@@ -331,6 +331,34 @@ void __fastcall check_box_set_state_pos_redirect(CheckBox *self, void *,
 }
 
 /*
+Purpose: Overwrite the whole state word in one store, then repaint through
+         the virtual base - unlike UNK1/UNK2/set_state_pos above, which each
+         touch a single bit.
+// ORIGINAL: 0x0060ECE0 ?set_state_flag@CheckBox@@QAEXJ@Z 0x0060ECE0-0x0060ED03 BYTE_EXACT
+// size      35 bytes
+// prototype void (__thiscall ?set_state_flag@CheckBox@@QAEXJ@Z)(CheckBox* this, long)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x0060ECFA
+Return Value: n/a
+Status: Complete
+*/
+void CheckBox::set_state_flag(long value) {
+    // Two separate reads of `*this` as a vbtable, not one cached local: the
+    // image reloads it (`mov edx,[ecx]`) between the store and the virtual
+    // call rather than keeping it live across both.
+    uint8_t *const self = reinterpret_cast<uint8_t *>(this);
+    *reinterpret_cast<int32_t *>(
+        self + (*reinterpret_cast<const int32_t *const *>(self))[2] + 0xEC) =
+        static_cast<int32_t>(value);
+    reinterpret_cast<VCall *>(
+        self +
+        (*reinterpret_cast<const int32_t *const *>(self))[1])->slot062();
+}
+
+/*
 Purpose: Repaint on dialog focus, dispatching through the enclosing object.
 // ORIGINAL: 0x0060FB90 ?on_dialog_focus@CheckBox@@QAEXH@Z 0x0060FB90-0x0060FBA7 BYTE_EXACT
 // size      23 bytes

@@ -27,6 +27,9 @@
 #include "strings.h"
 #include "technology.h"
 #include "veh.h"
+#include "log.h"
+#include "mapwin.h"
+#include "worldwin.h"
 
 int MapLongitudeBounds;  // 0x00949870
 int MapLatitudeBounds;  // 0x00949874
@@ -2989,6 +2992,65 @@ void __cdecl world_analysis() {
     for (i = 0; i < MapArea; i++) {
         map_tiles()[i].val2 &= 0xF; // clear map sites
     }
+}
+
+// Two fixed-address flags world_climate reads, no established identity
+// beyond what this one function shows.
+uint32_t WorldClimateSkipTerrainClear;  // 0x0068F21C
+uint32_t WorldClimateSkipTerritoryReset;  // 0x009B22EC
+// The process-wide WorldWin, torn down/built at this same fixed address
+// elsewhere (atexit_thunks.cpp, init_thunks.cpp).
+WorldWin *const WorldClimateWorldWin = (WorldWin *)0x008E9F60;
+
+/*
+Purpose: Regenerate the world's climate: shorelines, temperature, rivers,
+         rainfall, continents, then analysis; reset territory unless told
+         not to; reseed the random generator from the clock; and clear
+         terrain on every live map window (plus the world overview window)
+         unless told not to.
+// ORIGINAL: 0x005C5A30 ?world_climate@@YAXXZ 0x005C5A30-0x005C5ADB BYTE_EXACT
+// size      171 bytes
+// prototype void (__cdecl ?world_climate@@YAXXZ)()
+// callers   18   call targets   12
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x0046FD90 0x004C45E0 0x0051E760 0x00523DD0 0x0059C790 0x005C38B0
+//           0x005C3F70 0x005C4170 0x005C4470 0x005C55C0 0x006257E0 0x006262F0
+// indirect  0x005C5A7B
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl world_climate() {
+    do_checksums(2);
+    log_say(reinterpret_cast<LPCSTR>(0x00691E2C), 0, 0, 0);
+    world_shorelines();
+    world_temperature();
+    world_rivers();
+    world_rainfall();
+    Paths->continents();
+    world_analysis();
+    if (WorldClimateSkipTerritoryReset == 0) {
+        reset_territory();
+    }
+
+    random_reseed(timeGetTime());
+
+    if (WorldClimateSkipTerrainClear == 0) {
+        int cursor = reinterpret_cast<int>(MapWinTable);
+        const int end = cursor + static_cast<int>(MapWinTableSlots) * 4;
+        do {
+            MapWin *const window = *reinterpret_cast<MapWin *const *>(cursor);
+            if (*reinterpret_cast<int *>(
+                    reinterpret_cast<char *>(window) + 0x1DD74) != 0) {
+                window->clear_terrain();
+            }
+            cursor += 4;
+        } while (cursor < end);
+        WorldClimateWorldWin->clear_terrain();
+    }
+
+    log_say(reinterpret_cast<LPCSTR>(0x00691E4C), 0, 0, 0);
+    do_checksums(3);
 }
 
 /*

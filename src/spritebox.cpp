@@ -22,6 +22,8 @@
 #include "sounddevice.h"
 #include "menu.h"
 #include "win.h"
+#include "spot.h"
+#include "temp.h"  // HandleMain
 #include "buffer.h"
 
 // SpriteBox's own vbtable {0, 0x8C, 0xAA4} and the vtables it installs into
@@ -391,6 +393,156 @@ void SpriteBox::on_dialog_focus(int a1) {
         + *reinterpret_cast<int *>(
             *reinterpret_cast<int *>(
                 reinterpret_cast<char *>(this) - 0x8c) + 4))->slot062();
+}
+
+/*
+Purpose: Check the click against the widget's spots; if one is hit and its
+         registered handler accepts it, notify the main window with a
+         synthetic Return keypress.
+// ORIGINAL: 0x00611240 ?on_right_down@SpriteBox@@QAEXHH@Z 0x00611240-0x00611290 BYTE_EXACT
+// size      80 bytes
+// prototype void (__thiscall ?on_right_down@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FAB00
+// indirect  0x0061126D 0x00611286
+Return Value: n/a
+Status: Complete
+*/
+void SpriteBox::on_right_down(int x_coord, int y_coord) {
+    char *const self = reinterpret_cast<char *>(this);
+    Spot *const spot = reinterpret_cast<Spot *>(self - 0x7c);
+    if (spot->check(x_coord, y_coord, &y_coord, 0) == -1) {
+        return;
+    }
+    typedef int(__cdecl *ClickHandler)(int);
+    ClickHandler const handler = *reinterpret_cast<ClickHandler *>(self - 0x14);
+    if (!handler) {
+        return;
+    }
+    if (handler(y_coord) == 0) {
+        return;
+    }
+    PostMessageA(HandleMain, WM_KEYDOWN, VK_RETURN, 0);
+}
+
+/*
+Purpose: Same shape as on_right_down above, for the left-button-up spot
+         handler at this-0x1c.
+// ORIGINAL: 0x006111A0 ?on_left_up@SpriteBox@@QAEXHH@Z 0x006111A0-0x006111F0 BYTE_EXACT
+// size      80 bytes
+// prototype void (__thiscall ?on_left_up@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FAB00
+// indirect  0x006111CD 0x006111E6
+Return Value: n/a
+Status: Complete
+*/
+void SpriteBox::on_left_up(int x_coord, int y_coord) {
+    char *const self = reinterpret_cast<char *>(this);
+    Spot *const spot = reinterpret_cast<Spot *>(self - 0x7c);
+    if (spot->check(x_coord, y_coord, &y_coord, 0) == -1) {
+        return;
+    }
+    typedef int(__cdecl *ClickHandler)(int);
+    ClickHandler const handler = *reinterpret_cast<ClickHandler *>(self - 0x1c);
+    if (!handler) {
+        return;
+    }
+    if (handler(y_coord) == 0) {
+        return;
+    }
+    PostMessageA(HandleMain, WM_KEYDOWN, VK_RETURN, 0);
+}
+
+/*
+Purpose: Same check-then-notify shape, for the right-click spot handler at
+         this-0x18. NESTED, not early-return - the shape the image has here.
+// ORIGINAL: 0x006111F0 ?on_right_click@SpriteBox@@QAEXHH@Z 0x006111F0-0x00611240 BYTE_EXACT
+// size      80 bytes
+// prototype void (__thiscall ?on_right_click@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FAB00
+// indirect  0x0061121D 0x00611236
+Return Value: n/a
+Status: Complete
+*/
+void SpriteBox::on_right_click(int x_coord, int y_coord) {
+    char *const self = reinterpret_cast<char *>(this);
+    Spot *const spot = reinterpret_cast<Spot *>(self - 0x7c);
+    if (spot->check(x_coord, y_coord, &y_coord, 0) != -1) {
+        typedef int(__cdecl *ClickHandler)(int);
+        ClickHandler const handler =
+            *reinterpret_cast<ClickHandler *>(self - 0x18);
+        if (handler != 0) {
+            if (handler(y_coord) != 0) {
+                PostMessageA(HandleMain, WM_KEYDOWN, VK_RETURN, 0);
+            }
+        }
+    }
+}
+
+/*
+Purpose: Same check-then-notify shape, for the right-button-up spot handler
+         at this-0x10.
+// ORIGINAL: 0x00611290 ?on_right_up@SpriteBox@@QAEXHH@Z 0x00611290-0x006112E0 BYTE_EXACT
+// size      80 bytes
+// prototype void (__thiscall ?on_right_up@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FAB00
+// indirect  0x006112BD 0x006112D6
+Return Value: n/a
+Status: Complete
+*/
+void SpriteBox::on_right_up(int x_coord, int y_coord) {
+    char *const self = reinterpret_cast<char *>(this);
+    Spot *const spot = reinterpret_cast<Spot *>(self - 0x7c);
+    if (spot->check(x_coord, y_coord, &y_coord, 0) != -1) {
+        typedef int(__cdecl *ClickHandler)(int);
+        ClickHandler const handler =
+            *reinterpret_cast<ClickHandler *>(self - 0x10);
+        if (handler != 0) {
+            if (handler(y_coord) != 0) {
+                PostMessageA(HandleMain, WM_KEYDOWN, VK_RETURN, 0);
+            }
+        }
+    }
+}
+
+/*
+Purpose: Same check-then-notify shape, for the right-double-click spot
+         handler at this-8.
+// ORIGINAL: 0x00611330 ?on_right_double_click@SpriteBox@@QAEXHH@Z 0x00611330-0x00611380 BYTE_EXACT
+// size      80 bytes
+// prototype void (__thiscall ?on_right_double_click@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FAB00
+// indirect  0x0061135D 0x00611376
+Return Value: n/a
+Status: Complete
+*/
+void SpriteBox::on_right_double_click(int x_coord, int y_coord) {
+    char *const self = reinterpret_cast<char *>(this);
+    Spot *const spot = reinterpret_cast<Spot *>(self - 0x7c);
+    if (spot->check(x_coord, y_coord, &y_coord, 0) != -1) {
+        typedef int(__cdecl *ClickHandler)(int);
+        ClickHandler const handler =
+            *reinterpret_cast<ClickHandler *>(self - 8);
+        if (handler != 0) {
+            if (handler(y_coord) != 0) {
+                PostMessageA(HandleMain, WM_KEYDOWN, VK_RETURN, 0);
+            }
+        }
+    }
 }
 
 /*

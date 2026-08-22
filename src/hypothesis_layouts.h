@@ -1279,9 +1279,8 @@ class Fractal {
 /* 0xABC bytes, 2 member(s), 1 named. From the IDB. 7 function(s) in the image. */
 class ImageButton {
  public:
-  // 0x00625310 is not recovered: a pending_bodies forwarder, because
-  // an empty inline stub emits nothing and the deleting destructor
-  // needs a `call rel32`.
+  // 0x00625310, defined in src/leaf_recoveries.cpp: an empty inline stub
+  // emits nothing and the deleting destructor needs a `call rel32`.
   ~ImageButton();
 
  public:
@@ -1640,6 +1639,19 @@ struct NameNode {
 
 /* 0x10 bytes, 4 member(s), 0 named. From the IDB. 6 function(s) in the image. */
 class NetFifo {
+ public:
+  // 0x006339C0 and 0x006339E0, both pending_bodies forwarders. Declared HERE
+  // rather than as a file-local class in net_class.cpp, which is where they
+  // arrived: that spelling declared a NetFifo with no members at all, a
+  // different layout from this one, and two definitions of the same class in
+  // one translation unit - C2011. `Net::Net`/`~Net` need them by name so they
+  // reach the real bodies with an ordinary call rather than a bound pointer.
+  NetFifo();
+  ~NetFifo();
+  // 0x00633F70, a pending_bodies forwarder. Net::get (src/net_class.cpp)
+  // reaches it on the NetFifo embedded at its own this+0x10C.
+  int get(void *, unsigned int *, int *, unsigned int *);
+
  public:
   uint32_t field_0_;  // 0x0
   uint32_t field_4_;  // 0x4

@@ -20,10 +20,86 @@
 #include "sounddevice.h"
 #include "dialog.h"
 
-// init() for both device classes is reached by init_sound(); their bodies are
-// not yet recovered, so each forwards into the original image through the seam.
+// init() for both device classes is reached by init_sound().
+//
+// A REAL local vtable, not the vtable_method/ORIGINAL seam used elsewhere in
+// this file: the seam's extra indirection left window/backends and the
+// vtable read on the OPPOSITE registers from the image (mnemonic-identical,
+// byte-different). This class is never instantiated, so its own
+// VC6-synthesised vtable dispatch is exactly the image's `call [reg+N]`.
+namespace {
+class DeviceVCall { public:
+    virtual int slot000(unsigned long);
+    virtual void slot001();
+    virtual void slot002();
+    virtual int slot003(void *, unsigned long);
+};
+}  // namespace
 
+/*
+Purpose: Select the device (vtable slot 0), then open the wrapped device at
+         this+0x14 (vtable slot 0xC) with the given window and backends. On
+         failure to open, restart (vtable slot 4) and clear the wrapped
+         device pointer before reporting the failure.
+// ORIGINAL: 0x004C57A0 ?init@Midi_Device@@QAEHPAXK@Z 0x004C57A0-0x004C57E4 BYTE_EXACT
+// size      68 bytes
+// prototype int (__thiscall ?init@Midi_Device@@QAEHPAXK@Z)(Midi_Device* this, void*, unsigned long)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x004C57AD 0x004C57C5 0x004C57D5
+Return Value: 0 on success; the failing call's own non-zero result otherwise
+Status: Complete
+*/
+int Midi_Device::init(void *window, unsigned long backends) {
+    int result = reinterpret_cast<DeviceVCall *>(this)->slot000(backends);
+    if (result != 0) {
+        return result;
+    }
+    DeviceVCall *sub = *reinterpret_cast<DeviceVCall **>(
+        reinterpret_cast<uint8_t *>(this) + 0x14);
+    int result2 = sub->slot003(window, backends);
+    if (result2 != 0) {
+        reinterpret_cast<DeviceVCall *>(this)->slot001();
+        *reinterpret_cast<DeviceVCall **>(
+            reinterpret_cast<uint8_t *>(this) + 0x14) = 0;
+        return result2;
+    }
+    return 0;
+}
 
+/*
+Purpose: Select the device (vtable slot 0), then open the wrapped device at
+         this+0x14 (vtable slot 0xC) with the given window and backends. On
+         failure to open, restart (vtable slot 4) and report the failure -
+         unlike Midi_Device::init above, the wrapped device pointer is left
+         alone.
+// ORIGINAL: 0x004C5A10 ?init@Wave_In_Device@@QAEHPAXK@Z 0x004C5A10-0x004C5A4D BYTE_EXACT
+// size      61 bytes
+// prototype int (__thiscall ?init@Wave_In_Device@@QAEHPAXK@Z)(Wave_In_Device* this, void*, unsigned long)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x004C5A1D 0x004C5A2D 0x004C5A3A
+Return Value: 0 on success; the failing call's own non-zero result otherwise
+Status: Complete
+*/
+int Wave_In_Device::init(void *window, unsigned long backends) {
+    int result = reinterpret_cast<DeviceVCall *>(this)->slot000(backends);
+    if (result != 0) {
+        return result;
+    }
+    DeviceVCall *sub = *reinterpret_cast<DeviceVCall **>(
+        reinterpret_cast<uint8_t *>(this) + 0x14);
+    int result2 = sub->slot003(window, backends);
+    if (result2 != 0) {
+        reinterpret_cast<DeviceVCall *>(this)->slot001();
+        return result2;
+    }
+    return 0;
+}
 
 
 /*

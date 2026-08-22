@@ -18,6 +18,10 @@
 #include "stdafx.h"
 #include "xpops.h"
 #include "popup.h"   // PopupStartCaption, the shared caption buffer
+#include "faction.h"  // PopupDialogFactionID, ExpansionEnabled
+#include "spying_recovery.h"  // SpyingFactionFlagBytes
+#include <cstdio>
+#include <cstring>
 
 // THE SAME BUFFER `popup.cpp` calls `PopupStartCaption` - one array at
 // 0x009B8AA8 under two names. Defined there; used here.
@@ -461,4 +465,87 @@ int __cdecl x_pops_no_flags(char *caption, const char *label, int title,
                             int (__cdecl *callback)()) {
     return X_pops(caption, label, title, text, value, sprite, 1, 1,
                              callback);
+}
+
+// Eight fixed-address strings X_pop reaches for the mod-key check below, no
+// established identity beyond what this one function shows: two
+// filename/mode pairs it fopen/fclose-probes, two override captions/labels
+// it compares against, and two override-caption pointers it substitutes.
+// XPopModCheckString1 lives AT the address, not pointed at from it - a
+// variable holding a string pointer, read INLINE through a cast so the
+// dereference folds to one instruction rather than materialising the
+// address in a register first (the shape console_map_win() already uses).
+// string2 is used at the address level - a literal sitting right there.
+inline LPCSTR XPopModCheckString1() {
+    return *reinterpret_cast<LPCSTR *>(0x00691B0C);
+}
+LPCSTR const XPopModCheckString2 = (LPCSTR)0x00691C80;
+LPCSTR const XPopModCheckFile1 = (LPCSTR)0x00691C90;
+LPCSTR const XPopModCheckMode1 = (LPCSTR)0x00691C8C;
+// Both caption substitutes are variables holding a string pointer, like
+// XPopModCheckString1 above.
+inline LPCSTR XPopModCheckCaption1() {
+    return *reinterpret_cast<LPCSTR *>(0x00691B20);
+}
+LPCSTR const XPopModCheckFile2 = (LPCSTR)0x00691CA8;
+LPCSTR const XPopModCheckMode2 = (LPCSTR)0x00691CA4;
+inline LPCSTR XPopModCheckCaption2() {
+    return *reinterpret_cast<LPCSTR *>(0x00691B24);
+}
+
+/*
+Purpose: The full builder every xpops wrapper funnels into. When the label
+         matches one of two fixed override strings, probe for a mod-key file
+         (opening and immediately closing it) gated on the human's own or
+         the popup dialog's faction having its spying flag set, and on
+         expansions being enabled; on success substitute a fixed caption for
+         the popup. Either way, fall through to the shared pop builder.
+// ORIGINAL: 0x005BF480 ?X_pop@@YAHPADPBDHPADHP6AHXZ@Z 0x005BF480-0x005BF5C2 SEMANTIC
+// RULED-OUT: MNEMONIC_ONLY 100/127, best across all flag sets. The remaining gap is a pure register-rotation (eax/ecx/edx swapped) at three near-identical pop_full(cap, label, a3, a4, a5, callback) call sites reading [ebp+0xc] (label); caching label in a local, reordering it against the caption expression via separate statements, and reading the two fixed-address caption substitutes through an inline accessor (fixed a genuine double-indirection bug first) all leave the same rotation.
+// symbol    ?X_pop@@YAHPADPBDH0HP6AHXZ@Z
+// size      322 bytes
+// prototype int (__cdecl ?X_pop@@YAHPADPBDHPADHP6AHXZ@Z)(int8*, int8*, int length, int8*, int, int (__cdecl *)())
+// callers   9   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x006272C0 0x00645598 0x00645646 0x00645660
+Return Value: whatever the shared pop builder returns
+Status: Complete
+*/
+int __cdecl X_pop(char *caption, const char *label, int a3, char *a4, int a5,
+                  int (__cdecl *callback)()) {
+    char *const label2 = const_cast<char *>(label);
+    if (strcmp(caption, XPopModCheckString1()) == 0 ||
+        strcmp(caption, XPopModCheckString2) == 0) {
+        if ((SpyingFactionFlagBytes[LocalFaction * 0x59C] & 0x80) != 0) {
+            if (ExpansionEnabled != 0) {
+                FILE *const fp = fopen(XPopModCheckFile1, XPopModCheckMode1);
+                if (fp != nullptr) {
+                    fclose(fp);
+                    char *const lbl = label2;
+                    char *const cap = const_cast<char *>(XPopModCheckCaption1());
+                    int const result = pop_full(cap, lbl, a3, a4, a5, callback);
+                    if (result != -1) {
+                        return result;
+                    }
+                }
+            }
+        } else if (ExpansionEnabled != 0 && 0 < PopupDialogFactionID &&
+                  PopupDialogFactionID < 8 &&
+                  (SpyingFactionFlagBytes[PopupDialogFactionID * 0x59C] &
+                   0x80) != 0) {
+            FILE *const fp = fopen(XPopModCheckFile2, XPopModCheckMode2);
+            if (fp != nullptr) {
+                fclose(fp);
+                char *const lbl = label2;
+                char *const cap = const_cast<char *>(XPopModCheckCaption2());
+                int const result = pop_full(cap, lbl, a3, a4, a5, callback);
+                if (result != -1) {
+                    return result;
+                }
+            }
+        }
+        return pop_full(caption, label2, a3, a4, a5, callback);
+    }
+    return pop_full(caption, label2, a3, a4, a5, callback);
 }
