@@ -130,6 +130,9 @@ class Console : public MapWin {
   // already-matching `->Console::~Console()` proves it, the same way it did
   // for MapWin's and PlanWin's.
   ~Console();
+  // 0x0051D7D0. Not declared before this landed, which is why the body
+  // could only live in an artifact.
+  void close();
   void clear_group();
   void set_preferences();
   void set_auto_preferences();
