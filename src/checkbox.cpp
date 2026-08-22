@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "original_seam.h"
 #include "checkbox.h"
+#include "init_thunks.h"
 #include "vtable_shim.h"
 
 uint32_t CheckBoxDefault1;  // 0x00697104
@@ -484,9 +485,8 @@ Status: Complete
 */
 
 /*
-// ORIGINAL: 0x0060FC60 ?init_class@CheckBox@@QAAHXZ 0x0060FC60-0x0060FD52;0x00662F84-0x00662F99
+// ORIGINAL: 0x0060FC60 ?init_class@CheckBox@@QAAHXZ 0x0060FC60-0x0060FD52;0x00662F84-0x00662F99 BYTE_EXACT
 // symbol    ?init_class@CheckBox@@SAHXZ
-// TRIED: a real local `Buffer buf;` double-destructs (the explicit ~Buffer() call plus the automatic scope-exit one). A raw `char[sizeof(Buffer)]` + placement `new` + explicit `->~Buffer()` is the shape the original uses. SEH prologue/unwind funclet not reproduced (same gap as the RadioButton sibling).
 // size      263 bytes
 // prototype int (__cdecl ?init_class@CheckBox@@QAAHXZ)()
 // callers   1   call targets   5
@@ -498,22 +498,19 @@ Status: Complete
 // pending_bodies forwarder.
 Status: Complete
 */
-static int *const g_0069710c = (int *)0x0069710C;
-static int *const g_009b8f60 = (int *)0x009B8F60;
-static int *const g_009b8f90 = (int *)0x009B8F90;
-
 int __cdecl CheckBox::init_class() {
-    char bufMem[sizeof(Buffer)];
-    Buffer *buf = new (bufMem) Buffer();
-    buf->init(0x20, 0x20, 0, 0);
-    int result = buf->load_pcx(reinterpret_cast<const char *>(g_0069710c), 0, 10, 0xec);
+    // A REAL LOCAL, not `char bufMem[sizeof(Buffer)]` with a placement new.
+    // The image opens `sub esp, 0x588`, which is sizeof(Buffer) exactly; the
+    // array spelling costs four more bytes of frame and an explicit
+    // destructor call the compiler would emit itself.
+    Buffer buf;
+    buf.init(0x20, 0x20, 0, 0);
+    int result = buf.load_pcx("jackal.pcx", 0, 10, 0xec);
     if (result != 0) {
-        buf->~Buffer();
         return result;
     }
-    reinterpret_cast<Sprite *>(g_009b8f60)->extract(buf, 0x109, 1, 0x44, 0x20, 0x20, 0);
-    reinterpret_cast<Sprite *>(g_009b8f90)->extract(buf, 0x109, 0x22, 0x44, 0x20, 0x20, 0);
-    buf->~Buffer();
+    g_CHECKBOX_SPRITE_1->extract(&buf, 0x109, 1, 0x44, 0x20, 0x20, 0);
+    g_CHECKBOX_SPRITE_2->extract(&buf, 0x109, 0x22, 0x44, 0x20, 0x20, 0);
     return 0;
 }
 
