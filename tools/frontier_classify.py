@@ -75,24 +75,58 @@ if __name__ == "__main__":
 
     counts = collections.Counter()
     untouched = 0
+    # THE DISPATCH LIST, and the reason this option exists. On 2026-08-22 a
+    # batch of 72 was bucketed straight out of `frontier.py`'s depth-first
+    # order, which is CALL ORDER and says nothing about yield. Three of the six
+    # buckets came back 12-for-12 MISMATCH having changed NOTHING, because
+    # every body in them was already worked and already sitting on a
+    # register-allocation plateau with the refusal written on its marker. The
+    # agents were right; the list was wrong. This file already knew which those
+    # were - it just could not say so in a form anything could dispatch.
+    open_addresses: list[int] = []
     for record in read(REPO_ROOT / "src"):
         if record.address not in addresses or record.semantic:
             continue
         if not record.levers and not record.ruled_out:
             untouched += 1
+            open_addresses.append(record.address)
             continue
-        counts[family_of(record)] += 1
+        family = family_of(record)
+        counts[family] += 1
+        if family.startswith("worked, no known ceiling"):
+            open_addresses.append(record.address)
+
+    if "--open" in sys.argv:
+        for address in sorted(open_addresses):
+            print(f"0x{address:08X}")
+        raise SystemExit(0)
 
     total = sum(counts.values()) + untouched
     print(f"  {untouched:4d}  never looked at - no lever, no refusal")
     for name, n in counts.most_common():
         print(f"  {n:4d}  {name}")
+    # MATCHED ON THE STRING, WHICH IS WHY THIS WAS WRONG. The filter excluded
+    # names starting "open" and "no notes" - but the not-a-ceiling family is
+    # spelled "worked, no known ceiling named - likeliest to yield", which
+    # starts with "worked". So the 210 bodies that explicitly have NO known
+    # ceiling were counted as sitting on a measured, named one, and this line
+    # reported 344 blocked when the real number is 134. It made the frontier
+    # look two and a half times more stuck than it is.
+    #
+    # Now keyed off the same predicate `--open` uses, so the two CANNOT
+    # disagree again: anything dispatchable is by definition not a ceiling.
     ceilings = sum(n for name, n in counts.items()
-                   if not name.startswith("open") and not name.startswith("no notes"))
+                   if not name.startswith("worked, no known ceiling")
+                   and not name.startswith("no notes"))
     print(f"\n{total} remaining against \"byte exact or semantically the same\"")
     print(f"  {ceilings} sit on a ceiling this tree has already measured and named")
     print(f"  {total - ceilings} are open: never looked at, or worked without "
           f"hitting a named wall")
+    print(f"\n  --open prints the {len(open_addresses)} address(es) that are "
+          f"WORTH DISPATCHING - never looked at, or worked\n         without "
+          f"hitting a named wall. Bucket from THIS, not from frontier.py's "
+          f"depth-first order,\n         which is call order and says nothing "
+          f"about yield.")
     print("\nSampled to check the big bucket is real: its members carry LEVER "
           "lines recording partial progress, not refusals - so they are "
           "genuinely unfinished rather than misfiled ceilings.")
