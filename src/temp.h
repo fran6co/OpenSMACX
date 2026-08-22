@@ -76,10 +76,17 @@ void __cdecl alt_set(int a1, int a2, uint32_t a3);
 
 // Time
 typedef void func30(int);
-func30 *const blink_timer = (func30 *)0x0050EA40;
-func30 *const blink2_timer = (func30 *)0x0050EE30;
-func30 *const line_timer = (func30 *)0x0050EE80;
-func30 *const turn_timer = (func30 *)0x0050EF10;
+// The four callbacks below are pending_bodies forwarders (src/pending_bodies.cpp).
+// They were bound as pointers here, which cost `start_timers` the image's `E8`
+// at each of its four calls - see the note there.
+// 0x0050EA40, a pending_bodies forwarder.
+void __cdecl blink_timer(int a1);
+// 0x0050EE30, a pending_bodies forwarder.
+void __cdecl blink2_timer(int a1);
+// 0x0050EE80, a pending_bodies forwarder.
+void __cdecl line_timer(int a1);
+// 0x0050EF10, a pending_bodies forwarder.
+void __cdecl turn_timer(int a1);
 
 // testing
 typedef int *func8(LPSTR, LPSTR);

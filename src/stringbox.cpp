@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "original_seam.h"
 #include "stringbox.h"
+#include "stringstruct.h"
 #include <cstring>
 #include "vtable_shim.h"
 
@@ -144,12 +145,28 @@ Return Value: n/a
 Status: Complete
 */
 void StringBox::add(char *text, int index, int flag) {
-    std::memcpy(&field_2B8C_, &text, sizeof(text));
-    field_2B90_ = static_cast<uint32_t>(flag);
-    field_2B94_ = 0;
-    if ((ORIGINAL(&field_2B70_)->*StringBoxStructAdd)(index) == 0) {
+    // ONE ADDRESS, TAKEN ONCE. The image computes `ecx = &field_2B70_` a
+    // single time (`lea ecx, [esi + 0x2b70]`) and reaches every field below
+    // it - `field_2B8C_`, `field_2B90_`, `field_2B94_` and the
+    // StringStruct::add call itself - off THAT register. Storing through
+    // the named members instead makes VC6 re-derive each one from `this`.
+    char *const base = reinterpret_cast<char *>(&field_2B70_);
+    std::memcpy(base + 0x1c, &text, sizeof(text));
+    *reinterpret_cast<uint32_t *>(base + 0x20) = static_cast<uint32_t>(flag);
+    *reinterpret_cast<uint32_t *>(base + 0x24) = 0;
+    // CALLED BY NAME, same as Dialog::item at 0x00609990: a real
+    // `StringStruct::add` reaches the image's `call rel32`, where the
+    // pointer-to-member `StringBoxStructAdd` compiles `call dword ptr [0]`.
+    if (reinterpret_cast<StringStruct *>(base)->add(index) == 0) {
         StringBox::add_fixup();
     }
+    // TRIED: the image emits one further `xor eax, eax` right before the
+    // epilogue, on the fixup-taken path only - MISMATCH stays at 14/18
+    // (0.971 similar) without it. Tried: an early-return guard clause
+    // instead of the if-block (`if (result != 0) return;`); dropping the
+    // `StringBox::` qualifier on the call. Neither changes the codegen, and
+    // `add` is genuinely void (`...QAEX...`), so there is no return value
+    // to re-materialise. Plateaued here.
 }
 
 void __fastcall string_box_add_redirect(StringBox *self, void *, char *text,

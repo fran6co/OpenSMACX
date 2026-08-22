@@ -430,7 +430,7 @@ void CALLBACK Time::MultimediaProc(uint32_t UNUSED(timer_id), uint32_t UNUSED(ms
 
 /*
 Purpose: Start global timers.
-// ORIGINAL: 0x0050F3D0 ?start_timers@@YAXXZ 0x0050F3D0-0x0050F431
+// ORIGINAL: 0x0050F3D0 ?start_timers@@YAXXZ 0x0050F3D0-0x0050F431 BYTE_EXACT
 // size      97 bytes
 // prototype 
 // callers   3   call targets   1

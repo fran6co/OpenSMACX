@@ -365,7 +365,7 @@ Purpose: Find a player's name by key, or nothing.
          not established and this function is not evidence enough to establish
          it - it only shows that something 0x58 bytes wide lives at 0x154.
 
-// ORIGINAL: 0x00631A20 ?get_player_name@Net@@QAEPADK@Z 0x00631A20-0x00631A55
+// ORIGINAL: 0x00631A20 ?get_player_name@Net@@QAEPADK@Z 0x00631A20-0x00631A55 BYTE_EXACT
 // size      53 bytes
 // prototype int8* (__thiscall ?get_player_name@Net@@QAEPADK@Z)(Net* this, unsigned int)
 // callers   6   call targets   0
@@ -377,15 +377,24 @@ Status: Complete
 */
 char *Net::get_player_name(unsigned long key) {
     uint8_t *const bytes = reinterpret_cast<uint8_t *>(this);
-    for (uint32_t index = 0; index < 0x10; ++index) {
+    // A `for`, WITH THE MISS DETECTED AFTER THE LOOP. The image's loop
+    // tests only the key match inline (`cmp [edx], esi / je found`); the
+    // `index == 0x10` check that decides found-vs-not happens once, AFTER
+    // the loop, as its own `cmp eax, 0x10 / jne have`. A loop that returns
+    // from inside the loop body folds that second compare away.
+    int index;
+    for (index = 0; index < 0x10; ++index) {
         uint32_t candidate;
         std::memcpy(&candidate, bytes + 0x154 + index * 0x58,
                     sizeof(candidate));
         if (candidate == key) {
-            return reinterpret_cast<char *>(bytes + 0x169 + index * 0x58);
+            break;
         }
     }
-    return nullptr;
+    if (index == 0x10) {
+        return nullptr;
+    }
+    return reinterpret_cast<char *>(bytes + 0x169 + index * 0x58);
 }
 
 char *__fastcall net_get_player_name_redirect(

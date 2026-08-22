@@ -235,7 +235,7 @@ NetDaemon::~NetDaemon() {
 Purpose: Poll the network for one message; dispatch it when one arrives and
          report whether it did. The message and its two parameters come back
          from Net::get through out-parameters.
-// ORIGINAL: 0x00530320 ?receive@NetDaemon@@QAEHXZ 0x00530320-0x0053035E
+// ORIGINAL: 0x00530320 ?receive@NetDaemon@@QAEHXZ 0x00530320-0x0053035E BYTE_EXACT
 // size      62 bytes
 // prototype int (__thiscall ?receive@NetDaemon@@QAEHXZ)(NetDaemon* this)
 // callers   9   call targets   2
@@ -245,13 +245,13 @@ Purpose: Poll the network for one message; dispatch it when one arrives and
 Return Value: 1 when a message was received and dispatched, 0 when none was
 Status: Complete
 Verification note: the original leaves both out-params as uninitialized stack
-garbage for Net::get to fill and reads them only after a nonzero return; the
-zero initializers here pin an unspecified value deterministically, so the
-sweep's surviving constant mutants on them are equivalent by construction.
+garbage for Net::get to fill and reads them only after a nonzero return, so
+leaving them uninitialized here is equivalent by construction - Net::get
+always sets both before this reads them on the taken path.
 */
 int NetDaemon::receive() {
-    unsigned long first = 0;
-    unsigned long second = 0;
+    unsigned long first;
+    unsigned long second;
     const int result = NetDaemonNet->Net::get(&first, &second);
     if (result == 0) {
         return 0;

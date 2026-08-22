@@ -47,7 +47,7 @@ Status: Complete
 
 /*
 Purpose: Get a random value between min and (max - 1).
-// ORIGINAL: 0x00625770 ?get@Random@@QAEIHH@Z 0x00625770-0x006257A7
+// ORIGINAL: 0x00625770 ?get@Random@@QAEIHH@Z 0x00625770-0x006257A7 BYTE_EXACT
 // size      55 bytes
 // prototype unsigned int (__thiscall ?get@Random@@QAEIHH@Z)(Random* this, int, int)
 // callers   5   call targets   0
