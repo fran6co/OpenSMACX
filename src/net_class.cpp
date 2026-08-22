@@ -26,12 +26,6 @@
 // instead of an indirect through a forwarder.
 extern "C" void __fastcall sub_401be0(void *receiver, void *);
 
-NetFifo::NetFifo() {  // ??0NetFifo@@QAE@XZ at 0x006339C0 - not this batch's
-                       // address.
-    typedef void(__fastcall *pending)(NetFifo *, void *);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x006339C0))(this, nullptr);
-}
-
 NetFifo::~NetFifo() {  // ??1NetFifo@@QAE@XZ at 0x006339E0 - not this batch's
                         // address.
     typedef void(__fastcall *pending)(NetFifo *, void *);
@@ -478,4 +472,22 @@ int Net::get(unsigned long *a1, unsigned long *a2) {
         }
     }
     return 0;
+}
+
+/*
+Purpose: Zero the three head words and initialise the lock the fifo guards.
+// ORIGINAL: 0x006339C0 ??0NetFifo@@QAE@XZ 0x006339C0-0x006339DB BYTE_EXACT
+// LEVER: PROMOTED out of src/recovered/units/006339c0.cpp, which reached the CRITICAL_SECTION through `(*reinterpret_cast<InitFn *>(g_00669168))(this + 0xc)` - the import slot spelled as a raw address. A plain `InitializeCriticalSection` call compiles to the image's own `call dword ptr [0x669168]`.
+// LEVER: layout-corrected the IDB gave NetFifo 0x10 bytes and four uint32_t members. It is 0x24: ??0Net builds three of them at 0xE8, 0x10C and 0x130, spaced 0x24 apart, and this body starts a CRITICAL_SECTION at 0xC, which is 24 bytes. The fourth uint32_t was the head of that lock.
+// symbol    ??0NetFifo@@QAE@XZ
+// size      27 bytes
+// kind      game
+Return Value: `this`, which the image leaves in eax
+Status: Complete
+*/
+NetFifo::NetFifo() {
+    field_0_ = 0;
+    field_4_ = 0;
+    field_8_ = 0;
+    InitializeCriticalSection(&lock_);
 }

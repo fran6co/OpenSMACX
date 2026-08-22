@@ -1637,7 +1637,12 @@ struct NameNode {
   uint8_t field_8_[0x258];  // 0x8
 };
 
-/* 0x10 bytes, 4 member(s), 0 named. From the IDB. 6 function(s) in the image. */
+/* 0x24 bytes, not the IDB's 0x10. TWO INDEPENDENT PROOFS FROM THE IMAGE:
+   ??0Net builds three NetFifos at 0xE8, 0x10C and 0x130 (see src/alphanet.h),
+   spaced exactly 0x24 apart; and ??0NetFifo at 0x006339C0 ends
+   `lea eax, [esi + 0xc]; push eax; call dword ptr [0x669168]`, which the
+   import table resolves to KERNEL32!InitializeCriticalSection - so a
+   CRITICAL_SECTION starts at 0xC, and 0xC + 24 == 0x24. */
 class NetFifo {
  public:
   // 0x006339C0 and 0x006339E0, both pending_bodies forwarders. Declared HERE
@@ -1656,7 +1661,8 @@ class NetFifo {
   uint32_t field_0_;  // 0x0
   uint32_t field_4_;  // 0x4
   uint32_t field_8_;  // 0x8
-  uint32_t field_C_;  // 0xC
+  // 0xC, and it runs to 0x24. The IDB called this a fourth uint32_t.
+  CRITICAL_SECTION lock_;
 };
 
 /* 0x80 bytes, 18 member(s), 18 named. From Thinker. */
