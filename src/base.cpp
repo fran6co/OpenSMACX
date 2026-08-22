@@ -668,6 +668,18 @@ void __cdecl base_mark(int base_id) {
 /*
 Purpose: Calculate the cost factor for the specified faction and resource type. Optional base param.
 // ORIGINAL: 0x004E4430 ?cost_factor@@YAHHHH@Z 0x004E4430-0x004E46C2
+// RULED-OUT: call count already agrees (call_diff: 0 disagree, both call
+// bitmask and 0x539c00 through has_fac_built_call/great_satan), so the
+// 9/251 MISMATCH is not a call-shape defect. The image's `is_human(faction_id)`
+// ternary loads the bitmask table (`mov eax,[0x9a64e8]`) BEFORE the `push
+// esi`/`push edi` register saves; this tree's /O2 schedules that load after
+// them - pure instruction scheduling in the preamble. The larger gap is
+// past that: image is 251 instructions against this tree's 159 for the
+// same body, which the RSC_MINERALS `switch` on
+// `soc_effect_pending.industry` (cases -7..4) likely accounts for most of -
+// not chased further; a full match would need the same compare-chain-vs-
+// jump-table investigation `base_making`'s note describes for its own
+// `switch`, at a size (658 image bytes) outside this pass's budget.
 // size      658 bytes
 // prototype int (__cdecl ?cost_factor@@YAHHHH@Z)(uint32_t factionID, uint32_t rscType, int baseID)
 // callers   24   call targets   2
@@ -954,6 +966,23 @@ void __cdecl base_first(int base_id) {
 /*
 Purpose: Calculate the new unit morale bonus modifier provided by the base and faction for a triad.
 // ORIGINAL: 0x004E6400 ?morale_mod@@YAHHHH@Z 0x004E6400-0x004E65B1
+// LEVER: image makes 4 real `call 0x50ba00` (bitmask), one per
+// has_fac_built() site; the `inline bool has_fac_built(int, int)` in
+// base.h was not being inlined here and compiled to a real call to
+// has_fac_built itself instead (call_diff: MORE, wrong callee). Switching
+// all four checks to has_fac_built_call() (base.h, __forceinline, the same
+// lever recorded on cost_factor/breed_mod) fixes the call count (4 real
+// bitmask calls, matching) and moves best similarity from a much lower
+// score to 0.715, 7/153 agreeing.
+// RULED-OUT (still short of the image): the remaining gap starts with a
+// register swap in the prologue (image keeps `ebx`=base_id, `esi`=faction_id;
+// this tree's O2 default swaps them) and continues into how the bool result
+// of `has_fac_built_call(...) || has_project(...)` is materialised - the
+// image runs `and al,cl; neg al; sbb eax,eax; neg eax` and SPINS the boolean
+// through the `triad` parameter's own stack slot ([ebp+0x10]) as scratch
+// before the `||`, which this tree's direct `test ...; jne` never
+// reproduces. Not a call-count or lever-shape issue at this point - register
+// allocation and slot reuse the flag sweep does not reach.
 // size      433 bytes
 // prototype int (__cdecl ?morale_mod@@YAHHHH@Z)(int baseID, int factionID, int triad)
 // callers   2   call targets   1
@@ -966,22 +995,22 @@ Status: Complete
 int __cdecl morale_mod(int base_id, int faction_id, int triad) {
     uint32_t morale_modifier = 0;
     if (triad == TRIAD_LAND) {
-        if (has_fac_built(FAC_COMMAND_CENTER, base_id) 
+        if (has_fac_built_call(FAC_COMMAND_CENTER, base_id)
             || has_project(SP_COMMAND_NEXUS, faction_id)) {
             morale_modifier = 2;
         }
     } else if (triad == TRIAD_SEA) {
-        if (has_fac_built(FAC_NAVAL_YARD, base_id)
+        if (has_fac_built_call(FAC_NAVAL_YARD, base_id)
             || has_project(SP_MARITIME_CONTROL_CENTER, faction_id)) {
             morale_modifier = 2;
         }
     } else if (triad == TRIAD_AIR) {
-        if (has_fac_built(FAC_AEROSPACE_COMPLEX, base_id)
+        if (has_fac_built_call(FAC_AEROSPACE_COMPLEX, base_id)
             || has_project(SP_CLOUDBASE_ACADEMY, faction_id)) {
             morale_modifier = 2;
         }
     }
-    if (has_fac_built(FAC_BIOENHANCEMENT_CENTER, base_id)
+    if (has_fac_built_call(FAC_BIOENHANCEMENT_CENTER, base_id)
         || has_project(SP_CYBORG_FACTORY, faction_id)) {
         morale_modifier += 2;
     }
@@ -2721,8 +2750,19 @@ Status: Complete
 /*
 Purpose: Suggest the base the specified pair of factions should agree to attack together.
 // ORIGINAL: 0x0054ACC0 ?suggest_plan@@YAHHH@Z 0x0054ACC0-0x0054AF9D
+// RULED-OUT: `call_diff` flags this MORE (9 calls vs the image's 8: extra
+// `region_at`/`vector_dist`, missing `_abs`) but it is a KNOWN, MEASURED
+// trade-off, not an unexamined gap - see the full "Verification note" /
+// "RULED-OUT" prose in the Purpose block below (kept where it was written;
+// a marker-position scan does not reach prose after `Return Value:`, which
+// is why this address kept reading as untouched). Open-coding the
+// x_target/y_target `vector_dist` call as the `x_dist()+abs()x4` expansion
+// that the image's callee list implies measured WORSE here (best similarity
+// 0.728 -> 0.689 across all flag sets, same agreeing-instruction count), so
+// the real `vector_dist(...)` call is kept deliberately even though it
+// disagrees with `call_diff`.
 // size      733 bytes
-// prototype 
+// prototype
 // callers   1   call targets   3
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok

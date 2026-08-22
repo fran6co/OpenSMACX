@@ -148,8 +148,15 @@ void __cdecl kill_nl(LPSTR str) {
 Purpose: Add a line feed (LF) to the end of a string. This assumes the buffer has an extra byte and 
          doesn't take into account a carriage return (CR).
 // ORIGINAL: 0x00600840 ?add_lf@@YAXPAD@Z 0x00600840-0x00600859
+// RULED-OUT: MNEMONIC_ONLY plateau (8/10, 1.000 similar at the best flag
+// set /O2 /Gy /GR- /GX) across all --all-flags sets and several spellings
+// (strlen(str)+str, non-const end, *end/*(end+1), a separate `int len`
+// local, str[len]/str[len+1]). Every one still emits `add esp,4` before
+// `add eax,esi` after the `call strlen`; the image has the pointer add
+// before the stack cleanup. Register-allocation-only gap, not a
+// source-shape one found so far.
 // size      25 bytes
-// prototype 
+// prototype
 // callers   1   call targets   1
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -157,12 +164,6 @@ Purpose: Add a line feed (LF) to the end of a string. This assumes the buffer ha
 Return Value: n/a
 Status: Complete
 */
-// RULED-OUT: MNEMONIC_ONLY plateau (8/10) across all --all-flags sets and
-// several spellings (strlen(str)+str, non-const end, *end/*(end+1), a
-// separate `int len` local, str[len]/str[len+1]). Every one still emits
-// `add esp,4` before `add eax,esi` after the `call strlen`; the image has
-// the pointer add before the stack cleanup. Register-allocation-only gap,
-// not a source-shape one found so far.
 void __cdecl add_lf(LPSTR str) {
     // A POINTER, not an index. The image adds the length to the base at
     // 0x0060084B and stores through `[eax]` and `[eax+1]`; indexing keeps
@@ -303,6 +304,23 @@ int __cdecl parse_num(int id, int value) {
 /*
 Purpose: Use the string table input reference to copy a string into the global message buffer.
 // ORIGINAL: 0x00625E50 ?parse_say@@YAHHHHH@Z 0x00625E50-0x00625EB3
+// LEVER: hoisting `StringTable->get(input)` into its own local BEFORE
+// the truncating store moved 17/30 to 20/30 - the image loads the
+// `StringTable` this-pointer (`mov ecx, 0x9b90d8`) right next to the
+// dest-pointer computation, before either call, and folding the call
+// into the `strcat` argument list pushed that load later. Truncate then
+// `strcat`, exactly as `parse_says` does: `mov byte ptr [esi], 0` at
+// 0x00625E9D, immediately before `call 0x6169a0` (`StringTable::get`),
+// then `call 0x645470` (`strcat`).
+// RULED-OUT (still short of the image at 20/30, 0.918 similar,
+// plateaued across --all-flags): the remaining gap is the same
+// add-vs-lea encoding as `parse_says` (`lea esi, [eax+0x9bb5e8]` there
+// vs `add eax, 0x9bb5e8; mov esi, eax` here) plus the null-terminator
+// store landing next to the second `call` instead of the first. Tried
+// writing `dest[0] = 0` before the `get()` call, matching the image's own
+// instruction order (regresses to 17/30 - scheduling does not follow
+// source order here), a non-const `dest`, and reusing `*dest` instead of
+// `dest[0]`.
 // size      99 bytes
 // prototype int (__cdecl ?parse_say@@YAHHHHH@Z)(int id, int input, int gender, int pluralality)
 // callers   40   call targets   2
@@ -324,20 +342,6 @@ int __cdecl parse_say(int id, int input, int gender, int pluralality) {
         pluralality = *PluralityDefault;
     }
     ParseStrPlurality[id] = pluralality;
-    // Truncate then `strcat`, exactly as `parse_says` does: `mov byte ptr
-    // [esi], 0` at 0x00625E9D and `call 0x645470`, which is `strcat`.
-    // LEVER: hoisting `StringTable->get(input)` into its own local BEFORE
-    // the truncating store moved 17/30 to 20/30 - the image loads the
-    // `StringTable` this-pointer (`mov ecx, 0x9b90d8`) right next to the
-    // dest-pointer computation, before either call, and folding the call
-    // into the `strcat` argument list pushed that load later.
-    // RULED-OUT (still short of the image at 20/30, 0.918 similar,
-    // plateaued across --all-flags): the remaining gap is the same
-    // add-vs-lea encoding as `parse_says` (`lea esi, [eax+0x9bb5e8]` there
-    // vs `add eax, 0x9bb5e8; mov esi, eax` here) plus the null-terminator
-    // store landing next to the second `call` instead of the first. Tried
-    // writing `dest[0] = 0` before the `get()` call (regresses to 17/30),
-    // a non-const `dest`, and reusing `*dest` instead of `dest[0]`.
     char *const dest = ParseStrBuffer[id].str;
     LPSTR text = StringTable->get(input);
     dest[0] = 0;
@@ -469,19 +473,6 @@ int __cdecl stoi(LPCSTR str) {
 /*
 Purpose: Locates the first number in a string.
 // ORIGINAL: 0x00628B30 ?findnum@@YAHPAD@Z 0x00628B30-0x00628B69
-// symbol    ?findnum@@YAPADPAD@Z
-// size      57 bytes
-// prototype 
-// callers   1   call targets   0
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     (none)
-Return Value: Pointer to the first number, otherwise zero
-Status: Complete
-*/
-// `char *`, not `LPSTR`. The same type, but the verification scaffolding
-// forward-declares only types reachable from a signature, so the Windows
-// typedef made this body NO_COMPILE and unscoreable.
 // LEVER: the image reads its digit bounds from memory - `mov dl, byte ptr
 // [0x670c1c]` / `mov dh, byte ptr [0x670c1d]`, an .rdata pair holding '0'
 // and '9' - not immediates, so `*str < '0' || *str > '9'` (a pure literal
@@ -502,6 +493,19 @@ Status: Complete
 // slot this tree's codegen never reproduces at any flag set tried; the
 // remaining gap looks like a loop-rotation/tail-merge choice the optimizer
 // made under settings outside `/O1`, `/O2`, `/Ob0`, `/Oi-`, `/Oy-`, `/GX`.
+// symbol    ?findnum@@YAPADPAD@Z
+// size      57 bytes
+// prototype
+// callers   1   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+Return Value: Pointer to the first number, otherwise zero
+Status: Complete
+*/
+// `char *`, not `LPSTR`. The same type, but the verification scaffolding
+// forward-declares only types reachable from a signature, so the Windows
+// typedef made this body NO_COMPILE and unscoreable.
 char *__cdecl findnum(char *str) {
     if (!str) {
         return 0;
@@ -1176,16 +1180,6 @@ Purpose: Reverse string search for the last occurrence of the specified characte
          original searching logic with strrchr() that does same thing. The end parameter can be 
          removed in the future.
 // ORIGINAL: 0x00628AF0 ?memrchr@@YAHPBX0H@Z 0x00628AF0-0x00628B23
-// symbol    ?memrchr@@YAPBDPBD0D@Z
-// size      51 bytes
-// prototype 
-// callers   6   call targets   0
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     (none)
-Return Value: Position of character or NULL if not found.
-Status: Complete
-*/
 // LEVER: `calls (none)` in the annotation, and the image proves it - a
 // hand-rolled backward byte scan (`cmp byte ptr [eax], bl; je found; dec
 // eax; dec ecx; jne loop`), never a call to `strrchr`. The old body called
@@ -1199,12 +1193,25 @@ Status: Complete
 // RULED-OUT: splitting `!start`/`!end` into two `if`s (image compiles
 // `a || b` to the identical sequential-test-same-target shape already), and
 // a `for(;;){...; if(count==0) break;}` in place of `do {...} while(count)`
-// - neither changed the score. The remaining gap is the image keeping
+// - neither changed the score. `const char *const s = start; const char
+// *const e = end;` locals ahead of the null checks also made no difference
+// (identical codegen at every flag set) - VC6 already treats the unmodified
+// parameters as the same registers. The remaining gap is the image keeping
 // `start` live in `ebx` for the whole function and using ONE comparison per
 // iteration, where every flag set tried here rotates the loop (duplicates
 // the compare to peel the first iteration) and spills `count` back through
 // the `start` parameter's own stack slot instead of a register - the same
 // unreproduced "push ecx" frame-slot pattern as `findnum` just above it.
+// symbol    ?memrchr@@YAPBDPBD0D@Z
+// size      51 bytes
+// prototype
+// callers   6   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+Return Value: Position of character or NULL if not found.
+Status: Complete
+*/
 const char *__cdecl memrchr(LPCSTR start, LPCSTR end, char value) {
     if (!start || !end) {
         return 0;

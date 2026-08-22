@@ -118,18 +118,6 @@ Status: Complete
 /*
 Purpose: Get the faction's noun.
 // ORIGINAL: 0x0050B930 ?get_noun@@YAHH@Z 0x0050B930-0x0050B964
-// symbol    ?get_noun@@YAPADH@Z
-// size      52 bytes
-// prototype int (__cdecl ?get_noun@@YAHH@Z)(int factionID)
-// callers   5   call targets   0
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     (none)
-Return Value: Faction noun
-Status: Complete
-*/
-// BODY IN faction.h, as `MEASURED inline`: name_base (base.cpp) is the caller
-// that needs it folded in place, matching the image.
 // LEVER: calling `parse_set(...)` grouped the two field reads together (matching
 //        the image's read/read/store/store order) but gave the temps the wrong
 //        registers (edx for gender, ecx for plurality). Assigning `*GenderDefault`
@@ -146,6 +134,18 @@ Status: Complete
 //            (10/15, worse - same register/ordering issue as the parse_set call);
 //            storing plurality before gender (still 12/15, no change - the
 //            compiler canonicalizes either source order the same way).
+// symbol    ?get_noun@@YAPADH@Z
+// size      52 bytes
+// prototype int (__cdecl ?get_noun@@YAHH@Z)(int factionID)
+// callers   5   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+Return Value: Faction noun
+Status: Complete
+*/
+// BODY IN faction.h, as `MEASURED inline`: name_base (base.cpp) is the caller
+// that needs it folded in place, matching the image.
 
 /*
 Purpose: Determine whether automatic contact is enabled for net or PBEM games.
@@ -575,8 +575,18 @@ int __cdecl energy_value(int loan_principal) {
 Purpose: Pick out the two prototypes of faction_id_with that are worth putting in front of
          faction_id: the strongest one it owns, and the strongest one still worth bragging about.
 // ORIGINAL: 0x0053A4A0 ?scan_prototypes@@YAXHH@Z 0x0053A4A0-0x0053A774
+// RULED-OUT: `call_diff` already agrees (0 disagree) - `weap_strat`/
+// `arm_strat` are called the same number of times the image calls them.
+// MISMATCH is 10/218 at this pass, all register allocation/scheduling
+// inside the nested-loop body (218 image instructions against a
+// semantically-verified 222 here); not chased at the instruction level this
+// pass - the size (724 image bytes, two nested loops over 64 prototype
+// slots) puts a full register-by-register match outside this batch's
+// budget. The body itself is already heavily verified (see the mutation-
+// testing note below, in the Purpose block) so the gap is codegen shape,
+// not a wrong transcription.
 // size      724 bytes
-// prototype 
+// prototype
 // callers   3   call targets   2
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
@@ -1016,9 +1026,16 @@ BOOL __cdecl wants_to_attack(int faction_id, int faction_id_tgt, int faction_id_
 Purpose: Weigh how badly the specified faction's territory is being trespassed on by another
          faction's units, and mark those units so the rest of diplomacy can find them again.
 // ORIGINAL: 0x0055EB80 ?territory@@YAHHHHPAHPAH@Z 0x0055EB80-0x0055EEDE
+// RULED-OUT: `call_diff` already agrees (0 disagree). MISMATCH is 15/278 at
+// this pass, first divergence right in the prologue (frame size: image
+// `sub esp, 0x118` vs this tree's `sub esp, 0x11c`, one extra dword of
+// locals) - a stack-layout gap across an 862-byte body, not chased at the
+// instruction level this pass; outside this batch's budget. Semantically
+// verified in the Purpose block below (kept where it was written, not
+// re-derived here).
 // symbol    ?territory@@YAHHHHPAH0@Z
 // size      862 bytes
-// prototype 
+// prototype
 // callers   4   call targets   2
 // kind      game
 // flags     frame;sp_ready;purged_ok
@@ -1586,8 +1603,15 @@ void __cdecl see_map_check() {
 Purpose: Rescore every faction's power, and optionally publish the ranking order that scoring
          implies plus the betrayals the new order provokes.
 // ORIGINAL: 0x005AC690 ?rankings@@YAXH@Z 0x005AC690-0x005ACBD6
+// RULED-OUT: `call_diff` already agrees (0 disagree) across all seven
+// callees. MISMATCH is 10/425 at this pass; first divergence is in the
+// prologue's register/constant scheduling (image pushes ebx/esi/edi as
+// plain callee-saves before touching any parameter, this tree's O2 loads
+// `edx=1` and `ecx=0x9ac598` first) rather than a call-shape or semantic
+// gap. Not chased at the instruction level this pass - 1350 image bytes
+// across likely the largest body in this batch, well outside its budget.
 // size      1350 bytes
-// prototype 
+// prototype
 // callers   3   call targets   7
 // kind      game
 // flags     frame;sp_ready;purged_ok
