@@ -499,7 +499,9 @@ Purpose: Load the sound from a filename. The name resolves through the
          loaded bit is cleared. Either way the resolved path is copied onto
          the game heap - new copy first, old one freed after - and remembered
          at 0x4C.
-// ORIGINAL: 0x004C6280 ?load@Sound@@QAEHPBD@Z 0x004C6280-0x004C6361
+// ORIGINAL: 0x004C6280 ?load@Sound@@QAEHPBD@Z 0x004C6280-0x004C6361 SEMANTIC
+// LEVER: the two vtable dispatches (slots 0x60 and 0x10) spelled with `vtable_method<Fn>(object, offset)` instead of `original_slot<Fn>(vtable + offset)` - single indirect call, matching the image's `call dword ptr [reg+N]` where the slot-read idiom cost an extra `mov`. Took this from 44/102 to 100/102.
+// TRIED: the one remaining byte is the slot-0x60 dispatch alone - image loads the vtable into EDX (`mov edx,[ecx]; call [edx+0x60]`), this tree into EAX. Naming the method pointer in its own local first made it much WORSE (47/102) rather than fixing the register; reverted. Not chased further.
 // size      225 bytes
 // prototype int (__thiscall ?load@Sound@@QAEHPBD@Z)(Sound* this, int8*)
 // callers   5   call targets   5
@@ -507,16 +509,6 @@ Purpose: Load the sound from a filename. The name resolves through the
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x006005D0 0x006453E0 0x00645460 0x0064557F 0x0064558A
 // indirect  0x004C62C9 0x004C62DF 0x004C62F7 0x004C6311 0x004C6321
-// LEVER: the two vtable dispatches (slots 0x60 and 0x10) spelled with
-//        `vtable_method<Fn>(object, offset)` instead of
-//        `original_slot<Fn>(vtable + offset)` - single indirect call,
-//        matching the image's `call dword ptr [reg+N]` where the slot-read
-//        idiom cost an extra `mov`. Took this from 44/102 to 100/102.
-// TRIED: the one remaining byte is the slot-0x60 dispatch alone -
-//        image loads the vtable into EDX (`mov edx,[ecx]; call [edx+0x60]`),
-//        this tree into EAX. Naming the method pointer in its own local
-//        first made it much WORSE (47/102) rather than fixing the
-//        register; reverted. Not chased further.
 Return Value: the device's load answer, 0xA for an unresolvable name, 1 for
               a dead creation hook, 0xF for a busy device, or the creation
               error
