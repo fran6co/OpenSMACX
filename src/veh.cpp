@@ -309,6 +309,14 @@ int __cdecl valid_patrol(int veh_id, int x, int y) {
 /*
 Purpose: Calculate maximum range a faction's units can drop (air drops, Drop Pods).
 // ORIGINAL: 0x00500320 ?drop_range@@YAHH@Z 0x00500320-0x0050037C
+// LEVER: has_project(SP_SPACE_ELEVATOR, faction_id) written out by hand
+//        (base_project's `*(&SecretProject->human_genome_project + id)` then
+//        the owning base's faction) rather than called - at the `/Ob0` flag
+//        set this needs (so has_tech does NOT auto-inline, matching the
+//        image's real `call 0x5b9f20`), a call to the shared has_project()
+//        inline does not fold back open and compiles a real `push 0x1b; call`
+//        instead. Moved 10/36 (0.769) -> 17/36 (0.928): the SecretProject
+//        constant (0x9a6580) now lands exactly where the image has it.
 // size      92 bytes
 // prototype int (__cdecl ?drop_range@@YAHH@Z)(int factionID)
 // callers   3   call targets   1
@@ -319,9 +327,16 @@ Return Value: Max range
 Status: Complete
 */
 int __cdecl drop_range(int faction_id) {
-    if (!has_tech(Rules->tech_orb_insert_sans_spc_elev, faction_id) // default 'Graviton Theory'
-        && !has_project(SP_SPACE_ELEVATOR, faction_id)) {
-        return Rules->max_airdrop_sans_orb_insert;
+    // has_tech() is called for real here (the image's `call 0x5b9f20`), but
+    // has_project() is written out rather than called: at `/Ob0` - needed so
+    // has_tech does NOT auto-inline here, matching the image - a call to the
+    // shared `has_project()` inline does not fold back open, so this repeats
+    // its body (base_project() then the owning base's faction) directly.
+    if (!has_tech(Rules->tech_orb_insert_sans_spc_elev, faction_id)) { // default 'Graviton Theory'
+        int base_id = *(&SecretProject->human_genome_project + SP_SPACE_ELEVATOR);
+        if (base_id < 0 || Bases[base_id].faction_id_current != faction_id) {
+            return Rules->max_airdrop_sans_orb_insert;
+        }
     }
     return (MapLongitudeBounds <= MapLatitudeBounds) ? MapLatitudeBounds : MapLongitudeBounds;
 }
@@ -1335,6 +1350,16 @@ uint32_t __cdecl best_defender(int veh_id_def, int veh_id_atk, BOOL check_artill
 Purpose: Determine whether any enemy naval transports are carrying land units within range to 
          attack the specified base. If so, set the units to move towards the base.
 // ORIGINAL: 0x00506490 ?invasions@@YAXH@Z 0x00506490-0x00506646
+// RULED-OUT: call structure already matches exactly - `osmx calls --all`
+//            lists veh_cargo, stack_check, four abs() (vector_dist/x_dist
+//            inlined) and speed, in the image's own order, so vector_dist's
+//            4-arg overload IS inlining here despite being declared plain
+//            (not `inline`) in map.h; the divergence is pure register
+//            allocation/spill-slot choice across a big function (7 locals:
+//            base_x, base_y, faction_id_base, i, veh_x, veh_y, proximity),
+//            not a missing inline or a chained-condition shape. Best flag
+//            set /O2 /Gy /GR- /Oy- /GX, 0.746 similar, 11/143 raw. map.h is
+//            out of scope for this batch regardless.
 // size      438 bytes
 // prototype void (__cdecl ?invasions@@YAXH@Z)(int baseID)
 // callers   1   call targets   4
@@ -1411,6 +1436,13 @@ static inline int course_xrange(int x) {
 Purpose: Send the unit toward the given tile the long way round - by water - choosing the anchorage
          next to it that fronts the most of the destination's own landmass.
 // ORIGINAL: 0x00564890 ?set_course@@YAXHDHH@Z 0x00564890-0x00564B82
+// RULED-OUT: call structure already matches (`osmx calls --all` lists only
+//            base_at and base_on_sea, same as the image's own `calls` list),
+//            so the gap is register/control-flow noise across a 754-byte,
+//            21-candidate scoring loop, not a missing inline or a wrong
+//            callee. Best flag set /O2 /Ob0 /Gy /GR- /Oy- /GX, 0.558
+//            similar. Not chased further in this pass - the semantic content
+//            is already verified (mutant sweep kills 28/30, two equivalent).
 // size      754 bytes
 // prototype void (__cdecl ?set_course@@YAXHDHH@Z)(int vehID, int8 type, int xCoord, int yCoord)
 // callers   2   call targets   2
@@ -2929,11 +2961,12 @@ written out below, and once inside the inlined spot_tile(). It is a pure
 predicate over two globals and the same two coordinates, so the second test
 cannot disagree with the first.
 
-LEVER: `calls` disagreed (2 here vs the image's 1: synch_bit only) because
-spot_tile() and veh_top() were both left as real calls despite the comment
-above already establishing both are inlined. spot_tile is now plain `inline`
-(its only callers are spot_base/spot_stack/spot_loc, all in this file); the
-veh_top climb below is hand-inlined, matching veh_at's precedent.
+// LEVER: `calls` disagreed (2 here vs the image's 1: synch_bit only) because
+//        spot_tile() and veh_top() were both left as real calls despite the
+//        comment above already establishing both are inlined. spot_tile is
+//        now plain `inline` (its only callers are spot_base/spot_stack/
+//        spot_loc, all in this file); the veh_top climb below is
+//        hand-inlined, matching veh_at's precedent.
 // RULED-OUT: calling the `inline` spot_tile() directly - the optimiser did
 // NOT fold it away here (unlike in spot_base), so the call to spot_tile
 // survived and call_diff still reported WRONG CALLEE (spot_tile instead of
@@ -4784,11 +4817,14 @@ Purpose: Activate the specified unit and clear the current action.
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x004C9A50 0x005C1540
+// LEVER: `order` as int8_t, matching Vehs[].order's OWN (signed) field type -
+//        `uint8_t` forces unsigned `jb`/`jae` on the range check below where
+//        the image has signed `jl`/`jge`. Moved 0.903 -> 0.964.
 Return Value: Unit id (doesn't look to be used on return)
 Status: Complete
 */
 int __cdecl veh_wake(int veh_id) {
-    uint8_t order = Vehs[veh_id].order;
+    int8_t order = Vehs[veh_id].order;
     uint32_t state = Vehs[veh_id].state;
     if (order >= ORDER_FARM && order < ORDER_MOVE_TO && !(state & VSTATE_CRAWLING)) {
         // TODO bug fix: Issue with moves_expended size / speed return, see veh_skip()
@@ -5045,6 +5081,13 @@ Purpose: Weight the raw odds of an attack by how badly the faction's AI wants th
          stack dead. The odds arrive already computed by battle_fight; everything here is a
          strategic multiplier on top of them.
 // ORIGINAL: 0x00565F20 ?compute_odds@@YAHHHHHH@Z 0x00565F20-0x005665CC
+// RULED-OUT: call structure already matches exactly (`osmx calls --all`'s 15
+//            call sites resolve to the same 5 targets as the image's own
+//            `calls` list: base_at, at_goal, stack_check x9, has_abil,
+//            veh_at x2), so the 123/572 (0.540 best, /O2 /Gy /GR- /Oy- /GX)
+//            gap is register/control-flow noise across a 1708-byte function,
+//            not a missing inline or wrong callee. Not chased further in
+//            this pass - too large for the budget available here.
 // size      1708 bytes
 // prototype int (__cdecl ?compute_odds@@YAHHHHHH@Z)(int, int factionID, int vehID1, int vehID2, int)
 // callers   2   call targets   5
@@ -5335,14 +5378,15 @@ map_loc halves x with SAR, while the exported map_loc that region_at reaches tak
 would halve it with SHR. The two agree on every non-negative x, and alien_move at 0x005668A0 -
 the only caller - passes a unit's own sign-extended coordinates.
 
-LEVER: FEWER (6 calls vs image's 7) - the image calls `abs()` FOUR times here
-and never calls vector_dist(int,int) itself (0x4F8090 is not in its `calls`
-list, despite being a real, `callers 5`-elsewhere function). Open-coded the
-`vector_dist(x_dist(...), abs(...))` call as the abs()/largest/smallest
-expansion vector_dist's own body performs - the same pattern base.cpp's
-black_market and base_find already use for the 4-arg form. Call count now
-agrees (0 disagree); best flag set's similarity 0.782 -> 0.883 (/O2 /Oi-
-/GR- /Oy- /GX).
+// LEVER: FEWER (6 calls vs image's 7) - the image calls `abs()` FOUR times
+//        here and never calls vector_dist(int,int) itself (0x4F8090 is not
+//        in its `calls` list, despite being a real, `callers 5`-elsewhere
+//        function). Open-coded the `vector_dist(x_dist(...), abs(...))`
+//        call as the abs()/largest/smallest expansion vector_dist's own
+//        body performs - the same pattern base.cpp's black_market and
+//        base_find already use for the 4-arg form. Call count now agrees
+//        (0 disagree); best flag set's similarity 0.782 -> 0.883
+//        (/O2 /Oi- /GR- /Oy- /GX).
 */
 int __cdecl alien_base(int veh_id, int x, int y) {
     int best_value = 9999;

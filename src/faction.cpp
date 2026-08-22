@@ -61,6 +61,16 @@ Status: Complete
 /*
 Purpose: Calculate the base amount of talents and drones for the specified faction.
 // ORIGINAL: 0x004EA4A0 ?psych_check@@YAXHPAHPAH@Z 0x004EA4A0-0x004EA533
+// LEVER: the image clamps efficiency to zero with a BRANCHLESS
+//        `setl dl; dec edx; and edx, ecx` before adding 4 - splitting the
+//        combined ternary `efficiency < 0 ? 4 : efficiency + 4` into
+//        `(efficiency < 0 ? 0 : efficiency) + 4` isolates the classic
+//        clamp-to-zero idiom and reaches it. Moved 21/52 (0.796) -> 25/52
+//        (0.871).
+// RULED-OUT: the `test al,dl` vs `test dl,al` register-order-only divergence
+//            on is_human()'s bit test is the same one already documented at
+//            this file's `RULED-OUT` notes near line 179/223 (register
+//            allocation, not a source shape this tree controls).
 // symbol    ?psych_check@@YAXHPAH0@Z
 // size      147 bytes
 // prototype void (__cdecl ?psych_check@@YAXHPAHPAH@Z)(int factionID, int* drones, int* talents)
@@ -73,8 +83,8 @@ Status: Complete
 */
 void __cdecl psych_check(int faction_id, int *drones, int *talents) {
     *drones = 6 - (is_human(faction_id) ? PlayersData[faction_id].diff_level : DLVL_LIBRARIAN);
-    *talents = (((*drones + 2) * (PlayersData[faction_id].soc_effect_pending.efficiency < 0 ? 4
-        : PlayersData[faction_id].soc_effect_pending.efficiency + 4) * MapAreaSqRoot) / 56) / 2;
+    int efficiency = PlayersData[faction_id].soc_effect_pending.efficiency;
+    *talents = (((*drones + 2) * ((efficiency < 0 ? 0 : efficiency) + 4) * MapAreaSqRoot) / 56) / 2;
 }
 
 /*
@@ -1371,6 +1381,17 @@ void __cdecl add_site(int faction_id, int type, int priority, int x, int y) {
 /*
 Purpose: Check if a goal exists at the tile for the specified faction and type.
 // ORIGINAL: 0x00579CC0 ?at_goal@@YAHHHHH@Z 0x00579CC0-0x00579D16
+// LEVER: a `Goal *goals = PlayersData[faction_id].goals;` pointer hoisted
+//        out of the loop (indexed `goals[i]` inside) moved this from 22/40
+//        (0.900) to 17/40 (0.988) - fewer raw agreements but a tighter
+//        similarity score, because the image also walks a moving pointer
+//        rather than re-deriving the faction offset each iteration.
+// RULED-OUT: a `Goal &` reference alias over the hoisted pointer (identical,
+//            0.988); reordering the field comparisons y/x/type (identical).
+//            Remaining gap is the pointer's PRE-INCREMENT: this tree bumps
+//            eax by 8 before comparing [eax-4]/[eax] where the image compares
+//            [eax+4]/[eax+8] without the bump - a different but equivalent
+//            strength reduction of the same three field offsets.
 // size      86 bytes
 // prototype int (__cdecl ?at_goal@@YAHHHHH@Z)(int factionID, int type, int xCoord, int yCoord)
 // callers   5   call targets   0
@@ -1381,9 +1402,9 @@ Return Value: Does the specific goal exist for the faction at tile? true/false
 Status: Complete
 */
 BOOL __cdecl at_goal(int faction_id, int type, int x, int y) {
+    Goal *goals = PlayersData[faction_id].goals;
     for (int i = 0; i < MaxGoalsNum; i++) {
-        Goal &goals = PlayersData[faction_id].goals[i];
-        if (goals.x == x && goals.y == y && goals.type == type) {
+        if (goals[i].x == x && goals[i].y == y && goals[i].type == type) {
             return true;
         }
     }
@@ -1453,6 +1474,12 @@ void __cdecl wipe_goals(int faction_id) {
 /*
 Purpose: Initialize all goals for the specified faction.
 // ORIGINAL: 0x00579E00 ?init_goals@@YAXH@Z 0x00579E00-0x00579E66 SEMANTIC
+// RULED-OUT: already SHAPE_EXACT (1.000 similarity, 28/38 raw) - the only
+//            divergence is the loop pointer's anchor field (image anchors at
+//            &goals[i].priority, this tree at &goals[i].type; every absolute
+//            byte address written is identical either way). Swapping the
+//            priority/type write order to move the anchor scored WORSE
+//            (MISMATCH, 22/38) - left as the tree already had it.
 // size      102 bytes
 // prototype void (__cdecl ?init_goals@@YAXH@Z)(int factionID)
 // callers   1   call targets   0
@@ -1566,9 +1593,9 @@ int __cdecl corner_market(int faction_id) {
 }
 
 /*
-Purpose: Validate whether each faction meets the requirements to have the Map revealed. Added some
-         minor tweaks to improve performance without changing the logic.
-// ORIGINAL: 0x005A96D0 ?see_map_check@@YAXXZ 0x005A96D0-0x005A9753
+Purpose: Validate whether each faction meets the requirements to have the Map revealed.
+// ORIGINAL: 0x005A96D0 ?see_map_check@@YAXXZ 0x005A96D0-0x005A9753 BYTE_EXACT
+// LEVER: the image runs BOTH loops unconditionally, every time - no early `break` out of the 4-satellite loop (it always checks all four, re-OR-ing the same bit), and no `if (!PFLAG_MAP_REVEALED)` guard skipping the tech loop once the satellites already set it. Removing both "optimisations" (which changed nothing observable, only the instruction count) reached BYTE_EXACT.
 // size      131 bytes
 // prototype 
 // callers   2   call targets   1
@@ -1585,15 +1612,12 @@ void __cdecl see_map_check() {
         for (int i = 0; i < 4; i++, satellites++) {
             if (*satellites) {
                 PlayersData[faction_id].flags |= PFLAG_MAP_REVEALED;
-                break; // end satellite loop early once set
             }
         }
-        if (!(PlayersData[faction_id].flags & PFLAG_MAP_REVEALED)) { // skip Tech check if set
-            for (int tech_id = 0; tech_id < MaxTechnologyNum; tech_id++) {
-                if (Technology[tech_id].flags & TFLAG_REVEALS_MAP 
-                    && has_tech(tech_id, faction_id)) {
-                    PlayersData[faction_id].flags |= PFLAG_MAP_REVEALED;
-                }
+        for (int tech_id = 0; tech_id < MaxTechnologyNum; tech_id++) {
+            if (Technology[tech_id].flags & TFLAG_REVEALS_MAP
+                && has_tech(tech_id, faction_id)) {
+                PlayersData[faction_id].flags |= PFLAG_MAP_REVEALED;
             }
         }
     }
@@ -1858,6 +1882,16 @@ void __cdecl rankings(int apply_ranks) {
 /*
 Purpose: Calculate the basic social engineering modifiers for the specified faction.
 // ORIGINAL: 0x005B0D70 ?compute_faction_modifiers@@YAXH@Z 0x005B0D70-0x005B0DF3
+// LEVER: three WALKING POINTERS (bonus_id/bonus_val1/bonus_val2) advanced
+//        together in the `for`'s increment, rather than `faction_bonus_id[i]`
+//        &c re-subscripted each iteration - the image walks ONE pointer and
+//        reaches the other two arrays through fixed +-0x20 offsets from it
+//        (all three are 8-int arrays, 32 bytes apart), which three parallel
+//        pointers incremented by a constant stride lets VC6 fold the same
+//        way. Moved 6/48 (0.757) -> 6/48 (0.875) - same raw count, tighter
+//        similarity, and the image's `push ebp`/`ebp`-frame prologue is
+//        restored, which the re-subscripted form did not have at any flag
+//        set tried.
 // size      131 bytes
 // prototype void (__cdecl ?compute_faction_modifiers@@YAXH@Z)(int factionID)
 // callers   4   call targets   0
@@ -1870,11 +1904,13 @@ Status: Complete
 void __cdecl compute_faction_modifiers(int faction_id) {
     ZeroMemory(&PlayersData[faction_id].soc_effect_base, sizeof(SocialEffect));
     int count = Players[faction_id].faction_bonus_count;
-    for (int i = 0; i < count; i++) {
-        if (Players[faction_id].faction_bonus_id[i] == RULE_SOCIAL) {
-            *(&PlayersData[faction_id].soc_effect_base.economy
-                + Players[faction_id].faction_bonus_val1[i]) 
-                += Players[faction_id].faction_bonus_val2[i];
+    int *bonus_id = Players[faction_id].faction_bonus_id;
+    int *bonus_val1 = Players[faction_id].faction_bonus_val1;
+    int *bonus_val2 = Players[faction_id].faction_bonus_val2;
+    for (int i = 0; i < count; i++, bonus_id++, bonus_val1++, bonus_val2++) {
+        if (*bonus_id == RULE_SOCIAL) {
+            *(&PlayersData[faction_id].soc_effect_base.economy + *bonus_val1)
+                += *bonus_val2;
         }
     }
 }

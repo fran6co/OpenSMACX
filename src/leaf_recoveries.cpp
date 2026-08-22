@@ -64,6 +64,15 @@ __forceinline void store32(void *base, size_t offset, uint32_t value) {
     std::memcpy(static_cast<uint8_t *>(base) + offset, &value, sizeof(value));
 }
 
+// A one-argument view of a two-argument `__fastcall` redirect. The redirect's
+// second parameter is always an unused seam slot the callee never reads, but
+// the CALLER still has to materialise it - `xor edx, edx` for a `nullptr`
+// argument - which the image's direct `E8` call never does when the real
+// callee (a genuine destructor, taking no such slot) does not either. Casting
+// the redirect to this type drops the caller-side `edx` setup: `mov ecx, ...`
+// then `call` alone, matching the image.
+typedef void(__fastcall *SingleArgDtor)(void *);
+
 }  // namespace
 
 /*
@@ -230,6 +239,10 @@ Purpose: Follow a two-link chain, or return zero when the first link is unset.
          a body that works whenever the two happen to agree.
 
 // ORIGINAL: 0x005E3630 sub_5e3630 0x005E3630-0x005E3644 SEMANTIC
+// RULED-OUT: 8 source shapes measured (docs/BYTE_MATCH_ROUTE.md:295-340),
+//            plateaus at MNEMONIC_ONLY 7/9; the image reuses eax across the
+//            whole chase and every guard-clause / named-link / walking-
+//            pointer spelling still routes the middle link through ecx.
 // symbol    ?leaf_005e3630_redirect@@YIIPAX0@Z
 // size      20 bytes
 // prototype 
@@ -561,6 +574,16 @@ Purpose: Length of a three-component float vector.
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// LEVER: NAMED LOCALS FOR y AND z, rather than `vector[1]`/`vector[2]` read
+//        twice each: the image loads both as raw ints into ecx/edx and
+//        writes them to a two-slot scratch on the stack (reusing the
+//        argument's own slot, since __cdecl leaves it dead once the pointer
+//        is in eax) before reloading each from memory for its square - a
+//        local-variable spill, not a re-read through the pointer.
+//        `vector[1]`/`vector[2]` written out scored 0/21; these two locals
+//        reach 7/21 (0.818), the ceiling found - the two scratch SLOTS
+//        still land swapped ([esp]/[esp+8]) no matter which of y/z is
+//        declared or summed first (measured, six spellings).
 Return Value: the length, in ST(0)
 Status: Complete
 */
@@ -572,8 +595,10 @@ float __cdecl leaf_006281e0_redirect(const float *vector) {
     // `fsqrt` on the extended sum, which is what the original does. Checked
     // with objdump under the real compile command: a plain `-O2` on its own
     // produces the inline form and would have hidden the difference.
-    const long double sum = static_cast<long double>(vector[1]) * vector[1]
-                          + static_cast<long double>(vector[2]) * vector[2]
+    const float y = vector[1];
+    const float z = vector[2];
+    const long double sum = static_cast<long double>(y) * y
+                          + static_cast<long double>(z) * z
                           + static_cast<long double>(vector[0]) * vector[0];
     return static_cast<float>(std::sqrt(sum));
 }
@@ -951,6 +976,11 @@ Purpose: Report a node's neighbours through two optional out-parameters.
          just written, and a cached version would not.
 
 // ORIGINAL: 0x0063E7F0 sub_63e7f0 0x0063E7F0-0x0063E81C SEMANTIC
+// RULED-OUT: plateaus at MNEMONIC_ONLY 11/18 - eax/edx swap on the `first`
+//            branch (image keeps `first` in eax, node-reload in edx; this
+//            tree does the opposite). Caching the loaded front value in a
+//            named local, and `!=nullptr` vs bare pointer truthiness, both
+//            measured with no change - register allocation, not source shape.
 // symbol    ?leaf_0063e7f0_redirect@@YIIPAX0PAI1@Z
 // size      44 bytes
 // prototype 
@@ -1157,6 +1187,11 @@ Purpose: Swap two pairs of fields in the object this one points at.
          `[ecx]` would be seen.
 
 // ORIGINAL: 0x005CBBC0 sub_5cbbc0 0x005CBBC0-0x005CBBF5 SEMANTIC
+// RULED-OUT: plateaus at MNEMONIC_ONLY 13/22 - re-reading `load32(node, 0x20)`
+//            inside the guard instead of caching it in `moved` scores the
+//            same (measured); the divergence is edx-vs-esi register choice
+//            at the very first load, before any branch, so it is register
+//            allocation rather than a source shape this tree controls.
 // symbol    ?leaf_005cbbc0_redirect@@YIXPAX0@Z
 // size      53 bytes
 // prototype 
@@ -1271,6 +1306,16 @@ Purpose: Construct the Buffer subobject, then clear one field.
          order that would matter if the constructor ever reached that far back.
 
 // ORIGINAL: 0x004BEA30 ??0UV2Player@@QAE@XZ 0x004BEA30-0x004BEA4C
+// RULED-OUT: direct `new (bytes+0x8DC) Buffer()` scores WORSE (0/8, not 2/8) -
+//            it still pays the placement-new null guard the image never has,
+//            AND drops the `buffer_construct_redirect` indirection this
+//            candidate needs to reach the ctor at all. The image calls
+//            Buffer::Buffer() DIRECTLY with no guard, which only an implicit
+//            member construction on a REAL UV2Player ctor produces - but
+//            uv2player.h declares `UV2Player() { ; }` (empty inline over a
+//            real body) and is out of scope for this batch (leaf_recoveries/
+//            veh/base/faction only), so the redirect+nullptr shape here is
+//            the ceiling reachable without that header edit.
 // symbol    ?leaf_004bea30_redirect@@YIPAXPAX0@Z
 // size      28 bytes
 // prototype void (__thiscall ??0UV2Player@@QAE@XZ)(UV2Player* this)
@@ -1641,9 +1686,6 @@ Purpose: Destroy the ListBox at 0x48, the Dialog at 0xa60, and the GraphicWin
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D4DD0 0x00608E10 0x00609EC0
-Return Value: n/a
-Status: Complete
-*/
 // LEVER: the image's three calls are direct E8s to the destructors
 // themselves - going through the `Leaf*Destructor` pointer variables compiles
 // `call dword ptr [...]` and call_diff reports 0 real calls for it. Every
@@ -1651,12 +1693,26 @@ Status: Complete
 // scroll.cpp) already calls them by name; doing the same here reaches the
 // image's call sequence. The `Leaf*Destructor` globals stay declared for the
 // fixture use the comment above describes - nothing currently reads them.
+// LEVER: nullptr also costs the caller a `xor edx, edx` it never had to pay
+// (the destructors ignore their second slot) - casting each redirect through
+// `SingleArgDtor` before calling drops that instruction too.
+// RULED-OUT: VC6 tail-call-folds the LAST call into `jmp` regardless of which
+// spelling reaches it (SingleArgDtor or the plain 2-arg redirect+nullptr) -
+// the image has a real `call 0x5d4dd0` / `pop edi` / `pop esi` / `ret` there.
+// Reordering the three calls is not legal (it would call the wrong symbol
+// last); adding a `volatile` sink after the discarded `GraphicWin*` result
+// does not stop the fold either (measured). SingleArgDtor on all three scores
+// higher (0.880, 9/13) than nullptr-on-the-last (0.846, 11/13) despite fewer
+// raw agreements, so all three are cast; the trailing jmp is the residue.
+Return Value: n/a
+Status: Complete
+*/
 void __fastcall leaf_004080b0_redirect(void *self, void *) {
     uint8_t *const bytes = static_cast<uint8_t *>(self);
     uint8_t *const inner = bytes + ListBoxDestructorAdjustment;
-    list_box_destructor_redirect(inner, nullptr);
-    dialog_destructor_redirect(reinterpret_cast<Dialog *>(bytes + 0xA60), nullptr);
-    graphic_win_destructor_redirect(reinterpret_cast<GraphicWin *>(inner), nullptr);
+    reinterpret_cast<SingleArgDtor>(&list_box_destructor_redirect)(inner);
+    reinterpret_cast<SingleArgDtor>(&dialog_destructor_redirect)(bytes + 0xA60);
+    reinterpret_cast<SingleArgDtor>(&graphic_win_destructor_redirect)(inner);
 }
 
 /*
@@ -1675,17 +1731,21 @@ Purpose: Destroy the Dialogs at 0x188, the Dialog at 0xba0, and the GraphicWin
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     0x00406910 0x005D4DD0 0x00608E10
+// LEVER: same fix as leaf_004080b0_redirect above - direct calls to the named
+// redirects, not through the `Leaf*Destructor` pointer variables, cast
+// through `SingleArgDtor` so nullptr's `xor edx, edx` is not paid either.
+// RULED-OUT: same tail-call fold on the trailing call as 004080B0 - VC6
+// turns the last fastcall into `jmp` no matter which of the two spellings
+// reaches it; SingleArgDtor on all three still scores best (measured).
 Return Value: n/a
 Status: Complete
 */
-// LEVER: same fix as leaf_004080b0_redirect above - direct calls to the
-// named redirects, not through the `Leaf*Destructor` pointer variables.
 void __fastcall leaf_00406af0_redirect(void *self, void *) {
     uint8_t *const bytes = static_cast<uint8_t *>(self);
     uint8_t *const inner = bytes + DialogsDestructorAdjustment;
-    dialogs_destructor_redirect(inner, nullptr);
-    dialog_destructor_redirect(reinterpret_cast<Dialog *>(bytes + 0xBA0), nullptr);
-    graphic_win_destructor_redirect(reinterpret_cast<GraphicWin *>(inner), nullptr);
+    reinterpret_cast<SingleArgDtor>(&dialogs_destructor_redirect)(inner);
+    reinterpret_cast<SingleArgDtor>(&dialog_destructor_redirect)(bytes + 0xBA0);
+    reinterpret_cast<SingleArgDtor>(&graphic_win_destructor_redirect)(inner);
 }
 
 // load_deswin_sprites' two callees, seams for the same reason the destructor

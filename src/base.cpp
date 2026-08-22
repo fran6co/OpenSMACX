@@ -1023,6 +1023,20 @@ int __cdecl morale_mod(int base_id, int faction_id, int triad) {
 /*
 Purpose: Calculate the new native unit lifecycle bonus modifier provided by a base and faction.
 // ORIGINAL: 0x004E65C0 ?breed_mod@@YAHHH@Z 0x004E65C0-0x004E673D
+// LEVER: body lives in base.h (MEASURED inline) as four has_fac_built_call()
+//        checks instead of has_fac_built() - fixes breed_mod's OWN call
+//        count (0 -> 4 real bitmask() calls) and moves its best similarity
+//        to 0.749. TRADE-OFF, measured: since breed_mod is a single shared
+//        inline body, the same edit reaches worm_mod's inlined copy and
+//        drops ITS best similarity 0.826 -> 0.706 (worm_mod is 0x004E6740,
+//        not claimed, so not a tracked regression - full detail at the
+//        body in base.h and at worm_mod's own marker below).
+// RULED-OUT: register swap in the prologue (image keeps ebx=base_id,
+//            esi=faction_id; /O2 default swaps them) and how the bool
+//            result of `has_fac_built_call(...) || has_project(...)` is
+//            materialised - the image spins it through a stack slot as
+//            scratch before the `||`, which a direct `test/jne` never
+//            reproduces. Register allocation, not a call-count/lever issue.
 // size      381 bytes
 // prototype int (__cdecl ?breed_mod@@YAHHH@Z)(int baseID, int factionID)
 // callers   2   call targets   1
@@ -2488,27 +2502,35 @@ Purpose: Move the specified base's production queue forward if applicable.
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x004455F0 0x0046AEF0 0x005BA0E0 0x005BA910
+// LEVER: `Base *base = &Bases[base_id];` HOISTED, rather than
+//        `Bases[base_id]` re-subscripted at every field: the image computes
+//        the base's address exactly ONCE (esi = &Bases[base_id]) and reuses
+//        it for every field (queue_size, faction, queue_production_id, x,
+//        y) through the whole function, where re-subscripting recomputes
+//        (and partially re-folds) the base_id*sizeof(Base) multiply at each
+//        site. Moved 0/89 (0.804) -> 15/89 (0.859).
 Return Value: Is there a valid item in queue to be built? true/false
 Status: Complete
 */
 BOOL __cdecl base_queue(int base_id) {
-    uint32_t faction_id = Bases[base_id].faction_id_current;
-    while (Bases[base_id].queue_size) {
-        int queue_prod_id = Bases[base_id].queue_production_id[0];
+    Base *base = &Bases[base_id];
+    uint32_t faction_id = base->faction_id_current;
+    while (base->queue_size) {
+        int queue_prod_id = base->queue_production_id[0];
         if (queue_prod_id >= 0) {
             PlayersData[faction_id].proto_id_queue[queue_prod_id]--;
         }
-        for (uint32_t i = 0; i < Bases[base_id].queue_size; i++) {
-            Bases[base_id].queue_production_id[i] = Bases[base_id].queue_production_id[i + 1];
+        for (uint32_t i = 0; i < base->queue_size; i++) {
+            base->queue_production_id[i] = base->queue_production_id[i + 1];
         }
-        Bases[base_id].queue_size--;
-        queue_prod_id = Bases[base_id].queue_production_id[0];
-        if((queue_prod_id >= 0) ? veh_avail(queue_prod_id, faction_id, base_id) 
+        base->queue_size--;
+        queue_prod_id = base->queue_production_id[0];
+        if((queue_prod_id >= 0) ? veh_avail(queue_prod_id, faction_id, base_id)
             : facility_avail(-queue_prod_id, faction_id, base_id, 0)) {
             if (queue_prod_id <= -FacilitySPStart) {
                 wave_it(36); // CPU project initiated
             }
-            draw_radius(Bases[base_id].x, Bases[base_id].y, 2, 2);
+            draw_radius(base->x, base->y, 2, 2);
             return true;
         }
     }
@@ -2519,6 +2541,13 @@ BOOL __cdecl base_queue(int base_id) {
 Purpose: Check if current base has had an energy shortfall. If so, reset all existing energy convoy
          orders for the faction. TODO: Revisit and find a way to only reset specific base convoys.
 // ORIGINAL: 0x004F4DC0 ?base_energy_costs@@YAXXZ 0x004F4DC0-0x004F4E73
+// RULED-OUT: already 0.852 similar (best flag set, 3/60 raw). The remaining
+//            gap is inside base_who()/map_loc()'s inlined `x >> 1`: the
+//            image widens Vehs[i].x to int (movsx) BEFORE the shift, this
+//            tree's inline shifts the 16-bit value first and widens after -
+//            an explicit `(int)Vehs[i].x` cast at the call site does not
+//            change it (measured), so the divergence is inside the shared
+//            inline body, not this call site's source shape.
 // size      179 bytes
 // prototype 
 // callers   1   call targets   0
@@ -2588,6 +2617,17 @@ int __cdecl fac_maint(int facility_id, int faction_id) {
 /*
 Purpose: Calculate overall maintenance cost for the currently selected base.
 // ORIGINAL: 0x004F65F0 ?base_maint@@YAXXZ 0x004F65F0-0x004F67E3
+// RULED-OUT: the image's own call list has ONE call to bitmask() (0x50BA00);
+//            this tree's compile makes TWO, so `set_fac(fac,
+//            BaseIDCurrentSelected, false)` - a BYTE_EXACT standalone
+//            function elsewhere, called 10 times - looked like it was
+//            auto-inlining here and contributing its own internal bitmask()
+//            call on top of the loop guard's. Hand-inlining set_fac's body
+//            (set==false is a literal at this call site, so only the
+//            `&= ~mask` arm survives) does NOT improve it: best similarity
+//            goes 0.702 -> 0.696, a wash rather than a win, so the
+//            standalone `set_fac()` call is kept. Best flag set
+//            /O2 /Gy /GR- /Oy- /GX either way.
 // size      499 bytes
 // prototype 
 // callers   1   call targets   5
@@ -2808,12 +2848,15 @@ region_at (0x00500220), which the original expands three separate times. The inl
 halves x with SAR where the exported region_at takes uint32_t and would use SHR; the two agree for
 every non-negative coordinate, which is all a base or a target tile can hold.
 
-RULED-OUT: open-coding the x_target/y_target vector_dist call as the x_dist()+abs()x4 expansion
-(the same shape that works on base_find and black_market) measured WORSE here: best similarity
-across all flag sets dropped from 0.728 (/c /O2 /Gy /GR- /Oy- /GX, 6/233 agreeing) to 0.689
-(/c /O2 /Ob0 /Gy /GR- /Oy- /GX, 6/233 agreeing) - same agreeing count, lower similarity, and the
-default-flags similarity at the SAME flag set collapsed to 0.354. Left as a real vector_dist(...)
-call.
+// RULED-OUT: open-coding the x_target/y_target vector_dist call as the
+//            x_dist()+abs()x4 expansion (the same shape that works on
+//            base_find and black_market) measured WORSE here: best
+//            similarity across all flag sets dropped from 0.728
+//            (/c /O2 /Gy /GR- /Oy- /GX, 6/233 agreeing) to 0.689
+//            (/c /O2 /Ob0 /Gy /GR- /Oy- /GX, 6/233 agreeing) - same
+//            agreeing count, lower similarity, and the default-flags
+//            similarity at the SAME flag set collapsed to 0.354. Left as a
+//            real vector_dist(...) call.
 */
 int __cdecl suggest_plan(int faction_id, int faction_id_2) {
     PopupDialogFactionID = faction_id_2;
@@ -3452,37 +3495,43 @@ Purpose: Determine if the facility is redundant due to a Secret Project counting
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     (none)
+// LEVER: a `switch` assigning ONE shared `project_id` local, checked once at
+//        a single `return has_project(project_id, faction_id)`, keeps
+//        project_id a RUNTIME value - VC6 cannot fold `base_project()`'s
+//        address per case, and 7 cases in a numeric range compile to a jump
+//        table besides, where the image cascades explicit compares
+//        (FAC_NAVAL_YARD checked first and alone, with its own duplicated
+//        tail, before the rest). Returning the has_project() call directly
+//        from each arm makes project_id a COMPILE-TIME literal at every
+//        call site, so each one folds to the fixed global the image reads
+//        (0x9a653c, 0x9a6528, ...), and if/else instead of switch avoids
+//        the jump table. Moved 11/61 (0.478) -> 16/61 (0.950).
 Return Value: Is facility redundant? true/false
 Status: Complete
 */
 BOOL __cdecl redundant(int facility_id, int faction_id) {
-    uint32_t project_id;
-    switch (facility_id) {
-      case FAC_NAVAL_YARD:
-        project_id = SP_MARITIME_CONTROL_CENTER;
-        break;
-      case FAC_PERIMETER_DEFENSE:
-        project_id = SP_CITIZENS_DEFENSE_FORCE;
-        break;
-      case FAC_COMMAND_CENTER:
-        project_id = SP_COMMAND_NEXUS;
-        break;
-      case FAC_BIOENHANCEMENT_CENTER:
-        project_id = SP_CYBORG_FACTORY;
-        break;
-      case FAC_QUANTUM_CONVERTER:
-        project_id = SP_SINGULARITY_INDUCTOR;
-        break;
-      case FAC_AEROSPACE_COMPLEX:
-        project_id = SP_CLOUDBASE_ACADEMY;
-        break;
-      case FAC_ENERGY_BANK:
-        project_id = SP_PLANETARY_ENERGY_GRID;
-        break;
-      default:
-        return false;
+    if (facility_id == FAC_NAVAL_YARD) {
+        return has_project(SP_MARITIME_CONTROL_CENTER, faction_id);
     }
-    return has_project(project_id, faction_id);
+    if (facility_id == FAC_PERIMETER_DEFENSE) {
+        return has_project(SP_CITIZENS_DEFENSE_FORCE, faction_id);
+    }
+    if (facility_id == FAC_COMMAND_CENTER) {
+        return has_project(SP_COMMAND_NEXUS, faction_id);
+    }
+    if (facility_id == FAC_BIOENHANCEMENT_CENTER) {
+        return has_project(SP_CYBORG_FACTORY, faction_id);
+    }
+    if (facility_id == FAC_QUANTUM_CONVERTER) {
+        return has_project(SP_SINGULARITY_INDUCTOR, faction_id);
+    }
+    if (facility_id == FAC_AEROSPACE_COMPLEX) {
+        return has_project(SP_CLOUDBASE_ACADEMY, faction_id);
+    }
+    if (facility_id == FAC_ENERGY_BANK) {
+        return has_project(SP_PLANETARY_ENERGY_GRID, faction_id);
+    }
+    return false;
 }
 
 /*
