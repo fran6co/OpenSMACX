@@ -24,6 +24,27 @@ Exit 0 clean, 1 if any marker names a symbol the build does not emit.
 
 from __future__ import annotations
 
+def near(symbol, names):
+    """Symbols the build DOES emit for the same function under another spelling.
+
+    Three naming reconstructions cost claims on 2026-08-22 alone, all the same
+    shape: the annotation records a GUESS at the mangled name and only the
+    object file is evidence.
+
+      ??1GraphicWin@@QAE@XZ   the build emits ??1GraphicWin@@UAE@XZ
+                              - `U` not `Q`, because the destructor is virtual
+      ??_GAlphaMovie@@WEEE@   the build emits ??_EAlphaMovie@@WEEE@
+                              - the VECTOR deleting destructor, not the scalar
+      ?x@C@@QAEHXZ            a receiver the bytes deny at all
+
+    So a missing symbol is reported with what the build emits under the same
+    name and class, which is nearly always the answer.
+    """
+    head = symbol.split("@@")[0]
+    if not head:
+        return []
+    return sorted(n for n in names if n.split("@@")[0] == head and n != symbol)
+
 import json
 import re
 import subprocess
@@ -95,11 +116,15 @@ if __name__ == "__main__":
         scanned += 1
         for address, symbol in claims:
             if symbol not in names:
-                missing.append((path.name, address, symbol))
+                missing.append((path.name, address, symbol, near(symbol, names)))
 
-    for name, address, symbol in missing:
+    for name, address, symbol, suggestions in missing:
         print(f"  {address}  {name:22} names {symbol}")
-        print(f"      ...which this build does not emit")
+        if suggestions:
+            for s in suggestions[:3]:
+                print(f"      ...the build emits {s}")
+        else:
+            print(f"      ...which this build does not emit")
     if not missing:
         print("  every marker names a symbol the build emits")
     print(f"\n{scanned} file(s) checked; {len(missing)} marker(s) name a symbol "

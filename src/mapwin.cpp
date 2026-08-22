@@ -121,6 +121,7 @@ void MapWin::construct(int a1) {
 Purpose: Tear down a map window's own members. Nothing here calls
          MapWin::clear as MapWin - it is reached by name.
 // ORIGINAL: 0x00420F90 ??1MapWin@@QAE@XZ 0x00420F90-0x004210CB;0x00651190-0x00651250
+// symbol    ??1MapWin@@UAE@XZ
 // size      315 bytes
 // prototype void (__thiscall ??1MapWin@@QAE@XZ)(MapWin* this)
 // callers   1   call targets   6
