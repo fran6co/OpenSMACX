@@ -225,7 +225,15 @@ if __name__ == "__main__":
               f"differs only in a parameter's type\nstill gets through. A row "
               f"marked `?` is one whose mangled name would not parse: it was "
               f"kept\nUNCHECKED rather than dropped, because hiding a real hit "
-              f"is worse than showing an overload.")
+              f"is worse than showing an overload.\n\n"
+              f"MEASURE EVERY ROW BEFORE PROMOTING IT. A `?` row is a name "
+              f"match and nothing more:\n0x005EC740 listed "
+              f"`Win::set_cursor` against a product-source definition taking "
+              f"ONE\nparameter, where the image's "
+              f"`?set_cursor@Win@@QAEHPAUSprite@@HH@Z` takes THREE - a "
+              f"different\noverload entirely. It measured BYTE_EXACT because "
+              f"the claim still resolved against its\nARTIFACT, not against "
+              f"the definition this list pointed at.")
         sys.exit(0)
 
     wanted = sorted(a for a in orphan if a in called)
