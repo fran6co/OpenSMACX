@@ -192,3 +192,23 @@ void StringBox::on_scrolled(int a1, int a2) {
     *reinterpret_cast<int *>(self + 0xa1c) = a2;
     reinterpret_cast<VCall *>(this)->slot062();
 }
+
+/*
+Purpose: Step the receiver back to the subobject ??_GStringBox@@UAEPAXI@Z
+         expects, then forward unchanged.
+// ORIGINAL: 0x00432830 ??_GStringBox@@WEEE@AEPAXI@Z 0x00432830-0x0043283B BYTE_EXACT
+// symbol    ??_EStringBox@@WEEE@AEPAXI@Z
+// CORRECTED from ??3StringBox@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x00432770` into
+//   ??_GStringBox@@UAEPAXI@Z, which executes `ret 4`; no stack access
+//   and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/

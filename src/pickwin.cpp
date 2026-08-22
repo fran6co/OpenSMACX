@@ -77,7 +77,7 @@ const uint32_t PickWinBufferVtable = 0x0066D134;
 // immediately, compiles the image's own `call rel32` rather than the
 // `call dword ptr [...]` a stored pointer would give.
 PickWin::PickWin() {
-    GraphicWin::construct();
+    new (static_cast<GraphicWin *>(this)) GraphicWin();
 
     // popup_, flatButton1_..flatButton3_, sprites1_..sprites4_ and sprite5_
     // are REAL members now (see pickwin.h) and build implicitly, in
@@ -119,3 +119,23 @@ void PickWin::on_button_passover(int, int) {
 void __fastcall pick_win_on_button_passover_redirect(PickWin *self, void *, int a1, int a2) {
     self->on_button_passover(a1, a2);
 }
+
+/*
+Purpose: Step the receiver back to the subobject ??_GPickWin@@UAEPAXI@Z
+         expects, then forward unchanged.
+// ORIGINAL: 0x0048ADF0 ??_GPickWin@@WEEE@AEPAXI@Z 0x0048ADF0-0x0048ADFB BYTE_EXACT
+// symbol    ??_EPickWin@@WEEE@AEPAXI@Z
+// CORRECTED from ??3PickWin@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x0048ADC0` into
+//   ??_GPickWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/

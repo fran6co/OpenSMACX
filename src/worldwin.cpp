@@ -51,7 +51,7 @@ Return Value: n/a
 Status: Complete
 */
 WorldWin *WorldWin::construct() {
-    GraphicWin::construct();
+    new (static_cast<GraphicWin *>(this)) GraphicWin();
     new (&buffer1_) Buffer();
     new (&buffer2_) Buffer();
     mapWin_.construct(1);

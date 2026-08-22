@@ -142,31 +142,6 @@ void *__fastcall adjust_this_sub_404420(void *self, void *) {
 }
 
 /*
-Purpose: Step the receiver back to the subobject ??_GAlphaMovie@@UAEPAXI@Z
-         expects, then forward unchanged.
-// ORIGINAL: 0x00404430 ??_GAlphaMovie@@WEEE@AEPAXI@Z 0x00404430-0x0040443B
-// symbol    ?adjust_this_alpha_movie@@YIPAXPAX0I@Z
-// CORRECTED from ??3AlphaMovie@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x004043A0` into
-//   ??_GAlphaMovie@@UAEPAXI@Z, which executes `ret 4`; no stack access
-//   and the receiver stays in ECX. `WEEE@` re-demangles to
-//   adjustor{1092} and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_alpha_movie(void *self, void *,
-                                         unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return scalar_delete_alpha_movie(object - 0x444, nullptr, arg0);
-}
-
-/*
 Purpose: The compiler-generated scalar deleting destructor at
          ??_GFlatButton@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
@@ -240,104 +215,6 @@ void *__fastcall scalar_delete_popup(void *self, void *, unsigned int arg0) {
         operator delete(self);
     }
     return self;
-}
-
-/*
-Purpose: Step the receiver back to the subobject ??_GBasePop@@UAEPAXI@Z
-         expects, then forward unchanged.
-// ORIGINAL: 0x004070B0 ??_GBasePop@@WEEE@AEPAXI@Z 0x004070B0-0x004070BB
-// symbol    ?adjust_this_base_pop@@YIPAXPAX0I@Z
-// CORRECTED from ??3BasePop@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x00406B40` into
-//   ??_GBasePop@@UAEPAXI@Z, which executes `ret 4`; no stack access and
-//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
-//   and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_base_pop(void *self, void *, unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return scalar_delete_base_pop(object - 0x444, nullptr, arg0);
-}
-
-/*
-Purpose: Step the receiver back to the subobject ??_GScroll@@UAEPAXI@Z expects,
-         then forward unchanged.
-// ORIGINAL: 0x004070C0 ??_GScroll@@WEEE@AEPAXI@Z 0x004070C0-0x004070CB
-// symbol    ?adjust_this_scroll@@YIPAXPAX0I@Z
-// CORRECTED from ??3Scroll@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x00406F20` into
-//   ??_GScroll@@UAEPAXI@Z, which executes `ret 4`; no stack access and
-//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
-//   and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_scroll(void *self, void *, unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return scroll_scalar_dtor_redirect(
-        reinterpret_cast<Scroll *>(object - 0x444), nullptr, arg0);
-}
-
-/*
-Purpose: Step the receiver back to the subobject ??_GPopup@@UAEPAXI@Z expects,
-         then forward unchanged.
-// ORIGINAL: 0x004070D0 ??_GPopup@@WEEE@AEPAXI@Z 0x004070D0-0x004070DB
-// symbol    ?adjust_this_popup@@YIPAXPAX0I@Z
-// CORRECTED from ??3Popup@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x00406BD0` into
-//   ??_GPopup@@UAEPAXI@Z, which executes `ret 4`; no stack access and
-//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
-//   and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_popup(void *self, void *, unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return scalar_delete_popup(object - 0x444, nullptr, arg0);
-}
-
-/*
-Purpose: Step the receiver back to the subobject ??_GFlatButton@@UAEPAXI@Z
-         expects, then forward unchanged.
-// ORIGINAL: 0x004070E0 ??_GFlatButton@@WEEE@AEPAXI@Z 0x004070E0-0x004070EB
-// symbol    ?adjust_this_flat_button@@YIPAXPAX0I@Z
-// CORRECTED from ??3FlatButton@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x004068E0` into
-//   ??_GFlatButton@@UAEPAXI@Z, which executes `ret 4`; no stack access
-//   and the receiver stays in ECX. `WEEE@` re-demangles to
-//   adjustor{1092} and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_flat_button(void *self, void *,
-                                         unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return scalar_delete_flat_button(object - 0x444, nullptr, arg0);
 }
 
 /*
@@ -515,55 +392,6 @@ void *__fastcall scalar_delete_pop_menu(void *self, void *,
 }
 
 /*
-Purpose: Step the receiver back to the subobject ??_GBaseWin@@UAEPAXI@Z
-         expects, then forward unchanged.
-// ORIGINAL: 0x00421810 ??_GBaseWin@@WEEE@AEPAXI@Z 0x00421810-0x0042181B
-// symbol    ?adjust_this_base_win@@YIPAXPAX0I@Z
-// CORRECTED from ??3BaseWin@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x004213D0` into
-//   ??_GBaseWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
-//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
-//   and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_base_win(void *self, void *, unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return scalar_delete_base_win(object - 0x444, nullptr, arg0);
-}
-
-/*
-Purpose: Step the receiver back to the subobject ??_GProdPicker@@UAEPAXI@Z
-         expects, then forward unchanged.
-// ORIGINAL: 0x00421970 ??_GProdPicker@@WEEE@AEPAXI@Z 0x00421970-0x0042197B
-// symbol    ?adjust_this_prod_picker@@YIPAXPAX0I@Z
-// CORRECTED from ??3ProdPicker@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x004213A0` into
-//   ??_GProdPicker@@UAEPAXI@Z, which executes `ret 4`; no stack access
-//   and the receiver stays in ECX. `WEEE@` re-demangles to
-//   adjustor{1092} and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_prod_picker(void *self, void *,
-                                         unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return scalar_delete_prod_picker(object - 0x444, nullptr, arg0);
-}
-
-/*
 Purpose: Step the receiver back to the subobject ??_GPopMenu@@UAEPAXI@Z
          expects, then forward unchanged.
 // ORIGINAL: 0x00421980 PopMenu::delete1 0x00421980-0x0042198B
@@ -649,30 +477,6 @@ void *__fastcall scalar_delete_counc_win(void *self, void *,
 }
 
 /*
-Purpose: Step the receiver back to the subobject ??_GCouncWin@@UAEPAXI@Z
-         expects, then forward unchanged.
-// ORIGINAL: 0x00428740 ??_GCouncWin@@WEEE@AEPAXI@Z 0x00428740-0x0042874B
-// symbol    ?adjust_this_counc_win@@YIPAXPAX0I@Z
-// CORRECTED from ??3CouncWin@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x00428710` into
-//   ??_GCouncWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
-//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
-//   and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_counc_win(void *self, void *, unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return scalar_delete_counc_win(object - 0x444, nullptr, arg0);
-}
-
-/*
 Purpose: The compiler-generated scalar deleting destructor at
          ??_GCredits@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
@@ -694,30 +498,6 @@ void *__fastcall scalar_delete_credits(void *self, void *, unsigned int arg0) {
         operator delete(self);
     }
     return self;
-}
-
-/*
-Purpose: Step the receiver back to the subobject ??_GCredits@@UAEPAXI@Z
-         expects, then forward unchanged.
-// ORIGINAL: 0x00428F80 ??_GCredits@@WEEE@AEPAXI@Z 0x00428F80-0x00428F8B
-// symbol    ?adjust_this_credits@@YIPAXPAX0I@Z
-// CORRECTED from ??3Credits@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x00428E60` into
-//   ??_GCredits@@UAEPAXI@Z, which executes `ret 4`; no stack access and
-//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
-//   and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_credits(void *self, void *, unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return scalar_delete_credits(object - 0x444, nullptr, arg0);
 }
 
 /*
@@ -771,55 +551,6 @@ void *__fastcall scalar_delete_datalink(void *self, void *,
 }
 
 /*
-Purpose: Step the receiver back to the subobject ??_GStringBox@@UAEPAXI@Z
-         expects, then forward unchanged.
-// ORIGINAL: 0x00432830 ??_GStringBox@@WEEE@AEPAXI@Z 0x00432830-0x0043283B
-// symbol    ?adjust_this_string_box@@YIPAXPAX0I@Z
-// CORRECTED from ??3StringBox@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x00432770` into
-//   ??_GStringBox@@UAEPAXI@Z, which executes `ret 4`; no stack access
-//   and the receiver stays in ECX. `WEEE@` re-demangles to
-//   adjustor{1092} and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_string_box(void *self, void *,
-                                        unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return scalar_delete_string_box(object - 0x444, nullptr, arg0);
-}
-
-/*
-Purpose: Step the receiver back to the subobject ??_GDatalink@@UAEPAXI@Z
-         expects, then forward unchanged.
-// ORIGINAL: 0x00432840 ??_GDatalink@@WEEE@AEPAXI@Z 0x00432840-0x0043284B
-// symbol    ?adjust_this_datalink@@YIPAXPAX0I@Z
-// CORRECTED from ??3Datalink@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x00432800` into
-//   ??_GDatalink@@UAEPAXI@Z, which executes `ret 4`; no stack access and
-//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
-//   and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_datalink(void *self, void *, unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return scalar_delete_datalink(object - 0x444, nullptr, arg0);
-}
-
-/*
 Purpose: The compiler-generated scalar deleting destructor at
          ??_GDesignWin@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
@@ -867,31 +598,6 @@ void *__fastcall scalar_delete_select_part_win(void *self, void *,
         operator delete(self);
     }
     return self;
-}
-
-/*
-Purpose: Step the receiver back to the subobject ??_GDesignWin@@UAEPAXI@Z
-         expects, then forward unchanged.
-// ORIGINAL: 0x0043EFA0 ??_GDesignWin@@WEEE@AEPAXI@Z 0x0043EFA0-0x0043EFAB
-// symbol    ?adjust_this_design_win@@YIPAXPAX0I@Z
-// CORRECTED from ??3DesignWin@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x0043EDB0` into
-//   ??_GDesignWin@@UAEPAXI@Z, which executes `ret 4`; no stack access
-//   and the receiver stays in ECX. `WEEE@` re-demangles to
-//   adjustor{1092} and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_design_win(void *self, void *,
-                                        unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return scalar_delete_design_win(object - 0x444, nullptr, arg0);
 }
 
 /*
@@ -945,30 +651,6 @@ void *__fastcall scalar_delete_diplo_pop(void *self, void *,
 }
 
 /*
-Purpose: Step the receiver back to the subobject ??_GDiploPop@@UAEPAXI@Z
-         expects, then forward unchanged.
-// ORIGINAL: 0x00440EF0 ??_GDiploPop@@WEEE@AEPAXI@Z 0x00440EF0-0x00440EFB
-// symbol    ?adjust_this_diplo_pop@@YIPAXPAX0I@Z
-// CORRECTED from ??3DiploPop@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x00440EC0` into
-//   ??_GDiploPop@@UAEPAXI@Z, which executes `ret 4`; no stack access and
-//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
-//   and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_diplo_pop(void *self, void *, unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return scalar_delete_diplo_pop(object - 0x444, nullptr, arg0);
-}
-
-/*
 Purpose: The compiler-generated scalar deleting destructor at
          ??_GDiploWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
@@ -991,30 +673,6 @@ void *__fastcall scalar_delete_diplo_win(void *self, void *,
         operator delete(self);
     }
     return self;
-}
-
-/*
-Purpose: Step the receiver back to the subobject ??_GDiploWin@@UAEPAXI@Z
-         expects, then forward unchanged.
-// ORIGINAL: 0x00445120 ??_GDiploWin@@WEEE@AEPAXI@Z 0x00445120-0x0044512B
-// symbol    ?adjust_this_diplo_win@@YIPAXPAX0I@Z
-// CORRECTED from ??3DiploWin@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x00445080` into
-//   ??_GDiploWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
-//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
-//   and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_diplo_win(void *self, void *, unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return scalar_delete_diplo_win(object - 0x444, nullptr, arg0);
 }
 
 /*
@@ -1140,30 +798,6 @@ void *__fastcall scalar_delete_gamma(void *self, void *, unsigned int arg0) {
 }
 
 /*
-Purpose: Step the receiver back to the subobject ??_GGamma@@UAEPAXI@Z expects,
-         then forward unchanged.
-// ORIGINAL: 0x004562B0 ??_GGamma@@WEEE@AEPAXI@Z 0x004562B0-0x004562BB
-// symbol    ?adjust_this_gamma@@YIPAXPAX0I@Z
-// CORRECTED from ??3Gamma@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x00456280` into
-//   ??_GGamma@@UAEPAXI@Z, which executes `ret 4`; no stack access and
-//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
-//   and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_gamma(void *self, void *, unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return scalar_delete_gamma(object - 0x444, nullptr, arg0);
-}
-
-/*
 Purpose: The compiler-generated scalar deleting destructor at
          ??_GMainInterface@@UAEPAXI@Z: run the complete destructor, then
          release the storage through the executable's operator delete only when
@@ -1186,31 +820,6 @@ void *__fastcall scalar_delete_main_interface(void *self, void *,
         operator delete(self);
     }
     return self;
-}
-
-/*
-Purpose: Step the receiver back to the subobject ??_GMainInterface@@UAEPAXI@Z
-         expects, then forward unchanged.
-// ORIGINAL: 0x0045F1F0 ??_GMainInterface@@WEEE@AEPAXI@Z 0x0045F1F0-0x0045F1FB
-// symbol    ?adjust_this_main_interface@@YIPAXPAX0I@Z
-// CORRECTED from ??3MainInterface@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x0045F1C0` into
-//   ??_GMainInterface@@UAEPAXI@Z, which executes `ret 4`; no stack
-//   access and the receiver stays in ECX. `WEEE@` re-demangles to
-//   adjustor{1092} and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_main_interface(void *self, void *,
-                                            unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return scalar_delete_main_interface(object - 0x444, nullptr, arg0);
 }
 
 /*
@@ -1385,30 +994,6 @@ void *__fastcall scalar_delete_net_msg(void *self, void *, unsigned int arg0) {
 }
 
 /*
-Purpose: Step the receiver back to the subobject ??_GNetMsg@@UAEPAXI@Z expects,
-         then forward unchanged.
-// ORIGINAL: 0x0047AFE0 ??_GNetMsg@@WEEE@AEPAXI@Z 0x0047AFE0-0x0047AFEB
-// symbol    ?adjust_this_net_msg@@YIPAXPAX0I@Z
-// CORRECTED from ??3NetMsg@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x0047AD70` into
-//   ??_GNetMsg@@UAEPAXI@Z, which executes `ret 4`; no stack access and
-//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
-//   and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_net_msg(void *self, void *, unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return scalar_delete_net_msg(object - 0x444, nullptr, arg0);
-}
-
-/*
 Purpose: The compiler-generated scalar deleting destructor at
          ??_GNetWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
@@ -1430,30 +1015,6 @@ void *__fastcall scalar_delete_net_win(void *self, void *, unsigned int arg0) {
         operator delete(self);
     }
     return self;
-}
-
-/*
-Purpose: Step the receiver back to the subobject ??_GNetWin@@UAEPAXI@Z expects,
-         then forward unchanged.
-// ORIGINAL: 0x00483840 ??_GNetWin@@WEEE@AEPAXI@Z 0x00483840-0x0048384B
-// symbol    ?adjust_this_net_win@@YIPAXPAX0I@Z
-// CORRECTED from ??3NetWin@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x004837C0` into
-//   ??_GNetWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
-//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
-//   and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_net_win(void *self, void *, unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return scalar_delete_net_win(object - 0x444, nullptr, arg0);
 }
 
 /*
@@ -1479,31 +1040,6 @@ void *__fastcall scalar_delete_new_tech_win(void *self, void *,
         operator delete(self);
     }
     return self;
-}
-
-/*
-Purpose: Step the receiver back to the subobject ??_GNewTechWin@@UAEPAXI@Z
-         expects, then forward unchanged.
-// ORIGINAL: 0x00484AB0 ??_GNewTechWin@@WEEE@AEPAXI@Z 0x00484AB0-0x00484ABB
-// symbol    ?adjust_this_new_tech_win@@YIPAXPAX0I@Z
-// CORRECTED from ??3NewTechWin@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x00484A80` into
-//   ??_GNewTechWin@@UAEPAXI@Z, which executes `ret 4`; no stack access
-//   and the receiver stays in ECX. `WEEE@` re-demangles to
-//   adjustor{1092} and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_new_tech_win(void *self, void *,
-                                          unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return scalar_delete_new_tech_win(object - 0x444, nullptr, arg0);
 }
 
 /*
@@ -1578,30 +1114,6 @@ void *__fastcall scalar_delete_pick_win(void *self, void *,
         operator delete(self);
     }
     return self;
-}
-
-/*
-Purpose: Step the receiver back to the subobject ??_GPickWin@@UAEPAXI@Z
-         expects, then forward unchanged.
-// ORIGINAL: 0x0048ADF0 ??_GPickWin@@WEEE@AEPAXI@Z 0x0048ADF0-0x0048ADFB
-// symbol    ?adjust_this_pick_win@@YIPAXPAX0I@Z
-// CORRECTED from ??3PickWin@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x0048ADC0` into
-//   ??_GPickWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
-//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
-//   and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_pick_win(void *self, void *, unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return scalar_delete_pick_win(object - 0x444, nullptr, arg0);
 }
 
 /*
@@ -1755,31 +1267,6 @@ void *__fastcall scalar_delete_report_win(void *self, void *,
 }
 
 /*
-Purpose: Step the receiver back to the subobject ??_GReportWin@@UAEPAXI@Z
-         expects, then forward unchanged.
-// ORIGINAL: 0x004AD870 ??_GReportWin@@WEEE@AEPAXI@Z 0x004AD870-0x004AD87B
-// symbol    ?adjust_this_report_win@@YIPAXPAX0I@Z
-// CORRECTED from ??3ReportWin@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x004AD840` into
-//   ??_GReportWin@@UAEPAXI@Z, which executes `ret 4`; no stack access
-//   and the receiver stays in ECX. `WEEE@` re-demangles to
-//   adjustor{1092} and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_report_win(void *self, void *,
-                                        unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return scalar_delete_report_win(object - 0x444, nullptr, arg0);
-}
-
-/*
 Purpose: The compiler-generated scalar deleting destructor at
          ??_GSetupWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
@@ -1802,30 +1289,6 @@ void *__fastcall scalar_delete_setup_win(void *self, void *,
         operator delete(self);
     }
     return self;
-}
-
-/*
-Purpose: Step the receiver back to the subobject ??_GSetupWin@@UAEPAXI@Z
-         expects, then forward unchanged.
-// ORIGINAL: 0x004AE9A0 ??_GSetupWin@@WEEE@AEPAXI@Z 0x004AE9A0-0x004AE9AB
-// symbol    ?adjust_this_setup_win@@YIPAXPAX0I@Z
-// CORRECTED from ??3SetupWin@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x004AE760` into
-//   ??_GSetupWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
-//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
-//   and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_setup_win(void *self, void *, unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return scalar_delete_setup_win(object - 0x444, nullptr, arg0);
 }
 
 /*
@@ -1879,56 +1342,6 @@ void *__fastcall scalar_delete_social_win(void *self, void *,
 }
 
 /*
-Purpose: Step the receiver back to the subobject ??_GCheckButton@@UAEPAXI@Z
-         expects, then forward unchanged.
-// ORIGINAL: 0x004B3F80 ??_GCheckButton@@WEEE@AEPAXI@Z 0x004B3F80-0x004B3F8B
-// symbol    ?adjust_this_check_button@@YIPAXPAX0I@Z
-// CORRECTED from ??3CheckButton@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x004B3F20` into
-//   ??_GCheckButton@@UAEPAXI@Z, which executes `ret 4`; no stack access
-//   and the receiver stays in ECX. `WEEE@` re-demangles to
-//   adjustor{1092} and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_check_button(void *self, void *,
-                                          unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return scalar_delete_check_button(object - 0x444, nullptr, arg0);
-}
-
-/*
-Purpose: Step the receiver back to the subobject ??_GSocialWin@@UAEPAXI@Z
-         expects, then forward unchanged.
-// ORIGINAL: 0x004B3F90 ??_GSocialWin@@WEEE@AEPAXI@Z 0x004B3F90-0x004B3F9B
-// symbol    ?adjust_this_social_win@@YIPAXPAX0I@Z
-// CORRECTED from ??3SocialWin@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x004B3F50` into
-//   ??_GSocialWin@@UAEPAXI@Z, which executes `ret 4`; no stack access
-//   and the receiver stays in ECX. `WEEE@` re-demangles to
-//   adjustor{1092} and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_social_win(void *self, void *,
-                                        unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return scalar_delete_social_win(object - 0x444, nullptr, arg0);
-}
-
-/*
 Purpose: The compiler-generated scalar deleting destructor at
          ??_GTutWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
@@ -1950,30 +1363,6 @@ void *__fastcall scalar_delete_tut_win(void *self, void *, unsigned int arg0) {
         operator delete(self);
     }
     return self;
-}
-
-/*
-Purpose: Step the receiver back to the subobject ??_GTutWin@@UAEPAXI@Z expects,
-         then forward unchanged.
-// ORIGINAL: 0x004BEA20 ??_GTutWin@@WEEE@AEPAXI@Z 0x004BEA20-0x004BEA2B
-// symbol    ?adjust_this_tut_win@@YIPAXPAX0I@Z
-// CORRECTED from ??3TutWin@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x004BE9F0` into
-//   ??_GTutWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
-//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
-//   and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_tut_win(void *self, void *, unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return scalar_delete_tut_win(object - 0x444, nullptr, arg0);
 }
 
 /*
@@ -1999,30 +1388,6 @@ void *__fastcall scalar_delete_world_win(void *self, void *,
         operator delete(self);
     }
     return self;
-}
-
-/*
-Purpose: Step the receiver back to the subobject ??_GWorldWin@@UAEPAXI@Z
-         expects, then forward unchanged.
-// ORIGINAL: 0x004C4CA0 ??_GWorldWin@@WEEE@AEPAXI@Z 0x004C4CA0-0x004C4CAB
-// symbol    ?adjust_this_world_win@@YIPAXPAX0I@Z
-// CORRECTED from ??3WorldWin@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x004C4C70` into
-//   ??_GWorldWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
-//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
-//   and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_world_win(void *self, void *, unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return scalar_delete_world_win(object - 0x444, nullptr, arg0);
 }
 
 /*
@@ -2151,30 +1516,6 @@ void *__fastcall scalar_delete_dip_edit(void *self, void *,
 }
 
 /*
-Purpose: Step the receiver back to the subobject ??_GDipEdit@@UAEPAXI@Z
-         expects, then forward unchanged.
-// ORIGINAL: 0x004E23F0 ??_GDipEdit@@WEEE@AEPAXI@Z 0x004E23F0-0x004E23FB
-// symbol    ?adjust_this_dip_edit@@YIPAXPAX0I@Z
-// CORRECTED from ??3DipEdit@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x004E23C0` into
-//   ??_GDipEdit@@UAEPAXI@Z, which executes `ret 4`; no stack access and
-//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
-//   and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_dip_edit(void *self, void *, unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return scalar_delete_dip_edit(object - 0x444, nullptr, arg0);
-}
-
-/*
 Purpose: The compiler-generated scalar deleting destructor at
          ??_GAlphaMenu@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
@@ -2250,31 +1591,6 @@ void *__fastcall scalar_delete_replay_win(void *self, void *,
 }
 
 /*
-Purpose: Step the receiver back to the subobject ??_GReplayWin@@UAEPAXI@Z
-         expects, then forward unchanged.
-// ORIGINAL: 0x005AE0E0 ??_GReplayWin@@WEEE@AEPAXI@Z 0x005AE0E0-0x005AE0EB
-// symbol    ?adjust_this_replay_win@@YIPAXPAX0I@Z
-// CORRECTED from ??3ReplayWin@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x005AE0B0` into
-//   ??_GReplayWin@@UAEPAXI@Z, which executes `ret 4`; no stack access
-//   and the receiver stays in ECX. `WEEE@` re-demangles to
-//   adjustor{1092} and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_replay_win(void *self, void *,
-                                        unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return scalar_delete_replay_win(object - 0x444, nullptr, arg0);
-}
-
-/*
 Purpose: The compiler-generated scalar deleting destructor at
          ??_GMultiDebug@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
@@ -2297,31 +1613,6 @@ void *__fastcall scalar_delete_multi_debug(void *self, void *,
         operator delete(self);
     }
     return self;
-}
-
-/*
-Purpose: Step the receiver back to the subobject ??_GMultiDebug@@UAEPAXI@Z
-         expects, then forward unchanged.
-// ORIGINAL: 0x005C9EB0 ??_GMultiDebug@@WEEE@AEPAXI@Z 0x005C9EB0-0x005C9EBB
-// symbol    ?adjust_this_multi_debug@@YIPAXPAX0I@Z
-// CORRECTED from ??3MultiDebug@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x005C9E80` into
-//   ??_GMultiDebug@@UAEPAXI@Z, which executes `ret 4`; no stack access
-//   and the receiver stays in ECX. `WEEE@` re-demangles to
-//   adjustor{1092} and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_multi_debug(void *self, void *,
-                                         unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return scalar_delete_multi_debug(object - 0x444, nullptr, arg0);
 }
 
 /*
@@ -2348,31 +1639,6 @@ void *__fastcall scalar_delete_graphic_win(void *self, void *,
         operator delete(self);
     }
     return self;
-}
-
-/*
-Purpose: Step the receiver back to the subobject ??_GGraphicWin@@UAEPAXI@Z
-         expects, then forward unchanged.
-// ORIGINAL: 0x005D7160 ??_GGraphicWin@@WEEE@AEPAXI@Z 0x005D7160-0x005D716B
-// symbol    ?adjust_this_graphic_win@@YIPAXPAX0I@Z
-// CORRECTED from ??3GraphicWin@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x005D7140` into
-//   ??_GGraphicWin@@UAEPAXI@Z, which executes `ret 4`; no stack access
-//   and the receiver stays in ECX. `WEEE@` re-demangles to
-//   adjustor{1092} and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_graphic_win(void *self, void *,
-                                         unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return scalar_delete_graphic_win(object - 0x444, nullptr, arg0);
 }
 
 /*
@@ -2452,30 +1718,6 @@ void *__fastcall scalar_delete_pull_down(void *self, void *,
 }
 
 /*
-Purpose: Step the receiver back to the subobject ??_GPullDown@@UAEPAXI@Z
-         expects, then forward unchanged.
-// ORIGINAL: 0x005FA790 ??_GPullDown@@WEEE@AEPAXI@Z 0x005FA790-0x005FA79B
-// symbol    ?adjust_this_pull_down@@YIPAXPAX0I@Z
-// CORRECTED from ??3PullDown@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x005FA770` into
-//   ??_GPullDown@@UAEPAXI@Z, which executes `ret 4`; no stack access and
-//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
-//   and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_pull_down(void *self, void *, unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return scalar_delete_pull_down(object - 0x444, nullptr, arg0);
-}
-
-/*
 Purpose: The compiler-generated scalar deleting destructor at
          ??_GMenu@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
@@ -2497,30 +1739,6 @@ void *__fastcall scalar_delete_menu(void *self, void *, unsigned int arg0) {
         operator delete(self);
     }
     return self;
-}
-
-/*
-Purpose: Step the receiver back to the subobject ??_GMenu@@UAEPAXI@Z expects,
-         then forward unchanged.
-// ORIGINAL: 0x005FC6F0 ??_GMenu@@WEEE@AEPAXI@Z 0x005FC6F0-0x005FC6FB
-// symbol    ?adjust_this_menu@@YIPAXPAX0I@Z
-// CORRECTED from ??3Menu@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x005FC6D0` into ??_GMenu@@UAEPAXI@Z,
-//   which executes `ret 4`; no stack access and the receiver stays in
-//   ECX. `WEEE@` re-demangles to adjustor{1092} and 1092 == 0x444, the
-//   constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_menu(void *self, void *, unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return scalar_delete_menu(object - 0x444, nullptr, arg0);
 }
 
 /*
@@ -2547,31 +1765,6 @@ void *__fastcall scalar_delete_base_button(void *self, void *,
         operator delete(self);
     }
     return self;
-}
-
-/*
-Purpose: Step the receiver back to the subobject ??_GBaseButton@@UAEPAXI@Z
-         expects, then forward unchanged.
-// ORIGINAL: 0x00607CE0 ??_GBaseButton@@WEEE@AEPAXI@Z 0x00607CE0-0x00607CEB
-// symbol    ?adjust_this_base_button@@YIPAXPAX0I@Z
-// CORRECTED from ??3BaseButton@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x00607CC0` into
-//   ??_GBaseButton@@UAEPAXI@Z, which executes `ret 4`; no stack access
-//   and the receiver stays in ECX. `WEEE@` re-demangles to
-//   adjustor{1092} and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_base_button(void *self, void *,
-                                         unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return scalar_delete_base_button(object - 0x444, nullptr, arg0);
 }
 
 /*
@@ -2669,31 +1862,6 @@ void *__fastcall scalar_delete_push_button(void *self, void *,
         operator delete(self);
     }
     return self;
-}
-
-/*
-Purpose: Step the receiver back to the subobject ??_GPushButton@@UAEPAXI@Z
-         expects, then forward unchanged.
-// ORIGINAL: 0x0062C850 ??_GPushButton@@WEEE@AEPAXI@Z 0x0062C850-0x0062C85B
-// symbol    ?adjust_this_push_button@@YIPAXPAX0I@Z
-// CORRECTED from ??3PushButton@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x0062C830` into
-//   ??_GPushButton@@UAEPAXI@Z, which executes `ret 4`; no stack access
-//   and the receiver stays in ECX. `WEEE@` re-demangles to
-//   adjustor{1092} and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_push_button(void *self, void *,
-                                         unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return scalar_delete_push_button(object - 0x444, nullptr, arg0);
 }
 
 /*

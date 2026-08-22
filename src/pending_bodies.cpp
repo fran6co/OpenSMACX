@@ -1521,3 +1521,103 @@ void WaveGroupList::insert(Wave *wave) {
     typedef void(__fastcall *pending)(WaveGroupList *, void *, Wave *);
     PENDING_BODY(0x004C5BF0, pending)(this, nullptr, wave);
 }
+
+/*
+Purpose: Step the receiver back to the subobject ??_GBasePop@@UAEPAXI@Z
+         expects, then forward unchanged.
+// ORIGINAL: 0x004070B0 ??_GBasePop@@WEEE@AEPAXI@Z 0x004070B0-0x004070BB BYTE_EXACT
+// symbol    ??_EBasePop@@WEEE@AEPAXI@Z
+// CORRECTED from ??3BasePop@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x00406B40` into
+//   ??_GBasePop@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/
+
+/*
+Purpose: Step the receiver back to the subobject ??_GCredits@@UAEPAXI@Z
+         expects, then forward unchanged.
+// ORIGINAL: 0x00428F80 ??_GCredits@@WEEE@AEPAXI@Z 0x00428F80-0x00428F8B BYTE_EXACT
+// symbol    ??_ECredits@@WEEE@AEPAXI@Z
+// CORRECTED from ??3Credits@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x00428E60` into
+//   ??_GCredits@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/
+
+/*
+Purpose: Step the receiver back to the subobject ??_GSetupWin@@UAEPAXI@Z
+         expects, then forward unchanged.
+// ORIGINAL: 0x004AE9A0 ??_GSetupWin@@WEEE@AEPAXI@Z 0x004AE9A0-0x004AE9AB BYTE_EXACT
+// symbol    ??_ESetupWin@@WEEE@AEPAXI@Z
+// CORRECTED from ??3SetupWin@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x004AE760` into
+//   ??_GSetupWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/
+
+/*
+Purpose: Step the receiver back to the subobject ??_GDipEdit@@UAEPAXI@Z
+         expects, then forward unchanged.
+// ORIGINAL: 0x004E23F0 ??_GDipEdit@@WEEE@AEPAXI@Z 0x004E23F0-0x004E23FB BYTE_EXACT
+// symbol    ??_EDipEdit@@WEEE@AEPAXI@Z
+// CORRECTED from ??3DipEdit@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x004E23C0` into
+//   ??_GDipEdit@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/
+
+/*
+Purpose: Step the receiver back to the subobject ??_GReplayWin@@UAEPAXI@Z
+         expects, then forward unchanged.
+// ORIGINAL: 0x005AE0E0 ??_GReplayWin@@WEEE@AEPAXI@Z 0x005AE0E0-0x005AE0EB BYTE_EXACT
+// symbol    ??_EReplayWin@@WEEE@AEPAXI@Z
+// CORRECTED from ??3ReplayWin@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x005AE0B0` into
+//   ??_GReplayWin@@UAEPAXI@Z, which executes `ret 4`; no stack access
+//   and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/

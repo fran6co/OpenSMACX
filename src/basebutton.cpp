@@ -75,7 +75,7 @@ GraphicWin base against the Time members, which occupy disjoint storage, so
 their order is not observable.
 */
 BaseButton *BaseButton::construct() {
-    static_cast<GraphicWin *>(this)->construct();
+    new (static_cast<GraphicWin *>(this)) GraphicWin();
     new (&time1_) Time();
     new (&time2_) Time();
     volatile uint32_t *const object =

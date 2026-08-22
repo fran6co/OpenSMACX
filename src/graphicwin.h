@@ -46,7 +46,7 @@ class GraphicWin : public Win, public Buffer {
 
  public:
   void on_mouse_move(int a1, int a2, unsigned int a3, int a4);
-  GraphicWin() { ; }
+  GraphicWin();
   ~GraphicWin() { ; }
 
   // VIRTUAL, AND THE IMAGE IS WHAT SAYS SO. A body entered on a subobject
@@ -76,7 +76,6 @@ class GraphicWin : public Win, public Buffer {
   // returning the receiver, matching a real constructor's ABI even though
   // this is spelled as a method (see the `symbol` fact on its ORIGINAL
   // marker in graphicwin.cpp for why).
-  GraphicWin *construct();
   uint32_t close();
   int init(int x, int y, int width, int height, LPSTR title, int flags,
            Win *parent, Menu *menu, BorderSizing *border);
@@ -177,7 +176,9 @@ GraphicWin *__fastcall graphic_win_destructor_redirect(GraphicWin *self, void *)
 // before the first `lea ecx, [esi + N]`. tools/body_construct_order.py lists
 // the candidates.
 struct ConstructedGraphicWin : public GraphicWin {
-  ConstructedGraphicWin() { construct(); }
+  // Empty: GraphicWin::GraphicWin() is a REAL constructor now, so the
+  // base runs implicitly and calling it again would double-construct.
+  ConstructedGraphicWin() { ; }
 };
 
 GraphicWin *__fastcall graphic_win_construct_redirect(GraphicWin *self, void *);

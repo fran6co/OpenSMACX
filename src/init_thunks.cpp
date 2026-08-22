@@ -7131,3 +7131,143 @@ void __cdecl construct_caviar_buffer_2() {
     g_CAVIAR_BUFFER_2->Buffer::Buffer();
     atexit(teardown_g_caviar_buffer_2);
 }
+
+/*
+Purpose: Step the receiver back to the subobject ??_GCouncWin@@UAEPAXI@Z
+         expects, then forward unchanged.
+// ORIGINAL: 0x00428740 ??_GCouncWin@@WEEE@AEPAXI@Z 0x00428740-0x0042874B BYTE_EXACT
+// symbol    ??_ECouncWin@@WEEE@AEPAXI@Z
+// CORRECTED from ??3CouncWin@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x00428710` into
+//   ??_GCouncWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/
+
+/*
+Purpose: Step the receiver back to the subobject ??_GDatalink@@UAEPAXI@Z
+         expects, then forward unchanged.
+// ORIGINAL: 0x00432840 ??_GDatalink@@WEEE@AEPAXI@Z 0x00432840-0x0043284B BYTE_EXACT
+// symbol    ??_EDatalink@@WEEE@AEPAXI@Z
+// CORRECTED from ??3Datalink@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x00432800` into
+//   ??_GDatalink@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/
+
+/*
+Purpose: Step the receiver back to the subobject ??_GDesignWin@@UAEPAXI@Z
+         expects, then forward unchanged.
+// ORIGINAL: 0x0043EFA0 ??_GDesignWin@@WEEE@AEPAXI@Z 0x0043EFA0-0x0043EFAB BYTE_EXACT
+// symbol    ??_EDesignWin@@WEEE@AEPAXI@Z
+// CORRECTED from ??3DesignWin@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x0043EDB0` into
+//   ??_GDesignWin@@UAEPAXI@Z, which executes `ret 4`; no stack access
+//   and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/
+
+/*
+Purpose: Step the receiver back to the subobject ??_GDiploPop@@UAEPAXI@Z
+         expects, then forward unchanged.
+// ORIGINAL: 0x00440EF0 ??_GDiploPop@@WEEE@AEPAXI@Z 0x00440EF0-0x00440EFB BYTE_EXACT
+// symbol    ??_EDiploPop@@WEEE@AEPAXI@Z
+// CORRECTED from ??3DiploPop@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x00440EC0` into
+//   ??_GDiploPop@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/
+
+/*
+Purpose: Step the receiver back to the subobject ??_GDiploWin@@UAEPAXI@Z
+         expects, then forward unchanged.
+// ORIGINAL: 0x00445120 ??_GDiploWin@@WEEE@AEPAXI@Z 0x00445120-0x0044512B BYTE_EXACT
+// symbol    ??_EDiploWin@@WEEE@AEPAXI@Z
+// CORRECTED from ??3DiploWin@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x00445080` into
+//   ??_GDiploWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/
+
+/*
+Purpose: Step the receiver back to the subobject ??_GNewTechWin@@UAEPAXI@Z
+         expects, then forward unchanged.
+// ORIGINAL: 0x00484AB0 ??_GNewTechWin@@WEEE@AEPAXI@Z 0x00484AB0-0x00484ABB BYTE_EXACT
+// symbol    ??_ENewTechWin@@WEEE@AEPAXI@Z
+// CORRECTED from ??3NewTechWin@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x00484A80` into
+//   ??_GNewTechWin@@UAEPAXI@Z, which executes `ret 4`; no stack access
+//   and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/
+
+/*
+Purpose: Step the receiver back to the subobject ??_GWorldWin@@UAEPAXI@Z
+         expects, then forward unchanged.
+// ORIGINAL: 0x004C4CA0 ??_GWorldWin@@WEEE@AEPAXI@Z 0x004C4CA0-0x004C4CAB BYTE_EXACT
+// symbol    ??_EWorldWin@@WEEE@AEPAXI@Z
+// CORRECTED from ??3WorldWin@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x004C4C70` into
+//   ??_GWorldWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/

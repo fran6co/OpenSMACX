@@ -71,7 +71,7 @@ EditGroup::EditGroup(int a1) {
     // Only the two `construct()` calls remain, because those bases model
     // construction as a method rather than a constructor.
     if (a1 != 0) {
-        GraphicWin::construct();
+        new (static_cast<GraphicWin *>(this)) GraphicWin();
         Dialog::construct();
     }
 

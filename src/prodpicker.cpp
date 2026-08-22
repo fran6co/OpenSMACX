@@ -95,7 +95,7 @@ static void prod_picker_unknown_a7_block(char *self, unsigned int offset) {
 // disassembly shows, because C++'s implicit member construction would run
 // them all BEFORE this body - and GraphicWin::construct() has to be first.
 ProdPicker::ProdPicker() {
-    GraphicWin::construct();
+    new (static_cast<GraphicWin *>(this)) GraphicWin();
     char *const self = reinterpret_cast<char *>(this);
 
     VectorCtorIterator(sprites_, 0x2C, 3, ProdPickerSpriteCtor, ProdPickerSpriteDtor);
@@ -225,3 +225,23 @@ void __fastcall prod_picker_on_redraw_nc_redirect(
         ProdPicker *self, void *, RECT *a1, int a2) {
     self->on_redraw_nc(a1, a2);
 }
+
+/*
+Purpose: Step the receiver back to the subobject ??_GProdPicker@@UAEPAXI@Z
+         expects, then forward unchanged.
+// ORIGINAL: 0x00421970 ??_GProdPicker@@WEEE@AEPAXI@Z 0x00421970-0x0042197B BYTE_EXACT
+// symbol    ??_EProdPicker@@WEEE@AEPAXI@Z
+// CORRECTED from ??3ProdPicker@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x004213A0` into
+//   ??_GProdPicker@@UAEPAXI@Z, which executes `ret 4`; no stack access
+//   and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/

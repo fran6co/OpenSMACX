@@ -512,4 +512,22 @@ void BaseWin::on_scrolled(int a1, int a2) {
     }
 }
 
-
+/*
+Purpose: Step the receiver back to the subobject ??_GBaseWin@@UAEPAXI@Z
+         expects, then forward unchanged.
+// ORIGINAL: 0x00421810 ??_GBaseWin@@WEEE@AEPAXI@Z 0x00421810-0x0042181B BYTE_EXACT
+// symbol    ??_EBaseWin@@WEEE@AEPAXI@Z
+// CORRECTED from ??3BaseWin@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x004213D0` into
+//   ??_GBaseWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/

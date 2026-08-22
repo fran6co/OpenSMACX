@@ -88,3 +88,23 @@ void NetMsg::close() {
 void __fastcall net_msg_close_redirect(NetMsg *self, void *) {
     self->close();
 }
+
+/*
+Purpose: Step the receiver back to the subobject ??_GNetMsg@@UAEPAXI@Z expects,
+         then forward unchanged.
+// ORIGINAL: 0x0047AFE0 ??_GNetMsg@@WEEE@AEPAXI@Z 0x0047AFE0-0x0047AFEB
+// symbol    ??_ENetMsg@@WEEE@AEPAXI@Z
+// CORRECTED from ??3NetMsg@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x0047AD70` into
+//   ??_GNetMsg@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/
