@@ -59,10 +59,19 @@ if __name__ == "__main__":
         for typename, name, address in BINDING.findall(text):
             if typename not in function_types:
                 continue
+            # A USE, NOT ONLY A CALL. `\b{name}\s*\(` finds `foo(...)` and
+            # misses `start(foo, 1, 150, 150)` - a bound pointer PASSED AS AN
+            # ARGUMENT, which costs the identical `mov reg,[mem]; push reg`
+            # where the image has `push imm`. Four such bindings sat in temp.h
+            # with a live use in time.cpp and this reported "0 bound callee(s)
+            # with call sites" both before and after they were fixed, because
+            # the only use was an argument. A checker that cannot see the
+            # cheapest form of the defect reads as a clean tree.
+            use = rf"\b{name}\b(?!\s*[=;])"
             callers = sorted(
                 other.name for other, body in bodies.items()
-                if other != path and re.search(rf"\b{name}\s*\(", body))
-            if re.search(rf"\b{name}\s*\(", text.replace(
+                if other != path and re.search(use, body))
+            if re.search(use, text.replace(
                     f"{typename} *const {name}", "")):
                 callers.append(path.name)
             if callers:
