@@ -294,6 +294,7 @@ int Path::move(int veh_id, int faction_id) {
 /*
  Purpose: Populate the abstract map with the radial region value.
 // ORIGINAL: 0x0059C200 ?make_abstract@Path@@QAEXXZ 0x0059C200-0x0059C33F
+// RULED-OUT: the divergence is at instruction 2 and it is the FRAME SIZE - the image reserves `sub esp, 0x1c` where this body reserves 0x18, one dword short. Four source shapes measured with tools/try_spellings.py and ALL FOUR compile identically to what is committed, 11/112: hoisting `x * 5` and `y * 5` into their own locals, splitting the `on_map && !is_ocean` guard into nested ifs, both together, and signed loop counters. VC6 emits the same code for every one, so the extra slot is not this body's to allocate - it belongs to one of the four `MEASURED inline` callees here (xrange, on_map, is_ocean, region_at) spilling where ours does not. Same family as the port_to_port/has_tech ceiling; not reachable from path.cpp.
 // size      319 bytes
 // prototype void (__thiscall ?make_abstract@Path@@QAEXXZ)(Path* this)
 // callers   1   call targets   1
