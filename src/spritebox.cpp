@@ -186,6 +186,15 @@ Purpose: Tear down a SpriteBox: reinstall the base subobjects' own
          vtable/vtordisp values, close it, then destroy the Spot member.
 // ORIGINAL: 0x00610120 ??1SpriteBox@@QAE@XZ 0x00610120-0x00610274;0x006116C0-0x006116DB;0x00662FFA-0x0066301A
 // symbol    ??1SpriteBox@@UAE@XZ
+// TRIED: 35 compiled instructions against the image's 99, and the image opens
+//   an SEH frame (`push -1 / push 0x663010 / mov eax, fs:[0] / push eax /
+//   mov fs:[0], esp / sub esp, 8`) that this tree does not emit. The gap is
+//   not a spelling: the image DESTROYS members here and this body only
+//   reinstalls vtables and calls close(). Now that the bases are real, a
+//   destructor that lets the compiler tear them down is the shape to try -
+//   but GraphicWin's and Dialog's own destructors are empty inlines, so VC6
+//   proves them nothrow and emits no frame. Making those non-trivial is a
+//   coupled edit across every class that embeds one. Measured 2026-08-22.
 // size      399 bytes
 // prototype void (__thiscall ??1SpriteBox@@QAE@XZ)(SpriteBox* this)
 // callers   23   call targets   3
