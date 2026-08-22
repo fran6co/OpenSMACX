@@ -53,6 +53,35 @@ class Dialog {
   // `ListBox list_box_; // 0x286C, sizeof 0xB54, ends 0x33C0` with a field
   // immediately after, so ListBox is 0xB54 - four more than the 0xB50 it
   // measures with only the GraphicWin displacement.
+  // TRIED, AND IT IS RIGHT BUT NOT YET AFFORDABLE. `on_redraw` and `attach`
+  // ARE Dialog virtuals - the image's own vtables say so. Every class that
+  // virtually derives from Dialog installs a Dialog vtable whose slots point
+  // back into that class through VTORDISP THUNKS: ListBox's at 0x00670408
+  // reaching 0x0060D010..0x0060D050, CheckBox's at 0x0067059C reaching
+  // 0x0060FEB0..0x0060FEF0, and each thunk opens
+  // `sub ecx, dword ptr [ecx - N]` then `sub ecx, <const>` - that first
+  // instruction IS the vtordisp adjustment. adjustor_thunks.cpp already
+  // catalogues them by name.
+  //
+  // Declaring both virtual here was measured 2026-08-22 and it RESTORES THE
+  // SIZES: CheckBox 0xB24 -> 0xB28, RadioButton 0xB20 -> 0xB24, SpriteBox
+  // 0xB94 -> 0xB98 - three of them back to the pins that were already in this
+  // tree before they were "corrected" downward - and EditGroup to 0xB9C. All
+  // nine byte-exact bodies in those classes STAY byte-exact, and Dialogs'
+  // independent 0xC94 still holds.
+  //
+  // The cost is 12 REGRESSIONS in adjustor_thunks.cpp, and they are the reason
+  // this is not landed. Those twelve are HAND-WRITTEN MODELS of the very
+  // thunks the compiler now generates, so each emits one instruction too many:
+  // the model does `sub ecx, [ecx-4]` itself and the compiler then adds its
+  // own `add ecx, 0xa60`. The image's thunk is two instructions; ours becomes
+  // three. The right end state is to delete the hand-written models and let
+  // the markers name the compiler's `$4` thunks through a `// symbol` fact -
+  // a coupled edit across twelve functions in one file, not a spelling fix.
+  //
+  // Until then `item` stays virtual because it PRODUCES the proven layout for
+  // ListBox, and it is not the image's override: ListBox::item (0x0060C920)
+  // and Dialogs::item (0x00612A70) both open on an unadjusted receiver.
   virtual int item(char *text, int index);
   // 0x00608F50, a pending_bodies forwarder. checkbox.cpp and
   // radiobutton.cpp both reach it, and both did so through a pointer.
