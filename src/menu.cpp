@@ -63,8 +63,6 @@ Status: Complete
 */
 Menu::Menu() {
     uint32_t *const object = reinterpret_cast<uint32_t *>(this);
-    object[0x000 / 4] = MenuPrimaryVtable;
-    object[0x444 / 4] = MenuBufferVtable;
     proc_ = nullptr;
     count_ = 0;
     field_A20_ = 0;
@@ -796,7 +794,7 @@ void Menu::on_mouse_move(int a1, int a2) {
 /*
 Purpose: Step the receiver back to the subobject ??_GMenu@@UAEPAXI@Z expects,
          then forward unchanged.
-// ORIGINAL: 0x005FC6F0 ??_GMenu@@WEEE@AEPAXI@Z 0x005FC6F0-0x005FC6FB
+// ORIGINAL: 0x005FC6F0 ??_GMenu@@WEEE@AEPAXI@Z 0x005FC6F0-0x005FC6FB BYTE_EXACT
 // symbol    ??_EMenu@@WEEE@AEPAXI@Z
 // CORRECTED from ??3Menu@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x005FC6D0` into ??_GMenu@@UAEPAXI@Z,

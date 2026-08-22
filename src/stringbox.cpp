@@ -125,8 +125,6 @@ StringBox::StringBox() {
     field_A1C_ = 0;
     field_2B6C_ = 0;
     field_A14_ = 0;
-    object[0x000 / 4] = StringBoxPrimaryVtable;
-    object[0x444 / 4] = StringBoxBufferVtable;
     field_A18_ = 0xFFFFFFFFU;
 }
 

@@ -58,8 +58,6 @@ Status: Complete
 */
 AlphaMovie::AlphaMovie() {
     uint32_t *const object = reinterpret_cast<uint32_t *>(this);
-    object[0x000 / 4] = AlphaMoviePrimaryVtable;
-    object[0x444 / 4] = AlphaMovieBufferVtable;
 }
 
 /*
@@ -283,7 +281,7 @@ void MCIVideo::close() {
 /*
 Purpose: Step the receiver back to the subobject ??_GAlphaMovie@@UAEPAXI@Z
          expects, then forward unchanged.
-// ORIGINAL: 0x00404430 ??_GAlphaMovie@@WEEE@AEPAXI@Z 0x00404430-0x0040443B
+// ORIGINAL: 0x00404430 ??_GAlphaMovie@@WEEE@AEPAXI@Z 0x00404430-0x0040443B BYTE_EXACT
 // symbol    ??_EAlphaMovie@@WEEE@AEPAXI@Z
 // CORRECTED from ??3AlphaMovie@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x004043A0` into

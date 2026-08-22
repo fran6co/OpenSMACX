@@ -95,8 +95,6 @@ ReportWin::ReportWin() {
     reinterpret_cast<pending_flic_ctor>(0x00629D60)(flic_, nullptr);
 
     uint32_t *const object = reinterpret_cast<uint32_t *>(this);
-    object[0x000 / 4] = ReportWinPrimaryVtable;
-    object[0x444 / 4] = ReportWinBufferVtable;
 }
 
 /*

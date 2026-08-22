@@ -97,8 +97,6 @@ PickWin::PickWin() {
     new (buttonGroup_) ButtonGroup();
 
     uint32_t *const object = reinterpret_cast<uint32_t *>(this);
-    object[0x000 / 4] = PickWinPrimaryVtable;
-    object[0x444 / 4] = PickWinBufferVtable;
 }
 
 /*

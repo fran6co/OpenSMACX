@@ -58,8 +58,6 @@ NetMsg::NetMsg(int a1, int a2, int a3) {
     field_5380_ = a2;
     field_537C_ = a1;
     uint32_t *const object = reinterpret_cast<uint32_t *>(this);
-    object[0x000 / 4] = NetMsgPrimaryVtable;
-    object[0x444 / 4] = NetMsgBufferVtable;
     field_5384_ = 0;
     field_5388_ = a3;
 }
@@ -92,7 +90,7 @@ void __fastcall net_msg_close_redirect(NetMsg *self, void *) {
 /*
 Purpose: Step the receiver back to the subobject ??_GNetMsg@@UAEPAXI@Z expects,
          then forward unchanged.
-// ORIGINAL: 0x0047AFE0 ??_GNetMsg@@WEEE@AEPAXI@Z 0x0047AFE0-0x0047AFEB
+// ORIGINAL: 0x0047AFE0 ??_GNetMsg@@WEEE@AEPAXI@Z 0x0047AFE0-0x0047AFEB BYTE_EXACT
 // symbol    ??_ENetMsg@@WEEE@AEPAXI@Z
 // CORRECTED from ??3NetMsg@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x0047AD70` into

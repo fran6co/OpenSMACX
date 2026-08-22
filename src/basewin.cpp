@@ -64,13 +64,9 @@ Purpose: Construct BaseWin's large aggregate of sub-windows: a ProdPicker, a
 BaseWin::BaseWin() {
 
     uint32_t *const object = reinterpret_cast<uint32_t *>(this);
-    object[0xA14 / 4] = BaseWinSubInterfaceVtableInitial;
 
     mapWin_.construct(1);
 
-    object[0x000 / 4] = BaseWinPrimaryVtable;
-    object[0x444 / 4] = BaseWinBufferVtable;
-    object[0xA14 / 4] = BaseWinSubInterfaceVtable;
 }
 
 /*

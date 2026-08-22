@@ -831,13 +831,11 @@ int __cdecl Popup::alloc() {
 // (Scroll's construction must be able to unwind the already-built BasePop
 // base) where FlatButton/PullDown/NetWin - which only call a construct()
 // METHOD from the body - do not pay for one at all.
-static const uint32_t PopupPrimaryVtable = 0x006695C8;
-static const uint32_t PopupBufferVtable = 0x006695C0;
-
 Popup::Popup() {
-    uint32_t *const object = reinterpret_cast<uint32_t *>(this);
-    object[0x000 / 4] = PopupPrimaryVtable;
-    object[0x444 / 4] = PopupBufferVtable;
+    // EMPTY ON PURPOSE. Both vtable stores the body used to make by hand -
+    // 0x006695C8 at offset 0 and 0x006695C0 at the Buffer subobject's 0x444 -
+    // are the compiler's to emit now that Buffer is a real base of GraphicWin,
+    // and it puts them where the image does rather than where a body would.
 }
 
 // The shared scratch slot at 0x009BC070 base_at() (base.cpp) already names -
@@ -968,7 +966,7 @@ int __cdecl pops(char *caption, char *label, int a3, char *a4, int a5,
 /*
 Purpose: Step the receiver back to the subobject ??_GPopup@@UAEPAXI@Z expects,
          then forward unchanged.
-// ORIGINAL: 0x004070D0 ??_GPopup@@WEEE@AEPAXI@Z 0x004070D0-0x004070DB
+// ORIGINAL: 0x004070D0 ??_GPopup@@WEEE@AEPAXI@Z 0x004070D0-0x004070DB BYTE_EXACT
 // symbol    ??_EPopup@@WEEE@AEPAXI@Z
 // CORRECTED from ??3Popup@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x00406BD0` into

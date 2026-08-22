@@ -492,8 +492,6 @@ void PullDown::hide() {
 PullDown::PullDown() {
     new (static_cast<GraphicWin *>(this)) GraphicWin();
     uint32_t *const ordered = reinterpret_cast<uint32_t *>(this);
-    ordered[0x000 / 4] = PullDownPrimaryVtable;
-    ordered[0x444 / 4] = PullDownBufferVtable;
 
     for (size_t index = 0; index < 64; ++index) {
         items_[index].text = nullptr;

@@ -38,8 +38,6 @@ Status: Complete
 */
 MultiDebug::MultiDebug() {
     uint32_t *const object = reinterpret_cast<uint32_t *>(this);
-    object[0x000 / 4] = MultiDebugPrimaryVtable;
-    object[0x444 / 4] = MultiDebugBufferVtable;
     field_A3C_ = 0;
 }
 
@@ -85,7 +83,7 @@ void __cdecl MultiDebug::timer_callback_daemon(int a2) {
 /*
 Purpose: Step the receiver back to the subobject ??_GMultiDebug@@UAEPAXI@Z
          expects, then forward unchanged.
-// ORIGINAL: 0x005C9EB0 ??_GMultiDebug@@WEEE@AEPAXI@Z 0x005C9EB0-0x005C9EBB
+// ORIGINAL: 0x005C9EB0 ??_GMultiDebug@@WEEE@AEPAXI@Z 0x005C9EB0-0x005C9EBB BYTE_EXACT
 // symbol    ??_EMultiDebug@@WEEE@AEPAXI@Z
 // CORRECTED from ??3MultiDebug@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x005C9E80` into
