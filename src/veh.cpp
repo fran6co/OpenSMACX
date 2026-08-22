@@ -1679,6 +1679,7 @@ Purpose: Calculate the armor strategy for the specified armor id.
 // ORIGINAL: 0x0057D270 ?arm_strat@@YAHHH@Z 0x0057D270-0x0057D2D5
 // TRIED: still 0.987 similar, one instruction short of exact - the image folds `armor_id*16 + 0x94F280` into `shl eax,4` plus a displaced `mov`; this tree pre-adds the base (`add eax,0x94F28` then `shl eax,4`) under every flag set tried. `(Armor+armor_id)->defense_rating`, a local `RulesArmor *`, and explicit pointer-arithmetic-plus-cast all produced the identical extra `add`.
 // TRIED: defense_rating` (not `int`) matches the image's lazy sign-extension - it tests the byte directly and only does `movsx eax, al` right before the final return; casting both `Rules->psi_combat_ratio_*` operands to `(int)` at the call site gets the `idiv`/`cdq` the image uses instead of unsigned `div` (both fields are `uint32_t` in the header, out of scope for this file).
+// TRIED: `((int8_t *)0x0094F280)[armor_id * 16]` and `[armor_id * (int)sizeof(RulesArmor)]` as raw byte-array indexing, to try to get VC6 to emit `shl` then a displaced load instead of pre-adding the base - both produced the identical `add eax,0x94F28; shl eax,4` as the struct-array form. Plateau at 11/37, 0.987 similar.
 // size      101 bytes
 // prototype int (__cdecl ?arm_strat@@YAHHH@Z)(int armorID, int factionID)
 // callers   7   call targets   1
@@ -4331,6 +4332,7 @@ Purpose: Check if the prototype can perform artillery combat. The 2nd parameter 
          units are treated.
 // ORIGINAL: 0x005C0DB0 ?can_arty@@YAHHH@Z 0x005C0DB0-0x005C0E35
 // TRIED: the OR'd (offense<=0 || defense<0) guard into two sequential `if`s, one per term - matches the image's per-term SPORE_LAUNCHER exception check. Also: the TRIAD_SEA/TRIAD_AIR dispatch is a `switch`, not chained `if`s - the image's dec/je chain is switch codegen. 19/54 -> 50/54. One divergence remains: the defense_rating byte load folds into `cmp byte ptr [edx], 0` here where the image keeps `mov bl, ...; test bl, bl` - tried swapping check order, `0 > x`, a BOOL local, and `!(x >= 0)`; none moved it. Plateau.
+// TRIED: same `Armor[armor_id].defense_rating` addressing defect as arm_strat (0x0057D270): the image computes `shl edx,4` then loads with a displaced `[edx+0x94F280]`, this tree's `get_proto_defense_rating` inline always compiles `add edx,0x94F28` (pre-adding the displaced/16 constant) then `shl edx,4` then a base-only load. Raw byte-array indexing forms tried at arm_strat produced the identical bytes there too, so not re-tried per-callsite here. Cross-function confirmation that this is a compiler addressing-mode choice, not something source-shape-local to either caller.
 // size      133 bytes
 // prototype int (__cdecl ?can_arty@@YAHHH@Z)(int protoID, int triad_sea_retn)
 // callers   14   call targets   1
