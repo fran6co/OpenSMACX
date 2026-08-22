@@ -862,6 +862,31 @@ Purpose: Present the screen buffer: draw the bubble text over it, flip or
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D8000 0x005DAC70 0x005DACB0 0x005DD020 0x005DD130 0x005DE8F0 0x005DFCD0 0x005E3203 0x005E3503 0x005E3563 0x005E4B4A 0x005EC6F0 0x006453E0 0x00645DD0
+// LEVER: TWO DEFECTS THAT ARE NOT MATCHING DEFECTS, both read off the
+//        instruction bytes and both fixed here. (1) The bubble rectangle's
+//        four adjustments had the signs on `top` and `right` inverted in BOTH
+//        blocks: 0x005EFD7F-0x005EFD8C is `inc` on left (0x9B6E38) and top
+//        (0x9B6E3C) with `dec` on right (0x9B6E40) and bottom (0x9B6E44), and
+//        0x005EFEB9-0x005EFEBC is the exact inverse. As written the rectangle
+//        grew where the image shrinks it. (2) The undo block AND the
+//        `set_clip(&ScreenBuffer.rect2_)` after it sat outside the
+//        `*WinBubbleActive` test; 0x005EFD3D `je 0x5efee8` jumps past both, so
+//        a frame with no bubble text performs neither, where this tree moved
+//        WinBubbleRect by one on every frame. Neither fix moves the score -
+//        both blocks are inside the part that does not align - and both are
+//        right anyway.
+// RULED-OUT: not reachable from here as a spelling problem, and the numbers
+//            say so plainly: 11 of 407 at the best flag set (/O2 /Ob0 /Gy
+//            /GR- /GX) and 0.056 SIMILAR, with every one of the ten flag sets
+//            between 0.019 and 0.056 and none above 14 of 407. This tree
+//            compiles 312 instructions against the image's 407, so ninety-odd
+//            instructions of the image are work this body does not do -
+//            call_diff agrees on the call graph, so the gap is inlined work,
+//            not missing calls. The aligned diff collapses past image
+//            instruction 174 (233 image instructions against none of ours),
+//            which is what a structural difference looks like rather than a
+//            register one. Status is WIP for that reason; this is a
+//            transcription job against the listing, not a lever.
 Return Value: n/a
 Status: WIP
 
@@ -911,10 +936,15 @@ void __cdecl Win::flip(RECT *area) {
         ScreenBuffer.box(WinBubbleRect, WinBubbleEdgeColour,
                          WinBubbleEdgeColour);
         // The box is drawn on the border and the fill inside it, so the
-        // rectangle moves in by one on each side and back out below.
+        // rectangle moves IN by one on each side and back out below.
+        // 0x005EFD7F-0x005EFD8C: `inc` on left (0x9B6E38) and top (0x9B6E3C),
+        // `dec` on right (0x9B6E40) and bottom (0x9B6E44). This tree had the
+        // signs on top and right the other way round, which grows the
+        // rectangle where the image shrinks it - and the block below undid
+        // the wrong two the same way.
         WinBubbleRect->left += 1;
-        WinBubbleRect->top -= 1;
-        WinBubbleRect->right += 1;
+        WinBubbleRect->top += 1;
+        WinBubbleRect->right -= 1;
         WinBubbleRect->bottom -= 1;
         ScreenBuffer.fill(WinBubbleRect, WinBubbleFillColour);
         ScreenBuffer.set_font(WinBubbleFont, nullptr, nullptr, nullptr);
@@ -951,14 +981,19 @@ void __cdecl Win::flip(RECT *area) {
                 line = split + 1;
             }
         }
-    }
 
-    WinBubbleRect->left -= 1;
-    WinBubbleRect->top += 1;
-    WinBubbleRect->right -= 1;
-    WinBubbleRect->bottom += 1;
-    if (area != nullptr) {
-        ScreenBuffer.set_clip(&ScreenBuffer.rect2_);
+        // INSIDE the bubble branch, not after it. 0x005EFD3D
+        // `je 0x5efee8` - the WinBubbleActive test - jumps PAST both this
+        // block and the set_clip below it, so a run with no bubble text
+        // performs neither. This tree ran both unconditionally, which moved
+        // WinBubbleRect by one every frame.
+        WinBubbleRect->left -= 1;
+        WinBubbleRect->top -= 1;
+        WinBubbleRect->right += 1;
+        WinBubbleRect->bottom += 1;
+        if (area != nullptr) {
+            ScreenBuffer.set_clip(&ScreenBuffer.rect2_);
+        }
     }
 
     if (WinFlipSprite != nullptr) {
@@ -1843,12 +1878,29 @@ Purpose: Decide which window a screen position belongs to, translating the
 // four independent loads; nothing in the source controls which two VC6's
 // allocator decides to hoist.
 //
-// RULED-OUT, MEASURED: touching `WinPointerOwner2`/`WinPointerOwner4` with
-// a no-op read at the top of the function (before Owner1's check) to see
-// whether an earlier textual mention changes which two get preloaded -
-// 13/304 -> 14/304. The instruction that appears is the touch itself; the
-// image's own choice of ebp/edx for those two globals over ecx/ebx for
-// Owner1/3 did not follow.
+// RULED-OUT: touching `WinPointerOwner2`/`WinPointerOwner4` with a no-op read
+//            at the top of the function (before Owner1's check), to see
+//            whether an earlier textual mention changes which two get
+//            preloaded - 13 of 304 -> 14 of 304. The instruction that appears
+//            is the touch itself; the image's own choice of ebp/edx for those
+//            two globals over ecx/ebx for Owner1/3 did not follow.
+//            (This note used to read `RULED-OUT, MEASURED:`, which the lesson
+//            grammar does not accept - the token must be followed by the
+//            colon - so the body kept reading as untouched.)
+// RULED-OUT: the flag axis is exhausted and buys nothing. All ten sets
+//            measured: best is 13 of 304 at 0.106 similar (/O2 /Gy /GR- /GX,
+//            and /Ob0 and /Oi- score identically), worst 6 of 304 at 0.058;
+//            /Oy- costs 4 instructions of agreement at every optimisation
+//            level.
+// RULED-OUT: a second, independent scheduling gap, and it is worth an
+//            instruction at every one of the visibility tests: the image
+//            materialises the constant 1 once (`mov ebx, 1` at 0x005F6F2B)
+//            and spends `test byte ptr [reg + 0x9c], bl` thereafter, where
+//            this tree spends the seven-byte `test byte ptr [reg + 0x9c], 1`
+//            each time. The image itself uses the immediate form at the one
+//            site where ebx is the object pointer, so it is the allocator
+//            choosing, not the source: there is no C++ spelling of
+//            `flags & WinFlagVisible` that asks for a register.
 Status: WIP
 */
 Win *Win::get_mouse_window(int *x, int *y) {
@@ -2432,18 +2484,26 @@ Purpose: Tear down whatever DirectDraw surface and device window this
 // (a 1691-byte DDERR_* switch, unrecovered). Neither is this recovery's
 // job; see the notes beside their forwarders in pending_bodies.cpp.
 //
-// MISMATCH under `/c /O2 /Ob0 /Gy /GR- /GX` (the flag set `measure` picks),
-// 96/178 instructions positionally, 0.986 similar - every call, branch and
-// field access agrees; what does not is which callee-saved register holds
-// `this` and which holds the constant zero. The image keeps `this` in edi
-// and the zero it stores into cleared fields and compares pointers against
-// in ebp; this body's register allocator gives `this` to ebp and the zero
-// to ebx instead, which is the same register-allocation-order puzzle
-// `Win::init_class` documents above at length and never fully resolves -
-// no field order, `nullptr`-vs-`0` spelling or flag set tried here moves
-// it. Left as the correct shape rather than ground further, per the task
-// that added this call site: a running program past this point is the
-// deliverable, not the last two registers.
+// RULED-OUT: 96 of 178 positionally under `/c /O2 /Ob0 /Gy /GR- /GX` (the
+//            flag set `measure` picks), 0.986 similar - every call, branch
+//            and field access agrees; what does not is which callee-saved
+//            register holds `this` and which holds the constant zero. The
+//            image keeps `this` in edi and the zero it stores into cleared
+//            fields and compares pointers against in ebp; this body's
+//            allocator gives `this` to ebp and the zero to ebx, which is the
+//            same register-allocation-order puzzle `Win::init_class`
+//            documents above at length and never fully resolves. No field
+//            order, `nullptr`-vs-`0` spelling or flag set tried here moves
+//            it.
+// RULED-OUT: the one instruction of the 178 this tree does not emit is in
+//            the splash `copy` call: the image loads
+//            `ScreenBuffer.dib_.bmiHeader.biWidth` into ecx before pushing
+//            the other arguments and then computes `mov eax, ecx; sub eax,
+//            esi`, where this tree subtracts straight from memory. Hoisting
+//            it - and the other three header fields - into named `const int`
+//            locals does NOT reproduce that: VC6 folds them all back, and
+//            all three spellings measure an identical 96 of 178 with 177
+//            compiled instructions.
 Status: Complete
 */
 int DDInit::init(int width, int height, int depth, int tgl) {
@@ -2568,10 +2628,22 @@ static const char WinClassName[] = "JackalClass";
 // VC6 assign the constant zero to the register it saves first, and that is
 // allocation order, which no spelling tried here reaches.
 //
-// RULED OUT: the flag sets are byte-identical here, so it is not the frame
-// pointer or /O1 register pressure; declaring `wndclass` before `logo` does
-// not move the frame; and caching the import slot in a local changes
-// nothing, because this build already caches it.
+// RULED-OUT: the flag sets are byte-identical here, so it is not the frame
+//            pointer or /O1 register pressure; declaring `wndclass` before
+//            `logo` does not move the frame; and caching the import slot in a
+//            local changes nothing, because this build already caches it.
+//            (This note used to read `RULED OUT:` without the hyphen, which
+//            the lesson grammar does not accept, so the body kept reading as
+//            untouched however much had been measured against it.)
+// RULED-OUT: re-measured across all ten flag sets. The best is 16 of 203 at
+//            0.925 SIMILAR under /c /O2 /Ob0 /Gy /GR- /GX - higher than the
+//            0.887 this note recorded, and the highest similarity of any
+//            unclaimed body in this batch. /Ob0 is what buys it: without it
+//            the same 16 of 203 scores 0.549, and /Oy- drops it to 0.876.
+//            The positional count stays at 16 because the whole body after
+//            the prologue is shifted by the missing `push edi`, exactly as
+//            described above; nothing measured here moves which register VC6
+//            gives the constant zero.
 //
 // FIXED: the four `WinModalStack` stores now precede `GetModuleHandleA`,
 // which is where the image has them - it stores all four from a zeroed eax

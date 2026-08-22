@@ -193,6 +193,18 @@ Purpose: Release every entry in the list, notifying the owner about each
 //        folds their bodies (and destroy_virtual_base's own indirect
 //        vtable-adjustor dispatch) directly into this call site, taking
 //        call_diff to 0 disagreeing.
+// RULED-OUT: THAT LEVER NO LONGER HOLDS for the OUT-OF-LINE body at
+//            0x00402970, and it is not the `inline` keyword that stopped
+//            working. call_diff reports MORE here again - 2 calls to
+//            destroy_virtual_base against the image's 0 - at EVERY flag set it
+//            tries, which is what its "smallest gap wins" search means: no
+//            flag set folds the helper into the COMDAT copy VC6 emits for an
+//            `inline` member that other translation units also call. The
+//            inlining the lever bought is still real at the sites that matter
+//            - StringStruct::close (0x00401060) and 0x004066C0 both write the
+//            walk out with no call at all. Measured 2026-08-22, and NOT caused
+//            by this batch: reverting the `int index = 0` move above and
+//            rebuilding reports the identical 2 against 0.
 Status: Complete
 */
 // inline: sub_4066c0 (0x004066C0) calls this twice through
@@ -206,8 +218,13 @@ inline void StringStruct::remove_all() {
     if (!head_) {
         return;
     }
+    // `index` is declared BEFORE the count test, not inside it: the image
+    // stores the zero into the slot at 0x00401089, BETWEEN the load of
+    // entry_count_ and the compare against it. Declared inside, VC6 folds the
+    // count into the compare (`cmp dword ptr [esi + 0x10], ebx`) and the
+    // whole walk shifts - 7 of 64 against 50 of 64 in StringStruct::close.
+    int index = 0;
     if (entry_count_ > 0) {
-        int index = 0;
         do {
             StringStructEntry *const entry = head_;
             current_ = entry->next;
@@ -239,20 +256,9 @@ void __fastcall string_struct_remove_all_redirect(StringStruct *self, void *) {
 const uint32_t StringStructVtable = 0x006693A4;
 const uint32_t StringStructVirtualBaseVtable = 0x006693A0;
 
-/*
-Purpose: Reset the list to its constructed state, installing both virtual
-         tables and releasing every entry.
-// ORIGINAL: 0x00401060 ?close@StringStruct@@QAEXXZ 0x00401060-0x004010F9
-// size      153 bytes
-// prototype void (__thiscall ?close@StringStruct@@QAEXXZ)(StringStruct* this)
-// callers   25   call targets   0
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     (none)
-// indirect  0x004010A2 0x004010B4 0x004010D0
-// notes     Runtime redirect installed by DllMain after byte-signature validation
-Status: Complete
-*/
+// The shared body of every virtual-base close: installs the pair of virtual
+// tables, releases the entries, then clears the position. `inline` because
+// 0x004066C0 writes both of its stages out in place and makes no real call.
 inline void StringStruct::close_with_tables(uint32_t primary, uint32_t virtual_base) {
     uint8_t *const base = reinterpret_cast<uint8_t *>(this);
     *reinterpret_cast<volatile uint32_t *>(base) = primary;
@@ -273,17 +279,95 @@ inline void StringStruct::close_with_tables(uint32_t primary, uint32_t virtual_b
     current_position_ = 0;
 }
 
-// inline: sub_4066c0 (0x004066C0) calls this and makes NO real calls at all
-// in the image, so this must fold there too - same reasoning as
-// remove_all() above (plain `inline`, not MEASURED).
-inline void StringStruct::close() {
-    close_with_tables(StringStructVtable, StringStructVirtualBaseVtable);
+/*
+Purpose: Reset the list to its constructed state, installing both virtual
+         tables and releasing every entry.
+// ORIGINAL: 0x00401060 ?close@StringStruct@@QAEXXZ 0x00401060-0x004010F9
+// size      153 bytes
+// prototype void (__thiscall ?close@StringStruct@@QAEXXZ)(StringStruct* this)
+// callers   25   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x004010A2 0x004010B4 0x004010D0
+// notes     Runtime redirect installed by DllMain after byte-signature validation
+// LEVER: 0 of 64 -> 56 of 64, with the compiled instruction count now equal
+//        to the image's, on four stacked fixes. (1) THE 0x1C ADJUSTMENT
+//        BELONGS IN close(), not in string_struct_close_redirect: the image's
+//        first instruction after the prologue is `lea esi, [ecx - 0x1c]`, so
+//        ECX arrives pointing at the virtual base. With the redirect doing the
+//        subtraction the body opened `mov esi, ecx` and diverged at
+//        instruction 0.
+// LEVER: (2) THE VBTABLE IS REACHED THROUGH THE INCOMING POINTER. The image
+//        reads `[ecx - 0x18]` and stores `[edx + ecx - 0x18]`, not `[esi + 4]`
+//        - which is why the two table stores are written out here rather than
+//        delegated to close_with_tables, whose other two call sites are
+//        entered on the object itself and cannot say both.
+// LEVER: (3) `int index = 0;` moved OUT of `if (entry_count_ > 0)` in
+//        remove_all: the image stores the zero at 0x00401089, between the load
+//        of entry_count_ and the compare against it. Declared inside the
+//        `if`, VC6 folds the count into the compare and everything after it
+//        shifts. 7 of 64 -> 50 of 64.
+// LEVER: (4) the two table stores are NOT `volatile`. The image hoists its
+//        zero register (`xor ebx, ebx` at 0x00401069) between the `lea` and
+//        the first store, and a volatile store pins the schedule so the xor
+//        lands six instructions late. 50 of 64 -> 56 of 64.
+// RULED-OUT: the last 8 are one register choice inside the SECOND
+//            destroy_virtual_base, at 0x004010C3. The image keeps the vbtable
+//            delta in edx and spends `lea ecx, [edx + eax]` plus `mov eax,
+//            [edx + eax]`; VC6 here reuses ecx for the delta and spends `mov
+//            ecx, [ecx + 4]; add ecx, eax; mov edx, [ecx]` - two bytes
+//            shorter, which is why the `je` at 0x00401084 lands two bytes
+//            early. THE IMAGE ITSELF EMITS BOTH FORMS from this one helper:
+//            the FIRST site, 0x004010A9, is the `add` form this tree
+//            produces, so no single spelling of the helper can serve both.
+//            Measured, all 55 of 64 (worse): naming the delta in a local and
+//            indexing `base + delta` twice, reading the subobject vtable
+//            before computing the receiver, a `uintptr_t` receiver cast, and
+//            writing the second site out at the call site instead of through
+//            the helper (56, unchanged).
+Status: Complete
+*/
+void StringStruct::close() {
+    // ENTERED ON THE VIRTUAL BASE, NOT ON THE OBJECT. The first instruction
+    // after the prologue is `lea esi, [ecx - 0x1c]` at 0x00401066, and every
+    // field it then touches is [esi + N] - the list head at +8, the count at
+    // +0x10, the position at +0x14 - so ECX arrives pointing at the two-word
+    // virtual base this class holds at 0x1C, exactly as the adjustor-entered
+    // destructors in guarded_teardowns.cpp do. The adjustment therefore
+    // belongs HERE and not in the redirect: with the redirect subtracting it
+    // instead, the compiled body starts `mov esi, ecx` and diverges at
+    // instruction 0.
+    uint8_t *const vbase = reinterpret_cast<uint8_t *>(this);
+    StringStruct *const self = reinterpret_cast<StringStruct *>(
+        vbase - StringStructCloseAdjustment);
+    // The two table stores are written out here rather than delegated to
+    // close_with_tables because the image reaches the vbtable through the
+    // INCOMING pointer - `mov eax, [ecx - 0x18]`, `mov [edx + ecx - 0x18],
+    // 0x6693a0` - not through the recovered object base. close_with_tables is
+    // entered on the object at its other two call sites and cannot say both.
+    // NOT `volatile`, unlike close_with_tables' pair: the image hoists its
+    // zero register (`xor ebx, ebx` at 0x00401069) BETWEEN the `lea` and the
+    // first table store, and a volatile store pins the schedule so the xor
+    // lands six instructions late. 50 of 64 with the qualifier, 56 without.
+    // Both stores survive - the walk that follows calls through a vtable VC6
+    // cannot see through.
+    *reinterpret_cast<uint32_t *>(vbase - StringStructCloseAdjustment) =
+        StringStructVtable;
+    const uint32_t *const vbtable =
+        *reinterpret_cast<uint32_t **>(vbase - StringStructCloseAdjustment + 4);
+    const uint32_t displacement = vbtable[1];
+    *reinterpret_cast<uint32_t *>(
+        vbase - StringStructCloseAdjustment + 4 + displacement) =
+        StringStructVirtualBaseVtable;
+    self->remove_all();
+    self->current_position_ = 0;
 }
 
+// The redirect hands the adjusted pointer straight through - close() itself
+// performs the 0x1C, as the image does.
 void __fastcall string_struct_close_redirect(void *adjusted, void *) {
-    StringStruct *self = reinterpret_cast<StringStruct *>(
-        static_cast<uint8_t *>(adjusted) - StringStructCloseAdjustment);
-    self->close();
+    reinterpret_cast<StringStruct *>(adjusted)->close();
 }
 
 const uint32_t StringStructDerivedVtable = 0x006698C4;
@@ -302,6 +386,27 @@ Purpose: Close a derived string list, releasing its entries under its own
 // calls     (none)
 // indirect  0x00406721 0x00406735 0x00406754 0x004067B7 0x004067C9 0x004067E9
 // notes     Runtime redirect installed by DllMain after byte-signature validation
+// LEVER: 2 of 126 -> 6 of 126, 112 compiled instructions -> 114, on the same
+//        two fixes StringStruct::close records: the second stage is
+//        close_with_tables written out (0x00406778 recomputes the object with
+//        the SAME `lea esi, [ebx - 0x28]` the first stage used, so close()'s
+//        own 0x1C entry adjustment has no part in it), and remove_all's
+//        `int index = 0` moved out of the count test.
+// RULED-OUT: the ceiling is THE EH FRAME, and it is worth 14 instructions
+//            before anything else can line up. The image opens `push -1; push
+//            0x65098b; mov eax, fs:[0]; push eax; mov fs:[0], esp` - the
+//            second span, 0x00650980-0x00650995, is that handler's scope
+//            table - and it moves an unwind state through [ebp - 4]: 0 at
+//            0x00406701, just before the DERIVED walk, and -1 at 0x0040677B,
+//            just before the base stage. It also parks the adjusted receiver
+//            at [ebp - 0x14] for the unwind funclet. VC6 emits none of that
+//            for a plain function: under /GX the frame appears only when
+//            something in scope has to be unwound, which means this body is a
+//            COMPILER-GENERATED teardown of a class whose base still needs
+//            destroying while the derived stage runs - the same shape
+//            ??1Net@@QAE@XZ documents at 0x004E34D0. No spelling of a free
+//            `__fastcall` redirect can produce it, and `/GX-` is ruled out
+//            tree-wide in AGENT_BRIEF.md.
 Status: Complete
 Verification note: the base stage overwrites the derived tables, so with the
 non-walking fixtures the oracle can safely drive, the derived stage leaves no
@@ -315,7 +420,13 @@ void __fastcall string_struct_derived_close_redirect(void *adjusted, void *) {
         static_cast<uint8_t *>(adjusted) - StringStructDerivedCloseAdjustment);
     self->close_with_tables(
         StringStructDerivedVtable, StringStructDerivedVirtualBaseVtable);
-    self->close();
+    // The second stage is close()'s body written out, NOT a call to close():
+    // 0x00406778 recomputes the object with the SAME `lea esi, [ebx - 0x28]`
+    // the first stage used, so the 0x1C adjustment close() performs on its own
+    // entry has no part in it. src/dialog.cpp stages its embedded list the
+    // same way.
+    self->close_with_tables(
+        StringStructVtable, StringStructVirtualBaseVtable);
 }
 
 const uint32_t StringVirtualBaseVtable = 0x006693AC;

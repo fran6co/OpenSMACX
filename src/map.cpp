@@ -1766,6 +1766,30 @@ Purpose: Check whether a faction can see the specified tile.
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// RULED-OUT: 16 of 30 at the best flag set (/O2 /Gy /GR- /Oy- /GX), 32
+//            compiled instructions against the image's 30. The two extra are
+//            `push ebx`/`pop ebx`: the image computes `1 << faction_id` AFTER
+//            the tile-index `lea` chain, when edx is dead, and reuses ecx for
+//            map_tiles() (`mov edx, 1; shl edx, cl; mov ecx, [0x94a30c];
+//            test byte ptr [ecx + eax*4 + 4], dl`); VC6 here hoists the shift
+//            ahead of that chain, where eax/ecx/edx are all live, so the mask
+//            lands in a callee-saved register and costs the save/restore.
+// RULED-OUT: nothing moves that scheduling decision. Measured, all 16 of 30
+//            and all 32 instructions: a `mask`/`vis`/`tile`/`flags` local, a
+//            `(uint8_t)` cast on either operand, `!!(...)`, an explicit
+//            `!= 0`, extra parentheses, and swapping the `&` operands
+//            (`(1 << faction_id) & ...->visibility`).
+// RULED-OUT: splitting the `||` is WORSE, not better - the mirror of
+//            map_write/map_read. A guard clause (`if (A) return true; return
+//            B;`) scores 0 of 30, and so does the ternary form; the image
+//            shares one `mov eax, 1; pop ebp; ret` tail between both tests
+//            and falls through to `xor eax, eax` only once.
+// RULED-OUT: the equivalent bit test `(map_loc(x, y)->visibility >>
+//            faction_id) & 1` scores HIGHER, 25 of 30 with the instruction
+//            count matching at 30, because `shr al, cl; test al, 1` needs no
+//            second register - but it emits a shift of the VALUE where the
+//            image shifts the MASK, so it trades one divergence for another
+//            and still reaches no tier. Left as the image's own mask test.
 Return Value: Is tile visible/known to faction? true/false
 Status: Complete
 */
@@ -1773,16 +1797,6 @@ BOOL __cdecl is_known(int x, int y, int faction_id) {
     return (PlayersData[faction_id].flags & PFLAG_MAP_REVEALED
         || map_loc(x, y)->visibility & (1 << faction_id));
 }
-// RULED-OUT: splitting the `||` into a guard clause (`if (A) return true;
-//            return B;`) scored WORSE (0.730 vs 0.903 similar) - the image
-//            does NOT chain-split this one, opposite of map_write/map_read's
-//            lever. Also ruled out: swapping the `&` operand order
-//            (`(1 << faction_id) & ...->visibility`) - identical score.
-//            Best flag set (/O2 /Gy /GR- /Oy- /GX) is 16/30, 0.903 similar;
-//            the gap is `push ebx`/`pop ebx` around the shift - the image
-//            keeps `1 << faction_id` in edx and map_tiles() in ecx, this
-//            tree's allocator picks ebx for the shift (needing the
-//            save/restore) and edx for the pointer. Not chased further.
 
 /*
 Purpose: If a base exists, get the owner of the specified tile.
@@ -2021,6 +2035,18 @@ Purpose: Get the region value for the specified tile.
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// RULED-OUT: MNEMONIC_ONLY 10 of 12, and it is the same one-instruction
+//            plateau abstract_set (0x00591230) records. The image sums the
+//            ROW into the base register and leaves the column in its own
+//            (`add edx, eax; mov al, byte ptr [ecx + edx]`); VC6 -O2 always
+//            pre-sums the two index terms instead (`add eax, ecx; mov al,
+//            byte ptr [eax + edx]`), whatever the source says.
+// RULED-OUT: six spellings, every one MNEMONIC_ONLY with the divergence at
+//            the same instruction 8 - the committed `(x >> 1) + y * mult`,
+//            the reversed `y * mult + (x >> 1)`, an explicit `uint8_t *row`
+//            local, `row` plus a separate `col` local, a `col` local alone,
+//            `row += ...` as a statement, and the pointer-arithmetic
+//            `*(MapAbstract() + ... + ...)` form.
 Return Value: Abstract value (region)
 Status: Complete
 */
