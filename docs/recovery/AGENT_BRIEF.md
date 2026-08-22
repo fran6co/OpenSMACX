@@ -194,6 +194,25 @@ RUNNING THE EXECUTABLE: THE INVOCATION IS PART OF THE MEASUREMENT
   rather than trusting an exit code.
 - Kill leftovers between runs (`pkill -f OpenSMACX.exe`); wine leaves the
   process alive after `timeout` fires and a stale one perturbs the next run.
+- WHERE BOTH BINARIES ACTUALLY GET TO, measured 2026-08-22 with winedbg
+  driven from a pipe (`printf 'break *0xADDR\ncont\nquit\n' | winedbg ...`;
+  note that `run` fails because winedbg starts already attached - use `cont`):
+
+      Win::init_class   ->   DDInit::init   ->   [stops before
+      BasePop::init_class]
+
+  THE SHIPPED IMAGE AND THIS BUILD FOLLOW THAT SEQUENCE IDENTICALLY, and
+  neither reaches `BasePop::init_class` even after fourteen continues. So the
+  early stop is not a recovery defect - `jackal_init_real` runs a chain of
+  `init_class` calls, each returning early on failure, and both binaries leave
+  it at the same point. Matching the image's behaviour, including where it
+  gives up, is the goal.
+- winedbg resolves THIS build's symbols with file and line
+  (`DDInit::init [win.cpp:2449]`) straight from the PDB, so a breakpoint
+  address from `build/OpenSMACX.map` gives readable frames. Its ARGUMENT
+  display is not trustworthy under /O2 - a frame with the pointer omitted
+  shows the caller's stack slots as this function's parameters, which reads
+  like an argument-shift bug and is not one.
 
 A REFUSAL ONLY COUNTS AS A `// RULED-OUT:` LINE
 - Write what you measured as a LESSON LINE - `// LEVER:` or `// RULED-OUT:` -
