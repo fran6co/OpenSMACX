@@ -178,7 +178,7 @@ CheckBox::~CheckBox() {
     obj->field_14_ = CheckBoxDefault2;
     obj->field_10_ = CheckBoxDefault1;
 
-    reinterpret_cast<Dialog *>(self + vbtable[2])->close();
+    reinterpret_cast<Dialog *>(self + vbtable[2])->Dialog::close();
     const int32_t *const vbtable2 = *reinterpret_cast<const int32_t *const *>(self);
     reinterpret_cast<GraphicWin *>(self + vbtable2[1])->close();
 }
@@ -213,7 +213,7 @@ void CheckBox::close() {
     field_C_ = 0;
     field_14_ = CheckBoxDefault2;
     field_10_ = CheckBoxDefault1;
-    reinterpret_cast<Dialog *>(self + vbtable[2])->close();
+    reinterpret_cast<Dialog *>(self + vbtable[2])->Dialog::close();
     const int32_t *const vbtable2 =
         *reinterpret_cast<const int32_t *const *>(self);
     reinterpret_cast<GraphicWin *>(self + vbtable2[1])->close();

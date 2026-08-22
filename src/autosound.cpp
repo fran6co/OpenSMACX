@@ -36,7 +36,7 @@ Purpose: Construct an AutoSound by installing its virtual table and copying
 Status: Complete
 */
 AutoSound *AutoSound::construct() {
-    vtable_ = reinterpret_cast<PVOID>(AutoSoundVtable);
+    *reinterpret_cast<uint32_t *>(this) = AutoSoundVtable;
     val_1_ = static_cast<int>(AutoSoundDefaults[0]);
     val_3_ = static_cast<int>(AutoSoundDefaults[1]);
     val_4_ = static_cast<int>(AutoSoundDefaults[2]);

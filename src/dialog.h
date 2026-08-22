@@ -50,7 +50,14 @@ class Dialog {
   int item(char *text, int index);
   // 0x00608F50, a pending_bodies forwarder. checkbox.cpp and
   // radiobutton.cpp both reach it, and both did so through a pointer.
-  void close();
+  // VIRTUAL, and this is what earns the vtordisp before the Dialog base in
+  // every class that virtually derives from it. VC6 emits a displacement only
+  // where the derived class overrides a NON-DESTRUCTOR virtual of a virtual
+  // base - measured 2026-08-22 on a minimal case: with only virtual
+  // destructors it emits none, with a plain virtual override it emits one per
+  // base. RadioButton::close() has the same `void ()` signature and so
+  // overrides this.
+  virtual void close();
 
  public:
   // Static default shared by every dialog; __cdecl in the original.

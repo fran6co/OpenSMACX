@@ -52,7 +52,7 @@
   * `sizeof(GraphicWin) == 0xA14` is the check that would catch it going wrong.
   * Do NOT read this paragraph as "cannot be done".
   */
-class RadioButton {
+class RadioButton : public virtual GraphicWin, public virtual Dialog {
  public:
   // 0x0060E220, a pending_bodies forwarder.
   void on_redraw();
@@ -91,11 +91,15 @@ class RadioButton {
   // this constructor takes an explicit flag instead and mirrors what the
   // image's own guard does with it.
   RadioButton(int a1);
-  ~RadioButton() { ; }
+  // VIRTUAL, and that is what earns the vtordisp. A displacement is emitted
+  // for a virtual base only when the derived class OVERRIDES one of its
+  // virtuals; inheriting Dialog's destructor implicitly is not enough for
+  // VC6. The image has ??1RadioButton@@QAE@H@Z at 0x00406F60, so a real
+  // destructor is what belongs here regardless.
+  virtual ~RadioButton() { ; }
   void close();
 
  private:
-  uint32_t vbtable_pointer_;
   uint32_t field_4_;
   uint32_t field_8_;
   uint32_t field_C_;
@@ -103,9 +107,6 @@ class RadioButton {
   // The vbtable puts the base at 0x18; the declared fields reach
   // 0x14, so 4 bytes sit between them.
   uint8_t gap_14_[0x18 - 0x14];
-  GraphicWin virtual_base_;
-  uint8_t gap_A2C_[4];
-  Dialog dialog_;
 };
 
 // PINNED BEFORE CHANGING THE DECLARATION, so that replacing the hand-composed

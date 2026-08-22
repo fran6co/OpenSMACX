@@ -23,7 +23,12 @@
 class AutoSound {
  public:
   AutoSound() { ; }
-  ~AutoSound() { ; }
+  // VIRTUAL, so VC6 emits the vfptr at offset 0 instead of the hand-modelled
+  // `PVOID vtable_` this replaces. Win derives from AutoSound, so that one
+  // vfptr is Win's and GraphicWin's too - which is the second of the two
+  // missing base vtable pointers radiobutton.h measured the virtual-base
+  // conversion to be short by. Dialog supplied the first.
+  virtual ~AutoSound() { ; }
   // Returns `this`: the image's body opens `mov eax, ecx` and uses EAX as
   // the object base for all 38 stores, which is what a __thiscall that has
   // to leave `this` in EAX does. Declared `void`, VC6 keeps the base in ECX
@@ -34,7 +39,8 @@ class AutoSound {
   void init();
 
  private:
-  PVOID vtable_;
+  // The vfptr is EMITTED by the compiler now - see the virtual destructor
+  // above. Same four bytes at offset 0, so sizeof(AutoSound) stays 0x98.
   int val_1_;
   int val_2_;
   int val_3_;
