@@ -1919,8 +1919,27 @@ def check(
                     fg=typer.colors.RED if vtables.returncode
                     else typer.colors.WHITE)
 
+    # PROSE THAT TELLS THE READER TO RUN SOMETHING THAT IS NOT THERE, held to
+    # zero the same way. This failure is invisible from inside the instruction:
+    # `.claude/commands/recover-batch.md` named SEVEN deleted tools, so every
+    # `uv run` line in it failed at step 1 - and nothing noticed, because the
+    # only reader is whoever types the slash command. `tools/stale_references.py`
+    # had existed for months and its roots stopped one directory short of that
+    # file, and one directory is the whole difference between a check and a
+    # check that cannot see the defect it was written for.
+    stale = subprocess.run(
+        [sys.executable, str(REPO_ROOT / "tools" / "stale_references.py")],
+        cwd=REPO_ROOT, capture_output=True, text=True)
+    if not as_json:
+        said = stale.stdout.strip().splitlines() or [""]
+        typer.secho("  " + said[-1],
+                    fg=typer.colors.RED if stale.returncode
+                    else typer.colors.WHITE)
+        for line in said[:-1][:8]:
+            typer.secho(f"  {line}", fg=typer.colors.RED)
+
     code = (1 if regressed or dangling or unread or link.returncode
-            or vtables.returncode
+            or vtables.returncode or stale.returncode
             else 3 if unasked else 0)
     # THE VERDICT GOES IN THE OUTPUT, not only in the exit code. The brief has
     # told agents for a long time never to pipe this to `tail`, because `cmd |
@@ -1935,6 +1954,7 @@ def check(
             f"GATE EXIT {code} - "
             + ("FAILED: THE TREE DOES NOT LINK" if link.returncode
                else "FAILED: the tree does more of the compiler's work" if vtables.returncode
+               else "FAILED: an instruction names something that is not there" if stale.returncode
                else "FAILED: regressed, dangling or unread claims" if code == 1
                else "OK, with unverifiable claims present" if code == 3
                else "CLEAN"),

@@ -82,11 +82,15 @@ against it, never to trust directly.
    population its own seam filter never filtered — `callgraph.json` is an edge
    list and the filter read it as an address-keyed map, so `all([])` admitted
    every unrecovered row. 2,783 functions were measured where 946 qualify.
-   Re-derive with `tools/indirect_call_sites.py --frontier`; these move as
-   recoveries land, and they are prose that nothing checks.) Run `tools/indirect_call_sites.py --address <addr>` before
+   `tools/indirect_call_sites.py` was deleted, so these are the last
+   measurement and nothing re-derives them.) Ask
+   `uv run tools/osmx.py calls <addr>` what the image really calls before
    accepting any candidate; `?hline@Buffer@@`, `?vline@Buffer@@` and
-   `?fill@Buffer@@` were all selected as leaves before it existed. An indirect
-   site is a call to *look at*, not automatically a seam.
+   `?fill@Buffer@@` were all selected as leaves before anything asked. An
+   indirect site is a call to *look at*, not automatically a seam.
+   `tools/frontier.py` says the same thing at the graph level: it follows
+   direct and tail calls only, so its count is a lower bound on the work and
+   never an upper one.
    Then confirm the SEH prologue targets
    `__CxxFrameHandler` at `0x00644FD6`, which is safe to omit. Every game
    frame in this image does; the fifteen that do not are CRT (see the closing
@@ -262,8 +266,11 @@ gameplay tests keep a central `main()` list:
 - Library functions: 338.
 - Thunks: 35.
 - Current recovery state: **not restated here.** Run
-  `uv run tools/recovery_metrics.py`, or read
-  `docs/recovery/summary.json`, which is generated and gate-checked.
+  `uv run tools/osmx.py status`. (`tools/recovery_metrics.py` was deleted,
+  and `docs/recovery/summary.json` has not been written since 2026-08-09 -
+  nothing under `tools/` or `decomp/` reads or writes it. Calling it
+  "gate-checked" here was itself the defect the rest of this paragraph
+  warns about.)
   This line used to carry the six per-state counts and they were wrong twice:
   every figure was stale before 2026-07-29, and by 2026-08-01 the recovered
   total was understated by 21 and the unrecovered total overstated by the same.
@@ -600,7 +607,8 @@ formality.
 
 The same vacuous-seed failure mode also hides inside a fixture that *writes*
 through a computed address rather than only reading a table. `verify_close`'s
-synthetic vbtable displacement (`src/stringstruct_oracle.cpp`) pointed the
+synthetic vbtable displacement (`src/stringstruct_oracle.cpp`, retired with
+the DLL in d76b9810) pointed the
 write at offset `0x14` - `current_position_`'s slot - which
 `close_with_tables` unconditionally overwrites two lines later; the read of
 `vbtable[1]` and the write it drives were unobservable regardless of whether
@@ -665,8 +673,10 @@ in-process runtime oracle under the hybrid smoke. Survivors that remain are
 either documented equivalences (`Verification note:` comments at the
 function), instrumentation scaffolding, or the known suite-scope gaps:
 `Buffer`'s and `spying`'s bodies are observable only in the hybrid process,
-so a leaf-suite sweep of src/buffer.cpp or src/spying_recovery.cpp reports
-mass survival by design. New recoveries should be swept when their tests
+so a leaf-suite sweep of src/buffer.cpp or src/spying.cpp reports
+mass survival by design. (`src/spying_recovery.cpp` no longer exists: it was
+the one `*_recovery.cpp` unit with no base file to fold back into, so 619631a0
+renamed it `spying.cpp`.) New recoveries should be swept when their tests
 land, not re-audited wholesale. The harness filters literals inside
 `[X / 4]` indices whose mutation folds to the same index or to a division by
 zero. The remaining known noise class is `Probe`-style dotted increment
@@ -709,7 +719,7 @@ parallel-agent targets (see "Parallel recovery" above):
 - `src/random.h`, `src/random.cpp`: verified Random layout, lifecycle, signed-range generation, and exact floating transfer.
 - `src/log.h`, `src/log.cpp`: verified Log layout, lifecycle, global initialization/cleanup, reset, decimal/hexadecimal output wrappers, and state control.
 - `src/stringstruct.h`, `src/stringstruct.cpp`: verified standalone string-list layout and current ID/payload/advance/seek accessors.
-- `src/text_recovery.h`, `src/text_recovery.cpp`: verified Text constructors, destructor, open wrapper, get, and numeric-item source helpers.
+- `src/text.h`, `src/text.cpp`: verified Text constructors, destructor, open wrapper, get, and numeric-item source helpers. (Was `text_recovery.h`/`.cpp`, coalesced in 4b2472dc.)
 - `src/dialogs.h`, `src/dialogs.cpp`: recovered empty `Dialogs::close`.
 - `src/basepop.h`, `src/basepop.cpp`: corrected layout and recovered location setter.
 - `src/basepop_font.cpp`: recovered BasePop string-font setter in an isolated testable source unit.
@@ -744,9 +754,10 @@ parallel-agent targets (see "Parallel recovery" above):
   functions, 2,410,317 bytes), the `external_library` exclusion that produces it from the 6,000
   catalogued rows, and `machine_carried`, the recovery debt, which is the one published number that
   must go DOWN.
-- `tools/recovery_metrics.py`: the only place that decides which rows are in scope, how a row is
-  priced, and which way a number moves. Both the full exporter and the reused-export refresh path
-  compute the published block through it; `tools/test_recovery_metrics.py` pins that they agree.
+- `tools/osmx.py status`: what the source map is in, counted from `src/` itself. It replaced
+  `tools/recovery_metrics.py` and `tools/test_recovery_metrics.py`, both deleted - the pricing
+  model they carried decided which rows were "in scope" out of a second store that could drift
+  from the tree. There is no second store now; `src/` is counted directly.
 - `decomp/`: the source map as an installed package - `from decomp import read, write,
   function_line`, no `sys.path` line, works from any directory: the reader reads the
   `ORIGINAL: 0x...` markers - each carries the piece's name and its image spans ahead of

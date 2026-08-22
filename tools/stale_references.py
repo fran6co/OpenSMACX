@@ -71,8 +71,18 @@ IMPERATIVE = re.compile(
 # `uv run tools/definitely_not_a_real_tool.py` added to docs/TOOLS.md - was
 # waved through, because a retraction somewhere else in that file excused every
 # mention in it.
+# `(?:was|were|both) deleted` BELONGS HERE BY CONSTRUCTION. It was missing, and
+# the omission bit the moment this check was pointed at `AGENTS.md`: a line
+# reading "Run `uv run tools/osmx.py status`. (`tools/recovery_metrics.py` was
+# deleted...)" is a LIVE instruction naming a dead tool as history - exactly
+# what this file is for - and it failed, because IMPERATIVE is per-line and
+# "uv run" and the dead name share the line. The tempting fix is to reword the
+# sentence until the check likes it, which trades a true statement for a
+# vaguer one that passes. The vocabulary was incomplete: `was retired` and
+# `is gone` were already here, and `was deleted` is the same act.
 RETRACTED = re.compile(
-    r"NO LONGER EXISTS|was retired|retired the bulk generators|is gone", re.I)
+    r"NO LONGER EXISTS|was retired|retired the bulk generators|is gone|"
+    r"(?:was|were|both) deleted", re.I)
 
 
 if __name__ == "__main__":
@@ -80,16 +90,31 @@ if __name__ == "__main__":
     # which tool produced them, which is history and stays true even after the
     # tool is retired. 3,500 of those buried the nine hand-written INSTRUCTIONS
     # that were the real defect. Only live source and docs are checked.
-    roots = [REPO_ROOT / "src", REPO_ROOT / "docs",
-             REPO_ROOT / ".claude" / "agents"]
-    archived = (REPO_ROOT / "src" / "recovered", REPO_ROOT / "src" / "unrecovered")
+    # `.claude/` ENTIRE, not just `agents/`. `.claude/commands/recover-batch.md`
+    # is a slash command a human types, and every one of its seven `uv run`
+    # lines named a tool that had been deleted - `recovery_frontier.py`,
+    # `decomp_status.py`, `agent_brief.py`, `refresh_file_units.py`,
+    # `verify_member_offsets.py`, `member_map.py`, `verify_void_returns.py`.
+    # Typing it failed at step 1. The roots were widened to `agents/` once, for
+    # exactly this defect, and stopped one directory short of the other file
+    # where it had already happened.
+    #
+    # REPO-ROOT `*.md` too. `AGENTS.md` is 820 lines of handoff and named two
+    # more imperatively; it sits under no directory root at all, so no amount
+    # of widening `docs/` would ever have reached it.
+    roots = [REPO_ROOT / "src", REPO_ROOT / "docs", REPO_ROOT / ".claude"]
+    # `.claude/worktrees/` holds AGENT CHECKOUTS - whole copies of this repo,
+    # archives and all. Scanning them re-scans `src/recovered/` under a
+    # different prefix and reports the same reference once per live worktree.
+    archived = (REPO_ROOT / "src" / "recovered", REPO_ROOT / "src" / "unrecovered",
+                REPO_ROOT / ".claude" / "worktrees")
     missing: dict[str, set] = {}
     mentioned: dict[str, set] = {}
     scanned = 0
-    for root in roots:
-        if not root.exists():
-            continue
-        for path in sorted(root.rglob("*")):
+    groups = [sorted(root.rglob("*")) for root in roots if root.exists()]
+    groups.append(sorted(REPO_ROOT.glob("*.md")))
+    for group in groups:
+        for path in group:
             if not path.is_file() or path.suffix not in (".cpp", ".h", ".md", ".csv"):
                 continue
             if any(str(path).startswith(str(a)) for a in archived):
