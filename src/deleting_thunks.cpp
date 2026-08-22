@@ -1633,8 +1633,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_graphic_win(void *self, void *,
                                            unsigned int arg0) {
-    graphic_win_destructor_redirect(
-        reinterpret_cast<GraphicWin *>(self), nullptr);
+    reinterpret_cast<GraphicWin *>(self)->~GraphicWin();
     if (arg0 & 1) {
         operator delete(self);
     }

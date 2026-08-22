@@ -109,13 +109,13 @@ FileWin::~FileWin() {
 
     list_box_.destroy();
     reinterpret_cast<Dialog *>(reinterpret_cast<char *>(&list_box_) + 0xA60)->destroy();
-    graphic_win_destructor_redirect(reinterpret_cast<GraphicWin *>(&list_box_), nullptr);
+    reinterpret_cast<GraphicWin *>(&list_box_)->~GraphicWin();
 
     reinterpret_cast<uint32_t *>(&edit_box_)[0x000 / 4] = EditBoxPrimaryVtable;
     reinterpret_cast<uint32_t *>(&edit_box_)[0x444 / 4] = EditBoxBufferVtable;
     edit_box_.close();
     edit_box_.time_.~Time();
-    graphic_win_destructor_redirect(reinterpret_cast<GraphicWin *>(&edit_box_), nullptr);
+    reinterpret_cast<GraphicWin *>(&edit_box_)->~GraphicWin();
 
     reinterpret_cast<uint32_t *>(&flat_button1_)[0x000 / 4] = FlatButtonPrimaryVtable;
     reinterpret_cast<uint32_t *>(&flat_button1_)[0x444 / 4] = FlatButtonBufferVtable;

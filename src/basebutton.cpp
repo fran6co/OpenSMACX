@@ -223,8 +223,7 @@ BaseButton *BaseButton::destroy() {
     close();
     time2_.~Time();
     time1_.~Time();
-    graphic_win_destructor_redirect(
-        static_cast<GraphicWin *>(this), nullptr);
+    static_cast<GraphicWin *>(this)->~GraphicWin();
     return this;
 }
 
