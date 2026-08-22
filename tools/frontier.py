@@ -233,4 +233,15 @@ if __name__ == "__main__":
     print(f"{len(order):,} reachable and catalogued, {len(pending):,} not yet "
           f"byte exact; {unnamed:,} direct edges name nothing in the catalogue "
           f"({edges:,} edges walked, indirect ones not followed)")
+    # AND THE NUMBER THE GOAL ACTUALLY ASKS FOR. "Byte exact OR semantically
+    # the same" is the bar, and a body carrying a PROVED semantic claim has
+    # met it - `osmx semantic` grants only where the instruction sequence is
+    # identical and the registers differ. Counting those as outstanding
+    # overstates the work remaining, so both numbers are printed rather than
+    # one being quietly substituted for the other.
+    proved = sum(1 for record in pending if record.semantic)
+    if proved:
+        print(f"  {proved:,} of those carry a PROVED semantic claim, so "
+              f"{len(pending) - proved:,} remain against "
+              f"\"byte exact or semantically the same\"")
     print("  --all also lists reachable bodies the build does not compile")
