@@ -1130,7 +1130,11 @@ Purpose: Set the rockiness for the specified tile.
 //            local (matching the image's read-both-then-store-both order for the two fields)
 //            made it WORSE (0.960 -> 0.885) - the local for `bit2` changes the image's
 //            `mov ecx,[eax+0xc]/or ecx,.../mov [eax+0xc],ecx` register-folded shape into
-//            something that costs more elsewhere. Left storing `val3` immediately.
+//            something that costs more elsewhere. Left storing `val3` immediately. Also tried a
+//            `uint32_t bit2 = tile->bit2;` local read BEFORE the `val3` store, OR'd and stored
+//            AFTER (matching the image's load-then-store-val3-then-or-store-bit2 order exactly) -
+//            forced a fourth callee-saved register (`push esi`), which shifts every subsequent
+//            offset and drops it to 8/25. Confirms the plateau is a spill-slot ceiling, not order.
 // size      78 bytes
 // prototype void (__cdecl ?rocky_set@@YAXHHH@Z)(int xCoord, int yCoord, int rocky)
 // callers   11   call targets   0
