@@ -846,6 +846,21 @@ Popup::Popup() {
 // a second time under a name this function would have to guess too.
 extern int BaseAtKeyPollFlag;  // 0x009BC070
 
+// WHERE THE RUNTIME WALK STOPS, and it is not a missing body. Measured
+// 2026-08-21: the executable now reaches WinMain, runs Win::set_display_mode
+// -> DDInit::init, and DirectDraw FAILS under wine - so it takes the error
+// path, DDInit::report_error -> pop_caption_title -> pops. And `pops` reads
+// these two slots, which are still zero, because they are filled by
+// BasePop::init_class() from `jackal_init_real` - which has not run yet at
+// display-mode time. `Win::is_visible()` then reads offset 0x9C off null and
+// faults.
+//
+// That is FAITHFUL, not broken. The original takes this path only when
+// DirectDraw fails during startup, which is exactly when these singletons do
+// not exist yet either. Chasing it further recovers nothing: the next real
+// frontier is on the SUCCESS path, which needs DirectDraw to initialise in
+// this environment rather than any more source.
+//
 // Two singleton BasePop instances, allocated once by BasePop::init_class()
 // (basepop.cpp, which already casts to this pair of fixed addresses under
 // the names g_009bc074/g_009bc078) and chosen between here by which one is
