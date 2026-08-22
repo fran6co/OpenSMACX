@@ -888,6 +888,29 @@ void __cdecl filefind_set_alternative(LPCSTR path) {
 Purpose: Initialize the Filefind global along with a CD check if there isn't a complete install. 
          Optimized logic since most installs will be on a HDD making the CD check less important.
 // ORIGINAL: 0x00600400 ?filefind_init@@YAHPADH@Z 0x00600400-0x006005C5
+// LEVER: `strcat`/plain `[0]=0` clears in place of the bounded
+//        `strcpy_s`/`strcat_s` forms, matching the sibling
+//        `filefind_get`'s own documented idiom - mechanical, does not
+//        close the gap alone (see RULED-OUT).
+// RULED-OUT: NOT byte-exact and not attempted further - this body is
+//            genuinely incomplete, not just differently spelled. The
+//            "JACKAL_CLASS" block is commented out in the committed
+//            source, but the image DOES call it for real
+//            (`call dword ptr [0x696ecc]`, the JACKAL_init import,
+//            right after the exe-dir setup) and returns 4 when it comes
+//            back null - the very code the comment stubs out. Past the
+//            CD-scan loop the image also runs an entire message-box
+//            interaction this body has only as a comment
+//            ("send FILEFIND_NOCD message..."): a real call to
+//            0x00601BF0 with five pushed arguments, a response check
+//            against a slot 0x3100 vtable-style dispatch, and MessageBox-
+//            shaped calls through two more IAT slots (0x669114,
+//            0x66911c). The stack frame is short by exactly 0x100 bytes
+//            (0x14c against the image's 0x24c) because of the missing
+//            message buffer this never allocates. Completing this needs
+//            real investigation of 0x00601BF0 and the vtable at
+//            `edi + 0x3100`, which is out of scope for this pass;
+//            recorded as MISMATCH rather than left silently wrong.
 // symbol    ?filefind_init@@YAHPBDH@Z
 // size      453 bytes
 // prototype 
@@ -900,9 +923,12 @@ Return Value: No errors (0) otherwise error
 Status: WIP
 */
 int __cdecl filefind_init(LPCSTR file_check, BOOL is_complete) {
+    // THE PRE-sprintf IDIOM, same as `filefind_get` immediately below:
+    // `strcat`/plain assignment, no bounded forms - the image has no
+    // bounds check anywhere in this function.
     FilefindPath.alt_path[0] = 0;
     GetCurrentDirectoryA(256, FilefindPath.exe_dir);
-    strcat_s(FilefindPath.exe_dir, 256, "\\");
+    strcat(FilefindPath.exe_dir, "\\");
 
     if (is_complete) {
         return 0; // complete install, no need for further checks
@@ -911,8 +937,9 @@ int __cdecl filefind_init(LPCSTR file_check, BOOL is_complete) {
         return 16; // error, file_check shouldn't be NULL
     }
     WIN32_FIND_DATAA find_file_data;
-    strcpy_s(FilefindPath.last_path, 256, FilefindPath.exe_dir);
-    strcat_s(FilefindPath.last_path, file_check);
+    FilefindPath.last_path[0] = 0;
+    strcat(FilefindPath.last_path, FilefindPath.exe_dir);
+    strcat(FilefindPath.last_path, file_check);
     HANDLE file_found = FindFirstFileA(FilefindPath.last_path, &find_file_data);
     FindClose(file_found);
     if (file_found != INVALID_HANDLE_VALUE) {
@@ -926,18 +953,21 @@ int __cdecl filefind_init(LPCSTR file_check, BOOL is_complete) {
     */
     char root_path[5];
     do {
-        strcpy_s(root_path, 5, "A:\\");
+        root_path[0] = 0;
+        strcat(root_path, "A:\\");
         for (int i = 0; i < 26; i++) {
             if (GetDriveTypeA(root_path) == DRIVE_CDROM) {
                 // problem if drive was disconnected
-                strcpy_s(FilefindPath.last_path, 256, root_path);
-                strcat_s(FilefindPath.last_path, file_check);
+                FilefindPath.last_path[0] = 0;
+                strcat(FilefindPath.last_path, root_path);
+                strcat(FilefindPath.last_path, file_check);
                 //WIN32_FIND_DATA find_file_data;
                 //HANDLE file_found = FindFirstFile(g_filefind.last_path, &find_file_data);
                 file_found = FindFirstFileA(FilefindPath.last_path, &find_file_data);
                 FindClose(file_found);
                 if (file_found != INVALID_HANDLE_VALUE) {
-                    strcpy_s(FilefindPath.cd_path, 256, root_path);
+                    FilefindPath.cd_path[0] = 0;
+                    strcat(FilefindPath.cd_path, root_path);
                     // destroy JACKAL callBack
                     return 0;
                 }
@@ -1367,7 +1397,10 @@ uint32_t __cdecl checksum_password(LPCSTR password) {
 /*
 Purpose: Calculate a random value within the provided bounds. The unused 2nd parameter was possibly 
          meant to have the random value append to it.
-// ORIGINAL: 0x00579770 ?rnd@@YAHHPAD@Z 0x00579770-0x00579790
+// ORIGINAL: 0x00579770 ?rnd@@YAHHPAD@Z 0x00579770-0x00579790 BYTE_EXACT
+// LEVER: ternary flipped to a guard-clause `if (bounds - 1 <= 0) return 0;`
+//        then fall through to `return rand() % bounds;` - the image jumps
+//        TO the rand() work and falls through to the early return.
 // symbol    ?rnd@@YAIHPAD@Z
 // size      32 bytes
 // prototype int (__cdecl ?rnd@@YAHHPAD@Z)(int seed, int8*)
@@ -1379,7 +1412,10 @@ Return Value: Bounded random value
 Status: Complete
 */
 uint32_t __cdecl rnd(int bounds, LPSTR UNUSED(input)) {
-    return (bounds - 1 > 0) ? rand() % bounds : 0;
+    if (bounds - 1 <= 0) {
+        return 0;
+    }
+    return rand() % bounds;
 }
 
 /*
@@ -1424,6 +1460,13 @@ void __cdecl kill_auto_save() {
 /*
 Purpose: Handle the creation and management of the auto-save game files.
 // ORIGINAL: 0x005ABD20 ?auto_save@@YAXXZ 0x005ABD20-0x005ABE39
+// RULED-OUT: 28/66, 0.954 similar - as close as this gets. Both branches'
+//            call sequences end with the image cleaning the LAST call's
+//            single pushed argument via `pop ecx` (1 byte) rather than
+//            folding it into the preceding `add esp, N` that cleans the
+//            other calls in the run; this body folds all of them into one
+//            `add esp`. Pure VC6 stack-cleanup-size heuristic across a run
+//            of same-shaped `__cdecl` calls, not a source-form lever.
 // size      281 bytes
 // prototype 
 // callers   9   call targets   3
@@ -1504,7 +1547,17 @@ void __cdecl auto_save_debug() {
 /*
 Purpose: Load a Scenario Editor undo (type: 1) or redo (type: -1) auto-save. TODO: Revisit in the 
          future to fix some of the underlying issues with the undo/redo process.
-// ORIGINAL: 0x005ABE40 ?load_undo@@YAXH@Z 0x005ABE40-0x005ABEBF
+// ORIGINAL: 0x005ABE40 ?load_undo@@YAXH@Z 0x005ABE40-0x005ABEBF BYTE_EXACT
+// LEVER: two real bugs in the committed body, fixed by transcription
+//        instead of invention. (1) WRONG CALLEE - `sprintf_s` is not in the
+//        image; it's the `strcat`/`_itoa`/`strcat`-into-StringTemp idiom,
+//        no ".SAV" suffix, matching `wipe_undo`/`auto_undo` below. (2) the
+//        image calls NEITHER an early `return` on `type==-1`, NOR
+//        `draw_map` at the end - both were invented, not transcribed; the
+//        image's only calls are the two `strcat`s, `_itoa` and
+//        `load_daemon`. (3) `static_cast<int>(ScenEditorUndoPosition)` at
+//        both comparisons - the global is `uint32_t`, and the image's own
+//        `cmp`s are signed (`jle`/`jge`), giving `jbe`/`jae` uncast.
 // size      127 bytes
 // prototype void (__cdecl ?load_undo@@YAXH@Z)(int type)
 // callers   2   call targets   3
@@ -1515,19 +1568,22 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl load_undo(int type) {
-    if (type == -1 && ScenEditorUndoPosition == 1) {
-        return; // bug fix: skip redo if undo hasn't been triggered yet or on 1st undo
-    }
-    if (type < 0 && ScenEditorUndoPosition > 1) {
+    if (type < 0 && static_cast<int>(ScenEditorUndoPosition) > 1) {
         ScenEditorUndoPosition--;
     }
-    char load_path[38];
-    sprintf_s(load_path, 38, "saves\\auto\\Scenario Editor Undo %d.SAV", ScenEditorUndoPosition);
-    if (type > 0 && ScenEditorUndoPosition < 9) {
+    // THE PRE-sprintf IDIOM, same as `wipe_undo`/`auto_undo` immediately
+    // below: `strcat`/`_itoa`/`strcat` into StringTemp, no ".SAV" extension
+    // appended, and no `draw_map` call - the image's own call targets are
+    // just strcat x2, _itoa and load_daemon.
+    StringTemp[0] = 0;
+    strcat(StringTemp, "saves\\auto\\Scenario Editor Undo ");
+    char number[80];
+    _itoa(ScenEditorUndoPosition, number, 10);
+    strcat(StringTemp, number);
+    if (type > 0 && static_cast<int>(ScenEditorUndoPosition) < 9) {
         ScenEditorUndoPosition++;
     }
-    load_daemon(load_path, false);
-    draw_map(true); // Bug fix: Map artifacts display issue; TODO: best method of refreshing map?
+    load_daemon(StringTemp, false);
 }
 
 /*
@@ -1609,7 +1665,15 @@ void __cdecl auto_undo() {
 /*
 Purpose: Read the specified header from a file. This assumes the header string buffer is at least 
          256 characters. TODO: Replace built-in versions of _fgetc and change return to std::string.
-// ORIGINAL: 0x0057D1F0 ?header_check@@YAXPADPAUFILE@@@Z 0x0057D1F0-0x0057D235
+// ORIGINAL: 0x0057D1F0 ?header_check@@YAXPADPAUFILE@@@Z 0x0057D1F0-0x0057D235 BYTE_EXACT
+// LEVER: `header_chr` as `char` (not `int`) so the compare/store stay byte
+//        width; `int i` declared and zeroed BEFORE the first `fgetc` call,
+//        not inside the guard block; and the do-while-with-break rewritten
+//        as a plain `while (header_chr) { if (++i >= 256) break; ... }` -
+//        the do-while shape let VC6 fold the loop counter's first
+//        increment into its initial value and rotate the loop, which the
+//        image's own top-tested-counter / bottom-tested-char shape never
+//        does.
 // symbol    ?header_check@@YAXPADPAU_iobuf@@@Z
 // size      69 bytes
 // prototype void (__cdecl ?header_check@@YAXPADPAUFILE@@@Z)(int8* header, FILE* file)
@@ -1621,24 +1685,26 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl header_check(LPSTR header, FILE *file) {
-    int header_chr = fgetc(file);
-    *header++ = (char)header_chr;
-    if (header_chr) {
-        int i = 0;
-        do {
-            if (++i >= 256) {
-                break;
-            }
-            header_chr = fgetc(file);
-            *header++ = (char)header_chr;
-        } while (header_chr);
+    int i = 0;
+    char header_chr = (char)fgetc(file);
+    *header++ = header_chr;
+    while (header_chr) {
+        if (++i >= 256) {
+            break;
+        }
+        header_chr = (char)fgetc(file);
+        *header++ = header_chr;
     }
     fgetc(file);
 }
 
 /*
 Purpose: Write the specified header to a file. TODO: Replace built-in versions of _fputc.
-// ORIGINAL: 0x0057D240 ?header_write@@YAXPADPAUFILE@@@Z 0x0057D240-0x0057D270
+// ORIGINAL: 0x0057D240 ?header_write@@YAXPADPAUFILE@@@Z 0x0057D240-0x0057D270 BYTE_EXACT
+// LEVER: `header_chr` as `char`, not `int` - the image keeps the byte in
+//        `bl` for the loop's `test bl,bl` and only sign-extends it
+//        (`movsx eax, bl`) at the `fputc` push, which is the local matching
+//        the width it reads from.
 // symbol    ?header_write@@YAXPBDPAU_iobuf@@@Z
 // size      48 bytes
 // prototype 
@@ -1650,7 +1716,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl header_write(LPCSTR header, FILE *file) {
-    int header_chr;
+    char header_chr;
     do {
         header_chr = *header++;
         fputc(header_chr, file);
@@ -1661,6 +1727,17 @@ void __cdecl header_write(LPCSTR header, FILE *file) {
 /*
 Purpose: For the count, sort both id and value arrays by the least to greatest value (ascending).
 // ORIGINAL: 0x005B5690 ?sort@@YAXHPAHPAH@Z 0x005B5690-0x005B56F5
+// RULED-OUT: byte-match plateau at 5/47 across every flag set tried,
+//            before and after the `goto`/bug fix below - the image
+//            interleaves a SEARCH for the first out-of-order pair with the
+//            swap in one tight loop; any C form with the swap reachable
+//            from inside the scanning `for`/`while` gets restructured by
+//            VC6 into two separate loops (scan-only, then a single swap),
+//            which this address's plateau predates the bug fix and is
+//            unaffected by it. Tried: `break` after the swap, `goto` to a
+//            label after the loop, `goto` back to a `restart:` before the
+//            loop (best of the four, but still 5/47), and a `while`
+//            re-entering at i=0. Not a source-form lever found here.
 // symbol    ?sort@@YAXHPAH0@Z
 // size      101 bytes
 // prototype void (__cdecl ?sort@@YAXHPAHPAH@Z)(int count, int* id, int* value)
@@ -1671,30 +1748,23 @@ Purpose: For the count, sort both id and value arrays by the least to greatest v
 Return Value: n/a
 Status: Complete
 */
-// RULED-OUT: writing the loop bound inline - `i < count - 1` instead of the
-// hoisted `int bounds = count - 1` - on the theory that the image's
-// per-iteration `mov ecx, [ebp+8]; dec ecx` means it does not hoist. It changes
-// NOTHING measurable: 5 of 47 at `/c /O2 /Ob0 /Gy /GR- /GX` either way, and the
-// compiled instruction count was already exactly the image's 47 before the
-// edit, so there was no gap of that shape to close. Checked across all ten
-// flag sets. The remaining divergence is the frame pointer and the
-// `has_swapped` register, which are separate.
 void __cdecl sort(int count, int *id, int *value) {
     int bounds = count - 1;
-    // `int`, not `BOOL`. Identical type, but the verification scaffolding
-    // forward-declares only types reachable from a signature, so a Windows
-    // typedef on a LOCAL makes the whole body NO_COMPILE and unscoreable.
-    int has_swapped;
-    do {
-        has_swapped = false;
-        for (int i = 0; i < bounds; i++) {
-            if (value[i] > value[i + 1]) {
-                has_swapped = true;
-                swap(&value[i], &value[i + 1]);
-                swap(&id[i], &id[i + 1]);
-            }
+    // BUG IN THE ORIGINAL (reproduced): `test eax,eax` right after every
+    // swap jumps straight back to the function's own top (0x5b5697) the
+    // moment a swap happens, abandoning the rest of this pass instead of
+    // finishing it. A correct bubble sort would keep scanning to the end of
+    // the pass; this one restarts from i=0 after its FIRST swap each pass,
+    // which is why there is no `has_swapped` flag left to track here - the
+    // loop completing on its own IS the "nothing left to swap" signal.
+restart:
+    for (int i = 0; i < bounds; i++) {
+        if (value[i] > value[i + 1]) {
+            swap(&value[i], &value[i + 1]);
+            swap(&id[i], &id[i + 1]);
+            goto restart;
         }
-    } while (has_swapped);
+    }
 }
 
 /*

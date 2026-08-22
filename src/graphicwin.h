@@ -152,11 +152,6 @@ typedef void (OriginalObject::*func_graphic_win_overlay_nonclient)(RECT *);
 // The translation table fill consults before remapping. A null table means
 // the plain blit is the whole operation, which is the common case.
 inline void *&GraphicWinColorMapTable() { return *reinterpret_cast<void **>(0x009B3390); }
-// USER32!InvalidateRect through the import at 0x00669304.
-typedef BOOL(__stdcall func_graphic_win_invalidate_rect)(HWND, const RECT *,
-                                                          BOOL);
-extern func_graphic_win_invalidate_rect *GraphicWinInvalidateRect;
-
 // The optional hook stored at 0xA10. See redraw's Verification note: it is
 // entered by a bare `call eax` with nothing pushed and ECX not set, so it is
 // not __thiscall, and zero-argument __cdecl and __stdcall are

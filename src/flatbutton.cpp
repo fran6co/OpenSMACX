@@ -20,12 +20,39 @@
 
 const uint32_t FlatButtonPrimaryVtable = 0x00669754;
 const uint32_t FlatButtonBufferVtable = 0x0066974C;
-uint32_t FlatButtonDefaults;  // 0x009B8E44
+// The nine-group defaults table read by both the constructor and close():
+// a fixed image address, not a runtime-loaded pointer - `g_009b8e44` folds
+// to the immediate the same way the constructor's own copy of this table
+// already did, where dereferencing a variable holding the address would
+// not.
+static int *const g_009b8e44 = (int *)0x009B8E44;
 
 /*
 Purpose: Close the primary Time member, reset FlatButton orientation state,
          close the BaseButton base, and reload all nine three-entry tables.
 // ORIGINAL: 0x00607DA0 ?close@FlatButton@@QAEXXZ 0x00607DA0-0x00607E41
+// LEVER: two fixes, stacked. (1) a real out-of-line `time_close_call`
+//        forwarder (same idiom as `sleep_call`/`base_cost_call` in
+//        veh.cpp) so `time1_.close()` compiles the `call rel32` the image
+//        has instead of inlining away under /O2 - `Time::close()` is
+//        itself separately claimed BYTE_EXACT at 0x00616780. (2)
+//        `g_009b8e44` (a real constant pointer to the fixed image address)
+//        in place of dereferencing the `FlatButtonDefaults` VARIABLE,
+//        which read a runtime pointer VALUE where the image folds a
+//        compile-time address - same table the constructor already binds
+//        this way; `FlatButtonDefaults` itself is now unused and removed.
+//        0/41 (70 instructions, unrelated indirect calls from the inlined
+//        `Time::close()`) -> 0.557 similar (38 instructions, matching
+//        shape).
+// RULED-OUT: an explicit 9-way unroll of the inner group loop, matching
+//            what the CONSTRUCTOR's own identical table copy compiles to
+//            - here it makes things WORSE (80 instructions: the two real
+//            calls ahead of the unrolled block push VC6 to hoist nine
+//            `sub reg,esi` address computations before the loop even
+//            starts). The plain nested `for` loop the constructor also
+//            uses is closer here despite not being unrolled - the two
+//            functions are NOT under the same codegen heuristic once the
+//            forwarder call is added.
 // symbol    ?close@FlatButton@@QAEIXZ
 // size      161 bytes
 // prototype void (__thiscall ?close@FlatButton@@QAEXXZ)(FlatButton* this)
@@ -36,8 +63,17 @@ Purpose: Close the primary Time member, reset FlatButton orientation state,
 Return Value: Legacy final-loop residue (this + 0xAEC)
 Status: Complete
 */
+// A real, out-of-line forwarder so this call site gets an actual `call`
+// where `time1_.close()` directly would inline away under /O2 - same
+// idiom as `sleep_call`/`base_cost_call` in veh.cpp. `Time::close()` is
+// itself already claimed BYTE_EXACT at 0x00616780 (time.cpp); this only
+// keeps THIS caller from inlining it.
+void __cdecl time_close_call(Time *timer) {
+    timer->close();
+}
+
 uint32_t FlatButton::close() {
-    time1_.close();
+    time_close_call(&time1_);
     volatile uint32_t *const object =
         reinterpret_cast<volatile uint32_t *>(this);
     object[0xA18 / 4] = 0;
@@ -45,13 +81,11 @@ uint32_t FlatButton::close() {
     object[0xAB8 / 4] = 0xFFFFFFFFU;
     BaseButton::close();
 
-    volatile uint32_t *const defaults =
-        reinterpret_cast<volatile uint32_t *>(FlatButtonDefaults);
     for (size_t index = 0; index < 3; ++index) {
         object[(0xABC / 4) + index] = 0xFFFFFFFFU;
         for (size_t group = 0; group < 9; ++group) {
             object[(0xAE0 / 4) + group * 3 + index] =
-                defaults[group * 3 + index];
+                static_cast<uint32_t>(g_009b8e44[group * 3 + index]);
         }
         object[(0xAD4 / 4) + index] = 0;
         object[(0xAC8 / 4) + index] = 0;
@@ -67,6 +101,20 @@ uint32_t __fastcall flat_button_close_redirect(FlatButton *self, void *) {
 Purpose: Destroy a FlatButton by installing its two virtual tables, closing
          the derived stage, then running the complete BaseButton destructor.
 // ORIGINAL: 0x00406880 ??1FlatButton@@QAE@XZ 0x00406880-0x004068D8;0x006509A0-0x006509B2
+// LEVER: unlike FlatButton::FlatButton() (the CONSTRUCTOR, capped by the
+//        SEH-frame ceiling below), the image's DESTRUCTOR genuinely HAS the
+//        SEH frame (`push -1 / push handler / mov eax,fs:[0] / push eax /
+//        mov fs:[0],esp`). A real `FlatButton::~FlatButton()` (not the
+//        `destroy()` plain-method spelling this marker used to point at via
+//        a `// symbol` fact) reproduces it: 0/24 -> 13/24. `destroy()`
+//        stays as its own separate method - external call sites
+//        (reportif.cpp, scroll.cpp) reach FlatButton objects through it by
+//        name, outside this pass's file list, so left alone.
+// RULED-OUT: 13/24 plateau - the image's EH-state store (`[ebp-4]=0`)
+//            lands AFTER both vtable stores; this body's lands between
+//            them regardless of `volatile` on the vtable-store pointer
+//            (tried both). VC6's own EH-state scheduling around the
+//            primary vtable install, not a source-form lever found here.
 // size      106 bytes
 // prototype void (__thiscall ??1FlatButton@@QAE@XZ)(FlatButton* this)
 // callers   93   call targets   2
@@ -76,6 +124,15 @@ Purpose: Destroy a FlatButton by installing its two virtual tables, closing
 Return Value: Instance pointer in EAX
 Status: Complete
 */
+FlatButton::~FlatButton() {
+    volatile uint32_t *const object =
+        reinterpret_cast<volatile uint32_t *>(this);
+    object[0x000 / 4] = FlatButtonPrimaryVtable;
+    object[0x444 / 4] = FlatButtonBufferVtable;
+    close();
+    BaseButton::destroy();
+}
+
 FlatButton *FlatButton::destroy() {
     volatile uint32_t *const object =
         reinterpret_cast<volatile uint32_t *>(this);
@@ -180,7 +237,6 @@ FlatButton *__fastcall flat_button_destructor_redirect(
 // frame there, correctly reproduced. FlatButton/PullDown's constructors
 // are catalogued WITHOUT one, and that absence is not reproduced by any
 // src/-only change tried here.
-static int *const g_009b8e44 = (int *)0x009B8E44;
 
 FlatButton::FlatButton() {
     BaseButton::construct();

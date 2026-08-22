@@ -426,7 +426,10 @@ void __fastcall buffer_free_data_redirect(Buffer *self, void *, int count) {
 /*
 Purpose: Report the line height of the buffer's primary font, falling back to
          the global default font when none is set.
-// ORIGINAL: 0x005DCAB0 ?text_line_height@Buffer@@QAEHXZ 0x005DCAB0-0x005DCADB
+// ORIGINAL: 0x005DCAB0 ?text_line_height@Buffer@@QAEHXZ 0x005DCAB0-0x005DCADB BYTE_EXACT
+// LEVER: branch polarity - image falls through to the override-add case and
+//        jumps AWAY to the no-override case at the end; `if (>= 0) { add }
+//        return { no override }` matches, `if (< 0) return` inverted it.
 // size      43 bytes
 // prototype int (__thiscall ?text_line_height@Buffer@@QAEHXZ)(Buffer* this)
 // callers   21   call targets   0
@@ -443,13 +446,13 @@ int Buffer::text_line_height() {
     const Font *const font = font1_;
     const int *const fields = reinterpret_cast<const int *>(font);
     const int height_override = fields[0x00 / 4];
-    if (height_override < 0) {
-        // No override: the font's own line height already includes leading.
-        return fields[0x0C / 4];
+    if (height_override >= 0) {
+        return static_cast<int>(
+            static_cast<uint32_t>(fields[0x10 / 4])
+            + static_cast<uint32_t>(height_override));
     }
-    return static_cast<int>(
-        static_cast<uint32_t>(fields[0x10 / 4])
-        + static_cast<uint32_t>(height_override));
+    // No override: the font's own line height already includes leading.
+    return fields[0x0C / 4];
 }
 
 int __fastcall buffer_text_line_height_redirect(Buffer *self, void *) {
@@ -1822,7 +1825,11 @@ int __fastcall buffer_sync_to_palette_redirect(
 /*
 Purpose: Report the height of the buffer's text font, resolving the process
          default the first time it is needed.
-// ORIGINAL: 0x005DCA80 ?text_height@Buffer@@QAEHXZ 0x005DCA80-0x005DCAA5
+// ORIGINAL: 0x005DCA80 ?text_height@Buffer@@QAEHXZ 0x005DCA80-0x005DCAA5 BYTE_EXACT
+// LEVER: single trailing `return font1_->height_;` after the `if` (no early
+//        return inside it) - two early `return`s each recompute a fresh
+//        load in the non-null path, one merged return reuses the memory
+//        operand the image's own non-null path re-reads for.
 // size      37 bytes
 // prototype int (__thiscall ?text_height@Buffer@@QAEHXZ)(Buffer* this)
 // callers   5   call targets   0
@@ -1840,7 +1847,6 @@ int Buffer::text_height() {
     // taken. The hoist put the load ahead of the test and cost the match.
     if (!font1_) {
         font1_ = FontDefault;
-        return font1_->height_;
     }
     return font1_->height_;
 }
@@ -1988,6 +1994,14 @@ int __fastcall buffer_set_clip_redirect(Buffer *self, void *, RECT *rect) {
 /*
 Purpose: Measure `len` bytes of a string, following the buffer's markup.
 // ORIGINAL: 0x005DC7C0 ?text_width@Buffer@@QAEHPADH@Z 0x005DC7C0-0x005DCA02
+// RULED-OUT: see the "NOT BYTE EXACT" paragraph below - the image drives
+//            this scan through `&len` (a spilled frame slot reloaded every
+//            iteration) and accumulates width in the dead `text` parameter
+//            slot, which is an inlined-helper-over-pointers shape a
+//            straight loop-over-locals translation cannot force VC6 into.
+//            122 of 201 mnemonics shared at the last attempt; not
+//            re-attempted this pass (578 bytes, deepest function in this
+//            file).
 // size      578 bytes
 // prototype int (__thiscall ?text_width@Buffer@@QAEHPADH@Z)(Buffer* this, int8*, int)
 // callers   16   call targets   3
@@ -2440,6 +2454,14 @@ void __fastcall buffer_clear_links_redirect(Buffer *self, void *) {
 /*
 Purpose: Draw a string, switching fonts on markup and recording link regions.
 // ORIGINAL: 0x005DCAE0 ?write_multi_font_raw_l@Buffer@@QAEHPADHHH@Z 0x005DCAE0-0x005DCE23
+// RULED-OUT: 3/288 - one extra local dword (`sub esp, 0xc` here against
+//            the image's `sub esp, 8`) throws off the whole frame from
+//            instruction 2 on. `text_width`'s own twin (same file) has an
+//            identical shape and an identical plateau; both are the
+//            deepest functions in this file (288 and 201 image
+//            instructions) and neither was re-attempted this pass -
+//            already explicitly marked "not yet byte exact" above with
+//            its own scope note.
 // size      835 bytes
 // prototype int (__thiscall ?write_multi_font_raw_l@Buffer@@QAEHPADHHH@Z)(Buffer* this, int8*, int, int, int)
 // callers   9   call targets   6
@@ -2592,6 +2614,16 @@ int Buffer::write_multi_font_raw_l(LPSTR text, int x_coord, int y_coord,
 Purpose: Draw at most `len` characters of a string at an explicit pen
          position, clamping the count to the string's own length first.
 // ORIGINAL: 0x005DCEA0 ?write_l@Buffer@@QAEHPADHHH@Z 0x005DCEA0-0x005DCF34
+// LEVER: re-wrote the min(strlen(text), len) TERNARY OUT TWICE in source
+//        (once for the `< 0` guard, once for the final argument) instead of
+//        hoisting it into one local - `call_diff` showed FEWER strlen calls
+//        than the image's four, matching Font::width's own documented
+//        macro-reevaluation lever. 0/64 -> 22/64 (0.850 similar).
+// RULED-OUT: remaining 22/64 plateau is a register role swap (esi/edi both
+//            hold `text`, assigned to the opposite register from the
+//            image's) starting at instruction 2, before either ternary is
+//            reached - a VC6 allocation choice at the very top of the
+//            function, not something the macro-reevaluation fix touches.
 // size      148 bytes
 // prototype int (__thiscall ?write_l@Buffer@@QAEHPADHHH@Z)(Buffer* this, int8*, int, int, int)
 // callers   29   call targets   2
@@ -2609,14 +2641,14 @@ it was. The font guard is the only path here that yields a status code.
 
 The original evaluates min(strlen(text), len) twice - once for the `< 0` test
 at 0x005DCEE8 and once for the value it forwards - because `min` was a macro;
-it calls strlen up to four times for the same reason. strlen is pure and `len`
-is untouched between them, so the single evaluation here is the same value in
-every role. The comparison is signed (`cmp eax, esi` / `jge`), so a negative
-`len` wins the min and takes the early exit.
-
-Verification note: `(measured < len)` and `(measured <= len)` select the same
-value when the two are equal, so a comparison mutant that only relaxes the
-strictness of this min is equivalent by construction and will survive.
+it calls strlen up to four times for the same reason (each `min` call
+re-evaluates `strlen(text)` a second time on whichever branch takes it, since
+the macro's "then" arm re-runs the expression it just compared). strlen is
+pure and `len` is untouched between them, so every evaluation is the same
+value - this body writes the macro's expansion out literally rather than
+hoisting it, to match the image's own repeated calls. The comparison is
+signed (`cmp eax, esi` / `jge`), so a negative `len` wins the min and takes
+the early exit.
 */
 int Buffer::write_l(LPSTR text, int x_coord, int y_coord, int len) {
     if (!text) {
@@ -2625,12 +2657,12 @@ int Buffer::write_l(LPSTR text, int x_coord, int y_coord, int len) {
     if (!font1_ || !font1_->is_initialized()) {
         return 3;
     }
-    const int measured = static_cast<int>(strlen(text));
-    const int limit = (measured < len) ? measured : len;
-    if (limit <= 0) {
+    if ((static_cast<int>(strlen(text)) < len ? static_cast<int>(strlen(text)) : len) < 0) {
         return x_coord;
     }
-    return write_multi_font_raw_l(text, x_coord, y_coord, limit);
+    return write_multi_font_raw_l(
+        text, x_coord, y_coord,
+        static_cast<int>(strlen(text)) < len ? static_cast<int>(strlen(text)) : len);
 }
 
 int __fastcall buffer_write_l_redirect(Buffer *self, void *, LPSTR text,
@@ -2642,6 +2674,18 @@ int __fastcall buffer_write_l_redirect(Buffer *self, void *, LPSTR text,
 Purpose: Draw at most `len` characters of a string flush against a
          rectangle's left edge and vertically centred on the text font.
 // ORIGINAL: 0x005DCF40 ?write_l@Buffer@@QAEHPADPAURECT@@H@Z 0x005DCF40-0x005DD016
+// LEVER: a real BUG in a prior pass's REASONING, not the image: the note
+//        below used to argue the font1_ re-test/rebind at 0x005DCFCD is
+//        unreachable (the earlier null-font guard already returned), and
+//        left it untranscribed on that theory - but the image still emits
+//        it regardless. Adding `if (!font1_) { font1_ = FontDefault; }`
+//        back moved 0/80 -> 4/80 (68 -> 73 instructions, matching shape
+//        much closer).
+// RULED-OUT: remaining gap is scheduling - the image reads all four RECT
+//            fields (including the dead `rect->right`) BEFORE the font1_
+//            recheck; this body's recheck (textually before the final
+//            `rect->left` use) gets scheduled first instead. Not chased
+//            further at this budget.
 // symbol    ?write_l@Buffer@@QAEHPADPAUtagRECT@@H@Z
 // size      214 bytes
 // prototype int (__thiscall ?write_l@Buffer@@QAEHPADPAURECT@@H@Z)(Buffer* this, int8*, RECT*, int)
@@ -2667,12 +2711,13 @@ check, so a reversed or degenerate rectangle is centred as-is and the
 arithmetic wraps rather than saturating. The horizontal position is
 rect->left verbatim - nothing is measured, and text_width is never called.
 
-Verification note: the original re-tests font1_ at 0x005DCFCD and rebinds it
-from the process default at 0x009BB484 when null. That rebind cannot execute
-here - the guard at 0x005DCF69 already returned zero for a null font1_, and
-only pure strlen calls run in between - so it is not transcribed. The
-rectangle overload of write_cent_l carries the identical rebind and there it
-IS reachable, because the intervening text-width call can clear the field.
+CORRECTED. This used to say the re-test/rebind at 0x005DCFCD is
+unreachable - the guard at 0x005DCF69 already returned zero for a null
+font1_, and only pure strlen calls run in between - and left it
+untranscribed on that theory. The image still emits it (`test edx,edx /
+jne` then a real rebind from the process default at 0x009BB484), so it is
+reproduced here regardless of provable unreachability: mechanical
+transcription, not a dead branch this recovery gets to prune.
 
 Verification note: the original loads rect->right at 0x005DCFB8 and spills it
 at 0x005DCFC6 without ever reading it back; the dead store is not transcribed.
@@ -2702,6 +2747,9 @@ int Buffer::write_l(LPSTR text, RECT *rect, int len) {
     // wrapping int arithmetic). Using rect->left/top/bottom and
     // font1_->height_ directly, without the memcpy bit-cast, drops the two
     // extra calls the image does not make.
+    if (!font1_) {
+        font1_ = FontDefault;
+    }
     const int y_span = (rect->bottom - font1_->height_) - rect->top;
     const int y_coord = rect->top + y_span / 2;
     return write_multi_font_raw_l(text, rect->left, y_coord, limit);
@@ -2795,6 +2843,13 @@ int __fastcall buffer_write_cent_l_redirect(Buffer *self, void *, LPSTR text,
 Purpose: Draw at most `len` characters of a string centred both horizontally
          and vertically inside a rectangle.
 // ORIGINAL: 0x005DD130 ?write_cent_l@Buffer@@QAEHPADPAURECT@@H@Z 0x005DD130-0x005DD24A
+// RULED-OUT: close in shape and count (109 compiled against the image's
+//            106) but low `agreeing` - the remainder is a consistent
+//            ebx/ebp/edi/ecx register permutation through the whole body,
+//            not a structural gap. Consistent with the sibling
+//            `write_cent_l(int,int,int,int)`'s own documented note that a
+//            two-guard split scores WORSE here (34/76 against 39/76); not
+//            re-tried. No further source-form lever found at this budget.
 // symbol    ?write_cent_l@Buffer@@QAEHPADPAUtagRECT@@H@Z
 // size      282 bytes
 // prototype int (__thiscall ?write_cent_l@Buffer@@QAEHPADPAURECT@@H@Z)(Buffer* this, int8*, RECT*, int)

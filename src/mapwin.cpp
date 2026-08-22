@@ -42,6 +42,19 @@ static void *const g_0066a574 = reinterpret_cast<void *>(0x0066A574);
 Purpose: Build a map window - attach its embedded GraphicWin virtual base,
          then its own TextureStore/Buffer/Font/ImageButton members.
 // ORIGINAL: 0x004626E0 ??0MapWin@@QAE@H@Z 0x004626E0-0x00462868;0x00655860-0x00655920
+// RULED-OUT: 4/92 - the image carries an SEH unwind frame here (`push -1
+//            / push 0x655916 / mov eax,fs:[0] / ...`), same symptom
+//            catalogued on FlatButton's constructor/destructor and
+//            GraphicWin's destructor. Not attempted: MapWin::construct is
+//            already the correct spelling per `most_derived_flag.py`'s
+//            confirmed finding (a plain method, because a real
+//            constructor would double-push the most-derived flag at every
+//            `->MapWin::MapWin(1)` call site) - there is no constructor-
+//            vs-method swap available the way FlatButton's destructor
+//            had. Reproducing the frame here would need isolating what
+//            about this specific `construct()` body triggers it despite
+//            being a plain method, which this pass's budget does not
+//            cover for an already-92-instruction function.
 // symbol    ?construct@MapWin@@QAEXH@Z
 // size      584 bytes
 // prototype void (__thiscall ??0MapWin@@QAE@H@Z)(MapWin* this, int)
@@ -375,7 +388,12 @@ Purpose: Broadcast a single-tile redraw to every live map window. Walks the
          walk, the null guard, the slot-0 exemption, the activity gate and the
          argument order from mutation testing entirely, leaving both functions
          with zero mutants. The duplication buys verification.
-// ORIGINAL: 0x0046AF40 ?draw_tile@@YAXHHH@Z 0x0046AF40-0x0046AF86
+// ORIGINAL: 0x0046AF40 ?draw_tile@@YAXHHH@Z 0x0046AF40-0x0046AF86 BYTE_EXACT
+// LEVER: `window->draw_radius(...)` (the METHOD) in place of
+//        `(ORIGINAL(window)->*MapWinOriginalDrawRadius)(...)` (the seam
+//        variable) - the image's own call site is a direct `call 0x46a2a0`,
+//        which the method compiles to; the seam load compiles an indirect
+//        call. Same lever already used by the free `draw_radius` below.
 // size      70 bytes
 // prototype void (__cdecl ?draw_tile@@YAXHHH@Z)(int xCoord, int yCoord, int drawType)
 // callers   34   call targets   1
@@ -404,7 +422,9 @@ Purpose: The radius-1 sibling of draw_tile - the identical 70-byte broadcast,
          activity gate, argument order, loop bound and epilogue all match
          instruction for instruction. Transcribed in full for the mutation
          coverage reason recorded on draw_tile.
-// ORIGINAL: 0x0046B140 ?draw_tiles@@YAXHHH@Z 0x0046B140-0x0046B186
+// ORIGINAL: 0x0046B140 ?draw_tiles@@YAXHHH@Z 0x0046B140-0x0046B186 BYTE_EXACT
+// LEVER: same as draw_tile above - `window->draw_radius(...)` in place of
+//        the `MapWinOriginalDrawRadius` seam dispatch.
 // size      70 bytes
 // prototype 
 // callers   10   call targets   1

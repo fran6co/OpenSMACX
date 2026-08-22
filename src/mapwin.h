@@ -370,7 +370,10 @@ MEASURED inline void __cdecl draw_tile(int x_coord, int y_coord, int draw_type) 
         // (x_coord, y_coord, 0, draw_type) - the pushes run right to left, so
         // the last one (`push eax`, [ebp+8]) is the first stack argument. The
         // literal 0 is this function's discriminator; see draw_tiles.
-        (ORIGINAL(window)->*MapWinOriginalDrawRadius)(x_coord, y_coord, 0, draw_type);
+        // THE METHOD, not the seam directly - the image's own call site is
+        // `call 0x46a2a0`, a direct rel32; the free `draw_radius` (mapwin.cpp)
+        // is the worked example of the same lever.
+        window->draw_radius(x_coord, y_coord, 0, draw_type);
     }
 }
 
@@ -391,6 +394,7 @@ MEASURED inline void __cdecl draw_tiles(int x_coord, int y_coord, int draw_type)
             }
         }
         // 0x0046B171, with `push 1` at 0x0046B16D supplying the radius.
-        (ORIGINAL(window)->*MapWinOriginalDrawRadius)(x_coord, y_coord, 1, draw_type);
+        // THE METHOD, not the seam directly - same lever as draw_tile above.
+        window->draw_radius(x_coord, y_coord, 1, draw_type);
     }
 }
