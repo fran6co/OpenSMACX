@@ -151,10 +151,11 @@ Purpose: Add a line feed (LF) to the end of a string. This assumes the buffer ha
 // TRIED: MNEMONIC_ONLY plateau (8/10, 1.000 similar at the best flag
 // set /O2 /Gy /GR- /GX) across all --all-flags sets and several spellings
 // (strlen(str)+str, non-const end, *end/*(end+1), a separate `int len`
-// local, str[len]/str[len+1]). Every one still emits `add esp,4` before
-// `add eax,esi` after the `call strlen`; the image has the pointer add
-// before the stack cleanup. Register-allocation-only gap, not a
-// source-shape one found so far.
+// local, str[len]/str[len+1], `end += strlen(str)` as a separate
+// increment). Every one still emits `add esp,4` before `add eax,esi`
+// after the `call strlen`; the image has the pointer add before the
+// stack cleanup. Register-allocation-only gap, not a source-shape one
+// found so far.
 // size      25 bytes
 // prototype
 // callers   1   call targets   1
@@ -892,28 +893,46 @@ Purpose: Initialize the Filefind global along with a CD check if there isn't a c
 //        `strcpy_s`/`strcat_s` forms, matching the sibling
 //        `filefind_get`'s own documented idiom - mechanical, does not
 //        close the gap alone (see TRIED).
-// TRIED: NOT byte-exact and not attempted further - this body is
-//            genuinely incomplete, not just differently spelled. The
-//            "JACKAL_CLASS" block is commented out in the committed
-//            source, but the image DOES call it for real
-//            (`call dword ptr [0x696ecc]`, the JACKAL_init import,
-//            right after the exe-dir setup) and returns 4 when it comes
-//            back null - the very code the comment stubs out. Past the
-//            CD-scan loop the image also runs an entire message-box
-//            interaction this body has only as a comment
-//            ("send FILEFIND_NOCD message..."): a real call to
-//            0x00601BF0 with five pushed arguments, a response check
-//            against a slot 0x3100 vtable-style dispatch, and MessageBox-
-//            shaped calls through two more IAT slots (0x669114,
-//            0x66911c). The stack frame is short by exactly 0x100 bytes
-//            (0x14c against the image's 0x24c) because of the missing
-//            message buffer this never allocates. Completing this needs
-//            real investigation of 0x00601BF0 and the vtable at
-//            `edi + 0x3100`, which is out of scope for this pass;
-//            recorded as MISMATCH rather than left silently wrong.
+// LEVER: THE PREVIOUS BODY WAS WRONG, NOT JUST DIFFERENTLY SPELLED - a
+//        `DEFECTS THAT ARE NOT MATCHING DEFECTS` case. Read raw byte-for-byte
+//        (no earlier "is_complete -> return 0" early exit, no HDD
+//        FindFirstFileA/FindClose pre-check before the CD scan - neither
+//        exists in the shipped bytes at all) and cross-checked against the
+//        PE import table (`669140`=GetDriveTypeA, `6690e0`=FindFirstFileA
+//        cached in ebp for the loop, `6690e4`=GetCurrentDirectoryA,
+//        `66911c`=FindClose, `669114`=SetCurrentDirectoryA - none of which
+//        is "MessageBox-shaped") and the four .rdata string constants at
+//        `696ea0`/`696ea4`/`696ea8`/`696eb8` ("\\", "A:\\", "FILEFIND_NOCD",
+//        "jackal"). `edi` is not a "JACKAL_CLASS": it is a `BasePop *`
+//        obtained through the SAME `PopupAllocHook` slot `BasePop::init_class`
+//        already uses (0x00696ECC), and the "message-box interaction" is a
+//        real call to `BasePop::start` (0x00601BF0) followed by the object's
+//        own vtable[0] scalar-deleting-destructor call
+//        (`??_GBasePop@@UAEPAXI@Z`, already recovered as
+//        `scalar_delete_base_pop` in deleting_thunks.cpp, dispatched here
+//        the same way `sound.cpp` dispatches slot 0 - through
+//        `vtable_method`, not by name, because the call site is an indirect
+//        `call dword ptr [edx]`). `is_complete` is read only ONCE, after the
+//        26-drive scan comes up empty, to decide whether to show that popup
+//        at all - not as an up-front bypass. `field_3100_` (already a named
+//        BasePop member) is the popup's own response code: 1 means Retry
+//        (loop back to rescan, `jmp` target is BEFORE the `root_path` reset,
+//        which an outer `for(;;)` with `continue` reproduces), anything else
+//        falls out of the loop.
+// TRIED: not yet byte-exact - the corrected control flow compiles and
+//        reproduces the image's calls in the image's order, but the exact
+//        local-buffer layout (there are at least three untyped stack
+//        buffers in the image's 0x24c frame: `root_path`/"A:\\" pattern,
+//        the WIN32_FIND_DATA, and a saved copy of `exe_dir` taken before the
+//        trailing backslash is appended, used only much later by
+//        `SetCurrentDirectoryA`) is approximate, so the frame size and
+//        instruction count still diverge. Recorded as MISMATCH, not
+//        NO_COMPILE - this is real progress over the previous body, which
+//        called none of `BasePop::start`, `PopupAllocHook`, or the deleting
+//        destructor at all.
 // symbol    ?filefind_init@@YAHPBDH@Z
 // size      453 bytes
-// prototype 
+// prototype
 // callers   1   call targets   3
 // kind      game
 // flags     sp_ready;purged_ok
@@ -923,36 +942,42 @@ Return Value: No errors (0) otherwise error
 Status: WIP
 */
 int __cdecl filefind_init(LPCSTR file_check, BOOL is_complete) {
+    if (!file_check) {
+        return 16; // error, file_check shouldn't be NULL
+    }
     // THE PRE-sprintf IDIOM, same as `filefind_get` immediately below:
     // `strcat`/plain assignment, no bounded forms - the image has no
     // bounds check anywhere in this function.
     FilefindPath.alt_path[0] = 0;
+
+    // SAME HOOK AS `BasePop::init_class` (basepop.cpp): the image reaches
+    // the popup allocator through the pointer at 0x00696ECC rather than by
+    // name.
+    typedef int(__cdecl *FnPtr)();
+    static int *const g_00696ecc = (int *)0x00696ECC;
+    BasePop *const popup =
+        reinterpret_cast<BasePop *>((*reinterpret_cast<FnPtr *>(g_00696ecc))());
+    if (!popup) {
+        return 4;
+    }
+
+    FilefindPath.relative_path[0] = 0;
+    strcat(FilefindPath.relative_path, file_check);
+
+    FilefindPath.cd_path[0] = 0;
+    FilefindPath.exe_dir[0] = 0;
+    FilefindPath.last_path[0] = 0;
     GetCurrentDirectoryA(256, FilefindPath.exe_dir);
+    char saved_dir[256];
+    saved_dir[0] = 0;
+    strcat(saved_dir, FilefindPath.exe_dir);
     strcat(FilefindPath.exe_dir, "\\");
 
-    if (is_complete) {
-        return 0; // complete install, no need for further checks
-    }
-    if (!file_check) {
-        return 16; // error, file_check shouldn't be NULL
-    }
-    WIN32_FIND_DATAA find_file_data;
-    FilefindPath.last_path[0] = 0;
-    strcat(FilefindPath.last_path, FilefindPath.exe_dir);
-    strcat(FilefindPath.last_path, file_check);
-    HANDLE file_found = FindFirstFileA(FilefindPath.last_path, &find_file_data);
-    FindClose(file_found);
-    if (file_found != INVALID_HANDLE_VALUE) {
-        return 0; // complete install on HDD, no need for CD
-    }
-
-    /*
-    JACKAL_CLASS callBack = JACKAL_init();
-    if(!callBack)
-    return 4;
-    */
+    typedef void *(OriginalObject::*delete_popup_fn)(unsigned int);
     char root_path[5];
-    do {
+    WIN32_FIND_DATAA find_file_data;
+    HANDLE file_found;
+    for (;;) {
         root_path[0] = 0;
         strcat(root_path, "A:\\");
         for (int i = 0; i < 26; i++) {
@@ -961,25 +986,40 @@ int __cdecl filefind_init(LPCSTR file_check, BOOL is_complete) {
                 FilefindPath.last_path[0] = 0;
                 strcat(FilefindPath.last_path, root_path);
                 strcat(FilefindPath.last_path, file_check);
-                //WIN32_FIND_DATA find_file_data;
-                //HANDLE file_found = FindFirstFile(g_filefind.last_path, &find_file_data);
                 file_found = FindFirstFileA(FilefindPath.last_path, &find_file_data);
-                FindClose(file_found);
                 if (file_found != INVALID_HANDLE_VALUE) {
+                    FindClose(file_found);
                     FilefindPath.cd_path[0] = 0;
                     strcat(FilefindPath.cd_path, root_path);
-                    // destroy JACKAL callBack
+                    SetCurrentDirectoryA(saved_dir);
+                    (ORIGINAL(popup)->*vtable_method<delete_popup_fn>(popup, 0))(1);
                     return 0;
                 }
             }
             root_path[0]++;
         }
+        if (is_complete) {
+            (ORIGINAL(popup)->*vtable_method<delete_popup_fn>(popup, 0))(1);
+            return 0;
+        }
         // send FILEFIND_NOCD message -> if doesn't exist (removed from jackal.txt) -> exit
-        // if user response is to retry -> loop around again
+        const int response = popup->start(const_cast<LPSTR>("jackal"), "FILEFIND_NOCD", -1, 0, 0, 0);
+        if (response) {
+            (ORIGINAL(popup)->*vtable_method<delete_popup_fn>(popup, 0))(1);
+            return response;
+        }
+        // field_3100_ (BasePop, private): the popup's own response code.
+        // Read through the raw offset rather than a new accessor, to avoid
+        // touching basepop.h for a single caller.
+        if (*reinterpret_cast<uint32_t *>(reinterpret_cast<uint8_t *>(popup) + 0x3100) == 1) {
+            // if user response is to retry -> loop around again
+            continue;
+        }
         // if user response is "ok", exit loop
-    } while (0);
-    // destroy JACKAL callBack
-    return 0;
+        SetCurrentDirectoryA(saved_dir);
+        (ORIGINAL(popup)->*vtable_method<delete_popup_fn>(popup, 0))(1);
+        return 0;
+    }
 }
 
 /*
