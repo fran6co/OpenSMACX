@@ -245,6 +245,7 @@ Purpose: Destroy a GraphicWin by installing the original virtual tables,
 //            not risk against 185 callers and the existing
 //            `DestructorProbe` call-order test harness this free function
 //            backs.
+// RULED-OUT: and the instrumentation is NOT what holds it. Measured 2026-08-22 with try_spellings: deleting the five `Probe.*` writes takes the compiled body from 35 instructions to 23, deleting them and both `if (XDestructor)` null guards takes it to 17, and hoisting the null check into a `base ? buffer : nullptr` ternary takes it to 15 - against an image of 28. ALL FOUR SCORE 0 of 28, because the divergence is at instruction 0 and everything after it is shifted by the missing frame. Do not spend a pass tidying this body; the frame is the whole ceiling, and reaching it needs `Buffer buffer_` and `Win` as a real member and a real base so VC6 generates the unwind chain itself.
 // symbol    ?graphic_win_destructor_redirect@@YIPAVGraphicWin@@PAV1@PAX@Z
 // size      121 bytes
 // prototype void (__thiscall ??1GraphicWin@@QAE@XZ)(GraphicWin* this)
@@ -562,6 +563,7 @@ Purpose: Initialise a GraphicWin. Reset the window, republish the eleven
 //            further; reordering their declarations was not tried because
 //            this address's body is too large for a full-function
 //            `try_spellings` candidate at this budget.
+// RULED-OUT: that reorder HAS now been tried, with try_spellings on the whole body, and it changes nothing: declaring `thickness` before `nonclient_flags` scores 2 of 112, identical to the committed order. So do the two shapes for the owned-Buffer allocation - collapsing `block`/`owned` into one `block != nullptr ? new (block) Buffer() : nullptr` ternary, and spilling the result as a `uint32_t` instead of a `Buffer *` - both 2 of 112. The eax/ecx swap is downstream, not the cause. What the cause is: under every one of the ten flag sets this tree scores, the compiled prologue opens `push ebp / mov ebp, esp` and an extra `push ecx` before its `mov eax, fs:[0]`, where the image reads fs:[0] FIRST and keeps no frame pointer - an FPO C++ EH frame whose handler is the `mov eax, <FuncInfo> / jmp __CxxFrameHandler` thunk at 0x00662B3F. That shifts every following instruction, which is why 112 instructions that listing_diff aligns into only 13 short diverging runs still score 2. `--all-flags` best is 0.943 similar at /c /O2 /Gy /GR- /Oy- /GX; /Oy alone does not drop the frame pointer here.
 // symbol    ?init@GraphicWin@@QAEHHHHHPADHPAVWin@@PAVMenu@@PAUBorderSizing@@@Z
 // CORRECTED from ?init@GraphicWin@@QAEXHHHHPADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z
 //   BaseButton::init calls it at 0x006072A2 and immediately tests the

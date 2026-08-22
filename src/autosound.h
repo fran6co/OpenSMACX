@@ -24,7 +24,11 @@ class AutoSound {
  public:
   AutoSound() { ; }
   ~AutoSound() { ; }
-  void construct();
+  // Returns `this`: the image's body opens `mov eax, ecx` and uses EAX as
+  // the object base for all 38 stores, which is what a __thiscall that has
+  // to leave `this` in EAX does. Declared `void`, VC6 keeps the base in ECX
+  // and scores 0 of 77.
+  AutoSound *construct();
   void close();
   void close2();
   void init();

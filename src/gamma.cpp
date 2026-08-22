@@ -90,6 +90,7 @@ const uint32_t GammaBufferVtable = 0x0066C3D0;
 /*
 Purpose: Construct the gamma-correction dialog.
 // ORIGINAL: 0x005C8DA0 ??0Gamma@@QAE@XZ 0x005C8DA0-0x005C8E60;0x00662A70-0x00662AC8 BYTE_EXACT
+// LEVER: the two vtable stores must come FIRST, before `gamma_ = 1.0`. Written after it the body is SHAPE_EXACT 39/42; written before it, BYTE_EXACT 42/42. The image interleaves them - `[esi+0xee8] = 0`, both vtables, then `[esi+0xeec] = 0x3ff00000` - which reads like the vtable stores landing in the middle of the double and impossible to write as source. It is the other way round: VC6 hoists the double's ZERO half ahead of whatever precedes it and leaves the 0x3ff00000 half in place, so putting the vtable stores first is what produces the image's own order. (This lesson was already written out in full INSIDE the function body, ten lines below the marker, where `decomp.reader` - which reads only the comment run immediately after the marker - could not see it: `osmx show` listed no LEVER for this address at all.)
 // size      280 bytes
 // prototype void (__thiscall ??0Gamma@@QAE@XZ)(Gamma* this)
 // callers   2   call targets   6
@@ -105,15 +106,7 @@ Gamma::Gamma() {
     // these exact two offsets. Gamma has its own vtable because it overrides;
     // nothing in this chain is declared `virtual`, so the store is explicit
     // rather than emitted by a constructor VC6 would generate.
-    //
-    // LEVER: these two stores must come FIRST, before `gamma_ = 1.0`. Written
-    //   after it the body is SHAPE_EXACT at 39/42; written before it, 42/42.
-    //   The image interleaves them - `[esi+0xee8] = 0`, both vtables, then
-    //   `[esi+0xeec] = 0x3ff00000` - which reads like the vtable stores land
-    //   in the middle of the double, impossible to write as source. It is the
-    //   other way round: VC6 hoists the double's ZERO half ahead of whatever
-    //   precedes it and leaves the 0x3ff00000 half in place, so putting the
-    //   vtable stores first is what produces the image's own order.
+    // The store order matters; see the LEVER line on the marker above.
     uint32_t *const object = reinterpret_cast<uint32_t *>(this);
     object[0x000 / 4] = GammaPrimaryVtable;
     object[0x444 / 4] = GammaBufferVtable;

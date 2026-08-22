@@ -59,7 +59,8 @@ Purpose: Close the ListBox: close its GraphicWin virtual base (source-owned) and
          its Dialog virtual base (original dependency via seam), both located
          through the runtime vbtable, then reset the ListBox-owned fields from
          the process defaults and re-arm Dialog::field_B4_.
-// ORIGINAL: 0x00609F20 ?close@ListBox@@QAEXXZ 0x00609F20-0x00609F9D
+// ORIGINAL: 0x00609F20 ?close@ListBox@@QAEXXZ 0x00609F20-0x00609F9D BYTE_EXACT
+// LEVER: dropped `volatile` from the `object` alias and from the field_B4_ store: 35/37 -> BYTE_EXACT 37/37. The volatile was an ALIAS, not a store-keeper - every store here is to the live `this`, so VC6 keeps them all without it, and the only thing volatile bought was an ordering fence that stopped VC6 hoisting the vbtable load `mov ecx, [esi]` ahead of the `mov [esi + 0x14], edx` store the way the image does. Measured: volatile object + plain B4 store is still 35/37, so it is the object alias that costs the two instructions. Also measured and rejected, all while `volatile` was still in place: hoisting the vbtable pointer into a local between the 0x10 and 0x14 stores (35/37), hoisting it to the top of the store block (35/37), and hoisting the whole vbase displacement instead of the pointer (32/37) - scheduling, not spelling, was the difference.
 // symbol    ?close@ListBox@@QAEIXZ
 // size      125 bytes
 // prototype void (__thiscall ?close@ListBox@@QAEXXZ)(ListBox* this)
@@ -92,8 +93,7 @@ uint32_t ListBox::close() {
     reinterpret_cast<Dialog *>(
         base + (*reinterpret_cast<const int32_t *const *>(base))[2])->close();
 
-    volatile uint32_t *const object =
-        reinterpret_cast<volatile uint32_t *>(base);
+    uint32_t *const object = reinterpret_cast<uint32_t *>(base);
     object[0x04 / 4] = 0;
     object[0x08 / 4] = 0;
     object[0x18 / 4] = 0;
@@ -105,7 +105,7 @@ uint32_t ListBox::close() {
     object[0x10 / 4] = ListBoxCloseStaticDefaults[2];   // 0x006970E8
     object[0x14 / 4] = ListBoxCloseStaticDefaults[3];   // 0x006970EC
     // Dialog::field_B4_ = 1, reached through the runtime vbtable displacement.
-    *reinterpret_cast<volatile uint32_t *>(
+    *reinterpret_cast<uint32_t *>(
         base + (*reinterpret_cast<const int32_t *const *>(base))[2] + 0xB4) = 1;
     object[0x30 / 4] = 0;
     object[0x34 / 4] = 0;

@@ -23,7 +23,9 @@ const uint32_t AutoSoundVtable = 0x0066FF34;
 /*
 Purpose: Construct an AutoSound by installing its virtual table and copying
          the complete process-default block in legacy store order.
-// ORIGINAL: 0x0062BA80 ??0AutoSound@@QAE@XZ 0x0062BA80-0x0062BBE8
+// ORIGINAL: 0x0062BA80 ??0AutoSound@@QAE@XZ 0x0062BA80-0x0062BBE8 BYTE_EXACT
+// LEVER: TWO changes, both needed: (1) `construct()` returns `this` rather than void, and (2) the 33-element tail is unrolled into named field assignments. MISMATCH 0/77 -> BYTE_EXACT 77/77. Measured separately: unrolling alone still scores 0 of 77 with 76 compiled instructions, because a void __thiscall keeps the object base in ECX and uses EAX/EDX as the load scratch, where the image opens `mov eax, ecx` and threads every one of the 38 stores through EAX with ECX/EDX as scratch - the register assignment a __thiscall that must leave `this` in EAX produces. The missing 77th instruction is that opening `mov eax, ecx`. Same unroll finding as init() and close() in this file.
+// symbol    ?construct@AutoSound@@QAEPAV1@XZ
 // size      360 bytes
 // prototype void (__thiscall ??0AutoSound@@QAE@XZ)(AutoSound* this)
 // callers   1   call targets   0
@@ -33,30 +35,58 @@ Purpose: Construct an AutoSound by installing its virtual table and copying
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
-void AutoSound::construct() {
-    volatile uint32_t *const object =
-        reinterpret_cast<volatile uint32_t *>(this);
-    volatile const uint32_t *const defaults = AutoSoundDefaults;
-    object[0x00 / 4] = AutoSoundVtable;
-    object[0x04 / 4] = defaults[0];
-    object[0x0C / 4] = defaults[1];
-    object[0x10 / 4] = defaults[2];
-    object[0x08 / 4] = defaults[3];
-    for (size_t index = 4; index < 37; ++index) {
-        object[index + 1] = defaults[index];
-    }
+AutoSound *AutoSound::construct() {
+    vtable_ = reinterpret_cast<PVOID>(AutoSoundVtable);
+    val_1_ = static_cast<int>(AutoSoundDefaults[0]);
+    val_3_ = static_cast<int>(AutoSoundDefaults[1]);
+    val_4_ = static_cast<int>(AutoSoundDefaults[2]);
+    val_2_ = static_cast<int>(AutoSoundDefaults[3]);
+    val_5_ = static_cast<int>(AutoSoundDefaults[4]);
+    val_6_ = static_cast<int>(AutoSoundDefaults[5]);
+    val_7_ = static_cast<int>(AutoSoundDefaults[6]);
+    val_8_ = static_cast<int>(AutoSoundDefaults[7]);
+    val_9_ = static_cast<int>(AutoSoundDefaults[8]);
+    val_10_ = static_cast<int>(AutoSoundDefaults[9]);
+    val_11_ = static_cast<int>(AutoSoundDefaults[10]);
+    val_12_ = static_cast<int>(AutoSoundDefaults[11]);
+    val_13_ = static_cast<int>(AutoSoundDefaults[12]);
+    val_14_ = static_cast<int>(AutoSoundDefaults[13]);
+    val_15_ = static_cast<int>(AutoSoundDefaults[14]);
+    val_16_ = static_cast<int>(AutoSoundDefaults[15]);
+    val_17_ = static_cast<int>(AutoSoundDefaults[16]);
+    val_18_ = static_cast<int>(AutoSoundDefaults[17]);
+    val_19_ = static_cast<int>(AutoSoundDefaults[18]);
+    val_20_ = static_cast<int>(AutoSoundDefaults[19]);
+    val_21_ = static_cast<int>(AutoSoundDefaults[20]);
+    val_22_ = static_cast<int>(AutoSoundDefaults[21]);
+    val_23_ = static_cast<int>(AutoSoundDefaults[22]);
+    val_24_ = static_cast<int>(AutoSoundDefaults[23]);
+    val_25_ = static_cast<int>(AutoSoundDefaults[24]);
+    val_26_ = static_cast<int>(AutoSoundDefaults[25]);
+    val_27_ = static_cast<int>(AutoSoundDefaults[26]);
+    val_28_ = static_cast<int>(AutoSoundDefaults[27]);
+    val_29_ = static_cast<int>(AutoSoundDefaults[28]);
+    val_30_ = static_cast<int>(AutoSoundDefaults[29]);
+    val_31_ = static_cast<int>(AutoSoundDefaults[30]);
+    val_32_ = static_cast<int>(AutoSoundDefaults[31]);
+    val_33_ = static_cast<int>(AutoSoundDefaults[32]);
+    val_34_ = static_cast<int>(AutoSoundDefaults[33]);
+    val_35_ = static_cast<int>(AutoSoundDefaults[34]);
+    val_36_ = static_cast<int>(AutoSoundDefaults[35]);
+    val_37_ = static_cast<int>(AutoSoundDefaults[36]);
+    return this;
 }
 
 AutoSound *__fastcall auto_sound_construct_redirect(AutoSound *self, void *) {
-    self->construct();
-    return self;
+    return self->construct();
 }
 
 /*
 Purpose: Reset every field from the process-default block, in the same
          legacy store order as construction but without touching the
          virtual table.
-// ORIGINAL: 0x0062BBF0 ?close@AutoSound@@QAEXXZ 0x0062BBF0-0x0062BD3D
+// ORIGINAL: 0x0062BBF0 ?close@AutoSound@@QAEXXZ 0x0062BBF0-0x0062BD3D BYTE_EXACT
+// LEVER: unrolled the `for (index = 4; index < 37)` tail into 33 named field assignments: MISMATCH 8/75 -> BYTE_EXACT 75/75. VC6 compiles the loop as 15 instructions stepping an address (`mov eax, 0x9bc090; mov edx, [eax]; ... add eax, 4`), where the image is 37 straight `mov reg, [0x9bc0NN] / mov [ecx + 0xNN], reg` pairs. Same finding init() already carried for its constant fill; measured here for a COPY, so it is not specific to a constant. The `volatile` on the object and defaults aliases is not what mattered - object_plain/object_volatile and AutoSoundDefaults-direct/local-copy all four reach 75/75 once the loop is gone; named fields were chosen because they say what is being written.
 // size      333 bytes
 // prototype void (__thiscall ?close@AutoSound@@QAEXXZ)(AutoSound* this)
 // callers   3   call targets   0
@@ -67,16 +97,46 @@ Return Value: n/a
 Status: Complete
 */
 void AutoSound::close() {
-    volatile uint32_t *const object =
-        reinterpret_cast<volatile uint32_t *>(this);
-    volatile const uint32_t *const defaults = AutoSoundDefaults;
-    object[0x04 / 4] = defaults[0];
-    object[0x0C / 4] = defaults[1];
-    object[0x10 / 4] = defaults[2];
-    object[0x08 / 4] = defaults[3];
-    for (size_t index = 4; index < 37; ++index) {
-        object[index + 1] = defaults[index];
-    }
+    // Spelled out, NOT a loop - the same finding init() already carries.
+    // VC6 keeps the 33-element tail as an address-stepping loop and never
+    // unrolls it; the image is 333 bytes of straight-line load/store pairs.
+    val_1_ = static_cast<int>(AutoSoundDefaults[0]);
+    val_3_ = static_cast<int>(AutoSoundDefaults[1]);
+    val_4_ = static_cast<int>(AutoSoundDefaults[2]);
+    val_2_ = static_cast<int>(AutoSoundDefaults[3]);
+    val_5_ = static_cast<int>(AutoSoundDefaults[4]);
+    val_6_ = static_cast<int>(AutoSoundDefaults[5]);
+    val_7_ = static_cast<int>(AutoSoundDefaults[6]);
+    val_8_ = static_cast<int>(AutoSoundDefaults[7]);
+    val_9_ = static_cast<int>(AutoSoundDefaults[8]);
+    val_10_ = static_cast<int>(AutoSoundDefaults[9]);
+    val_11_ = static_cast<int>(AutoSoundDefaults[10]);
+    val_12_ = static_cast<int>(AutoSoundDefaults[11]);
+    val_13_ = static_cast<int>(AutoSoundDefaults[12]);
+    val_14_ = static_cast<int>(AutoSoundDefaults[13]);
+    val_15_ = static_cast<int>(AutoSoundDefaults[14]);
+    val_16_ = static_cast<int>(AutoSoundDefaults[15]);
+    val_17_ = static_cast<int>(AutoSoundDefaults[16]);
+    val_18_ = static_cast<int>(AutoSoundDefaults[17]);
+    val_19_ = static_cast<int>(AutoSoundDefaults[18]);
+    val_20_ = static_cast<int>(AutoSoundDefaults[19]);
+    val_21_ = static_cast<int>(AutoSoundDefaults[20]);
+    val_22_ = static_cast<int>(AutoSoundDefaults[21]);
+    val_23_ = static_cast<int>(AutoSoundDefaults[22]);
+    val_24_ = static_cast<int>(AutoSoundDefaults[23]);
+    val_25_ = static_cast<int>(AutoSoundDefaults[24]);
+    val_26_ = static_cast<int>(AutoSoundDefaults[25]);
+    val_27_ = static_cast<int>(AutoSoundDefaults[26]);
+    val_28_ = static_cast<int>(AutoSoundDefaults[27]);
+    val_29_ = static_cast<int>(AutoSoundDefaults[28]);
+    val_30_ = static_cast<int>(AutoSoundDefaults[29]);
+    val_31_ = static_cast<int>(AutoSoundDefaults[30]);
+    val_32_ = static_cast<int>(AutoSoundDefaults[31]);
+    val_33_ = static_cast<int>(AutoSoundDefaults[32]);
+    val_34_ = static_cast<int>(AutoSoundDefaults[33]);
+    val_35_ = static_cast<int>(AutoSoundDefaults[34]);
+    val_36_ = static_cast<int>(AutoSoundDefaults[35]);
+    val_37_ = static_cast<int>(AutoSoundDefaults[36]);
 }
 
 void __fastcall auto_sound_close_redirect(AutoSound *self, void *) {
@@ -87,7 +147,8 @@ void __fastcall auto_sound_close_redirect(AutoSound *self, void *) {
 Purpose: Reset every field from the process-default block, exactly as close
          does but storing in ascending field order - the two differ only in
          which of the shuffled leading fields lands first.
-// ORIGINAL: 0x0062BDD0 ?close2@AutoSound@@QAEXXZ 0x0062BDD0-0x0062BF1D
+// ORIGINAL: 0x0062BDD0 ?close2@AutoSound@@QAEXXZ 0x0062BDD0-0x0062BF1D BYTE_EXACT
+// LEVER: unrolled the `for` tail into 33 named field assignments, exactly as close() above - the loop compiles to 15 address-stepping instructions where the image is 37 straight load/store pairs.
 // size      333 bytes
 // prototype void (__thiscall ?close2@AutoSound@@QAEXXZ)(AutoSound* this)
 // callers   0   call targets   0
@@ -98,16 +159,44 @@ Return Value: n/a
 Status: Complete
 */
 void AutoSound::close2() {
-    volatile uint32_t *const object =
-        reinterpret_cast<volatile uint32_t *>(this);
-    volatile const uint32_t *const defaults = AutoSoundDefaults;
-    object[0x04 / 4] = defaults[0];
-    object[0x08 / 4] = defaults[3];
-    object[0x0C / 4] = defaults[1];
-    object[0x10 / 4] = defaults[2];
-    for (size_t index = 4; index < 37; ++index) {
-        object[index + 1] = defaults[index];
-    }
+    // Spelled out, NOT a loop - see close() above.
+    val_1_ = static_cast<int>(AutoSoundDefaults[0]);
+    val_2_ = static_cast<int>(AutoSoundDefaults[3]);
+    val_3_ = static_cast<int>(AutoSoundDefaults[1]);
+    val_4_ = static_cast<int>(AutoSoundDefaults[2]);
+    val_5_ = static_cast<int>(AutoSoundDefaults[4]);
+    val_6_ = static_cast<int>(AutoSoundDefaults[5]);
+    val_7_ = static_cast<int>(AutoSoundDefaults[6]);
+    val_8_ = static_cast<int>(AutoSoundDefaults[7]);
+    val_9_ = static_cast<int>(AutoSoundDefaults[8]);
+    val_10_ = static_cast<int>(AutoSoundDefaults[9]);
+    val_11_ = static_cast<int>(AutoSoundDefaults[10]);
+    val_12_ = static_cast<int>(AutoSoundDefaults[11]);
+    val_13_ = static_cast<int>(AutoSoundDefaults[12]);
+    val_14_ = static_cast<int>(AutoSoundDefaults[13]);
+    val_15_ = static_cast<int>(AutoSoundDefaults[14]);
+    val_16_ = static_cast<int>(AutoSoundDefaults[15]);
+    val_17_ = static_cast<int>(AutoSoundDefaults[16]);
+    val_18_ = static_cast<int>(AutoSoundDefaults[17]);
+    val_19_ = static_cast<int>(AutoSoundDefaults[18]);
+    val_20_ = static_cast<int>(AutoSoundDefaults[19]);
+    val_21_ = static_cast<int>(AutoSoundDefaults[20]);
+    val_22_ = static_cast<int>(AutoSoundDefaults[21]);
+    val_23_ = static_cast<int>(AutoSoundDefaults[22]);
+    val_24_ = static_cast<int>(AutoSoundDefaults[23]);
+    val_25_ = static_cast<int>(AutoSoundDefaults[24]);
+    val_26_ = static_cast<int>(AutoSoundDefaults[25]);
+    val_27_ = static_cast<int>(AutoSoundDefaults[26]);
+    val_28_ = static_cast<int>(AutoSoundDefaults[27]);
+    val_29_ = static_cast<int>(AutoSoundDefaults[28]);
+    val_30_ = static_cast<int>(AutoSoundDefaults[29]);
+    val_31_ = static_cast<int>(AutoSoundDefaults[30]);
+    val_32_ = static_cast<int>(AutoSoundDefaults[31]);
+    val_33_ = static_cast<int>(AutoSoundDefaults[32]);
+    val_34_ = static_cast<int>(AutoSoundDefaults[33]);
+    val_35_ = static_cast<int>(AutoSoundDefaults[34]);
+    val_36_ = static_cast<int>(AutoSoundDefaults[35]);
+    val_37_ = static_cast<int>(AutoSoundDefaults[36]);
 }
 
 void __fastcall auto_sound_close2_redirect(AutoSound *self, void *) {

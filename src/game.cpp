@@ -64,14 +64,12 @@ game stores there and disagree on everything else, and the difference is in the
 original rather than in the transcription. world_site() at 005C4FD0 carries the
 same distinction as map.cpp's site_xrange().
 */
-static int territory_xrange(int x) {
+__forceinline static int territory_xrange(int x) {
     if (!(MapIsFlat & 1)) {
-        if (x >= 0) {
-            if (x >= MapLongitudeBounds) {
-                x -= MapLongitudeBounds;
-            }
-        } else {
+        if (x < 0) {
             x += MapLongitudeBounds;
+        } else if (x >= MapLongitudeBounds) {
+            x -= MapLongitudeBounds;
         }
     }
     return x;
@@ -81,6 +79,51 @@ static int territory_xrange(int x) {
 Purpose: Recompute which faction owns each tile of the map, and rebuild every
          per-faction and per-region tally that ownership feeds.
 // ORIGINAL: 0x00523DD0 ?reset_territory@@YAXXZ 0x00523DD0-0x00524202
+// LEVER: 9/349 and 0.403 similar -> 158/349 and 0.789 similar, on five measured
+//   changes, in this order. (1) `territory_xrange` - a local static helper with no
+//   marker of its own - was a real `call`; the image inlines it, and
+//   `__forceinline` is what VC6 needs to be told. That alone made call_diff agree
+//   (10 calls -> 9) and took 0.403 -> 0.434. (2) DROPPED the `PlayerData &player`
+//   binding from the six-array zeroing loop and indexed `PlayersData[faction_id]`
+//   at each store: 0.434 -> 0.482 and 21/349 -> 55/349. Binding the row gives VC6
+//   a second pointer to strength-reduce, and it then carries the region index as
+//   `lea esi, [edx + ecx]` off it, where the image keeps EDX on the two byte
+//   arrays and ECX as a plain index (`cmp ecx, 0x80`). (3) The site block is an
+//   `if (tile->bit & BIT_BASE_RADIUS) { site = 0; } else { ... }`, NOT
+//   `site = 0;` followed by an inverted guard: the image falls THROUGH to the
+//   zero and jumps to the val2 read (`test ah, 0x10 / je`). 0.482 -> 0.583.
+//   (4) `& ~0x1F` and `& ~0x3F` rather than `& 0xE0` and `& 0xC0` - identical on
+//   these `uint8_t` fields, but the complement stops VC6 narrowing the whole test
+//   to a byte, which is what puts `xor ecx, ecx / mov cl, [edi] / and ecx,
+//   0xFFFFFFE0 / cmp ecx, 0x60 / setl` in place of `and cl, 0xE0 / cmp cl, 0x60 /
+//   sbb / neg`. 0.583 -> 0.613, and it brought the compiled instruction count to
+//   the image's 349 exactly. (5) `territory_xrange` again, rewritten
+//   `if (x < 0) ... else if (x >= bounds) ...`: the image's `jge` falls through to
+//   the negative arm, the `if (x >= 0)` spelling inverts it. 0.613 -> 0.630.
+//   (6) ONE `Continent *` for the region, reused by the unk_3 store and the pods
+//   increment: the image computes `region * 28` once into EDI and addresses both
+//   as `[edi + 0x9AA738]` / `[edi + 0x9AA73C]`, while `Continents[region].field`
+//   at each site made VC6 recompute the whole lea/sub/shl chain across the
+//   intervening `goody_at` call. 0.630 -> 0.789.
+// RULED-OUT: measured and rejected on the way. Splitting the rocky/fungus,
+//   visibility/is_human and BaseFindDist chains into separate `if`s: all three
+//   score exactly what the chained form does. Splitting the owner add_site
+//   condition into two arms that each call add_site does raise positional
+//   agreement (5 -> 13 at the time) but adds a third add_site call the image does
+//   not make, which call_diff then reports as MORE - rejected on that. Hoisting
+//   the masked climate/rockiness into `const int` locals: no change, VC6 folds
+//   them. A `PlayerData *` walked with `player++` in the zeroing loop: no change.
+//   Storing the byte arrays first in that loop: no change. `Continent &` instead
+//   of `Continent *`, and a `uint8_t *` for the unk_82 read/modify/write: both
+//   identical to what is committed, so they are free spellings, not levers.
+// RULED-OUT: what is left is register ASSIGNMENT, 20 diverging runs under
+//   /c /O2 /Gy /GR- /Oy- /GX and one instruction short of the image's 349. The
+//   faction loop is a straight ESI/EDI swap (image counts in ESI and walks the
+//   unk_79 pointer in EDI, this tree the other way round); `region * 2` is CSE'd
+//   into `shl eax, 1` by the image and re-encoded as `[eax + eax + disp]` here at
+//   all three unk_78/80/81 increments; and `cmp eax, ecx` / `cmp ecx, eax` at the
+//   territory-distance test is the same comparison with the operands in the other
+//   registers. None of those is reachable from the statement level.
 // size      1074 bytes
 // prototype 
 // callers   11   call targets   7
@@ -134,15 +177,19 @@ Both branches require the faction either to see the tile or to be an AI above
 difficulty 3, which is the standard "the AI is allowed to know" test.
 */
 void __cdecl reset_territory() {
+    // NO `PlayerData &player` HERE. Binding the faction row to a reference
+    // gives VC6 a second live pointer to strength-reduce, and it then carries
+    // the region INDEX as a subtraction off it; the image keeps `edx` on the
+    // byte pair and `ecx` as the index. Indexing `PlayersData[faction_id]`
+    // at each store instead is what reproduces that.
     for (int faction_id = 0; faction_id < MaxPlayerNum; faction_id++) {
-        PlayerData &player = PlayersData[faction_id];
         for (int region = 0; region < MaxContinentNum; region++) {
-            player.unk_80[region] = 0;
-            player.unk_78[region] = 0;
-            player.unk_79[region] = 0;
-            player.unk_81[region] = 0;
-            player.unk_83[region] = 0;
-            player.unk_82[region] = 0;
+            PlayersData[faction_id].unk_80[region] = 0;
+            PlayersData[faction_id].unk_78[region] = 0;
+            PlayersData[faction_id].unk_79[region] = 0;
+            PlayersData[faction_id].unk_81[region] = 0;
+            PlayersData[faction_id].unk_83[region] = 0;
+            PlayersData[faction_id].unk_82[region] = 0;
         }
     }
     for (int region = 0; region < MaxContinentNum; region++) {
@@ -166,7 +213,13 @@ void __cdecl reset_territory() {
             }
             int owner = -1;
             int base_id = base_find(x, y, -1, region, -1, -1);
-            BOOL is_ocean_tile = (tile->climate & 0xE0) < (ALT_SHORE_LINE << 5);
+            // `& ~0x1F`, not `& 0xE0`. Identical on a `uint8_t` field - both
+            // keep bits 5..7 of a value the promotion has already zero-extended -
+            // but the complement is what stops VC6 narrowing the whole test to a
+            // byte. The image loads `xor ecx, ecx / mov cl, [edi]`, masks
+            // `and ecx, 0xFFFFFFE0` and compares the DWORD `cmp ecx, 0x60 / setl`;
+            // `& 0xE0` gives `and cl, 0xE0 / cmp cl, 0x60 / sbb / neg` instead.
+            BOOL is_ocean_tile = (tile->climate & ~0x1F) < (ALT_SHORE_LINE << 5);
             if (base_id >= 0) {
                 int max_dist = (int)Rules->territory_max_dist_base;
                 if (is_ocean_tile) {
@@ -200,7 +253,10 @@ void __cdecl reset_territory() {
             }
             PlayersData[owner].unk_78[region]++;
             if (tile->climate & (RAINFALL_MOIST | RAINFALL_RAINY)) {
-                if ((tile->val3 & 0xC0) < (ROCKINESS_ROCKY << 6)
+                // `& ~0x3F` for the same reason as the altitude mask above: the
+                // image compares the widened dword (`and ecx, 0xFFFFFFC0 /
+                // cmp ecx, 0x80 / jge`), `& 0xC0` compares the byte (`jae`).
+                if ((tile->val3 & ~0x3F) < (ROCKINESS_ROCKY << 6)
                     && !(tile->bit & BIT_FUNGUS)) {
                     PlayersData[owner].unk_80[region]++;
                     if (tile->bit & BIT_BASE_RADIUS) {
@@ -208,19 +264,33 @@ void __cdecl reset_territory() {
                     }
                 }
             }
-            int site = 0;
-            if (!(tile->bit & BIT_BASE_RADIUS)) {
+            // if/else, NOT `site = 0` then an inverted guard. The image
+            // falls THROUGH to the zero and jumps to the val2 read
+            // (`test ah, 0x10 / je 0x0052401F`), which is what the positive
+            // test produces; the guard-clause form inverts every branch in
+            // this block.
+            int site;
+            if (tile->bit & BIT_BASE_RADIUS) {
+                site = 0;
+            } else {
                 site = tile->val2 >> 4;
                 if (!site) {
                     site = world_site(x, y, false);
                     site_set(x, y, site);
                 }
             }
-            int region_best = (int)Continents[region].unk_3;
+            // ONE pointer to the region's Continent, reused by both the
+            // unk_3 store here and the pods increment below. The image
+            // computes `region * 28` once into EDI and addresses both fields
+            // as `[edi + 0x9AA738]` / `[edi + 0x9AA73C]`; writing
+            // `Continents[region].field` at each site made VC6 recompute the
+            // whole `lea/sub/shl` chain for the second one.
+            Continent *const continent = &Continents[region];
+            int region_best = (int)continent->unk_3;
             if (site > region_best) {
                 region_best = site;
             }
-            Continents[region].unk_3 = (uint32_t)region_best;
+            continent->unk_3 = (uint32_t)region_best;
             if (owner) {
                 int owner_best = PlayersData[owner].unk_82[region];
                 if (site > owner_best) {
@@ -231,7 +301,7 @@ void __cdecl reset_territory() {
             if (!goody_at(x, y)) {
                 continue;
             }
-            Continents[region].pods++;
+            continent->pods++;
             PlayersData[owner].unk_83[region]++;
             if (owner) {
                 if (tile->visibility & (1 << owner)
@@ -392,10 +462,60 @@ void __cdecl say_year(LPSTR output) {
     strcat_s(output, 80, year);
 }
 
+// Out-of-line forwarders for repair_phase's three helpers that the image
+// CALLS and this tree would otherwise fold in. See the LEVER on the
+// 0x00526030 marker below; `#pragma auto_inline(off)` is what VC6 6.0 has
+// instead of `__declspec(noinline)`.
+#pragma auto_inline(off)
+static int __cdecl breed_mod_call(int base_id, int faction_id) {
+    return breed_mod(base_id, faction_id);
+}
+static void __cdecl draw_tile_call(int x, int y, int flags) {
+    draw_tile(x, y, flags);
+}
+#pragma auto_inline(on)
+
 /*
 Purpose: Run the repair phase for the specified faction: reset the per-turn unit state, heal every
          damaged unit by its reactor-weighted repair rate, and redraw the tiles the units stand on.
 // ORIGINAL: 0x00526030 ?repair_phase@@YAXH@Z 0x00526030-0x005267A9
+// LEVER: 2/572 and 0.125 similar -> 59/572 and 0.299 similar, and the direct-call
+//   multiset went from 11 to the image's exact 8. Four measured changes.
+//   (1) THREE helpers this tree folded in that the image CALLS: `breed_mod`
+//   (0x004E65C0) and `draw_tile` (0x0046AF40) are both `MEASURED inline`, and
+//   VC6 6.0 has no `__declspec(noinline)` - `#pragma auto_inline(off)` around a
+//   plain forwarder in THIS file does the job, and the forwarders sit just above
+//   this marker. breed_mod alone was worth three of the extra calls, because
+//   inlining it brought its four `has_fac_built_call` bitmask calls with it where
+//   the image makes exactly one. (2) That one belongs to THIS body: the
+//   facility/project test uses `has_fac_built_call`, not `has_fac_built`, so the
+//   bitmask is a real `E8` at 0x005263D1. (1)+(2) took 0.125 -> 0.241.
+//   (3) `veh_top` HAND-INLINED. The note below already said the image writes the
+//   climb out at 0x005264A8-0x005264C6 rather than calling 0x00579920, because
+//   veh.cpp is a different translation unit - but this body still CALLED it, so
+//   the note described the image and not the code beside it. Transcribing the
+//   climb (starting after the dead `veh_id < 0` guard) brought the call count to
+//   8 against the image's 8 and 0.241 -> 0.256; veh.cpp already does this at two
+//   of its own sites. (4) `int damage_before`, not `uint8_t`: the image
+//   zero-extends on the way in (`xor eax, eax / mov al, [esi + 0x952838]`) and
+//   spills a DWORD, where the byte local spills a byte and drops the extension -
+//   0.256 -> 0.297 on its own. (5) The VFLAG_UNK_2 test is written NEGATED with
+//   the arms swapped, because the image's `jne` goes to the `&= ~VFLAG_UNK_2` arm
+//   and falls through to `&= ~VFLAG_UNK_1`. 0.297 -> 0.299.
+// RULED-OUT: `triad` as `uint8_t` or `int` rather than `uint32_t`. The image does
+//   keep the chassis triad in CL (`mov cl, [ecx + 0x94A379] / test cl, cl /
+//   cmp cl, 2`) where this tree zero-extends it into a dword, so the width lever
+//   looks right - but measured on all three declarations it is 0.300/0.299/0.299
+//   against 0.299 committed, and both `uint8_t` variants RAISE the diverging-run
+//   count (55 -> 61 and 62). It is not the lever it looks like.
+// RULED-OUT: the VFLAG arms are still 16-bit here (`and eax, 0xFFFE`) against the
+//   image's 8-bit (`and al, 0xFE`), and writing the read-modify-write straight on
+//   `Vehs[veh_id].flags` with no local does not change that - 0.256, identical to
+//   the local. The other standing gap is `tile->bit`: the image re-reads it as a
+//   memory operand at every test (`test byte ptr [eax + 8], 1`, then
+//   `test dword ptr [eax + 8], 0x800`), while VC6 loads the dword once here and
+//   tests CL and CH out of it. Both reads are already written out separately in
+//   the source, so the CSE is not something the statement level can withdraw.
 // size      1913 bytes
 // prototype void (__cdecl ?repair_phase@@YAXH@Z)(int factionID)
 // callers   1   call targets   8
@@ -450,9 +570,10 @@ here is a statement about faithfulness to the original, not a coverage gap being
   - `veh_top()` returning negative. The original inlines the stack walk here rather than calling
     0x00579920, because veh.cpp is a different translation unit; its `veh_id < 0` guard
     (0x005264A2) and the `top < 0` test that follows (0x005264CC) are both dead, since the
-    argument is this loop's own index. Calling veh_top() rather than re-transcribing the walk is
-    exact: the walk at 0x005264A8-0x005264C6 is instruction-for-instruction that function. The
-    `stack_id >= 0` this leaves behind is still killable, and killed: unit 0 is a real unit.
+    argument is this loop's own index. The walk at 0x005264A8-0x005264C6 is
+    instruction-for-instruction that function, and it is now transcribed here rather than called -
+    calling it was semantically exact and structurally wrong, one `E8` the image does not have.
+    The `stack_id >= 0` this leaves behind is still killable, and killed: unit 0 is a real unit.
 
 The two mutants that DO survive are equivalences rather than gaps. Swapping the `facility_id` and
 `project_id` declarations reorders two uninitialised locals that are both assigned before either
@@ -472,7 +593,10 @@ void __cdecl repair_phase(int faction_id) {
         }
         int x = Vehs[veh_id].x;
         int y = Vehs[veh_id].y;
-        uint8_t damage_before = Vehs[veh_id].dmg_incurred;
+        // `int`, not `uint8_t`: the image zero-extends the byte on the way in
+        // (`xor eax, eax / mov al, [esi + 0x952838]`) and spills a DWORD local,
+        // where a `uint8_t` local spills a byte and drops the zero-extension.
+        int damage_before = Vehs[veh_id].dmg_incurred;
         Vehs[veh_id].unk_6 = 0;
         Vehs[veh_id].moves_expended = 0;
         Vehs[veh_id].state &= ~(VSTATE_UNK_2 | VSTATE_UNK_2000 | VSTATE_CRAWLING);
@@ -481,11 +605,14 @@ void __cdecl repair_phase(int faction_id) {
         // fourth turn rather than all at once.
         if (!((TurnCurrentNum + veh_id) & 3)) {
             Vehs[veh_id].state &= ~VSTATE_UNK_800;
+            // Tested NEGATED, with the arms the other way round: the image's `jne`
+            // goes to the `&= ~VFLAG_UNK_2` arm and FALLS THROUGH to
+            // `&= ~VFLAG_UNK_1`, which is what the negated test produces.
             uint16_t flags = Vehs[veh_id].flags;
-            if (flags & VFLAG_UNK_2) {
-                flags &= (uint16_t)~VFLAG_UNK_2;
-            } else {
+            if (!(flags & VFLAG_UNK_2)) {
                 flags &= (uint16_t)~VFLAG_UNK_1;
+            } else {
+                flags &= (uint16_t)~VFLAG_UNK_2;
             }
             Vehs[veh_id].flags = flags;
         }
@@ -562,7 +689,7 @@ void __cdecl repair_phase(int faction_id) {
                 && Vehs[veh_id].proto_id < MaxVehProtoFactionNum) {
                 // Native life is healed outright by any base whose owner has a lifecycle bonus,
                 // and the bonus is the base owner's rather than the unit owner's.
-                if (breed_mod(base_id, Bases[base_id].faction_id_current)) {
+                if (breed_mod_call(base_id, Bases[base_id].faction_id_current)) {
                     repair_rate = Vehs[veh_id].dmg_incurred;
                 }
             } else {
@@ -579,7 +706,7 @@ void __cdecl repair_phase(int faction_id) {
                     facility_id = FAC_COMMAND_CENTER;
                     project_id = SP_COMMAND_NEXUS;
                 }
-                if (has_fac_built(facility_id, base_id) || has_project(project_id, faction_id)) {
+                if (has_fac_built_call(facility_id, base_id) || has_project(project_id, faction_id)) {
                     repair_rate = Vehs[veh_id].dmg_incurred;
                 }
             }
@@ -589,7 +716,18 @@ void __cdecl repair_phase(int faction_id) {
             && veh_cargo(veh_id)
             && (Vehs[veh_id].order == ORDER_SENTRY_BOARD
                 || altitude_at(x, y) < ALT_BIT_SHORE_LINE)) {
-            for (int stack_id = veh_top(veh_id); stack_id >= 0;
+            // veh_top (0x00579920) HAND-INLINED, matching the two sites in
+            // veh.cpp that already do it: the image writes the climb out at
+            // 0x005264A8-0x005264C6 rather than calling it, because veh.cpp is
+            // a different translation unit and nothing can inline across one.
+            // Its `veh_id < 0` guard is dead here - the argument is this loop's
+            // own index - which is why the transcription starts at the climb.
+            int top_veh_id = veh_id;
+            for (int16_t prev = Vehs[top_veh_id].prev_veh_id_stack; prev >= 0;
+                prev = Vehs[prev].prev_veh_id_stack) {
+                top_veh_id = prev;
+            }
+            for (int stack_id = top_veh_id; stack_id >= 0;
                 stack_id = Vehs[stack_id].next_veh_id_stack) {
                 if (stack_id != veh_id && has_abil(Vehs[stack_id].proto_id, ABL_REPAIR)) {
                     has_repair_bay = true;
@@ -657,7 +795,7 @@ void __cdecl repair_phase(int faction_id) {
             && !(Vehs[veh_id].visibility & (1 << LocalFaction))) {
             continue;
         }
-        draw_tile(x, y, -1);
+        draw_tile_call(x, y, -1);
     }
     do_all_draws();
 }
