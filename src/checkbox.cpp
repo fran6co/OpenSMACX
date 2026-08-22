@@ -123,7 +123,7 @@ CheckBox::CheckBox(int a1) {
 Purpose: Tear down a CheckBox: reinstall the base subobjects' own
          vtable/vtordisp values, reset the state fields, and close the
          Dialog and GraphicWin subobjects through the object's own vbtable.
-// ORIGINAL: 0x0060E740 ??1CheckBox@@QAE@XZ 0x0060E740-0x0060E7C0
+// ORIGINAL: 0x0060E740 ??1CheckBox@@UAE@XZ 0x0060E740-0x0060E7C0
 // TRIED: MEASURED 2/37 agreeing. The image's opening `this` is already
 //            the vtordisp-adjusted GraphicWin-subobject pointer -
 //            `mov eax,[ecx-0x1c]; lea esi,[ecx-0x1c]` - and this body's
@@ -133,7 +133,7 @@ Purpose: Tear down a CheckBox: reinstall the base subobjects' own
 //            hand-written subtraction the way it does for a genuine
 //            vtordisp thunk over real virtual inheritance.
 // size      128 bytes
-// prototype void (__thiscall ??1CheckBox@@QAE@XZ)(CheckBox* this)
+// prototype void (__thiscall ??1CheckBox@@UAE@XZ)(CheckBox* this)
 // callers   24   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -187,10 +187,18 @@ CheckBox::~CheckBox() {
 Purpose: Reset the check box to its defaults, then close its dialog and
          graphic base. Both calls resolve through the vbtable, so they reach
          the Dialog and the virtual base rather than the object itself.
-// ORIGINAL: 0x0060E7C0 ?close@CheckBox@@QAEXXZ 0x0060E7C0-0x0060E7F9 BYTE_EXACT
+// ORIGINAL: 0x0060E7C0 ?close@CheckBox@@QAEIXZ 0x0060E7C0-0x0060E7F9 BYTE_EXACT
+// TRIED: the reconstructed signature `?close@CheckBox@@QAEXXZ`. The census
+//   names are RECONSTRUCTIONS - the image is stripped - and this one had the
+//   same method carrying two signatures across one hierarchy: Dialog::close and
+//   four derived close() returning void, GraphicWin::close and ListBox::close
+//   returning uint32_t. The original cannot have had that. Unified on
+//   `uint32_t` (the form two bodies were already tuned to, for the EAX
+//   residue) and on `virtual`, which is what the vtable slot these classes
+//   install by hand actually is - hence `UAEIXZ`.
 // LEVER: the vbtable is RE-READ for the second call, exactly as the destructor above it does. One cached `vbtable` local has to survive the first `close()`, so VC6 spends a callee-saved register and a `push edi` the image never makes: 5 of 20. Reading `[esi]` again for the GraphicWin call is 20 of 20. Reading it inline at BOTH sites scores the same 20 of 20, so the first read may stay a named local.
 // size      57 bytes
-// prototype void (__thiscall ?close@CheckBox@@QAEXXZ)(CheckBox* this)
+// prototype uint32_t (__thiscall ?close@CheckBox@@QAEIXZ)(CheckBox* this)
 // callers   13   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -198,7 +206,7 @@ Purpose: Reset the check box to its defaults, then close its dialog and
 Return Value: n/a
 Status: Complete
 */
-void CheckBox::close() {
+uint32_t CheckBox::close() {
     // The base offsets come from the object's own vbtable, read at run time,
     // not from where they sit in a most-derived CheckBox. When one is
     // embedded in a larger class - Dialogs holds a RadioButton at 0x44 - that
@@ -216,7 +224,7 @@ void CheckBox::close() {
     reinterpret_cast<Dialog *>(self + vbtable[2])->Dialog::close();
     const int32_t *const vbtable2 =
         *reinterpret_cast<const int32_t *const *>(self);
-    reinterpret_cast<GraphicWin *>(self + vbtable2[1])->close();
+    return reinterpret_cast<GraphicWin *>(self + vbtable2[1])->close();
 }
 
 void __fastcall check_box_close_redirect(CheckBox *self, void *) {
@@ -363,9 +371,9 @@ void CheckBox::set_state_flag(long value) {
 
 /*
 Purpose: Repaint on dialog focus, dispatching through the enclosing object.
-// ORIGINAL: 0x0060FB90 ?on_dialog_focus@CheckBox@@QAEXH@Z 0x0060FB90-0x0060FBA7 BYTE_EXACT
+// ORIGINAL: 0x0060FB90 ?on_dialog_focus@CheckBox@@UAEXH@Z 0x0060FB90-0x0060FBA7 BYTE_EXACT
 // size      23 bytes
-// prototype void (__thiscall ?on_dialog_focus@CheckBox@@QAEXH@Z)(CheckBox* this, int)
+// prototype void (__thiscall ?on_dialog_focus@CheckBox@@UAEXH@Z)(CheckBox* this, int)
 // callers   1   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -382,18 +390,18 @@ void CheckBox::on_dialog_focus(int a1) {
     // and edx for the vtable, which is mnemonic-identical and byte-different.
     // a1 is never read; `ret 4` still pops it.
     VCall *const target = reinterpret_cast<VCall *>(
-        reinterpret_cast<char *>(this) - 0x1c +
+        reinterpret_cast<char *>(this) +
         *reinterpret_cast<int *>(reinterpret_cast<char *>(
             *reinterpret_cast<int **>(
-                reinterpret_cast<char *>(this) - 0x1c)) + 4));
+                reinterpret_cast<char *>(this))) + 4));
     target->slot062();
 }
 
 /*
 Purpose: Clear the hover index and repaint, through the enclosing object.
-// ORIGINAL: 0x0060FC30 ?on_mouse_leave@CheckBox@@QAEXHH@Z 0x0060FC30-0x0060FC58 BYTE_EXACT
+// ORIGINAL: 0x0060FC30 ?on_mouse_leave@CheckBox@@UAEXHH@Z 0x0060FC30-0x0060FC58 BYTE_EXACT
 // size      40 bytes
-// prototype void (__thiscall ?on_mouse_leave@CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)
+// prototype void (__thiscall ?on_mouse_leave@CheckBox@@UAEXHH@Z)(CheckBox* this, int, int)
 // callers   1   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -403,27 +411,32 @@ Return Value: n/a
 Status: Complete
 */
 void CheckBox::on_mouse_leave(int a1, int a2) {
-    // `this - 0x1C` reaches a vbtable-shaped descriptor with two deltas:
-    // entry +8 locates the field, entry +4 the enclosing object's vtable.
-    // Note 0x1C + 0xD4 == 0xF0 across this whole family, so the
-    // field is at a FIXED +0xF0 in the enclosing object and these classes are
-    // subobjects at differing offsets inside it.
+    // `this` reaches a vbtable-shaped descriptor with two deltas: entry +8
+    // locates the field, entry +4 the enclosing object's vtable.
+    //
+    // THE CONSTANT IS 0xF0 NOW, AND THAT IS THE TRUE ONE. This body used to
+    // hand-write the -0x1C walk back to the enclosing object and carry 0xD4,
+    // with a note that 0x1C + 0xD4 == 0xF0 "across this whole family". With
+    // GraphicWin a real virtual base the compiler performs that walk itself as
+    // part of the override's entry, so the source states the field's ACTUAL
+    // fixed offset in the enclosing object instead of a subobject-relative
+    // remainder. The image emits `[edx + ecx + 0xd4]` either way.
     //
     // The arithmetic must go through `char *`. Through `int *` the compiler
     // scales the +8 and emits [eax+0x20].
     //
     // Both parameters are dead; `ret 8` still pops them.
     *reinterpret_cast<int *>(
-        reinterpret_cast<char *>(this) + 0xD4 +
+        reinterpret_cast<char *>(this) + 0xF0 +
         *reinterpret_cast<int *>(reinterpret_cast<char *>(
             *reinterpret_cast<int **>(
-                reinterpret_cast<char *>(this) - 0x1C)) + 8)) = -1;
+                reinterpret_cast<char *>(this))) + 8)) = -1;
 
     reinterpret_cast<VCall *>(
-        reinterpret_cast<char *>(this) - 0x1C +
+        reinterpret_cast<char *>(this) +
         *reinterpret_cast<int *>(reinterpret_cast<char *>(
             *reinterpret_cast<int **>(
-                reinterpret_cast<char *>(this) - 0x1C)) + 4))->slot062();
+                reinterpret_cast<char *>(this))) + 4))->slot062();
 }
 
 /*
