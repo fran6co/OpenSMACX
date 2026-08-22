@@ -839,3 +839,48 @@ void Console::editor_polar() {
     world_climate();
     ::draw_map(1);   // the FREE draw_map; see Console::editor_climate above
 }
+
+/*
+Purpose: Reset the console - clear the message ring, the two 0x20-entry tables,
+         and the trailing state, then close the Buffer, Time and GraphicWin
+         subobjects and clear the map.
+// ORIGINAL: 0x0051D7D0 ?close@Console@@QAEXXZ 0x0051D7D0-0x0051D88E BYTE_EXACT
+// LEVER: PROMOTED out of src/unrecovered/0051d7d0.cpp, whose claim proved the ARTIFACT reproduced while the program held a pending_bodies forwarder. `void close()` was not declared on Console at all - that, not the body, is what kept it in an artifact.
+// symbol    ?close@Console@@QAEXXZ
+// size      190 bytes
+// kind      game
+Return Value: n/a
+Status: Complete
+*/
+void Console::close() {
+    char *self = reinterpret_cast<char *>(this);
+    *reinterpret_cast<uint32_t *>(self + 0x23bc8) = 0xffffffff;
+    *reinterpret_cast<uint32_t *>(self + 0x23bd8) = 0;
+    *reinterpret_cast<uint32_t *>(self + 0x23be4) = 0;
+    *reinterpret_cast<uint32_t *>(self + 0x23be8) = 0;
+    *reinterpret_cast<uint32_t *>(self + 0x23bf0) = 0;
+    *reinterpret_cast<uint32_t *>(self + 0x23bf4) = 0;
+    *reinterpret_cast<uint32_t *>(self + 0x23c00) = 0;
+    *reinterpret_cast<uint32_t *>(self + 0x23c04) = 0;
+    *reinterpret_cast<uint32_t *>(self + 0x23bfc) = 0;
+    *reinterpret_cast<uint32_t *>(self + 0x23bf8) = 0;
+    *reinterpret_cast<uint32_t *>(self + 0x23c08) = 0;
+    int count = 0x20;
+    do {
+        count -= 1;
+        uint32_t idx1 = *reinterpret_cast<uint32_t *>(self + 0x23c08);
+        *reinterpret_cast<uint32_t *>(self + 0x23c10 + idx1 * 4) = 0;
+        uint32_t idx2 = *reinterpret_cast<uint32_t *>(self + 0x23c08);
+        *reinterpret_cast<uint32_t *>(self + 0x23c90 + idx2 * 4) = 0;
+    } while (count != 0);
+    *reinterpret_cast<uint32_t *>(self + 0x23d10) = 0;
+    *reinterpret_cast<uint32_t *>(self + 0x23d18) = 0;
+    *reinterpret_cast<uint32_t *>(self + 0x23d88) = 0;
+    *reinterpret_cast<uint32_t *>(self + 0x23d80) = 0;
+    *reinterpret_cast<uint32_t *>(self + 0x23d8c) = 0;
+    *reinterpret_cast<uint32_t *>(self + 0x23d84) = 0;
+    reinterpret_cast<Buffer *>(self + 0x2247c)->close();
+    reinterpret_cast<Time *>(self + 0x22a04)->close();
+    reinterpret_cast<GraphicWin *>(self + 0x22a2c)->close();
+    clear(0);
+}
