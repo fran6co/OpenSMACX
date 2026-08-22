@@ -241,6 +241,20 @@ void RadioButton::on_dialog_focus(int a1) {
 }
 
 /*
+Purpose: Adjust the receiver from the thunk1 subobject back to RadioButton and
+         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
+         names VC6's own vtordisp adjustor thunk, emitted because
+         RadioButton::on_dialog_focus overrides a virtual through a virtual
+         base. There is no C++ here to get right, only a name to record.
+// ORIGINAL: 0x00407050 ?on_dialog_focus@thunk1_RadioButton@@QAEXH@Z 0x00407050-0x00407058 BYTE_EXACT
+// symbol    ?on_dialog_focus@RadioButton@@$4PPPPPPPM@A@AEXH@Z
+// size      8 bytes
+// prototype void (__thiscall ?on_dialog_focus@thunk1_RadioButton@@QAEXH@Z)(RadioButton* this, int)
+// kind      game
+Status: Complete
+*/
+
+/*
 Purpose: Clear the hover index and repaint, through the enclosing object.
 // ORIGINAL: 0x0060E4A0 ?on_mouse_leave@RadioButton@@QAEXHH@Z 0x0060E4A0-0x0060E4C8 BYTE_EXACT
 // symbol    ?on_mouse_leave@RadioButton@@UAEXHH@Z
@@ -279,6 +293,19 @@ void RadioButton::on_mouse_leave(int a1, int a2) {
             *reinterpret_cast<int **>(
                 reinterpret_cast<char *>(this))) + 4))->slot062();
 }
+
+/*
+Purpose: Adjust the receiver from the thunk1 subobject back to RadioButton and
+         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
+         names VC6's own vtordisp adjustor thunk, emitted because
+         RadioButton::on_mouse_leave overrides a virtual reached through a virtual
+         base. There is no C++ here to get right, only a name to record.
+// ORIGINAL: 0x00407010 ?on_mouse_leave@thunk1_RadioButton@@QAEXHH@Z 0x00407010-0x00407018 BYTE_EXACT
+// symbol    ?on_mouse_leave@RadioButton@@$4PPPPPPPM@A@AEXHH@Z
+// size      8 bytes
+// kind      game
+Status: Complete
+*/
 
 /*
 // ORIGINAL: 0x0060E4D0 ?init_class@RadioButton@@QAAHXZ 0x0060E4D0-0x0060E5C2;0x00662F44-0x00662F59
@@ -343,3 +370,16 @@ int __cdecl RadioButton::init_class() {
     buf->Buffer::~Buffer();
     return 0;
 }
+
+/*
+Purpose: Adjust the receiver from the thunk1 subobject back to RadioButton and
+         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
+         names VC6's own vtordisp adjustor thunk, emitted because
+         RadioButton::attach overrides a virtual reached through a virtual
+         base. There is no C++ here to get right, only a name to record.
+// ORIGINAL: 0x00407090 ?attach@thunk1_RadioButton@@QAEHPAUGraphicWin@@HHH@Z 0x00407090-0x00407098 BYTE_EXACT
+// symbol    ?attach@RadioButton@@$4PPPPPPPM@A@AEHPAXHHH@Z
+// size      8 bytes
+// kind      game
+Status: Complete
+*/

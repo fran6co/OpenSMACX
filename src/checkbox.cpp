@@ -416,6 +416,19 @@ void CheckBox::on_dialog_focus(int a1) {
 }
 
 /*
+Purpose: Adjust the receiver from the thunk1 subobject back to CheckBox and
+         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
+         names VC6's own vtordisp adjustor thunk, emitted because
+         CheckBox::on_dialog_focus overrides a virtual reached through a virtual
+         base. There is no C++ here to get right, only a name to record.
+// ORIGINAL: 0x0060FEA0 ?on_dialog_focus@thunk1_CheckBox@@QAEXH@Z 0x0060FEA0-0x0060FEA8 BYTE_EXACT
+// symbol    ?on_dialog_focus@CheckBox@@$4PPPPPPPM@A@AEXH@Z
+// size      8 bytes
+// kind      game
+Status: Complete
+*/
+
+/*
 Purpose: Clear the hover index and repaint, through the enclosing object.
 // ORIGINAL: 0x0060FC30 ?on_mouse_leave@CheckBox@@UAEXHH@Z 0x0060FC30-0x0060FC58 BYTE_EXACT
 // size      40 bytes
@@ -458,6 +471,19 @@ void CheckBox::on_mouse_leave(int a1, int a2) {
 }
 
 /*
+Purpose: Adjust the receiver from the thunk1 subobject back to CheckBox and
+         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
+         names VC6's own vtordisp adjustor thunk, emitted because
+         CheckBox::on_mouse_leave overrides a virtual reached through a virtual
+         base. There is no C++ here to get right, only a name to record.
+// ORIGINAL: 0x0060FE60 ?on_mouse_leave@thunk1_CheckBox@@QAEXHH@Z 0x0060FE60-0x0060FE68 BYTE_EXACT
+// symbol    ?on_mouse_leave@CheckBox@@$4PPPPPPPM@A@AEXHH@Z
+// size      8 bytes
+// kind      game
+Status: Complete
+*/
+
+/*
 // ORIGINAL: 0x0060FC60 ?init_class@CheckBox@@QAAHXZ 0x0060FC60-0x0060FD52;0x00662F84-0x00662F99
 // symbol    ?init_class@CheckBox@@SAHXZ
 // TRIED: a real local `Buffer buf;` double-destructs (the explicit ~Buffer() call plus the automatic scope-exit one). A raw `char[sizeof(Buffer)]` + placement `new` + explicit `->~Buffer()` is the shape the original uses. SEH prologue/unwind funclet not reproduced (same gap as the RadioButton sibling).
@@ -490,3 +516,16 @@ int __cdecl CheckBox::init_class() {
     buf->~Buffer();
     return 0;
 }
+
+/*
+Purpose: Adjust the receiver from the thunk1 subobject back to CheckBox and
+         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
+         names VC6's own vtordisp adjustor thunk, emitted because
+         CheckBox::attach overrides a virtual reached through a virtual
+         base. There is no C++ here to get right, only a name to record.
+// ORIGINAL: 0x0060FEE0 ?attach@thunk1_CheckBox@@QAEHPAUGraphicWin@@HHH@Z 0x0060FEE0-0x0060FEE8 BYTE_EXACT
+// symbol    ?attach@CheckBox@@$4PPPPPPPM@A@AEHPAXHHH@Z
+// size      8 bytes
+// kind      game
+Status: Complete
+*/
