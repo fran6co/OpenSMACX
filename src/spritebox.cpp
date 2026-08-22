@@ -686,21 +686,48 @@ Status: Complete
 // any other checkout.
 class SpriteBoxList {
  public:
-  void empty();
+  void close();
 };
 
+// SUB_402BB0 IS THIS CLASS'S DELETING DESTRUCTOR, still unrecovered
+// (src/recovered/units/00402bb0.cpp, NOT_MATCHING). Named here because the
+// evidence is here:
+//
+//   * it installs the SAME pair, 0x0066943C at the object's start and
+//     0x00669438 through the vbtable, which no other class in the image does;
+//   * it then stores 0x006693AC at +0x1C. That one is referenced 158 times
+//     across the image, so it is not class-specific - it is StringStruct's own
+//     base vtable, installed by everything that embeds one;
+//   * it is entered on that base: `lea esi, [ecx - 0x1c]` walks back to the
+//     derived object's start;
+//   * it calls 0x00402970, StringStruct::remove_all;
+//   * and it ends `mov cl, [ebp+8]; test cl, 1` with a conditional
+//     `operator delete` - the flags byte a deleting destructor takes.
+//
+// So it is `??_ESpriteBoxList@@...`, the VECTOR deleting destructor - `??_E`
+// rather than the census's `??_G`, for the reason forty other thunks needed
+// correcting today.
+
 /*
-Purpose: Empty the polymorphic list - close every element through its own
-         vtable, then clear the head, count and capacity.
+Purpose: Close the list - install its pair of virtual tables, release every
+         entry through its own vtable, then clear head, count and position.
 // ORIGINAL: 0x00611730 sub_611730 0x00611730-0x006117C3 BYTE_EXACT
+// CORRECTED from sub_611730
+//   It is a StringStruct-derived list's `close`. src/stringstruct.h declares
+//   `close_with_tables(primary, virtual_base)` as "installs the pair of
+//   virtual tables, releases the entries, then clears the position", and
+//   StringStruct's first two members are `primary_abi_word_` and
+//   `virtual_base_abi_word_` - this body's two immediate stores. src/dialog.cpp
+//   calls the same helper the same way for the list at Dialog's this+0xBC.
 // LEVER: PROMOTED out of src/unrecovered/00611730.cpp. Called by both ??0SpriteBox and ??1SpriteBox, so it is shared setup and teardown rather than one or the other.
-// symbol    ?empty@SpriteBoxList@@QAEXXZ
+// TRIED: spelling the body AS `list->close_with_tables(0x0066943C, 0x00669438)` on the StringStruct at `this - 0x28`, which is the idiom dialog.cpp uses. It compiles to 5 instructions against the image's 63 - the inline folds to almost nothing at this offset - so the walk stays written out here.
+// symbol    ?close@SpriteBoxList@@QAEXXZ
 // size      147 bytes
 // kind      game
 Return Value: n/a
 Status: Complete
 */
-void SpriteBoxList::empty() {
+void SpriteBoxList::close() {
     class LocalVCall {
     public:
         virtual void slot0(int) = 0;
