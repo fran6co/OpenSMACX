@@ -614,7 +614,7 @@ inline bool __cdecl has_fac_built(int facility_id) {
 // (general.h) rather than the folded shift/and `MEASURED inline bitmask`
 // gives everywhere else - moved here (from base.cpp, where the marker note
 // for it still lives) so breed_mod below can reach it too.
-static __forceinline bool has_fac_built_call(int facility_id, int base_id) {
+static __forceinline int has_fac_built_call(int facility_id, int base_id) {
     int offset;
     int mask;
     bitmask_call(facility_id, &offset, &mask);
