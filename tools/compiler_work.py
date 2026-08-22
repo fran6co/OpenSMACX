@@ -77,8 +77,22 @@ SHAPES = [
      "dispatches through a fake class because the real function is not "
      "declared virtual. Declare it."),
 
-    ("ORIGINAL() seam", 192,
-     re.compile(r"\bORIGINAL\("),
+    # ONE SHAPE UNTIL 2026-08-23, and one shape was the mistake: the remedy
+    # decides the split, not the syntax. Both spell `ORIGINAL(`, but a
+    # vtable-slot dispatch is cured by DECLARING THE METHOD VIRTUAL (it is the
+    # VCall shim's defect wearing different clothes), while a named-pointer
+    # seam is cured by declaring the method and forwarding it from
+    # pending_bodies.cpp. A single ratchet let one grow while the other
+    # shrank, invisibly. The two regexes classify by what follows on the
+    # LINE - the census is line-wise, so a lookahead cannot leak across
+    # statements.
+    ("ORIGINAL() vtable-slot dispatch", 70,
+     re.compile(r"\bORIGINAL\((?=.*vtable\[)"),
+     "reads the target out of a vtable slot by hand because the method is not "
+     "declared virtual. Declare it - the compiler writes this dispatch."),
+
+    ("ORIGINAL() named-pointer seam", 122,
+     re.compile(r"\bORIGINAL\((?!.*vtable\[)"),
      "reaches a member through a function-pointer slot, which compiles "
      "`FF 15` where the image has `E8`. Call it by name once its body lands."),
 ]
