@@ -93,6 +93,23 @@
 //
 //   So the slot is proven and WHICH of ListBox's ~40 methods fills it is not.
 //   Only four of them are recovered and just one enters adjusted, on GraphicWin.
+//
+//   READ THE VTABLE, 2026-08-22, AND THE SLOT IS PROVEN EVEN THOUGH THE
+//   DECLARATION STILL CANNOT EXPRESS IT. This class installs its Dialog vtable
+//   at 0x00670408; its entries point back into ListBox code through ADJUSTOR
+//   THUNKS, and 0x0060D030 opens `sub ecx, dword ptr [ecx - 4]` - which IS the
+//   vtordisp adjustment, reading the displacement stored four bytes before the
+//   base and subtracting it from `this`. adjustor_thunks.cpp catalogues them
+//   as `?on_redraw@thunk3_ListBox@@` and `?attach@thunk1_ListBox@@`, so those
+//   are the overridden slots.
+//
+//   Declaring either `virtual` on Dialog was measured and BREAKS THE SIBLINGS:
+//   CheckBox, RadioButton, SpriteBox and EditGroup all declare on_redraw and
+//   attach too, so each would gain a Dialog vtordisp the image says it does
+//   not have - 62 and 63 failed size assertions respectively. Their on_redraw
+//   and attach are GRAPHICWIN's virtuals; ListBox's are in the DIALOG vtable.
+//   One flat declaration per name cannot say which base's slot it fills, and
+//   that - not the identity of the method - is what still blocks this.
 //   `Dialog::item` is declared virtual here because it produces the proven
 //   layout, NOT because the image says it is the override - and the price is
 //   the two forwarders below.
