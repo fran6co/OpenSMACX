@@ -478,7 +478,6 @@ static const uint32_t TutWinPrimaryVtable = 0x0066DD84;
 static const uint32_t TutWinBufferVtable = 0x0066DD7C;
 
 TutWin::TutWin() {
-    uint32_t *const object = reinterpret_cast<uint32_t *>(this);
     field_53B4_ = 0;
     field_53C0_ = 0;
     field_53D0_ = 0;

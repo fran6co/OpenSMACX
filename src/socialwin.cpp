@@ -78,8 +78,6 @@ SocialWin::SocialWin() {
     new (static_cast<GraphicWin *>(this)) GraphicWin();
     char *const self = reinterpret_cast<char *>(this);
 
-    uint32_t *const object = reinterpret_cast<uint32_t *>(this);
-
     // spot_, socEffect_, socEffectOrig_, energyLockButtons_, flatButtons_,
     // buttonGroups_, buttonGroup_ and font1_..font9_ are REAL members in
     // socialwin.h already (not raw storage) - they build IMPLICITLY, in

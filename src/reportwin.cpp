@@ -94,7 +94,6 @@ ReportWin::ReportWin() {
     typedef void(__fastcall *pending_flic_ctor)(void *, void *);
     reinterpret_cast<pending_flic_ctor>(0x00629D60)(flic_, nullptr);
 
-    uint32_t *const object = reinterpret_cast<uint32_t *>(this);
 }
 
 /*

@@ -57,7 +57,6 @@ Status: Complete
 NetMsg::NetMsg(int a1, int a2, int a3) {
     field_5380_ = a2;
     field_537C_ = a1;
-    uint32_t *const object = reinterpret_cast<uint32_t *>(this);
     field_5384_ = 0;
     field_5388_ = a3;
 }

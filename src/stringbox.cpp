@@ -93,8 +93,6 @@ Status: Complete
 StringBox::StringBox() {
 
     char *const self = reinterpret_cast<char *>(this);
-    uint32_t *const object = reinterpret_cast<uint32_t *>(this);
-
     // The 0x30 bytes at 0x2B70 are a StringList (src/stringstruct.h) and the
     // image builds it INLINE - there is no call to its constructor here. Same
     // block, same two-stage vtable install through the vbtable's second slot,
