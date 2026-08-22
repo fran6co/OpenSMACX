@@ -475,6 +475,44 @@ void __fastcall graphic_win_redraw_redirect(GraphicWin *self, void *) {
     self->redraw();
 }
 
+/*
+Purpose: When visible, tell the window to update and flip a rect the size of
+         the RECT at this+0x474 (the same field redraw() reads), positioned
+         at the origin.
+// ORIGINAL: 0x005D56B0 ?update@GraphicWin@@QAEXPAUGraphicWin@@@Z 0x005D56B0-0x005D571D BYTE_EXACT
+// symbol    ?update@GraphicWin@@QAEXPAV1@@Z
+// size      109 bytes
+// prototype void (__thiscall ?update@GraphicWin@@QAEXPAUGraphicWin@@@Z)(GraphicWin* this, GraphicWin*)
+// callers   8   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005ECFE0 0x005EFD20 0x005F74A0 0x005F7E90
+Return Value: n/a
+Status: Complete
+*/
+void GraphicWin::update(GraphicWin *) {
+    // Four separate field reads, not a memcpy'd RECT: the latter compiles
+    // a real `call memcpy` here (unlike redraw()'s own read of the same
+    // field, which VC6 happens to inline), where the image loads each of
+    // the four dwords directly.
+    uint8_t *const object = reinterpret_cast<uint8_t *>(this);
+    int height = *reinterpret_cast<int *>(object + 0x480) -
+                 *reinterpret_cast<int *>(object + 0x478);
+    int width = *reinterpret_cast<int *>(object + 0x47C) -
+                *reinterpret_cast<int *>(object + 0x474);
+
+    if (static_cast<Win *>(this)->is_visible()) {
+        RECT rect;
+        rect.left = 0;
+        rect.top = 0;
+        rect.right = width;
+        rect.bottom = height;
+        static_cast<Win *>(this)->update_window(&rect);
+        static_cast<Win *>(this)->client_to_screen(&rect);
+        Win::flip(&rect);
+    }
+}
+
 // GraphicWin::init's four remaining original dependencies. Win::init carries
 // the whole window-creation closure, compute_min_size is frame arithmetic,
 // nonclient_to_client converts an outer size to a client size in place, and

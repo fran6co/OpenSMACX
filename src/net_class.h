@@ -101,7 +101,6 @@ static_assert(sizeof(VoiceTx) == 0x58,
   */
 class Net {
  public:
-  // 0x00630A00, a pending_bodies forwarder.
   int get(unsigned long *a, unsigned long *b);
 
  public:
@@ -221,3 +220,10 @@ char *__fastcall net_get_player_name_redirect(
 // the same form `BaseCurrent()` and `console_map_win()` already use.
 inline Net *&NetCurrent() { return *reinterpret_cast<Net **>(0x009BE608); }
 uint32_t *const NetEnabled = (uint32_t *)0x009BE600;
+
+// Net::get's scratch destination: passed BY ADDRESS to NetFifo::get as the
+// buffer to fill, and that same address is the "got a message" return value,
+// not the message's own bytes - Net::get never reads through it. An
+// `extern` symbol, not a plain literal, keeps the relocation the image emits
+// at each of the two uses.
+extern uint32_t NetGetScratch;  // 0x009BC4BC

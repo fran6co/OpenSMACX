@@ -55,3 +55,8 @@ class Cursor {
 // Returns the object, preserving the legacy EAX = this residue.
 Cursor *__fastcall cursor_construct_redirect(Cursor *self, void *);
 void __cdecl cursor_close_cursor_class_redirect();
+
+// Cached results of GetSystemMetrics(SM_CXCURSOR)/(SM_CYCURSOR), filled in
+// by Cursor::init_cursor_class().
+extern int CursorWidth;   // 0x009BE6D4
+extern int CursorHeight;  // 0x009BE6D8

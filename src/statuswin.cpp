@@ -19,6 +19,10 @@
 #include "original_seam.h"
 #include "statuswin.h"
 #include "spritebox.h"
+#include "font.h"
+#include "win.h"
+#include "graphicwin.h"
+#include "mapwin.h"  // MainInterfaceGlobal
 
 /*
 Purpose: Compose a StatusWin from its Caviar, three Font and one Spot
@@ -127,4 +131,55 @@ void StatusWin::reset() {
 
 void __fastcall status_win_reset_redirect(StatusWin *self, void *) {
     self->reset();
+}
+
+// Three fixed-address RECTs redraw() unions together, no established
+// identity beyond what this one function shows.
+RECT *const StatusWinRedrawRect1 = (RECT *)0x007AF50C;
+RECT *const StatusWinRedrawRect2 = (RECT *)0x007AF4EC;
+RECT *const StatusWinRedrawRect3 = (RECT *)0x007AF4FC;
+
+/*
+Purpose: Re-init the three status fonts when the screen size changed enough
+         to want a different point size, force default character spacing at
+         low resolution, redraw the whole status area, then invalidate the
+         union of three fixed-address rects on the main interface window.
+// ORIGINAL: 0x004B9EA0 ?redraw@StatusWin@@QAEXXZ 0x004B9EA0-0x004B9F7B BYTE_EXACT
+// size      219 bytes
+// prototype void (__thiscall ?redraw@StatusWin@@QAEXXZ)(StatusWin* this)
+// callers   17   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004B6570 0x005D5930 0x00618F40
+// indirect  0x004B9F56 0x004B9F65
+Return Value: n/a
+Status: Complete
+*/
+void StatusWin::redraw() {
+    uint8_t *const self = reinterpret_cast<uint8_t *>(this);
+    int sizeVal = (WinScreenWidth != 0x320) ? 0xC : 0xA;
+    int *const sizeSlot = reinterpret_cast<int *>(self + 0x15AC);
+    if (sizeVal != *sizeSlot) {
+        *sizeSlot = sizeVal;
+        reinterpret_cast<Font *>(self + 0x1530)->init(DefaultFontFace,
+                                                       sizeVal, 0);
+        reinterpret_cast<Font *>(self + 0x1558)->init(DefaultFontFace,
+                                                       sizeVal, 2);
+        reinterpret_cast<Font *>(self + 0x1580)->init(DefaultFontFace,
+                                                       sizeVal, 1);
+    }
+    if (WinScreenWidth != 0x320) {
+        *reinterpret_cast<int *>(self + 0x1530) = 4;
+        *reinterpret_cast<int *>(self + 0x1558) = 4;
+        *reinterpret_cast<int *>(self + 0x1580) = 4;
+    }
+    draw_status(-1, -1, -1, -1, 0);
+    RECT localRect;
+    UnionRect(&localRect, StatusWinRedrawRect1, StatusWinRedrawRect2);
+    UnionRect(&localRect, &localRect, StatusWinRedrawRect3);
+    MainInterfaceGlobal.soft_update(&localRect);
+}
+
+void __fastcall status_win_redraw_redirect(StatusWin *self, void *) {
+    self->redraw();
 }

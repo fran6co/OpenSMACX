@@ -39,6 +39,28 @@ void __cdecl cursor_close_cursor_class_redirect() {
     Cursor::close_cursor_class();
 }
 
+int CursorWidth;   // 0x009BE6D4
+int CursorHeight;  // 0x009BE6D8
+
+/*
+Purpose: Cache the system cursor's width and height.
+// ORIGINAL: 0x0063B910 ?init_cursor_class@Cursor@@QAAHXZ 0x0063B910-0x0063B92D BYTE_EXACT
+// symbol    ?init_cursor_class@Cursor@@SAHXZ
+// size      29 bytes
+// prototype int (__cdecl ?init_cursor_class@Cursor@@QAAHXZ)()
+// callers   1   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: 0
+Status: Complete
+*/
+int Cursor::init_cursor_class() {
+    CursorWidth = GetSystemMetrics(SM_CXCURSOR);
+    CursorHeight = GetSystemMetrics(SM_CYCURSOR);
+    return 0;
+}
+
 /*
 Purpose: Clear all four fields.
 

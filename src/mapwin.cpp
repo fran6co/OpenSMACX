@@ -507,4 +507,133 @@ func_map_win_draw_map MapWinOriginalDrawMap =
 void MapWin::draw_map(int draw_type) {
     (ORIGINAL(this)->*MapWinOriginalDrawMap)(draw_type);
 }
+
+void MapWin::draw_radius(int x_coord, int y_coord, int a3, int draw_type) {
+    (ORIGINAL(this)->*MapWinOriginalDrawRadius)(x_coord, y_coord, a3, draw_type);
+}
 #pragma auto_inline(on)
+
+/*
+Purpose: Repaint every live MapWin slot - the FREE draw_map, not the method
+         above. Mirrors draw_tile/draw_tiles in mapwin.h: slot 0 is exempt
+         from the activity gate, every other slot only draws when its
+         MapWinActiveOffset dword is non-zero.
+// ORIGINAL: 0x0046B190 ?draw_map@@YAXH@Z 0x0046B190-0x0046B1CA BYTE_EXACT
+// size      58 bytes
+// prototype void (__cdecl ?draw_map@@YAXH@Z)(int)
+// callers   68   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0046A550
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl draw_map(int draw_type) {
+    // A do-while walking a raw cursor over the table, not draw_tile's
+    // indexed for-loop: the image parks the table's BASE ADDRESS in a
+    // register (`mov esi, 0x7d3c3c`) and compares the cursor against it
+    // directly (`cmp esi, 0x7d3c3c`) to recognise slot 0, rather than
+    // comparing an index against 0. `int`, not a pointer: the loop
+    // termination check is `jl`, a SIGNED compare, which a real pointer
+    // comparison would not give.
+    int cursor = reinterpret_cast<int>(MapWinTable);
+    const int end = cursor + static_cast<int>(MapWinTableSlots) * 4;
+    do {
+        MapWin *const window = *reinterpret_cast<MapWin *const *>(cursor);
+        if (window != nullptr) {
+            if (cursor == reinterpret_cast<int>(MapWinTable) ||
+                *reinterpret_cast<const volatile uint32_t *>(
+                    reinterpret_cast<const uint8_t *>(window) +
+                    MapWinActiveOffset) != 0) {
+                // THE METHOD, not the seam directly: `window->draw_map(...)`
+                // compiles the image's `call rel32` to
+                // `?draw_map@MapWin@@QAEXH@Z`, where dispatching through
+                // MapWinOriginalDrawMap here would be an indirect call
+                // through the seam's own storage.
+                window->draw_map(draw_type);
+            }
+        }
+        cursor += 4;
+    } while (cursor < end);
+}
+
+/*
+Purpose: Repaint the radius around a tile on every live MapWin slot. Same
+         shape as the free draw_map above, and the same fix: dispatch through
+         the METHOD (MapWin::draw_radius), not the MapWinOriginalDrawRadius
+         seam directly - the image's own call site is `call 0x46a2a0`, a
+         direct rel32, where the seam variable loads through an indirect
+         call.
+// ORIGINAL: 0x0046AEF0 ?draw_radius@@YAXHHHH@Z 0x0046AEF0-0x0046AF38 BYTE_EXACT
+// size      72 bytes
+// prototype void (__cdecl ?draw_radius@@YAXHHHH@Z)(int, int, int, int)
+// callers   2   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0046A2A0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl draw_radius(int x_coord, int y_coord, int a3, int draw_type) {
+    int cursor = reinterpret_cast<int>(MapWinTable);
+    const int end = cursor + static_cast<int>(MapWinTableSlots) * 4;
+    do {
+        MapWin *const window = *reinterpret_cast<MapWin *const *>(cursor);
+        if (window != nullptr) {
+            if (cursor == reinterpret_cast<int>(MapWinTable) ||
+                *reinterpret_cast<const volatile uint32_t *>(
+                    reinterpret_cast<const uint8_t *>(window) +
+                    MapWinActiveOffset) != 0) {
+                window->draw_radius(x_coord, y_coord, a3, draw_type);
+            }
+        }
+        cursor += 4;
+    } while (cursor < end);
+}
+
+// Three fixed-address windows terrain_fixup() also reaches, each pushed as a
+// bare constant in the image (`push 0x8eb48c` etc.) rather than loaded
+// through a variable - none has an established identity, so each is a raw
+// address rather than a named accessor.
+static MapWin *const MapWinTerrainFixupExtra1 =
+    reinterpret_cast<MapWin *>(0x008EB48C);
+static MapWin *const MapWinTerrainFixupExtra2 =
+    reinterpret_cast<MapWin *>(0x006C5C9C);
+static MapWin *const MapWinTerrainFixupExtra3 =
+    reinterpret_cast<MapWin *>(0x007D4060);
+
+/*
+Purpose: Fix up terrain on every live MapWin slot, then on three more
+         fixed-address windows.
+// ORIGINAL: 0x00471240 ?mapwin_terrain_fixup@@YAXXZ 0x00471240-0x00471293 BYTE_EXACT
+// size      83 bytes
+// prototype void (__cdecl ?mapwin_terrain_fixup@@YAXXZ)()
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004711A0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl mapwin_terrain_fixup() {
+    int cursor = reinterpret_cast<int>(MapWinTable);
+    const int end = cursor + static_cast<int>(MapWinTableSlots) * 4;
+    do {
+        // BUG IN THE ORIGINAL: unlike draw_tile/draw_tiles/draw_radius, this
+        // reads `(*cursor)->field_at(0x1DD74)` for every non-zero slot
+        // WITHOUT first checking that the slot itself is non-null - only
+        // slot 0 (`cursor == MapWinTable`) skips the read. An unpopulated
+        // later slot would dereference a null MapWin*. Reproduced as-is.
+        if (cursor == reinterpret_cast<int>(MapWinTable) ||
+            *reinterpret_cast<int *>(
+                reinterpret_cast<char *>(
+                    *reinterpret_cast<MapWin *const *>(cursor)) +
+                0x1DD74) != 0) {
+            terrain_fixup(*reinterpret_cast<MapWin *const *>(cursor));
+        }
+        cursor += 4;
+    } while (cursor < end);
+    terrain_fixup(MapWinTerrainFixupExtra1);
+    terrain_fixup(MapWinTerrainFixupExtra2);
+    terrain_fixup(MapWinTerrainFixupExtra3);
+}

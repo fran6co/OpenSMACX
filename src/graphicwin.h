@@ -64,6 +64,9 @@ class GraphicWin : public Win {
   // be virtual here. Still an original body; the definition at the end of
   // graphicwin.cpp forwards to it.
   void soft_update();
+  // 0x005D5930, still an original body - a distinct overload from the
+  // zero-argument one above. StatusWin::redraw calls it BY NAME.
+  void soft_update(RECT *area);
  private:
   Buffer buffer_;
   uint32_t field_9CC_;

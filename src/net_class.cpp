@@ -18,17 +18,7 @@
 #include "stdafx.h"
 #include <cstring>
 #include "net_class.h"
-
-// NetFifo: not a product type elsewhere - AlphaNet's own layout note names
-// it (0xB0/0xE8/0x10C/0x130 - see alphanet.h) but nothing carves it out of
-// AlphaNet's storage yet. Declared here, private to this file, so
-// Net::Net/~Net can reach its real constructor/destructor (0x006339C0 and
-// 0x006339E0) with an ordinary call rather than a bound pointer.
-class NetFifo {
- public:
-  NetFifo();
-  ~NetFifo();
-};
+#include "hypothesis_layouts.h"
 
 NetFifo::NetFifo() {  // ??0NetFifo@@QAE@XZ at 0x006339C0 - not this batch's
                        // address.
@@ -415,4 +405,34 @@ void __cdecl check_net() {
         return;
     }
     net->check_polling();
+}
+
+uint32_t NetGetScratch;  // 0x009BC4BC
+
+/*
+Purpose: Poll the embedded NetFifo for a message, when net play is enabled
+         and a destination is given.
+// ORIGINAL: 0x00630A00 ?get@Net@@QAEHPAKPAK@Z 0x00630A00-0x00630A3A BYTE_EXACT
+// symbol    ?get@Net@@QAEHPAK0@Z
+// size      58 bytes
+// prototype int (__thiscall ?get@Net@@QAEHPAKPAK@Z)(Net* this, unsigned int*, unsigned int*)
+// callers   18   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00633F70
+Return Value: NetGetScratch's address when a message was fetched, else 0
+Status: Complete
+*/
+int Net::get(unsigned long *a1, unsigned long *a2) {
+    if (*NetEnabled != 0) {
+        if (a1 != 0) {
+            NetFifo *const fifo = reinterpret_cast<NetFifo *>(
+                reinterpret_cast<char *>(this) + 0x10C);
+            int result = fifo->get(&NetGetScratch,
+                                   reinterpret_cast<unsigned int *>(a1), 0,
+                                   reinterpret_cast<unsigned int *>(a2));
+            return result ? reinterpret_cast<int>(&NetGetScratch) : 0;
+        }
+    }
+    return 0;
 }

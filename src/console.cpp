@@ -489,6 +489,53 @@ void __fastcall console_update_data_redirect(Console *self, void *, int a1) {
     self->update_data(a1);
 }
 
+int CursorLastIndex;    // 0x009392B8
+int CursorLastX[32];    // 0x009392C0
+int CursorLastY[32];    // 0x00939340
+
+/*
+Purpose: Report the cursor's new tile position to the status bar and record
+         it in this Console's own ring buffer, unless it is the same tile
+         already at the head of the cache. In debug mode, warn when the two
+         coordinates have mismatched parity, then normalise them to matching
+         parity before anything else runs.
+// ORIGINAL: 0x005109B0 ?cursor_next@Console@@QAEXHH@Z 0x005109B0-0x00510A59 BYTE_EXACT
+// size      169 bytes
+// prototype void (__thiscall ?cursor_next@Console@@QAEXHH@Z)(Console* this, int, int)
+// callers   1   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00517C50 0x00644C40 0x0064B330
+Return Value: n/a
+Status: Complete
+*/
+void Console::cursor_next(int x_coord, int y_coord) {
+    if (((x_coord ^ y_coord) & 1) != 0) {
+        if ((GameState & STATE_DEBUG_MODE) != 0) {
+            danger(CursorNextDangerMsg1, CursorNextDangerMsg2, x_coord,
+                  y_coord, 0);
+        }
+        if ((x_coord & 1) != 0) {
+            x_coord -= 1;
+        }
+        if ((y_coord & 1) != 0) {
+            x_coord += 1;
+        }
+    }
+    ConsoleStatusWin->set_loc(x_coord, y_coord);
+    int idx = CursorLastIndex;
+    if (x_coord == CursorLastX[idx]) {
+        if (y_coord == CursorLastY[idx]) {
+            return;
+        }
+    }
+    int newIdx = (static_cast<int32_t>(field_23C0C_) + 1) % 32;
+    field_23C0C_ = static_cast<uint32_t>(newIdx);
+    field_23C08_ = static_cast<uint32_t>(newIdx);
+    reinterpret_cast<int32_t *>(field_23C10_)[newIdx] = x_coord;
+    int reIdx = static_cast<int32_t>(field_23C0C_);
+    reinterpret_cast<int32_t *>(field_23C10_)[32 + reIdx] = y_coord;
+}
 
 /*
 Purpose: Point the map windows at one tile on behalf of one faction. Build a
@@ -654,6 +701,42 @@ int Console::focus(int x_coord, int y_coord, int faction_id) {
 int __fastcall console_focus_redirect(Console *self, void *, int x_coord,
                                       int y_coord, int faction_id) {
     return self->focus(x_coord, y_coord, faction_id);
+}
+
+/*
+Purpose: Drain the keyboard queue, clear the two pointer-owner slots and let
+         the network layer poll, then do the same for the mouse queue - each
+         PeekMessage loop PEELED, one check outside before the do-while, as
+         the image has it.
+// ORIGINAL: 0x005FD120 ?flush_input@@YAXXZ 0x005FD120-0x005FD1BA BYTE_EXACT
+// size      154 bytes
+// prototype void (__cdecl ?flush_input@@YAXXZ)()
+// callers   17   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x0062D5D0
+// indirect  0x005FD13F 0x005FD157 0x005FD180 0x005FD198
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl flush_input() {
+    MSG msg;
+    if (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE)) {
+        do {
+        } while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE));
+    }
+    WinPointerOwner1 = nullptr;
+    WinPointerOwner2 = nullptr;
+    check_net();
+    if (PeekMessage(&msg, NULL, WM_MOUSEFIRST, WM_MOUSELAST, PM_REMOVE)) {
+        do {
+        } while (PeekMessage(&msg, NULL, WM_MOUSEFIRST, WM_MOUSELAST,
+                             PM_REMOVE));
+    }
+    WinPointerOwner1 = nullptr;
+    WinPointerOwner2 = nullptr;
+    check_net();
+    check_net();
 }
 
 /*

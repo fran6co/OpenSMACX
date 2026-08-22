@@ -68,7 +68,7 @@ typedef int func20(LPCSTR, int, int, LPCSTR, Sprite *);
 // 0x0048C650, a pending_bodies forwarder.
 int __cdecl popb(LPCSTR a1, int a2, int a3, LPCSTR a4, Sprite * a5);
 typedef void func21(int, int, int, int);
-// 0x0046AEF0, a pending_bodies forwarder.
+// 0x0046AEF0, defined at the end of src/mapwin.cpp.
 void __cdecl draw_radius(int a1, int a2, int a3, int a4);
 typedef void func22(int, int, uint32_t);
 // 0x00591290, a pending_bodies forwarder.

@@ -1282,6 +1282,25 @@ int Buffer::fill(RECT *area, int color) {
 }
 
 /*
+Purpose: Build a RECT from the four coordinates and forward to the RECT
+         overload.
+// ORIGINAL: 0x005D8240 ?fill@Buffer@@QAEHHHHHH@Z 0x005D8240-0x005D8282 BYTE_EXACT
+// size      66 bytes
+// prototype int (__thiscall ?fill@Buffer@@QAEHHHHHH@Z)(Buffer* this, int, int, int, int, int)
+// callers   3   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DFCD0
+Return Value: whatever the RECT overload returns
+Status: Complete
+*/
+int Buffer::fill(int left, int top, int width, int height, int color) {
+    RECT area;
+    SetRect(&area, left, top, left + width, top + height);
+    return fill(&area, color);
+}
+
+/*
 Purpose: Load a PCX file by name into this buffer, supplying a default
          extension and memory-mapping the file for the decoder.
 // ORIGINAL: 0x005D7DE0 ?load_pcx@Buffer@@QAEHPBDPAVPalette@@HH@Z 0x005D7DE0-0x005D7F1D;0x00662BBC-0x00662BD1 BYTE_EXACT

@@ -44,6 +44,10 @@ class StringStruct {
   // Shared body of every virtual-base close: installs the pair of virtual
   // tables, releases the entries, then clears the position.
   void close_with_tables(uint32_t primary, uint32_t virtual_base);
+  // 0x00401100, still a pending_bodies forwarder: allocates and links a new
+  // entry, its own id, and (for the derived StringList at Dialog::item's
+  // this+0xBC) a payload id node too. Dialog::item calls it BY NAME.
+  int add(int id);
 
  private:
   uint32_t primary_abi_word_;

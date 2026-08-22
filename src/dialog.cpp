@@ -271,6 +271,36 @@ int Dialog::pos_to_id(int position) {
     return entry_head_ ? current_entry_->id : 0;
 }
 
+/*
+Purpose: Add an item to the dialog's string list, keyed by its id, if a
+         non-null string is given.
+// ORIGINAL: 0x00609990 ?item@Dialog@@QAEHPADH@Z 0x00609990-0x006099C4 BYTE_EXACT
+// size      52 bytes
+// prototype int (__thiscall ?item@Dialog@@QAEHPADH@Z)(Dialog* this, int8*, int)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00401100
+Return Value: 3 when text is null; otherwise StringStruct::add's result
+Status: Complete
+*/
+int Dialog::item(char *text, int index) {
+    if (!text) {
+        return 3;
+    }
+    // The list at this+0xBC, same subobject Dialog::destroy() reaches. Its
+    // OWN field_1C_/field_20_/field_24_ (StringList-relative - Dialog's
+    // field_D8_/field_DC_/field_E0_) are set through the LIST POINTER, not
+    // Dialog's absolute offsets: the image advances ecx to this+0xBC first
+    // (`add ecx, 0xbc`) and addresses 0x1C/0x20/0x24 off of that, which is
+    // what keeps the small displacements instead of Dialog's own 0xD8 etc.
+    uint8_t *const list = reinterpret_cast<uint8_t *>(this) + 0xBC;
+    *reinterpret_cast<char **>(list + 0x1C) = text;
+    *reinterpret_cast<int *>(list + 0x20) = 0;
+    *reinterpret_cast<int *>(list + 0x24) = 1;
+    return reinterpret_cast<StringStruct *>(list)->add(index);
+}
+
 int __fastcall dialog_set_font_redirect(
     Dialog *self, void *, Font *font1, Font *font2, Font *font3) {
     return self->set_dialog_font(font1, font2, font3);

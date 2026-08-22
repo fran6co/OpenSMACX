@@ -26,6 +26,7 @@
 #include "checkbox.h"
 #include "checkbutton.h"
 #include "dialog.h"
+#include "stringstruct.h"
 #include "spritebox.h"
 #include "dialogs.h"
 #include "listbox.h"
@@ -180,9 +181,12 @@ void __cdecl fixup_landmarks() {
     PENDING_BODY(0x00592940, pending)();
 }
 
-void __cdecl mapwin_terrain_fixup() {
-    typedef void(__cdecl *pending)();
-    PENDING_BODY(0x00471240, pending)();
+// ?terrain_fixup@@YAXPAUMapWin@@@Z at 0x004711A0 - mapwin_terrain_fixup
+// (src/mapwin.cpp) calls it BY NAME, once per live MapWin slot and once
+// more for each of three fixed-address windows.
+void __cdecl terrain_fixup(MapWin *window) {
+    typedef void(__cdecl *pending)(MapWin *);
+    PENDING_BODY(0x004711A0, pending)(window);
 }
 
 void __cdecl world_rainfall() {
@@ -348,46 +352,19 @@ int Scroll::init(int x, int y, int width, int height, Win *parent,
                                              height, parent, setting, options);
 }
 
-// ?item@Dialog@@QAEHPADH@Z at 0x00609990 and ?item@ListBox@@QAEHPADH@Z at
-// 0x0060C920 - the two item adders `Dialogs::item` dispatches to by kind.
-int Dialog::item(char *text, int index) {
-    typedef int(__fastcall *pending)(Dialog *, void *, char *, int);
-    return PENDING_BODY(0x00609990, pending)(this, nullptr, text, index);
+// ?add@StringStruct@@QAEHH@Z at 0x00401100 - allocates and links a new
+// entry; Dialog::item (src/dialog.cpp) and ListBox::item both call it BY
+// NAME on the list embedded at their own this+0xBC/this+... .
+int StringStruct::add(int id) {
+    typedef int(__fastcall *pending)(StringStruct *, void *, int);
+    return PENDING_BODY(0x00401100, pending)(this, nullptr, id);
 }
 
+// ?item@ListBox@@QAEHPADH@Z at 0x0060C920 - the item adder `Dialogs::item`
+// dispatches to for a ListBox.
 int ListBox::item(char *text, int index) {
     typedef int(__fastcall *pending)(ListBox *, void *, char *, int);
     return PENDING_BODY(0x0060C920, pending)(this, nullptr, text, index);
-}
-
-// 0x00611240 - SpriteBox::on_right_down, dispatched to by kind from dialogs.cpp.
-void SpriteBox::on_right_down(int a, int b) {
-    typedef void(__fastcall *pending)(SpriteBox *, void *, int, int);
-    PENDING_BODY(0x00611240, pending)(this, nullptr, a, b);
-}
-
-// 0x00611330 - SpriteBox::on_right_double_click, dispatched to by kind from dialogs.cpp.
-void SpriteBox::on_right_double_click(int a, int b) {
-    typedef void(__fastcall *pending)(SpriteBox *, void *, int, int);
-    PENDING_BODY(0x00611330, pending)(this, nullptr, a, b);
-}
-
-// 0x006111A0 - SpriteBox::on_left_up, dispatched to by kind from dialogs.cpp.
-void SpriteBox::on_left_up(int a, int b) {
-    typedef void(__fastcall *pending)(SpriteBox *, void *, int, int);
-    PENDING_BODY(0x006111A0, pending)(this, nullptr, a, b);
-}
-
-// 0x00611290 - SpriteBox::on_right_up, dispatched to by kind from dialogs.cpp.
-void SpriteBox::on_right_up(int a, int b) {
-    typedef void(__fastcall *pending)(SpriteBox *, void *, int, int);
-    PENDING_BODY(0x00611290, pending)(this, nullptr, a, b);
-}
-
-// 0x006111F0 - SpriteBox::on_right_click, dispatched to by kind from dialogs.cpp.
-void SpriteBox::on_right_click(int a, int b) {
-    typedef void(__fastcall *pending)(SpriteBox *, void *, int, int);
-    PENDING_BODY(0x006111F0, pending)(this, nullptr, a, b);
 }
 
 // 0x0060C5D0 - ListBox::on_scrolling, dispatched to by kind from dialogs.cpp.
@@ -448,13 +425,6 @@ int __cdecl X_pop(const char *label, int (__cdecl *callback)()) {  // 0x005BF310
     return PENDING_BODY(0x005BF310, pending)(label, callback);
 }
 
-int __cdecl X_pop(char *caption, const char *label, int a3, char *a4, int a5,
-                  int (__cdecl *callback)()) {
-    typedef int(__cdecl *pending)(char *, const char *, int, char *, int,
-                                  int (__cdecl *)());
-    return PENDING_BODY(0x005BF480, pending)(caption, label, a3, a4, a5,
-                                             callback);
-}
 
 // Five more bodies the tree called through function pointers. Each is
 // declared on its class now, so the call sites emit `call rel32`.
@@ -468,12 +438,6 @@ void MainInterface::set_date(char *text) {              // 0x0045BE80
     PENDING_BODY(0x0045BE80, pending)(this, nullptr, text);
 }
 
-int Buffer::fill(int left, int top, int width, int height, int color) {
-    typedef int(__fastcall *pending)(Buffer *, void *, int, int, int, int,
-                                     int);                // 0x005D8240
-    return PENDING_BODY(0x005D8240, pending)(this, nullptr, left, top, width,
-                                             height, color);
-}
 
 int TutWin::tut_win(void *owner, const char *text, int a3, int a4,
                     Sprite *sprite, int a6, int a7, int a8) {  // 0x004BDFE0
@@ -556,14 +520,12 @@ void PrefWin::display(int page) {  // 0x0048FA00
     PENDING_BODY(0x0048FA00, pending)(this, nullptr, page);
 }
 
-void StatusWin::redraw() {  // 0x004B9EA0
-    typedef void(__fastcall *pending)(StatusWin *, void *);
-    PENDING_BODY(0x004B9EA0, pending)(this, nullptr);
-}
-
-void Console::cursor_next(int x_coord, int y_coord) {  // 0x005109B0
-    typedef void(__fastcall *pending)(Console *, void *, int, int);
-    PENDING_BODY(0x005109B0, pending)(this, nullptr, x_coord, y_coord);
+// ?draw_status@StatusWin@@QAEXHHHHH@Z at 0x004B6570 - 8885 bytes, still an
+// original body. StatusWin::redraw (src/statuswin.cpp) calls it BY NAME.
+void StatusWin::draw_status(int a1, int a2, int a3, int a4, int a5) {
+    typedef void(__fastcall *pending)(StatusWin *, void *, int, int, int, int,
+                                     int);
+    PENDING_BODY(0x004B6570, pending)(this, nullptr, a1, a2, a3, a4, a5);
 }
 
 int ButtonGroup::button_click(int a1) {  // 0x0062B8A0
@@ -606,9 +568,12 @@ void DipEdit::read_check() {  // 0x004DA990
     PENDING_BODY(0x004DA990, pending)(this, nullptr);
 }
 
-void DipEdit::do_check() {  // 0x004DADA0
-    typedef void(__fastcall *pending)(DipEdit *, void *);
-    PENDING_BODY(0x004DADA0, pending)(this, nullptr);
+// ?set_state_id@CheckBox@@QAEXHH@Z at 0x0060EB80 - not yet recovered, a
+// pending_bodies forwarder. DipEdit::do_check (src/dipedit.cpp) calls it
+// BY NAME.
+void CheckBox::set_state_id(int id, int value) {
+    typedef void(__fastcall *pending)(CheckBox *, void *, int, int);
+    PENDING_BODY(0x0060EB80, pending)(this, nullptr, id, value);
 }
 
 int Dialog::init(int a1) {  // 0x006095F0
@@ -651,24 +616,31 @@ void GraphicWin::soft_update() {  // 0x005D5890
     PENDING_BODY(0x005D5890, pending)(this, nullptr);
 }
 
-void GraphicWin::update(GraphicWin * a1) {  // 0x005D56B0
-    typedef void(__fastcall *pending)(GraphicWin *, void *, GraphicWin *);
-    PENDING_BODY(0x005D56B0, pending)(this, nullptr, a1);
+// ?soft_update@GraphicWin@@QAEXPAURECT@@@Z at 0x005D5930 - the RECT
+// overload, still an original body. StatusWin::redraw calls it BY NAME.
+void GraphicWin::soft_update(RECT *area) {
+    typedef void(__fastcall *pending)(GraphicWin *, void *, RECT *);
+    PENDING_BODY(0x005D5930, pending)(this, nullptr, area);
+}
+
+// ?update_window@Win@@QAEHPAURECT@@@Z at 0x005F74A0 - GraphicWin::update
+// (src/graphicwin.cpp) calls it BY NAME.
+int Win::update_window(RECT *area) {
+    typedef int(__fastcall *pending)(Win *, void *, RECT *);
+    return PENDING_BODY(0x005F74A0, pending)(this, nullptr, area);
+}
+
+// ?client_to_screen@Win@@QAEXPAURECT@@@Z at 0x005ECFE0, the RECT overload -
+// distinct from client_to_screen(int*, int*) above. GraphicWin::update
+// calls it BY NAME.
+void Win::client_to_screen(RECT *area) {
+    typedef void(__fastcall *pending)(Win *, void *, RECT *);
+    PENDING_BODY(0x005ECFE0, pending)(this, nullptr, area);
 }
 
 void FileWin::UNK4() {  // 0x006146A0
     typedef void(__fastcall *pending)(FileWin *, void *);
     PENDING_BODY(0x006146A0, pending)(this, nullptr);
-}
-
-int Midi_Device::init(void * a1, unsigned long a2) {  // 0x004C57A0
-    typedef int(__fastcall *pending)(Midi_Device *, void *, void *, unsigned long);
-    return PENDING_BODY(0x004C57A0, pending)(this, nullptr, a1, a2);
-}
-
-int Wave_In_Device::init(void * a1, unsigned long a2) {  // 0x004C5A10
-    typedef int(__fastcall *pending)(Wave_In_Device *, void *, void *, unsigned long);
-    return PENDING_BODY(0x004C5A10, pending)(this, nullptr, a1, a2);
 }
 
 void Menu::mouse_move(int a1, int a2) {  // 0x005FBDB0
@@ -706,10 +678,6 @@ void Win::hide() {  // 0x005EDCD0
     PENDING_BODY(0x005EDCD0, pending)(this, nullptr);
 }
 
-void Win::on_mouse_move(int a1, int a2, unsigned int a3, int a4) {  // 0x005F6320
-    typedef void(__fastcall *pending)(Win *, void *, int, int, unsigned int, int);
-    PENDING_BODY(0x005F6320, pending)(this, nullptr, a1, a2, a3, a4);
-}
 
 int Win::on_nc_hittest(int a1, int a2) {  // 0x005F5AD0
     typedef int(__fastcall *pending)(Win *, void *, int, int);
@@ -746,16 +714,6 @@ void ReplayWin::timer_callback() {  // 0x005AD9E0
     PENDING_BODY(0x005AD9E0, pending)(this, nullptr);
 }
 
-void CheckBox::set_state_flag(long value) {  // 0x0060ECE0
-    typedef void(__fastcall *pending)(CheckBox *, void *, long);
-    PENDING_BODY(0x0060ECE0, pending)(this, nullptr, value);
-}
-
-void __cdecl flush_input() {  // 0x005FD120
-    typedef void(__cdecl *pending)();
-    PENDING_BODY(0x005FD120, pending)();
-}
-
 void Net::close() {  // 0x0062E010
     typedef void(__fastcall *pending)(Net *, void *);
     PENDING_BODY(0x0062E010, pending)(this, nullptr);
@@ -766,9 +724,12 @@ void Popup::hide() {  // 0x00404A80
     PENDING_BODY(0x00404A80, pending)(this, nullptr);
 }
 
-int Net::get(unsigned long *a, unsigned long *b) {  // 0x00630A00
-    typedef int(__fastcall *pending)(Net *, void *, unsigned long *, unsigned long *);
-    return PENDING_BODY(0x00630A00, pending)(this, nullptr, a, b);
+// ?get@NetFifo@@QAEHPAXPAIPAHPAI@Z at 0x00633F70 - Net::get (src/net_class.cpp)
+// reaches it on the NetFifo embedded at its own this+0x10C.
+int NetFifo::get(void *a1, unsigned int *a2, int *a3, unsigned int *a4) {
+    typedef int(__fastcall *pending)(NetFifo *, void *, void *, unsigned int *,
+                                     int *, unsigned int *);
+    return PENDING_BODY(0x00633F70, pending)(this, nullptr, a1, a2, a3, a4);
 }
 
 int BasePop::init(int a1, long a2) {  // 0x006015B0
@@ -789,11 +750,6 @@ uint32_t __cdecl load_daemon(LPCSTR a1, BOOL a2) {  // 0x005A9760
 int __cdecl popb(LPCSTR a1, int a2, int a3, LPCSTR a4, Sprite * a5) {  // 0x0048C650
     typedef int(__cdecl *pending)(LPCSTR, int, int, LPCSTR, Sprite *);
     return PENDING_BODY(0x0048C650, pending)(a1, a2, a3, a4, a5);
-}
-
-void __cdecl draw_radius(int a1, int a2, int a3, int a4) {  // 0x0046AEF0
-    typedef void(__cdecl *pending)(int, int, int, int);
-    PENDING_BODY(0x0046AEF0, pending)(a1, a2, a3, a4);
 }
 
 void __cdecl alt_set(int a1, int a2, uint32_t a3) {  // 0x00591290
@@ -969,11 +925,6 @@ EditBox::~EditBox() {  // ??1EditBox@@QAE@XZ at 0x00408010
 FameWin::~FameWin() {  // ??1FameWin@@QAE@XZ at 0x0044B100
     typedef void(__fastcall *pending)(FameWin *, void *);
     PENDING_BODY(0x0044B100, pending)(this, nullptr);
-}
-
-ImageButton::~ImageButton() {  // ??1ImageButton@@QAE@XZ at 0x00625310
-    typedef void(__fastcall *pending)(ImageButton *, void *);
-    PENDING_BODY(0x00625310, pending)(this, nullptr);
 }
 
 Interlude::~Interlude() {  // ??1Interlude@@QAE@XZ at 0x0045F740
@@ -1343,10 +1294,41 @@ int Buffer::write_raw_l(LPSTR text, int x_coord, int y_coord, int len) {
                                              y_coord, len);
 }
 
-// ?jackal_close@@YAXXZ at 0x0062D500 - body in src/recovered/0062d500.cpp
-void __cdecl jackal_close() {
+// jackal_close's own not-yet-recovered callees (src/general.cpp).
+// sub_62d100 at 0x0062D100 - no catalogued name.
+extern "C" int __cdecl sub_62d100() {
+    typedef int(__cdecl *pending)();
+    return PENDING_BODY(0x0062D100, pending)();
+}
+
+// ?close_class@FileWin@@QAAXXZ at 0x00614E30
+void __cdecl filewin_close_class() {
     typedef void(__cdecl *pending)();
-    PENDING_BODY(0x0062D500, pending)();
+    PENDING_BODY(0x00614E30, pending)();
+}
+
+// ?close_class@BasePop@@QAAXXZ at 0x00604680
+void __cdecl basepop_close_class() {
+    typedef void(__cdecl *pending)();
+    PENDING_BODY(0x00604680, pending)();
+}
+
+// ?close_palette_class@Palette@@QAAXXZ at 0x005FECF0
+void __cdecl palette_close_palette_class() {
+    typedef void(__cdecl *pending)();
+    PENDING_BODY(0x005FECF0, pending)();
+}
+
+// ?close_class@Win@@QAAXXZ at 0x005F04E0
+void __cdecl win_close_class() {
+    typedef void(__cdecl *pending)();
+    PENDING_BODY(0x005F04E0, pending)();
+}
+
+// sub_635750 at 0x00635750 - a genuine thiscall on the object at 0x9BE618.
+void Unk9BE618::unk_call() {
+    typedef void(__fastcall *pending)(Unk9BE618 *, void *);
+    PENDING_BODY(0x00635750, pending)(this, nullptr);
 }
 
 // ?init_class@Caviar@@QAAHXZ at 0x006185A0
@@ -1372,16 +1354,29 @@ void Caviar::close_class() {
 // src/temp.cpp bound, so nothing about runtime changed; only the call shape.
 // ---------------------------------------------------------------------------
 
-// ?draw_map@@YAXH@Z at 0x0046B190 - body in src/recovered/units/0046b190.cpp
-void __cdecl draw_map(int draw_type) {
-    typedef void(__cdecl *pending)(int);
-    PENDING_BODY(0x0046B190, pending)(draw_type);
+// world_climate's own not-yet-recovered callees (src/map.cpp).
+// ?clear_terrain@MapWin@@QAEXXZ at 0x0046FD90
+void MapWin::clear_terrain() {
+    typedef void(__fastcall *pending)(MapWin *, void *);
+    PENDING_BODY(0x0046FD90, pending)(this, nullptr);
 }
 
-// ?world_climate@@YAXXZ at 0x005C5A30 - body in src/unrecovered/005c5a30.cpp
-void __cdecl world_climate() {
+// ?do_checksums@@YAXH@Z at 0x0051E760
+void __cdecl do_checksums(int type) {
+    typedef void(__cdecl *pending)(int);
+    PENDING_BODY(0x0051E760, pending)(type);
+}
+
+// ?world_shorelines@@YAXXZ at 0x005C3F70
+void __cdecl world_shorelines() {
     typedef void(__cdecl *pending)();
-    PENDING_BODY(0x005C5A30, pending)();
+    PENDING_BODY(0x005C3F70, pending)();
+}
+
+// ?world_rivers@@YAXXZ at 0x005C38B0
+void __cdecl world_rivers() {
+    typedef void(__cdecl *pending)();
+    PENDING_BODY(0x005C38B0, pending)();
 }
 
 // ?custom_planet@@YAHHH@Z at 0x0058C2A0 - body in src/unrecovered/0058c2a0.cpp
@@ -1454,13 +1449,6 @@ Win *Win::get_key_window() {
     return PENDING_BODY(0x005F6A50, pending)();
 }
 
-// ?screen_to_client@Win@@QAEXPAHPAH@Z at 0x005ED2D0 - BYTE_EXACT already in
-// src/unrecovered/005ed2d0.cpp, and 133 bytes, so this edge is cheap to
-// close next.
-void Win::screen_to_client(int *x, int *y) {
-    typedef void(__fastcall *pending)(Win *, void *, int *, int *);
-    PENDING_BODY(0x005ED2D0, pending)(this, nullptr, x, y);
-}
 
 // ?get_mouse_window_recurse@@YAHPAUWin@@PAHPAH@Z at 0x005F6AB0 - the tree walk
 // `get_mouse_window` delegates to, 1110 bytes.
@@ -1493,12 +1481,6 @@ void Win::do_tracking(int x, int y) {
 extern "C" void __stdcall sub_5f86a0(int a1) {
     typedef void(__stdcall *pending)(int);
     PENDING_BODY(0x005F86A0, pending)(a1);
-}
-
-// ?init_cursor_class@Cursor@@QAAXXZ at 0x0063B910 - `int` here, see cursor.h
-int Cursor::init_cursor_class() {
-    typedef int(__cdecl *pending)();
-    return PENDING_BODY(0x0063B910, pending)();
 }
 
 // ?trig_init@@YAHXZ at 0x0063B940

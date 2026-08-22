@@ -312,6 +312,37 @@ void Win::client_to_screen(int *x, int *y) {
 }
 
 /*
+Purpose: The inverse of client_to_screen above.
+// ORIGINAL: 0x005ED2D0 ?screen_to_client@Win@@QAEXPAHPAH@Z 0x005ED2D0-0x005ED355 BYTE_EXACT
+// symbol    ?screen_to_client@Win@@QAEXPAH0@Z
+// size      133 bytes
+// prototype void (__thiscall ?screen_to_client@Win@@QAEXPAHPAH@Z)(Win* this, int*, int*)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005ED2D0
+Return Value: n/a
+Status: Complete
+*/
+void Win::screen_to_client(int *x, int *y) {
+    *x = *x - (client_rect_.left + outer_rect_.left);
+    *y = *y - (client_rect_.top + outer_rect_.top);
+    // Bit 5 marks a window whose coordinates are relative to its parent, so
+    // the walk continues only while both that flag and a parent are present.
+    if ((iFlags_ & 0x20U) == 0 || !win_parent_) {
+        return;
+    }
+    win_parent_->screen_to_client(x, y);
+    // Bit 15 additionally adds back the parent's own outer origin. The legacy
+    // body re-reads win_parent_ for each addition rather than caching it.
+    if ((iFlags_ & 0x8000U) == 0) {
+        return;
+    }
+    *x = *x + win_parent_->outer_rect_.left;
+    *y = *y + win_parent_->outer_rect_.top;
+}
+
+/*
 Purpose: Announce this window as the one the palette should follow, then report
          that the message was handled.
 
@@ -3022,4 +3053,99 @@ int DDInit::report_error(int hr) {
         return 0;
     }
     return cd_check();
+}
+
+namespace {
+// A second vtable shim, distinct from vtable_shim.h's own VCall: that one
+// fixes every slot to void(), which does not reproduce slot017/031's two
+// int arguments or slot023's int return. Only DECLARATION ORDER decides a
+// slot's offset, so the generous count before/after the ones this body
+// uses costs nothing.
+class VCallX { public:
+  virtual void slot000();
+  virtual void slot001();
+  virtual void slot002();
+  virtual void slot003();
+  virtual void slot004();
+  virtual void slot005();
+  virtual void slot006();
+  virtual void slot007();
+  virtual void slot008();
+  virtual void slot009();
+  virtual void slot010();
+  virtual void slot011();
+  virtual void slot012();
+  virtual void slot013();
+  virtual void slot014();
+  virtual void slot015();
+  virtual void slot016();
+  virtual void slot017(int, int);
+  virtual void slot018();
+  virtual void slot019();
+  virtual void slot020();
+  virtual void slot021();
+  virtual void slot022();
+  virtual int slot023();
+  virtual void slot024();
+  virtual void slot025();
+  virtual void slot026();
+  virtual void slot027();
+  virtual void slot028();
+  virtual void slot029();
+  virtual void slot030();
+  virtual void slot031(int, int);
+};
+}  // namespace
+
+/*
+Purpose: Route a mouse-move event either to the primary handler chain (a4
+         zero: a fixed field-408 callback, then virtual slot017, then a
+         child at +0x1C) or to the secondary one (virtual slot031, then a
+         child at +0x4C) - unless a class-wide suppression flag or an
+         instance flag byte is set. Either child, if present, is asked
+         whether it needs a redraw (slot023) and told to redraw (slot007)
+         if so. `a3` is never read; `ret 0x10` still pops it.
+// ORIGINAL: 0x005F6320 ?on_mouse_move@Win@@QAEXHHIH@Z 0x005F6320-0x005F63BB BYTE_EXACT
+// size      155 bytes
+// prototype void (__thiscall ?on_mouse_move@Win@@QAEXHHIH@Z)(Win* this, int, int, unsigned int, int)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005F6360 0x005F636B 0x005F637B 0x005F6386 0x005F639B 0x005F63A9 0x005F63B4
+Return Value: n/a
+Status: Complete
+*/
+void Win::on_mouse_move(int a1, int a2, unsigned int a3, int a4) {
+    char *const self = reinterpret_cast<char *>(this);
+    if ((*reinterpret_cast<uint32_t *>(self + 0x98) & 0x200000U) != 0) {
+        return;
+    }
+    if ((*reinterpret_cast<uint8_t *>(self + 0x9C) & 8U) != 0) {
+        return;
+    }
+    if (a4 == 0) {
+        ScrollCurrentWin() = this;
+        typedef void (__cdecl *MouseCallbackFn)(int, int);
+        MouseCallbackFn const fn =
+            *reinterpret_cast<MouseCallbackFn *>(self + 0x408);
+        if (fn != 0) {
+            fn(a1, a2);
+        }
+        reinterpret_cast<VCallX *>(this)->slot017(a1, a2);
+        void *const child = *reinterpret_cast<void **>(self + 0x1C);
+        if (child != 0) {
+            if (reinterpret_cast<VCallX *>(child)->slot023() == 0) {
+                reinterpret_cast<VCallX *>(child)->slot007();
+            }
+        }
+    } else {
+        reinterpret_cast<VCallX *>(this)->slot031(a1, a2);
+        void *const child = *reinterpret_cast<void **>(self + 0x4C);
+        if (child != 0) {
+            if (reinterpret_cast<VCallX *>(child)->slot023() == 0) {
+                reinterpret_cast<VCallX *>(child)->slot007();
+            }
+        }
+    }
 }

@@ -100,6 +100,14 @@ class MapWin : protected virtual GraphicWin {
   // ?draw_map@MapWin@@QAEXH@Z at 0x0046A550, still an original body: declared
   // here so on_redraw's direct call compiles, resolved at link time.
   void draw_map(int draw_type);
+  // ?draw_radius@MapWin@@QAEXHHHH@Z at 0x0046A2A0, still an original body -
+  // same idiom as draw_map above, declared so the FREE draw_radius (end of
+  // mapwin.cpp) reaches it with a `call rel32` instead of loading
+  // MapWinOriginalDrawRadius through an indirect call.
+  void draw_radius(int x_coord, int y_coord, int a3, int draw_type);
+  // 0x0046FD90, not yet recovered - a pending_bodies forwarder.
+  // world_climate (src/map.cpp) calls it BY NAME.
+  void clear_terrain();
   // MEASURED: a genuine `MapWin(int a1)` constructor was tried first, on the
   // theory the mangled `H` on `??0MapWin@@QAE@H@Z` is VC6's own
   // most-derived flag for the virtual `GraphicWin` base declared above,
@@ -316,9 +324,14 @@ extern func_map_win_draw_radius MapWinOriginalDrawRadius;  // 0x0046A2A0
 // ?draw_map@@YAXH@Z at 0x0046B190 - the FREE function that repaints every
 // live MapWin, not `MapWin::draw_map` at 0x0046A550 below. Declared here
 // rather than bound as a pointer in temp.h so its callers emit the `E8` the
-// image emits; the body is still original, behind a forwarder in
-// src/pending_bodies.cpp.
+// image emits; defined at the end of src/mapwin.cpp.
 void __cdecl draw_map(int draw_type);
+
+// ?terrain_fixup@@YAXPAUMapWin@@@Z at 0x004711A0 - not yet recovered, a
+// pending_bodies forwarder. mapwin_terrain_fixup (end of mapwin.cpp) calls
+// it once per live MapWin slot and once more for each of three
+// fixed-address windows.
+void __cdecl terrain_fixup(MapWin *window);
 
 // ?draw_map@MapWin@@QAEXH@Z at 0x0046A550 - public, __thiscall, void(int) by
 // the mangled name, `ret 4` by the image - is 2049 bytes and still an original

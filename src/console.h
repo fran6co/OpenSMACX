@@ -113,7 +113,6 @@ class Console : public MapWin {
   int on_key_click(int a1, int a2);
 
  public:
-  // 0x005109B0, a pending_bodies forwarder.
   void cursor_next(int x_coord, int y_coord);
 
  public:
@@ -288,9 +287,22 @@ typedef void(__cdecl func_console_flush_input)(void);
 // error, so a fixture rebinding one would leave the other still pointing at
 // the original image - which is why tools/test_generator_support.py refuses
 // a second binding, and it caught this one.
-// 0x005FD120, a pending_bodies forwarder.
+// 0x005FD120, defined in src/console.cpp.
 void __cdecl flush_input();
 Console *const ConsoleGlobal = (Console *)0x009156B0;  // 0x009156B0, the process-wide Console
+
+// Console::cursor_next's own last-position cache: the CURRENT index and the
+// two coordinate arrays it indexes, distinct from the per-object ring buffer
+// at field_23C08_/field_23C0C_/field_23C10_. No established identity beyond
+// what this one function shows.
+extern int CursorLastIndex;    // 0x009392B8
+extern int CursorLastX[32];    // 0x009392C0
+extern int CursorLastY[32];    // 0x00939340
+
+// Two fixed-address strings cursor_next passes to danger() when a debug-mode
+// coordinate parity mismatch is detected. No established text.
+LPCSTR const CursorNextDangerMsg1 = (LPCSTR)0x0068A5D0;
+LPCSTR const CursorNextDangerMsg2 = (LPCSTR)0x00939FF0;
 
 // The dword at 0x0093A938 is set while a turn is played out under program
 // control rather than interactively. A linear scan of .text finds exactly four
