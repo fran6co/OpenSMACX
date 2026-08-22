@@ -86,4 +86,3 @@ baseline-arm64/*.tsv -text
 ###############################################################################
 docs/recovery/summary.json             merge=binary
 docs/recovery/recovered-shapes.csv     merge=binary
-mizuchi-db.json filter=lfs diff=lfs merge=lfs -text
