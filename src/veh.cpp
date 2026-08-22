@@ -3014,6 +3014,7 @@ void __cdecl spot_loc(int x, int y, int faction_id) {
 Purpose: Determine if the specified unit wants to wake up based on certain conditions and
          preferences. Optional parameter for spotted veh_id (-1 to skip).
 // ORIGINAL: 0x005B5EA0 ?want_to_wake@@YAHHHH@Z 0x005B5EA0-0x005B6060
+// RULED-OUT: image never reads Vehs[veh_id].faction_id eagerly - it re-reads it at each conditional use, and never caches it across the early return. Un-caching it into `Vehs[veh_id].faction_id` at every site (instead of a hoisted `veh_faction_id` local) let the compiler pick a plain ebp-frame prologue matching the image's, where the hoisted local forced a param-less-locals, esp-relative frame from instruction 0. Also restored the `veh_id >= 0 &&` half of the trailing guard - the image's `test edi, edi; jl` tests veh_id, not just spotted_veh_id, contradicting this body's own comment that it was safe to drop. Residual divergence past this is register allocation (esi/edi/ebx/ebp swapped throughout) and one 16-bit shift-then-extend vs extend-then-shift on `waypoint_x[0] >> 1`; an explicit `(int)` cast on the base_who() arguments did not change the codegen. Best flag set /O2 /Gy /GR- /Oy- /GX, 0.793 similar.
 // size      448 bytes
 // prototype int (__cdecl ?want_to_wake@@YAHHHH@Z)(unsigned int factionID, unsigned int vehID, int vehID2)
 // callers   1   call targets   0
@@ -3024,35 +3025,33 @@ Return Value: Does unit want to wake? true/false
 Status: Complete
 */
 BOOL __cdecl want_to_wake(int faction_id, int veh_id, int spotted_veh_id) {
-    int base_faction_id;
     uint32_t triad = get_triad(veh_id);
-    uint32_t veh_faction_id = Vehs[veh_id].faction_id;
-    if (triad == TRIAD_AIR && Vehs[veh_id].terraforming_turns 
-        && Vehs[veh_id].order == ORDER_MOVE_TO
-        && (base_faction_id = base_who(Vehs[veh_id].waypoint_x[0], Vehs[veh_id].waypoint_y[0]),
-            base_faction_id >= 0)) {
-        if (((uint32_t)base_faction_id == veh_faction_id) 
-            || has_treaty(veh_faction_id, base_faction_id, DTREATY_PACT)) {
+    if (triad == TRIAD_AIR && Vehs[veh_id].terraforming_turns
+        && Vehs[veh_id].order == ORDER_MOVE_TO) {
+        int base_faction_id = base_who(Vehs[veh_id].waypoint_x[0], Vehs[veh_id].waypoint_y[0]);
+        if (base_faction_id >= 0
+            && (((uint32_t)base_faction_id == Vehs[veh_id].faction_id)
+                || has_treaty(Vehs[veh_id].faction_id, base_faction_id, DTREATY_PACT))) {
             return false;
         }
     }
     BOOL wants_to_wake;
     if (IsMultiplayerNet) { // restructured to be more efficient with same logic
-        if (has_treaty(veh_faction_id, faction_id, DTREATY_PACT)) {
+        if (has_treaty(Vehs[veh_id].faction_id, faction_id, DTREATY_PACT)) {
             wants_to_wake = false;
-        } else if (has_treaty(veh_faction_id, faction_id, DTREATY_TREATY)) {
+        } else if (has_treaty(Vehs[veh_id].faction_id, faction_id, DTREATY_TREATY)) {
             wants_to_wake = true;
-        } else if (has_treaty(veh_faction_id, faction_id, DTREATY_TRUCE)) {
+        } else if (has_treaty(Vehs[veh_id].faction_id, faction_id, DTREATY_TRUCE)) {
             wants_to_wake = true;
         } else {
             wants_to_wake = true;
         }
     } else {
-        if (has_treaty(veh_faction_id, faction_id, DTREATY_PACT)) {
+        if (has_treaty(Vehs[veh_id].faction_id, faction_id, DTREATY_PACT)) {
             wants_to_wake = GamePreferences & PREF_AUTO_END_MOVE_SPOT_VEH_PACT;
-        } else if (has_treaty(veh_faction_id, faction_id, DTREATY_TREATY)) {
+        } else if (has_treaty(Vehs[veh_id].faction_id, faction_id, DTREATY_TREATY)) {
             wants_to_wake = GamePreferences & PREF_AUTO_END_MOVE_SPOT_VEH_TREATY;
-        } else if (has_treaty(veh_faction_id, faction_id, DTREATY_TRUCE)) {
+        } else if (has_treaty(Vehs[veh_id].faction_id, faction_id, DTREATY_TRUCE)) {
             wants_to_wake = GamePreferences & PREF_AUTO_END_MOVE_SPOT_VEH_TRUCE;
         } else {
             wants_to_wake = GamePreferences & PREF_AUTO_END_MOVE_SPOT_VEH_WAR;
@@ -3061,7 +3060,7 @@ BOOL __cdecl want_to_wake(int faction_id, int veh_id, int spotted_veh_id) {
             return wants_to_wake;
         }
     }
-    if (spotted_veh_id >= 0) { // removed a check if veh_id is also >= 0 (always unsigned)
+    if (veh_id >= 0 && spotted_veh_id >= 0) {
         uint32_t triad_spotted = get_triad(spotted_veh_id);
         if (triad != triad_spotted && ((Vehs[veh_id].state & (VSTATE_UNK_1000000 | VSTATE_UNK_200))
             != (VSTATE_UNK_1000000 | VSTATE_UNK_200) || triad_spotted == TRIAD_LAND)) {
@@ -3822,6 +3821,7 @@ BOOL __cdecl veh_avail(int proto_id, int faction_id, int base_id) {
 Purpose: Determine whether a faction wants the specified prototype based on the faction's current
          prototype designs.
 // ORIGINAL: 0x005BE100 ?wants_prototype@@YAHHH@Z 0x005BE100-0x005BE29D
+// RULED-OUT: nested ternary chains (`cond ? a : cond2 ? b : c`) used as a single `if (...)` condition compiled to SETcc-then-test where the image branches directly - splitting each into if/else-if with explicit `continue` (the loop's early-out target is one shared label in the image) recovered the direct jumps. Also split the combined `if (!A || !B) return false;` guard at the top into two separate ifs - the image has two full, separate epilogues, one per check, not a combined OR. And walking a `VehPrototype *proto_cmp` pointer (++proto_cmp each iteration) instead of indexing `VehPrototypes[proto_id_cmp]` per field matches the image's single incrementing esi and its negative-offset field reads (esi-1 for chassis_id, esi+5 for plan) - though the image anchors that pointer at the weapon_id field specifically (esi+0), where this tree's pointer anchors at the struct's own front, a difference not chased further. Moved 0.617 -> 0.865 similar (/O2 /Gy /GR- /Oy- /GX).
 // size      413 bytes
 // prototype int (__cdecl ?wants_prototype@@YAHHH@Z)(int protoID, int factionID)
 // callers   1   call targets   1
@@ -3833,37 +3833,57 @@ Status: Complete
 */
 BOOL __cdecl wants_prototype(int proto_id, int faction_id) {
     uint32_t flags = VehPrototypes[proto_id].flags;
-    if (!(flags & PROTO_ACTIVE) || !(flags & PROTO_TYPED_COMPLETE)) {
+    if (!(flags & PROTO_ACTIVE)) {
+        return false;
+    }
+    if (!(flags & PROTO_TYPED_COMPLETE)) {
         return false;
     }
     uint32_t proto_offset = faction_id * MaxVehProtoFactionNum;
-    for (uint32_t i = 0; i < MaxVehProtoFactionNum; i++) {
-        uint32_t proto_id_cmp = proto_offset + i;
-        uint32_t flags_cmp = VehPrototypes[proto_id_cmp].flags;
-        if (flags_cmp & PROTO_ACTIVE && flags_cmp & PROTO_TYPED_COMPLETE
-            && VehPrototypes[proto_id].plan == VehPrototypes[proto_id_cmp].plan) {
-            uint8_t chas = VehPrototypes[proto_id].chassis_id;
-            uint8_t chas_cmp = VehPrototypes[proto_id_cmp].chassis_id;
-            if (Chassis[chas].triad == Chassis[chas_cmp].triad) {
-                uint8_t weap_id_cmp = VehPrototypes[proto_id_cmp].weapon_id;
-                uint8_t mode_cmp = Weapon[weap_id_cmp].mode;
-                int8_t off_rating_cmp;
-                if ((mode_cmp > WPN_MODE_MISSILE)
-                    ? (mode_cmp == Weapon[VehPrototypes[proto_id].weapon_id].mode)
-                    : (off_rating_cmp = Weapon[weap_id_cmp].offense_rating, off_rating_cmp < 0)
-                    ? (off_rating_cmp == get_proto_offense_rating(proto_id))
-                    : (off_rating_cmp >= get_proto_offense_rating(proto_id))) {
-                    uint8_t arm_id_cmp = VehPrototypes[proto_id_cmp].armor_id;
-                    if ((Armor[arm_id_cmp].defense_rating <= 0)
-                        ? (arm_id_cmp == VehPrototypes[proto_id].armor_id)
-                        : (armor_val(proto_id_cmp, faction_id) 
-                            >= armor_val(proto_id, faction_id))) {
-                        if (Chassis[chas_cmp].speed >= Chassis[chas].speed) {
-                            return false;
-                        }
-                    }
-                }
+    uint32_t proto_id_cmp = proto_offset;
+    VehPrototype *proto_cmp = &VehPrototypes[proto_offset];
+    for (uint32_t i = 0; i < MaxVehProtoFactionNum; i++, proto_id_cmp++, proto_cmp++) {
+        uint32_t flags_cmp = proto_cmp->flags;
+        if (!(flags_cmp & PROTO_ACTIVE)) {
+            continue;
+        }
+        if (!(flags_cmp & PROTO_TYPED_COMPLETE)) {
+            continue;
+        }
+        if (VehPrototypes[proto_id].plan != proto_cmp->plan) {
+            continue;
+        }
+        uint8_t chas_cmp = proto_cmp->chassis_id;
+        uint8_t chas = VehPrototypes[proto_id].chassis_id;
+        if (Chassis[chas].triad != Chassis[chas_cmp].triad) {
+            continue;
+        }
+        uint8_t weap_id_cmp = proto_cmp->weapon_id;
+        uint8_t mode_cmp = Weapon[weap_id_cmp].mode;
+        if (mode_cmp > WPN_MODE_MISSILE) {
+            if (mode_cmp != Weapon[VehPrototypes[proto_id].weapon_id].mode) {
+                continue;
             }
+        } else {
+            int8_t off_rating_cmp = Weapon[weap_id_cmp].offense_rating;
+            if (off_rating_cmp < 0) {
+                if (off_rating_cmp != get_proto_offense_rating(proto_id)) {
+                    continue;
+                }
+            } else if (off_rating_cmp < get_proto_offense_rating(proto_id)) {
+                continue;
+            }
+        }
+        uint8_t arm_id_cmp = proto_cmp->armor_id;
+        if (Armor[arm_id_cmp].defense_rating <= 0) {
+            if (arm_id_cmp != VehPrototypes[proto_id].armor_id) {
+                continue;
+            }
+        } else if (armor_val(proto_id_cmp, faction_id) < armor_val(proto_id, faction_id)) {
+            continue;
+        }
+        if (Chassis[chas_cmp].speed >= Chassis[chas].speed) {
+            return false;
         }
     }
     return true;
@@ -4151,6 +4171,7 @@ void __cdecl veh_promote(int veh_id) {
 /*
 Purpose: Clear the specified unit.
 // ORIGINAL: 0x005C02D0 ?veh_clear@@YAXHHH@Z 0x005C02D0-0x005C03C3
+// RULED-OUT: `Players[faction_id].rule_morale` into its own statement, placed right after the `order_auto_type = 0;` store (where the image starts computing the address) and adding 1 at the later `morale = ...` store site instead of folding the `+1` into the read, moved this from 44/57 (0.895 similar, MISMATCH) to 55/57 (1.000 similar, MNEMONIC_ONLY). The remaining 2-instruction divergence is VC6 scheduling the actual byte LOAD (`mov dl, byte ptr [edx*4+...]`) between `move_to_ai_type` and `visibility` while this tree's load lands one store earlier; the address computation (lea/lea/shl/sub) already matches exactly. Moving the local's declaration later (to sit textually where the image's load falls) moved the ADDRESS computation too and lost the match (back to 44/57 or worse) - the image splits one C expression into an early address calc and a late load, which no single placement of one statement reproduces. Not chased further.
 // size      243 bytes
 // prototype void (__cdecl ?veh_clear@@YAXHHH@Z)(int vehID, int protoID, int factionID)
 // callers   2   call targets   0
@@ -4181,12 +4202,13 @@ void __cdecl veh_clear(int veh_id, int proto_id, int faction_id) {
     Vehs[veh_id].moves_expended = 0;
     Vehs[veh_id].dmg_incurred = 0;
     Vehs[veh_id].order_auto_type = 0;
+    uint8_t rule_morale = (uint8_t)Players[faction_id].rule_morale;
     Vehs[veh_id].terraforming_turns = 0;
     Vehs[veh_id].unk_6 = 0;
     Vehs[veh_id].move_to_ai_type = 0;
     Vehs[veh_id].visibility = 0;
     Vehs[veh_id].home_base_id = -1;
-    Vehs[veh_id].morale = (uint8_t)(Players[faction_id].rule_morale + 1);
+    Vehs[veh_id].morale = rule_morale + 1;
     Vehs[veh_id].unk_5 = 2;
     Vehs[veh_id].probe_action = 0;
     Vehs[veh_id].probe_sabotage_id = 0;
