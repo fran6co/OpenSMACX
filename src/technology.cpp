@@ -93,6 +93,19 @@ BOOL __cdecl valid_tech_leap(int tech_id, int faction_id) {
 Purpose: Craft an output string related to a specific technology. For techIDs outside the standard
          range, craft a string related to world map, comm links or prototypes.
 // ORIGINAL: 0x005B9C40 ?say_tech@@YAXPADHH@Z 0x005B9C40-0x005B9EF0
+// RULED-OUT: call_diff shows this tree FEWER by 1 call (28 vs the image's 29) at every
+//   flag set; the image's own `calls` list has no target for tech_category, so it
+//   inlines `tech_category(tech_id)` at this one call site even though tech_category
+//   keeps its own out-of-line, BYTE_EXACT body elsewhere (same "6 callers, 0 call
+//   targets" shape as has_tech/tech_recurse). Measured two ways to reproduce that:
+//   reordering tech_category's definition ahead of say_tech in this file (so it is
+//   visible to /O2's same-TU inliner) is a no-op, still called under every flag set;
+//   marking it `__forceinline` DOES fold it into say_tech under /O2, but the
+//   measured-best flag set for byte similarity is /O2 /Oi- (not the /Ob0 set
+//   call_diff's own gap-search picks), and there tech_category still doesn't inline -
+//   `measure` regressed from 12/221 to 7/221 because the differently-shaped body
+//   scores worse elsewhere. Reverted; tech_category is not `MEASURED inline`'able
+//   from within this file without a net loss.
 // UNEXPLORED: left untouched - MISMATCH at instruction 2, compiled body is 133 instructions
 //   against the image's 221, a size gap much bigger than a register-allocation difference
 //   accounts for. The `tech_id < -1` branch here is suspect: the image reads a label id out of
