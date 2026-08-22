@@ -39,17 +39,10 @@ const uint32_t WinSecondaryVtable = 0x0066FF30;
 /*
 Purpose: Construct a Win from its AutoSound subobject and the process window
          defaults, preserving every sparse write and legacy return residue.
-// ORIGINAL: 0x005EB3D0 ??0Win@@QAE@XZ 0x005EB3D0-0x005EB63D
-// LEVER: `object`/`fixed`/`dynamic` were `volatile` pointers over a straight
-//   run of field-default copies - no rereads, nothing to guard against
-//   reordering. Dropping `volatile` (same raw-offset shape) took this from
-//   100/107 to 104/107 and the compiled instruction count now matches the
-//   image's 107 exactly. The remaining 3-instruction gap is the epilogue:
-//   the image's real `??0Win@@QAE@XZ` constructor sets `eax = this` before
-//   `pop esi; ret`, and this body's `void construct()` idiom never does -
-//   same cost the "construct method, not a constructor" lever elsewhere
-//   accepts, out of scope for the volatile fix.
-// symbol    ?construct@Win@@QAEXXZ
+// ORIGINAL: 0x005EB3D0 ??0Win@@QAE@XZ 0x005EB3D0-0x005EB63D BYTE_EXACT
+// LEVER: `object`/`fixed`/`dynamic` were `volatile` pointers over a straight run of field-default copies - no rereads, nothing to guard against reordering. Dropping `volatile` (same raw-offset shape) took this from 100/107 to 104/107 and the compiled instruction count now matches the image's 107 exactly.
+// LEVER: the remaining 3-instruction epilogue gap was the image's real `??0Win@@QAE@XZ` constructor setting `eax = this` before `pop esi; ret`, which a `void construct()` never emits. Declaring `Win *construct()` and `return this;` closed it: 104/107 -> 107/107, BYTE_EXACT.
+// symbol    ?construct@Win@@QAEPAV1@XZ
 // size      621 bytes
 // prototype void (__thiscall ??0Win@@QAE@XZ)(Win* this)
 // callers   1   call targets   1
@@ -59,7 +52,7 @@ Purpose: Construct a Win from its AutoSound subobject and the process window
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
-void Win::construct() {
+Win *Win::construct() {
     auto_sound_.construct();
     uint32_t *const object =
         reinterpret_cast<uint32_t *>(this);
@@ -159,6 +152,7 @@ void Win::construct() {
     object[0x17C / 4] = 1;
     object[0x180 / 4] = 1;
     object[0x1A0 / 4] = 2;
+    return this;
 }
 
 Win *__fastcall win_construct_redirect(Win *self, void *) {
@@ -1596,6 +1590,16 @@ Verification note: hoisting the count out of the loop is an EQUIVALENT mutant
 // divergence (a missing early `xor edi, edi` and the resulting jump-target
 // shift) did not yield to reordering the two post-count-check statements
 // either; both orders compile identically.
+//
+// RULED-OUT: loop shape, via try_spellings. `do { ... } while (index <
+// count);` ties the committed `for (;;) { ...; if (index >= count) return
+// 0; }` exactly (17/37, same bytes) - the image's single shared "return 1"
+// landing pad (reached by both `je` and the post-recursion `jne`) is not
+// reproduced by either; this tree's compiler duplicates that block instead of
+// sharing it. A top-tested `while (index < count) { ... }` is WORSE (9/37),
+// and merging the two early-return tests into one `||` condition is worse
+// still (5/37) - the image tests them separately, matching the existing
+// two-statement shape already committed.
 */
 int Win::is_descendant(Win *candidate) {
     if (!candidate) {

@@ -255,14 +255,30 @@ Purpose: Reset Scroll-owned state from the process defaults, close the two
 //   image never does. `&ScrollCloseStaticDefaults`/`&ScrollCloseDynamicDefaults`
 //   (the object IS the table base) matches the image's direct fixed-address
 //   loads and took this from 0/71 to 42/71.
-// BLOCKED for a further pass: the `for (index<3)` loop over `dynamic[]` here
-//   assumes one contiguous 17-slot table read with a fixed +3 stride between
-//   the four destinations; the image's loop (0x605453-0x60547F) instead reads
-//   four OVERLAPPING 3-element windows of that table at dword offsets
-//   0,2,5,8 into four separate destination fields (esi+0xa7c/a88/a94/aa0) -
-//   dword index 2 is read by both the first and second window. The
-//   loop needs rewriting around that windowing, not the current stride-3
-//   indexing, to match structurally.
+// CORRECTED (2026-08-22): the note this replaces claimed the loop below
+//   read the wrong windows of `dynamic[]` and called it BLOCKED. Read
+//   directly off 0x605453-0x60547F: `mov edi,[eax+0x9b8de8]` before `eax`'s
+//   first increment is dword offset 8 from the 0x9b8de0 table base, i.e.
+//   `dynamic[2+index]`; the three reads that follow use `eax` AFTER that
+//   same increment, at offsets 0x10/0x1c/0x28, i.e. `dynamic[5+index]`,
+//   `dynamic[8+index]`, `dynamic[11+index]` - exactly the four windows the
+//   loop below already writes. There is no data-mapping defect here; see the
+//   RULED-OUT below and the constructor's own (0x006051D0) matching note for
+//   what the remaining gap actually is.
+// RULED-OUT: the remaining 6-instruction gap is two SEPARATE, already-typed
+//   defects, neither of which yielded to a new spelling (try_spellings,
+//   2026-08-22). (1) The loop's induction variable: the image keeps a plain
+//   scaled byte offset in `eax` (`xor eax,eax` before the loop); this body's
+//   compiled `eax` starts at the strength-reduced `0x14` instead - the exact
+//   residual the constructor's own RULED-OUT above documents and could not
+//   move either (tried `int index` here too, no change). (2) The SECOND
+//   FlatButton dispatch (`flat_button_right_`) schedules its vtable load
+//   into `eax` and calls `[eax+0x168]` where the image loads `edx` and calls
+//   `[edx+0x168]` with the OTHER field read (`[esi+0x15f8]`) interleaved
+//   between them - the same "second call schedules differently" residual
+//   already documented and abandoned in `set_button_color` and
+//   `set_bevel_thickness` below. Naming the vtable pointer in a local before
+//   the second call does not change it either.
 // LEVER: dropped the OPENSMACX_NOINLINE call_noarg_virtual helper and
 //   expanded both FlatButton close dispatches inline via
 //   read_volatile_bits/original_slot<func_noarg_virtual> at slot 0x168,
@@ -272,9 +288,9 @@ Purpose: Reset Scroll-owned state from the process defaults, close the two
 //   reread), so `volatile` bought nothing but forced extra register loads.
 //   Plain (non-volatile) pointers, same raw-offset shape, took this from
 //   47/71 to 65/71 - and the compiled instruction count now matches the
-//   image's 71 exactly. The remaining 6-instruction gap starts exactly at
-//   the dynamic[] loop the BLOCKED note above already names; unaffected by
-//   this change.
+//   image's 71 exactly. The remaining 6-instruction gap is the induction
+//   variable and second-dispatch scheduling the RULED-OUT above names;
+//   unaffected by this change.
 // symbol    ?close@Scroll@@QAEIXZ
 // size      350 bytes
 // prototype void (__thiscall ?close@Scroll@@QAEXXZ)(Scroll* this)
@@ -685,14 +701,9 @@ void Scroll::set_border_color(int color) {
 
 /*
 Purpose: Expand a rectangle horizontally and vertically.
-// ORIGINAL: 0x00606F00 sub_606f00 0x00606F00-0x00606F2B
-// LEVER: the long_from_bits/uint32_t round trip on plain LONG subtraction was
-//   dead weight the image never does (no overflow-defined behavior needed for
-//   these fields); direct `RECT` member arithmetic on the `volatile RECT*`
-//   matches the mnemonics exactly (2/16 -> 11/16).
-// RULED-OUT: naming the params as separate int locals to coax the load order
-//   of param-before-field (image loads the int arg into ecx before the field
-//   into edx; this tree loads the field first) - no effect.
+// ORIGINAL: 0x00606F00 sub_606f00 0x00606F00-0x00606F2B BYTE_EXACT
+// LEVER: the long_from_bits/uint32_t round trip on plain LONG subtraction was dead weight the image never does (no overflow-defined behavior needed for these fields); direct `RECT` member arithmetic on the `volatile RECT*` matches the mnemonics exactly (2/16 -> 11/16).
+// LEVER: the `volatile RECT *ordered_rect` alias was itself the remaining wall, not a fix for anything read twice - every field here is written once and read once. Reading `rect->field` directly (compound `-=`/`+=`, no volatile handle) let VC6 fold the param-then-field load order the image has instead of forcing a `mov edx, [eax]` ahead of the `ecx` load through the alias. 11/16 -> BYTE_EXACT 16/16.
 // symbol    ?expand_rect@@YAPAUtagRECT@@PAU1@HH@Z
 // size      43 bytes
 // prototype 
@@ -704,11 +715,10 @@ Purpose: Expand a rectangle horizontally and vertically.
 Status: Complete
 */
 RECT *__cdecl expand_rect(RECT *rect, int horizontal, int vertical) {
-    volatile RECT *ordered_rect = rect;
-    ordered_rect->left = ordered_rect->left - horizontal;
-    ordered_rect->right = ordered_rect->right + horizontal;
-    ordered_rect->top = ordered_rect->top - vertical;
-    ordered_rect->bottom = ordered_rect->bottom + vertical;
+    rect->left -= horizontal;
+    rect->right += horizontal;
+    rect->top -= vertical;
+    rect->bottom += vertical;
     return rect;
 }
 

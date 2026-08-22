@@ -48,7 +48,11 @@ class GraphicWin : public Win {
   void on_mouse_move(int a1, int a2, unsigned int a3, int a4);
   GraphicWin() { ; }
   ~GraphicWin() { ; }
-  void construct();
+  // Returns `this`: the image's own closing `mov eax, esi` is the compiler
+  // returning the receiver, matching a real constructor's ABI even though
+  // this is spelled as a method (see the `symbol` fact on its ORIGINAL
+  // marker in graphicwin.cpp for why).
+  GraphicWin *construct();
   uint32_t close();
   int init(int x, int y, int width, int height, LPSTR title, int flags,
            Win *parent, Menu *menu, BorderSizing *border);

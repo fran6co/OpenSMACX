@@ -59,7 +59,7 @@ uint32_t GraphicWinFieldA0CDefault;  // 0x009B33C0
 Purpose: Construct the Win base and Buffer subobject, then install GraphicWin
          tables and initialize its trailing window state.
 // ORIGINAL: 0x005D4CF0 ??0GraphicWin@@QAE@XZ 0x005D4CF0-0x005D4DC4;0x00662B10-0x00662B22
-// symbol    ?construct@GraphicWin@@QAEXXZ
+// symbol    ?construct@GraphicWin@@QAEPAV1@XZ
 // size      230 bytes
 // prototype void (__thiscall ??0GraphicWin@@QAE@XZ)(GraphicWin* this)
 // callers   52   call targets   2
@@ -73,8 +73,29 @@ runs first and already zeroes both - so dropping either is unobservable. They
 mirror the original's instruction sequence rather than deduplicating it. The
 Win/Buffer construction order is likewise unobservable because the two write
 disjoint regions.
+// LEVER: `GraphicWin *construct()` returning `this` (`mov eax, esi` at the
+//        close) instead of `void construct()` - matches the image's closing
+//        instruction, which a void-returning method never emits. Reduced
+//        listing_diff from 5 differing runs to 4; did not change the
+//        `agreeing` count, so the tier stays MISMATCH.
+// RULED-OUT: the remaining divergence (`push ecx` vs `sub esp, 8`, and a
+//            null-check `cmp ecx, edi; je` around the `new (&buffer_)
+//            Buffer()` placement-new) is the PLACEMENT NEW COSTS A NULL
+//            GUARD lever - the image calls Buffer's real constructor at
+//            0x5D7210 unconditionally, with no guard, because it is an
+//            implicit member construction. Reaching that here needs
+//            `Win::construct()` to run from a BASE SUBOBJECT constructor
+//            (the ScrollGraphicWin idiom in scroll.h) INTRODUCED BETWEEN
+//            Win and GraphicWin, so it runs before `buffer_` (a GraphicWin
+//            member) is implicitly built - and GraphicWin's own `{ ; }`
+//            empty-inline constructor would then have to become real, which
+//            changes what "construct()" means to this class's 52 callers
+//            across files this pass does not own. Same layout-change
+//            tradeoff the sibling destructor (0x005D4DD0) already declined
+//            against its own 185 callers; not attempted here for the same
+//            reason.
 */
-void GraphicWin::construct() {
+GraphicWin *GraphicWin::construct() {
     static_cast<Win *>(this)->construct();
     new (&buffer_) Buffer();
 
@@ -106,6 +127,7 @@ void GraphicWin::construct() {
     field_A04_ = 0;
     poCanvas_ = 0;
     field_A0C_ = GraphicWinFieldA0CDefault;
+    return this;
 }
 
 GraphicWin *__fastcall graphic_win_construct_redirect(
