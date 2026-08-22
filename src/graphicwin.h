@@ -47,7 +47,7 @@ class GraphicWin : public Win, public Buffer {
  public:
   void on_mouse_move(int a1, int a2, unsigned int a3, int a4);
   GraphicWin();
-  ~GraphicWin() { ; }
+  ~GraphicWin();
 
   // VIRTUAL, AND THE IMAGE IS WHAT SAYS SO. A body entered on a subobject
   // opens by adjusting `this` back by that subobject's offset, and that is the

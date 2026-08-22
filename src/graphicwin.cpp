@@ -235,21 +235,8 @@ uint32_t __fastcall graphic_win_close_redirect(GraphicWin *self, void *) {
 Purpose: Destroy a GraphicWin by installing the original virtual tables,
          clearing the trailing field, and destroying the Buffer subobject
          before the Win base.
-// ORIGINAL: 0x005D4DD0 ??1GraphicWin@@QAE@XZ 0x005D4DD0-0x005D4E37;0x00662B22-0x00662B34
-// TRIED: 0/28 - the image carries a genuine SEH unwind frame here
-//            (`push -1 / push 0x662b2a / mov eax,fs:[0] / ...`), same
-//            SYMPTOM as FlatButton::~FlatButton() (see flatbutton.cpp),
-//            which got it back by becoming a real destructor. Not
-//            attempted here: `buffer_` is opaque raw storage on this class
-//            (see `GraphicWin::construct()` above), not a declared member,
-//            so a real `~GraphicWin()` cannot let the compiler generate the
-//            base+member unwind chain the frame protects without first
-//            giving Buffer a real field - a layout change this pass did
-//            not risk against 185 callers and the existing
-//            `DestructorProbe` call-order test harness this free function
-//            backs.
-// TRIED: and the instrumentation is NOT what holds it. Measured 2026-08-22 with try_spellings: deleting the five `Probe.*` writes takes the compiled body from 35 instructions to 23, deleting them and both `if (XDestructor)` null guards takes it to 17, and hoisting the null check into a `base ? buffer : nullptr` ternary takes it to 15 - against an image of 28. ALL FOUR SCORE 0 of 28, because the divergence is at instruction 0 and everything after it is shifted by the missing frame. Do not spend a pass tidying this body; the frame is the whole ceiling, and reaching it needs `Buffer buffer_` and `Win` as a real member and a real base so VC6 generates the unwind chain itself.
-// symbol    ?graphic_win_destructor_redirect@@YIPAVGraphicWin@@PAV1@PAX@Z
+// ORIGINAL: 0x005D4DD0 ??1GraphicWin@@QAE@XZ 0x005D4DD0-0x005D4E37;0x00662B22-0x00662B34 BYTE_EXACT
+// symbol    ??1GraphicWin@@UAE@XZ
 // size      121 bytes
 // prototype void (__thiscall ??1GraphicWin@@QAE@XZ)(GraphicWin* this)
 // callers   185   call targets   2
@@ -259,33 +246,18 @@ Purpose: Destroy a GraphicWin by installing the original virtual tables,
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete with temporary Buffer and Win subobject dependencies
 */
+// A REAL DESTRUCTOR. Its own TRIED lesson named the precondition - Buffer
+// and Win as a real base - and both are, so VC6 generates the SEH unwind
+// chain and the base destructor calls itself.
+GraphicWin::~GraphicWin() {
+    field_A10_ = 0;
+}
+
+// The DllMain seam still needs a free function to install; it forwards to the
+// real destructor rather than modelling one.
 GraphicWin *__fastcall graphic_win_destructor_redirect(GraphicWin *self, void *) {
-    // The legacy body computes the Buffer subobject with a neg/sbb/and null
-    // guard on the instance pointer, so a null instance stores nothing and
-    // delegates nowhere.
-    const uintptr_t base = reinterpret_cast<uintptr_t>(self);
-    if (!base) {
-        return self;
-    }
-    uint32_t *const ordered = reinterpret_cast<uint32_t *>(base);
-    ordered[0x000 / 4] = GraphicWinPrimaryVtable;
-    ordered[0x444 / 4] = GraphicWinBufferVtable;
-    ordered[0xA10 / 4] = 0;
-
-    void *const buffer_subobject = reinterpret_cast<void *>(base + 0x444);
-    Probe.buffer_target = buffer_subobject;
-    Probe.buffer_calls++;
-    Probe.order = (Probe.order << 4) | 2;
-    if (BufferSubobjectDestructor) {
-        (ORIGINAL(buffer_subobject)->*BufferSubobjectDestructor)();
-    }
-
-    void *const win_subobject = reinterpret_cast<void *>(base);
-    Probe.win_target = win_subobject;
-    Probe.win_calls++;
-    Probe.order = (Probe.order << 4) | 1;
-    if (WinOriginalDestructor) {
-        (ORIGINAL(win_subobject)->*WinOriginalDestructor)();
+    if (self) {
+        self->~GraphicWin();
     }
     return self;
 }
