@@ -25,7 +25,20 @@
  /*
   * Scroll class
   */
-class Scroll : public GraphicWin {
+// THE BASE IS CONSTRUCTED BY A BASE, because C++'s own ordering rule is what
+// the image's order requires. 0x006051D0 runs GraphicWin::construct() BEFORE
+// the two FlatButton members (0x6051ee, then 0x6051ff/0x60520f); a
+// `GraphicWin::construct()` written in Scroll's constructor BODY cannot get
+// there, because member constructors always run first. Base subobject
+// constructors, however, run before members - so putting the call in a base
+// puts it where the image has it, with no raw storage and no placement-new.
+// Adds no data and no virtual of its own, so the layout is untouched, which
+// the static_assert below is what actually checks.
+struct ScrollGraphicWin : public GraphicWin {
+  ScrollGraphicWin() { construct(); }
+};
+
+class Scroll : public ScrollGraphicWin {
  public:
   // 0x006051D0. Defined in scroll.cpp, alongside close() which resets the
   // same fields from the same two process-default tables.
@@ -125,8 +138,16 @@ extern int ScrollNonClientInit;
 extern uint32_t ScrollCloseStaticDefaults;
 extern uint32_t ScrollCloseDynamicDefaults;
 // The two virtual tables the destructor stages before running close.
-extern const uint32_t ScrollPrimaryVtable;
-extern const uint32_t ScrollBufferVtable;
+// DEFINED HERE, NOT `extern`, because the value has to be VISIBLE at the use
+// site to fold. 0x006051D0 stores both as immediates
+// (`mov dword ptr [esi], 0x669d58`); with the definition down in scroll.cpp
+// and only `extern const` in scope at the constructor, VC6 must emit a load
+// from the global and then a store - two instructions where the image has one.
+// A namespace-scope `const` has internal linkage, so defining it in the header
+// gives every translation unit its own foldable copy rather than a symbol
+// clash.
+const uint32_t ScrollPrimaryVtable = 0x00669D58;
+const uint32_t ScrollBufferVtable = 0x00669D50;
 
 RECT *__cdecl expand_rect(RECT *rect, int horizontal, int vertical);
 uint32_t __fastcall scroll_close_redirect(Scroll *self, void *);
