@@ -742,6 +742,11 @@ int __cdecl elev_at(int x, int y) {
 /*
 Purpose: Calculate the natural altitude of the specified tile.
 // ORIGINAL: 0x005918A0 ?alt_natural@@YAHHH@Z 0x005918A0-0x005918EF
+// RULED-OUT: same index-fold plateau as alt_at/alt_detail_at - the inlined
+//            map_loc(x,y)->contour read (via alt_detail_at) schedules the
+//            width-load/imul/shift with ecx/eax swapped from the image's
+//            allocation; best 4/28 (0.618) across all flag sets, default
+//            flags give 3/28 (0.793 similar, MISMATCH). Not chased further.
 // size      79 bytes
 // prototype 
 // callers   1   call targets   0
@@ -1214,6 +1219,23 @@ Status: Complete
 /*
 Purpose: Determine the tile's mineral count that translates to rockiness.
 // ORIGINAL: 0x00591F00 ?minerals_at@@YAHHH@Z 0x00591F00-0x00592007
+// LEVER: three fixes, 2/113 -> 13/113 (0.529 similar). (1) SIGNED / 2 IS NOT
+//        >> 1: the image's `avg` computation carries the `cdq;sub;sar`
+//        round-toward-zero fixup, so `avg` (and the `x/2`, `avg/2` subterms
+//        of val1) must be written `/2`, not `>>1`. (2) `alt_at(x, y)` is
+//        read by the image LAST, right before the switch, off a register
+//        that survives the whole body untouched - moved the call to just
+//        before `type` and read through a saved `origX` so the mutated `x`
+//        (`x -= avg`) does not corrupt it. (3) The jump-table dump at
+//        0x592008/0x592018 shows cases 1 and 2 of the outer `switch(type)`
+//        are themselves compare-decrement chains over `val2`, i.e. nested
+//        `switch(val2)` in the source, not the ternary chains that were
+//        here - only `case 3`'s ternary reproduces its target's
+//        test/cmp shape untouched.
+// RULED-OUT: not chased past this MISMATCH plateau - 263-byte body, three
+//            jump tables, register-allocation-sensitive scheduling of the
+//            early `push esi`/`push edi` pair. --all-flags agrees (best is
+//            the same /O2 /Ob0 /Gy /GR- /Oy- /GX set already in use).
 // size      263 bytes
 // prototype int (__cdecl ?minerals_at@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   2   call targets   0
@@ -1227,11 +1249,12 @@ int __cdecl minerals_at(int x, int y) {
     if (!y || y == (MapLatitudeBounds - 1)) {
         return 2; // poles
     }
-    int alt = alt_at(x, y);
-    int avg = (x + y) >> 1;
+    int origX = x;
+    int avg = (x + y) / 2;
     x -= avg;
     int val1 = (x / 2) + MapRandSeed + (x - (x % 2)) + (avg - (avg % 2));
     int val2 = (val1 - 2 * (x & 1) - (avg & 1)) & 3;
+    int alt = alt_at(origX, y);
     int type = abs(alt - ALT_SHORE_LINE);
     if (alt < ALT_SHORE_LINE) {
         type--;
@@ -1251,9 +1274,18 @@ int __cdecl minerals_at(int x, int y) {
         }
       }
       case 1:
-        return (val2 < 0 || val2 > 2) ? 2 : (val2 == 2) ? 1 : val2;
+        switch (val2) {
+          case 0: return 0;
+          case 1: return 1;
+          case 2: return 1;
+          default: return 2;
+        }
       case 2:
-        return (val2 < 0 || val2 > 1) ? 2 : val2;
+        switch (val2) {
+          case 0: return 0;
+          case 1: return 1;
+          default: return 2;
+        }
       case 3:
         return (val2 < 0 || val2 > 1) ? 2 : 1;
       default:
@@ -1448,6 +1480,12 @@ BOOL __cdecl valid_landmark(int x, int y, int faction_id) {
 /*
 Purpose: Remove the landmark at the specified tile.
 // ORIGINAL: 0x005926F0 ?kill_landmark@@YAXHH@Z 0x005926F0-0x005927D0
+// LEVER: the image's shift-down is a per-element `MapLandmark[i] =
+//        MapLandmark[i+1]` loop (struct assignment of `Landmark`, 40 bytes,
+//        compiles to `mov ecx,0xa; rep movsd` per iteration) - NOT the
+//        single bulk `memcpy_s` a prior pass had substituted for "the
+//        original loop". Writing the loop out took this from MISMATCH
+//        5/86 (0.851) to MNEMONIC_ONLY 60/86 (1.000 similar).
 // size      224 bytes
 // prototype void (__cdecl ?kill_landmark@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   3   call targets   0
@@ -1460,10 +1498,8 @@ Status: Complete
 void __cdecl kill_landmark(int x, int y) {
     int landmark_to_kill = find_landmark(x, y, 1);
     if (landmark_to_kill >= 0) {
-        if (landmark_to_kill < (MapLandmarkCount - 1)) {
-            memcpy_s(&MapLandmark[landmark_to_kill], sizeof(Landmark) * MaxLandmarkNum,
-                &MapLandmark[landmark_to_kill + 1], // single memcpy_s replaces original loop
-                sizeof(Landmark) * (MapLandmarkCount - landmark_to_kill - 1));
+        for (int i = landmark_to_kill; i < MapLandmarkCount - 1; i++) {
+            MapLandmark[i] = MapLandmark[i + 1];
         }
         MapLandmarkCount -= 1;
     }
@@ -1779,6 +1815,20 @@ BOOL __cdecl map_init() {
 /*
 Purpose: Reset the map to a blank state. Doesn't wipe unk_1 and territory fields.
 // ORIGINAL: 0x00591040 ?map_wipe@@YAXXZ 0x00591040-0x005910B0
+// LEVER: `Map *tile = map_tiles();` walked with `tile++` each iteration,
+//        instead of indexing `map_tiles()[i]` (which re-reads the global
+//        every field access AND fails to fold the `ZeroMemory` call to a
+//        `rep stosd`, forcing a real call) - matches the image's running
+//        pointer (`edx`, `add edx, 0x2c`). Field order also fixed to the
+//        image's `bit` BEFORE `val3`, and `bit2` folded into one
+//        `ZeroMemory` spanning `bit2`+`bit_visible` (the image zeroes both
+//        in the same `rep stosd`, `bit2` is never stored separately). `int i`
+//        instead of `uint32_t i`: the image's loop-bound compare is `jl`
+//        signed. Together: 9/38 (0.682) -> 30/38 (0.921), 38/38 total
+//        instructions, same count as the image.
+// RULED-OUT: declaring `tile` before `MapRandSeed = random(...)+1` (to chase
+//            the image scheduling the `map_tiles()` load between the
+//            `random()` call and consuming its result) - worse, 20/38 (0.895).
 // size      112 bytes
 // prototype 
 // callers   3   call targets   1
@@ -1793,22 +1843,23 @@ void __cdecl map_wipe() {
     MapSeaLevelCouncil = 0;
     MapLandmarkCount = 0;
     MapRandSeed = random(0, 0x7FFF) + 1;
-    for (uint32_t i = 0; i < MapArea; i++) {
-        map_tiles()[i].climate = ALT_BIT_OCEAN;
-        map_tiles()[i].contour = 20;
-        map_tiles()[i].val2 = 0xF;
-        map_tiles()[i].region = 0;
-        map_tiles()[i].visibility = 0;
-        map_tiles()[i].val3 = 0;
-        map_tiles()[i].bit = 0;
-        map_tiles()[i].bit2 = 0;
-        ZeroMemory(map_tiles()[i].bit_visible, sizeof(map_tiles()[i].bit_visible));
+    Map *tile = map_tiles();
+    for (int i = 0; i < (int)MapArea; i++) {
+        tile->climate = ALT_BIT_OCEAN;
+        tile->contour = 20;
+        tile->val2 = 0xF;
+        tile->region = 0;
+        tile->visibility = 0;
+        tile->bit = 0;
+        tile->val3 = 0;
+        ZeroMemory(&tile->bit2, sizeof(tile->bit2) + sizeof(tile->bit_visible));
+        tile++;
     }
 }
 
 /*
 Purpose: Write map data to a file.
-// ORIGINAL: 0x005910B0 ?map_write@@YAHPAUFILE@@@Z 0x005910B0-0x00591125
+// ORIGINAL: 0x005910B0 ?map_write@@YAHPAUFILE@@@Z 0x005910B0-0x00591125 BYTE_EXACT
 // symbol    ?map_write@@YAHPAU_iobuf@@@Z
 // size      117 bytes
 // prototype int (__cdecl ?map_write@@YAHPAUFILE@@@Z)(FILE* file)
@@ -1828,18 +1879,25 @@ Status: Complete
 // forward declarations of any of them fail LNK2001, and defining local
 // bodies for all three (to promote the artifact properly) is a bigger
 // change than this pass's scope. Left calling the public `fwrite()`.
+// LEVER: the image does NOT `&&`-chain the three calls into one condition -
+//        the first two are separate `if (!fwrite(...)) return true;` early
+//        returns, and the LAST is a direct `return !fwrite(...);` (branchless
+//        `neg;sbb;inc` boolean, no third branch at all). Matching that
+//        shape is BYTE_EXACT.
 BOOL __cdecl map_write(FILE *map_file) {
-    if (fwrite(&MapLongitudeBounds, 2724, 1, map_file)
-        && fwrite(map_tiles(), MapArea * sizeof(Map), 1, map_file)
-        && fwrite(MapAbstract(), MapAbstractArea, 1, map_file)) {
-        return false;
+    if (!fwrite(&MapLongitudeBounds, 2724, 1, map_file)) {
+        return true;
     }
-    return true;
+    if (!fwrite(map_tiles(), MapArea * sizeof(Map), 1, map_file)) {
+        return true;
+    }
+    return !fwrite(MapAbstract(), MapAbstractArea, 1, map_file);
 }
 
 /*
 Purpose: Read the map data from a file and write it into memory.
-// ORIGINAL: 0x00591130 ?map_read@@YAHPAUFILE@@@Z 0x00591130-0x00591208
+// ORIGINAL: 0x00591130 ?map_read@@YAHPAUFILE@@@Z 0x00591130-0x00591208 BYTE_EXACT
+// LEVER: same shape as map_write (0x005910B0) - the image does NOT `||`-chain the last two `fread`s into one condition; each is its own `if (!fread(...)) return true;`. BYTE_EXACT on that alone.
 // symbol    ?map_read@@YAHPAU_iobuf@@@Z
 // size      216 bytes
 // prototype int (__cdecl ?map_read@@YAHPAUFILE@@@Z)(FILE* file)
@@ -1860,8 +1918,10 @@ BOOL __cdecl map_read(FILE *map_file) {
     if (map_init()) {
         return true;
     }
-    if (!fread(map_tiles(), MapArea * sizeof(Map), 1, map_file)
-        || !fread(MapAbstract(), MapAbstractArea, 1, map_file)) {
+    if (!fread(map_tiles(), MapArea * sizeof(Map), 1, map_file)) {
+        return true;
+    }
+    if (!fread(MapAbstract(), MapAbstractArea, 1, map_file)) {
         return true;
     }
     fixup_landmarks();
@@ -2495,6 +2555,20 @@ void __cdecl brush(int x, int y, int altitude) {
 /*
 Purpose: Paint land to assist in the creation of the world terrain.
 // ORIGINAL: 0x005C27F0 ?paint_land@@YAXHHHH@Z 0x005C27F0-0x005C28E6
+// LEVER: two fixes, 0.849 -> 0.904 similar (9/89). (1) `x_rad_base`/
+//        `y_rad_base` are a CUMULATIVE random walk - the image's inlined
+//        `xrange()` adds `RadiusBaseX[offset]` to the PREVIOUS `esi`
+//        (`x_rad_base`), and `edi` (`y_rad_base`) is a plain running
+//        `add edi, RadiusBaseY[offset]` with no reset - not an offset from
+//        the fixed `x`/`y` parameters every iteration, which is a BUG this
+//        recovery had (paints a single-tile-radius dot around the start
+//        instead of wandering). (2) `offset` as `int`: the image's
+//        `rand() % 8` carries the full signed-modulo fixup
+//        (`and 0x80000007; jns; dec; or 0xfffffff8; inc`), which `uint32_t`
+//        drops to a plain `and eax, 7`.
+// RULED-OUT: not chased past this MISMATCH plateau - remaining gap starts in
+//            the prologue frame-size (image reserves 3 stack dwords, this
+//            tree keeps `unk_val` in a register alone).
 // size      246 bytes
 // prototype void (__cdecl ?paint_land@@YAXHHHH@Z)(int xCoord, int yCoord, int altitude, int radius)
 // callers   2   call targets   2
@@ -2513,8 +2587,8 @@ void __cdecl paint_land(int x, int y, int altitude, int radius) {
         int y_rad_base = y;
         do {
             brush(x_rad_base, y_rad_base, altitude);
-            uint32_t offset = rand() % 8 | 1;
-            if ((int)offset == search) {
+            int offset = rand() % 8 | 1;
+            if (offset == search) {
                 if (++unk_val > ((MapLandCoverage * MapLandCoverage) + 2)) {
                     offset = (offset - (MapLandCoverage * MapLandCoverage) + unk_val - 2) % 8;
                 }
@@ -2522,8 +2596,8 @@ void __cdecl paint_land(int x, int y, int altitude, int radius) {
                 search = offset;
                 unk_val = 0;
             }
-            x_rad_base = xrange(x + RadiusBaseX[offset]);
-            y_rad_base = y + RadiusBaseY[offset];
+            x_rad_base = xrange(x_rad_base + RadiusBaseX[offset]);
+            y_rad_base += RadiusBaseY[offset];
             i++;
         } while (i < 2000 && on_map(x_rad_base, y_rad_base) && BrushVal2 < radius);
     }
@@ -2532,8 +2606,19 @@ void __cdecl paint_land(int x, int y, int altitude, int radius) {
 /*
 Purpose: Build out the map continents.
 // ORIGINAL: 0x005C28F0 ?build_continent@@YAXH@Z 0x005C28F0-0x005C2B3C
+// LEVER: `osmx calls` shows exactly 2 game calls (paint_land,
+//        do_all_non_input) plus rand() itself - `rnd(bounds, NULL)` is
+//        cross-TU and can never inline, so all three call sites had to be
+//        rewritten as rnd's own body (`(bounds - 1 > 0) ? rand() % bounds :
+//        0`), the same idiom as alt_set_both. The region-zero loop also
+//        moved to the `Map *tile` pointer-walk idiom (map_wipe's lever).
+//        0.658 -> 0.698 similar (13/201).
+// RULED-OUT: not chased past this MISMATCH plateau - 588-byte body, deeply
+//            nested ratio/radius conditionals; the remaining gap starts in
+//            the very first loop's own scheduling (image loads MapArea into
+//            ecx before zeroing eax, this tree the other order).
 // size      588 bytes
-// prototype 
+// prototype
 // callers   1   call targets   3
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
@@ -2542,20 +2627,24 @@ Return Value: n/a
 Status: Complete - testing
 */
 void __cdecl build_continent(int size) {
+    Map *tile = map_tiles();
     for (uint32_t i = 0; i < MapArea; i++) {
-        map_tiles()[i].region = 0;
+        tile->region = 0;
+        tile++;
     }
     int coverage = MapLandCoverage;
     if (coverage && BrushVal1 >= WorldBuildVal1) {
         coverage--;
     }
     int radius = WorldBuilder->continent_mod * coverage * coverage + WorldBuilder->continent_base;
-    int x; 
+    int x;
     int y;
     int count = 0;
     do {
-        x = rnd(MapLongitudeBounds - (MapIsFlat * 8), NULL) + MapIsFlat * 4;
-        y = rnd(MapLatitudeBounds - 8, NULL) + 4;
+        int x_bound = MapLongitudeBounds - (MapIsFlat * 8);
+        x = ((x_bound - 1 > 0) ? rand() % x_bound : 0) + MapIsFlat * 4;
+        int y_bound = MapLatitudeBounds - 8;
+        y = ((y_bound - 1 > 0) ? rand() % y_bound : 0) + 4;
         if (x & 1) {
             x--;
         }
@@ -2576,8 +2665,11 @@ void __cdecl build_continent(int size) {
                     if (ratio < WorldBuilder->cont_size_ratio1 && MapLandCoverage > 1) {
                         radius += radius / 2;
                     }
-                } else  if (rnd(4 - MapLandCoverage, NULL)) {
-                    radius /= 2;
+                } else {
+                    int r_bound = 4 - MapLandCoverage;
+                    if ((r_bound - 1 > 0) ? rand() % r_bound : 0) {
+                        radius /= 2;
+                    }
                 }
             } else {
                 radius /= 2;
@@ -2596,8 +2688,14 @@ void __cdecl build_continent(int size) {
 /*
 Purpose: Build out the map hills.
 // ORIGINAL: 0x005C2B40 ?build_hills@@YAXH@Z 0x005C2B40-0x005C2CA8
+// LEVER: same as build_continent (0x005C28F0) - `osmx calls` shows only
+//        paint_land/do_all_non_input plus rand() itself, so the two
+//        `rnd(bounds, NULL)` cross-TU calls were rewritten as rnd's own
+//        body. 0.677 -> 0.743 similar.
+// RULED-OUT: not chased past this MISMATCH plateau - 360-byte body, same
+//            prologue frame-size gap as build_continent.
 // size      360 bytes
-// prototype 
+// prototype
 // callers   1   call targets   3
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
@@ -2611,8 +2709,10 @@ void __cdecl build_hills(int altitude) {
     int i = 0;
     BOOL keep_going = true;
     do {
-        x = rnd(MapLongitudeBounds - (MapIsFlat * 8), NULL) + MapIsFlat * 4;
-        y = rnd(MapLatitudeBounds - 8, NULL) + 4;
+        int x_bound = MapLongitudeBounds - (MapIsFlat * 8);
+        x = ((x_bound - 1 > 0) ? rand() % x_bound : 0) + MapIsFlat * 4;
+        int y_bound = MapLatitudeBounds - 8;
+        y = ((y_bound - 1 > 0) ? rand() % y_bound : 0) + 4;
         if (x & 1) {
             x--;
         }
@@ -2647,8 +2747,17 @@ void __cdecl build_hills(int altitude) {
 /*
 Purpose: Build out the world river beds.
 // ORIGINAL: 0x005C3680 ?world_riverbeds@@YAXXZ 0x005C3680-0x005C38AF
+// LEVER: `osmx calls` shows only ONE game call (bit_set) plus rand() itself
+//        - both `rnd(bounds, NULL)` sites are cross-TU and were rewritten
+//        as rnd's own body (same idiom as build_continent/build_hills), and
+//        the riverbed-clearing loop moved to the `Map *tile` pointer-walk
+//        idiom (map_wipe's lever). 0.711 -> 0.784 similar.
+// RULED-OUT: not chased past this MISMATCH plateau - same `is_ocean`
+//            map_tiles-load-timing family ceiling as the standalone
+//            `is_ocean`/`port_to_port` plateau this batch's sibling pass
+//            already documented, on top of a 559-byte body.
 // size      559 bytes
-// prototype 
+// prototype
 // callers   1   call targets   2
 // kind      game
 // flags     frame;sp_ready;purged_ok
@@ -2657,15 +2766,19 @@ Return Value: n/a
 Status: Complete - testing
 */
 void __cdecl world_riverbeds() {
+    Map *tile = map_tiles();
     for (uint32_t i = 0; i < MapArea; i++) {
-        map_tiles()[i].bit &= ~(BIT_RIVERBED);
+        tile->bit &= ~(BIT_RIVERBED);
+        tile++;
     }
     uint32_t riverbed_count = 0;
-    uint32_t max_riverbeds = (MapArea * ((4 - MapOceanCoverage) * (WorldBuilder->rivers_base 
+    uint32_t max_riverbeds = (MapArea * ((4 - MapOceanCoverage) * (WorldBuilder->rivers_base
         + MapCloudCover * WorldBuilder->rivers_rain_mod) / 3)) / 3200;
     for (i = 0; i < 4000 && riverbed_count < max_riverbeds; i++) {
-        int x = rnd(MapLongitudeBounds, NULL);
-        int y = rnd(MapLatitudeBounds, NULL);
+        int x_bound = MapLongitudeBounds;
+        int x = (x_bound - 1 > 0) ? rand() % x_bound : 0;
+        int y_bound = MapLatitudeBounds;
+        int y = (y_bound - 1 > 0) ? rand() % y_bound : 0;
         if (x & 1) {
             x--;
         }
@@ -2704,6 +2817,23 @@ void __cdecl world_riverbeds() {
 /*
 Purpose: Determine if there are any issues with how the world continents are set up.
 // ORIGINAL: 0x005C40F0 ?world_validate@@YAHXZ 0x005C40F0-0x005C416B
+// LEVER: three fixes, 0.609 -> 0.914 similar (20/52). (1) `val1`/`val2`/
+//        `tile_count` as `int`, not `uint32_t` - the image's final
+//        threshold uses a SIGNED div-by-3 magic-constant `imul` and a
+//        SIGNED `sar` div-by-2, both lost under unsigned. (2) the
+//        accumulate step rewritten `if (tile_count >= val2) {val1=val2;
+//        val2=tile_count;} else if (tile_count >= val1) {val1=tile_count;}`
+//        - logically the same as the nested `if (tile_count < val2)` this
+//        had, but matches the image's actual `jl`/fall-through order.
+//        (3) BRANCH POLARITY on the ternary: the image's fall-through
+//        (no jump) computes `val2/2` and jumps away for
+//        `MapLandCoverage==1`'s `(val2*2)/3` - `if (MapLandCoverage != 1)
+//        {val2/2} else {(val2*2)/3}` matches; the textual `==1` order did
+//        not.
+// RULED-OUT: remaining gap is an esi/edi register swap between `val1` and
+//            the `region` loop counter, present at every flag set tried;
+//            swapping `val1`/`val2` declaration order made it one
+//            instruction worse (19/52), not better.
 // size      123 bytes
 // prototype 
 // callers   1   call targets   1
@@ -2715,22 +2845,26 @@ Status: Complete - testing
 */
 BOOL __cdecl world_validate() {
     Paths->continents();
-    uint32_t val1 = 0; // rename to better var descriptions
-    uint32_t val2 = 0; // rename to better var descriptions
+    int val1 = 0; // rename to better var descriptions
+    int val2 = 0; // rename to better var descriptions
     for (uint32_t region = 1; region < MaxRegionLandNum; region++) {
         if (!bad_reg(region)) {
-            uint32_t tile_count = Continents[region].tile_count;
-            if (tile_count < val2) {
-                if (tile_count >= val1) {
-                    val1 = tile_count;
-                }
-            } else {
+            int tile_count = Continents[region].tile_count;
+            if (tile_count >= val2) {
                 val1 = val2;
                 val2 = tile_count;
+            } else if (tile_count >= val1) {
+                val1 = tile_count;
             }
         }
     }
-    return val1 < ((MapLandCoverage == 1) ? ((val2 * 2) / 3) : val2 / 2);
+    int threshold;
+    if (MapLandCoverage != 1) {
+        threshold = val2 / 2;
+    } else {
+        threshold = (val2 * 2) / 3;
+    }
+    return val1 < threshold;
 }
 
 /*
@@ -3215,8 +3349,21 @@ void __cdecl world_polar_caps() {
 /*
 Purpose: Set up the world contours.
 // ORIGINAL: 0x005C5AE0 ?world_linearize_contours@@YAXXZ 0x005C5AE0-0x005C5BC3
+// LEVER: BUG IN THIS RECOVERY (not the original): `alt_nat +
+//        (alt_nat >= ALT_3_LEVELS_ABOVE_SEA) ? 4 : 1` - `+` binds tighter
+//        than `?:`, so this parsed as `(alt_nat + (alt_nat >= ...)) ? 4 :
+//        1`, collapsing the array index to the plain constant 4 or 1. The
+//        image indexes `ElevDetail` at `[eax*4 + 0x68fb24]` /
+//        `[eax*4 + 0x68fb30]` - i.e. `alt_nat + 1` or `alt_nat + 4`,
+//        register-relative on `alt_nat`. Parenthesizing the ternary
+//        (`alt_nat + ((alt_nat >= ALT_3_LEVELS_ABOVE_SEA) ? 4 : 1)`) fixes
+//        the semantics; 0.690 -> 0.705 similar (best flags /O2 /Ob0).
+// RULED-OUT: not chased past this MISMATCH plateau - remaining gap starts
+//            in the prologue frame-size (image reserves 2 stack dwords for
+//            the divide's intermediates, this tree's compile picks a
+//            different spill count).
 // size      227 bytes
-// prototype 
+// prototype
 // callers   2   call targets   3
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
@@ -3229,7 +3376,7 @@ void __cdecl world_linearize_contours() {
         for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
             uint32_t alt_nat = alt_natural(x, y);
             alt_put_detail(x, y, (uint8_t)((((ElevDetail[alt_nat
-                + (alt_nat >= ALT_3_LEVELS_ABOVE_SEA) ? 4 : 1] - ElevDetail[alt_nat])
+                + ((alt_nat >= ALT_3_LEVELS_ABOVE_SEA) ? 4 : 1)] - ElevDetail[alt_nat])
                 * (alt_detail_at(x, y) - AltNatural[alt_nat]))
                 / (AltNatural[alt_nat + 1] - AltNatural[alt_nat])) + ElevDetail[alt_nat]));
         }
@@ -4161,6 +4308,9 @@ void __cdecl world_landmarks() {
 /*
 Purpose: Check for any type of zone of control conflicts (base and/or unit).
 // ORIGINAL: 0x005C89F0 ?zoc_any@@YAHHHH@Z 0x005C89F0-0x005C8AC0
+// RULED-OUT: same xrange/on_map-loop family ceiling as zoc_veh (0x005C8AC0,
+//            right below) and base_on_sea - best 3/82, 0.786 similar across
+//            every flag set. Not chased further.
 // size      208 bytes
 // prototype int (__cdecl ?zoc_any@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)
 // callers   5   call targets   0
