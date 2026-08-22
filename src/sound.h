@@ -56,7 +56,10 @@ class Sound {
   int attach();
   int detach();
 
- private:
+ protected:
+  // PROTECTED, not private, because `Wave` is a real derived class - its
+  // own 0x00..0x53 duplicated every one of these fields at the same
+  // offsets until 2026-08-22. Access changes no layout and no codegen.
   // The fields below are the slice Wave inherits and mirrors at the same
   // offsets: the loop dword at 0x30, the wrapped device at 0x3C, the flag
   // dword at 0x40 (bit 0 the loaded bit, plus set_type's class bits), the
