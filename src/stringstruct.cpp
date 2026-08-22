@@ -377,7 +377,7 @@ const uint32_t StringStructDerivedVirtualBaseVtable = 0x006698C0;
 Purpose: Close a derived string list, releasing its entries under its own
          virtual tables before closing its StringStruct base the same way.
 // ORIGINAL: 0x004066C0 sub_4066c0 0x004066C0-0x00406818;0x00650980-0x00650995
-// symbol    ?string_struct_derived_close_redirect@@YIXPAX0@Z
+// symbol    ?string_struct_derived_close_redirect@@YIXPAX@Z
 // size      365 bytes
 // prototype 
 // callers   61   call targets   0
@@ -415,7 +415,7 @@ addresses and the 0x28 adjustor were instead confirmed by reading the
 instruction bytes directly (`mov [ebx-0x28], 0x6698C4` and
 `mov [ecx+ebx-0x24], 0x6698C0`).
 */
-void __fastcall string_struct_derived_close_redirect(void *adjusted, void *) {
+void __fastcall string_struct_derived_close_redirect(void *adjusted) {
     StringStruct *self = reinterpret_cast<StringStruct *>(
         static_cast<uint8_t *>(adjusted) - StringStructDerivedCloseAdjustment);
     self->close_with_tables(
@@ -439,17 +439,23 @@ uint32_t StringVirtualBaseOwner;  // 0x009B3374
 Purpose: Destroy a most-derived StringList: run the source-owned two-stage
          derived close, then hand the virtual base back its own vtable and
          republish the pending-allocation owner the constructor captured.
-// ORIGINAL: 0x00406820 sub_406820 0x00406820-0x0040683B
-// RULED-OUT: dropping `volatile` on virtual_base_slots (plain
-//   `uint32_t *`) measured byte-identical to the volatile version, 2/9
-//   agreeing both ways - the divergence is at instruction 2, an extra
-//   `xor edx, edx` before the derived-close call (a two-parameter
-//   redirect signature vs the image's single-arg call), never reaching
-//   the aliased offsets. Named members (`allocation_owner_`,
-//   `allocation_base_abi_word_`) made it WORSE (1/9, 13 compiled
-//   instructions vs 10) because they force the compiler to keep a
-//   second `this`-relative register alive instead of reusing the
-//   `virtual_base` register the redirect call already computed. Reverted.
+// ORIGINAL: 0x00406820 sub_406820 0x00406820-0x0040683B BYTE_EXACT
+// LEVER: THE SECOND PARAMETER WAS INVENTED, so it is gone rather than worked
+//   around. 0x00406820 sets only ECX (`mov ecx, esi; call 0x4066c0`) and never
+//   EDX, and 0x004066C0's body reads only ECX - the `_redirect` name is this
+//   tree's own, so nothing about the image required the arity. Declaring ONE
+//   parameter takes this call site to BYTE_EXACT 9/9.
+// RULED-OUT: reaching the same 9/9 with a single-argument OVERLOAD forwarding
+//   to a two-argument body. It measures identically and it is WRONG: VC6 emits
+//   the overload as a 7-byte COMDAT thunk (`33 D2` xor edx,edx; `E9` jmp) and
+//   the call relocation targets THAT, so the recovered call graph becomes
+//   destroy -> invented thunk -> redirect where the image is destroy ->
+//   redirect. No such thunk exists in the image; scanning .text for `33 D2 E9`
+//   returns one hit and it does not target 0x4066C0. BYTE_EXACT survived only
+//   because the rel32 is one of the masked relocation bytes - the measurement
+//   cannot see where the call WENT. Caught by the adversarial verifier
+//   2026-08-22; recorded because the recipe would buy every future BYTE_EXACT
+//   at this idiom's other call sites with one more invented function.
 // symbol    ?destroy@StringList@@QAEIXZ
 // size      27 bytes
 // prototype 
@@ -480,7 +486,7 @@ uint32_t StringList::destroy() {
     // the object by subtracting the same 0x28, which is why the raw pointer
     // is handed to the recovered entry point rather than cast to StringStruct.
     uint8_t *const virtual_base = base + StringListVirtualBaseOffset;
-    string_struct_derived_close_redirect(virtual_base, nullptr);
+    string_struct_derived_close_redirect(virtual_base);
 
     // The three tail operations, in the original's order. The read of
     // [esi + 4] precedes the store to [esi]; both are volatile so an
