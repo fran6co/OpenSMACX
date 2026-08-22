@@ -84,11 +84,13 @@ if __name__ == "__main__":
     # agents were right; the list was wrong. This file already knew which those
     # were - it just could not say so in a form anything could dispatch.
     open_addresses: list[int] = []
+    untouched_addresses: set[int] = set()
     for record in read(REPO_ROOT / "src"):
         if record.address not in addresses or record.semantic:
             continue
         if not record.levers and not record.ruled_out:
             untouched += 1
+            untouched_addresses.add(record.address)
             open_addresses.append(record.address)
             continue
         family = family_of(record)
@@ -97,7 +99,28 @@ if __name__ == "__main__":
             open_addresses.append(record.address)
 
     if "--open" in sys.argv:
-        for address in sorted(open_addresses):
+        # NEVER-LOOKED-AT ONLY, BY DEFAULT, AND THAT IS A CORRECTION.
+        # `--open` used to emit the "worked, no known ceiling named - likeliest
+        # to yield" bucket as well, on the theory that a body with notes but no
+        # named wall is unfinished rather than blocked. MEASURED 2026-08-22 and
+        # it is not: 22 addresses from that bucket went to two agents and came
+        # back 22 already-worked, ZERO new recoveries - every one carrying
+        # prior TRIED/LEVER notes from a pass that had already ground it.
+        #
+        # Neither signal available here can tell the two apart. The prose does
+        # not match a family regex, because these notes describe WHAT WAS TRIED
+        # rather than why it is stuck ("the remaining gap is which register
+        # (eax/ecx/edx) the allocator picks" is plainly a register-allocation
+        # ceiling and matches no pattern for one). And the measurement does not
+        # flag them either - they are further off than the gate's near-miss
+        # window. Widening the regex is the same defect a third time.
+        #
+        # So the honest rule is the one that needs no vocabulary: a body
+        # CARRYING NOTES has been looked at. `--worked` still prints those for
+        # anyone who wants them; they are just not what to hand an agent.
+        wanted = (open_addresses if "--worked" in sys.argv
+                  else [a for a in open_addresses if a in untouched_addresses])
+        for address in sorted(wanted):
             print(f"0x{address:08X}")
         raise SystemExit(0)
 

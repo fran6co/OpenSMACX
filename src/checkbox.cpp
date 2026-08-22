@@ -124,6 +124,19 @@ Purpose: Tear down a CheckBox: reinstall the base subobjects' own
          vtable/vtordisp values, reset the state fields, and close the
          Dialog and GraphicWin subobjects through the object's own vbtable.
 // ORIGINAL: 0x0060E740 ??1CheckBox@@UAE@XZ 0x0060E740-0x0060E7C0
+// LEVER: the manual `- 0x1C` came OUT - this is a real override of
+//   GraphicWin's virtual destructor now, so VC6 enters it on the GraphicWin
+//   subobject and walks back itself, and subtracting again double-counted.
+//   2/37 -> 7/37. The note below diagnosed this exactly and could not act on
+//   it while the base was a member; it is kept for the diagnosis.
+// TRIED: dropping the named `self`/`obj` intermediates and writing
+//   `reinterpret_cast<char *>(this)` at each use, which is the lever that
+//   works on this class's on_dialog_focus and on_mouse_leave. Here it is
+//   WORSE, 7/37 -> 0/37 at the same 47 compiled instructions. The remaining
+//   gap is that the image folds the adjustment into every addressing mode
+//   (`[edx + ecx - 0x1c]`) where this tree materialises the pointer into esi
+//   once and uses `[reg + esi]`; ours also emits the three vtable stores
+//   later than the image does.
 // TRIED: MEASURED 2/37 agreeing. The image's opening `this` is already
 //            the vtordisp-adjusted GraphicWin-subobject pointer -
 //            `mov eax,[ecx-0x1c]; lea esi,[ecx-0x1c]` - and this body's
@@ -145,8 +158,13 @@ Return Value: n/a
 Status: Complete
 */
 CheckBox::~CheckBox() {
-    char *const self = reinterpret_cast<char *>(this) - 0x1C;
-    CheckBox *const obj = reinterpret_cast<CheckBox *>(self);
+    // NO MANUAL ADJUSTMENT. This is a real override of GraphicWin's virtual
+    // destructor now, so VC6 enters it on the GraphicWin subobject and walks
+    // back to the CheckBox pointer itself; subtracting 0x1C again in source
+    // double-counts it. The TRIED note above diagnosed exactly this and could
+    // not act on it while the base was a member.
+    char *const self = reinterpret_cast<char *>(this);
+    CheckBox *const obj = this;
 
     {
         const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
