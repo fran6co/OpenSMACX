@@ -36,7 +36,32 @@ const uint32_t BaseButtonBufferVtable = 0x00670288;
 Purpose: Construct the GraphicWin base and two Time members, then install the
          BaseButton tables and process defaults.
 // ORIGINAL: 0x00606F30 ??0BaseButton@@QAE@XZ 0x00606F30-0x00607033;0x00662E50-0x00662E70
-// symbol    ?construct@BaseButton@@QAEXXZ
+// LEVER: `construct()` RETURNS `this`. The image closes on `mov eax, esi`,
+//   which a `void` method never emits - the same last-instruction fix that
+//   closed four Ambience constructors. Changing the signature to
+//   `BaseButton *construct()` removed that divergence run (the `// symbol`
+//   fact moves with it, to `?construct@BaseButton@@QAEPAV1@XZ`). Both call
+//   sites - `base_button_construct_redirect` here and
+//   `FlatButton::FlatButton` - ignore the value, so neither changed.
+// RULED-OUT: the two placement-new null guards, which are the whole remaining
+//   difference. `new (&time1_) Time()` makes VC6 test the pointer -
+//   `cmp ecx, edi; je` - twice, and gives the frame TWO spill slots
+//   (`sub esp, 8`) where the image pushes one (`push ecx`): 60 compiled
+//   instructions against 54, agreeing 14. Replacing them with explicit
+//   `time1_.Time::Time()` calls (and the `(&time1_)->Time::Time()` spelling,
+//   same result) removes the guards but ALSO removes the unwind frame the
+//   image has, because a plain method has no partially-built object to
+//   protect: 38 instructions, agreeing 0. The frame is worth more than the
+//   guards cost, so the placement new stays.
+// RULED-OUT: the real fix is a REAL constructor - the image is one, base
+//   first (`call 0x005D4CF0`), then `time1_` at 0xA1C and `time2_` at 0xA4C
+//   implicitly, then this body, then `mov eax, esi`. It is not reachable from
+//   basebutton.cpp: `GraphicWin` is declared with a hollow inline
+//   `GraphicWin() { ; }`, so a real `BaseButton::BaseButton()` would call
+//   NOTHING where the image calls 0x005D4CF0, and giving GraphicWin a real
+//   constructor is a graphicwin.h edit with every GraphicWin-derived class
+//   downstream of it.
+// symbol    ?construct@BaseButton@@QAEPAV1@XZ
 // size      291 bytes
 // prototype void (__thiscall ??0BaseButton@@QAE@XZ)(BaseButton* this)
 // callers   3   call targets   2
@@ -49,7 +74,7 @@ Verification note: the surviving swap mutants reorder construction of the
 GraphicWin base against the Time members, which occupy disjoint storage, so
 their order is not observable.
 */
-void BaseButton::construct() {
+BaseButton *BaseButton::construct() {
     static_cast<GraphicWin *>(this)->construct();
     new (&time1_) Time();
     new (&time2_) Time();
@@ -78,6 +103,7 @@ void BaseButton::construct() {
     object[0xA98 / 4] = dynamic[1];
     object[0xAA4 / 4] = 0;
     object[0xAA0 / 4] = fixed[4];
+    return this;
 }
 
 BaseButton *__fastcall base_button_construct_redirect(
@@ -161,6 +187,24 @@ uint32_t __fastcall base_button_close_redirect(BaseButton *self, void *) {
 Purpose: Destroy a BaseButton by installing its two virtual tables, closing
          it, destroying Time2 then Time1, and finally destroying GraphicWin.
 // ORIGINAL: 0x00607040 ??1BaseButton@@QAE@XZ 0x00607040-0x006070B9;0x00662E70-0x00662E9E
+// RULED-OUT: this one wants the SEH frame and cannot have it. The image is a
+//   REAL DESTRUCTOR - `push -1 / push 0x662e94 / mov eax, fs:[0] / push eax /
+//   mov fs:[0], esp / push ecx`, then the two vtable stores and `close()`,
+//   then unwind state 1 for `time2_` at 0xA4C, 0 for `time1_` at 0xA1C and -1
+//   for the GraphicWin base at 0x005D4DD0, all three destroyed by the
+//   COMPILER rather than by the body. This tree spells it `destroy()`, a
+//   plain method, so there is no partially-destroyed object to protect and no
+//   frame is emitted: 15 compiled instructions against the image's 27,
+//   agreeing 0. Every instruction of the divergence is that frame.
+// RULED-OUT: converting it to `~BaseButton()`. Two blockers, both outside
+//   this file. (1) `destroy()` is reached BY NAME from dialog.cpp,
+//   listbox.cpp, pulldown.cpp, stringstruct.cpp, dialogs.cpp, radiobutton.cpp,
+//   reportif.cpp, filewin.cpp and leaf_recoveries.cpp - a rename is a
+//   nine-file edit. (2) even after it, the base call would not appear:
+//   `~GraphicWin()` is a hollow inline `{ ; }` in graphicwin.h, so the
+//   compiler-generated tail would call nothing where the image calls
+//   0x005D4DD0. `~Time()` at 0x00616200 is real and would work; GraphicWin is
+//   the one that has to change first, and it is not this pass's file.
 // symbol    ?destroy@BaseButton@@QAEPAV1@XZ
 // size      167 bytes
 // prototype void (__thiscall ??1BaseButton@@QAE@XZ)(BaseButton* this)

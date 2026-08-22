@@ -117,7 +117,11 @@ EditGroup::EditGroup(int a1) {
 Purpose: Tear down an EditGroup: reinstall the base subobjects' own
          vtable/vtordisp values, then close the object through its own
          `close()`.
-// ORIGINAL: 0x00611A20 ??1EditGroup@@QAE@XZ 0x00611A20-0x00611A88
+// ORIGINAL: 0x00611A20 ??1EditGroup@@QAE@XZ 0x00611A20-0x00611A88 BYTE_EXACT
+// LEVER: TWO changes, measured separately. (1) A real `~EditGroup()` has to destroy `virtual_base_` and `dialog_`, which under /GX is an SEH frame plus a thirty-instruction member-teardown tail - 67 compiled instructions against the image's 23, agreeing 0. The image reinstalls the base vtables and calls `close()` and destroys nothing, so this is a METHOD; spelling it `destruct()` drops the frame and the tail and lands exactly 23. (2) With that done the only remaining difference was register allocation, and a NAMED `base` local was causing it: `char *const base = self - 0x8C;` gets EAX and costs a `mov ecx, eax` before the call, 3 of 23. Writing `self - 0x8C` at each use lets VC6 common it into ECX - where the thiscall receiver has to be anyway - and spill `this` to EAX, which is the image's opening `mov eax, ecx`. 23 of 23, BYTE_EXACT.
+// RULED-OUT: naming the local and calling through `self - 0x8C` anyway (3/23), a typed `EditGroup *const base_object` (3/23), an explicitly qualified `->EditGroup::close()` (3/23), and deriving `self` from `base` rather than the other way round, which loses four instructions outright (0 of 23, 19 compiled).
+// RULED-OUT: `record` DROPPED the line above the first time it was written. Re-recording a body whose tier changes rewrites its annotation and keeps only the LEVER. Re-added after the claim was banked.
+// symbol    ?destruct@EditGroup@@QAEXXZ
 // size      104 bytes
 // prototype void (__thiscall ??1EditGroup@@QAE@XZ)(EditGroup* this)
 // callers   20   call targets   1
@@ -129,47 +133,43 @@ Purpose: Tear down an EditGroup: reinstall the base subobjects' own
 //           same vtordisp adjustor the constructor's own vtordisp slot
 //           names, and the closing call goes out on that adjusted (true
 //           object) pointer, not on `this` itself.
-// RULED-OUT: MEASURED 0/23 agreeing with named members (the preserved
-//            artifact src/recovered/units/00611a20.cpp, since deleted,
-//            reported divergence 1 on the raw-offset form it used). The
-//            image opens `mov eax,ecx` with no frame; this body's compiled
-//            prologue instead does a `call $+5` EIP-fetch idiom before the
-//            first real store, the same family of divergence as the
-//            constructor's SEH-adjacent prologue.
 Return Value: n/a
 Status: Complete
 */
-EditGroup::~EditGroup() {
+void EditGroup::destruct() {
     char *const self = reinterpret_cast<char *>(this);
-    char *const base = self - 0x8C;
 
     {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(base);
+        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self - 0x8C);
         const int32_t off1 = vbtable[1];
-        *reinterpret_cast<int32_t *>(base + off1) = 0x006708D4;
+        *reinterpret_cast<int32_t *>(self - 0x8C + off1) = 0x006708D4;
     }
     {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(base);
+        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self - 0x8C);
         const int32_t off1 = vbtable[1];
         *reinterpret_cast<int32_t *>(self + off1 + 0x3B8) = 0x006708CC;
     }
     {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(base);
+        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self - 0x8C);
         const int32_t off2 = vbtable[2];
-        *reinterpret_cast<int32_t *>(base + off2) = 0x006708C0;
+        *reinterpret_cast<int32_t *>(self - 0x8C + off2) = 0x006708C0;
     }
     {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(base);
+        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self - 0x8C);
         const int32_t off1 = vbtable[1];
         *reinterpret_cast<int32_t *>(self + off1 - 0x90) = off1 - 0x8C;
     }
     {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(base);
+        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self - 0x8C);
         const int32_t off2 = vbtable[2];
         *reinterpret_cast<int32_t *>(self + off2 - 0x90) = off2 - 0xAA4;
     }
 
-    reinterpret_cast<EditGroup *>(base)->close();
+    // NO `base` LOCAL. Naming `self - 0x8C` pins it to EAX and forces a
+    // `mov ecx, eax` before the call; letting VC6 common the subexpression
+    // itself puts it in ECX, where the receiver already has to be, and moves
+    // `this` to EAX - the image's own `mov eax, ecx` opening.
+    reinterpret_cast<EditGroup *>(self - 0x8C)->close();
 }
 
 /*
@@ -192,7 +192,8 @@ void EditGroup::set_text_limits(int limit) {
 
 /*
 Purpose: Return one box's text buffer, or nothing when that box is absent.
-// ORIGINAL: 0x00612060 ?get_text@EditGroup@@QAEPADH@Z 0x00612060-0x00612079
+// ORIGINAL: 0x00612060 ?get_text@EditGroup@@QAEPADH@Z 0x00612060-0x00612079 BYTE_EXACT
+// LEVER: branch polarity. The guard-clause form `if (!box) return nullptr;` lets VC6 prove eax is already zero and MERGE both returns onto one `ret 4` (5 of 8, `je` to the shared ret). The image keeps a separate `xor eax, eax; ret 4` tail, which is what `if (box) return ...; return nullptr;` produces - 8 of 8, BYTE_EXACT. A ternary and `return 0` score the same 8 of 8; re-reading `boxes_[index]` instead of caching it stays at 5 of 8.
 // size      25 bytes
 // prototype int8* (__thiscall ?get_text@EditGroup@@QAEPADH@Z)(EditGroup* this, int)
 // callers   1   call targets   0
@@ -204,10 +205,10 @@ Status: Complete
 */
 char *EditGroup::get_text(int index) {
     void *const box = boxes_[index];
-    if (!box) {
-        return nullptr;
+    if (box) {
+        return reinterpret_cast<char *>(box) + 0xA14;
     }
-    return reinterpret_cast<char *>(box) + 0xA14;
+    return nullptr;
 }
 
 /*
