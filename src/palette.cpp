@@ -364,7 +364,7 @@ Purpose: Build the process palette and hand it to GDI, replacing whatever
 //   compiled from `Palette::init_palette_class(tgl_direct_draw & 2)`, a call
 //   that pushes one argument and no receiver. `SA` is the static spelling,
 //   which is what `palette.h` has always declared.
-// RULED-OUT: source-form search this body is a REGISTER-PRESSURE plateau, not a
+// TRIED: source-form search this body is a REGISTER-PRESSURE plateau, not a
 //   control-flow one, and no spelling reached past it. Measured 2026-08-22 over
 //   all ten flag sets: best 0.881 at `/c /O2 /Gy /GR- /GX`, 0 of 99 instructions
 //   agreeing, this tree emitting 103 against the image's 99. The whole delta is

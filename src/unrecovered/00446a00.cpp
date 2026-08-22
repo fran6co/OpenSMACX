@@ -198,7 +198,7 @@ class FxShim { public:
 };
 
 void FX::play(int a1) {
-    // RULED-OUT: 141/142 bytes match (edit distance 1). Only the bit-4 test
+    // TRIED: 141/142 bytes match (edit distance 1). Only the bit-4 test
     // near the end differs: original is `shr ecx,4 / test cl,1`, every
     // rephrasing tried here (direct mask `flags & 0x10`, a named shifted
     // temp, byte-truncating the shift result, `% 2`, `/ 16`, unsigned flags,

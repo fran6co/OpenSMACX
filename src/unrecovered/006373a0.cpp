@@ -1,5 +1,5 @@
 // ORIGINAL: 0x006373A0 ?advance_frame@Video@@QAEHXZ 0x006373A0-0x00637526 FILE
-// RULED-OUT: none confirmed byte-exact; MISMATCH #0 'push' vs 'sub' - the loop is a for(;;) here where the original threads the two 'return 1' failure exits through one shared epilogue that also differs slightly by which callee-saved registers it pops.
+// TRIED: none confirmed byte-exact; MISMATCH #0 'push' vs 'sub' - the loop is a for(;;) here where the original threads the two 'return 1' failure exits through one shared epilogue that also differs slightly by which callee-saved registers it pops.
 // size      390 bytes
 // prototype int (__thiscall ?advance_frame@Video@@QAEHXZ)(Video* this)
 // callers   3   call targets   1

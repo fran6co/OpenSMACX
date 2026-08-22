@@ -75,7 +75,7 @@ class Sprite { public:
 
     int get_clipped_y_table_expand(RECT *, RECT *, int *, int *, int *, int *);
 };
-// RULED-OUT: MNEMONIC_ONLY (66/66 mnemonics match; not BYTE_EXACT). In the
+// TRIED: MNEMONIC_ONLY (66/66 mnemonics match; not BYTE_EXACT). In the
 //            negative-remainder branch, original loads `a3`'s pointer
 //            EARLY (right after the `jge`, before `neg`/`sub`/`dec`) but
 //            still stores through it SECOND, after `*g_009b4760 = ...`.

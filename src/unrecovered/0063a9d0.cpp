@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0063A9D0 sub_63a9d0 0x0063A9D0-0x0063AD54 FILE
-// RULED-OUT: `if (maxOut->x < local.x)` for the max-update tests scored MISMATCH #55 (ah&1 test, wrong FPU compare polarity vs the original's ah&0x41); writing the predicate with the loaded value first, `if (local.x > maxOut->x)`, reached #76 instead
+// TRIED: `if (maxOut->x < local.x)` for the max-update tests scored MISMATCH #55 (ah&1 test, wrong FPU compare polarity vs the original's ah&0x41); writing the predicate with the loaded value first, `if (local.x > maxOut->x)`, reached #76 instead
 // working copy - scaffold materialised by --work
 // size      900 bytes
 // prototype 

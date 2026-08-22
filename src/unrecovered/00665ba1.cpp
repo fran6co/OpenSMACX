@@ -1,6 +1,6 @@
 // ORIGINAL: 0x00665BA1 sub_665ba1 0x00665BA1-0x00665C93 EXCLUDED S2d
-// RULED-OUT: was `EXCLUDED S2a`; same shape as 0x00664D51's sibling (see that file's note in full) - the disassembly is a normal `ret`, no tail-jmp, self-contained store sequence, not an EH funclet by docs/EXCLUSIONS.md 2a's own test. Un-excluded.
-// RULED-OUT: combining `value + g_9be6b4 + g_9be6b4` into one expression vs. splitting into two statements - identical rebuilt bytes either way (VC6 folds both into one `lea`/`mov` pair; original is two separate `add`). Kept split as the more faithful source form. First divergence #18 add/mov, mnemonic similarity 0.92, 4 edit blocks, unrelated to this expression's semantics.
+// TRIED: was `EXCLUDED S2a`; same shape as 0x00664D51's sibling (see that file's note in full) - the disassembly is a normal `ret`, no tail-jmp, self-contained store sequence, not an EH funclet by docs/EXCLUSIONS.md 2a's own test. Un-excluded.
+// TRIED: combining `value + g_9be6b4 + g_9be6b4` into one expression vs. splitting into two statements - identical rebuilt bytes either way (VC6 folds both into one `lea`/`mov` pair; original is two separate `add`). Kept split as the more faithful source form. First divergence #18 add/mov, mnemonic similarity 0.92, 4 edit blocks, unrelated to this expression's semantics.
 // size      242 bytes
 // prototype
 // callers   1   call targets   0

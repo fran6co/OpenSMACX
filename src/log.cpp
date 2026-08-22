@@ -96,7 +96,7 @@ void __cdecl log_logging_exit() { Logging->~Log(); }
 void __cdecl log_reset() { Logging->reset(); }
 
 // ORIGINAL: 0x00626250 ?log_say@@YAXPADPADHHH@Z 0x00626250-0x006262E9
-// RULED-OUT: separate `if` guards instead of the `||` chain; `reinterpret_cast<Log*>(0x9BBFF8)->say(...)` instead of `Logging->`; all 10 FLAG_SETS via --all-flags. Structural fix (call count now matches the image; previously this tree inlined nothing and called Log::say/say_hex as a real function). Residual: the FIRST field read (log_file_) through the constant `this` materializes it into a register (`mov eax,0x9bbff8; mov eax,[eax]`) where the image folds base+offset directly (`mov eax,[0x9bbff8]`) - matches Log::reset's same pattern when log_file_ is a push-argument, not a boolean test.
+// TRIED: separate `if` guards instead of the `||` chain; `reinterpret_cast<Log*>(0x9BBFF8)->say(...)` instead of `Logging->`; all 10 FLAG_SETS via --all-flags. Structural fix (call count now matches the image; previously this tree inlined nothing and called Log::say/say_hex as a real function). Residual: the FIRST field read (log_file_) through the constant `this` materializes it into a register (`mov eax,0x9bbff8; mov eax,[eax]`) where the image folds base+offset directly (`mov eax,[0x9bbff8]`) - matches Log::reset's same pattern when log_file_ is a push-argument, not a boolean test.
 // symbol    ?log_say@@YAXPBD0HHH@Z
 // size      153 bytes
 // prototype 
@@ -110,7 +110,7 @@ void __cdecl log_say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
 }
 
 // ORIGINAL: 0x006262F0 ?log_say@@YAXPADHHH@Z 0x006262F0-0x0062634C
-// RULED-OUT: separate `if` guards instead of the `||` chain; `reinterpret_cast<Log*>(0x9BBFF8)->say(...)` instead of `Logging->`; all 10 FLAG_SETS via --all-flags. Structural fix (call count now matches the image; previously this tree inlined nothing and called Log::say/say_hex as a real function). Residual: the FIRST field read (log_file_) through the constant `this` materializes it into a register (`mov eax,0x9bbff8; mov eax,[eax]`) where the image folds base+offset directly (`mov eax,[0x9bbff8]`) - matches Log::reset's same pattern when log_file_ is a push-argument, not a boolean test.
+// TRIED: separate `if` guards instead of the `||` chain; `reinterpret_cast<Log*>(0x9BBFF8)->say(...)` instead of `Logging->`; all 10 FLAG_SETS via --all-flags. Structural fix (call count now matches the image; previously this tree inlined nothing and called Log::say/say_hex as a real function). Residual: the FIRST field read (log_file_) through the constant `this` materializes it into a register (`mov eax,0x9bbff8; mov eax,[eax]`) where the image folds base+offset directly (`mov eax,[0x9bbff8]`) - matches Log::reset's same pattern when log_file_ is a push-argument, not a boolean test.
 // symbol    ?log_say@@YAXPBDHHH@Z
 // size      92 bytes
 // prototype 
@@ -124,7 +124,7 @@ void __cdecl log_say(LPCSTR str1, int num1, int num2, int num3) {
 }
 
 // ORIGINAL: 0x00626350 ?log_say_hex@@YAXPADPADHHH@Z 0x00626350-0x006263E9
-// RULED-OUT: separate `if` guards instead of the `||` chain; `reinterpret_cast<Log*>(0x9BBFF8)->say(...)` instead of `Logging->`; all 10 FLAG_SETS via --all-flags. Structural fix (call count now matches the image; previously this tree inlined nothing and called Log::say/say_hex as a real function). Residual: the FIRST field read (log_file_) through the constant `this` materializes it into a register (`mov eax,0x9bbff8; mov eax,[eax]`) where the image folds base+offset directly (`mov eax,[0x9bbff8]`) - matches Log::reset's same pattern when log_file_ is a push-argument, not a boolean test.
+// TRIED: separate `if` guards instead of the `||` chain; `reinterpret_cast<Log*>(0x9BBFF8)->say(...)` instead of `Logging->`; all 10 FLAG_SETS via --all-flags. Structural fix (call count now matches the image; previously this tree inlined nothing and called Log::say/say_hex as a real function). Residual: the FIRST field read (log_file_) through the constant `this` materializes it into a register (`mov eax,0x9bbff8; mov eax,[eax]`) where the image folds base+offset directly (`mov eax,[0x9bbff8]`) - matches Log::reset's same pattern when log_file_ is a push-argument, not a boolean test.
 // symbol    ?log_say_hex@@YAXPBD0HHH@Z
 // size      153 bytes
 // prototype 
@@ -138,7 +138,7 @@ void __cdecl log_say_hex(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3)
 }
 
 // ORIGINAL: 0x006263F0 ?log_say_hex@@YAXPADHHH@Z 0x006263F0-0x0062644C
-// RULED-OUT: separate `if` guards instead of the `||` chain; `reinterpret_cast<Log*>(0x9BBFF8)->say(...)` instead of `Logging->`; all 10 FLAG_SETS via --all-flags. Structural fix (call count now matches the image; previously this tree inlined nothing and called Log::say/say_hex as a real function). Residual: the FIRST field read (log_file_) through the constant `this` materializes it into a register (`mov eax,0x9bbff8; mov eax,[eax]`) where the image folds base+offset directly (`mov eax,[0x9bbff8]`) - matches Log::reset's same pattern when log_file_ is a push-argument, not a boolean test.
+// TRIED: separate `if` guards instead of the `||` chain; `reinterpret_cast<Log*>(0x9BBFF8)->say(...)` instead of `Logging->`; all 10 FLAG_SETS via --all-flags. Structural fix (call count now matches the image; previously this tree inlined nothing and called Log::say/say_hex as a real function). Residual: the FIRST field read (log_file_) through the constant `this` materializes it into a register (`mov eax,0x9bbff8; mov eax,[eax]`) where the image folds base+offset directly (`mov eax,[0x9bbff8]`) - matches Log::reset's same pattern when log_file_ is a push-argument, not a boolean test.
 // symbol    ?log_say_hex@@YAXPBDHHH@Z
 // size      92 bytes
 // prototype 

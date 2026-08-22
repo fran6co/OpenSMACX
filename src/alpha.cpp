@@ -95,12 +95,12 @@ int __cdecl tech_name(LPSTR name) {
 /*
 Purpose: Convert the chassis name string to a numeric chassis id.
 // ORIGINAL: 0x00584E40 ?chas_name@@YAHPAD@Z 0x00584E40-0x00584F33
-// RULED-OUT: a `purge_trailing(name)` call - the image hand-inlines a NAIVE trim that recomputes `strlen` on every access (4 calls: check, loop-top compare, store index, continue condition) instead of one cached-length pointer walk. Restoring that shape took the call count from 9 to the image's 12; still MISMATCH on register choice (`mov bl,0x20` vs an immediate compare) and downstream byte offsets - not chased further, see weap_name/arm_name (identical).
+// TRIED: a `purge_trailing(name)` call - the image hand-inlines a NAIVE trim that recomputes `strlen` on every access (4 calls: check, loop-top compare, store index, continue condition) instead of one cached-length pointer walk. Restoring that shape took the call count from 9 to the image's 12; still MISMATCH on register choice (`mov bl,0x20` vs an immediate compare) and downstream byte offsets - not chased further, see weap_name/arm_name (identical).
 // LEVER: the trim loop was `if (strlen(name) != 0) { do {...} while (strlen(name) != 0); }`,
 //   which VC6 compiles as one copy of the head duplicated at the bottom (+6 instructions past the
 //   image's single `jne` backedge). A plain `while (strlen(name) != 0) { if (...) break; ...; }`
 //   is the image's rotated-while shape with one head. Moved 20/98 -> 55/98 agreeing.
-// RULED-OUT (still open): the chas_id loop's `_stricmp(name, Chassis[chas_id].offsv_1_name)`
+// TRIED (still open): the chas_id loop's `_stricmp(name, Chassis[chas_id].offsv_1_name)`
 //   diverges at instruction 53 - the image resolves the comparison string through
 //   `StringTable->get(...)` (`call 0x6169a0`, the same idiom say_tech uses for label lookups)
 //   before the ecx pointer switches over; this tree compares the field directly. Not chased -
@@ -153,7 +153,7 @@ Purpose: Convert the weapon name string to a numeric weapon id.
 // LEVER: same as chas_name - `if (strlen != 0) { do {...} while; }` duplicated the loop head;
 //   a plain `while (strlen(name) != 0) { if (...) break; ...; }` matches the image's single
 //   backedge. Moved 20/98 -> 55/98 agreeing.
-// RULED-OUT (still open): same weap_id-loop StringTable->get() divergence as chas_name, not
+// TRIED (still open): same weap_id-loop StringTable->get() divergence as chas_name, not
 //   chased further this pass.
 // size      240 bytes
 // prototype 
@@ -202,7 +202,7 @@ Purpose: Convert the armor name string to a numeric armor id.
 //   function's own documented "error (0)" return and chas_name/weap_name's `return 0;`. Because
 //   the old -2 return matched the earlier 'Disable' early return, VC6 had merged the two exits;
 //   fixing the constant also restored the image's separate epilogue. Moved 24/98 -> 55/98.
-// RULED-OUT (still open): same arm_id-loop StringTable->get() divergence as chas_name, not
+// TRIED (still open): same arm_id-loop StringTable->get() divergence as chas_name, not
 //   chased further this pass.
 // size      240 bytes
 // prototype 
@@ -904,7 +904,7 @@ void __cdecl read_faction(Player *player, int toggle) {
 /*
 Purpose: Parse the #BONUSNAMES, #FACTIONS, and #NEWFACTIONS sections inside the alpha(x).txt.
 // ORIGINAL: 0x00586F30 ?read_factions@@YAHXZ 0x00586F30-0x005871C9
-// RULED-OUT: fixes, call count 23 -> 28-29 (image 31): 1. `rand() % faction_count`, not `random(0, faction_count)` - the image calls the C library `rand` (0x0064601D) directly, never the game's seeded PRNG. BUG IN THE ORIGINAL, preserved. 2. `load_faction_art` was a temp.h function POINTER, compiling an indirect call where the image has `call rel32` twice; promoted to a src/pending_bodies.cpp forwarder (see there and temp.h). 3. `strcpy_s(dest, src)`, not `strncpy_s(dest, src, 24)`, for BonusName[i].key and both Players[player] fields in the first two loops - the image pushes only 2 args (`call 0x00645460`), an unbounded copy, not a 3-arg bounded one. BUG IN THE ORIGINAL, preserved. Remaining gap: `text_open`/`text_get` each short by 1 (a ternary argument the image tail-merges two of its three arms for, not chased), and `load_faction_art` merges its two call sites into one physical `call` at the object level where the image keeps two.
+// TRIED: fixes, call count 23 -> 28-29 (image 31): 1. `rand() % faction_count`, not `random(0, faction_count)` - the image calls the C library `rand` (0x0064601D) directly, never the game's seeded PRNG. BUG IN THE ORIGINAL, preserved. 2. `load_faction_art` was a temp.h function POINTER, compiling an indirect call where the image has `call rel32` twice; promoted to a src/pending_bodies.cpp forwarder (see there and temp.h). 3. `strcpy_s(dest, src)`, not `strncpy_s(dest, src, 24)`, for BonusName[i].key and both Players[player] fields in the first two loops - the image pushes only 2 args (`call 0x00645460`), an unbounded copy, not a 3-arg bounded one. BUG IN THE ORIGINAL, preserved. Remaining gap: `text_open`/`text_get` each short by 1 (a ternary argument the image tail-merges two of its three arms for, not chased), and `load_faction_art` merges its two call sites into one physical `call` at the object level where the image keeps two.
 // LEVER: signedness at the JENN282 reroll - `uint32_t faction_count = 14;` and `uint32_t
 //        faction_set = rand_val / 7;` made `rand() % faction_count` compile as an unsigned
 //        div and the /7 as an unsigned magic-multiply; the image uses `cdq; idiv` for the
@@ -1048,7 +1048,7 @@ Purpose: Parse the #UNITS section inside the alpha(x).txt.
 //        MaxVehProtoFactionNum);` (same defect as read_basic_rules - text_get_number inlines
 //        through text_get_source/text_item_number_source, but the image calls the zero-arg
 //        text_get()/text_item_number() wrappers). Moved 22/134 -> 48/134 agreeing.
-// RULED-OUT: not chased further - the image never reads a "reactor" field at
+// TRIED: not chased further - the image never reads a "reactor" field at
 //            all (only 4 `text_item_number` calls: plan, cost, carry, icon;
 //            `ability`'s `text_item_binary` result stays live in EAX straight
 //            into the proto_id switch that always computes reactor_id, no
@@ -1132,7 +1132,7 @@ Purpose: Parse in all the game rules via alpha/x.txt. If the toggle param is set
 //        one); after adding it the frame is 0x11c against the image's
 //        0x114, 8 bytes (two DWORDs) still unaccounted for somewhere else
 //        in this ~40-#SECTION function. 51/1217 -> 65/1217.
-// RULED-OUT: the rest of this function - it is 883 image instructions across
+// TRIED: the rest of this function - it is 883 image instructions across
 //            dozens of independent #SECTION loops (most already
 //            array-indexed field-for-field against the shipped struct
 //            layouts); several read like the read_tech pointer-walk (e.g.
@@ -1548,7 +1548,7 @@ Purpose: Attempt to read the setting's value from the ini file.
 // LEVER: WRONG CALLEE - `strcpy_s(TextBufferGetPtr, 256, default_value)`
 //        pushed a 3rd argument the image never does; `add esp, 8` after
 //        the call (2 args) confirms a plain `strcpy`.
-// RULED-OUT: NOT MEASURABLE in this tree as committed - this overload
+// TRIED: NOT MEASURABLE in this tree as committed - this overload
 //            (`LPSTR prefs_get(LPCSTR, LPCSTR, BOOL)`) has ZERO callers
 //            anywhere in the recovered source, unlike its `int`-returning
 //            sibling at 0x0059DB40 (17 callers). The image's own marker
@@ -1790,8 +1790,8 @@ inline LPSTR __cdecl prefs_get_binary(int value) {
 /*
 Purpose: Load the most common preferences from the game's ini to globals.
 // ORIGINAL: 0x0059DCF0 ?prefs_load@@YAXH@Z 0x0059DCF0-0x0059E502
-// RULED-OUT: `__forceinline` on the two helpers, zero measured effect under every flag set tried, reverted to plain `inline`.
-// RULED-OUT: dominant defect was std::string/std::stringstream (the "Custom World" default and `prefs_get_binary`'s return), which forces an SEH frame this function's actual `push ebp; sub esp, 0x54; push ebx/esi/edi` prologue does not have - first divergence was INSTRUCTION 0 before this. `prefs_get_binary` now writes directly into the global `StringTemp` (0x009B86A0), matching the image's `mov byte ptr [0x9b86a0], 0` + per-bit `strcat`, and the "Custom World" default is the same StringTemp+strcat loop with a SIGNED `int i` (image: `cmp esi, 7; jl`, not `jb`). Fixing this alone cannot get further: `prefs_get_binary` and both `prefs_get` overloads are `inline` (moved before first use where needed) since the image inlines them at MOST call sites, but the image's exact per-site mix (e.g. int-overload: 4 inlined + 3 real calls) is a VC6 codegen heuristic no source spelling reproduced here -
+// TRIED: `__forceinline` on the two helpers, zero measured effect under every flag set tried, reverted to plain `inline`.
+// TRIED: dominant defect was std::string/std::stringstream (the "Custom World" default and `prefs_get_binary`'s return), which forces an SEH frame this function's actual `push ebp; sub esp, 0x54; push ebx/esi/edi` prologue does not have - first divergence was INSTRUCTION 0 before this. `prefs_get_binary` now writes directly into the global `StringTemp` (0x009B86A0), matching the image's `mov byte ptr [0x9b86a0], 0` + per-bit `strcat`, and the "Custom World" default is the same StringTemp+strcat loop with a SIGNED `int i` (image: `cmp esi, 7; jl`, not `jb`). Fixing this alone cannot get further: `prefs_get_binary` and both `prefs_get` overloads are `inline` (moved before first use where needed) since the image inlines them at MOST call sites, but the image's exact per-site mix (e.g. int-overload: 4 inlined + 3 real calls) is a VC6 codegen heuristic no source spelling reproduced here -
 // size      2066 bytes
 // prototype void (__cdecl ?prefs_load@@YAXH@Z)(BOOL useDefault)
 // callers   3   call targets   8
@@ -1913,7 +1913,7 @@ Purpose: Save the most common preferences from memory to the game's ini.
 //        the whole "Custom World" join and the "Faction %d" key with the
 //        `StringTemp`/`strcat`/say_num idiom, and dropped the `sprintf_s`
 //        the same way. 140 -> 110 instructions, frame gone.
-// RULED-OUT: not byte-exact - the image fully INLINES `prefs_put(LPCSTR,
+// TRIED: not byte-exact - the image fully INLINES `prefs_put(LPCSTR,
 //            int, BOOL)` (0x0059E530, itself separately claimed
 //            BYTE_EXACT) at every one of its ~11 call sites here, each
 //            with its own local scratch buffer and direct
@@ -1969,7 +1969,7 @@ void __cdecl prefs_save(BOOL save_factions) {
 /*
 Purpose: Set the internal game preference globals from the ini setting globals.
 // ORIGINAL: 0x0059E950 ?prefs_use@@YAXXZ 0x0059E950-0x0059E973 SEMANTIC
-// RULED-OUT: 5/7 plateau, MNEMONIC_ONLY (register swap on the `more`/
+// TRIED: 5/7 plateau, MNEMONIC_ONLY (register swap on the `more`/
 //            `announce` stores only). Tried: declaring `announce` before
 //            `more`; storing `announce` before `more`; both reversed
 //            together; and direct field-to-field assignment with no
@@ -2000,7 +2000,7 @@ void __cdecl prefs_use() {
 /*
 Purpose: Parse the #LABELS section inside the labels.txt file.
 // ORIGINAL: 0x00616A00 ?labels_init@@YAHXZ 0x00616A00-0x00616A93
-// RULED-OUT: 40/45 plateau - the image stores `Labels->count` THEN reuses the
+// TRIED: 40/45 plateau - the image stores `Labels->count` THEN reuses the
 //            same register for `shl eax,2` (no reload); every source form
 //            tried instead computes `count*4` into a second register (`lea
 //            ecx,[eax*4]`) before the store: local `int count`, a separate
@@ -2077,7 +2077,7 @@ Purpose: Get the label string and concatenate it to the stringTemp buffer.
 // LEVER: `strcat_s` was calling the CRT's inlined byte-copy loop (29
 //        instructions) instead of the image's plain `call strcat`; `strcat`
 //        drops it to 10/14 MNEMONIC_ONLY.
-// RULED-OUT: remaining divergence is load order inside the inlined
+// TRIED: remaining divergence is load order inside the inlined
 //            `label_get` - image loads `label_offset` before
 //            `Labels->strings_ptr`, this tree's forceinline loads the
 //            reverse. Caching `label_offset` in a local first, caching the

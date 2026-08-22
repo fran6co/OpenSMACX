@@ -80,7 +80,7 @@ int Sprite::get_clipped_x_table_expand(RECT * a1, RECT * a2, int * a3, int * a4,
     // 'mov' vs 'neg' - a pure reordering, same opcodes and operands, so
     // operand_similarity 0.589 beats every other spelling tried.
     //
-    // RULED-OUT: ~18 source-form variants across three independent axes,
+    // TRIED: ~18 source-form variants across three independent axes,
     // none reaching BYTE_EXACT:
     //  - branch polarity on the excess<0 test: `if (excess>=0){pos}else{neg}`
     //    compiles pos-block-first with `jl`/`jle`; only `if (excess<0)

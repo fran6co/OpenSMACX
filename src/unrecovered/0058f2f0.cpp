@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0058F2F0 ?game_init@@YAHHH@Z 0x0058F2F0-0x0058F421
-// RULED-OUT: original establishes a real EBP frame (flags: frame); this body compiles FPO (esp-relative) instead - same mnemonics through the first branch, diverging only in WHEN the `add esp,4` stack cleanup after `log_set_state` happens (original defers it to the shared join point at 0x58f3d9, this body does it immediately before the `jmp`). Landed at MISMATCH #18.
+// TRIED: original establishes a real EBP frame (flags: frame); this body compiles FPO (esp-relative) instead - same mnemonics through the first branch, diverging only in WHEN the `add esp,4` stack cleanup after `log_set_state` happens (original defers it to the shared join point at 0x58f3d9, this body does it immediately before the `jmp`). Landed at MISMATCH #18.
 // size      305 bytes
 // prototype BOOL (__cdecl ?game_init@@YAHHH@Z)(BOOL tglParseStrings, BOOL tglAllRules)
 // callers   4   call targets   12

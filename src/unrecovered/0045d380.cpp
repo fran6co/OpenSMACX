@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0045D380 ?release_iface_mode@SubInterface@@QAEXXZ 0x0045D380-0x0045D43F FILE
-// RULED-OUT: byte-exact - a stack-search-and-shift over a linear "iface mode" stack (0x7AE778) plus a parallel object table (0x7AE7F0); the found-and-shifted case does not break, it keeps scanning downward exactly like the disassembly, so no attempt used `break`. 59% mnemonic similarity; landed for the control-flow shape (nested for-loops, no early exit) rather than chase the remaining scheduling/frame differences.
+// TRIED: byte-exact - a stack-search-and-shift over a linear "iface mode" stack (0x7AE778) plus a parallel object table (0x7AE7F0); the found-and-shifted case does not break, it keeps scanning downward exactly like the disassembly, so no attempt used `break`. 59% mnemonic similarity; landed for the control-flow shape (nested for-loops, no early exit) rather than chase the remaining scheduling/frame differences.
 // working copy - scaffold materialised by --work
 // size      191 bytes
 // prototype void (__thiscall ?release_iface_mode@SubInterface@@QAEXXZ)(SubInterface* this)

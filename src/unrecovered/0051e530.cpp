@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0051E530 sub_51e530 0x0051E530-0x0051E6ED FILE
-// RULED-OUT: char* record-base arithmetic (self+0x30*a1 relative to 0x93a7b0) with adjustor-thunk VCall dispatch (slot000/slot001) for the two destroy-list virtual calls; reaches #13
+// TRIED: char* record-base arithmetic (self+0x30*a1 relative to 0x93a7b0) with adjustor-thunk VCall dispatch (slot000/slot001) for the two destroy-list virtual calls; reaches #13
 // size      445 bytes
 // prototype 
 // callers   1   call targets   5

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005DDDE0 ?wrap_height_flying@Buffer@@QAEHPAD@Z 0x005DDDE0-0x005DDEEA
-// RULED-OUT: the `_strlen` no-arg-extern + function-pointer-cast idiom (see 0x006141C0) to avoid /O2's strlen intrinsic did not move the divergence - it is register-allocation, not a call shape. The original pushes ebx/esi/edi all in the shared prologue, before the `param_2==0` early return; this source form (an `if` straight after the first branch) defers the `push edi` past that early return since edi is unused on it. Not chased further; landing the closest structural match.
+// TRIED: the `_strlen` no-arg-extern + function-pointer-cast idiom (see 0x006141C0) to avoid /O2's strlen intrinsic did not move the divergence - it is register-allocation, not a call shape. The original pushes ebx/esi/edi all in the shared prologue, before the `param_2==0` early return; this source form (an `if` straight after the first branch) defers the `push edi` past that early return since edi is unused on it. Not chased further; landing the closest structural match.
 // size      266 bytes
 // prototype int (__thiscall ?wrap_height_flying@Buffer@@QAEHPAD@Z)(Buffer* this, int8*)
 // callers   3   call targets   3

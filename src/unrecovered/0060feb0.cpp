@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0060FEB0 sub_60feb0 0x0060FEB0-0x0060FEC1;0x0060FD90-0x0060FE40 FILE
-// RULED-OUT: known-wall shape (two-span function: adjustor thunk + shared scalar-deleting-dtor body reached via jmp; no C++ source naturally splits into two spans or reproduces the fs:[0] frame). Own __thiscall Obj_60feb0::handler(uint) does the vbase subtraction, the vtable-relocation writes, close()/dtor() calls with the exact `base+off4`/`base+off8` `this` derived from the asm, and the conditional operator delete(base); compiles, MISMATCH at #0 (whole-function register/frame order)
+// TRIED: known-wall shape (two-span function: adjustor thunk + shared scalar-deleting-dtor body reached via jmp; no C++ source naturally splits into two spans or reproduces the fs:[0] frame). Own __thiscall Obj_60feb0::handler(uint) does the vbase subtraction, the vtable-relocation writes, close()/dtor() calls with the exact `base+off4`/`base+off8` `this` derived from the asm, and the conditional operator delete(base); compiles, MISMATCH at #0 (whole-function register/frame order)
 // working copy - scaffold materialised by --work
 // size      193 bytes
 // prototype 

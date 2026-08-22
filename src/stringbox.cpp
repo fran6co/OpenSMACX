@@ -52,7 +52,7 @@ Purpose: Construct a StringBox: run the GraphicWin base construction, build
 //        `push 0x2b70 / push esi / call`: 0.683 similar. Written out in the
 //        body it is 0.917, and every instruction from the block to the closing
 //        vtable stores agrees.
-// RULED-OUT: BYTE_EXACT, and the wall is not in this file. call_diff says this
+// TRIED: BYTE_EXACT, and the wall is not in this file. call_diff says this
 //        tree makes THREE calls where the image makes two:
 //        ??0GraphicWin@@QAE@XZ, ??0Scroll@@QAE@XZ and, extra,
 //        ?construct@GraphicWin@@QAEXXZ. The image's ONE `call 0x005D4CF0` is
@@ -67,13 +67,13 @@ Purpose: Construct a StringBox: run the GraphicWin base construction, build
 //        fix is `GraphicWin() { construct(); }` in src/graphicwin.h, which is
 //        outside this batch's files and would move every GraphicWin-derived
 //        constructor at once.
-// RULED-OUT: a `construct()` METHOD with `new (&scroll_) Scroll()` in place of
+// TRIED: a `construct()` METHOD with `new (&scroll_) Scroll()` in place of
 //        the real constructor - the shape that beats the SEH-frame ceiling
 //        elsewhere. MEASURED WORSE: 0.627 against the real constructor's 0.917,
 //        because the placement-new guard and the extra state transitions cost
 //        more than the member ordering buys. The image's own `sub esp, 8` is
 //        NOT a placement-new guard slot here.
-// RULED-OUT: the last two instructions of the frame, `sub esp, 8` against this
+// TRIED: the last two instructions of the frame, `sub esp, 8` against this
 //        tree's `push ecx` and the missing `mov dword ptr [esp + 0xc], edi`.
 //        The image reserves TWO dwords below its EH record and writes `this`
 //        into one and zero into the other before calling the base; this tree

@@ -1,6 +1,6 @@
 // ORIGINAL: 0x005D8EE0 ?draw_dest_source@Buffer@@QAEHPAVBuffer@@HHHHHPAE@Z 0x005D8EE0-0x005D8FD8 FILE
-// RULED-OUT: same shape as 0x005D8740/0x005D8930/0x005D8B20 - see 0x005D8740's note for what the stdcall-Unlock and opaque-field access forms rule out.
-// RULED-OUT: nothing new past that - 94.9%+ mnemonic similarity, first gap at #41 (mov vs cmp) in the NULL-surface lock-count arm, same spot as every sibling in this family.
+// TRIED: same shape as 0x005D8740/0x005D8930/0x005D8B20 - see 0x005D8740's note for what the stdcall-Unlock and opaque-field access forms rule out.
+// TRIED: nothing new past that - 94.9%+ mnemonic similarity, first gap at #41 (mov vs cmp) in the NULL-surface lock-count arm, same spot as every sibling in this family.
 // working copy - scaffold materialised by --work
 // size      248 bytes
 // prototype int (__thiscall ?draw_dest_source@Buffer@@QAEHPAVBuffer@@HHHHHPAE@Z)(Buffer* this, Buffer*, int, int, int, int, int, unsigned int8*)

@@ -53,7 +53,7 @@ static int *const g_009c0b00 = (int *)0x009C0B00;
 // no prior push are three plain __cdecl arguments (float*, float, int),
 // matching the Ghidra hint's arity.
 //
-// RULED-OUT (8 structural variants, none BYTE_EXACT - closest is
+// TRIED (8 structural variants, none BYTE_EXACT - closest is
 // 145/151 bytes, 8 edits, mnemonic_similarity 0.887, landed below):
 // the divergence is entirely FPU SCHEDULING in the two `a1[0]`/`a1[1]`
 // blocks, not logic. `a2 * K1 * K2` recomputed inline every use (4x);

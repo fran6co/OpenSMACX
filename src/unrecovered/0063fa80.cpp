@@ -1,6 +1,6 @@
 // ORIGINAL: 0x0063FA80 sub_63fa80 0x0063FA80-0x0063FC92 FILE
-// RULED-OUT: the do/while(--n) with a hoisted `int delta = dst-src` byte pointer trick (rather than a plain `for` with two array subscripts) moved the mismatch from instruction #3 to #10 - matches the original's single moving pointer covering both arrays via `eax+ecx`.
-// RULED-OUT: MISMATCH #10 'fld' vs 'mov', not chased further - the round-half-away-from-zero helper (`v + (v>=thresh?+.5:-.5)` then truncate) reproduces the fcomp/fnstsw/test-ah,1 shape per call site but not byte-for-byte across all nine.
+// TRIED: the do/while(--n) with a hoisted `int delta = dst-src` byte pointer trick (rather than a plain `for` with two array subscripts) moved the mismatch from instruction #3 to #10 - matches the original's single moving pointer covering both arrays via `eax+ecx`.
+// TRIED: MISMATCH #10 'fld' vs 'mov', not chased further - the round-half-away-from-zero helper (`v + (v>=thresh?+.5:-.5)` then truncate) reproduces the fcomp/fnstsw/test-ah,1 shape per call site but not byte-for-byte across all nine.
 // working copy - scaffold materialised by --work
 // size      530 bytes
 // prototype 

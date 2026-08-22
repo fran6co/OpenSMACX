@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004E26E0 ?pick_service@AlphaNet@@QAEHPAH@Z 0x004E26E0-0x004E29DF;0x004E38E0-0x004E38FB;0x0065C630-0x0065C664 FILE
-// RULED-OUT: full transcription (guard/save-global, ServiceStruct local, BasePop::start/exec, Dialogs::item list build, join_service) compiles but this address is catalogued SHARED_TAIL - one of its spans is COMDAT-folded with another function, so no body, not even a one-line stub, gets a MISMATCH/BYTE_EXACT verdict
+// TRIED: full transcription (guard/save-global, ServiceStruct local, BasePop::start/exec, Dialogs::item list build, join_service) compiles but this address is catalogued SHARED_TAIL - one of its spans is COMDAT-folded with another function, so no body, not even a one-line stub, gets a MISMATCH/BYTE_EXACT verdict
 // working copy - scaffold materialised by --work
 // size      846 bytes
 // prototype int (__thiscall ?pick_service@AlphaNet@@QAEHPAH@Z)(AlphaNet* this, int*)

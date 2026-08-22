@@ -31,7 +31,7 @@ Purpose: Construct the Popup base and the embedded Time, then install
          NetMsg's own vtables and the three constructor arguments.
 // ORIGINAL: 0x0047ACF0 ??0NetMsg@@QAE@HHH@Z 0x0047ACF0-0x0047AD6E;0x00656440-0x00656452
 // LEVER: a real `NetMsg(int, int, int)` constructor, MISMATCH 11/31 -> SHAPE_EXACT 27/31, because the placement-new null guard disappears - the same lever that took MultiDebug::construct() to BYTE_EXACT. The two dynamic initialisers that build the NetMsg globals reach it as `ptr->NetMsg::NetMsg(...)`, explicit constructor call syntax with no new-expression, and stay BYTE_EXACT; written `new (ptr) NetMsg(...)` they pay the guard instead and 0x0047A7A0 falls to 1 of 9. `new (ptr) T()` and `ptr->T::T()` are not interchangeable here.
-// RULED-OUT: the residual is register allocation past the prologue. An EARLIER refusal here blamed `push ecx` against `sub esp, 8` on "how many spill slots the two placement-news plus the `object` local need, not a control-flow difference" - that was backwards, and the placement-new null guard it could not see IS control flow. It is gone; what is left is not.
+// TRIED: the residual is register allocation past the prologue. An EARLIER refusal here blamed `push ecx` against `sub esp, 8` on "how many spill slots the two placement-news plus the `object` local need, not a control-flow difference" - that was backwards, and the placement-new null guard it could not see IS control flow. It is gone; what is left is not.
 // size      126 bytes
 // prototype void (__thiscall ??0NetMsg@@QAE@HHH@Z)(NetMsg* this, int, int, int)
 // callers   0   call targets   2

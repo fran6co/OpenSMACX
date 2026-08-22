@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0046FC30 ?clear_alt@MapWin@@QAEXXZ 0x0046FC30-0x0046FC7B FILE
-// RULED-OUT: short-circuit && vs nested if vs hoisting the global count into a local all reproduce the same divergence (#7 mov vs cmp) - VC6 folds the `> 0` compare straight against the global memory operand instead of loading it into a register first
+// TRIED: short-circuit && vs nested if vs hoisting the global count into a local all reproduce the same divergence (#7 mov vs cmp) - VC6 folds the `> 0` compare straight against the global memory operand instead of loading it into a register first
 // working copy - scaffold materialised by --work
 // size      75 bytes
 // prototype void (__thiscall ?clear_alt@MapWin@@QAEXXZ)(MapWin* this)

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004E0FD0 ?editor_generate@Console@@QAEXXZ 0x004E0FD0-0x004E10BC FILE
-// RULED-OUT: hand-written VCall shim for the two indirect calls at +4/+8 on the fixed-address singleton 0x007B0CB8 (emit_translation_unit's vtable_slots heuristic only fires on a reg-deref'd vtable load, not an absolute-address one). Body compiles; landed at MISMATCH (82% mnemonic similarity, first divergence at instruction 2 - scheduling around the leading auto_undo() call).
+// TRIED: hand-written VCall shim for the two indirect calls at +4/+8 on the fixed-address singleton 0x007B0CB8 (emit_translation_unit's vtable_slots heuristic only fires on a reg-deref'd vtable load, not an absolute-address one). Body compiles; landed at MISMATCH (82% mnemonic similarity, first divergence at instruction 2 - scheduling around the leading auto_undo() call).
 // size      236 bytes
 // prototype void (__thiscall ?editor_generate@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   4

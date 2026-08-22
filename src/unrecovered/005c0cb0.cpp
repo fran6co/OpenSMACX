@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005C0CB0 ?veh_find@@YAHHHHH@Z 0x005C0CB0-0x005C0DA9 FILE
-// RULED-OUT: plain `abs()` gets intrinsic-inlined by /O2 (cdq/xor/sub) where the original has a real `call _abs`; `extern "C" int abs(int);` plus `#pragma function(abs)` forces the real call and fixed nearly all of it. Remaining MISMATCH is `or eax,0FFFFFFFFh` vs `mov eax,-1` for best_idx's initial -1 - an instruction-selection/scheduling choice tied to the adjacent `mov ecx,[DAT_9a64c8]` load, not source form; not reproduced.
+// TRIED: plain `abs()` gets intrinsic-inlined by /O2 (cdq/xor/sub) where the original has a real `call _abs`; `extern "C" int abs(int);` plus `#pragma function(abs)` forces the real call and fixed nearly all of it. Remaining MISMATCH is `or eax,0FFFFFFFFh` vs `mov eax,-1` for best_idx's initial -1 - an instruction-selection/scheduling choice tied to the adjacent `mov ecx,[DAT_9a64c8]` load, not source form; not reproduced.
 // size      249 bytes
 // prototype
 // callers   3   call targets   1

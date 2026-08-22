@@ -74,7 +74,7 @@ class Sprite { public:
 
     int get_clipped_x_table_shrink(RECT *, RECT *, int *, int *, int *, int *);
 };
-// RULED-OUT: reaches instruction 37/56 exactly (138 of 140 bytes) then
+// TRIED: reaches instruction 37/56 exactly (138 of 140 bytes) then
 // diverges by one extra `mov`. The original keeps EDX as the *a4 accumulator
 // pointer through the first loop and loads table1's marching pointer fresh
 // into ECX; every source form tried here gets those two roles swapped

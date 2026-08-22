@@ -95,7 +95,7 @@ class CheckBox {
   // `: virtual GraphicWin, virtual Dialog` declaration; this constructor
   // takes an explicit flag instead and mirrors what the image's own guard
   // does with it.
-  // RULED-OUT (re-checked 2026-08-22): declaring the real
+  // TRIED (re-checked 2026-08-22): declaring the real
   // `: public virtual GraphicWin, public virtual Dialog` and letting VC6
   // emit the vbtable and the base construction. It cannot produce this
   // symbol - a constructor on a class with a GENUINE virtual base compiles

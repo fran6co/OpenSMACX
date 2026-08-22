@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0057DF30 sub_57df30 0x0057DF30-0x0057DFB2 FILE
-// RULED-OUT: a separate pointer variable for the RMW counter slot ('mov' then a stray 'lea' to materialise the address) - index into the extern array directly (`table[idx]`) instead, which drops the divergence from #10 to #22. MISMATCH remains open.
+// TRIED: a separate pointer variable for the RMW counter slot ('mov' then a stray 'lea' to materialise the address) - index into the extern array directly (`table[idx]`) instead, which drops the divergence from #10 to #22. MISMATCH remains open.
 // working copy - scaffold materialised by --work
 // size      130 bytes
 // prototype 

@@ -1,6 +1,6 @@
 // ORIGINAL: 0x005D2901 sub_5d2901 0x005D2901-0x005D29E1 FILE
-// RULED-OUT: extern int name[] for the six indexed lookup tables (same tables as the sibling sub_5d2834 at 0x005D2834), not the given `static int *const` - these are used as `table[idx]`, an indexed base. Signature widened to the IDA-guessed 4 params (int*,int*,int*,int) since the given head has none.
-// RULED-OUT: could not reproduce the 6-register push prologue (push ebx,ecx,edx,esi,edi,ebp - ecx/edx pushed as scratch stack slots, not preservation); same wall the sibling function at 0x005D2834 hit. Hoisting the shared table_7f2c+table_772c subexpression into named locals `a`/`b` (to force it live across both blend computations, matching the original's edx reuse) made similarity slightly worse (0.61 -> 0.60), not better.
+// TRIED: extern int name[] for the six indexed lookup tables (same tables as the sibling sub_5d2834 at 0x005D2834), not the given `static int *const` - these are used as `table[idx]`, an indexed base. Signature widened to the IDA-guessed 4 params (int*,int*,int*,int) since the given head has none.
+// TRIED: could not reproduce the 6-register push prologue (push ebx,ecx,edx,esi,edi,ebp - ecx/edx pushed as scratch stack slots, not preservation); same wall the sibling function at 0x005D2834 hit. Hoisting the shared table_7f2c+table_772c subexpression into named locals `a`/`b` (to force it live across both blend computations, matching the original's edx reuse) made similarity slightly worse (0.61 -> 0.60), not better.
 // working copy - scaffold materialised by --work
 // size      224 bytes
 // prototype 

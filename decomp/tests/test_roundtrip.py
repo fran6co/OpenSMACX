@@ -108,8 +108,18 @@ def test_byte_exact():
 
 LESSON_TEXT = """// ORIGINAL: 0x00405000 ?f@@YAXXZ 0x00405000-0x00405040
 // LEVER: fp-1234 the cast that landed it
-// RULED-OUT: plain ret 4 leaves ECX live
+// TRIED: plain ret 4 leaves ECX live
 // UNRECOVERABLE: reads three registers live-in
+// DEFERRED: needs the vtable order first
+void __cdecl h() {
+}
+"""
+
+
+LESSON_CANONICAL = """// ORIGINAL: 0x00405000 ?f@@YAXXZ 0x00405000-0x00405040
+// LEVER: fp-1234 the cast that landed it
+// TRIED: plain ret 4 leaves ECX live
+// TRIED: reads three registers live-in
 // DEFERRED: needs the vtable order first
 void __cdecl h() {
 }
@@ -119,15 +129,30 @@ void __cdecl h() {
 def test_lessons():
     records, reread = loop(LESSON_TEXT)
     assert records[0].levers == (("fp-1234", "the cast that landed it"),)
-    assert records[0].ruled_out == ("plain ret 4 leaves ECX live",)
-    assert records[0].unrecoverable == ("reads three registers live-in",)
+    # UNRECOVERABLE READS AS A TRIED NOW. It was the strongest of the three
+    # refusals - it sat on a placeholder and asserted no C body could ever
+    # express the function - and this tree no longer says that about anything.
+    # The word is still matched (a reader that stops matching goes blind, it
+    # does not fail) and the prose survives verbatim; only the verdict is gone,
+    # so both notes arrive in `ruled_out`, in the order they were written.
+    assert records[0].ruled_out == ("plain ret 4 leaves ECX live",
+                                    "reads three registers live-in")
+    assert records[0].unrecoverable == ()
     assert records[0].deferred == ("needs the vtable order first",)
     assert keys(records) == keys(reread)
-    assert write(LESSON_TEXT, records) == LESSON_TEXT
+    # THE FIXTURE KEEPS THE OLD WORD ON PURPOSE - it is the back-compatibility
+    # case - so the write is NOT idempotent on it: the canonical form spells
+    # both attempts `TRIED`. That rewrite is the migration, and it is exactly
+    # what a rewrite of any file still carrying `UNRECOVERABLE` will do.
+    assert write(LESSON_TEXT, records) == LESSON_CANONICAL
+    # Canonical is a fixed point: writing the canonical text again changes
+    # nothing.
+    assert write(LESSON_CANONICAL, read_text(LESSON_CANONICAL, FIXTURE)) == \
+        LESSON_CANONICAL
 
 
 WRAPPED_LESSON = """// ORIGINAL: 0x00405100 ?g@@YAXXZ 0x00405100-0x00405140
-// RULED-OUT: plain ret 4 leaves ECX live,
+// TRIED: plain ret 4 leaves ECX live,
 //            so the stub must zero it first
 void __cdecl h() {
 }
@@ -182,7 +207,7 @@ void __cdecl a() {
 }
 
 // ORIGINAL: 0x00407010
-// RULED-OUT: the spelling that failed B
+// TRIED: the spelling that failed B
 void __cdecl b() {
 }
 """
@@ -280,7 +305,7 @@ def test_write_file_uses_the_paths_records_carry(tmp_path):
     path.write_text(WRAPPED_LESSON)
     write_file(read_file(path))
     # The wrapped lesson is canonicalised on disk, one line.
-    assert ("// RULED-OUT: plain ret 4 leaves ECX live, "
+    assert ("// TRIED: plain ret 4 leaves ECX live, "
             "so the stub must zero it first") in path.read_text()
 
 

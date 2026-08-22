@@ -233,7 +233,7 @@ void __fastcall sub_633010(void *self) {
 }
 
 // ?clear@MapWin@@QAEXH@Z at 0x00462870 - not this batch's address (still
-// RULED-OUT at 97.7% in `src/unrecovered/00462870.cpp`), but MapWin's own
+// TRIED at 97.7% in `src/unrecovered/00462870.cpp`), but MapWin's own
 // destructor and PlanWin's/Console's each reach it directly.
 void MapWin::clear(int a1) {
     typedef void(__fastcall *pending)(MapWin *, void *, int);

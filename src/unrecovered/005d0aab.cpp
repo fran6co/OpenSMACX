@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005D0AAB sub_5d0aab 0x005D0AAB-0x005D0D82 FILE
-// RULED-OUT: no prologue/epilogue in the original (falls into 0x5D0D82, no ret) - edi/esi/ebp are register-passed by one caller sharing its frame; no standalone C parameter list can receive that, so byte-exactness is not reachable here. Modelled as static globals a companion routine would set instead.
+// TRIED: no prologue/epilogue in the original (falls into 0x5D0D82, no ret) - edi/esi/ebp are register-passed by one caller sharing its frame; no standalone C parameter list can receive that, so byte-exactness is not reachable here. Modelled as static globals a companion routine would set instead.
 // working copy - scaffold materialised by --work
 // size      727 bytes
 // prototype 

@@ -1,6 +1,6 @@
 // ORIGINAL: 0x00614E50 ??0EditBox@@QAE@XZ 0x00614E50-0x00614F2C;0x00663130-0x00663142 FILE
-// RULED-OUT: the scaffold's own opaque `EditBox` (padded only to the highest
-// RULED-OUT: expected /GX to auto-generate the original's SEH prologue
+// TRIED: the scaffold's own opaque `EditBox` (padded only to the highest
+// TRIED: expected /GX to auto-generate the original's SEH prologue
 // size      238 bytes
 // prototype void (__thiscall ??0EditBox@@QAE@XZ)(EditBox* this)
 // callers   5   call targets   2

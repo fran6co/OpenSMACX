@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0040B140 ?garrison_click@BaseWin@@QAEXHHHH@Z 0x0040B140-0x0040BFE3;0x00651A78-0x00651A8D FILE
-// RULED-OUT: literal goto-per-branch transcription of the repeated viewport/recenter check (4 occurrences) simplified to one shared boolean form each time, not the exact per-occurrence instruction sharing (e.g. the 0x40b581/0x40bf94 cross-jump).
+// TRIED: literal goto-per-branch transcription of the repeated viewport/recenter check (4 occurrences) simplified to one shared boolean form each time, not the exact per-occurrence instruction sharing (e.g. the 0x40b581/0x40bf94 cross-jump).
 // working copy - scaffold materialised by --work
 // size      3768 bytes
 // prototype void (__thiscall ?garrison_click@BaseWin@@QAEXHHHH@Z)(BaseWin* this, int vehID, int, int, int)

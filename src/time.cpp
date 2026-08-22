@@ -102,7 +102,7 @@ Purpose: Start an instance of the class with a single parameter callback.
 //        stop(), is the only call it keeps), rather than calling
 //        0x00616260. MNEMONIC_ONLY, 65/69, 1.000 similar under /c /O2 /Gy
 //        /GR- /GX - `semantic` REFUSES on a displacement, not a register.
-// RULED-OUT: store_order.py shows the image storing cb_param1_ (offset
+// TRIED: store_order.py shows the image storing cb_param1_ (offset
 //        0x14) BEFORE oneshot_state_/tick_posted_/unk_2_/callback1_ here -
 //        a DIFFERENT order than the declaration order that keeps init()
 //        itself BYTE_EXACT. Reordering this copy's assignments to match
@@ -207,7 +207,7 @@ Purpose: Start a pulse instance of the class with a single parameter callback.
 // indirect  0x006164EE 0x006164FC 0x00616558 0x0061656D
 // LEVER: WRONG CALLEE - same fix as the `start` sibling immediately above:
 //        init() hand-inlined here. MNEMONIC_ONLY, 63/69, 1.000 similar.
-//        See that note for the store-order RULED-OUT (measured identically
+//        See that note for the store-order TRIED (measured identically
 //        here).
 Return Value: Zero on success, non-zero on error
 Status: Complete

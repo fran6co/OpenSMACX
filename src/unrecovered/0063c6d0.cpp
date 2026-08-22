@@ -1,6 +1,6 @@
 // ORIGINAL: 0x0063C6D0 sub_63c6d0 0x0063C6D0-0x0063C7B5 FILE BYTE_EXACT
 // symbol    ?connect@T63C6D0@@QAEHXZ
-// LEVER: ecx/cdecl the given `extern "C" int __cdecl sub_63c6d0()` head was wrong - every field access reads `[ecx+N]`/`[esi+N]` with `esi=ecx` and no stack argument, so the receiver is `this`. Changing it to a `__thiscall` member of a local helper class is part of what made this match, so it is a lever and not a ruled-out spelling.
+// LEVER: ecx/cdecl the given `extern "C" int __cdecl sub_63c6d0()` head was wrong - every field access reads `[ecx+N]`/`[esi+N]` with `esi=ecx` and no stack argument, so the receiver is `this`. Changing it to a `__thiscall` member of a local helper class is part of what made this match, so it is a lever and not a tried spelling.
 // LEVER: reversing a `>=` comparison's operand order (`iVar2 <= *w` instead of `*w >= iVar2`) flipped `jl` to the original's `jg`; and giving the "abs bound exceeded" early-exit its own flag (skipping the trailing `field36bc = iVar1` store) instead of relying on it falling out of a plain if/else, matched the original NOT sharing that store between the negative- and positive-`iVar1` branches - it stores separately in each.
 // working copy - scaffold materialised by --work
 // size      229 bytes
@@ -61,7 +61,7 @@ static int *const g_00698c50 = (int *)0x00698C50;
 static int *const g_00698c60 = (int *)0x00698C60;
 static int *const g_009bb5e8 = (int *)0x009BB5E8;
 #pragma function(abs)
-// `this` is the receiver (see RULED-OUT above); no catalogued name exists
+// `this` is the receiver (see TRIED above); no catalogued name exists
 // for this address, so the class name and method name are ours to choose.
 class T63C6D0 {
 public:

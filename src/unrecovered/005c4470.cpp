@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005C4470 ?world_rainfall@@YAXXZ 0x005C4470-0x005C4FC1 FILE
-// RULED-OUT: no Ghidra hypothesis was available for this address, so this is a from-scratch disassembly transcription (three map passes: windward-hint marking, 2-bit rainfall-class finalization with base_find caching, moderate-rain propagation). Pass 2's middle heuristic (unk_1 bit cascade feeding the 0-3 class value) is a best-effort condensation of ~80 instructions, not a literal register replay - the surrounding loop bounds, byte-merge write and base_find call sites are transcribed directly.
+// TRIED: no Ghidra hypothesis was available for this address, so this is a from-scratch disassembly transcription (three map passes: windward-hint marking, 2-bit rainfall-class finalization with base_find caching, moderate-rain propagation). Pass 2's middle heuristic (unk_1 bit cascade feeding the 0-3 class value) is a best-effort condensation of ~80 instructions, not a literal register replay - the surrounding loop bounds, byte-merge write and base_find call sites are transcribed directly.
 // working copy - scaffold materialised by --work
 // size      2897 bytes
 // prototype 

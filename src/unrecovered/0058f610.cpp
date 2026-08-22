@@ -1,6 +1,6 @@
 // ORIGINAL: 0x0058F610 ?say_special@@YAXPADPADH@Z 0x0058F610-0x0058F6F6 FILE
-// RULED-OUT: `extern int g_946a50_table[]` (indexed by `a3 * 0x167`, a genuine table lookup) instead of the given `static int *const` pointer; string-literal globals are passed as the ADDRESS itself (`reinterpret_cast<char*>(g_ADDR)`, not `*g_ADDR`) since they are `char*` arguments to strcat, not dereferenced ints; the 0/1/2 dispatch is a plain if/else-if chain, each branch with its own strcat call (matching ghidra's `goto`-past-the-shared-call shape semantically, though not byte-for-byte).
-// RULED-OUT: original computes `a3*0x167` via a lea/lea/shl/sub strength-reduction chain (avoiding imul); both `table[a3*0x167]` and a separately-named `idx = a3*0x167` local compiled to an `imul`, no difference between the two forms.
+// TRIED: `extern int g_946a50_table[]` (indexed by `a3 * 0x167`, a genuine table lookup) instead of the given `static int *const` pointer; string-literal globals are passed as the ADDRESS itself (`reinterpret_cast<char*>(g_ADDR)`, not `*g_ADDR`) since they are `char*` arguments to strcat, not dereferenced ints; the 0/1/2 dispatch is a plain if/else-if chain, each branch with its own strcat call (matching ghidra's `goto`-past-the-shared-call shape semantically, though not byte-for-byte).
+// TRIED: original computes `a3*0x167` via a lea/lea/shl/sub strength-reduction chain (avoiding imul); both `table[a3*0x167]` and a separately-named `idx = a3*0x167` local compiled to an `imul`, no difference between the two forms.
 // working copy - scaffold materialised by --work
 // size      230 bytes
 // prototype 

@@ -34,7 +34,7 @@
 //      expression is MAKEWORD(x, y); the redundant-looking `and ecx,0xffff`
 //      is that macro's `(WORD)` cast surviving into the output.
 //
-// RULED-OUT, all re-measured rather than inherited: signed against unsigned
+// TRIED, all re-measured rather than inherited: signed against unsigned
 // x and y (no effect); thirteen pack spellings, of which only the one below
 // reaches #64 and the same cast placed outside the OR falls back to #16;
 // declaring the locals at the top of the function; sharing one set of locals

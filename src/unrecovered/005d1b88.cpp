@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005D1B88 sub_5d1b88 0x005D1B88-0x005D2037 FILE
-// RULED-OUT: no conventional signature can match - the original has NO prologue/epilogue and reads esi/edi/ebp as inputs set up by the CALLER (Ghidra: unaff_ESI/unaff_EDI/unaff_EBP), which is not a calling convention VC6 can target without __asm/naked (barred). Landed as a 3-pointer __cdecl function with an 8-iteration loop reproducing the exact table math (16 unrolled blocks in the original, all structurally identical) so the algorithm is faithfully documented even though the prologue can never match.
+// TRIED: no conventional signature can match - the original has NO prologue/epilogue and reads esi/edi/ebp as inputs set up by the CALLER (Ghidra: unaff_ESI/unaff_EDI/unaff_EBP), which is not a calling convention VC6 can target without __asm/naked (barred). Landed as a 3-pointer __cdecl function with an 8-iteration loop reproducing the exact table math (16 unrolled blocks in the original, all structurally identical) so the algorithm is faithfully documented even though the prologue can never match.
 // working copy - scaffold materialised by --work
 // size      1199 bytes
 // prototype 

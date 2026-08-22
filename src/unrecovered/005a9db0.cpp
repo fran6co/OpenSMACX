@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005A9DB0 ?yearmotize@@YAXPAD@Z 0x005A9DB0-0x005A9EB0 FILE
-// RULED-OUT: scaffold's own `isdigit()`/`_itoa()` (empty-parens fallback declarations) - redeclared under new names `my_isdigit`/ `my_itoa` with the real signatures instead (relocation is masked regardless of the symbol name, matching the existing `my_itoa` idiom in src/recovered/units/0042abc0.cpp).
+// TRIED: scaffold's own `isdigit()`/`_itoa()` (empty-parens fallback declarations) - redeclared under new names `my_isdigit`/ `my_itoa` with the real signatures instead (relocation is masked regardless of the symbol name, matching the existing `my_itoa` idiom in src/recovered/units/0042abc0.cpp).
 // size      256 bytes
 // prototype
 // callers   1   call targets   5

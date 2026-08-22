@@ -17,7 +17,7 @@
 // function's - so this stays a self-contained unit. Tail call passes a1
 // as-is (the forwarded Buffer*, NOT `this`) - the stack slot is read fresh,
 // like the named siblings, not derived from the receiver.
-// The RULED-OUT that stood here was RIGHT and is now spent: it recorded
+// The TRIED that stood here was RIGHT and is now spent: it recorded
 // that this body matched all 75 mnemonics and could not score BYTE_EXACT
 // because the catalogue's span ended two bytes inside the closing
 // `ret 0x14`. Nine rows were truncated that way; the span is corrected and

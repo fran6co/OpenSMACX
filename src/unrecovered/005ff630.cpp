@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005FF630 ?get_nearest_palette_index@Palette@@QAEHPAUHSV@@0H@Z 0x005FF630-0x005FF92D FILE
-// RULED-OUT: MISMATCH #5 push/mov - and/sub-esp frame differs because the helper hsv_sq_distance() is a separate function call rather than inlined FPU code sharing one scratch stack slot per the original's single sub-esp-8 staging area reused across both sin/cos call sites in each loop body.
+// TRIED: MISMATCH #5 push/mov - and/sub-esp frame differs because the helper hsv_sq_distance() is a separate function call rather than inlined FPU code sharing one scratch stack slot per the original's single sub-esp-8 staging area reused across both sin/cos call sites in each loop body.
 // working copy - scaffold materialised by --work
 // size      765 bytes
 // prototype int (__thiscall ?get_nearest_palette_index@Palette@@QAEHPAUHSV@@0H@Z)(Palette* this, HSV*, HSV*, int)

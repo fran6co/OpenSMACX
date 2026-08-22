@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00624670 Texture::draw2 0x00624670-0x00624C6D FILE
-// RULED-OUT: __stdcall free function (receiver is really `this` via ECX, recast as Texture::draw2); exact EdgeScan field indices; the lit/ textured fill sub-branch borrows the real ESP as a second fixed-point counter (push ebp; mov [0x9bb4ac],esp; mov esp,ecx; ...; add sp,dx; sub esp,0x10000; jns ...; mov esp,[0x9bb4ac]) - no C construct can spell operating on the live stack pointer as data.
+// TRIED: __stdcall free function (receiver is really `this` via ECX, recast as Texture::draw2); exact EdgeScan field indices; the lit/ textured fill sub-branch borrows the real ESP as a second fixed-point counter (push ebp; mov [0x9bb4ac],esp; mov esp,ecx; ...; add sp,dx; sub esp,0x10000; jns ...; mov esp,[0x9bb4ac]) - no C construct can spell operating on the live stack pointer as data.
 // working copy - scaffold materialised by --work
 // size      1533 bytes
 // prototype 

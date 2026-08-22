@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00637910 ?decode_frame@Video@@QAEHH@Z 0x00637910-0x00637C26 FILE
-// RULED-OUT: MISMATCH #42 'mov' vs 'and' - transcribed the Ghidra decompile directly, sub_63e7f0/sub_63e820 redeclared to take the receiver (self+0xA5C) as an explicit int since a free-function thiscall can't be spelled without a helper class; matches structurally through the first ~40 instructions before diverging, not chased further.
+// TRIED: MISMATCH #42 'mov' vs 'and' - transcribed the Ghidra decompile directly, sub_63e7f0/sub_63e820 redeclared to take the receiver (self+0xA5C) as an explicit int since a free-function thiscall can't be spelled without a helper class; matches structurally through the first ~40 instructions before diverging, not chased further.
 // working copy - scaffold materialised by --work
 // size      790 bytes
 // prototype int (__thiscall ?decode_frame@Video@@QAEHH@Z)(Video* this, int)

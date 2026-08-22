@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005F9590 ?mouse_move@PullDown@@QAEXHH@Z 0x005F9590-0x005F9631 FILE
-// RULED-OUT: MISMATCH #0 mov/push, prologue register allocation differs
+// TRIED: MISMATCH #0 mov/push, prologue register allocation differs
 // working copy - scaffold materialised by --work
 // size      161 bytes
 // prototype void (__thiscall ?mouse_move@PullDown@@QAEXHH@Z)(PullDown* this, int, int)

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005EF950 sub_5ef950 0x005EF950-0x005EFB99 FILE
-// RULED-OUT: __stdcall(int a1..a8) reading ecx nowhere - the brief's IDA hypothesis; disasm dereferences the entering ecx at [ecx+0x184] (Win::field_184_) and later passes it unchanged as the Win* argument to Buffer::copy_to_window, so it is really a __thiscall Win member with 7 used stack ints + 1 unused pad. Palette::set_active_window is caller-cleaned (add esp,4 after the call) so it is invoked as a free __cdecl function pointer, not through the declared (thiscall-shaped) member.
+// TRIED: __stdcall(int a1..a8) reading ecx nowhere - the brief's IDA hypothesis; disasm dereferences the entering ecx at [ecx+0x184] (Win::field_184_) and later passes it unchanged as the Win* argument to Buffer::copy_to_window, so it is really a __thiscall Win member with 7 used stack ints + 1 unused pad. Palette::set_active_window is caller-cleaned (add esp,4 after the call) so it is invoked as a free __cdecl function pointer, not through the declared (thiscall-shaped) member.
 // working copy - scaffold materialised by --work
 // size      585 bytes
 // prototype 

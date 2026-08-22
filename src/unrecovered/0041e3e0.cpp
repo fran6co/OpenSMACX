@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0041E3E0 ?on_iface_mouse_leave@BaseWin@@QAEXHH@Z 0x0041E3E0-0x0041E4C0 FILE
-// RULED-OUT: two `char*` bases (self, self-0xa14) computed via arithmetic instead of matching the single-esi-reuse register shape
+// TRIED: two `char*` bases (self, self-0xa14) computed via arithmetic instead of matching the single-esi-reuse register shape
 // working copy - scaffold materialised by --work
 // size      224 bytes
 // prototype void (__thiscall ?on_iface_mouse_leave@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)

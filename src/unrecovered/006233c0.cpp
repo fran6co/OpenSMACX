@@ -1,5 +1,5 @@
 // ORIGINAL: 0x006233C0 ?draw@Texture@@QAEXPAUBuffer@@PAUVert@@PAHHPAUVert@@H@Z 0x006233C0-0x006239AB FILE
-// RULED-OUT: exact EdgeScan field indices for the per-scanline stepper; the textured/lit fill sub-branch borrows the real ESP as a second fixed-point counter (push ebp; mov [0x9bb4ac],esp; mov esp,ecx; ...; add sp,dx; sub esp,0x10000; jns ...; mov esp,[0x9bb4ac]) - no C construct can spell operating on the live stack pointer as data, so that inner loop is approximated with a plain byte copy instead.
+// TRIED: exact EdgeScan field indices for the per-scanline stepper; the textured/lit fill sub-branch borrows the real ESP as a second fixed-point counter (push ebp; mov [0x9bb4ac],esp; mov esp,ecx; ...; add sp,dx; sub esp,0x10000; jns ...; mov esp,[0x9bb4ac]) - no C construct can spell operating on the live stack pointer as data, so that inner loop is approximated with a plain byte copy instead.
 // working copy - scaffold materialised by --work
 // size      1515 bytes
 // prototype void (__thiscall ?draw@Texture@@QAEXPAUBuffer@@PAUVert@@PAHHPAUVert@@H@Z)(Texture* this, Buffer*, Vert*, int*, int, Vert*, int)

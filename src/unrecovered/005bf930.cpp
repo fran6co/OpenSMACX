@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005BF930 ?X_pops@@YAHPADPBDHPADHPAUSprite@@HHP6AHXZ@Z 0x005BF930-0x005BFAA2 FILE
-// RULED-OUT: precomputing the magic-string deref into a named local before the strcmp calls (#2 mismatch, 'mov' vs 'push'); same codegen.
+// TRIED: precomputing the magic-string deref into a named local before the strcmp calls (#2 mismatch, 'mov' vs 'push'); same codegen.
 // size      370 bytes
 // prototype int (__cdecl ?X_pops@@YAHPADPBDHPADHPAUSprite@@HHP6AHXZ@Z)(int8*, int8*, int length, int8*, int, Sprite*, int, int, int (__cdecl *)())
 // callers   17   call targets   4

@@ -1,6 +1,6 @@
 // ORIGINAL: 0x0062A120 ?UNK1@Flic@@QAEHHH@Z 0x0062A120-0x0062A202 FILE
-// RULED-OUT: `fseek` (scaffold declares it nullary) called via a differently named extern `fseek_real` with the real 3-arg signature - the call target address is masked from the comparison, so the rename costs nothing. The flags read/OR/store keeps the POST-or value in one local and reuses it for both the bit-0 test and the `& ~2` clear (matching the original's edx reuse) rather than re-deriving from the pre-or value the way ghidra's uVar1 does - 0.61 -> 0.92 mnemonic similarity.
-// RULED-OUT: could not reproduce one extra `mov eax,edx`/`mov ecx,edx` register-copy pair the original has ahead of `test al,1` even after removing all other redundant re-reads.
+// TRIED: `fseek` (scaffold declares it nullary) called via a differently named extern `fseek_real` with the real 3-arg signature - the call target address is masked from the comparison, so the rename costs nothing. The flags read/OR/store keeps the POST-or value in one local and reuses it for both the bit-0 test and the `& ~2` clear (matching the original's edx reuse) rather than re-deriving from the pre-or value the way ghidra's uVar1 does - 0.61 -> 0.92 mnemonic similarity.
+// TRIED: could not reproduce one extra `mov eax,edx`/`mov ecx,edx` register-copy pair the original has ahead of `test al,1` even after removing all other redundant re-reads.
 // working copy - scaffold materialised by --work
 // size      226 bytes
 // prototype int (__thiscall ?UNK1@Flic@@QAEHHH@Z)(Flic* this, int, int)

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004BF4B0 ?play@UV2Player@@QAEHHH@Z 0x004BF4B0-0x004BF6D1 FILE
-// RULED-OUT: plain member access vs a `UV2Player *self = this;` local before the first field_10C_ read - both leave the prologue's `this` spill (`mov [ebp-4],edi`) placed differently than the original (MISMATCH #4 'push' vs 'mov', 84% mnemonic similarity); not chased further. The 21-slot COM vtable dispatch (QueryInterface/ Release/SetCooperativeLevel/SetDisplayMode retry chain/ CreateSurface/GetAttachedSurface/CreateClipper/Blt) and the DDSURFACEDESC/DDBLTFX field offsets are a faithful transcription off the raw disassembly.
+// TRIED: plain member access vs a `UV2Player *self = this;` local before the first field_10C_ read - both leave the prologue's `this` spill (`mov [ebp-4],edi`) placed differently than the original (MISMATCH #4 'push' vs 'mov', 84% mnemonic similarity); not chased further. The 21-slot COM vtable dispatch (QueryInterface/ Release/SetCooperativeLevel/SetDisplayMode retry chain/ CreateSurface/GetAttachedSurface/CreateClipper/Blt) and the DDSURFACEDESC/DDBLTFX field offsets are a faithful transcription off the raw disassembly.
 // working copy - scaffold materialised by --work
 // size      545 bytes
 // prototype int (__thiscall ?play@UV2Player@@QAEHHH@Z)(UV2Player* this, int, int)

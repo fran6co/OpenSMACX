@@ -1,6 +1,6 @@
 // ORIGINAL: 0x004E31E0 ?setup@AlphaNet@@QAEHH@Z 0x004E31E0-0x004E32BA FILE
-// RULED-OUT: outer `if (a1 == 0) { big-init-block } else { field_D8_ |= 1 }` (ghidra's polarity, not the naive `!= 0`) plus a duplicated success-tail (field_48_/4C_ writes + return 0) inside the `if (rc >= 0)` arm rather than one shared tail reached via a unified `if (r2 == 0) return 1;` after the join/create if-else - 0.73 -> 0.98 mnemonic similarity. AlphaNet reaches Net::close()/ init() through reinterpret_cast<Net*>(this) (a zero-offset base).
-// RULED-OUT: one remaining `test/je` original has on the join() path only (create() path just has `test/jne`) that a single shared `if (r2 != 0)` after the join/create if-else does not reproduce; not chased further.
+// TRIED: outer `if (a1 == 0) { big-init-block } else { field_D8_ |= 1 }` (ghidra's polarity, not the naive `!= 0`) plus a duplicated success-tail (field_48_/4C_ writes + return 0) inside the `if (rc >= 0)` arm rather than one shared tail reached via a unified `if (r2 == 0) return 1;` after the join/create if-else - 0.73 -> 0.98 mnemonic similarity. AlphaNet reaches Net::close()/ init() through reinterpret_cast<Net*>(this) (a zero-offset base).
+// TRIED: one remaining `test/je` original has on the join() path only (create() path just has `test/jne`) that a single shared `if (r2 != 0)` after the join/create if-else does not reproduce; not chased further.
 // working copy - scaffold materialised by --work
 // size      218 bytes
 // prototype int (__thiscall ?setup@AlphaNet@@QAEHH@Z)(AlphaNet* this, int)

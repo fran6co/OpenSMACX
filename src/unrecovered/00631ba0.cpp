@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00631BA0 sub_631ba0 0x00631BA0-0x00631EDB FILE
-// RULED-OUT: a single flat switch over the 38 DPERR_* case values with a `default: goto tail;` matches through instr #16 (the top-level binary-search split) but the compiler's chosen jump-table boundaries at #17 diverge from the original's nested-if split
+// TRIED: a single flat switch over the 38 DPERR_* case values with a `default: goto tail;` matches through instr #16 (the top-level binary-search split) but the compiler's chosen jump-table boundaries at #17 diverge from the original's nested-if split
 // working copy - scaffold materialised by --work
 // size      827 bytes
 // prototype 

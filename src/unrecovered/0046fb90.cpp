@@ -697,7 +697,7 @@ class MapWin { public:
     void clear_alt(int, int, int);
 };
 void MapWin::clear_alt(int a1, int a2, int a3) {
-    // RULED-OUT: 153/153 bytes (edit distance 1 pair, same total size).
+    // TRIED: 153/153 bytes (edit distance 1 pair, same total size).
     // Original writes the -1 fill via `or edx,0xffffffff` into a register
     // it already holds, then stores that register (2 ops); every source
     // form tried here - a direct `*rec = -1`, a named `fill` temp shared

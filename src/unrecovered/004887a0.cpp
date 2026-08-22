@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004887A0 ?init@PickWin@@QAEXP6AXH@ZHH@Z 0x004887A0-0x0048965F;0x00657F70-0x00657F85 FILE
-// RULED-OUT: nothing exotic here (no x87, no computed jumps) - transcribed mechanically from the Ghidra pseudocode (which is accurate for this straight-line function) using raw `self+offset` field access and real member calls resolved against pickwin.h field names where they matched. sim 0.65-0.71 across flag sets.
+// TRIED: nothing exotic here (no x87, no computed jumps) - transcribed mechanically from the Ghidra pseudocode (which is accurate for this straight-line function) using raw `self+offset` field access and real member calls resolved against pickwin.h field names where they matched. sim 0.65-0.71 across flag sets.
 // working copy - scaffold materialised by --work
 // size      3796 bytes
 // prototype void (__thiscall ?init@PickWin@@QAEXP6AXH@ZHH@Z)(PickWin* this, void (__cdecl *)(int this), int, int)

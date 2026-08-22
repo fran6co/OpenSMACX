@@ -160,7 +160,7 @@ Purpose: Release the loaded wave. The wrapped device, if there is one, is asked
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
 // indirect  0x004C6EAF 0x004C6EC6
-// RULED-OUT: reordering `flags_40_ &= ...` ahead of the trailing vtable
+// TRIED: reordering `flags_40_ &= ...` ahead of the trailing vtable
 //   dispatch, and binding `this` into a named local first, both tried against
 //   the sole remaining divergence (`mov edx,[esi]`/`call [edx+0x80]` in the
 //   image vs this tree's `eax` for the same pointer) - neither changes the
@@ -205,7 +205,7 @@ Purpose: Set the playback pitch, clamped to the range the engine accepts
          (-1200 to 1200). The clamped value is stored at 0x58 and handed to the
          wrapped device, if there is one, through its vtable slot 0x98.
 // ORIGINAL: 0x004C6EE0 ?set_pitch@Wave@@QAEXH@Z 0x004C6EE0-0x004C6F19
-// RULED-OUT: 17/20 plateau, one instruction short of BYTE_EXACT - the
+// TRIED: 17/20 plateau, one instruction short of BYTE_EXACT - the
 //            image's shared tail (both the `device_ == 0` skip and the
 //            post-call join) does `xor eax, eax` before `pop ebp; ret 4`,
 //            which this `void`-returning body never emits. Tried: two
@@ -252,7 +252,7 @@ Purpose: Load a wave. The object's own vtable slot 0x88 does the loading; unless
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
 // indirect  0x004C6DC3 0x004C6DDA
-// RULED-OUT: the sole remaining divergence at best flags (/O2 /Gy /GR- /Oy-
+// TRIED: the sole remaining divergence at best flags (/O2 /Gy /GR- /Oy-
 //   /GX, 24/26, 1.000 similar, MNEMONIC_ONLY) is `mov edx,[esi]`/
 //   `call [edx+0x8c]` in the image against this tree's `eax` for the same
 //   pointer - the same register-choice gap `Wave::unload` has on its own
@@ -324,7 +324,7 @@ Purpose: Report whether the wave is still sounding. A wrapped device answers
 // flags     sp_ready;purged_ok
 // calls     (none)
 // indirect  0x004C6B2B 0x004C6B4A
-// RULED-OUT: inverting the guard so the CLOCK path is the fall-through and
+// TRIED: inverting the guard so the CLOCK path is the fall-through and
 //   the device dispatch is the merged tail - which is the shape the image's
 //   forward `jne` suggests - scores WORSE, 2 of 30 against the current 4 of
 //   30, and compiles 28 instructions against the image's 30. Spelling the
@@ -592,7 +592,7 @@ Return Value: the device's answer, or 0 when no device is wrapped (the
 Status: Complete
 */
 int Wave::is_3d() {
-    // RULED-OUT: static_cast<unsigned char>(0), a local unsigned char, and a
+    // TRIED: static_cast<unsigned char>(0), a local unsigned char, and a
     // ternary all still compile the no-device path as `xor eax, eax` where
     // the image narrows to `xor al, al`; MNEMONIC_ONLY plateau, 6/7 agreeing.
     typedef int(__fastcall *device_fn)(void *);
@@ -854,7 +854,7 @@ Purpose: Set the wave's volume. The low seven bits of the argument are stored
          double precision truncated back to an integer. The wrapped device,
          if any, hears the result through its vtable slot 0x40.
 // ORIGINAL: 0x004C7130 ?set_volume@Wave@@QAEXH@Z 0x004C7130-0x004C718D
-// RULED-OUT: 26/33 MISMATCH, instruction COUNT now matches the image (33/33)
+// TRIED: 26/33 MISMATCH, instruction COUNT now matches the image (33/33)
 //   but the `fild dword ptr [ebp+8]` + `fmul qword ptr [const]` pair that
 //   materialises `scaled` still schedules LATE (right before the final
 //   multiply) where the image schedules it EARLY (right after the group-slot
@@ -951,7 +951,7 @@ Purpose: Start the wave. While it holds a device group slot, a disabled group
          timeGetTime import, runs its own vtable slot 0x80, and forgets the
          device.
 // ORIGINAL: 0x004C6920 ?play@Wave@@QAEHXZ 0x004C6920-0x004C69AD SEMANTIC
-// RULED-OUT: 52/54 MNEMONIC_ONLY; sole divergence is the vtable-pointer
+// TRIED: 52/54 MNEMONIC_ONLY; sole divergence is the vtable-pointer
 //   register (edx vs eax) at the FIRST `vtable_slot<device_start_fn>(device_,
 //   0x1C)(device_)` call site only - the second, identical call already
 //   matches. Tried: a named `device_start_fn fn = vtable_slot<...>(...)`
@@ -1023,7 +1023,7 @@ Purpose: Load the wave from its remembered filename. With no wrapped device
 //        `fname` null check - matches the image's `xor edi, edi` right after
 //        the prologue's `push edi`, which forces edi to be pushed/popped
 //        uniformly across every exit path. 7/88 -> 9/88 MISMATCH.
-// RULED-OUT: declaring `attribs` after the fname check but before the
+// TRIED: declaring `attribs` after the fname check but before the
 //            device check (partway) - identical to the original placement,
 //            no change (7/88); the image's shared tail between "no fname"
 //            and "load failed" needs edi live from function ENTRY, not just
@@ -1240,7 +1240,7 @@ Purpose: Load the wave from a caller-supplied filename. The guarded creation
 //        after) - matches the image's `xor ebx, ebx` at function entry,
 //        which is reused as the attribs accumulator only after the
 //        create/guard logic. Moved 22/79 to 57/79 MISMATCH.
-// RULED-OUT: hoisting the 0xC4 length read into a named local and deferring
+// TRIED: hoisting the 0xC4 length read into a named local and deferring
 //            the `ms_length_ =` store past the volume dispatch, to match the
 //            image's `mov edx,[esi+4]; mov [esi+0x60],eax` order - no effect
 //            on codegen (still 57/79), so reverted; that ordering looks like
@@ -1333,7 +1333,7 @@ Purpose: Build the wave. The original constructs in the same three vtable
          regions, a 1000ms default at 0x38, flag dword 4, Sound::set_type
          run with type 1, unit reverb mix, and the out-of-range group slot.
 // ORIGINAL: 0x004C66E0 ??0Wave@@QAE@XZ 0x004C66E0-0x004C67B6;0x004C8450-0x004C8457;0x00659EF4-0x00659F06
-// RULED-OUT: 3/73 - the image carries an SEH unwind frame here (`push -1 /
+// TRIED: 3/73 - the image carries an SEH unwind frame here (`push -1 /
 //            push 0x659efc / mov eax,fs:[0] / ...`), the same symptom as
 //            FlatButton::FlatButton() (flatbutton.cpp) and
 //            GraphicWin::~GraphicWin() (graphicwin.cpp): a real
@@ -1423,7 +1423,7 @@ Purpose: Initialise the wave from a filename and a mode mask. Streaming waves
          (bit 4 suppressed for streaming waves, bit 8 unsuppressed here), and
          bit 1 of the mode runs the wave's own vtable slot 0x48 with 1.
 // ORIGINAL: 0x004C69B0 ?init@Wave@@QAEXPADK@Z 0x004C69B0-0x004C6AD5
-// RULED-OUT: best flag set /c /O2 /Oi- /Gy /GR- /Oy- /GX reaches 13/122
+// TRIED: best flag set /c /O2 /Oi- /Gy /GR- /Oy- /GX reaches 13/122
 //   (0.975 similar); `listing_diff` at those flags shows the structure and
 //   control flow already match - 23 differing runs, nearly all the SAME
 //   global register swap: the image keeps `this` in edi and the resolved
@@ -1575,7 +1575,7 @@ Purpose: Destroy the wave. The original is a three-stage teardown of an
          SEH frame is omitted: the binary has no throw entry point, so it is
          unreachable.
 // ORIGINAL: 0x004C67C0 ??1Wave@@QAE@XZ 0x004C67C0-0x004C68EC;0x004C8450-0x004C8457;0x00659F06-0x00659F20
-// RULED-OUT: 0.888 similar, 2/101 agreeing - already a real destructor,
+// TRIED: 0.888 similar, 2/101 agreeing - already a real destructor,
 //            and everything BUT the SEH prologue/epilogue is close; the
 //            gap is the missing unwind frame, matching Wave::Wave()'s own
 //            ceiling above (same file). The comment above claims the

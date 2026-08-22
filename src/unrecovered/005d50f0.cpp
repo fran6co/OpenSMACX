@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005D50F0 sub_5d50f0 0x005D50F0-0x005D5235
-// RULED-OUT: reading `*(uint*)(base+0x98)` twice (once per bit test) added an extra `mov` vs the original's single load reused by both `test al,N`; caching it in a local did not change the rebuilt bytes, so the remaining divergence is scheduling, not this. Best reached: MISMATCH, edit_count 5, 345 bytes vs 325, mnemonic similarity ~0.92.
+// TRIED: reading `*(uint*)(base+0x98)` twice (once per bit test) added an extra `mov` vs the original's single load reused by both `test al,N`; caching it in a local did not change the rebuilt bytes, so the remaining divergence is scheduling, not this. Best reached: MISMATCH, edit_count 5, 345 bytes vs 325, mnemonic similarity ~0.92.
 // size      325 bytes
 // prototype
 // callers   0   call targets   6

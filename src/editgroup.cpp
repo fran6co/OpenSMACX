@@ -48,7 +48,7 @@ Purpose: Compose an EditGroup from its two base-shaped subobjects
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D4CF0 0x00608C10
-// RULED-OUT: an earlier scratch artifact (src/unrecovered/00611940.cpp) used
+// TRIED: an earlier scratch artifact (src/unrecovered/00611940.cpp) used
 //            the same placement-new-with-try/catch shape and reported the
 //            image never establishes an ebp frame ahead of `push -1; push
 //            0x66303d` - pure esp-relative addressing - while every flag set
@@ -119,8 +119,8 @@ Purpose: Tear down an EditGroup: reinstall the base subobjects' own
          `close()`.
 // ORIGINAL: 0x00611A20 ??1EditGroup@@QAE@XZ 0x00611A20-0x00611A88 BYTE_EXACT
 // LEVER: TWO changes, measured separately. (1) A real `~EditGroup()` has to destroy `virtual_base_` and `dialog_`, which under /GX is an SEH frame plus a thirty-instruction member-teardown tail - 67 compiled instructions against the image's 23, agreeing 0. The image reinstalls the base vtables and calls `close()` and destroys nothing, so this is a METHOD; spelling it `destruct()` drops the frame and the tail and lands exactly 23. (2) With that done the only remaining difference was register allocation, and a NAMED `base` local was causing it: `char *const base = self - 0x8C;` gets EAX and costs a `mov ecx, eax` before the call, 3 of 23. Writing `self - 0x8C` at each use lets VC6 common it into ECX - where the thiscall receiver has to be anyway - and spill `this` to EAX, which is the image's opening `mov eax, ecx`. 23 of 23, BYTE_EXACT.
-// RULED-OUT: naming the local and calling through `self - 0x8C` anyway (3/23), a typed `EditGroup *const base_object` (3/23), an explicitly qualified `->EditGroup::close()` (3/23), and deriving `self` from `base` rather than the other way round, which loses four instructions outright (0 of 23, 19 compiled).
-// RULED-OUT: `record` DROPPED the line above the first time it was written. Re-recording a body whose tier changes rewrites its annotation and keeps only the LEVER. Re-added after the claim was banked.
+// TRIED: naming the local and calling through `self - 0x8C` anyway (3/23), a typed `EditGroup *const base_object` (3/23), an explicitly qualified `->EditGroup::close()` (3/23), and deriving `self` from `base` rather than the other way round, which loses four instructions outright (0 of 23, 19 compiled).
+// TRIED: `record` DROPPED the line above the first time it was written. Re-recording a body whose tier changes rewrites its annotation and keeps only the LEVER. Re-added after the claim was banked.
 // symbol    ?destruct@EditGroup@@QAEXXZ
 // size      104 bytes
 // prototype void (__thiscall ??1EditGroup@@QAE@XZ)(EditGroup* this)

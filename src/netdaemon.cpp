@@ -164,7 +164,7 @@ Purpose: Tear down a network daemon - its own lock table, then AlphaNet's
          and Net's fields, directly (no separate calls into their own
          destructors).
 // ORIGINAL: 0x00538D10 ??1NetDaemon@@QAE@XZ 0x00538D10-0x00538EBE;0x004E3710-0x004E372B;0x0065E010-0x0065E0A5
-// RULED-OUT: 15/97 with 62 compiled instructions, and the gap is the class, not
+// TRIED: 15/97 with 62 compiled instructions, and the gap is the class, not
 //   the spelling. TWO things measured 2026-08-22. (1) call_diff says MORE: this
 //   tree makes 13 direct calls where the image makes 12, and the extra one is
 //   `??1Net@@QAE@XZ` - NOT written in this body. `NetDaemon : public AlphaNet :

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005DC360 ?wrap_height@Buffer@@QAEHPADH@Z 0x005DC360-0x005DC40A FILE
-// RULED-OUT: `if (font->field0 < 0)` compiled to jge with the arms swapped (original is jl, negative-first fallthrough); writing `if (field0 >= 0) {...} else {...}` (arms swapped to match) lifted mnemonic similarity 0.929 -> 0.976. One scheduling-only diff remains (field_14 check's loads reordered around the field_18 increment store, #49) - not chased further.
+// TRIED: `if (font->field0 < 0)` compiled to jge with the arms swapped (original is jl, negative-first fallthrough); writing `if (field0 >= 0) {...} else {...}` (arms swapped to match) lifted mnemonic similarity 0.929 -> 0.976. One scheduling-only diff remains (field_14 check's loads reordered around the field_18 increment store, #49) - not chased further.
 // working copy - scaffold materialised by --work
 // size      170 bytes
 // prototype int (__thiscall ?wrap_height@Buffer@@QAEHPADH@Z)(Buffer* this, int8*, int)

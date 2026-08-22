@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0052A9B0 sub_52a9b0 0x0052A9B0-0x0052AA2D FILE
-// RULED-OUT: redeclaring the scaffold's 0-arg `_strcmpi()` with the real (const char*, const char*) signature under extern "C" - C2733, two C-linkage decls of the same name can't overload. Called it through a `StrcmpiFn` function-pointer cast of the existing symbol instead. RegOpenKeyExA/RegQueryValueExA/ RegCloseKey declared `__declspec(dllimport)` (advapi32 IAT shape, same pattern as 0x0051E090's set_tamper). Diverges at instr #3 (original 'push' vs rebuilt 'lea') in the prologue.
+// TRIED: redeclaring the scaffold's 0-arg `_strcmpi()` with the real (const char*, const char*) signature under extern "C" - C2733, two C-linkage decls of the same name can't overload. Called it through a `StrcmpiFn` function-pointer cast of the existing symbol instead. RegOpenKeyExA/RegQueryValueExA/ RegCloseKey declared `__declspec(dllimport)` (advapi32 IAT shape, same pattern as 0x0051E090's set_tamper). Diverges at instr #3 (original 'push' vs rebuilt 'lea') in the prologue.
 // working copy - scaffold materialised by --work
 // size      125 bytes
 // prototype 

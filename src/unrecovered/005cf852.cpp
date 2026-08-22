@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005CF852 OutputPixelRow16 0x005CF852-0x005CFAED FILE
-// RULED-OUT: zero-arg contract head - same register-in/register-out shape as 0x005CF5C7; recast as three explicit pointer params (diverges at instr #1, a normal push-args prologue vs none)
+// TRIED: zero-arg contract head - same register-in/register-out shape as 0x005CF5C7; recast as three explicit pointer params (diverges at instr #1, a normal push-args prologue vs none)
 // working copy - scaffold materialised by --work
 // size      667 bytes
 // prototype 

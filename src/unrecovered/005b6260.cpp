@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005B6260 ?spot_all@@YAXHH@Z 0x005B6260-0x005B8AE2 FILE
-// RULED-OUT: mechanical register/stack-slot goto transliteration (234 labels, 5638-line body): compiles, MISMATCH sim up to 0.73 on /O2 frameless. Not restructured into idiomatic control flow - next pass should re-derive loop/if shape per block before chasing byte-exactness.
+// TRIED: mechanical register/stack-slot goto transliteration (234 labels, 5638-line body): compiles, MISMATCH sim up to 0.73 on /O2 frameless. Not restructured into idiomatic control flow - next pass should re-derive loop/if shape per block before chasing byte-exactness.
 // working copy - scaffold materialised by --work
 // size      10370 bytes
 // prototype void (__cdecl ?spot_all@@YAXHH@Z)(uint32_t vehID, BOOL tgl)

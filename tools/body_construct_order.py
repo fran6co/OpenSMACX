@@ -12,7 +12,7 @@ written
 emits the base construction AFTER every member with a non-trivial constructor,
 and if the image calls it FIRST the two can never agree - the call targets
 match and the call ORDER does not. Scroll sat at 21 of 83 for this reason, and
-the marker's own RULED-OUT had diagnosed it correctly before concluding the fix
+the marker's own TRIED had diagnosed it correctly before concluding the fix
 needed raw storage and placement-new. It does not: base subobjects are
 constructed before members, so moving the call into a base uses C++'s own
 ordering rule and leaves the layout alone. 21 -> 81 of 83.

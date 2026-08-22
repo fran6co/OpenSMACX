@@ -11,7 +11,7 @@ CEILINGS this project has already measured and named, where more grinding
 buys nothing. Reporting them as one number makes the second kind look like
 unfinished work forever.
 
-This reads each remaining body's own RULED-OUT and LEVER lines and sorts it
+This reads each remaining body's own TRIED and LEVER lines and sorts it
 into the ceiling families the tree has established, or into "open" when
 nothing it says matches one.
 

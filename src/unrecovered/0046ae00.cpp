@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0046AE00 ?draw_cursor@@YAXXZ 0x0046AE00-0x0046AEED FILE
-// RULED-OUT: the loop register (ebx) is reused as scratch mid-body in the original, so failure branches land at two different epilogue offsets depending on whether ebx needs reloading from [ebp-4]; a real loop variable in source form can't reproduce that split. Landed at MISMATCH (93% mnemonic similarity, 6 edits, jl/jg swaps around the threshold comparisons).
+// TRIED: the loop register (ebx) is reused as scratch mid-body in the original, so failure branches land at two different epilogue offsets depending on whether ebx needs reloading from [ebp-4]; a real loop variable in source form can't reproduce that split. Landed at MISMATCH (93% mnemonic similarity, 6 edits, jl/jg swaps around the threshold comparisons).
 // size      237 bytes
 // prototype 
 // callers   10   call targets   2

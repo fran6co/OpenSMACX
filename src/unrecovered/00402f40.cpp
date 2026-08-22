@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00402F40 ?init@AlphaMenu@@QAEHPAUWin@@@Z 0x00402F40-0x00403199;0x006505C0-0x006505D5 FILE
-// RULED-OUT: MISMATCH #58 (push vs mov) - a genuine local `Buffer` (RAII) reproduces the SEH try-frame/dtor exactly for 57 instructions (prologue, ctor, null check+early return, globals store, first branch's load_pcx+extract, loop setup); the do/while loop body's byte-read-then-extract() call diverges on push order. Tried inlining the byte read into the call expression (same as the first, unlooped, extract call) - made it worse (#43), so a separate local before the call is closer; kept.
+// TRIED: MISMATCH #58 (push vs mov) - a genuine local `Buffer` (RAII) reproduces the SEH try-frame/dtor exactly for 57 instructions (prologue, ctor, null check+early return, globals store, first branch's load_pcx+extract, loop setup); the do/while loop body's byte-read-then-extract() call diverges on push order. Tried inlining the byte read into the call expression (same as the first, unlooped, extract call) - made it worse (#43), so a separate local before the call is closer; kept.
 // working copy - scaffold materialised by --work
 // size      622 bytes
 // prototype int (__thiscall ?init@AlphaMenu@@QAEHPAUWin@@@Z)(AlphaMenu* this, Win*)

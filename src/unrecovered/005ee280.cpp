@@ -859,7 +859,7 @@ class Win { public:
 
     void release_modal();
 };
-// RULED-OUT: nested-if vs early-return guard on `count != 0`; count/last
+// TRIED: nested-if vs early-return guard on `count != 0`; count/last
 //            kept in a named local vs restored via `count` at the
 //            not-found path; indexing through a `top_ptr` local vs
 //            re-indexing `g_009b6ef8[last]` each time. All five land the

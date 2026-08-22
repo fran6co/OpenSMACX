@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0053A780 ?contiguous@@YAHHHHH@Z 0x0053A780-0x0053A97C FILE
-// RULED-OUT: prologue register order (mov ecx,[ebp+0x10] before pushes vs a push earlier) - not chased; while/if structure matches disasm.
+// TRIED: prologue register order (mov ecx,[ebp+0x10] before pushes vs a push earlier) - not chased; while/if structure matches disasm.
 // working copy - scaffold materialised by --work
 // size      508 bytes
 // prototype int (__cdecl ?contiguous@@YAHHHHH@Z)(int factionID1, int factionID2, int region, int)

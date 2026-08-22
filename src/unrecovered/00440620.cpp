@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00440620 ?on_iface_group_clicked@DiploPop@@QAEXHHH@Z 0x00440620-0x004406CB FILE
-// RULED-OUT: MISMATCH #7 sub/add, virtual-base offset arithmetic form differs
+// TRIED: MISMATCH #7 sub/add, virtual-base offset arithmetic form differs
 // working copy - scaffold materialised by --work
 // size      171 bytes
 // prototype void (__thiscall ?on_iface_group_clicked@DiploPop@@QAEXHHH@Z)(DiploPop* this, int, int, int)

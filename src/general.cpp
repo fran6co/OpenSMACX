@@ -148,7 +148,7 @@ void __cdecl kill_nl(LPSTR str) {
 Purpose: Add a line feed (LF) to the end of a string. This assumes the buffer has an extra byte and 
          doesn't take into account a carriage return (CR).
 // ORIGINAL: 0x00600840 ?add_lf@@YAXPAD@Z 0x00600840-0x00600859
-// RULED-OUT: MNEMONIC_ONLY plateau (8/10, 1.000 similar at the best flag
+// TRIED: MNEMONIC_ONLY plateau (8/10, 1.000 similar at the best flag
 // set /O2 /Gy /GR- /GX) across all --all-flags sets and several spellings
 // (strlen(str)+str, non-const end, *end/*(end+1), a separate `int len`
 // local, str[len]/str[len+1]). Every one still emits `add esp,4` before
@@ -312,7 +312,7 @@ Purpose: Use the string table input reference to copy a string into the global m
 // `strcat`, exactly as `parse_says` does: `mov byte ptr [esi], 0` at
 // 0x00625E9D, immediately before `call 0x6169a0` (`StringTable::get`),
 // then `call 0x645470` (`strcat`).
-// RULED-OUT (still short of the image at 20/30, 0.918 similar,
+// TRIED (still short of the image at 20/30, 0.918 similar,
 // plateaued across --all-flags): the remaining gap is the same
 // add-vs-lea encoding as `parse_says` (`lea esi, [eax+0x9bb5e8]` there
 // vs `add eax, 0x9bb5e8; mov esi, eax` here) plus the null-terminator
@@ -352,8 +352,8 @@ int __cdecl parse_say(int id, int input, int gender, int pluralality) {
 /*
 Purpose: Copies the input string into the global message buffer.
 // ORIGINAL: 0x00625EC0 ?parse_says@@YAHHPADHH@Z 0x00625EC0-0x00625F1A
-// RULED-OUT: plateaued at 24/27 (0.963 similar) on a single instruction-
-//   selection difference - see the RULED-OUT note at the `dest`/`lea`
+// TRIED: plateaued at 24/27 (0.963 similar) on a single instruction-
+//   selection difference - see the TRIED note at the `dest`/`lea`
 //   pointer add below, inside the body, which lists the five spellings
 //   already tried. Recorded here too (this line only, not moving the body
 //   note) so a marker-position scan finds it - a prior pass left it there,
@@ -385,7 +385,7 @@ int __cdecl parse_says(int id, LPCSTR input, int gender, int pluralality) {
     // not `strcpy`. The two are behaviourally identical after a truncation and
     // the relocation hides the difference in the bytes, so only the CALL
     // SYMBOL tells them apart.
-    // RULED-OUT: the only remaining gap is `8D 80 E8 B5 9B 00 lea eax,
+    // TRIED: the only remaining gap is `8D 80 E8 B5 9B 00 lea eax,
     // [eax+0x9bb5e8]` (6 bytes) in the image vs `05 E8 B5 9B 00 add eax,
     // 0x9bb5e8` (5 bytes) here, which shifts every later offset/jump target
     // by one byte. Tried `&ParseStrBuffer[id].str[0]`, no `const`, an
@@ -483,7 +483,7 @@ Purpose: Locates the first number in a string.
 // the loop (rather than re-reading `digits[]` each iteration) matches the
 // image's loop-invariant load and moved 2/27 to 3/27 (0.667 similar under
 // /O1 /Oy-, the closest of any flag set tried).
-// RULED-OUT (still short of the image): a `goto`-based single-exit form and
+// TRIED (still short of the image): a `goto`-based single-exit form and
 // a `char *result` single-return form, both meant to reproduce the image's
 // shared `xor eax,eax` tail that both failure paths jump to and the
 // redundant `mov [ebp-4],eax; mov eax,[ebp-4]` roundtrip before the
@@ -555,7 +555,7 @@ BOOL __cdecl jackal_version_check(LPCSTR version) {
 /*
 Purpose: This handles parsing the input string and storing it in the output.
 // ORIGINAL: 0x00625880 ?parse_string@@YAHPADPAD@Z 0x00625880-0x00625DDD
-// RULED-OUT: 19/490 MISMATCH, mid-recovery - see the LEVER note just above
+// TRIED: 19/490 MISMATCH, mid-recovery - see the LEVER note just above
 //   the function definition below (outside this comment block, which is why
 //   a marker-position scan missed it before): the call graph is already
 //   fixed (memcpy, not strncpy, at every prefix-copy site), but instruction
@@ -891,8 +891,8 @@ Purpose: Initialize the Filefind global along with a CD check if there isn't a c
 // LEVER: `strcat`/plain `[0]=0` clears in place of the bounded
 //        `strcpy_s`/`strcat_s` forms, matching the sibling
 //        `filefind_get`'s own documented idiom - mechanical, does not
-//        close the gap alone (see RULED-OUT).
-// RULED-OUT: NOT byte-exact and not attempted further - this body is
+//        close the gap alone (see TRIED).
+// TRIED: NOT byte-exact and not attempted further - this body is
 //            genuinely incomplete, not just differently spelled. The
 //            "JACKAL_CLASS" block is commented out in the committed
 //            source, but the image DOES call it for real
@@ -1064,7 +1064,7 @@ Purpose: Count the number of unsigned bits set. Replaced the original code with 
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
-// RULED-OUT: sixteen source shapes (do-while/while, `count += bits & 1`,
+// TRIED: sixteen source shapes (do-while/while, `count += bits & 1`,
 //   `if (bits & 1) count++`, a captured-carry temp, shift-before-test) all
 //   land on the same 3/15, `push ebx` vs `mov ecx, [ebp+8]` at instruction 2
 //   - none coax VC6 into the image's shr/adc carry-chain fusion; this is the
@@ -1181,7 +1181,7 @@ Purpose: Shift the numerator to the left by 16 then divide by the denominator. N
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
-// RULED-OUT: still MISMATCH. The image's three-instruction dividend
+// TRIED: still MISMATCH. The image's three-instruction dividend
 //   construction - `edx = numerator >> 16` (arithmetic) and `eax = numerator
 //   << 16`, i.e. `(int64_t)numerator << 16` built directly in EDX:EAX - never
 //   falls out of `((int64_t)numerator << 16) / denominator` here at any flag
@@ -1221,7 +1221,7 @@ Purpose: Reverse string search for the last occurrence of the specified characte
 // end - start` byte compares remain) moved MISMATCH-wrong-shape (20
 // instructions, mostly not agreeing) to a same-instruction-count MISMATCH,
 // 0.704 similar under /O1.
-// RULED-OUT: splitting `!start`/`!end` into two `if`s (image compiles
+// TRIED: splitting `!start`/`!end` into two `if`s (image compiles
 // `a || b` to the identical sequential-test-same-target shape already), and
 // a `for(;;){...; if(count==0) break;}` in place of `do {...} while(count)`
 // - neither changed the score. `const char *const s = start; const char
@@ -1333,7 +1333,7 @@ Purpose: Calculate a basic XOR checksum for the data buffer.
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     (none)
-// RULED-OUT: byte-exact is unreachable (hand-written `loop`/`lodsb`, above);
+// TRIED: byte-exact is unreachable (hand-written `loop`/`lodsb`, above);
 //   ceiling here is semantic equivalence, currently MISMATCH 4/19.
 Return Value: the XOR checksum of the buffer, seeded
 Status: Complete
@@ -1373,7 +1373,7 @@ Purpose: Calculate a basic XOR checksum for a password string.
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x006453E0 0x00645460
 // indirect  0x005390F6
-// RULED-OUT: byte-exact is unreachable (hand-written `loop`/`lodsb` inside
+// TRIED: byte-exact is unreachable (hand-written `loop`/`lodsb` inside
 //   the `checksum` call it makes, above); ceiling here is semantic
 //   equivalence, currently MISMATCH 22/58.
 Return Value: Checksum
@@ -1460,7 +1460,7 @@ void __cdecl kill_auto_save() {
 /*
 Purpose: Handle the creation and management of the auto-save game files.
 // ORIGINAL: 0x005ABD20 ?auto_save@@YAXXZ 0x005ABD20-0x005ABE39
-// RULED-OUT: 28/66, 0.954 similar - as close as this gets. Both branches'
+// TRIED: 28/66, 0.954 similar - as close as this gets. Both branches'
 //            call sequences end with the image cleaning the LAST call's
 //            single pushed argument via `pop ecx` (1 byte) rather than
 //            folding it into the preceding `add esp, N` that cleans the
@@ -1727,7 +1727,7 @@ void __cdecl header_write(LPCSTR header, FILE *file) {
 /*
 Purpose: For the count, sort both id and value arrays by the least to greatest value (ascending).
 // ORIGINAL: 0x005B5690 ?sort@@YAXHPAHPAH@Z 0x005B5690-0x005B56F5
-// RULED-OUT: byte-match plateau at 5/47 across every flag set tried,
+// TRIED: byte-match plateau at 5/47 across every flag set tried,
 //            before and after the `goto`/bug fix below - the image
 //            interleaves a SEARCH for the first out-of-order pair with the
 //            swap in one tight loop; any C form with the swap reachable

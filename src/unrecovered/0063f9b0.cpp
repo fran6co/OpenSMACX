@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0063F9B0 sub_63f9b0 0x0063F9B0-0x0063FA72 FILE
-// RULED-OUT: nullary contract (evidence shows 1 stack param at [esp+0x10] after 3 pushes -> changed to sub_63f9b0(int param_1)); memcpy(27) for the tail rep-movsd/movsw/movsb copy. MISMATCH #1 push/mov, whole-function register order
+// TRIED: nullary contract (evidence shows 1 stack param at [esp+0x10] after 3 pushes -> changed to sub_63f9b0(int param_1)); memcpy(27) for the tail rep-movsd/movsw/movsb copy. MISMATCH #1 push/mov, whole-function register order
 // working copy - scaffold materialised by --work
 // size      194 bytes
 // prototype 

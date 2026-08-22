@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005E3283 ?dotted_box@Buffer@@QAEHHHHHH@Z 0x005E3283-0x005E32E4 FILE
-// RULED-OUT: nothing beyond the direct four-call transcription; diverges at #44 (pop vs xor), near the epilogue
+// TRIED: nothing beyond the direct four-call transcription; diverges at #44 (pop vs xor), near the epilogue
 // working copy - scaffold materialised by --work
 // size      97 bytes
 // prototype int (__thiscall ?dotted_box@Buffer@@QAEHHHHHH@Z)(Buffer* this, int, int, int, int, int)

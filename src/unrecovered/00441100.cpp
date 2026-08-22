@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00441100 sub_441100 0x00441100-0x004411EC FILE
-// RULED-OUT: signature had no params in the fallback head (IDA guessed 2 stack ints, confirmed by [ebp+8]/[ebp+0xc] reads before any push, and no meaningful eax at ret so void not int - both changed). Landed at MISMATCH (90% mnemonic similarity, 11 edits).
+// TRIED: signature had no params in the fallback head (IDA guessed 2 stack ints, confirmed by [ebp+8]/[ebp+0xc] reads before any push, and no meaningful eax at ret so void not int - both changed). Landed at MISMATCH (90% mnemonic similarity, 11 edits).
 // size      236 bytes
 // prototype 
 // callers   1   call targets   4

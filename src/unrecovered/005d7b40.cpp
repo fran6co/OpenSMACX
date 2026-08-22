@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005D7B40 ?load_tga@Buffer@@QAGHPBDPAVPalette@@HH@Z 0x005D7B40-0x005D7C78;0x00662B92-0x00662BA7 FILE
-// RULED-OUT: plain `Filemap fm;` with early returns has no SEH prologue at all; wrapping in try{}catch(...){throw;} recovers most of the /GX frame shape but still diverges at #0 push/mov - same wall as 0x005D7A30's Filemap-ctor SEH frame.
+// TRIED: plain `Filemap fm;` with early returns has no SEH prologue at all; wrapping in try{}catch(...){throw;} recovers most of the /GX frame shape but still diverges at #0 push/mov - same wall as 0x005D7A30's Filemap-ctor SEH frame.
 // size      333 bytes
 // prototype 
 // callers   1   call targets   5

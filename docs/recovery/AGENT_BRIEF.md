@@ -214,8 +214,8 @@ RUNNING THE EXECUTABLE: THE INVOCATION IS PART OF THE MEASUREMENT
   shows the caller's stack slots as this function's parameters, which reads
   like an argument-shift bug and is not one.
 
-A REFUSAL ONLY COUNTS AS A `// RULED-OUT:` LINE
-- Write what you measured as a LESSON LINE - `// LEVER:` or `// RULED-OUT:` -
+A REFUSAL ONLY COUNTS AS A `// TRIED:` LINE
+- Write what you measured as a LESSON LINE - `// LEVER:` or `// TRIED:` -
   in the marker's comment block. Written as ordinary prose ("cannot reach
   byte-exact", "not chased further") it is invisible to `decomp.reader`, so
   `frontier.py --untouched` keeps offering the body and the next pass
@@ -341,11 +341,11 @@ PICKING A BATCH (for whoever hands one out)
   returned ten instances of ONE problem: `alt_at`, `alt_detail_at`,
   `region_at`, `is_ocean` and their neighbours are a single accessor family
   sharing a single register-allocation plateau, and the whole pass produced
-  only RULED-OUT notes. Spread a batch across FILES, or select by defect shape
+  only TRIED notes. Spread a batch across FILES, or select by defect shape
   from `call_diff --all` / `hollow_bodies.py`, which name a cause rather than a
   size.
 - `uv run tools/frontier.py --fresh` lists WinMain-reachable bodies with no
-  `RULED-OUT:` notes on them. Rows without `--fresh` carry `[N ruled-out]`.
+  `TRIED:` notes on them. Rows without `--fresh` carry `[N tried]`.
   A batch picked off the raw depth order sent one agent eight bodies that were
   already exhausted, and it correctly reported eight no-changes.
 - `uv run tools/call_diff.py --all` ranks bodies whose CALL COUNT disagrees
@@ -506,7 +506,7 @@ RULES
 - The gate is `uv run tools/osmx.py check`. NEVER pipe it to `tail` - the exit code is
   the verdict. It must stay at 0 REGRESSED, and you must run it before finishing.
 - Record what you learn under each marker: a `// LEVER:` line for what worked, a
-  `// RULED-OUT:` line for a spelling you measured and rejected. Never touch the
+  `// TRIED:` line for a spelling you measured and rejected. Never touch the
   `// ORIGINAL:` marker line itself.
 - Never write a comment asserting something the measurement does not show. If a body
   plateaus after a handful of measured attempts, leave it and say so.

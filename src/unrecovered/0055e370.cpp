@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0055E370 ?encounter@@YAXHHHHHH@Z 0x0055E370-0x0055EB7A FILE
-// RULED-OUT: full structured transcription (verified every call-argument order and jump target against raw disasm) reaches MISMATCH #3 'push' vs 'mov' - a prologue register-allocation divergence (push ebx order), not a logic error; not chased further given function size (2058 bytes).
+// TRIED: full structured transcription (verified every call-argument order and jump target against raw disasm) reaches MISMATCH #3 'push' vs 'mov' - a prologue register-allocation divergence (push ebx order), not a logic error; not chased further given function size (2058 bytes).
 // working copy - scaffold materialised by --work
 // size      2058 bytes
 // prototype 

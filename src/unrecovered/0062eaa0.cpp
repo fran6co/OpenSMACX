@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0062EAA0 ?create_session@Net@@QAEHPADHPAD@Z 0x0062EAA0-0x0062ED2F FILE
-// RULED-OUT: the provided VCall thiscall shim (slots 4/14/22/24) - disasm shows *g_009be600 pushed as an EXPLICIT stack arg at every call (COM-style This-as-arg0, not ecx receiver), so raw __stdcall function-pointer casts through the vtable were used instead. Diverges at instr #0 (pre-prologue global load); not chased.
+// TRIED: the provided VCall thiscall shim (slots 4/14/22/24) - disasm shows *g_009be600 pushed as an EXPLICIT stack arg at every call (COM-style This-as-arg0, not ecx receiver), so raw __stdcall function-pointer casts through the vtable were used instead. Diverges at instr #0 (pre-prologue global load); not chased.
 // working copy - scaffold materialised by --work
 // size      655 bytes
 // prototype int (__thiscall ?create_session@Net@@QAEHPADHPAD@Z)(Net* this, int8*, int, int8*)

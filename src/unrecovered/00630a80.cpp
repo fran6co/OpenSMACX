@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00630A80 sub_630a80 0x00630A80-0x00630AFC FILE
-// RULED-OUT: `__stdcall` free-function contract (ecx read at offset 0x6fc/ 0x10c with no stack access -> real receiver, made a `TimeoutRecv` thiscall member). Original spills its cached `timeGetTime()` start value into the (now-unused) `a1` stack argument slot instead of a fresh local, which this source form does not reproduce (extra `sub esp,N` for a real local).
+// TRIED: `__stdcall` free-function contract (ecx read at offset 0x6fc/ 0x10c with no stack access -> real receiver, made a `TimeoutRecv` thiscall member). Original spills its cached `timeGetTime()` start value into the (now-unused) `a1` stack argument slot instead of a fresh local, which this source form does not reproduce (extra `sub esp,N` for a real local).
 // working copy - scaffold materialised by --work
 // size      124 bytes
 // prototype 

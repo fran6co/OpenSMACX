@@ -1,5 +1,5 @@
 // ORIGINAL: 0x006365B0 Video_unk1 0x006365B0-0x00636732 FILE
-// RULED-OUT: none confirmed byte-exact; MISMATCH #2 'mov' vs 'push' - the `extern C int __cdecl Video_unk1()` head contradicts pervasive [esi+N] reads with `mov esi, ecx` up front and no matching stack slot, so this landed as a __thiscall Video::unk1() member instead (PROPOSAL below). Direct call to the unrecovered thiscall sub_63e590 goes through the ORIGINAL()/original_method pointer-to-member trick (VC6 C4234 on a free __thiscall).
+// TRIED: none confirmed byte-exact; MISMATCH #2 'mov' vs 'push' - the `extern C int __cdecl Video_unk1()` head contradicts pervasive [esi+N] reads with `mov esi, ecx` up front and no matching stack slot, so this landed as a __thiscall Video::unk1() member instead (PROPOSAL below). Direct call to the unrecovered thiscall sub_63e590 goes through the ORIGINAL()/original_method pointer-to-member trick (VC6 C4234 on a free __thiscall).
 // size      386 bytes
 // prototype
 // callers   4   call targets   7

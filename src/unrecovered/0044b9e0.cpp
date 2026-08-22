@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0044B9E0 ?help_tech_info@@YAXP6AXPAD@ZHHH@Z 0x0044B9E0-0x0044C7C9 FILE
-// RULED-OUT: exact per-record byte offsets for the 4 embedded-owner index chains (52/380/etc strides) - transcribed the strcat/get/ construct_id/help_create_link shape per loop faithfully but did not verify every offset bit-for-bit; MISMATCH #0 at prologue.
+// TRIED: exact per-record byte offsets for the 4 embedded-owner index chains (52/380/etc strides) - transcribed the strcat/get/ construct_id/help_create_link shape per loop faithfully but did not verify every offset bit-for-bit; MISMATCH #0 at prologue.
 // working copy - scaffold materialised by --work
 // size      3561 bytes
 // prototype 

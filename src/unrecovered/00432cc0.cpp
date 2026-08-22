@@ -1,6 +1,6 @@
 // ORIGINAL: 0x00432CC0 ?draw_weapon@SelectPartWin@@QAEHHPAURECT@@H@Z 0x00432CC0-0x00433167 FILE
-// RULED-OUT: direct transcription of the Ghidra decompile (tech-search loop over the 0x94ae6c/0x10-stride weapon table, Caviar::add_object special-cases, set_scaling, Sprite::draw of the 0x778400/0x160 table entry, render/render_mono branch, Buffer text/caption rendering tail via panelBuf=self+0x444); diverges at insn #0, frame-pointer-vs-ESP-frame prologue shape, not control flow
-// RULED-OUT: field offsets (0x2b68, 0x2b9c, 0x3f68, 0x444, 0x45f4, 0x4600, 0x4604, 0x461c) taken straight from disasm, not from hypothesis_layouts.h SelectPartWin (not consulted for offsets)
+// TRIED: direct transcription of the Ghidra decompile (tech-search loop over the 0x94ae6c/0x10-stride weapon table, Caviar::add_object special-cases, set_scaling, Sprite::draw of the 0x778400/0x160 table entry, render/render_mono branch, Buffer text/caption rendering tail via panelBuf=self+0x444); diverges at insn #0, frame-pointer-vs-ESP-frame prologue shape, not control flow
+// TRIED: field offsets (0x2b68, 0x2b9c, 0x3f68, 0x444, 0x45f4, 0x4600, 0x4604, 0x461c) taken straight from disasm, not from hypothesis_layouts.h SelectPartWin (not consulted for offsets)
 // working copy - scaffold materialised by --work
 // size      1191 bytes
 // prototype 

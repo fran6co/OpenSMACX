@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00515530 ?survey2@Console@@QAEXXZ 0x00515530-0x005155F5 FILE
-// RULED-OUT: caching `MapWin *w = ...` upfront (mismatch #1, push vs test - original reloads *g_007d3c3c fresh at each use); re-reading *g_007d3c3c inline at every access reaches SHAPE_EXACT (same 197 bytes, same mnemonics/operand kinds, one constant differs)
+// TRIED: caching `MapWin *w = ...` upfront (mismatch #1, push vs test - original reloads *g_007d3c3c fresh at each use); re-reading *g_007d3c3c inline at every access reaches SHAPE_EXACT (same 197 bytes, same mnemonics/operand kinds, one constant differs)
 // working copy - scaffold materialised by --work
 // size      197 bytes
 // prototype void (__thiscall ?survey2@Console@@QAEXXZ)(Console* this)

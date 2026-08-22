@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005E2DD3 ?box_sprite@Buffer@@QAEHPAURECT@@PAUBoxSpriteParams@@@Z 0x005E2DD3-0x005E3188 FILE
-// RULED-OUT: the brief's Ghidra hypothesis decompiled cleanly here (9-slice panel: 4 corner Sprite::draw, 4 edge Sprite::tile, 1 center Buffer::tile, each with an optional Buffer::tile_mask shadow) - transcribing it directly with real field/method names reached MISMATCH at 0.9609 mnemonic similarity (393/406), 974 vs 949 bytes, first divergence at #0 (`push ecx` scratch-slot prologue idiom vs a plain `sub esp,4`, not chased further).
+// TRIED: the brief's Ghidra hypothesis decompiled cleanly here (9-slice panel: 4 corner Sprite::draw, 4 edge Sprite::tile, 1 center Buffer::tile, each with an optional Buffer::tile_mask shadow) - transcribing it directly with real field/method names reached MISMATCH at 0.9609 mnemonic similarity (393/406), 974 vs 949 bytes, first divergence at #0 (`push ecx` scratch-slot prologue idiom vs a plain `sub esp,4`, not chased further).
 // working copy - scaffold materialised by --work
 // size      949 bytes
 // prototype int (__thiscall ?box_sprite@Buffer@@QAEHPAURECT@@PAUBoxSpriteParams@@@Z)(Buffer* this, RECT*, BoxSpriteParams*)

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0060B530 ?draw_item@ListBox@@QAEXH@Z 0x0060B530-0x0060C1D8 FILE
-// RULED-OUT: raw offset macros on `this` (I()=int field, STYLE_OFF/SF()= the style-descriptor-relative field this class resolves through everywhere, WIN_ADJ=the Win this-adjustor at *(int*)(*(int*)this+4)) reproduce the control flow and the duplicated highlighted/normal text-draw tail; diverges at instr #0 (prologue shape only - original loads a1 off the raw stack before the EBP frame is set up).
+// TRIED: raw offset macros on `this` (I()=int field, STYLE_OFF/SF()= the style-descriptor-relative field this class resolves through everywhere, WIN_ADJ=the Win this-adjustor at *(int*)(*(int*)this+4)) reproduce the control flow and the duplicated highlighted/normal text-draw tail; diverges at instr #0 (prologue shape only - original loads a1 off the raw stack before the EBP frame is set up).
 // working copy - scaffold materialised by --work
 // size      3240 bytes
 // prototype void (__thiscall ?draw_item@ListBox@@QAEXH@Z)(ListBox* this, int)

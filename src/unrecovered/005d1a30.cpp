@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005D1A30 sub_5d1a30 0x005D1A30-0x005D1B88 FILE
-// RULED-OUT: OutputPixelRow (0x005CF5C7) is itself unrecovered and takes its row source/dest through esi/ebx/edi set by the caller before each call - a register-argument convention with no C++ expression that isn't __asm. Transcribed as 16 nullary calls in source order, matching call count/topology, not the per-call register setup.
+// TRIED: OutputPixelRow (0x005CF5C7) is itself unrecovered and takes its row source/dest through esi/ebx/edi set by the caller before each call - a register-argument convention with no C++ expression that isn't __asm. Transcribed as 16 nullary calls in source order, matching call count/topology, not the per-call register setup.
 // working copy - scaffold materialised by --work
 // size      344 bytes
 // prototype

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00625080 sub_625080 0x00625080-0x00625294 FILE
-// RULED-OUT: verbatim zero-param head - disasm reads [esp+0x10]/[esp+0x14]/ [esp+0x1c] as three stack args before any push (IDA's 3-int guess confirmed by field roles: int*, int, byte*), so the head was widened to those 3 params; prologue order still diverges from the original's odd 2-push-then-arg2 pattern.
+// TRIED: verbatim zero-param head - disasm reads [esp+0x10]/[esp+0x14]/ [esp+0x1c] as three stack args before any push (IDA's 3-int guess confirmed by field roles: int*, int, byte*), so the head was widened to those 3 params; prologue order still diverges from the original's odd 2-push-then-arg2 pattern.
 // working copy - scaffold materialised by --work
 // size      532 bytes
 // prototype 

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00441040 sub_441040 0x00441040-0x004410F1 FILE
-// RULED-OUT: void __cdecl(int a1, int a2), direct linked-list walk transcription; diverges at #29 mov vs cmp, not chased further
+// TRIED: void __cdecl(int a1, int a2), direct linked-list walk transcription; diverges at #29 mov vs cmp, not chased further
 // working copy - scaffold materialised by --work
 // size      177 bytes
 // prototype 

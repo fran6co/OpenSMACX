@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004714D0 ?UNK3@MessageWin@@QAEHHHPAD@Z 0x004714D0-0x0047152B FILE
-// RULED-OUT: the scaffolding's 3-arg UNK3 declaration can't express the `ret 0x10` 4th unused stack param, so wrote a 4-arg shim method on a derived class instead; diverges at #6 (lea vs mov)
+// TRIED: the scaffolding's 3-arg UNK3 declaration can't express the `ret 0x10` 4th unused stack param, so wrote a 4-arg shim method on a derived class instead; diverges at #6 (lea vs mov)
 // working copy - scaffold materialised by --work
 // size      91 bytes
 // prototype int (__thiscall ?UNK3@MessageWin@@QAEHHHPAD@Z)(MessageWin* this, int, int, int8* lpString)
@@ -664,7 +664,7 @@ class MessageWin : public Sprite { public:
 // MessageWin::UNK3(int, int, char *) as declared above is left undefined:
 // the disassembly's `ret 0x10` needs a 4th (unused) stack parameter that the
 // scaffolding's 3-arg declaration cannot express, so the real body is written
-// below as a shim method with the correct arity. See RULED-OUT note.
+// below as a shim method with the correct arity. See TRIED note.
 
 static ButtonGroup *const g_ButtonGroupAt7CD098 = (ButtonGroup *)0x007CD098;
 

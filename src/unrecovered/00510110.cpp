@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00510110 ?on_nc_mouse_move@Console@@QAEXHH@Z 0x00510110-0x005103FF FILE
-// RULED-OUT: two near-duplicate splitter-drag blocks (vertical/horizontal), each a 3-way slot-select then clamp-to-half then redraw_nc_buffer/update_nc_buffer, sharing an edi/ebx "last value" pair threaded via goto into a final draw section (sim 0.83). Explicit `int sentinel = -1;` local in place of the literal, matching the original's dedicated `or edx,-1` register, made no difference (compiler still folds it). First divergence is the -1 sentinel's register vs literal form at #7, not chased further. Not byte-exact.
+// TRIED: two near-duplicate splitter-drag blocks (vertical/horizontal), each a 3-way slot-select then clamp-to-half then redraw_nc_buffer/update_nc_buffer, sharing an edi/ebx "last value" pair threaded via goto into a final draw section (sim 0.83). Explicit `int sentinel = -1;` local in place of the literal, matching the original's dedicated `or edx,-1` register, made no difference (compiler still folds it). First divergence is the -1 sentinel's register vs literal form at #7, not chased further. Not byte-exact.
 // working copy - scaffold materialised by --work
 // size      751 bytes
 // prototype void (__thiscall ?on_nc_mouse_move@Console@@QAEXHH@Z)(Console* this, int, int)

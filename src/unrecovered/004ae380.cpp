@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004AE380 ?on_mouse_move@SetupWin@@QAEHHH@Z 0x004AE380-0x004AE3DA FILE
-// RULED-OUT: void return (no eax reload after soft_update); this+0xfd0/0xfd4 reached by offset since SetupWin carries no declared fields
+// TRIED: void return (no eax reload after soft_update); this+0xfd0/0xfd4 reached by offset since SetupWin carries no declared fields
 // working copy - scaffold materialised by --work
 // size      90 bytes
 // prototype int (__thiscall ?on_mouse_move@SetupWin@@QAEHHH@Z)(SetupWin* this, int xCoord, int yCoord)

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004D7EE0 ?set_patrol@Console@@QAEXH@Z 0x004D7EE0-0x004D7F5F FILE
-// RULED-OUT: reload `*p` for the draw_base_dest call instead of reusing the cached `val` local (drops the redundant `mov ecx,[esi]` the original keeps); cast the loop pointers to `int` for the bound compare (`(int)p < (int)g_007d3c5c`) to force signed `jl` over pointer-compare `jb`. SHAPE_EXACT: same 38 mnemonics, remaining diffs are embedded constants (incl. `field_23D10_`'s compiled offset, which does not match its own name here).
+// TRIED: reload `*p` for the draw_base_dest call instead of reusing the cached `val` local (drops the redundant `mov ecx,[esi]` the original keeps); cast the loop pointers to `int` for the bound compare (`(int)p < (int)g_007d3c5c`) to force signed `jl` over pointer-compare `jb`. SHAPE_EXACT: same 38 mnemonics, remaining diffs are embedded constants (incl. `field_23D10_`'s compiled offset, which does not match its own name here).
 // working copy - scaffold materialised by --work
 // size      127 bytes
 // prototype void (__thiscall ?set_patrol@Console@@QAEXH@Z)(Console* this, int vehID)

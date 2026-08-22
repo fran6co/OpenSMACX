@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00467DE0 ?draw_base_names@MapWin@@QAEXXZ 0x00467DE0-0x004688E0 FILE
-// RULED-OUT: Ghidra transcription with `this` restored on every Buffer/ Strings call Ghidra dropped (set_clip/set_font/set_text_color/ write_cent_l via a virtual-base offset `*(int*)(*(int*)this+4)`, Strings::get via fixed g_009b90d8); diverges at insn #6 (mov vs push), i.e. within the vtable/vbase-offset prologue read.
+// TRIED: Ghidra transcription with `this` restored on every Buffer/ Strings call Ghidra dropped (set_clip/set_font/set_text_color/ write_cent_l via a virtual-base offset `*(int*)(*(int*)this+4)`, Strings::get via fixed g_009b90d8); diverges at insn #6 (mov vs push), i.e. within the vtable/vbase-offset prologue read.
 // working copy - scaffold materialised by --work
 // size      2816 bytes
 // prototype void (__thiscall ?draw_base_names@MapWin@@QAEXXZ)(MapWin* this)

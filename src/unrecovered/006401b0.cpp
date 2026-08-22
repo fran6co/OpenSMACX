@@ -1,6 +1,6 @@
 // ORIGINAL: 0x006401B0 sub_6401b0 0x006401B0-0x006404E2 FILE
-// RULED-OUT: signature is 3 params (short*, short*, int*), matching IDA's 3-arg guess and Ghidra's; a rotation-matrix dot product + min/max bbox accumulation over 8 corner combinations, output written to param_3[0..5].
-// RULED-OUT: bit-trick round-to-nearest macro (mirrors Ghidra's ((-1<x)-1&0xffffff00)+0x80+x>>8) and a plain ternary +-0x80 form both land the same MISMATCH at #11 (an early movsx/imul reorder that cascades through the whole function, similarity ~0.63-0.66); did not find a form that reproduces the original's exact multiply-then-add scheduling.
+// TRIED: signature is 3 params (short*, short*, int*), matching IDA's 3-arg guess and Ghidra's; a rotation-matrix dot product + min/max bbox accumulation over 8 corner combinations, output written to param_3[0..5].
+// TRIED: bit-trick round-to-nearest macro (mirrors Ghidra's ((-1<x)-1&0xffffff00)+0x80+x>>8) and a plain ternary +-0x80 form both land the same MISMATCH at #11 (an early movsx/imul reorder that cascades through the whole function, similarity ~0.63-0.66); did not find a form that reproduces the original's exact multiply-then-add scheduling.
 // working copy - scaffold materialised by --work
 // size      818 bytes
 // prototype 

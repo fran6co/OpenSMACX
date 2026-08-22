@@ -32,7 +32,7 @@ Purpose: Read the specified file and create an index of section headers ("#EXAMP
 // flags     sp_ready;purged_ok
 // calls     0x005D4580 0x005D45E0 0x005D4620 0x005D4680 0x006007B0 0x00600820 0x00628380 0x006283E0 0x00628430 0x006287C0 0x006453E0 0x00645460 0x00645470 0x00645930 0x00645DD0 0x0064697A 0x006473F0
 // indirect  0x005FE007
-// RULED-OUT: the image opens a real SEH frame (`mov eax, fs:[0]; push eax;
+// TRIED: the image opens a real SEH frame (`mov eax, fs:[0]; push eax;
 //            mov fs:[0], esp` before `sub esp, 0x218`, and the second span
 //            0x00662D40-0x00662D52 is its unwind handler) - expected, since
 //            the local `Filemap txt_file_map` has a real destructor. This

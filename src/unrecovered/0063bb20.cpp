@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0063BB20 sub_63bb20 0x0063BB20-0x0063BD06;0x00663940-0x00663998 FILE
-// RULED-OUT: __cdecl no-arg contract - disasm has ecx=this (mov esi,ecx), no stack args, plain ret; used __fastcall(void*) instead (the free-thiscall-avoids-C4234 pattern from 005cb050.cpp). Placement-new construction of the 6 sub-objects (GraphicWin, Time, Heap, ListBox(1), PushButton x3) at their disasm offsets DOES reproduce the SEH frame's first two pushes (push -1; push funclet) - divergence starts at #2, likely an extra EBP-frame instruction from added local temporaries.
+// TRIED: __cdecl no-arg contract - disasm has ecx=this (mov esi,ecx), no stack args, plain ret; used __fastcall(void*) instead (the free-thiscall-avoids-C4234 pattern from 005cb050.cpp). Placement-new construction of the 6 sub-objects (GraphicWin, Time, Heap, ListBox(1), PushButton x3) at their disasm offsets DOES reproduce the SEH frame's first two pushes (push -1; push funclet) - divergence starts at #2, likely an extra EBP-frame instruction from added local temporaries.
 // working copy - scaffold materialised by --work
 // size      574 bytes
 // prototype 

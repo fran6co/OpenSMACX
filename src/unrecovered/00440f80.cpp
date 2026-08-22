@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00440F80 ?clear_hotseat_chat@@YAXXZ 0x00440F80-0x00441033 FILE
-// RULED-OUT: member-fn-pointer+union thunk for the two vtable-adjusted "release" calls; raw pointer cast over fixed globals for record base/bound (address itself does read-modify-write via `rec += 0xc`). First divergence is #11 lea vs je.
+// TRIED: member-fn-pointer+union thunk for the two vtable-adjusted "release" calls; raw pointer cast over fixed globals for record base/bound (address itself does read-modify-write via `rec += 0xc`). First divergence is #11 lea vs je.
 // working copy - scaffold materialised by --work
 // size      179 bytes
 // prototype 

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005D4890 sub_5d4890 0x005D4890-0x005D498D FILE
-// RULED-OUT: real `__thiscall` member (C005d4890::fill(int)) with `this` field 0x18 read fresh as `Heap*` at each use site, matching the disassembly's repeated `[edi+0x18]` reloads instead of a hoisted local - 4-byte stack arg, `ret 4`, confirming the Contract's nullary/stdcall head was the fallback, not the convention. Reproduces both string-duplicate blocks and the trailing RECT + 4-int copy, but MISMATCH #3: original never sets up an ebp frame (pure `push esi/edi` leaf), and every flag combination here adds either an ebp frame or an extra callee-saved register.
+// TRIED: real `__thiscall` member (C005d4890::fill(int)) with `this` field 0x18 read fresh as `Heap*` at each use site, matching the disassembly's repeated `[edi+0x18]` reloads instead of a hoisted local - 4-byte stack arg, `ret 4`, confirming the Contract's nullary/stdcall head was the fallback, not the convention. Reproduces both string-duplicate blocks and the trailing RECT + 4-int copy, but MISMATCH #3: original never sets up an ebp frame (pure `push esi/edi` leaf), and every flag combination here adds either an ebp frame or an extra callee-saved register.
 // size      253 bytes
 // prototype 
 // callers   0   call targets   4

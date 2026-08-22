@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004C75B0 sub_4c75b0 0x004C75B0-0x004C766D;0x004C8450-0x004C8457;0x00659F20-0x00659F32 FILE
-// RULED-OUT: SHARED_TAIL - the 0x4c8450/0x659f20 unwind-handler span is COMDAT-folded with another function's handler, so no tier is reachable regardless of body. Left as a plain field-write transcription (no SEH frame modeled) for the next pass.
+// TRIED: SHARED_TAIL - the 0x4c8450/0x659f20 unwind-handler span is COMDAT-folded with another function's handler, so no tier is reachable regardless of body. Left as a plain field-write transcription (no SEH frame modeled) for the next pass.
 // working copy - scaffold materialised by --work
 // size      214 bytes
 // prototype 
@@ -70,7 +70,7 @@ static int *const g_00679168 = (int *)0x00679168;
 // unwind handler that resets the vtable to the first-phase value, and a
 // span at 0x4c8450/0x659f20/0x659f28 that is PART of this same function
 // (the "spans" list is multi-range). The SEH frame is not modeled here -
-// see RULED-OUT.
+// see TRIED.
 class VCallArg { public:
     virtual void slot000(int a);
 };

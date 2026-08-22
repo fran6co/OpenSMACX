@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00624D80 ?setup_edge@Texture@@QAAHPAUEdgeScan@@H@Z 0x00624D80-0x00624EA9
-// RULED-OUT: the trailing division/remainder pair (offsets 0x2c/0x30) is computed with a THIRD separate idiv after the sign-dependent branch that already computed a quotient - the original never reuses that quotient's remainder, it redoes `diff % iVar1` from scratch, so the two writes here are kept as two separate statements rather than one combined div/mod to match that shape. `<< 0x10` kept as a shift rather than `* 0x10000` to match the original's shl. Landing the closest MISMATCH; divergence starts at instruction #2, a `mov` in the original reloading DAT_9bb4b0 versus a `push` in the rebuilt.
+// TRIED: the trailing division/remainder pair (offsets 0x2c/0x30) is computed with a THIRD separate idiv after the sign-dependent branch that already computed a quotient - the original never reuses that quotient's remainder, it redoes `diff % iVar1` from scratch, so the two writes here are kept as two separate statements rather than one combined div/mod to match that shape. `<< 0x10` kept as a shift rather than `* 0x10000` to match the original's shl. Landing the closest MISMATCH; divergence starts at instruction #2, a `mov` in the original reloading DAT_9bb4b0 versus a `push` in the rebuilt.
 // size      297 bytes
 // prototype
 // callers   9   call targets   1

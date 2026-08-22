@@ -53,7 +53,7 @@ Purpose: Construct the GraphicWin base and the embedded Spot, install
 //        0x005FA860, which is exactly base-then-member in declaration order.
 //        10/38 -> 15/38, and the compiled body drops from 42 instructions to
 //        39 against the image's 38.
-// RULED-OUT: the last gap is one hoisted constant. VC6 puts -1 in edx
+// TRIED: the last gap is one hoisted constant. VC6 puts -1 in edx
 //        (`or edx, 0xffffffff`) because `field_A24_` and the fifteen
 //        `entries_[i].id` share it, where the image writes the immediate
 //        straight to `[esi + 0xa24]`. Not reachable by reordering the
@@ -260,7 +260,7 @@ Purpose: Find the menu whose id matches and forward the item id to its
          PullDown. An unknown menu answers 0xB, and so does a table that runs
          out before matching.
 // ORIGINAL: 0x005FB300 ?hide_menu_item@Menu@@QAEHHH@Z 0x005FB300-0x005FB354
-// RULED-OUT: shared defect across the whole seven-clone family (UNK3,
+// TRIED: shared defect across the whole seven-clone family (UNK3,
 //        hide/show/disable/enable/check/uncheck_menu_item all measure
 //        1/32, 0.754 similar at their best flag set). Every one of them
 //        diverges starting at INSTRUCTION 0: this tree's compile hoists a
@@ -319,7 +319,7 @@ Purpose: Find the menu whose id matches and forward the item id to its
          PullDown. An unknown menu answers 0xB, and so does a table that runs
          out before matching.
 // ORIGINAL: 0x005FB3C0 ?show_menu_item@Menu@@QAEHHH@Z 0x005FB3C0-0x005FB414
-// RULED-OUT: shared defect across the whole seven-clone family (UNK3,
+// TRIED: shared defect across the whole seven-clone family (UNK3,
 //        hide/show/disable/enable/check/uncheck_menu_item all measure
 //        1/32, 0.754 similar at their best flag set) - see
 //        ?hide_menu_item@Menu@@QAEHHH@Z (0x005FB300) for the full
@@ -368,7 +368,7 @@ Purpose: Find the menu whose id matches and forward the item id to its
          PullDown. An unknown menu answers 0xB, and so does a table that runs
          out before matching.
 // ORIGINAL: 0x005FB480 ?disable_menu_item@Menu@@QAEHHH@Z 0x005FB480-0x005FB4D4
-// RULED-OUT: same shared-family defect as ?hide_menu_item@Menu@@QAEHHH@Z
+// TRIED: same shared-family defect as ?hide_menu_item@Menu@@QAEHHH@Z
 //        (0x005FB300, see its note) - a `do { } while(++index < 15)` and a
 //        raw `MenuEntry *` pointer walk were both tried there and both
 //        measured worse than the committed `for(;;)` form; not repeated
@@ -416,7 +416,7 @@ Purpose: Find the menu whose id matches and forward the item id to its
          PullDown. An unknown menu answers 0xB, and so does a table that runs
          out before matching.
 // ORIGINAL: 0x005FB540 ?enable_menu_item@Menu@@QAEHHH@Z 0x005FB540-0x005FB594
-// RULED-OUT: shared defect across the whole seven-clone family (UNK3,
+// TRIED: shared defect across the whole seven-clone family (UNK3,
 //        hide/show/disable/enable/check/uncheck_menu_item all measure
 //        1/32, 0.754 similar at their best flag set) - see
 //        ?hide_menu_item@Menu@@QAEHHH@Z (0x005FB300) for the full
@@ -465,7 +465,7 @@ Purpose: Find the menu whose id matches and forward the item id to its
          PullDown. An unknown menu answers 0xB, and so does a table that runs
          out before matching.
 // ORIGINAL: 0x005FB760 ?check_menu_item@Menu@@QAEHHH@Z 0x005FB760-0x005FB7B4
-// RULED-OUT: shared defect across the whole seven-clone family (UNK3,
+// TRIED: shared defect across the whole seven-clone family (UNK3,
 //        hide/show/disable/enable/check/uncheck_menu_item all measure
 //        1/32, 0.754 similar at their best flag set) - see
 //        ?hide_menu_item@Menu@@QAEHHH@Z (0x005FB300) for the full
@@ -514,7 +514,7 @@ Purpose: Find the menu whose id matches and forward the item id to its
          PullDown. An unknown menu answers 0xB, and so does a table that runs
          out before matching.
 // ORIGINAL: 0x005FB7C0 ?uncheck_menu_item@Menu@@QAEHHH@Z 0x005FB7C0-0x005FB814
-// RULED-OUT: shared defect across the whole seven-clone family (UNK3,
+// TRIED: shared defect across the whole seven-clone family (UNK3,
 //        hide/show/disable/enable/check/uncheck_menu_item all measure
 //        1/32, 0.754 similar at their best flag set) - see
 //        ?hide_menu_item@Menu@@QAEHHH@Z (0x005FB300) for the full

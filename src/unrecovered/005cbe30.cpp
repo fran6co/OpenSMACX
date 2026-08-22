@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005CBE30 sub_5cbe30 0x005CBE30-0x005CC14A FILE
-// RULED-OUT: MISMATCH #9 lea/push - thiscall member with local array frame layout differs from the original's; register/stack allocation for the two 91-int DDCAPS scratch buffers does not reproduce the original's `sub esp, 0x364` + rep-stosd shape byte-for-byte.
+// TRIED: MISMATCH #9 lea/push - thiscall member with local array frame layout differs from the original's; register/stack allocation for the two 91-int DDCAPS scratch buffers does not reproduce the original's `sub esp, 0x364` + rep-stosd shape byte-for-byte.
 // working copy - scaffold materialised by --work
 // size      794 bytes
 // prototype 

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005CEF8A sub_5cef8a 0x005CEF8A-0x005CF11D
-// RULED-OUT: each of the 15 calls is preceded by a `mov esi, <literal table address>` the sibling 0x005CED1D confirmed is a genuine hidden ESI input (Ghidra flags `unaff_ESI` there), not reproducible without inline asm; this transcribes every visible global store (DAT_009c3000/DAT_009c3004) and the call sequence and drops only the ESI loads, landing at 0.51 similarity.
+// TRIED: each of the 15 calls is preceded by a `mov esi, <literal table address>` the sibling 0x005CED1D confirmed is a genuine hidden ESI input (Ghidra flags `unaff_ESI` there), not reproducible without inline asm; this transcribes every visible global store (DAT_009c3000/DAT_009c3004) and the call sequence and drops only the ESI loads, landing at 0.51 similarity.
 // size      403 bytes
 // prototype
 // callers   1   call targets   2

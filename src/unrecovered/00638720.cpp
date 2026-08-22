@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00638720 sub_638720 0x00638720-0x006388B2
-// RULED-OUT: chunked-record reader (tag/length header, three named chunk tags 0x1010000/0x1020000/0x1030000 plus a default skip through the indirect callback at g_009c0b90) - diverges at #3 with the loop-entry `lea` vs `push`, register/stack layout differs from here on; landed at 0.73 similarity.
+// TRIED: chunked-record reader (tag/length header, three named chunk tags 0x1010000/0x1020000/0x1030000 plus a default skip through the indirect callback at g_009c0b90) - diverges at #3 with the loop-entry `lea` vs `push`, register/stack layout differs from here on; landed at 0.73 similarity.
 // size      402 bytes
 // prototype
 // callers   1   call targets   4

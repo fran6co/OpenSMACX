@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0061B780 sub_61b780 0x0061B780-0x0061C08E FILE
-// UNRECOVERABLE (partial): sibling of 0x00620A10 - a gouraud-shaded affine
+// TRIED (partial): sibling of 0x00620A10 - a gouraud-shaded affine
 //   texture-mapping scanline rasterizer with the same dual FPU/integer
 //   fixed-point DDA pixel loop that packs an `add` carry-out into an
 //   unrelated register via `adc`/`sbb` on the following instruction; no
@@ -11,7 +11,7 @@
 //   this->field_6c_ float-vs-integer mode branch, and the
 //   Buffer::get_data/free_data setup/cleanup - all cross-checked against
 //   the raw disassembly. The two DDA loop bodies are placeholders
-//   (RULED-OUT) that compile but do not reproduce the pixel math.
+//   (TRIED) that compile but do not reproduce the pixel math.
 // working copy - scaffold materialised by --work
 // size      2318 bytes
 // prototype 
@@ -1559,7 +1559,7 @@ int RasterSrc2::method(Buffer *bufParam, int *verts, int a3, int mode) {
                         if (this->field_6c_ == 0) {
                             /* Fixed-point gouraud-shaded scanline DDA (integer
                                path). Not reproduced bit-for-bit - see
-                               RULED-OUT. */
+                               TRIED. */
                             int scan = 0;
                             while (*g_009bb508 < *g_009bb538) {
                                 scan++;

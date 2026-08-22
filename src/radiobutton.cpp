@@ -37,7 +37,7 @@ Purpose: Compose a RadioButton from its two base-shaped subobjects
          class cannot let VC6 synthesise that flag (see the class comment in
          radiobutton.h), so it is modelled as an explicit parameter instead.
 // ORIGINAL: 0x0060D0E0 ??0RadioButton@@QAE@H@Z 0x0060D0E0-0x0060D1A2;0x00662F20-0x00662F44
-// RULED-OUT: MEASURED 3/52 agreeing, same family as CheckBox/EditGroup - no
+// TRIED: MEASURED 3/52 agreeing, same family as CheckBox/EditGroup - no
 //            SEH frame at all in this compiled body (`mov eax,0; call $+5`
 //            in place of `push -1; push handler`). `dialog_.construct()`
 //            is an ORDINARY METHOD CALL, not a placement-new constructor
@@ -120,7 +120,7 @@ Purpose: The complete-object destructor entry, which also conditionally
          destructor.
 // ORIGINAL: 0x00406F60 ??1RadioButton@@QAE@H@Z 0x00406F60-0x00406FE2
 // symbol    ?radio_button_teardown_redirect@@YIPAVRadioButton@@PAX0I@Z
-// RULED-OUT: MEASURED 3/39 agreeing, first divergence at instruction 2
+// TRIED: MEASURED 3/39 agreeing, first divergence at instruction 2
 //            (matches through `push ebp; mov ebp,esp`, then this body loads
 //            the vbtable pointer a step earlier than the image's `push
 //            esi/edi` pair). No SEH family issue here - the image's own
@@ -279,7 +279,7 @@ void RadioButton::on_mouse_leave(int a1, int a2) {
 // Promoted 2026-08-15 from src/unrecovered/0060e4d0.cpp to retire its
 // pending_bodies forwarder. Sibling of CheckBox::init_class; same
 // placement-new Buffer shape and the same SEH-funclet gap (see that body's
-// RULED-OUT).
+// TRIED).
 Status: Complete
 */
 static int *const g_006970f8 = (int *)0x006970F8;

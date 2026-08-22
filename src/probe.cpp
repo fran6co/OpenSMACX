@@ -81,11 +81,11 @@ Purpose: Calculate the cost for the faction to be able to mind control the speci
 //   It also needs /Ob2, not /Ob0 - the image INLINES `x_dist` and
 //   `has_fac_built` (calling `bitmask` directly), and under /Ob0 this tree calls
 //   both by name. There is no /O2 /Ob0 /Oi- set, so no single set answers both.
-// RULED-OUT: declaration order of `target_faction_id` / `target_x` / `target_y`.
+// TRIED: declaration order of `target_faction_id` / `target_x` / `target_y`.
 //   The image loads y, then faction, then x, which reads like a source order; all
 //   three permutations score exactly 22/350 and 0.244, so VC6 schedules those
 //   loads itself and the order in the source says nothing.
-// RULED-OUT: the remaining gap is 35 instructions and it is one block, not spread
+// TRIED: the remaining gap is 35 instructions and it is one block, not spread
 //   out. `listing_diff` aligns everything up to image instruction 80 and
 //   everything from 286 on, and cannot align the 199 image instructions between -
 //   the three inlined `has_fac_built` bit tests, the four halvings, the

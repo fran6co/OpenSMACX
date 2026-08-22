@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0046F000 ?on_mouse_move@MapWin@@QAEXHH@Z 0x0046F000-0x0046F651 FILE
-// RULED-OUT: `this` treated as a secondary-base receiver (MapWin front recovered via `self - 0x21a6c`, verified against field_1EF4C_/ field_1EF50_ in the existing MapWin scaffold layout), with the per-unit waypoint loop and vbtable-adjusted set_cursor thunk transcribed mechanically field-offset-by-field-offset against the raw disassembly. Compiles and reaches instruction #3 before diverging (prologue register-save order); not chased further given the function's size and the depth of the fixed-point waypoint bookkeeping in the middle third.
+// TRIED: `this` treated as a secondary-base receiver (MapWin front recovered via `self - 0x21a6c`, verified against field_1EF4C_/ field_1EF50_ in the existing MapWin scaffold layout), with the per-unit waypoint loop and vbtable-adjusted set_cursor thunk transcribed mechanically field-offset-by-field-offset against the raw disassembly. Compiles and reaches instruction #3 before diverging (prologue register-save order); not chased further given the function's size and the depth of the fixed-point waypoint bookkeeping in the middle third.
 // working copy - scaffold materialised by --work
 // size      1617 bytes
 // prototype void (__thiscall ?on_mouse_move@MapWin@@QAEXHH@Z)(MapWin* this, int, int)

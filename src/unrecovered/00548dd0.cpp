@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00548DD0 ?dont_withdrawal@@YAHHH@Z 0x00548DD0-0x00548F7D
-// RULED-OUT: MISMATCH #10 push/mov - the per-(player,base) flag array and the per-base coordinate/owner tables used as plain static-address casts with hand computed byte strides rather than typed extern arrays; register scheduling in the base-scan loop still differs.
+// TRIED: MISMATCH #10 push/mov - the per-(player,base) flag array and the per-base coordinate/owner tables used as plain static-address casts with hand computed byte strides rather than typed extern arrays; register scheduling in the base-scan loop still differs.
 // size      429 bytes
 // prototype
 // callers   1   call targets   4

@@ -536,7 +536,7 @@ struct SurfaceOwner {
 Purpose: Decode a PCX image out of memory into this buffer, then install the
          256 colours that follow it and publish them through the palette.
 // ORIGINAL: 0x005E2690 ?load_pcx@Buffer@@QAEHPAEKPAVPalette@@HH@Z 0x005E2690-0x005E2AF7
-// RULED-OUT: byte-exactness in this pass. Best measured is 0.22 similar
+// TRIED: byte-exactness in this pass. Best measured is 0.22 similar
 // (6-25/374 instructions across the flag sets), and the divergence is not
 // one small edit: the frame is 0x100 against the image's 0xfc, `this` and
 // `data` swap registers throughout (esi/edi/ebx allocated differently from
@@ -586,7 +586,7 @@ int Buffer::load_pcx(BYTE *data, DWORD size, Palette *palette,
         return 3;
     }
 
-    // RULED-OUT for now, and it is the whole remaining gap: the image is 374
+    // TRIED for now, and it is the whole remaining gap: the image is 374
     // instructions and we compile 288. The missing 86 are `sync_to_palette`,
     // which the image OPEN-CODES here - `Palette::get_rgbquad` at 0x005E2A1C
     // and `SetDIBColorTable` through [0x006690B4] at 0x005E2A7C are emitted
@@ -764,7 +764,7 @@ Purpose: Give the buffer a size and the storage behind it - a DirectDraw
 // which expands ours to `rep stosd`. `#pragma function(memset)` is the only
 // lever VC6 offers for that, and it is deliberately NOT used here.
 //
-// RULED-OUT: the last six instructions, and they are NOT source-shaped.
+// TRIED: the last six instructions, and they are NOT source-shaped.
 // Under `/O2 /Oi- /Gy /GR- /GX` this is 280/286 with every instruction from
 // 0x005D7930 to the epilogue identical and the two listings the SAME LENGTH.
 // The whole divergence is one six-instruction window at 0x005D7924, where the
@@ -968,7 +968,7 @@ Purpose: Flood the whole buffer with one colour - through DirectDraw when
 // assembly one.
 //
 // ORIGINAL: 0x005DFB50 ?fill@Buffer@@QAEHH@Z 0x005DFB50-0x005DFCCD
-// RULED-OUT: byte-exactness, because the image's body is HAND-WRITTEN ASSEMBLY - a `pushf`/`cld`/`mul` block at 0x005DFC43 that saves no flags, clobbers callee-saved ebx without saving it, and uses opcodes VC6 does not emit from C++. This tree does not answer that with `__asm`. The reasoning was already written out below in prose, which the reader cannot see - so this body kept showing up as untouched and kept being re-picked. Best reached is 18/157; the frame alone is 0xE0 against 0xD0, four locals the asm block addresses directly.
+// TRIED: byte-exactness, because the image's body is HAND-WRITTEN ASSEMBLY - a `pushf`/`cld`/`mul` block at 0x005DFC43 that saves no flags, clobbers callee-saved ebx without saving it, and uses opcodes VC6 does not emit from C++. This tree does not answer that with `__asm`. The reasoning was already written out below in prose, which the reader cannot see - so this body kept showing up as untouched and kept being re-picked. Best reached is 18/157; the frame alone is 0xE0 against 0xD0, four locals the asm block addresses directly.
 // size      381 bytes
 // prototype int (__thiscall ?fill@Buffer@@QAEHH@Z)(Buffer* this, int)
 // callers   40   call targets   1
@@ -1117,7 +1117,7 @@ Purpose: Fill a rectangle of this buffer with a single colour, through
 // assembly one.
 //
 // ORIGINAL: 0x005DFCD0 ?fill@Buffer@@QAEHPAURECT@@H@Z 0x005DFCD0-0x005DFEFC
-// RULED-OUT: byte-exactness, because 0x005DFE69 is a HAND-WRITTEN ASSEMBLY
+// TRIED: byte-exactness, because 0x005DFE69 is a HAND-WRITTEN ASSEMBLY
 // block that spends EBP as a row counter (`push ebp; mov ebp, ecx` ... `dec
 // ebp; jne row`) inside a function with a real frame, and routes the
 // per-row stride through a named file-scope global (`add edi,
@@ -1412,7 +1412,7 @@ Purpose: THE BLITTER. Copy a rectangle out of this buffer into `buffer`,
 // assembly one.
 //
 // ORIGINAL: 0x005DFF00 ?copy@Buffer@@QAEHPAVBuffer@@HHHHHH@Z 0x005DFF00-0x005E079B
-// RULED-OUT: byte-exactness, twice over, and it was RULED OUT IN PROSE ONLY
+// TRIED: byte-exactness, twice over, and it was RULED OUT IN PROSE ONLY
 //   until now - which is why `frontier.py --untouched` kept offering this
 //   body. Both reasons are mechanical facts, not judgements.
 //   (1) `uv run tools/handwritten_asm.py` lists this address for `pushf` and
@@ -2015,7 +2015,7 @@ int __fastcall buffer_set_clip_redirect(Buffer *self, void *, RECT *rect) {
 /*
 Purpose: Measure `len` bytes of a string, following the buffer's markup.
 // ORIGINAL: 0x005DC7C0 ?text_width@Buffer@@QAEHPADH@Z 0x005DC7C0-0x005DCA02
-// RULED-OUT: see the "NOT BYTE EXACT" paragraph below - the image drives
+// TRIED: see the "NOT BYTE EXACT" paragraph below - the image drives
 //            this scan through `&len` (a spilled frame slot reloaded every
 //            iteration) and accumulates width in the dead `text` parameter
 //            slot, which is an inlined-helper-over-pointers shape a
@@ -2211,7 +2211,7 @@ int edge_int(uint32_t bits) {
 /*
 Purpose: Fill one horizontal run of pixels, clipped to the buffer's rectangle.
 // ORIGINAL: 0x005E1A80 ?hline@Buffer@@QAEXHHHH@Z 0x005E1A80-0x005E1BF0
-// RULED-OUT: the second null check on the computed destination address
+// TRIED: the second null check on the computed destination address
 // (`add eax, edx; test eax, eax; je`, which the image keeps at 0x005E1B83
 // even though the sum of a non-null base and offset cannot be null).
 // Written as a plain sum through a named `char *const dest`, `== 0`,
@@ -2281,7 +2281,7 @@ void Buffer::hline(int x1, int x2, int y, int color) {
     // second `test eax, eax; je`, four bytes, which is exactly what this
     // body was short by. The sum of a non-null base and an offset cannot be
     // null, so the check is unreachable; it is in the shipped bytes.
-    // RULED-OUT: the check IS here and VC6 still folds it away. The image
+    // TRIED: the check IS here and VC6 still folds it away. The image
     // emits `add eax, edx; test eax, eax; je`, keeping a `test` that the add's
     // own flags already answer; ours emits `add eax, edx; je`. One instruction
     // in 131, and the body is otherwise identical - 0.996 similar, the only
@@ -2321,7 +2321,7 @@ Purpose: Fill one vertical run of pixels, clipped to the buffer's rectangle.
 // prototype void (__thiscall ?vline@Buffer@@QAEXHHHH@Z)(Buffer* this, int, int, int, int)
 // kind      game
 // calls     (none)
-// RULED-OUT: byte-exact is unreachable (hand-written `loop`/`ah`-write,
+// TRIED: byte-exact is unreachable (hand-written `loop`/`ah`-write,
 //   above); best measured is /O2 /Gy /GR- /Oy- /GX at 14/145 instructions,
 //   0.925 similar - still MISMATCH, and this is the ceiling.
 Return Value: n/a
@@ -2475,7 +2475,7 @@ void __fastcall buffer_clear_links_redirect(Buffer *self, void *) {
 /*
 Purpose: Draw a string, switching fonts on markup and recording link regions.
 // ORIGINAL: 0x005DCAE0 ?write_multi_font_raw_l@Buffer@@QAEHPADHHH@Z 0x005DCAE0-0x005DCE23
-// RULED-OUT: 3/288 - one extra local dword (`sub esp, 0xc` here against
+// TRIED: 3/288 - one extra local dword (`sub esp, 0xc` here against
 //            the image's `sub esp, 8`) throws off the whole frame from
 //            instruction 2 on. `text_width`'s own twin (same file) has an
 //            identical shape and an identical plateau; both are the
@@ -2640,7 +2640,7 @@ Purpose: Draw at most `len` characters of a string at an explicit pen
 //        hoisting it into one local - `call_diff` showed FEWER strlen calls
 //        than the image's four, matching Font::width's own documented
 //        macro-reevaluation lever. 0/64 -> 22/64 (0.850 similar).
-// RULED-OUT: remaining 22/64 plateau is a register role swap (esi/edi both
+// TRIED: remaining 22/64 plateau is a register role swap (esi/edi both
 //            hold `text`, assigned to the opposite register from the
 //            image's) starting at instruction 2, before either ternary is
 //            reached - a VC6 allocation choice at the very top of the
@@ -2702,7 +2702,7 @@ Purpose: Draw at most `len` characters of a string flush against a
 //        it regardless. Adding `if (!font1_) { font1_ = FontDefault; }`
 //        back moved 0/80 -> 4/80 (68 -> 73 instructions, matching shape
 //        much closer).
-// RULED-OUT: remaining gap is scheduling - the image reads all four RECT
+// TRIED: remaining gap is scheduling - the image reads all four RECT
 //            fields (including the dead `rect->right`) BEFORE the font1_
 //            recheck; this body's recheck (textually before the final
 //            `rect->left` use) gets scheduled first instead. Not chased
@@ -2791,7 +2791,7 @@ Purpose: Draw at most `len` characters of a string horizontally centred in a
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005DC7C0 0x005DCAE0 0x006453E0
-// RULED-OUT: splitting the MIN guard into two guard clauses - `if (MIN < 0)
+// TRIED: splitting the MIN guard into two guard clauses - `if (MIN < 0)
 //   return;` then `const int limit = MIN; if (!limit) return;` - on the
 //   theory that the image's separate return block at instruction 41 wants
 //   two distinct early exits. It is WORSE: 39 of 76 agreeing becomes 34, and
@@ -2864,7 +2864,7 @@ int __fastcall buffer_write_cent_l_redirect(Buffer *self, void *, LPSTR text,
 Purpose: Draw at most `len` characters of a string centred both horizontally
          and vertically inside a rectangle.
 // ORIGINAL: 0x005DD130 ?write_cent_l@Buffer@@QAEHPADPAURECT@@H@Z 0x005DD130-0x005DD24A
-// RULED-OUT: close in shape and count (109 compiled against the image's
+// TRIED: close in shape and count (109 compiled against the image's
 //            106) but low `agreeing` - the remainder is a consistent
 //            ebx/ebp/edi/ecx register permutation through the whole body,
 //            not a structural gap. Consistent with the sibling

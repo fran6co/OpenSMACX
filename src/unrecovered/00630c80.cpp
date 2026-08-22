@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00630C80 ?enum_players@Net@@QAEHKKPBUDPNAME@@KPAX@Z 0x00630C80-0x00630D63 FILE
-// RULED-OUT: cached `record` char* recomputed once vs re-derived from g_009bc4b8/g_009be4bc at every use site as the asm does
+// TRIED: cached `record` char* recomputed once vs re-derived from g_009bc4b8/g_009be4bc at every use site as the asm does
 // working copy - scaffold materialised by --work
 // size      227 bytes
 // prototype int (__thiscall ?enum_players@Net@@QAEHKKPBUDPNAME@@KPAX@Z)(Net* this, unsigned int, unsigned int, DPNAME*, unsigned int, void*)

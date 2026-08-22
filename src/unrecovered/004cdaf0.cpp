@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004CDAF0 ?shoot_it@@YAHHHHHH@Z 0x004CDAF0-0x004CE206 FILE
-// RULED-OUT: mechanical Ghidra-shape transcription (int-arithmetic bases for the fixed globals, char*/int* casts sized to match each DAT_ family's stride) compiles and matches through instruction #2; not chased to byte-exact given size (1814 bytes).
+// TRIED: mechanical Ghidra-shape transcription (int-arithmetic bases for the fixed globals, char*/int* casts sized to match each DAT_ family's stride) compiles and matches through instruction #2; not chased to byte-exact given size (1814 bytes).
 // working copy - scaffold materialised by --work
 // size      1814 bytes
 // prototype int (__cdecl ?shoot_it@@YAHHHHHH@Z)(int factionID1, int factionID2, int xCoord, int yCoord, int)

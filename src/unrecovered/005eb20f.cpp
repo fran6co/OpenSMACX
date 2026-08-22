@@ -68,7 +68,7 @@ class Sprite { public:
 
     void fill_scaling_table();
 };
-// RULED-OUT: ten statement-order permutations of the else-branch locals
+// TRIED: ten statement-order permutations of the else-branch locals
 //            (step/rem2/err/quotient, and remainder-as-named-var) all
 //            reproduce the loop and division logic but land the
 //            ebx/esi/edi push at the wrong point in the prologue - either

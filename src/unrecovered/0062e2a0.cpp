@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0062E2A0 ?join_service@Net@@QAEHPAUServiceStruct@@@Z 0x0062E2A0-0x0062E41C FILE
-// RULED-OUT: no `push ebp`/frame; the callee reuses the incoming a1 stack slot as the DirectPlayCreate out-param (Ghidra shows `unaff_EDI`). Rewritten with a fresh `void *dp` local instead of reusing `a1`'s storage; #2 mismatch is in the prologue.
+// TRIED: no `push ebp`/frame; the callee reuses the incoming a1 stack slot as the DirectPlayCreate out-param (Ghidra shows `unaff_EDI`). Rewritten with a fresh `void *dp` local instead of reusing `a1`'s storage; #2 mismatch is in the prologue.
 // size      380 bytes
 // prototype int (__thiscall ?join_service@Net@@QAEHPAUServiceStruct@@@Z)(Net* this, ServiceStruct*)
 // callers   2   call targets   4

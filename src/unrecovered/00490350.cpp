@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00490350 ?set_preferences@PrefWin@@QAEXXZ 0x00490350-0x00490AFA FILE
-// RULED-OUT: declared each CheckBox* group pointer lazily, right before its first get_state_id() call (matching the original's `lea edi, [esi+OFFSET]` sitting immediately before that group's first push), instead of all six upfront. Moved divergence #1(sim0.98)->#63 on the frameless build (original prologue is `push esi; mov esi,ecx; push edi` with no `push ebp`, so that is the row that matters, not the framed one the ranking line shows). Not chased further given size (1962 bytes / ~71 mechanical get_state_id calls).
+// TRIED: declared each CheckBox* group pointer lazily, right before its first get_state_id() call (matching the original's `lea edi, [esi+OFFSET]` sitting immediately before that group's first push), instead of all six upfront. Moved divergence #1(sim0.98)->#63 on the frameless build (original prologue is `push esi; mov esi,ecx; push edi` with no `push ebp`, so that is the row that matters, not the framed one the ranking line shows). Not chased further given size (1962 bytes / ~71 mechanical get_state_id calls).
 // working copy - scaffold materialised by --work
 // size      1962 bytes
 // prototype void (__thiscall ?set_preferences@PrefWin@@QAEXXZ)(PrefWin* this)

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00644DC6 ICSendMessage 0x00644DC6-0x00644DCC FILE
-// RULED-OUT: direct call through the IAT-style global cast to a function- pointer type; VC6 never folds it to the bare tail jmp, it always emits a push/call sequence instead (tried a plain forwarding wrapper too, same divergence)
+// TRIED: direct call through the IAT-style global cast to a function- pointer type; VC6 never folds it to the bare tail jmp, it always emits a push/call sequence instead (tried a plain forwarding wrapper too, same divergence)
 // working copy - scaffold materialised by --work
 // size      6 bytes
 // prototype LRESULT (__stdcall ICSendMessage)(HIC hic, UINT msg, DWORD dw1, DWORD dw2)

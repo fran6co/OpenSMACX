@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005592D0 ?get_zoom@FontQueue@@QAEHHHHH@Z 0x005592D0-0x005593D9 FILE
-// RULED-OUT: `int foundPos=-1` sentinel search vs a `while` loop with an early `goto`-style break matching the disassembly's `jl` dead branch (SF!=OF on an always-nonnegative counter) - landed with the sentinel form, MISMATCH at #2 already (loop-entry `cmp` vs the original's cached `mov`).
+// TRIED: `int foundPos=-1` sentinel search vs a `while` loop with an early `goto`-style break matching the disassembly's `jl` dead branch (SF!=OF on an always-nonnegative counter) - landed with the sentinel form, MISMATCH at #2 already (loop-entry `cmp` vs the original's cached `mov`).
 // size      265 bytes
 // prototype int (__thiscall ?get_zoom@FontQueue@@QAEHHHHH@Z)(FontQueue* this, int, int, int, int)
 // callers   2   call targets   1

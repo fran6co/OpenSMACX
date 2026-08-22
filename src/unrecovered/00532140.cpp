@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00532140 ?veh_drop@NetDaemon@@QAEHHHH@Z 0x00532140-0x00532563 FILE
-// RULED-OUT: flat byte-offset fields on `this` (class deliberately opaque); goto-based control flow matching the two shared cleanup labels (LAB_00532357 reject path, LAB_0053254e release path); fixed two Ghidra-vs-raw-asm discrepancies (speed()/array index use a1 not a2 after the reassignment at 0x53236F; message_data arg order is a1,a2,a3). Diverges at #0 (thiscall prologue).
+// TRIED: flat byte-offset fields on `this` (class deliberately opaque); goto-based control flow matching the two shared cleanup labels (LAB_00532357 reject path, LAB_0053254e release path); fixed two Ghidra-vs-raw-asm discrepancies (speed()/array index use a1 not a2 after the reassignment at 0x53236F; message_data arg order is a1,a2,a3). Diverges at #0 (thiscall prologue).
 // working copy - scaffold materialised by --work
 // size      1059 bytes
 // prototype int (__thiscall ?veh_drop@NetDaemon@@QAEHHHH@Z)(NetDaemon* this, int vehID, int xCoord, int yCoord)

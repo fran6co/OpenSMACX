@@ -34,7 +34,7 @@ Purpose: Construct the GraphicWin base and the three embedded subobjects
 // kind      game
 // flags     hidden;sp_ready;purged_ok;frame
 // calls     0x005D4CF0 0x005D7210 0x004626E0
-// RULED-OUT: best reached is 13/31, 0.882 similar (best of 10 flag sets).
+// TRIED: best reached is 13/31, 0.882 similar (best of 10 flag sets).
 //        The residual is placement-new's null guard - see
 //        multidebug.cpp, where converting to a real constructor closed it
 //        outright. NOT APPLIED HERE: `mapWin_` is built with

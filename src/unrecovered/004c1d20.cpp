@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004C1D20 ?vehdraw_construct_vehicle@@YAHHPAUCaviar@@@Z 0x004C1D20-0x004C202D FILE
-// RULED-OUT: MISMATCH #0 'push' vs 'mov' - transcribed the Ghidra decompile, confirming via raw disasm that DAT_009ab888 is a dword field at offset 0 of the same 0x34-byte-stride record as DAT_009ab88c/d/e/f, and DAT_00952832/0x952836 form a matching per-vehID 0x34-byte record; even so the very first instruction (prologue register save order) diverges, not chased further.
+// TRIED: MISMATCH #0 'push' vs 'mov' - transcribed the Ghidra decompile, confirming via raw disasm that DAT_009ab888 is a dword field at offset 0 of the same 0x34-byte-stride record as DAT_009ab88c/d/e/f, and DAT_00952832/0x952836 form a matching per-vehID 0x34-byte record; even so the very first instruction (prologue register save order) diverges, not chased further.
 // working copy - scaffold materialised by --work
 // size      781 bytes
 // prototype int (__cdecl ?vehdraw_construct_vehicle@@YAHHPAUCaviar@@@Z)(int vehID, Caviar*)

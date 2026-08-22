@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004C8B40 ?init@VoiceRx@@QAEHKPAXK@Z 0x004C8B40-0x004C8BC5 FILE
-// RULED-OUT: explicit __thiscall on a plain function-pointer typedef (C4234); a member-function-pointer/union shim compiles. MISMATCH #4 'mov' vs 'push' remains open.
+// TRIED: explicit __thiscall on a plain function-pointer typedef (C4234); a member-function-pointer/union shim compiles. MISMATCH #4 'mov' vs 'push' remains open.
 // working copy - scaffold materialised by --work
 // size      133 bytes
 // prototype int (__thiscall ?init@VoiceRx@@QAEHKPAXK@Z)(VoiceRx* this, unsigned int, void*, unsigned int)

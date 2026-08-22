@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005D5890 ?soft_update@GraphicWin@@QAEXXZ 0x005D5890-0x005D592D FILE
-// RULED-OUT: RECT r = buffer_.rect2_; then left/right += dx, top/bottom += dy after client_to_screen - MISMATCH #33 mov/add, deep into the field-add sequence, not the branch shape.
+// TRIED: RECT r = buffer_.rect2_; then left/right += dx, top/bottom += dy after client_to_screen - MISMATCH #33 mov/add, deep into the field-add sequence, not the branch shape.
 // working copy - scaffold materialised by --work
 // size      157 bytes
 // prototype void (__thiscall ?soft_update@GraphicWin@@QAEXXZ)(GraphicWin* this)

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00611060 ?on_left_click@SpriteBox@@QAEXHH@Z 0x00611060-0x0061114A FILE
-// RULED-OUT: `this` is offset by TWO different constants for two different base sub-objects (this-0x7c for Spot::check, this-0x8c for the SpriteBox proper, whose field_0_ IS *(this-0x8c)); modelled with raw char*-adjusted casts rather than real inheritance. `a2` is an in/out param aliased via `&a2` into check(). Gets to instruction 25 of ~90 before diverging on push/mov ordering around the `push ebp; push esi` callee-save point.
+// TRIED: `this` is offset by TWO different constants for two different base sub-objects (this-0x7c for Spot::check, this-0x8c for the SpriteBox proper, whose field_0_ IS *(this-0x8c)); modelled with raw char*-adjusted casts rather than real inheritance. `a2` is an in/out param aliased via `&a2` into check(). Gets to instruction 25 of ~90 before diverging on push/mov ordering around the `push ebp; push esi` callee-save point.
 // working copy - scaffold materialised by --work
 // size      234 bytes
 // prototype void (__thiscall ?on_left_click@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005F52E0 ?bring_child_to_top@Win@@QAEXPAVWin@@@Z 0x005F52E0-0x005F539C FILE
-// RULED-OUT: MISMATCH, closest at 193/188 bytes (mnemonic_similarity 0.90). An extra `push ebx` appears (register pressure from 4 live locals in the z-order loop: entry/cur/j plus the 'this'-Win receiver) that the original avoids; tried both a direct `(*entry)->iSomeFlag_ & 1` and a cached `Win *w = *entry;` form, no difference. `g_win_zorder_list` as its own `extern Win *[]` (not the fixed-address alias) for the indexed array walk, per the indexed-table-base lever.
+// TRIED: MISMATCH, closest at 193/188 bytes (mnemonic_similarity 0.90). An extra `push ebx` appears (register pressure from 4 live locals in the z-order loop: entry/cur/j plus the 'this'-Win receiver) that the original avoids; tried both a direct `(*entry)->iSomeFlag_ & 1` and a cached `Win *w = *entry;` form, no difference. `g_win_zorder_list` as its own `extern Win *[]` (not the fixed-address alias) for the indexed array walk, per the indexed-table-base lever.
 // working copy - scaffold materialised by --work
 // size      188 bytes
 // prototype void (__thiscall ?bring_child_to_top@Win@@QAEXPAVWin@@@Z)(Win* this, Win*)

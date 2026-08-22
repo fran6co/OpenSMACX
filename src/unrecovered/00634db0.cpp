@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00634DB0 ?add_filter@FileBox@@QAEHPADPAD@Z 0x00634DB0-0x00634E73 FILE
-// RULED-OUT: byte-exact - original has no ebp frame at all (esp-relative addressing throughout); any local variable we declare makes VC6 spill differently and changes the prologue shape. Tried both a variable-per-step version and a minimal-locals version (reusing one char** for both strcat/append steps); neither changed the prologue divergence at instruction 0.
+// TRIED: byte-exact - original has no ebp frame at all (esp-relative addressing throughout); any local variable we declare makes VC6 spill differently and changes the prologue shape. Tried both a variable-per-step version and a minimal-locals version (reusing one char** for both strcat/append steps); neither changed the prologue divergence at instruction 0.
 // working copy - scaffold materialised by --work
 // size      195 bytes
 // prototype int (__thiscall ?add_filter@FileBox@@QAEHPADPAD@Z)(FileBox* this, int8*, int8*)

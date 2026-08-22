@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004E0120 ?editor_energy@Console@@QAEXXZ 0x004E0120-0x004E020E
-// RULED-OUT: statement order for the two loop-body stores
+// TRIED: statement order for the two loop-body stores
 // size      238 bytes
 // prototype void (__thiscall ?editor_energy@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   7

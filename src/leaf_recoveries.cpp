@@ -239,7 +239,7 @@ Purpose: Follow a two-link chain, or return zero when the first link is unset.
          a body that works whenever the two happen to agree.
 
 // ORIGINAL: 0x005E3630 sub_5e3630 0x005E3630-0x005E3644 SEMANTIC
-// RULED-OUT: 8 source shapes measured (docs/BYTE_MATCH_ROUTE.md:295-340),
+// TRIED: 8 source shapes measured (docs/BYTE_MATCH_ROUTE.md:295-340),
 //            plateaus at MNEMONIC_ONLY 7/9; the image reuses eax across the
 //            whole chase and every guard-clause / named-link / walking-
 //            pointer spelling still routes the middle link through ecx.
@@ -976,7 +976,7 @@ Purpose: Report a node's neighbours through two optional out-parameters.
          just written, and a cached version would not.
 
 // ORIGINAL: 0x0063E7F0 sub_63e7f0 0x0063E7F0-0x0063E81C SEMANTIC
-// RULED-OUT: plateaus at MNEMONIC_ONLY 11/18 - eax/edx swap on the `first`
+// TRIED: plateaus at MNEMONIC_ONLY 11/18 - eax/edx swap on the `first`
 //            branch (image keeps `first` in eax, node-reload in edx; this
 //            tree does the opposite). Caching the loaded front value in a
 //            named local, and `!=nullptr` vs bare pointer truthiness, both
@@ -1187,7 +1187,7 @@ Purpose: Swap two pairs of fields in the object this one points at.
          `[ecx]` would be seen.
 
 // ORIGINAL: 0x005CBBC0 sub_5cbbc0 0x005CBBC0-0x005CBBF5 SEMANTIC
-// RULED-OUT: plateaus at MNEMONIC_ONLY 13/22 - re-reading `load32(node, 0x20)`
+// TRIED: plateaus at MNEMONIC_ONLY 13/22 - re-reading `load32(node, 0x20)`
 //            inside the guard instead of caching it in `moved` scores the
 //            same (measured); the divergence is edx-vs-esi register choice
 //            at the very first load, before any branch, so it is register
@@ -1306,7 +1306,7 @@ Purpose: Construct the Buffer subobject, then clear one field.
          order that would matter if the constructor ever reached that far back.
 
 // ORIGINAL: 0x004BEA30 ??0UV2Player@@QAE@XZ 0x004BEA30-0x004BEA4C
-// RULED-OUT: direct `new (bytes+0x8DC) Buffer()` scores WORSE (0/8, not 2/8) -
+// TRIED: direct `new (bytes+0x8DC) Buffer()` scores WORSE (0/8, not 2/8) -
 //            it still pays the placement-new null guard the image never has,
 //            AND drops the `buffer_construct_redirect` indirection this
 //            candidate needs to reach the ctor at all. The image calls
@@ -1696,7 +1696,7 @@ Purpose: Destroy the ListBox at 0x48, the Dialog at 0xa60, and the GraphicWin
 // LEVER: nullptr also costs the caller a `xor edx, edx` it never had to pay
 // (the destructors ignore their second slot) - casting each redirect through
 // `SingleArgDtor` before calling drops that instruction too.
-// RULED-OUT: VC6 tail-call-folds the LAST call into `jmp` regardless of which
+// TRIED: VC6 tail-call-folds the LAST call into `jmp` regardless of which
 // spelling reaches it (SingleArgDtor or the plain 2-arg redirect+nullptr) -
 // the image has a real `call 0x5d4dd0` / `pop edi` / `pop esi` / `ret` there.
 // Reordering the three calls is not legal (it would call the wrong symbol
@@ -1734,7 +1734,7 @@ Purpose: Destroy the Dialogs at 0x188, the Dialog at 0xba0, and the GraphicWin
 // LEVER: same fix as leaf_004080b0_redirect above - direct calls to the named
 // redirects, not through the `Leaf*Destructor` pointer variables, cast
 // through `SingleArgDtor` so nullptr's `xor edx, edx` is not paid either.
-// RULED-OUT: same tail-call fold on the trailing call as 004080B0 - VC6
+// TRIED: same tail-call fold on the trailing call as 004080B0 - VC6
 // turns the last fastcall into `jmp` no matter which of the two spellings
 // reaches it; SingleArgDtor on all three still scores best (measured).
 Return Value: n/a
@@ -1786,7 +1786,7 @@ Purpose: Construct a Buffer on the stack and immediately destroy it.
 // `call dword ptr [...]` where the image has a direct `call rel32`, since
 // the target is a relocation on both sides). `listing_diff` no longer shows
 // an unresolved `call dword ptr [0]` after this.
-// RULED-OUT: `new (scratch) Buffer(); scratch->~Buffer();` in place of the
+// TRIED: `new (scratch) Buffer(); scratch->~Buffer();` in place of the
 // redirects - PLACEMENT NEW PULLS IN AN SEH FRAME here (Buffer's destructor
 // is non-trivial and its constructor calls non-intrinsics), even though
 // `scratch` is a local array's address and provably non-null. Similarity
@@ -1932,7 +1932,7 @@ Status: Complete
 // the adjusted `this` with `lea ecx,[edx+eax]` and then re-derives the
 // target vtable via `[edx+eax]` addressing instead of reading `[ecx]`,
 // where the FIRST teardown call (on `sub_obj`, same shape) compiles
-// byte-exact with `add`+`[ecx]`. RULED-OUT: a named `int *vtbl`/`int
+// byte-exact with `add`+`[ecx]`. TRIED: a named `int *vtbl`/`int
 // disp` pair, a fused single expression, and routing the call through
 // `vtable_method` all reproduce the identical `add`+`[ecx]` form as the
 // first call - the allocator's choice between the two forms tracks

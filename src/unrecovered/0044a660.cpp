@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0044A660 ?try_to_add_me@FameWin@@QAEXXZ 0x0044A660-0x0044AC05 FILE
-// RULED-OUT: MISMATCH #14, register-allocation-level divergence in the compute_score call setup; full body (score/rank tables, demote chain, 3 tie-break loops, name copies, pcx message) transcribed from the disassembly with byte-offset field access.
+// TRIED: MISMATCH #14, register-allocation-level divergence in the compute_score call setup; full body (score/rank tables, demote chain, 3 tie-break loops, name copies, pcx message) transcribed from the disassembly with byte-offset field access.
 // working copy - scaffold materialised by --work
 // size      1445 bytes
 // prototype void (__thiscall ?try_to_add_me@FameWin@@QAEXXZ)(FameWin* this)

@@ -193,7 +193,7 @@ Purpose: Release every entry in the list, notifying the owner about each
 //        folds their bodies (and destroy_virtual_base's own indirect
 //        vtable-adjustor dispatch) directly into this call site, taking
 //        call_diff to 0 disagreeing.
-// RULED-OUT: THAT LEVER NO LONGER HOLDS for the OUT-OF-LINE body at
+// TRIED: THAT LEVER NO LONGER HOLDS for the OUT-OF-LINE body at
 //            0x00402970, and it is not the `inline` keyword that stopped
 //            working. call_diff reports MORE here again - 2 calls to
 //            destroy_virtual_base against the image's 0 - at EVERY flag set it
@@ -312,7 +312,7 @@ Purpose: Reset the list to its constructed state, installing both virtual
 //        zero register (`xor ebx, ebx` at 0x00401069) between the `lea` and
 //        the first store, and a volatile store pins the schedule so the xor
 //        lands six instructions late. 50 of 64 -> 56 of 64.
-// RULED-OUT: the last 8 are one register choice inside the SECOND
+// TRIED: the last 8 are one register choice inside the SECOND
 //            destroy_virtual_base, at 0x004010C3. The image keeps the vbtable
 //            delta in edx and spends `lea ecx, [edx + eax]` plus `mov eax,
 //            [edx + eax]`; VC6 here reuses ecx for the delta and spends `mov
@@ -392,7 +392,7 @@ Purpose: Close a derived string list, releasing its entries under its own
 //        the SAME `lea esi, [ebx - 0x28]` the first stage used, so close()'s
 //        own 0x1C entry adjustment has no part in it), and remove_all's
 //        `int index = 0` moved out of the count test.
-// RULED-OUT: the ceiling is THE EH FRAME, and it is worth 14 instructions
+// TRIED: the ceiling is THE EH FRAME, and it is worth 14 instructions
 //            before anything else can line up. The image opens `push -1; push
 //            0x65098b; mov eax, fs:[0]; push eax; mov fs:[0], esp` - the
 //            second span, 0x00650980-0x00650995, is that handler's scope
@@ -445,7 +445,7 @@ Purpose: Destroy a most-derived StringList: run the source-owned two-stage
 //   EDX, and 0x004066C0's body reads only ECX - the `_redirect` name is this
 //   tree's own, so nothing about the image required the arity. Declaring ONE
 //   parameter takes this call site to BYTE_EXACT 9/9.
-// RULED-OUT: reaching the same 9/9 with a single-argument OVERLOAD forwarding
+// TRIED: reaching the same 9/9 with a single-argument OVERLOAD forwarding
 //   to a two-argument body. It measures identically and it is WRONG: VC6 emits
 //   the overload as a 7-byte COMDAT thunk (`33 D2` xor edx,edx; `E9` jmp) and
 //   the call relocation targets THAT, so the recovered call graph becomes

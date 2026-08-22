@@ -1,6 +1,6 @@
 // ORIGINAL: 0x005D68C0 sub_5d68c0 0x005D68C0-0x005D6A42 FILE
-// RULED-OUT: none confirmed byte-exact; MISMATCH #44 'mov' vs 'jmp' - the IDA-guessed __stdcall(int) contradicts pervasive [ecx+N] reads with no matching stack slot, so this landed as a __thiscall member of a synthetic owner class instead (PROPOSAL below).
-// RULED-OUT: flipping the `(flags & 0x10) == 0` polarity to `!= 0` and swapping which field group goes in which arm moved the first divergence from #31 to #44 (similarity 0.70 -> 0.83).
+// TRIED: none confirmed byte-exact; MISMATCH #44 'mov' vs 'jmp' - the IDA-guessed __stdcall(int) contradicts pervasive [ecx+N] reads with no matching stack slot, so this landed as a __thiscall member of a synthetic owner class instead (PROPOSAL below).
+// TRIED: flipping the `(flags & 0x10) == 0` polarity to `!= 0` and swapping which field group goes in which arm moved the first divergence from #31 to #44 (similarity 0.70 -> 0.83).
 // size      386 bytes
 // prototype
 // callers   0   call targets   0

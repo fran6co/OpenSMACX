@@ -58,7 +58,7 @@ extern "C" int __cdecl sub_626470(int *param_1, int param_2) {
     //     char *self = reinterpret_cast<char *>(this);
     //     int v = *reinterpret_cast<int *>(self + 0x24);
     //
-    // RULED-OUT: 200/208 bytes (edit distance 4, first divergence in the
+    // TRIED: 200/208 bytes (edit distance 4, first divergence in the
     // prologue). Original pushes ebx/ebp/esi/edi (4 registers, full
     // register pressure) before the first check; every source form tried
     // here - named temps for each table read, a `volatile` temp to block

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004BE650 ?tut_map@TutWin@@QAEHPBDHHHPAUSprite@@HHH@Z 0x004BE650-0x004BE7C6 FILE
-// RULED-OUT: separate `int x = -1; int y = -1;` locals instead of the original's shared `or eax,0xffffffff` init (#3 mismatch, 'or' vs 'mov'); combined declaration compiled the same way.
+// TRIED: separate `int x = -1; int y = -1;` locals instead of the original's shared `or eax,0xffffffff` init (#3 mismatch, 'or' vs 'mov'); combined declaration compiled the same way.
 // size      374 bytes
 // prototype int (__thiscall ?tut_map@TutWin@@QAEHPBDHHHPAUSprite@@HHH@Z)(TutWin* this, int8*, int xCoord, int yCoord, int, Sprite*, int, int, int)
 // callers   9   call targets   3

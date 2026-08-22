@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004F4FB0 ?drone_riot@@YAXXZ 0x004F4FB0-0x004F5CD6 FILE
-// RULED-OUT: the first ~180 bytes (unrest flag check, draw_tile, the four popb dialog variants) are transcribed and argument-order checked directly against the raw disassembly. Past that, Ghidra typed `DAT_0090ea30` (BaseCurrent) as `short*`, so every offset it prints is HALF the real byte offset - doubled here and cross-checked against src/base.h's `Base` (0x38 governor, 0x4C queue_size, 0x50 queue_production_id, 0x7C specialist_total match exactly). Eight callees (owner_set/kill/best-target-transfer helpers at 0x46B1F0, 0x46B190, 0x580860, 0x591B10, 0x591C10, 0x5ADE80, 0x5B57D0, 0x5C0B00) have no catalogued name or signature in this scaffold and are called with no arguments; the base_energy/minerals/nutrient/support/yield call order is a guess. The nearest-rival-faction base-transfer arithmetic (distance metric, unit disband loop) follows Ghidra's shape but is not verified instruction-for-instruction.
+// TRIED: the first ~180 bytes (unrest flag check, draw_tile, the four popb dialog variants) are transcribed and argument-order checked directly against the raw disassembly. Past that, Ghidra typed `DAT_0090ea30` (BaseCurrent) as `short*`, so every offset it prints is HALF the real byte offset - doubled here and cross-checked against src/base.h's `Base` (0x38 governor, 0x4C queue_size, 0x50 queue_production_id, 0x7C specialist_total match exactly). Eight callees (owner_set/kill/best-target-transfer helpers at 0x46B1F0, 0x46B190, 0x580860, 0x591B10, 0x591C10, 0x5ADE80, 0x5B57D0, 0x5C0B00) have no catalogued name or signature in this scaffold and are called with no arguments; the base_energy/minerals/nutrient/support/yield call order is a guess. The nearest-rival-faction base-transfer arithmetic (distance metric, unit disband loop) follows Ghidra's shape but is not verified instruction-for-instruction.
 // working copy - scaffold materialised by --work
 // size      3366 bytes
 // prototype 
@@ -2121,7 +2121,7 @@ static int *const g_009ab88d = (int *)0x009AB88D;
 static int *const g_009ab88e = (int *)0x009AB88E;
 static int *const g_009ab88f = (int *)0x009AB88F;
 // Helpers with no catalogued name and no established signature; called
-// plainly (see RULED-OUT).
+// plainly (see TRIED).
 extern "C" int __cdecl sub_46b1f0();
 extern "C" int __cdecl sub_46b190();
 extern "C" int __cdecl sub_580860();
@@ -2206,7 +2206,7 @@ AFTER_POPUP:
     // exact arithmetic below (bitmask/tile-owner lookups, distance-metric
     // base-selection, unit disband weighting) follows Ghidra's structure
     // closely but several of its callees have no catalogued name or
-    // signature (see RULED-OUT); those are called with no arguments.
+    // signature (see TRIED); those are called with no arguments.
     int baseId = *g_00689370;
     short bx, by;
     bitmask(0x23, reinterpret_cast<int *>(&bx), reinterpret_cast<int *>(&by));

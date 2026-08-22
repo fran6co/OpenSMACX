@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005DD3B0 ?write_right_l@Buffer@@QAEHPADHHH@Z 0x005DD3B0-0x005DD44F FILE
-// RULED-OUT: literal Ghidra-order translation (a1==0 early-return, nested strlen/text_width) - MISMATCH #1 push/mov, original pushes ebx/esi/edi unconditionally before the a1==0 test; register-allocation shape only.
+// TRIED: literal Ghidra-order translation (a1==0 early-return, nested strlen/text_width) - MISMATCH #1 push/mov, original pushes ebx/esi/edi unconditionally before the a1==0 test; register-allocation shape only.
 // working copy - scaffold materialised by --work
 // size      159 bytes
 // prototype int (__thiscall ?write_right_l@Buffer@@QAEHPADHHH@Z)(Buffer* this, int8*, int, int, int)

@@ -97,7 +97,7 @@ Purpose: Open the specified text file and copy the section into the buffer for p
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     0x005FE120 0x006007B0 0x00600820 0x00626250 0x00634BB0 0x00645460 0x00645470 0x00645598 0x00645DD0 0x0064726A 0x006472CC 0x00647330 0x0064FD20
-// RULED-OUT: std::string for sect_header - it pulls an SEH frame (`mov eax,
+// TRIED: std::string for sect_header - it pulls an SEH frame (`mov eax,
 //            fs:[0]`) the image's `sub esp, 0x54` prologue does not have;
 //            replaced with a plain char buffer built by strcpy_s/strcat_s
 //            (fixed at 80 bytes - matches the image's `sub esp, 0x54` frame
@@ -339,14 +339,14 @@ object with a non-trivial constructor and destructor: `??__ETxt` inlines
 defined in-class in text.h so that inlining can happen. This line is the only
 source either comes from.
 
-RULED-OUT: hand-writing them over `Text *const Txt = (Text *)0x009B7BA0`,
+TRIED: hand-writing them over `Text *const Txt = (Text *)0x009B7BA0`,
            which is what stood here. It could be scored - 0x005FD400 reached
            97.8%, 87 bytes against 86 - and it could not RUN: that address is
            mapped in terranx.exe and in nothing this tree builds, so the
            first `Txt.` faults. It was also two hand-written copies of
            functions the compiler emits anyway.
 
-UNRECOVERABLE: a measurement of either. VC6 names a generated initialiser
+TRIED: a measurement of either. VC6 names a generated initialiser
                `_$E<n>` and registers it through `.CRT$XCU`, while `??__E`
                and `??__F` are IDA's reconstruction of what they DO; the byte
                match looks its subject up by name. Nothing that is correct

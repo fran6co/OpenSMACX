@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0058FA20 ?get_pacts@@YAPADH@Z 0x0058FA20-0x0058FA69 FILE
-// RULED-OUT: `extern int g_00946a50[];` for the indexed-table-base global conflicts (C2373) with the scaffold's own fixed-pointer decl of the same name; used the scaffold's `g_00946a50[idx]` directly instead, which compiles but diverges at #3 (xor vs mov)
+// TRIED: `extern int g_00946a50[];` for the indexed-table-base global conflicts (C2373) with the scaffold's own fixed-pointer decl of the same name; used the scaffold's `g_00946a50[idx]` directly instead, which compiles but diverges at #3 (xor vs mov)
 // working copy - scaffold materialised by --work
 // size      73 bytes
 // prototype 

@@ -210,7 +210,7 @@ Purpose: Tear down a Net - its embedded container, three NetFifo message
 //        sub1 - 8. Both went through no-argument `NetVectorTeardownHelper*()`
 //        forwarders, which is an indirect call the image does not make AND a
 //        receiver it does pass. call_diff is now clean.
-// RULED-OUT: 12 of 110 even so, and the ceiling is not spelling. THE IMAGE'S
+// TRIED: 12 of 110 even so, and the ceiling is not spelling. THE IMAGE'S
 //            BODY IS COMPILER-GENERATED MEMBER TEARDOWN, and this tree writes
 //            it out by hand. The image carries EIGHT EH state stores into
 //            [ebp - 4] - 5 before `Net::close`, 6 before remove_all, 4 before

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0055F450 ?major_atrocity@@YAXHH@Z 0x0055F450-0x0055F76A FILE
-// RULED-OUT: literal asm-mirrored translation (byte-offset arithmetic on fixed globals, parse_says/pact_ends/treaty_on call order) compiles and matches through instr #4; diverges at #5 (push vs mov) - not chased further, landed at MISMATCH.
+// TRIED: literal asm-mirrored translation (byte-offset arithmetic on fixed globals, parse_says/pact_ends/treaty_on call order) compiles and matches through instr #4; diverges at #5 (push vs mov) - not chased further, landed at MISMATCH.
 // working copy - scaffold materialised by --work
 // size      794 bytes
 // prototype 

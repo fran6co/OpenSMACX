@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005C1E20 ?init@Fractal@@QAEXXZ 0x005C1E20-0x005C1F12 FILE
-// RULED-OUT: nothing tried beyond the direct transcription below - landed at first compiling candidate given batch size. Mnemonic similarity 0.80, first divergence is prologue register-save scheduling (`sub esp,N` vs a `push`, #2).
+// TRIED: nothing tried beyond the direct transcription below - landed at first compiling candidate given batch size. Mnemonic similarity 0.80, first divergence is prologue register-save scheduling (`sub esp,N` vs a `push`, #2).
 // size      242 bytes
 // prototype void (__thiscall ?init@Fractal@@QAEXXZ)(Fractal* this)
 // callers   ?   call targets   1

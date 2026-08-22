@@ -40,7 +40,7 @@ from pathlib import Path
 
 from .grammar import (FACT_LINE, LESSON_CONTINUED, LESSON_DEFERRED,
                       LESSON_LEVER, LESSON_RULED_OUT, LESSON_UNRECOVERABLE,
-                      MARKER)
+                      MARKER, NEXT_MARKER)
 from .model import DecompilationState, Mode, State
 
 # ------------------------------------------------------------------ spelling
@@ -88,8 +88,10 @@ def _lesson_lines(record: DecompilationState) -> list[str]:
     space, so one line per lesson re-reads to the identical tuple.
     """
     out = [f"// LEVER: {key} {prose}" for key, prose in record.levers]
-    out += [f"// RULED-OUT: {prose}" for prose in record.ruled_out]
-    out += [f"// UNRECOVERABLE: {prose}" for prose in record.unrecoverable]
+    out += [f"// TRIED: {prose}" for prose in record.ruled_out]
+    # UNRECOVERABLE is no longer emitted - the reader folds it into
+    # `ruled_out`, so it comes back out as `// TRIED:` above.
+    out += [f"// TRIED: {prose}" for prose in record.unrecoverable]
     out += [f"// DEFERRED: {prose}" for prose in record.deferred]
     return out
 
@@ -104,12 +106,43 @@ def _lesson_drop(lines: list[str], index: int) -> set[int]:
     dropped; a continuation line is dropped only while a token is open -
     the same rule `_lessons` reads by. Prose comment lines are kept: they
     are not annotations.
+
+    IT STOPPED MIRRORING, AND THAT CORRUPTED FILES. `_lessons` gained three
+    rules - a marker inside a `/* */` block keeps reading past the closing
+    `*/`, and inside a block an unprefixed line is still tried as a lesson -
+    and this function kept the old one, breaking at the first line not
+    starting with `//` or `*`. The two then disagreed about which lines a
+    marker owns, so `write` deleted FEWER lines than it re-emitted and every
+    rewrite added a second copy of the same lesson. Thirteen files in src/
+    were failing the roundtrip fixed-point check this way, wave.cpp among
+    them, and each `osmx record` touching one of them duplicated a line.
+
+    The block-detection below is `_lessons`'s, verbatim in behaviour: scan
+    BACKWARDS for whether this marker sits inside a block comment, then apply
+    the same continue/break rules going forward.
     """
+    inside = False
+    for earlier in reversed(lines[:index]):
+        head = earlier.strip()
+        if head.startswith("*/"):
+            break
+        if head.startswith("/*"):
+            inside = True
+            break
+
     drop = set()
     current = None
     for offset, line in enumerate(lines[index + 1:], start=index + 1):
         stripped = line.strip()
-        if not (stripped.startswith("//") or stripped.startswith("*")):
+        # Mirrors reader._lessons: a marker owns only up to the next marker.
+        if NEXT_MARKER.match(line):
+            break
+        if inside and "*/" in stripped:
+            inside = False
+            if stripped not in ("*/", "*/;"):
+                continue
+        prefixed = stripped.startswith("//") or stripped.startswith("*")
+        if not prefixed and not inside:
             break
         if (LESSON_LEVER.match(line) or LESSON_RULED_OUT.match(line)
                 or LESSON_UNRECOVERABLE.match(line)

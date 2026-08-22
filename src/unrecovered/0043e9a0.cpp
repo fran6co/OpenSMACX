@@ -1,6 +1,6 @@
 // ORIGINAL: 0x0043E9A0 ?exec@DesignWin@@QAEHHH@Z 0x0043E9A0-0x0043ECAD;0x00654709-0x0065471E FILE
-// RULED-OUT: a plain `Buffer buf;` local (RAII ctor/dtor, no explicit __try) reproduces the whole SEH prologue/epilogue (fs:[0] chain, the 0x654709/0x654714 unwind funclet) for free - matched through instruction #9 without writing any of that by hand.
-// RULED-OUT: MISMATCH #9 'push' vs 'mov', not chased further (802B, one of the largest bodies in this batch): vtable slot001/slot057 retyped in this file to (int) / (int,int,int) from the call sites' push counts.
+// TRIED: a plain `Buffer buf;` local (RAII ctor/dtor, no explicit __try) reproduces the whole SEH prologue/epilogue (fs:[0] chain, the 0x654709/0x654714 unwind funclet) for free - matched through instruction #9 without writing any of that by hand.
+// TRIED: MISMATCH #9 'push' vs 'mov', not chased further (802B, one of the largest bodies in this batch): vtable slot001/slot057 retyped in this file to (int) / (int,int,int) from the call sites' push counts.
 // working copy - scaffold materialised by --work
 // size      802 bytes
 // prototype int (__thiscall ?exec@DesignWin@@QAEHHH@Z)(DesignWin* this, int, int)

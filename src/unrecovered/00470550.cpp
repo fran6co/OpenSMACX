@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00470550 ?get_brighting@MapWin@@QAEHHHH@Z 0x00470550-0x00470776 FILE
-// RULED-OUT: chained-OR bounds check vs nested ifs, and caching `this` in a named local before the owned_==0 check - none change when the compiler spills `this` to [ebp-4] relative to the row/col bound-check jumps (MISMATCH #6 'push' vs 'mov'); not chased further. Switch-table index math (v1..v4 nibble packing, per-case table*7 stride) is a faithful transcription.
+// TRIED: chained-OR bounds check vs nested ifs, and caching `this` in a named local before the owned_==0 check - none change when the compiler spills `this` to [ebp-4] relative to the row/col bound-check jumps (MISMATCH #6 'push' vs 'mov'); not chased further. Switch-table index math (v1..v4 nibble packing, per-case table*7 stride) is a faithful transcription.
 // working copy - scaffold materialised by --work
 // size      550 bytes
 // prototype int (__thiscall ?get_brighting@MapWin@@QAEHHHH@Z)(MapWin* this, int, int, int)

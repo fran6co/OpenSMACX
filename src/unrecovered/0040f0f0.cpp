@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0040F0F0 ?draw_farm@BaseWin@@QAEXH@Z 0x0040F0F0-0x0040FCB3 FILE
-// RULED-OUT: Ghidra transcription with `this` restored on every dropped thiscall (Spot::add/kill_type via self+0x40EC0, MapWin::get_alt/ clear_terrain via fixed g_007d4060, Sprite::draw/draw_mono via a 0x2c-stride table at g_007a72a0 or fixed g_0078a520, Strings::get via g_009b90d8); MapWin::gen_terrain_poly changed to `static` (QAA mangling, 10 stack args, no ecx `this` at the call site - confirmed against raw disasm). Diverges at insn #5.
+// TRIED: Ghidra transcription with `this` restored on every dropped thiscall (Spot::add/kill_type via self+0x40EC0, MapWin::get_alt/ clear_terrain via fixed g_007d4060, Sprite::draw/draw_mono via a 0x2c-stride table at g_007a72a0 or fixed g_0078a520, Strings::get via g_009b90d8); MapWin::gen_terrain_poly changed to `static` (QAA mangling, 10 stack args, no ecx `this` at the call site - confirmed against raw disasm). Diverges at insn #5.
 // working copy - scaffold materialised by --work
 // size      3011 bytes
 // prototype void (__thiscall ?draw_farm@BaseWin@@QAEXH@Z)(BaseWin* this, int)

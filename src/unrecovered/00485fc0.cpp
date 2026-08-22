@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00485FC0 ?on_mouse_move@PickTech@@QAEXHH@Z 0x00485FC0-0x004860A6 FILE
-// RULED-OUT: flipping `field*(field+1) <= a1` to `a1 >= field*(field+1)` fixed two jge/jle polarity flips, reaching 0.987 mnemonic similarity; the one remaining `a2 - 0x1d` compiles to `add eax,-0x1d` no matter how the subtraction is spelled (single temp, split statement, reordered operands all tried).
+// TRIED: flipping `field*(field+1) <= a1` to `a1 >= field*(field+1)` fixed two jge/jle polarity flips, reaching 0.987 mnemonic similarity; the one remaining `a2 - 0x1d` compiles to `add eax,-0x1d` no matter how the subtraction is spelled (single temp, split statement, reordered operands all tried).
 // working copy - scaffold materialised by --work
 // size      230 bytes
 // prototype void (__thiscall ?on_mouse_move@PickTech@@QAEXHH@Z)(PickTech* this, int, int)

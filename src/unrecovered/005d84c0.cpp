@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005D84C0 ?draw@Buffer@@QAEHPAVBuffer@@HHHHH@Z 0x005D84C0-0x005D8646 FILE
-// RULED-OUT: none confirmed byte-exact; MISMATCH #2 'push' vs 'mov' - the two indirect vtable-slot calls (0x74 and 0x14 on the sprite pointers) push their receiver as an explicit first stack argument rather than loading it into ecx, so they are modelled as raw __stdcall function-pointer calls here rather than C++ virtual dispatch; the real calling convention on those two slots is unconfirmed.
+// TRIED: none confirmed byte-exact; MISMATCH #2 'push' vs 'mov' - the two indirect vtable-slot calls (0x74 and 0x14 on the sprite pointers) push their receiver as an explicit first stack argument rather than loading it into ecx, so they are modelled as raw __stdcall function-pointer calls here rather than C++ virtual dispatch; the real calling convention on those two slots is unconfirmed.
 // size      390 bytes
 // prototype int (__thiscall ?draw@Buffer@@QAEHPAVBuffer@@HHHHH@Z)(Buffer* this, Buffer*, int, int, int, int, int)
 // callers   14   call targets   1

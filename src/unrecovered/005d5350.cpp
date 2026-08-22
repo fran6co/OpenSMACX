@@ -1,6 +1,6 @@
 // ORIGINAL: 0x005D5350 ?fill@GraphicWin@@QAEHPAURECT@@H@Z 0x005D5350-0x005D543E FILE
-// RULED-OUT: the scaffold's own VCall shim declares slot061 as `void`
-// RULED-OUT: could not reproduce the original's frameless, purely
+// TRIED: the scaffold's own VCall shim declares slot061 as `void`
+// TRIED: could not reproduce the original's frameless, purely
 // size      238 bytes
 // prototype int (__thiscall ?fill@GraphicWin@@QAEHPAURECT@@H@Z)(GraphicWin* this, RECT*, int)
 // callers   18   call targets   3

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005D7F20 sub_5d7f20 0x005D7F20-0x005D7FFB;0x00662BD1-0x00662BFC FILE
-// RULED-OUT: reproducing the SEH frame/unwind funclets (~Buffer only runs on the EXCEPTION path in the original; the normal path calls close()+~Spot() explicitly instead) - landed with the local `Buffer buf` left trivially destructible (no ~Buffer call at all on scope exit) and the explicit close()/spot_.~Spot() calls matching the normal path only.
+// TRIED: reproducing the SEH frame/unwind funclets (~Buffer only runs on the EXCEPTION path in the original; the normal path calls close()+~Spot() explicitly instead) - landed with the local `Buffer buf` left trivially destructible (no ~Buffer call at all on scope exit) and the explicit close()/spot_.~Spot() calls matching the normal path only.
 // (no mangled name - IDA guess only)
 // size      262 bytes
 // prototype extern "C" int __stdcall sub_5d7f20(int, int, int, int)

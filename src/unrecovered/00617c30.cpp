@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00617C30 ?add_object@Caviar@@QAEHPAUCaviarData@@PAUCaviarData@@H@Z 0x00617C30-0x00617DA7 FILE
-// RULED-OUT: the (field_13CC_+0x9C)*0xC pointer table at raw `this+0` and the literal-displacement tables at `this+0x74C`/`this+0x754` are transcribed by byte offset, not through named header fields (they overlap the header's field_74C_/750_/754_ scalars, which this function treats as an array base instead).
+// TRIED: the (field_13CC_+0x9C)*0xC pointer table at raw `this+0` and the literal-displacement tables at `this+0x74C`/`this+0x754` are transcribed by byte offset, not through named header fields (they overlap the header's field_74C_/750_/754_ scalars, which this function treats as an array base instead).
 // size      375 bytes
 // prototype int (__thiscall ?add_object@Caviar@@QAEHPAUCaviarData@@PAUCaviarData@@H@Z)(Caviar* this, CaviarData*, CaviarData*, int)
 // callers   0   call targets   0

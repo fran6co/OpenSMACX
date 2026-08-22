@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00634AD0 sub_634ad0 0x00634AD0-0x00634B67 FILE
-// RULED-OUT: extern "C" __stdcall(int,int) contract head - disasm reads ecx as an implicit receiver (thiscall) into a 3x3 float matrix, not a stack int; rewrote as Mat3x3::scale_into(float*,float). MISMATCH #1 push/lea, prologue layout only, structure otherwise matches Ghidra's nested-loop scale+copy.
+// TRIED: extern "C" __stdcall(int,int) contract head - disasm reads ecx as an implicit receiver (thiscall) into a 3x3 float matrix, not a stack int; rewrote as Mat3x3::scale_into(float*,float). MISMATCH #1 push/lea, prologue layout only, structure otherwise matches Ghidra's nested-loop scale+copy.
 // working copy - scaffold materialised by --work
 // size      151 bytes
 // prototype 

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00626E10 ?polygon_dest@@YAHPAUBuffer@@PAUVert@@HPAE@Z 0x00626E10-0x00627100 FILE
-// RULED-OUT: same shape as sibling 0x00626620 (`polygon`) - original reuses the a2 (Vert*) parameter's own stack slot as a scratch int (min-y vertex index); a distinct `min_idx` local keeps the same values but a different frame layout. sub_626470's real state-struct layout is unknown (its own body is out of scope), modelled as 9 loose ints per edge. Differs from `polygon` only in the fill: `*p = lut[*p]` through the a4 byte-remap table instead of a constant.
+// TRIED: same shape as sibling 0x00626620 (`polygon`) - original reuses the a2 (Vert*) parameter's own stack slot as a scratch int (min-y vertex index); a distinct `min_idx` local keeps the same values but a different frame layout. sub_626470's real state-struct layout is unknown (its own body is out of scope), modelled as 9 loose ints per edge. Differs from `polygon` only in the fill: `*p = lut[*p]` through the a4 byte-remap table instead of a constant.
 // working copy - scaffold materialised by --work
 // size      752 bytes
 // prototype 

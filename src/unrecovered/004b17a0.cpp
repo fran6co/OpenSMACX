@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004B17A0 ?on_button_text_draw@SocialWin@@QAEHPAUGraphicWin@@PADH@Z 0x004B17A0-0x004B1991 FILE
-// RULED-OUT: strlen/strcat named plainly get inlined by /O2 (fixed via the nullary _strlen/_strcat function-pointer lever, sim 0.71->0.90); remaining divergence at #17 is this/a1 register-allocation (esi vs edi) not chased further; not byte-exact.
+// TRIED: strlen/strcat named plainly get inlined by /O2 (fixed via the nullary _strlen/_strcat function-pointer lever, sim 0.71->0.90); remaining divergence at #17 is this/a1 register-allocation (esi vs edi) not chased further; not byte-exact.
 // working copy - scaffold materialised by --work
 // size      497 bytes
 // prototype int (__thiscall ?on_button_text_draw@SocialWin@@QAEHPAUGraphicWin@@PADH@Z)(SocialWin* this, GraphicWin*, int8*, int)

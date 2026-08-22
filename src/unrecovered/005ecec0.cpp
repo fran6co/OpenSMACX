@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005ECEC0 ?UNK4@Win@@QAEHXZ 0x005ECEC0-0x005ECF1C FILE
-// RULED-OUT: guard-clause form (`if (w!=0 || w==this) return 1; if (w!=0) {loop} return 0;`), matching Ghidra's redundant double null-check; compiles and matches the loop body, diverges at #0 in prologue register-save order (mov vs push)
+// TRIED: guard-clause form (`if (w!=0 || w==this) return 1; if (w!=0) {loop} return 0;`), matching Ghidra's redundant double null-check; compiles and matches the loop body, diverges at #0 in prologue register-save order (mov vs push)
 // working copy - scaffold materialised by --work
 // size      92 bytes
 // prototype int (__thiscall ?UNK4@Win@@QAEHXZ)(Win* this)

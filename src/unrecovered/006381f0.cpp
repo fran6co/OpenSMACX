@@ -1,5 +1,5 @@
 // ORIGINAL: 0x006381F0 sub_6381f0 0x006381F0-0x00638425 FILE
-// RULED-OUT: nullary contract - disasm reads [esp+0x18] as a stack arg before any push, so it takes 1 pointer param (matches Ghidra's `undefined4 *param_1`), reused in place as its own output slot via `&param_1`. Callee signatures fixed up from push order (empty-paren scaffold decls reject real args in C++). Prologue shape (#0 sub vs push) not chased - extra locals vs original's register-only working set.
+// TRIED: nullary contract - disasm reads [esp+0x18] as a stack arg before any push, so it takes 1 pointer param (matches Ghidra's `undefined4 *param_1`), reused in place as its own output slot via `&param_1`. Callee signatures fixed up from push order (empty-paren scaffold decls reject real args in C++). Prologue shape (#0 sub vs push) not chased - extra locals vs original's register-only working set.
 // working copy - scaffold materialised by --work
 // size      565 bytes
 // prototype 

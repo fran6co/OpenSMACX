@@ -43,7 +43,7 @@ Purpose: Construct the GraphicWin base and two Time members, then install the
 //   fact moves with it, to `?construct@BaseButton@@QAEPAV1@XZ`). Both call
 //   sites - `base_button_construct_redirect` here and
 //   `FlatButton::FlatButton` - ignore the value, so neither changed.
-// RULED-OUT: the two placement-new null guards, which are the whole remaining
+// TRIED: the two placement-new null guards, which are the whole remaining
 //   difference. `new (&time1_) Time()` makes VC6 test the pointer -
 //   `cmp ecx, edi; je` - twice, and gives the frame TWO spill slots
 //   (`sub esp, 8`) where the image pushes one (`push ecx`): 60 compiled
@@ -53,7 +53,7 @@ Purpose: Construct the GraphicWin base and two Time members, then install the
 //   image has, because a plain method has no partially-built object to
 //   protect: 38 instructions, agreeing 0. The frame is worth more than the
 //   guards cost, so the placement new stays.
-// RULED-OUT: the real fix is a REAL constructor - the image is one, base
+// TRIED: the real fix is a REAL constructor - the image is one, base
 //   first (`call 0x005D4CF0`), then `time1_` at 0xA1C and `time2_` at 0xA4C
 //   implicitly, then this body, then `mov eax, esi`. It is not reachable from
 //   basebutton.cpp: `GraphicWin` is declared with a hollow inline
@@ -116,7 +116,7 @@ BaseButton *__fastcall base_button_construct_redirect(
 Purpose: Close the GraphicWin base, reset BaseButton-owned state from the
          process defaults, then release the owned name and bubble strings.
 // ORIGINAL: 0x006070C0 ?close@BaseButton@@QAEXXZ 0x006070C0-0x00607190
-// RULED-OUT: hoisting `0xFFFFFFFFU` into a named local before the stores -
+// TRIED: hoisting `0xFFFFFFFFU` into a named local before the stores -
 //   no effect; the `or eax, 0xffffffff` for A44/A48 still schedules 4
 //   instructions later than the image (41/47 agreeing either way). The
 //   fixed/dynamic absolute-lvalue rewrite (LEVER, see body) fixed the other
@@ -187,7 +187,7 @@ uint32_t __fastcall base_button_close_redirect(BaseButton *self, void *) {
 Purpose: Destroy a BaseButton by installing its two virtual tables, closing
          it, destroying Time2 then Time1, and finally destroying GraphicWin.
 // ORIGINAL: 0x00607040 ??1BaseButton@@QAE@XZ 0x00607040-0x006070B9;0x00662E70-0x00662E9E
-// RULED-OUT: this one wants the SEH frame and cannot have it. The image is a
+// TRIED: this one wants the SEH frame and cannot have it. The image is a
 //   REAL DESTRUCTOR - `push -1 / push 0x662e94 / mov eax, fs:[0] / push eax /
 //   mov fs:[0], esp / push ecx`, then the two vtable stores and `close()`,
 //   then unwind state 1 for `time2_` at 0xA4C, 0 for `time1_` at 0xA1C and -1
@@ -196,7 +196,7 @@ Purpose: Destroy a BaseButton by installing its two virtual tables, closing
 //   plain method, so there is no partially-destroyed object to protect and no
 //   frame is emitted: 15 compiled instructions against the image's 27,
 //   agreeing 0. Every instruction of the divergence is that frame.
-// RULED-OUT: converting it to `~BaseButton()`. Two blockers, both outside
+// TRIED: converting it to `~BaseButton()`. Two blockers, both outside
 //   this file. (1) `destroy()` is reached BY NAME from dialog.cpp,
 //   listbox.cpp, pulldown.cpp, stringstruct.cpp, dialogs.cpp, radiobutton.cpp,
 //   reportif.cpp, filewin.cpp and leaf_recoveries.cpp - a rename is a

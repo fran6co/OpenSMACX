@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00478BE0 ?draw_time@MultiWin@@QAEXPAURECT@@H@Z 0x00478BE0-0x00479269 FILE
-// RULED-OUT: transcribed from Ghidra's decompilation (which resolved the dataflow cleanly) with member calls fixed up (Spot::add, Buffer::set_font/set_text_color/write_cent_l, Strings::get, AlphaNet::who_2_pid, Net::get_player_name, NetMsg::pop, FX::play, message_data, wave_it) and the two `(x<0)?0:x` clamp bit-tricks written as plain clamps rather than neg/sbb/and. Compiles; diverges at instruction #3 (prologue - local frame size/shape, not chased further).
+// TRIED: transcribed from Ghidra's decompilation (which resolved the dataflow cleanly) with member calls fixed up (Spot::add, Buffer::set_font/set_text_color/write_cent_l, Strings::get, AlphaNet::who_2_pid, Net::get_player_name, NetMsg::pop, FX::play, message_data, wave_it) and the two `(x<0)?0:x` clamp bit-tricks written as plain clamps rather than neg/sbb/and. Compiles; diverges at instruction #3 (prologue - local frame size/shape, not chased further).
 // working copy - scaffold materialised by --work
 // size      1673 bytes
 // prototype void (__thiscall ?draw_time@MultiWin@@QAEXPAURECT@@H@Z)(MultiWin* this, RECT*, int)

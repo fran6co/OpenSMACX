@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004BF8D0 ?vehdraw_turn_start@@YAHHHHH@Z 0x004BF8D0-0x004BFC67 FILE
-// RULED-OUT: full transcription off Ghidra + raw disasm (table lookups, MapWin::get_relative_alt x4, VOX table triple-add, Caviar camera setup, final turn-angle wrap calc); compiles but diverges at #9 - the local stack layout / register allocation does not match the original's frame
+// TRIED: full transcription off Ghidra + raw disasm (table lookups, MapWin::get_relative_alt x4, VOX table triple-add, Caviar camera setup, final turn-angle wrap calc); compiles but diverges at #9 - the local stack layout / register allocation does not match the original's frame
 // working copy - scaffold materialised by --work
 // size      919 bytes
 // prototype int (__cdecl ?vehdraw_turn_start@@YAHHHHH@Z)(int vehID, int, int, int)

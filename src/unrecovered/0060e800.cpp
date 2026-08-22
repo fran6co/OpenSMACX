@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0060E800 ?attach@CheckBox@@QAEHPAUGraphicWin@@HHH@Z 0x0060E800-0x0060E97F FILE
-// RULED-OUT: nothing confirmed byte-exact; MISMATCH #3 'push' vs 'mov' - the vtable-array double-reads (edx/ecx caching across the 0xa34/0x1c constants) get register-allocated differently than the original's edi-kept-live scheme.
+// TRIED: nothing confirmed byte-exact; MISMATCH #3 'push' vs 'mov' - the vtable-array double-reads (edx/ecx caching across the 0xa34/0x1c constants) get register-allocated differently than the original's edi-kept-live scheme.
 // size      383 bytes
 // prototype int (__thiscall ?attach@CheckBox@@QAEHPAUGraphicWin@@HHH@Z)(CheckBox* this, GraphicWin*, int, int, int)
 // callers   2   call targets   6

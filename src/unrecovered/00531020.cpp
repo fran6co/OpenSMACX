@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00531020 ?lock_veh@NetDaemon@@QAEHPAHHHHH@Z 0x00531020-0x005310EB FILE
-// RULED-OUT: extern char[] base for the runtime *a1*0x34 struct index (shared 0x952828 table with veh_ready); MISMATCH from #34, past the whole early-exit and lock() call - the final store-back sequence around the result branches differs
+// TRIED: extern char[] base for the runtime *a1*0x34 struct index (shared 0x952828 table with veh_ready); MISMATCH from #34, past the whole early-exit and lock() call - the final store-back sequence around the result branches differs
 // working copy - scaffold materialised by --work
 // size      203 bytes
 // prototype int (__thiscall ?lock_veh@NetDaemon@@QAEHPAHHHHH@Z)(NetDaemon* this, int*, int, int, int, int)

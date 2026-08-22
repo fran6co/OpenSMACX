@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0061F0D0 sub_61f0d0 0x0061F0D0-0x0061F785 FILE
-// RULED-OUT: literal Ghidra-derived transcription (EdgeScan DDA struct, param_2 as Buffer*, CONCAT/CARRY helpers for the dither table lookups) compiles and matches the outer control flow, but MSVC's register allocation for the two 300-line unrolled scanline loops diverges from instruction #5 on; did not attempt hand-tuning further given the size.
+// TRIED: literal Ghidra-derived transcription (EdgeScan DDA struct, param_2 as Buffer*, CONCAT/CARRY helpers for the dither table lookups) compiles and matches the outer control flow, but MSVC's register allocation for the two 300-line unrolled scanline loops diverges from instruction #5 on; did not attempt hand-tuning further given the size.
 // working copy - scaffold materialised by --work
 // size      1717 bytes
 // prototype 

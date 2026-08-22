@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005ED360 sub_5ed360 0x005ED360-0x005ED3E9 FILE
-// RULED-OUT: the given nullary `int __cdecl sub_5ed360()` head - the body reads 3 stack args at [esp+0xc/0x10/0x14] with no ebp frame, so it takes (int*,int*,int) and returns void; recurses on itself. MISMATCH #2 'mov' vs 'push' remains open.
+// TRIED: the given nullary `int __cdecl sub_5ed360()` head - the body reads 3 stack args at [esp+0xc/0x10/0x14] with no ebp frame, so it takes (int*,int*,int) and returns void; recurses on itself. MISMATCH #2 'mov' vs 'push' remains open.
 // working copy - scaffold materialised by --work
 // size      137 bytes
 // prototype 

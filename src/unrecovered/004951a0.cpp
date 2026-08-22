@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004951A0 ?init@QuayleWin@@QAEHXZ 0x004951A0-0x004956C1 FILE
-// RULED-OUT: field-by-offset access on `char *self`, per the scaffold's own hint, plus GraphicWin::init/Buffer::load_pcx/BaseButton::init argument order re-derived from the disassembly's push order (Ghidra's own decompilation independently agreed on all three). Reaches MISMATCH #1 (`push esi` vs a `mov`, one instruction into the __thiscall prologue's register-save order) - not chased further, a register-allocation detail this pass's budget does not cover.
+// TRIED: field-by-offset access on `char *self`, per the scaffold's own hint, plus GraphicWin::init/Buffer::load_pcx/BaseButton::init argument order re-derived from the disassembly's push order (Ghidra's own decompilation independently agreed on all three). Reaches MISMATCH #1 (`push esi` vs a `mov`, one instruction into the __thiscall prologue's register-save order) - not chased further, a register-allocation detail this pass's budget does not cover.
 // working copy - scaffold materialised by --work
 // size      1313 bytes
 // prototype int (__thiscall ?init@QuayleWin@@QAEHXZ)(QuayleWin* this)

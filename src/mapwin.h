@@ -285,7 +285,7 @@ void __fastcall map_win_on_left_up_redirect(MapWin *self, void *, int a1, int a2
 // VC6 park the base in a register across a loop, which the image never does.
 // An array reference has no value to park: the subscript folds the address in.
 //
-// RULED-OUT: an accessor returning `reinterpret_cast<MapWin **>(0x007D3C3C)`
+// TRIED: an accessor returning `reinterpret_cast<MapWin **>(0x007D3C3C)`
 // is a pointer value and measures WORSE than the `MapWin **const` it replaced
 // - 19 of 85 instructions in `Console::focus` against 29.
 typedef MapWin *MapWinSlots[8];

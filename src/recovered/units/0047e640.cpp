@@ -904,7 +904,7 @@ class NetWin { public:
 // one is an opaque, zero-sized shell). Both are required for the
 // compiler to emit the matching SEH prologue and frame size, so this
 // body follows the CALL SEQUENCE and every argument faithfully without
-// chasing those bytes - see the CHANGE note for the ruled-out approach.
+// chasing those bytes - see the CHANGE note for the tried approach.
 inline void *__cdecl operator new(unsigned int, void *p) { return p; }
 
 void NetWin::pick_time() {

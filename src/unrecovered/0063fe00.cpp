@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0063FE00 sub_63fe00 0x0063FE00-0x0063FFDD
-// RULED-OUT: near-duplicate of 0x0063FFE0 past the preamble (same 628220/6281b0/round-to-nearest/octant/ratio tail) - only the first block differs, negating all three floats when `*param_1 & 1` instead of calling sub_627f50. The three round-to-nearest computations are inlined at each call site rather than factored into a shared helper: a free-function helper ahead of the definition compiles to zero external .text symbols in body-mode extraction (only a helper CLASS is special-cased). Landing the closest control-flow-faithful form (divergence starts at instruction #2, on the flag test).
+// TRIED: near-duplicate of 0x0063FFE0 past the preamble (same 628220/6281b0/round-to-nearest/octant/ratio tail) - only the first block differs, negating all three floats when `*param_1 & 1` instead of calling sub_627f50. The three round-to-nearest computations are inlined at each call site rather than factored into a shared helper: a free-function helper ahead of the definition compiles to zero external .text symbols in body-mode extraction (only a helper CLASS is special-cased). Landing the closest control-flow-faithful form (divergence starts at instruction #2, on the flag test).
 // size      477 bytes
 // prototype
 // callers   1   call targets   3

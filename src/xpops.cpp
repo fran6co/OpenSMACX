@@ -501,7 +501,7 @@ Purpose: The full builder every xpops wrapper funnels into. When the label
          expansions being enabled; on success substitute a fixed caption for
          the popup. Either way, fall through to the shared pop builder.
 // ORIGINAL: 0x005BF480 ?X_pop@@YAHPADPBDHPADHP6AHXZ@Z 0x005BF480-0x005BF5C2 SEMANTIC
-// RULED-OUT: MNEMONIC_ONLY 100/127, best across all flag sets. The remaining gap is a pure register-rotation (eax/ecx/edx swapped) at three near-identical pop_full(cap, label, a3, a4, a5, callback) call sites reading [ebp+0xc] (label); caching label in a local, reordering it against the caption expression via separate statements, and reading the two fixed-address caption substitutes through an inline accessor (fixed a genuine double-indirection bug first) all leave the same rotation.
+// TRIED: MNEMONIC_ONLY 100/127, best across all flag sets. The remaining gap is a pure register-rotation (eax/ecx/edx swapped) at three near-identical pop_full(cap, label, a3, a4, a5, callback) call sites reading [ebp+0xc] (label); caching label in a local, reordering it against the caption expression via separate statements, and reading the two fixed-address caption substitutes through an inline accessor (fixed a genuine double-indirection bug first) all leave the same rotation.
 // symbol    ?X_pop@@YAHPADPBDH0HP6AHXZ@Z
 // size      322 bytes
 // prototype int (__cdecl ?X_pop@@YAHPADPBDHPADHP6AHXZ@Z)(int8*, int8*, int length, int8*, int, int (__cdecl *)())

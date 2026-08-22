@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00590000 ?lock@PlayerLock@@QAEHHHHHHHH@Z 0x00590000-0x00590093 FILE
-// RULED-OUT: real SquareLock member calls (first_/second_/flag_, lock/unlock) already declared by the scaffold; store order flag_,second_, first_ (not declaration order) matches the disassembly's init loop. MISMATCH #3 'push' vs 'mov' remains open.
+// TRIED: real SquareLock member calls (first_/second_/flag_, lock/unlock) already declared by the scaffold; store order flag_,second_, first_ (not declaration order) matches the disassembly's init loop. MISMATCH #3 'push' vs 'mov' remains open.
 // working copy - scaffold materialised by --work
 // size      147 bytes
 // prototype int (__thiscall ?lock@PlayerLock@@QAEHHHHHHHH@Z)(PlayerLock* this, int, int, int, int, int, int, int)

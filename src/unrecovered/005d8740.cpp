@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005D8740 sub_5d8740 0x005D8740-0x005D8838 FILE
-// RULED-OUT: register-copy-before-store for the two lock-count decrements (`int c=X-1; store; if(c>0)`) matches Ghidra's shape but VC6 collapses the redundant `mov eax,ecx` copy the original keeps for the NULL-surface arm; best reached is 97.5% mnemonic similarity, diverging only in that micro reg-alloc order (#41 mov vs cmp). __fastcall(self, unused-edx, 7 stack ints) instead of the given __stdcall(a1..a7): `mov esi, ecx` with no matching stack slot is a receiver, not a stack arg.
+// TRIED: register-copy-before-store for the two lock-count decrements (`int c=X-1; store; if(c>0)`) matches Ghidra's shape but VC6 collapses the redundant `mov eax,ecx` copy the original keeps for the NULL-surface arm; best reached is 97.5% mnemonic similarity, diverging only in that micro reg-alloc order (#41 mov vs cmp). __fastcall(self, unused-edx, 7 stack ints) instead of the given __stdcall(a1..a7): `mov esi, ecx` with no matching stack slot is a receiver, not a stack arg.
 // working copy - scaffold materialised by --work
 // size      248 bytes
 // prototype 

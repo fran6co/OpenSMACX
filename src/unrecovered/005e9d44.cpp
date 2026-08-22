@@ -5,7 +5,7 @@
 // them. Byte-exactness is NOT reachable from C++ here; the honest ceiling is
 // semantic equivalence, and the answer is NOT `__asm`.
 // Found by `tools/handwritten_asm.py`.
-// RULED-OUT: literal computed-jump dispatch (register/global holds a label address, re-jumped every outer row) - not reachable from C; reproduced as switch-based Duff's device per row instead.
+// TRIED: literal computed-jump dispatch (register/global holds a label address, re-jumped every outer row) - not reachable from C; reproduced as switch-based Duff's device per row instead.
 // working copy - scaffold materialised by --work
 // size      3515 bytes
 // prototype int (__thiscall ?draw@Sprite@@QAEHPAUBuffer@@HHHPAE@Z)(Sprite* this, Buffer*, int, int, int, unsigned int8*)

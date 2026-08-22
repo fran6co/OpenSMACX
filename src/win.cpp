@@ -206,7 +206,7 @@ void move_rect(RECT &rect, int x, int y) {
 /*
 Purpose: Move the active window rectangle while preserving its dimensions.
 // ORIGINAL: 0x005ED7D0 ?move@Win@@QAEHHH@Z 0x005ED7D0-0x005ED877
-// RULED-OUT: reordering the field stores to left,right,top,bottom (matching
+// TRIED: reordering the field stores to left,right,top,bottom (matching
 //   the image's actual store order per `store_order.py`) with dy computed
 //   before dx - regressed, 4/43 -> 1/43 (an extra `push edi`/`pop edi`
 //   appeared, similarity 0.795 -> 0.522). Left,right,top,bottom with the
@@ -869,7 +869,7 @@ Purpose: Present the screen buffer: draw the bubble text over it, flip or
 //        WinBubbleRect by one on every frame. Neither fix moves the score -
 //        both blocks are inside the part that does not align - and both are
 //        right anyway.
-// RULED-OUT: not reachable from here as a spelling problem, and the numbers
+// TRIED: not reachable from here as a spelling problem, and the numbers
 //            say so plainly: 11 of 407 at the best flag set (/O2 /Ob0 /Gy
 //            /GR- /GX) and 0.056 SIMILAR, with every one of the ten flag sets
 //            between 0.019 and 0.056 and none above 14 of 407. This tree
@@ -1583,7 +1583,7 @@ Verification note: hoisting the count out of the loop is an EQUIVALENT mutant
 // `index >= count` bound check, which the image still does with `cmp
 // edi, eax` against a separately-incremented edi.
 //
-// RULED-OUT: hoisting `int index = 0;` to sit between the `count =
+// TRIED: hoisting `int index = 0;` to sit between the `count =
 // child_count_` load and the `count <= 0` check (matching the image's
 // `xor edi, edi` appearing before `test eax, eax`) - this makes VC6 pick
 // edi instead of ebx for `this` and is WORSE (10/37). The remaining
@@ -1591,7 +1591,7 @@ Verification note: hoisting the count out of the loop is an EQUIVALENT mutant
 // shift) did not yield to reordering the two post-count-check statements
 // either; both orders compile identically.
 //
-// RULED-OUT: loop shape, via try_spellings. `do { ... } while (index <
+// TRIED: loop shape, via try_spellings. `do { ... } while (index <
 // count);` ties the committed `for (;;) { ...; if (index >= count) return
 // 0; }` exactly (17/37, same bytes) - the image's single shared "return 1"
 // landing pad (reached by both `je` and the post-recursion `jne`) is not
@@ -1882,21 +1882,21 @@ Purpose: Decide which window a screen position belongs to, translating the
 // four independent loads; nothing in the source controls which two VC6's
 // allocator decides to hoist.
 //
-// RULED-OUT: touching `WinPointerOwner2`/`WinPointerOwner4` with a no-op read
+// TRIED: touching `WinPointerOwner2`/`WinPointerOwner4` with a no-op read
 //            at the top of the function (before Owner1's check), to see
 //            whether an earlier textual mention changes which two get
 //            preloaded - 13 of 304 -> 14 of 304. The instruction that appears
 //            is the touch itself; the image's own choice of ebp/edx for those
 //            two globals over ecx/ebx for Owner1/3 did not follow.
-//            (This note used to read `RULED-OUT, MEASURED:`, which the lesson
+//            (This note used to read `TRIED, MEASURED:`, which the lesson
 //            grammar does not accept - the token must be followed by the
 //            colon - so the body kept reading as untouched.)
-// RULED-OUT: the flag axis is exhausted and buys nothing. All ten sets
+// TRIED: the flag axis is exhausted and buys nothing. All ten sets
 //            measured: best is 13 of 304 at 0.106 similar (/O2 /Gy /GR- /GX,
 //            and /Ob0 and /Oi- score identically), worst 6 of 304 at 0.058;
 //            /Oy- costs 4 instructions of agreement at every optimisation
 //            level.
-// RULED-OUT: a second, independent scheduling gap, and it is worth an
+// TRIED: a second, independent scheduling gap, and it is worth an
 //            instruction at every one of the visibility tests: the image
 //            materialises the constant 1 once (`mov ebx, 1` at 0x005F6F2B)
 //            and spends `test byte ptr [reg + 0x9c], bl` thereafter, where
@@ -2488,7 +2488,7 @@ Purpose: Tear down whatever DirectDraw surface and device window this
 // (a 1691-byte DDERR_* switch, unrecovered). Neither is this recovery's
 // job; see the notes beside their forwarders in pending_bodies.cpp.
 //
-// RULED-OUT: 96 of 178 positionally under `/c /O2 /Ob0 /Gy /GR- /GX` (the
+// TRIED: 96 of 178 positionally under `/c /O2 /Ob0 /Gy /GR- /GX` (the
 //            flag set `measure` picks), 0.986 similar - every call, branch
 //            and field access agrees; what does not is which callee-saved
 //            register holds `this` and which holds the constant zero. The
@@ -2499,7 +2499,7 @@ Purpose: Tear down whatever DirectDraw surface and device window this
 //            documents above at length and never fully resolves. No field
 //            order, `nullptr`-vs-`0` spelling or flag set tried here moves
 //            it.
-// RULED-OUT: the one instruction of the 178 this tree does not emit is in
+// TRIED: the one instruction of the 178 this tree does not emit is in
 //            the splash `copy` call: the image loads
 //            `ScreenBuffer.dib_.bmiHeader.biWidth` into ecx before pushing
 //            the other arguments and then computes `mov eax, ecx; sub eax,
@@ -2632,14 +2632,14 @@ static const char WinClassName[] = "JackalClass";
 // VC6 assign the constant zero to the register it saves first, and that is
 // allocation order, which no spelling tried here reaches.
 //
-// RULED-OUT: the flag sets are byte-identical here, so it is not the frame
+// TRIED: the flag sets are byte-identical here, so it is not the frame
 //            pointer or /O1 register pressure; declaring `wndclass` before
 //            `logo` does not move the frame; and caching the import slot in a
 //            local changes nothing, because this build already caches it.
 //            (This note used to read `RULED OUT:` without the hyphen, which
 //            the lesson grammar does not accept, so the body kept reading as
 //            untouched however much had been measured against it.)
-// RULED-OUT: re-measured across all ten flag sets. The best is 16 of 203 at
+// TRIED: re-measured across all ten flag sets. The best is 16 of 203 at
 //            0.925 SIMILAR under /c /O2 /Ob0 /Gy /GR- /GX - higher than the
 //            0.887 this note recorded, and the highest similarity of any
 //            unclaimed body in this batch. /Ob0 is what buys it: without it
@@ -2807,7 +2807,7 @@ Purpose: Name the DirectDraw error and put it in front of the user.
 // 99 agreeing with the SDK's DDRAW.H. So the case labels below are the
 // macros rather than the raw HRESULTs, and the strings are what shipped.
 //
-// RULED-OUT: byte-exactness, and it is the lowering rather than the mapping.
+// TRIED: byte-exactness, and it is the lowering rather than the mapping.
 // A flat switch over all 99 cases reaches instruction #22 before diverging
 // (`push` against `mov`): MSVC re-groups this case set into different
 // sub-tables than the original's five, and which case maps to which string

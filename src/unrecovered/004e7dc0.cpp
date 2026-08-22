@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004E7DC0 ?resource_yield@@YAHHHHHH@Z 0x004E7DC0-0x004E7E34 FILE
-// RULED-OUT: `case 3: ...; return 0;` (same size, 16 bytes over); the extra bytes are in the switch/bounds-check shape, not the case body.
+// TRIED: `case 3: ...; return 0;` (same size, 16 bytes over); the extra bytes are in the switch/bounds-check shape, not the case body.
 // working copy - scaffold materialised by --work
 // size      116 bytes
 // prototype int (__cdecl ?resource_yield@@YAHHHHHH@Z)(int type, int factionID, int baseID, int xCoord, int yCoord)

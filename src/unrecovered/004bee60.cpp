@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004BEE60 ?UNK2@UV2Player@@QAAHHHHH@Z 0x004BEE60-0x004BEEFD FILE
-// RULED-OUT: MISMATCH #2 push/sub, spill-slot reservation form differs
+// TRIED: MISMATCH #2 push/sub, spill-slot reservation form differs
 // working copy - scaffold materialised by --work
 // size      157 bytes
 // prototype 

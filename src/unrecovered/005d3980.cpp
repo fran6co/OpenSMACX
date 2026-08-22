@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005D3980 sub_5d3980 0x005D3980-0x005D3DF0 FILE
-// RULED-OUT: __fastcall(int *, unsigned int *) direct transcription of the Ghidra decompile (malloc/free node-buffer growth, 10-bit signed coefficient unpack, memcpy raw blocks, 2-bit nibble pixel expansion, two helper calls); diverges at insn #4 in the prologue register-save order, not in control flow
+// TRIED: __fastcall(int *, unsigned int *) direct transcription of the Ghidra decompile (malloc/free node-buffer growth, 10-bit signed coefficient unpack, memcpy raw blocks, 2-bit nibble pixel expansion, two helper calls); diverges at insn #4 in the prologue register-save order, not in control flow
 // working copy - scaffold materialised by --work
 // size      1136 bytes
 // prototype 

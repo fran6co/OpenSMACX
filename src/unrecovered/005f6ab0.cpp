@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005F6AB0 ?get_mouse_window_recurse@@YAHPAUWin@@PAHPAH@Z 0x005F6AB0-0x005F6F06 FILE
-// RULED-OUT: retyped VCall::slot061 from void to int (the real call tests the return value); flat Win offsets derived from raw asm rather than Ghidra (which mis-modeled the receiver on several calls); two structurally distinct child-recursion halves (primary path tests +0x9c bit 2, alt path is the fallback) each with their own pixel-precision hit test against one of the four buffer pointers at +0xb4/+0xb8/+0xbc/+0xc0, or the embedded Buffer at +0x444 in the alt path. Diverges at #0.
+// TRIED: retyped VCall::slot061 from void to int (the real call tests the return value); flat Win offsets derived from raw asm rather than Ghidra (which mis-modeled the receiver on several calls); two structurally distinct child-recursion halves (primary path tests +0x9c bit 2, alt path is the fallback) each with their own pixel-precision hit test against one of the four buffer pointers at +0xb4/+0xb8/+0xbc/+0xc0, or the embedded Buffer at +0x444 in the alt path. Diverges at #0.
 // working copy - scaffold materialised by --work
 // size      1110 bytes
 // prototype 

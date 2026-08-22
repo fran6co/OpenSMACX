@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00617AA0 ?add_object@Caviar@@QAEHPAUCaviarData@@PAEPAUVOX_Vect@@H@Z 0x00617AA0-0x00617C23 FILE
-// RULED-OUT: none confirmed byte-exact; MISMATCH #0 prologue 'sub' vs 'mov', same shape as the sibling 0x00617920 overload.
+// TRIED: none confirmed byte-exact; MISMATCH #0 prologue 'sub' vs 'mov', same shape as the sibling 0x00617920 overload.
 // size      387 bytes
 // prototype int (__thiscall ?add_object@Caviar@@QAEHPAUCaviarData@@PAEPAUVOX_Vect@@H@Z)(Caviar* this, CaviarData*, LPBYTE, game_base_warnings*, int)
 // callers   2   call targets   1

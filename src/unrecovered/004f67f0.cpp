@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004F67F0 ?base_ecology@@YAXXZ 0x004F67F0-0x004F79B3 FILE
-// RULED-OUT: heavily time-boxed given batch budget - only the leading probability gate (faction-table accumulator update, a rand()%100 roll against a base-stat threshold, and the two disabling-flag checks) is transcribed; the ecology event itself, most of the function, is a deliberate stub. MISMATCH #0, prologue only.
+// TRIED: heavily time-boxed given batch budget - only the leading probability gate (faction-table accumulator update, a rand()%100 roll against a base-stat threshold, and the two disabling-flag checks) is transcribed; the ecology event itself, most of the function, is a deliberate stub. MISMATCH #0, prologue only.
 // working copy - scaffold materialised by --work
 // size      4547 bytes
 // prototype 
@@ -2213,5 +2213,5 @@ void __cdecl base_ecology() {
     // Time-boxed: the event itself (picking a random tile near the base
     // and applying/undoing a fungus-pop/atrocity ecology effect there,
     // then redrawing) is not transcribed - most of this 4547-byte
-    // function is that body. See the RULED-OUT note.
+    // function is that body. See the TRIED note.
 }

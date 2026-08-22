@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005EB0BF ?load@Sprite@@QAEHH@Z 0x005EB0BF-0x005EB205;0x00662C42-0x00662C54 FILE
-// RULED-OUT: exact register-save order (push esi / mov esi,ecx / push edi) around the Filemap ctor call; matches a sibling (Sprite::copy, 0x005EAE4F) noted as the same register-pressure gap. #pragma function(memcpy) fixed a separate divergence (rep movsd vs call _memcpy), landing at 0.99 mnemonic similarity, 2 ops off.
+// TRIED: exact register-save order (push esi / mov esi,ecx / push edi) around the Filemap ctor call; matches a sibling (Sprite::copy, 0x005EAE4F) noted as the same register-pressure gap. #pragma function(memcpy) fixed a separate divergence (rep movsd vs call _memcpy), landing at 0.99 mnemonic similarity, 2 ops off.
 // working copy - scaffold materialised by --work
 // size      344 bytes
 // prototype int (__thiscall ?load@Sprite@@QAEHH@Z)(Sprite* this, int)

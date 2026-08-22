@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00483420 ?new_chat@NetWin@@QAEXPADH@Z 0x00483420-0x004834C5 FILE
-// RULED-OUT: `a2 * 0x19c` as a raw byte offset and as `NetPlayerRec[a2].id` struct-array indexing both compiled the multiply as a single `imul`, not the original's shl/add/lea strength reduction (0.74 mnemonic sim, first divergence at #3) - not chased further.
+// TRIED: `a2 * 0x19c` as a raw byte offset and as `NetPlayerRec[a2].id` struct-array indexing both compiled the multiply as a single `imul`, not the original's shl/add/lea strength reduction (0.74 mnemonic sim, first divergence at #3) - not chased further.
 // working copy - scaffold materialised by --work
 // size      165 bytes
 // prototype void (__thiscall ?new_chat@NetWin@@QAEXPADH@Z)(NetWin* this, int8*, int)

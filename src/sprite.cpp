@@ -69,7 +69,7 @@ Sprite *__fastcall sprite_construct_redirect(Sprite *self, void *) {
 Purpose: Release a sprite's allocations, discount its pixel memory, and clear
          every field except the type byte.
 // ORIGINAL: 0x005E3820 ?close@Sprite@@QAEXXZ 0x005E3820-0x005E3884 SEMANTIC
-// RULED-OUT: byte-exactness, on ONE REGISTER NAME. 35 of 38 instructions
+// TRIED: byte-exactness, on ONE REGISTER NAME. 35 of 38 instructions
 //   agree and similarity is 1.000 under every /O2 flag set; the whole
 //   divergence is that VC6 holds the loaded `*SpriteMemoryUsed` in ecx where
 //   the image holds it in edx (`mov edx, [0x9b6618]` / `sub edx, eax` /
@@ -252,7 +252,7 @@ void __fastcall sprite_unk4_redirect(Sprite *self, void *, int a1, int a2) {
 /*
 // ORIGINAL: 0x0063CE20 sub_63ce20 0x0063CE20-0x0063CEE7;0x00663998-0x006639AD
 // symbol    ?sub_63ce20@@YAHXZ
-// RULED-OUT: the original wraps the local Buffer in an fs:[0] SEH frame; no swept flag set reproduces that prologue/epilogue or the secondary 0x663998 span, so the SEH shape stays unmatched.
+// TRIED: the original wraps the local Buffer in an fs:[0] SEH frame; no swept flag set reproduces that prologue/epilogue or the secondary 0x663998 span, so the SEH shape stays unmatched.
 // size      220 bytes
 // prototype
 // callers   1   call targets   5
@@ -320,11 +320,11 @@ Purpose: Turn the sprite into a one-pixel placeholder of the given extent.
 //   16 of 25 to 23 of 25 (similarity 1.000, every instruction present):
 //   putting the zeros first schedules `mov eax, 1` after the `xor eax, eax`
 //   and costs the shared `mov ecx, 1` the image materialises up front.
-// RULED-OUT: the `const int one = 1;` local the promoted transcription used.
+// TRIED: the `const int one = 1;` local the promoted transcription used.
 //   It is not what shares the constant - a plain literal `1` at all three
 //   uses scores the same, and `const size_t one` / `mem_get(iSpriteWidth_)`
 //   score no better either (all 16 of 25 at the old field order).
-// RULED-OUT: reaching 25 of 25. The last two stores are `[esi+0x1c]` (height)
+// TRIED: reaching 25 of 25. The last two stores are `[esi+0x1c]` (height)
 //   and `[esi+8]` (depth) and the image emits them in that order while
 //   loading height EARLY into edx and depth LATE into al. VC6 here ties the
 //   two together: stores follow source order and the loads come out in the

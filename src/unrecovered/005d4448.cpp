@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005D4448 sub_5d4448 0x005D4448-0x005D44FC FILE
-// RULED-OUT: byte-exact - `pushal`/`popal` at entry has no C++ spelling (documented wall). Landed the nested do/while-with-goto gather loop structurally instead: 9 stack args, an outer per-run counter reset from a saved [ebp+0x24] and an inner index-table lookup vs a direct 16-byte-stride struct-array fallback.
+// TRIED: byte-exact - `pushal`/`popal` at entry has no C++ spelling (documented wall). Landed the nested do/while-with-goto gather loop structurally instead: 9 stack args, an outer per-run counter reset from a saved [ebp+0x24] and an inner index-table lookup vs a direct 16-byte-stride struct-array fallback.
 // working copy - scaffold materialised by --work
 // size      180 bytes
 // prototype 

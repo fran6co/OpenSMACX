@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0053D360 ?introduce@@YAXHH@Z 0x0053D360-0x0053DCB9;0x0065E53A-0x0065E622 FILE
-// RULED-OUT: `Popup popup;` RAII reproduces the whole BasePop/Scroll/ FlatButton/Sprite/Dialogs/Spot/Heap teardown cascade structurally (compiles, calls in the right order), but the prologue already diverges at instr #2 (mov vs push) - the frame/SEH setup this compiler emits for that one local doesn't match byte-for-byte. Field offsets into Players (0x00946A50, stride 0x59C) were cross-checked against src/faction.h's real Player layout and line up exactly.
+// TRIED: `Popup popup;` RAII reproduces the whole BasePop/Scroll/ FlatButton/Sprite/Dialogs/Spot/Heap teardown cascade structurally (compiles, calls in the right order), but the prologue already diverges at instr #2 (mov vs push) - the frame/SEH setup this compiler emits for that one local doesn't match byte-for-byte. Field offsets into Players (0x00946A50, stride 0x59C) were cross-checked against src/faction.h's real Player layout and line up exactly.
 // working copy - scaffold materialised by --work
 // size      2625 bytes
 // prototype 

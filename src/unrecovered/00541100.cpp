@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00541100 ?tech_trade@@YAHHHHHH@Z 0x00541100-0x00543A20;0x0065EB33-0x0065F1B4 FILE
-// RULED-OUT: full nested AI-mood reject condition tree (>10 inlined "trade rejected" popups, each with its own message id/number) was factored into one tech_trade_reject() helper covering the first few reject reasons only; the 4-slot trade loop's own per-slot popup/negotiation sequence (FUN_0053dce0 gating, per-partner commlink offers) is approximated, not reproduced.
+// TRIED: full nested AI-mood reject condition tree (>10 inlined "trade rejected" popups, each with its own message id/number) was factored into one tech_trade_reject() helper covering the first few reject reasons only; the 4-slot trade loop's own per-slot popup/negotiation sequence (FUN_0053dce0 gating, per-partner commlink offers) is approximated, not reproduced.
 // working copy - scaffold materialised by --work
 // size      12193 bytes
 // prototype 

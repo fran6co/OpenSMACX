@@ -1,6 +1,6 @@
 // ORIGINAL: 0x005F9D30 ?compute_length@PullDown@@QAEHPAD@Z 0x005F9D30-0x005F9F34 FILE
-// RULED-OUT: the emitted PullDown layout already places items_ at 0xA18 and width_ at 0xF24 (field_A14_ + PullDownItem[64] + two dwords), so the body reads them by name instead of by offset.
-// RULED-OUT: nothing further tried; MISMATCH #0 (push vs mov - the original has no ebp frame, esp-relative throughout like 0x6401B0), similarity 0.41.
+// TRIED: the emitted PullDown layout already places items_ at 0xA18 and width_ at 0xF24 (field_A14_ + PullDownItem[64] + two dwords), so the body reads them by name instead of by offset.
+// TRIED: nothing further tried; MISMATCH #0 (push vs mov - the original has no ebp frame, esp-relative throughout like 0x6401B0), similarity 0.41.
 // working copy - scaffold materialised by --work
 // size      516 bytes
 // prototype int (__thiscall ?compute_length@PullDown@@QAEHPAD@Z)(PullDown* this, int8*)

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00483EB0 ?on_group_clicked@NewTechWin@@QAEXHH@Z 0x00483EB0-0x00483F8C FILE
-// RULED-OUT: `#pragma function(strcat)` - without it VC6 inlines strcat as a scasb/movs sequence; with it plus a switch(a2){case 1: case 2:} (matching the dec/je/dec/jne shape) this reaches 0.96 mnemonic similarity, MISMATCH only on the final load()-call arg pushes.
+// TRIED: `#pragma function(strcat)` - without it VC6 inlines strcat as a scasb/movs sequence; with it plus a switch(a2){case 1: case 2:} (matching the dec/je/dec/jne shape) this reaches 0.96 mnemonic similarity, MISMATCH only on the final load()-call arg pushes.
 // working copy - scaffold materialised by --work
 // size      220 bytes
 // prototype void (__thiscall ?on_group_clicked@NewTechWin@@QAEXHH@Z)(NewTechWin* this, int, int)

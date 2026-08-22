@@ -105,7 +105,7 @@ Purpose: Recompute which faction owns each tile of the map, and rebuild every
 //   as `[edi + 0x9AA738]` / `[edi + 0x9AA73C]`, while `Continents[region].field`
 //   at each site made VC6 recompute the whole lea/sub/shl chain across the
 //   intervening `goody_at` call. 0.630 -> 0.789.
-// RULED-OUT: measured and rejected on the way. Splitting the rocky/fungus,
+// TRIED: measured and rejected on the way. Splitting the rocky/fungus,
 //   visibility/is_human and BaseFindDist chains into separate `if`s: all three
 //   score exactly what the chained form does. Splitting the owner add_site
 //   condition into two arms that each call add_site does raise positional
@@ -116,7 +116,7 @@ Purpose: Recompute which faction owns each tile of the map, and rebuild every
 //   Storing the byte arrays first in that loop: no change. `Continent &` instead
 //   of `Continent *`, and a `uint8_t *` for the unk_82 read/modify/write: both
 //   identical to what is committed, so they are free spellings, not levers.
-// RULED-OUT: what is left is register ASSIGNMENT, 20 diverging runs under
+// TRIED: what is left is register ASSIGNMENT, 20 diverging runs under
 //   /c /O2 /Gy /GR- /Oy- /GX and one instruction short of the image's 349. The
 //   faction loop is a straight ESI/EDI swap (image counts in ESI and walks the
 //   unk_79 pointer in EDI, this tree the other way round); `region * 2` is CSE'd
@@ -364,7 +364,7 @@ Purpose: Handle creation of pop-up message on Planetfall.
 // flags     frame;sp_ready;purged_ok
 // calls     0x005BF310 0x00625E30 0x00625E50 0x00625EC0 0x00645470 0x00645660
 // indirect  0x0058923D
-// RULED-OUT: not resolved this pass. The image's FOUR `parse_says`
+// TRIED: not resolved this pass. The image's FOUR `parse_says`
 //        (0x00625EC0) call sites write the gender/plurality arguments to
 //        FIXED GLOBALS (0x9bbfec/0x9bbff0) individually before each call
 //        rather than through `parse_set`, in an ORDER that does not match
@@ -502,13 +502,13 @@ Purpose: Run the repair phase for the specified faction: reset the per-turn unit
 //   0.256 -> 0.297 on its own. (5) The VFLAG_UNK_2 test is written NEGATED with
 //   the arms swapped, because the image's `jne` goes to the `&= ~VFLAG_UNK_2` arm
 //   and falls through to `&= ~VFLAG_UNK_1`. 0.297 -> 0.299.
-// RULED-OUT: `triad` as `uint8_t` or `int` rather than `uint32_t`. The image does
+// TRIED: `triad` as `uint8_t` or `int` rather than `uint32_t`. The image does
 //   keep the chassis triad in CL (`mov cl, [ecx + 0x94A379] / test cl, cl /
 //   cmp cl, 2`) where this tree zero-extends it into a dword, so the width lever
 //   looks right - but measured on all three declarations it is 0.300/0.299/0.299
 //   against 0.299 committed, and both `uint8_t` variants RAISE the diverging-run
 //   count (55 -> 61 and 62). It is not the lever it looks like.
-// RULED-OUT: the VFLAG arms are still 16-bit here (`and eax, 0xFFFE`) against the
+// TRIED: the VFLAG arms are still 16-bit here (`and eax, 0xFFFE`) against the
 //   image's 8-bit (`and al, 0xFE`), and writing the read-modify-write straight on
 //   `Vehs[veh_id].flags` with no local does not change that - 0.256, identical to
 //   the local. The other standing gap is `tile->bit`: the image re-reads it as a

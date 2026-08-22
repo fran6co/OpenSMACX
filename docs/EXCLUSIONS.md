@@ -270,7 +270,7 @@ All 18 now cite §2d, which is the reason that actually fires.
 
 The other four of the 22 are not exclusions and were left alone:
 `0x0063AEE0`, `0x0063AF00`, `0x0063AF20` and `0x0063AF40` carry landed
-FILE-mode bodies whose own `RULED-OUT` lines already say the range refuses
+FILE-mode bodies whose own `TRIED` lines already say the range refuses
 them. A body that exists and cannot be scored is a truthful state; converting
 it to an exclusion would delete four recoveries to tidy a citation.
 

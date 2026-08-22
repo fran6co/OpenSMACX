@@ -1,5 +1,5 @@
 // ORIGINAL: 0x006345E0 sub_6345e0 0x006345E0-0x00634641 FILE
-// RULED-OUT: signature is `__thiscall`, not the placeholder's `__stdcall` free function - `[ecx+N]` reads with no matching stack access, reinterpreted as `Vec3 *cross(Vec3 *out, Vec3 *b)` (3-float vectors, this=A, stack args=out,B). Named-temp form (rx/ry/rz locals before the stores) forces no closer a match than direct member-store form; both compile but diverge at #0 (sub vs mov/push) - original spills all three FP products to stack temps between fld/fmul/fsubp triplets, this form keeps more in registers under /O1
+// TRIED: signature is `__thiscall`, not the placeholder's `__stdcall` free function - `[ecx+N]` reads with no matching stack access, reinterpreted as `Vec3 *cross(Vec3 *out, Vec3 *b)` (3-float vectors, this=A, stack args=out,B). Named-temp form (rx/ry/rz locals before the stores) forces no closer a match than direct member-store form; both compile but diverge at #0 (sub vs mov/push) - original spills all three FP products to stack temps between fld/fmul/fsubp triplets, this form keeps more in registers under /O1
 // working copy - scaffold materialised by --work
 // size      97 bytes
 // prototype 

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005FB240 ?UNK5@Menu@@QAEHHHHH@Z 0x005FB240-0x005FB29E FILE
-// RULED-OUT: for-loop over entries_[] matching id, then a dead index==-1 guard mirrored from the disassembly before the pull_down->UNK3 call
+// TRIED: for-loop over entries_[] matching id, then a dead index==-1 guard mirrored from the disassembly before the pull_down->UNK3 call
 // working copy - scaffold materialised by --work
 // size      94 bytes
 // prototype int (__thiscall ?UNK5@Menu@@QAEHHHHH@Z)(Menu* this, int, int, int, int)

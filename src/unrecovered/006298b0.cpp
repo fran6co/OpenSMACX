@@ -1,5 +1,5 @@
 // ORIGINAL: 0x006298B0 ?UNK1@StringBox@@QAEXH@Z 0x006298B0-0x0062997B FILE
-// RULED-OUT: member-fn-pointer+union thunk (same shape as 0x00440F80) for the vtable-adjusted release calls and the slot1 notify call on the embedded list container at self+0x2b70. First divergence #22 jl/jge.
+// TRIED: member-fn-pointer+union thunk (same shape as 0x00440F80) for the vtable-adjusted release calls and the slot1 notify call on the embedded list container at self+0x2b70. First divergence #22 jl/jge.
 // working copy - scaffold materialised by --work
 // size      203 bytes
 // prototype void (__thiscall ?UNK1@StringBox@@QAEXH@Z)(StringBox* this, int)

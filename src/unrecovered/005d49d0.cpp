@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005D49D0 sub_5d49d0 0x005D49D0-0x005D4BA7
-// RULED-OUT: the object's fields at +8/+0xc/+0x10/+0x14 line up exactly with StringStruct's head_/current_/entry_count_/ current_position_ (src/stringstruct.h), and the one named callee (0x004015B0) is StringStruct::seek_pos - so `this` is reinterpret_cast to StringStruct* for that one call, while every other access stays raw pointer arithmetic since the rest of this function is not itself a StringStruct method. Landing the closest control-flow-faithful form (divergence starts at instruction #4, on the prologue's register choice).
+// TRIED: the object's fields at +8/+0xc/+0x10/+0x14 line up exactly with StringStruct's head_/current_/entry_count_/ current_position_ (src/stringstruct.h), and the one named callee (0x004015B0) is StringStruct::seek_pos - so `this` is reinterpret_cast to StringStruct* for that one call, while every other access stays raw pointer arithmetic since the rest of this function is not itself a StringStruct method. Landing the closest control-flow-faithful form (divergence starts at instruction #4, on the prologue's register choice).
 // size      471 bytes
 // prototype
 // callers   1   call targets   3

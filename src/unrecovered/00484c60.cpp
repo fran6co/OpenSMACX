@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00484C60 ?draw_tech@PickTech@@QAEHHPAURECT@@H@Z 0x00484C60-0x00485FBD;0x0065766C-0x006576A0 FILE
-// RULED-OUT: full transcription of all branches/tables/calls (~95% of instructions); approximated the StringStruct/StringList entry-teardown loop (~0x00485EB0-0x00485F9C, ~9% of the function) as a simplified linked-list walk instead of the adjustor-thunk virtual dispatch the disassembly performs, since the scaffold's StringStruct/StringList carry no vtable to reproduce it exactly; find_font/mandate_color call sites re-derived from raw push/pop counts against the declared 2-arg/1-arg signatures rather than Ghidra's (wrong) 3-arg/4-arg attribution of leftover stack pushes.
+// TRIED: full transcription of all branches/tables/calls (~95% of instructions); approximated the StringStruct/StringList entry-teardown loop (~0x00485EB0-0x00485F9C, ~9% of the function) as a simplified linked-list walk instead of the adjustor-thunk virtual dispatch the disassembly performs, since the scaffold's StringStruct/StringList carry no vtable to reproduce it exactly; find_font/mandate_color call sites re-derived from raw push/pop counts against the declared 2-arg/1-arg signatures rather than Ghidra's (wrong) 3-arg/4-arg attribution of leftover stack pushes.
 // working copy - scaffold materialised by --work
 // size      5009 bytes
 // prototype int (__thiscall ?draw_tech@PickTech@@QAEHHPAURECT@@H@Z)(PickTech* this, int, RECT*, int)
@@ -2134,7 +2134,7 @@ int PickTech::draw_tech(int a1, RECT * a2, int a3) {
 
     // ---- teardown: destroy entries of `techList`, mirroring the inlined
     //      destructor loop at 0x00485EB0-0x00485F17 (list #1) and
-    //      0x00485F1F-0x00485F9C (list #2). RULED-OUT below explains why
+    //      0x00485F1F-0x00485F9C (list #2). TRIED below explains why
     //      this is approximated rather than transcribed byte-for-byte. ----
     {
         int *obj = reinterpret_cast<int *>(&techList);

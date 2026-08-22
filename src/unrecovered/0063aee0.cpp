@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0063AEE0 sub_63aee0 0x0063AEE0-0x0063AEF4;0x0066731C-0x00667375 FILE
-// RULED-OUT: `int` return (no eax set before final ret, changed to `void`); address range carries a _SELFMOD (copy-protection) span, so the harness's authoritative check REFUSES any body here regardless of content - MISMATCH is the best obtainable signal via --dir.
+// TRIED: `int` return (no eax set before final ret, changed to `void`); address range carries a _SELFMOD (copy-protection) span, so the harness's authoritative check REFUSES any body here regardless of content - MISMATCH is the best obtainable signal via --dir.
 // working copy - scaffold materialised by --work
 // size      109 bytes
 // prototype 

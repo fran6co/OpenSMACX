@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0052F8E0 ?game_checksum@NetDaemon@@QAEXPAH@Z 0x0052F8E0-0x0053031E FILE
-// RULED-OUT: full instruction-order transcription of all ~150 checksum() calls (verified offsets/strides/seed-chaining against raw disasm, not Ghidra scaling); diverges at insn #53, likely register-alloc (lea vs mov) in the bit_count loop or header prologue, not logic.
+// TRIED: full instruction-order transcription of all ~150 checksum() calls (verified offsets/strides/seed-chaining against raw disasm, not Ghidra scaling); diverges at insn #53, likely register-alloc (lea vs mov) in the bit_count loop or header prologue, not logic.
 // working copy - scaffold materialised by --work
 // size      2622 bytes
 // prototype void (__thiscall ?game_checksum@NetDaemon@@QAEXPAH@Z)(NetDaemon* this, int*)

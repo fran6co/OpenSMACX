@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00630B00 sub_630b00 0x00630B00-0x00630B7C FILE
-// RULED-OUT: kept the contract's `__stdcall(int,int)` head - the disasm sets `ebx = ecx` on entry and reads `[ebx+0x6fc]`/`[ebx+0x10c]` with no stack access for a receiver, so it is really a __thiscall member; rewritten as one. MISMATCH is at #0 (bigger frame, 155 vs 124 bytes), not tried further.
+// TRIED: kept the contract's `__stdcall(int,int)` head - the disasm sets `ebx = ecx` on entry and reads `[ebx+0x6fc]`/`[ebx+0x10c]` with no stack access for a receiver, so it is really a __thiscall member; rewritten as one. MISMATCH is at #0 (bigger frame, 155 vs 124 bytes), not tried further.
 // working copy - scaffold materialised by --work
 // size      124 bytes
 // prototype 

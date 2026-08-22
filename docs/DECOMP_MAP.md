@@ -92,31 +92,31 @@ LEVER: jl/jge  flipped the `if` condition and swapped the arms
 ```
 ```
 ORIGINAL: 0x0055B760
-RULED-OUT: plain immediate; named local; const; x|0xFF;
+TRIED: plain immediate; named local; const; x|0xFF;
            register storage; a 1-bit bitfield
 ```
 
 **They carry different durability, and that is the design.** A `LEVER` sits on a
 body that MATCHED, so its divergence is gone and the fingerprint is historical —
 it must be written down or the lesson cannot be filed against anything. A
-`RULED-OUT` sits on a body that has NOT matched, so its divergence is still live
+`TRIED` sits on a body that has NOT matched, so its divergence is still live
 and the key is **measured rather than written**: a key that is never written can
 never be stale. An indented comment line with no token of its own continues the
 line above.
 
 **Both are self-refuting, which is what earns them a place under "state is
 measured, not claimed".** A `LEVER` is already covered by the ratchet: the body
-must keep reproducing. A `RULED-OUT` fails the moment its body *does* match, so
+must keep reproducing. A `TRIED` fails the moment its body *does* match, so
 a wall cannot quietly outlive its reason — it must be promoted to a `LEVER` with
 its fingerprint, or deleted. There is deliberately **no `WALL:` token**: a wall
 is `EXCLUDED S<n>` with a population `measure_exclusions.py --check` re-derives,
-or it is a long `RULED-OUT` list, and nothing in between. One marker carrying
+or it is a long `TRIED` list, and nothing in between. One marker carrying
 both "I stopped" and "nobody should try" is the trap that got a `static_assert`
 migration reverted.
 
 `--check` enforces three things, all offline and ahead of every early return, so
-a checkout with no VC6 still applies them: **state** (`RULED-OUT` on a proved
-body, or `LEVER` on an unproved one), **placement** (`RULED-OUT` on a
+a checkout with no VC6 still applies them: **state** (`TRIED` on a proved
+body, or `LEVER` on an unproved one), **placement** (`TRIED` on a
 placeholder — you cannot rule a spelling out of a body that does not exist), and
 **syntax** (`LEVER:` with no fingerprint, which is a lesson nothing can group).
 

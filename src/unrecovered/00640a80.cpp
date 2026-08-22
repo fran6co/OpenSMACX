@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00640A80 sub_640a80 0x00640A80-0x00640BAE FILE
-// RULED-OUT: `if(len!=0){do}while` (jbe->je); ternary `len>0x15b0?0x15b0:len` (jb->ja); `n -= blocks<<4` (neg->shl). Landed at MNEMONIC_ONLY (127/127 mnemonics match) with `n = n + blocks * -16` mirroring Ghidra's `uVar1 + uVar18 * -0x10`; remaining diff is byte-level only (register/immediate encoding), not chased further.
+// TRIED: `if(len!=0){do}while` (jbe->je); ternary `len>0x15b0?0x15b0:len` (jb->ja); `n -= blocks<<4` (neg->shl). Landed at MNEMONIC_ONLY (127/127 mnemonics match) with `n = n + blocks * -16` mirroring Ghidra's `uVar1 + uVar18 * -0x10`; remaining diff is byte-level only (register/immediate encoding), not chased further.
 // size      302 bytes
 // prototype
 // callers   1   call targets   0

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005C38B0 ?world_rivers@@YAXXZ 0x005C38B0-0x005C3F66 FILE
-// RULED-OUT: direct Ghidra-shape transcription (int-arithmetic base pointer, no pointer-typed intermediates) matches through instruction #14 of the framed build, diverges 'add' vs 'inc' at #15; not chased further given size (1718 bytes / ~550 asm lines).
+// TRIED: direct Ghidra-shape transcription (int-arithmetic base pointer, no pointer-typed intermediates) matches through instruction #14 of the framed build, diverges 'add' vs 'inc' at #15; not chased further given size (1718 bytes / ~550 asm lines).
 // working copy - scaffold materialised by --work
 // size      1718 bytes
 // prototype 

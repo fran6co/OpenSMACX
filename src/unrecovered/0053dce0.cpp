@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0053DCE0 ?wants_to_speak@@YAHHH@Z 0x0053DCE0-0x0053E46C;0x0065E622-0x0065E75A FILE
-// RULED-OUT: this is a 27-stage SEH unwind (vtable pokes for partially- constructed FlatButton/Scroll/Dialog/Sprite/Spot/Heap locals around a `Popup` object) that could not be fully re-derived in budget; landed a single `Popup popup;` local plus the has_tech-gated / consent / diplomacy-request control flow (diplomacy_check, diplomacy_caption, parse_says, random, get_him_her, X_pops, Popup::start/exec, DiploPop::start, introduce), omitting the other ~10 locals' manual close()/dtor bookkeeping. Compiles; diverges at #17 (prologue/frame size).
+// TRIED: this is a 27-stage SEH unwind (vtable pokes for partially- constructed FlatButton/Scroll/Dialog/Sprite/Spot/Heap locals around a `Popup` object) that could not be fully re-derived in budget; landed a single `Popup popup;` local plus the has_tech-gated / consent / diplomacy-request control flow (diplomacy_check, diplomacy_caption, parse_says, random, get_him_her, X_pops, Popup::start/exec, DiploPop::start, introduce), omitting the other ~10 locals' manual close()/dtor bookkeeping. Compiles; diverges at #17 (prologue/frame size).
 // working copy - scaffold materialised by --work
 // size      2244 bytes
 // prototype 

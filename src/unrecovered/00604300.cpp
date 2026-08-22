@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00604300 ?on_button_clicked@BasePop@@QAEXH@Z 0x00604300-0x006043CA FILE
-// RULED-OUT: goto-label mirror of the Ghidra shape; collapsed to an if/else-if/else that sets field_3100_ in both terminal arms instead. Dynamic vtable-relative `this` for get_selected_id (dialogs->vbtable_pointer_ / field_58_ + 8) reaches #18 lea-vs-add, deep past the branch structure
+// TRIED: goto-label mirror of the Ghidra shape; collapsed to an if/else-if/else that sets field_3100_ in both terminal arms instead. Dynamic vtable-relative `this` for get_selected_id (dialogs->vbtable_pointer_ / field_58_ + 8) reaches #18 lea-vs-add, deep past the branch structure
 // working copy - scaffold materialised by --work
 // size      202 bytes
 // prototype void (__thiscall ?on_button_clicked@BasePop@@QAEXH@Z)(BasePop* this, int)

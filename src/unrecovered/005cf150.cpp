@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005CF150 sub_5cf150 0x005CF150-0x005CF2F0
-// RULED-OUT: MISMATCH #0 mov/push - bit-reader state (accumulator/count/ cursor) modelled as plain re-read globals instead of the register-resident values the original keeps across the whole switch; entry-frame shape differs first.
+// TRIED: MISMATCH #0 mov/push - bit-reader state (accumulator/count/ cursor) modelled as plain re-read globals instead of the register-resident values the original keeps across the whole switch; entry-frame shape differs first.
 // size      416 bytes
 // prototype
 // callers   3   call targets   0

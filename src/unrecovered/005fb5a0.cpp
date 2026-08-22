@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005FB5A0 ?UNK10@Menu@@QAEHHPAD@Z 0x005FB5A0-0x005FB6FD FILE
-// RULED-OUT: the vtable call at [vtable]+0x170 (ordinal 92, nullary) has no auto-emitted VCall shim for this address, so a small local shim (VCall92) declares the 93 ordinals it needs by position; a bare __thiscall function-pointer cast is C4234 on VC6. Landed at 0.57 mnemonic similarity - the mnemonic- for-mnemonic transcription of the ampersand/mnemonic-marker string logic is right, register scheduling around the reused ebx/ebp/edi is not.
+// TRIED: the vtable call at [vtable]+0x170 (ordinal 92, nullary) has no auto-emitted VCall shim for this address, so a small local shim (VCall92) declares the 93 ordinals it needs by position; a bare __thiscall function-pointer cast is C4234 on VC6. Landed at 0.57 mnemonic similarity - the mnemonic- for-mnemonic transcription of the ampersand/mnemonic-marker string logic is right, register scheduling around the reused ebx/ebp/edi is not.
 // working copy - scaffold materialised by --work
 // size      349 bytes
 // prototype int (__thiscall ?UNK10@Menu@@QAEHHPAD@Z)(Menu* this, int, int8*)

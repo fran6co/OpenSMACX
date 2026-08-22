@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00668069 sub_668069 0x00668069-0x0066815D EXCLUDED S2d
-// RULED-OUT: was `EXCLUDED S2a`; disassembly is a normal `ret`, no tail-jmp, self-contained store sequence - not an EH funclet by docs/EXCLUSIONS.md 2a's own test (see 0x00664D51's note in full). Un-excluded.
+// TRIED: was `EXCLUDED S2a`; disassembly is a normal `ret`, no tail-jmp, self-contained store sequence - not an EH funclet by docs/EXCLUSIONS.md 2a's own test (see 0x00664D51's note in full). Un-excluded.
 // size      244 bytes
 // prototype
 // callers   1   call targets   0

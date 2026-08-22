@@ -1,5 +1,5 @@
 // ORIGINAL: 0x006097F0 ?init@Dialog@@QAEHPAURECT@@PAUHeap@@@Z 0x006097F0-0x006098C8 FILE
-// RULED-OUT: separate width/height locals vs `right -= left; bottom -= top;` in place - both diverge at the same instruction (field_2c/30 store). This is the "this-adjusting thunk" shape (vtbl[1] holds a byte offset, not a function pointer) modelled with a single-virtual-slot Slot0Iface + raw pointer chasing.
+// TRIED: separate width/height locals vs `right -= left; bottom -= top;` in place - both diverge at the same instruction (field_2c/30 store). This is the "this-adjusting thunk" shape (vtbl[1] holds a byte offset, not a function pointer) modelled with a single-virtual-slot Slot0Iface + raw pointer chasing.
 // working copy - scaffold materialised by --work
 // size      216 bytes
 // prototype int (__thiscall ?init@Dialog@@QAEHPAURECT@@PAUHeap@@@Z)(Dialog* this, RECT*, Heap*)

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0055A150 ?veh_scoot@@YAXHHHHH@Z 0x0055A150-0x0055AF11;0x0065FF70-0x0065FFC7 FILE
-// RULED-OUT: exact quarter-pixel/sub-pixel scroll-rect arithmetic and the Vector-based smooth-interpolation math were approximated, not derived register-by-register; body is a faithful call-graph and control-flow transcription (SEH via real Buffer/Vector RAII locals), not byte-exact.
+// TRIED: exact quarter-pixel/sub-pixel scroll-rect arithmetic and the Vector-based smooth-interpolation math were approximated, not derived register-by-register; body is a faithful call-graph and control-flow transcription (SEH via real Buffer/Vector RAII locals), not byte-exact.
 // working copy - scaffold materialised by --work
 // size      3608 bytes
 // prototype void (__cdecl ?veh_scoot@@YAXHHHHH@Z)(int vehID, int xCoord, int yCoord, int, int)

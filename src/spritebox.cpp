@@ -53,7 +53,7 @@ Purpose: Compose a SpriteBox from its GraphicWin and Dialog virtual-base-
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D4CF0 0x005DAC70 0x005DACB0 0x005DACE0 0x005DAD10 0x005FA860 0x00608C10 0x00611730
-// RULED-OUT: promoted from the preserved artifact
+// TRIED: promoted from the preserved artifact
 //            src/recovered/units/0060ff00.cpp (since deleted), which
 //            measured SHARED_TAIL (its own cold-code span is COMDAT-folded
 //            with another function, so no per-function verdict exists
@@ -198,7 +198,7 @@ Purpose: Tear down a SpriteBox: reinstall the base subobjects' own
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005FA870 0x00610280 0x00611730
 // indirect  0x006101ED 0x00610202 0x0061021D
-// RULED-OUT: the middle of the body, and it was written here as PROSE
+// TRIED: the middle of the body, and it was written here as PROSE
 //        ("NOT REPRODUCED: ...") until 2026-08-22, which meant `decomp.reader`
 //        never saw it and frontier.py kept offering this address as fresh.
 //        Restated so it counts: between close() and the Spot teardown the
@@ -212,7 +212,7 @@ Purpose: Tear down a SpriteBox: reinstall the base subobjects' own
 //        preserved artifact this was promoted from
 //        (src/recovered/units/00610120.cpp, since deleted, itself measured
 //        SHARED_TAIL and carried the identical gap).
-// RULED-OUT: the call count, separately, and it is NOT the gap above.
+// TRIED: the call count, separately, and it is NOT the gap above.
 //        call_diff makes this tree 4 calls against the image's 2. The image
 //        calls exactly `?close@SpriteBox@@QAEXXZ` and `??1Spot@@QAE@XZ`; this
 //        tree calls close(), then `??_GSpot@@QAEPAXI@Z` - Spot's SCALAR

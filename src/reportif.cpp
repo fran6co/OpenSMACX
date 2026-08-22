@@ -42,13 +42,13 @@ Purpose: Install the SubInterface vftable, then placement-new every
          runs, two ListBox(1)s, four ButtonGroups and fourteen individual
          FlatButtons, and a Spot - before installing ReportIf's own vftable.
 // ORIGINAL: 0x004AD170 ??0ReportIf@@QAE@XZ 0x004AD170-0x004AD3AA;0x00658F80-0x00659134
-// RULED-OUT: register allocation - the SEH prologue agrees (7/7) then the
+// TRIED: register allocation - the SEH prologue agrees (7/7) then the
 //            compiled body reserves an extra `sub esp, 8` the image does
 //            not. MISMATCH, 34/132 instructions agree - the best of this
 //            batch. Layout (offsets, sub-object sizes, construction order)
 //            cross-checked directly against the destructor at 0x004ACDA0,
 //            which tears the same run down in mirrored order.
-// RULED-OUT: real declared members (FlatButton[7]/Sprite[0x15]/FlatButton[7])
+// TRIED: real declared members (FlatButton[7]/Sprite[0x15]/FlatButton[7])
 //            for flatButtonsA_/spritesA_/flatButtonsB_, built implicitly -
 //            measured WORSE, 26/132 (compiled grew to 195 instructions). The
 //            `object[0] = vtable` store has to stay explicit body code (its
@@ -127,7 +127,7 @@ typedef void(__fastcall *pending_listbox_vbase_dtor)(void *, void *);
 Purpose: Tear down every sub-object the constructor built, in exactly the
          reverse order.
 // ORIGINAL: 0x004ACDA0 ??1ReportIf@@QAE@XZ 0x004ACDA0-0x004AD16C;0x00658D50-0x00658F74
-// RULED-OUT: SEH frame - the image has one (flags carry `frame`) but a body
+// TRIED: SEH frame - the image has one (flags carry `frame`) but a body
 //            built entirely from plain `->method()`/`->~T()` calls at raw
 //            offsets never triggers VC6's unwind-protection scaffolding (no
 //            local object construction for it to protect), so this tree's

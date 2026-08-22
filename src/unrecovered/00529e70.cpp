@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00529E70 ?net_not_my_turn@@YAXXZ 0x00529E70-0x00529F2C FILE
-// RULED-OUT: byte-exact - 94.5% mnemonic similarity; only remaining divergence is instruction-scheduling order of the arg-0 push for set_view() vs the two independent global stores before it (tried statement order and a cached Console* local, no change).
+// TRIED: byte-exact - 94.5% mnemonic similarity; only remaining divergence is instruction-scheduling order of the arg-0 push for set_view() vs the two independent global stores before it (tried statement order and a cached Console* local, no change).
 // working copy - scaffold materialised by --work
 // size      188 bytes
 // prototype 

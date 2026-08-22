@@ -55,7 +55,7 @@ Purpose: Calculate the credit cost to lower or raise the tile's terrain for the 
 //   `shr eax, 5`; as `int` it is `sar`. The two comparisons ON the result are
 //   signed - `cmp edx, 0x40; jl` and `cmp eax, 3; jge` - so `alt` and the
 //   masked altitude are `int`.
-// RULED-OUT: parameter-register-assignment what is left is allocation. The
+// TRIED: parameter-register-assignment what is left is allocation. The
 //   image loads y into ebx and x into esi (0x004C942C, 0x004C9430); this tree
 //   loads y into esi and x into ebx, in the same ORDER, and every instruction
 //   naming either register disagrees from there on. It spills the climate byte
@@ -63,7 +63,7 @@ Purpose: Calculate the credit cost to lower or raise the tile's terrain for the 
 //   keeps it in edi - which is free here precisely BECAUSE of the register
 //   swap. Nothing in the body's spelling chooses between them; `map_loc`'s
 //   `(x >> 1) + y * MapLongitude` is in map.h and shared with every caller.
-// RULED-OUT: mask-encoding the image's altitude mask is `83 E2 E0`, the
+// TRIED: mask-encoding the image's altitude mask is `83 E2 E0`, the
 //   sign-extended imm8 form of 0xFFFFFFE0, where `& 0xE0` needs the six-byte
 //   `81 /4 id`. Writing `& ~0x1Fu` DOES emit the short form and still costs an
 //   agreeing instruction (27 -> 26), because the register the mask applies to
@@ -138,7 +138,7 @@ Purpose: Calculate the Former rate to perform terrain enhancements.
 // LEVER: `faction_id` cached in a local (the image loads it once alongside
 //        `proto_id` and reuses it for both `has_project` calls, this body
 //        was re-reading `Vehs[veh_id].faction_id` at each site).
-// RULED-OUT: `if/else` in place of the `? 4 : 2` ternary for the has_abil
+// TRIED: `if/else` in place of the `? 4 : 2` ternary for the has_abil
 //        result - VC6 compiles BOTH forms to the same branchless
 //        `neg/sbb/and/add` idiom (any zero/nonzero boolean qualifies, not
 //        just exactly-0-or-1), where the image keeps two real branches
@@ -180,7 +180,7 @@ Purpose: Check to see whether the specified faction can construct a specific ter
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     (none)
-// RULED-OUT: the base-address split for `&Terraforming[terraform_id]
+// TRIED: the base-address split for `&Terraforming[terraform_id]
 //        .preq_tech + is_sea` - the image computes `(is_sea + id*8)` as an
 //        INDEX first, then a separate `[index*4 + 0x691880]` load; this
 //        tree's `lea` folds the base INTO the index before the implied
@@ -243,7 +243,7 @@ Purpose: Decide which Former order, if any, should be issued on the specified ti
 //   forwarder the counts agree, 28 against 28, and best similarity moved
 //   0.168 -> 0.207 at `/c /O2 /Gy /GR- /Oy- /GX`. That is a call the image
 //   really makes, so the fix stands on its own regardless of the tier.
-// RULED-OUT: not attempted to byte-exactness this pass - out of budget, and
+// TRIED: not attempted to byte-exactness this pass - out of budget, and
 //   said so rather than half-ground. Measured 2026-08-22 over all ten flag
 //   sets: best 0.214 at `/c /O2 /Ob0 /Gy /GR- /Oy- /GX`, 15 of 1113
 //   instructions. The gap is SIZE, not one lever: this tree compiles 1,566

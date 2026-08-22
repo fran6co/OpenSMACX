@@ -1,6 +1,6 @@
 // ORIGINAL: 0x005FC8F0 ?do_all_tasks@@YAXXZ 0x005FC8F0-0x005FC9DE FILE
-// RULED-OUT: PeekMessageA/TranslateMessage/DispatchMessageA are resolved
-// RULED-OUT: could not reproduce the original's frameless, purely
+// TRIED: PeekMessageA/TranslateMessage/DispatchMessageA are resolved
+// TRIED: could not reproduce the original's frameless, purely
 // size      238 bytes
 // prototype
 // callers   2   call targets   4

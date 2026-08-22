@@ -108,7 +108,7 @@ Status: Complete
 /*
 Purpose: Check who owns a tile. Optional parameter to get closest base.
 // ORIGINAL: 0x004E3EF0 ?whose_territory@@YAHHHHPAHH@Z 0x004E3EF0-0x004E3F9D
-// RULED-OUT: hoisting `Map *tile = map_loc(x, y)` before the territory read
+// TRIED: hoisting `Map *tile = map_loc(x, y)` before the territory read
 //            (compiler already CSEs it, identical bytes); flattening the
 //            nested owner==faction_id check into an early-return guard
 //            clause. Both plateau at 0.944 sim / 34 of 74 instructions;
@@ -158,7 +158,7 @@ Status: Complete
 //        - the image's `cmp esi, eax` (faction_id, owner) matches the
 //        operands in that order; took the best flag set (/O2 /Gy /GR- /Oy-
 //        /GX) from 42/50 to 43/50, 0.960 similar.
-// RULED-OUT: remaining gap is `is_human()` (faction.h) reading
+// TRIED: remaining gap is `is_human()` (faction.h) reading
 //            `FactionsStatus[0]` as `mov edx, dword ptr [addr]; and edx,
 //            0xff` in the image against this tree's `xor edx, edx; mov dl,
 //            byte ptr [addr]` - out of this batch's scope (faction.h, not
@@ -231,7 +231,7 @@ Purpose: Take two points and calculate how far out they radiate. This is mainly 
 //        setters in this file) - it stays a real out-of-line BYTE_EXACT
 //        function at its own 5 call sites AND inlines whole here, matching
 //        the image's call count exactly.
-// RULED-OUT: `__forceinline` instead of `inline` - identical score, so the
+// TRIED: `__forceinline` instead of `inline` - identical score, so the
 //            call-count fix, not the inlining strength, was the lever.
 //            Remaining gap (14/50 raw, 0.929 similar, best of every flag
 //            set) is x_dist's inner subtraction: the image caches
@@ -306,7 +306,7 @@ Purpose: Check to see whether base is within a one tile radius of a sea tile wit
          If you pass a land region (<63) as the 2nd parameter, it is possible to get collision
          behavior due to region bounding. TODO: Revisit in the future to see whether to remove them.
 // ORIGINAL: 0x0050DE50 ?base_on_sea@@YAHHH@Z 0x0050DE50-0x0050DF28
-// RULED-OUT: --all-flags's winner (23/81, the default set) already beats every other set;
+// TRIED: --all-flags's winner (23/81, the default set) already beats every other set;
 //            first divergence is the prologue's two globals (MapIsFlat at 0x94988c,
 //            MapLongitudeBounds at 0x949870) loading into ebx/edi in the opposite order
 //            from the image - same register-allocation swap seen on base_coast
@@ -349,7 +349,7 @@ Purpose: Determine the ocean region for coastal bases. There is an issue if a ba
          the Continents compare logic isn't used by anything. This might be the root cause of
          outlined bug. TODO: Revisit in the future once more is known about Continent structure.
 // ORIGINAL: 0x0050DF30 ?base_coast@@YAHH@Z 0x0050DF30-0x0050E021
-// RULED-OUT: 42/81 plateau, same xrange/on_map-loop family as base_on_sea
+// TRIED: 42/81 plateau, same xrange/on_map-loop family as base_on_sea
 //            (0x0050DE50). First divergence is inside the inlined `xrange`:
 //            the image loads MapLongitudeBounds ONCE and reuses that
 //            register for both the `+=` and `-=` wrap arms, this tree
@@ -402,7 +402,7 @@ Purpose: Check to see if a port base shares a common body of water with destinat
 Return Value: Is port and coastal region accessible by water to each other? true/false
 Status: Complete
 */
-// RULED-OUT: best 77/103, 0.922 similar (best flag set /O2 /Gy /GR- /Oy-
+// TRIED: best 77/103, 0.922 similar (best flag set /O2 /Gy /GR- /Oy-
 //            /GX), MISMATCH at every flag set. The remaining gaps are all
 //            `region_at`'s inlined `map_loc()->region` read: the image
 //            schedules `xor ecx, ecx` (or the byte-index add) before loading
@@ -449,7 +449,7 @@ Purpose: Check to see if two port bases share a common body of water determined 
 //        looks like register/stack-slot allocation (image reserves
 //        `sub esp, 0x18`, this tree `0x10`) rather than another structural
 //        difference.
-// RULED-OUT: the same inline rewritten as early-return guard clauses
+// TRIED: the same inline rewritten as early-return guard clauses
 //            (`if (!on_map(...)) continue;` etc.) instead of nested `if` -
 //            scored identically (12/141), so the remaining gap is not
 //            branch polarity.
@@ -481,7 +481,7 @@ Purpose: Determine if a base has access to ports or more than one coastal region
 //        (same shape as `sea_coasts`'s own comment about `sea_coast()`)
 //        instead of calling 0x0050DE00. Went 2/67 -> 42/67 (0.889 similar)
 //        inlining that loop instead of calling `sea_coasts(region)`.
-// RULED-OUT: the remaining gap is is_ocean's own known plateau - the image
+// TRIED: the remaining gap is is_ocean's own known plateau - the image
 //            loads map_tiles() (0x94a30c) earlier, before the Bases[].x/y
 //            reads, than this tree schedules it. Same root cause as
 //            is_ocean's standalone note, not something local to this site.
@@ -521,7 +521,7 @@ BOOL __cdecl transport_base(int base_id) {
 /*
 Purpose: Determine if there are other faction's ports in the vicinity of the specified base.
 // ORIGINAL: 0x0050E3C0 ?naval_base@@YAHH@Z 0x0050E3C0-0x0050E5BE
-// RULED-OUT: call count already matches the image (1 call, to base_coast;
+// TRIED: call count already matches the image (1 call, to base_coast;
 //            port_to_port makes 0 calls here, same as the image - `call_diff`
 //            agrees). The plateau (11/164, 0.894 similar, best of every flag
 //            set) is inherited from `port_to_port`'s own already-documented
@@ -555,7 +555,7 @@ BOOL __cdecl naval_base(int base_id) {
 /*
 Purpose: Determine if specified unit can set up a convoy route with specified base.
 // ORIGINAL: 0x0050E5C0 ?convoy@@YAHHH@Z 0x0050E5C0-0x0050E81C
-// RULED-OUT: call count already matches the image (0 calls - `port_to_port`
+// TRIED: call count already matches the image (0 calls - `port_to_port`
 //            fully inlines, same as the image; `call_diff` agrees). Best of
 //            every flag set is the default (18/200, 0.514 similar) - same
 //            inherited `port_to_port` inlining plateau as `naval_base`,
@@ -616,7 +616,7 @@ Purpose: Determine whether specified unit can physically reach the destination c
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x004E3A50 0x0050DDC0 0x0050DE50 0x0050E030 0x0050E160
-// RULED-OUT: best 17/147, 0.062 similar (best flag set /O2 /Gy /GR- /Oy-
+// TRIED: best 17/147, 0.062 similar (best flag set /O2 /Gy /GR- /Oy-
 //            /GX) - `call_diff` shows this tree making 6 calls against the
 //            image's 7, missing exactly `port_to_port` (0x0050E160). Its
 //            marker (0x0050E160, map.h) already notes the image keeps a REAL
@@ -678,7 +678,7 @@ Purpose: Determine whether point A is a coast or border tile. It seems that the 
 Return Value: Is point A considered a border or coast? true/false
 Status: Complete
 */
-// RULED-OUT: best 7/110, 0.826 similar (best flag set /O2 /Gy /GR- /GX; call
+// TRIED: best 7/110, 0.826 similar (best flag set /O2 /Gy /GR- /GX; call
 //            count already matches the image at 2, both to whose_territory).
 //            The remaining gap looks like the `region_a != region_b` OR-term
 //            being evaluated ahead of the `whose_territory(...)` call in the
@@ -759,7 +759,7 @@ Purpose: Calculate the elevation of the specified tile.
 //        to +10). Rewriting as `if (contour > threshold) { modulo } else
 //        { +10 }` matches. `contour` must be `int`: as `uint32_t` the
 //        comparison compiled `ja`/unsigned, the image's `jle` is signed.
-// RULED-OUT: the remaining divergence is a single MapSeaLevel global load
+// TRIED: the remaining divergence is a single MapSeaLevel global load
 //            (`mov edi, [0x94987c]`) that the image schedules AFTER the
 //            contour byte-read and this tree schedules one slot earlier,
 //            regardless of source statement order - tried an intermediate
@@ -789,7 +789,7 @@ int __cdecl elev_at(int x, int y) {
 /*
 Purpose: Calculate the natural altitude of the specified tile.
 // ORIGINAL: 0x005918A0 ?alt_natural@@YAHHH@Z 0x005918A0-0x005918EF
-// RULED-OUT: same index-fold plateau as alt_at/alt_detail_at - the inlined
+// TRIED: same index-fold plateau as alt_at/alt_detail_at - the inlined
 //            map_loc(x,y)->contour read (via alt_detail_at) schedules the
 //            width-load/imul/shift with ecx/eax swapped from the image's
 //            allocation; best 4/28 (0.618) across all flag sets, default
@@ -815,7 +815,7 @@ Purpose: Set both the altitude and natural altitude for the specified tile. The 
 //   `MEASURED inline` in map.h (image calls it for real from
 //   world_linearize_contours but inlines it here) and the `rnd()` call
 //   replaced with its own body, since a cross-TU call can never inline.
-//   0.513 -> 0.843 similar. RULED-OUT beyond that: `Map*`/pointer hoists for
+//   0.513 -> 0.843 similar. TRIED beyond that: `Map*`/pointer hoists for
 //   AltNatural[altitude_natural] (no change); rewriting alt_natural's
 //   `while (cond && natural) natural--;` as a decrement-then-clamp loop to
 //   chase the image's pointer-walk shape (made both worse, 0.843->0.817).
@@ -844,7 +844,7 @@ void __cdecl alt_set_both(int x, int y, int altitude_natural) {
 /*
 Purpose: Get the bit shifted (down) altitude of the specified tile.
 // ORIGINAL: 0x00500150 ?alt_at@@YAHHH@Z 0x00500150-0x0050017B
-// RULED-OUT: best 12/16, 0.875 similar (MISMATCH) at every flag set - image
+// TRIED: best 12/16, 0.875 similar (MISMATCH) at every flag set - image
 //            schedules `xor ecx,ecx` (the future zero-extend register) right
 //            after computing the tile index, before loading the map_tiles()
 //            pointer into edx; this tree always loads the pointer first and
@@ -867,7 +867,7 @@ Status: Complete
 // some call sites and calls it at others, and a .cpp definition is only ever
 // one of those. The marker stays here because that is where the catalogue
 // reads it.
-// RULED-OUT: best MNEMONIC_ONLY, 10/12 instructions, 1.000 similar (best flag
+// TRIED: best MNEMONIC_ONLY, 10/12 instructions, 1.000 similar (best flag
 //            set /O2 /Gy /GR- /Oy- /GX). Same index-fold plateau as
 //            alt_at/alt_detail_at: the image computes `edx + eax` then
 //            indexes `[ecx + edx]` (map_tiles()-style base loaded before the
@@ -881,7 +881,7 @@ Status: Complete
 /*
 Purpose: Get the altitude details of the specified tile.
 // ORIGINAL: 0x00500180 ?alt_detail_at@@YAHHH@Z 0x00500180-0x005001A9
-// RULED-OUT: same plateau as `alt_at` - image schedules `xor ecx,ecx` before
+// TRIED: same plateau as `alt_at` - image schedules `xor ecx,ecx` before
 //            loading the map_tiles() pointer into edx; this tree loads the
 //            pointer into ecx first and zeroes edx later for the byte-load.
 //            Best 11/15, MISMATCH at every flag set.
@@ -903,7 +903,7 @@ Status: Complete
 /*
 Purpose: Set the altitude details for the specified tile.
 // ORIGINAL: 0x00591260 ?alt_put_detail@@YAXHHH@Z 0x00591260-0x00591288 SEMANTIC
-// RULED-OUT: shared plateau with region_set (identical shape). Image loads
+// TRIED: shared plateau with region_set (identical shape). Image loads
 //            the byte parameter into cl BEFORE loading map_tiles(); the
 //            compiler always loads map_tiles() first regardless of source
 //            order. Tried: a cast-only local, a `Map *tile = map_loc(x,y);`
@@ -928,7 +928,7 @@ Status: Complete
 /*
 Purpose: Set the faction owner for the specified tile.
 // ORIGINAL: 0x00591B10 ?owner_set@@YAXHHH@Z 0x00591B10-0x00591B48
-// RULED-OUT: direct `tile->val2` read/write (no pointer hoist) - worse (0.857 vs 0.895).
+// TRIED: direct `tile->val2` read/write (no pointer hoist) - worse (0.857 vs 0.895).
 //            Rewriting the RHS as the explicit XOR-merge identity
 //            (`*field ^ ((*field ^ faction_id) & 0xF)`, which is what the image's
 //            `xor/and/xor` sequence computes for `(*field & 0xF0) | (faction_id & 0xF)`)
@@ -955,7 +955,7 @@ void __cdecl owner_set(int x, int y, int faction_id) {
 /*
 Purpose: Set the site for the specified tile.
 // ORIGINAL: 0x00591B50 ?site_set@@YAXHHH@Z 0x00591B50-0x00591B86 SEMANTIC
-// RULED-OUT: SHAPE_EXACT 17/19 plateau. Image folds the +2 field offset
+// TRIED: SHAPE_EXACT 17/19 plateau. Image folds the +2 field offset
 //            into the READ's addressing mode but recomputes a bare tile
 //            pointer (no offset) for the WRITE, applying +2 as the store's
 //            own displacement instead - the field-pointer form folds +2
@@ -983,7 +983,7 @@ void __cdecl site_set(int x, int y, int site) {
 /*
 Purpose: Get the region of the specified tile.
 // ORIGINAL: 0x00500220 ?region_at@@YAHHH@Z 0x00500220-0x00500249
-// RULED-OUT: same plateau as `alt_at` - image schedules `xor ecx,ecx` before
+// TRIED: same plateau as `alt_at` - image schedules `xor ecx,ecx` before
 //            loading the map_tiles() pointer into edx; this tree loads the
 //            pointer into ecx first and zeroes edx later for the byte-load.
 //            Tried a local `Map *tile` before the field read - no change.
@@ -1006,7 +1006,7 @@ Status: Complete
 /*
 Purpose: Set the region for the specified tile.
 // ORIGINAL: 0x00591B90 ?region_set@@YAXHHH@Z 0x00591B90-0x00591BB8 SEMANTIC
-// RULED-OUT: same plateau as alt_put_detail - byte-parameter load and
+// TRIED: same plateau as alt_put_detail - byte-parameter load and
 //            map_tiles() pointer load are swapped by the compiler
 //            regardless of source order. Tried a `Map *tile` temp before
 //            the store; no-op, same 11/14 MNEMONIC_ONLY.
@@ -1029,7 +1029,7 @@ Status: Complete
 /*
 Purpose: Set the using faction id for the specified tile.
 // ORIGINAL: 0x00591C10 ?using_set@@YAXHHH@Z 0x00591C10-0x00591C48
-// RULED-OUT: 12/20 plateau. Image reads tile->val3 TWICE (once via the
+// TRIED: 12/20 plateau. Image reads tile->val3 TWICE (once via the
 //   pre-offset [ecx+eax*4+5] load, once again via [eax+5] after computing
 //   the plain tile pointer); this tree's `&=0xF8; |=faction&7;` compiles the
 //   same XOR-merge trick but CSEs the two reads into one, one instruction
@@ -1126,7 +1126,7 @@ Purpose: Set the rockiness for the specified tile.
 //            `rocky << 6`, where `tile->val3 = (tile->val3 & 0x3F) | (rocky << 6)` in one
 //            statement (either operand order) evaluated the shift first regardless. 0.920 ->
 //            0.960 best-across-flags similarity.
-// RULED-OUT: delaying the `val3` store until after computing `tile->bit2 | 0x400000` into a
+// TRIED: delaying the `val3` store until after computing `tile->bit2 | 0x400000` into a
 //            local (matching the image's read-both-then-store-both order for the two fields)
 //            made it WORSE (0.960 -> 0.885) - the local for `bit2` changes the image's
 //            `mov ecx,[eax+0xc]/or ecx,.../mov [eax+0xc],ecx` register-folded shape into
@@ -1178,7 +1178,7 @@ Status: Complete
 // some call sites and calls it at others, and a .cpp definition is only ever
 // one of those. The marker stays here because that is where the catalogue
 // reads it.
-// RULED-OUT: best MNEMONIC_ONLY (needs /Oy- to even get the ebp-frame; with
+// TRIED: best MNEMONIC_ONLY (needs /Oy- to even get the ebp-frame; with
 //            it, 12/14 instructions, all mnemonics agree). The image loads
 //            the `bit` parameter into ecx BEFORE the map_tiles() pointer into
 //            edx, this tree's `map_loc(x, y)->bit = bit;` always loads the
@@ -1296,7 +1296,7 @@ Purpose: Determine the tile's mineral count that translates to rockiness.
 //        `switch(val2)` in the source, not the ternary chains that were
 //        here - only `case 3`'s ternary reproduces its target's
 //        test/cmp shape untouched.
-// RULED-OUT: not chased past this MISMATCH plateau - 263-byte body, three
+// TRIED: not chased past this MISMATCH plateau - 263-byte body, three
 //            jump tables, register-allocation-sensitive scheduling of the
 //            early `push esi`/`push edi` pair. --all-flags agrees (best is
 //            the same /O2 /Ob0 /Gy /GR- /Oy- /GX set already in use).
@@ -1361,7 +1361,7 @@ int __cdecl minerals_at(int x, int y) {
 Purpose: Determine if the tile has a resource bonus. While the last parameter is unused, it's set to
          1 by two calls inside world_site(). Otherwise, all other calls have it set to 0.
 // ORIGINAL: 0x00592030 ?bonus_at@@YAHHHH@Z 0x00592030-0x00592135
-// RULED-OUT (body is in map.h): the image reads the climate byte (alt_at) before the bit
+// TRIED (body is in map.h): the image reads the climate byte (alt_at) before the bit
 //            dword (bit_at) at the shared `site_tile`-style address, while map.h's body
 //            declares `bit` before `alt`. Swapping the declaration order to match the
 //            image's read order made it WORSE (25/117 -> 17/117), so the declaration
@@ -1374,7 +1374,7 @@ Purpose: Determine if the tile has a resource bonus. While the last parameter is
 //            `chk` with `idiv`, both signed forms; the tree's `uint32_t` locals were
 //            producing `jb`/`jae`/`div`. 25/117 (0.800 similar) -> 20/117 (0.856
 //            similar) across --all-flags.
-// RULED-OUT: `avg` typed `int` to match - the image's one remaining `avg >> 2` uses
+// TRIED: `avg` typed `int` to match - the image's one remaining `avg >> 2` uses
 //            `sar`, which `int` does reproduce, but it costs agreement elsewhere and
 //            the best-flags similarity drops to 0.825. Left `uint32_t`.
 // size      261 bytes
@@ -1389,7 +1389,7 @@ Status: Complete
 // BODY IN map.h, as `MEASURED inline`: seven bodies call it where the
 // image calls nothing - `call_diff` names it - and 0x00592030 is a real
 // body of its own, so a .cpp definition is only one of the two.
-// RULED-OUT: a non-inline `bonus_at_call` forwarder, routed through from
+// TRIED: a non-inline `bonus_at_call` forwarder, routed through from
 //            crop_yield/mine_yield/energy_yield (base.cpp) so bonus_at(x,y,0)
 //            would emit `call 0x592030` there - measured NO improvement to
 //            the best-across-flags similarity for any of the three (each
@@ -1401,7 +1401,7 @@ Status: Complete
 /*
 Purpose: Determine if the tile has a supply pod and if so what type.
 // ORIGINAL: 0x00592140 ?goody_at@@YAHHH@Z 0x00592140-0x00592248
-// RULED-OUT: --all-flags's winner (39/114, the default set) already beats every other set
+// TRIED: --all-flags's winner (39/114, the default set) already beats every other set
 //            by a wide margin; the divergence is in the prologue - the image delays
 //            loading x (`mov esi,[ebp+8]`) until after the `y * MapLongitude` multiply and
 //            the callee-saved pushes, this tree loads x into edx immediately before the
@@ -1487,11 +1487,11 @@ Status: Complete
 /*
 Purpose: Set up a new landmark with the provided name at the specified tile.
 // ORIGINAL: 0x00592600 ?new_landmark@@YAHHHPAD@Z 0x00592600-0x0059264B
-// RULED-OUT: strcpy_s(dst,32,src) vs strcpy(dst,src) - vc6_compat.h's strcpy_s already
+// TRIED: strcpy_s(dst,32,src) vs strcpy(dst,src) - vc6_compat.h's strcpy_s already
 //            inlines to a plain strcpy call, so this was a source-clarity change only; both
 //            spellings already made the single call the image makes (osmx calls confirms 1
 //            call to 0x00645460 either way). call_diff's "0 vs 1" was a false positive.
-// RULED-OUT: remaining mismatch is esi vs eax register allocation for MapLandmarkCount, a
+// TRIED: remaining mismatch is esi vs eax register allocation for MapLandmarkCount, a
 //            stack-frame plateau per prior pass's note, not a source shape
 // symbol    ?new_landmark@@YAHHHPBD@Z
 // size      75 bytes
@@ -1573,7 +1573,7 @@ void __cdecl kill_landmark(int x, int y) {
 Purpose: Check if coordinates are considered near or on coast. Radius (excludes actual coordinates)
          can either be all the squares directly around the coordinates or same as Base '+' radius.
 // ORIGINAL: 0x004E49D0 ?is_coast@@YAHHHH@Z 0x004E49D0-0x004E4A91
-// RULED-OUT: 9/76, 0.84 similar plateau across every flag set. The image
+// TRIED: 9/76, 0.84 similar plateau across every flag set. The image
 //            uses TWO induction variables for the loop (an unscaled count
 //            in [ebp-4] and a byte offset in edi, incremented in lockstep)
 //            and defers loading `MapIsFlat` to AFTER the "loop won't run"
@@ -1615,7 +1615,7 @@ BOOL __cdecl is_coast(int x, int y, BOOL is_base_radius) {
 /*
 Purpose: Check whether the specified tile is part of an ocean.
 // ORIGINAL: 0x005001E0 ?is_ocean@@YAHHH@Z 0x005001E0-0x00500211
-// RULED-OUT: same root plateau as `alt_at` (image schedules `xor ecx,ecx`
+// TRIED: same root plateau as `alt_at` (image schedules `xor ecx,ecx`
 //            before loading the map_tiles() pointer; this tree loads the
 //            pointer first). Downstream that also means the image has a
 //            spare zeroed register (`eax`) to build the boolean with
@@ -1653,7 +1653,7 @@ Status: Complete
 /*
 Purpose: Rebuild the Map's unit related values.
 // ORIGINAL: 0x00532A90 ?rebuild_vehicle_bits@@YAXXZ 0x00532A90-0x00532B63
-// RULED-OUT: bit_set/bit_at/owner_set with (x,y) never spilled a 3rd stack
+// TRIED: bit_set/bit_at/owner_set with (x,y) never spilled a 3rd stack
 //            slot (image is `sub esp, 0xc`) - a raw `Map *tile` walked by
 //            sizeof(Map), re-reading tile->bit at each of its three sites
 //            rather than caching it in a local, reaches the same frame size
@@ -1694,7 +1694,7 @@ void __cdecl rebuild_vehicle_bits() {
 /*
 Purpose: Rebuild the Map's base related values.
 // ORIGINAL: 0x00532B70 ?rebuild_base_bits@@YAXXZ 0x00532B70-0x00532C2B
-// RULED-OUT: bit_set/owner_set called with (x,y) recomputed map_loc each time
+// TRIED: bit_set/owner_set called with (x,y) recomputed map_loc each time
 //            and never reduced to the image's single walking pointer (0/66
 //            agreeing). A raw `Map *tile` incremented by `sizeof(Map)` once
 //            per x-step - since consecutive same-parity tiles are contiguous
@@ -1750,7 +1750,7 @@ Status: Complete
 //        (0x0048BEE0) - took the best flag set (/O2 /Oi- /Gy /GR- /Oy- /GX)
 //        from 14/21 to 16/21 (still 0.923 similar - the raw count moved, the
 //        rounded ratio didn't).
-// RULED-OUT: remaining gap (best flag set, 18 instructions here vs the
+// TRIED: remaining gap (best flag set, 18 instructions here vs the
 //            image's 21) is a trailing `mov ecx, eax` the image emits right
 //            before `pop ebp; ret` that this tree's `return dist;` never
 //            produces - same register-caching family as vector_dist
@@ -1766,7 +1766,7 @@ Purpose: Check whether a faction can see the specified tile.
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
-// RULED-OUT: 16 of 30 at the best flag set (/O2 /Gy /GR- /Oy- /GX), 32
+// TRIED: 16 of 30 at the best flag set (/O2 /Gy /GR- /Oy- /GX), 32
 //            compiled instructions against the image's 30. The two extra are
 //            `push ebx`/`pop ebx`: the image computes `1 << faction_id` AFTER
 //            the tile-index `lea` chain, when edx is dead, and reuses ecx for
@@ -1774,17 +1774,17 @@ Purpose: Check whether a faction can see the specified tile.
 //            test byte ptr [ecx + eax*4 + 4], dl`); VC6 here hoists the shift
 //            ahead of that chain, where eax/ecx/edx are all live, so the mask
 //            lands in a callee-saved register and costs the save/restore.
-// RULED-OUT: nothing moves that scheduling decision. Measured, all 16 of 30
+// TRIED: nothing moves that scheduling decision. Measured, all 16 of 30
 //            and all 32 instructions: a `mask`/`vis`/`tile`/`flags` local, a
 //            `(uint8_t)` cast on either operand, `!!(...)`, an explicit
 //            `!= 0`, extra parentheses, and swapping the `&` operands
 //            (`(1 << faction_id) & ...->visibility`).
-// RULED-OUT: splitting the `||` is WORSE, not better - the mirror of
+// TRIED: splitting the `||` is WORSE, not better - the mirror of
 //            map_write/map_read. A guard clause (`if (A) return true; return
 //            B;`) scores 0 of 30, and so does the ternary form; the image
 //            shares one `mov eax, 1; pop ebp; ret` tail between both tests
 //            and falls through to `xor eax, eax` only once.
-// RULED-OUT: the equivalent bit test `(map_loc(x, y)->visibility >>
+// TRIED: the equivalent bit test `(map_loc(x, y)->visibility >>
 //            faction_id) & 1` scores HIGHER, 25 of 30 with the instruction
 //            count matching at 30, because `shr al, cl; test al, 1` needs no
 //            second register - but it emits a shift of the VALUE where the
@@ -1866,7 +1866,7 @@ Purpose: Initialize map variables.
 //        StringTemp ("no C++ library" idiom): StringTemp[0]=0; strcat "maps\\";
 //        strcat label_get(676); strcat "."; then strcpy StringTemp into
 //        MapFilePath and strcat MapExtension onto that. Took this from 5/105
-//        (0.745 similar) to 25/105 (0.919 similar). RULED-OUT beyond this
+//        (0.745 similar) to 25/105 (0.919 similar). TRIED beyond this
 //        point: the image pins ebx=0/edi=1 in registers across the whole
 //        function (push edi; mov edi,1 at entry; cmp eax,ebx instead of
 //        test eax,eax at every null-check; mov eax,edi at the return-true
@@ -1923,7 +1923,7 @@ Purpose: Reset the map to a blank state. Doesn't wipe unk_1 and territory fields
 //        instead of `uint32_t i`: the image's loop-bound compare is `jl`
 //        signed. Together: 9/38 (0.682) -> 30/38 (0.921), 38/38 total
 //        instructions, same count as the image.
-// RULED-OUT: declaring `tile` before `MapRandSeed = random(...)+1` (to chase
+// TRIED: declaring `tile` before `MapRandSeed = random(...)+1` (to chase
 //            the image scheduling the `map_tiles()` load between the
 //            `random()` call and consuming its result) - worse, 20/38 (0.895).
 // size      112 bytes
@@ -1967,7 +1967,7 @@ Purpose: Write map data to a file.
 Return Value: Did an error occur? true/false
 Status: Complete
 */
-// RULED-OUT: call_diff names the image's target as `__fwrite`
+// TRIED: call_diff names the image's target as `__fwrite`
 // (src/recovered/0064603f.cpp, 0x0064603F, a CRT-internal
 // `__lock_file`/`_fwrite`/`__unlock_file` wrapper, already BYTE_EXACT there
 // but NOT a build input) rather than the public `fwrite()`. Neither
@@ -2035,13 +2035,13 @@ Purpose: Get the region value for the specified tile.
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
-// RULED-OUT: MNEMONIC_ONLY 10 of 12, and it is the same one-instruction
+// TRIED: MNEMONIC_ONLY 10 of 12, and it is the same one-instruction
 //            plateau abstract_set (0x00591230) records. The image sums the
 //            ROW into the base register and leaves the column in its own
 //            (`add edx, eax; mov al, byte ptr [ecx + edx]`); VC6 -O2 always
 //            pre-sums the two index terms instead (`add eax, ecx; mov al,
 //            byte ptr [eax + edx]`), whatever the source says.
-// RULED-OUT: six spellings, every one MNEMONIC_ONLY with the divergence at
+// TRIED: six spellings, every one MNEMONIC_ONLY with the divergence at
 //            the same instruction 8 - the committed `(x >> 1) + y * mult`,
 //            the reversed `y * mult + (x >> 1)`, an explicit `uint8_t *row`
 //            local, `row` plus a separate `col` local, a `col` local alone,
@@ -2059,7 +2059,7 @@ Status: Complete
 /*
 Purpose: Set the region value for the specified tile.
 // ORIGINAL: 0x00591230 ?abstract_set@@YAXHHE@Z 0x00591230-0x00591253 SEMANTIC
-// RULED-OUT: same plateau as abstract_at/alt_at. Image computes a row
+// TRIED: same plateau as abstract_at/alt_at. Image computes a row
 //            pointer (base + y*(bounds>>1)) explicitly, then indexes it by
 //            x>>1 in the final SIB store; VC6 -O2 always pre-sums the two
 //            index terms into one register first regardless of source shape.
@@ -2085,7 +2085,7 @@ Status: Complete
 Purpose: Quickly check for unit related zone of control conflicts. If a ZOC conflict is found, store
          the coordinates of the tile inside ZOC pointers.
 // ORIGINAL: 0x00593830 ?quick_zoc@@YAXHHHHHPAH0@Z 0x00593830-0x005939FC
-// RULED-OUT: 12/152, 0.873 similar (best flag set /Oi-) - call count already
+// TRIED: 12/152, 0.873 similar (best flag set /Oi-) - call count already
 //            matches the image (`call_diff` agrees). First divergence is
 //            is_ocean's own known plateau (`xor ecx,ecx` before the
 //            map_tiles() pointer load in the image, this tree loads the
@@ -2181,7 +2181,7 @@ Purpose: Determine if the specified two tiles are within the range radius of eac
 //        `x_radius_off` (rather than evaluating `y_dst - y_src` inline at the
 //        tail call) matches the image computing the y-difference early,
 //        interleaved with the x-difference - moved 0.800 -> 0.902.
-// RULED-OUT: remaining gap is an esi/ecx register swap running through the
+// TRIED: remaining gap is an esi/ecx register swap running through the
 //            whole body - same register-allocation plateau as the rest of
 //            this file's xrange/on_map-loop family. Not chased further.
 Return Value: Range radius, otherwise -1 if not within range
@@ -2268,7 +2268,7 @@ Purpose: Check whether there is a sensor available in the specified tile.
 //        computed once and cached, exactly as this tree already had it. Restoring the
 //        second `x_dist` call moved the compiled instruction count from 73 toward the
 //        image's 102 (73 -> 87).
-// RULED-OUT: remaining divergence starts in the prologue - `mov ecx,[ebp+0xc]` (image) vs
+// TRIED: remaining divergence starts in the prologue - `mov ecx,[ebp+0xc]` (image) vs
 //            this tree spilling y to ebx (`push ebx; mov ebx,[ebp+0xc]`) - the same
 //            register-allocation plateau as the rest of this family.
 // size      285 bytes
@@ -2310,7 +2310,7 @@ Purpose: Check whether a sensor array is worth building on the specified tile.
 Return Value: Is the tile a good sensor site? true/false
 Status: Complete
 
-RULED-OUT: best 14/242, 0.419 similar (best flag set /O2 /Gy /GR- /Oy- /GX).
+TRIED: best 14/242, 0.419 similar (best flag set /O2 /Gy /GR- /Oy- /GX).
 `has_tech` (0x005B9F20, technology.h) is `MEASURED inline` and gets inlined
 whole at this call site, where the image keeps a real call - dumping this
 tree's own compiled listing shows 7 call opcodes against the image's 9, the
@@ -2462,7 +2462,7 @@ Purpose: Check if faction controls the initial tile (code offset 0) of the Manif
 //        `bit2_at(x, y)` / `code_at(x, y)` as two separate inline calls) let
 //        VC6 fold the `*sizeof(Map)` scale into the load's own SIB addressing
 //        the way the image does, taking it to 65/70, 0.986 similar.
-//        RULED-OUT: caching a `Map *tile` pointer instead of the `bit2` value
+//        TRIED: caching a `Map *tile` pointer instead of the `bit2` value
 //        (65->21/70 - the pointer materialises with its own `lea` first,
 //        which the image never does); swapping the final visibility test's
 //        `&` operand order (no change, still 65/70) - the one remaining
@@ -2496,7 +2496,7 @@ BOOL __cdecl has_temple(int faction_id) {
 /*
 Purpose: Handle setting the world altitude.
 // ORIGINAL: 0x005C2020 ?world_alt_set@@YAXHHHH@Z 0x005C2020-0x005C2374
-// RULED-OUT: MISMATCH plateau, not chased to BYTE_EXACT (852-byte function,
+// TRIED: MISMATCH plateau, not chased to BYTE_EXACT (852-byte function,
 //   282 image instructions, best 48/282 similar 0.298 at /c /O2 /Gy /GR-
 //   /Oy- /GX). call_diff agrees on call count. The compiled body runs 396
 //   instructions against the image's 282 from early on (RadiusRange/
@@ -2618,7 +2618,7 @@ void __cdecl world_lower_alt(int x, int y) {
 /*
 Purpose: Set up the brush for creating world terrain.
 // ORIGINAL: 0x005C2440 ?brush@@YAXHHH@Z 0x005C2440-0x005C27E1
-// RULED-OUT: MISMATCH plateau, not chased to BYTE_EXACT (929-byte function,
+// TRIED: MISMATCH plateau, not chased to BYTE_EXACT (929-byte function,
 //   304 image instructions, best 8/304 similar 0.370 at /c /O1 /Ob0 /Gy
 //   /GR- /Oy- /GX). call_diff agrees on call count. Diverges from the first
 //   loop iteration on: which register RadiusOffsetX[i]/y_radius land in
@@ -2705,7 +2705,7 @@ Purpose: Paint land to assist in the creation of the world terrain.
 //        `rand() % 8` carries the full signed-modulo fixup
 //        (`and 0x80000007; jns; dec; or 0xfffffff8; inc`), which `uint32_t`
 //        drops to a plain `and eax, 7`.
-// RULED-OUT: not chased past this MISMATCH plateau - remaining gap starts in
+// TRIED: not chased past this MISMATCH plateau - remaining gap starts in
 //            the prologue frame-size (image reserves 3 stack dwords, this
 //            tree keeps `unk_val` in a register alone).
 // size      246 bytes
@@ -2752,7 +2752,7 @@ Purpose: Build out the map continents.
 //        0`), the same idiom as alt_set_both. The region-zero loop also
 //        moved to the `Map *tile` pointer-walk idiom (map_wipe's lever).
 //        0.658 -> 0.698 similar (13/201).
-// RULED-OUT: not chased past this MISMATCH plateau - 588-byte body, deeply
+// TRIED: not chased past this MISMATCH plateau - 588-byte body, deeply
 //            nested ratio/radius conditionals; the remaining gap starts in
 //            the very first loop's own scheduling (image loads MapArea into
 //            ecx before zeroing eax, this tree the other order).
@@ -2831,7 +2831,7 @@ Purpose: Build out the map hills.
 //        paint_land/do_all_non_input plus rand() itself, so the two
 //        `rnd(bounds, NULL)` cross-TU calls were rewritten as rnd's own
 //        body. 0.677 -> 0.743 similar.
-// RULED-OUT: not chased past this MISMATCH plateau - 360-byte body, same
+// TRIED: not chased past this MISMATCH plateau - 360-byte body, same
 //            prologue frame-size gap as build_continent.
 // size      360 bytes
 // prototype
@@ -2891,7 +2891,7 @@ Purpose: Build out the world river beds.
 //        as rnd's own body (same idiom as build_continent/build_hills), and
 //        the riverbed-clearing loop moved to the `Map *tile` pointer-walk
 //        idiom (map_wipe's lever). 0.711 -> 0.784 similar.
-// RULED-OUT: not chased past this MISMATCH plateau - same `is_ocean`
+// TRIED: not chased past this MISMATCH plateau - same `is_ocean`
 //            map_tiles-load-timing family ceiling as the standalone
 //            `is_ocean`/`port_to_port` plateau this batch's sibling pass
 //            already documented, on top of a 559-byte body.
@@ -2969,7 +2969,7 @@ Purpose: Determine if there are any issues with how the world continents are set
 //        `MapLandCoverage==1`'s `(val2*2)/3` - `if (MapLandCoverage != 1)
 //        {val2/2} else {(val2*2)/3}` matches; the textual `==1` order did
 //        not.
-// RULED-OUT: remaining gap is an esi/edi register swap between `val1` and
+// TRIED: remaining gap is an esi/edi register swap between `val1` and
 //            the `region` loop counter, present at every flag set tried;
 //            swapping `val1`/`val2` declaration order made it one
 //            instruction worse (19/52), not better.
@@ -3009,7 +3009,7 @@ BOOL __cdecl world_validate() {
 /*
 Purpose: Set up the world temperature.
 // ORIGINAL: 0x005C4170 ?world_temperature@@YAXXZ 0x005C4170-0x005C4401
-// RULED-OUT: MISMATCH plateau, not chased to BYTE_EXACT (657-byte function,
+// TRIED: MISMATCH plateau, not chased to BYTE_EXACT (657-byte function,
 //   226 image instructions). LEVER that DID help: `MapLatitudeBounds /
 //   WorldBuilder->solar_energy` (and the three siblings) is `int / uint32_t`,
 //   which promotes to an UNSIGNED `div`; the image uses signed `idiv` at all
@@ -3094,10 +3094,10 @@ __forceinline static Map *site_tile(int x, int y) {
 /*
 Purpose: Score the specified tile as a site for a new base.
 // ORIGINAL: 0x005C4FD0 ?world_site@@YAHHHH@Z 0x005C4FD0-0x005C55B5
-// RULED-OUT: site_tile/site_xrange were being emitted as real calls; __forceinline on both
+// TRIED: site_tile/site_xrange were being emitted as real calls; __forceinline on both
 //            (site_tile at 2423, site_xrange at 1730) brought the call count from 9 down to
 //            the image's 3 (2x bonus_at, 1x goody_at) but did not reach BYTE_EXACT.
-// RULED-OUT: remaining mismatch is register allocation across a 1509-byte body, the prior
+// TRIED: remaining mismatch is register allocation across a 1509-byte body, the prior
 //            pass's noted plateau for this family - not chased further.
 // size      1509 bytes
 // prototype 
@@ -3309,7 +3309,7 @@ Purpose: Analysis of the world map.
 //            that scaled induction variable - at `i < 20` the old `>= 32` could never be
 //            true, so the region_radius/BIT_UNK_4000 branch was dead code. 0.454 -> 0.484
 //            best-across-flags similarity; call_diff now agrees (0 vs 1 became 1 vs 1).
-// RULED-OUT (not attempted further): the remaining gap is the `imul 0x2c` vs
+// TRIED (not attempted further): the remaining gap is the `imul 0x2c` vs
 //            `lea`+SIB-scale-4 Map-stride plateau this file's other bodies already hit,
 //            compounded by a prologue register-scheduling difference (ebx/edi assignment
 //            order) at the very first divergence - both are the documented
@@ -3464,7 +3464,7 @@ Purpose: Set up the world polar caps.
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00591260 0x0064601D
-// RULED-OUT: call_diff's "4 vs 10" undercounts by excluding rand() as hidden; `osmx calls
+// TRIED: call_diff's "4 vs 10" undercounts by excluding rand() as hidden; `osmx calls
 //            --all` already shows 6 alt_put_detail + 4 rand = 10, matching the image. The
 //            remaining mismatch is the image omitting the ebp frame this tree keeps under
 //            every flag set tried - a stack-frame plateau, not a source shape.
@@ -3497,7 +3497,7 @@ Purpose: Set up the world contours.
 //        register-relative on `alt_nat`. Parenthesizing the ternary
 //        (`alt_nat + ((alt_nat >= ALT_3_LEVELS_ABOVE_SEA) ? 4 : 1)`) fixes
 //        the semantics; 0.690 -> 0.705 similar (best flags /O2 /Ob0).
-// RULED-OUT: not chased past this MISMATCH plateau - remaining gap starts
+// TRIED: not chased past this MISMATCH plateau - remaining gap starts
 //            in the prologue frame-size (image reserves 2 stack dwords for
 //            the divide's intermediates, this tree's compile picks a
 //            different spill count).
@@ -3538,7 +3538,7 @@ Purpose: Determine if the specified tile is near a landmark.
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     (none)
-// RULED-OUT: call shape already matches - `osmx calls` shows 0 calls, same as the image,
+// TRIED: call shape already matches - `osmx calls` shows 0 calls, same as the image,
 //            so xrange/on_map/code_at are already inlined here. Best flag set still only
 //            reaches 17/56 agreeing instructions; the divergence starts at the prologue's
 //            register assignment (ebx loaded from MapIsFlat before the frame push order this
@@ -3576,7 +3576,7 @@ Purpose: Setup the 'Garland Crater' landmark.
 //        declared once, used in both the second guard's condition and its
 //        `rand() % lon_bounds` - matches the image reusing one register for
 //        both, where the bare global re-read three times.
-// RULED-OUT: same xrange/on_map two-induction-variable loop family already
+// TRIED: same xrange/on_map two-induction-variable loop family already
 //            documented across this file (bonus_at, goody_at, base_on_sea,
 //            world_borehole) - the prologue's on_map inline and the loop's
 //            register scheduling (which global gets reloaded early during a
@@ -3652,7 +3652,7 @@ Purpose: Setup the 'Monsoon Jungle' landmark.
 //        lon_bounds; }` guard clause, matching the image's call count (no
 //        real call to rnd()) and fall-through polarity. Best flag set (/O2
 //        /Gy /GR- /Oy- /GX) moved 0.398 -> 0.455 similar.
-// RULED-OUT: same xrange/on_map two-induction-variable loop family plateau as
+// TRIED: same xrange/on_map two-induction-variable loop family plateau as
 //            world_crater - the on_map prologue and the loop's register
 //            scheduling do not follow from source shape. Not chased past
 //            this MISMATCH plateau (784-byte body, 260 image instructions).
@@ -3720,7 +3720,7 @@ Purpose: Setup the 'New Sargasso' landmark.
 //        NULL)` calls written out as guard clauses matching the image's
 //        call count and fall-through polarity. Best flag set (/O2 /Gy
 //        /GR- /Oy- /GX) moved 1/220 -> 26/220, 0.591 similar.
-// RULED-OUT: same xrange/on_map two-induction-variable loop family
+// TRIED: same xrange/on_map two-induction-variable loop family
 //            plateau as world_crater. Not chased past this MISMATCH
 //            plateau.
 Return Value: n/a
@@ -3791,7 +3791,7 @@ Purpose: Setup 'The Ruins' landmark.
 //        NULL)` calls written out as guard clauses matching the image's
 //        call count and fall-through polarity. Best flag set (/O2 /Gy
 //        /GR- /Oy- /GX) moved 1/221 -> 8/221, 0.422 similar.
-// RULED-OUT: same xrange/on_map two-induction-variable loop family
+// TRIED: same xrange/on_map two-induction-variable loop family
 //            plateau as world_crater. Not chased past this MISMATCH
 //            plateau.
 Return Value: n/a
@@ -3868,7 +3868,7 @@ Purpose: Setup the 'Great Dunes' landmark.
 //        guard clause (Y) and the usual `lon_bounds` guard clause (X). Best
 //        flag set (/O2 /Gy /GR- /Oy- /GX) moved 5/228 -> 9/228, 0.559
 //        similar.
-// RULED-OUT: same xrange/on_map two-induction-variable loop family
+// TRIED: same xrange/on_map two-induction-variable loop family
 //            plateau as world_crater, plus world_rainfall()'s own call at
 //            the top. Not chased past this MISMATCH plateau.
 Return Value: n/a
@@ -3937,7 +3937,7 @@ Purpose: Setup the 'Uranium Flats' landmark.
 //        NULL)` calls written out as guard clauses matching the image's
 //        call count and fall-through polarity. Best flag set (/O2 /Gy
 //        /GR- /Oy- /GX) moved 7/200 -> 14/200, 0.887 similar.
-// RULED-OUT: same xrange/on_map two-induction-variable loop family
+// TRIED: same xrange/on_map two-induction-variable loop family
 //            plateau as world_crater. Not chased past this MISMATCH
 //            plateau.
 Return Value: n/a
@@ -4004,9 +4004,9 @@ Purpose: Setup the 'Freshwater Sea' landmark.
 //        Confirmed the constant now matches byte-for-byte (`push 0x80` on
 //        both sides at the bit2_set call site) but the overall score does
 //        not move (still 4/125, 0.667 similar, best flag set /O2 /Gy /GR-
-//        /Oy- /GX) - the earlier structural mismatch (see RULED-OUT) already
+//        /Oy- /GX) - the earlier structural mismatch (see TRIED) already
 //        dominates the comparison.
-// RULED-OUT: the image places the `bit2_set`/`x_search` update block AFTER a
+// TRIED: the image places the `bit2_set`/`x_search` update block AFTER a
 //            second nested branch this tree's straight if/else-if puts it
 //            before - looks like the compiler restructured the two mutually
 //            exclusive branches into a different instruction order than a
@@ -4076,7 +4076,7 @@ Purpose: Setup the 'Mount Planet' landmark.
 //        fuzzy similarity score is misleadingly higher (0.868) because the
 //        frame-omitted form shares more MNEMONICS despite matching 0 bytes
 //        from instruction 0.
-// RULED-OUT: same xrange/on_map two-induction-variable loop family plateau as
+// TRIED: same xrange/on_map two-induction-variable loop family plateau as
 //            world_crater/world_monsoon. Not chased past this MISMATCH
 //            plateau (614-byte body, 206 image instructions).
 Return Value: n/a
@@ -4148,7 +4148,7 @@ Purpose: Setup the 'Borehole Cluster' landmark. Added to SMAC in 3.0 patch.
 // flags     frame;sp_ready;purged_ok
 // calls     0x004712A0 0x00591D60 0x00591DB0 0x00591E00 0x00592600 0x005C2020 0x006169A0 0x0064601D
 // indirect  0x005C7145
-// RULED-OUT (2026-08-21): call_diff says 12 calls here vs the image's 14 (missing
+// TRIED (2026-08-21): call_diff says 12 calls here vs the image's 14 (missing
 //            on_map/bit_set/bit2_set/code_set instances). on_map, bit_set, bit2_set and
 //            code_set are all `MEASURED inline` in map.h already - each is called from
 //            dozens of sites across map.cpp, and the image itself keeps SOME of those
@@ -4258,7 +4258,7 @@ Purpose: Setup 'The Manifold Nexus' landmark. Added to SMAC in 4.0 patch.
 //        NULL)` calls written out as guard clauses matching the image's
 //        call count and fall-through polarity. Best flag set (/O2 /Gy
 //        /GR- /Oy- /GX) moved 11/175 -> 12/175, 0.864 similar.
-// RULED-OUT: same xrange/on_map two-induction-variable loop family
+// TRIED: same xrange/on_map two-induction-variable loop family
 //            plateau as world_crater. Not chased past this MISMATCH
 //            plateau.
 Return Value: n/a
@@ -4324,7 +4324,7 @@ Purpose: Setup the 'Unity Wreckage' landmark (SMACX only).
 //        function's `x--/y--` then `x+=2/y+=2` then `x--/y--` re-walk of
 //        the same radius loop three times gives the register allocator
 //        much more to disagree about than its siblings).
-// RULED-OUT: same xrange/on_map two-induction-variable loop family
+// TRIED: same xrange/on_map two-induction-variable loop family
 //            plateau as world_crater, repeated three times over. Not
 //            chased past this MISMATCH plateau (805-byte body, 279 image
 //            instructions).
@@ -4416,7 +4416,7 @@ Purpose: Setup the 'Fossil Ridge' landmark (SMACX only).
 //        out as guard clauses matching the image's call count and
 //        fall-through polarity. Best flag set (/O2 /Gy /GR- /Oy- /GX)
 //        moved 1/183 -> 31/183, 0.850 similar.
-// RULED-OUT: same xrange/on_map two-induction-variable loop family
+// TRIED: same xrange/on_map two-induction-variable loop family
 //            plateau as world_crater. Not chased past this MISMATCH
 //            plateau.
 Return Value: n/a
@@ -4522,7 +4522,7 @@ Purpose: Setup the 'Sunny Mesa' landmark.
 //        NULL)` calls written out as guard clauses matching the image's
 //        call count and fall-through polarity. Best flag set (/O2 /Gy
 //        /GR- /Oy- /GX) moved 1/175 -> 12/175, 0.851 similar.
-// RULED-OUT: same xrange/on_map two-induction-variable loop family
+// TRIED: same xrange/on_map two-induction-variable loop family
 //            plateau as world_crater. Not chased past this MISMATCH
 //            plateau.
 Return Value: n/a
@@ -4583,7 +4583,7 @@ Purpose: Setup the 'Pholus Ridge' landmark.
 //        NULL)` calls written out as guard clauses matching the image's
 //        call count and fall-through polarity. Best flag set (/O2 /Gy
 //        /GR- /Oy- /GX) moved 4/199 -> 5/199, 0.699 similar.
-// RULED-OUT: same xrange/on_map two-induction-variable loop family
+// TRIED: same xrange/on_map two-induction-variable loop family
 //            plateau as world_crater. Not chased past this MISMATCH
 //            plateau.
 Return Value: n/a
@@ -4645,7 +4645,7 @@ Purpose: Setup the 'Geothermal Shallows' landmark.
 //        NULL)` calls written out as guard clauses matching the image's
 //        call count and fall-through polarity. Best flag set (/O2 /Gy
 //        /GR- /Oy- /GX) moved 3/207 -> 12/207, 0.492 similar.
-// RULED-OUT: same xrange/on_map two-induction-variable loop family
+// TRIED: same xrange/on_map two-induction-variable loop family
 //            plateau as world_crater. Not chased past this MISMATCH
 //            plateau.
 Return Value: n/a
@@ -4742,7 +4742,7 @@ void __cdecl world_landmarks() {
 /*
 Purpose: Check for any type of zone of control conflicts (base and/or unit).
 // ORIGINAL: 0x005C89F0 ?zoc_any@@YAHHHH@Z 0x005C89F0-0x005C8AC0
-// RULED-OUT: same xrange/on_map-loop family ceiling as zoc_veh (0x005C8AC0,
+// TRIED: same xrange/on_map-loop family ceiling as zoc_veh (0x005C8AC0,
 //            right below) and base_on_sea - best 3/82, 0.786 similar across
 //            every flag set. Not chased further.
 // size      208 bytes
@@ -4772,7 +4772,7 @@ int __cdecl zoc_any(int x, int y, int faction_id) {
 /*
 Purpose: Check for unit related zone of control conflicts.
 // ORIGINAL: 0x005C8AC0 ?zoc_veh@@YAHHHH@Z 0x005C8AC0-0x005C8B97
-// RULED-OUT: 13/80, 0.969 similar - best of every flag set. Same
+// TRIED: 13/80, 0.969 similar - best of every flag set. Same
 //            xrange/on_map-loop family ceiling as base_on_sea (0x0050DE50):
 //            the image caches MapIsFlat/MapLongitudeBounds into registers
 //            in the prologue, ahead of the loop; this tree's -O2 loads them
@@ -4808,7 +4808,7 @@ int __cdecl zoc_veh(int x, int y, int faction_id) {
 /*
 Purpose: Check for unit related zone of control conflicts taking into account land or ocean.
 // ORIGINAL: 0x005C8BA0 ?zoc_sea@@YAHHHH@Z 0x005C8BA0-0x005C8D36
-// RULED-OUT: 14/133, 0.908 similar - best of every flag set. First
+// TRIED: 14/133, 0.908 similar - best of every flag set. First
 //            divergence is is_ocean's own known plateau (`xor ecx,ecx`
 //            before the map_tiles() pointer load in the image, this tree
 //            loads the pointer first) - same root cause as is_ocean's
@@ -4910,7 +4910,7 @@ Purpose: Interpolate the rendered altitude detail at one point of a tile's
 //        hint. `__forceinline` on `alt_shore_detail` brought call_diff back to agreement
 //        (image and tree both make 0 direct calls, 4 indirect jumps apiece) and moved
 //        6/431 agreeing instructions to 9/431.
-// RULED-OUT: remaining mismatch starts at the prologue - image is `sub esp, 0xc` (3
+// TRIED: remaining mismatch starts at the prologue - image is `sub esp, 0xc` (3
 //            spill slots), this tree is `sub esp, 8` (2) - the same "image spills a
 //            local the tree keeps in a register" shape as 0x00532A90/0x00532B70, on a
 //            431-instruction body. Not chased further at this size.

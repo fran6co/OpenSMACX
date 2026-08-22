@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00638CC0 sub_638cc0 0x00638CC0-0x00638DD4
-// RULED-OUT: only one source-form tried; the callee-save register allocation (ebx/ebp/esi/edi across the whole loop) at the prologue diverges early. Landing the closest structural translation (mnemonic_similarity 0.635).
+// TRIED: only one source-form tried; the callee-save register allocation (ebx/ebp/esi/edi across the whole loop) at the prologue diverges early. Landing the closest structural translation (mnemonic_similarity 0.635).
 // size      276 bytes
 // prototype
 // callers   1   call targets   3

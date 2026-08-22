@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0063C9D0 sub_63c9d0 0x0063C9D0-0x0063CA98 FILE
-// RULED-OUT: signature __cdecl(void) -> __thiscall member (ecx=this throughout, plain `ret`, class-member wrapper like other anonymous subs). sub_63caa0 called via the scaffold's existing nullary __cdecl decl though the original passes ecx=this too - can't redeclare it (C2733), so that one call is known to diverge. First divergence #0 push/mov, 210 vs 200 B.
+// TRIED: signature __cdecl(void) -> __thiscall member (ecx=this throughout, plain `ret`, class-member wrapper like other anonymous subs). sub_63caa0 called via the scaffold's existing nullary __cdecl decl though the original passes ecx=this too - can't redeclare it (C2733), so that one call is known to diverge. First divergence #0 push/mov, 210 vs 200 B.
 // working copy - scaffold materialised by --work
 // size      200 bytes
 // prototype 

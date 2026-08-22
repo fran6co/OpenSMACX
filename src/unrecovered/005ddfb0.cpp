@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005DDFB0 ?wrap_flying@Buffer@@QAEHPAD@Z 0x005DDFB0-0x005DE1C8 FILE
-// RULED-OUT: MISMATCH #2 'push' vs 'sub' - the original reserves its EH/this-save slot with `push ecx` before the other pushes; not chased further. Dropped the `mov eax,0x696cdc; test eax,eax; je` guard entirely (Ghidra already resolved it as always-true and folded it away; a compile-time-nonzero address literal risked our own compiler eliding the branch differently).
+// TRIED: MISMATCH #2 'push' vs 'sub' - the original reserves its EH/this-save slot with `push ecx` before the other pushes; not chased further. Dropped the `mov eax,0x696cdc; test eax,eax; je` guard entirely (Ghidra already resolved it as always-true and folded it away; a compile-time-nonzero address literal risked our own compiler eliding the branch differently).
 // working copy - scaffold materialised by --work
 // size      536 bytes
 // prototype int (__thiscall ?wrap_flying@Buffer@@QAEHPAD@Z)(Buffer* this, int8*)

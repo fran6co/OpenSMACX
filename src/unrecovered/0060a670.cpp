@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0060A670 ?attach@ListBox@@QAEHPAUGraphicWin@@HHH@Z 0x0060A670-0x0060AA15 FILE
-// RULED-OUT: raw self+/-offset pointer chasing throughout (this points 0xa60 into the ListBox object; base=self-0xa60 is the real ListBox start reached via calculate_dimensions()); re-deriving the vbtable-style P1/P2 pointers fresh at each use instead of caching, to match the original's reloads across calls. Reaches MISMATCH #44 'lea' vs 'add' - 43 leading instructions already match; the remaining divergence looks like addressing-mode choice (lea vs add for a self+off-const computation), not a structural error.
+// TRIED: raw self+/-offset pointer chasing throughout (this points 0xa60 into the ListBox object; base=self-0xa60 is the real ListBox start reached via calculate_dimensions()); re-deriving the vbtable-style P1/P2 pointers fresh at each use instead of caching, to match the original's reloads across calls. Reaches MISMATCH #44 'lea' vs 'add' - 43 leading instructions already match; the remaining divergence looks like addressing-mode choice (lea vs add for a self+off-const computation), not a structural error.
 // working copy - scaffold materialised by --work
 // size      933 bytes
 // prototype int (__thiscall ?attach@ListBox@@QAEHPAUGraphicWin@@HHH@Z)(ListBox* this, GraphicWin*, int, int, int)

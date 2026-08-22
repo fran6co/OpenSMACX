@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00613900 ?close@FileWin@@QAEXXZ 0x00613900-0x006139AC FILE
-// RULED-OUT: DestroyWindowFn via *g_0066930c (established lever from 00635750.cpp/00635450.cpp) compiles clean; mnemonic sim 0.95, one pop/pop vs add-esp reorder right after the strcat call (#23) not chased further.
+// TRIED: DestroyWindowFn via *g_0066930c (established lever from 00635750.cpp/00635450.cpp) compiles clean; mnemonic sim 0.95, one pop/pop vs add-esp reorder right after the strcat call (#23) not chased further.
 // working copy - scaffold materialised by --work
 // size      172 bytes
 // prototype void (__thiscall ?close@FileWin@@QAEXXZ)(FileWin* this)

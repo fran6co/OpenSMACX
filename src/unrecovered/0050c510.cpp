@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0050C510 ?capture_base@@YAXHHH@Z 0x0050C510-0x0050DD8F FILE
-// RULED-OUT: full struct-based transcription (Base@0x97D040, PlayerData@0x96C9E0, Player@0x946A50, Map@0x94A30C, Veh@0x952828, RulesFacility@0x9A4B68, all cross-checked against base.h/faction.h/map.h/veh.h offsets and static_asserts) diverges at instruction #3 (prologue reg-save/stack layout order) - not yet matched at the frame-shape level.
+// TRIED: full struct-based transcription (Base@0x97D040, PlayerData@0x96C9E0, Player@0x946A50, Map@0x94A30C, Veh@0x952828, RulesFacility@0x9A4B68, all cross-checked against base.h/faction.h/map.h/veh.h offsets and static_asserts) diverges at instruction #3 (prologue reg-save/stack layout order) - not yet matched at the frame-shape level.
 // working copy - scaffold materialised by --work
 // size      6271 bytes
 // prototype void (__cdecl ?capture_base@@YAXHHH@Z)(int baseID, int factionID, int)

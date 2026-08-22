@@ -1,6 +1,6 @@
 // ORIGINAL: 0x005EEA90 ?key_click_event@Win@@QAEHHH@Z 0x005EEA90-0x005EEB81 FILE
-// RULED-OUT: nothing yet - MISMATCH #1 push/mov (73% mnemonic sim). Vtable calls on offsets 0xB0/0x64/0x5C/0x1C/0x100 and one recursive self-call whose receiver comes from a field, not `this`.
-// RULED-OUT: `__thiscall` on a raw function-pointer typedef is C4234 in this cl (reserved keyword) - used the pointer-to- member OriginalObject/original_method/original_slot pattern documented in src/original_seam.h instead (inlined here since the scaffold TU cannot #include project headers).
+// TRIED: nothing yet - MISMATCH #1 push/mov (73% mnemonic sim). Vtable calls on offsets 0xB0/0x64/0x5C/0x1C/0x100 and one recursive self-call whose receiver comes from a field, not `this`.
+// TRIED: `__thiscall` on a raw function-pointer typedef is C4234 in this cl (reserved keyword) - used the pointer-to- member OriginalObject/original_method/original_slot pattern documented in src/original_seam.h instead (inlined here since the scaffold TU cannot #include project headers).
 // size      241 bytes
 // prototype int (__thiscall ?key_click_event@Win@@QAEHHH@Z)(Win* this, int, int)
 // callers   4   call targets   1

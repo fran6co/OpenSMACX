@@ -72,8 +72,19 @@ EXCLUSION_TOKEN = re.compile(r"^\s*[§S]?\s*(?P<section>[0-9]+[a-z]?)")
 LESSON_LEVER = re.compile(
     r"^\s*(?://|\*)?\s*LEVER\s*(?P<qualifier>\([^)]*\))?:\s*"
     r"(?P<key>\S+)\s+(?P<prose>.+?)\s*$")
+# `TRIED` IS THE WORD NOW, and `RULED-OUT` is still accepted on purpose.
+# The tree stopped asserting that anything is unrecoverable - a refusal that
+# outlives its reason reads as authoritative and hides the recovery behind it,
+# which happened twice in one day: Wave stayed spelled flat to protect a
+# destructor that was not recovered, and at_goal called its remaining gap "a
+# different but equivalent strength reduction" when that gap WAS the lever, one
+# edit from BYTE_EXACT. What those lines are actually good for is the
+# measurement inside them, and `TRIED` keeps that without the verdict.
+#
+# The old spelling is NOT dropped: a reader that stops matching a line does not
+# fail, it goes BLIND, and the body then reads as untouched.
 LESSON_RULED_OUT = re.compile(
-    r"^\s*(?://|\*)?\s*RULED-OUT\s*(?P<qualifier>\([^)]*\))?:\s*"
+    r"^\s*(?://|\*)?\s*(?:TRIED|RULED-OUT)\s*(?P<qualifier>\([^)]*\))?:\s*"
     r"(?P<prose>.+?)\s*$")
 LESSON_CONTINUED = re.compile(r"^\s*(?://|\*)\s{2,}(?P<prose>\S.*?)\s*$")
 # The third token, and the only one that BELONGS on a placeholder.

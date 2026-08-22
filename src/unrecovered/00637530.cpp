@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00637530 Video_unk13 0x00637530-0x00637865 FILE
-// RULED-OUT: __thiscall Video member with plain if/else transcription of the Ghidra decomp; matches through instr #31, diverges at the byte-shuffle loop / trailing 0x34-byte ICSendMessage struct, whose exact field layout is not recovered
+// TRIED: __thiscall Video member with plain if/else transcription of the Ghidra decomp; matches through instr #31, diverges at the byte-shuffle loop / trailing 0x34-byte ICSendMessage struct, whose exact field layout is not recovered
 // working copy - scaffold materialised by --work
 // size      821 bytes
 // prototype 

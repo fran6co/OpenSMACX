@@ -42,7 +42,7 @@ static void *const g_0066a574 = reinterpret_cast<void *>(0x0066A574);
 Purpose: Build a map window - attach its embedded GraphicWin virtual base,
          then its own TextureStore/Buffer/Font/ImageButton members.
 // ORIGINAL: 0x004626E0 ??0MapWin@@QAE@H@Z 0x004626E0-0x00462868;0x00655860-0x00655920
-// RULED-OUT: 4/92 - the image carries an SEH unwind frame here (`push -1
+// TRIED: 4/92 - the image carries an SEH unwind frame here (`push -1
 //            / push 0x655916 / mov eax,fs:[0] / ...`), same symptom
 //            catalogued on FlatButton's constructor/destructor and
 //            GraphicWin's destructor. Not attempted: MapWin::construct is

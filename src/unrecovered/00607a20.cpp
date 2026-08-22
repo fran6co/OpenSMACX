@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00607A20 ?on_left_click@BaseButton@@QAEXHH@Z 0x00607A20-0x00607AF3 FILE
-// RULED-OUT: caching *(self+0xc4) into one local instead of re-reading it at each of the two use sites moved `push edi` out of place. A member-pointer union shim per call site (void/int-return/int-arg) reproduces direct `call [reg+disp]` for the void and arg slots; the int-returning slot (0x5c) still gets an extra `mov eax,[...]` before `call eax` instead of a direct `call [eax+0x5c]`, and the target==-1/-2 short-circuit collapses the original's per-branch duplicated `test/je` into one shared test. 2 edits, 63/65 shared.
+// TRIED: caching *(self+0xc4) into one local instead of re-reading it at each of the two use sites moved `push edi` out of place. A member-pointer union shim per call site (void/int-return/int-arg) reproduces direct `call [reg+disp]` for the void and arg slots; the int-returning slot (0x5c) still gets an extra `mov eax,[...]` before `call eax` instead of a direct `call [eax+0x5c]`, and the target==-1/-2 short-circuit collapses the original's per-branch duplicated `test/je` into one shared test. 2 edits, 63/65 shared.
 // working copy - scaffold materialised by --work
 // size      211 bytes
 // prototype void (__thiscall ?on_left_click@BaseButton@@QAEXHH@Z)(BaseButton* this, int, int)

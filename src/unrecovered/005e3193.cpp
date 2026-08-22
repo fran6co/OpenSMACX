@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005E3193 ?box@Buffer@@QAEHHHHHHH@Z 0x005E3193-0x005E31FC FILE
-// RULED-OUT: falling off the end without a return (C4716 under the scoring flags, treated as an error); the near-miss is the extra "xor eax,eax" that "return 0" adds versus the original's bare "pop"-chain tail.
+// TRIED: falling off the end without a return (C4716 under the scoring flags, treated as an error); the near-miss is the extra "xor eax,eax" that "return 0" adds versus the original's bare "pop"-chain tail.
 // working copy - scaffold materialised by --work
 // size      105 bytes
 // prototype int (__thiscall ?box@Buffer@@QAEHHHHHHH@Z)(Buffer* this, int, int, int, int, int, int)

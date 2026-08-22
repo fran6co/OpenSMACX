@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005F37C0 sub_5f37c0 0x005F37C0-0x005F3B73 FILE
-// RULED-OUT: signature is __thiscall(int,int,int) returning void, not the brief's __stdcall(int,int,int) - ecx used as `this` throughout, ret 0xc pops 3 stack args. Ghidra's pseudocode (IsRectEmpty/ IntersectRect/copy over 4 edge buffers + a GetWindowRect case) checked against the raw disassembly's ESP-relative RECT layout and used as the translation basis (sim 0.75 at /O2 no-Oy-). slot061 retyped `int` (thiscall, nullary, tested against 0). First divergence at #12 is prologue register scheduling, not chased further. Not byte-exact.
+// TRIED: signature is __thiscall(int,int,int) returning void, not the brief's __stdcall(int,int,int) - ecx used as `this` throughout, ret 0xc pops 3 stack args. Ghidra's pseudocode (IsRectEmpty/ IntersectRect/copy over 4 edge buffers + a GetWindowRect case) checked against the raw disassembly's ESP-relative RECT layout and used as the translation basis (sim 0.75 at /O2 no-Oy-). slot061 retyped `int` (thiscall, nullary, tested against 0). First divergence at #12 is prologue register scheduling, not chased further. Not byte-exact.
 // working copy - scaffold materialised by --work
 // size      947 bytes
 // prototype 

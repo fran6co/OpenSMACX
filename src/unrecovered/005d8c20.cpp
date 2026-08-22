@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005D8C20 sub_5d8c20 0x005D8C20-0x005D8D00 FILE
-// RULED-OUT: 223 vs 224 bytes; `int al=0; al=*(byte*)g_00696d14;` (two statements) reproduced the original's xor-then-byte-mov where a single `unsigned char al = *...;` collapsed to one mov. The remaining divergence is register/instruction ordering inside the `piVar1==0` branch (mov/cmp order, an extra `mov eax,ecx`); tried `--*(int*)(esi+0x6c)` for the pre-decrement, close but not exact.
+// TRIED: 223 vs 224 bytes; `int al=0; al=*(byte*)g_00696d14;` (two statements) reproduced the original's xor-then-byte-mov where a single `unsigned char al = *...;` collapsed to one mov. The remaining divergence is register/instruction ordering inside the `piVar1==0` branch (mov/cmp order, an extra `mov eax,ecx`); tried `--*(int*)(esi+0x6c)` for the pre-decrement, close but not exact.
 // working copy - scaffold materialised by --work
 // size      224 bytes
 // prototype 

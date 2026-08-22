@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005F5AD0 ?on_nc_hittest@Win@@QAEHHH@Z 0x005F5AD0-0x005F5BF6
-// RULED-OUT: transcribing the nine-way corner/edge ladder as one flat sequence of if-return statements (matching the Ghidra shape, each re-testing x/y against iVar1 and the recomputed client-rect edge) compiles and the byte count comes close (286 vs 294) but the prologue register allocation still diverges at instruction #3 - the original pushes edi before touching it, this form delays that push since it needs one fewer live temporary across the first branch. Landing the closest MISMATCH.
+// TRIED: transcribing the nine-way corner/edge ladder as one flat sequence of if-return statements (matching the Ghidra shape, each re-testing x/y against iVar1 and the recomputed client-rect edge) compiles and the byte count comes close (286 vs 294) but the prologue register allocation still diverges at instruction #3 - the original pushes edi before touching it, this form delays that push since it needs one fewer live temporary across the first branch. Landing the closest MISMATCH.
 // size      294 bytes
 // prototype int (__thiscall ?on_nc_hittest@Win@@QAEHHH@Z)(Win* this, int, int)
 // callers   3   call targets   0

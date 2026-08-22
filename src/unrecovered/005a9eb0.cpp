@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005A9EB0 ?save_game@@YAHH@Z 0x005A9EB0-0x005AAAA9;0x00661B40-0x00661E84 FILE
-// RULED-OUT: time-boxed - the filename/faction/year string build, the FileBox/FileWin set_def_name/set_def_ext/add_filter/ add_def_ext setup, prefs_get/put, the is_visible-gated AlphaSave::save vs FileBox::save dispatch and do_all_draws are transcribed against the disassembly; the failure path (daemon-reserved-name checks, save_daemon, auto_save, NetDaemon::hang_up, a large session-struct zero-fill) is a deliberate stub. MISMATCH #0, prologue only.
+// TRIED: time-boxed - the filename/faction/year string build, the FileBox/FileWin set_def_name/set_def_ext/add_filter/ add_def_ext setup, prefs_get/put, the is_visible-gated AlphaSave::save vs FileBox::save dispatch and do_all_draws are transcribed against the disassembly; the failure path (daemon-reserved-name checks, save_daemon, auto_save, NetDaemon::hang_up, a large session-struct zero-fill) is a deliberate stub. MISMATCH #0, prologue only.
 // working copy - scaffold materialised by --work
 // size      3901 bytes
 // prototype 
@@ -2373,7 +2373,7 @@ int __cdecl save_game(int a1) {
     // several daemon-reserved filenames, offering to overwrite, prefs_put
     // of the chosen name, save_daemon(), and (on a deeper failure)
     // auto_save()/NetDaemon::hang_up() plus a large zero-fill of a
-    // network-session struct - is not transcribed. See the RULED-OUT
+    // network-session struct - is not transcribed. See the TRIED
     // note; only the always-taken tail (do_all_draws + normal return)
     // above is faithful to the disassembly.
     return 0;

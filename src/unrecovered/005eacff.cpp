@@ -74,7 +74,7 @@ class Sprite { public:
 
     int get_clipped_y_table_shrink(RECT *, RECT *, int *, int *, int *, int *);
 };
-// RULED-OUT: BYTE_EXACT not reached in 10 candidates. The whole function
+// TRIED: BYTE_EXACT not reached in 10 candidates. The whole function
 // matches except ONE instruction: original stores the `*a4 = 0;` guard as
 // an immediate (`c7 02 00000000`, 6 bytes) even though a callee-saved
 // register (ebx, holding the `index` local seen below) provably holds 0 at

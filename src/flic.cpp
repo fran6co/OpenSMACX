@@ -87,7 +87,7 @@ Purpose: Close the file, then tear down the embedded Palette and Buffer in
 // kind      game
 // flags     hidden;sp_ready;purged_ok;frame
 // calls     0x00629DF0 0x005D7410 0x005FE2E0
-// RULED-OUT: best reached is 13/25 instructions, 0.980 similar (best of 10
+// TRIED: best reached is 13/25 instructions, 0.980 similar (best of 10
 //        flag sets, `/c /O2 /Ob0 /Gy /GR- /Oy- /GX`) - one single missing
 //        instruction (`tools/listing_diff.py`): the image stores a SECOND
 //        EH unwind-state byte (`mov byte ptr [ebp-4], 0`) right after

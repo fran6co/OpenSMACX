@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005CBC00 sub_5cbc00 0x005CBC00-0x005CBE2A FILE
-// RULED-OUT: IDA's 8-arg __stdcall guess; disasm shows ecx/edx as real args (fastcall, 10 logical params) and Ghidra's final-sum check param_5+param_6+param_7 is wrong - raw disasm reads [esp+0x2c](param_4)+[esp+0x34](param_6)+[esp+0x38](param_7). Prologue register/stack-frame shape (#0 sub vs push) not chased.
+// TRIED: IDA's 8-arg __stdcall guess; disasm shows ecx/edx as real args (fastcall, 10 logical params) and Ghidra's final-sum check param_5+param_6+param_7 is wrong - raw disasm reads [esp+0x2c](param_4)+[esp+0x34](param_6)+[esp+0x38](param_7). Prologue register/stack-frame shape (#0 sub vs push) not chased.
 // working copy - scaffold materialised by --work
 // size      554 bytes
 // prototype 

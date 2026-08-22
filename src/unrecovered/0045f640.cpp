@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0045F640 ?close@Interlude@@QAEXXZ 0x0045F640-0x0045F6E5 FILE
-// RULED-OUT: explicit `typedef void (__thiscall *)(...)` for the list-slot1 and adjuster-thunk calls is C4234; replaced with the member-fn-pointer + union shim (VCallObjP/VCallObjI). MISMATCH #1 mov/push, whole-function register-allocation shape, opaque class so all offsets are raw casts.
+// TRIED: explicit `typedef void (__thiscall *)(...)` for the list-slot1 and adjuster-thunk calls is C4234; replaced with the member-fn-pointer + union shim (VCallObjP/VCallObjI). MISMATCH #1 mov/push, whole-function register-allocation shape, opaque class so all offsets are raw casts.
 // working copy - scaffold materialised by --work
 // size      165 bytes
 // prototype void (__thiscall ?close@Interlude@@QAEXXZ)(Interlude* this)

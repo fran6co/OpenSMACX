@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00527290 ?faction_upkeep@@YAXH@Z 0x00527290-0x005275AC FILE
-// RULED-OUT: literal asm-mirrored translation compiles and matches through instr #41 (of ~230); diverges at #42 (shl vs and, likely the corner_market/has_tech gated block's field-offset codegen) - not chased further, landed at MISMATCH.
+// TRIED: literal asm-mirrored translation compiles and matches through instr #41 (of ~230); diverges at #42 (shl vs and, likely the corner_market/has_tech gated block's field-offset codegen) - not chased further, landed at MISMATCH.
 // working copy - scaffold materialised by --work
 // size      796 bytes
 // prototype 

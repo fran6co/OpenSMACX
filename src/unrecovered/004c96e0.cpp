@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004C96E0 ?action_build@@YAHHPAD@Z 0x004C96E0-0x004C99C5 FILE
-// RULED-OUT: byte-offset record indexing (a1*0x34) for the 0x952828/2a/2c/30/ 36/4f/56 base-record tables and the 0x20cc-stride diplomacy tables at 0x96c9f4/f8/0x96da3c and 0x134-stride base tables at 0x97d044/4a/53/78, matching Ghidra's decompile; diverges at instr #0 (prologue shape) given the function's size (741 bytes).
+// TRIED: byte-offset record indexing (a1*0x34) for the 0x952828/2a/2c/30/ 36/4f/56 base-record tables and the 0x20cc-stride diplomacy tables at 0x96c9f4/f8/0x96da3c and 0x134-stride base tables at 0x97d044/4a/53/78, matching Ghidra's decompile; diverges at instr #0 (prologue shape) given the function's size (741 bytes).
 // working copy - scaffold materialised by --work
 // size      741 bytes
 // prototype int (__cdecl ?action_build@@YAHHPAD@Z)(int vehID, int8*)

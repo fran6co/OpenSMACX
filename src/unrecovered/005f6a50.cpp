@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005F6A50 ?get_key_window@Win@@QAGHXZ 0x005F6A50-0x005F6AB0 FILE
-// RULED-OUT: direct transcription only tried once; diverges at #0 (push vs mov) in the prologue register-save pattern
+// TRIED: direct transcription only tried once; diverges at #0 (push vs mov) in the prologue register-save pattern
 // working copy - scaffold materialised by --work
 // size      96 bytes
 // prototype 

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00421B50 ?battle_report@BattleWin@@QAEXHHHHH@Z 0x00421B50-0x00422BFC;0x00652BA0-0x00652BCB FILE
-// RULED-OUT: real `Font font_c4/font_9c/font_ec;` locals reproduce the 3-Font RAII/SEH shape and the early-return dtor cascade, but the "away from base" separator/style checks and the odds/ wrap text-building tail (0x422781-0x422f00) are approximated rather than a literal per-instruction transcription.
+// TRIED: real `Font font_c4/font_9c/font_ec;` locals reproduce the 3-Font RAII/SEH shape and the early-return dtor cascade, but the "away from base" separator/style checks and the odds/ wrap text-building tail (0x422781-0x422f00) are approximated rather than a literal per-instruction transcription.
 // working copy - scaffold materialised by --work
 // size      4311 bytes
 // prototype void (__thiscall ?battle_report@BattleWin@@QAEXHHHHH@Z)(BattleWin* this, int, int, int, int, int)

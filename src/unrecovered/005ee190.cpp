@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005EE190 ?set_modal@Win@@QAEHHP6AHXZPAVWin@@@Z 0x005EE190-0x005EE27B FILE
-// RULED-OUT: 0.90 mnemonic similarity - the original keeps a register pinned to 0 across the whole function (xor ebx,ebx once, reused for every zero-store and the two early-return `xor eax,eax`s); writing plain `0` literals throughout lets the compiler re-derive zero per site instead, which is a register-allocation choice not reachable from source form.
+// TRIED: 0.90 mnemonic similarity - the original keeps a register pinned to 0 across the whole function (xor ebx,ebx once, reused for every zero-store and the two early-return `xor eax,eax`s); writing plain `0` literals throughout lets the compiler re-derive zero per site instead, which is a register-allocation choice not reachable from source form.
 // working copy - scaffold materialised by --work
 // size      235 bytes
 // prototype int (__thiscall ?set_modal@Win@@QAEHHP6AHXZPAVWin@@@Z)(Win* this, int, int (__cdecl *)(), Win*)

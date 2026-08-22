@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0061FC90 ?setup_edge_gouraud@Texture@@QAAHPAUEdgeScan@@H@Z 0x0061FC90-0x0061FDEA FILE
-// RULED-OUT: the four fixed-address globals (9bb490/9bb4f4/9bb4fc/9bb4b0) are pointer VARIABLES, dereferenced once to get the real array base (mov ecx,[0x9bb4f4] loads the pointer, not the data), then indexed - not plain data globals. Landed at 0.80 mnemonic similarity; prologue register-save order is the first divergence.
+// TRIED: the four fixed-address globals (9bb490/9bb4f4/9bb4fc/9bb4b0) are pointer VARIABLES, dereferenced once to get the real array base (mov ecx,[0x9bb4f4] loads the pointer, not the data), then indexed - not plain data globals. Landed at 0.80 mnemonic similarity; prologue register-save order is the first divergence.
 // working copy - scaffold materialised by --work
 // size      346 bytes
 // prototype

@@ -5,7 +5,7 @@
 # ///
 """Bodies whose refusal is written as prose the reader cannot see.
 
-A refusal only counts if it is a `// RULED-OUT:` LESSON LINE. Written as
+A refusal only counts if it is a `// TRIED:` LESSON LINE. Written as
 ordinary prose inside the comment block - "cannot reach byte-exact", "not
 chased further", "gives up" - it is invisible to `decomp.reader`, so
 `frontier.py --untouched` keeps offering the body as unworked and each new
@@ -18,7 +18,7 @@ image body is hand-written `__asm`), and it still reads as untouched.
     uv run tools/prose_refusals.py
 
 Reports every marker whose comment block contains refusal language but
-carries no RULED-OUT line of its own.
+carries no TRIED line of its own.
 """
 import pathlib
 import re
@@ -35,7 +35,12 @@ REFUSAL = re.compile(
     r"unreachable from|no tier is reachable|not reproducible|"
     r"cannot be reproduced|not attempted further|out of scope for",
     re.I)
-LESSON = re.compile(r"^\s*//\s*(RULED-OUT|UNRECOVERABLE|DEFERRED)\b", re.M)
+# `UNRECOVERABLE` is still matched although the tree no longer writes it:
+# a file this migration missed, or an agent that learned the old word,
+# must still count as HAVING a lesson line. A checker that stops
+# recognising a form reports the body as bare, which is the opposite of
+# what it is for.
+LESSON = re.compile(r"^\s*//\s*(TRIED|UNRECOVERABLE|DEFERRED)\b", re.M)
 
 
 def block(path: pathlib.Path, line: int) -> str:
@@ -72,7 +77,7 @@ if __name__ == "__main__":
 
     for record, where, phrase in rows:
         print(f"  {record.address_hex}  {where}:{record.line}")
-        print(f"      says \"{phrase}\" in prose, carries no RULED-OUT line - "
+        print(f"      says \"{phrase}\" in prose, carries no TRIED line - "
               f"{record.name}")
     print(f"\n{len(rows)} body(s) refuse in prose but not where the reader "
           f"looks, so `frontier.py --untouched` still offers them")

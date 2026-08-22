@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00644DC0 ICClose 0x00644DC0-0x00644DC6 FILE
-// RULED-OUT: original is `jmp dword ptr [addr]` (6B), a linker-generated import-thunk shape; every spelling tried (extern fn-ptr var, static const fn-ptr, raw deref-of-address) compiles under this build's /O1 to push+call+ret (13B), never a bare tail jmp
+// TRIED: original is `jmp dword ptr [addr]` (6B), a linker-generated import-thunk shape; every spelling tried (extern fn-ptr var, static const fn-ptr, raw deref-of-address) compiles under this build's /O1 to push+call+ret (13B), never a bare tail jmp
 // working copy - scaffold materialised by --work
 // size      6 bytes
 // prototype LRESULT (__stdcall ICClose)(HIC hic)

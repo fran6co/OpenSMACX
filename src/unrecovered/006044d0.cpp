@@ -1,5 +1,5 @@
 // ORIGINAL: 0x006044D0 ?double_click@BasePop@@QAEXH@Z 0x006044D0-0x00604581 FILE
-// RULED-OUT: early-return on tab==1 (MSVC folds the later redundant tab==1 check into dead code, collapsing 4 original instrs to 1 lea); lea-vs-add on the (off+base) address computation persists regardless of local-vs-inline pointer arithmetic
+// TRIED: early-return on tab==1 (MSVC folds the later redundant tab==1 check into dead code, collapsing 4 original instrs to 1 lea); lea-vs-add on the (off+base) address computation persists regardless of local-vs-inline pointer arithmetic
 // working copy - scaffold materialised by --work
 // size      177 bytes
 // prototype void (__thiscall ?double_click@BasePop@@QAEXH@Z)(BasePop* this, int)

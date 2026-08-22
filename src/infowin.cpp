@@ -193,7 +193,7 @@ void InfoWin::right_menu(int a1, int a2) {
 // calls     0x006161D0 0x00618EA0 0x0062BF20
 */
 
-// RULED-OUT: byte-exact is not reachable from this marker alone.
+// TRIED: byte-exact is not reachable from this marker alone.
 // PushButton::PushButton() (0x0062BF20, at field_9D0_) is still an
 // unrecovered stub (src/unrecovered/0062bf20.cpp), so the image's third
 // call cannot be reproduced from here; not one of this pass's seven
@@ -210,7 +210,7 @@ InfoWin::InfoWin() {
 Purpose: Tear down an InfoWin: destroy the PushButton, Font and Time
          subobjects in reverse construction order.
 // ORIGINAL: 0x004594A0 ??1InfoWin@@QAE@XZ 0x004594A0-0x004594FB;0x00655240-0x00655260
-// RULED-OUT: MEASURED 0/26 agreeing. The image opens `push ebp; mov
+// TRIED: MEASURED 0/26 agreeing. The image opens `push ebp; mov
 //            ebp,esp; push -1; push 0x655256` - a real SEH frame - which
 //            this straight-line body does not reproduce; every instruction
 //            is offset from #0. Time/Font/PushButton here are all raw

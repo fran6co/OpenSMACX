@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005D9610 ?copy@Buffer@@QAEHPAVBuffer@@HHHHHHHH@Z 0x005D9610-0x005D98EA FILE
-// RULED-OUT: slot017 shows a redundant `push ecx` of its own dispatch object right before `call [vtbl+0x44]` even though ecx is already the thiscall `this`; retyped as slot017(void*) with one explicit arg (the &hdc2_ out-slot) and did not chase reproducing that redundant push. slot026 similarly takes the HDC being released as its one explicit int arg.
+// TRIED: slot017 shows a redundant `push ecx` of its own dispatch object right before `call [vtbl+0x44]` even though ecx is already the thiscall `this`; retyped as slot017(void*) with one explicit arg (the &hdc2_ out-slot) and did not chase reproducing that redundant push. slot026 similarly takes the HDC being released as its one explicit int arg.
 // working copy - scaffold materialised by --work
 // size      730 bytes
 // prototype int (__thiscall ?copy@Buffer@@QAEHPAVBuffer@@HHHHHHHH@Z)(Buffer* this, Buffer* hdcSrc, int xSrc, int ySrc, int wSrc, int hSrc, int xDest, int yDest, int wDest, int hDest)

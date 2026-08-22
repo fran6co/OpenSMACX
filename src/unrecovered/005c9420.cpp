@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005C9420 ?on_redraw@Gamma@@QAEXXZ 0x005C9420-0x005C951D FILE
-// RULED-OUT: `RECT rect = *(RECT*)(self+0xa14);` (struct assignment through one base pointer, not 4 independent offset loads - the latter drops the original's `lea`+shared-`ecx` shape entirely) gets every field store byte-exact through the loop setup. The y2 = (bottom-top)+top redundant identity the ASM computes (sub ecx,eax; add ecx,eax) is always constant-folded to a plain `bottom` by every /O flag combination tried, whether written inline or through a named `height` temp - MISMATCH #19 is that fold, not a missed field.
+// TRIED: `RECT rect = *(RECT*)(self+0xa14);` (struct assignment through one base pointer, not 4 independent offset loads - the latter drops the original's `lea`+shared-`ecx` shape entirely) gets every field store byte-exact through the loop setup. The y2 = (bottom-top)+top redundant identity the ASM computes (sub ecx,eax; add ecx,eax) is always constant-folded to a plain `bottom` by every /O flag combination tried, whether written inline or through a named `height` temp - MISMATCH #19 is that fold, not a missed field.
 // size      253 bytes
 // prototype void (__thiscall ?on_redraw@Gamma@@QAEXXZ)(Gamma* this)
 // callers   0   call targets   8

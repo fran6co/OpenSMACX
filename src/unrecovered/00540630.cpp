@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00540630 ?energy_trade@@YAHHH@Z 0x00540630-0x005410F3 FILE
-// RULED-OUT: full goto/label transcription mirroring Ghidra's control flow 1:1 (verified array strides/index scaling against raw disasm at the entry points); diverges at insn #11, near the DAT_0093fab0 tech-stage dispatch (call vs mov) - likely bVar2 computed via a branchy compare sequence in the original rather than a plain OR.
+// TRIED: full goto/label transcription mirroring Ghidra's control flow 1:1 (verified array strides/index scaling against raw disasm at the entry points); diverges at insn #11, near the DAT_0093fab0 tech-stage dispatch (call vs mov) - likely bVar2 computed via a branchy compare sequence in the original rather than a plain OR.
 // working copy - scaffold materialised by --work
 // size      2755 bytes
 // prototype 

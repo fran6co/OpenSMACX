@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00612D60 ?on_left_double_click@Dialogs@@QAEXHH@Z 0x00612D60-0x00612DD8 FILE
-// RULED-OUT: read the embedded jump/byte tables at 0x612DD8/0x612DEC directly (tools/disasm.py --bytes) to recover the kind->handler mapping (1->CheckBox -276, 2->ListBox -320, 8->SpriteBox -140, 16->RadioButton -300; every other kind in [1,16] is a no-op) and wrote it as a plain `switch`. SHAPE_EXACT: same 35 mnemonics, only the compiler's own table addresses/immediates differ.
+// TRIED: read the embedded jump/byte tables at 0x612DD8/0x612DEC directly (tools/disasm.py --bytes) to recover the kind->handler mapping (1->CheckBox -276, 2->ListBox -320, 8->SpriteBox -140, 16->RadioButton -300; every other kind in [1,16] is a no-op) and wrote it as a plain `switch`. SHAPE_EXACT: same 35 mnemonics, only the compiler's own table addresses/immediates differ.
 // working copy - scaffold materialised by --work
 // size      120 bytes
 // prototype void (__thiscall ?on_left_double_click@Dialogs@@QAEXHH@Z)(Dialogs* this, int xCoord, int yCoord)

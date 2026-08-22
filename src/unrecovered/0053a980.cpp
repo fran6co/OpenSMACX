@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0053A980 ?diplomacy_check@@YAXHHH@Z 0x0053A980-0x0053C36E FILE
-// RULED-OUT: nothing yet re-tried; this is a first faithful transliteration of the Ghidra hypothesis (cross-checked field-by-field against PlayerData/Player offsets derived from faction.h and against raw disasm for the two FUN_005bfe90/FUN_005b9580 call sites Ghidra merged into one argument list). Compiles; MISMATCH #0 push-vs-sub suggests a prologue/frame-size divergence from local layout, not yet isolated. DEFERRED: byte-level narrowing of the ~90 DAT_ globals against real field names.
+// TRIED: nothing yet re-tried; this is a first faithful transliteration of the Ghidra hypothesis (cross-checked field-by-field against PlayerData/Player offsets derived from faction.h and against raw disasm for the two FUN_005bfe90/FUN_005b9580 call sites Ghidra merged into one argument list). Compiles; MISMATCH #0 push-vs-sub suggests a prologue/frame-size divergence from local layout, not yet isolated. DEFERRED: byte-level narrowing of the ~90 DAT_ globals against real field names.
 // working copy - scaffold materialised by --work
 // size      6638 bytes
 // prototype void (__cdecl ?diplomacy_check@@YAXHHH@Z)(int factionID, int, int)

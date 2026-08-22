@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00491DF0 ??1PrefWin@@QAE@XZ 0x00491DF0-0x004921DF;0x006586C0-0x00658924 FILE
-// RULED-OUT: real nested member declarations (arrays/Scroll/CheckBox/NetWin in true layout order) letting the compiler auto-cascade the teardown and build the SEH frame - instead used explicit reinterpret_cast<T*>(self+offset)->close()/~T() calls matching the disasm's two FlatButton arrays (stride 0xB4C), 5 Scrolls, one CheckBox+Dialog+GraphicWin triple, and 6-element NetWin array (stride 0xB28, closed via UNK4()) in program order.
+// TRIED: real nested member declarations (arrays/Scroll/CheckBox/NetWin in true layout order) letting the compiler auto-cascade the teardown and build the SEH frame - instead used explicit reinterpret_cast<T*>(self+offset)->close()/~T() calls matching the disasm's two FlatButton arrays (stride 0xB4C), 5 Scrolls, one CheckBox+Dialog+GraphicWin triple, and 6-element NetWin array (stride 0xB28, closed via UNK4()) in program order.
 // working copy - scaffold materialised by --work
 // size      1619 bytes
 // prototype void (__thiscall ??1PrefWin@@QAE@XZ)(PrefWin* this)

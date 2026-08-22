@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0055F930 ?enemy_diplomacy@@YAXH@Z 0x0055F930-0x00560ACD FILE
-// RULED-OUT: this is the most complex of the batch (4509 bytes of AI diplomacy state-machine over 8 faction-pair records). Landed a heavily compressed transcription: phase boundaries (early exit, two 1..7/1..8 relationship loops, war-weariness scan, satellite-defense scan) and the callee sequence are faithful, but per-faction-pair array index chains and the deep bitfield arithmetic within each phase are approximated, not a literal instruction-by-instruction transcription.
+// TRIED: this is the most complex of the batch (4509 bytes of AI diplomacy state-machine over 8 faction-pair records). Landed a heavily compressed transcription: phase boundaries (early exit, two 1..7/1..8 relationship loops, war-weariness scan, satellite-defense scan) and the callee sequence are faithful, but per-faction-pair array index chains and the deep bitfield arithmetic within each phase are approximated, not a literal instruction-by-instruction transcription.
 // working copy - scaffold materialised by --work
 // size      4509 bytes
 // prototype void (__cdecl ?enemy_diplomacy@@YAXH@Z)(int factionID)

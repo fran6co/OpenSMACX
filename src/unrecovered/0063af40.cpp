@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0063AF40 sub_63af40 0x0063AF40-0x0063AF54;0x0066731C-0x00667375 FILE
-// RULED-OUT: straight-line body after the 3 calls. The original's own tail is a `jmp` into a block shared with another caller (spans two disjoint ranges); inlining it here compiles to `mov` straight-through instead of the shared-tail `jmp`.
+// TRIED: straight-line body after the 3 calls. The original's own tail is a `jmp` into a block shared with another caller (spans two disjoint ranges); inlining it here compiles to `mov` straight-through instead of the shared-tail `jmp`.
 // working copy - scaffold materialised by --work
 // size      109 bytes
 // prototype 

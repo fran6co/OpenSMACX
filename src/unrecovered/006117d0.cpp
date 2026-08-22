@@ -1,5 +1,5 @@
 // ORIGINAL: 0x006117D0 sub_6117d0 0x006117D0-0x006117D8;0x006117E0-0x0061181E FILE
-// RULED-OUT: reproducing MSVC's own vtordisp adjustor thunk mechanism; wrote `raw - *(int*)(raw-4)` as explicit pointer arithmetic in a shim member instead - first instruction diverges (sub vs push)
+// TRIED: reproducing MSVC's own vtordisp adjustor thunk mechanism; wrote `raw - *(int*)(raw-4)` as explicit pointer arithmetic in a shim member instead - first instruction diverges (sub vs push)
 // working copy - scaffold materialised by --work
 // size      70 bytes
 // prototype 

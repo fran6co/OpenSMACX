@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0054D410 ?base_swap@@YAXHH@Z 0x0054D410-0x0054DC8C FILE
-// RULED-OUT: transcribed full Ghidra structure (verified against raw disasm: value_of_base/parse_says/X_pops/log_say arg order, the parameter-slot reuse where [ebp+0xc] becomes the swap `amount`). Compiles; diverges at #7 (register alloc), close for a 2172-byte function with 10 return sites.
+// TRIED: transcribed full Ghidra structure (verified against raw disasm: value_of_base/parse_says/X_pops/log_say arg order, the parameter-slot reuse where [ebp+0xc] becomes the swap `amount`). Compiles; diverges at #7 (register alloc), close for a 2172-byte function with 10 return sites.
 // PROPOSAL: signature -> int __cdecl base_swap(int, int); every exit sets eax
 //           to 0 or 1 before ret (10 exits), Ghidra independently infers
 //           undefined4 return. Catalogue currently says void.

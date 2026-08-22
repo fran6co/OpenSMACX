@@ -156,7 +156,7 @@ void Dialog::set_selected_id(int id) {
 /*
 Purpose: Restore the selected list position and return its item ID.
 // ORIGINAL: 0x00609A50 ?get_selected_id@Dialog@@QAEHXZ 0x00609A50-0x00609AE6
-// RULED-OUT: 25/50 plateau (0.8+ similar) - the image caches `this` itself
+// TRIED: 25/50 plateau (0.8+ similar) - the image caches `this` itself
 //            in a register (`mov esi, ecx` at instruction 1) and reads
 //            `entry_head_` through it early; this body's compiled form
 //            instead caches `entry_head_`/`current_entry_` early and keeps
@@ -238,7 +238,7 @@ Purpose: Restore an explicit list position and return its item ID.
 //        low-`agreeing`-count set here because its sort is count-first,
 //        not similarity-first; the source is correct, this is a scorer
 //        tie-break, not a body defect.
-// RULED-OUT: remaining gap under `/Oi-` is a handful of ecx/edx register
+// TRIED: remaining gap under `/Oi-` is a handful of ecx/edx register
 //            swaps around the `current_entry_`/`entry_head_` reads -
 //            plateaued, matching the sibling `get_selected_id` above.
 // size      154 bytes
@@ -419,7 +419,7 @@ Purpose: Destroy a Dialog. Install the Dialog table, run Dialog::close, then
          frame targets __CxxFrameHandler and is omitted as unreachable per
          policy.
 // ORIGINAL: 0x00608E10 ??1Dialog@@QAE@XZ 0x00608E10-0x00608F41;0x00662EC0-0x00662EEE
-// RULED-OUT: 0/94 - two stacked gaps, not chased at this budget. (1) the
+// TRIED: 0/94 - two stacked gaps, not chased at this budget. (1) the
 //            image carries a real SEH unwind frame, same symptom as
 //            FlatButton::~FlatButton() (flatbutton.cpp) - but unlike that
 //            case the comment above's "unreachable, omitted per policy"

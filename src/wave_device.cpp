@@ -122,7 +122,7 @@ __forceinline int forward_to_wrapped_device(Wave_Device *self, int vtable_offset
 /*
 Purpose: Enable the wrapped device, if there is one, through vtable slot 0x60.
 // ORIGINAL: 0x004C51C0 ?enable@Wave_Device@@QAEXXZ 0x004C51C0-0x004C51CF
-// RULED-OUT: byte-exactness - plateaus at 4/7 agreeing (0.769 similar)
+// TRIED: byte-exactness - plateaus at 4/7 agreeing (0.769 similar)
 // across every flag set tried. The image keeps a real `call` on the
 // device-present path and falls through into a SHARED `xor eax,eax; ret`
 // epilogue the null-device path also jumps to; this tree's void wrapper
@@ -149,7 +149,7 @@ void Wave_Device::enable() {
 /*
 Purpose: Disable the wrapped device, if there is one, through vtable slot 0x64.
 // ORIGINAL: 0x004C51D0 ?disable@Wave_Device@@QAEXXZ 0x004C51D0-0x004C51DF
-// RULED-OUT: byte-exactness, same plateau and same cause as `enable()` -
+// TRIED: byte-exactness, same plateau and same cause as `enable()` -
 // see the note there (4/7 agreeing, 0.769 similar, the image's real `call`
 // against this tree's tail `jmp`).
 // size      15 bytes
@@ -664,7 +664,7 @@ Purpose: Report whether a group is disabled: out-of-range groups always are,
          original defines only AL on the out-of-range path; callers test the
          byte.
 // ORIGINAL: 0x004C5460 ?is_group_disabled@Wave_Device@@QAEHI@Z 0x004C5460-0x004C5481
-// RULED-OUT: byte-exactness. Plateaus at 7/14, 0.875 similar (best
+// TRIED: byte-exactness. Plateaus at 7/14, 0.875 similar (best
 // `/c /O2 /Gy /GR- /Oy- /GX`). The image writes only AL on BOTH return
 // paths - `mov al, 1` (2 bytes) on the out-of-range path and a bare
 // `sete al` on the lookup path, each its own independent `ret`, never a
@@ -1325,7 +1325,7 @@ Purpose: Switch the wrapped device to another output. Every sound on the
 //   instructions against the image's 88. 62/88 -> 73/88.
 // LEVER: prev-before-fname read `wave_chain_prev` first and the filename after
 //   it (0x004C50CA then 0x004C50CD), not the other way round.
-// RULED-OUT: vtable-register-alternation the last 15 instructions are register
+// TRIED: vtable-register-alternation the last 15 instructions are register
 //   choice with identical shape and an identical instruction count (88 v 88,
 //   0.989 similar): the image loads the vtable pointer into edx for the second
 //   and fourth indirect calls where this tree reuses eax, because it issues

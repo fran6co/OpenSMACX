@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00629A70 ?clip_ids@StringBox@@QAEXK@Z 0x00629A70-0x00629B69 FILE
-// RULED-OUT: `cnt <= a1` remove-vs-decrement polarity matched (was `a1<cnt`, flipped to match `jbe`); loading head into a local before the `if` still compiles the null check as `test` where the original uses a pre-zeroed register and `cmp` (it reuses that zero for two later stack inits) - not reproduced, that reuse is a scheduling artifact not a source shape. Adjustor-thunk release pattern (vtbl[1]-as-delta, then vtbl2[0]) and the list-container slot1 dispatch both copied verbatim from 0x0045F640's proven VCallObjI/VCallObjP shim and matched structurally.
+// TRIED: `cnt <= a1` remove-vs-decrement polarity matched (was `a1<cnt`, flipped to match `jbe`); loading head into a local before the `if` still compiles the null check as `test` where the original uses a pre-zeroed register and `cmp` (it reuses that zero for two later stack inits) - not reproduced, that reuse is a scheduling artifact not a source shape. Adjustor-thunk release pattern (vtbl[1]-as-delta, then vtbl2[0]) and the list-container slot1 dispatch both copied verbatim from 0x0045F640's proven VCallObjI/VCallObjP shim and matched structurally.
 // size      249 bytes
 // prototype void (__thiscall ?clip_ids@StringBox@@QAEXK@Z)(StringBox* this, unsigned int)
 // callers   1   call targets   1

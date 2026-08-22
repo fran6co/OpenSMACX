@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004956D0 ?on_redraw@QuayleWin@@QAEXXZ 0x004956D0-0x0049649D;0x00658D10-0x00658D4F FILE
-// RULED-OUT: local StringStruct/Buffer objects reproduce the ctor/dtor calls but MSVC did not regenerate the original's SEH/EH unwind frame (push -1; push handler; fs:[0] chain) from source-level RAII alone here; body is a faithful, compiling transcription (MISMATCH #0, prologue only) - see call order, field offsets and vtable-adjustor reads below for the parts that are semantically verified against raw disassembly.
+// TRIED: local StringStruct/Buffer objects reproduce the ctor/dtor calls but MSVC did not regenerate the original's SEH/EH unwind frame (push -1; push handler; fs:[0] chain) from source-level RAII alone here; body is a faithful, compiling transcription (MISMATCH #0, prologue only) - see call order, field offsets and vtable-adjustor reads below for the parts that are semantically verified against raw disassembly.
 // working copy - scaffold materialised by --work
 // size      3596 bytes
 // prototype void (__thiscall ?on_redraw@QuayleWin@@QAEXXZ)(QuayleWin* this)

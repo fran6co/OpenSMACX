@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00405910 ?on_exec@Popup@@QAEHXZ 0x00405910-0x00405B01 FILE
-// RULED-OUT: extra named locals (list_head/msg/next_idx) force `sub esp,N` frame vs original's single [ebp-4] slot + ebx/esi/edi pushes.
+// TRIED: extra named locals (list_head/msg/next_idx) force `sub esp,N` frame vs original's single [ebp-4] slot + ebx/esi/edi pushes.
 // working copy - scaffold materialised by --work
 // size      497 bytes
 // prototype int (__thiscall ?on_exec@Popup@@QAEHXZ)(Popup* this)

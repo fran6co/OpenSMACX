@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00439960 ?on_left_click@DesignWin@@QAEXHH@Z 0x00439960-0x004399FA FILE
-// RULED-OUT: dropping the trailing `return;` on the last case (falling out of the switch) - identical trailing divergence either way. All 61 original mnemonics match 1:1 (similarity 0.90); the remaining MISMATCH #61 'end' vs 'mov' is 26 bytes of dead code VC6 appends after the last epilogue, not yet explained.
+// TRIED: dropping the trailing `return;` on the last case (falling out of the switch) - identical trailing divergence either way. All 61 original mnemonics match 1:1 (similarity 0.90); the remaining MISMATCH #61 'end' vs 'mov' is 26 bytes of dead code VC6 appends after the last epilogue, not yet explained.
 // working copy - scaffold materialised by --work
 // size      154 bytes
 // prototype void (__thiscall ?on_left_click@DesignWin@@QAEXHH@Z)(DesignWin* this, int xCoord, int yCoord)
