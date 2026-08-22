@@ -18,7 +18,13 @@
 #include "stdafx.h"
 #include <cstring>
 #include "net_class.h"
+#include "stringstruct.h"
 #include "hypothesis_layouts.h"
+
+// 0x00401BE0, recovered in src/leaf_recoveries.cpp. Declared here so
+// Net::~Net reaches it with the image's own `call rel32` at 0x004E353A
+// instead of an indirect through a forwarder.
+extern "C" void __fastcall sub_401be0(void *receiver, void *);
 
 NetFifo::NetFifo() {  // ??0NetFifo@@QAE@XZ at 0x006339C0 - not this batch's
                        // address.
@@ -30,17 +36,6 @@ NetFifo::~NetFifo() {  // ??1NetFifo@@QAE@XZ at 0x006339E0 - not this batch's
                         // address.
     typedef void(__fastcall *pending)(NetFifo *, void *);
     reinterpret_cast<pending>(static_cast<unsigned long>(0x006339E0))(this, nullptr);
-}
-
-// Two more not-this-batch callees `Net::~Net` reaches directly: teardown
-// helpers for the JackalVoiceRx-shaped container at self+0xb0.
-extern "C" int __cdecl NetVectorTeardownHelper1() {  // 0x00402970
-    typedef int(__cdecl *pending)();
-    return reinterpret_cast<pending>(static_cast<unsigned long>(0x00402970))();
-}
-extern "C" int __cdecl NetVectorTeardownHelper2() {  // 0x00401BE0
-    typedef int(__cdecl *pending)();
-    return reinterpret_cast<pending>(static_cast<unsigned long>(0x00401BE0))();
 }
 
 // Vtable shim. VC6 rejects a free `__thiscall` function pointer (C4234), so
@@ -204,6 +199,34 @@ Purpose: Tear down a Net - its embedded container, three NetFifo message
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00401BE0 0x00402970 0x004C8DB0 0x0062E010 0x006339E0
 // indirect  0x004E35D5 0x004E35E2 0x004E3602
+// LEVER: call_diff said MORE, 8 calls against the image's 7, and all three
+//        causes were real defects rather than encoding ones. (1)
+//        `voice_tx_.VoiceTx::~VoiceTx()` was written out in the body of a REAL
+//        destructor whose `voice_tx_` is a REAL member, so VC6 emitted the
+//        destruction TWICE - once here and once after the body, where the
+//        image has it. (2) 0x004E3529 `call 0x402970` is
+//        StringStruct::remove_all entered on the list at sub1 - 0x24, and (3)
+//        0x004E353A `call 0x401be0` is leaf_recoveries.cpp's sub_401be0 on
+//        sub1 - 8. Both went through no-argument `NetVectorTeardownHelper*()`
+//        forwarders, which is an indirect call the image does not make AND a
+//        receiver it does pass. call_diff is now clean.
+// RULED-OUT: 12 of 110 even so, and the ceiling is not spelling. THE IMAGE'S
+//            BODY IS COMPILER-GENERATED MEMBER TEARDOWN, and this tree writes
+//            it out by hand. The image carries EIGHT EH state stores into
+//            [ebp - 4] - 5 before `Net::close`, 6 before remove_all, 4 before
+//            sub_401be0, then 3, 2, 1 for the three NetFifos, 0 for the
+//            container at 0xB0 and -1 at the end - and VC6 emits those ONLY
+//            for members it is destroying itself. The order is exactly
+//            reverse declaration order, which is the evidence: the objects in
+//            the 0x72C..0x750 region go first, then the fifos at 0x130,
+//            0x10C, 0xE8, then the 0xB0 container, then `voice_tx_` at 0x58.
+//            `field_E8_[0x6C]` is precisely three 0x24-byte NetFifos, so the
+//            three explicit `reinterpret_cast<NetFifo *>(self + N)->~NetFifo()`
+//            calls in this body are the compiler's job; so is the 0xB0 walk
+//            and the 0x72C list. Declaring those members - and dropping the
+//            matching explicit construction from Net::Net, which
+//            double_construction.py will then flag - is what this body needs,
+//            and it is a layout job rather than a spelling one.
 Return Value: n/a
 */
 Net::~Net() {
@@ -223,10 +246,17 @@ Net::~Net() {
         int32_t const delta = *reinterpret_cast<int32_t *>(vbase + 4);
         *reinterpret_cast<void **>(sub1 - 0x20 + delta) = g_00669418;
     }
-    NetVectorTeardownHelper1();
+    // 0x004E3529 `call 0x402970` is StringStruct::remove_all, entered on the
+    // list at sub1 - 0x24 - the same object the vtable store above addresses.
+    // It used to go through a no-argument `NetVectorTeardownHelper1()`
+    // forwarder, which is both an indirect call the image does not make and a
+    // receiver the image does pass.
+    reinterpret_cast<StringStruct *>(sub1 - 0x24)->remove_all();
 
     *reinterpret_cast<int32_t *>(sub1 - 0x10) = 0;
-    NetVectorTeardownHelper2();
+    // 0x004E353A `call 0x401be0`, entered on sub1 - 8: the same object again,
+    // reached 0x1C in, which is the virtual-base receiver sub_401be0 expects.
+    sub_401be0(sub1 - 8, nullptr);
 
     *reinterpret_cast<void **>(sub1) = g_006693ac;
     *g_009b3374 = *reinterpret_cast<int32_t *>(sub1 + 4);
@@ -284,7 +314,11 @@ Net::~Net() {
     *g_009b3374 = *reinterpret_cast<int32_t *>(self + 0xd0);
     *reinterpret_cast<void **>(self + 0xcc) = g_006693ac;
 
-    voice_tx_.VoiceTx::~VoiceTx();
+    // NO EXPLICIT `voice_tx_.VoiceTx::~VoiceTx()`. This is a real destructor
+    // and `voice_tx_` is a real member, so VC6 emits its destruction after the
+    // body on its own - `lea ecx, [esi + 0x58]` / `call 0x4c8db0`, exactly
+    // where the image has it. Calling it here as well emitted it TWICE, which
+    // is what call_diff reported as MORE (8 calls against the image's 7).
 }
 
 /*

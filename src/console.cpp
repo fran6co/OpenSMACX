@@ -544,7 +544,11 @@ Purpose: Point the map windows at one tile on behalf of one faction. Build a
          selects. The primary window, slot 0, is handled quite differently from
          the rest, and only its success counts: when it moves, the queued input
          is flushed and 1 is returned.
-// ORIGINAL: 0x005108A0 ?focus@Console@@QAEXHHH@Z 0x005108A0-0x005109A3
+// ORIGINAL: 0x005108A0 ?focus@Console@@QAEXHHH@Z 0x005108A0-0x005109A3 BYTE_EXACT
+// LEVER: four stacked fixes took this from 32 of 85 to BYTE_EXACT, each measured on its own. (1) THE TAG TEST IS THE OUTER ONE. `if (slot == 0) { if (!tagged ...) } else if (!tagged)` makes the tag survive the slot branch, so VC6 materialises it (`and` plus `setne` plus a second `test`) where the image has one `test ecx, edx` at 0x00510908 with two consumers; the chained guard `(mask & flags) == 0 && (slot != 0 || ctrl == 0)` produces the image's own tag-then-slot-then-ctrl order. 32 -> 79/85, and 81/85 written as the single chained guard rather than two nested ifs.
+// LEVER: (2) `volatile` ON THE OVERLAY LATCH was the last four instructions. The image hoists `push edi; push ebx` - MapWin::focus's arguments - ABOVE the `mov dword ptr [eax + 0x23c00], 0` at 0x0051093C, and a volatile store cannot be reordered against them. Dropping it is 81/85 -> 85/85; the store survives because a call it cannot see through follows immediately. Ruled out at the same time: moving the `MapWinTable[0]` load ahead of the clear scores 80/85 either way.
+// LEVER: (3) `int slot`, not `size_t`: the loop's back edge is `jl 0x5108de` at 0x00510985, and an unsigned induction variable compiles `jb`. `MapWinTableSlots` is a `size_t`, so the bound needs the cast or the comparison promotes back to unsigned.
+// LEVER: (4) the repaint went through `MapWinOriginalDrawMap`, a pointer, and compiled `call dword ptr [...]` where 0x0051095D is a `call rel32`. `MapWin::draw_map` is declared in mapwin.h and defined at the end of mapwin.cpp, so naming it directly costs nothing and emits the E8.
 // symbol    ?focus@Console@@QAEHHHH@Z
 // size      259 bytes
 // prototype void (__thiscall ?focus@Console@@QAEXHHH@Z)(Console* this, int xCoord, int yCoord, int factionID)
@@ -608,7 +612,7 @@ int Console::focus(int x_coord, int y_coord, int faction_id) {
     } else {
         mask = (faction_id != LocalFaction) ? 0x40000000U : 0x20000000U;
     }
-    for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
+    for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
         // 0x005108DE `mov eax, [esi*4 + 0x7d3c3c]`. Re-read every iteration,
         // do NOT hoist: cursor_next, MapWin::focus and MapWin::draw_map below
         // can republish the table, and later slots must see that.
@@ -633,13 +637,17 @@ int Console::focus(int x_coord, int y_coord, int faction_id) {
         // equality, so a window carrying 0x60000000 matches either mask.
         const uint32_t flags = *reinterpret_cast<const volatile uint32_t *>(
             reinterpret_cast<const uint8_t *>(window) + 0x1DD70);
-        const bool tagged = (mask & flags) != 0;
+        // 0x00510908 `test ecx, edx` is ONE test with two consumers: the
+        // image branches on the tag FIRST and only then on the slot, which is
+        // this chained guard and not an `if (slot == 0)` outer test. Written
+        // the other way round the tag has to survive the slot branch, so VC6
+        // materialises it (`and`/`setne` plus a second `test`) and the whole
+        // tail shifts - 32 of 85 against 81 of 85 here.
+        if ((mask & flags) == 0
+            && (slot != 0 || *ConsoleControlTurnActive == 0)) {
+            continue;
+        }
         if (slot == 0) {
-            // Specialisation 2. Short-circuit order matches the original: the
-            // control-turn global is read only when the tag missed.
-            if (!tagged && *ConsoleControlTurnActive == 0) {
-                continue;
-            }
             // Specialisation 3. cursor_next runs on the process-wide Console at
             // 0x009156B0, NOT on `this`. Every call site happens to enter focus
             // with the same object, but the constant is in the instruction
@@ -651,8 +659,16 @@ int Console::focus(int x_coord, int y_coord, int faction_id) {
             // writes its own object's fields in this region. Held as a raw
             // offset into the unmapped derived storage, the way clear_group
             // holds 0x23D1C.
-            volatile uint32_t *const overlay =
-                reinterpret_cast<volatile uint32_t *>(
+            // NOT `volatile`. The image hoists the two argument pushes for
+            // MapWin::focus ABOVE this store (`push edi; push ebx` at
+            // 0x0051093A, then the clear at 0x0051093C); a volatile store
+            // cannot be reordered against them, which pinned it four
+            // instructions early and cost the match at 81 of 85. The store
+            // still survives - it is followed by a call VC6 cannot see
+            // through - and the read below still cannot be hoisted over
+            // cursor_next for the same reason.
+            uint32_t *const overlay =
+                reinterpret_cast<uint32_t *>(
                     reinterpret_cast<uint8_t *>(this) + 0x23C00);
             if (*overlay != 0) {
                 // 0x0051093C clears the latch BEFORE the table load at
@@ -671,13 +687,11 @@ int Console::focus(int x_coord, int y_coord, int faction_id) {
                 // returned. Re-read, do NOT hoist and do not share with the
                 // load above. The literal 1 is the draw type.
                 MapWin *const repaint = MapWinTable[0];
-                (ORIGINAL(repaint)->*MapWinOriginalDrawMap)(1);
+                repaint->MapWin::draw_map(1);
                 continue;
             }
             // Latch already clear (0x00510936 je 0x510964): fall through to the
             // plain focus call, exactly as a tagged slot 1..7 does.
-        } else if (!tagged) {
-            continue;
         }
         // 0x00510964 - the third table read this iteration can make. Re-read,
         // do NOT hoist: on the slot-0 path cursor_next has already run between
