@@ -213,6 +213,20 @@ int Font::width(LPSTR input) {
 Purpose: Get the width for the input text with a maximum length.
 // ORIGINAL: 0x006192F0 ?width@Font@@QAEHPADH@Z 0x006192F0-0x0061936B
 // symbol    ?width@Font@@QAEHPADI@Z
+// LEVER: `strlen` called TWICE and compared SIGNED. The image's clamp is a min
+//   MACRO that re-evaluates its argument - `call strlen; cmp ebx, eax; jl;
+//   call strlen` at 0x0061930B and 0x0061931C - so caching it in a local
+//   collapses six instructions into three. `jl` not `jbe`, because both
+//   operands are `int` there; a `size_t` comparison emits the unsigned branch.
+//   This note was written INSIDE the function body, where the reader cannot
+//   see it, which is why this address kept reading as untouched.
+// RULED-OUT: the remaining 20 of 48 are register allocation in the prologue.
+//   The image saves esi and edi and keeps `this` in edi; this body saves ebx
+//   as well and keeps `this` there. Three spellings measured with
+//   tools/try_spellings.py - the clamp as an inline min expression with no
+//   named local (4/48), the local computed after the first SelectObject
+//   (4/48), and the null guard inverted so the body is inside `if (input)`
+//   (8/48) - and every one is WORSE than what is committed at 28/48.
 // size      123 bytes
 // prototype int (__thiscall ?width@Font@@QAEHPADH@Z)(Font* this, int8* lpString, int max)
 // callers   3   call targets   1

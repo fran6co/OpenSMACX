@@ -80,13 +80,17 @@ uint32_t ListBox::close() {
     // Base offsets come from the object's OWN vbtable, read at run time - never
     // the compile-time 0x48/0xA60 - so an embedded ListBox with a different
     // vbtable still reaches the correct subobjects (AGENTS.md RadioButton rule).
-    const int32_t *const vbtable =
-        *reinterpret_cast<const int32_t *const *>(base);
-
     // GraphicWin virtual base: source-owned close at 0x005D4E40. Return discarded.
-    reinterpret_cast<GraphicWin *>(base + vbtable[1])->close();
-    // Dialog virtual base: original dependency at 0x00608F50 via rebindable seam.
-    (ORIGINAL(reinterpret_cast<Dialog *>(base + vbtable[2]))->*ListBoxOriginalDialogClose)();
+    reinterpret_cast<GraphicWin *>(
+        base + (*reinterpret_cast<const int32_t *const *>(base))[1])->close();
+    // Dialog virtual base at 0x00608F50, CALLED BY NAME. Reached through the
+    // `ListBoxOriginalDialogClose` member pointer it cost a `call dword ptr`
+    // where the image emits `call rel32` - `osmx semantic` refused this body
+    // at "instruction 9: call operand is a different KIND". `Dialog::close`
+    // is a real declared method backed by a pending_bodies forwarder, and
+    // checkbox.cpp and radiobutton.cpp already reach it this way.
+    reinterpret_cast<Dialog *>(
+        base + (*reinterpret_cast<const int32_t *const *>(base))[2])->close();
 
     volatile uint32_t *const object =
         reinterpret_cast<volatile uint32_t *>(base);
@@ -101,7 +105,8 @@ uint32_t ListBox::close() {
     object[0x10 / 4] = ListBoxCloseStaticDefaults[2];   // 0x006970E8
     object[0x14 / 4] = ListBoxCloseStaticDefaults[3];   // 0x006970EC
     // Dialog::field_B4_ = 1, reached through the runtime vbtable displacement.
-    *reinterpret_cast<volatile uint32_t *>(base + vbtable[2] + 0xB4) = 1;
+    *reinterpret_cast<volatile uint32_t *>(
+        base + (*reinterpret_cast<const int32_t *const *>(base))[2] + 0xB4) = 1;
     object[0x30 / 4] = 0;
     object[0x34 / 4] = 0;
     object[0x38 / 4] = 0;
