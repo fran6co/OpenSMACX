@@ -143,6 +143,14 @@ class SpriteBox {
   Dialog dialog_;            // 0xAA4, ends 0xB98
 };
 
+// PINNED BEFORE CHANGING THE DECLARATION, so that replacing the hand-composed
+// vbtable pointer and embedded subobjects with a real
+// `: public virtual GraphicWin, public virtual Dialog` cannot move the layout
+// without failing here. 0x8C of own data, then GraphicWin 0xA14, then the
+// 4-byte vtordisp this header already carries as a gap, then Dialog 0xF4.
+static_assert(sizeof(SpriteBox) == 0xB98,
+              "SpriteBox layout must match the original executable");
+
 uint32_t __fastcall sprite_box_id_to_pos_redirect(SpriteBox *self, void *, int id);
 void __fastcall sprite_box_on_mouse_move_redirect(SpriteBox *self, void *, int a1, int a2);
 void __fastcall sprite_box_on_mouse_leave_redirect(SpriteBox *self, void *, int a1, int a2);

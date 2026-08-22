@@ -108,6 +108,14 @@ class RadioButton {
   Dialog dialog_;
 };
 
+// PINNED BEFORE CHANGING THE DECLARATION, so that replacing the hand-composed
+// vbtable pointer and embedded subobjects with a real
+// `: public virtual GraphicWin, public virtual Dialog` cannot move the layout
+// without failing here. 0x18 of own data, then GraphicWin 0xA14, then the
+// 4-byte vtordisp this header already carries as a gap, then Dialog 0xF4.
+static_assert(sizeof(RadioButton) == 0xB24,
+              "RadioButton layout must match the original executable");
+
 // RadioButton's Dialog::close is not recovered yet.
 extern uint32_t RadioButtonDefault1;
 extern uint32_t RadioButtonDefault2;

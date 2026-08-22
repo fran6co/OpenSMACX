@@ -109,6 +109,14 @@ class EditGroup {
   Dialog dialog_;
 };
 
+// PINNED BEFORE CHANGING THE DECLARATION, so that replacing the hand-composed
+// vbtable pointer and embedded subobjects with a real
+// `: public virtual GraphicWin, public virtual Dialog` cannot move the layout
+// without failing here. 0x8C of own data, then GraphicWin 0xA14, then the
+// 4-byte vtordisp this header already carries as a gap, then Dialog 0xF4.
+static_assert(sizeof(EditGroup) == 0xB98,
+              "EditGroup layout must match the original executable");
+
 // EditBox is not declared yet; its text setter is reached at its address, and
 // its text buffer sits 0xA14 into it.
 typedef void (OriginalObject::*func_edit_box_set_text)(char *);
