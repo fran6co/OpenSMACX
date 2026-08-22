@@ -45,7 +45,7 @@
   * methods recovered here are bare returns that touch no field, which is why
   * they can be replaced ahead of that mapping.
   */
-class BaseWin : public GraphicWin, public SubInterface {
+class BaseWin : public ConstructedGraphicWin, public SubInterface {
  public:
   // 0x004165D0, a pending_bodies forwarder: the three click handlers
   // below funnel into it and reached it through a pointer.

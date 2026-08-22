@@ -37,7 +37,7 @@
   * methods recovered here are bare returns that touch no field, which is why
   * they can be replaced ahead of that mapping.
   */
-class NetWin : public GraphicWin {
+class NetWin : public ConstructedGraphicWin {
  public:
   NetWin();
   // 0x004834E0 is not recovered: a

@@ -46,38 +46,17 @@ const uint32_t AlphaMovieBufferVtable = 0x00669450;
 /*
 Purpose: Construct the GraphicWin base and the embedded MCIVideo, then
          install AlphaMovie's own vtables.
-// ORIGINAL: 0x00404010 ??0AlphaMovie@@QAE@XZ 0x00404010-0x00404067;0x006506DC-0x006506EE
+// ORIGINAL: 0x00404010 ??0AlphaMovie@@QAE@XZ 0x00404010-0x00404067;0x006506DC-0x006506EE BYTE_EXACT
 // size      87 bytes
 // prototype void (__thiscall ??0AlphaMovie@@QAE@XZ)(AlphaMovie* this)
 // callers   0   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok;frame
 // calls     0x005D4CF0 0x005FFD80
-// RULED-OUT: best reached is 15/24 instructions, 0.941 similar (best of all
-//        10 measured flag sets, `/c /O2 /Ob0 /Gy /GR- /Oy- /GX`), a REAL
-//        derived constructor with `mciVideo_` as an ordinary member so its
-//        automatic construction lands between the two explicit calls, same
-//        as the image. The residual: `tools/osmx.py calls` on this body
-//        shows THREE calls - `??0GraphicWin@@QAE@XZ`, `??0MCIVideo@@QAE@XZ`,
-//        `?construct@GraphicWin@@QAEXXZ` - where the image has only two.
-//        `GraphicWin::GraphicWin()` is `{ ; }` (this tree's own split of the
-//        base's real logic into `construct()`, not the original's shape),
-//        and under /Ob0 VC6 does not fold that empty call away once a
-//        SECOND auto-constructed subobject (`mciVideo_`) also needs EH
-//        unwind-state bookkeeping - it emits a real `call` to the trivial
-//        base ctor, scheduled AFTER `mciVideo_`'s construction rather than
-//        before. Every other measured flag set (with inlining enabled)
-//        drops the extra call but also drops the SEH frame and several
-//        other instructions the image has, scoring worse overall (<=0.83).
-//        Same class of wall as FlatButton's/PullDown's own real-constructor
-//        SEH-frame notes (flatbutton.cpp, pulldown.cpp): a codegen quirk
-//        this tree's split of GraphicWin's construction into `construct()`
-//        exposes, not reachable from src/ alone.
 Return Value: n/a
 Status: Complete
 */
 AlphaMovie::AlphaMovie() {
-    GraphicWin::construct();
     uint32_t *const object = reinterpret_cast<uint32_t *>(this);
     object[0x000 / 4] = AlphaMoviePrimaryVtable;
     object[0x444 / 4] = AlphaMovieBufferVtable;

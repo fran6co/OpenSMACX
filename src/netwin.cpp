@@ -221,7 +221,6 @@ void __fastcall net_win_unk5_redirect(NetWin *self, void *) {
 // automatically by the compiler once CheckBox::CheckBox() takes it - not
 // reachable while checkBox_'s constructor is the current no-arg stub).
 NetWin::NetWin() {
-    GraphicWin::construct();
     volatile uint32_t *const object =
         reinterpret_cast<volatile uint32_t *>(this);
     object[0x000 / 4] = 0x0066CCEC;

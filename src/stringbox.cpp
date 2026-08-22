@@ -90,7 +90,6 @@ Return Value: Instance pointer in EAX
 Status: Complete
 */
 StringBox::StringBox() {
-    GraphicWin::construct();
 
     char *const self = reinterpret_cast<char *>(this);
     uint32_t *const object = reinterpret_cast<uint32_t *>(this);
