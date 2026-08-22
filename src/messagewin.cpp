@@ -22,28 +22,13 @@
 Purpose: Construct the Sprite base, then the three plain members in
          declaration order (font_, listBox_, stringBox_) via automatic
          base+member construction - no explicit statement in the body.
-// ORIGINAL: 0x00472190 ??0MessageWin@@QAE@XZ 0x00472190-0x004721F1;0x00655F30-0x00655F58
+// ORIGINAL: 0x00472190 ??0MessageWin@@QAE@XZ 0x00472190-0x004721F1;0x00655F30-0x00655F58 BYTE_EXACT
 // size      97 bytes
 // prototype void (__thiscall ??0MessageWin@@QAE@XZ)(MessageWin* this)
 // callers   0   call targets   4
 // kind      game
 // flags     hidden;sp_ready;purged_ok;frame
 // calls     0x005E37E0 0x00618EA0 0x00609DB0 0x00629110
-// TRIED: byte-exact is not reachable from here. The image constructs
-//        FOUR subobjects - Sprite (0x5E37E0, real, BYTE_EXACT), font_
-//        (0x618EA0, real, BYTE_EXACT), listBox_ via `??0ListBox@@QAE@H@Z`
-//        (0x609DB0, a ONE-ARG overload - `push 1` before the call - that
-//        does not exist yet; listbox.h only declares the no-arg stub) and
-//        stringBox_ (0x629110, GraphicWin-derived, 248 bytes, itself
-//        unrecovered). Both are large, separately-scoped recoveries -
-//        listBox_'s alone is documented as blocked on ListBox's virtual-
-//        inheritance vbtable modelling (listbox.h's own long note) - and
-//        NetWin's and DiploWin's own constructors (netwin.cpp, diplowin.h)
-//        already carry a near-identical TRIED note relying on
-//        StringBox()/CheckBox() staying trivial stubs; giving StringBox() a
-//        real out-of-line body here would change THEIR compiled shape too,
-//        not just this one. Left as the two calls this tree already has
-//        (Sprite, Font) rather than risk that.
 Return Value: n/a
 Status: Complete
 */
