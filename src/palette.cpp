@@ -707,3 +707,22 @@ int Palette::start_cycle(int key) {
     internal_[slot].time->start();
     return 0;
 }
+
+/*
+Purpose: Release the process-wide HPALETTE and clear it, so "initialised" and
+         "non-null" stay the same question.
+// ORIGINAL: 0x005FECF0 ?close_palette_class@Palette@@QAAXXZ 0x005FECF0-0x005FED0B BYTE_EXACT
+// LEVER: PROMOTED out of src/recovered/units/005fecf0.cpp, where the claim proved the ARTIFACT reproduced and the shipped program contained nothing. The artifact reached the HPALETTE through `(int *)0x009B8178` and the destructor through `(*(CleanupFn *)0x00669058)`; both are named here - PaletteInitialized is the object this tree already models, and 0x00669058 is DeleteObject's import thunk, so a plain `DeleteObject` call compiles to the image's own `call dword ptr [0x669058]`.
+// symbol    ?close_palette_class@Palette@@SAXXZ
+// size      27 bytes
+// prototype void (__cdecl ?close_palette_class@Palette@@QAAXXZ)()
+// kind      game
+Return Value: n/a
+Status: Complete
+*/
+void Palette::close_palette_class() {
+    if (PaletteInitialized) {
+        DeleteObject(PaletteInitialized);
+        PaletteInitialized = nullptr;
+    }
+}

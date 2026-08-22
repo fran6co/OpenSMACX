@@ -49,6 +49,11 @@ class Palette {
   void close();                      // 005FE500
   int set();                         // 005FE460
   static void init_palette_class(int mode);
+  // 0x005FECF0, PROMOTED out of src/recovered/units/. `static` for the same
+  // reason init_palette_class is: the image's name ends `QAA`, a __cdecl
+  // member that takes no receiver in ecx, so a call site can only spell it
+  // `Palette::close_palette_class()`.
+  static void close_palette_class();
   static void set_active_window(Win *window);
   int get_pos(int value);
   // ?UNK7@Palette@@QAEHHHHHHH@Z at 0x005FF280, named from what it does:
