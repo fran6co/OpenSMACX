@@ -169,6 +169,36 @@ DO NOT CHAIN CONDITIONS THE IMAGE TESTS SEPARATELY
   WORSE (34 against 39 of 76). The image sometimes does merge tails. Measure;
   do not apply this on sight.
 
+A VIRTUAL BASE'S VTORDISP IS EARNED, NOT REQUESTED
+- VC6 emits a vtordisp for a virtual base ONLY when the derived class overrides
+  a NON-DESTRUCTOR virtual of it. Measured 2026-08-22 on a minimal case: two
+  virtual bases with virtual DESTRUCTORS only produce no displacement at all,
+  under every setting including `/vd2`; add one plain virtual override and it
+  emits one per base. `#pragma vtordisp(on)` is the default and changes
+  nothing.
+- So a layout that needs a 4-byte displacement before a virtual base needs a
+  real override to produce it. RadioButton got its Dialog displacement by
+  `Dialog::close()` becoming `virtual void close()`, which
+  `RadioButton::close()` already matched.
+- READ THE IMAGE TO SEE WHICH DISPLACEMENT IS WHOSE. 0x0060D0E0 writes exactly
+  one by hand - `*(self + off1 - 4) = off1 - 0x18` - so THAT one is faithfully
+  a declared member and only the other has to come from the compiler.
+
+A QUALIFIED CALL SUPPRESSES VIRTUAL DISPATCH
+- Making a method virtual to earn a vtordisp turns every `p->close()` into
+  `call dword ptr [vtable]` where the image has `call rel32`. Two BYTE_EXACT
+  claims regressed on that in one change.
+- `p->Dialog::close()` names the class and emits the direct call. Both bodies
+  came straight back to BYTE_EXACT. Use it at every call site that reaches a
+  virtual through a base pointer.
+
+SIZEOF FROM A FILE THAT DOES NOT COMPILE IS A LIE
+- VC6 reports `sizeof` in the error message of a TU that failed for an
+  unrelated reason, and the number can be WRONG. A layout change measured
+  0xB20 for four separate probes purely because the constructor still named
+  members the header had dropped; the true value was 0xB24 all along. Fix every
+  error before believing a size.
+
 RUNNING THE EXECUTABLE: THE INVOCATION IS PART OF THE MEASUREMENT
 - From `.opensmacx/game` (653 files are opened by relative path), under the
   PROJECT'S wine prefix, inside a wine VIRTUAL DESKTOP:

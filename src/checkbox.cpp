@@ -75,15 +75,15 @@ Status: Complete
 CheckBox::CheckBox(int a1) {
     char *const self = reinterpret_cast<char *>(this);
 
+    // THE COMPILER OWNS THE VIRTUAL-BASE SETUP. The vbtable pointer store,
+    // both vtordisp initialisations and the unwind that destroys GraphicWin
+    // if Dialog's stage throws are emitted from the declaration now. What is
+    // left is what the language cannot do for us: GraphicWin and Dialog model
+    // construction as a `construct()` METHOD, so those two calls stay,
+    // base-qualified rather than member calls.
     if (a1 != 0) {
-        vbtable_pointer_ = 0x00670718;
-        virtual_base_.construct();
-        try {
-            dialog_.construct();
-        } catch (...) {
-            virtual_base_.~GraphicWin();
-            throw;
-        }
+        GraphicWin::construct();
+        Dialog::construct();
     }
 
     {

@@ -54,7 +54,35 @@
   * `sizeof(GraphicWin) == 0xA14` is the check that would catch it going wrong.
   * Do NOT read this paragraph as "cannot be done".
   */
-class CheckBox {
+// The bases are REAL: `: public virtual GraphicWin, public virtual Dialog`.
+// The vbtable pointer, both base constructions and the unwind are the
+// compiler's now. The 4 bytes that used to sit before the Dialog subobject are
+// its VTORDISP, which VC6 emits because this class overrides the virtual
+// `Dialog::close()` - a displacement is earned by overriding a NON-destructor
+// virtual, and nothing else forces it (measured 2026-08-22; /vd2 does not).
+// The displacement before GraphicWin stays a declared member, because the
+// image's own constructor writes that one by hand.
+// WHY EDITGROUP AND SPRITEBOX ARE NOT CONVERTED WITH THIS CLASS, measured
+// 2026-08-22. The displacement before the Dialog base is earned by overriding
+// a non-destructor virtual of it, and `close()` is the ONLY method these
+// classes share with Dialog at an exact signature. But making `Dialog::close()`
+// virtual changes the ENTRY CONVENTION of every derived override: MSVC enters
+// an override of a virtual-base method with the BASE SUBOBJECT as `this`, so
+// each call site gains a `lea ecx, [esi + <base offset>]`.
+//
+// The image says whether that is right, per class. SpriteBox's own close at
+// 0x00610280 is entered with `this = esi`, UNADJUSTED - so in the original
+// SpriteBox::close is not an override of Dialog::close, and the four
+// `SpriteBox::init` overloads that call it (0x00610420, 0x00610480,
+// 0x006104B0, 0x006104D0) each gained exactly one extra `lea` and stopped
+// reproducing. EditGroup::~EditGroup (0x00611A20) went the same way through
+// register allocation. CheckBox and RadioButton have no such caller and both
+// stay BYTE_EXACT, which is why the conversion lands here and not there.
+//
+// So those two need a DIFFERENT virtual to earn the displacement - one the
+// image really does dispatch - and that is a per-class reading of the vtable,
+// not a repeat of this edit.
+class CheckBox : public virtual GraphicWin, public virtual Dialog {
  public:
   // 0x0060FAB0, a pending_bodies forwarder.
   void on_redraw();
@@ -122,7 +150,7 @@ class CheckBox {
   void set_state_id(int id, int value);
 
  private:
-  uint32_t vbtable_pointer_;
+  // The vbtable pointer is EMITTED by the compiler now.
   uint32_t field_4_;
   uint32_t field_8_;
   uint32_t field_C_;
@@ -131,9 +159,7 @@ class CheckBox {
   // The vbtable puts the base at 0x1C; the declared fields reach
   // 0x18, so 4 bytes sit between them.
   uint8_t gap_18_[0x1C - 0x18];
-  GraphicWin virtual_base_;
-  uint8_t gap_A30_[4];
-  Dialog dialog_;
+  // GraphicWin and Dialog are VIRTUAL BASES, appended by the compiler.
 };
 
 // PINNED BEFORE CHANGING THE DECLARATION, so that replacing the hand-composed
