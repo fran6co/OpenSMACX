@@ -23,10 +23,21 @@
 #include "checkbox.h"
 #include "flatbutton.h"
 
+class SpriteBox;  // sprite_box() below returns a pointer only; spritebox.h
+                  // is not included here to avoid pulling in its own chain.
+
  /*
   * BasePop class
   */
 class BasePop : public GraphicWin {
+  // `pops()` (popup.cpp) reaches BasePop's fields directly - field_2144_,
+  // field_2274_, field_A14_, field_30B4_..field_30C0_, field_3100_,
+  // field_3104_, field_3108_ - the way the image's own free function does,
+  // through the same object rather than through an accessor per field.
+  friend int __cdecl pops(char *caption, char *label, int a3, char *a4,
+                          int a5, Sprite *sprite, int a7, int a8,
+                          int (__cdecl *callback)());
+
  public:
   // 0x006015B0, a pending_bodies forwarder.
   int init(int a1, long a2);
@@ -42,6 +53,10 @@ class BasePop : public GraphicWin {
   // `BasePop` inherits GraphicWin privately, so an undeclared `close`
   // resolves to the inaccessible base one.
   void close();
+  // 0x00601BF0, still a pending_bodies forwarder: `pops()` (popup.cpp) calls
+  // it BY NAME so it emits the image's `call rel32`.
+  int start(char *a1, const char *a2, int a3, char *a4, int a5,
+           GraphicWin *a6);
   // 0x00602600, still a pending_bodies forwarder: the two `exec`
   // overloads below call it BY NAME so they emit the image's `E8`.
   int exec(int flags, int(__cdecl *callback)());
@@ -180,7 +195,14 @@ class BasePop : public GraphicWin {
   uint32_t field_21C4_;
   uint32_t field_21C8_;
   uint32_t field_21CC_;
-  uint8_t dialogs_[0xC94];
+  // Split so `field_2274_` - the flag `pops()` (popup.cpp) tests, right
+  // after the SpriteBox call below, to decide whether a caller-supplied
+  // sprite replaces the popup's own - has a name. The CheckBox at +0x2228
+  // and the SpriteBox at +0x2240 both still live in the opaque first span;
+  // neither is carved out as a stored member (see check_box() below).
+  uint8_t dialogs_[0x2274 - 0x21D0];
+  uint32_t field_2274_;
+  uint8_t dialogs_tail_[0x2E64 - 0x2278];
 
  public:
   // The CheckBox subobject at 0x2228, which is INSIDE `dialogs_` above. Not
@@ -192,6 +214,16 @@ class BasePop : public GraphicWin {
   CheckBox *check_box() {
     return reinterpret_cast<CheckBox *>(
         reinterpret_cast<uint8_t *>(this) + 0x2228);
+  }
+
+  // The SpriteBox subobject at 0x2240, also inside `dialogs_` above and not
+  // carved out as a stored member for the same reason as check_box():
+  // SpriteBox composes its own GraphicWin/Dialog virtual bases by hand (see
+  // spritebox.h), so a real `SpriteBox` member here would give BasePop a
+  // generated constructor the image does not have.
+  SpriteBox *sprite_box() {
+    return reinterpret_cast<SpriteBox *>(
+        reinterpret_cast<uint8_t *>(this) + 0x2240);
   }
 
  private:
