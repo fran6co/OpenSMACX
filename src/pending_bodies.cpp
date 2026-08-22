@@ -292,12 +292,6 @@ void FileWin::close() {
     PENDING_BODY(0x00613900, pending)(this, nullptr);
 }
 
-// ?close@EditBox@@QAEXXZ at 0x00614F30 - reached directly by
-// FileWin::~FileWin. See the note in editbox.h.
-void EditBox::close() {
-    typedef void(__fastcall *pending)(EditBox *, void *);
-    PENDING_BODY(0x00614F30, pending)(this, nullptr);
-}
 
 // ?close@UV2Player@@QAEXXZ at 0x004BF400 - reached by ~UV2Player. See the
 // note in uv2player.h.

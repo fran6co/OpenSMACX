@@ -165,6 +165,7 @@ set(OPENSMACX_SOURCES
     src/netmsg.cpp
     src/radiobutton.cpp
     src/checkbox.cpp
+    src/editbox.cpp
     src/editgroup.cpp
     src/xpops.cpp
     src/planwin.cpp
