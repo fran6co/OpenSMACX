@@ -174,27 +174,6 @@ void __fastcall adjust_radio_button1_on_mouse_move(void *self, void *,
     reinterpret_cast<RadioButton *>(object - vtordisp)->RadioButton::on_mouse_move(arg0, arg1);
 }
 
-/*
-Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
-         RadioButton::on_mouse_leave expects, then forward unchanged.
-// ORIGINAL: 0x00407010 ?on_mouse_leave@thunk1_RadioButton@@QAEXHH@Z 0x00407010-0x00407018
-// symbol    ?adjust_radio_button1_on_mouse_leave@@YIXPAX0HH@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_mouse_leave@thunk1_RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_radio_button1_on_mouse_leave(void *self, void *,
-                                                    int arg0, int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<RadioButton *>(object - vtordisp)->RadioButton::on_mouse_leave(arg0, arg1);
-}
 
 /*
 Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
@@ -262,28 +241,6 @@ void __fastcall adjust_radio_button1_on_left_double_click(void *self, void *,
 }
 
 /*
-Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
-         RadioButton::on_dialog_focus expects, then forward unchanged.
-// ORIGINAL: 0x00407050 ?on_dialog_focus@thunk1_RadioButton@@QAEXH@Z 0x00407050-0x00407058
-// symbol    ?adjust_radio_button1_on_dialog_focus@@YIXPAX0H@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_dialog_focus@thunk1_RadioButton@@QAEXH@Z)(RadioButton* this, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_radio_button1_on_dialog_focus(void *self, void *,
-                                                     int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<RadioButton *>(object - vtordisp)->RadioButton::on_dialog_focus(arg0);
-}
-
-/*
 Purpose: Adjust the receiver from RadioButton's thunk2 subobject to the one
          RadioButton::dtor expects, then forward unchanged.
 // ORIGINAL: 0x00407060 ??1thunk2_RadioButton@@QAE@H@Z 0x00407060-0x00407071
@@ -325,27 +282,6 @@ void __fastcall adjust_radio_button3_dtor(void *self, void *, int arg0) {
     (ORIGINAL(object - vtordisp - 2584)->*RadioButtonDtorTarget)(arg0);
 }
 
-/*
-Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
-         RadioButton::attach expects, then forward unchanged.
-// ORIGINAL: 0x00407090 ?attach@thunk1_RadioButton@@QAEHPAUGraphicWin@@HHH@Z 0x00407090-0x00407098
-// symbol    ?adjust_radio_button1_attach@@YIHPAX00HHH@Z
-// size      8 bytes
-// prototype int (__thiscall ?attach@thunk1_RadioButton@@QAEHPAUGraphicWin@@HHH@Z)(RadioButton* this, GraphicWin*, int, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-int __fastcall adjust_radio_button1_attach(void *self, void *, void *arg0,
-                                           int arg1, int arg2, int arg3) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    return reinterpret_cast<RadioButton *>(object - vtordisp - 0xA30)->RadioButton::attach(arg0, arg1, arg2, arg3);
-}
 
 /*
 Purpose: Adjust the receiver from RadioButton's thunk3 subobject to the one
@@ -2072,27 +2008,6 @@ void __fastcall adjust_list_box1_on_mouse_move(void *self, void *, int arg0,
     reinterpret_cast<ListBox *>(object - vtordisp)->ListBox::on_mouse_move(arg0, arg1);
 }
 
-/*
-Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
-         ListBox::on_mouse_leave expects, then forward unchanged.
-// ORIGINAL: 0x0060CF80 ?on_mouse_leave@thunk1_ListBox@@QAEXHH@Z 0x0060CF80-0x0060CF88
-// symbol    ?adjust_list_box1_on_mouse_leave@@YIXPAX0HH@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_mouse_leave@thunk1_ListBox@@QAEXHH@Z)(ListBox* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_list_box1_on_mouse_leave(void *self, void *, int arg0,
-                                                int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<ListBox *>(object - vtordisp)->ListBox::on_mouse_leave(arg0, arg1);
-}
 
 /*
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
@@ -2247,49 +2162,7 @@ void __fastcall adjust_list_box1_on_scrolling(void *self, void *, int arg0,
     reinterpret_cast<ListBox *>(object - vtordisp)->ListBox::on_scrolling(arg0, arg1);
 }
 
-/*
-Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
-         ListBox::on_dialog_focus expects, then forward unchanged.
-// ORIGINAL: 0x0060D000 ?on_dialog_focus@thunk1_ListBox@@QAEXH@Z 0x0060D000-0x0060D008
-// symbol    ?adjust_list_box1_on_dialog_focus@@YIXPAX0H@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_dialog_focus@thunk1_ListBox@@QAEXH@Z)(ListBox* this, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_list_box1_on_dialog_focus(void *self, void *,
-                                                 int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<ListBox *>(object - vtordisp)->ListBox::on_dialog_focus(arg0);
-}
 
-/*
-Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
-         ListBox::attach expects, then forward unchanged.
-// ORIGINAL: 0x0060D040 ?attach@thunk1_ListBox@@QAEHPAUGraphicWin@@HHH@Z 0x0060D040-0x0060D048
-// symbol    ?adjust_list_box1_attach@@YIHPAX00HHH@Z
-// size      8 bytes
-// prototype int (__thiscall ?attach@thunk1_ListBox@@QAEHPAUGraphicWin@@HHH@Z)(ListBox* this, GraphicWin*, int, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-int __fastcall adjust_list_box1_attach(void *self, void *, void *arg0,
-                                       int arg1, int arg2, int arg3) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    return reinterpret_cast<ListBox *>(object - vtordisp - 0xA60)->ListBox::attach(arg0, arg1, arg2, arg3);
-}
 
 /*
 Purpose: Adjust the receiver from ListBox's thunk3 subobject to the one
@@ -2355,27 +2228,6 @@ void __fastcall adjust_check_box1_on_mouse_move(void *self, void *, int arg0,
     reinterpret_cast<CheckBox *>(object - vtordisp)->CheckBox::on_mouse_move(arg0, arg1);
 }
 
-/*
-Purpose: Adjust the receiver from CheckBox's thunk1 subobject to the one
-         CheckBox::on_mouse_leave expects, then forward unchanged.
-// ORIGINAL: 0x0060FE60 ?on_mouse_leave@thunk1_CheckBox@@QAEXHH@Z 0x0060FE60-0x0060FE68
-// symbol    ?adjust_check_box1_on_mouse_leave@@YIXPAX0HH@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_mouse_leave@thunk1_CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_check_box1_on_mouse_leave(void *self, void *, int arg0,
-                                                 int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<CheckBox *>(object - vtordisp)->CheckBox::on_mouse_leave(arg0, arg1);
-}
 
 /*
 Purpose: Adjust the receiver from CheckBox's thunk1 subobject to the one
@@ -2442,49 +2294,7 @@ void __fastcall adjust_check_box1_on_left_double_click(void *self, void *,
     reinterpret_cast<CheckBox *>(object - vtordisp)->CheckBox::on_left_double_click(arg0, arg1);
 }
 
-/*
-Purpose: Adjust the receiver from CheckBox's thunk1 subobject to the one
-         CheckBox::on_dialog_focus expects, then forward unchanged.
-// ORIGINAL: 0x0060FEA0 ?on_dialog_focus@thunk1_CheckBox@@QAEXH@Z 0x0060FEA0-0x0060FEA8
-// symbol    ?adjust_check_box1_on_dialog_focus@@YIXPAX0H@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_dialog_focus@thunk1_CheckBox@@QAEXH@Z)(CheckBox* this, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_check_box1_on_dialog_focus(void *self, void *,
-                                                  int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<CheckBox *>(object - vtordisp)->CheckBox::on_dialog_focus(arg0);
-}
 
-/*
-Purpose: Adjust the receiver from CheckBox's thunk1 subobject to the one
-         CheckBox::attach expects, then forward unchanged.
-// ORIGINAL: 0x0060FEE0 ?attach@thunk1_CheckBox@@QAEHPAUGraphicWin@@HHH@Z 0x0060FEE0-0x0060FEE8
-// symbol    ?adjust_check_box1_attach@@YIHPAX00HHH@Z
-// size      8 bytes
-// prototype int (__thiscall ?attach@thunk1_CheckBox@@QAEHPAUGraphicWin@@HHH@Z)(CheckBox* this, GraphicWin*, int, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-int __fastcall adjust_check_box1_attach(void *self, void *, void *arg0,
-                                        int arg1, int arg2, int arg3) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    return reinterpret_cast<CheckBox *>(object - vtordisp - 0xA34)->CheckBox::attach(arg0, arg1, arg2, arg3);
-}
 
 /*
 Purpose: Adjust the receiver from CheckBox's thunk3 subobject to the one
@@ -2550,27 +2360,6 @@ void __fastcall adjust_sprite_box1_on_mouse_move(void *self, void *, int arg0,
     reinterpret_cast<SpriteBox *>(object - vtordisp)->SpriteBox::on_mouse_move(arg0, arg1);
 }
 
-/*
-Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
-         SpriteBox::on_mouse_leave expects, then forward unchanged.
-// ORIGINAL: 0x00611840 ?on_mouse_leave@thunk1_SpriteBox@@QAEXHH@Z 0x00611840-0x00611848
-// symbol    ?adjust_sprite_box1_on_mouse_leave@@YIXPAX0HH@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_mouse_leave@thunk1_SpriteBox@@QAEXHH@Z)(SpriteBox* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_sprite_box1_on_mouse_leave(void *self, void *,
-                                                  int arg0, int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<SpriteBox *>(object - vtordisp)->SpriteBox::on_mouse_leave(arg0, arg1);
-}
 
 /*
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
@@ -2769,49 +2558,7 @@ void __fastcall adjust_sprite_box1_on_right_double_click(void *self, void *,
     reinterpret_cast<SpriteBox *>(object - vtordisp)->SpriteBox::on_right_double_click(arg0, arg1);
 }
 
-/*
-Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
-         SpriteBox::on_dialog_focus expects, then forward unchanged.
-// ORIGINAL: 0x006118E0 ?on_dialog_focus@thunk1_SpriteBox@@QAEXH@Z 0x006118E0-0x006118E8
-// symbol    ?adjust_sprite_box1_on_dialog_focus@@YIXPAX0H@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_dialog_focus@thunk1_SpriteBox@@QAEXH@Z)(SpriteBox* this, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_sprite_box1_on_dialog_focus(void *self, void *,
-                                                   int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<SpriteBox *>(object - vtordisp)->SpriteBox::on_dialog_focus(arg0);
-}
 
-/*
-Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
-         SpriteBox::attach expects, then forward unchanged.
-// ORIGINAL: 0x00611920 ?attach@thunk1_SpriteBox@@QAEHPAUGraphicWin@@HHH@Z 0x00611920-0x00611928
-// symbol    ?adjust_sprite_box1_attach@@YIHPAX00HHH@Z
-// size      8 bytes
-// prototype int (__thiscall ?attach@thunk1_SpriteBox@@QAEHPAUGraphicWin@@HHH@Z)(SpriteBox* this, GraphicWin*, int, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-int __fastcall adjust_sprite_box1_attach(void *self, void *, void *arg0,
-                                         int arg1, int arg2, int arg3) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    return reinterpret_cast<SpriteBox *>(object - vtordisp - 0xAA4)->SpriteBox::attach(arg0, arg1, arg2, arg3);
-}
 
 /*
 Purpose: Adjust the receiver from SpriteBox's thunk3 subobject to the one
@@ -2855,27 +2602,6 @@ void __fastcall adjust_edit_group1_on_redraw(void *self, void *) {
     reinterpret_cast<EditGroup *>(object - vtordisp - 0xAA8)->EditGroup::on_redraw();
 }
 
-/*
-Purpose: Adjust the receiver from EditGroup's thunk1 subobject to the one
-         EditGroup::on_dialog_focus expects, then forward unchanged.
-// ORIGINAL: 0x006127C0 ?on_dialog_focus@thunk1_EditGroup@@QAEXH@Z 0x006127C0-0x006127C8
-// symbol    ?adjust_edit_group1_on_dialog_focus@@YIXPAX0H@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_dialog_focus@thunk1_EditGroup@@QAEXH@Z)(EditGroup* this, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_edit_group1_on_dialog_focus(void *self, void *,
-                                                   int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<EditGroup *>(object - vtordisp)->EditGroup::on_dialog_focus(arg0);
-}
 
 /*
 Purpose: Adjust the receiver from EditGroup's thunk1 subobject to the one
@@ -2898,27 +2624,6 @@ void __fastcall adjust_edit_group1_pass_dialog_focus(void *self, void *) {
     reinterpret_cast<EditGroup *>(object - vtordisp)->EditGroup::pass_dialog_focus();
 }
 
-/*
-Purpose: Adjust the receiver from EditGroup's thunk1 subobject to the one
-         EditGroup::attach expects, then forward unchanged.
-// ORIGINAL: 0x00612810 ?attach@thunk1_EditGroup@@QAEHPAUGraphicWin@@HHH@Z 0x00612810-0x00612818
-// symbol    ?adjust_edit_group1_attach@@YIHPAX00HHH@Z
-// size      8 bytes
-// prototype int (__thiscall ?attach@thunk1_EditGroup@@QAEHPAUGraphicWin@@HHH@Z)(EditGroup* this, GraphicWin*, int, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-int __fastcall adjust_edit_group1_attach(void *self, void *, void *arg0,
-                                         int arg1, int arg2, int arg3) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    return reinterpret_cast<EditGroup *>(object - vtordisp - 0xAA8)->EditGroup::attach(arg0, arg1, arg2, arg3);
-}
 
 /*
 Purpose: Adjust the receiver from EditGroup's thunk3 subobject to the one

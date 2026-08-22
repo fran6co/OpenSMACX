@@ -254,3 +254,54 @@ int __cdecl FileWin::init_class() {
     strcat(reinterpret_cast<char *>(*g_009b90a8), str);
     return 0;
 }
+
+/*
+Purpose: Adjust the receiver from the thunk1 subobject back to ListBox and
+         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
+         names VC6's own vtordisp adjustor thunk, emitted because
+         ListBox::on_dialog_focus overrides a virtual reached through a virtual
+         base. There is no C++ here to get right, only a name to record.
+         NOT IN listbox.cpp, which defines no ListBox constructor, so
+         VC6 emits no vtable and no thunk there. MSVC emits both in
+         every TU that CONSTRUCTS the object; filewin.cpp is one, and
+         the COMDATs it emits are what the linker folds into these bytes.
+// ORIGINAL: 0x0060D000 ?on_dialog_focus@thunk1_ListBox@@QAEXH@Z 0x0060D000-0x0060D008 BYTE_EXACT
+// symbol    ?on_dialog_focus@ListBox@@$4PPPPPPPM@A@AEXH@Z
+// size      8 bytes
+// kind      game
+Status: Complete
+*/
+
+/*
+Purpose: Adjust the receiver from the thunk1 subobject back to ListBox and
+         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
+         names VC6's own vtordisp adjustor thunk, emitted because
+         ListBox::on_mouse_leave overrides a virtual reached through a virtual
+         base. There is no C++ here to get right, only a name to record.
+         NOT IN listbox.cpp, which defines no ListBox constructor, so
+         VC6 emits no vtable and no thunk there. MSVC emits both in
+         every TU that CONSTRUCTS the object; filewin.cpp is one, and
+         the COMDATs it emits are what the linker folds into these bytes.
+// ORIGINAL: 0x0060CF80 ?on_mouse_leave@thunk1_ListBox@@QAEXHH@Z 0x0060CF80-0x0060CF88 BYTE_EXACT
+// symbol    ?on_mouse_leave@ListBox@@$4PPPPPPPM@A@AEXHH@Z
+// size      8 bytes
+// kind      game
+Status: Complete
+*/
+
+/*
+Purpose: Adjust the receiver from the thunk1 subobject back to ListBox and
+         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
+         names VC6's own vtordisp adjustor thunk, emitted because
+         ListBox::attach overrides a virtual reached through a virtual
+         base. There is no C++ here to get right, only a name to record.
+         NOT IN listbox.cpp, which defines no ListBox constructor, so
+         VC6 emits no vtable and no thunk there. MSVC emits both in
+         every TU that CONSTRUCTS the object; filewin.cpp is one, and
+         the COMDATs it emits are what the linker folds into these bytes.
+// ORIGINAL: 0x0060D040 ?attach@thunk1_ListBox@@QAEHPAUGraphicWin@@HHH@Z 0x0060D040-0x0060D048 BYTE_EXACT
+// symbol    ?attach@ListBox@@$4PPPPPPPM@A@AEHPAXHHH@Z
+// size      8 bytes
+// kind      game
+Status: Complete
+*/

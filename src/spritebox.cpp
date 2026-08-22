@@ -292,6 +292,19 @@ Status: Complete
 void SpriteBox::on_mouse_leave(int, int) {
 }
 
+/*
+Purpose: Adjust the receiver from the thunk1 subobject back to SpriteBox and
+         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
+         names VC6's own vtordisp adjustor thunk, emitted because
+         SpriteBox::on_mouse_leave overrides a virtual reached through a virtual
+         base. There is no C++ here to get right, only a name to record.
+// ORIGINAL: 0x00611840 ?on_mouse_leave@thunk1_SpriteBox@@QAEXHH@Z 0x00611840-0x00611848 BYTE_EXACT
+// symbol    ?on_mouse_leave@SpriteBox@@$4PPPPPPPM@A@AEXHH@Z
+// size      8 bytes
+// kind      game
+Status: Complete
+*/
+
 void __fastcall sprite_box_on_mouse_move_redirect(SpriteBox *self, void *, int a1, int a2) {
     self->on_mouse_move(a1, a2);
 }
@@ -416,6 +429,19 @@ void SpriteBox::on_dialog_focus(int a1) {
             *reinterpret_cast<int *>(
                 reinterpret_cast<char *>(this)) + 4))->slot062();
 }
+
+/*
+Purpose: Adjust the receiver from the thunk1 subobject back to SpriteBox and
+         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
+         names VC6's own vtordisp adjustor thunk, emitted because
+         SpriteBox::on_dialog_focus overrides a virtual reached through a virtual
+         base. There is no C++ here to get right, only a name to record.
+// ORIGINAL: 0x006118E0 ?on_dialog_focus@thunk1_SpriteBox@@QAEXH@Z 0x006118E0-0x006118E8 BYTE_EXACT
+// symbol    ?on_dialog_focus@SpriteBox@@$4PPPPPPPM@A@AEXH@Z
+// size      8 bytes
+// kind      game
+Status: Complete
+*/
 
 /*
 Purpose: Check the click against the widget's spots; if one is hit and its
@@ -625,3 +651,16 @@ int SpriteBox::init(int a1, int a2, int a3, int a4, Heap * a5) {
         + *reinterpret_cast<int *>(*reinterpret_cast<char **>(this) + 8))
         ->init(a1, a2, a3, a4, a5);
 }
+
+/*
+Purpose: Adjust the receiver from the thunk1 subobject back to SpriteBox and
+         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
+         names VC6's own vtordisp adjustor thunk, emitted because
+         SpriteBox::attach overrides a virtual reached through a virtual
+         base. There is no C++ here to get right, only a name to record.
+// ORIGINAL: 0x00611920 ?attach@thunk1_SpriteBox@@QAEHPAUGraphicWin@@HHH@Z 0x00611920-0x00611928 BYTE_EXACT
+// symbol    ?attach@SpriteBox@@$4PPPPPPPM@A@AEHPAXHHH@Z
+// size      8 bytes
+// kind      game
+Status: Complete
+*/

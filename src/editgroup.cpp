@@ -239,3 +239,29 @@ char *__fastcall edit_group_get_text_redirect(EditGroup *self, void *, int index
 void __fastcall edit_group_set_text_redirect(EditGroup *self, void *, char *text, int index) {
     self->set_text(text, index);
 }
+
+/*
+Purpose: Adjust the receiver from the thunk1 subobject back to EditGroup and
+         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
+         names VC6's own vtordisp adjustor thunk, emitted because
+         EditGroup::attach overrides a virtual reached through a virtual
+         base. There is no C++ here to get right, only a name to record.
+// ORIGINAL: 0x00612810 ?attach@thunk1_EditGroup@@QAEHPAUGraphicWin@@HHH@Z 0x00612810-0x00612818 BYTE_EXACT
+// symbol    ?attach@EditGroup@@$4PPPPPPPM@A@AEHPAXHHH@Z
+// size      8 bytes
+// kind      game
+Status: Complete
+*/
+
+/*
+Purpose: Adjust the receiver from the thunk1 subobject back to EditGroup and
+         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
+         names VC6's own vtordisp adjustor thunk, emitted because
+         EditGroup::on_dialog_focus overrides a virtual reached through a virtual
+         base. There is no C++ here to get right, only a name to record.
+// ORIGINAL: 0x006127C0 ?on_dialog_focus@thunk1_EditGroup@@QAEXH@Z 0x006127C0-0x006127C8 BYTE_EXACT
+// symbol    ?on_dialog_focus@EditGroup@@$4PPPPPPPM@A@AEXH@Z
+// size      8 bytes
+// kind      game
+Status: Complete
+*/

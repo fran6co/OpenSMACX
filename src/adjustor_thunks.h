@@ -55,19 +55,13 @@ void __fastcall adjust_radio_button1_dtor(void *self, void *, int arg0);
 void __fastcall adjust_radio_button1_on_redraw(void *self, void *);
 void __fastcall adjust_radio_button1_on_mouse_move(void *self, void *,
                                                    int arg0, int arg1);
-void __fastcall adjust_radio_button1_on_mouse_leave(void *self, void *,
-                                                    int arg0, int arg1);
 void __fastcall adjust_radio_button1_on_left_down(void *self, void *,
                                                   int arg0, int arg1);
 int __fastcall adjust_radio_button1_on_key_down(void *self, void *, int arg0);
 void __fastcall adjust_radio_button1_on_left_double_click(void *self, void *,
                                                           int arg0, int arg1);
-void __fastcall adjust_radio_button1_on_dialog_focus(void *self, void *,
-                                                     int arg0);
 void __fastcall adjust_radio_button2_dtor(void *self, void *, int arg0);
 void __fastcall adjust_radio_button3_dtor(void *self, void *, int arg0);
-int __fastcall adjust_radio_button1_attach(void *self, void *, void *arg0,
-                                           int arg1, int arg2, int arg3);
 void __fastcall adjust_radio_button3_on_redraw(void *self, void *);
 void * __fastcall adjust_dialogs1_scalar_delete(void *self, void *,
                                                 unsigned int arg0);
@@ -207,8 +201,6 @@ void __fastcall adjust_list_box1_on_redraw(void *self, void *);
 void __fastcall adjust_list_box1_on_mousewheel(void *self, void *, int arg0);
 void __fastcall adjust_list_box1_on_mouse_move(void *self, void *, int arg0,
                                                int arg1);
-void __fastcall adjust_list_box1_on_mouse_leave(void *self, void *, int arg0,
-                                                int arg1);
 void __fastcall adjust_list_box1_on_left_down(void *self, void *, int arg0,
                                               int arg1);
 void __fastcall adjust_list_box1_on_right_down(void *self, void *, int arg0,
@@ -222,30 +214,19 @@ void __fastcall adjust_list_box1_on_scrolled(void *self, void *, int arg0,
                                              int arg1);
 void __fastcall adjust_list_box1_on_scrolling(void *self, void *, int arg0,
                                               int arg1);
-void __fastcall adjust_list_box1_on_dialog_focus(void *self, void *, int arg0);
-int __fastcall adjust_list_box1_attach(void *self, void *, void *arg0,
-                                       int arg1, int arg2, int arg3);
 void __fastcall adjust_list_box3_on_redraw(void *self, void *);
 void __fastcall adjust_check_box1_on_redraw(void *self, void *);
 void __fastcall adjust_check_box1_on_mouse_move(void *self, void *, int arg0,
                                                 int arg1);
-void __fastcall adjust_check_box1_on_mouse_leave(void *self, void *, int arg0,
-                                                 int arg1);
 void __fastcall adjust_check_box1_on_left_down(void *self, void *, int arg0,
                                                int arg1);
 int __fastcall adjust_check_box1_on_key_down(void *self, void *, int arg0);
 void __fastcall adjust_check_box1_on_left_double_click(void *self, void *,
                                                        int arg0, int arg1);
-void __fastcall adjust_check_box1_on_dialog_focus(void *self, void *,
-                                                  int arg0);
-int __fastcall adjust_check_box1_attach(void *self, void *, void *arg0,
-                                        int arg1, int arg2, int arg3);
 void __fastcall adjust_check_box3_on_redraw(void *self, void *);
 void __fastcall adjust_sprite_box1_on_redraw(void *self, void *);
 void __fastcall adjust_sprite_box1_on_mouse_move(void *self, void *, int arg0,
                                                  int arg1);
-void __fastcall adjust_sprite_box1_on_mouse_leave(void *self, void *,
-                                                  int arg0, int arg1);
 void __fastcall adjust_sprite_box1_on_left_click(void *self, void *, int arg0,
                                                  int arg1);
 void __fastcall adjust_sprite_box1_on_left_down(void *self, void *, int arg0,
@@ -263,15 +244,7 @@ void __fastcall adjust_sprite_box1_on_left_double_click(void *self, void *,
                                                         int arg0, int arg1);
 void __fastcall adjust_sprite_box1_on_right_double_click(void *self, void *,
                                                          int arg0, int arg1);
-void __fastcall adjust_sprite_box1_on_dialog_focus(void *self, void *,
-                                                   int arg0);
-int __fastcall adjust_sprite_box1_attach(void *self, void *, void *arg0,
-                                         int arg1, int arg2, int arg3);
 void __fastcall adjust_sprite_box3_on_redraw(void *self, void *);
 void __fastcall adjust_edit_group1_on_redraw(void *self, void *);
-void __fastcall adjust_edit_group1_on_dialog_focus(void *self, void *,
-                                                   int arg0);
 void __fastcall adjust_edit_group1_pass_dialog_focus(void *self, void *);
-int __fastcall adjust_edit_group1_attach(void *self, void *, void *arg0,
-                                         int arg1, int arg2, int arg3);
 void __fastcall adjust_edit_group3_on_redraw(void *self, void *);
