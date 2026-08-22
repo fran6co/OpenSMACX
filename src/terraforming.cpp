@@ -30,6 +30,45 @@
 /*
 Purpose: Calculate the credit cost to lower or raise the tile's terrain for the specified faction.
 // ORIGINAL: 0x004C9420 ?terraform_cost@@YAHHHH@Z 0x004C9420-0x004C96D6
+// LEVER: both-base_finds-run the second `base_find` is NOT nested inside
+//   `if (base_id >= 0)`. The image pushes the first call's three arguments and
+//   the second's six back to back and cleans both up with one `add esp, 0x24`
+//   at 0x004C94BD, BEFORE `test edi, edi` at 0x004C94C3. Nested, this tree made
+//   7 calls against the image's 8 and `call_diff` reported FEWER; hoisted it is
+//   8 against 8, and the body went 8 of 236 to 27 of 236, similarity
+//   0.174 -> 0.515 at `/c /O2 /Gy /GR- /Oy- /GX`. This is a BEHAVIOUR fix, not
+//   an encoding one: the image searches for the nearest foreign base on every
+//   call, including the ones with no friendly base on the tile.
+// LEVER: one-tile-pointer `Map *const tile = map_loc(x, y);` with the climate
+//   byte read ONCE into a local, instead of `alt_at` + `bit_at` +
+//   `altitude_at`. The image computes the tile address once into edx
+//   (0x004C9449), reads `[edx]` for the climate and folds the fungus test into
+//   the memory operand, `test byte ptr [edx + 8], 0x20`. Three accessor calls
+//   leave a separate byte load before the test.
+// LEVER: abs-is-a-branch-here `int cost = alt - 3; if (cost < 0) cost = 3 - alt;`
+//   is what the image emits - `lea ecx, [eax-3]; test ecx, ecx; jge; mov ecx, 3;
+//   sub ecx, eax`. `abs()` compiles to VC6's branchless intrinsic
+//   `cdq; xor eax, edx; sub eax, edx`, which is three different instructions in
+//   the same place. Note the image DOES call `_abs` at 0x004C94F0, inside the
+//   inlined `cursor_dist`, so this is per-site and not the `/Oi-` axis.
+// LEVER: climate-unsigned-alt-signed `uint32_t climate` gives the image's
+//   `shr eax, 5`; as `int` it is `sar`. The two comparisons ON the result are
+//   signed - `cmp edx, 0x40; jl` and `cmp eax, 3; jge` - so `alt` and the
+//   masked altitude are `int`.
+// RULED-OUT: parameter-register-assignment what is left is allocation. The
+//   image loads y into ebx and x into esi (0x004C942C, 0x004C9430); this tree
+//   loads y into esi and x into ebx, in the same ORDER, and every instruction
+//   naming either register disagrees from there on. It spills the climate byte
+//   into the dead `y` parameter slot, `mov [ebp+0xc], eax`, where this tree
+//   keeps it in edi - which is free here precisely BECAUSE of the register
+//   swap. Nothing in the body's spelling chooses between them; `map_loc`'s
+//   `(x >> 1) + y * MapLongitude` is in map.h and shared with every caller.
+// RULED-OUT: mask-encoding the image's altitude mask is `83 E2 E0`, the
+//   sign-extended imm8 form of 0xFFFFFFE0, where `& 0xE0` needs the six-byte
+//   `81 /4 id`. Writing `& ~0x1Fu` DOES emit the short form and still costs an
+//   agreeing instruction (27 -> 26), because the register the mask applies to
+//   differs anyway and the three saved bytes shift every later offset.
+//   Measured and reverted; the tree's `altitude_at` spelling stands.
 // size      694 bytes
 // prototype int (__cdecl ?terraform_cost@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)
 // callers   3   call targets   3
@@ -40,11 +79,17 @@ Return Value: Credit cost
 Status: Complete
 */
 int __cdecl terraform_cost(int x, int y, int faction_id) {
-    uint32_t alt = alt_at(x, y);
-    int cost = abs((int)alt - 3);
+    Map *const tile = map_loc(x, y);
+    const uint32_t climate = tile->climate;
+    const int alt = static_cast<int>(climate >> 5);
+    int cost = alt - 3;
+    if (cost < 0) {
+        cost = 3 - alt;
+    }
     cost += 2;
     cost *= cost;
-    if (bit_at(x, y) & BIT_FUNGUS && altitude_at(x, y) >= ALT_BIT_OCEAN_SHELF) {
+    if (tile->bit & BIT_FUNGUS
+        && static_cast<int>(climate & 0xE0) >= ALT_BIT_OCEAN_SHELF) {
         cost *= 3;
     }
     cost *= 2;
@@ -55,10 +100,15 @@ int __cdecl terraform_cost(int x, int y, int faction_id) {
         }
     }
     int base_id = base_find(x, y, faction_id);
+    // BOTH SEARCHES RUN, always: the image pushes the three arguments of the
+    // first and the six of the second back to back and cleans up once,
+    // `add esp, 0x24` at 0x004C94BD, BEFORE it tests base_id at 0x004C94C3.
+    // Nesting the second inside `if (base_id >= 0)` makes this tree skip a
+    // call the image makes - `call_diff` reports FEWER.
+    int base_id_prox = base_find(x, y, -1, -1, faction_id, -1);
     if (base_id >= 0) {
         int cursor_distance = cursor_dist(x, y, Bases[base_id].x, Bases[base_id].y);
         cost *= range(cursor_distance, 1, 100);
-        int base_id_prox = base_find(x, y, -1, -1, faction_id, -1);
         if (base_id_prox >= 0 
             && !has_treaty(faction_id, Bases[base_id_prox].faction_id_current, DTREATY_PACT)) {
             int num_prox = (cursor_distance * (Bases[base_id_prox].population_size + 2)) / 3;
@@ -185,6 +235,29 @@ static int terraform_xrange(int x) {
 /*
 Purpose: Decide which Former order, if any, should be issued on the specified tile.
 // ORIGINAL: 0x00565320 ?can_terraform@@YAHHHHHH@Z 0x00565320-0x00565F1E
+// LEVER: real-bitmask-calls the two facility checks in the forest-value block
+//   are `has_fac_built_call` (base.h), not `has_fac_built`. The image CALLS
+//   `bitmask` at 0x0050BA00 twice, from 0x00565449 and 0x00565487; the plain
+//   spelling folds `MEASURED inline bitmask` into a shift/and and this body
+//   then made 26 calls against the image's 28 - `call_diff` FEWER. With the
+//   forwarder the counts agree, 28 against 28, and best similarity moved
+//   0.168 -> 0.207 at `/c /O2 /Gy /GR- /Oy- /GX`. That is a call the image
+//   really makes, so the fix stands on its own regardless of the tier.
+// RULED-OUT: not attempted to byte-exactness this pass - out of budget, and
+//   said so rather than half-ground. Measured 2026-08-22 over all ten flag
+//   sets: best 0.214 at `/c /O2 /Ob0 /Gy /GR- /Oy- /GX`, 15 of 1113
+//   instructions. The gap is SIZE, not one lever: this tree compiles 1,566
+//   instructions against the image's 1,113, a 40% excess, across 51 differing
+//   runs, and that shape says the image leaves out-of-line what this tree
+//   inlines somewhere in the accessor chain rather than that any one
+//   expression is spelled wrong. The divergence opens at instruction 3, on
+//   the `map_loc` index: the image reads MapLongitude at the fixed 0x0068FAF0
+//   while this tree reads it as a linker symbol, and the base-in-tile test
+//   arrives as `mov ecx, 1; test cl, bl` instead of a folded memory-operand
+//   test. Anyone picking this up should start from `osmx calls` plus
+//   `inline_candidates.py` on the accessors this body reaches, not from the
+//   listing: with 453 instructions of excess, the first divergence is not
+//   where the cause is.
 // size      3070 bytes
 // prototype int (__cdecl ?can_terraform@@YAHHHHHH@Z)(int factionID, int xCoord, int yCoord, int, int baseID)
 // callers   3   call targets   6
@@ -294,10 +367,15 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
         + ResourceInfo[RSCINFO_FOREST_SQ].minerals
         + ResourceInfo[RSCINFO_FOREST_SQ].energy;
     if (base_id >= 0) {
-        if (has_fac_built(FAC_TREE_FARM, base_id)) {
+        // REAL bitmask() CALLS, not the folded shift/and: the image calls
+        // 0x0050BA00 twice, at 0x00565449 and 0x00565487, which is what
+        // `has_fac_built_call` (base.h) is for. Plain `has_fac_built` inlines
+        // `MEASURED inline bitmask` and this body then makes 26 calls against
+        // the image's 28.
+        if (has_fac_built_call(FAC_TREE_FARM, base_id)) {
             forest_value++;
         }
-        if (has_fac_built(FAC_HYBRID_FOREST, base_id)) {
+        if (has_fac_built_call(FAC_HYBRID_FOREST, base_id)) {
             forest_value += 2;
         }
     }

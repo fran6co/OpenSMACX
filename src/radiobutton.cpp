@@ -177,7 +177,8 @@ RadioButton *__fastcall radio_button_teardown_redirect(void *adjusted, void *,
 Purpose: Reset the radio button to its defaults, then close its dialog and
          graphic base. Both calls resolve through the vbtable, so they reach
          the Dialog and the virtual base rather than the object itself.
-// ORIGINAL: 0x0060D1B0 ?close@RadioButton@@QAEXXZ 0x0060D1B0-0x0060D1E6
+// ORIGINAL: 0x0060D1B0 ?close@RadioButton@@QAEXXZ 0x0060D1B0-0x0060D1E6 BYTE_EXACT
+// LEVER: reread-vbtable the image reads `[esi]` TWICE, once per base call (0x0060D1B5 and 0x0060D1D8). Holding it in a `const int32_t *const vbtable` local made VC6 keep it live across the first call, which costs a callee-saved edi and a push/pop pair the image never emits: 5 of 19 with the cache, BYTE_EXACT 19/19 reading it inline at both uses.
 // size      54 bytes
 // prototype void (__thiscall ?close@RadioButton@@QAEXXZ)(RadioButton* this)
 // callers   21   call targets   2
@@ -195,14 +196,14 @@ void RadioButton::close() {
     // own sends both calls to the wrong subobject. Doing exactly that passed
     // every unit test here and crashed the game on a null vtable pointer.
     uint8_t *const self = reinterpret_cast<uint8_t *>(this);
-    const int32_t *const vbtable =
-        *reinterpret_cast<const int32_t *const *>(self);
     field_C_ = 0;
     field_10_ = 0;
     field_8_ = RadioButtonDefault2;
     field_4_ = RadioButtonDefault1;
-    reinterpret_cast<Dialog *>(self + vbtable[2])->close();
-    reinterpret_cast<GraphicWin *>(self + vbtable[1])->close();
+    reinterpret_cast<Dialog *>(
+        self + (*reinterpret_cast<const int32_t *const *>(self))[2])->close();
+    reinterpret_cast<GraphicWin *>(
+        self + (*reinterpret_cast<const int32_t *const *>(self))[1])->close();
 }
 
 void __fastcall radio_button_close_redirect(RadioButton *self, void *) {

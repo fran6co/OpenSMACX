@@ -197,6 +197,23 @@ Status: Complete
 /*
 Purpose: Determine technology level for tech_id.
 // ORIGINAL: 0x005B9F90 ?tech_recurse@@YAHHH@Z 0x005B9F90-0x005B9FE0
+// LEVER: hoist-next-lvl `const int next_lvl = base_lvl + 1;` ahead of the tech
+//   pointer, passed to both recursive calls instead of writing `base_lvl + 1`
+//   twice. The image reads base_lvl at 0x005B9F9F, before the index arithmetic
+//   finishes, and builds edi once; writing the `+ 1` at each call site defers
+//   that read past the lea chain. 22/36 -> 25/36, and the instruction count
+//   now matches the image exactly at 36.
+// RULED-OUT: scaled-index-in-register the last divergence is addressing form,
+//   not control flow: the image keeps `esi = 44*tech_id` (`shl esi, 2`) and
+//   folds the array base into BOTH displacements - `[esi+0x94F37C]`,
+//   `[esi+0x94F380]` - where this tree materialises the whole pointer,
+//   `lea edi, [eax*4+0x94F358]` then `[edi+0x28]`. `osmx semantic` refuses on
+//   exactly that, "instruction 13: shl against lea". Two subscripts
+//   (`Technology[tech_id].preq_tech_N`) do NOT recover it: VC6 then keeps
+//   tech_id itself in a register and rebuilds the whole lea chain after the
+//   first call, 4/36 with the hoist and 4/36 without it. The array base is a
+//   `RulesTechnology *const` in technology.h, so the fold is already an
+//   immediate; nothing in the body's spelling chooses which half stays live.
 // LEVER: same as has_tech - `RulesTechnology *tech = &Technology[tech_id];` before the two
 //   recursive calls, instead of two `Technology[tech_id].preq_tech_N` subscripts. 4/36 -> 22/36.
 // LEVER: `MEASURED inline` in technology.h - the image expands a recursive inline exactly one
@@ -769,10 +786,46 @@ Status: Complete
 /*
 Purpose: Calculate how much researching a tech will cost the specified faction.
 // ORIGINAL: 0x005BE6B0 ?tech_rate@@YAHH@Z 0x005BE6B0-0x005BE931
-// UNEXPLORED: left untouched - MISMATCH at instruction 0 under every flag set the search tries
-//   (best found still omits the frame pointer the image keeps), and the compiled body is 182
-//   instructions against the image's 234. A big arithmetic function; needs the same kind of
-//   per-expression source-form search done here for has_tech/tech_avail, not attempted this pass.
+// LEVER: unsigned-shift-signed-divide `rule_factor` is UNSIGNED - the image
+//   shifts it `shr edi, 3` and `shr esi, 5` at 0x005BE7EC/0x005BE7F1 - while the
+//   division it feeds stays signed, `cdq; idiv edi`. So the source is
+//   `uint32_t rule_factor` with `(int)` casts at the two use sites, not an `int`
+//   throughout: as `int` VC6 emits `sar` for both shifts.
+// LEVER: signed-divide-through-a-uint32_t-operand three expressions divided or
+//   multiplied through a `uint32_t` global and came out unsigned where the image
+//   is signed - `100 * discovery_rate / Rules->tech_discovery_rate_pct_std`
+//   (`div` against the image's `cdq; idiv`) and `discovery_rate * MapAreaSqRoot
+//   / 56` (`mul`/`shr` against `imul`/`sar`). Casting each divisor and factor to
+//   `int` at the use site fixes both without changing the shared declarations.
+// LEVER: top-factor-compares-ge the max loop is `if (compare >= top_factor)`,
+//   not `>`: the image's `cmp ebx, esi; jl` skips the assignment only when
+//   compare is STRICTLY below, so the equal case still stores. Same value,
+//   opposite condition byte.
+// RULED-OUT: this pass did NOT reach byte-exactness. The three levers above took
+//   best similarity 0.384 -> 0.721 at `/c /O2 /Gy /GR- /Oy- /GX` and the compiled
+//   body from 230 to 232 instructions against the image's 234, with 71 of 234
+//   agreeing; the differing runs fell from 20 to 15. What is left, measured
+//   2026-08-22:
+//   * `is_human` reads `FactionsStatus[0]` as a `uint8_t`, which compiles
+//     `xor ecx, ecx; mov cl, byte ptr [0x9A64E8]`, where the image loads the
+//     WORD and masks - `mov ecx, [0x9A64E8]; and ecx, 0xFF`. Writing that mask
+//     out locally in this body does NOT reproduce it either: VC6 reassociates
+//     `(1 << faction_id) & (word & 0xFF)` into `and eax, edx; and eax, 0xFF`,
+//     and it costs five agreeing instructions (71 -> 66) while flattering the
+//     similarity to 0.773. The fix belongs in `is_human` itself, in faction.h,
+//     and that declaration is shared with every other caller.
+//   * this tree's frame is `sub esp, 0x14` against the image's `sub esp, 0x10`.
+//     The image REUSES [ebp-4] - the `range(..., 2, 9999)` result for
+//     player_factor at 0x005BE717, then `diff_lvl = 3` at 0x005BE794 once the
+//     first is dead - where this tree gives the two separate slots and every
+//     later displacement is off by one slot.
+//   * `range(research, -1, 1)` collapses in the image to the SIGN of research -
+//     `test; jle; mov eax, 1` / `xor eax, eax; test; setge al; dec eax` - and it
+//     is computed inline at its single use, immediately before `sub ebx, eax`.
+//     Spelling that ternary out reproduces the sign idiom but VC6 then hoists it
+//     to the top of the expression and spills it, which is WORSE overall:
+//     0.721 -> 0.459 similarity for one extra agreeing instruction. Measured
+//     and reverted.
 // LEVER: signedness - player_factor, top_factor, compare, diff_factor, diff_lvl,
 //   tech_stagnation, rule_factor, fin_factor, discovery_rate and cost changed from uint32_t to
 //   int so the image's signed sar/cdq/idiv/jl/setl forms come out instead of shr/div/jbe. Under
@@ -802,7 +855,7 @@ int __cdecl tech_rate(int faction_id) {
     int top_factor = 0;
     for (uint32_t i = 1; i < MaxPlayerNum; i++) {
         int compare = PlayersData[i].earned_techs_saved * 2 + PlayersData[i].tech_ranking;
-        if (compare > top_factor) {
+        if (compare >= top_factor) {
             top_factor = compare;
         }
     }
@@ -815,21 +868,23 @@ int __cdecl tech_rate(int faction_id) {
     diff_factor = is_human_player ? diff_factor * 4 + 8 : 29 - diff_factor * 3;
     diff_factor = range(diff_factor, 12 - player_factor, player_factor + 12);
     int tech_stagnation = GameRules & RULES_TECH_STAGNATION;
-    int rule_factor = tech_stagnation | 0x40; // 64 or 96
-    int fin_factor = range(player_factor - (TurnCurrentNum / (rule_factor >> 3)),
-        0, (diff_factor * (rule_factor >> 5)) >> 1) + diff_factor;
+    uint32_t rule_factor = tech_stagnation | 0x40; // 64 or 96
+    int fin_factor = range(
+        player_factor - (TurnCurrentNum / static_cast<int>(rule_factor >> 3)),
+        0, (diff_factor * static_cast<int>(rule_factor >> 5)) >> 1) + diff_factor;
     int resch_base = range(PlayersData[faction_id].soc_effect_base.research, -1, 1);
     int discovery_rate = (fin_factor
         - range((top_factor - diff_lvl - player_factor + 7) / (8 - diff_lvl),
             0, diff_lvl * fin_factor / 10 + 1))
         * range(player_factor - resch_base, 1, 99999);
     if (Rules->tech_discovery_rate_pct_std != 100) {
-        discovery_rate = 100 * discovery_rate / Rules->tech_discovery_rate_pct_std;
+        discovery_rate = 100 * discovery_rate
+            / static_cast<int>(Rules->tech_discovery_rate_pct_std);
     }
     if (Players[faction_id].rule_techcost != 100) {
         discovery_rate = discovery_rate * Players[faction_id].rule_techcost / 100;
     }
-    int cost = (discovery_rate * MapAreaSqRoot) / 56;
+    int cost = (discovery_rate * static_cast<int>(MapAreaSqRoot)) / 56;
     if (tech_stagnation) {
         cost += cost / 2; // Slower Rate of Research Discoveries
     }

@@ -527,7 +527,10 @@ Purpose: Set the dialog width, scaled to three-halves in the high-resolution
          subobject of the embedded Dialogs, located through that Dialogs'
          own vbtable exactly as the original does rather than at a hardcoded
          offset.
-// ORIGINAL: 0x00601B20 ?set_width@BasePop@@QAEXH@Z 0x00601B20-0x00601B77
+// ORIGINAL: 0x00601B20 ?set_width@BasePop@@QAEXH@Z 0x00601B20-0x00601B77 BYTE_EXACT
+// LEVER: if-else-not-one-store the image writes the width TWICE, once per arm (0x00601B56 and 0x00601B6D), each with its own `ret 4`. Computing a `value` local and storing it once after the guard shares the store and scores 1 of 23; an `if/else` with a full store in each arm is BYTE_EXACT.
+// LEVER: no-memcpy the store is a plain `*(int32_t *)(...) = value`. The `std::memcpy(dst, &value, 4)` spelling takes the local's ADDRESS, which pins it to a stack slot the image never allocates.
+// LEVER: reread-vbptr the Dialogs vbptr at this+0x21D0 is loaded separately in each arm, as the image does at 0x00601B4B and 0x00601B60.
 // size      87 bytes
 // prototype void (__thiscall ?set_width@BasePop@@QAEXH@Z)(BasePop* this, int)
 // callers   4   call targets   0
@@ -538,15 +541,18 @@ Return Value: n/a
 Status: Complete
 */
 void BasePop::set_width(int width) {
-    int value = width;
+    uint8_t *const dialogs = reinterpret_cast<uint8_t *>(this) + 0x21D0;
     if (field_A14_ == 0 && (field_30A8_ & 0x400) == 0 &&
         *BasePopScreenWidth >= 0x400) {
-        value = (width * 3) / 2;
+        *reinterpret_cast<int32_t *>(
+            dialogs + 0x2C +
+            (*reinterpret_cast<const int32_t *const *>(dialogs))[2]) =
+            (width * 3) / 2;
+    } else {
+        *reinterpret_cast<int32_t *>(
+            dialogs + 0x2C +
+            (*reinterpret_cast<const int32_t *const *>(dialogs))[2]) = width;
     }
-    uint8_t *const dialogs = reinterpret_cast<uint8_t *>(this) + 0x21D0;
-    const int32_t *const vbtable =
-        *reinterpret_cast<const int32_t *const *>(dialogs);
-    std::memcpy(dialogs + 0x2C + vbtable[2], &value, sizeof(value));
 }
 
 void __fastcall base_pop_set_width_redirect(BasePop *self, void *, int width) {
@@ -811,78 +817,16 @@ int BasePop::basepop_alloc() {
     return (int)new BasePop();
 }
 
-/*
-// ORIGINAL: 0x00604590 ?init_class@BasePop@@QAAHXZ 0x00604590-0x0060467A
-// symbol    ?init_class@BasePop@@SAHXZ
-// size      234 bytes
-// prototype
-// callers   1   call targets   4
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005D4510 0x00644EF2 0x006453E0 0x00645470
-// indirect  0x00604650 0x00604665
-//
-// Promoted 2026-08-15 from src/unrecovered/00604590.cpp to retire its
-// pending_bodies forwarder. Copies the two default-caption strings into
-// heap buffers, then reaches the two allocation hooks through the pointer at
-// 0x00696ECC, as the original does.
-Status: Complete
-*/
 char *BasePopDefaultOkText;      // 0x009B8D80
 char *BasePopDefaultCancelText;  // 0x009B8D84
 
 static int *const g_00696ecc = (int *)0x00696ECC;
-static int *const g_00697008 = (int *)0x00697008;
-static int *const g_00697010 = (int *)0x00697010;
 static int *const g_009b8d98 = (int *)0x009B8D98;
 static int *const g_009b8da8 = (int *)0x009B8DA8;
 static int *const g_009bb484 = (int *)0x009BB484;
 static int *const g_009bc074 = (int *)0x009BC074;
 static int *const g_009bc078 = (int *)0x009BC078;
 
-int __cdecl BasePop::init_class() {
-    *g_009b8d98 = *g_009bb484;
-    *g_009b8da8 = *g_009bb484;
-
-    if (g_00697008 != 0) {
-        if (BasePopDefaultCancelText != 0) {
-            free(BasePopDefaultCancelText);
-            BasePopDefaultCancelText = nullptr;
-        }
-        unsigned int len = strlen(reinterpret_cast<char *>(g_00697008));
-        void *p = mem_get(len + 1);
-        BasePopDefaultCancelText = static_cast<char *>(p);
-        if (p != 0) {
-            *reinterpret_cast<char *>(p) = 0;
-            strcat(reinterpret_cast<char *>(p), reinterpret_cast<char *>(g_00697008));
-        }
-    }
-
-    if (g_00697010 != 0) {
-        if (BasePopDefaultOkText != 0) {
-            free(BasePopDefaultOkText);
-            BasePopDefaultOkText = nullptr;
-        }
-        unsigned int len2 = strlen(reinterpret_cast<char *>(g_00697010));
-        void *p2 = mem_get(len2 + 1);
-        BasePopDefaultOkText = static_cast<char *>(p2);
-        if (p2 != 0) {
-            *reinterpret_cast<char *>(p2) = 0;
-            strcat(reinterpret_cast<char *>(p2), reinterpret_cast<char *>(g_00697010));
-        }
-    }
-
-    typedef int(__cdecl *FnPtr)();
-    FnPtr fn = reinterpret_cast<FnPtr>(*g_00696ecc);
-    int r1 = fn();
-    *g_009bc074 = r1;
-    if (r1 != 0) {
-        int r2 = fn();
-        *g_009bc078 = r2;
-        return (-(static_cast<unsigned int>(r2 != 0)) & 0xfffffffc) + 4;
-    }
-    return 4;
-}
 
 /*
 Purpose: Replace the default OK caption with a heap copy of `text`.
@@ -903,7 +847,7 @@ THE COPY IS `dst[0] = 0` FOLLOWED BY A STRCAT, which is what the image does
 everywhere it copies a string - two arguments and `add esp, 8`, not the
 bounded three.
 */
-int __cdecl BasePop::set_def_ok_text(LPSTR text) {
+__forceinline int __cdecl BasePop::set_def_ok_text(LPSTR text) {
     if (text == nullptr) {
         return 3;
     }
@@ -936,7 +880,7 @@ PROMOTED FROM src/unrecovered/00601910.cpp. NOTE THE RETURN CODE: this one
 answers 4 where its twin above answers 5 for the same failure. Both are in
 the shipped bytes.
 */
-int __cdecl BasePop::set_def_cancel_text(LPSTR text) {
+__forceinline int __cdecl BasePop::set_def_cancel_text(LPSTR text) {
     if (text == nullptr) {
         return 3;
     }
@@ -951,4 +895,45 @@ int __cdecl BasePop::set_def_cancel_text(LPSTR text) {
     BasePopDefaultCancelText[0] = 0;
     strcat(BasePopDefaultCancelText, text);
     return 0;
+}
+
+/*
+// ORIGINAL: 0x00604590 ?init_class@BasePop@@QAAHXZ 0x00604590-0x0060467A BYTE_EXACT
+// LEVER: inline-the-two-setters the body is `set_def_cancel_text("Cancel");` then `set_def_ok_text("OK");` INLINED, not open-coded. Each inlined copy keeps its own `if (text == nullptr) return 3;` and `return 5`/`return 4` failure exits, which is why the image has `mov eax, <caption>; test eax, eax; je` before each block and why both failure paths jump to the START OF THE NEXT BLOCK (0x006045F8, 0x00604650) rather than to a return. The two setters are `__forceinline` here and MUST be defined ABOVE this body: VC6 is single-pass and will not inline a definition it has not seen. Both keep their own out-of-line BYTE_EXACT bodies, which /Gy still emits.
+// LEVER: string-literal-not-address the captions are the LITERALS "Cancel" (0x00697008) and "OK" (0x00697010), read out of the image. Spelled as `(LPSTR)0x00697008` VC6 folds `text == nullptr` to false at compile time and the whole `mov/test/je` triple disappears; a literal's address is a RELOCATION, which VC6 cannot fold and the comparison masks away.
+// LEVER: no-hook-local `(*reinterpret_cast<FnPtr *>(g_00696ecc))()` written out at BOTH call sites. Binding it to a local `FnPtr *const` costs a callee-saved esi, a push/pop pair, and `call dword ptr [esi]` where the image has `call dword ptr [0x696ECC]`.
+// LEVER: shared-load `const int base = *g_009bb484;` for both stores - the image loads 0x009BB484 ONCE (0x00604590) and stores eax twice. Written as two assignments straight from the global, VC6 must re-read it because the first store may alias.
+// LEVER: guard-clause-tail `if (!r1) { return 4; }` then the second hook call. The image falls through to `mov eax, 4; ret` and jumps FORWARD to the second call, which is a guard clause and not an `if (r1) {...} return 4;`. The final `return r2 ? 0 : 4;` is VC6's `neg/sbb/and al,0xFC/add` select; spelling it as arithmetic on `(r2 != 0)` emits setne instead.
+// symbol    ?init_class@BasePop@@SAHXZ
+// size      234 bytes
+// prototype
+// callers   1   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x00644EF2 0x006453E0 0x00645470
+// indirect  0x00604650 0x00604665
+//
+// Promoted 2026-08-15 from src/unrecovered/00604590.cpp to retire its
+// pending_bodies forwarder. Copies the two default-caption strings into
+// heap buffers, then reaches the two allocation hooks through the pointer at
+// 0x00696ECC, as the original does.
+Status: Complete
+*/
+int __cdecl BasePop::init_class() {
+    const int base = *g_009bb484;
+    *g_009b8d98 = base;
+    *g_009b8da8 = base;
+
+    set_def_cancel_text(const_cast<LPSTR>("Cancel"));
+    set_def_ok_text(const_cast<LPSTR>("OK"));
+
+    typedef int(__cdecl *FnPtr)();
+    const int r1 = (*reinterpret_cast<FnPtr *>(g_00696ecc))();
+    *g_009bc074 = r1;
+    if (!r1) {
+        return 4;
+    }
+    const int r2 = (*reinterpret_cast<FnPtr *>(g_00696ecc))();
+    *g_009bc078 = r2;
+    return r2 ? 0 : 4;
 }

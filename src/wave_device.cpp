@@ -1307,6 +1307,34 @@ Purpose: Switch the wrapped device to another output. Every sound on the
          appended to the resume list keeps whatever its next link held until
          the replay clears it.
 // ORIGINAL: 0x004C5030 ?select@Wave_Device@@QAEHK@Z 0x004C5030-0x004C50EF
+// LEVER: declare-before-the-guard `Wave *resume_tail = nullptr;` above the
+//   `if (!device_14_) return 2;` early exit, not below it. The image zeroes edi
+//   at 0x004C503B - BEFORE the guard's compare - and pops it again inside the
+//   early-return epilogue at 0x004C5044, so resume_tail is live across the
+//   guard. Declaring it after the guard costs the whole prologue and every
+//   register after it: 14 of 88 below the guard, 62 of 88 above it.
+// LEVER: guard-polarity `if (!resume_tail) { prev = 0; next = 0; } else {...}`.
+//   The image FALLS THROUGH to the empty-list arm and jumps to 0x004C5096 for
+//   the append, so the null test is the fall-through. Written the other way up
+//   the two arms swap and the jumps invert.
+// LEVER: tail-is-the-loop-variable the replay loop walks `resume_tail` itself -
+//   `Wave *const replay = resume_tail; resume_tail = wave_chain_prev(...);` -
+//   rather than seeding a separate `replay` cursor from it. The image keeps the
+//   list head in edi and copies it to esi INSIDE the loop (0x004C50C8); a
+//   separate cursor emits one extra `mov esi, edi` before the loop, 89
+//   instructions against the image's 88. 62/88 -> 73/88.
+// LEVER: prev-before-fname read `wave_chain_prev` first and the filename after
+//   it (0x004C50CA then 0x004C50CD), not the other way round.
+// RULED-OUT: vtable-register-alternation the last 15 instructions are register
+//   choice with identical shape and an identical instruction count (88 v 88,
+//   0.989 similar): the image loads the vtable pointer into edx for the second
+//   and fourth indirect calls where this tree reuses eax, because it issues
+//   `mov edx, [esi]` BEFORE `mov ebx, eax` saves the chain-next result and this
+//   tree issues them the other way round. `osmx semantic` refuses on exactly
+//   that, "instruction 34: mov operand is a different KIND". Hoisting the
+//   `next` local, splitting the two attribute tests into separate `if`s, and
+//   assigning `resume_tail`/`sound` inside both arms were all measured: 0/88,
+//   0/88 and 70/88 against the 73/88 that stands.
 // LEVER: call_diff showed 14 real calls to wave_attrib/wave_chain_next/
 //        halt_wave/resume_links/load_wave_by_name where the image has 0 -
 //        those anonymous-namespace one-liners were not being inlined at
@@ -1327,21 +1355,21 @@ Return Value: 0, or 2 when no device is wrapped
 Status: Complete
 */
 int Wave_Device::select(unsigned long a1) {
+    Wave *resume_tail = nullptr;
     if (!device_14_) {
         return 2;
     }
-    Wave *resume_tail = nullptr;
     Wave *sound = WaveChainHead();
     while (sound) {
         if ((wave_attrib(sound) & 1) && !(wave_attrib(sound) & 4)) {
             Wave *const next = wave_chain_next(sound);
             halt_wave(sound);
-            if (resume_tail) {
-                resume_links(resume_tail)->next = sound;
-                resume_links(sound)->prev = resume_tail;
-            } else {
+            if (!resume_tail) {
                 resume_links(sound)->prev = nullptr;
                 resume_links(sound)->next = nullptr;
+            } else {
+                resume_links(resume_tail)->next = sound;
+                resume_links(sound)->prev = resume_tail;
             }
             resume_tail = sound;
             sound = next;
@@ -1353,13 +1381,13 @@ int Wave_Device::select(unsigned long a1) {
         typedef int (OriginalObject::*device_fn)(unsigned long a1);
         (ORIGINAL(device_14_)->*vtable_slot<device_fn>(device_14_, 0x18))(a1);
     }
-    for (Wave *replay = resume_tail; replay;) {
+    while (resume_tail) {
+        Wave *const replay = resume_tail;
+        resume_tail = wave_chain_prev(resume_tail);
         char *const fname = resume_links(replay)->fname;
-        Wave *const prev = wave_chain_prev(replay);
         resume_links(replay)->next = nullptr;
         resume_links(replay)->prev = nullptr;
         load_wave_by_name(replay, fname);
-        replay = prev;
     }
     return 0;
 }
@@ -1476,7 +1504,10 @@ Purpose: Release the wrapped device: its own vtable slot 0x10 winds it down,
          and only if the device is STILL there afterwards - the callback may
          have cleared it - does the destroy hook run. Either way the field is
          forgotten.
-// ORIGINAL: 0x004C4F80 ?release@Wave_Device@@QAEXXZ 0x004C4F80-0x004C4FB3
+// ORIGINAL: 0x004C4F80 ?release@Wave_Device@@QAEXXZ 0x004C4F80-0x004C4FB3 BYTE_EXACT
+// LEVER: returns-int the catalogued name decodes `X` (void), but `xor eax, eax` at 0x004C4FAF is a MERGE POINT - the guard's `je 0x4c4faf` and the fall-through from the trailing store both reach it before `pop esi; ret`. That is a shared `return 0`, not a side effect. Same correction as `?release@Wave_In_Device@@QAEHXZ` (0x004C5A50) and `Midi_Device::release`. With the void head the body is 2 bytes short and ends at 17 of 19.
+// LEVER: store-twice the field is cleared INSIDE the destroy-hook arm and again after it, which is why 0x004C4FA1 and 0x004C4FA8 are two identical `mov [esi+0x14], 0` that fall into one another. One store scores 17/19.
+// symbol    ?release@Wave_Device@@QAEHXZ
 // size      51 bytes
 // prototype void (__thiscall ?release@Wave_Device@@QAEXXZ)(Wave_Device* this)
 // callers   1   call targets   0
@@ -1484,21 +1515,25 @@ Purpose: Release the wrapped device: its own vtable slot 0x10 winds it down,
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
 // indirect  0x004C4F8C 0x004C4F9F
-Return Value: n/a
+Return Value: zero
 Status: Complete
 */
-void Wave_Device::release() {
-    if (!device_14_) {
-        return;
+int Wave_Device::release() {
+    if (device_14_) {
+        {
+            typedef void(__fastcall *device_down_fn)(void *);
+            vtable_slot<device_down_fn>(device_14_, 0x10)(device_14_);
+        }
+        if (device_14_) {
+            func_wave_device_destroy *const hook = WaveDeviceDestroySlot();
+            if (hook) {
+                hook();
+                device_14_ = nullptr;
+            }
+        }
+        device_14_ = nullptr;
     }
-    {
-        typedef void(__fastcall *device_down_fn)(void *);
-        vtable_slot<device_down_fn>(device_14_, 0x10)(device_14_);
-    }
-    if (device_14_ && WaveDeviceDestroySlot()) {
-        (WaveDeviceDestroySlot())();
-    }
-    device_14_ = nullptr;
+    return 0;
 }
 
 void __fastcall wave_device_release_redirect(Wave_Device *self, void *) {
