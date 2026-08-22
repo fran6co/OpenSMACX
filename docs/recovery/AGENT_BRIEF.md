@@ -169,6 +169,32 @@ DO NOT CHAIN CONDITIONS THE IMAGE TESTS SEPARATELY
   WORSE (34 against 39 of 76). The image sometimes does merge tails. Measure;
   do not apply this on sight.
 
+RUNNING THE EXECUTABLE: THE INVOCATION IS PART OF THE MEASUREMENT
+- From `.opensmacx/game` (653 files are opened by relative path), under the
+  PROJECT'S wine prefix, inside a wine VIRTUAL DESKTOP:
+
+      cd .opensmacx/game
+      WINEPREFIX=$HOME/opt/vc6/.wineprefix DISPLAY=:1 \
+          wine explorer /desktop=smac,1024x768 <exe>
+
+- Get any of those three wrong and the program faults in a way that looks like
+  a recovery defect and is not. Under the default prefix with no virtual
+  desktop the SHIPPED IMAGE faults too, at 0x005F7E90 - its own
+  `Win::is_visible`, reading 0x9C off a null popup slot. An entire runtime
+  investigation on 2026-08-21 was built on that crash, concluded "DirectDraw
+  fails under wine, so this path is faithful", and wrote it into popup.cpp.
+  All of it was the invocation.
+- ALWAYS RUN THE SHIPPED IMAGE THE SAME WAY FIRST. It is the baseline, it
+  takes ten seconds, and if it faults where your build faults you have learned
+  nothing about your build.
+- `WINEDEBUG=-all` hides the fault line. A run that "completes" with no output
+  may be a crash whose debugger sat at a prompt until `timeout` killed it -
+  which reads as exit 124, exactly like a healthy long run. Leave the debug
+  output on when you care about the answer, and count `page fault` lines
+  rather than trusting an exit code.
+- Kill leftovers between runs (`pkill -f OpenSMACX.exe`); wine leaves the
+  process alive after `timeout` fires and a stale one perturbs the next run.
+
 A REFUSAL ONLY COUNTS AS A `// RULED-OUT:` LINE
 - Write what you measured as a LESSON LINE - `// LEVER:` or `// RULED-OUT:` -
   in the marker's comment block. Written as ordinary prose ("cannot reach
