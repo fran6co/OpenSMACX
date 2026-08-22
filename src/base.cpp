@@ -1748,6 +1748,12 @@ Purpose: Tally what the current base's forces cost it: the resources its supply
          convoys move in and out, the units it supports, the minerals their
          maintenance takes, and the pacifism drones they cause.
 // ORIGINAL: 0x004E9550 ?base_support@@YAXXZ 0x004E9550-0x004E9B4A
+// LEVER: the FAC_BROOD_PIT police-modifier check was `has_fac_built(...)`,
+//        which constant-folds to a bit test here (same systemic gap as
+//        has_fac/base_nutrient/base_minerals - see their notes). Swapping it
+//        for `has_fac_built_call(...)` (base.h, forces bitmask_call's real
+//        E8) took call_diff from FEWER by 2 to FEWER by 1 and best-across-
+//        flags similarity 0.371 -> 0.431 (45/465 raw agreeing, /O2 /Gy /GR- /GX).
 // RULED-OUT: hoisting `Base *base_current = BaseCurrent();` above the loop -
 //            already ruled out for a sibling function a few hundred lines up
 //            in this file (see the RULED-OUT note near line 396): the image
@@ -1963,7 +1969,7 @@ void __cdecl base_support() {
         }
         (BaseCurrentVehPacifismCount)++;
         int police = PlayersData[faction_id].soc_effect_pending.police
-            + (has_fac_built(FAC_BROOD_PIT, BaseIDCurrentSelected) ? 2 : 0);
+            + (has_fac_built_call(FAC_BROOD_PIT, BaseIDCurrentSelected) ? 2 : 0);
         if (police == -3) {
             veh->state |= (BaseCurrentVehPacifismCount == 1) ? VSTATE_PACIFISM_FREE_SKIP
                                                               : VSTATE_PACIFISM_DRONE;
@@ -1976,19 +1982,20 @@ void __cdecl base_support() {
 /*
 Purpose: Calculate nutrients and growth for the current base.
 // ORIGINAL: 0x004E9B70 ?base_nutrient@@YAXXZ 0x004E9B70-0x004E9CAD
-// RULED-OUT: the image's single call is bitmask() with two ebp-relative
+// LEVER: the image's single call is bitmask() with two ebp-relative
 //   out-params (the has_fac_built(FAC_CHILDREN_CRECHE,...) shape - an
 //   ebp-based frame exists ONLY to hold those two locals). Under this
 //   tree's toolchain, has_fac_built(literal, base_id) always constant-folds
 //   the offset/mask math to a direct `test byte ptr [...], imm` with no
 //   call and no frame at all (same defect as base_minerals's
-//   CENTAURI_PRESERVE/TEMPLE_OF_PLANET checks - see its note). Writing the
-//   bitmask()+manual bit-test out by hand instead of through has_fac_built
-//   folds identically. No flag set in --all-flags keeps the call: /Ob0
-//   forces an actual call but to has_fac_built (not bitmask), which the
-//   image never makes either. Left as has_fac_built(...); getting bitmask()
-//   itself to stay out-of-line here looks like the same open question as
-//   base_minerals, not a distinct bug in this function's body.
+//   CENTAURI_PRESERVE/TEMPLE_OF_PLANET checks - see its note). has_fac_built_call
+//   (base.h, forces bitmask_call's real E8 the same way breed_mod's checks
+//   do) is the fix: swapping just this one site took call_diff to 0
+//   disagreeing (was FEWER by 1) and best-across-flags similarity 0.790 ->
+//   0.951 (10/93 raw agreeing, /O2 /Gy /GR- /Oy- /GX). Residual is the same
+//   neg/sbb/neg 0-or-1 materialization plateau documented on is_objective
+//   (0x005AC060) - the image boolifies the facilities_built bit test before
+//   its `test eax,eax`, this tree emits a plain `test byte ptr [...]`.
 // size      317 bytes
 // prototype 
 // callers   7   call targets   1
@@ -2001,7 +2008,7 @@ Status: Complete
 void __cdecl base_nutrient() {
     uint32_t faction_id = (BaseCurrent())->faction_id_current;
     BaseCurrentGrowthRate = PlayersData[faction_id].soc_effect_pending.growth;
-    if (has_fac_built(FAC_CHILDREN_CRECHE, BaseIDCurrentSelected)) {
+    if (has_fac_built_call(FAC_CHILDREN_CRECHE, BaseIDCurrentSelected)) {
         BaseCurrentGrowthRate += 2; // +2 on growth scale
     }
     if ((BaseCurrent())->state & BSTATE_GOLDEN_AGE_ACTIVE) {
@@ -2032,17 +2039,19 @@ Purpose: Calculate minerals and ecological damage for the current base.
 //   5 of 7 facility checks (QUANTUM_CONVERTER, ROBOTIC_ASSEMBLY_PLANT,
 //   GENEJACK_FACTORY, both NANOREPLICATOR checks); switching those 5 from
 //   has_fac_built(...) to has_fac(...,0) took the call count from 1 to 6 of 7.
-// RULED-OUT: CENTAURI_PRESERVE/TEMPLE_OF_PLANET still short one real bitmask()
-//   call each (6 vs 7). has_fac_built(literal,...) here fully constant-folds
+// LEVER: CENTAURI_PRESERVE/TEMPLE_OF_PLANET were short one real bitmask()
+//   call each (6 vs 7) because has_fac_built(literal,...) fully constant-folds
 //   under this tree's VC6 (offset/mask collapse to a direct bit test, no
 //   call at all) instead of leaving bitmask() out-of-line as the image does;
-//   an explicit local `int offset,mask; bitmask(...)` folds identically.
-//   Routing them through has_fac(literal,base,0) instead (matching the other
+//   an explicit local `int offset,mask; bitmask(...)` folds identically, and
+//   routing them through has_fac(literal,base,0) instead (matching the other
 //   5) makes it WORSE: all 7 become real has_fac calls and a downstream
 //   ascending() call that was inlined stops being inlined (8 total, MORE).
-//   Left as has_fac_built(...) (closest structural match, FEWER by 2 calls);
-//   whatever source shape keeps only bitmask() out-of-line for just these
-//   two literals is still open.
+//   has_fac_built_call (base.h, forces bitmask_call's real E8 the same way
+//   breed_mod's four checks do) is the shape that matches: switching just
+//   these two took call_diff to 0 disagreeing (was FEWER by 2), for a
+//   negligible similarity cost (0.239 -> 0.232 best-across-flags) - the
+//   correct call graph, not the highest score, so kept.
 // size      1343 bytes
 // prototype 
 // callers   7   call targets   2
@@ -2089,10 +2098,10 @@ void __cdecl base_minerals() {
     }
     int eco_dmg_reduction = (has_fac(FAC_NANOREPLICATOR, BaseIDCurrentSelected, 0)
         || has_project(SP_SINGULARITY_INDUCTOR, faction_id)) ? 2 : 1;
-    if (has_fac_built(FAC_CENTAURI_PRESERVE, BaseIDCurrentSelected)) {
+    if (has_fac_built_call(FAC_CENTAURI_PRESERVE, BaseIDCurrentSelected)) {
         eco_dmg_reduction++;
     }
-    if (has_fac_built(FAC_TEMPLE_OF_PLANET, BaseIDCurrentSelected)) {
+    if (has_fac_built_call(FAC_TEMPLE_OF_PLANET, BaseIDCurrentSelected)) {
         eco_dmg_reduction++;
     }
     if (has_project(SP_PHOLUS_MUTAGEN, faction_id)) {
