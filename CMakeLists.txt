@@ -24,7 +24,7 @@ endif()
 
 # THE BUILD'S OWN FLAGS, WRITTEN DOWN WHERE A TOOL CAN READ THEM.
 #
-# `tools/decomp_status.py` measures a body in its real translation unit
+# `tools/osmx.py measure` measures a body in its real translation unit
 # whenever the scaffold cannot build one, and to do that it has to compile
 # that file the way the build compiles it. It used to approximate: copy the
 # file's own directory beside it and hope. That resolves `#include "win.h"`
@@ -37,7 +37,7 @@ endif()
 # decisions, and the copy goes stale the first time an include path is added.
 # CMake already knows; this makes it say so.
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL
-    "write build/compile_commands.json; tools/vc6_build_flags.py reads it"
+    "write build/compile_commands.json; tools/osmx.py configure reads it"
     FORCE)
 
 # `C` AS WELL AS `CXX`, for zlib. zlib 1.0.2 uses K&R parameter definitions,
@@ -356,7 +356,7 @@ install(TARGETS OpenSMACX
 # like. A second check had been failing since the very commit that
 # introduced its bound, and stayed red through every commit after.
 #
-# The gate is `tools/decomp_status.py --check`: it compiles every BYTE_EXACT
+# The gate is `tools/osmx.py check`: it compiles every BYTE_EXACT
 # claim in `src/` against the shipped image and fails if one no longer
 # reproduces. That one is run every batch, its result is read, and it is the
 # only check in this tree that was ever load-bearing.
