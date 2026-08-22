@@ -1,14 +1,11 @@
 # OpenSMACX
 A project to decompile SMAC/X to C++ with the long term goal of creating a full open source clone.
 
-Source tested and compiled as an x86 DLL with Visual Studio 2019 using Visual C++ with default 
+Originally tested and compiled as an x86 DLL with Visual Studio 2019 using Visual C++ with default 
 settings.
 
 Historically also built with CodeBlocks 20.03 using GCC 8.1.0; that project file (courtesy of
 induktio) has been removed in favour of the CMake build below, which is what the gates use.
-
-The patcher script found under tools is compatible with the latest GOG version as well as the most
-recent version of my unofficial patch. Cursory testing shows it is compatible with PRACX.
 
 ## CMake build
 
@@ -47,7 +44,7 @@ find . -type d -exec sh -c 'for f in "$1"/*; do b=$(basename "$f"); \
     && ln -s "$b" "$1/$l"; done' _ {} \;
 ```
 
-The product is `opensmacx-link-check.exe`: it exists so the recovered bodies
+The product is `OpenSMACX.exe`: it exists so the recovered bodies
 must compile and LINK, which is what catches a body that type-checks in
 isolation and cannot resolve its callees. It is not the game.
 
@@ -58,10 +55,43 @@ back if byte-exact recovery cannot reach the whole image; until then the byte
 comparison IS the verification, and a route that only existed to observe a
 running process was costing more than it proved.
 
+## Verifying a checkout
+
+```sh
+uv sync                                   # .venv: capstone, typer, pytest, decomp
+uv run pytest decomp/tests                # the annotation parse + read/write roundtrip
+cmake -S . -B build -G Ninja && cmake --build build
+uv run tools/osmx.py check                # THE GATE (never pipe it)
+```
+
+`osmx check` re-compiles every `BYTE_EXACT` claim in `src/` against the
+pinned image and fails if one stops reproducing; on a new host it is the
+answer to "did the move cost anything".
+
+## New host
+
+Debian/Ubuntu x86-64 needs Wine with a 32-bit loader (`wine32:i386` is the
+one that matters — a wine64-only install answers `wine --version` happily and
+then cannot load an i386 PE at all), plus `cmake`, `ninja-build`,
+`build-essential`, and [uv](https://astral.sh/uv). VC6 under Wine is the only
+compiler; its one-time setup step is above. The pinned image lives at
+`.opensmacx/game/terranx_original.exe` — your own copy, deliberately never in
+git:
+
+```sh
+git bundle create /tmp/opensmacx.bundle --all        # old host
+git clone /tmp/opensmacx.bundle OpenSMACX            # new host
+mkdir -p OpenSMACX/.opensmacx/game
+cp /path/to/terranx_original.exe OpenSMACX/.opensmacx/game/
+```
+
+Debugging the built executable under Wine is what `tools/gdb_sidecar.py` is
+for; its docstring carries the whole recipe.
+
 ## Where things are
 
-- `docs/DECOMP_MAP.md` - the annotation grammar and the ratchet
-- `docs/TOOLS.md` - every tool, grouped by the question it answers
+- `docs/DECOMP_MAP.md` - the annotation grammar, LEVER/TRIED rules, the ratchet
+- `docs/EXCLUSIONS.md` - declared out of scope, with populations
 - `docs/RETIRED_ROUTES.md` - what was removed, and the numbers that priced it
 - `AGENTS.md` - the recovery loop agents run
 
