@@ -143,6 +143,7 @@ set(OPENSMACX_SOURCES
     src/alphamovie.cpp
     src/checkbutton.cpp
     src/cursor.cpp
+    src/imagebutton.cpp
     src/infowin.cpp
     src/statuswin.cpp
     src/filewin.cpp

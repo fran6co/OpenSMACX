@@ -37,7 +37,7 @@ REPO = pathlib.Path(__file__).resolve().parent.parent
 
 # Measured 2026-08-22 on a clean tree. Lower a ceiling when its count falls.
 SHAPES = [
-    ("vtable", 29,
+    ("vtable", 25,
      re.compile(r"""(?x)
         (?: \w+ \s* \[ \s* 0x[0-9A-Fa-f]+ \s* / \s* 4 \s* \]
           | \* \s* reinterpret_cast \s* < [^>]*? \* \s* > \s* \([^)]*\)
@@ -57,7 +57,7 @@ SHAPES = [
      "a destructor modelled as a free function. Make it `X::~X()`. A free "
      "function is only needed where C++ cannot take a destructor's address."),
 
-    ("explicit base construct/destroy", 13,
+    ("explicit base construct/destroy", 12,
      re.compile(r"\b\w+::(?:destroy|construct)\(\)\s*;"),
      "duplicates the base constructor or destructor the compiler already "
      "calls, so the body carries one call too many."),
