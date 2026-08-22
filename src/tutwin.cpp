@@ -479,8 +479,6 @@ static const uint32_t TutWinBufferVtable = 0x0066DD7C;
 
 TutWin::TutWin() {
     uint32_t *const object = reinterpret_cast<uint32_t *>(this);
-    object[0x000 / 4] = TutWinPrimaryVtable;
-    object[0x444 / 4] = TutWinBufferVtable;
     field_53B4_ = 0;
     field_53C0_ = 0;
     field_53D0_ = 0;
@@ -499,7 +497,7 @@ TutWin::TutWin() {
 /*
 Purpose: Step the receiver back to the subobject ??_GTutWin@@UAEPAXI@Z expects,
          then forward unchanged.
-// ORIGINAL: 0x004BEA20 ??_GTutWin@@WEEE@AEPAXI@Z 0x004BEA20-0x004BEA2B
+// ORIGINAL: 0x004BEA20 ??_GTutWin@@WEEE@AEPAXI@Z 0x004BEA20-0x004BEA2B BYTE_EXACT
 // symbol    ??_ETutWin@@WEEE@AEPAXI@Z
 // CORRECTED from ??3TutWin@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x004BE9F0` into

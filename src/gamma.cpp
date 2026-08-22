@@ -109,8 +109,6 @@ Gamma::Gamma() {
     // rather than emitted by a constructor VC6 would generate.
     // The store order matters; see the LEVER line on the marker above.
     uint32_t *const object = reinterpret_cast<uint32_t *>(this);
-    object[0x000 / 4] = GammaPrimaryVtable;
-    object[0x444 / 4] = GammaBufferVtable;
     gamma_ = 1.0;
     field_A64_ = 0;
 }
@@ -118,7 +116,7 @@ Gamma::Gamma() {
 /*
 Purpose: Step the receiver back to the subobject ??_GGamma@@UAEPAXI@Z expects,
          then forward unchanged.
-// ORIGINAL: 0x004562B0 ??_GGamma@@WEEE@AEPAXI@Z 0x004562B0-0x004562BB
+// ORIGINAL: 0x004562B0 ??_GGamma@@WEEE@AEPAXI@Z 0x004562B0-0x004562BB BYTE_EXACT
 // symbol    ??_EGamma@@WEEE@AEPAXI@Z
 // CORRECTED from ??3Gamma@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x00456280` into

@@ -79,7 +79,6 @@ SocialWin::SocialWin() {
     char *const self = reinterpret_cast<char *>(this);
 
     uint32_t *const object = reinterpret_cast<uint32_t *>(this);
-    object[0xA14 / 4] = SocialWinSubInterfaceVtable;
 
     // spot_, socEffect_, socEffectOrig_, energyLockButtons_, flatButtons_,
     // buttonGroups_, buttonGroup_ and font1_..font9_ are REAL members in
@@ -100,9 +99,6 @@ SocialWin::SocialWin() {
     VectorCtorIterator(self + 0x3DE8, 0x2C, 6, SocialWinSpriteCtor, SocialWinSpriteDtor);
     VectorCtorIterator(self + 0x3EF0, 0x588, 6, SocialWinBufferCtor, SocialWinBufferDtor);
 
-    object[0x000 / 4] = SocialWinPrimaryVtable;
-    object[0x444 / 4] = SocialWinBufferVtable;
-    object[0xA14 / 4] = SocialWinSubInterfaceVtable2;
     factionID_ = 0xFFFFFFFFU;
 }
 

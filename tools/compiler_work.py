@@ -37,7 +37,7 @@ REPO = pathlib.Path(__file__).resolve().parent.parent
 
 # Measured 2026-08-22 on a clean tree. Lower a ceiling when its count falls.
 SHAPES = [
-    ("vtable", 61,
+    ("vtable", 29,
      re.compile(r"""(?x)
         (?: \w+ \s* \[ \s* 0x[0-9A-Fa-f]+ \s* / \s* 4 \s* \]
           | \* \s* reinterpret_cast \s* < [^>]*? \* \s* > \s* \([^)]*\)
