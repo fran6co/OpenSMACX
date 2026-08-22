@@ -54,32 +54,47 @@ CLASS_HEAD = re.compile(r"^\s*(?:class|struct)\s+(\w+)\s*(?::\s*([^{]*))?\{")
 MEMBER = re.compile(
     r"^\s*(?!public|private|protected|friend|typedef|using|return)"
     r"(?:const\s+|mutable\s+|static\s+|unsigned\s+|signed\s+)*"
-    r"[\w:<>]+\s*[*&]?\s*(\w+)\s*(?:\[[^\]]*\])?\s*;")
+    r"(?P<type>[\w:<>]+)\s*(?P<ptr>[*&]?)\s*(?P<name>\w+)"
+    r"\s*(?:\[[^\]]*\])?\s*;")
 
 
-def classes(path: Path) -> dict[str, tuple[str, list[str]]]:
-    """name -> (base-list, ordered field names). Brace-depth tracked, so a
-    nested struct does not leak its fields into the enclosing class."""
-    out: dict[str, tuple[str, list[str]]] = {}
-    lines = path.read_text(errors="replace").splitlines()
-    stack: list[tuple[str, str, list[str], int]] = []
+def classes(path: Path) -> dict[str, tuple[str, list[tuple[str, str]]]]:
+    """name -> (base-list, ordered (type, name) members).
+
+    DEPTH IS TRACKED AGAINST THE CLASS'S OWN OPENING LEVEL, and the first
+    version of this was not. It popped the class on any line whose `}` count
+    was non-zero, so `CheckBox() { ; }` - an inline method body, opened and
+    closed on one line - ended the class at its first such member. CheckBox and
+    Dialogs both came back with ZERO fields, which is exactly backwards: they
+    are the two classes this tool exists to find. Anything with an inline
+    method above its data was being read truncated, and the tool reported a
+    clean tree because it could not see into it.
+
+    Members are collected only at `start + 1`, so a nested struct's fields do
+    not leak into the enclosing class.
+    """
+    out: dict[str, tuple[str, list[tuple[str, str]]]] = {}
+    stack: list[tuple[str, str, list[tuple[str, str]], int]] = []
     depth = 0
-    for line in lines:
+    for line in path.read_text(errors="replace").splitlines():
         head = CLASS_HEAD.match(line)
         if head and not line.rstrip().endswith(";"):
             stack.append((head.group(1), (head.group(2) or "").strip(), [],
                           depth))
             depth += line.count("{") - line.count("}")
             continue
-        opened, closed = line.count("{"), line.count("}")
-        if stack and depth - closed < stack[-1][3] + 1 and closed:
-            name, base, fields, _ = stack.pop()
-            out[name] = (base, fields)
-        elif stack and opened == closed:
+        if stack and depth == stack[-1][3] + 1:
             member = MEMBER.match(line)
             if member and "(" not in line.split(";")[0]:
-                stack[-1][2].append(member.group(1))
-        depth += opened - closed
+                stack[-1][2].append((member.group("type") + member.group("ptr"),
+                                     member.group("name")))
+        depth += line.count("{") - line.count("}")
+        while stack and depth <= stack[-1][3]:
+            name, base, fields, _ = stack.pop()
+            out[name] = (base, fields)
+    while stack:                      # a header that never closes its class
+        name, base, fields, _ = stack.pop()
+        out[name] = (base, fields)
     return out
 
 
@@ -114,24 +129,104 @@ if __name__ == "__main__":
                 continue
             shared = 0
             for mine, theirs in zip(fields, other_fields):
-                if mine != theirs:
+                if mine[1] != theirs[1]:
                     break
                 shared += 1
             if other_where in skip_files:
                 continue
             if shared >= minimum and any(
-                    not generic.match(n) for n in fields[:shared]):
+                    not generic.match(n) for _ty, n in fields[:shared]):
                 hits.append((shared, name, where, other, other_where,
                              fields[:shared]))
+
+    # ---- SIGNAL 2: the base is EMBEDDED as a member ------------------------
+    # A class that holds another class BY VALUE occupies exactly the storage a
+    # base subobject would, and gets none of the language's ordering,
+    # conversion or name lookup. CheckBox and Dialogs both carry
+    # `GraphicWin virtual_base_;` spelled that way, and checkbox.h says
+    # outright that the real declaration is `: virtual GraphicWin, virtual
+    # Dialog`.
+    #
+    # TWO NARROWER RULES THAN THE OBVIOUS ONE, both because the obvious one was
+    # measured and was noise:
+    #
+    #   * "first member is a class" returns AlphaMovie/MCIVideo,
+    #     BaseWin/ProdPicker, Popup/Scroll - classes that ALREADY derive, whose
+    #     first member merely follows the base. And it MISSES CheckBox, whose
+    #     GraphicWin sits after six hand-composed fields. Position is the wrong
+    #     discriminator.
+    #   * The right one is whether the embedded type is a thing this tree
+    #     DERIVES FROM ELSEWHERE. GraphicWin is a base for 28 classes, so a
+    #     class holding one by value is suspicious; VOX_Vect and Sprite are
+    #     bases for nobody, so FactionArt holding a Sprite is just a member.
+    #
+    # Still not proof - `osmx show` on the constructor is what settles it.
+    used_as_base: set[str] = set()
+    for _name, (base, _fields, _where) in catalogue.items():
+        for token in re.split(r"[,\s]+", base or ""):
+            token = token.strip()
+            if token and token not in ("public", "private", "protected",
+                                       "virtual"):
+                used_as_base.add(token)
+
+    # GROUPED BY CLASS, because more than one embedded base is MULTIPLE
+    # INHERITANCE and that is the shape here - CheckBox holds a GraphicWin AND
+    # a Dialog, and dialogs.h describes "what it tells its five bases to do".
+    # Reported per-member the list was 36 rows of the same few classes, with
+    # Sprite arrays drowning it; per-class it is short and the arity is the
+    # interesting column.
+    # RESTRICTED TO BASELESS CLASSES, AND THEN SHOWING EVERY CLASS-TYPED
+    # MEMBER. Both halves were measured into place:
+    #
+    #   * A class that already declares a base is not the defect - its embedded
+    #     members are members. Including them gave 36 rows of Sprite arrays.
+    #   * "the embedded type is used as a base elsewhere" is CIRCULAR here and
+    #     it silently dropped the most important row. CheckBox holds a
+    #     GraphicWin AND a Dialog - checkbox.h says the real declaration is
+    #     `: virtual GraphicWin, virtual Dialog` - but nothing in this tree
+    #     derives from Dialog YET, precisely because these classes are the ones
+    #     still spelled flat. Filtering on it hid the second base of a
+    #     multiple-inheritance class.
+    #
+    # So: no declared base, and every member whose type is a class this tree
+    # declares. More than one is multiple inheritance.
+    embedded: dict[str, tuple[str, list[tuple[str, str]]]] = {}
+    for name, (base, fields, where) in sorted(catalogue.items()):
+        if where in skip_files or base.strip():
+            continue
+        seen: list[tuple[str, str]] = []
+        for ty, member in fields:
+            if ty.endswith("*") or ty.endswith("&") or ty == name:
+                continue              # a pointer occupies no base storage
+            if ty not in catalogue:
+                continue
+            if any(ty == t for t, _m in seen):
+                continue              # an array of members, not a second base
+            seen.append((ty, member))
+        if seen:
+            embedded[name] = (where, seen)
 
     hits.sort(key=lambda h: -h[0])
     for shared, name, where, other, other_where, names in hits:
         print(f"  {name} ({where}) repeats {other} ({other_where})'s first "
               f"{shared} field(s)")
-        print(f"      {', '.join(names)}")
+        print(f"      {', '.join(n for _ty, n in names)}")
         print(f"      check:  sizeof({other}) + {name}'s own == its pinned size")
 
     if not hits:
         print("  no baseless class repeats another's leading fields")
+
+    print()
+    for name, (where, seen) in sorted(
+            embedded.items(), key=lambda kv: -len(kv[1][1])):
+        kind = (f"MULTIPLE INHERITANCE, {len(seen)} bases" if len(seen) > 1
+                else "one embedded base")
+        print(f"  {name} ({where}) has NO base and embeds {kind}:")
+        for ty, member in seen:
+            print(f"      {ty:16} as `{member}`")
+    if not embedded:
+        print("  no class embeds by value a type this tree derives from "
+              "elsewhere")
     print(f"\n{len(catalogue):,} class(es) read from {len(list(SRC.glob('*.h'))):,} "
-          f"header(s); {len(hits)} candidate(s) at prefix >= {minimum}")
+          f"header(s); {len(hits)} name-prefix candidate(s) at prefix >= "
+          f"{minimum}, {len(embedded)} embedded-base candidate(s)")
