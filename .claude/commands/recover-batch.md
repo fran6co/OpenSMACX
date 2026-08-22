@@ -2,137 +2,152 @@
 description: Select a batch of unrecovered functions and fan out byte-match-recovery subagents over them
 ---
 
-Run one byte-match recovery batch. `$ARGUMENTS` may name a size cap (default
-`128`) and a batch size (default `12`).
+Run one byte-match recovery batch. `$ARGUMENTS` may name a batch size
+(default `12`).
 
-You are the **coordinator**. You alone touch the shared ledger and the map;
-subagents only score candidates. Follow these six steps in order.
+You are the **coordinator**. You alone touch the map and run `git`; subagents
+only edit bodies in their own worktrees. Follow these steps in order.
+
+Everything here names a tool that exists. `uv run tools/stale_references.py`
+is wired into the gate and will fail if that stops being true — the previous
+version of this file named **seven** deleted tools and `/recover-batch` failed
+at step 1 for as long as that went unnoticed.
 
 ## 1. Select
 
 ```sh
-uv run tools/recovery_frontier.py --max-size <cap> --queue <n>
+uv run tools/frontier.py --untouched   # neither a TRIED nor a LEVER
+uv run tools/frontier.py --fresh       # no TRIED (may carry a LEVER)
+uv run tools/frontier.py               # everything the build can compile
+uv run tools/frontier.py --all         # ...plus what it cannot
 ```
 
-This is already joined against `annotation_scan`, so it will not hand out work
-`src/` has proved, nor anything measured `SHARED_TAIL` or `REFUSED`. Take the
-top **n** by callers — a zero-caller leaf unblocks nothing and does not count
-as progress.
+Depth-first from `_WinMain@16`, nearest the root first. **Take from the top.**
+Do not select by address order — it correlates with nothing.
 
-Do not select by address order. It correlates with nothing.
+Measured 2026-08-23, and the shape of the work is the reason the flags matter:
 
-**When the leaf queue is empty, the leaf strategy is finished, not the work.**
-As of 2026-08-14 there are no fresh leaves left under 512 bytes at all. What
-remains is two populations, and they need different handouts:
+| queue | size | what it is |
+|---|---|---|
+| `--untouched` | **2** | effectively exhausted |
+| `--fresh` | **54** | no prior `TRIED:`; the real handout queue |
+| default | **364** | + bodies a previous pass already worked (IMPROVE) |
+| `--all` | **1,594** | + **1,230 in files the build does not compile** |
 
-- ~350 addresses with **no body at all**, every one 500 B or more and most of
-  them virtual handlers reached only through a vtable, so they have zero
-  direct callers and will never appear in a leaf queue. These are the
-  coverage gap. Rank them by size ascending and hand them out directly.
-- ~3,700 that have a body which does not match. This is IMPROVE work, and the
-  brief must carry the incumbent body.
+Three consequences:
 
-Ranking by callers is right while leaves exist and is meaningless afterwards;
-say which population a batch came from when you report it.
+- **`--untouched` is dry.** Do not report an empty queue as "no work left".
+- **A batch off `--fresh` is 54 addresses deep and then that is dry too.**
+  After it, batches are IMPROVE work — the body exists and does not match — and
+  the agent needs to know that, because starting over on a transcription that
+  is already correct is how a pass produces nothing.
+- **The 1,230 are not agent work.** A body in a file the build does not compile
+  cannot be *measured*, so no agent can finish it. It first needs a home in a
+  translation unit. Say which population a batch came from when you report it.
 
-## 2. Prepare
+## 2. Fan out
 
-For each address:
+Launch `byte-match-recovery` subagents with **`isolation: "worktree"`**, at most
+**6 concurrently**, 6–8 addresses each.
+
+Six is measured, not guessed: every VC6 compile runs against the one wine
+prefix at `~/opt/vc6/.wineprefix`, and `osmx check` alone runs up to
+`WINE_CEILING` concurrent compiles inside a single call.
+
+Give each agent **its addresses and nothing else**. The agent's own system
+prompt already carries the loop, the rules, and the report format, and it is
+told to read `docs/recovery/AGENT_BRIEF.md` itself as its first act.
+
+**Do not paste a brief into the handout.** A brief is a snapshot, a batch runs
+for a long time, and the tree records what that costs: one batch taught 13
+agents the `// LEVER:` convention backwards and all 13 landings had to be
+demoted; another handed two agents mutually exclusive instructions. An agent
+that reads the current brief has the current one by construction. It also keeps
+your context free, which is what lets a batch be 48 addresses instead of 12.
+
+## 3. Collect
 
 ```sh
-uv run tools/decomp_status.py --work <addr>
+uv run tools/collect_agent.py <agent-id-or-worktree-path>
 ```
 
-This materialises the scaffold over the placeholder, with `mizuchi_declfix`
-applied — so the unit an agent iterates on is the unit that will bank the
-result. One address is one file, so no two agents can collide.
+One agent at a time. It never pipes `git apply`, never trusts
+`--check --3way`, and reads the tree afterwards to find out what actually
+happened — all three of those were real defects that reported success and wrote
+nothing. Conflicts are reported, not resolved; `--resolve-ours` prints every
+discarded line and you are expected to read them.
 
-## 3. Brief — the AGENT generates it, not you
-
-```sh
-uv run tools/agent_brief.py <addr> [--tier T --note "..."]
-```
-
-The output **is** the prompt for that one function. **Tell each agent to run
-this itself, per address, as its first step.** Do not generate the briefs and
-paste them into the handout.
-
-A brief is a SNAPSHOT. Pasting it freezes the tool as it stood when the batch
-was selected, and a batch runs for a long time: batch 11 taught 13 agents the
-`// LEVER:` convention backwards and all 13 landings had to be demoted, batch
-12 handed two agents mutually exclusive instructions, and a mid-batch fix to
-`verify_recovered_function.py` never reached the agents already holding a
-brief — two of them worked around the stale refusal by hand. An agent that
-generates its own brief has the current one by construction, and the failure
-mode disappears instead of being remembered.
-
-It also keeps the coordinator's context free, which is what lets a batch be
-48 addresses instead of 12.
-
-## 4. Fan out
-
-Launch `byte-match-recovery` subagents, **at most 6 concurrently**, 6–8
-addresses each. Give each agent its addresses, the command above, and the
-standing rules: land the body in the ONE file the brief names (a body left in
-`/tmp` banks nothing), report the verdict line verbatim, no `__asm`, no `git`,
-and never edit the `// name` / `// size` / `// spans` / `// calls` fact lines —
-those are the catalogue it is being measured against.
-
-Six is a measured ceiling, not a guess: every VC6 compile runs against the one
-prefix at `~/opt/vc6/.wineprefix`, `byte_match.compile_batches` already runs up
-to 8 concurrent `wine CL` inside a single call, and an agent scoring ≤120
-candidates forms one chunk and runs serially. Eight agents is the ceiling.
-
-## 5. Collect — and do not trust the reports
+## 4. Re-measure — and do not trust the reports
 
 ```sh
-uv run tools/decomp_status.py --addresses <all of them> --record-matches
+uv run tools/osmx.py record <all of them>
 ```
 
 **Re-measure everything.** An agent's report is a claim about a run you did not
-observe, produced by the process that had an incentive to stop. `--record-matches`
-stamps only what *it* measured. This is the one serial step: it rewrites files
-across `src/` and must not run beside anything.
+observe, produced by a process with an incentive to stop. `record` measures
+first and writes only what it measured, so it cannot bank something false.
 
-## 6. Gate
+## 5. Gate
 
 ```sh
-uv run tools/decomp_status.py --check
+uv run tools/osmx.py check
 ```
 
-The claim count is the floor and there is no constant to bump. Then report:
-how many addresses were attempted, how many reached `BYTE_EXACT` **by your
-measurement**, and the new claim total.
+Compiles every claim, **links the tree**, and runs the `compiler_work.py`
+census. Exit `1` = a claim REGRESSED, `3` = something could not be measured
+(**not** a green gate), `0` = clean. The claim count is the floor and there is
+no constant to bump.
 
-If an agent's report and your measurement disagree, say so — a divergence
+**Never pipe it.** `cmd | tail` reports tail's exit status, and that has called
+a red gate green.
+
+## 6. Reap
+
+```sh
+uv run tools/reap_worktrees.py          # report
+uv run tools/reap_worktrees.py --reap   # remove
+```
+
+Agents leave their worktrees dirty by design and nothing else removes them;
+twelve accumulated before this existed, each a full checkout. Its four refusals
+are what make it safe to run.
+
+## 7. Report
+
+How many addresses were attempted, how many reached `BYTE_EXACT` **by your
+measurement**, which population the batch came from, and the new claim total.
+
+If an agent's report and your measurement disagree, **say so** — a divergence
 between claim and measurement is a finding about the harness, not a rounding
 error.
 
-## 7. Between batches
+## 8. Between batches
 
-The gate being green is not the end of a batch. Three of these have paid for
-themselves more than once, and none of them costs agent time.
+None of these costs agent time, and each has paid for itself more than once.
 
 ```sh
-# Landed units freeze their scaffolding, so an emitter fix reaches only the
-# units written after it. A re-scaffold pass banked 20 BYTE_EXACT with no
-# agent time at all; it keeps bodies and ratchets, and reverts regressions.
-uv run tools/refresh_file_units.py --apply
+# Byte-exact bodies sitting in an artifact the build never compiles, and
+# unclaimed bodies already in the tree. Free claims; re-run after every batch.
+uv run tools/promotable.py
+uv run tools/promotable.py --unmarked
 
-# A field name that lies about its offset is read straight into a body. Every
-# brief for a class with observed accesses tells the agent that the field at
-# 0x838 is spelled `field_838_`; this is what holds that true, against the
-# compiler rather than against a header comment.
-uv run tools/verify_member_offsets.py --check-names
+# One address claimed by BOTH product source and a leftover artifact. The
+# gate's duplicate check does not look across directories.
+uv run tools/orphan_artifacts.py
 
-# What a class's own code proves about where its fields are, for any class an
-# agent reported as unverified. This is already in every brief - run it
-# directly when triaging a DEFERRED note that blames a layout.
-uv run tools/member_map.py <Class>
+# Work the tree is doing that the compiler should do - hand-installed vtables,
+# `construct()` stand-ins, placement new on a subobject. Ratcheted; every big
+# win in this project came from DELETING one of these.
+uv run tools/compiler_work.py
 
-# Names that say void over bodies that return a status. A review aid, not a
-# gate: it reads constants only, and the caller-side half is still unbuilt.
-uv run tools/verify_void_returns.py
+# What the build ACTUALLY emits for a marker's mangled name. Every catalogued
+# name is a reconstruction: `QAE` hides `UAE`, `??_G` hides `??_E`, `QAA`
+# invents a receiver. Do not diagnose these by eye.
+uv run tools/marker_symbols.py
+uv run tools/compiler_thunks.py
+
+# Prose that refuses to do something for a reason that was true once.
+uv run tools/prose_refusals.py
 ```
 
 **Act on the agents' STRUCTURE rows, and check the ones that blame a header.**
@@ -140,5 +155,5 @@ Two functions were deferred in one batch against headers that named every
 offset they needed — one agent read "sizeof is not pinned" in `infowin.h` as
 "these offsets are guesses", another read the unspelled inheritance edge in
 `dialogs.h` as "a `Dialogs` cannot be declared". Both headers were right and
-both agents were wrong, which is only discoverable by reading the header
-rather than the report.
+both agents were wrong, which is only discoverable by reading the header rather
+than the report.
