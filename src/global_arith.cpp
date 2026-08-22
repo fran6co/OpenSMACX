@@ -562,6 +562,13 @@ Purpose: sub_48d810 - arithmetic over 2 fixed global(s), one
 // calls     (none)
 Return Value: n/a
 Status: Complete
+// TRIED: the one divergence is an ENCODING choice VC6 will not make - the
+//   image has `add eax, -2` (83 C0 FE), this tree emits `sub eax, 2`
+//   (83 E8 02), same semantics and same length. `eax = eax + -2` is
+//   already the source form and VC6 canonicalises it to a subtract;
+//   so does the unsigned spelling `eax + 0xFFFFFFFEu`, measured. A
+//   literal negative addend cannot reach that encoding, so whatever
+//   the original wrote, the -2 did not arrive as a constant here.
 */
 void __fastcall global_arith_0048d810_redirect(void *, void *) {
     int32_t eax = *GlobalSlot008578BC;
