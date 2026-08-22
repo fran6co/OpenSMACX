@@ -298,6 +298,7 @@ int Dialog::pos_to_id(int position) {
 Purpose: Add an item to the dialog's string list, keyed by its id, if a
          non-null string is given.
 // ORIGINAL: 0x00609990 ?item@Dialog@@QAEHPADH@Z 0x00609990-0x006099C4 BYTE_EXACT
+// symbol    ?item@Dialog@@UAEHPADH@Z
 // size      52 bytes
 // prototype int (__thiscall ?item@Dialog@@QAEHPADH@Z)(Dialog* this, int8*, int)
 // callers   1   call targets   1

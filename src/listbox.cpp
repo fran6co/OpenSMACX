@@ -26,6 +26,7 @@
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
 // ORIGINAL: 0x0060C7C0 ?on_dialog_focus@ListBox@@QAEXH@Z 0x0060C7C0-0x0060C7C3 BYTE_EXACT
+// symbol    ?on_dialog_focus@ListBox@@UAEXH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_dialog_focus@ListBox@@QAEXH@Z)(ListBox* this, int)
 // callers   1   call targets   0
@@ -179,6 +180,7 @@ uint32_t __fastcall list_box_destructor_redirect(void *adjusted, void *) {
 /*
 Purpose: Clear the hover index and repaint, through the enclosing object.
 // ORIGINAL: 0x0060CE10 ?on_mouse_leave@ListBox@@QAEXHH@Z 0x0060CE10-0x0060CE38 BYTE_EXACT
+// symbol    ?on_mouse_leave@ListBox@@UAEXHH@Z
 // size      40 bytes
 // prototype void (__thiscall ?on_mouse_leave@ListBox@@QAEXHH@Z)(ListBox* this, int, int)
 // callers   1   call targets   0
@@ -200,15 +202,20 @@ void ListBox::on_mouse_leave(int a1, int a2) {
     // scales the +8 and emits [eax+0x20].
     //
     // Both parameters are dead; `ret 8` still pops them.
+    // 0xF0, NOT 0xA8 - and that is the third class to confirm the constant.
+    // The compiler walks out of the subobject as part of the override's entry
+    // now, so the source states the field's actual offset in the ENCLOSING
+    // object rather than a subobject-relative remainder. 0x48 + 0xA8 == 0xF0,
+    // exactly as 0x1C + 0xD4 and 0x18 + 0xD8 do in CheckBox and RadioButton.
     *reinterpret_cast<int *>(
-        reinterpret_cast<char *>(this) + 0xA8 +
+        reinterpret_cast<char *>(this) + 0xF0 +
         *reinterpret_cast<int *>(reinterpret_cast<char *>(
             *reinterpret_cast<int **>(
-                reinterpret_cast<char *>(this) - 0x48)) + 8)) = -1;
+                reinterpret_cast<char *>(this))) + 8)) = -1;
 
     reinterpret_cast<VCall *>(
-        reinterpret_cast<char *>(this) - 0x48 +
+        reinterpret_cast<char *>(this) +
         *reinterpret_cast<int *>(reinterpret_cast<char *>(
             *reinterpret_cast<int **>(
-                reinterpret_cast<char *>(this) - 0x48)) + 4))->slot062();
+                reinterpret_cast<char *>(this))) + 4))->slot062();
 }
