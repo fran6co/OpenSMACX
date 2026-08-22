@@ -846,20 +846,24 @@ Popup::Popup() {
 // a second time under a name this function would have to guess too.
 extern int BaseAtKeyPollFlag;  // 0x009BC070
 
-// WHERE THE RUNTIME WALK STOPS, and it is not a missing body. Measured
-// 2026-08-21: the executable now reaches WinMain, runs Win::set_display_mode
-// -> DDInit::init, and DirectDraw FAILS under wine - so it takes the error
-// path, DDInit::report_error -> pop_caption_title -> pops. And `pops` reads
-// these two slots, which are still zero, because they are filled by
-// BasePop::init_class() from `jackal_init_real` - which has not run yet at
-// display-mode time. `Win::is_visible()` then reads offset 0x9C off null and
-// faults.
+// WITHDRAWN 2026-08-22. This note used to say the runtime walk stops here
+// because "DirectDraw FAILS under wine", that the error path into
+// `report_error` -> `pops` was therefore faithful, and that no further source
+// would move it. ALL THREE CLAIMS WERE WRONG, and they were wrong because the
+// executable was being launched incorrectly, not because of anything here.
 //
-// That is FAITHFUL, not broken. The original takes this path only when
-// DirectDraw fails during startup, which is exactly when these singletons do
-// not exist yet either. Chasing it further recovers nothing: the next real
-// frontier is on the SUCCESS path, which needs DirectDraw to initialise in
-// this environment rather than any more source.
+// Run the way docs/TOOLS.md documents - the project's own wine prefix, inside
+// a wine virtual desktop, from `.opensmacx/game` - BOTH the shipped image and
+// this build run with zero page faults, repeatably:
+//
+//   cd .opensmacx/game
+//   WINEPREFIX=$HOME/opt/vc6/.wineprefix DISPLAY=:1 \
+//       wine explorer /desktop=smac,1024x768 <exe>
+//
+// Under the DEFAULT prefix with no virtual desktop, the SHIPPED IMAGE faults
+// identically - at 0x005F7E90, its own `Win::is_visible`, reading 0x9C off a
+// null popup slot. So the crash was never evidence about this recovery at
+// all; it reproduced on the original just as readily.
 //
 // Two singleton BasePop instances, allocated once by BasePop::init_class()
 // (basepop.cpp, which already casts to this pair of fixed addresses under
