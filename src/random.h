@@ -59,11 +59,20 @@ class Random {
           max ^= min;
           min ^= max;
       }
+      const uint32_t range = static_cast<uint32_t>(max - min);
       seed_ = seed_ * 0x19660D + 0x3C6EF35F;
+      // A LOCAL MASK, NOT THE `LOWORD` MACRO. `LOWORD(seed_)` truncates to a
+      // 16-bit rvalue and VC6 satisfies that by RE-READING the low word from
+      // `seed_`'s memory (`mov si, word ptr [ecx]`) right after the store
+      // that just wrote it, rather than masking the register already
+      // holding the value. Copying `seed_` into a 32-bit local first and
+      // masking THAT keeps it in the register the image's `and edx, 0xffff`
+      // reuses.
+      const uint32_t new_seed = seed_;
       // UNSIGNED SHIFT. The image is `shr eax, 0x10`; with `int` operands
       // the same expression shifts arithmetically - `sar` - and that one
       // byte was the last divergence in `random(int, int)`.
-      return ((static_cast<uint32_t>(max - min) * LOWORD(seed_)) >> 16) + min;
+      return ((range * (new_seed & 0xFFFF)) >> 16) + min;
   }
   // IN-CLASS for the same reason as reseed() and get(int, int): the image's
   // free `random()` at 0x00625850 has this body FOLDED IN - twelve

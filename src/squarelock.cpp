@@ -111,17 +111,37 @@ Purpose: Take a square and every tile in its footprint for a faction. The
 Return Value: 1 when a footprint tile is already locked by another faction,
               0 otherwise (including an off-map coordinate)
 Status: Complete
+// LEVER: /Oy- is the winning flag set - the doc's own `frame` tag says the
+//   image keeps a real ebp frame. Store order is flag/first/second (not
+//   declaration order first/second/flag - `store_order.py` shows it), and
+//   the loop-count test reads the untouched `flags` parameter rather than
+//   `flag & N`, matching the image's `test bl, 0x10` against the parameter
+//   register instead of the stored member.
+// TRIED: 59/87 (0.977 similar), plateaued. The remaining divergence is
+//   which callee-saved register (eax vs ebx) VC6 assigns to the surviving
+//   `flags` parameter against the OR'd value, and it propagates through the
+//   loop as an eax/ebx or edi/ebx register swap throughout - not a
+//   spelling this tree's source controls. `semantic` refuses at instruction
+//   4 (`mov` against `push`), so it is a real ordering difference, not pure
+//   allocation noise.
 */
 int SquareLock::lock(int factionID, int flags, int x, int y) {
+    // STORE ORDER: flag, then first, then second - the image writes
+    // `[esi+8]` (flag) before `[esi]`/`[esi+4]` (first/second), the
+    // opposite of the field's declaration order.
+    flag = flags | 1;
     first = x;
     second = y;
-    flag = flags | 1;
     if (y < 0 || y >= MapLatitudeBounds || x < 0 || x >= MapLongitudeBounds) {
         return 0;
     }
+    // TESTED OFF THE PARAMETER, NOT THE MEMBER. Bits 2, 3 and 4 do not
+    // overlap the `| 1` that went into `flag`, so `flags & N` and
+    // `flag & N` agree here; the image keeps the untouched parameter in a
+    // register (`test bl, 0x10`) instead of re-deriving it from `flag`.
     int count;
-    if ((flag & 4) && !(flag & 0x10)) {
-        count = (flag & 8) ? 81 : 25;   // RadiusRange[4] or RadiusRange[2]
+    if ((flags & 4) && !(flags & 0x10)) {
+        count = (flags & 8) ? 81 : 25;   // RadiusRange[4] or RadiusRange[2]
     } else {
         count = 1;
     }

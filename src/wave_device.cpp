@@ -602,7 +602,7 @@ Purpose: Take a wave out of its group. The wave's slot names the group; its
          out. A wave whose node is not on the list - or a group with no list
          at all - just forgets its slot. Either way the wave's slot becomes
          the out-of-range 0x10.
-// ORIGINAL: 0x004C5280 ?pull_from_group@Wave_Device@@QAEHPAUWave@@@Z 0x004C5280-0x004C531C
+// ORIGINAL: 0x004C5280 ?pull_from_group@Wave_Device@@QAEHPAUWave@@@Z 0x004C5280-0x004C531C BYTE_EXACT
 // symbol    ?pull_from_group@Wave_Device@@QAEHPAVWave@@@Z
 // size      156 bytes
 // prototype int (__thiscall ?pull_from_group@Wave_Device@@QAEHPAUWave@@@Z)(Wave_Device* this, Wave*)
@@ -614,37 +614,56 @@ Return Value: 0, or 0xA for a null wave or an out-of-range slot
 Status: Complete
 */
 int Wave_Device::pull_from_group(Wave *a1) {
-    if (!a1) {
-        return 0xA;
-    }
+    // ONE SHARED TAIL, NOT TWO. The image jumps both the null-wave check
+    // and the out-of-range-slot check to the SAME `mov eax, 0xa; ret`, which
+    // a merged `||` condition reproduces; two separate early-return `if`s
+    // each got their own inline epilogue instead.
     uint32_t *const slot_field =
         reinterpret_cast<uint32_t *>(reinterpret_cast<uint8_t *>(a1) + 0x68);
-    const uint32_t slot = *slot_field;
-    if (slot >= 0x10) {
+    if (!a1 || *slot_field >= 0x10) {
         return 0xA;
     }
-    WaveControlGroup &group = groups_[slot];
+    const uint32_t slot = *slot_field;
+    // THE HEAD-RELATIVE VIEW, NOT THE WHOLE STRUCT. The image computes its
+    // group pointer straight to `&groups_[slot].head`
+    // (`lea esi, [ecx + eax*8 + 0x2c]`) and addresses head/tail/cursor/count
+    // at +0/+4/+8/+0xc from THAT; binding a `WaveControlGroup&` to the
+    // struct's own front computes the pointer 8 bytes earlier and every
+    // field store lands 8 bytes further out (+8/+0xc/+0x10/+0x14) than the
+    // image's.
+    WaveGroupList &group =
+        *reinterpret_cast<WaveGroupList *>(&groups_[slot].head);
+    // ONE LOOP CONDITION, NOT A NESTED GUARD. The image tests `node` for
+    // null on every iteration as PART of the loop condition (`test eax,eax;
+    // je` shared by both the "list ran out" and "found" exits), then
+    // retests it once after the loop to tell which exit it was - a nested
+    // `if (!node) return` inside the loop body produces its own separate
+    // tail instead of sharing that merge point.
     WaveGroupNode *node = group.head;
+    while (node && node->wave != a1) {
+        node = node->next;
+    }
     if (node) {
-        while (node->wave != a1) {
-            node = node->next;
-            if (!node) {
-                *slot_field = 0x10;
-                return 0;
-            }
-        }
         if (node->prev) {
             node->prev->next = node->next;
         } else {
             group.head = node->next;
         }
         if (node->next) {
-            node->next->prev = node->prev;
-            group.cursor = node->next;
+            // ONE READ OF `node->next`, reused for both the store into it
+            // and the store of it into `group.cursor` - the image keeps it
+            // in the register the `if` already loaded rather than
+            // re-reading `node->next` a second time.
+            WaveGroupNode *const next = node->next;
+            next->prev = node->prev;
+            group.cursor = next;
         } else {
-            // One statement, comma-sequenced: the cursor clears first and
-            // the tail steps back second, exactly the original's store order.
-            group.tail = (group.cursor = nullptr, node->prev);
+            // `node->prev` READ FIRST, then the cursor cleared, then the
+            // tail steps back - the image loads it into a register before
+            // storing the cursor's zero, not after.
+            WaveGroupNode *const prev = node->prev;
+            group.cursor = nullptr;
+            group.tail = prev;
         }
         operator delete(node);
         group.count -= 1;

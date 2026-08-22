@@ -195,6 +195,29 @@ void __cdecl world_rainfall() {
     PENDING_BODY(0x005C4470, pending)();
 }
 
+// Four Time callbacks `temp.h` bound as pointers - start_timers (time.cpp)
+// calls each by name now, reaching the image's `push 0x...` immediate
+// instead of loading the pointer from memory.
+void __cdecl blink_timer(int a1) {
+    typedef void(__cdecl *pending)(int);
+    PENDING_BODY(0x0050EA40, pending)(a1);
+}
+
+void __cdecl blink2_timer(int a1) {
+    typedef void(__cdecl *pending)(int);
+    PENDING_BODY(0x0050EE30, pending)(a1);
+}
+
+void __cdecl line_timer(int a1) {
+    typedef void(__cdecl *pending)(int);
+    PENDING_BODY(0x0050EE80, pending)(a1);
+}
+
+void __cdecl turn_timer(int a1) {
+    typedef void(__cdecl *pending)(int);
+    PENDING_BODY(0x0050EF10, pending)(a1);
+}
+
 void __cdecl social_set(uint32_t faction_id) {
     typedef void(__cdecl *pending)(uint32_t);
     PENDING_BODY(0x005B4600, pending)(faction_id);

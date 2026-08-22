@@ -206,12 +206,31 @@ Purpose: Calculate the success and survival rates for a probe action based on th
 // calls     0x0050BA00 0x00625EC0 0x00645470 0x0064FC88
 Return Value: Success rate of probe
 Status: Complete
+// LEVER: /Oy- - the doc's own `frame` tag says the image keeps a real ebp
+//   frame, and it also earns the `lea eax,[esi+1]; test eax,eax` idiom for
+//   `base_id != -1`; spelling that comparison as `(base_id + 1) != 0`
+//   instead of `base_id != -1` reproduces it (both prb_defense sites).
+//   `StringTemp[0] = '\0'` scheduled BEFORE the `morale < 1` guard (both
+//   unconditional; the image hoists the clear first) also helped.
+// TRIED: 23/208 (0.916 similar), plateaued at this size. The remaining gap
+//   is the `has_fac_built`-shaped bit test in the block that reads
+//   `soc_effect_active.probe` - the image indexes a table with a `lea`
+//   chain (`esi+esi*8`, `esi+edx*2`, `esi+eax*4`) this tree's equivalent
+//   expression does not reproduce, plus pervasive esi/edi register-role
+//   swaps through the rest of the body. This is a body-shape question for
+//   its own pass, not another spelling of the preamble - see the
+//   `mind_control` LEVER note just above this function for the same shape
+//   of ceiling.
 */
 int __cdecl success_rates(int id, int morale, int diff_modifier, int base_id) {
+    // STRINGTEMP CLEARED BEFORE THE MORALE GUARD. The image's
+    // `mov byte ptr [StringTemp], 0` is scheduled ahead of the `cmp ebx, 1`
+    // that guards `morale = 1` - both are unconditional, but the image
+    // hoists the string clear first.
+    StringTemp[0] = '\0';
     if (morale < 1) {
         morale = 1;
     }
-    StringTemp[0] = '\0';
     int success_rate;
     if (diff_modifier < 0) {
         strcat(StringTemp, "100%");
@@ -221,7 +240,7 @@ int __cdecl success_rates(int id, int morale, int diff_modifier, int base_id) {
         // for loss_rate - it never caches it in a shared local, and each use
         // makes its own real has_fac_built() call (via has_fac_built_call's
         // bitmask() E8, matching the image's two `call 0x50ba00` sites).
-        int prb_defense = (base_id != -1 && has_fac_built_call(FAC_COVERT_OPS_CENTER, base_id))
+        int prb_defense = ((base_id + 1) != 0 && has_fac_built_call(FAC_COVERT_OPS_CENTER, base_id))
             ? 2 : 0;
         prb_defense = range(PlayersData[ProbeTargetFactionID].soc_effect_active.probe
             + prb_defense, -2, 0);
@@ -236,7 +255,7 @@ int __cdecl success_rates(int id, int morale, int diff_modifier, int base_id) {
         say_num(success_rate);
         strcat(StringTemp, "%");
 
-        int prb_defense_2 = (base_id != -1 && has_fac_built_call(FAC_COVERT_OPS_CENTER, base_id))
+        int prb_defense_2 = ((base_id + 1) != 0 && has_fac_built_call(FAC_COVERT_OPS_CENTER, base_id))
             ? 2 : 0;
         prb_defense_2 = range(PlayersData[ProbeTargetFactionID].soc_effect_active.probe
             + prb_defense_2, -2, 0);
