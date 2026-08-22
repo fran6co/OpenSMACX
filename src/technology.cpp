@@ -243,12 +243,15 @@ Status: Complete
 // units (facility_avail in base.cpp) got a real out-of-line call where the
 // image open-codes the whole preq_tech walk at all 109 call sites.
 
-// Non-inline forwarder for best_specialist (base.cpp), where the image
-// genuinely emits `call 0x5b9f20` rather than folding has_tech's preq walk
-// in place.
-BOOL __cdecl has_tech_call(int tech_id, int faction_id) {
-    return has_tech(tech_id, faction_id);
-}
+// has_tech_call's DEFINITION LIVES IN leaf_recoveries.cpp, not here, and the
+// distance is the whole point. `/O2` implies `/Ob2`, which inlines any
+// suitable function and not merely `inline`-marked ones - so a forwarder
+// defined in THIS file gets folded straight back into every caller in this
+// file, and valid_tech_leap's four sites emitted has_tech's preq walk in place
+// where the image emits `call 0x5b9f20`. That is why best_specialist
+// (base.cpp) worked with the same idiom: it is CROSS-TU, and VC6 cannot inline
+// across translation units. Moving the definition out is what makes the
+// forwarder actually forward.
 
 /*
 Purpose: Determine technology level for tech_id.

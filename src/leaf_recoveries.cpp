@@ -36,6 +36,7 @@
 #include "dialog.h"
 #include "reportwin.h"
 #include "reportif.h"
+#include "technology.h"  // has_tech, for the forwarder at the end
 
 #include <cstring>
 
@@ -2164,3 +2165,12 @@ int __cdecl pop_ask(char *a1, char *a2, int a3, char *a4,
     return reinterpret_cast<func_pop_ask>(0x00627910)(a1, a2, a3, a4, a5, a6);
 }
 #pragma auto_inline(on)
+
+// Non-inline forwarder for callers the image really does make a call at -
+// best_specialist (base.cpp) and valid_tech_leap (technology.cpp). It lives
+// HERE rather than beside has_tech because /O2 implies /Ob2: a forwarder in
+// technology.cpp is inlined back into technology.cpp's own callers, and the
+// call it exists to produce never appears. Cross-TU is what stops that.
+BOOL __cdecl has_tech_call(int tech_id, int faction_id) {
+    return has_tech(tech_id, faction_id);
+}
