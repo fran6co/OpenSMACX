@@ -164,6 +164,26 @@ Purpose: Tear down a network daemon - its own lock table, then AlphaNet's
          and Net's fields, directly (no separate calls into their own
          destructors).
 // ORIGINAL: 0x00538D10 ??1NetDaemon@@QAE@XZ 0x00538D10-0x00538EBE;0x004E3710-0x004E372B;0x0065E010-0x0065E0A5
+// RULED-OUT: 15/97 with 62 compiled instructions, and the gap is the class, not
+//   the spelling. TWO things measured 2026-08-22. (1) call_diff says MORE: this
+//   tree makes 13 direct calls where the image makes 12, and the extra one is
+//   `??1Net@@QAE@XZ` - NOT written in this body. `NetDaemon : public AlphaNet :
+//   public Net`, so a REAL `~NetDaemon()` emits the implicit base-destructor
+//   chain; VC6 inlines `~AlphaNet` and calls `~Net` out of line, and the image
+//   calls neither, having open-coded both bases' teardown as the field clears
+//   and vtable resets this body writes by hand. Under /O1 the count is 14,
+//   the fourteenth being `__EH_prolog`. (2) The image's body is a genuine C++
+//   unwind state machine: `mov byte ptr [ebp - 4], N` steps through states
+//   2,1,3,0,9,0xa,8,7,6,5,4,-1 between the calls, and reserves `sub esp, 8`
+//   where this tree reserves `push ecx`. Those state writes come from member
+//   and base subobjects the compiler is destroying itself, one protected
+//   region per subobject - explicit `->~Shim()` calls on reinterpret_cast
+//   pointers, which is what this body has, create no unwind states at all, so
+//   no spelling of the current shim scaffolding can produce them. Reaching
+//   this needs Net/AlphaNet/NetDaemon modelled with the real members at 0x58,
+//   0xb0, 0xe8, 0x10c, 0x130, 0x72c, 0x748, 0x144c, 0x148c - the same layout
+//   job the class comment above says is still open - not another pass over the
+//   statements.
 // size      430 bytes
 // prototype void (__thiscall ??1NetDaemon@@QAE@XZ)(NetDaemon* this)
 // callers   0   call targets   9
