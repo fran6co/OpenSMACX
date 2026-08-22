@@ -154,10 +154,21 @@ Purpose: Find closest base to territory owned by another faction not at war with
 Return Value: Base id or -1
 Status: Complete
 */
+// LEVER: `faction_id != (uint32_t)owner`, not `(uint32_t)owner != faction_id`
+//        - the image's `cmp esi, eax` (faction_id, owner) matches the
+//        operands in that order; took the best flag set (/O2 /Gy /GR- /Oy-
+//        /GX) from 42/50 to 43/50, 0.960 similar.
+// RULED-OUT: remaining gap is `is_human()` (faction.h) reading
+//            `FactionsStatus[0]` as `mov edx, dword ptr [addr]; and edx,
+//            0xff` in the image against this tree's `xor edx, edx; mov dl,
+//            byte ptr [addr]` - out of this batch's scope (faction.h, not
+//            map.cpp/map.h), and identical at both is_human() call sites
+//            here, so nothing in base_territory's own source shape can move
+//            it. Not chased further.
 int __cdecl base_territory(int faction_id, int x, int y) {
     int base_id;
     int owner = whose_territory(faction_id, x, y, &base_id, false);
-    if (owner >= 0 && (uint32_t)owner != faction_id && (is_human(faction_id) || is_human(owner))
+    if (owner >= 0 && faction_id != (uint32_t)owner && (is_human(faction_id) || is_human(owner))
         && !has_treaty(faction_id, owner, DTREATY_VENDETTA)) {
         return base_id;
     }
@@ -391,6 +402,15 @@ Purpose: Check to see if a port base shares a common body of water with destinat
 Return Value: Is port and coastal region accessible by water to each other? true/false
 Status: Complete
 */
+// RULED-OUT: best 77/103, 0.922 similar (best flag set /O2 /Gy /GR- /Oy-
+//            /GX), MISMATCH at every flag set. The remaining gaps are all
+//            `region_at`'s inlined `map_loc()->region` read: the image
+//            schedules `xor ecx, ecx` (or the byte-index add) before loading
+//            the map_tiles() pointer, this tree always loads the pointer
+//            first - same register-scheduling plateau as alt_at/alt_detail_at
+//            (0x00500150/0x00500180) and abstract_at (0x00591210), inherited
+//            here because `region_at` is called four times over the body.
+//            Not chased further.
 BOOL __cdecl port_to_coast(int base_id, int region) {
     int x = Bases[base_id].x;
     int y = Bases[base_id].y;
@@ -596,6 +616,24 @@ Purpose: Determine whether specified unit can physically reach the destination c
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x004E3A50 0x0050DDC0 0x0050DE50 0x0050E030 0x0050E160
+// RULED-OUT: best 17/147, 0.062 similar (best flag set /O2 /Gy /GR- /Oy-
+//            /GX) - `call_diff` shows this tree making 6 calls against the
+//            image's 7, missing exactly `port_to_port` (0x0050E160). Its
+//            marker (0x0050E160, map.h) already notes the image keeps a REAL
+//            call to port_to_port here (and in veh.cpp's valid_patrol) while
+//            inlining it whole at naval_base/convoy - a genuine per-call-site
+//            split the image itself makes. `port_to_port` is `MEASURED
+//            inline` in map.h because THAT lever is what fixed naval_base and
+//            convoy; at get_there's call site VC6 chooses to inline it too
+//            (confirmed by dumping this tree's own compiled listing - no
+//            `call` opcode for it, and the prologue reserves `sub esp, 0x10`
+//            where the image's is a single `push ecx`, consistent with the
+//            inlined body's extra locals). VC6 6.0 has no
+//            `__declspec(noinline)` to force the split per call site, and
+//            reverting port_to_port to non-inline would regress the
+//            already-recorded naval_base/convoy fixes - out of this batch's
+//            reach without touching shared map.h behavior other claims
+//            depend on. Not chased further.
 Return Value: Can unit reach tile? true/false
 Status: Complete
 */
@@ -640,6 +678,15 @@ Purpose: Determine whether point A is a coast or border tile. It seems that the 
 Return Value: Is point A considered a border or coast? true/false
 Status: Complete
 */
+// RULED-OUT: best 7/110, 0.826 similar (best flag set /O2 /Gy /GR- /GX; call
+//            count already matches the image at 2, both to whose_territory).
+//            The remaining gap looks like the `region_a != region_b` OR-term
+//            being evaluated ahead of the `whose_territory(...)` call in the
+//            image (a cheap loop-invariant compare scheduled before an
+//            expensive call) - swapping the source's OR order to match
+//            scored WORSE (0.780), so that is not the lever. Same
+//            xrange/on_map/is_ocean-loop register-scheduling plateau as the
+//            rest of this file otherwise. Not chased further.
 BOOL __cdecl coast_or_border(int x_point_a, int y_point_a, int x_point_b, 
                              int y_point_b, int faction_id) {
     if ((int)faction_id != whose_territory(faction_id, x_point_a, y_point_a, NULL, false)) {
@@ -820,6 +867,14 @@ Status: Complete
 // some call sites and calls it at others, and a .cpp definition is only ever
 // one of those. The marker stays here because that is where the catalogue
 // reads it.
+// RULED-OUT: best MNEMONIC_ONLY, 10/12 instructions, 1.000 similar (best flag
+//            set /O2 /Gy /GR- /Oy- /GX). Same index-fold plateau as
+//            alt_at/alt_detail_at: the image computes `edx + eax` then
+//            indexes `[ecx + edx]` (map_tiles()-style base loaded before the
+//            offset add), this tree's `(x >> 1) + y * (bounds >> 1)` compiles
+//            `eax + ecx` then `[eax + edx]` - operands and registers both
+//            swapped from a single array-index expression. Not chased
+//            further; register-allocation-only, not a source-shape fix.
 
 
 
@@ -1123,6 +1178,15 @@ Status: Complete
 // some call sites and calls it at others, and a .cpp definition is only ever
 // one of those. The marker stays here because that is where the catalogue
 // reads it.
+// RULED-OUT: best MNEMONIC_ONLY (needs /Oy- to even get the ebp-frame; with
+//            it, 12/14 instructions, all mnemonics agree). The image loads
+//            the `bit` parameter into ecx BEFORE the map_tiles() pointer into
+//            edx, this tree's `map_loc(x, y)->bit = bit;` always loads the
+//            pointer first and `bit` second. Tried: a local `int new_bit =
+//            bit;` before the store, and a local `Map *tile = map_loc(x, y);`
+//            before it - both compiled byte-identical to the plain form, so
+//            the scheduling is fixed by the compiler regardless of source
+//            shape. Not chased further.
 
 
 /*
@@ -1682,6 +1746,15 @@ Status: Complete
 // some call sites and calls it at others, and a .cpp definition is only ever
 // one of those. The marker stays here because that is where the catalogue
 // reads it.
+// LEVER: `!(MapIsFlat & 1)`, not `!MapIsFlat` - same idiom as xrange
+//        (0x0048BEE0) - took the best flag set (/O2 /Oi- /Gy /GR- /Oy- /GX)
+//        from 14/21 to 16/21 (still 0.923 similar - the raw count moved, the
+//        rounded ratio didn't).
+// RULED-OUT: remaining gap (best flag set, 18 instructions here vs the
+//            image's 21) is a trailing `mov ecx, eax` the image emits right
+//            before `pop ebp; ret` that this tree's `return dist;` never
+//            produces - same register-caching family as vector_dist
+//            (0x005A5910)'s note on this same function. Not chased further.
 
 
 /*
@@ -1700,6 +1773,16 @@ BOOL __cdecl is_known(int x, int y, int faction_id) {
     return (PlayersData[faction_id].flags & PFLAG_MAP_REVEALED
         || map_loc(x, y)->visibility & (1 << faction_id));
 }
+// RULED-OUT: splitting the `||` into a guard clause (`if (A) return true;
+//            return B;`) scored WORSE (0.730 vs 0.903 similar) - the image
+//            does NOT chain-split this one, opposite of map_write/map_read's
+//            lever. Also ruled out: swapping the `&` operand order
+//            (`(1 << faction_id) & ...->visibility`) - identical score.
+//            Best flag set (/O2 /Gy /GR- /Oy- /GX) is 16/30, 0.903 similar;
+//            the gap is `push ebx`/`pop ebx` around the shift - the image
+//            keeps `1 << faction_id` in edx and map_tiles() in ecx, this
+//            tree's allocator picks ebx for the shift (needing the
+//            save/restore) and edx for the pointer. Not chased further.
 
 /*
 Purpose: If a base exists, get the owner of the specified tile.
@@ -2057,18 +2140,37 @@ Purpose: Determine if the specified two tiles are within the range radius of eac
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// LEVER: two fixes, 0.709 -> 0.902 similar (3/40 raw, best flag set /O2 /Gy
+//        /GR- /Oy- /GX). (1) BUG IN THIS RECOVERY (not the original): the
+//        wraparound test compared against the precomputed `MapLongitude`
+//        global and adjusted by `MapLongitudeBounds` - a mismatched pair. The
+//        image reads ONLY `MapLongitudeBounds` (0x949870) here, computing its
+//        own `/2` inline via `cdq; sub; sar` for the threshold and using the
+//        UNHALVED value for the adjustment - the exact shape compass_move
+//        (0x005A6630) already documents, with `MapLongitudeBounds` where
+//        compass_move uses `MapLongitude`. Rewriting both threshold checks as
+//        `-((int)MapLongitudeBounds / 2)` / `((int)MapLongitudeBounds / 2)`
+//        and the adjustment as `MapLongitudeBounds` fixed the division shape.
+//        (2) Declaring `int y_radius_off = y_dst - y_src;` BEFORE
+//        `x_radius_off` (rather than evaluating `y_dst - y_src` inline at the
+//        tail call) matches the image computing the y-difference early,
+//        interleaved with the x-difference - moved 0.800 -> 0.902.
+// RULED-OUT: remaining gap is an esi/ecx register swap running through the
+//            whole body - same register-allocation plateau as the rest of
+//            this file's xrange/on_map-loop family. Not chased further.
 Return Value: Range radius, otherwise -1 if not within range
 Status: Complete
 */
 int __cdecl radius_move(int x_src, int y_src, int x_dst, int y_dst, int range) {
+    int y_radius_off = y_dst - y_src;
     int x_radius_off = x_dst - x_src;
-    if (x_radius_off < (-(int)MapLongitude)) {
+    if (x_radius_off < -((int)MapLongitudeBounds / 2)) {
         x_radius_off += MapLongitudeBounds;
     }
-    if (x_radius_off > ((int)MapLongitude)) {
+    if (x_radius_off > ((int)MapLongitudeBounds / 2)) {
         x_radius_off -= MapLongitudeBounds;
     }
-    return radius_move(x_radius_off, y_dst - y_src, range);
+    return radius_move(x_radius_off, y_radius_off, range);
 }
 
 /*
@@ -2181,6 +2283,17 @@ Purpose: Check whether a sensor array is worth building on the specified tile.
 // calls     0x004E3A50 0x004E3EF0 0x00592030 0x005B9F20 0x005BF010
 Return Value: Is the tile a good sensor site? true/false
 Status: Complete
+
+RULED-OUT: best 14/242, 0.419 similar (best flag set /O2 /Gy /GR- /Oy- /GX).
+`has_tech` (0x005B9F20, technology.h) is `MEASURED inline` and gets inlined
+whole at this call site, where the image keeps a real call - dumping this
+tree's own compiled listing shows 7 call opcodes against the image's 9, the
+two missing being has_tech's. Same cross-file per-call-site conflict as
+get_there/port_to_port (0x0056B320, this file) - technology.h's `inline` is
+what fixes has_tech's OTHER callers, and reverting it here is out of this
+batch's reach (map.cpp/map.h only) without regressing those. The remaining
+gap otherwise is the usual xrange/on_map/is_ocean-loop register-scheduling
+plateau documented across this file. Not chased further.
 
 Three questions in order, and every one of them can answer no on its own.
 
@@ -3426,6 +3539,23 @@ Purpose: Setup the 'Garland Crater' landmark.
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x00591AD0 0x00591BC0 0x00591D60 0x00591DB0 0x00591E00 0x00592600 0x005C2020 0x006169A0 0x0064601D
+// LEVER: two fixes, 0.703 -> 0.779 similar (28/221 raw). (1) `rnd(bounds,
+//        NULL)` WRITTEN OUT as rnd's own body (0x00579770's ternary) at both
+//        call sites - the image never calls rnd(), only rand() - matching
+//        the image's call count. (2) rnd's ternary compiles with INVERTED
+//        branch polarity from the image's; an `if (bounds - 1 <= 0) { x = 0;
+//        } else { x = rand() % bounds; }` guard clause (zero branch inline,
+//        compute branch out-of-line via `jg`) reproduces the image's
+//        fall-through instead. Also: `int lon_bounds = MapLongitudeBounds;`
+//        declared once, used in both the second guard's condition and its
+//        `rand() % lon_bounds` - matches the image reusing one register for
+//        both, where the bare global re-read three times.
+// RULED-OUT: same xrange/on_map two-induction-variable loop family already
+//            documented across this file (bonus_at, goody_at, base_on_sea,
+//            world_borehole) - the prologue's on_map inline and the loop's
+//            register scheduling (which global gets reloaded early during a
+//            call's latency slot) do not follow from source shape. Not
+//            chased past this MISMATCH plateau.
 Return Value: n/a
 Status: Complete - testing
 */
@@ -3434,8 +3564,21 @@ void __cdecl world_crater(int x, int y) {
     if (!on_map(x, y)) {
         do {
             do {
-                y = rnd(MapLatitudeBounds - 16, NULL) + 8;
-                int x_seed = rnd(MapLongitudeBounds, NULL);
+                int lat_bounds = MapLatitudeBounds - 16;
+                int rnd_y;
+                if (lat_bounds - 1 <= 0) {
+                    rnd_y = 0;
+                } else {
+                    rnd_y = rand() % lat_bounds;
+                }
+                y = rnd_y + 8;
+                int lon_bounds = MapLongitudeBounds;
+                int x_seed;
+                if (lon_bounds - 1 <= 0) {
+                    x_seed = 0;
+                } else {
+                    x_seed = rand() % lon_bounds;
+                }
                 x = ((x_seed ^ y) & 1) ^ x_seed;
                 if (++loc_attempts >= 1000) {
                     return;
@@ -3477,6 +3620,16 @@ Purpose: Setup the 'Monsoon Jungle' landmark.
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x004E49D0 0x00591DB0 0x00591E00 0x00592600 0x005C2020 0x005C4470 0x006169A0 0x0064601D
+// LEVER: same shape as world_crater (0x005C5C70) - `rnd(MapLongitudeBounds,
+//        NULL)` written out as an `int lon_bounds = MapLongitudeBounds; if
+//        (lon_bounds - 1 <= 0) { x_seed = 0; } else { x_seed = rand() %
+//        lon_bounds; }` guard clause, matching the image's call count (no
+//        real call to rnd()) and fall-through polarity. Best flag set (/O2
+//        /Gy /GR- /Oy- /GX) moved 0.398 -> 0.455 similar.
+// RULED-OUT: same xrange/on_map two-induction-variable loop family plateau as
+//            world_crater - the on_map prologue and the loop's register
+//            scheduling do not follow from source shape. Not chased past
+//            this MISMATCH plateau (784-byte body, 260 image instructions).
 Return Value: n/a
 Status: Complete - testing
 */
@@ -3488,7 +3641,13 @@ void __cdecl world_monsoon(int x, int y) {
             uint32_t land_count;
             do {
                 y = MapLatitudeBounds / 2 + rand() % 4 - 2;
-                int x_seed = rnd(MapLongitudeBounds, NULL);
+                int lon_bounds = MapLongitudeBounds;
+                int x_seed;
+                if (lon_bounds - 1 <= 0) {
+                    x_seed = 0;
+                } else {
+                    x_seed = rand() % lon_bounds;
+                }
                 x = ((x_seed ^ y) & 1) ^ x_seed;
                 land_count = 0;
                 for (int i = 0; i < RadiusRange[5]; i++) {
@@ -3531,6 +3690,13 @@ Purpose: Setup the 'New Sargasso' landmark.
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x00591D60 0x00591DB0 0x00591E00 0x00592600 0x005C2020 0x006169A0 0x0064601D
+// LEVER: same shape as world_crater (0x005C5C70) - both `rnd(bounds,
+//        NULL)` calls written out as guard clauses matching the image's
+//        call count and fall-through polarity. Best flag set (/O2 /Gy
+//        /GR- /Oy- /GX) moved 1/220 -> 26/220, 0.591 similar.
+// RULED-OUT: same xrange/on_map two-induction-variable loop family
+//            plateau as world_crater. Not chased past this MISMATCH
+//            plateau.
 Return Value: n/a
 Status: Complete - testing
 */
@@ -3540,8 +3706,21 @@ void __cdecl world_sargasso(int x, int y) {
     if (!on_map(x, y)) {
         do {
             do {
-                y = rnd(MapLatitudeBounds - 16, NULL) + 8;
-                int x_seed = rnd(MapLongitudeBounds, NULL);
+                int lat_bounds = MapLatitudeBounds - 16;
+                int rnd_y;
+                if (lat_bounds - 1 <= 0) {
+                    rnd_y = 0;
+                } else {
+                    rnd_y = rand() % lat_bounds;
+                }
+                y = rnd_y + 8;
+                int lon_bounds = MapLongitudeBounds;
+                int x_seed;
+                if (lon_bounds - 1 <= 0) {
+                    x_seed = 0;
+                } else {
+                    x_seed = rand() % lon_bounds;
+                }
                 x = ((x_seed ^ y) & 1) ^ x_seed;
                 if (++loc_attempts >= 1000) {
                     return;
@@ -3582,6 +3761,13 @@ Purpose: Setup 'The Ruins' landmark.
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x00591D60 0x00591DB0 0x00591E00 0x00592600 0x005C2020 0x006169A0 0x0064601D
+// LEVER: same shape as world_crater (0x005C5C70) - both `rnd(bounds,
+//        NULL)` calls written out as guard clauses matching the image's
+//        call count and fall-through polarity. Best flag set (/O2 /Gy
+//        /GR- /Oy- /GX) moved 1/221 -> 8/221, 0.422 similar.
+// RULED-OUT: same xrange/on_map two-induction-variable loop family
+//            plateau as world_crater. Not chased past this MISMATCH
+//            plateau.
 Return Value: n/a
 Status: Complete - testing
 */
@@ -3590,8 +3776,21 @@ void __cdecl world_ruin(int x, int y) {
     if (!on_map(x, y)) {
         do {
             do {
-                y = rnd(MapLatitudeBounds - 16, NULL) + 8;
-                int x_seed = rnd(MapLongitudeBounds, NULL);
+                int lat_bounds = MapLatitudeBounds - 16;
+                int rnd_y;
+                if (lat_bounds - 1 <= 0) {
+                    rnd_y = 0;
+                } else {
+                    rnd_y = rand() % lat_bounds;
+                }
+                y = rnd_y + 8;
+                int lon_bounds = MapLongitudeBounds;
+                int x_seed;
+                if (lon_bounds - 1 <= 0) {
+                    x_seed = 0;
+                } else {
+                    x_seed = rand() % lon_bounds;
+                }
                 x = ((x_seed ^ y) & 1) ^ x_seed;
                 if (++loc_attempts >= 1000) {
                     return;
@@ -3637,6 +3836,15 @@ Purpose: Setup the 'Great Dunes' landmark.
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x00591BC0 0x00591D60 0x00591DB0 0x00591E00 0x00592600 0x005C2020 0x005C4470 0x006169A0 0x0064601D
+// LEVER: same shape as world_crater (0x005C5C70), plus its own
+//        `half_vert_bounds` local already matched rnd's `bounds`
+//        parameter - written out as an `int dune_bounds = half_vert_bounds;`
+//        guard clause (Y) and the usual `lon_bounds` guard clause (X). Best
+//        flag set (/O2 /Gy /GR- /Oy- /GX) moved 5/228 -> 9/228, 0.559
+//        similar.
+// RULED-OUT: same xrange/on_map two-induction-variable loop family
+//            plateau as world_crater, plus world_rainfall()'s own call at
+//            the top. Not chased past this MISMATCH plateau.
 Return Value: n/a
 Status: Complete - testing
 */
@@ -3647,8 +3855,21 @@ void __cdecl world_dune(int x, int y) {
     if (!on_map(x, y)) {
         do {
             do {
-                y = rnd(half_vert_bounds, NULL) + half_vert_bounds - MapLatitudeBounds / 4;
-                int x_seed = rnd(MapLongitudeBounds, NULL);
+                int dune_bounds = half_vert_bounds;
+                int rnd_y;
+                if (dune_bounds - 1 <= 0) {
+                    rnd_y = 0;
+                } else {
+                    rnd_y = rand() % dune_bounds;
+                }
+                y = rnd_y + half_vert_bounds - MapLatitudeBounds / 4;
+                int lon_bounds = MapLongitudeBounds;
+                int x_seed;
+                if (lon_bounds - 1 <= 0) {
+                    x_seed = 0;
+                } else {
+                    x_seed = rand() % lon_bounds;
+                }
                 x = ((x_seed ^ y) & 1) ^ x_seed;
                 if (++loc_attempts >= 1000) {
                     return;
@@ -3686,6 +3907,13 @@ Purpose: Setup the 'Uranium Flats' landmark.
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00591BC0 0x00591D60 0x00591DB0 0x00591E00 0x00592600 0x005C2020 0x006169A0 0x0064601D
+// LEVER: same shape as world_crater (0x005C5C70) - both `rnd(bounds,
+//        NULL)` calls written out as guard clauses matching the image's
+//        call count and fall-through polarity. Best flag set (/O2 /Gy
+//        /GR- /Oy- /GX) moved 7/200 -> 14/200, 0.887 similar.
+// RULED-OUT: same xrange/on_map two-induction-variable loop family
+//            plateau as world_crater. Not chased past this MISMATCH
+//            plateau.
 Return Value: n/a
 Status: Complete - testing
 */
@@ -3694,8 +3922,21 @@ void __cdecl world_diamond(int x, int y) {
     if (!on_map(x, y)) {
         do {
             do {
-                y = rnd(MapLatitudeBounds - 16, NULL) + 8;
-                int x_seed = rnd(MapLongitudeBounds, NULL);
+                int lat_bounds = MapLatitudeBounds - 16;
+                int rnd_y;
+                if (lat_bounds - 1 <= 0) {
+                    rnd_y = 0;
+                } else {
+                    rnd_y = rand() % lat_bounds;
+                }
+                y = rnd_y + 8;
+                int lon_bounds = MapLongitudeBounds;
+                int x_seed;
+                if (lon_bounds - 1 <= 0) {
+                    x_seed = 0;
+                } else {
+                    x_seed = rand() % lon_bounds;
+                }
                 x = ((x_seed ^ y) & 1) ^ x_seed;
                 if (++loc_attempts >= 1000) {
                     return;
@@ -3731,6 +3972,22 @@ Purpose: Setup the 'Freshwater Sea' landmark.
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00591DB0 0x00592600 0x006169A0
+// LEVER: `bit2_set(x_it, y_it, BIT2_FRESH, true)`, not `LM_FRESH` - the image
+//        pushes 0x80 (BIT2_FRESH), not 7 (LM_FRESH's enum index), same
+//        LM_ vs BIT2_ mixup already fixed at world_geothermal (0x005C83B0).
+//        Confirmed the constant now matches byte-for-byte (`push 0x80` on
+//        both sides at the bit2_set call site) but the overall score does
+//        not move (still 4/125, 0.667 similar, best flag set /O2 /Gy /GR-
+//        /Oy- /GX) - the earlier structural mismatch (see RULED-OUT) already
+//        dominates the comparison.
+// RULED-OUT: the image places the `bit2_set`/`x_search` update block AFTER a
+//            second nested branch this tree's straight if/else-if puts it
+//            before - looks like the compiler restructured the two mutually
+//            exclusive branches into a different instruction order than a
+//            literal transcription of the nested if/else-if produces. Not
+//            chased further; same xrange/on_map-loop family register-
+//            scheduling plateau as this file's other worldbuilder bodies
+//            besides.
 Return Value: n/a
 Status: Complete - testing
 */
@@ -3761,7 +4018,7 @@ void __cdecl world_fresh(int x, int y) {
     for (int y_it = MapLatitudeBounds - 1; y_it >= 0 ; y_it--) {
         for (int x_it = y_it & 1; x_it < MapLongitudeBounds; x_it += 2) {
             if (region_at(x_it, y_it) == region) {
-                bit2_set(x_it, y_it, LM_FRESH, true);
+                bit2_set(x_it, y_it, BIT2_FRESH, true);
                 if (x_search < 0) {
                     x_search = x_it;
                 }
@@ -3784,6 +4041,18 @@ Purpose: Setup the 'Mount Planet' landmark.
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x00591BC0 0x00591D30 0x00591DB0 0x00591E00 0x00592600 0x005C2020 0x006169A0 0x0064601D
+// LEVER: same shape as world_crater (0x005C5C70) - both `rnd(bounds, NULL)`
+//        calls written out as guard clauses (`if (bounds - 1 <= 0) { x = 0;
+//        } else { x = rand() % bounds; }`), matching the image's call count
+//        and fall-through polarity. Needs /Oy- (the marker's own `frame`
+//        flag) for the comparison to even mean anything - best flag set
+//        (/O2 /Gy /GR- /Oy- /GX) is 20/206, 0.633 similar; without /Oy- the
+//        fuzzy similarity score is misleadingly higher (0.868) because the
+//        frame-omitted form shares more MNEMONICS despite matching 0 bytes
+//        from instruction 0.
+// RULED-OUT: same xrange/on_map two-induction-variable loop family plateau as
+//            world_crater/world_monsoon. Not chased past this MISMATCH
+//            plateau (614-byte body, 206 image instructions).
 Return Value: n/a
 Status: Complete - testing
 */
@@ -3792,8 +4061,21 @@ void __cdecl world_volcano(int x, int y, BOOL is_not_landmark) {
     if (!on_map(x, y)) {
         do {
             do {
-                y = rnd(MapLatitudeBounds - 16, NULL) + 8;
-                int x_seed = rnd(MapLongitudeBounds, NULL);
+                int lat_bounds = MapLatitudeBounds - 16;
+                int rnd_y;
+                if (lat_bounds - 1 <= 0) {
+                    rnd_y = 0;
+                } else {
+                    rnd_y = rand() % lat_bounds;
+                }
+                y = rnd_y + 8;
+                int lon_bounds = MapLongitudeBounds;
+                int x_seed;
+                if (lon_bounds - 1 <= 0) {
+                    x_seed = 0;
+                } else {
+                    x_seed = rand() % lon_bounds;
+                }
                 x = ((x_seed ^ y) & 1) ^ x_seed;
                 if (++loc_attempts >= 1000) {
                     return;
@@ -3946,6 +4228,13 @@ Purpose: Setup 'The Manifold Nexus' landmark. Added to SMAC in 4.0 patch.
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x00591D60 0x00591DB0 0x00591E00 0x00592600 0x005C2020 0x006169A0 0x0064601D
+// LEVER: same shape as world_crater (0x005C5C70) - both `rnd(bounds,
+//        NULL)` calls written out as guard clauses matching the image's
+//        call count and fall-through polarity. Best flag set (/O2 /Gy
+//        /GR- /Oy- /GX) moved 11/175 -> 12/175, 0.864 similar.
+// RULED-OUT: same xrange/on_map two-induction-variable loop family
+//            plateau as world_crater. Not chased past this MISMATCH
+//            plateau.
 Return Value: n/a
 Status: Complete - testing
 */
@@ -3954,8 +4243,21 @@ void __cdecl world_temple(int x, int y) {
     if (!on_map(x, y)) {
         do {
             do {
-                y = rnd(MapLatitudeBounds - 16, NULL) + 8;
-                int x_seed = rnd(MapLongitudeBounds, NULL);
+                int lat_bounds = MapLatitudeBounds - 16;
+                int rnd_y;
+                if (lat_bounds - 1 <= 0) {
+                    rnd_y = 0;
+                } else {
+                    rnd_y = rand() % lat_bounds;
+                }
+                y = rnd_y + 8;
+                int lon_bounds = MapLongitudeBounds;
+                int x_seed;
+                if (lon_bounds - 1 <= 0) {
+                    x_seed = 0;
+                } else {
+                    x_seed = rand() % lon_bounds;
+                }
                 x = ((x_seed ^ y) & 1) ^ x_seed;
                 if (++loc_attempts >= 1000) {
                     return;
@@ -3988,6 +4290,18 @@ Purpose: Setup the 'Unity Wreckage' landmark (SMACX only).
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x00591BC0 0x00591D60 0x00591DB0 0x00591E00 0x00592600 0x005C2020 0x006169A0 0x0064601D
+// LEVER: same shape as world_crater (0x005C5C70) - both `rnd(bounds,
+//        NULL)` calls (inside the `if (ExpansionEnabled)` guard) written
+//        out as guard clauses matching the image's call count and
+//        fall-through polarity. Best flag set (/O2 /Gy /GR- /Oy- /GX)
+//        moved 3/279 -> 41/279 raw agreeing (0.216 similar - this
+//        function's `x--/y--` then `x+=2/y+=2` then `x--/y--` re-walk of
+//        the same radius loop three times gives the register allocator
+//        much more to disagree about than its siblings).
+// RULED-OUT: same xrange/on_map two-induction-variable loop family
+//            plateau as world_crater, repeated three times over. Not
+//            chased past this MISMATCH plateau (805-byte body, 279 image
+//            instructions).
 Return Value: n/a
 Status: Complete - testing
 */
@@ -3997,8 +4311,21 @@ void __cdecl world_unity(int x, int y) {
         if (!on_map(x, y)) {
             do {
                 do {
-                    y = rnd(MapLatitudeBounds - 16, NULL) + 8;
-                    int x_seed = rnd(MapLongitudeBounds, NULL);
+                    int lat_bounds = MapLatitudeBounds - 16;
+                    int rnd_y;
+                    if (lat_bounds - 1 <= 0) {
+                        rnd_y = 0;
+                    } else {
+                        rnd_y = rand() % lat_bounds;
+                    }
+                    y = rnd_y + 8;
+                    int lon_bounds = MapLongitudeBounds;
+                    int x_seed;
+                    if (lon_bounds - 1 <= 0) {
+                        x_seed = 0;
+                    } else {
+                        x_seed = rand() % lon_bounds;
+                    }
                     x = ((x_seed ^ y) & 1) ^ x_seed;
                     if (++loc_attempts >= 1000) {
                         return;
@@ -4058,6 +4385,14 @@ Purpose: Setup the 'Fossil Ridge' landmark (SMACX only).
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00591DB0 0x00591E00 0x00592600 0x005C2020 0x006169A0 0x0064601D
+// LEVER: same shape as world_crater (0x005C5C70) - both `rnd(bounds,
+//        NULL)` calls (inside the `if (ExpansionEnabled)` guard) written
+//        out as guard clauses matching the image's call count and
+//        fall-through polarity. Best flag set (/O2 /Gy /GR- /Oy- /GX)
+//        moved 1/183 -> 31/183, 0.850 similar.
+// RULED-OUT: same xrange/on_map two-induction-variable loop family
+//            plateau as world_crater. Not chased past this MISMATCH
+//            plateau.
 Return Value: n/a
 Status: Complete - testing
 */
@@ -4067,8 +4402,21 @@ void __cdecl world_fossil(int x, int y) {
         if (!on_map(x, y)) {
             do {
                 do {
-                    y = rnd(MapLatitudeBounds - 16, NULL) + 8;
-                    int x_seed = rnd(MapLongitudeBounds, NULL);
+                    int lat_bounds = MapLatitudeBounds - 16;
+                    int rnd_y;
+                    if (lat_bounds - 1 <= 0) {
+                        rnd_y = 0;
+                    } else {
+                        rnd_y = rand() % lat_bounds;
+                    }
+                    y = rnd_y + 8;
+                    int lon_bounds = MapLongitudeBounds;
+                    int x_seed;
+                    if (lon_bounds - 1 <= 0) {
+                        x_seed = 0;
+                    } else {
+                        x_seed = rand() % lon_bounds;
+                    }
                     x = ((x_seed ^ y) & 1) ^ x_seed;
                     if (++loc_attempts >= 1000) {
                         return;
@@ -4144,6 +4492,13 @@ Purpose: Setup the 'Sunny Mesa' landmark.
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00591DB0 0x00591E00 0x00592600 0x005C2020 0x006169A0 0x0064601D
+// LEVER: same shape as world_crater (0x005C5C70) - both `rnd(bounds,
+//        NULL)` calls written out as guard clauses matching the image's
+//        call count and fall-through polarity. Best flag set (/O2 /Gy
+//        /GR- /Oy- /GX) moved 1/175 -> 12/175, 0.851 similar.
+// RULED-OUT: same xrange/on_map two-induction-variable loop family
+//            plateau as world_crater. Not chased past this MISMATCH
+//            plateau.
 Return Value: n/a
 Status: Complete - testing
 */
@@ -4152,8 +4507,21 @@ void __cdecl world_mesa(int x, int y) {
     if (!on_map(x, y)) {
         do {
             do {
-                y = rnd(MapLatitudeBounds - 16, NULL) + 8;
-                int x_seed = rnd(MapLongitudeBounds, NULL);
+                int lat_bounds = MapLatitudeBounds - 16;
+                int rnd_y;
+                if (lat_bounds - 1 <= 0) {
+                    rnd_y = 0;
+                } else {
+                    rnd_y = rand() % lat_bounds;
+                }
+                y = rnd_y + 8;
+                int lon_bounds = MapLongitudeBounds;
+                int x_seed;
+                if (lon_bounds - 1 <= 0) {
+                    x_seed = 0;
+                } else {
+                    x_seed = rand() % lon_bounds;
+                }
                 x = ((x_seed ^ y) & 1) ^ x_seed;
                 if (++loc_attempts >= 1000) {
                     return;
@@ -4185,6 +4553,13 @@ Purpose: Setup the 'Pholus Ridge' landmark.
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x00591DB0 0x00591E00 0x00592600 0x005C2020 0x006169A0 0x0064601D
+// LEVER: same shape as world_crater (0x005C5C70) - both `rnd(bounds,
+//        NULL)` calls written out as guard clauses matching the image's
+//        call count and fall-through polarity. Best flag set (/O2 /Gy
+//        /GR- /Oy- /GX) moved 4/199 -> 5/199, 0.699 similar.
+// RULED-OUT: same xrange/on_map two-induction-variable loop family
+//            plateau as world_crater. Not chased past this MISMATCH
+//            plateau.
 Return Value: n/a
 Status: Complete - testing
 */
@@ -4193,8 +4568,21 @@ void __cdecl world_ridge(int x, int y) {
     if (!on_map(x, y)) {
         do {
             do {
-                y = rnd(MapLatitudeBounds - 16, NULL) + 8;
-                int x_seed = rnd(MapLongitudeBounds, NULL);
+                int lat_bounds = MapLatitudeBounds - 16;
+                int rnd_y;
+                if (lat_bounds - 1 <= 0) {
+                    rnd_y = 0;
+                } else {
+                    rnd_y = rand() % lat_bounds;
+                }
+                y = rnd_y + 8;
+                int lon_bounds = MapLongitudeBounds;
+                int x_seed;
+                if (lon_bounds - 1 <= 0) {
+                    x_seed = 0;
+                } else {
+                    x_seed = rand() % lon_bounds;
+                }
                 x = ((x_seed ^ y) & 1) ^ x_seed;
                 if (++loc_attempts >= 1000) {
                     return;
@@ -4227,6 +4615,13 @@ Purpose: Setup the 'Geothermal Shallows' landmark.
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00591DB0 0x00591E00 0x00592600 0x005C2020 0x006169A0 0x0064601D
+// LEVER: same shape as world_crater (0x005C5C70) - both `rnd(bounds,
+//        NULL)` calls written out as guard clauses matching the image's
+//        call count and fall-through polarity. Best flag set (/O2 /Gy
+//        /GR- /Oy- /GX) moved 3/207 -> 12/207, 0.492 similar.
+// RULED-OUT: same xrange/on_map two-induction-variable loop family
+//            plateau as world_crater. Not chased past this MISMATCH
+//            plateau.
 Return Value: n/a
 Status: Complete - testing
 */
@@ -4235,8 +4630,21 @@ void __cdecl world_geothermal(int x, int y) {
     if (!on_map(x, y)) {
         do {
             do {
-                y = rnd(MapLatitudeBounds - 16, NULL) + 8;
-                int x_seed = rnd(MapLongitudeBounds, NULL);
+                int lat_bounds = MapLatitudeBounds - 16;
+                int rnd_y;
+                if (lat_bounds - 1 <= 0) {
+                    rnd_y = 0;
+                } else {
+                    rnd_y = rand() % lat_bounds;
+                }
+                y = rnd_y + 8;
+                int lon_bounds = MapLongitudeBounds;
+                int x_seed;
+                if (lon_bounds - 1 <= 0) {
+                    x_seed = 0;
+                } else {
+                    x_seed = rand() % lon_bounds;
+                }
                 x = ((x_seed ^ y) & 1) ^ x_seed;
                 if (++loc_attempts >= 1000) {
                     return;
