@@ -92,7 +92,7 @@ class Log {
       }
   }
   // additional functions to assist with encapsulation
-  void set_state(BOOL state) { is_disabled_ = state ? false : true; }
+  void set_state(BOOL state) { is_disabled_ = (state == 0); }
 
  private:
   LPSTR log_file_;

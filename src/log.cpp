@@ -21,7 +21,9 @@
 
 /*
 Purpose: Initialize a log file.
-// ORIGINAL: 0x00626040 ?init@Log@@QAEHPAD@Z 0x00626040-0x006260C3
+// ORIGINAL: 0x00626040 ?init@Log@@QAEHPAD@Z 0x00626040-0x006260C3 BYTE_EXACT
+// LEVER: same idiom as Log::construct - clear the first byte, then `strcat`
+// into it (0x645470) - rather than `strcpy_s`, which the image does not call.
 // symbol    ?init@Log@@QAEHPBD@Z
 // size      131 bytes
 // prototype int (__thiscall ?init@Log@@QAEHPAD@Z)(Log* this, int8*)
@@ -42,7 +44,8 @@ int Log::init(LPCSTR input) {
     if (!log_file_) {
         return 4;
     }
-    strcpy_s(log_file_, len, input);
+    *log_file_ = '\0';
+    strcat(log_file_, input);
     FILE *file = env_open(input, "wt");
     if (!file) {
         return 6;
@@ -151,7 +154,11 @@ void __cdecl log_say_hex(LPCSTR str1, int num1, int num2, int num3) {
     Logging->say_hex(str1, NULL, num1, num2, num3);
 }
 
-// ORIGINAL: 0x00626450 ?log_set_state@@YAXH@Z 0x00626450-0x00626461
+// ORIGINAL: 0x00626450 ?log_set_state@@YAXH@Z 0x00626450-0x00626461 BYTE_EXACT
+// LEVER: Log::set_state as `is_disabled_ = (state == 0);` rather than the
+// ternary `state ? false : true;` - the comparison form is the xor/sete idiom
+// (`xor eax,eax; test ecx,ecx; sete al`), the ternary needed a trailing
+// `and eax, 0xff` the image does not have.
 // size      17 bytes
 // prototype 
 // callers   5   call targets   0
