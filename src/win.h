@@ -70,7 +70,9 @@ class Win {
   // `pending_bodies.cpp` until its body lands.
   ~Win();
 
-  void construct();
+  // Returns `this`: the image's own real `??0Win@@QAE@XZ` sets `eax = this`
+  // before its epilogue, which a void-returning method never emits.
+  Win *construct();
   int move(int x, int y);
   int is_visible();
   int is_descendant(Win *candidate);

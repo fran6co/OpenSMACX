@@ -1418,18 +1418,13 @@ void __cdecl add_site(int faction_id, int type, int priority, int x, int y) {
 
 /*
 Purpose: Check if a goal exists at the tile for the specified faction and type.
-// ORIGINAL: 0x00579CC0 ?at_goal@@YAHHHHH@Z 0x00579CC0-0x00579D16
-// LEVER: a `Goal *goals = PlayersData[faction_id].goals;` pointer hoisted
-//        out of the loop (indexed `goals[i]` inside) moved this from 22/40
-//        (0.900) to 17/40 (0.988) - fewer raw agreements but a tighter
-//        similarity score, because the image also walks a moving pointer
-//        rather than re-deriving the faction offset each iteration.
-// RULED-OUT: a `Goal &` reference alias over the hoisted pointer (identical,
-//            0.988); reordering the field comparisons y/x/type (identical).
-//            Remaining gap is the pointer's PRE-INCREMENT: this tree bumps
-//            eax by 8 before comparing [eax-4]/[eax] where the image compares
-//            [eax+4]/[eax+8] without the bump - a different but equivalent
-//            strength reduction of the same three field offsets.
+// ORIGINAL: 0x00579CC0 ?at_goal@@YAHHHHH@Z 0x00579CC0-0x00579D16 BYTE_EXACT
+// LEVER: WALK the pointer, do not index it. `for (int i = 0; i < MaxGoalsNum; i++, goals++)` with `goals->x` reaches 40 of 40 - BYTE_EXACT. The hoisted-but-INDEXED form (`goals[i]`) plateaus at 17/40, and the RULED-OUT this replaces called that remaining gap "a different but equivalent strength reduction". It was not equivalent and it was not a gap: it was this lever, unapplied.
+// NOTE: found by the adversarial verifier on at_site (0x00579D20) 2026-08-22,
+//        which cited this body as precedent for the walked form while this
+//        body was still indexed - so the citation named a lever that recovers
+//        its own precedent outright. Checking a claim's PROSE, not just its
+//        tier, is what surfaced a free BYTE_EXACT.
 // size      86 bytes
 // prototype int (__cdecl ?at_goal@@YAHHHHH@Z)(int factionID, int type, int xCoord, int yCoord)
 // callers   5   call targets   0
@@ -1441,8 +1436,8 @@ Status: Complete
 */
 BOOL __cdecl at_goal(int faction_id, int type, int x, int y) {
     Goal *goals = PlayersData[faction_id].goals;
-    for (int i = 0; i < MaxGoalsNum; i++) {
-        if (goals[i].x == x && goals[i].y == y && goals[i].type == type) {
+    for (int i = 0; i < MaxGoalsNum; i++, goals++) {
+        if (goals->x == x && goals->y == y && goals->type == type) {
             return true;
         }
     }
@@ -1452,7 +1447,7 @@ BOOL __cdecl at_goal(int faction_id, int type, int x, int y) {
 /*
 Purpose: Check if a site exists at the tile for the specified faction and type.
 // ORIGINAL: 0x00579D20 ?at_site@@YAHHHHH@Z 0x00579D20-0x00579D76 BYTE_EXACT
-// LEVER: a `Goal *sites` pointer hoisted out of the loop, WALKED with `sites++` in the for-loop's increment (matching at_goal's own lever) - the earlier RULED-OUT note below tried the pointer only INDEXED (`sites[i]`), which keeps the same 17/40-raw/worse-similarity shape as the `Goal&` reference form; incrementing the pointer itself instead of re-scaling `i` each iteration is what the image does. BYTE_EXACT 40/40.
+// LEVER: a `Goal *sites` pointer hoisted out of the loop, WALKED with `sites++` in the for-loop's increment (NOT "matching at_goal's own lever" - at_goal was still INDEXED when this was written, and this same form recovered it outright; see 0x00579CC0) - the earlier RULED-OUT note below tried the pointer only INDEXED (`sites[i]`), which keeps the same 17/40-raw/worse-similarity shape as the `Goal&` reference form; incrementing the pointer itself instead of re-scaling `i` each iteration is what the image does. BYTE_EXACT 40/40.
 // size      86 bytes
 // prototype int (__cdecl ?at_site@@YAHHHHH@Z)(int factionID, int type, int xCoord, int yCoord)
 // callers   2   call targets   0
