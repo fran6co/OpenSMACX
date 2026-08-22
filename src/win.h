@@ -69,7 +69,7 @@ class Win : public AutoSound {
   int UNK5();
   int UNK6(int a);
   int on_set_cursor(void *a, unsigned int b, unsigned int c);
-  Win() { ; }
+  Win();
   // DECLARED, NOT DEFINED EMPTY. The real destructor is at 0x005EBC90, and it
   // ends `ret` rather than `ret 4` - it takes no vbase flag - so a direct call
   // to it is reachable, unlike RadioButton's. An empty inline body compiles
@@ -78,7 +78,6 @@ class Win : public AutoSound {
   // `pending_bodies.cpp` until its body lands.
   ~Win();
 
-  Win *construct();
 
   // Returns `this`: the image's own real `??0Win@@QAE@XZ` sets `eax = this`
   // before its epilogue, which a void-returning method never emits.
@@ -197,7 +196,11 @@ class Win : public AutoSound {
   // `lea ecx, [esi + 0xdc]; call 0x5d4560` for Heap's real constructor
   // and the body stops matching. `uint32_t[]` keeps the size and the
   // 4-byte alignment; nothing in the tree reads Win::heap_ by name.
-  uint32_t heap_[sizeof(Heap) / 4];
+  // 0xDC is SEPARATE because the constructor zeroes it in its member
+  // initialiser list - the image writes it at 0x005EB3FC, one
+  // instruction BEFORE the vfptr store, and only the list runs there.
+  uint32_t heap_head_;
+  uint32_t heap_[sizeof(Heap) / 4 - 1];
   Menu *menu_;
   uint32_t field_F4_;
   uint32_t field_F8_;

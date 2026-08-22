@@ -22,7 +22,7 @@
   */
 class AutoSound {
  public:
-  AutoSound() { ; }
+  AutoSound();
   // VIRTUAL, so VC6 emits the vfptr at offset 0 instead of the hand-modelled
   // `PVOID vtable_` this replaces. Win derives from AutoSound, so that one
   // vfptr is Win's and GraphicWin's too - which is the second of the two
@@ -33,7 +33,6 @@ class AutoSound {
   // the object base for all 38 stores, which is what a __thiscall that has
   // to leave `this` in EAX does. Declared `void`, VC6 keeps the base in ECX
   // and scores 0 of 77.
-  AutoSound *construct();
   void close();
   void close2();
   void init();

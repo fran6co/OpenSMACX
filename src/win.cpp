@@ -42,7 +42,7 @@ Purpose: Construct a Win from its AutoSound subobject and the process window
 // ORIGINAL: 0x005EB3D0 ??0Win@@QAE@XZ 0x005EB3D0-0x005EB63D BYTE_EXACT
 // LEVER: `object`/`fixed`/`dynamic` were `volatile` pointers over a straight run of field-default copies - no rereads, nothing to guard against reordering. Dropping `volatile` (same raw-offset shape) took this from 100/107 to 104/107 and the compiled instruction count now matches the image's 107 exactly.
 // LEVER: the remaining 3-instruction epilogue gap was the image's real `??0Win@@QAE@XZ` constructor setting `eax = this` before `pop esi; ret`, which a `void construct()` never emits. Declaring `Win *construct()` and `return this;` closed it: 104/107 -> 107/107, BYTE_EXACT.
-// symbol    ?construct@Win@@QAEPAV1@XZ
+// symbol    ??0Win@@QAE@XZ
 // size      621 bytes
 // prototype void (__thiscall ??0Win@@QAE@XZ)(Win* this)
 // callers   1   call targets   1
@@ -52,20 +52,25 @@ Purpose: Construct a Win from its AutoSound subobject and the process window
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
-Win *Win::construct() {
-    AutoSound::construct();
+// THE FIVE 0xC8 STORES ARE A MEMBER-INITIALISER LIST, not body
+// statements. MSVC assigns the vfptr AFTER the list, and the image
+// stores Win's vtable at 0x005EB402 - after the 0xC8..0xD8 writes,
+// not immediately after the AutoSound base constructor. Written in
+// the body they would follow the vfptr and the order would be wrong.
+// The list runs in DECLARATION order regardless of how it is spelled,
+// and declaration order here already matches the image.
+Win::Win()
+    : field_C8_(WinSecondaryVtable),
+      field_CC_(0),
+      field_D0_(0),
+      field_D4_(0),
+      field_D8_(0),
+      heap_head_(0) {
     uint32_t *const object =
         reinterpret_cast<uint32_t *>(this);
     const uint32_t *const fixed = WinStaticDefaults;
     const uint32_t *const dynamic = WinDynamicDefaults;
 
-    object[0x0C8 / 4] = WinSecondaryVtable;
-    object[0x0CC / 4] = 0;
-    object[0x0D0 / 4] = 0;
-    object[0x0D4 / 4] = 0;
-    object[0x0D8 / 4] = 0;
-    object[0x0DC / 4] = 0;
-    object[0x000 / 4] = WinPrimaryVtable;
     object[0x0A8 / 4] = reinterpret_cast<uintptr_t>(this);
     object[0x3FC / 4] = 0;
     object[0x09C / 4] = 0;
@@ -152,11 +157,10 @@ Win *Win::construct() {
     object[0x17C / 4] = 1;
     object[0x180 / 4] = 1;
     object[0x1A0 / 4] = 2;
-    return this;
 }
 
 Win *__fastcall win_construct_redirect(Win *self, void *) {
-    self->construct();
+    new (self) Win();
     return self;
 }
 
