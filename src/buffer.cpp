@@ -1412,6 +1412,27 @@ Purpose: THE BLITTER. Copy a rectangle out of this buffer into `buffer`,
 // assembly one.
 //
 // ORIGINAL: 0x005DFF00 ?copy@Buffer@@QAEHPAVBuffer@@HHHHHH@Z 0x005DFF00-0x005E079B
+// RULED-OUT: byte-exactness, twice over, and it was RULED OUT IN PROSE ONLY
+//   until now - which is why `frontier.py --untouched` kept offering this
+//   body. Both reasons are mechanical facts, not judgements.
+//   (1) `uv run tools/handwritten_asm.py` lists this address for `pushf` and
+//   `popf`. The shipped bytes save and restore FLAGS around a block, which
+//   no compiler emits because it owns the flags between setting and reading
+//   them, so no C++ spelling can produce these bytes.
+//   (2) Measured 2026-08-22: 196 instructions against the image's 761,
+//   similarity 0.255, first divergence at instruction 7. The image writes
+//   the same-buffer case FOUR times - one arm per combination of "the
+//   horizontal shift needs a backwards copy" and "the vertical shift needs
+//   rows in reverse" - each repeating the whole clip / `get_data` /
+//   pointer-compute / `free_data` sequence inline; the three largest gaps
+//   are runs of 188, 199 and 89 instructions. This body collapses those
+//   four arms into a row direction plus `memmove`, deliberately.
+//   The honest ceiling is SEMANTIC, and `osmx semantic` refuses at this
+//   instruction count. Closing it means writing the four arms back out,
+//   which is a different body rather than an adjustment to this one - and
+//   it still could not be byte-exact, because of (1). Do not answer it with
+//   `__asm`: a semantic C++ body is worth more than a byte-exact assembly
+//   one.
 // symbol    ?copy@Buffer@@QAEHPAV1@HHHHHH@Z
 // size      2203 bytes
 // prototype int (__thiscall ?copy@Buffer@@QAEHPAVBuffer@@HHHHHH@Z)(Buffer* this, Buffer*, int, int, int, int, int, int)

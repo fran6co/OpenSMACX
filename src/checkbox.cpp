@@ -187,7 +187,8 @@ CheckBox::~CheckBox() {
 Purpose: Reset the check box to its defaults, then close its dialog and
          graphic base. Both calls resolve through the vbtable, so they reach
          the Dialog and the virtual base rather than the object itself.
-// ORIGINAL: 0x0060E7C0 ?close@CheckBox@@QAEXXZ 0x0060E7C0-0x0060E7F9
+// ORIGINAL: 0x0060E7C0 ?close@CheckBox@@QAEXXZ 0x0060E7C0-0x0060E7F9 BYTE_EXACT
+// LEVER: the vbtable is RE-READ for the second call, exactly as the destructor above it does. One cached `vbtable` local has to survive the first `close()`, so VC6 spends a callee-saved register and a `push edi` the image never makes: 5 of 20. Reading `[esi]` again for the GraphicWin call is 20 of 20. Reading it inline at BOTH sites scores the same 20 of 20, so the first read may stay a named local.
 // size      57 bytes
 // prototype void (__thiscall ?close@CheckBox@@QAEXXZ)(CheckBox* this)
 // callers   13   call targets   2
@@ -213,7 +214,9 @@ void CheckBox::close() {
     field_14_ = CheckBoxDefault2;
     field_10_ = CheckBoxDefault1;
     reinterpret_cast<Dialog *>(self + vbtable[2])->close();
-    reinterpret_cast<GraphicWin *>(self + vbtable[1])->close();
+    const int32_t *const vbtable2 =
+        *reinterpret_cast<const int32_t *const *>(self);
+    reinterpret_cast<GraphicWin *>(self + vbtable2[1])->close();
 }
 
 void __fastcall check_box_close_redirect(CheckBox *self, void *) {

@@ -69,6 +69,18 @@ Sprite *__fastcall sprite_construct_redirect(Sprite *self, void *) {
 Purpose: Release a sprite's allocations, discount its pixel memory, and clear
          every field except the type byte.
 // ORIGINAL: 0x005E3820 ?close@Sprite@@QAEXXZ 0x005E3820-0x005E3884 SEMANTIC
+// RULED-OUT: byte-exactness, on ONE REGISTER NAME. 35 of 38 instructions
+//   agree and similarity is 1.000 under every /O2 flag set; the whole
+//   divergence is that VC6 holds the loaded `*SpriteMemoryUsed` in ecx where
+//   the image holds it in edx (`mov edx, [0x9b6618]` / `sub edx, eax` /
+//   `mov [0x9b6618], edx`). Everything else, including the image's second
+//   redundant `cmp [esi+4]` before the free, already reproduces.
+//   Ten spellings measured, all 35 of 38: `-=` compound assignment, the
+//   unsigned-cast form committed here, `a - b` written out, a local for the
+//   product, a local for the loaded value, a local `int *const` alias,
+//   `SpriteMemoryUsed[0]`, the multiplicands swapped, and splitting the
+//   chained `fObj1Exists_ == 0 && pcBits_ != 0` guard into two nested `if`s.
+//   /O1 is worse (27 of 38); /Ob0 and /Oi- change nothing.
 // size      100 bytes
 // prototype void (__thiscall ?close@Sprite@@QAEXXZ)(Sprite* this)
 // callers   111   call targets   1
@@ -303,6 +315,24 @@ int __cdecl sub_63ce20() {
 /*
 Purpose: Turn the sprite into a one-pixel placeholder of the given extent.
 // ORIGINAL: 0x005EAF3F ?create_blank@Sprite@@QAEHHHH@Z 0x005EAF3F-0x005EAF86
+// LEVER: the two `1` stores go BEFORE the two zero stores, and the depth
+//   store goes BEFORE the height store. Field order alone moved this from
+//   16 of 25 to 23 of 25 (similarity 1.000, every instruction present):
+//   putting the zeros first schedules `mov eax, 1` after the `xor eax, eax`
+//   and costs the shared `mov ecx, 1` the image materialises up front.
+// RULED-OUT: the `const int one = 1;` local the promoted transcription used.
+//   It is not what shares the constant - a plain literal `1` at all three
+//   uses scores the same, and `const size_t one` / `mem_get(iSpriteWidth_)`
+//   score no better either (all 16 of 25 at the old field order).
+// RULED-OUT: reaching 25 of 25. The last two stores are `[esi+0x1c]` (height)
+//   and `[esi+8]` (depth) and the image emits them in that order while
+//   loading height EARLY into edx and depth LATE into al. VC6 here ties the
+//   two together: stores follow source order and the loads come out in the
+//   REVERSE of it, so `height; depth` buys the store order and loses the
+//   registers (21 of 25) while `depth; height` buys the registers and loses
+//   the store order (23 of 25). Nine spellings measured - chained zeros,
+//   swapped 1-stores, swapped width stores, swapped zero stores, a raw
+//   `char *` store, temps for either parameter - and none decouples them.
 // size      71 bytes
 // prototype int (__thiscall ?create_blank@Sprite@@QAEHHHH@Z)(Sprite* this, int, int, int)
 // kind      game
@@ -321,16 +351,12 @@ pair the drawing code reads as "sheet stride" and "frame width".
 int Sprite::create_blank(int width, int height, int depth) {
     iWidth_ = width;
     iSpriteWidth2_ = width;
+    iSpriteWidth_ = 1;
+    iSpriteHeight_ = 1;
     iLeftOffset_ = 0;
     iTopOffset_ = 0;
-    // ONE, SHARED. The image materialises `mov ecx, 1` once and uses it for
-    // both stores AND as the allocation size, pushing it before the stores
-    // that follow.
-    const int one = 1;
-    iSpriteWidth_ = one;
-    iSpriteHeight_ = one;
-    iHeight_ = height;
     cTransparentIndex_ = static_cast<char>(depth);
-    pcBits_ = reinterpret_cast<int>(mem_get(one));
+    iHeight_ = height;
+    pcBits_ = reinterpret_cast<int>(mem_get(1));
     return pcBits_ ? 0 : 4;
 }
