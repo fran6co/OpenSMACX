@@ -134,6 +134,23 @@ A `construct()` METHOD IS HOW THE SEH FRAME IS AVOIDED
   from 99 down to 79 against an image of 83. Fewer instructions is not a
   better match - dropping the frame shifts everything after it.
 
+DO NOT CHAIN CONDITIONS THE IMAGE TESTS SEPARATELY
+- `if (A || B) return 0;` compiles to ONE shared `return 0` epilogue that both
+  tests jump to. The image very often has a separate inline epilogue after
+  each test - fall through to `xor eax, eax; pop ebp; ret`, then test the
+  next - which is what TWO separate `if` statements produce.
+- Three bodies went BYTE_EXACT on this in one day: `prototype_factor`
+  (18/48 -> 48/48), `map_write` and `map_read`, where the image chains neither
+  its `fwrite`s nor its `freads` - the first two are early-return `if`s and
+  the last is a direct `return !fwrite(...)`. `wants_prototype` moved
+  0.617 -> 0.865 on the same shape.
+- THE ORDER IS ALSO THE IMAGE'S, and it is cheap to check. Splitting
+  `prototype_factor`'s guards the other way round scores 5 of 48 instead of
+  48 of 48. Measure both orders before settling.
+- The mirror of this is `Buffer::write_cent_l`, where a two-guard split scored
+  WORSE (34 against 39 of 76). The image sometimes does merge tails. Measure;
+  do not apply this on sight.
+
 A REFUSAL ONLY COUNTS AS A `// RULED-OUT:` LINE
 - Write what you measured as a LESSON LINE - `// LEVER:` or `// RULED-OUT:` -
   in the marker's comment block. Written as ordinary prose ("cannot reach
