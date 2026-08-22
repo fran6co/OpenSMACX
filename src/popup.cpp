@@ -23,6 +23,7 @@
 #include "win.h"
 #include "spritebox.h"
 #include "net_class.h"
+#include "temp.h"
 
 
 /*
@@ -837,4 +838,110 @@ Popup::Popup() {
     uint32_t *const object = reinterpret_cast<uint32_t *>(this);
     object[0x000 / 4] = PopupPrimaryVtable;
     object[0x444 / 4] = PopupBufferVtable;
+}
+
+// The shared scratch slot at 0x009BC070 base_at() (base.cpp) already names -
+// its own comment there says the purpose is "inferred only from this one
+// call site", so it is reused here by the same storage rather than declared
+// a second time under a name this function would have to guess too.
+extern int BaseAtKeyPollFlag;  // 0x009BC070
+
+// Two singleton BasePop instances, allocated once by BasePop::init_class()
+// (basepop.cpp, which already casts to this pair of fixed addresses under
+// the names g_009bc074/g_009bc078) and chosen between here by which one is
+// not already on screen.
+static int *const PopupInstanceSlotA = (int *)0x009BC074;
+static int *const PopupInstanceSlotB = (int *)0x009BC078;
+
+// The screen location saved across one call to `pops()` and restored on the
+// next, then reset to the sentinel 0x2000 (BasePop::set_loc's own "let the
+// popup centre itself" value elsewhere in this file).
+static int *const PopupSavedLocX = (int *)0x006973DC;
+static int *const PopupSavedLocY = (int *)0x006973E0;
+
+// Read before write_check() and overwritten from read_check()'s result at
+// the bottom of the non-modal-close tail - a request/response pair the two
+// calls share across invocations.
+static int *const PopupWriteCheckState = (int *)0x009BC06C;
+
+// The `a5 & 0x8000` tail's rectangle: BasePop's field_30B4_/_30B8_ are an
+// origin, field_30BC_/_30C0_ a width and height added to that origin to
+// close the rectangle. Inferred from the arithmetic pattern alone.
+static int *const PopupCloseRectLeft = (int *)0x009BC058;
+static int *const PopupCloseRectTop = (int *)0x009BC05C;
+static int *const PopupCloseRectRight = (int *)0x009BC060;
+static int *const PopupCloseRectBottom = (int *)0x009BC064;
+
+/*
+// ORIGINAL: 0x006276A0 ?pops@@YAHPADPADHPADHPAUSprite@@HHP6AHXZ@Z 0x006276A0-0x006277F9
+// RULED-OUT: the pending_bodies scaffold this replaces had the two start()/sprite() success checks inverted (`== 0` where the image's `je` jumps to the CONTINUE label when the callee returns 0, i.e. success is 0 and only a nonzero result is an error), and folded read_check()'s return value into the *(self+0x3100) store instead of keeping them as the two separate globals (0x9BC06C and 0x9BC070) the image writes.
+// RULED-OUT: win-selection guard reads `*PopupInstanceSlotB` as the DEFAULT and only re-reads `*PopupInstanceSlotA` inside the `!is_visible()` branch (never binding `*PopupInstanceSlotA` to a local kept live across the call) - 91/110 -> 98/110. The `field_2274_` ternary needed its arms swapped (`== 0` first) to match the image placing the ELSE body as the fallthrough. The 0x8000 tail's four field reads declared in REVERSE offset order (0x30C0 down to 0x30B4, matching the image's load order) fixed its register choice - 87/110 -> 91/110. Plateaued at 98/110: one `add` operand order in that same tail and the prologue's exact register pick for the is_visible receiver did not yield to further reordering attempts.
+// symbol    ?pops@@YAHPAD0H0HPAVSprite@@HHP6AHXZ@Z
+// size      345 bytes
+// prototype
+// callers   ?   call targets   9
+// kind      game
+// calls     0x005F7E90 0x00601BF0 0x00601B80 0x006108E0 0x00601BB0 0x00602600
+//           0x005FCBB0 0x00601BD0 0x00600F00
+Status: Complete - testing
+*/
+int __cdecl pops(char *caption, char *label, int a3, char *a4, int a5,
+                 Sprite *sprite, int a7, int a8, int (__cdecl *callback)()) {
+    Win *win = reinterpret_cast<Win *>(*PopupInstanceSlotB);
+    if (!reinterpret_cast<Win *>(*PopupInstanceSlotA)->is_visible()) {
+        win = reinterpret_cast<Win *>(*PopupInstanceSlotA);
+    }
+    BasePop *pop = reinterpret_cast<BasePop *>(win);
+
+    if (pop->start(caption, label, a3, a4, a5, 0)) {
+        return -1;
+    }
+
+    pop->set_loc(*PopupSavedLocX, *PopupSavedLocY);
+    *PopupSavedLocY = 0x2000;
+    *PopupSavedLocX = 0x2000;
+
+    if (sprite != 0) {
+        if (a7 != a8) {
+            pop->field_3104_ = a7;
+            pop->field_3108_ = a8;
+        }
+        if (pop->field_2274_ == 0) {
+            pop->field_2144_ = reinterpret_cast<uint32_t>(sprite);
+        } else {
+            pop->field_2144_ = 0;
+        }
+
+        if (pop->sprite_box()->sprite(sprite, 0, 0)) {
+            return -1;
+        }
+    }
+
+    pop->write_check(*PopupWriteCheckState);
+    int execResult = pop->exec(0, callback);
+
+    if (pop->field_A14_ == 0) {
+        do_all_draws();
+    }
+
+    if (a5 & 0x8000) {
+        int h = pop->field_30C0_;
+        int w = pop->field_30BC_;
+        int y = pop->field_30B8_;
+        int x = pop->field_30B4_;
+        *PopupCloseRectTop = y;
+        w += x;
+        y += h;
+        *PopupCloseRectLeft = x;
+        *PopupCloseRectBottom = y;
+        *PopupCloseRectRight = w;
+        return execResult;
+    }
+
+    *PopupWriteCheckState = pop->read_check();
+    BaseAtKeyPollFlag = pop->field_3100_;
+    if ((a5 & 0x300) == 0) {
+        pop->close();
+    }
+    return execResult;
 }

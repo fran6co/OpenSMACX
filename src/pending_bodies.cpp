@@ -417,15 +417,20 @@ void Popup::start(char *a1, const char *a2, int a3, char *a4, int a5,
     PENDING_BODY(0x00406380, pending)(this, nullptr, a1, a2, a3, a4, a5, owner);
 }
 
-// ?pops@@YAHPADPADHPADHPAUSprite@@HHP6AHXZ@Z at 0x006276A0 - the full popup
-// entry every `pop` wrapper funnels into.
-//             body in src/unrecovered/006276a0.cpp
-int __cdecl pops(char *caption, char *label, int a3, char *a4, int a5,
-                 Sprite *sprite, int a7, int a8, int (__cdecl *callback)()) {
-    typedef int(__cdecl *pending)(char *, char *, int, char *, int, Sprite *,
-                                  int, int, int (__cdecl *)());
-    return PENDING_BODY(0x006276A0, pending)(caption, label, a3, a4, a5,
-                                             sprite, a7, a8, callback);
+// ?start@BasePop@@QAEHPADPBDH0HPAUGraphicWin@@@Z at 0x00601BF0 - popup.cpp's
+// `pops()` calls it BY NAME so it emits the image's `call rel32`.
+int BasePop::start(char *a1, const char *a2, int a3, char *a4, int a5,
+                   GraphicWin *a6) {
+    typedef int(__fastcall *pending)(BasePop *, void *, char *, const char *,
+                                     int, char *, int, GraphicWin *);
+    return PENDING_BODY(0x00601BF0, pending)(this, nullptr, a1, a2, a3, a4, a5, a6);
+}
+
+// ?sprite@SpriteBox@@QAEHPAUSprite@@PADH@Z at 0x006108E0 - popup.cpp's
+// `pops()` calls it BY NAME so it emits the image's `call rel32`.
+int SpriteBox::sprite(Sprite *a1, char *a2, int a3) {
+    typedef int(__fastcall *pending)(SpriteBox *, void *, Sprite *, char *, int);
+    return PENDING_BODY(0x006108E0, pending)(this, nullptr, a1, a2, a3);
 }
 
 // ?X_pops@@... at 0x005BF930 and ?X_pop@@... at 0x005BF480 - the two full

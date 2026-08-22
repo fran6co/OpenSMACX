@@ -69,6 +69,9 @@ class SpriteBox {
  public:
   void on_dialog_focus(int a1);
   void close();
+  // 0x006108E0, still a pending_bodies forwarder: `pops()` (popup.cpp) calls
+  // it BY NAME so it emits the image's `call rel32`.
+  int sprite(Sprite *a1, char *a2, int a3);
   int init(RECT* a1, int a2);
   int init(int a1);
   int init(Heap *a1);
