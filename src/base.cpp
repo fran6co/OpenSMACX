@@ -3393,7 +3393,7 @@ int __cdecl num_objectives(int faction_id, BOOL count_pact_factions) {
 /*
 Purpose: Check if specified faction is currently building Ascent to Transcendence. This code isn't
          used by original game. There was also a bug where it compares to a non-negative queue id.
-// ORIGINAL: 0x005AC630 ?transcending@@YAHH@Z 0x005AC630-0x005AC67A
+// ORIGINAL: 0x005AC630 ?transcending@@YAHH@Z 0x005AC630-0x005AC67A BYTE_EXACT
 // size      74 bytes
 // prototype int (__cdecl ?transcending@@YAHH@Z)(int factionID)
 // callers   0   call targets   0
@@ -3408,8 +3408,20 @@ BOOL __cdecl transcending(int faction_id) {
         return false;
     }
     for (int i = 0; i < BaseCurrentCount; i++) {
+        // NOT NEGATED, and that is the image rather than a slip here. The
+        // bytes at 0x005AC65C are `83 38 66` - `cmp dword ptr [eax], 0x66` -
+        // a POSITIVE 102, where every other site in the tree writes
+        // `-FAC_ASCENT_TO_TRANSCENDENCE` for a queued facility.
+        //
+        // The original disagrees with itself: `at_climax` (0x00539EF0) tests
+        // the same facility with `cmp dword ptr [eax + 0x10], -0x66`, the
+        // negated form. One of the two shipped wrong, and by the convention
+        // the rest of the game follows - facilities queued as negative ids -
+        // it is this one. Reproduced as shipped, the same way
+        // `Probe::success_rate` reproduces its own halving bug: this is a
+        // matching decompilation, not a fix.
         if (Bases[i].faction_id_current == faction_id
-            && Bases[i].queue_production_id[0] == -FAC_ASCENT_TO_TRANSCENDENCE) {
+            && Bases[i].queue_production_id[0] == FAC_ASCENT_TO_TRANSCENDENCE) {
             return true;
         }
     }
