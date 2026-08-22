@@ -25,6 +25,7 @@
 #include "planwin.h"
 #include "mapwin.h"
 #include "atexit_thunks.h"
+#include "guarded_teardowns.h"
 #include "ambience.h"
 #include "buffer.h"
 #include "buttongroup.h"
@@ -6174,7 +6175,7 @@ Status: Complete
 */
 void __cdecl construct_mapwin() {
     reinterpret_cast<MapWin *>(0x007D4060)->MapWin::construct(1);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004620A0));
+    atexit(teardown_g_mapwin);
 }
 
 /*
@@ -6390,7 +6391,7 @@ Status: Complete
 */
 void __cdecl construct_planwin() {
     reinterpret_cast<PlanWin *>(0x00834D70)->PlanWin::construct(1);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0048AE20));
+    atexit(teardown_g_planwin);
 }
 
 /*
@@ -6660,7 +6661,7 @@ Status: Complete
 */
 void __cdecl construct_console() {
     reinterpret_cast<Console *>(0x009156B0)->Console::construct(1);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0050E870));
+    atexit(teardown_g_console);
 }
 
 /*
@@ -6894,7 +6895,7 @@ Status: Complete
 */
 void __cdecl construct_buffer_sprite() {
     g_BUFFER_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x005D71F0));
+    atexit(teardown_g_buffer_sprite);
 }
 
 /*
@@ -6930,7 +6931,7 @@ Status: Complete
 */
 void __cdecl construct_win_buffer() {
     g_WIN_BUFFER->Buffer::Buffer();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x005EB370));
+    atexit(teardown_g_win_buffer);
 }
 
 /*
@@ -6966,7 +6967,7 @@ Status: Complete
 */
 void __cdecl construct_radiobutton_sprite_1() {
     g_RADIOBUTTON_SPRITE_1->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0060D080));
+    atexit(teardown_g_radiobutton_sprite_1);
 }
 
 /*
@@ -6984,7 +6985,7 @@ Status: Complete
 */
 void __cdecl construct_radiobutton_sprite_2() {
     g_RADIOBUTTON_SPRITE_2->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0060D0C0));
+    atexit(teardown_g_radiobutton_sprite_2);
 }
 
 /*
@@ -7002,7 +7003,7 @@ Status: Complete
 */
 void __cdecl construct_checkbox_sprite_1() {
     g_CHECKBOX_SPRITE_1->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0060E610));
+    atexit(teardown_g_checkbox_sprite_1);
 }
 
 /*
@@ -7020,7 +7021,7 @@ Status: Complete
 */
 void __cdecl construct_checkbox_sprite_2() {
     g_CHECKBOX_SPRITE_2->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0060E650));
+    atexit(teardown_g_checkbox_sprite_2);
 }
 
 /*
@@ -7038,7 +7039,7 @@ Status: Complete
 */
 void __cdecl construct_filewin_sprite_1() {
     g_FILEWIN_SPRITE_1->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x006137B0));
+    atexit(teardown_g_filewin_sprite_1);
 }
 
 /*
@@ -7056,7 +7057,7 @@ Status: Complete
 */
 void __cdecl construct_filewin_sprite_2() {
     g_FILEWIN_SPRITE_2->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x006137F0));
+    atexit(teardown_g_filewin_sprite_2);
 }
 
 /*
@@ -7074,7 +7075,7 @@ Status: Complete
 */
 void __cdecl construct_filewin_sprite_3() {
     g_FILEWIN_SPRITE_3->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00613830));
+    atexit(teardown_g_filewin_sprite_3);
 }
 
 /*
@@ -7110,7 +7111,7 @@ Status: Complete
 */
 void __cdecl construct_caviar_buffer_1() {
     g_CAVIAR_BUFFER_1->Buffer::Buffer();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00616AC0));
+    atexit(teardown_g_caviar_buffer_1);
 }
 
 /*
@@ -7128,5 +7129,5 @@ Status: Complete
 */
 void __cdecl construct_caviar_buffer_2() {
     g_CAVIAR_BUFFER_2->Buffer::Buffer();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00616B00));
+    atexit(teardown_g_caviar_buffer_2);
 }
