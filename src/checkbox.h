@@ -95,6 +95,16 @@ class CheckBox {
   // `: virtual GraphicWin, virtual Dialog` declaration; this constructor
   // takes an explicit flag instead and mirrors what the image's own guard
   // does with it.
+  // RULED-OUT (re-checked 2026-08-22): declaring the real
+  // `: public virtual GraphicWin, public virtual Dialog` and letting VC6
+  // emit the vbtable and the base construction. It cannot produce this
+  // symbol - a constructor on a class with a GENUINE virtual base compiles
+  // to `??0CheckBox@@QAE@XZ` on this compiler, with the most-derived flag a
+  // hidden stack parameter that is NEVER part of the mangled name, and the
+  // image plainly has `@H@Z`. The hand-composed layout below is the
+  // workaround for that, not an oversight; tools/most_derived_flag.py lists
+  // this class as needing a base and is right about the LAYOUT while being
+  // unable to see that constraint.
   CheckBox(int a1);
   // Trivial default, kept ONLY so an embedding class that has not itself
   // been recovered to call the flag-taking constructor (NetWin::checkBox_,
