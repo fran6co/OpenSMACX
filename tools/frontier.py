@@ -165,12 +165,27 @@ if __name__ == "__main__":
     def ruled_out(record) -> int:
         return len(record.ruled_out)
 
+    def levers(record) -> int:
+        return len(record.levers)
+
     if "--fresh" in sys.argv:
         pending = [r for r in pending if not ruled_out(r)]
 
+    # `--untouched` IS THE ONE THAT TARGETS YIELD. `--fresh` only drops bodies
+    # carrying a RULED-OUT, and a body can have been worked hard and left a
+    # `// LEVER:` line instead - Scroll's three `set_bevel_*` siblings each
+    # carry one, and every one reads as "fresh". Picking a batch that way hands
+    # an agent work a previous pass already did. Untouched means NEITHER.
+    if "--untouched" in sys.argv:
+        pending = [r for r in pending if not ruled_out(r) and not levers(r)]
+
     for depth, record in enumerate(pending):
-        worked = ruled_out(record)
-        mark = f"  [{worked} ruled-out]" if worked else ""
+        worked, moved = ruled_out(record), levers(record)
+        mark = ""
+        if worked or moved:
+            parts = ([f"{worked} ruled-out"] if worked else []) + \
+                    ([f"{moved} lever"] if moved else [])
+            mark = "  [" + ", ".join(parts) + "]"
         print(f"{depth:4d}  {record.address_hex}  {record.path.name:24s} "
               f"{record.name}{mark}")
     if "--semantic" in sys.argv:
