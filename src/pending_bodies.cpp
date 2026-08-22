@@ -452,10 +452,6 @@ int __cdecl X_pops(char *caption, const char *label, int a3, char *a4, int a5,
                                              sprite, a7, a8, callback);
 }
 
-int __cdecl X_pop(const char *label, int (__cdecl *callback)()) {  // 0x005BF310
-    typedef int(__cdecl *pending)(const char *, int (__cdecl *)());
-    return PENDING_BODY(0x005BF310, pending)(label, callback);
-}
 
 
 // Five more bodies the tree called through function pointers. Each is

@@ -116,7 +116,7 @@ class RadioButton : public virtual GraphicWin, public virtual Dialog {
 // `: public virtual GraphicWin, public virtual Dialog` cannot move the layout
 // without failing here. 0x18 of own data, then GraphicWin 0xA14, then the
 // 4-byte vtordisp this header already carries as a gap, then Dialog 0xF4.
-static_assert(sizeof(RadioButton) == 0xB20,
+static_assert(sizeof(RadioButton) == 0xB24,
               "RadioButton layout must match the original executable");
 
 // RadioButton's Dialog::close is not recovered yet.
