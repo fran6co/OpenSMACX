@@ -81,7 +81,12 @@ class EditGroup {
   // takes an explicit flag instead and mirrors what the image's own guard
   // does with it.
   EditGroup(int a1);
-  ~EditGroup();
+  // The catalogued `??1EditGroup@@QAE@XZ` at 0x00611A20 is spelled as a
+  // METHOD, not a destructor: the image's body reinstalls the base
+  // vtables and calls `close()`, and never destroys `virtual_base_` or
+  // `dialog_`. A real `~EditGroup()` has to destroy both, which is an
+  // SEH frame and thirty extra instructions the image does not have.
+  void destruct();
   // 0x00611A90, a pending_bodies forwarder. ~EditGroup calls it on the
   // adjusted (true) object pointer.
   void close();

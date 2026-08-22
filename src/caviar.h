@@ -30,7 +30,12 @@ struct CaviarCamera {
 
 class CaviarData {
  public:
-  CaviarData();
+  // IN-CLASS and `MEASURED`, not out-of-line in caviar.cpp: `Caviar::Caviar()`
+  // has to be able to FOLD this into its 200-element array-construction loop,
+  // which is what the image writes out inline there. `MEASURED` rather than a
+  // plain `inline` keeps 0x00616BC0's own COMDAT measurable; its marker stays
+  // in caviar.cpp with a `// body` fact.
+  MEASURED CaviarData() : field_0_(0), fileDescriptor_(0), record_(nullptr) { }
   void close();
 
  private:
@@ -147,9 +152,11 @@ class Caviar {
   uint8_t field_D9_[0x2F];   // 0xD9
   int32_t field_108_;
   uint8_t field_10C_[0x640];  // 0x10C
-  // THE OBJECT-DATA ARRAY, and the constructor already said so: it does
-  // `memset(bytes + 0x74C, 0, sizeof(CaviarData) * 200)`. Declaring it means
-  // neither that nor `Caviar::close` has to reach it through a cast.
+  // THE OBJECT-DATA ARRAY. The image does NOT memset it - it runs a 200-turn
+  // loop writing three zero dwords per element, which is `CaviarData`'s own
+  // constructor folded into the implicit array construction. Declaring the
+  // array means neither that nor `Caviar::close` has to reach it through a
+  // cast, and `Caviar::Caviar()` writes nothing about it at all.
   // The arithmetic reconciles exactly: 200 * 0xC is 0x960, from 0x74C to
   // 0x10AC, and 0x960 + 0x320 is 0xC80, which is what the four fields this
   // replaces occupied (4 + 4 + 4 + 0xC74).

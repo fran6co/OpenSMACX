@@ -36,8 +36,7 @@ Purpose: Initialize an empty Caviar object-data record.
 Return Value: n/a
 Status: Complete
 */
-CaviarData::CaviarData() : field_0_(0), fileDescriptor_(0), record_(nullptr) {
-}
+// body src/caviar.h
 
 /*
 Purpose: Release the record this data slot owns. A slot with no record is left
@@ -63,7 +62,9 @@ void CaviarData::close() {
 
 /*
 Purpose: Initialize the Caviar renderer's object records and default scalar fields.
-// ORIGINAL: 0x00616DA0 ??0Caviar@@QAE@XZ 0x00616DA0-0x00616DD6
+// ORIGINAL: 0x00616DA0 ??0Caviar@@QAE@XZ 0x00616DA0-0x00616DD6 SEMANTIC
+// LEVER: 0 of 16 -> SHAPE_EXACT 12 of 16, on two changes that are one idea. The image never memsets `slots_`: it runs a 200-turn loop writing three zero dwords per element, which is `CaviarData::CaviarData()` FOLDED into the implicit array construction. This body was doing both - the compiler emitted a 200-turn loop of `call ?CaviarData::CaviarData` because that constructor was out-of-line in caviar.cpp, AND the source then memset the same storage with `rep stosd`, 25 instructions against the image's 16. Moving the constructor in-class in caviar.h (`MEASURED`, so 0x00616BC0 keeps its own COMDAT and stays BYTE_EXACT) lets VC6 inline it, and deleting the memset leaves exactly the image's loop.
+// RULED-OUT: the residual 4 instructions are a pointer bias inside VC6's array-construction loop and no source form here reaches it. The image walks `[eax + 0x750]` and stores at `[edx - 4]`, `[edx]`, `[edx + 4]`; this tree walks `[eax + 0x74c]` and stores at `[edx]`, `[edx + 4]`, `[edx + 8]`. Same element, same order, same encoded length - only the base is biased by 4. listing_diff reports 0 differing runs, which is why this is SHAPE_EXACT rather than a structural mismatch.
 // size      54 bytes
 // prototype void (__thiscall ??0Caviar@@QAE@XZ)(Caviar* this)
 // callers   7   call targets   0
@@ -76,7 +77,6 @@ Status: Complete
 */
 Caviar::Caviar() {
     uint8_t *bytes = reinterpret_cast<uint8_t *>(this);
-    memset(slots_, 0, sizeof(slots_));
     const uint32_t distance_limit = 0x461C4000;
     const uint32_t default_scene_scale = 0x3F2AAAAB;
     const uint32_t zero = 0;
@@ -87,7 +87,10 @@ Caviar::Caviar() {
 
 /*
 Purpose: Copy a camera position and orientation directly into the renderer state.
-// ORIGINAL: 0x006182A0 ?set_camera_direct@Caviar@@QAEXPAUVOX_Vect@@PAUVOX_Matrix@@@Z 0x006182A0-0x0061831F
+// ORIGINAL: 0x006182A0 ?set_camera_direct@Caviar@@QAEXPAUVOX_Vect@@PAUVOX_Matrix@@@Z 0x006182A0-0x0061831F BYTE_EXACT
+// LEVER: TWELVE ELEMENT COPIES, no struct assignment anywhere. Every store in the image is `mov [ecx + disp32], reg` off the incoming `this` - 0xA5, 0xA9, 0xAD for the vector and 0xB1 through 0xD1 for the matrix - so nothing ever takes the address of a subobject. `camera_.position = *camera` (12 bytes) forms `lea edx, [ecx + 0xa5]` and indexes off it, and `camera_.rotation = *matrix` (36 bytes) is over VC6's inline-copy threshold and becomes `rep movsd`, which also costs the EDI/ESI pair and moves the two null tests behind the pushes: 21 compiled instructions against 33, agreeing 0. Assigning the twelve floats one at a time gives 33 of 33, BYTE_EXACT.
+// RULED-OUT: MEASURED, all with the same 5 of 33 - three 12-byte `memcpy`s for the matrix rows (42 compiled), a `for (row)` loop over three row memcpys (34), splitting `camera && matrix` into two guard clauses (42), and keeping the struct assignment for `position` while spelling the nine matrix floats out (36). It is the struct assignment that costs it, not the copy width and not the chained condition - the image really does test both and share one `ret 8`.
+// RULED-OUT: `record` DROPPED THIS LINE the first time. Re-recording a body whose tier changes rewrites its annotation from the parsed state and keeps only the LEVER; the RULED-OUT text is discarded silently. Re-added after the claim was banked, and verified with `osmx show` rather than by reading the diff.
 // symbol    ?set_camera_direct@Caviar@@QAEXPBUVOX_Vect@@PBUVOX_Matrix@@@Z
 // size      127 bytes
 // prototype void (__thiscall ?set_camera_direct@Caviar@@QAEXPAUVOX_Vect@@PAUVOX_Matrix@@@Z)(Caviar* this, VOX_Vect*, VOX_Matrix*)
@@ -101,8 +104,18 @@ Status: Complete
 */
 void Caviar::set_camera_direct(const VOX_Vect *camera, const VOX_Matrix *matrix) {
     if (camera && matrix) {
-        camera_.position = *camera;
-        camera_.rotation = *matrix;
+        camera_.position.values[0] = camera->values[0];
+        camera_.position.values[1] = camera->values[1];
+        camera_.position.values[2] = camera->values[2];
+        camera_.rotation.values[0][0] = matrix->values[0][0];
+        camera_.rotation.values[0][1] = matrix->values[0][1];
+        camera_.rotation.values[0][2] = matrix->values[0][2];
+        camera_.rotation.values[1][0] = matrix->values[1][0];
+        camera_.rotation.values[1][1] = matrix->values[1][1];
+        camera_.rotation.values[1][2] = matrix->values[1][2];
+        camera_.rotation.values[2][0] = matrix->values[2][0];
+        camera_.rotation.values[2][1] = matrix->values[2][1];
+        camera_.rotation.values[2][2] = matrix->values[2][2];
     }
 }
 

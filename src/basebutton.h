@@ -46,7 +46,7 @@ class BaseButton : public GraphicWin {
   BaseButton() { ; }
   ~BaseButton() { ; }
 
-  void construct();
+  BaseButton *construct();
   uint32_t close();
   int init(LPCSTR name, int id, int x, int y, int width, int height,
            Win *parent, int style_flag);
