@@ -134,6 +134,21 @@ A `construct()` METHOD IS HOW THE SEH FRAME IS AVOIDED
   from 99 down to 79 against an image of 83. Fewer instructions is not a
   better match - dropping the frame shifts everything after it.
 
+A REFUSAL ONLY COUNTS AS A `// RULED-OUT:` LINE
+- Write what you measured as a LESSON LINE - `// LEVER:` or `// RULED-OUT:` -
+  in the marker's comment block. Written as ordinary prose ("cannot reach
+  byte-exact", "not chased further") it is invisible to `decomp.reader`, so
+  `frontier.py --untouched` keeps offering the body and the next pass
+  re-derives your wall from scratch.
+- `uv run tools/prose_refusals.py` lists the 20 bodies currently hiding that
+  way. `Buffer::fill` was one: its comment explained at length that the
+  image's body is hand-written assembly, and it still read as untouched.
+- Anywhere in the block is fine now. The reader used to stop at the scaffold's
+  unprefixed `Return Value:` and `Status:` lines, which hid anything below
+  them; that is fixed. You no longer need to reposition notes to the top.
+- A refusal is a claim and needs the same evidence as a success. Say what you
+  measured and what it scored, not that something "seems" impossible.
+
 VTABLE STORES GO FIRST IN A CONSTRUCTOR BODY
 - Nothing in the GraphicWin/Win chain is declared `virtual`, deliberately, so
   a constructor's vtable stores are EXPLICIT assignments rather than something
