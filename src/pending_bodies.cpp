@@ -1141,11 +1141,6 @@ void EditGroup::pass_dialog_focus() {  // 0x006126C0
     PENDING_BODY(0x006126C0, pending)(this, nullptr);
 }
 
-uint32_t EditGroup::close() {  // 0x00611A90
-    typedef void(__fastcall *pending)(EditGroup *, void *);
-    PENDING_BODY(0x00611A90, pending)(this, nullptr);
-    return 0;
-}
 
 int ListBox::attach(void * a1, int a2, int a3, int a4) {  // 0x0060A670
     typedef int(__fastcall *pending)(ListBox *, void *, void *, int, int, int);

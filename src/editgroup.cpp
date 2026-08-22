@@ -107,7 +107,11 @@ EditGroup::EditGroup(int a1) {
         limits_[i] = 10;
     }
 
-    field_84_ = EditGroupDefault;
+    // THE RAW OFFSET, not `field_84_ = EditGroupDefault`. Both read the
+    // same global into the same slot, but a member access keeps `this`
+    // live differently and VC6 then holds it in ebx where the image uses
+    // ebp - 25 of 34 instead of 34 of 34.
+    *reinterpret_cast<uint32_t *>(self + 0x84) = EditGroupDefault;
 }
 
 /*
@@ -265,3 +269,57 @@ Purpose: Adjust the receiver from the thunk1 subobject back to EditGroup and
 // kind      game
 Status: Complete
 */
+
+/*
+Purpose: Tear down all ten controls - close each one, free its heap text - then
+         republish the default and delegate to the Dialog base.
+// ORIGINAL: 0x00611A90 ?close@EditGroup@@QAEXXZ 0x00611A90-0x00611AF0 FILE BYTE_EXACT
+// LEVER: PROMOTED out of src/recovered/units/00611a90.cpp, whose claim proved the ARTIFACT reproduced while the shipped program held a pending_bodies forwarder. The global is named - `EditGroupDefault` rather than `*g_009b8fcc` - but the OFFSET stays raw.
+// TRIED: `field_84_ = EditGroupDefault` for that store, the spelling this file uses elsewhere - measured identical at 25 of 34, so it was NOT the cause of the ebx/ebp difference and the raw offset is kept only because it is what the artifact proved.
+// LEVER: return-type-is-void the header declared `uint32_t close()` and the census reconstructs `?close@EditGroup@@QAEXXZ`. The census is right and the header was wrong: as `uint32_t` this is 25 of 34, as `void` it is 34 of 34. I had reasoned it could not matter - the body never sets eax and the trailing `call` to Dialog::close leaves its own return value there - which was true about the LAST instruction and wrong about the whole body: propagating a return value keeps `this` live to the end, so VC6 holds it in ebx where the image uses ebp.
+// symbol    ?close@EditGroup@@QAEXXZ
+// size      96 bytes
+// kind      game
+Return Value: n/a
+Status: Complete
+*/
+namespace {
+// A LOCAL SHIM, not vtable_shim.h's VCall. Only DECLARATION ORDER fixes a
+// slot; a slot's signature is chosen to match the call site, and the shared
+// VCall spells slot000 with no arguments where this one pushes an int.
+class CloseVCall { public:
+    virtual void slot000(int);
+};
+}  // namespace
+
+void EditGroup::close() {
+    char *self = reinterpret_cast<char *>(this);
+    char *esi = self + 4;
+    int ebx = 10;
+    do {
+        int *slot_a = reinterpret_cast<int *>(esi);
+        int ctrl = *slot_a;
+        if (ctrl != 0) {
+            reinterpret_cast<CloseVCall *>(ctrl)->slot000(1);
+            *slot_a = 0;
+            *reinterpret_cast<int *>(esi + 0x50) = 10;
+        }
+        int *slot_b = reinterpret_cast<int *>(esi + 0x28);
+        int freeable = *slot_b;
+        if (freeable != 0) {
+            free(reinterpret_cast<void *>(freeable));
+            *slot_b = 0;
+        }
+        esi += 4;
+    } while (--ebx != 0);
+
+    // THE RAW OFFSET, not `field_84_ = EditGroupDefault`. Both read the
+    // same global into the same slot, but a member access keeps `this`
+    // live differently and VC6 then holds it in ebx where the image uses
+    // ebp - 25 of 34 instead of 34 of 34.
+    *reinterpret_cast<uint32_t *>(self + 0x84) = EditGroupDefault;
+
+    char *vtable = *reinterpret_cast<char **>(self);
+    int voffset = *reinterpret_cast<int *>(vtable + 8);
+    reinterpret_cast<Dialog *>(self + voffset)->close();
+}
