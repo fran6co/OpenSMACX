@@ -200,7 +200,10 @@ MEASURED inline int __cdecl tech_tech(int tech_id) {
 }
 
 MEASURED inline int __cdecl tech_infra(int tech_id) {
-    return (tech_id >= MaxTechnologyNum) ? 1 : *(&Technology[tech_id].wealth_value);
+    if (tech_id < MaxTechnologyNum) {
+        return Technology[tech_id].wealth_value;
+    }
+    return 1;
 }
 
 MEASURED inline int __cdecl tech_colonize(int tech_id) {

@@ -162,7 +162,7 @@ LPVOID Filemap::open(LPCSTR file_name, BOOL is_sequential) {
 
 /*
 Purpose: Create a new file or overwrite an existing one with the specified size filled with zeros.
-// ORIGINAL: 0x00628650 ?create@Filemap@@QAEHPADKH@Z 0x00628650-0x006287B3
+// ORIGINAL: 0x00628650 ?create@Filemap@@QAEHPADKH@Z 0x00628650-0x006287B3 BYTE_EXACT
 // symbol    ?create@Filemap@@QAEPAXPBDIH@Z
 // size      355 bytes
 // prototype int (__thiscall ?create@Filemap@@QAEHPADKH@Z)(Filemap* this, int8* lpFileName, ULONG lDistanceToMove, int)
@@ -175,30 +175,45 @@ Return Value: Pointer to the mapped file or NULL on error
 Status: Complete
 */
 LPVOID Filemap::create(LPCSTR file_name, uint32_t size, BOOL is_sequential) {
+    // THE SAME FLAGS SHAPE AS open_read/open, computed first before close().
+    const DWORD flags = is_sequential
+        ? (FILE_FLAG_SEQUENTIAL_SCAN | FILE_ATTRIBUTE_NORMAL)
+        : (FILE_FLAG_RANDOM_ACCESS | FILE_ATTRIBUTE_NORMAL);
     close();
     file_size_ = size;
-    file_ = CreateFileA(file_name, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
-        FILE_ATTRIBUTE_NORMAL |
-        (is_sequential ? FILE_FLAG_SEQUENTIAL_SCAN : FILE_FLAG_RANDOM_ACCESS), NULL);
+    file_ = CreateFileA(file_name, GENERIC_READ | GENERIC_WRITE, 0, NULL,
+                        CREATE_ALWAYS, flags, NULL);
     if (file_ == INVALID_HANDLE_VALUE) {
         GetLastError();
         return NULL;
     }
-    if (SetFilePointer(file_, size, NULL, FILE_BEGIN) != INVALID_SET_FILE_POINTER) {
-        SetEndOfFile(file_);
-        if (SetFilePointer(file_, 0, NULL, FILE_BEGIN) != INVALID_SET_FILE_POINTER) {
-            file_map_ = CreateFileMapping(file_, NULL, PAGE_READWRITE, 0, 0, NULL);
-            if (file_map_) {
-                map_view_addr_ = MapViewOfFile(file_map_, FILE_MAP_ALL_ACCESS, 0, 0, 0);
-                if (map_view_addr_) {
-                    ZeroMemory(map_view_addr_, size);
-                    return map_view_addr_;
-                }
-            }
-        }
+    // AN EARLY OUT AT EACH FAILURE, not a single trailing cleanup: the image
+    // inlines `close()` separately at every one of these four points (VC6
+    // proves the `map_view_addr_` check dead only at the last of them, where
+    // it was just stored 0 by MapViewOfFile's own failure in the same basic
+    // block, and folds the shared CloseHandle(file_map_)/CloseHandle(file_)
+    // tail across all four via cross-jumping).
+    if (SetFilePointer(file_, size, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER) {
+        close();
+        return NULL;
     }
-    close(); // clear everything on error
-    return NULL;
+    SetEndOfFile(file_);
+    if (SetFilePointer(file_, 0, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER) {
+        close();
+        return NULL;
+    }
+    file_map_ = CreateFileMapping(file_, NULL, PAGE_READWRITE, 0, 0, NULL);
+    if (!file_map_) {
+        close();
+        return NULL;
+    }
+    map_view_addr_ = MapViewOfFile(file_map_, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+    if (!map_view_addr_) {
+        close();
+        return NULL;
+    }
+    memset(map_view_addr_, 0, size);
+    return map_view_addr_;
 }
 
 /*
@@ -219,7 +234,7 @@ Status: Complete
 /*
 Purpose: Close and set the end of the file. This can be used to truncate existing files. It also 
          assumes the file has write permission.
-// ORIGINAL: 0x00628810 ?close@Filemap@@QAEXPAE@Z 0x00628810-0x006288C4
+// ORIGINAL: 0x00628810 ?close@Filemap@@QAEXPAE@Z 0x00628810-0x006288C4 BYTE_EXACT
 // symbol    ?close@Filemap@@QAEXPAX@Z
 // size      180 bytes
 // prototype void (__thiscall ?close@Filemap@@QAEXPAE@Z)(Filemap* this, unsigned int8*)
@@ -237,30 +252,36 @@ void Filemap::close(LPVOID new_addr) {
     // what `if (new_addr < map_view_addr_) { close(); return; }` emits;
     // written the other way round VC6 lays the body inline and the close
     // after it, and every branch in between inverts.
+    // LEVER: `new_size` NOT scoped inside a trailing `{ }` block, and the
+    // SetFilePointer failure returns EARLY (`close(); return;`) instead of
+    // falling through to one `close()` call at the very end. Both spellings
+    // are semantically identical, but the block scope stopped VC6 from
+    // folding this `close()`'s tail (CloseHandle(file_map_)/CloseHandle
+    // (file_)) into the SAME physical code the later failure branch also
+    // reaches by `jmp` - the image has ONE copy of that tail, this tree had
+    // two before the reshape.
     if (new_addr < map_view_addr_) {
         close();
         return;
     }
-    {
-        LONG new_size = LONG(new_addr) - LONG(map_view_addr_);
-        if (map_view_addr_) {
-            UnmapViewOfFile(map_view_addr_);
-            map_view_addr_ = 0;
-        }
-        if (file_map_) {
-            CloseHandle(file_map_);
-            file_map_ = 0;
-        }
-        if (SetFilePointer(file_, new_size, NULL, FILE_BEGIN) != INVALID_SET_FILE_POINTER) {
-            SetEndOfFile(file_);
-            if (file_) {
-                CloseHandle(file_);
-                file_ = 0;
-            }
-            return;
-        }
+    LONG new_size = LONG(new_addr) - LONG(map_view_addr_);
+    if (map_view_addr_) {
+        UnmapViewOfFile(map_view_addr_);
+        map_view_addr_ = 0;
     }
-    close(); // clear everything on error
+    if (file_map_) {
+        CloseHandle(file_map_);
+        file_map_ = 0;
+    }
+    if (SetFilePointer(file_, new_size, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER) {
+        close();
+        return;
+    }
+    SetEndOfFile(file_);
+    if (file_) {
+        CloseHandle(file_);
+        file_ = 0;
+    }
 }
 
 // ---------------------------------------------------------------------------

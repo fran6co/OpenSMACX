@@ -59,31 +59,67 @@ Purpose: Determine whether a faction is able to jump up the tech tree for the sp
 Return Value: Is a tech leap possible? true/false
 Status: Complete
 */
+// TRIED: has_tech_call() (technology.h) exists for exactly this - a real
+// out-of-line has_tech() the way best_specialist (base.cpp) needs one - but
+// that idiom only works CROSS-TU. has_tech's `MEASURED inline` body lives in
+// technology.h, included at the top of THIS file, so it is visible to every
+// function below it uniformly; there is no position in technology.cpp where
+// valid_tech_leap could sit "before" it the way tech_avail's own marker
+// describes (that split predates has_tech's move into the header and no
+// longer holds - tech_avail measures MISMATCH here too, not BYTE_EXACT).
+// `#pragma inline_depth(0)` around this function has NO effect (measured):
+// it limits the RECURSION depth of nested inline expansion, not whether a
+// direct, first-level call to an explicitly `inline` function expands, and
+// neither does `/Ob0` on this flag set. has_tech_call still reads correctly
+// here even though it does not yet reproduce the image's real `call
+// 0x5b9f20` at these 4 sites - fixing it needs has_tech's definition moved
+// out of the header, which has ~108 other call sites across the tree and is
+// out of scope for this body.
 BOOL __cdecl valid_tech_leap(int tech_id, int faction_id) {
-    int preq_1 = Technology[tech_id].preq_tech_1;
-    if (preq_1 >= 0 && !(has_tech(Technology[preq_1].preq_tech_1, faction_id)
-        && has_tech(Technology[preq_1].preq_tech_2, faction_id))) {
-        return false; // doesn't have 1st prerequisite prerequisites
+    // EACH `&&` IS TWO SEPARATE EARLY RETURNS, not one combined test: the
+    // image tests every has_tech() call on its own `je`, and re-reads
+    // Technology[tech_id].preq_tech_1/2 from the array rather than keeping
+    // an earlier read live across a has_tech()/weapon_budget() call.
+    if (Technology[tech_id].preq_tech_1 >= 0) {
+        if (!has_tech_call(Technology[Technology[tech_id].preq_tech_1].preq_tech_1, faction_id)) {
+            return false; // doesn't have 1st prerequisite's 1st prerequisite
+        }
+        if (!has_tech_call(Technology[Technology[tech_id].preq_tech_1].preq_tech_2, faction_id)) {
+            return false; // doesn't have 1st prerequisite's 2nd prerequisite
+        }
     }
-    int preq_2 = Technology[tech_id].preq_tech_2;
-    if (preq_2 >= 0 && !(has_tech(Technology[preq_2].preq_tech_1, faction_id)
-        && has_tech(Technology[preq_2].preq_tech_2, faction_id))) {
-        return false; // doesn't have 2nd prerequisite prerequisites
+    if (Technology[tech_id].preq_tech_2 >= 0) {
+        if (!has_tech_call(Technology[Technology[tech_id].preq_tech_2].preq_tech_1, faction_id)) {
+            return false; // doesn't have 2nd prerequisite's 1st prerequisite
+        }
+        if (!has_tech_call(Technology[Technology[tech_id].preq_tech_2].preq_tech_2, faction_id)) {
+            return false; // doesn't have 2nd prerequisite's 2nd prerequisite
+        }
     }
-    if (preq_1 <= TechDisabled || preq_2 <= TechDisabled) {
+    if (Technology[tech_id].preq_tech_1 <= TechDisabled) {
         return false; // disabled
     }
-    for (uint32_t i = 0; i < MaxReactorNum; i++) {
-        if ((int)tech_id == Reactor[i].preq_tech) {
+    if (Technology[tech_id].preq_tech_2 <= TechDisabled) {
+        return false; // disabled
+    }
+    RulesReactor *reactor = Reactor;
+    for (int i = 0; i < MaxReactorNum; i++, reactor++) {
+        if (tech_id == reactor->preq_tech) {
             return false; // leap not possible for reactor tech
         }
     }
-    for (i = 0; i < MaxWeaponNum; i++) {
-        if (Weapon[i].preq_tech == (int)tech_id) { // may end early if 2 weapons have the same preq
-            return (PlayersData[faction_id].ranking <= 2 // lowest two ranking factions
-                // this line is an odd comparison (offensive rating <= best weapon id + 2)
-                // however it might be to prevent leaps for later weapon tech
-                && Weapon[i].offense_rating <= (weapon_budget(faction_id, 99, false) + 2));
+    RulesWeapon *weapon = Weapon;
+    for (i = 0; i < MaxWeaponNum; i++, weapon++) {
+        if (weapon->preq_tech == tech_id) { // may end early if 2 weapons have the same preq
+            if (PlayersData[faction_id].ranking > 2) { // lowest two ranking factions
+                return false;
+            }
+            // this line is an odd comparison (offensive rating <= best weapon id + 2)
+            // however it might be to prevent leaps for later weapon tech
+            if (weapon->offense_rating > weapon_budget(faction_id, 99, false) + 2) {
+                return false;
+            }
+            return true;
         }
     }
     return true;
@@ -768,7 +804,10 @@ Status: Complete
 
 /*
 Purpose: Get wealth_value from technology struct for tech id.
-// ORIGINAL: 0x005BDDC0 ?tech_infra@@YAHH@Z 0x005BDDC0-0x005BDDE1
+// ORIGINAL: 0x005BDDC0 ?tech_infra@@YAHH@Z 0x005BDDC0-0x005BDDE1 BYTE_EXACT
+// LEVER: same guard-clause rewrite as tech_tech/tech_colonize - the ternary
+// spelling (`(tech_id >= Max) ? 1 : *(&Technology[tech_id].wealth_value)`)
+// was a different program, not just a different shape.
 // size      33 bytes
 // prototype 
 // callers   1   call targets   0
