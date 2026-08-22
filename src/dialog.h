@@ -47,7 +47,13 @@ static_assert(offsetof(DialogEntry, previous) == 0x10,
   */
 class Dialog {
  public:
-  int item(char *text, int index);
+  // VIRTUAL, and this is the Dialog virtual ListBox overrides - which is why
+  // ListBox carries a Dialog vtordisp and CheckBox/RadioButton/SpriteBox do
+  // not. The evidence is independent of this file: filewin.h pins
+  // `ListBox list_box_; // 0x286C, sizeof 0xB54, ends 0x33C0` with a field
+  // immediately after, so ListBox is 0xB54 - four more than the 0xB50 it
+  // measures with only the GraphicWin displacement.
+  virtual int item(char *text, int index);
   // 0x00608F50, a pending_bodies forwarder. checkbox.cpp and
   // radiobutton.cpp both reach it, and both did so through a pointer.
   // VIRTUAL, and this is what earns the vtordisp before the Dialog base in

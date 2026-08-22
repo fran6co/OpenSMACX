@@ -74,7 +74,11 @@
   * The 0x44 and 0xA5C dwords are the GraphicWin/Dialog vbase-adjust slots that
   * sit four bytes below each virtual base; they are 0 in a most-derived ListBox.
   */
-class ListBox {
+// The bases are REAL. `graphic_vbase_adjust_` and `dialog_vbase_adjust_` were
+// this header's own names for the two vtordisps, so it already knew what they
+// were - the compiler emits the GraphicWin one, because this class overrides
+// GraphicWin's on_dialog_focus and on_mouse_leave.
+class ListBox : public virtual GraphicWin, public virtual Dialog {
  public:
   // 0x0060C6A0, a pending_bodies forwarder.
   void on_scrolled(int a1, int a2);
@@ -138,7 +142,7 @@ class ListBox {
   void on_dialog_focus(int);
 
  private:
-  uint32_t vbtable_pointer_;      // 0x00 -> 0x00670584
+  // 0x00 is the vbtable pointer, EMITTED by the compiler now.
   uint32_t field_4_;              // 0x04
   uint32_t field_8_;              // 0x08
   uint32_t field_C_;              // 0x0C
@@ -155,10 +159,8 @@ class ListBox {
   uint32_t field_38_;             // 0x38
   uint32_t field_3C_;             // 0x3C
   uint32_t field_40_;             // 0x40
-  uint32_t graphic_vbase_adjust_; // 0x44  (GraphicWin - 4)
-  GraphicWin virtual_base_;       // 0x48  (0xA14; Buffer subobject at +0x444 -> 0x48C)
-  uint32_t dialog_vbase_adjust_;  // 0xA5C (Dialog - 4)
-  Dialog dialog_;                 // 0xA60 (0xF4; ends 0xB54)
+  // 0x44 is GraphicWin's VTORDISP and 0x48 the base itself - both the
+  // compiler's now, as is the Dialog base that follows.
 };
 
 static_assert(sizeof(ListBox) == 0xB54,
