@@ -953,6 +953,7 @@ Purpose: Flood the whole buffer with one colour - through DirectDraw when
 // assembly one.
 //
 // ORIGINAL: 0x005DFB50 ?fill@Buffer@@QAEHH@Z 0x005DFB50-0x005DFCCD
+// RULED-OUT: byte-exactness, because the image's body is HAND-WRITTEN ASSEMBLY - a `pushf`/`cld`/`mul` block at 0x005DFC43 that saves no flags, clobbers callee-saved ebx without saving it, and uses opcodes VC6 does not emit from C++. This tree does not answer that with `__asm`. The reasoning was already written out below in prose, which the reader cannot see - so this body kept showing up as untouched and kept being re-picked. Best reached is 18/157; the frame alone is 0xE0 against 0xD0, four locals the asm block addresses directly.
 // size      381 bytes
 // prototype int (__thiscall ?fill@Buffer@@QAEHH@Z)(Buffer* this, int)
 // callers   40   call targets   1
