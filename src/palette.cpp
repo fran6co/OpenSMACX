@@ -364,6 +364,23 @@ Purpose: Build the process palette and hand it to GDI, replacing whatever
 //   compiled from `Palette::init_palette_class(tgl_direct_draw & 2)`, a call
 //   that pushes one argument and no receiver. `SA` is the static spelling,
 //   which is what `palette.h` has always declared.
+// RULED-OUT: source-form search this body is a REGISTER-PRESSURE plateau, not a
+//   control-flow one, and no spelling reached past it. Measured 2026-08-22 over
+//   all ten flag sets: best 0.881 at `/c /O2 /Gy /GR- /GX`, 0 of 99 instructions
+//   agreeing, this tree emitting 103 against the image's 99. The whole delta is
+//   ONE spilled local. The image keeps the LOGPALETTE pointer in esi from
+//   0x005FEBD4 to the closing `push esi` at 0x005FECE2 and never touches memory
+//   for it; this tree opens with `push ecx` and writes `mov [esp+8], ebp`
+//   immediately after the null check, then re-reads it at `mov eax, [esp+0x10]`
+//   to seed the 236-entry loop. The cause is one register: the image's `ebx`
+//   doubles as the zero constant AND the byte temp inside the reserved-colour
+//   loop - `mov bl, [edx+eax]` ... `xor ebx, ebx` ... `mov [eax+0x3da], bl` -
+//   where this tree spends `dl` on the temp and keeps `ebx` zeroed, which is one
+//   live value too many and pushes the header out to the stack. Every store,
+//   every strength-reduced offset (SystemColours+0x22/0x23/0x24 less the header)
+//   and both loop bounds already agree; the earlier notes in this block record
+//   the spellings that got them there. An earlier pass measured 27 source forms
+//   and 13 flag sets against this same wall.
 // size      320 bytes
 // prototype
 // callers   1   call targets   2

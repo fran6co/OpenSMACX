@@ -95,7 +95,7 @@ class Wave_Device {
   int create_device(unsigned long a1);
   int delete_device();
   int init(void *a1, unsigned long a2);
-  void release();
+  int release();
   int set_group_volume(unsigned int a1, unsigned int a2);
   int enable_group(unsigned int a1);
   int disable_group(unsigned int a1);

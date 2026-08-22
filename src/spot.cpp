@@ -80,7 +80,11 @@ void Spot::replace(int position, int type, int left, int top, int length, int wi
 
 /*
 Purpose: Add a new spot from the specified values.
-// ORIGINAL: 0x005FA960 ?add@Spot@@QAEHHHHHHH@Z 0x005FA960-0x005FA9C0
+// ORIGINAL: 0x005FA960 ?add@Spot@@QAEHHHHHHH@Z 0x005FA960-0x005FA9C0 BYTE_EXACT
+// LEVER: rect-in-declaration-order the image STORES left, right, top, bottom (0x00, 0x08, 0x04, 0x0C) but the SOURCE writes them left, top, right, bottom - VC6 reorders, and writing the image's store order back into the source costs the whole body: 7 of 38 with left/right/top/bottom, BYTE_EXACT 38/38 with left/top/right/bottom. Do not read a store order off the listing and copy it here.
+// LEVER: rect-pointer `RECT *const rect = &spots_[index].rect;` for the four RECT writes, then `spots_[index]` again for position and type. The image reads `[ecx]` three times (0x005FA981, 0x005FA9A9, 0x005FA9AF): the RECT run shares one base, the two trailing fields each re-read the member. A single `SpotInternal *` for all six collapses to 28 instructions.
+// LEVER: index-local `const int index = add_count_; add_count_ = index + 1;` BEFORE the writes - the image stores the new count at 0x005FA983, ahead of every field. `return add_count_++;` at the tail scores 6 of 38.
+// LEVER: signed-count `jl` at 0x005FA968, not `jae`: the guard compares the two counts as `int` even though both members are `uint32_t`.
 // size      96 bytes
 // prototype int (__thiscall ?add@Spot@@QAEHHHHHHH@Z)(Spot* this, int position, int type, int left, int top, int length, int width)
 // callers   37   call targets   0
@@ -91,16 +95,19 @@ Return Value: Spot position on success otherwise -1 on error
 Status: Complete
 */
 int Spot::add(int position, int type, int left, int top, int length, int width) {
-    if (add_count_ >= max_count_) {
+    const int index = static_cast<int>(add_count_);
+    if (index >= static_cast<int>(max_count_)) {
         return -1;
     }
-    spots_[add_count_].rect.left = left;
-    spots_[add_count_].rect.right = left + length;
-    spots_[add_count_].rect.top = top;
-    spots_[add_count_].rect.bottom = top + width;
-    spots_[add_count_].position = position;
-    spots_[add_count_].type = type;
-    return add_count_++;
+    add_count_ = index + 1;
+    RECT *const rect = &spots_[index].rect;
+    rect->left = left;
+    rect->top = top;
+    rect->right = left + length;
+    rect->bottom = top + width;
+    spots_[index].position = position;
+    spots_[index].type = type;
+    return index;
 }
 
 /*
