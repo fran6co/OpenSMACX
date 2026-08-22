@@ -341,7 +341,6 @@ int __cdecl whose_territory(int faction_id, int x, int y, int *base_id,
                                       BOOL ignore_comm);
 int __cdecl base_territory(int faction_id, int x, int y);
 int __cdecl crappy(int x, int y);
-int __cdecl vector_dist(int x_distance, int y_distance);
 int __cdecl vector_dist(int x_point_a, int y_point_a, int x_point_b, int y_point_b);
 // Non-inline forwarder to `bit_set` below: base_mark (base.cpp) is the one
 // call site where the image emits a real `call 0x591D60` rather than
@@ -546,6 +545,27 @@ MEASURED inline int __cdecl x_dist(int x_point_a, int x_point_b) {
         dist = MapLongitudeBounds - dist;
     }
     return dist;
+}
+
+// MEASURED inline: real out-of-line function AT 0x004F8090 (BYTE_EXACT,
+// callers 5) and ALSO inlined whole at the 4-arg vector_dist's call site
+// (0x005A5910) - a .cpp definition can only ever be one of those.
+MEASURED inline int __cdecl vector_dist(int x_distance, int y_distance) {
+    x_distance = abs(x_distance);
+    y_distance = abs(y_distance);
+    int largest = x_distance;
+    if (x_distance <= y_distance) {
+        largest = y_distance;
+    }
+    int smallest = x_distance;
+    if (x_distance >= y_distance) {
+        smallest = y_distance;
+    }
+    // `>> 1`, NOT `/ 2`. Both operands are `abs()` results, so nothing here is
+    // ever negative and the two mean the same - but signed `/ 2` makes VC6 emit
+    // the round-toward-zero fixup (`cdq; sub eax, edx`) before each `sar`, and
+    // the image has neither. Two instructions per divide, four here.
+    return largest - ((((y_distance + x_distance) >> 1) - smallest + 1) >> 1);
 }
 
 MEASURED inline uint8_t __cdecl abstract_at(int x, int y) {
