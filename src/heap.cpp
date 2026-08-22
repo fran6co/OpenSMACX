@@ -38,7 +38,7 @@ Heap::Heap() {
 
 /*
 Purpose: Shutdown the class instance.
-// ORIGINAL: 0x005D45B0 ?shutdown@Heap@@QAEXXZ 0x005D45B0-0x005D45DA
+// ORIGINAL: 0x005D45B0 ?shutdown@Heap@@QAEXXZ 0x005D45B0-0x005D45DA BYTE_EXACT
 // size      42 bytes
 // prototype void (__thiscall ?shutdown@Heap@@QAEXXZ)(Heap* this)
 // callers   93   call targets   1
@@ -49,19 +49,23 @@ Return Value: n/a
 Status: Complete
 */
 void Heap::shutdown() {
+    // SAME SHAPE AS ~Heap() (heap.h): the null goes INSIDE the guard as well
+    // as after it, and the store order is err_flags_, current_, base_,
+    // free_size_, base_size_ - not declaration order.
     if (base_) {
         free(base_);
+        base_ = nullptr;
     }
     *reinterpret_cast<volatile int8_t *>(&err_flags_) = 0;
-    base_ = 0;
-    current_ = 0;
-    base_size_ = 0;
+    current_ = nullptr;
+    base_ = nullptr;
     free_size_ = 0;
+    base_size_ = 0;
 }
 
 /*
 Purpose: Deflate the heap of any free memory.
-// ORIGINAL: 0x005D45E0 ?squeeze@Heap@@QAEXH@Z 0x005D45E0-0x005D4615
+// ORIGINAL: 0x005D45E0 ?squeeze@Heap@@QAEXH@Z 0x005D45E0-0x005D4615 BYTE_EXACT
 // size      53 bytes
 // prototype void (__thiscall ?squeeze@Heap@@QAEXH@Z)(Heap* this, int toggle)
 // callers   1   call targets   1
@@ -72,18 +76,21 @@ Return Value: n/a
 Status: Complete
 */
 void Heap::squeeze(int UNUSED(toggle)) {
-    size_t used_size = base_size_ - free_size_;
-    LPVOID new_addr = realloc(base_, used_size);
+    // NOT CACHED. The image RE-READS base_size_ and free_size_ after the
+    // call instead of reusing the value it computed for realloc's argument.
+    size_t const size = base_size_ - free_size_;
+    LPVOID const old_base = base_;
+    LPVOID new_addr = realloc(old_base, size);
     if (new_addr) {
         base_ = new_addr;
-        base_size_ = used_size;
+        base_size_ -= free_size_;
         free_size_ = 0;
     }
 }
 
 /*
 Purpose: Initialize the class instance and allocate the requested memory size.
-// ORIGINAL: 0x005D4620 ?init@Heap@@QAE_NH@Z 0x005D4620-0x005D4675
+// ORIGINAL: 0x005D4620 ?init@Heap@@QAE_NH@Z 0x005D4620-0x005D4675 BYTE_EXACT
 // symbol    ?init@Heap@@QAEHI@Z
 // size      85 bytes
 // prototype bool (__thiscall ?init@Heap@@QAE_NH@Z)(Heap* this, int)
@@ -95,17 +102,27 @@ Return Value: Was there an error? true/false
 Status: Complete
 */
 BOOL Heap::init(size_t req_size) {
+    // shutdown()'S BODY, INLINED AND WHOLLY GUARDED: `osmx calls` names
+    // 0x005D4510 and 0x00644EF2 (free) only, no call to 0x005D45B0
+    // (Heap::shutdown) - and unlike shutdown() itself, the image's `je`
+    // skips ALL FIVE stores, not just the free() call, when base_ is
+    // already null.
     if (base_) {
-        shutdown();
+        free(base_);
+        *reinterpret_cast<volatile int8_t *>(&err_flags_) = 0;
+        current_ = nullptr;
+        base_ = nullptr;
+        free_size_ = 0;
+        base_size_ = 0;
     }
     base_ = mem_get(req_size);
-    if (base_) {
-        current_ = base_;
-        base_size_ = req_size;
-        free_size_ = req_size;
-        return false;
+    if (!base_) {
+        return true; // error: failed to allocate memory
     }
-    return true; // error: failed to allocate memory
+    current_ = base_;
+    free_size_ = req_size;
+    base_size_ = req_size;
+    return false;
 }
 
 /*

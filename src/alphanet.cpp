@@ -41,7 +41,7 @@ int AlphaNet::pid_2_idx(uint32_t process_id) {
 
 /*
 Purpose: Convert a multiplayer process ID to its signed player identity.
-// ORIGINAL: 0x004E2610 ?pid_2_who@AlphaNet@@QAEHK@Z 0x004E2610-0x004E2653
+// ORIGINAL: 0x004E2610 ?pid_2_who@AlphaNet@@QAEHK@Z 0x004E2610-0x004E2653 BYTE_EXACT
 // symbol    ?pid_2_who@AlphaNet@@QAEHI@Z
 // size      67 bytes
 // prototype int (__thiscall ?pid_2_who@AlphaNet@@QAEHK@Z)(AlphaNet* this, unsigned int)
@@ -55,12 +55,12 @@ Status: Complete
 */
 int AlphaNet::pid_2_who(uint32_t process_id) {
     const uint8_t *bytes = reinterpret_cast<const uint8_t *>(this);
-    for (int slot = 0; slot < 7; ++slot) {
+    for (int index = 1; index < 8; index++) {
         uint32_t candidate;
-        memcpy(&candidate, bytes + 0x928 + slot * 0x19C, sizeof(candidate));
+        memcpy(&candidate, bytes + 0x928 + (index - 1) * 0x19C, sizeof(candidate));
         if (candidate == process_id) {
             int8_t identity;
-            memcpy(&identity, bytes + 0x92C + slot * 0x19C, sizeof(identity));
+            memcpy(&identity, bytes + 0x92C + (index - 1) * 0x19C, sizeof(identity));
             return identity;
         }
     }
@@ -69,7 +69,7 @@ int AlphaNet::pid_2_who(uint32_t process_id) {
 
 /*
 Purpose: Convert a signed multiplayer player identity to its process ID.
-// ORIGINAL: 0x004E2660 ?who_2_pid@AlphaNet@@QAEHH@Z 0x004E2660-0x004E26A8
+// ORIGINAL: 0x004E2660 ?who_2_pid@AlphaNet@@QAEHH@Z 0x004E2660-0x004E26A8 BYTE_EXACT
 // size      72 bytes
 // prototype int (__thiscall ?who_2_pid@AlphaNet@@QAEHH@Z)(AlphaNet* this, int)
 // callers   4   call targets   0
@@ -82,12 +82,12 @@ Status: Complete
 */
 int AlphaNet::who_2_pid(int identity) {
     const uint8_t *bytes = reinterpret_cast<const uint8_t *>(this);
-    for (int slot = 0; slot < 7; ++slot) {
+    for (int index = 1; index < 8; index++) {
         int8_t candidate;
-        memcpy(&candidate, bytes + 0x92C + slot * 0x19C, sizeof(candidate));
+        memcpy(&candidate, bytes + 0x92C + (index - 1) * 0x19C, sizeof(candidate));
         if (candidate == identity) {
             int process_id;
-            memcpy(&process_id, bytes + 0x928 + slot * 0x19C, sizeof(process_id));
+            memcpy(&process_id, bytes + 0x928 + (index - 1) * 0x19C, sizeof(process_id));
             return process_id;
         }
     }
@@ -96,7 +96,7 @@ int AlphaNet::who_2_pid(int identity) {
 
 /*
 Purpose: Convert a signed multiplayer player identity to its one-based index.
-// ORIGINAL: 0x004E26B0 ?who_2_idx@AlphaNet@@QAEXH@Z 0x004E26B0-0x004E26DC
+// ORIGINAL: 0x004E26B0 ?who_2_idx@AlphaNet@@QAEXH@Z 0x004E26B0-0x004E26DC BYTE_EXACT
 // symbol    ?who_2_idx@AlphaNet@@QAEHH@Z
 // size      44 bytes
 // prototype void (__thiscall ?who_2_idx@AlphaNet@@QAEXH@Z)(AlphaNet* this, int)
@@ -110,11 +110,11 @@ Status: Complete
 */
 int AlphaNet::who_2_idx(int identity) {
     const uint8_t *bytes = reinterpret_cast<const uint8_t *>(this);
-    for (int slot = 0; slot < 7; ++slot) {
+    for (int index = 1; index < 8; index++) {
         int8_t candidate;
-        memcpy(&candidate, bytes + 0x92C + slot * 0x19C, sizeof(candidate));
+        memcpy(&candidate, bytes + 0x92C + (index - 1) * 0x19C, sizeof(candidate));
         if (candidate == identity) {
-            return slot + 1;
+            return index;
         }
     }
     return 0;

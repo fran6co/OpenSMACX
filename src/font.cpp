@@ -141,12 +141,24 @@ Purpose: Initialize the class using the file, font name, height and style.
 // flags     sp_ready;purged_ok
 // calls     0x005D4510 0x00618F40 0x00644EF2 0x006453E0 0x00645470
 // indirect  0x006190F8 0x00619109 0x006191A0 0x006191B1 0x006191BB 0x006191C5 0x006191E6
+// LEVER: `fot_file_name_[0] = 0; strcat(...)` in place of `strcpy_s`/
+//        `strcat_s` - the image calls plain strcat (0x00645470) and
+//        strlen (0x006453E0), never the bounded `_s` forms, which this
+//        tree's `_s` calls were compiling as an inlined `rep movsd` copy
+//        the image does not have. Took this from 10/119 to 49/119.
+// RULED-OUT: `if (!file || !font_name)` vs `if (!font_name || !file)` -
+//        both compile identically (VC6 canonicalises the `||`), so the
+//        residual gap is not this guard's operand order. Splitting the
+//        guard into two separate `if`s (the usual chained-condition lever)
+//        measured WORSE, 29/119 - reverted. Not chased further; the image
+//        also caches `font_name` into a register across the whole function
+//        where this body re-reads it, which is the likely next lever.
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
 int Font::init(LPCSTR file, LPCSTR font_name, int height, int style) {
     close();
-    if (!file || !font_name) {
+    if (!font_name || !file) {
         return 16;
     }
     size_t len = strlen(file) + 1;
@@ -154,9 +166,13 @@ int Font::init(LPCSTR file, LPCSTR font_name, int height, int style) {
     if (!fot_file_name_) {
         return 4;
     }
-    strcpy_s(fot_file_name_, len, file);
+    // WRONG CALLEE: the image calls strcat (0x00645470), not strcpy - it
+    // zeroes fot_file_name_[0] first and strcat()s onto it, the same
+    // zero-then-strcat idiom as Font::init(name,height,style) above.
+    fot_file_name_[0] = 0;
+    strcat(fot_file_name_, file);
     fot_file_name_[len - 5] = 0; // font extension length + 1
-    strcat_s(fot_file_name_, len, ".fot");
+    strcat(fot_file_name_, ".fot");
     char path[MAX_PATH + 1];
     GetCurrentDirectoryA(MAX_PATH, path);
     CreateScalableFontResourceA(0, fot_file_name_, file, path);
@@ -212,21 +228,22 @@ int Font::width(LPSTR input) {
 /*
 Purpose: Get the width for the input text with a maximum length.
 // ORIGINAL: 0x006192F0 ?width@Font@@QAEHPADH@Z 0x006192F0-0x0061936B
+// body      src/font.h
 // symbol    ?width@Font@@QAEHPADI@Z
+// MOVED IN-CLASS: `find_line_break_l` (0x00619370) inlines this twice -
+//        its own `calls` list never names 0x006192F0.
 // LEVER: `strlen` called TWICE and compared SIGNED. The image's clamp is a min
 //   MACRO that re-evaluates its argument - `call strlen; cmp ebx, eax; jl;
 //   call strlen` at 0x0061930B and 0x0061931C - so caching it in a local
 //   collapses six instructions into three. `jl` not `jbe`, because both
 //   operands are `int` there; a `size_t` comparison emits the unsigned branch.
-//   This note was written INSIDE the function body, where the reader cannot
-//   see it, which is why this address kept reading as untouched.
-// RULED-OUT: the remaining 20 of 48 are register allocation in the prologue.
-//   The image saves esi and edi and keeps `this` in edi; this body saves ebx
-//   as well and keeps `this` there. Three spellings measured with
-//   tools/try_spellings.py - the clamp as an inline min expression with no
-//   named local (4/48), the local computed after the first SelectObject
-//   (4/48), and the null guard inverted so the body is inside `if (input)`
-//   (8/48) - and every one is WORSE than what is committed at 28/48.
+// RULED-OUT: as a standalone body, the remaining 20 of 48 were register
+//   allocation in the prologue (image saves esi/edi and keeps `this` in
+//   edi; this saved ebx as well and kept `this` there). Three spellings
+//   measured with tools/try_spellings.py before the move - the clamp as an
+//   inline min expression with no named local (4/48), the local computed
+//   after the first SelectObject (4/48), and the null guard inverted so the
+//   body is inside `if (input)` (8/48) - all worse than 28/48.
 // size      123 bytes
 // prototype int (__thiscall ?width@Font@@QAEHPADH@Z)(Font* this, int8* lpString, int max)
 // callers   3   call targets   1
@@ -237,25 +254,6 @@ Purpose: Get the width for the input text with a maximum length.
 Return Value: Width otherwise zero on error
 Status: Complete
 */
-int Font::width(LPSTR input, size_t max_len) {
-    if (!input) {
-        return 0;
-    }
-    // `strlen` TWICE, and SIGNED. The image's clamp is a min MACRO that
-    // re-evaluates its argument - `call strlen; cmp ebx, eax; jl; call strlen`
-    // at 0x0061930B and 0x0061931C - so caching it in a local collapses six
-    // instructions into three. `jl`, not `jbe`, because both operands are int
-    // there; a `size_t` comparison emits the unsigned branch.
-    int len = static_cast<int>(max_len);
-    if (len >= static_cast<int>(strlen(input))) {
-        len = static_cast<int>(strlen(input));
-    }
-    SelectObject(FontHDC, font_obj_);
-    SIZE size;
-    GetTextExtentPoint32A(FontHDC, input, len, &size);
-    SelectObject(FontHDC, GetStockObject(SYSTEM_FONT));
-    return size.cx;
-}
 
 /*
 Purpose: Find a space in the input string that can be used as a natural line break.
@@ -268,6 +266,19 @@ Purpose: Find a space in the input string that can be used as a natural line bre
 // flags     sp_ready;purged_ok
 // calls     0x006453E0 0x006473F0
 // indirect  0x006193EB 0x006193FA 0x00619402 0x00619410 0x006194AD 0x006194BC 0x006194C4 0x006194D2
+// LEVER: `width(LPSTR, size_t)` moved IN-CLASS (font.h) so it inlines here
+//        twice, matching the image's own `calls`/`indirect` lists (no
+//        0x006192F0, but 8 indirect WinAPI calls and strlen showing up
+//        instead) - `calls` lists unique callees, not call counts, which
+//        is why one `0x006453E0` covers strlen from both inlined copies.
+//        Moved compiled-instruction count from 107 to 174 against an image
+//        of 208, much closer to the right shape.
+// RULED-OUT: not chased to a match this pass - the inlined `memchr` call
+//        (0x006473F0, matched at instruction ~9) is followed by a large
+//        divergent run inside the inlined `width()` bodies; this tree also
+//        opens with a `push ebp; mov ebp, esp` frame the image does not
+//        have. Left at 3/208 for a pass that can afford the register/frame
+//        search on top of the now-correct call shape.
 Return Value: Pointer to string section after the line break or NULL if not found
 Status: Complete
 */
@@ -308,7 +319,7 @@ LPSTR Font::find_line_break_l(LPSTR input, int *break_len, size_t len) {
 
 /*
 Purpose: Initialize the class static variables.
-// ORIGINAL: 0x006195B0 ?init_font_class@Font@@QAAHPAUFont@@@Z 0x006195B0-0x0061960D
+// ORIGINAL: 0x006195B0 ?init_font_class@Font@@QAAHPAUFont@@@Z 0x006195B0-0x0061960D BYTE_EXACT
 // symbol    ?init_font_class@Font@@SAHPAV1@@Z
 // size      93 bytes
 // prototype 
@@ -321,21 +332,23 @@ Return Value: Zero on success (or already initialized), non-zero on error
 Status: Complete
 */
 int __cdecl Font::init_font_class(Font *font) {
-    if (++FontInitCount > 1) {
-        return 0;
+    if (++FontInitCount <= 1) {
+        if (!font) {
+            return 3;
+        }
+        FontHDC = CreateCompatibleDC(NULL);
+        if (!FontHDC) {
+            return 2;
+        }
+        FontDefault = font;
+        if (!font->font_obj_) {
+            int const result = font->init("Times New Roman", 12, 0);
+            if (result) {
+                return result;
+            }
+        }
     }
-    if (!font) {
-        return 3;
-    }
-    FontHDC = CreateCompatibleDC(NULL);
-    if (!FontHDC) {
-        return 2;
-    }
-    FontDefault = font;
-    if (font->font_obj_) {
-        return 0;
-    }
-    return font->init("Times New Roman", 12, 0);
+    return 0;
 }
 
 /*

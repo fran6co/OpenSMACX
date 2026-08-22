@@ -49,7 +49,7 @@ int Sound::UNK1(int) {
 Purpose: Fade the sound out. The work is done by two of the object's own
          virtual methods: slot 0 is asked to fade with the given argument, and
          only when it declines (returns zero) is slot 0x28 run as the fallback.
-// ORIGINAL: 0x004C6600 ?fade@Sound@@QAEXK@Z 0x004C6600-0x004C6620
+// ORIGINAL: 0x004C6600 ?fade@Sound@@QAEXK@Z 0x004C6600-0x004C6620 BYTE_EXACT
 // size      32 bytes
 // prototype void (__thiscall ?fade@Sound@@QAEXK@Z)(Sound* this, unsigned int)
 // callers   11   call targets   0
@@ -63,12 +63,13 @@ Status: Complete
 void Sound::fade(unsigned long a1) {
     // The object's own vtable is read at run time rather than declaring these
     // virtual, so the dispatch cannot disagree with the original's layout.
-    uint8_t *const vtable = *reinterpret_cast<uint8_t **>(this);
+    // `vtable_method` leaves the call operand where it lives - the image's
+    // `call dword ptr [eax]` / `call dword ptr [edx + 0x28]` - where
+    // `original_slot` read the slot into a register first.
     typedef int (OriginalObject::*fade_fn)(int a1);
     typedef void (OriginalObject::*fallback_fn)();
-    if ((ORIGINAL(this)->*original_slot<fade_fn>(vtable))(a1) == 0) {
-        uint8_t *const reread = *reinterpret_cast<uint8_t **>(this);
-        (ORIGINAL(this)->*original_slot<fallback_fn>(reread + 0x28))();
+    if ((ORIGINAL(this)->*vtable_method<fade_fn>(this, 0))(a1) == 0) {
+        (ORIGINAL(this)->*vtable_method<fallback_fn>(this, 0x28))();
     }
 }
 
@@ -426,46 +427,59 @@ void __fastcall sound_ramp_redirect(Sound *self, void *, int a1, int a2,
 /*
 Purpose: Record the sound's type. Types 1..7 - except 3, which the original's
          jump table routes to the invalid arm - store the type at 0x50 and OR
-         a per-type class bit into the flag dword at 0x40: 1 -> 4, 2 -> 8,
-         4 -> 0x10, 5 -> 0x28, 6 -> 0x100, 7 -> 0x80. Anything else stores
+         a per-type class bit into the flag dword at 0x40: 1 -> 0x10, 2 -> 8,
+         4 -> 4, 5 -> 0x28, 6 -> 0x100, 7 -> 0x80. Anything else stores
          type 0 and leaves the flags alone.
-// ORIGINAL: 0x004C61E0 ?set_type@Sound@@QAEXI@Z 0x004C61E0-0x004C6260
+// ORIGINAL: 0x004C61E0 ?set_type@Sound@@QAEXI@Z 0x004C61E0-0x004C6260 BYTE_EXACT
 // size      128 bytes
 // prototype void (__thiscall ?set_type@Sound@@QAEXI@Z)(Sound* this, SOUNDTYPE)
 // callers   5   call targets   0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// LEVER, two parts. (1) each `case` inlines its own `type_ = a1;
+//        flags_40_ |= N; return;` rather than sharing a `class_bit` local
+//        and a common tail - the image duplicates the four-instruction
+//        block per arm with no merged epilogue. (2) the CATALOGUED mapping
+//        1->4 / 4->0x10 is backwards: the jump table's own byte order says
+//        1->0x10 and 4->4 - `constant #9/#21 or` swapped is what measure
+//        named it, and swapping the two immediates is what closed it.
 Return Value: n/a
 Status: Complete
 */
 void Sound::set_type(unsigned int a1) {
-    uint32_t class_bit;
+    // EACH ARM INLINE, not a shared `type_ = a1; flags_40_ |= class_bit;`
+    // tail: the image duplicates the store-and-OR in every case block and
+    // returns from each directly, rather than merging them.
     switch (a1) {
     case 1:
-        class_bit = 4;
-        break;
+        flags_40_ |= 0x10;
+        type_ = a1;
+        return;
     case 2:
-        class_bit = 8;
-        break;
+        flags_40_ |= 8;
+        type_ = a1;
+        return;
     case 4:
-        class_bit = 0x10;
-        break;
+        flags_40_ |= 4;
+        type_ = a1;
+        return;
     case 5:
-        class_bit = 0x28;
-        break;
+        flags_40_ |= 0x28;
+        type_ = a1;
+        return;
     case 6:
-        class_bit = 0x100;
-        break;
+        flags_40_ |= 0x100;
+        type_ = a1;
+        return;
     case 7:
-        class_bit = 0x80;
-        break;
+        flags_40_ |= 0x80;
+        type_ = a1;
+        return;
     default:
         type_ = 0;
         return;
     }
-    type_ = a1;
-    flags_40_ |= class_bit;
 }
 
 void __fastcall sound_set_type_redirect(Sound *self, void *, unsigned int a1) {
@@ -493,6 +507,16 @@ Purpose: Load the sound from a filename. The name resolves through the
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x006005D0 0x006453E0 0x00645460 0x0064557F 0x0064558A
 // indirect  0x004C62C9 0x004C62DF 0x004C62F7 0x004C6311 0x004C6321
+// LEVER: the two vtable dispatches (slots 0x60 and 0x10) spelled with
+//        `vtable_method<Fn>(object, offset)` instead of
+//        `original_slot<Fn>(vtable + offset)` - single indirect call,
+//        matching the image's `call dword ptr [reg+N]` where the slot-read
+//        idiom cost an extra `mov`. Took this from 44/102 to 100/102.
+// RULED-OUT: the one remaining byte is the slot-0x60 dispatch alone -
+//        image loads the vtable into EDX (`mov edx,[ecx]; call [edx+0x60]`),
+//        this tree into EAX. Naming the method pointer in its own local
+//        first made it much WORSE (47/102) rather than fixing the
+//        register; reverted. Not chased further.
 Return Value: the device's load answer, 0xA for an unresolvable name, 1 for
               a dead creation hook, 0xF for a busy device, or the creation
               error
@@ -513,14 +537,14 @@ int Sound::load(const char *a1) {
         }
     } else {
         typedef int (OriginalObject::*device_busy_fn)();
-        if ((ORIGINAL(device_)->*original_slot<device_busy_fn>(*reinterpret_cast<uint8_t **>(device_) + 0x60))()) {
+        if ((ORIGINAL(device_)->*vtable_method<device_busy_fn>(device_, 0x60))()) {
             return 0xF;
         }
     }
     int result;
     {
         typedef int (OriginalObject::*device_load_fn)(const char *name);
-        result = (ORIGINAL(device_)->*original_slot<device_load_fn>(*reinterpret_cast<uint8_t **>(device_) + 0x10))(
+        result = (ORIGINAL(device_)->*vtable_method<device_load_fn>(device_, 0x10))(
             resolved);
     }
     if (result == 0) {
