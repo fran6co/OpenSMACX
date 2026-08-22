@@ -464,7 +464,8 @@ void BaseButton::set_text_color(int color1, int color2, int color3, int color4) 
     if (!win_parent_) {
         return;
     }
-    recolour(buffer_, &Buffer::set_text_color, color1, color2, color3, color4);
+    Buffer::sync_to_palette(BaseButtonActivePalette());
+    Buffer::set_text_color(color1, color2, color3, color4);
 }
 
 /*
@@ -482,7 +483,8 @@ void BaseButton::set_text_color2(int color1, int color2, int color3, int color4)
     if (!win_parent_) {
         return;
     }
-    recolour(buffer_, &Buffer::set_text_color2, color1, color2, color3, color4);
+    Buffer::sync_to_palette(BaseButtonActivePalette());
+    Buffer::set_text_color2(color1, color2, color3, color4);
 }
 
 /*
@@ -500,7 +502,8 @@ void BaseButton::set_text_color3(int color1, int color2, int color3, int color4)
     if (!win_parent_) {
         return;
     }
-    recolour(buffer_, &Buffer::set_text_color3, color1, color2, color3, color4);
+    Buffer::sync_to_palette(BaseButtonActivePalette());
+    Buffer::set_text_color3(color1, color2, color3, color4);
 }
 
 void __fastcall base_button_set_text_color_redirect(
@@ -741,13 +744,13 @@ int BaseButton::init(LPCSTR name, int id, int x, int y, int width, int height,
     // construction, so a set_def_text_color issued between construct and init
     // is the one that lands.
     const uint32_t *const colors = BaseButtonDefaultTextColors;
-    buffer_.set_text_color(
+    Buffer::set_text_color(
         static_cast<int>(colors[0]), static_cast<int>(colors[3]),
         static_cast<int>(colors[6]), static_cast<int>(colors[9]));
-    buffer_.set_text_color2(
+    Buffer::set_text_color2(
         static_cast<int>(colors[1]), static_cast<int>(colors[4]),
         static_cast<int>(colors[7]), static_cast<int>(colors[10]));
-    buffer_.set_text_color3(
+    Buffer::set_text_color3(
         static_cast<int>(colors[2]), static_cast<int>(colors[5]),
         static_cast<int>(colors[8]), static_cast<int>(colors[11]));
 
@@ -756,7 +759,7 @@ int BaseButton::init(LPCSTR name, int id, int x, int y, int width, int height,
     // primary font - its code 3 - does not fail init. Each slot is read as
     // its own absolute lvalue - the named `Font **const` alias reloads the
     // pointer at every use instead of folding to the immediate.
-    buffer_.set_font(*reinterpret_cast<Font **>(0x009B8E34),
+    Buffer::set_font(*reinterpret_cast<Font **>(0x009B8E34),
                       *reinterpret_cast<Font **>(0x009B8E38),
                       *reinterpret_cast<Font **>(0x009B8E3C), nullptr);
 

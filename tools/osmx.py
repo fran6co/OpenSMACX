@@ -439,6 +439,25 @@ FLAG_SETS = (
     # written into the program.
     "/c /O2 /Oi- /Gy /GR- /Oy- /GX",
     "/c /O2 /Oi- /Gy /GR- /GX",
+    # AND EXCEPTION HANDLING IS THE FIFTH, found the same way /Oi- was: the
+    # axis was retired on a sample that could not show it. Every set above
+    # carried /GX, so no body was ever measured without it - and /GX is what
+    # makes a constructor whose BASE has a destructor open with an EH frame
+    # (`mov eax, 0; call __EH_prolog`). ??0Win@@QAE@XZ constructing its
+    # AutoSound base is 0 of 107 with /GX and 12 of 107 without, because the
+    # image's constructor has no EH frame at all. So each set above gets its
+    # no-/GX twin rather than a flag being chosen for the whole image.
+    "/c /O2 /Gy /GR- /Oy-",
+    "/c /O2 /Gy /GR-",
+    "/c /O1 /Gy /GR- /Oy-",
+    "/c /O1 /Gy /GR-",
+    "/c /O2 /Ob0 /Gy /GR- /Oy-",
+    "/c /O2 /Ob0 /Gy /GR-",
+    "/c /O1 /Ob0 /Gy /GR- /Oy-",
+    "/c /O1 /Ob0 /Gy /GR-",
+    "/c /O2 /Oi- /Gy /GR- /Oy-",
+    "/c /O2 /Oi- /Gy /GR-",
+
 )
 
 

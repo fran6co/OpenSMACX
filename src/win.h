@@ -78,9 +78,10 @@ class Win : public AutoSound {
   // `pending_bodies.cpp` until its body lands.
   ~Win();
 
+  Win *construct();
+
   // Returns `this`: the image's own real `??0Win@@QAE@XZ` sets `eax = this`
   // before its epilogue, which a void-returning method never emits.
-  Win *construct();
   int move(int x, int y);
   int is_visible();
   int is_descendant(Win *candidate);
@@ -189,7 +190,14 @@ class Win : public AutoSound {
   uint32_t field_D0_;
   uint32_t field_D4_;
   uint32_t field_D8_;
-  Heap heap_;
+  // RAW STORAGE, NOT A TYPED Heap, and the image is what says so. The
+  // marker on ??0Win@@QAE@XZ records exactly one call target -
+  // 0x0062BA80, the AutoSound base constructor - so Win's constructor
+  // never builds a Heap here. Declared `Heap heap_`, VC6 emits
+  // `lea ecx, [esi + 0xdc]; call 0x5d4560` for Heap's real constructor
+  // and the body stops matching. `uint32_t[]` keeps the size and the
+  // 4-byte alignment; nothing in the tree reads Win::heap_ by name.
+  uint32_t heap_[sizeof(Heap) / 4];
   Menu *menu_;
   uint32_t field_F4_;
   uint32_t field_F8_;
