@@ -37,6 +37,7 @@ LPVOID __cdecl mem_get(size_t size);
 class Text;
 void __cdecl text_set_get_ptr_source(Text *text, LPSTR *output);
 void __cdecl text_set_item_ptr_source(Text *text, LPSTR *output);
+void __cdecl text_shutdown_source(Text *text);
 
 class Text {
  public:
@@ -103,6 +104,7 @@ class Text {
   friend void __cdecl text_set_item_ptr_source(Text *text, LPSTR *output);
   friend LPSTR __cdecl text_get_source(Text *text);
   friend LPSTR __cdecl text_item_source(Text *text);
+  friend void __cdecl text_shutdown_source(Text *text);
 
  private:
   char file_name_[80];  // (+0)    : stores text filename string
@@ -205,6 +207,24 @@ inline LPSTR __cdecl text_get_source(Text *text) {
   value->current_pos_ = value->buffer_get_;
   return value->buffer_get_;
 }
+// SHUTDOWN, INLINE, for the same reason as its neighbours: `Text::init`
+// (0x005FD8D0) writes this whole three-guard teardown out rather than calling
+// 0x005FD970, and a .cpp definition can only ever be the call.
+inline void __cdecl text_shutdown_source(Text *text) {
+  Text *const value = text;
+  if (value->text_file_) {
+    fclose(value->text_file_);
+    value->text_file_ = 0;
+  }
+  if (value->buffer_get_) {
+    free(value->buffer_get_);
+    value->buffer_get_ = 0;
+  }
+  if (value->buffer_item_) {
+    free(value->buffer_item_);
+    value->buffer_item_ = 0;
+  }
+}
 inline LPSTR __cdecl text_string_source(Text *text, Strings *strings) {
   return strings->put(text_get_source(text));
 }
@@ -227,20 +247,19 @@ inline LPSTR __cdecl text_item_string_source(Text *text, Strings *strings) {
 inline int __cdecl text_item_number_source(Text *text) {
   return stoi(text_item_source(text));
 }
-inline int __cdecl text_item_binary_source(Text *text) {
-  return btoi(text_item_source(text));
-}
-inline int __cdecl text_item_hex_source(Text *text) {
-  return htoi(text_item_source(text));
-}
-inline int __cdecl text_get_number_source(Text *text, int min, int max) {
-  text_get_source(text);
-  return range(text_item_number_source(text), min, max);
-}
+// text_item_binary_source, text_item_hex_source and text_get_number_source
+// USED TO LIVE HERE and were deleted on 2026-08-22 with their last caller.
+// Each folded a `MEASURED inline` conversion (btoi / htoi) or a whole pair of
+// zero-arg wrappers (text_get / text_item_number) into its caller, and every
+// caller's image CALLS those instead - the four bodies that reached for one
+// were all MISMATCH and all went BYTE_EXACT once they stopped. Left as a note
+// rather than as dead code, because an available helper is an invitation to
+// re-introduce the defect; the spellings that reproduce are in text.cpp.
 
 // Nothing in the image calls text_get_number: `inline_candidates` found no
 // direct edge to it anywhere in the shipped bytes, so every caller has
 // it written out. `MEASURED` keeps the standalone body measurable.
 MEASURED inline int __cdecl text_get_number(int min, int max) {
-    return text_get_number_source(&Txt, min, max);
+    text_get();
+    return range(text_item_number(), min, max);
 }

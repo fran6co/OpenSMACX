@@ -17,6 +17,8 @@
  */
 #pragma once
 
+#include <cstring>
+
  /*
   * Random class: Handles pseudo random number generator.
   */
@@ -34,7 +36,20 @@ class Random {
   // image does: `random_reseed` is `mov ecx, [Rand]; xor ...` with no call
   // in it at all. Each still emits its own COMDAT under /Ob0, so each keeps
   // its own claim.
-  void reseed(uint32_t new_seed) { seed_ = new_seed; }
+  // AN XOR-SWAP THROUGH THE PARAMETER'S ADDRESS. The image really does swap
+  // `seed_` with the argument - four xors and two stores - and the net effect
+  // is only `seed_ = new_seed`, which is why this used to be written that way.
+  // Written plainly (`seed_ ^= new_seed; new_seed ^= seed_; seed_ ^= new_seed;`)
+  // VC6 recognises the idiom and folds it straight back to the single store,
+  // three instructions against the image's eight. Reading and writing the
+  // parameter through `*b` takes the non-aliasing away from it and the whole
+  // chain survives - 0x00625750 and 0x006257E0 are both byte-exact on it.
+  void reseed(uint32_t new_seed) {
+      uint32_t *const b = &new_seed;
+      seed_ ^= *b;
+      *b ^= seed_;
+      seed_ ^= *b;
+  }
   // IN-CLASS for the same reason: the image's `random(int, int)` at
   // 0x00625810 has this body folded into it - nineteen instructions with no
   // call - and VC6 only inlines what it can see here.
@@ -50,7 +65,18 @@ class Random {
       // byte was the last divergence in `random(int, int)`.
       return ((static_cast<uint32_t>(max - min) * LOWORD(seed_)) >> 16) + min;
   }
-  double get();
+  // IN-CLASS for the same reason as reseed() and get(int, int): the image's
+  // free `random()` at 0x00625850 has this body FOLDED IN - twelve
+  // instructions, `imul`/`and`/`or`/`fld`/`fsub`, with no call in it at all -
+  // and VC6 only inlines what it can see here. It keeps its own claim because
+  // /Ob0 still emits its COMDAT.
+  MEASURED double get() {   // 006257B0
+      seed_ = seed_ * 0x19660D + 0x3C6EF35F;
+      const uint32_t bits = (seed_ & 0x7FFFFF) | 0x3F800000;
+      float unit;
+      std::memcpy(&unit, &bits, sizeof(unit));
+      return static_cast<double>(unit) - 1.0;
+  }
   // additional functions to assist with encapsulation
   uint32_t get_seed() { return seed_; }
 

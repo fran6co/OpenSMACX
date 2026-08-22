@@ -25,7 +25,8 @@
 
 /*
 Purpose: Initialize the class instance.
-// ORIGINAL: 0x005FD8D0 ?init@Text@@QAEHH@Z 0x005FD8D0-0x005FD969
+// ORIGINAL: 0x005FD8D0 ?init@Text@@QAEHH@Z 0x005FD8D0-0x005FD969 BYTE_EXACT
+// LEVER: BYTE_EXACT 39/39, on two measured changes. (1) `shutdown()` was a CALL and the image WRITES IT OUT - all three guards, two `free`s and an `fclose` - which call_diff caught as 3 calls against the image's 5. Moved to `text_shutdown_source()` in text.h, the same shape the text_*_source family already uses, and reached from both here and Text::shutdown(); 0x005FD970 keeps its own BYTE_EXACT claim. (2) THE SECOND FAILURE IS BRANCHLESS. The image tests buffer_get_ with a real `test/jne` and an early `mov eax, 4`, but ends `neg eax; sbb eax, eax; and al, 0xfc; add eax, 4` - VC6's lowering of `return buffer_item_ ? 0 : 4;`. The second `if (!x) return 4; return 0;` compiles the branch instead. Only the LAST one is the ternary.
 // symbol    ?init@Text@@QAEHI@Z
 // size      153 bytes
 // prototype int (__thiscall ?init@Text@@QAEHH@Z)(_Text* this, int)
@@ -37,16 +38,13 @@ Return Value: Zero on success, non-zero on error
 Status: Complete
 */
 int Text::init(size_t size) {
-    shutdown();
+    text_shutdown_source(this);
     buffer_get_ = (LPSTR)mem_get(size);
     if (!buffer_get_) {
         return 4;
     }
     buffer_item_ = (LPSTR)mem_get(size);
-    if (!buffer_item_) {
-        return 4;
-    }
-    return 0;
+    return buffer_item_ ? 0 : 4;
 }
 
 /*
@@ -62,22 +60,12 @@ Return Value: n/a
 Status: Complete
 */
 void Text::shutdown() {
-    // close() (0x005FD9D0, BYTE_EXACT as its own out-of-line function) is
-    // hand-inlined here: the image writes its one-line body out at this
-    // call site (fclose() is a real call, matching close()'s own body),
-    // rather than calling 0x005FD9D0.
-    if (text_file_) {
-        fclose(text_file_);
-        text_file_ = 0;
-    }
-    if (buffer_get_) {
-        free(buffer_get_);
-        buffer_get_ = 0;
-    }
-    if (buffer_item_) {
-        free(buffer_item_);
-        buffer_item_ = 0;
-    }
+    // ONE COPY, in text.h. close() (0x005FD9D0, BYTE_EXACT as its own
+    // out-of-line function) is written out rather than called - the image
+    // does that here and again inside init() - and this used to be a
+    // hand-inlined second copy of the same three guards. Both call sites now
+    // reach text_shutdown_source(); measured BYTE_EXACT 25/25 either way.
+    text_shutdown_source(this);
 }
 
 /*
@@ -188,7 +176,8 @@ BOOL Text::open(LPCSTR src_file_id, LPCSTR section_id) {
 
 /*
 Purpose: Parse text from the opened file until a newline is reached. Copy this text into the buffer.
-// ORIGINAL: 0x005FDC10 ?get@Text@@QAEHXZ 0x005FDC10-0x005FDC7E
+// ORIGINAL: 0x005FDC10 ?get@Text@@QAEHXZ 0x005FDC10-0x005FDC7E BYTE_EXACT
+// LEVER: BYTE_EXACT 34/34, from 17/34, on BRANCH SHAPE alone - same instruction count either way. The body was `if (fgets(...)) { work } else { buffer_get_[0] = 0; } return buffer_get_;`, one shared tail; the image falls through to a separate `return` after EACH test. Written as the two guard clauses text_get_source() in text.h already uses - which is why the free `text_get()` wrapper over the same helper was byte-exact and this was not - it reproduces exactly. Delegating to that one copy rather than repeating it scores identically (34/34 both ways), so the shared definition wins.
 // symbol    ?get@Text@@QAEPADXZ
 // size      110 bytes
 // prototype int (__thiscall ?get@Text@@QAEHXZ)(_Text* this)
@@ -200,23 +189,13 @@ Return Value: Pointer to string
 Status: Complete
 */
 LPSTR Text::get() {
-    if (feof(text_file_)) {
-        buffer_get_[0] = 0;
-        return NULL;
-    }
-    if (fgets(buffer_get_, 511, text_file_)) {
-        kill_lf(buffer_get_);
-        purge_spaces(buffer_get_);
-        current_pos_ = buffer_get_;
-    } else {
-        buffer_get_[0] = 0;
-    }
-    return buffer_get_;
+    return text_get_source(this);
 }
 
 /*
 Purpose: Get the string and put it into the string table.
-// ORIGINAL: 0x005FDC80 ?string@Text@@QAEXXZ 0x005FDC80-0x005FDD0F
+// ORIGINAL: 0x005FDC80 ?string@Text@@QAEXXZ 0x005FDC80-0x005FDD0F BYTE_EXACT
+// LEVER: BYTE_EXACT 43/43, from 5/43. The previous body had the right SHAPE - get() hand-inlined, put() called on all three exit paths, which the image does - but wrote the three put() calls out itself, and that put a literal in the first one: `put(nullptr)` compiles `push 0` where the image has `xor eax, eax; push eax`. Feeding put() the RETURN VALUE of the inlined get() - `strings->put(text_get_source(text))`, which is exactly text_string_source() in text.h - makes the null a value in a register, and VC6 duplicates the shared `call put; pop esi; ret` tail into each branch by itself. Delegating and spelling it out here score identically (43/43 both), so the one copy in the header wins.
 // symbol    ?string@Text@@QAEPADXZ
 // size      143 bytes
 // prototype void (__thiscall ?string@Text@@QAEXXZ)(_Text* this)
@@ -228,23 +207,7 @@ Return Value: Pointer to string table
 Status: Complete
 */
 LPSTR Text::string() {
-    // LEVER: the image's call list is purge_spaces/kill_lf/put/fgets - get()
-    // is hand-inlined here, not called out of line (its own body's real
-    // calls appear directly in string()'s listing), and `put()` is called
-    // THREE times, once per exit path - the image has three separate
-    // `call 0x616970; pop esi; ret` tails rather than one shared epilogue.
-    if (feof(text_file_)) {
-        buffer_get_[0] = 0;
-        return StringTable->put(NULL);
-    }
-    if (!fgets(buffer_get_, 511, text_file_)) {
-        buffer_get_[0] = 0;
-        return StringTable->put(buffer_get_);
-    }
-    kill_lf(buffer_get_);
-    purge_spaces(buffer_get_);
-    current_pos_ = buffer_get_;
-    return StringTable->put(buffer_get_);
+    return text_string_source(this, StringTable);
 }
 
 /*
@@ -275,7 +238,8 @@ LPSTR Text::item() {
 
 /*
 Purpose: Parse the current string item into the buffer and add it to the string table.
-// ORIGINAL: 0x005FDD80 ?item_string@Text@@QAEXXZ 0x005FDD80-0x005FDDED
+// ORIGINAL: 0x005FDD80 ?item_string@Text@@QAEXXZ 0x005FDD80-0x005FDDED BYTE_EXACT
+// LEVER: BYTE_EXACT 33/33, from 0/33 and 5 compiled instructions. The body called `item()`, which is defined OUT OF LINE in this .cpp, so the whole scanner loop became a `call`; the image writes it out here and calls only its own two helpers. `text_item_source(this)` - the same logic as an `inline` in text.h - reproduces it exactly. Sibling of the already-byte-exact free `text_item_*` wrappers, which reach it the same way.
 // symbol    ?item_string@Text@@QAEPADXZ
 // size      109 bytes
 // prototype void (__thiscall ?item_string@Text@@QAEXXZ)(_Text* this)
@@ -287,12 +251,13 @@ Return Value: Pointer to string table
 Status: Complete
 */
 LPSTR Text::item_string() {
-    return StringTable->put(item());
+    return StringTable->put(text_item_source(this));
 }
 
 /*
 Purpose: Parse the current number item.
-// ORIGINAL: 0x005FDDF0 ?item_number@Text@@QAEXXZ 0x005FDDF0-0x005FDE58
+// ORIGINAL: 0x005FDDF0 ?item_number@Text@@QAEXXZ 0x005FDDF0-0x005FDE58 BYTE_EXACT
+// LEVER: BYTE_EXACT 32/32, from 0/32 and 5 compiled instructions. The body called `item()`, which is defined OUT OF LINE in this .cpp, so the whole scanner loop became a `call`; the image writes it out here and calls only its own two helpers. `text_item_source(this)` - the same logic as an `inline` in text.h - reproduces it exactly. Sibling of the already-byte-exact free `text_item_*` wrappers, which reach it the same way.
 // symbol    ?item_number@Text@@QAEHXZ
 // size      104 bytes
 // prototype void (__thiscall ?item_number@Text@@QAEXXZ)(_Text* this)
@@ -304,12 +269,14 @@ Return Value: Integer value of the number item
 Status: Complete
 */
 int Text::item_number() {
-    return stoi(item());
+    return stoi(text_item_source(this));
 }
 
 /*
 Purpose: Parse the current binary item.
-// ORIGINAL: 0x005FDE60 ?item_binary@Text@@QAEXXZ 0x005FDE60-0x005FDEC8
+// ORIGINAL: 0x005FDE60 ?item_binary@Text@@QAEXXZ 0x005FDE60-0x005FDEC8 BYTE_EXACT
+// LEVER: BYTE_EXACT 32/32, from 0/32 and 5 compiled instructions. The body called `item()`, which is defined OUT OF LINE in this .cpp, so the whole scanner loop became a `call`; the image writes it out here and calls only its own two helpers. `text_item_source(this)` - the same logic as an `inline` in text.h - reproduces it exactly. Sibling of the already-byte-exact free `text_item_*` wrappers, which reach it the same way.
+// LEVER: and the btoi has to go through a LOCAL const function pointer, `int(__cdecl *const btoi_fn)(LPCSTR) = btoi;`, exactly as text_item_binary() already documents: btoi is `MEASURED inline` in general.h and VC6 writes it out where the image emits `push eax; call 0x006288D0`. Measured: the plain spelling scores 27/32 and the pointer 32/32. VC6 still folds the pointer to a direct `call rel32`, so this costs no indirection.
 // symbol    ?item_binary@Text@@QAEHXZ
 // size      104 bytes
 // prototype void (__thiscall ?item_binary@Text@@QAEXXZ)(_Text* this)
@@ -321,12 +288,15 @@ Return Value: Integer value of the binary item
 Status: Complete
 */
 int Text::item_binary() {
-    return btoi(item());
+    int(__cdecl *const btoi_fn)(LPCSTR) = btoi;
+    return btoi_fn(text_item_source(this));
 }
 
 /*
 Purpose: Parse the current hex item.
-// ORIGINAL: 0x005FDED0 ?item_hex@Text@@QAEXXZ 0x005FDED0-0x005FDF38
+// ORIGINAL: 0x005FDED0 ?item_hex@Text@@QAEXXZ 0x005FDED0-0x005FDF38 BYTE_EXACT
+// LEVER: BYTE_EXACT 32/32, from 0/32 and 5 compiled instructions. The body called `item()`, which is defined OUT OF LINE in this .cpp, so the whole scanner loop became a `call`; the image writes it out here and calls only its own two helpers. `text_item_source(this)` - the same logic as an `inline` in text.h - reproduces it exactly. Sibling of the already-byte-exact free `text_item_*` wrappers, which reach it the same way.
+// LEVER: and the htoi has to go through a LOCAL const function pointer, `int(__cdecl *const htoi_fn)(LPCSTR) = htoi;`, exactly as text_item_binary() already documents: htoi is `MEASURED inline` in general.h and VC6 writes it out where the image emits `push eax; call 0x006288F0`. Measured: the plain spelling scores 2/32, 62 instructions and the pointer 32/32. VC6 still folds the pointer to a direct `call rel32`, so this costs no indirection.
 // symbol    ?item_hex@Text@@QAEHXZ
 // size      104 bytes
 // prototype void (__thiscall ?item_hex@Text@@QAEXXZ)(_Text* this)
@@ -338,7 +308,8 @@ Return Value: Integer value of the hex item
 Status: Complete
 */
 int Text::item_hex() {
-    return htoi(item());
+    int(__cdecl *const htoi_fn)(LPCSTR) = htoi;
+    return htoi_fn(text_item_source(this));
 }
 // global
 /*
@@ -502,7 +473,8 @@ int __cdecl text_item_binary() {
     return btoi_fn(text_item_source(&Txt));
 }
 
-// ORIGINAL: 0x005FD800 ?text_item_hex@@YAHXZ 0x005FD800-0x005FD85D
+// ORIGINAL: 0x005FD800 ?text_item_hex@@YAHXZ 0x005FD800-0x005FD85D BYTE_EXACT
+// LEVER: BYTE_EXACT 30/30, from 0/30 and 61 compiled instructions. The scanner half already matched through `text_item_hex_source`; what diverged was `htoi`, which is `MEASURED inline` in general.h and got written out where the image emits `push eax; call 0x006288F0`. A LOCAL const function pointer blocks the inline and still compiles a direct `call rel32` - the idiom text_item_binary() above already uses for btoi, now applied to htoi here and in Text::item_hex().
 // size      93 bytes
 // prototype 
 // callers   0   call targets   2
@@ -510,9 +482,13 @@ int __cdecl text_item_binary() {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x006007B0 0x006288F0
 // notes     Staged hybrid export redirect calls the source-owned wrapper
-int __cdecl text_item_hex() { return text_item_hex_source(&Txt); }
+int __cdecl text_item_hex() {
+    int(__cdecl *const htoi_fn)(LPCSTR) = htoi;
+    return htoi_fn(text_item_source(&Txt));
+}
 
-// ORIGINAL: 0x00585120 ?text_get_number@@YAHHH@Z 0x00585120-0x00585150
+// ORIGINAL: 0x00585120 ?text_get_number@@YAHHH@Z 0x00585120-0x00585150 BYTE_EXACT
+// LEVER: BYTE_EXACT 18/18, from 2/18 and 71 compiled instructions against the image's 18. The body went through `text_get_number_source(&Txt, ...)`, so both parses were written out INLINE; the image CALLS the zero-arg wrappers, `call 0x005FD570` then `call 0x005FD740`, and open-codes only the range() clamp. call_diff said exactly that - 1 call against the image's 2. Rewritten in text.h as `text_get(); return range(text_item_number(), min, max);`, which is the same two-statement shape alpha.cpp's LEVER already spells out at its own 83 call sites. Nothing else calls text_get_number(), so no caller moved.
 // size      48 bytes
 // prototype int (__cdecl ?text_get_number@@YAHHH@Z)(int min, int max)
 // callers   0   call targets   2
@@ -594,8 +570,7 @@ BOOL __cdecl text_open(LPCSTR src_id, LPCSTR section_id) {
 }
 
 // text_close_source, text_get_source, text_string_source, text_item_source,
-// text_item_string_source, text_item_number_source, text_item_binary_source,
-// text_item_hex_source and text_get_number_source moved to text.h, INLINE:
+// text_item_number_source and text_item_string_source moved to text.h, INLINE:
 // the image folds each into every one of its callers rather than sharing one
 // out-of-line copy (see LEVER on text_get() and neighbours below). None of
 // them carries its own ORIGINAL marker - they are this tree's own shared

@@ -22,7 +22,9 @@ char StringTemp[1032];   // 0x009B86A0
 
 /*
 Purpose: Initialize the class instance with a new string table of the specified size.
-// ORIGINAL: 0x006168F0 ?init@Strings@@QAEHH@Z 0x006168F0-0x00616950
+// ORIGINAL: 0x006168F0 ?init@Strings@@QAEHH@Z 0x006168F0-0x00616950 BYTE_EXACT
+// LEVER: BYTE_EXACT 31/31, from 6/31. call_diff had it at 3 calls against the image's 5: BOTH `shutdown()` and `put("-Nil-")` are written out here by the image, and both were real calls. Hand-inlined - not moved to the header - because each has its own out-of-line body in the image (0x00616950 has 4 callers, 0x00616970 has 5) and an `inline` in strings.h would take those call sites away from them. Measured one at a time: shutdown alone 17/31, put alone 5/31, both 31/31.
+// LEVER: strcpy, not strcpy_s, in the inlined put(). The image's callee is 0x00645460; the safe-CRT form scores 10/31 and compiles 35 instructions against the image's 31.
 // symbol    ?init@Strings@@QAEHI@Z
 // size      96 bytes
 // prototype int (__thiscall ?init@Strings@@QAEHH@Z)(Strings* this, int)
@@ -34,13 +36,21 @@ Return Value: Was there an error? true/false
 Status: Complete
 */
 BOOL Strings::init(size_t mem_size) {
+    // BOTH HELPERS ARE HAND-INLINED. The image writes shutdown() and put()
+    // out here rather than calling either - see the LEVER above - so this is
+    // shutdown()'s `~Heap(); is_populated_ = false;` and put()'s
+    // strlen/Heap::get/strcpy, spelled out. Both keep their own out-of-line
+    // BYTE_EXACT claims at 0x00616950 and 0x00616970.
     if (is_populated_) {
-        shutdown();
+        Heap::~Heap();
+        is_populated_ = false;
     }
     if (Heap::init(mem_size)) {
         return true; // allocation failed
     }
-    put("-Nil-");
+    size_t len = strlen("-Nil-") + 1;
+    LPSTR table_addr = LPSTR(Heap::get(len));
+    strcpy(table_addr, "-Nil-");
     is_populated_ = true;
     return false; // successful
 }
