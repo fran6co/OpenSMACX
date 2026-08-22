@@ -62,8 +62,16 @@ class GraphicWin : public Win {
   // earn a vtordisp was measured and is wrong - it moves every derived
   // close() onto the base's entry convention, which no call site in the image
   // uses.
-  virtual void on_dialog_focus(int a1);
-  virtual void on_mouse_leave(int a1, int a2);
+  // DEFINED EMPTY, NOT PURE. The image has no GraphicWin body for either -
+  // these are vtable SLOTS that the derived classes fill, and every call
+  // reaches one through a derived override. `= 0` would be the natural
+  // spelling for that and cannot be used: GraphicWin is still a concrete type
+  // here (BaseWin embeds one as `graphicWin2_`, and several bodies construct
+  // and cast to it), so making it abstract breaks those. A virtual with no
+  // definition does not link at all - it has to be in the vtable - which is
+  // what 2 unresolved externals across 30 objects said.
+  virtual void on_dialog_focus(int) { ; }
+  virtual void on_mouse_leave(int, int) { ; }
   // Returns `this`: the image's own closing `mov eax, esi` is the compiler
   // returning the receiver, matching a real constructor's ABI even though
   // this is spelled as a method (see the `symbol` fact on its ORIGINAL

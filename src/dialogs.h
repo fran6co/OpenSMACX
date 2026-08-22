@@ -12,8 +12,33 @@
 #include "original_seam.h"
 #include "dialog.h"
 #include "graphicwin.h"
+#include "listbox.h"
+#include "radiobutton.h"
+#include "checkbox.h"
+#include "spritebox.h"
+#include "editgroup.h"
 
-class Dialogs {
+// FIVE BASES, ONE GraphicWin AND ONE Dialog BETWEEN THEM - which is the thing
+// a base can do and a member cannot: a member of a class with virtual bases
+// carries its own copies. This header has described that layout for a long
+// time and could not express it, because "the coupled edit that unblocks this
+// class is on GraphicWin and Dialog, not here, and all five of these bases
+// need it at once". That edit is done, and the five prefixes chain onto the
+// image's own offsets exactly:
+//
+//   ListBox     at 0x0    prefix 0x44
+//   RadioButton at 0x44   prefix 0x14
+//   CheckBox    at 0x58   prefix 0x18
+//   SpriteBox   at 0x70   prefix 0x88
+//   EditGroup   at 0xF8   prefix 0x8C
+//     -> vtordisp 0x184, GraphicWin 0x188, Dialog 0xBA0, sizeof 0xC94
+//
+// every one of which the vbtables above name independently.
+class Dialogs : public ListBox,
+                public RadioButton,
+                public CheckBox,
+                public SpriteBox,
+                public EditGroup {
  public:
   // 0x00613180, a pending_bodies forwarder.
   void pass_dialog_focus();
@@ -174,23 +199,11 @@ class Dialogs {
   // jump table, and both take the Dialog's address from the object's own
   // vbtable rather than from where it sits here: this class is used as a
   // subobject, and the embedding object's vbtable names different offsets.
-  uint32_t vbtable_pointer_;
-  uint8_t field_4_[0x40];  // 0x4
-  uint32_t field_44_;  // 0x44   RadioButton subobject's vbtable pointer
-  uint8_t field_48_[0x10];  // 0x48
-  uint32_t field_58_;  // 0x58   CheckBox subobject's vbtable pointer
-  uint8_t field_5C_[0x14];  // 0x5C
-  uint32_t field_70_;  // 0x70   SpriteBox subobject's vbtable pointer
-  uint8_t field_74_[0x30];  // 0x74
-  int32_t field_A4_;
-  uint8_t field_A8_[0x50];  // 0xA8
-  uint32_t field_F8_;  // 0xF8   EditGroup subobject's vbtable pointer
-  uint8_t field_FC_[0x84];  // 0xFC
-  int32_t kind_;
-  uint8_t unmapped_184_[0x188 - 0x184];  // GraphicWin's vtordisp
-  GraphicWin virtual_base_;
-  uint8_t gap_B9C_[4];  // Dialog's vtordisp
-  Dialog dialog_;
+  // NO OWN DATA. Everything from 0 to 0x184 is the five base subobjects and
+  // the last four bytes are GraphicWin's vtordisp - all of it the compiler's
+  // now. What used to be `kind_` at 0x180 is EditGroup's own field at its
+  // +0x88 (0x180 - 0xF8), which is why EditGroup's prefix is 0x8C where
+  // SpriteBox's is 0x88.
 };
 
 static_assert(sizeof(Dialogs) == 0xC94,

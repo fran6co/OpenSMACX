@@ -83,7 +83,7 @@ Return Value: the widget's result, zero for kinds that hold no items
 Status: Complete
 */
 int Dialogs::item(char *text, int index) {
-    switch (kind_) {
+    switch (EditGroup::kind_) {
         case 2:
             // THE RECEIVER IS THIS OBJECT, reinterpreted: the image calls
             // ListBox::item with the Dialogs pointer unchanged, and
@@ -115,7 +115,7 @@ Return Value: the count, zero for kinds that hold no items
 Status: Complete
 */
 int Dialogs::get_num_items() {
-    switch (kind_) {
+    switch (EditGroup::kind_) {
         case 1:
         case 2:
         case 4:
@@ -127,7 +127,7 @@ int Dialogs::get_num_items() {
             return count;
         }
         case 8:
-            return field_A4_;
+            return SpriteBox::field_34_;
         default:
             return 0;
     }

@@ -1863,7 +1863,30 @@ def check(
                         else
                         f"DANGLING  {record.address_hex} body fact: {note} - "
                         f"{record.location}", fg=typer.colors.RED)
-    code = 1 if regressed or dangling or unread else 3 if unasked else 0
+    # DOES IT STILL LINK? The gate compiles each body on its own and never
+    # built the executable, so a tree could be 2,532-verified green while
+    # OpenSMACX.exe did not link at all. That is not hypothetical: declaring
+    # two GraphicWin virtuals without defining them produced 2 unresolved
+    # externals across 30 objects on 2026-08-22, and every per-function
+    # measurement still passed - a virtual has to be IN THE VTABLE, so it needs
+    # a definition, and nothing that measures one function at a time can see
+    # that. The entry point is the frontier; a tree that cannot link has no
+    # entry point.
+    #
+    # The build is incremental and this is the last thing the gate does, so a
+    # clean tree pays almost nothing for it.
+    link = subprocess.run(["cmake", "--build", "build"], cwd=REPO_ROOT,
+                          capture_output=True, text=True)
+    unlinked = [line for line in (link.stdout + link.stderr).splitlines()
+                if "LNK" in line or "error" in line.lower()]
+    if link.returncode and not as_json:
+        typer.secho(f"DOES NOT LINK - {len(unlinked)} error line(s):",
+                    fg=typer.colors.RED, bold=True)
+        for line in unlinked[:6]:
+            typer.secho(f"  {line.strip()[:150]}", fg=typer.colors.RED)
+
+    code = (1 if regressed or dangling or unread or link.returncode
+            else 3 if unasked else 0)
     # THE VERDICT GOES IN THE OUTPUT, not only in the exit code. The brief has
     # told agents for a long time never to pipe this to `tail`, because `cmd |
     # tail` reports TAIL's status and `echo $?` after it is always 0 - and an
@@ -1875,7 +1898,8 @@ def check(
     if not as_json:
         typer.secho(
             f"GATE EXIT {code} - "
-            + ("FAILED: regressed, dangling or unread claims" if code == 1
+            + ("FAILED: THE TREE DOES NOT LINK" if link.returncode
+               else "FAILED: regressed, dangling or unread claims" if code == 1
                else "OK, with unverifiable claims present" if code == 3
                else "CLEAN"),
             fg=typer.colors.RED if code == 1 else

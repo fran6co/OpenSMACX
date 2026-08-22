@@ -108,7 +108,11 @@ class SpriteBox : public virtual GraphicWin, public virtual Dialog {
   // residue). The IDB names all four field_2C..field_38 at four bytes each.
   uint32_t field_2C_;
   uint32_t field_30_;
+  // 0x34. Dialogs returns this for kind 8 - at 0x70 + 0x34 == 0xA4, which that
+  // header called `field_A4_`.
+ protected:
   int32_t field_34_;
+ private:
   uint32_t field_38_;
   uint32_t field_3C_;  // 0x3C
   uint8_t field_40_[0xC];  // 0x40
