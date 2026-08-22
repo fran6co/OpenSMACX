@@ -76,6 +76,7 @@ void PlanWin::construct(int a1) {
 Purpose: Tear down a plan window's own buffer and the MapWin fields it holds
          directly, without a separate call into MapWin's own destructor.
 // ORIGINAL: 0x0048BD80 ??1PlanWin@@QAE@XZ 0x0048BD80-0x0048BED6;0x00658210-0x006582DE
+// symbol    ??1PlanWin@@UAE@XZ
 // size      548 bytes
 // prototype void (__thiscall ??1PlanWin@@QAE@XZ)(PlanWin* this)
 // callers   2   call targets   5

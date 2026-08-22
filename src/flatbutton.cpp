@@ -142,6 +142,7 @@ uint32_t __fastcall flat_button_close_redirect(FlatButton *self, void *) {
 Purpose: Destroy a FlatButton by installing its two virtual tables, closing
          the derived stage, then running the complete BaseButton destructor.
 // ORIGINAL: 0x00406880 ??1FlatButton@@QAE@XZ 0x00406880-0x004068D8;0x006509A0-0x006509B2
+// symbol    ??1FlatButton@@UAE@XZ
 // LEVER: unlike FlatButton::FlatButton() (the CONSTRUCTOR, capped by the
 //        SEH-frame ceiling below), the image's DESTRUCTOR genuinely HAS the
 //        SEH frame (`push -1 / push handler / mov eax,fs:[0] / push eax /

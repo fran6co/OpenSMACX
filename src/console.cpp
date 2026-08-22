@@ -151,6 +151,7 @@ Purpose: Tear down the game console - its own Buffer/Time/Menu/Sprite
          fields it holds directly (no separate call into MapWin's own
          destructor).
 // ORIGINAL: 0x0051D9F0 ??1Console@@QAE@XZ 0x0051D9F0-0x0051DC10;0x0065D0E0-0x0065D220
+// symbol    ??1Console@@UAE@XZ
 // size      864 bytes
 // prototype void (__thiscall ??1Console@@QAE@XZ)(Console* this)
 // callers   2   call targets   10
