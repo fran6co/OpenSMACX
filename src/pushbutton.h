@@ -27,13 +27,29 @@
  * followed by eighteen four-byte fields ending at 0xB00. No method is
  * recovered and nothing pins the sizeof yet.
  */
+// The two virtual tables the destructor stages before delegating to
+// BaseButton::destroy(). DEFINED HERE, NOT `extern`, so the value is
+// visible at the use site and folds to an immediate store, the same
+// reasoning as ScrollPrimaryVtable/ScrollBufferVtable (scroll.h).
+const uint32_t PushButtonPrimaryVtable = 0x00670C60;
+const uint32_t PushButtonBufferVtable = 0x00670C58;
+
 class PushButton : public BaseButton {
  public:
   PushButton() { ; }
-  // 0x0062C010 is not recovered: a
-  // pending_bodies forwarder, because an empty inline stub emits
-  // nothing and the deleting destructor needs a `call rel32`.
-  ~PushButton();
+  // A real `~PushButton()` mangles `??1PushButton@@UAE@XZ` here, not the
+  // catalogued `@@QAE@XZ`: AutoSound's virtual destructor (autosound.h,
+  // added for RadioButton's vbtable layout) cascades virtuality onto every
+  // Win-derived destructor, and VC6's complete-object form for a virtual
+  // destructor installs the vtable pointer and unwinds bases through a
+  // ~15-instruction sequence where the image's body is 3 (two `mov`s and a
+  // tail `jmp`). `destroy()` below is an ordinary method, never a
+  // destructor override, so it is never cascaded into virtual - the same
+  // BaseButton::destroy()/Scroll::destroy() idiom used everywhere else in
+  // this tree for exactly this shape of problem.
+  ~PushButton() { destroy(); }
+
+  PushButton *destroy();
 
  private:
   uint32_t field_AB8_;  // 0xAB8

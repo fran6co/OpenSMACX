@@ -906,11 +906,6 @@ ProdPicker::~ProdPicker() {  // ??1ProdPicker@@QAE@XZ at 0x00421100
     PENDING_BODY(0x00421100, pending)(this, nullptr);
 }
 
-PushButton::~PushButton() {  // ??1PushButton@@QAE@XZ at 0x0062C010
-    typedef void(__fastcall *pending)(PushButton *, void *);
-    PENDING_BODY(0x0062C010, pending)(this, nullptr);
-}
-
 ReplayWin::~ReplayWin() {  // ??1ReplayWin@@QAE@XZ at 0x005ADF10
     typedef void(__fastcall *pending)(ReplayWin *, void *);
     PENDING_BODY(0x005ADF10, pending)(this, nullptr);

@@ -55,31 +55,32 @@ void Gamma::on_scrolled(int a1, int a2) {
 }
 
 
-// ---------------------------------------------------------------------------
-// DEFINED IN THE HEADER, CLAIMED HERE.
-//
-// These pieces are written in-class so the image's own inlining reproduces -
-// a constructor or destructor the compiler is expected to fold into its
-// caller. A marker cannot live beside them: `decomp.reader` globs `*.cpp`
-// and `*.c`, and a comparison compiles a TRANSLATION UNIT, so a marker in a
-// header could be neither read nor measured. VC6 emits each of them into
-// this unit's object as its own COMDAT anyway, which is what the comparison
-// pulls out, and the `body` fact says where to go to edit one.
-//
-// The ratchet still covers the header: this unit includes it, so breaking an
-// in-class body here fails the claim below. Measured, not assumed.
-// ---------------------------------------------------------------------------
-
 /*
-// ORIGINAL: 0x0062C010 ??1PushButton@@QAE@XZ 0x0062C010-0x0062C025
-// body      src/pushbutton.h
+Purpose: Re-install PushButton's two virtual tables, then delegate to
+         BaseButton::destroy() (this tree's spelling of BaseButton's real
+         complete-object destructor). A trivial trailing void call with no
+         stack cleanup, so VC6 folds the tail into a `jmp` rather than a
+         `call`+`ret` pair - the LEVER documented on PullDown's destructor
+         (pulldown.cpp) does NOT apply here because it depends on the caller
+         needing the callee's return value; this one genuinely wants the
+         jmp, and the image has one.
+// ORIGINAL: 0x0062C010 ??1PushButton@@QAE@XZ 0x0062C010-0x0062C025 BYTE_EXACT
+// LEVER: a real `~PushButton()` mangles `??1PushButton@@UAE@XZ` and compiles ~15 instructions of vtable-pointer/base-unwind bookkeeping - AutoSound's virtual destructor (autosound.h, added for RadioButton's vbtable layout) cascades virtuality onto every Win-derived destructor. `destroy()`, an ordinary method rather than a destructor override, is never cascaded into virtual and reproduces the image's plain 3-instruction body; see pushbutton.h for the declaration. Same idiom as BaseButton::destroy()/Scroll::destroy().
+// symbol    ?destroy@PushButton@@QAEPAV1@XZ
 // size      21 bytes
 // prototype void (__thiscall ??1PushButton@@QAE@XZ)(PushButton* this)
 // callers   7   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+Status: Complete
 */
+PushButton *PushButton::destroy() {
+    uint32_t *const ordered = reinterpret_cast<uint32_t *>(this);
+    ordered[0x000 / 4] = PushButtonPrimaryVtable;
+    ordered[0x444 / 4] = PushButtonBufferVtable;
+    return static_cast<PushButton *>(BaseButton::destroy());
+}
 
 // Gamma's own virtual table addresses, installed by the constructor. The pair
 // mirrors GraphicWin's exactly - primary at +0, the Buffer subobject's at

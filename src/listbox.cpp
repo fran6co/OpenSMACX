@@ -120,22 +120,14 @@ uint32_t ListBox::close() {
 /*
 Purpose: Destroy a ListBox: re-stage the GraphicWin, Buffer, and Dialog subobject
          vtables and refresh the two vbase-adjust fields (all located through the
-         runtime vbtable), then run close(). The original opens no exception
-         frame; there is nothing to omit.
-// ORIGINAL: 0x00609EC0 ??1ListBox@@QAE@XZ 0x00609EC0-0x00609F13
-// size      83 bytes
-// prototype void (__thiscall ??1ListBox@@QAE@XZ)(ListBox* this)
-// callers   35   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00609F20
-Return Value: EAX residue (close()'s residue, constant 0). The void destructor is
-              entered adjusted to L + 0x48; see the redirect.
+         runtime vbtable), then run close(). Not independently addressed - VC6
+         inlines this whole body into `list_box_destructor_redirect` below,
+         which is where the marker for 0x00609EC0 actually lives; a real
+         `ListBox::~ListBox()` cannot be the image's own body because the
+         image enters the void destructor ADJUSTED (this = L + 0x48, the
+         GraphicWin subobject), which no C++ member function can express -
+         `this` is always the class's own front. See the redirect's marker.
 Status: Complete with temporary Dialog::close original dependency (through close)
-Verification note: the sweep's two survivors here rewrite the 0x48/0xA60 in the
-displacement comments, not the vbtable loads beside them; the immediates the
-code does carry - the vbase-adjust subtrahends below - have their mutants
-killed by the shifted-vbtable shape.
 */
 uint32_t ListBox::destroy() {
     uint8_t *const base = reinterpret_cast<uint8_t *>(this);
@@ -168,13 +160,71 @@ uint32_t __fastcall list_box_close_redirect(ListBox *self, void *) {
     return self->close();
 }
 
-// ~ListBox is entered with this = L + 0x48 (the GraphicWin controlling-vftable
-// location); recover the base before delegating, as the original does with
-// `eax - 0x48`.
+/*
+Purpose: The real complete-object destructor body. ~ListBox is entered with
+         this = L + 0x48 (the GraphicWin controlling-vftable location, not
+         ListBox's own front); recover the base with the original's own
+         `eax - 0x48`, then re-stage the three subobject vtables and the two
+         vbase-adjust fields directly (not through a call to
+         `ListBox::destroy()` - that call target is a SEPARATE image
+         address dialogs.cpp already reaches by name, and calling it here
+         adds a `call`/register-spill the image's 83-byte body does not
+         pay for), then run close().
+// ORIGINAL: 0x00609EC0 ??1ListBox@@QAE@XZ 0x00609EC0-0x00609F13 BYTE_EXACT
+// symbol    ?list_box_destructor_redirect@@YIIPAX0@Z
+// size      83 bytes
+// prototype void (__thiscall ??1ListBox@@QAE@XZ)(ListBox* this)
+// callers   35   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00609F20
+Return Value: EAX residue (close()'s residue, constant 0).
+Status: Complete with temporary Dialog::close original dependency (through close)
+*/
 uint32_t __fastcall list_box_destructor_redirect(void *adjusted, void *) {
-    ListBox *self = reinterpret_cast<ListBox *>(
-        static_cast<uint8_t *>(adjusted) - ListBoxDestructorAdjustment);
-    return self->destroy();
+    // `unadjusted` is the RECEIVED this (L + 0x48); every store address below
+    // is expressed off IT, matching the image's own choice of anchor
+    // (`mov eax, ecx` keeps the unadjusted pointer live, and every store's
+    // SIB is `[edx + eax - 0x48]`) rather than off the walked-back `self`,
+    // which the image computes too (`lea ecx, [eax - 0x48]`) but uses ONLY
+    // to re-read the vbtable pointer, never as a store anchor.
+    uint8_t *const unadjusted = static_cast<uint8_t *>(adjusted);
+    ListBox *const self = reinterpret_cast<ListBox *>(
+        unadjusted - ListBoxDestructorAdjustment);
+
+    // Each store RE-READS the vbtable pointer at [self] and re-indexes it,
+    // rather than caching graphic_disp/dialog_disp across the five stores -
+    // the image does `mov edx,[ecx]; mov edx,[edx+4]` (or `+8`) freshly
+    // before every one of them (this is the "do not cache what the image
+    // re-reads" lever).
+    *reinterpret_cast<volatile uint32_t *>(
+        unadjusted +
+        (*reinterpret_cast<const int32_t *const *>(self))[1] -
+        ListBoxDestructorAdjustment) = ListBoxGraphicWinVtable;
+    *reinterpret_cast<volatile uint32_t *>(
+        unadjusted +
+        (*reinterpret_cast<const int32_t *const *>(self))[1] -
+        ListBoxDestructorAdjustment + 0x444) = ListBoxBufferVtable;
+    *reinterpret_cast<volatile uint32_t *>(
+        unadjusted +
+        (*reinterpret_cast<const int32_t *const *>(self))[2] -
+        ListBoxDestructorAdjustment) = ListBoxDialogVtable;
+    {
+        const int32_t graphic_disp =
+            (*reinterpret_cast<const int32_t *const *>(self))[1];
+        *reinterpret_cast<volatile int32_t *>(
+            unadjusted + graphic_disp - ListBoxDestructorAdjustment - 4) =
+            graphic_disp - 0x48;
+    }
+    {
+        const int32_t dialog_disp =
+            (*reinterpret_cast<const int32_t *const *>(self))[2];
+        *reinterpret_cast<volatile int32_t *>(
+            unadjusted + dialog_disp - ListBoxDestructorAdjustment - 4) =
+            dialog_disp - 0xA60;
+    }
+
+    return self->close();
 }
 
 /*
