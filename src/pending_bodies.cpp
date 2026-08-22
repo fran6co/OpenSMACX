@@ -597,13 +597,6 @@ void DipEdit::read_check() {  // 0x004DA990
     PENDING_BODY(0x004DA990, pending)(this, nullptr);
 }
 
-// ?set_state_id@CheckBox@@QAEXHH@Z at 0x0060EB80 - not yet recovered, a
-// pending_bodies forwarder. DipEdit::do_check (src/dipedit.cpp) calls it
-// BY NAME.
-void CheckBox::set_state_id(int id, int value) {
-    typedef void(__fastcall *pending)(CheckBox *, void *, int, int);
-    PENDING_BODY(0x0060EB80, pending)(this, nullptr, id, value);
-}
 
 int Dialog::init(int a1) {  // 0x006095F0
     typedef int(__fastcall *pending)(Dialog *, void *, int);
