@@ -533,6 +533,18 @@ struct SurfaceOwner {
 Purpose: Decode a PCX image out of memory into this buffer, then install the
          256 colours that follow it and publish them through the palette.
 // ORIGINAL: 0x005E2690 ?load_pcx@Buffer@@QAEHPAEKPAVPalette@@HH@Z 0x005E2690-0x005E2AF7
+// RULED-OUT: byte-exactness in this pass. Best measured is 0.22 similar
+// (6-25/374 instructions across the flag sets), and the divergence is not
+// one small edit: the frame is 0x100 against the image's 0xfc, `this` and
+// `data` swap registers throughout (esi/edi/ebx allocated differently from
+// the first instruction on), and the image OPEN-CODES the palette tail -
+// `Palette::get_rgbquad` and `SetDIBColorTable` inline at 0x005E2A1C and
+// 0x005E2A7C - where this body calls the already-BYTE_EXACT
+// `sync_to_palette` (0x005DE8F0). Inlining that call is a real lever but a
+// larger change than this pass affords, and it would cost a standalone
+// BYTE_EXACT claim to chase a body that is still far off on register
+// allocation alone; the call graph is correct either way. Not chased
+// further here.
 // symbol    ?load_pcx@Buffer@@QAEHPAEKPAVPalette@@HH@Z
 // size      1127 bytes
 // prototype int (__thiscall ?load_pcx@Buffer@@QAEHPAEKPAVPalette@@HH@Z)(Buffer* this, unsigned int8*, unsigned int, Palette*, int, int)
@@ -1102,6 +1114,15 @@ Purpose: Fill a rectangle of this buffer with a single colour, through
 // assembly one.
 //
 // ORIGINAL: 0x005DFCD0 ?fill@Buffer@@QAEHPAURECT@@H@Z 0x005DFCD0-0x005DFEFC
+// RULED-OUT: byte-exactness, because 0x005DFE69 is a HAND-WRITTEN ASSEMBLY
+// block that spends EBP as a row counter (`push ebp; mov ebp, ecx` ... `dec
+// ebp; jne row`) inside a function with a real frame, and routes the
+// per-row stride through a named file-scope global (`add edi,
+// [0x9B3A10]`) rather than a loop-invariant a compiler would keep in a
+// register. Neither is something VC6 emits from C++, so this tree does not
+// answer it with `__asm`; the loop is written in C and best reached is
+// 189/215 mnemonics, 24 edits, against the FRAMED flag set. Do not
+// re-derive this - see the prose below for the full accounting.
 // symbol    ?fill@Buffer@@QAEHPAUtagRECT@@H@Z
 // size      556 bytes
 // prototype int (__thiscall ?fill@Buffer@@QAEHPAURECT@@H@Z)(Buffer* this, RECT* rect, int)
@@ -2155,6 +2176,16 @@ int edge_int(uint32_t bits) {
 /*
 Purpose: Fill one horizontal run of pixels, clipped to the buffer's rectangle.
 // ORIGINAL: 0x005E1A80 ?hline@Buffer@@QAEXHHHH@Z 0x005E1A80-0x005E1BF0
+// RULED-OUT: the second null check on the computed destination address
+// (`add eax, edx; test eax, eax; je`, which the image keeps at 0x005E1B83
+// even though the sum of a non-null base and offset cannot be null).
+// Written as a plain sum through a named `char *const dest`, `== 0`,
+// `!dest`, or with the offset hoisted into its own `const int` - four
+// spellings, all byte-identical - VC6 always folds the redundant `test`
+// into the preceding `add`'s own flags. Best reached is 0.996 similar
+// (69/131 agreeing at `/c /O2 /Oi- /Gy /GR- /GX`), one instruction short in
+// 131; nothing shy of a barrier keeps the dead test and that would cost
+// more than the instruction is worth. Do not re-derive this.
 // size      368 bytes
 // prototype void (__thiscall ?hline@Buffer@@QAEXHHHH@Z)(Buffer* this, int, int, int, int)
 // kind      game

@@ -1720,9 +1720,24 @@ Purpose: Construct a Buffer on the stack and immediately destroy it.
          beats an assertion that would only appear to cover them.
 
 // ORIGINAL: 0x00455E50 ?load_deswin_sprites@@YAXXZ 0x00455E50-0x00455E73
+// LEVER: same fix as leaf_004080b0_redirect/leaf_00406af0_redirect above -
+// direct calls to the named redirects, not through the
+// `LeafBufferConstruct`/`LeafBufferDestruct` pointer variables (an indirect
+// `call dword ptr [...]` where the image has a direct `call rel32`, since
+// the target is a relocation on both sides). `listing_diff` no longer shows
+// an unresolved `call dword ptr [0]` after this.
+// RULED-OUT: `new (scratch) Buffer(); scratch->~Buffer();` in place of the
+// redirects - PLACEMENT NEW PULLS IN AN SEH FRAME here (Buffer's destructor
+// is non-trivial and its constructor calls non-intrinsics), even though
+// `scratch` is a local array's address and provably non-null. Similarity
+// fell from 0.909 to 0.474 (`push -1; push 0; mov eax, fs:[0]` unwind
+// prologue the image does not pay for). Reverted. Still MISMATCH at 0.909
+// (3/10 agreeing, best `/c /O2 /Gy /GR- /Oy- /GX`) - the residual gap is
+// the two redirects' unused `void *` second parameter, called with
+// `nullptr`, costing an `xor edx, edx` each the image does not emit.
 // symbol    ?leaf_00455e50_redirect@@YAXXZ
 // size      35 bytes
-// prototype 
+// prototype
 // callers   1   call targets   2
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
@@ -1733,8 +1748,8 @@ Status: Complete
 void __cdecl leaf_00455e50_redirect() {
     alignas(8) uint8_t storage[0x588];
     Buffer *const scratch = reinterpret_cast<Buffer *>(storage);
-    LeafBufferConstruct(scratch, nullptr);
-    LeafBufferDestruct(scratch, nullptr);
+    buffer_construct_redirect(scratch, nullptr);
+    buffer_destructor_redirect(scratch, nullptr);
 }
 
 /*

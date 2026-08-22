@@ -122,6 +122,16 @@ __forceinline int forward_to_wrapped_device(Wave_Device *self, int vtable_offset
 /*
 Purpose: Enable the wrapped device, if there is one, through vtable slot 0x60.
 // ORIGINAL: 0x004C51C0 ?enable@Wave_Device@@QAEXXZ 0x004C51C0-0x004C51CF
+// RULED-OUT: byte-exactness - plateaus at 4/7 agreeing (0.769 similar)
+// across every flag set tried. The image keeps a real `call` on the
+// device-present path and falls through into a SHARED `xor eax,eax; ret`
+// epilogue the null-device path also jumps to; this tree's void wrapper
+// always folds the trailing call into a tail `jmp` since nothing follows
+// it, matching `disable()`'s own sibling shape rather than the image's.
+// Three spellings measured, all 4/7: `dispatch_wrapped_device` as-is,
+// discarding `query_wrapped_device(this, 0x60)`'s int return, and a
+// guard-clause early-return before the dispatch. Contrast `get_ds()`
+// (int-returning, correctly tail-jumps on the call path) - see it there.
 // size      15 bytes
 // prototype void (__thiscall ?enable@Wave_Device@@QAEXXZ)(Wave_Device* this)
 // callers   4   call targets   0
@@ -133,18 +143,15 @@ Return Value: n/a
 Status: Complete
 */
 void Wave_Device::enable() {
-    // RULED-OUT: this shape and --all-flags both plateau at 4/7 agreeing.
-    // The image keeps a real `call` here and zeroes eax afterward even
-    // though the function is void; this tree's void wrapper always folds
-    // the trailing call into a tail `jmp` since nothing follows it. No
-    // source form tried moves the transform - see disable() and get_ds()
-    // (int-returning, correctly tail-calls) for the contrast.
     dispatch_wrapped_device(this, 0x60);
 }
 
 /*
 Purpose: Disable the wrapped device, if there is one, through vtable slot 0x64.
 // ORIGINAL: 0x004C51D0 ?disable@Wave_Device@@QAEXXZ 0x004C51D0-0x004C51DF
+// RULED-OUT: byte-exactness, same plateau and same cause as `enable()` -
+// see the note there (4/7 agreeing, 0.769 similar, the image's real `call`
+// against this tree's tail `jmp`).
 // size      15 bytes
 // prototype void (__thiscall ?disable@Wave_Device@@QAEXXZ)(Wave_Device* this)
 // callers   4   call targets   0
@@ -156,8 +163,6 @@ Return Value: n/a
 Status: Complete
 */
 void Wave_Device::disable() {
-    // RULED-OUT: same plateau as enable() - the image keeps a real `call`
-    // where this compiles a tail `jmp`; see the note there.
     dispatch_wrapped_device(this, 0x64);
 }
 
@@ -659,6 +664,19 @@ Purpose: Report whether a group is disabled: out-of-range groups always are,
          original defines only AL on the out-of-range path; callers test the
          byte.
 // ORIGINAL: 0x004C5460 ?is_group_disabled@Wave_Device@@QAEHI@Z 0x004C5460-0x004C5481
+// RULED-OUT: byte-exactness. Plateaus at 7/14, 0.875 similar (best
+// `/c /O2 /Gy /GR- /Oy- /GX`). The image writes only AL on BOTH return
+// paths - `mov al, 1` (2 bytes) on the out-of-range path and a bare
+// `sete al` on the lookup path, each its own independent `ret`, never a
+// full `mov eax`/zero-extend even though the mangled return type is `H`
+// (int). This tree's compiled form always widens: `mov eax, 1` on the
+// first path, and `xor edx,edx; ...; sete dl; mov eax,edx` (with a
+// spurious `push ebx`/`pop ebx` for the extra register) on the second.
+// Measured `return 1` vs `return true`, and `groups_[a1].enabled == 0`
+// as a direct boolean return vs the `? 1 : 0` ternary - all four
+// combinations compile identically (still 0.875). Whatever makes the
+// image settle for AL-only appears to be a VC6 quirk this tree has not
+// found the source shape for; not chased further.
 // size      33 bytes
 // prototype int (__thiscall ?is_group_disabled@Wave_Device@@QAEHI@Z)(Wave_Device* this, unsigned int)
 // callers   1   call targets   0
@@ -690,7 +708,15 @@ Purpose: Append a wave to a group's node list. A fresh 12-byte node comes
          shapes are kept. With a live tail the new node's prev is the
          RE-READ tail field, after the old tail's next was written - an
          order the original's aliasing permits to matter.
-// ORIGINAL: 0x004C5BF0 sub_4c5bf0 0x004C5BF0-0x004C5C4A
+// ORIGINAL: 0x004C5BF0 sub_4c5bf0 0x004C5BF0-0x004C5C4A BYTE_EXACT
+// LEVER: `WaveGroupNode *const node` -> non-const with an explicit
+// `else { node = 0; }`. With the pointer const-initialized from the `if
+// (node) {...}` alone, this tree let the null path fall straight into the
+// tail-check with `eax` already zero from the allocator's own return,
+// dropping the image's own `jmp`/`xor eax,eax` merge pair (0x004C5C17-
+// 0x004C5C19) - 34/36 instructions, 0.971 similar. Materializing the
+// redundant zero explicitly reproduces the image's (needless) re-zero and
+// closes the last two instructions.
 // symbol    ?wave_group_insert_redirect@@YIXPAUWaveGroupList@@PAXPAVWave@@@Z
 // size      90 bytes
 // prototype 
@@ -703,12 +729,14 @@ Status: Complete
 */
 void __fastcall wave_group_insert_redirect(WaveGroupList *self, void *,
                                            Wave *a1) {
-    WaveGroupNode *const node =
+    WaveGroupNode *node =
         static_cast<WaveGroupNode *>(WaveOperatorNew(0xC));
     if (node) {
         node->prev = nullptr;
         node->next = nullptr;
         node->wave = a1;
+    } else {
+        node = 0;
     }
     WaveGroupNode *const tail = self->tail;
     if (tail) {

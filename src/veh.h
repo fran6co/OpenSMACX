@@ -647,6 +647,11 @@ int __cdecl veh_cargo(int veh_id);
 // one caller (stack_veh, 0x005B8EE0) is a genuine `call` in the image, not
 // the folded field writes every other spot gets from `sleep` inlining.
 void __cdecl sleep_call(int veh_id);
+// A REAL, out-of-line forwarder to the `MEASURED inline base_cost()` below -
+// its one caller (veh_cost, 0x005C1850) is a genuine `call` in the image
+// (0x005A5D00, "callers 1"), where `base_cost(proto_id)` written directly
+// inlines away under /O2 and exposes the inner `proto_cost` call instead.
+int __cdecl base_cost_call(int proto_id);
 int __cdecl prototype_factor(int proto_id);
 int __cdecl veh_cost(int proto_id, int base_id, BOOL *has_proto_cost);
 BOOL __cdecl veh_jail(int veh_id);
