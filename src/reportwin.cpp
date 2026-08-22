@@ -33,7 +33,7 @@ Purpose: Construct every sub-object in image order - a FlatButton[7] run, a
          by two ButtonGroups, a Scroll, three Times, two Buffers and a Flic -
          then install ReportWin's own vftables.
 // ORIGINAL: 0x004AD6B0 ??0ReportWin@@QAE@XZ 0x004AD6B0-0x004AD838;0x006592F0-0x00659419
-// RULED-OUT: deriving from ConstructedGraphicWin (graphicwin.h) to move the
+// TRIED: deriving from ConstructedGraphicWin (graphicwin.h) to move the
 //   base construction ahead of the members. The ORDER IS RIGHT - this image
 //   really does `call 0x5d4cf0` before its first `lea ecx, [esi + N]`, checked
 //   2026-08-22 - but making the source agree took this body 14 -> 10
@@ -43,7 +43,7 @@ Purpose: Construct every sub-object in image order - a FlatButton[7] run, a
 //   these constants already fold, and this body is structurally far off
 //   (149 compiled against 87). Re-derive the ordering fix as part
 //   of a dedicated pass on the whole body, not on its own.
-// RULED-OUT: register allocation - the SEH prologue agrees (7/7) then the
+// TRIED: register allocation - the SEH prologue agrees (7/7) then the
 //            compiled body reserves an extra `sub esp, 8` the image does
 //            not. MISMATCH, 9/87 instructions agree.
 // LEVER: flatButtons1_ and spot_ (the whole prefix before the irreducible

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004620C0 sub_4620c0 0x004620C0-0x00462184 FILE
-// RULED-OUT: nullary contract head (reads [ebp+8]/[ebp+0xc], no ecx use -> 2 plain int args, not __thiscall). First divergence #2 push/mov, 176 vs 196 B.
+// TRIED: nullary contract head (reads [ebp+8]/[ebp+0xc], no ecx use -> 2 plain int args, not __thiscall). First divergence #2 push/mov, 176 vs 196 B.
 // working copy - scaffold materialised by --work
 // size      196 bytes
 // prototype 

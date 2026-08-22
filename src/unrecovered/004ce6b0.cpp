@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004CE6B0 sub_4ce6b0 0x004CE6B0-0x004CE78D FILE
-// RULED-OUT: caching the recomputed table index in one local (idx) instead of re-reading g_0068faf0 fresh each use loses the frame; kept `half = a1>>1` cached (matches the original's stack-slot reuse of the a2 parameter) but still diverges on the imul operand ordering a few instructions in.
+// TRIED: caching the recomputed table index in one local (idx) instead of re-reading g_0068faf0 fresh each use loses the frame; kept `half = a1>>1` cached (matches the original's stack-slot reuse of the a2 parameter) but still diverges on the imul operand ordering a few instructions in.
 // working copy - scaffold materialised by --work
 // size      221 bytes
 // prototype 

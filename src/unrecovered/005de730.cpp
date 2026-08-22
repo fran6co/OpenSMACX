@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005DE730 ?change_color@Buffer@@QAEHPAURECT@@HH@Z 0x005DE730-0x005DE8EB FILE
-// RULED-OUT: raw self+offset field access with COM-style stdcall function-pointer casts for the two vtable slot calls (0x64, 0x80); diverges at #0, initial register order
+// TRIED: raw self+offset field access with COM-style stdcall function-pointer casts for the two vtable slot calls (0x64, 0x80); diverges at #0, initial register order
 // size      443 bytes
 // prototype int (__thiscall ?change_color@Buffer@@QAEHPAURECT@@HH@Z)(Buffer* this, RECT*, int, int)
 // callers   1   call targets   0

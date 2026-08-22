@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00424410 ?make_resolution@CouncWin@@QAEHH@Z 0x00424410-0x0042471F FILE
-// RULED-OUT: full Ghidra-faithful translation compiles and matches control flow (do/while record scan, max-index tie-break, vtable slot 001/002/062 calls); diverges at instr #0 (prologue shape), not yet chased further - large function, landed at MISMATCH.
+// TRIED: full Ghidra-faithful translation compiles and matches control flow (do/while record scan, max-index tie-break, vtable slot 001/002/062 calls); diverges at instr #0 (prologue shape), not yet chased further - large function, landed at MISMATCH.
 // working copy - scaffold materialised by --work
 // size      783 bytes
 // prototype int (__thiscall ?make_resolution@CouncWin@@QAEHH@Z)(CouncWin* this, int)

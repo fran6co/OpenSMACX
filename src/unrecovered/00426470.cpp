@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00426470 ?draw_info@CouncWin@@QAEXXZ 0x00426470-0x00426A95 FILE
-// RULED-OUT: field-offset `__thiscall` rewrite (two RECT locals reused positionally across the function, verified push/pop order and branch polarity against the raw disassembly rather than trusting Ghidra's dropped thiscall receivers) compiles and follows the retry-loop/goto-restart structure faithfully, but diverges at instruction #3 (stack-frame shape: an 80-byte itoa scratch buffer vs the original's exact 0x7c-byte frame).
+// TRIED: field-offset `__thiscall` rewrite (two RECT locals reused positionally across the function, verified push/pop order and branch polarity against the raw disassembly rather than trusting Ghidra's dropped thiscall receivers) compiles and follows the retry-loop/goto-restart structure faithfully, but diverges at instruction #3 (stack-frame shape: an 80-byte itoa scratch buffer vs the original's exact 0x7c-byte frame).
 // working copy - scaffold materialised by --work
 // size      1573 bytes
 // prototype void (__thiscall ?draw_info@CouncWin@@QAEXXZ)(CouncWin* this)

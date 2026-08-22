@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0045B550 ?draw_edit_pane@MainInterface@@QAEXXZ 0x0045B550-0x0045BBF7 FILE
-// RULED-OUT: the 30-way switch is transcribed from the actual jump table (0x0045BBF8) and case table (0x0045BC24) read out of the image with pefile, not hand-decoded, so the VALUES it produces should be right even though the emitted `cmp`/`jmp` shape won't match a real jump table; find_font's three call sites each push one more dword than the declared 2-int signature consumes (`add esp,8` after three pushes) - the extra value is dropped rather than guessed at.
+// TRIED: the 30-way switch is transcribed from the actual jump table (0x0045BBF8) and case table (0x0045BC24) read out of the image with pefile, not hand-decoded, so the VALUES it produces should be right even though the emitted `cmp`/`jmp` shape won't match a real jump table; find_font's three call sites each push one more dword than the declared 2-int signature consumes (`add esp,8` after three pushes) - the extra value is dropped rather than guessed at.
 // working copy - scaffold materialised by --work
 // size      1703 bytes
 // prototype void (__thiscall ?draw_edit_pane@MainInterface@@QAEXXZ)(MainInterface* this)

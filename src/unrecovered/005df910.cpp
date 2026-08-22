@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005DF910 ?write_bmp@Buffer@@QAEHPAD@Z 0x005DF910-0x005DFB48 FILE
-// RULED-OUT: literal struct/array locals for the BMP header + info struct change VC6's frame layout from the start (#1 'mov' vs 'push'); semantics (calls, field offsets, COM-style vtable slots 25/32) are faithfully transcribed from the disassembly + Ghidra hints.
+// TRIED: literal struct/array locals for the BMP header + info struct change VC6's frame layout from the start (#1 'mov' vs 'push'); semantics (calls, field offsets, COM-style vtable slots 25/32) are faithfully transcribed from the disassembly + Ghidra hints.
 // working copy - scaffold materialised by --work
 // size      568 bytes
 // prototype int (__thiscall ?write_bmp@Buffer@@QAEHPAD@Z)(Buffer* this, int8*)

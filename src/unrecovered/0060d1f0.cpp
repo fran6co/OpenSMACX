@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0060D1F0 ?attach@RadioButton@@QAEHPAUGraphicWin@@HHH@Z 0x0060D1F0-0x0060D377 FILE
-// RULED-OUT: none confirmed byte-exact; MISMATCH #26 'push' vs 'mov', same vtable-array-double-read shape as the sibling CheckBox::attach (0x0060E800). GraphicWin::init's scaffold return type is void (the mangled name spells X), so the caller cannot propagate its failure code the way the CheckBox::attach byte pattern implies it should - RadioButton::attach DOES check calculate_dimensions()'s return here, unlike CheckBox's.
+// TRIED: none confirmed byte-exact; MISMATCH #26 'push' vs 'mov', same vtable-array-double-read shape as the sibling CheckBox::attach (0x0060E800). GraphicWin::init's scaffold return type is void (the mangled name spells X), so the caller cannot propagate its failure code the way the CheckBox::attach byte pattern implies it should - RadioButton::attach DOES check calculate_dimensions()'s return here, unlike CheckBox's.
 // size      391 bytes
 // prototype int (__thiscall ?attach@RadioButton@@QAEHPAUGraphicWin@@HHH@Z)(RadioButton* this, GraphicWin*, int, int, int)
 // callers   2   call targets   6

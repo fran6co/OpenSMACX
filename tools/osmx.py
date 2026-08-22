@@ -268,8 +268,8 @@ def _ambiguous(claimants: list, target: str, command: str,
 
 def _lessons(record: DecompilationState) -> list[tuple[str, str]]:
     out = [("LEVER", f"{key}  {prose}") for key, prose in record.levers]
-    out += [("RULED-OUT", p) for p in record.ruled_out]
-    out += [("UNRECOVERABLE", p) for p in record.unrecoverable]
+    out += [("TRIED", p) for p in record.ruled_out]
+    out += [("TRIED", p) for p in record.unrecoverable]
     out += [("DEFERRED", p) for p in record.deferred]
     return out
 

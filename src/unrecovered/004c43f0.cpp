@@ -51,7 +51,7 @@ static int *const g_00949874 = (int *)0x00949874;
 class WorldWin { public:
     int pixel_to_tile(int, int, int *, int *);
 };
-// RULED-OUT: MISMATCH at 0.905 mnemonic similarity (best of several
+// TRIED: MISMATCH at 0.905 mnemonic similarity (best of several
 //            structural attempts). LEVERS THAT WORKED: (1) declaring
 //            `x_num`/`y_num` (the a1/a2-derived locals) BEFORE
 //            `width_div`/`height_div_neg` in the fast-path branch kept

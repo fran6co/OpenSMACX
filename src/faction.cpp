@@ -67,9 +67,9 @@ Purpose: Calculate the base amount of talents and drones for the specified facti
 //        `(efficiency < 0 ? 0 : efficiency) + 4` isolates the classic
 //        clamp-to-zero idiom and reaches it. Moved 21/52 (0.796) -> 25/52
 //        (0.871).
-// RULED-OUT: the `test al,dl` vs `test dl,al` register-order-only divergence
+// TRIED: the `test al,dl` vs `test dl,al` register-order-only divergence
 //            on is_human()'s bit test is the same one already documented at
-//            this file's `RULED-OUT` notes near line 179/223 (register
+//            this file's `TRIED` notes near line 179/223 (register
 //            allocation, not a source shape this tree controls).
 // symbol    ?psych_check@@YAXHPAH0@Z
 // size      147 bytes
@@ -138,7 +138,7 @@ Purpose: Get the faction's noun.
 //        stores; this tree's O2 hoists that address computation right after the
 //        first read and reaches the second field off the new eax
 //        (`mov edx,[eax+0x1c]`) instead of off the original one - scheduling only.
-// RULED-OUT: `Player *player = &Players[faction_id];` then player->field (4/15,
+// TRIED: `Player *player = &Players[faction_id];` then player->field (4/15,
 //            worse - address-of-record defeats the folded multiply); hoisting
 //            the two reads into named `int`/`BOOL` locals before both stores
 //            (10/15, worse - same register/ordering issue as the parse_set call);
@@ -182,7 +182,7 @@ Purpose: Determine if the overall dominant human faction is a minor threat based
 //        bases_threat `int` and cast `(int)current_num_bases` at its one use
 //        here (left the shared PlayerData field uint32_t - too many other
 //        callers to retype safely) - moved 35/43 -> 37/43 agreeing.
-//        RULED-OUT: splitting `int t=TurnCurrentNum; t=(t+25)/50;` and
+//        TRIED: splitting `int t=TurnCurrentNum; t=(t+25)/50;` and
 //        `(25+TurnCurrentNum)/50` to break the compiler's mov+lea fold of the
 //        image's separate `mov edx,[TurnCurrentNum]; add edx,0x19` - both tie
 //        at 37/43, no change. Remaining divergence is `test al,dl` vs
@@ -220,12 +220,12 @@ Purpose: Determine if the specified faction is considered a threat based on the 
 //        here and the register holding GameRules/diff_level is reused past
 //        the inline boundary. Wrote it inlined (is_minor_threat local) instead
 //        of calling great_beelzebub(); moved from 1/113 (wrong shape, esp-frame,
-//        real call) to 9/113 agreeing. RULED-OUT: open-coding is_human's bit
+//        real call) to 9/113 agreeing. TRIED: open-coding is_human's bit
 //        test directly instead of the call did not move the tier further.
-//        RULED-OUT: `PlayerData *p = &PlayersData[faction_id];` before the
+//        TRIED: `PlayerData *p = &PlayersData[faction_id];` before the
 //        repeated `.current_num_bases`/`.diff_level` reads - dropped to 4/113;
 //        the image keeps faction_id itself live across the whole body instead.
-//        RULED-OUT: the image never materializes an is_minor_threat flag - all
+//        TRIED: the image never materializes an is_minor_threat flag - all
 //        four guard conditions are separate early `return false` sites, no
 //        variable. Rewrote as guard clauses instead of the flag+outer-if; ties
 //        at 9/113 (identical codegen), kept for shape. Remaining divergence at
@@ -348,7 +348,7 @@ Purpose: Check if the human controlled player is nearing the endgame.
 //        incrementing pointer through the first loop; this tree's compile
 //        still indexes by `i` and schedules differently from instruction 0.
 //        Plateaus here after the ascending() fix; not chased further.
-//        RULED-OUT: `PlayerData *player = &PlayersData[1];` walked with
+//        TRIED: `PlayerData *player = &PlayersData[1];` walked with
 //        `player++` alongside `i` for the first loop, to mimic the image's
 //        raw pointer walk - dropped to 15/56 (the &-of-array-element address
 //        is not a link-time constant the way `FactionsStatus`/`PlayersData`
@@ -399,7 +399,7 @@ Purpose: Determine if the specified AI faction is at the game climax based on ce
 //        source. Fixed to `PlayersData[i].corner_market_turn`, matching
 //        climactic_battle's `is_human(i) && PlayersData[i].corner_market_turn`
 //        shape - similarity rose 0.888->0.957 (bytes 241/306 vs relocations).
-//        RULED-OUT: hoisting `!(GameRules & RULES_VICTORY_COOPERATIVE)` into
+//        TRIED: hoisting `!(GameRules & RULES_VICTORY_COOPERATIVE)` into
 //        a local before the loop, to match the image's `mov edx,[GameRules]`
 //        once before the loop reused via `test dh,0x10` inside it - tied at
 //        5/105 agreeing, no change. Remaining divergence is a near-total
@@ -461,14 +461,14 @@ Purpose: Add friction between the two specified factions.
 //   the `uint32_t[8]` itself, no `[faction_id_with]` yet) rather than to the single
 //   `&...diplo_friction[faction_id_with]` ELEMENT - indexing with `[faction_id_with]`
 //   at each of the two uses, instead of dereferencing a pointer already advanced past
-//   the row. The earlier RULED-OUT below only tried the ELEMENT pointer (`*diplo_friction`)
+//   the row. The earlier TRIED below only tried the ELEMENT pointer (`*diplo_friction`)
 //   and a plain double-index with no pointer at all; the ROW pointer is the one the image
 //   actually keeps live (`diplo_friction[8]` is itself 2D-indexed by a runtime
 //   `faction_id`, and only that outer index is worth hoisting - the inner one stays a
 //   subscript). Moved 13/33 -> 21/33 agreeing. Remaining divergence starts at
 //   instruction 5 with push/register-assignment order (esi/edi scheduling), not
 //   chased further this pass.
-// RULED-OUT: direct double array-index instead of a *diplo_friction pointer;
+// TRIED: direct double array-index instead of a *diplo_friction pointer;
 //            a `new_friction` local holding range()'s result before the store.
 //            Same shape as set_treaty's divergence: the image computes the
 //            PlayersData[faction_id].diplo_friction[faction_id_with] address
@@ -603,7 +603,7 @@ int __cdecl energy_value(int loan_principal) {
 Purpose: Pick out the two prototypes of faction_id_with that are worth putting in front of
          faction_id: the strongest one it owns, and the strongest one still worth bragging about.
 // ORIGINAL: 0x0053A4A0 ?scan_prototypes@@YAXHH@Z 0x0053A4A0-0x0053A774
-// RULED-OUT: `call_diff` already agrees (0 disagree) - `weap_strat`/
+// TRIED: `call_diff` already agrees (0 disagree) - `weap_strat`/
 // `arm_strat` are called the same number of times the image calls them.
 // MISMATCH is 10/218 at this pass, all register allocation/scheduling
 // inside the nested-loop body (218 image instructions against a
@@ -763,13 +763,13 @@ void __cdecl scan_prototypes(int faction_id, int faction_id_with) {
 /*
 Purpose: Set or unset the diplomatic treaty for the specified faction with another faction.
 // ORIGINAL: 0x0055BB30 ?set_treaty@@YAXHHHH@Z 0x0055BB30-0x0055BB98
-// RULED-OUT: pointer to diplo_treaties field (shared or per-branch); local index var;
+// TRIED: pointer to diplo_treaties field (shared or per-branch); local index var;
 //            unsigned cast on index; explicit RMW temp; if-condition hoisted before the |=.
 //            Set branch: image computes the index via explicit `shl eax,2` then reuses
 //            the plain [eax+base] address for both the load and the store; this tree's
 //            compile always folds the *4 into the addressing mode instead. Plateaus at
 //            15/36 agreeing across all tried flag sets.
-//            RULED-OUT (2026-08-22): a `uint32_t *diplo_treaties` pointer bound to the
+//            TRIED (2026-08-22): a `uint32_t *diplo_treaties` pointer bound to the
 //            ROW (`PlayersData[faction_id].diplo_treaties`, no `[faction_id_with]` yet,
 //            indexed at each of the three uses) - the lever that took cause_friction
 //            13/33 -> 21/33. Here it is WORSE, not a tie: drops to 0/36. This is a
@@ -798,7 +798,7 @@ void __cdecl set_treaty(int faction_id, int faction_id_with, int treaty, BOOL se
 /*
 Purpose: Set or unset the diplomatic agenda for the specified faction with another faction.
 // ORIGINAL: 0x0055BBA0 ?set_agenda@@YAXHHHH@Z 0x0055BBA0-0x0055BBF1
-// RULED-OUT: the image folds `diplo_agenda[faction_id_with] |= agenda` into
+// TRIED: the image folds `diplo_agenda[faction_id_with] |= agenda` into
 //            one `or dword ptr [eax*4+addr], ecx`; this tree's O2 always
 //            splits it into load/lea/or/store even with a cached
 //            `int *diplo = &PlayersData[faction_id].diplo_agenda[...]`
@@ -1060,7 +1060,7 @@ BOOL __cdecl wants_to_attack(int faction_id, int faction_id_tgt, int faction_id_
 Purpose: Weigh how badly the specified faction's territory is being trespassed on by another
          faction's units, and mark those units so the rest of diplomacy can find them again.
 // ORIGINAL: 0x0055EB80 ?territory@@YAHHHHPAHPAH@Z 0x0055EB80-0x0055EEDE
-// RULED-OUT: `call_diff` already agrees (0 disagree). MISMATCH is 15/278 at
+// TRIED: `call_diff` already agrees (0 disagree). MISMATCH is 15/278 at
 // this pass, first divergence right in the prologue (frame size: image
 // `sub esp, 0x118` vs this tree's `sub esp, 0x11c`, one extra dword of
 // locals) - a stack-layout gap across an 862-byte body, not chased at the
@@ -1282,16 +1282,16 @@ Purpose: Add the specific goal to the faction's goals for the specified tile. Op
 // ORIGINAL: 0x00579A30 ?add_goal@@YAXHHHHHH@Z 0x00579A30-0x00579B64
 // LEVER: declaring `priority_search`/`goal_id` before the first loop (matching
 //        their eventual use right after it, not right before the second loop)
-//        moved 5/104 -> 11/104 agreeing. RULED-OUT: rewriting the `Goal&`
+//        moved 5/104 -> 11/104 agreeing. TRIED: rewriting the `Goal&`
 //        aliases as direct PlayersData[faction_id].goals[i].field accesses
 //        made it worse (1/104) - the reference form is closer to the image.
 //        Remaining gap: the image needs only ebx/esi/edi as callee-saved
 //        registers and reuses the (dead, post-use) faction_id parameter slot
 //        at [ebp+8] as a spill for priority_search; this tree's compile still
 //        pushes an extra ecx for a fourth save. Not chased further.
-//        RULED-OUT: `PlayerData *p = &PlayersData[faction_id];` before both
+//        TRIED: `PlayerData *p = &PlayersData[faction_id];` before both
 //        loops - ties at 11/104, no change either way.
-//        RULED-OUT: a `Goal *goals` pointer hoisted out of EITHER loop (or
+//        TRIED: a `Goal *goals` pointer hoisted out of EITHER loop (or
 //        both) and WALKED with `++` in the for-loop increment instead of
 //        `Goal &goals = ...[i]` - the lever that took at_site to BYTE_EXACT
 //        and del_site 61/95 -> 68/95. Here it does not help: walking loop 1
@@ -1350,7 +1350,7 @@ void __cdecl add_goal(int faction_id, int type, int priority, int x, int y, int 
 /*
 Purpose: Add the specific site to the faction's site goals for the specified tile.
 // ORIGINAL: 0x00579B70 ?add_site@@YAXHHHHH@Z 0x00579B70-0x00579CB5
-// RULED-OUT: hoisting priority_search/site_id before the first loop (the lever
+// TRIED: hoisting priority_search/site_id before the first loop (the lever
 //            that helped add_goal) made this WORSE (7/116, two spilled locals
 //            instead of one); reverted. Separate loop counters (i for the
 //            first loop, j for the second) instead of reusing `i` made no
@@ -1360,7 +1360,7 @@ Purpose: Add the specific site to the faction's site goals for the specified til
 //            two (`sub esp,8`). Plateaus at 17/116 agreeing.
 //            `PlayerData *p = &PlayersData[faction_id];` before both loops
 //            also worse (16/116).
-// RULED-OUT: a `Goal *sites` pointer hoisted out of loop 1, loop 2, or both,
+// TRIED: a `Goal *sites` pointer hoisted out of loop 1, loop 2, or both,
 //            WALKED with `++` in the for-loop increment instead of
 //            `Goal &sites = ...[i]` - the lever that took at_site to
 //            BYTE_EXACT and del_site 61/95 -> 68/95. Here every combination
@@ -1419,7 +1419,7 @@ void __cdecl add_site(int faction_id, int type, int priority, int x, int y) {
 /*
 Purpose: Check if a goal exists at the tile for the specified faction and type.
 // ORIGINAL: 0x00579CC0 ?at_goal@@YAHHHHH@Z 0x00579CC0-0x00579D16 BYTE_EXACT
-// LEVER: WALK the pointer, do not index it. `for (int i = 0; i < MaxGoalsNum; i++, goals++)` with `goals->x` reaches 40 of 40 - BYTE_EXACT. The hoisted-but-INDEXED form (`goals[i]`) plateaus at 17/40, and the RULED-OUT this replaces called that remaining gap "a different but equivalent strength reduction". It was not equivalent and it was not a gap: it was this lever, unapplied.
+// LEVER: WALK the pointer, do not index it. `for (int i = 0; i < MaxGoalsNum; i++, goals++)` with `goals->x` reaches 40 of 40 - BYTE_EXACT. The hoisted-but-INDEXED form (`goals[i]`) plateaus at 17/40, and the TRIED this replaces called that remaining gap "a different but equivalent strength reduction". It was not equivalent and it was not a gap: it was this lever, unapplied.
 // NOTE: found by the adversarial verifier on at_site (0x00579D20) 2026-08-22,
 //        which cited this body as precedent for the walked form while this
 //        body was still indexed - so the citation named a lever that recovers
@@ -1447,7 +1447,7 @@ BOOL __cdecl at_goal(int faction_id, int type, int x, int y) {
 /*
 Purpose: Check if a site exists at the tile for the specified faction and type.
 // ORIGINAL: 0x00579D20 ?at_site@@YAHHHHH@Z 0x00579D20-0x00579D76 BYTE_EXACT
-// LEVER: a `Goal *sites` pointer hoisted out of the loop, WALKED with `sites++` in the for-loop's increment (NOT "matching at_goal's own lever" - at_goal was still INDEXED when this was written, and this same form recovered it outright; see 0x00579CC0) - the earlier RULED-OUT note below tried the pointer only INDEXED (`sites[i]`), which keeps the same 17/40-raw/worse-similarity shape as the `Goal&` reference form; incrementing the pointer itself instead of re-scaling `i` each iteration is what the image does. BYTE_EXACT 40/40.
+// LEVER: a `Goal *sites` pointer hoisted out of the loop, WALKED with `sites++` in the for-loop's increment (NOT "matching at_goal's own lever" - at_goal was still INDEXED when this was written, and this same form recovered it outright; see 0x00579CC0) - the earlier TRIED note below tried the pointer only INDEXED (`sites[i]`), which keeps the same 17/40-raw/worse-similarity shape as the `Goal&` reference form; incrementing the pointer itself instead of re-scaling `i` each iteration is what the image does. BYTE_EXACT 40/40.
 // size      86 bytes
 // prototype int (__cdecl ?at_site@@YAHHHHH@Z)(int factionID, int type, int xCoord, int yCoord)
 // callers   2   call targets   0
@@ -1501,7 +1501,7 @@ void __cdecl wipe_goals(int faction_id) {
 /*
 Purpose: Initialize all goals for the specified faction.
 // ORIGINAL: 0x00579E00 ?init_goals@@YAXH@Z 0x00579E00-0x00579E66 SEMANTIC
-// RULED-OUT: already SHAPE_EXACT (1.000 similarity, 28/38 raw) - the only
+// TRIED: already SHAPE_EXACT (1.000 similarity, 28/38 raw) - the only
 //            divergence is the loop pointer's anchor field (image anchors at
 //            &goals[i].priority, this tree at &goals[i].type; every absolute
 //            byte address written is identical either way). Swapping the
@@ -1549,16 +1549,16 @@ Purpose: Delete sites of the specified type within proximity of the tile along w
 // LEVER: both `Goal&` aliases (outer `sites`, inner `goal_compare`) replaced
 //        with a `Goal *` pointer HOISTED out of its loop and WALKED with the
 //        for-loop's own `++` (same lever that took at_site to BYTE_EXACT) -
-//        the earlier RULED-OUT below only tried a plain array INDEX before
+//        the earlier TRIED below only tried a plain array INDEX before
 //        the reference, not an incrementing pointer; the increment is what
 //        resolves the `lea` vs `add`/offset-by-4 choice it names. 61/95 ->
-//        68/95 agreeing. RULED-OUT: walking the inner `goal_compare` loop
+//        68/95 agreeing. TRIED: walking the inner `goal_compare` loop
 //        alone, keeping the outer `sites` as a `Goal&` - ties at 61/95, no
 //        change; the outer loop's own address form is what has to move.
-// RULED-OUT: testing sites.type==type via a plain array index before
+// TRIED: testing sites.type==type via a plain array index before
 //        taking the Goal& reference - no change (see the LEVER above for
 //        what the remaining `lea` vs `add`/offset-by-4 choice actually was).
-//        RULED-OUT: `PlayerData *p = &PlayersData[faction_id];` in place of
+//        TRIED: `PlayerData *p = &PlayersData[faction_id];` in place of
 //        the two PlayersData[faction_id] subscripts - dropped to 33/95.
 // size      259 bytes
 // prototype void (__cdecl ?del_site@@YAXHHHHH@Z)(int factionID, int type, int xCoord, int yCoord, int proximity)
@@ -1662,7 +1662,7 @@ void __cdecl see_map_check() {
 Purpose: Rescore every faction's power, and optionally publish the ranking order that scoring
          implies plus the betrayals the new order provokes.
 // ORIGINAL: 0x005AC690 ?rankings@@YAXH@Z 0x005AC690-0x005ACBD6
-// RULED-OUT: `call_diff` already agrees (0 disagree) across all seven
+// TRIED: `call_diff` already agrees (0 disagree) across all seven
 // callees. MISMATCH is 10/425 at this pass; first divergence is in the
 // prologue's register/constant scheduling (image pushes ebx/esi/edi as
 // plain callee-saves before touching any parameter, this tree's O2 loads
@@ -1953,7 +1953,7 @@ void __cdecl compute_faction_modifiers(int faction_id) {
 /*
 Purpose: Calculate the social engineering effect modifiers for the specified faction.
 // ORIGINAL: 0x005B4210 ?social_calc@@YAXPAHPAHHHH@Z 0x005B4210-0x005B44C9
-// RULED-OUT: hoisting `base_project(SP_NETWORK_BACKBONE)`/`base_project(
+// TRIED: hoisting `base_project(SP_NETWORK_BACKBONE)`/`base_project(
 //            SP_CLONING_VATS)` into locals ahead of the loop, keeping the
 //            per-branch `Bases[base_id].faction_id_current == faction_id`
 //            checks in place (the image loads both project base ids ONCE
@@ -2123,7 +2123,7 @@ Purpose: Calculate an AI faction's social engineering.
 //        also exists as a real out-of-line body. Moved social_upheaval to
 //        faction.h as `MEASURED inline` (see its ORIGINAL marker, which now
 //        points there) per the "helper the image inlines" lever.
-//        RULED-OUT: `MEASURED __forceinline` on the same definition - call
+//        TRIED: `MEASURED __forceinline` on the same definition - call
 //        count stayed 9 vs 7 under every flag set `call_diff` tries, so this
 //        tree's O2 will not fold social_upheaval's 4-iteration loop in
 //        either spelling; reverted to plain `MEASURED inline` since it did

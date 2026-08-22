@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005F2830 sub_5f2830 0x005F2830-0x005F293B FILE
-// RULED-OUT: not chased to byte-exact (MISMATCH from instruction 0, 267 vs 214 bytes). Landed for control flow: a switch on `a1` in {0,1,2}, each case reading/clearing the same pair of window globals (g_009b7abc/g_009b7ac0) around a `slot004()` virtual call, matching the disassembly's duplicated case-0/case-1 shape (Ghidra's own decompile duplicates it the same way).
+// TRIED: not chased to byte-exact (MISMATCH from instruction 0, 267 vs 214 bytes). Landed for control flow: a switch on `a1` in {0,1,2}, each case reading/clearing the same pair of window globals (g_009b7abc/g_009b7ac0) around a `slot004()` virtual call, matching the disassembly's duplicated case-0/case-1 shape (Ghidra's own decompile duplicates it the same way).
 // size      267 bytes
 // prototype
 // callers   0   call targets   0

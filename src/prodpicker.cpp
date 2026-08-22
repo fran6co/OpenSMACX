@@ -64,7 +64,7 @@ static void prod_picker_unknown_a7_block(char *self, unsigned int offset) {
 
 /*
 // ORIGINAL: 0x00492420 ??0ProdPicker@@QAE@XZ 0x00492420-0x004926AD;0x00658B70-0x00658C09
-// RULED-OUT: register allocation - compiled body agrees on the SEH prologue
+// TRIED: register allocation - compiled body agrees on the SEH prologue
 //            (7/7) then diverges at the push ebx/esi/edi save order; VC6
 //            chose a different callee-save order for this body's register
 //            pressure. MISMATCH, 11/127 instructions agree. The three
@@ -74,7 +74,7 @@ static void prod_picker_unknown_a7_block(char *self, unsigned int offset) {
 //            per-block instruction SCHEDULING (which register holds the
 //            vtable pointer, when it gets reloaded) varies between the three
 //            in the image in a way plain repeated C++ does not reproduce.
-// RULED-OUT: real declared members (Sprite[3]/Font x4/Time/FlatButton[9]/
+// TRIED: real declared members (Sprite[3]/Font x4/Time/FlatButton[9]/
 //            Scroll/Caviar) built implicitly instead of placement-new -
 //            measured WORSE, 8/127 against this baseline's 11/127. This
 //            constructor's image already emits `sub esp, 8` at instruction 7

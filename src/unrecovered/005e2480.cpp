@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005E2480 ?get_pcx_dimensions@Buffer@@QAAHPBDPAHPAH@Z 0x005E2480-0x005E2690;0x00662C11-0x00662C26 FILE
-// RULED-OUT: plain RAII (local `Filemap fm;` with multiple `return`s) instead of manual SEH frame setup - VC6 did not emit the push -1/ push 0x662c1c/fs:[0] prologue for it, MISMATCH #0 at the very first instruction. Body is otherwise a faithful transcription: dot-scan loop for the extension check, DAT_009bc054 1/2/else switch for the three extension strings, PCX header parse at offsets 0/2/4/6/8/10 from the memcpy'd 0x80-byte buffer.
+// TRIED: plain RAII (local `Filemap fm;` with multiple `return`s) instead of manual SEH frame setup - VC6 did not emit the push -1/ push 0x662c1c/fs:[0] prologue for it, MISMATCH #0 at the very first instruction. Body is otherwise a faithful transcription: dot-scan loop for the extension check, DAT_009bc054 1/2/else switch for the three extension strings, PCX header parse at offsets 0/2/4/6/8/10 from the memcpy'd 0x80-byte buffer.
 // working copy - scaffold materialised by --work
 // size      549 bytes
 // prototype 

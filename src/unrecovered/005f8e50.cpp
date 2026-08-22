@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005F8E50 ?rename_item@PullDown@@QAEHHPAD@Z 0x005F8E50-0x005F903E FILE
-// RULED-OUT: straightforward translation using the existing PullDownItem fields (text/right_text/id/mnemonic) compiles but the compiler picks a different register-save prologue (`sub esp` vs the original's `push ebx`) from instruction #0 on; did not chase register-pressure-driven reordering further.
+// TRIED: straightforward translation using the existing PullDownItem fields (text/right_text/id/mnemonic) compiles but the compiler picks a different register-save prologue (`sub esp` vs the original's `push ebx`) from instruction #0 on; did not chase register-pressure-driven reordering further.
 // working copy - scaffold materialised by --work
 // size      494 bytes
 // prototype int (__thiscall ?rename_item@PullDown@@QAEHHPAD@Z)(PullDown* this, int, int8*)

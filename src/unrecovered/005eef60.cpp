@@ -955,7 +955,7 @@ class Win { public:
 
     void nonclient_to_client(int *, int *);
 };
-// RULED-OUT: MISMATCH at 97.47% mnemonic similarity (76/78 in common),
+// TRIED: MISMATCH at 97.47% mnemonic similarity (76/78 in common),
 //            first divergence at instruction #37. Unlike the RECT sibling
 //            (0x005EF110, BYTE_EXACT), this overload's if/(else if) arms
 //            for flag 0x400 vs 0x11 are NOT unified by the original

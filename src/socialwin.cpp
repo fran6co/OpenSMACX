@@ -44,7 +44,7 @@ Purpose: Install the SubInterface vftable, construct the Spot, nine runs of
          ButtonGroup, nine Fonts), then install SocialWin's own vftables and
          set factionID_ to -1.
 // ORIGINAL: 0x004AE9E0 ??0SocialWin@@QAE@XZ 0x004AE9E0-0x004AEBE7;0x006598A0-0x00659A0A
-// RULED-OUT: deriving from ConstructedGraphicWin (graphicwin.h) to move the
+// TRIED: deriving from ConstructedGraphicWin (graphicwin.h) to move the
 //   base construction ahead of the members. The ORDER IS RIGHT - this image
 //   really does `call 0x5d4cf0` before its first `lea ecx, [esi + N]`, checked
 //   2026-08-22 - but making the source agree took this body 16 -> 16
@@ -54,7 +54,7 @@ Purpose: Install the SubInterface vftable, construct the Spot, nine runs of
 //   these constants already fold, and this body is structurally far off
 //   (133 compiled against 121). Re-derive the ordering fix as part
 //   of a dedicated pass on the whole body, not on its own.
-// RULED-OUT: register allocation - the SEH prologue agrees (7/7) then the
+// TRIED: register allocation - the SEH prologue agrees (7/7) then the
 //            compiled body reserves an extra `sub esp, 0xc` and an extra
 //            callee-save (ebx) the image does not. MISMATCH, 15/121
 //            instructions agree.

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00506650 ?interceptor@@YAHHHHH@Z 0x00506650-0x00506A53 FILE
-// RULED-OUT: local var/register order (early prologue push/xor order diverges at insn #5); structure and calls match Ghidra decompile faithfully
+// TRIED: local var/register order (early prologue push/xor order diverges at insn #5); structure and calls match Ghidra decompile faithfully
 // working copy - scaffold materialised by --work
 // size      1027 bytes
 // prototype int (__cdecl ?interceptor@@YAHHHHH@Z)(int factionID1, int factionID2, int xCoord, int yCoord)

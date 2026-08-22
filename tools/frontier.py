@@ -17,7 +17,7 @@ node reached ONLY that way does not appear - the frontier is a lower bound on
 the work, never an upper one, and the count is printed so that is visible.
 
 WORKED BODIES ARE MARKED, because handing out eight already-exhausted addresses
-costs a whole agent. A body carrying `RULED-OUT:` notes has had someone attack
+costs a whole agent. A body carrying `TRIED:` notes has had someone attack
 it and write down what failed; a batch of those comes back "no change, already
 plateaued" eight times over, which is exactly what happened to a faction.cpp
 batch picked off the raw depth order. `--fresh` drops them.
@@ -155,7 +155,7 @@ if __name__ == "__main__":
         print(json.dumps([{"address": r.address_hex, "name": r.name,
                            "file": str(r.path)} for r in pending], indent=2))
         sys.exit(0)
-    # How many `RULED-OUT:` notes sit under each marker. The reader already
+    # How many `TRIED:` notes sit under each marker. The reader already
     # parses lesson lines, so this is the record's own evidence of prior work
     # rather than anything maintained by hand.
     # NO `getattr` DEFAULT. The first draft guessed the field name, and a
@@ -172,7 +172,7 @@ if __name__ == "__main__":
         pending = [r for r in pending if not ruled_out(r)]
 
     # `--untouched` IS THE ONE THAT TARGETS YIELD. `--fresh` only drops bodies
-    # carrying a RULED-OUT, and a body can have been worked hard and left a
+    # carrying a TRIED, and a body can have been worked hard and left a
     # `// LEVER:` line instead - Scroll's three `set_bevel_*` siblings each
     # carry one, and every one reads as "fresh". Picking a batch that way hands
     # an agent work a previous pass already did. Untouched means NEITHER.
@@ -183,7 +183,7 @@ if __name__ == "__main__":
         worked, moved = ruled_out(record), levers(record)
         mark = ""
         if worked or moved:
-            parts = ([f"{worked} ruled-out"] if worked else []) + \
+            parts = ([f"{worked} tried"] if worked else []) + \
                     ([f"{moved} lever"] if moved else [])
             mark = "  [" + ", ".join(parts) + "]"
         print(f"{depth:4d}  {record.address_hex}  {record.path.name:24s} "

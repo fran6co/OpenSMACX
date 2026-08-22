@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0048BAB0 ?draw_line_base@PlanWin@@QAEXHHH@Z 0x0048BAB0-0x0048BB72 FILE
-// RULED-OUT: extern short table array for the runtime-indexed 0x97d040 lookup (lever: address does index arithmetic); vbase-adjustor read from vtbl+4 for the Buffer receiver. MISMATCH from #14: the a1*0x9a index multiply lowers via a different lea/shl chain than the original's
+// TRIED: extern short table array for the runtime-indexed 0x97d040 lookup (lever: address does index arithmetic); vbase-adjustor read from vtbl+4 for the Buffer receiver. MISMATCH from #14: the a1*0x9a index multiply lowers via a different lea/shl chain than the original's
 // working copy - scaffold materialised by --work
 // size      194 bytes
 // prototype void (__thiscall ?draw_line_base@PlanWin@@QAEXHHH@Z)(PlanWin* this, int, int, int)

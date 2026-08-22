@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004B1EC0 ?on_mouse_move@SocialWin@@QAEXHH@Z 0x004B1EC0-0x004B1FB2 FILE
-// RULED-OUT: nothing yet - MISMATCH #8 call/mov (90% mnemonic sim); not chased further. On a match, `break` only the inner (column) loop - the outer (row) loop keeps running, so a LATER row's match overwrites an earlier one (last match wins, not first).
+// TRIED: nothing yet - MISMATCH #8 call/mov (90% mnemonic sim); not chased further. On a match, `break` only the inner (column) loop - the outer (row) loop keeps running, so a LATER row's match overwrites an earlier one (last match wins, not first).
 // size      242 bytes
 // prototype void (__thiscall ?on_mouse_move@SocialWin@@QAEXHH@Z)(SocialWin* this, int, int)
 // callers   0   call targets   4

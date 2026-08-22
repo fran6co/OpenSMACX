@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00405140 ?POP2@@YAHPBDPBDH@Z 0x00405140-0x0040559B;0x0065078F-0x00650839 FILE
-// RULED-OUT: a real `Popup pop;` local forces the compiler to synthesise and EMIT its own ~Popup() (Scroll has a declared, non-trivial dtor), which fails the one-external-symbol check; split into `BasePop pop; Scroll scroll;` locals instead (both already declare their own ctor/dtor) and call Popup::start() through a `(Popup*)&pop` cast. Reaches MISMATCH #19 in the construction/frame-setup area; did not chase the exact stack-slot layout (BasePop's true size vs. the scaffold's estimate) further.
+// TRIED: a real `Popup pop;` local forces the compiler to synthesise and EMIT its own ~Popup() (Scroll has a declared, non-trivial dtor), which fails the one-external-symbol check; split into `BasePop pop; Scroll scroll;` locals instead (both already declare their own ctor/dtor) and call Popup::start() through a `(Popup*)&pop` cast. Reaches MISMATCH #19 in the construction/frame-setup area; did not chase the exact stack-slot layout (BasePop's true size vs. the scaffold's estimate) further.
 // working copy - scaffold materialised by --work
 // size      1285 bytes
 // prototype 

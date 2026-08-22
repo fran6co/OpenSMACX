@@ -512,7 +512,7 @@ Purpose: Load the sound from a filename. The name resolves through the
 //        `original_slot<Fn>(vtable + offset)` - single indirect call,
 //        matching the image's `call dword ptr [reg+N]` where the slot-read
 //        idiom cost an extra `mov`. Took this from 44/102 to 100/102.
-// RULED-OUT: the one remaining byte is the slot-0x60 dispatch alone -
+// TRIED: the one remaining byte is the slot-0x60 dispatch alone -
 //        image loads the vtable into EDX (`mov edx,[ecx]; call [edx+0x60]`),
 //        this tree into EAX. Naming the method pointer in its own local
 //        first made it much WORSE (47/102) rather than fixing the

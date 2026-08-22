@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00639090 sub_639090 0x00639090-0x006391E6 FILE
-// RULED-OUT: same record-copy-and-patch family as 0x00638F30, sharing sub_638650/sub_639390/DAT_009C0B90; the 0x4050002 branch carries an index set by a 0x4050001 record in an EARLIER iteration (single int persists across loop iterations). First divergence #2 push/sub, not chased further.
+// TRIED: same record-copy-and-patch family as 0x00638F30, sharing sub_638650/sub_639390/DAT_009C0B90; the 0x4050002 branch carries an index set by a 0x4050001 record in an EARLIER iteration (single int persists across loop iterations). First divergence #2 push/sub, not chased further.
 // size      342 bytes
 // prototype 
 // callers   1   call targets   3

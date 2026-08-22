@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0040C850 ?draw_supported@BaseWin@@QAEXH@Z 0x0040C850-0x0040D24C;0x00651A8D-0x00651AA2 FILE
-// RULED-OUT: literal per-instruction register/stack transcription (eax/ebx/ecx/edx/esi/edi + s_XX stack slots + RECT groups rectA/rectB/rect28/rectScroll), goto-based control flow mirroring every branch; diverges at instr #9 (early prologue push/mov shape), not chased further given function size (2577 bytes).
+// TRIED: literal per-instruction register/stack transcription (eax/ebx/ecx/edx/esi/edi + s_XX stack slots + RECT groups rectA/rectB/rect28/rectScroll), goto-based control flow mirroring every branch; diverges at instr #9 (early prologue push/mov shape), not chased further given function size (2577 bytes).
 // working copy - scaffold materialised by --work
 // size      2577 bytes
 // prototype void (__thiscall ?draw_supported@BaseWin@@QAEXH@Z)(BaseWin* this, int)

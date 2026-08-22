@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005F9480 ?on_left_up@PullDown@@QAEXHH@Z 0x005F9480-0x005F9563 FILE
-// RULED-OUT: field_A14_/items_ as named in the scaffold do NOT sit at the disasm's 0x474/0xA24 (raw self+offset used instead, per the 0xA14-lower-than-actual caution). PtInRect(RECT*, long, long) instead of PtInRect(RECT*, POINT) diverges one instruction earlier (prologue reserves stack differently either way).
+// TRIED: field_A14_/items_ as named in the scaffold do NOT sit at the disasm's 0x474/0xA24 (raw self+offset used instead, per the 0xA14-lower-than-actual caution). PtInRect(RECT*, long, long) instead of PtInRect(RECT*, POINT) diverges one instruction earlier (prologue reserves stack differently either way).
 // working copy - scaffold materialised by --work
 // size      227 bytes
 // prototype void (__thiscall ?on_left_up@PullDown@@QAEXHH@Z)(PullDown* this, int, int)

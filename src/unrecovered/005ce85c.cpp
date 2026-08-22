@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005CE85C sub_5ce85c 0x005CE85C-0x005CEA09
-// RULED-OUT: MISMATCH #1 push/mov - the bit-reader state (accumulator, bits-available count, word cursor) that the original keeps in esi/edi/ebp for the whole function is modelled as ordinary locals written back once at the shared epilogue and at the single early-return branch; entry-frame shape differs first.
+// TRIED: MISMATCH #1 push/mov - the bit-reader state (accumulator, bits-available count, word cursor) that the original keeps in esi/edi/ebp for the whole function is modelled as ordinary locals written back once at the shared epilogue and at the single early-return branch; entry-frame shape differs first.
 // size      429 bytes
 // prototype
 // callers   1   call targets   0

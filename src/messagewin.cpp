@@ -29,7 +29,7 @@ Purpose: Construct the Sprite base, then the three plain members in
 // kind      game
 // flags     hidden;sp_ready;purged_ok;frame
 // calls     0x005E37E0 0x00618EA0 0x00609DB0 0x00629110
-// RULED-OUT: byte-exact is not reachable from here. The image constructs
+// TRIED: byte-exact is not reachable from here. The image constructs
 //        FOUR subobjects - Sprite (0x5E37E0, real, BYTE_EXACT), font_
 //        (0x618EA0, real, BYTE_EXACT), listBox_ via `??0ListBox@@QAE@H@Z`
 //        (0x609DB0, a ONE-ARG overload - `push 1` before the call - that
@@ -39,7 +39,7 @@ Purpose: Construct the Sprite base, then the three plain members in
 //        listBox_'s alone is documented as blocked on ListBox's virtual-
 //        inheritance vbtable modelling (listbox.h's own long note) - and
 //        NetWin's and DiploWin's own constructors (netwin.cpp, diplowin.h)
-//        already carry a near-identical RULED-OUT note relying on
+//        already carry a near-identical TRIED note relying on
 //        StringBox()/CheckBox() staying trivial stubs; giving StringBox() a
 //        real out-of-line body here would change THEIR compiled shape too,
 //        not just this one. Left as the two calls this tree already has
@@ -61,7 +61,7 @@ Purpose: Tear the three plain members down in reverse declaration order
 // kind      game
 // flags     hidden;sp_ready;purged_ok;frame
 // calls     0x00401060 0x00402970 0x00406880 0x005D4DD0 0x005E3820 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00609EC0 0x00618EE0 0x00629210
-// RULED-OUT: byte-exact is not reachable from here, by a wide margin. The
+// TRIED: byte-exact is not reachable from here, by a wide margin. The
 //        image's teardown is NOT a plain reverse-order destructor call per
 //        member - StringBox's own destructor (0x629210) is inlined open at
 //        the call site alongside manual teardown of ListBox's two virtual

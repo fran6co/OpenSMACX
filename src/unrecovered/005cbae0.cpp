@@ -95,7 +95,7 @@ class VCall { public:
 // the scaffold's default `VCall` (thiscall) above, which this body does not
 // use.
 //
-// RULED-OUT / open: two locals (`device[0x64/4]-1`, `device[0x60/4]-1`,
+// TRIED / open: two locals (`device[0x64/4]-1`, `device[0x60/4]-1`,
 // stored at ESP0+0x18/+0x1C - the two dwords immediately BEFORE the 14-dword
 // zeroed buffer at ESP0+0x20) are computed and stored but never read again
 // anywhere in this function, in the original OR in every spelling tried

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00433520 ?draw_reactor@SelectPartWin@@QAEHHPAURECT@@H@Z 0x00433520-0x00433811 FILE
-// RULED-OUT: instruction-for-instruction match on the whole first loop (table scan, has_tech dispatch) and every call target/arg order after it, but the prologue register assignment differs - original keeps `this` in ebx, the slot counter in esi, the has_tech-failed flag in edi; this source's declaration order gets esi/edi/ebx instead. Did not chase local-declaration reordering to force the allocator's hand.
+// TRIED: instruction-for-instruction match on the whole first loop (table scan, has_tech dispatch) and every call target/arg order after it, but the prologue register assignment differs - original keeps `this` in ebx, the slot counter in esi, the has_tech-failed flag in edi; this source's declaration order gets esi/edi/ebx instead. Did not chase local-declaration reordering to force the allocator's hand.
 // working copy - scaffold materialised by --work
 // size      753 bytes
 // prototype int (__thiscall ?draw_reactor@SelectPartWin@@QAEHHPAURECT@@H@Z)(SelectPartWin* this, int, RECT*, int)

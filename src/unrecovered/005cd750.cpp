@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005CD750 sub_5cd750 0x005CD750-0x005CD8C5 FILE
-// RULED-OUT: `extern "C" int __cdecl sub_5cd750()` fallback head; the entry `mov esi,ecx / mov [ebp-4],edx` with no stack reads is __fastcall(int*, uint*), so the signature was changed.
+// TRIED: `extern "C" int __cdecl sub_5cd750()` fallback head; the entry `mov esi,ecx / mov [ebp-4],edx` with no stack reads is __fastcall(int*, uint*), so the signature was changed.
 // size      373 bytes
 // prototype 
 // callers   1   call targets   0

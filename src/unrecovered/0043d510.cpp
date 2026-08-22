@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0043D510 ?draw_stack@DesignWin@@QAEXXZ 0x0043D510-0x0043DD43;0x006546DA-0x006546EC FILE
-// RULED-OUT: Ghidra could not decompile this SEH-frame function (stub output); hand-translated full raw disasm (loop over up to 10 protos, two draw paths gated by the obsolete/undesigned bit at +0x9ab898), call args cross-checked (Spot::add, box_sprite, veh_draw, write_l/write_cent_l, Strings::get). Compiles; prologue frame layout differs from original (#0 push vs mov).
+// TRIED: Ghidra could not decompile this SEH-frame function (stub output); hand-translated full raw disasm (loop over up to 10 protos, two draw paths gated by the obsolete/undesigned bit at +0x9ab898), call args cross-checked (Spot::add, box_sprite, veh_draw, write_l/write_cent_l, Strings::get). Compiles; prologue frame layout differs from original (#0 push vs mov).
 // working copy - scaffold materialised by --work
 // size      2117 bytes
 // prototype void (__thiscall ?draw_stack@DesignWin@@QAEXXZ)(DesignWin* this)

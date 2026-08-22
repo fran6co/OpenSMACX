@@ -65,7 +65,7 @@ Note:    `output` is the hidden return-object slot of `Vector operator-`, not
 // calls     (none)
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
-// RULED-OUT: this catalogued `void __mi(Vector&, Vector&)` signature, tried
+// TRIED: this catalogued `void __mi(Vector&, Vector&)` signature, tried
 //            as-is - MISMATCH from instruction 0 (`sub esp, 0x10` against
 //            this tree's `sub esp, 0xc`). The image's extra 4 bytes and the
 //            `mov dword ptr [esp], 0` right after are the /GX return-object
@@ -151,7 +151,7 @@ Note:    The original scales `this` IN PLACE and then copies it out; `output`
 // calls     (none)
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
-// RULED-OUT: this catalogued `void scale(Vector&, float)` signature, tried
+// TRIED: this catalogued `void scale(Vector&, float)` signature, tried
 //            as-is - MISMATCH from instruction 0 (image opens `push ecx`
 //            with no frame; this tree's `push ebp; mov ebp, esp`). Same
 //            /GX return-object-flag ceiling as __mi above: `scale` is really

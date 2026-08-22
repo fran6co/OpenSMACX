@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005CE6E3 sub_5ce6e3 0x005CE6E3-0x005CE85A FILE
-// RULED-OUT: original uses `pushal`/`popal` around the whole body (5 stack args, no `this`); no portable C source form reproduces that register-save shape, so #0 mismatches in the prologue.
+// TRIED: original uses `pushal`/`popal` around the whole body (5 stack args, no `this`); no portable C source form reproduces that register-save shape, so #0 mismatches in the prologue.
 // size      375 bytes
 // prototype 
 // callers   1   call targets   0

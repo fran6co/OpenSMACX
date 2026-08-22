@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005DDC90 ?wrap_right@Buffer@@QAEHPADH@Z 0x005DDC90-0x005DDD91 FILE
-// RULED-OUT: `int *a2` second parameter - the mangled name is `PADH` (char*, int), not `PADPAH`, so the second argument really is `int` and the disassembly's [eax]/[eax+4]/[eax+8] reads are the body reinterpreting that int as an `int*` internally, not a real pointer parameter.
+// TRIED: `int *a2` second parameter - the mangled name is `PADH` (char*, int), not `PADPAH`, so the second argument really is `int` and the disassembly's [eax]/[eax+4]/[eax+8] reads are the body reinterpreting that int as an `int*` internally, not a real pointer parameter.
 // size      257 bytes
 // prototype int (__thiscall ?wrap_right@Buffer@@QAEHPADH@Z)(Buffer* this, char*, int)
 // callers   1   call targets   3

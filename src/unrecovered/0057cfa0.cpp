@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0057CFA0 ?study_artifact@@YAHH@Z 0x0057CFA0-0x0057D1E8 FILE
-// RULED-OUT: direct pointer-cast field reads/multiply-based offsets instead of the lea-chain scaling; diverges at instr #3 (prologue push/save order)
+// TRIED: direct pointer-cast field reads/multiply-based offsets instead of the lea-chain scaling; diverges at instr #3 (prologue push/save order)
 // working copy - scaffold materialised by --work
 // size      584 bytes
 // prototype int (__cdecl ?study_artifact@@YAHH@Z)(int vehID)

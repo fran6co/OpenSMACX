@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005D8D00 sub_5d8d00 0x005D8D00-0x005D8DEA FILE
-// RULED-OUT: 233 vs 234 bytes; same divergence as its twin 0x005D8C20 - register/instruction ordering inside the `piVar1==0` branch (mov/cmp order). See that address's note for what was tried.
+// TRIED: 233 vs 234 bytes; same divergence as its twin 0x005D8C20 - register/instruction ordering inside the `piVar1==0` branch (mov/cmp order). See that address's note for what was tried.
 // working copy - scaffold materialised by --work
 // size      234 bytes
 // prototype 

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005DEA20 sub_5dea20 0x005DEA20-0x005DEB1C FILE
-// RULED-OUT: `int *a1, int a2` signature (IDA's int,int guess with the pointer made explicit - the disassembly never touches [ecx]), do/while over a hoisted `idx` local mirroring the ASM's search-then-fill-record shape. Reproduces the whole body but diverges at MISMATCH #2 (original never sets up an ebp frame, addressing args purely off esp; every C form tried here gets a `push`-heavy prologue instead of the original's early `mov ebx,[esp+0xc]`).
+// TRIED: `int *a1, int a2` signature (IDA's int,int guess with the pointer made explicit - the disassembly never touches [ecx]), do/while over a hoisted `idx` local mirroring the ASM's search-then-fill-record shape. Reproduces the whole body but diverges at MISMATCH #2 (original never sets up an ebp frame, addressing args purely off esp; every C form tried here gets a `push`-heavy prologue instead of the original's early `mov ebx,[esp+0xc]`).
 // size      252 bytes
 // prototype 
 // callers   1   call targets   1

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005F89D0 ?add_item@PullDown@@QAEHHPAD@Z 0x005F89D0-0x005F8BDF FILE
-// RULED-OUT: translated from the Ghidra hypothesis directly (item index via self+(newCount*5-5)*4, mnemonic slot via self+(newCount*5+0x285)*4, pointer-typed mnemonic store as buf+strlen(buf) rather than an int add) rather than re-deriving stack-slot aliasing by hand - the disasm reuses one stack slot for both `a1` and `amp+1` across non-overlapping lifetimes, which Ghidra's own stack tracking resolves more reliably than manual [esp+N] tracing. MISMATCH #0 push/sub - prologue stack-reservation strategy differs from the very first instruction.
+// TRIED: translated from the Ghidra hypothesis directly (item index via self+(newCount*5-5)*4, mnemonic slot via self+(newCount*5+0x285)*4, pointer-typed mnemonic store as buf+strlen(buf) rather than an int add) rather than re-deriving stack-slot aliasing by hand - the disasm reuses one stack slot for both `a1` and `amp+1` across non-overlapping lifetimes, which Ghidra's own stack tracking resolves more reliably than manual [esp+N] tracing. MISMATCH #0 push/sub - prologue stack-reservation strategy differs from the very first instruction.
 // working copy - scaffold materialised by --work
 // size      527 bytes
 // prototype int (__thiscall ?add_item@PullDown@@QAEHHPAD@Z)(PullDown* this, int, int8*)

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004C8290 sub_4c8290 0x004C8290-0x004C8348 FILE
-// RULED-OUT: extern "C" __thiscall free function (C4234); switched to a class-member sub_4c8290 like sibling anonymous subs. Signature changed __stdcall(int) -> __thiscall member void(char*): ecx used as this, ret 4 pops one stack arg. First divergence #11 add/pop.
+// TRIED: extern "C" __thiscall free function (C4234); switched to a class-member sub_4c8290 like sibling anonymous subs. Signature changed __stdcall(int) -> __thiscall member void(char*): ecx used as this, ret 4 pops one stack arg. First divergence #11 add/pop.
 // working copy - scaffold materialised by --work
 // size      184 bytes
 // prototype 

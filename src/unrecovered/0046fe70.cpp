@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0046FE70 ?get_alt@MapWin@@QAEHHHH@Z 0x0046FE70-0x00470414 FILE
-// RULED-OUT: get_alt_ratio() helper factoring the repeated scale-ratio computation (4 call sites collapsed to 1 call + reuse); recursive self-call kept inline per original; diverges at insn #3
+// TRIED: get_alt_ratio() helper factoring the repeated scale-ratio computation (4 call sites collapsed to 1 call + reuse); recursive self-call kept inline per original; diverges at insn #3
 // working copy - scaffold materialised by --work
 // size      1444 bytes
 // prototype int (__thiscall ?get_alt@MapWin@@QAEHHHH@Z)(MapWin* this, int, int, int)

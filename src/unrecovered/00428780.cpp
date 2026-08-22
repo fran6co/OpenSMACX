@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00428780 ??0Credits@@QAE@XZ 0x00428780-0x00428830;0x00653110-0x0065315A FILE
-// RULED-OUT: same shape as 0x00484AC0 (PickTech's ctor). Placement-new for the 6 subobject constructors (GraphicWin base, GraphicWin/Font/Buffer/ FlatButton/Time members, in disassembly call order) plus the vtable stores and the 0x200-dword zero-fill loop match the call sequence, but the opaque scaffold has no compiler-recognised subobject with a non- trivial destructor, so the `push -1/push handler/mov fs:[0]` SEH-unwind prologue does not get emitted; first divergence is at the prologue.
+// TRIED: same shape as 0x00484AC0 (PickTech's ctor). Placement-new for the 6 subobject constructors (GraphicWin base, GraphicWin/Font/Buffer/ FlatButton/Time members, in disassembly call order) plus the vtable stores and the 0x200-dword zero-fill loop match the call sequence, but the opaque scaffold has no compiler-recognised subobject with a non- trivial destructor, so the `push -1/push handler/mov fs:[0]` SEH-unwind prologue does not get emitted; first divergence is at the prologue.
 // size      250 bytes
 // prototype void (__thiscall ??0Credits@@QAE@XZ)(Credits* this)
 // callers   1   call targets   5

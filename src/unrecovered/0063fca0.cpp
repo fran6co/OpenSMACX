@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0063FCA0 sub_63fca0 0x0063FCA0-0x0063FDF6 FILE
-// RULED-OUT: FPU scheduling of the two-argument sub_627f50 call push sequence (register-save push esi + call-arg pushes) does not reproduce exactly; landed at 0.77 mnemonic similarity. The logic itself (spherical-to-index trig via acos/atan2/table lookup) is transcribed directly from the disassembly.
+// TRIED: FPU scheduling of the two-argument sub_627f50 call push sequence (register-save push esi + call-arg pushes) does not reproduce exactly; landed at 0.77 mnemonic similarity. The logic itself (spherical-to-index trig via acos/atan2/table lookup) is transcribed directly from the disassembly.
 // working copy - scaffold materialised by --work
 // size      342 bytes
 // prototype

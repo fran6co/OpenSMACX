@@ -5,7 +5,7 @@
 // them. Byte-exactness is NOT reachable from C++ here; the honest ceiling is
 // semantic equivalence, and the answer is NOT `__asm`.
 // Found by `tools/handwritten_asm.py`.
-// RULED-OUT: the pixel copy is a hand-unrolled, self-computed-goto (Duff's Device style) loop jumping into the middle of an unrolled 4-wide copy based on `count & 3`; replaced with a plain nested loop that is semantically equivalent (skip the transparent key byte, else write the fill color, honoring the row/column repeat counts the four get_clipped_*_table_* helpers hand back) rather than the exact unrolled shape.
+// TRIED: the pixel copy is a hand-unrolled, self-computed-goto (Duff's Device style) loop jumping into the middle of an unrolled 4-wide copy based on `count & 3`; replaced with a plain nested loop that is semantically equivalent (skip the transparent key byte, else write the fill color, honoring the row/column repeat counts the four get_clipped_*_table_* helpers hand back) rather than the exact unrolled shape.
 // working copy - scaffold materialised by --work
 // size      3210 bytes
 // prototype int (__thiscall ?draw_mono@Sprite@@QAEHPAUBuffer@@HHHH@Z)(Sprite* this, Buffer*, int, int, int, int)
@@ -1819,7 +1819,7 @@ int Sprite::draw_mono(Buffer *a1, int a2, int a3, int a4, int a5) {
     // loop that is semantically the same (skip bytes equal to the
     // transparent key, else write the fill color, using the row/column
     // repeat-count tables the four get_clipped_*_table_* helpers hand
-    // back) rather than a byte-for-byte reproduction. See RULED-OUT.
+    // back) rather than a byte-for-byte reproduction. See TRIED.
     if (this->ppszFileName_ != 0) {
         int r = reinterpret_cast<Buffer *>(g_009b6080)->load_pcx(
             reinterpret_cast<const char *>(this->ppszFileName_), (Palette *)0, 0xa, 0xec);

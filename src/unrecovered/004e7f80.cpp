@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004E7F80 sub_4e7f80 0x004E7F80-0x004E8094
-// RULED-OUT: same register-allocation divergence at the prologue as 0x004E7E50 (its near-identical sibling, subtracting the yield instead of adding it); landing the same closest form.
+// TRIED: same register-allocation divergence at the prologue as 0x004E7E50 (its near-identical sibling, subtracting the yield instead of adding it); landing the same closest form.
 // size      276 bytes
 // prototype
 // callers   0   call targets   3

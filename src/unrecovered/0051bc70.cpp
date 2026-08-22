@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0051BC70 ?menu_proc@Console@@QAEXH@Z 0x0051BC70-0x0051D23E FILE
-// RULED-OUT: full transcription of every case in the ~150-target dispatch (mnemonic_similarity 0.45, 834/1610 original mnemonics in common); first divergence is the Win::set_cursor call through the vbtable adjustor near the top loop (mov/add ordering), and downstream case bodies pick up extra instructions from real vtable dispatch (VCall) and MapWin/Console member calls the original inlined more cheaply than /O2 does here.
+// TRIED: full transcription of every case in the ~150-target dispatch (mnemonic_similarity 0.45, 834/1610 original mnemonics in common); first divergence is the Win::set_cursor call through the vbtable adjustor near the top loop (mov/add ordering), and downstream case bodies pick up extra instructions from real vtable dispatch (VCall) and MapWin/Console member calls the original inlined more cheaply than /O2 does here.
 // working copy - scaffold materialised by --work
 // size      5582 bytes
 // prototype void (__thiscall ?menu_proc@Console@@QAEXH@Z)(Console* this, int)

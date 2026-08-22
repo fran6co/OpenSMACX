@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00530920 ?add_lock@NetDaemon@@QAEHHHH@Z 0x00530920-0x00530A91 FILE
-// RULED-OUT: reordering the initial `*g_0093f660==0` / `field_1BAC_==0` guards; the mismatch (#5) is deeper, in how the two early returns and the ebx-lazy-save prologue are scheduled.
+// TRIED: reordering the initial `*g_0093f660==0` / `field_1BAC_==0` guards; the mismatch (#5) is deeper, in how the two early returns and the ebx-lazy-save prologue are scheduled.
 // size      369 bytes
 // prototype int (__thiscall ?add_lock@NetDaemon@@QAEHHHH@Z)(NetDaemon* this, int, int, int)
 // callers   2   call targets   9

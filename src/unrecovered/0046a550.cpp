@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0046A550 ?draw_map@MapWin@@QAEXH@Z 0x0046A550-0x0046AD51 FILE
-// RULED-OUT: prologue diverges at #6 (orig 'push edi' before 'xor edi,edi', rebuilt reorders them) regardless of where the vbase/mapBuf virtual-base pointer is computed (top of function vs. first use) or where `int edi` is declared/initialised; body is otherwise a full instruction-level transcription (goto per original jcc, register-named locals, stack slots as vXX locals) reaching 319/702 common mnemonics.
+// TRIED: prologue diverges at #6 (orig 'push edi' before 'xor edi,edi', rebuilt reorders them) regardless of where the vbase/mapBuf virtual-base pointer is computed (top of function vs. first use) or where `int edi` is declared/initialised; body is otherwise a full instruction-level transcription (goto per original jcc, register-named locals, stack slots as vXX locals) reaching 319/702 common mnemonics.
 // working copy - scaffold materialised by --work
 // size      2049 bytes
 // prototype void (__thiscall ?draw_map@MapWin@@QAEXH@Z)(MapWin* this, int)

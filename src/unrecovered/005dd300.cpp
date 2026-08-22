@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005DD300 ?write_right_l@Buffer@@QAEHPADHHHH@Z 0x005DD300-0x005DD3A5 FILE
-// RULED-OUT: nesting everything inside a single `if (font1_ && font_obj_)` block with one trailing `return a2` (matching Ghidra's shape more literally) instead of early returns - same MISMATCH #1 'push' vs 'mov' either way; the divergence is in the prologue's register push order (ebx/esi/edi count/order), not the branch structure. similarity ~0.61-0.63.
+// TRIED: nesting everything inside a single `if (font1_ && font_obj_)` block with one trailing `return a2` (matching Ghidra's shape more literally) instead of early returns - same MISMATCH #1 'push' vs 'mov' either way; the divergence is in the prologue's register push order (ebx/esi/edi count/order), not the branch structure. similarity ~0.61-0.63.
 // working copy - scaffold materialised by --work
 // size      165 bytes
 // prototype int (__thiscall ?write_right_l@Buffer@@QAEHPADHHHH@Z)(Buffer* this, int8*, int, int, int, int)

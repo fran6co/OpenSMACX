@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0060C9B0 ?update_changes@ListBox@@QAEHXZ 0x0060C9B0-0x0060CB63 FILE
-// RULED-OUT: raw vbtable-adjustor arithmetic (vbt[1]/vbt[2]) for the Win/Dialog virtual bases plus a hand-written VCall shim with slot054 taking int; diverges at #0, register allocation differs immediately
+// TRIED: raw vbtable-adjustor arithmetic (vbt[1]/vbt[2]) for the Win/Dialog virtual bases plus a hand-written VCall shim with slot054 taking int; diverges at #0, register allocation differs immediately
 // size      435 bytes
 // prototype int (__thiscall ?update_changes@ListBox@@QAEHXZ)(ListBox* this)
 // callers   10   call targets   10

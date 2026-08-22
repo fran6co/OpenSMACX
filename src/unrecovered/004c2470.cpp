@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004C2470 ?vehdraw_construct_chassis@@YAHHHHHHPAUCaviar@@@Z 0x004C2470-0x004C2C87 FILE
-// RULED-OUT: full switch/goto transcription of both jump tables (resolved from the image, 14-way then 9-way) with calls verified against raw disasm; compiles, MISMATCH #1 (prologue/local layout, likely stack-slot count or eflag scratch var order). Not chased further - function is 2071 bytes of near-duplicate case bodies, byte-exactness needs per-block register tracking.
+// TRIED: full switch/goto transcription of both jump tables (resolved from the image, 14-way then 9-way) with calls verified against raw disasm; compiles, MISMATCH #1 (prologue/local layout, likely stack-slot count or eflag scratch var order). Not chased further - function is 2071 bytes of near-duplicate case bodies, byte-exactness needs per-block register tracking.
 // working copy - scaffold materialised by --work
 // size      2071 bytes
 // prototype 

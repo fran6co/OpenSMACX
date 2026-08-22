@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00419A90 ?governor@BaseWin@@QAEHH@Z 0x00419A90-0x0041A010 FILE
-// RULED-OUT: direct transcription from the (unusually clean, non-SEH) Ghidra output, cross-checked field-by-field against raw asm offsets on `*(char**)g_0090ea30` and `self+0x40b0c` (all confirmed to match). Reaches MISMATCH #1 in the prologue ('mov' vs 'push') - the compiler's local/register layout differs from the original's; did not chase variable declaration order further.
+// TRIED: direct transcription from the (unusually clean, non-SEH) Ghidra output, cross-checked field-by-field against raw asm offsets on `*(char**)g_0090ea30` and `self+0x40b0c` (all confirmed to match). Reaches MISMATCH #1 in the prologue ('mov' vs 'push') - the compiler's local/register layout differs from the original's; did not chase variable declaration order further.
 // working copy - scaffold materialised by --work
 // size      1408 bytes
 // prototype int (__thiscall ?governor@BaseWin@@QAEHH@Z)(BaseWin* this, int)

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00579240 ?enemy_veh@@YAHH@Z 0x00579240-0x005794C8 FILE
-// RULED-OUT: two chained switch(faction){0..7} jump tables collapsed to a no-op (both map identity onto esi); [ebp+8] repurposed to a bool (faction==current && netflag) after ebx caches a1, used for two later gates instead of a1 itself; diverges at instr #4
+// TRIED: two chained switch(faction){0..7} jump tables collapsed to a no-op (both map identity onto esi); [ebp+8] repurposed to a bool (faction==current && netflag) after ebx caches a1, used for two later gates instead of a1 itself; diverges at instr #4
 // working copy - scaffold materialised by --work
 // size      648 bytes
 // prototype int (__cdecl ?enemy_veh@@YAHH@Z)(int vehID)

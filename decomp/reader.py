@@ -118,7 +118,7 @@ def _lessons(lines: list[str], index: int,
       LEVER: <fingerprint> <what worked>   on a body that MATCHED. The
           divergence is gone, so the fingerprint is historical and has to be
           written down or the lesson cannot be filed against anything.
-      RULED-OUT: <what did not work>       on a body that has NOT matched. The
+      TRIED: <what did not work>       on a body that has NOT matched. The
           divergence is still live, so the key is MEASURED rather than written -
           and a key that is never written can never be stale.
       UNRECOVERABLE: <evidence>            on a PLACEHOLDER, and only there.
@@ -131,7 +131,7 @@ def _lessons(lines: list[str], index: int,
           comes back.
 
     THE THIRD TOKEN EXISTS BECAUSE THE FIRST TWO COULD NOT SAY IT. The grammar
-    used to hold that a RULED-OUT belongs only on a landed body - "you cannot
+    used to hold that a TRIED belongs only on a landed body - "you cannot
     rule a spelling out of a body that does not exist" - which is right for an
     ordinary function and wrong for one no C body can express. A function that
     reads three registers live-in with no prologue has no best attempt to land;
@@ -150,7 +150,7 @@ def _lessons(lines: list[str], index: int,
     Both are read only from the comment run immediately after the marker, so a
     mention of either word in ordinary prose further down a file is not a claim.
     A continuation line is an indented comment line carrying no token of its own,
-    which is how a long RULED-OUT list stays readable.
+    which is how a long TRIED list stays readable.
     """
     levers, ruled, unrecoverable, deferred, current = [], [], [], [], None
     # IS THIS MARKER INSIDE A `/* ... */` BLOCK? Product source puts it in one,
@@ -170,6 +170,17 @@ def _lessons(lines: list[str], index: int,
             break
     for line in lines[index + 1:]:
         stripped = line.strip()
+        # A MARKER OWNS ONLY UP TO THE NEXT MARKER, and this loop did not know
+        # that. Fact lines (`// size`, `// calls`) are `//`-prefixed, so the
+        # scan ran straight through them, over the following `// ORIGINAL:`
+        # line, and into the NEXT piece's lessons - 0x005FD400 in text.cpp came
+        # back carrying two TRIED and two UNRECOVERABLE, its own and its
+        # neighbour's. Every rewrite then re-emitted the stolen pair under the
+        # first marker, so `osmx record` DUPLICATED lines and misattributed the
+        # lesson to a body it was never about. `NEXT_MARKER` already existed
+        # for exactly this and was only used further down.
+        if NEXT_MARKER.match(line):
+            break
         if inside and "*/" in stripped:
             # THE BLOCK ENDS, THE RUN DOES NOT. Notes are commonly written as
             # `//` lines immediately AFTER the closing `*/`, still contiguous
@@ -204,8 +215,15 @@ def _lessons(lines: list[str], index: int,
             continue
         dead = LESSON_UNRECOVERABLE.match(line)
         if dead:
-            unrecoverable.append(dead.group("prose"))
-            current = ("unrecoverable", len(unrecoverable) - 1)
+            # `UNRECOVERABLE` IS READ AS A `TRIED`. It was the strongest of the
+            # three refusals - it sat on a placeholder and asserted that no C
+            # body could ever express the function - and this tree no longer
+            # says that about anything. The word is still MATCHED, because a
+            # reader that stops matching a line goes blind rather than failing,
+            # but what it produces is an ordinary attempt record. The prose is
+            # kept verbatim: what was measured stays, only the verdict goes.
+            ruled.append(dead.group("prose"))
+            current = ("ruled", len(ruled) - 1)
             continue
         later = LESSON_DEFERRED.match(line)
         if later:
@@ -246,7 +264,7 @@ def _brace_delta(line: str, in_block: bool) -> tuple[int, bool, bool, str]:
 
     COUNTED WHERE THE COMPILER COUNTS. `line.count("{")` reads a brace in a
     comment or a string literal as structure, so prose like
-    `` `class Shim { ... };` `` inside a RULED-OUT note closed the region
+    `` `class Shim { ... };` `` inside a TRIED note closed the region
     early and the body below it was dropped in silence. An agent reported
     exactly that after writing the idiom into a note.
 

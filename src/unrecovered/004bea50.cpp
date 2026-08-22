@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004BEA50 ?exec@UV2Player@@QAEHPADHHH@Z 0x004BEA50-0x004BEDB5 FILE
-// RULED-OUT: direct transcription off Ghidra + raw disasm, `this` used as the char* name buffer at offset 0, indirect calls through the fixed import-table slots (ShowCursor/PeekMessage/GetMessage/ TranslateMessage/DispatchMessage/Sleep/CharUpperA); matches through instr #26, diverges in the strrchr/inc-vs-lea shape
+// TRIED: direct transcription off Ghidra + raw disasm, `this` used as the char* name buffer at offset 0, indirect calls through the fixed import-table slots (ShowCursor/PeekMessage/GetMessage/ TranslateMessage/DispatchMessage/Sleep/CharUpperA); matches through instr #26, diverges in the strrchr/inc-vs-lea shape
 // working copy - scaffold materialised by --work
 // size      869 bytes
 // prototype int (__thiscall ?exec@UV2Player@@QAEHPADHHH@Z)(UV2Player* this, LPSTR pszFileName, int, int, int)

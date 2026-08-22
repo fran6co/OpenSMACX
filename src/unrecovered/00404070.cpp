@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00404070 ?exec@AlphaMovie@@QAEHPAD@Z 0x00404070-0x004041BF FILE
-// RULED-OUT: GraphicWin::init/fill plus MCIVideo::load/play/stop and the vtable slots (1,2,57 - the last two given explicit int args since only declaration order is pinned) compiles and matches structure, including the load-retry into a near-uninitialised local buffer the original also uses. First divergence #4 mov/push, not chased further.
+// TRIED: GraphicWin::init/fill plus MCIVideo::load/play/stop and the vtable slots (1,2,57 - the last two given explicit int args since only declaration order is pinned) compiles and matches structure, including the load-retry into a near-uninitialised local buffer the original also uses. First divergence #4 mov/push, not chased further.
 // size      335 bytes
 // prototype int (__thiscall ?exec@AlphaMovie@@QAEHPAD@Z)(AlphaMovie* this, int8* lpszPath)
 // callers   1   call targets   9

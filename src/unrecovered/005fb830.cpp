@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005FB830 ?menu_event@Menu@@QAEHH@Z 0x005FB830-0x005FB8D8 FILE
-// RULED-OUT: dropping `return 0;` entirely (eax is never set on any path in the disassembly) - C4716 "must return a value" is a hard error here, not a warning, since the scaffold's own class declares `int menu_event(int)`. similarity 0.9905 with the explicit `return 0;`; the only divergence left is the resulting `xor eax,eax`. PROPOSAL: retype as void.
+// TRIED: dropping `return 0;` entirely (eax is never set on any path in the disassembly) - C4716 "must return a value" is a hard error here, not a warning, since the scaffold's own class declares `int menu_event(int)`. similarity 0.9905 with the explicit `return 0;`; the only divergence left is the resulting `xor eax,eax`. PROPOSAL: retype as void.
 // working copy - scaffold materialised by --work
 // size      168 bytes
 // prototype int (__thiscall ?menu_event@Menu@@QAEHH@Z)(Menu* this, int)

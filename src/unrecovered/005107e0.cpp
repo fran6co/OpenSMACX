@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005107E0 ?selected@Console@@QAEXXZ 0x005107E0-0x00510899 FILE
-// RULED-OUT: manual vbase-adjust pointer arith for Win::set_cursor `this` (obj + *(int*)(*(int*)obj+4)); #0 push/mov is frame-setup register order, not a logic mismatch
+// TRIED: manual vbase-adjust pointer arith for Win::set_cursor `this` (obj + *(int*)(*(int*)obj+4)); #0 push/mov is frame-setup register order, not a logic mismatch
 // working copy - scaffold materialised by --work
 // size      185 bytes
 // prototype void (__thiscall ?selected@Console@@QAEXXZ)(Console* this)

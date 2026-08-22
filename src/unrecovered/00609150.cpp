@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00609150 ?init@Dialog@@QAEHXZ 0x00609150-0x006092FB
-// RULED-OUT: MISMATCH #1 mov/push - the three inlined entry-list clears (originally StringStruct::remove_all-shaped) written out by hand with a locally redefined `VCall` shim (slot000(int), slot001(void*)) for the notify/destroy virtual calls; stack frame layout differs from instruction 1 on.
+// TRIED: MISMATCH #1 mov/push - the three inlined entry-list clears (originally StringStruct::remove_all-shaped) written out by hand with a locally redefined `VCall` shim (slot000(int), slot001(void*)) for the notify/destroy virtual calls; stack frame layout differs from instruction 1 on.
 // size      427 bytes
 // prototype int (__thiscall ?init@Dialog@@QAEHXZ)(Dialog* this)
 // callers   0   call targets   1

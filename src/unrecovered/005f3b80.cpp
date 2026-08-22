@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005F3B80 sub_5f3b80 0x005F3B80-0x005F4AA7 FILE
-// RULED-OUT: IDA's `__stdcall(int,RECT*,int)` guess with no receiver - ecx is dereferenced immediately with no matching stack slot, so this is a __thiscall member (class EdgeWin here) over IDA's 3 args. The screen-relative pass's destination buffer (5th TRY5 call) isn't resolved past this point in the disassembly given; reused the top-edge buffer field there as the least-wrong guess. sim 0.56-0.74 across flag sets.
+// TRIED: IDA's `__stdcall(int,RECT*,int)` guess with no receiver - ecx is dereferenced immediately with no matching stack slot, so this is a __thiscall member (class EdgeWin here) over IDA's 3 args. The screen-relative pass's destination buffer (5th TRY5 call) isn't resolved past this point in the disassembly given; reused the top-edge buffer field there as the least-wrong guess. sim 0.56-0.74 across flag sets.
 // working copy - scaffold materialised by --work
 // size      3879 bytes
 // prototype 

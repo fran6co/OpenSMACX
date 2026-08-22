@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004328B0 ??0SelectPartWin@@QAE@XZ 0x004328B0-0x00432961;0x00653F10-0x00653F5A FILE
-// RULED-OUT: same shape as 0x00484AC0 (PickTech's ctor) - placement-new for the 6 subobjects (GraphicWin base, Scroll/Caviar/Buffer/Font/Font members) plus the 5 zeroed fields and 2 vtable stores, in disassembly order, reproduce the call sequence but not the opaque scaffold's missing SEH-unwind prologue (see 0x00484AC0's note for why).
+// TRIED: same shape as 0x00484AC0 (PickTech's ctor) - placement-new for the 6 subobjects (GraphicWin base, Scroll/Caviar/Buffer/Font/Font members) plus the 5 zeroed fields and 2 vtable stores, in disassembly order, reproduce the call sequence but not the opaque scaffold's missing SEH-unwind prologue (see 0x00484AC0's note for why).
 // size      251 bytes
 // prototype void (__thiscall ??0SelectPartWin@@QAE@XZ)(SelectPartWin* this)
 // callers   4   call targets   5

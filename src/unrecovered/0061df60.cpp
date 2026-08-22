@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0061DF60 sub_61df60 0x0061DF60-0x0061E538 FILE
-// RULED-OUT: byte-exact register-packed inner blit loop (bl/bh texel pointer, ebp repurposed as scratch, cx/ax half-register Bresenham counters); landed as a __thiscall member with two EdgeScan scratch blocks (edge0[15]/edge1[10]) and a plain per-pixel loop instead - correct shape, not byte-identical.
+// TRIED: byte-exact register-packed inner blit loop (bl/bh texel pointer, ebp repurposed as scratch, cx/ax half-register Bresenham counters); landed as a __thiscall member with two EdgeScan scratch blocks (edge0[15]/edge1[10]) and a plain per-pixel loop instead - correct shape, not byte-identical.
 // working copy - scaffold materialised by --work
 // size      1496 bytes
 // prototype 

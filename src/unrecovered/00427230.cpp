@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00427230 ?init@CouncWin@@QAEXHH@Z 0x00427230-0x00428347;0x006530F4-0x00653109 FILE
-// RULED-OUT: the AI diplomatic-negotiation body (faction relationship scan, tech-trade proposal, vote-threshold check, roughly 0x4281XX-0x4282E2 in the disassembly) was left as a stub comment rather than transcribed - it needed more raw-asm cross-checking than remaining time allowed. VCall::slot001 and slot057 were retyped in place to take the args this call site passes (int; int,void*,void*) per the emitter's own "retype in place" convention. Everything else (field-init prologue, widget/font/spot setup, vote-table build) is a direct transcription of a clean Ghidra decompile.
+// TRIED: the AI diplomatic-negotiation body (faction relationship scan, tech-trade proposal, vote-threshold check, roughly 0x4281XX-0x4282E2 in the disassembly) was left as a stub comment rather than transcribed - it needed more raw-asm cross-checking than remaining time allowed. VCall::slot001 and slot057 were retyped in place to take the args this call site passes (int; int,void*,void*) per the emitter's own "retype in place" convention. Everything else (field-init prologue, widget/font/spot setup, vote-table build) is a direct transcription of a clean Ghidra decompile.
 // working copy - scaffold materialised by --work
 // size      4396 bytes
 // prototype void (__thiscall ?init@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
@@ -2687,7 +2687,7 @@ void CouncWin::init(int a1, int a2) {
         (*(reinterpret_cast<int *>(g_0096c9e8) + *g_00939284 * 0x833 / 4 * 0 + 0) != 0)) {
         // NOTE: the AI diplomatic negotiation body (faction relationship
         // scan, tech-trade proposal and vote-threshold check) is not
-        // transcribed here; see RULED-OUT.
+        // transcribed here; see TRIED.
     }
 
     reinterpret_cast<VCall *>(this)->slot057(0, g_005398e0, g_007ae820);

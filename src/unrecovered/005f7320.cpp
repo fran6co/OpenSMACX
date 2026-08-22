@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005F7320 ?update_screen@Win@@QAAHPAURECT@@PAVWin@@@Z 0x005F7320-0x005F749F FILE
-// RULED-OUT: none confirmed byte-exact; MISMATCH #9 'test' vs 'mov' - the [0x669338] seam is modelled as a raw IntersectRect-shaped __stdcall function pointer with a guessed (dest, src1, src2) argument order; the real signature at that seam is unconfirmed, and the down-counting child-window loop's register pressure does not match the original's.
+// TRIED: none confirmed byte-exact; MISMATCH #9 'test' vs 'mov' - the [0x669338] seam is modelled as a raw IntersectRect-shaped __stdcall function pointer with a guessed (dest, src1, src2) argument order; the real signature at that seam is unconfirmed, and the down-counting child-window loop's register pressure does not match the original's.
 // size      383 bytes
 // prototype
 // callers   12   call targets   4

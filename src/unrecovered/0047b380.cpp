@@ -60,7 +60,7 @@ class NetWin { public:
     int get_player_color(int);
 };
 int NetWin::get_player_color(int a1) {
-    // RULED-OUT: 194/213 bytes (rebuilt is LARGER, first divergence in the
+    // TRIED: 194/213 bytes (rebuilt is LARGER, first divergence in the
     // prologue). Original does `push ebp; mov ebp,esp; push ecx` - the
     // `push ecx` is a 1-byte "reserve one local dword" idiom, and that slot
     // is then overwritten with the `this->+0x772c` pointer value and RELOADED

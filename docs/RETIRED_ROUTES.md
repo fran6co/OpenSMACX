@@ -295,7 +295,7 @@ names are historical; the code is load-bearing.
 - **No channel between agents.** Its own findings file said so: "Mizuchi runs one
   agent per function with no channel between them, so two agents hitting the same
   idiom each pay for it separately." That file then had zero readers for its
-  entire life. The `LEVER:`/`RULED-OUT:` grammar exists because of this.
+  entire life. The `LEVER:`/`TRIED:` grammar exists because of this.
 - **The evidence left the repository.** The integrator ratcheted
   `docs/recovery/byte-match.csv`, which had already moved to a gitignored path,
   so a run's proof lived only in a cache. 122 proved bodies once existed solely

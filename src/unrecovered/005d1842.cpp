@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005D1842 sub_5d1842 0x005D1842-0x005D1A30 FILE
-// RULED-OUT: callee (OutputPixelRow16) takes its args in esi/edi/ebp with no stack push before `call` - no cdecl/fastcall signature the compiler can be told to use reproduces that register setup without __asm, which is barred. Landed with plausible field offsets and call count/order; prologue register save order and the per-call register loads do not match.
+// TRIED: callee (OutputPixelRow16) takes its args in esi/edi/ebp with no stack push before `call` - no cdecl/fastcall signature the compiler can be told to use reproduces that register setup without __asm, which is barred. Landed with plausible field offsets and call count/order; prologue register save order and the per-call register loads do not match.
 // working copy - scaffold materialised by --work
 // size      494 bytes
 // prototype 

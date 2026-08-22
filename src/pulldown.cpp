@@ -464,7 +464,7 @@ void PullDown::hide() {
 // calls     0x005D4CF0
 */
 
-// RULED-OUT: SEH frame - same symptom as FlatButton::FlatButton() (see
+// TRIED: SEH frame - same symptom as FlatButton::FlatButton() (see
 // flatbutton.cpp for the full measurement) - PullDown : public GraphicWin
 // is a REAL constructor calling `GraphicWin::construct()`, and this tree's
 // compiled body gets an unwind frame (`push -1 / push handler / mov eax,

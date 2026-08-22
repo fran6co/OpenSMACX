@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0051BBA0 ?load_proc@Console@@QAEXHH@Z 0x0051BBA0-0x0051BC62 FILE
-// RULED-OUT: the game_reload/exit(3)/desktop_init(0) call site is a compiler shared-tail (desktop_init's arg slot is reused dead code after the never-returning exit(3)); wrote the two reachable paths as separate if/else instead. First divergence #8 test/mov.
+// TRIED: the game_reload/exit(3)/desktop_init(0) call site is a compiler shared-tail (desktop_init's arg slot is reused dead code after the never-returning exit(3)); wrote the two reachable paths as separate if/else instead. First divergence #8 test/mov.
 // working copy - scaffold materialised by --work
 // size      194 bytes
 // prototype void (__thiscall ?load_proc@Console@@QAEXHH@Z)(Console* this, int, int)

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00617F20 ?add_object@Caviar@@QAEHPAUCaviarData@@H@Z 0x00617F20-0x00618079 FILE
-// RULED-OUT: this->recordArray[counter] (base 0x74C, stride 0xC, three pointer fields) is a genuine array indexed by field_13CC_; the auto-generated class only names the counter==0 view (field_74C_/750_/754_), so the body reaches every field by offset instead. Transcribed straight from the disassembly (byteOffset/index dual loop counters, remainder from the a2%stride division). Landed at 0.65 mnemonic similarity; prologue frame shape (no ebp frame vs local-heavy candidate) is the first divergence.
+// TRIED: this->recordArray[counter] (base 0x74C, stride 0xC, three pointer fields) is a genuine array indexed by field_13CC_; the auto-generated class only names the counter==0 view (field_74C_/750_/754_), so the body reaches every field by offset instead. Transcribed straight from the disassembly (byteOffset/index dual loop counters, remainder from the a2%stride division). Landed at 0.65 mnemonic similarity; prologue frame shape (no ebp frame vs local-heavy candidate) is the first divergence.
 // working copy - scaffold materialised by --work
 // size      345 bytes
 // prototype int (__thiscall ?add_object@Caviar@@QAEHPAUCaviarData@@H@Z)(Caviar* this, CaviarData*, int)

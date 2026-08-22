@@ -1,6 +1,6 @@
 // ORIGINAL: 0x005D8930 ?draw_mono@Buffer@@QAEHPAVBuffer@@HHHHHH@Z 0x005D8930-0x005D8A28 FILE
-// RULED-OUT: same shape as sub_5d8740 (0x005D8740) - opaque Buffer* self, field_58_/ppv_bits_/field_50_/field_6C_/field_4A8_/width_/height_ read through the named Buffer members instead of raw offsets, and the stdcall surface-Unlock reached via a `void(__stdcall*)(void*,void*)` function pointer (a C++ virtual call would put `this` in ecx, but the original pushes it on the stack like a COM method). `a1` (declared Buffer* by the mangled name) is compared to -1 and stored as a byte, so it's cast through `(int)`, not dereferenced.
-// RULED-OUT: nothing past that - 94.9% mnemonic similarity, first gap at #41 (mov vs cmp) in the NULL-surface lock-count arm, same spot as 0x005D8740's closest reach (see that file's note for what was tried).
+// TRIED: same shape as sub_5d8740 (0x005D8740) - opaque Buffer* self, field_58_/ppv_bits_/field_50_/field_6C_/field_4A8_/width_/height_ read through the named Buffer members instead of raw offsets, and the stdcall surface-Unlock reached via a `void(__stdcall*)(void*,void*)` function pointer (a C++ virtual call would put `this` in ecx, but the original pushes it on the stack like a COM method). `a1` (declared Buffer* by the mangled name) is compared to -1 and stored as a byte, so it's cast through `(int)`, not dereferenced.
+// TRIED: nothing past that - 94.9% mnemonic similarity, first gap at #41 (mov vs cmp) in the NULL-surface lock-count arm, same spot as 0x005D8740's closest reach (see that file's note for what was tried).
 // working copy - scaffold materialised by --work
 // size      248 bytes
 // prototype int (__thiscall ?draw_mono@Buffer@@QAEHPAVBuffer@@HHHHHH@Z)(Buffer* this, Buffer*, int, int, int, int, int, int)

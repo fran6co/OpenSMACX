@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00607720 ?on_left_up@BaseButton@@QAEXHH@Z 0x00607720-0x006077E6 FILE
-// RULED-OUT: extra VC24/VC43 shims for the two non-void vtable slots (23 returns int, 42 takes int); IAT-style function pointers for timeGetTime/Sleep instead of named imports. First divergence #43 test/push.
+// TRIED: extra VC24/VC43 shims for the two non-void vtable slots (23 returns int, 42 takes int); IAT-style function pointers for timeGetTime/Sleep instead of named imports. First divergence #43 test/push.
 // working copy - scaffold materialised by --work
 // size      198 bytes
 // prototype void (__thiscall ?on_left_up@BaseButton@@QAEXHH@Z)(BaseButton* this, int, int)

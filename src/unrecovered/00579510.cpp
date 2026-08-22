@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00579510 ?enemy_turn@@YAHH@Z 0x00579510-0x00579769 FILE
-// RULED-OUT: `int` return (contract head) - the only `ret` leaves eax holding leftover address-calc garbage (a1*2099), not a deliberate return value, so recast as void; diverges at instr #9
+// TRIED: `int` return (contract head) - the only `ret` leaves eax holding leftover address-calc garbage (a1*2099), not a deliberate return value, so recast as void; diverges at instr #9
 // working copy - scaffold materialised by --work
 // size      601 bytes
 // prototype int (__cdecl ?enemy_turn@@YAHH@Z)(int factionID)

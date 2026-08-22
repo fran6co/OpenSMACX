@@ -1,6 +1,6 @@
 // ORIGINAL: 0x00532570 ?action@NetDaemon@@QAEHHH@Z 0x00532570-0x005328BA FILE
-// RULED-OUT: g_00669368 is a cached stdcall function pointer (timeGetTime), called twice through the same loaded pointer - matches the two `// indirect` sites.
-// RULED-OUT: nothing else tried; landed at MISMATCH #7 (original compares several fields against a zero register cached once via `xor ebx,ebx` and reused, rebuilt re-derives `== 0` per comparison; similarity 0.886).
+// TRIED: g_00669368 is a cached stdcall function pointer (timeGetTime), called twice through the same loaded pointer - matches the two `// indirect` sites.
+// TRIED: nothing else tried; landed at MISMATCH #7 (original compares several fields against a zero register cached once via `xor ebx,ebx` and reused, rebuilt re-derives `== 0` per comparison; similarity 0.886).
 // working copy - scaffold materialised by --work
 // size      842 bytes
 // prototype int (__thiscall ?action@NetDaemon@@QAEHHH@Z)(NetDaemon* this, int vehID, int)

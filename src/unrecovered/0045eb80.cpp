@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0045EB80 ??1MainInterface@@QAE@XZ 0x0045EB80-0x0045EF0A;0x006552C0-0x0065552F FILE
-// RULED-OUT: plain reinterpret_cast pointer-offset calls into close()/dtors in disasm order (same shape as 0x00408170's AlphaSave dtor); compiles and matches through instruction #17, then diverges because the real destructor's ~35-state SEH unwind table (one `mov byte ptr [ebp-4], N` per sub-object cleanup, with matching funclets) only emerges from genuine implicit member/base destruction, not explicit calls in a hand-written body.
+// TRIED: plain reinterpret_cast pointer-offset calls into close()/dtors in disasm order (same shape as 0x00408170's AlphaSave dtor); compiles and matches through instruction #17, then diverges because the real destructor's ~35-state SEH unwind table (one `mov byte ptr [ebp-4], N` per sub-object cleanup, with matching funclets) only emerges from genuine implicit member/base destruction, not explicit calls in a hand-written body.
 // working copy - scaffold materialised by --work
 // size      1529 bytes
 // prototype void (__thiscall ??1MainInterface@@QAE@XZ)(MainInterface* this)

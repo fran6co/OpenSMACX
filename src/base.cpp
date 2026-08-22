@@ -101,7 +101,7 @@ int UnkGlobal0093A934;  // 0x0093A934
 /*
 Purpose: Check if the base already has a particular facility built or if it's in the queue.
 // ORIGINAL: 0x00421670 ?has_fac@@YA_NHHH@Z 0x00421670-0x004216E9
-// RULED-OUT: bitmask() call count now agrees (1), but the image's
+// TRIED: bitmask() call count now agrees (1), but the image's
 //   has_fac_built(facility_id, base_id) - facility_id a genuine runtime
 //   parameter here, not a literal - still keeps bitmask() as a real
 //   out-of-line call (`lea eax,[ebp-4]; lea ecx,[ebp+8]; push facility_id;
@@ -157,7 +157,7 @@ BOOL __cdecl has_fac(int facility_id, int base_id, int queue_count) {
 /*
 Purpose: Set the current base globals.
 // ORIGINAL: 0x004E39D0 ?set_base@@YAXH@Z 0x004E39D0-0x004E39F3 SEMANTIC
-// RULED-OUT: reordering the two stores (pointer before id) drops to 5/11;
+// TRIED: reordering the two stores (pointer before id) drops to 5/11;
 //            a named local `Base *base = &Bases[base_id];` still 8/11, same
 //            eax/ecx vs edx/ecx register choice on the last two lea/mov -
 //            plateau, best flags /c /O2 /Gy /GR- /Oy- /GX.
@@ -280,7 +280,7 @@ Purpose: Find the base id closest to the specified coordinates.
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x00644F3A
-// RULED-OUT: vector_dist(x, y, Bases[i].x, Bases[i].y) - the image never calls
+// TRIED: vector_dist(x, y, Bases[i].x, Bases[i].y) - the image never calls
 //            vector_dist, only abs() x4 (see del_site 0x00579E70 for the same
 //            expansion); open-coding it moved the mismatch from the whole
 //            function to a prologue scheduling difference (/O2 /Oi- gets the
@@ -454,7 +454,7 @@ Purpose: Find the best specialist available to the current base with more weight
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x005B9F20
-// RULED-OUT: `Base *base_current = BaseCurrent();` hoisted once above the loop
+// TRIED: `Base *base_current = BaseCurrent();` hoisted once above the loop
 //            - costs an extra stack slot (`sub esp, 8` instead of `push ecx`),
 //            which is worse (5/44 -> 6/44 agreeing but lower total similarity).
 //            The image re-reads BaseCurrent() from the global twice per
@@ -668,7 +668,7 @@ void __cdecl base_mark(int base_id) {
 /*
 Purpose: Calculate the cost factor for the specified faction and resource type. Optional base param.
 // ORIGINAL: 0x004E4430 ?cost_factor@@YAHHHH@Z 0x004E4430-0x004E46C2
-// RULED-OUT: call count already agrees (call_diff: 0 disagree, both call
+// TRIED: call count already agrees (call_diff: 0 disagree, both call
 // bitmask and 0x539c00 through has_fac_built_call/great_satan), so the
 // 9/251 MISMATCH is not a call-shape defect. The image's `is_human(faction_id)`
 // ternary loads the bitmask table (`mov eax,[0x9a64e8]`) BEFORE the `push
@@ -773,7 +773,7 @@ Purpose: Determine if the specified base has any restrictions around production 
 //        the disjunct alone (without forcing the real bitmask call) and saw
 //        0.549, WORSE - that was the wrong half of this fix, not proof the
 //        disjunct belongs.
-// RULED-OUT: remaining divergence is the switch(retool) codegen - image
+// TRIED: remaining divergence is the switch(retool) codegen - image
 //            compiles it as a compare chain, this tree's /O2 default emits a
 //            jump table (`jmp dword ptr [ebx*4]`), plus an omit-frame-pointer
 //            stack layout (esp-relative) vs the image's ebp frame. Neither
@@ -924,7 +924,7 @@ Purpose: Determine what unit the specified base should start building 1st then a
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x005BA910
-// RULED-OUT: pre-storing `Bases[base_id].queue_production_id[0] = proto_id;`
+// TRIED: pre-storing `Bases[base_id].queue_production_id[0] = proto_id;`
 //            before the loop (to match the image's early store at
 //            0x004E4AA0 instr 7) and reading VehPrototypes[i].plan directly
 //            at each compare instead of hoisting it into a local both
@@ -974,7 +974,7 @@ Purpose: Calculate the new unit morale bonus modifier provided by the base and f
 // lever recorded on cost_factor/breed_mod) fixes the call count (4 real
 // bitmask calls, matching) and moves best similarity from a much lower
 // score to 0.715, 7/153 agreeing.
-// RULED-OUT (still short of the image): the remaining gap starts with a
+// TRIED (still short of the image): the remaining gap starts with a
 // register swap in the prologue (image keeps `ebx`=base_id, `esi`=faction_id;
 // this tree's O2 default swaps them) and continues into how the bool result
 // of `has_fac_built_call(...) || has_project(...)` is materialised - the
@@ -1031,7 +1031,7 @@ Purpose: Calculate the new native unit lifecycle bonus modifier provided by a ba
 //        drops ITS best similarity 0.826 -> 0.706 (worm_mod is 0x004E6740,
 //        not claimed, so not a tracked regression - full detail at the
 //        body in base.h and at worm_mod's own marker below).
-// RULED-OUT: register swap in the prologue (image keeps ebx=base_id,
+// TRIED: register swap in the prologue (image keeps ebx=base_id,
 //            esi=faction_id; /O2 default swaps them) and how the bool
 //            result of `has_fac_built_call(...) || has_project(...)` is
 //            materialised - the image spins it through a stack slot as
@@ -1129,7 +1129,7 @@ static __forceinline int yield_tile_owner(const Map *tile) {
 /*
 Purpose: Calculate the nutrients produced by a single map square.
 // ORIGINAL: 0x004E6E50 ?crop_yield@@YAHHHHHH@Z 0x004E6E50-0x004E7306
-// RULED-OUT: caching bit2 to a named local before the landmark_bonus jungle/
+// TRIED: caching bit2 to a named local before the landmark_bonus jungle/
 //            fresh check (image re-reads tile->climate twice there instead
 //            of the cached is_ocean_tile - now written that way, but score
 //            unchanged: 0x8-vs-0xC sub esp gap under /Oy- is unexplained,
@@ -1148,7 +1148,7 @@ Purpose: Calculate the nutrients produced by a single map square.
 //        (0.292, its winning flag set is /Ob0-based, where yield_tile was
 //        already being folded in regardless of the marker) - kept anyway
 //        since it does not regress and helps the sibling.
-// RULED-OUT: a `bonus_at_call` non-inline forwarder (map.h/map.cpp, since
+// TRIED: a `bonus_at_call` non-inline forwarder (map.h/map.cpp, since
 //            removed) so bonus_at(x, y, 0) would emit `call 0x592030` as
 //            the image does - measured NO improvement to best-across-flags
 //            similarity (stayed at 0.292) on top of the forceinline change.
@@ -1328,7 +1328,7 @@ Purpose: Calculate the minerals produced by a single map square.
 //        bonus_at() call. Also is_ocean_tile was hoisted; the image computes
 //        it lazily, right at its one `else if`, not up front. Both fixed:
 //        agreeing instructions 2->5 of 355 (/Oy-), similarity 0.379->0.407.
-// RULED-OUT: the image needs ZERO stack (reuses the dead x/y/base_id/
+// TRIED: the image needs ZERO stack (reuses the dead x/y/base_id/
 //            assume_improved parameter slots as scratch throughout); this
 //            tree's body still needs sub esp 0xc for ~8 live locals across
 //            the branch chain. That reuse is a VC6 liveness heuristic, not
@@ -1345,7 +1345,7 @@ Purpose: Calculate the minerals produced by a single map square.
 //        base_support (0.160 -> 0.371). Tied here (best-across-flags stays
 //        0.388, won by an /Ob0 flag set where yield_tile already folded
 //        regardless) - kept anyway since it does not regress.
-// RULED-OUT: a `bonus_at_call` non-inline forwarder (map.h/map.cpp, since
+// TRIED: a `bonus_at_call` non-inline forwarder (map.h/map.cpp, since
 //            removed) so bonus_at(x, y, 0) would emit `call 0x592030` -
 //            measured no improvement on top of the forceinline change.
 // LEVER: FEWER (3 calls vs image's 6: 3 bitmask() + bonus_at + 2 has_tech) -
@@ -1499,7 +1499,7 @@ Purpose: Calculate the energy produced by a single map square.
 //        Fixed: agreeing instructions 4->5 of 536 (/Oy-), and `sub esp,0x18`
 //        now matches the image exactly (both sides, 6 stack-resident
 //        locals) - the frame allocation itself is no longer the gap here.
-// RULED-OUT: the remaining divergence (instr 3) is prologue INSTRUCTION
+// TRIED: the remaining divergence (instr 3) is prologue INSTRUCTION
 //            SCHEDULING - the image multiplies width by a direct memory
 //            operand on y (`imul eax, [ebp+0x14]`) and only loads y into a
 //            register later, right before the bonus_at() call; this tree's
@@ -1517,7 +1517,7 @@ Purpose: Calculate the energy produced by a single map square.
 //        base_support (0.160 -> 0.371). Tied here (best-across-flags stays
 //        0.137, won by an /Ob0 flag set where yield_tile already folded
 //        regardless) - kept anyway since it does not regress.
-// RULED-OUT: a `bonus_at_call` non-inline forwarder (map.h/map.cpp, since
+// TRIED: a `bonus_at_call` non-inline forwarder (map.h/map.cpp, since
 //            removed) so bonus_at(x, y, 0) would emit `call 0x592030` -
 //            measured no improvement on top of the forceinline change.
 // LEVER: FEWER (2 calls vs image's 8: 6 bitmask() + bonus_at + has_tech) -
@@ -1754,9 +1754,9 @@ Purpose: Tally what the current base's forces cost it: the resources its supply
 //        for `has_fac_built_call(...)` (base.h, forces bitmask_call's real
 //        E8) took call_diff from FEWER by 2 to FEWER by 1 and best-across-
 //        flags similarity 0.371 -> 0.431 (45/465 raw agreeing, /O2 /Gy /GR- /GX).
-// RULED-OUT: hoisting `Base *base_current = BaseCurrent();` above the loop -
+// TRIED: hoisting `Base *base_current = BaseCurrent();` above the loop -
 //            already ruled out for a sibling function a few hundred lines up
-//            in this file (see the RULED-OUT note near line 396): the image
+//            in this file (see the TRIED note near line 396): the image
 //            re-reads the BaseCurrent() global fresh at every use, so this
 //            was not retried here. Under /Oy-, `sub esp` is 0x34 against the
 //            image's 0x3c (one 8-byte gap, i.e. two stack slots) - closer
@@ -2156,14 +2156,14 @@ Purpose: Calculate the current base's energy loss/inefficiency for an amount of 
 //   same shape as base_find (0x004E3D50), AND re-reads
 //   (BaseCurrent())->x/y fresh inside the loop rather than hoisting them
 //   to locals before it. Both fixed together: agreeing went 4/233 -> 8/233.
-// RULED-OUT: the remaining gap is the same has_fac_built(literal,...)
+// TRIED: the remaining gap is the same has_fac_built(literal,...)
 //   systemic issue documented on has_fac (0x00421670) and base_minerals
 //   (0x004E9CB0) - the image keeps a real bitmask() call for
 //   FAC_HEADQUARTERS (inside the loop) and FAC_CHILDREN_CRECHE even though
 //   both facility ids are literal; this tree's toolchain always folds
 //   them. Not re-derived further here; still a 0x1c vs 0xc stack-size gap
 //   (the two ebp-relative bitmask out-params never materialise).
-// RULED-OUT (measured): swapping both of those has_fac_built() calls for
+// TRIED (measured): swapping both of those has_fac_built() calls for
 //   has_fac_built_call() (the general.h bitmask_call forwarder, base.h) to
 //   force the real E8 the image emits. This function's best-scoring flag
 //   set has no /Ob0 - plain /O2 implies /Ob2 auto-inline, which folds the
@@ -2474,7 +2474,7 @@ Purpose: Calculate population goal for a base.
 //        image's two `push 0x18`/`push 0x19` + call sequences instead of
 //        folding to a byte test. Best similarity 0.910 (38/105 agreeing,
 //        /c /O2 /Gy /GR- /Oy- /GX) - the largest jump of the bitmask-call
-//        family (cost_factor RULED-OUT the same lever; see that note).
+//        family (cost_factor TRIED the same lever; see that note).
 Return Value: Goal population
 Status: Complete
 */
@@ -2550,7 +2550,7 @@ BOOL __cdecl base_queue(int base_id) {
 Purpose: Check if current base has had an energy shortfall. If so, reset all existing energy convoy
          orders for the faction. TODO: Revisit and find a way to only reset specific base convoys.
 // ORIGINAL: 0x004F4DC0 ?base_energy_costs@@YAXXZ 0x004F4DC0-0x004F4E73
-// RULED-OUT: already 0.852 similar (best flag set, 3/60 raw). The remaining
+// TRIED: already 0.852 similar (best flag set, 3/60 raw). The remaining
 //            gap is inside base_who()/map_loc()'s inlined `x >> 1`: the
 //            image widens Vehs[i].x to int (movsx) BEFORE the shift, this
 //            tree's inline shifts the 16-bit value first and widens after -
@@ -2626,7 +2626,7 @@ int __cdecl fac_maint(int facility_id, int faction_id) {
 /*
 Purpose: Calculate overall maintenance cost for the currently selected base.
 // ORIGINAL: 0x004F65F0 ?base_maint@@YAXXZ 0x004F65F0-0x004F67E3
-// RULED-OUT: the image's own call list has ONE call to bitmask() (0x50BA00);
+// TRIED: the image's own call list has ONE call to bitmask() (0x50BA00);
 //            this tree's compile makes TWO, so `set_fac(fac,
 //            BaseIDCurrentSelected, false)` - a BYTE_EXACT standalone
 //            function elsewhere, called 10 times - looked like it was
@@ -2763,7 +2763,7 @@ Purpose: Checks whether the facility (non-SP) has been build in the currently se
 //        image's early return clears full `eax` (int width) where a `bool`
 //        return clears only `al`, and the callee's bitmask() is a real call
 //        in the image but constant-folds here - both are the documented
-//        systemic gaps (return-width note above; bitmask folding RULED-OUT
+//        systemic gaps (return-width note above; bitmask folding TRIED
 //        on has_fac base.cpp:104).
 Return Value: Does current base have facility? true/false
 Status: Complete
@@ -2799,10 +2799,10 @@ Status: Complete
 /*
 Purpose: Suggest the base the specified pair of factions should agree to attack together.
 // ORIGINAL: 0x0054ACC0 ?suggest_plan@@YAHHH@Z 0x0054ACC0-0x0054AF9D
-// RULED-OUT: `call_diff` flags this MORE (9 calls vs the image's 8: extra
+// TRIED: `call_diff` flags this MORE (9 calls vs the image's 8: extra
 // `region_at`/`vector_dist`, missing `_abs`) but it is a KNOWN, MEASURED
 // trade-off, not an unexamined gap - see the full "Verification note" /
-// "RULED-OUT" prose in the Purpose block below (kept where it was written;
+// "TRIED" prose in the Purpose block below (kept where it was written;
 // a marker-position scan does not reach prose after `Return Value:`, which
 // is why this address kept reading as untouched). Open-coding the
 // x_target/y_target `vector_dist` call as the `x_dist()+abs()x4` expansion
@@ -2857,7 +2857,7 @@ region_at (0x00500220), which the original expands three separate times. The inl
 halves x with SAR where the exported region_at takes uint32_t and would use SHR; the two agree for
 every non-negative coordinate, which is all a base or a target tile can hold.
 
-// RULED-OUT: open-coding the x_target/y_target vector_dist call as the
+// TRIED: open-coding the x_target/y_target vector_dist call as the
 //            x_dist()+abs()x4 expansion (the same shape that works on
 //            base_find and black_market) measured WORSE here: best
 //            similarity across all flag sets dropped from 0.728
@@ -2929,7 +2929,7 @@ Purpose: Determine the faction's best base to attack the specified base from.
 //        expansion (same shape as base_find 0x004E3B80/0x004E3D50) - the
 //        image never calls vector_dist, only abs() x4. Took best similarity
 //        from 3/135 to 4/135 agreeing (0.714 similar, /c /O2 /Oi- /Gy /GR-
-//        /Oy- /GX). Unlike suggest_plan (RULED-OUT above), this one measured
+//        /Oy- /GX). Unlike suggest_plan (TRIED above), this one measured
 //        better, not worse - the two bodies disagree on the lever.
 Return Value: Base id to attack from or 0
 Status: Complete
@@ -2987,7 +2987,7 @@ Purpose: Determine the value of the specified base between the requester and the
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x004E3A50 0x0050BA00 0x0059E980 0x005AC060 0x005B8E10 0x005BFE90 0x00645660
-// RULED-OUT: widening `value`, `base_pop_factor`, `res_base_count_region`,
+// TRIED: widening `value`, `base_pop_factor`, `res_base_count_region`,
 //            `req_base_count_region` and `facil_count` from uint32_t to int
 //            (to get signed cdq/sar and jge/jl instead of shr/jae) measured
 //            WORSE at every flag set - best case dropped from 9/337 agreeing
@@ -3115,7 +3115,7 @@ Purpose: Determine ideal non-offense (defense, combat, recon) unit count for the
 //        0x5AC060 (is_objective) twice, not once with a cached result. Best
 //        similarity 0.763 -> 0.809; agreeing count unchanged at 4/170. The
 //        bitmask() half of the evidence (has_fac_built folding to a byte
-//        test) is the documented systemic gap - RULED-OUT on has_fac
+//        test) is the documented systemic gap - TRIED on has_fac
 //        base.cpp:104 - and not fixable here.
 Return Value: Amount of non-offensive units needed (1-10)
 Status: Complete
@@ -3212,7 +3212,7 @@ Purpose: Calculate how vulnerable the coordinates are for the specified faction 
 //        similarity moved 0.595 -> 0.805 (/c /O2 /Oi- /Gy /GR- /Oy- /GX).
 //        The bitmask side of the evidence (has_fac_built(FAC_HEADQUARTERS,i)
 //        folding away the image's real bitmask() call) is the documented
-//        systemic gap - RULED-OUT on has_fac base.cpp:104 - and not
+//        systemic gap - TRIED on has_fac base.cpp:104 - and not
 //        addressed here.
 Return Value: Radial distance between coordinates and faction's HQ or 12 if no HQ/bases
 Status: Complete
@@ -3247,8 +3247,8 @@ int __cdecl vulnerable(int faction_id, int x, int y) {
 /*
 Purpose: Determine whether the specified base is considered an objective.
 // ORIGINAL: 0x005AC060 ?is_objective@@YAHH@Z 0x005AC060-0x005AC10B
-// RULED-OUT: the image still boolifies the `facilities_built[offset] & mask` test with a `neg/sbb/neg` 0-or-1 materialization into the old base_id stack slot before the final `je`, where this tree emits a plain `test`; hoisting `has_fac_built_call(...)` into its own named `BOOL` local before the `if` did not reproduce it (same 43/64, 0.927) - VC6 still proves the value is only used for one branch and drops the materialization.
-// RULED-OUT: `GameRules & X || Bases[base_id].event & Y` into two separate `if` statements (matching the image's two separate short-circuit branches instead of one `||`) moved 0.586 -> 0.762 similar. CORRECTION to the note this replaces: `calls agrees at exactly 1 (0x0050BA00, bitmask)` was wrong - the one call this tree made was to has_fac (out-of-line), not bitmask; the image inlines has_fac itself (its `cmp eax,0x41/jge` IS has_fac's own FacilityRepStart guard) and keeps ONLY the bitmask call inside that. Open-coding has_fac(ScnVictFacilityObj, base_id, 0) as its own `< FacilityRepStart` guard + has_fac_built() at the site removed the out-of-line has_fac call and moved best similarity 0.762 -> 0.783. `ScnVictFacilityObj` is a runtime facility id (read from a global, not a compile-time constant), so the folded `MEASURED inline bitmask` cannot constant-fold it away - routing it through `has_fac_built_call` (the real `bitmask()` call, same lever as cost_factor/pop_goal/num_objectives) reaches the call the image makes; call_diff agreed at 0/1 before, 1/1 after. Casting the `(int)ScnVictFacilityObj < FacilityRepStart` guard fixed a jge/jae signed-vs-unsigned split (ScnVictFacilityObj is uint32_t, compared unsigned without the cast). Moved 2/64 -> 43/64 agreeing, 0.586 -> 0.927 similar.
+// TRIED: the image still boolifies the `facilities_built[offset] & mask` test with a `neg/sbb/neg` 0-or-1 materialization into the old base_id stack slot before the final `je`, where this tree emits a plain `test`; hoisting `has_fac_built_call(...)` into its own named `BOOL` local before the `if` did not reproduce it (same 43/64, 0.927) - VC6 still proves the value is only used for one branch and drops the materialization.
+// TRIED: `GameRules & X || Bases[base_id].event & Y` into two separate `if` statements (matching the image's two separate short-circuit branches instead of one `||`) moved 0.586 -> 0.762 similar. CORRECTION to the note this replaces: `calls agrees at exactly 1 (0x0050BA00, bitmask)` was wrong - the one call this tree made was to has_fac (out-of-line), not bitmask; the image inlines has_fac itself (its `cmp eax,0x41/jge` IS has_fac's own FacilityRepStart guard) and keeps ONLY the bitmask call inside that. Open-coding has_fac(ScnVictFacilityObj, base_id, 0) as its own `< FacilityRepStart` guard + has_fac_built() at the site removed the out-of-line has_fac call and moved best similarity 0.762 -> 0.783. `ScnVictFacilityObj` is a runtime facility id (read from a global, not a compile-time constant), so the folded `MEASURED inline bitmask` cannot constant-fold it away - routing it through `has_fac_built_call` (the real `bitmask()` call, same lever as cost_factor/pop_goal/num_objectives) reaches the call the image makes; call_diff agreed at 0/1 before, 1/1 after. Casting the `(int)ScnVictFacilityObj < FacilityRepStart` guard fixed a jge/jae signed-vs-unsigned split (ScnVictFacilityObj is uint32_t, compared unsigned without the cast). Moved 2/64 -> 43/64 agreeing, 0.586 -> 0.927 similar.
 // size      171 bytes
 // prototype int (__cdecl ?is_objective@@YAHH@Z)(int baseID)
 // callers   14   call targets   1
@@ -3296,7 +3296,7 @@ Purpose: Count how far the specified faction has got towards the scenario's
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x004E3A50 0x0050BA00 0x0050BA30 0x005AC110 0x005B9F20
-// RULED-OUT: routing has_fac_built(FAC_HEADQUARTERS, base_id) and/or
+// TRIED: routing has_fac_built(FAC_HEADQUARTERS, base_id) and/or
 //            has_fac_built(ScnVictFacilityObj, base_id) through the new
 //            `has_fac_built_call` helper (real bitmask() call, same lever
 //            that won on pop_goal) measured WORSE here in all three
@@ -3565,7 +3565,7 @@ Purpose: Determine if the provided faction can build a specific facility or Secr
 //        ascending's single base_project() != SP_Unbuilt compare). Best
 //        similarity 0.137, agreeing instructions 20->25 of 742. The ten
 //        `call 0x50ba00` (bitmask) sites the image keeps are the documented
-//        systemic has_fac_built(literal,...) folding, RULED-OUT on has_fac
+//        systemic has_fac_built(literal,...) folding, TRIED on has_fac
 //        base.cpp:104, and are not fixable from this site.
 Return Value: Is facility or Secret Project available to faction, base and game mode? true/false
 Status: Complete

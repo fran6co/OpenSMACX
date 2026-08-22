@@ -1,6 +1,6 @@
 // ORIGINAL: 0x00590510 ?say_reactor@@YAXPAXHH@Z 0x00590510-0x005905B5 FILE
-// RULED-OUT: MISMATCH #4 push/mov, local buffer layout differs
-// RULED-OUT: _itoa needs a real signature -> declared as itoa_impl (own name), since the scaffold's nullary _itoa can't be redeclared (C2733)
+// TRIED: MISMATCH #4 push/mov, local buffer layout differs
+// TRIED: _itoa needs a real signature -> declared as itoa_impl (own name), since the scaffold's nullary _itoa can't be redeclared (C2733)
 // working copy - scaffold materialised by --work
 // size      165 bytes
 // prototype 

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005F2760 ?redo_caption_buttons@Win@@QAEXXZ 0x005F2760-0x005F2822 FILE
-// RULED-OUT: named field access via the scaffold's Win::heap_ - offsets 0xE4/0xE8/0xEC are read here as Win* pointers with their own field_4C4_ (and 0xE8's target is written through, indexed by IsZoomed()), which cannot be Heap sub-bytes; used raw (char*)this+offset casts instead of the class's named fields.
+// TRIED: named field access via the scaffold's Win::heap_ - offsets 0xE4/0xE8/0xEC are read here as Win* pointers with their own field_4C4_ (and 0xE8's target is written through, indexed by IsZoomed()), which cannot be Heap sub-bytes; used raw (char*)this+offset casts instead of the class's named fields.
 // working copy - scaffold materialised by --work
 // size      194 bytes
 // prototype void (__thiscall ?redo_caption_buttons@Win@@QAEXXZ)(Win* this)

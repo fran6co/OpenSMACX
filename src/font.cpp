@@ -61,7 +61,7 @@ Purpose: Initialize the class using the font name, height and style.
 //        own bit-extraction order and took it to 110/130. Casting `style`
 //        to `unsigned` for the `>>1`/`>>2` bit extractions gets the image's
 //        `shr` where a plain `int style` compiles `sar` - 112/130.
-// RULED-OUT: the residual gap is the ascent_/internal_leading_/height_
+// TRIED: the residual gap is the ascent_/internal_leading_/height_
 //        store order - the image defers internal_leading_'s store past
 //        ascent_'s despite reading it earlier. Caching `tm.tmAscent` in a
 //        local, and reordering the source statements to the image's own
@@ -140,7 +140,7 @@ int Font::init(LPCSTR font_name, int height, int style) {
     SelectObject(FontHDC, font_obj_);
     TEXTMETRIC tm;
     GetTextMetricsA(FontHDC, &tm);
-    // RULED-OUT: the image's remaining STORE order here - line_height_,
+    // TRIED: the image's remaining STORE order here - line_height_,
     // ascent_, internal_leading_, height_ - defers internal_leading_'s
     // store past ascent_'s even though it is read earlier. Both an
     // `internal_leading_`-first source order and a reordered one matching
@@ -171,7 +171,7 @@ Purpose: Initialize the class using the file, font name, height and style.
 //        strlen (0x006453E0), never the bounded `_s` forms, which this
 //        tree's `_s` calls were compiling as an inlined `rep movsd` copy
 //        the image does not have. Took this from 10/119 to 49/119.
-// RULED-OUT: `if (!file || !font_name)` vs `if (!font_name || !file)` -
+// TRIED: `if (!file || !font_name)` vs `if (!font_name || !file)` -
 //        both compile identically (VC6 canonicalises the `||`), so the
 //        residual gap is not this guard's operand order. Splitting the
 //        guard into two separate `if`s (the usual chained-condition lever)
@@ -262,7 +262,7 @@ Purpose: Get the width for the input text with a maximum length.
 //   call strlen` at 0x0061930B and 0x0061931C - so caching it in a local
 //   collapses six instructions into three. `jl` not `jbe`, because both
 //   operands are `int` there; a `size_t` comparison emits the unsigned branch.
-// RULED-OUT: as a standalone body, the remaining 20 of 48 were register
+// TRIED: as a standalone body, the remaining 20 of 48 were register
 //   allocation in the prologue (image saves esi/edi and keeps `this` in
 //   edi; this saved ebx as well and kept `this` there). Three spellings
 //   measured with tools/try_spellings.py before the move - the clamp as an
@@ -298,7 +298,7 @@ Purpose: Find a space in the input string that can be used as a natural line bre
 //        is why one `0x006453E0` covers strlen from both inlined copies.
 //        Moved compiled-instruction count from 107 to 174 against an image
 //        of 208, much closer to the right shape.
-// RULED-OUT: not chased to a match this pass - the inlined `memchr` call
+// TRIED: not chased to a match this pass - the inlined `memchr` call
 //        (0x006473F0, matched at instruction ~9) is followed by a large
 //        divergent run inside the inlined `width()` bodies; this tree also
 //        opens with a `push ebp; mov ebp, esp` frame the image does not

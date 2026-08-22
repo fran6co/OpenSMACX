@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005CC150 sub_5cc150 0x005CC150-0x005CC2A9 FILE
-// RULED-OUT: catalogue head is stdcall(a1..a5) but the body reads ecx/edx directly as real values at entry (mov ebx,edx; mov edi,ecx) - PROPOSAL: __fastcall(ecxArg, edxArg, a1..a5); ret 0x14 cleans exactly the 5 stack ints, consistent with fastcall. Call-site argument order for the 2nd/3rd loops was cross-checked against the ghidra decompile's param_1..param_7 (fastcall) naming, which also confirms two of the fixed-point angle computations per loop are dead (computed, never read by the callee).
+// TRIED: catalogue head is stdcall(a1..a5) but the body reads ecx/edx directly as real values at entry (mov ebx,edx; mov edi,ecx) - PROPOSAL: __fastcall(ecxArg, edxArg, a1..a5); ret 0x14 cleans exactly the 5 stack ints, consistent with fastcall. Call-site argument order for the 2nd/3rd loops was cross-checked against the ghidra decompile's param_1..param_7 (fastcall) naming, which also confirms two of the fixed-point angle computations per loop are dead (computed, never read by the callee).
 // working copy - scaffold materialised by --work
 // size      345 bytes
 // prototype

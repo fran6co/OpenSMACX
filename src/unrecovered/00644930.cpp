@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00644930 sub_644930 0x00644930-0x00644A62 FILE
-// RULED-OUT: 3 stack args (IDA agrees), no receiver - ring-buffer flush: drain up to `avail` bytes from a1's [0x2c,0x30) window into a2's buffer, optionally through a `decode` callback at a1+0x34, then repeat once more if the read pointer wrapped to a1+0x28. Landed at MISMATCH #4; not chased further.
+// TRIED: 3 stack args (IDA agrees), no receiver - ring-buffer flush: drain up to `avail` bytes from a1's [0x2c,0x30) window into a2's buffer, optionally through a `decode` callback at a1+0x34, then repeat once more if the read pointer wrapped to a1+0x28. Landed at MISMATCH #4; not chased further.
 // size      306 bytes
 // prototype
 // callers   2   call targets   0

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x006337E0 ?init@CheckButton@@QAEHHHPAUGraphicWin@@H@Z 0x006337E0-0x00633841 FILE
-// RULED-OUT: field mapping confirmed against Ghidra (param_1[0x28a]/ [0x289] deref'd at +0x18/+0x1c, isToggled_ at 0xA18); the 9-arg GraphicWin::init call and the a3==0 guard match. Divergence is push/mov ordering in the argument marshalling (mnemonic_similarity 0.97, one insn swapped at #19) - a scheduling artifact, not a semantic gap.
+// TRIED: field mapping confirmed against Ghidra (param_1[0x28a]/ [0x289] deref'd at +0x18/+0x1c, isToggled_ at 0xA18); the 9-arg GraphicWin::init call and the a3==0 guard match. Divergence is push/mov ordering in the argument marshalling (mnemonic_similarity 0.97, one insn swapped at #19) - a scheduling artifact, not a semantic gap.
 // working copy - scaffold materialised by --work
 // size      97 bytes
 // prototype int (__thiscall ?init@CheckButton@@QAEHHHPAUGraphicWin@@H@Z)(CheckButton* this, int, int, GraphicWin*, int)

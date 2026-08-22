@@ -476,7 +476,7 @@ Purpose: Build the ambience. The original constructs in four vtable stages -
          keep whatever the storage held - and nothing at or above 0x58 is
          written at all, which is what pins the shared base's extent there.
 // ORIGINAL: 0x004C8460 ??0Ambience@@QAE@XZ 0x004C8460-0x004C852D;0x004C8450-0x004C8457;0x00659F4C-0x00659F5E
-// RULED-OUT: dropping `volatile` off `object`/`bytes` measured 0/72
+// TRIED: dropping `volatile` off `object`/`bytes` measured 0/72
 //   agreeing both ways (the function diverges at instruction 0, the
 //   omitted SEH prologue, before reaching these stores), but it shrank
 //   the compiled body from 31 to 25 instructions - the optimiser folds

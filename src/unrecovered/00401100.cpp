@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00401100 ?add@StringStruct@@QAEHH@Z 0x00401100-0x00401513 FILE
-// RULED-OUT: alloc_entry_node/alloc_id_node/report_fatal helper functions factoring the repeated Heap::get-or-mem_get pattern; introduces real CALLs the inlined original does not have, diverges at insn #4
+// TRIED: alloc_entry_node/alloc_id_node/report_fatal helper functions factoring the repeated Heap::get-or-mem_get pattern; introduces real CALLs the inlined original does not have, diverges at insn #4
 // working copy - scaffold materialised by --work
 // size      1043 bytes
 // prototype int (__thiscall ?add@StringStruct@@QAEHH@Z)(StringStruct* this, int)

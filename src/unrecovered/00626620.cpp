@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00626620 ?polygon@@YAHPAUBuffer@@PAUVert@@HH@Z 0x00626620-0x00626900 FILE
-// RULED-OUT: original reuses the a2 (Vert*) parameter's own stack slot as a scratch int (min-y vertex index) across the whole function; a distinct `min_idx` local keeps the same values but a different frame layout. sub_626470's real state-struct layout is unknown (its own body is out of scope), modelled here as 9 loose ints per edge, matching Ghidra's stack-slot names. Control flow/order matches Ghidra throughout.
+// TRIED: original reuses the a2 (Vert*) parameter's own stack slot as a scratch int (min-y vertex index) across the whole function; a distinct `min_idx` local keeps the same values but a different frame layout. sub_626470's real state-struct layout is unknown (its own body is out of scope), modelled here as 9 loose ints per edge, matching Ghidra's stack-slot names. Control flow/order matches Ghidra throughout.
 // working copy - scaffold materialised by --work
 // size      736 bytes
 // prototype 

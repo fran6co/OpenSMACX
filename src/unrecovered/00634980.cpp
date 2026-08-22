@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00634980 sub_634980 0x00634980-0x00634A50 FILE
-// RULED-OUT: `extern "C" int __stdcall sub_634980(int a1, int a2)` per the given def head - disasm reads *ecx directly as a float* with no matching stack slot (a 3x3 matrix "this"), so the receiver is a __thiscall member, not a 2-arg __stdcall free function; changed to a `Mat3::multiply` member. `dst`/`a` tracked as independent incrementing pointers gives a MISMATCH at the prologue (#4, 87% similarity); an `int off = dst - a` delta recomputed each outer iteration (matching the original's spill of that delta to `[esp+0x14]` and its `add esi, ebx` re-derivation) gets to 89.5% similarity, 7 edits, all register-allocation choices (which callee-saved reg holds which pointer) rather than control-flow shape.
+// TRIED: `extern "C" int __stdcall sub_634980(int a1, int a2)` per the given def head - disasm reads *ecx directly as a float* with no matching stack slot (a 3x3 matrix "this"), so the receiver is a __thiscall member, not a 2-arg __stdcall free function; changed to a `Mat3::multiply` member. `dst`/`a` tracked as independent incrementing pointers gives a MISMATCH at the prologue (#4, 87% similarity); an `int off = dst - a` delta recomputed each outer iteration (matching the original's spill of that delta to `[esp+0x14]` and its `add esi, ebx` re-derivation) gets to 89.5% similarity, 7 edits, all register-allocation choices (which callee-saved reg holds which pointer) rather than control-flow shape.
 // working copy - scaffold materialised by --work
 // size      208 bytes
 // prototype 
@@ -42,7 +42,7 @@ typedef char int8;
 typedef unsigned char uint8;
 // A 3x3 row-major float matrix. `this` is the left operand (matches ecx
 // dereferenced directly as a float base, no field offsets), `other` is the
-// right operand, `out` receives the product - see RULED-OUT above for the
+// right operand, `out` receives the product - see TRIED above for the
 // signature evidence.
 class Mat3 {
 public:

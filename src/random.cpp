@@ -34,7 +34,7 @@ Purpose: Update the seed value, by the xor-swap with the argument that the image
 // calls     (none)
 Return Value: n/a
 Status: Complete
-// RULED-OUT: the two RULED-OUT lines that stood here - "VC6 folds any xor-swap
+// TRIED: the two TRIED lines that stood here - "VC6 folds any xor-swap
 //        source" and "a /GX frame prologue is a real ceiling for every member of
 //        Random" - were both measured false on 2026-08-22. The first is true only
 //        of the PLAIN spelling (see the LEVER above). The second was read off the
@@ -121,7 +121,7 @@ void __cdecl random_rand_exit() { Rand.~Random(); }
 // flags     sp_ready;purged_ok
 // calls     (none)
 // notes     Staged hybrid export redirect calls the source-owned reseed wrapper
-// RULED-OUT: the "class-wide SEH-frame ceiling" that stood here before
+// TRIED: the "class-wide SEH-frame ceiling" that stood here before
 //        2026-08-22. There is no frame at all under `/c /O2 /Gy /GR- /GX`; the
 //        `push ebp` it was read off came from the `/Oy-` in the flag set the
 //        default measurement happened to report, not from `Random` carrying a

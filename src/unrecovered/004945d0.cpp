@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004945D0 ?on_button_clicked@ProdPicker@@QAEXH@Z 0x004945D0-0x004946A1 FILE
-// RULED-OUT: `switch(a1)` with case 2 falling through to case 7 reproduces the jump-table dispatch; MISMATCH remains in the prologue (push esi/edi ordering around the range check), not the switch body itself.
+// TRIED: `switch(a1)` with case 2 falling through to case 7 reproduces the jump-table dispatch; MISMATCH remains in the prologue (push esi/edi ordering around the range check), not the switch body itself.
 // working copy - scaffold materialised by --work
 // size      209 bytes
 // prototype void (__thiscall ?on_button_clicked@ProdPicker@@QAEXH@Z)(ProdPicker* this, int)

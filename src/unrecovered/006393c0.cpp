@@ -1,5 +1,5 @@
 // ORIGINAL: 0x006393C0 sub_6393c0 0x006393C0-0x00639612 FILE
-// RULED-OUT: 5-param __cdecl signature from IDA's guess and the [esp+N] stack reads (2 pointers, an int struct ptr, a byte flag). Grouped `switch` cases (1,2,4 / 3,5 / default) mirror the disasm's shared jump-table entries. Caching `*g_009c0b80` into a local vs calling through the global pointer inline made no difference - divergence starts at #1 (push vs mov), likely the original's persistent zero register (`xor ebp,ebp` reused for every zero-store) vs literal `0` at each site.
+// TRIED: 5-param __cdecl signature from IDA's guess and the [esp+N] stack reads (2 pointers, an int struct ptr, a byte flag). Grouped `switch` cases (1,2,4 / 3,5 / default) mirror the disasm's shared jump-table entries. Caching `*g_009c0b80` into a local vs calling through the global pointer inline made no difference - divergence starts at #1 (push vs mov), likely the original's persistent zero register (`xor ebp,ebp` reused for every zero-store) vs literal `0` at each site.
 // working copy - scaffold materialised by --work
 // size      594 bytes
 // prototype 

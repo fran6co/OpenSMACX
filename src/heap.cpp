@@ -137,7 +137,7 @@ Purpose: Get the requested memory size. If there currently isn't enough memory t
 //        sprintf_s into a stack local. Rewrote to strcat/add_lf/say_num()
 //        into StringTemp (0x9B86A0, strings.h). Best similarity 0.896 ->
 //        0.943 (/O2 /Gy /GR- /GX) and call_diff now agrees exactly.
-// RULED-OUT: hand-inlining say_num's _itoa+strcat body at each of the three
+// TRIED: hand-inlining say_num's _itoa+strcat body at each of the three
 //        call sites instead of calling it - identical 0.943/15/104, so
 //        VC6 already folds say_num() the same way here. Reverted to the
 //        say_num() spelling as the more idiomatic match to its own lever.

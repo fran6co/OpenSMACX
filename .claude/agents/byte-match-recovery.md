@@ -107,7 +107,7 @@ Under the marker, keyed by the divergence it addresses:
 ```
 // ORIGINAL: 0x005E3650 ??0Foo@@QAE@XZ 0x5E3650-0x5E36C2
 // LEVER: jl/jge  flipped the `if` condition and swapped the arms
-// RULED-OUT: plain immediate; named local; const; register storage
+// TRIED: plain immediate; named local; const; register storage
 ```
 
 The fingerprint (`jl/jge`) is what lets the next agent find your lesson.
@@ -115,7 +115,7 @@ The fingerprint (`jl/jge`) is what lets the next agent find your lesson.
 This is not bookkeeping — without it a miss leaves nothing behind and the next
 agent starts from zero on the same function. **Never write a comment asserting
 something the measurement does not show.** If a body plateaus after a handful
-of measured attempts, leave it and say so. A refusal must be a `RULED-OUT:`
+of measured attempts, leave it and say so. A refusal must be a `TRIED:`
 line, not prose, or the reader cannot see it.
 
 ## When the original is wrong
@@ -150,7 +150,7 @@ it is budget taken from addresses you did not reach.
 
 ```
 0x005FA860 | BYTE_EXACT | LEVER: store order, not declaration order
-0x0060EC10 | MISMATCH #12 'push' vs 'mov' | RULED-OUT: cached idx; do/while
+0x0060EC10 | MISMATCH #12 'push' vs 'mov' | TRIED: cached idx; do/while
 0x004C8910 | NO_COMPILE C2065 'g_x' | undeclared global
 ```
 

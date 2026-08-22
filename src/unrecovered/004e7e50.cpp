@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004E7E50 sub_4e7e50 0x004E7E50-0x004E7F64
-// RULED-OUT: various expression orderings for the x/y base+offset sums and the wrap-around guard placement all keep the divergence at the very first instructions (register allocation for edx/ecx/a1 differs from the original's push-ebx/push-esi-before-movsx order); none reproduced the original's exact prologue. Landing the closest form (mnemonic_similarity 0.807).
+// TRIED: various expression orderings for the x/y base+offset sums and the wrap-around guard placement all keep the divergence at the very first instructions (register allocation for edx/ecx/a1 differs from the original's push-ebx/push-esi-before-movsx order); none reproduced the original's exact prologue. Landing the closest form (mnemonic_similarity 0.807).
 // size      276 bytes
 // prototype
 // callers   0   call targets   3

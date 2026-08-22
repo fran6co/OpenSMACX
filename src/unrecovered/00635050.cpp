@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00635050 ?UNK2@TexHeap@@QAEHH@Z 0x00635050-0x00635370 FILE
-// RULED-OUT: MISMATCH #3 mov/push - the four-register prologue (ebx/ebp/esi/edi) the original uses for this heavily-inlined free/loop/alloc body is not reproduced by writing the four inlined cleanup sites as a shared macro; register pressure differs from the start.
+// TRIED: MISMATCH #3 mov/push - the four-register prologue (ebx/ebp/esi/edi) the original uses for this heavily-inlined free/loop/alloc body is not reproduced by writing the four inlined cleanup sites as a shared macro; register pressure differs from the start.
 // working copy - scaffold materialised by --work
 // size      800 bytes
 // prototype int (__thiscall ?UNK2@TexHeap@@QAEHH@Z)(TexHeap* this, int)

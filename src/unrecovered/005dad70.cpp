@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005DAD70 ?write_strings_height@Buffer@@QAEHPAUStringList@@HH@Z 0x005DAD70-0x005DB03E FILE
-// RULED-OUT: redeclared sub_5e3630/sub_5e3650 as StringStruct::method_5e3630()/ Font::method_5e3650() (thiscall, 0 explicit stack args) - the "push ebp"/"push edx" seen before some call sites are the NEXT call's pre-staged 2nd argument (a2), left unpopped since sub_5e3630 never touches caller stack args; the one call site with a clean stack (0x5DB00E) confirms 0-arity. Prologue register order not chased further past that.
+// TRIED: redeclared sub_5e3630/sub_5e3650 as StringStruct::method_5e3630()/ Font::method_5e3650() (thiscall, 0 explicit stack args) - the "push ebp"/"push edx" seen before some call sites are the NEXT call's pre-staged 2nd argument (a2), left unpopped since sub_5e3630 never touches caller stack args; the one call site with a clean stack (0x5DB00E) confirms 0-arity. Prologue register order not chased further past that.
 // working copy - scaffold materialised by --work
 // size      718 bytes
 // prototype int (__thiscall ?write_strings_height@Buffer@@QAEHPAUStringList@@HH@Z)(Buffer* this, StringList*, int, int)

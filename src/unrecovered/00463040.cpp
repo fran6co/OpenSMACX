@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00463040 ?pixel_to_tile@MapWin@@QAEHHHPAHPAH@Z 0x00463040-0x004632CC FILE
-// RULED-OUT: MISMATCH #10 'lea' vs 'cmp' - transcribed the Ghidra pseudocode almost verbatim (including the vbtable-indirected bounds check via *(int*)(*this+4)); the entry sequence loading eax/ecx from [edi] and [eax+4] diverges around instruction 10, not chased further.
+// TRIED: MISMATCH #10 'lea' vs 'cmp' - transcribed the Ghidra pseudocode almost verbatim (including the vbtable-indirected bounds check via *(int*)(*this+4)); the entry sequence loading eax/ecx from [edi] and [eax+4] diverges around instruction 10, not chased further.
 // working copy - scaffold materialised by --work
 // size      652 bytes
 // prototype int (__thiscall ?pixel_to_tile@MapWin@@QAEHHHPAHPAH@Z)(MapWin* this, int, int, int*, int*)

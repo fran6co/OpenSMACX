@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005D5630 ?update@GraphicWin@@QAEXPAURECT@@PAUGraphicWin@@@Z 0x005D5630-0x005D56AA FILE
-// RULED-OUT: `a2` is read nowhere in the disasm (Ghidra recovers only 2 params: this + the RECT*); kept in the signature, unused in the body. Mismatch is #0 in the prologue (frame-size choice).
+// TRIED: `a2` is read nowhere in the disasm (Ghidra recovers only 2 params: this + the RECT*); kept in the signature, unused in the body. Mismatch is #0 in the prologue (frame-size choice).
 // working copy - scaffold materialised by --work
 // size      122 bytes
 // prototype void (__thiscall ?update@GraphicWin@@QAEXPAURECT@@PAUGraphicWin@@@Z)(GraphicWin* this, RECT*, GraphicWin*)

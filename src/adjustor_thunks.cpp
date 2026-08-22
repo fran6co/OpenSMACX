@@ -90,7 +90,7 @@ func_adjustor_p_u MapWinScalarDeleteTarget =
     original_method<func_adjustor_p_u>(0x00421830);
 func_adjustor_p_u PlanWinScalarDeleteTarget =
     original_method<func_adjustor_p_u>(0x0048BF20);
-// RULED-OUT for the whole vtordisp family, and the blocker is NOT this seam.
+// TRIED for the whole vtordisp family, and the blocker is NOT this seam.
 // The image's thunk is two instructions - `sub ecx, [ecx-4]` then a TAIL JUMP
 // to 0x00406F60 - and VC6 does generate the folded `sub ecx, [ecx-4]` from
 // `object - *(int32_t *)(object - 4)`. What it will not do is reuse the

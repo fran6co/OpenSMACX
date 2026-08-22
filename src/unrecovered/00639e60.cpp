@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00639E60 sub_639e60 0x00639E60-0x0063A279 FILE
-// RULED-OUT: signature widened to the IDA-guessed 4 int params (confirmed by the [esp+0x58.. 0x64] reads resolving to entry-relative +4../+0x10, matching arg1..arg4); the 9 declared sub_NNNNNN callees are scaffold-fixed nullary cdecl so their real args could not be reproduced, only call order/branching; the two `code*` fields at this+0x58/0x5c and this+0x7c are data callbacks (not a vtable), modeled with local typedefs. Diverges at #0 (prologue - real function is [esp]-addressed, no frame pointer; ours uses whatever MSVC chose for 4 params).
+// TRIED: signature widened to the IDA-guessed 4 int params (confirmed by the [esp+0x58.. 0x64] reads resolving to entry-relative +4../+0x10, matching arg1..arg4); the 9 declared sub_NNNNNN callees are scaffold-fixed nullary cdecl so their real args could not be reproduced, only call order/branching; the two `code*` fields at this+0x58/0x5c and this+0x7c are data callbacks (not a vtable), modeled with local typedefs. Diverges at #0 (prologue - real function is [esp]-addressed, no frame pointer; ours uses whatever MSVC chose for 4 params).
 // working copy - scaffold materialised by --work
 // size      1049 bytes
 // prototype 

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005DC410 ?find_line_break_l@Buffer@@QAEHPADPAHH@Z 0x005DC410-0x005DC70A FILE
-// RULED-OUT: same bracket-skip/jump-table markup dispatch as Buffer::text_width (0x005DC7C0), verified against the raw jump/byte tables at 0x5dc70c/0x5dc728 (identical shape, different literal token address 0x696c90). The four find-break-then-adjust call sites collapse to one resolve_break() helper (space-before or segment-start keeps the position, else memrchr back to the last space). Reaches MISMATCH, 147/265 mnemonics shared, first divergence at #2 (frame setup, not the parser).
+// TRIED: same bracket-skip/jump-table markup dispatch as Buffer::text_width (0x005DC7C0), verified against the raw jump/byte tables at 0x5dc70c/0x5dc728 (identical shape, different literal token address 0x696c90). The four find-break-then-adjust call sites collapse to one resolve_break() helper (space-before or segment-start keeps the position, else memrchr back to the last space). Reaches MISMATCH, 147/265 mnemonics shared, first divergence at #2 (frame setup, not the parser).
 // working copy - scaffold materialised by --work
 // size      762 bytes
 // prototype int (__thiscall ?find_line_break_l@Buffer@@QAEHPADPAHH@Z)(Buffer* this, int8*, int*, int)

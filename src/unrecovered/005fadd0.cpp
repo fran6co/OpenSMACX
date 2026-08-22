@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005FADD0 ?init@Menu@@QAEHPAUWin@@@Z 0x005FADD0-0x005FAE69 FILE
-// RULED-OUT: GraphicWin::init declared void per mangled name (QAEX), yet caller tests eax post-call; treated eax as the surviving "scale" local (register-allocated across the call) rather than a fabricated int-returning redeclaration of init. Body compiles, MISMATCH (#0 push/mov, 177 vs 153 bytes) - extra prologue/epilogue shape from locals, not yet chased further.
+// TRIED: GraphicWin::init declared void per mangled name (QAEX), yet caller tests eax post-call; treated eax as the surviving "scale" local (register-allocated across the call) rather than a fabricated int-returning redeclaration of init. Body compiles, MISMATCH (#0 push/mov, 177 vs 153 bytes) - extra prologue/epilogue shape from locals, not yet chased further.
 // working copy - scaffold materialised by --work
 // size      153 bytes
 // prototype int (__thiscall ?init@Menu@@QAEHPAUWin@@@Z)(Menu* this, Win*)

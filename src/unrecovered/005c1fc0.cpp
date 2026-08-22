@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005C1FC0 ?UNK2@Fractal@@QAEHHHH@Z 0x005C1FC0-0x005C2020 FILE
-// RULED-OUT: two UNK1 calls on shifted operands, `(r1*5+r2*2)*7 >> 8` then clamp to [0,100], matching Ghidra; compiles and matches through both calls and the arithmetic, diverges at #14 (lea vs mov) in the final clamp/pop sequence
+// TRIED: two UNK1 calls on shifted operands, `(r1*5+r2*2)*7 >> 8` then clamp to [0,100], matching Ghidra; compiles and matches through both calls and the arithmetic, diverges at #14 (lea vs mov) in the final clamp/pop sequence
 // working copy - scaffold materialised by --work
 // size      96 bytes
 // prototype int (__thiscall ?UNK2@Fractal@@QAEHHHH@Z)(Fractal* this, int, int, int)

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0062D5F0 sub_62d5f0 0x0062D5F0-0x0062D69D FILE
-// RULED-OUT: calling `strcat(dst, src)` by name directly - VC6 recognises it as an intrinsic and inlines it (repne scasb/not/sub), which the original does NOT do (it's a real `call _strcat`). Casting through a `StrcatFn` function-pointer type at the call site defeats the substitution and lifts similarity from 0.78 to 0.855; a local variable holding the same cast changes the prologue's register count instead, no better. MISMATCH #3 'push' vs 'mov' remains open (prologue register allocation).
+// TRIED: calling `strcat(dst, src)` by name directly - VC6 recognises it as an intrinsic and inlines it (repne scasb/not/sub), which the original does NOT do (it's a real `call _strcat`). Casting through a `StrcatFn` function-pointer type at the call site defeats the substitution and lifts similarity from 0.78 to 0.855; a local variable holding the same cast changes the prologue's register count instead, no better. MISMATCH #3 'push' vs 'mov' remains open (prologue register allocation).
 // working copy - scaffold materialised by --work
 // size      173 bytes
 // prototype 

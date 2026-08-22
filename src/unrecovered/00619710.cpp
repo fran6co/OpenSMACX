@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00619710 ?extract@Texture@@QAEHPAUBuffer@@HHHHPAUTexHeap@@@Z 0x00619710-0x006198DE
-// RULED-OUT: the extra locals this body needs (widthMinus1, heightMinus1, stride, etc.) push the prologue to a `sub esp` before the register pushes, so divergence starts at instruction #1 (push vs mov). Landing the closest control-flow-faithful form.
+// TRIED: the extra locals this body needs (widthMinus1, heightMinus1, stride, etc.) push the prologue to a `sub esp` before the register pushes, so divergence starts at instruction #1 (push vs mov). Landing the closest control-flow-faithful form.
 // size      462 bytes
 // prototype int (__thiscall ?extract@Texture@@QAEHPAUBuffer@@HHHHPAUTexHeap@@@Z)(Texture* this, Buffer*, int xCoord, int yCoord, int height, int width, #120*)
 // callers   3   call targets   6

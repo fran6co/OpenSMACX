@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00607B30 ?timer_callback@BaseButton@@QAEXH@Z 0x00607B30-0x00607C29 FILE
-// RULED-OUT: reading the 4 rect fields through a `RECT*` base pointer, and through 4 plain named int locals (Ghidra's own local_10/local_c/local_8/ local_4 shape) - neither recovers the original's single `lea`-then-4-reads codegen; /O2 keeps re-deriving `[esi+0x13c+k]` per read either way. Not reproduced; everything else (branch shape, vtable shim at +0x50, Time start/stop calls) matches.
+// TRIED: reading the 4 rect fields through a `RECT*` base pointer, and through 4 plain named int locals (Ghidra's own local_10/local_c/local_8/ local_4 shape) - neither recovers the original's single `lea`-then-4-reads codegen; /O2 keeps re-deriving `[esi+0x13c+k]` per read either way. Not reproduced; everything else (branch shape, vtable shim at +0x50, Time start/stop calls) matches.
 // size      249 bytes
 // prototype void (__thiscall ?timer_callback@BaseButton@@QAEXH@Z)(BaseButton* this, int)
 // callers   2   call targets   4

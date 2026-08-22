@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00433F70 ?exec@SelectPartWin@@QAEHHHHHHHHHHHPAE@Z 0x00433F70-0x0043446F;0x00653F5A-0x00653F6F FILE
-// RULED-OUT: field-by-field transcription via `char *self` offset casts, following Ghidra's param_1[K] indexing (cross-checked against raw push order for every call - it lined up everywhere it was checked). Reaches MISMATCH #10 ('push' vs 'lea') early in the Buffer::init/Sprite::draw setup; did not chase the local Buffer's exact stack placement or the BoxSpriteParams copy (memcpy stands in for the original's rep movsd) further.
+// TRIED: field-by-field transcription via `char *self` offset casts, following Ghidra's param_1[K] indexing (cross-checked against raw push order for every call - it lined up everywhere it was checked). Reaches MISMATCH #10 ('push' vs 'lea') early in the Buffer::init/Sprite::draw setup; did not chase the local Buffer's exact stack placement or the BoxSpriteParams copy (memcpy stands in for the original's rep movsd) further.
 // working copy - scaffold materialised by --work
 // size      1300 bytes
 // prototype int (__thiscall ?exec@SelectPartWin@@QAEHHHHHHHHHHHPAE@Z)(SelectPartWin* this, int, int, int, int, int, int, int, int, int, int, LPBYTE)

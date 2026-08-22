@@ -53,7 +53,7 @@ Purpose: Close the primary Time member, reset FlatButton orientation state,
 //        0/41 (70 instructions, unrelated indirect calls from the inlined
 //        `Time::close()`) -> 0.557 similar (38 instructions, matching
 //        shape).
-// RULED-OUT: an explicit 9-way unroll of the inner group loop, matching
+// TRIED: an explicit 9-way unroll of the inner group loop, matching
 //            what the CONSTRUCTOR's own identical table copy compiles to
 //            - here it makes things WORSE (80 instructions: the two real
 //            calls ahead of the unrolled block push VC6 to hoist nine
@@ -69,7 +69,7 @@ Purpose: Close the primary Time member, reset FlatButton orientation state,
 //   __cdecl forwarder costs the `push`/`add esp, 4` pair around it (38 -> 36
 //   instructions).
 //   (4) THE DESTINATION IS A WALKING POINTER, and that is what un-blocks the
-//   9-way unroll the RULED-OUT below rejected. `object[(0xAE0 / 4) + g * 3 +
+//   9-way unroll the TRIED below rejected. `object[(0xAE0 / 4) + g * 3 +
 //   index]` gives VC6 one induction variable for nine destinations and nine
 //   `mov reg, <table>; sub reg, esi` differences hoisted before the loop (70-80
 //   instructions). `uint32_t *dest = object + 0xAE0 / 4; ... ++dest;` with the
@@ -80,7 +80,7 @@ Purpose: Close the primary Time member, reset FlatButton orientation state,
 //   is what the image leaves in EAX as pure loop residue; returning
 //   `reinterpret_cast<uintptr_t>(this) + 0xAEC` instead emits a `lea eax,
 //   [esi + 0xaec]` the image does not have (42 -> 41 instructions).
-// RULED-OUT: the residual 13 instructions are ONE strength-reduction choice and
+// TRIED: the residual 13 instructions are ONE strength-reduction choice and
 //   no source form moved it. The image starts its table index at zero
 //   (`xor ecx, ecx`, then `mov edx, [ecx + 0x9b8e44]` nine times at 0xC
 //   strides, `cmp ecx, 0xc; jl`); this tree bases the same induction variable
@@ -151,7 +151,7 @@ Purpose: Destroy a FlatButton by installing its two virtual tables, closing
 //        stays as its own separate method - external call sites
 //        (reportif.cpp, scroll.cpp) reach FlatButton objects through it by
 //        name, outside this pass's file list, so left alone.
-// RULED-OUT: 13/24 plateau - the image's EH-state store (`[ebp-4]=0`)
+// TRIED: 13/24 plateau - the image's EH-state store (`[ebp-4]=0`)
 //            lands AFTER both vtable stores; this body's lands between
 //            them regardless of `volatile` on the vtable-store pointer
 //            (tried both). VC6's own EH-state scheduling around the
@@ -207,12 +207,12 @@ FlatButton *__fastcall flat_button_destructor_redirect(
 
 /*
 // ORIGINAL: 0x00607CF0 ??0FlatButton@@QAE@XZ 0x00607CF0-0x00607D96
-// RULED-OUT: THE NOTES BELOW WERE INVISIBLE UNTIL 2026-08-22. They sat AFTER
+// TRIED: THE NOTES BELOW WERE INVISIBLE UNTIL 2026-08-22. They sat AFTER
 //   this comment block's closing delimiter, so `decomp.reader` never read
 //   them and `frontier.py --untouched` kept offering this body as fresh.
 //   They are
 //   moved inside verbatim; only the placement changed.
-// RULED-OUT: the SEH frame. The image has NO unwind frame here (its flags
+// TRIED: the SEH frame. The image has NO unwind frame here (its flags
 //   carry no `frame`, unlike Popup::Popup() at 0x004048A0 which does). This
 //   tree's compiled body gets one anyway - `push -1 / push handler /
 //   mov eax, fs:[0] / push eax / mov fs:[0], esp` at instruction 0 - plus the
@@ -273,7 +273,7 @@ FlatButton *__fastcall flat_button_destructor_redirect(
 //   project genuinely needs `/GX` elsewhere in this same header's closure,
 //   and turning it off to fix this constructor would regress an existing
 //   claim.
-// RULED-OUT: respelling this body as a `construct()` METHOD - the escape the
+// TRIED: respelling this body as a `construct()` METHOD - the escape the
 //   note above says was "not found". It is found, and it is refused on cost,
 //   not on doctrine: by the brief's own test this body IS a method (it
 //   constructs no bases, it calls `BaseButton::construct`, and it returns
@@ -285,7 +285,7 @@ FlatButton *__fastcall flat_button_destructor_redirect(
 //   stop constructing every one of them and take their claims with it. The
 //   conversion is a coupled edit across eight headers, not a flatbutton.cpp
 //   change.
-// RULED-OUT: the table loop here is byte-for-byte the SAME loop as
+// TRIED: the table loop here is byte-for-byte the SAME loop as
 //   FlatButton::close (0x00607DA0), and the pair of fixes that took THAT one
 //   from 0 to 28 of 41 - a walking `dest` pointer plus the nine group reads
 //   written out - makes THIS one worse: 44 compiled instructions and 1 of 41
@@ -294,7 +294,7 @@ FlatButton *__fastcall flat_button_destructor_redirect(
 //   ahead of the loop have already taken the registers the unrolled form
 //   needs, so VC6 spills instead of unrolling cleanly. The two bodies are not
 //   under the same codegen heuristic once the frame is there - the same
-//   conclusion the RULED-OUT on 0x00607DA0 reached from the other direction.
+//   conclusion the TRIED on 0x00607DA0 reached from the other direction.
 //   Reverted; this body keeps the rolled `for (group)` loop.
 // size      166 bytes
 // prototype void (__thiscall ??0FlatButton@@QAE@XZ)(FlatButton* this)

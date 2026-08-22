@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004ACA90 ?report_projects@@YAXXZ 0x004ACA90-0x004ACADC FILE
-// RULED-OUT: explicit __thiscall function-pointer typedef for the vtable call (C4234); used a member-pointer/union cast instead
+// TRIED: explicit __thiscall function-pointer typedef for the vtable call (C4234); used a member-pointer/union cast instead
 // working copy - scaffold materialised by --work
 // size      76 bytes
 // prototype 

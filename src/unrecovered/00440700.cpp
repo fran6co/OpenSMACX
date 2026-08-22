@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00440700 ?init@DiploPop@@QAEXXZ 0x00440700-0x00440D4B;0x006548F4-0x0065491F FILE
-// RULED-OUT: the SEH __try/__finally frame and its per-object unwind-state byte; the layout arithmetic (0x004407B3-0x00440A21) is transcribed as algebraically-simplified named quantities rather than a literal register-by-register replay, so it matches the VALUES the original computes but not the register shuffling that produces them.
+// TRIED: the SEH __try/__finally frame and its per-object unwind-state byte; the layout arithmetic (0x004407B3-0x00440A21) is transcribed as algebraically-simplified named quantities rather than a literal register-by-register replay, so it matches the VALUES the original computes but not the register shuffling that produces them.
 // working copy - scaffold materialised by --work
 // size      1654 bytes
 // prototype void (__thiscall ?init@DiploPop@@QAEXXZ)(DiploPop* this)

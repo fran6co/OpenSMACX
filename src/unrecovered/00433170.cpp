@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00433170 ?draw_armor@SelectPartWin@@QAEHHPAURECT@@H@Z 0x00433170-0x0043351C FILE
-// RULED-OUT: goto-based literal transliteration of every register move reaches MISMATCH #5 (prologue push order) already; did not chase further register-allocation-driven prologue differences for this 940-byte fn.
+// TRIED: goto-based literal transliteration of every register move reaches MISMATCH #5 (prologue push order) already; did not chase further register-allocation-driven prologue differences for this 940-byte fn.
 // working copy - scaffold materialised by --work
 // size      940 bytes
 // prototype 

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00613BA0 ?prepare_sprites@FileWin@@QAEHXZ 0x00613BA0-0x00613D47;0x00663114-0x00663129 FILE
-// RULED-OUT: plain RAII Buffer local (letting VC6 generate its own SEH/finally scaffolding) instead of hand-written try/finally; diverges at #0, prologue shape
+// TRIED: plain RAII Buffer local (letting VC6 generate its own SEH/finally scaffolding) instead of hand-written try/finally; diverges at #0, prologue shape
 // size      444 bytes
 // prototype int (__thiscall ?prepare_sprites@FileWin@@QAEHXZ)(FileWin* this)
 // callers   1   call targets   5

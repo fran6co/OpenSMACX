@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005D98F0 sub_5d98f0 0x005D98F0-0x005D9BD7 FILE
-// RULED-OUT: plain extern "C" __stdcall(a1,a2,a3) per IDA's guess - landed as Buffer::sub_5d98f0(Buffer *srcBuf, RECT *srcRect, RECT *destRect) __thiscall instead: `this`(edi) drives the same HDC-acquire/refcount pattern as srcBuf, and only srcRect/ destRect are null-checked (srcBuf is checked separately, non-fatally). slot001 is plain VCall (no push, this in ecx); slot017/026 are COM-style (this explicitly pushed as arg 0) despite reusing the same ecx register - frame differs from #3 on, not pursued further given the size of this function.
+// TRIED: plain extern "C" __stdcall(a1,a2,a3) per IDA's guess - landed as Buffer::sub_5d98f0(Buffer *srcBuf, RECT *srcRect, RECT *destRect) __thiscall instead: `this`(edi) drives the same HDC-acquire/refcount pattern as srcBuf, and only srcRect/ destRect are null-checked (srcBuf is checked separately, non-fatally). slot001 is plain VCall (no push, this in ecx); slot017/026 are COM-style (this explicitly pushed as arg 0) despite reusing the same ecx register - frame differs from #3 on, not pursued further given the size of this function.
 // working copy - scaffold materialised by --work
 // size      743 bytes
 // prototype 

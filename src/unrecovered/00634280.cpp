@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00634280 sub_634280 0x00634280-0x00634326 FILE
-// RULED-OUT: `if (dr == 1) { ...; return deflateEnd_real(); } else {...}` flipped je/jne against the original (0.78 sim). `if (dr != 1) {cleanup path} ...; success path falls through` matches polarity (0.95 sim); the remaining diff is a duplicated epilogue the compiler didn't share between the two returns.
+// TRIED: `if (dr == 1) { ...; return deflateEnd_real(); } else {...}` flipped je/jne against the original (0.78 sim). `if (dr != 1) {cleanup path} ...; success path falls through` matches polarity (0.95 sim); the remaining diff is a duplicated epilogue the compiler didn't share between the two returns.
 // working copy - scaffold materialised by --work
 // size      166 bytes
 // prototype 

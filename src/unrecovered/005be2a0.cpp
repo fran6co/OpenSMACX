@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005BE2A0 tech_wizard_unk2 0x005BE2A0-0x005BE378 FILE
-// RULED-OUT: 6-param __cdecl void, if/else matching Ghidra's arithmetic structure gets 0.84 mnemonic similarity but the original saves ebx/esi (push) before the `al&1` test while ours defers it; register-save scheduling around the ternary not matched.
+// TRIED: 6-param __cdecl void, if/else matching Ghidra's arithmetic structure gets 0.84 mnemonic similarity but the original saves ebx/esi (push) before the `al&1` test while ours defers it; register-save scheduling around the ternary not matched.
 // working copy - scaffold materialised by --work
 // size      216 bytes
 // prototype 

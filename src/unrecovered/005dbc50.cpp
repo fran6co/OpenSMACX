@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005DBC50 ?wrap_right@Buffer@@QAEHPAVFont@@PADHHH@Z 0x005DBC50-0x005DBCA9 FILE
-// RULED-OUT: save/swap/restore of the triple at this+0x52c is right (matches Ghidra's field layout and the 4-arg wrap_right overload target); divergence is register-allocation scheduling in the push/pop prologue, not semantics - mnemonic_similarity 0.91, first divergence at insn #0.
+// TRIED: save/swap/restore of the triple at this+0x52c is right (matches Ghidra's field layout and the 4-arg wrap_right overload target); divergence is register-allocation scheduling in the push/pop prologue, not semantics - mnemonic_similarity 0.91, first divergence at insn #0.
 // working copy - scaffold materialised by --work
 // size      89 bytes
 // prototype int (__thiscall ?wrap_right@Buffer@@QAEHPAVFont@@PADHHH@Z)(Buffer* this, Font*, int8*, int, int, int)

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0062D1E0 sub_62d1e0 0x0062D1E0-0x0062D2B1 FILE
-// RULED-OUT: 209 vs 204 bytes; struct-literal field order for the 0x30-byte DrawRegion local drifts the compiler's address-of scheduling (lea moves relative to the field stores) versus the original's register reuse. Tried plain field assigns and an early `DrawRegion *preg = &region;` alias; neither matched.
+// TRIED: 209 vs 204 bytes; struct-literal field order for the 0x30-byte DrawRegion local drifts the compiler's address-of scheduling (lea moves relative to the field stores) versus the original's register reuse. Tried plain field assigns and an early `DrawRegion *preg = &region;` alias; neither matched.
 // working copy - scaffold materialised by --work
 // size      209 bytes
 // prototype 

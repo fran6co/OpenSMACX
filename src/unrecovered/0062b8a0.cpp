@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0062B8A0 ?button_click@ButtonGroup@@QAEHH@Z 0x0062B8A0-0x0062BA77
-// RULED-OUT: the four indirect calls are virtual dispatch (vtable slots 0xf8/0xbc/0xb8, read at runtime from `[obj]` then `[vtable + slot]`), not fixed addresses, so they go through the Dummy member-function-pointer trick with the slot pointer loaded live rather than baked in. The 0xc4 receiver for the two multi-arg calls is `buttons_[0]->win_parent_` (Win, inherited through GraphicWin/BaseButton) - confirmed by field offset, not guessed. Landing the closest control-flow-faithful form (divergence starts at instruction #5, on the loop-guard register choice).
+// TRIED: the four indirect calls are virtual dispatch (vtable slots 0xf8/0xbc/0xb8, read at runtime from `[obj]` then `[vtable + slot]`), not fixed addresses, so they go through the Dummy member-function-pointer trick with the slot pointer loaded live rather than baked in. The 0xc4 receiver for the two multi-arg calls is `buttons_[0]->win_parent_` (Win, inherited through GraphicWin/BaseButton) - confirmed by field offset, not guessed. Landing the closest control-flow-faithful form (divergence starts at instruction #5, on the loop-guard register choice).
 // size      471 bytes
 // prototype int (__thiscall ?button_click@ButtonGroup@@QAEHH@Z)(ButtonGroup* this, int)
 // callers   5   call targets   1

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x006279C0 ?pop_ask_number@@YAHPADHP6AHXZ@Z 0x006279C0-0x00627A8B FILE
-// RULED-OUT: byte-exact - 96.1% mnemonic similarity, same shape as sibling 0x00627B60 (a2 here is the real itoa value, a1 passes straight through to BasePop::start's const char* slot with no cast needed). Same _itoa/_strcat nullary-alias trick to force real calls instead of intrinsic expansion.
+// TRIED: byte-exact - 96.1% mnemonic similarity, same shape as sibling 0x00627B60 (a2 here is the real itoa value, a1 passes straight through to BasePop::start's const char* slot with no cast needed). Same _itoa/_strcat nullary-alias trick to force real calls instead of intrinsic expansion.
 // working copy - scaffold materialised by --work
 // size      203 bytes
 // prototype int (__cdecl ?pop_ask_number@@YAHPADHP6AHXZ@Z)(int8* sectionID, int, int (__cdecl *)())

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00629210 ?close@StringBox@@QAEXXZ 0x00629210-0x006292C9 FILE
-// RULED-OUT: byte-exact - the scaffold's nullary VCall shim adds an extra vtable dereference the original doesn't have (mgr itself IS the raw table, call [edx+4] with no leading [edx] read); a member-function-pointer/union shim avoids that but still spills extra locals VC6 didn't need (220 vs 185 bytes rebuilt).
+// TRIED: byte-exact - the scaffold's nullary VCall shim adds an extra vtable dereference the original doesn't have (mgr itself IS the raw table, call [edx+4] with no leading [edx] read); a member-function-pointer/union shim avoids that but still spills extra locals VC6 didn't need (220 vs 185 bytes rebuilt).
 // working copy - scaffold materialised by --work
 // size      185 bytes
 // prototype void (__thiscall ?close@StringBox@@QAEXXZ)(StringBox* this)

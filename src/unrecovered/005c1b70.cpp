@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005C1B70 ?veh_ready@@YAHH@Z 0x005C1B70-0x005C1C38 FILE
-// RULED-OUT: separate 'if (cond) return 0;' per check duplicated the epilogue (245 vs 200 bytes); combined into nested && conditions sharing one trailing `return 0` (lever: single-exit chain). extern char[] base for the runtime a1*0x34 struct index. MISMATCH from #9: the a1*0x34 multiply still lowers via a different instruction chain than the original's lea/lea/shl
+// TRIED: separate 'if (cond) return 0;' per check duplicated the epilogue (245 vs 200 bytes); combined into nested && conditions sharing one trailing `return 0` (lever: single-exit chain). extern char[] base for the runtime a1*0x34 struct index. MISMATCH from #9: the a1*0x34 multiply still lowers via a different instruction chain than the original's lea/lea/shl
 // working copy - scaffold materialised by --work
 // size      200 bytes
 // prototype int (__cdecl ?veh_ready@@YAHH@Z)(int vehID)

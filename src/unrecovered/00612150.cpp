@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00612150 ?calculate_dimensions@EditGroup@@QAEHXZ 0x00612150-0x0061244A FILE
-// RULED-OUT: MISMATCH #1 push/mov - re-deriving the vbtable-offset macros at every access (matching the original's frequent [esi] re-fetch) gave the allocator no reason to keep `this` pinned in esi or the 0 constant pinned in ebp across the body.
+// TRIED: MISMATCH #1 push/mov - re-deriving the vbtable-offset macros at every access (matching the original's frequent [esi] re-fetch) gave the allocator no reason to keep `this` pinned in esi or the 0 constant pinned in ebp across the body.
 // working copy - scaffold materialised by --work
 // size      762 bytes
 // prototype int (__thiscall ?calculate_dimensions@EditGroup@@QAEHXZ)(EditGroup* this)

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0060D750 ?draw_item@RadioButton@@QAEXHH@Z 0x0060D750-0x0060DE08 FILE
-// RULED-OUT: full register-level transliteration (RD macro + eax/ebx/ecx/edx/edi/ebp locals, goto for shared tails); compiles and matches control flow through the vbtable-offset chases, StringStruct/Dialog/Buffer/Sprite/Win member calls, but MISMATCH #5 (prologue register order) not chased further.
+// TRIED: full register-level transliteration (RD macro + eax/ebx/ecx/edx/edi/ebp locals, goto for shared tails); compiles and matches control flow through the vbtable-offset chases, StringStruct/Dialog/Buffer/Sprite/Win member calls, but MISMATCH #5 (prologue register order) not chased further.
 // working copy - scaffold materialised by --work
 // size      1720 bytes
 // prototype void (__thiscall ?draw_item@RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)

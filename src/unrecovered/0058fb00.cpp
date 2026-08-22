@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0058FB00 ?get_pact_hood@@YAPADHH@Z 0x0058FB00-0x0058FB61 FILE
-// RULED-OUT: short-circuit || skipping a2's lookup on a1's failing, matching the disassembly's early je; g_009b90f8 held as int** (a slot)
+// TRIED: short-circuit || skipping a2's lookup on a1's failing, matching the disassembly's early je; g_009b90f8 held as int** (a slot)
 // working copy - scaffold materialised by --work
 // size      97 bytes
 // prototype 

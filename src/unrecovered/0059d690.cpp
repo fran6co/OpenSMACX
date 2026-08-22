@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0059D690 ?popm@@YAHPADHHP6AHXZ@Z 0x0059D690-0x0059D971;0x006612E8-0x006613D0 FILE
-// RULED-OUT: same recipe as popv (0x0048C360): Popup popup; PullDown pulldown; real locals for the SEH/alloca lever, PopMenu::exec cast through &popup, raw ebp-relative reinterpret_cast for the ~20 close/dtor calls. MISMATCH #18 remains; not chased further.
+// TRIED: same recipe as popv (0x0048C360): Popup popup; PullDown pulldown; real locals for the SEH/alloca lever, PopMenu::exec cast through &popup, raw ebp-relative reinterpret_cast for the ~20 close/dtor calls. MISMATCH #18 remains; not chased further.
 // working copy - scaffold materialised by --work
 // size      969 bytes
 // prototype 

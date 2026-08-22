@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00620A10 sub_620a10 0x00620A10-0x006212A4 FILE
-// UNRECOVERABLE (partial): this is a fixed-point/FPU-dual-mode affine
+// TRIED (partial): this is a fixed-point/FPU-dual-mode affine
 //   texture-mapping scanline rasterizer. The two inner pixel loops
 //   (0x620EA1-0x620ECA and 0x621102-0x621197) pack a running fixed-point
 //   accumulator's carry-out (from a 32-bit `add`) into an unrelated 8-bit
@@ -13,7 +13,7 @@
 //   real min/max vertex scan loop, the two Texture::setup_edge calls with
 //   real arguments, the field_6c_ float-vs-integer mode branch, and the
 //   Buffer::get_data/free_data cleanup - all cross-checked against the raw
-//   disassembly. The two DDA loop bodies are placeholders (RULED-OUT) that
+//   disassembly. The two DDA loop bodies are placeholders (TRIED) that
 //   compile but do not reproduce the pixel math.
 // working copy - scaffold materialised by --work
 // size      2196 bytes
@@ -1590,7 +1590,7 @@ int RasterSrc::method(Buffer *bufParam, int vertsParam, int countParam, int a4, 
                 /* Floating-point interpolation path (fld1/fdivr driven slope
                    setup, then a per-scanline byte-blit DDA loop). The exact
                    fixed-point/carry-chained pixel loop is not reproduced
-                   here bit-for-bit - see RULED-OUT. */
+                   here bit-for-bit - see TRIED. */
                 int scan = 0;
                 while (*g_009bb508 < *g_009bb538) {
                     scan++;

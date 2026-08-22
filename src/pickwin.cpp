@@ -29,7 +29,7 @@ const uint32_t PickWinBufferVtable = 0x0066D134;
 
 /*
 // ORIGINAL: 0x0048AC10 ??0PickWin@@QAE@XZ 0x0048AC10-0x0048ADB6;0x00657E30-0x00657F65
-// RULED-OUT: deriving from ConstructedGraphicWin (graphicwin.h) to move the
+// TRIED: deriving from ConstructedGraphicWin (graphicwin.h) to move the
 //   base construction ahead of the members. The ORDER IS RIGHT - this image
 //   really does `call 0x5d4cf0` before its first `lea ecx, [esi + N]`, checked
 //   2026-08-22 - but making the source agree took this body 21 -> 16
@@ -39,7 +39,7 @@ const uint32_t PickWinBufferVtable = 0x0066D134;
 //   these constants already fold, and this body is structurally far off
 //   (134 compiled against 101). Re-derive the ordering fix as part
 //   of a dedicated pass on the whole body, not on its own.
-// RULED-OUT: register allocation - the SEH prologue agrees (7/7) then the
+// TRIED: register allocation - the SEH prologue agrees (7/7) then the
 //            compiled body reserves an extra `sub esp, 8` and an extra
 //            callee-save (ebx) the image does not; the image keeps `this` in
 //            ecx/a stack slot with less spill pressure. MISMATCH, 16/101

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005401A0 ?buy_tech@@YAHHHHHH@Z 0x005401A0-0x00540626 FILE
-// RULED-OUT: direct transcription of the Ghidra decompile (tech-cost computation, string message build via say_tech/parse_says/ parse_num/strcat, X_pops purchase gate, energy/tech transfer with Console/NetDaemon dispatch); diverges at insn #5 in the prologue register-save order, not in control flow
+// TRIED: direct transcription of the Ghidra decompile (tech-cost computation, string message build via say_tech/parse_says/ parse_num/strcat, X_pops purchase gate, energy/tech transfer with Console/NetDaemon dispatch); diverges at insn #5 in the prologue register-save order, not in control flow
 // working copy - scaffold materialised by --work
 // size      1158 bytes
 // prototype 

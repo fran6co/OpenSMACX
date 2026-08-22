@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00638430 sub_638430 0x00638430-0x006385CD
-// RULED-OUT: teardown - frees five plain pointer fields (0xc/0x10/0x14/ 0x18/0x1c), three arrays of small structs at 0x28/0x2c/0x30/ 0x34 sized by a shared count field at 0x24, then the object itself through the free callback at g_009c0b84. Diverges at #6 - the original re-reads each array-base field inside the loop rather than caching it once; landed at 0.64 similarity.
+// TRIED: teardown - frees five plain pointer fields (0xc/0x10/0x14/ 0x18/0x1c), three arrays of small structs at 0x28/0x2c/0x30/ 0x34 sized by a shared count field at 0x24, then the object itself through the free callback at g_009c0b84. Diverges at #6 - the original re-reads each array-base field inside the loop rather than caching it once; landed at 0.64 similarity.
 // size      413 bytes
 // prototype
 // callers   2   call targets   0

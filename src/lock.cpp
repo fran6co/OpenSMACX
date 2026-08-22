@@ -103,7 +103,7 @@ Purpose: Report whether any lock is engaged. The trailing dword at 0xE0 forces
 // LEVER: `second_byte` read via a byte pointer into `mask` (not
 //        `(mask >> 8) & 0xFF`) is what lets VC6 test it as `bh` with no
 //        shift, matching the image's `test al, bh` exactly.
-// RULED-OUT: the one remaining byte - image's inner-loop test is
+// TRIED: the one remaining byte - image's inner-loop test is
 //        `test eax, edi` (85 F8), this tree compiles the same bits as
 //        `test edi, eax` (85 C7), same flags, different ModRM. Tried
 //        swapping `&` operand order both ways (`bit & low_byte` and
@@ -322,7 +322,7 @@ Purpose: Lock both of a slot's square entries in one call. Refuses when another
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x0052DBA0 0x0058FD90 0x0058FE80 0x00592EE0
-// RULED-OUT: the whole-function shape - this catalogue's `frame` flag is
+// TRIED: the whole-function shape - this catalogue's `frame` flag is
 //        real (image opens `push ebp; mov ebp, esp` and addresses every
 //        one of its 7 stack parameters `[ebp+N]`, reusing the dead `flags`
 //        parameter slot at `[ebp+8]` for TWO further unrelated locals -

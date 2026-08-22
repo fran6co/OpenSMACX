@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00494700 ?exec@ProdPicker@@QAEHPAUBase@@HPAUGraphicWin@@H@Z 0x00494700-0x0049515F;0x00658C1E-0x00658C3E FILE
-// RULED-OUT: faithful field/call transcription (two local Buffer RAII objects, real BaseButton/Scroll/Caviar calls) diverges at instr #14 (lea vs xor), early prologue-area register choice; not chased further given the 2687-byte SEH-frame scope.
+// TRIED: faithful field/call transcription (two local Buffer RAII objects, real BaseButton/Scroll/Caviar calls) diverges at instr #14 (lea vs xor), early prologue-area register choice; not chased further given the 2687-byte SEH-frame scope.
 // working copy - scaffold materialised by --work
 // size      2687 bytes
 // prototype int (__thiscall ?exec@ProdPicker@@QAEHPAUBase@@HPAUGraphicWin@@H@Z)(ProdPicker* this, Base*, int, GraphicWin*, int)

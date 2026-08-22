@@ -1,6 +1,6 @@
 // ORIGINAL: 0x00505D80 ?battle_kill@@YAHHPAHPAHPAHHH@Z 0x00505D80-0x0050612A FILE
-// RULED-OUT: unit records are 0x34 bytes (0x952800 area); byte-offset casts on the declared g_* globals reproduce the (bVar1*0x20cc+sVar3)-style table indexing and the terrain-base indirection through g_0094a30c/g_0068faf0.
-// RULED-OUT: nothing further tried; MISMATCH #8 (xor vs lea, likely a zeroed- register-reuse difference like 0x00532570), similarity 0.86.
+// TRIED: unit records are 0x34 bytes (0x952800 area); byte-offset casts on the declared g_* globals reproduce the (bVar1*0x20cc+sVar3)-style table indexing and the terrain-base indirection through g_0094a30c/g_0068faf0.
+// TRIED: nothing further tried; MISMATCH #8 (xor vs lea, likely a zeroed- register-reuse difference like 0x00532570), similarity 0.86.
 // working copy - scaffold materialised by --work
 // size      938 bytes
 // prototype int (__cdecl ?battle_kill@@YAHHPAHPAHPAHHH@Z)(int vehID1, int*, int*, int*, int vehID2, int)

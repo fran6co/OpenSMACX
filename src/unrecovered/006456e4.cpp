@@ -1,5 +1,5 @@
 // ORIGINAL: 0x006456E4 ??_M@YGXPAXIHP6EX0@Z@Z 0x006456E4-0x00645764 FILE
-// RULED-OUT: explicit __thiscall keyword on a free-function-pointer typedef (C4234 reserved keyword); use a member-function-pointer/union shim instead. MISMATCH #12 'and' vs 'mov' remains open.
+// TRIED: explicit __thiscall keyword on a free-function-pointer typedef (C4234 reserved keyword); use a member-function-pointer/union shim instead. MISMATCH #12 'and' vs 'mov' remains open.
 // working copy - scaffold materialised by --work
 // size      128 bytes
 // prototype void (__stdcall ??_M@YGXPAXIHP6EX0@Z@Z)(void*, unsigned int size, int count, void (__thiscall *)(void*))

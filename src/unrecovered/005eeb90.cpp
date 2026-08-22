@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005EEB90 ?key_down_event@Win@@QAEHH@Z 0x005EEB90-0x005EEDB9 FILE
-// RULED-OUT: ebx used as a single dual-purpose local (focus ptr, then the 0x430-hook return accumulator, matching the real register reuse and the leading `xor ebx,ebx`) got closest (#5/xor vs test); hoisting it before the 0x98/0x9c early-return check regressed prologue push order (#4) so it stayed after that check.
+// TRIED: ebx used as a single dual-purpose local (focus ptr, then the 0x430-hook return accumulator, matching the real register reuse and the leading `xor ebx,ebx`) got closest (#5/xor vs test); hoisting it before the 0x98/0x9c early-return check regressed prologue push order (#4) so it stayed after that check.
 // working copy - scaffold materialised by --work
 // size      553 bytes
 // prototype int (__thiscall ?key_down_event@Win@@QAEHH@Z)(Win* this, int)

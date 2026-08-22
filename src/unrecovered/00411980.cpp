@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00411980 ?draw_energy_alloc@BaseWin@@QAEXH@Z 0x00411980-0x00412A96;0x00651B4C-0x00651B61 FILE
-// RULED-OUT: heavily time-boxed given batch budget - only the local Font construction, the initial set_clip, Font::init and set_font calls are transcribed (MISMATCH #11, well past the prologue); the bar-chart body (many box_sprite calls with per-slider RECT arithmetic and a faction colour table) is a deliberate stub, not fabricated.
+// TRIED: heavily time-boxed given batch budget - only the local Font construction, the initial set_clip, Font::init and set_font calls are transcribed (MISMATCH #11, well past the prologue); the bar-chart body (many box_sprite calls with per-slider RECT arithmetic and a faction colour table) is a deliberate stub, not fabricated.
 // working copy - scaffold materialised by --work
 // size      4395 bytes
 // prototype void (__thiscall ?draw_energy_alloc@BaseWin@@QAEXH@Z)(BaseWin* this, int)
@@ -1956,6 +1956,6 @@ void BaseWin::draw_energy_alloc(int a1) {
     // calls, per-slider RECT arithmetic driven by the current
     // allocation at self+0x474+0xc..0x474+0x30-ish, and a faction
     // colour-table lookup (stride 0x59c) - not transcribed beyond the
-    // clip/font setup above. See the RULED-OUT note.
+    // clip/font setup above. See the TRIED note.
     (void)a1;
 }

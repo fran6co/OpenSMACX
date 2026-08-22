@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00534400 ?process_message@NetDaemon@@QAEXPADKH@Z 0x00534400-0x005388B9;0x0065E0C2-0x0065E442 FILE
-// RULED-OUT: no Ghidra hypothesis was available for this one (raw asm only). The real dispatcher spans ~67 distinct message-type case bodies across several chained range checks up to type 0x1300+; only the first band (0xF05-0xF0F, 11 cases) and the shared default "fixup_message + send_message" forwarding path (the target of the large majority of jump-table slots) were read from the disassembly and modelled. Everything above type 0x1101 is unimplemented.
+// TRIED: no Ghidra hypothesis was available for this one (raw asm only). The real dispatcher spans ~67 distinct message-type case bodies across several chained range checks up to type 0x1300+; only the first band (0xF05-0xF0F, 11 cases) and the shared default "fixup_message + send_message" forwarding path (the target of the large majority of jump-table slots) were read from the disassembly and modelled. Everything above type 0x1101 is unimplemented.
 // working copy - scaffold materialised by --work
 // size      18489 bytes
 // prototype void (__thiscall ?process_message@NetDaemon@@QAEXPADKH@Z)(NetDaemon* this, MessageFactionData*, unsigned int, int)
@@ -3167,7 +3167,7 @@ void NetDaemon::process_message(char * a1, unsigned long a2, int a3) {
     // First dispatch band: message types 0xF05-0xF0F. Bodies below are a
     // faithful-shape but incomplete reading of what is a much larger
     // (roughly 67-case) dispatcher spanning the rest of the type space;
-    // see the RULED-OUT note on the file header.
+    // see the TRIED note on the file header.
     if (type <= 0x1101) {
         if (type == 0x1101) {
             // TODO: 0x53624a - not reconstructed (schedule/ready-state update).

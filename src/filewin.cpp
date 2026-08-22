@@ -38,7 +38,7 @@ Purpose: Compose a FileWin from four member subobjects (two FlatButtons, an
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     0x00607CF0 0x00609DB0 0x00614E50 0x00645470
-// RULED-OUT: MEASURED 8/42 agreeing - the SEH prologue itself matches
+// TRIED: MEASURED 8/42 agreeing - the SEH prologue itself matches
 //            (`push -1/handler; mov eax,fs:[0]; push eax; mov fs:[0],esp`,
 //            instructions 0-6 all agree), so this is NOT the CheckBox/
 //            EditGroup family's esp-vs-ebp divergence. The first mismatch is
@@ -94,7 +94,7 @@ Purpose: Tear down a FileWin: close it, then destroy the ListBox, EditBox and
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005D4DD0 0x00607040 0x00607DA0 0x00608E10 0x00609EC0 0x00613900 0x00614F30 0x00616200
-// RULED-OUT: MEASURED 14/62 agreeing with named members - better than the
+// TRIED: MEASURED 14/62 agreeing with named members - better than the
 //            preserved artifact's raw-offset form (src/recovered/units/
 //            00407f00.cpp, since deleted, reported divergence 1 against a
 //            DIFFERENT flag set/scaffold). First mismatch is again register

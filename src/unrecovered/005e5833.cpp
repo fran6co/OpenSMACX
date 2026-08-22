@@ -5,7 +5,7 @@
 // them. Byte-exactness is NOT reachable from C++ here; the honest ceiling is
 // semantic equivalence, and the answer is NOT `__asm`.
 // Found by `tools/handwritten_asm.py`.
-// RULED-OUT: hand-unrolled Duff's device (three variants: 1:1 shrink, table-driven shrink, four-orientation expand) reached through a computed jump (`lea reg,[label]; jmp reg` / `jmp dword ptr [global]`) with EBP/EBX repurposed as data pointers mid-function - no C source form reaches this (a switch-based Duff's device still emits direct per-case branches). Setup/validation/dispatch transcribed faithfully; the three copy loops are a plain non-matching approximation. MISMATCH at #8 (validation block, cmp vs test).
+// TRIED: hand-unrolled Duff's device (three variants: 1:1 shrink, table-driven shrink, four-orientation expand) reached through a computed jump (`lea reg,[label]; jmp reg` / `jmp dword ptr [global]`) with EBP/EBX repurposed as data pointers mid-function - no C source form reaches this (a switch-based Duff's device still emits direct per-case branches). Setup/validation/dispatch transcribed faithfully; the three copy loops are a plain non-matching approximation. MISMATCH at #8 (validation block, cmp vs test).
 // working copy - scaffold materialised by --work
 // size      3615 bytes
 // prototype int (__thiscall ?draw_dest@Sprite@@QAEHPAUBuffer@@HHHPAE@Z)(Sprite* this, Buffer*, int, int, int, unsigned int8*)

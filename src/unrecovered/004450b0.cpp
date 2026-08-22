@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004450B0 sub_4450b0 0x004450B0-0x0044511C FILE
-// RULED-OUT: plain constructor with raw pointer-offset writes (eax=ecx=this, returns this implicitly). Diverges at instr #2: original pushes ecx for a compiler-generated [ebp-4] unwind-context local (a partially-constructed-object marker) that a plain non-throwing body never allocates.
+// TRIED: plain constructor with raw pointer-offset writes (eax=ecx=this, returns this implicitly). Diverges at instr #2: original pushes ecx for a compiler-generated [ebp-4] unwind-context local (a partially-constructed-object marker) that a plain non-throwing body never allocates.
 // working copy - scaffold materialised by --work
 // size      108 bytes
 // prototype 

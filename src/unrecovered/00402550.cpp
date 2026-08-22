@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00402550 SpriteStruct::add 0x00402550-0x00402963 FILE
-// RULED-OUT: fallback __stdcall(int) signature - disasm has `mov esi,ecx` in the prologue (this-in-ecx), matched as __thiscall SpriteStruct::add per the ServiceStruct::add sibling shape; diverges at insn #7, same prologue-order divergence as 0x00401760
+// TRIED: fallback __stdcall(int) signature - disasm has `mov esi,ecx` in the prologue (this-in-ecx), matched as __thiscall SpriteStruct::add per the ServiceStruct::add sibling shape; diverges at insn #7, same prologue-order divergence as 0x00401760
 // working copy - scaffold materialised by --work
 // size      1043 bytes
 // prototype 

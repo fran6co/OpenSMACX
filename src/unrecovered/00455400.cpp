@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00455400 ?load_cycling@@YAXXZ 0x00455400-0x004554C0 FILE
-// RULED-OUT: nothing ruled out; landed at MISMATCH #50 (deep, near the second text_open/do-while), for-loop + do-while over text_get/text_item_number, Palette::init_cycle/start_cycle on the fixed g_0094c590 object
+// TRIED: nothing ruled out; landed at MISMATCH #50 (deep, near the second text_open/do-while), for-loop + do-while over text_get/text_item_number, Palette::init_cycle/start_cycle on the fixed g_0094c590 object
 // working copy - scaffold materialised by --work
 // size      192 bytes
 // prototype 

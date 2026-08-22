@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005DE1D0 ?wrap_flying_flush@Buffer@@QAEHXZ 0x005DE1D0-0x005DE2DE
-// RULED-OUT: the `_strlen` no-arg-extern lever (0x006141C0) moved the divergence from instruction 0 to instruction 5. The original reads `g_009b3a90`/`g_009b3a94` into ebx/ebp up front, before the text/font-metric checks that guard the call using them; this source form evaluates them only at the call site, which is a hoisting choice VC6 made differently. Not chased further.
+// TRIED: the `_strlen` no-arg-extern lever (0x006141C0) moved the divergence from instruction 0 to instruction 5. The original reads `g_009b3a90`/`g_009b3a94` into ebx/ebp up front, before the text/font-metric checks that guard the call using them; this source form evaluates them only at the call site, which is a hoisting choice VC6 made differently. Not chased further.
 // size      270 bytes
 // prototype int (__thiscall ?wrap_flying_flush@Buffer@@QAEHXZ)(Buffer* this)
 // callers   3   call targets   2

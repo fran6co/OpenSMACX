@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00488690 ??1PickTech@@QAE@XZ 0x00488690-0x0048873F;0x00657C20-0x00657C6A FILE
-// RULED-OUT: same class as 0x00484AC0 (PickTech's ctor, already landed MISMATCH #1) - the scaffold's PickTech is opaque (no real GraphicWin/Font subobjects), so explicit `->close()`/`->~Font()`/`->~GraphicWin()` calls reproduce the CALL SEQUENCE but not the `push -1/push handler/mov fs:[0]` SEH-unwind prologue, which only a compiler-recognised subobject with a non-trivial destructor would trigger. Field-store order (vtables first, then the four zeroed fields, matches disassembly) is otherwise exact.
+// TRIED: same class as 0x00484AC0 (PickTech's ctor, already landed MISMATCH #1) - the scaffold's PickTech is opaque (no real GraphicWin/Font subobjects), so explicit `->close()`/`->~Font()`/`->~GraphicWin()` calls reproduce the CALL SEQUENCE but not the `push -1/push handler/mov fs:[0]` SEH-unwind prologue, which only a compiler-recognised subobject with a non-trivial destructor would trigger. Field-store order (vtables first, then the four zeroed fields, matches disassembly) is otherwise exact.
 // size      249 bytes
 // prototype void (__thiscall ??1PickTech@@QAE@XZ)(PickTech* this)
 // callers   1   call targets   3

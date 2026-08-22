@@ -44,11 +44,11 @@ def stamped(record: DecompilationState, verdict: AsmComparison,
 
     THE LESSONS FOLLOW TOO, because the grammar admits each on exactly one
     kind of body. A `LEVER:` records the spelling that MADE a match, so it
-    is a statement about a body that matches; a `RULED-OUT:` records a
+    is a statement about a body that matches; a `TRIED:` records a
     spelling that did not, so it is a statement about one that does not. A
-    body that stops matching turns its levers into ruled-out spellings -
+    body that stops matching turns its levers into tried spellings -
     they are still true, they simply stopped being the thing that worked -
-    and a body that starts matching drops its ruled-out list, which the
+    and a body that starts matching drops its tried list, which the
     match has refuted wholesale.
     """
     matched = verdict.verdict is Tier.BYTE_EXACT
@@ -69,7 +69,7 @@ def stamped(record: DecompilationState, verdict: AsmComparison,
         # of the tree's 248 lever lines sit on bodies that do not reproduce,
         # so this is what the tree actually does, whatever the grammar above
         # says a lever is for. Converting them here turned every one into a
-        # `RULED-OUT` reading "this does not work" the first time anyone ran
+        # `TRIED` reading "this does not work" the first time anyone ran
         # `record` on the body: the exact reverse of what was measured. One of
         # them recorded 4/36 -> 22/36.
         return replace(record, byte_exact=False)

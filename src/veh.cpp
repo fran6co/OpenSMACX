@@ -48,7 +48,7 @@ Purpose: Generate an output string for the specified unit's morale.
 // ORIGINAL: 0x004B3FD0 ?say_morale@@YAXPADHH@Z 0x004B3FD0-0x004B43BF
 // LEVER: std::string -> strcat, matching the say_stats family (calls went
 //        from 16, mostly basic_string internals, to 10; strcat count now
-//        exactly 7, matching the image). RULED-OUT: crèche/brood-pit was
+//        exactly 7, matching the image). TRIED: crèche/brood-pit was
 //        already the correct asymmetric if/else-if here, unlike
 //        get_basic_offense - no change needed.
 // LEVER: the ternary feeding the first strcat's `Strings::get()` argument
@@ -57,7 +57,7 @@ Purpose: Generate an output string for the specified unit's morale.
 //        let the compiler merge them to 1. call_diff went from 10 (image 14)
 //        to 11; best flag set's exact-instruction count nearly doubled,
 //        13/313 -> 26/313 at /O2 /GR- /Oy- /GX.
-// RULED-OUT: `bitmask_call` forwarder for the crèche/brood-pit
+// TRIED: `bitmask_call` forwarder for the crèche/brood-pit
 //        `has_fac_built()` sites (general.h, the same lever that helped
 //        base.cpp's pop_goal) - tried on the sibling morale_veh (0x5C0E40)
 //        first and reverted there, similarity fell at every flag set; not
@@ -441,8 +441,8 @@ int __cdecl defense_value(int faction_id, int x, int y, int veh_id_def,
 /*
 Purpose: Calculate the lifecycle (morale) of the specified native life unit.
 // ORIGINAL: 0x00501350 ?morale_alien@@YAHHH@Z 0x00501350-0x005014F1
-// RULED-OUT: still MISMATCH (~0.72 similar, up from ~0.46) - most of the remaining divergence is register allocation the compiler picked differently around the atrocities/veh-flags block and the two `range()` call sites, which every flag set tried left in place.
-// RULED-OUT: source had the Fungal Tower special case as the OUTER `if`, guarded by `veh_id >= 0`, with the turn-ladder as its `else` - the image runs the turn-ladder/atrocities/veh-flags computation FIRST, UNCONDITIONALLY, then reads `Vehs[veh_id].x/.y/.proto_id` with NO veh_id guard (an out-of-bounds `Vehs[-1]` read - reproduced deliberately, see the BUG comment at the site) and only THEN branches on proto_id, overwriting `morale` if it is the Fungal Tower. Each branch ends in its OWN `return range(morale, 0, 6);` (not a shared tail after the `if`) - `int x`/`int y` locals (not `int16_t`) match the image's `movsx` at the point of assignment.
+// TRIED: still MISMATCH (~0.72 similar, up from ~0.46) - most of the remaining divergence is register allocation the compiler picked differently around the atrocities/veh-flags block and the two `range()` call sites, which every flag set tried left in place.
+// TRIED: source had the Fungal Tower special case as the OUTER `if`, guarded by `veh_id >= 0`, with the turn-ladder as its `else` - the image runs the turn-ladder/atrocities/veh-flags computation FIRST, UNCONDITIONALLY, then reads `Vehs[veh_id].x/.y/.proto_id` with NO veh_id guard (an out-of-bounds `Vehs[-1]` read - reproduced deliberately, see the BUG comment at the site) and only THEN branches on proto_id, overwriting `morale` if it is the Fungal Tower. Each branch ends in its OWN `return range(morale, 0, 6);` (not a shared tail after the `if`) - `int x`/`int y` locals (not `int16_t`) match the image's `movsx` at the point of assignment.
 // symbol    ?morale_alien@@YAIHH@Z
 // size      417 bytes
 // prototype int (__cdecl ?morale_alien@@YAHHH@Z)(int vehID, int factionIDvsNative)
@@ -783,7 +783,7 @@ Purpose: Calculate the battle outcome between two units.
 //        strcpy (0x00645460) and strcat (0x00645470), and add_bat copies what
 //        it is handed - and the frame is gone: the prologue now agrees and the
 //        compiled body drops from 2,290 instructions to 2,160.
-// RULED-OUT: BYTE_EXACT, on budget rather than on a wall. 2,811 image
+// TRIED: BYTE_EXACT, on budget rather than on a wall. 2,811 image
 //        instructions against 2,160 compiled - 651 SHORT, meaning whole
 //        blocks of the image are inlined work this tree still calls out to or
 //        does not do - at 0.037 similarity, the best of all ten flag sets, and
@@ -1389,7 +1389,7 @@ uint32_t __cdecl best_defender(int veh_id_def, int veh_id_atk, BOOL check_artill
 Purpose: Determine whether any enemy naval transports are carrying land units within range to 
          attack the specified base. If so, set the units to move towards the base.
 // ORIGINAL: 0x00506490 ?invasions@@YAXH@Z 0x00506490-0x00506646
-// RULED-OUT: call structure already matches exactly - `osmx calls --all`
+// TRIED: call structure already matches exactly - `osmx calls --all`
 //            lists veh_cargo, stack_check, four abs() (vector_dist/x_dist
 //            inlined) and speed, in the image's own order, so vector_dist's
 //            4-arg overload IS inlining here despite being declared plain
@@ -1475,7 +1475,7 @@ static inline int course_xrange(int x) {
 Purpose: Send the unit toward the given tile the long way round - by water - choosing the anchorage
          next to it that fronts the most of the destination's own landmass.
 // ORIGINAL: 0x00564890 ?set_course@@YAXHDHH@Z 0x00564890-0x00564B82
-// RULED-OUT: call structure already matches (`osmx calls --all` lists only
+// TRIED: call structure already matches (`osmx calls --all` lists only
 //            base_at and base_on_sea, same as the image's own `calls` list),
 //            so the gap is register/control-flow noise across a 754-byte,
 //            21-candidate scoring loop, not a missing inline or a wrong
@@ -1677,8 +1677,8 @@ BOOL __cdecl want_monolith(int veh_id) {
 /*
 Purpose: Calculate the armor strategy for the specified armor id.
 // ORIGINAL: 0x0057D270 ?arm_strat@@YAHHH@Z 0x0057D270-0x0057D2D5
-// RULED-OUT: still 0.987 similar, one instruction short of exact - the image folds `armor_id*16 + 0x94F280` into `shl eax,4` plus a displaced `mov`; this tree pre-adds the base (`add eax,0x94F28` then `shl eax,4`) under every flag set tried. `(Armor+armor_id)->defense_rating`, a local `RulesArmor *`, and explicit pointer-arithmetic-plus-cast all produced the identical extra `add`.
-// RULED-OUT: defense_rating` (not `int`) matches the image's lazy sign-extension - it tests the byte directly and only does `movsx eax, al` right before the final return; casting both `Rules->psi_combat_ratio_*` operands to `(int)` at the call site gets the `idiv`/`cdq` the image uses instead of unsigned `div` (both fields are `uint32_t` in the header, out of scope for this file).
+// TRIED: still 0.987 similar, one instruction short of exact - the image folds `armor_id*16 + 0x94F280` into `shl eax,4` plus a displaced `mov`; this tree pre-adds the base (`add eax,0x94F28` then `shl eax,4`) under every flag set tried. `(Armor+armor_id)->defense_rating`, a local `RulesArmor *`, and explicit pointer-arithmetic-plus-cast all produced the identical extra `add`.
+// TRIED: defense_rating` (not `int`) matches the image's lazy sign-extension - it tests the byte directly and only does `movsx eax, al` right before the final return; casting both `Rules->psi_combat_ratio_*` operands to `(int)` at the call site gets the `idiv`/`cdq` the image uses instead of unsigned `div` (both fields are `uint32_t` in the header, out of scope for this file).
 // size      101 bytes
 // prototype int (__cdecl ?arm_strat@@YAHHH@Z)(int armorID, int factionID)
 // callers   7   call targets   1
@@ -1785,7 +1785,7 @@ Purpose: Calculate the armor value for the specified armor id.
 // LEVER: WRONG CALLEE - arm_strat() (0x0057D270, own out-of-line function)
 //        is hand-inlined at this site, matching the image's one call
 //        (psi_factor), not arm_strat. Best similarity 0.980 (14->44 of 48).
-// RULED-OUT: the residual 2-instruction gap is the SAME `Armor[armor_id]
+// TRIED: the residual 2-instruction gap is the SAME `Armor[armor_id]
 //        .defense_rating` base-fold quirk already documented and left as-is
 //        on arm_strat itself (0x0057D270) - the image folds
 //        `armor_id*16 + 0x94F280` into `shl eax,4` + a displaced `mov`,
@@ -1831,7 +1831,7 @@ Purpose: Calculate the armor value for the specified prototype.
 // LEVER: WRONG CALLEE - arm_val() (0x0057D3F0) and arm_strat() (0x0057D270)
 //        are both hand-inlined at this site, matching the image's one call
 //        (psi_factor), not arm_val. Best similarity 0.981.
-// RULED-OUT: same `Armor[armor_id].defense_rating` base-fold quirk as
+// TRIED: same `Armor[armor_id].defense_rating` base-fold quirk as
 //        arm_strat/arm_val (see arm_val's own note above) - not re-chased
 //        here either.
 Return Value: Armor value
@@ -1987,7 +1987,7 @@ void __cdecl say_defense(LPSTR stat, int proto_id) {
 Purpose: Generate stats string for specified prototype. Replaced existing non-safe strcat with 
          string. Reworked to integrate with existing C code.
 // ORIGINAL: 0x0057D7D0 ?say_stats_3@@YAXPADH@Z 0x0057D7D0-0x0057D8D3
-// RULED-OUT: else-if branch order off_rating<0/off_rating<99/else folded the "?"
+// TRIED: else-if branch order off_rating<0/off_rating<99/else folded the "?"
 //            and "*" strcat tails together (29/92); reordering to
 //            off_rating<0/off_rating>=99/else (matching the disasm's own branch
 //            order) got to 51/92. def_rating stored to a named int8_t local, or
@@ -2050,7 +2050,7 @@ void __cdecl say_stats_3(int proto_id) {
 Purpose: Generate stats string for specified prototype. List whether prototype is psi, sea or air.
          Replaced existing non-safe strcat with string. Reworked to integrate with existing C code.
 // ORIGINAL: 0x0057D8E0 ?say_stats_2@@YAXPADH@Z 0x0057D8E0-0x0057DA94
-// RULED-OUT: label_get(196/163/162) calls (25/140); open-coding
+// TRIED: label_get(196/163/162) calls (25/140); open-coding
 //            StringTable->get((int)*((LPSTR*)Labels->strings_ptr + N)) plus the
 //            off_rating<0/>=99/else branch order got to 58/140. def_rating via
 //            get_proto_defense_rating() vs inlined Armor[...] made no further
@@ -2110,7 +2110,7 @@ Purpose: Generate verbose stats string for specified prototype. Used by Design W
          existing C code.
 // ORIGINAL: 0x0057DAA0 ?say_stats@@YAXPADHPAD@Z 0x0057DAA0-0x0057DED8
 // symbol    ?say_stats@@YAXPADH0@Z
-// RULED-OUT: std::string body called 82 vs the image's 44 (call_diff); rebuilt
+// TRIED: std::string body called 82 vs the image's 44 (call_diff); rebuilt
 //            as char pointer + strcat/sprintf in the image's own branch shape (goto
 //            shared "defense+spacer+speed" tail, matching the two physical
 //            jumps into 0x57dd70) got the call count to 42/44. label_get(N)
@@ -2360,7 +2360,7 @@ Purpose: Check against the faction's available tech for the best available armor
          requirement.
 // ORIGINAL: 0x0057F150 ?armor_budget@@YAHHH@Z 0x0057F150-0x0057F1CF
 // LEVER: store order - best_defense=-1 before armor_id=0, opposite of
-//        declaration order (0.9524 -> 0.971 similar). RULED-OUT: remaining
+//        declaration order (0.9524 -> 0.971 similar). TRIED: remaining
 //        divergence starts at the has_tech() call site (instr 17); not
 //        chased further.
 // size      127 bytes
@@ -2413,7 +2413,7 @@ Status: Complete
 /*
 Purpose: Calculate the movement penalty/cost.
 // ORIGINAL: 0x00593510 ?hex_cost@@YAHHHHHHHH@Z 0x00593510-0x0059382F
-// RULED-OUT: tree's `proto_id != BSC_SEALURK // Bug fix` term has no matching `cmp` in the image - only ONE proto_id compare (`cmp eax, 9`, BSC_ISLE_OF_THE_DEEP) exists on this path. Removing the extra term is a structural fix (matches the image's condition), not a byte win by itself: 7/308 -> 8/308 agreeing under the best flag set. RULED-OUT: hoisting `bit_src` next to `bit_dst` at the top (image DOES read the src tile's `bit` field before the is_ocean(dst) branch, per raw ebx allocation) - tried both declaration orders, both regressed (18/308 and 5/308) because it forces a second stack-resident local where the image keeps bit_src in a register (ebx) for the whole function and only spills bit_dst. The remaining gap past instruction 8 is VC6's own instruction scheduling across the three nested inlines (bit_at/is_ocean/altitude_at) - a scheduler decision, not reachable by reordering statements. Plateau at this structure.
+// TRIED: tree's `proto_id != BSC_SEALURK // Bug fix` term has no matching `cmp` in the image - only ONE proto_id compare (`cmp eax, 9`, BSC_ISLE_OF_THE_DEEP) exists on this path. Removing the extra term is a structural fix (matches the image's condition), not a byte win by itself: 7/308 -> 8/308 agreeing under the best flag set. TRIED: hoisting `bit_src` next to `bit_dst` at the top (image DOES read the src tile's `bit` field before the is_ocean(dst) branch, per raw ebx allocation) - tried both declaration orders, both regressed (18/308 and 5/308) because it forces a second stack-resident local where the image keeps bit_src in a register (ebx) for the whole function and only spills bit_dst. The remaining gap past instruction 8 is VC6's own instruction scheduling across the three nested inlines (bit_at/is_ocean/altitude_at) - a scheduler decision, not reachable by reordering statements. Plateau at this structure.
 // size      799 bytes
 // prototype int (__cdecl ?hex_cost@@YAHHHHHHHH@Z)(int protoID, int factionID, int xCoordSrc, int yCoordSrc, int xCoordDst, int yCoordDst, int toggle)
 // callers   5   call targets   3
@@ -2544,7 +2544,7 @@ Purpose: Calculates cost of the prototype based on various factors. Optimized lo
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     (none)
-// RULED-OUT: reordering the checks to the ORIGINAL's actual sequence (missile check AFTER
+// TRIED: reordering the checks to the ORIGINAL's actual sequence (missile check AFTER
 //   the triad-based armor/speed adjustments, not before; the AFLAG_COST_INC_LAND_UNIT
 //   check as a second standalone loop over Ability[] that only runs for TRIAD_LAND,
 //   not folded into the main loop; the all-four-costs==1 override applied at the very
@@ -2690,7 +2690,7 @@ Purpose: Create a new prototype. Sets initial values for everything except veh_n
 // callers   4   call targets   4
 // kind      game
 // flags     frame;sp_ready;purged_ok
-// RULED-OUT: nothing tried yet beyond inspection - call_diff agrees on call count/targets,
+// TRIED: nothing tried yet beyond inspection - call_diff agrees on call count/targets,
 //   so the divergence (5/361 agreeing, ~0.14 similar) is all in the opening loop. The image
 //   computes `i % MaxVehProtoFactionNum` there with the full MSVC signed-modulo-by-constant
 //   sign-correction sequence (`and 0x8000003f; jns; dec; or 0xffffffc0; inc`), which this
@@ -3006,7 +3006,7 @@ cannot disagree with the first.
 //        now plain `inline` (its only callers are spot_base/spot_stack/
 //        spot_loc, all in this file); the veh_top climb below is
 //        hand-inlined, matching veh_at's precedent.
-// RULED-OUT: calling the `inline` spot_tile() directly - the optimiser did
+// TRIED: calling the `inline` spot_tile() directly - the optimiser did
 // NOT fold it away here (unlike in spot_base), so the call to spot_tile
 // survived and call_diff still reported WRONG CALLEE (spot_tile instead of
 // synch_bit). Hand-inlining spot_tile's body, matching spot_base's own
@@ -3053,7 +3053,7 @@ Purpose: Reveal whatever occupies the specified location - the tile itself, and
          then either the base standing on it or the whole unit stack - to the
          specified faction.
 // ORIGINAL: 0x005B5AD0 ?spot_loc@@YAXHHH@Z 0x005B5AD0-0x005B5E05
-// RULED-OUT: byte-exactness, deliberately - not chased. The image INLINES
+// TRIED: byte-exactness, deliberately - not chased. The image INLINES
 // spot_tile, spot_base and spot_stack whole (only base_at and veh_at
 // survive as real calls), so a body that calls the five source-owned
 // helpers by name - as this one does, on purpose, per the analysis below -
@@ -3106,7 +3106,7 @@ void __cdecl spot_loc(int x, int y, int faction_id) {
 Purpose: Determine if the specified unit wants to wake up based on certain conditions and
          preferences. Optional parameter for spotted veh_id (-1 to skip).
 // ORIGINAL: 0x005B5EA0 ?want_to_wake@@YAHHHH@Z 0x005B5EA0-0x005B6060
-// RULED-OUT: image never reads Vehs[veh_id].faction_id eagerly - it re-reads it at each conditional use, and never caches it across the early return. Un-caching it into `Vehs[veh_id].faction_id` at every site (instead of a hoisted `veh_faction_id` local) let the compiler pick a plain ebp-frame prologue matching the image's, where the hoisted local forced a param-less-locals, esp-relative frame from instruction 0. Also restored the `veh_id >= 0 &&` half of the trailing guard - the image's `test edi, edi; jl` tests veh_id, not just spotted_veh_id, contradicting this body's own comment that it was safe to drop. Residual divergence past this is register allocation (esi/edi/ebx/ebp swapped throughout) and one 16-bit shift-then-extend vs extend-then-shift on `waypoint_x[0] >> 1`; an explicit `(int)` cast on the base_who() arguments did not change the codegen. Best flag set /O2 /Gy /GR- /Oy- /GX, 0.793 similar.
+// TRIED: image never reads Vehs[veh_id].faction_id eagerly - it re-reads it at each conditional use, and never caches it across the early return. Un-caching it into `Vehs[veh_id].faction_id` at every site (instead of a hoisted `veh_faction_id` local) let the compiler pick a plain ebp-frame prologue matching the image's, where the hoisted local forced a param-less-locals, esp-relative frame from instruction 0. Also restored the `veh_id >= 0 &&` half of the trailing guard - the image's `test edi, edi; jl` tests veh_id, not just spotted_veh_id, contradicting this body's own comment that it was safe to drop. Residual divergence past this is register allocation (esi/edi/ebx/ebp swapped throughout) and one 16-bit shift-then-extend vs extend-then-shift on `waypoint_x[0] >> 1`; an explicit `(int)` cast on the base_who() arguments did not change the codegen. Best flag set /O2 /Gy /GR- /Oy- /GX, 0.793 similar.
 // size      448 bytes
 // prototype int (__cdecl ?want_to_wake@@YAHHHH@Z)(unsigned int factionID, unsigned int vehID, int vehID2)
 // callers   1   call targets   0
@@ -3174,7 +3174,7 @@ Purpose: Wake up units meeting specific conditions from the stack where specifie
 //        BEFORE it - the image reads them once, kept live in registers across
 //        every iteration, rather than re-reading them on each tile lookup a
 //        plain per-iteration map_loc(x, y) call would. Together: 0.836 -> 0.955.
-// RULED-OUT: an `int altitude = tile->climate & 0xE0;` local still narrows to a
+// TRIED: an `int altitude = tile->climate & 0xE0;` local still narrows to a
 //   byte compare (`cmp al`/`jb`) where the image has `cmp eax`/`jl` - VC6 proves
 //   the range from the `& 0xE0` mask regardless of the local's declared width;
 //   not reachable by re-typing. Left as the last four-instruction gap.
@@ -3237,7 +3237,7 @@ Purpose: Move a stack of units in the same stack as the specified unit to a dest
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x005BFFA0 0x005C0080
-// RULED-OUT: `veh_top()`/`veh_put()` as plain calls - both are inline-marked
+// TRIED: `veh_top()`/`veh_put()` as plain calls - both are inline-marked
 // wrappers, but this call site is not one of veh_top's real sites and
 // veh_put did not fold here either, so call_diff reported WRONG CALLEE
 // (veh_put/veh_top instead of veh_lift/veh_drop). Hand-inlining both,
@@ -3275,7 +3275,7 @@ void __cdecl stack_put(int veh_id, int x, int y) {
 /*
 Purpose: Sort a stack of units with the transports moved to the top.
 // ORIGINAL: 0x005B8B60 ?stack_sort@@YAXH@Z 0x005B8B60-0x005B8C8D
-// RULED-OUT: and `stack_put(veh_id_put, x, y)` were plain calls; call_diff's count-based check missed it (6 calls either way, since {veh_top, stack_put} happened to replace the {2 extra veh_lift/veh_drop} the image gets from inlining stack_put), but the image's actual 6 callees are veh_cargo/has_abil/veh_lift x2/ veh_drop x2 - no veh_top or stack_put. Hand-inlining both, including stack_put's OWN internal veh_top climb (its outer `next_veh_id >= 0` check survives - the image keeps it as a second, separate test after veh_top's own), took 0.627 -> 0.758.
+// TRIED: and `stack_put(veh_id_put, x, y)` were plain calls; call_diff's count-based check missed it (6 calls either way, since {veh_top, stack_put} happened to replace the {2 extra veh_lift/veh_drop} the image gets from inlining stack_put), but the image's actual 6 callees are veh_cargo/has_abil/veh_lift x2/ veh_drop x2 - no veh_top or stack_put. Hand-inlining both, including stack_put's OWN internal veh_top climb (its outer `next_veh_id >= 0` check survives - the image keeps it as a second, separate test after veh_top's own), took 0.627 -> 0.758.
 // size      301 bytes
 // prototype void (__cdecl ?stack_sort@@YAXH@Z)(int vehID)
 // callers   2   call targets   4
@@ -3418,9 +3418,9 @@ void __cdecl stack_sort_2(int veh_id) {
 /*
 Purpose: Refresh and fix the stack. Used by DirectPlay multiplayer only.
 // ORIGINAL: 0x005B8E10 ?stack_fix@@YAHH@Z 0x005B8E10-0x005B8ED9
-// RULED-OUT: frame pointer - the image keeps ebp (a `push ecx` local-space idiom) and duplicate non-merged epilogues; no flag set in the harness reproduces both at once here - /Oy- restores ebp but the two early returns cross-jump to one shared tail instead of duplicating, unlike the image. Plateau at 0.758 (/O2 /Gy /GR- /GX).
-// RULED-OUT: is called at only 2 real sites in the image (see its own comment on veh_top); here it is inlined, matching veh_at above.
-// RULED-OUT: combined `if (a || b || c) return veh_id;` compiled to one merged block; the image duplicates the epilogue three times (three separate early returns, each its own `jge`). Splitting into three sequential `if`s took similarity 0.627 -> 0.758 (best flag set has 0 raw agree but is the closest shape - see BUG note below for the loop, which is the bulk of the remaining gap).
+// TRIED: frame pointer - the image keeps ebp (a `push ecx` local-space idiom) and duplicate non-merged epilogues; no flag set in the harness reproduces both at once here - /Oy- restores ebp but the two early returns cross-jump to one shared tail instead of duplicating, unlike the image. Plateau at 0.758 (/O2 /Gy /GR- /GX).
+// TRIED: is called at only 2 real sites in the image (see its own comment on veh_top); here it is inlined, matching veh_at above.
+// TRIED: combined `if (a || b || c) return veh_id;` compiled to one merged block; the image duplicates the epilogue three times (three separate early returns, each its own `jge`). Splitting into three sequential `if`s took similarity 0.627 -> 0.758 (best flag set has 0 raw agree but is the closest shape - see BUG note below for the loop, which is the bulk of the remaining gap).
 // BUG IN THE ORIGINAL: the promote/sort loop compares `Vehs[veh_id]`'s own
 //        x/y against themselves, not the loop iterator `Vehs[i]`'s - always
 //        true, so `veh_promote(i)`/`stack_sort(veh_id)` fire on EVERY
@@ -3470,7 +3470,7 @@ Purpose: Board the eligible units stacked with the specified transport or carrie
          off-map holding square; mode 2+ makes a single pass and short-circuits to the lift when
          the subject already sits on a faction-owned base.
 // ORIGINAL: 0x005B8EE0 ?stack_veh@@YAHHH@Z 0x005B8EE0-0x005B950F
-// RULED-OUT: by 1 (17 vs image's 16) - two `veh_top(veh_id)` calls (the mode-0 refresh loop and the per-pass boarding loop's start index) hand-inlined, matching stack_fix's precedent, and `sleep(i)` forced to a real call via a new `sleep_call` forwarder in veh.h/veh.cpp (its only other reference is the inline body - under /O2 `sleep(i)` folds to 3 field writes, but the image calls it for real at this one site). call_diff now agrees (0 disagreeing, was MORE by 1). This is a 472-instruction function; the remaining gap is per-branch register/scheduling noise not chased further at this budget.
+// TRIED: by 1 (17 vs image's 16) - two `veh_top(veh_id)` calls (the mode-0 refresh loop and the per-pass boarding loop's start index) hand-inlined, matching stack_fix's precedent, and `sleep(i)` forced to a real call via a new `sleep_call` forwarder in veh.h/veh.cpp (its only other reference is the inline body - under /O2 `sleep(i)` folds to 3 field writes, but the image calls it for real at this one site). call_diff now agrees (0 disagreeing, was MORE by 1). This is a 472-instruction function; the remaining gap is per-branch register/scheduling noise not chased further at this budget.
 // size      1583 bytes
 // prototype int (__cdecl ?stack_veh@@YAHHH@Z)(int vehID, int)
 // callers   10   call targets   7
@@ -3638,8 +3638,8 @@ int __cdecl stack_veh(int veh_id, int mode) {
 /*
 Purpose: Various unit stack related calculations based on type parameter (0-19) and conditions.
 // ORIGINAL: 0x005B9580 ?stack_check@@YAHHHHHH@Z 0x005B9580-0x005B9BB8
-// RULED-OUT: call_diff still FEWER by one - case 12's `weap_strat(...)` call gets auto-inlined by this tree (weap_strat is small/BYTE_EXACT after this same pass) where the image keeps it a real `call`. `#pragma auto_inline(off)` around weap_strat's OWN definition would fix this call site but also stops weap_val (0x0057D360, not in this batch) from inlining it, which the image DOES do there - out of scope to touch a function outside this batch to fix this one. Still MISMATCH overall (~0.28 similar best) - a 20-case switch this size has per-case register allocation/instruction-scheduling noise that dwarfs the two structural fixes above.
-// RULED-OUT: MORE - this tree called `veh_top(veh_id)` and (case 8) `veh_cargo(i)`, neither of which the image calls (both fully inlined here, matching veh_at's precedent on veh_top and veh_cargo's own inline expansion for case 8).
+// TRIED: call_diff still FEWER by one - case 12's `weap_strat(...)` call gets auto-inlined by this tree (weap_strat is small/BYTE_EXACT after this same pass) where the image keeps it a real `call`. `#pragma auto_inline(off)` around weap_strat's OWN definition would fix this call site but also stops weap_val (0x0057D360, not in this batch) from inlining it, which the image DOES do there - out of scope to touch a function outside this batch to fix this one. Still MISMATCH overall (~0.28 similar best) - a 20-case switch this size has per-case register allocation/instruction-scheduling noise that dwarfs the two structural fixes above.
+// TRIED: MORE - this tree called `veh_top(veh_id)` and (case 8) `veh_cargo(i)`, neither of which the image calls (both fully inlined here, matching veh_at's precedent on veh_top and veh_cargo's own inline expansion for case 8).
 // size      1592 bytes
 // prototype int (__cdecl ?stack_check@@YAHHHHHH@Z)(int vehID, int type, int cond1, int cond2, int cond3)
 // callers   39   call targets   5
@@ -3805,7 +3805,7 @@ Purpose: Check to see whether provided faction and base can build a specific pro
 //   false;` statements - the image gives each condition its own duplicated epilogue
 //   rather than sharing one merged branch. The ability_flags checks are bitwise
 //   (`abil_flag & ABL_X`), not equality - the image emits `test`, not `cmp`. Together
-//   0.538 -> 0.996 similar; RULED-OUT: the last ~6-instruction gap is register
+//   0.538 -> 0.996 similar; TRIED: the last ~6-instruction gap is register
 //   allocation inside has_tech()/is_coast()'s own inlined bodies (shared MEASURED
 //   inline helpers) - did not chase further to avoid touching their other callers.
 // size      553 bytes
@@ -3913,7 +3913,7 @@ BOOL __cdecl veh_avail(int proto_id, int faction_id, int base_id) {
 Purpose: Determine whether a faction wants the specified prototype based on the faction's current
          prototype designs.
 // ORIGINAL: 0x005BE100 ?wants_prototype@@YAHHH@Z 0x005BE100-0x005BE29D
-// RULED-OUT: nested ternary chains (`cond ? a : cond2 ? b : c`) used as a single `if (...)` condition compiled to SETcc-then-test where the image branches directly - splitting each into if/else-if with explicit `continue` (the loop's early-out target is one shared label in the image) recovered the direct jumps. Also split the combined `if (!A || !B) return false;` guard at the top into two separate ifs - the image has two full, separate epilogues, one per check, not a combined OR. And walking a `VehPrototype *proto_cmp` pointer (++proto_cmp each iteration) instead of indexing `VehPrototypes[proto_id_cmp]` per field matches the image's single incrementing esi and its negative-offset field reads (esi-1 for chassis_id, esi+5 for plan) - though the image anchors that pointer at the weapon_id field specifically (esi+0), where this tree's pointer anchors at the struct's own front, a difference not chased further. Moved 0.617 -> 0.865 similar (/O2 /Gy /GR- /Oy- /GX).
+// TRIED: nested ternary chains (`cond ? a : cond2 ? b : c`) used as a single `if (...)` condition compiled to SETcc-then-test where the image branches directly - splitting each into if/else-if with explicit `continue` (the loop's early-out target is one shared label in the image) recovered the direct jumps. Also split the combined `if (!A || !B) return false;` guard at the top into two separate ifs - the image has two full, separate epilogues, one per check, not a combined OR. And walking a `VehPrototype *proto_cmp` pointer (++proto_cmp each iteration) instead of indexing `VehPrototypes[proto_id_cmp]` per field matches the image's single incrementing esi and its negative-offset field reads (esi-1 for chassis_id, esi+5 for plan) - though the image anchors that pointer at the weapon_id field specifically (esi+0), where this tree's pointer anchors at the struct's own front, a difference not chased further. Moved 0.617 -> 0.865 similar (/O2 /Gy /GR- /Oy- /GX).
 // size      413 bytes
 // prototype int (__cdecl ?wants_prototype@@YAHHH@Z)(int protoID, int factionID)
 // callers   1   call targets   1
@@ -3984,7 +3984,7 @@ BOOL __cdecl wants_prototype(int proto_id, int faction_id) {
 /*
 Purpose: Check the coordinates for units and if at least one is found return the top most id.
 // ORIGINAL: 0x005BFE90 ?veh_at@@YAHHH@Z 0x005BFE90-0x005BFF9E
-// RULED-OUT: 0.937 similar under every flag set tried - the control flow and
+// TRIED: 0.937 similar under every flag set tried - the control flow and
 //        field reads already match; what's left is register allocation (the
 //        image hoists `MapLatitudeBounds`/`MapLongitudeBounds` into ebx/edi
 //        ONCE and reuses them for both `on_map()` call sites, this tree
@@ -4037,7 +4037,7 @@ int __cdecl veh_at(int x, int y) {
 /*
 Purpose: Check whether the prototype has a specific ability.
 // ORIGINAL: 0x005BF1F0 ?has_abil@@YAHHH@Z 0x005BF1F0-0x005BF310
-// RULED-OUT: a negative-proto_id guard clause (with its log_say call) that call_diff flagged as an extra call the image does not make; now 13/109 instructions agree, 0.825 similar (best flags), up from a structurally-unrelated function body before
+// TRIED: a negative-proto_id guard clause (with its log_say call) that call_diff flagged as an extra call the image does not make; now 13/109 instructions agree, 0.825 similar (best flags), up from a structurally-unrelated function body before
 // size      288 bytes
 // prototype int (__cdecl ?has_abil@@YAHHH@Z)(int protoID, int abilityID)
 // callers   54   call targets   1
@@ -4084,8 +4084,8 @@ BOOL __cdecl has_abil(int proto_id, int ability_id) {
 Purpose: Temporarily remove the specified unit from its current square and stack in preparation for 
          another action such as interacting with the stack, moving or killing it.
 // ORIGINAL: 0x005BFFA0 ?veh_lift@@YAXH@Z 0x005BFFA0-0x005C007F
-// RULED-OUT: swapping the x/y local declaration order - the remaining gap is which register (eax/ecx/edx) the allocator picks for x, y and the -1 constant at the join point; both orders produced the identical register assignment, so it isn't source-order controlled here. Plateau at 49/60.
-// RULED-OUT: were cached into locals BEFORE the prev/next stack-pointer fixup and the on_map/bit_set branch; the image re-reads `Vehs[veh_id].x`/`.y` fresh at each site (inside the branch, and again at the join point for VehLiftX/Y) instead of hoisting one read to the top. Also `VehDropLiftVehID = veh_id;` moved to AFTER the x/y reads (image assigns it between reading y and zeroing the fields, not before). 4/60 -> 49/60 (0.829 -> 0.983 similar).
+// TRIED: swapping the x/y local declaration order - the remaining gap is which register (eax/ecx/edx) the allocator picks for x, y and the -1 constant at the join point; both orders produced the identical register assignment, so it isn't source-order controlled here. Plateau at 49/60.
+// TRIED: were cached into locals BEFORE the prev/next stack-pointer fixup and the on_map/bit_set branch; the image re-reads `Vehs[veh_id].x`/`.y` fresh at each site (inside the branch, and again at the join point for VehLiftX/Y) instead of hoisting one read to the top. Also `VehDropLiftVehID = veh_id;` moved to AFTER the x/y reads (image assigns it between reading y and zeroing the fields, not before). 4/60 -> 49/60 (0.829 -> 0.983 similar).
 // symbol    ?veh_lift@@YAHH@Z
 // size      223 bytes
 // prototype void (__cdecl ?veh_lift@@YAXH@Z)(int vehID)
@@ -4124,8 +4124,8 @@ int __cdecl veh_lift(int veh_id) {
 /*
 Purpose: Move the specified unit to the provided coordinates.
 // ORIGINAL: 0x005C0080 ?veh_drop@@YAXHHH@Z 0x005C0080-0x005C019C
-// RULED-OUT: the last `mov ecx,[ebp+8]; mov eax,ecx` before the final `ret` - the image loads straight into eax there (ecx is dead, clobbered by the `bit_set` call just before), but this tree's register allocator prefers ecx as veh_id's home register for the whole function and copies to eax at the return. No source reshuffle around the final `return veh_id;` moved it; plateau.
-// RULED-OUT: (veh_id_dest < 0) {...} else {...}` had the arms backwards - the image falls through the `>= 0` write first and jumps to the `< 0` block, so the source needs `if (veh_id_dest >= 0) {...} else {...}` to get that polarity. Also the flags ternary `(A && B) ? X|Y : Y` compiled an extra `mov` before the compare the image folds into a direct `cmp byte ptr [...], 2`; splitting it into `flags = 0/BIT_SUPPLY_REMOVE; flags |= BIT_VEH_IN_TILE;` (the image ORs BIT_VEH_IN_TILE in unconditionally at a shared tail) dropped that mov. 39/95 -> 80/95 (0.880 -> 0.973 similar).
+// TRIED: the last `mov ecx,[ebp+8]; mov eax,ecx` before the final `ret` - the image loads straight into eax there (ecx is dead, clobbered by the `bit_set` call just before), but this tree's register allocator prefers ecx as veh_id's home register for the whole function and copies to eax at the return. No source reshuffle around the final `return veh_id;` moved it; plateau.
+// TRIED: (veh_id_dest < 0) {...} else {...}` had the arms backwards - the image falls through the `>= 0` write first and jumps to the `< 0` block, so the source needs `if (veh_id_dest >= 0) {...} else {...}` to get that polarity. Also the flags ternary `(A && B) ? X|Y : Y` compiled an extra `mov` before the compare the image folds into a direct `cmp byte ptr [...], 2`; splitting it into `flags = 0/BIT_SUPPLY_REMOVE; flags |= BIT_VEH_IN_TILE;` (the image ORs BIT_VEH_IN_TILE in unconditionally at a shared tail) dropped that mov. 39/95 -> 80/95 (0.880 -> 0.973 similar).
 // symbol    ?veh_drop@@YAHHHH@Z
 // size      284 bytes
 // prototype void (__cdecl ?veh_drop@@YAXHHH@Z)(int vehID, int xCoord, int yCoord)
@@ -4199,7 +4199,7 @@ int __cdecl base_cost_call(int proto_id) {
 /*
 Purpose: Move the specified unit to the bottom of the stack.
 // ORIGINAL: 0x005C01D0 ?veh_demote@@YAXH@Z 0x005C01D0-0x005C0256
-// RULED-OUT: byte-exactness. Best is 0.916 similar (4/40 in position) at
+// TRIED: byte-exactness. Best is 0.916 similar (4/40 in position) at
 // `/c /O2 /Gy /GR- /Oy- /GX`, and every remaining edit is register
 // allocation - `esi`/`edi`/`ebx` permuted against the image's fixed
 // `ebx`=veh_id, `esi`=last_veh_id, `edi`=&Vehs[veh_id] - with no control
@@ -4245,8 +4245,8 @@ void __cdecl veh_demote(int veh_id) {
 /*
 Purpose: Move the specified unit to the top of the stack.
 // ORIGINAL: 0x005C0260 ?veh_promote@@YAXH@Z 0x005C0260-0x005C02CE
-// RULED-OUT: a `veh_id_top >= 0` guard after the hand-inlined veh_top - the image has none (see BUG note below). RULED-OUT: seeding `veh_id_top = veh_id` before vs. inside the `if` - same codegen either way. The remaining gap is the compiler proving the `prev_veh_id_stack < 0` (zero-iteration) case makes `veh_id_top != veh_id` tautologically false and skipping straight to the epilogue, where the image still materializes and compares it; not reachable by reordering statements. Plateau at 3/40.
-// RULED-OUT: CALLEE - the tree called `veh_top()`/`veh_put()`, both inline-marked wrappers, but this call site is not one of veh_top's two real sites and veh_put did not inline here either. Hand- inlining both (veh_top's loop, and veh_put's `veh_lift(id); veh_drop(id, x, y)` - dropping veh_lift's unused return since it always returns its own argument) took call_diff from WRONG CALLEE to 0 disagreeing and 0.657 -> 0.773 similar.
+// TRIED: a `veh_id_top >= 0` guard after the hand-inlined veh_top - the image has none (see BUG note below). TRIED: seeding `veh_id_top = veh_id` before vs. inside the `if` - same codegen either way. The remaining gap is the compiler proving the `prev_veh_id_stack < 0` (zero-iteration) case makes `veh_id_top != veh_id` tautologically false and skipping straight to the epilogue, where the image still materializes and compares it; not reachable by reordering statements. Plateau at 3/40.
+// TRIED: CALLEE - the tree called `veh_top()`/`veh_put()`, both inline-marked wrappers, but this call site is not one of veh_top's two real sites and veh_put did not inline here either. Hand- inlining both (veh_top's loop, and veh_put's `veh_lift(id); veh_drop(id, x, y)` - dropping veh_lift's unused return since it always returns its own argument) took call_diff from WRONG CALLEE to 0 disagreeing and 0.657 -> 0.773 similar.
 // size      110 bytes
 // prototype 
 // callers   6   call targets   2
@@ -4283,7 +4283,7 @@ void __cdecl veh_promote(int veh_id) {
 /*
 Purpose: Clear the specified unit.
 // ORIGINAL: 0x005C02D0 ?veh_clear@@YAXHHH@Z 0x005C02D0-0x005C03C3
-// RULED-OUT: `Players[faction_id].rule_morale` into its own statement, placed right after the `order_auto_type = 0;` store (where the image starts computing the address) and adding 1 at the later `morale = ...` store site instead of folding the `+1` into the read, moved this from 44/57 (0.895 similar, MISMATCH) to 55/57 (1.000 similar, MNEMONIC_ONLY). The remaining 2-instruction divergence is VC6 scheduling the actual byte LOAD (`mov dl, byte ptr [edx*4+...]`) between `move_to_ai_type` and `visibility` while this tree's load lands one store earlier; the address computation (lea/lea/shl/sub) already matches exactly. Moving the local's declaration later (to sit textually where the image's load falls) moved the ADDRESS computation too and lost the match (back to 44/57 or worse) - the image splits one C expression into an early address calc and a late load, which no single placement of one statement reproduces. Not chased further.
+// TRIED: `Players[faction_id].rule_morale` into its own statement, placed right after the `order_auto_type = 0;` store (where the image starts computing the address) and adding 1 at the later `morale = ...` store site instead of folding the `+1` into the read, moved this from 44/57 (0.895 similar, MISMATCH) to 55/57 (1.000 similar, MNEMONIC_ONLY). The remaining 2-instruction divergence is VC6 scheduling the actual byte LOAD (`mov dl, byte ptr [edx*4+...]`) between `move_to_ai_type` and `visibility` while this tree's load lands one store earlier; the address computation (lea/lea/shl/sub) already matches exactly. Moving the local's declaration later (to sit textually where the image's load falls) moved the ADDRESS computation too and lost the match (back to 44/57 or worse) - the image splits one C expression into an early address calc and a late load, which no single placement of one statement reproduces. Not chased further.
 // size      243 bytes
 // prototype void (__cdecl ?veh_clear@@YAXHHH@Z)(int vehID, int protoID, int factionID)
 // callers   2   call targets   0
@@ -4330,7 +4330,7 @@ void __cdecl veh_clear(int veh_id, int proto_id, int faction_id) {
 Purpose: Check if the prototype can perform artillery combat. The 2nd parameter determines how sea 
          units are treated.
 // ORIGINAL: 0x005C0DB0 ?can_arty@@YAHHH@Z 0x005C0DB0-0x005C0E35
-// RULED-OUT: the OR'd (offense<=0 || defense<0) guard into two sequential `if`s, one per term - matches the image's per-term SPORE_LAUNCHER exception check. Also: the TRIAD_SEA/TRIAD_AIR dispatch is a `switch`, not chained `if`s - the image's dec/je chain is switch codegen. 19/54 -> 50/54. One divergence remains: the defense_rating byte load folds into `cmp byte ptr [edx], 0` here where the image keeps `mov bl, ...; test bl, bl` - tried swapping check order, `0 > x`, a BOOL local, and `!(x >= 0)`; none moved it. Plateau.
+// TRIED: the OR'd (offense<=0 || defense<0) guard into two sequential `if`s, one per term - matches the image's per-term SPORE_LAUNCHER exception check. Also: the TRIAD_SEA/TRIAD_AIR dispatch is a `switch`, not chained `if`s - the image's dec/je chain is switch codegen. 19/54 -> 50/54. One divergence remains: the defense_rating byte load folds into `cmp byte ptr [edx], 0` here where the image keeps `mov bl, ...; test bl, bl` - tried swapping check order, `0 > x`, a BOOL local, and `!(x >= 0)`; none moved it. Plateau.
 // size      133 bytes
 // prototype int (__cdecl ?can_arty@@YAHHH@Z)(int protoID, int triad_sea_retn)
 // callers   14   call targets   1
@@ -4361,7 +4361,7 @@ BOOL __cdecl can_arty(int proto_id, BOOL sea_triad_retn) {
 Purpose: Calculate a unit's morale. TODO: Determine if 2nd param is a toggle for display vs actual 
          morale.
 // ORIGINAL: 0x005C0E40 ?morale_veh@@YAHHHH@Z 0x005C0E40-0x005C1143
-// RULED-OUT: call_diff FEWER (2 vs image's 4: morale_alien, has_tech, and
+// TRIED: call_diff FEWER (2 vs image's 4: morale_alien, has_tech, and
 //        `bitmask` TWICE) - the two `has_fac_built(FAC_CHILDREN_CRECHE/
 //        FAC_BROOD_PIT, home_base_id)` calls each keep `bitmask()` as a real
 //        `call 0x50ba00` in the image, but this tree fully inlines it under
@@ -4372,7 +4372,7 @@ Purpose: Calculate a unit's morale. TODO: Determine if 2nd param is a toggle for
 //        and short-circuit structure already match; the rest of the gap
 //        looks like register allocation (a cached zero register the image
 //        keeps in ebx that this tree re-materializes per comparison).
-// RULED-OUT (2nd attempt): base.cpp's `bitmask_call` forwarder (general.h),
+// TRIED (2nd attempt): base.cpp's `bitmask_call` forwarder (general.h),
 //        via a local `has_fac_built_call` matching base.cpp's own helper, at
 //        BOTH call sites. Call count agreed (0 disagree, was FEWER 2v4), but
 //        the best flag set's similarity fell from 0.484 (4/286 exact, /O1
@@ -4453,8 +4453,8 @@ int __cdecl morale_veh(int veh_id, BOOL check_drone_riot, int faction_id_vs_nati
 Purpose: Calculate the offense of the specified prototype. Optional param of the unit defending 
          against (-1 to ignore) as well as whether artillery or missile combat is being utilized.
 // ORIGINAL: 0x005C1150 ?offense_proto@@YAHHHH@Z 0x005C1150-0x005C128F
-// RULED-OUT: `abs()` for the negate - same similarity as the manual ternary. The remaining gap is the same defense_rating byte-load fold as can_arty's plateau (`cmp byte ptr [x], 0` here vs the image's `mov dl, ...; test dl, dl`) plus register-naming noise past that point; not moved by source reshuffling.
-// RULED-OUT: `uint32_t weapon_id = VehPrototypes[proto_id].weapon_id;` local, read at its two use sites, made the compiler spill it back into proto_id's own stack slot (an extra store the image never makes) and renamed registers through the entire rest of the function. Writing `VehPrototypes[proto_id].weapon_id` at both call sites instead of caching it dropped that spill: 4/112 -> 47/112 (0.882 -> 0.918 similar). Also reproduced the missing `veh_id_def < 0` guard on the SECOND `Vehs[veh_id_def].proto_id != SPORE_LAUNCHER` check (see the BUG note below) and split `off_rating` into an `int8_t` read plus a widened ternary negate rather than negating an already-widened `int` - the image tests/negates the BYTE before the `movsx`. 47/112 -> 50/112 (0.932 similar).
+// TRIED: `abs()` for the negate - same similarity as the manual ternary. The remaining gap is the same defense_rating byte-load fold as can_arty's plateau (`cmp byte ptr [x], 0` here vs the image's `mov dl, ...; test dl, dl`) plus register-naming noise past that point; not moved by source reshuffling.
+// TRIED: `uint32_t weapon_id = VehPrototypes[proto_id].weapon_id;` local, read at its two use sites, made the compiler spill it back into proto_id's own stack slot (an extra store the image never makes) and renamed registers through the entire rest of the function. Writing `VehPrototypes[proto_id].weapon_id` at both call sites instead of caching it dropped that spill: 4/112 -> 47/112 (0.882 -> 0.918 similar). Also reproduced the missing `veh_id_def < 0` guard on the SECOND `Vehs[veh_id_def].proto_id != SPORE_LAUNCHER` check (see the BUG note below) and split `off_rating` into an `int8_t` read plus a widened ternary negate rather than negating an already-widened `int` - the image tests/negates the BYTE before the `movsx`. 47/112 -> 50/112 (0.932 similar).
 // size      319 bytes
 // prototype int (__cdecl ?offense_proto@@YAHHHH@Z)(int protoID, int vehIDDef, BOOL isBombardment)
 // callers   4   call targets   0
@@ -4534,7 +4534,7 @@ Purpose: Calculate the speed of the specified prototype on roads.
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x005BF1F0
-// RULED-OUT: nothing changed - traced the full disassembly instruction-by-instruction
+// TRIED: nothing changed - traced the full disassembly instruction-by-instruction
 //   against this body (struct offsets, ABL_* constant values, WPN_MODE_TRANSPORT==7,
 //   the TRIAD_AIR-only tail) and the control flow order already matches the image
 //   exactly. Best flags give 0.81-0.82 similar; remainder looks like register
@@ -4585,7 +4585,7 @@ Purpose: Calculate the speed of a unit on roads taking into consideration protot
          elite morale, if the unit is damaged and other factors. The skip_morale parameter seems to 
          only be set to true for certain combat calculations in battle_fight().
 // ORIGINAL: 0x005C1540 ?speed@@YAHHH@Z 0x005C1540-0x005C1752
-// RULED-OUT: is called UNCONDITIONALLY in the image - `!skip_morale` is tested only AFTER the call and its MORALE_ELITE comparison, not before it (short-circuit order swapped: `morale_veh(...) == MORALE_ELITE && !skip_morale && (...)` instead of `!skip_morale && morale_veh(...) == MORALE_ELITE && (...)`). Confirmed against the disassembly: `call 0x5c0e40` at 0x5C15CB has no guard before it, and the skip_morale parameter isn't read until 0x5C15D8, after the MORALE_ELITE compare at 0x5C15D3.
+// TRIED: is called UNCONDITIONALLY in the image - `!skip_morale` is tested only AFTER the call and its MORALE_ELITE comparison, not before it (short-circuit order swapped: `morale_veh(...) == MORALE_ELITE && !skip_morale && (...)` instead of `!skip_morale && morale_veh(...) == MORALE_ELITE && (...)`). Confirmed against the disassembly: `call 0x5c0e40` at 0x5C15CB has no guard before it, and the skip_morale parameter isn't read until 0x5C15D8, after the MORALE_ELITE compare at 0x5C15D3.
 // size      530 bytes
 // prototype int (__cdecl ?speed@@YAHHH@Z)(int vehID, int toggle)
 // callers   27   call targets   2
@@ -4630,8 +4630,8 @@ int __cdecl speed(int veh_id, BOOL skip_morale) {
 Purpose: Calculate the cargo capacity of a unit. It seems Spore Launchers were considered to have 
          cargo capacity at one time.
 // ORIGINAL: 0x005C1760 ?veh_cargo@@YAHH@Z 0x005C1760-0x005C17C4
-// RULED-OUT: still MISMATCH (0.853 similar) - the image computes `proto_id*sizeof(VehPrototype)` ONCE and reuses it for both the `carry_capacity` and `weapon_id` field reads (same array element, two fields); this tree recomputes it for the second read under every flag set tried. A local `VehPrototype *proto = &VehPrototypes[proto_id]` used for both field reads did not change the codegen. Also see the `add`-before-`shl` base-folding note on arm_strat (0x0057D270) - same class of divergence on the `carry_capacity` read itself.
-// RULED-OUT: proto_id` (not `uint32_t`/`int`) matches the image, which keeps the 16-bit `proto_id` in `si` for the `< MaxVehProtoFactionNum` and `== BSC_SPORE_LAUNCHER` compares and only does `movsx eax,si` at the array-indexing use sites.
+// TRIED: still MISMATCH (0.853 similar) - the image computes `proto_id*sizeof(VehPrototype)` ONCE and reuses it for both the `carry_capacity` and `weapon_id` field reads (same array element, two fields); this tree recomputes it for the second read under every flag set tried. A local `VehPrototype *proto = &VehPrototypes[proto_id]` used for both field reads did not change the codegen. Also see the `add`-before-`shl` base-folding note on arm_strat (0x0057D270) - same class of divergence on the `carry_capacity` read itself.
+// TRIED: proto_id` (not `uint32_t`/`int`) matches the image, which keeps the 16-bit `proto_id` in `si` for the `< MaxVehProtoFactionNum` and `== BSC_SPORE_LAUNCHER` compares and only does `movsx eax,si` at the array-indexing use sites.
 // size      100 bytes
 // prototype int (__cdecl ?veh_cargo@@YAHH@Z)(int vehID)
 // callers   19   call targets   0
@@ -4708,7 +4708,7 @@ Purpose: Calculate the specified prototype's overall cost to build. Optional out
 //      the image's `(cost*3)/4` and the `/100` scaling both carry the
 //      `cdq`/sign-correction fixup a signed local earns and an unsigned one
 //      does not, even though the values are never negative.
-// RULED-OUT: not chased further. The residual gap is the boolean
+// TRIED: not chased further. The residual gap is the boolean
 // materialization in `has_fac_built_call`'s `(mask & field) != 0` - the
 // image computes an actual 0/1 via `and/neg/sbb/neg` before testing it
 // (0x005C18B8), where this tree's `&&`-chain folds the AND straight into a
@@ -4792,7 +4792,7 @@ Purpose: Check if the land unit inside an air transport can disembark. The trans
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     (none)
-// RULED-OUT: splitting the one big && chain into sequential early-return ifs; hoisting
+// TRIED: splitting the one big && chain into sequential early-return ifs; hoisting
 //   Vehs[veh_id].x/y into locals; mixing split-return with the || form - all measured
 //   worse or equal. Committed form already gets 6/63 agreeing, 0.800 similar; remaining
 //   divergence is register naming only (ecx/edx swapped on otherwise identical opcodes)
@@ -5120,7 +5120,7 @@ Purpose: Weight the raw odds of an attack by how badly the faction's AI wants th
          stack dead. The odds arrive already computed by battle_fight; everything here is a
          strategic multiplier on top of them.
 // ORIGINAL: 0x00565F20 ?compute_odds@@YAHHHHHH@Z 0x00565F20-0x005665CC
-// RULED-OUT: call structure already matches exactly (`osmx calls --all`'s 15
+// TRIED: call structure already matches exactly (`osmx calls --all`'s 15
 //            call sites resolve to the same 5 targets as the image's own
 //            `calls` list: base_at, at_goal, stack_check x9, has_abil,
 //            veh_at x2), so the 123/572 (0.540 best, /O2 /Gy /GR- /Oy- /GX)

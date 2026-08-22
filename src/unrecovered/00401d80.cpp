@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00401D80 sub_401d80 0x00401D80-0x0040230F;0x006504E0-0x00650571 FILE
-// RULED-OUT: reproducing the /GX SEH prologue (push -1/funclet/fs:[0] chain) by hand - the earlier lever (a real local object with a destructor makes the compiler emit its own matching frame) needs the ACTUAL class whose ctor/dtor this uses, which is not recoverable from this file alone; landed the full two-branch allocate-and-link body (both the 0x1c-node and 0x60-node paths, both empty/non-empty container cases) as plain control flow instead, diverging from instruction #5 (no SEH frame set up) but matching the field offsets and call order throughout.
+// TRIED: reproducing the /GX SEH prologue (push -1/funclet/fs:[0] chain) by hand - the earlier lever (a real local object with a destructor makes the compiler emit its own matching frame) needs the ACTUAL class whose ctor/dtor this uses, which is not recoverable from this file alone; landed the full two-branch allocate-and-link body (both the 0x1c-node and 0x60-node paths, both empty/non-empty container cases) as plain control flow instead, diverging from instruction #5 (no SEH frame set up) but matching the field offsets and call order throughout.
 // working copy - scaffold materialised by --work
 // size      1568 bytes
 // prototype 

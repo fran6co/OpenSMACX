@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004BF400 ?close@UV2Player@@QAEXXZ 0x004BF400-0x004BF4A2 FILE
-// RULED-OUT: COM-style vtable (ecx=vtbl, self pushed explicit, callee-pop) via a raw VFn* vtable array rather than the scaffold's thiscall VCall; set_display_mode called through a differently-named free extern since it is QAA/cdecl-static, not the scaffold's non-static member. MISMATCH #29, well past the vtable teardown into the display-mode branch.
+// TRIED: COM-style vtable (ecx=vtbl, self pushed explicit, callee-pop) via a raw VFn* vtable array rather than the scaffold's thiscall VCall; set_display_mode called through a differently-named free extern since it is QAA/cdecl-static, not the scaffold's non-static member. MISMATCH #29, well past the vtable teardown into the display-mode branch.
 // working copy - scaffold materialised by --work
 // size      162 bytes
 // prototype void (__thiscall ?close@UV2Player@@QAEXXZ)(UV2Player* this)

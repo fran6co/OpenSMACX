@@ -153,7 +153,7 @@ Purpose: Construct a Scroll: run the GraphicWin base construction, install
 //   no placement-new, layout unchanged. 21 -> 22 of 83 on its own, and it is
 //   what UNBLOCKS the two levers below - they are unreachable until the order
 //   is right. This RETRACTS the "raw bytes and placement-new" conclusion the
-//   RULED-OUT below reached; that note read the divergence correctly and then
+//   TRIED below reached; that note read the divergence correctly and then
 //   picked the wrong of two ways to fix it.
 // LEVER: vtable immediates  `extern const uint32_t ScrollPrimaryVtable` with
 //   the definition down in this file is invisible at the constructor, so VC6
@@ -162,7 +162,7 @@ Purpose: Construct a Scroll: run the GraphicWin base construction, install
 //   largest single move, and it was hidden behind the ordering defect.
 // LEVER: store order  0xA30 is written between 0xA2C and 0xA3C in the image;
 //   this body had it three lines later. 77 -> 81 of 83.
-// RULED-OUT: the last 2 instructions are the four-store loop's INDUCTION
+// TRIED: the last 2 instructions are the four-store loop's INDUCTION
 //   VARIABLE, not its body. The image keeps eax a plain scaled index and folds
 //   each table base into the displacement (`xor eax,eax`;
 //   `mov edx,[eax+0x9b8de8]`); this tree emits `mov eax,0x14` and
@@ -172,7 +172,7 @@ Purpose: Construct a Scroll: run the GraphicWin base construction, install
 //   and subscripting the array by name inside the loop worse again at 75. The
 //   `uint32_t *const` locals reading `&Scroll...Defaults` are the best of the
 //   four spellings measured.
-// RULED-OUT: SEH frame divergence at instruction 0, same family as
+// TRIED: SEH frame divergence at instruction 0, same family as
 //   FlatButton::FlatButton() (flatbutton.cpp) and PullDown::PullDown()
 //   (pulldown.cpp) - a REAL derived-class constructor calling a base's
 //   `construct()` method under `/GX` gets VC6's unwind scaffolding. Unlike
@@ -180,7 +180,7 @@ Purpose: Construct a Scroll: run the GraphicWin base construction, install
 //   (`push -1 / push 0x662e46 / mov eax,fs:[0] / push eax / mov
 //   fs:[0],esp`), so this is not the same "we have one where they have
 //   none" defect - not re-derived per policy either way.
-// RULED-OUT: named FlatButton members over placement-new at a fixed offset.
+// TRIED: named FlatButton members over placement-new at a fixed offset.
 //   The image calls GraphicWin::construct() BEFORE the two FlatButton
 //   constructors (0x6051ee then 0x6051ff/0x60520f); ordinary C++ member
 //   construction always runs the member ctors before the constructor BODY
@@ -263,14 +263,14 @@ Purpose: Reset Scroll-owned state from the process defaults, close the two
 //   same increment, at offsets 0x10/0x1c/0x28, i.e. `dynamic[5+index]`,
 //   `dynamic[8+index]`, `dynamic[11+index]` - exactly the four windows the
 //   loop below already writes. There is no data-mapping defect here; see the
-//   RULED-OUT below and the constructor's own (0x006051D0) matching note for
+//   TRIED below and the constructor's own (0x006051D0) matching note for
 //   what the remaining gap actually is.
-// RULED-OUT: the remaining 6-instruction gap is two SEPARATE, already-typed
+// TRIED: the remaining 6-instruction gap is two SEPARATE, already-typed
 //   defects, neither of which yielded to a new spelling (try_spellings,
 //   2026-08-22). (1) The loop's induction variable: the image keeps a plain
 //   scaled byte offset in `eax` (`xor eax,eax` before the loop); this body's
 //   compiled `eax` starts at the strength-reduced `0x14` instead - the exact
-//   residual the constructor's own RULED-OUT above documents and could not
+//   residual the constructor's own TRIED above documents and could not
 //   move either (tried `int index` here too, no change). (2) The SECOND
 //   FlatButton dispatch (`flat_button_right_`) schedules its vtable load
 //   into `eax` and calls `[eax+0x168]` where the image loads `edx` and calls
@@ -289,7 +289,7 @@ Purpose: Reset Scroll-owned state from the process defaults, close the two
 //   Plain (non-volatile) pointers, same raw-offset shape, took this from
 //   47/71 to 65/71 - and the compiled instruction count now matches the
 //   image's 71 exactly. The remaining 6-instruction gap is the induction
-//   variable and second-dispatch scheduling the RULED-OUT above names;
+//   variable and second-dispatch scheduling the TRIED above names;
 //   unaffected by this change.
 // symbol    ?close@Scroll@@QAEIXZ
 // size      350 bytes
@@ -467,7 +467,7 @@ int Scroll::init_horz_nc(
 /*
 Purpose: Set the signed scrollbar range and redraw it at the lower endpoint.
 // ORIGINAL: 0x006059B0 ?set_range@Scroll@@QAEXHH@Z 0x006059B0-0x00605A0D
-// RULED-OUT: manual temp-swap (3/24 agreeing); swap() by name matches structure
+// TRIED: manual temp-swap (3/24 agreeing); swap() by name matches structure
 //   through the branch and both stores (15/24) but the call target itself
 //   doesn't resolve to 0x628A50 in this harness - store order/offsets confirmed
 //   correct via tools/store_order.py.
@@ -507,7 +507,7 @@ Purpose: Set the color shared by the scrollbar and both end buttons.
 //   helper, and the shared helpers marked `inline`) gets the vtable dispatch inlined
 //   in place, matching the image's direct load+call; a volatile store on the first
 //   field write fixes its scheduling relative to the following `lea`.
-// RULED-OUT: the second call's vtable-load/call still schedules differently
+// TRIED: the second call's vtable-load/call still schedules differently
 //   (edx direct-load + call [edx+0xf8] vs our eax materialised then call eax);
 //   tried this+0x15F8 addressing and evaluation-order changes, no effect.
 // symbol    ?set_button_color@Scroll@@QAEIH@Z
@@ -542,7 +542,7 @@ Purpose: Set the bevel thickness shared by the scrollbar and both end buttons.
 //   0x00605A10 already uses - 4/14 to 7/14 agreeing. First dispatch now
 //   matches the image's single `call dword ptr [reg+0xf8]`; the second still
 //   schedules as `mov eax,[obj]; mov eax,[eax+0xf8]; call eax` - the same
-//   residual 0x00605A10's own RULED-OUT note already gives up on.
+//   residual 0x00605A10's own TRIED note already gives up on.
 // symbol    ?set_bevel_thickness@Scroll@@QAEIH@Z
 // size      61 bytes
 // prototype void (__thiscall ?set_bevel_thickness@Scroll@@QAEXH@Z)(Scroll* this, int)
@@ -622,7 +622,7 @@ uint32_t Scroll::set_bevel_lower(int color) {
 /*
 Purpose: Set the scrollbar thickness and reset its thumb rectangle.
 // ORIGINAL: 0x00605B80 ?set_bar_thickness@Scroll@@QAEXH@Z 0x00605B80-0x00605BE0
-// RULED-OUT: dropping the `volatile` casts on `bar_thickness_`, `border_color_`
+// TRIED: dropping the `volatile` casts on `bar_thickness_`, `border_color_`
 //   and the `thumb` RECT alias (plain assignments/reads to the named fields
 //   instead): 7/22 -> 8/22 but the compiler now folds the border-color guard
 //   into an `or eax, edx` the image never has and drops 4 instructions the
@@ -670,7 +670,7 @@ Purpose: Set the border color and reset the scrollbar thumb rectangle.
 //   drop it. A `volatile RECT*` keeps both writes, and re-reading `border_color_`
 //   (not the `color` parameter) for the branch condition matches the image, which
 //   reloads from the just-stored field instead of keeping color live (1/22 -> 9/22).
-// RULED-OUT: forcing the thickness read through a volatile cast, no further gain.
+// TRIED: forcing the thickness read through a volatile cast, no further gain.
 // size      100 bytes
 // prototype void (__thiscall ?set_border_color@Scroll@@QAEXH@Z)(Scroll* this, int)
 // callers   1   call targets   0
@@ -807,13 +807,13 @@ void Scroll::set_sprite_down(
 /*
 Purpose: Clamp, optionally reverse, and redraw the scrollbar position.
 // ORIGINAL: 0x00605D20 ?set_pos@Scroll@@QAEXH@Z 0x00605D20-0x00605D8A
-// RULED-OUT: the guard clause's branch polarity (image falls through to the
+// TRIED: the guard clause's branch polarity (image falls through to the
 //   continue path and jumps forward to a shared `ret` for the early return;
 //   this tree's `if(!parent) return 0;` gets compiled the other way around,
 //   `jne`+immediate `ret` first). Tried if/else, nested-if without else, and
 //   goto-to-label; all three either reproduce the same layout or add a second
 //   epilogue. Everything past the guard already matches in shape (8/29).
-// RULED-OUT: replacing the redraw_from_vtable(__asm helper) tail with the
+// TRIED: replacing the redraw_from_vtable(__asm helper) tail with the
 //   inline read_volatile_bits/original_slot<func_noarg_virtual> dispatch -
 //   still 8/29, no measured improvement, so reverted. The inline form emits
 //   `mov eax,[ecx]; mov eax,[eax+0xf8]; call eax` (3 insns) against the
@@ -988,7 +988,7 @@ void Scroll::compute_thumb_rect(RECT *rect) {
 /*
 Purpose: Reset the scrollbar thumb rectangle from its stored thickness.
 // ORIGINAL: 0x00606EA0 ?set_thumb_rect@Scroll@@QAEXXZ 0x00606EA0-0x00606EF8
-// RULED-OUT: dropping the `volatile` casts on `bar_thickness_`, `border_color_`
+// TRIED: dropping the `volatile` casts on `bar_thickness_`, `border_color_`
 //   and the `thumb` RECT alias: 12/20 -> 7/20, a clear regression. Without
 //   `volatile` the optimizer proves the unconditional 0/0/thickness/thickness
 //   rect writes are dead when the branch below overwrites them and elides
@@ -1164,7 +1164,7 @@ Purpose: Destroy a Scroll: stage its two virtual tables, run close, destroy
          GraphicWin base teardown. The original's exception frame is omitted
          as unreachable per policy.
 // ORIGINAL: 0x00406E60 ??1Scroll@@QAE@XZ 0x00406E60-0x00406F1A;0x00650BB0-0x00650BEE
-// RULED-OUT: dropping `volatile` from `object` (plain `uint32_t *`, same raw
+// TRIED: dropping `volatile` from `object` (plain `uint32_t *`, same raw
 //   offsets): no change, still 0/46. The image's prologue is an SEH frame
 //   (`push ebp; mov ebp,esp; push -1; push handler; ...`) that this body's
 //   policy-omitted frame (see Purpose above) never reproduces, so every

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005FB9C0 ?compute@Menu@@QAEXXZ 0x005FB9C0-0x005FBABD FILE
-// RULED-OUT: `(seed = DAT_9bb484, DAT_9b7b94 = seed, seed != 0)` (single load reused for both the store and the test) instead of a comma expression that rereads the global twice, which forced an extra reload. `reinterpret_cast<Spot*>(self+0xa2c)` kept INLINE at each call site, not hoisted to a named local - hoisting moves the `lea` ahead of the `DAT_9bb484` fallback branch and regresses to MISMATCH #9. Best form lands at MISMATCH #33 (deep past the loop setup); divergence is a 'mov' vs 'test' pairing whose surrounding bytes still match, not a missed field.
+// TRIED: `(seed = DAT_9bb484, DAT_9b7b94 = seed, seed != 0)` (single load reused for both the store and the test) instead of a comma expression that rereads the global twice, which forced an extra reload. `reinterpret_cast<Spot*>(self+0xa2c)` kept INLINE at each call site, not hoisted to a named local - hoisting moves the `lea` ahead of the `DAT_9bb484` fallback branch and regresses to MISMATCH #9. Best form lands at MISMATCH #33 (deep past the loop setup); divergence is a 'mov' vs 'test' pairing whose surrounding bytes still match, not a missed field.
 // size      253 bytes
 // prototype void (__thiscall ?compute@Menu@@QAEXXZ)(Menu* this)
 // callers   0   call targets   3

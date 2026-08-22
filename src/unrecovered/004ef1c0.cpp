@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004EF1C0 ?base_growth@@YAHXZ 0x004EF1C0-0x004EFB4E FILE
-// RULED-OUT: DAT_0090ea30 is Ghidra-typed `short*` throughout, so every `DAT_0090ea30[N]`/`DAT_0090ea30+N` is byte offset N*2 off the Base* (confirmed against raw disasm: index 0x1e/0x68 -> bytes 0x3c/0xd0, index 3 -> byte 6, the growth-stage counter); two has_fac() calls use the local `owner` byte, not DAT_00689370, per raw push order (Ghidra swapped these). Compiles; diverges at #3 (prologue field-read order).
+// TRIED: DAT_0090ea30 is Ghidra-typed `short*` throughout, so every `DAT_0090ea30[N]`/`DAT_0090ea30+N` is byte offset N*2 off the Base* (confirmed against raw disasm: index 0x1e/0x68 -> bytes 0x3c/0xd0, index 3 -> byte 6, the growth-stage counter); two has_fac() calls use the local `owner` byte, not DAT_00689370, per raw push order (Ghidra swapped these). Compiles; diverges at #3 (prologue field-read order).
 // working copy - scaffold materialised by --work
 // size      2446 bytes
 // prototype 

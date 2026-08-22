@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00589A30 ?change_opening@@YAHPAD@Z 0x00589A30-0x00589B1D;0x00660255-0x0066026A FILE
-// RULED-OUT: reproducing the SEH frame/unwind funclet for the local `Buffer buf` explicitly - a real local of non-trivial type (ctor/dtor declared, undefined) makes MSVC generate its own construction/destruction and unwind automatically; landed relying on that instead of hand-writing the funclet.
+// TRIED: reproducing the SEH frame/unwind funclet for the local `Buffer buf` explicitly - a real local of non-trivial type (ctor/dtor declared, undefined) makes MSVC generate its own construction/destruction and unwind automatically; landed relying on that instead of hand-writing the funclet.
 // size      258 bytes
 // prototype
 // callers   1   call targets   4

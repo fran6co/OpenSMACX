@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00628F30 sub_628f30 0x00628F30-0x006290E0 FILE
-// RULED-OUT: fixed-slot function-pointer casts (GetDriveTypeA/FindFirstFileA/LoadLibraryA/GetProcAddress/etc via g_ globals) for the CD-check loop; diverges at #0, whole-frame size differs from local buffer layout
+// TRIED: fixed-slot function-pointer casts (GetDriveTypeA/FindFirstFileA/LoadLibraryA/GetProcAddress/etc via g_ globals) for the CD-check loop; diverges at #0, whole-frame size differs from local buffer layout
 // size      432 bytes
 // prototype 
 // callers   2   call targets   3

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0043AA00 ?select_reactor@DesignWin@@QAEXXZ 0x0043AA00-0x0043AC69;0x0065438B-0x00654410 FILE
-// RULED-OUT: same shape as 0x004C9080 - a chain of independent locals (SelectPartWin, Buffer, 2 Fonts, Caviar, a Scroll-typed object, 2 FlatButtons) each closed/destroyed by an explicit call, not by RAII. Used one flat byte buffer plus reinterpret_cast calls in disassembly order/targets rather than real locals, at the cost of the free SEH prologue. The two count-matching loops over the 4-entry 0x952800 table use a fixed `idx < 4` bound rather than the pointer compare against the literal 0x952830.
+// TRIED: same shape as 0x004C9080 - a chain of independent locals (SelectPartWin, Buffer, 2 Fonts, Caviar, a Scroll-typed object, 2 FlatButtons) each closed/destroyed by an explicit call, not by RAII. Used one flat byte buffer plus reinterpret_cast calls in disassembly order/targets rather than real locals, at the cost of the free SEH prologue. The two count-matching loops over the 4-entry 0x952800 table use a fixed `idx < 4` bound rather than the pointer compare against the literal 0x952830.
 // working copy - scaffold materialised by --work
 // size      750 bytes
 // prototype void (__thiscall ?select_reactor@DesignWin@@QAEXXZ)(DesignWin* this)

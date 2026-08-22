@@ -53,15 +53,23 @@ def test_a_body_that_stops_matching_keeps_its_claim_for_a_human(tmp_path):
     assert not stamped(record, verdict(Tier.MISMATCH), demote=True).byte_exact
 
 
-def test_a_lever_that_stops_working_becomes_a_ruled_out(tmp_path):
+def test_a_lever_that_stops_working_becomes_a_tried(tmp_path):
     """Each lesson is legal on exactly one kind of body: LEVER on one that
-    matches, RULED-OUT on one that does not. The prose stays true either
-    way - it just stopped being the thing that worked."""
+    matches, TRIED on one that does not. The prose stays true either
+    way - it just stopped being the thing that worked.
+
+    THE KEY TRAVELS WITH THE PROSE. A LEVER is `KEY prose` and a TRIED is one
+    string, so migrating one to the other must re-join them: dropping the key
+    ATE THE FIRST WORD of every migrated line, turning `jl/jge flipped the
+    condition` into `flipped the condition` - a note that no longer says which
+    divergence it addresses, which is the only part the next agent greps for.
+    This test asserted the lossy form and so could not see it."""
     record = record_in(tmp_path, MATCHED)
     assert record.levers
     after = stamped(record, verdict(Tier.SHAPE_EXACT))
     assert after.levers == ()
-    assert "flipped the condition and swapped the arms" in after.ruled_out
+    assert ("jl/jge flipped the condition and swapped the arms"
+            in after.ruled_out)
 
 
 @pytest.mark.parametrize("tier", [t for t in Tier if t is not Tier.BYTE_EXACT])
@@ -130,7 +138,9 @@ def test_the_lesson_still_moves_when_the_claim_is_kept(tmp_path, monkeypatch):
     after = read_file(tmp_path / "x.cpp")[0]
     assert after.byte_exact
     assert after.levers == ()
-    assert "flipped the condition and swapped the arms" in after.ruled_out
+    # The key travels with the prose - see the migration test above.
+    assert ("jl/jge flipped the condition and swapped the arms"
+            in after.ruled_out)
 
 
 def test_demote_is_how_a_caller_says_it_has_looked(tmp_path, monkeypatch):

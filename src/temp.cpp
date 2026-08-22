@@ -675,7 +675,7 @@ Purpose: Process non-input related message.
 //        it names the operand pair, "push immediate 0x20a against 0x209",
 //        where `listing_diff` cannot: it masks every immediate before
 //        comparing, so a wrong constant is invisible there.
-// RULED-OUT: the last two instructions, 82/84 at `/c /O2 /Gy /GR- /GX`. VC6
+// TRIED: the last two instructions, 82/84 at `/c /O2 /Gy /GR- /GX`. VC6
 //        emits the two strength-reduced byte offsets of the min-search loop -
 //        `mov eax, 0x1c` for `c` and `xor esi, esi` for `a` - in the opposite
 //        ORDER to the image; nothing else differs and the instruction counts
@@ -751,7 +751,7 @@ Status: Complete - testing
 //        `/c /O2 /Gy /GR- /Oy- /GX`, unchanged. `MEASURED inline` in temp.h
 //        with the marker left in this .cpp is what makes it both reproduce
 //        and stay measurable; decomp's reader globs only *.cpp and *.c.
-// RULED-OUT: an out-of-line `do_all_non_input_call` forwarder, the
+// TRIED: an out-of-line `do_all_non_input_call` forwarder, the
 //        `sleep_call`/`base_cost_call` idiom, to unblock Path::continent -
 //        which this `MEASURED inline` caps because the image CALLS 0x005FCB20
 //        there. Measured and reverted in path.cpp: agreement 16/206 -> 1/206

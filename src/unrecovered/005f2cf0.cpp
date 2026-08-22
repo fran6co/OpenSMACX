@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005F2CF0 ?on_redraw_nc@Win@@QAEXPAURECT@@H@Z 0x005F2CF0-0x005F37BA FILE
-// RULED-OUT: first 9 instructions match (prologue, flag tests); diverges at instr #10 (je vs mov). Field map (buffer1_..4_ at 0xB4/0xB8/0xBC/0xC0, heap_.base_ at 0xE0 as the title char*, client_rect_/outer_rect_ at 0x14C/0x13C) cross-checked against param_1[N]*4 in the Ghidra listing and is consistent across all 4 near-identical edge blocks.
+// TRIED: first 9 instructions match (prologue, flag tests); diverges at instr #10 (je vs mov). Field map (buffer1_..4_ at 0xB4/0xB8/0xBC/0xC0, heap_.base_ at 0xE0 as the title char*, client_rect_/outer_rect_ at 0x14C/0x13C) cross-checked against param_1[N]*4 in the Ghidra listing and is consistent across all 4 near-identical edge blocks.
 // working copy - scaffold materialised by --work
 // size      2762 bytes
 // prototype void (__thiscall ?on_redraw_nc@Win@@QAEXPAURECT@@H@Z)(Win* this, RECT*, int)

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00493AF0 ?edbc_unit@ProdPicker@@QAEHH@Z 0x00493AF0-0x00493B4A FILE
-// RULED-OUT: `a1 > 0x3f` (jl/jle polarity mismatch) - fixed with `a1 >= 0x40` to match the original's literal `cmp eax, 0x40; jl`. All 29 mnemonics now match; the only leftover diff is a trailing 2-byte `mov edi,edi` alignment pad after the switch's jump table that this single-function unit picks up on its own.
+// TRIED: `a1 > 0x3f` (jl/jle polarity mismatch) - fixed with `a1 >= 0x40` to match the original's literal `cmp eax, 0x40; jl`. All 29 mnemonics now match; the only leftover diff is a trailing 2-byte `mov edi,edi` alignment pad after the switch's jump table that this single-function unit picks up on its own.
 // working copy - scaffold materialised by --work
 // size      90 bytes
 // prototype int (__thiscall ?edbc_unit@ProdPicker@@QAEHH@Z)(ProdPicker* this, int)

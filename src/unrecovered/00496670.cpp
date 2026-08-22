@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00496670 ?quayle@@YAXH@Z 0x00496670-0x0049670F FILE
-// RULED-OUT: MISMATCH #15 add/mov, table-index lea chain differs from the do/while division idiom form used
+// TRIED: MISMATCH #15 add/mov, table-index lea chain differs from the do/while division idiom form used
 // working copy - scaffold materialised by --work
 // size      159 bytes
 // prototype void (__cdecl ?quayle@@YAXH@Z)(int factionID)

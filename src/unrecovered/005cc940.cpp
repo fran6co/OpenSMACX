@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005CC940 sub_5cc940 0x005CC940-0x005CD28C FILE
-// UNRECOVERABLE (partial): a DirectDraw surface-format-change/blit handler
+// TRIED (partial): a DirectDraw surface-format-change/blit handler
 //   (COM vtable dispatch through IDirectDrawSurface-shaped interfaces,
 //   confirmed by the 0x887601c2/DDERR_SURFACELOST-style comparisons and the
 //   guidance's own COM-dispatch note). Landed: __fastcall signature
@@ -17,7 +17,7 @@
 //   the second switch is a pixel-format converter that packs 1/3/6 source
 //   bytes into 32-bit BGRA-ish words via byte-granularity CONCAT31 before
 //   calling sub_5cd560/5cd3b0 (16bpp) or sub_5d02cc/5cfaed (raw copy) - left
-//   as a placeholder (RULED-OUT) rather than guess the per-run-type byte
+//   as a placeholder (TRIED) rather than guess the per-run-type byte
 //   layout without more time.
 // working copy - scaffold materialised by --work
 // size      2380 bytes
@@ -1659,7 +1659,7 @@ extern "C" int __fastcall sub_5cc940(int *param_1, int *param_2) {
                or sub_5d02cc/5cfaed (raw copy), driven by a run-length "type
                byte" (<0xd) read from the source stream. The exact CONCAT31
                byte-packing per run type is not reproduced here bit-for-bit -
-               see RULED-OUT; this keeps the call shape and the two format
+               see TRIED; this keeps the call shape and the two format
                branches (param_1[4]&0x40 selects 4-byte vs 2-byte dest pitch). */
             unsigned int uVar9b = *(unsigned int *)(*param_1 + 4);
             (void)uVar9b;

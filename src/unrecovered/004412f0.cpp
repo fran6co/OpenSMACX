@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004412F0 ?new_chat@DiploWin@@QAEXPADH@Z 0x004412F0-0x004413A7 FILE
-// RULED-OUT: const-pointer style for the 0x946a50 table (indexed lea would fold); own `extern char g_00946a50[]` used instead. #3 push/mov is register-allocation order, not a logic mismatch
+// TRIED: const-pointer style for the 0x946a50 table (indexed lea would fold); own `extern char g_00946a50[]` used instead. #3 push/mov is register-allocation order, not a logic mismatch
 // working copy - scaffold materialised by --work
 // size      183 bytes
 // prototype void (__thiscall ?new_chat@DiploWin@@QAEXPADH@Z)(DiploWin* this, int8*, int)

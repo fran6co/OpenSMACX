@@ -98,7 +98,7 @@ void Path::set(uint32_t x, uint32_t y, int val) {
 //   what stops VC6 collapsing the pair into one byte-wide `cmp cl, 8 / jb`.
 //   It is redundant as arithmetic (`val2 & 0xF` is 0..15) and load-bearing
 //   as codegen: dropping it costs 0.859 -> 0.844 and two instructions.
-// RULED-OUT: the `is_ocean` materialisation, for the same reason as
+// TRIED: the `is_ocean` materialisation, for the same reason as
 //   0x0059C3C0. The image ends it `xor edx, edx / mov dl, [eax] / and edx,
 //   0xE0 / cmp edx, 0x60 / setl al` - dword and SIGNED - and this tree emits
 //   `and dl, 0xe0 / cmp dl, 0x60 / sbb eax, eax / neg eax`, byte and
@@ -106,7 +106,7 @@ void Path::set(uint32_t x, uint32_t y, int val) {
 //   for the masked altitude, an `int` local for the raw climate byte,
 //   `static_cast<int>` on both sides of the compare, and the `is_ocean()`
 //   helper itself (which is worse still, 0.839).
-// RULED-OUT: matching the loop's register schedule. The image hoists
+// TRIED: matching the loop's register schedule. The image hoists
 //   `MapLongitudeBounds` into ebx for `xrange`/`on_map` and reloads it once
 //   per iteration at the back edge; this tree reads `[0x949870]` at each of
 //   the four uses. Those reads are inside `xrange` and `on_map` in
@@ -157,7 +157,7 @@ int Path::zoc_path(int x, int y, int faction_id) {
 /*
  Purpose: Find the path between two points that meets the conditions?
 // ORIGINAL: 0x0059A530 ?find@Path@@QAEHHHHHHHHH@Z 0x0059A530-0x0059BC05
-// RULED-OUT: this pass, on BUDGET, not on any wall - and recorded as a
+// TRIED: this pass, on BUDGET, not on any wall - and recorded as a
 //   lesson line because the investigation note below is prose and therefore
 //   invisible to `frontier.py --untouched`, which is why this address was
 //   handed out again as fresh. Measured 2026-08-22: the body is still
@@ -261,7 +261,7 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
 /*
  Purpose: TBD
 // ORIGINAL: 0x0059BC10 ?move@Path@@QAEHHH@Z 0x0059BC10-0x0059C1F3
-// RULED-OUT: this pass, on BUDGET. Measured 2026-08-22: 62 instructions
+// TRIED: this pass, on BUDGET. Measured 2026-08-22: 62 instructions
 //   against the image's 488, similarity 0.211, first divergence at
 //   instruction 0 - the image opens `sub esp, 0x38` for a frame this body
 //   never needs because it stops at 0x0059BD73, roughly an eighth of the
@@ -347,7 +347,7 @@ int Path::move(int veh_id, int faction_id) {
 /*
  Purpose: Populate the abstract map with the radial region value.
 // ORIGINAL: 0x0059C200 ?make_abstract@Path@@QAEXXZ 0x0059C200-0x0059C33F
-// RULED-OUT: the divergence is at instruction 2 and it is the FRAME SIZE - the image reserves `sub esp, 0x1c` where this body reserves 0x18, one dword short. Four source shapes measured with tools/try_spellings.py and ALL FOUR compile identically to what is committed, 11/112: hoisting `x * 5` and `y * 5` into their own locals, splitting the `on_map && !is_ocean` guard into nested ifs, both together, and signed loop counters. VC6 emits the same code for every one, so the extra slot is not this body's to allocate - it belongs to one of the four `MEASURED inline` callees here (xrange, on_map, is_ocean, region_at) spilling where ours does not. Same family as the port_to_port/has_tech ceiling; not reachable from path.cpp.
+// TRIED: the divergence is at instruction 2 and it is the FRAME SIZE - the image reserves `sub esp, 0x1c` where this body reserves 0x18, one dword short. Four source shapes measured with tools/try_spellings.py and ALL FOUR compile identically to what is committed, 11/112: hoisting `x * 5` and `y * 5` into their own locals, splitting the `on_map && !is_ocean` guard into nested ifs, both together, and signed loop counters. VC6 emits the same code for every one, so the extra slot is not this body's to allocate - it belongs to one of the four `MEASURED inline` callees here (xrange, on_map, is_ocean, region_at) spilling where ours does not. Same family as the port_to_port/has_tech ceiling; not reachable from path.cpp.
 // size      319 bytes
 // prototype void (__thiscall ?make_abstract@Path@@QAEXXZ)(Path* this)
 // callers   1   call targets   1
@@ -412,7 +412,7 @@ void Path::merge(int region_old, int region_new) {
 //   `mov eax, [0x94a30c]` / `add eax, esi`), because the tile pointer comes
 //   from a global and cannot be CSE'd across it. 0.851 -> 0.871, and two
 //   instructions closer (125 against the image's 123).
-// RULED-OUT: reaching the image's `xor ebx, ebx / mov bl, [eax] / and ebx,
+// TRIED: reaching the image's `xor ebx, ebx / mov bl, [eax] / and ebx,
 //   0xffffffe0 / cmp ebx, 0x60 / setl` from this file. VC6 narrows the same
 //   expression to `mov al, [eax] / and al, 0xe0 / cmp al, 0x60 / jb` - byte
 //   width and UNSIGNED where the image is dword and SIGNED - and it does so
@@ -422,12 +422,12 @@ void Path::merge(int region_old, int region_new) {
 //   local for `unk_1` all compile to the byte form and all score 0.871. The
 //   shape belongs to `altitude_at`/`is_ocean` in src/map.h, which this batch
 //   does not own; it is the same divergence at BOTH ocean tests here.
-// RULED-OUT: the bool-materialising guard spellings that fixed 0x0055BC00.
+// TRIED: the bool-materialising guard spellings that fixed 0x0055BC00.
 //   The image's entry test ends `setl al / xor edi, edi / cmp eax, edi /
 //   jne`, but `BOOL ocean = is_ocean(x, y);`, `!!is_ocean(...)`,
 //   `is_ocean(...) != 0` and `(is_ocean(...) ? 1 : 0) != 0` all fold to the
 //   same direct branch here: 0.871 each, no movement.
-// RULED-OUT: writing `index1_ = 0;` before `index2_ = 0;`, and reusing the
+// TRIED: writing `index1_ = 0;` before `index2_ = 0;`, and reusing the
 //   `x`/`y` parameters as the loop cursors instead of naming new locals.
 //   Both score exactly 0.871; the parameter reuse does reproduce the image's
 //   `mov [ebp+8], edx` but costs nothing either way.
@@ -471,14 +471,14 @@ void Path::territory(int x, int y, int UNUSED(region), int faction_id) {
 /*
  Purpose: Populate the continent and path table for the specified tile and region.
 // ORIGINAL: 0x0059C520 ?continent@Path@@QAEXHHH@Z 0x0059C520-0x0059C781
-// RULED-OUT: a real out-of-line forwarder for `do_all_non_input`, the `sleep_call`/`base_cost_call` idiom, to answer this body making 5 calls where the image makes 4. MEASURED and REVERTED: it makes things worse in both directions at once. Agreement falls from 16/206 to 1/206, because changing the call target shifts everything after it; and call_diff goes from MORE (5 against 4) to FEWER (2 against 4) rather than agreeing, because it resolves callees by ADDRESS and a forwarder is a different address than the 0x005FCB20 the image calls. The idiom works where the forwarder IS the image's callee; here it cannot be.
+// TRIED: a real out-of-line forwarder for `do_all_non_input`, the `sleep_call`/`base_cost_call` idiom, to answer this body making 5 calls where the image makes 4. MEASURED and REVERTED: it makes things worse in both directions at once. Agreement falls from 16/206 to 1/206, because changing the call target shifts everything after it; and call_diff goes from MORE (5 against 4) to FEWER (2 against 4) rather than agreeing, because it resolves callees by ADDRESS and a forwarder is a different address than the 0x005FCB20 the image calls. The idiom works where the forwarder IS the image's callee; here it cannot be.
 // size      609 bytes
 // prototype void (__thiscall ?continent@Path@@QAEXHHH@Z)(Path* this, int xCoord, int yCoord, int region)
 // callers   1   call targets   3
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x00591B90 0x00591DB0 0x005FCB20
-// RULED-OUT: `call_diff` reports this tree makes 5 calls against the
+// TRIED: `call_diff` reports this tree makes 5 calls against the
 //   image's 4 (MORE) - the image calls 0x005FCB20 (`do_all_non_input`)
 //   directly at this site, but `do_all_non_input` is declared `MEASURED
 //   inline` in temp.h and VC6 inlines it here too, expanding it into three
@@ -543,7 +543,7 @@ void Path::continent(int x, int y, int region) {
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x0050BA00 0x00591B90 0x0059C200 0x0059C520 0x005FCB20
-// RULED-OUT: `call_diff` reports NO call-count disagreement here (unlike
+// TRIED: `call_diff` reports NO call-count disagreement here (unlike
 //   the sibling `continent` a few lines up, where the same `do_all_non_input`
 //   call gets inlined) - this function is large enough that VC6 keeps it as
 //   a real out-of-line call, matching the image's 0x005FCB20. The remaining
@@ -682,9 +682,9 @@ void Path::continents() {
 //   the image accepts. Fixing all four costs NOTHING on the measurement -
 //   0.3363 either way with `altitude_at(x, y)` for the altitude arms - so
 //   this is a correctness fix that the score could never have found.
-// RULED-OUT: spelling the altitude arms as `tile->climate & 0xE0` instead of
+// TRIED: spelling the altitude arms as `tile->climate & 0xE0` instead of
 //   `altitude_at(x, y)`. Same program, and it costs 0.336 -> 0.285.
-// RULED-OUT: byte-exactness this pass - out of budget, and the gap is
+// TRIED: byte-exactness this pass - out of budget, and the gap is
 //   register allocation across a 464-instruction body, not a missing
 //   statement. `call_diff` reports the call counts already AGREE (nine
 //   calls, whose_territory x3, is_sensor x2, zoc_veh, bonus_at, has_tech,

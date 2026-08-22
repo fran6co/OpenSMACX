@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00410870 ?draw_commerce@BaseWin@@QAEXH@Z 0x00410870-0x00411235;0x00651B22-0x00651B37 FILE
-// RULED-OUT: SEH-framed function with one real local object (`Font font;`, matching the single ??0Font/??1Font pair) reproduced via plain RAII, same as 0x004ADB70. Diverges at #12 (sim 0.53), not chased further given time. The "own faction" index scan, both box_sprite/set_font/ set_text_color RECT setups, and the tail (soft_update vs update on a1, restore clip) are a direct instruction-level transcription off raw disassembly. The per-faction commerce-report loop body (the `slot` loop building relation strings via write_l) and the military-score ELSE branch are adapted from Ghidra with real field offsets and real calls but approximated message-selection logic - not verified call-for-call against raw bytes given the remaining budget.
+// TRIED: SEH-framed function with one real local object (`Font font;`, matching the single ??0Font/??1Font pair) reproduced via plain RAII, same as 0x004ADB70. Diverges at #12 (sim 0.53), not chased further given time. The "own faction" index scan, both box_sprite/set_font/ set_text_color RECT setups, and the tail (soft_update vs update on a1, restore clip) are a direct instruction-level transcription off raw disassembly. The per-faction commerce-report loop body (the `slot` loop building relation strings via write_l) and the military-score ELSE branch are adapted from Ghidra with real field offsets and real calls but approximated message-selection logic - not verified call-for-call against raw bytes given the remaining budget.
 // working copy - scaffold materialised by --work
 // size      2522 bytes
 // prototype void (__thiscall ?draw_commerce@BaseWin@@QAEXH@Z)(BaseWin* this, int)
@@ -1991,7 +1991,7 @@ void BaseWin::draw_commerce(int a1) {
                numbers via Strings::get + write_l. The exact string assembly
                (which of several message templates, and the numeric
                parameters) is approximated below rather than reproduced
-               call-for-call - see RULED-OUT. */
+               call-for-call - see TRIED. */
             int slot;
             char *facRec = (char *)g_009472ec;
             int *facTable = (int *)g_0096eb6c;

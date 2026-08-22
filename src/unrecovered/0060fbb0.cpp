@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0060FBB0 ?on_mouse_move@CheckBox@@QAEXHH@Z 0x0060FBB0-0x0060FC2B FILE
-// RULED-OUT: literal register-mirroring translation of the offset chain ([this-0x1c] outer descriptor, +8 offset, base+0x28/0x48/0x4c denominators, base+0x3c multiplier, base+0xd0/0xd4 bit tracking, then the outer[+4] vtable-slot-62 dispatch). Both an intermediate-locals form and an inline-division form diverge at instr #8 (original 'cdq' vs rebuilt 'imul') around where the sign-extend for the first idiv is scheduled.
+// TRIED: literal register-mirroring translation of the offset chain ([this-0x1c] outer descriptor, +8 offset, base+0x28/0x48/0x4c denominators, base+0x3c multiplier, base+0xd0/0xd4 bit tracking, then the outer[+4] vtable-slot-62 dispatch). Both an intermediate-locals form and an inline-division form diverge at instr #8 (original 'cdq' vs rebuilt 'imul') around where the sign-extend for the first idiv is scheduled.
 // working copy - scaffold materialised by --work
 // size      123 bytes
 // prototype void (__thiscall ?on_mouse_move@CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)

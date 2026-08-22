@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005593E0 ?pick_top_veh@@YAHH@Z 0x005593E0-0x005594EB
-// RULED-OUT: 98.2% mnemonic agreement (272 vs 267 bytes), diverges at one `lea`/`mov` pair - the parent-chain climb needs an extra `mov ecx,eax` to hold `top` across the array-index computation that the original does not need. Tried folding `top` back into the `a1` parameter itself (mutating it in place, matching the register reuse the disassembly implies) - that changed the PROLOGUE instead (diverges at instruction 0), worse overall. Landing the closer of the two.
+// TRIED: 98.2% mnemonic agreement (272 vs 267 bytes), diverges at one `lea`/`mov` pair - the parent-chain climb needs an extra `mov ecx,eax` to hold `top` across the array-index computation that the original does not need. Tried folding `top` back into the `a1` parameter itself (mutating it in place, matching the register reuse the disassembly implies) - that changed the PROLOGUE instead (diverges at instruction 0), worse overall. Landing the closer of the two.
 // size      267 bytes
 // prototype int (__cdecl ?pick_top_veh@@YAHH@Z)(int vehID)
 // callers   5   call targets   0

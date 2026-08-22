@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00633AB0 ?add@NetFifo@@QAEHPAXKKHK@Z 0x00633AB0-0x00633B9A FILE
-// RULED-OUT: `*tailSlot` re-dereferenced per store instead of caching the reloaded node pointer once per statement block
+// TRIED: `*tailSlot` re-dereferenced per store instead of caching the reloaded node pointer once per statement block
 // working copy - scaffold materialised by --work
 // size      234 bytes
 // prototype int (__thiscall ?add@NetFifo@@QAEHPAXKKHK@Z)(NetFifo* this, void*, unsigned int, unsigned int, int, unsigned int)

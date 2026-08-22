@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0063E5E0 sub_63e5e0 0x0063E5E0-0x0063E6DD FILE
-// RULED-OUT: real `__thiscall` member (C0063e5e0::fill(int,int,int,int)) - `this[2]==this[3]` full-guard, mem_get(0x14) in BOTH the empty-list and grow-list arms matching the ASM exactly, a linked-list node {id,val,buf,buflen,next} appended at `this[1]`, and the alloc-failure path unwinding the node it just linked (free buf, unlink, free node, count--). Reproduces the whole body; MISMATCH #3 is the same "no ebp frame" prologue wall seen across this batch (0x005D4890, 0x005DEA20) plus a `cmp [mem],reg` vs `mov reg,[mem]; cmp reg,reg` operand-form choice neither a named local nor inlining changed.
+// TRIED: real `__thiscall` member (C0063e5e0::fill(int,int,int,int)) - `this[2]==this[3]` full-guard, mem_get(0x14) in BOTH the empty-list and grow-list arms matching the ASM exactly, a linked-list node {id,val,buf,buflen,next} appended at `this[1]`, and the alloc-failure path unwinding the node it just linked (free buf, unlink, free node, count--). Reproduces the whole body; MISMATCH #3 is the same "no ebp frame" prologue wall seen across this batch (0x005D4890, 0x005DEA20) plus a `cmp [mem],reg` vs `mov reg,[mem]; cmp reg,reg` operand-form choice neither a named local nor inlining changed.
 // size      253 bytes
 // prototype 
 // callers   0   call targets   3

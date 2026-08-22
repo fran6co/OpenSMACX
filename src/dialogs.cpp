@@ -66,7 +66,7 @@ Purpose: Fetch one item's text, from whichever widget this kind of dialog
 //        order changed which block VC6 places (and schedules) first; moved
 //        12/26 -> 20/26 and removed a spurious internal `call`+`ret 8` the
 //        shared-tail block was reached through.
-// RULED-OUT: 20/26 plateau on the remaining block - image loads `index`
+// TRIED: 20/26 plateau on the remaining block - image loads `index`
 //            ([esp+8]) before starting the receiver's vtable dereference,
 //            pushes it, THEN loads/pushes `text`, interleaved with
 //            finishing the receiver. Tried: reversing the 16/8/4/1 case
@@ -457,7 +457,7 @@ Purpose: Destroy a Dialogs. Stage the Dialogs tables into the GraphicWin/Win
          targets __CxxFrameHandler and is omitted as unreachable per policy.
 // ORIGINAL: 0x00406910 ??1Dialogs@@QAE@XZ 0x00406910-0x00406A74;0x006509C0-0x00650AAA
 // symbol    ?destroy@Dialogs@@QAEIXZ
-// RULED-OUT: 3/92 - same SEH-frame symptom as `Dialog::~Dialog()` (this
+// TRIED: 3/92 - same SEH-frame symptom as `Dialog::~Dialog()` (this
 //            file's sibling class in dialog.cpp) and FlatButton's own
 //            constructor/destructor pair. Not attempted: the comment
 //            above claims the frame is "unreachable, omitted per policy",

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00460DD0 ?check@MainMenu@@QAEXH@Z 0x00460DD0-0x0046207E FILE
-// RULED-OUT: time-boxed - roughly the first quarter of the function (a long sequence of Menu::show_menu_item/hide_menu_item/ enable_menu_item gates against game-option and tech flags, transcribed with goto-labelled control flow matching the disassembly's branch targets) is faithful; the difficulty-table-driven remainder (several hundred more show/hide/enable calls) is a deliberate stub. MISMATCH #2, well past the prologue.
+// TRIED: time-boxed - roughly the first quarter of the function (a long sequence of Menu::show_menu_item/hide_menu_item/ enable_menu_item gates against game-option and tech flags, transcribed with goto-labelled control flow matching the disassembly's branch targets) is faithful; the difficulty-table-driven remainder (several hundred more show/hide/enable calls) is a deliberate stub. MISMATCH #2, well past the prologue.
 // working copy - scaffold materialised by --work
 // size      4782 bytes
 // prototype void (__thiscall ?check@MainMenu@@QAEXH@Z)(MainMenu* this, int vehID)
@@ -2060,5 +2060,5 @@ Lgroup8:
     // Time-boxed: past this point the original walks a per-difficulty
     // (0x952832-indexed) capability table and continues with several
     // hundred further show/hide/enable_menu_item calls; not
-    // transcribed. See the RULED-OUT note.
+    // transcribed. See the TRIED note.
 }

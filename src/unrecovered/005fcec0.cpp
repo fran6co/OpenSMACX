@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005FCEC0 sub_5fcec0 0x005FCEC0-0x005FCF8C FILE
-// RULED-OUT: fall-off-end int return (C4716 error, needed explicit return 0); for(;;)+continue and do/while(true)+continue both compile the same 'continue' back-edge as an inlined re-run of do_video()/ check_net() instead of the original's single trailing jmp.
+// TRIED: fall-off-end int return (C4716 error, needed explicit return 0); for(;;)+continue and do/while(true)+continue both compile the same 'continue' back-edge as an inlined re-run of do_video()/ check_net() instead of the original's single trailing jmp.
 // working copy - scaffold materialised by --work
 // size      204 bytes
 // prototype 

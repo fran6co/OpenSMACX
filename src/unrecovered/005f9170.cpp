@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005F9170 ?show@PullDown@@QAEHHHP6AHXZ@Z 0x005F9170-0x005F9397 FILE
-// RULED-OUT: straightforward if/else-if for the two selected_=-1 stores (no tail-merge from the compiler); raw self+offset field access; three-arg VCall shim for slot057. MISMATCH #0 mov/push at the very prologue - register allocation differs from the first instruction, not just a late branch shape.
+// TRIED: straightforward if/else-if for the two selected_=-1 stores (no tail-merge from the compiler); raw self+offset field access; three-arg VCall shim for slot057. MISMATCH #0 mov/push at the very prologue - register allocation differs from the first instruction, not just a late branch shape.
 // working copy - scaffold materialised by --work
 // size      551 bytes
 // prototype int (__thiscall ?show@PullDown@@QAEHHHP6AHXZ@Z)(PullDown* this, int, int, int (__cdecl *)())

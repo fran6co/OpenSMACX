@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004C2CF0 ?vehdraw_construct_weapon@@YAHHHHPAUCaviar@@@Z 0x004C2CF0-0x004C306A FILE
-// RULED-OUT: MISMATCH #2 'sub' vs 'push' - transcribed the Ghidra decompile directly (jump-table dispatch as if/switch, the 26-entry ability table as an initializer list, three add_object overloads by argument type); the stack-frame allocation at entry diverges almost immediately, not chased further.
+// TRIED: MISMATCH #2 'sub' vs 'push' - transcribed the Ghidra decompile directly (jump-table dispatch as if/switch, the 26-entry ability table as an initializer list, three add_object overloads by argument type); the stack-frame allocation at entry diverges almost immediately, not chased further.
 // working copy - scaffold materialised by --work
 // size      890 bytes
 // prototype int (__cdecl ?vehdraw_construct_weapon@@YAHHHHPAUCaviar@@@Z)(int factionID, int a2, int weapID, Caviar* a4)

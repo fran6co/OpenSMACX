@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0061D990 sub_61d990 0x0061D990-0x0061DF5C FILE
-// RULED-OUT: __stdcall free function (receiver is really `this` via ECX, recast as Texture::draw_gouraud_lit); byte-exact EdgeScan field indices for the per-scanline u/v/light stepper (packed 16.16 multiply/carry chain, x87 rounding-mode divide) - not reachable from portable C++, see 0061c090.cpp's own precedent for the same call chain.
+// TRIED: __stdcall free function (receiver is really `this` via ECX, recast as Texture::draw_gouraud_lit); byte-exact EdgeScan field indices for the per-scanline u/v/light stepper (packed 16.16 multiply/carry chain, x87 rounding-mode divide) - not reachable from portable C++, see 0061c090.cpp's own precedent for the same call chain.
 // working copy - scaffold materialised by --work
 // size      1484 bytes
 // prototype 

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0047BBF0 ?pick_player@NetWin@@QAEXXZ 0x0047BBF0-0x0047C527;0x00656740-0x006568F9 FILE
-// RULED-OUT: no real SEH frame (raw scratch buffer + manual destructor calls instead of automatic-local RAII); sub_4066c0/ sub_406820/sub_406af0 called with no receiver since their declared prototype is a 0-arg extern "C" and changing it would break linkage to the real symbol. Field offsets into `Players` (0x00946A50 array, stride 0x59C) cross-checked against src/faction.h's `Player` struct.
+// TRIED: no real SEH frame (raw scratch buffer + manual destructor calls instead of automatic-local RAII); sub_4066c0/ sub_406820/sub_406af0 called with no receiver since their declared prototype is a 0-arg extern "C" and changing it would break linkage to the real symbol. Field offsets into `Players` (0x00946A50 array, stride 0x59C) cross-checked against src/faction.h's `Player` struct.
 // working copy - scaffold materialised by --work
 // size      2800 bytes
 // prototype void (__thiscall ?pick_player@NetWin@@QAEXXZ)(NetWin* this)

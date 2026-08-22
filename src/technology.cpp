@@ -93,7 +93,7 @@ BOOL __cdecl valid_tech_leap(int tech_id, int faction_id) {
 Purpose: Craft an output string related to a specific technology. For techIDs outside the standard
          range, craft a string related to world map, comm links or prototypes.
 // ORIGINAL: 0x005B9C40 ?say_tech@@YAXPADHH@Z 0x005B9C40-0x005B9EF0
-// RULED-OUT: call_diff shows this tree FEWER by 1 call (28 vs the image's 29) at every
+// TRIED: call_diff shows this tree FEWER by 1 call (28 vs the image's 29) at every
 //   flag set; the image's own `calls` list has no target for tech_category, so it
 //   inlines `tech_category(tech_id)` at this one call site even though tech_category
 //   keeps its own out-of-line, BYTE_EXACT body elsewhere (same "6 callers, 0 call
@@ -190,7 +190,7 @@ Purpose: Check whether faction has a particular tech or not.
 //   (matching the image's edi/esi) instead of re-deriving the field address per access;
 //   two direct `Technology[tech_id].field` reads in one condition compile to a completely
 //   different (and much longer) address recomputation. Moved 8/46 -> 32/46 agreeing.
-// RULED-OUT: `== TechDisabled` for the preq checks compiles to `cmp/je -2`; the image is
+// TRIED: `== TechDisabled` for the preq checks compiles to `cmp/je -2`; the image is
 //   `cmp/jl -1` (i.e. `< TechNone`), which is what preq_tech_1/preq_tech_2 use now.
 // symbol    ?has_tech@@YAHHH@Z
 // size      105 bytes
@@ -216,7 +216,7 @@ Purpose: Determine technology level for tech_id.
 //   finishes, and builds edi once; writing the `+ 1` at each call site defers
 //   that read past the lea chain. 22/36 -> 25/36, and the instruction count
 //   now matches the image exactly at 36.
-// RULED-OUT: scaled-index-in-register the last divergence is addressing form,
+// TRIED: scaled-index-in-register the last divergence is addressing form,
 //   not control flow: the image keeps `esi = 44*tech_id` (`shl esi, 2`) and
 //   folds the array base into BOTH displacements - `[esi+0x94F37C]`,
 //   `[esi+0x94F380]` - where this tree materialises the whole pointer,
@@ -389,7 +389,7 @@ void __cdecl tech_effects(int faction_id) {
 /*
 Purpose: Determine if preqTechID is a prerequisite of parentTechID within descending range.
 // ORIGINAL: 0x005BCB60 ?tech_is_preq@@YAHHHH@Z 0x005BCB60-0x005BCBDB
-// RULED-OUT: the `RulesTechnology *tech = &Technology[parent_tech_id];` pointer lever that
+// TRIED: the `RulesTechnology *tech = &Technology[parent_tech_id];` pointer lever that
 //   helped has_tech/tech_recurse/tech_avail REGRESSES this one (9/63 -> 5/63): it merges the
 //   two early `return false;` guards (preq_tech_id<0, parent_tech_id<0) into one shared
 //   epilogue the image does not use. Left as plain `Technology[parent_tech_id].preq_tech_N`.
@@ -418,7 +418,7 @@ Purpose: Determine how valuable the specified techID is to a faction. This id ei
 //   list has no 0x005B9F20, so it inlines has_tech at every one of this function's several
 //   call sites. Moved 21/1361 -> 26/1361 agreeing; still deep MISMATCH, unexplored past that -
 //   4133 bytes is far past what a source-form search covers in one pass.
-// RULED-OUT: applying the `RulesTechnology *tech_ptr = &Technology[tech_id];` pointer lever to
+// TRIED: applying the `RulesTechnology *tech_ptr = &Technology[tech_id];` pointer lever to
 //   the growth/power/wealth/tech reads (the same shape that helped has_tech/tech_avail)
 //   REGRESSES this function (26/1361 -> 16/1361); left as four separate `Technology[tech_id].*`
 //   reads.
@@ -814,7 +814,7 @@ Purpose: Calculate how much researching a tech will cost the specified faction.
 //   not `>`: the image's `cmp ebx, esi; jl` skips the assignment only when
 //   compare is STRICTLY below, so the equal case still stores. Same value,
 //   opposite condition byte.
-// RULED-OUT: this pass did NOT reach byte-exactness. The three levers above took
+// TRIED: this pass did NOT reach byte-exactness. The three levers above took
 //   best similarity 0.384 -> 0.721 at `/c /O2 /Gy /GR- /Oy- /GX` and the compiled
 //   body from 230 to 232 instructions against the image's 234, with 71 of 234
 //   agreeing; the differing runs fell from 20 to 15. What is left, measured

@@ -78,7 +78,7 @@ disjoint regions.
 //        instruction, which a void-returning method never emits. Reduced
 //        listing_diff from 5 differing runs to 4; did not change the
 //        `agreeing` count, so the tier stays MISMATCH.
-// RULED-OUT: the remaining divergence (`push ecx` vs `sub esp, 8`, and a
+// TRIED: the remaining divergence (`push ecx` vs `sub esp, 8`, and a
 //            null-check `cmp ecx, edi; je` around the `new (&buffer_)
 //            Buffer()` placement-new) is the PLACEMENT NEW COSTS A NULL
 //            GUARD lever - the image calls Buffer's real constructor at
@@ -185,7 +185,7 @@ Purpose: Close a GraphicWin by closing its Win base and Buffer subobject,
          resetting its window-specific state, and deleting the trailing
          owned interface when present.
 // ORIGINAL: 0x005D4E40 ?close@GraphicWin@@QAEXXZ 0x005D4E40-0x005D4EE6 SEMANTIC
-// RULED-OUT: image calls both 0x5EB640 (Win::close) and 0x5D7470 (Buffer::close) directly with no null check - the null-checked `if (WinOriginalClose) (ORIGINAL(this)->*WinOriginalClose)();` form at the call site compiled an extra load/compare/branch/ indirect-call the image never has (0/37 agreeing, diverging at instruction 0). Moving the null check into `win_close_original` (a real function, so the call site is a direct E8) and calling the already-recovered `buffer_.close()` in place of the second seam fixed both calls at once.
+// TRIED: image calls both 0x5EB640 (Win::close) and 0x5D7470 (Buffer::close) directly with no null check - the null-checked `if (WinOriginalClose) (ORIGINAL(this)->*WinOriginalClose)();` form at the call site compiled an extra load/compare/branch/ indirect-call the image never has (0/37 agreeing, diverging at instruction 0). Moving the null check into `win_close_original` (a real function, so the call site is a direct E8) and calling the already-recovered `buffer_.close()` in place of the second seam fixed both calls at once.
 // symbol    ?close@GraphicWin@@QAEIXZ
 // size      166 bytes
 // prototype void (__thiscall ?close@GraphicWin@@QAEXXZ)(GraphicWin* this)
@@ -236,7 +236,7 @@ uint32_t GraphicWin::close() {
     // Slot 0, called where it lives: `vtable_method` leaves the call operand
     // at `[vtable]` so VC6 emits one `call dword ptr [reg]` rather than
     // loading the slot into a register first.
-    // RULED-OUT: inlining the `vtable_method<...>(...)` call directly into
+    // TRIED: inlining the `vtable_method<...>(...)` call directly into
     // the `->*` expression instead of naming it `deleting_destructor` first -
     // no change, still `eax` where the image has `edx` for this one slot.
     func_scalar_deleting_destructor &deleting_destructor =
@@ -255,7 +255,7 @@ Purpose: Destroy a GraphicWin by installing the original virtual tables,
          clearing the trailing field, and destroying the Buffer subobject
          before the Win base.
 // ORIGINAL: 0x005D4DD0 ??1GraphicWin@@QAE@XZ 0x005D4DD0-0x005D4E37;0x00662B22-0x00662B34
-// RULED-OUT: 0/28 - the image carries a genuine SEH unwind frame here
+// TRIED: 0/28 - the image carries a genuine SEH unwind frame here
 //            (`push -1 / push 0x662b2a / mov eax,fs:[0] / ...`), same
 //            SYMPTOM as FlatButton::~FlatButton() (see flatbutton.cpp),
 //            which got it back by becoming a real destructor. Not
@@ -267,7 +267,7 @@ Purpose: Destroy a GraphicWin by installing the original virtual tables,
 //            not risk against 185 callers and the existing
 //            `DestructorProbe` call-order test harness this free function
 //            backs.
-// RULED-OUT: and the instrumentation is NOT what holds it. Measured 2026-08-22 with try_spellings: deleting the five `Probe.*` writes takes the compiled body from 35 instructions to 23, deleting them and both `if (XDestructor)` null guards takes it to 17, and hoisting the null check into a `base ? buffer : nullptr` ternary takes it to 15 - against an image of 28. ALL FOUR SCORE 0 of 28, because the divergence is at instruction 0 and everything after it is shifted by the missing frame. Do not spend a pass tidying this body; the frame is the whole ceiling, and reaching it needs `Buffer buffer_` and `Win` as a real member and a real base so VC6 generates the unwind chain itself.
+// TRIED: and the instrumentation is NOT what holds it. Measured 2026-08-22 with try_spellings: deleting the five `Probe.*` writes takes the compiled body from 35 instructions to 23, deleting them and both `if (XDestructor)` null guards takes it to 17, and hoisting the null check into a `base ? buffer : nullptr` ternary takes it to 15 - against an image of 28. ALL FOUR SCORE 0 of 28, because the divergence is at instruction 0 and everything after it is shifted by the missing frame. Do not spend a pass tidying this body; the frame is the whole ceiling, and reaching it needs `Buffer buffer_` and `Win` as a real member and a real base so VC6 generates the unwind chain itself.
 // symbol    ?graphic_win_destructor_redirect@@YIPAVGraphicWin@@PAV1@PAX@Z
 // size      121 bytes
 // prototype void (__thiscall ??1GraphicWin@@QAE@XZ)(GraphicWin* this)
@@ -355,7 +355,7 @@ Purpose: Paint the window's surface in one colour. A window that is marked
 //        spelling for the slot-0xF4 query - the image's own call is ONE
 //        `call dword ptr [eax+0xf4]`, where the pointer-to-member form
 //        loads the slot into a register first (two instructions).
-// RULED-OUT: not chased to completion - still a big structural gap beyond
+// TRIED: not chased to completion - still a big structural gap beyond
 //            that one call (80 image instructions against this body's 66,
 //            largely a different register plan for `flags_`/`parent`
 //            starting at the very first branch). This is a large function
@@ -579,13 +579,13 @@ Purpose: Initialise a GraphicWin. Reset the window, republish the eleven
 //        `GraphicWinInitDefaults[N]` directly at each site instead reached
 //        0.943 similar (up from a fresh mismatch at the very top of this
 //        block).
-// RULED-OUT: remaining gap is a small, consistent eax/ecx swap around the
+// TRIED: remaining gap is a small, consistent eax/ecx swap around the
 //            nonclient-flags/scrollbar-thickness pair near the end of the
 //            function (`nonclient_flags`/`thickness` locals) - not chased
 //            further; reordering their declarations was not tried because
 //            this address's body is too large for a full-function
 //            `try_spellings` candidate at this budget.
-// RULED-OUT: that reorder HAS now been tried, with try_spellings on the whole body, and it changes nothing: declaring `thickness` before `nonclient_flags` scores 2 of 112, identical to the committed order. So do the two shapes for the owned-Buffer allocation - collapsing `block`/`owned` into one `block != nullptr ? new (block) Buffer() : nullptr` ternary, and spilling the result as a `uint32_t` instead of a `Buffer *` - both 2 of 112. The eax/ecx swap is downstream, not the cause. What the cause is: under every one of the ten flag sets this tree scores, the compiled prologue opens `push ebp / mov ebp, esp` and an extra `push ecx` before its `mov eax, fs:[0]`, where the image reads fs:[0] FIRST and keeps no frame pointer - an FPO C++ EH frame whose handler is the `mov eax, <FuncInfo> / jmp __CxxFrameHandler` thunk at 0x00662B3F. That shifts every following instruction, which is why 112 instructions that listing_diff aligns into only 13 short diverging runs still score 2. `--all-flags` best is 0.943 similar at /c /O2 /Gy /GR- /Oy- /GX; /Oy alone does not drop the frame pointer here.
+// TRIED: that reorder HAS now been tried, with try_spellings on the whole body, and it changes nothing: declaring `thickness` before `nonclient_flags` scores 2 of 112, identical to the committed order. So do the two shapes for the owned-Buffer allocation - collapsing `block`/`owned` into one `block != nullptr ? new (block) Buffer() : nullptr` ternary, and spilling the result as a `uint32_t` instead of a `Buffer *` - both 2 of 112. The eax/ecx swap is downstream, not the cause. What the cause is: under every one of the ten flag sets this tree scores, the compiled prologue opens `push ebp / mov ebp, esp` and an extra `push ecx` before its `mov eax, fs:[0]`, where the image reads fs:[0] FIRST and keeps no frame pointer - an FPO C++ EH frame whose handler is the `mov eax, <FuncInfo> / jmp __CxxFrameHandler` thunk at 0x00662B3F. That shifts every following instruction, which is why 112 instructions that listing_diff aligns into only 13 short diverging runs still score 2. `--all-flags` best is 0.943 similar at /c /O2 /Gy /GR- /Oy- /GX; /Oy alone does not drop the frame pointer here.
 // symbol    ?init@GraphicWin@@QAEHHHHHPADHPAVWin@@PAVMenu@@PAUBorderSizing@@@Z
 // CORRECTED from ?init@GraphicWin@@QAEXHHHHPADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z
 //   BaseButton::init calls it at 0x006072A2 and immediately tests the

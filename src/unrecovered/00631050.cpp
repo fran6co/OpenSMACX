@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00631050 sub_631050 0x00631050-0x00631A06;0x00663528-0x0066372B FILE
-// RULED-OUT: no ESP-relative frame (raw buffer + manual calls, not a real frame pointer omission); the entry receiver (`mov edi,ecx`) and Ghidra's `param_2` are not recoverable under the mandated 0-arg `__cdecl` signature, so both are read from placeholder storage instead of a real caller-supplied value; sub_63bb20/ sub_63bd10/sub_4e34b0/sub_4e3350/sub_4080b0/fn_00401c80/ fn_00401ce0/fn_00402970 called with no receiver/args since their declared prototypes are 0-arg extern "C" and changing them would break linkage to the real symbol.
+// TRIED: no ESP-relative frame (raw buffer + manual calls, not a real frame pointer omission); the entry receiver (`mov edi,ecx`) and Ghidra's `param_2` are not recoverable under the mandated 0-arg `__cdecl` signature, so both are read from placeholder storage instead of a real caller-supplied value; sub_63bb20/ sub_63bd10/sub_4e34b0/sub_4e3350/sub_4080b0/fn_00401c80/ fn_00401ce0/fn_00402970 called with no receiver/args since their declared prototypes are 0-arg extern "C" and changing them would break linkage to the real symbol.
 // working copy - scaffold materialised by --work
 // size      3001 bytes
 // prototype 
@@ -2405,7 +2405,7 @@ extern "C" int __cdecl sub_631050() {
     // so nothing carries the receiver the disassembly reads via
     // `mov edi, ecx` at entry, or the second (session-search-retry) value
     // Ghidra calls `param_2`. Both are read as plain values here instead
-    // of threaded from a real caller; see RULED-OUT.
+    // of threaded from a real caller; see TRIED.
     volatile char selfStorage[0x6e4];
     char *self = const_cast<char *>(selfStorage);
     volatile int paramCountStorage;
@@ -2422,7 +2422,7 @@ extern "C" int __cdecl sub_631050() {
     int savedCurObj = *g_009b3374;
     *g_009b3374 = 0;
 
-    fn_00401c80(0);  // SessionStruct::SessionStruct(this=&ST(0x18), 0) - ecx not threaded, see RULED-OUT
+    fn_00401c80(0);  // SessionStruct::SessionStruct(this=&ST(0x18), 0) - ecx not threaded, see TRIED
     sub_63bb20();     // ctor-like call on the object at ST(0x7c)
 
     if (*reinterpret_cast<int *>(self + 0x6e0) == 0) {
@@ -2455,7 +2455,7 @@ extern "C" int __cdecl sub_631050() {
             int r = reinterpret_cast<BasePop *>(net)->exec(0, 0);
             if (*reinterpret_cast<int *>(reinterpret_cast<char *>(net) + 0x3100) == 1) goto LAB_63150b;
             if (r != 0) {
-                exit();  // extern "C" symbol declared 0-arg; the original passes (2), see RULED-OUT
+                exit();  // extern "C" symbol declared 0-arg; the original passes (2), see TRIED
                 goto LAB_6313ba;
             }
         }

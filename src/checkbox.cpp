@@ -36,7 +36,7 @@ Purpose: Compose a CheckBox from its two base-shaped subobjects (GraphicWin,
          comment in checkbox.h), so it is modelled as an explicit parameter
          instead and the guard is written out by hand.
 // ORIGINAL: 0x0060E670 ??0CheckBox@@QAE@H@Z 0x0060E670-0x0060E735;0x00662F60-0x00662F84
-// RULED-OUT: MEASURED 1/53 agreeing (was 0.71 mnemonic similarity from an
+// TRIED: MEASURED 1/53 agreeing (was 0.71 mnemonic similarity from an
 //            earlier scratch artifact). Divergence is at instruction 0: the
 //            image opens `push -1; push 0x662f7a; mov eax,fs:[0]; push eax`
 //            (a real SEH frame, pure esp-relative, no `push ebp`), this body
@@ -64,7 +64,7 @@ Purpose: Compose a CheckBox from its two base-shaped subobjects (GraphicWin,
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D4CF0 0x00608C10
-// RULED-OUT: SEH-frame modelling via `new`-placement + try/catch was tried
+// TRIED: SEH-frame modelling via `new`-placement + try/catch was tried
 // earlier (src/unrecovered/0060e670.cpp) and reached only 0.71 mnemonic
 // similarity - the image installs a real fs:[0] frame here but with pure
 // esp-relative addressing, no `push ebp; mov ebp,esp`, which no flag set
@@ -124,7 +124,7 @@ Purpose: Tear down a CheckBox: reinstall the base subobjects' own
          vtable/vtordisp values, reset the state fields, and close the
          Dialog and GraphicWin subobjects through the object's own vbtable.
 // ORIGINAL: 0x0060E740 ??1CheckBox@@QAE@XZ 0x0060E740-0x0060E7C0
-// RULED-OUT: MEASURED 2/37 agreeing. The image's opening `this` is already
+// TRIED: MEASURED 2/37 agreeing. The image's opening `this` is already
 //            the vtordisp-adjusted GraphicWin-subobject pointer -
 //            `mov eax,[ecx-0x1c]; lea esi,[ecx-0x1c]` - and this body's
 //            `char *const self = this - 0x1C;` opening compiles a different
@@ -429,7 +429,7 @@ void CheckBox::on_mouse_leave(int a1, int a2) {
 /*
 // ORIGINAL: 0x0060FC60 ?init_class@CheckBox@@QAAHXZ 0x0060FC60-0x0060FD52;0x00662F84-0x00662F99
 // symbol    ?init_class@CheckBox@@SAHXZ
-// RULED-OUT: a real local `Buffer buf;` double-destructs (the explicit ~Buffer() call plus the automatic scope-exit one). A raw `char[sizeof(Buffer)]` + placement `new` + explicit `->~Buffer()` is the shape the original uses. SEH prologue/unwind funclet not reproduced (same gap as the RadioButton sibling).
+// TRIED: a real local `Buffer buf;` double-destructs (the explicit ~Buffer() call plus the automatic scope-exit one). A raw `char[sizeof(Buffer)]` + placement `new` + explicit `->~Buffer()` is the shape the original uses. SEH prologue/unwind funclet not reproduced (same gap as the RadioButton sibling).
 // size      263 bytes
 // prototype int (__cdecl ?init_class@CheckBox@@QAAHXZ)()
 // callers   1   call targets   5

@@ -212,7 +212,7 @@ void __fastcall net_win_unk5_redirect(NetWin *self, void *) {
 // `?construct@BaseButton@@QAEXXZ`), which the trivial `GraphicWin() { ; }`
 // base ctor cannot reach implicitly, so it is called explicitly here.
 //
-// RULED-OUT: byte-exact is not reachable from this marker alone.
+// TRIED: byte-exact is not reachable from this marker alone.
 // StringBox()/CheckBox() are still trivial stubs (0x00629110/0x0060E670
 // unfilled) and EditBox() has no declared constructor at all - none of the
 // three are among this pass's seven targets, so the image's calls to them

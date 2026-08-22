@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00453710 ?load_faction_art@@YAXH@Z 0x00453710-0x00453A17 FILE
-// RULED-OUT: caching (Buffer*)0x798668 in a local `buf` (no change, still diverges at #7 push-vs-call in the prologue call setup).
+// TRIED: caching (Buffer*)0x798668 in a local `buf` (no change, still diverges at #7 push-vs-call in the prologue call setup).
 // working copy - scaffold materialised by --work
 // size      775 bytes
 // prototype 

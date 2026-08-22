@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004E10C0 ?editor_fast@Console@@QAEXXZ 0x004E10C0-0x004E118D FILE BYTE_EXACT
-// LEVER: reread-global-in-loop-condition leave the loop bound as a fresh read of the global on every iteration instead of hoisting it into a cached local. This was recorded as a RULED-OUT - the thing that did NOT work - and the body then reached BYTE_EXACT with the opposite spelling, which is exactly the refutation the grammar exists to force. /O2 will not re-read a global it has already loaded unless the source asks again, so caching the bound is a one-instruction difference that persists through the whole loop.
+// LEVER: reread-global-in-loop-condition leave the loop bound as a fresh read of the global on every iteration instead of hoisting it into a cached local. This was recorded as a TRIED - the thing that did NOT work - and the body then reached BYTE_EXACT with the opposite spelling, which is exactly the refutation the grammar exists to force. /O2 will not re-read a global it has already loaded unless the source asks again, so caching the bound is a one-instruction difference that persists through the whole loop.
 // working copy - scaffold materialised by --work
 // size      205 bytes
 // prototype void (__thiscall ?editor_fast@Console@@QAEXXZ)(Console* this)

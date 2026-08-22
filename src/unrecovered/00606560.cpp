@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00606560 ?on_key_click@Scroll@@QAEHHH@Z 0x00606560-0x006066EC
-// RULED-OUT: transcription (guard, Home/End vs PageUp/PageDown, vtable slot 48/23/7/62 dispatch, cdecl callback at field_2144_) diverges at #1 - the prologue's register-save set differs, structurally the same shape as the tile()/tile_mask() family in this batch. Tried caching win_parent_ in a local and reordering the branch tests; neither moved the divergence.
+// TRIED: transcription (guard, Home/End vs PageUp/PageDown, vtable slot 48/23/7/62 dispatch, cdecl callback at field_2144_) diverges at #1 - the prologue's register-save set differs, structurally the same shape as the tile()/tile_mask() family in this batch. Tried caching win_parent_ in a local and reordering the branch tests; neither moved the divergence.
 // size      396 bytes
 // prototype int (__thiscall ?on_key_click@Scroll@@QAEHHH@Z)(Scroll* this, int, int)
 // callers   0   call targets   0

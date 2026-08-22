@@ -141,7 +141,7 @@ Return Value: 1 once the game has run and shut down; 0 if any stage of the
               bring-up refuses.
 Status: Complete
 
-RULED-OUT: `reinterpret_cast<Caviar *>(0)->init_class()`. The image's names for
+TRIED: `reinterpret_cast<Caviar *>(0)->init_class()`. The image's names for
            Caviar::init_class and ::close_class end in `QAA` - a public member
            declared __cdecl - and 0x0045FA5D calls the first with no ecx set
            up at all, so there is no receiver and a non-static declaration
@@ -151,7 +151,7 @@ RULED-OUT: `reinterpret_cast<Caviar *>(0)->init_class()`. The image's names for
            tools/emit_translation_unit.py already applies to every other
            `*::init_class`, so the cast is gone.
 
-RULED-OUT: eleven source spellings for the ONE instruction still differing.
+TRIED: eleven source spellings for the ONE instruction still differing.
            This body is MNEMONIC_ONLY - every mnemonic agrees, in order, 141
            against 141 - and 458 bytes against the image's 459. The whole of
            the remaining byte is #52:

@@ -1,5 +1,5 @@
 // ORIGINAL: 0x0063AF60 sub_63af60 0x0063AF60-0x0063B072
-// RULED-OUT: `unsigned short pattern` forces a `movzx` the original never emits (it relies on the shl/and pair discarding the garbage upper half of a 16-bit-loaded register instead of an explicit zero-extend); switching the parameter to plain `int` and writing the fold as `(pattern<<16)|(pattern&0xffff)` gets closest. The 16/8/4/2/1 unrolled fill body mirrors a hand-written negative-counter cascade (`n -= 16; if (n>=0) ...`), matched structurally to the original's sub/jl-then-add/jl chain; landing the closest form (mnemonic_similarity 0.644, 282 vs 274 bytes).
+// TRIED: `unsigned short pattern` forces a `movzx` the original never emits (it relies on the shl/and pair discarding the garbage upper half of a 16-bit-loaded register instead of an explicit zero-extend); switching the parameter to plain `int` and writing the fold as `(pattern<<16)|(pattern&0xffff)` gets closest. The 16/8/4/2/1 unrolled fill body mirrors a hand-written negative-counter cascade (`n -= 16; if (n>=0) ...`), matched structurally to the original's sub/jl-then-add/jl chain; landing the closest form (mnemonic_similarity 0.644, 282 vs 274 bytes).
 // size      274 bytes
 // prototype
 // callers   2   call targets   0

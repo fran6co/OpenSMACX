@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004E2E50 ?join@AlphaNet@@QAEHXZ 0x004E2E50-0x004E31D6;0x0065C771-0x0065C7EC FILE
-// RULED-OUT: automatic Popup dtor cascade for the SEH frame (LEVER #1); direct pushes for start()/X_pop() arg order re-derived from disasm; join_session/positioning logic transcribed twice (matches two inlined copies in the original). Diverges at instruction #15 (register alloc order for the shared cleanup path), not re-derived further.
+// TRIED: automatic Popup dtor cascade for the SEH frame (LEVER #1); direct pushes for start()/X_pop() arg order re-derived from disasm; join_session/positioning logic transcribed twice (matches two inlined copies in the original). Diverges at instruction #15 (register alloc order for the shared cleanup path), not re-derived further.
 // working copy - scaffold materialised by --work
 // size      1025 bytes
 // prototype int (__thiscall ?join@AlphaNet@@QAEHXZ)(AlphaNet* this)

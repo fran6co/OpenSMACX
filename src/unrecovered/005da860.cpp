@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005DA860 ?tile@Buffer@@QAEHPAVBuffer@@HHHHHH@Z 0x005DA860-0x005DA9EC
-// RULED-OUT: straight transcription diverges at #2 (original pushes ebx/ebp/esi/edi as one prologue block; this form only needs three, so the compiler's register save set differs) - 122/144 mnemonics still agree. Landing the closest.
+// TRIED: straight transcription diverges at #2 (original pushes ebx/ebp/esi/edi as one prologue block; this form only needs three, so the compiler's register save set differs) - 122/144 mnemonics still agree. Landing the closest.
 // size      396 bytes
 // prototype int (__thiscall ?tile@Buffer@@QAEHPAVBuffer@@HHHHHH@Z)(Buffer* this, Buffer*, int, int, int, int, int, int)
 // callers   12   call targets   2

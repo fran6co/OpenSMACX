@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004F0650 ?upgrade_any_prototypes@@YAXH@Z 0x004F0650-0x004F06D3 FILE
-// RULED-OUT: manual mask/sign-fixup for idx>=0x40 case (jns vs jge) - plain `idx % 0x40` reproduced the and/jns/dec/or/inc block exactly; last divergence is `(flags & 0x100)` compiling to a bare test instead of original's and+test cx,cx
+// TRIED: manual mask/sign-fixup for idx>=0x40 case (jns vs jge) - plain `idx % 0x40` reproduced the and/jns/dec/or/inc block exactly; last divergence is `(flags & 0x100)` compiling to a bare test instead of original's and+test cx,cx
 // working copy - scaffold materialised by --work
 // size      131 bytes
 // prototype void (__cdecl ?upgrade_any_prototypes@@YAXH@Z)(int factionID)

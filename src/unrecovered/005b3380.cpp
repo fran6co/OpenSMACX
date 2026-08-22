@@ -1,5 +1,5 @@
 // ORIGINAL: 0x005B3380 ?eliminate_player@@YAHHH@Z 0x005B3380-0x005B38C6 FILE
-// RULED-OUT: direct Ghidra transcription with own extern DAT_ table arrays for every indexed global; diverges at insn #0 (prologue/frame shape of the ~1350-byte body)
+// TRIED: direct Ghidra transcription with own extern DAT_ table arrays for every indexed global; diverges at insn #0 (prologue/frame shape of the ~1350-byte body)
 // working copy - scaffold materialised by --work
 // size      1350 bytes
 // prototype 

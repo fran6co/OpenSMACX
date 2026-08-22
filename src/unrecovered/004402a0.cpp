@@ -1,5 +1,5 @@
 // ORIGINAL: 0x004402A0 ?on_redraw@DiploPop@@QAEXXZ 0x004402A0-0x00440379 FILE
-// RULED-OUT: RECT local via named struct field assigns, not raw offsets
+// TRIED: RECT local via named struct field assigns, not raw offsets
 // working copy - scaffold materialised by --work
 // size      217 bytes
 // prototype void (__thiscall ?on_redraw@DiploPop@@QAEXXZ)(DiploPop* this)
