@@ -661,6 +661,28 @@ uint32_t MsgStatus;  // 0x009B7B9C
 Purpose: Process non-input related message.
 // ORIGINAL: 0x005FCA30 ?do_non_input@@YAXXZ 0x005FCA30-0x005FCB14
 // symbol    ?do_non_input@@YAHXZ
+// LEVER: A WRONG PROGRAM, not a wrong spelling. The three PeekMessage guards
+//        were chained with `||`: `if (!A || !B || !C) return false;`, which
+//        gives up unless ALL THREE ranges have a message waiting. The image
+//        jumps AWAY on each success (`test eax, eax; jne 0x5FCAA7`) and only
+//        falls through the third into `pop edi; add esp, 0x54; ret`, so it
+//        gives up only when NONE of them does - `&&`. 33/84 -> 81/84, and the
+//        recovered program now answers the message pump the way the image does.
+// LEVER: 0x020A spelled out, because `WM_MOUSELAST` is not one constant.
+//        winuser.h defines it 0x020A under WINVER >= 0x0400 and 0x0209
+//        otherwise, and this build takes the 0x0209 arm while the image pushes
+//        0x020A. Worth the 82nd instruction. `osmx semantic` is what found it -
+//        it names the operand pair, "push immediate 0x20a against 0x209",
+//        where `listing_diff` cannot: it masks every immediate before
+//        comparing, so a wrong constant is invisible there.
+// RULED-OUT: the last two instructions, 82/84 at `/c /O2 /Gy /GR- /GX`. VC6
+//        emits the two strength-reduced byte offsets of the min-search loop -
+//        `mov eax, 0x1c` for `c` and `xor esi, esi` for `a` - in the opposite
+//        ORDER to the image; nothing else differs and the instruction counts
+//        match. Measured against three rewrites of that loop: declaring `c`
+//        before `a` (81/84), reversing the comparison to `msg[a].time >
+//        msg[c].time` (78/84) and a while-form with the increment written out
+//        (81/84). None beats the plain `for`.
 // size      228 bytes
 // prototype 
 // callers   12   call targets   3
@@ -679,9 +701,18 @@ BOOL __cdecl do_non_input() {
     for (int i = 0; i < 3; i++) {
         msg[i].time = 0xFFFFFFFF;
     }
+    // `&&`, NOT `||`. This tree had `if (!A || !B || !C) return false;`, which
+    // demands a message in ALL THREE ranges; the image returns false only when
+    // NONE of them has one - it jumps AWAY on each success and falls through
+    // the third test into the epilogue. A different program, not a different
+    // spelling. 33/84 -> 81/84 on the fix.
     if (!PeekMessage(&msg[0], NULL, WM_NULL, WM_INPUT, PM_NOREMOVE)
-        || !PeekMessage(&msg[1], NULL, WM_UNICHAR, WM_KEYDOWN | WM_INPUT, PM_NOREMOVE)
-        || !PeekMessage(&msg[2], NULL, WM_MOUSELAST, UNICODE_NOCHAR, PM_NOREMOVE)) {
+        && !PeekMessage(&msg[1], NULL, WM_UNICHAR, WM_KEYDOWN | WM_INPUT, PM_NOREMOVE)
+        // 0x020A, NOT `WM_MOUSELAST`. winuser.h defines that name TWICE - 0x020A
+        // when WINVER >= 0x0400, 0x0209 otherwise - and this build takes the
+        // 0x0209 arm, while the image pushes 0x020A. `osmx semantic` names the
+        // pair outright: "push immediate 0x20a against 0x209".
+        && !PeekMessage(&msg[2], NULL, 0x020A, UNICODE_NOCHAR, PM_NOREMOVE)) {
         return false;
     }
     int a = 0;
@@ -712,6 +743,22 @@ Status: Complete - testing
 // some call sites and calls it at others, and a .cpp definition is only ever
 // one of those. The marker stays here because that is where the catalogue
 // reads it.
+//
+// The two lines above were prose, so `frontier.py --untouched` kept offering
+// this address as fresh. Restated as lesson lines:
+//
+// LEVER: already BYTE_EXACT 11/11 - re-measured 2026-08-22 at
+//        `/c /O2 /Gy /GR- /Oy- /GX`, unchanged. `MEASURED inline` in temp.h
+//        with the marker left in this .cpp is what makes it both reproduce
+//        and stay measurable; decomp's reader globs only *.cpp and *.c.
+// RULED-OUT: an out-of-line `do_all_non_input_call` forwarder, the
+//        `sleep_call`/`base_cost_call` idiom, to unblock Path::continent -
+//        which this `MEASURED inline` caps because the image CALLS 0x005FCB20
+//        there. Measured and reverted in path.cpp: agreement 16/206 -> 1/206
+//        and call_diff went from MORE to FEWER, because it resolves callees by
+//        ADDRESS and a forwarder is not the address the image calls. Recorded
+//        here too so the ceiling is visible from the callee, not only from the
+//        caller that hit it.
 
 
 /*

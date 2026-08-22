@@ -198,18 +198,31 @@ Purpose: Tear down a SpriteBox: reinstall the base subobjects' own
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005FA870 0x00610280 0x00611730
 // indirect  0x006101ED 0x00610202 0x0061021D
-// NOT REPRODUCED: between close() and the Spot teardown, the image walks a
-//                 vector of polymorphic pointers at this-0x68 (count at
-//                 +0xC, capacity at +0x10), rewrites ITS OWN vtable pointer
-//                 the same vbtable-relative way as the block above, then
-//                 for each live element calls a virtual "clear" through the
-//                 element's own vtable and a second virtual call through a
-//                 vtable-relative adjustor - undeclared-virtual-base
-//                 dispatch, compounded by per-element dynamic dispatch with
-//                 no element TYPE recovered. Left out rather than guessed,
-//                 matching the preserved artifact this was promoted from
-//                 (src/recovered/units/00610120.cpp, since deleted, itself
-//                 measured SHARED_TAIL and carried the identical gap).
+// RULED-OUT: the middle of the body, and it was written here as PROSE
+//        ("NOT REPRODUCED: ...") until 2026-08-22, which meant `decomp.reader`
+//        never saw it and frontier.py kept offering this address as fresh.
+//        Restated so it counts: between close() and the Spot teardown the
+//        image walks a vector of polymorphic pointers at this-0x68 (count at
+//        +0xC, capacity at +0x10), rewrites ITS OWN vtable pointer the same
+//        vbtable-relative way as the block above, then for each live element
+//        calls a virtual "clear" through the element's own vtable and a second
+//        virtual call through a vtable-relative adjustor - undeclared-virtual-
+//        base dispatch, compounded by per-element dynamic dispatch with no
+//        element TYPE recovered. Left out rather than guessed, matching the
+//        preserved artifact this was promoted from
+//        (src/recovered/units/00610120.cpp, since deleted, itself measured
+//        SHARED_TAIL and carried the identical gap).
+// RULED-OUT: the call count, separately, and it is NOT the gap above.
+//        call_diff makes this tree 4 calls against the image's 2. The image
+//        calls exactly `?close@SpriteBox@@QAEXXZ` and `??1Spot@@QAE@XZ`; this
+//        tree calls close(), then `??_GSpot@@QAEPAXI@Z` - Spot's SCALAR
+//        DELETING destructor rather than its complete one - and then
+//        `??1Dialog@@QAE@XZ` and `??1GraphicWin@@QAE@XZ`, the implicit base
+//        destructors a real C++ destructor runs after the body. The image's
+//        0x00610120 destroys no bases at all; it is the vbase-less variant.
+//        Both are declaration-shape problems in spritebox.h/dialog.h, not body
+//        spelling, and neither is reachable while SpriteBox holds its virtual
+//        bases by layout rather than by `: virtual`.
 Return Value: n/a
 Status: Complete
 */
@@ -564,6 +577,12 @@ int SpriteBox::init(int a1) {
 /*
 // ORIGINAL: 0x006104B0 ?init@SpriteBox@@QAEHPAUHeap@@@Z 0x006104B0-0x006104CD BYTE_EXACT
 // symbol    ?init@SpriteBox@@QAEHPAVHeap@@@Z
+// LEVER: already BYTE_EXACT 11/11 - re-measured 2026-08-22 at
+//        `/c /O2 /Gy /GR- /GX`, unchanged, no lever left to pull. The
+//        spelling that reproduces is the one below: close() by name, then
+//        `return`ing the vbtable-relative Dialog::init as the TAIL of the
+//        function, reading the virtual-base displacement out of `*this + 8`
+//        at the use rather than caching it in a local.
 // size      29 bytes
 // prototype int (__thiscall ?init@SpriteBox@@QAEHPAUHeap@@@Z)(SpriteBox* this, Heap*)
 // callers   1   call targets   2
