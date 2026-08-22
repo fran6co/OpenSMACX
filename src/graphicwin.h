@@ -32,7 +32,7 @@
 // gave C2248/C2247 while the base stayed private. Access to the member itself
 // is unchanged - win_parent_ is still private in Win - and a base's
 // accessibility affects no offset, so the layout is untouched.
-class GraphicWin : public Win {
+class GraphicWin : public Win, public Buffer {
  public:
   // 0x005D7030, a pending_bodies forwarder.
   void compute_min_size();
@@ -96,7 +96,6 @@ class GraphicWin : public Win {
   // zero-argument one above. StatusWin::redraw calls it BY NAME.
   void soft_update(RECT *area);
  private:
-  Buffer buffer_;
   uint32_t field_9CC_;
   uint32_t field_9D0_;
   uint32_t field_9D4_;

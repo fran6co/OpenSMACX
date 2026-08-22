@@ -97,7 +97,6 @@ disjoint regions.
 */
 GraphicWin *GraphicWin::construct() {
     static_cast<Win *>(this)->construct();
-    new (&buffer_) Buffer();
 
     // Win's own vtable slot and the Buffer subobject's vtable slot are
     // compiler-managed, not ordinary members a derived class can name; Win's
@@ -201,7 +200,7 @@ Status: Complete with temporary Win close dependency
 */
 uint32_t GraphicWin::close() {
     win_close_original(this);
-    buffer_.close();
+    Buffer::close();
 
     // Win's own field_134_/field_138_ are private to Win, unreachable from
     // GraphicWin except at their raw offset; everything else here is
@@ -738,12 +737,12 @@ int GraphicWin::init(int x, int y, int width, int height, LPSTR title,
     }
 
     const int surface_result =
-        buffer_.init(width, height, 0, nullptr);
+        Buffer::init(width, height, 0, nullptr);
     if (surface_result != 0) {
         return surface_result;
     }
     // Return discarded: the original zeroes EAX at 0x005D5081 straight after.
-    buffer_.sync_to_palette(WinActivePalette());
+    Buffer::sync_to_palette(WinActivePalette());
     return 0;
 }
 
