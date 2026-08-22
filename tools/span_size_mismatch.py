@@ -24,8 +24,19 @@ DID NOT CHECK OUT. Comparing the markers before and after its commit,
 size fact of 29 - they agreed all along, and the four SpriteBox handlers are
 the same. Whatever made those bodies land, it was not a span correction.
 
-So this check has never caught a defect. It is kept because the invariant is
-real and cheap - 5,513 single-span records hold it and 2 do not - and because
+That was true until 2026-08-22, WHEN IT CAUGHT ITS FIRST. Promoting
+close_palette_class out of src/recovered/units/ transcribed its span as
+0x005FECF0-0x005FED0A where the artifact said 0x005FED0B - one byte, the
+trailing `ret`. The body then measured 6 of 6 instructions AGREEING and
+MISMATCH overall, because it was being compared against a truncated extent: a
+short span passes every instruction it bothers to compare, so nothing in the
+result says the extent is wrong. This reported it at once, as "spans cover 26b,
+`// size` says 27b - short by 1".
+
+RUN IT AFTER ANY PROMOTION. Twelve more artifact-only bodies are called by
+compiled code, and copying a span by hand is the step that goes wrong quietly.
+
+It is kept because the invariant is real and cheap - 5,513 single-span records hold it and 2 do not - and because
 a short span is a failure mode that no amount of work on the C++ can fix. The
 2 it does report are both already BYTE_EXACT, which means their SIZE FACT is
 off by one rather than their span.
