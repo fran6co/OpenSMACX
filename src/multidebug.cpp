@@ -37,7 +37,6 @@ Return Value: n/a
 Status: Complete
 */
 MultiDebug::MultiDebug() {
-    uint32_t *const object = reinterpret_cast<uint32_t *>(this);
     field_A3C_ = 0;
 }
 

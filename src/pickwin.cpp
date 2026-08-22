@@ -96,7 +96,6 @@ PickWin::PickWin() {
 
     new (buttonGroup_) ButtonGroup();
 
-    uint32_t *const object = reinterpret_cast<uint32_t *>(this);
 }
 
 /*

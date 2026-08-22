@@ -62,7 +62,6 @@ Return Value: n/a
 Status: Complete
 */
 Menu::Menu() {
-    uint32_t *const object = reinterpret_cast<uint32_t *>(this);
     proc_ = nullptr;
     count_ = 0;
     field_A20_ = 0;

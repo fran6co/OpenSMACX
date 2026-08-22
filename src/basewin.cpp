@@ -63,8 +63,6 @@ Purpose: Construct BaseWin's large aggregate of sub-windows: a ProdPicker, a
 // pointer-to-member elsewhere in this tree.
 BaseWin::BaseWin() {
 
-    uint32_t *const object = reinterpret_cast<uint32_t *>(this);
-
     mapWin_.construct(1);
 
 }

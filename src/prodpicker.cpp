@@ -118,7 +118,6 @@ ProdPicker::ProdPicker() {
     field_A830_ = 0x86;
     field_A834_ = 0x86;
     field_A14_ = 0;
-    uint32_t *const object = reinterpret_cast<uint32_t *>(this);
     field_A838_ = 0x6C;
     field_A83C_ = 0x5E;
 }

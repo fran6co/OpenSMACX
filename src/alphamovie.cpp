@@ -57,7 +57,6 @@ Return Value: n/a
 Status: Complete
 */
 AlphaMovie::AlphaMovie() {
-    uint32_t *const object = reinterpret_cast<uint32_t *>(this);
 }
 
 /*

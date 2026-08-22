@@ -108,7 +108,6 @@ Gamma::Gamma() {
     // nothing in this chain is declared `virtual`, so the store is explicit
     // rather than emitted by a constructor VC6 would generate.
     // The store order matters; see the LEVER line on the marker above.
-    uint32_t *const object = reinterpret_cast<uint32_t *>(this);
     gamma_ = 1.0;
     field_A64_ = 0;
 }
