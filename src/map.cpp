@@ -205,28 +205,28 @@ Purpose: Take the absolute distance between two points as parameters to calculat
 Return Value: Distance radius
 Status: Complete
 */
-int __cdecl vector_dist(int x_distance, int y_distance) {
-    x_distance = abs(x_distance);
-    y_distance = abs(y_distance);
-    int largest = x_distance;
-    if (x_distance <= y_distance) {
-        largest = y_distance;
-    }
-    int smallest = x_distance;
-    if (x_distance >= y_distance) {
-        smallest = y_distance;
-    }
-    // `>> 1`, NOT `/ 2`. Both operands are `abs()` results, so nothing here is
-    // ever negative and the two mean the same - but signed `/ 2` makes VC6 emit
-    // the round-toward-zero fixup (`cdq; sub eax, edx`) before each `sar`, and
-    // the image has neither. Two instructions per divide, four here.
-    return largest - ((((y_distance + x_distance) >> 1) - smallest + 1) >> 1);
-}
+// BODY IN map.h, as `MEASURED inline`: the image has it as a real function
+// at ITS OWN 5 call sites AND inlines it whole at the 4-arg vector_dist's
+// call site (0x005A5910) - a .cpp definition can only ever be one of those.
 
 /*
 Purpose: Take two points and calculate how far out they radiate. This is mainly used to determine
          proximity or how far away the two points are from each other in a rough circle shape.
 // ORIGINAL: 0x005A5910 ?vector_dist@@YAHHHHH@Z 0x005A5910-0x005A5987
+// LEVER: `osmx calls` showed 4 abs() calls, 0 game calls in the image; the
+//        2-arg `vector_dist` (0x004F8090) was declared/defined out-of-line
+//        only, so calling it here compiled a real local call. Moved it to
+//        map.h as `MEASURED inline` (same idiom as the many single-field
+//        setters in this file) - it stays a real out-of-line BYTE_EXACT
+//        function at its own 5 call sites AND inlines whole here, matching
+//        the image's call count exactly.
+// RULED-OUT: `__forceinline` instead of `inline` - identical score, so the
+//            call-count fix, not the inlining strength, was the lever.
+//            Remaining gap (14/50 raw, 0.929 similar, best of every flag
+//            set) is x_dist's inner subtraction: the image caches
+//            x_point_b in edi before subtracting, this tree reads it
+//            straight from the stack slot - same register-caching family
+//            as base_on_sea/base_coast, not fixable from source shape.
 // size      119 bytes
 // prototype 
 // callers   1   call targets   1
@@ -338,6 +338,18 @@ Purpose: Determine the ocean region for coastal bases. There is an issue if a ba
          the Continents compare logic isn't used by anything. This might be the root cause of
          outlined bug. TODO: Revisit in the future once more is known about Continent structure.
 // ORIGINAL: 0x0050DF30 ?base_coast@@YAHH@Z 0x0050DF30-0x0050E021
+// RULED-OUT: 42/81 plateau, same xrange/on_map-loop family as base_on_sea
+//            (0x0050DE50). First divergence is inside the inlined `xrange`:
+//            the image loads MapLongitudeBounds ONCE and reuses that
+//            register for both the `+=` and `-=` wrap arms, this tree
+//            reloads it from memory for the `-=` arm, shifting every
+//            address after it by 4 bytes and cascading the mismatch
+//            through the rest of the loop body (which otherwise agrees,
+//            per `listing_diff`: only 6 runs differ across 81
+//            instructions). Tried hand-inlining `xrange`/`on_map` instead
+//            of calling them - no change, confirming this is `xrange`'s own
+//            shared register-allocation ceiling, not something local to
+//            this call site.
 // size      241 bytes
 // prototype int (__cdecl ?base_coast@@YAHH@Z)(int baseID)
 // callers   3   call targets   0
@@ -444,6 +456,15 @@ Status: Complete
 Purpose: Determine if a base has access to ports or more than one coastal region. This helps
          prioritize whether naval transports should be built.
 // ORIGINAL: 0x0050E310 ?transport_base@@YAHH@Z 0x0050E310-0x0050E3BD
+// LEVER: catalogue lists `sea_coasts` as callers=1, and this wasn't it - the
+//        image hand-inlines `sea_coasts`'s whole loop at this call site
+//        (same shape as `sea_coasts`'s own comment about `sea_coast()`)
+//        instead of calling 0x0050DE00. Went 2/67 -> 42/67 (0.889 similar)
+//        inlining that loop instead of calling `sea_coasts(region)`.
+// RULED-OUT: the remaining gap is is_ocean's own known plateau - the image
+//            loads map_tiles() (0x94a30c) earlier, before the Bases[].x/y
+//            reads, than this tree schedules it. Same root cause as
+//            is_ocean's standalone note, not something local to this site.
 // size      173 bytes
 // prototype int (__cdecl ?transport_base@@YAHH@Z)(int baseID)
 // callers   1   call targets   2
@@ -461,12 +482,32 @@ BOOL __cdecl transport_base(int base_id) {
     if (is_ocean(Bases[base_id].x, Bases[base_id].y)) {
         return true;
     }
-    return (sea_coasts(region) > 1);
+    // `sea_coasts` (0x0050DE00, BYTE_EXACT as its own out-of-line function)
+    // is hand-inlined here: the image writes its whole loop body out at this
+    // call site (bitmask() is the only call it keeps), rather than calling
+    // 0x0050DE00.
+    uint32_t sea_coast_count = 0;
+    for (int i = 1; i < RegionBounds; i++) {
+        int offset;
+        int mask;
+        bitmask_call(region & RegionBounds, &offset, &mask);
+        if ((Continents[i].sea_coasts[offset] & mask) != 0) {
+            sea_coast_count++;
+        }
+    }
+    return sea_coast_count > 1;
 }
 
 /*
 Purpose: Determine if there are other faction's ports in the vicinity of the specified base.
 // ORIGINAL: 0x0050E3C0 ?naval_base@@YAHH@Z 0x0050E3C0-0x0050E5BE
+// RULED-OUT: call count already matches the image (1 call, to base_coast;
+//            port_to_port makes 0 calls here, same as the image - `call_diff`
+//            agrees). The plateau (11/164, 0.894 similar, best of every flag
+//            set) is inherited from `port_to_port`'s own already-documented
+//            MISMATCH ceiling (12/141, register/stack-slot allocation, not
+//            branch shape) - here it is inlined a SECOND time, inside the
+//            `BaseCurrentCount` loop, compounding the same divergence.
 // size      510 bytes
 // prototype int (__cdecl ?naval_base@@YAHH@Z)(int baseID)
 // callers   1   call targets   1
@@ -494,6 +535,11 @@ BOOL __cdecl naval_base(int base_id) {
 /*
 Purpose: Determine if specified unit can set up a convoy route with specified base.
 // ORIGINAL: 0x0050E5C0 ?convoy@@YAHHH@Z 0x0050E5C0-0x0050E81C
+// RULED-OUT: call count already matches the image (0 calls - `port_to_port`
+//            fully inlines, same as the image; `call_diff` agrees). Best of
+//            every flag set is the default (18/200, 0.514 similar) - same
+//            inherited `port_to_port` inlining plateau as `naval_base`,
+//            not something specific to this call site's own control flow.
 // size      604 bytes
 // prototype int (__cdecl ?convoy@@YAHHH@Z)(int vehID, int baseID)
 // callers   1   call targets   0
@@ -656,6 +702,22 @@ void __cdecl climate_set(int x, int y, int rainfall) {
 /*
 Purpose: Calculate the elevation of the specified tile.
 // ORIGINAL: 0x005919C0 ?elev_at@@YAHHH@Z 0x005919C0-0x00591A77
+// LEVER: two fixes got this from 37/67 to 57/67 (0.985 similar). (1) A
+//        shared `Map *tile` read once for both `contour` and `climate`,
+//        instead of calling `alt_detail_at`/`alt_at` as separate accessors
+//        that each recompute map_loc(x,y). (2) BRANCH POLARITY: the ternary
+//        `contour <= threshold ? 10 : modulo` put the short `+10` arm in
+//        the fall-through and jumped to the long modulo block, backwards
+//        from the image (which falls through to the modulo work and jumps
+//        to +10). Rewriting as `if (contour > threshold) { modulo } else
+//        { +10 }` matches. `contour` must be `int`: as `uint32_t` the
+//        comparison compiled `ja`/unsigned, the image's `jle` is signed.
+// RULED-OUT: the remaining divergence is a single MapSeaLevel global load
+//            (`mov edi, [0x94987c]`) that the image schedules AFTER the
+//            contour byte-read and this tree schedules one slot earlier,
+//            regardless of source statement order - tried an intermediate
+//            `diff` local isolating the two subtractions, no effect. Same
+//            instruction count (67/67) either way, just one load's position.
 // size      183 bytes
 // prototype int (__cdecl ?elev_at@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   1   call targets   0
@@ -666,10 +728,14 @@ Return Value: Elevation (bounded to: -3000 to 3500)
 Status: Complete
 */
 int __cdecl elev_at(int x, int y) {
-    uint32_t contour = alt_detail_at(x, y);
+    Map *const tile = map_loc(x, y);
+    int contour = tile->contour;
     int elev = 50 * (contour - ElevDetail[3] - MapSeaLevel);
-    elev += (contour <= ElevDetail[alt_at(x, y)]) ? 10 
-        : (x * 113 + y * 217 + MapSeaLevel * 301) % 50;
+    if (contour > (int)ElevDetail[tile->climate >> 5]) {
+        elev += (x * 113 + y * 217 + MapSeaLevel * 301) % 50;
+    } else {
+        elev += 10;
+    }
     return range(elev, -3000, 3500);
 }
 
@@ -777,6 +843,12 @@ Status: Complete
 /*
 Purpose: Set the altitude details for the specified tile.
 // ORIGINAL: 0x00591260 ?alt_put_detail@@YAXHHH@Z 0x00591260-0x00591288 SEMANTIC
+// RULED-OUT: shared plateau with region_set (identical shape). Image loads
+//            the byte parameter into cl BEFORE loading map_tiles(); the
+//            compiler always loads map_tiles() first regardless of source
+//            order. Tried: a cast-only local, a `Map *tile = map_loc(x,y);`
+//            temp before the store, both no-op - same 11/14 MNEMONIC_ONLY,
+//            same swapped pair of loads.
 // size      40 bytes
 // prototype void (__cdecl ?alt_put_detail@@YAXHHH@Z)(int xCoord, int yCoord, int detail)
 // callers   5   call targets   0
@@ -823,6 +895,16 @@ void __cdecl owner_set(int x, int y, int faction_id) {
 /*
 Purpose: Set the site for the specified tile.
 // ORIGINAL: 0x00591B50 ?site_set@@YAXHHH@Z 0x00591B50-0x00591B86 SEMANTIC
+// RULED-OUT: SHAPE_EXACT 17/19 plateau. Image folds the +2 field offset
+//            into the READ's addressing mode but recomputes a bare tile
+//            pointer (no offset) for the WRITE, applying +2 as the store's
+//            own displacement instead - the field-pointer form folds +2
+//            into a single lea reused for both, one byte longer at that
+//            lea and everything after shifts. Tried: a `Map *tile` local
+//            with two independent `->val2` accesses (worse, 15/19 and a
+//            full reorder of the shl/and), an intermediate `uint8_t v`
+//            local, re-calling `map_loc(x,y)` a second time for the write,
+//            and swapping the OR operand order - all equal or worse.
 // size      54 bytes
 // prototype void (__cdecl ?site_set@@YAXHHH@Z)(int xCoord, int yCoord, int site)
 // callers   9   call targets   0
@@ -864,6 +946,10 @@ Status: Complete
 /*
 Purpose: Set the region for the specified tile.
 // ORIGINAL: 0x00591B90 ?region_set@@YAXHHH@Z 0x00591B90-0x00591BB8 SEMANTIC
+// RULED-OUT: same plateau as alt_put_detail - byte-parameter load and
+//            map_tiles() pointer load are swapped by the compiler
+//            regardless of source order. Tried a `Map *tile` temp before
+//            the store; no-op, same 11/14 MNEMONIC_ONLY.
 // size      40 bytes
 // prototype void (__cdecl ?region_set@@YAXHHH@Z)(int xCoord, int yCoord, int region)
 // callers   2   call targets   0
@@ -1387,6 +1473,17 @@ void __cdecl kill_landmark(int x, int y) {
 Purpose: Check if coordinates are considered near or on coast. Radius (excludes actual coordinates)
          can either be all the squares directly around the coordinates or same as Base '+' radius.
 // ORIGINAL: 0x004E49D0 ?is_coast@@YAHHHH@Z 0x004E49D0-0x004E4A91
+// RULED-OUT: 9/76, 0.84 similar plateau across every flag set. The image
+//            uses TWO induction variables for the loop (an unscaled count
+//            in [ebp-4] and a byte offset in edi, incremented in lockstep)
+//            and defers loading `MapIsFlat` to AFTER the "loop won't run"
+//            guard; this tree's -O2 always collapses to one induction
+//            variable and hoists the `MapIsFlat` read before that guard,
+//            regardless of whether the source calls `xrange`/`on_map` or
+//            inlines their logic by hand (tried both, identical score).
+//            `is_ocean`'s own comparison also narrows to a byte `cmp/jb`
+//            here where the image keeps the 32-bit `cmp edx,0x60`/`jl` -
+//            same root cause as is_ocean's own standalone plateau.
 // size      193 bytes
 // prototype int (__cdecl ?is_coast@@YAHHHH@Z)(int xCoord, int yCoord, int isBaseRadius)
 // callers   10   call targets   0
@@ -1399,7 +1496,14 @@ Status: Complete
 BOOL __cdecl is_coast(int x, int y, BOOL is_base_radius) {
     uint32_t radius = is_base_radius ? 21 : 9;
     for (uint32_t i = 1; i < radius; i++) {
-        int x_radius = xrange(x + RadiusOffsetX[i]);
+        int x_radius = x + RadiusOffsetX[i];
+        if (!(MapIsFlat & 1)) {
+            if (x_radius < 0) {
+                x_radius += MapLongitudeBounds;
+            } else if (x_radius >= (int)MapLongitudeBounds) {
+                x_radius -= MapLongitudeBounds;
+            }
+        }
         int y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
             return true; // modified original that would return i, all calls check return as boolean
@@ -1786,6 +1890,13 @@ Status: Complete
 /*
 Purpose: Set the region value for the specified tile.
 // ORIGINAL: 0x00591230 ?abstract_set@@YAXHHE@Z 0x00591230-0x00591253 SEMANTIC
+// RULED-OUT: same plateau as abstract_at/alt_at. Image computes a row
+//            pointer (base + y*(bounds>>1)) explicitly, then indexes it by
+//            x>>1 in the final SIB store; VC6 -O2 always pre-sums the two
+//            index terms into one register first regardless of source shape.
+//            Tried: (x>>1)+y*mult, y*mult+(x>>1), an explicit `row` pointer
+//            local, and a separate `col=x>>1` local before the row - all
+//            identical 10/13 MNEMONIC_ONLY, same first divergence.
 // size      35 bytes
 // prototype void (__cdecl ?abstract_set@@YAXHHE@Z)(int xCoord, int yCoord, unsigned int8 val)
 // callers   1   call targets   0
@@ -1805,6 +1916,11 @@ Status: Complete
 Purpose: Quickly check for unit related zone of control conflicts. If a ZOC conflict is found, store
          the coordinates of the tile inside ZOC pointers.
 // ORIGINAL: 0x00593830 ?quick_zoc@@YAXHHHHHPAH0@Z 0x00593830-0x005939FC
+// RULED-OUT: 12/152, 0.873 similar (best flag set /Oi-) - call count already
+//            matches the image (`call_diff` agrees). First divergence is
+//            is_ocean's own known plateau (`xor ecx,ecx` before the
+//            map_tiles() pointer load in the image, this tree loads the
+//            pointer first) - same root cause as is_ocean's standalone note.
 // symbol    ?quick_zoc@@YAXIIIHHPAH0@Z
 // size      460 bytes
 // prototype void (__cdecl ?quick_zoc@@YAXHHHHHPAH0@Z)(int xCoordSrc, int yCoordSrc, int factionID, int xCoordDst, int yCoordDst, int* xCoordZoc, int* yCoordZoc)
@@ -4072,6 +4188,11 @@ int __cdecl zoc_any(int x, int y, int faction_id) {
 /*
 Purpose: Check for unit related zone of control conflicts.
 // ORIGINAL: 0x005C8AC0 ?zoc_veh@@YAHHHH@Z 0x005C8AC0-0x005C8B97
+// RULED-OUT: 13/80, 0.969 similar - best of every flag set. Same
+//            xrange/on_map-loop family ceiling as base_on_sea (0x0050DE50):
+//            the image caches MapIsFlat/MapLongitudeBounds into registers
+//            in the prologue, ahead of the loop; this tree's -O2 loads them
+//            one instruction later and via a different pair of registers.
 // size      215 bytes
 // prototype int (__cdecl ?zoc_veh@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)
 // callers   4   call targets   0
@@ -4103,6 +4224,11 @@ int __cdecl zoc_veh(int x, int y, int faction_id) {
 /*
 Purpose: Check for unit related zone of control conflicts taking into account land or ocean.
 // ORIGINAL: 0x005C8BA0 ?zoc_sea@@YAHHHH@Z 0x005C8BA0-0x005C8D36
+// RULED-OUT: 14/133, 0.908 similar - best of every flag set. First
+//            divergence is is_ocean's own known plateau (`xor ecx,ecx`
+//            before the map_tiles() pointer load in the image, this tree
+//            loads the pointer first) - same root cause as is_ocean's
+//            standalone note, not something local to this call site.
 // size      406 bytes
 // prototype int (__cdecl ?zoc_sea@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)
 // callers   5   call targets   1
