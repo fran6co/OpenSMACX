@@ -3229,3 +3229,26 @@ void Win::on_mouse_move(int a1, int a2, unsigned int a3, int a4) {
         }
     }
 }
+
+/*
+Purpose: Tear the process-wide window class down - destroy the main window,
+         close the screen buffer, and unregister the class.
+// ORIGINAL: 0x005F04E0 ?close_class@Win@@QAAXXZ 0x005F04E0-0x005F0520 BYTE_EXACT
+// LEVER: PROMOTED out of src/recovered/005f04e0.cpp, which reached every global through a raw `static T *const g_00xxxxxx` and both Win32 entry points through their import thunks. All five are named here: HandleMain (temp.cpp), ScreenBuffer (palette.h), WinInstance, and plain `DestroyWindow`/`UnregisterClass` calls, which compile to the image's own `call dword ptr [import]`.
+// LEVER: literal-not-shared the class name is written as `"JackalClass"` rather than reusing `WinClassName`. The image carries THREE copies of that string - 0x696DC8, 0x696DD4 and 0x696DEC - because VC6 does not pool string literals across use sites without /GF, so each site has its own.
+// symbol    ?close_class@Win@@SAXXZ
+// size      64 bytes
+// prototype void (__cdecl ?close_class@Win@@QAAXXZ)()
+// kind      game
+Return Value: n/a
+Status: Complete
+*/
+void Win::close_class() {
+    if (HandleMain) {
+        DestroyWindow(HandleMain);
+        HandleMain = nullptr;
+    }
+    ScreenBuffer.close();
+    UnregisterClass("JackalClass", WinInstance);
+    WinInstance = nullptr;
+}

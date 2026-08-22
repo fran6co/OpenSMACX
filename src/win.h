@@ -70,6 +70,10 @@ class Win : public AutoSound {
   int UNK6(int a);
   int on_set_cursor(void *a, unsigned int b, unsigned int c);
   Win();
+
+  // STATIC, not the `QAA` member the census reconstructs: the body at
+  // 0x005F04E0 reads no receiver, and its one caller sets up no ecx.
+  static void close_class();   // 0x005F04E0
   // DECLARED, NOT DEFINED EMPTY. The real destructor is at 0x005EBC90, and it
   // ends `ret` rather than `ret 4` - it takes no vbase flag - so a direct call
   // to it is reachable, unlike RadioButton's. An empty inline body compiles
@@ -340,6 +344,10 @@ extern Win *WinModalStack[4];
 // 0x009B7B14. The module handle the window class is registered under:
 // `Win::close_class` unregisters with it and `FileWin::init` passes it on.
 extern HINSTANCE WinInstance;
+
+// STATIC, not a `QAA` member. The catalogued name
+// `?close_class@Win@@QAAXXZ` claims a receiver the body never reads.
+
 
 // 0x009B7B1C and 0x009B7B20. The screen metrics, read once from
 // GetSystemMetrics in `Win::init_class` and then from 166 and 51 other
