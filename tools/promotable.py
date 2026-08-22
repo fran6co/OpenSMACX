@@ -1,5 +1,5 @@
 #!/usr/bin/env -S uv run python
-"""Byte-exact bodies that live in an artifact the build never compiles.
+r"""Byte-exact bodies that live in an artifact the build never compiles.
 
 `src/recovered/`, `src/recovered/units/` and `src/unrecovered/` hold bodies from
 earlier bulk passes. A BYTE_EXACT claim on one of those proves THE ARTIFACT and
@@ -117,7 +117,78 @@ if __name__ == "__main__":
     # pattern: a `^[\w\s:*&<>,~]*` prefix over a few megabytes backtracks
     # catastrophically and never returns. A definition has a `{` before the
     # next `;`, and is not preceded on its line by `return`, `=`, `.` or `->`.
+
+    # ARITY, BECAUSE THE NAME ALONE MATCHES OVERLOADS. This list used to hand
+    # out `Buffer::write_l` pointing at 0x005DB580 - which is
+    # `?write_l@Buffer@@QAEHPAVFont@@PADHHH@Z`, five parameters starting with a
+    # Font* - while the definition it matched in buffer.cpp takes four starting
+    # with a char* and is ALREADY marked, at 0x005DCEA0. Three of the thirteen
+    # candidates were that, and checking them by hand is exactly the work a
+    # tool should not be asking for.
+    #
+    # A PARSE FAILURE KEEPS THE CANDIDATE. Dropping what it cannot read would
+    # let this quietly hide real hits, which is worse than the overloads it is
+    # removing; unparsed rows are printed with a `?` so they read as unchecked
+    # rather than as verified.
+    def mangled_arity(mangled: str) -> int | None:
+        body = re.sub(r"^\?[\w?@]+@@", "", mangled or "")
+        body = re.sub(r"^[A-Z]{2,3}", "", body)      # access + calling convention
+        body = re.sub(r"@Z$", "", body)
+        if not body:
+            return None
+        i, count, first = 0, 0, True
+        while i < len(body):
+            c = body[i]
+            if c in "0123456789":                     # back-reference to a param
+                i += 1
+            elif c in "PAQR":                         # pointer/reference prefixes
+                i += 1
+                continue
+            elif c in "UVW":                          # struct/class/enum: name@@
+                end = body.find("@@", i)
+                if end < 0:
+                    return None
+                i = end + 2
+            elif c == "_":                            # extended builtin, 2 chars
+                i += 2
+            elif c.isalpha():                         # plain builtin
+                i += 1
+            else:
+                return None
+            if first:                                 # the first item is the RETURN
+                first = False
+                continue
+            if body[i - 1:i] == "X" and count == 0:   # (void)
+                return 0
+            count += 1
+        return count
+
+    def source_arity(text: str, open_paren: int) -> int | None:
+        depth, i, args = 0, open_paren, [""]
+        while i < len(text):
+            ch = text[i]
+            if ch in "([{<":
+                depth += 1
+            elif ch in ")]}>":
+                depth -= 1
+                if depth == 0:
+                    break
+            elif ch == "," and depth == 1:
+                args.append("")
+                i += 1
+                continue
+            if depth >= 1 and not (depth == 1 and ch == "("):
+                args[-1] += ch
+            i += 1
+        else:
+            return None
+        joined = "".join(args).strip()
+        if not joined or joined == "void":
+            return 0
+        return len(args)
+
     unmarked = {}
+    unchecked = set()
     for address, record in orphan.items():
         name = cpp_name(record.name)
         if not name:
@@ -133,18 +204,28 @@ if __name__ == "__main__":
                 continue
             tail = after[close + 1:close + 40]
             if re.match(r"\s*(const\s*)?\{", tail):
+                want = mangled_arity(record.name or "")
+                got = source_arity(product_text, hit.end() - 1)
+                if want is not None and got is not None and want != got:
+                    continue          # an overload, not this body
+                if want is None or got is None:
+                    unchecked.add(address)
                 unmarked[address] = name
                 break
 
     if "--unmarked" in sys.argv:
         for address in sorted(unmarked):
             record = orphan[address]
-            print(f"  0x{address:08X}  {record.size or 0:6,}b  "
+            flag = " ?" if address in unchecked else "  "
+            print(f"  0x{address:08X}{flag}{record.size or 0:6,}b  "
                   f"{unmarked[address]}")
         print(f"\n{len(unmarked):,} CANDIDATE(S) - a name in product source "
-              f"matched a definition. Overloads and free-vs-member name\n"
-              f"collisions still get through; check each against the mangled "
-              f"signature before believing it.")
+              f"matched a definition, with the same NUMBER of parameters as\n"
+              f"the mangled name. Types are not checked, so an overload that "
+              f"differs only in a parameter's type\nstill gets through. A row "
+              f"marked `?` is one whose mangled name would not parse: it was "
+              f"kept\nUNCHECKED rather than dropped, because hiding a real hit "
+              f"is worse than showing an overload.")
         sys.exit(0)
 
     wanted = sorted(a for a in orphan if a in called)
