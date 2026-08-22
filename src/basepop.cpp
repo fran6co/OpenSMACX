@@ -734,7 +734,7 @@ Purpose: Fetch one item's text from the embedded Dialogs at 0x21D0.
          Dialogs::item takes the Dialog's address from the EMBEDDING object's
          own vbtable rather than from where a Dialogs sits when it is
          most-derived, which is why this can hand it a subobject at all.
-// ORIGINAL: 0x00558FE0 ?item@BasePop@@QAEHPADH@Z 0x00558FE0-0x00558FFA
+// ORIGINAL: 0x00558FE0 ?item@BasePop@@QAEHPADH@Z 0x00558FE0-0x00558FFA BYTE_EXACT
 // size      26 bytes
 // prototype int (__thiscall ?item@BasePop@@QAEHPADH@Z)(BasePop* this, int8* lpString, int position)
 // callers   2   call targets   1
