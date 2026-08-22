@@ -1814,31 +1814,6 @@ void *__fastcall scalar_delete_image_button(void *self, void *,
 }
 
 /*
-Purpose: Step the receiver back to the subobject ??_GImageButton@@UAEPAXI@Z
-         expects, then forward unchanged.
-// ORIGINAL: 0x006256F0 ??_GImageButton@@WEEE@AEPAXI@Z 0x006256F0-0x006256FB
-// symbol    ?adjust_this_image_button@@YIPAXPAX0I@Z
-// CORRECTED from ??3ImageButton@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x006256D0` into
-//   ??_GImageButton@@UAEPAXI@Z, which executes `ret 4`; no stack access
-//   and the receiver stays in ECX. `WEEE@` re-demangles to
-//   adjustor{1092} and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_image_button(void *self, void *,
-                                          unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return scalar_delete_image_button(object - 0x444, nullptr, arg0);
-}
-
-/*
 Purpose: The compiler-generated scalar deleting destructor at
          ??_GPushButton@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0

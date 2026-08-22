@@ -1276,17 +1276,11 @@ class Fractal {
   uint8_t field_0_[0x2C0];  // 0x0
 };
 
-/* 0xABC bytes, 2 member(s), 1 named. From the IDB. 7 function(s) in the image. */
-class ImageButton {
- public:
-  // 0x00625310, defined in src/leaf_recoveries.cpp: an empty inline stub
-  // emits nothing and the deleting destructor needs a `call rel32`.
-  ~ImageButton();
+// ImageButton MOVED to src/imagebutton.h, where it derives from BaseButton
+// rather than carrying `uint8_t baseButton_[0xAB8]` as raw storage. The
+// evidence for the base is in that header.
+#include "imagebutton.h"
 
- public:
-  uint8_t baseButton_[0xAB8];  // 0x0
-  uint32_t field_AB8_;  // 0xAB8
-};
 
 /* 0xFDC bytes, 18 member(s), 2 named. From the IDB. 9 function(s) in the image. */
 class Interlude {

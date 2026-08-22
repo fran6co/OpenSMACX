@@ -211,9 +211,9 @@ Return Value: Instance pointer in EAX
 Status: Complete
 */
 Scroll::Scroll() {
+    // Both vtable stores are the compiler's now that Buffer is a real base of
+    // GraphicWin; it puts them where the image does.
     uint32_t *const object = reinterpret_cast<uint32_t *>(this);
-    object[0x000 / 4] = ScrollPrimaryVtable;
-    object[0x444 / 4] = ScrollBufferVtable;
 
     uint32_t *const fixed = &ScrollCloseStaticDefaults;
     uint32_t *const dynamic = &ScrollCloseDynamicDefaults;

@@ -1441,44 +1441,6 @@ const uint32_t ImageButtonPrimaryVtable = 0x00670A94;
 const uint32_t ImageButtonBufferVtable = 0x00670A8C;
 
 /*
-Purpose: Construct the BaseButton base, publish ImageButton's vtables, clear
-         one field.
-
-             mov esi,ecx / call ??0BaseButton / mov [esi],0x670a94
-             mov [esi+0x444],0x670a8c / mov [esi+0xab8],0 / mov eax,esi / ret
-
-         Two vtables, at 0 and at 0x444 - the primary and the Buffer
-         subobject's, the same pair GraphicWin and BaseButton each publish.
-         Both are written AFTER the base constructor and overwrite what it
-         left.
-
-         No ImageButton class is declared for these three. Deriving one from
-         BaseButton and giving it a field at 0xab8 would assert that
-         sizeof(BaseButton) is exactly 0xab8, and nothing here evidences that;
-         raw offsets claim only what the instructions show, which is the same
-         rule src/net_class.h states for Net.
-
-// ORIGINAL: 0x006252E0 ??0ImageButton@@QAE@XZ 0x006252E0-0x00625306
-// symbol    ?image_button_construct_redirect@@YIPAXPAX0@Z
-// size      38 bytes
-// prototype void (__thiscall ??0ImageButton@@QAE@XZ)(ImageButton* this)
-// callers   0   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00606F30
-Return Value: `this`
-Status: Complete
-*/
-void *__fastcall image_button_construct_redirect(void *self, void *) {
-    base_button_construct_redirect(reinterpret_cast<BaseButton *>(self),
-                                   nullptr);
-    store32(self, 0x0, ImageButtonPrimaryVtable);
-    store32(self, 0x444, ImageButtonBufferVtable);
-    store32(self, 0xAB8, 0);
-    return self;
-}
-
-/*
 Purpose: Clear the field, then close as a BaseButton.
 
              mov dword [ecx+0xab8],0 / jmp ?close@BaseButton@@QAEXXZ
@@ -1506,34 +1468,6 @@ void __fastcall image_button_close_redirect(void *self, void *) {
     // image does not have. It tail-jumps straight to 0x006070C0.
     store32(self, 0xAB8, 0);
     reinterpret_cast<BaseButton *>(self)->BaseButton::close();
-}
-
-/*
-Purpose: Re-install this class's two vtables - its own and the secondary base
-         subobject's at +0x444 - then run the base destructor, `destroy()`,
-         which is a plain method rather than a real C++ destructor for the
-         same reason BaseButton's own is (see basebutton.cpp) - a real
-         `~BaseButton()` pulls in SEH scaffolding the image does not have.
-
-             mov [ecx],0x670a94 / mov [ecx+0x444],0x670a8c
-             jmp ?destroy@BaseButton@@QAEPAV1@XZ
-
-// ORIGINAL: 0x00625310 ??1ImageButton@@QAE@XZ 0x00625310-0x00625325 BYTE_EXACT
-// size      21 bytes
-// prototype void (__thiscall ??1ImageButton@@QAE@XZ)(ImageButton* this)
-// callers   1   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-ImageButton::~ImageButton() {
-    volatile uint32_t *const object =
-        reinterpret_cast<volatile uint32_t *>(this);
-    object[0x000 / 4] = ImageButtonPrimaryVtable;
-    object[0x444 / 4] = ImageButtonBufferVtable;
-    reinterpret_cast<BaseButton *>(this)->BaseButton::destroy();
 }
 
 /*
