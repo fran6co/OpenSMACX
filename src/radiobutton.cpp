@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "original_seam.h"
 #include "radiobutton.h"
+#include "init_thunks.h"
 #include "vtable_shim.h"
 
 uint32_t RadioButtonDefault1;  // 0x006970F0
@@ -308,7 +309,7 @@ Status: Complete
 */
 
 /*
-// ORIGINAL: 0x0060E4D0 ?init_class@RadioButton@@QAAHXZ 0x0060E4D0-0x0060E5C2;0x00662F44-0x00662F59
+// ORIGINAL: 0x0060E4D0 ?init_class@RadioButton@@QAAHXZ 0x0060E4D0-0x0060E5C2;0x00662F44-0x00662F59 BYTE_EXACT
 // symbol    ?init_class@RadioButton@@SAHXZ
 // size      263 bytes
 // prototype int (__cdecl ?init_class@RadioButton@@QAAHXZ)()
@@ -321,53 +322,24 @@ Status: Complete
 // pending_bodies forwarder. Sibling of CheckBox::init_class; same
 // placement-new Buffer shape and the same SEH-funclet gap (see that body's
 // TRIED).
-// TRIED: qualified `buf->Buffer::~Buffer()` in place of `buf->~Buffer()` -
-//          Buffer's destructor is virtual (buffer.h), so the unqualified
-//          call dispatches through the vtable (`mov edx,[esi]; call [edx]`)
-//          where the image calls the real destructor directly
-//          (`call 0x5d7410`). MEASURED: 0.826 -> 0.832 similar, still 6/63
-//          agreeing - a real but small improvement, not a fix.
-// TRIED: `buffer_construct_redirect(...)` in place of `new (bufMem)
-//          Buffer()` - drops the placement-new null guard (as the brief's
-//          lever predicts) but ALSO drops the image's own SEH frame
-//          entirely, since VC6 only establishes it for a REAL local object
-//          with a non-trivial destructor exposed at this scope; a redirect
-//          call hides that. MEASURED WORSE: agreement collapsed and the
-//          frame (`push -1 / mov fs:[0],esp`) never appears. Reverted.
-// TRIED: the frame vs. the constructor/destructor call shapes are two
-//          different structural facts this one function cannot have both
-//          of at once without the same coupled GraphicWin/Dialog-style
-//          fix CheckBox::init_class's TRIED note already names. Left as a
-//          MISMATCH; same ceiling as the CheckBox sibling.
 Status: Complete
 */
-static int *const g_006970f8 = (int *)0x006970F8;
-static int *const g_009b8ef8 = (int *)0x009B8EF8;
-static int *const g_009b8f28 = (int *)0x009B8F28;
-
 int __cdecl RadioButton::init_class() {
-    char bufMem[sizeof(Buffer)];
-    // KEEP the placement-new form here, deliberately - swapping it for
-    // `buffer_construct_redirect` (dropping the null guard) also drops the
-    // image's SEH frame entirely (`flags frame`): the frame comes from
-    // VC6 recognising a REAL local object with a non-trivial destructor
-    // that needs unwind protection while `load_pcx` below can throw, and a
-    // redirect call hides that from the compiler. The frame is the bigger
-    // structural fact to match; see flatbutton.cpp for the general case.
-    Buffer *buf = new (bufMem) Buffer();
-    buf->init(0x20, 0x20, 0, 0);
-    int result = buf->load_pcx(reinterpret_cast<const char *>(g_006970f8), 0, 10, 0xec);
+    // A REAL LOCAL. The note that stood here kept the placement-new form to
+    // preserve the image's SEH frame, and that reasoning was right about the
+    // frame and wrong about what produces it: a plain `Buffer buf;` is a real
+    // local with a non-trivial destructor too, so VC6 emits the same frame -
+    // and it also gets `sub esp, 0x588`, sizeof(Buffer) exactly, where the
+    // char array costs four more bytes. The CheckBox sibling this note called
+    // "the same ceiling" is BYTE_EXACT with this spelling.
+    Buffer buf;
+    buf.init(0x20, 0x20, 0, 0);
+    int result = buf.load_pcx("jackal.pcx", 0, 10, 0xec);
     if (result != 0) {
-        // QUALIFIED - Buffer's destructor is virtual (buffer.h), so an
-        // unqualified `buf->~Buffer()` dispatches through the vtable
-        // (`mov edx,[esi]; call [edx]`) where the image calls the real
-        // destructor directly (`call 0x5d7410`).
-        buf->Buffer::~Buffer();
         return result;
     }
-    reinterpret_cast<Sprite *>(g_009b8ef8)->extract(buf, 0x109, 1, 0x23, 0x20, 0x20, 0);
-    reinterpret_cast<Sprite *>(g_009b8f28)->extract(buf, 0x109, 0x22, 0x23, 0x20, 0x20, 0);
-    buf->Buffer::~Buffer();
+    g_RADIOBUTTON_SPRITE_1->extract(&buf, 0x109, 1, 0x23, 0x20, 0x20, 0);
+    g_RADIOBUTTON_SPRITE_2->extract(&buf, 0x109, 0x22, 0x23, 0x20, 0x20, 0);
     return 0;
 }
 
