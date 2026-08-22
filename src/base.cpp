@@ -100,21 +100,18 @@ int UnkGlobal0093A934;  // 0x0093A934
 
 /*
 Purpose: Check if the base already has a particular facility built or if it's in the queue.
-// ORIGINAL: 0x00421670 ?has_fac@@YA_NHHH@Z 0x00421670-0x004216E9
-// TRIED: bitmask() call count now agrees (1), but the image's
-//   has_fac_built(facility_id, base_id) - facility_id a genuine runtime
-//   parameter here, not a literal - still keeps bitmask() as a real
-//   out-of-line call (`lea eax,[ebp-4]; lea ecx,[ebp+8]; push facility_id;
-//   call bitmask`, reusing the dead facility_id parameter slot at [ebp+8]
-//   as the "offset" out-param). This tree's toolchain instead always
-//   substitutes bitmask's body (shift/and on `input`) at the call site
-//   regardless of whether the input is a literal - same systemic gap as
-//   base_nutrient (0x004E9B70) and base_minerals's CENTAURI_PRESERVE/
-//   TEMPLE_OF_PLANET checks (0x004E9CB0): every has_fac_built() call site
-//   examined in base.cpp inlines bitmask() here where the image keeps a
-//   call, not just the literal-facility ones. Left as-is; getting VC6 to
-//   stop treating bitmask() as an inline candidate is an open question
-//   bigger than this one function.
+// ORIGINAL: 0x00421670 ?has_fac@@YA_NHHH@Z 0x00421670-0x004216E9 BYTE_EXACT
+// LEVER: deleted the added `queue_count > 10` upper-bounds guard (see the BUG IN THE ORIGINAL comment at the site) - the image has no such check, only the for-loop's own entry test. Best similarity 0.755 -> 0.779 (2/54 agreeing either way). This is a behavioural change, not just a byte-match one: a caller passing queue_count > 10 now walks past the end of queue_production_id, matching the original's own defect.
+// LEVER: swapped the inline `has_fac_built(facility_id, base_id)` call for
+//   base.h's `has_fac_built_call` (real out-of-line bitmask_call, not the
+//   folded-shift `MEASURED inline bitmask`), which the earlier TRIED note
+//   on this marker had left unused - moved similarity 2/54 -> 17/54 by
+//   itself. The rest closed by changing has_fac_built_call's RETURN TYPE
+//   from `bool` to `int`: a `bool`-returning inline forces a `setne al` /
+//   `and eax, 0xff` widen-to-BOOL at the call site, where the image's own
+//   `(field & mask) != 0` compiles the `neg al; sbb eax, eax; neg eax`
+//   idiom instead, so returning `int` (already 0/1 from the boolean
+//   expression) drops the widen. 54/54 BYTE_EXACT once both landed.
 // symbol    ?has_fac@@YAHHHH@Z
 // size      121 bytes
 // prototype bool (__cdecl ?has_fac@@YA_NHHH@Z)(int facilityID, int baseID, int queueCount)
@@ -122,13 +119,6 @@ Purpose: Check if the base already has a particular facility built or if it's in
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x0050BA00
-// LEVER: deleted the added `queue_count > 10` upper-bounds guard (see the
-//        BUG IN THE ORIGINAL comment at the site) - the image has no such
-//        check, only the for-loop's own entry test. Best similarity 0.755 ->
-//        0.779 (2/54 agreeing either way). This is a behavioural change, not
-//        just a byte-match one: a caller passing queue_count > 10 now walks
-//        past the end of queue_production_id, matching the original's own
-//        defect.
 Return Value: Does base already have or planning on building facility? true/false
 Status: Complete
 */
@@ -136,7 +126,7 @@ BOOL __cdecl has_fac(int facility_id, int base_id, int queue_count) {
     if (facility_id >= FacilityRepStart) {
         return false;
     }
-    BOOL is_built = has_fac_built(facility_id, base_id);
+    BOOL is_built = has_fac_built_call(facility_id, base_id);
     if (is_built || !queue_count) {
         return is_built;
     }
@@ -382,6 +372,15 @@ int __cdecl base_find(int x, int y, int faction_id) {
 /*
 Purpose: Find the base id closest to the specified coordinates meeting various conditional checks.
 // ORIGINAL: 0x004E3D50 ?base_find@@YAHHHHHHH@Z 0x004E3D50-0x004E3EEB
+// TRIED: region_at(base->x, base->y) - the image widens base->y (int16_t)
+//   to int with `movsx` BEFORE the `sar edx, 1` inside map_loc's `x >> 1`;
+//   this tree's compiled body does the shift in 16-bit (`sar dx, 1`) and
+//   widens only afterward. Forcing `region_at((int)base->x, (int)base->y)`
+//   made no difference at all to the emitted bytes (same divergence at the
+//   same instruction, every flag set) - this is the same register-
+//   allocation plateau already documented across region_at/alt_at/is_ocean
+//   and their neighbours (see AGENT_BRIEF's "PICKING A BATCH" note), not
+//   something reachable from this call site's source shape.
 // size      411 bytes
 // prototype int (__cdecl ?base_find@@YAHHHHHHH@Z)(int xCoord, int yCoord, int factionID, int region, int factionID2, int factionID3)
 // callers   14   call targets   1
@@ -446,7 +445,21 @@ int __cdecl base_find(int x, int y, int faction_id, int region, int faction_id_2
 
 /*
 Purpose: Find the best specialist available to the current base with more weight placed on psych.
-// ORIGINAL: 0x004E4020 ?best_specialist@@YAHXZ 0x004E4020-0x004E4090
+// ORIGINAL: 0x004E4020 ?best_specialist@@YAHXZ 0x004E4020-0x004E4090 BYTE_EXACT
+// LEVER: two fixes. (1) has_tech(...) was inlining its whole preq_tech walk
+//   here where the image keeps a real `call 0x5b9f20` - added
+//   technology.h/.cpp's `has_tech_call` non-inline forwarder (same idiom as
+//   general.h's bitmask_call) and called that instead, which alone moved
+//   0/44 -> ~40/44 agreeing. (2) the remaining gap was BaseCurrent()'s two
+//   textual reads: the image reads the global ONCE before the loop (priming
+//   iteration 1) then reloads it UNCONDITIONALLY right after the has_tech
+//   call - even on a false return - which feeds both the current
+//   iteration's population_size check AND the next iteration's top-of-loop
+//   read, eliminating what would otherwise be a second load. Hoisting
+//   `Base *base_current = BaseCurrent();` before the loop and reassigning it
+//   right after `has_tech_call` (not inside the `if`, since the image
+//   reloads even when the call returns false) reproduces that exactly.
+//   44/44 BYTE_EXACT.
 // symbol    ?best_specialist@@YAIXZ
 // size      112 bytes
 // prototype 
@@ -454,25 +467,19 @@ Purpose: Find the best specialist available to the current base with more weight
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x005B9F20
-// TRIED: `Base *base_current = BaseCurrent();` hoisted once above the loop
-//            - costs an extra stack slot (`sub esp, 8` instead of `push ecx`),
-//            which is worse (5/44 -> 6/44 agreeing but lower total similarity).
-//            The image re-reads BaseCurrent() from the global twice per
-//            iteration (before and after the has_tech call, since ecx isn't
-//            preserved across it) exactly as the two `(BaseCurrent())->`
-//            expressions already do; only the FIRST read is hoisted above the
-//            loop in the image, which no source reshuffle reproduced. Left at
-//            5/44 (0.889 similar, /O2 /Gy /GR- /Oy- /GX).
 Return Value: Best citizen id (always going to be 1, 4, or 6 based on default weights)
 Status: Complete
 */
 uint32_t  __cdecl best_specialist() {
     int current_bonus = -999;
     uint32_t citizen_id = 0;
+    Base *base_current = BaseCurrent();
     for (int i = 0; i < MaxSpecialistNum; i++) {
-        if (has_tech(Citizen[i].preq_tech, (BaseCurrent())->faction_id_current)) {
+        BOOL known = has_tech_call(Citizen[i].preq_tech, base_current->faction_id_current);
+        base_current = BaseCurrent();
+        if (known) {
             uint32_t bonus = Citizen[i].psych_bonus * 3;
-            if ((BaseCurrent())->population_size >= (int)Rules->min_base_size_specialists) {
+            if (base_current->population_size >= (int)Rules->min_base_size_specialists) {
                 bonus += Citizen[i].ops_bonus + Citizen[i].research_bonus;
             }
             if ((int)bonus > current_bonus) {
@@ -1996,6 +2003,11 @@ Purpose: Calculate nutrients and growth for the current base.
 //   neg/sbb/neg 0-or-1 materialization plateau documented on is_objective
 //   (0x005AC060) - the image boolifies the facilities_built bit test before
 //   its `test eax,eax`, this tree emits a plain `test byte ptr [...]`.
+// TRIED: `has_fac_built_call`'s own return type is already `int` (see
+//   0x00421670's LEVER note); assigning its result to a named `BOOL` local
+//   before the `if` here made no difference either - VC6 still proves the
+//   value feeds only one branch and drops the materialization. Same
+//   plateau, confirmed a second way.
 // size      317 bytes
 // prototype 
 // callers   7   call targets   1

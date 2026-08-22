@@ -258,3 +258,11 @@ MEASURED inline BOOL __cdecl has_tech(int tech_id, int faction_id) {
     }
     return ((1 << faction_id) & GameTechAchieved[tech_id]) != 0;
 }
+
+// Non-inline forwarder to `has_tech` above: best_specialist (base.cpp) needs
+// a real `call 0x5b9f20` the way the image emits there, unlike most of
+// has_tech's other 108 call sites, which genuinely inline the whole
+// preq_tech walk. The E8 target is a relocation on both sides and is
+// discounted, so this symbol's own name costs nothing - same idiom as
+// general.h's bitmask_call.
+BOOL __cdecl has_tech_call(int tech_id, int faction_id);
