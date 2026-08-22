@@ -172,14 +172,18 @@ def _lessons(lines: list[str], index: int,
         stripped = line.strip()
         if inside and "*/" in stripped:
             break
-        if not (stripped.startswith("//") or stripped.startswith("*")):
-            # Unprefixed lines are scaffolding INSIDE the block, not the end of
-            # the run. Outside a block they still end it, which is what keeps a
-            # stray "ruled out" in prose further down the file from reading as
-            # a claim.
-            if inside:
-                continue
+        prefixed = stripped.startswith("//") or stripped.startswith("*")
+        if not prefixed and not inside:
+            # Outside a block an unprefixed line ends the run, which is what
+            # keeps a stray "ruled out" in prose further down the file from
+            # reading as a claim.
             break
+        # INSIDE a block, an unprefixed line is scaffolding - but it may also be
+        # a LESSON. The tokens below accept a missing `//`, and skipping
+        # straight past unprefixed lines here dropped every lesson written as
+        # bare prose inside a `/* */`: five such notes were found in the tree,
+        # each of which had kept its body reading as untouched. So fall through
+        # and try to match; only give up on the line if nothing does.
         lever = LESSON_LEVER.match(line)
         out = LESSON_RULED_OUT.match(line)
         if lever:
