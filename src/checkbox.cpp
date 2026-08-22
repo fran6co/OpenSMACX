@@ -529,3 +529,40 @@ Purpose: Adjust the receiver from the thunk1 subobject back to CheckBox and
 // kind      game
 Status: Complete
 */
+
+/*
+Purpose: Move the group's selection to the control with `id`, then set or clear
+         that control's bit in the shared state word.
+// ORIGINAL: 0x0060EB80 ?set_state_id@CheckBox@@QAEXHH@Z 0x0060EB80-0x0060EC0B FILE BYTE_EXACT
+// LEVER: PROMOTED out of src/unrecovered/0060eb80.cpp, whose claim proved the ARTIFACT reproduced while the shipped program contained nothing. Kept in the artifact's own spelling for now - it reaches the Dialog subobject through the vbtable by hand (`*(int *)(*(int *)this + 8)`), which is one of the shapes tools/compiler_work.py counts, and unpicking that is a class-model change rather than a promotion.
+// symbol    ?set_state_id@CheckBox@@QAEXHH@Z
+// size      139 bytes
+// kind      game
+Return Value: n/a
+Status: Complete
+*/
+void CheckBox::set_state_id(int a1, int a2) {
+    int base = *(int *)(*(int *)this + 8);
+    char *list = (char *)this + base + 0xbc;
+    int head = *(int *)(list + 8);
+    if (head != 0) {
+        int count = *(int *)(list + 0x10);
+        int idx;
+        *(int *)(list + 0x14) = 0;
+        *(int *)(list + 0xc) = head;
+        for (idx = 0; idx < count; idx = idx + 1) {
+            int cur = *(int *)(list + 0xc);
+            if (*(int *)(cur + 4) == a1) break;
+            *(int *)(list + 0x14) = *(int *)(list + 0x14) + 1;
+            *(int *)(list + 0xc) = *(int *)(cur + 0xc);
+        }
+    }
+    if (a2 != 0) {
+        *(unsigned int *)((int)this + *(int *)(*(int *)this + 8) + 0xec) |=
+            1 << *(int *)((int)this + *(int *)(*(int *)this + 8) + 0xd0);
+    } else {
+        *(unsigned int *)((int)this + *(int *)(*(int *)this + 8) + 0xec) &=
+            ~(1 << *(int *)((int)this + *(int *)(*(int *)this + 8) + 0xd0));
+    }
+}
+
