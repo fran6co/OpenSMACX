@@ -793,4 +793,22 @@ void Menu::on_mouse_move(int a1, int a2) {
     mouse_move(a1, a2);
 }
 
-
+/*
+Purpose: Step the receiver back to the subobject ??_GMenu@@UAEPAXI@Z expects,
+         then forward unchanged.
+// ORIGINAL: 0x005FC6F0 ??_GMenu@@WEEE@AEPAXI@Z 0x005FC6F0-0x005FC6FB
+// symbol    ??_EMenu@@WEEE@AEPAXI@Z
+// CORRECTED from ??3Menu@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x005FC6D0` into ??_GMenu@@UAEPAXI@Z,
+//   which executes `ret 4`; no stack access and the receiver stays in
+//   ECX. `WEEE@` re-demangles to adjustor{1092} and 1092 == 0x444, the
+//   constant subtracted
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/

@@ -75,7 +75,7 @@ Purpose: Install the SubInterface vftable, construct the Spot, nine runs of
 // its constructor/destructor addresses are reached raw, same as every
 // other not-yet-promoted callee.
 SocialWin::SocialWin() {
-    GraphicWin::construct();
+    new (static_cast<GraphicWin *>(this)) GraphicWin();
     char *const self = reinterpret_cast<char *>(this);
 
     uint32_t *const object = reinterpret_cast<uint32_t *>(this);
@@ -364,3 +364,23 @@ void SocialWin::hide() {
         SubInterface::release_iface_mode();
     }
 }
+
+/*
+Purpose: Step the receiver back to the subobject ??_GSocialWin@@UAEPAXI@Z
+         expects, then forward unchanged.
+// ORIGINAL: 0x004B3F90 ??_GSocialWin@@WEEE@AEPAXI@Z 0x004B3F90-0x004B3F9B BYTE_EXACT
+// symbol    ??_ESocialWin@@WEEE@AEPAXI@Z
+// CORRECTED from ??3SocialWin@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x004B3F50` into
+//   ??_GSocialWin@@UAEPAXI@Z, which executes `ret 4`; no stack access
+//   and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/

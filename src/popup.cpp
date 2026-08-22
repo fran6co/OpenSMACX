@@ -964,3 +964,23 @@ int __cdecl pops(char *caption, char *label, int a3, char *a4, int a5,
     }
     return execResult;
 }
+
+/*
+Purpose: Step the receiver back to the subobject ??_GPopup@@UAEPAXI@Z expects,
+         then forward unchanged.
+// ORIGINAL: 0x004070D0 ??_GPopup@@WEEE@AEPAXI@Z 0x004070D0-0x004070DB
+// symbol    ??_EPopup@@WEEE@AEPAXI@Z
+// CORRECTED from ??3Popup@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x00406BD0` into
+//   ??_GPopup@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/

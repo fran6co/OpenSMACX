@@ -29,7 +29,7 @@ static int *const g_00697f24 = (int *)0x00697F24;
 Purpose: Construct the GraphicWin base, then install CheckButton's own
          vtables and the trailing toggle-state fields.
 // ORIGINAL: 0x00633750 ??0CheckButton@@QAE@XZ 0x00633750-0x0063379D BYTE_EXACT
-// symbol    ?construct@CheckButton@@QAEPAV1@XZ
+// symbol    ??0CheckButton@@QAE@XZ
 // size      77 bytes
 // prototype void (__thiscall ??0CheckButton@@QAE@XZ)(CheckButton* this)
 // callers   0   call targets   1
@@ -39,18 +39,13 @@ Purpose: Construct the GraphicWin base, then install CheckButton's own
 Return Value: n/a
 Status: Complete
 */
-CheckButton *CheckButton::construct() {
-    GraphicWin::construct();
-    uint32_t *const object = reinterpret_cast<uint32_t *>(this);
-    object[0x000 / 4] = CheckButtonPrimaryVtable;
-    object[0x444 / 4] = CheckButtonBufferVtable;
+CheckButton::CheckButton() {
     field_A14_ = 0;
     isToggled_ = 0;
     field_A1C_ = 0;
     field_A20_ = 0;
     field_A28_ = *g_00697f24;
     field_A24_ = *g_00697f20;
-    return this;
 }
 
 /*
@@ -93,3 +88,23 @@ int CheckButton::init_class() {
 int __cdecl check_button_init_class_redirect() {
     return CheckButton::init_class();
 }
+
+/*
+Purpose: Step the receiver back to the subobject ??_GCheckButton@@UAEPAXI@Z
+         expects, then forward unchanged.
+// ORIGINAL: 0x004B3F80 ??_GCheckButton@@WEEE@AEPAXI@Z 0x004B3F80-0x004B3F8B BYTE_EXACT
+// symbol    ??_ECheckButton@@WEEE@AEPAXI@Z
+// CORRECTED from ??3CheckButton@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x004B3F20` into
+//   ??_GCheckButton@@UAEPAXI@Z, which executes `ret 4`; no stack access
+//   and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/

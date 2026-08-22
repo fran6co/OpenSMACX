@@ -323,3 +323,43 @@ FlatButton::FlatButton() {
         object[(0xAC8 / 4) + index] = 0;
     }
 }
+
+/*
+Purpose: Step the receiver back to the subobject ??_GFlatButton@@UAEPAXI@Z
+         expects, then forward unchanged.
+// ORIGINAL: 0x004070E0 ??_GFlatButton@@WEEE@AEPAXI@Z 0x004070E0-0x004070EB BYTE_EXACT
+// symbol    ??_EFlatButton@@WEEE@AEPAXI@Z
+// CORRECTED from ??3FlatButton@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x004068E0` into
+//   ??_GFlatButton@@UAEPAXI@Z, which executes `ret 4`; no stack access
+//   and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/
+
+/*
+Purpose: Step the receiver back to the subobject ??_GBaseButton@@UAEPAXI@Z
+         expects, then forward unchanged.
+// ORIGINAL: 0x00607CE0 ??_GBaseButton@@WEEE@AEPAXI@Z 0x00607CE0-0x00607CEB BYTE_EXACT
+// symbol    ??_EBaseButton@@WEEE@AEPAXI@Z
+// CORRECTED from ??3BaseButton@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x00607CC0` into
+//   ??_GBaseButton@@UAEPAXI@Z, which executes `ret 4`; no stack access
+//   and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/

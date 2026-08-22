@@ -58,7 +58,7 @@ void PlanWin::construct(int a1) {
 
     if (a1) {
         *reinterpret_cast<void **>(self) = g_0066d414;
-        reinterpret_cast<GraphicWin *>(self + 0x22050)->construct();
+        new (reinterpret_cast<GraphicWin *>(self + 0x22050)) GraphicWin();
     }
 
     MapWin::construct(0);

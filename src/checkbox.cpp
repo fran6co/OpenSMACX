@@ -82,7 +82,7 @@ CheckBox::CheckBox(int a1) {
     // construction as a `construct()` METHOD, so those two calls stay,
     // base-qualified rather than member calls.
     if (a1 != 0) {
-        GraphicWin::construct();
+        new (static_cast<GraphicWin *>(this)) GraphicWin();
         Dialog::construct();
     }
 

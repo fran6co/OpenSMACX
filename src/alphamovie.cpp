@@ -279,3 +279,23 @@ void MCIVideo::close() {
     (ORIGINAL(this)->*MCIVideoOriginalClose)();
 }
 #pragma auto_inline(on)
+
+/*
+Purpose: Step the receiver back to the subobject ??_GAlphaMovie@@UAEPAXI@Z
+         expects, then forward unchanged.
+// ORIGINAL: 0x00404430 ??_GAlphaMovie@@WEEE@AEPAXI@Z 0x00404430-0x0040443B
+// symbol    ??_EAlphaMovie@@WEEE@AEPAXI@Z
+// CORRECTED from ??3AlphaMovie@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x004043A0` into
+//   ??_GAlphaMovie@@UAEPAXI@Z, which executes `ret 4`; no stack access
+//   and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/

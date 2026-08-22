@@ -35,7 +35,10 @@
 // Adds no data and no virtual of its own, so the layout is untouched, which
 // the static_assert below is what actually checks.
 struct ScrollGraphicWin : public GraphicWin {
-  ScrollGraphicWin() { construct(); }
+  // Empty: GraphicWin::GraphicWin() is a real constructor now, so the
+  // base runs implicitly at exactly the point this idiom existed to
+  // reach.
+  ScrollGraphicWin() { ; }
 };
 
 class Scroll : public ScrollGraphicWin {

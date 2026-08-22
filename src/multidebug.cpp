@@ -81,3 +81,23 @@ void __cdecl MultiDebug::timer_callback_daemon(int a2) {
         reinterpret_cast<VCall *>(this)->slot062();
     }
 }
+
+/*
+Purpose: Step the receiver back to the subobject ??_GMultiDebug@@UAEPAXI@Z
+         expects, then forward unchanged.
+// ORIGINAL: 0x005C9EB0 ??_GMultiDebug@@WEEE@AEPAXI@Z 0x005C9EB0-0x005C9EBB
+// symbol    ??_EMultiDebug@@WEEE@AEPAXI@Z
+// CORRECTED from ??3MultiDebug@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x005C9E80` into
+//   ??_GMultiDebug@@UAEPAXI@Z, which executes `ret 4`; no stack access
+//   and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/

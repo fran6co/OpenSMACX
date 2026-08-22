@@ -67,7 +67,7 @@ SpriteBox::SpriteBox(int a1) {
     char *const self = reinterpret_cast<char *>(this);
 
     if (a1 != 0) {
-        GraphicWin::construct();
+        new (static_cast<GraphicWin *>(this)) GraphicWin();
         Dialog::construct();
     }
 

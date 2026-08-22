@@ -491,7 +491,7 @@ void PullDown::hide() {
 // on `GraphicWin::construct()`'s declaration does not suppress the frame
 // either. Left as a MISMATCH; see flatbutton.cpp for the full note.
 PullDown::PullDown() {
-    GraphicWin::construct();
+    new (static_cast<GraphicWin *>(this)) GraphicWin();
     uint32_t *const ordered = reinterpret_cast<uint32_t *>(this);
     ordered[0x000 / 4] = PullDownPrimaryVtable;
     ordered[0x444 / 4] = PullDownBufferVtable;
@@ -519,3 +519,23 @@ PullDown::PullDown() {
     field_F38_ = PullDownFieldF38Default;
     field_F3C_ = PullDownFieldF3CDefault;
 }
+
+/*
+Purpose: Step the receiver back to the subobject ??_GPullDown@@UAEPAXI@Z
+         expects, then forward unchanged.
+// ORIGINAL: 0x005FA790 ??_GPullDown@@WEEE@AEPAXI@Z 0x005FA790-0x005FA79B BYTE_EXACT
+// symbol    ??_EPullDown@@WEEE@AEPAXI@Z
+// CORRECTED from ??3PullDown@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x005FA770` into
+//   ??_GPullDown@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/

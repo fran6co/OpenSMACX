@@ -66,7 +66,7 @@ Purpose: Construct every sub-object in image order - a FlatButton[7] run, a
 // their image address, the same treatment pending_bodies.cpp gives every
 // not-yet-promoted callee.
 ReportWin::ReportWin() {
-    GraphicWin::construct();
+    new (static_cast<GraphicWin *>(this)) GraphicWin();
 
     // flatButtons1_ and spot_ are real members now (see reportwin.h) and
     // build implicitly, in declaration order, before this body runs.
@@ -138,4 +138,22 @@ void __fastcall report_win_on_mouse_leave_redirect(ReportWin *self, void *, int 
     self->on_mouse_leave(a1, a2);
 }
 
-
+/*
+Purpose: Step the receiver back to the subobject ??_GReportWin@@UAEPAXI@Z
+         expects, then forward unchanged.
+// ORIGINAL: 0x004AD870 ??_GReportWin@@WEEE@AEPAXI@Z 0x004AD870-0x004AD87B BYTE_EXACT
+// symbol    ??_EReportWin@@WEEE@AEPAXI@Z
+// CORRECTED from ??3ReportWin@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x004AD840` into
+//   ??_GReportWin@@UAEPAXI@Z, which executes `ret 4`; no stack access
+//   and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/

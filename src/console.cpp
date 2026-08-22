@@ -79,12 +79,12 @@ void Console::construct(int a1) {
 
     if (a1) {
         *reinterpret_cast<void **>(self) = g_0066ef04;
-        reinterpret_cast<GraphicWin *>(self + 0x23d94)->construct();
+        new (reinterpret_cast<GraphicWin *>(self + 0x23d94)) GraphicWin();
     }
 
     MapWin::construct(0);
 
-    reinterpret_cast<GraphicWin *>(self + 0x21a68)->construct();
+    new (reinterpret_cast<GraphicWin *>(self + 0x21a68)) GraphicWin();
     reinterpret_cast<Buffer *>(self + 0x2247c)->Buffer::Buffer();
     reinterpret_cast<Time *>(self + 0x22a04)->Time::Time();
 

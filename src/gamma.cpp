@@ -114,3 +114,43 @@ Gamma::Gamma() {
     gamma_ = 1.0;
     field_A64_ = 0;
 }
+
+/*
+Purpose: Step the receiver back to the subobject ??_GGamma@@UAEPAXI@Z expects,
+         then forward unchanged.
+// ORIGINAL: 0x004562B0 ??_GGamma@@WEEE@AEPAXI@Z 0x004562B0-0x004562BB
+// symbol    ??_EGamma@@WEEE@AEPAXI@Z
+// CORRECTED from ??3Gamma@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x00456280` into
+//   ??_GGamma@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/
+
+/*
+Purpose: Step the receiver back to the subobject ??_GPushButton@@UAEPAXI@Z
+         expects, then forward unchanged.
+// ORIGINAL: 0x0062C850 ??_GPushButton@@WEEE@AEPAXI@Z 0x0062C850-0x0062C85B BYTE_EXACT
+// symbol    ??_EPushButton@@WEEE@AEPAXI@Z
+// CORRECTED from ??3PushButton@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x0062C830` into
+//   ??_GPushButton@@UAEPAXI@Z, which executes `ret 4`; no stack access
+//   and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/
