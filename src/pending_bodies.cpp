@@ -437,9 +437,10 @@ int __cdecl X_pop(const char *label, int (__cdecl *callback)()) {  // 0x005BF310
 
 // Five more bodies the tree called through function pointers. Each is
 // declared on its class now, so the call sites emit `call rel32`.
-void Dialog::close() {                                  // 0x00608F50
+uint32_t Dialog::close() {                                  // 0x00608F50
     typedef void(__fastcall *pending)(Dialog *, void *);
     PENDING_BODY(0x00608F50, pending)(this, nullptr);
+    return 0;
 }
 
 void MainInterface::set_date(char *text) {              // 0x0045BE80
@@ -703,9 +704,10 @@ int SetupWin::do_menu_rightside(char *a1, int a2) {  // 0x004ADB70
     return PENDING_BODY(0x004ADB70, pending)(this, nullptr, a1, a2);
 }
 
-void SpriteBox::close() {  // 0x00610280
+uint32_t SpriteBox::close() {  // 0x00610280
     typedef void(__fastcall *pending)(SpriteBox *, void *);
     PENDING_BODY(0x00610280, pending)(this, nullptr);
+    return 0;
 }
 
 void Scroll::on_mousewheel_down(int a1) {  // 0x00606320
@@ -1132,9 +1134,10 @@ void EditGroup::pass_dialog_focus() {  // 0x006126C0
     PENDING_BODY(0x006126C0, pending)(this, nullptr);
 }
 
-void EditGroup::close() {  // 0x00611A90
+uint32_t EditGroup::close() {  // 0x00611A90
     typedef void(__fastcall *pending)(EditGroup *, void *);
     PENDING_BODY(0x00611A90, pending)(this, nullptr);
+    return 0;
 }
 
 int ListBox::attach(void * a1, int a2, int a3, int a4) {  // 0x0060A670

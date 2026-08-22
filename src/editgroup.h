@@ -56,7 +56,9 @@
   * `sizeof(GraphicWin) == 0xA14` is the check that would catch it going wrong.
   * Do NOT read this paragraph as "cannot be done".
   */
-class EditGroup {
+// The bases are REAL. The vbtable pointer, the base constructions, the
+// vtordisp and the unwind all come from this declaration now.
+class EditGroup : public virtual GraphicWin, public virtual Dialog {
  public:
   // 0x006126C0, a pending_bodies forwarder.
   void pass_dialog_focus();
@@ -89,13 +91,13 @@ class EditGroup {
   void destruct();
   // 0x00611A90, a pending_bodies forwarder. ~EditGroup calls it on the
   // adjusted (true) object pointer.
-  void close();
+  uint32_t close();
   void set_text_limits(int limit);
   char *get_text(int index);
   void set_text(char *text, int index);
 
  private:
-  uint32_t vbtable_pointer_;
+  // The vbtable pointer is EMITTED by the compiler now.
   // Indexed from 0x4 by both text accessors. The count is not established -
   // the span up to the limits array holds twenty pointers, and only that the
   // array starts at 0x4 is evidenced.
@@ -104,9 +106,7 @@ class EditGroup {
   uint8_t field_7C_[0x8];  // 0x7C
   uint32_t field_84_;  // 0x84
   uint8_t field_88_[0x4];  // 0x88
-  GraphicWin virtual_base_;
-  uint8_t gap_AA0_[4];
-  Dialog dialog_;
+  // GraphicWin and Dialog are VIRTUAL BASES, appended by the compiler.
 };
 
 // PINNED BEFORE CHANGING THE DECLARATION, so that replacing the hand-composed

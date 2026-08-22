@@ -141,7 +141,7 @@ class CheckBox : public virtual GraphicWin, public virtual Dialog {
   // address above.
   CheckBox() { ; }
   ~CheckBox();
-  void close();
+  uint32_t close();
   void UNK1(int pos);
   int UNK2(int pos);
   void set_state_pos(int pos, int state);
@@ -158,7 +158,13 @@ class CheckBox : public virtual GraphicWin, public virtual Dialog {
   uint32_t field_14_;
   // The vbtable puts the base at 0x1C; the declared fields reach
   // 0x18, so 4 bytes sit between them.
-  uint8_t gap_18_[0x1C - 0x18];
+  // NO GAP MEMBER HERE. These four bytes are GraphicWin's VTORDISP and the
+  // compiler emits them, because this class overrides GraphicWin's
+  // on_dialog_focus and on_mouse_leave. Declaring the gap as well put the base
+  // at 0x20 where the image has it at 0x1C - and sizeof still matched, because
+  // 0x20 + 0xA14 + 0xF4 and 0x1C + 0xA14 + 4 + 0xF4 are both 0xB28. A size
+  // assertion CANNOT pin a two-virtual-base layout; the offset has to be
+  // checked separately, which is what OFFSET_PROBE below does.
   // GraphicWin and Dialog are VIRTUAL BASES, appended by the compiler.
 };
 
@@ -167,7 +173,7 @@ class CheckBox : public virtual GraphicWin, public virtual Dialog {
 // `: public virtual GraphicWin, public virtual Dialog` cannot move the layout
 // without failing here. 0x1C of own data, then GraphicWin 0xA14, then the
 // 4-byte vtordisp this header already carries as a gap, then Dialog 0xF4.
-static_assert(sizeof(CheckBox) == 0xB28,
+static_assert(sizeof(CheckBox) == 0xB24,
               "CheckBox layout must match the original executable");
 
 // CheckBox's Dialog::close is not recovered yet.

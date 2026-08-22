@@ -179,10 +179,18 @@ RadioButton *__fastcall radio_button_teardown_redirect(void *adjusted, void *,
 Purpose: Reset the radio button to its defaults, then close its dialog and
          graphic base. Both calls resolve through the vbtable, so they reach
          the Dialog and the virtual base rather than the object itself.
-// ORIGINAL: 0x0060D1B0 ?close@RadioButton@@QAEXXZ 0x0060D1B0-0x0060D1E6 BYTE_EXACT
+// ORIGINAL: 0x0060D1B0 ?close@RadioButton@@QAEIXZ 0x0060D1B0-0x0060D1E6 BYTE_EXACT
+// TRIED: the reconstructed signature `?close@CheckBox@@QAEXXZ`. The census
+//   names are RECONSTRUCTIONS - the image is stripped - and this one had the
+//   same method carrying two signatures across one hierarchy: Dialog::close and
+//   four derived close() returning void, GraphicWin::close and ListBox::close
+//   returning uint32_t. The original cannot have had that. Unified on
+//   `uint32_t` (the form two bodies were already tuned to, for the EAX
+//   residue) and on `virtual`, which is what the vtable slot these classes
+//   install by hand actually is - hence `UAEIXZ`.
 // LEVER: reread-vbtable the image reads `[esi]` TWICE, once per base call (0x0060D1B5 and 0x0060D1D8). Holding it in a `const int32_t *const vbtable` local made VC6 keep it live across the first call, which costs a callee-saved edi and a push/pop pair the image never emits: 5 of 19 with the cache, BYTE_EXACT 19/19 reading it inline at both uses.
 // size      54 bytes
-// prototype void (__thiscall ?close@RadioButton@@QAEXXZ)(RadioButton* this)
+// prototype uint32_t (__thiscall ?close@RadioButton@@QAEIXZ)(RadioButton* this)
 // callers   21   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -190,7 +198,7 @@ Purpose: Reset the radio button to its defaults, then close its dialog and
 Return Value: n/a
 Status: Complete
 */
-void RadioButton::close() {
+uint32_t RadioButton::close() {
     // The base offsets come from the object's own vbtable, read at run time,
     // not from where they sit in a most-derived RadioButton. When one is
     // embedded in a larger class - Dialogs holds a RadioButton at 0x44 - that
@@ -204,7 +212,7 @@ void RadioButton::close() {
     field_4_ = RadioButtonDefault1;
     reinterpret_cast<Dialog *>(
         self + (*reinterpret_cast<const int32_t *const *>(self))[2])->Dialog::close();
-    reinterpret_cast<GraphicWin *>(
+    return reinterpret_cast<GraphicWin *>(
         self + (*reinterpret_cast<const int32_t *const *>(self))[1])->close();
 }
 
@@ -214,6 +222,7 @@ void __fastcall radio_button_close_redirect(RadioButton *self, void *) {
 
 /*
 // ORIGINAL: 0x0060E300 ?on_dialog_focus@RadioButton@@QAEXH@Z 0x0060E300-0x0060E317 BYTE_EXACT
+// symbol    ?on_dialog_focus@RadioButton@@UAEXH@Z
 // size      23 bytes
 // prototype void (__thiscall ?on_dialog_focus@RadioButton@@QAEXH@Z)(RadioButton* this, int)
 // callers   1   call targets   0
@@ -225,15 +234,16 @@ Status: Complete
 */
 void RadioButton::on_dialog_focus(int a1) {
     reinterpret_cast<VCall *>(
-        reinterpret_cast<char *>(this) - 0x18 +
+        reinterpret_cast<char *>(this) +
         *reinterpret_cast<int *>(
-            *reinterpret_cast<char **>(reinterpret_cast<char *>(this) - 0x18) + 4)
+            *reinterpret_cast<char **>(reinterpret_cast<char *>(this)) + 4)
     )->slot062();
 }
 
 /*
 Purpose: Clear the hover index and repaint, through the enclosing object.
 // ORIGINAL: 0x0060E4A0 ?on_mouse_leave@RadioButton@@QAEXHH@Z 0x0060E4A0-0x0060E4C8 BYTE_EXACT
+// symbol    ?on_mouse_leave@RadioButton@@UAEXHH@Z
 // size      40 bytes
 // prototype void (__thiscall ?on_mouse_leave@RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)
 // callers   1   call targets   0
@@ -245,9 +255,11 @@ Return Value: n/a
 Status: Complete
 */
 void RadioButton::on_mouse_leave(int a1, int a2) {
-    // `this - 0x18` reaches a vbtable-shaped descriptor with two deltas:
+    // `this` reaches a vbtable-shaped descriptor with two deltas:
     // entry +8 locates the field, entry +4 the enclosing object's vtable.
-    // Note 0x18 + 0xD8 == 0xF0 across this whole family, so the
+    // THE CONSTANT IS 0xF0 NOW - the compiler performs the walk back to the
+    // enclosing object as part of the override's entry, so the source states
+    // the field's ACTUAL offset there. Note 0x18 + 0xD8 == 0xF0, so the
     // field is at a FIXED +0xF0 in the enclosing object and these classes are
     // subobjects at differing offsets inside it.
     //
@@ -256,16 +268,16 @@ void RadioButton::on_mouse_leave(int a1, int a2) {
     //
     // Both parameters are dead; `ret 8` still pops them.
     *reinterpret_cast<int *>(
-        reinterpret_cast<char *>(this) + 0xD8 +
+        reinterpret_cast<char *>(this) + 0xF0 +
         *reinterpret_cast<int *>(reinterpret_cast<char *>(
             *reinterpret_cast<int **>(
-                reinterpret_cast<char *>(this) - 0x18)) + 8)) = -1;
+                reinterpret_cast<char *>(this))) + 8)) = -1;
 
     reinterpret_cast<VCall *>(
-        reinterpret_cast<char *>(this) - 0x18 +
+        reinterpret_cast<char *>(this) +
         *reinterpret_cast<int *>(reinterpret_cast<char *>(
             *reinterpret_cast<int **>(
-                reinterpret_cast<char *>(this) - 0x18)) + 4))->slot062();
+                reinterpret_cast<char *>(this))) + 4))->slot062();
 }
 
 /*

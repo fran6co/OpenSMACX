@@ -30,7 +30,7 @@
   * returns touching no field, so the opaque storage below is only an object
   * for the canary to seed, not a modelled layout.
   */
-class SpriteBox {
+class SpriteBox : public virtual GraphicWin, public virtual Dialog {
  public:
   // 0x00611380, a pending_bodies forwarder.
   void on_redraw();
@@ -63,7 +63,7 @@ class SpriteBox {
   void on_right_click(int a, int b);
  public:
   void on_dialog_focus(int a1);
-  void close();
+  uint32_t close();
   // 0x006108E0, still a pending_bodies forwarder: `pops()` (popup.cpp) calls
   // it BY NAME so it emits the image's `call rel32`.
   int sprite(Sprite *a1, char *a2, int a3);
@@ -87,7 +87,7 @@ class SpriteBox {
   void on_mouse_leave(int, int);
 
  private:
-  uint32_t field_0_;  // 0x0, this object's own vbtable pointer
+  // 0x0 is this object's own vbtable pointer, EMITTED by the compiler.
   uint32_t field_4_;  // 0x4
   uint32_t field_8_;  // 0x8
   uint8_t field_C_[0x4];  // 0xC
@@ -127,7 +127,11 @@ class SpriteBox {
   uint32_t field_7C_;  // 0x7C
   uint32_t field_80_;  // 0x80
   uint32_t field_84_;  // 0x84
-  uint32_t field_88_;  // 0x88
+  // 0x88 IS GRAPHICWIN'S VTORDISP, not a field. The compiler emits it because
+  // this class overrides GraphicWin's on_dialog_focus and on_mouse_leave;
+  // declaring it as well put the base at 0x90 where the image has it at 0x8C,
+  // which `mov eax, [ecx - 0x8c]` in 0x006115E0 is what caught. A size
+  // assertion could not: the four bytes total the same wherever they sit.
 
   // The constructor placement-news a GraphicWin at +0x8C and a Dialog at
   // +0xAA4 (`new (self+0x8c) GraphicWin(); new (self+0xaa4) Dialog();`),
@@ -138,9 +142,7 @@ class SpriteBox {
   // these as real GraphicWin/Dialog subobjects is what makes the previous
   // field_88_[0x3D8] wrong: SpriteBox has no size assertion, so nothing else
   // in this file depended on the old (too-small) extent.
-  GraphicWin virtual_base_;  // 0x8C
-  uint8_t gap_AA0_[4];       // 0xAA0
-  Dialog dialog_;            // 0xAA4, ends 0xB98
+  // GraphicWin and Dialog are VIRTUAL BASES, appended by the compiler.
 };
 
 // PINNED BEFORE CHANGING THE DECLARATION, so that replacing the hand-composed
@@ -148,7 +150,7 @@ class SpriteBox {
 // `: public virtual GraphicWin, public virtual Dialog` cannot move the layout
 // without failing here. 0x8C of own data, then GraphicWin 0xA14, then the
 // 4-byte vtordisp this header already carries as a gap, then Dialog 0xF4.
-static_assert(sizeof(SpriteBox) == 0xB98,
+static_assert(sizeof(SpriteBox) == 0xB94,
               "SpriteBox layout must match the original executable");
 
 uint32_t __fastcall sprite_box_id_to_pos_redirect(SpriteBox *self, void *, int id);

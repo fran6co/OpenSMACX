@@ -67,14 +67,8 @@ SpriteBox::SpriteBox(int a1) {
     char *const self = reinterpret_cast<char *>(this);
 
     if (a1 != 0) {
-        field_0_ = SpriteBoxVbtable;
-        virtual_base_.construct();
-        try {
-            dialog_.construct();
-        } catch (...) {
-            virtual_base_.~GraphicWin();
-            throw;
-        }
+        GraphicWin::construct();
+        Dialog::construct();
     }
 
     new (self + 0x10) Spot();
@@ -191,6 +185,7 @@ SpriteBox::SpriteBox(int a1) {
 Purpose: Tear down a SpriteBox: reinstall the base subobjects' own
          vtable/vtordisp values, close it, then destroy the Spot member.
 // ORIGINAL: 0x00610120 ??1SpriteBox@@QAE@XZ 0x00610120-0x00610274;0x006116C0-0x006116DB;0x00662FFA-0x0066301A
+// symbol    ??1SpriteBox@@UAE@XZ
 // size      399 bytes
 // prototype void (__thiscall ??1SpriteBox@@QAE@XZ)(SpriteBox* this)
 // callers   23   call targets   3
@@ -275,6 +270,7 @@ void SpriteBox::on_mouse_move(int, int) {
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
 // ORIGINAL: 0x00611050 ?on_mouse_leave@SpriteBox@@QAEXHH@Z 0x00611050-0x00611053 BYTE_EXACT
+// symbol    ?on_mouse_leave@SpriteBox@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_mouse_leave@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int, int)
 // callers   1   call targets   0
@@ -386,6 +382,7 @@ int SpriteBox::init(RECT* a1, int a2) {
 /*
 Purpose: Repaint on dialog focus, through the enclosing object.
 // ORIGINAL: 0x006115E0 ?on_dialog_focus@SpriteBox@@QAEXH@Z 0x006115E0-0x00611600 BYTE_EXACT
+// symbol    ?on_dialog_focus@SpriteBox@@UAEXH@Z
 // size      32 bytes
 // prototype void (__thiscall ?on_dialog_focus@SpriteBox@@QAEXH@Z)(SpriteBox* this, int)
 // callers   1   call targets   0
@@ -397,15 +394,18 @@ Return Value: n/a
 Status: Complete
 */
 void SpriteBox::on_dialog_focus(int a1) {
-    // `this - 0x8c` walks OUT of this subobject to the enclosing one, whose
-    // own +4 holds a further this-adjustment delta - the MSVC virtual-base
-    // shape. One expression: naming an intermediate changes the register
-    // choice. `a1` is dead; `ret 4` still pops it.
+    // THE COMPILER WALKS OUT OF THE SUBOBJECT NOW. This body used to write
+    // `this - 0x8c` by hand; with GraphicWin a real virtual base and this an
+    // override of its `on_dialog_focus`, VC6 performs that adjustment as part
+    // of the entry, and subtracting it again in source double-counts it
+    // (`-0x11c` where the image has `-0x8c`). One expression still: naming an
+    // intermediate changes the register choice. `a1` is dead; `ret 4` still
+    // pops it.
     reinterpret_cast<VCall *>(
-        reinterpret_cast<char *>(this) - 0x8c
+        reinterpret_cast<char *>(this)
         + *reinterpret_cast<int *>(
             *reinterpret_cast<int *>(
-                reinterpret_cast<char *>(this) - 0x8c) + 4))->slot062();
+                reinterpret_cast<char *>(this)) + 4))->slot062();
 }
 
 /*

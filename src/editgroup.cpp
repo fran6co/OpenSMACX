@@ -67,15 +67,12 @@ Status: Complete
 EditGroup::EditGroup(int a1) {
     char *const self = reinterpret_cast<char *>(this);
 
+    // THE COMPILER OWNS THE VIRTUAL-BASE SETUP - see the class declaration.
+    // Only the two `construct()` calls remain, because those bases model
+    // construction as a method rather than a constructor.
     if (a1 != 0) {
-        vbtable_pointer_ = 0x00670A3C;
-        virtual_base_.construct();
-        try {
-            dialog_.construct();
-        } catch (...) {
-            virtual_base_.~GraphicWin();
-            throw;
-        }
+        GraphicWin::construct();
+        Dialog::construct();
     }
 
     {

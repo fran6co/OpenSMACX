@@ -97,16 +97,18 @@ class RadioButton : public virtual GraphicWin, public virtual Dialog {
   // VC6. The image has ??1RadioButton@@QAE@H@Z at 0x00406F60, so a real
   // destructor is what belongs here regardless.
   virtual ~RadioButton() { ; }
-  void close();
+  uint32_t close();
 
  private:
   uint32_t field_4_;
   uint32_t field_8_;
   uint32_t field_C_;
   uint32_t field_10_;
-  // The vbtable puts the base at 0x18; the declared fields reach
-  // 0x14, so 4 bytes sit between them.
-  uint8_t gap_14_[0x18 - 0x14];
+  // NO GAP MEMBER: those four bytes are GraphicWin's VTORDISP and the compiler
+  // emits them, because this class overrides GraphicWin's on_dialog_focus and
+  // on_mouse_leave. Declaring the gap as well pushes the base to 0x1C where
+  // the image has it at 0x18 - and sizeof still matches, which is why a size
+  // assertion alone cannot pin a two-virtual-base layout.
 };
 
 // PINNED BEFORE CHANGING THE DECLARATION, so that replacing the hand-composed
@@ -114,7 +116,7 @@ class RadioButton : public virtual GraphicWin, public virtual Dialog {
 // `: public virtual GraphicWin, public virtual Dialog` cannot move the layout
 // without failing here. 0x18 of own data, then GraphicWin 0xA14, then the
 // 4-byte vtordisp this header already carries as a gap, then Dialog 0xF4.
-static_assert(sizeof(RadioButton) == 0xB24,
+static_assert(sizeof(RadioButton) == 0xB20,
               "RadioButton layout must match the original executable");
 
 // RadioButton's Dialog::close is not recovered yet.

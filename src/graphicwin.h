@@ -48,6 +48,22 @@ class GraphicWin : public Win {
   void on_mouse_move(int a1, int a2, unsigned int a3, int a4);
   GraphicWin() { ; }
   ~GraphicWin() { ; }
+
+  // VIRTUAL, AND THE IMAGE IS WHAT SAYS SO. A body entered on a subobject
+  // opens by adjusting `this` back by that subobject's offset, and that is the
+  // signature of an override reached through a base's vtable. In CheckBox -
+  // own data to 0x1C, GraphicWin at 0x1C - exactly three bodies open
+  // `mov eax, [ecx - 0x1c]`: ??1CheckBox (0x0060E740), on_dialog_focus
+  // (0x0060FB90) and on_mouse_leave (0x0060FC30). So these are GraphicWin's
+  // virtuals, overridden there.
+  //
+  // `close()` is NOT one, by the same test: 0x0060E7C0 and 0x0060D1B0 both
+  // open `mov esi, ecx` on an UNADJUSTED receiver. Declaring it virtual to
+  // earn a vtordisp was measured and is wrong - it moves every derived
+  // close() onto the base's entry convention, which no call site in the image
+  // uses.
+  virtual void on_dialog_focus(int a1);
+  virtual void on_mouse_leave(int a1, int a2);
   // Returns `this`: the image's own closing `mov eax, esi` is the compiler
   // returning the receiver, matching a real constructor's ABI even though
   // this is spelled as a method (see the `symbol` fact on its ORIGINAL
