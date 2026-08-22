@@ -18,6 +18,7 @@ import json
 import os
 import re
 import shutil
+import sys
 import subprocess
 import statistics
 from enum import StrEnum
@@ -1885,7 +1886,24 @@ def check(
         for line in unlinked[:6]:
             typer.secho(f"  {line.strip()[:150]}", fg=typer.colors.RED)
 
+    # HAND-INSTALLED VTABLES, which are a modelling choice that BLOCKS
+    # recovery rather than a matter of taste. A class that stores its own
+    # vtable dword gets no compiler-emitted vtable, and therefore none of the
+    # adjustor thunks that live in one - measured, when converting GraphicWin's
+    # Buffer member to a base produced zero of the 46 `??_G...@@W...` thunks
+    # because the hand-installed vtable was the real blocker. The rule has been
+    # given in prose more than once and the population still grew, so it is a
+    # ratchet here instead.
+    vtables = subprocess.run(
+        [sys.executable, str(REPO_ROOT / "tools" / "handwritten_vtables.py"),
+         "--check"], cwd=REPO_ROOT, capture_output=True, text=True)
+    if not as_json:
+        typer.secho("  " + vtables.stdout.strip(),
+                    fg=typer.colors.RED if vtables.returncode
+                    else typer.colors.WHITE)
+
     code = (1 if regressed or dangling or unread or link.returncode
+            or vtables.returncode
             else 3 if unasked else 0)
     # THE VERDICT GOES IN THE OUTPUT, not only in the exit code. The brief has
     # told agents for a long time never to pipe this to `tail`, because `cmd |
@@ -1899,6 +1917,7 @@ def check(
         typer.secho(
             f"GATE EXIT {code} - "
             + ("FAILED: THE TREE DOES NOT LINK" if link.returncode
+               else "FAILED: hand-installed vtables grew" if vtables.returncode
                else "FAILED: regressed, dangling or unread claims" if code == 1
                else "OK, with unverifiable claims present" if code == 3
                else "CLEAN"),
