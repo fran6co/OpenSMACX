@@ -85,6 +85,32 @@ void Path::set(uint32_t x, uint32_t y, int val) {
  Purpose: Check for unit zone of control conflicts taking into account land or ocean. This is a 
           slightly modified version of zoc_move() or zoc_sea().
 // ORIGINAL: 0x0059A370 ?zoc_path@Path@@QAEHHHH@Z 0x0059A370-0x0059A527
+// LEVER: ONE `map_loc` for the entry test. The image computes the tile
+//   address once at 0x0059A395 and then reads `[eax+8]` (bit), `[eax+2]`
+//   (val2) and `[eax]` (climate) off THAT pointer - `bit_at`, `owner_at` and
+//   `is_ocean` all open-coded against a shared `Map *`. Calling the three
+//   helpers instead makes VC6 reload `*MapTiles` and redo the index for each:
+//   0.838 -> 0.859, first divergence 14 -> 22, 25 -> 33 instructions
+//   agreeing. Mixing them (shared tile for the bit, `owner_at()` for the
+//   owner) is WORSE than either, 0.817.
+// LEVER: the owner is tested TWICE. The image emits `cmp ecx, 8 / jge` and
+//   then `test ecx, ecx / jge` - `< 8` AND `>= 0` - and the second test is
+//   what stops VC6 collapsing the pair into one byte-wide `cmp cl, 8 / jb`.
+//   It is redundant as arithmetic (`val2 & 0xF` is 0..15) and load-bearing
+//   as codegen: dropping it costs 0.859 -> 0.844 and two instructions.
+// RULED-OUT: the `is_ocean` materialisation, for the same reason as
+//   0x0059C3C0. The image ends it `xor edx, edx / mov dl, [eax] / and edx,
+//   0xE0 / cmp edx, 0x60 / setl al` - dword and SIGNED - and this tree emits
+//   `and dl, 0xe0 / cmp dl, 0x60 / sbb eax, eax / neg eax`, byte and
+//   unsigned. Five spellings measured, all 0.859: `? 1 : 0`, an `int` local
+//   for the masked altitude, an `int` local for the raw climate byte,
+//   `static_cast<int>` on both sides of the compare, and the `is_ocean()`
+//   helper itself (which is worse still, 0.839).
+// RULED-OUT: matching the loop's register schedule. The image hoists
+//   `MapLongitudeBounds` into ebx for `xrange`/`on_map` and reloads it once
+//   per iteration at the back edge; this tree reads `[0x949870]` at each of
+//   the four uses. Those reads are inside `xrange` and `on_map` in
+//   src/map.h, which this batch does not own.
 // size      439 bytes
 // prototype int (__thiscall ?zoc_path@Path@@QAEHHHH@Z)(Path* this, int xCoord, int yCoord, int factionID)
 // callers   1   call targets   1
@@ -95,10 +121,14 @@ void Path::set(uint32_t x, uint32_t y, int val) {
  Status: Complete
 */
 int Path::zoc_path(int x, int y, int faction_id) {
-    if (bit_at(x, y) & BIT_BASE_IN_TILE && owner_at(x, y) < 8) {
+    Map *tile = map_loc(x, y);
+    int owner_tile;
+    if ((tile->bit & BIT_BASE_IN_TILE)
+        && (owner_tile = tile->val2 & 0xF, owner_tile < 8)
+        && owner_tile >= 0) {
         return 0;
     }
-    BOOL is_ocean_tile = is_ocean(x, y);
+    BOOL is_ocean_tile = (tile->climate & 0xE0) < ALT_BIT_SHORE_LINE;
     for (uint32_t i = 0; i < 8; i++) {
         int x_radius = xrange(x + RadiusBaseX[i]);
         int y_radius = y + RadiusBaseY[i];
@@ -127,6 +157,16 @@ int Path::zoc_path(int x, int y, int faction_id) {
 /*
  Purpose: Find the path between two points that meets the conditions?
 // ORIGINAL: 0x0059A530 ?find@Path@@QAEHHHHHHHHH@Z 0x0059A530-0x0059BC05
+// RULED-OUT: this pass, on BUDGET, not on any wall - and recorded as a
+//   lesson line because the investigation note below is prose and therefore
+//   invisible to `frontier.py --untouched`, which is why this address was
+//   handed out again as fresh. Measured 2026-08-22: the body is still
+//   `return 0;` and compiles to 2 instructions against the image's 1,884,
+//   similarity 0.002 under every flag set. There is nothing here to lever;
+//   it is ~1,900 instructions of transcription, with the same
+//   ~400-instruction neighbour-scan block repeated at four sites, and it is
+//   the largest single body left in the tree. Do not hand it out beside
+//   eleven other addresses - it needs a pass of its own.
 // size      5845 bytes
 // prototype int (__thiscall ?find@Path@@QAEHHHHHHHHH@Z)(Path* this, int xCoordSrc, int yCoordSrc, int xCoordDst, int yCoordDst, int protoID, int factionID, int, int)
 // callers   7   call targets   11
@@ -221,6 +261,19 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
 /*
  Purpose: TBD
 // ORIGINAL: 0x0059BC10 ?move@Path@@QAEHHH@Z 0x0059BC10-0x0059C1F3
+// RULED-OUT: this pass, on BUDGET. Measured 2026-08-22: 62 instructions
+//   against the image's 488, similarity 0.211, first divergence at
+//   instruction 0 - the image opens `sub esp, 0x38` for a frame this body
+//   never needs because it stops at 0x0059BD73, roughly an eighth of the
+//   way in. The `STATUS: WIP` comment in the body traces the missing
+//   ~420 instructions and they reach `Path::find` (0x0059A530) at
+//   0x0059BE66, which is itself still `return 0;`, so the tail cannot be
+//   finished before that one is. No source-shape lever applies to a body
+//   that is seven eighths absent; the work is transcription.
+//   The `LEVER:` note about the two `veh_moves` calls lives INSIDE the body
+//   rather than in this block, which is why this address still reads as
+//   untouched to `frontier.py`; it is a real measured lever and is left
+//   where the code it explains is.
 // size      1507 bytes
 // prototype int (__thiscall ?move@Path@@QAEHHH@Z)(Path* this, int vehID, int factionID)
 // callers   4   call targets   6
@@ -347,6 +400,37 @@ void Path::merge(int region_old, int region_new) {
  Purpose: Build the pathing tables using the provided coordinates to radiate outward for connected 
           land tiles owned by the specified faction.
 // ORIGINAL: 0x0059C3C0 ?territory@Path@@QAEXHHHH@Z 0x0059C3C0-0x0059C51B
+// LEVER: the loop cursors are `int`, not `int16_t`. The image reads
+//   `movsx edx, word ptr [edx + eax*2]` and keeps a 32-bit value; `int16_t`
+//   locals give `mov dx, word ptr [...]` and defer the widening to a later
+//   `movsx`, which shifts every use after it. 0.803 -> 0.851 on that alone.
+// LEVER: ONE `map_loc` for the whole condition. The image computes the tile
+//   address once - `lea eax, [ebx + eax*4]` - and then reads `[eax]`,
+//   `[eax+6]` and `[eax+7]` off it, so the ocean test is `tile->climate &
+//   0xE0` rather than a second `is_ocean(x_radius, y_radius)`. Calling
+//   `is_ocean` here made VC6 recompute the address (a second
+//   `mov eax, [0x94a30c]` / `add eax, esi`), because the tile pointer comes
+//   from a global and cannot be CSE'd across it. 0.851 -> 0.871, and two
+//   instructions closer (125 against the image's 123).
+// RULED-OUT: reaching the image's `xor ebx, ebx / mov bl, [eax] / and ebx,
+//   0xffffffe0 / cmp ebx, 0x60 / setl` from this file. VC6 narrows the same
+//   expression to `mov al, [eax] / and al, 0xe0 / cmp al, 0x60 / jb` - byte
+//   width and UNSIGNED where the image is dword and SIGNED - and it does so
+//   whatever the caller writes: `is_ocean(...)`, the open-coded
+//   `(climate & 0xE0) >= ALT_BIT_SHORE_LINE`, an `int` local for the loaded
+//   byte, `static_cast<int>(tile->climate)`, `!(... < ...)`, and an `int`
+//   local for `unk_1` all compile to the byte form and all score 0.871. The
+//   shape belongs to `altitude_at`/`is_ocean` in src/map.h, which this batch
+//   does not own; it is the same divergence at BOTH ocean tests here.
+// RULED-OUT: the bool-materialising guard spellings that fixed 0x0055BC00.
+//   The image's entry test ends `setl al / xor edi, edi / cmp eax, edi /
+//   jne`, but `BOOL ocean = is_ocean(x, y);`, `!!is_ocean(...)`,
+//   `is_ocean(...) != 0` and `(is_ocean(...) ? 1 : 0) != 0` all fold to the
+//   same direct branch here: 0.871 each, no movement.
+// RULED-OUT: writing `index1_ = 0;` before `index2_ = 0;`, and reusing the
+//   `x`/`y` parameters as the loop cursors instead of naming new locals.
+//   Both score exactly 0.871; the parameter reuse does reproduce the image's
+//   `mov [ebp+8], edx` but costs nothing either way.
 // size      347 bytes
 // prototype void (__thiscall ?territory@Path@@QAEXHHHH@Z)(Path* this, int xCoord, int yCoord, int region, int factionID)
 // callers   1   call targets   1
@@ -360,20 +444,21 @@ void Path::territory(int x, int y, int UNUSED(region), int faction_id) {
     if (is_ocean(x, y)) {
         return; // skip ocean terrain
     }
-    index1_ = 0; 
     index2_ = 0;
+    index1_ = 0;
     x_table_[index1_] = (int16_t)x;
     y_table_[index1_++] = (int16_t)y;
     do {
-        int16_t x_it = x_table_[index2_];
-        int16_t y_it = y_table_[index2_++];
+        int x_it = x_table_[index2_];
+        int y_it = y_table_[index2_++];
         for (uint32_t i = 0; i < 8; i++) {
             int x_radius = xrange(x_it + RadiusBaseX[i]);
             int y_radius = y_it + RadiusBaseY[i];
             Map *tile;
             if (on_map(x_radius, y_radius) && y_it && y_it != ((int)MapLatitudeBounds - 1)
-                && !is_ocean(x_radius, y_radius) && (tile = map_loc(x_radius, y_radius),
-                    !tile->unk_1 && tile->territory == faction_id)) {
+                && (tile = map_loc(x_radius, y_radius),
+                    (tile->climate & 0xE0) >= ALT_BIT_SHORE_LINE
+                    && !tile->unk_1 && tile->territory == faction_id)) {
                 tile->unk_1 = 1;
                 x_table_[index1_] = (int16_t)x_radius;
                 y_table_[index1_++] = (int16_t)y_radius;
@@ -564,6 +649,52 @@ void Path::continents() {
 /*
  Purpose: TBD
 // ORIGINAL: 0x0059CCA0 ?sensors@Path@@QAEHHPAHPAH@Z 0x0059CCA0-0x0059D22A
+// LEVER: THE SWEEP IS OVER THE REAL MAP, NOT THE ABSTRACT ONE, and this was
+//   a WRONG PROGRAM rather than a wrong spelling. The body read
+//   `for (uint32_t y = 1; y < MapAbstractLatBounds - 1; y++)` /
+//   `x < MapAbstractLongBounds`; the image loads 0x00949874
+//   (`MapLatitudeBounds`) and 0x00949870 (`MapLongitudeBounds`), starts y at
+//   ZERO (`xor esi, esi`), and closes the two loops `add ebx, 2 / cmp ebx,
+//   edx / jl` and `inc esi / cmp esi, eax / jl` at 0x0059D1EE-0x0059D213 -
+//   SIGNED tests against the real bounds, with no `- 1` anywhere. The
+//   abstract bounds are 0x0094A294/0x0094A298 and the image never reads
+//   them here. Fixed to `for (int y = 0; y < MapLatitudeBounds; y++)` /
+//   `for (int x = y & 1; x < MapLongitudeBounds; x += 2)`:
+//   similarity 0.177 -> 0.336, 25 -> 32 instructions agreeing, and six
+//   fewer instructions emitted. `uint32_t` cursors over the same real
+//   bounds score 0.312, so the SIGNED `int` is part of it.
+// LEVER: FOUR MORE WRONG-PROGRAM DEFECTS in the accept test, all read off
+//   the branch targets rather than guessed - every one of them jumps to
+//   0x0059D1EE, which the loop bottom shows is "skip this tile":
+//     * `test al, 0x50 / jne skip` at 0x0059CE4A. The tile is taken when
+//       BIT_MINE|BIT_SOLAR_TIDAL are CLEAR; the body required them SET.
+//     * `test eax, 0x1402000 / jne skip` at 0x0059CE52. Same inversion for
+//       BIT_MONOLITH|BIT_CONDENSER|BIT_THERMAL_BORE.
+//     * `test byte [eax*4+0x96c9f8], 0x10 / jne skip` at 0x0059CE23 is
+//       DTREATY_VENDETTA (0x10) and skips when SET, so the guard is
+//       `!has_treaty(..., DTREATY_VENDETTA)`. The body had
+//       `has_treaty(..., DTREATY_PACT)` - wrong mask AND wrong polarity.
+//       (The veh_who guard 30 bytes earlier really is PACT: mask 1,
+//       `je skip`, so that one was right.)
+//     * the fungus arms compare against 0x40, ALT_BIT_OCEAN_SHELF, not the
+//       0x60 of `is_ocean`: 0x0059CEB1 and 0x0059CEC7 both `cmp ecx, 0x40`.
+//   Together the old body accepted very nearly the complement of the tiles
+//   the image accepts. Fixing all four costs NOTHING on the measurement -
+//   0.3363 either way with `altitude_at(x, y)` for the altitude arms - so
+//   this is a correctness fix that the score could never have found.
+// RULED-OUT: spelling the altitude arms as `tile->climate & 0xE0` instead of
+//   `altitude_at(x, y)`. Same program, and it costs 0.336 -> 0.285.
+// RULED-OUT: byte-exactness this pass - out of budget, and the gap is
+//   register allocation across a 464-instruction body, not a missing
+//   statement. `call_diff` reports the call counts already AGREE (nine
+//   calls, whose_territory x3, is_sensor x2, zoc_veh, bonus_at, has_tech,
+//   do_all_non_input), so nothing structural is missing; this tree emits
+//   535 against 464 because the image keeps the outer cursor in ESI while
+//   also mirroring it to `[ebp-8]`, and this tree reads `[ebp-8]` at every
+//   use. `/Oi-` is the winning flag set here and already applied by the
+//   measurement - the image CALLS memset at 0x006465F0 for the
+//   `ZeroMemory(map_table_, MapArea * 4)`, where the intrinsic gives
+//   `rep stosd`.
 // symbol    ?sensors@Path@@QAEHHPAH0@Z
 // size      1418 bytes
 // prototype int (__thiscall ?sensors@Path@@QAEHHPAHPAH@Z)(Path* this, int factionID, int* xCoordPtr, int* yCoordPtr)
@@ -583,8 +714,8 @@ BOOL Path::sensors(int faction_id, int *x_sensor, int *y_sensor) {
     int y_search = *y_sensor;
     int search = 9999;
     uint32_t region = region_at(x_search, y_search);
-    for (uint32_t y = 1; y < MapAbstractLatBounds - 1; y++) {
-        for (uint32_t x = y & 1; x < MapAbstractLongBounds; x += 2) {
+    for (int y = 0; y < MapLatitudeBounds; y++) {
+        for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
             int veh_faction_id;
             if (region_at(x, y) == region 
                 && whose_territory(faction_id, x, y, NULL, false) == (int)faction_id
@@ -595,13 +726,16 @@ BOOL Path::sensors(int faction_id, int *x_sensor, int *y_sensor) {
                 uint32_t bit = bit_at(x, y);
                 Map *tile = map_loc(x, y);
                 if (zoc_faction_id != 1 && (!zoc_faction_id
-                    || has_treaty(faction_id, zoc_faction_id, DTREATY_PACT))
-                    && bit & (BIT_MINE | BIT_SOLAR_TIDAL)
-                    && bit & (BIT_MONOLITH | BIT_CONDENSER | BIT_THERMAL_BORE)
+                    || !has_treaty(faction_id, zoc_faction_id, DTREATY_VENDETTA))
+                    && !(bit & (BIT_MINE | BIT_SOLAR_TIDAL))
+                    && !(bit & (BIT_MONOLITH | BIT_CONDENSER | BIT_THERMAL_BORE))
                     && !bonus_at(x, y, 0) && ((tile->val3 & 0xC0u) > TERRAIN_BIT_ROLLING
-                        || climate_at(x, y) == RAINFALL_ARID || !(bit & BIT_FUNGUS) 
-                        || !is_ocean(x, y)) && (!(bit & BIT_FUNGUS) || (!is_ocean(x, y) 
-                        && has_tech(Rules->tech_improve_fungus_sqr, faction_id)))) {
+                        || climate_at(x, y) == RAINFALL_ARID
+                        || ((bit & BIT_FUNGUS)
+                            && altitude_at(x, y) >= ALT_BIT_OCEAN_SHELF))
+                    && (!(bit & BIT_FUNGUS)
+                        || altitude_at(x, y) < ALT_BIT_OCEAN_SHELF
+                        || has_tech(Rules->tech_improve_fungus_sqr, faction_id))) {
                     uint32_t flags = 0;
                     for (int i = 0; i < RadiusRange[2]; i++) {
                         int x_radius = xrange(x + RadiusOffsetX[i]);

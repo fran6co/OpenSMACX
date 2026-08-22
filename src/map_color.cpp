@@ -27,7 +27,8 @@ Purpose: Return the display colour for a mandate selector. Selectors 0, 1, and 2
          map to the first three table entries; any other value returns the
          fourth. The original decrements the selector twice against zero, so the
          branch structure is preserved for exactness.
-// ORIGINAL: 0x0050E820 ?mandate_color@@YAHH@Z 0x0050E820-0x0050E84D
+// ORIGINAL: 0x0050E820 ?mandate_color@@YAHH@Z 0x0050E820-0x0050E84D BYTE_EXACT
+// LEVER: a `switch`, not a chain of `if`s. The image's dispatch is `sub eax, 0 / je` then `dec eax / je` twice - VC6's small-switch lowering, which keeps the selector live in eax and lays the arms out in reverse after the chain. Three separate `if (mandate == N)` compare `[ebp+8]` against an immediate at every arm and scored 5 of 21; the switch scores 21 of 21.
 // size      45 bytes
 // prototype int (__cdecl ?mandate_color@@YAHH@Z)(int category)
 // callers   9   call targets   0
@@ -38,17 +39,17 @@ Return Value: Colour dword from the mandate colour table
 Status: Complete
 */
 int __cdecl mandate_color(int mandate) {
-    volatile uint32_t *const table = MandateColors;
-    if (mandate == 0) {
+    const uint32_t *const table = MandateColors;
+    switch (mandate) {
+    case 0:
         return static_cast<int>(table[0x00 / 4]);
-    }
-    if (mandate == 1) {
+    case 1:
         return static_cast<int>(table[0x08 / 4]);
-    }
-    if (mandate == 2) {
+    case 2:
         return static_cast<int>(table[0x10 / 4]);
+    default:
+        return static_cast<int>(table[0x18 / 4]);
     }
-    return static_cast<int>(table[0x18 / 4]);
 }
 
 int __cdecl mandate_color_redirect(int mandate) {

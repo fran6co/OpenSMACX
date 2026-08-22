@@ -142,7 +142,9 @@ Purpose: Set the store's two fields to 3 and 0.
          `mov eax,ecx` first is the legacy EAX = this residue, carried by the
          redirect. The 3 is a constant the original writes and is reproduced as
          one; nothing here says what it means.
-// ORIGINAL: 0x006252A0 ??0TextureStore@@QAE@XZ 0x006252A0-0x006252B0
+// ORIGINAL: 0x006252A0 ??0TextureStore@@QAE@XZ 0x006252A0-0x006252B0 BYTE_EXACT
+// LEVER: a `construct` METHOD returning `TextureStore *`, not a real constructor and not `void`. The image opens `mov eax, ecx` and stores through eax - that is the return of `this`, and a `void construct()` emits the two stores through ecx and never writes eax.
+// symbol    ?construct@TextureStore@@QAEPAV1@XZ
 // size      16 bytes
 // prototype void (__thiscall ??0TextureStore@@QAE@XZ)(TextureStore* this)
 // callers   1   call targets   0
@@ -152,13 +154,13 @@ Purpose: Set the store's two fields to 3 and 0.
 Return Value: this
 Status: Complete
 */
-void TextureStore::construct() {
+TextureStore *TextureStore::construct() {
     field_0_ = 3;
     iWidth_ = 0;
+    return this;
 }
 
 TextureStore *__fastcall texture_store_construct_redirect(TextureStore *self,
                                                           void *) {
-    self->construct();
-    return self;
+    return self->construct();
 }

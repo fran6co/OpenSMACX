@@ -56,8 +56,9 @@ class TextureStore {
  public:
   TextureStore() { ; }
   // A method rather than a real constructor, as Cursor::construct is: the
-  // inline TextureStore() above is relied on elsewhere.
-  void construct();
+  // inline TextureStore() above is relied on elsewhere. It answers `this`
+  // because the original's closing value in eax is the object.
+  TextureStore *construct();
   ~TextureStore();
 
  private:

@@ -17,7 +17,9 @@ int SpyingObserverFaction;  // 0x009A6614
 /*
 Purpose: Determine whether the current faction has intelligence visibility of
          the given subject faction.
-// ORIGINAL: 0x0055BC00 ?spying@@YAHH@Z 0x0055BC00-0x0055BC7C
+// ORIGINAL: 0x0055BC00 ?spying@@YAHH@Z 0x0055BC00-0x0055BC7C BYTE_EXACT
+// LEVER: ONE `||` CHAIN IN A `return`, not three early-return `if`s. The image reaches its `mov eax, 1` epilogue from three different jumps and its `xor eax, eax` epilogue from two - shared tails, which is the opposite of the usual split-the-guards lever and is what a single `return A || B || C;` produces. Separate `if (...) return 1;` statements emit an inline epilogue after each test: 9 of 44, similarity 0.632. The chain alone took it to 0.860.
+// LEVER: the MIDDLE operand is a TERNARY, not an `&&`. `base >= 0 && byte == faction` short-circuits with a plain `je`, where the image materialises the comparison - `xor eax, eax / cmp edx, ecx / sete al / test eax, eax / jne` - which is what `(base >= 0 ? (byte == faction) : 0) != 0` emits. That was the last three instructions: 42 compiled against 44, then 44 of 44. `!!(...)`, `static_cast<int>(...) != 0`, an extra `(...) != 0` and the comparison written the other way round all stay at 42.
 // size      124 bytes
 // prototype 
 // callers   19   call targets   0
@@ -42,33 +44,18 @@ vacuous by construction.
 */
 int __cdecl spying(int subject) {
     const int faction = SpyingCurrentFaction;
-    // Status word for this faction/subject pair; bit 12 grants visibility
-    // outright.
-    const size_t status_index =
-        static_cast<size_t>(subject)
-        + static_cast<size_t>(faction) * SpyingStatusStride;
-    if ((SpyingStatusTable[status_index] & 0x1000U) != 0) {
-        return 1;
-    }
-    // A tracked base belonging to the current faction also grants it.
-    const int base_index = SpyingBaseIndex;
-    if (base_index >= 0) {
-        const uint8_t base_faction =
-            SpyingBaseFactionBytes[static_cast<size_t>(base_index)
-                                   * SpyingBaseStride];
-        if (static_cast<int>(base_faction) == faction) {
-            return 1;
-        }
-    }
-    // Otherwise the observing faction sees every subject whose high flag bit
-    // is clear.
-    if (faction != SpyingObserverFaction) {
-        return 0;
-    }
-    const uint8_t flags =
-        SpyingFactionFlagBytes[static_cast<size_t>(subject)
-                               * SpyingFactionStride];
-    return (flags & 0x80U) == 0 ? 1 : 0;
+    return (SpyingStatusTable[static_cast<size_t>(subject)
+                              + static_cast<size_t>(faction)
+                                    * SpyingStatusStride]
+            & 0x1000U) != 0
+           || (SpyingBaseIndex >= 0
+               ? (SpyingBaseFactionBytes[static_cast<size_t>(SpyingBaseIndex)
+                                         * SpyingBaseStride] == faction)
+               : 0) != 0
+           || (faction == SpyingObserverFaction
+               && (SpyingFactionFlagBytes[static_cast<size_t>(subject)
+                                          * SpyingFactionStride]
+                   & 0x80U) == 0);
 }
 
 namespace {
