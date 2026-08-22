@@ -34,6 +34,8 @@ stated, and reports the rest rather than guessing:
 
 from __future__ import annotations
 
+import contextlib
+import io
 import re
 import sys
 from pathlib import Path
@@ -576,6 +578,22 @@ def convert(source: Path, apply: bool) -> int:
     header = source.with_suffix(".h")
     done = 0
     for seam in seams(source):
+        # A LIFECYCLE METHOD CANNOT BE DECLARED BY NAME. The first bare-tree
+        # run reported exactly four convertible seams, applied them, and broke
+        # the build four ways: `void Console::Console(int)` is a constructor
+        # with a return type (C2380), `void Win::~Win()` a destructor with one
+        # (C2631). Every one of the four was a constructor or destructor -
+        # the survivors of this tool's other refusals are SKEWED toward
+        # lifecycle seams, because ordinary methods with a live wrapper get
+        # refused on the wrapper and lifecycle ones often kept none. The
+        # remedy is a REAL constructor/destructor, which is `compiler_work.py`
+        # 'construct' shape work, not a declaration this tool can write.
+        # Destructor seams have their own narrower door: `--dtors`.
+        if seam.method == seam.klass or seam.method.startswith("~"):
+            print(f"  - {seam.pointer} -> {seam.klass}::{seam.method}")
+            print(f"      a {'destructor (see --dtors)' if seam.method.startswith('~') else 'constructor'}"
+                  f" cannot be declared as a named method; it needs the real thing")
+            continue
         blockers = seam.blockers()
         if blockers:
             print(f"  - {seam.pointer} -> {seam.klass}::{seam.method}")
@@ -992,16 +1010,45 @@ if __name__ == "__main__":
         print(f"{count} free-function binding(s) "
               f"{'converted' if '--apply' in sys.argv else 'convertible'}")
         raise SystemExit(0)
+    # NO ARGUMENTS MEANS THE WHOLE TREE. Without this, `for name in args` over
+    # an empty `args` converted nothing and printed `0 seam(s) convertible` -
+    # the SAME SENTENCE it prints when the work is genuinely finished. Run bare,
+    # which is the obvious way to ask "is there any seam work left?", it
+    # answered "no" over 48 live bindings in 17 files, four of them convertible
+    # and the rest carrying refusals nobody could see. It reported that for as
+    # long as anyone ran it that way.
+    #
+    # The whole tree is also the RIGHT scope, not just a convenience.
+    # `elsewhere()` refuses a seam whose pointer is read from a file this run
+    # will not rewrite, so a narrow invocation MANUFACTURES its own refusals:
+    # `WinOriginalClose` is named in five files and is unconvertible from any
+    # one of them alone.
+    if not args:
+        args = [str(p) for p in sorted((REPO_ROOT / "src").glob("*.cpp"))]
     SCOPE.update(Path(a).resolve() for a in args)
     SCOPE.update(Path(a).resolve().with_suffix(".h") for a in args)
     SCOPE.intersection_update(tree())
     before = dict(tree())
     total = 0
     for name in args:
-        print(name)
-        total += convert(Path(name).resolve(), apply)
+        # The file name only when the file has something to say. Printing it
+        # unconditionally was fine for the three files anyone passed by hand
+        # and buries four findings under 130 bare paths now that bare means
+        # everything.
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer):
+            found = convert(Path(name).resolve(), apply)
+        if buffer.getvalue().strip():
+            print(name)
+            print(buffer.getvalue(), end="")
+        total += found
     if apply:
         for path, text in tree().items():
             if text != before[path]:
                 path.write_text(text)
-    print(f"{total} seam(s) {'converted' if apply else 'convertible'}")
+    # A COUNT THAT DOES NOT SAY WHAT IT COUNTED IS NOT AN ANSWER. That is the
+    # whole defect above, in one line of output.
+    print(f"{total} seam(s) {'converted' if apply else 'convertible'} "
+          f"of {len(args):,} file(s) scanned")
+    print("  --dtors, --widen and --free are separate populations and are "
+          "not counted here")
