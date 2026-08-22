@@ -62,7 +62,6 @@ Purpose: Construct BaseWin's large aggregate of sub-windows: a ProdPicker, a
 // the established seam for a virtual-base constructor reached through a
 // pointer-to-member elsewhere in this tree.
 BaseWin::BaseWin() {
-    GraphicWin::construct();
 
     uint32_t *const object = reinterpret_cast<uint32_t *>(this);
     object[0xA14 / 4] = BaseWinSubInterfaceVtableInitial;
