@@ -34,7 +34,15 @@ class Scroll; // forward declaration
  /*
   * Win class: Most basic window class.
   */
-class Win {
+// WIN IS AN AUTOSOUND. The layout said so before the inheritance did: this
+// class held `AutoSound auto_sound_` at offset 0, AutoSound's own first member
+// was the vtable dword, so Win's vtable and AutoSound's were the same four
+// bytes - and `iFlags_` sat immediately after AutoSound's 0x98, exactly where
+// a base subobject puts it. tools/flat_classes.py flags the embedded-base
+// shape independently.
+//
+// Declaring it is what gives Win, and through it GraphicWin, a real vfptr.
+class Win : public AutoSound {
  public:
   // 0x005EEF60, a pending_bodies forwarder.
   void nonclient_to_client(int * a1, int * a2);
@@ -160,7 +168,6 @@ class Win {
   int on_nc_hittest(int a1, int a2);    // 0x005F5AD0  ?on_nc_hittest@Win@@QAEHHH@Z
   void release_modal();                 // 0x005EE280  ?release_modal@Win@@QAEXXZ
  private:
-  AutoSound auto_sound_;
   uint32_t iFlags_;
   uint32_t iSomeFlag_;
   uint32_t field_A0_;

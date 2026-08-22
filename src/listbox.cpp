@@ -91,7 +91,7 @@ uint32_t ListBox::close() {
     // is a real declared method backed by a pending_bodies forwarder, and
     // checkbox.cpp and radiobutton.cpp already reach it this way.
     reinterpret_cast<Dialog *>(
-        base + (*reinterpret_cast<const int32_t *const *>(base))[2])->close();
+        base + (*reinterpret_cast<const int32_t *const *>(base))[2])->Dialog::close();
 
     uint32_t *const object = reinterpret_cast<uint32_t *>(base);
     object[0x04 / 4] = 0;

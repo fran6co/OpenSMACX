@@ -53,7 +53,7 @@ Purpose: Construct a Win from its AutoSound subobject and the process window
 Status: Complete
 */
 Win *Win::construct() {
-    auto_sound_.construct();
+    AutoSound::construct();
     uint32_t *const object =
         reinterpret_cast<uint32_t *>(this);
     const uint32_t *const fixed = WinStaticDefaults;
@@ -2083,7 +2083,7 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
     // it - `original_slot` off the object's own vtable - because `Win` is
     // not polymorphic in this tree: `Win::construct` writes
     // `object[0] = WinPrimaryVtable` by hand, over the pointer
-    // `auto_sound_.construct()` just put there, which is base-then-derived
+    // `AutoSound::construct()` just put there, which is base-then-derived
     // vtable assignment done manually. Declaring these `virtual` needs
     // `Win : public AutoSound` first, and that is a change to the object
     // model rather than to this function.

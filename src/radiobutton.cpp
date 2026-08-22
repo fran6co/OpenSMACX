@@ -67,15 +67,17 @@ Status: Complete
 RadioButton::RadioButton(int a1) {
     char *const self = reinterpret_cast<char *>(this);
 
+    // THE COMPILER OWNS THE VIRTUAL-BASE SETUP NOW. With
+    // `: public virtual GraphicWin, public virtual Dialog` declared, VC6 emits
+    // the vbtable pointer store, both vtordisp initialisations, and the unwind
+    // that destroys GraphicWin if Dialog's stage throws - all of which this
+    // body used to write by hand against a layout composed out of members.
+    // What is left is what the compiler cannot do: GraphicWin and Dialog model
+    // construction as a `construct()` METHOD rather than a constructor, so the
+    // two calls stay, and they are base-qualified rather than member calls.
     if (a1 != 0) {
-        vbtable_pointer_ = 0x00670590;
-        virtual_base_.construct();
-        try {
-            dialog_.construct();
-        } catch (...) {
-            virtual_base_.~GraphicWin();
-            throw;
-        }
+        GraphicWin::construct();
+        Dialog::construct();
     }
 
     {
@@ -201,7 +203,7 @@ void RadioButton::close() {
     field_8_ = RadioButtonDefault2;
     field_4_ = RadioButtonDefault1;
     reinterpret_cast<Dialog *>(
-        self + (*reinterpret_cast<const int32_t *const *>(self))[2])->close();
+        self + (*reinterpret_cast<const int32_t *const *>(self))[2])->Dialog::close();
     reinterpret_cast<GraphicWin *>(
         self + (*reinterpret_cast<const int32_t *const *>(self))[1])->close();
 }
