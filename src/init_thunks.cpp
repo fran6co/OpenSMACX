@@ -158,7 +158,7 @@ Status: Complete
 */
 void __cdecl construct_alphamenu_wave() {
     g_ALPHAMENU_WAVE->Wave::Wave();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00402F30));
+    atexit(destroy_alphamenu_wave);
 }
 
 /*
@@ -176,7 +176,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var02() {
     g_UNUSED_SPRITE_VAR02->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00404460));
+    atexit(destroy_unused_sprite_var02);
 }
 
 /*
@@ -194,7 +194,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var11() {
     g_UNUSED_SPRITE_VAR11->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00404490));
+    atexit(destroy_unused_sprite_var11);
 }
 
 /*
@@ -212,7 +212,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var06() {
     g_UNUSED_SPRITE_VAR06->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004044C0));
+    atexit(destroy_unused_sprite_var06);
 }
 
 /*
@@ -230,7 +230,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var09() {
     g_UNUSED_SPRITE_VAR09->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004044F0));
+    atexit(destroy_unused_sprite_var09);
 }
 
 /*
@@ -248,7 +248,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var21() {
     g_UNUSED_SPRITE_VAR21->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00404520));
+    atexit(destroy_unused_sprite_var21);
 }
 
 /*
@@ -266,7 +266,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var05() {
     g_UNUSED_SPRITE_VAR05->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00404550));
+    atexit(destroy_unused_sprite_var05);
 }
 
 /*
@@ -284,7 +284,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var08() {
     g_UNUSED_SPRITE_VAR08->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00404580));
+    atexit(destroy_unused_sprite_var08);
 }
 
 /*
@@ -302,7 +302,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var04() {
     g_UNUSED_SPRITE_VAR04->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004045B0));
+    atexit(destroy_unused_sprite_var04);
 }
 
 /*
@@ -320,7 +320,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var01() {
     g_UNUSED_SPRITE_VAR01->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004045E0));
+    atexit(destroy_unused_sprite_var01);
 }
 
 /*
@@ -338,7 +338,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var18() {
     g_UNUSED_SPRITE_VAR18->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00404610));
+    atexit(destroy_unused_sprite_var18);
 }
 
 /*
@@ -356,7 +356,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var03() {
     g_UNUSED_SPRITE_VAR03->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00404640));
+    atexit(destroy_unused_sprite_var03);
 }
 
 /*
@@ -374,7 +374,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var20() {
     g_UNUSED_SPRITE_VAR20->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00404670));
+    atexit(destroy_unused_sprite_var20);
 }
 
 /*
@@ -392,7 +392,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var16() {
     g_UNUSED_SPRITE_VAR16->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004046A0));
+    atexit(destroy_unused_sprite_var16);
 }
 
 /*
@@ -410,7 +410,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var14() {
     g_UNUSED_SPRITE_VAR14->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004046D0));
+    atexit(destroy_unused_sprite_var14);
 }
 
 /*
@@ -428,7 +428,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var22() {
     g_UNUSED_SPRITE_VAR22->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00404700));
+    atexit(destroy_unused_sprite_var22);
 }
 
 /*
@@ -446,7 +446,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var10() {
     g_UNUSED_SPRITE_VAR10->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00404730));
+    atexit(destroy_unused_sprite_var10);
 }
 
 /*
@@ -464,7 +464,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var15() {
     g_UNUSED_SPRITE_VAR15->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00404760));
+    atexit(destroy_unused_sprite_var15);
 }
 
 /*
@@ -482,7 +482,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var13() {
     g_UNUSED_SPRITE_VAR13->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00404790));
+    atexit(destroy_unused_sprite_var13);
 }
 
 /*
@@ -500,7 +500,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var17() {
     g_UNUSED_SPRITE_VAR17->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004047C0));
+    atexit(destroy_unused_sprite_var17);
 }
 
 /*
@@ -518,7 +518,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var19() {
     g_UNUSED_SPRITE_VAR19->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004047F0));
+    atexit(destroy_unused_sprite_var19);
 }
 
 /*
@@ -536,7 +536,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var12() {
     g_UNUSED_SPRITE_VAR12->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00404820));
+    atexit(destroy_unused_sprite_var12);
 }
 
 /*
@@ -554,7 +554,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var07() {
     g_UNUSED_SPRITE_VAR07->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00404850));
+    atexit(destroy_unused_sprite_var07);
 }
 
 /*
@@ -572,7 +572,7 @@ Status: Complete
 */
 void __cdecl construct_basewin() {
     reinterpret_cast<BaseWin *>(0x006A7628)->BaseWin::BaseWin();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004083D0));
+    atexit(destroy_basewin);
 }
 
 /*
@@ -590,7 +590,7 @@ Status: Complete
 */
 void __cdecl construct_basewin_wave() {
     g_BASEWIN_WAVE->Wave::Wave();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00408400));
+    atexit(destroy_basewin_wave);
 }
 
 /*
@@ -608,7 +608,7 @@ Status: Complete
 */
 void __cdecl construct_battlewin() {
     reinterpret_cast<BattleWin *>(0x006EEED8)->BattleWin::BattleWin();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004219D0));
+    atexit(destroy_battlewin);
 }
 
 /*
@@ -626,7 +626,7 @@ Status: Complete
 */
 void __cdecl construct_councwin() {
     reinterpret_cast<CouncWin *>(0x006FEC80)->CouncWin::CouncWin();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004243C0));
+    atexit(destroy_councwin);
 }
 
 /*
@@ -644,7 +644,7 @@ Status: Complete
 */
 void __cdecl construct_credits_wave() {
     g_CREDITS_WAVE->Wave::Wave();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00428770));
+    atexit(destroy_credits_wave);
 }
 
 /*
@@ -662,7 +662,7 @@ Status: Complete
 */
 void __cdecl construct_datalink() {
     reinterpret_cast<Datalink *>(0x00703EA0)->Datalink::Datalink();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00428FB0));
+    atexit(destroy_datalink);
 }
 
 /*
@@ -680,7 +680,7 @@ Status: Complete
 */
 void __cdecl construct_designwin() {
     reinterpret_cast<DesignWin *>(0x0071F2B0)->DesignWin::DesignWin();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00432870));
+    atexit(destroy_designwin);
 }
 
 /*
@@ -698,7 +698,7 @@ Status: Complete
 */
 void __cdecl construct_designwin_wave() {
     g_DESIGNWIN_WAVE->Wave::Wave();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004328A0));
+    atexit(destroy_designwin_wave);
 }
 
 /*
@@ -716,7 +716,7 @@ Status: Complete
 */
 void __cdecl construct_diplopop() {
     reinterpret_cast<DiploPop *>(0x00733990)->DiploPop::DiploPop();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0043EFE0));
+    atexit(destroy_diplopop);
 }
 
 /*
@@ -734,7 +734,7 @@ Status: Complete
 */
 void __cdecl construct_diplowin() {
     reinterpret_cast<DiploWin *>(0x0073ACD8)->DiploWin::DiploWin();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00440F20));
+    atexit(destroy_diplowin);
 }
 
 /*
@@ -752,7 +752,7 @@ Status: Complete
 */
 void __cdecl construct_cpu_waves() {
     VectorCtorIterator(g_CPU_WAVES, 0x6C, 45, WaveElementCtor, WaveElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00445480));
+    atexit(destroy_cpu_waves);
 }
 
 /*
@@ -770,7 +770,7 @@ Status: Complete
 */
 void __cdecl construct_menu_up_wave() {
     g_MENU_UP_WAVE->Wave::Wave();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004454C0));
+    atexit(destroy_menu_up_wave);
 }
 
 /*
@@ -788,7 +788,7 @@ Status: Complete
 */
 void __cdecl construct_menu_down_wave() {
     g_MENU_DOWN_WAVE->Wave::Wave();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004454F0));
+    atexit(destroy_menu_down_wave);
 }
 
 /*
@@ -806,7 +806,7 @@ Status: Complete
 */
 void __cdecl construct_scoot_wave() {
     g_SCOOT_WAVE->Wave::Wave();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00445520));
+    atexit(destroy_scoot_wave);
 }
 
 /*
@@ -824,7 +824,7 @@ Status: Complete
 */
 void __cdecl construct_ok_wave() {
     g_OK_WAVE->Wave::Wave();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00445550));
+    atexit(destroy_ok_wave);
 }
 
 /*
@@ -842,7 +842,7 @@ Status: Complete
 */
 void __cdecl construct_passover_wave() {
     g_PASSOVER_WAVE->Wave::Wave();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00445580));
+    atexit(destroy_passover_wave);
 }
 
 /*
@@ -860,7 +860,7 @@ Status: Complete
 */
 void __cdecl construct_fx() {
     g_FX->FX::FX();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004455B0));
+    atexit(destroy_fx);
 }
 
 /*
@@ -878,7 +878,7 @@ Status: Complete
 */
 void __cdecl construct_ambience() {
     g_AMBIENCE->Ambience::Ambience();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004455E0));
+    atexit(destroy_ambience);
 }
 
 /*
@@ -896,7 +896,7 @@ Status: Complete
 */
 void __cdecl construct_famewin() {
     reinterpret_cast<FameWin *>(0x0074DAF8)->FameWin::FameWin();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004483F0));
+    atexit(destroy_famewin);
 }
 
 /*
@@ -914,7 +914,7 @@ Status: Complete
 */
 void __cdecl construct_pcx_parse_temp_buffer1() {
     g_PCX_PARSE_TEMP_BUFFER1->Buffer::Buffer();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044CC40));
+    atexit(destroy_pcx_parse_temp_buffer1);
 }
 
 /*
@@ -933,7 +933,7 @@ Status: Complete
 void __cdecl construct_factionart() {
     VectorCtorIterator(reinterpret_cast<void *>(0x0078E978), 0x65C, 8,
                        FactionArtCtorTarget, FactionArtElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044CC80));
+    atexit(destroy_factionart);
 }
 
 /*
@@ -951,7 +951,7 @@ Status: Complete
 */
 void __cdecl construct_iface_close_x_sprites() {
     VectorCtorIterator(g_IFACE_CLOSE_X_SPRITES, 0x2C, 3, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044CCD0));
+    atexit(destroy_iface_close_x_sprites);
 }
 
 /*
@@ -969,7 +969,7 @@ Status: Complete
 */
 void __cdecl construct_iface_box_sprites1() {
     VectorCtorIterator(g_IFACE_BOX_SPRITES1, 0x2C, 51, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044CD20));
+    atexit(destroy_iface_box_sprites1);
 }
 
 /*
@@ -987,7 +987,7 @@ Status: Complete
 */
 void __cdecl construct_iface_box_sprites2() {
     VectorCtorIterator(g_IFACE_BOX_SPRITES2, 0x2C, 51, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044CD70));
+    atexit(destroy_iface_box_sprites2);
 }
 
 /*
@@ -1005,7 +1005,7 @@ Status: Complete
 */
 void __cdecl construct_iface_box_sprites3() {
     VectorCtorIterator(g_IFACE_BOX_SPRITES3, 0x2C, 51, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044CDC0));
+    atexit(destroy_iface_box_sprites3);
 }
 
 /*
@@ -1023,7 +1023,7 @@ Status: Complete
 */
 void __cdecl construct_iface_box_sprites4() {
     VectorCtorIterator(g_IFACE_BOX_SPRITES4, 0x2C, 51, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044CE10));
+    atexit(destroy_iface_box_sprites4);
 }
 
 /*
@@ -1041,7 +1041,7 @@ Status: Complete
 */
 void __cdecl construct_iface_box_sprites5() {
     VectorCtorIterator(g_IFACE_BOX_SPRITES5, 0x2C, 51, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044CE60));
+    atexit(destroy_iface_box_sprites5);
 }
 
 /*
@@ -1059,7 +1059,7 @@ Status: Complete
 */
 void __cdecl construct_iface_box_sprites6() {
     VectorCtorIterator(g_IFACE_BOX_SPRITES6, 0x2C, 51, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044CEB0));
+    atexit(destroy_iface_box_sprites6);
 }
 
 /*
@@ -1077,7 +1077,7 @@ Status: Complete
 */
 void __cdecl construct_iface_box_sprites7() {
     VectorCtorIterator(g_IFACE_BOX_SPRITES7, 0x2C, 51, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044CF00));
+    atexit(destroy_iface_box_sprites7);
 }
 
 /*
@@ -1095,7 +1095,7 @@ Status: Complete
 */
 void __cdecl construct_iface_box_sprites8() {
     VectorCtorIterator(g_IFACE_BOX_SPRITES8, 0x2C, 51, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044CF50));
+    atexit(destroy_iface_box_sprites8);
 }
 
 /*
@@ -1113,7 +1113,7 @@ Status: Complete
 */
 void __cdecl construct_iface_box_sprite_buffers() {
     VectorCtorIterator(g_IFACE_BOX_SPRITE_BUFFERS, 0x588, 51, BufferElementCtor, BufferElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044CFA0));
+    atexit(destroy_iface_box_sprite_buffers);
 }
 
 /*
@@ -1131,7 +1131,7 @@ Status: Complete
 */
 void __cdecl construct_iface_std_popups_top_left_sprite() {
     g_IFACE_STD_POPUPS_TOP_LEFT_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044CFE0));
+    atexit(destroy_iface_std_popups_top_left_sprite);
 }
 
 /*
@@ -1149,7 +1149,7 @@ Status: Complete
 */
 void __cdecl construct_iface_std_popups_top_right_sprite() {
     g_IFACE_STD_POPUPS_TOP_RIGHT_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D010));
+    atexit(destroy_iface_std_popups_top_right_sprite);
 }
 
 /*
@@ -1167,7 +1167,7 @@ Status: Complete
 */
 void __cdecl construct_iface_std_popups_bot_left_sprite() {
     g_IFACE_STD_POPUPS_BOT_LEFT_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D040));
+    atexit(destroy_iface_std_popups_bot_left_sprite);
 }
 
 /*
@@ -1185,7 +1185,7 @@ Status: Complete
 */
 void __cdecl construct_iface_std_popups_bot_right_sprite() {
     g_IFACE_STD_POPUPS_BOT_RIGHT_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D070));
+    atexit(destroy_iface_std_popups_bot_right_sprite);
 }
 
 /*
@@ -1203,7 +1203,7 @@ Status: Complete
 */
 void __cdecl construct_iface_std_popups_top_mid_sprite() {
     g_IFACE_STD_POPUPS_TOP_MID_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D0A0));
+    atexit(destroy_iface_std_popups_top_mid_sprite);
 }
 
 /*
@@ -1221,7 +1221,7 @@ Status: Complete
 */
 void __cdecl construct_iface_std_popups_bot_mid_sprite() {
     g_IFACE_STD_POPUPS_BOT_MID_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D0D0));
+    atexit(destroy_iface_std_popups_bot_mid_sprite);
 }
 
 /*
@@ -1239,7 +1239,7 @@ Status: Complete
 */
 void __cdecl construct_iface_std_popups_mid_left_sprite() {
     g_IFACE_STD_POPUPS_MID_LEFT_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D100));
+    atexit(destroy_iface_std_popups_mid_left_sprite);
 }
 
 /*
@@ -1257,7 +1257,7 @@ Status: Complete
 */
 void __cdecl construct_iface_std_popups_mid_right_sprite() {
     g_IFACE_STD_POPUPS_MID_RIGHT_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D130));
+    atexit(destroy_iface_std_popups_mid_right_sprite);
 }
 
 /*
@@ -1275,7 +1275,7 @@ Status: Complete
 */
 void __cdecl construct_iface_std_popups_middle_buffer() {
     g_IFACE_STD_POPUPS_MIDDLE_BUFFER->Buffer::Buffer();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D160));
+    atexit(destroy_iface_std_popups_middle_buffer);
 }
 
 /*
@@ -1293,7 +1293,7 @@ Status: Complete
 */
 void __cdecl construct_unused_caviardata_var1() {
     g_UNUSED_CAVIARDATA_VAR1->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D190));
+    atexit(destroy_unused_caviardata_var1);
 }
 
 /*
@@ -1311,7 +1311,7 @@ Status: Complete
 */
 void __cdecl construct_ssf_caviardata() {
     g_SSF_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D1C0));
+    atexit(destroy_ssf_caviardata);
 }
 
 /*
@@ -1329,7 +1329,7 @@ Status: Complete
 */
 void __cdecl construct_sdp_caviardata() {
     g_SDP_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D1F0));
+    atexit(destroy_sdp_caviardata);
 }
 
 /*
@@ -1347,7 +1347,7 @@ Status: Complete
 */
 void __cdecl construct_sas_caviardata() {
     g_SAS_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D220));
+    atexit(destroy_sas_caviardata);
 }
 
 /*
@@ -1365,7 +1365,7 @@ Status: Complete
 */
 void __cdecl construct_scd_caviardata() {
     g_SCD_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D250));
+    atexit(destroy_scd_caviardata);
 }
 
 /*
@@ -1383,7 +1383,7 @@ Status: Complete
 */
 void __cdecl construct_scj_caviardata() {
     g_SCJ_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D280));
+    atexit(destroy_scj_caviardata);
 }
 
 /*
@@ -1401,7 +1401,7 @@ Status: Complete
 */
 void __cdecl construct_sags_caviardata() {
     g_SAGS_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D2B0));
+    atexit(destroy_sags_caviardata);
 }
 
 /*
@@ -1419,7 +1419,7 @@ Status: Complete
 */
 void __cdecl construct_sft_caviardata() {
     g_SFT_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D2E0));
+    atexit(destroy_sft_caviardata);
 }
 
 /*
@@ -1437,7 +1437,7 @@ Status: Complete
 */
 void __cdecl construct_vhr_caviardata1() {
     g_VHR_CAVIARDATA1->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D310));
+    atexit(destroy_vhr_caviardata1);
 }
 
 /*
@@ -1455,7 +1455,7 @@ Status: Complete
 */
 void __cdecl construct_sht_caviardata() {
     g_SHT_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D340));
+    atexit(destroy_sht_caviardata);
 }
 
 /*
@@ -1473,7 +1473,7 @@ Status: Complete
 */
 void __cdecl construct_srb_caviardata() {
     g_SRB_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D370));
+    atexit(destroy_srb_caviardata);
 }
 
 /*
@@ -1491,7 +1491,7 @@ Status: Complete
 */
 void __cdecl construct_asas_caviardata() {
     g_ASAS_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D3A0));
+    atexit(destroy_asas_caviardata);
 }
 
 /*
@@ -1509,7 +1509,7 @@ Status: Complete
 */
 void __cdecl construct_reslaser_caviardata() {
     g_RESLASER_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D3D0));
+    atexit(destroy_reslaser_caviardata);
 }
 
 /*
@@ -1527,7 +1527,7 @@ Status: Complete
 */
 void __cdecl construct_resbolt_caviardata() {
     g_RESBOLT_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D400));
+    atexit(destroy_resbolt_caviardata);
 }
 
 /*
@@ -1545,7 +1545,7 @@ Status: Complete
 */
 void __cdecl construct_funload_caviardata() {
     g_FUNLOAD_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D430));
+    atexit(destroy_funload_caviardata);
 }
 
 /*
@@ -1563,7 +1563,7 @@ Status: Complete
 */
 void __cdecl construct_tecload_caviardata() {
     g_TECLOAD_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D460));
+    atexit(destroy_tecload_caviardata);
 }
 
 /*
@@ -1581,7 +1581,7 @@ Status: Complete
 */
 void __cdecl construct_sp_disswave_caviardata() {
     g_SP_DISSWAVE_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D490));
+    atexit(destroy_sp_disswave_caviardata);
 }
 
 /*
@@ -1599,7 +1599,7 @@ Status: Complete
 */
 void __cdecl construct_sp_marined_caviardata() {
     g_SP_MARINED_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D4C0));
+    atexit(destroy_sp_marined_caviardata);
 }
 
 /*
@@ -1617,7 +1617,7 @@ Status: Complete
 */
 void __cdecl construct_sp_nanoo_caviardata() {
     g_SP_NANOO_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D4F0));
+    atexit(destroy_sp_nanoo_caviardata);
 }
 
 /*
@@ -1635,7 +1635,7 @@ Status: Complete
 */
 void __cdecl construct_sp_soporific_caviardata() {
     g_SP_SOPORIFIC_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D520));
+    atexit(destroy_sp_soporific_caviardata);
 }
 
 /*
@@ -1653,7 +1653,7 @@ Status: Complete
 */
 void __cdecl construct_aa01_caviardata() {
     g_AA01_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D550));
+    atexit(destroy_aa01_caviardata);
 }
 
 /*
@@ -1671,7 +1671,7 @@ Status: Complete
 */
 void __cdecl construct_aa_rover_caviardata() {
     g_AA_ROVER_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D580));
+    atexit(destroy_aa_rover_caviardata);
 }
 
 /*
@@ -1689,7 +1689,7 @@ Status: Complete
 */
 void __cdecl construct_aa_wing_caviardata() {
     VectorCtorIterator(g_AA_WING_CAVIARDATA, 0xC, 2, CaviarDataElementCtor, CaviarDataElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D5C0));
+    atexit(destroy_aa_wing_caviardata);
 }
 
 /*
@@ -1707,7 +1707,7 @@ Status: Complete
 */
 void __cdecl construct_acp_caviardata() {
     VectorCtorIterator(g_ACP_CAVIARDATA, 0xC, 4, CaviarDataElementCtor, CaviarDataElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D610));
+    atexit(destroy_acp_caviardata);
 }
 
 /*
@@ -1725,7 +1725,7 @@ Status: Complete
 */
 void __cdecl construct_ax_caviardata() {
     g_AX_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D650));
+    atexit(destroy_ax_caviardata);
 }
 
 /*
@@ -1743,7 +1743,7 @@ Status: Complete
 */
 void __cdecl construct_aa_caviardata() {
     g_AA_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D680));
+    atexit(destroy_aa_caviardata);
 }
 
 /*
@@ -1761,7 +1761,7 @@ Status: Complete
 */
 void __cdecl construct_acolpod_caviardata() {
     g_ACOLPOD_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D6B0));
+    atexit(destroy_acolpod_caviardata);
 }
 
 /*
@@ -1779,7 +1779,7 @@ Status: Complete
 */
 void __cdecl construct_at_caviardata() {
     g_AT_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D6E0));
+    atexit(destroy_at_caviardata);
 }
 
 /*
@@ -1797,7 +1797,7 @@ Status: Complete
 */
 void __cdecl construct_vta_caviardata() {
     g_VTA_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D710));
+    atexit(destroy_vta_caviardata);
 }
 
 /*
@@ -1815,7 +1815,7 @@ Status: Complete
 */
 void __cdecl construct_atp_caviardata() {
     g_ATP_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D740));
+    atexit(destroy_atp_caviardata);
 }
 
 /*
@@ -1833,7 +1833,7 @@ Status: Complete
 */
 void __cdecl construct_ssfa_caviardata() {
     g_SSFA_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D770));
+    atexit(destroy_ssfa_caviardata);
 }
 
 /*
@@ -1851,7 +1851,7 @@ Status: Complete
 */
 void __cdecl construct_sfta_caviardata() {
     g_SFTA_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D7A0));
+    atexit(destroy_sfta_caviardata);
 }
 
 /*
@@ -1869,7 +1869,7 @@ Status: Complete
 */
 void __cdecl construct_vw00_caviardata() {
     g_VW00_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D7D0));
+    atexit(destroy_vw00_caviardata);
 }
 
 /*
@@ -1887,7 +1887,7 @@ Status: Complete
 */
 void __cdecl construct_viptawl_caviardata() {
     g_VIPTAWL_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D800));
+    atexit(destroy_viptawl_caviardata);
 }
 
 /*
@@ -1905,7 +1905,7 @@ Status: Complete
 */
 void __cdecl construct_viptasgn_caviardata() {
     g_VIPTASGN_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D830));
+    atexit(destroy_viptasgn_caviardata);
 }
 
 /*
@@ -1923,7 +1923,7 @@ Status: Complete
 */
 void __cdecl construct_viptapsi_caviardata() {
     g_VIPTAPSI_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D860));
+    atexit(destroy_viptapsi_caviardata);
 }
 
 /*
@@ -1941,7 +1941,7 @@ Status: Complete
 */
 void __cdecl construct_viptr_caviardata() {
     VectorCtorIterator(g_VIPTR_CAVIARDATA, 0xC, 4, CaviarDataElementCtor, CaviarDataElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D8A0));
+    atexit(destroy_viptr_caviardata);
 }
 
 /*
@@ -1959,7 +1959,7 @@ Status: Complete
 */
 void __cdecl construct_vipta_caviardata() {
     VectorCtorIterator(g_VIPTA_CAVIARDATA, 0xC, 2, CaviarDataElementCtor, CaviarDataElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D8F0));
+    atexit(destroy_vipta_caviardata);
 }
 
 /*
@@ -1977,7 +1977,7 @@ Status: Complete
 */
 void __cdecl construct_ptmod_caviardata() {
     g_PTMOD_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D930));
+    atexit(destroy_ptmod_caviardata);
 }
 
 /*
@@ -1995,7 +1995,7 @@ Status: Complete
 */
 void __cdecl construct_vb_caviardata() {
     g_VB_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D960));
+    atexit(destroy_vb_caviardata);
 }
 
 /*
@@ -2013,7 +2013,7 @@ Status: Complete
 */
 void __cdecl construct_vbp_caviardata() {
     g_VBP_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D990));
+    atexit(destroy_vbp_caviardata);
 }
 
 /*
@@ -2031,7 +2031,7 @@ Status: Complete
 */
 void __cdecl construct_vgmc_caviardata() {
     g_VGMC_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D9C0));
+    atexit(destroy_vgmc_caviardata);
 }
 
 /*
@@ -2049,7 +2049,7 @@ Status: Complete
 */
 void __cdecl construct_vgmcp_caviardata() {
     g_VGMCP_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044D9F0));
+    atexit(destroy_vgmcp_caviardata);
 }
 
 /*
@@ -2067,7 +2067,7 @@ Status: Complete
 */
 void __cdecl construct_vlights_caviardata() {
     g_VLIGHTS_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DA20));
+    atexit(destroy_vlights_caviardata);
 }
 
 /*
@@ -2085,7 +2085,7 @@ Status: Complete
 */
 void __cdecl construct_vpt_caviardata() {
     g_VPT_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DA50));
+    atexit(destroy_vpt_caviardata);
 }
 
 /*
@@ -2103,7 +2103,7 @@ Status: Complete
 */
 void __cdecl construct_a_caviardata() {
     g_A_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DA80));
+    atexit(destroy_a_caviardata);
 }
 
 /*
@@ -2121,7 +2121,7 @@ Status: Complete
 */
 void __cdecl construct_apwall_caviardata() {
     g_APWALL_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DAB0));
+    atexit(destroy_apwall_caviardata);
 }
 
 /*
@@ -2139,7 +2139,7 @@ Status: Complete
 */
 void __cdecl construct_asgen_caviardata() {
     g_ASGEN_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DAE0));
+    atexit(destroy_asgen_caviardata);
 }
 
 /*
@@ -2157,7 +2157,7 @@ Status: Complete
 */
 void __cdecl construct_apsid_caviardata() {
     g_APSID_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DB10));
+    atexit(destroy_apsid_caviardata);
 }
 
 /*
@@ -2175,7 +2175,7 @@ Status: Complete
 */
 void __cdecl construct_va01_caviardata() {
     g_VA01_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DB40));
+    atexit(destroy_va01_caviardata);
 }
 
 /*
@@ -2193,7 +2193,7 @@ Status: Complete
 */
 void __cdecl construct_vr_caviardata() {
     VectorCtorIterator(g_VR_CAVIARDATA, 0xC, 4, CaviarDataElementCtor, CaviarDataElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DB80));
+    atexit(destroy_vr_caviardata);
 }
 
 /*
@@ -2211,7 +2211,7 @@ Status: Complete
 */
 void __cdecl construct_vhr_caviardata2() {
     g_VHR_CAVIARDATA2->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DBC0));
+    atexit(destroy_vhr_caviardata2);
 }
 
 /*
@@ -2229,7 +2229,7 @@ Status: Complete
 */
 void __cdecl construct_vrc_caviardata() {
     VectorCtorIterator(g_VRC_CAVIARDATA, 0xC, 4, CaviarDataElementCtor, CaviarDataElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DC00));
+    atexit(destroy_vrc_caviardata);
 }
 
 /*
@@ -2247,7 +2247,7 @@ Status: Complete
 */
 void __cdecl construct_vi_caviardata() {
     g_VI_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DC40));
+    atexit(destroy_vi_caviardata);
 }
 
 /*
@@ -2265,7 +2265,7 @@ Status: Complete
 */
 void __cdecl construct_vgmt_caviardata() {
     g_VGMT_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DC70));
+    atexit(destroy_vgmt_caviardata);
 }
 
 /*
@@ -2283,7 +2283,7 @@ Status: Complete
 */
 void __cdecl construct_vgmtp_caviardata() {
     g_VGMTP_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DCA0));
+    atexit(destroy_vgmtp_caviardata);
 }
 
 /*
@@ -2301,7 +2301,7 @@ Status: Complete
 */
 void __cdecl construct_unused_caviardata_var2() {
     g_UNUSED_CAVIARDATA_VAR2->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DCD0));
+    atexit(destroy_unused_caviardata_var2);
 }
 
 /*
@@ -2319,7 +2319,7 @@ Status: Complete
 */
 void __cdecl construct_vwntu_caviardata() {
     g_VWNTU_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DD00));
+    atexit(destroy_vwntu_caviardata);
 }
 
 /*
@@ -2337,7 +2337,7 @@ Status: Complete
 */
 void __cdecl construct_vt_caviardata() {
     g_VT_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DD30));
+    atexit(destroy_vt_caviardata);
 }
 
 /*
@@ -2355,7 +2355,7 @@ Status: Complete
 */
 void __cdecl construct_drop_caviardata() {
     g_DROP_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DD60));
+    atexit(destroy_drop_caviardata);
 }
 
 /*
@@ -2373,7 +2373,7 @@ Status: Complete
 */
 void __cdecl construct_droplet_caviardata() {
     g_DROPLET_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DD90));
+    atexit(destroy_droplet_caviardata);
 }
 
 /*
@@ -2391,7 +2391,7 @@ Status: Complete
 */
 void __cdecl construct_vcl_caviardata() {
     g_VCL_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DDC0));
+    atexit(destroy_vcl_caviardata);
 }
 
 /*
@@ -2409,7 +2409,7 @@ Status: Complete
 */
 void __cdecl construct_unused_caviardata_var3() {
     VectorCtorIterator(g_UNUSED_CAVIARDATA_VAR3, 0xC, 2, CaviarDataElementCtor, CaviarDataElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DE00));
+    atexit(destroy_unused_caviardata_var3);
 }
 
 /*
@@ -2427,7 +2427,7 @@ Status: Complete
 */
 void __cdecl construct_vclt00_caviardata() {
     g_VCLT00_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DE40));
+    atexit(destroy_vclt00_caviardata);
 }
 
 /*
@@ -2445,7 +2445,7 @@ Status: Complete
 */
 void __cdecl construct_vht_vbp_caviardata() {
     g_VHT_VBP_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DE70));
+    atexit(destroy_vht_vbp_caviardata);
 }
 
 /*
@@ -2463,7 +2463,7 @@ Status: Complete
 */
 void __cdecl construct_vhtp_caviardata() {
     g_VHTP_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DEA0));
+    atexit(destroy_vhtp_caviardata);
 }
 
 /*
@@ -2481,7 +2481,7 @@ Status: Complete
 */
 void __cdecl construct_vhta0_caviardata() {
     VectorCtorIterator(g_VHTA0_CAVIARDATA, 0xC, 2, CaviarDataElementCtor, CaviarDataElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DEE0));
+    atexit(destroy_vhta0_caviardata);
 }
 
 /*
@@ -2499,7 +2499,7 @@ Status: Complete
 */
 void __cdecl construct_vhttp_caviardata() {
     g_VHTTP_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DF20));
+    atexit(destroy_vhttp_caviardata);
 }
 
 /*
@@ -2517,7 +2517,7 @@ Status: Complete
 */
 void __cdecl construct_vhttpa0_caviardata() {
     VectorCtorIterator(g_VHTTPA0_CAVIARDATA, 0xC, 3, CaviarDataElementCtor, CaviarDataElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DF60));
+    atexit(destroy_vhttpa0_caviardata);
 }
 
 /*
@@ -2535,7 +2535,7 @@ Status: Complete
 */
 void __cdecl construct_vsp_caviardata() {
     g_VSP_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DFA0));
+    atexit(destroy_vsp_caviardata);
 }
 
 /*
@@ -2553,7 +2553,7 @@ Status: Complete
 */
 void __cdecl construct_vspa0_caviardata() {
     VectorCtorIterator(g_VSPA0_CAVIARDATA, 0xC, 2, CaviarDataElementCtor, CaviarDataElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044DFE0));
+    atexit(destroy_vspa0_caviardata);
 }
 
 /*
@@ -2571,7 +2571,7 @@ Status: Complete
 */
 void __cdecl construct_vsptf_caviardata() {
     g_VSPTF_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E020));
+    atexit(destroy_vsptf_caviardata);
 }
 
 /*
@@ -2589,7 +2589,7 @@ Status: Complete
 */
 void __cdecl construct_vsptb_caviardata() {
     g_VSPTB_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E050));
+    atexit(destroy_vsptb_caviardata);
 }
 
 /*
@@ -2607,7 +2607,7 @@ Status: Complete
 */
 void __cdecl construct_vfl_caviardata() {
     g_VFL_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E080));
+    atexit(destroy_vfl_caviardata);
 }
 
 /*
@@ -2625,7 +2625,7 @@ Status: Complete
 */
 void __cdecl construct_vgs_caviardata() {
     g_VGS_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E0B0));
+    atexit(destroy_vgs_caviardata);
 }
 
 /*
@@ -2643,7 +2643,7 @@ Status: Complete
 */
 void __cdecl construct_vgsp_caviardata() {
     g_VGSP_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E0E0));
+    atexit(destroy_vgsp_caviardata);
 }
 
 /*
@@ -2661,7 +2661,7 @@ Status: Complete
 */
 void __cdecl construct_vjtp_caviardata() {
     g_VJTP_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E110));
+    atexit(destroy_vjtp_caviardata);
 }
 
 /*
@@ -2679,7 +2679,7 @@ Status: Complete
 */
 void __cdecl construct_vjt0_caviardata() {
     VectorCtorIterator(g_VJT0_CAVIARDATA, 0xC, 2, CaviarDataElementCtor, CaviarDataElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E150));
+    atexit(destroy_vjt0_caviardata);
 }
 
 /*
@@ -2697,7 +2697,7 @@ Status: Complete
 */
 void __cdecl construct_vcu_caviardata() {
     g_VCU_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E190));
+    atexit(destroy_vcu_caviardata);
 }
 
 /*
@@ -2715,7 +2715,7 @@ Status: Complete
 */
 void __cdecl construct_vcup_caviardata() {
     g_VCUP_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E1C0));
+    atexit(destroy_vcup_caviardata);
 }
 
 /*
@@ -2733,7 +2733,7 @@ Status: Complete
 */
 void __cdecl construct_vcua0_caviardata() {
     VectorCtorIterator(g_VCUA0_CAVIARDATA, 0xC, 2, CaviarDataElementCtor, CaviarDataElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E200));
+    atexit(destroy_vcua0_caviardata);
 }
 
 /*
@@ -2751,7 +2751,7 @@ Status: Complete
 */
 void __cdecl construct_vcuw_caviardata() {
     g_VCUW_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E240));
+    atexit(destroy_vcuw_caviardata);
 }
 
 /*
@@ -2769,7 +2769,7 @@ Status: Complete
 */
 void __cdecl construct_vct_caviardata() {
     g_VCT_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E270));
+    atexit(destroy_vct_caviardata);
 }
 
 /*
@@ -2787,7 +2787,7 @@ Status: Complete
 */
 void __cdecl construct_vctp_caviardata() {
     g_VCTP_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E2A0));
+    atexit(destroy_vctp_caviardata);
 }
 
 /*
@@ -2805,7 +2805,7 @@ Status: Complete
 */
 void __cdecl construct_vctb_caviardata() {
     g_VCTB_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E2D0));
+    atexit(destroy_vctb_caviardata);
 }
 
 /*
@@ -2823,7 +2823,7 @@ Status: Complete
 */
 void __cdecl construct_vct0_caviardata() {
     VectorCtorIterator(g_VCT0_CAVIARDATA, 0xC, 2, CaviarDataElementCtor, CaviarDataElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E310));
+    atexit(destroy_vct0_caviardata);
 }
 
 /*
@@ -2841,7 +2841,7 @@ Status: Complete
 */
 void __cdecl construct_vwntt_caviardata() {
     g_VWNTT_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E350));
+    atexit(destroy_vwntt_caviardata);
 }
 
 /*
@@ -2859,7 +2859,7 @@ Status: Complete
 */
 void __cdecl construct_vwnst_caviardata() {
     g_VWNST_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E380));
+    atexit(destroy_vwnst_caviardata);
 }
 
 /*
@@ -2877,7 +2877,7 @@ Status: Complete
 */
 void __cdecl construct_vwnaa_caviardata() {
     g_VWNAA_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E3B0));
+    atexit(destroy_vwnaa_caviardata);
 }
 
 /*
@@ -2895,7 +2895,7 @@ Status: Complete
 */
 void __cdecl construct_vw_caviardata() {
     VectorCtorIterator(g_VW_CAVIARDATA, 0xC, 16, CaviarDataElementCtor, CaviarDataElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E3F0));
+    atexit(destroy_vw_caviardata);
 }
 
 /*
@@ -2913,7 +2913,7 @@ Status: Complete
 */
 void __cdecl construct_vm_caviardata() {
     g_VM_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E430));
+    atexit(destroy_vm_caviardata);
 }
 
 /*
@@ -2931,7 +2931,7 @@ Status: Complete
 */
 void __cdecl construct_vm13_caviardata() {
     g_VM13_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E460));
+    atexit(destroy_vm13_caviardata);
 }
 
 /*
@@ -2949,7 +2949,7 @@ Status: Complete
 */
 void __cdecl construct_vpbr0_caviardata() {
     VectorCtorIterator(g_VPBR0_CAVIARDATA, 0xC, 4, CaviarDataElementCtor, CaviarDataElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E4A0));
+    atexit(destroy_vpbr0_caviardata);
 }
 
 /*
@@ -2967,7 +2967,7 @@ Status: Complete
 */
 void __cdecl construct_unused_caviardata_var4() {
     VectorCtorIterator(g_UNUSED_CAVIARDATA_VAR4, 0xC, 2, CaviarDataElementCtor, CaviarDataElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E4F0));
+    atexit(destroy_unused_caviardata_var4);
 }
 
 /*
@@ -2985,7 +2985,7 @@ Status: Complete
 */
 void __cdecl construct_nw_caviardata() {
     g_NW_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E530));
+    atexit(destroy_nw_caviardata);
 }
 
 /*
@@ -3003,7 +3003,7 @@ Status: Complete
 */
 void __cdecl construct_ni_caviardata() {
     g_NI_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E560));
+    atexit(destroy_ni_caviardata);
 }
 
 /*
@@ -3021,7 +3021,7 @@ Status: Complete
 */
 void __cdecl construct_nlc_caviardata() {
     g_NLC_CAVIARDATA->CaviarData::CaviarData();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E590));
+    atexit(destroy_nlc_caviardata);
 }
 
 /*
@@ -3039,7 +3039,7 @@ Status: Complete
 */
 void __cdecl construct_unused_caviardata_var5() {
     VectorCtorIterator(g_UNUSED_CAVIARDATA_VAR5, 0xC, 5, CaviarDataElementCtor, CaviarDataElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E5D0));
+    atexit(destroy_unused_caviardata_var5);
 }
 
 /*
@@ -3057,7 +3057,7 @@ Status: Complete
 */
 void __cdecl construct_radius1_texture() {
     g_RADIUS1_TEXTURE->Texture::Texture();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E610));
+    atexit(destroy_radius1_texture);
 }
 
 /*
@@ -3075,7 +3075,7 @@ Status: Complete
 */
 void __cdecl construct_radius2_texture() {
     g_RADIUS2_TEXTURE->Texture::Texture();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E640));
+    atexit(destroy_radius2_texture);
 }
 
 /*
@@ -3093,7 +3093,7 @@ Status: Complete
 */
 void __cdecl construct_rocky_textures() {
     VectorCtorIterator(g_ROCKY_TEXTURES, 0x70, 4, TextureElementCtor, TextureElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E680));
+    atexit(destroy_rocky_textures);
 }
 
 /*
@@ -3111,7 +3111,7 @@ Status: Complete
 */
 void __cdecl construct_ocean_textures() {
     VectorCtorIterator(g_OCEAN_TEXTURES, 0x70, 2, TextureElementCtor, TextureElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E6D0));
+    atexit(destroy_ocean_textures);
 }
 
 /*
@@ -3129,7 +3129,7 @@ Status: Complete
 */
 void __cdecl construct_flat_arid_land_texture() {
     g_FLAT_ARID_LAND_TEXTURE->Texture::Texture();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E710));
+    atexit(destroy_flat_arid_land_texture);
 }
 
 /*
@@ -3147,7 +3147,7 @@ Status: Complete
 */
 void __cdecl construct_moist_land_textures() {
     VectorCtorIterator(g_MOIST_LAND_TEXTURES, 0x70, 16, TextureElementCtor, TextureElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E750));
+    atexit(destroy_moist_land_textures);
 }
 
 /*
@@ -3165,7 +3165,7 @@ Status: Complete
 */
 void __cdecl construct_rainy_land_textures() {
     VectorCtorIterator(g_RAINY_LAND_TEXTURES, 0x70, 16, TextureElementCtor, TextureElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E7A0));
+    atexit(destroy_rainy_land_textures);
 }
 
 /*
@@ -3183,7 +3183,7 @@ Status: Complete
 */
 void __cdecl construct_jungle_land_textures() {
     VectorCtorIterator(g_JUNGLE_LAND_TEXTURES, 0x70, 15, TextureElementCtor, TextureElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E7F0));
+    atexit(destroy_jungle_land_textures);
 }
 
 /*
@@ -3201,7 +3201,7 @@ Status: Complete
 */
 void __cdecl construct_dune_land_texture() {
     g_DUNE_LAND_TEXTURE->Texture::Texture();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E830));
+    atexit(destroy_dune_land_texture);
 }
 
 /*
@@ -3219,7 +3219,7 @@ Status: Complete
 */
 void __cdecl construct_sunny_mesa_textures() {
     VectorCtorIterator(g_SUNNY_MESA_TEXTURES, 0x70, 8, TextureElementCtor, TextureElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E870));
+    atexit(destroy_sunny_mesa_textures);
 }
 
 /*
@@ -3237,7 +3237,7 @@ Status: Complete
 */
 void __cdecl construct_rainfall_single_tile_textures() {
     VectorCtorIterator(g_RAINFALL_SINGLE_TILE_TEXTURES, 0x70, 2, TextureElementCtor, TextureElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E8C0));
+    atexit(destroy_rainfall_single_tile_textures);
 }
 
 /*
@@ -3255,7 +3255,7 @@ Status: Complete
 */
 void __cdecl construct_road_textures() {
     VectorCtorIterator(g_ROAD_TEXTURES, 0x70, 9, TextureElementCtor, TextureElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E910));
+    atexit(destroy_road_textures);
 }
 
 /*
@@ -3273,7 +3273,7 @@ Status: Complete
 */
 void __cdecl construct_magtube_textures() {
     VectorCtorIterator(g_MAGTUBE_TEXTURES, 0x70, 9, TextureElementCtor, TextureElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E960));
+    atexit(destroy_magtube_textures);
 }
 
 /*
@@ -3291,7 +3291,7 @@ Status: Complete
 */
 void __cdecl construct_river_textures() {
     VectorCtorIterator(g_RIVER_TEXTURES, 0x70, 16, TextureElementCtor, TextureElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044E9B0));
+    atexit(destroy_river_textures);
 }
 
 /*
@@ -3309,7 +3309,7 @@ Status: Complete
 */
 void __cdecl construct_mount_planet_textures() {
     VectorCtorIterator(g_MOUNT_PLANET_TEXTURES, 0x70, 3, TextureElementCtor, TextureElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044EA00));
+    atexit(destroy_mount_planet_textures);
 }
 
 /*
@@ -3327,7 +3327,7 @@ Status: Complete
 */
 void __cdecl construct_garland_crater_textures() {
     VectorCtorIterator(g_GARLAND_CRATER_TEXTURES, 0x70, 3, TextureElementCtor, TextureElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044EA50));
+    atexit(destroy_garland_crater_textures);
 }
 
 /*
@@ -3345,7 +3345,7 @@ Status: Complete
 */
 void __cdecl construct_fungus_textures() {
     VectorCtorIterator(g_FUNGUS_TEXTURES, 0x70, 30, TextureElementCtor, TextureElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044EAA0));
+    atexit(destroy_fungus_textures);
 }
 
 /*
@@ -3363,7 +3363,7 @@ Status: Complete
 */
 void __cdecl construct_farm_textures() {
     VectorCtorIterator(g_FARM_TEXTURES, 0x70, 9, TextureElementCtor, TextureElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044EAF0));
+    atexit(destroy_farm_textures);
 }
 
 /*
@@ -3381,7 +3381,7 @@ Status: Complete
 */
 void __cdecl construct_forest_textures() {
     VectorCtorIterator(g_FOREST_TEXTURES, 0x70, 16, TextureElementCtor, TextureElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044EB40));
+    atexit(destroy_forest_textures);
 }
 
 /*
@@ -3399,7 +3399,7 @@ Status: Complete
 */
 void __cdecl construct_rainfall_single_tile_texture() {
     g_RAINFALL_SINGLE_TILE_TEXTURE->Texture::Texture();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044EB80));
+    atexit(destroy_rainfall_single_tile_texture);
 }
 
 /*
@@ -3417,7 +3417,7 @@ Status: Complete
 */
 void __cdecl construct_ter1_white_org_yel_tile_sprites() {
     VectorCtorIterator(g_TER1_WHITE_ORG_YEL_TILE_SPRITES, 0x2C, 6, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044EBC0));
+    atexit(destroy_ter1_white_org_yel_tile_sprites);
 }
 
 /*
@@ -3435,7 +3435,7 @@ Status: Complete
 */
 void __cdecl construct_ter1_bottom_left_tile_sprites() {
     VectorCtorIterator(g_TER1_BOTTOM_LEFT_TILE_SPRITES, 0x2C, 9, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044EC10));
+    atexit(destroy_ter1_bottom_left_tile_sprites);
 }
 
 /*
@@ -3453,7 +3453,7 @@ Status: Complete
 */
 void __cdecl construct_ter1_unused_sprites2() {
     VectorCtorIterator(g_TER1_UNUSED_SPRITES2, 0x2C, 2, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044EC60));
+    atexit(destroy_ter1_unused_sprites2);
 }
 
 /*
@@ -3471,7 +3471,7 @@ Status: Complete
 */
 void __cdecl construct_ter1_mine_sprite() {
     g_TER1_MINE_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044ECA0));
+    atexit(destroy_ter1_mine_sprite);
 }
 
 /*
@@ -3489,7 +3489,7 @@ Status: Complete
 */
 void __cdecl construct_ter1_solar_collector_sprite() {
     g_TER1_SOLAR_COLLECTOR_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044ECD0));
+    atexit(destroy_ter1_solar_collector_sprite);
 }
 
 /*
@@ -3507,7 +3507,7 @@ Status: Complete
 */
 void __cdecl construct_ter1_tidal_harness_sprite() {
     g_TER1_TIDAL_HARNESS_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044ED00));
+    atexit(destroy_ter1_tidal_harness_sprite);
 }
 
 /*
@@ -3525,7 +3525,7 @@ Status: Complete
 */
 void __cdecl construct_ter1_mining_platform_sprite() {
     g_TER1_MINING_PLATFORM_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044ED30));
+    atexit(destroy_ter1_mining_platform_sprite);
 }
 
 /*
@@ -3543,7 +3543,7 @@ Status: Complete
 */
 void __cdecl construct_ter1_tut_blank_sprite() {
     g_TER1_TUT_BLANK_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044ED60));
+    atexit(destroy_ter1_tut_blank_sprite);
 }
 
 /*
@@ -3561,7 +3561,7 @@ Status: Complete
 */
 void __cdecl construct_ter1_kelp_farm_sprite() {
     g_TER1_KELP_FARM_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044ED90));
+    atexit(destroy_ter1_kelp_farm_sprite);
 }
 
 /*
@@ -3579,7 +3579,7 @@ Status: Complete
 */
 void __cdecl construct_ter1_condenser_sprite() {
     g_TER1_CONDENSER_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044EDC0));
+    atexit(destroy_ter1_condenser_sprite);
 }
 
 /*
@@ -3597,7 +3597,7 @@ Status: Complete
 */
 void __cdecl construct_ter1_echelon_mirror_sprite() {
     g_TER1_ECHELON_MIRROR_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044EDF0));
+    atexit(destroy_ter1_echelon_mirror_sprite);
 }
 
 /*
@@ -3615,7 +3615,7 @@ Status: Complete
 */
 void __cdecl construct_ter1_borehole_sprite() {
     g_TER1_BOREHOLE_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044EE20));
+    atexit(destroy_ter1_borehole_sprite);
 }
 
 /*
@@ -3633,7 +3633,7 @@ Status: Complete
 */
 void __cdecl construct_ter1_borehole_cluster_sprite() {
     g_TER1_BOREHOLE_CLUSTER_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044EE50));
+    atexit(destroy_ter1_borehole_cluster_sprite);
 }
 
 /*
@@ -3651,7 +3651,7 @@ Status: Complete
 */
 void __cdecl construct_ter1_manifold_nexus_sprites() {
     VectorCtorIterator(g_TER1_MANIFOLD_NEXUS_SPRITES, 0x2C, 6, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044EE90));
+    atexit(destroy_ter1_manifold_nexus_sprites);
 }
 
 /*
@@ -3669,7 +3669,7 @@ Status: Complete
 */
 void __cdecl construct_ter1wreck_unity_wreckage_sprites() {
     VectorCtorIterator(g_TER1WRECK_UNITY_WRECKAGE_SPRITES, 0x2C, 15, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044EEE0));
+    atexit(destroy_ter1wreck_unity_wreckage_sprites);
 }
 
 /*
@@ -3687,7 +3687,7 @@ Status: Complete
 */
 void __cdecl construct_ter1wreck_unity_wreckage_alt_sprites() {
     VectorCtorIterator(g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES, 0x2C, 4, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044EF30));
+    atexit(destroy_ter1wreck_unity_wreckage_alt_sprites);
 }
 
 /*
@@ -3705,7 +3705,7 @@ Status: Complete
 */
 void __cdecl construct_fossil_field_ridge_sprites() {
     VectorCtorIterator(g_FOSSIL_FIELD_RIDGE_SPRITES, 0x2C, 6, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044EF80));
+    atexit(destroy_fossil_field_ridge_sprites);
 }
 
 /*
@@ -3723,7 +3723,7 @@ Status: Complete
 */
 void __cdecl construct_ter1_unused_sprites1() {
     VectorCtorIterator(g_TER1_UNUSED_SPRITES1, 0x2C, 5, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044EFD0));
+    atexit(destroy_ter1_unused_sprites1);
 }
 
 /*
@@ -3741,7 +3741,7 @@ Status: Complete
 */
 void __cdecl construct_ter1_farm_sprites() {
     VectorCtorIterator(g_TER1_FARM_SPRITES, 0x2C, 5, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F020));
+    atexit(destroy_ter1_farm_sprites);
 }
 
 /*
@@ -3759,7 +3759,7 @@ Status: Complete
 */
 void __cdecl construct_ter1_soil_enricher_sprites() {
     VectorCtorIterator(g_TER1_SOIL_ENRICHER_SPRITES, 0x2C, 5, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F070));
+    atexit(destroy_ter1_soil_enricher_sprites);
 }
 
 /*
@@ -3777,7 +3777,7 @@ Status: Complete
 */
 void __cdecl construct_ter1_sea_land_resource_sprites() {
     VectorCtorIterator(g_TER1_SEA_LAND_RESOURCE_SPRITES, 0x2C, 12, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F0C0));
+    atexit(destroy_ter1_sea_land_resource_sprites);
 }
 
 /*
@@ -3795,7 +3795,7 @@ Status: Complete
 */
 void __cdecl construct_ter1_landmark_resource_sprites() {
     VectorCtorIterator(g_TER1_LANDMARK_RESOURCE_SPRITES, 0x2C, 6, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F110));
+    atexit(destroy_ter1_landmark_resource_sprites);
 }
 
 /*
@@ -3813,7 +3813,7 @@ Status: Complete
 */
 void __cdecl construct_glow_sprites() {
     VectorCtorIterator(g_GLOW_SPRITES, 0x2C, 2, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F160));
+    atexit(destroy_glow_sprites);
 }
 
 /*
@@ -3831,7 +3831,7 @@ Status: Complete
 */
 void __cdecl construct_ter1_unity_pod_sprites() {
     VectorCtorIterator(g_TER1_UNITY_POD_SPRITES, 0x2C, 6, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F1B0));
+    atexit(destroy_ter1_unity_pod_sprites);
 }
 
 /*
@@ -3849,7 +3849,7 @@ Status: Complete
 */
 void __cdecl construct_ter1_monolith_sprite() {
     g_TER1_MONOLITH_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F1F0));
+    atexit(destroy_ter1_monolith_sprite);
 }
 
 /*
@@ -3867,7 +3867,7 @@ Status: Complete
 */
 void __cdecl construct_ter1_bunker_sprite() {
     g_TER1_BUNKER_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F220));
+    atexit(destroy_ter1_bunker_sprite);
 }
 
 /*
@@ -3885,7 +3885,7 @@ Status: Complete
 */
 void __cdecl construct_ter1_airbase_sprite() {
     g_TER1_AIRBASE_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F250));
+    atexit(destroy_ter1_airbase_sprite);
 }
 
 /*
@@ -3903,7 +3903,7 @@ Status: Complete
 */
 void __cdecl construct_ter1_sensor_array_sprite() {
     g_TER1_SENSOR_ARRAY_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F280));
+    atexit(destroy_ter1_sensor_array_sprite);
 }
 
 /*
@@ -3921,7 +3921,7 @@ Status: Complete
 */
 void __cdecl construct_rainfall_double_tile_sprites() {
     VectorCtorIterator(g_RAINFALL_DOUBLE_TILE_SPRITES, 0x2C, 2, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F2C0));
+    atexit(destroy_rainfall_double_tile_sprites);
 }
 
 /*
@@ -3939,7 +3939,7 @@ Status: Complete
 */
 void __cdecl construct_veh_sprites() {
     VectorCtorIterator(g_VEH_SPRITES, 0x2C, 152, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F310));
+    atexit(destroy_veh_sprites);
 }
 
 /*
@@ -3957,7 +3957,7 @@ Status: Complete
 */
 void __cdecl construct_flags_veh_sprites() {
     VectorCtorIterator(g_FLAGS_VEH_SPRITES, 0x2C, 112, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F360));
+    atexit(destroy_flags_veh_sprites);
 }
 
 /*
@@ -3975,7 +3975,7 @@ Status: Complete
 */
 void __cdecl construct_icons_general_sprites() {
     VectorCtorIterator(g_ICONS_GENERAL_SPRITES, 0x2C, 16, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F3B0));
+    atexit(destroy_icons_general_sprites);
 }
 
 /*
@@ -3993,7 +3993,7 @@ Status: Complete
 */
 void __cdecl construct_resource_icon_sprites() {
     VectorCtorIterator(g_RESOURCE_ICON_SPRITES, 0x2C, 32, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F400));
+    atexit(destroy_resource_icon_sprites);
 }
 
 /*
@@ -4011,7 +4011,7 @@ Status: Complete
 */
 void __cdecl construct_citizen_lg_cursor_sprites() {
     VectorCtorIterator(g_CITIZEN_LG_CURSOR_SPRITES, 0x2C, 8, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F450));
+    atexit(destroy_citizen_lg_cursor_sprites);
 }
 
 /*
@@ -4029,7 +4029,7 @@ Status: Complete
 */
 void __cdecl construct_specialist_lg_cursor_sprites() {
     VectorCtorIterator(g_SPECIALIST_LG_CURSOR_SPRITES, 0x2C, 7, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F4A0));
+    atexit(destroy_specialist_lg_cursor_sprites);
 }
 
 /*
@@ -4047,7 +4047,7 @@ Status: Complete
 */
 void __cdecl construct_citizen_sm_cursor_sprites() {
     VectorCtorIterator(g_CITIZEN_SM_CURSOR_SPRITES, 0x2C, 8, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F4F0));
+    atexit(destroy_citizen_sm_cursor_sprites);
 }
 
 /*
@@ -4065,7 +4065,7 @@ Status: Complete
 */
 void __cdecl construct_specialist_sm_cursor_sprites() {
     VectorCtorIterator(g_SPECIALIST_SM_CURSOR_SPRITES, 0x2C, 7, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F540));
+    atexit(destroy_specialist_sm_cursor_sprites);
 }
 
 /*
@@ -4083,7 +4083,7 @@ Status: Complete
 */
 void __cdecl construct_al_citizen_lg_cursor_sprites() {
     VectorCtorIterator(g_AL_CITIZEN_LG_CURSOR_SPRITES, 0x2C, 4, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F590));
+    atexit(destroy_al_citizen_lg_cursor_sprites);
 }
 
 /*
@@ -4101,7 +4101,7 @@ Status: Complete
 */
 void __cdecl construct_al_specialist_lg_cursor_sprites() {
     VectorCtorIterator(g_AL_SPECIALIST_LG_CURSOR_SPRITES, 0x2C, 7, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F5E0));
+    atexit(destroy_al_specialist_lg_cursor_sprites);
 }
 
 /*
@@ -4119,7 +4119,7 @@ Status: Complete
 */
 void __cdecl construct_al_citizen_sm_cursor_sprites() {
     VectorCtorIterator(g_AL_CITIZEN_SM_CURSOR_SPRITES, 0x2C, 4, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F630));
+    atexit(destroy_al_citizen_sm_cursor_sprites);
 }
 
 /*
@@ -4137,7 +4137,7 @@ Status: Complete
 */
 void __cdecl construct_al_specialist_sm_cursor_sprites() {
     VectorCtorIterator(g_AL_SPECIALIST_SM_CURSOR_SPRITES, 0x2C, 7, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F680));
+    atexit(destroy_al_specialist_sm_cursor_sprites);
 }
 
 /*
@@ -4155,7 +4155,7 @@ Status: Complete
 */
 void __cdecl construct_red_alien_head_icon_sprite() {
     g_RED_ALIEN_HEAD_ICON_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F6C0));
+    atexit(destroy_red_alien_head_icon_sprite);
 }
 
 /*
@@ -4173,7 +4173,7 @@ Status: Complete
 */
 void __cdecl construct_silver_menu_icon_sprites() {
     VectorCtorIterator(g_SILVER_MENU_ICON_SPRITES, 0x2C, 4, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F700));
+    atexit(destroy_silver_menu_icon_sprites);
 }
 
 /*
@@ -4191,7 +4191,7 @@ Status: Complete
 */
 void __cdecl construct_silver_checkbox_icon_sprites() {
     VectorCtorIterator(g_SILVER_CHECKBOX_ICON_SPRITES, 0x2C, 2, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F750));
+    atexit(destroy_silver_checkbox_icon_sprites);
 }
 
 /*
@@ -4209,7 +4209,7 @@ Status: Complete
 */
 void __cdecl construct_red_male_head_icon_sprite() {
     g_RED_MALE_HEAD_ICON_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F790));
+    atexit(destroy_red_male_head_icon_sprite);
 }
 
 /*
@@ -4227,7 +4227,7 @@ Status: Complete
 */
 void __cdecl construct_null_resource_icon_sprite() {
     g_NULL_RESOURCE_ICON_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F7C0));
+    atexit(destroy_null_resource_icon_sprite);
 }
 
 /*
@@ -4245,7 +4245,7 @@ Status: Complete
 */
 void __cdecl construct_peace_sign_sprites() {
     VectorCtorIterator(g_PEACE_SIGN_SPRITES, 0x2C, 2, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F800));
+    atexit(destroy_peace_sign_sprites);
 }
 
 /*
@@ -4263,7 +4263,7 @@ Status: Complete
 */
 void __cdecl construct_icon_tile_square_sprite() {
     g_ICON_TILE_SQUARE_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F840));
+    atexit(destroy_icon_tile_square_sprite);
 }
 
 /*
@@ -4281,7 +4281,7 @@ Status: Complete
 */
 void __cdecl construct_xi_boom_veh_sprites() {
     VectorCtorIterator(g_XI_BOOM_VEH_SPRITES, 0x2C, 144, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F880));
+    atexit(destroy_xi_boom_veh_sprites);
 }
 
 /*
@@ -4299,7 +4299,7 @@ Status: Complete
 */
 void __cdecl construct_xf_boom_veh_sprites() {
     VectorCtorIterator(g_XF_BOOM_VEH_SPRITES, 0x2C, 64, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F8D0));
+    atexit(destroy_xf_boom_veh_sprites);
 }
 
 /*
@@ -4317,7 +4317,7 @@ Status: Complete
 */
 void __cdecl construct_battle_mind_worm_sprite() {
     g_BATTLE_MIND_WORM_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F910));
+    atexit(destroy_battle_mind_worm_sprite);
 }
 
 /*
@@ -4335,7 +4335,7 @@ Status: Complete
 */
 void __cdecl construct_battle_isle_deep_sprite() {
     g_BATTLE_ISLE_DEEP_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F940));
+    atexit(destroy_battle_isle_deep_sprite);
 }
 
 /*
@@ -4353,7 +4353,7 @@ Status: Complete
 */
 void __cdecl construct_battle_locusts_chiron_sprite() {
     g_BATTLE_LOCUSTS_CHIRON_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F970));
+    atexit(destroy_battle_locusts_chiron_sprite);
 }
 
 /*
@@ -4371,7 +4371,7 @@ Status: Complete
 */
 void __cdecl construct_battle_fungal_tower_sprite() {
     g_BATTLE_FUNGAL_TOWER_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F9A0));
+    atexit(destroy_battle_fungal_tower_sprite);
 }
 
 /*
@@ -4389,7 +4389,7 @@ Status: Complete
 */
 void __cdecl construct_battle_spore_launcher_sprite() {
     g_BATTLE_SPORE_LAUNCHER_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044F9D0));
+    atexit(destroy_battle_spore_launcher_sprite);
 }
 
 /*
@@ -4407,7 +4407,7 @@ Status: Complete
 */
 void __cdecl construct_battle_sealurk_sprite() {
     g_BATTLE_SEALURK_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FA00));
+    atexit(destroy_battle_sealurk_sprite);
 }
 
 /*
@@ -4425,7 +4425,7 @@ Status: Complete
 */
 void __cdecl construct_tech_icon_sprites() {
     VectorCtorIterator(g_TECH_ICON_SPRITES, 0x2C, 89, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FA40));
+    atexit(destroy_tech_icon_sprites);
 }
 
 /*
@@ -4443,7 +4443,7 @@ Status: Complete
 */
 void __cdecl construct_facility_icon_sprites() {
     VectorCtorIterator(g_FACILITY_ICON_SPRITES, 0x2C, 70, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FA90));
+    atexit(destroy_facility_icon_sprites);
 }
 
 /*
@@ -4461,7 +4461,7 @@ Status: Complete
 */
 void __cdecl construct_secret_project_icon_sprites() {
     VectorCtorIterator(g_SECRET_PROJECT_ICON_SPRITES, 0x2C, 64, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FAE0));
+    atexit(destroy_secret_project_icon_sprites);
 }
 
 /*
@@ -4479,7 +4479,7 @@ Status: Complete
 */
 void __cdecl construct_iface_mp_combo_arrow_sprites() {
     VectorCtorIterator(g_IFACE_MP_COMBO_ARROW_SPRITES, 0x2C, 3, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FB30));
+    atexit(destroy_iface_mp_combo_arrow_sprites);
 }
 
 /*
@@ -4497,7 +4497,7 @@ Status: Complete
 */
 void __cdecl construct_scroll_bar_arrow_icon_sprites() {
     VectorCtorIterator(g_SCROLL_BAR_ARROW_ICON_SPRITES, 0x2C, 12, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FB80));
+    atexit(destroy_scroll_bar_arrow_icon_sprites);
 }
 
 /*
@@ -4515,7 +4515,7 @@ Status: Complete
 */
 void __cdecl construct_scroll_bar_small_arrow_icon_sprites() {
     VectorCtorIterator(g_SCROLL_BAR_SMALL_ARROW_ICON_SPRITES, 0x2C, 12, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FBD0));
+    atexit(destroy_scroll_bar_small_arrow_icon_sprites);
 }
 
 /*
@@ -4533,7 +4533,7 @@ Status: Complete
 */
 void __cdecl construct_scroll_bar_filler_icon_sprites() {
     g_SCROLL_BAR_FILLER_ICON_SPRITES->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FC10));
+    atexit(destroy_scroll_bar_filler_icon_sprites);
 }
 
 /*
@@ -4551,7 +4551,7 @@ Status: Complete
 */
 void __cdecl construct_scroll_bar_small_filler_icon_sprite() {
     g_SCROLL_BAR_SMALL_FILLER_ICON_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FC40));
+    atexit(destroy_scroll_bar_small_filler_icon_sprite);
 }
 
 /*
@@ -4569,7 +4569,7 @@ Status: Complete
 */
 void __cdecl construct_iface_lock_sprites() {
     VectorCtorIterator(g_IFACE_LOCK_SPRITES, 0x2C, 2, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FC80));
+    atexit(destroy_iface_lock_sprites);
 }
 
 /*
@@ -4587,7 +4587,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprites_var01() {
     VectorCtorIterator(g_UNUSED_SPRITES_VAR01, 0x2C, 8, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FCD0));
+    atexit(destroy_unused_sprites_var01);
 }
 
 /*
@@ -4605,7 +4605,7 @@ Status: Complete
 */
 void __cdecl construct_iface_general_windows_top_left_sprite() {
     g_IFACE_GENERAL_WINDOWS_TOP_LEFT_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FD10));
+    atexit(destroy_iface_general_windows_top_left_sprite);
 }
 
 /*
@@ -4623,7 +4623,7 @@ Status: Complete
 */
 void __cdecl construct_iface_general_windows_top_right_sprite() {
     g_IFACE_GENERAL_WINDOWS_TOP_RIGHT_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FD40));
+    atexit(destroy_iface_general_windows_top_right_sprite);
 }
 
 /*
@@ -4641,7 +4641,7 @@ Status: Complete
 */
 void __cdecl construct_iface_general_windows_bot_left_sprite() {
     g_IFACE_GENERAL_WINDOWS_BOT_LEFT_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FD70));
+    atexit(destroy_iface_general_windows_bot_left_sprite);
 }
 
 /*
@@ -4659,7 +4659,7 @@ Status: Complete
 */
 void __cdecl construct_iface_general_windows_bot_right_sprite() {
     g_IFACE_GENERAL_WINDOWS_BOT_RIGHT_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FDA0));
+    atexit(destroy_iface_general_windows_bot_right_sprite);
 }
 
 /*
@@ -4677,7 +4677,7 @@ Status: Complete
 */
 void __cdecl construct_iface_general_windows_mid_left_sprite() {
     g_IFACE_GENERAL_WINDOWS_MID_LEFT_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FDD0));
+    atexit(destroy_iface_general_windows_mid_left_sprite);
 }
 
 /*
@@ -4695,7 +4695,7 @@ Status: Complete
 */
 void __cdecl construct_iface_general_windows_mid_right_sprite() {
     g_IFACE_GENERAL_WINDOWS_MID_RIGHT_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FE00));
+    atexit(destroy_iface_general_windows_mid_right_sprite);
 }
 
 /*
@@ -4713,7 +4713,7 @@ Status: Complete
 */
 void __cdecl construct_iface_general_windows_top_mid_sprite() {
     g_IFACE_GENERAL_WINDOWS_TOP_MID_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FE30));
+    atexit(destroy_iface_general_windows_top_mid_sprite);
 }
 
 /*
@@ -4731,7 +4731,7 @@ Status: Complete
 */
 void __cdecl construct_iface_general_windows_bot_mid_sprite() {
     g_IFACE_GENERAL_WINDOWS_BOT_MID_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FE60));
+    atexit(destroy_iface_general_windows_bot_mid_sprite);
 }
 
 /*
@@ -4749,7 +4749,7 @@ Status: Complete
 */
 void __cdecl construct_iface_general_windows_noncap_mid_sprite() {
     g_IFACE_GENERAL_WINDOWS_NONCAP_MID_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FE90));
+    atexit(destroy_iface_general_windows_noncap_mid_sprite);
 }
 
 /*
@@ -4767,7 +4767,7 @@ Status: Complete
 */
 void __cdecl construct_iface_general_windows_noncap_left_sprite() {
     g_IFACE_GENERAL_WINDOWS_NONCAP_LEFT_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FEC0));
+    atexit(destroy_iface_general_windows_noncap_left_sprite);
 }
 
 /*
@@ -4785,7 +4785,7 @@ Status: Complete
 */
 void __cdecl construct_iface_general_windows_noncap_right_sprite() {
     g_IFACE_GENERAL_WINDOWS_NONCAP_RIGHT_SPRITE->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FEF0));
+    atexit(destroy_iface_general_windows_noncap_right_sprite);
 }
 
 /*
@@ -4803,7 +4803,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var23() {
     g_UNUSED_SPRITE_VAR23->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FF20));
+    atexit(destroy_unused_sprite_var23);
 }
 
 /*
@@ -4821,7 +4821,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var24() {
     g_UNUSED_SPRITE_VAR24->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FF50));
+    atexit(destroy_unused_sprite_var24);
 }
 
 /*
@@ -4839,7 +4839,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var25() {
     g_UNUSED_SPRITE_VAR25->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FF80));
+    atexit(destroy_unused_sprite_var25);
 }
 
 /*
@@ -4857,7 +4857,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var26() {
     g_UNUSED_SPRITE_VAR26->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FFB0));
+    atexit(destroy_unused_sprite_var26);
 }
 
 /*
@@ -4875,7 +4875,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var27() {
     g_UNUSED_SPRITE_VAR27->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0044FFE0));
+    atexit(destroy_unused_sprite_var27);
 }
 
 /*
@@ -4893,7 +4893,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var28() {
     g_UNUSED_SPRITE_VAR28->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450010));
+    atexit(destroy_unused_sprite_var28);
 }
 
 /*
@@ -4911,7 +4911,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var29() {
     g_UNUSED_SPRITE_VAR29->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450040));
+    atexit(destroy_unused_sprite_var29);
 }
 
 /*
@@ -4929,7 +4929,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var30() {
     g_UNUSED_SPRITE_VAR30->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450070));
+    atexit(destroy_unused_sprite_var30);
 }
 
 /*
@@ -4947,7 +4947,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var31() {
     g_UNUSED_SPRITE_VAR31->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004500A0));
+    atexit(destroy_unused_sprite_var31);
 }
 
 /*
@@ -4965,7 +4965,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var32() {
     g_UNUSED_SPRITE_VAR32->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004500D0));
+    atexit(destroy_unused_sprite_var32);
 }
 
 /*
@@ -4983,7 +4983,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var33() {
     g_UNUSED_SPRITE_VAR33->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450100));
+    atexit(destroy_unused_sprite_var33);
 }
 
 /*
@@ -5001,7 +5001,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var34() {
     g_UNUSED_SPRITE_VAR34->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450130));
+    atexit(destroy_unused_sprite_var34);
 }
 
 /*
@@ -5019,7 +5019,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var35() {
     g_UNUSED_SPRITE_VAR35->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450160));
+    atexit(destroy_unused_sprite_var35);
 }
 
 /*
@@ -5037,7 +5037,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var36() {
     g_UNUSED_SPRITE_VAR36->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450190));
+    atexit(destroy_unused_sprite_var36);
 }
 
 /*
@@ -5055,7 +5055,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var37() {
     g_UNUSED_SPRITE_VAR37->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004501C0));
+    atexit(destroy_unused_sprite_var37);
 }
 
 /*
@@ -5073,7 +5073,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var38() {
     g_UNUSED_SPRITE_VAR38->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004501F0));
+    atexit(destroy_unused_sprite_var38);
 }
 
 /*
@@ -5091,7 +5091,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var39() {
     g_UNUSED_SPRITE_VAR39->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450220));
+    atexit(destroy_unused_sprite_var39);
 }
 
 /*
@@ -5109,7 +5109,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var40() {
     g_UNUSED_SPRITE_VAR40->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450250));
+    atexit(destroy_unused_sprite_var40);
 }
 
 /*
@@ -5127,7 +5127,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var41() {
     g_UNUSED_SPRITE_VAR41->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450280));
+    atexit(destroy_unused_sprite_var41);
 }
 
 /*
@@ -5145,7 +5145,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var42() {
     g_UNUSED_SPRITE_VAR42->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004502B0));
+    atexit(destroy_unused_sprite_var42);
 }
 
 /*
@@ -5163,7 +5163,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var43() {
     g_UNUSED_SPRITE_VAR43->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004502E0));
+    atexit(destroy_unused_sprite_var43);
 }
 
 /*
@@ -5181,7 +5181,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var44() {
     g_UNUSED_SPRITE_VAR44->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450310));
+    atexit(destroy_unused_sprite_var44);
 }
 
 /*
@@ -5199,7 +5199,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var45() {
     g_UNUSED_SPRITE_VAR45->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450340));
+    atexit(destroy_unused_sprite_var45);
 }
 
 /*
@@ -5217,7 +5217,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var46() {
     g_UNUSED_SPRITE_VAR46->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450370));
+    atexit(destroy_unused_sprite_var46);
 }
 
 /*
@@ -5235,7 +5235,7 @@ Status: Complete
 */
 void __cdecl construct_iface_tech_tree_arrow_sprites() {
     VectorCtorIterator(g_IFACE_TECH_TREE_ARROW_SPRITES, 0x2C, 3, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004503B0));
+    atexit(destroy_iface_tech_tree_arrow_sprites);
 }
 
 /*
@@ -5253,7 +5253,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var47() {
     g_UNUSED_SPRITE_VAR47->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004503F0));
+    atexit(destroy_unused_sprite_var47);
 }
 
 /*
@@ -5271,7 +5271,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var48() {
     g_UNUSED_SPRITE_VAR48->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450420));
+    atexit(destroy_unused_sprite_var48);
 }
 
 /*
@@ -5289,7 +5289,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var49() {
     g_UNUSED_SPRITE_VAR49->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450450));
+    atexit(destroy_unused_sprite_var49);
 }
 
 /*
@@ -5307,7 +5307,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var50() {
     g_UNUSED_SPRITE_VAR50->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450480));
+    atexit(destroy_unused_sprite_var50);
 }
 
 /*
@@ -5325,7 +5325,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var51() {
     g_UNUSED_SPRITE_VAR51->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004504B0));
+    atexit(destroy_unused_sprite_var51);
 }
 
 /*
@@ -5343,7 +5343,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var52() {
     g_UNUSED_SPRITE_VAR52->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004504E0));
+    atexit(destroy_unused_sprite_var52);
 }
 
 /*
@@ -5361,7 +5361,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var53() {
     g_UNUSED_SPRITE_VAR53->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450510));
+    atexit(destroy_unused_sprite_var53);
 }
 
 /*
@@ -5379,7 +5379,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var54() {
     g_UNUSED_SPRITE_VAR54->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450540));
+    atexit(destroy_unused_sprite_var54);
 }
 
 /*
@@ -5397,7 +5397,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var55() {
     g_UNUSED_SPRITE_VAR55->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450570));
+    atexit(destroy_unused_sprite_var55);
 }
 
 /*
@@ -5415,7 +5415,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var56() {
     g_UNUSED_SPRITE_VAR56->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004505A0));
+    atexit(destroy_unused_sprite_var56);
 }
 
 /*
@@ -5433,7 +5433,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var57() {
     g_UNUSED_SPRITE_VAR57->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004505D0));
+    atexit(destroy_unused_sprite_var57);
 }
 
 /*
@@ -5451,7 +5451,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var58() {
     g_UNUSED_SPRITE_VAR58->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450600));
+    atexit(destroy_unused_sprite_var58);
 }
 
 /*
@@ -5469,7 +5469,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var59() {
     g_UNUSED_SPRITE_VAR59->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450630));
+    atexit(destroy_unused_sprite_var59);
 }
 
 /*
@@ -5487,7 +5487,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var60() {
     g_UNUSED_SPRITE_VAR60->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450660));
+    atexit(destroy_unused_sprite_var60);
 }
 
 /*
@@ -5505,7 +5505,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var61() {
     g_UNUSED_SPRITE_VAR61->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450690));
+    atexit(destroy_unused_sprite_var61);
 }
 
 /*
@@ -5523,7 +5523,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var62() {
     g_UNUSED_SPRITE_VAR62->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004506C0));
+    atexit(destroy_unused_sprite_var62);
 }
 
 /*
@@ -5541,7 +5541,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var63() {
     g_UNUSED_SPRITE_VAR63->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004506F0));
+    atexit(destroy_unused_sprite_var63);
 }
 
 /*
@@ -5559,7 +5559,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var64() {
     g_UNUSED_SPRITE_VAR64->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450720));
+    atexit(destroy_unused_sprite_var64);
 }
 
 /*
@@ -5577,7 +5577,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var65() {
     g_UNUSED_SPRITE_VAR65->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450750));
+    atexit(destroy_unused_sprite_var65);
 }
 
 /*
@@ -5595,7 +5595,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var66() {
     g_UNUSED_SPRITE_VAR66->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450780));
+    atexit(destroy_unused_sprite_var66);
 }
 
 /*
@@ -5613,7 +5613,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var67() {
     g_UNUSED_SPRITE_VAR67->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004507B0));
+    atexit(destroy_unused_sprite_var67);
 }
 
 /*
@@ -5631,7 +5631,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var68() {
     g_UNUSED_SPRITE_VAR68->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004507E0));
+    atexit(destroy_unused_sprite_var68);
 }
 
 /*
@@ -5649,7 +5649,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var69() {
     g_UNUSED_SPRITE_VAR69->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450810));
+    atexit(destroy_unused_sprite_var69);
 }
 
 /*
@@ -5667,7 +5667,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var70() {
     g_UNUSED_SPRITE_VAR70->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450840));
+    atexit(destroy_unused_sprite_var70);
 }
 
 /*
@@ -5685,7 +5685,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var71() {
     g_UNUSED_SPRITE_VAR71->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450870));
+    atexit(destroy_unused_sprite_var71);
 }
 
 /*
@@ -5703,7 +5703,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var72() {
     g_UNUSED_SPRITE_VAR72->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004508A0));
+    atexit(destroy_unused_sprite_var72);
 }
 
 /*
@@ -5721,7 +5721,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var73() {
     g_UNUSED_SPRITE_VAR73->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004508D0));
+    atexit(destroy_unused_sprite_var73);
 }
 
 /*
@@ -5739,7 +5739,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var74() {
     g_UNUSED_SPRITE_VAR74->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450900));
+    atexit(destroy_unused_sprite_var74);
 }
 
 /*
@@ -5757,7 +5757,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprites_var02() {
     VectorCtorIterator(g_UNUSED_SPRITES_VAR02, 0x2C, 3, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450940));
+    atexit(destroy_unused_sprites_var02);
 }
 
 /*
@@ -5775,7 +5775,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprites_var03() {
     VectorCtorIterator(g_UNUSED_SPRITES_VAR03, 0x2C, 3, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450990));
+    atexit(destroy_unused_sprites_var03);
 }
 
 /*
@@ -5793,7 +5793,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprites_var04() {
     VectorCtorIterator(g_UNUSED_SPRITES_VAR04, 0x2C, 3, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004509E0));
+    atexit(destroy_unused_sprites_var04);
 }
 
 /*
@@ -5811,7 +5811,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprites_var05() {
     VectorCtorIterator(g_UNUSED_SPRITES_VAR05, 0x2C, 3, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450A30));
+    atexit(destroy_unused_sprites_var05);
 }
 
 /*
@@ -5829,7 +5829,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprites_var06() {
     VectorCtorIterator(g_UNUSED_SPRITES_VAR06, 0x2C, 3, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450A80));
+    atexit(destroy_unused_sprites_var06);
 }
 
 /*
@@ -5847,7 +5847,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprites_var07() {
     VectorCtorIterator(g_UNUSED_SPRITES_VAR07, 0x2C, 3, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450AD0));
+    atexit(destroy_unused_sprites_var07);
 }
 
 /*
@@ -5865,7 +5865,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprites_var08() {
     VectorCtorIterator(g_UNUSED_SPRITES_VAR08, 0x2C, 3, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450B20));
+    atexit(destroy_unused_sprites_var08);
 }
 
 /*
@@ -5883,7 +5883,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprites_var09() {
     VectorCtorIterator(g_UNUSED_SPRITES_VAR09, 0x2C, 3, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450B70));
+    atexit(destroy_unused_sprites_var09);
 }
 
 /*
@@ -5901,7 +5901,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprites_var10() {
     VectorCtorIterator(g_UNUSED_SPRITES_VAR10, 0x2C, 3, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450BC0));
+    atexit(destroy_unused_sprites_var10);
 }
 
 /*
@@ -5919,7 +5919,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var75() {
     g_UNUSED_SPRITE_VAR75->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450C00));
+    atexit(destroy_unused_sprite_var75);
 }
 
 /*
@@ -5937,7 +5937,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var76() {
     g_UNUSED_SPRITE_VAR76->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450C30));
+    atexit(destroy_unused_sprite_var76);
 }
 
 /*
@@ -5955,7 +5955,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var77() {
     g_UNUSED_SPRITE_VAR77->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450C60));
+    atexit(destroy_unused_sprite_var77);
 }
 
 /*
@@ -5973,7 +5973,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var78() {
     g_UNUSED_SPRITE_VAR78->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450C90));
+    atexit(destroy_unused_sprite_var78);
 }
 
 /*
@@ -5991,7 +5991,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var79() {
     g_UNUSED_SPRITE_VAR79->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450CC0));
+    atexit(destroy_unused_sprite_var79);
 }
 
 /*
@@ -6009,7 +6009,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var80() {
     g_UNUSED_SPRITE_VAR80->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450CF0));
+    atexit(destroy_unused_sprite_var80);
 }
 
 /*
@@ -6027,7 +6027,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var81() {
     g_UNUSED_SPRITE_VAR81->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450D20));
+    atexit(destroy_unused_sprite_var81);
 }
 
 /*
@@ -6045,7 +6045,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var82() {
     g_UNUSED_SPRITE_VAR82->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450D50));
+    atexit(destroy_unused_sprite_var82);
 }
 
 /*
@@ -6063,7 +6063,7 @@ Status: Complete
 */
 void __cdecl construct_unused_sprite_var83() {
     g_UNUSED_SPRITE_VAR83->Sprite::Sprite();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450D80));
+    atexit(destroy_unused_sprite_var83);
 }
 
 /*
@@ -6081,7 +6081,7 @@ Status: Complete
 */
 void __cdecl construct_basewin_sprites() {
     VectorCtorIterator(g_BASEWIN_SPRITES, 0x2C, 27, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00450DC0));
+    atexit(destroy_basewin_sprites);
 }
 
 /*
@@ -6099,7 +6099,7 @@ Status: Complete
 */
 void __cdecl construct_infowin() {
     reinterpret_cast<InfoWin *>(0x007AD2A0)->InfoWin::InfoWin();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004562E0));
+    atexit(destroy_infowin);
 }
 
 /*
@@ -6117,7 +6117,7 @@ Status: Complete
 */
 void __cdecl construct_maininterface() {
     reinterpret_cast<MainInterface *>(0x007AE820)->MainInterface::MainInterface();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00459580));
+    atexit(destroy_maininterface);
 }
 
 /*
@@ -6135,7 +6135,7 @@ Status: Complete
 */
 void __cdecl construct_maininterface_wave() {
     g_MAININTERFACE_WAVE->Wave::Wave();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004595B0));
+    atexit(destroy_maininterface_wave);
 }
 
 /*
@@ -6156,7 +6156,7 @@ void __cdecl construct_jackal_font() {
     // 0x00618EA0, which is exactly what the image calls here; the
     // pointer-to-member seam could only emit `call dword ptr [...]`.
     g_JACKAL_FONT.Font::Font();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0045F940));
+    atexit(destroy_jackal_font);
 }
 
 /*
@@ -6192,7 +6192,7 @@ Status: Complete
 */
 void __cdecl construct_messagewin() {
     reinterpret_cast<MessageWin *>(0x007F67F8)->MessageWin::MessageWin();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00471340));
+    atexit(destroy_messagewin);
 }
 
 /*
@@ -6210,7 +6210,7 @@ Status: Complete
 */
 void __cdecl construct_iface_green_right_arrow_sprite() {
     VectorCtorIterator(g_IFACE_GREEN_RIGHT_ARROW_SPRITE, 0x2C, 1, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00471380));
+    atexit(destroy_iface_green_right_arrow_sprite);
 }
 
 /*
@@ -6228,7 +6228,7 @@ Status: Complete
 */
 void __cdecl construct_monuwin() {
     reinterpret_cast<MonuWin *>(0x007F9F58)->MonuWin::MonuWin();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00472220));
+    atexit(destroy_monuwin);
 }
 
 /*
@@ -6246,7 +6246,7 @@ Status: Complete
 */
 void __cdecl construct_multiwin() {
     reinterpret_cast<MultiWin *>(0x007FD648)->MultiWin::MultiWin();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00477E30));
+    atexit(destroy_multiwin);
 }
 
 /*
@@ -6264,7 +6264,7 @@ Status: Complete
 */
 void __cdecl construct_multiwin_wave() {
     g_MULTIWIN_WAVE->Wave::Wave();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00477E60));
+    atexit(destroy_multiwin_wave);
 }
 
 /*
@@ -6282,7 +6282,7 @@ Status: Complete
 */
 void __cdecl construct_netmsg1() {
     reinterpret_cast<NetMsg *>(0x00805338)->NetMsg::NetMsg(4096, 8, 0);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0047A790));
+    atexit(destroy_netmsg1);
 }
 
 /*
@@ -6300,7 +6300,7 @@ Status: Complete
 */
 void __cdecl construct_netmsg2() {
     reinterpret_cast<NetMsg *>(0x007FFF80)->NetMsg::NetMsg(-5, 40, 1);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0047A7C0));
+    atexit(destroy_netmsg2);
 }
 
 /*
@@ -6318,7 +6318,7 @@ Status: Complete
 */
 void __cdecl construct_netwin() {
     reinterpret_cast<NetWin *>(0x0080A6F8)->NetWin::NetWin();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0047B010));
+    atexit(destroy_netwin);
 }
 
 /*
@@ -6336,7 +6336,7 @@ Status: Complete
 */
 void __cdecl construct_newtechwin() {
     reinterpret_cast<NewTechWin *>(0x00811E40)->NewTechWin::NewTechWin();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00483870));
+    atexit(destroy_newtechwin);
 }
 
 /*
@@ -6372,7 +6372,7 @@ Status: Complete
 */
 void __cdecl construct_pickwin() {
     reinterpret_cast<PickWin *>(0x00822718)->PickWin::PickWin();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00488770));
+    atexit(destroy_pickwin);
 }
 
 /*
@@ -6408,7 +6408,7 @@ Status: Complete
 */
 void __cdecl construct_prefwin() {
     reinterpret_cast<PrefWin *>(0x008578D8)->PrefWin::PrefWin();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0048D510));
+    atexit(destroy_prefwin);
 }
 
 /*
@@ -6426,7 +6426,7 @@ Status: Complete
 */
 void __cdecl construct_prefwin_buttongroup() {
     g_PREFWIN_BUTTONGROUP->ButtonGroup::ButtonGroup();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0048D540));
+    atexit(destroy_prefwin_buttongroup);
 }
 
 /*
@@ -6444,7 +6444,7 @@ Status: Complete
 */
 void __cdecl construct_quaylewin() {
     reinterpret_cast<QuayleWin *>(0x00872CB0)->QuayleWin::QuayleWin();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00495190));
+    atexit(destroy_quaylewin);
 }
 
 /*
@@ -6462,7 +6462,7 @@ Status: Complete
 */
 void __cdecl construct_reportif() {
     reinterpret_cast<ReportIf *>(0x00885F38)->ReportIf::ReportIf();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00496920));
+    atexit(destroy_reportif);
 }
 
 /*
@@ -6480,7 +6480,7 @@ Status: Complete
 */
 void __cdecl construct_reportwin() {
     reinterpret_cast<ReportWin *>(0x00876478)->ReportWin::ReportWin();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00496950));
+    atexit(destroy_reportwin);
 }
 
 /*
@@ -6498,7 +6498,7 @@ Status: Complete
 */
 void __cdecl construct_socialwinparent() {
     reinterpret_cast<SocialWin *>(0x008A6270)->SocialWin::SocialWin();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004AE9D0));
+    atexit(destroy_socialwinparent);
 }
 
 /*
@@ -6516,7 +6516,7 @@ Status: Complete
 */
 void __cdecl construct_statuswin() {
     reinterpret_cast<StatusWin *>(0x008C5568)->StatusWin::StatusWin();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004B3FC0));
+    atexit(destroy_statuswin);
 }
 
 /*
@@ -6534,7 +6534,7 @@ Status: Complete
 */
 void __cdecl construct_tutwin() {
     reinterpret_cast<TutWin *>(0x008C6E68)->TutWin::TutWin();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004BA5E0));
+    atexit(destroy_tutwin);
 }
 
 /*
@@ -6552,7 +6552,7 @@ Status: Complete
 */
 void __cdecl construct_vehdraw_caviar() {
     g_VEHDRAW_CAVIAR->Caviar::Caviar();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004BF700));
+    atexit(destroy_vehdraw_caviar);
 }
 
 /*
@@ -6570,7 +6570,7 @@ Status: Complete
 */
 void __cdecl construct_vehdraw_buffer() {
     g_VEHDRAW_BUFFER->Buffer::Buffer();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004BF730));
+    atexit(destroy_vehdraw_buffer);
 }
 
 /*
@@ -6588,7 +6588,7 @@ Status: Complete
 */
 void __cdecl construct_worldwin() {
     reinterpret_cast<WorldWin *>(0x008E9F60)->WorldWin::WorldWin();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004C38D0));
+    atexit(destroy_worldwin);
 }
 
 /*
@@ -6606,7 +6606,7 @@ Status: Complete
 */
 void __cdecl construct_wave_device() {
     g_WAVE_DEVICE->Wave_Device::Wave_Device();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004C5C70));
+    atexit(destroy_wave_device);
 }
 
 /*
@@ -6624,7 +6624,7 @@ Status: Complete
 */
 void __cdecl construct_midi_device() {
     reinterpret_cast<Midi_Device *>(0x0090D950)->Midi_Device::Midi_Device();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004C5CA0));
+    atexit(destroy_midi_device);
 }
 
 /*
@@ -6642,7 +6642,7 @@ Status: Complete
 */
 void __cdecl construct_wave_in_device() {
     reinterpret_cast<Wave_In_Device *>(0x0090DB50)->Wave_In_Device::Wave_In_Device();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004C5CD0));
+    atexit(destroy_wave_in_device);
 }
 
 /*
@@ -6678,7 +6678,7 @@ Status: Complete
 */
 void __cdecl construct_console_timer() {
     g_CONSOLE_TIMER->Time::Time();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0050E9A0));
+    atexit(destroy_console_timer);
 }
 
 /*
@@ -6696,7 +6696,7 @@ Status: Complete
 */
 void __cdecl construct_cursor_sprites() {
     VectorCtorIterator(g_CURSOR_SPRITES, 0x2C, 12, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0052DAF0));
+    atexit(destroy_cursor_sprites);
 }
 
 /*
@@ -6714,7 +6714,7 @@ Status: Complete
 */
 void __cdecl construct_netdaemon() {
     reinterpret_cast<NetDaemon *>(0x0093CD90)->NetDaemon::NetDaemon();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x0052DB30));
+    atexit(destroy_netdaemon);
 }
 
 /*
@@ -6732,7 +6732,7 @@ Status: Complete
 */
 void __cdecl construct_fontqueue_val2() {
     reinterpret_cast<FontQueue *>(0x0093FB88)->FontQueue::FontQueue();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00559250));
+    atexit(destroy_fontqueue_val2);
 }
 
 /*
@@ -6750,7 +6750,7 @@ Status: Complete
 */
 void __cdecl construct_fontqueue_val1() {
     reinterpret_cast<FontQueue *>(0x0093FAE8)->FontQueue::FontQueue();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00559280));
+    atexit(destroy_fontqueue_val1);
 }
 
 /*
@@ -6768,7 +6768,7 @@ Status: Complete
 */
 void __cdecl construct_top_menu_wave() {
     g_TOP_MENU_WAVE->Wave::Wave();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x00584D20));
+    atexit(destroy_top_menu_wave);
 }
 
 /*
@@ -6786,7 +6786,7 @@ Status: Complete
 */
 void __cdecl construct_fonts() {
     VectorCtorIterator(g_FONTS, 0x28, 48, FontElementCtor, FontElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x005882D0));
+    atexit(destroy_fonts);
 }
 
 /*
@@ -6804,7 +6804,7 @@ Status: Complete
 */
 void __cdecl construct_crash_landing_wave() {
     g_CRASH_LANDING_WAVE->Wave::Wave();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x005AE110));
+    atexit(destroy_crash_landing_wave);
 }
 
 /*
@@ -6822,7 +6822,7 @@ Status: Complete
 */
 void __cdecl construct_wave_general() {
     g_WAVE_GENERAL->Wave::Wave();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x005B9C30));
+    atexit(destroy_wave_general);
 }
 
 /*
@@ -6840,7 +6840,7 @@ Status: Complete
 */
 void __cdecl construct_palette1() {
     reinterpret_cast<Palette *>(0x0094C590)->Palette::Palette();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x005BEC60));
+    atexit(destroy_palette1);
 }
 
 /*
@@ -6858,7 +6858,7 @@ Status: Complete
 */
 void __cdecl construct_palette2() {
     reinterpret_cast<Palette *>(0x009523A0)->Palette::Palette();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x005BEC90));
+    atexit(destroy_palette2);
 }
 
 /*
@@ -6876,7 +6876,7 @@ Status: Complete
 */
 void __cdecl construct_multidebug() {
     reinterpret_cast<MultiDebug *>(0x009B22F0)->MultiDebug::MultiDebug();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x005C97E0));
+    atexit(destroy_multidebug);
 }
 
 /*
@@ -6912,7 +6912,7 @@ Status: Complete
 */
 void __cdecl construct_buffer() {
     g_BUFFER->Buffer::Buffer();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x005E37D0));
+    atexit(destroy_buffer);
 }
 
 /*
@@ -6948,7 +6948,7 @@ Status: Complete
 */
 void __cdecl construct_txtindex() {
     VectorCtorIterator(TxtIndexGlobal, 0x118, 4, TextIndexElementCtor, TextIndexElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x005FD510));
+    atexit(destroy_txtindex);
 }
 
 /*
@@ -7092,7 +7092,7 @@ Status: Complete
 */
 void __cdecl construct_stringtable() {
     StringTable->Strings::Strings();
-    atexit(reinterpret_cast<func_atexit_callback *>(0x006168C0));
+    atexit(destroy_stringtable);
 }
 
 /*
