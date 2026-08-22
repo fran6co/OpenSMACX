@@ -117,6 +117,7 @@ void __fastcall net_win_on_mouse_move_redirect(NetWin *self, void *, int a1, int
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x0047F950 ?on_mouse_leave@NetWin@@QAEXHH@Z 0x0047F950-0x0047F953 BYTE_EXACT
+// symbol    ?on_mouse_leave@NetWin@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_mouse_leave@NetWin@@QAEXHH@Z)(NetWin* this, int, int)
 // callers   0   call targets   0

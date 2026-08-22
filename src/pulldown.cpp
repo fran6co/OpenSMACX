@@ -374,6 +374,7 @@ int __fastcall pull_down_unk6_redirect(
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x005FA740 ?on_mouse_leave@PullDown@@QAEXHH@Z 0x005FA740-0x005FA743 BYTE_EXACT
+// symbol    ?on_mouse_leave@PullDown@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_mouse_leave@PullDown@@QAEXHH@Z)(PullDown* this, int, int)
 // callers   0   call targets   0

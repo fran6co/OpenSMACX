@@ -443,6 +443,7 @@ Purpose: Dismiss the bubble text when the pointer leaves. The whole body is two
          bubble between them - which is why the fixture re-arms it rather than
          asserting a single refresh and calling that agreement.
 // ORIGINAL: 0x0041B1E0 ?on_mouse_leave@BaseWin@@QAEXHH@Z 0x0041B1E0-0x0041B1ED BYTE_EXACT
+// symbol    ?on_mouse_leave@BaseWin@@UAEXHH@Z
 // size      13 bytes
 // prototype void (__thiscall ?on_mouse_leave@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
 // callers   0   call targets   1

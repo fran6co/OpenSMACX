@@ -292,6 +292,7 @@ int __fastcall counc_win_on_button_text_draw_redirect(
 
 /*
 // ORIGINAL: 0x00426EC0 ?on_mouse_leave@CouncWin@@QAEXHH@Z 0x00426EC0-0x00426EDE BYTE_EXACT
+// symbol    ?on_mouse_leave@CouncWin@@UAEXHH@Z
 // size      30 bytes
 // prototype void (__thiscall ?on_mouse_leave@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
 // callers   0   call targets   1
