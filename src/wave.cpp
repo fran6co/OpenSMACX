@@ -160,7 +160,7 @@ Purpose: Release the loaded wave. The wrapped device, if there is one, is asked
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
 // indirect  0x004C6EAF 0x004C6EC6
-// RULED-OUT: reordering `field_40_ &= ...` ahead of the trailing vtable
+// RULED-OUT: reordering `flags_40_ &= ...` ahead of the trailing vtable
 //   dispatch, and binding `this` into a named local first, both tried against
 //   the sole remaining divergence (`mov edx,[esi]`/`call [edx+0x80]` in the
 //   image vs this tree's `eax` for the same pointer) - neither changes the
@@ -192,7 +192,7 @@ int Wave::unload() {
     if (!(flags & 2)) {
         vtable_slot<wave_self_fn>(this, 0x80)(this);
     }
-    field_40_ &= 0xFFFFFFFEu;
+    flags_40_ &= 0xFFFFFFFEu;
     return result;
 }
 
@@ -764,7 +764,7 @@ Status: Complete
 void Wave::set_attrib(unsigned long a1) {
     typedef int (OriginalObject::*device_fn)(uint32_t a1);
     if (a1 & 2) {
-        field_30_ = 1;
+        loop_flag_30_ = 1;
     }
     if (a1 & 1) {
         flags_54_ |= 1;
@@ -816,7 +816,7 @@ int Wave::get_attrib() {
         typedef int(__fastcall *device_fn)(void *);
         result = vtable_slot<device_fn>(device_, 0x70)(device_);
     }
-    if (field_30_) {
+    if (loop_flag_30_) {
         result |= 2;
     }
     const uint32_t flags = flags_54_;
@@ -1157,13 +1157,13 @@ int Wave::reload() {
     if (reloaded) {
         return reloaded;
     }
-    if (!(field_40_ & 1)) {
-        field_40_ |= 1;
+    if (!(flags_40_ & 1)) {
+        flags_40_ |= 1;
         {
             typedef void(__fastcall *wave_vfn)(void *);
             vtable_slot<wave_vfn>(this, 0x7C)(this);
         }
-        if (field_30_) {
+        if (loop_flag_30_) {
             typedef void (OriginalObject::*device_loop_fn)(int on);
             (ORIGINAL(device_)->*vtable_slot<device_loop_fn>(device_, 0x48))(1);
         }
@@ -1312,7 +1312,7 @@ int Wave::load(const char *a1) {
         (ORIGINAL(device_)->*vtable_slot<device_pitch_fn>(device_, 0x98))(pitch_);
     }
     typedef void (OriginalObject::*device_pan_fn)(uint32_t v);
-    (ORIGINAL(device_)->*vtable_slot<device_pan_fn>(device_, 0x44))(field_8_);
+    (ORIGINAL(device_)->*vtable_slot<device_pan_fn>(device_, 0x44))(pan_8_);
     return 0;
 }
 
@@ -1359,41 +1359,41 @@ Return Value: n/a (the redirect answers the object pointer, as the original
 Status: Complete
 */
 // LEVER: the image's call list is memset x3 + Sound::set_type - the region
-// loop and the two single-dword field clears (field_40_, flags_54_) are all
+// loop and the two single-dword field clears (flags_40_, flags_54_) are all
 // real `call memset` in the image, not stores; writing them as memset() calls
 // (matching set_fname's own `memset(&flags_54_, 0, 4)` lever below) reaches
 // that count. Store order also follows the image: an early temporary vtable
 // write (0x66E444), then the region memset, then a SECOND temporary vtable
-// write (0x66E3C0) ahead of the pointer-field clears and the field_40_
+// write (0x66E3C0) ahead of the pointer-field clears and the flags_40_
 // memset, then the FINAL vtable write (0x66E44C) ahead of the flags_54_
 // memset.
 Wave::Wave() {
     vtable_storage_ = 0x0066E444;
     volume_ = 0x7F;
-    field_8_ = 0;
-    memset(memset_region_, 0, sizeof(memset_region_));
-    field_30_ = 0;
+    pan_8_ = 0;
+    memset(&field_C_, 0, 0x24);
+    loop_flag_30_ = 0;
     vtable_storage_ = 0x0066E3C0;
     chain_prev_ = nullptr;
     chain_next_ = nullptr;
     device_ = nullptr;
     fname_ = nullptr;
-    memset(&field_40_, 0, sizeof(field_40_));
+    memset(&flags_40_, 0, sizeof(flags_40_));
     // The bit-0 clear on a value the memset above just zeroed is a no-op in
     // practice, but the image performs it unconditionally (`and ecx,
     // 0xfffffffe` right after the memset), so it is transcribed.
-    field_40_ &= ~1;
-    field_38_ = 0x3E8;
+    flags_40_ &= ~1;
+    fade_38_ = 0x3E8;
     // The original's indirect device dispatch through slot 0x6C with the
     // 1000ms default is provably dead here (device_ was just zeroed above,
     // with nothing between) and is not transcribed - same policy as the
     // other Wave bodies with an `indirect` marker line.
-    field_50_ = 0;
+    type_ = 0;
     vtable_storage_ = 0x0066E44C;
     // The original's `memset(this + 0x54, 0, 4)` at 0x004C6774 - same lever
     // as set_fname's own `memset(&flags_54_, 0, 4)` below.
     memset(&flags_54_, 0, sizeof(flags_54_));
-    field_40_ |= 4;
+    flags_40_ |= 4;
     // `Wave` is deliberately NOT spelled `: Sound` - see the note on the
     // class - so the base's method is reached by cast rather than by
     // inheritance.
@@ -1615,30 +1615,30 @@ Wave::~Wave() {
         operator delete(block);
     }
     self->fname_ = nullptr;
-    if (self->field_40_ & 2) {
+    if (self->flags_40_ & 2) {
         // Unlink from the wave chain. The neighbour writes go through volatile
         // views too, and the second neighbour is re-read after the first write
         // because a neighbour pointer may alias this very object - the
         // original re-reads it the same way. The flag update folds the
         // original's early read of the word into the final store; the two
         // null stores between them cannot touch it.
-        Wave *const prev = self->chain_prev_;
+        Wave *const prev = static_cast<Wave *>(self->chain_prev_);
         if (prev) {
             reinterpret_cast<Wave volatile *>(prev)->chain_next_ =
                 self->chain_next_;
         } else {
-            WaveChainHead() = self->chain_next_;
+            WaveChainHead() = static_cast<Wave *>(self->chain_next_);
         }
-        Wave *const next = self->chain_next_;
+        Wave *const next = static_cast<Wave *>(self->chain_next_);
         if (next) {
             reinterpret_cast<Wave volatile *>(next)->chain_prev_ =
                 self->chain_prev_;
         } else {
-            WaveChainTail() = self->chain_prev_;
+            WaveChainTail() = static_cast<Wave *>(self->chain_prev_);
         }
         self->chain_next_ = nullptr;
         self->chain_prev_ = nullptr;
-        self->field_40_ &= ~2u;
+        self->flags_40_ &= ~2u;
     }
     self->vtable_storage_ = 0x0066E3C0;
     // The inlined base destructor's copy of the free: reachable only when the
@@ -1655,26 +1655,26 @@ Wave::~Wave() {
         }
         self->device_ = nullptr;
     }
-    if (self->field_40_ & 2) {
+    if (self->flags_40_ & 2) {
         // The inlined base destructor's copy of the unlink: reachable only
         // when the release hook re-armed the chain bit.
-        Wave *const prev = self->chain_prev_;
+        Wave *const prev = static_cast<Wave *>(self->chain_prev_);
         if (prev) {
             reinterpret_cast<Wave volatile *>(prev)->chain_next_ =
                 self->chain_next_;
         } else {
-            WaveChainHead() = self->chain_next_;
+            WaveChainHead() = static_cast<Wave *>(self->chain_next_);
         }
-        Wave *const next = self->chain_next_;
+        Wave *const next = static_cast<Wave *>(self->chain_next_);
         if (next) {
             reinterpret_cast<Wave volatile *>(next)->chain_prev_ =
                 self->chain_prev_;
         } else {
-            WaveChainTail() = self->chain_prev_;
+            WaveChainTail() = static_cast<Wave *>(self->chain_prev_);
         }
         self->chain_next_ = nullptr;
         self->chain_prev_ = nullptr;
-        self->field_40_ &= ~2u;
+        self->flags_40_ &= ~2u;
     }
     self->vtable_storage_ = 0x0066E444;
 }

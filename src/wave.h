@@ -33,7 +33,21 @@
   * 0x004C676E and its own first field at 0x004C6774, which is 0x54. That is
   * exactly where src/sound.h now pins sizeof(Sound).
   *
-  * It stays spelled FLAT, not `class Wave : Sound`. Sound::~Sound is
+  * WITHDRAWN 2026-08-22. This said Wave "stays spelled FLAT, not
+  * `class Wave : Sound`", to protect a `~Wave` that was "already recovered".
+  * `~Wave` was NOT recovered - it measured 2 of 101 - so the reason had
+  * outlived itself, and the flat spelling was costing both bodies almost
+  * everything. Wave IS a Sound: its 0x00..0x53 duplicated every one of
+  * Sound's fields at the same offsets, names and all, and sizeof(Sound)
+  * 0x54 + Wave's own 0x18 is exactly the pinned 0x6C.
+  *
+  * Declaring the real base restores the SEH UNWIND FRAME the image has and
+  * this tree could not produce: constructing a base with a non-trivial
+  * destructor, then calling something VC6 cannot prove nothrow, is what
+  * emits it. All twelve prologue instructions now agree.
+  * Wave::Wave 3/73 -> 23/73, ~Wave 2/101 -> 44/101.
+  *
+  * The withdrawn note, for the record: Sound::~Sound is
   * out-of-line, so a real base would make ~Wave emit a `call` where the
   * original inlines the teardown, breaking a body that is already recovered.
   * base-edges.csv records this edge as `unchecked` for the same reason its
@@ -81,7 +95,7 @@
   * compiles to. tools/verify_member_offsets.py --class Wave reported the
   * straddle that withdrew the old declaration.
   */
-class Wave {
+class Wave : public Sound {
  public:
   Wave();
   ~Wave();
@@ -127,19 +141,6 @@ class Wave {
   void set_attrib(unsigned long a1);
   int get_attrib();
  private:
-  uint32_t vtable_storage_;      // 0x00
-  uint32_t volume_;              // 0x04, low 7 bits of set_volume's argument
-  uint32_t field_8_;
-  uint8_t memset_region_[0x24];  // 0x0C..0x2F
-  uint32_t field_30_;
-  uint32_t field_34_;
-  uint32_t field_38_;
-  void *device_;                 // 0x3C, the wrapped device or null
-  uint32_t field_40_;            // 0x40, bit 0 cleared on unload, bit 1 chained
-  Wave *chain_prev_;             // 0x44, chain neighbour; null at the head end
-  Wave *chain_next_;             // 0x48, chain neighbour; null at the tail end
-  void *fname_;                  // 0x4C, heap-owned filename copy
-  uint32_t field_50_;
   // 0x54, a whole 32-bit field - see the withdrawal above. Bit 1 suppresses
   // the vtable callback in unload, and set_attrib/init/get_attrib map the
   // mode mask onto bits 0..5.
