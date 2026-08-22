@@ -93,7 +93,8 @@ class Text {
   //
   // `?text_open@@YAHPADPAD@Z` and its neighbours are free functions in the
   // image, not methods, so they cannot reach these members - and
-  // src/text_recovery.cpp answered that with a private `struct TextState`
+  // the retired src/text_recovery.cpp answered that with a private
+  // `struct TextState`
   // repeating the layout field for field, pinned by five `static_assert`s
   // and reached through a `reinterpret_cast`. Five asserts is a good mirror
   // and a mirror is still a second copy of a layout: it has to be corrected

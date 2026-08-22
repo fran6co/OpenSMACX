@@ -94,20 +94,20 @@ src/deletionlist.cpp,39,,,,this,,uint8_t *,outside-any-catalogued-body,,,,,,deri
 src/dialog.cpp,389,0x00608E10,Dialog,NO_COMPILE,this,,volatile uint32_t *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/dialog.cpp,399,0x00608E10,Dialog,NO_COMPILE,this,0xbc,uint8_t *,exact-member-typeable,field_BC_,0xbc,4,0xbc,,derived,
 src/dialog.cpp,409,0x00608E10,Dialog,NO_COMPILE,this,0xe4,uint8_t *,exact-member-typeable,field_E4_,0xe4,4,0xe4,,derived,
-src/dialogs_recovery.cpp,147,0x00612ED0,Dialogs,MNEMONIC_ONLY,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
-src/dialogs_recovery.cpp,173,0x00612EF0,Dialogs,MNEMONIC_ONLY,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
-src/dialogs_recovery.cpp,199,0x00612F10,Dialogs,MISMATCH,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
-src/dialogs_recovery.cpp,225,0x00612F40,Dialogs,MNEMONIC_ONLY,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
-src/dialogs_recovery.cpp,251,0x00612F60,Dialogs,MNEMONIC_ONLY,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
-src/dialogs_recovery.cpp,277,0x00612F80,Dialogs,MISMATCH,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
-src/dialogs_recovery.cpp,303,0x00612FA0,Dialogs,MISMATCH,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
-src/dialogs_recovery.cpp,329,0x00612FC0,Dialogs,MISMATCH,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
-src/dialogs_recovery.cpp,452,0x00406910,Dialogs,NO_COMPILE,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
-src/dialogs_recovery.cpp,465,0x00406910,Dialogs,NO_COMPILE,base,,uintptr_t,unresolvable,,,,,,derived,alias used with no constant displacement
-src/dialogs_recovery.cpp,482,0x00406910,Dialogs,NO_COMPILE,base,,ListBox *,unresolvable,,,,,,derived,alias used with no constant displacement
-src/dialogs_recovery.cpp,516,0x00407100,Dialogs,NO_COMPILE,base,,Dialogs *,unresolvable,,,,,,derived,alias used with no constant displacement
-src/dialogs_recovery.cpp,517,0x00407100,Dialogs,NO_COMPILE,base,0xba0,Dialog *,layout-unreadable,,,,,,hypothesis,"class_layouts cannot total this class, so no offset in it can be resolved"
-src/dialogs_recovery.cpp,519,0x00407100,Dialogs,NO_COMPILE,base,0x188,GraphicWin *,layout-unreadable,,,,,,hypothesis,"class_layouts cannot total this class, so no offset in it can be resolved"
+src/dialogs.cpp,,0x00612ED0,Dialogs,MNEMONIC_ONLY,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
+src/dialogs.cpp,,0x00612EF0,Dialogs,MNEMONIC_ONLY,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
+src/dialogs.cpp,,0x00612F10,Dialogs,MISMATCH,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
+src/dialogs.cpp,,0x00612F40,Dialogs,MNEMONIC_ONLY,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
+src/dialogs.cpp,,0x00612F60,Dialogs,MNEMONIC_ONLY,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
+src/dialogs.cpp,,0x00612F80,Dialogs,MISMATCH,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
+src/dialogs.cpp,,0x00612FA0,Dialogs,MISMATCH,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
+src/dialogs.cpp,,0x00612FC0,Dialogs,MISMATCH,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
+src/dialogs.cpp,,0x00406910,Dialogs,NO_COMPILE,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
+src/dialogs.cpp,,0x00406910,Dialogs,NO_COMPILE,base,,uintptr_t,unresolvable,,,,,,derived,alias used with no constant displacement
+src/dialogs.cpp,,0x00406910,Dialogs,NO_COMPILE,base,,ListBox *,unresolvable,,,,,,derived,alias used with no constant displacement
+src/dialogs.cpp,,0x00407100,Dialogs,NO_COMPILE,base,,Dialogs *,unresolvable,,,,,,derived,alias used with no constant displacement
+src/dialogs.cpp,,0x00407100,Dialogs,NO_COMPILE,base,0xba0,Dialog *,layout-unreadable,,,,,,hypothesis,"class_layouts cannot total this class, so no offset in it can be resolved"
+src/dialogs.cpp,,0x00407100,Dialogs,NO_COMPILE,base,0x188,GraphicWin *,layout-unreadable,,,,,,hypothesis,"class_layouts cannot total this class, so no offset in it can be resolved"
 src/dipedit.cpp,77,,,,this,,char *,outside-any-catalogued-body,,,,,,derived,no `Original Offset:` precedes this line
 src/diplopop.cpp,244,,,,this,,Win *,outside-any-catalogued-body,,,,,,derived,no `Original Offset:` precedes this line
 src/diplowin.cpp,393,0x004413C0,DiploWin,MISMATCH,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself

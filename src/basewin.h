@@ -489,7 +489,8 @@ class BaseWin : public ConstructedGraphicWin, public SubInterface {
   // 0x00420B02 `lea edi, [esi + 0x435a0]`, repeats the same sequence on
   // scroll2_, so the shape is the one already declared twice above.
   // ??0BaseWin@@QAE@XZ constructs the matching object at the same offset
-  // (`new (self + 0x456ec) Scroll();` in src/recovered/units/00408490.cpp).
+  // (`new (self + 0x456ec) Scroll();` in the deleted
+  // src/recovered/units/00408490.cpp).
   // 0x456EC + sizeof(Scroll) == 0x47838, which is 8 bytes under the 0x47840
   // upper bound docs/recovery/class-size-bounds.csv derives from the next
   // constructed global, so this is the last member and BaseWin ends here.

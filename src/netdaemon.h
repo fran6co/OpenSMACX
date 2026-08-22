@@ -119,7 +119,7 @@ int __fastcall net_daemon_receive_redirect(NetDaemon *self, void *);
 // 0x00939284, both read by unlock_veh. src/game.cpp binds the same two
 // addresses as IsMultiplayerNet / LocalFaction, but that translation unit is
 // not linked into recovery-leaf-tests, so NetDaemon owns its own rebindable
-// pair the way src/spying_recovery.cpp owns SpyingCurrentFaction for the very
+// pair the way src/spying.cpp owns SpyingCurrentFaction for the very
 // same faction address.
 extern int NetDaemonIsMultiplayerNet;
 extern int NetDaemonLocalFaction;

@@ -15,6 +15,5 @@ static const size_t SpyingFactionStride = 0x59C;
 
 int __cdecl spying(int subject);
 
-// Runtime-oracle suite for the spying check; registered in
-// src/runtime_oracle.cpp.
+// Runtime-oracle suite for the spying check; defined in src/spying.cpp.
 bool run_spying_oracle_suite();

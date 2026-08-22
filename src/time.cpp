@@ -583,8 +583,8 @@ Purpose: Count one more user of the timer class.
 // calls     (none)
 //
 // THE BODY WAS ALREADY HERE and carried no marker, so the catalogue only knew
-// it through `src/unrecovered/00616880.cpp` - an artifact the build does not
-// compile. That is a third shape of the same defect: not a missing body, a
+// it through `src/unrecovered/00616880.cpp` - a since-deleted artifact the
+// build never compiled. That is a third shape of the same defect: not a missing body, a
 // missing CLAIM on a body that was always in the tree.
 Return Value: 0, always
 Status: Complete
