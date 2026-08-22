@@ -188,6 +188,10 @@ Purpose: Determine if the overall dominant human faction is a minor threat based
 //        at 37/43, no change. Remaining divergence is `test al,dl` vs
 //        `test dl,al` (is_human's bit test, register/operand-order only) and
 //        the mov+lea fold itself - not chased per the no-register-only rule.
+//        TRIED (2026-08-22): swapping is_human's own source operand order
+//        (`(1<<faction_id) & FactionsStatus[0]` instead of the reverse) in
+//        faction.h - the compiler canonicalises the AND back to the same
+//        `test dl,al` regardless; ties at 37/43, no change, reverted.
 // size      130 bytes
 // prototype BOOL (__cdecl ?great_beelzebub@@YAHHH@Z)(int factionID, int tgl)
 // callers   2   call targets   0
@@ -763,6 +767,17 @@ void __cdecl scan_prototypes(int faction_id, int faction_id_with) {
 /*
 Purpose: Set or unset the diplomatic treaty for the specified faction with another faction.
 // ORIGINAL: 0x0055BB30 ?set_treaty@@YAXHHHH@Z 0x0055BB30-0x0055BB98
+// LEVER: naming the diplo_treaties element's address in a local
+//            `uint32_t *treaty_slot` and reaching diplo_merc through it via
+//            `(char *)treaty_slot + (offsetof(diplo_merc)-offsetof(diplo_treaties))`
+//            moved 15/36 -> 27/36 agreeing (0.933 similar) over the un-named
+//            `&PlayersData[...].diplo_treaties[...]` spelling, which ties the
+//            original 15/36. Remaining divergence: the image's `set`-branch
+//            materialises the index as a byte offset via one `shl eax,2` and
+//            reuses plain `[eax+base]` addressing for the load/store/second
+//            field; this tree's /O2 always folds `*4` into `[eax*4+base]`
+//            scaled addressing instead, and the `else` branch RMW does not
+//            fold to the image's single `and dword ptr [mem], reg`.
 // TRIED: pointer to diplo_treaties field (shared or per-branch); local index var;
 //            unsigned cast on index; explicit RMW temp; if-condition hoisted before the |=.
 //            Set branch: image computes the index via explicit `shl eax,2` then reuses
@@ -786,9 +801,11 @@ Status: Complete
 */
 void __cdecl set_treaty(int faction_id, int faction_id_with, int treaty, BOOL set) {
     if (set) {
-        PlayersData[faction_id].diplo_treaties[faction_id_with] |= treaty;
+        uint32_t *treaty_slot = &PlayersData[faction_id].diplo_treaties[faction_id_with];
+        *treaty_slot |= treaty;
         if (treaty & DTREATY_UNK_40) {
-            PlayersData[faction_id].diplo_merc[faction_id_with] = 50;
+            *(int *)((char *)treaty_slot
+                     + (offsetof(PlayerData, diplo_merc) - offsetof(PlayerData, diplo_treaties))) = 50;
         }
     } else {
         PlayersData[faction_id].diplo_treaties[faction_id_with] &= ~treaty;
