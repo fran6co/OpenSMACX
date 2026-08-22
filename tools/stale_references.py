@@ -8,8 +8,20 @@ told every reader NOT to edit them in the only way they could be edited. An
 instruction that cannot be followed is worse than no instruction: it reads as
 authoritative.
 
-This checks every `tools/...py` path mentioned in `src/` and `docs/` and fails
-if it is not there. Wire it into whatever runs before a batch.
+This checks every `tools/...` path mentioned in `src/`, `docs/` and
+`.claude/agents/` and fails if it is not there. Wire it into whatever runs
+before a batch.
+
+`.claude/agents/` WAS THE HOLE, and it hid the worst instance of exactly this
+defect. The roots were a hand-written list of two, so a subagent's system
+prompt - read by every agent on every dispatch - went months naming FOUR tools
+that had been deleted (`verify_recovered_function.py`, `decomp_status.py`,
+`agent_brief.py`, `disasm.py`) and describing a scaffold workflow the tree has
+zero markers left of. Found by hand on 2026-08-22; a check that scanned prose
+for humans but not prose for agents could never have found it.
+
+`.sh` counts too: `tools/agent_setup.sh` is the first command a dispatched
+agent runs, and matching only `.py` would not have noticed it going missing.
 
     uv run tools/stale_references.py
 
@@ -23,7 +35,7 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-MENTION = re.compile(r"\btools/[a-z0-9_]+\.py\b")
+MENTION = re.compile(r"\btools/[a-z0-9_]+\.(?:py|sh)\b")
 # A mention is IMPERATIVE when its line tells the reader to do something with
 # the tool. That distinction is the whole point: `docs/RETIRED_ROUTES.md`
 # naming a retired tool is correct and must not fail this check, while
@@ -50,7 +62,8 @@ if __name__ == "__main__":
     # which tool produced them, which is history and stays true even after the
     # tool is retired. 3,500 of those buried the nine hand-written INSTRUCTIONS
     # that were the real defect. Only live source and docs are checked.
-    roots = [REPO_ROOT / "src", REPO_ROOT / "docs"]
+    roots = [REPO_ROOT / "src", REPO_ROOT / "docs",
+             REPO_ROOT / ".claude" / "agents"]
     archived = (REPO_ROOT / "src" / "recovered", REPO_ROOT / "src" / "unrecovered")
     missing: dict[str, set] = {}
     mentioned: dict[str, set] = {}
