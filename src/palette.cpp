@@ -656,14 +656,15 @@ Palette::Palette() {
 
 /*
 Purpose: Restart the timer of the colour-cycling slot that owns `key`.
-// ORIGINAL: 0x005FE8B0 ?start_cycle@Palette@@QAEHH@Z 0x005FE8B0-0x005FE8FB
+// ORIGINAL: 0x005FE8B0 ?start_cycle@Palette@@QAEHH@Z 0x005FE8B0-0x005FE8FB BYTE_EXACT
+// LEVER: two separate early-exit `if`s, not one chained `key==held || held==-1` - a single OR condition made VC6 peel the loop's first read outside it and rotate the test to the bottom (30 compiled instructions against the image's 27). Two `if`s with the SAME break target reproduces the image's two distinct `je`s off one `mov edx,[esi]`. Also needed a `while (slot < 5)` in place of `do { ... } while (slot < 5)` - the do-while form still peeled even with the two-if split - and `slot` declared BEFORE `entry` (not after): the image's `xor eax,eax` precedes its `lea esi,[ecx+0x404]`, and declaration order is store order here.
 // size      75 bytes
 // prototype int (__thiscall ?start_cycle@Palette@@QAEHH@Z)(Palette* this, int)
 // callers   1   call targets   1
 // kind      game
 // calls     0x00616650
 Return Value: No errors (0); no slot holds that key (0xB)
-Status: Semantics transcribed from the image
+Status: Complete
 
 PROMOTED FROM src/recovered/units/005fe8b0.cpp, which reached the slots
 through `reinterpret_cast<CycleEntry *>(self + 0x404)`.
@@ -681,18 +682,25 @@ int Palette::start_cycle(int key) {
     // address from the INDEX afterwards - `shl eax, 4; add eax, ecx`.
     // Indexing in the loop lets VC6 peel the first iteration and rotate the
     // test to the bottom, which is a different shape entirely.
-    const PaletteInternal *entry = internal_;
     int slot = 0;
-    do {
+    const PaletteInternal *entry = internal_;
+    while (slot < 5) {
         // Read once, compared twice: `mov edx, [esi]` then two `cmp`s
-        // against the register, not two memory compares.
+        // against the register, not two memory compares. TWO SEPARATE
+        // `if`s, not one chained `||` - the image jumps to the same target
+        // from two distinct `je`s, which is what two early-exit `if`s
+        // produce; a single OR condition made VC6 peel the first read
+        // outside the loop and rotate the test to the bottom instead.
         const int held = static_cast<int>(entry->key);
-        if (key == held || held == -1) {
+        if (key == held) {
+            break;
+        }
+        if (held == -1) {
             break;
         }
         ++slot;
         ++entry;
-    } while (slot < 5);
+    }
     if (static_cast<int>(internal_[slot].key) != key) {
         return 0xB;
     }

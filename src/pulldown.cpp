@@ -241,7 +241,13 @@ Purpose: Destroy a PullDown by releasing every item's text pair, resetting
          the trailing fields from their global defaults, and delegating to
          the GraphicWin destructor.
 // ORIGINAL: 0x005F88A0 ??1PullDown@@QAE@XZ 0x005F88A0-0x005F891B
-// symbol    ?destroy@PullDown@@QAEXXZ
+// symbol    ?destroy@PullDown@@QAEPAV1@XZ
+// LEVER: void trailing-call tail-jmps every time (VC6 always sibling-calls
+//          a trailing call needing no stack cleanup, verified in isolation
+//          even for a compiler-generated base-dtor call); returning `this`
+//          (matching BaseButton::destroy/Scroll::destroy) forces a real
+//          call+epilogue and mirrors the image's `call 0x5d4dd0` / pop* /
+//          ret shape instead of pop* / jmp.
 // size      123 bytes
 // prototype void (__thiscall ??1PullDown@@QAE@XZ)(PullDown* this)
 // callers   27   call targets   2
@@ -253,7 +259,7 @@ Verification note: the two virtual-table stores are dead - the GraphicWin
 delegation unconditionally overwrites both slots with its own tables - so
 they mirror the original's transient writes and no suite can observe them.
 */
-void PullDown::destroy() {
+PullDown *PullDown::destroy() {
     // 0x000 and 0x444 are the Win and Buffer vtable slots GraphicWin
     // installs; they are compiler-managed, not ordinary members, so they
     // stay at their raw offset. They are also dead stores here - the
@@ -280,6 +286,7 @@ void PullDown::destroy() {
     field_F3C_ = PullDownFieldF3CDefault;
     graphic_win_destructor_redirect(
         reinterpret_cast<GraphicWin *>(this), nullptr);
+    return this;
 }
 
 PullDown *__fastcall pull_down_destructor_redirect(PullDown *self, void *) {

@@ -166,7 +166,7 @@ void Spot::kill_specific(int position, int type) {
 
 /*
 Purpose: Remove all spots of a specific type.
-// ORIGINAL: 0x005FAA90 ?kill_type@Spot@@QAEXH@Z 0x005FAA90-0x005FAAFD
+// ORIGINAL: 0x005FAA90 ?kill_type@Spot@@QAEXH@Z 0x005FAA90-0x005FAAFD BYTE_EXACT
 // size      109 bytes
 // prototype void (__thiscall ?kill_type@Spot@@QAEXH@Z)(Spot* this, int type)
 // callers   25   call targets   0
@@ -177,9 +177,14 @@ Return Value: n/a
 Status: Complete
 */
 void Spot::kill_type(int type) {
-    for (int i = add_count_ - 1; i >= 0; i--) {
+    for (int i = static_cast<int>(add_count_) - 1; i >= 0; i--) {
         if (spots_[i].type == type) {
-            kill_pos(i);
+            if (i >= 0 && i < static_cast<int>(add_count_)) {
+                for (int j = i; j < static_cast<int>(add_count_) - 1; j++) {
+                    spots_[j] = spots_[j + 1];
+                }
+                add_count_--;
+            }
         }
     }
 }
