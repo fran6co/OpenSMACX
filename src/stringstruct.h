@@ -77,7 +77,7 @@ void __fastcall string_struct_close_redirect(void *adjusted, void *);
 static const size_t StringStructDerivedCloseAdjustment = 0x28;
 extern const uint32_t StringStructDerivedVtable;
 extern const uint32_t StringStructDerivedVirtualBaseVtable;
-void __fastcall string_struct_derived_close_redirect(void *adjusted, void *);
+void __fastcall string_struct_derived_close_redirect(void *adjusted);
 int __fastcall string_struct_current_id_redirect(StringStruct *self, void *);
 int __fastcall string_struct_current_entry_redirect(StringStruct *self, void *);
 int __fastcall string_struct_next_entry_redirect(StringStruct *self, void *);

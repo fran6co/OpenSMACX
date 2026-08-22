@@ -52,9 +52,22 @@ Purpose: Initialize the class using the font name, height and style.
 //        to skip it, i.e. `if (!(is_fot_set_ & 1)) { close-teardown }
 //        else { simple }`, not the other way around. All three together:
 //        best similarity 0.958 (95/130), up from a WRONG CALLEE baseline.
-// RULED-OUT: residual gap is LOGFONT bitfield computation order
-//        (lfUnderline/lfItalic extraction, ascent_/height_/descent_ store
-//        order) - register-scheduling noise not chased further here.
+// LEVER: else-arm store order (height_ before line_height_, matching the
+//        if-arm and the constructor - see the comment at that assignment)
+//        took this 95/130 -> 97/130. Reordering `lf.lfWeight`/`lfItalic`/
+//        `lfUnderline` to the real Win32 LOGFONT struct declaration order
+//        (Escapement, Orientation, Weight, Italic, Underline - the source
+//        had Underline computed before Weight/Italic) matched the image's
+//        own bit-extraction order and took it to 110/130. Casting `style`
+//        to `unsigned` for the `>>1`/`>>2` bit extractions gets the image's
+//        `shr` where a plain `int style` compiles `sar` - 112/130.
+// RULED-OUT: the residual gap is the ascent_/internal_leading_/height_
+//        store order - the image defers internal_leading_'s store past
+//        ascent_'s despite reading it earlier. Caching `tm.tmAscent` in a
+//        local, and reordering the source statements to the image's own
+//        store sequence, both compile to the identical 112/130: this is
+//        the optimizer's instruction scheduling, not a source-shape choice
+//        reachable from here.
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -86,8 +99,11 @@ int Font::init(LPCSTR font_name, int height, int style) {
             fot_file_name_ = 0;
         }
     } else {
-        line_height_ = 0;
+        // IMAGE ORDER: height_ before line_height_, same as the if-branch
+        // above - [esi+0x10] (height_) is stored before [esi+0xc]
+        // (line_height_) in the image.
         height_ = 0;
+        line_height_ = 0;
         ascent_ = 0;
         descent_ = 0;
         if (font_obj_) {
@@ -99,10 +115,13 @@ int Font::init(LPCSTR font_name, int height, int style) {
     lf.lfHeight = -height;
     lf.lfWidth = 0;
     lf.lfEscapement = 0;
-    lf.lfUnderline = (style >> 2) & 1;
     lf.lfOrientation = 0;
     lf.lfWeight = (style & 1) ? 700 : 0;
-    lf.lfItalic = (style >> 1) & 1;
+    // Unsigned shift: the image's `shr`, not `sar` - style's sign bit does
+    // not matter for a single-bit test, but VC6 picks the shift form from
+    // the operand's declared signedness, so the cast is what selects it.
+    lf.lfItalic = (static_cast<unsigned>(style) >> 1) & 1;
+    lf.lfUnderline = (static_cast<unsigned>(style) >> 2) & 1;
     lf.lfStrikeOut = 0;
     lf.lfCharSet = 0;
     lf.lfOutPrecision = 7;
@@ -121,6 +140,12 @@ int Font::init(LPCSTR font_name, int height, int style) {
     SelectObject(FontHDC, font_obj_);
     TEXTMETRIC tm;
     GetTextMetricsA(FontHDC, &tm);
+    // RULED-OUT: the image's remaining STORE order here - line_height_,
+    // ascent_, internal_leading_, height_ - defers internal_leading_'s
+    // store past ascent_'s even though it is read earlier. Both an
+    // `internal_leading_`-first source order and a reordered one matching
+    // the image's store sequence compile to the identical 112/130; this is
+    // the optimizer's own instruction scheduling, not a source-shape one.
     internal_leading_ = tm.tmInternalLeading;
     line_height_ = tm.tmHeight + tm.tmExternalLeading;
     ascent_ = tm.tmAscent;
