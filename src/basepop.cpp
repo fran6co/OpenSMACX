@@ -734,7 +734,7 @@ Purpose: Fetch one item's text from the embedded Dialogs at 0x21D0.
          Dialogs::item takes the Dialog's address from the EMBEDDING object's
          own vbtable rather than from where a Dialogs sits when it is
          most-derived, which is why this can hand it a subobject at all.
-// ORIGINAL: 0x00558FE0 ?item@BasePop@@QAEHPADH@Z 0x00558FE0-0x00558FFA BYTE_EXACT
+// ORIGINAL: 0x00558FE0 ?item@BasePop@@QAEHPADH@Z 0x00558FE0-0x00558FFA
 // size      26 bytes
 // prototype int (__thiscall ?item@BasePop@@QAEHPADH@Z)(BasePop* this, int8* lpString, int position)
 // callers   2   call targets   1
@@ -745,8 +745,12 @@ Return Value: whatever Dialogs::item returns
 Status: Complete
 */
 int BasePop::item(char *text, int index) {
+    // QUALIFIED: `Dialog::item` is virtual now (it is the virtual ListBox
+    // overrides, which is what earns ListBox its Dialog vtordisp), so an
+    // unqualified call here dispatches through the vtable where the image
+    // calls directly.
     return reinterpret_cast<Dialogs *>(
-        reinterpret_cast<uint8_t *>(this) + 0x21D0)->item(text, index);
+        reinterpret_cast<uint8_t *>(this) + 0x21D0)->Dialogs::item(text, index);
 }
 
 int __fastcall base_pop_item_redirect(BasePop *self, void *, char *text,

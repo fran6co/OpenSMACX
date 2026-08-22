@@ -105,7 +105,11 @@ class EditGroup : public virtual GraphicWin, public virtual Dialog {
   uint32_t limits_[10];
   uint8_t field_7C_[0x8];  // 0x7C
   uint32_t field_84_;  // 0x84
-  uint8_t field_88_[0x4];  // 0x88
+  // 0x88. Dialogs dispatches on this - at 0xF8 + 0x88 == 0x180, which that
+  // header called `kind_` while it could not name the base it belongs to.
+ protected:
+  int32_t kind_;  // 0x88
+ private:
   // GraphicWin and Dialog are VIRTUAL BASES, appended by the compiler.
 };
 

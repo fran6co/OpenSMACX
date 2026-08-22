@@ -1588,7 +1588,7 @@ Purpose: Add one fixed item to the Dialogs at 0x21d0.
          which is the sort of thing that gets "tidied" to 2 or 0 by someone
          reading quickly.
 
-// ORIGINAL: 0x0059D230 sub_59d230 0x0059D230-0x0059D243 BYTE_EXACT
+// ORIGINAL: 0x0059D230 sub_59d230 0x0059D230-0x0059D243
 // symbol    ?leaf_0059d230_redirect@@YIHPAX0@Z
 // size      19 bytes
 // prototype 
@@ -1602,7 +1602,9 @@ Status: Complete
 int __fastcall leaf_0059d230_redirect(void *self, void *) {
     Dialogs *const dialogs = reinterpret_cast<Dialogs *>(
         static_cast<uint8_t *>(self) + 0x21D0);
-    return dialogs->item(DialogsItemText6900C4, -2);
+    // QUALIFIED: Dialog::item is virtual, so the unqualified call dispatches
+    // through the vtable where the image calls 0x00612A70 directly.
+    return dialogs->Dialogs::item(DialogsItemText6900C4, -2);
 }
 
 /*

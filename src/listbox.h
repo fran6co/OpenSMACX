@@ -78,6 +78,24 @@
 // this header's own names for the two vtordisps, so it already knew what they
 // were - the compiler emits the GraphicWin one, because this class overrides
 // GraphicWin's on_dialog_focus and on_mouse_leave.
+// TRIED: `close()` and `item()` as the Dialog virtual that earns this class's
+//   Dialog vtordisp. BOTH ARE REFUTED BY THE IMAGE, on the same test: a body
+//   entered on a subobject opens by adjusting `this` back by that subobject's
+//   offset, and neither does. ListBox::item (0x0060C920) opens
+//   `push ebx / mov esi, ecx`, Dialogs::item (0x00612A70) opens `mov eax, ecx`,
+//   ListBox::close and CheckBox::close likewise - all unadjusted receivers.
+//
+//   THE VTORDISP ITSELF IS NOT IN DOUBT. FileWin's constructor writes
+//   `mov dword ptr [esi + 0x33c0], ebx` at 0x006138E4, and its ListBox starts
+//   at 0x286C, so this class is 0xB54 - four more than the 0xB50 it measures
+//   with only the GraphicWin displacement. Datalink and MessageWin embed one
+//   too and agree.
+//
+//   So the slot is proven and WHICH of ListBox's ~40 methods fills it is not.
+//   Only four of them are recovered and just one enters adjusted, on GraphicWin.
+//   `Dialog::item` is declared virtual here because it produces the proven
+//   layout, NOT because the image says it is the override - and the price is
+//   the two forwarders below.
 class ListBox : public virtual GraphicWin, public virtual Dialog {
  public:
   // 0x0060C6A0, a pending_bodies forwarder.
