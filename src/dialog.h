@@ -90,7 +90,7 @@ class Dialog {
   // destructors it emits none, with a plain virtual override it emits one per
   // base. RadioButton::close() has the same `void ()` signature and so
   // overrides this.
-  uint32_t close();
+  void close();
 
  public:
   // Static default shared by every dialog; __cdecl in the original.
