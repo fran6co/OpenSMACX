@@ -475,6 +475,15 @@ Purpose: Set the signed scrollbar range and redraw it at the lower endpoint.
 //   tail with the inline read_volatile_bits/original_slot<func_noarg_virtual>
 //   dispatch 0x00605A10 uses - 15/24 to 17/24 agreeing (best flags /Ob0).
 //   The swap defect above is the remaining structural cause.
+// TRIED: at /Ob0 the named `swap()` call now DOES resolve to 0x628A50 up to
+//   instruction 16 - the earlier note is stale - but /Ob0 also stops
+//   `read_volatile_bits`/`original_slot` from inlining, so the vtable
+//   dispatch tail becomes two real out-of-line calls instead of the image's
+//   `mov eax,[esi]; call [eax+0xf8]`. Marking `read_volatile_bits`
+//   `__forceinline` did not change this - VC6 12.00.8168 lets /Ob0 win over
+//   `__forceinline` too, so no flag set inlines the tail while leaving
+//   `swap` a real call. 17/24 (0.815 similar) is the ceiling under every
+//   flag combination tried.
 // symbol    ?set_range@Scroll@@QAEIHH@Z
 // size      93 bytes
 // prototype void (__thiscall ?set_range@Scroll@@QAEXHH@Z)(Scroll* this, int, int)
@@ -536,13 +545,8 @@ uint32_t Scroll::set_button_color(int color) {
 
 /*
 Purpose: Set the bevel thickness shared by the scrollbar and both end buttons.
-// ORIGINAL: 0x00605A50 ?set_bevel_thickness@Scroll@@QAEXH@Z 0x00605A50-0x00605A8D
-// LEVER: replaced both redraw_from_vtable(__asm helper) calls with the
-//   inline read_volatile_bits/original_slot<func_noarg_virtual> dispatch
-//   0x00605A10 already uses - 4/14 to 7/14 agreeing. First dispatch now
-//   matches the image's single `call dword ptr [reg+0xf8]`; the second still
-//   schedules as `mov eax,[obj]; mov eax,[eax+0xf8]; call eax` - the same
-//   residual 0x00605A10's own TRIED note already gives up on.
+// ORIGINAL: 0x00605A50 ?set_bevel_thickness@Scroll@@QAEXH@Z 0x00605A50-0x00605A8D SEMANTIC
+// LEVER: replaced both redraw_from_vtable(__asm helper) calls with the inline read_volatile_bits/original_slot<func_noarg_virtual> dispatch 0x00605A10 already uses - 4/14 to 7/14 agreeing. First dispatch now matches the image's single `call dword ptr [reg+0xf8]`; the second still schedules as `mov eax,[obj]; mov eax,[eax+0xf8]; call eax` - the same residual 0x00605A10's own TRIED note already gives up on.
 // symbol    ?set_bevel_thickness@Scroll@@QAEIH@Z
 // size      61 bytes
 // prototype void (__thiscall ?set_bevel_thickness@Scroll@@QAEXH@Z)(Scroll* this, int)
@@ -556,20 +560,19 @@ Status: Complete
 */
 uint32_t Scroll::set_bevel_thickness(int thickness) {
     const uint32_t value = static_cast<uint32_t>(thickness);
-    bevel_thickness_ = value;
+    *reinterpret_cast<volatile uint32_t *>(&bevel_thickness_) = value;
     flat_button_left_.bevel_thickness_ = value;
     flat_button_right_.bevel_thickness_ = value;
     (ORIGINAL(&flat_button_left_)->*original_slot<func_noarg_virtual>(
         reinterpret_cast<const uint8_t *>(read_volatile_bits(&flat_button_left_, 0)) + 0xF8))();
-    return (ORIGINAL(&flat_button_right_)->*original_slot<func_noarg_virtual>(
-        reinterpret_cast<const uint8_t *>(read_volatile_bits(&flat_button_right_, 0)) + 0xF8))();
+    return (ORIGINAL(&flat_button_right_)->*vtable_method<func_noarg_virtual>(
+        &flat_button_right_, 0xF8))();
 }
 
 /*
 Purpose: Set the upper bevel color shared by the scrollbar and both end buttons.
-// ORIGINAL: 0x00605A90 ?set_bevel_upper@Scroll@@QAEXH@Z 0x00605A90-0x00605ACD
-// LEVER: same substitution as 0x00605A50 - 4/14 to 7/14 agreeing, same
-//   second-call residual.
+// ORIGINAL: 0x00605A90 ?set_bevel_upper@Scroll@@QAEXH@Z 0x00605A90-0x00605ACD SEMANTIC
+// LEVER: same substitution as 0x00605A50 - 4/14 to 7/14 agreeing, same second-call residual.
 // symbol    ?set_bevel_upper@Scroll@@QAEIH@Z
 // size      61 bytes
 // prototype void (__thiscall ?set_bevel_upper@Scroll@@QAEXH@Z)(Scroll* this, int)
@@ -583,20 +586,19 @@ Status: Complete
 */
 uint32_t Scroll::set_bevel_upper(int color) {
     const uint32_t value = static_cast<uint32_t>(color);
-    bevel_upper_ = value;
+    *reinterpret_cast<volatile uint32_t *>(&bevel_upper_) = value;
     flat_button_left_.bevel_upper_ = value;
     flat_button_right_.bevel_upper_ = value;
     (ORIGINAL(&flat_button_left_)->*original_slot<func_noarg_virtual>(
         reinterpret_cast<const uint8_t *>(read_volatile_bits(&flat_button_left_, 0)) + 0xF8))();
-    return (ORIGINAL(&flat_button_right_)->*original_slot<func_noarg_virtual>(
-        reinterpret_cast<const uint8_t *>(read_volatile_bits(&flat_button_right_, 0)) + 0xF8))();
+    return (ORIGINAL(&flat_button_right_)->*vtable_method<func_noarg_virtual>(
+        &flat_button_right_, 0xF8))();
 }
 
 /*
 Purpose: Set the lower bevel color shared by the scrollbar and both end buttons.
-// ORIGINAL: 0x00605AD0 ?set_bevel_lower@Scroll@@QAEXH@Z 0x00605AD0-0x00605B0D
-// LEVER: same substitution as 0x00605A50 - 4/14 to 7/14 agreeing, same
-//   second-call residual.
+// ORIGINAL: 0x00605AD0 ?set_bevel_lower@Scroll@@QAEXH@Z 0x00605AD0-0x00605B0D SEMANTIC
+// LEVER: same substitution as 0x00605A50 - 4/14 to 7/14 agreeing, same second-call residual.
 // symbol    ?set_bevel_lower@Scroll@@QAEIH@Z
 // size      61 bytes
 // prototype void (__thiscall ?set_bevel_lower@Scroll@@QAEXH@Z)(Scroll* this, int)
@@ -610,13 +612,13 @@ Status: Complete
 */
 uint32_t Scroll::set_bevel_lower(int color) {
     const uint32_t value = static_cast<uint32_t>(color);
-    bevel_lower_ = value;
+    *reinterpret_cast<volatile uint32_t *>(&bevel_lower_) = value;
     flat_button_left_.bevel_lower_ = value;
     flat_button_right_.bevel_lower_ = value;
     (ORIGINAL(&flat_button_left_)->*original_slot<func_noarg_virtual>(
         reinterpret_cast<const uint8_t *>(read_volatile_bits(&flat_button_left_, 0)) + 0xF8))();
-    return (ORIGINAL(&flat_button_right_)->*original_slot<func_noarg_virtual>(
-        reinterpret_cast<const uint8_t *>(read_volatile_bits(&flat_button_right_, 0)) + 0xF8))();
+    return (ORIGINAL(&flat_button_right_)->*vtable_method<func_noarg_virtual>(
+        &flat_button_right_, 0xF8))();
 }
 
 /*
@@ -671,6 +673,18 @@ Purpose: Set the border color and reset the scrollbar thumb rectangle.
 //   (not the `color` parameter) for the branch condition matches the image, which
 //   reloads from the just-stored field instead of keeping color live (1/22 -> 9/22).
 // TRIED: forcing the thickness read through a volatile cast, no further gain.
+// TRIED: `thumb->left = 1` re-spelled as `thumb->left + 1` (mirroring the
+//   already-matching `top`/`right`/`bottom` idiom, on the theory that the
+//   image's `inc edx` reuses the register the unconditional zero-init left
+//   at 0 rather than materialising a fresh literal) - WORSE, 9/22 -> 7/22
+//   and the compiled body grows from 21 to 23 instructions. Reverted.
+// TRIED: hoisting the RECT zero-init through a named `const uint32_t zero`
+//   local, on the theory that a value with no dependency on the
+//   `border_color_` store would let VC6 schedule the `xor edx, edx` before
+//   it, matching the image's instruction 1. No effect - still 9/22, same
+//   schedule. Reverted. The `xor edx, edx` vs its later position is the
+//   remaining divergence and is pure instruction scheduling, not source
+//   shape.
 // size      100 bytes
 // prototype void (__thiscall ?set_border_color@Scroll@@QAEXH@Z)(Scroll* this, int)
 // callers   1   call targets   0

@@ -540,14 +540,17 @@ Purpose: Decode a PCX image out of memory into this buffer, then install the
 // (6-25/374 instructions across the flag sets), and the divergence is not
 // one small edit: the frame is 0x100 against the image's 0xfc, `this` and
 // `data` swap registers throughout (esi/edi/ebx allocated differently from
-// the first instruction on), and the image OPEN-CODES the palette tail -
-// `Palette::get_rgbquad` and `SetDIBColorTable` inline at 0x005E2A1C and
-// 0x005E2A7C - where this body calls the already-BYTE_EXACT
-// `sync_to_palette` (0x005DE8F0). Inlining that call is a real lever but a
-// larger change than this pass affords, and it would cost a standalone
-// BYTE_EXACT claim to chase a body that is still far off on register
-// allocation alone; the call graph is correct either way. Not chased
-// further here.
+// the first instruction on).
+// LEVER (measured, did not move the score): duplicated `sync_to_palette`'s
+// body inline here rather than calling it, since `osmx calls` shows the
+// image never reaches 0x005DE8F0 from this address - `Palette::get_rgbquad`
+// and `SetDIBColorTable` are open-coded at 0x005E2A1C and 0x005E2A7C. This
+// is the correct call graph (`sync_to_palette` itself stays BYTE_EXACT for
+// its 24 other callers), but similarity does not move on it - best measured
+// stays ~0.21-0.22 across flag sets - because the register-allocation
+// divergence starts at instruction 0, before any of the inlined code is
+// reached. Kept for call-graph fidelity; do not re-chase similarity from
+// this alone.
 // symbol    ?load_pcx@Buffer@@QAEHPAEKPAVPalette@@HH@Z
 // size      1127 bytes
 // prototype int (__thiscall ?load_pcx@Buffer@@QAEHPAEKPAVPalette@@HH@Z)(Buffer* this, unsigned int8*, unsigned int, Palette*, int, int)
@@ -688,7 +691,22 @@ int Buffer::load_pcx(BYTE *data, DWORD size, Palette *palette,
         return 0;
     }
     palette->set_from_dib(&dib_);
-    sync_to_palette(palette);
+    // sync_to_palette (0x005DE8F0, BYTE_EXACT elsewhere) is OPEN-CODED here
+    // by the image - Palette::get_rgbquad at 0x005E2A1C and SetDIBColorTable
+    // through [0x006690B4] at 0x005E2A7C are both emitted inline rather than
+    // called through the standalone function - so the body is duplicated
+    // rather than called.
+    if (palette_seed_ != palette->seed_) {
+        palette_seed_ = palette->seed_;
+        RGBQUAD *const table = dib_.bmiColors;
+        palette->get_rgbquad(table, 0, 0x100);
+        if (get_hdc() != nullptr) {
+            SetDIBColorTable(hdc2_, 0, 0x100, table);
+            release_hdc(1);
+        }
+    }
+    has_palette_ = 1;
+    palette_ = palette;
     return 0;
 }
 
