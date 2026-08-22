@@ -850,8 +850,8 @@ extern int BaseAtKeyPollFlag;  // 0x009BC070
 // would move it. ALL THREE CLAIMS WERE WRONG, and they were wrong because the
 // executable was being launched incorrectly, not because of anything here.
 //
-// Run the way docs/TOOLS.md documents - the project's own wine prefix, inside
-// a wine virtual desktop, from `.opensmacx/game` - BOTH the shipped image and
+// Run with the project's own wine prefix, inside a wine virtual desktop, from
+// `.opensmacx/game` - BOTH the shipped image and
 // this build run with zero page faults, repeatably:
 //
 //   cd .opensmacx/game

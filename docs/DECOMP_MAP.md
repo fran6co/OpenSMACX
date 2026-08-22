@@ -2,25 +2,21 @@
 
 The decompilation is tracked in exactly one place: the source tree. Every
 piece of the binary the project maps carries an annotation in a `.cpp` file
-naming the bytes it claims, and one tool asks the original compiler what
+naming the bytes it claims, and one command asks the original compiler what
 state each piece is in.
 
-**As of 2026-08-12 that is literally true.** `functions.csv` and
-`callgraph.json` are deleted. Every annotation carries its own `name`, `size`,
-`spans`, `prototype`, `callers`, `kind`, `flags`, direct `calls` and `indirect`
-call sites, stamped by `tools/project_catalogue.py` and read back by
-`emit.load_functions()`. The IDA database remains the SEED - it is the only
-thing that can produce these facts in the first place, since the image carries
-no symbols - but it is no longer a runtime dependency, and
-`export_recovery_inventory.py` regenerates an export on demand for
-`project_catalogue.py --check` to compare against.
+Every annotation carries its own `name`, `size`, `spans`, `prototype`,
+`callers`, `kind`, `flags`, direct `calls` and `indirect` call sites. The IDA
+database was the SEED - the only thing that could produce these facts in the
+first place, since the image carries no symbols - and each fact now travels
+with the annotation that needs it, so nothing else has to be consulted to
+read the map.
 
-Tool: `tools/decomp_status.py` (reader: `tools/annotation_scan.py`).
-Offline tests: `tools/test_annotation_scan.py`,
-`tools/test_decomp_status.py`. Measured 2026-08-09: 4,095 implemented
-pieces, 1,488 placeholders, 376 exclusions — 5,958 of 6,000 catalogue rows
-mapped; the remaining 42 are `source_complete` rows the scan cannot locate
-and a human must place.
+Reader: the `decomp` package (`uv sync` installs it editable, so
+`from decomp import read` works anywhere). Driver: `tools/osmx.py`, the
+command line over it. Offline tests: `uv run pytest decomp/tests` - the
+parse, the read -> write -> read loop over every annotated file, and what
+each module may import.
 
 ## The grammar
 
@@ -49,8 +45,8 @@ A `// symbol` line names the symbol THIS TREE'S compiler emits, measured
 from the object rather than guessed, and its value is a single token — the
 key alone cannot be trusted, because `src/` carries 2,037 prose lines that
 begin `// symbol ` and every one of them is a sentence. 1,543 were written
-on 2026-08-19 for the records the build compiles. **`decomp` reads this
-fact; `tools/` does not yet**, and an annotation without one is simply a
+on 2026-08-19 for the records the build compiles. Every reader goes through
+`decomp`, which reads this fact, and an annotation without one is simply a
 piece whose emitted name is its `name`.
 
 ```
@@ -109,150 +105,81 @@ measured, not claimed".** A `LEVER` is already covered by the ratchet: the body
 must keep reproducing. A `TRIED` fails the moment its body *does* match, so
 a wall cannot quietly outlive its reason — it must be promoted to a `LEVER` with
 its fingerprint, or deleted. There is deliberately **no `WALL:` token**: a wall
-is `EXCLUDED S<n>` with a population `measure_exclusions.py --check` re-derives,
+is `EXCLUDED S<n>` with its ground in docs/EXCLUSIONS.md,
 or it is a long `TRIED` list, and nothing in between. One marker carrying
 both "I stopped" and "nobody should try" is the trap that got a `static_assert`
 migration reverted.
 
-`--check` enforces three things, all offline and ahead of every early return, so
-a checkout with no VC6 still applies them: **state** (`TRIED` on a proved
-body, or `LEVER` on an unproved one), **placement** (`TRIED` on a
-placeholder — you cannot rule a spelling out of a body that does not exist), and
-**syntax** (`LEVER:` with no fingerprint, which is a lesson nothing can group).
-
-That placement rule has a deliberate consequence: an agent whose attempt does
-not match must LAND it under `src/unrecovered/<addr>.cpp` before it can record
-what it tried. Today such a run leaves nothing behind and the next agent starts
-from zero.
+No automated check enforces LEVER/TRIED placement today; the rule lives here
+and in the worker prompt. The convention that does the work: an agent whose
+attempt does not match writes what it tried under the body's own marker in
+`src/`, so the next attempt starts from what failed instead of from zero.
 
 `// EXTERN-SYMBOL LEVER:` is a different, older convention that appears inside
 recovered bodies; the anchored grammar above does not read it.
 
 **State is measured, not claimed.** The only declared state is EXCLUDED,
-because exclusion is a decision. Everything else is derived: a region that
-still holds the `// BODY GOES HERE.` sentinel with nothing but the
-emitter's own residue after it (comments, the closing brace, the
-PLACEHOLDER-tagged return) is a **placeholder**; anything else is
-**implemented** and goes to the compiler. A file that claims a match in a
-comment and does not hold one in bytes is not a match.
+because exclusion is a decision. Everything else is derived: a record whose
+region holds no body at all is **NO_BODY** in `osmx status`; anything with a
+body is **implemented** and goes to the compiler. A file that claims a match in
+a comment and does not hold one in bytes is not a match.
 
 Prose stays as ordinary comments around the marker; the parser keys only on
 the marker line. Layout is free: one function per file or many per file,
 anywhere under `src/` — the scanner is decoupled from organisation by
-construction, and a placeholder may move to its permanent home once the
-body is written.
+construction.
 
-## Placeholders
+## Working copies
 
-One file per undecompiled function under `src/unrecovered/<addr>.cpp`,
-generated by the tool and stamped with the catalogue's facts so the file
-speaks for itself:
-
-```cpp
-// ORIGINAL: 0x00405C20 FILE
-// placeholder - not yet decompiled
-// name      ?bar@@YAXXZ
-// size      128 bytes
-// spans     0x00405C20-0x00405CA0
-// prototype void __cdecl bar(void)
-// callers   12   call targets   3
-// To start: tools/decomp_status.py --work 0x00405C20
-
-// BODY GOES HERE.
-```
-
-Excluded rows get files the same way, carrying their ground instead of a
-sentinel. The directory is not in `OPENSMACX_SOURCES` (a hand list) and
-never reaches the DLL build.
-
-The decompile loop: `--work <addr>` materialises the emitted scaffold over
-the placeholder, keeping the marker and the sentinel; the state stays
-placeholder (measured) until a real body replaces it; then
-`tools/decomp_status.py <file>` compiles it with VC6 and reports the tier.
+`src/unrecovered/` holds working-copy units materialised by the retired
+scaffold route; they are verification artifacts, not product source, and are
+not build inputs. New work happens IN PLACE: the worker edits the body under
+its own marker in the `src/` file that claims it.
+`uv run tools/osmx.py show <addr> --in unrecovered` still reads an old copy
+when it is the best starting point.
 
 ## The status tool
 
 ```
-tools/decomp_status.py                     full map: states, drift, verdicts
-tools/decomp_status.py --state-only        the map alone; no VC6 needed
-tools/decomp_status.py src/stringstruct.cpp
-tools/decomp_status.py --addresses 0x401640,0x402530
-tools/decomp_status.py --generate-placeholders
-tools/decomp_status.py --work 0x00405C20
-tools/decomp_status.py --gaps              image bytes in no catalogued span
-tools/decomp_status.py --no-cache --verbose --json
+uv run tools/osmx.py status            # every population, reachable or not
+uv run tools/osmx.py show <addr|name>  # annotation + shipped disassembly
+uv run tools/osmx.py calls <addr>      # call sites in image order
+uv run tools/osmx.py measure <addr | --body F | --dir D>   # exit 0 only BYTE_EXACT
+uv run tools/osmx.py record <addrs...> # measure AND stamp annotations
+uv run tools/osmx.py semantic <addr> [--withdraw]          # equivalence claim
+uv run tools/osmx.py configure         # regenerate the build database
 ```
 
-Measurement reuses the ratchet's machinery VERBATIM — census extractor and
-scaffolding for body mode, the writeback recipe for the proved store,
-`byte_match.match_functions` (batched response-file compiles, four flag
-sets, best-of, early exit on BYTE_EXACT) for the comparison. A cold pass
-over the whole tree is ~2 minutes; a content-hash cache
-(`.opensmacx/decomp-status-cache.json`, keyed on the BUILT unit) makes warm
-reruns seconds. Without VC6/Wine/the pinned executable the tool prints the
-reason, exits 0, and still reports the map and drift.
+Measurement goes through `decomp.asm`: the pinned image on one side, the
+record's unit compiled by VC6 on the other, several flag sets compared, and
+the best answer kept. `--dir` scores a whole directory of candidate bodies
+best-first in one pass. Without VC6, Wine, or the pinned image the commands
+print the reason instead of guessing.
 
-Verdicts merge into the ignored cache `.opensmacx/byte-match.csv` keyed
-by address: rows
-this run did not measure are preserved verbatim, and **a BYTE_EXACT row is
-never downgraded** — a failure to reproduce it is kept and printed as
-UNREPRODUCED, because that is either a tooling change or a lost scaffolding
-and both need a human.
+**THE RATCHET IS `osmx check`.** It reads the claims in `src/`, recompiles
+every one against the pinned image, links the tree, and fails by address and
+file if a claim stops reproducing. The floor is the number of claims, so
+there is no constant to bump: only `osmx record` writes the token, it stamps
+only what it measured, and nothing ever removes one but a deliberate source
+edit visible in the diff.
 
-**THE RATCHET IS `tools/decomp_status.py --check`**, and it reads the claims
-in `src/`, not the CSV. The floor is the number of claims, so there is no
-constant to bump: every piece a run proves gets `BYTE_EXACT` written onto its
-own annotation by `--record-matches`, and a claim that stops reproducing
-fails the check by address and file. The previous form compared two hardcoded
-totals against the ledger, and counted `0x0064F09C` - whose body had been
-reset to `// BODY GOES HERE.` after the proof - for months.
+## Drift
 
-## Drift, gaps, and the two populations
-
-The report names where map and catalogue disagree: implemented pieces whose
-catalogue row still says unrecovered, `source_complete` rows with no
-annotation, annotations the catalogue does not know, stale
-`source_locations`, duplicate addresses. Drift is reported, never failed
-on — it is the worklist for inverting the truth direction.
-
-`--gaps` measures the image bytes no catalogued span covers (padding,
-switch tables, funclet edges): the map claims completeness, and that claim
-stays a measurement.
-
-Generated thunk files (`init_thunks.cpp`, `atexit_thunks.cpp`, the rest of
-`byte_match_census.GENERATED_FILES`) are reported in a separate block from
-hand-written bodies and never totalled with them — the census rule, carried
-over.
+There is no second catalogue left to drift against: the annotations ARE the
+map, so drift is checked by re-measurement rather than by comparison with an
+export. `osmx status` reports how many records the build can compile today;
+records in non-build directories are counted separately, and an address
+claimed by both product source and a leftover artifact is what
+`tools/orphan_artifacts.py` exists to catch.
 
 ## Migration — done 2026-08-09
 
-The whole tree was migrated in one guarded pass
-(`tools/decomp_status.py --migrate --apply --rewrite-locations`, a flag
-that no longer exists — see below): 1,607
-files rewritten, every rewrite proven comment-only (code content
-identical) and address-set-preserving before anything was written; the
-full VC6 re-measurement preserved every ledger tier; the DLL rebuilt
-clean. The legacy spellings (`Original Offset:` blocks, the inline
-trailing and opening-brace forms, the two `src/recovered/` header
-styles) are still RECOGNISED read-only and flagged `deprecated`, but an
-offline test now pins the convergence invariant: no deprecated spelling
-may remain in `src/`, and the writers (`writeback.py`,
-`preserve_worked_units.py`) emit the marker on every new file.
-
-One rule the migration surfaced: `source_locations` is not the map — it
-is the SCORING ROUTE. A row with a location belongs to the census; a
-body under `src/recovered/` stays scoreable only while its row is
-unowned (`test_collect_ownership.py` pins this); a placeholder is a
-promise, not an implementation. Only an IMPLEMENTED annotation in
-product source may occupy the column.
-
-`--rewrite-locations` used to enforce that by writing the column back
-into `functions.csv`. That export is deleted, so the flag could only
-raise `FileNotFoundError`; it and `rewrite_source_locations` were
-removed on 2026-08-12. The column is now derived on READ, per row, by
-`project_catalogue.from_source()` — `annotation.location` when
-IMPLEMENTED, empty otherwise — so it cannot go stale between rewrites.
-What did not survive the move is the `src/recovered/` half of the rule:
-`from_source` applies no such filter, and 1,477 of the 6,000 rows carry
-a `src/recovered/` location today (measured). That is a live question
-about what the census scores, not a leftover of the deleted CSV.
+The whole tree was migrated in one guarded pass (a flag of the retired
+status tool): 1,607 files rewritten, every rewrite proven comment-only (code
+content identical) and address-set-preserving before anything was written;
+the full VC6 re-measurement preserved every tier; the build rebuilt clean.
+The legacy spellings (`Original Offset:` blocks, the inline trailing and
+opening-brace forms, the two `src/recovered/` header styles) are still
+RECOGNISED read-only and flagged `deprecated`, and the package's tests pin
+the convergence invariant: no deprecated spelling may remain in `src/`, and
+the writer emits the marker on every new file.

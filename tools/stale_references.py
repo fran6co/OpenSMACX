@@ -68,7 +68,7 @@ IMPERATIVE = re.compile(
 #
 # SCOPED TO A WINDOW AROUND THE MENTION, not the whole file. Matching file-wide
 # made the check unable to fail: a positive control - one fake
-# `uv run tools/definitely_not_a_real_tool.py` added to docs/TOOLS.md - was
+# `uv run tools/definitely_not_a_real_tool.py` added to a doc - was
 # waved through, because a retraction somewhere else in that file excused every
 # mention in it.
 # `(?:was|were|both) deleted` BELONGS HERE BY CONSTRUCTION. It was missing, and

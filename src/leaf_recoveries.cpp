@@ -240,8 +240,7 @@ Purpose: Follow a two-link chain, or return zero when the first link is unset.
          a body that works whenever the two happen to agree.
 
 // ORIGINAL: 0x005E3630 sub_5e3630 0x005E3630-0x005E3644 SEMANTIC
-// TRIED: 8 source shapes measured (docs/BYTE_MATCH_ROUTE.md:295-340),
-//            plateaus at MNEMONIC_ONLY 7/9; the image reuses eax across the
+// TRIED: 8 source shapes measured, plateaus at MNEMONIC_ONLY 7/9; the image reuses eax across the
 //            whole chase and every guard-clause / named-link / walking-
 //            pointer spelling still routes the middle link through ecx.
 // symbol    ?leaf_005e3630_redirect@@YIIPAX0@Z
@@ -260,7 +259,7 @@ uint32_t __fastcall leaf_005e3630_redirect(void *self, void *) {
     // guarded arm, so this spelling negates to `je` and the `== 0` spelling
     // negated to `jne`. What remains is a register-allocation difference the
     // original resolves by reusing eax across the pointer chase; seven source
-    // shapes were tried and none steers it (docs/BYTE_MATCH_ROUTE.md:295-340).
+    // shapes were tried and none steers it.
     if (*reinterpret_cast<const uint32_t *>(bytes + 0x8) != 0) {
         // ONE WALKING POINTER RATHER THAN TWO NAMED LINKS, which is the
         // eighth shape tried here and does not steer it either: VC6 still
