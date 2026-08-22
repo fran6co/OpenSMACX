@@ -160,6 +160,12 @@ Purpose: Release the loaded wave. The wrapped device, if there is one, is asked
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
 // indirect  0x004C6EAF 0x004C6EC6
+// RULED-OUT: reordering `field_40_ &= ...` ahead of the trailing vtable
+//   dispatch, and binding `this` into a named local first, both tried against
+//   the sole remaining divergence (`mov edx,[esi]`/`call [edx+0x80]` in the
+//   image vs this tree's `eax` for the same pointer) - neither changes the
+//   register VC6 picks. 22/24 instructions, 1.000 similar, MNEMONIC_ONLY;
+//   this is the ceiling found so far.
 Return Value: whatever the device's unload returned, or 0 when none was wrapped
 Status: Complete
 */
@@ -238,6 +244,13 @@ Purpose: Load a wave. The object's own vtable slot 0x88 does the loading; unless
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
 // indirect  0x004C6DC3 0x004C6DDA
+// RULED-OUT: the sole remaining divergence at best flags (/O2 /Gy /GR- /Oy-
+//   /GX, 24/26, 1.000 similar, MNEMONIC_ONLY) is `mov edx,[esi]`/
+//   `call [edx+0x8c]` in the image against this tree's `eax` for the same
+//   pointer - the same register-choice gap `Wave::unload` has on its own
+//   trailing `vtable_slot` dispatch, where reordering statements and binding
+//   `this` into a named local did not move it. Not re-tried here on that
+//   evidence.
 Return Value: slot 0x8C's result, or 0 when bit 2 of a2 skipped it
 Status: Complete
 */
@@ -303,16 +316,17 @@ Purpose: Report whether the wave is still sounding. A wrapped device answers
 // flags     sp_ready;purged_ok
 // calls     (none)
 // indirect  0x004C6B2B 0x004C6B4A
+// RULED-OUT: inverting the guard so the CLOCK path is the fall-through and
+//   the device dispatch is the merged tail - which is the shape the image's
+//   forward `jne` suggests - scores WORSE, 2 of 30 against the current 4 of
+//   30, and compiles 28 instructions against the image's 30. Spelling the
+//   flag test as `(flags_54_ >> 4) & 1` and returning a literal 1 instead of
+//   the ternary was part of the same attempt and did not rescue it. The
+//   branch-polarity lever is real elsewhere in this tree; it does not apply
+//   here.
 Return Value: nonzero while playing, 0 once finished or when not started
 Status: Complete
 */
-// RULED-OUT: inverting the guard so the CLOCK path is the fall-through and the
-// device dispatch is the merged tail - which is the shape the image's forward
-// `jne` suggests - scores WORSE, 2 of 30 against the current 4 of 30, and
-// compiles 28 instructions against the image's 30. Spelling the flag test as
-// `(flags_54_ >> 4) & 1` and returning a literal 1 instead of the ternary was
-// part of the same attempt and did not rescue it. The branch-polarity lever is
-// real elsewhere in this tree; it does not apply here.
 int Wave::is_playing() {
     // The device answers through its live vtable rather than a C++ virtual
     // call, and it is the receiver of that call - the original loads it into

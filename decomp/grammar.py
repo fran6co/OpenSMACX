@@ -62,8 +62,19 @@ EXCLUSION_TOKEN = re.compile(r"^\s*[§S]?\s*(?P<section>[0-9]+[a-z]?)")
 
 # --------------------------------------------------------- the lesson tokens
 
-LESSON_LEVER = re.compile(r"^\s*(?://|\*)?\s*LEVER:\s*(?P<key>\S+)\s+(?P<prose>.+?)\s*$")
-LESSON_RULED_OUT = re.compile(r"^\s*(?://|\*)?\s*RULED-OUT:\s*(?P<prose>.+?)\s*$")
+# THE PARENTHETICAL IS OPTIONAL AND IS PART OF THE TOKEN. People write
+# `RULED-OUT (still open):`, `LEVER (partial):`, `LEVER (2026-08-21):` - a
+# qualifier before the colon - and without `(?:\([^)]*\))?` here the line
+# matches NOTHING and the lesson is invisible: the body reads as untouched and
+# the next pass re-derives it. 15 such lines were sitting in five files when
+# this was found. The qualifier is captured into the prose so nothing is lost
+# when a lesson is rewritten.
+LESSON_LEVER = re.compile(
+    r"^\s*(?://|\*)?\s*LEVER\s*(?P<qualifier>\([^)]*\))?:\s*"
+    r"(?P<key>\S+)\s+(?P<prose>.+?)\s*$")
+LESSON_RULED_OUT = re.compile(
+    r"^\s*(?://|\*)?\s*RULED-OUT\s*(?P<qualifier>\([^)]*\))?:\s*"
+    r"(?P<prose>.+?)\s*$")
 LESSON_CONTINUED = re.compile(r"^\s*(?://|\*)\s{2,}(?P<prose>\S.*?)\s*$")
 # The third token, and the only one that BELONGS on a placeholder.
 LESSON_UNRECOVERABLE = re.compile(
