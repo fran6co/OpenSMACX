@@ -385,6 +385,7 @@ void Path::territory(int x, int y, int UNUSED(region), int faction_id) {
 /*
  Purpose: Populate the continent and path table for the specified tile and region.
 // ORIGINAL: 0x0059C520 ?continent@Path@@QAEXHHH@Z 0x0059C520-0x0059C781
+// RULED-OUT: a real out-of-line forwarder for `do_all_non_input`, the `sleep_call`/`base_cost_call` idiom, to answer this body making 5 calls where the image makes 4. MEASURED and REVERTED: it makes things worse in both directions at once. Agreement falls from 16/206 to 1/206, because changing the call target shifts everything after it; and call_diff goes from MORE (5 against 4) to FEWER (2 against 4) rather than agreeing, because it resolves callees by ADDRESS and a forwarder is a different address than the 0x005FCB20 the image calls. The idiom works where the forwarder IS the image's callee; here it cannot be.
 // size      609 bytes
 // prototype void (__thiscall ?continent@Path@@QAEXHHH@Z)(Path* this, int xCoord, int yCoord, int region)
 // callers   1   call targets   3
