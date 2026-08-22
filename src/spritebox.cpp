@@ -664,3 +664,99 @@ Purpose: Adjust the receiver from the thunk1 subobject back to SpriteBox and
 // kind      game
 Status: Complete
 */
+
+// THE LIST SpriteBox EMPTIES, and it is SpriteBox's alone. Measured across the
+// whole image: the two vtables this body installs, 0x0066943C and 0x00669438,
+// are referenced by exactly four functions - ??0SpriteBox, ??1SpriteBox,
+// sub_402bb0 (which is itself a slot in them), and this. Nothing else in
+// 2.5MB of .text touches either. So the class is private to this file.
+//
+// TWO VPTRS, ONE TABLE. 0x0066943C is 0x00669438 shifted by one slot, which is
+// the secondary-vptr-into-one-table arrangement multiple inheritance produces,
+// and this body is entered on the SECOND of them: `lea esi, [ecx - 0x28]`
+// walks back to the object's own start before storing the primary vtable, then
+// reaches the virtual base through the vbtable to store the other.
+//
+// THE NAME IS OURS. The image is stripped, so no mangled name is being matched
+// here - only bytes - and the artifact's `Obj611730` was as invented as this.
+//
+// NOT IN AN ANONYMOUS NAMESPACE, though it is file-private in spirit: VC6
+// mangles one by embedding the translation unit's ABSOLUTE PATH and a hash,
+// so the `// symbol` fact below would be machine-specific and would break on
+// any other checkout.
+class SpriteBoxList {
+ public:
+  void empty();
+};
+
+/*
+Purpose: Empty the polymorphic list - close every element through its own
+         vtable, then clear the head, count and capacity.
+// ORIGINAL: 0x00611730 sub_611730 0x00611730-0x006117C3 BYTE_EXACT
+// LEVER: PROMOTED out of src/unrecovered/00611730.cpp. Called by both ??0SpriteBox and ??1SpriteBox, so it is shared setup and teardown rather than one or the other.
+// symbol    ?empty@SpriteBoxList@@QAEXXZ
+// size      147 bytes
+// kind      game
+Return Value: n/a
+Status: Complete
+*/
+void SpriteBoxList::empty() {
+    class LocalVCall {
+    public:
+        virtual void slot0(int) = 0;
+        virtual void slot1(void *) = 0;
+    };
+
+    char *self = reinterpret_cast<char *>(this) - 0x28;
+    char *this_char = reinterpret_cast<char *>(this);
+
+    *reinterpret_cast<int *>(self) = 0x66943c;
+
+    int *base_ptr = *reinterpret_cast<int **>(this_char - 0x24);
+    int adjust = *reinterpret_cast<int *>(reinterpret_cast<char *>(base_ptr) + 4);
+    *reinterpret_cast<int *>(this_char - 0x24 + adjust) = 0x669438;
+
+    void *head = *reinterpret_cast<void **>(self + 8);
+    if (head != 0) {
+        int count = *reinterpret_cast<int *>(self + 0x10);
+        int i = 0;
+        if (count > 0) {
+            do {
+                *reinterpret_cast<void **>(self + 0xc) =
+                    *reinterpret_cast<void **>(reinterpret_cast<char *>(
+                        *reinterpret_cast<void **>(self + 8)) + 0xc);
+                void *child = *reinterpret_cast<void **>(reinterpret_cast<char *>(
+                    *reinterpret_cast<void **>(self + 8)) + 8);
+
+                reinterpret_cast<LocalVCall *>(self)->slot1(child);
+
+                if (child != 0) {
+                    char *vtbl = *reinterpret_cast<char **>(child);
+                    int adj = *reinterpret_cast<int *>(vtbl + 4);
+                    char *adjusted = reinterpret_cast<char *>(child) + adj;
+                    reinterpret_cast<LocalVCall *>(adjusted)->slot0(1);
+                }
+
+                *reinterpret_cast<int *>(reinterpret_cast<char *>(
+                    *reinterpret_cast<void **>(self + 8)) + 8) = 0;
+
+                void *cur2 = *reinterpret_cast<void **>(self + 8);
+                if (cur2 != 0) {
+                    reinterpret_cast<LocalVCall *>(
+                        reinterpret_cast<char *>(cur2) +
+                        *reinterpret_cast<int *>(
+                            *reinterpret_cast<char **>(cur2) + 4))->slot0(1);
+                }
+
+                i++;
+                *reinterpret_cast<void **>(self + 8) = *reinterpret_cast<void **>(self + 0xc);
+            } while (i < *reinterpret_cast<int *>(self + 0x10));
+        }
+        *reinterpret_cast<volatile int *>(self + 0x14) = 0;
+        *reinterpret_cast<int *>(self + 8) = 0;
+        *reinterpret_cast<int *>(self + 0x10) = 0;
+        *reinterpret_cast<int *>(self + 0x14) = 0;
+    } else {
+        *reinterpret_cast<int *>(self + 0x14) = 0;
+    }
+}
