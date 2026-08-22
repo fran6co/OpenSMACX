@@ -353,7 +353,12 @@ Purpose: Check if the human controlled player is nearing the endgame.
 //        raw pointer walk - dropped to 15/56 (the &-of-array-element address
 //        is not a link-time constant the way `FactionsStatus`/`PlayersData`
 //        base pointers are, so the compiler emits a relocation load instead
-//        of folding the walk); reverted.
+//        of folding the walk); reverted. Re-measured 2026-08-22: `measure`'s
+//        flag-set search now lands on 10/56 (not the 16/56 above - a flag-set
+//        selection drift, not a regression from this pass; re-tried the same
+//        `player++` pointer walk against the current baseline and it still
+//        ties at 10/56). Still capped by the same instruction-0 scheduling
+//        gap; not chased further.
 // size      164 bytes
 // prototype 
 // callers   7   call targets   2
@@ -452,6 +457,17 @@ BOOL __cdecl at_climax(int faction_id) {
 /*
 Purpose: Add friction between the two specified factions.
 // ORIGINAL: 0x0053A030 ?cause_friction@@YAXHHH@Z 0x0053A030-0x0053A08D
+// LEVER: `diplo_friction` bound to the ROW (`PlayersData[faction_id].diplo_friction`,
+//   the `uint32_t[8]` itself, no `[faction_id_with]` yet) rather than to the single
+//   `&...diplo_friction[faction_id_with]` ELEMENT - indexing with `[faction_id_with]`
+//   at each of the two uses, instead of dereferencing a pointer already advanced past
+//   the row. The earlier RULED-OUT below only tried the ELEMENT pointer (`*diplo_friction`)
+//   and a plain double-index with no pointer at all; the ROW pointer is the one the image
+//   actually keeps live (`diplo_friction[8]` is itself 2D-indexed by a runtime
+//   `faction_id`, and only that outer index is worth hoisting - the inner one stays a
+//   subscript). Moved 13/33 -> 21/33 agreeing. Remaining divergence starts at
+//   instruction 5 with push/register-assignment order (esi/edi scheduling), not
+//   chased further this pass.
 // RULED-OUT: direct double array-index instead of a *diplo_friction pointer;
 //            a `new_friction` local holding range()'s result before the store.
 //            Same shape as set_treaty's divergence: the image computes the
@@ -460,9 +476,11 @@ Purpose: Add friction between the two specified factions.
 //            (`mov ecx,[edx*4+base]; ...; mov [edx*4+base],ecx`), while this
 //            tree's compile folds the *4 into the addressing mode on the
 //            store and recomputes it with `lea`/`mov` split differently.
-//            Plateaus at 13/33 agreeing across tried flag sets. A
-//            `PlayerData *p = &PlayersData[faction_id]` wrapper around the
-//            existing `*diplo_friction` pointer ties at 13/33, no change.
+//            Plateaus at 13/33 agreeing across tried flag sets (this was the
+//            ELEMENT-pointer form; see the LEVER above for the ROW-pointer
+//            form that moved past it). A `PlayerData *p = &PlayersData[faction_id]`
+//            wrapper around the existing `*diplo_friction` pointer ties at
+//            13/33, no change.
 // size      93 bytes
 // prototype void (__cdecl ?cause_friction@@YAXHHH@Z)(int factionID, int factionIDWith, int friction)
 // callers   8   call targets   0
@@ -473,8 +491,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl cause_friction(int faction_id, int faction_id_with, int friction) {
-    uint32_t *diplo_friction = &PlayersData[faction_id].diplo_friction[faction_id_with];
-    *diplo_friction = range(*diplo_friction + friction, 0, 20);
+    uint32_t *diplo_friction = PlayersData[faction_id].diplo_friction;
+    diplo_friction[faction_id_with] = range(diplo_friction[faction_id_with] + friction, 0, 20);
     if (DiploFrictionFactionID == faction_id && DiploFrictionFactionIDWith == faction_id_with) {
         DiploFriction += friction; // not bounded?
     }
@@ -751,6 +769,12 @@ Purpose: Set or unset the diplomatic treaty for the specified faction with anoth
 //            the plain [eax+base] address for both the load and the store; this tree's
 //            compile always folds the *4 into the addressing mode instead. Plateaus at
 //            15/36 agreeing across all tried flag sets.
+//            RULED-OUT (2026-08-22): a `uint32_t *diplo_treaties` pointer bound to the
+//            ROW (`PlayersData[faction_id].diplo_treaties`, no `[faction_id_with]` yet,
+//            indexed at each of the three uses) - the lever that took cause_friction
+//            13/33 -> 21/33. Here it is WORSE, not a tie: drops to 0/36. This is a
+//            single read-modify-write per branch (not cause_friction's read-then-separate-
+//            write of the same element), so there is no shared address to amortise.
 // size      104 bytes
 // prototype 
 // callers   24   call targets   0
@@ -1267,6 +1291,13 @@ Purpose: Add the specific goal to the faction's goals for the specified tile. Op
 //        pushes an extra ecx for a fourth save. Not chased further.
 //        RULED-OUT: `PlayerData *p = &PlayersData[faction_id];` before both
 //        loops - ties at 11/104, no change either way.
+//        RULED-OUT: a `Goal *goals` pointer hoisted out of EITHER loop (or
+//        both) and WALKED with `++` in the for-loop increment instead of
+//        `Goal &goals = ...[i]` - the lever that took at_site to BYTE_EXACT
+//        and del_site 61/95 -> 68/95. Here it does not help: walking loop 1
+//        alone drops to 10/104, walking loop 2 alone or both ties the
+//        committed 11/104. This function's ceiling is the register-pressure
+//        gap described above, not the address-computation form.
 // size      308 bytes
 // prototype void (__cdecl ?add_goal@@YAXHHHHHH@Z)(int factionID, int type, int priority, int xCoord, int yCoord, int baseID)
 // callers   12   call targets   0
@@ -1329,6 +1360,13 @@ Purpose: Add the specific site to the faction's site goals for the specified til
 //            two (`sub esp,8`). Plateaus at 17/116 agreeing.
 //            `PlayerData *p = &PlayersData[faction_id];` before both loops
 //            also worse (16/116).
+// RULED-OUT: a `Goal *sites` pointer hoisted out of loop 1, loop 2, or both,
+//            WALKED with `++` in the for-loop increment instead of
+//            `Goal &sites = ...[i]` - the lever that took at_site to
+//            BYTE_EXACT and del_site 61/95 -> 68/95. Here every combination
+//            ties or loses (17/116 unchanged, or 16/116 walking loop 1).
+//            Same register-pressure ceiling as add_goal, not an addressing
+//            form this function is short on.
 // size      325 bytes
 // prototype void (__cdecl ?add_site@@YAXHHHHH@Z)(int factionID, int type, int priority, int xCoord, int yCoord)
 // callers   4   call targets   2
@@ -1413,14 +1451,8 @@ BOOL __cdecl at_goal(int faction_id, int type, int x, int y) {
 
 /*
 Purpose: Check if a site exists at the tile for the specified faction and type.
-// ORIGINAL: 0x00579D20 ?at_site@@YAHHHHH@Z 0x00579D20-0x00579D76
-// RULED-OUT: a `Goal *sites` pointer hoisted out of the loop (worse, 17/40);
-//            a `while` loop instead of `for` (identical, 22/40). The image
-//            zeroes the loop counter (ecx) LAST, right before the loop body,
-//            after using ecx to build the PlayersData[faction_id].sites base
-//            address; this tree's compile zeroes it FIRST and uses edx for
-//            the address instead, needing one more register. Field compare
-//            order (x, y, type) already matches. Plateaus at 22/40 agreeing.
+// ORIGINAL: 0x00579D20 ?at_site@@YAHHHHH@Z 0x00579D20-0x00579D76 BYTE_EXACT
+// LEVER: a `Goal *sites` pointer hoisted out of the loop, WALKED with `sites++` in the for-loop's increment (matching at_goal's own lever) - the earlier RULED-OUT note below tried the pointer only INDEXED (`sites[i]`), which keeps the same 17/40-raw/worse-similarity shape as the `Goal&` reference form; incrementing the pointer itself instead of re-scaling `i` each iteration is what the image does. BYTE_EXACT 40/40.
 // size      86 bytes
 // prototype int (__cdecl ?at_site@@YAHHHHH@Z)(int factionID, int type, int xCoord, int yCoord)
 // callers   2   call targets   0
@@ -1431,9 +1463,9 @@ Return Value: Does specific site exist for faction at tile? true/false
 Status: Complete
 */
 BOOL __cdecl at_site(int faction_id, int type, int x, int y) {
-    for (int i = 0; i < MaxSitesNum; i++) {
-        Goal &sites = PlayersData[faction_id].sites[i];
-        if (sites.x == x && sites.y == y && sites.type == type) {
+    Goal *sites = PlayersData[faction_id].sites;
+    for (int i = 0; i < MaxSitesNum; i++, sites++) {
+        if (sites->x == x && sites->y == y && sites->type == type) {
             return true;
         }
     }
@@ -1519,10 +1551,18 @@ Purpose: Delete sites of the specified type within proximity of the tile along w
 //        then the 2-arg vector_dist body re-abs's both (redundant but what the
 //        image does) and runs the largest/smallest formula. Writing that out
 //        instead of calling vector_dist() moved 9/95 -> 36/95 agreeing.
-//        RULED-OUT: testing sites.type==type via a plain array index before
-//        taking the Goal& reference - no change. Remaining divergence is a
-//        `lea` vs `add`/offset-by-4 choice for the sites[i] base pointer used
-//        for the type field read; not chased further.
+// LEVER: both `Goal&` aliases (outer `sites`, inner `goal_compare`) replaced
+//        with a `Goal *` pointer HOISTED out of its loop and WALKED with the
+//        for-loop's own `++` (same lever that took at_site to BYTE_EXACT) -
+//        the earlier RULED-OUT below only tried a plain array INDEX before
+//        the reference, not an incrementing pointer; the increment is what
+//        resolves the `lea` vs `add`/offset-by-4 choice it names. 61/95 ->
+//        68/95 agreeing. RULED-OUT: walking the inner `goal_compare` loop
+//        alone, keeping the outer `sites` as a `Goal&` - ties at 61/95, no
+//        change; the outer loop's own address form is what has to move.
+// RULED-OUT: testing sites.type==type via a plain array index before
+//        taking the Goal& reference - no change (see the LEVER above for
+//        what the remaining `lea` vs `add`/offset-by-4 choice actually was).
 //        RULED-OUT: `PlayerData *p = &PlayersData[faction_id];` in place of
 //        the two PlayersData[faction_id] subscripts - dropped to 33/95.
 // size      259 bytes
@@ -1535,11 +1575,11 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl del_site(int faction_id, int type, int x, int y, int proximity) {
-    for (int i = 0; i < MaxSitesNum; i++) {
-        Goal &sites = PlayersData[faction_id].sites[i];
-        if (sites.type == type) {
-            int dx = x_dist(x, sites.x);
-            int dy = abs(y - sites.y);
+    Goal *sites = PlayersData[faction_id].sites;
+    for (int i = 0; i < MaxSitesNum; i++, sites++) {
+        if (sites->type == type) {
+            int dx = x_dist(x, sites->x);
+            int dy = abs(y - sites->y);
             int abs_dx = abs(dx);
             int abs_dy = abs(dy);
             int largest = abs_dx;
@@ -1552,13 +1592,13 @@ void __cdecl del_site(int faction_id, int type, int x, int y, int proximity) {
             }
             int dist = largest - ((((abs_dy + abs_dx) >> 1) - smallest + 1) >> 1);
             if (dist <= proximity) {
-                sites.type = AI_GOAL_UNUSED;
-                sites.priority = 0;
-                for (int j = 0; j < MaxGoalsNum; j++) {
-                    Goal &goal_compare = PlayersData[faction_id].goals[j];
-                    if (goal_compare.x == sites.x && goal_compare.y == sites.y &&
-                        goal_compare.type == type) {
-                        goal_compare.type = AI_GOAL_UNUSED;
+                sites->type = AI_GOAL_UNUSED;
+                sites->priority = 0;
+                Goal *goal_compare = PlayersData[faction_id].goals;
+                for (int j = 0; j < MaxGoalsNum; j++, goal_compare++) {
+                    if (goal_compare->x == sites->x && goal_compare->y == sites->y &&
+                        goal_compare->type == type) {
+                        goal_compare->type = AI_GOAL_UNUSED;
                     }
                 }
             }
