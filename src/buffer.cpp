@@ -2286,6 +2286,9 @@ Purpose: Fill one vertical run of pixels, clipped to the buffer's rectangle.
 // prototype void (__thiscall ?vline@Buffer@@QAEXHHHH@Z)(Buffer* this, int, int, int, int)
 // kind      game
 // calls     (none)
+// RULED-OUT: byte-exact is unreachable (hand-written `loop`/`ah`-write,
+//   above); best measured is /O2 /Gy /GR- /Oy- /GX at 14/145 instructions,
+//   0.925 similar - still MISMATCH, and this is the ceiling.
 Return Value: n/a
 Status: Semantics transcribed from the image
 
@@ -2719,6 +2722,16 @@ Purpose: Draw at most `len` characters of a string horizontally centred in a
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005DC7C0 0x005DCAE0 0x006453E0
+// RULED-OUT: splitting the MIN guard into two guard clauses - `if (MIN < 0)
+//   return;` then `const int limit = MIN; if (!limit) return;` - on the
+//   theory that the image's separate return block at instruction 41 wants
+//   two distinct early exits. It is WORSE: 39 of 76 agreeing becomes 34, and
+//   the compiled body grows from 70 instructions to 80 against the image's
+//   76. The merged `||` (committed) is the right shape. Best measured is
+//   /O2 /Gy /GR- /GX at 39/76, 0.932 similar; the remaining divergence is
+//   the image's SEPARATE, unmerged epilogue at 0x005DD08A (identical to the
+//   one at 0x005DD02D) where this tree's tail-merges the two returns into
+//   one jump - a VC6 block-folding decision, not a semantic difference.
 Return Value: The raster writer's result; the incoming x for a null string or
               an empty draw; unusable font (3)
 Status: Complete with temporary raster-writer and text-width dependencies
@@ -2756,12 +2769,6 @@ int Buffer::write_cent_l(LPSTR text, int x_coord, int y_coord, int width,
     // and its `jne` at 0x005DD088 both reach the SAME epilogue at
     // 0x005DD08A. Two separate `if (...) return x_coord;` statements make
     // VC6 emit that epilogue twice; a short-circuit `||` gives it one.
-    // RULED-OUT: splitting this into two guard clauses - `if (MIN < 0) return;`
-    // then `const int limit = MIN; if (!limit) return;` - on the theory that
-    // the image's separate return block at instruction 41 wants two distinct
-    // early exits. It is WORSE: 39 of 76 agreeing becomes 34, and the compiled
-    // body grows from 70 instructions to 80 against the image's 76. The merged
-    // `||` is the right shape; the remaining divergence is elsewhere.
     int limit;
     if (BUFFER_MIN(static_cast<int>(strlen(text)), len) < 0 ||
         (limit = BUFFER_MIN(static_cast<int>(strlen(text)), len)) == 0) {

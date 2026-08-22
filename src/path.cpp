@@ -391,6 +391,16 @@ void Path::territory(int x, int y, int UNUSED(region), int faction_id) {
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x00591B90 0x00591DB0 0x005FCB20
+// RULED-OUT: `call_diff` reports this tree makes 5 calls against the
+//   image's 4 (MORE) - the image calls 0x005FCB20 (`do_all_non_input`)
+//   directly at this site, but `do_all_non_input` is declared `MEASURED
+//   inline` in temp.h and VC6 inlines it here too, expanding it into three
+//   calls (`do_non_input`/`do_net`/`check_net`) that the image does not make
+//   at this address. That header is outside this batch's touch list (general/
+//   buffer/wave/path only), so the fix - making this ONE call site see the
+//   out-of-line function while `do_all_draws`/`do_all_keyboard` keep the
+//   inlined one - is not made here; reported instead. Best measured with the
+//   body unchanged: 16/206 instructions, MISMATCH.
  Return Value: n/a
  Status: Complete
 */
@@ -446,6 +456,13 @@ void Path::continent(int x, int y, int region) {
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x0050BA00 0x00591B90 0x0059C200 0x0059C520 0x005FCB20
+// RULED-OUT: `call_diff` reports NO call-count disagreement here (unlike
+//   the sibling `continent` a few lines up, where the same `do_all_non_input`
+//   call gets inlined) - this function is large enough that VC6 keeps it as
+//   a real out-of-line call, matching the image's 0x005FCB20. The remaining
+//   gap is register/stack-layout noise typical of a 1293-byte function this
+//   size, not a structural difference: best measured 2/414 instructions,
+//   MISMATCH. Not chased further at this size within batch budget.
  Return Value: n/a
  Status: Complete
 */

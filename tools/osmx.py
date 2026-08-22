@@ -1086,11 +1086,24 @@ def semantic(
             typer.secho(f"{piece.address_hex}  REFUSED: {why}",
                         fg=typer.colors.RED)
             continue
-        typer.echo(f"{piece.address_hex}  {result.matching_instructions} of "
-                   f"{result.original_instructions} instructions byte "
-                   f"identical, the rest allocated differently")
-        if not piece.semantic:
-            updated.append(replace(piece, semantic=True))
+        # SAY WHICH OF THE TWO THIS IS. The agreement summary alone reads
+        # like a fresh grant either way, and a caller who stops at the first
+        # line - as I did, twice - reports claims that were already there.
+        # The count at the end says so, but only after the fact.
+        if piece.semantic:
+            typer.secho(f"{piece.address_hex}  ALREADY CLAIMED - "
+                        f"{result.matching_instructions} of "
+                        f"{result.original_instructions} instructions byte "
+                        f"identical, the rest allocated differently. Nothing "
+                        f"written; this is not a new claim.",
+                        fg=typer.colors.YELLOW)
+            continue
+        typer.secho(f"{piece.address_hex}  GRANTED - "
+                    f"{result.matching_instructions} of "
+                    f"{result.original_instructions} instructions byte "
+                    f"identical, the rest allocated differently",
+                    fg=typer.colors.GREEN)
+        updated.append(replace(piece, semantic=True))
     if updated:
         write_file(updated)
     typer.echo(f"\n{len(updated)} annotation(s) rewritten")

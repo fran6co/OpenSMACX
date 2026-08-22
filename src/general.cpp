@@ -1029,21 +1029,22 @@ LPSTR __cdecl filefind_get(LPCSTR file_name) {
 Purpose: Count the number of unsigned bits set. Replaced the original code with Brian Kernighan's 
 // ORIGINAL: 0x0050BA30 ?bit_count@@YAHH@Z 0x0050BA30-0x0050BA4E
 // size      30 bytes
-// prototype 
+// prototype
 // callers   34   call targets   0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// RULED-OUT: sixteen source shapes (do-while/while, `count += bits & 1`,
+//   `if (bits & 1) count++`, a captured-carry temp, shift-before-test) all
+//   land on the same 3/15, `push ebx` vs `mov ecx, [ebp+8]` at instruction 2
+//   - none coax VC6 into the image's shr/adc carry-chain fusion; this is the
+//   right algorithm (shift-and-accumulate, matching the shr/adc chain, not
+//   Kernighan's clear-lowest-set-bit trick) and it scores strictly better
+//   than the `n &= n - 1` form it replaced, but still MISMATCH.
 Return Value: the number of set bits
 Status: Complete
 */
 int __cdecl bit_count(int bitfield) {
-    // Shift-and-accumulate, not Kernighan's clear-lowest-set-bit trick: the
-    // original's shr/adc carry chain is this algorithm, and the committed
-    // `n &= n - 1` form is a different one. Still not byte-exact - eleven
-    // source shapes all land on the same `#2 push vs mov`, which is the
-    // register-allocation class - but it is the right algorithm and it scores
-    // strictly better.
     unsigned int bits = bitfield;
     int count = 0;
     do {
@@ -1150,6 +1151,17 @@ Purpose: Shift the numerator to the left by 16 then divide by the denominator. N
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// RULED-OUT: still MISMATCH. The image's three-instruction dividend
+//   construction - `edx = numerator >> 16` (arithmetic) and `eax = numerator
+//   << 16`, i.e. `(int64_t)numerator << 16` built directly in EDX:EAX - never
+//   falls out of `((int64_t)numerator << 16) / denominator` here at any flag
+//   set tried. This compiler always promotes `denominator` to a full 64-bit
+//   value first (a `cdq`-and-`call` sequence to a 64-bit shift helper, then
+//   another call to a 64-bit divide helper - 16-28 instructions depending on
+//   flags, never the image's 13), where the image gets a single hardware
+//   `idiv` on a 64-bit dividend against a 32-bit memory operand. That native
+//   widen-then-idiv form usually comes from inline assembly, which is off
+//   the table here; no plain-C rephrasing tried reproduces it.
 Return Value: Quotient
 Status: Complete
 */
@@ -1160,17 +1172,6 @@ Status: Complete
 // 0;` is not in the shipped bytes (13 instructions there, not 15) and is
 // left out deliberately; adding it back defeats the match, it does not fix
 // one.
-// RULED-OUT (still MISMATCH): the image's three-instruction dividend
-// construction - `edx = numerator >> 16` (arithmetic) and `eax = numerator
-// << 16`, i.e. `(int64_t)numerator << 16` built directly in EDX:EAX - never
-// falls out of `((int64_t)numerator << 16) / denominator` here at any flag
-// set tried. This compiler always promotes `denominator` to a full 64-bit
-// value first (a `cdq`-and-`call` sequence to a 64-bit shift helper, then
-// another call to a 64-bit divide helper - 16-28 instructions depending on
-// flags, never the image's 13), where the image gets a single hardware
-// `idiv` on a 64-bit dividend against a 32-bit memory operand. That native
-// widen-then-idiv form usually comes from inline assembly, which is off the
-// table here; no plain-C rephrasing tried reproduces it.
 int __cdecl fixed_div(int numerator, int denominator) {
     return (int)(((int64_t)numerator << 16) / denominator);
 }
@@ -1297,11 +1298,13 @@ Purpose: Calculate a basic XOR checksum for the data buffer.
 // similar before this was noticed.
 // ORIGINAL: 0x00539090 ?checksum@@YAEPADHE@Z 0x00539090-0x005390B4
 // size      36 bytes
-// prototype 
+// prototype
 // callers   2   call targets   0
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     (none)
+// RULED-OUT: byte-exact is unreachable (hand-written `loop`/`lodsb`, above);
+//   ceiling here is semantic equivalence, currently MISMATCH 4/19.
 Return Value: the XOR checksum of the buffer, seeded
 Status: Complete
 */
@@ -1334,12 +1337,15 @@ Purpose: Calculate a basic XOR checksum for a password string.
 // ORIGINAL: 0x005390C0 ?checksum_password@@YAHPAD@Z 0x005390C0-0x00539157
 // symbol    ?checksum_password@@YAIPBD@Z
 // size      151 bytes
-// prototype 
+// prototype
 // callers   2   call targets   2
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x006453E0 0x00645460
 // indirect  0x005390F6
+// RULED-OUT: byte-exact is unreachable (hand-written `loop`/`lodsb` inside
+//   the `checksum` call it makes, above); ceiling here is semantic
+//   equivalence, currently MISMATCH 22/58.
 Return Value: Checksum
 Status: Complete
 */
