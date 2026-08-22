@@ -153,9 +153,32 @@ def _lessons(lines: list[str], index: int,
     which is how a long RULED-OUT list stays readable.
     """
     levers, ruled, unrecoverable, deferred, current = [], [], [], [], None
+    # IS THIS MARKER INSIDE A `/* ... */` BLOCK? Product source puts it in one,
+    # under a `Purpose:` line, and the scaffold also writes `Return Value:` and
+    # `Status:` lines that carry NO `//` prefix. Breaking on those - which is
+    # what this loop used to do - made every lesson written below them
+    # invisible: the body then read as untouched, and pass after pass
+    # re-derived work that was already written down beside it. Measured on one
+    # batch of eleven addresses, five were hiding lessons this way.
+    inside = False
+    for earlier in reversed(lines[:index]):
+        head = earlier.strip()
+        if head.startswith("*/"):
+            break
+        if head.startswith("/*"):
+            inside = True
+            break
     for line in lines[index + 1:]:
         stripped = line.strip()
+        if inside and "*/" in stripped:
+            break
         if not (stripped.startswith("//") or stripped.startswith("*")):
+            # Unprefixed lines are scaffolding INSIDE the block, not the end of
+            # the run. Outside a block they still end it, which is what keeps a
+            # stray "ruled out" in prose further down the file from reading as
+            # a claim.
+            if inside:
+                continue
             break
         lever = LESSON_LEVER.match(line)
         out = LESSON_RULED_OUT.match(line)
