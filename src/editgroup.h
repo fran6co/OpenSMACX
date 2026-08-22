@@ -91,7 +91,7 @@ class EditGroup : public virtual GraphicWin, public virtual Dialog {
   void destruct();
   // 0x00611A90, a pending_bodies forwarder. ~EditGroup calls it on the
   // adjusted (true) object pointer.
-  uint32_t close();
+  void close();
   void set_text_limits(int limit);
   char *get_text(int index);
   void set_text(char *text, int index);
