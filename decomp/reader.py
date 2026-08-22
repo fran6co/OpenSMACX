@@ -171,7 +171,15 @@ def _lessons(lines: list[str], index: int,
     for line in lines[index + 1:]:
         stripped = line.strip()
         if inside and "*/" in stripped:
-            break
+            # THE BLOCK ENDS, THE RUN DOES NOT. Notes are commonly written as
+            # `//` lines immediately AFTER the closing `*/`, still contiguous
+            # with the marker, and breaking here hid every one of them - four
+            # in map.cpp alone, each reported as a landed lever by the pass
+            # that wrote it. Leave the block, keep reading; the prefix rule
+            # below now ends the run at the first line of actual code.
+            inside = False
+            if stripped not in ("*/", "*/;"):
+                continue
         prefixed = stripped.startswith("//") or stripped.startswith("*")
         if not prefixed and not inside:
             # Outside a block an unprefixed line ends the run, which is what
