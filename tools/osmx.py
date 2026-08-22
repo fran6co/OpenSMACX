@@ -1770,6 +1770,25 @@ def check(
                 "  unverifiable: "
                 + ", ".join(f"{n} {v}" for v, n in sorted(causes.items())),
                 fg=typer.colors.YELLOW)
+            # WHAT "UNVERIFIABLE" MEANS HERE, because the word invites the
+            # wrong reading. These are not claims that might be broken and
+            # nobody looked; they are almost all ARTIFACT-ONLY bodies under
+            # src/recovered/ and src/unrecovered/ that were never
+            # self-compiling - bare bodies whose scaffolding lived in the
+            # generator's own unit and was not kept beside them. Their own
+            # headers say so: "NOT in OPENSMACX_SOURCES and not compiled".
+            # Nothing links them, so they cannot hide a regression in
+            # anything the build produces - and they cannot be re-asked
+            # either, which is why promoting one into product source is the
+            # only thing that makes its claim checkable again.
+            artifacts = sum(
+                1 for record, _v, _n in unasked
+                if "/recovered/" in str(record.path)
+                or "/unrecovered/" in str(record.path))
+            typer.secho(
+                f"    {artifacts} of them are artifact-only bodies that were "
+                f"never in the build; promoting one is what makes its claim "
+                f"checkable", fg=typer.colors.YELLOW)
         # COUNTED APART. A semantic claim is re-proved like any other, but it
         # is a weaker statement and must never be added into the number the
         # ratchet is measured by.

@@ -563,6 +563,7 @@ int SpriteBox::init(int a1) {
 
 /*
 // ORIGINAL: 0x006104B0 ?init@SpriteBox@@QAEHPAUHeap@@@Z 0x006104B0-0x006104CD BYTE_EXACT
+// symbol    ?init@SpriteBox@@QAEHPAVHeap@@@Z
 // size      29 bytes
 // prototype int (__thiscall ?init@SpriteBox@@QAEHPAUHeap@@@Z)(SpriteBox* this, Heap*)
 // callers   1   call targets   2
