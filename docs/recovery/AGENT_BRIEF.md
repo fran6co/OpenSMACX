@@ -134,6 +134,24 @@ A `construct()` METHOD IS HOW THE SEH FRAME IS AVOIDED
   from 99 down to 79 against an image of 83. Fewer instructions is not a
   better match - dropping the frame shifts everything after it.
 
+A `MEASURED inline` THAT THE IMAGE CALLS AT SOME SITES IS A REAL CEILING
+- Several bodies are capped by a helper this tree declares `MEASURED inline`
+  which the image INLINES at most call sites and CALLS at one or two. VC6 6.0
+  has no `__declspec(noinline)`, so there is no way to split that per site.
+  Known instances: `port_to_port` (map.h) caps `get_there`; `has_tech`
+  (technology.h) caps `good_sensor`; `do_all_non_input` (temp.h) caps
+  `Path::continent`.
+- THE OUT-OF-LINE FORWARDER IDIOM DOES NOT FIX IT, and that is measured, not
+  assumed. Building a `do_all_non_input_call` for `Path::continent` - the same
+  shape as `sleep_call` and `base_cost_call` - made it worse in both
+  directions: agreement 16/206 -> 1/206, and call_diff went from MORE (5
+  against 4) to FEWER (2 against 4) rather than agreeing, because it resolves
+  callees BY ADDRESS and a forwarder is a different address than the one the
+  image calls.
+- The idiom works only where the forwarder IS the image's callee, which is why
+  `sleep_call` and `base_cost_call` succeed. Do not build a third one for this
+  family; record the ceiling and move on.
+
 DO NOT CHAIN CONDITIONS THE IMAGE TESTS SEPARATELY
 - `if (A || B) return 0;` compiles to ONE shared `return 0` epilogue that both
   tests jump to. The image very often has a separate inline epilogue after
