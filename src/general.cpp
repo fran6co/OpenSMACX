@@ -348,6 +348,12 @@ int __cdecl parse_say(int id, int input, int gender, int pluralality) {
 /*
 Purpose: Copies the input string into the global message buffer.
 // ORIGINAL: 0x00625EC0 ?parse_says@@YAHHPADHH@Z 0x00625EC0-0x00625F1A
+// RULED-OUT: plateaued at 24/27 (0.963 similar) on a single instruction-
+//   selection difference - see the RULED-OUT note at the `dest`/`lea`
+//   pointer add below, inside the body, which lists the five spellings
+//   already tried. Recorded here too (this line only, not moving the body
+//   note) so a marker-position scan finds it - a prior pass left it there,
+//   which is why this address kept showing as untouched.
 // symbol    ?parse_says@@YAHHPBDHH@Z
 // size      90 bytes
 // prototype int (__cdecl ?parse_says@@YAHHPADHH@Z)(int nID, int8* input, int gender, int pluralality)
@@ -545,6 +551,15 @@ BOOL __cdecl jackal_version_check(LPCSTR version) {
 /*
 Purpose: This handles parsing the input string and storing it in the output.
 // ORIGINAL: 0x00625880 ?parse_string@@YAHPADPAD@Z 0x00625880-0x00625DDD
+// RULED-OUT: 19/490 MISMATCH, mid-recovery - see the LEVER note just above
+//   the function definition below (outside this comment block, which is why
+//   a marker-position scan missed it before): the call graph is already
+//   fixed (memcpy, not strncpy, at every prefix-copy site), but instruction
+//   0 itself diverges - image reserves `sub esp, 0xfc` against this tree's
+//   much smaller frame, a locals-layout gap across a 490-instruction
+//   multi-branch `switch`. Closing that needs matching the whole local
+//   variable layout, which is out of scope for a single pass; not attempted
+//   here either, to avoid a blind rewrite of a function this size.
 // symbol    ?parse_string@@YAHPAD0@Z
 // size      1373 bytes
 // prototype int (__cdecl ?parse_string@@YAHPADPAD@Z)(int8* input, int8* output)
