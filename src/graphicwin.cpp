@@ -233,6 +233,18 @@ Purpose: Destroy a GraphicWin by installing the original virtual tables,
          clearing the trailing field, and destroying the Buffer subobject
          before the Win base.
 // ORIGINAL: 0x005D4DD0 ??1GraphicWin@@QAE@XZ 0x005D4DD0-0x005D4E37;0x00662B22-0x00662B34
+// RULED-OUT: 0/28 - the image carries a genuine SEH unwind frame here
+//            (`push -1 / push 0x662b2a / mov eax,fs:[0] / ...`), same
+//            SYMPTOM as FlatButton::~FlatButton() (see flatbutton.cpp),
+//            which got it back by becoming a real destructor. Not
+//            attempted here: `buffer_` is opaque raw storage on this class
+//            (see `GraphicWin::construct()` above), not a declared member,
+//            so a real `~GraphicWin()` cannot let the compiler generate the
+//            base+member unwind chain the frame protects without first
+//            giving Buffer a real field - a layout change this pass did
+//            not risk against 185 callers and the existing
+//            `DestructorProbe` call-order test harness this free function
+//            backs.
 // symbol    ?graphic_win_destructor_redirect@@YIPAVGraphicWin@@PAV1@PAX@Z
 // size      121 bytes
 // prototype void (__thiscall ??1GraphicWin@@QAE@XZ)(GraphicWin* this)
@@ -305,25 +317,27 @@ typedef void * (OriginalObject::*func_graphic_win_parent_query)();
 // Virtual slot 0x30, the window's own paint.
 typedef void (OriginalObject::*func_graphic_win_paint)();
 
-// USER32!InvalidateRect, read out of the executable's import table. This is
-// resolved on FIRST USE rather than by a dynamic initializer, because the
-// initializer runs in every binary that links this translation unit and only
-// one of them has anything mapped at 0x00669304. In the host test executables
-// the address lands past the end of the image, and whether the load faults
-// depends on what the loader happened to place after it - measured on
-// recovery-gameplay-tests, the same read survived at one binary size and took
-// the process down with an unhandled page fault before main at another. The
-// variable stays writable so tests can still rebind it; a test that installs
-// its own hook never reaches the resolve.
-func_graphic_win_invalidate_rect *GraphicWinInvalidateRect = nullptr;
-
-const uintptr_t GraphicWinInvalidateRectImport = 0x00669304;
+// USER32!InvalidateRect - called directly (see GraphicWin::redraw below).
+// image address 0x00669304 is that call's own IAT slot; it is not read as
+// a raw address anywhere here, so there is nothing hardcoded to fault on
+// in a host test executable with a different layout.
 
 /*
 Purpose: Paint the window's surface in one colour. A window that is marked
          transparent and whose parent agrees copies the parent's pixels in
          instead, then remaps them through the process colour table.
 // ORIGINAL: 0x005D5250 ?fill@GraphicWin@@QAEXH@Z 0x005D5250-0x005D5346
+// LEVER: `vtable_slot<parent_query_fn>(parent, 0xF4)(parent)` in place of
+//        the pointer-to-member `original_method<...>(vtable[0xF4/4])`
+//        spelling for the slot-0xF4 query - the image's own call is ONE
+//        `call dword ptr [eax+0xf4]`, where the pointer-to-member form
+//        loads the slot into a register first (two instructions).
+// RULED-OUT: not chased to completion - still a big structural gap beyond
+//            that one call (80 image instructions against this body's 66,
+//            largely a different register plan for `flags_`/`parent`
+//            starting at the very first branch). This is a large function
+//            (246 bytes); the vtable-slot fix is banked, the rest is not
+//            at this budget.
 // size      246 bytes
 // prototype void (__thiscall ?fill@GraphicWin@@QAEXH@Z)(GraphicWin* this, int)
 // callers   58   call targets   3
@@ -358,12 +372,11 @@ void GraphicWin::fill(int color) {
     // parent answers with itself and the copy path is the default.
     bool transparent = false;
     if ((flags & 0x80000) != 0 && parent != nullptr) {
-        uintptr_t *const parent_vtable =
-            *reinterpret_cast<uintptr_t **>(parent);
-        func_graphic_win_parent_query const query =
-            original_method<func_graphic_win_parent_query>(
-                parent_vtable[0xF4 / 4]);
-        transparent = (ORIGINAL(parent)->*query)() != nullptr;
+        // ONE `call dword ptr [reg+0xf4]`, not two instructions: the
+        // pointer-to-member spelling loads the slot into a register first.
+        typedef void *(__fastcall *parent_query_fn)(void *);
+        transparent =
+            vtable_slot<parent_query_fn>(parent, 0xF4)(parent) != nullptr;
     }
     if (!transparent) {
         surface->fill(color);
@@ -401,7 +414,14 @@ void __fastcall graphic_win_fill_color_redirect(GraphicWin *self, void *,
 Purpose: Repaint the window and invalidate the screen area it occupies. A
          window already inside a redraw is skipped, so a paint hook that
          redraws again cannot recurse.
-// ORIGINAL: 0x005D5A70 ?redraw@GraphicWin@@QAEXXZ 0x005D5A70-0x005D5B64
+// ORIGINAL: 0x005D5A70 ?redraw@GraphicWin@@QAEXXZ 0x005D5A70-0x005D5B64 BYTE_EXACT
+// LEVER: `InvalidateRect(...)` called directly instead of through a
+//        manually lazily-resolved function pointer read from a hardcoded
+//        IAT address - the image just calls `dword ptr [0x669304]`
+//        unconditionally, which is what an ordinary imported-function call
+//        already compiles to. Dropped the now-dead
+//        `GraphicWinInvalidateRect`/`GraphicWinInvalidateRectImport`
+//        globals with it. 45/69 -> 69/69.
 // size      244 bytes
 // prototype void (__thiscall ?redraw@GraphicWin@@QAEXXZ)(GraphicWin* this)
 // callers   42   call targets   3
@@ -463,12 +483,12 @@ void GraphicWin::redraw() {
     area.top += y_offset;
     area.bottom += y_offset;
     // The window handle is read again here rather than reused from the guard
-    // above, matching the original's second load at 0x005D5B43.
-    if (!GraphicWinInvalidateRect) {
-        GraphicWinInvalidateRect = *reinterpret_cast<func_graphic_win_invalidate_rect **>(
-            GraphicWinInvalidateRectImport);
-    }
-    GraphicWinInvalidateRect(HandleMain, &area, FALSE);
+    // above, matching the original's second load at 0x005D5B43. THE REAL
+    // API, not a lazily-resolved pointer: the image just calls
+    // `dword ptr [0x669304]` unconditionally - that address IS
+    // `InvalidateRect`'s own IAT slot, which the compiler already produces
+    // an indirect call through for an ordinary imported function.
+    InvalidateRect(HandleMain, &area, FALSE);
 }
 
 void __fastcall graphic_win_redraw_redirect(GraphicWin *self, void *) {
@@ -527,6 +547,21 @@ Purpose: Initialise a GraphicWin. Reset the window, republish the eleven
          Win base, then size and initialise the window's own drawing surface
          and sync it to the active palette.
 // ORIGINAL: 0x005D4EF0 ?init@GraphicWin@@QAEHHHHHPADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z 0x005D4EF0-0x005D5096;0x00662B34-0x00662B49
+// LEVER: dropped the `uint32_t *const defaults = GraphicWinInitDefaults;`
+//        local from the eleven-slot default table copy - `defaults` was
+//        already a fixed-address constant, and caching it in a local
+//        forced VC6 to hold it in a register across all eleven reads
+//        instead of folding each one to its own absolute address the way
+//        the image's eleven independent `mov reg, [0x9b33xx]` do. Indexing
+//        `GraphicWinInitDefaults[N]` directly at each site instead reached
+//        0.943 similar (up from a fresh mismatch at the very top of this
+//        block).
+// RULED-OUT: remaining gap is a small, consistent eax/ecx swap around the
+//            nonclient-flags/scrollbar-thickness pair near the end of the
+//            function (`nonclient_flags`/`thickness` locals) - not chased
+//            further; reordering their declarations was not tried because
+//            this address's body is too large for a full-function
+//            `try_spellings` candidate at this budget.
 // symbol    ?init@GraphicWin@@QAEHHHHHPADHPAVWin@@PAVMenu@@PAUBorderSizing@@@Z
 // CORRECTED from ?init@GraphicWin@@QAEXHHHHPADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z
 //   BaseButton::init calls it at 0x006072A2 and immediately tests the
@@ -592,8 +627,6 @@ int GraphicWin::init(int x, int y, int width, int height, LPSTR title,
     // One `test edi, 0x30000000` at 0x005D4F12 covers both style bits: either
     // one republishes the whole block.
     if ((flags & 0x30000000) != 0) {
-        uint32_t *const defaults =
-            reinterpret_cast<uint32_t *>(GraphicWinInitDefaults);
         // The most error-prone part of the function, because the table slot
         // and the destination field are two different permutations. Read
         // straight off the stores at 0x005D4F1E through 0x005D4F98, the
@@ -608,17 +641,22 @@ int GraphicWin::init(int x, int y, int width, int height, LPSTR title,
         // scheduling only, since both of those slots map to their own field.
         // Every destination is GraphicWin's own field, so it is written
         // directly rather than through an aliased pointer into `this`.
-        field_9CC_ = defaults[0];
-        field_9D4_ = defaults[2];
-        field_9D0_ = defaults[1];
-        field_9D8_ = defaults[3];
-        field_9E8_ = defaults[4];
-        field_9E4_ = defaults[5];
-        field_9DC_ = defaults[6];
-        field_9E0_ = defaults[7];
-        field_9EC_ = defaults[9];
-        field_9F0_ = defaults[8];
-        field_9F4_ = defaults[10];
+        // NO LOCAL FOR THE TABLE BASE: `GraphicWinInitDefaults` is already
+        // a fixed-address constant, and indexing it directly at each site
+        // lets each store fold to its own absolute address, the way the
+        // image computes eleven independent `mov reg, [0x9b33xx]` reads
+        // rather than caching the base pointer in a register.
+        field_9CC_ = GraphicWinInitDefaults[0];
+        field_9D4_ = GraphicWinInitDefaults[2];
+        field_9D0_ = GraphicWinInitDefaults[1];
+        field_9D8_ = GraphicWinInitDefaults[3];
+        field_9E8_ = GraphicWinInitDefaults[4];
+        field_9E4_ = GraphicWinInitDefaults[5];
+        field_9DC_ = GraphicWinInitDefaults[6];
+        field_9E0_ = GraphicWinInitDefaults[7];
+        field_9EC_ = GraphicWinInitDefaults[9];
+        field_9F0_ = GraphicWinInitDefaults[8];
+        field_9F4_ = GraphicWinInitDefaults[10];
     }
 
     // 0x588 is sizeof(Buffer). The allocation goes through the executable's

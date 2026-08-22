@@ -1545,6 +1545,21 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
 /*
 Purpose: Attempt to read the setting's value from the ini file.
 // ORIGINAL: 0x0059D980 ?prefs_get@@YAPADPADPADH@Z 0x0059D980-0x0059DA19
+// LEVER: WRONG CALLEE - `strcpy_s(TextBufferGetPtr, 256, default_value)`
+//        pushed a 3rd argument the image never does; `add esp, 8` after
+//        the call (2 args) confirms a plain `strcpy`.
+// RULED-OUT: NOT MEASURABLE in this tree as committed - this overload
+//            (`LPSTR prefs_get(LPCSTR, LPCSTR, BOOL)`) has ZERO callers
+//            anywhere in the recovered source, unlike its `int`-returning
+//            sibling at 0x0059DB40 (17 callers). The image's own marker
+//            says 4 real callers exist, so some other not-yet-recovered
+//            call site reaches it, but nothing here does - VC6 (COMDAT,
+//            `/Gy`) drops an unreferenced `inline` free function from the
+//            linked object regardless. Tried dropping `inline` to force
+//            emission; still absent from the linked symbols, confirming
+//            it is the LINKER discarding an unreferenced COMDAT, not the
+//            `inline` keyword. Transcribed correctly (see the LEVER above)
+//            but cannot be scored until a real caller is found.
 // size      153 bytes
 // prototype int8* (__cdecl ?prefs_get@@YAPADPADPADH@Z)(int8* lpKeyName, int8* lpDefault, int)
 // callers   4   call targets   2
@@ -1559,7 +1574,7 @@ inline LPSTR __cdecl prefs_get(LPCSTR key_name, LPCSTR default_value, BOOL use_d
     if (use_default ||
         (GetPrivateProfileStringA(PrefsSection, "Prefs Format", "0", TextBufferGetPtr, 256,
             PrefsFile), atoi(TextBufferGetPtr) != 12)) {
-        strcpy_s(TextBufferGetPtr, 256, default_value);
+        strcpy(TextBufferGetPtr, default_value);
     } else {
         GetPrivateProfileStringA(PrefsSection, key_name, default_value, TextBufferGetPtr, 256,
             PrefsFile);
@@ -1892,6 +1907,21 @@ void __cdecl prefs_put(LPCSTR key_name, int value, BOOL tgl_binary) {
 /*
 Purpose: Save the most common preferences from memory to the game's ini. 
 // ORIGINAL: 0x0059E5D0 ?prefs_save@@YAXH@Z 0x0059E5D0-0x0059E946
+// LEVER: THE IMAGE HAS NO C++ LIBRARY - `std::stringstream` was pulling
+//        in a genuine SEH unwind frame (its own destructor is
+//        non-trivial), which the image does not carry at all; replaced
+//        the whole "Custom World" join and the "Faction %d" key with the
+//        `StringTemp`/`strcat`/say_num idiom, and dropped the `sprintf_s`
+//        the same way. 140 -> 110 instructions, frame gone.
+// RULED-OUT: not byte-exact - the image fully INLINES `prefs_put(LPCSTR,
+//            int, BOOL)` (0x0059E530, itself separately claimed
+//            BYTE_EXACT) at every one of its ~11 call sites here, each
+//            with its own local scratch buffer and direct
+//            WritePrivateProfileStringA call, where this body calls the
+//            real function. Same "MEASURED inline ceiling" shape the
+//            brief documents elsewhere - reproducing it means inlining
+//            prefs_put's entire body ~11 times by hand, not attempted at
+//            this budget for an 886-byte function.
 // size      886 bytes
 // prototype void (__cdecl ?prefs_save@@YAXH@Z)(BOOL saveFactions)
 // callers   17   call targets   3
@@ -1914,19 +1944,23 @@ void __cdecl prefs_save(BOOL save_factions) {
     prefs_put("Announce", AlphaIniPrefs->announce, true);
     prefs_put("Rules", AlphaIniPrefs->rules, true);
     prefs_put("Customize", AlphaIniPrefs->customize, false);
-    std::stringstream ss;
+    // THE IMAGE HAS NO C++ LIBRARY: no stringstream, no sprintf - the
+    // call list is just `strcat`/`_itoa` (say_num's own idiom) into the
+    // global StringTemp buffer.
+    StringTemp[0] = 0;
     for (uint32_t i = 0; i < 7; i++) {
         if (i != 0) {
-            ss << ", "; // removed last trailing comma
+            strcat(StringTemp, ", "); // removed last trailing comma
         }
-        ss << AlphaIniPrefs->custom_world[i];
+        say_num(AlphaIniPrefs->custom_world[i]);
     }
-    std::string custom_world_str = ss.str();
-    prefs_put("Custom World", custom_world_str.c_str());
+    prefs_put("Custom World", StringTemp);
     prefs_put("Time Controls", AlphaIniPrefs->time_controls, false);
     if (save_factions && ExpansionEnabled) {
         for (uint32_t i = 1; i < MaxPlayerNum; i++) {
-            sprintf_s(StringTemp, sizeof(StringTemp), "Faction %d", i);
+            StringTemp[0] = 0;
+            strcat(StringTemp, "Faction ");
+            say_num(i);
             prefs_put(StringTemp, Players[i].filename);
         }
     }
@@ -1935,6 +1969,13 @@ void __cdecl prefs_save(BOOL save_factions) {
 /*
 Purpose: Set the internal game preference globals from the ini setting globals.
 // ORIGINAL: 0x0059E950 ?prefs_use@@YAXXZ 0x0059E950-0x0059E973 SEMANTIC
+// RULED-OUT: 5/7 plateau, MNEMONIC_ONLY (register swap on the `more`/
+//            `announce` stores only). Tried: declaring `announce` before
+//            `more`; storing `announce` before `more`; both reversed
+//            together; and direct field-to-field assignment with no
+//            locals at all. All four score WORSE (3-4/7) than the
+//            committed three-loads-then-three-stores body. VC6 register
+//            allocation quirk, not a source-form lever found here.
 // size      35 bytes
 // prototype 
 // callers   6   call targets   0
@@ -2033,6 +2074,18 @@ Status: Complete
 /*
 Purpose: Get the label string and concatenate it to the stringTemp buffer.
 // ORIGINAL: 0x005A5880 ?say_label@@YAXH@Z 0x005A5880-0x005A58AA SEMANTIC
+// LEVER: `strcat_s` was calling the CRT's inlined byte-copy loop (29
+//        instructions) instead of the image's plain `call strcat`; `strcat`
+//        drops it to 10/14 MNEMONIC_ONLY.
+// RULED-OUT: remaining divergence is load order inside the inlined
+//            `label_get` - image loads `label_offset` before
+//            `Labels->strings_ptr`, this tree's forceinline loads the
+//            reverse. Caching `label_offset` in a local first, caching the
+//            `label_get` result first, and manually inlining the
+//            `StringTable->get(...)` expression in place of the call all
+//            score identically (10/14) - not a lever found at this call
+//            site; `label_get` itself is shared and used correctly
+//            elsewhere.
 // size      42 bytes
 // prototype void (__cdecl ?say_label@@YAXH@Z)(int labelID)
 // callers   1   call targets   2
@@ -2043,7 +2096,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl say_label(int label_offset) {
-    strcat_s(StringTemp, 1032, label_get(label_offset));
+    strcat(StringTemp, label_get(label_offset));
 }
 
 /*

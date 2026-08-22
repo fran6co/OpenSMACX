@@ -93,7 +93,13 @@ void __fastcall tut_win_unk3_redirect(TutWin *self, void *, int a1) {
 /*
 Purpose: Centre the rectangle on both axes and convert the result to screen
          coordinates through the iface window.
-// ORIGINAL: 0x004BC5A0 ?iface_rect@TutWin@@QAEXPAURECT@@PAH1@Z 0x004BC5A0-0x004BC5E3
+// ORIGINAL: 0x004BC5A0 ?iface_rect@TutWin@@QAEXPAURECT@@PAH1@Z 0x004BC5A0-0x004BC5E3 BYTE_EXACT
+// LEVER: plain `left + (right - left) / 2` signed division - the image
+//        already emits the `cdq; sub; sar` fixup itself, so the hand-rolled
+//        unsigned-with-sign-carried-over-the-shift trick this body used to
+//        model the SAME idiom compiled to different instructions. Matches
+//        the sibling `base_rect`/`soc_rect`/`des_rect`, already byte-exact
+//        on this same lever.
 // symbol    ?iface_rect@TutWin@@QAEXPAUtagRECT@@PAH1@Z
 // size      67 bytes
 // prototype void (__thiscall ?iface_rect@TutWin@@QAEXPAURECT@@PAH1@Z)(TutWin* this, RECT*, int*, int*)
@@ -108,16 +114,8 @@ Verification note: client_to_screen is entered on the FIXED window at 0x007AE820
          TutWin receiver is not read by this body at all.
 */
 void TutWin::iface_rect(RECT *rect, int *x, int *y) {
-    const uint32_t left = static_cast<uint32_t>(rect->left);
-    const uint32_t width = static_cast<uint32_t>(rect->right) - left;
-    const uint32_t width_adjusted = width + (width >> 31);
-    *x = static_cast<int>(
-        left + ((width_adjusted >> 1) | (width_adjusted & 0x80000000U)));
-    const uint32_t top = static_cast<uint32_t>(rect->top);
-    const uint32_t height = static_cast<uint32_t>(rect->bottom) - top;
-    const uint32_t height_adjusted = height + (height >> 31);
-    *y = static_cast<int>(
-        top + ((height_adjusted >> 1) | (height_adjusted & 0x80000000U)));
+    *x = rect->left + (rect->right - rect->left) / 2;
+    *y = rect->top + (rect->bottom - rect->top) / 2;
     TutWinIfaceWindow->client_to_screen(x, y);
 }
 
@@ -231,7 +229,9 @@ void __fastcall tut_win_des_rect_redirect(
 /*
 Purpose: Centre the rectangle, convert it through the base window, and
          show the tutorial text there against the primary map window.
-// ORIGINAL: 0x004BA870 ?do_base@TutWin@@QAEXPAURECT@@PBDH@Z 0x004BA870-0x004BA8EB
+// ORIGINAL: 0x004BA870 ?do_base@TutWin@@QAEXPAURECT@@PBDH@Z 0x004BA870-0x004BA8EB SEMANTIC
+// LEVER: two levers stacked, 4/56 -> 45/56 MNEMONIC_ONLY. (1) plain `left + (right - left) / 2` signed division instead of the unsigned-with-sign-carried trick, same as `iface_rect`. (2) `primary` read BEFORE `window` is given any value, and its null-check written `if (primary == nullptr) { window = nullptr; } else { ...compute... }` (primary-first declaration order, and the null case as the FIRST arm) - the image reads the global first and only zeroes the result register on the branch that skips the vtable dereference, both of which a `window = nullptr;`-then-test body reorders.
+// RULED-OUT: 45/56 plateau - the remainder is a consistent eax/ecx role swap through the vbtable-dereference block and the final argument push order, tried: `uint8_t *` instead of `void *` for `window`, and folding the `vbtable` local into the expression directly - neither changes it. VC6 register allocation, not a source-form lever found here.
 // symbol    ?do_base@TutWin@@QAEXPAUtagRECT@@PBDH@Z
 // size      123 bytes
 // prototype void (__thiscall ?do_base@TutWin@@QAEXPAURECT@@PBDH@Z)(TutWin* this, RECT*, int8*, int)
@@ -250,21 +250,17 @@ Verification note: the original writes the y centre over its own first
          from that point. A local is equivalent and is what is used here.
 */
 void TutWin::do_base(RECT *rect, const char *text, int flag) {
-    const uint32_t left = static_cast<uint32_t>(rect->left);
-    const uint32_t width = static_cast<uint32_t>(rect->right) - left;
-    const uint32_t width_adjusted = width + (width >> 31);
-    int x = static_cast<int>(
-        left + ((width_adjusted >> 1) | (width_adjusted & 0x80000000U)));
-    const uint32_t top = static_cast<uint32_t>(rect->top);
-    const uint32_t height = static_cast<uint32_t>(rect->bottom) - top;
-    const uint32_t height_adjusted = height + (height >> 31);
-    int y = static_cast<int>(
-        top + ((height_adjusted >> 1) | (height_adjusted & 0x80000000U)));
+    // Plain signed division: the image emits `cdq; sub eax,edx; sar eax,1`
+    // (round-toward-zero) for each half, not a rounding bit-trick.
+    int x = rect->left + (rect->right - rect->left) / 2;
+    int y = rect->top + (rect->bottom - rect->top) / 2;
     TutWinBaseWindow->client_to_screen(&x, &y);
 
-    void *window = nullptr;
     uint8_t *const primary = reinterpret_cast<uint8_t *>(MapWinTable[0]);
-    if (primary != nullptr) {
+    void *window;
+    if (primary == nullptr) {
+        window = nullptr;
+    } else {
         // The virtual-base displacement lives at offset 4 of the object's
         // vbtable, which is the dword at offset 0.
         const int32_t *const vbtable =
@@ -282,7 +278,9 @@ void __fastcall tut_win_do_base_redirect(
 /*
 Purpose: Centre the rectangle, convert it through the iface window, and
          show the tutorial text there against the primary map window.
-// ORIGINAL: 0x004BA8F0 ?do_iface@TutWin@@QAEXPAURECT@@PBDH@Z 0x004BA8F0-0x004BA96B
+// ORIGINAL: 0x004BA8F0 ?do_iface@TutWin@@QAEXPAURECT@@PBDH@Z 0x004BA8F0-0x004BA96B SEMANTIC
+// LEVER: same two levers as `do_base` (see that marker) - plain signed division, and `primary` read/null-checked before `window` is given any value. 4/56 -> 45/56 MNEMONIC_ONLY.
+// RULED-OUT: same 45/56 plateau as `do_base` - a consistent eax/ecx register swap through the vbtable block; see that marker for what was tried.
 // symbol    ?do_iface@TutWin@@QAEXPAUtagRECT@@PBDH@Z
 // size      123 bytes
 // prototype void (__thiscall ?do_iface@TutWin@@QAEXPAURECT@@PBDH@Z)(TutWin* this, RECT*, int8*, int)
@@ -301,21 +299,17 @@ Verification note: the original writes the y centre over its own first
          from that point. A local is equivalent and is what is used here.
 */
 void TutWin::do_iface(RECT *rect, const char *text, int flag) {
-    const uint32_t left = static_cast<uint32_t>(rect->left);
-    const uint32_t width = static_cast<uint32_t>(rect->right) - left;
-    const uint32_t width_adjusted = width + (width >> 31);
-    int x = static_cast<int>(
-        left + ((width_adjusted >> 1) | (width_adjusted & 0x80000000U)));
-    const uint32_t top = static_cast<uint32_t>(rect->top);
-    const uint32_t height = static_cast<uint32_t>(rect->bottom) - top;
-    const uint32_t height_adjusted = height + (height >> 31);
-    int y = static_cast<int>(
-        top + ((height_adjusted >> 1) | (height_adjusted & 0x80000000U)));
+    // Plain signed division: the image emits `cdq; sub eax,edx; sar eax,1`
+    // (round-toward-zero) for each half, not a rounding bit-trick.
+    int x = rect->left + (rect->right - rect->left) / 2;
+    int y = rect->top + (rect->bottom - rect->top) / 2;
     TutWinIfaceWindow->client_to_screen(&x, &y);
 
-    void *window = nullptr;
     uint8_t *const primary = reinterpret_cast<uint8_t *>(MapWinTable[0]);
-    if (primary != nullptr) {
+    void *window;
+    if (primary == nullptr) {
+        window = nullptr;
+    } else {
         // The virtual-base displacement lives at offset 4 of the object's
         // vbtable, which is the dword at offset 0.
         const int32_t *const vbtable =
@@ -333,7 +327,9 @@ void __fastcall tut_win_do_iface_redirect(
 /*
 Purpose: Centre the rectangle, convert it through the soc window, and
          show the tutorial text there against the primary map window.
-// ORIGINAL: 0x004BA970 ?do_soc@TutWin@@QAEXPAURECT@@PBDH@Z 0x004BA970-0x004BA9EB
+// ORIGINAL: 0x004BA970 ?do_soc@TutWin@@QAEXPAURECT@@PBDH@Z 0x004BA970-0x004BA9EB SEMANTIC
+// LEVER: same two levers as `do_base` (see that marker) - plain signed division, and `primary` read/null-checked before `window` is given any value. 4/56 -> 45/56 MNEMONIC_ONLY.
+// RULED-OUT: same 45/56 plateau as `do_base` - a consistent eax/ecx register swap through the vbtable block; see that marker for what was tried.
 // symbol    ?do_soc@TutWin@@QAEXPAUtagRECT@@PBDH@Z
 // size      123 bytes
 // prototype void (__thiscall ?do_soc@TutWin@@QAEXPAURECT@@PBDH@Z)(TutWin* this, RECT*, int8*, int)
@@ -352,21 +348,17 @@ Verification note: the original writes the y centre over its own first
          from that point. A local is equivalent and is what is used here.
 */
 void TutWin::do_soc(RECT *rect, const char *text, int flag) {
-    const uint32_t left = static_cast<uint32_t>(rect->left);
-    const uint32_t width = static_cast<uint32_t>(rect->right) - left;
-    const uint32_t width_adjusted = width + (width >> 31);
-    int x = static_cast<int>(
-        left + ((width_adjusted >> 1) | (width_adjusted & 0x80000000U)));
-    const uint32_t top = static_cast<uint32_t>(rect->top);
-    const uint32_t height = static_cast<uint32_t>(rect->bottom) - top;
-    const uint32_t height_adjusted = height + (height >> 31);
-    int y = static_cast<int>(
-        top + ((height_adjusted >> 1) | (height_adjusted & 0x80000000U)));
+    // Plain signed division: the image emits `cdq; sub eax,edx; sar eax,1`
+    // (round-toward-zero) for each half, not a rounding bit-trick.
+    int x = rect->left + (rect->right - rect->left) / 2;
+    int y = rect->top + (rect->bottom - rect->top) / 2;
     TutWinSocWindow->client_to_screen(&x, &y);
 
-    void *window = nullptr;
     uint8_t *const primary = reinterpret_cast<uint8_t *>(MapWinTable[0]);
-    if (primary != nullptr) {
+    void *window;
+    if (primary == nullptr) {
+        window = nullptr;
+    } else {
         // The virtual-base displacement lives at offset 4 of the object's
         // vbtable, which is the dword at offset 0.
         const int32_t *const vbtable =
@@ -384,7 +376,9 @@ void __fastcall tut_win_do_soc_redirect(
 /*
 Purpose: Centre the rectangle, convert it through the des window, and
          show the tutorial text there against the primary map window.
-// ORIGINAL: 0x004BA9F0 ?do_des@TutWin@@QAEXPAURECT@@PBDH@Z 0x004BA9F0-0x004BAA6B
+// ORIGINAL: 0x004BA9F0 ?do_des@TutWin@@QAEXPAURECT@@PBDH@Z 0x004BA9F0-0x004BAA6B SEMANTIC
+// LEVER: same two levers as `do_base` (see that marker) - plain signed division, and `primary` read/null-checked before `window` is given any value. 4/56 -> 45/56 MNEMONIC_ONLY.
+// RULED-OUT: same 45/56 plateau as `do_base` - a consistent eax/ecx register swap through the vbtable block; see that marker for what was tried.
 // symbol    ?do_des@TutWin@@QAEXPAUtagRECT@@PBDH@Z
 // size      123 bytes
 // prototype void (__thiscall ?do_des@TutWin@@QAEXPAURECT@@PBDH@Z)(TutWin* this, RECT*, int8*, int)
@@ -403,21 +397,17 @@ Verification note: the original writes the y centre over its own first
          from that point. A local is equivalent and is what is used here.
 */
 void TutWin::do_des(RECT *rect, const char *text, int flag) {
-    const uint32_t left = static_cast<uint32_t>(rect->left);
-    const uint32_t width = static_cast<uint32_t>(rect->right) - left;
-    const uint32_t width_adjusted = width + (width >> 31);
-    int x = static_cast<int>(
-        left + ((width_adjusted >> 1) | (width_adjusted & 0x80000000U)));
-    const uint32_t top = static_cast<uint32_t>(rect->top);
-    const uint32_t height = static_cast<uint32_t>(rect->bottom) - top;
-    const uint32_t height_adjusted = height + (height >> 31);
-    int y = static_cast<int>(
-        top + ((height_adjusted >> 1) | (height_adjusted & 0x80000000U)));
+    // Plain signed division: the image emits `cdq; sub eax,edx; sar eax,1`
+    // (round-toward-zero) for each half, not a rounding bit-trick.
+    int x = rect->left + (rect->right - rect->left) / 2;
+    int y = rect->top + (rect->bottom - rect->top) / 2;
     TutWinDesWindow->client_to_screen(&x, &y);
 
-    void *window = nullptr;
     uint8_t *const primary = reinterpret_cast<uint8_t *>(MapWinTable[0]);
-    if (primary != nullptr) {
+    void *window;
+    if (primary == nullptr) {
+        window = nullptr;
+    } else {
         // The virtual-base displacement lives at offset 4 of the object's
         // vbtable, which is the dword at offset 0.
         const int32_t *const vbtable =

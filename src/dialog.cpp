@@ -156,6 +156,16 @@ void Dialog::set_selected_id(int id) {
 /*
 Purpose: Restore the selected list position and return its item ID.
 // ORIGINAL: 0x00609A50 ?get_selected_id@Dialog@@QAEHXZ 0x00609A50-0x00609AE6
+// RULED-OUT: 25/50 plateau (0.8+ similar) - the image caches `this` itself
+//            in a register (`mov esi, ecx` at instruction 1) and reads
+//            `entry_head_` through it early; this body's compiled form
+//            instead caches `entry_head_`/`current_entry_` early and keeps
+//            `this` in `ecx` throughout, register-swapped rather than
+//            structurally different. Tried an explicit `Dialog *const self
+//            = this;` local read through everywhere - scores identically
+//            (25/50). Not a source-form lever found on top of the
+//            extensive prior tuning already in this body (see the
+//            instruction-level comments above).
 // size      150 bytes
 // prototype int (__thiscall ?get_selected_id@Dialog@@QAEHXZ)(Dialog* this)
 // callers   15   call targets   1
@@ -217,6 +227,20 @@ int Dialog::get_selected_id() {
 /*
 Purpose: Restore an explicit list position and return its item ID.
 // ORIGINAL: 0x00609B50 ?pos_to_id@Dialog@@QAEHH@Z 0x00609B50-0x00609BEA
+// LEVER: dropped a dead `int count = entry_count_;` first line (unused,
+//        scored no differently either way) - not the defect. `/Oi-` is:
+//        the DEFAULT flag set lets VC6 expand `abs()` as an intrinsic bit
+//        trick (`cdq; xor; sub`), which is what stops it caching `this` in
+//        a register the way the image's real `call`-based `abs` does;
+//        `/c /O2 /Oi- /Gy /GR- /GX` reaches 0.970 similar (10 differing
+//        runs total) against 0.771-0.780 for the flag sets with
+//        intrinsics on. `record`'s own auto-pick still reports the
+//        low-`agreeing`-count set here because its sort is count-first,
+//        not similarity-first; the source is correct, this is a scorer
+//        tie-break, not a body defect.
+// RULED-OUT: remaining gap under `/Oi-` is a handful of ecx/edx register
+//            swaps around the `current_entry_`/`entry_head_` reads -
+//            plateaued, matching the sibling `get_selected_id` above.
 // size      154 bytes
 // prototype int (__thiscall ?pos_to_id@Dialog@@QAEHH@Z)(Dialog* this, int)
 // callers   7   call targets   1
@@ -228,7 +252,6 @@ Return Value: Item ID at the requested position, or zero when the list head is n
 Status: Complete
 */
 int Dialog::pos_to_id(int position) {
-    int count = entry_count_;
     // `position <= count - 1`, WHICH IS NOT `position < count`. The image
     // decrements the count and compares - `dec eax; cmp edi, eax; jg` - and
     // for count == INT_MIN that decrement WRAPS, which is the whole reason
@@ -396,6 +419,19 @@ Purpose: Destroy a Dialog. Install the Dialog table, run Dialog::close, then
          frame targets __CxxFrameHandler and is omitted as unreachable per
          policy.
 // ORIGINAL: 0x00608E10 ??1Dialog@@QAE@XZ 0x00608E10-0x00608F41;0x00662EC0-0x00662EEE
+// RULED-OUT: 0/94 - two stacked gaps, not chased at this budget. (1) the
+//            image carries a real SEH unwind frame, same symptom as
+//            FlatButton::~FlatButton() (flatbutton.cpp) - but unlike that
+//            case the comment above's "unreachable, omitted per policy"
+//            claim is NOT independently re-verified here (write_l's own
+//            font1_-rebind note, buffer.cpp, turned out wrong on the same
+//            kind of claim elsewhere in this pass, so it is flagged, not
+//            trusted). (2) `StringStruct::close_with_tables` is fully
+//            INLINED into this call site in the image (94 instructions
+//            for what compiles to a real 26-instruction call chain here) -
+//            the documented "MEASURED inline ceiling" shape the brief
+//            says a forwarder does not fix. Both would need real
+//            investigation this pass did not have budget for.
 // symbol    ?destroy@Dialog@@QAEXXZ
 // size      351 bytes
 // prototype void (__thiscall ??1Dialog@@QAE@XZ)(Dialog* this)

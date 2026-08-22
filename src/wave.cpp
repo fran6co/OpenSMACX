@@ -205,6 +205,14 @@ Purpose: Set the playback pitch, clamped to the range the engine accepts
          (-1200 to 1200). The clamped value is stored at 0x58 and handed to the
          wrapped device, if there is one, through its vtable slot 0x98.
 // ORIGINAL: 0x004C6EE0 ?set_pitch@Wave@@QAEXH@Z 0x004C6EE0-0x004C6F19
+// RULED-OUT: 17/20 plateau, one instruction short of BYTE_EXACT - the
+//            image's shared tail (both the `device_ == 0` skip and the
+//            post-call join) does `xor eax, eax` before `pop ebp; ret 4`,
+//            which this `void`-returning body never emits. Tried: two
+//            separate `if`s instead of `if/else if` for the clamp, and an
+//            explicit early `return;` for the null-device_ case - neither
+//            changes the tail. Mangled name is `@QAEXH@Z` (`X` = void), so
+//            the return type cannot change; not a lever found here.
 // size      57 bytes
 // prototype void (__thiscall ?set_pitch@Wave@@QAEXH@Z)(Wave* this, int)
 // callers   3   call targets   0
@@ -1325,6 +1333,20 @@ Purpose: Build the wave. The original constructs in the same three vtable
          regions, a 1000ms default at 0x38, flag dword 4, Sound::set_type
          run with type 1, unit reverb mix, and the out-of-range group slot.
 // ORIGINAL: 0x004C66E0 ??0Wave@@QAE@XZ 0x004C66E0-0x004C67B6;0x004C8450-0x004C8457;0x00659EF4-0x00659F06
+// RULED-OUT: 3/73 - the image carries an SEH unwind frame here (`push -1 /
+//            push 0x659efc / mov eax,fs:[0] / ...`), the same symptom as
+//            FlatButton::FlatButton() (flatbutton.cpp) and
+//            GraphicWin::~GraphicWin() (graphicwin.cpp): a real
+//            constructor calling something VC6 assumes can throw
+//            (`Sound::set_type`) alongside a non-trivial `~Wave()`
+//            (0x004C67C0, this file). Not attempted: this body already
+//            deliberately elides two intermediate vtable-install stages
+//            the image performs before the SEH frame, on the documented
+//            theory that a CRT memset between them makes both
+//            unobservable - reworking the frame risks that already-
+//            reasoned simplification for an uncertain payoff, given
+//            FlatButton's own SEH-frame recovery needed no vtable-stage
+//            changes and this body's does. Left as is.
 // size      239 bytes
 // prototype void (__thiscall ??0Wave@@QAE@XZ)(Wave* this)
 // callers   16   call targets   2
@@ -1553,6 +1575,21 @@ Purpose: Destroy the wave. The original is a three-stage teardown of an
          SEH frame is omitted: the binary has no throw entry point, so it is
          unreachable.
 // ORIGINAL: 0x004C67C0 ??1Wave@@QAE@XZ 0x004C67C0-0x004C68EC;0x004C8450-0x004C8457;0x00659F06-0x00659F20
+// RULED-OUT: 0.888 similar, 2/101 agreeing - already a real destructor,
+//            and everything BUT the SEH prologue/epilogue is close; the
+//            gap is the missing unwind frame, matching Wave::Wave()'s own
+//            ceiling above (same file). The comment above claims the
+//            frame is "unreachable, so omitted", which is the SAME
+//            reasoning that write_l's own font1_ rebind note (buffer.cpp)
+//            turned out to be WRONG about elsewhere in this pass -
+//            flagged here rather than trusted, but not re-investigated:
+//            unlike FlatButton's destructor (flatbutton.cpp, where the
+//            fix was straightforward - just stop routing through a
+//            `destroy()` method), this is ALREADY a real destructor, has
+//            no base class to call into, and is wrapped in heavy
+//            `volatile` reads/writes throughout; reproducing the frame
+//            here would need isolating which of those is responsible,
+//            which this budget does not cover.
 // size      333 bytes
 // prototype 
 // callers   2   call targets   2

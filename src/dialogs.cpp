@@ -50,7 +50,7 @@ namespace {
 
 
 // Where the Dialog subobject is, according to this object's own vbtable.
-Dialog *dialog_of(void *self) {
+__forceinline Dialog *dialog_of(void *self) {
     uint8_t *const bytes = reinterpret_cast<uint8_t *>(self);
     const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(bytes);
     return reinterpret_cast<Dialog *>(bytes + vbtable[2]);
@@ -62,6 +62,17 @@ Dialog *dialog_of(void *self) {
 Purpose: Fetch one item's text, from whichever widget this kind of dialog
          keeps its items in.
 // ORIGINAL: 0x00612A70 ?item@Dialogs@@QAEHPADH@Z 0x00612A70-0x00612ABF
+// LEVER: `case 2` moved AHEAD of the `case 1/4/8/16` group - source case
+//        order changed which block VC6 places (and schedules) first; moved
+//        12/26 -> 20/26 and removed a spurious internal `call`+`ret 8` the
+//        shared-tail block was reached through.
+// RULED-OUT: 20/26 plateau on the remaining block - image loads `index`
+//            ([esp+8]) before starting the receiver's vtable dereference,
+//            pushes it, THEN loads/pushes `text`, interleaved with
+//            finishing the receiver. Tried: reversing the 16/8/4/1 case
+//            order, and copying `text`/`index` into locals before the call
+//            - both score identically to the committed body. VC6
+//            call-argument scheduling, not a source-form lever found here.
 // size      79 bytes
 // prototype int (__thiscall ?item@Dialogs@@QAEHPADH@Z)(Dialogs* this, int8* lpString, int position)
 // callers   72   call targets   2
@@ -73,17 +84,17 @@ Status: Complete
 */
 int Dialogs::item(char *text, int index) {
     switch (kind_) {
-        case 1:
-        case 4:
-        case 8:
-        case 16:
-            return dialog_of(this)->item(text, index);
         case 2:
             // THE RECEIVER IS THIS OBJECT, reinterpreted: the image calls
             // ListBox::item with the Dialogs pointer unchanged, and
             // `class Dialogs : ListBox` cannot be spelled here - see the
             // measured sizes in dialogs.h.
             return reinterpret_cast<ListBox *>(this)->item(text, index);
+        case 1:
+        case 4:
+        case 8:
+        case 16:
+            return dialog_of(this)->item(text, index);
         default:
             return 0;
     }
@@ -91,7 +102,9 @@ int Dialogs::item(char *text, int index) {
 
 /*
 Purpose: Count the items this kind of dialog holds.
-// ORIGINAL: 0x00613740 ?get_num_items@Dialogs@@QAEHXZ 0x00613740-0x00613772
+// ORIGINAL: 0x00613740 ?get_num_items@Dialogs@@QAEHXZ 0x00613740-0x00613772 BYTE_EXACT
+// LEVER: `dialog_of` marked `__forceinline` - the image has zero call
+//        targets here, so its vbtable lookup is inlined, not called.
 // size      50 bytes
 // prototype int (__thiscall ?get_num_items@Dialogs@@QAEHXZ)(Dialogs* this)
 // callers   4   call targets   0
@@ -443,6 +456,17 @@ Purpose: Destroy a Dialogs. Stage the Dialogs tables into the GraphicWin/Win
          the original's exact order. The original's C++ exception frame
          targets __CxxFrameHandler and is omitted as unreachable per policy.
 // ORIGINAL: 0x00406910 ??1Dialogs@@QAE@XZ 0x00406910-0x00406A74;0x006509C0-0x00650AAA
+// symbol    ?destroy@Dialogs@@QAEIXZ
+// RULED-OUT: 3/92 - same SEH-frame symptom as `Dialog::~Dialog()` (this
+//            file's sibling class in dialog.cpp) and FlatButton's own
+//            constructor/destructor pair. Not attempted: the comment
+//            above claims the frame is "unreachable, omitted per policy",
+//            which is UNVERIFIED here (flagged, not trusted - see the
+//            note on Dialog::~Dialog for why). This body is the most
+//            complex of the three (six member teardowns across five
+//            classes chained together); reproducing the frame plus
+//            whatever member-destruction reordering it would take is out
+//            of scope for this pass's budget.
 // size      590 bytes
 // prototype void (__thiscall ??1Dialogs@@QAE@XZ)(Dialogs* this)
 // callers   72   call targets   6
