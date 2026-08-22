@@ -145,6 +145,33 @@ Purpose: Construct a Scroll: run the GraphicWin base construction, install
          own base-then-member sequencing rather than an explicit placement
          call.
 // ORIGINAL: 0x006051D0 ??0Scroll@@QAE@XZ 0x006051D0-0x00605367;0x00662E30-0x00662E50
+// LEVER: base-ctor ordering  the image runs GraphicWin::construct() BEFORE the
+//   two FlatButton members, and a call in the constructor BODY can never get
+//   there - member ctors always run first. Moving it into a base subobject
+//   (`struct ScrollGraphicWin : GraphicWin`, scroll.h) uses C++'s own
+//   base-before-members rule to put it where the image has it. No raw storage,
+//   no placement-new, layout unchanged. 21 -> 22 of 83 on its own, and it is
+//   what UNBLOCKS the two levers below - they are unreachable until the order
+//   is right. This RETRACTS the "raw bytes and placement-new" conclusion the
+//   RULED-OUT below reached; that note read the divergence correctly and then
+//   picked the wrong of two ways to fix it.
+// LEVER: vtable immediates  `extern const uint32_t ScrollPrimaryVtable` with
+//   the definition down in this file is invisible at the constructor, so VC6
+//   emits a load-then-store where the image has one `mov [esi], 0x669d58`.
+//   Defining the value IN scroll.h folds it. 22 -> 77 of 83 - by far the
+//   largest single move, and it was hidden behind the ordering defect.
+// LEVER: store order  0xA30 is written between 0xA2C and 0xA3C in the image;
+//   this body had it three lines later. 77 -> 81 of 83.
+// RULED-OUT: the last 2 instructions are the four-store loop's INDUCTION
+//   VARIABLE, not its body. The image keeps eax a plain scaled index and folds
+//   each table base into the displacement (`xor eax,eax`;
+//   `mov edx,[eax+0x9b8de8]`); this tree emits `mov eax,0x14` and
+//   `mov edx,[eax-0xc]`, a strength-reduced moving pointer. Measured 2026-08-22:
+//   `int index` for the signed `jl` - no change, still 81. Declaring the two
+//   tables as real ARRAYS so each subscript folds its own base - WORSE, 76,
+//   and subscripting the array by name inside the loop worse again at 75. The
+//   `uint32_t *const` locals reading `&Scroll...Defaults` are the best of the
+//   four spellings measured.
 // RULED-OUT: SEH frame divergence at instruction 0, same family as
 //   FlatButton::FlatButton() (flatbutton.cpp) and PullDown::PullDown()
 //   (pulldown.cpp) - a REAL derived-class constructor calling a base's
@@ -176,8 +203,6 @@ Return Value: Instance pointer in EAX
 Status: Complete
 */
 Scroll::Scroll() {
-    GraphicWin::construct();
-
     uint32_t *const object = reinterpret_cast<uint32_t *>(this);
     object[0x000 / 4] = ScrollPrimaryVtable;
     object[0x444 / 4] = ScrollBufferVtable;
@@ -191,9 +216,9 @@ Scroll::Scroll() {
     object[0xA20 / 4] = dynamic[1];
     object[0xA24 / 4] = fixed[4];
     object[0xA2C / 4] = dynamic[1];
+    object[0xA30 / 4] = fixed[2];
     object[0xA3C / 4] = 0xFFFFFFFFU;
     object[0xA38 / 4] = 0;
-    object[0xA30 / 4] = fixed[2];
     object[0xA34 / 4] = fixed[1];
     object[0xA40 / 4] = fixed[0];
     object[0xA44 / 4] = 0;
@@ -208,7 +233,7 @@ Scroll::Scroll() {
     object[0xA6C / 4] = fixed[9];
     object[0xA70 / 4] = fixed[10];
 
-    for (size_t index = 0; index < 3; ++index) {
+    for (int index = 0; index < 3; ++index) {
         object[(0xA7C / 4) + index] = dynamic[2 + index];
         object[(0xA88 / 4) + index] = dynamic[5 + index];
         object[(0xA94 / 4) + index] = dynamic[8 + index];
@@ -1122,8 +1147,6 @@ int __fastcall scroll_on_left_click_redirect(Scroll *self, void *, int a1, int a
     return self->on_left_click(a1, a2);
 }
 
-const uint32_t ScrollPrimaryVtable = 0x00669D58;
-const uint32_t ScrollBufferVtable = 0x00669D50;
 
 /*
 Purpose: Destroy a Scroll: stage its two virtual tables, run close, destroy
