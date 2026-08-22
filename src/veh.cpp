@@ -4579,7 +4579,8 @@ int __cdecl veh_cargo(int veh_id) {
 /*
 Purpose: Determine the extra percent cost for building a prototype. Includes a check if the faction 
          has the free prototype flag set or if the player is using one of the easier difficulties.
-// ORIGINAL: 0x005C17D0 ?prototype_factor@@YAHH@Z 0x005C17D0-0x005C184F
+// ORIGINAL: 0x005C17D0 ?prototype_factor@@YAHH@Z 0x005C17D0-0x005C184F BYTE_EXACT
+// LEVER: the `||` split into two separate guards - the image falls through to an inline `return 0` after the first test where a combined condition jumps to a shared epilogue. 18/48 -> BYTE_EXACT 48/48. Order measured: rule_flags first, `diff_level` first scores 5/48.
 // size      127 bytes
 // prototype int (__cdecl ?prototype_factor@@YAHH@Z)(int protoID)
 // callers   3   call targets   0
@@ -4591,8 +4592,17 @@ Status: Complete
 */
 int __cdecl prototype_factor(int proto_id) {
     uint32_t faction_id = proto_id / MaxVehProtoFactionNum;
-    if (Players[faction_id].rule_flags & RFLAG_FREEPROTO
-        || PlayersData[faction_id].diff_level <= DLVL_SPECIALIST) {
+    // TWO GUARDS, NOT ONE `||`. Combined, VC6 short-circuits both tests into a
+    // shared `return 0` epilogue and jumps to it; the image falls through to
+    // its own inline `xor eax, eax; pop ebp; ret` after the first test, which
+    // is what two separate statements produce. 18/48 -> 48/48.
+    //
+    // The ORDER is the image's too, and measured rather than assumed: testing
+    // `diff_level` first scores 5 of 48.
+    if (Players[faction_id].rule_flags & RFLAG_FREEPROTO) {
+        return 0;
+    }
+    if (PlayersData[faction_id].diff_level <= DLVL_SPECIALIST) {
         return 0;
     }
     uint8_t triad = get_proto_triad(proto_id);
