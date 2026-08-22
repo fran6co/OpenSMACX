@@ -2434,7 +2434,14 @@ Status: Complete
 
 /*
 Purpose: Get the current health of the specified unit factoring in damage.
-// ORIGINAL: 0x005A59E0 ?veh_health@@YAHH@Z 0x005A59E0-0x005A5A52
+// ORIGINAL: 0x005A59E0 ?veh_health@@YAHH@Z 0x005A59E0-0x005A5A52 BYTE_EXACT
+// LEVER: ternary -> if/else. The image branches on `plan != ALIEN_ARTIFACT`
+// with `jne` to the range()*10 path and falls through `mov eax,1; jmp` on
+// the equal side; a `cond ? range(...)*10 : 1` ternary compiled the
+// opposite polarity (`je` past a shared *10). Splitting it into a plain
+// if/else in the image's own branch order gives BYTE_EXACT at
+// `/c /O2 /Gy /GR- /Oy- /GX` (the FRAMED set - `flags frame` above already
+// says so).
 // size      114 bytes
 // prototype int (__cdecl ?veh_health@@YAHH@Z)(int vehID)
 // callers   1   call targets   0
@@ -2446,8 +2453,12 @@ Status: Complete
 */
 int __cdecl veh_health(int veh_id) {
     int proto_id = Vehs[veh_id].proto_id;
-    int health = VehPrototypes[proto_id].plan != PLAN_ALIEN_ARTIFACT
-        ? range(VehPrototypes[proto_id].reactor_id, 1, 100) * 10 : 1;
+    int health;
+    if (VehPrototypes[proto_id].plan == PLAN_ALIEN_ARTIFACT) {
+        health = 1;
+    } else {
+        health = range(VehPrototypes[proto_id].reactor_id, 1, 100) * 10;
+    }
     return range(health - Vehs[veh_id].dmg_incurred, 0, 9999);
 }
 
@@ -2970,6 +2981,15 @@ Purpose: Reveal whatever occupies the specified location - the tile itself, and
          then either the base standing on it or the whole unit stack - to the
          specified faction.
 // ORIGINAL: 0x005B5AD0 ?spot_loc@@YAXHHH@Z 0x005B5AD0-0x005B5E05
+// RULED-OUT: byte-exactness, deliberately - not chased. The image INLINES
+// spot_tile, spot_base and spot_stack whole (only base_at and veh_at
+// survive as real calls), so a body that calls the five source-owned
+// helpers by name - as this one does, on purpose, per the analysis below -
+// diverges from instruction 0 (1/247 agreeing, push ebp/mov ebp,esp vs a
+// register-argument prologue). Re-inlining all five to chase bytes would
+// duplicate spot_tile/spot_base/spot_stack's own already-recovered bodies
+// here; the call-graph transcription is judged the better trade and is
+// left as MISMATCH.
 // size      821 bytes
 // prototype void (__cdecl ?spot_loc@@YAXHHH@Z)(int xCoord, int yCoord, int factionID)
 // callers   6   call targets   3
@@ -4097,9 +4117,26 @@ void __cdecl sleep_call(int veh_id) {
     sleep(veh_id);
 }
 
+// See veh.h: a real, out-of-line forwarder so veh_cost's one call site gets
+// an actual `call` where `base_cost(proto_id)` directly would inline away
+// under /O2.
+int __cdecl base_cost_call(int proto_id) {
+    return base_cost(proto_id);
+}
+
 /*
 Purpose: Move the specified unit to the bottom of the stack.
 // ORIGINAL: 0x005C01D0 ?veh_demote@@YAXH@Z 0x005C01D0-0x005C0256
+// RULED-OUT: byte-exactness. Best is 0.916 similar (4/40 in position) at
+// `/c /O2 /Gy /GR- /Oy- /GX`, and every remaining edit is register
+// allocation - `esi`/`edi`/`ebx` permuted against the image's fixed
+// `ebx`=veh_id, `esi`=last_veh_id, `edi`=&Vehs[veh_id] - with no control
+// flow or field-order difference. Measured two spellings: nested `if` and
+// guard-clause early-return (identical 0.916, guard clause kept as closer
+// to the image's flat `jl`/`jl`/`je` shape), and a cached `Veh *` for
+// `&Vehs[veh_id]`/`&Vehs[last_veh_id]` (WORSE, 0.892 - an extra `lea`
+// survives past the call where the image recomputes the address after
+// `veh_lift` returns). Do not re-derive the pointer-cache attempt.
 // size      134 bytes
 // prototype void (__cdecl ?veh_demote@@YAXH@Z)(int vehID)
 // callers   4   call targets   1
@@ -4110,24 +4147,27 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl veh_demote(int veh_id) {
-    if (veh_id >= 0) {
-        int16_t next_veh_id = Vehs[veh_id].next_veh_id_stack;
-        if (next_veh_id >= 0) {
-            int16_t last_veh_id;
-            do {
-                last_veh_id = next_veh_id;
-                next_veh_id = Vehs[last_veh_id].next_veh_id_stack;
-            } while (next_veh_id >= 0);
-            if (last_veh_id != veh_id) {
-                veh_lift(veh_id);
-                Vehs[last_veh_id].next_veh_id_stack = (int16_t)veh_id;
-                Vehs[veh_id].prev_veh_id_stack = last_veh_id;
-                Vehs[veh_id].next_veh_id_stack = -1;
-                Vehs[veh_id].x = Vehs[last_veh_id].x;
-                Vehs[veh_id].y = Vehs[last_veh_id].y;
-            }
-        }
+    if (veh_id < 0) {
+        return;
     }
+    int16_t next_veh_id = Vehs[veh_id].next_veh_id_stack;
+    if (next_veh_id < 0) {
+        return;
+    }
+    int16_t last_veh_id;
+    do {
+        last_veh_id = next_veh_id;
+        next_veh_id = Vehs[last_veh_id].next_veh_id_stack;
+    } while (next_veh_id >= 0);
+    if (last_veh_id == veh_id) {
+        return;
+    }
+    veh_lift(veh_id);
+    Vehs[last_veh_id].next_veh_id_stack = (int16_t)veh_id;
+    Vehs[veh_id].prev_veh_id_stack = last_veh_id;
+    Vehs[veh_id].next_veh_id_stack = -1;
+    Vehs[veh_id].x = Vehs[last_veh_id].x;
+    Vehs[veh_id].y = Vehs[last_veh_id].y;
 }
 
 /*
@@ -4571,6 +4611,27 @@ int __cdecl prototype_factor(int proto_id) {
 Purpose: Calculate the specified prototype's overall cost to build. Optional output parameter
          whether there is an associated 1st time prototype cost (true) or just the base (false).
 // ORIGINAL: 0x005C1850 ?veh_cost@@YAHHHPAH@Z 0x005C1850-0x005C1A1D
+// LEVER: three real structural fixes moved this 0.545 -> 0.854 similar
+// (0/167 in position at the winning `/c /O2 /Gy /GR- /GX`):
+//  (1) `prototype_factor(proto_id)` INLINED rather than called - call_diff
+//      confirmed the image has no call to 0x005C17D0 here, it open-codes
+//      the free-proto/difficulty/triad switch directly;
+//  (2) a real out-of-line `base_cost_call` forwarder (veh.h/veh.cpp,
+//      `sleep_call`'s own idiom) for the ONE call site where the image
+//      keeps `base_cost` (0x005A5D00, "callers 1") as a genuine `call`
+//      rather than the inline every other site gets - `base_cost(proto_id)`
+//      written directly folded away under /O2, exposing the inner
+//      `proto_cost` call call_diff flagged as WRONG CALLEE;
+//  (3) `cost`/`proto_cost_first` as plain (signed) `int`, not `uint32_t` -
+//      the image's `(cost*3)/4` and the `/100` scaling both carry the
+//      `cdq`/sign-correction fixup a signed local earns and an unsigned one
+//      does not, even though the values are never negative.
+// RULED-OUT: not chased further. The residual gap is the boolean
+// materialization in `has_fac_built_call`'s `(mask & field) != 0` - the
+// image computes an actual 0/1 via `and/neg/sbb/neg` before testing it
+// (0x005C18B8), where this tree's `&&`-chain folds the AND straight into a
+// `test`. Same result, different instruction selection; not a control-flow
+// difference.
 // size      461 bytes
 // prototype int (__cdecl ?veh_cost@@YAHHHPAH@Z)(int protoID, int baseID, int* hasProtoCost)
 // callers   12   call targets   2
@@ -4581,20 +4642,56 @@ Return Value: Mineral cost
 Status: Complete
 */
 int __cdecl veh_cost(int proto_id, int base_id, BOOL *has_proto_cost) {
-    uint32_t cost = VehPrototypes[proto_id].cost;
-    if (base_id >= 0 && proto_id < MaxVehProtoFactionNum // bug fix: added base_id bounds check
+    // SIGNED, matching the image's `cdq; and edx,3; add eax,edx; sar eax,2`
+    // divide-by-4 fixup below - `VehPrototypes[proto_id].cost` is a uint8_t
+    // field, but the local the image computes with is a plain (signed) int.
+    int cost = VehPrototypes[proto_id].cost;
+    // BUG IN THE ORIGINAL: no `base_id >= 0` guard here, unlike the
+    // FAC_SKUNKWORKS check below - `has_fac_built` reads `Bases[base_id]`
+    // even when base_id is negative. The image's `test ebx,ebx; jl` guard
+    // only appears on the second call site (0x005C19AE); this one
+    // (0x005C1890) has none. Reproduced.
+    if (proto_id < MaxVehProtoFactionNum
         && (get_proto_offense_rating(proto_id) < 0 || proto_id == BSC_SPORE_LAUNCHER)
-        && has_fac_built(FAC_BROOD_PIT, base_id)) {
+        && has_fac_built_call(FAC_BROOD_PIT, base_id)) {
         cost = (cost * 3) / 4; // Decrease the cost of alien units by 25%
     }
     if (VehPrototypes[proto_id].plan == PLAN_COLONIZATION && base_id >= 0) {
         cost = range(cost, 1, 999);
     }
-    uint32_t proto_cost_first = 0;
-    if (proto_id >= MaxVehProtoFactionNum 
+    int proto_cost_first = 0;
+    if (proto_id >= MaxVehProtoFactionNum
         && !(VehPrototypes[proto_id].flags & PROTO_TYPED_COMPLETE)) {
-        proto_cost_first = (base_id >= 0 && has_fac_built(FAC_SKUNKWORKS, base_id))
-            ? 0 : (prototype_factor(proto_id) * base_cost(proto_id) + 50) / 100; // moved checks up
+        // `prototype_factor` INLINED, not called - the image has no call to
+        // 0x005C17D0 here, it open-codes the free-proto/difficulty check and
+        // the triad switch directly (0x005C1919-0x005C1986).
+        int faction_id = proto_id / MaxVehProtoFactionNum;
+        int factor;
+        if (Players[faction_id].rule_flags & RFLAG_FREEPROTO
+            || PlayersData[faction_id].diff_level <= DLVL_SPECIALIST) {
+            factor = 0;
+        } else {
+            uint8_t triad = get_proto_triad(proto_id);
+            switch (triad) {
+              case TRIAD_SEA:
+                factor = Rules->extra_pct_cost_proto_sea;
+                break;
+              case TRIAD_AIR:
+                factor = Rules->extra_pct_cost_proto_air;
+                break;
+              case TRIAD_LAND:
+              default:
+                factor = Rules->extra_pct_cost_proto_land;
+                break;
+            }
+        }
+        // `base_cost` IS CALLED UNCONDITIONALLY here in the image, before the
+        // FAC_SKUNKWORKS check - not short-circuited behind it the way a
+        // `cond ? 0 : (factor * base_cost(...) + 50) / 100` ternary would.
+        proto_cost_first = (factor * base_cost_call(proto_id) + 50) / 100;
+        if (base_id >= 0 && has_fac_built_call(FAC_SKUNKWORKS, base_id)) {
+            proto_cost_first = 0;
+        }
         cost += proto_cost_first;
     }
     if (has_proto_cost) {
