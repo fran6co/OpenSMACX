@@ -549,3 +549,17 @@ int __cdecl X_pop(char *caption, const char *label, int a3, char *a4, int a5,
     }
     return pop_full(caption, label2, a3, a4, a5, callback);
 }
+
+/*
+Purpose: The two-argument popup form: caption from the shared buffer, no
+         value, no sprite.
+// ORIGINAL: 0x005BF310 ?X_pop@@YAHPBDP6AHXZ@Z 0x005BF310-0x005BF330 BYTE_EXACT
+// LEVER: PROMOTED out of src/recovered/005bf310.cpp, where the claim proved the artifact and the shipped program held nothing at this address. The artifact reached the caption as `(int8 *)g_009b8aa8`; popup.cpp already models that buffer as PopupStartCaption, and xpops.cpp already includes popup.h for exactly this - the sibling forms above use the same name.
+// size      32 bytes
+// kind      game
+Return Value: whatever the full form returns
+Status: Complete
+*/
+int __cdecl X_pop(const char *label, int (__cdecl *callback)()) {
+    return X_pop(PopupStartCaption, label, -1, nullptr, 0, callback);
+}

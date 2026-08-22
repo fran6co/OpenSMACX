@@ -149,7 +149,7 @@ void __fastcall adjust_radio_button1_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<RadioButton *>(object - vtordisp)->RadioButton::on_redraw();
+    reinterpret_cast<RadioButton *>(object - vtordisp - 0xA30)->RadioButton::on_redraw();
 }
 
 /*
@@ -344,7 +344,7 @@ int __fastcall adjust_radio_button1_attach(void *self, void *, void *arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    return reinterpret_cast<RadioButton *>(object - vtordisp)->RadioButton::attach(arg0, arg1, arg2, arg3);
+    return reinterpret_cast<RadioButton *>(object - vtordisp - 0xA30)->RadioButton::attach(arg0, arg1, arg2, arg3);
 }
 
 /*
@@ -365,7 +365,7 @@ void __fastcall adjust_radio_button3_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<RadioButton *>(object - vtordisp - 2584)->RadioButton::on_redraw();
+    reinterpret_cast<RadioButton *>(object - vtordisp - 2584 - 0xA30)->RadioButton::on_redraw();
 }
 
 /*
@@ -451,7 +451,7 @@ void __fastcall adjust_dialogs1_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::on_redraw();
+    reinterpret_cast<Dialogs *>(object - vtordisp - 0xBA0)->Dialogs::on_redraw();
 }
 
 /*
@@ -865,7 +865,7 @@ int __fastcall adjust_dialogs1_attach(void *self, void *, void *arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    return reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::attach(arg0, arg1, arg2, arg3);
+    return reinterpret_cast<Dialogs *>(object - vtordisp - 0xBA0)->Dialogs::attach(arg0, arg1, arg2, arg3);
 }
 
 /*
@@ -886,7 +886,7 @@ void __fastcall adjust_dialogs3_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<Dialogs *>(object - vtordisp - 2584)->Dialogs::on_redraw();
+    reinterpret_cast<Dialogs *>(object - vtordisp - 2584 - 0xBA0)->Dialogs::on_redraw();
 }
 
 /*
@@ -2021,7 +2021,12 @@ void __fastcall adjust_list_box1_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<ListBox *>(object - vtordisp)->ListBox::on_redraw();
+    // MINUS THE BASE OFFSET, so the compiler's own adjustment nets to zero.
+    // on_redraw is a Dialog virtual now, so a qualified call on a ListBox*
+    // emits `add ecx, 0xa60` to reach the Dialog subobject - an instruction
+    // the image's two-instruction thunk does not have. Handing it a pointer
+    // already 0xA60 low lets it fold the pair away.
+    reinterpret_cast<ListBox *>(object - vtordisp - 0xA60)->ListBox::on_redraw();
 }
 
 /*
@@ -2283,7 +2288,7 @@ int __fastcall adjust_list_box1_attach(void *self, void *, void *arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    return reinterpret_cast<ListBox *>(object - vtordisp)->ListBox::attach(arg0, arg1, arg2, arg3);
+    return reinterpret_cast<ListBox *>(object - vtordisp - 0xA60)->ListBox::attach(arg0, arg1, arg2, arg3);
 }
 
 /*
@@ -2304,7 +2309,7 @@ void __fastcall adjust_list_box3_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<ListBox *>(object - vtordisp - 2584)->ListBox::on_redraw();
+    reinterpret_cast<ListBox *>(object - vtordisp - 2584 - 0xA60)->ListBox::on_redraw();
 }
 
 /*
@@ -2325,7 +2330,7 @@ void __fastcall adjust_check_box1_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<CheckBox *>(object - vtordisp)->CheckBox::on_redraw();
+    reinterpret_cast<CheckBox *>(object - vtordisp - 0xA34)->CheckBox::on_redraw();
 }
 
 /*
@@ -2478,7 +2483,7 @@ int __fastcall adjust_check_box1_attach(void *self, void *, void *arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    return reinterpret_cast<CheckBox *>(object - vtordisp)->CheckBox::attach(arg0, arg1, arg2, arg3);
+    return reinterpret_cast<CheckBox *>(object - vtordisp - 0xA34)->CheckBox::attach(arg0, arg1, arg2, arg3);
 }
 
 /*
@@ -2499,7 +2504,7 @@ void __fastcall adjust_check_box3_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<CheckBox *>(object - vtordisp - 2584)->CheckBox::on_redraw();
+    reinterpret_cast<CheckBox *>(object - vtordisp - 2584 - 0xA34)->CheckBox::on_redraw();
 }
 
 /*
@@ -2520,7 +2525,7 @@ void __fastcall adjust_sprite_box1_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<SpriteBox *>(object - vtordisp)->SpriteBox::on_redraw();
+    reinterpret_cast<SpriteBox *>(object - vtordisp - 0xAA4)->SpriteBox::on_redraw();
 }
 
 /*
@@ -2805,7 +2810,7 @@ int __fastcall adjust_sprite_box1_attach(void *self, void *, void *arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    return reinterpret_cast<SpriteBox *>(object - vtordisp)->SpriteBox::attach(arg0, arg1, arg2, arg3);
+    return reinterpret_cast<SpriteBox *>(object - vtordisp - 0xAA4)->SpriteBox::attach(arg0, arg1, arg2, arg3);
 }
 
 /*
@@ -2826,7 +2831,7 @@ void __fastcall adjust_sprite_box3_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<SpriteBox *>(object - vtordisp - 2584)->SpriteBox::on_redraw();
+    reinterpret_cast<SpriteBox *>(object - vtordisp - 2584 - 0xAA4)->SpriteBox::on_redraw();
 }
 
 /*
@@ -2847,7 +2852,7 @@ void __fastcall adjust_edit_group1_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<EditGroup *>(object - vtordisp)->EditGroup::on_redraw();
+    reinterpret_cast<EditGroup *>(object - vtordisp - 0xAA8)->EditGroup::on_redraw();
 }
 
 /*
@@ -2912,7 +2917,7 @@ int __fastcall adjust_edit_group1_attach(void *self, void *, void *arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    return reinterpret_cast<EditGroup *>(object - vtordisp)->EditGroup::attach(arg0, arg1, arg2, arg3);
+    return reinterpret_cast<EditGroup *>(object - vtordisp - 0xAA8)->EditGroup::attach(arg0, arg1, arg2, arg3);
 }
 
 /*
@@ -2933,5 +2938,5 @@ void __fastcall adjust_edit_group3_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<EditGroup *>(object - vtordisp - 2584)->EditGroup::on_redraw();
+    reinterpret_cast<EditGroup *>(object - vtordisp - 2584 - 0xAA8)->EditGroup::on_redraw();
 }

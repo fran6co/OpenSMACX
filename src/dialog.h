@@ -53,48 +53,34 @@ class Dialog {
   // `ListBox list_box_; // 0x286C, sizeof 0xB54, ends 0x33C0` with a field
   // immediately after, so ListBox is 0xB54 - four more than the 0xB50 it
   // measures with only the GraphicWin displacement.
-  // TRIED, AND IT IS RIGHT BUT NOT YET AFFORDABLE. `on_redraw` and `attach`
-  // ARE Dialog virtuals - the image's own vtables say so. Every class that
-  // virtually derives from Dialog installs a Dialog vtable whose slots point
-  // back into that class through VTORDISP THUNKS: ListBox's at 0x00670408
-  // reaching 0x0060D010..0x0060D050, CheckBox's at 0x0067059C reaching
-  // 0x0060FEB0..0x0060FEF0, and each thunk opens
-  // `sub ecx, dword ptr [ecx - N]` then `sub ecx, <const>` - that first
-  // instruction IS the vtordisp adjustment. adjustor_thunks.cpp already
-  // catalogues them by name.
+  // `on_redraw` and `attach` are VIRTUAL below, and the image's own vtables are
+  // why. Every class that virtually derives from Dialog installs a Dialog
+  // vtable whose slots point back into that class through VTORDISP THUNKS -
+  // ListBox's at 0x00670408 reaching 0x0060D010..0x0060D050, CheckBox's at
+  // 0x0067059C reaching 0x0060FEB0..0x0060FEF0 - and each thunk opens
+  // `sub ecx, dword ptr [ecx - N]`, which IS the vtordisp adjustment.
   //
-  // Declaring both virtual here was measured 2026-08-22 and it RESTORES THE
-  // SIZES: CheckBox 0xB24 -> 0xB28, RadioButton 0xB20 -> 0xB24, SpriteBox
-  // 0xB94 -> 0xB98 - three of them back to the pins that were already in this
-  // tree before they were "corrected" downward - and EditGroup to 0xB9C. All
-  // nine byte-exact bodies in those classes STAY byte-exact, and Dialogs'
-  // independent 0xC94 still holds.
+  // Declaring them RESTORED FOUR LAYOUTS: CheckBox 0xB28, RadioButton 0xB24,
+  // SpriteBox 0xB98 - three of them pins that were already in this tree before
+  // being wrongly reduced - and EditGroup 0xB9C.
   //
-  // The cost is 12 REGRESSIONS in adjustor_thunks.cpp, and they are the reason
-  // this is not landed. Those twelve are HAND-WRITTEN MODELS of the very
-  // thunks the compiler now generates, so each emits one instruction too many:
-  // the model does `sub ecx, [ecx-4]` itself and the compiler then adds its
-  // own `add ecx, 0xa60`. The image's thunk is two instructions; ours becomes
-  // three.
+  // TWO EARLIER NOTES HERE WERE WRONG AND ARE WITHDRAWN. One said the fix was
+  // to delete the twelve hand-written thunk models and name the compiler's
+  // `$4` thunks; there are none, because these classes install their vtable by
+  // hand so VC6 emits no vtable. The next said that made the whole thing
+  // unreachable until the vtable modelling changed. IT DID NOT: the thunks
+  // simply DOUBLE-COUNTED. A model calling `((ListBox*)(object - vtordisp))
+  // ->ListBox::on_redraw()` gets a compiler-emitted `add ecx, 0xa60` to reach
+  // the Dialog subobject, one instruction the image's two-instruction thunk
+  // lacks; handing it a pointer already 0xA60 low folds the pair away. Twelve
+  // call sites, two shapes, every offset taken from its own class's layout.
   //
-  // AND THE OBVIOUS FIX DOES NOT EXIST - measured, correcting what this note
-  // claimed an hour earlier. "Delete the models and let the markers name the
-  // compiler's `$4` thunks" assumes those thunks are emitted. Declaring both
-  // virtuals and searching every object finds ZERO of them. The reason is
-  // upstream of the thunks: these classes install their vtable BY HAND as an
-  // opaque dword, so VC6 emits no vtable for them at all - and with no vtable
-  // there are no slots to hold an adjustor and no symbol to name. The compiler
-  // still emits the vtordisp FIELDS, which is why the sizes grow; it just
-  // never emits the thunks that read them.
-  //
-  // So the blocker is the HAND-INSTALLED VTABLE, not the twelve models, and it
-  // is a far larger edit than this note first said. Nothing here is reachable
-  // until these classes stop modelling their vtable as a dword.
-  //
-  // Until then `item` stays virtual because it PRODUCES the proven layout for
-  // ListBox, and it is not the image's override: ListBox::item (0x0060C920)
-  // and Dialogs::item (0x00612A70) both open on an unadjusted receiver.
-  virtual int item(char *text, int index);
+  // `item` is NOT one of these - ListBox::item (0x0060C920) and Dialogs::item
+  // (0x00612A70) both open on an unadjusted receiver - and it is no longer
+  // virtual.
+  int item(char *text, int index);
+  virtual void on_redraw() { ; }
+  virtual int attach(void *a1, int a2, int a3, int a4) { return 0; }
   // 0x00608F50, a pending_bodies forwarder. checkbox.cpp and
   // radiobutton.cpp both reach it, and both did so through a pointer.
   // VIRTUAL, and this is what earns the vtordisp before the Dialog base in
