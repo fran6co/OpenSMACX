@@ -511,14 +511,18 @@ uint32_t Scroll::set_range(int minimum, int maximum) {
 
 /*
 Purpose: Set the color shared by the scrollbar and both end buttons.
-// ORIGINAL: 0x00605A10 ?set_button_color@Scroll@@QAEXH@Z 0x00605A10-0x00605A4D
-// LEVER: read_volatile_bits/original_slot inline (not the redraw_from_vtable __asm
-//   helper, and the shared helpers marked `inline`) gets the vtable dispatch inlined
-//   in place, matching the image's direct load+call; a volatile store on the first
-//   field write fixes its scheduling relative to the following `lea`.
-// TRIED: the second call's vtable-load/call still schedules differently
-//   (edx direct-load + call [edx+0xf8] vs our eax materialised then call eax);
-//   tried this+0x15F8 addressing and evaluation-order changes, no effect.
+// ORIGINAL: 0x00605A10 ?set_button_color@Scroll@@QAEXH@Z 0x00605A10-0x00605A4D SEMANTIC
+// LEVER: vtable_method for the SECOND dispatch, `original_slot` for the first.
+//   The two are not interchangeable here: the first dispatch already matches
+//   the image's single `call dword ptr [reg+0xf8]` through
+//   read_volatile_bits/original_slot, while the second scheduled as
+//   `mov eax,[obj]; mov eax,[eax+0xf8]; call eax` - two instructions the image
+//   does not have. `vtable_method<Fn>(&obj, 0xF8)` emits the single call.
+//   MISMATCH 7/14 -> 12 of 14, granted SEMANTIC. Identical to what
+//   set_bevel_thickness, set_bevel_upper and set_bevel_lower each needed, so
+//   this is the fourth site of one shape rather than four coincidences.
+// LEVER: read_volatile_bits/original_slot inline (not the redraw_from_vtable __asm helper, and the shared helpers marked `inline`) gets the vtable dispatch inlined in place, matching the image's direct load+call; a volatile store on the first field write fixes its scheduling relative to the following `lea`.
+// TRIED: the second call's vtable-load/call still schedules differently (edx direct-load + call [edx+0xf8] vs our eax materialised then call eax); tried this+0x15F8 addressing and evaluation-order changes, no effect.
 // symbol    ?set_button_color@Scroll@@QAEIH@Z
 // size      61 bytes
 // prototype void (__thiscall ?set_button_color@Scroll@@QAEXH@Z)(Scroll* this, int)
@@ -539,8 +543,8 @@ uint32_t Scroll::set_button_color(int color) {
     (ORIGINAL(&flat_button_left_)->*original_slot<func_noarg_virtual>(
         reinterpret_cast<const uint8_t *>(read_volatile_bits(&flat_button_left_, 0)) + 0xF8))();
 
-    return (ORIGINAL(&flat_button_right_)->*original_slot<func_noarg_virtual>(
-        reinterpret_cast<const uint8_t *>(read_volatile_bits(&flat_button_right_, 0)) + 0xF8))();
+    return (ORIGINAL(&flat_button_right_)->*vtable_method<func_noarg_virtual>(
+        &flat_button_right_, 0xF8))();
 }
 
 /*
