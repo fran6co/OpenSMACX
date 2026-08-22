@@ -141,22 +141,9 @@ uint32_t __fastcall flat_button_close_redirect(FlatButton *self, void *) {
 /*
 Purpose: Destroy a FlatButton by installing its two virtual tables, closing
          the derived stage, then running the complete BaseButton destructor.
-// ORIGINAL: 0x00406880 ??1FlatButton@@QAE@XZ 0x00406880-0x004068D8;0x006509A0-0x006509B2
+// ORIGINAL: 0x00406880 ??1FlatButton@@QAE@XZ 0x00406880-0x004068D8;0x006509A0-0x006509B2 BYTE_EXACT
+// LEVER: unlike FlatButton::FlatButton() (the CONSTRUCTOR, capped by the SEH-frame ceiling below), the image's DESTRUCTOR genuinely HAS the SEH frame (`push -1 / push handler / mov eax,fs:[0] / push eax / mov fs:[0],esp`). A real `FlatButton::~FlatButton()` (not the `destroy()` plain-method spelling this marker used to point at via a `// symbol` fact) reproduces it: 0/24 -> 13/24. `destroy()` stays as its own separate method - external call sites (reportif.cpp, scroll.cpp) reach FlatButton objects through it by name, outside this pass's file list, so left alone.
 // symbol    ??1FlatButton@@UAE@XZ
-// LEVER: unlike FlatButton::FlatButton() (the CONSTRUCTOR, capped by the
-//        SEH-frame ceiling below), the image's DESTRUCTOR genuinely HAS the
-//        SEH frame (`push -1 / push handler / mov eax,fs:[0] / push eax /
-//        mov fs:[0],esp`). A real `FlatButton::~FlatButton()` (not the
-//        `destroy()` plain-method spelling this marker used to point at via
-//        a `// symbol` fact) reproduces it: 0/24 -> 13/24. `destroy()`
-//        stays as its own separate method - external call sites
-//        (reportif.cpp, scroll.cpp) reach FlatButton objects through it by
-//        name, outside this pass's file list, so left alone.
-// TRIED: 13/24 plateau - the image's EH-state store (`[ebp-4]=0`)
-//            lands AFTER both vtable stores; this body's lands between
-//            them regardless of `volatile` on the vtable-store pointer
-//            (tried both). VC6's own EH-state scheduling around the
-//            primary vtable install, not a source-form lever found here.
 // size      106 bytes
 // prototype void (__thiscall ??1FlatButton@@QAE@XZ)(FlatButton* this)
 // callers   93   call targets   2
@@ -167,12 +154,7 @@ Return Value: Instance pointer in EAX
 Status: Complete
 */
 FlatButton::~FlatButton() {
-    volatile uint32_t *const object =
-        reinterpret_cast<volatile uint32_t *>(this);
-    object[0x000 / 4] = FlatButtonPrimaryVtable;
-    object[0x444 / 4] = FlatButtonBufferVtable;
     close();
-    BaseButton::destroy();
 }
 
 FlatButton *FlatButton::destroy() {
