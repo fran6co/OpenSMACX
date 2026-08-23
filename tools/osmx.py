@@ -1687,7 +1687,8 @@ def check(
     def unasked_here(record: DecompilationState, verdict: str) -> bool:
         """Was this claim unaskable, or did someone break it?
 
-        A NO_COMPILE IS ONLY A WALL IN A FILE THE BUILD DOES NOT BUILD.
+        A WALL ONLY EXPLAINS ITSELF IN A FILE THE BUILD DOES NOT BUILD -
+        and that goes for every unaskable verdict, not just NO_COMPILE.
         `src/recovered/` and `src/unrecovered/` are not build inputs - they
         compile on a borrowed invocation and 313 of them do not compile at
         all, which is the wall this classification was written for. A file
@@ -1701,10 +1702,18 @@ def check(
         and the same exit 3 it prints when everything is fine, because a
         wall someone just built looked exactly like a wall that was always
         there. The verified count fell by 28 and nothing said so.
+
+        THE SAME HOLE IN A DIFFERENT WALL, found 2026-08-23 auditing for
+        the class loop: UNRESOLVED - the verdict of a symbol the object no
+        longer carries - took the unaskable branch UNCONDITIONALLY. Yet
+        declaring a method virtual, renaming one, or re-pointing its
+        `// symbol` fact - three things the class passes do on every pass -
+        can stop a CLAIMED symbol from being emitted, and the ratchet then
+        folded the loss into the standing unverifiable tally as exit 3.
+        Same guard, therefore: in a built file these verdicts are
+        regressions too.
         """
-        if verdict in UNASKED:
-            return True
-        if verdict == "NO_COMPILE":
+        if verdict in UNASKED or verdict == "NO_COMPILE":
             return record.path.resolve() not in built
         return False
 
