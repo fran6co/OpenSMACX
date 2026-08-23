@@ -75,6 +75,41 @@ THE `int` IN `??0Class@@QAE@H@Z` IS NOT AN ARGUMENT
   broken working code. Nine are confirmed: CheckBox, Console, Dialogs,
   EditGroup, ListBox, PlanWin, RadioButton (both ctor and dtor) and SpriteBox.
 
+WHERE THE WORK IS (measured 2026-08-23)
+- `uv run tools/osmx.py check --json` emits every population below as data.
+  Harvest it; do not re-derive any of this by eye.
+- FREE CLAIMS (`free` rows): bodies that already reproduce with no token
+  banked. `osmx record` them before anything else - they cost nothing.
+- NEAR MISSES (`near_miss` rows): unclaimed bodies within three instructions
+  of the image. 129 on 2026-08-23, 111 of them in adjustor_thunks.cpp and
+  deleting_thunks.cpp - one spelling discovery flips a whole family, so work
+  them as families, not as 111 separate puzzles.
+- SEAM-BLOCKED BODIES: of 655 reachable not-matching bodies, 107 carry a
+  compiler_work shape: 46 vtable-slot dispatches (remedy: declare the method
+  virtual), 36 named-pointer seams, 16 placement-new on a subobject, 9
+  hand-installed vtables. `tools/convert_seams.py` bare reports every refusal;
+  on 2026-08-23 all four of its populations reported zero convertible - what
+  remains needs the class modelled, not the call site rewritten.
+- THE SECOND ROOT: the CRT init/atexit thunks (768 pieces) are done, but their
+  callees include 62 annotated-unclaimed ctors/dtors - BaseWin, InfoWin,
+  MapWin, MainInterface, Datalink and friends - that a WinMain-rooted frontier
+  never surfaces, because they run BEFORE WinMain. The global objects are
+  where these live.
+
+ADJUSTOR THUNKS WITH ARGUMENTS (open lever, ~92 bodies)
+- The void thunks are BYTE_EXACT as free __fastcall wrappers that compute
+  `object - vtordisp - CONST` and make one qualified call - VC6 fuses that to
+  `sub ecx, dword ptr [ecx-N] / sub ecx, imm32 / jmp`.
+- Every ARG-FORWARDING thunk is NOT_MATCHING for one structural reason: the
+  image's `?on_mouse_move@thunk1_RadioButton@@QAEXHH@Z` is a MEMBER function,
+  so its arguments sit on the caller's stack across the tail jump - two
+  instructions total, nothing pushed. A free __fastcall wrapper receives those
+  arguments in registers and must push them back, which can never reproduce
+  the bytes. The candidate remedy is the member spelling (the catalogue already
+  names them as members of fake `thunkN_Class` classes); PROVE IT ON ONE BODY
+  and write the LEVER here before fanning out over the family.
+
+
 DO NOT BUILD A MEMBER THE COMPILER ALREADY BUILT
 - `uv run tools/double_construction.py`. In a REAL CONSTRUCTOR the compiler
   has already built every declared member before the body runs, so a

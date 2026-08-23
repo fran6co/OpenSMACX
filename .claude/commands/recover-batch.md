@@ -101,6 +101,13 @@ no constant to bump.
 **Never pipe it.** `cmd | tail` reports tail's exit status, and that has called
 a red gate green.
 
+**Then run it once more with `--json` into a file, and harvest it.** The JSON
+names the cheap work a plain run only summarizes: `free` rows are bodies that
+already reproduce with no claim - `osmx record` them before anything else -
+and `near_miss` rows are within three instructions of the image, which is
+where the next batch's easiest wins live. Both are measured by this pass
+anyway; throwing them away costs a full re-measure later.
+
 ## 6. Reap
 
 ```sh
