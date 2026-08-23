@@ -126,7 +126,8 @@ HEADER_SHAPES = [
 SCAFFOLD_MARKERS = ("init_thunks.cpp", "atexit_thunks.cpp",
                     "adjustor_thunks.cpp", "deleting_thunks.cpp",
                     "delegation_thunks.cpp", "field_accessors.cpp",
-                    "leaf_recoveries.cpp")
+                    "leaf_recoveries.cpp", "nullsub_thunks.cpp",
+                    "guarded_teardowns.cpp")
 SCAFFOLD_CEILINGS = {
     "init_thunks.cpp markers": 395,
     "atexit_thunks.cpp markers": 373,
@@ -135,6 +136,8 @@ SCAFFOLD_CEILINGS = {
     "delegation_thunks.cpp markers": 27,
     "field_accessors.cpp markers": 42,
     "leaf_recoveries.cpp markers": 53,
+    "nullsub_thunks.cpp markers": 56,
+    "guarded_teardowns.cpp markers": 25,
     "PENDING_BODY forwarders": 235,
     "artifact files (recovered/)": 1395,
     "unrecovered files": 1757,

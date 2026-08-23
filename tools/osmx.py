@@ -1975,8 +1975,28 @@ def check(
         for line in said[:-1][:4]:
             typer.secho(f"  {line}", fg=typer.colors.RED)
 
+    # ONE ADDRESS, EVERY PLACE IT APPEARS. The three partial duplicate/
+    # artifact checks each guarded one boundary and the audit found every
+    # boundary leaking: addresses annotated in two artifact files, claims
+    # contradicted by the PENDING_BODY forwarder the build actually links,
+    # scaffold files nobody ratcheted. This is the whole map, floors only
+    # falling; duplicated_markers/redundant_artifacts stay (they encode
+    # within-file and claimed-copy RULES) while orphan_artifacts' report is
+    # subsumed here.
+    index = subprocess.run(
+        [sys.executable, str(REPO_ROOT / "tools" / "address_index.py"),
+         "--check"], cwd=REPO_ROOT, capture_output=True, text=True)
+    if not as_json:
+        said = index.stdout.strip().splitlines() or [""]
+        typer.secho("  " + said[-1],
+                    fg=typer.colors.RED if index.returncode
+                    else typer.colors.WHITE)
+        for line in said[:-1][:4]:
+            typer.secho(f"  {line}", fg=typer.colors.RED)
+
     code = (1 if regressed or dangling or unread or link.returncode
             or vtables.returncode or stale.returncode or symbols.returncode
+            or index.returncode
             else 3 if unasked else 0)
     # THE VERDICT GOES IN THE OUTPUT, not only in the exit code. The brief has
     # told agents for a long time never to pipe this to `tail`, because `cmd |
@@ -1993,6 +2013,7 @@ def check(
                else "FAILED: the tree does more of the compiler's work" if vtables.returncode
                else "FAILED: an instruction names something that is not there" if stale.returncode
                else "FAILED: a marker names a symbol the build does not emit" if symbols.returncode
+               else "FAILED: the address index grew" if index.returncode
                else "FAILED: regressed, dangling or unread claims" if code == 1
                else "OK, with unverifiable claims present" if code == 3
                else "CLEAN"),
