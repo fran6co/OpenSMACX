@@ -547,6 +547,33 @@ def test_no_compile_in_a_build_input_is_a_regression(claimed, monkeypatch,
     assert "REGRESSED 0x00402000" in result.output
 
 
+def test_unresolved_in_a_build_input_is_a_regression(claimed, monkeypatch,
+                                                     tmp_path):
+    """A symbol that stopped being emitted is not an unaskable question.
+
+    The class passes rename methods, declare them virtual and re-point
+    `// symbol` facts - exactly the operations that can make a CLAIMED
+    symbol vanish from the object. UNRESOLVED took the unaskable branch
+    unconditionally, so such a loss folded into the standing unverifiable
+    tally and the gate printed its healthy exit 3 over a broken tree.
+    Same wall as NO_COMPILE, same rule: in a file CMake builds, it is a
+    regression.
+    """
+    database = tmp_path / "cc.json"
+    database.write_text(json.dumps([{
+        "directory": str(claimed),
+        "file": str(claimed / "c.cpp"),
+        "command": "cl /c /I. c.cpp",
+    }]))
+    monkeypatch.setattr(osmx, "_fresh_compile_commands",
+                        lambda *_args, **_kw: None)
+    monkeypatch.setattr(osmx, "_check_one_file",
+                        fake_file_result({0x00402000: "UNRESOLVED"}))
+    result = check(claimed, "--compile-commands", str(database))
+    assert result.exit_code == 1, "the claim was lost, not unaskable"
+    assert "REGRESSED 0x00402000" in result.output
+
+
 def test_a_failed_compile_is_not_retried_under_every_flag_set(
         claimed, monkeypatch):
     """The eight sets differ only in /O1|/O2, /Oy- and /Ob0 - all back-end.
