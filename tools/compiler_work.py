@@ -136,7 +136,7 @@ SCAFFOLD_CEILINGS = {
     "field_accessors.cpp markers": 42,
     "leaf_recoveries.cpp markers": 53,
     "PENDING_BODY forwarders": 235,
-    "artifact files (recovered/)": 1396,
+    "artifact files (recovered/)": 1395,
     "unrecovered files": 1757,
     "hypothesis_layouts.h lines": 2709,
 }
@@ -241,16 +241,26 @@ def main():
         for name, n, ceiling in grew + scaffold_grew:
             print(f"COMPILER WORK GREW: {name} is {n}, above its ceiling of {ceiling}")
         return 1
-    for name, n, ceiling in shrank + scaffold_shrank:
-        kind = "scaffold" if name in SCAFFOLD_CEILINGS else "compiler work"
-        print(f"{kind} down: {name} is {n}, below its ceiling of "
-              f"{ceiling} - lower it in this same commit")
+    # SLACK IS A REGRESSION TOO, not advice. A ceiling above its count is
+    # re-fillable space: the next regression hides inside it exactly as it
+    # would above a stale total, which is how one unit of drift went
+    # unnoticed for the whole day a ratchet existed (finding 4, 2026-08-23:
+    # artifact files sat at 1395 under a 1396 ceiling from birth). A count
+    # below its ceiling means an improvement landed WITHOUT claiming its
+    # ratchet - so every improvement commit must set the ceiling from its
+    # own measured number, and anything else fails here.
+    if shrank or scaffold_shrank:
+        for name, n, ceiling in shrank + scaffold_shrank:
+            kind = "scaffold" if name in SCAFFOLD_CEILINGS else "compiler work"
+            print(f"{kind} SLACK: {name} is {n}, below its ceiling of "
+                  f"{ceiling} - set the ceiling to {n} in this same commit")
+        return 1
     if not args.check:
         print(f"\n{total} site(s) doing the compiler's work, across "
               f"{len(SHAPES) + len(HEADER_SHAPES)} shapes; "
               f"{len(SCAFFOLD_CEILINGS)} scaffold ceilings watched")
-    elif not shrank and not scaffold_shrank:
-        print(f"compiler work: {total} site(s), no shape growing")
+    else:
+        print(f"compiler work: {total} site(s), every ceiling exact")
     return 0
 
 
