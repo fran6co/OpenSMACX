@@ -39,6 +39,10 @@ void __cdecl RGB_to_HSV(const PALETTEENTRY *entry, HSV *out);
   */
 class Palette {
  public:
+  // homed from 005fe6d0.cpp
+  void reseed();
+
+ public:
   // homed from 005fed40.cpp
   int create_table(unsigned char * a1, int a2, int a3, int a4);
 
