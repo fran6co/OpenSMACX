@@ -726,3 +726,109 @@ void Palette::close_palette_class() {
         PaletteInitialized = nullptr;
     }
 }
+
+// ORIGINAL: 0x005FF470 ?get_nearest_palette_index@Palette@@QAEHEEEH@Z 0x005FF470-0x005FF627 FILE
+// TRIED: separate loops for the a4==0 (linear scan) and a4!=0 (group-reserved scan) paths with a stack reserved[0x100] array; diverges at #1, stack layout order
+// size      439 bytes
+// prototype int (__thiscall ?get_nearest_palette_index@Palette@@QAEHEEEH@Z)(Palette* this, unsigned int8, unsigned int8, unsigned int8, int)
+// callers   5   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+
+
+int Palette::get_nearest_palette_index(unsigned char a1, unsigned char a2, unsigned char a3, int a4) {
+    int best_dist = 200000;
+    int best_index = 0;
+    char *self = reinterpret_cast<char *>(this);
+
+    if (a4 == 0) {
+        unsigned char *p = reinterpret_cast<unsigned char *>(self) + 2;
+        for (int i = 0; i < 0x100; ++i, p += 4) {
+            int red = (int)p[-2] - (int)a1;
+            int green = (int)p[-1] - (int)a2;
+            int blue = (int)p[0] - (int)a3;
+            int dist = red * red + green * green + blue * blue;
+            if (dist < best_dist) {
+                best_dist = dist;
+                best_index = i;
+            }
+        }
+        return best_index;
+    }
+
+    int reserved[0x100];
+    for (int k = 0; k < 0x100; ++k) {
+        reserved[k] = 0;
+    }
+
+    for (int g = 0; g < 5; ++g) {
+        int id = *(int *)(self + 0x404 + g * 0x10);
+        if (id != -1) {
+            unsigned char start = *(unsigned char *)(self + 0x40c + g * 0x10);
+            unsigned char count = *(unsigned char *)(self + 0x40d + g * 0x10);
+            int end = (int)start + (int)count;
+            if ((int)start < end) {
+                for (int k = start; k < end; ++k) {
+                    reserved[k] = 1;
+                }
+            }
+        }
+    }
+
+    unsigned char *p2 = reinterpret_cast<unsigned char *>(self) + 10 * 4 + 2;
+    for (int i = 10; i < 0xf6; ++i, p2 += 4) {
+        if (reserved[i] != 0) {
+            continue;
+        }
+        int red = (int)p2[-2] - (int)a1;
+        int green = (int)p2[-1] - (int)a2;
+        int blue = (int)p2[0] - (int)a3;
+        int dist = red * red + green * green + blue * blue;
+        if (dist < best_dist) {
+            best_dist = dist;
+            best_index = i;
+        }
+    }
+    return best_index;
+}
+
+// ORIGINAL: 0x005FF1A0 ?UNK5@Palette@@QAEHHHHH@Z 0x005FF1A0-0x005FF21C FILE
+// working copy - scaffold materialised by --work
+// size      124 bytes
+// prototype int (__thiscall ?UNK5@Palette@@QAEHHHHH@Z)(Palette* this, int, int, int, int)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FF470
+
+int Palette::UNK5(int a1, int a2, int a3, int a4) {
+    char *self = reinterpret_cast<char *>(this);
+    if (a1 == 0 || a2 == 0) {
+        return 0x10;
+    }
+    char *dest = (char *)a2;
+    int i = 0;
+    if (0 < a3) {
+        do {
+            dest[i] = (char)i;
+            i = i + 1;
+        } while (i < a3);
+    }
+    int end = a3 + a4;
+    for (i = end; i < 0x100; i = i + 1) {
+        dest[i] = (char)i;
+    }
+    if (a3 < end) {
+        unsigned char *p = (unsigned char *)(self + 1 + a3 * 4);
+        int idx = a3;
+        do {
+            int result = get_nearest_palette_index(p[-1], p[0], p[1], 1);
+            dest[idx] = (char)result;
+            idx = idx + 1;
+            p = p + 4;
+        } while (idx < end);
+    }
+    return 0;
+}
+
