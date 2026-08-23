@@ -77,6 +77,7 @@ Purpose: Clear all four fields.
          fields leave the same object whatever order they run in, and nothing
          interleaves. Saying so beats implying the sequence was matched.
 // ORIGINAL: 0x0063B2D0 ??0Cursor@@QAE@XZ 0x0063B2D0-0x0063B2E0
+// symbol    ?construct@Cursor@@QAEXXZ
 // size      16 bytes
 // prototype Cursor* (__thiscall ??0Cursor@@QAE@XZ)(Cursor* this)
 // callers   0   call targets   0

@@ -1947,8 +1947,24 @@ def check(
         for line in said[:-1][:8]:
             typer.secho(f"  {line}", fg=typer.colors.RED)
 
+    # EVERY MARKER NAMES A SYMBOL THE BUILD EMITS, held to a falling floor.
+    # A wrong or stale `// symbol` fact sends measurement to the wrong bytes
+    # or abandons it - and the class passes rewrite those facts constantly.
+    # Six of today's markers await stub conversions and the ordinal
+    # initialiser matcher; the floor starts there and only goes down.
+    symbols = subprocess.run(
+        [sys.executable, str(REPO_ROOT / "tools" / "marker_symbols.py"),
+         "--check"], cwd=REPO_ROOT, capture_output=True, text=True)
+    if not as_json:
+        said = symbols.stdout.strip().splitlines() or [""]
+        typer.secho("  " + said[-1],
+                    fg=typer.colors.RED if symbols.returncode
+                    else typer.colors.WHITE)
+        for line in said[:-1][:4]:
+            typer.secho(f"  {line}", fg=typer.colors.RED)
+
     code = (1 if regressed or dangling or unread or link.returncode
-            or vtables.returncode or stale.returncode
+            or vtables.returncode or stale.returncode or symbols.returncode
             else 3 if unasked else 0)
     # THE VERDICT GOES IN THE OUTPUT, not only in the exit code. The brief has
     # told agents for a long time never to pipe this to `tail`, because `cmd |
@@ -1964,6 +1980,7 @@ def check(
             + ("FAILED: THE TREE DOES NOT LINK" if link.returncode
                else "FAILED: the tree does more of the compiler's work" if vtables.returncode
                else "FAILED: an instruction names something that is not there" if stale.returncode
+               else "FAILED: a marker names a symbol the build does not emit" if symbols.returncode
                else "FAILED: regressed, dangling or unread claims" if code == 1
                else "OK, with unverifiable claims present" if code == 3
                else "CLEAN"),

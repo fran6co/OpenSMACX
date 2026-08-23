@@ -129,4 +129,22 @@ if __name__ == "__main__":
         print("  every marker names a symbol the build emits")
     print(f"\n{scanned} file(s) checked; {len(missing)} marker(s) name a symbol "
           f"that is not there")
+
+    # THE FLOOR, ratcheted like every other census. Six of today's eight are
+    # empty-inline lifecycle stubs and the two ??__E/??__F ordinal
+    # initialisers - each needs a stub conversion or the initialiser matcher,
+    # not a symbol-fact edit, and forcing them overnight risks exactly the
+    # neighbour regressions the gate exists to catch. The count may only
+    # fall; --check fails when it rises, and reaching zero retires this
+    # ceiling in its own commit.
+    CEILING = 6
+    if "--check" in sys.argv:
+        if len(missing) > CEILING:
+            print(f"SYMBOL FACTS GREW: {len(missing)}, above the floor of "
+                  f"{CEILING}")
+            sys.exit(1)
+        if len(missing) < CEILING:
+            print(f"symbol facts down: {len(missing)}, below the floor of "
+                  f"{CEILING} - lower it in this same commit")
+        sys.exit(0)
     sys.exit(1 if missing else 0)

@@ -1545,6 +1545,7 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
 /*
 Purpose: Attempt to read the setting's value from the ini file.
 // ORIGINAL: 0x0059D980 ?prefs_get@@YAPADPADPADH@Z 0x0059D980-0x0059DA19
+// symbol    ?prefs_get@@YAPADPBD0H@Z
 // LEVER: WRONG CALLEE - `strcpy_s(TextBufferGetPtr, 256, default_value)`
 //        pushed a 3rd argument the image never does; `add esp, 8` after
 //        the call (2 args) confirms a plain `strcpy`.
