@@ -33,6 +33,7 @@ batch picked off the raw depth order. `--fresh` drops them.
 
 from __future__ import annotations
 
+import collections
 import json
 import os
 import re
@@ -45,6 +46,7 @@ from decomp import read
 from decomp.asm import build_inputs
 from decomp.asm import original_asm, shared_spans, span_refusal
 from decomp.calls import call_sites
+from decomp.model import State
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -180,6 +182,190 @@ def crt_roots(records: list, exe: Path) -> list:
     return targets
 
 
+# The work queue shows the GAME's code. Library code is never this project's
+# work, and an excluded import thunk is a linker artefact (`jmp [__imp_X]`),
+# so neither is offered to a batch. Excluded GAME records stay VISIBLE with
+# their citation: an exclusion is a decision that can be re-litigated, and a
+# queue that hides one hides the argument too. Filter by kind and state
+# together - NEVER by exclusion alone.
+def never_work(record) -> str | None:
+    if record.kind == "library":
+        return "library"
+    if record.kind == "thunk" and record.state is State.EXCLUDED:
+        return "excluded import stub"
+    return None
+
+
+SCAFFOLD_FILES = ("init_thunks.cpp", "atexit_thunks.cpp",
+                  "adjustor_thunks.cpp", "deleting_thunks.cpp",
+                  "delegation_thunks.cpp", "field_accessors.cpp",
+                  "leaf_recoveries.cpp")
+
+BASE_DECL = re.compile(r"\b(?:class|struct)\s+(\w+)\s*(?::\s*([^{;]+))?\{")
+
+
+def declared_bases() -> dict:
+    """Class -> declared bases, read off every header's own text.
+
+    Comments are blanked first, or prose naming a class inside a base list
+    invents an edge. Best-effort by design: a class whose bases are not yet
+    DECLARED contributes no edges, which is exactly why it sits deep in the
+    queue until its pass declares them.
+    """
+    edges: dict = {}
+    for header in sorted((REPO_ROOT / "src").glob("*.h")):
+        text = _blanked(header.read_text(errors="replace"))
+        for match in BASE_DECL.finditer(text):
+            bases = match.group(2)
+            if not bases:
+                continue
+            names = []
+            for spec in bases.split(","):
+                words = spec.split()
+                if words:
+                    names.append(words[-1])
+            if names:
+                edges.setdefault(match.group(1), []).extend(names)
+    return edges
+
+
+def owner_of(record) -> str:
+    """The mangled name's class, or the TU for free functions."""
+    parts = (record.name or "").split("@")
+    if len(parts) > 1 and parts[0].startswith("?") and parts[1]:
+        return parts[1]
+    return f"free:{record.path.name}"
+
+
+def file_compiler_work_sites() -> dict:
+    """Hand-done compiler-work sites per PRODUCT file, from compiler_work's
+    own patterns - the same census the gate runs, keyed per file so
+    --by-class can join it by the files a class lives in."""
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import compiler_work
+    sites: dict = {}
+    for path in sorted((REPO_ROOT / "src").glob("*.cpp")):
+        if "recovered" in path.parts or "unrecovered" in path.parts:
+            continue
+        count = 0
+        for line in path.read_text(errors="replace").splitlines():
+            if line.lstrip().startswith("//"):
+                continue
+            for _name, _ceiling, rx, _why in compiler_work.SHAPES:
+                count += len(rx.findall(line))
+        if count:
+            sites[path.name] = count
+    return sites
+
+
+def by_class(records, order, built, visible) -> None:
+    """The standing class view: who owns the frontier's work, how far each
+    class is from complete, and what still holds it off the ratchet.
+
+    TWO columns define done: exact/total complete, compiler-work sites at 0
+    faithful - and a class can be the first without the second, which is the
+    state where hand-written thunks hold a family off the ratchet. Rows sort
+    BASES BEFORE DERIVED (best-effort topological over DECLARED bases,
+    first-appearance as tiebreak); the one-directional invariant is asserted:
+    no row may appear before a class it declares as a base. Everything else
+    is heuristic and is not checked as if it were law.
+    """
+    edges = declared_bases()
+    sites = file_compiler_work_sites()
+    header_texts = {h.name: _blanked(h.read_text(errors="replace"))
+                    for h in sorted((REPO_ROOT / "src").glob("*.h"))}
+
+    by_owner = collections.defaultdict(list)
+    for record in records:
+        by_owner[owner_of(record)].append(record)
+
+    queue: dict = {}
+    first_seen: dict = {}
+    position = 0
+    thunk_owners = 0
+    for record in order:
+        if record.byte_exact or not visible(record):
+            continue
+        owner = owner_of(record)
+        if re.fullmatch(r"thunk\d+_\w+", owner):
+            thunk_owners += 1
+            continue
+        first_seen.setdefault(owner, position)
+        position += 1
+        slot = queue.setdefault(owner, {"reach": 0, "built": 0, "artifact": 0})
+        slot["reach"] += 1
+        if record.path in built:
+            slot["built"] += 1
+        else:
+            slot["artifact"] += 1
+
+    depth: dict = {}
+
+    def base_depth(owner: str, trail: tuple = ()) -> int:
+        if owner in depth:
+            return depth[owner]
+        if owner in trail:
+            return 0
+        bases = [b for b in edges.get(owner, []) if b in queue]
+        depth[owner] = max((base_depth(b, trail + (owner,)) + 1
+                            for b in bases), default=0)
+        return depth[owner]
+
+    for owner in queue:
+        base_depth(owner)
+
+    rows = sorted(queue, key=lambda o: (depth[o], first_seen[o]))
+    index = {owner: i for i, owner in enumerate(rows)}
+    for owner, i in index.items():
+        for base in edges.get(owner, []):
+            if base in index and index[base] > i:
+                sys.exit(f"--by-class invariant violated: {owner} "
+                         f"appears before its declared base {base}")
+
+    owner_files: dict = collections.defaultdict(set)
+    for record in records:
+        path = str(record.path)
+        if "recovered" in path or "unrecovered" in path:
+            continue
+        owner_files[owner_of(record)].add(record.path.name)
+
+    print(f"{'first':>5}  {'owner':22s} {'reach':>5} {'built':>5} "
+          f"{'artif':>5} {'exact':>9} {'cw':>4} {'scaf':>4}  declaration")
+    for owner in rows:
+        slot = queue[owner]
+        every = by_owner[owner]
+        exact = sum(1 for r in every if r.byte_exact or r.semantic)
+        cw = sum(sites.get(name, 0) for name in owner_files[owner])
+        scaff = sum(1 for r in every if r.path.name in SCAFFOLD_FILES)
+        decl = sorted({name for name, text in header_texts.items()
+                       if re.search(rf"\b(?:class|struct)\s+"
+                                    rf"{re.escape(owner)}\b", text)})
+        where = ",".join(decl[:2]) + ("…" if len(decl) > 2 else "")
+        print(f"{first_seen[owner]:>5}  {owner:22.22s} {slot['reach']:>5} "
+              f"{slot['built']:>5} {slot['artifact']:>5} "
+              f"{exact:>4}/{len(every):<4} {cw:>4} {scaff:>4}  {where}")
+
+    hyp_only = [owner for owner in rows
+                if "hypothesis_layouts.h" in
+                {name for name, text in header_texts.items()
+                 if re.search(rf"\b(?:class|struct)\s+"
+                              f"{re.escape(owner)}\b", text)}
+                and len({name for name, text in header_texts.items()
+                         if re.search(rf"\b(?:class|struct)\s+"
+                                      f"{re.escape(owner)}\b", text)}) == 1]
+    print(f"\n{len(rows)} classes on the frontier; done = exact/total complete"
+          f" AND cw 0 AND scaf 0.")
+    print(f"  {thunk_owners} thunkN_ scaffold owners excluded from this view"
+          f" - they dissolve when their real bases go virtual.")
+    if hyp_only:
+        print(f"  hypothesis-only declarations ({len(hyp_only)}), homed by the"
+              f" hypothesis_layouts.h split before their dependents run:")
+        for owner in hyp_only:
+            print(f"    {owner}")
+    print(f"  cw = compiler-work sites in the owner's product TUs (census"
+          f" joined per file; TUs shared between classes count for each).")
+
+
 if __name__ == "__main__":
     records = read(REPO_ROOT / "src")
     order, edges, unnamed = walk(records, IMAGE, ROOT)
@@ -207,12 +393,33 @@ if __name__ == "__main__":
         print(f"--roots crtinit: {len(seeds):,} pre-WinMain construction "
               f"roots seeded from the init/atexit thunks", file=sys.stderr)
     built = build_inputs(REPO_ROOT / "build" / "compile_commands.json")
-    pending = [r for r in order if not r.byte_exact]
+
+    skip_counts: dict = collections.Counter()
+
+    def visible(record) -> bool:
+        why = never_work(record)
+        if why is None:
+            return True
+        skip_counts[why] += 1
+        return False
+
+    if "--by-class" in sys.argv:
+        by_class(records, order, built, visible)
+        if skip_counts:
+            split = ", ".join(f"{n} {kind}"
+                              for kind, n in sorted(skip_counts.items()))
+            print(f"  filtered from every view above, never work: {split}")
+        sys.exit(0)
+
+    pending = [record for record in order if not record.byte_exact]
+    # KIND BEFORE BUILD: under --all the queue's head was Microsoft's libc -
+    # 168 library bodies a batch selector would otherwise hand out first.
+    pending = [record for record in pending if visible(record)]
     if "--all" not in sys.argv:
         # A record whose file the build does not compile cannot be MEASURED,
         # so it is not work anyone can finish today - it is work that first
         # needs a home in a translation unit.
-        pending = [r for r in pending if r.path in built]
+        pending = [record for record in pending if record.path in built]
     if "--json" in sys.argv:
         print(json.dumps([{"address": r.address_hex, "name": r.name,
                            "file": str(r.path)} for r in pending], indent=2))
@@ -307,3 +514,6 @@ if __name__ == "__main__":
               f"{len(pending) - proved:,} remain against "
               f"\"byte exact or semantically the same\"")
     print("  --all also lists reachable bodies the build does not compile")
+    split = ", ".join(f"{n} {kind}" for kind, n in sorted(skip_counts.items()))
+    print(f"  filtered from the queue as never-work: {split or 'nothing'}"
+          f" (game-side exclusions stay listed, with their citation)")
