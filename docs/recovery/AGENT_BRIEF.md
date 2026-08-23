@@ -110,6 +110,18 @@ ADJUSTOR THUNKS WITH ARGUMENTS (open lever, ~92 bodies)
   push eax / sub... / push edx / call / pop ebp / ret 8` - a full frame,
   re-pushed arguments, a CALL. Do not retry parameter forwarding in any free-
   function or member spelling; VC6 has no sibcall-with-stack-reuse here.
+- THE LEVER IS SELECTIVE, measured 2026-08-23 twice. Declaring ListBox's
+  inherited events virtual made cl emit `$4` thunks of the exact image shape
+  (`2b 49 fc / e9 rel32`, four-arg value-returning included) - but the same
+  edit regressed six BYTE_EXACT claims whose image symbols spell `Q`
+  (non-virtual), and the census settles why: **75 of the 80
+  adjustor_thunks.cpp targets spell Q in the image; zero spell U.** The
+  image's window-event thunks are NOT C++ virtual dispatch for these
+  classes. Virtualize only families whose target symbols spell U (ListBox's
+  do); for the rest the thunks are plausibly member-pointer adjustment
+  stubs (`thunkN_Class` reads like a demangler's rendering of a `$4`/`$R`
+  mangle), and the faithful source form is whatever takes adjusted member
+  pointers - per-family recovery design, not a declaration sweep.
 - THE LEVER IS MEASURED LIVE: declare the real virtual bases and cl EMITS
   these thunks itself. RadioButton already declares
   `public virtual GraphicWin, public virtual Dialog`, and its object carries
