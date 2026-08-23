@@ -1,0 +1,308 @@
+#!/usr/bin/env -S uv run python
+"""Home an artifact body into the product TU that owns it.
+
+A body in src/recovered/ or src/unrecovered/ cannot be MEASURED - the build
+never compiles those files - so no agent can finish it and no claim on it can
+be checked. Homing moves it into the translation unit that owns its class,
+where the gate sees it. MISMATCH after a homing is PROGRESS: the body went
+from unverifiable to measured.
+
+    tools/home_bodies.py --class Palette              # proposals, no writes
+    tools/home_bodies.py --class Palette --apply      # unclaimed batch
+    tools/home_bodies.py --class Palette --claimed --apply 0x005FE6D0
+    tools/home_bodies.py --tu log.cpp                 # free functions
+
+THE ORDERING RULE, and why it is not a flag you can ignore: 963 BYTE_EXACT
+claims live in these scaffolds. Homing an UNCLAIMED body is free - nothing
+can regress. Homing a CLAIMED one can legitimately turn the gate red: a
+different TU means different includes, and VC6 may lower identical source
+differently there. So unclaimed bodies batch freely; a claimed body moves
+ONE PER COMMIT through --claimed <addr>, and if the gate goes REGRESSED the
+fix is the include context or reverting that single homing.
+
+WHAT ONE HOMING DOES. Take the marker, its fact block, and the definition
+from the artifact; append them to the owning TU; declare the method on its
+class in the header if no declaration is there; remove a PENDING_BODY
+forwarder of the same member from pending_bodies.cpp, whose definition this
+one replaces; delete the artifact file. Then rebuild. A body that does not
+compile is REVERTED whole - TU edit, declaration, forwarder removal, file -
+and the compiler's first error is printed as the class-modelling blocker it
+is. The tool never leaves a half-homed body behind.
+"""
+
+from __future__ import annotations
+
+import collections
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from decomp import read
+from decomp.asm import build_inputs
+
+REPO = Path(__file__).resolve().parent.parent
+SRC = REPO / "src"
+PENDING = SRC / "pending_bodies.cpp"
+
+MARKER = re.compile(r"^// ORIGINAL: 0x", re.M)
+DEFINITION = re.compile(
+    r"^[\w:<>,*&\s]*?\b(?P<klass>\w+)::(?P<method>~?\w+)\s*\((?P<params>[^)]*)\)"
+    r"(?:\s*const)?\s*\{", re.M)
+
+
+def owner_of(record) -> str | None:
+    parts = (record.name or "").split("@")
+    if len(parts) > 1 and parts[0].startswith("?") and parts[1]:
+        return parts[1]
+    return None
+
+
+def code(text: str) -> str:
+    """Comments blanked, offsets kept - prose must not look like code."""
+    text = re.sub(r"/\*.*?\*/", lambda m: " " * len(m.group(0)), text,
+                  flags=re.S)
+    return re.sub(r"//[^\n]*", lambda m: " " * len(m.group(0)), text)
+
+
+def product_tu(klass: str, records) -> Path | None:
+    """The .cpp defining the most members of `klass`; stem-matched wins ties."""
+    counts: dict = collections.Counter()
+    for path in sorted(SRC.glob("*.cpp")):
+        if "recovered" in path.parts or "unrecovered" in path.parts:
+            continue
+        n = len(re.findall(rf"\b{re.escape(klass)}::~?\w+\s*\(",
+                           code(path.read_text(errors="replace"))))
+        if n:
+            counts[path] = n
+    if not counts:
+        return None
+    best = max(counts.values())
+    tied = [p for p, n in counts.items() if n == best]
+    if len(tied) > 1:
+        for p in tied:
+            if p.stem.lower() == klass.lower():
+                return p
+    return tied[0]
+
+
+def split_artifact(text: str) -> tuple[str, str] | None:
+    """(marker+facts+prose, definition) - the scaffold preamble stays behind.
+
+    The head is the run of `//` lines from the marker on - some artifacts
+    have no blank line before the definition, so an index-of-blank-line cut
+    silently swallowed whole bodies.
+    """
+    marker = MARKER.search(text)
+    if marker is None:
+        return None
+    idx = text.index("\n", marker.start()) + 1
+    while idx < len(text):
+        line_end = text.find("\n", idx)
+        line = text[idx:line_end if line_end != -1 else len(text)]
+        if not line.startswith("//"):
+            break
+        idx = line_end + 1 if line_end != -1 else len(text)
+    head = text[marker.start():idx].rstrip()
+    definition = DEFINITION.search(text, idx)
+    if definition is None:
+        return None
+    return head, text[definition.start():].rstrip() + "\n"
+
+
+def class_span(text: str, klass: str):
+    opening = re.search(rf"\b(?:class|struct)\s+{re.escape(klass)}\b[^{{;]*{{",
+                        code(text))
+    if opening is None:
+        return None
+    depth, i = 1, opening.end()
+    while i < len(text) and depth:
+        depth += {"{": 1, "}": -1}.get(text[i], 0)
+        i += 1
+    return opening.end(), i - 1
+
+
+def declared(header_text: str, klass: str, method: str) -> bool:
+    span = class_span(header_text, klass)
+    if span is None:
+        return False
+    return bool(re.search(rf"\b{re.escape(method)}\s*\(",
+                          header_text[span[0]:span[1]]))
+
+
+def pending_forwarder_span(text: str, klass: str, method: str):
+    """The PENDING_BODY forwarder defining klass::method, if one exists."""
+    match = re.search(rf"[\w:<>,*& ]+\b{re.escape(klass)}::{re.escape(method)}"
+                      rf"\s*\([^;{{}}]*\)\s*\{{", code(text))
+    if match is None:
+        return None
+    depth, i = 1, match.end()
+    while i < len(text) and depth:
+        depth += {"{": 1, "}": -1}.get(text[i], 0)
+        i += 1
+    start = text.rfind("\n", 0, match.start()) + 1
+    return start, i
+
+
+def build() -> tuple[bool, str]:
+    done = subprocess.run(["cmake", "--build", "build"], cwd=REPO,
+                          capture_output=True, text=True)
+    out = done.stdout + done.stderr
+    error = next((line.strip() for line in out.splitlines()
+                  if re.search(r"error C\d+|LNK\d{4}:.*error|unresolved external",
+                               line)), "")
+    return done.returncode == 0, error
+
+
+def main() -> int:
+    args = sys.argv[1:]
+    apply = "--apply" in args
+    claimed_flag = "--claimed" in args
+    wanted_addr = None
+    if claimed_flag:
+        addrs = [a for a in args if a.startswith("0x")]
+        if not addrs:
+            print("--claimed needs the one address to move")
+            return 2
+        wanted_addr = int(addrs[0], 16)
+
+    klass = None
+    tu_arg = None
+    for flag, value in zip(args, args[1:] + [""]):
+        if flag == "--class":
+            klass = value
+        if flag == "--tu":
+            tu_arg = Path(value)
+
+    records = read(SRC)
+    built = build_inputs(REPO / "build" / "compile_commands.json")
+
+    population = []
+    for record in records:
+        path = str(record.path)
+        if "recovered" not in path and "unrecovered" not in path:
+            continue
+        if klass and owner_of(record) != klass:
+            continue
+        if tu_arg and record.path.name != tu_arg.name:
+            continue
+        population.append(record)
+
+    claimed = [r for r in population if r.byte_exact or r.semantic]
+    unclaimed = [r for r in population if not (r.byte_exact or r.semantic)]
+
+    print(f"{len(population)} artifact body(ies) owned by "
+          f"{klass or tu_arg and tu_arg.name}: "
+          f"{len(unclaimed)} unclaimed, {len(claimed)} claimed")
+    if claimed_flag:
+        targets = [r for r in claimed if r.address == wanted_addr]
+        if not targets:
+            print(f"0x{wanted_addr:08X} is not a claimed artifact body here")
+            return 2
+        targets = targets[:1]
+    else:
+        targets = unclaimed
+        if claimed and not klass and not tu_arg:
+            pass
+        elif claimed:
+            print(f"  ({len(claimed)} CLAIMED body(s) need --claimed <addr>, "
+                  f"one per commit)")
+
+    if not targets:
+        print("nothing to home")
+        return 0
+
+    if not apply:
+        for record in sorted(targets, key=lambda r: r.address):
+            state = "CLAIMED" if (record.byte_exact or record.semantic) \
+                else "unclaimed"
+            print(f"  would home {record.address_hex} [{state}] "
+                  f"{record.path.name} -> {record.name}")
+        print(f"\ndry run: {len(targets)} proposal(s); pass --apply to move"
+              f" them (claimed bodies one at a time via --claimed <addr>)")
+        return 0
+
+    failures = kept = 0
+    for record in sorted(targets, key=lambda r: r.address):
+        head_and_def = split_artifact(record.path.read_text(errors="replace"))
+        if head_and_def is None:
+            print(f"  SKIP {record.address_hex}: no marker+definition pair in "
+                  f"{record.path.name}")
+            continue
+        head, definition = head_and_def
+        method_match = DEFINITION.search(definition)
+        d_klass, method = (method_match.group("klass"),
+                           method_match.group("method"))
+        tu = product_tu(d_klass, records) if not tu_arg else \
+            SRC / tu_arg.name
+        if tu is None:
+            print(f"  BLOCKED {record.address_hex}: no product TU defines "
+                  f"{d_klass}::* - model the class first")
+            continue
+
+        tu_text = tu.read_text()
+        header = tu.with_suffix(".h")
+        header_text = header.read_text() if header.exists() else ""
+        pending_text = PENDING.read_text()
+
+        # snapshots, so a failed build restores ALL FOUR edits
+        snapshots = {
+            "tu": tu_text,
+            "header": header_text,
+            "pending": pending_text,
+            "artifact": record.path.read_text(),
+        }
+
+        def revert(where: str, error: str):
+            nonlocal failures
+            tu.write_text(snapshots["tu"])
+            if header.exists():
+                header.write_text(snapshots["header"])
+            PENDING.write_text(snapshots["pending"])
+            record.path.write_text(snapshots["artifact"])
+            failures += 1
+            print(f"  REVERTED {record.address_hex} ({where}): {error[:160]}")
+
+        new_tu = tu_text.rstrip() + "\n\n" + head.strip() + "\n\n" \
+            + definition + "\n"
+        tu.write_text(new_tu)
+
+        if header_text and not declared(header_text, d_klass, method):
+            span = class_span(header_text, d_klass)
+            if span is None:
+                revert("header", f"no class {d_klass} in {header.name}")
+                continue
+            sig_head = definition.split("{")[0].strip()
+            ret = re.match(r"([\w:<>,*&\s]+?)\b" + re.escape(d_klass) +
+                           r"\s*::", sig_head)
+            ret_type = (ret.group(1).strip() + " ") if ret else ""
+            insertion = (f"\n public:\n  // homed from {record.path.name}\n"
+                         f"  {ret_type}{method}({method_match.group('params')});\n")
+            header.write_text(header_text[:span[0]] + insertion
+                              + header_text[span[0]:])
+
+        fwd = pending_forwarder_span(pending_text, d_klass, method)
+        if fwd is not None:
+            PENDING.write_text(
+                pending_text[:fwd[0]] + pending_text[fwd[1]:])
+
+        record.path.unlink()
+
+        ok, error = build()
+        if not ok:
+            revert("build", error or "link failed")
+            continue
+        kept += 1
+        print(f"  HOMED {record.address_hex} -> {tu.name} "
+              f"{'CLAIMED - gate before committing' if record.byte_exact else ''}")
+
+    print(f"\n{kept} homed, {failures} reverted. "
+          f"Next: bare osmx check; orphan_artifacts.py; lower the artifact "
+          f"ceilings this commit made stale.")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

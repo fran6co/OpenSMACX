@@ -28,6 +28,14 @@ struct IDirectDrawPalette;  // <ddraw.h>, included where it is called
   */
 class Palette {
  public:
+  // homed from 005ff1a0.cpp
+  int UNK5(int a1, int a2, int a3, int a4);
+
+ public:
+  // homed from 005ff470.cpp
+  int get_nearest_palette_index(unsigned char a1, unsigned char a2, unsigned char a3, int a4);
+
+ public:
   Palette();                         // 005FE2A0
   // A TAIL JUMP, not an empty body: the image's destructor is one
   // instruction, `jmp ?close@Palette@@QAEXXZ`.
