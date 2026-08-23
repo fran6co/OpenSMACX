@@ -138,9 +138,11 @@ None of these costs agent time, and each has paid for itself more than once.
 uv run tools/promotable.py
 uv run tools/promotable.py --unmarked
 
-# One address claimed by BOTH product source and a leftover artifact. The
-# gate's duplicate check does not look across directories.
-uv run tools/orphan_artifacts.py
+# Every address, every place it appears: duplicate annotations across files,
+# claims contradicted by the PENDING_BODY forwarder the build still links,
+# marker-hosting files outside the known scaffolds. The gate runs this with
+# floors that only fall - run it bare for the full defect list.
+uv run tools/address_index.py
 
 # Work the tree is doing that the compiler should do - hand-installed vtables,
 # `construct()` stand-ins, placement new on a subobject. Ratcheted; every big
