@@ -1,5 +1,5 @@
 #!/usr/bin/env -S uv run python
-"""The WinMain-reachable call graph, in depth-first order, with verdicts.
+"""The reachable call graph, in depth-first order, with verdicts.
 
 WHY. The standing goal is to walk depth first from WinMain until everything
 reachable is byte exact or semantically equivalent, and nothing in the tree
@@ -15,6 +15,14 @@ WHAT "REACHABLE" MEANS HERE. Direct and tail calls only. An indirect call
 through a vtable or a bound slot is a runtime fact this cannot resolve, so a
 node reached ONLY that way does not appear - the frontier is a lower bound on
 the work, never an upper one, and the count is printed so that is visible.
+
+THE SECOND ROOT. WinMain is not the only entry into this program: the CRT's
+dynamic initializers run FIRST, constructing every global object. Measured
+2026-08-23, the 768 init/atexit thunk bodies make 101 distinct direct calls,
+and 62 of their targets are annotated but unclaimed - invisible to any
+WinMain-only walk. `--roots crtinit` seeds the walk with those targets too;
+WinMain's order still comes out on top, the pre-WinMain construction graph
+after it. The global objects are where those lives are lived.
 
 WORKED BODIES ARE MARKED, because handing out eight already-exhausted addresses
 costs a whole agent. A body carrying `TRIED:` notes has had someone attack
@@ -105,14 +113,24 @@ def is_stub(record) -> bool:
     return len(statements) <= 1 and bool(STUB.fullmatch(" ".join(statements)))
 
 
-def walk(records: list, exe: Path, root: int) -> tuple[list, int, int]:
-    """Depth-first from `root`; returns (order, edges seen, unnamed edges)."""
+def walk(records: list, exe: Path, root: int,
+         seen: set | None = None, order: list | None = None) -> tuple[list, int, int]:
+    """Depth-first from `root`; returns (order, edges seen, unnamed edges).
+
+    `seen` and `order` let several roots share one walk - `--roots crtinit`
+    seeds the pre-WinMain construction graph into the SAME traversal, so a
+    body reachable from both appears once, where WinMain put it.
+    """
+    if seen is None:
+        seen = set()
+    if order is None:
+        order = []
     by_address = {}
     for record in records:
         by_address.setdefault(record.address, record)
     shared = shared_spans(records)
 
-    order, seen, unnamed, edges = [], set(), 0, 0
+    unnamed, edges = 0, 0
     stack = [root]
     while stack:
         address = stack.pop()
@@ -141,9 +159,53 @@ def walk(records: list, exe: Path, root: int) -> tuple[list, int, int]:
     return order, edges, unnamed
 
 
+def crt_roots(records: list, exe: Path) -> list:
+    """The direct callees of every init/atexit thunk - the second root set.
+
+    These are the constructors and destructors of the global objects: the
+    code the CRT runs BEFORE WinMain, which no WinMain-rooted walk can ever
+    reach except by coincidence.
+    """
+    targets = []
+    for record in records:
+        if record.path.name not in ("init_thunks.cpp", "atexit_thunks.cpp"):
+            continue
+        try:
+            listing = original_asm(record, exe)
+        except (ValueError, KeyError):
+            continue
+        for site in call_sites(listing):
+            if site.form in ("direct", "tail") and site.target is not None:
+                targets.append(site.target)
+    return targets
+
+
 if __name__ == "__main__":
     records = read(REPO_ROOT / "src")
     order, edges, unnamed = walk(records, IMAGE, ROOT)
+    # `--roots <name>` extends the traversal. Only `crtinit` exists; an
+    # unknown name is refused rather than silently ignored, because a flag
+    # that does nothing reads exactly like one that worked.
+    if "--roots" in sys.argv:
+        index = sys.argv.index("--roots")
+        mode = sys.argv[index + 1] if index + 1 < len(sys.argv) else ""
+        if mode != "crtinit":
+            sys.exit(f"frontier.py: unknown --roots mode {mode!r} "
+                     f"(only 'crtinit' is defined)")
+        seeds = sorted(set(crt_roots(records, IMAGE)))
+        seen = {record.address for record in order}
+        beyond = 0
+        for seed in seeds:
+            if seed in seen:
+                continue
+            before = len(order)
+            order, e2, u2 = walk(records, IMAGE, seed, seen=seen,
+                                 order=order)
+            edges += e2
+            unnamed += u2
+            beyond += 1
+        print(f"--roots crtinit: {len(seeds):,} pre-WinMain construction "
+              f"roots seeded from the init/atexit thunks", file=sys.stderr)
     built = build_inputs(REPO_ROOT / "build" / "compile_commands.json")
     pending = [r for r in order if not r.byte_exact]
     if "--all" not in sys.argv:
