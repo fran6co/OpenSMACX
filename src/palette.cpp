@@ -30,6 +30,20 @@ Buffer ScreenBuffer;                    // 0x009B7490
 int PaletteSeedCache;                   // 0x009B8184
 IDirectDrawPalette *DirectDrawPalette;  // 0x009BC4A0
 
+// The two double constants the HSV colour math reads from .data: the
+// saturation floor create_table scales by, and the hue factor
+// get_nearest_palette_index multiplies every hue by.
+static const double *const g_0066eb38 = (const double *)0x0066EB38;
+static const double *const g_00670280 = (const double *)0x00670280;
+// RGB_to_HSV's own .data reads - carried verbatim from its recovered unit,
+// where the const-pointer spelling is what reproduces the bytes.
+static int *const g_0066fa70 = (int *)0x0066FA70;
+static int *const g_0066fdc8 = (int *)0x0066FDC8;
+static int *const g_00670c30 = (int *)0x00670C30;
+static int *const g_00670c40 = (int *)0x00670C40;
+static int *const g_00670c48 = (int *)0x00670C48;
+static int *const g_00670c50 = (int *)0x00670C50;
+
 // Palette::timer_callback's own address, which init_cycle hands to Time::init
 // as a __cdecl callback exactly as the image does. The same idiom as
 // sound.cpp's fixed-slot bindings: the literal is what the bytes contain.
@@ -1400,6 +1414,231 @@ int Palette::UNK9(int a1, int a2, int a3, int a4, int a5) {
         *reinterpret_cast<int *>(self + 0x400) = newSeed;
     } while (newSeed == 0);
 
+    return 0;
+}
+
+// ORIGINAL: 0x00628DB0 ?RGB_to_HSV@@YAXPAUPALETTEENTRY@@PAUHSV@@@Z 0x00628DB0-0x00628F27 FILE
+// symbol    ?RGB_to_HSV@@YAXPAUtagPALETTEENTRY@@PAUHSV@@@Z
+// size      375 bytes
+// prototype 
+// callers   3   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x00628DB0
+// measured tier  MISMATCH
+// divergence     2
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/00628db0/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?RGB_to_HSV@@YAXPAUPALETTEENTRY@@PAUHSV@@@Z  at 0x00628DB0  (375 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+void __cdecl RGB_to_HSV(PALETTEENTRY * a1, HSV * a2) {
+    unsigned char *p = reinterpret_cast<unsigned char *>(a1);
+    double *out = reinterpret_cast<double *>(a2);
+    if (a2 != 0 && a1 != 0) {
+        const double scale = *reinterpret_cast<const double *>(g_00670c50);
+        const double zero = *reinterpret_cast<const double *>(g_0066fa70);
+        int ir = p[0];
+        int ig = p[1];
+        int ib = p[2];
+        double r = static_cast<double>(ir) * scale;
+        double g = static_cast<double>(ig) * scale;
+        double b = static_cast<double>(ib) * scale;
+        double vmax = r;
+        if (r < g) vmax = g;
+        if (vmax < b) vmax = b;
+        double vmin = r;
+        if (g < r) vmin = g;
+        if (b < vmax) vmin = b;
+        out[2] = vmax;
+        double s = zero;
+        if (vmax != zero) s = (vmax - vmin) / vmax;
+        out[1] = s;
+        if (s == zero) {
+            *reinterpret_cast<int *>(out) = 0;
+            *(reinterpret_cast<int *>(out) + 1) = static_cast<int>(0xbff00000);
+            return;
+        }
+        double delta = vmax - vmin;
+        double h;
+        if (r == vmax) {
+            h = (g - b) / delta;
+        } else if (g == vmax) {
+            h = (b - r) / delta + *reinterpret_cast<const double *>(g_00670c48);
+        } else {
+            h = (r - g) / delta + *reinterpret_cast<const double *>(g_0066fdc8);
+        }
+        out[0] = h;
+        double h2 = out[0] * *reinterpret_cast<const double *>(g_00670c40);
+        bool neg = h2 < zero;
+        out[0] = h2;
+        if (neg) {
+            out[0] = h2 + *reinterpret_cast<const double *>(g_00670c30);
+        }
+    }
+}
+
+// ORIGINAL: 0x005FF630 ?get_nearest_palette_index@Palette@@QAEHPAUHSV@@0H@Z 0x005FF630-0x005FF92D FILE
+// TRIED: MISMATCH #5 push/mov - and/sub-esp frame differs because the helper hsv_sq_distance() is a separate function call rather than inlined FPU code sharing one scratch stack slot per the original's single sub-esp-8 staging area reused across both sin/cos call sites in each loop body.
+// working copy - scaffold materialised by --work
+// size      765 bytes
+// prototype int (__thiscall ?get_nearest_palette_index@Palette@@QAEHPAUHSV@@0H@Z)(Palette* this, HSV*, HSV*, int)
+// callers   1   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x006463E4 0x00646494
+
+// The record name FF630's recovered body thinks in; same 0x18 layout as
+// struct HSV above.
+namespace {
+struct HsvRecord {
+    double hue_;
+    double sat_;
+    double val_;
+};
+}
+
+static double hsv_sq_distance(const HsvRecord *a, const HsvRecord *b, double k) {
+    double dv = a->val_ - b->val_;
+    double sin_a = ((double(__cdecl *)(double))sin)(a->hue_ * k) * a->sat_;
+    double sin_b = ((double(__cdecl *)(double))sin)(b->hue_ * k) * b->sat_;
+    double cos_a = ((double(__cdecl *)(double))cos)(a->hue_ * k) * a->sat_;
+    double cos_b = ((double(__cdecl *)(double))cos)(b->hue_ * k) * b->sat_;
+    double ds = sin_a - sin_b;
+    double dc = cos_a - cos_b;
+    return dv * dv + ds * ds + dc * dc;
+}
+
+int Palette::get_nearest_palette_index(HSV * a1, HSV * a2, int a3) {
+    double k = *(double *)g_00670280;
+    double best = 200000.0;
+    int best_index = 0;
+    int i;
+
+    if (PaletteInitialized == nullptr) {
+        return 7;
+    }
+
+    const HsvRecord *query = (const HsvRecord *)a1;
+
+    if (a3 != 0) {
+        int used[256];
+        for (i = 0; i < 0x100; i++) {
+            used[i] = 0;
+        }
+
+        for (i = 0; i < 5; i++) {
+            if (internal_[i].key != 0xffffffff) {
+                unsigned int start = internal_[i].first;
+                unsigned int len = internal_[i].count;
+                unsigned int end = start + len;
+                if (start < end) {
+                    unsigned int j;
+                    for (j = start; j < end; j++) {
+                        used[j] = 1;
+                    }
+                }
+            }
+        }
+
+        {
+            const HsvRecord *arr = (const HsvRecord *)((char *)a2 + 0xf8) + 10;
+            for (i = 10; i < 0xf6; i++) {
+                if (used[i] == 0) {
+                    double d = hsv_sq_distance(query, arr, k);
+                    if (d < best) {
+                        best = d;
+                        best_index = i;
+                    }
+                }
+                arr++;
+            }
+        }
+        return best_index;
+    }
+
+    {
+        const HsvRecord *arr = (const HsvRecord *)((char *)a2 + 8);
+        for (i = 0; i < 0x100; i++) {
+            double d = hsv_sq_distance(query, arr, k);
+            if (d < best) {
+                best = d;
+                best_index = i;
+            }
+            arr++;
+        }
+    }
+    return best_index;
+}
+
+// ORIGINAL: 0x005FED40 ?create_table@Palette@@QAEHPAEHHH@Z 0x005FED40-0x005FEE78
+// TRIED: manual dword-by-dword copy loop for the HSV struct (compiler reordered vs. the `rep movsd` struct-assignment form used below); computing `&hsv[0]` at the call site instead of before the loop. Best reached: MISMATCH, edit_count 4/~110 mnemonics, 313 bytes vs 312 - one `fmul qword ptr [addr]` compiled as `mov eax,addr; fmul qword ptr [eax]` instead of the direct absolute form, apparently because `&hsv[0]`'s address happened to occupy eax at that point in the original and not here.
+// size      312 bytes
+// prototype int (__thiscall ?create_table@Palette@@QAEHPAEHHH@Z)(Palette* this, unsigned int8*, int, int, int)
+// callers   1   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FF630 0x00628DB0 0x00645550
+
+int Palette::create_table(unsigned char * a1, int a2, int a3, int a4) {
+    struct HSVLocal { double h; double s; double v; };
+    HSVLocal hsv[256];
+    HSVLocal local1;
+    HSVLocal *ref0;
+    int i;
+    int upper;
+
+    if (PaletteInitialized == nullptr) {
+        return 7;
+    }
+    if (a1 == 0) {
+        return 0x10;
+    }
+    if (a4 < -100 || a4 > 100) {
+        return 3;
+    }
+    for (i = 0; i < a2; i++) {
+        a1[i] = (unsigned char)i;
+    }
+    upper = a2 + a3;
+    for (i = upper; i < 0x100; i++) {
+        a1[i] = (unsigned char)i;
+    }
+    for (i = 0; i < 0x100; i++) {
+        RGB_to_HSV((PALETTEENTRY *)((unsigned char *)this + i * 4), (HSV *)&hsv[i]);
+    }
+    ref0 = &hsv[0];
+    for (i = a2; i < upper; i++) {
+        local1 = hsv[i];
+        local1.v = (double)(a4 + 100) * local1.v * *(double *)g_0066eb38;
+        a1[i] = (unsigned char)get_nearest_palette_index((HSV *)&local1, (HSV *)ref0, 1);
+    }
     return 0;
 }
 
