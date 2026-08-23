@@ -33,7 +33,6 @@ The seam/global instruments:
 
     uv run tools/bound_callees.py   # function-typed pointer bindings that cost call sites their E8
     uv run tools/fold_globals.py    # object-pointer bindings that cost data references their immediate
-    uv run tools/jackal_seam.py     # how far the engine layer is from separable translation units
 
 ## The gate
 
