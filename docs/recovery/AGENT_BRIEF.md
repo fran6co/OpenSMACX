@@ -103,11 +103,20 @@ ADJUSTOR THUNKS WITH ARGUMENTS (open lever, ~92 bodies)
 - Every ARG-FORWARDING thunk is NOT_MATCHING for one structural reason: the
   image's `?on_mouse_move@thunk1_RadioButton@@QAEXHH@Z` is a MEMBER function,
   so its arguments sit on the caller's stack across the tail jump - two
-  instructions total, nothing pushed. A free __fastcall wrapper receives those
-  arguments in registers and must push them back, which can never reproduce
-  the bytes. The candidate remedy is the member spelling (the catalogue already
-  names them as members of fake `thunkN_Class` classes); PROVE IT ON ONE BODY
-  and write the LEVER here before fanning out over the family.
+  instructions total, nothing pushed.
+- MEASURED 2026-08-23 against cl 12.00.8168 (`/O2 /Gy /GR- /Oy- /GX`): the
+  naive remedy is DEAD. A fake-class member that forwards its parameters
+  compiles to `push ebp / mov ebp,esp / mov eax,[ebp+c] / mov edx,[ebp+8] /
+  push eax / sub... / push edx / call / pop ebp / ret 8` - a full frame,
+  re-pushed arguments, a CALL. Do not retry parameter forwarding in any free-
+  function or member spelling; VC6 has no sibcall-with-stack-reuse here.
+- The remaining hypothesis is that NO source spelling produces these bytes:
+  in the original they are compiler-EMITTED adjustor thunks, generated because
+  the class really had virtual bases. If modelling RadioButton's virtual
+  inheritance makes VC6 emit the thunks itself, the hand bodies become
+  redundant artifacts to promote away, not bodies to fix. Test that on ONE
+  class from most_derived_flag.py's confirmed nine before touching the other
+  ninety-one.
 
 
 DO NOT BUILD A MEMBER THE COMPILER ALREADY BUILT
