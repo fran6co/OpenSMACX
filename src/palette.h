@@ -39,6 +39,10 @@ void __cdecl RGB_to_HSV(const PALETTEENTRY *entry, HSV *out);
   */
 class Palette {
  public:
+  // homed from 005fe2f0.cpp
+  int __as(Palette* a1);
+
+ public:
   // homed from 005fe900.cpp
   void UNK2(int a1);
 
