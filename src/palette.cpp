@@ -30,6 +30,11 @@ Buffer ScreenBuffer;                    // 0x009B7490
 int PaletteSeedCache;                   // 0x009B8184
 IDirectDrawPalette *DirectDrawPalette;  // 0x009BC4A0
 
+// Palette::timer_callback's own address, which init_cycle hands to Time::init
+// as a __cdecl callback exactly as the image does. The same idiom as
+// sound.cpp's fixed-slot bindings: the literal is what the bytes contain.
+static void *const g_005fead0 = (void *)0x005FEAD0;
+
 // 0x0067022C - see palette.h. Blue, green, red, reserved, per RGBQUAD.
 const uint8_t SystemColours[80] = {
       0,   0,   0, 0,   // 0   black
@@ -829,6 +834,572 @@ int Palette::UNK5(int a1, int a2, int a3, int a4) {
             p = p + 4;
         } while (idx < end);
     }
+    return 0;
+}
+
+// ORIGINAL: 0x005FE5C0 ?UNK1@Palette@@QAEHHHH@Z 0x005FE5C0-0x005FE646 FILE
+// working copy - scaffold materialised by --work
+// size      134 bytes
+// prototype int (__thiscall ?UNK1@Palette@@QAEHHHH@Z)(Palette* this, int, int, int)
+// callers   2   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00625810
+
+int Palette::UNK1(int a1, int a2, int a3) {
+    char *self = reinterpret_cast<char *>(this);
+    if (a1 == 0) {
+        return 3;
+    }
+    if (PaletteInitialized == nullptr) {
+        return 7;
+    }
+    if (a3 > 0) {
+        unsigned char *dst = reinterpret_cast<unsigned char *>(self + 2 + a2 * 4);
+        unsigned char *src = reinterpret_cast<unsigned char *>(a1 + 1);
+        int count = a3;
+        do {
+            dst[-2] = src[1];
+            dst[-1] = src[0];
+            dst[0] = src[-1];
+            dst[1] = 5;
+            dst += 4;
+            src += 4;
+            count--;
+        } while (count != 0);
+    }
+    *reinterpret_cast<int *>(self + 0x400) = 0;
+    int result;
+    do {
+        result = random(0, 0xffff);
+        *reinterpret_cast<int *>(self + 0x400) = result;
+    } while (result == 0);
+    return 0;
+}
+
+// ORIGINAL: 0x005FEE80 ?UNK4@Palette@@QAEHPAXHHHHH@Z 0x005FEE80-0x005FEFE7
+// TRIED: `int i` reused across the two fill loops is a VC6 for-scope leak (C2374), so the loop counters are named `i0`/`i1`. The blend loop's R/G/B channel math and the `get_nearest_palette_index` call are transcribed directly from the Ghidra pseudocode (the CONCAT31 casts there are just "pass the low byte", nothing else). 0.81 mnemonic similarity; first divergence at #3 is in the prologue stack-frame setup for the two 0x400-byte local copies, not chased further.
+// size      359 bytes
+// prototype int (__thiscall ?UNK4@Palette@@QAEHPAXHHHHH@Z)(Palette* this, void*, int, int, int, int, int)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FF470 0x00645930
+
+
+
+int Palette::UNK4(void *a1, int a2, int a3, int a4, int a5, int a6) {
+    if (a1 == 0) {
+        return 0x10;
+    }
+    if (PaletteInitialized == nullptr) {
+        return 7;
+    }
+    if (a2 == 0) {
+        return 0x10;
+    }
+
+    uint8_t *dest = reinterpret_cast<uint8_t *>(a2);
+    for (int i0 = 0; i0 < a3; ++i0) {
+        dest[i0] = static_cast<uint8_t>(i0);
+    }
+
+    int hi = a3 + a4;
+    for (int i1 = hi; i1 < 0x100; ++i1) {
+        dest[i1] = static_cast<uint8_t>(i1);
+    }
+
+    uint8_t selfCopy[0x400];
+    uint8_t srcCopy[0x400];
+    memcpy(selfCopy, this, 0x400);
+    memcpy(srcCopy, a1, 0x400);
+
+    if (a3 < hi) {
+        int divisor = a5 + a6;
+        int i = a3;
+        do {
+            uint8_t r = static_cast<uint8_t>(
+                (static_cast<unsigned int>(srcCopy[i * 4]) * a6 +
+                 static_cast<unsigned int>(selfCopy[i * 4]) * a5) / divisor);
+            selfCopy[i * 4] = r;
+
+            uint8_t g = static_cast<uint8_t>(
+                (static_cast<unsigned int>(srcCopy[i * 4 + 1]) * a6 +
+                 static_cast<unsigned int>(selfCopy[i * 4 + 1]) * a5) / divisor);
+            selfCopy[i * 4 + 1] = g;
+
+            int bSum = static_cast<unsigned int>(srcCopy[i * 4 + 2]) * a6 +
+                       static_cast<unsigned int>(selfCopy[i * 4 + 2]) * a5;
+            int b = bSum / divisor;
+            selfCopy[i * 4 + 2] = static_cast<uint8_t>(b);
+
+            uint8_t idx = static_cast<uint8_t>(
+                get_nearest_palette_index(r, g, static_cast<uint8_t>(b), 0));
+
+            ++i;
+            dest[i - 1] = idx;
+        } while (i < hi);
+    }
+
+    return 0;
+}
+
+// ORIGINAL: 0x005FEFF0 ?create_table_from_color@Palette@@QAEHHPAEHHHH@Z 0x005FEFF0-0x005FF19E
+// TRIED: MISMATCH #3 test/push - Palette has no named per-field layout (all generic field_XX_), so `this` is treated as a raw unsigned char* (the 256-entry colour table, then the 5-record "special colours" table at +0x40c) rather than named members.
+// size      430 bytes
+// prototype int (__thiscall ?create_table_from_color@Palette@@QAEHHPAEHHHH@Z)(Palette* this, int, unsigned int8*, int, int, int, int)
+// callers   2   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005FF470
+// To start: tools/decomp_status.py --work 0x005FEFF0
+
+
+int Palette::create_table_from_color(int a1, unsigned char * a2, int a3, int a4, int a5, int a6) {
+    unsigned char *const colors = reinterpret_cast<unsigned char *>(this);
+
+    if (PaletteInitialized == nullptr) {
+        return 7;
+    }
+    if (a2 == 0) {
+        return 0x10;
+    }
+
+    int i = 0;
+    if (0 < a3) {
+        do {
+            a2[i] = static_cast<unsigned char>(i);
+            ++i;
+        } while (i < a3);
+    }
+    int range_end = a3 + a4;
+    for (i = range_end; i < 0x100; ++i) {
+        a2[i] = static_cast<unsigned char>(i);
+    }
+
+    int index = a3;
+    uint32_t target = *reinterpret_cast<uint32_t *>(colors + (a1 & 0xff) * 4);
+
+    if (a3 < range_end) {
+        int divisor = a5 + a6;
+        unsigned char blend[0x400];
+        unsigned char *dest = blend + a3 * 4;
+        unsigned char *src = colors + 2 + a3 * 4;
+        do {
+            dest[0] = static_cast<unsigned char>(
+                (static_cast<int>(src[-2]) * a5 + static_cast<int>(target & 0xff) * a6) / divisor);
+            dest[1] = static_cast<unsigned char>(
+                (static_cast<int>(src[-1]) * a5 + static_cast<int>((target >> 8) & 0xff) * a6) / divisor);
+            int sum = static_cast<int>(src[0]) * a5 + static_cast<int>((target >> 0x10) & 0xff) * a6;
+            int blue = sum / divisor;
+            dest[2] = static_cast<unsigned char>(blue);
+            unsigned char nearest = static_cast<unsigned char>(
+                get_nearest_palette_index(dest[0], dest[1], dest[2], 1));
+            src += 4;
+            dest += 4;
+            a2[index] = nearest;
+            ++index;
+        } while (index < range_end);
+    }
+
+    unsigned char *record = colors + 0x40c;
+    int remaining = 5;
+    do {
+        if (*reinterpret_cast<int32_t *>(record - 8) != -1) {
+            unsigned int start = record[0];
+            if (start < static_cast<unsigned int>(record[1] + start)) {
+                do {
+                    a2[start] = static_cast<unsigned char>(start);
+                    ++start;
+                } while (static_cast<int>(start) < static_cast<int>(record[0] + record[1]));
+            }
+        }
+        record += 0x10;
+        --remaining;
+    } while (remaining != 0);
+
+    return 0;
+}
+
+// ORIGINAL: 0x005FF220 ?UNK6@Palette@@QAEHHHH@Z 0x005FF220-0x005FF277 FILE
+// size      87 bytes
+// prototype int (__thiscall ?UNK6@Palette@@QAEHHHH@Z)(Palette* this, int, int, int)
+// callers   0   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005FF280
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x005FF220
+// measured tier  MISMATCH
+// divergence     9
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/005ff220/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?UNK6@Palette@@QAEHHHH@Z  at 0x005FF220  (87 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+
+
+int Palette::UNK6(int a1, int a2, int a3) {
+    if (a1 == 0) {
+        return 0x10;
+    }
+    char *self = reinterpret_cast<char *>(this);
+    int *dst = reinterpret_cast<int *>(a1 + 0x28);
+    unsigned char *src = reinterpret_cast<unsigned char *>(self + 0x29);
+    int count = 0xec;
+    do {
+        int idx = closest(src[-1], src[0], src[1], a2, a3, 1);
+        src += 4;
+        *dst = *reinterpret_cast<int *>(self + idx * 4);
+        dst += 1;
+    } while (--count);
+    return 0;
+}
+
+// ORIGINAL: 0x005FEAD0 ?timer_callback@Palette@@QAAXHH@Z 0x005FEAD0-0x005FEBA8 FILE
+// TRIED: 228 vs 216 bytes; the extra named locals (idx/found/entries/ iStartIndex/cEntries/i) push more callee-saved registers before the first `mov ebp,a2`, where the original loads a2 into ebp before any other push. Did not try collapsing to fewer locals given budget.
+// working copy - scaffold materialised by --work
+// size      216 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005FEB91
+
+
+void __cdecl Palette::timer_callback(int a1, int a2) {
+    if (a2 == 0 || PaletteUsesSystemColours != 0) {
+        return;
+    }
+
+    char *base = reinterpret_cast<char *>(a2);
+    int idx = 0;
+    char *entry = base + 0x404;
+    do {
+        int field0 = *reinterpret_cast<int *>(entry);
+        if (a1 == field0 || field0 == -1) {
+            break;
+        }
+        idx++;
+        entry += 0x10;
+    } while (idx < 5);
+
+    char *found = base + idx * 0x10;
+    if (*reinterpret_cast<int *>(found + 0x404) != a1) {
+        return;
+    }
+
+    unsigned int iStartIndex = *reinterpret_cast<unsigned char *>(found + 0x40c);
+    unsigned int cEntries = *reinterpret_cast<unsigned char *>(found + 0x40d);
+
+    PALETTEENTRY *entries = reinterpret_cast<PALETTEENTRY *>(base + iStartIndex * 4);
+    unsigned char lastBlue = entries[0].peBlue;
+    unsigned char lastGreen = entries[0].peGreen;
+    unsigned char lastRed = entries[0].peRed;
+
+    unsigned int i;
+    for (i = 0; i < cEntries - 1; i++) {
+        entries[i].peRed = entries[i + 1].peRed;
+        entries[i].peGreen = entries[i + 1].peGreen;
+        entries[i].peBlue = entries[i + 1].peBlue;
+    }
+
+    entries[cEntries - 1].peRed = lastRed;
+    entries[cEntries - 1].peGreen = lastGreen;
+    entries[cEntries - 1].peBlue = lastBlue;
+
+    AnimatePalette(
+        PaletteInitialized, iStartIndex, cEntries, entries);
+
+    PaletteSeedCache = *reinterpret_cast<int *>(base + 0x400);
+}
+
+// ORIGINAL: 0x005FF930 ?UNK8@Palette@@QAEHHHHHH@Z 0x005FF930-0x005FFB0B
+// TRIED: the third RGB channel is written through a pair of pointers precomputed once before the loop (`stackA_adj`/`stackB_adj` plus the destination pointer) rather than a fresh `k*4+2` index each iteration; kept as a direct index into the two 1024-byte stack copies, which is semantically the same value. `seed_` at offset 0x400 (right after `field_3FC_`) matches the reseed loop exactly. Landing the closest control-flow- faithful form (divergence starts at instruction #2, on the `this`-copy prologue).
+// size      475 bytes
+// prototype int (__thiscall ?UNK8@Palette@@QAEHHHHHH@Z)(Palette* this, void*, UINT iStartIndex, UINT cEntries, int, int)
+// callers   0   call targets   2
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00625810 0x00645930
+// indirect  0x005FF9D2 0x005FFA94 0x005FFA9A 0x005FFAB1
+
+
+
+int Palette::UNK8(int a1, int a2, int a3, int a4, int a5) {
+  if (PaletteUsesSystemColours != 0) {
+    return 0;
+  }
+  if (PaletteInitialized == nullptr) {
+    return 7;
+  }
+  if (a1 == 0) {
+    return 0x10;
+  }
+
+  unsigned char stackA[0x400];
+  unsigned char stackB[0x400];
+  memcpy(stackA, this, 0x400);
+  memcpy(stackB, reinterpret_cast<void *>(a1), 0x400);
+
+  
+
+  int frame = 0;
+  if (a4 != -1 && a4 + 1 >= 0) {
+    int weight = a4;
+    do {
+      DWORD t0 = timeGetTime();
+      if (a2 < a2 + a3) {
+        unsigned char *dst =
+            reinterpret_cast<unsigned char *>(a1) + 2 + a2 * 4;
+        int k = a2;
+        do {
+          dst[-2] = static_cast<char>(
+              (static_cast<unsigned int>(stackA[k * 4]) * weight +
+               static_cast<unsigned int>(stackB[k * 4]) * frame) /
+              a4);
+          dst[-1] = static_cast<char>(
+              (static_cast<unsigned int>(stackA[k * 4 + 1]) * weight +
+               static_cast<unsigned int>(stackB[k * 4 + 1]) * frame) /
+              a4);
+          dst[0] = static_cast<char>(
+              (static_cast<unsigned int>(stackA[k * 4 + 2]) * weight +
+               static_cast<unsigned int>(stackB[k * 4 + 2]) * frame) /
+              a4);
+          ++k;
+          dst += 4;
+        } while (k < a2 + a3);
+      }
+
+      AnimatePalette(PaletteInitialized, a2, a3,
+                      reinterpret_cast<const PALETTEENTRY *>(a1 + a2 * 4));
+
+      DWORD t1 = timeGetTime();
+      unsigned int elapsed = t1 - t0;
+      while (elapsed < static_cast<unsigned int>(a5)) {
+        t1 = timeGetTime();
+        elapsed = t1 - t0;
+      }
+
+      ++frame;
+      --weight;
+    } while (frame < a4 + 1);
+  }
+
+  seed_ = 0;
+  int r;
+  do {
+    r = random(0, 0xffff);
+    seed_ = r;
+  } while (r == 0);
+
+  return 0;
+}
+
+// ORIGINAL: 0x005FE700 ?init_cycle@Palette@@QAEHHHHK@Z 0x005FE700-0x005FE8AC;0x00662D60-0x00662D75 FILE
+// TRIED: plain 'new Time()'/'operator delete'/'free' expressions relying on VC6's own SEH codegen instead of hand-written __try/__finally; diverges at #1, prologue register order
+// size      449 bytes
+// prototype int (__thiscall ?init_cycle@Palette@@QAEHHHHK@Z)(Palette* this, int, int, int, unsigned int)
+// callers   1   call targets   8
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005D4510 0x006161D0 0x00616200 0x006162D0 0x00644EF2 0x0064557F 0x0064558A 0x00645930
+
+
+int Palette::init_cycle(int a1, int a2, int a3, unsigned long a4) {
+    char *self = reinterpret_cast<char *>(this);
+    unsigned int a2masked = (unsigned char)a2;
+
+    if (a2masked < 10) {
+        return 3;
+    }
+    if ((int)(0xf6 - a2masked) < (int)a4) {
+        return 3;
+    }
+    if (a1 == -1) {
+        return 3;
+    }
+    if (PaletteInitialized == nullptr) {
+        return 7;
+    }
+
+    int slot = 0;
+    while (slot < 5) {
+        int id = *(int *)(self + 0x404 + slot * 0x10);
+        if (a1 == id || id == -1) {
+            break;
+        }
+        ++slot;
+    }
+
+    char *entry = self + 0x404 + slot * 0x10;
+
+    if (*(int *)entry == a1) {
+        Time *t = *(Time **)(entry + 4);
+        if (t != 0) {
+            t->~Time();
+            operator delete(t);
+            *(Time **)(entry + 4) = 0;
+        }
+        char *extra = self + (slot + 0x41) * 0x10;
+        void *p = *(void **)extra;
+        if (p != 0) {
+            free(p);
+            *(void **)extra = 0;
+        }
+    }
+
+    *(int *)entry = a1;
+    *(unsigned char *)(entry + 9) = (unsigned char)a4;
+    *(unsigned char *)(entry + 8) = (unsigned char)a2masked;
+
+    void *mem = mem_get(a4 * 4);
+    char *extra = self + (slot + 0x41) * 0x10;
+    *(void **)extra = mem;
+    if (mem == 0) {
+        return 4;
+    }
+
+    memcpy(mem, self + a2masked * 4, a4 * 4);
+
+    Time *t = new Time();
+    *(Time **)(entry + 4) = t;
+    if (t == 0) {
+        return 4;
+    }
+
+    t->init((void (__cdecl *)(int, int))g_005fead0, a1, (int)self, (int)a4, 5);
+    return 0;
+}
+
+// ORIGINAL: 0x005FFB10 ?UNK9@Palette@@QAEHHHHHH@Z 0x005FFB10-0x005FFD7F FILE
+// TRIED: flipping the outer if/else polarity to test BufferDirectDraw != nullptr first (matching the disasm's fall-through order literally) moved the divergence from #13 (a lone je/jne polarity swap) to #0 (a different prologue entirely - no `sub esp,0x428`), so the `== 0`-first form below is the better body. Full control flow, field offsets and the interpolation formula (backup*stepsRemaining + target*progressCounter)/a4 were hand-traced from the raw disasm stack-offset arithmetic, not from Ghidra's decompile, which mis-simplifies the backup-buffer pointer trick.
+// working copy - scaffold materialised by --work
+// size      623 bytes
+// prototype int (__thiscall ?UNK9@Palette@@QAEHHHHHH@Z)(Palette* this, UINT, UINT iStartIndex, UINT cEntries, int, int)
+// callers   0   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DE8F0 0x00625810 0x00645930
+// indirect  0x005FFB82 0x005FFBCC 0x005FFC18 0x005FFD05 0x005FFD0B 0x005FFD1A
+
+int Palette::UNK9(int a1, int a2, int a3, int a4, int a5) {
+    if (PaletteInitialized == nullptr) {
+        return 7;
+    }
+    if (PaletteUsesSystemColours != 0) {
+        return 0;
+    }
+
+    unsigned char *self = reinterpret_cast<unsigned char *>(this);
+    unsigned int targetColor = *reinterpret_cast<unsigned int *>(self + a1 * 4);
+    unsigned char backup[0x400];
+    memcpy(backup, this, 0x400);
+
+    if (BufferDirectDraw == nullptr) {
+        if (PaletteInitialized != nullptr) {
+            PaletteActive = this;
+            reinterpret_cast<Buffer *>(0x009B7490)->sync_to_palette(this);
+            if (PaletteUsesSystemColours == 0 &&
+                PaletteSeedCache != *reinterpret_cast<int *>(self + 0x400)) {
+                AnimatePalette(PaletteInitialized, 10, 0xec,
+                               reinterpret_cast<PALETTEENTRY *>(self + 0x28));
+                PaletteSeedCache = *reinterpret_cast<int *>(self + 0x400);
+            }
+        }
+    } else if (DirectDrawPalette != nullptr) {
+        DirectDrawPalette->SetEntries(0, 0, 0x100,
+                                      reinterpret_cast<PALETTEENTRY *>(this));
+    }
+
+    if (a4 + 1 > 0) {
+        unsigned int targetR = targetColor & 0xff;
+        unsigned int targetG = (targetColor >> 8) & 0xff;
+        unsigned int targetB = (targetColor >> 16) & 0xff;
+        int stepsRemaining = a4;
+        int progressCounter = 0;
+        do {
+            unsigned int tick1 = timeGetTime();
+            int endIndex = a2 + a3;
+            if (a2 < endIndex) {
+                unsigned char *dst = self + a2 * 4;
+                unsigned char *src = backup + a2 * 4;
+                int count = endIndex - a2;
+                int r = targetR * progressCounter;
+                int g = targetG * progressCounter;
+                int b = targetB * progressCounter;
+                do {
+                    dst[0] = (unsigned char)((src[0] * stepsRemaining + r) / a4);
+                    dst[1] = (unsigned char)((src[1] * stepsRemaining + g) / a4);
+                    dst[2] = (unsigned char)((src[2] * stepsRemaining + b) / a4);
+                    dst += 4;
+                    src += 4;
+                    --count;
+                } while (count != 0);
+            }
+            AnimatePalette(PaletteInitialized, a2, a3,
+                           reinterpret_cast<PALETTEENTRY *>(self + a2 * 4));
+            unsigned int tick2 = timeGetTime();
+            while (tick2 - tick1 < (unsigned int)a5) {
+                tick2 = timeGetTime();
+            }
+            ++progressCounter;
+            --stepsRemaining;
+        } while (progressCounter < a4 + 1);
+    }
+
+    *reinterpret_cast<int *>(self + 0x400) = 0;
+    int newSeed;
+    do {
+        newSeed = (int)random(0, 0xffff);
+        *reinterpret_cast<int *>(self + 0x400) = newSeed;
+    } while (newSeed == 0);
+
     return 0;
 }
 

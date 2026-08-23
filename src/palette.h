@@ -28,6 +28,38 @@ struct IDirectDrawPalette;  // <ddraw.h>, included where it is called
   */
 class Palette {
  public:
+  // homed from 005ffb10.cpp
+  int UNK9(int a1, int a2, int a3, int a4, int a5);
+
+ public:
+  // homed from 005fe700.cpp
+  int init_cycle(int a1, int a2, int a3, unsigned long a4);
+
+ public:
+  // homed from 005ff930.cpp
+  int UNK8(int a1, int a2, int a3, int a4, int a5);
+
+ public:
+  // homed from 005fead0.cpp
+  void __cdecl timer_callback(int a1, int a2);
+
+ public:
+  // homed from 005ff220.cpp
+  int UNK6(int a1, int a2, int a3);
+
+ public:
+  // homed from 005feff0.cpp
+  int create_table_from_color(int a1, unsigned char * a2, int a3, int a4, int a5, int a6);
+
+ public:
+  // homed from 005fee80.cpp
+  int UNK4(void *a1, int a2, int a3, int a4, int a5, int a6);
+
+ public:
+  // homed from 005fe5c0.cpp
+  int UNK1(int a1, int a2, int a3);
+
+ public:
   // homed from 005ff1a0.cpp
   int UNK5(int a1, int a2, int a3, int a4);
 
