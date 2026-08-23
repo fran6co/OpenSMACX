@@ -23,10 +23,25 @@ struct Dib;    // <buffer.h>, where the DIB block is declared
 class Buffer;  // forward declaration
 struct IDirectDrawPalette;  // <ddraw.h>, included where it is called
 
+// 0x18-byte records of hue/saturation/value as doubles. MEASURED from the
+// image's own array arithmetic: get_nearest_palette_index walks its second
+// table in +0x18 strides, and create_table's stack copy is `rep movsd`
+// triplets. RGB_to_HSV fills them from PALETTEENTRYs.
+struct HSV {
+    double h;
+    double s;
+    double v;
+};
+void __cdecl RGB_to_HSV(const PALETTEENTRY *entry, HSV *out);
+
  /*
   * Palette class
   */
 class Palette {
+ public:
+  // homed from 005fed40.cpp
+  int create_table(unsigned char * a1, int a2, int a3, int a4);
+
  public:
   // homed from 005ffb10.cpp
   int UNK9(int a1, int a2, int a3, int a4, int a5);
@@ -66,6 +81,7 @@ class Palette {
  public:
   // homed from 005ff470.cpp
   int get_nearest_palette_index(unsigned char a1, unsigned char a2, unsigned char a3, int a4);
+  int get_nearest_palette_index(HSV *query, HSV *table, int start);
 
  public:
   Palette();                         // 005FE2A0

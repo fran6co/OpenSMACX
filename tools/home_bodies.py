@@ -88,6 +88,23 @@ def product_tu(klass: str, records) -> Path | None:
     return tied[0]
 
 
+def free_definition_span(text: str, ident: str):
+    """(head_end, definition) for a FREE function named `ident`.
+
+    The first brace-opened definition whose name is exactly `ident` -
+    declarations end in `;`, so they cannot shadow it, and helpers defined
+    above it have their own names.
+    """
+    for match in re.finditer(rf"\b({re.escape(ident)})\s*\(([^;{{}}]*)\)\s*\{{",
+                             text):
+        start = text.rfind("\n", 0, match.start()) + 1
+        prefix = text[start:match.start()]
+        if not re.fullmatch(r"[\w:<>,*&\s]*", prefix):
+            continue
+        return start, text[match.start():].rstrip() + "\n"
+    return None
+
+
 def split_artifact(text: str) -> tuple[str, str] | None:
     """(marker+facts+prose, definition) - the scaffold preamble stays behind.
 
@@ -226,15 +243,26 @@ def main() -> int:
 
     failures = kept = 0
     for record in sorted(targets, key=lambda r: r.address):
-        head_and_def = split_artifact(record.path.read_text(errors="replace"))
+        if tu_arg is not None:
+            ident = (record.name or "").split("@")[0].lstrip("?")
+            pair = free_definition_span(record.path.read_text(errors="replace"),
+                                        ident)
+        else:
+            pair = split_artifact(record.path.read_text(errors="replace"))
+        head_and_def = pair
         if head_and_def is None:
             print(f"  SKIP {record.address_hex}: no marker+definition pair in "
                   f"{record.path.name}")
             continue
         head, definition = head_and_def
         method_match = DEFINITION.search(definition)
-        d_klass, method = (method_match.group("klass"),
-                           method_match.group("method"))
+        if method_match is not None:
+            d_klass = method_match.group("klass")
+            method = method_match.group("method")
+        else:
+            # A FREE function - --tu mode. No class to declare it on and no
+            # pending forwarder can exist for an unqualified name.
+            d_klass, method = None, (record.name or "").split("@")[0].lstrip("?")
         tu = product_tu(d_klass, records) if not tu_arg else \
             SRC / tu_arg.name
         if tu is None:
@@ -269,7 +297,7 @@ def main() -> int:
             + definition + "\n"
         tu.write_text(new_tu)
 
-        if header_text and not declared(header_text, d_klass, method):
+        if d_klass and header_text and not declared(header_text, d_klass, method):
             span = class_span(header_text, d_klass)
             if span is None:
                 revert("header", f"no class {d_klass} in {header.name}")
@@ -283,7 +311,8 @@ def main() -> int:
             header.write_text(header_text[:span[0]] + insertion
                               + header_text[span[0]:])
 
-        fwd = pending_forwarder_span(pending_text, d_klass, method)
+        fwd = pending_forwarder_span(pending_text, d_klass, method) \
+            if d_klass else None
         if fwd is not None:
             PENDING.write_text(
                 pending_text[:fwd[0]] + pending_text[fwd[1]:])
