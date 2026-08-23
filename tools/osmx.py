@@ -1812,6 +1812,18 @@ def check(
                 "  unverifiable: "
                 + ", ".join(f"{n} {v}" for v, n in sorted(causes.items())),
                 fg=typer.colors.YELLOW)
+            # A TALLY IS WHERE A NEW LOSS HIDES. 297 NO_COMPILE against 34
+            # UNRESOLVED reads as furniture - which is exactly how 28 claims
+            # that went NO_COMPILE in one edit stayed invisible (the incident
+            # narrated above). Name them: address and file, nearest-first,
+            # so the difference between yesterday's wall and today's break
+            # is one diffable list instead of a recount.
+            for record, verdict, _note in unasked[:15]:
+                typer.secho(f"    {record.address_hex}  {verdict:12s} "
+                            f"{record.path.name}", fg=typer.colors.YELLOW)
+            if len(unasked) > 15:
+                typer.secho(f"    ... and {len(unasked) - 15} more",
+                            fg=typer.colors.YELLOW)
             # WHAT "UNVERIFIABLE" MEANS HERE, because the word invites the
             # wrong reading. These are not claims that might be broken and
             # nobody looked; they are almost all ARTIFACT-ONLY bodies under
