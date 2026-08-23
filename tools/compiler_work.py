@@ -132,13 +132,13 @@ SCAFFOLD_CEILINGS = {
     "atexit_thunks.cpp markers": 373,
     "adjustor_thunks.cpp markers": 116,
     "deleting_thunks.cpp markers": 74,
-    "delegation_thunks.cpp markers": 59,
+    "delegation_thunks.cpp markers": 27,
     "field_accessors.cpp markers": 42,
     "leaf_recoveries.cpp markers": 53,
     "PENDING_BODY forwarders": 235,
     "artifact files (recovered/)": 1396,
     "unrecovered files": 1766,
-    "hypothesis_layouts.h lines": 2844,
+    "hypothesis_layouts.h lines": 2709,
 }
 
 
