@@ -912,3 +912,34 @@ had none.
 Retrying this needs the ordering fixed first, not the gate relaxed. The
 evidence that it is worth doing is unchanged — an agent really did land a
 weaker body for want of a base — so this is a "not yet", not a "no".
+
+---
+
+## TU refinement from `.rdata` ordering — measured dead 2026-08-22, tool retired 2026-08-23
+
+The idea: if the shipped image's sections preserve the original link order,
+the boundaries between translation units are recoverable, and organising
+`src/` around them would speed matched decompilation by putting each body in
+a unit whose neighbours - and therefore whose inlining opportunities - match
+the original's.
+
+Half of it is TRUE, and proved. `.text` IS in link order: the CRT initialiser
+table (434 entries) walks monotonically - **0 descents in 433 steps**. Locate
+that table by the NULL `__xc_a`/`__xc_z` sentinels in `.data`, and ONLY that
+way: locating it by longest-plausible-run instead finds an 871-entry vtable
+in `.rdata` and reports 335 false descents, which is the trap waiting for
+anyone re-measuring this.
+
+The refinement route is DEAD. `.rdata` carries no TU signal - walking it the
+same way measured **51.9% descents**, coin-flip order, so it cannot sharpen
+the `.text` boundaries. And the true half was measured to not be worth
+acting on either: the session that proved it also asked whether reorganising
+`src/` by TU would make recovery faster, and the answer was no - the match is
+decided per body by flags, spelling and class modelling, and `osmx measure`
+already compiles each body in the unit it lives in. The user closed it with
+"let's not worry about TU for now".
+
+`tools/link_order.py` made both measurements; it was deleted in 56f53bec with
+the other unreferenced tools. Git holds it if this route is ever re-opened
+with new evidence - and the sentinel-vs-longest-run trap above is the first
+thing to re-read if it is.
