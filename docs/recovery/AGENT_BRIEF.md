@@ -110,13 +110,21 @@ ADJUSTOR THUNKS WITH ARGUMENTS (open lever, ~92 bodies)
   push eax / sub... / push edx / call / pop ebp / ret 8` - a full frame,
   re-pushed arguments, a CALL. Do not retry parameter forwarding in any free-
   function or member spelling; VC6 has no sibcall-with-stack-reuse here.
-- The remaining hypothesis is that NO source spelling produces these bytes:
-  in the original they are compiler-EMITTED adjustor thunks, generated because
-  the class really had virtual bases. If modelling RadioButton's virtual
-  inheritance makes VC6 emit the thunks itself, the hand bodies become
-  redundant artifacts to promote away, not bodies to fix. Test that on ONE
-  class from most_derived_flag.py's confirmed nine before touching the other
-  ninety-one.
+- THE LEVER IS MEASURED LIVE: declare the real virtual bases and cl EMITS
+  these thunks itself. RadioButton already declares
+  `public virtual GraphicWin, public virtual Dialog`, and its object carries
+  three `$4` vtordisp COMDATs byte-identical to image thunks -
+  `$4PPPPPPPM@A`, `$4PPPPPLLI@EEE@`, `$4PPPPPPPM@KBI@` - including an
+  arg-forwarding one with four stack arguments and an int return. Six files
+  (checkbox, deleting_thunks, editgroup, filewin, radiobutton, spritebox)
+  already bank claims through such `// symbol ?x@$4...` facts. The remedy for
+  the family, in order:
+    1. declare the window-event methods virtual in Win / GraphicWin at their
+       image slot positions - one coupled edit gives VC6 an override to thunk
+       for every derived family;
+    2. re-point stale `// symbol` facts in adjustor_thunks.cpp from dead hand
+       wrappers onto the emitted `$4` symbols whose bytes match - bookkeeping,
+       not recovery. Verify each against the object, never by name alone.
 
 THE PASS ORDER (how the loops fit together)
 - `/recover-class <Family>` runs a WHOLE class: declarations from image
