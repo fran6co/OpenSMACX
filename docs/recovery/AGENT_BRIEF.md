@@ -118,6 +118,23 @@ ADJUSTOR THUNKS WITH ARGUMENTS (open lever, ~92 bodies)
   class from most_derived_flag.py's confirmed nine before touching the other
   ninety-one.
 
+THE PASS ORDER (how the loops fit together)
+- `/recover-class <Family>` runs a WHOLE class: declarations from image
+  evidence first (inheritance, vtable slot order), then lifecycle stand-ins,
+  then artifact promotion, then wide re-measurement - the callers unlocked by
+  new declarations frequently claim with no edit of their own. Read
+  `.claude/commands/recover-class.md` when your handout names a family rather
+  than addresses.
+- `tools/frontier.py --roots crtinit` adds the second root: the CRT's dynamic
+  initializers construct every global BEFORE WinMain, and measured
+  2026-08-23 their callees held 62 unclaimed bodies no WinMain walk could see.
+  The pre-WinMain construction graph comes out after WinMain's order.
+- Standing cycle: skeleton (class families) -> unblock (their seam-blocked
+  callers) -> coverage (`/recover-batch`) -> sweep (free claims, near misses,
+  promotables). Each pass ends at a green gate and a commit; the censuses -
+  compiler_work shapes, CLAIMED count - are what tells you which pass to run
+  next.
+
 
 DO NOT BUILD A MEMBER THE COMPILER ALREADY BUILT
 - `uv run tools/double_construction.py`. In a REAL CONSTRUCTOR the compiler
