@@ -626,8 +626,6 @@ int __cdecl pops_no_flags(char *caption, char *label, int value, char *text,
                             callback);
 }
 
-func_popup_wave_query PopupWavePlay = original_method<func_popup_wave_query>(0x004C6920);
-
 /*
 Purpose: Sound a popup's wave. Nothing sounds unless bit 0x400 of the flag
          word is set, the popup is armed, and its index is inside the
@@ -683,7 +681,7 @@ void __cdecl popup_wave_callback(PopupWave *popup, int) {
             *PopupWaveLastIndex = chosen;
             Wave *const wave = PopupWaveBank + chosen;
             wave->Wave::load();
-            (ORIGINAL(wave)->*PopupWavePlay)();
+            wave->Wave::play();
         }
     }
     if (popup->wave_index_ == 0x19) {

@@ -100,7 +100,7 @@ void __cdecl teardown_00422ec0() {
 Purpose: ?passover_callback@@YAXXZ - run 1 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
-// ORIGINAL: 0x004456A0 ?passover_callback@@YAXXZ 0x004456A0-0x004456AA
+// ORIGINAL: 0x004456A0 ?passover_callback@@YAXXZ 0x004456A0-0x004456AA BYTE_EXACT
 // symbol    ?teardown_004456a0@@YAXXZ
 // size      10 bytes
 // prototype 
