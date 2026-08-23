@@ -97,6 +97,68 @@ SHAPES = [
      "`FF 15` where the image has `E8`. Call it by name once its body lands."),
 ]
 
+# SCANNED OVER .cpp AND .h TOGETHER, which is why they are a second list: the
+# members live in HEADERS, and turning the whole census loose on headers
+# inflates three existing shapes with DECLARATIONS (free-function destructor
+# 10 -> 20, VCall 21 -> 23, named-pointer seam 121 -> 123 - measured
+# 2026-08-23). Same ratchet, narrower lens.
+HEADER_SHAPES = [
+    ("vtable-as-member", 11,
+     re.compile(r"\b[A-Za-z_]\w*\s+vtable\w*\s*;"),
+     "a vtable pointer spelled as a data member is a base class that has "
+     "not been declared. Declare the base whose vfptr lives at that offset "
+     "- or the class's own virtuals - and let the compiler own slot 0."),
+    ("vtable-initialiser store", 1,
+     re.compile(r"\w+\s*\(\s*[A-Za-z_]\w*Vtable\w*\s*\)"),
+     "a base installed by an initialiser-list store is a base that has not "
+     "been declared (Win's second base at 0xC8). Declare it."),
+    ("vtable address constant", 78,
+     re.compile(r"\b[A-Za-z_]\w*Vtable\w*\s*=\s*\(?\s*0x"),
+     "the raw material every hand-installed vtable is built from. When the "
+     "classes are real, these constants have nothing left to point at."),
+]
+
+# THE SCAFFOLD RATCHET. Twelve files exist because a body had no real home or
+# the tree did by hand what a faithful class makes the compiler do; the
+# recovery includes their retirement, so their sizes are ceilings like any
+# shape's. A scaffold at zero is deleted in its own commit. Measured
+# 2026-08-23 on a clean tree at 2bbecdbd.
+SCAFFOLD_MARKERS = ("init_thunks.cpp", "atexit_thunks.cpp",
+                    "adjustor_thunks.cpp", "deleting_thunks.cpp",
+                    "delegation_thunks.cpp", "field_accessors.cpp",
+                    "leaf_recoveries.cpp")
+SCAFFOLD_CEILINGS = {
+    "init_thunks.cpp markers": 395,
+    "atexit_thunks.cpp markers": 373,
+    "adjustor_thunks.cpp markers": 116,
+    "deleting_thunks.cpp markers": 74,
+    "delegation_thunks.cpp markers": 59,
+    "field_accessors.cpp markers": 42,
+    "leaf_recoveries.cpp markers": 53,
+    "PENDING_BODY forwarders": 235,
+    "artifact files (recovered/)": 1396,
+    "unrecovered files": 1766,
+    "hypothesis_layouts.h lines": 2844,
+}
+
+
+def scaffold_census():
+    """The scaffold sizes, counted live against the ceilings above."""
+    counts = {}
+    for name in SCAFFOLD_MARKERS:
+        text = (REPO / "src" / name).read_text(errors="replace")
+        counts[f"{name} markers"] = len(re.findall(r"ORIGINAL: 0x", text))
+    pending = (REPO / "src" / "pending_bodies.cpp").read_text(errors="replace")
+    counts["PENDING_BODY forwarders"] = len(
+        re.findall(r"PENDING_BODY\(", pending))
+    counts["artifact files (recovered/)"] = sum(
+        1 for _ in (REPO / "src" / "recovered").rglob("*.cpp"))
+    counts["unrecovered files"] = sum(
+        1 for _ in (REPO / "src" / "unrecovered").glob("*.cpp"))
+    counts["hypothesis_layouts.h lines"] = sum(
+        1 for _ in (REPO / "src" / "hypothesis_layouts.h").open())
+    return counts
+
 
 def census(root):
     r"""Counted LINE BY LINE, and comment lines are skipped.
@@ -115,7 +177,21 @@ def census(root):
         for line in path.read_text(errors="replace").splitlines():
             if line.lstrip().startswith("//"):
                 continue
-            for name, _ceiling, rx, _why in SHAPES:
+            # SHAPES are .cpp-only BY MEASUREMENT: loosing them on headers
+            # counts DECLARATIONS as sites (free-function destructor alone
+            # went 10 -> 20). HEADER_SHAPES were measured over BOTH.
+            for name, _ceiling, rx, _why in SHAPES + HEADER_SHAPES:
+                n = len(rx.findall(line))
+                if n:
+                    counts[name] += n
+                    files[name].add(path.name)
+    for path in sorted(root.glob("*.h")):
+        if "recovered" in path.parts or "unrecovered" in path.parts:
+            continue
+        for line in path.read_text(errors="replace").splitlines():
+            if line.lstrip().startswith("//"):
+                continue
+            for name, _ceiling, rx, _why in HEADER_SHAPES:
                 n = len(rx.findall(line))
                 if n:
                     counts[name] += n
@@ -133,7 +209,7 @@ def main():
 
     counts, files = census(args.root)
     grew, shrank = [], []
-    for name, ceiling, _rx, why in SHAPES:
+    for name, ceiling, _rx, why in SHAPES + HEADER_SHAPES:
         n = counts[name]
         if n > ceiling:
             grew.append((name, n, ceiling))
@@ -145,18 +221,35 @@ def main():
             print(f"           {why}")
             print(f"           {len(files[name])} file(s)")
 
+    scaffold_grew, scaffold_shrank = [], []
+    scaffolds = scaffold_census()
+    for name, ceiling in SCAFFOLD_CEILINGS.items():
+        n = scaffolds.get(name, 0)
+        if n > ceiling:
+            scaffold_grew.append((name, n, ceiling))
+        elif n < ceiling:
+            scaffold_shrank.append((name, n, ceiling))
+        if not args.check:
+            flag = ("GREW" if n > ceiling
+                    else "down" if n < ceiling else "    ")
+            print(f"  {flag} {n:4d}/{ceiling:<4d} {name}  [scaffold]")
+            print(f"           retired by homing and the class passes; at zero"
+                  f" it is deleted in its own commit")
+
     total = sum(counts.values())
-    if grew:
-        for name, n, ceiling in grew:
+    if grew or scaffold_grew:
+        for name, n, ceiling in grew + scaffold_grew:
             print(f"COMPILER WORK GREW: {name} is {n}, above its ceiling of {ceiling}")
         return 1
-    for name, n, ceiling in shrank:
-        print(f"compiler work down: {name} is {n}, below its ceiling of "
+    for name, n, ceiling in shrank + scaffold_shrank:
+        kind = "scaffold" if name in SCAFFOLD_CEILINGS else "compiler work"
+        print(f"{kind} down: {name} is {n}, below its ceiling of "
               f"{ceiling} - lower it in this same commit")
     if not args.check:
         print(f"\n{total} site(s) doing the compiler's work, across "
-              f"{len(SHAPES)} shapes")
-    elif not shrank:
+              f"{len(SHAPES) + len(HEADER_SHAPES)} shapes; "
+              f"{len(SCAFFOLD_CEILINGS)} scaffold ceilings watched")
+    elif not shrank and not scaffold_shrank:
         print(f"compiler work: {total} site(s), no shape growing")
     return 0
 
