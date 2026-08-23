@@ -282,13 +282,13 @@ def by_class(records, order, built, visible) -> None:
     queue: dict = {}
     first_seen: dict = {}
     position = 0
-    thunk_owners = 0
+    thunk_seen: set = set()
     for record in order:
         if record.byte_exact or not visible(record):
             continue
         owner = owner_of(record)
         if re.fullmatch(r"thunk\d+_\w+", owner):
-            thunk_owners += 1
+            thunk_seen.add(owner)
             continue
         first_seen.setdefault(owner, position)
         position += 1
@@ -355,8 +355,24 @@ def by_class(records, order, built, visible) -> None:
                                       f"{re.escape(owner)}\b", text)}) == 1]
     print(f"\n{len(rows)} classes on the frontier; done = exact/total complete"
           f" AND cw 0 AND scaf 0.")
-    print(f"  {thunk_owners} thunkN_ scaffold owners excluded from this view"
-          f" - they dissolve when their real bases go virtual.")
+    # A ZERO HERE IS TWO ANSWERS, so it carries its denominator. `thunkN_`
+    # owners are the fake classes the adjustor shims dispatch through, and
+    # they dissolve when their real bases go virtual - but the number of them
+    # EXCLUDED FROM THIS VIEW is 0 and structurally always will be. An
+    # adjustor thunk is reached only through a vtable, and this walk follows
+    # direct and tail calls only, so the family was never ON the frontier to
+    # be filtered off it. Printing the exclusion alone made a structural
+    # invisibility read as "checked, and there were none".
+    thunk_all = sorted(o for o in by_owner if re.fullmatch(r"thunk\d+_\w+", o))
+    thunk_bodies = sum(len(by_owner[o]) for o in thunk_all)
+    print(f"  thunkN_ scaffold owners: {len(thunk_seen)} excluded from this "
+          f"view, of {len(thunk_all)} in the catalogue ({thunk_bodies:,} "
+          f"bodies).")
+    if thunk_all and not thunk_seen:
+        print(f"    None are reachable: an adjustor thunk is entered through "
+              f"a vtable, and this walk follows direct and tail calls only. "
+              f"They dissolve when their real bases go virtual - track them "
+              f"by the adjustor_thunks ceiling, not here.")
     if hyp_only:
         print(f"  hypothesis-only declarations ({len(hyp_only)}), homed by the"
               f" hypothesis_layouts.h split before their dependents run:")
