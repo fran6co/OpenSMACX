@@ -38,7 +38,7 @@
  * Most rows are free redirects over opaque storage rather than methods;
  * the classes involved there are still unmodelled. The 32 Midi rows became
  * real `Midi::` methods on 2026-08-23 - their delegate is modelled as
- * `MidiDelegate` in hypothesis_layouts.h with virtuals at the image's own
+ * `MidiDelegate` in midi.h with virtuals at the image's own
  * slot order - so this header declares none of them any more.
  */
 

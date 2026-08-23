@@ -99,6 +99,7 @@ set(OPENSMACX_SOURCES
     src/adjustor_thunks.cpp
     src/deleting_thunks.cpp
     src/delegation_thunks.cpp
+    src/midi.cpp
     src/nullsub_thunks.cpp
     src/field_accessors.cpp
     src/leaf_recoveries.cpp
