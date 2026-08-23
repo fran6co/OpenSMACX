@@ -238,7 +238,6 @@ Wave *const PopupWaveBank = (Wave *)0x0074C5F0;
 int32_t *const PopupWaveLastIndex = (int32_t *)0x0074DAA4;
 inline void *&PopupWaveOwnerSlot() { return *reinterpret_cast<void **>(0x0074DAA0); }
 FX *const PopupWaveFx = (FX *)0x00749CF8;
-extern func_popup_wave_query PopupWavePlay;
 inline func_popup_time_source *&PopupWaveTimeSlot() { return *reinterpret_cast<func_popup_time_source **>(0x00669368); }
 
 void __cdecl popup_wave_callback(PopupWave *popup, int);

@@ -1249,7 +1249,7 @@ void *__fastcall scroll_scalar_dtor_redirect(Scroll *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GScroll@@UAEPAXI@Z expects,
          then forward unchanged.
-// ORIGINAL: 0x004070C0 ??_GScroll@@WEEE@AEPAXI@Z 0x004070C0-0x004070CB
+// ORIGINAL: 0x004070C0 ??_GScroll@@WEEE@AEPAXI@Z 0x004070C0-0x004070CB BYTE_EXACT
 // symbol    ??_EScroll@@WEEE@AEPAXI@Z
 // CORRECTED from ??3Scroll@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x00406F20` into

@@ -92,5 +92,5 @@ void __cdecl teardown_0063bb00();
 void __cdecl teardown_0063cef0();
 
 MEASURED inline void __cdecl teardown_004456a0() {
-    (ORIGINAL(g_PASSOVER_WAVE)->*original_method<func_thiscall_teardown>(original_address(PopupWavePlay)))();
+    g_PASSOVER_WAVE->Wave::play();
 }
