@@ -14,7 +14,7 @@ int Palette::create_table(unsigned char * a1, int a2, int a3, int a4) {
     int i;
     int upper;
 
-    if (*g_009b8178 == 0) {
+    if (PaletteInitialized == nullptr) {
         return 7;
     }
     if (a1 == 0) {

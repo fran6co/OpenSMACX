@@ -137,7 +137,7 @@ SCAFFOLD_CEILINGS = {
     "leaf_recoveries.cpp markers": 53,
     "PENDING_BODY forwarders": 235,
     "artifact files (recovered/)": 1396,
-    "unrecovered files": 1764,
+    "unrecovered files": 1757,
     "hypothesis_layouts.h lines": 2709,
 }
 

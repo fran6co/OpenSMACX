@@ -1207,8 +1207,6 @@ extern "C" int __cdecl sin();
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_00670280 = (int *)0x00670280;
-static int *const g_009b8178 = (int *)0x009B8178;
 
 class Palette { public:
     struct PaletteInternal {
@@ -1509,7 +1507,7 @@ int Palette::get_nearest_palette_index(HSV * a1, HSV * a2, int a3) {
     int best_index = 0;
     int i;
 
-    if (*g_009b8178 == 0) {
+    if (PaletteInitialized == nullptr) {
         return 7;
     }
 
