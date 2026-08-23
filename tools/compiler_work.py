@@ -86,7 +86,7 @@ SHAPES = [
     # shrank, invisibly. The two regexes classify by what follows on the
     # LINE - the census is line-wise, so a lookahead cannot leak across
     # statements.
-    ("ORIGINAL() vtable-slot dispatch", 70,
+    ("ORIGINAL() vtable-slot dispatch", 38,
      re.compile(r"\bORIGINAL\((?=.*vtable\[)"),
      "reads the target out of a vtable slot by hand because the method is not "
      "declared virtual. Declare it - the compiler writes this dispatch."),
