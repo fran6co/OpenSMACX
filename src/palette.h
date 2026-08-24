@@ -40,7 +40,7 @@ void __cdecl RGB_to_HSV(const PALETTEENTRY *entry, HSV *out);
 class Palette {
  public:
   // homed from 005fe2f0.cpp
-  Palette &operator=(Palette *a1);
+  Palette &copy_from(Palette *src);
 
  public:
   // homed from 005fe900.cpp
