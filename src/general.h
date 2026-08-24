@@ -121,8 +121,6 @@ int __cdecl sub_63ce20();
 extern "C" int __cdecl sub_62d100();
 void __cdecl filewin_close_class();
 void __cdecl basepop_close_class();
-void __cdecl palette_close_palette_class();
-void __cdecl win_close_class();
 // 0x00635750, called through ecx = 0x9BE618 - a genuine thiscall receiver,
 // unlike the free `_close_class` helpers above, on an object of no
 // established identity.

@@ -53,12 +53,41 @@ KNOWN_SCAFFOLDS = ("init_thunks.cpp", "atexit_thunks.cpp",
                    "guarded_teardowns.cpp")
 ARCHIVES = ("src/recovered/", "src/unrecovered/")
 
-PENDING_AT = re.compile(r"at\s+(0x[0-9A-Fa-f]{8})")
+# A FORWARDER IS A `PENDING_BODY(0xADDR, ...)` CALL, NOT THE WORDS "at 0x...".
+# The old pattern scanned the whole file INCLUDING PROSE, so a comment reading
+# "?X_pop@@... at 0x005BF480 - the two full bodies" (pending_bodies.cpp:439)
+# was counted as a forwarder definition and reported as a live contradiction
+# against src/xpops.cpp. It was wrong in the other direction too: it matched
+# only the addresses that happen to be written after the word "at", so real
+# forwarders whose comment is phrased differently were invisible. Match the
+# macro invocation, which is the definition itself.
+PENDING_AT = re.compile(r"PENDING_BODY\s*\(\s*(0x[0-9A-Fa-f]{8})")
 
 # Floors, measured 2026-08-23. Each may only fall.
+# TWO SHAPES, AND ONLY ONE OF THEM IS A FAULT. A claim whose body is
+# COMPILED INTO THE BUILD, with a forwarder still routed to a raw image
+# address, is a live landmine: any caller reaching the forwarder jumps into
+# nothing and faults, though the real body is linked into the same binary.
+# A claim that lives only in src/recovered/ or src/unrecovered/ is not that
+# at all - those files are not build inputs, so the forwarder is the ONLY
+# definition and deleting it breaks the link. Conflating the two is what
+# made this floor read 9 and then be left alone: five of the nine could not
+# be fixed the way the other three had to be, so nobody fixed any.
 FLOORS = {
     "duplicate": 4,
-    "contradicted": 9,
+    # TWO LIVE LANDMINES REMAIN, named so the number cannot become scenery:
+    #   0x00428550 - claimed in BOTH 00428550.cpp and councwin.cpp (it is
+    #     also a duplicate), so which definition the build links has to be
+    #     settled before the forwarder can go.
+    #   0x004C5BF0 - the byte-exact body is in wave_device.cpp but spelled as
+    #     a free function; retiring the forwarder means giving it the member
+    #     identity its caller already uses, which moves its symbol and must
+    #     be re-measured. That belongs to the Wave pass, not to this one.
+    # The two that WERE mechanical - 0x005F04E0 Win::close_class and
+    # 0x005FECF0 Palette::close_palette_class - are gone, and jackal_close
+    # calls the members directly now.
+    "contradicted": 2,
+    "archive-only-forwarder": 20,
     "unknown-host-files": 0,
 }
 
@@ -95,15 +124,22 @@ def main() -> int:
     check = "--check" in sys.argv
     by_address, pending_defs, hosts = build()
 
+    built = build_inputs(REPO / "build" / "compile_commands.json")
     duplicates = []
     contradicted = []
+    archive_only = []
     for address, records in sorted(by_address.items()):
         files = {r.path.name for r in records}
         if len(files) > 1:
             duplicates.append((address, records))
         if any(r.byte_exact or r.semantic for r in records) \
                 and address in pending_defs:
-            contradicted.append((address, records))
+            # Is the claiming body actually COMPILED? That is the whole
+            # difference between a fault and an archive waiting to be homed.
+            if any(r.path.resolve() in built for r in records):
+                contradicted.append((address, records))
+            else:
+                archive_only.append((address, records))
 
     print(f"{len(by_address)} distinct addresses indexed")
     for address, records in duplicates:
@@ -115,19 +151,25 @@ def main() -> int:
         print(f"  DUPLICATE 0x{address:08X} [{state}]  {places}")
     for address, records in contradicted:
         where = sorted({r.path.name for r in records})[0]
-        print(f"  CONTRADICTED 0x{address:08X}  claim in {where}, "
-              f"PENDING_BODY defines it too")
+        print(f"  LANDMINE 0x{address:08X}  claim in {where} IS COMPILED, "
+              f"and a PENDING_BODY forwarder still jumps to the raw address")
+    for address, records in archive_only:
+        where = sorted({r.path.name for r in records})[0]
+        print(f"  archive-only 0x{address:08X}  claim in {where}, which the "
+              f"build does not compile - the forwarder is the only definition")
     if hosts:
         for name, n in sorted(hosts.items()):
             print(f"  UNKNOWN HOST {name}: {n} marker(s)")
 
     print(f"\n{len(duplicates)} duplicate group(s), "
-          f"{len(contradicted)} claim-vs-forwarder contradiction(s), "
+          f"{len(contradicted)} live landmine(s), "
+          f"{len(archive_only)} archive-only forwarder(s), "
           f"{len(hosts)} unknown host file(s)")
 
     if check:
         live = {"duplicate": len(duplicates),
                 "contradicted": len(contradicted),
+                "archive-only-forwarder": len(archive_only),
                 "unknown-host-files": len(hosts)}
         grew = [k for k, v in live.items() if v > FLOORS[k]]
         shrank = [(k, v) for k, v in live.items() if v < FLOORS[k]]

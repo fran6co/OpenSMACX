@@ -425,8 +425,16 @@ A BODY MAY ALREADY BE WRITTEN, SOMEWHERE THAT IS NOT COMPILED
 - Promoting one is not copying it. The artifact reaches its fields through
   `reinterpret_cast<char *>(this) + 0x...`; you have to model the layout,
   declare the member, delete the artifact, and delete any `pending_bodies.cpp`
-  forwarder it had. The linker catches the last one for you - two definitions
-  of a symbol is LNK2005.
+  forwarder it had - AND REPOINT ITS CALLERS. The linker does NOT catch that
+  last one: a forwarder is a free function (`?win_close_class@@YAXXZ`) and
+  your promotion is a member (`?close_class@Win@@QAAXXZ`), so the names never
+  collide and both link happily while every unrepointed caller jumps to a raw
+  image address and faults. `tools/address_index.py` is what catches it, and
+  it is gated: a LANDMINE line names any address whose claim is compiled while
+  a forwarder still defines it. Do NOT delete a forwarder whose claim lives
+  only in `src/recovered/` or `src/unrecovered/` - the build does not compile
+  those, so the forwarder is the only definition and removing it breaks the
+  link. The tool tells the two apart; read which line it printed.
 
 DEFECTS THAT ARE NOT MATCHING DEFECTS
 - The recovered program can be WRONG, not merely spelled differently, and no

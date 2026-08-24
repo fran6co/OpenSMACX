@@ -112,10 +112,27 @@
  * the call site honest C++, emits the `E8` the image emits, and puts every
  * not-yet-promoted edge in ONE place that can be counted.
  *
- * HOW ONE LEAVES. When a body lands in a compiled unit, DELETE its forwarder.
- * The linker enforces that: two definitions of one symbol is LNK2005, so a
- * stale forwarder cannot survive the promotion it was waiting for. That is
- * the whole maintenance rule, and it is mechanical rather than remembered.
+ * HOW ONE LEAVES. When a body lands in a compiled unit, DELETE its forwarder,
+ * AND REPOINT ITS CALLERS.
+ *
+ * This used to claim the linker enforced that - "two definitions of one
+ * symbol is LNK2005, so a stale forwarder cannot survive the promotion it
+ * was waiting for" - and that was false, in the way that matters. A
+ * forwarder is a FREE FUNCTION (`?win_close_class@@YAXXZ`); the promotion is
+ * a MEMBER (`?close_class@Win@@QAAXXZ`). Different mangled names. Nothing
+ * collides, nothing fires, and both definitions link happily side by side
+ * while every caller still routed through the forwarder jumps into a raw
+ * image address and faults - with the real body sitting in the same binary.
+ * `jackal_close` did exactly that for Win and Palette until 2026-08-24.
+ *
+ * WHAT ENFORCES IT NOW is `tools/address_index.py`, gated: it reports a
+ * LANDMINE for any address whose claim is COMPILED while a forwarder still
+ * defines it, and that floor is a hard count that may only fall. It also
+ * distinguishes the case that looks identical and must NOT be touched - a
+ * claim living only in src/recovered/ or src/unrecovered/, which the build
+ * does not compile, so the forwarder is the ONLY definition and deleting it
+ * breaks the link. Conflating those two is why a floor of nine sat
+ * untouched: five of them could not be fixed the way the others had to be.
  *
  * WHAT THEY DO AT RUNTIME. Jump into an address that means nothing in this
  * process, and fault. That is deliberate: a forwarder that returned a
@@ -1309,18 +1326,6 @@ void __cdecl filewin_close_class() {
 void __cdecl basepop_close_class() {
     typedef void(__cdecl *pending)();
     PENDING_BODY(0x00604680, pending)();
-}
-
-// ?close_palette_class@Palette@@QAAXXZ at 0x005FECF0
-void __cdecl palette_close_palette_class() {
-    typedef void(__cdecl *pending)();
-    PENDING_BODY(0x005FECF0, pending)();
-}
-
-// ?close_class@Win@@QAAXXZ at 0x005F04E0
-void __cdecl win_close_class() {
-    typedef void(__cdecl *pending)();
-    PENDING_BODY(0x005F04E0, pending)();
 }
 
 // sub_635750 at 0x00635750 - a genuine thiscall on the object at 0x9BE618.
