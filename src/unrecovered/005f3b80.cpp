@@ -1539,7 +1539,7 @@ class VCall { public:
 static int *const g_006692a8 = (int *)0x006692A8;
 static int *const g_00669338 = (int *)0x00669338;
 static int *const g_0066933c = (int *)0x0066933C;
-static int *const g_009b7b28 = (int *)0x009B7B28;
+static int *const &ExpansionEnabled = (int *)0x009B7B28;
 // `ecx` is dereferenced immediately (`mov edi,ecx`) with no matching stack
 // slot - a __thiscall receiver, not one of IDA's 3 guessed stdcall args.
 // IDA's guess for the real stack args was `(int, RECT *lprc, int)`.
@@ -1607,7 +1607,7 @@ void EdgeWin::copy_edges(int a1, RECT *a2, int a3) {
 
     if (reinterpret_cast<VCall *>(w2)->slot061() != 0 && (A(0x98) & 0x40000000) != 0) {
         windowPtr = w2;
-        GetWindowRect_(reinterpret_cast<void *>(*g_009b7b28), &rScreen);
+        GetWindowRect_(reinterpret_cast<void *>(ExpansionEnabled), &rScreen);
     }
 
 #define TRY5(destBuf, edgeRect)                                                                   \
@@ -1698,7 +1698,7 @@ void EdgeWin::copy_edges(int a1, RECT *a2, int a3) {
 
     if (reinterpret_cast<VCall *>(self)->slot061() != 0) {
         RECT edge;
-        GetWindowRect_(reinterpret_cast<void *>(*g_009b7b28), &edge);
+        GetWindowRect_(reinterpret_cast<void *>(ExpansionEnabled), &edge);
         TRY5(I(0xb4), edge); // destination buffer for the screen-relative pass is unresolved in
                              // the disassembly beyond this point; reuse the top edge's buffer.
     }

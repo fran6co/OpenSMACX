@@ -2178,7 +2178,7 @@ class VCall { public:
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
 static int *const g_009b7ab8 = (int *)0x009B7AB8;
-static int *const g_009b7acc = (int *)0x009B7ACC;
+static int *const &WinPointerOwner1 = (int *)0x009B7ACC;
 static int *const g_009b7ad0 = (int *)0x009B7AD0;
 
 class Win { public:
@@ -2281,11 +2281,11 @@ class Win { public:
 void Win::on_r_button_up(int a1, int a2, unsigned int a3, int a4) {
     char *self = reinterpret_cast<char *>(this);
 
-    int32_t captured = *g_009b7acc;
+    int32_t captured = WinPointerOwner1;
     if (captured == 0) {
         captured = *g_009b7ad0;
     }
-    *g_009b7acc = 0;
+    WinPointerOwner1 = 0;
     *g_009b7ad0 = 0;
 
     if (captured == reinterpret_cast<int32_t>(self)) {

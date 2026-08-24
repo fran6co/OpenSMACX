@@ -46,6 +46,9 @@ class Win : public AutoSound {
  public:
   // homed from 005f54e0.cpp
   void on_paint(RECT * a1);
+  void client_to_nonclient(RECT * rect);
+  void client_to_nonclient(int * points, int * count);
+  void bring_child_to_top(Win * child);
 
  public:
   // homed from 005ed170.cpp

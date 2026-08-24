@@ -256,7 +256,7 @@ static int *const g_009b7a6c = (int *)0x009B7A6C;
 static int *const g_009b7a70 = (int *)0x009B7A70;
 static int *const g_009b7a74 = (int *)0x009B7A74;
 static int *const g_009b7a78 = (int *)0x009B7A78;
-static int *const g_009b7b30 = (int *)0x009B7B30;
+static int *const &WinZOrderCount = (int *)0x009B7B30;
 static int *const g_009b7b34 = (int *)0x009B7B34;
 
 class Win { public:
@@ -362,11 +362,11 @@ void Win::update_back_to_window(Buffer * a1) {
     uint32_t savedFlags = *reinterpret_cast<uint32_t *>(self + 0x9c);
     *reinterpret_cast<uint32_t *>(self + 0x9c) = savedFlags & 0xfffffffe;
 
-    *g_009b7b30 = 0;
+    WinZOrderCount = 0;
     for (int i = 0; i < *g_009b7b34; i++) {
         Win *w = g_009b6e48x[i];
         if (*g_009b7a6c != 0 && *g_009b7a6c == reinterpret_cast<int>(w)) {
-            *g_009b7b30 = 0;
+            WinZOrderCount = 0;
             *g_009b7a78 = 0;
         }
         if (*reinterpret_cast<uint8_t *>(reinterpret_cast<char *>(w) + 0x9c) & 1) {
@@ -428,11 +428,11 @@ after_offset_fixup:;
     *g_009b7a6c = 0;
     *reinterpret_cast<uint32_t *>(self + 0x9c) = savedFlags;
 
-    *g_009b7b30 = 0;
+    WinZOrderCount = 0;
     for (int j = 0; j < *g_009b7b34; j++) {
         Win *w = g_009b6e48x[j];
         if (*g_009b7a6c != 0 && *g_009b7a6c == reinterpret_cast<int>(w)) {
-            *g_009b7b30 = 0;
+            WinZOrderCount = 0;
             *g_009b7a78 = 0;
         }
         if (*reinterpret_cast<uint8_t *>(reinterpret_cast<char *>(w) + 0x9c) & 1) {

@@ -255,7 +255,7 @@ static int *const g_009b7a6c = (int *)0x009B7A6C;
 static int *const g_009b7a70 = (int *)0x009B7A70;
 static int *const g_009b7a74 = (int *)0x009B7A74;
 static int *const g_009b7a78 = (int *)0x009B7A78;
-static int *const g_009b7b30 = (int *)0x009B7B30;
+static int *const &WinZOrderCount = (int *)0x009B7B30;
 static int *const g_009b7b34 = (int *)0x009B7B34;
 
 class Win { public:
@@ -358,13 +358,13 @@ void Win::update_window_to_buffer(Buffer * a1) {
         uint32_t flags9c = *reinterpret_cast<uint32_t *>(self + 0x9c);
         int iVar3 = 0;
         *reinterpret_cast<uint32_t *>(self + 0x9c) = flags9c | 1;
-        *g_009b7b30 = 0;
+        WinZOrderCount = 0;
         if (0 < *g_009b7b34) {
             Win **piVar4 = reinterpret_cast<Win **>(g_009b6e48_zorder);
             int iVar2 = *g_009b7a6c;
             do {
                 if (iVar2 != 0 && iVar2 == (int)*piVar4) {
-                    *g_009b7b30 = 0;
+                    WinZOrderCount = 0;
                     *g_009b7a78 = 0;
                 }
                 if ((*reinterpret_cast<uint8_t *>(reinterpret_cast<char *>(*piVar4) + 0x9c) & 1) != 0) {
@@ -413,13 +413,13 @@ void Win::update_window_to_buffer(Buffer * a1) {
         *reinterpret_cast<uint32_t *>(self + 0x9c) = flags9c;
 
         iVar3 = 0;
-        *g_009b7b30 = 0;
+        WinZOrderCount = 0;
         if (0 < *g_009b7b34) {
             Win **piVar4 = reinterpret_cast<Win **>(g_009b6e48_zorder);
             int iVar2 = *g_009b7a6c;
             do {
                 if (iVar2 != 0 && iVar2 == (int)*piVar4) {
-                    *g_009b7b30 = 0;
+                    WinZOrderCount = 0;
                     *g_009b7a78 = 0;
                 }
                 if ((*reinterpret_cast<uint8_t *>(reinterpret_cast<char *>(*piVar4) + 0x9c) & 1) != 0) {
