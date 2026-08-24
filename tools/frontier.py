@@ -34,6 +34,7 @@ batch picked off the raw depth order. `--fresh` drops them.
 from __future__ import annotations
 
 import collections
+import hashlib
 import json
 import os
 import re
@@ -382,31 +383,100 @@ def by_class(records, order, built, visible) -> None:
           f" joined per file; TUs shared between classes count for each).")
 
 
+def _walk_cache_key(records: list, mode: str) -> str:
+    """Everything the walk's answer depends on, hashed.
+
+    The image bytes and every record's (address, spans) pair are the walk's
+    INPUTS; the three source files are its SEMANTICS - a fix to call-site
+    decoding must invalidate the cache by construction, not by someone
+    remembering a version constant. Verdict state (BYTE_EXACT and friends) is
+    deliberately NOT in the key: the cache stores only addresses, and the
+    records they resolve to are re-read fresh every run.
+    """
+    digest = hashlib.sha1()
+    digest.update(IMAGE.read_bytes())
+    for own in ("frontier.py",):
+        digest.update((Path(__file__).parent / own).read_bytes())
+    for own in ("calls.py", "asm.py"):
+        digest.update((REPO_ROOT / "decomp" / own).read_bytes())
+    # `image_spans`, and NO getattr DEFAULT - this file's own walk-marking
+    # lesson, relearned live: the first spelling here was `r.spans`, which
+    # does not exist, and the raise is what caught it. (It also caught the
+    # verifier: three "identical" diffs upstream were comparing the empty
+    # stdout of three CRASHED runs. Diff outputs only after proving them
+    # non-empty.)
+    for line in sorted(f"{r.address}:{r.image_spans}" for r in records
+                       if r.address):
+        digest.update(line.encode())
+    digest.update(mode.encode())
+    return digest.hexdigest()
+
+
+WALK_CACHE = REPO_ROOT / "build" / "frontier_walk.json"
+
+
 if __name__ == "__main__":
     records = read(REPO_ROOT / "src")
-    order, edges, unnamed = walk(records, IMAGE, ROOT)
     # `--roots <name>` extends the traversal. Only `crtinit` exists; an
     # unknown name is refused rather than silently ignored, because a flag
     # that does nothing reads exactly like one that worked.
+    roots_mode = ""
     if "--roots" in sys.argv:
         index = sys.argv.index("--roots")
-        mode = sys.argv[index + 1] if index + 1 < len(sys.argv) else ""
-        if mode != "crtinit":
-            sys.exit(f"frontier.py: unknown --roots mode {mode!r} "
+        roots_mode = sys.argv[index + 1] if index + 1 < len(sys.argv) else ""
+        if roots_mode != "crtinit":
+            sys.exit(f"frontier.py: unknown --roots mode {roots_mode!r} "
                      f"(only 'crtinit' is defined)")
-        seeds = sorted(set(crt_roots(records, IMAGE)))
-        seen = {record.address for record in order}
-        beyond = 0
-        for seed in seeds:
-            if seed in seen:
-                continue
-            before = len(order)
-            order, e2, u2 = walk(records, IMAGE, seed, seen=seen,
-                                 order=order)
-            edges += e2
-            unnamed += u2
-            beyond += 1
-        print(f"--roots crtinit: {len(seeds):,} pre-WinMain construction "
+
+    # THE WALK IS A PURE FUNCTION OF ITS KEY, so it is cached: ~30 s of
+    # re-disassembling a pinned image on every selection run, down to ~1 s.
+    # A cache hit stores ADDRESSES ONLY - the records they resolve to, and
+    # therefore every verdict printed, are re-read from the tree above on
+    # every run. Anything wrong with the cache file falls through to a full
+    # walk; `--no-walk-cache` forces one.
+    key = _walk_cache_key(records, roots_mode)
+    cached = None
+    if "--no-walk-cache" not in sys.argv:
+        try:
+            candidate = json.loads(WALK_CACHE.read_text())
+            if candidate.get("key") == key:
+                cached = candidate
+        except (OSError, ValueError):
+            cached = None
+
+    if cached is not None:
+        by_address = {}
+        for record in records:
+            by_address.setdefault(record.address, record)
+        try:
+            order = [by_address[a] for a in cached["order"]]
+            edges, unnamed = cached["edges"], cached["unnamed"]
+            seed_count = cached["seeds"]
+        except KeyError:
+            cached = None
+    if cached is None:
+        order, edges, unnamed = walk(records, IMAGE, ROOT)
+        seed_count = 0
+        if roots_mode == "crtinit":
+            seeds = sorted(set(crt_roots(records, IMAGE)))
+            seed_count = len(seeds)
+            seen = {record.address for record in order}
+            for seed in seeds:
+                if seed in seen:
+                    continue
+                order, e2, u2 = walk(records, IMAGE, seed, seen=seen,
+                                     order=order)
+                edges += e2
+                unnamed += u2
+        try:
+            WALK_CACHE.parent.mkdir(exist_ok=True)
+            WALK_CACHE.write_text(json.dumps(
+                {"key": key, "order": [r.address for r in order],
+                 "edges": edges, "unnamed": unnamed, "seeds": seed_count}))
+        except OSError:
+            pass
+    if roots_mode == "crtinit":
+        print(f"--roots crtinit: {seed_count:,} pre-WinMain construction "
               f"roots seeded from the init/atexit thunks", file=sys.stderr)
     built = build_inputs(REPO_ROOT / "build" / "compile_commands.json")
 
