@@ -67,8 +67,16 @@ EXCLUSION_TOKEN = re.compile(r"^\s*[§S]?\s*(?P<section>[0-9]+[a-z]?)")
 # qualifier before the colon - and without `(?:\([^)]*\))?` here the line
 # matches NOTHING and the lesson is invisible: the body reads as untouched and
 # the next pass re-derives it. 15 such lines were sitting in five files when
-# this was found. The qualifier is captured into the prose so nothing is lost
-# when a lesson is rewritten.
+# this was found.
+#
+# `qualifier` IS ITS OWN GROUP AND NOTHING READS IT. This comment used to
+# claim the qualifier was "captured into the prose so nothing is lost when a
+# lesson is rewritten", which was false against the regex two lines below:
+# the group is separate, the reader keeps only key and prose, and every
+# rewrite dropped it - 19 sites, `(measured, did not move the score)` among
+# them. Nothing is lost NOW, but not because of this pattern: the writer puts
+# an unedited lesson back from `record.origin`, line for line, and never
+# re-spells prose it did not change.
 LESSON_LEVER = re.compile(
     r"^\s*(?://|\*)?\s*LEVER\s*(?P<qualifier>\([^)]*\))?:\s*"
     r"(?P<key>\S+)\s+(?P<prose>.+?)\s*$")
@@ -86,6 +94,18 @@ LESSON_LEVER = re.compile(
 LESSON_RULED_OUT = re.compile(
     r"^\s*(?://|\*)?\s*(?:TRIED|RULED-OUT)\s*(?P<qualifier>\([^)]*\))?:\s*"
     r"(?P<prose>.+?)\s*$")
+# TWO SPACES, AND DO NOT WIDEN IT TO ONE. A one-space `//` line after a
+# lesson is indistinguishable from an ordinary comment paragraph, which is
+# how this tree writes prose. Measured before trying it: `\s{1,}` would newly
+# absorb 10,984 lines across 1,127 files while a token is open - 9,496 of
+# them FACT lines (1,475 `// size`, 1,475 `// kind`, 1,466 `// prototype`,
+# 1,464 `// calls`, 1,461 `// callers`, 1,460 `// flags`, 519 `// indirect`,
+# 124 `// symbol`, 49 `// notes`, 3 `// body`) plus 1,488 prose lines. Every
+# one would become lesson prose and be deleted on the next rewrite. Excluding
+# FACT_LINE still leaves the 1,488. The cost of the rule as it stands is that
+# a one-space wrap parses to a truncated prose - the RECORD loses the tail,
+# the FILE keeps it - and a reader that goes blind is this package's chosen
+# failure. Widening is not the fix; re-wrapping such a lesson is.
 LESSON_CONTINUED = re.compile(r"^\s*(?://|\*)\s{2,}(?P<prose>\S.*?)\s*$")
 # The third token, and the only one that BELONGS on a placeholder.
 LESSON_UNRECOVERABLE = re.compile(

@@ -77,6 +77,38 @@ def _any_artifact() -> str:
                          "with the directory")
 
 
+def _origin_blind() -> None:
+    """Make the writer forget every lesson's provenance, whatever it holds.
+
+    CODE-SIDE DAMAGE, DELIBERATELY. After the fix, annotation identity is a
+    STRUCTURAL property: no edit under `src/` can break invariant I, because
+    the writer no longer regenerates what it did not carry. The honest
+    control for a structurally-enforced invariant is to break the structure,
+    the same idiom `_slack_damage` uses on a ceiling. `annotation marker
+    spelling` below is what keeps this honest by proving the check still
+    reads the tree.
+    """
+    base = _snap("decomp/writer.py")
+    found = re.search(r"    if record\.origin is None:\n        return False",
+                      base)
+    assert found, "writer.py no longer guards on record.origin"
+    _patch("decomp/writer.py", found.group(0),
+           "    if True:\n        return False")
+
+
+def _marker_respelling() -> None:
+    """Put a second space in a live marker line, wherever one is.
+
+    TREE-SIDE, and it trips nothing else on purpose: same address, same
+    name, same spans, same claim count - so `address_index`, `marker_symbols`
+    and the claim floor all stay quiet, and only the canonical spelling of
+    the marker notices.
+    """
+    marker = _first_claim("src/palette.cpp")
+    _patch("src/palette.cpp", marker,
+           marker.replace("// ORIGINAL: ", "// ORIGINAL:  ", 1))
+
+
 CASES = [
     ("compiler_work slack",
      "FAILED: the tree does more of the compiler's work",
@@ -114,6 +146,12 @@ CASES = [
      # more claim than `osmx record` ever wrote down.
      "CLAIMS ABOVE THE FLOOR",
      lambda: _floor_decrement()),
+    ("annotation identity",
+     "FAILED: an annotation does not survive being rewritten",
+     _origin_blind),
+    ("annotation marker spelling",
+     "FAILED: an annotation does not survive being rewritten",
+     _marker_respelling),
     ("unresolved guard",
      # Evaluated AFTER the damage lands, so the asserted wording carries the
      # address of whatever claim the damage actually hit - a pinned address

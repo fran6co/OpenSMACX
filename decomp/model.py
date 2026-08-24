@@ -12,7 +12,7 @@ package.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 from pathlib import Path
 
@@ -84,6 +84,25 @@ class State(StrEnum):
     IMPLEMENTED = "implemented"
     PLACEHOLDER = "placeholder"
     EXCLUDED = "excluded"
+
+
+@dataclass(frozen=True)
+class Lesson:
+    """One lesson token and the exact lines it occupies.
+
+    `lines` carries the TEXT as well as the offset on purpose: it is what
+    lets the writer prove the offsets still describe the file in front of
+    it before acting on them. A caller that edited `line`, or handed the
+    writer a record read from different text, has stale offsets - and one
+    string compare per lesson turns that from silent corruption into a
+    fall-back to canonical spelling.
+    """
+    kind: str                    # "lever" | "ruled" | "unrecoverable"
+                                 #        | "deferred"
+    key: str                     # a lever's fingerprint; "" for the others
+    prose: str                   # joined across continuation lines
+    lines: tuple[tuple[int, str], ...]
+                                 # (0-based offset, exact text), token first
 
 
 @dataclass
@@ -158,6 +177,29 @@ class DecompilationState:
                                  # prose: no C body CAN exist for this piece
     deferred: tuple[str, ...] = ()
                                  # prose: a body can exist, nobody has written it
+    origin: tuple["Lesson", ...] | None = field(
+        default=None, compare=False, repr=False)
+                                 # THE LESSON RUN AS IT IS WRITTEN, line by
+                                 # line. The four tuples above are what a
+                                 # lesson MEANS; this is what it SAYS. The
+                                 # writer needs both: it re-spells the marker
+                                 # canonically, but a lesson whose prose has
+                                 # not changed is put back exactly as its
+                                 # author wrote it, wrapping and parentheses
+                                 # and all. Without this the record was not a
+                                 # complete description of the annotation, so
+                                 # "the writer trusts the records" meant "the
+                                 # writer discards what the record does not
+                                 # hold" - 434 records losing 3,998 lines of
+                                 # measured LEVER/TRIED prose on their next
+                                 # `osmx record`.
+                                 #
+                                 # `compare=False` keeps `==` meaning "the
+                                 # same annotation", which is the question
+                                 # `record.py` asks before rewriting. `None`
+                                 # means "this record says nothing about a
+                                 # lesson run" - spell one from scratch, and
+                                 # do NOT delete one.
 
     def __post_init__(self) -> None:
         # 1-BASED, AND CHECKED HERE. `writer` used to reject `line == 0` at

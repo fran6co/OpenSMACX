@@ -159,17 +159,26 @@ void __cdecl h() {
 """
 
 
-def test_wrapped_lesson_canonicalises():
+def test_wrapped_lesson_survives():
+    """A WRAPPED LESSON IS PUT BACK THE WAY IT WAS WRITTEN.
+
+    This test used to assert the opposite - `rewritten != WRAPPED_LESSON`,
+    "one canonical line now" - and that assertion was the defect, pinned.
+    Regenerating a lesson from its joined prose reflowed 434 records across
+    92 files, a net 3,998 lines of measured LEVER/TRIED history, every time
+    `osmx record` touched one of them. What a lesson MEANS is the four
+    tuples; what it SAYS is `record.origin`, and an unedited lesson is put
+    back verbatim.
+    """
     records = read_text(WRAPPED_LESSON, FIXTURE)
-    # The reader joins the continuation with a space.
+    # The reader still joins the continuation with a space - that is the
+    # MEANING, and it is what a consumer asks for.
     assert records[0].ruled_out == \
         ("plain ret 4 leaves ECX live, so the stub must zero it first",)
     rewritten = write(WRAPPED_LESSON, records)
-    assert rewritten != WRAPPED_LESSON          # one canonical line now
+    assert rewritten == WRAPPED_LESSON          # byte for byte
     reread = read_text(rewritten, FIXTURE)
     assert keys(records) == keys(reread)
-    # The fixed point: canonical is stable.
-    assert write(rewritten, reread) == rewritten
 
 
 MULTI = """// ORIGINAL: 0x00406000 ?a@@YAXXZ 0x00406000-0x00406008
@@ -304,9 +313,9 @@ def test_write_file_uses_the_paths_records_carry(tmp_path):
     path = tmp_path / "unit.cpp"
     path.write_text(WRAPPED_LESSON)
     write_file(read_file(path))
-    # The wrapped lesson is canonicalised on disk, one line.
-    assert ("// TRIED: plain ret 4 leaves ECX live, "
-            "so the stub must zero it first") in path.read_text()
+    # The wrapped lesson is still on disk exactly as written - the write
+    # went to the path the records carry, and changed nothing else.
+    assert path.read_text() == WRAPPED_LESSON
 
 
 def test_write_file_groups_records_by_path(tmp_path):
@@ -609,6 +618,9 @@ def _key(record: DecompilationState) -> tuple[object, ...]:
     """
     return (record.address, record.mode, record.state,
             _region_code(record.region), record.byte_exact,
+            # `semantic` WAS MISSING. The gate re-proves it and regresses on
+            # it, and a rewrite could have dropped it with every test green.
+            record.semantic,
             record.exclusion, record.extract_error, record.recipe,
             record.levers, record.ruled_out, record.unrecoverable,
             record.deferred, record.name, record.image_spans,
