@@ -149,11 +149,19 @@ THE PASS ORDER (how the loops fit together)
   initializers construct every global BEFORE WinMain, and measured
   2026-08-23 their callees held 62 unclaimed bodies no WinMain walk could see.
   The pre-WinMain construction graph comes out after WinMain's order.
+- `uv run tools/class_debt.py` counts SEMANTIC DEBT: what a body can carry
+  while measuring BYTE_EXACT. A method named UNK2, an `operator=` spelled
+  `__as` returning int, a dead `*_redirect` nothing calls, a function address
+  cast into a `void *` global - all of it measured exact in palette.cpp,
+  because the lies live in the source model, not the object file. The class
+  pass (recover-class.md, pass 2b) drives a family's debt to 0, and
+  `--by-class` will not call a class done above it. Renames update the
+  `// symbol` fact and re-measure; the claim floor must not move.
 - Standing cycle: skeleton (class families) -> unblock (their seam-blocked
   callers) -> coverage (`/recover-batch`) -> sweep (free claims, near misses,
-  promotables). Each pass ends at a green gate and a commit; the censuses -
-  compiler_work shapes, CLAIMED count - are what tells you which pass to run
-  next.
+  promotables) -> fidelity (class_debt to 0). Each pass ends at a green gate
+  and a commit; the censuses - compiler_work shapes, class_debt shapes,
+  CLAIMED count - are what tells you which pass to run next.
 
 
 DO NOT BUILD A MEMBER THE COMPILER ALREADY BUILT
