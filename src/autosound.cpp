@@ -18,7 +18,18 @@
 #include "stdafx.h"
 #include "autosound.h"
 
-namespace { const uint32_t AutoSoundVtable = 0x0066FF34; }
+namespace {
+// The vfptr ??_GAutoSound re-installs before delegating to close():
+// AutoSound's own vftable in the image.
+const uint32_t AutoSoundVtable = 0x0066FF34;
+}
+
+// 0x009BC080, in .data's ZERO-FILL tail - the shipped file carries no
+// bytes here. The FILLER is measured: FX::init (0x00445CD0) writes the
+// entries before any AutoSound is constructed, so this is runtime
+// storage, never compile-time data.
+uint32_t AutoSoundDefaults[33];
+
 
 /*
 Purpose: Construct an AutoSound by installing its virtual table and copying
