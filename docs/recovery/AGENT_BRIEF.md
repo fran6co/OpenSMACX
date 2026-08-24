@@ -157,6 +157,12 @@ THE PASS ORDER (how the loops fit together)
   pass (recover-class.md, pass 2b) drives a family's debt to 0, and
   `--by-class` will not call a class done above it. Renames update the
   `// symbol` fact and re-measure; the claim floor must not move.
+- `reinterpret_cast` of `this` is BANNED, any target type, C-style puns
+  included. The members are declared - use them; a cast to another class is
+  an undeclared inheritance edge. Palette's copy_from measured the member
+  form byte-identical, and a divergence after de-punning is a LAYOUT
+  finding, which is worth more than the body. Ratcheted by class_debt.py
+  ("raw self-access"), so a new one fails the gate.
 - Standing cycle: skeleton (class families) -> unblock (their seam-blocked
   callers) -> coverage (`/recover-batch`) -> sweep (free claims, near misses,
   promotables) -> fidelity (class_debt to 0). Each pass ends at a green gate
