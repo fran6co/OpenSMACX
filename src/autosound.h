@@ -18,17 +18,33 @@
 #pragma once
 
  /*
-  * AutoSound class
+  * AutoSound - the PROCESS SETTINGS RECORD, embedded at offset 0 of every
+  * window (class Win : public AutoSound). 37 ints behind one vfptr; the
+  * constructor copies them wholesale from AutoSoundDefaults[33], the
+  * runtime-filled block at 0x009BC080 that FX::init zeroes before any
+  * window exists.
+  *
+  * WHAT THE FIELDS MEAN IS UNKNOWN TODAY. Recovered code only bulk-copies,
+  * resets, or zero-fills them - no per-field behaviour exists anywhere in
+  * the tree, so val_1_..val_37_ stay numbered rather than guessed. The
+  * names arrive when the settings/options writer is recovered; each field
+  * sits at offset 4*N - val_1_ is 0x04, val_37_ is 0x94.
   */
 class AutoSound {
  public:
   AutoSound();
-  // VIRTUAL, so VC6 emits the vfptr at offset 0 instead of the hand-modelled
-  // `PVOID vtable_` this replaces. Win derives from AutoSound, so that one
-  // vfptr is Win's and GraphicWin's too - which is the second of the two
-  // missing base vtable pointers radiobutton.h measured the virtual-base
-  // conversion to be short by. Dialog supplied the first.
-  virtual ~AutoSound() { ; }
+  // VIRTUAL, so VC6 emits the vfptr at offset 0 - Win's and GraphicWin's
+  // too, since Win derives from here (radiobutton.h measured this as the
+  // second of the two missing base vtable pointers; Dialog supplied the
+  // first).
+  //
+  // THE BODY IS CLOSE, MEASURED: the image's deleting destructor
+  // ??_GAutoSound@@UAEPAXI@Z (36 bytes) restores the vftable, runs close(),
+  // then frees conditionally on the caller's flag - which is byte-for-byte
+  // what cl emits for a virtual destructor whose body runs close(). The
+  // compiler owns ??_G; nothing in the tree names it or the vftable any
+  // more.
+  virtual ~AutoSound() { close(); }
   // Returns `this`: the image's body opens `mov eax, ecx` and uses EAX as
   // the object base for all 38 stores, which is what a __thiscall that has
   // to leave `this` in EAX does. Declared `void`, VC6 keeps the base in ECX
@@ -36,6 +52,9 @@ class AutoSound {
   void close();
   void close2();
   void init();
+  // ??_GAutoSound@@UAEPAXI@Z as a member: re-installs the vfptr, runs
+  // close(), deletes only when the caller's flag says so.
+  void *scalar_delete(unsigned int mode);
 
  private:
   // The vfptr is EMITTED by the compiler now - see the virtual destructor
@@ -86,8 +105,6 @@ static_assert(sizeof(AutoSound) == 0x98,
 // The game CRT operator delete the scalar deleting destructor frees the
 // object through; bound here rather than through wave.h so this file's
 // link closure stays self-contained.
-void *__fastcall auto_sound_scalar_dtor_redirect(AutoSound *self, void *,
-                                                 unsigned int mode);
 
 // Returns `int`, not `void`: the body is `xor eax, eax; ret`, where a void
 // function would emit `ret` alone. Corrected in tools/catalogue_corrections.py.

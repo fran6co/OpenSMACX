@@ -18,12 +18,6 @@
 #include "stdafx.h"
 #include "autosound.h"
 
-namespace {
-// The vfptr ??_GAutoSound re-installs before delegating to close():
-// AutoSound's own vftable in the image.
-const uint32_t AutoSoundVtable = 0x0066FF34;
-}
-
 // 0x009BC080, in .data's ZERO-FILL tail - the shipped file carries no
 // bytes here. The FILLER is measured: FX::init (0x00445CD0) writes the
 // entries before any AutoSound is constructed, so this is runtime
@@ -267,7 +261,6 @@ Purpose: The compiler-generated scalar deleting destructor: re-install the
          virtual table, reset the fields through close, and, when bit 0 of
          the mode asks, free the storage to the game heap.
 // ORIGINAL: 0x005F8640 ??_GAutoSound@@UAEPAXI@Z 0x005F8640-0x005F8664 BYTE_EXACT
-// symbol    ?auto_sound_scalar_dtor_redirect@@YIPAXPAVAutoSound@@PAXI@Z
 // size      36 bytes
 // prototype void* (__thiscall ??_GAutoSound@@UAEPAXI@Z)(AutoSound* this, unsigned int)
 // callers   0   call targets   2
@@ -277,15 +270,6 @@ Purpose: The compiler-generated scalar deleting destructor: re-install the
 Return Value: the object pointer
 Status: Complete
 */
-void *__fastcall auto_sound_scalar_dtor_redirect(AutoSound *self, void *,
-                                                 unsigned int mode) {
-    *reinterpret_cast<volatile uint32_t *>(self) = AutoSoundVtable;
-    self->close();
-    if (mode & 1) {
-        operator delete(self);
-    }
-    return self;
-}
 
 /*
 Purpose: Legacy sound processing hook retained as a no-op.
