@@ -82,7 +82,6 @@ class AutoSound {
 static_assert(sizeof(AutoSound) == 0x98,
               "AutoSound layout must match the legacy ABI");
 
-uint32_t *const AutoSoundDefaults = (uint32_t *)0x009BC080;
 
 // The game CRT operator delete the scalar deleting destructor frees the
 // object through; bound here rather than through wave.h so this file's
