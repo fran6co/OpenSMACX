@@ -71,8 +71,8 @@ void Time::init(void(__cdecl *callback)(int, int), int param, int param2, uint32
     // IN THE IMAGE'S STORE ORDER at 0x0061631A, which is not the one-argument
     // overload's: the two callback fields come first here.
     stop();
-    callback2_ = callback;
-    cb_param2_ = param2;
+    callback2_ = reinterpret_cast<void(__cdecl *)(int, Palette *)>(callback);
+    cb_param2_ = reinterpret_cast<Palette *>(param2);
     oneshot_state_ = 0;
     tick_posted_ = 0;
     unk_2_ = 0;
@@ -169,8 +169,8 @@ uint32_t Time::start(void(__cdecl *callback)(int, int), int param, int param2, u
     // flush_timer() call is the only one that survives), rather than calling
     // it as init(callback, param, param2, cnt, res).
     stop();
-    callback2_ = callback;
-    cb_param2_ = param2;
+    callback2_ = reinterpret_cast<void(__cdecl *)(int, Palette *)>(callback);
+    cb_param2_ = reinterpret_cast<Palette *>(param2);
     oneshot_state_ = 0;
     tick_posted_ = 0;
     unk_2_ = 0;
@@ -183,7 +183,7 @@ uint32_t Time::start(void(__cdecl *callback)(int, int), int param, int param2, u
     }
     oneshot_state_ = 0;
     if (count_ < 50) {
-        id_event_ = timeSetEvent(count_, resolution_, (LPTIMECALLBACK)MultimediaProc, 
+        id_event_ = timeSetEvent(count_, resolution_, (LPTIMECALLBACK)MultimediaProc,
             (UINT_PTR)this, TIME_PERIODIC);
     } else {
         id_event_ = SetTimer(HandleMain, (UINT_PTR)this, count_, (TIMERPROC)TimerProc);
@@ -266,8 +266,8 @@ uint32_t Time::pulse(void(__cdecl *callback)(int, int), int param, int param2, u
     // out-of-line function) is hand-inlined here: the image writes its whole
     // body out at this call site, rather than calling it directly.
     stop();
-    callback2_ = callback;
-    cb_param2_ = param2;
+    callback2_ = reinterpret_cast<void(__cdecl *)(int, Palette *)>(callback);
+    cb_param2_ = reinterpret_cast<Palette *>(param2);
     oneshot_state_ = 0;
     tick_posted_ = 0;
     unk_2_ = 0;

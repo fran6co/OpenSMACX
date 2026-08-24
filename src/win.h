@@ -31,6 +31,34 @@ class Menu; // forward declaration
 struct BorderSizing;
 class Scroll; // forward declaration
 
+// THE EMBEDDED OBJECT AT Win+0xC8. Only `??0Win@@QAE@XZ`, `??1Win@@QAE@XZ`
+// and this class's own out-of-line scalar deleting destructor (0x005F8770)
+// reference its vtable at 0x0066FF30 anywhere in .text, and that table is
+// exactly ONE slot - the destructor's own address - so it belongs to Win
+// alone. It is a small singly-linked list: `head_` walks nodes whose own
+// +0x8 is a payload `free()`s and +0xC is the next pointer, proven by
+// 0x005F8770 and by `Win::~Win()` (0x005EBC90) performing the identical
+// walk INLINE at Win+0xCC.._0xDC rather than calling it. `external_` is a
+// "do not own this list" guard: nonzero skips the free loop entirely.
+// `current_` is scratch during that loop, but is read live elsewhere too -
+// `Win::is_dialog_focus` (0x005F2CA0) reads it as the top-of-stack node,
+// whose own +0x4 holds the `Win *` currently holding focus.
+//
+// NOT A SECOND BASE: it is a plain member (`Win::list_`), so Win's own
+// vtable at offset 0 stays exactly as it is - hand-installed, not
+// compiler-generated.
+class WinNodeList {
+ public:
+  WinNodeList() : head_(0), current_(0), count_(0), tail_(0), external_(0) {}
+  virtual ~WinNodeList();
+
+  void *head_;      // 0x4  (Win+0xCC)
+  void *current_;   // 0x8  (Win+0xD0)
+  int count_;         // 0xC  (Win+0xD4)
+  void *tail_;       // 0x10 (Win+0xD8)
+  int external_;      // 0x14 (Win+0xDC)
+};
+
  /*
   * Win class: Most basic window class.
   */
@@ -43,6 +71,35 @@ class Scroll; // forward declaration
 //
 // Declaring it is what gives Win, and through it GraphicWin, a real vfptr.
 class Win : public AutoSound {
+ public:
+  // homed from 005f83d0.cpp
+  void set_bubble_text(char * text, RECT * rect);
+
+ public:
+  // homed from 005f6230.cpp
+  // `is_down` gates which pair of messages this posts/dispatches: WM_KEYDOWN
+  // + WM_SYSKEYDOWN when set, WM_KEYUP + WM_SYSKEYUP when clear. `repeat_count`
+  // and `key_flags` pack into the dispatched message's lParam exactly as
+  // Windows itself packs WM_SYSKEYDOWN/UP, low word and high word.
+  int __stdcall on_sys_key(unsigned int vkey, long is_down, int repeat_count,
+                           unsigned int key_flags);
+
+ public:
+  // homed from 005f2760.cpp
+  void redo_caption_buttons();
+
+ public:
+  // homed from 005f1150.cpp
+  // `(HWND hWnd, LPARAM lParam)` per the catalogue's prototype: the WM_
+  // PALETTECHANGED handler, comparing them raw (both read as generic
+  // words) to skip a self-triggered change.
+  // `static`: the mangled name ends in `QAA`, same as `set_display_mode`
+  // and `init_class` below - a public member declared __cdecl, taking no
+  // receiver. A non-static `__cdecl` member still takes `this` on the
+  // stack, which is exactly the four-byte argument-offset shift a
+  // non-static declaration measured here.
+  static int __cdecl OnPaletteChanged(void * hwnd, void * lparam);
+
  public:
   // homed from 005f54e0.cpp
   void on_paint(RECT * a1);
@@ -223,23 +280,25 @@ class Win : public AutoSound {
   Buffer *buffer3_;
   Buffer *buffer4_;
   Win *win_parent_;
-  uint32_t field_C8_;
-  uint32_t field_CC_;
-  uint32_t field_D0_;
-  uint32_t field_D4_;
-  uint32_t field_D8_;
-  // RAW STORAGE, NOT A TYPED Heap, and the image is what says so. The
-  // marker on ??0Win@@QAE@XZ records exactly one call target -
-  // 0x0062BA80, the AutoSound base constructor - so Win's constructor
-  // never builds a Heap here. Declared `Heap heap_`, VC6 emits
-  // `lea ecx, [esi + 0xdc]; call 0x5d4560` for Heap's real constructor
-  // and the body stops matching. `uint32_t[]` keeps the size and the
-  // 4-byte alignment; nothing in the tree reads Win::heap_ by name.
-  // 0xDC is SEPARATE because the constructor zeroes it in its member
-  // initialiser list - the image writes it at 0x005EB3FC, one
-  // instruction BEFORE the vfptr store, and only the list runs there.
-  uint32_t heap_head_;
-  uint32_t heap_[sizeof(Heap) / 4 - 1];
+  // 0xC8..0xDF (0x18 bytes). See `class WinNodeList` above for what proves
+  // this is an embedded member rather than raw storage: `Win::Win()` stores
+  // this member's own vtable FIRST, then zeroes its four remaining fields
+  // in declaration order - exactly what an implicitly-constructed member
+  // ahead of the constructor BODY produces - and only then installs Win's
+  // own vtable at offset 0.
+  WinNodeList list_;
+  // 0xE0. Zeroed by the constructor; nothing yet reads it.
+  uint32_t field_E0_;
+  // 0xE4, 0xE8, 0xEC. PROVEN pointers, not raw storage: `redo_caption_buttons`
+  // (0x005F2760) positions each with `move()` and reads a field at +0x4C4 on
+  // every one - past `sizeof(Win)`, so each points at a Win-derived object of
+  // its own. Processed right-to-left (the standard Windows caption-button
+  // order), and the one at +0xE8 alone swaps an icon by `IsZoomed()` -
+  // maximize/restore is the only caption button whose icon depends on zoom
+  // state. Names are INFERRED from that, not independently confirmed.
+  Win *minimize_button_;   // 0xE4
+  Win *zoom_button_;       // 0xE8
+  Win *close_button_;      // 0xEC
   Menu *menu_;
   uint32_t field_F4_;
   uint32_t field_F8_;
@@ -316,19 +375,8 @@ class Win : public AutoSound {
 static_assert(sizeof(Win) == 0x444, "Win layout must match the legacy ABI");
 
 extern const uint32_t WinPrimaryVtable;
-extern const uint32_t WinSecondaryVtable;
 uint32_t *const WinStaticDefaults = (uint32_t *)0x00696D34;
 uint32_t *const WinDynamicDefaults = (uint32_t *)0x009B7AF0;
-Win *__fastcall win_construct_redirect(Win *self, void *);
-int __fastcall win_move_redirect(Win *self, void *, int x, int y);
-int __fastcall win_is_visible_redirect(Win *self, void *);
-void __fastcall win_client_to_screen_redirect(
-    Win *self, void *, int *x, int *y);
-int __fastcall win_on_query_new_palette_redirect(Win *self, void *);
-int __fastcall win_get_vert_pos_redirect(Win *self, void *);
-int __fastcall win_get_horz_pos_redirect(Win *self, void *);
-void __fastcall win_set_vert_paging_redirect(Win *self, void *, int paging);
-void __fastcall win_set_horz_paging_redirect(Win *self, void *, int paging);
 
 BOOL __cdecl in_box(int x, int y, const RECT *rect);
 int __cdecl in_box(
@@ -336,13 +384,9 @@ int __cdecl in_box(
 void __cdecl offset_rect(RECT *rect, int dx, int dy);
 RECT *__cdecl make_rect(RECT *rect, int x, int y, int width, int height);
 int __stdcall rect_center(RECT *rect, int *x, int *y);
-int __fastcall tutwin_rect_center_redirect(
-    void *self, void *, RECT *rect, int *x, int *y);
 
 int __fastcall win_is_dialog_focus_redirect(Win *self, void *);
 
-HDC __cdecl win_get_hdc_redirect();
-void __cdecl win_release_hdc_redirect();
 
 // Shared device-context state: the reference count, the cached handle, and
 // the optional DirectDraw surface that supplies it.
@@ -516,12 +560,10 @@ extern void(__cdecl *WinKeyHook)(WPARAM key);
 // not a `Win` member; byte-exact in src/recovered/005f86a0.cpp.
 extern "C" void __stdcall sub_5f86a0(int a1);
 
-int __fastcall win_set_cursor_redirect(Win *self, void *, int name);
 
 // The cursor refresh this setter triggers is a 2528-byte body with six call
 // targets, still an original dependency. Tests rebind this seam.
 
-void __cdecl win_clear_bubble_text_redirect();
 
 // Bubble state: the pending flag, its companion slot, and the rectangle the
 // refresh republishes. Tests rebind all three.
@@ -537,46 +579,25 @@ extern int WinFlipClipped;             // 0x009B7AD8
 extern IDirectDrawSurface *DirectDrawBackBuffer;  // 0x009BC49C
 extern RECT DirectDrawClipRect;        // 0x009BC2D0
 int *const WinBubbleActive = (int *)0x009B7A50;
-int *const WinBubbleCompanion = (int *)0x009B7A4C;
+// A `Win *`, not a word: `Win::set_bubble_text` (0x005F83D0) stores `this`
+// here directly, with no cast - retyped from `int *` so that store needs
+// none either.
+Win **const WinBubbleCompanion = (Win **)0x009B7A4C;
 RECT *const WinBubbleRect = (RECT *)0x009B6E38;
 
 // Both refresh bodies remain original dependencies: update_screen is 383
 // bytes with four call targets, flip 1223 bytes with fourteen.
 
-int __fastcall win_unk1_redirect(
-    Win *self, void *, int a, int b, int c, int d, int e, int f, int g, int h, int i);
-int __fastcall win_unk5_redirect(
-    Win *self, void *);
-int __fastcall win_unk6_redirect(
-    Win *self, void *, int a);
-int __fastcall win_on_set_cursor_redirect(
-    Win *self, void *, void *a, unsigned int b, unsigned int c);
 
-void __cdecl win_set_def_focus_redirect(int focus);
 int *const WinDefaultFocus = (int *)0x009B7AEC;
 
-void __fastcall win_unk8_redirect(Win *self, void *, int value);
-void __fastcall win_unk9_redirect(Win *self, void *, int value);
-void __fastcall win_reset_window_clip_redirect(Win *self, void *);
-void __fastcall win_on_move_redirect(Win *self, void *, int a1, int a2);
-void __fastcall win_on_size_redirect(Win *self, void *, unsigned int a1, int a2, int a3);
-void __fastcall win_on_size_nc_redirect(Win *self, void *, unsigned int a1, int a2, int a3);
-int __fastcall win_on_sys_command_redirect(Win *self, void *, unsigned int a1, int a2, int a3);
 
 // The active palette lives at a fixed address; rebindable so tests can
 // point it at a local rather than requiring the mapped global.
 inline Palette *&WinActivePalette() { return *reinterpret_cast<Palette **>(0x009B8180); }
 
-void __fastcall win_sync_palette_redirect(Win *self, void *);
 
-void __fastcall win_set_vert_pos_redirect(Win *self, void *, int position);
-void __fastcall win_set_horz_pos_redirect(Win *self, void *, int position);
-void __fastcall win_set_vert_range_redirect(Win *self, void *, int minimum, int maximum);
-void __fastcall win_set_horz_range_redirect(Win *self, void *, int minimum, int maximum);
-int __cdecl win_onsetcursor_redirect(void *a1, void *a2, unsigned int a3, unsigned int a4);
-int __fastcall win_unk3_redirect(Win *self, void *, int value);
 
-int __fastcall win_is_descendant_redirect(Win *self, void *, Win *candidate);
 
 // The four handlers declared above that are still original bodies - hide is
 // 390 bytes, on_mouse_move 155, on_nc_hittest 294 and release_modal 167. Each

@@ -40,14 +40,14 @@ from decomp import read  # noqa: E402
 # eyeballed before pinning - vector-dtor iterators, atexit callbacks, and
 # `g_00406850`-style disguises, every one a real function reference.
 CEILINGS = {
-    "unk-method": 291,
+    "unk-method": 285,
     "function-address binding": 65,
-    "orphan redirect": 885,
+    "orphan redirect": 851,
     "pointer-as-int": 2,
     "undocumented trivial body": 0,
-    "raw self-access": 240,
+    "raw self-access": 239,
     "pointer-parameter as int": 7,
-    "scaffold name": 3560,
+    "scaffold name": 3509,
 }
 
 WHY = {

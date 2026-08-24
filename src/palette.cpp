@@ -1272,12 +1272,14 @@ void __cdecl Palette::timer_callback(int key, int context) {
         return;
     }
 
-    // `context` IS a Palette* - init_cycle passes `this` - but Time's
-    // callback slot (cb_param2_) is an int in Time's own catalogued API,
-    // so the int arrives here and this one examined cast is the record of
-    // that. Retyping the chain (callback type, cb_param2_, both init
-    // overloads, Win::window_proc's inline tick) is the Time/Win pass's
-    // work, not Palette's.
+    // `context` IS a Palette* - init_cycle passes `this` - but this
+    // function's own mangled name (`?timer_callback@Palette@@QAAXHH@Z`,
+    // both `H` = int) proves the PUBLIC wire format at the Time/callback
+    // boundary is `int`, so the parameter stays `int` and this cast is
+    // still where the pointer is recovered. `Time`'s PRIVATE storage
+    // (`cb_param2_`, `time.h`) is now typed `Palette *` throughout -
+    // the Time/Win pass's retype - with the matching cast moved to where
+    // `Time::init`/`start`/`pulse` STORE the incoming `int param2` into it.
     Palette *self = reinterpret_cast<Palette *>(context);
     int idx = 0;
     do {

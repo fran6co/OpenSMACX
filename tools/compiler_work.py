@@ -108,11 +108,11 @@ HEADER_SHAPES = [
      "a vtable pointer spelled as a data member is a base class that has "
      "not been declared. Declare the base whose vfptr lives at that offset "
      "- or the class's own virtuals - and let the compiler own slot 0."),
-    ("vtable-initialiser store", 1,
+    ("vtable-initialiser store", 0,
      re.compile(r"\w+\s*\(\s*[A-Za-z_]\w*Vtable\w*\s*\)"),
      "a base installed by an initialiser-list store is a base that has not "
      "been declared (Win's second base at 0xC8). Declare it."),
-    ("vtable address constant", 77,
+    ("vtable address constant", 76,
      re.compile(r"\b[A-Za-z_]\w*Vtable\w*\s*=\s*\(?\s*0x"),
      "the raw material every hand-installed vtable is built from. When the "
      "classes are real, these constants have nothing left to point at."),
@@ -150,8 +150,8 @@ SCAFFOLD_CEILINGS = {
     "nullsub_thunks.cpp markers": 56,
     "guarded_teardowns.cpp markers": 25,
     "PENDING_BODY forwarders": 230,
-    "artifact files (recovered/)": 1389,
-    "unrecovered files": 1744,
+    "artifact files (recovered/)": 1388,
+    "unrecovered files": 1740,
     "hypothesis_layouts.h lines": 2709,
 }
 
