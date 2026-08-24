@@ -773,7 +773,7 @@ class Sprite { public:
 // encoding including the address; `extern T *g` does not.
 static int *const g_006692b0 = (int *)0x006692B0;
 static int *const g_00669314 = (int *)0x00669314;
-static int *const g_009b7b28 = (int *)0x009B7B28;
+static int *const &ExpansionEnabled = (int *)0x009B7B28;
 
 class Win { public:
     AutoSound auto_sound_;
@@ -863,15 +863,15 @@ int __stdcall Win::on_sys_key(unsigned int a1, long a2, int a3, unsigned int a4)
     void *hwnd;
     unsigned int lParam;
     if (a2 != 0) {
-        hwnd = (void *)*g_009b7b28;
+        hwnd = (void *)ExpansionEnabled;
         lParam = (a4 << 0x10) | (a3 & 0xffff);
         (*(PostMessageAFn *)g_00669314)(hwnd, 0x100, a1, lParam);
-        hwnd = (void *)*g_009b7b28;
+        hwnd = (void *)ExpansionEnabled;
         return (*(DefWindowProcAFn *)g_006692b0)(hwnd, 0x104, a1, lParam);
     }
-    hwnd = (void *)*g_009b7b28;
+    hwnd = (void *)ExpansionEnabled;
     lParam = (a4 << 0x10) | (a3 & 0xffff);
     (*(PostMessageAFn *)g_00669314)(hwnd, 0x101, a1, lParam);
-    hwnd = (void *)*g_009b7b28;
+    hwnd = (void *)ExpansionEnabled;
     return (*(DefWindowProcAFn *)g_006692b0)(hwnd, 0x105, a1, lParam);
 }

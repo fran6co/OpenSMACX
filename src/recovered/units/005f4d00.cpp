@@ -2236,7 +2236,7 @@ class VCall { public:
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
 static int *const g_009b6630 = (int *)0x009B6630;
-static int *const g_009b7b30 = (int *)0x009B7B30;
+static int *const &WinZOrderCount = (int *)0x009B7B30;
 
 class Win { public:
     AutoSound auto_sound_;
@@ -2340,7 +2340,7 @@ class Win { public:
 static void **const g_win_array = (void **)0x009B6630;
 
 void __cdecl Win::update() {
-    for (int i = 0; i < *g_009b7b30; ++i) {
+    for (int i = 0; i < WinZOrderCount; ++i) {
         reinterpret_cast<VCall *>(g_win_array[i])->slot074(0, -1);
         if (reinterpret_cast<VCall *>(g_win_array[i])->slot061() != 0) {
             reinterpret_cast<VCall *>(g_win_array[i])->slot063();

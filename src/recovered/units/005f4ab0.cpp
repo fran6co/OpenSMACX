@@ -252,7 +252,7 @@ void __cdecl recurse_zorder(Win *);
 static int *const g_009b6e48 = (int *)0x009B6E48;
 static int *const g_009b7a6c = (int *)0x009B7A6C;
 static int *const g_009b7a78 = (int *)0x009B7A78;
-static int *const g_009b7b30 = (int *)0x009B7B30;
+static int *const &WinZOrderCount = (int *)0x009B7B30;
 static int *const g_009b7b34 = (int *)0x009B7B34;
 
 class Win { public:
@@ -366,13 +366,13 @@ void Win::bring_to_top() {
             parent->children_[0] = this;
         }
 
-        *g_009b7b30 = 0;
+        WinZOrderCount = 0;
         if (*g_009b7b34 > 0) {
             int highlighted = *g_009b7a6c;
             int *zslot = g_zorder_list;
             for (int j = 0; j < *g_009b7b34; j++) {
                 if (highlighted != 0 && highlighted == *zslot) {
-                    *g_009b7b30 = 0;
+                    WinZOrderCount = 0;
                     *g_009b7a78 = 0;
                 }
                 Win *w = reinterpret_cast<Win *>(*zslot);
@@ -410,13 +410,13 @@ void Win::bring_to_top() {
         g_zorder_list[0] = reinterpret_cast<int>(this);
     }
 
-    *g_009b7b30 = 0;
+    WinZOrderCount = 0;
     if (*g_009b7b34 > 0) {
         int highlighted = *g_009b7a6c;
         int *zslot = g_zorder_list;
         for (int j = 0; j < *g_009b7b34; j++) {
             if (highlighted != 0 && highlighted == *zslot) {
-                *g_009b7b30 = 0;
+                WinZOrderCount = 0;
                 *g_009b7a78 = 0;
             }
             Win *w = reinterpret_cast<Win *>(*zslot);

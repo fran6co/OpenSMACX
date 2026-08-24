@@ -2243,7 +2243,7 @@ class VCall { public:
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
 static int *const g_009b7aa4 = (int *)0x009B7AA4;
-static int *const g_009b7aac = (int *)0x009B7AAC;
+static int *const &WinTrackingWindow = (int *)0x009B7AAC;
 
 class Win { public:
     AutoSound auto_sound_;
@@ -2351,7 +2351,7 @@ class ButtonUpVCall { public: virtual void slot082(void *, int, int, int); };
 typedef int (__stdcall *SelectObjectFn)(void *hdc, void *obj);
 
 void Win::OnLButtonUp(void *a1, int a2, int a3, unsigned int a4) {
-    *g_009b7aac = 0;
+    WinTrackingWindow = 0;
     ButtonUpVCall *obj = reinterpret_cast<ButtonUpVCall *>(
         get_mouse_window_free(reinterpret_cast<int *>(&a1), &a2));
     if (obj) {

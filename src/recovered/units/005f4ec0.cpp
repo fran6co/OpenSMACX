@@ -333,7 +333,7 @@ class Win { public:
 // /O2 doesn't fold the SIB addressing away.
 extern int g_009b6630[];
 static int *const g_009b7a6c = (int *)0x009B7A6C;
-static int *const g_009b7b30 = (int *)0x009B7B30;
+static int *const &WinZOrderCount = (int *)0x009B7B30;
 
 void __cdecl recurse_zorder(Win * a1) {
     bool found = false;
@@ -347,7 +347,7 @@ void __cdecl recurse_zorder(Win * a1) {
             Win *c = *child;
             if ((c->iFlags_ & 0x20) == 0) {
                 if (cur != 0 && cur == reinterpret_cast<int>(c)) {
-                    *g_009b7b30 = 0;
+                    WinZOrderCount = 0;
                     found = true;
                 }
                 if (c->iSomeFlag_ & 1) {
@@ -377,7 +377,7 @@ void __cdecl recurse_zorder(Win * a1) {
             do {
                 Win *c = *child;
                 if (cur != 0 && cur == reinterpret_cast<int>(c)) {
-                    *g_009b7b30 = 0;
+                    WinZOrderCount = 0;
                     found = true;
                 }
                 if (a1->poWinBase_ == reinterpret_cast<uint32_t>(a1) &&
@@ -404,9 +404,9 @@ void __cdecl recurse_zorder(Win * a1) {
     if (a1->iSomeFlag_ & 1) {
         int a1_c4 = *reinterpret_cast<int *>(reinterpret_cast<char *>(a1) + 0xc4);
         if (a1_c4 == 0 || reinterpret_cast<Win *>(a1_c4)->is_visible() != 0) {
-            int idx = *g_009b7b30;
+            int idx = WinZOrderCount;
             g_009b6630[idx] = reinterpret_cast<int>(a1);
-            *g_009b7b30 = idx + 1;
+            WinZOrderCount = idx + 1;
         }
     }
 }

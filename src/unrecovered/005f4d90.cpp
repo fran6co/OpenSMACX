@@ -54,13 +54,13 @@ extern "C" int __stdcall sub_5f4d90(void *self_ptr, void *a1) {
   *(void **)(self + 0xa8) = a1;
 
   int i = 0;
-  *g_009b7b30 = 0;
+  WinZOrderCount = 0;
   if (*g_009b7b34 > 0) {
     void **arr = (void **)g_009b6e48;
     int cur = *g_009b7a6c;
     do {
       if (cur != 0 && cur == (int)arr[i]) {
-        *g_009b7b30 = 0;
+        WinZOrderCount = 0;
         *g_009b7a78 = 0;
       }
       if (*(unsigned char *)((char *)arr[i] + 0x9c) & 1) {

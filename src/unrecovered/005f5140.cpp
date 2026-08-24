@@ -776,7 +776,7 @@ void recurse_zorder(Win *);
 static int *const g_009b6e48 = (int *)0x009B6E48;
 static int *const g_009b7a6c = (int *)0x009B7A6C;
 static int *const g_009b7a78 = (int *)0x009B7A78;
-static int *const g_009b7b30 = (int *)0x009B7B30;
+static int *const &WinZOrderCount = (int *)0x009B7B30;
 static int *const g_009b7b34 = (int *)0x009B7B34;
 
 class Win { public:
@@ -883,12 +883,12 @@ void __cdecl Win::bring_parent_to_top(Win * a1) {
                 if (i >= count) break;
             }
         }
-        *g_009b7b30 = 0;
+        WinZOrderCount = 0;
         if (count > 0) {
             for (int j = 0; j < count; ++j) {
                 int cur = *g_009b7a6c;
                 if (cur != 0 && cur == reinterpret_cast<int>(g_009b6e48_arr[j])) {
-                    *g_009b7b30 = 0;
+                    WinZOrderCount = 0;
                     *g_009b7a78 = 0;
                 }
                 Win *w = g_009b6e48_arr[j];

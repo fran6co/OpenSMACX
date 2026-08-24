@@ -1506,7 +1506,7 @@ class VCall { public:
 static int *const g_006692a8 = (int *)0x006692A8;
 static int *const g_00669338 = (int *)0x00669338;
 static int *const g_0066933c = (int *)0x0066933C;
-static int *const g_009b7b28 = (int *)0x009B7B28;
+static int *const &ExpansionEnabled = (int *)0x009B7B28;
 
 typedef BOOL(__stdcall *IntersectRectFn)(RECT *, const RECT *, const RECT *);
 typedef BOOL(__stdcall *IsRectEmptyFn)(const RECT *);
@@ -1603,7 +1603,7 @@ void Obj5f37c0::sub_5f37c0(int a2, int a3, int a4) {
 
     if (reinterpret_cast<VCall *>(this)->slot061()) {
         GetWindowRectFn pGetWindowRect = reinterpret_cast<GetWindowRectFn>(*g_006692a8);
-        pGetWindowRect(reinterpret_cast<HWND>(*g_009b7b28), &rectSrc);
+        pGetWindowRect(reinterpret_cast<HWND>(ExpansionEnabled), &rectSrc);
         if (pIntersectRect(&rectIntersect, &rectSrc, &rectDamage)) {
             reinterpret_cast<Buffer *>(self + 0x444)->copy(
                 target, rectIntersect.left - rectSrc.left, rectIntersect.top - rectSrc.top,

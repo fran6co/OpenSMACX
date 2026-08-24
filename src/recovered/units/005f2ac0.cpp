@@ -297,7 +297,7 @@ static int *const g_006690c4 = (int *)0x006690C4;
 static int *const g_0066927c = (int *)0x0066927C;
 static int *const g_00669280 = (int *)0x00669280;
 static int *const g_009b3ab0 = (int *)0x009B3AB0;
-static int *const g_009b7b28 = (int *)0x009B7B28;
+static int *const &ExpansionEnabled = (int *)0x009B7B28;
 static int *const g_009b7b2c = (int *)0x009B7B2C;
 static int *const g_009b8180 = (int *)0x009B8180;
 static int *const g_009bc498 = (int *)0x009BC498;
@@ -411,7 +411,7 @@ void Win::window_line_raw(int a1, int a2, int a3, int a4, int a5, int a6, unsign
             fn(iface, g_009b7b2c);
         } else {
             GetDCProc getDC = *reinterpret_cast<GetDCProc *>(g_0066927c);
-            *g_009b7b2c = reinterpret_cast<int>(getDC(reinterpret_cast<void *>(*g_009b7b28)));
+            *g_009b7b2c = reinterpret_cast<int>(getDC(reinterpret_cast<void *>(ExpansionEnabled)));
         }
         if (*g_009b7b2c == 0) {
             return;
@@ -457,7 +457,7 @@ void Win::window_line_raw(int a1, int a2, int a3, int a4, int a5, int a6, unsign
                     return;
                 }
                 ReleaseDCProc releaseDC = *reinterpret_cast<ReleaseDCProc *>(g_00669280);
-                releaseDC(reinterpret_cast<void *>(*g_009b7b28), reinterpret_cast<HDC>(*g_009b7b2c));
+                releaseDC(reinterpret_cast<void *>(ExpansionEnabled), reinterpret_cast<HDC>(*g_009b7b2c));
                 *g_009b7b2c = 0;
             }
         }

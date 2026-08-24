@@ -344,7 +344,7 @@ class VCall { public:
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
 static int *const g_009b7aa4 = (int *)0x009B7AA4;
-static int *const g_009b7aac = (int *)0x009B7AAC;
+static int *const &WinTrackingWindow = (int *)0x009B7AAC;
 
 class Win { public:
     AutoSound auto_sound_;
@@ -491,7 +491,7 @@ class VCallW { public:
 // Both compile, both keep the same logic, neither reaches the caller-
 // cleanup form the original binary has.
 void __cdecl Win::OnRButtonUp(void * a1, int a2, int a3, unsigned int a4) {
-    *g_009b7aac = 0;
+    WinTrackingWindow = 0;
     Win *win = reinterpret_cast<Win *>(get_mouse_window(&a2, &a3));
     if (win != 0) {
         VCallW *vcall = reinterpret_cast<VCallW *>(win);

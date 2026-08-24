@@ -2026,7 +2026,7 @@ static int *const g_00669324 = (int *)0x00669324;
 static int *const g_0066937c = (int *)0x0066937C;
 static int *const g_00696e94 = (int *)0x00696E94;
 static int *const g_0090d978 = (int *)0x0090D978;
-static int *const g_009b7b28 = (int *)0x009B7B28;
+static int *const &ExpansionEnabled = (int *)0x009B7B28;
 static int *const g_009b8194 = (int *)0x009B8194;
 
 class MCIVideo { public:
@@ -2069,8 +2069,8 @@ int MCIVideo::load(char * a1, Win * a2, int a3, int a4) {
     *reinterpret_cast<char **>(AT(0x410)) = a1;
     *reinterpret_cast<char **>(AT(0x414)) = reinterpret_cast<char *>(g_00696e94);
     *reinterpret_cast<DWORD *>(AT(0x408)) = 0x40000000;
-    *reinterpret_cast<DWORD *>(AT(0x404)) = *g_009b7b28;
-    *g_009b8194 = *g_009b7b28;
+    *reinterpret_cast<DWORD *>(AT(0x404)) = ExpansionEnabled;
+    *g_009b8194 = ExpansionEnabled;
     MCIERROR mciErr = mciSendCommandA(0, 0x803, 0x32200, reinterpret_cast<DWORD>(AT(0x41c)));
     if (mciErr != 0) {
         return 1;
