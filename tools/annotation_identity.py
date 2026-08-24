@@ -52,8 +52,8 @@ def by_file(root: Path) -> dict:
 
 
 def _one_keyword_flip(text: str, after: str) -> str:
-    """"" if the two texts differ by one line that differs only by a
-    ratchet keyword; otherwise what went wrong."""
+    """Empty if the two texts differ by one line, and that line differs
+    only by a ratchet keyword; otherwise what went wrong."""
     before_lines, after_lines = text.splitlines(), after.splitlines()
     if len(before_lines) != len(after_lines):
         return (f"line count moved {len(before_lines)} -> "

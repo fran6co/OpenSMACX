@@ -1911,7 +1911,6 @@ static int *const g_005fc234 = (int *)0x005FC234;
 static int *const g_006692d0 = (int *)0x006692D0;
 static int *const g_00696e3c = (int *)0x00696E3C;
 static int *const g_00696e58 = (int *)0x00696E58;
-static int *const &ExpansionEnabled = (int *)0x009B7B28;
 static int *const g_009b7b6c = (int *)0x009B7B6C;
 
 class Menu : public GraphicWin { public:
@@ -2041,7 +2040,7 @@ int Menu::on_key_click(int a1, int a2) {
             POINT pt;
             pt.x = *reinterpret_cast<int *>(rec);
             pt.y = *reinterpret_cast<int *>(rec + 4);
-            (*reinterpret_cast<ClientToScreenFn *>(g_006692d0))(*reinterpret_cast<HWND *>(&ExpansionEnabled), &pt);
+            (*reinterpret_cast<ClientToScreenFn *>(g_006692d0))(*reinterpret_cast<HWND *>(&HandleMain), &pt);
             *g_009b7b6c = 1;
             this->mouse_move(pt.x, pt.y);
             return 1;
@@ -2076,7 +2075,7 @@ searchHotkeys:
                     POINT pt;
                     pt.x = *reinterpret_cast<int *>(positions + (*curIndexPtr) * 0x18) - width;
                     pt.y = -*reinterpret_cast<int *>(self + 0x4c8);
-                    (*reinterpret_cast<ClientToScreenFn *>(g_006692d0))(*reinterpret_cast<HWND *>(&ExpansionEnabled), &pt);
+                    (*reinterpret_cast<ClientToScreenFn *>(g_006692d0))(*reinterpret_cast<HWND *>(&HandleMain), &pt);
                     flush_input();
                     reinterpret_cast<VCall *>(this)->slot062();
                     *g_009b7b6c = 1;

@@ -2230,8 +2230,6 @@ class VCall { public:
 // encoding including the address; `extern T *g` does not.
 static int *const g_009b6e48 = (int *)0x009B6E48;
 static int *const g_009b7ab8 = (int *)0x009B7AB8;
-static int *const &WinPointerOwner1 = (int *)0x009B7ACC;
-static int *const g_009b7ad0 = (int *)0x009B7AD0;
 static int *const g_009b7ad4 = (int *)0x009B7AD4;
 static int *const g_009b7b34 = (int *)0x009B7B34;
 
@@ -2378,11 +2376,11 @@ void Win::on_l_button_down(long a1, int a2, int a3, unsigned int a4, int a5) {
     }
 
     if (a4 == 0) {
-        *g_009b7ad0 = 0;
-        WinPointerOwner1 = reinterpret_cast<int32_t>(self);
+        WinPointerOwner2 = nullptr;
+        WinPointerOwner1 = self;
     } else {
-        WinPointerOwner1 = 0;
-        *g_009b7ad0 = reinterpret_cast<int32_t>(self);
+        WinPointerOwner1 = nullptr;
+        WinPointerOwner2 = reinterpret_cast<int32_t>(self);
     }
 
     *g_009b7ad4 = 1;

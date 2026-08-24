@@ -849,7 +849,6 @@ class VCall { public:
 static int *const g_006692b0 = (int *)0x006692B0;
 static int *const g_00669314 = (int *)0x00669314;
 static int *const g_00800000 = (int *)0x00800000;
-static int *const &ExpansionEnabled = (int *)0x009B7B28;
 
 class Win { public:
     AutoSound auto_sound_;
@@ -1034,7 +1033,7 @@ long Win::on_window_pos_changing(WINDOWPOS * a1) {
         *reinterpret_cast<unsigned int *>(wp + 0x18) |= 4;
     }
     if (*reinterpret_cast<int *>(wp + 4) == 0) {
-        PostMessageA(ExpansionEnabled, 3, 0, 0);
+        PostMessageA(HandleMain, 3, 0, 0);
     }
-    return DefWindowProcA(ExpansionEnabled, 0x46, 0, reinterpret_cast<int>(a1));
+    return DefWindowProcA(HandleMain, 0x46, 0, reinterpret_cast<int>(a1));
 }

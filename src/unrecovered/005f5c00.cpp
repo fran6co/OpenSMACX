@@ -1987,7 +1987,6 @@ static int *const g_0066927c = (int *)0x0066927C;
 static int *const g_00669280 = (int *)0x00669280;
 static int *const g_006692b0 = (int *)0x006692B0;
 static int *const g_009b3ab0 = (int *)0x009B3AB0;
-static int *const &ExpansionEnabled = (int *)0x009B7B28;
 static int *const g_009b7b2c = (int *)0x009B7B2C;
 static int *const g_009b8178 = (int *)0x009B8178;
 static int *const g_009bc494 = (int *)0x009BC494;
@@ -2103,7 +2102,7 @@ long Win::on_activate(unsigned int a1, void * a2, long a3) {
         if (*g_009b3ab0 == 0) {
             int obj = *g_009bc498;
             if (obj == 0) {
-                *g_009b7b2c = reinterpret_cast<int>(GetDC(reinterpret_cast<void *>(ExpansionEnabled)));
+                *g_009b7b2c = reinterpret_cast<int>(GetDC(HandleMain));
             } else {
                 void **vtbl = *reinterpret_cast<void ***>(obj);
                 Fn2 fn = reinterpret_cast<Fn2>(vtbl[0x44 / 4]);
@@ -2124,7 +2123,7 @@ long Win::on_activate(unsigned int a1, void * a2, long a3) {
             if (*g_009b3ab0 == 0) {
                 int obj = *g_009bc498;
                 if (obj == 0) {
-                    ReleaseDC(reinterpret_cast<void *>(ExpansionEnabled),
+                    ReleaseDC(HandleMain,
                               reinterpret_cast<void *>(*g_009b7b2c));
                 } else {
                     void **vtbl = *reinterpret_cast<void ***>(obj);
@@ -2136,6 +2135,6 @@ long Win::on_activate(unsigned int a1, void * a2, long a3) {
         }
     }
 done:
-    return DefWindowProcA(reinterpret_cast<void *>(ExpansionEnabled), 6,
+    return DefWindowProcA(HandleMain, 6,
                           ((a3 & 0xffff) << 16) | (a1 & 0xffff), a2);
 }

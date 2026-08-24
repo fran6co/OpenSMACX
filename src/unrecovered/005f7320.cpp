@@ -1959,7 +1959,6 @@ static int *const g_009b7a40 = (int *)0x009B7A40;
 static int *const g_009b7a44 = (int *)0x009B7A44;
 static int *const g_009b7a68 = (int *)0x009B7A68;
 static int *const g_009b7a6c = (int *)0x009B7A6C;
-static int *const &WinZOrderCount = (int *)0x009B7B30;
 
 class Win { public:
     AutoSound auto_sound_;

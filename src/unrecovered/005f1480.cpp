@@ -17,7 +17,7 @@ typedef int (__stdcall *IfaceReleaseHdcProc)(void *, int);
 // IAT-indirect shape.
 
 long __cdecl Win::OnActivate(void *a1, unsigned int a2, void *a3, long a4) {
-    InvalidateRect(reinterpret_cast<void *>(ExpansionEnabled), 0, 0);
+    InvalidateRect(HandleMain, 0, 0);
     if (a2 != 0) {
       if (a4 == 0 && *g_009bc494 == 0) {
         int hdc;
@@ -31,7 +31,7 @@ long __cdecl Win::OnActivate(void *a1, unsigned int a2, void *a3, long a4) {
                 fn(iface, g_009b7b2c);
                 hdc = *g_009b7b2c;
             } else {
-                *g_009b7b2c = reinterpret_cast<int>(GetDC(reinterpret_cast<void *>(ExpansionEnabled)));
+                *g_009b7b2c = reinterpret_cast<int>(GetDC(HandleMain));
                 hdc = *g_009b7b2c;
             }
             if (hdc != 0) {
@@ -53,15 +53,15 @@ long __cdecl Win::OnActivate(void *a1, unsigned int a2, void *a3, long a4) {
                     typedef int (__stdcall *ReleaseDCProc)(void *, HDC);
                     static int *const g_00669280 = (int *)0x00669280;
                     (*reinterpret_cast<ReleaseDCProc *>(g_00669280))(
-                        reinterpret_cast<void *>(ExpansionEnabled), reinterpret_cast<HDC>(*g_009b7b2c));
+                        HandleMain, reinterpret_cast<HDC>(*g_009b7b2c));
                 }
                 *g_009b7b2c = 0;
             }
         }
       }
     } else {
-        WinPointerOwner1 = 0;
-        *g_009b7ad0 = 0;
+        WinPointerOwner1 = nullptr;
+        WinPointerOwner2 = nullptr;
     }
     return DefWindowProcA(a1, 6, (static_cast<unsigned int>(a4) << 16) | (a2 & 0xffff), a3);
 }

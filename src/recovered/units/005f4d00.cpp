@@ -2236,7 +2236,6 @@ class VCall { public:
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
 static int *const g_009b6630 = (int *)0x009B6630;
-static int *const &WinZOrderCount = (int *)0x009B7B30;
 
 class Win { public:
     AutoSound auto_sound_;

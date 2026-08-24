@@ -1,0 +1,15 @@
+# THE IMAGE EVERY CLAIM IS MEASURED AGAINST.
+#
+# 3,018 BYTE_EXACT and SEMANTIC claims mean "these bytes reproduce THAT
+# executable", and until this file existed nothing said which executable.
+# `docs/recovery/summary.json` records a different digest entirely -
+# 7d1933da..., taken from /Users/scient/Desktop/ on another machine - and no
+# code path anywhere verified either one: `grep -rn sha256 tools decomp`
+# returned nothing. A ratchet measured against an unasserted ruler is not a
+# ratchet.
+#
+# `osmx check` compares this against the image it is about to read. If they
+# differ, the claims are about a different binary and the run stops.
+#
+# Measured 2026-08-24 from .opensmacx/game/terranx_original.exe.
+sha256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf

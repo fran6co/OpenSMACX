@@ -1931,12 +1931,8 @@ static int *const g_009b7a6c = (int *)0x009B7A6C;
 static int *const g_009b7a78 = (int *)0x009B7A78;
 static int *const g_009b7abc = (int *)0x009B7ABC;
 static int *const g_009b7ac0 = (int *)0x009B7AC0;
-static int *const &WinPointerOwner1 = (int *)0x009B7ACC;
-static int *const g_009b7ad0 = (int *)0x009B7AD0;
 static int *const g_009b7ae0 = (int *)0x009B7AE0;
 static int *const g_009b7b18 = (int *)0x009B7B18;
-static int *const &ExpansionEnabled = (int *)0x009B7B28;
-static int *const &WinZOrderCount = (int *)0x009B7B30;
 static int *const g_009b7b34 = (int *)0x009B7B34;
 static int *const g_009b7b48 = (int *)0x009B7B48;
 static int *const g_009b7b51 = (int *)0x009B7B51;
@@ -1980,19 +1976,19 @@ void Win::sub_5f5fb0(char param2, int param3) {
                 ((Win *)g_009b22f0)->flip((RECT *)g_009b6e38);
             }
 
-            Win *cand = *(Win **)&WinPointerOwner1;
-            if (cand == 0) {
+            Win *cand = WinPointerOwner1;
+            if (cand == nullptr) {
                 cand = *(Win **)g_009b7ad0;
             }
             if (cand == (Win *)g_009b22f0) {
-                *(int *)&WinPointerOwner1 = 0;
+                WinPointerOwner1 = nullptr;
                 *(int *)g_009b7ad0 = 0;
-            } else if (cand != 0 && *(int *)g_009b26ec > 0) {
+            } else if (cand != nullptr && *(int *)g_009b26ec > 0) {
                 Win **list = (Win **)g_009b2494;
                 int i = 0;
                 do {
                     if (list[i] == cand || list[i]->is_descendant(cand)) {
-                        *(int *)&WinPointerOwner1 = 0;
+                        WinPointerOwner1 = nullptr;
                         *(int *)g_009b7ad0 = 0;
                         break;
                     }
@@ -2013,14 +2009,14 @@ void Win::sub_5f5fb0(char param2, int param3) {
             }
 
             if ((*(uint8_t *)g_009bc4b0 & 1) != 0) {
-                *(int *)&WinZOrderCount = 0;
+                WinZOrderCount = 0;
                 if (*(int *)g_009b7b34 > 0) {
                     Win **entries = (Win **)g_009b6e48;
                     int cur = *(int *)g_009b7a6c;
                     int j = 0;
                     do {
                         if (cur != 0 && cur == (int)entries[j]) {
-                            *(int *)&WinZOrderCount = 0;
+                            WinZOrderCount = 0;
                             *(int *)g_009b7a78 = 0;
                         }
                         if ((*(uint8_t *)((char *)entries[j] + 0x9c) & 1) != 0) {
@@ -2032,7 +2028,7 @@ void Win::sub_5f5fb0(char param2, int param3) {
                 }
 
                 InvalidateRectFn invalidate = *(InvalidateRectFn *)g_00669304;
-                invalidate(*(void **)&ExpansionEnabled, 0, 0);
+                invalidate(*(void **)&HandleMain, 0, 0);
 
                 Win *w = *(Win **)g_009b2300;
                 if (w != 0 && ((VCall *)w)->slot023() == 0) {
