@@ -452,9 +452,15 @@ def _exclusion_citation(rest: str) -> str:
     return rest or "unspecified"
 
 def read_file(path: Path) -> list[DecompilationState]:
-    """Every annotation one file declares, in line order."""
+    """Every annotation one file declares, in line order.
+
+    `errors="replace"` because a stray byte must cost ONE character, not the
+    whole file's annotations - every scanning peer in tools/ already reads
+    this way. A MISSING file still raises here: a caller who names a specific
+    file wants the error, and the tree walk below makes its own decision.
+    """
     path = Path(path)
-    return _read_text(path.read_text(), path)
+    return _read_text(path.read_text(errors="replace"), path)
 
 
 def read(path: Path | str) -> list[DecompilationState]:
@@ -486,7 +492,18 @@ def read(path: Path | str) -> list[DecompilationState]:
         # tree.
         for suffix in ("*.cpp", "*.c"):
             for file in path.rglob(suffix):
-                found.extend(read_file(file))
+                # A file CAN vanish between the glob and the read: agents
+                # home artifacts concurrently, and `osmx status` died with a
+                # bare FileNotFoundError mid-audit for exactly that
+                # (2026-08-24, src/unrecovered/005fe700.cpp deleted by a
+                # homing pass). A measurement tool degrades, it does not
+                # abort: the file is gone, so its annotations are gone, and
+                # the claim-floor gate is what makes that VISIBLE as a count
+                # - a crash here reported nothing at all.
+                try:
+                    found.extend(read_file(file))
+                except FileNotFoundError:
+                    continue
         found.sort(key=lambda record: (record.path, record.line,
                                        record.address))
         return found
