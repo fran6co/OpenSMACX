@@ -185,6 +185,25 @@ def census(root):
     """
     counts = collections.Counter()
     files = collections.defaultdict(set)
+    for name_of_file, per_shape in census_by_file(root).items():
+        for name, n in per_shape.items():
+            counts[name] += n
+            files[name].add(name_of_file)
+    return counts, files
+
+
+def census_by_file(root):
+    """The same census, keyed per file: {filename: Counter{shape: n}}.
+
+    ONE LOOP, TWO CONSUMERS. `frontier.py --by-class` needs per-file counts
+    to join them onto the class that owns the file, and it used to carry its
+    own copy of this walk. The copy drifted: it iterated `SHAPES` alone and
+    globbed `*.cpp` alone, so the DONE bar could not see 320 vtable-shape
+    sites (34 of them in win.cpp) and tagged classes finished that were not.
+    A second list someone has to keep in step IS the defect; there is one
+    walk now, and `census` is derived from it.
+    """
+    per_file = collections.defaultdict(collections.Counter)
     for path in sorted(root.rglob("*.cpp")):
         if "recovered" in path.parts or "unrecovered" in path.parts:
             continue
@@ -197,8 +216,7 @@ def census(root):
             for name, _ceiling, rx, _why in SHAPES + HEADER_SHAPES:
                 n = len(rx.findall(line))
                 if n:
-                    counts[name] += n
-                    files[name].add(path.name)
+                    per_file[path.name][name] += n
     for path in sorted(root.glob("*.h")):
         if "recovered" in path.parts or "unrecovered" in path.parts:
             continue
@@ -208,9 +226,8 @@ def census(root):
             for name, _ceiling, rx, _why in HEADER_SHAPES:
                 n = len(rx.findall(line))
                 if n:
-                    counts[name] += n
-                    files[name].add(path.name)
-    return counts, files
+                    per_file[path.name][name] += n
+    return per_file
 
 
 def main():
