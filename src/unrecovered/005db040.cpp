@@ -1284,7 +1284,7 @@ static int *const g_009b33cc = (int *)0x009B33CC;
 static int *const g_009b3a90 = (int *)0x009B3A90;
 static int *const g_009b3a94 = (int *)0x009B3A94;
 static int *const g_009b3a98 = (int *)0x009B3A98;
-static int *const g_009b3a9c = (int *)0x009B3A9C;
+static int *const &BufferStrHeight = (int *)0x009B3A9C;
 static int *const g_009bb484 = (int *)0x009BB484;
 
 class Buffer { public:
@@ -1418,7 +1418,7 @@ int Buffer::write_strings(StringList * a1, int a2, int a3, int a4, int a5) {
         *g_009b3a90 = a2;
         *g_009b3a94 = extent;
         *g_009b3a98 = a4;
-        *g_009b3a9c = 0;
+        BufferStrHeight = 0;
         field_51C_ = 0;
         *reinterpret_cast<char *>(g_009b33cc) = 0;
         wrap_flying(0);
@@ -1426,7 +1426,7 @@ int Buffer::write_strings(StringList * a1, int a2, int a3, int a4, int a5) {
         int textId = (a1->head_ != 0) ? *reinterpret_cast<int *>(listAsStruct->current_entry() + 4) : 0;
         extent = a3;
         if (textId != 0) {
-            *g_009b3a9c = 0;
+            BufferStrHeight = 0;
             field_18_ = 0;
             int pos = textId;
             int accumY = 0;
@@ -1447,7 +1447,7 @@ int Buffer::write_strings(StringList * a1, int a2, int a3, int a4, int a5) {
         field_18_ = 0;
         *g_009b3a90 = a2;
         *g_009b3a98 = a4;
-        *g_009b3a9c = 0;
+        BufferStrHeight = 0;
         *g_009b3a94 = extent;
         field_51C_ = 0;
         *reinterpret_cast<char *>(g_009b33cc) = 0;
@@ -1459,7 +1459,7 @@ int Buffer::write_strings(StringList * a1, int a2, int a3, int a4, int a5) {
         *g_009b3a90 = a2;
         *g_009b3a94 = a3;
         *g_009b3a98 = a4;
-        *g_009b3a9c = 0;
+        BufferStrHeight = 0;
         field_51C_ = 0;
         *reinterpret_cast<char *>(g_009b33cc) = 0;
         wrap_flying(reinterpret_cast<char *>(id));

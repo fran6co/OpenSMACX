@@ -23,6 +23,8 @@
 #include "general.h"   // mem_get, for the link labels this owns
 #include "palette.h"
 #include "spot.h"
+#include "temp.h"      // BufferStrHeight, which the wrap family scales by
+#include "alpha.h"     // Language, the write/wrap text-selection switch
 
 #include <new>
 
@@ -3011,3 +3013,113 @@ int __cdecl polygon(Buffer *buffer, Vert *verts, int a3, int a4) {
     return reinterpret_cast<func_polygon>(0x00626620)(buffer, verts, a3, a4);
 }
 #pragma auto_inline(on)
+
+// ORIGINAL: 0x005DD300 ?write_right_l@Buffer@@QAEHPADHHHH@Z 0x005DD300-0x005DD3A5 FILE
+// TRIED: nesting everything inside a single `if (font1_ && font_obj_)` block with one trailing `return a2` (matching Ghidra's shape more literally) instead of early returns - same MISMATCH #1 'push' vs 'mov' either way; the divergence is in the prologue's register push order (ebx/esi/edi count/order), not the branch structure. similarity ~0.61-0.63.
+// working copy - scaffold materialised by --work
+// size      165 bytes
+// prototype int (__thiscall ?write_right_l@Buffer@@QAEHPADHHHH@Z)(Buffer* this, int8*, int, int, int, int)
+// callers   4   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DC7C0 0x005DCAE0 0x006453E0
+
+int Buffer::write_right_l(char * a1, int a2, int a3, int a4, int a5) {
+    if (a1 == 0) {
+        return a2;
+    }
+    if (font1_ == 0 || font1_->font_obj_ == 0) {
+        return 3;
+    }
+
+    int len = (int)strlen(a1);
+    int w = a5;
+    if (len < a5) {
+        w = (int)strlen(a1);
+    }
+    if (w < 0) {
+        return a2;
+    }
+
+    int len2 = (int)strlen(a1);
+    if (len2 < a5) {
+        a5 = (int)strlen(a1);
+    }
+    if (a5 == 0) {
+        return a2;
+    }
+
+    int width = text_width(a1, a5);
+    return write_multi_font_raw_l(a1, a3 + (a4 - width), a2, a5);
+}
+
+// Fixed-slot bindings carried from 005d8290.cpp
+static int *const g_00696d14 = (int *)0x00696D14;
+static int *const g_009b3a54 = (int *)0x009B3A54;
+static int *const g_009b3a58 = (int *)0x009B3A58;
+static int *const g_009b3a5c = (int *)0x009B3A5C;
+static int *const g_009b3a60 = (int *)0x009B3A60;
+static int *const g_009b3a64 = (int *)0x009B3A64;
+static int *const g_009b3a68 = (int *)0x009B3A68;
+static int *const g_009b3a6c = (int *)0x009B3A6C;
+static int *const g_009b3a70 = (int *)0x009B3A70;
+static int *const g_009b3a74 = (int *)0x009B3A74;
+static int *const g_009b3a78 = (int *)0x009B3A78;
+
+// ORIGINAL: 0x005D8290 ?setup_buff_sprite@Buffer@@QAEXH@Z 0x005D8290-0x005D835C FILE
+// working copy - scaffold materialised by --work
+// size      204 bytes
+// prototype void (__thiscall ?setup_buff_sprite@Buffer@@QAEXH@Z)(Buffer* this, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005D834B
+
+void Buffer::setup_buff_sprite(int a1) {
+    char *self = (char *)this;
+    if (*(int *)(self + 0x58) != 0) {
+        return;
+    }
+    if (a1 == -1) {
+        a1 = *(unsigned char *)g_00696d14;
+    }
+    int val54 = *(int *)(self + 0x54);
+    *(int *)(self + 0x50) = val54;
+    if (val54 != 0) {
+        ++*(int *)(self + 0x6c);
+    }
+    *g_009b3a54 = val54;
+    *g_009b3a5c = *(int *)(self + 0x4a8);
+    *g_009b3a60 = *(int *)(self + 0x80);
+    *g_009b3a64 = -*(int *)(self + 0x84);
+    *g_009b3a68 = *(int *)(self + 0x80);
+    *g_009b3a6c = -*(int *)(self + 0x84);
+    *g_009b3a70 = 0;
+    *g_009b3a74 = 0;
+    *(unsigned char *)g_009b3a58 = (unsigned char)a1;
+    *g_009b3a78 = 0;
+
+    void **field58 = *(void ***)(self + 0x58);
+    int *field6c = (int *)(self + 0x6c);
+    if (field58 == 0) {
+        int newCount = *field6c - 1;
+        *field6c = newCount;
+        if (newCount <= 0) {
+            *(int *)(self + 0x50) = 0;
+            *field6c = 0;
+        }
+        return;
+    }
+    int newCount = *field6c - 1;
+    *field6c = newCount;
+    int owner = *(int *)(self + 0x50);
+    if (owner != 0 && newCount <= 0) {
+        typedef void (__stdcall *Fn)(void *, int);
+        void **vtbl = *(void ***)field58;
+        ((Fn)vtbl[0x20])(field58, owner);
+        *(int *)(self + 0x50) = 0;
+        *field6c = 0;
+    }
+}
+

@@ -22,7 +22,7 @@ int Buffer::wrap_cent(Font * a1, char * a2, int a3, int a4, int a5) {
 
     int y = a4;
     if (a2 != 0) {
-        *g_009b3a9c = 0;
+        BufferStrHeight = 0;
         *reinterpret_cast<int *>(self + 0x18) = 0;
         char *str = a2;
         char *breakPos;
@@ -30,7 +30,7 @@ int Buffer::wrap_cent(Font * a1, char * a2, int a3, int a4, int a5) {
             breakPos = 0;
             int outParam = a5;
             if (str != 0) {
-                *g_009b3a9c = 0;
+                BufferStrHeight = 0;
                 unsigned int len = strlen(str);
                 breakPos = reinterpret_cast<char *>(find_line_break_l(str, &outParam, len));
                 int lineLen;

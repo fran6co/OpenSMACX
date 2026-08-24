@@ -86,6 +86,14 @@ struct Dib : BITMAPINFO {
 
 class Buffer {
  public:
+  // homed from 005d8290.cpp
+  void setup_buff_sprite(int a1);
+
+ public:
+  // homed from 005dd300.cpp
+  int write_right_l(char * a1, int a2, int a3, int a4, int a5);
+
+ public:
   int poly(Vert *a1, int a2, int a3);
   // 0x005D7210. The body is in buffer.cpp beside its marker.
   Buffer();

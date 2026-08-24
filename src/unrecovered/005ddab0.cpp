@@ -71,7 +71,7 @@ extern "C" unsigned int strlen(const char *);
 // The original CALLS strlen at 0x006453E0; /O2 would otherwise inline it.
 #pragma function(strlen)
 
-extern int g_009b3a9c;
+extern int &BufferStrHeight;
 extern Font *g_009bb484;
 
 // Lays `text` out centred inside `rect`, one line per call to write_cent_l,
@@ -80,7 +80,7 @@ int Buffer::wrap_cent(char * text, RECT * rect) {
     if (text == 0 || rect == 0) {
         return rect->top;
     }
-    g_009b3a9c = 0;
+    &BufferStrHeight = 0;
     this->lineCount_ = 0;
     int left = rect->left;
     int width = rect->right - left;
@@ -92,7 +92,7 @@ int Buffer::wrap_cent(char * text, RECT * rect) {
         if (str == 0) {
             nextStr = 0;
         } else {
-            g_009b3a9c = 0;
+            &BufferStrHeight = 0;
             unsigned int fullLen = strlen(str);
             nextStr = reinterpret_cast<char *>(
                 find_line_break_l(str, &lineWidth, static_cast<int>(fullLen)));

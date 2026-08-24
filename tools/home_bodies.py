@@ -242,6 +242,7 @@ def main() -> int:
         return 0
 
     failures = kept = 0
+    carried: set = set()
     for record in sorted(targets, key=lambda r: r.address):
         if tu_arg is not None:
             ident = (record.name or "").split("@")[0].lstrip("?")
@@ -293,8 +294,26 @@ def main() -> int:
             failures += 1
             print(f"  REVERTED {record.address_hex} ({where}): {error[:160]}")
 
-        new_tu = tu_text.rstrip() + "\n\n" + head.strip() + "\n\n" \
-            + definition + "\n"
+        # THE RECONCILE STEP. Artifacts bind every fixed address they touch
+        # as `static T *const g_HEX = (T *)0xADDR;` in their scaffold
+        # preamble - which split_artifact throws away. Without those lines
+        # the moved body cannot compile, and hand-copying them was the whole
+        # of the Palette pass's whack-a-mole. Carry them verbatim into the
+        # target TU instead; renaming them to modelled names is the class
+        # pass's semantic half, done against a MEASURED body.
+        full_artifact = snapshots["artifact"]
+        bindings = re.findall(
+            r"^static .+?= \(.*?0x[0-9A-Fa-f]+;\n", full_artifact, re.M)
+        fresh = [b for b in bindings
+                 if not (b in tu_text or b in carried)]
+        for b in fresh:
+            carried.add(b)
+        carried_block = "".join(fresh)
+
+        new_tu = tu_text.rstrip() + "\n\n" + (
+            ("// Fixed-slot bindings carried from " + record.path.name + "\n"
+             + carried_block + "\n") if carried_block else ""
+        ) + head.strip() + "\n\n" + definition + "\n"
         tu.write_text(new_tu)
 
         if d_klass and header_text and not declared(header_text, d_klass, method):

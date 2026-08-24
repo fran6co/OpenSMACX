@@ -91,7 +91,7 @@ extern "C" unsigned int strlen(const char *);
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_009b3a9c = (int *)0x009B3A9C;
+static int *const &BufferStrHeight = (int *)0x009B3A9C;
 static int *const g_009bb484 = (int *)0x009BB484;
 
 class Buffer { public:
@@ -176,7 +176,7 @@ int Buffer::wrap_right(char * a1, int a2, int a3, int a4) {
     if (a1 == 0) {
         return a3;
     }
-    *g_009b3a9c = 0;
+    BufferStrHeight = 0;
     *reinterpret_cast<int *>(self + 0x18) = 0;
     *reinterpret_cast<int *>(self + 0x14) = *reinterpret_cast<int *>(self + 0x10);
     int y = a3;
@@ -189,7 +189,7 @@ int Buffer::wrap_right(char * a1, int a2, int a3, int a4) {
             brk = 0;
         } else {
             int len;
-            *g_009b3a9c = 0;
+            BufferStrHeight = 0;
             unsigned int slen = strlen(text);
             brk = reinterpret_cast<char *>(find_line_break_l(text, &a3, slen));
             if (brk == 0) {

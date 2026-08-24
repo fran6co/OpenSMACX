@@ -18,7 +18,7 @@ int Buffer::wrap_height_flying(char * a1) {
         char *text = a1;
         if (*text != '\0') {
             do {
-                int remaining = *g_009b3a98 - *g_009b3a9c;
+                int remaining = *g_009b3a98 - BufferStrHeight;
                 text = (char *)find_line_break_l(text, &remaining, strlen(text));
                 if (text == 0) {
                     break;
@@ -34,7 +34,7 @@ int Buffer::wrap_height_flying(char * a1) {
                 } else {
                     lineAdvance = fnt->height_ + fnt->unk_1_;
                 }
-                *g_009b3a9c = 0;
+                BufferStrHeight = 0;
                 *g_009b3a94 = *g_009b3a94 + lineAdvance;
                 if (field_14_ != 0) {
                     *g_009b3a98 = *g_009b3a98 - field_14_;
@@ -45,7 +45,7 @@ int Buffer::wrap_height_flying(char * a1) {
             if (prompt != 0) {
                 unsigned int len = strlen(prompt);
                 int width = text_width(prompt, (int)len);
-                *g_009b3a9c = *g_009b3a9c + width;
+                BufferStrHeight = BufferStrHeight + width;
             }
         }
     }

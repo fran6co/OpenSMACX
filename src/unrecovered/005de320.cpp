@@ -32,12 +32,12 @@ int Sub5DE320Target::run(LPCSTR a1) {
             strcat(reinterpret_cast<char *>(g_009b33cc), reinterpret_cast<char *>(g_00682820));
             unsigned int len = strlen(reinterpret_cast<char *>(g_00696ce0));
             int width = buf->text_width(reinterpret_cast<char *>(g_00696ce0), static_cast<int>(len));
-            *g_009b3a9c = *g_009b3a9c + width;
+            BufferStrHeight = BufferStrHeight + width;
         }
         const char *next = text;
-        if (*g_009b3a9c < *g_009b3a98) {
+        if (BufferStrHeight < *g_009b3a98) {
             unsigned int len = strlen(text);
-            int room = *g_009b3a98 - *g_009b3a9c;
+            int room = *g_009b3a98 - BufferStrHeight;
             next = reinterpret_cast<char *>(
                 buf->find_line_break_l(const_cast<char *>(text), &room, static_cast<int>(len)));
         }
@@ -56,7 +56,7 @@ int Sub5DE320Target::run(LPCSTR a1) {
         buf->write_cent_l(reinterpret_cast<char *>(g_009b33cc), v, h, w, static_cast<int>(total_len));
 
         *reinterpret_cast<char *>(g_009b33cc) = 0;
-        *g_009b3a9c = 0;
+        BufferStrHeight = 0;
 
         buf->field_18_ = buf->field_18_ + 1;
         *g_009b3a94 = *g_009b3a94 + buf->text_line_height();
