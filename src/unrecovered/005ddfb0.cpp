@@ -1238,7 +1238,7 @@ static int *const g_009b33cc = (int *)0x009B33CC;
 static int *const g_009b3a90 = (int *)0x009B3A90;
 static int *const g_009b3a94 = (int *)0x009B3A94;
 static int *const g_009b3a98 = (int *)0x009B3A98;
-static int *const &BufferStrHeight = (int *)0x009B3A9C;
+static int *const BufferStrHeight = (int *)0x009B3A9C;
 static int *const g_009bb484 = (int *)0x009BB484;
 
 class Buffer { public:

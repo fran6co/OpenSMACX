@@ -1548,7 +1548,7 @@ static int *const g_0067f768 = (int *)0x0067F768;
 static int *const g_00696c58 = (int *)0x00696C58;
 static int *const g_00696c60 = (int *)0x00696C60;
 static int *const g_00696c68 = (int *)0x00696C68;
-static int *const &Language = (int *)0x009BC054;
+static int *const Language = (int *)0x009BC054;
 
 class Buffer { public:
     LPVOID vtable_;
