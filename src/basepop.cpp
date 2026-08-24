@@ -680,12 +680,10 @@ Return Value: n/a
 Status: Complete
 */
 void BasePop::UNK3(int a1) {
-    uint32_t *const flags =
-        reinterpret_cast<uint32_t *>(reinterpret_cast<uint8_t *>(this) + 0x20);
     if (a1) {
-        *flags |= 1U;
+        flags_ |= 1U;
     } else {
-        *flags &= ~1U;
+        flags_ &= ~1U;
     }
 }
 
@@ -707,12 +705,10 @@ Return Value: n/a
 Status: Complete
 */
 void BasePop::UNK4(int a1) {
-    uint32_t *const flags =
-        reinterpret_cast<uint32_t *>(reinterpret_cast<uint8_t *>(this) + 0x20);
     if (a1) {
-        *flags |= 2U;
+        flags_ |= 2U;
     } else {
-        *flags &= ~2U;
+        flags_ &= ~2U;
     }
 }
 

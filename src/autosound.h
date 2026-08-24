@@ -24,11 +24,13 @@
   * runtime-filled block at 0x009BC080 that FX::init zeroes before any
   * window exists.
   *
-  * WHAT THE FIELDS MEAN IS UNKNOWN TODAY. Recovered code only bulk-copies,
-  * resets, or zero-fills them - no per-field behaviour exists anywhere in
-  * the tree, so val_1_..val_37_ stay numbered rather than guessed. The
-  * names arrive when the settings/options writer is recovered; each field
-  * sits at offset 4*N - val_1_ is 0x04, val_37_ is 0x94.
+  * FIELD MAP (offset = 0x04 + 4*(N-1)). One member is anchored:
+  *   flags_   0x20  BasePop toggles bits 0/1 (UNK3/UNK4)
+  * The other 36 are bulk-copy/reset/zero only across the whole tree -
+  * no per-field behaviour exists anywhere yet, so they stay numbered
+  * rather than guessed. Their names arrive with the settings/options
+  * writer, still unrecovered. IDB independently numbered them identically
+  * (docs/recovery/idb-members.csv: val1..val37).
   */
 class AutoSound {
  public:
@@ -66,7 +68,11 @@ class AutoSound {
   int val_5_;
   int val_6_;
   int val_7_;
-  int val_8_;
+ protected:
+  // MEASURED: BasePop::UNK3/UNK4 set/clear bits 0/1 of this word
+  // (basepop.cpp) - the only per-field behaviour recovered anywhere.
+  uint32_t flags_;
+ private:
   int val_9_;
   int val_10_;
   int val_11_;
