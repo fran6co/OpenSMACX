@@ -116,6 +116,17 @@ HEADER_SHAPES = [
      re.compile(r"\b[A-Za-z_]\w*Vtable\w*\s*=\s*\(?\s*0x"),
      "the raw material every hand-installed vtable is built from. When the "
      "classes are real, these constants have nothing left to point at."),
+    # EVERY MENTION COUNTS, not just the declaration, because the name is
+    # the defect: `g_0069710c` tells the reader nothing at every one of its
+    # use sites. Renaming the declaration clears them all at once, which is
+    # what lets this ratchet fall in class-pass-sized steps. Homing imports
+    # bindings from the artifacts (6ee2b94a) - this ceiling is what forces
+    # it to import them NAMED.
+    ("anonymous fixed-address global", 187,
+     re.compile(r"\bg_00[0-9a-f]{4,6}\b"),
+     "a global named by its address instead of its meaning. Name it from "
+     "evidence - the image's .data value, the arithmetic identity, the "
+     "behaviour CSVs - in the class pass that touches it."),
 ]
 
 # THE SCAFFOLD RATCHET. Twelve files exist because a body had no real home or
