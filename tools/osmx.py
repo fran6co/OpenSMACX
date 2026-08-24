@@ -41,6 +41,41 @@ from decomp.asm import (AsmComparison, CompileFailed, build_command,
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
+# THE CLAIM FLOOR IS A FILE, NOT A RECOUNT. `check` recomputes the claim
+# count from the tree on every run, so "the floor is the number of claims"
+# only held against honest edits: delete a marker - or typo it, `ORIGINAl:`
+# reads as prose - and the claim did not fail, it CEASED TO EXIST, and the
+# recount just followed it down (measured 2026-08-23: both corruptions read
+# as 0 records, silently). This file is what the recount is compared TO.
+# Only `osmx record` and `osmx semantic` rewrite it, in the same breath as
+# the annotations; the gate fails on ANY mismatch, in either direction - a
+# live count above the floor is a BYTE_EXACT token something other than
+# `record` wrote. Collected agent patches can carry their worktree's floor
+# line; the coordinator's re-measure (`osmx record`, batch step 4) is what
+# reconciles it, exactly as it reconciles the markers themselves.
+FLOOR_PATH = REPO_ROOT / "src" / "CLAIM_FLOOR"
+
+
+def _read_floor() -> int | None:
+    """The persisted claim count, or None when the file is missing/garbled."""
+    try:
+        return int(FLOOR_PATH.read_text().split()[-1])
+    except (OSError, ValueError, IndexError):
+        return None
+
+
+def _refresh_floor(src: Path) -> int:
+    """Recount the tree and persist. Called ONLY by record/semantic, which
+    have just rewritten annotations - the gate itself never writes."""
+    live = sum(1 for r in read(src) if r.byte_exact or r.semantic)
+    FLOOR_PATH.write_text(
+        "# The claim floor. Maintained by `osmx record` / `osmx semantic`;\n"
+        "# `osmx check` fails when the tree's live claim count differs in\n"
+        "# EITHER direction. Never edit by hand - bank or demote through\n"
+        "# `osmx record`, which rewrites this file with what it measured.\n"
+        f"claims {live}\n")
+    return live
+
 # More matches than this and a listing is more use than a dump.
 SHOW_IN_FULL = 4
 
@@ -998,6 +1033,7 @@ def record(
 
     if updated:
         write_file(updated)
+        typer.echo(f"claim floor now {_refresh_floor(src):,}")
 
     for piece, result in results:
         gained = (not piece.byte_exact
@@ -1082,6 +1118,7 @@ def semantic(
                 typer.echo(f"{piece.address_hex}  withdrawn")
         if updated:
             write_file(updated)
+            typer.echo(f"claim floor now {_refresh_floor(src):,}")
         typer.echo(f"\n{len(updated)} annotation(s) rewritten")
         return
 
@@ -1126,6 +1163,7 @@ def semantic(
         updated.append(replace(piece, semantic=True))
     if updated:
         write_file(updated)
+        typer.echo(f"claim floor now {_refresh_floor(src):,}")
     typer.echo(f"\n{len(updated)} annotation(s) rewritten")
 
 
@@ -1645,6 +1683,29 @@ def check(
                     fg=typer.colors.RED)
         raise typer.Exit(2)
 
+    # THE FLOOR, before anything is measured: a claim that VANISHED never
+    # reaches the measure loop, so no verdict can catch it - only the count
+    # against the persisted ledger can. Both directions fail. Below: a marker
+    # was deleted or corrupted into prose (`ORIGINAl:` reads as a comment).
+    # Above: a claim token exists that `osmx record` never measured.
+    floor = _read_floor()
+    if floor is None:
+        floor_broken = (f"NO CLAIM FLOOR at {FLOOR_PATH.name} - "
+                        f"run `osmx record` on any address to write it")
+    elif claims < floor:
+        floor_broken = (f"CLAIMS FELL: {claims:,} live against a floor of "
+                        f"{floor:,} - a marker vanished or was edited into "
+                        f"prose; `git diff` names it, and a deliberate "
+                        f"demotion goes through `osmx record --demote`, "
+                        f"which rewrites the floor")
+    elif claims > floor:
+        floor_broken = (f"CLAIMS ABOVE THE FLOOR: {claims:,} live against "
+                        f"{floor:,} - a claim token was written by something "
+                        f"other than `osmx record`; measure it "
+                        f"(`osmx record <addr>`) or remove it")
+    else:
+        floor_broken = ""
+
     jobs = max(1, min(jobs or (os.cpu_count() or 1), WINE_CEILING))
 
     work = []
@@ -1779,6 +1840,8 @@ def check(
                     for r, v, n in items]
         typer.echo(json.dumps({
             "claims": claims,
+            "claim_floor": floor,
+            "floor_broken": floor_broken or None,
             "reproduced": claims - len(broken),
             "semantic": [{"address": r.address_hex, "name": r.name}
                          for r in semantic_held],
@@ -1994,9 +2057,12 @@ def check(
         for line in said[:-1][:4]:
             typer.secho(f"  {line}", fg=typer.colors.RED)
 
+    if floor_broken and not as_json:
+        typer.secho(f"  {floor_broken}", fg=typer.colors.RED, bold=True)
+
     code = (1 if regressed or dangling or unread or link.returncode
             or vtables.returncode or stale.returncode or symbols.returncode
-            or index.returncode
+            or index.returncode or floor_broken
             else 3 if unasked else 0)
     # THE VERDICT GOES IN THE OUTPUT, not only in the exit code. The brief has
     # told agents for a long time never to pipe this to `tail`, because `cmd |
@@ -2014,6 +2080,7 @@ def check(
                else "FAILED: an instruction names something that is not there" if stale.returncode
                else "FAILED: a marker names a symbol the build does not emit" if symbols.returncode
                else "FAILED: the address index grew" if index.returncode
+               else "FAILED: the claim floor does not match the tree" if floor_broken
                else "FAILED: regressed, dangling or unread claims" if code == 1
                else "OK, with unverifiable claims present" if code == 3
                else "CLEAN"),
