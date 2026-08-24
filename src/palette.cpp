@@ -797,6 +797,7 @@ int Palette::get_nearest_palette_index(unsigned char a1, unsigned char a2, unsig
 }
 
 // ORIGINAL: 0x005FF1A0 ?UNK5@Palette@@QAEHHHHH@Z 0x005FF1A0-0x005FF21C FILE
+// symbol    ?make_remap_table@Palette@@QAEHHHHH@Z
 // working copy - scaffold materialised by --work
 // size      124 bytes
 // prototype int (__thiscall ?UNK5@Palette@@QAEHHHHH@Z)(Palette* this, int, int, int, int)
@@ -805,7 +806,7 @@ int Palette::get_nearest_palette_index(unsigned char a1, unsigned char a2, unsig
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005FF470
 
-int Palette::UNK5(int a1, int a2, int a3, int a4) {
+int Palette::make_remap_table(int a1, int a2, int a3, int a4) {
     char *self = reinterpret_cast<char *>(this);
     if (a1 == 0 || a2 == 0) {
         return 0x10;
@@ -836,6 +837,7 @@ int Palette::UNK5(int a1, int a2, int a3, int a4) {
 }
 
 // ORIGINAL: 0x005FE5C0 ?UNK1@Palette@@QAEHHHH@Z 0x005FE5C0-0x005FE646 FILE
+// symbol    ?set_rgbquad@Palette@@QAEHHHH@Z
 // working copy - scaffold materialised by --work
 // size      134 bytes
 // prototype int (__thiscall ?UNK1@Palette@@QAEHHHH@Z)(Palette* this, int, int, int)
@@ -844,7 +846,7 @@ int Palette::UNK5(int a1, int a2, int a3, int a4) {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00625810
 
-int Palette::UNK1(int a1, int a2, int a3) {
+int Palette::set_rgbquad(int a1, int a2, int a3) {
     char *self = reinterpret_cast<char *>(this);
     if (a1 == 0) {
         return 3;
@@ -876,6 +878,7 @@ int Palette::UNK1(int a1, int a2, int a3) {
 }
 
 // ORIGINAL: 0x005FEE80 ?UNK4@Palette@@QAEHPAXHHHHH@Z 0x005FEE80-0x005FEFE7
+// symbol    ?make_blend_table@Palette@@QAEHPAXHHHHH@Z
 // TRIED: `int i` reused across the two fill loops is a VC6 for-scope leak (C2374), so the loop counters are named `i0`/`i1`. The blend loop's R/G/B channel math and the `get_nearest_palette_index` call are transcribed directly from the Ghidra pseudocode (the CONCAT31 casts there are just "pass the low byte", nothing else). 0.81 mnemonic similarity; first divergence at #3 is in the prologue stack-frame setup for the two 0x400-byte local copies, not chased further.
 // size      359 bytes
 // prototype int (__thiscall ?UNK4@Palette@@QAEHPAXHHHHH@Z)(Palette* this, void*, int, int, int, int, int)
@@ -886,7 +889,7 @@ int Palette::UNK1(int a1, int a2, int a3) {
 
 
 
-int Palette::UNK4(void *a1, int a2, int a3, int a4, int a5, int a6) {
+int Palette::make_blend_table(void *a1, int a2, int a3, int a4, int a5, int a6) {
     if (a1 == 0) {
         return 0x10;
     }
@@ -1020,6 +1023,7 @@ int Palette::create_table_from_color(int a1, unsigned char * a2, int a3, int a4,
 }
 
 // ORIGINAL: 0x005FF220 ?UNK6@Palette@@QAEHHHH@Z 0x005FF220-0x005FF277 FILE
+// symbol    ?map_to_palette@Palette@@QAEHHHH@Z
 // size      87 bytes
 // prototype int (__thiscall ?UNK6@Palette@@QAEHHHH@Z)(Palette* this, int, int, int)
 // callers   0   call targets   1
@@ -1081,7 +1085,7 @@ int Palette::create_table_from_color(int a1, unsigned char * a2, int a3, int a4,
 //    near miss from a wrong body.
 
 
-int Palette::UNK6(int a1, int a2, int a3) {
+int Palette::map_to_palette(int a1, int a2, int a3) {
     if (a1 == 0) {
         return 0x10;
     }
@@ -1159,6 +1163,7 @@ void __cdecl Palette::timer_callback(int a1, int a2) {
 }
 
 // ORIGINAL: 0x005FF930 ?UNK8@Palette@@QAEHHHHHH@Z 0x005FF930-0x005FFB0B
+// symbol    ?fade_to@Palette@@QAEHHHHHH@Z
 // TRIED: the third RGB channel is written through a pair of pointers precomputed once before the loop (`stackA_adj`/`stackB_adj` plus the destination pointer) rather than a fresh `k*4+2` index each iteration; kept as a direct index into the two 1024-byte stack copies, which is semantically the same value. `seed_` at offset 0x400 (right after `field_3FC_`) matches the reseed loop exactly. Landing the closest control-flow- faithful form (divergence starts at instruction #2, on the `this`-copy prologue).
 // size      475 bytes
 // prototype int (__thiscall ?UNK8@Palette@@QAEHHHHHH@Z)(Palette* this, void*, UINT iStartIndex, UINT cEntries, int, int)
@@ -1170,7 +1175,7 @@ void __cdecl Palette::timer_callback(int a1, int a2) {
 
 
 
-int Palette::UNK8(int a1, int a2, int a3, int a4, int a5) {
+int Palette::fade_to(int a1, int a2, int a3, int a4, int a5) {
   if (PaletteUsesSystemColours != 0) {
     return 0;
   }
@@ -1317,6 +1322,7 @@ int Palette::init_cycle(int a1, int a2, int a3, unsigned long a4) {
 }
 
 // ORIGINAL: 0x005FFB10 ?UNK9@Palette@@QAEHHHHHH@Z 0x005FFB10-0x005FFD7F FILE
+// symbol    ?fade_to_entry@Palette@@QAEHHHHHH@Z
 // TRIED: flipping the outer if/else polarity to test BufferDirectDraw != nullptr first (matching the disasm's fall-through order literally) moved the divergence from #13 (a lone je/jne polarity swap) to #0 (a different prologue entirely - no `sub esp,0x428`), so the `== 0`-first form below is the better body. Full control flow, field offsets and the interpolation formula (backup*stepsRemaining + target*progressCounter)/a4 were hand-traced from the raw disasm stack-offset arithmetic, not from Ghidra's decompile, which mis-simplifies the backup-buffer pointer trick.
 // working copy - scaffold materialised by --work
 // size      623 bytes
@@ -1327,7 +1333,7 @@ int Palette::init_cycle(int a1, int a2, int a3, unsigned long a4) {
 // calls     0x005DE8F0 0x00625810 0x00645930
 // indirect  0x005FFB82 0x005FFBCC 0x005FFC18 0x005FFD05 0x005FFD0B 0x005FFD1A
 
-int Palette::UNK9(int a1, int a2, int a3, int a4, int a5) {
+int Palette::fade_to_entry(int a1, int a2, int a3, int a4, int a5) {
     if (PaletteInitialized == nullptr) {
         return 7;
     }
@@ -1657,6 +1663,7 @@ void Palette::reseed() {
 }
 
 // ORIGINAL: 0x005FE900 ?UNK2@Palette@@QAEXH@Z 0x005FE900-0x005FE941 FILE BYTE_EXACT
+// symbol    ?stop_animation@Palette@@QAEXH@Z
 // size      65 bytes
 // prototype void (__thiscall ?UNK2@Palette@@QAEXH@Z)(Palette* this, int)
 // callers   0   call targets   1
@@ -1717,7 +1724,7 @@ void Palette::reseed() {
 //    near miss from a wrong body.
 
 
-void Palette::UNK2(int a1) {
+void Palette::stop_animation(int a1) {
     char *self = reinterpret_cast<char *>(this);
     int i;
     for (i = 0; i < 5; i++) {

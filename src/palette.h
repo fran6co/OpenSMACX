@@ -44,7 +44,7 @@ class Palette {
 
  public:
   // homed from 005fe900.cpp
-  void UNK2(int a1);
+  void stop_animation(int a1);
 
  public:
   // homed from 005fe6d0.cpp
@@ -56,7 +56,7 @@ class Palette {
 
  public:
   // homed from 005ffb10.cpp
-  int UNK9(int a1, int a2, int a3, int a4, int a5);
+  int fade_to_entry(int a1, int a2, int a3, int a4, int a5);
 
  public:
   // homed from 005fe700.cpp
@@ -64,7 +64,7 @@ class Palette {
 
  public:
   // homed from 005ff930.cpp
-  int UNK8(int a1, int a2, int a3, int a4, int a5);
+  int fade_to(int a1, int a2, int a3, int a4, int a5);
 
  public:
   // homed from 005fead0.cpp
@@ -72,7 +72,7 @@ class Palette {
 
  public:
   // homed from 005ff220.cpp
-  int UNK6(int a1, int a2, int a3);
+  int map_to_palette(int a1, int a2, int a3);
 
  public:
   // homed from 005feff0.cpp
@@ -80,15 +80,15 @@ class Palette {
 
  public:
   // homed from 005fee80.cpp
-  int UNK4(void *a1, int a2, int a3, int a4, int a5, int a6);
+  int make_blend_table(void *a1, int a2, int a3, int a4, int a5, int a6);
 
  public:
   // homed from 005fe5c0.cpp
-  int UNK1(int a1, int a2, int a3);
+  int set_rgbquad(int a1, int a2, int a3);
 
  public:
   // homed from 005ff1a0.cpp
-  int UNK5(int a1, int a2, int a3, int a4);
+  int make_remap_table(int a1, int a2, int a3, int a4);
 
  public:
   // homed from 005ff470.cpp
