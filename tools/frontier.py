@@ -38,6 +38,7 @@ import hashlib
 import json
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -330,21 +331,41 @@ def by_class(records, order, built, visible) -> None:
             continue
         owner_files[owner_of(record)].add(record.path.name)
 
+    # SEMANTIC DEBT per file, from the class_debt census - the shapes a body
+    # can carry while measuring BYTE_EXACT (UNK names, function addresses in
+    # data clothes, orphan redirects, pointer-as-int). A class is not done
+    # while its files carry any: this column is what re-opens a class the
+    # byte ratchet already called finished.
+    debt_by_file: dict = collections.Counter()
+    try:
+        debt_json = subprocess.run(
+            [sys.executable, str(REPO_ROOT / "tools" / "class_debt.py"),
+             "--json"], cwd=REPO_ROOT, capture_output=True, text=True)
+        for _shape, per_file in json.loads(debt_json.stdout).items():
+            for name, n in per_file.items():
+                debt_by_file[name] += n
+    except (ValueError, OSError):
+        print("  (class_debt census unavailable - debt column reads 0)",
+              file=sys.stderr)
+
     print(f"{'first':>5}  {'owner':22s} {'reach':>5} {'built':>5} "
-          f"{'artif':>5} {'exact':>9} {'cw':>4} {'scaf':>4}  declaration")
+          f"{'artif':>5} {'exact':>9} {'cw':>4} {'scaf':>4} {'debt':>4}"
+          f"  declaration")
     for owner in rows:
         slot = queue[owner]
         every = by_owner[owner]
         exact = sum(1 for r in every if r.byte_exact or r.semantic)
         cw = sum(sites.get(name, 0) for name in owner_files[owner])
         scaff = sum(1 for r in every if r.path.name in SCAFFOLD_FILES)
+        debt = sum(debt_by_file.get(name, 0) for name in owner_files[owner])
         decl = sorted({name for name, text in header_texts.items()
                        if re.search(rf"\b(?:class|struct)\s+"
                                     rf"{re.escape(owner)}\b", text)})
         where = ",".join(decl[:2]) + ("…" if len(decl) > 2 else "")
         print(f"{first_seen[owner]:>5}  {owner:22.22s} {slot['reach']:>5} "
               f"{slot['built']:>5} {slot['artifact']:>5} "
-              f"{exact:>4}/{len(every):<4} {cw:>4} {scaff:>4}  {where}")
+              f"{exact:>4}/{len(every):<4} {cw:>4} {scaff:>4} {debt:>4}"
+              f"  {where}")
 
     hyp_only = [owner for owner in rows
                 if "hypothesis_layouts.h" in
@@ -355,7 +376,7 @@ def by_class(records, order, built, visible) -> None:
                          if re.search(rf"\b(?:class|struct)\s+"
                                       f"{re.escape(owner)}\b", text)}) == 1]
     print(f"\n{len(rows)} classes on the frontier; done = exact/total complete"
-          f" AND cw 0 AND scaf 0.")
+          f" AND cw 0 AND scaf 0 AND debt 0.")
     # A ZERO HERE IS TWO ANSWERS, so it carries its denominator. `thunkN_`
     # owners are the fake classes the adjustor shims dispatch through, and
     # they dissolve when their real bases go virtual - but the number of them

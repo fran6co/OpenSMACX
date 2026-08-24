@@ -64,6 +64,38 @@ Worktree isolation as always. The agent works top-down:
 Two families sharing a header go to the SAME batch or are sequenced; parallel
 agents editing one header is how declarations silently vanish.
 
+## 2b. The semantic-fidelity pass: drive the class's `debt` to 0
+
+`uv run tools/class_debt.py` counts what a body can carry while measuring
+BYTE_EXACT - the bytes cannot see any of it, which is why palette.cpp
+measured clean while carrying all of it (2026-08-24). `--by-class` shows the
+per-class total in the `debt` column, and **a class is not done above 0**.
+In the same worktree, same agent, after the declarations land:
+
+1. **Name every `UNKn`** from evidence: callers, the image's data,
+   `docs/recovery/behaviour-member-names.csv`. A rename changes the mangled
+   symbol - update the `// symbol` fact (the gated `marker_symbols.py` holds
+   it to what the build emits) and re-measure the body. No `UNKn` survives
+   the class's pass.
+2. **Fix the types the bytes cannot see.** `int` returning
+   `reinterpret_cast<int>(this)` is a pointer; `__as` is `operator=` (the
+   census name is a guess - ask `marker_symbols.py` what the build emits).
+   Re-measure every touched body: a type change that moves bytes is a
+   finding, not a formality.
+3. **Delete the class's orphan redirects** - `*_redirect` functions whose
+   only references are their own declaration and definition. The gate's
+   link step referees; if the link breaks, something non-textual needed it,
+   which is a finding to record, not a reason to keep dead code quietly.
+4. **Convert function-address bindings**: a cast like
+   `(void *)0x005FEAD0` whose address lands inside a catalogued function is
+   a function reference in data clothes. Declare the callee (forward in
+   `pending_bodies.cpp` if unpromoted) and delete the global.
+5. **Claim every lowered ceiling** in `class_debt.py` in the same commit -
+   the gate fails on slack.
+
+The claim floor must not move through any of this: renames and type fixes
+re-measure to the same claims under corrected names, never to fewer.
+
 ## 3. Re-measure WIDE
 
 After landing, the coordinator measures beyond the family itself:
