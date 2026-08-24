@@ -26,6 +26,7 @@
 #include "sounddevice.h"
 #include "menu.h"
 #include "popup.h"   // pop_caption_title, for DDInit::report_error
+#include "basepop.h"  // BasePopScreenWidth, for Win::set_bubble_text
 #include <ddraw.h>  // IDirectDrawSurface::GetDC / ReleaseDC in the hdc pair
 // `DirectDrawCreate` itself (DDInit::init) is the one symbol this tree needs
 // out of ddraw.lib rather than dxguid.lib's IIDs; CMakeLists.txt links
@@ -34,7 +35,64 @@
 #pragma comment(lib, "ddraw.lib")
 
 const uint32_t WinPrimaryVtable = 0x0066FDD0;
-const uint32_t WinSecondaryVtable = 0x0066FF30;
+
+// ORIGINAL: 0x005F8770 sub_5f8770 0x005F8770-0x005F87F6 FILE
+// symbol    ??_GWinNodeList@@UAEPAXI@Z
+// homed from 005f8770.cpp: the scalar deleting destructor
+// the 0xC8 member's vtable (0x0066FF30) points at. `WinNodeList` is this
+// tree's own name for the class - nothing in the image names it - but the
+// mangle SHAPE (`??_G<Class>@@UAEPAXI@Z`, a public virtual __thiscall
+// returning `void *`, taking one flag argument) is exactly what a class
+// with a virtual destructor and no other virtuals emits for its only
+// vtable slot, matching what this address's own bytes do.
+// TRIED: the body below, transcribed field-for-field from this address's
+// own bytes. This build's `??_GWinNodeList` does NOT inline the walk -
+// under /GX it emits an SEH frame (`mov dword ptr [ebp-4], 0xCCCCCCCC`
+// cookie, funclets) and tail-CALLS the separate `??1WinNodeList@@UAE@XZ`
+// complete-object destructor instead, where the image is ONE function with
+// no such split. Plateau at 0/54 MISMATCH; not chased further - this
+// address is a bonus beyond the 0xC8 member fix itself.
+// size      134 bytes
+// prototype void *(__thiscall ??_GWinNodeList@@UAEPAXI@Z)(WinNodeList *this, unsigned int)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00644EF2 0x0064557F
+
+WinNodeList::~WinNodeList() {
+    // IMAGE ORDER: the head is read before the vfptr-restore that every
+    // scalar deleting destructor opens with, matching `Win::~Win()`
+    // performing the same walk inline. `external_` guards the whole loop -
+    // nonzero means this list does not own its nodes.
+    void *node = head_;
+    if (node != 0) {
+        if (external_ == 0 && count_ > 0) {
+            int i = 0;
+            do {
+                void *next = *reinterpret_cast<void **>(
+                    reinterpret_cast<char *>(node) + 0xC);
+                current_ = next;
+                void *payload = *reinterpret_cast<void **>(
+                    reinterpret_cast<char *>(node) + 8);
+                if (payload != 0) {
+                    std::free(payload);
+                }
+                *reinterpret_cast<void **>(
+                    reinterpret_cast<char *>(head_) + 8) = 0;
+                if (head_ != 0) {
+                    std::free(head_);
+                }
+                node = current_;
+                head_ = node;
+                ++i;
+            } while (i < count_);
+        }
+        head_ = 0;
+        tail_ = 0;
+        count_ = 0;
+    }
+    tail_ = 0;
+}
 
 /*
 Purpose: Construct a Win from its AutoSound subobject and the process window
@@ -52,20 +110,15 @@ Purpose: Construct a Win from its AutoSound subobject and the process window
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
-// THE FIVE 0xC8 STORES ARE A MEMBER-INITIALISER LIST, not body
-// statements. MSVC assigns the vfptr AFTER the list, and the image
-// stores Win's vtable at 0x005EB402 - after the 0xC8..0xD8 writes,
-// not immediately after the AutoSound base constructor. Written in
-// the body they would follow the vfptr and the order would be wrong.
-// The list runs in DECLARATION order regardless of how it is spelled,
-// and declaration order here already matches the image.
-Win::Win()
-    : field_C8_(WinSecondaryVtable),
-      field_CC_(0),
-      field_D0_(0),
-      field_D4_(0),
-      field_D8_(0),
-      heap_head_(0) {
+// THE FIVE 0xC8 STORES ARE `list_`'s OWN IMPLICIT CONSTRUCTION, not body
+// statements. `list_` (a `WinNodeList`) is a real member with no entry in
+// this constructor's initialiser list, so the compiler constructs it
+// implicitly - vfptr first, then its four remaining fields in declaration
+// order - BEFORE this body runs at all. That is exactly the image's own
+// order: 0x005EB3DA installs `list_`'s vtable, 0x005EB3E4-0x005EB3FC zero
+// its fields, and only then does 0x005EB402 install Win's OWN vtable at
+// offset 0 - the first statement of this body below.
+Win::Win() {
     uint32_t *const object =
         reinterpret_cast<uint32_t *>(this);
     const uint32_t *const fixed = WinStaticDefaults;
@@ -159,10 +212,6 @@ Win::Win()
     object[0x1A0 / 4] = 2;
 }
 
-Win *__fastcall win_construct_redirect(Win *self, void *) {
-    new (self) Win();
-    return self;
-}
 
 namespace {
 
@@ -372,9 +421,6 @@ int Win::on_query_new_palette() {
     return 1;
 }
 
-int __fastcall win_on_query_new_palette_redirect(Win *self, void *) {
-    return self->on_query_new_palette();
-}
 
 /*
 Purpose: Read the vertical scroll bar's current position.
@@ -395,9 +441,6 @@ int Win::get_vert_pos() {
     return scroll_vert_ ? scroll_vert_->position_ : 0;
 }
 
-int __fastcall win_get_vert_pos_redirect(Win *self, void *) {
-    return self->get_vert_pos();
-}
 
 /*
 Purpose: Read the horizontal scroll bar's current position.
@@ -418,9 +461,6 @@ int Win::get_horz_pos() {
     return scroll_horz_ ? scroll_horz_->position_ : 0;
 }
 
-int __fastcall win_get_horz_pos_redirect(Win *self, void *) {
-    return self->get_horz_pos();
-}
 
 /*
 Purpose: Set vertical scrollbar paging when a scrollbar is attached.
@@ -458,26 +498,10 @@ void Win::set_horz_paging(int paging) {
     }
 }
 
-int __fastcall win_move_redirect(Win *self, void *, int x, int y) {
-    return self->move(x, y);
-}
 
-int __fastcall win_is_visible_redirect(Win *self, void *) {
-    return self->is_visible();
-}
 
-void __fastcall win_client_to_screen_redirect(
-        Win *self, void *, int *x, int *y) {
-    self->client_to_screen(x, y);
-}
 
-void __fastcall win_set_vert_paging_redirect(Win *self, void *, int paging) {
-    self->set_vert_paging(paging);
-}
 
-void __fastcall win_set_horz_paging_redirect(Win *self, void *, int paging) {
-    self->set_horz_paging(paging);
-}
 
 /*
 Purpose: Determine whether a point is inside a rectangle using Win32 edge semantics.
@@ -621,15 +645,16 @@ int __stdcall rect_center(RECT *rect, int *x, int *y) {
     return center_y;
 }
 
-int __fastcall tutwin_rect_center_redirect(
-        void *, void *, RECT *rect, int *x, int *y) {
-    return rect_center(rect, x, y);
-}
 
 /*
 Purpose: Report whether this window holds the dialog focus, either directly or
          as its parent's current focus target.
 // ORIGINAL: 0x005F2CA0 ?is_dialog_focus@Win@@QAEHXZ 0x005F2CA0-0x005F2CDF
+// TRIED: a ternary and this if/else statement compile IDENTICALLY here (both
+// 16/21, 0.857 similar, best across all ten flag sets) - the divergence is
+// the guard's own polarity (`je`/zero-branch-jumps-ahead vs this tree's
+// `jne`/compute-branch-jumps-ahead) and neither source shape reaches it.
+// Plateau at 16/21 MISMATCH.
 // size      63 bytes
 // prototype int (__thiscall ?is_dialog_focus@Win@@QAEHXZ)(Win* this)
 // callers   7   call targets   0
@@ -647,10 +672,15 @@ int Win::is_dialog_focus() {
     if (parent) {
         // An empty focus list reads as no focus rather than dereferencing the
         // list pointer, which the legacy body leaves untouched in that case.
-        const uintptr_t focused = (parent->field_CC_ == 0)
-            ? 0U
-            : *reinterpret_cast<const uintptr_t *>(
-                  static_cast<uintptr_t>(parent->field_D0_) + 4);
+        // `list_.current_` is the top-of-stack node; its own +0x4 holds the
+        // `Win *` that currently has focus (see `class WinNodeList`, win.h).
+        uintptr_t focused;
+        if (parent->list_.head_ == 0) {
+            focused = 0U;
+        } else {
+            focused = *reinterpret_cast<const uintptr_t *>(
+                reinterpret_cast<char *>(parent->list_.current_) + 4);
+        }
         if (focused == reinterpret_cast<uintptr_t>(this)) {
             return 1;
         }
@@ -771,13 +801,7 @@ void Win::release_hdc() {
     WinSharedHdc = nullptr;
 }
 
-HDC __cdecl win_get_hdc_redirect() {
-    return Win::get_hdc();
-}
 
-void __cdecl win_release_hdc_redirect() {
-    Win::release_hdc();
-}
 
 
 /*
@@ -815,9 +839,6 @@ int Win::set_cursor(int name) {
     return 0;
 }
 
-int __fastcall win_set_cursor_redirect(Win *self, void *, int name) {
-    return self->set_cursor(name);
-}
 
 
 // The globals `Win::flip` reaches, all of them past `.data`'s stored bytes
@@ -1108,9 +1129,6 @@ void Win::clear_bubble_text() {
     Win::flip(WinBubbleRect);
 }
 
-void __cdecl win_clear_bubble_text_redirect() {
-    Win::clear_bubble_text();
-}
 
 /*
 Purpose: Legacy stub; the original body returns 0 without reading its
@@ -1128,10 +1146,6 @@ int Win::UNK1(int, int, int, int, int, int, int, int, int) {
     return 0;
 }
 
-int __fastcall win_unk1_redirect(
-        Win *self, void *, int a, int b, int c, int d, int e, int f, int g, int h, int i) {
-    return self->UNK1(a, b, c, d, e, f, g, h, i);
-}
 
 /*
 Purpose: Legacy stub; the original body returns 0 without reading its
@@ -1149,10 +1163,6 @@ int Win::UNK5() {
     return 0;
 }
 
-int __fastcall win_unk5_redirect(
-        Win *self, void *) {
-    return self->UNK5();
-}
 
 /*
 Purpose: Legacy stub; the original body returns 0 without reading its
@@ -1170,10 +1180,6 @@ int Win::UNK6(int) {
     return 0;
 }
 
-int __fastcall win_unk6_redirect(
-        Win *self, void *, int a) {
-    return self->UNK6(a);
-}
 
 /*
 Purpose: Legacy stub; the original body returns 1 without reading its
@@ -1191,10 +1197,6 @@ int Win::on_set_cursor(void *, unsigned int, unsigned int) {
     return 1;
 }
 
-int __fastcall win_on_set_cursor_redirect(
-        Win *self, void *, void *a, unsigned int b, unsigned int c) {
-    return self->on_set_cursor(a, b, c);
-}
 
 
 /*
@@ -1213,9 +1215,6 @@ void Win::set_def_focus(int focus) {
     *WinDefaultFocus = focus;
 }
 
-void __cdecl win_set_def_focus_redirect(int focus) {
-    Win::set_def_focus(focus);
-}
 
 /*
 Purpose: Publish a value into both attached scrollbars' first shared slot.
@@ -1259,13 +1258,7 @@ void Win::UNK9(int value) {
     }
 }
 
-void __fastcall win_unk8_redirect(Win *self, void *, int value) {
-    self->UNK8(value);
-}
 
-void __fastcall win_unk9_redirect(Win *self, void *, int value) {
-    self->UNK9(value);
-}
 
 /*
 Purpose: Reset the window clip; the legacy implementation is a bare return.
@@ -1282,9 +1275,6 @@ Status: Complete
 void Win::reset_window_clip() {
 }
 
-void __fastcall win_reset_window_clip_redirect(Win *self, void *) {
-    self->reset_window_clip();
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -1301,9 +1291,6 @@ Status: Complete
 void Win::on_move(int, int) {
 }
 
-void __fastcall win_on_move_redirect(Win *self, void *, int a1, int a2) {
-    self->on_move(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -1320,9 +1307,6 @@ Status: Complete
 void Win::on_size(unsigned int, int, int) {
 }
 
-void __fastcall win_on_size_redirect(Win *self, void *, unsigned int a1, int a2, int a3) {
-    self->on_size(a1, a2, a3);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -1339,9 +1323,6 @@ Status: Complete
 void Win::on_size_nc(unsigned int, int, int) {
 }
 
-void __fastcall win_on_size_nc_redirect(Win *self, void *, unsigned int a1, int a2, int a3) {
-    self->on_size_nc(a1, a2, a3);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -1364,9 +1345,6 @@ int Win::on_sys_command(unsigned int, int, int) {
 }
 #pragma warning(pop)
 
-int __fastcall win_on_sys_command_redirect(Win *self, void *, unsigned int a1, int a2, int a3) {
-    return self->on_sys_command(a1, a2, a3);
-}
 
 // The active palette lives at a fixed address; the same seam basebutton.cpp
 // uses. Its most-recently-set window generation counter is at 0x400.
@@ -1400,9 +1378,6 @@ void Win::sync_palette() {
     field_184_ = generation;
 }
 
-void __fastcall win_sync_palette_redirect(Win *self, void *) {
-    self->sync_palette();
-}
 
 /*
 Purpose: Forward a scrollbar position to the vertical Scroll the window owns,
@@ -1480,21 +1455,9 @@ void Win::set_horz_range(int minimum, int maximum) {
     }
 }
 
-void __fastcall win_set_vert_pos_redirect(Win *self, void *, int position) {
-    self->set_vert_pos(position);
-}
 
-void __fastcall win_set_horz_pos_redirect(Win *self, void *, int position) {
-    self->set_horz_pos(position);
-}
 
-void __fastcall win_set_vert_range_redirect(Win *self, void *, int minimum, int maximum) {
-    self->set_vert_range(minimum, maximum);
-}
 
-void __fastcall win_set_horz_range_redirect(Win *self, void *, int minimum, int maximum) {
-    self->set_horz_range(minimum, maximum);
-}
 
 /*
 Purpose: Window cursor-set hook; the legacy implementation returns 1 to report
@@ -1514,9 +1477,6 @@ int Win::OnSetCursor(void *, void *, unsigned int, unsigned int) {
     return 1;
 }
 
-int __cdecl win_onsetcursor_redirect(void *a1, void *a2, unsigned int a3, unsigned int a4) {
-    return Win::OnSetCursor(a1, a2, a3, a4);
-}
 
 /*
 Purpose: Report whether a value is present in the window's id table - the
@@ -1549,9 +1509,6 @@ int Win::UNK3(int value) {
     return 0;
 }
 
-int __fastcall win_unk3_redirect(Win *self, void *, int value) {
-    return self->UNK3(value);
-}
 
 /*
 Purpose: Report whether a window is anywhere below this one in the child
@@ -1635,9 +1592,6 @@ int Win::is_descendant(Win *candidate) {
     }
 }
 
-int __fastcall win_is_descendant_redirect(Win *self, void *, Win *candidate) {
-    return self->is_descendant(candidate);
-}
 
 /*
 // ORIGINAL: 0x005F8530 ?on_mousewheel_down_vert@Win@@QAEXH@Z 0x005F8530-0x005F8547 BYTE_EXACT
@@ -3285,6 +3239,7 @@ void Win::set_mouse_pos(int a1, int a2) {
 static int *const g_00669284 = (int *)0x00669284;
 
 // ORIGINAL: 0x005EC8A0 ?get_mouse_pos@Win@@QAEXPAHPAH@Z 0x005EC8A0-0x005EC952 FILE
+// symbol    ?get_mouse_pos@Win@@QAEXPAH0@Z
 // TRIED: tagPOINT (undeclared, C2065); reaches #38/~178B with local Pt struct + GetCursorPos via g_00669284 fn-ptr, outer_rect_/client_rect_ members
 // working copy - scaffold materialised by --work
 // size      178 bytes
@@ -3488,7 +3443,12 @@ int Win::UNK4() {
 }
 
 // ORIGINAL: 0x005ECFE0 ?client_to_screen@Win@@QAEXPAURECT@@@Z 0x005ECFE0-0x005ED094 FILE
+// symbol    ?client_to_screen@Win@@QAEXPAUtagRECT@@@Z
 // TRIED: owner->client_to_screen(&x,&y) via the declared sibling overload; struct-field += for the RECT update. First divergence #10 add/push, rebuilt 6 bytes shorter.
+// TRIED: named-member form (client_rect_/outer_rect_/iFlags_/win_parent_)
+// in place of the `reinterpret_cast<char *>(this)` raw-offset form - same
+// score either way (9/56, 0.885 similar, best of ten flag sets); kept for
+// the class_debt fix, not a byte-exactness gain. Plateau MISMATCH.
 // working copy - scaffold materialised by --work
 // size      180 bytes
 // prototype void (__thiscall ?client_to_screen@Win@@QAEXPAURECT@@@Z)(Win* this, RECT*)
@@ -3497,30 +3457,28 @@ int Win::UNK4() {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005ED240
 
-void Win::client_to_screen(RECT * a1) {
-    char *self = reinterpret_cast<char *>(this);
-    if (a1 == 0) {
+void Win::client_to_screen(RECT * rect) {
+    if (rect == 0) {
         return;
     }
-    int xAdj = *reinterpret_cast<int *>(self + 0x14c) + *reinterpret_cast<int *>(self + 0x13c);
-    int yAdj = *reinterpret_cast<int *>(self + 0x150) + *reinterpret_cast<int *>(self + 0x140);
-    if ((*reinterpret_cast<unsigned char *>(self + 0x98) & 0x20) != 0 &&
-        *reinterpret_cast<int *>(self + 0xc4) != 0) {
-        Win *owner = *reinterpret_cast<Win **>(self + 0xc4);
+    int xAdj = client_rect_.left + outer_rect_.left;
+    int yAdj = client_rect_.top + outer_rect_.top;
+    if ((iFlags_ & 0x20U) != 0 && win_parent_ != 0) {
+        Win *const owner = win_parent_;
         owner->client_to_screen(&xAdj, &yAdj);
-        if ((*reinterpret_cast<unsigned int *>(self + 0x98) & 0x8000) != 0) {
-            char *ownerSelf = reinterpret_cast<char *>(owner);
-            xAdj -= *reinterpret_cast<int *>(ownerSelf + 0x13c);
-            yAdj -= *reinterpret_cast<int *>(ownerSelf + 0x140);
+        if ((iFlags_ & 0x8000U) != 0) {
+            xAdj -= owner->outer_rect_.left;
+            yAdj -= owner->outer_rect_.top;
         }
     }
-    a1->left += xAdj;
-    a1->right += xAdj;
-    a1->top += yAdj;
-    a1->bottom += yAdj;
+    rect->left += xAdj;
+    rect->right += xAdj;
+    rect->top += yAdj;
+    rect->bottom += yAdj;
 }
 
 // ORIGINAL: 0x005ED0A0 ?nonscreen_to_client@Win@@QAEXPAURECT@@@Z 0x005ED0A0-0x005ED16A FILE
+// symbol    ?nonscreen_to_client@Win@@QAEXPAUtagRECT@@@Z
 // working copy - scaffold materialised by --work
 // size      202 bytes
 // prototype void (__thiscall ?nonscreen_to_client@Win@@QAEXPAURECT@@@Z)(Win* this, RECT*)
@@ -3550,6 +3508,7 @@ void Win::nonscreen_to_client(RECT * a1) {
 }
 
 // ORIGINAL: 0x005ED170 ?nonclient_to_screen@Win@@QAEXPAURECT@@@Z 0x005ED170-0x005ED236 FILE
+// symbol    ?nonclient_to_screen@Win@@QAEXPAUtagRECT@@@Z
 // TRIED: byte-exact - 97.6% mnemonic similarity; the remaining divergence is the entry frame reserving a scratch stack slot via `push ecx` (one extra local-sized push before esi=ecx) that our two-int-local (x,y) version doesn't trigger the same way.
 // working copy - scaffold materialised by --work
 // size      198 bytes
@@ -3642,6 +3601,7 @@ static int *const g_006690cc = (int *)0x006690CC;
 static int *const g_00669294 = (int *)0x00669294;
 
 // ORIGINAL: 0x005F54E0 ?on_paint@Win@@QAEXPAURECT@@@Z 0x005F54E0-0x005F5803 FILE
+// symbol    ?on_paint@Win@@QAEXPAUtagRECT@@@Z
 // size      803 bytes
 // prototype void (__thiscall ?on_paint@Win@@QAEXPAURECT@@@Z)(Win* this, RECT* lprc)
 // callers   0   call targets   2
@@ -3738,5 +3698,238 @@ int Win::on_nc_hittest(int a1, int a2) {
     return 2;
   }
   return 0;
+}
+
+// ORIGINAL: 0x005F1150 ?OnPaletteChanged@Win@@QAAHPAXPAX@Z 0x005F1150-0x005F122B FILE BYTE_EXACT
+// symbol    ?OnPaletteChanged@Win@@SAHPAX0@Z
+// LEVER: the same `WinHdcRefCount`/`WinSharedHdc`/`DirectDrawSurface` globals
+// and `DirectDrawSurface->GetDC/ReleaseDC` idiom `Win::get_hdc`/`release_hdc`
+// already use (both are BYTE_EXACT), plus `BufferDirectDraw` and
+// `PaletteInitialized` for the two remaining fixed slots, and plain
+// `SelectPalette`/`RealizePalette`/`GetDC`/`ReleaseDC` calls in place of the
+// six `g_`-named function-pointer bindings - every one compiles to the same
+// `call dword ptr [import]` or `call [vtable+N]` the image emits.
+// `xor eax,eax` anywhere), so despite the `int` in the mangled name the body
+// never manufactures a return value except at the one distinct early `ret`
+// (0x5F120C), where returning the vtable slot's own `long` result reproduces
+// the "value already sitting in eax" shape instead of adding one.
+// size      219 bytes
+// prototype int (__cdecl ?OnPaletteChanged@Win@@QAAHPAXPAX@Z)(HWND hWnd, LPARAM lParam)
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005F1194 0x005F11A5 0x005F11CC 0x005F11D9 0x005F11FF 0x005F121A
+
+int __cdecl Win::OnPaletteChanged(void * hwnd, void * lparam) {
+    if (hwnd != lparam && BufferDirectDraw == nullptr) {
+        if (WinHdcRefCount != 0) {
+            ++WinHdcRefCount;
+        } else {
+            if (DirectDrawSurface != nullptr) {
+                DirectDrawSurface->GetDC(&WinSharedHdc);
+            } else {
+                WinSharedHdc = GetDC(HandleMain);
+            }
+            if (WinSharedHdc != nullptr) {
+                WinHdcRefCount = 1;
+            }
+        }
+        if (WinSharedHdc != nullptr) {
+            SelectPalette(WinSharedHdc, PaletteInitialized, FALSE);
+            RealizePalette(WinSharedHdc);
+
+            --WinHdcRefCount;
+            if (WinHdcRefCount == 0) {
+                if (DirectDrawSurface != nullptr) {
+                    long result = DirectDrawSurface->ReleaseDC(WinSharedHdc);
+                    WinSharedHdc = nullptr;
+                    return static_cast<int>(result);
+                }
+                ReleaseDC(HandleMain, WinSharedHdc);
+                WinSharedHdc = nullptr;
+            }
+        }
+    }
+}
+
+// The two icons `redo_caption_buttons` swaps into the zoom button's own
+// +0xAB8 field, keyed by `IsZoomed()`. INFERRED names: the icon shown when
+// NOT zoomed is the action still available (maximize), and vice versa.
+static int *const WinMaximizeIcon = (int *)0x009B7B04;
+static int *const WinRestoreIcon = (int *)0x009B7B08;
+
+// ORIGINAL: 0x005F2760 ?redo_caption_buttons@Win@@QAEXXZ 0x005F2760-0x005F2822 FILE
+// LEVER: the image's `call rel32` to `Win::move` takes its RECEIVER from
+// `[edi+0xe4/0xe8/0xec]` (the button pointer), not `edi` (`this`) - the
+// scaffold's bare `move(w, y)` called this window's own move instead of
+// the button's, a wrong-receiver defect independent of the `this`-pun.
+// size      194 bytes
+// prototype void (__thiscall ?redo_caption_buttons@Win@@QAEXXZ)(Win* this)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005ED7D0
+// indirect  0x005F27CC
+
+void Win::redo_caption_buttons() {
+    int w = field_128_;
+    int y = client_rect_.right - w * 2 - client_rect_.left -
+            border_thickness_ - caption_height_ - 2;
+    if (close_button_ != 0) {
+        close_button_->move(w, y);
+        y += -3 - *reinterpret_cast<int *>(
+                       reinterpret_cast<char *>(close_button_) + 0x4C4);
+    }
+    if (zoom_button_ != 0) {
+        zoom_button_->move(w, y);
+        if (IsZoomed(HandleMain) == 0) {
+            *reinterpret_cast<int *>(
+                reinterpret_cast<char *>(zoom_button_) + 0xAB8) =
+                *WinMaximizeIcon;
+        } else {
+            *reinterpret_cast<int *>(
+                reinterpret_cast<char *>(zoom_button_) + 0xAB8) =
+                *WinRestoreIcon;
+        }
+        y += -1 - *reinterpret_cast<int *>(
+                       reinterpret_cast<char *>(zoom_button_) + 0x4C4);
+    }
+    if (minimize_button_ != 0) {
+        minimize_button_->move(w, y);
+    }
+}
+
+// ORIGINAL: 0x005F6230 ?on_sys_key@Win@@QAGHIJHI@Z 0x005F6230-0x005F62C8 FILE
+// LEVER: `PostMessageA`/`DefWindowProcA` by name instead of the two import
+// thunks (0x00669314, 0x006692B0) as `g_`-named function pointers - both
+// compile to the same `call dword ptr [import]` the image emits.
+// size      152 bytes
+// prototype LRESULT (__stdcall ?on_sys_key@Win@@QAGHIJHI@Z)(WPARAM wParam, int, int, unsigned int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005F6264 0x005F6278 0x005F62A9 0x005F62BD
+
+int __stdcall Win::on_sys_key(unsigned int vkey, long is_down, int repeat_count,
+                              unsigned int key_flags) {
+    LPARAM lParam = (key_flags << 0x10) | (repeat_count & 0xffff);
+    if (is_down != 0) {
+        PostMessageA(HandleMain, WM_KEYDOWN, vkey, lParam);
+        return DefWindowProcA(HandleMain, WM_SYSKEYDOWN, vkey, lParam);
+    }
+    PostMessageA(HandleMain, WM_KEYUP, vkey, lParam);
+    return DefWindowProcA(HandleMain, WM_SYSKEYUP, vkey, lParam);
+}
+
+// A one-character glyph `set_bubble_text` measures the width of to compute
+// each line's padding. Named, not `g_`-prefixed; the exact string is not
+// independently confirmed, so the fixed address is kept rather than a
+// literal.
+static char *const WinBubblePrefixGlyph = reinterpret_cast<char *>(0x00696E00);
+
+// ORIGINAL: 0x005F83D0 ?set_bubble_text@Win@@QAEXPADPAURECT@@@Z 0x005F83D0-0x005F84FB FILE
+// symbol    ?set_bubble_text@Win@@QAEXPADPAUtagRECT@@@Z
+// LEVER: `WinBubbleActive`/`WinBubbleCompanion`/`WinBubbleFont`/`WinBubbleRect`
+// (already declared, `WinBubbleCompanion` retyped `Win **` so `this` needs no
+// cast) and `BasePopScreenWidth`, in place of the eight `g_`-named bindings.
+// `strchr` called directly - the scaffold's function-pointer cast of it
+// serves no purpose `char *strchr(const char *, int)` does not already.
+// size      299 bytes
+// prototype void (__thiscall ?set_bubble_text@Win@@QAEXPADPAURECT@@@Z)(Win* this, int8*, RECT*)
+// callers   14   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005EFD20 0x005F7320 0x00619280 0x00645DD0
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x005F83D0
+// measured tier  MISMATCH
+// divergence     0
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/005f83d0/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?set_bubble_text@Win@@QAEXPADPAURECT@@@Z  at 0x005F83D0  (299 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+
+void Win::set_bubble_text(char * text, RECT * rect) {
+    if (text == 0 || rect == 0) {
+        return;
+    }
+    if (*WinBubbleActive != 0) {
+        *WinBubbleCompanion = 0;
+        *WinBubbleActive = 0;
+        update_screen(WinBubbleRect, 0);
+        flip(WinBubbleRect);
+    }
+    int max_width = 0;
+    int line_count = 0;
+    char *str = text;
+    *WinBubbleCompanion = this;
+    for (;;) {
+        char *caret = strchr(str, '^');
+        if (caret != 0) {
+            *caret = 0;
+        }
+        int prefix_width = WinBubbleFont->width(WinBubblePrefixGlyph);
+        int line_width = WinBubbleFont->width(str) + prefix_width * 2;
+        if (max_width < line_width) {
+            max_width = line_width;
+        }
+        str = caret + 1;
+        if (caret == 0) {
+            break;
+        }
+        *caret = '^';
+        line_count = line_count + 1;
+    }
+    Font *const font = WinBubbleFont;
+    int line_height;
+    if (font->unk_1_ < 0) {
+        line_height = font->line_height_;
+    } else {
+        line_height = font->height_ + font->unk_1_;
+    }
+    line_height = line_height * (line_count + 1);
+    int y = rect->top - line_height;
+    if (y < 0) {
+        y = rect->bottom;
+    }
+    int x = ((rect->right - max_width) + rect->left) / 2;
+    if (x < 0) {
+        x = 0;
+    } else if (*BasePopScreenWidth < x + max_width) {
+        x = *BasePopScreenWidth - max_width;
+    }
+    WinBubbleRect->left = x;
+    WinBubbleRect->top = y;
+    WinBubbleRect->right = x + max_width;
+    WinBubbleRect->bottom = y + line_height;
+    *WinBubbleActive = reinterpret_cast<int>(text);
+    flip(WinBubbleRect);
 }
 
