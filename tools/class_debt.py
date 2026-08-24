@@ -45,6 +45,7 @@ CEILINGS = {
     "orphan redirect": 891,
     "pointer-as-int": 2,
     "undocumented trivial body": 0,
+    "raw self-access": 164,
 }
 
 WHY = {
@@ -69,6 +70,12 @@ WHY = {
         "a BYTE_EXACT claim on a <=4-byte body with no Purpose:/Verification "
         "note prose. The claim is honest - the image really is that trivial - "
         "but nothing SAYS so, and it reads as a stub.",
+    "raw self-access":
+        "a body walking its own object through reinterpret_cast<char*>(this) "
+        "and raw offsets when the class declares the members. Palette's "
+        "operator= proved the member form byte-identical (19/19) - and its "
+        "do-while-plus-dead-store was a while loop in disguise. Use the "
+        "members; a divergence is a LAYOUT finding, not a style problem.",
 }
 
 UNK = re.compile(r"\bUNK\d+\b")
@@ -81,6 +88,10 @@ POINTER_AS_INT = re.compile(
     r"|return\s*\(\s*int\s*\)\s*new\b"
     r"|\b__(?:as|ct|dt)\b")
 DOCUMENTED = re.compile(r"Purpose:|Verification note", re.I)
+SELF_CAST = re.compile(
+    r"reinterpret_cast<\s*(?:char|unsigned char|uint8_t|int|unsigned int"
+    r"|uint32_t|void)\s*\*\s*>\s*\(\s*this\s*\)"
+    r"|\(\s*(?:char|unsigned char|uint8_t)\s*\*\s*\)\s*this\b")
 
 
 def product_files() -> list[Path]:
@@ -142,6 +153,9 @@ def census():
             if POINTER_AS_INT.search(line):
                 counts["pointer-as-int"] += 1
                 files["pointer-as-int"][path.name] += 1
+            for _ in SELF_CAST.findall(line):
+                counts["raw self-access"] += 1
+                files["raw self-access"][path.name] += 1
 
     # Orphans need the whole tree's reference counts first; attribute each to
     # the file that DEFINES it (the one place `name(` appears at line start
