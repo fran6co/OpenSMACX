@@ -188,6 +188,11 @@ void Palette::set_active_window(Win *) {
 /*
 Purpose: Drop the animation slot registered under the given key.
 // ORIGINAL: 0x005FE950 ?UNK3@Palette@@QAEXH@Z 0x005FE950-0x005FEAC4
+// TRIED: transcription as a member reading its key normally - the image
+//            opens by reading the key from [esp+4] past a callee-save push
+//            sequence, this tree opens push ecx/mov edx,ecx, diverging at
+//            instruction 0; 0.798 similar, 115/116 instructions (2026-08-24,
+//            named remove_animation from its behaviour).
 // symbol    ?remove_animation@Palette@@QAEXH@Z
 // size      372 bytes
 // prototype void (__thiscall)(Palette* this, int)

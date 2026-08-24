@@ -107,6 +107,20 @@ In the same worktree, same agent, after the declarations land:
 The claim floor must not move through any of this: renames and type fixes
 re-measure to the same claims under corrected names, never to fewer.
 
+## 2c. The byte grind: exact or TRIED, per remaining member
+
+Same worktree or a second agent - the class's MISMATCH members, one at a
+time, `osmx measure` per attempt and `listing_diff` for the full picture.
+Plateau etiquette: **confirm a recorded plateau once** (re-measure the best
+known spelling), never re-grind it - `TRIED:` exists so a wall costs one
+dispatch, not eight. One line per address in the report: verdict,
+similarity, lever or TRIED written.
+
+Read AGENT_BRIEF's THE RECEIVER-SPILL WALL before starting: seven Palette
+bodies share a measured register-allocation plateau that source spelling
+did not reach, and its fingerprint (extra callee-saved pushes in the
+prologue, receiver pre-spilled) may hold for other UI classes too.
+
 ## 3. Re-measure WIDE
 
 After landing, the coordinator measures beyond the family itself:
@@ -127,3 +141,18 @@ Bare `osmx check`, never piped, then `--json` harvest as in `/recover-batch`.
 A `compiler_work` shape that DROPPED must have its ceiling lowered in this
 same commit. Report: family, declarations changed, shapes removed, claims
 banked by your measurement, and anything that regressed with why.
+
+## Family notes (what the next dispatch will trip over)
+
+WIN (includes DDInit - same TU):
+- The Time-context retype: Palette's timer_callback documents that Time's
+  `cb_param2_` is an int holding a `Palette *`. The retype chain - both
+  `Time::init` overloads, the callback typedefs, `cb_param2_` itself, and
+  Win::window_proc's inline tick (Win is a friend of Time for exactly that
+  code) - lands with this pass, which owns window_proc.
+- Q/U rule stands: virtualize ONLY where the image spells U; the tree-wide
+  sweep that flipped six claims is recorded in AGENT_BRIEF and must not be
+  repeated.
+- `field_C8_(WinSecondaryVtable)` is the last vtable-initialiser store
+  (ceiling 1): derive what sits at 0xC8 from base-ctor order and vtordisp
+  arithmetic before touching it.

@@ -97,6 +97,17 @@ WHERE THE WORK IS (measured 2026-08-23)
   where these live.
 
 ADJUSTOR THUNKS WITH ARGUMENTS (open lever, ~92 bodies)
+- THE RECEIVER-SPILL WALL (measured on 7 Palette bodies, 2026-08-24): the
+  image keeps `this` spilled to a stack slot - one fewer live register,
+  callee-saved pushes deferred past the early-return guards - while every
+  source spelling tried computes addresses eagerly. Guard reordering and
+  local collapsing do not reach it (tried and scored on multiple bodies).
+  RECOGNISE THE FINGERPRINT - extra `push ebx/edi` in your prologue before
+  the first guard, image reading its argument at `[esp+N]` where yours
+  opens `push ecx` - write the TRIED:, and move on. Also measured there:
+  `static __forceinline` genuinely inlines a small FPU helper (verified in
+  the object: call targets become _sin/_cos); a const local can COST a
+  push; per-arm stores reproduce asymmetric branch-tail merges.
 - The void thunks are BYTE_EXACT as free __fastcall wrappers that compute
   `object - vtordisp - CONST` and make one qualified call - VC6 fuses that to
   `sub ecx, dword ptr [ecx-N] / sub ecx, imm32 / jmp`.
