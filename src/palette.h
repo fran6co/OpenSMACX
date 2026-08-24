@@ -40,7 +40,7 @@ void __cdecl RGB_to_HSV(const PALETTEENTRY *entry, HSV *out);
 class Palette {
  public:
   // homed from 005fe2f0.cpp
-  int __as(Palette* a1);
+  Palette &operator=(Palette *a1);
 
  public:
   // homed from 005fe900.cpp
@@ -68,7 +68,7 @@ class Palette {
 
  public:
   // homed from 005fead0.cpp
-  void __cdecl timer_callback(int a1, int a2);
+  static void __cdecl timer_callback(int a1, int a2);
 
  public:
   // homed from 005ff220.cpp
@@ -280,8 +280,3 @@ extern IDirectDrawPalette *DirectDrawPalette;
  * nothing and removes an indirection from every future call site.
  */
 extern Palette g_PALETTE1;
-int __fastcall palette_get_rgbquad_redirect(
-    Palette *self, void *, RGBQUAD *output, int start, int count);
-
-void __cdecl palette_set_active_window_redirect(Win *window);
-int __fastcall palette_get_pos_redirect(Palette *self, void *, int value);

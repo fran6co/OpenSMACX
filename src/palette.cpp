@@ -46,11 +46,6 @@ const double hsv_degrees_per_sector = 60.0;         // 0x00670C40
 const double hsv_value_byte_scale = 0.00390625;     // 1/255, 0x00670C50
 }
 
-// Palette::timer_callback's own address, which init_cycle hands to Time::init
-// as a __cdecl callback exactly as the image does. The same idiom as
-// sound.cpp's fixed-slot bindings: the literal is what the bytes contain.
-static void *const g_005fead0 = (void *)0x005FEAD0;
-
 // 0x0067022C - see palette.h. Blue, green, red, reserved, per RGBQUAD.
 const uint8_t SystemColours[80] = {
       0,   0,   0, 0,   // 0   black
@@ -171,11 +166,6 @@ int Palette::get_rgbquad(RGBQUAD *output, int start, int count) {
     return 0;
 }
 
-int __fastcall palette_get_rgbquad_redirect(
-        Palette *self, void *, RGBQUAD *output, int start, int count) {
-    return self->get_rgbquad(output, start, count);
-}
-
 /*
 Purpose: Record the window the palette applies to.
 // ORIGINAL: 0x005FE4F0 ?set_active_window@Palette@@QAAXPAVWin@@@Z 0x005FE4F0-0x005FE4F1 BYTE_EXACT
@@ -193,10 +183,6 @@ perturb, so the mutation harness reports no mutants for this function; the
 ABI gate covers its calling convention and the smoke gate covers its callers.
 */
 void Palette::set_active_window(Win *) {
-}
-
-void __cdecl palette_set_active_window_redirect(Win *window) {
-    Palette::set_active_window(window);
 }
 
 /*
@@ -366,10 +352,6 @@ int Palette::get_pos(int value) {
         }
     }
     return index;
-}
-
-int __fastcall palette_get_pos_redirect(Palette *self, void *, int value) {
-    return self->get_pos(value);
 }
 
 /*
@@ -1117,6 +1099,7 @@ int Palette::UNK6(int a1, int a2, int a3) {
 }
 
 // ORIGINAL: 0x005FEAD0 ?timer_callback@Palette@@QAAXHH@Z 0x005FEAD0-0x005FEBA8 FILE
+// symbol    ?timer_callback@Palette@@SAXHH@Z
 // TRIED: 228 vs 216 bytes; the extra named locals (idx/found/entries/ iStartIndex/cEntries/i) push more callee-saved registers before the first `mov ebp,a2`, where the original loads a2 into ebp before any other push. Did not try collapsing to fewer locals given budget.
 // working copy - scaffold materialised by --work
 // size      216 bytes
@@ -1329,7 +1312,7 @@ int Palette::init_cycle(int a1, int a2, int a3, unsigned long a4) {
         return 4;
     }
 
-    t->init((void (__cdecl *)(int, int))g_005fead0, a1, (int)self, (int)a4, 5);
+    t->init(Palette::timer_callback, a1, (int)self, (int)a4, 5);
     return 0;
 }
 
@@ -1750,7 +1733,7 @@ void Palette::UNK2(int a1) {
 }
 
 // ORIGINAL: 0x005FE2F0 ?__as@Palette@@QAEHQAUPalette@@@Z 0x005FE2F0-0x005FE32F FILE BYTE_EXACT
-// symbol    ?__as@Palette@@QAEHPAV1@@Z
+// symbol    ??4Palette@@QAEAAV0@PAV0@@Z
 // size      63 bytes
 // prototype int (__thiscall ?__as@Palette@@QAEHQAUPalette@@@Z)(Palette* this, Palette*)
 // callers   2   call targets   2
@@ -1811,7 +1794,7 @@ void Palette::UNK2(int a1) {
 //    near miss from a wrong body.
 
 
-int Palette::__as(Palette* a1) {
+Palette &Palette::operator=(Palette *a1) {
     char *self = reinterpret_cast<char *>(this);
     memcpy(self, a1, 0x400);
 
@@ -1821,5 +1804,5 @@ int Palette::__as(Palette* a1) {
         *seed = random(0, 0xffff);
     } while (*seed == 0);
 
-    return reinterpret_cast<int>(this);
+    return *this;
 }
