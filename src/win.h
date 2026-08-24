@@ -44,6 +44,38 @@ class Scroll; // forward declaration
 // Declaring it is what gives Win, and through it GraphicWin, a real vfptr.
 class Win : public AutoSound {
  public:
+  // homed from 005f54e0.cpp
+  void on_paint(RECT * a1);
+
+ public:
+  // homed from 005ed170.cpp
+  void nonclient_to_screen(RECT * a1);
+
+ public:
+  // homed from 005ed0a0.cpp
+  void nonscreen_to_client(RECT * a1);
+
+ public:
+  // homed from 005ecec0.cpp
+  int UNK4();
+
+ public:
+  // homed from 005ecdc0.cpp
+  int UNK2(int a1);
+
+ public:
+  // homed from 005ecb60.cpp
+  void remove_parent_dialog();
+
+ public:
+  // homed from 005ec8a0.cpp
+  void get_mouse_pos(int * a1, int * a2);
+
+ public:
+  // homed from 005ec800.cpp
+  void set_mouse_pos(int a1, int a2);
+
+ public:
   // 0x005EEF60, a pending_bodies forwarder.
   void nonclient_to_client(int * a1, int * a2);
 
