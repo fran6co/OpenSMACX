@@ -1967,8 +1967,8 @@ void __cdecl jackal_close() {
     filewin_close_class();
     basepop_close_class();
     Cursor::close_cursor_class();
-    win_close_class();
-    palette_close_palette_class();
+    Win::close_class();
+    Palette::close_palette_class();
     StringTable->shutdown();
     JackalInitFlags &= ~1;
 }
