@@ -53,22 +53,34 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 # `record` wrote. Collected agent patches can carry their worktree's floor
 # line; the coordinator's re-measure (`osmx record`, batch step 4) is what
 # reconciles it, exactly as it reconciles the markers themselves.
-FLOOR_PATH = REPO_ROOT / "src" / "CLAIM_FLOOR"
+#
+# THE FLOOR LIVES IN THE TREE IT COUNTS. The first version pinned the path
+# from __file__ while counting the `--src` it was handed - the mixed
+# location mechanism the 2026-08-24 audit named as a hazard, rebuilt hours
+# later by its own author. It bit the same day: a record run against a
+# small src wrote `claims 3` into MAIN's floor while main held 3,018.
+# Deriving the path from `src` makes counting and writing the same tree by
+# construction, and gives every worktree its own self-consistent floor.
 
 
-def _read_floor() -> int | None:
+def _floor_path(src: Path) -> Path:
+    return Path(src) / "CLAIM_FLOOR"
+
+
+def _read_floor(src: Path) -> int | None:
     """The persisted claim count, or None when the file is missing/garbled."""
     try:
-        return int(FLOOR_PATH.read_text().split()[-1])
+        return int(_floor_path(src).read_text().split()[-1])
     except (OSError, ValueError, IndexError):
         return None
 
 
 def _refresh_floor(src: Path) -> int:
-    """Recount the tree and persist. Called ONLY by record/semantic, which
-    have just rewritten annotations - the gate itself never writes."""
+    """Recount the tree and persist BESIDE IT. Called ONLY by
+    record/semantic, which have just rewritten annotations - the gate itself
+    never writes."""
     live = sum(1 for r in read(src) if r.byte_exact or r.semantic)
-    FLOOR_PATH.write_text(
+    _floor_path(src).write_text(
         "# The claim floor. Maintained by `osmx record` / `osmx semantic`;\n"
         "# `osmx check` fails when the tree's live claim count differs in\n"
         "# EITHER direction. Never edit by hand - bank or demote through\n"
@@ -1688,9 +1700,9 @@ def check(
     # against the persisted ledger can. Both directions fail. Below: a marker
     # was deleted or corrupted into prose (`ORIGINAl:` reads as a comment).
     # Above: a claim token exists that `osmx record` never measured.
-    floor = _read_floor()
+    floor = _read_floor(src)
     if floor is None:
-        floor_broken = (f"NO CLAIM FLOOR at {FLOOR_PATH.name} - "
+        floor_broken = (f"NO CLAIM FLOOR at {_floor_path(src)} - "
                         f"run `osmx record` on any address to write it")
     elif claims < floor:
         floor_broken = (f"CLAIMS FELL: {claims:,} live against a floor of "
