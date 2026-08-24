@@ -82,22 +82,16 @@ class AutoSound {
 static_assert(sizeof(AutoSound) == 0x98,
               "AutoSound layout must match the legacy ABI");
 
-extern const uint32_t AutoSoundVtable;
 uint32_t *const AutoSoundDefaults = (uint32_t *)0x009BC080;
 
 // The game CRT operator delete the scalar deleting destructor frees the
 // object through; bound here rather than through wave.h so this file's
 // link closure stays self-contained.
-AutoSound *__fastcall auto_sound_construct_redirect(AutoSound *self, void *);
-void __fastcall auto_sound_close_redirect(AutoSound *self, void *);
-void __fastcall auto_sound_close2_redirect(AutoSound *self, void *);
-void __fastcall auto_sound_init_redirect(AutoSound *self, void *);
 void *__fastcall auto_sound_scalar_dtor_redirect(AutoSound *self, void *,
                                                  unsigned int mode);
 
 // Returns `int`, not `void`: the body is `xor eax, eax; ret`, where a void
 // function would emit `ret` alone. Corrected in tools/catalogue_corrections.py.
-int __cdecl do_sound_redirect();
 
 MEASURED inline int __cdecl do_sound() {
     return 0;
