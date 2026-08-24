@@ -803,7 +803,6 @@ class VCall { public:
 // encoding including the address; `extern T *g` does not.
 static int *const g_009b7a7c = (int *)0x009B7A7C;
 static int *const g_009b7aa4 = (int *)0x009B7AA4;
-static int *const &WinTrackingWindow = (int *)0x009B7AAC;
 static int *const g_009b7abc = (int *)0x009B7ABC;
 static int *const g_009b7b3c = (int *)0x009B7B3C;
 
@@ -917,11 +916,11 @@ class VCall2 { public:
 
 void __cdecl Win::OnMouseMove(void * a1, int a2, int a3, unsigned int a4) {
     Win *hit;
-    int tracking;
+    Win *tracking;
 
     tracking = WinTrackingWindow;
     *g_009b7b3c = 0;
-    if (tracking != 0) {
+    if (tracking != nullptr) {
         do_tracking(a2, a3);
         return;
     }

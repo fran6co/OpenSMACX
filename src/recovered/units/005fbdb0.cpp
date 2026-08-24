@@ -287,7 +287,6 @@ class VCall { public:
 static int *const g_006692d0 = (int *)0x006692D0;
 static int *const g_006692d4 = (int *)0x006692D4;
 static int *const g_00696e54 = (int *)0x00696E54;
-static int *const &ExpansionEnabled = (int *)0x009B7B28;
 static int *const g_009b7b80 = (int *)0x009B7B80;
 static int *const g_009b7b84 = (int *)0x009B7B84;
 
@@ -414,7 +413,7 @@ void Menu::mouse_move(int a1, int a2) {
             pt.x = a1;
             pt.y = a2;
             (*reinterpret_cast<ScreenToClientFn *>(g_006692d4))(
-                *reinterpret_cast<HWND *>(&ExpansionEnabled), &pt);
+                *reinterpret_cast<HWND *>(&HandleMain), &pt);
 
             int newIndex;
             Spot *spot = reinterpret_cast<Spot *>(self + 0xa2c);
@@ -435,7 +434,7 @@ void Menu::mouse_move(int a1, int a2) {
                 pt.y = -*reinterpret_cast<int *>(self + 0x4c8);
 
                 (*reinterpret_cast<ClientToScreenFn *>(g_006692d0))(
-                    *reinterpret_cast<HWND *>(&ExpansionEnabled), &pt);
+                    *reinterpret_cast<HWND *>(&HandleMain), &pt);
 
                 reinterpret_cast<VCall *>(this)->slot062();
 

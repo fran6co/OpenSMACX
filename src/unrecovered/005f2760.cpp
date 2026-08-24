@@ -777,7 +777,6 @@ class Sprite { public:
 static int *const g_00669270 = (int *)0x00669270;
 static int *const g_009b7b04 = (int *)0x009B7B04;
 static int *const g_009b7b08 = (int *)0x009B7B08;
-static int *const &ExpansionEnabled = (int *)0x009B7B28;
 
 class Win { public:
     AutoSound auto_sound_;
@@ -875,7 +874,7 @@ void Win::redo_caption_buttons() {
     int *pE8 = *(int **)(self + 0xe8);
     if (pE8 != 0) {
         move(w, y);
-        if (IsZoomed((void *)ExpansionEnabled) == 0) {
+        if (IsZoomed(HandleMain) == 0) {
             *(int *)((char *)pE8 + 0xab8) = *g_009b7b04;
         } else {
             *(int *)((char *)pE8 + 0xab8) = *g_009b7b08;

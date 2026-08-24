@@ -333,7 +333,6 @@ class Win { public:
 // /O2 doesn't fold the SIB addressing away.
 extern int g_009b6630[];
 static int *const g_009b7a6c = (int *)0x009B7A6C;
-static int *const &WinZOrderCount = (int *)0x009B7B30;
 
 void __cdecl recurse_zorder(Win * a1) {
     bool found = false;

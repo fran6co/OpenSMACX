@@ -102,10 +102,34 @@ if __name__ == "__main__":
             "on top of them makes the two indistinguishable if the gate then "
             "fails.\n  " + "\n  ".join(dirty[:8]))
 
-    patch = git("diff", "HEAD", cwd=worktree).stdout
+    # AGAINST THE MERGE BASE, NOT `HEAD`. `git diff HEAD` shows only what is
+    # UNCOMMITTED, so an agent that committed its work in its own worktree
+    # collected as "nothing to collect" and exit 0 - a whole class pass,
+    # discarded silently, by the tool whose entire job is not to lose it.
+    # `reap_worktrees.py` already knows this case and refuses to remove a
+    # branch with unmerged commits; collection did not.
+    found = git("merge-base", "HEAD", "master", cwd=worktree)
+    base = found.stdout.strip() or "HEAD"
+    patch = git("diff", base, cwd=worktree).stdout
+    committed = [line for line in
+                 git("log", "--oneline", f"{base}..HEAD",
+                     cwd=worktree).stdout.splitlines() if line.strip()]
+    uncommitted = [line for line in
+                   git("status", "--porcelain", cwd=worktree).stdout.splitlines()
+                   if not line.startswith("??")]
     if not patch.strip():
-        print(f"{worktree.name}: nothing to collect")
+        # A ZERO FROM A TOOL IS TWO ANSWERS - "finished" and "I was looking in
+        # the wrong place" - and they are indistinguishable without the
+        # denominator. Say what was examined, always.
+        print(f"{worktree.name}: nothing to collect "
+              f"({len(committed)} commit(s) since {base[:8]}, "
+              f"{len(uncommitted)} uncommitted change(s))")
         raise SystemExit(0)
+    if committed:
+        print(f"{worktree.name}: {len(committed)} commit(s) since "
+              f"{base[:8]}, collected as one patch:")
+        for line in committed[:8]:
+            print(f"    {line}")
     scratch = REPO_ROOT / ".git" / "collect-agent.patch"
     scratch.write_text(patch)
     markers = len(re.findall(r"^\+.*ORIGINAL: 0x", patch, re.M))

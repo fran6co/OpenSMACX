@@ -295,8 +295,6 @@ class VCall { public:
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
 static int *const g_009b7ab8 = (int *)0x009B7AB8;
-static int *const &WinPointerOwner1 = (int *)0x009B7ACC;
-static int *const g_009b7ad0 = (int *)0x009B7AD0;
 
 class Win { public:
     AutoSound auto_sound_;
@@ -420,12 +418,12 @@ class VCallX { public:
 };
 
 void Win::on_l_button_up(int a1, int a2, unsigned int a3, int a4) {
-    Win *captured = *reinterpret_cast<Win **>(&WinPointerOwner1);
-    if (captured == 0) {
+    Win *captured = WinPointerOwner1;
+    if (captured == nullptr) {
         captured = *reinterpret_cast<Win **>(g_009b7ad0);
     }
     bool isSelf = (captured == this);
-    *reinterpret_cast<Win **>(&WinPointerOwner1) = 0;
+    WinPointerOwner1 = nullptr;
     *reinterpret_cast<Win **>(g_009b7ad0) = 0;
 
     if (isSelf) {

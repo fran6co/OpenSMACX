@@ -1251,9 +1251,6 @@ static int *const g_00669320 = (int *)0x00669320;
 static int *const g_009b7ab8 = (int *)0x009B7AB8;
 static int *const g_009b7abc = (int *)0x009B7ABC;
 static int *const g_009b7ac0 = (int *)0x009B7AC0;
-static int *const &WinPointerOwner1 = (int *)0x009B7ACC;
-static int *const g_009b7ad0 = (int *)0x009B7AD0;
-static int *const &ExpansionEnabled = (int *)0x009B7B28;
 
 class VCallW {
 public:
@@ -1320,9 +1317,9 @@ extern "C" int __cdecl sub_5f2830(int a1) {
     void *obj = *reinterpret_cast<void **>(g_009b7ab8);
     VCallW *self = reinterpret_cast<VCallW *>(obj);
     if (a1 == 0) {
-        int zoomed = reinterpret_cast<IsZoomedFn>(g_00669270)(*reinterpret_cast<void **>(&ExpansionEnabled));
-        WinPointerOwner1 = 0;
-        *g_009b7ad0 = 0;
+        int zoomed = reinterpret_cast<IsZoomedFn>(g_00669270)(HandleMain);
+        WinPointerOwner1 = nullptr;
+        WinPointerOwner2 = nullptr;
         if (zoomed != 0) {
             if (*g_009b7abc == (int)obj) {
                 *g_009b7abc = 0;
@@ -1337,10 +1334,10 @@ extern "C" int __cdecl sub_5f2830(int a1) {
         if (*g_009b7ac0 == (int)obj) {
             *g_009b7ac0 = 0;
         }
-        reinterpret_cast<ShowWindowFn>(g_00669320)(*reinterpret_cast<void **>(&ExpansionEnabled), 3);
+        reinterpret_cast<ShowWindowFn>(g_00669320)(HandleMain, 3);
     } else if (a1 == 1) {
-        WinPointerOwner1 = 0;
-        *g_009b7ad0 = 0;
+        WinPointerOwner1 = nullptr;
+        WinPointerOwner2 = nullptr;
         if (*g_009b7abc == (int)obj) {
             *g_009b7abc = 0;
             self->slot004();
@@ -1348,7 +1345,7 @@ extern "C" int __cdecl sub_5f2830(int a1) {
         if (*g_009b7ac0 == (int)obj) {
             *g_009b7ac0 = 0;
         }
-        reinterpret_cast<ShowWindowFn>(g_00669320)(*reinterpret_cast<void **>(&ExpansionEnabled), 6);
+        reinterpret_cast<ShowWindowFn>(g_00669320)(HandleMain, 6);
         return 0;
     } else if (a1 == 2) {
         self->slot052();

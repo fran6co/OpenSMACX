@@ -813,7 +813,6 @@ static int *const g_006690b8 = (int *)0x006690B8;
 static int *const g_0066927c = (int *)0x0066927C;
 static int *const g_00669280 = (int *)0x00669280;
 static int *const g_009b3ab0 = (int *)0x009B3AB0;
-static int *const &ExpansionEnabled = (int *)0x009B7B28;
 static int *const g_009b7b2c = (int *)0x009B7B2C;
 static int *const g_009b8178 = (int *)0x009B8178;
 static int *const g_009bc494 = (int *)0x009BC494;
@@ -913,7 +912,7 @@ int __cdecl Win::OnPaletteChanged(void * a1, void * a2) {
             } else {
                 typedef void *(__stdcall *GetDCFn)(void *);
                 *g_009b7b2c = reinterpret_cast<int>(
-                    (reinterpret_cast<GetDCFn>(*g_0066927c))(reinterpret_cast<void *>(ExpansionEnabled)));
+                    (reinterpret_cast<GetDCFn>(*g_0066927c))(HandleMain));
             }
             if (*g_009b7b2c != 0) {
                 *g_009b3ab0 = 1;
@@ -939,7 +938,7 @@ int __cdecl Win::OnPaletteChanged(void * a1, void * a2) {
                 }
                 typedef int (__stdcall *ReleaseDCFn)(void *, void *);
                 (reinterpret_cast<ReleaseDCFn>(*g_00669280))(
-                    reinterpret_cast<void *>(ExpansionEnabled), reinterpret_cast<void *>(*g_009b7b2c));
+                    HandleMain, reinterpret_cast<void *>(*g_009b7b2c));
                 *g_009b7b2c = 0;
             }
         }

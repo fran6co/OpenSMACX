@@ -14,6 +14,7 @@ through the code that uses it.
 from __future__ import annotations
 
 import concurrent.futures
+import hashlib
 import json
 import os
 import re
@@ -1635,6 +1636,31 @@ def _check_one_file(job: tuple) -> list[tuple[tuple, str, str]]:
     return [(key, verdict, note) for key, (verdict, note) in best.items()]
 
 
+def _image_pin(src: Path, exe: Path) -> str:
+    """Empty if the image matches the pin beside the tree; else what differs.
+
+    THE RULER IS CHECKED BEFORE ANYTHING IS MEASURED WITH IT.
+    """
+    pin = src / "IMAGE_PIN"
+    try:
+        recorded = re.search(r"^sha256 ([0-9a-f]{64})$", pin.read_text(),
+                             re.M)
+    except OSError:
+        return (f"NO IMAGE PIN at {pin} - write one with the sha256 of the "
+                f"image these claims were measured against")
+    if not recorded:
+        return f"{pin} carries no `sha256 <digest>` line"
+    try:
+        actual = hashlib.sha256(exe.read_bytes()).hexdigest()
+    except OSError as problem:
+        return f"cannot read the image at {exe}: {problem}"
+    if actual != recorded.group(1):
+        return (f"IMAGE IS NOT THE PINNED ONE: {exe} hashes {actual[:16]}..., "
+                f"the pin says {recorded.group(1)[:16]}... - every claim in "
+                f"this tree was measured against the pinned bytes")
+    return ""
+
+
 @app.command()
 def check(
     src: Annotated[Path, typer.Option(
@@ -1700,6 +1726,11 @@ def check(
     # against the persisted ledger can. Both directions fail. Below: a marker
     # was deleted or corrupted into prose (`ORIGINAl:` reads as a comment).
     # Above: a claim token exists that `osmx record` never measured.
+    pin_broken = _image_pin(src, exe)
+    if pin_broken:
+        typer.secho(pin_broken, fg=typer.colors.RED, bold=True)
+        raise typer.Exit(1)
+
     floor = _read_floor(src)
     if floor is None:
         floor_broken = (f"NO CLAIM FLOOR at {_floor_path(src)} - "
@@ -1845,12 +1876,23 @@ def check(
     near.sort(key=lambda row: (row[0], row[1]))
     broken = regressed + unasked
 
+    payload = None
     if as_json:
         def rows(items):
             return [{"address": r.address_hex, "name": r.name,
                      "location": str(r.location), "measured": v, "note": n}
                     for r, v, n in items]
-        typer.echo(json.dumps({
+        # BUILT HERE, EMITTED AT THE END, and the move IS the fix. This
+        # echoed right here - before the link probe and all five censuses had
+        # run - so EIGHT of the ten signals that decide the exit code could
+        # not appear in it even in principle: dangling, unread, the link, and
+        # every census verdict. A harvest could read `reproduced == claims`,
+        # an empty `regressed`, and still exit 1 with nothing saying why.
+        # The verdict line was suppressed under `--json` too, in the one mode
+        # built for machines - while the comment beside it argued, from a
+        # real incident, that a verdict nobody can see through a pipe is how
+        # a red gate gets called green. `--json` is a superset now.
+        payload = {
             "claims": claims,
             "claim_floor": floor,
             "floor_broken": floor_broken or None,
@@ -1869,7 +1911,7 @@ def check(
             "dangling_bodies": [{"address": r.address_hex,
                                  "location": str(r.location), "note": n}
                                 for r, n in dangling],
-        }, indent=2))
+        }
     else:
         for record, verdict, note in regressed:
             claimed = "SEMANTIC" if record.semantic and not record.byte_exact \
@@ -2117,10 +2159,7 @@ def check(
     # someone has to remember is not a check. This line is LAST, so it survives
     # any `tail`, and it states the verdict in words rather than leaving it to
     # a status nobody can see through a pipe.
-    if not as_json:
-        typer.secho(
-            f"GATE EXIT {code} - "
-            + ("FAILED: THE TREE DOES NOT LINK" if link.returncode
+    verdict = ("FAILED: THE TREE DOES NOT LINK" if link.returncode
                else "FAILED: the tree does more of the compiler's work" if vtables.returncode
                else "FAILED: an instruction names something that is not there" if stale.returncode
                else "FAILED: a marker names a symbol the build does not emit" if symbols.returncode
@@ -2131,10 +2170,37 @@ def check(
                else "FAILED: the claim floor does not match the tree" if floor_broken
                else "FAILED: regressed, dangling or unread claims" if code == 1
                else "OK, with unverifiable claims present" if code == 3
-               else "CLEAN"),
-            fg=typer.colors.RED if code == 1 else
-            typer.colors.YELLOW if code == 3 else typer.colors.GREEN,
-            bold=True)
+               else "CLEAN")
+
+    if as_json:
+        # Every input to `code` above, by the name the verdict uses.
+        payload.update({
+            "exit_code": code,
+            "verdict": verdict,
+            "failed": {
+                "link": bool(link.returncode),
+                "compiler_work": bool(vtables.returncode),
+                "stale_references": bool(stale.returncode),
+                "marker_symbols": bool(symbols.returncode),
+                "address_index": bool(index.returncode),
+                "class_debt": bool(debt.returncode),
+                "annotation_identity": bool(annotations.returncode),
+                "claim_floor": bool(floor_broken),
+                "regressed": bool(regressed),
+                "dangling": bool(dangling),
+                "unread_markers": bool(unread),
+            },
+            "unread_markers": [str(m) for m in unread],
+            "restated": [str(m) for m in restated],
+        })
+        typer.echo(json.dumps(payload, indent=2))
+        raise typer.Exit(code)
+
+    typer.secho(
+        f"GATE EXIT {code} - " + verdict,
+        fg=typer.colors.RED if code == 1 else
+        typer.colors.YELLOW if code == 3 else typer.colors.GREEN,
+        bold=True)
     raise typer.Exit(code)
 
 

@@ -298,7 +298,6 @@ static int *const g_0066932c = (int *)0x0066932C;
 static int *const g_00669358 = (int *)0x00669358;
 static int *const g_009b7ab8 = (int *)0x009B7AB8;
 static int *const g_009b7b18 = (int *)0x009B7B18;
-static int *const &ExpansionEnabled = (int *)0x009B7B28;
 static int *const g_009be608 = (int *)0x009BE608;
 
 class Win { public:
@@ -440,11 +439,11 @@ void Win::on_key(unsigned int a1, long a2, int a3, unsigned int a4) {
                 reinterpret_cast<Net *>(net)->start_voice(
                     *reinterpret_cast<unsigned long *>(net + 0x50));
             }
-            if (!peekMessage(&msg, *reinterpret_cast<void **>(&ExpansionEnabled), 0x102, 0x102, 1)) {
+            if (!peekMessage(&msg, HandleMain, 0x102, 0x102, 1)) {
                 return;
             }
             do {
-            } while (peekMessage(&msg, *reinterpret_cast<void **>(&ExpansionEnabled), 0x102, 0x102, 1));
+            } while (peekMessage(&msg, HandleMain, 0x102, 0x102, 1));
             return;
         }
         if (key == *reinterpret_cast<unsigned int *>(net + 0x4c)) {
@@ -454,11 +453,11 @@ void Win::on_key(unsigned int a1, long a2, int a3, unsigned int a4) {
                 reinterpret_cast<Net *>(net)->start_voice(
                     *reinterpret_cast<long *>(net + 0x54));
             }
-            if (!peekMessage(&msg, *reinterpret_cast<void **>(&ExpansionEnabled), 0x102, 0x102, 1)) {
+            if (!peekMessage(&msg, HandleMain, 0x102, 0x102, 1)) {
                 return;
             }
             do {
-            } while (peekMessage(&msg, *reinterpret_cast<void **>(&ExpansionEnabled), 0x102, 0x102, 1));
+            } while (peekMessage(&msg, HandleMain, 0x102, 0x102, 1));
             return;
         }
     }
@@ -503,18 +502,18 @@ void Win::on_key(unsigned int a1, long a2, int a3, unsigned int a4) {
 
     *reinterpret_cast<unsigned int *>(g_009b7b18) = key;
     Fn1 fn = *reinterpret_cast<Fn1 *>(g_006692c8);
-    if (fn(*reinterpret_cast<void **>(&ExpansionEnabled))) {
+    if (fn(HandleMain)) {
         reinterpret_cast<Win *>(self)->key_down_event(key);
     }
 
     if (key >= 0x60 && key <= 0x6f) {
         PeekMessageFn peekMessage = *reinterpret_cast<PeekMessageFn *>(g_00669358);
         MsgT msg;
-        if (!peekMessage(&msg, *reinterpret_cast<void **>(&ExpansionEnabled), 0x102, 0x102, 1)) {
+        if (!peekMessage(&msg, HandleMain, 0x102, 0x102, 1)) {
             return;
         }
         do {
-        } while (peekMessage(&msg, *reinterpret_cast<void **>(&ExpansionEnabled), 0x102, 0x102, 1));
+        } while (peekMessage(&msg, HandleMain, 0x102, 0x102, 1));
         return;
     }
 

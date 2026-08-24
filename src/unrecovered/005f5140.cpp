@@ -776,7 +776,6 @@ void recurse_zorder(Win *);
 static int *const g_009b6e48 = (int *)0x009B6E48;
 static int *const g_009b7a6c = (int *)0x009B7A6C;
 static int *const g_009b7a78 = (int *)0x009B7A78;
-static int *const &WinZOrderCount = (int *)0x009B7B30;
 static int *const g_009b7b34 = (int *)0x009B7B34;
 
 class Win { public:
