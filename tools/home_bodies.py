@@ -302,12 +302,34 @@ def main() -> int:
         # target TU instead; renaming them to modelled names is the class
         # pass's semantic half, done against a MEASURED body.
         full_artifact = snapshots["artifact"]
+        # TYPEDEFS TRAVEL TOO. An artifact declares the Win32 entry points it
+        # calls as its own function-pointer types - `typedef int (__stdcall
+        # *IntersectRectFn)(RECT *, const RECT *, const RECT *);` - and the
+        # scaffold preamble that holds them is thrown away with everything
+        # else. Carrying only the `static ... = (...)0xADDR;` bindings homed
+        # the body and left it referring to a type nothing declares: eleven
+        # of Win's fifty-two failed on exactly that, one `undeclared
+        # identifier` at a time.
         bindings = re.findall(
             r"^static .+?= \(.*?0x[0-9A-Fa-f]+;\n", full_artifact, re.M)
         fresh = [b for b in bindings
                  if not (b in tu_text or b in carried)]
-        for b in fresh:
-            carried.add(b)
+
+        # TYPEDEFS ARE NOT CARRIED, AND TWO ATTEMPTS SAY WHY. An artifact
+        # declares the Win32 entry points it calls as its own function-pointer
+        # types, and a homed body that loses them fails on `undeclared
+        # identifier`. Carrying them by exact string collides with the same
+        # name spelled differently in the target TU: 1 homed became 0, with 36
+        # `redefinition; different basic types`. Carrying them only when the
+        # name is not already in the TU TEXT is no better, because the text
+        # cannot see through `#include` - `HBITMAP` is declared in a Windows
+        # header, so every artifact's copy of it looked fresh and redefined it.
+        #
+        # A correct carry has to react to the COMPILER rather than guess ahead
+        # of it: build, and only on `undeclared identifier 'X'` go looking for
+        # X's declaration. Until that exists, a body needing a typedef is
+        # REVERTED and says so, which is a true report an agent can act on -
+        # not a silent loss.
         carried_block = "".join(fresh)
 
         new_tu = tu_text.rstrip() + "\n\n" + (
@@ -338,10 +360,55 @@ def main() -> int:
 
         record.path.unlink()
 
+        # THE CARRY REACTS TO THE COMPILER INSTEAD OF GUESSING AHEAD OF IT.
+        # An artifact declares the Win32 entry points it calls as its own
+        # function-pointer typedefs, and the scaffold preamble holding them is
+        # thrown away with everything else - 42 of Win's 49 first-pass reverts
+        # were a name the moved body could no longer see.
+        #
+        # Carrying typedefs speculatively does not work, and both wrong ways
+        # were measured: by exact string it collides with the same name spelled
+        # differently in the target TU (1 homed became 0, 36 `redefinition;
+        # different basic types`), and skipping names already in the TU text is
+        # no better because text cannot see through `#include` - `HBITMAP` lives
+        # in a Windows header, so every artifact's copy looked fresh.
+        #
+        # Only the compiler knows what is missing. Build; if it says a name is
+        # UNDECLARED, go find that name's declaration in the artifact and add
+        # it. A name the compiler calls undeclared cannot be a redefinition, so
+        # this direction is safe by construction where guessing was not.
         ok, error = build()
+        for _ in range(8):
+            if ok:
+                break
+            missing = re.search(
+                r"error C2065: '(\w+)' : undeclared identifier|"
+                r"error C2061: syntax error : identifier '(\w+)'", error)
+            if not missing:
+                break
+            token = missing.group(1) or missing.group(2)
+            found = re.search(
+                rf"^(?:typedef|static|extern)[^\n;]*\b{re.escape(token)}\b"
+                rf"[^\n;]*;\n", full_artifact, re.M)
+            if not found or found.group(0) in tu.read_text():
+                break
+            fresh.append(found.group(0))
+            tu.write_text(tu.read_text().replace(
+                head.strip(), found.group(0) + "\n" + head.strip(), 1))
+            ok, error = build()
         if not ok:
             revert("build", error or "link failed")
             continue
+        # A CARRY IS ONLY REMEMBERED IF IT SURVIVED. `carried` used to be
+        # updated before the build, and `revert` puts the file back - so a
+        # body that carried `g_009b7b34` and was then reverted for an
+        # unrelated reason left the set claiming that binding was in the TU
+        # when it was not. Every later body needing it skipped the carry and
+        # failed with `undeclared identifier`, which is how ONE failure
+        # became a cascade: Win homed 1 of 52, and ten of the fifty reverts
+        # were this and nothing else.
+        for b in fresh:
+            carried.add(b)
         kept += 1
         print(f"  HOMED {record.address_hex} -> {tu.name} "
               f"{'CLAIMED - gate before committing' if record.byte_exact else ''}")
