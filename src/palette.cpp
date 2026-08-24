@@ -203,9 +203,29 @@ inference from that behaviour, so the catalogue's `UNK3` stays on the
 marker and `symbol` carries what this tree emits.
 Return Value: n/a
 Status: Half recovered - the body is right, the codegen is not
+
+LEVER: 2026-08-24, `osmx calls` names only 7 targets for the image
+(Time::~Time, operator delete, memcpy, the DirectDrawPalette vtable slot,
+Buffer::sync_to_palette, AnimatePalette, free) - no `get_pos`. This body was
+calling `get_pos(key)`; the image INLINES the same five-slot search loop
+instead, matching the shape `get_pos`'s own body already has. Inlining it
+raised best-of-all-flags similarity 0.728 -> 0.798 (0/115 raw agreeing, but
+the image itself is 115 instructions against this tree's 118, so the count
+undersells it same as elsewhere in this file). The remaining gap is register
+naming/allocation on the `PaletteInternal` fields (`slot.time`/`.first`/
+`.count`/`.colours`), all at the CORRECT struct-relative offsets already -
+not chased further given the size of the function.
 */
 void Palette::remove_animation(int key) {
-    int index = get_pos(key);
+    // get_pos INLINED - the image never calls it here (`osmx calls` lists
+    // no reference to it), it repeats the search loop directly.
+    int index = 0;
+    for (; index < 5; ++index) {
+        const int slot_key = static_cast<int>(internal_[index].key);
+        if (key == slot_key || slot_key == -1) {
+            break;
+        }
+    }
     if (internal_[index].key != static_cast<uint32_t>(key)) {
         return;
     }
@@ -266,6 +286,16 @@ The name is an inference from behaviour, which is why the catalogue's
 `UNK7` stays on the marker and `symbol` carries what this tree emits.
 Return Value: the nearest entry's index, or 7 if there is no palette
 Status: Half recovered - see above
+
+TRIED: 2026-08-24, confirmed this is the SAME wall as
+get_nearest_palette_index(unsigned char,...)'s (0x005FF470) TRIED note: that
+sibling has the identical shape (one `push esi` before the `PaletteInitialized`
+guard, `push ebx/ebp/edi` deferred to the continue-path in the image, all four
+pushed up front here regardless of guard placement) and moving the guard to
+the absolute top of the body there did not change the push count. Given six
+spellings already failed here and the sibling's guard-placement experiment
+also failed, this reads as one whole-function register-pressure wall shared
+by both `reserved[256]`-scanning bodies, not two separate puzzles.
 */
 int Palette::closest(int red, int green, int blue, int start, int count,
                      int skip_animated) {
@@ -732,6 +762,28 @@ void Palette::close_palette_class() {
 
 // ORIGINAL: 0x005FF470 ?get_nearest_palette_index@Palette@@QAEHEEEH@Z 0x005FF470-0x005FF627 FILE
 // TRIED: separate loops for the a4==0 (linear scan) and a4!=0 (group-reserved scan) paths with a stack reserved[0x100] array; diverges at #1, stack layout order
+// BUG IN THE ORIGINAL SOURCE MODEL, now fixed: this body was missing the
+//   `if (PaletteInitialized == 0) return 7;` guard entirely - the image's
+//   `mov eax,[0x9b8178]; push esi; test eax,eax; ...; jne` at the very top,
+//   returning 7 (`pop esi` only - ONE register saved) when the palette is not
+//   yet realised, is exactly the same guard `get_rgbquad`, `set`, `closest`
+//   and this class's other accessors all carry. This tree computed a wrong
+//   answer instead of 7 on an unrealised palette. Also fixed the distance sum
+//   order to `dg*dg + dr*dr + db*db` (green, red, blue), matching both the
+//   image's `imul`/`add` chain here and `closest()`'s own documented order -
+//   it was `dr*dr + dg*dg + db*db` (red first).
+// TRIED: 2026-08-24, the guard's placement does not close the remaining gap.
+//   With it positioned exactly where the image's shared prefix has it (after
+//   `best_dist`/`best_index`, matching this body) the divergence stays at
+//   instruction 1 (3/136); moved to the very first statement, before the two
+//   locals, it is slightly WORSE (2/136, +1 instruction). The image pushes
+//   only `esi` before the guard and defers `ebx`/`ebp`/`edi` to the
+//   continue-path (`pop esi` alone on the early return); this tree's compiled
+//   prologue pushes all four up front regardless of source placement, which
+//   reads as the same "stack layout order" wall the earlier TRIED note above
+//   already named - a whole-function register-pressure decision (driven by
+//   the 256-entry `reserved[]` scan later in the body) that guard placement
+//   alone does not move. Left as the semantically-correct MISMATCH.
 // size      439 bytes
 // prototype int (__thiscall ?get_nearest_palette_index@Palette@@QAEHEEEH@Z)(Palette* this, unsigned int8, unsigned int8, unsigned int8, int)
 // callers   5   call targets   0
@@ -745,13 +797,17 @@ int Palette::get_nearest_palette_index(unsigned char red, unsigned char green,
     int best_dist = 200000;
     int best_index = 0;
 
+    if (PaletteInitialized == nullptr) {
+        return 7;
+    }
+
     if (skip_animated == 0) {
         const PALETTEENTRY *p = entries_;
         for (int i = 0; i < 0x100; ++i, ++p) {
             int dr = (int)p->peRed - (int)red;
             int dg = (int)p->peGreen - (int)green;
             int db = (int)p->peBlue - (int)blue;
-            int dist = dr * dr + dg * dg + db * db;
+            int dist = dg * dg + dr * dr + db * db;
             if (dist < best_dist) {
                 best_dist = dist;
                 best_index = i;
@@ -787,7 +843,7 @@ int Palette::get_nearest_palette_index(unsigned char red, unsigned char green,
         int dr = (int)p2->peRed - (int)red;
         int dg = (int)p2->peGreen - (int)green;
         int db = (int)p2->peBlue - (int)blue;
-        int dist = dr * dr + dg * dg + db * db;
+        int dist = dg * dg + dr * dr + db * db;
         if (dist < best_dist) {
             best_dist = dist;
             best_index = i;
@@ -805,6 +861,19 @@ int Palette::get_nearest_palette_index(unsigned char red, unsigned char green,
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005FF470
+// TRIED: 2026-08-24, best is the body as it stands: 1/53 instructions, 0.937
+//   similar (the whole image is 53 instructions but this tree needs 58, so
+//   the raw count undersells the match). Two levers that paid off elsewhere
+//   in this file did NOT here, each isolated and re-measured separately:
+//   splitting `if (source==0 || table==0) return 0x10;` into two `if`s (the
+//   image's two `je`s DO share one target at 0x5ff213, so it is genuinely
+//   one merged epilogue, not the two-inline-epilogues shape the lever
+//   expects) regressed hard, to 0/53 and 0.835 similar; switching the
+//   blend-loop's walking `const PALETTEENTRY *p = &entries_[start]` to
+//   indexed `entries_[idx].peRed` (the `get_rgbquad` lesson) was neutral,
+//   0.935 similar, 1/53 with one fewer instruction (54 against 58) - not
+//   worse, not a win either. Left as the pointer-walk plus chained `||`,
+//   which is the higher-scoring of the three shapes measured.
 
 // `source` is only ever null-checked; the census types it int and the
 // body proves nothing more. Its real type is an open finding.
@@ -847,6 +916,18 @@ int Palette::make_remap_table(int source, unsigned char *table, int start,
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00625810
+// TRIED: 2026-08-24, the get_rgbquad "INDEX, DO NOT WALK" lesson does NOT
+//   transfer here. Rewriting the blend loop as `entries_[start+i].peRed =
+//   src[i].rgbRed;` etc. (a single ascending index `i` compared against
+//   `count`) raises raw instruction agreement 11/47 -> 17/47 but LOWERS
+//   bytes similarity 0.946 -> 0.878 (best of all ten flag sets, both ways) -
+//   the image's loop keeps ONE descending counter (`dec esi; jne`, doubling
+//   as progress and termination) and TWO independently walking pointers
+//   (dst biased +2 onto .peBlue, src biased +1 onto .rgbGreen, each `add
+//   reg,4` once per iteration); an ascending index needs the ORIGINAL bound
+//   (`count`) AND the index both live for the `<` comparison, which is a
+//   register more than the image's single counter costs. Left as the
+//   pointer-walk form, which is the higher-similarity of the two measured.
 
 int Palette::set_rgbquad(const RGBQUAD *src, int start, int count) {
     if (src == 0) {
@@ -885,7 +966,27 @@ int Palette::set_rgbquad(const RGBQUAD *src, int start, int count) {
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005FF470 0x00645930
-
+// TRIED: 2026-08-24, re-measured at 51/112 (0.920 similar, best flag set is
+//   `/O2 /Oi- /Gy /GR-` - the /Oi- axis matters here, plain `/O2 /GX` only
+//   reaches 2/112). The image's THREE guards (`other==0`, `PaletteInitialized
+//   ==0`, `table==0`) each get their OWN full `pop ebx; add esp,0x808; ret
+//   0x18` epilogue rather than a shared one (tail DUPLICATION, not merging -
+//   this body already writes them as three separate early-return `if`s,
+//   matching), and critically `this` is SPILLED to `[esp+8]` right after the
+//   first guard and never loaded into a register until the `memcpy` calls
+//   much later - `ebx` (holding `other`) is the only register pushed before
+//   the guards, and `esi`/`edi` are not pushed until after all three guards
+//   pass, when the fill loops need them for `start`/`table`. This tree's
+//   compiled body keeps BOTH `other` and `this` in registers (`ebp`/`esi`)
+//   pushed together up front - one register more than the image needs at
+//   that point, extra prologue instructions, and the frame is 8 bytes
+//   bigger (0x810 vs 0x808). Tried folding the `bSum`/`b` split for the blue
+//   channel into one `uint8_t b = (...) / divisor;` expression (matching the
+//   r/g channels' shape exactly) - regressed to 50/112 with an even bigger
+//   frame (0x814), so the extra local is not the lever; reverted. The
+//   remaining gap reads as the same "keep the receiver in a register instead
+//   of a stack spill" wall as `closest()`/`get_nearest_palette_index`, not
+//   chased further.
 
 
 int Palette::make_blend_table(const Palette *other, uint8_t *table, int start,
@@ -956,6 +1057,21 @@ int Palette::make_blend_table(const Palette *other, uint8_t *table, int start,
 // flags     sp_ready;purged_ok
 // calls     0x005FF470
 // To start: tools/decomp_status.py --work 0x005FEFF0
+// TRIED: 2026-08-24, re-measured against the current named-member body (the
+//   TRIED note above is stale - it describes the raw-`unsigned char*` form
+//   this tree no longer uses): 10/142 instructions, but 0.909 similar (best
+//   of all ten flag sets, `/O2 /Oi- /Gy /GR-`) - the raw instruction count
+//   undersells it because the divergence is at instruction 2, in the
+//   prologue, and everything downstream is address-shifted by it, same as
+//   `closest()`/`get_nearest_palette_index`/`make_blend_table`. The image
+//   pushes ONE register (`esi`) before the `PaletteInitialized` guard and
+//   SPILLS `this` to `[esp+4]` rather than keeping it live in a register;
+//   this tree's compiled prologue puts `this` in a register (`edx`) and
+//   pushes a second callee-saved register (`edi`) before the guard even
+//   runs. Did not re-run the register-pressure experiments already measured
+//   dead on the three sibling functions above (guard-first reordering,
+//   dropping the trailing `nearest`/`bSum`-style intermediate) - this is the
+//   fourth body with the identical shape, not a fresh puzzle.
 
 
 int Palette::create_table_from_color(int colour_index, unsigned char *table,
@@ -1034,6 +1150,22 @@ int Palette::create_table_from_color(int colour_index, unsigned char *table,
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     0x005FF280
+// TRIED: 2026-08-24, 6/39 instructions, 0.847 similar (same across all ten
+//   flag sets). The image keeps FOUR independent callee-saved values live
+//   through the loop - `edi`=this, `ebx`=dst (walking), `esi`=src (walking,
+//   biased +1 onto .peGreen), `ebp`=the 0xec down-counter - and re-reads
+//   `start`/`count` from the stack each iteration rather than caching them.
+//   This tree's compiled body instead fuses `dst`/`src` into one base
+//   register plus a constant delta (`sub ebp, esi` once, then `[esi+ebp]`
+//   addressing in the loop) and SPILLS the down-counter to `[esp+0x14]`
+//   instead of keeping it in a register - one register short somewhere,
+//   though the source has the same four "live across the call" values
+//   (this, dst, src, remaining) the image does. Reordering the `remaining`
+//   declaration ahead of `dst`/`src` did not change the compiled output at
+//   all (byte-identical). Not chased further - reads as the same class of
+//   whole-function register-pressure decision as `closest()` and
+//   `get_nearest_palette_index`, just manifesting as a fusion instead of an
+//   extra push.
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE. This directory IS on the ratchet: every file here
@@ -1108,6 +1240,18 @@ int Palette::map_to_palette(Palette *dest, int start, int count) {
 // ORIGINAL: 0x005FEAD0 ?timer_callback@Palette@@QAAXHH@Z 0x005FEAD0-0x005FEBA8 FILE
 // symbol    ?timer_callback@Palette@@SAXHH@Z
 // TRIED: 228 vs 216 bytes; the extra named locals (idx/found/entries/ iStartIndex/cEntries/i) push more callee-saved registers before the first `mov ebp,a2`, where the original loads a2 into ebp before any other push. Did not try collapsing to fewer locals given budget.
+// TRIED: 2026-08-24, collapsing WAS tried and it is not the lever - it makes
+//   things worse. Re-measured: current body 2/72, 0.886 similar (best of all
+//   ten flag sets). Dropping `iStartIndex`/`cEntries` and reading
+//   `self->internal_[idx].first`/`.count` directly at each use (instead of
+//   once into named locals) regresses to 0.715 similar, MORE total
+//   instructions (79 vs 77), and pushes an extra register (`edi`) the
+//   baseline does not. The image's very first divergent instruction in
+//   EITHER form is `push ecx` at the top of this tree's compiled body,
+//   before the first guard even runs - one register of pressure this
+//   function needs that the image does not, for a reason source-form edits
+//   here have not isolated. Left as the named-locals form, which is the
+//   higher-similarity of the two measured.
 // working copy - scaffold materialised by --work
 // size      216 bytes
 // prototype 
@@ -1178,6 +1322,15 @@ void __cdecl Palette::timer_callback(int key, int context) {
 // flags     sp_ready;purged_ok
 // calls     0x00625810 0x00645930
 // indirect  0x005FF9D2 0x005FFA94 0x005FFA9A 0x005FFAB1
+// TRIED: 2026-08-24, re-measured: 20/141, 0.823 similar (best of all ten
+//   flag sets, `/O2 /Oi- /Gy /GR-`). The three-guard order (PaletteUsesSystem
+//   Colours, PaletteInitialized, other==0) already matches the image's own
+//   read order exactly. The image SPILLS `this` to `[esp+8]` right after
+//   loading it into `esi` (`mov [esp+8], esi`), rather than keeping it in a
+//   register through all three guards - the same shape as
+//   `make_blend_table`'s finding. Not chased further given the size of the
+//   function (475 bytes) and that three siblings already measured this exact
+//   wall unmovable by guard reordering.
 
 
 
@@ -1259,6 +1412,15 @@ int Palette::fade_to(Palette *other, int start, int count, int steps,
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     0x005D4510 0x006161D0 0x00616200 0x006162D0 0x00644EF2 0x0064557F 0x0064558A 0x00645930
+// TRIED: 2026-08-24, re-measured: 6/129, 0.863 similar (best of all ten flag
+//   sets, `/O2 /Oi- /Gy /GR-` - /Oi- alone is worth 0.049 here, `/O2 /GX`
+//   plain only reaches 0.814). `osmx calls --all` confirms the eight targets
+//   above are exactly what this body calls, in the same relative order
+//   (~Time, operator delete, free, mem_get, memcpy, operator new, Time::Time,
+//   Time::init) - the call graph is not the defect. Same whole-function
+//   register-pressure wall as the other large bodies in this file; not
+//   re-derived given the size (449 bytes) and the existing TRIED line's
+//   verdict.
 
 
 // `reserved` is never read; the census carries it as a third int and the
@@ -1339,6 +1501,15 @@ int Palette::init_cycle(int key, int first, int reserved, unsigned long count) {
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005DE8F0 0x00625810 0x00645930
+// TRIED: 2026-08-24, re-measured: 15/180, 0.773 similar (best of all ten flag
+//   sets, `/O2 /Oi- /Gy /GR-`). `osmx calls --all` confirms the call graph
+//   already matches the image exactly (memcpy, `Buffer::sync_to_palette`,
+//   two `AnimatePalette`s, `random`, and four vtable/import calls through a
+//   register - the two `SetEntries`/`timeGetTime`x3 sites this body's shape
+//   predicts). The remaining gap is the now-familiar whole-function
+//   register-pressure wall (frame 0x428 vs this tree's 0x430, one register
+//   short at the very first guard) shared with `fade_to`/`closest`/
+//   `get_nearest_palette_index` above - not re-derived here.
 // indirect  0x005FFB82 0x005FFBCC 0x005FFC18 0x005FFD05 0x005FFD0B 0x005FFD1A
 
 int Palette::fade_to_entry(int colour_index, int start, int count, int steps,
@@ -1421,6 +1592,32 @@ int Palette::fade_to_entry(int colour_index, int start, int count, int steps,
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     (none)
+// TRIED: 2026-08-24, from a 6/133 baseline to 96/133 (0.894 similar, best of all ten
+//   flag sets) on three levers, each independently measured: (1) dropped the
+//   `const double scale/zero` locals and the named `int ir/ig/ib` temporaries in
+//   favour of `hsv_value_byte_scale`/`hsv_zero` and inline `entry->peRed` casts -
+//   the named copies alone cost an extra callee-saved register (`push esi`) and
+//   12 bytes more stack frame the image never pays for, even though they are
+//   themselves `const` and should have folded; (2) wrote `out->h = ...;` directly
+//   in each arm of the `if (r==vmax)/else if (g==vmax)/else` chain instead of
+//   assigning a local `h` and storing it once after the chain - the image's
+//   asymmetric tail (branch 1 stores-and-jumps-around, branches 2/3 share a
+//   tail-merged store) only appears when each arm owns its own store; (3) replaced
+//   `bool neg = h2 < zero; out->h = h2; if (neg) out->h = h2 + wrap;` with a direct
+//   `if (h2 < hsv_zero)` on the raw comparison - the image never materialises the
+//   condition as a byte (no `test al,al`), it stores h2 unconditionally then
+//   conditionally re-stores. Two plateaus remain, both isolated to single spots:
+//   the first vmax comparison (`(r<g)?g:r`) compiles `fld st(1); fcomp st(1)` where
+//   the image has one `fcom st(1)` - tried `(g>r)?g:r`, `(g>=r)?g:r`, `(r<=g)?g:r`;
+//   the `?g:r` forms regress hard (44-45/133, the frame-size problem returns), the
+//   `<=` form is byte-identical to `<` (VC6 treats them the same for a pure
+//   max-select). And `double h2 = out->h * hsv_degrees_per_sector;` folds the
+//   CONSTANT into an explicit `fld` and the pointer read into the `fmul`'s memory
+//   operand (`fld [0]; fmul [ecx]`) where the image folds the opposite way
+//   (`fld [ecx]; fmul [0x670c40]`) - swapping the written multiplicand order
+//   (`hsv_degrees_per_sector * out->h`) compiles byte-IDENTICAL to the unswapped
+//   form, so this is VC6's own operand-selection heuristic, not a source-order
+//   question this tree's spellings reach.
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE. This directory IS on the ratchet: every file here
@@ -1456,25 +1653,18 @@ int Palette::fade_to_entry(int colour_index, int start, int count, int steps,
 
 void __cdecl RGB_to_HSV(const PALETTEENTRY *entry, HSV *out) {
     if (out != 0 && entry != 0) {
-        const double scale = hsv_value_byte_scale;
-        const double zero = hsv_zero;
-        int ir = entry->peRed;
-        int ig = entry->peGreen;
-        int ib = entry->peBlue;
-        double r = static_cast<double>(ir) * scale;
-        double g = static_cast<double>(ig) * scale;
-        double b = static_cast<double>(ib) * scale;
-        double vmax = r;
-        if (r < g) vmax = g;
-        if (vmax < b) vmax = b;
-        double vmin = r;
-        if (g < r) vmin = g;
-        if (b < vmax) vmin = b;
+        double r = static_cast<double>(static_cast<int>(entry->peRed)) * hsv_value_byte_scale;
+        double g = static_cast<double>(static_cast<int>(entry->peGreen)) * hsv_value_byte_scale;
+        double b = static_cast<double>(static_cast<int>(entry->peBlue)) * hsv_value_byte_scale;
+        double vmax = (r < g) ? g : r;
+        vmax = (vmax < b) ? b : vmax;
+        double vmin = (g < r) ? g : r;
+        vmin = (b < vmax) ? b : vmin;
         out->v = vmax;
-        double s = zero;
-        if (vmax != zero) s = (vmax - vmin) / vmax;
+        double s = hsv_zero;
+        if (vmax != hsv_zero) s = (vmax - vmin) / vmax;
         out->s = s;
-        if (s == zero) {
+        if (s == hsv_zero) {
             // The transcription wrote this as two int stores of 0x00000000
             // and 0xBFF00000 - which are exactly the bit halves of the
             // double -1.0. Say the constant; the compiler emits the halves.
@@ -1482,19 +1672,16 @@ void __cdecl RGB_to_HSV(const PALETTEENTRY *entry, HSV *out) {
             return;
         }
         double delta = vmax - vmin;
-        double h;
         if (r == vmax) {
-            h = (g - b) / delta;
+            out->h = (g - b) / delta;
         } else if (g == vmax) {
-            h = (b - r) / delta + hsv_sector_offset_b_minus_r;
+            out->h = (b - r) / delta + hsv_sector_offset_b_minus_r;
         } else {
-            h = (r - g) / delta + hsv_sector_offset_r_minus_g;
+            out->h = (r - g) / delta + hsv_sector_offset_r_minus_g;
         }
-        out->h = h;
         double h2 = out->h * hsv_degrees_per_sector;
-        bool neg = h2 < zero;
         out->h = h2;
-        if (neg) {
+        if (h2 < hsv_zero) {
             out->h = h2 + hsv_hue_wrap_degrees;
         }
     }
@@ -1503,6 +1690,19 @@ void __cdecl RGB_to_HSV(const PALETTEENTRY *entry, HSV *out) {
 // ORIGINAL: 0x005FF630 ?get_nearest_palette_index@Palette@@QAEHPAUHSV@@0H@Z 0x005FF630-0x005FF92D FILE
 // symbol    ?get_nearest_palette_index@Palette@@QAEHPBUHSV@@0H@Z
 // TRIED: MISMATCH #5 push/mov - and/sub-esp frame differs because the helper hsv_sq_distance() is a separate function call rather than inlined FPU code sharing one scratch stack slot per the original's single sub-esp-8 staging area reused across both sin/cos call sites in each loop body.
+// LEVER: `static __forceinline` on `hsv_sq_distance` makes VC6 actually inline
+//   it - confirmed by objdump on the compiled object: the `call` sites now
+//   target `_sin`/`_cos` directly (DISP32 relocations), not the helper, and
+//   `hsv_sq_distance` never appears as its own symbol. That closes the
+//   "separate function call" defect this TRIED line names. It does not move
+//   the score (best-of-all-flags ties the un-inlined body at 0.401, 6/224),
+//   because the image goes one step further and UNROLLS each of the two
+//   loops by 2 - 8 sin + 8 cos call sites total (two groups of 4-sin/4-cos),
+//   double what one inlined copy per loop produces (4+4=8 total, confirmed
+//   by counting `_sin`/`_cos` relocations in the compiled object). Loop
+//   unrolling is a compiler heuristic this tree has no source-level lever
+//   for. Kept anyway: the call graph now matches the image's (no call the
+//   image does not make), which is worth more than the tied score.
 // working copy - scaffold materialised by --work
 // size      765 bytes
 // prototype int (__thiscall ?get_nearest_palette_index@Palette@@QAEHPAUHSV@@0H@Z)(Palette* this, HSV*, HSV*, int)
@@ -1511,7 +1711,7 @@ void __cdecl RGB_to_HSV(const PALETTEENTRY *entry, HSV *out) {
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x006463E4 0x00646494
 
-static double hsv_sq_distance(const HSV *a, const HSV *b, double k) {
+static __forceinline double hsv_sq_distance(const HSV *a, const HSV *b, double k) {
     double dv = a->v - b->v;
     double sin_a = ((double(__cdecl *)(double))sin)(a->h * k) * a->s;
     double sin_b = ((double(__cdecl *)(double))sin)(b->h * k) * b->s;
@@ -1597,6 +1797,16 @@ int Palette::get_nearest_palette_index(const HSV *query, const HSV *hsv_block,
 //            hoisting a &local1 pointer ahead of the loop to busy eax does not compile
 //            as written - the lever is whatever makes VC6 compute the call's argument
 //            addresses BEFORE the v-multiply, which is an ordering this tree has not found.
+// TRIED: 2026-08-24, re-measured against the CURRENT `local1.v = A * B * C` body with
+//   `osmx measure` directly (0.978 similar, 80/93 instructions, best of all ten flag
+//   sets): re-tried `*(const double *)0x0066EB38` for the scale constant - regresses to
+//   59/93, so the 0.9626 figure above was from a different metric or a different body
+//   shape, not reproducible on this one; computing `&hsv[0]` at the call site (no `ref0`
+//   local) - byte-identical to the current form, 80/93, same divergence; `local1.v *= ...`
+//   compound-assign instead of `local1.v = local1.v * ...` - also byte-identical, 80/93.
+//   The plateau is instruction SCHEDULING (the image interleaves the closing `fstp` of
+//   the v-multiply with the call's address computation; every spelling tried here keeps
+//   them as one unbroken FPU sequence), not a data-flow or constant-spelling difference.
 // size      312 bytes
 // prototype int (__thiscall ?create_table@Palette@@QAEHPAEHHH@Z)(Palette* this, unsigned int8*, int, int, int)
 // callers   1   call targets   3
