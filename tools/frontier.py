@@ -240,24 +240,24 @@ def owner_of(record) -> str:
 
 
 def file_compiler_work_sites() -> dict:
-    """Hand-done compiler-work sites per PRODUCT file, from compiler_work's
-    own patterns - the same census the gate runs, keyed per file so
-    --by-class can join it by the files a class lives in."""
+    """Hand-done compiler-work sites per PRODUCT file - THE GATE'S OWN
+    CENSUS, not a second copy of it.
+
+    It used to be a copy, and the copy was wrong in two ways at once: it
+    iterated `SHAPES` without `HEADER_SHAPES`, and it globbed `*.cpp`
+    without `*.h`. So the DONE bar could not see the four shapes this
+    project cares most about - vtable-as-member, vtable-initialiser store,
+    vtable address constant, anonymous fixed-address global - 320 sites
+    across 50 files, 34 of them in win.cpp. A class could be tagged [DONE]
+    while still carrying vtables as data. `compiler_work.census_by_file`
+    is now the single walk both consumers read.
+    """
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import compiler_work
-    sites: dict = {}
-    for path in sorted((REPO_ROOT / "src").glob("*.cpp")):
-        if "recovered" in path.parts or "unrecovered" in path.parts:
-            continue
-        count = 0
-        for line in path.read_text(errors="replace").splitlines():
-            if line.lstrip().startswith("//"):
-                continue
-            for _name, _ceiling, rx, _why in compiler_work.SHAPES:
-                count += len(rx.findall(line))
-        if count:
-            sites[path.name] = count
-    return sites
+    return {name: sum(per_shape.values())
+            for name, per_shape
+            in compiler_work.census_by_file(REPO_ROOT / "src").items()
+            if sum(per_shape.values())}
 
 
 def by_class(records, order, built, visible) -> None:
@@ -358,6 +358,32 @@ def by_class(records, order, built, visible) -> None:
     # spill wall holds seven such), and it must never exclude either - the
     # class stays on the books, its row tagged done, free to be re-opened by
     # a lever landing elsewhere.
+    def defining_headers(owner: str) -> list:
+        r"""Headers that DEFINE this class, not merely mention it.
+
+        The old test was `\b(?:class|struct)\s+X\b` anywhere in the text,
+        which is true of `class Palette;` in buffer.h, of `friend class Win;`
+        in six headers, and even of the words "(class Win : public
+        AutoSound)" inside an autosound.h comment. Harmless while it only
+        fed a display column; not harmless once the header's compiler-work
+        and debt counts are summed onto the class, which attributed
+        buffer.h's debt to Palette and took a finished class off DONE. A
+        definition is followed by `:` or `{` - a declaration by `;` - and
+        comment lines are not code.
+        """
+        found = []
+        for name, text in header_texts.items():
+            for line in text.splitlines():
+                stripped = line.lstrip()
+                if (stripped.startswith(("//", "*", "/*"))
+                        or "friend" in stripped):
+                    continue
+                if re.match(rf"(?:class|struct)\s+{re.escape(owner)}\b"
+                            rf"\s*(?::|\{{|$)", stripped):
+                    found.append(name)
+                    break
+        return sorted(found)
+
     def member_done(r) -> bool:
         return (r.byte_exact or r.semantic or bool(r.ruled_out))
 
@@ -365,14 +391,20 @@ def by_class(records, order, built, visible) -> None:
         slot = queue[owner]
         every = by_owner[owner]
         exact = sum(1 for r in every if r.byte_exact or r.semantic)
-        cw = sum(sites.get(name, 0) for name in owner_files[owner])
+        decl = defining_headers(owner)
+        # THE HEADER IS PART OF THE CLASS. `owner_files` is built from the
+        # paths that carry MARKERS, and markers live in .cpp - so a class's
+        # declaring header was summed by neither column. Measured when this
+        # was found: 2,315 of the tree's 5,050 debt sites (46%) live in
+        # headers, win.h alone holding 102. The header is already known here
+        # for the `declaration` column; the fix is to let the arithmetic see
+        # what the display always did.
+        counted = owner_files[owner] | set(decl)
+        cw = sum(sites.get(name, 0) for name in counted)
         scaff = sum(1 for r in every if r.path.name in SCAFFOLD_FILES)
-        debt = sum(debt_by_file.get(name, 0) for name in owner_files[owner])
+        debt = sum(debt_by_file.get(name, 0) for name in counted)
         done = (all(member_done(r) for r in every)
                 and cw == 0 and scaff == 0 and debt == 0)
-        decl = sorted({name for name, text in header_texts.items()
-                       if re.search(rf"\b(?:class|struct)\s+"
-                                    rf"{re.escape(owner)}\b", text)})
         where = ",".join(decl[:2]) + ("…" if len(decl) > 2 else "")
         tag = "  [DONE]" if done else ""
         print(f"{first_seen[owner]:>5}  {owner:22.22s} {slot['reach']:>5} "
@@ -381,13 +413,7 @@ def by_class(records, order, built, visible) -> None:
               f"  {where}{tag}")
 
     hyp_only = [owner for owner in rows
-                if "hypothesis_layouts.h" in
-                {name for name, text in header_texts.items()
-                 if re.search(rf"\b(?:class|struct)\s+"
-                              f"{re.escape(owner)}\b", text)}
-                and len({name for name, text in header_texts.items()
-                         if re.search(rf"\b(?:class|struct)\s+"
-                                      f"{re.escape(owner)}\b", text)}) == 1]
+                if defining_headers(owner) == ["hypothesis_layouts.h"]]
     print(f"\n{len(rows)} classes on the frontier; done = every member "
           f"BYTE_EXACT/SEMANTIC/TRIED AND cw 0 AND scaf 0 AND debt 0."
           f" Done rows are tagged and leave the queue; nothing is excluded.")
