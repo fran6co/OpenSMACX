@@ -40,7 +40,7 @@ from decomp import read  # noqa: E402
 # eyeballed before pinning - vector-dtor iterators, atexit callbacks, and
 # `g_00406850`-style disguises, every one a real function reference.
 CEILINGS = {
-    "unk-method": 315,
+    "unk-method": 286,
     "function-address binding": 65,
     "orphan redirect": 891,
     "pointer-as-int": 2,
@@ -87,6 +87,28 @@ def product_files() -> list[Path]:
     return sorted(REPO.glob("src/*.cpp")) + sorted(REPO.glob("src/*.h"))
 
 
+def code_lines(path: Path):
+    """Non-comment lines - and that includes /* */ INTERIORS. The first
+    version skipped only `//`-prefixed lines, so prose inside a Purpose
+    block ("the catalogue's UNK3 stays on the marker") counted as an
+    unnamed method. History must not be renamed to appease a census; the
+    census must know history when it sees it."""
+    in_block = False
+    for line in path.read_text(errors="replace").splitlines():
+        s = line.lstrip()
+        if in_block:
+            if "*/" in s:
+                in_block = False
+            continue
+        if s.startswith(("//", "*")):
+            continue
+        if s.startswith("/*"):
+            if "*/" not in s:
+                in_block = True
+            continue
+        yield line
+
+
 def census():
     """counts per shape, files per shape, per-file detail for --json."""
     records = read(REPO / "src")
@@ -107,9 +129,7 @@ def census():
     redirect_refs = collections.Counter()
 
     for path in product_files():
-        for line in path.read_text(errors="replace").splitlines():
-            if line.lstrip().startswith(("//", "*")):
-                continue
+        for line in code_lines(path):
             for name in UNK.findall(line):
                 counts["unk-method"] += 1
                 files["unk-method"][path.name] += 1
@@ -130,9 +150,7 @@ def census():
     orphans = {name for name, n in redirect_refs.items() if n <= 2}
     if orphans:
         for path in product_files():
-            for line in path.read_text(errors="replace").splitlines():
-                if line.lstrip().startswith(("//", "*")):
-                    continue
+            for line in code_lines(path):
                 for name in REDIRECT.findall(line):
                     if name in orphans:
                         counts["orphan redirect"] += 1
