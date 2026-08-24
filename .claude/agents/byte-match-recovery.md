@@ -132,6 +132,13 @@ worked example.
 
 ## Rules
 
+- **`reinterpret_cast` of `this` is BANNED** (C-style puns of `this` too).
+  A cast to `char *`/`int *` hides members behind offsets; a cast to another
+  class hides an inheritance edge. Say what the class IS: use the declared
+  members, or declare the base/member the image's layout proves. If a body
+  cannot be written without the cast, that is a LAYOUT finding - report it,
+  don't pun around it. The `class_debt.py` ratchet holds the count and the
+  gate fails on a new one.
 - **No `__asm`, no `_emit`.** It pastes the original's instructions instead of
   deriving them, so it proves nothing about the source.
 - **Do not commit, and do not change any file outside `src/`.**

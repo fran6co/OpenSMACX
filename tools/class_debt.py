@@ -45,7 +45,15 @@ CEILINGS = {
     "orphan redirect": 891,
     "pointer-as-int": 2,
     "undocumented trivial body": 0,
-    "raw self-access": 164,
+    "pointer-parameter as int":
+        "the body casts a scaffold parameter (aN) to a pointer - the body "
+        "PROVING the parameter's type; the census's H was a guess. Retype "
+        "from use (set_rgbquad's RGBQUAD dual went 6->11 agreeing once "
+        "typed), update the `// symbol` fact to what the build emits, and "
+        "re-measure. A null-check alone is a hint, not proof - only a cast "
+        "counts here.",
+    "raw self-access": 238,
+    "pointer-parameter as int": 17,
 }
 
 WHY = {
@@ -70,12 +78,23 @@ WHY = {
         "a BYTE_EXACT claim on a <=4-byte body with no Purpose:/Verification "
         "note prose. The claim is honest - the image really is that trivial - "
         "but nothing SAYS so, and it reads as a stub.",
+    "pointer-parameter as int":
+        "the body casts a scaffold parameter (aN) to a pointer - the body "
+        "PROVING the parameter's type; the census's H was a guess. Retype "
+        "from use (set_rgbquad's RGBQUAD dual went 6->11 agreeing once "
+        "typed), update the `// symbol` fact to what the build emits, and "
+        "re-measure. A null-check alone is a hint, not proof - only a cast "
+        "counts here.",
     "raw self-access":
         "a body walking its own object through reinterpret_cast<char*>(this) "
         "and raw offsets when the class declares the members. Palette's "
-        "operator= proved the member form byte-identical (19/19) - and its "
+        "copy_from proved the member form byte-identical (19/19) - and its "
         "do-while-plus-dead-store was a while loop in disguise. Use the "
-        "members; a divergence is a LAYOUT finding, not a style problem.",
+        "members; a divergence is a LAYOUT finding, not a style problem. "
+        "Do not trade a this-pun for a MEMBER-pun either: a dword pun of an "
+        "entry feeding mask/shift extraction is the entry's channels read as "
+        "members, an int copy of an entry is a struct assignment - and "
+        "Palette's honest forms measured CLOSER (12->15, 6->10 agreeing).",
 }
 
 UNK = re.compile(r"\bUNK\d+\b")
@@ -88,10 +107,18 @@ POINTER_AS_INT = re.compile(
     r"|return\s*\(\s*int\s*\)\s*new\b"
     r"|\b__(?:as|ct|dt)\b")
 DOCUMENTED = re.compile(r"Purpose:|Verification note", re.I)
+# ANY reinterpret_cast of `this`, ANY target - the user's rule, stated as a
+# ban: "all reinterpret_cast involving this should be banned". A cast to
+# char*/int* hides members behind offsets; a cast to another CLASS hides an
+# inheritance edge behind a pun. Either way the class model is being
+# bypassed, and the remedy is to say what the class IS. C-style puns of
+# `this` count the same.
+PARAM_CAST = re.compile(
+    r"(?:reinterpret_cast<[^>]*\*[^>]*>|\(\s*[A-Za-z_][\w :]*\*+\s*\))"
+    r"\s*\(?\s*a\d+\b")
 SELF_CAST = re.compile(
-    r"reinterpret_cast<\s*(?:char|unsigned char|uint8_t|int|unsigned int"
-    r"|uint32_t|void)\s*\*\s*>\s*\(\s*this\s*\)"
-    r"|\(\s*(?:char|unsigned char|uint8_t)\s*\*\s*\)\s*this\b")
+    r"reinterpret_cast<[^>]*>\s*\(\s*this\s*\)"
+    r"|\(\s*[A-Za-z_][\w :]*\*+\s*\)\s*this\b")
 
 
 def product_files() -> list[Path]:
@@ -156,6 +183,9 @@ def census():
             for _ in SELF_CAST.findall(line):
                 counts["raw self-access"] += 1
                 files["raw self-access"][path.name] += 1
+            for _ in PARAM_CAST.findall(line):
+                counts["pointer-parameter as int"] += 1
+                files["pointer-parameter as int"][path.name] += 1
 
     # Orphans need the whole tree's reference counts first; attribute each to
     # the file that DEFINES it (the one place `name(` appears at line start

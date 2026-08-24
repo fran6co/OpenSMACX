@@ -78,19 +78,30 @@ In the same worktree, same agent, after the declarations land:
    it to what the build emits) and re-measure the body. No `UNKn` survives
    the class's pass.
 2. **Fix the types the bytes cannot see.** `int` returning
-   `reinterpret_cast<int>(this)` is a pointer; `__as` is `operator=` (the
-   census name is a guess - ask `marker_symbols.py` what the build emits).
-   Re-measure every touched body: a type change that moves bytes is a
-   finding, not a formality.
+   `reinterpret_cast<int>(this)` is a pointer. Do not trust an invented
+   operator name either way: Palette's `__as` looked like `operator=` and
+   the CALLERS refuted it - both run the destructor immediately before it,
+   so it is `copy_from`, a reset method. Name from call patterns and
+   behaviour; ask `marker_symbols.py` what the build emits. Re-measure every
+   touched body: a type change that moves bytes is a finding, not a
+   formality.
 3. **Delete the class's orphan redirects** - `*_redirect` functions whose
    only references are their own declaration and definition. The gate's
    link step referees; if the link breaks, something non-textual needed it,
    which is a finding to record, not a reason to keep dead code quietly.
-4. **Convert function-address bindings**: a cast like
+4. **Purge `reinterpret_cast<...>(this)` - it is banned.** Palette's
+   copy_from proved the member form byte-identical (19/19); a cast to
+   another class is an inheritance edge to declare instead. A body that
+   cannot lose the cast is a layout finding for the family brief. And do
+   not trade a this-pun for a member-pun: a dword pun of a struct feeding
+   mask/shift extraction is that struct's fields read directly, an int copy
+   of a struct is a struct assignment - Palette's honest forms measured
+   CLOSER to the image, not just cleaner.
+5. **Convert function-address bindings**: a cast like
    `(void *)0x005FEAD0` whose address lands inside a catalogued function is
    a function reference in data clothes. Declare the callee (forward in
    `pending_bodies.cpp` if unpromoted) and delete the global.
-5. **Claim every lowered ceiling** in `class_debt.py` in the same commit -
+6. **Claim every lowered ceiling** in `class_debt.py` in the same commit -
    the gate fails on slack.
 
 The claim floor must not move through any of this: renames and type fixes

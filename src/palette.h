@@ -84,11 +84,11 @@ class Palette {
 
  public:
   // homed from 005fe5c0.cpp
-  int set_rgbquad(int a1, int a2, int a3);
+  int set_rgbquad(const RGBQUAD *src, int start, int count);
 
  public:
   // homed from 005ff1a0.cpp
-  int make_remap_table(int a1, int a2, int a3, int a4);
+  int make_remap_table(int a1, unsigned char *table, int start, int count);
 
  public:
   // homed from 005ff470.cpp
