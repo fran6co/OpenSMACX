@@ -1229,7 +1229,7 @@ extern "C" unsigned int strlen(const char *);
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const &BufferStrHeight = (int *)0x009B3A9C;
+static int *const BufferStrHeight = (int *)0x009B3A9C;
 
 class Buffer { public:
     LPVOID vtable_;

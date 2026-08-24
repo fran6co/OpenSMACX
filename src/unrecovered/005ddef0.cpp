@@ -89,7 +89,7 @@ class Spot { public:
 // encoding including the address; `extern T *g` does not.
 static int *const g_009b3a94 = (int *)0x009B3A94;
 static int *const g_009b3a98 = (int *)0x009B3A98;
-static int *const &BufferStrHeight = (int *)0x009B3A9C;
+static int *const BufferStrHeight = (int *)0x009B3A9C;
 static int *const g_009bb484 = (int *)0x009BB484;
 
 class Buffer { public:
@@ -168,7 +168,7 @@ class Buffer { public:
     int wrap_height_flying_flush();
 };
 int Buffer::wrap_height_flying_flush() {
-    if (BufferStrHeight != 0) {
+    if (*BufferStrHeight != 0) {
         if (font1_ == 0) {
             font1_ = (Font *)*g_009bb484;
         }
