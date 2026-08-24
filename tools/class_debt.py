@@ -40,20 +40,14 @@ from decomp import read  # noqa: E402
 # eyeballed before pinning - vector-dtor iterators, atexit callbacks, and
 # `g_00406850`-style disguises, every one a real function reference.
 CEILINGS = {
-    "unk-method": 286,
+    "unk-method": 285,
     "function-address binding": 65,
     "orphan redirect": 891,
     "pointer-as-int": 2,
     "undocumented trivial body": 0,
-    "pointer-parameter as int":
-        "the body casts a scaffold parameter (aN) to a pointer - the body "
-        "PROVING the parameter's type; the census's H was a guess. Retype "
-        "from use (set_rgbquad's RGBQUAD dual went 6->11 agreeing once "
-        "typed), update the `// symbol` fact to what the build emits, and "
-        "re-measure. A null-check alone is a hint, not proof - only a cast "
-        "counts here.",
     "raw self-access": 238,
-    "pointer-parameter as int": 17,
+    "pointer-parameter as int": 6,
+    "scaffold name": 3507,
 }
 
 WHY = {
@@ -85,6 +79,12 @@ WHY = {
         "typed), update the `// symbol` fact to what the build emits, and "
         "re-measure. A null-check alone is a hint, not proof - only a cast "
         "counts here.",
+    "scaffold name":
+        "an aN identifier surviving in code is a parameter (or local) nobody "
+        "has examined: the name records that no one yet asked what it IS. "
+        "Name it from inferred use - the body's own reads and writes say. "
+        "Renames of value parameters change no mangled name and no bytes; "
+        "palette.cpp went to zero in one pass.",
     "raw self-access":
         "a body walking its own object through reinterpret_cast<char*>(this) "
         "and raw offsets when the class declares the members. Palette's "
@@ -113,12 +113,17 @@ DOCUMENTED = re.compile(r"Purpose:|Verification note", re.I)
 # inheritance edge behind a pun. Either way the class model is being
 # bypassed, and the remedy is to say what the class IS. C-style puns of
 # `this` count the same.
+SCAFFOLD_NAME = re.compile(r"\ba\d+\b")
 PARAM_CAST = re.compile(
     r"(?:reinterpret_cast<[^>]*\*[^>]*>|\(\s*[A-Za-z_][\w :]*\*+\s*\))"
     r"\s*\(?\s*a\d+\b")
 SELF_CAST = re.compile(
     r"reinterpret_cast<[^>]*>\s*\(\s*this\s*\)"
-    r"|\(\s*[A-Za-z_][\w :]*\*+\s*\)\s*this\b")
+    r"|\(\s*[A-Za-z_][\w :]*\*+\s*\)\s*this\b"
+    # memcpy(dst, this, n) needs NO cast - void* swallows `this` silently,
+    # which is how `memcpy(selfCopy, this, 0x400)` outlived the cast ban.
+    # The member being copied has a name and a sizeof; use them.
+    r"|\bmem(?:cpy|set|move)\s*\([^;)]*\bthis\b")
 
 
 def product_files() -> list[Path]:
@@ -144,7 +149,13 @@ def code_lines(path: Path):
             if "*/" not in s:
                 in_block = True
             continue
-        yield line
+        # TRAILING comments are prose too: `uint8_t field_B; // not UNK3`
+        # counted its comment as an unnamed method. Naive split - a `//`
+        # inside a string literal would be cut, but this tree's code lines
+        # do not carry URLs, and losing one would UNDERCOUNT, which the
+        # only-falls ceiling turns into a visible "lower it" rather than a
+        # silent lie.
+        yield line.split("//", 1)[0]
 
 
 def census():
@@ -186,6 +197,9 @@ def census():
             for _ in PARAM_CAST.findall(line):
                 counts["pointer-parameter as int"] += 1
                 files["pointer-parameter as int"][path.name] += 1
+            for _ in SCAFFOLD_NAME.findall(line):
+                counts["scaffold name"] += 1
+                files["scaffold name"][path.name] += 1
 
     # Orphans need the whole tree's reference counts first; attribute each to
     # the file that DEFINES it (the one place `name(` appears at line start

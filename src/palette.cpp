@@ -740,17 +740,18 @@ void Palette::close_palette_class() {
 // calls     (none)
 
 
-int Palette::get_nearest_palette_index(unsigned char a1, unsigned char a2, unsigned char a3, int a4) {
+int Palette::get_nearest_palette_index(unsigned char red, unsigned char green,
+                                       unsigned char blue, int skip_animated) {
     int best_dist = 200000;
     int best_index = 0;
 
-    if (a4 == 0) {
+    if (skip_animated == 0) {
         const PALETTEENTRY *p = entries_;
         for (int i = 0; i < 0x100; ++i, ++p) {
-            int red = (int)p->peRed - (int)a1;
-            int green = (int)p->peGreen - (int)a2;
-            int blue = (int)p->peBlue - (int)a3;
-            int dist = red * red + green * green + blue * blue;
+            int dr = (int)p->peRed - (int)red;
+            int dg = (int)p->peGreen - (int)green;
+            int db = (int)p->peBlue - (int)blue;
+            int dist = dr * dr + dg * dg + db * db;
             if (dist < best_dist) {
                 best_dist = dist;
                 best_index = i;
@@ -783,10 +784,10 @@ int Palette::get_nearest_palette_index(unsigned char a1, unsigned char a2, unsig
         if (reserved[i] != 0) {
             continue;
         }
-        int red = (int)p2->peRed - (int)a1;
-        int green = (int)p2->peGreen - (int)a2;
-        int blue = (int)p2->peBlue - (int)a3;
-        int dist = red * red + green * green + blue * blue;
+        int dr = (int)p2->peRed - (int)red;
+        int dg = (int)p2->peGreen - (int)green;
+        int db = (int)p2->peBlue - (int)blue;
+        int dist = dr * dr + dg * dg + db * db;
         if (dist < best_dist) {
             best_dist = dist;
             best_index = i;
@@ -805,9 +806,11 @@ int Palette::get_nearest_palette_index(unsigned char a1, unsigned char a2, unsig
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005FF470
 
-int Palette::make_remap_table(int a1, unsigned char *table, int start,
+// `source` is only ever null-checked; the census types it int and the
+// body proves nothing more. Its real type is an open finding.
+int Palette::make_remap_table(int source, unsigned char *table, int start,
                               int count) {
-    if (a1 == 0 || table == 0) {
+    if (source == 0 || table == 0) {
         return 0x10;
     }
     int i = 0;
@@ -874,7 +877,7 @@ int Palette::set_rgbquad(const RGBQUAD *src, int start, int count) {
 }
 
 // ORIGINAL: 0x005FEE80 ?UNK4@Palette@@QAEHPAXHHHHH@Z 0x005FEE80-0x005FEFE7
-// symbol    ?make_blend_table@Palette@@QAEHPAXHHHHH@Z
+// symbol    ?make_blend_table@Palette@@QAEHPBV1@PAEHHHH@Z
 // TRIED: `int i` reused across the two fill loops is a VC6 for-scope leak (C2374), so the loop counters are named `i0`/`i1`. The blend loop's R/G/B channel math and the `get_nearest_palette_index` call are transcribed directly from the Ghidra pseudocode (the CONCAT31 casts there are just "pass the low byte", nothing else). 0.81 mnemonic similarity; first divergence at #3 is in the prologue stack-frame setup for the two 0x400-byte local copies, not chased further.
 // size      359 bytes
 // prototype int (__thiscall ?UNK4@Palette@@QAEHPAXHHHHH@Z)(Palette* this, void*, int, int, int, int, int)
@@ -885,57 +888,60 @@ int Palette::set_rgbquad(const RGBQUAD *src, int start, int count) {
 
 
 
-int Palette::make_blend_table(void *a1, int a2, int a3, int a4, int a5, int a6) {
-    if (a1 == 0) {
+int Palette::make_blend_table(const Palette *other, uint8_t *table, int start,
+                              int count, int self_weight, int other_weight) {
+    if (other == 0) {
         return 0x10;
     }
     if (PaletteInitialized == nullptr) {
         return 7;
     }
-    if (a2 == 0) {
+    if (table == 0) {
         return 0x10;
     }
 
-    uint8_t *dest = reinterpret_cast<uint8_t *>(a2);
-    for (int i0 = 0; i0 < a3; ++i0) {
-        dest[i0] = static_cast<uint8_t>(i0);
+    for (int i0 = 0; i0 < start; ++i0) {
+        table[i0] = static_cast<uint8_t>(i0);
     }
 
-    int hi = a3 + a4;
-    for (int i1 = hi; i1 < 0x100; ++i1) {
-        dest[i1] = static_cast<uint8_t>(i1);
+    int end = start + count;
+    for (int i1 = end; i1 < 0x100; ++i1) {
+        table[i1] = static_cast<uint8_t>(i1);
     }
 
-    uint8_t selfCopy[0x400];
-    uint8_t srcCopy[0x400];
-    memcpy(selfCopy, this, 0x400);
-    memcpy(srcCopy, a1, 0x400);
+    PALETTEENTRY selfCopy[256];
+    PALETTEENTRY otherCopy[256];
+    memcpy(selfCopy, entries_, sizeof(selfCopy));
+    memcpy(otherCopy, other->entries_, sizeof(otherCopy));
 
-    if (a3 < hi) {
-        int divisor = a5 + a6;
-        int i = a3;
+    if (start < end) {
+        int divisor = self_weight + other_weight;
+        int i = start;
         do {
             uint8_t r = static_cast<uint8_t>(
-                (static_cast<unsigned int>(srcCopy[i * 4]) * a6 +
-                 static_cast<unsigned int>(selfCopy[i * 4]) * a5) / divisor);
-            selfCopy[i * 4] = r;
+                (static_cast<unsigned int>(otherCopy[i].peRed) * other_weight +
+                 static_cast<unsigned int>(selfCopy[i].peRed) * self_weight) /
+                divisor);
+            selfCopy[i].peRed = r;
 
             uint8_t g = static_cast<uint8_t>(
-                (static_cast<unsigned int>(srcCopy[i * 4 + 1]) * a6 +
-                 static_cast<unsigned int>(selfCopy[i * 4 + 1]) * a5) / divisor);
-            selfCopy[i * 4 + 1] = g;
+                (static_cast<unsigned int>(otherCopy[i].peGreen) * other_weight +
+                 static_cast<unsigned int>(selfCopy[i].peGreen) * self_weight) /
+                divisor);
+            selfCopy[i].peGreen = g;
 
-            int bSum = static_cast<unsigned int>(srcCopy[i * 4 + 2]) * a6 +
-                       static_cast<unsigned int>(selfCopy[i * 4 + 2]) * a5;
+            int bSum =
+                static_cast<unsigned int>(otherCopy[i].peBlue) * other_weight +
+                static_cast<unsigned int>(selfCopy[i].peBlue) * self_weight;
             int b = bSum / divisor;
-            selfCopy[i * 4 + 2] = static_cast<uint8_t>(b);
+            selfCopy[i].peBlue = static_cast<uint8_t>(b);
 
             uint8_t idx = static_cast<uint8_t>(
                 get_nearest_palette_index(r, g, static_cast<uint8_t>(b), 0));
 
             ++i;
-            dest[i - 1] = idx;
-        } while (i < hi);
+            table[i - 1] = idx;
+        } while (i < end);
     }
 
     return 0;
@@ -952,48 +958,50 @@ int Palette::make_blend_table(void *a1, int a2, int a3, int a4, int a5, int a6) 
 // To start: tools/decomp_status.py --work 0x005FEFF0
 
 
-int Palette::create_table_from_color(int a1, unsigned char * a2, int a3, int a4, int a5, int a6) {
+int Palette::create_table_from_color(int colour_index, unsigned char *table,
+                                     int start, int count, int keep_weight,
+                                     int colour_weight) {
 
     if (PaletteInitialized == nullptr) {
         return 7;
     }
-    if (a2 == 0) {
+    if (table == 0) {
         return 0x10;
     }
 
     int i = 0;
-    if (0 < a3) {
+    if (0 < start) {
         do {
-            a2[i] = static_cast<unsigned char>(i);
+            table[i] = static_cast<unsigned char>(i);
             ++i;
-        } while (i < a3);
+        } while (i < start);
     }
-    int range_end = a3 + a4;
+    int range_end = start + count;
     for (i = range_end; i < 0x100; ++i) {
-        a2[i] = static_cast<unsigned char>(i);
+        table[i] = static_cast<unsigned char>(i);
     }
 
-    int index = a3;
-    const PALETTEENTRY target = entries_[a1 & 0xff];
+    int index = start;
+    const PALETTEENTRY target = entries_[colour_index & 0xff];
 
-    if (a3 < range_end) {
-        int divisor = a5 + a6;
+    if (start < range_end) {
+        int divisor = keep_weight + colour_weight;
         unsigned char blend[0x400];
-        unsigned char *dest = blend + a3 * 4;
-        const PALETTEENTRY *src = &entries_[a3];
+        unsigned char *dest = blend + start * 4;
+        const PALETTEENTRY *src = &entries_[start];
         do {
             dest[0] = static_cast<unsigned char>(
-                (static_cast<int>(src->peRed) * a5 + static_cast<int>(target.peRed) * a6) / divisor);
+                (static_cast<int>(src->peRed) * keep_weight + static_cast<int>(target.peRed) * colour_weight) / divisor);
             dest[1] = static_cast<unsigned char>(
-                (static_cast<int>(src->peGreen) * a5 + static_cast<int>(target.peGreen) * a6) / divisor);
-            int sum = static_cast<int>(src->peBlue) * a5 + static_cast<int>(target.peBlue) * a6;
+                (static_cast<int>(src->peGreen) * keep_weight + static_cast<int>(target.peGreen) * colour_weight) / divisor);
+            int sum = static_cast<int>(src->peBlue) * keep_weight + static_cast<int>(target.peBlue) * colour_weight;
             int blue = sum / divisor;
             dest[2] = static_cast<unsigned char>(blue);
             unsigned char nearest = static_cast<unsigned char>(
                 get_nearest_palette_index(dest[0], dest[1], dest[2], 1));
             ++src;
             dest += 4;
-            a2[index] = nearest;
+            table[index] = nearest;
             ++index;
         } while (index < range_end);
     }
@@ -1005,7 +1013,7 @@ int Palette::create_table_from_color(int a1, unsigned char * a2, int a3, int a4,
             unsigned int start = record->first;
             if (start < static_cast<unsigned int>(record->count + start)) {
                 do {
-                    a2[start] = static_cast<unsigned char>(start);
+                    table[start] = static_cast<unsigned char>(start);
                     ++start;
                 } while (static_cast<int>(start) <
                          static_cast<int>(record->first + record->count));
@@ -1019,7 +1027,7 @@ int Palette::create_table_from_color(int a1, unsigned char * a2, int a3, int a4,
 }
 
 // ORIGINAL: 0x005FF220 ?UNK6@Palette@@QAEHHHH@Z 0x005FF220-0x005FF277 FILE
-// symbol    ?map_to_palette@Palette@@QAEHHHH@Z
+// symbol    ?map_to_palette@Palette@@QAEHPAV1@HH@Z
 // size      87 bytes
 // prototype int (__thiscall ?UNK6@Palette@@QAEHHHH@Z)(Palette* this, int, int, int)
 // callers   0   call targets   1
@@ -1081,19 +1089,19 @@ int Palette::create_table_from_color(int a1, unsigned char * a2, int a3, int a4,
 //    near miss from a wrong body.
 
 
-int Palette::map_to_palette(int a1, int a2, int a3) {
-    if (a1 == 0) {
+int Palette::map_to_palette(Palette *dest, int start, int count) {
+    if (dest == 0) {
         return 0x10;
     }
-    PALETTEENTRY *dst = reinterpret_cast<PALETTEENTRY *>(a1 + 0x28);
+    PALETTEENTRY *dst = &dest->entries_[10];
     const PALETTEENTRY *src = &entries_[10];
-    int count = 0xec;
+    int remaining = 0xec;
     do {
-        int idx = closest(src->peRed, src->peGreen, src->peBlue, a2, a3, 1);
+        int idx = closest(src->peRed, src->peGreen, src->peBlue, start, count, 1);
         ++src;
         *dst = entries_[idx];
         dst += 1;
-    } while (--count);
+    } while (--remaining);
     return 0;
 }
 
@@ -1110,32 +1118,35 @@ int Palette::map_to_palette(int a1, int a2, int a3) {
 // indirect  0x005FEB91
 
 
-void __cdecl Palette::timer_callback(int a1, int a2) {
-    if (a2 == 0 || PaletteUsesSystemColours != 0) {
+void __cdecl Palette::timer_callback(int key, int context) {
+    if (context == 0 || PaletteUsesSystemColours != 0) {
         return;
     }
 
-    char *base = reinterpret_cast<char *>(a2);
+    // `context` IS a Palette* - init_cycle passes `this` - but Time's
+    // callback slot (cb_param2_) is an int in Time's own catalogued API,
+    // so the int arrives here and this one examined cast is the record of
+    // that. Retyping the chain (callback type, cb_param2_, both init
+    // overloads, Win::window_proc's inline tick) is the Time/Win pass's
+    // work, not Palette's.
+    Palette *self = reinterpret_cast<Palette *>(context);
     int idx = 0;
-    char *entry = base + 0x404;
     do {
-        int field0 = *reinterpret_cast<int *>(entry);
-        if (a1 == field0 || field0 == -1) {
+        int slot_key = self->internal_[idx].key;
+        if (key == slot_key || slot_key == -1) {
             break;
         }
         idx++;
-        entry += 0x10;
     } while (idx < 5);
 
-    char *found = base + idx * 0x10;
-    if (*reinterpret_cast<int *>(found + 0x404) != a1) {
+    if ((int)self->internal_[idx].key != key) {
         return;
     }
 
-    unsigned int iStartIndex = *reinterpret_cast<unsigned char *>(found + 0x40c);
-    unsigned int cEntries = *reinterpret_cast<unsigned char *>(found + 0x40d);
+    unsigned int iStartIndex = self->internal_[idx].first;
+    unsigned int cEntries = self->internal_[idx].count;
 
-    PALETTEENTRY *entries = reinterpret_cast<PALETTEENTRY *>(base + iStartIndex * 4);
+    PALETTEENTRY *entries = &self->entries_[iStartIndex];
     unsigned char lastBlue = entries[0].peBlue;
     unsigned char lastGreen = entries[0].peGreen;
     unsigned char lastRed = entries[0].peRed;
@@ -1154,11 +1165,11 @@ void __cdecl Palette::timer_callback(int a1, int a2) {
     AnimatePalette(
         PaletteInitialized, iStartIndex, cEntries, entries);
 
-    PaletteSeedCache = *reinterpret_cast<int *>(base + 0x400);
+    PaletteSeedCache = (int)self->seed_;
 }
 
 // ORIGINAL: 0x005FF930 ?UNK8@Palette@@QAEHHHHHH@Z 0x005FF930-0x005FFB0B
-// symbol    ?fade_to@Palette@@QAEHHHHHH@Z
+// symbol    ?fade_to@Palette@@QAEHPAV1@HHHH@Z
 // TRIED: the third RGB channel is written through a pair of pointers precomputed once before the loop (`stackA_adj`/`stackB_adj` plus the destination pointer) rather than a fresh `k*4+2` index each iteration; kept as a direct index into the two 1024-byte stack copies, which is semantically the same value. `seed_` at offset 0x400 (right after `field_3FC_`) matches the reseed loop exactly. Landing the closest control-flow- faithful form (divergence starts at instruction #2, on the `this`-copy prologue).
 // size      475 bytes
 // prototype int (__thiscall ?UNK8@Palette@@QAEHHHHHH@Z)(Palette* this, void*, UINT iStartIndex, UINT cEntries, int, int)
@@ -1170,64 +1181,64 @@ void __cdecl Palette::timer_callback(int a1, int a2) {
 
 
 
-int Palette::fade_to(int a1, int a2, int a3, int a4, int a5) {
+int Palette::fade_to(Palette *other, int start, int count, int steps,
+                     int min_frame_ms) {
   if (PaletteUsesSystemColours != 0) {
     return 0;
   }
   if (PaletteInitialized == nullptr) {
     return 7;
   }
-  if (a1 == 0) {
+  if (other == 0) {
     return 0x10;
   }
 
-  unsigned char stackA[0x400];
-  unsigned char stackB[0x400];
-  memcpy(stackA, entries_, sizeof(entries_));
-  memcpy(stackB, reinterpret_cast<void *>(a1), 0x400);
+  PALETTEENTRY selfCopy[256];
+  PALETTEENTRY otherCopy[256];
+  memcpy(selfCopy, entries_, sizeof(selfCopy));
+  memcpy(otherCopy, other->entries_, sizeof(otherCopy));
 
   
 
   int frame = 0;
-  if (a4 != -1 && a4 + 1 >= 0) {
-    int weight = a4;
+  if (steps != -1 && steps + 1 >= 0) {
+    int weight = steps;
     do {
       DWORD t0 = timeGetTime();
-      if (a2 < a2 + a3) {
-        unsigned char *dst =
-            reinterpret_cast<unsigned char *>(a1) + 2 + a2 * 4;
-        int k = a2;
+      if (start < start + count) {
+        PALETTEENTRY *dst = &other->entries_[start];
+        int k = start;
         do {
-          dst[-2] = static_cast<char>(
-              (static_cast<unsigned int>(stackA[k * 4]) * weight +
-               static_cast<unsigned int>(stackB[k * 4]) * frame) /
-              a4);
-          dst[-1] = static_cast<char>(
-              (static_cast<unsigned int>(stackA[k * 4 + 1]) * weight +
-               static_cast<unsigned int>(stackB[k * 4 + 1]) * frame) /
-              a4);
-          dst[0] = static_cast<char>(
-              (static_cast<unsigned int>(stackA[k * 4 + 2]) * weight +
-               static_cast<unsigned int>(stackB[k * 4 + 2]) * frame) /
-              a4);
+          dst->peRed = static_cast<char>(
+              (static_cast<unsigned int>(selfCopy[k].peRed) * weight +
+               static_cast<unsigned int>(otherCopy[k].peRed) * frame) /
+              steps);
+          dst->peGreen = static_cast<char>(
+              (static_cast<unsigned int>(selfCopy[k].peGreen) * weight +
+               static_cast<unsigned int>(otherCopy[k].peGreen) * frame) /
+              steps);
+          dst->peBlue = static_cast<char>(
+              (static_cast<unsigned int>(selfCopy[k].peBlue) * weight +
+               static_cast<unsigned int>(otherCopy[k].peBlue) * frame) /
+              steps);
           ++k;
-          dst += 4;
-        } while (k < a2 + a3);
+          ++dst;
+        } while (k < start + count);
       }
 
-      AnimatePalette(PaletteInitialized, a2, a3,
-                      reinterpret_cast<const PALETTEENTRY *>(a1 + a2 * 4));
+      AnimatePalette(PaletteInitialized, start, count,
+                     &other->entries_[start]);
 
       DWORD t1 = timeGetTime();
       unsigned int elapsed = t1 - t0;
-      while (elapsed < static_cast<unsigned int>(a5)) {
+      while (elapsed < static_cast<unsigned int>(min_frame_ms)) {
         t1 = timeGetTime();
         elapsed = t1 - t0;
       }
 
       ++frame;
       --weight;
-    } while (frame < a4 + 1);
+    } while (frame < steps + 1);
   }
 
   seed_ = 0;
@@ -1250,16 +1261,18 @@ int Palette::fade_to(int a1, int a2, int a3, int a4, int a5) {
 // calls     0x005D4510 0x006161D0 0x00616200 0x006162D0 0x00644EF2 0x0064557F 0x0064558A 0x00645930
 
 
-int Palette::init_cycle(int a1, int a2, int a3, unsigned long a4) {
-    unsigned int a2masked = (unsigned char)a2;
+// `reserved` is never read; the census carries it as a third int and the
+// body proves nothing about it. Open finding, like make_remap_table's.
+int Palette::init_cycle(int key, int first, int reserved, unsigned long count) {
+    unsigned int first_index = (unsigned char)first;
 
-    if (a2masked < 10) {
+    if (first_index < 10) {
         return 3;
     }
-    if ((int)(0xf6 - a2masked) < (int)a4) {
+    if ((int)(0xf6 - first_index) < (int)count) {
         return 3;
     }
-    if (a1 == -1) {
+    if (key == -1) {
         return 3;
     }
     if (PaletteInitialized == nullptr) {
@@ -1269,7 +1282,7 @@ int Palette::init_cycle(int a1, int a2, int a3, unsigned long a4) {
     int slot = 0;
     while (slot < 5) {
         int id = internal_[slot].key;
-        if (a1 == id || id == -1) {
+        if (key == id || id == -1) {
             break;
         }
         ++slot;
@@ -1277,7 +1290,7 @@ int Palette::init_cycle(int a1, int a2, int a3, unsigned long a4) {
 
     PaletteInternal *entry = &internal_[slot];
 
-    if ((int)entry->key == a1) {
+    if ((int)entry->key == key) {
         Time *t = entry->time;
         if (t != 0) {
             t->~Time();
@@ -1291,17 +1304,17 @@ int Palette::init_cycle(int a1, int a2, int a3, unsigned long a4) {
         }
     }
 
-    entry->key = a1;
-    entry->count = (unsigned char)a4;
-    entry->first = (unsigned char)a2masked;
+    entry->key = key;
+    entry->count = (unsigned char)count;
+    entry->first = (unsigned char)first_index;
 
-    void *mem = mem_get(a4 * 4);
+    void *mem = mem_get(count * 4);
     entry->colours = mem;
     if (mem == 0) {
         return 4;
     }
 
-    memcpy(mem, &entries_[a2masked], a4 * 4);
+    memcpy(mem, &entries_[first_index], count * 4);
 
     Time *t = new Time();
     entry->time = t;
@@ -1312,7 +1325,7 @@ int Palette::init_cycle(int a1, int a2, int a3, unsigned long a4) {
     // (int)this: Time::init's context parameter really is an int in its
     // catalogued signature - the pointer-as-int lives in Time's API, and
     // Time's own class pass is where the type gets fixed.
-    t->init(Palette::timer_callback, a1, (int)this, (int)a4, 5);
+    t->init(Palette::timer_callback, key, (int)this, (int)count, 5);
     return 0;
 }
 
@@ -1328,7 +1341,8 @@ int Palette::init_cycle(int a1, int a2, int a3, unsigned long a4) {
 // calls     0x005DE8F0 0x00625810 0x00645930
 // indirect  0x005FFB82 0x005FFBCC 0x005FFC18 0x005FFD05 0x005FFD0B 0x005FFD1A
 
-int Palette::fade_to_entry(int a1, int a2, int a3, int a4, int a5) {
+int Palette::fade_to_entry(int colour_index, int start, int count, int steps,
+                           int min_frame_ms) {
     if (PaletteInitialized == nullptr) {
         return 7;
     }
@@ -1336,14 +1350,14 @@ int Palette::fade_to_entry(int a1, int a2, int a3, int a4, int a5) {
         return 0;
     }
 
-    const PALETTEENTRY target = entries_[a1];
-    unsigned char backup[0x400];
-    memcpy(backup, entries_, sizeof(entries_));
+    const PALETTEENTRY target = entries_[colour_index];
+    PALETTEENTRY backup[256];
+    memcpy(backup, entries_, sizeof(backup));
 
     if (BufferDirectDraw == nullptr) {
         if (PaletteInitialized != nullptr) {
             PaletteActive = this;
-            reinterpret_cast<Buffer *>(0x009B7490)->sync_to_palette(this);
+            ScreenBuffer.sync_to_palette(this);
             if (PaletteUsesSystemColours == 0 &&
                 PaletteSeedCache != (int)seed_) {
                 AnimatePalette(PaletteInitialized, 10, 0xec, &entries_[10]);
@@ -1354,39 +1368,39 @@ int Palette::fade_to_entry(int a1, int a2, int a3, int a4, int a5) {
         DirectDrawPalette->SetEntries(0, 0, 0x100, entries_);
     }
 
-    if (a4 + 1 > 0) {
+    if (steps + 1 > 0) {
         unsigned int targetR = target.peRed;
         unsigned int targetG = target.peGreen;
         unsigned int targetB = target.peBlue;
-        int stepsRemaining = a4;
+        int stepsRemaining = steps;
         int progressCounter = 0;
         do {
             unsigned int tick1 = timeGetTime();
-            int endIndex = a2 + a3;
-            if (a2 < endIndex) {
-                PALETTEENTRY *dst = &entries_[a2];
-                unsigned char *src = backup + a2 * 4;
-                int count = endIndex - a2;
+            int endIndex = start + count;
+            if (start < endIndex) {
+                PALETTEENTRY *dst = &entries_[start];
+                const PALETTEENTRY *src = &backup[start];
+                int remaining = endIndex - start;
                 int r = targetR * progressCounter;
                 int g = targetG * progressCounter;
                 int b = targetB * progressCounter;
                 do {
-                    dst->peRed = (unsigned char)((src[0] * stepsRemaining + r) / a4);
-                    dst->peGreen = (unsigned char)((src[1] * stepsRemaining + g) / a4);
-                    dst->peBlue = (unsigned char)((src[2] * stepsRemaining + b) / a4);
+                    dst->peRed = (unsigned char)((src->peRed * stepsRemaining + r) / steps);
+                    dst->peGreen = (unsigned char)((src->peGreen * stepsRemaining + g) / steps);
+                    dst->peBlue = (unsigned char)((src->peBlue * stepsRemaining + b) / steps);
                     ++dst;
-                    src += 4;
-                    --count;
-                } while (count != 0);
+                    ++src;
+                    --remaining;
+                } while (remaining != 0);
             }
-            AnimatePalette(PaletteInitialized, a2, a3, &entries_[a2]);
+            AnimatePalette(PaletteInitialized, start, count, &entries_[start]);
             unsigned int tick2 = timeGetTime();
-            while (tick2 - tick1 < (unsigned int)a5) {
+            while (tick2 - tick1 < (unsigned int)min_frame_ms) {
                 tick2 = timeGetTime();
             }
             ++progressCounter;
             --stepsRemaining;
-        } while (progressCounter < a4 + 1);
+        } while (progressCounter < steps + 1);
     }
 
     seed_ = 0;
@@ -1400,7 +1414,7 @@ int Palette::fade_to_entry(int a1, int a2, int a3, int a4, int a5) {
 }
 
 // ORIGINAL: 0x00628DB0 ?RGB_to_HSV@@YAXPAUPALETTEENTRY@@PAUHSV@@@Z 0x00628DB0-0x00628F27 FILE
-// symbol    ?RGB_to_HSV@@YAXPAUtagPALETTEENTRY@@PAUHSV@@@Z
+// symbol    ?RGB_to_HSV@@YAXPBUtagPALETTEENTRY@@PAUHSV@@@Z
 // size      375 bytes
 // prototype 
 // callers   3   call targets   0
@@ -1440,15 +1454,13 @@ int Palette::fade_to_entry(int a1, int a2, int a3, int a4, int a5) {
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
 
-void __cdecl RGB_to_HSV(PALETTEENTRY * a1, HSV * a2) {
-    unsigned char *p = reinterpret_cast<unsigned char *>(a1);
-    double *out = reinterpret_cast<double *>(a2);
-    if (a2 != 0 && a1 != 0) {
+void __cdecl RGB_to_HSV(const PALETTEENTRY *entry, HSV *out) {
+    if (out != 0 && entry != 0) {
         const double scale = hsv_value_byte_scale;
         const double zero = hsv_zero;
-        int ir = p[0];
-        int ig = p[1];
-        int ib = p[2];
+        int ir = entry->peRed;
+        int ig = entry->peGreen;
+        int ib = entry->peBlue;
         double r = static_cast<double>(ir) * scale;
         double g = static_cast<double>(ig) * scale;
         double b = static_cast<double>(ib) * scale;
@@ -1458,13 +1470,15 @@ void __cdecl RGB_to_HSV(PALETTEENTRY * a1, HSV * a2) {
         double vmin = r;
         if (g < r) vmin = g;
         if (b < vmax) vmin = b;
-        out[2] = vmax;
+        out->v = vmax;
         double s = zero;
         if (vmax != zero) s = (vmax - vmin) / vmax;
-        out[1] = s;
+        out->s = s;
         if (s == zero) {
-            *reinterpret_cast<int *>(out) = 0;
-            *(reinterpret_cast<int *>(out) + 1) = static_cast<int>(0xbff00000);
+            // The transcription wrote this as two int stores of 0x00000000
+            // and 0xBFF00000 - which are exactly the bit halves of the
+            // double -1.0. Say the constant; the compiler emits the halves.
+            out->h = -1.0;
             return;
         }
         double delta = vmax - vmin;
@@ -1476,17 +1490,18 @@ void __cdecl RGB_to_HSV(PALETTEENTRY * a1, HSV * a2) {
         } else {
             h = (r - g) / delta + hsv_sector_offset_r_minus_g;
         }
-        out[0] = h;
-        double h2 = out[0] * hsv_degrees_per_sector;
+        out->h = h;
+        double h2 = out->h * hsv_degrees_per_sector;
         bool neg = h2 < zero;
-        out[0] = h2;
+        out->h = h2;
         if (neg) {
-            out[0] = h2 + hsv_hue_wrap_degrees;
+            out->h = h2 + hsv_hue_wrap_degrees;
         }
     }
 }
 
 // ORIGINAL: 0x005FF630 ?get_nearest_palette_index@Palette@@QAEHPAUHSV@@0H@Z 0x005FF630-0x005FF92D FILE
+// symbol    ?get_nearest_palette_index@Palette@@QAEHPBUHSV@@0H@Z
 // TRIED: MISMATCH #5 push/mov - and/sub-esp frame differs because the helper hsv_sq_distance() is a separate function call rather than inlined FPU code sharing one scratch stack slot per the original's single sub-esp-8 staging area reused across both sin/cos call sites in each loop body.
 // working copy - scaffold materialised by --work
 // size      765 bytes
@@ -1496,28 +1511,26 @@ void __cdecl RGB_to_HSV(PALETTEENTRY * a1, HSV * a2) {
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x006463E4 0x00646494
 
-// The record name FF630's recovered body thinks in; same 0x18 layout as
-// struct HSV above.
-namespace {
-struct HsvRecord {
-    double hue_;
-    double sat_;
-    double val_;
-};
-}
-
-static double hsv_sq_distance(const HsvRecord *a, const HsvRecord *b, double k) {
-    double dv = a->val_ - b->val_;
-    double sin_a = ((double(__cdecl *)(double))sin)(a->hue_ * k) * a->sat_;
-    double sin_b = ((double(__cdecl *)(double))sin)(b->hue_ * k) * b->sat_;
-    double cos_a = ((double(__cdecl *)(double))cos)(a->hue_ * k) * a->sat_;
-    double cos_b = ((double(__cdecl *)(double))cos)(b->hue_ * k) * b->sat_;
+static double hsv_sq_distance(const HSV *a, const HSV *b, double k) {
+    double dv = a->v - b->v;
+    double sin_a = ((double(__cdecl *)(double))sin)(a->h * k) * a->s;
+    double sin_b = ((double(__cdecl *)(double))sin)(b->h * k) * b->s;
+    double cos_a = ((double(__cdecl *)(double))cos)(a->h * k) * a->s;
+    double cos_b = ((double(__cdecl *)(double))cos)(b->h * k) * b->s;
     double ds = sin_a - sin_b;
     double dc = cos_a - cos_b;
     return dv * dv + ds * ds + dc * dc;
 }
 
-int Palette::get_nearest_palette_index(HSV * a1, HSV * a2, int a3) {
+// CORRECTED from a transcription that read the table at an 8-byte skew
+// ((char*)+8 and (char*)+0xf8): the caller refutes it. create_table -
+// transcribed at 0.96 similarity - passes &hsv[0] of a real HSV[256], and
+// hsv_sq_distance compares LIKE fields, which a skewed base cannot feed.
+// The skew was frame arithmetic misread out of a body whose own TRIED note
+// says it diverges at instruction #5. Branch A starts at entry 10, exactly
+// where its used[10..0xf5] skip logic operates; branch B at the base.
+int Palette::get_nearest_palette_index(const HSV *query, const HSV *hsv_block,
+                                       int skip_animated) {
     double k = hsv_deg_to_rad;
     double best = 200000.0;
     int best_index = 0;
@@ -1527,9 +1540,7 @@ int Palette::get_nearest_palette_index(HSV * a1, HSV * a2, int a3) {
         return 7;
     }
 
-    const HsvRecord *query = (const HsvRecord *)a1;
-
-    if (a3 != 0) {
+    if (skip_animated != 0) {
         int used[256];
         for (i = 0; i < 0x100; i++) {
             used[i] = 0;
@@ -1550,7 +1561,7 @@ int Palette::get_nearest_palette_index(HSV * a1, HSV * a2, int a3) {
         }
 
         {
-            const HsvRecord *arr = (const HsvRecord *)((char *)a2 + 0xf8) + 10;
+            const HSV *arr = hsv_block + 10;
             for (i = 10; i < 0xf6; i++) {
                 if (used[i] == 0) {
                     double d = hsv_sq_distance(query, arr, k);
@@ -1566,7 +1577,7 @@ int Palette::get_nearest_palette_index(HSV * a1, HSV * a2, int a3) {
     }
 
     {
-        const HsvRecord *arr = (const HsvRecord *)((char *)a2 + 8);
+        const HSV *arr = hsv_block;
         for (i = 0; i < 0x100; i++) {
             double d = hsv_sq_distance(query, arr, k);
             if (d < best) {
@@ -1593,7 +1604,8 @@ int Palette::get_nearest_palette_index(HSV * a1, HSV * a2, int a3) {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005FF630 0x00628DB0 0x00645550
 
-int Palette::create_table(unsigned char * a1, int a2, int a3, int a4) {
+int Palette::create_table(unsigned char *table, int start, int count,
+                          int brightness_boost) {
     struct HSVLocal { double h; double s; double v; };
     HSVLocal hsv[256];
     HSVLocal local1;
@@ -1604,27 +1616,27 @@ int Palette::create_table(unsigned char * a1, int a2, int a3, int a4) {
     if (PaletteInitialized == nullptr) {
         return 7;
     }
-    if (a1 == 0) {
+    if (table == 0) {
         return 0x10;
     }
-    if (a4 < -100 || a4 > 100) {
+    if (brightness_boost < -100 || brightness_boost > 100) {
         return 3;
     }
-    for (i = 0; i < a2; i++) {
-        a1[i] = (unsigned char)i;
+    for (i = 0; i < start; i++) {
+        table[i] = (unsigned char)i;
     }
-    upper = a2 + a3;
+    upper = start + count;
     for (i = upper; i < 0x100; i++) {
-        a1[i] = (unsigned char)i;
+        table[i] = (unsigned char)i;
     }
     for (i = 0; i < 0x100; i++) {
         RGB_to_HSV(&entries_[i], (HSV *)&hsv[i]);
     }
     ref0 = &hsv[0];
-    for (i = a2; i < upper; i++) {
+    for (i = start; i < upper; i++) {
         local1 = hsv[i];
-        local1.v = (double)(a4 + 100) * local1.v * hsv_percent_scale;
-        a1[i] = (unsigned char)get_nearest_palette_index((HSV *)&local1, (HSV *)ref0, 1);
+        local1.v = (double)(brightness_boost + 100) * local1.v * hsv_percent_scale;
+        table[i] = (unsigned char)get_nearest_palette_index((HSV *)&local1, (HSV *)ref0, 1);
     }
     return 0;
 }
@@ -1713,18 +1725,18 @@ void Palette::reseed() {
 //    near miss from a wrong body.
 
 
-void Palette::stop_animation(int a1) {
+void Palette::stop_animation(int key) {
     int i;
     for (i = 0; i < 5; i++) {
         int v = internal_[i].key;
-        if (a1 == v || v == -1) {
+        if (key == v || v == -1) {
             break;
         }
     }
     // BUG IN THE ORIGINAL, reproduced: when no slot matches and none is
     // free, i is 5 and the read below is internal_[5].key - the first four
     // bytes PAST the object. The image does exactly this.
-    if ((int)internal_[i].key == a1) {
+    if ((int)internal_[i].key == key) {
         internal_[i].time->stop();
     }
 }

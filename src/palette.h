@@ -44,7 +44,7 @@ class Palette {
 
  public:
   // homed from 005fe900.cpp
-  void stop_animation(int a1);
+  void stop_animation(int key);
 
  public:
   // homed from 005fe6d0.cpp
@@ -52,35 +52,41 @@ class Palette {
 
  public:
   // homed from 005fed40.cpp
-  int create_table(unsigned char * a1, int a2, int a3, int a4);
+  int create_table(unsigned char *table, int start, int count,
+                   int brightness_boost);
 
  public:
   // homed from 005ffb10.cpp
-  int fade_to_entry(int a1, int a2, int a3, int a4, int a5);
+  int fade_to_entry(int colour_index, int start, int count, int steps,
+                    int min_frame_ms);
 
  public:
   // homed from 005fe700.cpp
-  int init_cycle(int a1, int a2, int a3, unsigned long a4);
+  int init_cycle(int key, int first, int reserved, unsigned long count);
 
  public:
   // homed from 005ff930.cpp
-  int fade_to(int a1, int a2, int a3, int a4, int a5);
+  int fade_to(Palette *other, int start, int count, int steps,
+              int min_frame_ms);
 
  public:
   // homed from 005fead0.cpp
-  static void __cdecl timer_callback(int a1, int a2);
+  static void __cdecl timer_callback(int key, int context);
 
  public:
   // homed from 005ff220.cpp
-  int map_to_palette(int a1, int a2, int a3);
+  int map_to_palette(Palette *dest, int start, int count);
 
  public:
   // homed from 005feff0.cpp
-  int create_table_from_color(int a1, unsigned char * a2, int a3, int a4, int a5, int a6);
+  int create_table_from_color(int colour_index, unsigned char *table,
+                              int start, int count, int keep_weight,
+                              int colour_weight);
 
  public:
   // homed from 005fee80.cpp
-  int make_blend_table(void *a1, int a2, int a3, int a4, int a5, int a6);
+  int make_blend_table(const Palette *other, uint8_t *table, int start,
+                       int count, int self_weight, int other_weight);
 
  public:
   // homed from 005fe5c0.cpp
@@ -88,12 +94,15 @@ class Palette {
 
  public:
   // homed from 005ff1a0.cpp
-  int make_remap_table(int a1, unsigned char *table, int start, int count);
+  int make_remap_table(int source, unsigned char *table, int start,
+                       int count);
 
  public:
   // homed from 005ff470.cpp
-  int get_nearest_palette_index(unsigned char a1, unsigned char a2, unsigned char a3, int a4);
-  int get_nearest_palette_index(HSV *query, HSV *table, int start);
+  int get_nearest_palette_index(unsigned char red, unsigned char green,
+                                unsigned char blue, int skip_animated);
+  int get_nearest_palette_index(const HSV *query, const HSV *hsv_block,
+                                int skip_animated);
 
  public:
   Palette();                         // 005FE2A0
