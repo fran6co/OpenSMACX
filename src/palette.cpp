@@ -30,20 +30,21 @@ Buffer ScreenBuffer;                    // 0x009B7490
 int PaletteSeedCache;                   // 0x009B8184
 IDirectDrawPalette *DirectDrawPalette;  // 0x009BC4A0
 
-// The HSV colour math's constants, READ OUT OF THE IMAGE'S .DATA and
-// named from the arithmetic that uses them. The addresses stay
-// first-class: they are what any future data-map reconciliation
-// matches against.
-static const double *const hsv_percent_scale = (const double *)0x0066EB38;  // 0.01
-static const double *const hsv_deg_to_rad = (const double *)0x00670280;  // pi/180
-// RGB_to_HSV's own .data reads - carried verbatim from its recovered unit,
-// where the const-pointer spelling is what reproduces the bytes.
-static int *const hsv_zero = (int *)0x0066FA70;
-static int *const hsv_sector_offset_r_minus_g = (int *)0x0066FDC8;
-static int *const hsv_hue_wrap_degrees = (int *)0x00670C30;
-static int *const hsv_degrees_per_sector = (int *)0x00670C40;
-static int *const hsv_sector_offset_b_minus_r = (int *)0x00670C48;
-static int *const hsv_value_byte_scale = (int *)0x00670C50;
+// The HSV colour math's constants, values READ OUT OF THE IMAGE'S .DATA at
+// the addresses noted, named from the arithmetic that uses them. cl emits
+// its own .rdata copies and the relocation mask makes the addressing match
+// the image's absolute references - verified by measure on all three
+// bodies, which is why there is no pointer indirection left here.
+namespace {
+const double hsv_percent_scale = 0.01;              // 0x0066EB38
+const double hsv_deg_to_rad = 0.017453292519444445; // pi/180, 0x00670280
+const double hsv_zero = 0.0;                        // 0x0066FA70
+const double hsv_sector_offset_b_minus_r = 2.0;     // 0x00670C48
+const double hsv_sector_offset_r_minus_g = 4.0;     // 0x0066FDC8
+const double hsv_hue_wrap_degrees = 360.0;          // 0x00670C30
+const double hsv_degrees_per_sector = 60.0;         // 0x00670C40
+const double hsv_value_byte_scale = 0.00390625;     // 1/255, 0x00670C50
+}
 
 // Palette::timer_callback's own address, which init_cycle hands to Time::init
 // as a __cdecl callback exactly as the image does. The same idiom as
@@ -1463,8 +1464,8 @@ void __cdecl RGB_to_HSV(PALETTEENTRY * a1, HSV * a2) {
     unsigned char *p = reinterpret_cast<unsigned char *>(a1);
     double *out = reinterpret_cast<double *>(a2);
     if (a2 != 0 && a1 != 0) {
-        const double scale = *reinterpret_cast<const double *>(hsv_value_byte_scale);
-        const double zero = *reinterpret_cast<const double *>(hsv_zero);
+        const double scale = hsv_value_byte_scale;
+        const double zero = hsv_zero;
         int ir = p[0];
         int ig = p[1];
         int ib = p[2];
@@ -1491,16 +1492,16 @@ void __cdecl RGB_to_HSV(PALETTEENTRY * a1, HSV * a2) {
         if (r == vmax) {
             h = (g - b) / delta;
         } else if (g == vmax) {
-            h = (b - r) / delta + *reinterpret_cast<const double *>(hsv_sector_offset_b_minus_r);
+            h = (b - r) / delta + hsv_sector_offset_b_minus_r;
         } else {
-            h = (r - g) / delta + *reinterpret_cast<const double *>(hsv_sector_offset_r_minus_g);
+            h = (r - g) / delta + hsv_sector_offset_r_minus_g;
         }
         out[0] = h;
-        double h2 = out[0] * *reinterpret_cast<const double *>(hsv_degrees_per_sector);
+        double h2 = out[0] * hsv_degrees_per_sector;
         bool neg = h2 < zero;
         out[0] = h2;
         if (neg) {
-            out[0] = h2 + *reinterpret_cast<const double *>(hsv_hue_wrap_degrees);
+            out[0] = h2 + hsv_hue_wrap_degrees;
         }
     }
 }
@@ -1537,7 +1538,7 @@ static double hsv_sq_distance(const HsvRecord *a, const HsvRecord *b, double k) 
 }
 
 int Palette::get_nearest_palette_index(HSV * a1, HSV * a2, int a3) {
-    double k = *(double *)hsv_deg_to_rad;
+    double k = hsv_deg_to_rad;
     double best = 200000.0;
     int best_index = 0;
     int i;
@@ -1642,7 +1643,7 @@ int Palette::create_table(unsigned char * a1, int a2, int a3, int a4) {
     ref0 = &hsv[0];
     for (i = a2; i < upper; i++) {
         local1 = hsv[i];
-        local1.v = (double)(a4 + 100) * local1.v * *(double *)hsv_percent_scale;
+        local1.v = (double)(a4 + 100) * local1.v * hsv_percent_scale;
         a1[i] = (unsigned char)get_nearest_palette_index((HSV *)&local1, (HSV *)ref0, 1);
     }
     return 0;
