@@ -90,7 +90,7 @@ extern "C" unsigned int strlen(const char *);
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_009b3a9c = (int *)0x009B3A9C;
+static int *const &BufferStrHeight = (int *)0x009B3A9C;
 
 class Buffer { public:
     LPVOID vtable_;
@@ -173,7 +173,7 @@ int Buffer::wrap_cent(char * a1, int a2, int a3, int a4, int a5) {
     if (a1 == 0) {
         return a3;
     }
-    *g_009b3a9c = 0;
+    BufferStrHeight = 0;
     field_18_ = 0;
     int total = a3;
     char *cur = a1;
@@ -183,7 +183,7 @@ int Buffer::wrap_cent(char * a1, int a2, int a3, int a4, int a5) {
         if (cur == 0) {
             brk = 0;
         } else {
-            *g_009b3a9c = 0;
+            BufferStrHeight = 0;
             unsigned int len = strlen(cur);
             brk = (char *)find_line_break_l(cur, &width, (int)len);
             if (brk == 0) {

@@ -1238,7 +1238,7 @@ static int *const g_009b33cc = (int *)0x009B33CC;
 static int *const g_009b3a90 = (int *)0x009B3A90;
 static int *const g_009b3a94 = (int *)0x009B3A94;
 static int *const g_009b3a98 = (int *)0x009B3A98;
-static int *const g_009b3a9c = (int *)0x009B3A9C;
+static int *const &BufferStrHeight = (int *)0x009B3A9C;
 static int *const g_009bb484 = (int *)0x009BB484;
 
 class Buffer { public:
@@ -1349,13 +1349,13 @@ int Buffer::wrap_flying(char * a1) {
             strcat(buf, (const char *)g_00682820);
             unsigned int len = strlen((const char *)g_00696cdc);
             int w = this->text_width((char *)g_00696cdc, len);
-            *g_009b3a9c += w;
+            BufferStrHeight += w;
         }
 
         char *brk = cur;
-        if (*g_009b3a9c < *g_009b3a98) {
+        if (BufferStrHeight < *g_009b3a98) {
             unsigned int len2 = strlen(cur);
-            int avail = *g_009b3a98 - *g_009b3a9c;
+            int avail = *g_009b3a98 - BufferStrHeight;
             brk = (char *)this->find_line_break_l(cur, &avail, len2);
         }
         if (brk == 0) {
@@ -1388,7 +1388,7 @@ int Buffer::wrap_flying(char * a1) {
         }
 
         buf[0] = 0;
-        *g_009b3a9c = 0;
+        BufferStrHeight = 0;
         *(int *)(self + 0x18) += 1;
         if (*(int *)(self + 0x52c) == 0) {
             *(int *)(self + 0x52c) = *g_009bb484;

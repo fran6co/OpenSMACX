@@ -1548,7 +1548,7 @@ static int *const g_0067f768 = (int *)0x0067F768;
 static int *const g_00696c58 = (int *)0x00696C58;
 static int *const g_00696c60 = (int *)0x00696C60;
 static int *const g_00696c68 = (int *)0x00696C68;
-static int *const g_009bc054 = (int *)0x009BC054;
+static int *const &Language = (int *)0x009BC054;
 
 class Buffer { public:
     LPVOID vtable_;
@@ -1657,7 +1657,7 @@ int __stdcall Buffer::load_tga(const char * a1, Palette * a2, int a3, int a4) {
                 end--;
             } while (end != path);
         }
-        switch (*g_009bc054) {
+        switch (Language) {
             case 1: strcat(path, (char *)g_00696c58); break;
             case 2: strcat(path, (char *)g_00696c60); break;
             default: strcat(path, (char *)g_00696c68); break;

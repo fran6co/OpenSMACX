@@ -1283,7 +1283,7 @@ extern "C" unsigned int strlen(const char *);
 // encoding including the address; `extern T *g` does not.
 static int *const g_009b3a94 = (int *)0x009B3A94;
 static int *const g_009b3a98 = (int *)0x009B3A98;
-static int *const g_009b3a9c = (int *)0x009B3A9C;
+static int *const &BufferStrHeight = (int *)0x009B3A9C;
 static int *const g_009bb484 = (int *)0x009BB484;
 
 class Buffer { public:
@@ -1417,7 +1417,7 @@ int Buffer::write_strings_height(StringList * a1, int a2, int a3) {
         field_51C_ = 0;
         *g_009b3a98 = a2;
         *g_009b3a94 = 0;
-        *g_009b3a9c = 0;
+        BufferStrHeight = 0;
         wrap_height_flying((char *)0);
     } else if (payload == 2) {
         char *str;
@@ -1431,7 +1431,7 @@ int Buffer::write_strings_height(StringList * a1, int a2, int a3) {
             totalHeight = 0;
         } else {
             field_18_ = 0;
-            *g_009b3a9c = 0;
+            BufferStrHeight = 0;
             field_14_ = field_10_;
             totalHeight = 0;
             int remainingWidth = a2;
@@ -1439,7 +1439,7 @@ int Buffer::write_strings_height(StringList * a1, int a2, int a3) {
                 unsigned int len = strlen(str);
                 int breakWidth = remainingWidth;
                 str = (char *)find_line_break_l(str, &breakWidth, len);
-                *g_009b3a9c = 0;
+                BufferStrHeight = 0;
                 totalHeight += text_line_height();
                 field_18_ = field_18_ + 1;
                 if (field_14_ != 0) {
@@ -1452,7 +1452,7 @@ int Buffer::write_strings_height(StringList * a1, int a2, int a3) {
         field_18_ = 0;
         field_14_ = field_10_;
         field_51C_ = 0;
-        *g_009b3a9c = 0;
+        BufferStrHeight = 0;
         *g_009b3a98 = a2;
         *g_009b3a94 = 0;
         wrap_height_flying((char *)0);
@@ -1466,7 +1466,7 @@ int Buffer::write_strings_height(StringList * a1, int a2, int a3) {
         field_18_ = 0;
         field_14_ = field_10_;
         field_51C_ = 0;
-        *g_009b3a9c = 0;
+        BufferStrHeight = 0;
         *g_009b3a98 = a2;
         *g_009b3a94 = 0;
         wrap_height_flying((char *)idVal);
