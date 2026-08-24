@@ -351,6 +351,16 @@ def by_class(records, order, built, visible) -> None:
     print(f"{'first':>5}  {'owner':22s} {'reach':>5} {'built':>5} "
           f"{'artif':>5} {'exact':>9} {'cw':>4} {'scaf':>4} {'debt':>4}"
           f"  declaration")
+    # THE DONE BAR. exact/total complete AND cw 0 AND scaf 0 AND debt 0 -
+    # with one release valve the standing rule already earned: a member that
+    # carries a MEASURED TRIED: is finished work for this pass. The bar must
+    # never demand BYTE_EXACT from a diagnosed plateau (Palette's register-
+    # spill wall holds seven such), and it must never exclude either - the
+    # class stays on the books, its row tagged done, free to be re-opened by
+    # a lever landing elsewhere.
+    def member_done(r) -> bool:
+        return (r.byte_exact or r.semantic or bool(r.ruled_out))
+
     for owner in rows:
         slot = queue[owner]
         every = by_owner[owner]
@@ -358,14 +368,17 @@ def by_class(records, order, built, visible) -> None:
         cw = sum(sites.get(name, 0) for name in owner_files[owner])
         scaff = sum(1 for r in every if r.path.name in SCAFFOLD_FILES)
         debt = sum(debt_by_file.get(name, 0) for name in owner_files[owner])
+        done = (all(member_done(r) for r in every)
+                and cw == 0 and scaff == 0 and debt == 0)
         decl = sorted({name for name, text in header_texts.items()
                        if re.search(rf"\b(?:class|struct)\s+"
                                     rf"{re.escape(owner)}\b", text)})
         where = ",".join(decl[:2]) + ("…" if len(decl) > 2 else "")
+        tag = "  [DONE]" if done else ""
         print(f"{first_seen[owner]:>5}  {owner:22.22s} {slot['reach']:>5} "
               f"{slot['built']:>5} {slot['artifact']:>5} "
               f"{exact:>4}/{len(every):<4} {cw:>4} {scaff:>4} {debt:>4}"
-              f"  {where}")
+              f"  {where}{tag}")
 
     hyp_only = [owner for owner in rows
                 if "hypothesis_layouts.h" in
@@ -375,8 +388,9 @@ def by_class(records, order, built, visible) -> None:
                 and len({name for name, text in header_texts.items()
                          if re.search(rf"\b(?:class|struct)\s+"
                                       f"{re.escape(owner)}\b", text)}) == 1]
-    print(f"\n{len(rows)} classes on the frontier; done = exact/total complete"
-          f" AND cw 0 AND scaf 0 AND debt 0.")
+    print(f"\n{len(rows)} classes on the frontier; done = every member "
+          f"BYTE_EXACT/SEMANTIC/TRIED AND cw 0 AND scaf 0 AND debt 0."
+          f" Done rows are tagged and leave the queue; nothing is excluded.")
     # A ZERO HERE IS TWO ANSWERS, so it carries its denominator. `thunkN_`
     # owners are the fake classes the adjustor shims dispatch through, and
     # they dissolve when their real bases go virtual - but the number of them
