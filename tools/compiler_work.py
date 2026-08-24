@@ -122,7 +122,7 @@ HEADER_SHAPES = [
     # what lets this ratchet fall in class-pass-sized steps. Homing imports
     # bindings from the artifacts (6ee2b94a) - this ceiling is what forces
     # it to import them NAMED.
-    ("anonymous fixed-address global", 187,
+    ("anonymous fixed-address global", 185,
      re.compile(r"\bg_00[0-9a-f]{4,6}\b"),
      "a global named by its address instead of its meaning. Name it from "
      "evidence - the image's .data value, the arithmetic identity, the "
