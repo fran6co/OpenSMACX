@@ -648,10 +648,7 @@ int Win::update_window(RECT *area) {
 // ?client_to_screen@Win@@QAEXPAURECT@@@Z at 0x005ECFE0, the RECT overload -
 // distinct from client_to_screen(int*, int*) above. GraphicWin::update
 // calls it BY NAME.
-void Win::client_to_screen(RECT *area) {
-    typedef void(__fastcall *pending)(Win *, void *, RECT *);
-    PENDING_BODY(0x005ECFE0, pending)(this, nullptr, area);
-}
+
 
 void FileWin::UNK4() {  // 0x006146A0
     typedef void(__fastcall *pending)(FileWin *, void *);
@@ -694,15 +691,9 @@ void Win::hide() {  // 0x005EDCD0
 }
 
 
-int Win::on_nc_hittest(int a1, int a2) {  // 0x005F5AD0
-    typedef int(__fastcall *pending)(Win *, void *, int, int);
-    return PENDING_BODY(0x005F5AD0, pending)(this, nullptr, a1, a2);
-}
 
-void Win::release_modal() {  // 0x005EE280
-    typedef void(__fastcall *pending)(Win *, void *);
-    PENDING_BODY(0x005EE280, pending)(this, nullptr);
-}
+
+
 
 int SetupWin::do_menu_rightside(char *a1, int a2) {  // 0x004ADB70
     typedef int(__fastcall *pending)(SetupWin *, void *, char *, int);
