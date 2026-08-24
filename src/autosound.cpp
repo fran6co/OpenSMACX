@@ -18,7 +18,7 @@
 #include "stdafx.h"
 #include "autosound.h"
 
-const uint32_t AutoSoundVtable = 0x0066FF34;
+namespace { const uint32_t AutoSoundVtable = 0x0066FF34; }
 
 /*
 Purpose: Construct an AutoSound by installing its virtual table and copying
@@ -75,9 +75,6 @@ AutoSound::AutoSound() {
     val_37_ = static_cast<int>(AutoSoundDefaults[36]);
 }
 
-AutoSound *__fastcall auto_sound_construct_redirect(AutoSound *self, void *) {
-    return new (self) AutoSound();
-}
 
 /*
 Purpose: Reset every field from the process-default block, in the same
@@ -137,9 +134,6 @@ void AutoSound::close() {
     val_37_ = static_cast<int>(AutoSoundDefaults[36]);
 }
 
-void __fastcall auto_sound_close_redirect(AutoSound *self, void *) {
-    self->close();
-}
 
 /*
 Purpose: Reset every field from the process-default block, exactly as close
@@ -197,9 +191,6 @@ void AutoSound::close2() {
     val_37_ = static_cast<int>(AutoSoundDefaults[36]);
 }
 
-void __fastcall auto_sound_close2_redirect(AutoSound *self, void *) {
-    self->close2();
-}
 
 /*
 Purpose: Zero every field, in the same legacy store order as construction,
@@ -259,9 +250,6 @@ void AutoSound::init() {
     val_37_ = 0;
 }
 
-void __fastcall auto_sound_init_redirect(AutoSound *self, void *) {
-    self->init();
-}
 
 /*
 Purpose: The compiler-generated scalar deleting destructor: re-install the
@@ -309,6 +297,3 @@ Status: Complete
 // reads it.
 
 
-int __cdecl do_sound_redirect() {
-    return do_sound();
-}
