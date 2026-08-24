@@ -98,6 +98,9 @@ CASES = [
      "ADDRESS INDEX GREW: duplicate above their floors",
      lambda: _prepend(_any_artifact(),
                       _first_claim("src/palette.cpp") + "\n")),
+    ("class_debt growth",
+     "SEMANTIC DEBT GREW",
+     lambda: _append("src/palette.h", "  void UNK99(int);\n")),
     ("claim floor fell",
      # The one corruption no verdict can catch: the marker stops being a
      # marker, the claim ceases to exist, and only the ledger notices.
