@@ -20,6 +20,7 @@ which is itself a finding.
 
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -34,31 +35,70 @@ def run_gate() -> tuple[int, str]:
     return done.returncode, done.stdout + done.stderr
 
 
+# DAMAGE IS DERIVED FROM THE LIVE TREE, NEVER PINNED. The first version of
+# this list hard-coded a ceiling value and an artifact path, and both went
+# stale WITHIN A DAY: a legitimate ceiling lowering (1395 -> 1391) made the
+# slack case's _patch assert, and the Palette homing deleted the artifact
+# file the duplicate case wrote into. A positive control that breaks on every
+# legitimate improvement is a control nobody runs - the hand-maintained-list
+# defect, inside the tool that exists to catch defects.
+
+
+def _slack_damage() -> None:
+    """Raise one scaffold ceiling above its live count, whatever it is."""
+    base = _snap("tools/compiler_work.py")
+    found = re.search(r'("artifact files \(recovered/\)": )(\d+)', base)
+    assert found, "scaffold ceiling line missing from compiler_work.py"
+    _patch("tools/compiler_work.py", found.group(0),
+           f"{found.group(1)}{int(found.group(2)) + 5}")
+
+
+def _first_claim(rel: str) -> str:
+    """The file's first BYTE_EXACT marker line, current as of this run."""
+    found = re.search(r"^// ORIGINAL: 0x\w+ \S+ \S+ BYTE_EXACT$",
+                      _snap(rel), re.M)
+    assert found, f"no BYTE_EXACT marker in {rel}"
+    return found.group(0)
+
+
+def _any_artifact() -> str:
+    """A live artifact file to damage, whichever exists today."""
+    for candidate in sorted((REPO / "src" / "unrecovered").glob("*.cpp")):
+        return str(candidate.relative_to(REPO))
+    raise AssertionError("src/unrecovered/ is empty - retire this case "
+                         "with the directory")
+
+
 CASES = [
     ("compiler_work slack",
      "FAILED: the tree does more of the compiler's work",
-     lambda: _patch("tools/compiler_work.py",
-                    '"artifact files (recovered/)": 1395,',
-                    '"artifact files (recovered/)": 1390,')),
+     _slack_damage),
+    ("compiler_work growth",
+     "FAILED: the tree does more of the compiler's work",
+     lambda: _append("src/palette.h",
+                     "static int *const g_00dead01 = (int *)0x00DEAD01;\n")),
     ("marker_symbols floor",
      "FAILED: a marker names a symbol the build does not emit",
      lambda: _append("src/palette.cpp",
                      "// symbol    ?totally_bogus_harness@@YAXXZ\n",
-                     after="// ORIGINAL: 0x005FE460 ?set@Palette@@QAEHXZ")),
+                     after=_first_claim("src/palette.cpp"))),
     ("stale_references",
      "FAILED: an instruction names something that is not there",
      lambda: _append("README.md",
                      "\nRun `uv run tools/harness_not_a_tool_9f3a.py` now.\n")),
     ("address_index duplicates",
      "ADDRESS INDEX GREW: duplicate above their floors",
-     lambda: _prepend("src/unrecovered/005fed40.cpp",
-                      "// ORIGINAL: 0x005FE460 ?set@Palette@@QAEHXZ"
-                      " 0x005FE460-0x005FE4EB BYTE_EXACT\n")),
+     lambda: _prepend(_any_artifact(),
+                      _first_claim("src/palette.cpp") + "\n")),
     ("unresolved guard",
-     "REGRESSED 0x005FE460 claims BYTE_EXACT, measured UNRESOLVED",
+     # Evaluated AFTER the damage lands, so the asserted wording carries the
+     # address of whatever claim the damage actually hit - a pinned address
+     # here would rot exactly like the pinned ceiling did.
+     lambda: ("REGRESSED " + _first_claim("src/palette.cpp").split()[2]
+              + " claims BYTE_EXACT, measured UNRESOLVED"),
      lambda: _append("src/palette.cpp",
                      "// symbol    ?second_bogus_harness@@YAXXZ\n",
-                     after="// ORIGINAL: 0x005FE460 ?set@Palette@@QAEHXZ")),
+                     after=_first_claim("src/palette.cpp"))),
 ]
 
 
@@ -107,15 +147,28 @@ def restore_all() -> None:
 
 
 def main() -> int:
+    # Name cases on the command line to run only those - one new damage case
+    # should not cost six full gate runs. The baseline always runs: a
+    # filtered run that skips it could leave the tree damaged and call
+    # itself green.
+    wanted = set(sys.argv[1:])
+    selected = [case for case in CASES if not wanted or case[0] in wanted]
+    unknown = wanted - {case[0] for case in CASES}
+    if unknown:
+        print(f"unknown case(s): {', '.join(sorted(unknown))}")
+        print(f"have: {', '.join(case[0] for case in CASES)}")
+        return 2
+
     failures = []
-    for name, wording, damage in CASES:
+    for name, wording, damage in selected:
         _SNAPSHOTS.clear()
         try:
             damage()
+            expected = wording() if callable(wording) else wording
             code, out = run_gate()
-            ok = code == 1 and wording in out
+            ok = code == 1 and expected in out
             print(f"  {'PASS' if ok else 'FAIL'} {name}: exit {code}, "
-                  f"{wording[:40]!r} {'found' if wording in out else 'MISSING'}")
+                  f"{expected[:40]!r} {'found' if expected in out else 'MISSING'}")
             if not ok:
                 failures.append(name)
         except Exception as exc:                       # noqa: BLE001
@@ -130,7 +183,7 @@ def main() -> int:
     if not baseline_ok:
         failures.append("baseline")
 
-    print(f"\n{len(CASES) + 1} case(s), "
+    print(f"\n{len(selected) + 1} case(s), "
           f"{len(failures)} failure(s){': ' + ', '.join(failures) if failures else ''}")
     return 1 if failures else 0
 
