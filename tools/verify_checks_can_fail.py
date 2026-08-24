@@ -61,6 +61,14 @@ def _first_claim(rel: str) -> str:
     return found.group(0)
 
 
+def _floor_decrement() -> None:
+    """Lower the persisted floor by one, whatever it currently says."""
+    found = re.search(r"claims (\d+)", _snap("src/CLAIM_FLOOR"))
+    assert found, "no claims line in src/CLAIM_FLOOR"
+    _patch("src/CLAIM_FLOOR", found.group(0),
+           f"claims {int(found.group(1)) - 1}")
+
+
 def _any_artifact() -> str:
     """A live artifact file to damage, whichever exists today."""
     for candidate in sorted((REPO / "src" / "unrecovered").glob("*.cpp")):
@@ -90,6 +98,19 @@ CASES = [
      "ADDRESS INDEX GREW: duplicate above their floors",
      lambda: _prepend(_any_artifact(),
                       _first_claim("src/palette.cpp") + "\n")),
+    ("claim floor fell",
+     # The one corruption no verdict can catch: the marker stops being a
+     # marker, the claim ceases to exist, and only the ledger notices.
+     "CLAIMS FELL",
+     lambda: _patch("src/palette.cpp",
+                    _first_claim("src/palette.cpp"),
+                    _first_claim("src/palette.cpp")
+                    .replace("// ORIGINAL:", "// ORIGINAl:"))),
+    ("claim floor exceeded",
+     # Equivalent to a BYTE_EXACT token nothing measured: the tree holds one
+     # more claim than `osmx record` ever wrote down.
+     "CLAIMS ABOVE THE FLOOR",
+     lambda: _floor_decrement()),
     ("unresolved guard",
      # Evaluated AFTER the damage lands, so the asserted wording carries the
      # address of whatever claim the damage actually hit - a pinned address
