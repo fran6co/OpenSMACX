@@ -24,7 +24,7 @@ from .grammar import (DEFINITION_HEAD, DEFINITION_KEYWORDS,
                       MARKER, MARKER_KEYWORD, MARKER_MATCHED,
                       MARKER_SEMANTIC, MARKER_TAIL,
                       NEXT_MARKER, SENTINEL, _MANGLED_BASE)
-from .model import DecompilationState, Mode, Recipe, State
+from .model import DecompilationState, Lesson, Mode, Recipe, State
 
 
 
@@ -111,7 +111,36 @@ def _parse_marker(line: str, in_block: bool) -> tuple | None:
 def _lessons(lines: list[str], index: int,
              ) -> tuple[tuple[tuple[str, str], ...], tuple[str, ...],
                         tuple[str, ...], tuple[str, ...]]:
-    """(levers, ruled_out, unrecoverable) from the comment run after `index`.
+    """(levers, ruled_out, unrecoverable, deferred), derived from the run.
+
+    WHAT A LESSON MEANS, derived from `_lesson_run`, which is what it SAYS.
+    One walk, so the two can never disagree.
+    """
+    run = _lesson_run(lines, index)
+    return (_levers_of(run), _ruled_of(run), (), _deferred_of(run))
+
+
+# UNRECOVERABLE IS READ AS A TRIED, and `unrecoverable` is therefore always
+# empty - the tree stopped asserting that anything is impossible, and only
+# the measurement inside such a note was ever durable. The RUN still records
+# the kind, because the writer needs to know a line says `UNRECOVERABLE:` in
+# order to re-spell that one word in place; what a lesson MEANS and what it
+# SAYS are different questions.
+def _levers_of(run) -> tuple:
+    return tuple((l.key, l.prose) for l in run if l.kind == "lever")
+
+
+def _ruled_of(run) -> tuple:
+    return tuple(l.prose for l in run
+                 if l.kind in ("ruled", "unrecoverable"))
+
+
+def _deferred_of(run) -> tuple:
+    return tuple(l.prose for l in run if l.kind == "deferred")
+
+
+def _lesson_run(lines: list[str], index: int) -> tuple[Lesson, ...]:
+    """The lesson tokens after `index`, each with the lines it occupies.
 
     THE THREE TOKENS CARRY DIFFERENT DURABILITY, and that is the whole design.
 
@@ -152,7 +181,8 @@ def _lessons(lines: list[str], index: int,
     A continuation line is an indented comment line carrying no token of its own,
     which is how a long TRIED list stays readable.
     """
-    levers, ruled, unrecoverable, deferred, current = [], [], [], [], None
+    run: list[dict] = []
+    current = None
     # IS THIS MARKER INSIDE A `/* ... */` BLOCK? Product source puts it in one,
     # under a `Purpose:` line, and the scaffold also writes `Return Value:` and
     # `Status:` lines that carry NO `//` prefix. Breaking on those - which is
@@ -168,7 +198,7 @@ def _lessons(lines: list[str], index: int,
         if head.startswith("/*"):
             inside = True
             break
-    for line in lines[index + 1:]:
+    for offset, line in enumerate(lines[index + 1:], start=index + 1):
         stripped = line.strip()
         # A MARKER OWNS ONLY UP TO THE NEXT MARKER, and this loop did not know
         # that. Fact lines (`// size`, `// calls`) are `//`-prefixed, so the
@@ -206,12 +236,15 @@ def _lessons(lines: list[str], index: int,
         lever = LESSON_LEVER.match(line)
         out = LESSON_RULED_OUT.match(line)
         if lever:
-            levers.append((lever.group("key"), lever.group("prose")))
-            current = ("lever", len(levers) - 1)
+            current = {"kind": "lever", "key": lever.group("key"),
+                       "prose": lever.group("prose"),
+                       "lines": [(offset, line)]}
+            run.append(current)
             continue
         if out:
-            ruled.append(out.group("prose"))
-            current = ("ruled", len(ruled) - 1)
+            current = {"kind": "ruled", "key": "",
+                       "prose": out.group("prose"), "lines": [(offset, line)]}
+            run.append(current)
             continue
         dead = LESSON_UNRECOVERABLE.match(line)
         if dead:
@@ -222,29 +255,24 @@ def _lessons(lines: list[str], index: int,
             # reader that stops matching a line goes blind rather than failing,
             # but what it produces is an ordinary attempt record. The prose is
             # kept verbatim: what was measured stays, only the verdict goes.
-            ruled.append(dead.group("prose"))
-            current = ("ruled", len(ruled) - 1)
+            current = {"kind": "unrecoverable", "key": "",
+                       "prose": dead.group("prose"), "lines": [(offset, line)]}
+            run.append(current)
             continue
         later = LESSON_DEFERRED.match(line)
         if later:
-            deferred.append(later.group("prose"))
-            current = ("deferred", len(deferred) - 1)
+            current = {"kind": "deferred", "key": "",
+                       "prose": later.group("prose"), "lines": [(offset, line)]}
+            run.append(current)
             continue
         joined = LESSON_CONTINUED.match(line)
         if joined and current:
-            kind, position = current
-            if kind == "lever":
-                key, prose = levers[position]
-                levers[position] = (key, prose + " " + joined.group("prose"))
-            elif kind == "unrecoverable":
-                unrecoverable[position] += " " + joined.group("prose")
-            elif kind == "deferred":
-                deferred[position] += " " + joined.group("prose")
-            else:
-                ruled[position] = ruled[position] + " " + joined.group("prose")
+            current["prose"] += " " + joined.group("prose")
+            current["lines"].append((offset, line))
             continue
         current = None
-    return tuple(levers), tuple(ruled), tuple(unrecoverable), tuple(deferred)
+    return tuple(Lesson(kind=b["kind"], key=b["key"], prose=b["prose"],
+                        lines=tuple(b["lines"])) for b in run)
 
 
 # --------------------------------------------------------------- extraction
@@ -627,8 +655,11 @@ def _read_text(text: str, path: Path | str,
         if parsed is None:
             continue
         address, keyword, rest, matched, name, spans, semantic = parsed
-        found_levers, found_ruled, found_dead, found_later = \
-            _lessons(lines, index)
+        found_run = _lesson_run(lines, index)
+        found_levers = _levers_of(found_run)
+        found_ruled = _ruled_of(found_run)
+        found_dead = ()
+        found_later = _deferred_of(found_run)
         emitted = _token_fact(lines, index, "symbol")
         catalogued_kind = _token_fact(lines, index, "kind")
         defined_in = _token_fact(lines, index, "body")
@@ -642,7 +673,7 @@ def _read_text(text: str, path: Path | str,
                 byte_exact=matched, semantic=semantic,
                 levers=found_levers,
                 ruled_out=found_ruled, unrecoverable=found_dead,
-                deferred=found_later))
+                deferred=found_later, origin=found_run))
         elif keyword == "EXCLUDED":
             found.append(DecompilationState(
                 address=address, mode=Mode.BODY, state=State.EXCLUDED,
@@ -651,7 +682,8 @@ def _read_text(text: str, path: Path | str,
                 exclusion=_exclusion_citation(rest), byte_exact=matched,
                 semantic=semantic,
                 levers=found_levers, ruled_out=found_ruled,
-                unrecoverable=found_dead, deferred=found_later))
+                unrecoverable=found_dead, deferred=found_later,
+                origin=found_run))
         else:
             if proved:
                 # Proved bodies keep the writeback semantics even once an
@@ -673,7 +705,8 @@ def _read_text(text: str, path: Path | str,
                 symbol=emitted, kind=catalogued_kind, body=defined_in, extract_error=error, recipe=recipe,
                 byte_exact=matched, semantic=semantic,
                 levers=found_levers, ruled_out=found_ruled,
-                unrecoverable=found_dead, deferred=found_later))
+                unrecoverable=found_dead, deferred=found_later,
+                origin=found_run))
 
     return found
 

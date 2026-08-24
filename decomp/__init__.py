@@ -45,12 +45,12 @@ and `writer` import nothing that has to be installed, so `import decomp`
 and everything above this line costs only Python; `asm` disassembles both
 sides of a byte match and needs capstone, which is why it is not imported
 here and why it is a declared dependency rather than a hopeful lazy import.
-`python -m decomp` CHECKS that split rather than restating it - see
+`decomp/tests/test_roundtrip.py` CHECKS that split rather than restating it - see
 `layering` - because the package carried the broader claim in prose for as
 long as it was already false. The scripts in `tools/`
 still carry their own copies of the reading machinery; on 2026-08-18 the
 marker moved - it carries the piece's name and its image spans - and the
-tools copies stayed on the old spelling by decision. `python -m decomp`
+tools copies stayed on the old spelling by decision. The test suite
 proves the package against `src/` alone: the parse and the read -> write ->
 read loop. When the tools are refactored onto this package, their copies
 are deleted.

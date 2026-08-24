@@ -54,7 +54,7 @@ clipping, batching, caching and the ledger.
 CAPSTONE is imported like anything else. It is a declared dependency, so a
 lazy import bought nothing but a failure that arrives halfway through a
 measurement instead of at import; the readers that must not need it live in
-other modules, and `python -m decomp` checks that split. The PE and COFF
+other modules, and the layering test checks that split. The PE and COFF
 readers below are small struct walks instead of dependencies, because all
 they need is the section table, the symbol table and two relocation
 directories.

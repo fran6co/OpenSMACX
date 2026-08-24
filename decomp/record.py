@@ -92,11 +92,19 @@ def record_match(record: DecompilationState, exe: Path | str,
     """Measure `record`, write what the measurement says, return the verdict.
 
     ONE RECORD. A caller writing several in the same FILE must not use this
-    in a loop: the writer re-reads the file each time, and a first write may
-    canonicalise a wrapped lesson onto one line and move every line below
-    it, which leaves the records read before it pointing at the wrong lines.
-    Measure them all, `stamped` them all, and hand the whole set to
-    `write_file`, which groups by path and writes each file once.
+    in a loop: the writer re-reads the file each time, and records read
+    before an earlier write can end up pointing at the wrong lines. Measure
+    them all, `stamped` them all, and hand the whole set to `write_file`,
+    which groups by path and writes each file once. (The sharpest version of
+    that hazard is gone - a write no longer canonicalises a wrapped lesson
+    onto one line and shifts everything below it - and `writer` now checks
+    each record's lesson offsets against the text before trusting them. The
+    rule stands anyway: a record is a position in one text.)
+
+    THE DEMOTION IS A ONE-WORD EDIT NOW. `stamped` moves a LEVER into
+    `ruled_out`, and the writer re-spells that single word on the author's
+    own line, so the wrapping and the parenthetical measurement beside it
+    survive the demotion instead of being regenerated.
 
     A claim is not lowered unless `demote` - see `stamped`.
 

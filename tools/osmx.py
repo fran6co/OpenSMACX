@@ -2084,12 +2084,30 @@ def check(
         for line in said[:-1][:4]:
             typer.secho(f"  {line}", fg=typer.colors.RED)
 
+    # ANNOTATION IDENTITY: does an annotation survive being rewritten? The
+    # writer used to regenerate each lesson run from a lossy parse, so
+    # `osmx record` reflowed, truncated or deleted the measured LEVER/TRIED
+    # prose of 434 records the moment it touched their file - and the
+    # roundtrip test could not see it, because it compared POST-PARSE data.
+    # This is the check that had to exist outside the parse.
+    annotations = subprocess.run(
+        [sys.executable, str(REPO_ROOT / "tools" / "annotation_identity.py"),
+         "--check"], cwd=REPO_ROOT, capture_output=True, text=True)
+    if not as_json:
+        said = annotations.stdout.strip().splitlines() or [""]
+        typer.secho("  " + said[-1],
+                    fg=typer.colors.RED if annotations.returncode
+                    else typer.colors.WHITE)
+        for line in said[:-1][:4]:
+            typer.secho(f"  {line}", fg=typer.colors.RED)
+
     if floor_broken and not as_json:
         typer.secho(f"  {floor_broken}", fg=typer.colors.RED, bold=True)
 
     code = (1 if regressed or dangling or unread or link.returncode
             or vtables.returncode or stale.returncode or symbols.returncode
             or index.returncode or floor_broken or debt.returncode
+            or annotations.returncode
             else 3 if unasked else 0)
     # THE VERDICT GOES IN THE OUTPUT, not only in the exit code. The brief has
     # told agents for a long time never to pipe this to `tail`, because `cmd |
@@ -2108,6 +2126,8 @@ def check(
                else "FAILED: a marker names a symbol the build does not emit" if symbols.returncode
                else "FAILED: the address index grew" if index.returncode
                else "FAILED: semantic debt grew" if debt.returncode
+               else "FAILED: an annotation does not survive being rewritten"
+               if annotations.returncode
                else "FAILED: the claim floor does not match the tree" if floor_broken
                else "FAILED: regressed, dangling or unread claims" if code == 1
                else "OK, with unverifiable claims present" if code == 3
