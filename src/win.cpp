@@ -4005,24 +4005,44 @@ void Win::get_mouse_pos(int * x, int * y) {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00644EF2
 
+// TRIED: 12 -> 16 of 61, and the gain is the CORRECTNESS fix below, not a
+// spelling. Two further attempts moved nothing: hoisting the loop count the
+// way the image does (`mov edi, [esi + 0xd4]` once, `cmp edx, edi` in the
+// loop) is already what the source says and changes no byte; and lifting the
+// found-arm out of the loop - the image puts its unlink at 0x005ECBA9, past
+// the `jmp 0x5ecc1b` that leaves the loop, and re-reads `[esi + 0xd0]` there
+// rather than reusing the loop's node - costs one instruction and one
+// agreeing pair, 15 of 61 at 60. So the layout difference is the compiler's
+// loop rotation, not the source's arrangement.
+//
+// FIXED, and it was reading another object entirely: every access here was
+// `*reinterpret_cast<int *>(parent + 0xNN)`, which is POINTER ARITHMETIC ON
+// `Win *` - it advances 0xNN whole Win objects, not 0xNN bytes. The offsets
+// are the WinNodeList members win.h annotates at Win+0xCC..0xDC, so they are
+// named now and the arithmetic is the compiler's.
 void Win::remove_parent_dialog() {
     Win *parent = win_parent_;
-    if (parent != 0 && *reinterpret_cast<int *>(parent + 0xcc) != 0) {
+    if (parent != 0 && reinterpret_cast<int>(parent->list_.head_) != 0) {
         int counter = 0;
-        if (*reinterpret_cast<int *>(parent + 0xd4) > 0) {
+        // HOISTED, unlike is_descendant's count: the image loads it once
+        // (`mov edi, [esi + 0xd4]` at 0x005ECB7E) and compares against the
+        // register (`cmp edx, edi`). Safe here because the only write to
+        // count_ is in the arm that breaks out.
+        const int total = parent->list_.count_;
+        if (total > 0) {
             do {
-                int node = *reinterpret_cast<int *>(parent + 0xd0);
+                int node = reinterpret_cast<int>(parent->list_.current_);
                 if (*reinterpret_cast<int *>(node + 4) == reinterpret_cast<int>(this)) {
                     int prev = *reinterpret_cast<int *>(node + 0xc);
                     int next = *reinterpret_cast<int *>(node + 0x10);
                     *reinterpret_cast<int *>(prev + 0x10) = next;
                     *reinterpret_cast<int *>(next + 0xc) = prev;
-                    counter = *reinterpret_cast<int *>(parent + 0xd0);
-                    if (counter == *reinterpret_cast<int *>(parent + 0xcc)) {
-                        *reinterpret_cast<int *>(parent + 0xcc) = *reinterpret_cast<int *>(counter + 0xc);
+                    counter = reinterpret_cast<int>(parent->list_.current_);
+                    if (counter == reinterpret_cast<int>(parent->list_.head_)) {
+                        parent->list_.head_ = reinterpret_cast<void *>(*reinterpret_cast<int *>(counter + 0xc));
                     }
-                    *reinterpret_cast<int *>(parent + 0xd0) = *reinterpret_cast<int *>(counter + 0xc);
-                    if (*reinterpret_cast<int *>(parent + 0xdc) == 0) {
+                    parent->list_.current_ = reinterpret_cast<void *>(*reinterpret_cast<int *>(counter + 0xc));
+                    if (parent->list_.external_ == 0) {
                         int payload = *reinterpret_cast<int *>(counter + 8);
                         if (payload != 0) {
                             free(reinterpret_cast<void *>(payload));
@@ -4032,17 +4052,17 @@ void Win::remove_parent_dialog() {
                             free(reinterpret_cast<void *>(counter));
                         }
                     }
-                    *reinterpret_cast<int *>(parent + 0xd4) = *reinterpret_cast<int *>(parent + 0xd4) - 1;
+                    parent->list_.count_ = parent->list_.count_ - 1;
                     break;
                 }
                 ++counter;
-                *reinterpret_cast<int *>(parent + 0xd0) = *reinterpret_cast<int *>(node + 0xc);
-            } while (counter < *reinterpret_cast<int *>(parent + 0xd4));
+                parent->list_.current_ = reinterpret_cast<void *>(*reinterpret_cast<int *>(node + 0xc));
+            } while (counter < total);
         }
-        if (*reinterpret_cast<int *>(parent + 0xd4) == 0) {
-            *reinterpret_cast<int *>(parent + 0xcc) = 0;
+        if (parent->list_.count_ == 0) {
+            parent->list_.head_ = reinterpret_cast<void *>(0);
         }
-        *reinterpret_cast<int *>(parent + 0xd8) = *reinterpret_cast<int *>(parent + 0xd4) - 1;
+        parent->list_.tail_ = parent->list_.count_ - 1;
     }
 }
 

@@ -2141,6 +2141,24 @@ def check(
         for line in said[:-1][:4]:
             typer.secho(f"  {line}", fg=typer.colors.RED)
 
+    # POINTER SCALING: `reinterpret_cast<int *>(parent + 0xcc)` where parent
+    # is a `Win *` advances 0xcc whole OBJECTS, not bytes, and reads about
+    # 900KB past the one it meant. A byte comparison cannot tell a wrong
+    # displacement from a right one - it sees two numbers that differ - so
+    # Win::remove_parent_dialog carried eight of them at 12 of 61 and nobody
+    # asked why. Ceiling is zero; the correct form casts the POINTER, not
+    # the sum.
+    scaling = subprocess.run(
+        [sys.executable, str(REPO_ROOT / "tools" / "pointer_scale.py"),
+         "--check"], cwd=REPO_ROOT, capture_output=True, text=True)
+    if not as_json:
+        said = scaling.stdout.strip().splitlines() or [""]
+        typer.secho("  " + said[-1],
+                    fg=typer.colors.RED if scaling.returncode
+                    else typer.colors.WHITE)
+        for line in said[:-1][:6]:
+            typer.secho(f"  {line}", fg=typer.colors.RED)
+
     # ANNOTATION IDENTITY: does an annotation survive being rewritten? The
     # writer used to regenerate each lesson run from a lossy parse, so
     # `osmx record` reflowed, truncated or deleted the measured LEVER/TRIED
@@ -2164,7 +2182,7 @@ def check(
     code = (1 if regressed or dangling or unread or link.returncode
             or vtables.returncode or stale.returncode or symbols.returncode
             or index.returncode or floor_broken or debt.returncode
-            or annotations.returncode
+            or annotations.returncode or scaling.returncode
             else 3 if unasked else 0)
     # THE VERDICT GOES IN THE OUTPUT, not only in the exit code. The brief has
     # told agents for a long time never to pipe this to `tail`, because `cmd |
@@ -2200,6 +2218,7 @@ def check(
                 "address_index": bool(index.returncode),
                 "class_debt": bool(debt.returncode),
                 "annotation_identity": bool(annotations.returncode),
+                "pointer_scale": bool(scaling.returncode),
                 "claim_floor": bool(floor_broken),
                 "regressed": bool(regressed),
                 "dangling": bool(dangling),
