@@ -37,7 +37,6 @@ static int * const g_EndPaint = (int *)0x006692B4;
 static int * const g_ShowWindow = (int *)0x00669320;
 static int * const g_SetRect = (int *)0x00669274;
 static int * const WinFocusStack = (int *)0x009B7A1C;
-static int * const WinFocusTop = (int *)0x009B7ADC;
 static int * const WinModalDepth = (int *)0x009B7AE4;
 static int * const WinMaximizeIcon = (int *)0x009B7B04;
 static int * const WinRestoreIcon = (int *)0x009B7B08;
@@ -91,19 +90,13 @@ static int * const WinDirtyRect = (int *)0x009B6EE8;
 static int * const WinModalResult = (int *)0x009B6EF0;
 static int * const WinSavedAreaWidth = (int *)0x009B6F88;
 static int * const WinSavedAreaHeight = (int *)0x009B6F8C;
-static int * const WinSavedFocus = (int *)0x009B7A2C;
-static int * const WinClipLeft = (int *)0x009B7A30;
-static int * const WinClipTop = (int *)0x009B7A34;
 static int * const WinDragOffsetX = (int *)0x009B7A38;
 static int * const WinDragOffsetY = (int *)0x009B7A3C;
 static int * const WinClipWidth = (int *)0x009B7A40;
 static int * const WinClipHeight = (int *)0x009B7A44;
 static int * const WinBackBuffer = (int *)0x009B7A68;
-static int * const WinHighlighted = (int *)0x009B7A6C;
 static int * const WinViewOriginX = (int *)0x009B7A70;
 static int * const WinViewOriginY = (int *)0x009B7A74;
-static int * const WinZOrderDirty = (int *)0x009B7A78;
-static int * const WinDoubleClickFlag = (int *)0x009B7AA4;
 // TRIED 2026-08-25 and REFUTED BY MEASUREMENT: retyping these three to
 // `Win **const` - the honest type, and the spelling win.h's
 // WinBubbleCompanion uses - cost show_maximize and maximize their claims.
@@ -116,17 +109,11 @@ static int * const WinDoubleClickFlag = (int *)0x009B7AA4;
 // not laziness - it is raw-self-access debt the ratchet has to keep.
 // See the recorded lesson `binding-type-decides-folding`.
 static int * const WinCallbackWindow = (int *)0x009B7AB8;
-static int * const WinActiveDialog = (int *)0x009B7ABC;
-static int * const WinLastActive = (int *)0x009B7AC0;
 static int * const WinInputFocus = (int *)0x009B7AC4;
 static int * const WinActiveWindow = (int *)0x009B7AC8;
-static int * const WinFocusPrimary = (int *)0x009B7ACC;
-static int * const WinFocusSecondary = (int *)0x009B7AD0;
 static int * const WinSizingFlag = (int *)0x009B7AD4;
 static int * const WinScreenDC = (int *)0x009B7B2C;
-static int * const WinZOrderListCount = (int *)0x009B7B34;
 static int * const WinPendingFocus = (int *)0x009B7B38;
-static int * const WinKeyState = (int *)0x009B7B3C;
 static int * const WinDDSurface = (int *)0x009BC498;
 // `int *const`, for the same reason g_GetDC above carries that type: a
 // fixed-address binding folds to its immediate only in this spelling. As
@@ -157,8 +144,6 @@ static int * const g_ReleaseDC = (int *)0x00669280;
 #endif  // OPENSMACX_WIN_SLOTS_H
 // 0x009B6628, read by get_mouse_window_recurse when it restores the
 // screen position it was called with; its neighbour 0x009B662C is the Y.
-static int * const WinMouseScreenXSaved = (int *)0x009B6628;
-static int * const WinMouseScreenYSaved = (int *)0x009B662C;
 // USER32 imports the message pump reaches, named by tools/iat_names.py
 // from the PE import table rather than inferred from their use.
 static int * const g_TranslateMessage = (int *)0x0066935C;
