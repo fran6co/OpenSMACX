@@ -703,7 +703,7 @@ int GraphicWin::init(int x, int y, int width, int height, LPSTR title,
         return surface_result;
     }
     // Return discarded: the original zeroes EAX at 0x005D5081 straight after.
-    Buffer::sync_to_palette(WinActivePalette());
+    Buffer::sync_to_palette(PaletteActive);
     return 0;
 }
 

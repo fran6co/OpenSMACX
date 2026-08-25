@@ -762,6 +762,17 @@ Win *WinCallbackWindow;   // 0x009B7AB8
 Win *WinInputFocus;       // 0x009B7AC4
 Win *WinActiveWindow;     // 0x009B7AC8
 Win *WinBubbleCompanion;   // 0x009B7A4C
+RECT WinBubbleRect;        // 0x009B6E38
+RECT WinScreenClipRect;    // 0x009B74C0
+RECT WinDirtyRect;         // 0x009B6EE8
+Win *WinDefaultFocus;      // 0x009B7AEC
+DDInit WinDisplayInit;     // 0x009BE618
+Win *WinFocusStack[4];     // 0x009B7A1C
+char WinKeyRing[10];       // 0x009B7B48
+char *WinKeyRingCursor = WinKeyRing;  // 0x00696D5C
+const uint32_t WinStaticDefaults[10] = {  // 0x00696D34, the image's values
+    247, 24, 0xffffffff, 1, 1, 8, 0xffffffff, 7, 2, 1};
+uint32_t WinDynamicDefaults[10];       // 0x009B7AF0
 int WinBubbleActive;       // 0x009B7A50
 Win *WinZOrderWindow;      // 0x009B7A6C
 int WinZOrderCount;        // 0x009B7B30
@@ -1115,7 +1126,7 @@ void __cdecl Win::flip(RECT *area) {
         if (area != nullptr) {
             ScreenBuffer.set_clip(area);
         }
-        ScreenBuffer.box(WinBubbleRect, WinBubbleEdgeColour,
+        ScreenBuffer.box(&WinBubbleRect, WinBubbleEdgeColour,
                          WinBubbleEdgeColour);
         // The box is drawn on the border and the fill inside it, so the
         // rectangle moves IN by one on each side and back out below.
@@ -1124,11 +1135,11 @@ void __cdecl Win::flip(RECT *area) {
         // signs on top and right the other way round, which grows the
         // rectangle where the image shrinks it - and the block below undid
         // the wrong two the same way.
-        WinBubbleRect->left += 1;
-        WinBubbleRect->top += 1;
-        WinBubbleRect->right -= 1;
-        WinBubbleRect->bottom -= 1;
-        ScreenBuffer.fill(WinBubbleRect, WinBubbleFillColour);
+        WinBubbleRect.left += 1;
+        WinBubbleRect.top += 1;
+        WinBubbleRect.right -= 1;
+        WinBubbleRect.bottom -= 1;
+        ScreenBuffer.fill(&WinBubbleRect, WinBubbleFillColour);
         ScreenBuffer.set_font(WinBubbleFont, nullptr, nullptr, nullptr);
         ScreenBuffer.set_text_color(WinBubbleTextColour, -1, 1, 1);
 
@@ -1136,13 +1147,13 @@ void __cdecl Win::flip(RECT *area) {
         if (strchr(text, '^') == nullptr) {
             // One line, centred in the box.
             if (text != nullptr) {
-                ScreenBuffer.write_cent_l(text, WinBubbleRect,
+                ScreenBuffer.write_cent_l(text, &WinBubbleRect,
                                           static_cast<int>(strlen(text)));
             }
         } else {
             // `^` separates lines. Each is centred in turn and the
             // separator is put back so the caller's string survives.
-            int y = WinBubbleRect->top + 1;
+            int y = WinBubbleRect.top + 1;
             LPSTR line = text;
             for (;;) {
                 LPSTR const split = strchr(line, '^');
@@ -1150,8 +1161,8 @@ void __cdecl Win::flip(RECT *area) {
                     *split = '\0';
                 }
                 ScreenBuffer.write_cent_l(
-                    line, WinBubbleRect->left, y,
-                    WinBubbleRect->right - WinBubbleRect->left,
+                    line, WinBubbleRect.left, y,
+                    WinBubbleRect.right - WinBubbleRect.left,
                     static_cast<int>(strlen(line)));
                 y += (WinBubbleFont->unk_1_ < 0)
                     ? WinBubbleFont->line_height_
@@ -1169,10 +1180,10 @@ void __cdecl Win::flip(RECT *area) {
         // block and the set_clip below it, so a run with no bubble text
         // performs neither. This tree ran both unconditionally, which moved
         // WinBubbleRect by one every frame.
-        WinBubbleRect->left -= 1;
-        WinBubbleRect->top -= 1;
-        WinBubbleRect->right += 1;
-        WinBubbleRect->bottom += 1;
+        WinBubbleRect.left -= 1;
+        WinBubbleRect.top -= 1;
+        WinBubbleRect.right += 1;
+        WinBubbleRect.bottom += 1;
         if (area != nullptr) {
             ScreenBuffer.set_clip(&ScreenBuffer.rect2_);
         }
@@ -1305,8 +1316,8 @@ void Win::clear_bubble_text() {
     }
     WinBubbleCompanion = 0;
     WinBubbleActive = 0;
-    Win::update_screen(WinBubbleRect, nullptr);
-    Win::flip(WinBubbleRect);
+    Win::update_screen(&WinBubbleRect, nullptr);
+    Win::flip(&WinBubbleRect);
 }
 
 
@@ -1393,7 +1404,7 @@ Purpose: Record the window that receives focus by default.
 Status: Complete
 */
 void Win::set_def_focus(int focus) {
-    *WinDefaultFocus = focus;
+    WinDefaultFocus = reinterpret_cast<Win *>(focus);
 }
 
 
@@ -1562,7 +1573,7 @@ Status: Complete
 // image does `mov eax, [esi + 0x184]` / `cmp eax, [ecx + 0x400]`, this body
 // the reverse, and the temporary is what puts the palette's field in eax.
 void Win::sync_palette() {
-    Palette *const active = WinActivePalette();
+    Palette *const active = PaletteActive;
     uint32_t generation;
     std::memcpy(&generation,
                 reinterpret_cast<uint8_t *>(active) + 0x400, sizeof(generation));
@@ -1571,7 +1582,7 @@ void Win::sync_palette() {
     }
     Palette::set_active_window(this);
     std::memcpy(&generation,
-                reinterpret_cast<uint8_t *>(WinActivePalette()) + 0x400,
+                reinterpret_cast<uint8_t *>(PaletteActive) + 0x400,
                 sizeof(generation));
     field_184_ = generation;
 }
@@ -2602,7 +2613,7 @@ Return Value: DDInit::init's own return
 Status: Complete.
 */
 int __cdecl Win::set_display_mode(int width, int height, int depth, int tgl) {
-    return WinDisplayInit->init(width, height, depth, tgl);
+    return WinDisplayInit.init(width, height, depth, tgl);
 }
 
 // The class name `UnregisterClassA` is handed at teardown - a THIRD copy of
@@ -3677,8 +3688,8 @@ void __cdecl sub_5f1750(int a1) {
         local.left = x;
         local.bottom = y + WinClipHeight;
         local.top = y;
-        UnionRect(reinterpret_cast<RECT *>(WinDirtyRect),
-                  reinterpret_cast<RECT *>(WinDirtyRect), &local);
+        UnionRect(&WinDirtyRect,
+                  &WinDirtyRect, &local);
         if (a1 != 0) {
             int saved = reinterpret_cast<int>(WinFlipSprite);
             WinFlipSprite = reinterpret_cast<Sprite *>(0);
@@ -3686,9 +3697,9 @@ void __cdecl sub_5f1750(int a1) {
             // single RECT push with no ecx setup IS this call - which is
             // what the artifact's invented `win_flip_stub` was standing in
             // for. No stub and no forwarder needed.
-            Win::flip(reinterpret_cast<RECT *>(WinDirtyRect));
+            Win::flip(&WinDirtyRect);
             WinFlipSprite = reinterpret_cast<Sprite *>(saved);
-            *WinDirtyRect = 0;
+            WinDirtyRect.left = 0;
             WinModalResult = 0;
         }
     }
@@ -3808,7 +3819,7 @@ long __cdecl OnNCHitTest(HWND hwnd, int x, int y) {
 /*
 Purpose: Does the tail of the typed-key ring match this string, read
          BACKWARDS? Walks the caller's string from its last character and
-         the 10-byte ring at WinKeyRingStart..WinKeyRingEnd from the write
+         the 10-byte ring at WinKeyRing..(WinKeyRing + 9) from the write
          cursor, both backwards, wrapping the ring. Returns 0 when every
          character matched and 1 at the first difference - strcmp's
          convention, not a boolean.
@@ -3839,13 +3850,13 @@ Purpose: Does the tail of the typed-key ring match this string, read
 // flags     hidden;sp_ready;purged_ok
 int __cdecl typed_keys_differ(char *code, int length) {
     char *want = code + length - 1;
-    char *typed = *reinterpret_cast<char **>(WinKeyRingCursor);
+    char *typed = WinKeyRingCursor;
     for (int n = length; n > 0; --n) {
         if (*typed != *want) return 1;
         --typed;
         --want;
-        if (typed < reinterpret_cast<char *>(WinKeyRingStart)) {
-            typed = reinterpret_cast<char *>(WinKeyRingEnd);
+        if (typed < WinKeyRing) {
+            typed = (WinKeyRing + 9);
         }
     }
     return 0;
@@ -3882,7 +3893,7 @@ void __cdecl OnSysKey(void *hwnd, unsigned int key, long flags, int repeat,
     } else {
         val = reinterpret_cast<int>(WinInputFocus);
         if (val == 0) {
-            val = *WinDefaultFocus;
+            val = reinterpret_cast<int>(WinDefaultFocus);
         }
     }
     WinActiveWindow = reinterpret_cast<Win *>(val);
@@ -4754,8 +4765,8 @@ void Win::set_bubble_text(char * text, RECT * rect) {
     if (WinBubbleActive != 0) {
         WinBubbleCompanion = 0;
         WinBubbleActive = 0;
-        update_screen(WinBubbleRect, 0);
-        flip(WinBubbleRect);
+        update_screen(&WinBubbleRect, 0);
+        flip(&WinBubbleRect);
     }
     int max_width = 0;
     int line_count = 0;
@@ -4796,12 +4807,12 @@ void Win::set_bubble_text(char * text, RECT * rect) {
     } else if (*BasePopScreenWidth < x + max_width) {
         x = *BasePopScreenWidth - max_width;
     }
-    WinBubbleRect->left = x;
-    WinBubbleRect->top = y;
-    WinBubbleRect->right = x + max_width;
-    WinBubbleRect->bottom = y + line_height;
+    WinBubbleRect.left = x;
+    WinBubbleRect.top = y;
+    WinBubbleRect.right = x + max_width;
+    WinBubbleRect.bottom = y + line_height;
     WinBubbleActive = reinterpret_cast<int>(text);
-    flip(WinBubbleRect);
+    flip(&WinBubbleRect);
 }
 
 // ORIGINAL: 0x005EE330 ?resize_event@Win@@QAEHHH@Z 0x005EE330-0x005EE454
@@ -5480,9 +5491,9 @@ static void RestoreAndFlip(UnionRectFn UnionRect, bool useHelper) {
             BuildRectDirect(rect);
         }
         RECT merged;
-        UnionRect(&merged, &rect, reinterpret_cast<RECT *>(WinDirtyRect));
+        UnionRect(&merged, &rect, &WinDirtyRect);
         Win::flip(&merged);
-        *WinDirtyRect = 0;
+        WinDirtyRect.left = 0;
         WinModalResult = 0;
     }
     WinFlipSprite = reinterpret_cast<Sprite *>(0);
@@ -5799,7 +5810,7 @@ void __cdecl OnChar(void *hwnd, char ch, int flags) {
     } else {
         result = reinterpret_cast<int>(WinInputFocus);
         if (result == 0) {
-            result = *WinDefaultFocus;
+            result = reinterpret_cast<int>(WinDefaultFocus);
         }
     }
     WinActiveWindow = reinterpret_cast<Win *>(result);
@@ -5916,8 +5927,8 @@ void Win::hide() {
         if (WinBubbleActive != zero) {
             WinBubbleCompanion = reinterpret_cast<Win *>(zero);
             WinBubbleActive = zero;
-            update_screen(WinBubbleRect, 0);
-            flip(WinBubbleRect);
+            update_screen(&WinBubbleRect, 0);
+            flip(&WinBubbleRect);
         }
         goto converge;
     }
@@ -7107,7 +7118,7 @@ void Win::on_nc_paint(RECT * area, int flags) {
             (&ScreenBuffer)->draw(buf, WinFillColour, v + stack8, yv + stack4, 1, 1);
         }
 
-        (&ScreenBuffer)->set_clip(reinterpret_cast<RECT *>(WinScreenClipRect));
+        (&ScreenBuffer)->set_clip(&WinScreenClipRect);
     }
 }
 
@@ -7314,7 +7325,7 @@ Win *Win::get_key_window() {
     if (WinFocusWindow == nullptr) {
         w = reinterpret_cast<char *>(WinInputFocus);
         if (WinInputFocus == 0) {
-            w = (char *)*WinDefaultFocus;
+            w = (char *)WinDefaultFocus;
         }
     } else {
         w = (char *)WinFocusWindow;
@@ -8137,7 +8148,7 @@ int __cdecl Win::update_cursor(Win *window, int tgl) {
             rect.right = destX + width;
             rect.bottom = destY + height;
             RECT merged;
-            UnionRect(&merged, &rect, reinterpret_cast<RECT *>(WinDirtyRect));
+            UnionRect(&merged, &rect, &WinDirtyRect);
             if (merged.bottom == 0) {
                 return copyResult;
             }
@@ -8146,7 +8157,7 @@ int __cdecl Win::update_cursor(Win *window, int tgl) {
             Win::flip(&merged);
             int result = WinModalResult;
             WinFlipClipped = prevFlag;
-            *WinDirtyRect = result;
+            WinDirtyRect.left = result;
             return result;
         }
 
@@ -8240,12 +8251,12 @@ int __cdecl Win::update_cursor(Win *window, int tgl) {
             RECT rect;
             make_rect(&rect, WinFlipSpriteY, WinFlipSpriteX, WinClipWidth, WinClipHeight);
             RECT merged;
-            UnionRect(&merged, &rect, reinterpret_cast<RECT *>(WinDirtyRect));
+            UnionRect(&merged, &rect, &WinDirtyRect);
             int savedFlag = reinterpret_cast<int>(WinFlipSprite);
             WinFlipSprite = reinterpret_cast<Sprite *>(0);
             Win::flip(&merged);
             WinFlipSprite = reinterpret_cast<Sprite *>(savedFlag);
-            *WinDirtyRect = 0;
+            WinDirtyRect.left = 0;
             WinModalResult = 0;
         }
 
@@ -8648,7 +8659,7 @@ void Win::screen_to_nonclient(int * x, int * y) {
 // ===== homed from src/unrecovered/005f5fb0.cpp =====
 
 void Win::on_char(char param2, int param3) {
-    char **cursor = (char **)WinKeyRingCursor;
+    char **cursor = &WinKeyRingCursor;
     **cursor = param2;
 
     bool matched = true;
@@ -8664,8 +8675,8 @@ void Win::on_char(char param2, int param3) {
             }
             pos--;
             pat--;
-            if (pos < (char *)WinKeyRingStart) {
-                pos = (char *)WinKeyRingEnd;
+            if (pos < (char *)WinKeyRing) {
+                pos = (char *)(WinKeyRing + 9);
             }
             count--;
         } while (count > 0);
@@ -8680,8 +8691,8 @@ void Win::on_char(char param2, int param3) {
                 WinBubbleActive != 0) {
                 WinBubbleCompanion = nullptr;
                 WinBubbleActive = 0;
-                ((Win *)WinBubbleWindow)->update_screen(WinBubbleRect, 0);
-                ((Win *)WinBubbleWindow)->flip(WinBubbleRect);
+                ((Win *)WinBubbleWindow)->update_screen(&WinBubbleRect, 0);
+                ((Win *)WinBubbleWindow)->flip(&WinBubbleRect);
             }
 
             Win *cand = WinPointerOwner1;
@@ -8746,8 +8757,8 @@ void Win::on_char(char param2, int param3) {
     }
 
     *cursor = *cursor + 1;
-    if (*cursor > (char *)WinKeyRingEnd) {
-        *cursor = (char *)WinKeyRingStart;
+    if (*cursor > (char *)(WinKeyRing + 9)) {
+        *cursor = (char *)WinKeyRing;
     }
 
     bool handled = false;
@@ -10416,8 +10427,8 @@ void Win::close() {
     if ((WinBubbleCompanion == this) && (WinBubbleActive != 0)) {
         WinBubbleCompanion = nullptr;
         WinBubbleActive = 0;
-        update_screen(WinBubbleRect, 0);
-        flip(WinBubbleRect);
+        update_screen(&WinBubbleRect, 0);
+        flip(&WinBubbleRect);
     }
     if (WinHoverWindow == this) {
         WinHoverWindow = 0;
@@ -10753,8 +10764,23 @@ typedef void *(__stdcall *SelectPaletteFn)(void *, void *, int);
 typedef int (__stdcall *RealizePaletteFn)(void *);
 typedef int (__stdcall *ReleaseDCFn)(void *, void *);
 
-// ORIGINAL: 0x005F1070 ?OnQueryNewPalette@Win@@QAAHPAX@Z 0x005F1070-0x005F1141 FILE BYTE_EXACT
+// ORIGINAL: 0x005F1070 ?OnQueryNewPalette@Win@@QAAHPAX@Z 0x005F1070-0x005F1141 FILE
 // TRIED: call directly through `(*reinterpret_cast<Fn*>(g_addr))(args)` at the call site instead of binding the function pointer to a named local first - the named local forced an extra reg-to-reg mov before the GetDC argument push. Also: these two "vtable" calls (slots 17/26) push the object pointer as an explicit stack arg with ecx holding the vtable pointer, not a real __thiscall dispatch, so plain `int*`/function-pointer casts matched where the VCall shim would not.
+// TRIED and NOT recovered (2026-08-25): this body was BYTE_EXACT while
+// 0x009B7B2C was read through the `WinScreenDC` fixed-address binding, and
+// dropped to 50 of 61 when that binding merged onto `WinSharedHdc`, the
+// real global it duplicated. VC6 then CSEs the tail's `WinSharedHdc` load
+// with `eax`, which holds DirectDrawSurface and is provably 0 on that
+// path, so it emits `push 0` where the image has `mov edx,[0x9b7b2c]; push
+// edx`, and an extra `test eax, eax` appears at image instruction 40. The
+// opaque binding is what used to block that reasoning.
+// Three spellings measured, all 50 of 61, so the cause is upstream of the
+// call itself: naming the value in a local (`HDC shared = WinSharedHdc`),
+// reading through a pointer to the REAL global (`HDC *const shared =
+// &WinSharedHdc`, not a second storage), and dropping the `eax` binding at
+// the tail entirely.
+// The merge is KEPT and the claim is paid: two names for one address is a
+// defect the byte ratchet cannot see, and this is what removing it cost.
 // working copy - scaffold materialised by --work
 // size      209 bytes
 // prototype int (__cdecl ?OnQueryNewPalette@Win@@QAAHPAX@Z)(HWND hWnd)
@@ -10823,8 +10849,7 @@ int __cdecl Win::OnQueryNewPalette(void * a1) {
         return 0;
     }
 
-    ReleaseDC(HandleMain,
-              WinSharedHdc);
+    ReleaseDC(HandleMain, WinSharedHdc);
     WinSharedHdc = 0;
     return 0;
 }

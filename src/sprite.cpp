@@ -135,8 +135,8 @@ void __fastcall sprite_close_redirect(Sprite *self, void *) {
 // OBJECTS, NOT POINTERS: the image addresses 0x00696D18 and 0x00696D1C
 // directly - `mov esi, dword ptr [0x696d18]` - where a pointer variable
 // loads the pointer first.
-int SpriteDrawOriginX;  // 0x00696D18
-int SpriteDrawOriginY;  // 0x00696D1C
+int SpriteDrawOriginX = 1;  // 0x00696D18
+int SpriteDrawOriginY = 1;  // 0x00696D1C
 
 /*
 Purpose: Draw the sprite with a temporarily substituted draw origin.

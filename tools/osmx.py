@@ -2157,6 +2157,22 @@ def check(
                     fg=typer.colors.RED if dupes.returncode
                     else typer.colors.WHITE)
 
+    # INITIAL VALUES: a global written `int X;  // 0x00696D14` is ZERO at run
+    # time. If the image's own .data carries 9 at that address, the recovered
+    # program is simply wrong - and nothing else here can tell, because both
+    # spellings compile the same load and the byte comparison sees no
+    # difference. WinFillColour shipped as 0 against the image's 9 on
+    # 2026-08-25, caught only because tools/image_data.py had just been
+    # written to ask the image what its DATA says rather than its code.
+    values = subprocess.run(
+        [sys.executable, str(REPO_ROOT / "tools" / "data_values.py"),
+         "--check"], cwd=REPO_ROOT, capture_output=True, text=True)
+    if not as_json:
+        said = values.stdout.strip().splitlines() or [""]
+        typer.secho("  " + said[-1],
+                    fg=typer.colors.RED if values.returncode
+                    else typer.colors.WHITE)
+
     # POINTER SCALING: `reinterpret_cast<int *>(parent + 0xcc)` where parent
     # is a `Win *` advances 0xcc whole OBJECTS, not bytes, and reads about
     # 900KB past the one it meant. A byte comparison cannot tell a wrong
@@ -2200,6 +2216,7 @@ def check(
             or index.returncode or floor_broken or debt.returncode
             or annotations.returncode or scaling.returncode
             or dupes.returncode
+            or values.returncode
             else 3 if unasked else 0)
     # THE VERDICT GOES IN THE OUTPUT, not only in the exit code. The brief has
     # told agents for a long time never to pipe this to `tail`, because `cmd |
@@ -2237,6 +2254,7 @@ def check(
                 "annotation_identity": bool(annotations.returncode),
                 "pointer_scale": bool(scaling.returncode),
                 "duplicate_globals": bool(dupes.returncode),
+                "data_values": bool(values.returncode),
                 "claim_floor": bool(floor_broken),
                 "regressed": bool(regressed),
                 "dangling": bool(dangling),

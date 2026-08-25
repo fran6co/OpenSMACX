@@ -37,13 +37,13 @@
  * Naming them costs nothing in bytes: the operand is a relocation, and the
  * comparison masks relocated bytes on both sides.
  */
-uint32_t EditBoxDefaultB1C;  // 0x006971DC
-uint32_t EditBoxDefaultB20;  // 0x006971F8
-uint32_t EditBoxDefaultB24;  // 0x006971F4
+uint32_t EditBoxDefaultB1C = 255;  // 0x006971DC
+uint32_t EditBoxDefaultB20 = -1;  // 0x006971F8
+uint32_t EditBoxDefaultB24 = -1;  // 0x006971F4
 uint32_t EditBoxDefaultB28;  // 0x009B90B8
 uint32_t EditBoxDefaultB2C;  // 0x009B90BC
-uint32_t EditBoxDefaultB30;  // 0x006971E0
-uint32_t EditBoxDefaultB34;  // 0x006971E4
+uint32_t EditBoxDefaultB30 = 1;  // 0x006971E0
+uint32_t EditBoxDefaultB34 = 4;  // 0x006971E4
 
 /*
 Purpose: Reset the edit box - clear its state, republish the seven defaults,

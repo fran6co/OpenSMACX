@@ -58,7 +58,7 @@ uint32_t BrushVal1;  // 0x009B22B0
 uint32_t BrushVal2;  // 0x009B22B8
 uint32_t WorldBuildVal1;  // 0x009B22B4
 
-uint32_t MapLongitude;  // 0x0068FAF0 // default set to 1
+uint32_t MapLongitude = 1;  // 0x0068FAF0 // default set to 1
 LPCSTR MapExtension = "MP";
 
 /*
@@ -3389,7 +3389,7 @@ void __cdecl world_analysis() {
 
 // Two fixed-address flags world_climate reads, no established identity
 // beyond what this one function shows.
-uint32_t WorldClimateSkipTerrainClear;  // 0x0068F21C
+uint32_t WorldClimateSkipTerrainClear = 1;  // 0x0068F21C
 uint32_t WorldClimateSkipTerritoryReset;  // 0x009B22EC
 // The process-wide WorldWin, torn down/built at this same fixed address
 // elsewhere (atexit_thunks.cpp, init_thunks.cpp).
