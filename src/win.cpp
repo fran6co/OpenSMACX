@@ -6041,6 +6041,21 @@ skip_all:
 
 // ===== homed from src/recovered/units/005f63c0.cpp =====
 
+// FINDING, not a layout to declare: this body reads PAST THE END OF Win.
+// `sizeof(Win)` is 0x444 (win.h's static_assert, and scroll_horz_ at 0x440
+// is the last member), so `self + 0x8f4` and `self + idx*4 + 0x900` are
+// 0x4B0 and beyond outside the object. A Win method cannot legally touch
+// them, so the receiver is wrong: this body belongs to a Win-DERIVED class
+// that the catalogue attributed to Win, the same way `adjust_menus` was
+// given a receiver it never had (0x005F0540, fixed and BYTE_EXACT).
+// Searched for the owner and did NOT find it: no declared class in this
+// tree puts a `Spot` at 0x8F4 - councwin.h has one at 0xA48, diplowin.h at
+// 0xED0, basewin.h at 0x40EB4. Until the class is identified the offsets
+// cannot be turned into members, and the `char *self` here is the honest
+// spelling of an access whose type is genuinely unknown.
+// The body is UNCLAIMED, so nothing in the image validates these offsets
+// either - they are the decompiler's, and they are what points at the
+// wrong receiver in the first place.
 void Win::on_l_button_down(long flags, int x, int y, unsigned int keys, int dbl) {
     char *self = reinterpret_cast<char *>(this);
 
@@ -8913,6 +8928,21 @@ shared:
 //    prologue), it had enough register pressure to do so. That is a
 //    hard case - the tool reports a similarity ratio so you can tell a
 //    near miss from a wrong body.
+// TWO FINDINGS, both recorded rather than cleared, and they are different
+// kinds of stuck.
+// 1. `self + 0xa14` is PAST `sizeof(Win)` (0x444), so the receiver is a
+//    Win-DERIVED class carrying an embedded Time - the same misattribution
+//    as on_l_button_down above. Unlike that one this body IS BYTE_EXACT, so
+//    the image itself validates the offset: [this+0xA14] is really read.
+//    The offset is right and the CLASS is wrong.
+// 2. `reinterpret_cast<int>(this)` here is not a member walk and cannot be
+//    spelled away: `Time::start(void(__cdecl *)(int), int param, ...)`
+//    takes its callback context as an int, so a Win * has to go through
+//    one. class_debt counts it as raw self-access, and its remedy - use the
+//    declared member - does not apply to a pointer crossing an int-typed
+//    API. Retyping that context is the Time work the plan calls A3; it
+//    touches both Time::start overloads, the callback typedefs and every
+//    caller including Palette's, so it belongs to Time's pass, not here.
 int Win::sub_63c340() {
     char *self = reinterpret_cast<char *>(this);
     if (reinterpret_cast<Time *>(self + 0xa14)->start(
