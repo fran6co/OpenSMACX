@@ -160,9 +160,6 @@ void PlanWin::clear_lines() {
     field_21FF8_ = 0;
 }
 
-void __fastcall plan_win_clear_lines_redirect(PlanWin *self, void *) {
-    self->clear_lines();
-}
 
 /*
 Purpose: Close the plan window by dropping its blink state and running the
@@ -193,9 +190,6 @@ void PlanWin::close() {
     MapWin::close();
 }
 
-void __fastcall plan_win_close_redirect(PlanWin *self, void *) {
-    self->close();
-}
 
 namespace {
 
@@ -239,9 +233,6 @@ void PlanWin::blink() {
     (ORIGINAL(base)->*original_method<func_base_vtable_slot>(reinterpret_cast<unsigned long>(vtable[PlanWinBlinkSlot / sizeof(void *)])))();
 }
 
-void __fastcall plan_win_blink_redirect(PlanWin *self, void *) {
-    self->blink();
-}
 
 /*
 Purpose: Restore the window's backing image from the plan window's own buffer.
@@ -269,6 +260,3 @@ void PlanWin::UNK1() {
                         -height);
 }
 
-void __fastcall plan_win_unk1_redirect(PlanWin *self, void *) {
-    self->UNK1();
-}

@@ -126,5 +126,3 @@ class NewTechWin : public GraphicWin {
 static_assert(sizeof(NewTechWin) == 0x107C4,
               "NewTechWin layout must match the original executable");
 
-void __fastcall new_tech_win_on_left_click_redirect(NewTechWin *self, void *, int a1, int a2);
-int __fastcall new_tech_win_on_key_click_redirect(NewTechWin *self, void *, int a1, int a2);

@@ -113,7 +113,6 @@ class NetDaemon : public AlphaNet {
 // daemon reads from lives at a fixed address.
 NetDaemon *const NetDaemonNet = (NetDaemon *)0x0093CD90;
 
-int __fastcall net_daemon_receive_redirect(NetDaemon *self, void *);
 
 // The multiplayer-transport flag at 0x0093F660 and the local faction id at
 // 0x00939284, both read by unlock_veh. src/game.cpp binds the same two
@@ -137,9 +136,6 @@ extern int NetDaemonLocalFaction;
 // it discard it.
 uint32_t __cdecl message_data(int a1, int a2, int a3, int a4, int a5, int a6);
 
-// unlock_veh is entered on an unadjusted `this` (the original does a plain
-// `mov esi, ecx`), so the adapter forwards without displacement.
-uint32_t __fastcall net_daemon_unlock_veh_redirect(NetDaemon *self, void *);
 
 // NetDaemon::synch itself is not recovered - 4,905 bytes with its own call
 // targets, so it remains an original dependency. The fourteen synch_*

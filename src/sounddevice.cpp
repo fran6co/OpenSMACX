@@ -192,29 +192,11 @@ Status: Complete
 void Wave_In_Device::restart() {
 }
 
-void __fastcall midi_device_update_sound_redirect(Midi_Device *self, void *) {
-    self->update_sound();
-}
 
-void __fastcall midi_device_suspend_redirect(Midi_Device *self, void *) {
-    self->suspend();
-}
 
-void __fastcall midi_device_restart_redirect(Midi_Device *self, void *) {
-    self->restart();
-}
 
-void __fastcall wave_in_device_update_sound_redirect(Wave_In_Device *self, void *) {
-    self->update_sound();
-}
 
-void __fastcall wave_in_device_suspend_redirect(Wave_In_Device *self, void *) {
-    self->suspend();
-}
 
-void __fastcall wave_in_device_restart_redirect(Wave_In_Device *self, void *) {
-    self->restart();
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
@@ -232,9 +214,6 @@ int Midi_Device::select(unsigned int) {
     return 0;
 }
 
-int __fastcall midi_device_select_redirect(Midi_Device *self, void *, unsigned int a1) {
-    return self->select(a1);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -251,9 +230,6 @@ Status: Complete
 void Midi_Device::set_volume(unsigned int) {
 }
 
-void __fastcall midi_device_set_volume_redirect(Midi_Device *self, void *, unsigned int a1) {
-    self->set_volume(a1);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -270,9 +246,6 @@ Status: Complete
 void Midi_Device::set_pan(int) {
 }
 
-void __fastcall midi_device_set_pan_redirect(Midi_Device *self, void *, int a1) {
-    self->set_pan(a1);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
@@ -290,9 +263,6 @@ int Midi_Device::fade(unsigned int) {
     return 0;
 }
 
-int __fastcall midi_device_fade_redirect(Midi_Device *self, void *, unsigned int a1) {
-    return self->fade(a1);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -309,9 +279,6 @@ Status: Complete
 void Midi_Device::set_rate(unsigned int) {
 }
 
-void __fastcall midi_device_set_rate_redirect(Midi_Device *self, void *, unsigned int a1) {
-    self->set_rate(a1);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
@@ -329,9 +296,6 @@ int Wave_In_Device::select(unsigned int) {
     return 0;
 }
 
-int __fastcall wave_in_device_select_redirect(Wave_In_Device *self, void *, unsigned int a1) {
-    return self->select(a1);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
@@ -349,9 +313,6 @@ int Wave_In_Device::get_caps(unsigned int) {
     return 0;
 }
 
-int __fastcall wave_in_device_get_caps_redirect(Wave_In_Device *self, void *, unsigned int a1) {
-    return self->get_caps(a1);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -368,9 +329,6 @@ Status: Complete
 void Wave_In_Device::set_rate(unsigned int) {
 }
 
-void __fastcall wave_in_device_set_rate_redirect(Wave_In_Device *self, void *, unsigned int a1) {
-    self->set_rate(a1);
-}
 
 /*
 Purpose: Report no device description; the legacy implementation returns 0.
@@ -388,9 +346,6 @@ int Midi_Device::get_description(unsigned int, char *, unsigned int) {
     return 0;
 }
 
-int __fastcall midi_device_get_description_redirect(Midi_Device *self, void *, unsigned int a1, char *a2, unsigned int a3) {
-    return self->get_description(a1, a2, a3);
-}
 
 /*
 Purpose: Report no device description; the legacy implementation returns 0.
@@ -408,9 +363,6 @@ int Wave_In_Device::get_description(unsigned int, char *, unsigned int) {
     return 0;
 }
 
-int __fastcall wave_in_device_get_description_redirect(Wave_In_Device *self, void *, unsigned int a1, char *a2, unsigned int a3) {
-    return self->get_description(a1, a2, a3);
-}
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
@@ -524,33 +476,12 @@ int Wave_In_Device::get_rate() {
     return 0;
 }
 
-int __fastcall midi_device_get_ndevices_redirect(Midi_Device *self, void *) {
-    return self->get_ndevices();
-}
 
-int __fastcall midi_device_get_volume_redirect(Midi_Device *self, void *) {
-    return self->get_volume();
-}
 
-int __fastcall midi_device_stop_redirect(Midi_Device *self, void *) {
-    return self->stop();
-}
 
-int __fastcall midi_device_get_rate_redirect(Midi_Device *self, void *) {
-    return self->get_rate();
-}
 
-int __fastcall wave_in_device_get_ndevices_redirect(Wave_In_Device *self, void *) {
-    return self->get_ndevices();
-}
 
-int __fastcall wave_in_device_stop_redirect(Wave_In_Device *self, void *) {
-    return self->stop();
-}
 
-int __fastcall wave_in_device_get_rate_redirect(Wave_In_Device *self, void *) {
-    return self->get_rate();
-}
 
 namespace {
 // Midi_Device wraps its device at 0x14, the same offset Wave_Device uses, and
@@ -601,13 +532,7 @@ void Midi_Device::disable() {
     dispatch_midi_device(this, 0x58);
 }
 
-void __fastcall midi_device_enable_redirect(Midi_Device *self, void *) {
-    self->enable();
-}
 
-void __fastcall midi_device_disable_redirect(Midi_Device *self, void *) {
-    self->disable();
-}
 
 namespace {
 typedef int (OriginalObject::*device_query_vfn)();
@@ -681,17 +606,8 @@ int Wave_In_Device::end_record() {
     return 0;
 }
 
-int __fastcall midi_device_is_disabled_redirect(Midi_Device *self, void *) {
-    return self->is_disabled();
-}
 
-int __fastcall wave_in_device_start_record_redirect(Wave_In_Device *self, void *) {
-    return self->start_record();
-}
 
-int __fastcall wave_in_device_end_record_redirect(Wave_In_Device *self, void *) {
-    return self->end_record();
-}
 
 
 // ---------------------------------------------------------------------------

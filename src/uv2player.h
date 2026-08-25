@@ -624,4 +624,3 @@ class UV2Player {
 static_assert(sizeof(UV2Player) == 0xE68,
               "UV2Player layout must match the original executable");
 
-int __fastcall uv2_player_unk4_redirect(UV2Player *self, void *);

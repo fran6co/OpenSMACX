@@ -73,13 +73,7 @@ void Sound::fade(unsigned long a1) {
     }
 }
 
-int __fastcall sound_unk1_redirect(Sound *self, void *, int a1) {
-    return self->UNK1(a1);
-}
 
-void __fastcall sound_fade_redirect(Sound *self, void *, int a1) {
-    self->fade(a1);
-}
 
 namespace {
 // Sound wraps its device at 0x3C and asks it these questions through the
@@ -154,17 +148,8 @@ int Sound::get_time() {
     return query_sound_device(this, 0x74);
 }
 
-int __fastcall sound_is_playing_redirect(Sound *self, void *) {
-    return self->is_playing();
-}
 
-int __fastcall sound_is_looping_redirect(Sound *self, void *) {
-    return self->is_looping();
-}
 
-int __fastcall sound_get_time_redirect(Sound *self, void *) {
-    return self->get_time();
-}
 
 namespace {
 typedef int (OriginalObject::*sound_device_arg)(int a1);
@@ -307,29 +292,11 @@ void Sound::set_delay(unsigned int a1) {
     forward_sound_device(this, 0x4C, value, 0);
 }
 
-int __fastcall sound_play_redirect(Sound *self, void *) {
-    return self->play();
-}
 
-int __fastcall sound_play_arg_redirect(Sound *self, void *, unsigned int a1) {
-    return self->play(a1);
-}
 
-int __fastcall sound_stop_redirect(Sound *self, void *) {
-    return self->stop();
-}
 
-int __fastcall sound_release_redirect(Sound *self, void *) {
-    return self->release();
-}
 
-void __fastcall sound_set_loop_state_redirect(Sound *self, void *, long a1) {
-    self->set_loop_state(a1);
-}
 
-void __fastcall sound_set_delay_redirect(Sound *self, void *, unsigned int a1) {
-    self->set_delay(a1);
-}
 
 namespace {
 // fade and fade_in are guarded twice: the field at 0x38 must be set as well as
@@ -411,18 +378,8 @@ void Sound::ramp(int a1, int a2, unsigned int a3) {
     (ORIGINAL(device)->*original_slot<ramp_fn>(vtable + 0x34))(a1, a2, static_cast<int>(a3));
 }
 
-int __fastcall sound_fade_query_redirect(Sound *self, void *) {
-    return self->fade();
-}
 
-int __fastcall sound_fade_in_redirect(Sound *self, void *) {
-    return self->fade_in();
-}
 
-void __fastcall sound_ramp_redirect(Sound *self, void *, int a1, int a2,
-                                    unsigned int a3) {
-    self->ramp(a1, a2, a3);
-}
 
 /*
 Purpose: Record the sound's type. Types 1..7 - except 3, which the original's
@@ -482,9 +439,6 @@ void Sound::set_type(unsigned int a1) {
     }
 }
 
-void __fastcall sound_set_type_redirect(Sound *self, void *, unsigned int a1) {
-    self->set_type(a1);
-}
 
 /*
 Purpose: Load the sound from a filename. The name resolves through the
@@ -562,9 +516,6 @@ int Sound::load(const char *a1) {
     return result;
 }
 
-int __fastcall sound_load_redirect(Sound *self, void *, const char *a1) {
-    return self->load(a1);
-}
 
 /*
 Purpose: Set the sound's volume: the low seven bits are stored at 0x04 and
@@ -591,9 +542,6 @@ void Sound::set_volume(int a1) {
     }
 }
 
-void __fastcall sound_set_volume_redirect(Sound *self, void *, int a1) {
-    self->set_volume(a1);
-}
 
 /*
 Purpose: Set the fade time. Zero is refused with 0xA; otherwise the value is
@@ -623,9 +571,6 @@ int Sound::set_fade(unsigned long a1) {
     return 0;
 }
 
-int __fastcall sound_set_fade_redirect(Sound *self, void *, unsigned long a1) {
-    return self->set_fade(a1);
-}
 
 /*
 Purpose: Set the fade-in time. Zero is refused with 0xA; otherwise the value
@@ -655,10 +600,6 @@ int Sound::set_fade_in(unsigned int a1) {
     return 0;
 }
 
-int __fastcall sound_set_fade_in_redirect(Sound *self, void *,
-                                          unsigned int a1) {
-    return self->set_fade_in(a1);
-}
 
 /*
 Purpose: Fade the sound in: its own vtable slot 0x54 takes the time, and only
@@ -682,10 +623,6 @@ void Sound::fade_in(unsigned int a1) {
     }
 }
 
-void __fastcall sound_fade_in_arg_redirect(Sound *self, void *,
-                                           unsigned int a1) {
-    self->fade_in(a1);
-}
 
 /*
 Purpose: Set the pan, clamped to the range the engine accepts (-0x40 to
@@ -715,9 +652,6 @@ void Sound::set_pan(int a1) {
     }
 }
 
-void __fastcall sound_set_pan_redirect(Sound *self, void *, int a1) {
-    self->set_pan(a1);
-}
 
 /*
 Purpose: Release the loaded sound. The wrapped device, if any, is asked to
@@ -749,9 +683,6 @@ int Sound::unload() {
     return result;
 }
 
-int __fastcall sound_unload_redirect(Sound *self, void *) {
-    return self->unload();
-}
 
 /*
 Purpose: Destroy the sound. This is exactly the body ~Wave inlines as its
@@ -812,9 +743,6 @@ Sound::~Sound() {
     self->vtable_storage_ = 0x0066E444;
 }
 
-void __fastcall sound_dtor_redirect(Sound *self, void *) {
-    self->~Sound();
-}
 
 /*
 Purpose: The compiler-generated scalar deleting destructor: destroy the
@@ -875,9 +803,6 @@ int Sound::attach() {
     return 0;
 }
 
-int __fastcall sound_attach_redirect(Sound *self, void *) {
-    return self->attach();
-}
 
 /*
 Purpose: Leave the sound chain: nothing at all for an unchained sound;
@@ -916,9 +841,6 @@ int Sound::detach() {
     return 0;
 }
 
-int __fastcall sound_detach_redirect(Sound *self, void *) {
-    return self->detach();
-}
 
 // load_sound_dll's body is not yet recovered; forward into the original image.
 int __cdecl load_sound_dll() {

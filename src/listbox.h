@@ -216,6 +216,4 @@ extern uint32_t ListBoxCloseDynamicDefault;            // 0x009B8EE0
 // subobject); the destructor is always entered at L + this adjustment.
 static const size_t ListBoxDestructorAdjustment = 0x48;
 
-void __fastcall list_box_on_dialog_focus_redirect(ListBox *self, void *, int a1);
-uint32_t __fastcall list_box_close_redirect(ListBox *self, void *);
 uint32_t __fastcall list_box_destructor_redirect(void *adjusted, void *);

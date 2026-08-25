@@ -54,13 +54,7 @@ BattleWin::~BattleWin() {
     reinterpret_cast<Time *>(reinterpret_cast<uint8_t *>(this) + 8)->~Time();
 }
 
-void __fastcall battle_win_dtor_redirect(BattleWin *self, void *) {
-    self->~BattleWin();
-}
 
-void __fastcall battle_win_on_iface_left_click_redirect(BattleWin *self, void *, int a1, int a2) {
-    self->on_iface_left_click(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -77,9 +71,6 @@ Status: Complete
 void BattleWin::on_iface_right_click(int, int) {
 }
 
-void __fastcall battle_win_on_iface_right_click_redirect(BattleWin *self, void *, int a1, int a2) {
-    self->on_iface_right_click(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -96,9 +87,6 @@ Status: Complete
 void BattleWin::on_iface_right_down(int, int) {
 }
 
-void __fastcall battle_win_on_iface_right_down_redirect(BattleWin *self, void *, int a1, int a2) {
-    self->on_iface_right_down(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -115,9 +103,6 @@ Status: Complete
 void BattleWin::on_iface_mouse_move(int, int) {
 }
 
-void __fastcall battle_win_on_iface_mouse_move_redirect(BattleWin *self, void *, int a1, int a2) {
-    self->on_iface_mouse_move(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -134,9 +119,6 @@ Status: Complete
 void BattleWin::on_iface_mouse_leave(int, int) {
 }
 
-void __fastcall battle_win_on_iface_mouse_leave_redirect(BattleWin *self, void *, int a1, int a2) {
-    self->on_iface_mouse_leave(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -153,9 +135,6 @@ Status: Complete
 void BattleWin::on_iface_selected(int, int) {
 }
 
-void __fastcall battle_win_on_iface_selected_redirect(BattleWin *self, void *, int a1, int a2) {
-    self->on_iface_selected(a1, a2);
-}
 
 /*
 // ORIGINAL: 0x00422DC0 ?on_iface_button_clicked@BattleWin@@QAEXH@Z 0x00422DC0-0x00422DDA BYTE_EXACT

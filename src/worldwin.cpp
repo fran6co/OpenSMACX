@@ -76,9 +76,6 @@ Status: Complete
 void WorldWin::clear_terrain() {
 }
 
-void __fastcall world_win_clear_terrain_redirect(WorldWin *self, void *) {
-    self->clear_terrain();
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -95,9 +92,6 @@ Status: Complete
 void WorldWin::on_left_double_click(int, int) {
 }
 
-void __fastcall world_win_on_left_double_click_redirect(WorldWin *self, void *, int a1, int a2) {
-    self->on_left_double_click(a1, a2);
-}
 
 
 /*
@@ -132,13 +126,7 @@ void WorldWin::on_right_click(int a1, int a2) {
     click(a1, a2, 1, 0);
 }
 
-void __fastcall world_win_on_left_click_redirect(WorldWin *self, void *, int a1, int a2) {
-    self->on_left_click(a1, a2);
-}
 
-void __fastcall world_win_on_right_click_redirect(WorldWin *self, void *, int a1, int a2) {
-    self->on_right_click(a1, a2);
-}
 
 /*
 // ORIGINAL: 0x004C45F0 ?set_center@WorldWin@@QAEXHH@Z 0x004C45F0-0x004C4603 BYTE_EXACT

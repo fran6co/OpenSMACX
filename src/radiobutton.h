@@ -123,7 +123,6 @@ static_assert(sizeof(RadioButton) == 0xB24,
 extern uint32_t RadioButtonDefault1;
 extern uint32_t RadioButtonDefault2;
 
-void __fastcall radio_button_close_redirect(RadioButton *self, void *);
 
 // ??1RadioButton@@QAE@H@Z at 0x00406F60 - the DESTRUCTOR entry that also
 // conditionally frees the storage. C++ forbids a user-declared destructor

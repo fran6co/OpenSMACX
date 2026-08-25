@@ -138,9 +138,6 @@ int ProdPicker::UNK1(int) {
     return 1;
 }
 
-int __fastcall prod_picker_unk1_redirect(ProdPicker *self, void *, int a1) {
-    return self->UNK1(a1);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -157,9 +154,6 @@ Status: Complete
 void ProdPicker::on_mouse_move(int, int) {
 }
 
-void __fastcall prod_picker_on_mouse_move_redirect(ProdPicker *self, void *, int a1, int a2) {
-    self->on_mouse_move(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -176,9 +170,6 @@ Status: Complete
 void ProdPicker::UNK3(int) {
 }
 
-void __fastcall prod_picker_unk3_redirect(ProdPicker *self, void *, int a1) {
-    self->UNK3(a1);
-}
 
 /*
 Purpose: Close the picker - clear the field at 0xA14 that marks it live, then
@@ -198,9 +189,6 @@ void ProdPicker::close() {
     GraphicWin::close();
 }
 
-void __fastcall prod_picker_close_redirect(ProdPicker *self, void *) {
-    self->close();
-}
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
@@ -218,10 +206,6 @@ Status: Complete
 void ProdPicker::on_redraw_nc(RECT *, int) {
 }
 
-void __fastcall prod_picker_on_redraw_nc_redirect(
-        ProdPicker *self, void *, RECT *a1, int a2) {
-    self->on_redraw_nc(a1, a2);
-}
 
 /*
 Purpose: Step the receiver back to the subobject ??_GProdPicker@@UAEPAXI@Z

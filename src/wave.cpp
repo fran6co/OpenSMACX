@@ -41,9 +41,6 @@ int Wave::set_asdr() {
     return 11;
 }
 
-int __fastcall wave_set_asdr_redirect(Wave *self, void *) {
-    return self->set_asdr();
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 11.
@@ -61,9 +58,6 @@ int Wave::set_bufflimit(unsigned int) {
     return 11;
 }
 
-int __fastcall wave_set_bufflimit_redirect(Wave *self, void *, unsigned int a1) {
-    return self->set_bufflimit(a1);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 11.
@@ -81,9 +75,6 @@ int Wave::set_attack(unsigned int, unsigned int, unsigned int) {
     return 11;
 }
 
-int __fastcall wave_set_attack_redirect(Wave *self, void *, unsigned int a1, unsigned int a2, unsigned int a3) {
-    return self->set_attack(a1, a2, a3);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 11.
@@ -101,9 +92,6 @@ int Wave::set_sustain(unsigned int, unsigned int, unsigned int) {
     return 11;
 }
 
-int __fastcall wave_set_sustain_redirect(Wave *self, void *, unsigned int a1, unsigned int a2, unsigned int a3) {
-    return self->set_sustain(a1, a2, a3);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 11.
@@ -121,9 +109,6 @@ int Wave::set_decay(unsigned int, unsigned int, unsigned int) {
     return 11;
 }
 
-int __fastcall wave_set_decay_redirect(Wave *self, void *, unsigned int a1, unsigned int a2, unsigned int a3) {
-    return self->set_decay(a1, a2, a3);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 11.
@@ -141,9 +126,6 @@ int Wave::set_release(unsigned int, unsigned int, unsigned int) {
     return 11;
 }
 
-int __fastcall wave_set_release_redirect(Wave *self, void *, unsigned int a1, unsigned int a2, unsigned int a3) {
-    return self->set_release(a1, a2, a3);
-}
 
 /*
 Purpose: Release the loaded wave. The wrapped device, if there is one, is asked
@@ -196,9 +178,6 @@ int Wave::unload() {
     return result;
 }
 
-int __fastcall wave_unload_redirect(Wave *self, void *) {
-    return self->unload();
-}
 
 /*
 Purpose: Set the playback pitch, clamped to the range the engine accepts
@@ -276,14 +255,7 @@ int Wave::load(char *a1, unsigned long a2) {
     return vtable_slot<follow_fn>(this, 0x8C)(this);
 }
 
-void __fastcall wave_set_pitch_redirect(Wave *self, void *, int a1) {
-    self->set_pitch(a1);
-}
 
-int __fastcall wave_load_redirect(Wave *self, void *, char *a1,
-                                  unsigned long a2) {
-    return self->load(a1, a2);
-}
 
 /*
 Purpose: Report the wave's length in milliseconds, a plain read of the field
@@ -302,9 +274,6 @@ int Wave::get_ms_length() {
     return ms_length_;
 }
 
-int __fastcall wave_get_ms_length_redirect(Wave *self, void *) {
-    return self->get_ms_length();
-}
 
 // With no wrapped device the wave is timed against the clock. The original
 // reaches timeGetTime through `call dword ptr [0x669368]`, an indirect call
@@ -360,9 +329,6 @@ int Wave::is_playing() {
     return static_cast<uint32_t>(ms_length_) > elapsed ? 1 : 0;
 }
 
-int __fastcall wave_is_playing_redirect(Wave *self, void *) {
-    return self->is_playing();
-}
 
 /*
 Purpose: Start the wave playing. A wrapped device answers through its own
@@ -388,9 +354,6 @@ int Wave::play(int a1) {
     return 0x14;
 }
 
-int __fastcall wave_play_redirect(Wave *self, void *, int a1) {
-    return self->play(a1);
-}
 
 // The wrapped-device forwarder family: each method lets the device at 0x3C
 // answer through its own vtable slot, as the receiver, and returns a fixed
@@ -418,9 +381,6 @@ int Wave::is_hwbuffer() {
     return 0;
 }
 
-int __fastcall wave_is_hwbuffer_redirect(Wave *self, void *) {
-    return self->is_hwbuffer();
-}
 
 /*
 Purpose: Ask the wrapped device for a time value through its vtable slot 0xB4,
@@ -444,9 +404,6 @@ int Wave::get_time(uint32_t a1) {
     return 0;
 }
 
-int __fastcall wave_get_time_redirect(Wave *self, void *, uint32_t a1) {
-    return self->get_time(a1);
-}
 
 /*
 Purpose: Ask the wrapped device for the current marker through its vtable
@@ -469,9 +426,6 @@ int Wave::get_current_marker() {
     return -1;
 }
 
-int __fastcall wave_get_current_marker_redirect(Wave *self, void *) {
-    return self->get_current_marker();
-}
 
 /*
 Purpose: Ask the wrapped device for the game window handle through its vtable
@@ -494,9 +448,6 @@ int Wave::get_game_hwnd() {
     return 0;
 }
 
-int __fastcall wave_get_game_hwnd_redirect(Wave *self, void *) {
-    return self->get_game_hwnd();
-}
 
 /*
 Purpose: Ask the wrapped device for the device count through its vtable
@@ -519,9 +470,6 @@ int Wave::get_ndevices() {
     return 0;
 }
 
-int __fastcall wave_get_ndevices_redirect(Wave *self, void *) {
-    return self->get_ndevices();
-}
 
 /*
 Purpose: Unknown. The original chases the pointer chain that starts at the
@@ -546,9 +494,6 @@ int Wave::UNK1(int) {
     return 1;
 }
 
-int __fastcall wave_unk1_redirect(Wave *self, void *, int a1) {
-    return self->UNK1(a1);
-}
 
 /*
 Purpose: Set the reverb mix. The value is stored at 0x5C first, then the
@@ -573,9 +518,6 @@ int Wave::set_reverb_mix(float a1) {
     return 0x14;
 }
 
-int __fastcall wave_set_reverb_mix_redirect(Wave *self, void *, float a1) {
-    return self->set_reverb_mix(a1);
-}
 
 /*
 Purpose: Ask the wrapped device, through its vtable slot 0xDC, whether the
@@ -602,9 +544,6 @@ int Wave::is_3d() {
     return 0;
 }
 
-int __fastcall wave_is_3d_redirect(Wave *self, void *) {
-    return self->is_3d();
-}
 
 /*
 Purpose: Describe a device into the caller's buffer through the wrapped
@@ -633,10 +572,6 @@ int Wave::get_device_description(char *a1, int a2, int a3) {
     return 1;
 }
 
-int __fastcall wave_get_device_description_redirect(Wave *self, void *,
-                                                    char *a1, int a2, int a3) {
-    return self->get_device_description(a1, a2, a3);
-}
 
 /*
 Purpose: Position the wave in 3D through the wrapped device's vtable
@@ -660,10 +595,6 @@ int Wave::set_position3d(float a1, float a2, float a3) {
     return 0x14;
 }
 
-int __fastcall wave_set_position3d_redirect(Wave *self, void *, float a1,
-                                            float a2, float a3) {
-    return self->set_position3d(a1, a2, a3);
-}
 
 /*
 Purpose: Set the wave's X position through the wrapped device's vtable
@@ -687,9 +618,6 @@ int Wave::set_xpos(float a1) {
     return 0x14;
 }
 
-int __fastcall wave_set_xpos_redirect(Wave *self, void *, float a1) {
-    return self->set_xpos(a1);
-}
 
 /*
 Purpose: Set the wave's Y position through the wrapped device's vtable
@@ -713,9 +641,6 @@ int Wave::set_ypos(float a1) {
     return 0x14;
 }
 
-int __fastcall wave_set_ypos_redirect(Wave *self, void *, float a1) {
-    return self->set_ypos(a1);
-}
 
 /*
 Purpose: Set the wave's Z position through the wrapped device's vtable
@@ -739,9 +664,6 @@ int Wave::set_zpos(float a1) {
     return 0x14;
 }
 
-int __fastcall wave_set_zpos_redirect(Wave *self, void *, float a1) {
-    return self->set_zpos(a1);
-}
 
 /*
 Purpose: Store the attribute mask into the wave's own fields, then tell the
@@ -789,9 +711,6 @@ void Wave::set_attrib(unsigned long a1) {
     }
 }
 
-void __fastcall wave_set_attrib_redirect(Wave *self, void *, unsigned long a1) {
-    self->set_attrib(a1);
-}
 
 /*
 Purpose: Compose the attribute mask back out of the wave's own fields, OR-ed
@@ -841,9 +760,6 @@ int Wave::get_attrib() {
     return result;
 }
 
-int __fastcall wave_get_attrib_redirect(Wave *self, void *) {
-    return self->get_attrib();
-}
 
 
 /*
@@ -903,9 +819,6 @@ void Wave::set_volume(int a1) {
     }
 }
 
-void __fastcall wave_set_volume_redirect(Wave *self, void *, int a1) {
-    self->set_volume(a1);
-}
 
 /*
 Purpose: Remember the wave's filename. The previous copy, if any, goes back
@@ -934,9 +847,6 @@ int Wave::set_fname(const char *a1) {
     return 0;
 }
 
-int __fastcall wave_set_fname_redirect(Wave *self, void *, const char *a1) {
-    return self->set_fname(a1);
-}
 
 /*
 Purpose: Start the wave. While it holds a device group slot, a disabled group
@@ -1004,9 +914,6 @@ int Wave::play() {
     return result;
 }
 
-int __fastcall wave_play_empty_redirect(Wave *self, void *) {
-    return self->play();
-}
 
 
 /*
@@ -1100,9 +1007,6 @@ int Wave::load() {
     return 0;
 }
 
-int __fastcall wave_load_empty_redirect(Wave *self, void *) {
-    return self->load();
-}
 
 /*
 Purpose: Reload the wave from its remembered filename. The device is created
@@ -1171,9 +1075,6 @@ int Wave::reload() {
     return reloaded;
 }
 
-int __fastcall wave_reload_redirect(Wave *self, void *) {
-    return self->reload();
-}
 
 /*
 Purpose: Load the wave from in-memory data. Refuses (0xC) when a device is
@@ -1222,9 +1123,6 @@ int Wave::dyna_load(char *a1) {
     return created;
 }
 
-int __fastcall wave_dyna_load_redirect(Wave *self, void *, char *a1) {
-    return self->dyna_load(a1);
-}
 
 /*
 Purpose: Load the wave from a caller-supplied filename. The guarded creation
@@ -1316,9 +1214,6 @@ int Wave::load(const char *a1) {
     return 0;
 }
 
-int __fastcall wave_load_fname_redirect(Wave *self, void *, const char *a1) {
-    return self->load(a1);
-}
 
 
 /*
@@ -1405,9 +1300,6 @@ Wave::Wave() {
     start_time_ = 0;
 }
 
-Wave *__fastcall wave_ctor_redirect(Wave *self, void *) {
-    return new (self) Wave;
-}
 
 /*
 Purpose: Initialise the wave from a filename and a mode mask. Streaming waves
@@ -1525,9 +1417,6 @@ void Wave::init(char *a1, unsigned long a2) {
     }
 }
 
-void __fastcall wave_init_redirect(Wave *self, void *, char *a1, uint32_t a2) {
-    self->init(a1, a2);
-}
 
 /*
 Purpose: The compiler-generated scalar deleting destructor: destroy the wave
@@ -1679,9 +1568,6 @@ Wave::~Wave() {
     self->vtable_storage_ = 0x0066E444;
 }
 
-void __fastcall wave_dtor_redirect(Wave *self, void *) {
-    self->~Wave();
-}
 
 /*
 Purpose: Tear down an Effect, which is a Wave and nothing more.

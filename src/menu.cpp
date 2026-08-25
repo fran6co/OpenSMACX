@@ -115,15 +115,7 @@ int Menu::id_to_index(int id) {
     return -1;
 }
 
-MenuProc __fastcall menu_set_menu_proc_redirect(
-        Menu *self, void *, MenuProc proc) {
-    self->set_menu_proc(proc);
-    return proc;
-}
 
-int __fastcall menu_id_to_index_redirect(Menu *self, void *, int id) {
-    return self->id_to_index(id);
-}
 
 /*
 Purpose: Legacy stub; the original body returns 0 without reading its
@@ -141,10 +133,6 @@ int Menu::UNK2(int) {
     return 0;
 }
 
-int __fastcall menu_unk2_redirect(
-        Menu *self, void *, int a) {
-    return self->UNK2(a);
-}
 
 /*
 Purpose: Legacy stub; the original body returns 0 without reading its
@@ -162,10 +150,6 @@ int Menu::UNK4(int, int, int) {
     return 0;
 }
 
-int __fastcall menu_unk4_redirect(
-        Menu *self, void *, int a, int b, int c) {
-    return self->UNK4(a, b, c);
-}
 
 
 /*
@@ -190,9 +174,6 @@ int Menu::requested_height() {
     return font->height_ * 2;
 }
 
-int __fastcall menu_requested_height_redirect(Menu *self, void *) {
-    return self->requested_height();
-}
 
 /*
  * The seven menu-item operations below are ONE function seven times over: the
@@ -247,10 +228,6 @@ int Menu::UNK3(int menu_id, int item_id) {
     return entries_[index].pull_down->UNK2(item_id);
 }
 
-int __fastcall menu_unk3_redirect(
-        Menu *self, void *, int menu_id, int item_id) {
-    return self->UNK3(menu_id, item_id);
-}
 
 /*
 Purpose: Find the menu whose id matches and forward the item id to its
@@ -306,10 +283,6 @@ int Menu::hide_menu_item(int menu_id, int item_id) {
     return entries_[index].pull_down->hide_item(item_id);
 }
 
-int __fastcall menu_hide_menu_item_redirect(
-        Menu *self, void *, int menu_id, int item_id) {
-    return self->hide_menu_item(menu_id, item_id);
-}
 
 /*
 Purpose: Find the menu whose id matches and forward the item id to its
@@ -355,10 +328,6 @@ int Menu::show_menu_item(int menu_id, int item_id) {
     return entries_[index].pull_down->show_item(item_id);
 }
 
-int __fastcall menu_show_menu_item_redirect(
-        Menu *self, void *, int menu_id, int item_id) {
-    return self->show_menu_item(menu_id, item_id);
-}
 
 /*
 Purpose: Find the menu whose id matches and forward the item id to its
@@ -403,10 +372,6 @@ int Menu::disable_menu_item(int menu_id, int item_id) {
     return entries_[index].pull_down->disable_item(item_id);
 }
 
-int __fastcall menu_disable_menu_item_redirect(
-        Menu *self, void *, int menu_id, int item_id) {
-    return self->disable_menu_item(menu_id, item_id);
-}
 
 /*
 Purpose: Find the menu whose id matches and forward the item id to its
@@ -452,10 +417,6 @@ int Menu::enable_menu_item(int menu_id, int item_id) {
     return entries_[index].pull_down->enable_item(item_id);
 }
 
-int __fastcall menu_enable_menu_item_redirect(
-        Menu *self, void *, int menu_id, int item_id) {
-    return self->enable_menu_item(menu_id, item_id);
-}
 
 /*
 Purpose: Find the menu whose id matches and forward the item id to its
@@ -501,10 +462,6 @@ int Menu::check_menu_item(int menu_id, int item_id) {
     return entries_[index].pull_down->check_item(item_id);
 }
 
-int __fastcall menu_check_menu_item_redirect(
-        Menu *self, void *, int menu_id, int item_id) {
-    return self->check_menu_item(menu_id, item_id);
-}
 
 /*
 Purpose: Find the menu whose id matches and forward the item id to its
@@ -550,10 +507,6 @@ int Menu::uncheck_menu_item(int menu_id, int item_id) {
     return entries_[index].pull_down->uncheck_item(item_id);
 }
 
-int __fastcall menu_uncheck_menu_item_redirect(
-        Menu *self, void *, int menu_id, int item_id) {
-    return self->uncheck_menu_item(menu_id, item_id);
-}
 
 /*
  * A second Menu clone family: four 96-byte bodies differing at two byte
@@ -604,10 +557,6 @@ int Menu::UNK6(int menu_id) {
     return 0;
 }
 
-int __fastcall menu_unk6_redirect(
-        Menu *self, void *, int menu_id) {
-    return self->UNK6(menu_id);
-}
 
 /*
 Purpose: Find the menu whose id matches and set bit 0 of its entry's flag byte,
@@ -650,10 +599,6 @@ int Menu::UNK7(int menu_id) {
     return 0;
 }
 
-int __fastcall menu_unk7_redirect(
-        Menu *self, void *, int menu_id) {
-    return self->UNK7(menu_id);
-}
 
 /*
 Purpose: Find the menu whose id matches and set bit 1 of its entry's flag byte,
@@ -696,10 +641,6 @@ int Menu::UNK8(int menu_id) {
     return 0;
 }
 
-int __fastcall menu_unk8_redirect(
-        Menu *self, void *, int menu_id) {
-    return self->UNK8(menu_id);
-}
 
 /*
 Purpose: Find the menu whose id matches and clear bit 1 of its entry's flag byte,
@@ -742,10 +683,6 @@ int Menu::UNK9(int menu_id) {
     return 0;
 }
 
-int __fastcall menu_unk9_redirect(
-        Menu *self, void *, int menu_id) {
-    return self->UNK9(menu_id);
-}
 
 /*
 Purpose: Legacy hook for adjusting a pull-down's position. The original body is
@@ -772,9 +709,6 @@ Status: Complete
 void Menu::on_adjust_pulldown_pos(int *, int *) {
 }
 
-void __fastcall menu_on_adjust_pulldown_pos_redirect(Menu *self, void *, int *a1, int *a2) {
-    self->on_adjust_pulldown_pos(a1, a2);
-}
 
 /*
 // ORIGINAL: 0x005FC680 ?on_mouse_move@Menu@@QAEXHH@Z 0x005FC680-0x005FC692 BYTE_EXACT

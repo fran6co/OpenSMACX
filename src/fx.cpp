@@ -50,9 +50,6 @@ FX::FX() {
                        EffectElementTeardown);
 }
 
-FX *__fastcall fx_ctor_redirect(FX *self, void *) {
-    return new (self) FX;
-}
 
 /*
 Purpose: Destroy the effect bank: hand the whole 0x61-element walk to the CRT
@@ -72,9 +69,6 @@ FX::~FX() {
     VectorDtorIterator(this, 0x6C, 0x61, EffectElementTeardown);
 }
 
-void __fastcall fx_dtor_redirect(FX *self, void *) {
-    self->~FX();
-}
 
 /*
 // ORIGINAL: 0x00446A90 ?stop@FX@@QAEXH@Z 0x00446A90-0x00446AA9 BYTE_EXACT

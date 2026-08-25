@@ -229,11 +229,6 @@ static_assert(sizeof(Console) == 0x247A8, "Console layout must match terranx.exe
 // address, opening it to a different page. PrefWin::display is not recovered.
 PrefWin *const ConsolePrefWin = (PrefWin *)0x008578D8;
 
-void __fastcall console_set_preferences_redirect(Console *self, void *);
-void __fastcall console_set_auto_preferences_redirect(Console *self, void *);
-void __fastcall console_set_base_preferences_redirect(Console *self, void *);
-void __fastcall console_set_audiovisual_redirect(Console *self, void *);
-void __fastcall console_set_map_display_redirect(Console *self, void *);
 
 // clear_group masks a bit in each entry of a group table the game keeps at a
 // fixed address, counted by another fixed-address field; both are rebindable
@@ -241,7 +236,6 @@ void __fastcall console_set_map_display_redirect(Console *self, void *);
 int32_t *const ConsoleGroupCount = (int32_t *)0x009A64C8;
 uint8_t *const ConsoleGroupTable = (uint8_t *)0x0095282C;
 
-void __fastcall console_clear_group_redirect(Console *self, void *);
 
 // edit_lock consults the Scroll Lock key through the game's imported
 // GetKeyState. The seam is the address of that import slot (the IAT entry the
@@ -250,9 +244,6 @@ void __fastcall console_clear_group_redirect(Console *self, void *);
 typedef SHORT(__stdcall func_get_key_state)(int virtual_key);
 inline func_get_key_state *&ConsoleEditKeyStateSlot() { return *reinterpret_cast<func_get_key_state **>(0x0066932C); }
 
-int __fastcall console_edit_lock_redirect(Console *self, void *);
-void __fastcall console_set_adv_preferences_redirect(Console *self, void *);
-void __fastcall console_editor_undo_redirect(Console *self, void *);
 
 // update_data drives the three fixed windows the original reaches by absolute
 // address and never through `this` - ecx is dead on entry and is overwritten
@@ -279,7 +270,6 @@ inline MapWin *&console_map_win() {
   return *reinterpret_cast<MapWin **>(0x007D3C3C);
 }
 
-void __fastcall console_update_data_redirect(Console *self, void *, int a1);
 
 // focus walks the eight map-window slots and, for the primary window only,
 // runs the console cursor and the survey-overlay latch first. Four of its
@@ -343,5 +333,3 @@ int32_t *const ConsoleExitTurnLoop = (int32_t *)0x009B2068;  // 0x009B2068
 // unrecovered and MainMenu has no header in src/, so this is a seam rather
 // than a declared type.
 
-int __fastcall console_focus_redirect(Console *self, void *, int x_coord,
-                                      int y_coord, int faction_id);

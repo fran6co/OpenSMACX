@@ -74,7 +74,3 @@ class Credits : public GraphicWin {
   Time time_;  // 0x2D44, IDB `time`, size == sizeof(Time); ends 0x2D6C
 };
 
-void __fastcall credits_on_left_down_redirect(Credits *self, void *, int a1, int a2);
-void __fastcall credits_on_right_down_redirect(Credits *self, void *, int a1, int a2);
-void __fastcall credits_on_mouse_move_redirect(Credits *self, void *, int a1, int a2);
-void __fastcall credits_on_button_clicked_redirect(Credits *self, void *, int a1);

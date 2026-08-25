@@ -96,27 +96,17 @@ class Popup : public BasePop {
 static_assert(sizeof(Popup) == 0x537C,
               "Popup layout must match the original executable");
 
-void __fastcall popup_on_adjust_button_width_redirect(Popup *self, void *);
-void __fastcall popup_on_redraw_nc_redirect(
-    Popup *self, void *, RECT *a1, int a2);
 
 // BasePop::close is not recovered yet.
 
-void __fastcall popup_close_redirect(Popup *self, void *);
 
 // The six-argument Popup::start is not recovered; the five-argument form
 // forwards to it with a null final GraphicWin argument.
 
-void __fastcall popup_start_redirect(Popup *self, void *, char *a1,
-                                     const char *a2, int a3, char *a4, int a5);
 
 // The two short start forms share the caption buffer at a fixed address.
 extern char PopupStartCaption[256];
 
-void __fastcall popup_start_label_redirect(Popup *self, void *, const char *label);
-void __fastcall popup_start_label_value_redirect(Popup *self, void *,
-                                                 const char *label, int value);
-int __fastcall popup_on_dialog_back_draw_redirect(Popup *self, void *, ::GraphicWin *window);
 
 /*
  * pop/pops forwarder family
@@ -241,4 +231,3 @@ FX *const PopupWaveFx = (FX *)0x00749CF8;
 inline func_popup_time_source *&PopupWaveTimeSlot() { return *reinterpret_cast<func_popup_time_source **>(0x00669368); }
 
 void __cdecl popup_wave_callback(PopupWave *popup, int);
-void __cdecl popup_wave_callback_redirect(PopupWave *popup, int a2);

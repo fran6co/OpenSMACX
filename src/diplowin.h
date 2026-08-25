@@ -499,20 +499,3 @@ class DiploWin : public GraphicWin {
   EditBox editBox_;  // 0xDA7C, IDB `editBox`, size == sizeof(EditBox) == 0xB74
 };
 
-void __fastcall diplo_win_unk3_redirect(DiploWin *self, void *, int a1);
-void __fastcall diplo_win_unk5_redirect(DiploWin *self, void *);
-void __fastcall diplo_win_unk4_redirect(DiploWin *self, void *, int a1);
-void __fastcall diplo_win_on_iface_left_click_redirect(DiploWin *self, void *, int a1, int a2);
-void __fastcall diplo_win_on_iface_left_up_redirect(DiploWin *self, void *, int a1, int a2);
-void __fastcall diplo_win_on_iface_right_click_redirect(DiploWin *self, void *, int a1, int a2);
-void __fastcall diplo_win_on_iface_left_down_redirect(DiploWin *self, void *, int a1, int a2);
-void __fastcall diplo_win_on_iface_right_down_redirect(DiploWin *self, void *, int a1, int a2);
-void __fastcall diplo_win_on_iface_mouse_move_redirect(DiploWin *self, void *, int a1, int a2);
-void __fastcall diplo_win_on_iface_mouse_leave_redirect(DiploWin *self, void *, int a1, int a2);
-void __fastcall diplo_win_on_iface_selected_redirect(DiploWin *self, void *, int a1, int a2);
-void __fastcall diplo_win_on_iface_left_double_click_redirect(DiploWin *self, void *, int a1, int a2);
-void __fastcall diplo_win_on_iface_right_double_click_redirect(DiploWin *self, void *, int a1, int a2);
-void __fastcall diplo_win_on_iface_button_clicked_redirect(DiploWin *self, void *, int a1);
-void __fastcall diplo_win_on_iface_button_toggled_redirect(DiploWin *self, void *, int a1, int a2);
-int __fastcall diplo_win_on_iface_dialog_back_draw_redirect(DiploWin *self, void *, int a1);
-void __fastcall diplo_win_unk2_redirect(DiploWin *self, void *);

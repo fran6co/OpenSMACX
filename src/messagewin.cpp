@@ -81,9 +81,6 @@ Status: Complete
 void MessageWin::UNK1(int, int, int, int, int) {
 }
 
-void __fastcall message_win_unk1_redirect(MessageWin *self, void *, int a1, int a2, int a3, int a4, int a5) {
-    self->UNK1(a1, a2, a3, a4, a5);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -100,6 +97,3 @@ Status: Complete
 void MessageWin::UNK4(int) {
 }
 
-void __fastcall message_win_unk4_redirect(MessageWin *self, void *, int a1) {
-    self->UNK4(a1);
-}

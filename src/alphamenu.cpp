@@ -34,6 +34,3 @@ int AlphaMenu::requested_height() {
     return 0;
 }
 
-int __fastcall alpha_menu_requested_height_redirect(AlphaMenu *self, void *) {
-    return self->requested_height();
-}

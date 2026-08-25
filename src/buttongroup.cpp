@@ -118,24 +118,9 @@ void ButtonGroup::add(BaseButton *button) {
     count_++;
 }
 
-void __fastcall button_group_add_redirect(ButtonGroup *self, void *, BaseButton *button) {
-    self->add(button);
-}
 
-ButtonGroup *__fastcall button_group_construct_redirect(ButtonGroup *self, void *) {
-    return new (self) ButtonGroup;
-}
 
-uint32_t __fastcall button_group_close_redirect(ButtonGroup *self, void *) {
-    self->close();
-    return 0;
-}
 
-int __fastcall button_group_init_redirect(
-        ButtonGroup *self, void *, int group_id, int flags) {
-    self->init(group_id, flags);
-    return group_id;
-}
 
 
 /*
@@ -160,7 +145,3 @@ int ButtonGroup::set(int button_id, int notify) {
     return result;
 }
 
-int __fastcall button_group_set_redirect(ButtonGroup *self, void *,
-                                         int button_id, int notify) {
-    return self->set(button_id, notify);
-}

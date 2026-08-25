@@ -95,9 +95,6 @@ class FileWin {
 static_assert(sizeof(FileWin) == 0x33C4,
               "FileWin layout must match the original executable");
 
-void __fastcall file_win_unk6_redirect(FileWin *self, void *);
-void __fastcall file_win_unk2_redirect(FileWin *self, void *, int a1);
-void __fastcall file_win_unk1_redirect(FileWin *self, void *);
 
 // ?UNK4@FileWin@@QAEXXZ (0x006146A0). Unrecovered; on_double_clicked calls it,
 // so its definition is a seam into the original image.

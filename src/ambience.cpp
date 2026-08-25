@@ -291,77 +291,23 @@ Status: Complete
 void GAmbience::eot() {
 }
 
-void __fastcall faction_ambience_begin_redirect(FactionAmbience *self, void *) {
-    self->begin();
-}
 
-void __fastcall faction_ambience_tech_redirect(FactionAmbience *self, void *) {
-    self->tech();
-}
 
-void __fastcall faction_ambience_terraform_redirect(FactionAmbience *self, void *) {
-    self->terraform();
-}
 
-void __fastcall faction_ambience_production_redirect(FactionAmbience *self, void *) {
-    self->production();
-}
 
-void __fastcall faction_ambience_general_redirect(FactionAmbience *self, void *) {
-    self->general();
-}
 
-void __fastcall faction_ambience_new_base_redirect(FactionAmbience *self, void *) {
-    self->new_base();
-}
 
-void __fastcall faction_ambience_popup1_redirect(FactionAmbience *self, void *) {
-    self->popup1();
-}
 
-void __fastcall faction_ambience_eot_redirect(FactionAmbience *self, void *) {
-    self->eot();
-}
 
-void __fastcall faction_ambience_hostility_redirect(FactionAmbience *self, void *) {
-    self->hostility();
-}
 
-void __fastcall faction_ambience_energy_resources_redirect(FactionAmbience *self, void *) {
-    self->energy_resources();
-}
 
-void __fastcall faction_ambience_base_liberated_redirect(FactionAmbience *self, void *) {
-    self->base_liberated();
-}
 
-void __fastcall u_ambience_tech_redirect(UAmbience *self, void *) {
-    self->tech();
-}
 
-void __fastcall u_ambience_popup1_redirect(UAmbience *self, void *) {
-    self->popup1();
-}
 
-void __fastcall u_ambience_eot_redirect(UAmbience *self, void *) {
-    self->eot();
-}
 
-void __fastcall g_ambience_tech_redirect(GAmbience *self, void *) {
-    self->tech();
-}
 
-void __fastcall g_ambience_production_redirect(GAmbience *self, void *) {
-    self->production();
-}
 
-void __fastcall g_ambience_popup1_redirect(GAmbience *self, void *) {
-    self->popup1();
-}
 
-void __fastcall g_ambience_eot_redirect(GAmbience *self, void *) {
-    self->eot();
-}
 
 namespace {
 
@@ -558,10 +504,6 @@ void Ambience::construct() {
     reinterpret_cast<Sound *>(this)->set_type(5);
 }
 
-Ambience *__fastcall ambience_construct_redirect(Ambience *self, void *) {
-    self->construct();
-    return self;
-}
 
 /*
 Purpose: FactionAmbience records the event in a flag byte and does nothing else;
@@ -580,9 +522,6 @@ void FactionAmbience::basewin_show() {
     field_6C_ = 1;
 }
 
-void __fastcall faction_ambience_basewin_show_redirect(FactionAmbience *self, void *) {
-    self->basewin_show();
-}
 
 /*
 Purpose: FactionAmbience records the event in a flag byte and does nothing else;
@@ -601,9 +540,6 @@ void FactionAmbience::basewin_hide() {
     field_6C_ = 0;
 }
 
-void __fastcall faction_ambience_basewin_hide_redirect(FactionAmbience *self, void *) {
-    self->basewin_hide();
-}
 
 /*
 Purpose: FactionAmbience records the event in a flag byte and does nothing else;
@@ -622,9 +558,6 @@ void FactionAmbience::design_window_show() {
     field_6D_ = 1;
 }
 
-void __fastcall faction_ambience_design_window_show_redirect(FactionAmbience *self, void *) {
-    self->design_window_show();
-}
 
 /*
 Purpose: FactionAmbience records the event in a flag byte and does nothing else;
@@ -643,9 +576,6 @@ void FactionAmbience::design_window_hide() {
     field_6D_ = 0;
 }
 
-void __fastcall faction_ambience_design_window_hide_redirect(FactionAmbience *self, void *) {
-    self->design_window_hide();
-}
 
 /*
 Purpose: GAmbience raises the flag byte only when it is CLEAR.
@@ -673,9 +603,6 @@ void GAmbience::basewin_show() {
     }
 }
 
-void __fastcall g_ambience_basewin_show_redirect(GAmbience *self, void *) {
-    self->basewin_show();
-}
 
 /*
 Purpose: GAmbience records the event in a flag byte and does nothing else;
@@ -694,9 +621,6 @@ void GAmbience::basewin_hide() {
     field_6C_ = 0;
 }
 
-void __fastcall g_ambience_basewin_hide_redirect(GAmbience *self, void *) {
-    self->basewin_hide();
-}
 
 const uint32_t FactionAmbienceVtable = 0x0066C0F8;
 const uint32_t MAmbienceVtable = 0x0066BE28;
@@ -759,11 +683,6 @@ FactionAmbience *FactionAmbience::construct() {
     return this;
 }
 
-FactionAmbience *__fastcall faction_ambience_construct_redirect(
-        FactionAmbience *self, void *) {
-    self->construct();
-    return self;
-}
 
 /*
 Purpose: As 004471F0, with the MAmbience vtable and one more field.
@@ -800,10 +719,6 @@ MAmbience *MAmbience::construct() {
     return this;
 }
 
-MAmbience *__fastcall m_ambience_construct_redirect(MAmbience *self, void *) {
-    self->construct();
-    return self;
-}
 
 /*
 Purpose: As 004471F0, with the SAmbience vtable and two more fields.
@@ -841,10 +756,6 @@ SAmbience *SAmbience::construct() {
     return this;
 }
 
-SAmbience *__fastcall s_ambience_construct_redirect(SAmbience *self, void *) {
-    self->construct();
-    return self;
-}
 
 /*
 Purpose: As 004471F0, with the GAmbience vtable and one more field.
@@ -881,7 +792,3 @@ GAmbience *GAmbience::construct() {
     return this;
 }
 
-GAmbience *__fastcall g_ambience_construct_redirect(GAmbience *self, void *) {
-    self->construct();
-    return self;
-}

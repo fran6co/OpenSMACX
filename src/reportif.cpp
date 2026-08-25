@@ -327,41 +327,14 @@ Status: Complete
 void ReportIf::close_score() {
 }
 
-void __fastcall report_if_on_iface_right_click_redirect(ReportIf *self, void *, int a1, int a2) {
-    self->on_iface_right_click(a1, a2);
-}
 
-void __fastcall report_if_on_iface_left_double_click_redirect(ReportIf *self, void *, int a1, int a2) {
-    self->on_iface_left_double_click(a1, a2);
-}
 
-void __fastcall report_if_on_iface_right_double_click_redirect(ReportIf *self, void *, int a1, int a2) {
-    self->on_iface_right_double_click(a1, a2);
-}
 
-void __fastcall report_if_on_iface_left_down_redirect(ReportIf *self, void *, int a1, int a2) {
-    self->on_iface_left_down(a1, a2);
-}
 
-void __fastcall report_if_on_iface_right_down_redirect(ReportIf *self, void *, int a1, int a2) {
-    self->on_iface_right_down(a1, a2);
-}
 
-void __fastcall report_if_on_iface_mouse_move_redirect(ReportIf *self, void *, int a1, int a2) {
-    self->on_iface_mouse_move(a1, a2);
-}
 
-void __fastcall report_if_on_iface_mouse_leave_redirect(ReportIf *self, void *, int a1, int a2) {
-    self->on_iface_mouse_leave(a1, a2);
-}
 
-void __fastcall report_if_on_iface_button_toggled_redirect(ReportIf *self, void *, int a1, int a2) {
-    self->on_iface_button_toggled(a1, a2);
-}
 
-void __fastcall report_if_close_score_redirect(ReportIf *self, void *) {
-    self->close_score();
-}
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 1.
@@ -380,10 +353,6 @@ int ReportIf::on_iface_dialog_item_back_draw(::GraphicWin *, int, int, RECT *) {
     return 1;
 }
 
-int __fastcall report_if_on_iface_dialog_item_back_draw_redirect(
-        ReportIf *self, void *, ::GraphicWin *a1, int a2, int a3, RECT *a4) {
-    return self->on_iface_dialog_item_back_draw(a1, a2, a3, a4);
-}
 
 /*
 Purpose: Close the two intel list boxes.
@@ -414,9 +383,6 @@ void ReportIf::close_intel() {
     reinterpret_cast<ListBox *>(self + 0xAE24)->close();
 }
 
-void __fastcall report_if_close_intel_redirect(ReportIf *self, void *) {
-    self->close_intel();
-}
 
 /*
 Purpose: Close the energy report's three list boxes.
@@ -451,9 +417,6 @@ void ReportIf::close_energy() {
     reinterpret_cast<ListBox *>(self + 0xAE24)->close();
 }
 
-void __fastcall report_if_close_energy_redirect(ReportIf *self, void *) {
-    self->close_energy();
-}
 
 /*
 // ORIGINAL: 0x004A3930 ?done@ReportIf@@QAEXXZ 0x004A3930-0x004A3946 BYTE_EXACT

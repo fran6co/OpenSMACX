@@ -130,11 +130,3 @@ static_assert(sizeof(Vector) == 0xC, "Vector layout must match the legacy ABI");
 // preserved because the output may overlap either input.
 void __cdecl vector_add(Vector *left, Vector *right, Vector *output);
 
-Vector *__fastcall vector_construct_redirect(Vector *self, void *);
-uintptr_t __fastcall vector_close_redirect(Vector *self, void *);
-Vector *__fastcall vector_subtract_redirect(
-    Vector *self, void *, Vector *output, Vector *right);
-Vector *__fastcall vector_add_assign_redirect(Vector *self, void *, Vector *right);
-Vector *__fastcall vector_subtract_assign_redirect(Vector *self, void *, Vector *right);
-Vector *__fastcall vector_scale_redirect(
-    Vector *self, void *, Vector *output, uint32_t scalar_bits);

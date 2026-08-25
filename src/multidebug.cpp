@@ -56,9 +56,6 @@ void MultiDebug::close() {
     field_A3C_ = 0;
 }
 
-void __fastcall multi_debug_close_redirect(MultiDebug *self, void *) {
-    self->close();
-}
 
 /*
 Purpose: Forward the timer tick to the object's own virtual slot 62.

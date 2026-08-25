@@ -157,9 +157,6 @@ class SpriteBox : public virtual GraphicWin, public virtual Dialog {
 static_assert(sizeof(SpriteBox) == 0xB98,
               "SpriteBox layout must match the original executable");
 
-uint32_t __fastcall sprite_box_id_to_pos_redirect(SpriteBox *self, void *, int id);
-void __fastcall sprite_box_on_mouse_move_redirect(SpriteBox *self, void *, int a1, int a2);
-void __fastcall sprite_box_on_mouse_leave_redirect(SpriteBox *self, void *, int a1, int a2);
 
 // ?close@SpriteBox@@QAEXXZ (0x00610280) - not recovered; forwarded in
 // pending_bodies.cpp. The destructor and the three init overloads above all

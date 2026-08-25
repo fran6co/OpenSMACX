@@ -40,9 +40,9 @@ from decomp import read  # noqa: E402
 # eyeballed before pinning - vector-dtor iterators, atexit callbacks, and
 # `g_00406850`-style disguises, every one a real function reference.
 CEILINGS = {
-    "unk-method": 272,
+    "unk-method": 190,
     "function-address binding": 63,
-    "orphan redirect": 771,
+    "orphan redirect": 209,
     "pointer-as-int": 2,
     "undocumented trivial body": 0,
     # 239 IS BELOW WHAT THE TREE CAN REACH TODAY, and this is the only
@@ -57,7 +57,7 @@ CEILINGS = {
     # layout model - their passes, not Win's.
     "raw self-access": 239,
     "pointer-parameter as int": 6,
-    "scaffold name": 3319,
+    "scaffold name": 1912,
 }
 
 WHY = {

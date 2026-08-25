@@ -211,23 +211,12 @@ static_assert(sizeof(Dialogs) == 0xC94,
 
 // Neither delegate target is recovered yet.
 
-int __fastcall dialogs_item_redirect(Dialogs *self, void *, char *text, int index);
-int __fastcall dialogs_get_num_items_redirect(Dialogs *self, void *);
 
-void __fastcall dialogs_close_redirect(Dialogs *self, void *);
 
 // The SpriteBox and ListBox handlers these forward to are not recovered.
 typedef void (OriginalObject::*func_dialogs_fwd2)(int a1, int a2);
 typedef void (OriginalObject::*func_dialogs_fwd1)(int a1);
 
-void __fastcall dialogs_on_right_down_redirect(Dialogs *self, void *, int a1, int a2);
-void __fastcall dialogs_on_right_double_click_redirect(Dialogs *self, void *, int a1, int a2);
-void __fastcall dialogs_on_left_up_redirect(Dialogs *self, void *, int a1, int a2);
-void __fastcall dialogs_on_right_up_redirect(Dialogs *self, void *, int a1, int a2);
-void __fastcall dialogs_on_right_click_redirect(Dialogs *self, void *, int a1, int a2);
-void __fastcall dialogs_on_scrolled_redirect(Dialogs *self, void *, int a1, int a2);
-void __fastcall dialogs_on_scrolling_redirect(Dialogs *self, void *, int a1, int a2);
-void __fastcall dialogs_on_mousewheel_redirect(Dialogs *self, void *, int a1);
 
 // ~Dialogs tears down the EditGroup, SpriteBox and CheckBox members through
 // still-original destructors; each is bound rebindably. The embedded

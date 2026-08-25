@@ -100,8 +100,6 @@ class StatusWin {
   Spot spot_;  // 0x15E0
 };
 
-void __fastcall status_win_close_redirect(StatusWin *self, void *);
-void __fastcall status_win_set_loc_redirect(StatusWin *self, void *, int x, int y);
 
 // SubInterface::release_iface_mode is not recovered, and the interface it
 // acts on is a global the original reaches at a fixed address. Both are
@@ -114,4 +112,3 @@ inline SubInterface *sub_interface_global() {
   return reinterpret_cast<SubInterface *>(0x006EEED8);
 }
 
-void __fastcall status_win_reset_redirect(StatusWin *self, void *);

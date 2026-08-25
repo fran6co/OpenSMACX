@@ -37,9 +37,6 @@ void SquareLock::clear() {
     first = -1;
 }
 
-void __fastcall square_lock_clear_redirect(SquareLock *self, void *) {
-    self->clear();
-}
 
 /*
 Purpose: Release the square this lock holds and every tile in its footprint.
@@ -87,10 +84,6 @@ void SquareLock::unlock(int factionID) {
     first = -1;
 }
 
-void __fastcall square_lock_unlock_redirect(SquareLock *self, void *,
-                                            int factionID) {
-    self->unlock(factionID);
-}
 
 /*
 Purpose: Take a square and every tile in its footprint for a faction. The
@@ -158,7 +151,3 @@ int SquareLock::lock(int factionID, int flags, int x, int y) {
     return 0;
 }
 
-int __fastcall square_lock_lock_redirect(SquareLock *self, void *, int factionID,
-                                         int flags, int x, int y) {
-    return self->lock(factionID, flags, x, y);
-}

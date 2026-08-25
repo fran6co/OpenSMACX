@@ -305,13 +305,7 @@ Purpose: Adjust the receiver from the thunk1 subobject back to SpriteBox and
 Status: Complete
 */
 
-void __fastcall sprite_box_on_mouse_move_redirect(SpriteBox *self, void *, int a1, int a2) {
-    self->on_mouse_move(a1, a2);
-}
 
-void __fastcall sprite_box_on_mouse_leave_redirect(SpriteBox *self, void *, int a1, int a2) {
-    self->on_mouse_leave(a1, a2);
-}
 
 /*
 Purpose: Walk the entry list for `id` and leave the cursor and position on the
@@ -380,9 +374,6 @@ uint32_t SpriteBox::id_to_pos(int id) {
     return *position;
 }
 
-uint32_t __fastcall sprite_box_id_to_pos_redirect(SpriteBox *self, void *, int id) {
-    return self->id_to_pos(id);
-}
 
 /*
 // ORIGINAL: 0x00610480 ?init@SpriteBox@@QAEHPAURECT@@H@Z 0x00610480-0x006104A2 BYTE_EXACT

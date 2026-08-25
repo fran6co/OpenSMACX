@@ -203,8 +203,6 @@ class ReportWin : public GraphicWin {
 static_assert(sizeof(ReportWin) == 0xFABC,
               "ReportWin layout must match the legacy ABI");
 
-void __fastcall report_win_on_mouse_move_redirect(ReportWin *self, void *, int a1, int a2);
-void __fastcall report_win_on_mouse_leave_redirect(ReportWin *self, void *, int a1, int a2);
 
 // Neither animation tick is recovered; both forward to the original image.
 // ?sat_anim@ReportWin@@QAEXXZ and ?exp_anim@ReportWin@@QAEXXZ are public,

@@ -117,22 +117,9 @@ TextureStore::~TextureStore() {
     fields[1] = 0;
 }
 
-Texture *__fastcall texture_ctor_redirect(Texture *self, void *) {
-    new (self) Texture();
-    return self;
-}
 
-void __fastcall texture_close_redirect(Texture *self, void *) {
-    self->close();
-}
 
-void __fastcall texture_dtor_redirect(Texture *self, void *) {
-    self->~Texture();
-}
 
-void __fastcall texture_store_dtor_redirect(TextureStore *self, void *) {
-    self->~TextureStore();
-}
 
 /*
 Purpose: Set the store's two fields to 3 and 0.
@@ -160,7 +147,3 @@ TextureStore *TextureStore::construct() {
     return this;
 }
 
-TextureStore *__fastcall texture_store_construct_redirect(TextureStore *self,
-                                                          void *) {
-    return self->construct();
-}

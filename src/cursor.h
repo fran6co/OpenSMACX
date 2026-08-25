@@ -52,9 +52,6 @@ class Cursor {
   uint32_t field_C_;
 };
 
-// Returns the object, preserving the legacy EAX = this residue.
-Cursor *__fastcall cursor_construct_redirect(Cursor *self, void *);
-void __cdecl cursor_close_cursor_class_redirect();
 
 // Cached results of GetSystemMetrics(SM_CXCURSOR)/(SM_CYCURSOR), filled in
 // by Cursor::init_cursor_class().

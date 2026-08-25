@@ -164,9 +164,3 @@ class ProdPicker : public GraphicWin {
 static_assert(sizeof(ProdPicker) == 0xA840,
               "ProdPicker layout must match the original executable");
 
-int __fastcall prod_picker_unk1_redirect(ProdPicker *self, void *, int a1);
-void __fastcall prod_picker_on_mouse_move_redirect(ProdPicker *self, void *, int a1, int a2);
-void __fastcall prod_picker_unk3_redirect(ProdPicker *self, void *, int a1);
-void __fastcall prod_picker_close_redirect(ProdPicker *self, void *);
-void __fastcall prod_picker_on_redraw_nc_redirect(
-    ProdPicker *self, void *, RECT *a1, int a2);

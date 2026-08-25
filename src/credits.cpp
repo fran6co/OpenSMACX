@@ -33,9 +33,6 @@ Status: Complete
 void Credits::on_left_down(int, int) {
 }
 
-void __fastcall credits_on_left_down_redirect(Credits *self, void *, int a1, int a2) {
-    self->on_left_down(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -52,9 +49,6 @@ Status: Complete
 void Credits::on_right_down(int, int) {
 }
 
-void __fastcall credits_on_right_down_redirect(Credits *self, void *, int a1, int a2) {
-    self->on_right_down(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -71,9 +65,6 @@ Status: Complete
 void Credits::on_mouse_move(int, int) {
 }
 
-void __fastcall credits_on_mouse_move_redirect(Credits *self, void *, int a1, int a2) {
-    self->on_mouse_move(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -90,6 +81,3 @@ Status: Complete
 void Credits::on_button_clicked(int) {
 }
 
-void __fastcall credits_on_button_clicked_redirect(Credits *self, void *, int a1) {
-    self->on_button_clicked(a1);
-}

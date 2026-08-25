@@ -82,9 +82,6 @@ void NetMsg::close() {
     }
 }
 
-void __fastcall net_msg_close_redirect(NetMsg *self, void *) {
-    self->close();
-}
 
 /*
 Purpose: Step the receiver back to the subobject ??_GNetMsg@@UAEPAXI@Z expects,

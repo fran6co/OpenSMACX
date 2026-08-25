@@ -46,9 +46,6 @@ void PlayerLock::clear() {
     active_ = 0;
 }
 
-void __fastcall player_lock_clear_redirect(PlayerLock *self, void *) {
-    self->clear();
-}
 
 /*
 Purpose: Report whether either lock entry is engaged - the low bit of its flag
@@ -75,9 +72,6 @@ int PlayerLock::active() {
     return 0;
 }
 
-int __fastcall player_lock_active_redirect(PlayerLock *self, void *) {
-    return self->active();
-}
 
 /*
 Purpose: Lock the second square entry for a faction, forcing the 0x10 flag on.
@@ -108,11 +102,6 @@ int PlayerLock::add_lock(int factionID, int flags, int x, int y) {
     return entries_[1].lock(factionID, flags | 0x10, x, y);
 }
 
-int __fastcall player_lock_add_lock_redirect(PlayerLock *self, void *,
-                                             int factionID, int flags,
-                                             int x, int y) {
-    return self->add_lock(factionID, flags, x, y);
-}
 
 /*
 Purpose: Release both square entries for a faction and clear the active byte.
@@ -138,7 +127,3 @@ void PlayerLock::unlock(int factionID) {
     active_ = 0;
 }
 
-void __fastcall player_lock_unlock_redirect(PlayerLock *self, void *,
-                                            int factionID) {
-    self->unlock(factionID);
-}

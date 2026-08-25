@@ -104,10 +104,6 @@ class InfoWin {
   uint8_t field_9D0_[0x4];  // 0x9D0
 };
 
-void __fastcall info_win_unk1_redirect(InfoWin *self, void *);
-void __fastcall info_win_on_redraw_redirect(InfoWin *self, void *);
-void __fastcall info_win_change_redirect(InfoWin *self, void *, int a1);
-void __fastcall info_win_unk3_redirect(InfoWin *self, void *, int a1, int a2);
 
 // InfoWin::timer_proc is not recovered yet.
 
@@ -117,4 +113,3 @@ void __fastcall info_win_unk3_redirect(InfoWin *self, void *, int a1, int a2);
 typedef void (OriginalObject::*func_info_win_right_menu)(int, int);
 extern func_info_win_right_menu InfoWinOriginalRightMenu;  // 0x004589C0
 
-void __fastcall info_win_reset_redirect(InfoWin *self, void *);

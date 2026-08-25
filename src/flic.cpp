@@ -179,22 +179,7 @@ Status: Complete
 void Flic::UNK8() {
 }
 
-void __fastcall flic_unk4_redirect(Flic *self, void *) {
-    self->UNK4();
-}
 
-void __fastcall flic_unk5_redirect(Flic *self, void *) {
-    self->UNK5();
-}
 
-void __fastcall flic_unk6_redirect(Flic *self, void *) {
-    self->UNK6();
-}
 
-void __fastcall flic_unk7_redirect(Flic *self, void *) {
-    self->UNK7();
-}
 
-void __fastcall flic_unk8_redirect(Flic *self, void *) {
-    self->UNK8();
-}

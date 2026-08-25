@@ -41,6 +41,3 @@ void DeletionList::clear(int index) {
     std::memcpy(entry + 8, &zero, sizeof(zero));
 }
 
-void __fastcall deletion_list_clear_redirect(DeletionList *self, void *, int index) {
-    self->clear(index);
-}

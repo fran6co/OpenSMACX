@@ -34,9 +34,6 @@ Status: Complete
 void Dialogs::close() {
 }
 
-void __fastcall dialogs_close_redirect(Dialogs *self, void *) {
-    self->close();
-}
 
 // ---------------------------------------------------------------------------
 // Merged from the retired src/dialogs_recovery.cpp on 2026-08-20, following
@@ -133,13 +130,7 @@ int Dialogs::get_num_items() {
     }
 }
 
-int __fastcall dialogs_item_redirect(Dialogs *self, void *, char *text, int index) {
-    return self->item(text, index);
-}
 
-int __fastcall dialogs_get_num_items_redirect(Dialogs *self, void *) {
-    return self->get_num_items();
-}
 
 
 /*
@@ -363,37 +354,13 @@ void Dialogs::on_mousewheel(int a1) {
     }
 }
 
-void __fastcall dialogs_on_right_down_redirect(Dialogs *self, void *, int a1, int a2) {
-    self->on_right_down(a1, a2);
-}
 
-void __fastcall dialogs_on_right_double_click_redirect(Dialogs *self, void *, int a1, int a2) {
-    self->on_right_double_click(a1, a2);
-}
 
-void __fastcall dialogs_on_left_up_redirect(Dialogs *self, void *, int a1, int a2) {
-    self->on_left_up(a1, a2);
-}
 
-void __fastcall dialogs_on_right_up_redirect(Dialogs *self, void *, int a1, int a2) {
-    self->on_right_up(a1, a2);
-}
 
-void __fastcall dialogs_on_right_click_redirect(Dialogs *self, void *, int a1, int a2) {
-    self->on_right_click(a1, a2);
-}
 
-void __fastcall dialogs_on_scrolled_redirect(Dialogs *self, void *, int a1, int a2) {
-    self->on_scrolled(a1, a2);
-}
 
-void __fastcall dialogs_on_scrolling_redirect(Dialogs *self, void *, int a1, int a2) {
-    self->on_scrolling(a1, a2);
-}
 
-void __fastcall dialogs_on_mousewheel_redirect(Dialogs *self, void *, int a1) {
-    self->on_mousewheel(a1);
-}
 
 func_dialogs_teardown DialogsEditGroupDestructor =
     original_method<func_dialogs_teardown>(0x00611A20);

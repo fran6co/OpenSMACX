@@ -109,31 +109,3 @@ class Wave_In_Device {
 static_assert(sizeof(Wave_In_Device) == 0x20,
               "Wave_In_Device layout must match the original executable");
 
-void __fastcall midi_device_update_sound_redirect(Midi_Device *self, void *);
-void __fastcall midi_device_suspend_redirect(Midi_Device *self, void *);
-void __fastcall midi_device_restart_redirect(Midi_Device *self, void *);
-void __fastcall wave_in_device_update_sound_redirect(Wave_In_Device *self, void *);
-void __fastcall wave_in_device_suspend_redirect(Wave_In_Device *self, void *);
-void __fastcall wave_in_device_restart_redirect(Wave_In_Device *self, void *);
-int __fastcall midi_device_select_redirect(Midi_Device *self, void *, unsigned int a1);
-void __fastcall midi_device_set_volume_redirect(Midi_Device *self, void *, unsigned int a1);
-void __fastcall midi_device_set_pan_redirect(Midi_Device *self, void *, int a1);
-int __fastcall midi_device_fade_redirect(Midi_Device *self, void *, unsigned int a1);
-void __fastcall midi_device_set_rate_redirect(Midi_Device *self, void *, unsigned int a1);
-int __fastcall wave_in_device_select_redirect(Wave_In_Device *self, void *, unsigned int a1);
-int __fastcall wave_in_device_get_caps_redirect(Wave_In_Device *self, void *, unsigned int a1);
-void __fastcall wave_in_device_set_rate_redirect(Wave_In_Device *self, void *, unsigned int a1);
-int __fastcall midi_device_get_description_redirect(Midi_Device *self, void *, unsigned int a1, char *a2, unsigned int a3);
-int __fastcall wave_in_device_get_description_redirect(Wave_In_Device *self, void *, unsigned int a1, char *a2, unsigned int a3);
-int __fastcall midi_device_get_ndevices_redirect(Midi_Device *self, void *);
-int __fastcall midi_device_get_volume_redirect(Midi_Device *self, void *);
-int __fastcall midi_device_stop_redirect(Midi_Device *self, void *);
-int __fastcall midi_device_get_rate_redirect(Midi_Device *self, void *);
-int __fastcall wave_in_device_get_ndevices_redirect(Wave_In_Device *self, void *);
-int __fastcall wave_in_device_stop_redirect(Wave_In_Device *self, void *);
-int __fastcall wave_in_device_get_rate_redirect(Wave_In_Device *self, void *);
-void __fastcall midi_device_enable_redirect(Midi_Device *self, void *);
-void __fastcall midi_device_disable_redirect(Midi_Device *self, void *);
-int __fastcall midi_device_is_disabled_redirect(Midi_Device *self, void *);
-int __fastcall wave_in_device_start_record_redirect(Wave_In_Device *self, void *);
-int __fastcall wave_in_device_end_record_redirect(Wave_In_Device *self, void *);

@@ -126,6 +126,3 @@ static_assert(sizeof(EditGroup) == 0xB9C,
 typedef void (OriginalObject::*func_edit_box_set_text)(char *);
 extern func_edit_box_set_text EditBoxOriginalSetText;
 
-void __fastcall edit_group_set_text_limits_redirect(EditGroup *self, void *, int limit);
-char *__fastcall edit_group_get_text_redirect(EditGroup *self, void *, int index);
-void __fastcall edit_group_set_text_redirect(EditGroup *self, void *, char *text, int index);

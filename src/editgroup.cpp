@@ -232,17 +232,8 @@ void EditGroup::set_text(char *text, int index) {
     }
 }
 
-void __fastcall edit_group_set_text_limits_redirect(EditGroup *self, void *, int limit) {
-    self->set_text_limits(limit);
-}
 
-char *__fastcall edit_group_get_text_redirect(EditGroup *self, void *, int index) {
-    return self->get_text(index);
-}
 
-void __fastcall edit_group_set_text_redirect(EditGroup *self, void *, char *text, int index) {
-    self->set_text(text, index);
-}
 
 /*
 Purpose: Adjust the receiver from the thunk1 subobject back to EditGroup and

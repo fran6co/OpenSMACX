@@ -54,7 +54,6 @@ class Ambience {
   uint8_t base_storage_[0x58];
 };
 
-Ambience *__fastcall ambience_construct_redirect(Ambience *self, void *);
 void __fastcall ambience_dtor_redirect(Ambience *self, void *);
 
 // The four derived vtables. They are named constants rather than literals in
@@ -201,36 +200,3 @@ class GAmbience : public Ambience {
 static_assert(sizeof(GAmbience) == 0x74,
               "GAmbience layout must match the original executable");
 
-FactionAmbience *__fastcall faction_ambience_construct_redirect(
-    FactionAmbience *self, void *);
-MAmbience *__fastcall m_ambience_construct_redirect(MAmbience *self, void *);
-SAmbience *__fastcall s_ambience_construct_redirect(SAmbience *self, void *);
-GAmbience *__fastcall g_ambience_construct_redirect(GAmbience *self, void *);
-void __fastcall faction_ambience_begin_redirect(FactionAmbience *self, void *);
-void __fastcall faction_ambience_tech_redirect(FactionAmbience *self, void *);
-void __fastcall faction_ambience_terraform_redirect(FactionAmbience *self, void *);
-void __fastcall faction_ambience_production_redirect(FactionAmbience *self, void *);
-void __fastcall faction_ambience_general_redirect(FactionAmbience *self, void *);
-void __fastcall faction_ambience_new_base_redirect(FactionAmbience *self, void *);
-void __fastcall faction_ambience_popup1_redirect(FactionAmbience *self, void *);
-void __fastcall faction_ambience_eot_redirect(FactionAmbience *self, void *);
-void __fastcall faction_ambience_hostility_redirect(FactionAmbience *self, void *);
-void __fastcall faction_ambience_energy_resources_redirect(FactionAmbience *self, void *);
-void __fastcall faction_ambience_base_liberated_redirect(FactionAmbience *self, void *);
-void __fastcall u_ambience_tech_redirect(UAmbience *self, void *);
-void __fastcall u_ambience_popup1_redirect(UAmbience *self, void *);
-void __fastcall u_ambience_eot_redirect(UAmbience *self, void *);
-void __fastcall g_ambience_tech_redirect(GAmbience *self, void *);
-void __fastcall g_ambience_production_redirect(GAmbience *self, void *);
-void __fastcall g_ambience_popup1_redirect(GAmbience *self, void *);
-void __fastcall g_ambience_eot_redirect(GAmbience *self, void *);
-void __fastcall faction_ambience_basewin_show_redirect(
-    FactionAmbience *self, void *);
-void __fastcall faction_ambience_basewin_hide_redirect(
-    FactionAmbience *self, void *);
-void __fastcall faction_ambience_design_window_show_redirect(
-    FactionAmbience *self, void *);
-void __fastcall faction_ambience_design_window_hide_redirect(
-    FactionAmbience *self, void *);
-void __fastcall g_ambience_basewin_show_redirect(GAmbience *self, void *);
-void __fastcall g_ambience_basewin_hide_redirect(GAmbience *self, void *);

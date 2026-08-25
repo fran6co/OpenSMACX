@@ -401,4 +401,3 @@ class DeletionList {
 static_assert(sizeof(DeletionList) == 0x5A4,
               "DeletionList layout must match the original executable");
 
-void __fastcall deletion_list_clear_redirect(DeletionList *self, void *, int index);

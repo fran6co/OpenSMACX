@@ -23,6 +23,7 @@ can be called from another class's file.
 from __future__ import annotations
 
 import argparse
+import collections
 import re
 import sys
 from pathlib import Path
@@ -30,12 +31,26 @@ from pathlib import Path
 REDIRECT = re.compile(r"\b[A-Za-z_][\w]*_redirect\b")
 
 
-def references(name: str, root: Path) -> int:
-    n = 0
-    word = re.compile(r"\b" + re.escape(name) + r"\b")
+_COUNTS: collections.Counter = collections.Counter()
+
+
+def _load_counts(root: Path) -> None:
+    """Count EVERY `*_redirect` occurrence in the tree in ONE pass.
+
+    The first version ran one regex per name over every file: ~400 names by
+    ~900 files is 360,000 scans of large texts, and the sweep never
+    finished. One `findall` per file with the shared REDIRECT pattern gives
+    the same answer in a single read.
+    """
+    if _COUNTS:
+        return
     for path in list(root.rglob("*.cpp")) + list(root.rglob("*.h")):
-        n += len(word.findall(path.read_text(errors="replace")))
-    return n
+        _COUNTS.update(REDIRECT.findall(path.read_text(errors="replace")))
+
+
+def references(name: str, root: Path) -> int:
+    _load_counts(root)
+    return _COUNTS[name]
 
 
 def is_claimed(name: str, source: Path) -> bool:
@@ -52,21 +67,51 @@ def is_claimed(name: str, source: Path) -> bool:
     return False
 
 
-def cut(path: Path, name: str, terminator: str, apply: bool) -> int:
+def cut(path: Path, name: str, _unused: str, apply: bool) -> int:
+    """Remove every declaration and definition of `name` from `path`.
+
+    DECLARATION AND DEFINITION ARE NOT THE SAME CUT, and conflating them is
+    how the first sweep corrupted stringstruct.cpp: a forward DECLARATION
+    inside the .cpp was matched and then cut with a `}` terminator, which
+    scanned past its own `;` and swallowed the function after it. So: read
+    forward to whichever comes first, `;` or `{`. A `;` ends a declaration
+    there; a `{` starts a body, and the body ends when brace depth returns
+    to zero - not at the first line that happens to end in `}`, which any
+    nested block satisfies.
+    """
     lines = path.read_text(errors="replace").split("\n")
     start = re.compile(r"^[A-Za-z_].*\b" + re.escape(name) + r"\b")
     out, i, removed = [], 0, 0
     while i < len(lines):
-        if start.match(lines[i]):
-            j = i
-            while j < len(lines) and not lines[j].rstrip().endswith(terminator):
-                j += 1
-            while out and out[-1].lstrip().startswith("//"):
-                out.pop()
-            i, removed = j + 1, removed + 1
+        if not start.match(lines[i]):
+            out.append(lines[i])
+            i += 1
             continue
-        out.append(lines[i])
-        i += 1
+        j, kind = i, None
+        while j < len(lines):
+            line = lines[j]
+            semi, brace = line.find(";"), line.find("{")
+            if brace >= 0 and (semi < 0 or brace < semi):
+                kind = "body"
+                break
+            if semi >= 0:
+                kind = "decl"
+                break
+            j += 1
+        if kind is None:
+            out.append(lines[i])
+            i += 1
+            continue
+        if kind == "body":
+            depth = 0
+            while j < len(lines):
+                depth += lines[j].count("{") - lines[j].count("}")
+                if depth <= 0:
+                    break
+                j += 1
+        while out and out[-1].lstrip().startswith("//"):
+            out.pop()
+        i, removed = j + 1, removed + 1
     if apply and removed:
         path.write_text("\n".join(out))
     return removed
@@ -75,11 +120,42 @@ def cut(path: Path, name: str, terminator: str, apply: bool) -> int:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("header", type=Path)
-    ap.add_argument("source", type=Path)
+    ap.add_argument("header", type=Path, nargs="?")
+    ap.add_argument("source", type=Path, nargs="?")
+    ap.add_argument("--all", action="store_true",
+                    help="every header/source pair under --root that declares one")
     ap.add_argument("--apply", action="store_true")
     ap.add_argument("--root", type=Path, default=Path("src"))
     args = ap.parse_args()
+
+    if args.all:
+        pairs = []
+        for h in sorted(args.root.glob("*.h")):
+            c = h.with_suffix(".cpp")
+            if c.exists() and "_redirect" in h.read_text(errors="replace"):
+                pairs.append((h, c))
+        total_d = total_k = 0
+        for h, c in pairs:
+            args.header, args.source = h, c
+            names = sorted(set(REDIRECT.findall(h.read_text(errors="replace"))))
+            d = k = 0
+            for name in names:
+                if references(name, args.root) > 2 or is_claimed(name, c):
+                    k += 1
+                    continue
+                cut(h, name, ";", args.apply)
+                cut(c, name, "}", args.apply)
+                # NO cache invalidation: deleting a redirect removes only
+                # its OWN two references, so every other name's count is
+                # still right. Clearing here re-read ~900 files per drop and
+                # made the sweep quadratic.
+                d += 1
+            if d or k:
+                print(f"  {h.stem:<24} {d} dropped, {k} kept")
+            total_d += d; total_k += k
+        print(f"{total_d} orphan(s) dropped, {total_k} kept, across {len(pairs)} pair(s)"
+              f"{'' if args.apply else '  (dry run; pass --apply)'}")
+        return 0
 
     names = sorted(set(REDIRECT.findall(args.header.read_text(errors="replace"))))
     if not names:

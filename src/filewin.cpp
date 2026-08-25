@@ -143,9 +143,6 @@ Status: Complete
 void FileWin::UNK6() {
 }
 
-void __fastcall file_win_unk6_redirect(FileWin *self, void *) {
-    self->UNK6();
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -162,9 +159,6 @@ Status: Complete
 void FileWin::UNK2(int) {
 }
 
-void __fastcall file_win_unk2_redirect(FileWin *self, void *, int a1) {
-    self->UNK2(a1);
-}
 
 /*
 Purpose: Clear the file window's three name buffers, its selection index and
@@ -187,9 +181,6 @@ void FileWin::UNK1() {
     field_514_ = 0;
 }
 
-void __fastcall file_win_unk1_redirect(FileWin *self, void *) {
-    self->UNK1();
-}
 
 /*
 // ORIGINAL: 0x00614C40 ?on_double_clicked@FileWin@@QAEXH@Z 0x00614C40-0x00614C48 BYTE_EXACT

@@ -98,10 +98,3 @@ class BattleWin : public SubInterface {
 static_assert(sizeof(BattleWin) == 0xA0,
               "BattleWin layout must match the original executable");
 
-void __fastcall battle_win_dtor_redirect(BattleWin *self, void *);
-void __fastcall battle_win_on_iface_left_click_redirect(BattleWin *self, void *, int a1, int a2);
-void __fastcall battle_win_on_iface_right_click_redirect(BattleWin *self, void *, int a1, int a2);
-void __fastcall battle_win_on_iface_right_down_redirect(BattleWin *self, void *, int a1, int a2);
-void __fastcall battle_win_on_iface_mouse_move_redirect(BattleWin *self, void *, int a1, int a2);
-void __fastcall battle_win_on_iface_mouse_leave_redirect(BattleWin *self, void *, int a1, int a2);
-void __fastcall battle_win_on_iface_selected_redirect(BattleWin *self, void *, int a1, int a2);

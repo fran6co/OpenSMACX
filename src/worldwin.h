@@ -82,10 +82,6 @@ class WorldWin : public GraphicWin {
   uint8_t field_239D0_[0x4];
 };
 
-void __fastcall world_win_clear_terrain_redirect(WorldWin *self, void *);
-void __fastcall world_win_on_left_double_click_redirect(WorldWin *self, void *, int a1, int a2);
 
 // WorldWin's shared click handler is not recovered.
 
-void __fastcall world_win_on_left_click_redirect(WorldWin *self, void *, int a1, int a2);
-void __fastcall world_win_on_right_click_redirect(WorldWin *self, void *, int a1, int a2);

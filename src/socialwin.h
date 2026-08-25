@@ -334,14 +334,3 @@ class SocialWin : public GraphicWin, public SubInterface {
 static_assert(sizeof(SocialWin) == 0x1F2F0,
               "SocialWin layout must match the original executable");
 
-void __fastcall social_win_unk2_redirect(SocialWin *self, void *);
-void __fastcall social_win_unk3_redirect(SocialWin *self, void *);
-void __fastcall social_win_on_iface_left_down_redirect(SocialWin *self, void *, int a1, int a2);
-void __fastcall social_win_on_iface_right_down_redirect(SocialWin *self, void *, int a1, int a2);
-void __fastcall social_win_on_iface_selected_redirect(SocialWin *self, void *, int a1, int a2);
-void __fastcall social_win_on_iface_left_double_click_redirect(SocialWin *self, void *, int a1, int a2);
-void __fastcall social_win_on_iface_right_double_click_redirect(SocialWin *self, void *, int a1, int a2);
-void __fastcall social_win_on_iface_button_toggled_redirect(SocialWin *self, void *, int a1, int a2);
-void __fastcall social_win_on_iface_group_clicked_redirect(SocialWin *self, void *, int a1, int a2, int a3);
-void __fastcall social_win_on_iface_mouse_move_redirect(SocialWin *self, void *, int a1, int a2);
-void __fastcall social_win_on_iface_mouse_leave_redirect(SocialWin *self, void *, int a1, int a2);

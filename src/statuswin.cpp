@@ -80,9 +80,6 @@ Status: Complete
 void StatusWin::close() {
 }
 
-void __fastcall status_win_close_redirect(StatusWin *self, void *) {
-    self->close();
-}
 
 /*
 Purpose: Place the status window, invalidating the two cached values that
@@ -104,9 +101,6 @@ void StatusWin::set_loc(int x, int y) {
     iUnitIndex_ = -1;
 }
 
-void __fastcall status_win_set_loc_redirect(StatusWin *self, void *, int x, int y) {
-    self->set_loc(x, y);
-}
 
 
 /*
@@ -129,9 +123,6 @@ void StatusWin::reset() {
     }
 }
 
-void __fastcall status_win_reset_redirect(StatusWin *self, void *) {
-    self->reset();
-}
 
 // Three fixed-address RECTs redraw() unions together, no established
 // identity beyond what this one function shows.

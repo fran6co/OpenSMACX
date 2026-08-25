@@ -75,17 +75,8 @@ Status: Complete
 void Datalink::UNK9() {
 }
 
-void __fastcall datalink_unk6_redirect(Datalink *self, void *) {
-    self->UNK6();
-}
 
-void __fastcall datalink_unk8_redirect(Datalink *self, void *) {
-    self->UNK8();
-}
 
-void __fastcall datalink_unk9_redirect(Datalink *self, void *) {
-    self->UNK9();
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -102,9 +93,6 @@ Status: Complete
 void Datalink::on_left_click(int, int) {
 }
 
-void __fastcall datalink_on_left_click_redirect(Datalink *self, void *, int a1, int a2) {
-    self->on_left_click(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -121,9 +109,6 @@ Status: Complete
 void Datalink::on_group_clicked(int, int) {
 }
 
-void __fastcall datalink_on_group_clicked_redirect(Datalink *self, void *, int a1, int a2) {
-    self->on_group_clicked(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -140,9 +125,6 @@ Status: Complete
 void Datalink::on_mouse_move(int, int) {
 }
 
-void __fastcall datalink_on_mouse_move_redirect(Datalink *self, void *, int a1, int a2) {
-    self->on_mouse_move(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -159,9 +141,6 @@ Status: Complete
 void Datalink::on_iface_left_click(int, int) {
 }
 
-void __fastcall datalink_on_iface_left_click_redirect(Datalink *self, void *, int a1, int a2) {
-    self->on_iface_left_click(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -178,9 +157,6 @@ Status: Complete
 void Datalink::on_iface_right_click(int, int) {
 }
 
-void __fastcall datalink_on_iface_right_click_redirect(Datalink *self, void *, int a1, int a2) {
-    self->on_iface_right_click(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -197,9 +173,6 @@ Status: Complete
 void Datalink::on_iface_left_down(int, int) {
 }
 
-void __fastcall datalink_on_iface_left_down_redirect(Datalink *self, void *, int a1, int a2) {
-    self->on_iface_left_down(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -216,9 +189,6 @@ Status: Complete
 void Datalink::on_iface_right_down(int, int) {
 }
 
-void __fastcall datalink_on_iface_right_down_redirect(Datalink *self, void *, int a1, int a2) {
-    self->on_iface_right_down(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -235,9 +205,6 @@ Status: Complete
 void Datalink::on_iface_mouse_move(int, int) {
 }
 
-void __fastcall datalink_on_iface_mouse_move_redirect(Datalink *self, void *, int a1, int a2) {
-    self->on_iface_mouse_move(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -254,9 +221,6 @@ Status: Complete
 void Datalink::on_iface_mouse_leave(int, int) {
 }
 
-void __fastcall datalink_on_iface_mouse_leave_redirect(Datalink *self, void *, int a1, int a2) {
-    self->on_iface_mouse_leave(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -273,9 +237,6 @@ Status: Complete
 void Datalink::on_iface_selected(int, int) {
 }
 
-void __fastcall datalink_on_iface_selected_redirect(Datalink *self, void *, int a1, int a2) {
-    self->on_iface_selected(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -292,9 +253,6 @@ Status: Complete
 void Datalink::on_iface_left_double_click(int, int) {
 }
 
-void __fastcall datalink_on_iface_left_double_click_redirect(Datalink *self, void *, int a1, int a2) {
-    self->on_iface_left_double_click(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -311,9 +269,6 @@ Status: Complete
 void Datalink::on_iface_right_double_click(int, int) {
 }
 
-void __fastcall datalink_on_iface_right_double_click_redirect(Datalink *self, void *, int a1, int a2) {
-    self->on_iface_right_double_click(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -330,9 +285,6 @@ Status: Complete
 void Datalink::on_iface_button_clicked(int) {
 }
 
-void __fastcall datalink_on_iface_button_clicked_redirect(Datalink *self, void *, int a1) {
-    self->on_iface_button_clicked(a1);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -349,9 +301,6 @@ Status: Complete
 void Datalink::on_iface_button_toggled(int, int) {
 }
 
-void __fastcall datalink_on_iface_button_toggled_redirect(Datalink *self, void *, int a1, int a2) {
-    self->on_iface_button_toggled(a1, a2);
-}
 
 /*
 Purpose: Close the datalink display, clearing the three values it caches.
@@ -371,9 +320,6 @@ void Datalink::close() {
     field_2A38_ = 0;
 }
 
-void __fastcall datalink_close_redirect(Datalink *self, void *) {
-    self->close();
-}
 
 /*
 Purpose: Show the technology help topic for the given id.
@@ -583,9 +529,6 @@ int Datalink::UNK1(int a1, int a2) {
                                 + static_cast<uint32_t>(a2));
 }
 
-int __fastcall datalink_unk1_redirect(Datalink *self, void *, int a1, int a2) {
-    return self->UNK1(a1, a2);
-}
 
 /*
 Purpose: Split a combined id into its two halves - `id / 10000` into the first
@@ -627,11 +570,6 @@ void Datalink::parse_id(int id, DatalinkID *out_id, int *out_remainder) {
         static_cast<uint32_t>(id) - static_cast<uint32_t>(quotient) * 10000U);
 }
 
-void __fastcall datalink_parse_id_redirect(Datalink *self, void *, int id,
-                                           DatalinkID *out_id,
-                                           int *out_remainder) {
-    self->parse_id(id, out_id, out_remainder);
-}
 
 /*
 // ORIGINAL: 0x00432040 ?on_selected@Datalink@@QAEXH@Z 0x00432040-0x00432052 BYTE_EXACT

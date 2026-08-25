@@ -109,38 +109,11 @@ class Menu : public GraphicWin {
 
 static_assert(sizeof(Menu) == 0xB64, "Menu layout must match the legacy ABI");
 
-MenuProc __fastcall menu_set_menu_proc_redirect(
-    Menu *self, void *, MenuProc proc);
-int __fastcall menu_id_to_index_redirect(Menu *self, void *, int id);
-int __fastcall menu_unk6_redirect(Menu *self, void *, int menu_id);
-int __fastcall menu_unk7_redirect(Menu *self, void *, int menu_id);
-int __fastcall menu_unk8_redirect(Menu *self, void *, int menu_id);
-int __fastcall menu_unk9_redirect(Menu *self, void *, int menu_id);
-int __fastcall menu_unk3_redirect(
-    Menu *self, void *, int menu_id, int item_id);
-int __fastcall menu_hide_menu_item_redirect(
-    Menu *self, void *, int menu_id, int item_id);
-int __fastcall menu_show_menu_item_redirect(
-    Menu *self, void *, int menu_id, int item_id);
-int __fastcall menu_disable_menu_item_redirect(
-    Menu *self, void *, int menu_id, int item_id);
-int __fastcall menu_enable_menu_item_redirect(
-    Menu *self, void *, int menu_id, int item_id);
-int __fastcall menu_check_menu_item_redirect(
-    Menu *self, void *, int menu_id, int item_id);
-int __fastcall menu_uncheck_menu_item_redirect(
-    Menu *self, void *, int menu_id, int item_id);
 
-int __fastcall menu_unk2_redirect(
-    Menu *self, void *, int a);
-int __fastcall menu_unk4_redirect(
-    Menu *self, void *, int a, int b, int c);
 
-int __fastcall menu_requested_height_redirect(Menu *self, void *);
 
 // The menu's own font, falling back to the process default when unset.
 inline Font *&MenuFont() { return *reinterpret_cast<Font **>(0x009B7B94); }
-void __fastcall menu_on_adjust_pulldown_pos_redirect(Menu *self, void *, int *a1, int *a2);
 
 // mouse_move is declared on the class because the recovered on_mouse_move is
 // an 18-byte tail-forward to it, but its 333-byte body is not recovered, so

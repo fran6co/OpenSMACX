@@ -191,13 +191,7 @@ Status: Complete
 void MapWin::do_image_buttons() {
 }
 
-void __fastcall map_win_unk3_redirect(MapWin *self, void *) {
-    self->UNK3();
-}
 
-void __fastcall map_win_do_image_buttons_redirect(MapWin *self, void *) {
-    self->do_image_buttons();
-}
 
 MainInterface MainInterfaceGlobal;  // 0x007AE820
 // AN ARRAY: the image pushes 0x009B86A0 as an immediate. Extent is a
@@ -222,9 +216,6 @@ void MapWin::main_caption() {
     MainInterfaceGlobal.set_date(MapWinMainCaption);
 }
 
-void __fastcall map_win_main_caption_redirect(MapWin *self, void *) {
-    self->main_caption();
-}
 
 /*
 Purpose: Close the map window - free the buffer it owns at 0x4, then close its
@@ -251,9 +242,6 @@ void MapWin::close() {
         reinterpret_cast<uint8_t *>(this) + vbtable[1])->close();
 }
 
-void __fastcall map_win_close_redirect(MapWin *self, void *) {
-    self->close();
-}
 
 
 /*
@@ -301,13 +289,7 @@ void MapWin::on_right_click(int a1, int a2) {
     base->click(a1, a2, 1);
 }
 
-void __fastcall map_win_on_left_click_redirect(MapWin *self, void *, int a1, int a2) {
-    self->on_left_click(a1, a2);
-}
 
-void __fastcall map_win_on_right_click_redirect(MapWin *self, void *, int a1, int a2) {
-    self->on_right_click(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
@@ -339,13 +321,7 @@ Status: Complete
 void MapWin::on_left_up(int, int) {
 }
 
-void __fastcall map_win_on_left_double_click_redirect(MapWin *self, void *, int a1, int a2) {
-    self->on_left_double_click(a1, a2);
-}
 
-void __fastcall map_win_on_left_up_redirect(MapWin *self, void *, int a1, int a2) {
-    self->on_left_up(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
@@ -363,9 +339,6 @@ int MapWin::UNK2() {
     return 0;
 }
 
-int __fastcall map_win_unk2_redirect(MapWin *self, void *) {
-    return self->UNK2();
-}
 
 func_map_win_draw_radius MapWinOriginalDrawRadius =
     original_method<func_map_win_draw_radius>(0x0046A2A0);
@@ -475,9 +448,6 @@ int MapWin::UNK1() {
     return this == reinterpret_cast<MapWin *>(ConsoleGlobal) ? 1 : 0;
 }
 
-int __fastcall map_win_unk1_redirect(MapWin *self, void *) {
-    return self->UNK1();
-}
 
 /*
 // ORIGINAL: 0x0046B1D0 ?on_redraw@MapWin@@QAEXXZ 0x0046B1D0-0x0046B1E8 BYTE_EXACT

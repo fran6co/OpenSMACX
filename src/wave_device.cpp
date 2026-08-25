@@ -166,21 +166,9 @@ void Wave_Device::disable() {
     dispatch_wrapped_device(this, 0x64);
 }
 
-void __fastcall wave_device_set_pan_redirect(Wave_Device *self, void *, int a1) {
-    self->set_pan(a1);
-}
 
-int __fastcall wave_device_fade_redirect(Wave_Device *self, void *, int a1) {
-    return self->fade(a1);
-}
 
-void __fastcall wave_device_enable_redirect(Wave_Device *self, void *) {
-    self->enable();
-}
 
-void __fastcall wave_device_disable_redirect(Wave_Device *self, void *) {
-    self->disable();
-}
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
@@ -214,13 +202,7 @@ int Wave_Device::stop() {
     return 0;
 }
 
-int __fastcall wave_device_get_volume_redirect(Wave_Device *self, void *) {
-    return self->get_volume();
-}
 
-int __fastcall wave_device_stop_redirect(Wave_Device *self, void *) {
-    return self->stop();
-}
 
 /*
 Purpose: Ask the wrapped device to suspend, through its vtable slot 0x48.
@@ -366,37 +348,13 @@ int Wave_Device::is_eax() {
     return query_wrapped_device(this, 0x74);
 }
 
-void __fastcall wave_device_suspend_redirect(Wave_Device *self, void *) {
-    self->suspend();
-}
 
-void __fastcall wave_device_restart_redirect(Wave_Device *self, void *) {
-    self->restart();
-}
 
-void __fastcall wave_device_update_sound_redirect(Wave_Device *self, void *) {
-    self->update_sound();
-}
 
-int __fastcall wave_device_get_ndevices_redirect(Wave_Device *self, void *) {
-    return self->get_ndevices();
-}
 
-int __fastcall wave_device_get_hw_mem_size_redirect(Wave_Device *self, void *) {
-    return self->get_hw_mem_size();
-}
 
-int __fastcall wave_device_get_rate_redirect(Wave_Device *self, void *) {
-    return self->get_rate();
-}
 
-int __fastcall wave_device_get_ds_redirect(Wave_Device *self, void *) {
-    return self->get_ds();
-}
 
-int __fastcall wave_device_is_eax_redirect(Wave_Device *self, void *) {
-    return self->is_eax();
-}
 
 /*
 Purpose: Ask the wrapped device whether it is disabled, through vtable slot
@@ -529,37 +487,12 @@ int Wave_Device::get_group_volume(unsigned int a1) {
     return value;
 }
 
-int __fastcall wave_device_is_disabled_redirect(Wave_Device *self, void *) {
-    return self->is_disabled();
-}
 
-int __fastcall wave_device_stop_raw_dump_redirect(Wave_Device *self, void *) {
-    return self->stop_raw_dump();
-}
 
-int __fastcall wave_device_is_3d_redirect(Wave_Device *self, void *) {
-    return self->is_3d();
-}
 
-void __fastcall wave_device_set_rate_redirect(Wave_Device *self, void *,
-                                              unsigned long a1) {
-    self->set_rate(a1);
-}
 
-void __fastcall wave_device_set_volume_redirect(Wave_Device *self, void *,
-                                                unsigned long a1) {
-    self->set_volume(a1);
-}
 
-int __fastcall wave_device_set_hwnd_redirect(Wave_Device *self, void *,
-                                             void *a1) {
-    return self->set_hwnd(a1);
-}
 
-int __fastcall wave_device_get_group_volume_redirect(Wave_Device *self, void *,
-                                                     unsigned int a1) {
-    return self->get_group_volume(a1);
-}
 
 /*
 Purpose: Put a wave into one of the sixteen groups. The list-insert helper
@@ -589,10 +522,6 @@ int Wave_Device::add_to_group(unsigned int a1, Wave *a2) {
     return 0;
 }
 
-int __fastcall wave_device_add_to_group_redirect(Wave_Device *self, void *,
-                                                 unsigned int a1, Wave *a2) {
-    return self->add_to_group(a1, a2);
-}
 
 /*
 Purpose: Take a wave out of its group. The wave's slot names the group; its
@@ -672,10 +601,6 @@ int Wave_Device::pull_from_group(Wave *a1) {
     return 0;
 }
 
-int __fastcall wave_device_pull_from_group_redirect(Wave_Device *self, void *,
-                                                    Wave *a1) {
-    return self->pull_from_group(a1);
-}
 
 /*
 Purpose: Report whether a group is disabled: out-of-range groups always are,
@@ -712,11 +637,6 @@ int Wave_Device::is_group_disabled(unsigned int a1) {
     return groups_[a1].enabled == 0 ? 1 : 0;
 }
 
-int __fastcall wave_device_is_group_disabled_redirect(Wave_Device *self,
-                                                      void *,
-                                                      unsigned int a1) {
-    return self->is_group_disabled(a1);
-}
 
 /*
 Purpose: Append a wave to a group's node list. A fresh 12-byte node comes
@@ -801,9 +721,6 @@ void Wave_Device::get_description(unsigned long a1, char *a2, unsigned long a3) 
     }
 }
 
-void __fastcall wave_device_get_description_redirect(Wave_Device *self, void *, unsigned long a1, char *a2, unsigned long a3) {
-    self->get_description(a1, a2, a3);
-}
 
 /*
 Purpose: Forward start_raw_dump to the wrapped device through its vtable slot
@@ -832,9 +749,6 @@ int Wave_Device::start_raw_dump(char *a1) {
     return 3;
 }
 
-int __fastcall wave_device_start_raw_dump_redirect(Wave_Device *self, void *, char *a1) {
-    return self->start_raw_dump(a1);
-}
 
 /*
 Purpose: Forward set_eax to the wrapped device through its vtable slot
@@ -858,9 +772,6 @@ int Wave_Device::set_eax(EAX_REVERB_PROPERTIES *a1) {
     return 0x14;
 }
 
-int __fastcall wave_device_set_eax_props_redirect(Wave_Device *self, void *, EAX_REVERB_PROPERTIES *a1) {
-    return self->set_eax(a1);
-}
 
 /*
 Purpose: Forward set_eax to the wrapped device through its vtable slot
@@ -884,9 +795,6 @@ int Wave_Device::set_eax(unsigned long a1) {
     return 0x14;
 }
 
-int __fastcall wave_device_set_eax_redirect(Wave_Device *self, void *, unsigned long a1) {
-    return self->set_eax(a1);
-}
 
 /*
 Purpose: Forward set_eax_mix to the wrapped device through its vtable slot
@@ -910,9 +818,6 @@ int Wave_Device::set_eax_mix(float a1) {
     return 0x14;
 }
 
-int __fastcall wave_device_set_eax_mix_redirect(Wave_Device *self, void *, float a1) {
-    return self->set_eax_mix(a1);
-}
 
 /*
 Purpose: Forward set_listener_position to the wrapped device through its vtable slot
@@ -936,9 +841,6 @@ int Wave_Device::set_listener_position(float a1, float a2, float a3) {
     return 0x14;
 }
 
-int __fastcall wave_device_set_listener_position_redirect(Wave_Device *self, void *, float a1, float a2, float a3) {
-    return self->set_listener_position(a1, a2, a3);
-}
 
 /*
 Purpose: Forward get_listener_position to the wrapped device through its vtable slot
@@ -962,9 +864,6 @@ int Wave_Device::get_listener_position(float *a1, float *a2, float *a3) {
     return 0x14;
 }
 
-int __fastcall wave_device_get_listener_position_redirect(Wave_Device *self, void *, float *a1, float *a2, float *a3) {
-    return self->get_listener_position(a1, a2, a3);
-}
 
 /*
 Purpose: Forward set_listener_xpos to the wrapped device through its vtable slot
@@ -988,9 +887,6 @@ int Wave_Device::set_listener_xpos(float a1) {
     return 0x14;
 }
 
-int __fastcall wave_device_set_listener_xpos_redirect(Wave_Device *self, void *, float a1) {
-    return self->set_listener_xpos(a1);
-}
 
 /*
 Purpose: Forward get_listener_xpos to the wrapped device through its vtable slot
@@ -1014,9 +910,6 @@ int Wave_Device::get_listener_xpos(float *a1) {
     return 0x14;
 }
 
-int __fastcall wave_device_get_listener_xpos_redirect(Wave_Device *self, void *, float *a1) {
-    return self->get_listener_xpos(a1);
-}
 
 /*
 Purpose: Forward set_listener_ypos to the wrapped device through its vtable slot
@@ -1040,9 +933,6 @@ int Wave_Device::set_listener_ypos(float a1) {
     return 0x14;
 }
 
-int __fastcall wave_device_set_listener_ypos_redirect(Wave_Device *self, void *, float a1) {
-    return self->set_listener_ypos(a1);
-}
 
 /*
 Purpose: Forward get_listener_ypos to the wrapped device through its vtable slot
@@ -1066,9 +956,6 @@ int Wave_Device::get_listener_ypos(float *a1) {
     return 0x14;
 }
 
-int __fastcall wave_device_get_listener_ypos_redirect(Wave_Device *self, void *, float *a1) {
-    return self->get_listener_ypos(a1);
-}
 
 /*
 Purpose: Forward set_listener_zpos to the wrapped device through its vtable slot
@@ -1092,9 +979,6 @@ int Wave_Device::set_listener_zpos(float a1) {
     return 0x14;
 }
 
-int __fastcall wave_device_set_listener_zpos_redirect(Wave_Device *self, void *, float a1) {
-    return self->set_listener_zpos(a1);
-}
 
 /*
 Purpose: Forward get_listener_zpos to the wrapped device through its vtable slot
@@ -1118,9 +1002,6 @@ int Wave_Device::get_listener_zpos(float *a1) {
     return 0x14;
 }
 
-int __fastcall wave_device_get_listener_zpos_redirect(Wave_Device *self, void *, float *a1) {
-    return self->get_listener_zpos(a1);
-}
 
 namespace {
 
@@ -1243,11 +1124,6 @@ int Wave_Device::set_group_volume(unsigned int a1, unsigned int a2) {
     return 0;
 }
 
-int __fastcall wave_device_set_group_volume_redirect(Wave_Device *self,
-                                                     void *, unsigned int a1,
-                                                     unsigned int a2) {
-    return self->set_group_volume(a1, a2);
-}
 
 /*
 Purpose: Enable a group. Only a disabled one does any work: every member
@@ -1277,10 +1153,6 @@ int Wave_Device::enable_group(unsigned int a1) {
     return 0;
 }
 
-int __fastcall wave_device_enable_group_redirect(Wave_Device *self, void *,
-                                                 unsigned int a1) {
-    return self->enable_group(a1);
-}
 
 /*
 Purpose: Disable a group. Only an enabled one does any work: every member
@@ -1309,10 +1181,6 @@ int Wave_Device::disable_group(unsigned int a1) {
     return 0;
 }
 
-int __fastcall wave_device_disable_group_redirect(Wave_Device *self, void *,
-                                                  unsigned int a1) {
-    return self->disable_group(a1);
-}
 
 /*
 Purpose: Switch the wrapped device to another output. Every sound on the
@@ -1411,10 +1279,6 @@ int Wave_Device::select(unsigned long a1) {
     return 0;
 }
 
-int __fastcall wave_device_select_redirect(Wave_Device *self, void *,
-                                           unsigned long a1) {
-    return self->select(a1);
-}
 
 
 /*
@@ -1443,10 +1307,6 @@ int Wave_Device::create_device(unsigned long a1) {
     return (WaveDeviceFactorySlot())(&device_14_, a1);
 }
 
-int __fastcall wave_device_create_device_redirect(Wave_Device *self, void *,
-                                                  unsigned long a1) {
-    return self->create_device(a1);
-}
 
 /*
 Purpose: Tear the wrapped device down through the argument-less destroy hook
@@ -1474,10 +1334,6 @@ int Wave_Device::delete_device() {
     return 0;
 }
 
-int __fastcall wave_device_delete_device_redirect(Wave_Device *self,
-                                                  void *) {
-    return self->delete_device();
-}
 
 /*
 Purpose: Initialise the device stack: the Wave_Device's OWN virtual slot 0
@@ -1513,10 +1369,6 @@ int Wave_Device::init(void *a1, unsigned long a2) {
     return 0;
 }
 
-int __fastcall wave_device_init_redirect(Wave_Device *self, void *, void *a1,
-                                         unsigned long a2) {
-    return self->init(a1, a2);
-}
 
 /*
 Purpose: Release the wrapped device: its own vtable slot 0x10 winds it down,
@@ -1555,9 +1407,6 @@ int Wave_Device::release() {
     return 0;
 }
 
-void __fastcall wave_device_release_redirect(Wave_Device *self, void *) {
-    self->release();
-}
 
 const void *const WaveControlGroupOriginalCtor = (const void *)0x004C5490;
 const void *const WaveControlGroupOriginalDtor = (const void *)0x004C5B80;
@@ -1659,9 +1508,6 @@ Wave_Device::Wave_Device() {
     field_20_ = 0;
 }
 
-Wave_Device *__fastcall wave_device_ctor_redirect(Wave_Device *self, void *) {
-    return new (self) Wave_Device;
-}
 
 /*
 Purpose: Tear the device singleton down: its own vtable republishes, the
@@ -1695,6 +1541,3 @@ Wave_Device::~Wave_Device() {
     }
 }
 
-void __fastcall wave_device_dtor_redirect(Wave_Device *self, void *) {
-    self->~Wave_Device();
-}

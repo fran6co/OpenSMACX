@@ -64,7 +64,6 @@ class StringStruct {
 static_assert(sizeof(StringStruct) == 0x24,
               "StringStruct layout must match the original executable");
 
-void __fastcall string_struct_remove_all_redirect(StringStruct *self, void *);
 // The legacy close is entered through a virtual-base adjustor, so the redirect
 // receives a pointer 0x1C bytes into the object rather than its base.
 static const size_t StringStructCloseAdjustment = 0x1C;
@@ -78,10 +77,6 @@ static const size_t StringStructDerivedCloseAdjustment = 0x28;
 extern const uint32_t StringStructDerivedVtable;
 extern const uint32_t StringStructDerivedVirtualBaseVtable;
 void __fastcall string_struct_derived_close_redirect(void *adjusted);
-int __fastcall string_struct_current_id_redirect(StringStruct *self, void *);
-int __fastcall string_struct_current_entry_redirect(StringStruct *self, void *);
-int __fastcall string_struct_next_entry_redirect(StringStruct *self, void *);
-int __fastcall string_struct_seek_id_redirect(StringStruct *self, void *, int id);
 
 /*
  * StringList - the string list whose two-stage teardown at 0x004066C0 is
@@ -158,7 +153,3 @@ extern const uint32_t StringVirtualBaseVtable;
 // default address is only mapped inside the game process.
 extern uint32_t StringVirtualBaseOwner;   // default 0x009B3374
 
-// ~StringList is entered on the UNADJUSTED object, so unlike
-// ListBoxDestructorAdjustment there is nothing to undo in the adapter; the
-// 0x28 belongs to the callee at 0x004066C0.
-uint32_t __fastcall string_list_destructor_redirect(StringList *self, void *);

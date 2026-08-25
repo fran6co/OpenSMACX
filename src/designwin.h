@@ -382,15 +382,6 @@ class DesignWin : public GraphicWin, public SubInterface {
   Font font3_;  // 0x14590, the IDB's third font; the class grows by 0x14
 };
 
-void __fastcall design_win_unk1_redirect(DesignWin *self, void *);
-void __fastcall design_win_on_iface_left_down_redirect(DesignWin *self, void *, int a1, int a2);
-void __fastcall design_win_on_iface_right_down_redirect(DesignWin *self, void *, int a1, int a2);
-void __fastcall design_win_on_iface_selected_redirect(DesignWin *self, void *, int a1, int a2);
-void __fastcall design_win_on_iface_left_double_click_redirect(DesignWin *self, void *, int a1, int a2);
-void __fastcall design_win_on_iface_right_double_click_redirect(DesignWin *self, void *, int a1, int a2);
-void __fastcall design_win_on_iface_button_toggled_redirect(DesignWin *self, void *, int a1, int a2);
-void __fastcall design_win_on_iface_group_clicked_redirect(DesignWin *self, void *, int a1, int a2, int a3);
-void __fastcall design_win_on_mouse_leave_redirect(DesignWin *self, void *, int a1, int a2);
 
 // DesignWin::select_special is not recovered, so the body at the end of
 // designwin.cpp forwards through this seam. Both byte-exact select_special_N

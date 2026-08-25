@@ -68,13 +68,7 @@ void TutWin::UNK3(int a1) {
     field_53D4_ = a1;
 }
 
-void __fastcall tut_win_unk1_redirect(TutWin *self, void *) {
-    self->UNK1();
-}
 
-void __fastcall tut_win_unk3_redirect(TutWin *self, void *, int a1) {
-    self->UNK3(a1);
-}
 
 /*
  * Four 67-byte clones differing only in which fixed window they finish on.
@@ -119,10 +113,6 @@ void TutWin::iface_rect(RECT *rect, int *x, int *y) {
     TutWinIfaceWindow->client_to_screen(x, y);
 }
 
-void __fastcall tut_win_iface_rect_redirect(
-        TutWin *self, void *, RECT *rect, int *x, int *y) {
-    self->iface_rect(rect, x, y);
-}
 
 
 /*
@@ -150,10 +140,6 @@ void TutWin::base_rect(RECT *rect, int *x, int *y) {
     TutWinBaseWindow->client_to_screen(x, y);
 }
 
-void __fastcall tut_win_base_rect_redirect(
-        TutWin *self, void *, RECT *rect, int *x, int *y) {
-    self->base_rect(rect, x, y);
-}
 
 
 /*
@@ -181,10 +167,6 @@ void TutWin::soc_rect(RECT *rect, int *x, int *y) {
     TutWinSocWindow->client_to_screen(x, y);
 }
 
-void __fastcall tut_win_soc_rect_redirect(
-        TutWin *self, void *, RECT *rect, int *x, int *y) {
-    self->soc_rect(rect, x, y);
-}
 
 
 /*
@@ -212,10 +194,6 @@ void TutWin::des_rect(RECT *rect, int *x, int *y) {
     TutWinDesWindow->client_to_screen(x, y);
 }
 
-void __fastcall tut_win_des_rect_redirect(
-        TutWin *self, void *, RECT *rect, int *x, int *y) {
-    self->des_rect(rect, x, y);
-}
 
 
 /*
@@ -270,10 +248,6 @@ void TutWin::do_base(RECT *rect, const char *text, int flag) {
     this->tut_win(window, text, x, y, nullptr, flag, -1, -1);
 }
 
-void __fastcall tut_win_do_base_redirect(
-        TutWin *self, void *, RECT *rect, const char *text, int flag) {
-    self->do_base(rect, text, flag);
-}
 
 /*
 Purpose: Centre the rectangle, convert it through the iface window, and
@@ -319,10 +293,6 @@ void TutWin::do_iface(RECT *rect, const char *text, int flag) {
     this->tut_win(window, text, x, y, nullptr, flag, -1, -1);
 }
 
-void __fastcall tut_win_do_iface_redirect(
-        TutWin *self, void *, RECT *rect, const char *text, int flag) {
-    self->do_iface(rect, text, flag);
-}
 
 /*
 Purpose: Centre the rectangle, convert it through the soc window, and
@@ -368,10 +338,6 @@ void TutWin::do_soc(RECT *rect, const char *text, int flag) {
     this->tut_win(window, text, x, y, nullptr, flag, -1, -1);
 }
 
-void __fastcall tut_win_do_soc_redirect(
-        TutWin *self, void *, RECT *rect, const char *text, int flag) {
-    self->do_soc(rect, text, flag);
-}
 
 /*
 Purpose: Centre the rectangle, convert it through the des window, and
@@ -417,10 +383,6 @@ void TutWin::do_des(RECT *rect, const char *text, int flag) {
     this->tut_win(window, text, x, y, nullptr, flag, -1, -1);
 }
 
-void __fastcall tut_win_do_des_redirect(
-        TutWin *self, void *, RECT *rect, const char *text, int flag) {
-    self->do_des(rect, text, flag);
-}
 
 /*
 Purpose: Tell the attached object the tutorial window moved.

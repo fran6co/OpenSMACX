@@ -112,29 +112,11 @@ Status: Complete
 void ReplayWin::on_left_up(int, int) {
 }
 
-void __fastcall replay_win_on_left_double_click_redirect(ReplayWin *self, void *, int a1, int a2) {
-    self->on_left_double_click(a1, a2);
-}
 
-void __fastcall replay_win_on_right_double_click_redirect(ReplayWin *self, void *, int a1, int a2) {
-    self->on_right_double_click(a1, a2);
-}
 
-void __fastcall replay_win_on_mouse_move_redirect(ReplayWin *self, void *, int a1, int a2) {
-    self->on_mouse_move(a1, a2);
-}
 
-void __fastcall replay_win_on_right_down_redirect(ReplayWin *self, void *, int a1, int a2) {
-    self->on_right_down(a1, a2);
-}
 
-void __fastcall replay_win_on_left_down_redirect(ReplayWin *self, void *, int a1, int a2) {
-    self->on_left_down(a1, a2);
-}
 
-void __fastcall replay_win_on_left_up_redirect(ReplayWin *self, void *, int a1, int a2) {
-    self->on_left_up(a1, a2);
-}
 
 /*
 // ORIGINAL: 0x005ADBD0 ?timer_callback_daemon@ReplayWin@@QAAXH@Z 0x005ADBD0-0x005ADBE1 BYTE_EXACT

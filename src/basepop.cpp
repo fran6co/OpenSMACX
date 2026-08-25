@@ -48,9 +48,6 @@ void BasePop::set_loc(int x, int y) {
     }
 }
 
-void __fastcall base_pop_set_loc_redirect(BasePop *self, void *, int x, int y) {
-    self->set_loc(x, y);
-}
 
 Font *BasePopDefaultStringFonts[4];  // 0x009B8D98
 Font *BasePopDefaultButtonFonts[3];  // 0x009B8DA8
@@ -119,15 +116,7 @@ int BasePop::set_def_button_font(Font *font1, Font *font2, Font *font3) {
     return 0;
 }
 
-int __cdecl base_pop_set_def_string_font_redirect(
-        Font *font1, Font *font2, Font *font3, Font *font4) {
-    return BasePop::set_def_string_font(font1, font2, font3, font4);
-}
 
-int __cdecl base_pop_set_def_button_font_redirect(
-        Font *font1, Font *font2, Font *font3) {
-    return BasePop::set_def_button_font(font1, font2, font3);
-}
 
 // Slot s of tier t lives at base + s * stride + t * 4. The string table has
 // four tiers so its slots are 0x10 apart; the button table has three, so its
@@ -163,9 +152,6 @@ void BasePop::set_def_string_color(int c1, int c2, int c3, int c4) {
     BasePopDefaultStringColors[3][0] = static_cast<uint32_t>(c4);
 }
 
-void __cdecl base_pop_set_def_string_color_redirect(int c1, int c2, int c3, int c4) {
-    BasePop::set_def_string_color(c1, c2, c3, c4);
-}
 
 /*
 Purpose: Set default string colour tier 1 shared by every popup.
@@ -186,9 +172,6 @@ void BasePop::set_def_string_color2(int c1, int c2, int c3, int c4) {
     BasePopDefaultStringColors[3][1] = static_cast<uint32_t>(c4);
 }
 
-void __cdecl base_pop_set_def_string_color2_redirect(int c1, int c2, int c3, int c4) {
-    BasePop::set_def_string_color2(c1, c2, c3, c4);
-}
 
 /*
 Purpose: Set default string colour tier 2 shared by every popup.
@@ -209,9 +192,6 @@ void BasePop::set_def_string_color3(int c1, int c2, int c3, int c4) {
     BasePopDefaultStringColors[3][2] = static_cast<uint32_t>(c4);
 }
 
-void __cdecl base_pop_set_def_string_color3_redirect(int c1, int c2, int c3, int c4) {
-    BasePop::set_def_string_color3(c1, c2, c3, c4);
-}
 
 /*
 Purpose: Set default string colour tier 3 shared by every popup.
@@ -232,9 +212,6 @@ void BasePop::set_def_string_color_hyper(int c1, int c2, int c3, int c4) {
     BasePopDefaultStringColors[3][3] = static_cast<uint32_t>(c4);
 }
 
-void __cdecl base_pop_set_def_string_color_hyper_redirect(int c1, int c2, int c3, int c4) {
-    BasePop::set_def_string_color_hyper(c1, c2, c3, c4);
-}
 
 /*
 Purpose: Set default button colour tier 0 shared by every popup.
@@ -255,9 +232,6 @@ void BasePop::set_def_button_color(int c1, int c2, int c3, int c4) {
     BasePopDefaultButtonColors[3][0] = static_cast<uint32_t>(c4);
 }
 
-void __cdecl base_pop_set_def_button_color_redirect(int c1, int c2, int c3, int c4) {
-    BasePop::set_def_button_color(c1, c2, c3, c4);
-}
 
 /*
 Purpose: Set default button colour tier 1 shared by every popup.
@@ -278,9 +252,6 @@ void BasePop::set_def_button_color2(int c1, int c2, int c3, int c4) {
     BasePopDefaultButtonColors[3][1] = static_cast<uint32_t>(c4);
 }
 
-void __cdecl base_pop_set_def_button_color2_redirect(int c1, int c2, int c3, int c4) {
-    BasePop::set_def_button_color2(c1, c2, c3, c4);
-}
 
 /*
 Purpose: Set default button colour tier 2 shared by every popup.
@@ -301,9 +272,6 @@ void BasePop::set_def_button_color3(int c1, int c2, int c3, int c4) {
     BasePopDefaultButtonColors[3][2] = static_cast<uint32_t>(c4);
 }
 
-void __cdecl base_pop_set_def_button_color3_redirect(int c1, int c2, int c3, int c4) {
-    BasePop::set_def_button_color3(c1, c2, c3, c4);
-}
 
 /*
 Purpose: Set this popup's string color slots.
@@ -323,10 +291,6 @@ void BasePop::set_string_color(int c1, int c2, int c3, int c4) {
     string_color_d_ = c4;
 }
 
-void __fastcall base_pop_set_string_color_redirect(
-        BasePop *self, void *, int c1, int c2, int c3, int c4) {
-    self->set_string_color(c1, c2, c3, c4);
-}
 
 /*
 Purpose: Set this popup's string color2 slots.
@@ -346,10 +310,6 @@ void BasePop::set_string_color2(int c1, int c2, int c3, int c4) {
     string_color_2d_ = c4;
 }
 
-void __fastcall base_pop_set_string_color2_redirect(
-        BasePop *self, void *, int c1, int c2, int c3, int c4) {
-    self->set_string_color2(c1, c2, c3, c4);
-}
 
 /*
 Purpose: Set this popup's string color3 slots.
@@ -369,10 +329,6 @@ void BasePop::set_string_color3(int c1, int c2, int c3, int c4) {
     string_color_3d_ = c4;
 }
 
-void __fastcall base_pop_set_string_color3_redirect(
-        BasePop *self, void *, int c1, int c2, int c3, int c4) {
-    self->set_string_color3(c1, c2, c3, c4);
-}
 
 /*
 Purpose: Set this popup's string color hyper slots.
@@ -392,10 +348,6 @@ void BasePop::set_string_color_hyper(int c1, int c2, int c3, int c4) {
     string_color_hyper_d_ = c4;
 }
 
-void __fastcall base_pop_set_string_color_hyper_redirect(
-        BasePop *self, void *, int c1, int c2, int c3, int c4) {
-    self->set_string_color_hyper(c1, c2, c3, c4);
-}
 
 /*
 Purpose: Set this popup's button color slots.
@@ -418,10 +370,6 @@ void BasePop::set_button_color(char c1, int c2, int c3, int c4) {
     button_color_d_ = static_cast<uint32_t>(c4);
 }
 
-void __fastcall base_pop_set_button_color_redirect(
-        BasePop *self, void *, char c1, int c2, int c3, int c4) {
-    self->set_button_color(c1, c2, c3, c4);
-}
 
 /*
 Purpose: Set this popup's button color2 slots.
@@ -444,10 +392,6 @@ void BasePop::set_button_color2(char c1, int c2, int c3, int c4) {
     button_color_2d_ = static_cast<uint32_t>(c4);
 }
 
-void __fastcall base_pop_set_button_color2_redirect(
-        BasePop *self, void *, char c1, int c2, int c3, int c4) {
-    self->set_button_color2(c1, c2, c3, c4);
-}
 
 /*
 Purpose: Set this popup's button color3 slots.
@@ -470,10 +414,6 @@ void BasePop::set_button_color3(char c1, int c2, int c3, int c4) {
     button_color_3d_ = static_cast<uint32_t>(c4);
 }
 
-void __fastcall base_pop_set_button_color3_redirect(
-        BasePop *self, void *, char c1, int c2, int c3, int c4) {
-    self->set_button_color3(c1, c2, c3, c4);
-}
 
 
 /*
@@ -494,9 +434,6 @@ void BasePop::fallout() {
     }
 }
 
-void __cdecl base_pop_fallout_redirect() {
-    BasePop::fallout();
-}
 
 /*
 Purpose: Set the popup's embedded check box, at 0x2228, to the given state.
@@ -514,9 +451,6 @@ void BasePop::write_check(long value) {
     check_box()->set_state_flag(value);
 }
 
-void __fastcall base_pop_write_check_redirect(BasePop *self, void *, long value) {
-    self->write_check(value);
-}
 
 
 /*
@@ -555,9 +489,6 @@ void BasePop::set_width(int width) {
     }
 }
 
-void __fastcall base_pop_set_width_redirect(BasePop *self, void *, int width) {
-    self->set_width(width);
-}
 
 
 /*
@@ -592,14 +523,7 @@ int BasePop::exec(int (__cdecl *callback)()) {
     return exec(0, callback);
 }
 
-int __fastcall base_pop_exec_void_redirect(BasePop *self, void *) {
-    return self->exec();
-}
 
-int __fastcall base_pop_exec_callback_redirect(BasePop *self, void *,
-                                               int (__cdecl *callback)()) {
-    return self->exec(callback);
-}
 
 /*
 Purpose: Report whether the popup will accept a key click. Both this and
@@ -624,9 +548,6 @@ int BasePop::on_key_click(int, int) {
     return static_cast<int>((~field_30A8_ >> 14) & 1U);
 }
 
-int __fastcall base_pop_on_key_click_redirect(BasePop *self, void *, int a1, int a2) {
-    return self->on_key_click(a1, a2);
-}
 
 /*
 Purpose: As on_key_click above, over the same field and the same bit. Kept as
@@ -647,9 +568,6 @@ int BasePop::on_key_up(int) {
     return static_cast<int>((~field_30A8_ >> 14) & 1U);
 }
 
-int __fastcall base_pop_on_key_up_redirect(BasePop *self, void *, int a1) {
-    return self->on_key_up(a1);
-}
 
 /*
 Purpose: Set or clear bit 0 of the flags word at offset 0x20 - set when the
@@ -687,9 +605,6 @@ void BasePop::UNK3(int a1) {
     }
 }
 
-void __fastcall base_pop_unk3_redirect(BasePop *self, void *, int a1) {
-    self->UNK3(a1);
-}
 
 /*
 Purpose: As UNK3 above, over the same flags word but bit 1 (`or al, 2` /
@@ -712,9 +627,6 @@ void BasePop::UNK4(int a1) {
     }
 }
 
-void __fastcall base_pop_unk4_redirect(BasePop *self, void *, int a1) {
-    self->UNK4(a1);
-}
 
 /*
 Purpose: Fetch one item's text from the embedded Dialogs at 0x21D0.
@@ -749,10 +661,6 @@ int BasePop::item(char *text, int index) {
         reinterpret_cast<uint8_t *>(this) + 0x21D0)->Dialogs::item(text, index);
 }
 
-int __fastcall base_pop_item_redirect(BasePop *self, void *, char *text,
-                                      int index) {
-    return self->item(text, index);
-}
 
 /*
 Purpose: Read the state word of the CheckBox embedded at 0x2228.
@@ -792,9 +700,6 @@ uint32_t BasePop::read_check() {
     return *reinterpret_cast<const uint32_t *>(check + vbtable[2] + 0xEC);
 }
 
-uint32_t __fastcall base_pop_read_check_redirect(BasePop *self, void *) {
-    return self->read_check();
-}
 /*
 Purpose: Allocate a BasePop on the heap and construct it.
 // ORIGINAL: 0x00604E40 ?basepop_alloc@BasePop@@SAHXZ 0x00604E40-0x00604E9A;0x00662E17-0x00662E2C BYTE_EXACT

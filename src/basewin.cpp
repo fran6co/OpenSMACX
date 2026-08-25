@@ -127,21 +127,9 @@ Status: Complete
 void BaseWin::UNK7() {
 }
 
-void __fastcall base_win_close_redirect(BaseWin *self, void *) {
-    self->close();
-}
 
-void __fastcall base_win_unk4_redirect(BaseWin *self, void *) {
-    self->UNK4();
-}
 
-void __fastcall base_win_unk6_redirect(BaseWin *self, void *) {
-    self->UNK6();
-}
 
-void __fastcall base_win_unk7_redirect(BaseWin *self, void *) {
-    self->UNK7();
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -158,9 +146,6 @@ Status: Complete
 void BaseWin::UNK5(int) {
 }
 
-void __fastcall base_win_unk5_redirect(BaseWin *self, void *, int a1) {
-    self->UNK5(a1);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -177,9 +162,6 @@ Status: Complete
 void BaseWin::on_button_toggled(int, int) {
 }
 
-void __fastcall base_win_on_button_toggled_redirect(BaseWin *self, void *, int a1, int a2) {
-    self->on_button_toggled(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -196,9 +178,6 @@ Status: Complete
 void BaseWin::on_iface_right_down(int, int) {
 }
 
-void __fastcall base_win_on_iface_right_down_redirect(BaseWin *self, void *, int a1, int a2) {
-    self->on_iface_right_down(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -215,9 +194,6 @@ Status: Complete
 void BaseWin::on_iface_selected(int, int) {
 }
 
-void __fastcall base_win_on_iface_selected_redirect(BaseWin *self, void *, int a1, int a2) {
-    self->on_iface_selected(a1, a2);
-}
 
 
 /*
@@ -296,21 +272,9 @@ void BaseWin::on_iface_right_double_click(int a1, int a2) {
     base->iface_click(a1, a2, 1, 1);
 }
 
-void __fastcall base_win_on_iface_left_click_redirect(BaseWin *self, void *, int a1, int a2) {
-    self->on_iface_left_click(a1, a2);
-}
 
-void __fastcall base_win_on_iface_right_click_redirect(BaseWin *self, void *, int a1, int a2) {
-    self->on_iface_right_click(a1, a2);
-}
 
-void __fastcall base_win_on_iface_left_double_click_redirect(BaseWin *self, void *, int a1, int a2) {
-    self->on_iface_left_double_click(a1, a2);
-}
 
-void __fastcall base_win_on_iface_right_double_click_redirect(BaseWin *self, void *, int a1, int a2) {
-    self->on_iface_right_double_click(a1, a2);
-}
 
 
 /*
@@ -338,9 +302,6 @@ void BaseWin::on_iface_scrolled(int a1, int a2) {
     base->draw_supported(1);
 }
 
-void __fastcall base_win_on_iface_scrolled_redirect(BaseWin *self, void *, int a1, int a2) {
-    self->on_iface_scrolled(a1, a2);
-}
 
 
 /*
@@ -394,17 +355,8 @@ void BaseWin::on_left_double_click(int a1, int a2) {
     click(a1, a2, 0, 1);
 }
 
-void __fastcall base_win_on_left_click_redirect(BaseWin *self, void *, int a1, int a2) {
-    self->on_left_click(a1, a2);
-}
 
-void __fastcall base_win_on_right_click_redirect(BaseWin *self, void *, int a1, int a2) {
-    self->on_right_click(a1, a2);
-}
 
-void __fastcall base_win_on_left_double_click_redirect(BaseWin *self, void *, int a1, int a2) {
-    self->on_left_double_click(a1, a2);
-}
 
 /*
 Purpose: Interface timer tick; the legacy implementation ignores it and
@@ -423,9 +375,6 @@ Status: Complete
 void BaseWin::timer_callback(int, int) {
 }
 
-void __cdecl base_win_timer_callback_redirect(int a1, int a2) {
-    BaseWin::timer_callback(a1, a2);
-}
 
 /*
 Purpose: Dismiss the bubble text when the pointer leaves. The whole body is two
@@ -452,9 +401,6 @@ void BaseWin::on_mouse_leave(int, int) {
     ::Win::clear_bubble_text();
 }
 
-void __fastcall base_win_on_mouse_leave_redirect(BaseWin *self, void *, int a1, int a2) {
-    self->on_mouse_leave(a1, a2);
-}
 
 /*
 // ORIGINAL: 0x0041E890 ?show@BaseWin@@QAEXH@Z 0x0041E890-0x0041E8AB BYTE_EXACT

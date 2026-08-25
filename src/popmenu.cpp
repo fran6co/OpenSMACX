@@ -39,6 +39,3 @@ int PopMenu::init() {
     return BasePop::init(0, 0);
 }
 
-int __fastcall pop_menu_init_redirect(PopMenu *self, void *) {
-    return self->init();
-}

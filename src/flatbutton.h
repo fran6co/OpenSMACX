@@ -77,4 +77,3 @@ extern const uint32_t FlatButtonPrimaryVtable;
 extern const uint32_t FlatButtonBufferVtable;
 
 FlatButton *__fastcall flat_button_destructor_redirect(FlatButton *self, void *);
-uint32_t __fastcall flat_button_close_redirect(FlatButton *self, void *);

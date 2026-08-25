@@ -55,13 +55,7 @@ Status: Complete
 void InfoWin::on_redraw() {
 }
 
-void __fastcall info_win_unk1_redirect(InfoWin *self, void *) {
-    self->UNK1();
-}
 
-void __fastcall info_win_on_redraw_redirect(InfoWin *self, void *) {
-    self->on_redraw();
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -78,9 +72,6 @@ Status: Complete
 void InfoWin::change(int) {
 }
 
-void __fastcall info_win_change_redirect(InfoWin *self, void *, int a1) {
-    self->change(a1);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -97,9 +88,6 @@ Status: Complete
 void InfoWin::UNK3(int, int) {
 }
 
-void __fastcall info_win_unk3_redirect(InfoWin *self, void *, int a1, int a2) {
-    self->UNK3(a1, a2);
-}
 
 
 /*
@@ -121,9 +109,6 @@ void InfoWin::reset() {
     }
 }
 
-void __fastcall info_win_reset_redirect(InfoWin *self, void *) {
-    self->reset();
-}
 
 /*
 // ORIGINAL: 0x00458D40 ?on_right_click@InfoWin@@QAEXHH@Z 0x00458D40-0x00458D54 BYTE_EXACT

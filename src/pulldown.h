@@ -87,31 +87,8 @@ extern uint32_t PullDownFieldF38Default;
 extern uint32_t PullDownFieldF3CDefault;
 
 PullDown *__fastcall pull_down_destructor_redirect(PullDown *self, void *);
-int __fastcall pull_down_hide_item_redirect(
-    PullDown *self, void *, int id);
-int __fastcall pull_down_show_item_redirect(
-    PullDown *self, void *, int id);
-int __fastcall pull_down_disable_item_redirect(
-    PullDown *self, void *, int id);
-int __fastcall pull_down_enable_item_redirect(
-    PullDown *self, void *, int id);
-int __fastcall pull_down_check_item_redirect(
-    PullDown *self, void *, int id);
-int __fastcall pull_down_uncheck_item_redirect(
-    PullDown *self, void *, int id);
-int __fastcall pull_down_get_selected_redirect(PullDown *self, void *);
 
-int __fastcall pull_down_unk2_redirect(
-    PullDown *self, void *, int a);
-int __fastcall pull_down_unk3_redirect(
-    PullDown *self, void *, int a, int b, int c);
-int __fastcall pull_down_unk5_redirect(
-    PullDown *self, void *);
-int __fastcall pull_down_unk6_redirect(
-    PullDown *self, void *);
-void __fastcall pull_down_on_mouse_leave_redirect(PullDown *self, void *, int a1, int a2);
 
-int __fastcall pull_down_id_to_index_redirect(PullDown *self, void *, int id);
 
 // The image inlines this scan at every hide_item/show_item/disable_item/
 // enable_item/check_item/uncheck_item call site rather than emitting a
