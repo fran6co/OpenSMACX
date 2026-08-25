@@ -753,6 +753,8 @@ Win *WinModalFocus;         // 0x009B8D7C
 Win *WinPopupWindow;        // 0x009B23B4
 Win *WinTopDialog;          // 0x009B2300
 Win *WinPendingFocus;       // 0x009B7B38
+Win *WinBubbleCompanion;   // 0x009B7A4C
+int WinBubbleActive;       // 0x009B7A50
 Win *WinZOrderWindow;      // 0x009B7A6C
 int WinZOrderCount;        // 0x009B7B30
 int WinZOrderFlag;         // 0x009B7A78
@@ -1042,7 +1044,7 @@ Purpose: Present the screen buffer: draw the bubble text over it, flip or
 //        0x005EFEB9-0x005EFEBC is the exact inverse. As written the rectangle
 //        grew where the image shrinks it. (2) The undo block AND the
 //        `set_clip(&ScreenBuffer.rect2_)` after it sat outside the
-//        `*WinBubbleActive` test; 0x005EFD3D `je 0x5efee8` jumps past both, so
+//        `WinBubbleActive` test; 0x005EFD3D `je 0x5efee8` jumps past both, so
 //        a frame with no bubble text performs neither, where this tree moved
 //        WinBubbleRect by one on every frame. Neither fix moves the score -
 //        both blocks are inside the part that does not align - and both are
@@ -1101,7 +1103,7 @@ void __cdecl Win::flip(RECT *area) {
         WinFlipHook();
     }
 
-    if (*WinBubbleActive != 0) {
+    if (WinBubbleActive != 0) {
         if (area != nullptr) {
             ScreenBuffer.set_clip(area);
         }
@@ -1122,7 +1124,7 @@ void __cdecl Win::flip(RECT *area) {
         ScreenBuffer.set_font(WinBubbleFont, nullptr, nullptr, nullptr);
         ScreenBuffer.set_text_color(WinBubbleTextColour, -1, 1, 1);
 
-        LPSTR text = reinterpret_cast<LPSTR>(*WinBubbleActive);
+        LPSTR text = reinterpret_cast<LPSTR>(WinBubbleActive);
         if (strchr(text, '^') == nullptr) {
             // One line, centred in the box.
             if (text != nullptr) {
@@ -1261,7 +1263,7 @@ void __cdecl Win::flip(RECT *area) {
 
 /*
 Purpose: Dismiss any pending bubble text and repaint the area it covered.
-// ORIGINAL: 0x005F8500 ?clear_bubble_text@Win@@QAGXXZ 0x005F8500-0x005F852F
+// ORIGINAL: 0x005F8500 ?clear_bubble_text@Win@@QAGXXZ 0x005F8500-0x005F852F BYTE_EXACT
 // symbol    ?clear_bubble_text@Win@@SAXXZ
 // size      47 bytes
 // prototype 
@@ -1271,23 +1273,30 @@ Purpose: Dismiss any pending bubble text and repaint the area it covered.
 // calls     0x005EFD20 0x005F7320
 Status: Complete with temporary dependencies on the screen refresh and flip
 */
-// TRIED: 6 of 13. `*WinBubbleCompanion = 0` compiles `mov eax, dword ptr
-// [0]` and a store THROUGH eax, where the image writes the address directly
-// and shares one zeroed register across both stores
-// (`push eax` / `mov [0x9b7a4c], eax` / `mov [0x9b7a50], eax`). The binding
-// is `Win **const`, which does not fold for a store - `int *const` does -
-// but retyping it is refused here rather than measured: the LEVER on
-// bubble_text (0x005F8410) records that `Win **` is what let `this` be
-// stored without a cast there, and that spelling earned its claim. Trading
-// one body's claim for another's is not a fix. See also the refuted
-// `Win **const` retype recorded in win_slots.h.
+// LEVER (measured 2026-08-25, 6 of 13 -> 13 of 13 BYTE_EXACT):
+// GIVE THE GLOBAL REAL STORAGE INSTEAD OF PICKING A BINDING TYPE.
+// This plateau used to be recorded here as a trade-off with no winning
+// side. Through a `Win **const` binding, `*WinBubbleCompanion = 0`
+// compiled `mov eax, dword ptr [0]` and a store THROUGH eax, where the
+// image writes the address directly and shares one zeroed register across
+// both stores (`push eax` / `mov [0x9b7a4c], eax` / `mov [0x9b7a50],
+// eax`). An `int *const` binding folds for the store, but then bubble_text
+// needs a cast to put `this` into it - and that cast-free spelling is what
+// earned bubble_text ITS claim. Either binding type cost some body a claim,
+// so the retype was refused rather than measured.
+// Both horns come off once the name stops being a binding at all.
+// `extern Win *WinBubbleCompanion;`, defined in this file, folds for the
+// store AND takes `this` with no cast, because it IS a Win * rather than a
+// pointer to one. map.h reached the same conclusion by a third route -
+// `inline Map *&map_tiles()` - after measuring that `Map **const` cost two
+// loads on every tile access. The dilemma was an artifact of the scaffold.
 void Win::clear_bubble_text() {
     // Nothing to dismiss when no bubble is pending.
-    if (*WinBubbleActive == 0) {
+    if (WinBubbleActive == 0) {
         return;
     }
-    *WinBubbleCompanion = 0;
-    *WinBubbleActive = 0;
+    WinBubbleCompanion = 0;
+    WinBubbleActive = 0;
     Win::update_screen(WinBubbleRect, nullptr);
     Win::flip(WinBubbleRect);
 }
@@ -4734,16 +4743,16 @@ void Win::set_bubble_text(char * text, RECT * rect) {
     if (text == 0 || rect == 0) {
         return;
     }
-    if (*WinBubbleActive != 0) {
-        *WinBubbleCompanion = 0;
-        *WinBubbleActive = 0;
+    if (WinBubbleActive != 0) {
+        WinBubbleCompanion = 0;
+        WinBubbleActive = 0;
         update_screen(WinBubbleRect, 0);
         flip(WinBubbleRect);
     }
     int max_width = 0;
     int line_count = 0;
     char *str = text;
-    *WinBubbleCompanion = this;
+    WinBubbleCompanion = this;
     for (;;) {
         char *caret = strchr(str, '^');
         if (caret != 0) {
@@ -4783,7 +4792,7 @@ void Win::set_bubble_text(char * text, RECT * rect) {
     WinBubbleRect->top = y;
     WinBubbleRect->right = x + max_width;
     WinBubbleRect->bottom = y + line_height;
-    *WinBubbleActive = reinterpret_cast<int>(text);
+    WinBubbleActive = reinterpret_cast<int>(text);
     flip(WinBubbleRect);
 }
 
@@ -5894,11 +5903,11 @@ void Win::hide() {
         return;
     }
 
-    if (*WinBubbleCompanion == this) {
+    if (WinBubbleCompanion == this) {
         zero = 0;
-        if (*WinBubbleActive != zero) {
-            *WinBubbleCompanion = reinterpret_cast<Win *>(zero);
-            *WinBubbleActive = zero;
+        if (WinBubbleActive != zero) {
+            WinBubbleCompanion = reinterpret_cast<Win *>(zero);
+            WinBubbleActive = zero;
             update_screen(WinBubbleRect, 0);
             flip(WinBubbleRect);
         }
@@ -8658,10 +8667,10 @@ void Win::on_char(char param2, int param3) {
             (WinPopupWindow != 0 && (WinPopupWindow)->is_visible() == 0)) {
             ((Win *)WinBubbleWindow)->show(0);
         } else if ((static_cast<uint8_t>(WinDrawFlags) & 1) != 0) {
-            if (*WinBubbleCompanion == (Win *)WinBubbleWindow &&
-                *WinBubbleActive != 0) {
-                *WinBubbleCompanion = nullptr;
-                *WinBubbleActive = 0;
+            if (WinBubbleCompanion == (Win *)WinBubbleWindow &&
+                WinBubbleActive != 0) {
+                WinBubbleCompanion = nullptr;
+                WinBubbleActive = 0;
                 ((Win *)WinBubbleWindow)->update_screen(WinBubbleRect, 0);
                 ((Win *)WinBubbleWindow)->flip(WinBubbleRect);
             }
@@ -10395,9 +10404,9 @@ void Win::close() {
     if (WinPointerOwner4 == this) {
         WinPointerOwner4 = 0;
     }
-    if ((*WinBubbleCompanion == this) && (*WinBubbleActive != 0)) {
-        *WinBubbleCompanion = nullptr;
-        *WinBubbleActive = 0;
+    if ((WinBubbleCompanion == this) && (WinBubbleActive != 0)) {
+        WinBubbleCompanion = nullptr;
+        WinBubbleActive = 0;
         update_screen(WinBubbleRect, 0);
         flip(WinBubbleRect);
     }
