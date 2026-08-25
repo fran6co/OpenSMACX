@@ -19,6 +19,14 @@ an anchor would hide exactly what the ratchet is for.
 
     uv run tools/anchor_from_names.py            # what would be anchored
     uv run tools/anchor_from_names.py --apply
+
+WHAT IS LEFT AFTER THIS, measured 2026-08-26: 36 classes still carry no
+anchor, and none of them can be reached the same way. A second rule was
+considered and DISCARDED against the tree rather than shipped as a comment:
+"a class with no base starts its data at 0 (or 4 with a vfptr), and its own
+static_assert(sizeof) verifies the walk" - true, and it applies to ZERO of
+the 36, because every one of them either has a base or has no size assert.
+Those need per-class evidence from the image.
 """
 from __future__ import annotations
 
