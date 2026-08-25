@@ -32,7 +32,7 @@ import sys
 REPO = pathlib.Path(__file__).resolve().parent.parent
 
 # Measured 2026-08-25 after consolidating Win's fifteen.
-CEILING = 36
+CEILING = 30
 
 BINDING = re.compile(r"^\s*(?:static\s+)?[\w:]+[\s\*&]+const\s+(\w+)\s*=\s*"
                      r"\(?\s*\([\w:\s\*]+\)\s*0x(00[0-9A-Fa-f]{6})")

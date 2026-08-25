@@ -5355,7 +5355,7 @@ class VCallW { public:
 // The z-order list. MEASURED from the image, not inferred: `bring_to_top`
 // at 0x005F4B34 loads its base as an immediate - `mov esi, 0x9b6e48` -
 // and walks it with the count at 0x009B7B34. The artifacts declared it
-// `extern int g_zorder_list[];` and never defined it anywhere, so nothing
+// `extern int WinRootWindows[];` and never defined it anywhere, so nothing
 // that used it could ever have linked.
 
 // SLOT 88 IS PAST WIN'S TABLE. Win's vtable is 88 entries, 0..87 - slot
@@ -5378,12 +5378,12 @@ typedef int (__stdcall *ComSlot17)(void *self, HDC *out);
 #define ACQUIRE_HDC(haveHdcVar) \
     do { \
         if (WinHdcRefCount == 0) { \
-            if (*WinDDSurface != 0) { \
-                ComSlot17 fn = (ComSlot17)(*reinterpret_cast<void ***>(*WinDDSurface))[0x11]; \
-                fn(reinterpret_cast<void *>(*WinDDSurface), &WinSharedHdc); \
+            if (DirectDrawSurface != 0) { \
+                ComSlot17 fn = (ComSlot17)(*reinterpret_cast<void ***>(DirectDrawSurface))[0x11]; \
+                fn(DirectDrawSurface, &WinSharedHdc); \
             } else { \
                 WinSharedHdc =  \
-                    GetDC(reinterpret_cast<HWND>(*WinMainHwnd)); \
+                    GetDC(HandleMain); \
             } \
             (haveHdcVar) = (WinSharedHdc != 0); \
             if (haveHdcVar) { \
@@ -5618,7 +5618,7 @@ int Win::show_maximize() {
     if (WinPointerOwner4 == this) {
         WinPointerOwner4 = 0;
     }
-    ShowWindow(reinterpret_cast<HWND>(*WinMainHwnd), 3);
+    ShowWindow(HandleMain, 3);
     return 0;
 }
 
@@ -5651,7 +5651,7 @@ int Win::maximize() {
         WinPointerOwner4 = 0;
     }
     ShowWindow(
-        *reinterpret_cast<HWND *>(WinMainHwnd), 3);
+        HandleMain, 3);
     return 0;
 }
 
@@ -5960,7 +5960,7 @@ skip_all:
         WinZOrderCount = 0;
         if (total > 0) {
             int32_t target = reinterpret_cast<int>(WinZOrderWindow);
-            Win **p = reinterpret_cast<Win **>(g_zorder_list);
+            Win **p = WinRootWindows;
             int32_t j = 0;
             for (;;) {
                 if (target != 0 && target == reinterpret_cast<int32_t>(*p)) {
@@ -5981,7 +5981,7 @@ skip_all:
         }
     }
 
-    InvalidateRect(reinterpret_cast<HWND>(*WinMainHwnd), 0, 0);
+    InvalidateRect(HandleMain, 0, 0);
 
     {
         Win *other = reinterpret_cast<Win *>(val_4_);
@@ -6006,19 +6006,19 @@ void Win::on_l_button_down(long flags, int x, int y, unsigned int keys, int dbl)
         int32_t idx = 0;
         int32_t count = WinRootCount;
         if (count > 0) {
-            Win **p = g_zorder_list;
+            Win **p = WinRootWindows;
             for (;;) {
                 if (*p == this) {
                     if (idx < count) {
                         if (idx > 0) {
-                            Win **q = g_zorder_list + idx;
+                            Win **q = WinRootWindows + idx;
                             do {
                                 *q = *(q - 1);
                                 --q;
                                 --idx;
                             } while (idx != 0);
                         }
-                        *g_zorder_list = this;
+                        WinRootWindows[0] = this;
                     }
                     break;
                 }
@@ -6256,7 +6256,7 @@ typedef long (__stdcall *SendMsgFn)(int, int, int, void*);
 //    near miss from a wrong body.
 LRESULT Win::on_window_pos_changed(WINDOWPOS* pos) {
     this->set_rects();
-    return DefWindowProcA(reinterpret_cast<HWND>(*WinMainHwnd), 0x47, 0,
+    return DefWindowProcA(HandleMain, 0x47, 0,
                           reinterpret_cast<LPARAM>(pos));
 }
 
@@ -6292,7 +6292,7 @@ void Win::bring_to_top() {
         WinZOrderCount = 0;
         if (WinRootCount > 0) {
             Win *highlighted = reinterpret_cast<Win *>(WinZOrderWindow);
-            Win **zslot = g_zorder_list;
+            Win **zslot = WinRootWindows;
             for (int j = 0; j < WinRootCount; j++) {
                 if (highlighted != 0 && highlighted == *zslot) {
                     WinZOrderCount = 0;
@@ -6315,7 +6315,7 @@ void Win::bring_to_top() {
     int count = WinRootCount;
     int i = 0;
     if (count > 0) {
-        Win **slot = g_zorder_list;
+        Win **slot = WinRootWindows;
         do {
             if (reinterpret_cast<int>(*slot) == reinterpret_cast<int>(this)) break;
             i++;
@@ -6324,19 +6324,19 @@ void Win::bring_to_top() {
     }
     if (i < count) {
         if (i > 0) {
-            Win **dst = g_zorder_list + i;
+            Win **dst = WinRootWindows + i;
             do {
                 *dst = dst[-1];
                 dst--;
             } while (--i);
         }
-        g_zorder_list[0] = this;
+        WinRootWindows[0] = this;
     }
 
     WinZOrderCount = 0;
     if (WinRootCount > 0) {
         Win *highlighted = reinterpret_cast<Win *>(WinZOrderWindow);
-        Win **zslot = g_zorder_list;
+        Win **zslot = WinRootWindows;
         for (int j = 0; j < WinRootCount; j++) {
             if (highlighted != 0 && highlighted == *zslot) {
                 WinZOrderCount = 0;
@@ -6744,23 +6744,23 @@ void Win::set_rects() {
         }
 
         this->buffer1_->init(this->client_rect_.right - this->client_rect_.left, barH, 0, 0);
-        this->buffer1_->sync_to_palette(reinterpret_cast<Palette *>(WinPalette));
+        this->buffer1_->sync_to_palette(PaletteActive);
         this->buffer1_->fill(*reinterpret_cast<uint8_t *>(WinFillColour));
 
         this->buffer4_->init(this->client_rect_.right - this->client_rect_.left, bottomBar, 0, 0);
-        this->buffer4_->sync_to_palette(reinterpret_cast<Palette *>(WinPalette));
+        this->buffer4_->sync_to_palette(PaletteActive);
         this->buffer4_->fill(*reinterpret_cast<uint8_t *>(WinFillColour));
 
         this->buffer3_->init(this->border_thickness_,
                               (this->client_rect_.bottom - this->client_rect_.top) - bottomBar - barH,
                               0, 0);
-        this->buffer3_->sync_to_palette(reinterpret_cast<Palette *>(WinPalette));
+        this->buffer3_->sync_to_palette(PaletteActive);
         this->buffer3_->fill(*reinterpret_cast<uint8_t *>(WinFillColour));
 
         this->buffer2_->init(this->border_thickness_,
                               (this->client_rect_.bottom - this->client_rect_.top) - bottomBar - barH,
                               0, 0);
-        this->buffer2_->sync_to_palette(reinterpret_cast<Palette *>(WinPalette));
+        this->buffer2_->sync_to_palette(PaletteActive);
         this->buffer2_->fill(*reinterpret_cast<uint8_t *>(WinFillColour));
 
         this->on_redraw_nc(0, -1);
@@ -6785,7 +6785,7 @@ void Win::window_line_raw(int x2, int y2, int x1, int y1, int colour,
     if (WinHdcRefCount != 0) {
         WinHdcRefCount = WinHdcRefCount + 1;
     } else {
-        void *iface = reinterpret_cast<void *>(*WinDDSurface);
+        void *iface = DirectDrawSurface;
         if (iface != 0) {
             IfaceGetHdcProc fn = (*reinterpret_cast<IfaceGetHdcProc **>(iface))[17];
             fn(iface, &WinSharedHdc);
@@ -6798,9 +6798,9 @@ void Win::window_line_raw(int x2, int y2, int x1, int y1, int colour,
         WinHdcRefCount = 1;
     }
     if (WinSharedHdc != 0) {
-        if (field_184_ != *reinterpret_cast<int *>(*WinPalette + 0x400)) {
-            (*reinterpret_cast<Palette **>(WinPalette))->set_active_window(this);
-            field_184_ = *reinterpret_cast<int *>(*WinPalette + 0x400);
+        if (field_184_ != PaletteActive->seed_) {
+            PaletteActive->set_active_window(this);
+            field_184_ = PaletteActive->seed_;
         }
 
         LOGPEN pen;
@@ -6822,7 +6822,7 @@ void Win::window_line_raw(int x2, int y2, int x1, int y1, int colour,
 
             WinHdcRefCount = WinHdcRefCount - 1;
             if (WinHdcRefCount == 0) {
-                void *iface2 = reinterpret_cast<void *>(*WinDDSurface);
+                void *iface2 = DirectDrawSurface;
                 if (iface2 != 0) {
                     IfaceReleaseHdcProc fn2 = (*reinterpret_cast<IfaceReleaseHdcProc **>(iface2))[26];
                     fn2(iface2, WinSharedHdc);
@@ -7178,8 +7178,14 @@ void __cdecl Win::OnRButtonDown(void * hwnd, long flags, int x, int y, unsigned 
     if (result != 0) {
         reinterpret_cast<Win *>(result)->on_r_button_down(reinterpret_cast<long>(hwnd), flags, x, y, WinMouseDirect);
     }
-    if (*WinMouseCallback != 0) {
-        reinterpret_cast<void (__cdecl *)(int, int)>(*WinMouseCallback)(flags, x);
+    // 0x009B7A94, which window_proc calls as WinMouseHook(HWND, LPARAM).
+    // SIGNATURES DISAGREE and the image cannot referee it: both sites push
+    // two dwords __cdecl, so the argument TYPES are invisible in the asm.
+    // Here `flags` and `x` hold the translated coordinates get_mouse_window
+    // wrote back through them, so this site reads the hook as (int, int).
+    // Merged onto the typed name with the cast kept at this call.
+    if (WinMouseHook != nullptr) {
+        reinterpret_cast<void(__cdecl *)(int, int)>(WinMouseHook)(flags, x);
     }
     if (WinCursorMoved != 0) {
         reinterpret_cast<void (__cdecl *)()>(WinCursorMoved)();
@@ -7330,7 +7336,7 @@ void Win::show(int visible) {
         if (count > 0) {
             int32_t cur = reinterpret_cast<int>(WinZOrderWindow);
             for (int32_t i = 0; i < count; ++i) {
-                Win *w = g_zorder_list[i];
+                Win *w = WinRootWindows[i];
                 if (cur != 0 && cur == reinterpret_cast<int32_t>(w)) {
                     WinZOrderCount = 0;
                     WinZOrderFlag = 0;
@@ -7388,7 +7394,7 @@ void Win::show(int visible) {
             rect.bottom += y - outer_rect_.top;
         }
 
-        InvalidateRect(reinterpret_cast<HWND>(*WinMainHwnd), &rect, 0);
+        InvalidateRect(HandleMain, &rect, 0);
 
         Win *obj2 = reinterpret_cast<Win *>(val_3_);
         if (obj2 != 0) {
@@ -7417,7 +7423,7 @@ void Win::update_back_to_window(Buffer * buffer) {
 
     WinZOrderCount = 0;
     for (int i = 0; i < WinRootCount; i++) {
-        Win *w = g_zorder_list[i];
+        Win *w = WinRootWindows[i];
         if (WinZOrderWindow != 0 && WinZOrderWindow == w) {
             WinZOrderCount = 0;
             WinZOrderFlag = 0;
@@ -7483,7 +7489,7 @@ after_offset_fixup:;
 
     WinZOrderCount = 0;
     for (int j = 0; j < WinRootCount; j++) {
-        Win *w = g_zorder_list[j];
+        Win *w = WinRootWindows[j];
         if (WinZOrderWindow != 0 && WinZOrderWindow == w) {
             WinZOrderCount = 0;
             WinZOrderFlag = 0;
@@ -7560,7 +7566,7 @@ void Win::draw_rect_border(int x1, int y1, int x2, int y2, HGDIOBJ pen1, HGDIOBJ
 
     ACQUIRE_HDC(haveHdc);
     if (haveHdc) {
-        Palette *pal = reinterpret_cast<Palette *>(*WinPalette);
+        Palette *pal = PaletteActive;
         if (this->field_184_ != pal->seed_) {
             pal->set_active_window(this);
             this->field_184_ = pal->seed_;
@@ -7575,7 +7581,7 @@ void Win::draw_rect_border(int x1, int y1, int x2, int y2, HGDIOBJ pen1, HGDIOBJ
 
     ACQUIRE_HDC(haveHdc);
     if (haveHdc) {
-        Palette *pal = reinterpret_cast<Palette *>(*WinPalette);
+        Palette *pal = PaletteActive;
         if (this->field_184_ != pal->seed_) {
             pal->set_active_window(this);
             this->field_184_ = pal->seed_;
@@ -7590,7 +7596,7 @@ void Win::draw_rect_border(int x1, int y1, int x2, int y2, HGDIOBJ pen1, HGDIOBJ
 
     ACQUIRE_HDC(haveHdc);
     if (haveHdc) {
-        Palette *pal = reinterpret_cast<Palette *>(*WinPalette);
+        Palette *pal = PaletteActive;
         if (this->field_184_ != pal->seed_) {
             pal->set_active_window(this);
             this->field_184_ = pal->seed_;
@@ -7831,7 +7837,7 @@ int Win::init(int x, int y, int width, int height, char * caption,
             // `void exit();` in its stub class, which was a guess.
             exit(4);
         } else {
-            Win **globalList = reinterpret_cast<Win **>(g_zorder_list);
+            Win **globalList = WinRootWindows;
             if ((this->iFlags_ & 0x2000000) != 0) {
                 globalList[cnt] = this;
             } else {
@@ -8286,9 +8292,10 @@ void Win::left_down_event(int x, int y, int from_parent) {
         }
     }
 
-    FnCallback global_cb = *reinterpret_cast<FnCallback *>(WinGlobalCallback);
-    if (global_cb != 0) {
-        global_cb(x, y);
+    // 0x009B7A90 - the same slot window_proc calls as WinLeftDownHook, and
+    // the signature agrees: (int x, int y).
+    if (WinLeftDownHook != nullptr) {
+        WinLeftDownHook(x, y);
     }
 
     if (from_parent == 0) {
@@ -8682,7 +8689,7 @@ void Win::on_char(char param2, int param3) {
             if ((*(uint8_t *)JackalInitFlags & 1) != 0) {
                 WinZOrderCount = 0;
                 if (*(int *)WinRootCount > 0) {
-                    Win **entries = (Win **)g_zorder_list;
+                    Win **entries = (Win **)WinRootWindows;
                     int cur = *(int *)WinZOrderWindow;
                     int j = 0;
                     do {
@@ -8897,14 +8904,14 @@ void __cdecl Win::bring_parent_to_top(Win * window) {
         int i = 0;
         if (count > 0) {
             while (true) {
-                if (g_zorder_list[i] == window) {
+                if (WinRootWindows[i] == window) {
                     if (i < count) {
                         int j = i;
                         while (j > 0) {
-                            g_zorder_list[j] = g_zorder_list[j - 1];
+                            WinRootWindows[j] = WinRootWindows[j - 1];
                             --j;
                         }
-                        g_zorder_list[0] = window;
+                        WinRootWindows[0] = window;
                     }
                     break;
                 }
@@ -8916,11 +8923,11 @@ void __cdecl Win::bring_parent_to_top(Win * window) {
         if (count > 0) {
             for (int j = 0; j < count; ++j) {
                 int cur = reinterpret_cast<int>(WinZOrderWindow);
-                if (cur != 0 && cur == reinterpret_cast<int>(g_zorder_list[j])) {
+                if (cur != 0 && cur == reinterpret_cast<int>(WinRootWindows[j])) {
                     WinZOrderCount = 0;
                     WinZOrderFlag = 0;
                 }
-                Win *w = g_zorder_list[j];
+                Win *w = WinRootWindows[j];
                 if (*(reinterpret_cast<unsigned char *>(w) + 0x9c) & 1) {
                     recurse_zorder(w);
                     count = WinRootCount;
@@ -9120,7 +9127,7 @@ void Win::bring_child_to_top(Win * child) {
     }
     WinZOrderCount = 0;
     if (WinRootCount > 0) {
-        Win **entry = g_zorder_list;
+        Win **entry = WinRootWindows;
         int cur = reinterpret_cast<int>(WinZOrderWindow);
         int j = 0;
         do {
@@ -9166,7 +9173,7 @@ int Win::minimize() {
         WinPointerOwner4 = 0;
     }
     ShowWindow(
-        reinterpret_cast<HWND>(*WinMainHwnd), 6);
+        HandleMain, 6);
     return 0;
 }
 
@@ -9436,13 +9443,13 @@ void Win::sub_5ef1e0(int x1, int y1, int x2, int y2, void *pen, int unused6) {
         WinHdcRefCount = WinHdcRefCount + 1;
         hdc = WinSharedHdc;
     } else {
-        void *iface = reinterpret_cast<void *>(*WinDDSurface);
+        void *iface = DirectDrawSurface;
         if (iface != 0) {
             IfaceGetHdcProc fn = (*reinterpret_cast<IfaceGetHdcProc **>(iface))[17];
             fn(iface, &WinSharedHdc);
             hdc = WinSharedHdc;
         } else {
-            WinSharedHdc = GetDC(reinterpret_cast<HWND>(*WinMainHwnd));
+            WinSharedHdc = GetDC(HandleMain);
             hdc = WinSharedHdc;
         }
         if (hdc == 0) {
@@ -9451,9 +9458,9 @@ void Win::sub_5ef1e0(int x1, int y1, int x2, int y2, void *pen, int unused6) {
         WinHdcRefCount = 1;
     }
     if (hdc != 0) {
-        if ((int)field_184_ != *reinterpret_cast<int *>(*WinPalette + 0x400)) {
-            (*reinterpret_cast<Palette **>(WinPalette))->set_active_window(this);
-            field_184_ = *reinterpret_cast<unsigned int *>(*WinPalette + 0x400);
+        if ((int)field_184_ != PaletteActive->seed_) {
+            PaletteActive->set_active_window(this);
+            field_184_ = *reinterpret_cast<unsigned int *>(PaletteActive + 0x400);
         }
 
         void *oldPen = SelectObject(WinSharedHdc, pen);
@@ -9466,14 +9473,14 @@ void Win::sub_5ef1e0(int x1, int y1, int x2, int y2, void *pen, int unused6) {
 
         WinHdcRefCount = WinHdcRefCount - 1;
         if (WinHdcRefCount == 0) {
-            void *iface2 = reinterpret_cast<void *>(*WinDDSurface);
+            void *iface2 = DirectDrawSurface;
             if (iface2 != 0) {
                 IfaceReleaseHdcProc fn2 = (*reinterpret_cast<IfaceReleaseHdcProc **>(iface2))[26];
                 fn2(iface2, WinSharedHdc);
                 WinSharedHdc = 0;
                 return;
             }
-            ReleaseDC(reinterpret_cast<HWND>(*WinMainHwnd), WinSharedHdc);
+            ReleaseDC(HandleMain, WinSharedHdc);
             WinSharedHdc = 0;
         }
     }
@@ -9807,7 +9814,7 @@ void Win::update_window_to_buffer(Buffer * buffer) {
         iSomeFlag_ = flags9c | 1;
         WinZOrderCount = 0;
         if (0 < WinRootCount) {
-            Win **piVar4 = reinterpret_cast<Win **>(g_zorder_list);
+            Win **piVar4 = WinRootWindows;
             int iVar2 = reinterpret_cast<int>(WinZOrderWindow);
             do {
                 if (iVar2 != 0 && iVar2 == (int)*piVar4) {
@@ -9862,7 +9869,7 @@ void Win::update_window_to_buffer(Buffer * buffer) {
         iVar3 = 0;
         WinZOrderCount = 0;
         if (0 < WinRootCount) {
-            Win **piVar4 = reinterpret_cast<Win **>(g_zorder_list);
+            Win **piVar4 = WinRootWindows;
             int iVar2 = reinterpret_cast<int>(WinZOrderWindow);
             do {
                 if (iVar2 != 0 && iVar2 == (int)*piVar4) {
@@ -10041,7 +10048,7 @@ typedef long (__stdcall *Fn2)(void *, void *);
 long Win::on_activate(unsigned int state, void * other, long minimized) {
     if (state != 0 && minimized == 0 && BufferDirectDraw == 0) {
         if (WinHdcRefCount == 0) {
-            int obj = *WinDDSurface;
+            IDirectDrawSurface *obj = DirectDrawSurface;
             if (obj == 0) {
                 WinSharedHdc = GetDC(HandleMain);
             } else {
@@ -10061,7 +10068,7 @@ long Win::on_activate(unsigned int state, void * other, long minimized) {
             RealizePalette(WinSharedHdc);
             WinHdcRefCount = WinHdcRefCount - 1;
             if (WinHdcRefCount == 0) {
-                int obj = *WinDDSurface;
+                IDirectDrawSurface *obj = DirectDrawSurface;
                 if (obj == 0) {
                     ReleaseDC(HandleMain, WinSharedHdc);
                 } else {
@@ -10218,12 +10225,12 @@ void Win::paint_tiled(Buffer *tile, int x_origin, int y_origin, int clip_left,
     }
 
     if (WinHdcRefCount == 0) {
-        if (*WinDDSurface == 0) {
+        if (DirectDrawSurface == 0) {
             WinSharedHdc = GetDC(
-                reinterpret_cast<HWND>(*WinMainHwnd));
+                HandleMain);
         } else {
-            ComSlot017 fn = (ComSlot017)(*reinterpret_cast<void ***>(*WinDDSurface))[17];
-            fn(reinterpret_cast<void *>(*WinDDSurface), WinSharedHdc);
+            ComSlot017 fn = (ComSlot017)(*reinterpret_cast<void ***>(DirectDrawSurface))[17];
+            fn(DirectDrawSurface, WinSharedHdc);
         }
         if (WinSharedHdc == 0) {
             return;
@@ -10237,9 +10244,9 @@ void Win::paint_tiled(Buffer *tile, int x_origin, int y_origin, int clip_left,
         return;
     }
 
-    if (field_184_ != *reinterpret_cast<uint32_t *>(*WinPalette + 0x400)) {
+    if (field_184_ != *reinterpret_cast<uint32_t *>(PaletteActive + 0x400)) {
         (*g_SetActiveWindow)(this);
-        field_184_ = *reinterpret_cast<uint32_t *>(*WinPalette + 0x400);
+        field_184_ = *reinterpret_cast<uint32_t *>(PaletteActive + 0x400);
     }
 
     RECT clip_rect;
@@ -10288,14 +10295,14 @@ void Win::paint_tiled(Buffer *tile, int x_origin, int y_origin, int clip_left,
     }
 
     if (--WinHdcRefCount == 0) {
-        if (*WinDDSurface != 0) {
-            ComSlot026 fn = (ComSlot026)(*reinterpret_cast<void ***>(*WinDDSurface))[26];
-            fn(reinterpret_cast<void *>(*WinDDSurface), WinSharedHdc);
+        if (DirectDrawSurface != 0) {
+            ComSlot026 fn = (ComSlot026)(*reinterpret_cast<void ***>(DirectDrawSurface))[26];
+            fn(DirectDrawSurface, WinSharedHdc);
             WinSharedHdc = 0;
             return;
         }
         ReleaseDC(
-            reinterpret_cast<HWND>(*WinMainHwnd), WinSharedHdc);
+            HandleMain, WinSharedHdc);
         WinSharedHdc = 0;
     }
 }
@@ -10739,7 +10746,7 @@ int __cdecl Win::OnQueryNewPalette(void * a1) {
         WinHdcRefCount = eax;
         eax = reinterpret_cast<int>(WinSharedHdc);
     } else {
-        eax = *WinDDSurface;
+        eax = reinterpret_cast<int>(DirectDrawSurface);
         if (eax != 0) {
             int *vtbl = *reinterpret_cast<int **>(eax);
             (*reinterpret_cast<NotifyFn>(vtbl[0x44 / 4]))(reinterpret_cast<void *>(eax), &WinSharedHdc);
@@ -10753,7 +10760,7 @@ int __cdecl Win::OnQueryNewPalette(void * a1) {
             // GetDC call in the macro above, BYTE_EXACT), and it restores
             // the direct indirect-call encoding.
             eax = reinterpret_cast<int>(GetDC(
-                reinterpret_cast<HWND>(*WinMainHwnd)));
+                HandleMain));
             WinSharedHdc = reinterpret_cast<HDC>(eax);
         }
         if (eax == 0) {
@@ -10778,7 +10785,7 @@ int __cdecl Win::OnQueryNewPalette(void * a1) {
         return 0;
     }
 
-    eax = *WinDDSurface;
+    eax = reinterpret_cast<int>(DirectDrawSurface);
     if (eax != 0) {
         int *vtbl = *reinterpret_cast<int **>(eax);
         (*reinterpret_cast<ReleaseFn>(vtbl[0x68 / 4]))(reinterpret_cast<void *>(eax), &WinSharedHdc);
@@ -10786,7 +10793,7 @@ int __cdecl Win::OnQueryNewPalette(void * a1) {
         return 0;
     }
 
-    ReleaseDC(reinterpret_cast<HWND>(*WinMainHwnd),
+    ReleaseDC(HandleMain,
               WinSharedHdc);
     WinSharedHdc = 0;
     return 0;
@@ -10866,7 +10873,7 @@ long __cdecl Win::OnActivate(void *hwnd, unsigned int state, void *other,
             WinHdcRefCount = WinHdcRefCount + 1;
             hdc = WinSharedHdc;
         } else {
-            void *iface = reinterpret_cast<void *>(*WinDDSurface);
+            void *iface = DirectDrawSurface;
             if (iface != 0) {
                 IfaceGetHdcProc fn = (*reinterpret_cast<IfaceGetHdcProc **>(iface))[17];
                 fn(iface, &WinSharedHdc);
@@ -10885,7 +10892,7 @@ long __cdecl Win::OnActivate(void *hwnd, unsigned int state, void *other,
 
             WinHdcRefCount = WinHdcRefCount - 1;
             if (WinHdcRefCount == 0) {
-                void *iface2 = reinterpret_cast<void *>(*WinDDSurface);
+                void *iface2 = DirectDrawSurface;
                 if (iface2 != 0) {
                     IfaceReleaseHdcProc fn2 = (*reinterpret_cast<IfaceReleaseHdcProc **>(iface2))[26];
                     fn2(iface2, WinSharedHdc);
