@@ -109,7 +109,7 @@ int Midi::set_nswitch_threads(unsigned long a1) {
 /*
 Purpose: ?map_patch@Midi@@QAEHPADKK@Z - forward 3 argument(s) to slot 0xdc of the
          object at +0x3c, answering 0x14 when that object is absent.
-// ORIGINAL: 0x004C7860 ?map_patch@Midi@@QAEHPADKK@Z 0x004C7860-0x004C788B
+// ORIGINAL: 0x004C7860 ?map_patch@Midi@@QAEHPADKK@Z 0x004C7860-0x004C788B SEMANTIC
 // size      43 bytes
 // prototype int (__thiscall ?map_patch@Midi@@QAEHPADKK@Z)(Midi* this, int8*, unsigned int, unsigned int)
 // callers   0   call targets   0
@@ -129,7 +129,7 @@ int Midi::map_patch(char *a1, unsigned long a2, unsigned long a3) {
 /*
 Purpose: ?map_patch@Midi@@QAEHPADK@Z - forward 2 argument(s) to slot 0xd8 of the
          object at +0x3c, answering 0x14 when that object is absent.
-// ORIGINAL: 0x004C7890 ?map_patch@Midi@@QAEHPADK@Z 0x004C7890-0x004C78B7
+// ORIGINAL: 0x004C7890 ?map_patch@Midi@@QAEHPADK@Z 0x004C7890-0x004C78B7 SEMANTIC
 // size      39 bytes
 // prototype int (__thiscall ?map_patch@Midi@@QAEHPADK@Z)(Midi* this, int8*, unsigned int)
 // callers   0   call targets   0
@@ -248,7 +248,7 @@ int Midi::unmute_track(unsigned long a1) {
 /*
 Purpose: ?set_active_tracks@Midi@@QAEHKK@Z - forward 2 argument(s) to slot 0x94 of the
          object at +0x3c, answering 0x14 when that object is absent.
-// ORIGINAL: 0x004C79C0 ?set_active_tracks@Midi@@QAEHKK@Z 0x004C79C0-0x004C79E7
+// ORIGINAL: 0x004C79C0 ?set_active_tracks@Midi@@QAEHKK@Z 0x004C79C0-0x004C79E7 SEMANTIC
 // size      39 bytes
 // prototype int (__thiscall ?set_active_tracks@Midi@@QAEHKK@Z)(Midi* this, unsigned int, unsigned int)
 // callers   0   call targets   0
@@ -268,7 +268,7 @@ int Midi::set_active_tracks(unsigned long a1, unsigned long a2) {
 /*
 Purpose: ?set_active_tracks@Midi@@QAEHI@Z - forward 1 argument(s) to slot 0x90 of the
          object at +0x3c, answering 0x14 when that object is absent.
-// ORIGINAL: 0x004C79F0 ?set_active_tracks@Midi@@QAEHI@Z 0x004C79F0-0x004C7A13
+// ORIGINAL: 0x004C79F0 ?set_active_tracks@Midi@@QAEHI@Z 0x004C79F0-0x004C7A13 SEMANTIC
 // size      35 bytes
 // prototype int (__thiscall ?set_active_tracks@Midi@@QAEHI@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
