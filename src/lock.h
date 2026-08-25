@@ -55,7 +55,7 @@ class Lock {
     Entry entries[2];
   };
   Record records_[8];
-  uint32_t field_E0_;
+  uint32_t field_E0_;  // 0x00e0
   uint32_t field_E4_;
   uint32_t field_E8_;
 };

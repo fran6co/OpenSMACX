@@ -88,7 +88,7 @@ class Scroll : public ScrollGraphicWin {
  private:
   friend class Win;
 
-  uint32_t field_A14_;
+  uint32_t field_A14_;  // 0x0a14
   uint32_t field_A18_;
   int border_color_;
   int range_minimum_;

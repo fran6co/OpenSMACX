@@ -97,7 +97,7 @@ class Wave_In_Device {
   int end_record();
  private:
   uint32_t vtable_storage_;
-  uint32_t field_4_;
+  uint32_t field_4_;  // 0x0004
   uint32_t field_8_;
   uint32_t field_C_;
   uint32_t field_10_;

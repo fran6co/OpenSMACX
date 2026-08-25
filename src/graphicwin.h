@@ -95,7 +95,7 @@ class GraphicWin : public Win, public Buffer {
   // zero-argument one above. StatusWin::redraw calls it BY NAME.
   void soft_update(RECT *area);
  private:
-  uint32_t field_9CC_;
+  uint32_t field_9CC_;  // 0x09cc
   uint32_t field_9D0_;
   uint32_t field_9D4_;
   uint32_t field_9D8_;
