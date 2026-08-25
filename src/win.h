@@ -989,13 +989,9 @@ static int * const WinPopupWindow = (int *)0x009B23B4;
 static int * const WinDialogList = (int *)0x009B2494;
 static int * const WinPopupCount = (int *)0x009B26EC;
 static int * const WinScreenClipRect = (int *)0x009B74C0;
-static int * const WinGlobalCallback = (int *)0x009B7A90;
-static int * const WinMouseCallback = (int *)0x009B7A94;
 static int * const WinKeyModifiers = (int *)0x009B7B18;
-static int * const WinMainHwnd = (int *)0x009B7B28;
 static int * const WinKeyRingStart = (int *)0x009B7B48;
 static int * const WinKeyRingEnd = (int *)0x009B7B51;
-static int * const WinPalette = (int *)0x009B8180;
 static int * const WinModalFocus = (int *)0x009B8D7C;
 static int * const WinTitleBarHeight = (int *)0x009B8DD4;
 static int * const WinDirtyRect = (int *)0x009B6EE8;
@@ -1017,7 +1013,6 @@ static int * const WinCallbackWindow = (int *)0x009B7AB8;
 static int * const WinInputFocus = (int *)0x009B7AC4;
 static int * const WinActiveWindow = (int *)0x009B7AC8;
 static int * const WinPendingFocus = (int *)0x009B7B38;
-static int * const WinDDSurface = (int *)0x009BC498;
 // `int *const`, for the same reason g_GetDC above carries that type: a
 // fixed-address binding folds to its immediate only in this spelling. As
 // `void **const` it compiled `mov eax, dword ptr [0]` in Win::redraw - the
@@ -1027,4 +1022,3 @@ static int * const WinDDSurface = (int *)0x009BC498;
 static int * const g_win_array = (int *)0x009B6630;
 static uint32_t * const WinStaticDefaults = (uint32_t *)0x00696D34;
 static uint32_t * const WinDynamicDefaults = (uint32_t *)0x009B7AF0;
-static Win ** const g_zorder_list = (Win **)0x009B6E48;
