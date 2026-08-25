@@ -186,7 +186,7 @@ void PlanWin::close() {
     // `mov [ecx + 0x21a68], 0` then TAIL-JUMPS to MapWin::close; routing the
     // store through a helper call blocks that tail call and costs the claim.
     // The pun of `this` is the price of the tail jump, and it is measured.
-    *reinterpret_cast<int32_t *>(reinterpret_cast<char *>(this) + 0x21A68) = 0;
+    field_21A68_ = 0;
     MapWin::close();
 }
 

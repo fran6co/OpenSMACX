@@ -111,7 +111,7 @@ EditGroup::EditGroup(int a1) {
     // same global into the same slot, but a member access keeps `this`
     // live differently and VC6 then holds it in ebx where the image uses
     // ebp - 25 of 34 instead of 34 of 34.
-    *reinterpret_cast<uint32_t *>(self + 0x84) = EditGroupDefault;
+    field_84_ = EditGroupDefault;
 }
 
 /*
@@ -308,7 +308,7 @@ void EditGroup::close() {
     // same global into the same slot, but a member access keeps `this`
     // live differently and VC6 then holds it in ebx where the image uses
     // ebp - 25 of 34 instead of 34 of 34.
-    *reinterpret_cast<uint32_t *>(self + 0x84) = EditGroupDefault;
+    field_84_ = EditGroupDefault;
 
     char *vtable = *reinterpret_cast<char **>(self);
     int voffset = *reinterpret_cast<int *>(vtable + 8);

@@ -61,21 +61,21 @@ Status: Complete
 void EditBox::close() {
     char *self = reinterpret_cast<char *>(this);
 
-    *reinterpret_cast<unsigned char *>(self + 0xa14) = 0;
-    *reinterpret_cast<int *>(self + 0xb14) = 0xa;
-    *reinterpret_cast<int *>(self + 0xb28) = EditBoxDefaultB28;
-    *reinterpret_cast<int *>(self + 0xb2c) = EditBoxDefaultB2C;
-    *reinterpret_cast<int *>(self + 0xb30) = EditBoxDefaultB30;
-    *reinterpret_cast<int *>(self + 0xb34) = EditBoxDefaultB34;
-    *reinterpret_cast<int *>(self + 0xb1c) = EditBoxDefaultB1C;
-    *reinterpret_cast<int *>(self + 0xb20) = EditBoxDefaultB20;
-    *reinterpret_cast<int *>(self + 0xb24) = EditBoxDefaultB24;
-    *reinterpret_cast<int *>(self + 0xb38) = 0;
-    *reinterpret_cast<int *>(self + 0xb40) = 0;
-    *reinterpret_cast<int *>(self + 0xb44) = 0;
+    field_A14_ = 0;
+    field_B14_ = 0xa;
+    field_B28_ = EditBoxDefaultB28;
+    field_B2C_ = EditBoxDefaultB2C;
+    field_B30_ = EditBoxDefaultB30;
+    field_B34_ = EditBoxDefaultB34;
+    field_B1C_ = EditBoxDefaultB1C;
+    field_B20_ = EditBoxDefaultB20;
+    field_B24_ = EditBoxDefaultB24;
+    field_B38_ = 0;
+    field_B40_ = 0;
+    field_B44_ = 0;
     field_B48_ = 0;
-    *reinterpret_cast<int *>(self + 0xb18) = 0;
-    *reinterpret_cast<int *>(self + 0xb3c) = 0;
+    field_B18_ = 0;
+    field_B3C_ = 0;
 
     reinterpret_cast<Time *>(self + 0xb4c)->close();
     reinterpret_cast<GraphicWin *>(self)->close();
