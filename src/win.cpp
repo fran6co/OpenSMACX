@@ -296,6 +296,14 @@ int Win::move(int x, int y) {
     // call, where a shared helper compiles to 14 and a reference bound to the
     // ternary compiles to the same. Reaching each rectangle by name is what
     // gives VC6 the two straight-line arms the image has.
+    //
+    // TRIED: 4 of 43, and computing `dy` before `dx` - the image loads
+    // `[ecx+0x150]` before `[ecx+0x14c]` - changes nothing. The real
+    // divergence is earlier and is register pressure: the image reads its
+    // argument out of the frame BEFORE the branch and needs one callee-saved
+    // register, where this body pushes edi as well and reads the argument
+    // after. Source statement order does not reach that; it is the same
+    // shape as the receiver-spill wall recorded in AGENT_BRIEF.
     if (iSomeFlag_ & 2U) {
         const int dx = x - client_rect_.left;
         const int dy = y - client_rect_.top;
