@@ -49,14 +49,27 @@ def tree_files():
         yield p
 
 
+# `Win *WinModalStack[4];     // 0x009B6EF8` - a REAL global with storage of
+# its own, carrying the image address in a trailing comment. This is the
+# tree's other way of naming an image global, and reading only BINDING missed
+# it: 0x009B6EF8 already had the exact name this tool was about to invent for
+# it, and the collision surfaced as a compiler redefinition rather than as
+# the duplicate it is.
+ANNOTATED = re.compile(r"^\s*(?:static\s+|extern\s+)?[\w:]+[\s\*&]+(\w+)"
+                       r"\s*(?:\[[^\]]*\])?\s*;\s*//\s*0x(00[0-9A-Fa-f]{6})\b")
+
+
 def named_addresses() -> dict[str, set[str]]:
-    """address -> the non-anonymous names already bound to it."""
+    """address -> the non-anonymous names already bound to it, in EITHER of
+    the tree's two spellings: a fixed-address binding, or a real global whose
+    trailing comment records the address."""
     out = collections.defaultdict(set)
     for p in tree_files():
         for line in p.read_text(errors="replace").splitlines():
-            m = BINDING.match(line)
-            if m and not m.group(1).startswith("g_00"):
-                out[m.group(2).lower()].add(m.group(1))
+            for rx, gname, gaddr in ((BINDING, 1, 2), (ANNOTATED, 1, 2)):
+                m = rx.match(line)
+                if m and not m.group(gname).startswith("g_00"):
+                    out[m.group(gaddr).lower()].add(m.group(gname))
     return out
 
 
@@ -81,8 +94,34 @@ def sheet(target: pathlib.Path) -> int:
     return 0
 
 
+def taken_identifiers() -> set[str]:
+    """Every identifier the tree already declares at file scope. A rename
+    that lands on one of these does NOT fail loudly - it silently rebinds
+    use sites to a DIFFERENT ADDRESS. Measured 2026-08-25: renaming
+    0x009B7A40 to `WinScreenWidth` pointed sixteen dereferences at win.h's
+    real `int WinScreenWidth` (0x009B7B1C). The compiler caught those only
+    because the collision changed pointer to int; a same-typed collision
+    would have compiled and been wrong."""
+    out = set()
+    for p in tree_files():
+        for line in p.read_text(errors="replace").splitlines():
+            m = re.match(r"\s*(?:static\s+|extern\s+)?[\w:]+[\s\*&]+(\w+)\s*[;=]",
+                         line)
+            if m:
+                out.add(m.group(1))
+    return out
+
+
 def apply(target: pathlib.Path, mapping: dict) -> int:
     known = named_addresses()
+    taken = taken_identifiers()
+    clash = {a: n for a, n in mapping.items() if n in taken}
+    if clash:
+        for a, n in clash.items():
+            print(f"REFUSED 0x{a.upper()}: `{n}` is already declared in this "
+                  f"tree - the rename would silently point its use sites at "
+                  f"a different address. Pick another name.")
+        return 1
     bad = [a for a in mapping if a.lower() in known]
     if bad:
         for a in bad:

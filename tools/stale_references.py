@@ -51,9 +51,17 @@ SOURCE = re.compile(r"\bsrc/[A-Za-z0-9_/]+\.(?:cpp|h)\b")
 # Measured against the tree: 83 references name a source path that is gone, and
 # 58 of them already say so. Prose that records where a body CAME FROM is
 # history and stays true - what is left is the live claims.
+# `homed from` BELONGS HERE BY CONSTRUCTION, for the same reason
+# `was deleted` belongs in RETRACTED below: it is the tree's own word for
+# "moved here from", which is already in this list. Homing a body deletes
+# its artifact file, and the comment recording where the body CAME FROM is
+# history that stays true. Without the word, the check refuses a true
+# statement - and the tempting fix is to reword the comment into something
+# vaguer that passes, trading a fact for a phrasing. Add the vocabulary.
 GONE = re.compile(
-    r"deleted|retired|promoted|merged from|moved here from|went into|"
-    r"no longer|used to|was replaced|scratch artifact|earlier", re.I)
+    r"deleted|retired|promoted|merged from|moved here from|homed from|"
+    r"went into|no longer|used to|was replaced|scratch artifact|earlier",
+    re.I)
 # A mention is IMPERATIVE when its line tells the reader to do something with
 # the tool. That distinction is the whole point: `docs/RETIRED_ROUTES.md`
 # naming a retired tool is correct and must not fail this check, while

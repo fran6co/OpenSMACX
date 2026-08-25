@@ -79,6 +79,10 @@ class Win : public AutoSound {
   // is a free function (both member spellings were measured and
   // refuted), and it reads `iFlags_` the way the image does.
   friend void __cdecl add_parent(Win *);
+  // Homed into win.cpp 2026-08-25. It walks a window's children and
+  // reads the same private fields the class's own z-order code does;
+  // the image treats it as part of Win even though it is not a member.
+  friend void __cdecl recurse_zorder(Win *window);
  public:
   // homed from 005f1340.cpp
   bool __cdecl OnPaint(void * a1);
@@ -233,7 +237,7 @@ class Win : public AutoSound {
                                        WPARAM wparam, LPARAM lparam);
   static void clear_bubble_text();
   static void set_def_focus(int focus);
-  void UNK8(int value);
+  void set_scroll_sprite(int value);
   void UNK9(int value);
   void reset_window_clip();
   void sync_palette();
@@ -512,7 +516,10 @@ class Win : public AutoSound {
   int get_rbutton_state();
   void left_down_event(int a1, int a2, int a3);
   int on_redraw(int, int);
-  int redraw_nc_buffer(int a1);
+  // Returns Buffer *, not int: every arm of its switch returns one of the
+  // four render buffers. The `int` was the raw-offset form's type leaking
+  // into the signature. Unclaimed, so no marker moves with this.
+  Buffer *redraw_nc_buffer(int index);
   void __cdecl remove_parent(Win* a1);
   void set_border_thickness(int a1);
   void set_parent_dialog(Win *a1);
@@ -749,6 +756,8 @@ void __cdecl recurse_zorder(Win *window);
 // 0x005F6AB0. The tree walk `get_mouse_window` delegates to once it has a
 // subtree and a position in that subtree's coordinates.
 Win *__cdecl get_mouse_window_recurse(Win *window, int *x, int *y);
+// 0x0063C4E0, homed into win.cpp.
+void __cdecl sub_63c4e0(int a1);
 
 // 0x009B7B3C. Cleared on every WM_MOUSEMOVE and read by
 // `Win::update_cursor`, which is the only other function that touches it.
@@ -766,8 +775,10 @@ extern void(__cdecl *WinMouseHook)(HWND window, LPARAM position);
 extern void(__cdecl *WinKeyHook)(WPARAM key);
 
 // 0x005F86A0. The one thing `window_proc`'s WM_SYSCOMMAND arm calls that is
-// not a `Win` member; byte-exact in src/recovered/005f86a0.cpp.
-extern "C" void __stdcall sub_5f86a0(int a1);
+// not a `Win` member. Its body was homed from src/recovered/005f86a0.cpp
+// into win.cpp and measures BYTE_EXACT there.
+// 0x005F86A0, homed into win.cpp.
+void __stdcall sub_5f86a0(int a1);
 
 
 // The cursor refresh this setter triggers is a 2528-byte body with six call

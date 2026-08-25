@@ -37,7 +37,7 @@ REPO = pathlib.Path(__file__).resolve().parent.parent
 
 # Measured 2026-08-22 on a clean tree. Lower a ceiling when its count falls.
 SHAPES = [
-    ("vtable", 24,
+    ("vtable", 19,
      re.compile(r"""(?x)
         (?: \w+ \s* \[ \s* 0x[0-9A-Fa-f]+ \s* / \s* 4 \s* \]
           | \* \s* reinterpret_cast \s* < [^>]*? \* \s* > \s* \([^)]*\)
@@ -91,7 +91,7 @@ SHAPES = [
      "reads the target out of a vtable slot by hand because the method is not "
      "declared virtual. Declare it - the compiler writes this dispatch."),
 
-    ("ORIGINAL() named-pointer seam", 121,
+    ("ORIGINAL() named-pointer seam", 108,
      re.compile(r"\bORIGINAL\((?!.*vtable\[)"),
      "reaches a member through a function-pointer slot, which compiles "
      "`FF 15` where the image has `E8`. Call it by name once its body lands."),
@@ -103,7 +103,7 @@ SHAPES = [
 # 10 -> 20, VCall 21 -> 23, named-pointer seam 121 -> 123 - measured
 # 2026-08-23). Same ratchet, narrower lens.
 HEADER_SHAPES = [
-    ("vtable-as-member", 11,
+    ("vtable-as-member", 10,
      re.compile(r"\b[A-Za-z_]\w*\s+vtable\w*\s*;"),
      "a vtable pointer spelled as a data member is a base class that has "
      "not been declared. Declare the base whose vfptr lives at that offset "
@@ -112,7 +112,7 @@ HEADER_SHAPES = [
      re.compile(r"\w+\s*\(\s*[A-Za-z_]\w*Vtable\w*\s*\)"),
      "a base installed by an initialiser-list store is a base that has not "
      "been declared (Win's second base at 0xC8). Declare it."),
-    ("vtable address constant", 76,
+    ("vtable address constant", 75,
      re.compile(r"\b[A-Za-z_]\w*Vtable\w*\s*=\s*\(?\s*0x"),
      "the raw material every hand-installed vtable is built from. When the "
      "classes are real, these constants have nothing left to point at."),
@@ -122,7 +122,7 @@ HEADER_SHAPES = [
     # what lets this ratchet fall in class-pass-sized steps. Homing imports
     # bindings from the artifacts (6ee2b94a) - this ceiling is what forces
     # it to import them NAMED.
-    ("anonymous fixed-address global", 213,
+    ("anonymous fixed-address global", 103,
      re.compile(r"\bg_00[0-9a-f]{4,6}\b"),
      "a global named by its address instead of its meaning. Name it from "
      "evidence - the image's .data value, the arithmetic identity, the "
@@ -149,9 +149,9 @@ SCAFFOLD_CEILINGS = {
     "leaf_recoveries.cpp markers": 53,
     "nullsub_thunks.cpp markers": 56,
     "guarded_teardowns.cpp markers": 25,
-    "PENDING_BODY forwarders": 230,
-    "artifact files (recovered/)": 1388,
-    "unrecovered files": 1739,
+    "PENDING_BODY forwarders": 226,
+    "artifact files (recovered/)": 1339,
+    "unrecovered files": 1696,
     "hypothesis_layouts.h lines": 2709,
 }
 
@@ -192,6 +192,28 @@ def census(root):
     return counts, files
 
 
+def _code_lines(path):
+    """Non-comment lines, and that includes `/* */` INTERIORS. This walk
+    skipped only `//`-prefixed lines, so a Purpose block explaining why a
+    homed body's `g_00612bf8` binding was dropped COUNTED that mention as a
+    live anonymous global. class_debt.py already had this fix; the two
+    censuses disagreed about what a comment is."""
+    in_block = False
+    for line in path.read_text(errors="replace").splitlines():
+        s = line.lstrip()
+        if in_block:
+            if "*/" in s:
+                in_block = False
+            continue
+        if s.startswith(("//", "*")):
+            continue
+        if s.startswith("/*"):
+            if "*/" not in s:
+                in_block = True
+            continue
+        yield line.split("//", 1)[0]
+
+
 def _skipped(path) -> bool:
     """Directories no census counts: the artifact archives (they die by
     homing, not by cleanup) and the vendored zlib (not our code to fix)."""
@@ -213,9 +235,7 @@ def census_by_file(root):
     for path in sorted(root.rglob("*.cpp")):
         if _skipped(path):
             continue
-        for line in path.read_text(errors="replace").splitlines():
-            if line.lstrip().startswith("//"):
-                continue
+        for line in _code_lines(path):
             # SHAPES are .cpp-only BY MEASUREMENT: loosing them on headers
             # counts DECLARATIONS as sites (free-function destructor alone
             # went 10 -> 20). HEADER_SHAPES were measured over BOTH.
@@ -231,9 +251,7 @@ def census_by_file(root):
     for path in sorted(root.rglob("*.h")):
         if _skipped(path):
             continue
-        for line in path.read_text(errors="replace").splitlines():
-            if line.lstrip().startswith("//"):
-                continue
+        for line in _code_lines(path):
             for name, _ceiling, rx, _why in HEADER_SHAPES:
                 n = len(rx.findall(line))
                 if n:

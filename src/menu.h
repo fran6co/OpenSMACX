@@ -91,6 +91,20 @@ class Menu : public GraphicWin {
   uint32_t field_A28_;
   Spot spot_;
   MenuEntry entries_[15];
+
+ public:
+  // MENU'S OWN VTABLE SLOTS, derived from a dispatch the image spells out.
+  // Win declares 0..87 and GraphicWin appends on_dialog_focus and
+  // on_mouse_leave at 88 and 89, so Menu's first addition is 90.
+  // `Win::adjust_menus` (0x005F0540, BYTE_EXACT) calls this object at
+  // `[vtable + 0x174]` = slot 93, which is what fixes the count at four:
+  // three unnamed slots and the one the dispatch proves exists. Naming any
+  // of them is a later measurement; the declaration is what lets the
+  // compiler emit the dispatch instead of a fake-class shim.
+  virtual void vslot_90() {}
+  virtual void vslot_91() {}
+  virtual void vslot_92() {}
+  virtual void vslot_93() {}
 };
 
 static_assert(sizeof(Menu) == 0xB64, "Menu layout must match the legacy ABI");

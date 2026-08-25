@@ -556,3 +556,37 @@ void *__fastcall dialogs_scalar_dtor_redirect(void *adjusted, void *,
     }
     return base;
 }
+
+/*
+Purpose: Route a mouse move to whichever control this Dialogs subobject is
+         embedded in - the `kind_` at this-8 says which, and each case steps
+         back to the enclosing control's own base. HOMED from
+         src/unrecovered/00612b80.cpp on 2026-08-25 to retire its
+         pending_bodies forwarder. The artifact's `g_00612bf8` binding was
+         unused scaffold pointing at this function's own end address and did
+         not come with it.
+*/
+// ORIGINAL: 0x00612B80 ?on_mouse_move@Dialogs@@QAEXHH@Z 0x00612B80-0x00612BF8 FILE BYTE_EXACT
+// symbol    ?on_mouse_move@Dialogs@@QAEXHH@Z
+// size      120 bytes
+// kind      game
+void Dialogs::on_mouse_move(int a1, int a2) {
+    char *self = reinterpret_cast<char *>(this);
+    int type = *(int *)(self - 8);
+    switch (type) {
+        case 16:
+            ((RadioButton *)(self - 0x12c))->on_mouse_move(a1, a2);
+            break;
+        case 2:
+            ((ListBox *)(self - 0x140))->on_mouse_move(a1, a2);
+            break;
+        case 1:
+            ((CheckBox *)(self - 0x114))->on_mouse_move(a1, a2);
+            break;
+        case 8:
+            ((SpriteBox *)(self - 0x8c))->on_mouse_move(a1, a2);
+            break;
+        default:
+            break;
+    }
+}
