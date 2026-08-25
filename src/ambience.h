@@ -90,7 +90,7 @@ class FactionAmbience : public Ambience {
   FactionAmbience *construct();
 
  private:
-  uint32_t field_58_;
+  uint32_t field_58_;  // 0x0058
   uint32_t field_5C_;
   uint32_t field_60_;
   uint32_t field_64_;
@@ -135,7 +135,7 @@ class MAmbience : public Ambience {
   MAmbience *construct();
 
  private:
-  uint32_t field_58_;
+  uint32_t field_58_;  // 0x0058
   uint32_t field_5C_;
   uint32_t field_60_;
   uint32_t field_64_;
@@ -157,7 +157,7 @@ class SAmbience : public Ambience {
   SAmbience *construct();
 
  private:
-  uint32_t field_58_;
+  uint32_t field_58_;  // 0x0058
   uint32_t field_5C_;
   uint32_t field_60_;
   uint32_t field_64_;
