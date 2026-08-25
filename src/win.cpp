@@ -738,9 +738,21 @@ int WinModalResult;          // 0x009B6EF0
 int WinSavedAreaWidth;       // 0x009B6F88
 int WinSavedAreaHeight;      // 0x009B6F8C
 int WinSizingFlag;           // 0x009B7AD4
+int WinModalDepth;           // 0x009B7AE4
+int WinPopupCount;           // 0x009B26EC
+int WinDrawFlags;            // 0x009B238C
+int WinKeyModifiers;         // 0x009B7B18
+int WinViewOriginX;          // 0x009B7A70
+int WinViewOriginY;          // 0x009B7A74
+int WinFillColour;           // 0x00696D14
 int WinTrackingMode;       // 0x009B7AA8
 int WinTrackingX;          // 0x009B7AB0
 int WinTrackingY;          // 0x009B7AB4
+Buffer *WinBackBuffer;         // 0x009B7A68
+Win *WinModalFocus;         // 0x009B8D7C
+Win *WinPopupWindow;        // 0x009B23B4
+Win *WinTopDialog;          // 0x009B2300
+Win *WinPendingFocus;       // 0x009B7B38
 Win *WinZOrderWindow;      // 0x009B7A6C
 int WinZOrderCount;        // 0x009B7B30
 int WinZOrderFlag;         // 0x009B7A78
@@ -3522,7 +3534,7 @@ Win *__cdecl get_mouse_window_recurse(Win * window, int * x, int * y) {
 
     if (!in_box(*x, *y, reinterpret_cast<RECT *>(wc + 0x13c))) {
         // pixel-precise hit test against one of the window's four render buffers
-        unsigned char key = *reinterpret_cast<unsigned char *>(WinFillColour);
+        unsigned char key = static_cast<unsigned char>(WinFillColour);
         unsigned int flagsHere;
         int threshold1, threshold2;
         unsigned int pixel;
@@ -3606,7 +3618,7 @@ alt_path:
         {
             Buffer *buf = reinterpret_cast<Buffer *>(wc + 0x444);
             unsigned char pixel = (unsigned char)buf->get_pixel(*x, *y);
-            if (pixel != *reinterpret_cast<unsigned char *>(WinFillColour)) {
+            if (pixel != static_cast<unsigned char>(WinFillColour)) {
                 if (*reinterpret_cast<int *>(wc + 0xa0) == 0) {
                     return window;
                 }
@@ -3846,7 +3858,7 @@ void __cdecl OnSysKey(void *hwnd, unsigned int key, long flags, int repeat,
                       unsigned int scan) {
     int val;
     if (WinFocusWindow != nullptr) {
-        val = *WinModalFocus;
+        val = reinterpret_cast<int>(WinModalFocus);
         if (val == 0) {
             val = reinterpret_cast<int>(WinFocusWindow);
         }
@@ -4381,12 +4393,12 @@ void Win::release_modal() {
     // it there and stores it back; keeping `count` and computing
     // `last = count - 1` into a second register cost a `xor edx,edx`
     // for the compare and a `lea esi,[eax-1]` for the decrement.
-    int last = *WinModalDepth;
+    int last = WinModalDepth;
     if (last == 0) {
         return;
     }
     --last;
-    *WinModalDepth = last;
+    WinModalDepth = last;
     Win **top_ptr = &WinModalStack[last];
     if (*top_ptr == this) {
         *top_ptr = 0;
@@ -4408,7 +4420,7 @@ void Win::release_modal() {
             } while (i < last);
         }
         if (i == last) {
-            *WinModalDepth = last + 1;
+            WinModalDepth = last + 1;
             return;
         }
         if (i < last) {
@@ -5763,7 +5775,7 @@ void Win::update_nc_buffer(int a1) {
 void __cdecl OnChar(void *hwnd, char ch, int flags) {
     int result;
     if (WinFocusWindow != nullptr) {
-        result = *WinModalFocus;
+        result = reinterpret_cast<int>(WinModalFocus);
         if (result == 0) {
             result = reinterpret_cast<int>(WinFocusWindow);
         }
@@ -6745,23 +6757,23 @@ void Win::set_rects() {
 
         this->buffer1_->init(this->client_rect_.right - this->client_rect_.left, barH, 0, 0);
         this->buffer1_->sync_to_palette(PaletteActive);
-        this->buffer1_->fill(*reinterpret_cast<uint8_t *>(WinFillColour));
+        this->buffer1_->fill(static_cast<uint8_t>(WinFillColour));
 
         this->buffer4_->init(this->client_rect_.right - this->client_rect_.left, bottomBar, 0, 0);
         this->buffer4_->sync_to_palette(PaletteActive);
-        this->buffer4_->fill(*reinterpret_cast<uint8_t *>(WinFillColour));
+        this->buffer4_->fill(static_cast<uint8_t>(WinFillColour));
 
         this->buffer3_->init(this->border_thickness_,
                               (this->client_rect_.bottom - this->client_rect_.top) - bottomBar - barH,
                               0, 0);
         this->buffer3_->sync_to_palette(PaletteActive);
-        this->buffer3_->fill(*reinterpret_cast<uint8_t *>(WinFillColour));
+        this->buffer3_->fill(static_cast<uint8_t>(WinFillColour));
 
         this->buffer2_->init(this->border_thickness_,
                               (this->client_rect_.bottom - this->client_rect_.top) - bottomBar - barH,
                               0, 0);
         this->buffer2_->sync_to_palette(PaletteActive);
-        this->buffer2_->fill(*reinterpret_cast<uint8_t *>(WinFillColour));
+        this->buffer2_->fill(static_cast<uint8_t>(WinFillColour));
 
         this->on_redraw_nc(0, -1);
     }
@@ -7014,16 +7026,16 @@ void Win::on_nc_paint(RECT * area, int flags) {
         if (buffer1_ != 0 && (flags == -1 || flags == 0)) {
             Buffer *buf;
             int x, y;
-            if (*WinBackBuffer == 0) {
+            if (WinBackBuffer == 0) {
                 buf = (&ScreenBuffer);
                 x = stack8;
                 y = stack4;
             } else {
-                buf = reinterpret_cast<Buffer *>(*WinBackBuffer);
-                x = stack8 - *WinViewOriginX;
-                y = stack4 - *WinViewOriginY;
+                buf = WinBackBuffer;
+                x = stack8 - WinViewOriginX;
+                y = stack4 - WinViewOriginY;
             }
-            (&ScreenBuffer)->draw(buf, *WinFillColour, x, y, 1, 1);
+            (&ScreenBuffer)->draw(buf, WinFillColour, x, y, 1, 1);
         }
 
         if (buffer4_ != 0 && (flags == -1 || flags == 2)) {
@@ -7033,29 +7045,29 @@ void Win::on_nc_paint(RECT * area, int flags) {
             }
             Buffer *buf;
             int x;
-            if (*WinBackBuffer == 0) {
+            if (WinBackBuffer == 0) {
                 v = (client_rect_.bottom -
                      client_rect_.top) - v;
                 buf = (&ScreenBuffer);
                 x = stack8;
             } else {
                 v = ((client_rect_.bottom -
-                      client_rect_.top) - *WinViewOriginY) - v;
-                buf = reinterpret_cast<Buffer *>(*WinBackBuffer);
-                x = stack8 - *WinViewOriginX;
+                      client_rect_.top) - WinViewOriginY) - v;
+                buf = WinBackBuffer;
+                x = stack8 - WinViewOriginX;
             }
-            (&ScreenBuffer)->draw(buf, *WinFillColour, x, v + stack4, 1, 1);
+            (&ScreenBuffer)->draw(buf, WinFillColour, x, v + stack4, 1, 1);
         }
 
         if (buffer3_ != 0 && (flags == -1 || flags == 3)) {
-            if (*WinBackBuffer == 0) {
+            if (WinBackBuffer == 0) {
                 (&ScreenBuffer)
-                    ->draw((&ScreenBuffer), *WinFillColour, stack8,
+                    ->draw((&ScreenBuffer), WinFillColour, stack8,
                            stack4 + iVar1, 1, 1);
             } else {
                 (&ScreenBuffer)
-                    ->draw(reinterpret_cast<Buffer *>(*WinBackBuffer), *WinFillColour,
-                           stack8 - *WinViewOriginX, (iVar1 - *WinViewOriginY) + stack4, 1, 1);
+                    ->draw(WinBackBuffer, WinFillColour,
+                           stack8 - WinViewOriginX, (iVar1 - WinViewOriginY) + stack4, 1, 1);
             }
         }
 
@@ -7063,19 +7075,19 @@ void Win::on_nc_paint(RECT * area, int flags) {
             Buffer *buf;
             int v;
             int yv = iVar1;
-            if (*WinBackBuffer == 0) {
+            if (WinBackBuffer == 0) {
                 v = (client_rect_.right -
                      client_rect_.left) -
                     border_thickness_;
                 buf = (&ScreenBuffer);
             } else {
-                yv = iVar1 - *WinViewOriginY;
+                yv = iVar1 - WinViewOriginY;
                 v = ((client_rect_.right -
                       client_rect_.left) -
-                     border_thickness_) - *WinViewOriginX;
-                buf = reinterpret_cast<Buffer *>(*WinBackBuffer);
+                     border_thickness_) - WinViewOriginX;
+                buf = WinBackBuffer;
             }
-            (&ScreenBuffer)->draw(buf, *WinFillColour, v + stack8, yv + stack4, 1, 1);
+            (&ScreenBuffer)->draw(buf, WinFillColour, v + stack8, yv + stack4, 1, 1);
         }
 
         (&ScreenBuffer)->set_clip(reinterpret_cast<RECT *>(WinScreenClipRect));
@@ -7289,8 +7301,8 @@ Win *Win::get_key_window() {
         }
     } else {
         w = (char *)WinFocusWindow;
-        if (*WinModalFocus != 0) {
-            w = (char *)*WinModalFocus;
+        if (WinModalFocus != 0) {
+            w = (char *)WinModalFocus;
         }
     }
     *WinActiveWindow = (int)w;
@@ -7413,10 +7425,10 @@ void Win::update_back_to_window(Buffer * buffer) {
         return;
     }
 
-    *WinBackBuffer = reinterpret_cast<int>(buffer);
+    WinBackBuffer = buffer;
     WinZOrderWindow = 0;
-    *WinViewOriginX = 0;
-    *WinViewOriginY = 0;
+    WinViewOriginX = 0;
+    WinViewOriginY = 0;
 
     uint32_t savedFlags = iSomeFlag_;
     iSomeFlag_ = savedFlags & 0xfffffffe;
@@ -7435,28 +7447,28 @@ void Win::update_back_to_window(Buffer * buffer) {
 
     int tail;
     if (!(savedFlags & 2)) {
-        *WinViewOriginX += client_rect_.left + outer_rect_.left;
-        *WinViewOriginY += client_rect_.top + outer_rect_.top;
+        WinViewOriginX += client_rect_.left + outer_rect_.left;
+        WinViewOriginY += client_rect_.top + outer_rect_.top;
 
         if (!(iFlags_ & 0x20) ||
             win_parent_ == 0) {
             goto after_offset_fixup;
         }
-        this->client_to_screen(WinViewOriginX, WinViewOriginY);
+        this->client_to_screen(&WinViewOriginX, &WinViewOriginY);
         if (!(iFlags_ & 0x8000)) {
             goto after_offset_fixup;
         }
         {
             char *owner = reinterpret_cast<char *>(win_parent_);
-            *WinViewOriginX -= *reinterpret_cast<int *>(owner + 0x13c);
+            WinViewOriginX -= *reinterpret_cast<int *>(owner + 0x13c);
             tail = *reinterpret_cast<int *>(owner + 0x140);
         }
     } else {
-        this->client_to_screen(WinViewOriginX, WinViewOriginY);
-        *WinViewOriginX -= outer_rect_.left;
+        this->client_to_screen(&WinViewOriginX, &WinViewOriginY);
+        WinViewOriginX -= outer_rect_.left;
         tail = outer_rect_.top;
     }
-    *WinViewOriginY -= tail;
+    WinViewOriginY -= tail;
 after_offset_fixup:;
 
     RECT rect;
@@ -7474,16 +7486,16 @@ after_offset_fixup:;
 
     buffer->init(rect.right - rect.left, rect.bottom - rect.top, 0, 0);
 
-    int dx = *WinViewOriginX - rect.left;
-    int dy = *WinViewOriginY - rect.top;
-    rect.left = *WinViewOriginX;
-    rect.top = *WinViewOriginY;
+    int dx = WinViewOriginX - rect.left;
+    int dy = WinViewOriginY - rect.top;
+    rect.left = WinViewOriginX;
+    rect.top = WinViewOriginY;
     rect.right += dx;
     rect.bottom += dy;
 
     this->update_screen(&rect, 0);
 
-    *WinBackBuffer = 0;
+    WinBackBuffer = 0;
     WinZOrderWindow = 0;
     iSomeFlag_ = savedFlags;
 
@@ -7505,13 +7517,13 @@ typedef void *(__stdcall *PFN_LoadCursorA)(void *, const char *);
 typedef void *(__stdcall *PFN_SetCursor)(void *);
 
 int Win::set_modal(int flags, int (__cdecl *callback)(), Win * owner) {
-    if (*WinModalDepth >= 4) {
+    if (WinModalDepth >= 4) {
         return 0;
     }
-    int idx = *WinModalDepth;
+    int idx = WinModalDepth;
     WinModalStack[idx] = this;
     reinterpret_cast<void **>(WinFocusStack)[idx] = owner;
-    *WinModalDepth = idx + 1;
+    WinModalDepth = idx + 1;
     WinFocusWindow = this;
     WinPointerOwner1 = 0;
     WinPointerOwner2 = 0;
@@ -8642,10 +8654,10 @@ void Win::on_char(char param2, int param3) {
     }
 
     if (matched) {
-        if ((*(uint8_t *)WinDrawFlags & 1) == 0 ||
-            (*WinPopupWindow != 0 && ((Win *)*WinPopupWindow)->is_visible() == 0)) {
+        if ((static_cast<uint8_t>(WinDrawFlags) & 1) == 0 ||
+            (WinPopupWindow != 0 && (WinPopupWindow)->is_visible() == 0)) {
             ((Win *)WinBubbleWindow)->show(0);
-        } else if ((*(uint8_t *)WinDrawFlags & 1) != 0) {
+        } else if ((static_cast<uint8_t>(WinDrawFlags) & 1) != 0) {
             if (*WinBubbleCompanion == (Win *)WinBubbleWindow &&
                 *WinBubbleActive != 0) {
                 *WinBubbleCompanion = nullptr;
@@ -8661,7 +8673,7 @@ void Win::on_char(char param2, int param3) {
             if (cand == (Win *)WinBubbleWindow) {
                 WinPointerOwner1 = nullptr;
                 WinPointerOwner2 = 0;
-            } else if (cand != nullptr && *(int *)WinPopupCount > 0) {
+            } else if (cand != nullptr && WinPopupCount > 0) {
                 Win **list = (Win **)WinDialogList;
                 int i = 0;
                 do {
@@ -8671,7 +8683,7 @@ void Win::on_char(char param2, int param3) {
                         break;
                     }
                     i++;
-                } while (i < *(int *)WinPopupCount);
+                } while (i < WinPopupCount);
             }
 
             if (WinPointerOwner3 == (Win *)WinBubbleWindow) {
@@ -8681,7 +8693,7 @@ void Win::on_char(char param2, int param3) {
             if (*(void **)WinPointerOwner4 == (void *)WinBubbleWindow) {
                 *(int *)WinPointerOwner4 = 0;
             }
-            *(int *)WinDrawFlags &= ~1;
+            WinDrawFlags &= ~1;
             if (WinFocusWindow == (Win *)WinBubbleWindow) {
                 ((Win *)WinBubbleWindow)->release_modal();
             }
@@ -8707,7 +8719,7 @@ void Win::on_char(char param2, int param3) {
 
                 InvalidateRect(*(HWND *)&HandleMain, 0, 0);
 
-                Win *w = *(Win **)WinTopDialog;
+                Win *w = WinTopDialog;
                 if (w != 0 && reinterpret_cast<Win *>(w)->vslot_23() == 0) {
                     reinterpret_cast<Win *>(w)->vslot_07();
                 }
@@ -8722,15 +8734,15 @@ void Win::on_char(char param2, int param3) {
 
     bool handled = false;
     if (scroll_vert_ != 0 &&
-        reinterpret_cast<ScrollSlots *>(scroll_vert_)->slot025((int)param2, *(int *)WinKeyModifiers) != 0) {
+        reinterpret_cast<ScrollSlots *>(scroll_vert_)->slot025((int)param2, WinKeyModifiers) != 0) {
         handled = true;
     }
     if (!handled && scroll_horz_ != 0 &&
-        reinterpret_cast<ScrollSlots *>(scroll_horz_)->slot025((int)param2, *(int *)WinKeyModifiers) != 0) {
+        reinterpret_cast<ScrollSlots *>(scroll_horz_)->slot025((int)param2, WinKeyModifiers) != 0) {
         handled = true;
     }
     if (!handled) {
-        key_click_event((int)param2, *(int *)WinKeyModifiers);
+        key_click_event((int)param2, WinKeyModifiers);
     }
 }
 
@@ -9519,7 +9531,7 @@ int __cdecl Win::update_screen(RECT *area, Win *window) {
             return windowCount;
         }
     } else {
-        if (*WinBackBuffer == 0) {
+        if (WinBackBuffer == 0) {
             if (area != 0) {
                 (&ScreenBuffer)->fill(area, 0);
             } else {
@@ -9804,10 +9816,10 @@ void Win::nonclient_to_client(int * x, int * y) {
 void Win::update_window_to_buffer(Buffer * buffer) {
     if (buffer != 0) {
 
-        *WinBackBuffer = (int)buffer;
+        WinBackBuffer = buffer;
         WinZOrderWindow = this;
-        (*WinViewOriginX) = 0;
-        (*WinViewOriginY) = 0;
+        (WinViewOriginX) = 0;
+        (WinViewOriginY) = 0;
 
         uint32_t flags9c = iSomeFlag_;
         int iVar3 = 0;
@@ -9831,38 +9843,38 @@ void Win::update_window_to_buffer(Buffer * buffer) {
         }
 
         if ((iSomeFlag_ & 2) == 0) {
-            (*WinViewOriginX) += client_rect_.left + outer_rect_.left;
-            (*WinViewOriginY) += client_rect_.top + outer_rect_.top;
+            (WinViewOriginX) += client_rect_.left + outer_rect_.left;
+            (WinViewOriginY) += client_rect_.top + outer_rect_.top;
             if ((iFlags_ & 0x20) != 0 &&
                 win_parent_ != 0) {
                 Win *parent = win_parent_;
-                parent->client_to_screen(&(*WinViewOriginX), &(*WinViewOriginY));
+                parent->client_to_screen(&(WinViewOriginX), &(WinViewOriginY));
                 if ((iFlags_ & 0x8000) != 0) {
                     char *pself = reinterpret_cast<char *>(win_parent_);
-                    (*WinViewOriginX) -= *reinterpret_cast<int32_t *>(pself + 0x13c);
-                    (*WinViewOriginY) -= *reinterpret_cast<int32_t *>(pself + 0x140);
+                    (WinViewOriginX) -= *reinterpret_cast<int32_t *>(pself + 0x13c);
+                    (WinViewOriginY) -= *reinterpret_cast<int32_t *>(pself + 0x140);
                 }
             }
         } else {
-            (*WinViewOriginX) += client_rect_.left + outer_rect_.left;
-            (*WinViewOriginY) += client_rect_.top + outer_rect_.top;
+            (WinViewOriginX) += client_rect_.left + outer_rect_.left;
+            (WinViewOriginY) += client_rect_.top + outer_rect_.top;
             if ((iFlags_ & 0x20) != 0 &&
                 win_parent_ != 0) {
                 Win *parent = win_parent_;
-                parent->client_to_screen(&(*WinViewOriginX), &(*WinViewOriginY));
+                parent->client_to_screen(&(WinViewOriginX), &(WinViewOriginY));
                 if ((iFlags_ & 0x8000) != 0) {
                     char *pself = reinterpret_cast<char *>(win_parent_);
-                    (*WinViewOriginX) -= *reinterpret_cast<int32_t *>(pself + 0x13c);
-                    (*WinViewOriginY) -= *reinterpret_cast<int32_t *>(pself + 0x140);
+                    (WinViewOriginX) -= *reinterpret_cast<int32_t *>(pself + 0x13c);
+                    (WinViewOriginY) -= *reinterpret_cast<int32_t *>(pself + 0x140);
                 }
             }
-            (*WinViewOriginX) -= outer_rect_.left;
-            (*WinViewOriginY) -= outer_rect_.top;
+            (WinViewOriginX) -= outer_rect_.left;
+            (WinViewOriginY) -= outer_rect_.top;
         }
 
         update_screen(0, this);
 
-        *WinBackBuffer = 0;
+        WinBackBuffer = 0;
         WinZOrderWindow = 0;
         iSomeFlag_ = flags9c;
 
@@ -10315,8 +10327,8 @@ void Win::pass_dialog_focus() {
 
     parent = win_parent_;
     if (parent != 0 && (int)parent->list_.count_ > 1) {
-        *WinPendingFocus = (parent->list_.head_ != 0)
-            ? *reinterpret_cast<int *>(reinterpret_cast<char *>(parent->list_.current_) + 4) : 0;
+        WinPendingFocus = (parent->list_.head_ != 0)
+            ? *reinterpret_cast<Win **>(reinterpret_cast<char *>(parent->list_.current_) + 4) : 0;
         parent = win_parent_;
         if (parent->list_.head_ != 0) {
             parent->list_.current_ = *reinterpret_cast<void **>(reinterpret_cast<char *>(parent->list_.current_) + 0xc);
@@ -10821,7 +10833,7 @@ void Win::set_dialog_focus(Win * window) {
         return;
     }
 
-    *reinterpret_cast<int **>(WinPendingFocus) = newFocus;
+    WinPendingFocus = reinterpret_cast<Win *>(newFocus);
 
     if (list_.head_ == 0) {
         return;

@@ -814,6 +814,13 @@ extern int WinSavedAreaWidth;       // 0x009B6F88
 extern int WinSavedAreaHeight;      // 0x009B6F8C
 extern int WinSizingFlag;           // 0x009B7AD4
 
+extern int WinModalDepth;           // 0x009B7AE4
+extern int WinPopupCount;           // 0x009B26EC
+extern int WinDrawFlags;            // 0x009B238C
+extern int WinKeyModifiers;         // 0x009B7B18
+extern int WinViewOriginX;          // 0x009B7A70
+extern int WinViewOriginY;          // 0x009B7A74
+extern int WinFillColour;           // 0x00696D14
 extern int WinTrackingMode;  // 0x009B7AA8, the hit-test code that started it
 extern int WinTrackingX;     // 0x009B7AB0
 extern int WinTrackingY;     // 0x009B7AB4
@@ -826,6 +833,11 @@ extern int WinTrackingY;     // 0x009B7AB4
 // window in turn and re-read after every `recurse_zorder`, so it is a
 // `Win *`. The other two are cleared together whenever that comparison
 // hits, and what they count is not established.
+extern Buffer *WinBackBuffer;         // 0x009B7A68
+extern Win *WinModalFocus;         // 0x009B8D7C
+extern Win *WinPopupWindow;        // 0x009B23B4
+extern Win *WinTopDialog;          // 0x009B2300
+extern Win *WinPendingFocus;       // 0x009B7B38
 extern Win *WinZOrderWindow;  // 0x009B7A6C
 extern int WinZOrderCount;    // 0x009B7B30
 extern int WinZOrderFlag;     // 0x009B7A78
@@ -974,8 +986,6 @@ int __cdecl cd_check();
 typedef void(__cdecl *FnSetActiveWindow)(Win *);
 
 static int * const WinFocusStack = (int *)0x009B7A1C;
-static int * const WinModalDepth = (int *)0x009B7AE4;
-static int * const WinFillColour = (int *)0x00696D14;
 static int * const WinKeyRingCursor = (int *)0x00696D5C;
 static int * const WinMsgIncreaseMaxChildren = (int *)0x00696D60;
 static int * const WinMsgTooManyChildren = (int *)0x00696D80;
@@ -983,21 +993,12 @@ static int * const WinMsgIncreaseMaxParents = (int *)0x00696D94;
 static int * const WinMsgTooManyParents = (int *)0x00696DB4;
 static int * const WinMdebugCodeEnd = (int *)0x00696DFD;
 static int * const WinBubbleWindow = (int *)0x009B22F0;
-static int * const WinTopDialog = (int *)0x009B2300;
-static int * const WinDrawFlags = (int *)0x009B238C;
-static int * const WinPopupWindow = (int *)0x009B23B4;
 static int * const WinDialogList = (int *)0x009B2494;
-static int * const WinPopupCount = (int *)0x009B26EC;
 static int * const WinScreenClipRect = (int *)0x009B74C0;
-static int * const WinKeyModifiers = (int *)0x009B7B18;
 static int * const WinKeyRingStart = (int *)0x009B7B48;
 static int * const WinKeyRingEnd = (int *)0x009B7B51;
-static int * const WinModalFocus = (int *)0x009B8D7C;
 static int * const WinTitleBarHeight = (int *)0x009B8DD4;
 static int * const WinDirtyRect = (int *)0x009B6EE8;
-static int * const WinBackBuffer = (int *)0x009B7A68;
-static int * const WinViewOriginX = (int *)0x009B7A70;
-static int * const WinViewOriginY = (int *)0x009B7A74;
 // TRIED 2026-08-25 and REFUTED BY MEASUREMENT: retyping these three to
 // `Win **const` - the honest type, and the spelling win.h's
 // WinBubbleCompanion uses - cost show_maximize and maximize their claims.
@@ -1012,7 +1013,6 @@ static int * const WinViewOriginY = (int *)0x009B7A74;
 static int * const WinCallbackWindow = (int *)0x009B7AB8;
 static int * const WinInputFocus = (int *)0x009B7AC4;
 static int * const WinActiveWindow = (int *)0x009B7AC8;
-static int * const WinPendingFocus = (int *)0x009B7B38;
 // `int *const`, for the same reason g_GetDC above carries that type: a
 // fixed-address binding folds to its immediate only in this spelling. As
 // `void **const` it compiled `mov eax, dword ptr [0]` in Win::redraw - the
