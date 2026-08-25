@@ -1527,6 +1527,14 @@ Purpose: Bring this window's palette into step with the active one, but only
 Return Value: n/a
 Status: Complete
 */
+// TRIED: 7 of 14, and the memcpy-into-a-temporary form is the BEST one
+// found - which is surprising, because this image has no C++ library and a
+// dword read is the idiom everywhere else. Reading the palette's field
+// directly in the comparison (either both sites or only the first) drops it
+// to 0 of 14 at 15 instructions. Swapping the `==` operands changes nothing,
+// as it should not. What remains is which side lands in the register: the
+// image does `mov eax, [esi + 0x184]` / `cmp eax, [ecx + 0x400]`, this body
+// the reverse, and the temporary is what puts the palette's field in eax.
 void Win::sync_palette() {
     Palette *const active = WinActivePalette();
     uint32_t generation;
