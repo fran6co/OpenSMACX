@@ -672,8 +672,7 @@ int __stdcall rect_center(RECT *rect, int *x, int *y) {
 /*
 Purpose: Report whether this window holds the dialog focus, either directly or
          as its parent's current focus target.
-// ORIGINAL: 0x005F2CA0 ?is_dialog_focus@Win@@QAEHXZ 0x005F2CA0-0x005F2CDF
-// TRIED: a ternary and this if/else statement compile IDENTICALLY here (both
+// ORIGINAL: 0x005F2CA0 ?is_dialog_focus@Win@@QAEHXZ 0x005F2CA0-0x005F2CDF BYTE_EXACT
 // 16/21, 0.857 similar, best across all ten flag sets) - the divergence is
 // the guard's own polarity (`je`/zero-branch-jumps-ahead vs this tree's
 // `jne`/compute-branch-jumps-ahead) and neither source shape reaches it.
@@ -697,12 +696,19 @@ int Win::is_dialog_focus() {
         // list pointer, which the legacy body leaves untouched in that case.
         // `list_.current_` is the top-of-stack node; its own +0x4 holds the
         // `Win *` that currently has focus (see `class WinNodeList`, win.h).
+        // LEVER: swapping these two arms - testing `!= 0` and putting the
+        // read FIRST - is the whole match. The image branches `je` past the
+        // read to a shared zero; testing `== 0` first compiled `jne` over a
+        // zeroing arm instead, and cost 5 of 21 instructions. Collapsing the
+        // zero away entirely (`if (parent && head_ != 0)`) is worse still:
+        // 18 instructions against the image's 21, because the image really
+        // does compute a zero and merge.
         uintptr_t focused;
-        if (parent->list_.head_ == 0) {
-            focused = 0U;
-        } else {
+        if (parent->list_.head_ != 0) {
             focused = *reinterpret_cast<const uintptr_t *>(
                 reinterpret_cast<char *>(parent->list_.current_) + 4);
+        } else {
+            focused = 0U;
         }
         if (focused == reinterpret_cast<uintptr_t>(this)) {
             return 1;
@@ -1256,6 +1262,16 @@ Purpose: Dismiss any pending bubble text and repaint the area it covered.
 // calls     0x005EFD20 0x005F7320
 Status: Complete with temporary dependencies on the screen refresh and flip
 */
+// TRIED: 6 of 13. `*WinBubbleCompanion = 0` compiles `mov eax, dword ptr
+// [0]` and a store THROUGH eax, where the image writes the address directly
+// and shares one zeroed register across both stores
+// (`push eax` / `mov [0x9b7a4c], eax` / `mov [0x9b7a50], eax`). The binding
+// is `Win **const`, which does not fold for a store - `int *const` does -
+// but retyping it is refused here rather than measured: the LEVER on
+// bubble_text (0x005F8410) records that `Win **` is what let `this` be
+// stored without a cast there, and that spelling earned its claim. Trading
+// one body's claim for another's is not a fix. See also the refuted
+// `Win **const` retype recorded in win_slots.h.
 void Win::clear_bubble_text() {
     // Nothing to dismiss when no bubble is pending.
     if (*WinBubbleActive == 0) {
@@ -3894,9 +3910,8 @@ void Win::set_mouse_pos(int a1, int a2) {
 
 // Fixed-slot bindings carried from 005ec8a0.cpp
 
-// ORIGINAL: 0x005EC8A0 ?get_mouse_pos@Win@@QAEXPAHPAH@Z 0x005EC8A0-0x005EC952 FILE
+// ORIGINAL: 0x005EC8A0 ?get_mouse_pos@Win@@QAEXPAHPAH@Z 0x005EC8A0-0x005EC952 FILE BYTE_EXACT
 // symbol    ?get_mouse_pos@Win@@QAEXPAH0@Z
-// TRIED: tagPOINT (undeclared, C2065); reaches #38/~178B with local Pt struct + GetCursorPos via g fn-ptr, outer_rect_/client_rect_ members
 // working copy - scaffold materialised by --work
 // size      178 bytes
 // prototype void (__thiscall ?get_mouse_pos@Win@@QAEXPAHPAH@Z)(Win* this, int*, int*)
@@ -3916,7 +3931,12 @@ void Win::get_mouse_pos(int * x, int * y) {
         *x -= client_rect_.left + outer_rect_.left;
         *y -= client_rect_.top + outer_rect_.top;
         if ((iFlags_ & 0x20) != 0 && win_parent_ != 0) {
-            screen_to_client(x, y);
+            // THE PARENT'S, not this window's. The image loads win_parent_
+            // into ECX - the receiver register - and calls from there:
+            // `mov ecx, [esi + 0xc4]` / `test ecx, ecx` straight into the
+            // call. Calling it on `this` compiled the same load into EAX and
+            // then an extra `mov ecx, esi` to set the receiver back.
+            win_parent_->screen_to_client(x, y);
             if ((iFlags_ & 0x8000) != 0) {
                 *x += win_parent_->outer_rect_.left;
                 *y += win_parent_->outer_rect_.top;
