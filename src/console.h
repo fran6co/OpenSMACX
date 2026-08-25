@@ -67,21 +67,28 @@ class PrefWin;
   * immediately ahead of a virtual base, and it belongs to the MOST DERIVED
   * object, so in a Console it moves to 0x23D90: 0x0050F57E reads the vbase
   * displacement out of the vbtable and writes `[esi + 0x23D94 - 4]` at
-  * 0x0050F584. field_23D90_ below is that slot, and mapwin.h's
-  * `MapWin::field_21A68_` carries the same argument from MapWin's side.
+  * 0x0050F584.
+  * field_23D90_ below WAS that slot; the compiler owns it now (see the
+  * correction below), and MapWin no longer declares a counterpart either.
   *
-  * VC6 will not emit a vtordisp of its own - it only does so where a virtual
-  * base's virtual functions are overridden, and nothing in this chain
-  * declares a single `virtual`. So mapwin.h has to hold its four bytes as a
-  * declared member to keep sizeof(MapWin) == 0x22480, and that makes the base
-  * subobject here 0x21A6C wide against the image's 0x21A68. It costs no
-  * offset - everything from 0x21A6C on lands where the image puts it, and
-  * sizeof is unmoved - and it costs one declaration: the GraphicWin at
-  * 0x21A68 cannot be named as a Console member while the base owns its first
-  * dword, so it stays inside the slab below and `verify_subobjects` reports
-  * that site as `mistyped ... 0x4 bytes against 0xA14` rather than `absent`.
-  * That report is the truth about this spelling, not a defect introduced by
-  * it; no spelling that keeps both static_asserts can make it go away.
+  * SUPERSEDED 2026-08-25, and the correction is the whole point of the
+  * Win pass. This block used to read "VC6 will not emit a vtordisp of its
+  * own - it only does so where a virtual base's virtual functions are
+  * overridden, and nothing in this chain declares a single `virtual`", and
+  * concluded that mapwin.h therefore had to hold the four bytes as a
+  * declared member. The premise was true when it was written and is false
+  * now: win.h declares its 88 vtable slots, so the chain overrides plenty
+  * and VC6 emits the vtordisp itself.
+  *
+  * What that changes here: the compiler emits ONE vtordisp per most-derived
+  * object. In a Console the MapWin base is not most-derived, so it gets
+  * none and the subobject stops at the image's 0x21A68 - the slab below
+  * starts there rather than at 0x21A6C. Console's own vtordisp, at 0x23D90,
+  * is likewise emitted rather than declared. Both edits are four bytes in
+  * opposite directions, which is exactly why sizeof(Console) never moved
+  * and the static_assert could not see the damage; `cursor_next` could,
+  * reading [eax*4 + 0x23C08] against the image's 0x23C0C. The recorded
+  * lesson `sizeof-cannot-pin-a-layout` is this incident's second instance.
   *
   * Fields must be carved out of the slabs as methods are recovered, keeping
   * the total fixed. Appending would move the virtual base and break every
@@ -106,7 +113,7 @@ class Console : public MapWin {
 
  public:
   // 0x0050F680, a pending_bodies forwarder.
-  void on_nc_hittest(int a1, int a2);
+  int on_nc_hittest(int x, int y);
 
  public:
   // 0x005178C0, a pending_bodies forwarder.
@@ -161,7 +168,15 @@ class Console : public MapWin {
   // All but the first four of the unnamed GraphicWin at 0x21A68..0x2247C sit
   // in here - the four the base swallowed are the reason the header comment
   // says it cannot be spelled.
-  uint8_t field_21A6C_[0xFC0];  // 0x21A6C
+  // 0x21A68, FOUR BYTES WIDER than the address in its old name. MapWin
+  // used to hand-declare the dword at 0x21A68 so a standalone MapWin
+  // reached sizeof 0x22480; VC6 emits that vtordisp itself now that the
+  // Win base declares virtuals, and it only emits one where the base is
+  // MOST-DERIVED. Inside a Console it is not, so the subobject stops at
+  // 0x21A68 and this slab has to start there or every field below sits
+  // four bytes early - measured: cursor_next read [eax*4 + 0x23C08]
+  // where the image reads 0x23C0C.
+  uint8_t field_21A68_[0xFC4];  // 0x21A68
   uint32_t field_22A2C_;  // 0x22A2C
   uint8_t field_22A30_[0x440];  // 0x22A30
   uint32_t field_22E70_;  // 0x22E70
@@ -196,13 +211,16 @@ class Console : public MapWin {
   uint32_t field_23D84_;  // 0x23D84
   uint32_t field_23D88_;  // 0x23D88
   uint32_t field_23D8C_;  // 0x23D8C
-  // NOT Console data: the vtordisp for the virtual base at 0x23D94. The
-  // constructor computes it rather than storing a constant - `mov edx, [esi]`
-  // / `mov eax, [edx+4]` / `lea ecx, [eax - 0x23d94]` / `mov [eax + esi - 4],
-  // ecx` at 0x0050F579..0x0050F584 - which is the same idiom mapwin.h records
-  // at MapWin::field_21A68_, one dword ahead of wherever the vbase landed.
-  // Four bytes wide because that is the width of the write.
-  int32_t field_23D90_;  // 0x23D90
+  // The vtordisp for the virtual base at 0x23D94 USED to be declared here,
+  // because nothing in the chain spelled `virtual` and VC6 emits one only
+  // where a virtual base's virtuals are overridden. Win declares its 88
+  // slots now, so the compiler emits this dword itself and naming it too
+  // made the class four bytes long - which sizeof hid, because the same
+  // four had just been lost from the MapWin subobject above. The image's
+  // own idiom is still worth recording: the constructor COMPUTES the
+  // value rather than storing a constant, `mov edx,[esi]` / `mov eax,
+  // [edx+4]` / `lea ecx,[eax - 0x23d94]` / `mov [eax + esi - 4], ecx` at
+  // 0x0050F579..0x0050F584.
 };
 
 static_assert(sizeof(Console) == 0x247A8, "Console layout must match terranx.exe");

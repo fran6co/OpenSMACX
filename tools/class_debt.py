@@ -47,7 +47,7 @@ CEILINGS = {
     "undocumented trivial body": 0,
     "raw self-access": 239,
     "pointer-parameter as int": 7,
-    "scaffold name": 3509,
+    "scaffold name": 3487,
 }
 
 WHY = {

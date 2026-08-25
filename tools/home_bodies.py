@@ -390,6 +390,32 @@ def main() -> int:
             found = re.search(
                 rf"^(?:typedef|static|extern)[^\n;]*\b{re.escape(token)}\b"
                 rf"[^\n;]*;\n", full_artifact, re.M)
+            if not found:
+                # A WHOLE CLASS, NOT JUST A LINE. Artifacts that dispatch
+                # through a vtable slot carry their own `class VCall { ...
+                # void slot004(); };` shim, and split_artifact drops it with
+                # the rest of the preamble - 18 of Win's reverts are one of
+                # those names. Take the definition entire, brace-matched,
+                # since a class body spans lines where a typedef does not.
+                head_ = re.search(rf"^(?:class|struct)\s+{re.escape(token)}\b"
+                                  rf"[^\n{{]*\{{", full_artifact, re.M)
+                if head_:
+                    k = head_.end() - 1
+                    depth = 0
+                    while k < len(full_artifact):
+                        if full_artifact[k] == "{":
+                            depth += 1
+                        elif full_artifact[k] == "}":
+                            depth -= 1
+                            if depth == 0:
+                                break
+                        k += 1
+                    end = full_artifact.find("\n", k) + 1
+                    found = re.match(r"(?s).*", full_artifact[head_.start():end])
+                    class Found:
+                        def __init__(self, s): self._s = s
+                        def group(self, _n=0): return self._s
+                    found = Found(full_artifact[head_.start():end])
             if not found or found.group(0) in tu.read_text():
                 break
             fresh.append(found.group(0))

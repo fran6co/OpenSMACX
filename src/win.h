@@ -55,7 +55,10 @@ class WinNodeList {
   void *head_;      // 0x4  (Win+0xCC)
   void *current_;   // 0x8  (Win+0xD0)
   int count_;         // 0xC  (Win+0xD4)
-  void *tail_;       // 0x10 (Win+0xD8)
+  // AN INDEX, not a pointer: the node walk does `++tail_ == count_`,
+  // which is a ring position. Same four bytes either way, so the
+  // layout is unchanged and the assert still holds.
+  int tail_;          // 0x10 (Win+0xD8)
   int external_;      // 0x14 (Win+0xDC)
 };
 
@@ -72,6 +75,19 @@ class WinNodeList {
 // Declaring it is what gives Win, and through it GraphicWin, a real vfptr.
 class Win : public AutoSound {
  public:
+  // Reaches Win's fields directly: the byte-exact body for 0x005F5080
+  // is a free function (both member spellings were measured and
+  // refuted), and it reads `iFlags_` the way the image does.
+  friend void __cdecl add_parent(Win *);
+ public:
+  // homed from 005f1340.cpp
+  bool __cdecl OnPaint(void * a1);
+
+ public:
+  // homed from 005ee330.cpp
+  int resize_event(int a1, int a2);
+
+ public:
   // homed from 005f83d0.cpp
   void set_bubble_text(char * text, RECT * rect);
 
@@ -81,8 +97,6 @@ class Win : public AutoSound {
   // + WM_SYSKEYDOWN when set, WM_KEYUP + WM_SYSKEYUP when clear. `repeat_count`
   // and `key_flags` pack into the dispatched message's lParam exactly as
   // Windows itself packs WM_SYSKEYDOWN/UP, low word and high word.
-  int __stdcall on_sys_key(unsigned int vkey, long is_down, int repeat_count,
-                           unsigned int key_flags);
 
  public:
   // homed from 005f2760.cpp
@@ -102,7 +116,6 @@ class Win : public AutoSound {
 
  public:
   // homed from 005f54e0.cpp
-  void on_paint(RECT * a1);
   void client_to_nonclient(RECT * rect);
   void client_to_nonclient(int * points, int * count);
   void bring_child_to_top(Win * child);
@@ -138,6 +151,9 @@ class Win : public AutoSound {
  public:
   // 0x005EEF60, a pending_bodies forwarder.
   void nonclient_to_client(int * a1, int * a2);
+  // The RECT overload the homed bodies call - same conversion, one
+  // rectangle instead of a coordinate pair.
+  void nonclient_to_client(RECT *rect);
 
  public:
   // 0x005EBD80, a pending_bodies forwarder.
@@ -151,7 +167,6 @@ class Win : public AutoSound {
   // 0x005F6320  ?on_mouse_move@Win@@QAEXHHIH@Z - public, __thiscall,
   // void(int, int, unsigned int, int). GraphicWin::on_mouse_move is a pure
   // forwarder to it and is its only caller.
-  void on_mouse_move(int a1, int a2, unsigned int a3, int a4);
   void on_mousewheel_up_vert(int a1);
   void on_mousewheel_down_horz(int a1);
   int get_lbutton_state();
@@ -160,7 +175,6 @@ class Win : public AutoSound {
   int UNK1(int a, int b, int c, int d, int e, int f, int g, int h, int i);
   int UNK5();
   int UNK6(int a);
-  int on_set_cursor(void *a, unsigned int b, unsigned int c);
   Win();
 
   // STATIC, not the `QAA` member the census reconstructs: the body at
@@ -243,26 +257,18 @@ class Win : public AutoSound {
   // ?update_window@Win@@QAEHPAURECT@@@Z at 0x005F74A0. Not yet recovered,
   // a pending_bodies forwarder.
   int update_window(RECT *area);
-  int on_query_new_palette();
   int get_vert_pos();
   int get_horz_pos();
   void set_vert_paging(int paging);
   void set_horz_paging(int paging);
 
-  void on_move(int a1, int a2);
-  void on_size(unsigned int a1, int a2, int a3);
-  void on_size_nc(unsigned int a1, int a2, int a3);
   // ?on_sys_command@Win@@QAEHIHH@Z returns H. The body is empty either way
   // - VC6 emits the same `ret 0xc` - so only the decorated name moves.
-  int on_sys_command(unsigned int a1, int a2, int a3);
 
   // Three base handlers the derived windows reach with a direct `call rel32`,
   // never through a vtable slot - PullDown::hide, DiploPop::hide,
   // Popup::on_nc_hittest and ReportIf::done all encode one - so they are
   // declared non-virtual on purpose. All three are unrecovered.
-  void hide();                          // 0x005EDCD0  ?hide@Win@@QAEXXZ
-  int on_nc_hittest(int a1, int a2);    // 0x005F5AD0  ?on_nc_hittest@Win@@QAEHHH@Z
-  void release_modal();                 // 0x005EE280  ?release_modal@Win@@QAEXXZ
  private:
   uint32_t iFlags_;
   uint32_t iSomeFlag_;
@@ -370,13 +376,216 @@ class Win : public AutoSound {
   uint32_t field_438_;
   Scroll *scroll_vert_;
   Scroll *scroll_horz_;
+
+ public:
+  // ============ THE IMAGE'S VTABLE, DECLARED IN SLOT ORDER ==============
+  // 88 slots at 0x0066FDD0. Slot 0 is `??_GWin`, emitted from `~Win()` -
+  // already virtual because AutoSound's destructor is. Slots 1..87 are
+  // Win's own and are declared here IN ORDER: declaration order IS vtable
+  // order. Win was ALREADY polymorphic, so this extends the table without
+  // moving a field - sizeof(Win) stays 0x444.
+  //
+  // The `vslot_NN` entries are real slots whose image body is trivial
+  // (`ret`, `ret 8`, `xor eax,eax; ret 0xc`, `mov eax,1; ret`, or one
+  // returning its first argument): default handlers a derived class
+  // overrides. VC6 folds identical bodies program-wide, which is why the
+  // catalogue attributes 51 of them to `AlphaMovie` - it saw that owner
+  // first. Each arity is read from its own `ret N`.
+  // slot  0  0x005F8610  ??_GWin - the compiler emits this
+  //                from the virtual destructor below.
+  virtual void show(int visible);  // slot 1  0x005ED9D0
+  virtual void hide();  // slot 2  0x005EDCD0
+  virtual int resize(int width, int height, int repaint);  // slot 3  0x005ED880
+  virtual void vslot_04() {}  // 0x00404280
+  virtual int vslot_05(int = 0, int = 0, int = 0) { return 0; }  // 0x00404220
+  virtual int vslot_06() { return 0; }  // 0x00406B30
+  virtual int vslot_07() { return 0; }  // 21 call sites pass nothing and
+                                      // the image pushes nothing  // 0x00404230
+  virtual int vslot_08() { return 0; }  // 0x00406B30
+  virtual int vslot_09(int value = 0) { return value; }  // 0x00404230
+  virtual int vslot_10(int = 0) { return 0; }  // 0x00404250
+  virtual int vslot_11(int = 0, int = 0, int = 0, int = 0) { return 0; }  // 0x00404240
+  virtual void vslot_12() {}  // 0x00404280
+  virtual void vslot_13(int = 0, int = 0) {}  // 0x00404260
+  virtual void vslot_14() {}  // 0x00404280
+  virtual void vslot_15(int = 0) {}  // 0x00404270
+  virtual void on_mouse_move(int x, int y, unsigned int keys, int from_parent);  // slot 16  0x005F6320
+  virtual void vslot_17(int = 0, int = 0) {}  // 0x00404260
+  virtual void vslot_18(int = 0, int = 0) {}  // 0x00404260
+  virtual void vslot_19(int = 0, int = 0) {}  // 0x00404260
+  virtual void vslot_20(int = 0, int = 0) {}  // 0x00404260
+  virtual void vslot_21(int = 0, int = 0) {}  // 0x00404260
+  virtual void vslot_22(int = 0, int = 0) {}  // 0x00404260
+  // NO DEFAULT ARGUMENTS. They compiled into `push 0; push 0` at every
+  // call, which the image does not emit - measured on 0x005EE750 and
+  // 0x005F6320. Twenty-one call sites pass nothing; the one that passed
+  // two was the outlier.
+  virtual int vslot_23() { return 0; }  // 0x00404260
+  virtual void vslot_24(int = 0, int = 0) {}  // 0x00404260
+  virtual int vslot_25(int = 0, int = 0) { return 0; }  // 0x00406A80
+  virtual int vslot_26(int = 0) { return 0; }  // 0x00404250
+  virtual int vslot_27(int = 0) { return 0; }  // 0x00404250
+  virtual void vslot_28(int = 0, int = 0) {}  // 0x00404260
+  virtual void vslot_29(int = 0, int = 0) {}  // 0x00404260
+  virtual void vslot_30(int = 0) {}  // 0x00404270
+  virtual void vslot_31(int = 0, int = 0) {}  // 0x00404260
+  virtual void vslot_32(int = 0, int = 0) {}  // 0x00404260
+  virtual void vslot_33(int = 0, int = 0) {}  // 0x00404260
+  virtual void vslot_34(int = 0, int = 0) {}  // 0x00404260
+  virtual void vslot_35(int = 0, int = 0) {}  // 0x00404260
+  virtual void vslot_36(int = 0, int = 0) {}  // 0x00404260
+  virtual void vslot_37(int = 0, int = 0) {}  // 0x00404260
+  virtual void vslot_38(int = 0, int = 0) {}  // 0x00404260
+  virtual void vslot_39(int = 0, int = 0) {}  // 0x00404260
+  virtual void vslot_40(int = 0, int = 0) {}  // 0x00404260
+  virtual int vslot_41(int = 0) { return 0; }  // 0x00404250
+  virtual void vslot_42(int = 0) {}  // 0x00404270
+  virtual void vslot_43(int = 0) {}  // 0x00404270
+  virtual void vslot_44(int = 0) {}  // 0x00404270
+  virtual void vslot_45(int = 0, int = 0) {}  // 0x00404260
+  virtual void vslot_46(int = 0, int = 0, int = 0) {}  // 0x00406B20
+  virtual void vslot_47(int = 0, int = 0) {}  // 0x00404260
+  virtual void vslot_48(int = 0, int = 0) {}  // 0x00404260
+  virtual void vslot_49(int = 0, int = 0) {}  // 0x00404260
+  virtual void vslot_50(int = 0) {}  // 0x00404270
+  virtual void vslot_51(int = 0) {}  // 0x00404270
+  virtual void vslot_52() {}  // 0x00404280
+  virtual void vslot_53(int = 0, int = 0) {}  // 0x00404260
+  virtual void vslot_54(int = 0) {}  // 0x00404270
+  virtual void vslot_55(int = 0, int = 0) {}  // 0x00404260
+  virtual void vslot_56(int = 0) {}  // 0x00404270
+  virtual int set_modal(int flag, int (*poll)(), Win *owner);  // slot 57  0x005EE190
+  virtual void release_modal();  // slot 58  0x005EE280
+  virtual int vslot_59() { return 1; }  // 0x00406840
+  virtual void vslot_60(int = 0, int = 0) {}  // 0x00404260
+  virtual int vslot_61() { return 0; }  // 0x00406B30
+  virtual void vslot_62() {}  // 0x00404280
+  virtual void vslot_63() {}  // 0x00404280
+  virtual void pass_dialog_focus();  // slot 64  0x005ECD20
+  virtual void set_dialog_focus(Win *target);  // slot 65  0x005ECC40
+  virtual void set_rects();  // slot 66  0x005F2940
+  virtual void on_redraw_nc(RECT *area, int flags);  // slot 67  0x005F2CF0
+  virtual long on_window_pos_changing(WINDOWPOS *pos);  // slot 68  0x005F53A0
+  virtual long on_window_pos_changed(WINDOWPOS *pos);  // slot 69  0x005F5480
+  virtual void on_move(int x, int y);  // slot 70  0x005F54B0
+  virtual void on_size(unsigned int flags, int width, int height);  // slot 71  0x005F54C0
+  virtual void on_size_nc(unsigned int flags, int width, int height);  // slot 72  0x005F54D0
+  virtual void on_paint(RECT *area);  // slot 73  0x005F54E0
+  virtual void on_nc_paint(RECT *area, int flags);  // slot 74  0x005F5810
+  virtual int on_nc_hittest(int x, int y);  // slot 75  0x005F5AD0
+  virtual int on_query_new_palette();  // slot 76  0x005F1060
+  // slot 77  0x005F62D0  A REAL BODY, uncatalogued - declare it when it is named.
+  virtual void vslot_77() {}
+  virtual void on_key(unsigned int key, long flags, int repeat, unsigned int scan);  // slot 78  0x005F5D10
+  // slot 79  0x005F5FB0  A REAL BODY, uncatalogued - declare it when it is named.
+  virtual void vslot_79(int = 0, int = 0) {}
+  virtual int __stdcall on_sys_key(unsigned int key, long flags, int repeat, unsigned int scan);  // slot 80  0x005F6230
+  virtual void on_l_button_down(long flags, int x, int y, unsigned int keys, int dbl);  // slot 81  0x005F63C0
+  virtual void on_l_button_up(int x, int y, unsigned int keys, int dbl);  // slot 82  0x005F6550
+  virtual void on_r_button_down(long flags, int x, int y, unsigned int keys, int dbl);  // slot 83  0x005F6710
+  virtual void on_r_button_up(int x, int y, unsigned int keys, int dbl);  // slot 84  0x005F6880
+  virtual int on_set_cursor(void *cursor, unsigned int hit, unsigned int msg);  // slot 85  0x005F6A30
+  virtual int on_sys_command(unsigned int command, int x, int y);  // slot 86  0x005F6A40
+  virtual long on_activate(unsigned int state, void *other, long minimized);  // slot 87  0x005F5C00
+
+ public:
+  // Homed bodies whose declaration the class never carried - which is
+  // exactly why their artifacts would not compile in this TU. Each
+  // signature is the definition's own, not a guess.
+  // `int`, not the catalogue's `D` (char): the image loads a full dword,
+  // `mov ecx, [esp+0x10]`, where a char parameter compiles `movsx ecx,
+  // byte ptr`. Measured on 0x005F1660.
+  void __cdecl OnChar(void *hwnd, int ch, int flags);
+  void UNK7(int a1, int a2, int a3, int a4);
+  int __stdcall adjust_menus(void *a1);
+  void do_caption_buttons();
+  int maximize();
+  void on_mousewheel_down(int a1);
+  void on_mousewheel_up(int a1);
+  void set_bottom_border_thickness(int a1);
+  int show_maximize();
+  void update_nc_buffer(int a1);
+
+ public:
+  void add_child(Win* a1);
+  void bring_to_top();
+  int get_rbutton_state();
+  void left_down_event(int a1, int a2, int a3);
+  int on_redraw(int, int);
+  int redraw_nc_buffer(int a1);
+  void __cdecl remove_parent(Win* a1);
+  void set_border_thickness(int a1);
+  void set_parent_dialog(Win *a1);
+  void __cdecl update();
+  void __cdecl update_zorder();
+  void window_line_raw(int a1, int a2, int a3, int a4, int a5, int a6, unsigned int a7);
+
+ public:
+  void __cdecl OnRButtonDown(void * a1, long a2, int a3, int a4, unsigned int a5);
+  void __cdecl OnRButtonUp(void * a1, int a2, int a3, unsigned int a4);
+  void __cdecl bring_parent_to_top(Win * a1);
+  void draw_rect_border(int x1, int y1, int x2, int y2, HGDIOBJ pen1, HGDIOBJ pen2, int unused7);
+  void remove_child(Win *a1);
+  void set_caption_height(int a1);
+  void update_back_to_window(Buffer * a1);
+
+ public:
+  // The RECT overload. `char *` not `signed char *`: the catalogue spells
+  // the caption `PAD`, and matching it makes the tree emit the image's
+  // own name instead of needing a `symbol` alias.
+  int init(RECT *area, char *caption, int style, Win *parent,
+           Menu *menu, BorderSizing *sizing);
+    int key_click_event(int a1, int a2);
+  int key_down_event(int a1);
+  int key_up_event(int a1);
+  int set_cursor(Sprite* a1, int a2, int a3);
+  int set_cursor(HCURSOR *a1);
+
+ public:
+  int center();
+  int minimize();
+  void nonclient_to_screen(int * a1, int * a2);
+  void screen_to_nonclient(int * a1, int * a2);
+  void set_caption(char * a1);
+  void sub_5ef1e0(int x1, int y1, int x2, int y2, void *pen, int unused6);
+  void sub_5f5fb0(char param2, int param3);
+  int sub_63c340();
+
+ public:
+  void __cdecl OnKey(void * a1, unsigned int a2, long a3, int a4, unsigned int a5);
+  void OnLButtonUp(void *a1, int a2, int a3, unsigned int a4);
+  int __cdecl OnSysCommand(void * a1, unsigned int a2, int a3, int a4);
+  void paint_tiled(Buffer *tile, int x_origin, int y_origin, int clip_left, int clip_top, int clip_width, int clip_height, int unused8);
+  void update_window_to_buffer(Buffer * a1);
+
+ public:
+  void __cdecl OnMouseMove(void * a1, int a2, int a3, unsigned int a4);
+
+ public:
+  int __cdecl OnQueryNewPalette(void * a1);
+
+ public:
+  long __cdecl OnActivate(void *a1, unsigned int a2, void *a3, long a4);
+  void screen_to_client(RECT * a1);
+
+ public:
+  // Tear the window down: clears the focus/tracking globals and walks
+  // the child list. Homed from 005eb640.cpp.
+  void close();
+
+ public:
+  void __cdecl redraw();  // 0x005F4CC0
+
+ public:
+
+ public:
+  // A MEMBER: the caller at 0x0063C340 sets up `mov ecx, esi` before
+  // this call, which is a thiscall receiver, not a __cdecl free function.
+  int sub_63c7c0();  // 0x0063C7C0
 };
 
 static_assert(sizeof(Win) == 0x444, "Win layout must match the legacy ABI");
 
-extern const uint32_t WinPrimaryVtable;
-uint32_t *const WinStaticDefaults = (uint32_t *)0x00696D34;
-uint32_t *const WinDynamicDefaults = (uint32_t *)0x009B7AF0;
 
 BOOL __cdecl in_box(int x, int y, const RECT *rect);
 int __cdecl in_box(

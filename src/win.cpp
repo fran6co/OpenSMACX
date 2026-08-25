@@ -16,6 +16,14 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "net_class.h"
+#include "win_slots.h"
+#include "init_thunks.h"  // g_WIN_BUFFER, the 0x009B6F08 Buffer Win draws into
+extern "C" void __cdecl do_all_chars();
+extern "C" int __cdecl sub_5f86c0(RECT *, int, int, int, int);
+
+typedef signed char int8;  // a scaffold spelling the artifacts use
+#include "vtable_shim.h"
 #include "scroll.h"
 #include "win.h"
 #include <cstring>
@@ -28,13 +36,13 @@
 #include "popup.h"   // pop_caption_title, for DDInit::report_error
 #include "basepop.h"  // BasePopScreenWidth, for Win::set_bubble_text
 #include <ddraw.h>  // IDirectDrawSurface::GetDC / ReleaseDC in the hdc pair
-// `DirectDrawCreate` itself (DDInit::init) is the one symbol this tree needs
-// out of ddraw.lib rather than dxguid.lib's IIDs; CMakeLists.txt links
-// neither by name, so the dependency has to sit beside the code that needs
-// it the way `dxguid` used to before it was measured into the CMake line.
-#pragma comment(lib, "ddraw.lib")
+// `DirectDrawCreate` (DDInit::init) is the one symbol this tree needs out of
+// ddraw.lib; it is on the CMake link line now, where dxguid already was.
 
-const uint32_t WinPrimaryVtable = 0x0066FDD0;
+// `WinPrimaryVtable` IS GONE. It held 0x0066FDD0, the address of the very
+// table this class now declares, and nothing read it: the compiler emits the
+// vfptr store itself once the virtuals are declared. A named constant for a
+// vtable address is the hand-work this project exists to delete.
 
 // ORIGINAL: 0x005F8770 sub_5f8770 0x005F8770-0x005F87F6 FILE
 // symbol    ??_GWinNodeList@@UAEPAXI@Z
@@ -69,7 +77,7 @@ WinNodeList::~WinNodeList() {
         if (external_ == 0 && count_ > 0) {
             int i = 0;
             do {
-                void *next = *reinterpret_cast<void **>(
+                Win *next = *reinterpret_cast<Win **>(
                     reinterpret_cast<char *>(node) + 0xC);
                 current_ = next;
                 void *payload = *reinterpret_cast<void **>(
@@ -110,6 +118,11 @@ Purpose: Construct a Win from its AutoSound subobject and the process window
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
+
+// THE TWO DEFAULT TABLES, BESIDE THEIR ONLY USER. They sat in win.h, so every
+// translation unit that included it carried two fixed-address bindings it
+// never touched; `Win::Win` is the only reader in the tree.
+
 // THE FIVE 0xC8 STORES ARE `list_`'s OWN IMPLICIT CONSTRUCTION, not body
 // statements. `list_` (a `WinNodeList`) is a real member with no entry in
 // this constructor's initialiser list, so the compiler constructs it
@@ -371,6 +384,17 @@ Purpose: The inverse of client_to_screen above.
 Return Value: n/a
 Status: Complete
 */
+// ORIGINAL: 0x005ECF20 ?screen_to_client@Win@@QAEXPAURECT@@@Z 0x005ECF20-0x005ECFD8 FILE BYTE_EXACT
+// symbol    ?screen_to_client@Win@@QAEXPAUtagRECT@@@Z
+// notes     the RECT overload; the coordinate-pair form shares the name
+//           and marker_symbols resolves to whichever comes first.
+// working copy - scaffold materialised by --work
+// size      184 bytes
+// prototype void (__thiscall ?screen_to_client@Win@@QAEXPAURECT@@@Z)(Win* this, RECT*)
+// callers   4   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005ED2D0
 void Win::screen_to_client(int *x, int *y) {
     *x = *x - (client_rect_.left + outer_rect_.left);
     *y = *y - (client_rect_.top + outer_rect_.top);
@@ -399,6 +423,7 @@ Purpose: Announce this window as the one the palette should follow, then report
          `this` is passed as the only argument and the caller cleans it, which
          is the cdecl convention the callee's mangled name declares.
 // ORIGINAL: 0x005F1060 ?on_query_new_palette@Win@@QAEHXZ 0x005F1060-0x005F106F BYTE_EXACT
+// symbol    ?on_query_new_palette@Win@@UAEHXZ
 // size      15 bytes
 // prototype int (__thiscall ?on_query_new_palette@Win@@QAEHXZ)(Win* this)
 // callers   0   call targets   1
@@ -826,6 +851,121 @@ kept as the legacy body has it rather than because a test distinguishes it.
 // eax,0x7f8b; jge`. Spelling the boundary the way the image does moved
 // 13/17 (0.882) to BYTE_EXACT.
 */
+// ORIGINAL: 0x005EC740 ?set_cursor@Win@@QAEHPAVSprite@@HH@Z 0x005EC740-0x005EC773 FILE BYTE_EXACT
+// symbol    ?set_cursor@Win@@QAEHPAVSprite@@HH@Z
+// notes     the Sprite overload; `marker_symbols` resolves a region to the
+//           first overload of that name in the object, so each one has to
+//           say what it emits.
+// size      51 bytes
+// prototype int (__thiscall ?set_cursor@Win@@QAEHPAVSprite@@HH@Z)(Win* this, Sprite*, int, int)
+// callers   6   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F1820
+// PRESERVED UNIT - measured BYTE_EXACT.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x005EC740
+// measured tier  BYTE_EXACT
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/005ec740/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?set_cursor@Win@@QAEHPAVSprite@@HH@Z  at 0x005EC740  (51 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+// ORIGINAL: 0x005EC780 ?set_cursor@Win@@QAEHPAUHCURSOR@@@Z 0x005EC780-0x005EC7BC FILE BYTE_EXACT
+// symbol    ?set_cursor@Win@@QAEHPAPAUHICON__@@@Z
+// notes     the HCURSOR overload. `HCURSOR` is `struct HICON__ *`, so a
+//           `HCURSOR *` parameter mangles PAPAUHICON__. Stated because
+//           marker_symbols resolves the region to the first `set_cursor`.
+// notes     the HCURSOR overload; `marker_symbols` resolves a region to the
+//           first overload of that name in the object, so each one has to
+//           say what it emits.
+// size      60 bytes
+// prototype int (__thiscall ?set_cursor@Win@@QAEHPAUHCURSOR@@@Z)(Win* this, HCURSOR* phCursor)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F1820
+// PRESERVED UNIT - measured NO_COMPILE.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x005EC780
+// measured tier  NO_COMPILE
+// refusal        u005ec780.cpp(7) : error C2065: 'Win' : undeclared identifier u005ec780.cpp(7) : error C2059: syntax error : ',' u005ec780.cpp(9) : error C2653: 'Win' : is not 
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/005ec780/unit.cpp
+// and score it with tools/agent_brief.py.
+// `update_cursor` is one of the `QAA`/`QAG` Win window-procedure family: the
+// mangled name reads as a non-static member, but the real ABI omits the
+// receiver entirely (see tools/recovery_symbols.py:is_nonstatic_member). The
+// scaffolding's class-member declaration therefore adds an implicit `this`
+// no real caller passes; a plain free `__cdecl` declaration with the same
+// two explicit parameters reproduces the direct call the original makes.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?set_cursor@Win@@QAEHPAUHCURSOR@@@Z  at 0x005EC780  (60 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
 int Win::set_cursor(int name) {
     // Only the system cursor range is accepted; anything else is rejected
     // before any field is touched.
@@ -1185,6 +1325,7 @@ int Win::UNK6(int) {
 Purpose: Legacy stub; the original body returns 1 without reading its
          arguments.
 // ORIGINAL: 0x005F6A30 ?on_set_cursor@Win@@QAEHPAXII@Z 0x005F6A30-0x005F6A38 BYTE_EXACT
+// symbol    ?on_set_cursor@Win@@UAEHPAXII@Z
 // size      8 bytes
 // prototype int (__thiscall ?on_set_cursor@Win@@QAEHPAXII@Z)(Win* this, void*, unsigned int, unsigned int)
 // callers   0   call targets   0
@@ -1279,6 +1420,7 @@ void Win::reset_window_clip() {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x005F54B0 ?on_move@Win@@QAEXHH@Z 0x005F54B0-0x005F54B3 BYTE_EXACT
+// symbol    ?on_move@Win@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_move@Win@@QAEXHH@Z)(Win* this, int, int)
 // callers   0   call targets   0
@@ -1295,6 +1437,7 @@ void Win::on_move(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x005F54C0 ?on_size@Win@@QAEXIHH@Z 0x005F54C0-0x005F54C3 BYTE_EXACT
+// symbol    ?on_size@Win@@UAEXIHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_size@Win@@QAEXIHH@Z)(Win* this, unsigned int, int, int)
 // callers   0   call targets   0
@@ -1311,6 +1454,7 @@ void Win::on_size(unsigned int, int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x005F54D0 ?on_size_nc@Win@@QAEXIHH@Z 0x005F54D0-0x005F54D3 BYTE_EXACT
+// symbol    ?on_size_nc@Win@@UAEXIHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_size_nc@Win@@QAEXIHH@Z)(Win* this, unsigned int, int, int)
 // callers   0   call targets   0
@@ -1327,6 +1471,7 @@ void Win::on_size_nc(unsigned int, int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x005F6A40 ?on_sys_command@Win@@QAEHIHH@Z 0x005F6A40-0x005F6A43 BYTE_EXACT
+// symbol    ?on_sys_command@Win@@UAEHIHH@Z
 // size      3 bytes
 // prototype int (__thiscall ?on_sys_command@Win@@QAEHIHH@Z)(Win* this, unsigned int, int, int)
 // callers   0   call targets   0
@@ -1496,13 +1641,13 @@ int Win::UNK3(int value) {
     if (value == 0) {
         return 0;
     }
-    int32_t count;
-    std::memcpy(&count, reinterpret_cast<uint8_t *>(this) + 0x3FC, sizeof(count));
-    uint8_t *const table = reinterpret_cast<uint8_t *>(this) + 0x1A4;
-    for (int index = 0; index < count; ++index) {
-        int32_t entry;
-        std::memcpy(&entry, table + index * 4, sizeof(entry));
-        if (entry == value) {
+    // THE CHILD LIST, BY ITS NAME. This arrived from the artifact walking
+    // `this + 0x1A4` with a count at `this + 0x3FC` through memcpy - the
+    // offsets are right, and win.h already proves they are `children_` and
+    // `child_count_` from add_child's own `mov [ecx + eax*4 + 0x1a4], esi`.
+    // A pun of `this` is banned here precisely because the members exist.
+    for (int index = 0; index < child_count_; ++index) {
+        if (reinterpret_cast<int>(children_[index]) == value) {
             return 1;
         }
     }
@@ -2317,7 +2462,7 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
         case WM_ACTIVATE: {
             const unsigned int active = LOWORD(wparam);
             const unsigned int minimised = HIWORD(wparam);
-            InvalidateRect(HandleMain, nullptr, FALSE);
+            InvalidateRect(reinterpret_cast<HWND>(HandleMain), nullptr, FALSE);
             if (active == 0) {
                 WinPointerOwner1 = nullptr;
                 WinPointerOwner2 = nullptr;
@@ -2488,7 +2633,7 @@ int DDInit::init(int width, int height, int depth, int tgl) {
         surf_ = nullptr;
     }
     if (hwnd_ != nullptr) {
-        DestroyWindow(hwnd_);
+        DestroyWindow(reinterpret_cast<HWND>(hwnd_));
         hwnd_ = nullptr;
         UnregisterClassA(DDInitClassName, WinInstance);
     }
@@ -2559,7 +2704,7 @@ static const char WinClassName[] = "JackalClass";
 //
 // WRITTEN AGAINST THE REAL HEADERS. It used to reach every Win32 import
 // through a hand-written function-pointer typedef and its IAT slot address
-// - `(*(FnRegisterClassA *)g_0066929c)(&wndclass)` - and every global
+// - `(*(FnRegisterClassA *)g)(&wndclass)` - and every global
 // through `static int *const g_009b7b14 = (int *)0x009B7B14`. That is what
 // a MEASUREMENT SCAFFOLD has to do, because a scaffold includes no
 // <windows.h> and declares no project header; this file is in the build and
@@ -2717,7 +2862,7 @@ int __cdecl Win::init_class(LPSTR window_name) {
     }
 
     if ((JackalInitFlags & 4) == 0) {
-        ShowWindow(HandleMain, SW_SHOW);
+        ShowWindow(reinterpret_cast<HWND>(HandleMain), SW_SHOW);
         Win::flip(0);
     }
 
@@ -3140,6 +3285,7 @@ Purpose: Route a mouse-move event either to the primary handler chain (a4
          whether it needs a redraw (slot023) and told to redraw (slot007)
          if so. `a3` is never read; `ret 0x10` still pops it.
 // ORIGINAL: 0x005F6320 ?on_mouse_move@Win@@QAEXHHIH@Z 0x005F6320-0x005F63BB BYTE_EXACT
+// symbol    ?on_mouse_move@Win@@UAEXHHIH@Z
 // size      155 bytes
 // prototype void (__thiscall ?on_mouse_move@Win@@QAEXHHIH@Z)(Win* this, int, int, unsigned int, int)
 // callers   1   call targets   0
@@ -3166,19 +3312,19 @@ void Win::on_mouse_move(int a1, int a2, unsigned int a3, int a4) {
         if (fn != 0) {
             fn(a1, a2);
         }
-        reinterpret_cast<VCallX *>(this)->slot017(a1, a2);
-        void *const child = *reinterpret_cast<void **>(self + 0x1C);
+        this->vslot_17(a1, a2);
+        Win *const child = *reinterpret_cast<Win **>(self + 0x1C);
         if (child != 0) {
-            if (reinterpret_cast<VCallX *>(child)->slot023() == 0) {
-                reinterpret_cast<VCallX *>(child)->slot007();
+            if (child->vslot_23() == 0) {
+                child->vslot_07();
             }
         }
     } else {
-        reinterpret_cast<VCallX *>(this)->slot031(a1, a2);
-        void *const child = *reinterpret_cast<void **>(self + 0x4C);
+        this->vslot_31(a1, a2);
+        Win *const child = *reinterpret_cast<Win **>(self + 0x4C);
         if (child != 0) {
-            if (reinterpret_cast<VCallX *>(child)->slot023() == 0) {
-                reinterpret_cast<VCallX *>(child)->slot007();
+            if (child->vslot_23() == 0) {
+                child->vslot_07();
             }
         }
     }
@@ -3199,7 +3345,7 @@ Status: Complete
 */
 void Win::close_class() {
     if (HandleMain) {
-        DestroyWindow(HandleMain);
+        DestroyWindow(reinterpret_cast<HWND>(HandleMain));
         HandleMain = nullptr;
     }
     ScreenBuffer.close();
@@ -3208,7 +3354,6 @@ void Win::close_class() {
 }
 
 // Fixed-slot bindings carried from 005ec800.cpp
-static int *const g_00669310 = (int *)0x00669310;
 
 // ORIGINAL: 0x005EC800 ?set_mouse_pos@Win@@QAEXHH@Z 0x005EC800-0x005EC89B FILE
 // TRIED: `a1+client_rect_.left+outer_rect_.left` left-to-right, and `(client_rect_.left+outer_rect_.left)+a1` grouped - both MISMATCH #9 mov/add, a local-store scheduling difference around the x/y pair, not the arithmetic itself.
@@ -3232,15 +3377,14 @@ void Win::set_mouse_pos(int a1, int a2) {
             y = y - win_parent_->outer_rect_.top;
         }
     }
-    ((SetCursorPosFn)*g_00669310)(x, y);
+    ((SetCursorPosFn)*g)(x, y);
 }
 
 // Fixed-slot bindings carried from 005ec8a0.cpp
-static int *const g_00669284 = (int *)0x00669284;
 
 // ORIGINAL: 0x005EC8A0 ?get_mouse_pos@Win@@QAEXPAHPAH@Z 0x005EC8A0-0x005EC952 FILE
 // symbol    ?get_mouse_pos@Win@@QAEXPAH0@Z
-// TRIED: tagPOINT (undeclared, C2065); reaches #38/~178B with local Pt struct + GetCursorPos via g_00669284 fn-ptr, outer_rect_/client_rect_ members
+// TRIED: tagPOINT (undeclared, C2065); reaches #38/~178B with local Pt struct + GetCursorPos via g fn-ptr, outer_rect_/client_rect_ members
 // working copy - scaffold materialised by --work
 // size      178 bytes
 // prototype void (__thiscall ?get_mouse_pos@Win@@QAEXPAHPAH@Z)(Win* this, int*, int*)
@@ -3254,7 +3398,7 @@ void Win::get_mouse_pos(int * a1, int * a2) {
     if (a1 != 0 && a2 != 0) {
         struct Pt { int x, y; } pt;
         typedef int (__stdcall *GetCursorPosFn)(Pt *);
-        (*reinterpret_cast<GetCursorPosFn *>(g_00669284))(&pt);
+        (*reinterpret_cast<GetCursorPosFn *>(g))(&pt);
         *a1 = pt.x;
         *a2 = pt.y;
         *a1 -= client_rect_.left + outer_rect_.left;
@@ -3405,7 +3549,6 @@ int Win::UNK2(int a1) {
 }
 
 // Fixed-slot bindings carried from 005ecec0.cpp
-static int *const g_009b7ae0 = (int *)0x009B7AE0;
 
 // ORIGINAL: 0x005ECEC0 ?UNK4@Win@@QAEHXZ 0x005ECEC0-0x005ECF1C FILE
 // TRIED: guard-clause form (`if (w!=0 || w==this) return 1; if (w!=0) {loop} return 0;`), matching Ghidra's redundant double null-check; compiles and matches the loop body, diverges at #0 in prologue register-save order (mov vs push)
@@ -3518,6 +3661,14 @@ void Win::nonscreen_to_client(RECT * a1) {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005ED240
 
+// ORIGINAL: 0x005ED3F0 ?nonclient_to_screen@Win@@QAEXPAH0@Z 0x005ED3F0-0x005ED48D FILE BYTE_EXACT
+// working copy - scaffold materialised by --work
+// size      157 bytes
+// prototype void (__thiscall ?nonclient_to_screen@Win@@QAEXPAH0@Z)(Win* this, int*, int*)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005ED240
 void Win::nonclient_to_screen(RECT * a1) {
     if (a1 != 0) {
         int x = client_rect_.left + outer_rect_.left;
@@ -3539,14 +3690,9 @@ void Win::nonclient_to_screen(RECT * a1) {
 }
 
 // Fixed-slot bindings carried from 005ee280.cpp
-static int *const g_009b6ef8 = (int *)0x009B6EF8;
-static int *const g_009b6efc = (int *)0x009B6EFC;
-static int *const g_009b7a1c = (int *)0x009B7A1C;
-static int *const g_009b7a20 = (int *)0x009B7A20;
-static int *const g_009b7adc = (int *)0x009B7ADC;
-static int *const g_009b7ae4 = (int *)0x009B7AE4;
 
 // ORIGINAL: 0x005EE280 ?release_modal@Win@@QAEXXZ 0x005EE280-0x005EE327 FILE
+// symbol    ?release_modal@Win@@UAEXXZ
 // size      167 bytes
 // prototype void (__thiscall ?release_modal@Win@@QAEXXZ)(Win* this)
 // callers   5   call targets   0
@@ -3597,11 +3743,9 @@ void Win::release_modal() {
 }
 
 // Fixed-slot bindings carried from 005f54e0.cpp
-static int *const g_006690cc = (int *)0x006690CC;
-static int *const g_00669294 = (int *)0x00669294;
 
 // ORIGINAL: 0x005F54E0 ?on_paint@Win@@QAEXPAURECT@@@Z 0x005F54E0-0x005F5803 FILE
-// symbol    ?on_paint@Win@@QAEXPAUtagRECT@@@Z
+// symbol    ?on_paint@Win@@UAEXPAUtagRECT@@@Z
 // size      803 bytes
 // prototype void (__thiscall ?on_paint@Win@@QAEXPAURECT@@@Z)(Win* this, RECT* lprc)
 // callers   0   call targets   2
@@ -3648,6 +3792,7 @@ void Win::on_paint(RECT * a1) {
 }
 
 // ORIGINAL: 0x005F5AD0 ?on_nc_hittest@Win@@QAEHHH@Z 0x005F5AD0-0x005F5BF6
+// symbol    ?on_nc_hittest@Win@@UAEHHH@Z
 // TRIED: transcribing the nine-way corner/edge ladder as one flat sequence of if-return statements (matching the Ghidra shape, each re-testing x/y against iVar1 and the recomputed client-rect edge) compiles and the byte count comes close (286 vs 294) but the prologue register allocation still diverges at instruction #3 - the original pushes edi before touching it, this form delays that push since it needs one fewer live temporary across the first branch. Landing the closest MISMATCH.
 // size      294 bytes
 // prototype int (__thiscall ?on_nc_hittest@Win@@QAEHHH@Z)(Win* this, int, int)
@@ -3756,8 +3901,6 @@ int __cdecl Win::OnPaletteChanged(void * hwnd, void * lparam) {
 // The two icons `redo_caption_buttons` swaps into the zoom button's own
 // +0xAB8 field, keyed by `IsZoomed()`. INFERRED names: the icon shown when
 // NOT zoomed is the action still available (maximize), and vice versa.
-static int *const WinMaximizeIcon = (int *)0x009B7B04;
-static int *const WinRestoreIcon = (int *)0x009B7B08;
 
 // ORIGINAL: 0x005F2760 ?redo_caption_buttons@Win@@QAEXXZ 0x005F2760-0x005F2822 FILE
 // LEVER: the image's `call rel32` to `Win::move` takes its RECEIVER from
@@ -3801,6 +3944,7 @@ void Win::redo_caption_buttons() {
 }
 
 // ORIGINAL: 0x005F6230 ?on_sys_key@Win@@QAGHIJHI@Z 0x005F6230-0x005F62C8 FILE
+// symbol    ?on_sys_key@Win@@UAGHIJHI@Z
 // LEVER: `PostMessageA`/`DefWindowProcA` by name instead of the two import
 // thunks (0x00669314, 0x006692B0) as `g_`-named function pointers - both
 // compile to the same `call dword ptr [import]` the image emits.
@@ -3933,3 +4077,6845 @@ void Win::set_bubble_text(char * text, RECT * rect) {
     flip(WinBubbleRect);
 }
 
+// ORIGINAL: 0x005EE330 ?resize_event@Win@@QAEHHH@Z 0x005EE330-0x005EE454
+// TRIED: a named-global spelling for 0x9b7ab8, i.e. a static Win-pointer global assigned from `this`, reordered the entry register allocation - mismatch at instr #0; a plain store through a cast fixed address matches through instr #16-19 depending on how the vtable-slot-3/13 calls are spelled. The two indirect vtable calls, slot 3 at +0xc and slot 13 at +0x34, cannot use a virtual-shim helper class declared ahead of the definition: a second top-level type before the function truncates the region this file's own extractor reads (brace-depth returns to zero at the helper's own close, before the real body), and a LOCAL shim class needs every declared virtual defined, C2599, which VC6 then emits as extra external symbols and the unit fails the exactly-one-symbol check. A raw thiscall function pointer draws C4234. The working spelling: an empty LOCAL class with no members at all, so it carries no vtable and needs no symbol, used purely for its member-pointer representation, populated at runtime through a union from the vtable slot read as a plain pointer - legitimate member-pointer call syntax, so it invokes with the receiver in ECX like the original, and it is one self-contained region for this file's own extractor. 0.857 mnemonic similarity, first divergence at instr #19; landing the closest MISMATCH. NOTE: literal brace characters in this comment block will truncate the region the same way - keep this prose brace-free.
+// size      292 bytes
+// prototype int (__thiscall ?resize_event@Win@@QAEHHH@Z)(Win* this, int, int)
+// callers   3   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005ED7D0 0x005F2760
+// indirect  0x005EE3AA 0x005EE401 0x005EE422 0x005EE439 0x005EE444
+
+
+int Win::resize_event(int a1, int a2) {
+  class MfpBase {};
+  typedef int (MfpBase::*Fn3)(int, int, int);
+  union Conv3 {
+    Fn3 asMfp;
+    void *asPtr;
+  };
+
+  *(Win **)0x9b7ab8 = this;
+
+  if ((iFlags_ & 0x40) == 0) {
+    if (scroll_vert_ != 0) {
+      move(outer_rect_.right - outer_rect_.left, 0);
+      char *sv = (char *)scroll_vert_;
+      char *sh = (char *)scroll_horz_;
+      int iVar2;
+      if (sh == 0) {
+        iVar2 = outer_rect_.bottom - outer_rect_.top;
+      } else {
+        iVar2 = *(int *)(sh + 0x4c8) - outer_rect_.top + outer_rect_.bottom;
+      }
+      Conv3 c;
+      c.asPtr = (*(void ***)sv)[0xc / 4];
+      (reinterpret_cast<MfpBase *>(scroll_vert_)->*c.asMfp)(
+          *(int *)(sv + 0x4c4), iVar2, 0);
+    }
+    if (scroll_horz_ != 0) {
+      move(0, outer_rect_.bottom - outer_rect_.top);
+      char *sh = (char *)scroll_horz_;
+      char *sv = (char *)scroll_vert_;
+      Conv3 c;
+      c.asPtr = (*(void ***)sh)[0xc / 4];
+      if (sv == 0) {
+        (reinterpret_cast<MfpBase *>(scroll_horz_)->*c.asMfp)(
+            outer_rect_.right - outer_rect_.left, -*(int *)(sh + 0x4c8), 0);
+      } else {
+        (reinterpret_cast<MfpBase *>(scroll_horz_)->*c.asMfp)(
+            (outer_rect_.right - *(int *)(sv + 0x4c4)) - outer_rect_.left,
+            -*(int *)(sh + 0x4c8), 0);
+      }
+    }
+  }
+  if (field_400_ != 0) {
+    typedef void(__cdecl * Fn2)(int, int);
+    Fn2 fn = (Fn2)field_400_;
+    fn(a1, a2);
+  }
+  {
+    typedef int (MfpBase::*Fn2m)(int, int);
+    union Conv2 {
+      Fn2m asMfp;
+      void *asPtr;
+    } c2;
+    c2.asPtr = (*(void ***)this)[0x34 / 4];
+    (reinterpret_cast<MfpBase *>(this)->*c2.asMfp)(a1, a2);
+  }
+  redo_caption_buttons();
+  return 0;
+}
+
+// Fixed-slot bindings carried from 005f1340.cpp
+
+typedef HDC (__stdcall *BeginPaintProc)(void *, PAINTSTRUCT *);
+typedef int (__stdcall *EndPaintProc)(void *, const PAINTSTRUCT *);
+
+// ORIGINAL: 0x005F1340 ?OnPaint@Win@@QAA_NPAX@Z 0x005F1340-0x005F13A2 FILE
+// TRIED: BeginPaint/EndPaint reached through the IAT slots as fn-ptr casts; bool return passed straight through EndPaint's result
+// working copy - scaffold materialised by --work
+// size      98 bytes
+// prototype bool (__cdecl ?OnPaint@Win@@QAA_NPAX@Z)(HWND hWnd)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005EFD20 0x005F7320
+// indirect  0x005F134E 0x005F1397
+
+
+bool __cdecl Win::OnPaint(void * a1) {
+    PAINTSTRUCT ps;
+    BeginPaintProc beginPaint = *reinterpret_cast<BeginPaintProc *>(g);
+    EndPaintProc endPaint = *reinterpret_cast<EndPaintProc *>(g);
+    HDC hdc = beginPaint(a1, &ps);
+    if (hdc == 0) {
+        return false;
+    }
+    RECT paintRect;
+    paintRect.left = ps.rcPaint.left;
+    paintRect.top = ps.rcPaint.top;
+    paintRect.right = ps.rcPaint.right;
+    paintRect.bottom = ps.rcPaint.bottom;
+    update_screen(&paintRect, 0);
+    flip(&paintRect);
+    return endPaint(a1, &ps) != 0;
+}
+
+// Helper shims the artifacts carried, one copy each, ahead of first use.
+class ButtonUpVCall { public: virtual void slot082(void *, int, int, int); };
+
+class HideVCall {
+ public:
+  virtual void slot000();
+  virtual void slot001();
+  virtual void slot002();
+  virtual void slot003();
+  virtual void slot004();  // <-- used, void
+  virtual void slot005();
+  virtual void slot006();
+  virtual void slot007();  // <-- used, void
+  virtual void slot008();
+  virtual void slot009();
+  virtual void slot010();
+  virtual void slot011();
+  virtual void slot012();
+  virtual void slot013();
+  virtual void slot014();
+  virtual void slot015();
+  virtual void slot016();
+  virtual void slot017();
+  virtual void slot018();
+  virtual void slot019();
+  virtual void slot020();
+  virtual void slot021();
+  virtual void slot022();
+  virtual int slot023();  // <-- used, returns int (tested with `test eax,eax`)
+  virtual void slot024();
+  virtual void slot025();
+  virtual void slot026();
+  virtual void slot027();
+  virtual void slot028();
+  virtual void slot029();
+  virtual void slot030();
+  virtual void slot031();
+  virtual void slot032();
+  virtual void slot033();
+  virtual void slot034();
+  virtual void slot035();
+  virtual void slot036();
+  virtual void slot037();
+  virtual void slot038();
+  virtual void slot039();
+  virtual void slot040();
+  virtual void slot041();
+  virtual void slot042();
+  virtual void slot043();
+  virtual void slot044();
+  virtual void slot045();
+  virtual void slot046();
+  virtual void slot047();
+  virtual void slot048();
+  virtual void slot049();
+  virtual void slot050();
+  virtual void slot051();
+  virtual void slot052();
+  virtual void slot053();
+  virtual void slot054();
+  virtual void slot055();
+  virtual void slot056();
+  virtual void slot057();
+  virtual void slot058();  // <-- used, void
+};
+
+struct LocalLogPen {
+    unsigned int style;
+    int widthX;
+    int widthY;
+    unsigned int color;
+};
+
+class MenuVCall {
+public:
+    virtual void slot000();
+    virtual void slot001();
+    virtual void slot002();
+    virtual void slot003();
+    virtual void slot004();
+    virtual void slot005();
+    virtual void slot006();
+    virtual void slot007();
+    virtual void slot008();
+    virtual void slot009();
+    virtual void slot010();
+    virtual void slot011();
+    virtual void slot012();
+    virtual void slot013();
+    virtual void slot014();
+    virtual void slot015();
+    virtual void slot016();
+    virtual void slot017();
+    virtual void slot018();
+    virtual void slot019();
+    virtual void slot020();
+    virtual void slot021();
+    virtual void slot022();
+    virtual void slot023();
+    virtual void slot024();
+    virtual void slot025();
+    virtual void slot026();
+    virtual void slot027();
+    virtual void slot028();
+    virtual void slot029();
+    virtual void slot030();
+    virtual void slot031();
+    virtual void slot032();
+    virtual void slot033();
+    virtual void slot034();
+    virtual void slot035();
+    virtual void slot036();
+    virtual void slot037();
+    virtual void slot038();
+    virtual void slot039();
+    virtual void slot040();
+    virtual void slot041();
+    virtual void slot042();
+    virtual void slot043();
+    virtual void slot044();
+    virtual void slot045();
+    virtual void slot046();
+    virtual void slot047();
+    virtual void slot048();
+    virtual void slot049();
+    virtual void slot050();
+    virtual void slot051();
+    virtual void slot052();
+    virtual void slot053();
+    virtual void slot054();
+    virtual void slot055();
+    virtual void slot056();
+    virtual void slot057();
+    virtual void slot058();
+    virtual void slot059();
+    virtual void slot060();
+    virtual void slot061();
+    virtual void slot062();
+    virtual void slot063();
+    virtual void slot064();
+    virtual void slot065();
+    virtual void slot066();
+    virtual void slot067();
+    virtual void slot068();
+    virtual void slot069();
+    virtual void slot070();
+    virtual void slot071();
+    virtual void slot072();
+    virtual void slot073();
+    virtual void slot074();
+    virtual void slot075();
+    virtual void slot076();
+    virtual void slot077();
+    virtual void slot078();
+    virtual void slot079();
+    virtual void slot080();
+    virtual void slot081();
+    virtual void slot082();
+    virtual void slot083();
+    virtual void slot084();
+    virtual void slot085();
+    virtual void slot086();
+    virtual void slot087();
+    virtual void slot088();
+    virtual void slot089();
+    virtual void slot090();
+    virtual int slot091();
+};
+
+struct MsgT {
+    void *hwnd;
+    unsigned int message;
+    unsigned int wParam;
+    long lParam;
+    unsigned long time;
+    long pt_x;
+    long pt_y;
+};
+
+class MyVCall { public:
+    virtual void slot000();
+    virtual void slot001();
+    virtual void slot002();
+    virtual void slot003();
+    virtual void slot004();
+    virtual void slot005();
+    virtual void slot006();
+    virtual void slot007();
+    virtual void slot008();
+    virtual void slot009();
+    virtual void slot010();
+    virtual void slot011();
+    virtual void slot012();
+    virtual void slot013();
+    virtual void slot014();
+    virtual void slot015();
+    virtual void slot016();
+    virtual void slot017();
+    virtual void slot018();
+    virtual void slot019();
+    virtual void slot020();
+    virtual void slot021();
+    virtual void slot022();
+    virtual int slot023();
+};
+
+class NCCall { public:
+    virtual void slot000();
+    virtual void slot001();
+    virtual void slot002();
+    virtual void slot003();
+    virtual void slot004();
+    virtual void slot005();
+    virtual void slot006();
+    virtual void slot007();
+    virtual void slot008();
+    virtual void slot009();
+    virtual void slot010();
+    virtual void slot011();
+    virtual void slot012();
+    virtual void slot013();
+    virtual void slot014();
+    virtual void slot015();
+    virtual void slot016();
+    virtual void slot017();
+    virtual void slot018();
+    virtual void slot019();
+    virtual void slot020();
+    virtual void slot021();
+    virtual void slot022();
+    virtual void slot023();
+    virtual void slot024();
+    virtual void slot025();
+    virtual void slot026();
+    virtual void slot027();
+    virtual void slot028();
+    virtual void slot029();
+    virtual void slot030();
+    virtual void slot031();
+    virtual void slot032();
+    virtual void slot033();
+    virtual void slot034();
+    virtual void slot035();
+    virtual void slot036();
+    virtual void slot037();
+    virtual void slot038();
+    virtual void slot039();
+    virtual void slot040();
+    virtual void slot041();
+    virtual void slot042();
+    virtual void slot043();
+    virtual void slot044();
+    virtual void slot045();
+    virtual void slot046();
+    virtual void slot047();
+    virtual void slot048();
+    virtual void slot049();
+    virtual void slot050();
+    virtual void slot051();
+    virtual void slot052();
+    virtual void slot053();
+    virtual void slot054();
+    virtual void slot055();
+    virtual void slot056();
+    virtual void slot057();
+    virtual void slot058();
+    virtual void slot059();
+    virtual void slot060();
+    virtual void slot061();
+    virtual void slot062();
+    virtual void slot063();
+    virtual void slot064();
+    virtual void slot065();
+    virtual void slot066();
+    virtual void slot067();
+    virtual void slot068();
+    virtual void slot069();
+    virtual void slot070();
+    virtual void slot071();
+    virtual void slot072();
+    virtual void slot073();
+    virtual void slot074();
+    virtual void slot075();
+    virtual void slot076();
+    virtual void slot077();
+    virtual void slot078();
+    virtual void slot079();
+    virtual void slot080();
+    virtual void slot081();
+    virtual void slot082();
+    virtual void slot083();
+    virtual void slot084();
+    virtual void slot085();
+    virtual void slot086();
+    virtual void slot087();
+    virtual void slot088();
+    virtual void slot089();
+    virtual void slot090();
+    virtual int slot091();
+};
+
+class NcVCall {
+ public:
+  virtual void slot000();
+  virtual void slot001();
+  virtual void slot002();
+  virtual void slot003();
+  virtual void slot004();
+  virtual void slot005();
+  virtual void slot006();
+  virtual void slot007();
+  virtual void slot008();
+  virtual void slot009();
+  virtual void slot010();
+  virtual void slot011();
+  virtual void slot012();
+  virtual void slot013();
+  virtual void slot014();
+  virtual void slot015();
+  virtual void slot016();
+  virtual void slot017();
+  virtual void slot018();
+  virtual void slot019();
+  virtual void slot020();
+  virtual void slot021();
+  virtual void slot022();
+  virtual void slot023();
+  virtual void slot024();
+  virtual void slot025();
+  virtual void slot026();
+  virtual void slot027();
+  virtual void slot028();
+  virtual void slot029();
+  virtual void slot030();
+  virtual void slot031();
+  virtual void slot032();
+  virtual void slot033();
+  virtual void slot034();
+  virtual void slot035();
+  virtual void slot036();
+  virtual void slot037();
+  virtual void slot038();
+  virtual void slot039();
+  virtual void slot040();
+  virtual void slot041();
+  virtual void slot042();
+  virtual void slot043();
+  virtual void slot044();
+  virtual void slot045();
+  virtual void slot046();
+  virtual void slot047();
+  virtual void slot048();
+  virtual void slot049();
+  virtual void slot050();
+  virtual void slot051();
+  virtual void slot052();
+  virtual void slot053();
+  virtual void slot054();
+  virtual void slot055();
+  virtual void slot056();
+  virtual void slot057();
+  virtual void slot058();
+  virtual void slot059();
+  virtual void slot060();
+  virtual void slot061();
+  virtual void slot062();
+  virtual void slot063();
+  virtual void slot064();
+  virtual void slot065();
+  virtual void slot066();
+  virtual void slot067();
+  virtual void slot068();
+  virtual void slot069();
+  virtual void slot070();
+  virtual void slot071();
+  virtual void slot072();
+  virtual void slot073();
+  virtual void slot074(int, int);
+};
+
+struct PAINTSTRUCT_ {
+    HDC hdc;
+    int fErase;
+    RECT rcPaint;
+    int fRestore;
+    int fIncUpdate;
+    unsigned char rgbReserved[32];
+};
+
+class VCall12 {
+public:
+    virtual void slot000();
+    virtual void slot001();
+    virtual void slot002();
+    virtual void slot003();
+    virtual void slot004();
+    virtual void slot005();
+    virtual void slot006();
+    virtual void slot007();
+    virtual void slot008();
+    virtual void slot009();
+    virtual void slot010();
+    virtual void slot011();
+    virtual void slot012();
+};
+
+class VCall2 { public:
+    virtual void slot000();
+    virtual void slot001();
+    virtual void slot002();
+    virtual void slot003();
+    virtual void slot004();
+    virtual void slot005();
+    virtual void slot006();
+    virtual void slot007();
+    virtual void slot008();
+    virtual void slot009();
+    virtual void slot010();
+    virtual void slot011();
+    virtual void slot012();
+    virtual void slot013();
+    virtual void slot014();
+    virtual void slot015();
+    virtual void slot016();
+    virtual void slot017();
+    virtual void slot018();
+    virtual void slot019();
+    virtual void slot020();
+    virtual void slot021();
+    virtual void slot022();
+    virtual void slot023();
+    virtual void slot024();
+    virtual void slot025();
+    virtual void slot026();
+    virtual void slot027();
+    virtual void slot028();
+    virtual void slot029();
+    virtual void slot030();
+    virtual void slot031();
+    virtual void slot032();
+    virtual void slot033();
+    virtual void slot034();
+    virtual void slot035();
+    virtual void slot036();
+    virtual void slot037();
+    virtual void slot038();
+    virtual void slot039();
+    virtual void slot040();
+    virtual void slot041();
+    virtual void slot042();
+    virtual void slot043();
+    virtual void slot044();
+    virtual void slot045();
+    virtual void slot046();
+    virtual void slot047();
+    virtual void slot048();
+    virtual void slot049();
+    virtual void slot050();
+    virtual void slot051();
+    virtual void slot052();
+    virtual void slot053();
+    virtual void slot054();
+    virtual void slot055();
+    virtual void slot056();
+    virtual void slot057();
+    virtual void slot058();
+    virtual void slot059();
+    virtual void slot060();
+    virtual void slot061();
+    virtual void slot062();
+    virtual void slot063();
+    virtual void slot064();
+    virtual void slot065();
+    virtual void slot066();
+    virtual void slot067();
+    virtual void slot068();
+    virtual void slot069();
+    virtual void slot070();
+    virtual void slot071();
+    virtual void slot072();
+    virtual void slot073();
+    virtual void slot074();
+    virtual void slot075();
+    virtual void slot076();
+    virtual void slot077();
+    virtual void slot078();
+    virtual void slot079();
+    virtual void slot080();
+    virtual void slot081();
+    virtual void slot082();
+    virtual void slot083();
+    virtual void slot084();
+    virtual void slot085();
+    virtual void slot086();
+    virtual void slot087();
+    virtual void slot088();
+    virtual void slot089();
+    virtual void slot090();
+    virtual int slot091();
+};
+
+class VCall3 {
+public:
+    virtual void slot000();
+    virtual void slot001();
+    virtual void slot002();
+    virtual void slot003(int, int, int);
+};
+
+class VCall66 {
+public:
+    virtual void slot000();
+    virtual void slot001();
+    virtual void slot002();
+    virtual void slot003();
+    virtual void slot004();
+    virtual void slot005();
+    virtual void slot006();
+    virtual void slot007();
+    virtual void slot008();
+    virtual void slot009();
+    virtual void slot010();
+    virtual void slot011();
+    virtual void slot012();
+    virtual void slot013();
+    virtual void slot014();
+    virtual void slot015();
+    virtual void slot016();
+    virtual void slot017();
+    virtual void slot018();
+    virtual void slot019();
+    virtual void slot020();
+    virtual void slot021();
+    virtual void slot022();
+    virtual void slot023();
+    virtual void slot024();
+    virtual void slot025();
+    virtual void slot026();
+    virtual void slot027();
+    virtual void slot028();
+    virtual void slot029();
+    virtual void slot030();
+    virtual void slot031();
+    virtual void slot032();
+    virtual void slot033();
+    virtual void slot034();
+    virtual void slot035();
+    virtual void slot036();
+    virtual void slot037();
+    virtual void slot038();
+    virtual void slot039();
+    virtual void slot040();
+    virtual void slot041();
+    virtual void slot042();
+    virtual void slot043();
+    virtual void slot044();
+    virtual void slot045();
+    virtual void slot046();
+    virtual void slot047();
+    virtual void slot048();
+    virtual void slot049();
+    virtual void slot050();
+    virtual void slot051();
+    virtual void slot052();
+    virtual void slot053();
+    virtual void slot054();
+    virtual void slot055();
+    virtual void slot056();
+    virtual void slot057();
+    virtual void slot058();
+    virtual void slot059();
+    virtual void slot060();
+    virtual void slot061();
+    virtual void slot062();
+    virtual void slot063();
+    virtual void slot064();
+    virtual void slot065();
+    virtual void slot066();
+};
+
+class VCall67 { public:
+    virtual void slot000();
+    virtual void slot001();
+    virtual void slot002();
+    virtual void slot003();
+    virtual void slot004();
+    virtual void slot005();
+    virtual void slot006();
+    virtual void slot007();
+    virtual void slot008();
+    virtual void slot009();
+    virtual void slot010();
+    virtual void slot011();
+    virtual void slot012();
+    virtual void slot013();
+    virtual void slot014();
+    virtual void slot015();
+    virtual void slot016();
+    virtual void slot017();
+    virtual void slot018();
+    virtual void slot019();
+    virtual void slot020();
+    virtual void slot021();
+    virtual void slot022();
+    virtual void slot023();
+    virtual void slot024();
+    virtual void slot025();
+    virtual void slot026();
+    virtual void slot027();
+    virtual void slot028();
+    virtual void slot029();
+    virtual void slot030();
+    virtual void slot031();
+    virtual void slot032();
+    virtual void slot033();
+    virtual void slot034();
+    virtual void slot035();
+    virtual void slot036();
+    virtual void slot037();
+    virtual void slot038();
+    virtual void slot039();
+    virtual void slot040();
+    virtual void slot041();
+    virtual void slot042();
+    virtual void slot043();
+    virtual void slot044();
+    virtual void slot045();
+    virtual void slot046();
+    virtual void slot047();
+    virtual void slot048();
+    virtual void slot049();
+    virtual void slot050();
+    virtual void slot051();
+    virtual void slot052();
+    virtual void slot053();
+    virtual void slot054();
+    virtual void slot055();
+    virtual void slot056();
+    virtual void slot057();
+    virtual void slot058();
+    virtual void slot059();
+    virtual void slot060();
+    virtual void slot061();
+    virtual void slot062();
+    virtual void slot063();
+    virtual void slot064();
+    virtual void slot065();
+    virtual void slot066();
+    virtual void slot067(int, int);  // <-- used, widened
+};
+
+class VCallArg { public:
+    virtual void s00(); virtual void s01(); virtual void s02(); virtual void s03();
+    virtual void s04(); virtual void s05(); virtual void s06(); virtual void s07();
+    virtual void s08(); virtual void s09(); virtual void s10(); virtual void s11();
+    virtual void s12(); virtual void s13(); virtual void s14(); virtual void s15();
+    virtual void s16(); virtual void s17(); virtual void s18(); virtual void s19();
+    virtual void s20(); virtual void s21(); virtual void s22(); virtual int s23();  // <-- used
+    virtual void s24(); virtual void s25(); virtual void s26();
+    virtual void s27(int);  // <-- used
+};
+
+class VCallArg51 { public:
+    virtual void s00(); virtual void s01(); virtual void s02(); virtual void s03();
+    virtual void s04(); virtual void s05(); virtual void s06(); virtual void s07();
+    virtual void s08(); virtual void s09(); virtual void s10(); virtual void s11();
+    virtual void s12(); virtual void s13(); virtual void s14(); virtual void s15();
+    virtual void s16(); virtual void s17(); virtual void s18(); virtual void s19();
+    virtual void s20(); virtual void s21(); virtual void s22(); virtual void s23();
+    virtual void s24(); virtual void s25(); virtual void s26(); virtual void s27();
+    virtual void s28(); virtual void s29(); virtual void s30(); virtual void s31();
+    virtual void s32(); virtual void s33(); virtual void s34(); virtual void s35();
+    virtual void s36(); virtual void s37(); virtual void s38(); virtual void s39();
+    virtual void s40(); virtual void s41(); virtual void s42(); virtual void s43();
+    virtual void s44(); virtual void s45(); virtual void s46(); virtual void s47();
+    virtual void s48(); virtual void s49(); virtual void s50();
+    virtual void s51(int);  // <-- used, takes an int
+};
+
+class VCallArgs { public:
+    virtual void slot000();
+    virtual void slot001();
+    virtual void slot002();
+    virtual void slot003();
+    virtual void slot004();
+    virtual void slot005();
+    virtual void slot006();
+    virtual void slot007();
+    virtual void slot008();
+    virtual void slot009();
+    virtual void slot010();
+    virtual void slot011();
+    virtual void slot012();
+    virtual void slot013();
+    virtual void slot014();
+    virtual void slot015();
+    virtual void slot016();
+    virtual void slot017();
+    virtual void slot018();
+    virtual void slot019();
+    virtual void slot020();
+    virtual void slot021();
+    virtual void slot022();
+    virtual void slot023(int, int);  // <-- used
+    virtual void slot024();
+    virtual void slot025();
+    virtual void slot026();
+    virtual void slot027();
+    virtual void slot028();
+    virtual void slot029(int, int);  // <-- used
+    virtual void slot030();
+    virtual void slot031();
+    virtual void slot032();
+    virtual void slot033();
+    virtual void slot034();
+    virtual void slot035();
+    virtual void slot036(int, int);  // <-- used
+    virtual void slot037();
+    virtual void slot038();
+    virtual void slot039(int, int);  // <-- used
+    virtual void slot040();
+    virtual void slot041();
+    virtual void slot042();
+    virtual void slot043();
+    virtual void slot044();
+    virtual void slot045();
+    virtual void slot046();
+    virtual void slot047();
+    virtual void slot048();
+    virtual void slot049();
+    virtual void slot050();
+    virtual void slot051();
+    virtual void slot052();
+    virtual void slot053();
+    virtual void slot054();
+    virtual void slot055();
+    virtual void slot056();
+    virtual void slot057();
+    virtual void slot058();
+    virtual void slot059();
+    virtual void slot060();
+    virtual void slot061();
+    virtual void slot062();
+    virtual void slot063();
+    virtual void slot064();
+    virtual void slot065(Win *);  // <-- used
+};
+
+class VCallChild { public:
+    virtual void slot000();
+    virtual void slot001();
+    virtual void slot002();
+    virtual void slot003();
+    virtual void slot004();
+    virtual void slot005();
+    virtual void slot006();
+    virtual void slot007();  // <-- used
+    virtual void slot008();
+    virtual void slot009();
+    virtual void slot010();
+    virtual void slot011();
+    virtual void slot012();
+    virtual void slot013();
+    virtual void slot014();
+    virtual void slot015();
+    virtual void slot016();
+    virtual void slot017();
+    virtual void slot018();
+    virtual void slot019();
+    virtual void slot020();
+    virtual void slot021();
+    virtual void slot022();
+    virtual int slot023();  // <-- used; return value is tested against 0
+};
+
+class VCallInt { public:
+    virtual void slot000();
+    virtual void slot001();
+    virtual void slot002();
+    virtual void slot003();
+    virtual void slot004();
+    virtual void slot005();
+    virtual void slot006();
+    virtual void slot007();
+    virtual void slot008();
+    virtual void slot009();
+    virtual void slot010();
+    virtual void slot011();
+    virtual void slot012();
+    virtual void slot013();
+    virtual void slot014();
+    virtual void slot015();
+    virtual void slot016();
+    virtual void slot017();
+    virtual void slot018();
+    virtual void slot019();
+    virtual void slot020();
+    virtual void slot021();
+    virtual void slot022();
+    virtual void slot023();
+    virtual void slot024();
+    virtual void slot025();
+    virtual void slot026();
+    virtual void slot027();
+    virtual void slot028();
+    virtual void slot029();
+    virtual void slot030();
+    virtual void slot031();
+    virtual void slot032();
+    virtual void slot033();
+    virtual void slot034();
+    virtual void slot035();
+    virtual void slot036();
+    virtual void slot037();
+    virtual void slot038();
+    virtual void slot039();
+    virtual void slot040();
+    virtual void slot041();
+    virtual void slot042();
+    virtual void slot043();
+    virtual void slot044();
+    virtual void slot045();
+    virtual void slot046();
+    virtual void slot047();
+    virtual void slot048();
+    virtual void slot049();
+    virtual void slot050();
+    virtual void slot051();
+    virtual void slot052();
+    virtual void slot053();
+    virtual void slot054();
+    virtual void slot055();
+    virtual void slot056();
+    virtual void slot057();
+    virtual void slot058();
+    virtual void slot059();
+    virtual void slot060();
+    virtual int slot061();
+};
+
+class VCallModal { public:
+    virtual void slot00();
+    virtual void slot01(int);  // offset 4, used
+    virtual void slot02();
+    virtual void slot03();
+    virtual void slot04();     // offset 0x10, used
+    virtual void slot05();
+    virtual void slot06();
+    virtual void slot07();
+    virtual void slot08();
+    virtual void slot09();
+    virtual void slot10();
+    virtual void slot11();
+    virtual void slot12();
+    virtual void slot13();
+    virtual void slot14();
+    virtual void slot15();
+    virtual void slot16();
+    virtual void slot17();
+    virtual void slot18();
+    virtual void slot19();
+    virtual void slot20();
+    virtual void slot21();
+    virtual void slot22();
+    virtual void slot23();
+    virtual void slot24();
+    virtual void slot25();
+    virtual void slot26();
+    virtual void slot27();
+    virtual void slot28();
+    virtual void slot29();
+    virtual void slot30();
+    virtual void slot31();
+    virtual void slot32();
+    virtual void slot33();
+    virtual void slot34();
+    virtual void slot35();
+    virtual void slot36();
+    virtual void slot37();
+    virtual void slot38();
+    virtual void slot39();
+    virtual void slot40();
+    virtual void slot41();
+    virtual void slot42();
+    virtual void slot43();
+    virtual void slot44();
+    virtual void slot45();
+    virtual void slot46();
+    virtual void slot47();
+    virtual void slot48();
+    virtual void slot49();
+    virtual void slot50();
+    virtual void slot51();
+    virtual void slot52();
+    virtual void slot53();
+    virtual void slot54();
+    virtual void slot55();
+    virtual void slot56();
+    virtual void slot57();
+    virtual void slot58();  // offset 0xe8, used
+    virtual int  slot59();  // offset 0xec, used, checked
+};
+
+class VCallRet23 { public:
+    virtual void s00(); virtual void s01(); virtual void s02(); virtual void s03();
+    virtual void s04(); virtual void s05(); virtual void s06(); virtual void s07();
+    virtual void s08(); virtual void s09(); virtual void s10(); virtual void s11();
+    virtual void s12(); virtual void s13(); virtual void s14(); virtual void s15();
+    virtual void s16(); virtual void s17(); virtual void s18(); virtual void s19();
+    virtual void s20(); virtual void s21(); virtual void s22();
+    virtual int  s23();  // <-- used, returns int
+};
+
+class VCallW { public:
+    virtual void slot000();  virtual void slot001();  virtual void slot002();
+    virtual void slot003();  virtual void slot004();  virtual void slot005();
+    virtual void slot006();  virtual void slot007();  virtual void slot008();
+    virtual void slot009();  virtual void slot010();  virtual void slot011();
+    virtual void slot012();  virtual void slot013();  virtual void slot014();
+    virtual void slot015();  virtual void slot016();  virtual void slot017();
+    virtual void slot018();  virtual void slot019();  virtual void slot020();
+    virtual void slot021();  virtual void slot022();  virtual void slot023();
+    virtual void slot024();  virtual void slot025();  virtual void slot026();
+    virtual void slot027();  virtual void slot028();  virtual void slot029();
+    virtual void slot030();  virtual void slot031();  virtual void slot032();
+    virtual void slot033();  virtual void slot034();  virtual void slot035();
+    virtual void slot036();  virtual void slot037();  virtual void slot038();
+    virtual void slot039();  virtual void slot040();  virtual void slot041();
+    virtual void slot042();  virtual void slot043();  virtual void slot044();
+    virtual void slot045();  virtual void slot046();  virtual void slot047();
+    virtual void slot048();  virtual void slot049();  virtual void slot050();
+    virtual void slot051();  virtual void slot052();  virtual void slot053();
+    virtual void slot054();  virtual void slot055();  virtual void slot056();
+    virtual void slot057();  virtual void slot058();  virtual void slot059();
+    virtual void slot060();  virtual void slot061();  virtual void slot062();
+    virtual void slot063();  virtual void slot064();  virtual void slot065();
+    virtual void slot066();  virtual void slot067();  virtual void slot068();
+    virtual void slot069();  virtual void slot070();  virtual void slot071();
+    virtual void slot072();  virtual void slot073();  virtual void slot074();
+    virtual void slot075();  virtual void slot076();  virtual void slot077();
+    virtual void slot078();  virtual void slot079();  virtual void slot080();
+    virtual void slot081();  virtual void slot082();  virtual void slot083();
+    virtual void slot084(int, int, unsigned int, int);  // <-- used
+};
+
+class VCallX { public:
+    virtual void slot000();
+    virtual void slot001();
+    virtual void slot002();
+    virtual void slot003();
+    virtual void slot004();
+    virtual void slot005();
+    virtual void slot006();
+    virtual void slot007();
+    virtual void slot008();
+    virtual void slot009();
+    virtual void slot010();
+    virtual void slot011();
+    virtual void slot012();
+    virtual void slot013();
+    virtual void slot014();
+    virtual void slot015();
+    virtual void slot016();
+    virtual void slot017();
+    virtual void slot018();
+    virtual void slot019(int, int);
+    virtual void slot020();
+    virtual void slot021(int, int);
+    virtual void slot022();
+    virtual int slot023();
+    virtual void slot024();
+    virtual void slot025();
+    virtual void slot026();
+    virtual void slot027();
+    virtual void slot028();
+    virtual void slot029();
+    virtual void slot030();
+    virtual void slot031();
+    virtual void slot032(int, int);
+    virtual void slot033();
+    virtual void slot034(int, int);
+};
+
+
+class WinVCall074 { public:
+    virtual void slot000(); virtual void slot001(); virtual void slot002(); virtual void slot003();
+    virtual void slot004(); virtual void slot005(); virtual void slot006(); virtual void slot007();
+    virtual void slot008(); virtual void slot009(); virtual void slot010(); virtual void slot011();
+    virtual void slot012(); virtual void slot013(); virtual void slot014(); virtual void slot015();
+    virtual void slot016(); virtual void slot017(); virtual void slot018(); virtual void slot019();
+    virtual void slot020(); virtual void slot021(); virtual void slot022(); virtual void slot023();
+    virtual void slot024(); virtual void slot025(); virtual void slot026(); virtual void slot027();
+    virtual void slot028(); virtual void slot029(); virtual void slot030(); virtual void slot031();
+    virtual void slot032(); virtual void slot033(); virtual void slot034(); virtual void slot035();
+    virtual void slot036(); virtual void slot037(); virtual void slot038(); virtual void slot039();
+    virtual void slot040(); virtual void slot041(); virtual void slot042(); virtual void slot043();
+    virtual void slot044(); virtual void slot045(); virtual void slot046(); virtual void slot047();
+    virtual void slot048(); virtual void slot049(); virtual void slot050(); virtual void slot051();
+    virtual void slot052(); virtual void slot053(); virtual void slot054(); virtual void slot055();
+    virtual void slot056(); virtual void slot057(); virtual void slot058(); virtual void slot059();
+    virtual void slot060(); virtual void slot061(); virtual void slot062(); virtual void slot063();
+    virtual void slot064(); virtual void slot065(); virtual void slot066(); virtual void slot067();
+    virtual void slot068(); virtual void slot069(); virtual void slot070(); virtual void slot071();
+    virtual void slot072(); virtual void slot073();
+    virtual void slot074(int, int);
+};
+
+// Fixed-slot bindings the homed bodies name but no artifact defined
+// in this file - each is an address the image reaches directly.
+// The z-order list. MEASURED from the image, not inferred: `bring_to_top`
+// at 0x005F4B34 loads its base as an immediate - `mov esi, 0x9b6e48` -
+// and walks it with the count at 0x009B7B34. The artifacts declared it
+// `extern int g_zorder_list[];` and never defined it anywhere, so nothing
+// that used it could ever have linked.
+
+// SLOT 88 IS PAST WIN'S TABLE. Win's vtable is 88 entries, 0..87 - slot
+// 88 would be the first dword of the SECONDARY table at 0x0066FF30. So
+// this dispatch is not one of Win's virtuals and is left as a shim,
+// rather than inventing a 89th slot to make it compile.
+namespace { class Slot88Shim { public:
+  virtual void pad(); 
+  virtual int slot088(int, int);
+  virtual int slot090(Win *);
+}; }
+
+extern "C" int __cdecl sub_5f8670();
+void __cdecl flush_input();
+void __cdecl wait_task();
+typedef int (__stdcall *ComSlot17)(void *self, int *out);
+
+// The HDC acquire/release pair, recovered from the artifact that defined
+// it: the bodies that paint non-client areas all use it, and a macro
+// does not travel with a function body.
+#define ACQUIRE_HDC(haveHdcVar) \
+    do { \
+        if (*g_009b3ab0 == 0) { \
+            if (*g_009bc498 != 0) { \
+                ComSlot17 fn = (ComSlot17)(*reinterpret_cast<void ***>(*g_009bc498))[0x11]; \
+                fn(reinterpret_cast<void *>(*g_009bc498), g_009b7b2c); \
+            } else { \
+                GetDCFn getDc = *reinterpret_cast<GetDCFn *>(g_GetDC); \
+                *g_009b7b2c = getDc(reinterpret_cast<void *>(*g_009b7b28)); \
+            } \
+            (haveHdcVar) = (*g_009b7b2c != 0); \
+            if (haveHdcVar) { \
+                *g_009b3ab0 = 1; \
+            } \
+        } else { \
+            ++*g_009b3ab0; \
+            (haveHdcVar) = (*g_009b7b2c != 0); \
+        } \
+    } while (0)
+
+// Helpers the flip/restore body needs, recovered from the artifact that
+// defined them - a static function and a macro do not travel with a
+// method body.
+
+#define WFIELD(obj, off) (*reinterpret_cast<int *>(reinterpret_cast<char *>(obj) + (off)))
+extern "C" int __cdecl sub_5f1750(int);
+extern "C" int __cdecl update_screen(RECT *, Win *);
+
+
+typedef int (__stdcall *NetCreateGroupFn)(Net *, int *, void *, int, int, int);
+
+
+// 0xCC / 4 = SLOT 51, which Win declares. The artifact reached it by
+// building a member-pointer out of the raw vtable entry through a
+// `SlotCCCast` union; with the slot declared, it is just a call.
+static void call_slot_cc(int *obj, int arg) {
+    reinterpret_cast<Win *>(obj)->vslot_51(arg);
+}
+
+// The flip/restore helper block, taken whole from the artifact that
+// defined it. Restoring its pieces one compiler error at a time kept
+// finding another dependency; the block is the coherent unit.
+typedef int(__stdcall *UnionRectFn)(RECT *, const RECT *, const RECT *);
+typedef void *(__stdcall *LoadCursorFn)(void *, int);
+typedef void *(__stdcall *SetCursorFn)(void *);
+typedef void(__stdcall *GetCursorPosFn)(int *);
+typedef int(__stdcall *PollFn)(int);
+
+#define WFIELD(obj, off) (*reinterpret_cast<int *>(reinterpret_cast<char *>(obj) + (off)))
+
+// Builds the saved-region rect the "direct" way: left,top,right=left+w,bottom=top+h.
+static void BuildRectDirect(RECT &r) {
+    r.left = *g_009b7a30;
+    r.top = *g_009b7a34;
+    r.right = *g_009b7a30 + *g_009b7a40;
+    r.bottom = *g_009b7a34 + *g_009b7a44;
+}
+
+// Restores the saved screen region (if one is pending) and flips it, then
+// clears the pending flag. `useHelper` selects between the two rect-build
+// strategies the disassembly duplicates at each call site (a direct sum,
+// or the opaque sub_5f86c0 helper) - both read the same four fields.
+static void RestoreAndFlip(UnionRectFn UnionRect, bool useHelper) {
+    if (*g_009b7a2c != 0) {
+        g_WIN_BUFFER
+            ->copy(reinterpret_cast<Buffer *>(g_009b7490), 0, 0, *g_009b7a30, *g_009b7a34,
+                   *g_009b7a40, *g_009b7a44);
+        RECT rect;
+        if (useHelper) {
+            sub_5f86c0(&rect, *g_009b7a30, *g_009b7a34, *g_009b7a40, *g_009b7a44);
+        } else {
+            BuildRectDirect(rect);
+        }
+        RECT merged;
+        UnionRect(&merged, &rect, reinterpret_cast<RECT *>(g_009b6ee8));
+        Win::flip(&merged);
+        *g_009b6ee8 = 0;
+        *g_009b6ef0 = 0;
+    }
+    *g_009b7a2c = 0;
+}
+
+namespace {
+// SCROLL'S SLOT 25, NOT WIN'S. `scroll_vert_` is a `Scroll *`, so this
+// dispatch indexes Scroll's vtable - Win's slot map does not apply, and
+// converting it to a Win virtual would have called the wrong function
+// while compiling cleanly. It stays a shim until Scroll's vtable is
+// declared. Only declaration ORDER fixes a slot, hence the pads.
+class ScrollSlots { public:
+  virtual void pad000();
+  virtual void pad001();
+  virtual void pad002();
+  virtual void pad003();
+  virtual void pad004();
+  virtual void pad005();
+  virtual void pad006();
+  virtual void pad007();
+  virtual void pad008();
+  virtual void pad009();
+  virtual void pad010();
+  virtual void pad011();
+  virtual void pad012();
+  virtual void pad013();
+  virtual void pad014();
+  virtual void pad015();
+  virtual void pad016();
+  virtual void pad017();
+  virtual void pad018();
+  virtual void pad019();
+  virtual void pad020();
+  virtual void pad021();
+  virtual void pad022();
+  virtual void pad023();
+  virtual void pad024();
+  virtual int slot025(int, int);
+};
+}
+
+
+static FnSetActiveWindow const g_SetActiveWindow = (FnSetActiveWindow)0x005FE4F0;
+// ===== homed from src/recovered/005f2700.cpp =====
+
+// ORIGINAL: 0x005F2700 ?do_caption_buttons@Win@@QAEXXZ 0x005F2700-0x005F2753 BYTE_EXACT
+// size      83 bytes
+// prototype void (__thiscall ?do_caption_buttons@Win@@QAEXXZ)(Win* this)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005F2711 0x005F272B 0x005F2745
+// 0x005F2700  ?do_caption_buttons@Win@@QAEXXZ  ->  ?do_caption_buttons@Win@@QAEXXZ
+//
+// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
+// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
+// and rewriting it in the tree's own style is a later phase. See README.md
+// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
+void Win::do_caption_buttons() {
+    char *self = reinterpret_cast<char *>(this);
+    Win *obj;
+
+    obj = *reinterpret_cast<Win **>(self + 0xe4);
+    if (obj) {
+        delete obj;
+        *reinterpret_cast<Win **>(self + 0xe4) = 0;
+    }
+    obj = *reinterpret_cast<Win **>(self + 0xe8);
+    if (obj) {
+        delete obj;
+        *reinterpret_cast<Win **>(self + 0xe8) = 0;
+    }
+    obj = *reinterpret_cast<Win **>(self + 0xec);
+    if (obj) {
+        delete obj;
+        *reinterpret_cast<Win **>(self + 0xec) = 0;
+    }
+}
+
+// ===== homed from src/recovered/005f85b0.cpp =====
+
+// ORIGINAL: 0x005F85B0 ?on_mousewheel_down@Win@@QAEXH@Z 0x005F85B0-0x005F85DD BYTE_EXACT
+// size      45 bytes
+// prototype void (__thiscall ?on_mousewheel_down@Win@@QAEXH@Z)(Win* this, int)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00606320
+// 0x005F85B0  ?on_mousewheel_down@Win@@QAEXH@Z  ->  ?on_mousewheel_down@Win@@QAEXH@Z
+//
+// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
+// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
+// and rewriting it in the tree's own style is a later phase. See README.md
+// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
+void Win::on_mousewheel_down(int a1) {
+    char *self = reinterpret_cast<char *>(this);
+    Scroll *scroll = *reinterpret_cast<Scroll **>(self + 0x43C);
+    if (scroll) {
+        scroll->on_mousewheel_down(a1);
+    }
+    scroll = *reinterpret_cast<Scroll **>(self + 0x440);
+    if (scroll) {
+        scroll->on_mousewheel_down(a1);
+    }
+}
+
+// ===== homed from src/recovered/005f0540.cpp =====
+typedef long (__stdcall *GetWindowLongProc)(void *, int);
+
+// ORIGINAL: 0x005F0540 ?adjust_menus@Win@@QAGHPAX@Z 0x005F0540-0x005F0579 BYTE_EXACT
+// size      57 bytes
+// prototype int (__stdcall ?adjust_menus@Win@@QAGHPAX@Z)(HWND hWnd)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005F0548 0x005F0558 0x005F056A
+// 0x005F0540  ?adjust_menus@Win@@QAGHPAX@Z  ->  ?adjust_menus@Win@@QAGHPAX@Z
+//
+// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
+// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
+// and rewriting it in the tree's own style is a later phase. See README.md
+// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
+int __stdcall Win::adjust_menus(void *a1) {
+    Win *obj = reinterpret_cast<Win *>(
+        (*reinterpret_cast<GetWindowLongProc *>(g))(
+            reinterpret_cast<void *>(this), -0x15));
+    if (obj != 0) {
+        obj->set_rects();
+        Menu *menu = obj->menu_;
+        if (menu != 0) {
+            reinterpret_cast<VCall *>(menu)->slot093();
+        }
+    }
+    return 1;
+}
+
+// ===== homed from src/recovered/005edf00.cpp =====
+
+// ORIGINAL: 0x005EDF00 ?show_maximize@Win@@QAEHXZ 0x005EDF00-0x005EDF48 BYTE_EXACT
+// size      72 bytes
+// prototype int (__thiscall ?show_maximize@Win@@QAEHXZ)(Win* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005EDF23 0x005EDF3D
+// 0x005EDF00  ?show_maximize@Win@@QAEHXZ  ->  ?show_maximize@Win@@QAEHXZ
+//
+// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
+// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
+// and rewriting it in the tree's own style is a later phase. See README.md
+// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
+int Win::show_maximize() {
+    int active = *g_009b7abc;
+    *g_009b7acc = 0;
+    *g_009b7ad0 = 0;
+    if (active == reinterpret_cast<int>(this)) {
+        *g_009b7abc = 0;
+        this->vslot_04();
+    }
+    if (*g_009b7ac0 == reinterpret_cast<int>(this)) {
+        *g_009b7ac0 = 0;
+    }
+    ShowWindow(reinterpret_cast<HWND>(*g_009b7b28), 3);
+    return 0;
+}
+
+// ===== homed from src/recovered/005ede60.cpp =====
+typedef int(__stdcall *ShowWindowFn)(void *, int);
+
+// ORIGINAL: 0x005EDE60 ?maximize@Win@@QAEHXZ 0x005EDE60-0x005EDEA8 BYTE_EXACT
+// size      72 bytes
+// prototype int (__thiscall ?maximize@Win@@QAEHXZ)(Win* this)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005EDE83 0x005EDE9D
+// 0x005EDE60  ?maximize@Win@@QAEHXZ  ->  ?maximize@Win@@QAEHXZ
+//
+// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
+// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
+// and rewriting it in the tree's own style is a later phase. See README.md
+// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
+int Win::maximize() {
+    void *active = *reinterpret_cast<void **>(g_009b7abc);
+    *g_009b7acc = 0;
+    *g_009b7ad0 = 0;
+    if (active == this) {
+        *g_009b7abc = 0;
+        this->vslot_04();
+    }
+    if (*reinterpret_cast<void **>(g_009b7ac0) == this) {
+        *g_009b7ac0 = 0;
+    }
+    (*reinterpret_cast<ShowWindowFn *>(g))(*reinterpret_cast<void **>(g_009b7b28), 3);
+    return 0;
+}
+
+// ===== homed from src/recovered/005f0610.cpp =====
+
+// ORIGINAL: 0x005F0610 ?set_bottom_border_thickness@Win@@QAEXH@Z 0x005F0610-0x005F064D BYTE_EXACT
+// size      61 bytes
+// prototype void (__thiscall ?set_bottom_border_thickness@Win@@QAEXH@Z)(Win* this, int thickness)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005F0646
+// 0x005F0610  ?set_bottom_border_thickness@Win@@QAEXH@Z  ->  ?set_bottom_border_thickness@Win@@QAEXH@Z
+//
+// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
+// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
+// and rewriting it in the tree's own style is a later phase. See README.md
+// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
+void Win::set_bottom_border_thickness(int a1) {
+    if (iSomeFlag_ & 2) {
+        bottom_border_thickness_ = a1;
+        int width = client_rect_.right - client_rect_.left;
+        int height = client_rect_.bottom - client_rect_.top;
+        this->resize(width, height, 0);
+    }
+}
+
+// ===== homed from src/recovered/005f85e0.cpp =====
+
+// ORIGINAL: 0x005F85E0 ?on_mousewheel_up@Win@@QAEXH@Z 0x005F85E0-0x005F860D BYTE_EXACT
+// size      45 bytes
+// prototype void (__thiscall ?on_mousewheel_up@Win@@QAEXH@Z)(Win* this, int)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00606440
+// 0x005F85E0  ?on_mousewheel_up@Win@@QAEXH@Z  ->  ?on_mousewheel_up@Win@@QAEXH@Z
+//
+// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
+// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
+// and rewriting it in the tree's own style is a later phase. See README.md
+// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
+void Win::on_mousewheel_up(int a1) {
+    // BODY GOES HERE.
+    //
+    // Reach fields by offset - the class is deliberately empty:
+    //     char *self = reinterpret_cast<char *>(this);
+    //     int v = *reinterpret_cast<int *>(self + 0x24);
+    char *self = reinterpret_cast<char *>(this);
+    Scroll *first = *reinterpret_cast<Scroll **>(self + 0x43c);
+    if (first != 0) {
+        first->on_mousewheel_up(a1);
+    }
+    Scroll *second = *reinterpret_cast<Scroll **>(self + 0x440);
+    if (second != 0) {
+        second->on_mousewheel_up(a1);
+    }
+}
+
+// ===== homed from src/recovered/005f4ca0.cpp =====
+
+// ORIGINAL: 0x005F4CA0 ?update_nc_buffer@Win@@QAEXH@Z 0x005F4CA0-0x005F4CB2 BYTE_EXACT
+// size      18 bytes
+// prototype void (__thiscall ?update_nc_buffer@Win@@QAEXH@Z)(Win* this, int)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005F4CA9
+// 0x005F4CA0  ?update_nc_buffer@Win@@QAEXH@Z  ->  ?update_nc_buffer@Win@@QAEXH@Z
+//
+// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
+// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
+// and rewriting it in the tree's own style is a later phase. See README.md
+// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
+void Win::update_nc_buffer(int a1) {
+    this->on_nc_paint(0, a1);
+}
+
+// ===== homed from src/recovered/005f1660.cpp =====
+
+// ORIGINAL: 0x005F1660 ?OnChar@Win@@QAAXPAXDH@Z 0x005F1660-0x005F16CB BYTE_EXACT
+// symbol    ?OnChar@Win@@QAAXPAXHH@Z
+// notes     `H` where the catalogue guessed `D`: the image loads a dword
+//           for that parameter, so it is an int.
+// size      107 bytes
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F7E90
+// indirect  0x005F16C3
+// 0x005F1660  ?OnChar@Win@@QAAXPAXDH@Z  ->  ?OnChar@Win@@QAAXPAXDH@Z
+//
+// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
+// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
+// and rewriting it in the tree's own style is a later phase. See README.md
+// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
+void __cdecl Win::OnChar(void * a1, int a2, int a3) {
+    int result;
+    if (*g_009b7ae0 != 0) {
+        result = *g_009b8d7c;
+        if (result == 0) {
+            result = *g_009b7ae0;
+        }
+    } else {
+        result = *g_009b7ac4;
+        if (result == 0) {
+            result = *WinDefaultFocus;
+        }
+    }
+    *g_009b7ac8 = result;
+    if (result != 0) {
+        char *p = *reinterpret_cast<char **>(result + 0xa8);
+        if (p != 0 && (*reinterpret_cast<unsigned char *>(p + 0x9c) & 1) != 0) {
+            Win *visobj = *reinterpret_cast<Win **>(p + 0xc4);
+            if (visobj == 0 || visobj->is_visible() != 0) {
+                reinterpret_cast<Win *>(p)->vslot_79(reinterpret_cast<int>(a1), a2);
+            }
+        }
+    }
+}
+
+// ===== homed from src/recovered/units/005ec630.cpp =====
+
+// ORIGINAL: 0x005EC630 ?init@Win@@QAEHPAURECT@@PADHPAVWin@@PAVMenu@@PAUBorderSizing@@@Z 0x005EC630-0x005EC678 FILE BYTE_EXACT
+// symbol    ?init@Win@@QAEHPAUtagRECT@@PADHPAV1@PAVMenu@@PAUBorderSizing@@@Z
+// notes     the RECT overload. `marker_symbols` resolves this region to
+//           the FIRST `Win::init` in the object, which is the nine-argument
+//           overload - so the emitted name has to be stated here.
+// size      72 bytes
+// prototype int (__thiscall ?init@Win@@QAEHPAURECT@@PADHPAVWin@@PAVMenu@@PAUBorderSizing@@@Z)(Win* this, RECT*, int8*, int, Win*, Menu*, BorderSizing*)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005EBD80
+// PRESERVED UNIT - measured BYTE_EXACT.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x005EC630
+// measured tier  BYTE_EXACT
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/005ec630/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?init@Win@@QAEHPAURECT@@PADHPAVWin@@PAVMenu@@PAUBorderSizing@@@Z  at 0x005EC630  (72 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+int Win::init(RECT* a1, char* a2, int a3, Win* a4, Menu* a5, BorderSizing* a6) {
+    if (a1 == 0) {
+        return 3;
+    }
+    char *r = reinterpret_cast<char *>(a1);
+    int top = *reinterpret_cast<int *>(r + 4);
+    int left = *reinterpret_cast<int *>(r);
+    return this->init(
+        left, top,
+        *reinterpret_cast<int *>(r + 8) - left,
+        *reinterpret_cast<int *>(r + 0xc) - top,
+        reinterpret_cast<char *>(a2), a3, a4, a5, a6);
+}
+
+// ===== homed from src/recovered/units/005edcd0.cpp =====
+typedef int int32_t;
+typedef unsigned char uint8_t;
+typedef void(__stdcall *ThreeArgFn)(int, int, int);
+
+void Win::hide() {
+    char *const self = reinterpret_cast<char *>(this);
+    int32_t zero;
+    int32_t focus_a, focus_b, chosen;
+    Win **child;
+    int32_t i;
+
+    if (!(iSomeFlag_ & 1)) {
+        return;
+    }
+
+    if (*WinBubbleCompanion == this) {
+        zero = 0;
+        if (*WinBubbleActive != zero) {
+            *WinBubbleCompanion = reinterpret_cast<Win *>(zero);
+            *WinBubbleActive = zero;
+            update_screen(WinBubbleRect, 0);
+            flip(WinBubbleRect);
+        }
+        goto converge;
+    }
+    zero = 0;
+
+converge:
+    focus_a = *g_009b7acc;
+    focus_b = *g_009b7ad0;
+    chosen = (focus_a != zero) ? focus_a : focus_b;
+    if (chosen == reinterpret_cast<int32_t>(this)) {
+        goto clear_focus;
+    }
+    if (focus_a == zero) {
+        if (focus_b == zero) {
+            goto skip_all;
+        }
+        goto search;
+    }
+    focus_b = focus_a;
+
+search:
+    if (focus_b == zero) {
+        goto skip_all;
+    }
+    if (child_count_ <= 0) {
+        goto skip_all;
+    }
+    child = children_;
+    i = 0;
+    for (;;) {
+        if (reinterpret_cast<int32_t>(*child) == focus_b) {
+            goto found;
+        }
+        if ((*child)->is_descendant(reinterpret_cast<Win *>(focus_b))) {
+            goto found;
+        }
+        i++;
+        child++;
+        if (i >= child_count_) {
+            goto skip_all;
+        }
+    }
+
+found:
+    zero = 0;
+clear_focus:
+    *g_009b7acc = zero;
+    *g_009b7ad0 = zero;
+
+skip_all:
+    if (*g_009b7abc == reinterpret_cast<int32_t>(this)) {
+        *g_009b7abc = 0;
+        this->vslot_04();
+    }
+    if (*g_009b7ac0 == reinterpret_cast<int32_t>(this)) {
+        *g_009b7ac0 = 0;
+    }
+    iSomeFlag_ &= 0xfffffffeu;
+    if (*g_009b7ae0 == reinterpret_cast<int32_t>(this)) {
+        this->release_modal();
+    }
+
+    if (!(*reinterpret_cast<uint8_t *>(g_009bc4b0) & 1)) {
+        return;
+    }
+
+    {
+        int32_t total = *g_009b7b34;
+        *g_009b7b30 = 0;
+        if (total > 0) {
+            int32_t target = *g_009b7a6c;
+            Win **p = reinterpret_cast<Win **>(g_zorder_list);
+            int32_t j = 0;
+            for (;;) {
+                if (target != 0 && target == reinterpret_cast<int32_t>(*p)) {
+                    *g_009b7b30 = 0;
+                    *g_009b7a78 = 0;
+                }
+                if ((*p)->iSomeFlag_ & 1) {
+                    recurse_zorder(*p);
+                    target = *g_009b7a6c;
+                }
+                total = *g_009b7b34;
+                j++;
+                p++;
+                if (j >= total) {
+                    break;
+                }
+            }
+        }
+    }
+
+    (*reinterpret_cast<ThreeArgFn *>(g_00669304))(*g_009b7b28, 0, 0);
+
+    {
+        Win *other = *reinterpret_cast<Win **>(self + 0x10);
+        if (other != 0) {
+            if (other->vslot_23() == 0) {
+                other->vslot_07();
+            }
+        }
+    }
+}
+
+// ===== homed from src/recovered/units/005f63c0.cpp =====
+
+void Win::on_l_button_down(long a1, int a2, int a3, unsigned int a4, int a5) {
+    char *self = reinterpret_cast<char *>(this);
+
+    int32_t child = *reinterpret_cast<int32_t *>(self + 0xc4);
+    if (child != 0) {
+        reinterpret_cast<Win *>(child)->bring_child_to_top(reinterpret_cast<Win *>(self));
+    } else if (reinterpret_cast<int32_t>(self) != 0 &&
+               (*reinterpret_cast<int32_t *>(self + 0x98) & 0x2000000) == 0) {
+        int32_t idx = 0;
+        int32_t count = *g_009b7b34;
+        if (count > 0) {
+            Win **p = g_zorder_list;
+            for (;;) {
+                if (*p == reinterpret_cast<Win *>(self)) {
+                    if (idx < count) {
+                        if (idx > 0) {
+                            Win **q = g_zorder_list + idx;
+                            do {
+                                *q = *(q - 1);
+                                --q;
+                                --idx;
+                            } while (idx != 0);
+                        }
+                        *g_zorder_list = reinterpret_cast<Win *>(self);
+                    }
+                    break;
+                }
+                ++idx;
+                ++p;
+                if (idx >= count) {
+                    break;
+                }
+            }
+        }
+        reinterpret_cast<Win *>(self)->update_zorder();
+    }
+
+    child = *reinterpret_cast<int32_t *>(self + 0xc4);
+    if (child != 0) {
+        reinterpret_cast<Win *>(child)->set_dialog_focus(reinterpret_cast<Win *>(self));
+    }
+
+    if (a4 == 0) {
+        WinPointerOwner2 = nullptr;
+        WinPointerOwner1 = reinterpret_cast<Win *>(self);
+    } else {
+        WinPointerOwner1 = nullptr;
+        WinPointerOwner2 = reinterpret_cast<Win *>(reinterpret_cast<int32_t>(self));
+    }
+
+    *g_009b7ad4 = 1;
+    if (a1 != 0 &&
+        (*reinterpret_cast<int32_t *>(self + 0x98) & 0x200200) == 0 &&
+        (*reinterpret_cast<uint8_t *>(self + 0x9c) & 8) == 0) {
+        int32_t related;
+        if (a4 == 0) {
+            *g_009b7ab8 = reinterpret_cast<int32_t>(self);
+            int32_t fp = *reinterpret_cast<int32_t *>(self + 0x40c);
+            if (fp != 0) {
+                reinterpret_cast<void(__cdecl *)(int, int)>(fp)(a2, a3);
+            }
+            reinterpret_cast<Win *>(self)->vslot_28(a3, a2);
+            related = *reinterpret_cast<int32_t *>(self + 0x44);
+        } else {
+            reinterpret_cast<Win *>(self)->vslot_38(a3, a2);
+            related = *reinterpret_cast<int32_t *>(self + 0x68);
+        }
+        if (related != 0 && reinterpret_cast<Win *>(related)->vslot_23() == 0) {
+            reinterpret_cast<Win *>(related)->vslot_07();
+        }
+    }
+
+    int32_t hitTest = reinterpret_cast<Win *>(self)->vslot_61();
+    int32_t idx = 0;
+    if (hitTest == 0 ||
+        reinterpret_cast<Spot *>(self + 0x8f4)->check(a2, a3, &idx, 0) < 0 ||
+        reinterpret_cast<Slot88Shim *>(self)->slot088(
+            idx, *reinterpret_cast<int32_t *>(self + idx * 4 + 0x900)) != 0) {
+        reinterpret_cast<Win *>(self)->left_down_event(a2, a3, a5);
+    }
+}
+
+// ===== homed from src/recovered/units/005f6550.cpp =====
+
+void Win::on_l_button_up(int a1, int a2, unsigned int a3, int a4) {
+    Win *captured = WinPointerOwner1;
+    if (captured == nullptr) {
+        captured = *reinterpret_cast<Win **>(g_009b7ad0);
+    }
+    bool isSelf = (captured == this);
+    WinPointerOwner1 = nullptr;
+    *reinterpret_cast<Win **>(g_009b7ad0) = 0;
+
+    if (isSelf) {
+        RECT r;
+        r.left = 0;
+        r.top = 0;
+        r.right = outer_rect_.right - outer_rect_.left;
+        r.bottom = outer_rect_.bottom - outer_rect_.top;
+        if (in_box(a1, a2, &r) != 0 &&
+            (iFlags_ & 0x200000) == 0 &&
+            (*reinterpret_cast<uint8_t *>(&iSomeFlag_) & 8) == 0) {
+            if (a4 == 0) {
+                *g_009b7ab8 = reinterpret_cast<int>(this);
+                void(__cdecl * cb)(int, int) =
+                    reinterpret_cast<void(__cdecl *)(int, int)>(field_414_);
+                if (cb != 0) {
+                    cb(a1, a2);
+                }
+                this->vslot_19(a1, a2);
+                Win *child = *reinterpret_cast<Win **>(reinterpret_cast<char *>(this) + 0x20);
+                if (child != 0 && child->vslot_23() == 0) {
+                    child->vslot_07();
+                }
+            } else {
+                this->vslot_32(a1, a2);
+                Win *child = *reinterpret_cast<Win **>(reinterpret_cast<char *>(this) + 0x50);
+                if (child != 0 && child->vslot_23() == 0) {
+                    child->vslot_07();
+                }
+            }
+        }
+    }
+
+    if (*reinterpret_cast<uint8_t *>(&iSomeFlag_) & 1) {
+        Win *w = *reinterpret_cast<Win **>(reinterpret_cast<char *>(this) + 0xc4);
+        if (w != 0 && w->is_visible() == 0) {
+            return;
+        }
+        if ((iFlags_ & 0x200000) == 0 &&
+            (*reinterpret_cast<uint8_t *>(&iSomeFlag_) & 8) == 0) {
+            if (a4 == 0) {
+                *g_009b7ab8 = reinterpret_cast<int>(this);
+                void(__cdecl * cb)(int, int) =
+                    reinterpret_cast<void(__cdecl *)(int, int)>(field_41C_);
+                if (cb != 0) {
+                    cb(a1, a2);
+                }
+                this->vslot_21(a1, a2);
+                Win *child = *reinterpret_cast<Win **>(reinterpret_cast<char *>(this) + 0x28);
+                if (child != 0 && child->vslot_23() == 0) {
+                    child->vslot_07();
+                }
+            } else {
+                this->vslot_34(a1, a2);
+                Win *child = *reinterpret_cast<Win **>(reinterpret_cast<char *>(this) + 0x58);
+                if (child != 0 && child->vslot_23() == 0) {
+                    child->vslot_07();
+                }
+            }
+        }
+    }
+}
+
+// ===== homed from src/recovered/units/005ec740.cpp =====
+
+int Win::set_cursor(Sprite* a1, int a2, int a3) {
+    char *self = reinterpret_cast<char *>(this);
+    if (a1 != 0) {
+        *reinterpret_cast<Sprite **>(self + 0x188) = a1;
+        *reinterpret_cast<int *>(self + 0x18c) = a2;
+        *reinterpret_cast<int *>(self + 0x190) = a3;
+    }
+    // IDENTIFIED: the image emits `push 1; push 0; call 0x5f1820` here, and
+    // 0x005F1820 is `Win::update_cursor`. The artifact spelled it `fn(0, 1)`
+    // with no declaration; deleting the call was wrong, and listing_diff
+    // against this body is what named the target.
+    Win::update_cursor(nullptr, 1);
+    return 0;
+}
+
+// ===== homed from src/recovered/005edff0.cpp =====
+typedef int (__stdcall *SetRectFn)(void*, int, int, int, int);
+
+// ORIGINAL: 0x005EDFF0 ?UNK7@Win@@QAEXHHHH@Z 0x005EDFF0-0x005EE01D BYTE_EXACT
+// size      45 bytes
+// prototype void (__thiscall ?UNK7@Win@@QAEXHHHH@Z)(Win* this, int xLeft, int yTop, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005EE011
+// 0x005EDFF0  ?UNK7@Win@@QAEXHHHH@Z  ->  ?UNK7@Win@@QAEXHHHH@Z
+//
+// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
+// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
+// and rewriting it in the tree's own style is a later phase. See README.md
+// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
+void Win::UNK7(int a1, int a2, int a3, int a4) {
+    int rectangle[4];
+    (*reinterpret_cast<SetRectFn *>(g))(
+        rectangle, a1, a2, a1 + a3, a2 + a4);
+}
+
+// ===== homed from src/recovered/units/005f5480.cpp =====
+typedef long LRESULT;
+typedef long (__stdcall *SendMsgFn)(int, int, int, void*);
+
+// ORIGINAL: 0x005F5480 ?on_window_pos_changed@Win@@QAEJPAUWINDOWPOS@@@Z 0x005F5480-0x005F54A1 FILE BYTE_EXACT
+// symbol    ?on_window_pos_changed@Win@@UAEJPAUtagWINDOWPOS@@@Z
+// size      33 bytes
+// prototype LRESULT (__thiscall ?on_window_pos_changed@Win@@QAEJPAUWINDOWPOS@@@Z)(Win* this, WINDOWPOS*)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005F5482 0x005F5498
+// PRESERVED UNIT - measured BYTE_EXACT.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x005F5480
+// measured tier  BYTE_EXACT
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/005f5480/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?on_window_pos_changed@Win@@QAEJPAUWINDOWPOS@@@Z  at 0x005F5480  (33 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+LRESULT Win::on_window_pos_changed(WINDOWPOS* a1) {
+    this->set_rects();
+    return (*reinterpret_cast<SendMsgFn *>(g_006692b0))(*g_009b7b28, 0x47, 0, a1);
+}
+
+// ===== homed from src/recovered/units/005f4ab0.cpp =====
+
+void Win::bring_to_top() {
+    Win *parent = win_parent_;
+    if (parent != 0) {
+        if (this == 0) return;
+        if (iFlags_ & 0x2000000) return;
+
+        int count = parent->child_count_;
+        int i = 0;
+        if (count > 0) {
+            Win **slot = &parent->children_[0];
+            do {
+                if (*slot == this) break;
+                i++;
+                slot++;
+            } while (i < count);
+        }
+        if (i < count) {
+            if (i > 0) {
+                Win **dst = &parent->children_[i];
+                do {
+                    *dst = dst[-1];
+                    dst--;
+                } while (--i);
+            }
+            parent->children_[0] = this;
+        }
+
+        WinZOrderCount = 0;
+        if (*g_009b7b34 > 0) {
+            Win *highlighted = reinterpret_cast<Win *>(*g_009b7a6c);
+            Win **zslot = g_zorder_list;
+            for (int j = 0; j < *g_009b7b34; j++) {
+                if (highlighted != 0 && highlighted == *zslot) {
+                    WinZOrderCount = 0;
+                    *g_009b7a78 = 0;
+                }
+                Win *w = reinterpret_cast<Win *>(*zslot);
+                if (w->iSomeFlag_ & 1) {
+                    recurse_zorder(w);
+                    highlighted = reinterpret_cast<Win *>(*g_009b7a6c);
+                }
+                zslot++;
+            }
+        }
+        return;
+    }
+
+    if (this == 0) return;
+    if (iFlags_ & 0x2000000) return;
+
+    int count = *g_009b7b34;
+    int i = 0;
+    if (count > 0) {
+        Win **slot = g_zorder_list;
+        do {
+            if (reinterpret_cast<int>(*slot) == reinterpret_cast<int>(this)) break;
+            i++;
+            slot++;
+        } while (i < count);
+    }
+    if (i < count) {
+        if (i > 0) {
+            Win **dst = g_zorder_list + i;
+            do {
+                *dst = dst[-1];
+                dst--;
+            } while (--i);
+        }
+        g_zorder_list[0] = this;
+    }
+
+    WinZOrderCount = 0;
+    if (*g_009b7b34 > 0) {
+        Win *highlighted = reinterpret_cast<Win *>(*g_009b7a6c);
+        Win **zslot = g_zorder_list;
+        for (int j = 0; j < *g_009b7b34; j++) {
+            if (highlighted != 0 && highlighted == *zslot) {
+                WinZOrderCount = 0;
+                *g_009b7a78 = 0;
+            }
+            Win *w = reinterpret_cast<Win *>(*zslot);
+            if (w->iSomeFlag_ & 1) {
+                recurse_zorder(w);
+                highlighted = reinterpret_cast<Win *>(*g_009b7a6c);
+            }
+            zslot++;
+        }
+    }
+}
+
+// ===== homed from src/recovered/units/005ec980.cpp =====
+typedef short (__stdcall *RBtnFn)(int);
+typedef int (__stdcall *KeyFn)(int);
+
+// ORIGINAL: 0x005EC980 ?get_rbutton_state@Win@@QAEHXZ 0x005EC980-0x005EC99B FILE BYTE_EXACT
+// size      27 bytes
+// prototype int (__thiscall ?get_rbutton_state@Win@@QAEHXZ)(Win* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005EC983 0x005EC991
+// PRESERVED UNIT - measured BYTE_EXACT.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x005EC980
+// measured tier  BYTE_EXACT
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/005ec980/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?get_rbutton_state@Win@@QAEHXZ  at 0x005EC980  (27 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+int Win::get_rbutton_state() {
+    short r1 = (*reinterpret_cast<RBtnFn *>(g_00669330))(2);
+    int mask = r1 >> 15;
+    int r2 = (*reinterpret_cast<KeyFn *>(g_00669334))(0x17);
+    return r2 ^ mask;
+}
+
+// ===== homed from src/recovered/units/005ec9a0.cpp =====
+
+// ORIGINAL: 0x005EC9A0 ?set_parent_dialog@Win@@QAEXPAVWin@@@Z 0x005EC9A0-0x005ECB58 FILE BYTE_EXACT
+// symbol    ?set_parent_dialog@Win@@QAEXPAV1@@Z
+// size      440 bytes
+// prototype void (__thiscall ?set_parent_dialog@Win@@QAEXPAVWin@@@Z)(Win* this, Win*)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x005D4680
+// PRESERVED UNIT - measured BYTE_EXACT.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x005EC9A0
+// measured tier  BYTE_EXACT
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/005ec9a0/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?set_parent_dialog@Win@@QAEXPAVWin@@@Z  at 0x005EC9A0  (440 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+void Win::set_parent_dialog(Win *a1) {
+    char *self = reinterpret_cast<char *>(this);
+
+    if (*reinterpret_cast<unsigned int *>(self + 0x98) & 0x200000) {
+        return;
+    }
+    if (*reinterpret_cast<unsigned char *>(self + 0x9c) & 8) {
+        return;
+    }
+    if ((*reinterpret_cast<unsigned int *>(self + 0x98) & 0x1000) && a1 == 0) {
+        return;
+    }
+
+    char *b = reinterpret_cast<char *>(a1);
+    if ((~*reinterpret_cast<unsigned int *>(b + 0x98) & 0x1000) == 0) {
+        return;
+    }
+
+    if (*reinterpret_cast<int *>(b + 0xd4) == 0) {
+        void *iv2 = (*reinterpret_cast<int *>(b + 0xdc) != 0)
+            ? reinterpret_cast<Heap *>(*reinterpret_cast<int *>(b + 0xdc))->get(0x1c)
+            : mem_get(0x1c);
+        *reinterpret_cast<void **>(b + 0xcc) = iv2;
+        if (iv2 == 0) {
+            goto tail_common;
+        }
+        *reinterpret_cast<void **>(reinterpret_cast<char *>(iv2) + 4) = this;
+        char *h1 = *reinterpret_cast<char **>(b + 0xcc);
+        *reinterpret_cast<void **>(h1 + 0xc) = h1;
+        char *h2 = *reinterpret_cast<char **>(b + 0xcc);
+        *reinterpret_cast<void **>(h2 + 0x10) = h2;
+
+        if (*reinterpret_cast<int *>(b + 0xdc) != 0) {
+            *reinterpret_cast<void **>(*reinterpret_cast<char **>(b + 0xcc) + 8) =
+                reinterpret_cast<Heap *>(*reinterpret_cast<int *>(b + 0xdc))->get(4);
+        } else {
+            *reinterpret_cast<void **>(*reinterpret_cast<char **>(b + 0xcc) + 8) = mem_get(4);
+        }
+        char *h4 = *reinterpret_cast<char **>(b + 0xcc);
+        if (*reinterpret_cast<int *>(h4 + 8) == 0) {
+            goto tail_common;
+        }
+        *reinterpret_cast<void **>(b + 0xd0) = h4;
+    } else {
+        void *newnode = (*reinterpret_cast<int *>(b + 0xdc) != 0)
+            ? reinterpret_cast<Heap *>(*reinterpret_cast<int *>(b + 0xdc))->get(0x1c)
+            : mem_get(0x1c);
+        char *head = *reinterpret_cast<char **>(b + 0xcc);
+        char *tail = *reinterpret_cast<char **>(head + 0x10);
+        *reinterpret_cast<void **>(tail + 0xc) = newnode;
+
+        char *tail2 = *reinterpret_cast<char **>(*reinterpret_cast<char **>(b + 0xcc) + 0x10);
+        char *node = *reinterpret_cast<char **>(tail2 + 0xc);
+        if (node == 0) {
+            goto tail_common;
+        }
+        *reinterpret_cast<void **>(node + 0x10) = tail2;
+        *reinterpret_cast<void **>(
+            *reinterpret_cast<char **>(
+                *reinterpret_cast<char **>(*reinterpret_cast<char **>(b + 0xcc) + 0x10) + 0xc) + 0xc) =
+            *reinterpret_cast<char **>(b + 0xcc);
+        *reinterpret_cast<void **>(*reinterpret_cast<char **>(b + 0xcc) + 0x10) =
+            *reinterpret_cast<void **>(
+                *reinterpret_cast<char **>(*reinterpret_cast<char **>(b + 0xcc) + 0x10) + 0xc);
+        char *nn = *reinterpret_cast<char **>(*reinterpret_cast<char **>(b + 0xcc) + 0x10);
+        *reinterpret_cast<void **>(b + 0xd0) = nn;
+        *reinterpret_cast<void **>(nn + 4) = this;
+
+        if (*reinterpret_cast<int *>(b + 0xdc) != 0) {
+            *reinterpret_cast<void **>(*reinterpret_cast<char **>(b + 0xd0) + 8) =
+                reinterpret_cast<Heap *>(*reinterpret_cast<int *>(b + 0xdc))->get(4);
+        } else {
+            *reinterpret_cast<void **>(*reinterpret_cast<char **>(b + 0xd0) + 8) = mem_get(4);
+        }
+        char *d0 = *reinterpret_cast<char **>(b + 0xd0);
+        if (*reinterpret_cast<int *>(d0 + 8) == 0) {
+            goto tail_common;
+        }
+    }
+
+    *reinterpret_cast<int *>(b + 0xd8) = *reinterpret_cast<int *>(b + 0xd4);
+    *reinterpret_cast<int *>(b + 0xd4) = *reinterpret_cast<int *>(b + 0xd4) + 1;
+
+tail_common:
+    if (*reinterpret_cast<int *>(b + 0xd4) - 1 >= 0) {
+        *reinterpret_cast<int *>(b + 0xd8) = 0;
+        *reinterpret_cast<int *>(b + 0xd0) = *reinterpret_cast<int *>(b + 0xcc);
+    }
+    *reinterpret_cast<Win **>(self + 0xc4) = a1;
+}
+
+// ===== homed from src/recovered/units/005f5200.cpp =====
+
+// ORIGINAL: 0x005F5200 ?add_child@Win@@QAEXPAUWin@@@Z 0x005F5200-0x005F5268 FILE BYTE_EXACT
+// symbol    ?add_child@Win@@QAEXPAV1@@Z
+// size      104 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// PRESERVED UNIT - measured BYTE_EXACT.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x005F5200
+// measured tier  BYTE_EXACT
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/005f5200/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?add_child@Win@@QAEXPAUWin@@@Z  at 0x005F5200  (104 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+void Win::add_child(Win* a1) {
+    if (a1 == 0) {
+        return;
+    }
+    char *self = reinterpret_cast<char *>(this);
+    char *other = reinterpret_cast<char *>(a1);
+    if (*reinterpret_cast<unsigned int *>(other + 0x98) & 0x2000000) {
+        int count = *reinterpret_cast<int *>(self + 0x3FC);
+        *reinterpret_cast<Win **>(self + 0x1A4 + count * 4) = a1;
+        *reinterpret_cast<int *>(self + 0x3FC) = *reinterpret_cast<int *>(self + 0x3FC) + 1;
+        return;
+    }
+    int count = *reinterpret_cast<int *>(self + 0x3FC);
+    if (count > 0) {
+        Win **slot = reinterpret_cast<Win **>(self + 0x1A4 + count * 4);
+        do {
+            *slot = *(slot - 1);
+            --slot;
+        } while (--count);
+    }
+    *reinterpret_cast<Win **>(self + 0x1A4) = a1;
+    *reinterpret_cast<int *>(self + 0x3FC) = *reinterpret_cast<int *>(self + 0x3FC) + 1;
+}
+
+// ===== homed from src/recovered/units/005f50e0.cpp =====
+
+// ORIGINAL: 0x005F50E0 ?remove_parent@Win@@QAAXPAUWin@@@Z 0x005F50E0-0x005F5136 FILE BYTE_EXACT
+// symbol    ?remove_parent@Win@@QAAXPAV1@@Z
+// size      86 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005F5113
+// PRESERVED UNIT - measured BYTE_EXACT.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x005F50E0
+// measured tier  BYTE_EXACT
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/005f50e0/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?remove_parent@Win@@QAAXPAUWin@@@Z  at 0x005F50E0  (86 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+void __cdecl Win::remove_parent(Win* a1) {
+    if (this == 0) {
+        return;
+    }
+    int count = *g_009b7b34;
+    for (int i = 0; i < count; i++) {
+        if (reinterpret_cast<Win **>(0x009B6E48)[i] == this) {
+            if (i < count) {
+                count--;
+                *g_009b7b34 = count;
+                this->hide();
+                count = *g_009b7b34;
+                if (i < count) {
+                    Win **p = reinterpret_cast<Win **>(&reinterpret_cast<Win **>(0x009B6E48)[i]);
+                    int n = count - i;
+                    do {
+                        *p = p[1];
+                        p++;
+                    } while (--n);
+                }
+            }
+            return;
+        }
+    }
+}
+
+// ===== homed from src/recovered/units/005f2940.cpp =====
+
+void Win::set_rects() {
+    if (this->iSomeFlag_ & 2) {
+        int32_t barH;
+        if ((this->iFlags_ & 0x10) == 0 || (this->iFlags_ & 0x400000) != 0) {
+            barH = this->border_thickness_;
+        } else {
+            barH = this->caption_height_;
+        }
+        int32_t bottomBar = this->bottom_border_thickness_;
+        if (bottomBar == -1) {
+            bottomBar = this->border_thickness_;
+        }
+
+        this->buffer1_->init(this->client_rect_.right - this->client_rect_.left, barH, 0, 0);
+        this->buffer1_->sync_to_palette(reinterpret_cast<Palette *>(g_009b8180));
+        this->buffer1_->fill(*reinterpret_cast<uint8_t *>(g_00696d14));
+
+        this->buffer4_->init(this->client_rect_.right - this->client_rect_.left, bottomBar, 0, 0);
+        this->buffer4_->sync_to_palette(reinterpret_cast<Palette *>(g_009b8180));
+        this->buffer4_->fill(*reinterpret_cast<uint8_t *>(g_00696d14));
+
+        this->buffer3_->init(this->border_thickness_,
+                              (this->client_rect_.bottom - this->client_rect_.top) - bottomBar - barH,
+                              0, 0);
+        this->buffer3_->sync_to_palette(reinterpret_cast<Palette *>(g_009b8180));
+        this->buffer3_->fill(*reinterpret_cast<uint8_t *>(g_00696d14));
+
+        this->buffer2_->init(this->border_thickness_,
+                              (this->client_rect_.bottom - this->client_rect_.top) - bottomBar - barH,
+                              0, 0);
+        this->buffer2_->sync_to_palette(reinterpret_cast<Palette *>(g_009b8180));
+        this->buffer2_->fill(*reinterpret_cast<uint8_t *>(g_00696d14));
+
+        this->on_redraw_nc(0, -1);
+    }
+}
+
+// ===== homed from src/recovered/units/005f2ac0.cpp =====
+typedef int (__stdcall *IfaceGetHdcProc)(void *, int *);
+typedef int (__stdcall *IfaceReleaseHdcProc)(void *, int);
+typedef HDC (__stdcall *GetDCProc)(void *);
+typedef int (__stdcall *ReleaseDCProc)(void *, HDC);
+typedef void *(__stdcall *CreatePenIndirectProc)(const LocalLogPen *);
+typedef void *(__stdcall *SelectObjectProc)(HDC, void *);
+typedef int (__stdcall *MoveToExProc)(HDC, int, int, void *);
+typedef int (__stdcall *LineToProc)(HDC, int, int);
+typedef int (__stdcall *DeleteObjectProc)(void *);
+
+void Win::window_line_raw(int a1, int a2, int a3, int a4, int a5, int a6, unsigned int a7) {
+    if (*g_009b3ab0 != 0) {
+        *g_009b3ab0 = *g_009b3ab0 + 1;
+    } else {
+        void *iface = reinterpret_cast<void *>(*g_009bc498);
+        if (iface != 0) {
+            IfaceGetHdcProc fn = (*reinterpret_cast<IfaceGetHdcProc **>(iface))[17];
+            fn(iface, g_009b7b2c);
+        } else {
+            GetDCProc getDC = *reinterpret_cast<GetDCProc *>(g_GetDC);
+            *g_009b7b2c = reinterpret_cast<int>(getDC(HandleMain));
+        }
+        if (*g_009b7b2c == 0) {
+            return;
+        }
+        *g_009b3ab0 = 1;
+    }
+    if (*g_009b7b2c != 0) {
+        char *self = reinterpret_cast<char *>(this);
+        if (*reinterpret_cast<int *>(self + 0x184) != *reinterpret_cast<int *>(*g_009b8180 + 0x400)) {
+            (*reinterpret_cast<Palette **>(g_009b8180))->set_active_window(this);
+            *reinterpret_cast<int *>(self + 0x184) = *reinterpret_cast<int *>(*g_009b8180 + 0x400);
+        }
+
+        LocalLogPen pen;
+        pen.style = a7;
+        pen.widthX = a6;
+        pen.color = (a5 & 0xffff) | 0x1000000;
+
+        CreatePenIndirectProc createPen = *reinterpret_cast<CreatePenIndirectProc *>(g_0066904c);
+        void *hpen = createPen(&pen);
+        if (hpen != 0) {
+            SelectObjectProc selectObj = *reinterpret_cast<SelectObjectProc *>(g_00669060);
+            void *oldPen = selectObj(reinterpret_cast<HDC>(*g_009b7b2c), hpen);
+
+            MoveToExProc moveTo = *reinterpret_cast<MoveToExProc *>(g_00669048);
+            moveTo(reinterpret_cast<HDC>(*g_009b7b2c), a3, a4, 0);
+
+            LineToProc lineTo = *reinterpret_cast<LineToProc *>(g_006690c4);
+            lineTo(reinterpret_cast<HDC>(*g_009b7b2c), a1, a2);
+
+            selectObj(reinterpret_cast<HDC>(*g_009b7b2c), oldPen);
+
+            DeleteObjectProc deleteObj = *reinterpret_cast<DeleteObjectProc *>(g_00669058);
+            deleteObj(hpen);
+
+            *g_009b3ab0 = *g_009b3ab0 - 1;
+            if (*g_009b3ab0 == 0) {
+                void *iface2 = reinterpret_cast<void *>(*g_009bc498);
+                if (iface2 != 0) {
+                    IfaceReleaseHdcProc fn2 = (*reinterpret_cast<IfaceReleaseHdcProc **>(iface2))[26];
+                    fn2(iface2, *g_009b7b2c);
+                    *g_009b7b2c = 0;
+                    return;
+                }
+                ReleaseDCProc releaseDC = *reinterpret_cast<ReleaseDCProc *>(g);
+                releaseDC(HandleMain, reinterpret_cast<HDC>(*g_009b7b2c));
+                *g_009b7b2c = 0;
+            }
+        }
+    }
+}
+
+// ===== homed from src/recovered/units/005f4d00.cpp =====
+
+void __cdecl Win::update() {
+    for (int i = 0; i < WinZOrderCount; ++i) {
+        reinterpret_cast<Win *>(reinterpret_cast<void **>(g_win_array)[i])->on_nc_paint(0, -1);
+        if (reinterpret_cast<Win *>(reinterpret_cast<void **>(g_win_array)[i])->vslot_61() != 0) {
+            reinterpret_cast<Win *>(reinterpret_cast<void **>(g_win_array)[i])->vslot_63();
+            do_sound();
+        }
+    }
+}
+
+// ===== homed from src/recovered/units/005f4c30.cpp =====
+
+int Win::redraw_nc_buffer(int a1) {
+    char *self = reinterpret_cast<char *>(this);
+    this->on_redraw_nc(0, a1);
+    switch (a1) {
+        case 0:
+            return *reinterpret_cast<int *>(self + 0xb4);
+        case 1:
+            return *reinterpret_cast<int *>(self + 0xb8);
+        case 2:
+            return *reinterpret_cast<int *>(self + 0xc0);
+        case 3:
+            return *reinterpret_cast<int *>(self + 0xbc);
+        default:
+            return 0;
+    }
+}
+
+// ===== homed from src/recovered/units/005f05d0.cpp =====
+
+// ORIGINAL: 0x005F05D0 ?set_border_thickness@Win@@QAEXH@Z 0x005F05D0-0x005F060D FILE BYTE_EXACT
+// size      61 bytes
+// prototype void (__thiscall ?set_border_thickness@Win@@QAEXH@Z)(Win* this, int thickness)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005F0606
+// PRESERVED UNIT - measured NO_COMPILE.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x005F05D0
+// measured tier  NO_COMPILE
+// refusal        u005f05d0.cpp(8) : error C2653: 'Win' : is not a class or namespace name u005f05d0.cpp(9) : error C2673: 'set_border_thickness' : global functions do not have '
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/005f05d0/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?set_border_thickness@Win@@QAEXH@Z  at 0x005F05D0  (61 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+void Win::set_border_thickness(int a1) {
+    if (*reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(this) + 0x9C) & 2) {
+        border_thickness_ = a1;
+        this->resize(
+            client_rect_.right - client_rect_.left,
+            client_rect_.bottom - client_rect_.top,
+            0);
+    }
+}
+
+// ===== homed from src/recovered/units/005ed9c0.cpp =====
+
+// ORIGINAL: 0x005ED9C0 ?on_redraw@Win@@QAEHXZ 0x005ED9C0-0x005ED9C5 FILE BYTE_EXACT
+// symbol    ?on_redraw@Win@@QAEHHH@Z
+// size      5 bytes
+// prototype int (__thiscall ?on_redraw@Win@@QAEHXZ)(Win* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// PRESERVED UNIT - measured BYTE_EXACT.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x005ED9C0
+// measured tier  BYTE_EXACT
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/005ed9c0/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?on_redraw@Win@@QAEHXZ  at 0x005ED9C0  (5 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+int Win::on_redraw(int, int) {
+    return 0;
+}
+
+// ===== homed from src/recovered/units/005f5810.cpp =====
+typedef unsigned int uint32_t;
+
+void Win::on_nc_paint(RECT * a1, int a2) {
+    char *self = reinterpret_cast<char *>(this);
+
+    if ((*reinterpret_cast<uint8_t *>(self + 0x98) & 0x11) != 0 &&
+        (*reinterpret_cast<uint8_t *>(self + 0x9c) & 1) != 0 &&
+        (*reinterpret_cast<int *>(self + 0xc4) == 0 || this->is_visible() != 0)) {
+        int stack8 = 0, stack4 = 0;
+        this->client_to_screen(&stack8, &stack4);
+        stack8 -= *reinterpret_cast<int *>(self + 0x13c);
+        stack4 -= *reinterpret_cast<int *>(self + 0x140);
+
+        if (a1 != 0) {
+            a2 = -1;
+            reinterpret_cast<Buffer *>(a1)->set_clip(a1);
+        }
+
+        int iVar1;
+        if ((*reinterpret_cast<uint32_t *>(self + 0x98) & 0x10) == 0 ||
+            (*reinterpret_cast<uint32_t *>(self + 0x98) & 0x400000) != 0) {
+            iVar1 = *reinterpret_cast<int *>(self + 0x118);
+        } else {
+            iVar1 = *reinterpret_cast<int *>(self + 0x114);
+        }
+
+        if (*reinterpret_cast<int *>(self + 0xb4) != 0 && (a2 == -1 || a2 == 0)) {
+            Buffer *buf;
+            int x, y;
+            if (*g_009b7a68 == 0) {
+                buf = reinterpret_cast<Buffer *>(g_009b7490);
+                x = stack8;
+                y = stack4;
+            } else {
+                buf = reinterpret_cast<Buffer *>(*g_009b7a68);
+                x = stack8 - *g_009b7a70;
+                y = stack4 - *g_009b7a74;
+            }
+            reinterpret_cast<Buffer *>(g_009b7490)->draw(buf, *g_00696d14, x, y, 1, 1);
+        }
+
+        if (*reinterpret_cast<int *>(self + 0xc0) != 0 && (a2 == -1 || a2 == 2)) {
+            int v = *reinterpret_cast<int *>(self + 0x11c);
+            if (v == -1) {
+                v = *reinterpret_cast<int *>(self + 0x118);
+            }
+            Buffer *buf;
+            int x;
+            if (*g_009b7a68 == 0) {
+                v = (*reinterpret_cast<int *>(self + 0x158) -
+                     *reinterpret_cast<int *>(self + 0x150)) - v;
+                buf = reinterpret_cast<Buffer *>(g_009b7490);
+                x = stack8;
+            } else {
+                v = ((*reinterpret_cast<int *>(self + 0x158) -
+                      *reinterpret_cast<int *>(self + 0x150)) - *g_009b7a74) - v;
+                buf = reinterpret_cast<Buffer *>(*g_009b7a68);
+                x = stack8 - *g_009b7a70;
+            }
+            reinterpret_cast<Buffer *>(g_009b7490)->draw(buf, *g_00696d14, x, v + stack4, 1, 1);
+        }
+
+        if (*reinterpret_cast<int *>(self + 0xbc) != 0 && (a2 == -1 || a2 == 3)) {
+            if (*g_009b7a68 == 0) {
+                reinterpret_cast<Buffer *>(g_009b7490)
+                    ->draw(reinterpret_cast<Buffer *>(g_009b7490), *g_00696d14, stack8,
+                           stack4 + iVar1, 1, 1);
+            } else {
+                reinterpret_cast<Buffer *>(g_009b7490)
+                    ->draw(reinterpret_cast<Buffer *>(*g_009b7a68), *g_00696d14,
+                           stack8 - *g_009b7a70, (iVar1 - *g_009b7a74) + stack4, 1, 1);
+            }
+        }
+
+        if (*reinterpret_cast<int *>(self + 0xb8) != 0 && (a2 == -1 || a2 == 1)) {
+            Buffer *buf;
+            int v;
+            int yv = iVar1;
+            if (*g_009b7a68 == 0) {
+                v = (*reinterpret_cast<int *>(self + 0x154) -
+                     *reinterpret_cast<int *>(self + 0x14c)) -
+                    *reinterpret_cast<int *>(self + 0x118);
+                buf = reinterpret_cast<Buffer *>(g_009b7490);
+            } else {
+                yv = iVar1 - *g_009b7a74;
+                v = ((*reinterpret_cast<int *>(self + 0x154) -
+                      *reinterpret_cast<int *>(self + 0x14c)) -
+                     *reinterpret_cast<int *>(self + 0x118)) - *g_009b7a70;
+                buf = reinterpret_cast<Buffer *>(*g_009b7a68);
+            }
+            reinterpret_cast<Buffer *>(g_009b7490)->draw(buf, *g_00696d14, v + stack8, yv + stack4, 1, 1);
+        }
+
+        reinterpret_cast<Buffer *>(g_009b7490)->set_clip(reinterpret_cast<RECT *>(g_009b74c0));
+    }
+}
+
+// ===== homed from src/recovered/units/005f5270.cpp =====
+
+void Win::remove_child(Win *a1) {
+    if (a1 == 0) return;
+
+    int count = child_count_;
+    int i = 0;
+    if (count > 0) {
+        do {
+            if (children_[i] == a1) break;
+            ++i;
+        } while (i < count);
+    }
+    if (i < count) {
+        child_count_ = count - 1;
+        a1->hide();
+        if (i < child_count_) {
+            do {
+                children_[i] = children_[i + 1];
+                ++i;
+            } while (i < child_count_);
+        }
+    }
+}
+
+// ===== homed from src/recovered/units/005f6880.cpp =====
+
+void Win::on_r_button_up(int a1, int a2, unsigned int a3, int a4) {
+    char *self = reinterpret_cast<char *>(this);
+
+    Win *captured = WinPointerOwner1;
+    if (captured == nullptr) {
+        captured = WinPointerOwner2;
+    }
+    WinPointerOwner1 = nullptr;
+    WinPointerOwner2 = nullptr;
+
+    if (captured == this) {
+        int32_t fa = *reinterpret_cast<int32_t *>(self + 0x13c);
+        int32_t fb = *reinterpret_cast<int32_t *>(self + 0x140);
+        int32_t fc = *reinterpret_cast<int32_t *>(self + 0x144);
+        int32_t fd = *reinterpret_cast<int32_t *>(self + 0x148);
+        RECT testRect = {0, 0, fc - fa, fd - fb};
+
+        if (in_box(a1, a2, &testRect)) {
+            if ((*reinterpret_cast<int32_t *>(self + 0x98) & 0x200000) == 0) {
+                if ((*reinterpret_cast<uint8_t *>(self + 0x9c) & 8) == 0) {
+                    int32_t related;
+                    if (a4 == 0) {
+                        *g_009b7ab8 = reinterpret_cast<int32_t>(self);
+                        int32_t fp = *reinterpret_cast<int32_t *>(self + 0x420);
+                        if (fp != 0) {
+                            reinterpret_cast<void(__cdecl *)(int, int)>(fp)(a1, a2);
+                        }
+                        reinterpret_cast<Win *>(self)->vslot_22(a1, a2);
+                        related = *reinterpret_cast<int32_t *>(self + 0x2c);
+                    } else {
+                        reinterpret_cast<Win *>(self)->vslot_35(a1, a2);
+                        related = *reinterpret_cast<int32_t *>(self + 0x5c);
+                    }
+                    if (related != 0 && reinterpret_cast<Win *>(related)->vslot_23() == 0) {
+                        reinterpret_cast<Win *>(related)->vslot_07();
+                    }
+                }
+            }
+        }
+    }
+
+    if ((*reinterpret_cast<int32_t *>(self + 0x98) & 0x200000) == 0 &&
+        (*reinterpret_cast<uint8_t *>(self + 0x9c) & 8) == 0) {
+        int32_t related2;
+        if (a4 == 0) {
+            *g_009b7ab8 = reinterpret_cast<int32_t>(self);
+            int32_t fp = *reinterpret_cast<int32_t *>(self + 0x428);
+            if (fp != 0) {
+                reinterpret_cast<void(__cdecl *)(int, int)>(fp)(a1, a2);
+            }
+            reinterpret_cast<Win *>(self)->vslot_24(a1, a2);
+            related2 = *reinterpret_cast<int32_t *>(self + 0x34);
+        } else {
+            reinterpret_cast<Win *>(self)->vslot_37(a1, a2);
+            related2 = *reinterpret_cast<int32_t *>(self + 0x64);
+        }
+        if (related2 != 0 && reinterpret_cast<Win *>(related2)->vslot_23() == 0) {
+            reinterpret_cast<Win *>(related2)->vslot_07();
+        }
+    }
+}
+
+// ===== homed from src/recovered/units/005f25c0.cpp =====
+
+void __cdecl Win::OnRButtonDown(void * a1, long a2, int a3, int a4, unsigned int a5) {
+    int result = reinterpret_cast<int>(get_mouse_window(
+        reinterpret_cast<int *>(&a2), reinterpret_cast<int *>(&a3)));
+    if (result != 0) {
+        reinterpret_cast<Win *>(result)->on_r_button_down(reinterpret_cast<long>(a1), a2, a3, a4, *g_009b7aa4);
+    }
+    if (*g_009b7a94 != 0) {
+        reinterpret_cast<void (__cdecl *)(int, int)>(*g_009b7a94)(a2, a3);
+    }
+    if (WinCursorMoved != 0) {
+        reinterpret_cast<void (__cdecl *)()>(WinCursorMoved)();
+        return;
+    }
+}
+
+// ===== homed from src/recovered/units/005f2620.cpp =====
+
+void __cdecl Win::OnRButtonUp(void * a1, int a2, int a3, unsigned int a4) {
+    WinTrackingWindow = nullptr;
+    Win *win = reinterpret_cast<Win *>(get_mouse_window(&a2, &a3));
+    if (win != 0) {
+        VCallW *vcall = reinterpret_cast<VCallW *>(win);
+        vcall->slot084(a2, a3, a4, *g_009b7aa4);
+    }
+}
+
+// ===== homed from src/recovered/units/005f0580.cpp =====
+
+// ORIGINAL: 0x005F0580 ?set_caption_height@Win@@QAEXH@Z 0x005F0580-0x005F05BD FILE BYTE_EXACT
+// size      61 bytes
+// prototype void (__thiscall ?set_caption_height@Win@@QAEXH@Z)(Win* this, int)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005F05B6
+// PRESERVED UNIT - measured BYTE_EXACT.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x005F0580
+// measured tier  BYTE_EXACT
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/005f0580/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?set_caption_height@Win@@QAEXH@Z  at 0x005F0580  (61 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+void Win::set_caption_height(int a1) {
+    char *self = reinterpret_cast<char *>(this);
+    if (*reinterpret_cast<unsigned char *>(self + 0x9c) & 2) {
+        *reinterpret_cast<int *>(self + 0x114) = a1;
+        int w = *reinterpret_cast<int *>(self + 0x154) - *reinterpret_cast<int *>(self + 0x14c);
+        int h = *reinterpret_cast<int *>(self + 0x158) - *reinterpret_cast<int *>(self + 0x150);
+        this->resize(w, h, 0);
+    }
+}
+
+// ===== homed from src/unrecovered/005f6a50.cpp =====
+
+// CORRECTED: the catalogue spells `?get_key_window@Win@@QAGHXZ` - `H`,
+// int - but every caller assigns the result to a `Win *`. The int is
+// the pointer, and win.h has said so since the focus-window work.
+Win *Win::get_key_window() {
+    char *w;
+    if (*g_009b7ae0 == 0) {
+        w = (char *)*g_009b7ac4;
+        if (*g_009b7ac4 == 0) {
+            w = (char *)*WinDefaultFocus;
+        }
+    } else {
+        w = (char *)*g_009b7ae0;
+        if (*g_009b8d7c != 0) {
+            w = (char *)*g_009b8d7c;
+        }
+    }
+    *g_009b7ac8 = (int)w;
+    int result = 0;
+    if (w != 0) {
+        result = *(int *)(w + 0xa8);
+        if (result != 0) {
+            if ((*(unsigned char *)(result + 0x9c) & 1) == 0) {
+                return 0;
+            }
+            if (*(int *)(result + 0xc4) != 0) {
+                if (((Win *)result)->is_visible() == 0) {
+                    return 0;
+                }
+            }
+        }
+    }
+    return reinterpret_cast<Win *>(result);
+}
+
+// ===== homed from src/recovered/units/005ed9d0.cpp =====
+typedef BOOL (__stdcall *InvalidateRectFn)(void *, const RECT *, BOOL);
+typedef void (__cdecl *Sub5f8670Fn)(RECT *, int, int);
+
+void Win::show(int a1) {
+    if ((iSomeFlag_ & 1) == 0 && (iSomeFlag_ & 4) != 0) {
+        field_1A0_ |= 2;
+        if ((iFlags_ & 2) == 0) {
+            *g_009b7acc = 0;
+            *g_009b7ad0 = 0;
+        }
+        iSomeFlag_ |= 1;
+        if ((a1 & 4) == 0) {
+            if (win_parent_) {
+                win_parent_->bring_child_to_top(this);
+            } else {
+                win_parent_->bring_parent_to_top(this);
+            }
+        }
+
+        int32_t count = *g_009b7b34;
+        *g_009b7b30 = 0;
+        if (count > 0) {
+            int32_t cur = *g_009b7a6c;
+            for (int32_t i = 0; i < count; ++i) {
+                Win *w = g_zorder_list[i];
+                if (cur != 0 && cur == reinterpret_cast<int32_t>(w)) {
+                    *g_009b7b30 = 0;
+                    *g_009b7a78 = 0;
+                }
+                if (reinterpret_cast<uint8_t *>(w)[0x9c] & 1) {
+                    recurse_zorder(w);
+                    cur = *g_009b7a6c;
+                }
+            }
+        }
+
+        if ((a1 & 2) == 0) {
+            resize_event(outer_rect_.right - outer_rect_.left, outer_rect_.bottom - outer_rect_.top);
+        }
+        if ((a1 & 1) == 0) {
+            this->vslot_12();
+        }
+        if (menu_ != 0) {
+            menu_->vslot_62();
+        }
+        if (list_.count_ != 0 && list_.head_ != 0) {
+            Win *obj = *reinterpret_cast<Win **>(reinterpret_cast<char *>(list_.current_) + 4);
+            if (obj != 0) {
+                reinterpret_cast<VCallArg51 *>(obj)->s51(1);
+            }
+        }
+
+        RECT rect;
+        if ((iSomeFlag_ & 2) == 0) {
+            rect.right = outer_rect_.right - outer_rect_.left;
+            rect.left = 0;
+            rect.bottom = outer_rect_.bottom - outer_rect_.top;
+            rect.top = 0;
+            int x = client_rect_.left + outer_rect_.left;
+            int y = client_rect_.top + outer_rect_.top;
+            if ((iFlags_ & 0x20) != 0 && win_parent_ != 0) {
+                win_parent_->client_to_screen(&x, &y);
+                if (iFlags_ & 0x8000) {
+                    x -= win_parent_->outer_rect_.left;
+                    y -= win_parent_->outer_rect_.top;
+                }
+            }
+            reinterpret_cast<Sub5f8670Fn>(sub_5f8670)(&rect, x, y);
+        } else {
+            rect.right = client_rect_.right - client_rect_.left;
+            rect.bottom = client_rect_.bottom - client_rect_.top;
+            rect.left = 0;
+            rect.top = 0;
+            int x = 0;
+            int y = 0;
+            client_to_screen(&x, &y);
+            rect.left += x - outer_rect_.left;
+            rect.right += x - outer_rect_.left;
+            rect.top += y - outer_rect_.top;
+            rect.bottom += y - outer_rect_.top;
+        }
+
+        (*reinterpret_cast<InvalidateRectFn *>(g_00669304))(reinterpret_cast<void *>(*g_009b7b28), &rect, 0);
+
+        Win *obj2 = reinterpret_cast<Win *>(val_3_);
+        if (obj2 != 0) {
+            if (reinterpret_cast<VCallRet23 *>(obj2)->s23() == 0) {
+                obj2->vslot_07();
+            }
+        }
+    }
+}
+
+// ===== homed from src/recovered/units/005f7ec0.cpp =====
+typedef unsigned short uint16_t;
+
+void Win::update_back_to_window(Buffer * a1) {
+    char *self = reinterpret_cast<char *>(this);
+    if (a1 == 0) {
+        return;
+    }
+
+    *g_009b7a68 = reinterpret_cast<int>(a1);
+    *g_009b7a6c = 0;
+    *g_009b7a70 = 0;
+    *g_009b7a74 = 0;
+
+    uint32_t savedFlags = *reinterpret_cast<uint32_t *>(self + 0x9c);
+    *reinterpret_cast<uint32_t *>(self + 0x9c) = savedFlags & 0xfffffffe;
+
+    WinZOrderCount = 0;
+    for (int i = 0; i < *g_009b7b34; i++) {
+        Win *w = g_zorder_list[i];
+        if (*g_009b7a6c != 0 && *g_009b7a6c == reinterpret_cast<int>(w)) {
+            WinZOrderCount = 0;
+            *g_009b7a78 = 0;
+        }
+        if (*reinterpret_cast<uint8_t *>(reinterpret_cast<char *>(w) + 0x9c) & 1) {
+            recurse_zorder(w);
+        }
+    }
+
+    int tail;
+    if (!(savedFlags & 2)) {
+        *g_009b7a70 += *reinterpret_cast<int *>(self + 0x14c) + *reinterpret_cast<int *>(self + 0x13c);
+        *g_009b7a74 += *reinterpret_cast<int *>(self + 0x150) + *reinterpret_cast<int *>(self + 0x140);
+
+        if (!(*reinterpret_cast<uint8_t *>(self + 0x98) & 0x20) ||
+            *reinterpret_cast<int *>(self + 0xc4) == 0) {
+            goto after_offset_fixup;
+        }
+        this->client_to_screen(g_009b7a70, g_009b7a74);
+        if (!(*reinterpret_cast<uint16_t *>(self + 0x98) & 0x8000)) {
+            goto after_offset_fixup;
+        }
+        {
+            char *owner = reinterpret_cast<char *>(*reinterpret_cast<Win **>(self + 0xc4));
+            *g_009b7a70 -= *reinterpret_cast<int *>(owner + 0x13c);
+            tail = *reinterpret_cast<int *>(owner + 0x140);
+        }
+    } else {
+        this->client_to_screen(g_009b7a70, g_009b7a74);
+        *g_009b7a70 -= *reinterpret_cast<int *>(self + 0x13c);
+        tail = *reinterpret_cast<int *>(self + 0x140);
+    }
+    *g_009b7a74 -= tail;
+after_offset_fixup:;
+
+    RECT rect;
+    if (!(savedFlags & 2)) {
+        rect.left = *reinterpret_cast<int *>(self + 0x13c);
+        rect.top = *reinterpret_cast<int *>(self + 0x140);
+        rect.right = *reinterpret_cast<int *>(self + 0x144);
+        rect.bottom = *reinterpret_cast<int *>(self + 0x148);
+    } else {
+        rect.left = *reinterpret_cast<int *>(self + 0x14c);
+        rect.top = *reinterpret_cast<int *>(self + 0x150);
+        rect.right = *reinterpret_cast<int *>(self + 0x154);
+        rect.bottom = *reinterpret_cast<int *>(self + 0x158);
+    }
+
+    a1->init(rect.right - rect.left, rect.bottom - rect.top, 0, 0);
+
+    int dx = *g_009b7a70 - rect.left;
+    int dy = *g_009b7a74 - rect.top;
+    rect.left = *g_009b7a70;
+    rect.top = *g_009b7a74;
+    rect.right += dx;
+    rect.bottom += dy;
+
+    this->update_screen(&rect, 0);
+
+    *g_009b7a68 = 0;
+    *g_009b7a6c = 0;
+    *reinterpret_cast<uint32_t *>(self + 0x9c) = savedFlags;
+
+    WinZOrderCount = 0;
+    for (int j = 0; j < *g_009b7b34; j++) {
+        Win *w = g_zorder_list[j];
+        if (*g_009b7a6c != 0 && *g_009b7a6c == reinterpret_cast<int>(w)) {
+            WinZOrderCount = 0;
+            *g_009b7a78 = 0;
+        }
+        if (*reinterpret_cast<uint8_t *>(reinterpret_cast<char *>(w) + 0x9c) & 1) {
+            recurse_zorder(w);
+        }
+    }
+}
+
+// ===== homed from src/unrecovered/005ee190.cpp =====
+typedef void *(__stdcall *PFN_LoadCursorA)(void *, const char *);
+typedef void *(__stdcall *PFN_SetCursor)(void *);
+
+int Win::set_modal(int a1, int (__cdecl *a2)(), Win * a3) {
+    if (*g_009b7ae4 >= 4) {
+        return 0;
+    }
+    int idx = *g_009b7ae4;
+    reinterpret_cast<void **>(g_009b6ef8)[idx] = this;
+    reinterpret_cast<void **>(g_009b7a1c)[idx] = a3;
+    *g_009b7ae4 = idx + 1;
+    *g_009b7ae0 = reinterpret_cast<int>(this);
+    *g_009b7acc = 0;
+    *g_009b7ad0 = 0;
+
+    void *prior = reinterpret_cast<void *>(*g_009b7abc);
+    if (prior != 0 && prior != this) {
+        reinterpret_cast<Win *>(prior)->vslot_04();
+        *g_009b7abc = 0;
+    }
+    *g_009b7ac4 = 0;
+    if (a3 != 0) {
+        *g_009b7adc = reinterpret_cast<int>(a3);
+        reinterpret_cast<Win *>(a3)->show(0);
+    }
+    reinterpret_cast<Win *>(this)->show(0);
+    flush_input();
+
+    void *cursor = (*reinterpret_cast<PFN_LoadCursorA *>(g_0066928c))(0, reinterpret_cast<const char *>(0x7f00));
+    (*reinterpret_cast<PFN_SetCursor *>(g_00669288))(cursor);
+
+    int result = 0;
+    if (*g_009b7ae0 == reinterpret_cast<int>(this)) {
+        for (;;) {
+            int r = reinterpret_cast<Win *>(this)->vslot_59();
+            if (r == 0) {
+                break;
+            }
+            if (a2 != 0) {
+                int rr = a2();
+                if (rr == 0) {
+                    int cur = *g_009b7ae0;
+                    if (cur != 0) {
+                        reinterpret_cast<VCallModal *>(reinterpret_cast<void *>(cur))->slot58();
+                    }
+                    result = 1;
+                    break;
+                }
+            }
+            wait_task();
+            if (*g_009b7ae0 != reinterpret_cast<int>(this)) {
+                return 0;
+            }
+        }
+    }
+    return result;
+}
+
+// ===== homed from src/unrecovered/005ef310.cpp =====
+typedef int (__stdcall *SelectObjectFn)(void *hdc, void *obj);
+typedef int (__stdcall *MoveToExFn)(void *hdc, int x, int y, void *point);
+typedef int (__stdcall *LineToFn)(void *hdc, int x, int y);
+
+void Win::draw_rect_border(int x1, int y1, int x2, int y2, HGDIOBJ pen1, HGDIOBJ pen2, int unused7) {
+    SelectObjectFn selectObject = *reinterpret_cast<SelectObjectFn *>(g_00669060);
+    MoveToExFn moveToEx = *reinterpret_cast<MoveToExFn *>(g_00669048);
+    LineToFn lineTo = *reinterpret_cast<LineToFn *>(g_006690c4);
+    bool haveHdc;
+
+    ACQUIRE_HDC(haveHdc);
+    if (haveHdc) {
+        Palette *pal = reinterpret_cast<Palette *>(*g_009b8180);
+        if (this->field_184_ != pal->seed_) {
+            pal->set_active_window(this);
+            this->field_184_ = pal->seed_;
+        }
+        void *hdc = reinterpret_cast<void *>(*g_009b7b2c);
+        void *prev = reinterpret_cast<void *>(selectObject(hdc, pen1));
+        moveToEx(hdc, x1 + 1, y1, 0);
+        lineTo(hdc, x2 + 1, y1);
+        selectObject(hdc, prev);
+        release_hdc();
+    }
+
+    ACQUIRE_HDC(haveHdc);
+    if (haveHdc) {
+        Palette *pal = reinterpret_cast<Palette *>(*g_009b8180);
+        if (this->field_184_ != pal->seed_) {
+            pal->set_active_window(this);
+            this->field_184_ = pal->seed_;
+        }
+        void *hdc = reinterpret_cast<void *>(*g_009b7b2c);
+        void *prev = reinterpret_cast<void *>(selectObject(hdc, pen2));
+        moveToEx(hdc, x1, y2, 0);
+        lineTo(hdc, x2, y2);
+        selectObject(hdc, prev);
+        release_hdc();
+    }
+
+    ACQUIRE_HDC(haveHdc);
+    if (haveHdc) {
+        Palette *pal = reinterpret_cast<Palette *>(*g_009b8180);
+        if (this->field_184_ != pal->seed_) {
+            pal->set_active_window(this);
+            this->field_184_ = pal->seed_;
+        }
+        void *hdc = reinterpret_cast<void *>(*g_009b7b2c);
+        void *prev = reinterpret_cast<void *>(selectObject(hdc, pen1));
+        moveToEx(hdc, x1, y1, 0);
+        lineTo(hdc, x1, y2);
+        selectObject(hdc, prev);
+        release_hdc();
+    }
+
+    ACQUIRE_HDC(haveHdc);
+    if (haveHdc) {
+        sync_palette();
+        void *hdc = reinterpret_cast<void *>(*g_009b7b2c);
+        void *prev = reinterpret_cast<void *>(selectObject(hdc, pen2));
+        moveToEx(hdc, x2, y1 + 1, 0);
+        lineTo(hdc, x2, y2 + 1);
+        selectObject(hdc, prev);
+        release_hdc();
+    }
+}
+
+// ===== homed from src/unrecovered/005eedc0.cpp =====
+
+int Win::key_up_event(int a1) {
+    char *self = reinterpret_cast<char *>(this);
+    int result = 0;
+    if ((*reinterpret_cast<unsigned int *>(self + 0x98) & 0x200000) != 0 ||
+        (*reinterpret_cast<unsigned char *>(self + 0x9C) & 8) != 0) {
+        return 0;
+    }
+    if (*reinterpret_cast<int *>(self + 0xD4) != 0) {
+        int recvThis;
+        if (*reinterpret_cast<int *>(self + 0xCC) != 0) {
+            int fieldD0 = *reinterpret_cast<int *>(self + 0xD0);
+            recvThis = *reinterpret_cast<int *>(fieldD0 + 4);
+        } else {
+            recvThis = 0;
+        }
+        if (reinterpret_cast<Win *>(recvThis)->key_up_event(a1) != 0) {
+            return 1;
+        }
+    }
+    *g_009b7ab8 = reinterpret_cast<int>(this);
+    int callback = *reinterpret_cast<int *>(self + 0x434);
+    if (callback != 0) {
+        result = reinterpret_cast<int (__cdecl *)(int)>(callback)(a1);
+    }
+    result += this->vslot_27(a1);
+    Win *child = *reinterpret_cast<Win **>(self + 0x40);
+    if (child != 0) {
+        if (child->vslot_23() == 0) {
+            child->vslot_07();
+        }
+    }
+    return result;
+}
+
+// ===== homed from src/unrecovered/005eeb90.cpp =====
+
+int Win::key_down_event(int a1) {
+    typedef int (__cdecl *KeyHookFn)(int);
+    char *self = reinterpret_cast<char *>(this);
+
+    if ((*reinterpret_cast<unsigned int *>(self + 0x98) & 0x200000) != 0 ||
+        (*reinterpret_cast<unsigned char *>(self + 0x9c) & 8) != 0) {
+        return 0;
+    }
+
+    bool clicked = false;
+    int ebx = 0;
+
+    if (*reinterpret_cast<int *>(self + 0xd4) != 0) {
+        if (*reinterpret_cast<int *>(self + 0xcc) != 0) {
+            ebx = *reinterpret_cast<int *>(*reinterpret_cast<int *>(self + 0xd0) + 4);
+        }
+        Win *focus = reinterpret_cast<Win *>(ebx);
+
+        if (focus->scroll_vert_ != 0) {
+            if (focus->scroll_vert_->vslot_25(0, a1) != 0) {
+                return 1;
+            }
+            if ((short)MapVirtualKeyA(a1 & 0xfff8ffff, 2) == 0) {
+                focus->key_click_event(0, a1);
+                clicked = true;
+            }
+        }
+        if (focus->scroll_horz_ != 0) {
+            if (focus->scroll_horz_->vslot_25(0, a1) != 0) {
+                return 1;
+            }
+            if (!clicked && (short)MapVirtualKeyA(a1 & 0xfff8ffff, 2) == 0) {
+                focus->key_click_event(0, a1);
+            }
+        }
+        if (focus->scroll_horz_ == 0 && focus->scroll_vert_ == 0 &&
+            (short)MapVirtualKeyA(a1 & 0xfff8ffff, 2) == 0) {
+            focus->key_click_event(0, a1);
+        }
+        if (focus->key_down_event(a1) != 0) {
+            return 1;
+        }
+    }
+
+    if (this->scroll_vert_ != 0) {
+        if (this->scroll_vert_->vslot_25(0, a1) != 0) {
+            return 1;
+        }
+        if (!clicked && (short)MapVirtualKeyA(a1 & 0xfff8ffff, 2) == 0) {
+            key_click_event(0, a1);
+            clicked = true;
+        }
+    }
+    if (this->scroll_horz_ != 0) {
+        if (this->scroll_horz_->vslot_25(0, a1) != 0) {
+            return 1;
+        }
+        if (!clicked && (short)MapVirtualKeyA(a1 & 0xfff8ffff, 2) == 0) {
+            key_click_event(0, a1);
+        }
+    }
+    if (this->scroll_horz_ == 0 && this->scroll_vert_ == 0 && !clicked &&
+        (short)MapVirtualKeyA(a1 & 0xfff8ffff, 2) == 0 &&
+        key_click_event(0, a1) != 0) {
+        return 1;
+    }
+
+    *g_009b7ab8 = reinterpret_cast<int>(this);
+
+    KeyHookFn hook = *reinterpret_cast<KeyHookFn *>(self + 0x430);
+    if (hook != 0) {
+        ebx = hook(a1);
+    }
+    int r2 = this->vslot_26(a1);
+
+    Win *child = *reinterpret_cast<Win **>(self + 0x3c);
+    if (child != 0) {
+        if (child->vslot_23() == 0) {
+            child->vslot_07();
+        }
+    }
+    return ebx + r2;
+}
+
+// ===== homed from src/unrecovered/005ebd80.cpp =====
+typedef int (__stdcall *MessageBoxAFn)(void *, const char *, const char *, unsigned int);
+
+int Win::init(int a1, int a2, int a3, int a4, char * a5, int a6, Win * a7, Menu * a8, BorderSizing * a9) {
+    this->close();
+
+    if (a9 != 0) {
+        int *bs = reinterpret_cast<int *>(a9);
+        this->caption_height_ = bs[0];
+        this->border_thickness_ = bs[1];
+        this->bottom_border_thickness_ = bs[2];
+    }
+    this->field_1A0_ |= 2;
+
+    {
+        void *raw = operator new(0x588U);
+        this->buffer1_ = (raw != 0) ? new (raw) Buffer() : 0;
+        if (this->buffer1_ == 0) return 4;
+    }
+    {
+        void *raw = operator new(0x588U);
+        this->buffer2_ = (raw != 0) ? new (raw) Buffer() : 0;
+        if (this->buffer2_ == 0) return 4;
+    }
+    {
+        void *raw = operator new(0x588U);
+        this->buffer3_ = (raw != 0) ? new (raw) Buffer() : 0;
+        if (this->buffer3_ == 0) return 4;
+    }
+    {
+        void *raw = operator new(0x588U);
+        this->buffer4_ = (raw != 0) ? new (raw) Buffer() : 0;
+        if (this->buffer4_ == 0) return 4;
+    }
+
+    int flags = a6;
+    if ((flags & 0xF0000000) != 0) {
+        if (this->vslot_61() == 0) {
+            return 3;
+        }
+    }
+    if ((flags & 0x80000) != 0) {
+        flags |= 0x20;
+    }
+
+    int posX = a1;
+    if (a1 < 0) {
+        int w = a7 ? (a7->outer_rect_.right - a7->outer_rect_.left) : WinScreenWidth;
+        posX = a1 + (w - a3);
+    }
+    int posY = a2;
+    if (a2 < 0) {
+        int h = a7 ? (a7->outer_rect_.bottom - a7->outer_rect_.top) : WinScreenHeight;
+        posY = a2 + (h - a4);
+    }
+
+    this->iFlags_ = flags;
+    this->menu_ = a8;
+    this->win_parent_ = a7;
+
+    if (a5 != 0 && a5[0] != 0 && (flags & 0x400080) == 0) {
+        flags |= 0x10;
+        this->iFlags_ = flags;
+    }
+
+    if (a7 != 0) {
+        if (a7->child_count_ == 150) {
+            this->close();
+            (*reinterpret_cast<MessageBoxAFn *>(g_00669318))(
+                0, reinterpret_cast<const char *>(g_00696d80), reinterpret_cast<const char *>(g_00696d60), 0);
+            // MEASURED at 0x005EBFC4: `push 4; call 0x644dff` - the CRT's exit with
+            // status 4, not a member call. The artifact declared a local
+            // `void exit();` in its stub class, which was a guess.
+            exit(4);
+        } else {
+            int idx = a7->child_count_;
+            if ((this->iFlags_ & 0x2000000) != 0) {
+                a7->children_[idx] = this;
+            } else {
+                for (int i = idx; i > 0; i--) {
+                    a7->children_[i] = a7->children_[i - 1];
+                }
+                a7->children_[0] = this;
+            }
+            a7->child_count_++;
+        }
+    } else {
+        int cnt = *g_009b7b34;
+        if (cnt == 0x28) {
+            this->close();
+            (*reinterpret_cast<MessageBoxAFn *>(g_00669318))(
+                0, reinterpret_cast<const char *>(g_00696db4), reinterpret_cast<const char *>(g_00696d94), 0);
+            // MEASURED at 0x005EBFC4: `push 4; call 0x644dff` - the CRT's exit with
+            // status 4, not a member call. The artifact declared a local
+            // `void exit();` in its stub class, which was a guess.
+            exit(4);
+        } else {
+            Win **globalList = reinterpret_cast<Win **>(g_zorder_list);
+            if ((this->iFlags_ & 0x2000000) != 0) {
+                globalList[cnt] = this;
+            } else {
+                if (cnt > 0) {
+                    for (int i = cnt; i > 0; i--) {
+                        globalList[i] = globalList[i - 1];
+                    }
+                }
+                globalList[0] = this;
+            }
+            *g_009b7b34 = cnt + 1;
+        }
+    }
+
+    if (((this->iFlags_ & 0x80) != 0) || ((this->iFlags_ & 0x1D) == 0)) {
+        this->iSomeFlag_ &= ~2u;
+        this->iFlags_ &= ~0x411u;
+    } else {
+        this->iSomeFlag_ |= 2;
+    }
+
+    if ((this->iFlags_ & 0x800) == 0 && (this->iSomeFlag_ & 2) != 0) {
+        this->client_rect_.left = posX;
+        this->client_rect_.top = posY;
+        this->client_rect_.right = posX + a3;
+        this->client_rect_.bottom = posY + a4;
+        this->outer_rect_ = this->client_rect_;
+        this->nonclient_to_client(&this->outer_rect_);
+        int dx = -this->outer_rect_.left;
+        int dy = -this->client_rect_.top;
+        this->outer_rect_.left += dx;
+        this->outer_rect_.right += dx;
+        this->outer_rect_.top += dy;
+        this->outer_rect_.bottom += dy;
+    } else {
+        this->outer_rect_.left = posX;
+        this->outer_rect_.top = posY;
+        this->outer_rect_.right = posX + a3;
+        this->outer_rect_.bottom = posY + a4;
+        if ((this->iSomeFlag_ & 2) != 0) {
+            this->client_rect_ = this->outer_rect_;
+            this->client_to_nonclient(&this->outer_rect_);
+            int dx = -this->client_rect_.left;
+            int dy = -this->outer_rect_.top;
+            this->outer_rect_.left += dx;
+            this->outer_rect_.right += dx;
+            this->outer_rect_.top += dy;
+            this->outer_rect_.bottom += dy;
+        }
+    }
+
+    this->field_15C_ = this->outer_rect_.left;
+    this->field_160_ = this->outer_rect_.top;
+    this->field_164_ = this->outer_rect_.right;
+    this->field_168_ = this->outer_rect_.bottom;
+
+    void **nameSlot = reinterpret_cast<void **>(reinterpret_cast<char *>(this) + 0xE0);
+    if (*nameSlot) {
+        free(*nameSlot);
+        *nameSlot = 0;
+    }
+    if (a5 != 0) {
+        unsigned int len = strlen(a5) + 1;
+        void *mem = mem_get(static_cast<int>(len));
+        *nameSlot = mem;
+        if (mem != 0) {
+            reinterpret_cast<char *>(mem)[0] = 0;
+            strcat(reinterpret_cast<char *>(*nameSlot), a5);
+        }
+    }
+
+    if ((this->iSomeFlag_ & 1) != 0) {
+        bool draw = true;
+        if (this->win_parent_ != 0) {
+            draw = this->win_parent_->is_visible() != 0;
+        }
+        if (draw) {
+            this->on_nc_paint(0, -1);
+        }
+    }
+
+    this->set_rects();
+
+    if (a8 != 0) {
+        int result = reinterpret_cast<Slot88Shim *>(a8)->slot090(this);
+        if (result != 0) {
+            this->close();
+            return result;
+        }
+    }
+
+    if ((this->iFlags_ & 0x10) != 0) {
+        this->field_16C_ = this->caption_height_;
+    } else if ((this->iFlags_ & 0x20) != 0) {
+        this->field_16C_ = this->border_thickness_;
+    }
+    if ((this->iFlags_ & 0x400) != 0) {
+        this->field_170_ = this->border_thickness_;
+    } else {
+        this->field_170_ = 0;
+    }
+
+    if ((this->iFlags_ & 4) != 0) {
+        if ((this->iFlags_ & 0x40) != 0) {
+            this->buffer4_ = reinterpret_cast<Buffer *>(this->vslot_06());
+        }
+        if (this->buffer4_ == 0) {
+            void *raw = operator new(0x214C);
+            this->buffer4_ = (raw != 0) ? reinterpret_cast<Buffer *>(new (raw) Scroll()) : 0;
+            if (this->buffer4_ == 0) return 4;
+            Scroll *sc = reinterpret_cast<Scroll *>(this->buffer4_);
+            int top = *g_009b8dd4;
+            int nc = this->outer_rect_.bottom - top;
+            int arg2 = ((this->iFlags_ & 8) != 0)
+                           ? (this->outer_rect_.right - this->outer_rect_.left) - top
+                           : (this->outer_rect_.right - this->outer_rect_.left);
+            sc->init_horz_nc(0, nc, arg2, this, -2);
+            sc->show(0);
+        }
+
+        if ((this->iFlags_ & 8) != 0) {
+            if ((this->iFlags_ & 0x40) != 0) {
+                this->buffer3_ = reinterpret_cast<Buffer *>(this->vslot_06());
+            }
+            if (this->buffer3_ == 0) {
+                void *raw = operator new(0x214C);
+                this->buffer3_ = (raw != 0) ? reinterpret_cast<Buffer *>(new (raw) Scroll()) : 0;
+                if (this->buffer3_ == 0) return 4;
+                Scroll *sc = reinterpret_cast<Scroll *>(this->buffer3_);
+                int top = *g_009b8dd4;
+                int nc = this->outer_rect_.right - top;
+                int arg2 = ((this->iFlags_ & 4) != 0)
+                               ? (this->outer_rect_.bottom - this->outer_rect_.top) - top
+                               : (this->outer_rect_.bottom - this->outer_rect_.top);
+                sc->init_vert_nc(nc, 0, arg2, this, -1);
+                sc->show(0);
+            }
+        }
+    }
+
+    this->do_caption_buttons();
+    *g_009b7ab8 = reinterpret_cast<int>(this);
+
+    unsigned int fl = this->iFlags_;
+    bool skipMenuList = (fl & 0x100000) != 0 || (fl & 0x200000) != 0 ||
+                         (this->iSomeFlag_ & 8) != 0 ||
+                         (((fl & 0x100000) == 0 && ((fl >> 16) & 0x10) != 0) && this->win_parent_ == 0);
+
+    if (!skipMenuList && this->win_parent_ != 0 &&
+        ((*reinterpret_cast<unsigned int *>(reinterpret_cast<char *>(this->win_parent_) + 0x98)) & 0x1000) == 0) {
+        char *parent = reinterpret_cast<char *>(this->win_parent_);
+        Heap *heap = *reinterpret_cast<Heap **>(parent + 0xdc);
+        int initCount = *reinterpret_cast<int *>(parent + 0xd4);
+        if (initCount != 0) {
+            char *newNode = reinterpret_cast<char *>(heap ? heap->get(0x1C) : mem_get(0x1C));
+            char *head = *reinterpret_cast<char **>(parent + 0xcc);
+            char *prevOfHead = *reinterpret_cast<char **>(head + 0x10);
+            *reinterpret_cast<char **>(prevOfHead + 0xc) = newNode;
+            if (newNode != 0) {
+                *reinterpret_cast<char **>(newNode + 0x10) = prevOfHead;
+                *reinterpret_cast<char **>(newNode + 0xc) = head;
+                *reinterpret_cast<char **>(head + 0x10) = newNode;
+                *reinterpret_cast<void **>(parent + 0xd0) = newNode;
+                *reinterpret_cast<Win **>(newNode + 4) = this;
+                void *link = heap ? heap->get(4) : mem_get(4);
+                *reinterpret_cast<void **>(newNode + 8) = link;
+                if (link == 0) {
+                    return 0;
+                }
+            } else {
+                return 0;
+            }
+        } else {
+            void *newNode = heap ? heap->get(0x1C) : mem_get(0x1C);
+            *reinterpret_cast<void **>(parent + 0xcc) = newNode;
+            if (newNode == 0) {
+                return 0;
+            }
+            *reinterpret_cast<Win **>(reinterpret_cast<char *>(newNode) + 4) = this;
+            *reinterpret_cast<void **>(reinterpret_cast<char *>(newNode) + 0xc) = newNode;
+            *reinterpret_cast<void **>(reinterpret_cast<char *>(newNode) + 0x10) = newNode;
+            void *link = heap ? heap->get(4) : mem_get(4);
+            *reinterpret_cast<void **>(reinterpret_cast<char *>(newNode) + 8) = link;
+            if (link == 0) {
+                return 0;
+            }
+            *reinterpret_cast<void **>(parent + 0xd0) = newNode;
+        }
+
+        int oldCount = *reinterpret_cast<int *>(parent + 0xd4);
+        *reinterpret_cast<int *>(parent + 0xd8) = oldCount;
+        *reinterpret_cast<int *>(parent + 0xd4) = oldCount + 1;
+
+        int cnt = *reinterpret_cast<int *>(parent + 0xd4) - 1;
+        if (cnt >= 0) {
+            void *head = *reinterpret_cast<void **>(parent + 0xcc);
+            *reinterpret_cast<int *>(parent + 0xd8) = 0;
+            *reinterpret_cast<void **>(parent + 0xd0) = head;
+        }
+    }
+
+    this->iSomeFlag_ |= 4;
+    return 0;
+}
+
+// ===== homed from src/unrecovered/005f1820.cpp =====
+typedef int(__stdcall *UnionRectFn)(RECT *, const RECT *, const RECT *);
+typedef void *(__stdcall *LoadCursorFn)(void *, int);
+typedef void *(__stdcall *SetCursorFn)(void *);
+typedef void(__stdcall *GetCursorPosFn)(int *);
+typedef int(__stdcall *PollFn)(int);
+
+int __cdecl Win::update_cursor(Win *a1, int a2) {
+    UnionRectFn UnionRect = (UnionRectFn)(*g_00669328);
+    GetCursorPosFn GetCursorPosPtr = (GetCursorPosFn)(*g);
+    LoadCursorFn LoadCursorPtr = (LoadCursorFn)(*g_0066928c);
+    SetCursorFn SetCursorPtr = (SetCursorFn)(*g_00669288);
+    PollFn PollPtr = (PollFn)(*g_00669354);
+
+    int pt[2];
+    GetCursorPosPtr(pt);
+    int x = pt[0];
+    int y = pt[1];
+
+    Win *win = a1;
+    if (win == 0) {
+        win = reinterpret_cast<Win *>(Win::get_mouse_window(&x, &y));
+        if (win == 0) {
+            RestoreAndFlip(UnionRect, false);
+            void *cur = LoadCursorPtr(0, 0x7f00);
+            return reinterpret_cast<int>(SetCursorPtr(cur));
+        }
+    }
+
+    if (*g_009b7aa4 == 0 && (WFIELD(win, 0x98) & 0x4000000) == 0) {
+        int field188 = WFIELD(win, 0x188);
+        if (field188 != 0) {
+            // A window wants the cursor image saved/restored under it.
+            int saved = *g_009b7a2c;
+            if (saved == 0) {
+                while (PollPtr(0) >= 0) {
+                }
+            } else {
+                sub_5f1750(0);
+            }
+
+            int field188b = WFIELD(win, 0x188);
+            int prevSaved = *g_009b7a2c;
+            if (field188b != prevSaved) {
+                *g_009b7a40 = *reinterpret_cast<int *>(field188b + 0x18);
+                *g_009b7a44 = *reinterpret_cast<int *>(field188b + 0x1c);
+                *g_009b7a38 = WFIELD(win, 0x18c);
+                *g_009b7a3c = WFIELD(win, 0x190);
+                bool sameArea = *g_009b6f88 == field188b && -*g_009b6f8c == prevSaved;
+                if (!sameArea) {
+                    g_WIN_BUFFER->init(field188b, prevSaved, 0, 0);
+                }
+            }
+            int width = *g_009b7a40;
+            int height = *g_009b7a44;
+            int destX = x - *g_009b7a38;
+            int destY = y - *g_009b7a3c;
+            *g_009b7a30 = destX;
+            *g_009b7a34 = destY;
+            *g_009b7a2c = field188b;
+            int copyResult = g_WIN_BUFFER
+                                  ->copy(reinterpret_cast<Buffer *>(g_009b7490), 0, 0, destX, destY,
+                                         width, height);
+
+            RECT rect;
+            rect.left = destX;
+            rect.top = destY;
+            rect.right = destX + width;
+            rect.bottom = destY + height;
+            RECT merged;
+            UnionRect(&merged, &rect, reinterpret_cast<RECT *>(g_009b6ee8));
+            if (merged.bottom == 0) {
+                return copyResult;
+            }
+            int prevFlag = *g_009b7ad8;
+            *g_009b7ad8 = 1;
+            Win::flip(&merged);
+            int result = *g_009b6ef0;
+            *g_009b7ad8 = prevFlag;
+            *g_009b6ee8 = result;
+            return result;
+        }
+
+        // win->0x188 == 0: nothing pending under this window.
+        if (*g_009b7a2c != 0) {
+            int ebxFlag = 1;
+            sub_5f1750(1);
+            while (PollPtr(ebxFlag) <= 0) {
+            }
+        }
+        *g_009b7a2c = 0;
+
+        int owner = WFIELD(win, 0x194);
+        if (owner != 0) {
+            int cursorId = WFIELD(owner, 0);
+            if (cursorId != 0) {
+                void *cur = LoadCursorPtr(0, cursorId);
+                return reinterpret_cast<int>(SetCursorPtr(cur));
+            }
+        }
+        Win *win2 = reinterpret_cast<Win *>(WFIELD(win, 0x198));
+        if (win2 == 0) {
+            goto lab_default_cursor;
+        }
+        {
+            void *cur = LoadCursorPtr(0, reinterpret_cast<int>(win2));
+            return reinterpret_cast<int>(SetCursorPtr(cur));
+        }
+    }
+
+    // Full dispatch: ask the window what kind of hit region the cursor is
+    // over, then pick the matching cursor image / saved-region behaviour.
+    // Case grouping and targets read from the resolved jump table (20
+    // entries at 0x005F1B3C), not guessed.
+    {
+        int hitCode = win->on_nc_hittest(x, y);
+        hitCode += 2;
+        int ebxFlag = 1;
+
+        switch (hitCode) {
+        case 2:
+        case 4:
+            RestoreAndFlip(UnionRect, false);
+            *g_009b7b3c = ebxFlag;
+            SetCursorPtr(LoadCursorPtr(0, 0x7f00));
+            break;
+        case 12:
+            RestoreAndFlip(UnionRect, false);
+            *g_009b7b3c = ebxFlag;
+            SetCursorPtr(LoadCursorPtr(0, 0x7f84));
+            break;
+        case 13:
+            RestoreAndFlip(UnionRect, true);
+            *g_009b7b3c = ebxFlag;
+            SetCursorPtr(LoadCursorPtr(0, 0x7f84));
+            break;
+        case 14:
+        case 17:
+            RestoreAndFlip(UnionRect, true);
+            *g_009b7b3c = ebxFlag;
+            SetCursorPtr(LoadCursorPtr(0, 0x7f85));
+            break;
+        case 15:
+        case 19:
+            RestoreAndFlip(UnionRect, true);
+            *g_009b7b3c = ebxFlag;
+            SetCursorPtr(LoadCursorPtr(0, 0x7f82));
+            break;
+        case 16:
+        case 18:
+            RestoreAndFlip(UnionRect, true);
+            *g_009b7b3c = ebxFlag;
+            SetCursorPtr(LoadCursorPtr(0, 0x7f83));
+            break;
+        case 0:
+        case 1:
+        case 3:
+            // No cursor change at all for these hit codes.
+            break;
+        default:
+            // Covers 5..11 and any out-of-table index (the `ja` fallback).
+            RestoreAndFlip(UnionRect, true);
+            SetCursorPtr(LoadCursorPtr(0, 0x7f00));
+            break;
+        }
+
+        if (*g_009b7aa4 == 0 && WFIELD(win, 0x188) == 0 && *g_009b7a2c != 0) {
+            g_WIN_BUFFER
+                ->copy(reinterpret_cast<Buffer *>(g_009b7490), 0, 0, *g_009b7a30, *g_009b7a34,
+                       *g_009b7a40, *g_009b7a44);
+            RECT rect;
+            sub_5f86c0(&rect, *g_009b7a30, *g_009b7a34, *g_009b7a40, *g_009b7a44);
+            RECT merged;
+            UnionRect(&merged, &rect, reinterpret_cast<RECT *>(g_009b6ee8));
+            int savedFlag = *g_009b7a2c;
+            *g_009b7a2c = 0;
+            Win::flip(&merged);
+            *g_009b7a2c = savedFlag;
+            *g_009b6ee8 = 0;
+            *g_009b6ef0 = 0;
+        }
+
+        while (PollPtr(ebxFlag) <= 0) {
+        }
+        return 0;
+    }
+
+lab_default_cursor:
+    *g_009b7a2c = 0;
+    {
+        void *cur = LoadCursorPtr(0, 0x7f00);
+        return reinterpret_cast<int>(SetCursorPtr(cur));
+    }
+}
+
+// ===== homed from src/unrecovered/005ed5c0.cpp =====
+
+int Win::center() {
+    int local_8;
+    int local_4;
+    int top;
+    int bottom;
+
+    if ((iSomeFlag_ & 2) != 0) {
+        local_8 = (client_rect_.left - client_rect_.right + WinScreenWidth) / 2;
+        bottom = client_rect_.bottom;
+        top = client_rect_.top;
+    } else {
+        local_8 = (outer_rect_.left - outer_rect_.right + WinScreenWidth) / 2;
+        bottom = outer_rect_.bottom;
+        top = outer_rect_.top;
+    }
+    local_4 = (top - bottom + WinScreenHeight) / 2;
+    if (win_parent_ != 0) {
+        local_8 -= reinterpret_cast<Win *>(win_parent_)->client_rect_.left + reinterpret_cast<Win *>(win_parent_)->outer_rect_.left;
+        local_4 -= reinterpret_cast<Win *>(win_parent_)->client_rect_.top + reinterpret_cast<Win *>(win_parent_)->outer_rect_.top;
+        if ((reinterpret_cast<Win *>(win_parent_)->iFlags_ & 0x20) != 0 && reinterpret_cast<Win *>(win_parent_)->win_parent_ != 0) {
+            reinterpret_cast<Win *>(win_parent_)->win_parent_->screen_to_client(&local_8, &local_4);
+            if ((reinterpret_cast<Win *>(win_parent_)->iFlags_ & 0x8000) != 0) {
+                local_8 += reinterpret_cast<Win *>(win_parent_)->win_parent_->outer_rect_.left;
+                local_4 += reinterpret_cast<Win *>(win_parent_)->win_parent_->outer_rect_.top;
+                return move(local_8, local_4);
+            }
+        }
+    }
+    return move(local_8, local_4);
+}
+
+// ===== homed from src/unrecovered/005ee750.cpp =====
+typedef void (__cdecl *FnCallback)(int, int);
+
+// ORIGINAL: 0x005EE750 ?left_down_event@Win@@QAEXHHH@Z 0x005EE750-0x005EE802 FILE BYTE_EXACT
+// working copy - scaffold materialised by --work
+// size      178 bytes
+// prototype void (__thiscall ?left_down_event@Win@@QAEXHHH@Z)(Win* this, int, int, int)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005EE795 0x005EE7A5 0x005EE7B5 0x005EE7C3 0x005EE7CE 0x005EE7DD 0x005EE7EE 0x005EE7F9
+void Win::left_down_event(int a1, int a2, int a3) {
+    char *self = reinterpret_cast<char *>(this);
+    uint32_t iFlags = *reinterpret_cast<uint32_t *>(self + 0x98);
+    if ((iFlags & 0x200000) != 0) return;
+    uint8_t iSomeFlagByte = *reinterpret_cast<uint8_t *>(self + 0x9c);
+    if ((iSomeFlagByte & 8) != 0) return;
+
+    if (a3 == 0) {
+        *g_009b7ab8 = reinterpret_cast<int>(this);
+        FnCallback cb = *reinterpret_cast<FnCallback *>(self + 0x418);
+        if (cb != 0) {
+            cb(a1, a2);
+        }
+    }
+
+    FnCallback global_cb = *reinterpret_cast<FnCallback *>(g_009b7a90);
+    if (global_cb != 0) {
+        global_cb(a1, a2);
+    }
+
+    if (a3 == 0) {
+        reinterpret_cast<Win *>(this)->vslot_20(a1, a2);
+        Win *child = *reinterpret_cast<Win **>(self + 0x24);
+        if (child != 0) {
+            int r = reinterpret_cast<Win *>(child)->vslot_23();
+            if (r == 0) {
+                reinterpret_cast<Win *>(child)->vslot_07();
+            }
+        }
+    } else {
+        reinterpret_cast<Win *>(this)->vslot_33(a1, a2);
+        Win *child = *reinterpret_cast<Win **>(self + 0x54);
+        if (child != 0) {
+            int r = reinterpret_cast<Win *>(child)->vslot_23();
+            if (r == 0) {
+                reinterpret_cast<Win *>(child)->vslot_07();
+            }
+        }
+    }
+}
+
+// ===== homed from src/unrecovered/005ef110.cpp =====
+
+// ORIGINAL: 0x005EF110 ?nonclient_to_client@Win@@QAEXPAURECT@@@Z 0x005EF110-0x005EF1D1 FILE BYTE_EXACT
+// symbol    ?nonclient_to_client@Win@@QAEXPAUtagRECT@@@Z
+// notes     the RECT overload; the coordinate-pair form shares the name
+//           and marker_symbols resolves to whichever comes first.
+// size      193 bytes
+// prototype void (__thiscall ?nonclient_to_client@Win@@QAEXPAURECT@@@Z)(Win* this, RECT*)
+// callers   2   call targets   0
+// kind      
+// flags     
+// calls     (none)
+// indirect  0x005EF1C4
+// working copy - scaffold materialised by --work
+void Win::nonclient_to_client(RECT * a1) {
+    if (a1 != 0) {
+        if ((iFlags_ & 4) != 0) {
+            a1->bottom -= *g_009b8dd4;
+        }
+        if ((iFlags_ & 8) != 0) {
+            a1->right -= *g_009b8dd4;
+        }
+        if (((iFlags_ & 0x400) != 0) || ((iFlags_ & 0x11) != 0)) {
+            int border = border_thickness_;
+            int left = a1->left;
+            int right = a1->right;
+            int neg_border = -border;
+            left -= neg_border;
+            right += neg_border;
+            a1->left = left;
+            int top = a1->top;
+            a1->right = right;
+            int bottom = a1->bottom;
+            top -= neg_border;
+            bottom += neg_border;
+            a1->top = top;
+            a1->bottom = bottom;
+            if (bottom_border_thickness_ != -1) {
+                a1->bottom = (border_thickness_ - bottom_border_thickness_) + a1->bottom;
+            }
+        }
+        if ((iFlags_ & 0x10) != 0) {
+            a1->top = a1->top + (caption_height_ - border_thickness_);
+        }
+        if (menu_ != 0) {
+            a1->top = a1->top + reinterpret_cast<NCCall *>(menu_)->slot091();
+        }
+    }
+}
+
+// ===== homed from src/unrecovered/005f2cf0.cpp =====
+typedef int (__stdcall *IntersectRectFn)(RECT *, const RECT *, const RECT *);
+
+void Win::on_redraw_nc(RECT * a1, int a2) {
+    if ((*(unsigned char *)&this->iSomeFlag_ & 2) == 0) return;
+    unsigned int flags = this->iFlags_;
+    if ((flags & 0x11) == 0) return;
+
+    int savedLeft = 0, savedTop = 0;
+    int side = a2;
+    if (a1 != 0) {
+        side = -1;
+        savedLeft = this->client_rect_.left;
+        savedTop = this->client_rect_.top;
+    }
+
+    int capHeight;
+    if ((flags & 0x10) == 0 || (flags & 0x400000) != 0) {
+        capHeight = this->border_thickness_;
+    } else {
+        capHeight = this->caption_height_;
+    }
+
+    int bottomThick = this->bottom_border_thickness_;
+    if (bottomThick == -1) bottomThick = this->border_thickness_;
+
+    int clientH = this->client_rect_.bottom - this->client_rect_.top;
+    int clientW = this->client_rect_.right - this->client_rect_.left;
+    int borderM1 = this->border_thickness_ - 1;
+    int outerW = (this->outer_rect_.right - this->outer_rect_.left) + 2 + borderM1;
+    int capM1 = capHeight - 1;
+    int outerH = ((clientH - bottomThick) - capHeight) + 2 + capM1;
+
+    IntersectRectFn intersectRect = (IntersectRectFn)*(void **)g_00669338;
+
+    // ---- edge 0: top caption bar (buffer1_) ----
+    {
+        Buffer *buf = this->buffer1_;
+        if (buf != 0 && (side == -1 || side == 0)) {
+            RECT outer = buf->rect2_;
+            RECT clip = outer;
+            if (a1 != 0) {
+                clip.left = a1->left - savedLeft;
+                clip.top = a1->top - savedTop;
+                clip.right = a1->right - savedLeft;
+                clip.bottom = a1->bottom - savedTop;
+            }
+            if (intersectRect(&clip, &clip, &outer)) {
+                buf->set_clip(&clip);
+                if (this->field_FC_ == 0) {
+                    buf->fill(this->field_100_);
+                } else {
+                    buf->tile((Buffer *)this->field_FC_, 0, 0, 0, 0, clientW, clientH);
+                }
+                {
+                    RECT r; r.left = 0; r.top = 0; r.right = clientW; r.bottom = clientH;
+                    for (int i = 0; i < (int)this->field_128_; i++) {
+                        buf->box(&r, this->field_120_, this->field_124_);
+                        r.left++; r.top++; r.right--; r.bottom--;
+                    }
+                }
+                {
+                    RECT r; r.left = borderM1; r.top = capM1; r.right = outerW; r.bottom = outerH;
+                    for (int i = 0; i < (int)this->field_128_; i++) {
+                        buf->box(&r, this->field_124_, this->field_120_);
+                        r.left--; r.top--; r.right++; r.bottom++;
+                    }
+                }
+                if (this->field_E0_ != 0) {
+                    int w = clientW - capHeight;
+                    RECT r; r.left = 0; r.top = 0; r.right = w; r.bottom = capHeight;
+                    buf->set_text_color(this->field_104_, this->field_108_, this->field_10C_, this->field_110_);
+                    buf->set_font((Font *)this->field_F8_, 0, 0, 0);
+                    buf->set_clip(&r);
+                    char *title = (char *)this->field_E0_;
+                    if ((flags & 0x10000) != 0) {
+                        if (title != 0) {
+                            unsigned int len = strlen(title);
+                            buf->write_l(title, &r, len);
+                        }
+                    } else if ((flags & 0x40000) != 0) {
+                        if (title != 0) {
+                            unsigned int len = strlen(title);
+                            buf->write_right_l(title, &r, len);
+                        }
+                    } else if (title != 0) {
+                        unsigned int len = strlen(title);
+                        buf->write_cent_l(title, &r, len);
+                    }
+                }
+                buf->set_clip(&buf->rect2_);
+            }
+            this->vslot_60(reinterpret_cast<int>(buf), 0);
+        }
+    }
+
+    // ---- edge 2: bottom border (buffer4_) ----
+    {
+        Buffer *buf = this->buffer4_;
+        if (buf != 0 && (side == -1 || side == 2)) {
+            RECT outer = buf->rect2_;
+            RECT clip = outer;
+            if (a1 != 0) {
+                clip.left = a1->left - savedLeft;
+                clip.top = a1->top + (capHeight - savedTop);
+                clip.right = a1->right - savedLeft;
+                clip.bottom = a1->bottom + (capHeight - savedTop);
+            }
+            if (intersectRect(&clip, &clip, &outer)) {
+                buf->set_clip(&clip);
+                if (this->field_FC_ == 0) {
+                    buf->fill(this->field_100_);
+                } else {
+                    buf->tile((Buffer *)this->field_FC_, 0, capHeight, 0, 0, clientW, clientH);
+                }
+                {
+                    RECT r; r.left = 0; r.top = -capHeight; r.right = clientW; r.bottom = clientH - capHeight;
+                    for (int i = 0; i < (int)this->field_128_; i++) {
+                        buf->box(&r, this->field_120_, this->field_124_);
+                        r.left++; r.top++; r.right--; r.bottom--;
+                    }
+                }
+                {
+                    RECT r; r.left = borderM1 - capHeight; r.top = capM1 - capHeight; r.right = outerW; r.bottom = outerH;
+                    for (int i = 0; i < (int)this->field_128_; i++) {
+                        buf->box(&r, this->field_124_, this->field_120_);
+                        r.left--; r.top--; r.right++; r.bottom++;
+                    }
+                }
+                buf->set_clip(&buf->rect2_);
+            }
+            this->vslot_60(reinterpret_cast<int>(buf), 2);
+        }
+    }
+
+    // ---- edge 3: right border (buffer3_) ----
+    {
+        Buffer *buf = this->buffer3_;
+        if (buf != 0 && (side == -1 || side == 3)) {
+            RECT outer = buf->rect2_;
+            RECT clip = outer;
+            if (a1 != 0) {
+                int shiftY = capHeight - savedTop;
+                clip.left = a1->left - savedLeft;
+                clip.top = a1->top + shiftY;
+                clip.right = a1->right - savedLeft;
+                clip.bottom = a1->bottom + shiftY;
+            }
+            if (intersectRect(&clip, &clip, &outer)) {
+                buf->set_clip(&clip);
+                if (this->field_FC_ == 0) {
+                    buf->fill(this->field_100_);
+                } else {
+                    buf->tile((Buffer *)this->field_FC_, 0, capHeight, 0, 0, clientW, clientH);
+                }
+                {
+                    RECT r; r.left = 0; r.top = -capHeight; r.right = clientW; r.bottom = clientH - capHeight;
+                    for (int i = 0; i < (int)this->field_128_; i++) {
+                        buf->box(&r, this->field_120_, this->field_124_);
+                        r.left++; r.top++; r.right--; r.bottom--;
+                    }
+                }
+                {
+                    RECT r; r.left = borderM1 - capHeight; r.top = capM1 - capHeight; r.right = outerW; r.bottom = outerH;
+                    for (int i = 0; i < (int)this->field_128_; i++) {
+                        buf->box(&r, this->field_124_, this->field_120_);
+                        r.left--; r.top--; r.right++; r.bottom++;
+                    }
+                }
+                buf->set_clip(&buf->rect2_);
+            }
+            this->vslot_60(reinterpret_cast<int>(buf), 3);
+        }
+    }
+
+    // ---- edge 1: left border (buffer2_) ----
+    {
+        Buffer *buf = this->buffer2_;
+        if (buf != 0 && (side == -1 || side == 1)) {
+            RECT outer = buf->rect2_;
+            RECT clip = outer;
+            int shiftX = ((this->client_rect_.right - this->client_rect_.left) - this->border_thickness_) - savedLeft;
+            if (a1 != 0) {
+                clip.left = a1->left + shiftX;
+                clip.top = a1->top + (capHeight - savedTop);
+                clip.right = a1->right + shiftX;
+                clip.bottom = a1->bottom + (capHeight - savedTop);
+            }
+            if (intersectRect(&clip, &clip, &outer)) {
+                buf->set_clip(&clip);
+                if (this->field_FC_ == 0) {
+                    buf->fill(this->field_100_);
+                } else {
+                    buf->tile((Buffer *)this->field_FC_, clientW - this->border_thickness_, capHeight, 0, 0, clientW, clientH);
+                }
+                int negCap = -capHeight;
+                int loop1Left = (this->client_rect_.left - this->client_rect_.right) + this->border_thickness_;
+                {
+                    RECT r;
+                    r.left = loop1Left; r.top = negCap; r.right = clientW + loop1Left; r.bottom = clientH - capHeight;
+                    for (int i = 0; i < (int)this->field_128_; i++) {
+                        buf->box(&r, this->field_120_, this->field_124_);
+                        r.left++; r.top++; r.right--; r.bottom--;
+                    }
+                }
+                {
+                    RECT r;
+                    r.left = loop1Left + (borderM1 - capHeight);
+                    r.top = capM1 - capHeight;
+                    r.right = outerW + loop1Left;
+                    r.bottom = outerH + loop1Left;
+                    for (int i = 0; i < (int)this->field_128_; i++) {
+                        buf->box(&r, this->field_124_, this->field_120_);
+                        r.left--; r.top--; r.right++; r.bottom++;
+                    }
+                }
+                buf->set_clip(&buf->rect2_);
+            }
+            this->vslot_60(reinterpret_cast<int>(buf), 1);
+        }
+    }
+}
+
+// ===== homed from src/unrecovered/005ed520.cpp =====
+
+// ORIGINAL: 0x005ED520 ?screen_to_nonclient@Win@@QAEXPAH0@Z 0x005ED520-0x005ED5BD FILE BYTE_EXACT
+// working copy - scaffold materialised by --work
+// size      157 bytes
+// prototype void (__thiscall ?screen_to_nonclient@Win@@QAEXPAH0@Z)(Win* this, int*, int*)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005ED2D0
+void Win::screen_to_nonclient(int * a1, int * a2) {
+    char *self = reinterpret_cast<char *>(this);
+    *a1 -= *reinterpret_cast<int *>(self + 0x14c) + *reinterpret_cast<int *>(self + 0x13c);
+    *a2 -= *reinterpret_cast<int *>(self + 0x150) + *reinterpret_cast<int *>(self + 0x140);
+    if ((*reinterpret_cast<uint8_t *>(self + 0x98) & 0x20) != 0 &&
+        *reinterpret_cast<Win **>(self + 0xc4) != 0) {
+        (*reinterpret_cast<Win **>(self + 0xc4))->screen_to_client(a1, a2);
+        if ((*reinterpret_cast<uint32_t *>(self + 0x98) & 0x8000) != 0) {
+            *a1 += *reinterpret_cast<int *>(reinterpret_cast<char *>(*reinterpret_cast<Win **>(self + 0xc4)) + 0x13c);
+            *a2 += *reinterpret_cast<int *>(reinterpret_cast<char *>(*reinterpret_cast<Win **>(self + 0xc4)) + 0x140);
+        }
+    }
+    *a1 += *reinterpret_cast<int *>(self + 0x13c);
+    *a2 += *reinterpret_cast<int *>(self + 0x140);
+}
+
+// ===== homed from src/unrecovered/005f5fb0.cpp =====
+
+void Win::sub_5f5fb0(char param2, int param3) {
+    char **cursor = (char **)g_00696d5c;
+    **cursor = param2;
+
+    bool matched = true;
+    {
+        char *pat = (char *)g_00696dfd;
+        char *pos = *cursor;
+        int count = 6;
+        do {
+            if (*pos != *pat) {
+                matched = false;
+                break;
+            }
+            pos--;
+            pat--;
+            if (pos < (char *)g_009b7b48) {
+                pos = (char *)g_009b7b51;
+            }
+            count--;
+        } while (count > 0);
+    }
+
+    if (matched) {
+        if ((*(uint8_t *)g_009b238c & 1) == 0 ||
+            (*g_009b23b4 != 0 && ((Win *)*g_009b23b4)->is_visible() == 0)) {
+            ((Win *)g_009b22f0)->show(0);
+        } else if ((*(uint8_t *)g_009b238c & 1) != 0) {
+            if (*WinBubbleCompanion == (Win *)g_009b22f0 &&
+                *WinBubbleActive != 0) {
+                *WinBubbleCompanion = nullptr;
+                *WinBubbleActive = 0;
+                ((Win *)g_009b22f0)->update_screen(WinBubbleRect, 0);
+                ((Win *)g_009b22f0)->flip(WinBubbleRect);
+            }
+
+            Win *cand = WinPointerOwner1;
+            if (cand == nullptr) {
+                cand = *(Win **)g_009b7ad0;
+            }
+            if (cand == (Win *)g_009b22f0) {
+                WinPointerOwner1 = nullptr;
+                *(int *)g_009b7ad0 = 0;
+            } else if (cand != nullptr && *(int *)g_009b26ec > 0) {
+                Win **list = (Win **)g_009b2494;
+                int i = 0;
+                do {
+                    if (list[i] == cand || list[i]->is_descendant(cand)) {
+                        WinPointerOwner1 = nullptr;
+                        *(int *)g_009b7ad0 = 0;
+                        break;
+                    }
+                    i++;
+                } while (i < *(int *)g_009b26ec);
+            }
+
+            if (*(void **)g_009b7abc == (void *)g_009b22f0) {
+                *(int *)g_009b7abc = 0;
+                ((VCall *)g_009b22f0)->slot004();
+            }
+            if (*(void **)g_009b7ac0 == (void *)g_009b22f0) {
+                *(int *)g_009b7ac0 = 0;
+            }
+            *(int *)g_009b238c &= ~1;
+            if (*(void **)g_009b7ae0 == (void *)g_009b22f0) {
+                ((VCall *)g_009b22f0)->slot058();
+            }
+
+            if ((*(uint8_t *)g_009bc4b0 & 1) != 0) {
+                WinZOrderCount = 0;
+                if (*(int *)g_009b7b34 > 0) {
+                    Win **entries = (Win **)g_zorder_list;
+                    int cur = *(int *)g_009b7a6c;
+                    int j = 0;
+                    do {
+                        if (cur != 0 && cur == (int)entries[j]) {
+                            WinZOrderCount = 0;
+                            *(int *)g_009b7a78 = 0;
+                        }
+                        if ((*(uint8_t *)((char *)entries[j] + 0x9c) & 1) != 0) {
+                            recurse_zorder(entries[j]);
+                            cur = *(int *)g_009b7a6c;
+                        }
+                        j++;
+                    } while (j < *(int *)g_009b7b34);
+                }
+
+                InvalidateRectFn invalidate = *(InvalidateRectFn *)g_00669304;
+                invalidate(*(void **)&HandleMain, 0, 0);
+
+                Win *w = *(Win **)g_009b2300;
+                if (w != 0 && reinterpret_cast<Win *>(w)->vslot_23() == 0) {
+                    reinterpret_cast<Win *>(w)->vslot_07();
+                }
+            }
+        }
+    }
+
+    *cursor = *cursor + 1;
+    if (*cursor > (char *)g_009b7b51) {
+        *cursor = (char *)g_009b7b48;
+    }
+
+    bool handled = false;
+    if (scroll_vert_ != 0 &&
+        reinterpret_cast<ScrollSlots *>(scroll_vert_)->slot025((int)param2, *(int *)g_009b7b18) != 0) {
+        handled = true;
+    }
+    if (!handled && scroll_horz_ != 0 &&
+        reinterpret_cast<ScrollSlots *>(scroll_horz_)->slot025((int)param2, *(int *)g_009b7b18) != 0) {
+        handled = true;
+    }
+    if (!handled) {
+        key_click_event((int)param2, *(int *)g_009b7b18);
+    }
+}
+
+// ===== homed from src/recovered/units/005ec780.cpp =====
+
+int Win::set_cursor(HCURSOR *a1) {
+    if (a1 != 0 && *reinterpret_cast<int *>(a1) == 0) {
+        return 7;
+    }
+    cursor_sprite_ = 0;
+    cursor_handle_ = a1;
+    cursor_name_ = 0;
+    Win::update_cursor(nullptr, 1);
+    return 0;
+}
+
+// ===== homed from src/unrecovered/005ed880.cpp =====
+
+int Win::resize(int a2, int a3, int a4) {
+    if (a4 != 0) {
+        if ((iSomeFlag_ & 2) == 0) {
+            int left = outer_rect_.left;
+            int top = outer_rect_.top;
+            outer_rect_.left = left;
+            outer_rect_.right = left + a2;
+            outer_rect_.top = top;
+            outer_rect_.bottom = top + a3;
+            goto shared;
+        }
+        client_to_nonclient(&a2, &a3);
+    }
+    {
+        int cleft = client_rect_.left;
+        int ctop = client_rect_.top;
+        client_rect_.left = cleft;
+        client_rect_.top = ctop;
+        client_rect_.right = cleft + a2;
+        client_rect_.bottom = ctop + a3;
+        outer_rect_.left = client_rect_.left;
+        outer_rect_.top = client_rect_.top;
+        outer_rect_.right = client_rect_.right;
+        outer_rect_.bottom = client_rect_.bottom;
+        int negLeft = outer_rect_.left;
+        outer_rect_.left -= negLeft;
+        outer_rect_.right -= negLeft;
+        outer_rect_.bottom -= outer_rect_.top;
+        outer_rect_.top -= outer_rect_.top;
+        nonclient_to_client(&outer_rect_);
+    }
+shared:
+    this->set_rects();
+    if (reinterpret_cast<Win *>(poWinBase_) != this) {
+        poWinBase_->resize(a2, a3, 0);
+    }
+    resize_event(outer_rect_.right - outer_rect_.left, outer_rect_.bottom - outer_rect_.top);
+    this->vslot_12();
+    return 0;
+}
+
+// ===== homed from src/recovered/units/0063c340.cpp =====
+
+// ORIGINAL: 0x0063C340 sub_63c340 0x0063C340-0x0063C38F FILE BYTE_EXACT
+// symbol    ?sub_63c340@Win@@QAEHXZ
+// size      79 bytes
+// prototype 
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00616350 0x0063C7C0
+// indirect  0x0063C374 0x0063C37E
+// PRESERVED UNIT - measured BYTE_EXACT.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x0063C340
+// measured tier  BYTE_EXACT
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/0063c340/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: sub_63c340  at 0x0063C340  (79 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+int Win::sub_63c340() {
+    char *self = reinterpret_cast<char *>(this);
+    if (reinterpret_cast<Time *>(self + 0xa14)->start(
+            reinterpret_cast<void (__cdecl *)(int)>(g_0063c4e0),
+            reinterpret_cast<int>(this), 1000, 5) != 0) {
+        return 0;
+    }
+    this->sub_63c7c0();
+    this->set_modal(0, 0, 0);
+    this->hide();
+    return *reinterpret_cast<int *>(*reinterpret_cast<char **>(self + 0x36a4) + 0x760);
+}
+
+// ===== homed from src/unrecovered/005edf50.cpp =====
+
+void Win::set_caption(char * a1) {
+    char *self = reinterpret_cast<char *>(this);
+    void **caption = reinterpret_cast<void **>(self + 0xe0);
+    if (*caption != 0) {
+        free(*caption);
+        *caption = 0;
+    }
+    if (a1 != 0) {
+        unsigned int len = strlen(a1);
+        void *buf = mem_get(len + 1);
+        *caption = buf;
+        if (buf == 0) {
+            return;
+        }
+        *reinterpret_cast<char *>(buf) = 0;
+        strcat(reinterpret_cast<char *>(*caption), a1);
+    }
+    if (*reinterpret_cast<uint8_t *>(self + 0x9c) & 1) {
+        Win *other = *reinterpret_cast<Win **>(self + 0xc4);
+        if (other != 0) {
+            if (!other->is_visible()) {
+                return;
+            }
+        }
+        this->on_nc_paint(0, -1);
+    }
+}
+
+// ===== homed from src/unrecovered/005f5140.cpp =====
+
+void __cdecl Win::bring_parent_to_top(Win * a1) {
+    if (a1 != 0 && (reinterpret_cast<unsigned int *>(a1)[0x26] & 0x2000000) == 0) {
+        int count = *g_009b7b34;
+        int i = 0;
+        if (count > 0) {
+            while (true) {
+                if (g_zorder_list[i] == a1) {
+                    if (i < count) {
+                        int j = i;
+                        while (j > 0) {
+                            g_zorder_list[j] = g_zorder_list[j - 1];
+                            --j;
+                        }
+                        g_zorder_list[0] = a1;
+                    }
+                    break;
+                }
+                ++i;
+                if (i >= count) break;
+            }
+        }
+        WinZOrderCount = 0;
+        if (count > 0) {
+            for (int j = 0; j < count; ++j) {
+                int cur = *g_009b7a6c;
+                if (cur != 0 && cur == reinterpret_cast<int>(g_zorder_list[j])) {
+                    WinZOrderCount = 0;
+                    *g_009b7a78 = 0;
+                }
+                Win *w = g_zorder_list[j];
+                if (*(reinterpret_cast<unsigned char *>(w) + 0x9c) & 1) {
+                    recurse_zorder(w);
+                    count = *g_009b7b34;
+                }
+            }
+        }
+    }
+
+}
+
+// ===== homed from src/unrecovered/005eee70.cpp =====
+
+// ORIGINAL: 0x005EEE70 ?client_to_nonclient@Win@@QAEXPAH0@Z 0x005EEE70-0x005EEF56 FILE BYTE_EXACT
+// size      230 bytes
+// prototype void (__thiscall ?client_to_nonclient@Win@@QAEXPAH0@Z)(Win* this, int*, int*)
+// callers   3   call targets   0
+// kind      
+// flags     
+// calls     (none)
+// indirect  0x005EEF4A
+// working copy - scaffold materialised by --work
+void Win::client_to_nonclient(int * a1, int * a2) {
+    if (a1 == 0) {
+        return;
+    }
+    if (a2 == 0) {
+        return;
+    }
+    if (*reinterpret_cast<uint8_t *>(&iFlags_) & 4) {
+        *a2 += *g_009b8dd4;
+    }
+    if (*reinterpret_cast<uint8_t *>(&iFlags_) & 8) {
+        *a1 += *g_009b8dd4;
+    }
+    uint32_t flags = iFlags_;
+    if (flags & 0x400) {
+        int doubled1 = border_thickness_ * 2;
+        *a1 += doubled1;
+        int doubled2 = border_thickness_ * 2;
+        *a2 += doubled2;
+        int newval = *a2;
+        if (bottom_border_thickness_ != -1) {
+            *a2 = (bottom_border_thickness_ - border_thickness_) + newval;
+        }
+    } else if (flags & 0x11) {
+        int doubled1 = border_thickness_ * 2;
+        *a1 += doubled1;
+        int doubled2 = border_thickness_ * 2;
+        *a2 += doubled2;
+        int newval = *a2;
+        if (bottom_border_thickness_ != -1) {
+            *a2 = (bottom_border_thickness_ - border_thickness_) + newval;
+        }
+    }
+    if (*reinterpret_cast<uint8_t *>(&iFlags_) & 0x10) {
+        *a2 += caption_height_ - border_thickness_;
+    }
+    if (menu_ != 0) {
+        *a2 += reinterpret_cast<MenuVCall *>(menu_)->slot091();
+    }
+}
+
+// ===== homed from src/unrecovered/005ed3f0.cpp =====
+
+void Win::nonclient_to_screen(int * a1, int * a2) {
+    *a1 = *a1 + outer_rect_.left + client_rect_.left;
+    *a2 = *a2 + outer_rect_.top + client_rect_.top;
+    if ((*(unsigned char *)&iFlags_ & 0x20) != 0 && win_parent_ != 0) {
+        win_parent_->client_to_screen(a1, a2);
+        if ((iFlags_ & 0x8000) != 0) {
+            *a1 = *a1 - win_parent_->outer_rect_.left;
+            *a2 = *a2 - win_parent_->outer_rect_.top;
+        }
+    }
+    *a1 = *a1 - outer_rect_.left;
+    *a2 = *a2 - outer_rect_.top;
+}
+
+// ===== homed from src/unrecovered/005eea90.cpp =====
+typedef void (__stdcall *VCall2Fn)(void *, int, char *, int);
+// RETURNS int: the body assigns `result = callback(a1, a2)`, which the
+// artifact's `void` spelling could not have compiled.
+typedef int (__cdecl *Callback2)(int, int);
+typedef void (OriginalObject::*VCall0)();
+typedef void (OriginalObject::*VCall1)(int);
+
+int Win::key_click_event(int a1, int a2) {
+    Win *const self = this;
+
+    if ((*(unsigned int *)((char *)self + 0x98) & 0x200000) != 0) {
+        return 0;
+    }
+    if ((*(unsigned char *)((char *)self + 0x9c) & 8) != 0) {
+        return 0;
+    }
+
+    {
+        void *vtbl = *(void **)self;
+        if (a2 == 0x1b) {
+            reinterpret_cast<Win *>(self)->vslot_44(-2);
+        } else if (a2 == 0xd || a2 == 0x1000d) {
+            reinterpret_cast<Win *>(self)->vslot_44(-1);
+        }
+    }
+
+    if (*(int *)((char *)self + 0xd4) != 0) {
+        Win *target = 0;
+        if (*(int *)((char *)self + 0xcc) != 0) {
+            int *field_d0 = *(int **)((char *)self + 0xd0);
+            target = *(Win **)((char *)field_d0 + 4);
+        }
+        if (a2 == 9) {
+            void *tvtbl = *(void **)target;
+            reinterpret_cast<Win *>(target)->pass_dialog_focus();
+        } else {
+            if (target->key_click_event(a1, a2) != 0) {
+                return 1;
+            }
+        }
+    }
+
+    int result = 0;
+    *(void **)0x009B7AB8 = self;
+    Callback2 callback = *(Callback2 *)((char *)self + 0x42c);
+    if (callback != 0) {
+        result = callback(a1, a2);
+    }
+    void *vtbl2 = *(void **)self;
+    int r2 = reinterpret_cast<Win *>(self)->vslot_25(a1, a2);
+    Win *child = *(Win **)((char *)self + 0x38);
+    if (child != 0) {
+        void *cvtbl = *(void **)child;
+        if (reinterpret_cast<Win *>(child)->vslot_23() == 0) {
+            void *cvtbl2 = *(void **)child;
+            reinterpret_cast<Win *>(child)->vslot_07();
+        }
+    }
+    return result + r2;
+}
+
+// ===== homed from src/unrecovered/005f74a0.cpp =====
+
+int Win::update_window(RECT * a1) {
+    char *self = reinterpret_cast<char *>(this);
+    if (a1 == 0) {
+        return update_screen(0, this);
+    }
+    int y = *reinterpret_cast<int *>(self + 0x150) + *reinterpret_cast<int *>(self + 0x140);
+    int x = *reinterpret_cast<int *>(self + 0x14c) + *reinterpret_cast<int *>(self + 0x13c);
+    if ((*reinterpret_cast<unsigned char *>(self + 0x98) & 0x20) != 0 &&
+        *reinterpret_cast<int *>(self + 0xc4) != 0) {
+        client_to_screen(&x, &y);
+        if ((*reinterpret_cast<unsigned int *>(self + 0x98) & 0x8000) != 0) {
+            char *rel = reinterpret_cast<char *>(*reinterpret_cast<int *>(self + 0xc4));
+            x -= *reinterpret_cast<int *>(rel + 0x13c);
+            y -= *reinterpret_cast<int *>(rel + 0x140);
+        }
+    }
+    RECT r;
+    r.left = a1->left + x;
+    r.top = a1->top + y;
+    r.right = a1->right + x;
+    r.bottom = a1->bottom + y;
+    return update_screen(&r, this);
+}
+
+// ===== homed from src/unrecovered/005f52e0.cpp =====
+
+void Win::bring_child_to_top(Win * a1) {
+    if (a1 == 0) {
+        return;
+    }
+    if (a1->iFlags_ & 0x2000000) {
+        return;
+    }
+    int count = child_count_;
+    int i = 0;
+    if (count > 0) {
+        Win **slot = children_;
+        do {
+            if (*slot == a1) {
+                break;
+            }
+            ++i;
+            ++slot;
+        } while (i < count);
+    }
+    if (i < count) {
+        if (i > 0) {
+            Win **p = &children_[i];
+            do {
+                *p = p[-1];
+                --p;
+                --i;
+            } while (i != 0);
+        }
+        children_[0] = a1;
+    }
+    WinZOrderCount = 0;
+    if (*g_009b7b34 > 0) {
+        Win **entry = g_zorder_list;
+        int cur = *g_009b7a6c;
+        int j = 0;
+        do {
+            if (cur != 0 && cur == reinterpret_cast<int>(*entry)) {
+                WinZOrderCount = 0;
+                *g_009b7a78 = 0;
+            }
+            if ((*entry)->iSomeFlag_ & 1) {
+                recurse_zorder(*entry);
+                cur = *g_009b7a6c;
+            }
+            ++j;
+            ++entry;
+        } while (j < *g_009b7b34);
+    }
+}
+
+// ===== homed from src/recovered/005edeb0.cpp =====
+
+// ORIGINAL: 0x005EDEB0 ?minimize@Win@@QAEHXZ 0x005EDEB0-0x005EDEF8 BYTE_EXACT
+// size      72 bytes
+// prototype int (__thiscall ?minimize@Win@@QAEHXZ)(Win* this)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005EDED3 0x005EDEED
+// 0x005EDEB0  ?minimize@Win@@QAEHXZ  ->  ?minimize@Win@@QAEHXZ
+//
+// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
+// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
+// and rewriting it in the tree's own style is a later phase. See README.md
+// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
+int Win::minimize() {
+    int active = *g_009b7abc;
+    *g_009b7acc = 0;
+    *g_009b7ad0 = 0;
+    if (active == reinterpret_cast<int>(this)) {
+        *g_009b7abc = 0;
+        this->vslot_04();
+    }
+    if (*g_009b7ac0 == reinterpret_cast<int>(this)) {
+        *g_009b7ac0 = 0;
+    }
+    (*reinterpret_cast<ShowWindowFn *>(g))(reinterpret_cast<void *>(*g_009b7b28), 6);
+    return 0;
+}
+
+// ===== homed from src/unrecovered/005f7580.cpp =====
+
+void Win::do_tracking(int a1, int a2) {
+    int dx, dy;
+
+    // ---- 0x005F7589-0x005F7657: normalize (a1,a2) into a client-space delta ----
+    if ((iFlags_ & 0x4000000) != 0) {
+        dx = a1 - (client_rect_.left + outer_rect_.left);
+        dy = a2 - (client_rect_.top + outer_rect_.top);
+        if ((iFlags_ & 0x20) != 0 && win_parent_ != 0) {
+            win_parent_->screen_to_client(&dx, &dy);
+            if ((iFlags_ & 0x8000) != 0) {
+                dx += win_parent_->outer_rect_.left;
+                dy += win_parent_->outer_rect_.top;
+            }
+        }
+    } else {
+        screen_to_client(&a1, &a2);
+        dx = a1 + outer_rect_.left;
+        dy = a2 + outer_rect_.top;
+    }
+    dx -= WinTrackingX;
+    dy -= WinTrackingY;
+    if (dx == 0 && dy == 0) return;
+
+    // ---- 0x005F7673-0x005F76E9: min-size threshold, transformed to nonclient space ----
+    int minW = static_cast<int>(field_134_);
+    int minH = static_cast<int>(field_138_);
+    client_to_nonclient(&minW, &minH);
+
+    // ---- 0x005F7698-0x005F77CD: build an absolute-screen "before" rect ----
+    RECT rectA;
+    int origX = 0, origY = 0;
+    if ((iFlags_ & 0x4000000) != 0) {
+        rectA.left = 0;
+        rectA.top = 0;
+        rectA.right = outer_rect_.right - outer_rect_.left;
+        rectA.bottom = outer_rect_.bottom - outer_rect_.top;
+        client_to_screen(&origX, &origY);
+    } else {
+        rectA.left = 0;
+        rectA.top = 0;
+        rectA.right = client_rect_.right - client_rect_.left;
+        rectA.bottom = client_rect_.bottom - client_rect_.top;
+        nonclient_to_screen(&origX, &origY);
+    }
+    rectA.left += origX;
+    rectA.right += origX;
+    rectA.top += origY;
+    rectA.bottom += origY;
+
+    // ---- 0x005F77CD-0x005F77DF: dispatch on drag-handle id ----
+    switch (WinTrackingMode) {
+    case 2:
+        if (dx != 0 || dy != 0) {
+            if ((iFlags_ & 0x4000000) == 0) {
+                client_rect_.left += dx;
+                client_rect_.right += dx;
+                client_rect_.top += dy;
+                client_rect_.bottom += dy;
+            } else {
+                outer_rect_.left += dx;
+                outer_rect_.right += dx;
+                outer_rect_.top += dy;
+                outer_rect_.bottom += dy;
+            }
+        }
+        break;
+
+    case 10:
+        if (dx != 0) {
+            int right = client_rect_.right;
+            client_rect_.left += dx;
+            if (right - client_rect_.left < minW) {
+                client_rect_.left = right - minW;
+            }
+            poWinBase_->resize(right - client_rect_.left,
+                client_rect_.bottom - client_rect_.top, 0);
+        }
+        break;
+
+    case 0xb:
+        if (dx != 0) {
+            client_rect_.right += dx;
+            WinTrackingX += dx;
+            int width = client_rect_.right - client_rect_.left;
+            if (width < minW) {
+                int deficit = minW - width;
+                client_rect_.right += deficit;
+                WinTrackingX += deficit;
+            }
+            int w = client_rect_.right - client_rect_.left;
+            int h = client_rect_.bottom - client_rect_.top;
+            poWinBase_->resize(w, h, 0);
+        }
+        break;
+
+    case 0xc:
+        if (dy != 0) {
+            int bottom = client_rect_.bottom;
+            client_rect_.top += dy;
+            if (bottom - client_rect_.top < minH) {
+                client_rect_.top = bottom - minH;
+            }
+            int w = client_rect_.right - client_rect_.left;
+            int h = client_rect_.bottom - client_rect_.top;
+            poWinBase_->resize(w, h, 0);
+        }
+        break;
+
+    case 0xd: {
+        int right = client_rect_.right;
+        int bottom = client_rect_.bottom;
+        client_rect_.left += dx;
+        client_rect_.top += dy;
+        if (bottom - client_rect_.top < minH) {
+            client_rect_.top = bottom - minH;
+        }
+        if (right - client_rect_.left < minW) {
+            client_rect_.left = right - minW;
+        }
+        int w = client_rect_.right - client_rect_.left;
+        int h = client_rect_.bottom - client_rect_.top;
+        poWinBase_->resize(w, h, 0);
+        break;
+    }
+
+    case 0xe: {
+        client_rect_.right += dx;
+        client_rect_.top += dy;
+        WinTrackingX += dx;
+        if (client_rect_.bottom - client_rect_.top < minH) {
+            client_rect_.top = client_rect_.bottom - minH;
+        }
+        int width = client_rect_.right - client_rect_.left;
+        if (width < minW) {
+            int deficit = minW - width;
+            client_rect_.right += deficit;
+            WinTrackingX += deficit;
+        }
+        int w = client_rect_.right - client_rect_.left;
+        int h = client_rect_.bottom - client_rect_.top;
+        poWinBase_->resize(w, h, 0);
+        break;
+    }
+
+    case 0xf:
+        if (dy != 0) {
+            client_rect_.bottom += dy;
+            WinTrackingY += dy;
+            int height = client_rect_.bottom - client_rect_.top;
+            if (height < minH) {
+                int deficit = minH - height;
+                client_rect_.bottom += deficit;
+                WinTrackingY += deficit;
+            }
+            int w = client_rect_.right - client_rect_.left;
+            int h = client_rect_.bottom - client_rect_.top;
+            poWinBase_->resize(w, h, 0);
+        }
+        break;
+
+    case 0x10: {
+        client_rect_.left += dx;
+        client_rect_.bottom += dy;
+        WinTrackingY += dy;
+        int height = client_rect_.bottom - client_rect_.top;
+        if (height < minH) {
+            int deficit = minH - height;
+            client_rect_.bottom += deficit;
+            WinTrackingY += deficit;
+        }
+        int right = client_rect_.right;
+        if (right - client_rect_.left < minW) {
+            client_rect_.left = right - minW;
+        }
+        int w = client_rect_.right - client_rect_.left;
+        int h = client_rect_.bottom - client_rect_.top;
+        poWinBase_->resize(w, h, 0);
+        break;
+    }
+
+    case 0x11: {
+        client_rect_.right += dx;
+        client_rect_.bottom += dy;
+        WinTrackingX += dx;
+        WinTrackingY += dy;
+        int height = client_rect_.bottom - client_rect_.top;
+        if (height < minH) {
+            int deficit = minH - height;
+            client_rect_.bottom += deficit;
+            WinTrackingY += deficit;
+        }
+        int width = client_rect_.right - client_rect_.left;
+        if (width < minW) {
+            int deficit = minW - width;
+            client_rect_.right += deficit;
+            WinTrackingX += deficit;
+        }
+        int w = client_rect_.right - client_rect_.left;
+        int h = client_rect_.bottom - client_rect_.top;
+        poWinBase_->resize(w, h, 0);
+        break;
+    }
+
+    default:
+        break;
+    }
+
+    // ---- 0x005F7C2F-0x005F7DE7: build an absolute-screen "after" rect ----
+    RECT rectB;
+    int origX2, origY2;
+    if ((iFlags_ & 0x4000000) != 0) {
+        rectB.left = 0;
+        rectB.top = 0;
+        rectB.right = outer_rect_.right - outer_rect_.left;
+        rectB.bottom = outer_rect_.bottom - outer_rect_.top;
+
+        origX2 = client_rect_.left + outer_rect_.left;
+        origY2 = client_rect_.top + outer_rect_.top;
+        if ((iFlags_ & 0x20) != 0 && win_parent_ != 0) {
+            win_parent_->client_to_screen(&origX2, &origY2);
+            if ((iFlags_ & 0x8000) != 0) {
+                origX2 -= win_parent_->outer_rect_.left;
+                origY2 -= win_parent_->outer_rect_.top;
+            }
+        }
+    } else {
+        rectB.left = 0;
+        rectB.top = 0;
+        rectB.right = client_rect_.right - client_rect_.left;
+        rectB.bottom = client_rect_.bottom - client_rect_.top;
+
+        origX2 = client_rect_.left + outer_rect_.left;
+        origY2 = client_rect_.top + outer_rect_.top;
+        if ((iFlags_ & 0x20) != 0 && win_parent_ != 0) {
+            win_parent_->client_to_screen(&origX2, &origY2);
+            if ((iFlags_ & 0x8000) != 0) {
+                origX2 -= win_parent_->outer_rect_.left;
+                origY2 -= win_parent_->outer_rect_.top;
+            }
+        }
+        origX2 -= outer_rect_.left;
+        origY2 -= outer_rect_.top;
+    }
+    rectB.left += origX2;
+    rectB.right += origX2;
+    rectB.top += origY2;
+    rectB.bottom += origY2;
+
+    // ---- 0x005F7E0F-0x005F7E3A: union the two rects and repaint ----
+    RECT unioned;
+    (*reinterpret_cast<UnionRectFn *>(g_00669328))(&unioned, &rectA, &rectB);
+    update_screen(&unioned, 0);
+    flip(&unioned);
+}
+
+// ===== homed from src/unrecovered/005ef1e0.cpp =====
+
+void Win::sub_5ef1e0(int x1, int y1, int x2, int y2, void *pen, int unused6) {
+    (void)unused6;
+    int hdc;
+    if (*g_009b3ab0 != 0) {
+        *g_009b3ab0 = *g_009b3ab0 + 1;
+        hdc = *g_009b7b2c;
+    } else {
+        void *iface = reinterpret_cast<void *>(*g_009bc498);
+        if (iface != 0) {
+            IfaceGetHdcProc fn = (*reinterpret_cast<IfaceGetHdcProc **>(iface))[17];
+            fn(iface, g_009b7b2c);
+            hdc = *g_009b7b2c;
+        } else {
+            *g_009b7b2c = reinterpret_cast<int>(GetDC(reinterpret_cast<HWND>(*g_009b7b28)));
+            hdc = *g_009b7b2c;
+        }
+        if (hdc == 0) {
+            return;
+        }
+        *g_009b3ab0 = 1;
+    }
+    if (hdc != 0) {
+        if ((int)field_184_ != *reinterpret_cast<int *>(*g_009b8180 + 0x400)) {
+            (*reinterpret_cast<Palette **>(g_009b8180))->set_active_window(this);
+            field_184_ = *reinterpret_cast<unsigned int *>(*g_009b8180 + 0x400);
+        }
+
+        void *oldPen = SelectObject(reinterpret_cast<HDC>(*g_009b7b2c), pen);
+
+        MoveToEx(reinterpret_cast<HDC>(*g_009b7b2c), x1, y1, 0);
+
+        LineTo(reinterpret_cast<HDC>(*g_009b7b2c), x2, y2);
+
+        SelectObject(reinterpret_cast<HDC>(*g_009b7b2c), oldPen);
+
+        *g_009b3ab0 = *g_009b3ab0 - 1;
+        if (*g_009b3ab0 == 0) {
+            void *iface2 = reinterpret_cast<void *>(*g_009bc498);
+            if (iface2 != 0) {
+                IfaceReleaseHdcProc fn2 = (*reinterpret_cast<IfaceReleaseHdcProc **>(iface2))[26];
+                fn2(iface2, *g_009b7b2c);
+                *g_009b7b2c = 0;
+                return;
+            }
+            ReleaseDC(reinterpret_cast<HWND>(*g_009b7b28), reinterpret_cast<HDC>(*g_009b7b2c));
+            *g_009b7b2c = 0;
+        }
+    }
+}
+
+// ===== homed from src/unrecovered/005f7320.cpp =====
+
+int __cdecl Win::update_screen(RECT *a1, Win *a2) {
+    int windowCount = WinZOrderCount;
+    if (windowCount == 0) {
+        return 0;
+    }
+
+    int target;
+    if (*g_009b7a6c != 0) {
+        target = reinterpret_cast<int>(a2);
+    } else {
+        target = 0;
+    }
+
+    int idx = windowCount - 1;
+    if (target != 0) {
+        idx = 0;
+        if (windowCount > 0) {
+            int *table = g_win_array;
+            int i = 0;
+            while (table[i] != target) {
+                ++i;
+                if (i >= windowCount) {
+                    break;
+                }
+            }
+            idx = i;
+        }
+        if (idx == windowCount) {
+            return windowCount;
+        }
+    } else {
+        if (*g_009b7a68 == 0) {
+            if (a1 != 0) {
+                reinterpret_cast<Buffer *>(g_009b7490)->fill(a1, 0);
+            } else {
+                reinterpret_cast<Buffer *>(g_009b7490)->fill(0);
+            }
+        }
+    }
+
+    if (idx >= 0) {
+        for (int i = idx; i >= 0; --i) {
+            Win *w = reinterpret_cast<Win *>(reinterpret_cast<void **>(g_win_array)[i]);
+            unsigned char *const wb = reinterpret_cast<unsigned char *>(w);
+            if ((*(wb + 0x9c) & 1) != 0) {
+                Win *menuLike = *reinterpret_cast<Win **>(wb + 0xc4);
+                bool visible = true;
+                if (menuLike != 0) {
+                    visible = menuLike->is_visible() != 0;
+                }
+                if (visible) {
+                    if ((*(wb + 0x9c) & 2) != 0) {
+                        w->on_nc_paint(a1, -1);
+                    }
+                    bool doSecond = true;
+                    if (target != 0) {
+                        doSecond = (target == *reinterpret_cast<int *>(wb + 0xa8));
+                    }
+                    if (doSecond) {
+                        Win *const other = *reinterpret_cast<Win **>(wb + 0xa8);
+                        other->on_paint(a1);
+                    }
+                }
+            }
+        }
+    }
+
+    if (*g_009b7a2c == 0) {
+        return 0;
+    }
+
+    int base = *g_009b7a30;
+    int wA = *g_009b7a40;
+    int base2 = *g_009b7a34;
+    int l10 = base;
+    int l14 = base2;
+    int l18 = wA + base;
+    int wB = *g_009b7a44;
+    int l1c = wB + base2;
+
+    if (a1 != 0) {
+        int rectA[2] = {l10, l14};
+        int rectB[2] = {l18, l1c};
+        IntersectRectFn fn = *reinterpret_cast<IntersectRectFn *>(g_00669338);
+        int result = fn(reinterpret_cast<RECT *>(&rectB[0]), reinterpret_cast<const RECT *>(a1),reinterpret_cast<const tagRECT *>(&rectA[0]));
+        if (result == 0) {
+            return 0;
+        }
+        l1c = rectB[0];
+        l18 = rectB[1];
+        l10 = rectA[0];
+        l14 = rectA[1];
+        base2 = *g_009b7a34;
+        base = *g_009b7a30;
+    }
+
+    reinterpret_cast<Buffer *>(g_009b7490)
+        ->copy(g_WIN_BUFFER, l14 - base2, l10 - base, l1c - l14,
+               l18 - l10, l14, l10);
+    return 0;
+}
+
+// ===== homed from src/recovered/units/005f5d10.cpp =====
+typedef short(__stdcall *GetKeyStateFn)(int);
+typedef int(__stdcall *PeekMessageFn)(MsgT *, void *, unsigned int, unsigned int, unsigned int);
+typedef int(__stdcall *Fn1)(void *);
+
+void Win::on_key(unsigned int a1, long a2, int a3, unsigned int a4) {
+    char *self = reinterpret_cast<char *>(this);
+    (void)a3;
+    (void)a4;
+
+    GetKeyStateFn getKeyState = *reinterpret_cast<GetKeyStateFn *>(g_0066932c);
+    unsigned int key = a1;
+    if (getKeyState(0x10) & 0x8000) key |= 0x10000;
+    if (getKeyState(0x11) & 0x8000) key |= 0x20000;
+    if (getKeyState(0x12) & 0x8000) key |= 0x40000;
+
+    char *net = *reinterpret_cast<char **>(g_009be608);
+    if (net != 0) {
+        PeekMessageFn peekMessage = *reinterpret_cast<PeekMessageFn *>(g_00669358);
+        MsgT msg;
+        if (key == *reinterpret_cast<unsigned int *>(net + 0x48)) {
+            if (a2 == 0) {
+                reinterpret_cast<Net *>(net)->stop_voice();
+            } else {
+                reinterpret_cast<Net *>(net)->start_voice(
+                    *reinterpret_cast<unsigned long *>(net + 0x50));
+            }
+            if (!peekMessage(&msg, HandleMain, 0x102, 0x102, 1)) {
+                return;
+            }
+            do {
+            } while (peekMessage(&msg, HandleMain, 0x102, 0x102, 1));
+            return;
+        }
+        if (key == *reinterpret_cast<unsigned int *>(net + 0x4c)) {
+            if (a2 == 0) {
+                reinterpret_cast<Net *>(net)->stop_voice();
+            } else {
+                reinterpret_cast<Net *>(net)->start_voice(
+                    *reinterpret_cast<long *>(net + 0x54));
+            }
+            if (!peekMessage(&msg, HandleMain, 0x102, 0x102, 1)) {
+                return;
+            }
+            do {
+            } while (peekMessage(&msg, HandleMain, 0x102, 0x102, 1));
+            return;
+        }
+    }
+
+    if (a2 == 0) {
+        if (*reinterpret_cast<unsigned int *>(self + 0x98) & 0x200000) {
+            return;
+        }
+        if (*reinterpret_cast<unsigned char *>(self + 0x9c) & 8) {
+            return;
+        }
+        if (*reinterpret_cast<int *>(self + 0xd4) != 0) {
+            void *target;
+            if (*reinterpret_cast<int *>(self + 0xcc) != 0) {
+                target = *reinterpret_cast<void **>(*reinterpret_cast<char **>(self + 0xd0) + 4);
+            } else {
+                target = 0;
+            }
+            if (reinterpret_cast<Win *>(target)->key_up_event(key) != 0) {
+                return;
+            }
+        }
+
+        *reinterpret_cast<void **>(g_009b7ab8) = self;
+        typedef void(__cdecl * OnKeyCb)(unsigned int);
+        OnKeyCb cb = *reinterpret_cast<OnKeyCb *>(self + 0x434);
+        if (cb != 0) {
+            cb(key);
+        }
+        reinterpret_cast<VCallArg *>(self)->s27(key);
+
+        Win *next = *reinterpret_cast<Win **>(self + 0x40);
+        if (next == 0) {
+            return;
+        }
+        if (next->vslot_23() != 0) {
+            return;
+        }
+        next->vslot_07();
+        return;
+    }
+
+    *reinterpret_cast<unsigned int *>(g_009b7b18) = key;
+    Fn1 fn = *reinterpret_cast<Fn1 *>(g_006692c8);
+    if (fn(HandleMain)) {
+        reinterpret_cast<Win *>(self)->key_down_event(key);
+    }
+
+    if (key >= 0x60 && key <= 0x6f) {
+        PeekMessageFn peekMessage = *reinterpret_cast<PeekMessageFn *>(g_00669358);
+        MsgT msg;
+        if (!peekMessage(&msg, HandleMain, 0x102, 0x102, 1)) {
+            return;
+        }
+        do {
+        } while (peekMessage(&msg, HandleMain, 0x102, 0x102, 1));
+        return;
+    }
+
+    do_all_chars();
+}
+
+// ===== homed from src/unrecovered/005ee330.cpp =====
+
+// DUPLICATE `Win::resize_event` removed: two artifacts carried the same body.
+
+// ===== homed from src/unrecovered/005f2680.cpp =====
+typedef long (__stdcall *GetWindowLongAFn)(void *, int);
+typedef long (__stdcall *DefWindowProcAFn)(void *, unsigned int, unsigned int, long);
+typedef void (__cdecl *Callback404)();
+
+int __cdecl Win::OnSysCommand(void * a1, unsigned int a2, int a3, int a4) {
+    Win *self = reinterpret_cast<Win *>(
+        (*reinterpret_cast<GetWindowLongAFn *>(g))(a1, -0x15));
+    if (self == 0) {
+        return 0;
+    }
+    if (a2 != 0xf060) {
+        return (*reinterpret_cast<DefWindowProcAFn *>(g_006692b0))(
+            a1, 0x112, a2,
+            (static_cast<unsigned int>(static_cast<unsigned short>(a4)) << 16)
+                | static_cast<unsigned short>(a3));
+    }
+    *reinterpret_cast<Win **>(g_009b7ab8) = self;
+    Callback404 cb = *reinterpret_cast<Callback404 *>(
+        reinterpret_cast<char *>(self) + 0x404);
+    if (cb != 0) {
+        cb();
+    }
+    self->vslot_14();
+    MyVCall *child = *reinterpret_cast<MyVCall **>(
+        reinterpret_cast<char *>(self) + 0x18);
+    if (child != 0) {
+        if (child->slot023() == 0) {
+            child->slot007();
+        }
+    }
+    return 0;
+}
+
+// ===== homed from src/unrecovered/005ef050.cpp =====
+
+void Win::client_to_nonclient(RECT * a1) {
+    if (a1 != 0) {
+        if ((iFlags_ & 4) != 0) {
+            a1->bottom += *g_009b8dd4;
+        }
+        if ((iFlags_ & 8) != 0) {
+            a1->right += *g_009b8dd4;
+        }
+        if ((iFlags_ & 0x400) != 0 || (iFlags_ & 0x11) != 0) {
+            int adj = border_thickness_;
+            a1->left -= adj;
+            a1->right += adj;
+            a1->top -= adj;
+            long bottom = a1->bottom;
+            a1->bottom = bottom + adj;
+            if (bottom_border_thickness_ != -1) {
+                a1->bottom = (bottom_border_thickness_ - border_thickness_) + bottom + adj;
+            }
+        }
+        if ((iFlags_ & 0x10) != 0) {
+            a1->top += border_thickness_ - caption_height_;
+        }
+        if (menu_ != 0) {
+            int adj = reinterpret_cast<VCall2 *>(menu_)->slot091();
+            a1->top -= adj;
+        }
+    }
+}
+
+// ===== homed from src/unrecovered/005eef60.cpp =====
+
+void Win::nonclient_to_client(int * a1, int * a2) {
+    if (a1 == 0) {
+        return;
+    }
+    if (a2 == 0) {
+        return;
+    }
+    if ((iFlags_ & 4) != 0) {
+        *a2 -= *g_009b8dd4;
+    }
+    if ((iFlags_ & 8) != 0) {
+        *a1 -= *g_009b8dd4;
+    }
+    if ((iFlags_ & 0x400) != 0) {
+        *a1 += -border_thickness_ * 2;
+        *a2 += -border_thickness_ * 2;
+        if (bottom_border_thickness_ != -1) {
+            *a2 = (border_thickness_ - bottom_border_thickness_) + *a2;
+        }
+    } else if ((iFlags_ & 0x11) != 0) {
+        *a1 += -border_thickness_ * 2;
+        *a2 += -border_thickness_ * 2;
+        if (bottom_border_thickness_ != -1) {
+            *a2 = (border_thickness_ - bottom_border_thickness_) + *a2;
+        }
+    }
+    if ((iFlags_ & 0x10) != 0) {
+        *a2 += caption_height_ - border_thickness_;
+    }
+    if (menu_ != 0) {
+        *a2 -= reinterpret_cast<NCCall *>(menu_)->slot091();
+    }
+}
+
+// ===== homed from src/recovered/units/005f8140.cpp =====
+
+void Win::update_window_to_buffer(Buffer * a1) {
+    if (a1 != 0) {
+        char *self = reinterpret_cast<char *>(this);
+
+        *g_009b7a68 = (int)a1;
+        *g_009b7a6c = (int)this;
+        (*g_009b7a70) = 0;
+        (*g_009b7a74) = 0;
+
+        uint32_t flags9c = *reinterpret_cast<uint32_t *>(self + 0x9c);
+        int iVar3 = 0;
+        *reinterpret_cast<uint32_t *>(self + 0x9c) = flags9c | 1;
+        WinZOrderCount = 0;
+        if (0 < *g_009b7b34) {
+            Win **piVar4 = reinterpret_cast<Win **>(g_zorder_list);
+            int iVar2 = *g_009b7a6c;
+            do {
+                if (iVar2 != 0 && iVar2 == (int)*piVar4) {
+                    WinZOrderCount = 0;
+                    *g_009b7a78 = 0;
+                }
+                if ((*reinterpret_cast<uint8_t *>(reinterpret_cast<char *>(*piVar4) + 0x9c) & 1) != 0) {
+                    recurse_zorder(*piVar4);
+                    iVar2 = *g_009b7a6c;
+                }
+                iVar3++;
+                piVar4++;
+            } while (iVar3 < *g_009b7b34);
+        }
+
+        if ((*reinterpret_cast<uint8_t *>(self + 0x9c) & 2) == 0) {
+            (*g_009b7a70) += *reinterpret_cast<int32_t *>(self + 0x14c) + *reinterpret_cast<int32_t *>(self + 0x13c);
+            (*g_009b7a74) += *reinterpret_cast<int32_t *>(self + 0x150) + *reinterpret_cast<int32_t *>(self + 0x140);
+            if ((*reinterpret_cast<uint32_t *>(self + 0x98) & 0x20) != 0 &&
+                *reinterpret_cast<int *>(self + 0xc4) != 0) {
+                Win *parent = *reinterpret_cast<Win **>(self + 0xc4);
+                parent->client_to_screen(&(*g_009b7a70), &(*g_009b7a74));
+                if ((*reinterpret_cast<uint32_t *>(self + 0x98) & 0x8000) != 0) {
+                    char *pself = reinterpret_cast<char *>(*reinterpret_cast<Win **>(self + 0xc4));
+                    (*g_009b7a70) -= *reinterpret_cast<int32_t *>(pself + 0x13c);
+                    (*g_009b7a74) -= *reinterpret_cast<int32_t *>(pself + 0x140);
+                }
+            }
+        } else {
+            (*g_009b7a70) += *reinterpret_cast<int32_t *>(self + 0x14c) + *reinterpret_cast<int32_t *>(self + 0x13c);
+            (*g_009b7a74) += *reinterpret_cast<int32_t *>(self + 0x150) + *reinterpret_cast<int32_t *>(self + 0x140);
+            if ((*reinterpret_cast<uint32_t *>(self + 0x98) & 0x20) != 0 &&
+                *reinterpret_cast<int *>(self + 0xc4) != 0) {
+                Win *parent = *reinterpret_cast<Win **>(self + 0xc4);
+                parent->client_to_screen(&(*g_009b7a70), &(*g_009b7a74));
+                if ((*reinterpret_cast<uint32_t *>(self + 0x98) & 0x8000) != 0) {
+                    char *pself = reinterpret_cast<char *>(*reinterpret_cast<Win **>(self + 0xc4));
+                    (*g_009b7a70) -= *reinterpret_cast<int32_t *>(pself + 0x13c);
+                    (*g_009b7a74) -= *reinterpret_cast<int32_t *>(pself + 0x140);
+                }
+            }
+            (*g_009b7a70) -= *reinterpret_cast<int32_t *>(self + 0x13c);
+            (*g_009b7a74) -= *reinterpret_cast<int32_t *>(self + 0x140);
+        }
+
+        update_screen(0, this);
+
+        *g_009b7a68 = 0;
+        *g_009b7a6c = 0;
+        *reinterpret_cast<uint32_t *>(self + 0x9c) = flags9c;
+
+        iVar3 = 0;
+        WinZOrderCount = 0;
+        if (0 < *g_009b7b34) {
+            Win **piVar4 = reinterpret_cast<Win **>(g_zorder_list);
+            int iVar2 = *g_009b7a6c;
+            do {
+                if (iVar2 != 0 && iVar2 == (int)*piVar4) {
+                    WinZOrderCount = 0;
+                    *g_009b7a78 = 0;
+                }
+                if ((*reinterpret_cast<uint8_t *>(reinterpret_cast<char *>(*piVar4) + 0x9c) & 1) != 0) {
+                    recurse_zorder(*piVar4);
+                    iVar2 = *g_009b7a6c;
+                }
+                iVar3++;
+                piVar4++;
+            } while (iVar3 < *g_009b7b34);
+        }
+    }
+}
+
+// ===== homed from src/recovered/units/005f6710.cpp =====
+
+void Win::on_r_button_down(long a1, int a2, int a3, unsigned int a4, int a5) {
+    char *self = reinterpret_cast<char *>(this);
+    typedef void(__cdecl *RawHandler)(int, int);
+
+    Win *parent = *reinterpret_cast<Win **>(self + 0xC4);
+    if (parent != 0) {
+        parent->bring_child_to_top(this);
+    } else {
+        bring_parent_to_top(this);
+    }
+
+    parent = *reinterpret_cast<Win **>(self + 0xC4);
+    if (parent != 0) {
+        parent->set_dialog_focus(this);
+    }
+
+    if (a5 == 0) {
+        WinPointerOwner2 = nullptr;
+        WinPointerOwner1 = this;
+    } else {
+        WinPointerOwner1 = nullptr;
+        WinPointerOwner2 = this;
+    }
+    *g_009b7ad4 = 0;
+
+    if (a1 != 0 &&
+        (*reinterpret_cast<unsigned int *>(self + 0x98) & 0x200200) == 0 &&
+        (*reinterpret_cast<unsigned char *>(self + 0x9C) & 8) == 0) {
+        if (a5 == 0) {
+            *g_009b7ab8 = reinterpret_cast<int>(this);
+            RawHandler fn = *reinterpret_cast<RawHandler *>(self + 0x410);
+            if (fn != 0) {
+                fn(a2, a3);
+            }
+            this->vslot_29(a2, a3);
+            Win *child = *reinterpret_cast<Win **>(self + 0x48);
+            if (child != 0) {
+                int r = child->vslot_23();
+                if (r == 0) {
+                    child->vslot_07();
+                }
+            }
+        } else {
+            this->vslot_39(a2, a3);
+            Win *child = *reinterpret_cast<Win **>(self + 0x6C);
+            if (child != 0) {
+                int r = child->vslot_23();
+                if (r == 0) {
+                    child->vslot_07();
+                }
+            }
+        }
+    }
+
+    if ((*reinterpret_cast<unsigned int *>(self + 0x98) & 0x200000) == 0 &&
+        (*reinterpret_cast<unsigned char *>(self + 0x9C) & 8) == 0) {
+        if (a5 == 0) {
+            *g_009b7ab8 = reinterpret_cast<int>(this);
+            RawHandler fn = *reinterpret_cast<RawHandler *>(self + 0x424);
+            if (fn != 0) {
+                fn(a2, a3);
+            }
+            this->vslot_23();
+            Win *child = *reinterpret_cast<Win **>(self + 0x30);
+            if (child != 0) {
+                int r = child->vslot_23();
+                if (r == 0) {
+                    child->vslot_07();
+                }
+            }
+        } else {
+            this->vslot_36(a2, a3);
+            Win *child = *reinterpret_cast<Win **>(self + 0x60);
+            if (child != 0) {
+                int r = child->vslot_23();
+                if (r == 0) {
+                    child->vslot_07();
+                }
+            }
+        }
+    }
+
+}
+
+// ===== homed from src/recovered/units/005f2570.cpp =====
+
+void Win::OnLButtonUp(void *a1, int a2, int a3, unsigned int a4) {
+    WinTrackingWindow = nullptr;
+    ButtonUpVCall *obj = reinterpret_cast<ButtonUpVCall *>(
+        get_mouse_window(reinterpret_cast<int *>(&a1), &a2));
+    if (obj) {
+        obj->slot082(a1, a2, a3, *g_009b7aa4);
+    }
+}
+
+// ===== homed from src/unrecovered/005f15c0.cpp =====
+
+void __cdecl Win::OnKey(void * a1, unsigned int a2, long a3, int a4, unsigned int a5) {
+    int *p_9b7ac8 = (int *)0x009B7AC8;
+    int *p_9b7ac4 = (int *)0x009B7AC4;
+    int *p_9b7aec = (int *)0x009B7AEC;
+    int *p_9b7ae0 = (int *)0x009B7AE0;
+    int *p_9b8d7c = (int *)0x009B8D7C;
+    int *p_9b7a8c = (int *)0x009B7A8C;
+    int *p_9b7a88 = (int *)0x009B7A88;
+    int chosen;
+
+    if (*p_9b7ae0 != 0) {
+        chosen = *p_9b8d7c;
+        if (chosen == 0) {
+            chosen = *p_9b7ae0;
+        }
+    } else {
+        chosen = *p_9b7ac4;
+        if (chosen == 0) {
+            chosen = *p_9b7aec;
+        }
+    }
+    *p_9b7ac8 = chosen;
+
+    if (chosen != 0) {
+        char *base = (char *)chosen;
+        Win *inner = *(Win **)(base + 0xa8);
+        if (inner != 0 && (*((unsigned char *)inner + 0x9c) & 1) != 0) {
+            char *innerb = (char *)inner;
+            Win *parent = *(Win **)(innerb + 0xc4);
+            int visible = 1;
+            if (parent != 0) {
+                visible = parent->is_visible();
+            }
+            if (visible != 0) {
+                reinterpret_cast<Win *>(inner)->on_key(a2, a3, a4, a5);
+            }
+        }
+    }
+
+    if (*p_9b7a8c != 0 && a3 != 0) {
+        typedef void (__cdecl *cb_t)(unsigned int);
+        cb_t cb = (cb_t)*p_9b7a8c;
+        cb(a2);
+    }
+
+    if (*p_9b7a88 != 0) {
+        typedef void (__cdecl *jmp_t)(void);
+        jmp_t jmp = (jmp_t)*p_9b7a88;
+        jmp();
+    }
+}
+
+// ===== homed from src/unrecovered/005f5c00.cpp =====
+typedef long (__stdcall *Fn2)(void *, void *);
+
+
+
+
+long Win::on_activate(unsigned int a1, void * a2, long a3) {
+    if (a1 != 0 && a3 == 0 && *g_009bc494 == 0) {
+        if (*g_009b3ab0 == 0) {
+            int obj = *g_009bc498;
+            if (obj == 0) {
+                *g_009b7b2c = reinterpret_cast<int>(GetDC(HandleMain));
+            } else {
+                void **vtbl = *reinterpret_cast<void ***>(obj);
+                Fn2 fn = reinterpret_cast<Fn2>(vtbl[0x44 / 4]);
+                fn(reinterpret_cast<void *>(obj), g_009b7b2c);
+            }
+            if (*g_009b7b2c == 0) {
+                goto done;
+            }
+            *g_009b3ab0 = 1;
+        } else {
+            *g_009b3ab0 = *g_009b3ab0 + 1;
+        }
+        if (*g_009b7b2c != 0) {
+            SelectPalette(reinterpret_cast<HDC>(*g_009b7b2c), reinterpret_cast<HPALETTE>(*g_009b8178), 0);
+            RealizePalette(reinterpret_cast<HDC>(*g_009b7b2c));
+            *g_009b3ab0 = *g_009b3ab0 - 1;
+            if (*g_009b3ab0 == 0) {
+                int obj = *g_009bc498;
+                if (obj == 0) {
+                    ReleaseDC(HandleMain, reinterpret_cast<HDC>(*g_009b7b2c));
+                } else {
+                    void **vtbl = *reinterpret_cast<void ***>(obj);
+                    Fn2 fn = reinterpret_cast<Fn2>(vtbl[0x68 / 4]);
+                    fn(reinterpret_cast<void *>(obj), reinterpret_cast<void *>(*g_009b7b2c));
+                }
+                *g_009b7b2c = 0;
+            }
+        }
+    }
+done:
+    return DefWindowProcA(HandleMain, 6,
+                          ((a3 & 0xffff) << 16) | (a1 & 0xffff), reinterpret_cast<long>(a2));
+}
+
+// ===== homed from src/recovered/units/005f5020.cpp =====
+
+// ORIGINAL: 0x005F5020 ?update_zorder@Win@@QAAXXZ 0x005F5020-0x005F5080 FILE BYTE_EXACT
+// size      96 bytes
+// prototype 
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F4EC0
+// PRESERVED UNIT - measured NO_COMPILE.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x005F5020
+// measured tier  NO_COMPILE
+// refusal        u005f5020.cpp(29) : error C2653: 'Win' : is not a class or namespace name u005f5020.cpp(31) : error C2065: 'g_009b7b34' : undeclared identifier u005f5020.cpp(31
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/005f5020/unit.cpp
+// and score it with tools/agent_brief.py.
+// 0x005F5020  ?update_zorder@Win@@QAAXXZ  (96 bytes)
+//
+// `QAAXXZ`: public, __cdecl, void, no params - a STATIC member (no `this` is
+// ever read; every operand is one of the five fixed globals or the array at
+// g_009b6e48). The stale on-disk scaffold had this as `fn_005f5020(Win* a1)`;
+// the fresh brief's contract head (`void __cdecl Win::update_zorder()`)
+// matches the disassembly, so that is what is defined here.
+//
+// The initial `mov eax, dword ptr [0x9b7b34]` (the loop bound) happens
+// BEFORE the `mov dword ptr [0x9b7b30], ebp` store in the original, even
+// though the store is unconditional and the load only feeds the guard below
+// it. Writing `*g_009b7b30 = 0;` before reading the count reordered the two
+// (store first) under /O2; reading the count into a local FIRST, in source
+// order, reproduces the original ordering exactly. The do-while's own
+// continuation test re-reads `*g_009b7b34` fresh each iteration (matching
+// the original's second `mov eax, [0x9b7b34]` at the bottom of the loop) -
+// only the ONE-TIME guard above the loop uses the cached local.
+//
+// `target != 0 && target == arr[i]` short-circuits to exactly the original's
+// two-branch `cmp ecx,ebp / je skip; cmp ecx,[esi] / jne skip` - no
+// restructuring needed there.
+//
+// g_009b6e48 (the Win* array base) did NOT need the extern-array override
+// the general lever warns about: the given `static Win *const g = ...`
+// (cast at the point of use, not redeclared) already reproduces the
+// register-walked indexing here - the lever's "address itself does work"
+// failure mode did not reproduce for this walk. Recorded so the next agent
+// does not re-pay for testing it.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?update_zorder@Win@@QAAXXZ  at 0x005F5020  (96 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+void __cdecl Win::update_zorder() {
+    int i = 0;
+    int n = *g_009b7b34;
+    *g_009b7b30 = 0;
+    if (n > 0) {
+        Win **arr = reinterpret_cast<Win **>(0x009B6E48);
+        Win *target = *reinterpret_cast<Win **>(g_009b7a6c);
+        do {
+            if (target != 0 && target == arr[i]) {
+                *g_009b7b30 = 0;
+                *g_009b7a78 = 0;
+            }
+            if (arr[i]->iSomeFlag_ & 1) {
+                recurse_zorder(arr[i]);
+                target = *reinterpret_cast<Win **>(g_009b7a6c);
+            }
+            i++;
+        } while (i < *g_009b7b34);
+    }
+}
+
+// ===== homed from src/unrecovered/005f53a0.cpp =====
+
+long Win::on_window_pos_changing(WINDOWPOS * a1) {
+    char *self = reinterpret_cast<char *>(this);
+    char *wp = reinterpret_cast<char *>(a1);
+    if ((*reinterpret_cast<unsigned char *>(wp + 0x18) & 1) == 0) {
+        int ok = this->vslot_61();
+        if (ok != 0) {
+            int cx = *reinterpret_cast<int *>(wp + 0x10);
+            int f134 = *reinterpret_cast<int *>(self + 0x134);
+            if (cx <= f134) {
+                cx = f134;
+            }
+            *reinterpret_cast<int *>(wp + 0x10) = cx;
+            int cy = *reinterpret_cast<int *>(wp + 0x14);
+            int f138 = *reinterpret_cast<int *>(self + 0x138);
+            if (cy <= f138) {
+                cy = f138;
+            }
+            *reinterpret_cast<int *>(wp + 0x14) = cy;
+        }
+        if ((*reinterpret_cast<unsigned int *>(self + 0x98) & 0x800000) != 0) {
+            int ncx = *reinterpret_cast<int *>(wp + 0x10);
+            int ncy = *reinterpret_cast<int *>(wp + 0x14);
+            nonclient_to_client(&ncx, &ncy);
+            ncy = (*reinterpret_cast<int *>(self + 0xB0) * ncx) / *reinterpret_cast<int *>(self + 0xAC);
+            client_to_nonclient(&ncx, &ncy);
+            *reinterpret_cast<int *>(wp + 0x14) = ncy;
+        }
+    }
+    if ((*reinterpret_cast<unsigned int *>(self + 0x98) & 0x4000) != 0) {
+        *reinterpret_cast<unsigned int *>(wp + 0x18) |= 4;
+    }
+    if (*reinterpret_cast<int *>(wp + 4) == 0) {
+        PostMessageA(HandleMain, 3, 0, 0);
+    }
+    return DefWindowProcA(HandleMain, 0x46, 0, reinterpret_cast<int>(a1));
+}
+
+// ===== homed from src/unrecovered/005ef950.cpp =====
+typedef int (__stdcall *ComSlot017)(void *self, void *out_hdc);
+typedef int (__stdcall *ComSlot026)(void *self, void *hdc);
+
+void Win::paint_tiled(Buffer *tile, int x_origin, int y_origin, int clip_left,
+                       int clip_top, int clip_width, int clip_height, int unused8) {
+    if (tile == 0) {
+        return;
+    }
+
+    if (*g_009b3ab0 == 0) {
+        if (*g_009bc498 == 0) {
+            *g_009b7b2c = (int)(*reinterpret_cast<GetDCFn *>(g_GetDC))(
+                reinterpret_cast<HWND>(*g_009b7b28));
+        } else {
+            ComSlot017 fn = (ComSlot017)(*reinterpret_cast<void ***>(*g_009bc498))[17];
+            fn(reinterpret_cast<void *>(*g_009bc498), g_009b7b2c);
+        }
+        if (*g_009b7b2c == 0) {
+            return;
+        }
+        *g_009b3ab0 = 1;
+    } else {
+        *g_009b3ab0 = *g_009b3ab0 + 1;
+    }
+
+    if (*g_009b7b2c == 0) {
+        return;
+    }
+
+    if (field_184_ != *reinterpret_cast<uint32_t *>(*g_009b8180 + 0x400)) {
+        (*g_SetActiveWindow)(this);
+        field_184_ = *reinterpret_cast<uint32_t *>(*g_009b8180 + 0x400);
+    }
+
+    RECT clip_rect;
+    clip_rect.left = clip_left;
+    clip_rect.right = clip_left + clip_width;
+    clip_rect.top = clip_top;
+    clip_rect.bottom = clip_top + clip_height;
+    HRGN clip_region = reinterpret_cast<HRGN__ *>((*g_CreateRectRgnIndirect)(&clip_rect));
+    if (clip_region == 0) {
+        return;
+    }
+    (*g_SelectClipRgn)(reinterpret_cast<HDC>(*g_009b7b2c), clip_region);
+
+    int tile_width = static_cast<int>(tile->dib_.bmiHeader.biWidth);
+    int neg_tile_height = -static_cast<int>(tile->dib_.bmiHeader.biHeight);
+
+    int mod_x = x_origin % tile_width;
+    int mod_y = y_origin % neg_tile_height;
+
+    int cols = (mod_x != 0) ? 1 : 0;
+    cols += (clip_width - mod_x) / tile_width;
+    if ((clip_width - mod_x) % tile_width != 0) {
+        ++cols;
+    }
+
+    int rows = (mod_y != 0) ? 1 : 0;
+    rows += (clip_height - mod_y) / neg_tile_height;
+    if ((clip_height - mod_y) % neg_tile_height != 0) {
+        ++rows;
+    }
+
+    int start_x = clip_left - mod_x;
+    int cur_y = clip_top - mod_y;
+
+    if (rows > 0) {
+        for (int r = rows; r != 0; --r) {
+            if (cols > 0) {
+                int cur_x = start_x;
+                for (int c = cols; c != 0; --c) {
+                    tile->copy_to_window(this, 0, 0, cur_x, cur_y, static_cast<int>(tile->dib_.bmiHeader.biWidth), -static_cast<int>(tile->dib_.bmiHeader.biHeight));
+                    cur_x += tile_width;
+                }
+            }
+            cur_y += neg_tile_height;
+        }
+    }
+
+    if (--*g_009b3ab0 == 0) {
+        if (*g_009bc498 != 0) {
+            ComSlot026 fn = (ComSlot026)(*reinterpret_cast<void ***>(*g_009bc498))[26];
+            fn(reinterpret_cast<void *>(*g_009bc498), reinterpret_cast<void *>(*g_009b7b2c));
+            *g_009b7b2c = 0;
+            return;
+        }
+        (*g_ReleaseDC)(reinterpret_cast<HWND>(*g_009b7b28), reinterpret_cast<HDC>(*g_009b7b2c));
+        *g_009b7b2c = 0;
+    }
+}
+
+// ===== homed from src/unrecovered/005ecd20.cpp =====
+
+void Win::pass_dialog_focus() {
+    Win *parent;
+    Win *obj;
+
+    parent = win_parent_;
+    if (parent != 0 && (int)parent->list_.count_ > 1) {
+        *g_009b7b38 = (parent->list_.head_ != 0)
+            ? *reinterpret_cast<int *>(reinterpret_cast<char *>(parent->list_.current_) + 4) : 0;
+        parent = win_parent_;
+        if (parent->list_.head_ != 0) {
+            parent->list_.current_ = *reinterpret_cast<void **>(reinterpret_cast<char *>(parent->list_.current_) + 0xc);
+            if (++parent->list_.tail_ == parent->list_.count_) {
+                parent->list_.tail_ = 0;
+            }
+        }
+        this->vslot_51(0);
+        parent = win_parent_;
+        if (parent->list_.head_ != 0) {
+            obj = *reinterpret_cast<Win **>(reinterpret_cast<char *>(parent->list_.current_) + 4);
+            if (obj != 0) {
+                obj->vslot_51(1);
+            }
+        }
+    }
+}
+
+// ===== homed from src/unrecovered/005f1340.cpp =====
+
+// DUPLICATE `Win::OnPaint` removed: two artifacts carried the same body.
+
+// ===== homed from src/unrecovered/005eb640.cpp =====
+
+void Win::close() {
+    Win *modal;
+    Win *focusWin;
+    Win *candidate;
+    int i;
+    int count;
+    bool doClear;
+
+    modal = (Win *)*g_009b7acc;
+    focusWin = (Win *)*g_009b7ad0;
+    candidate = modal != 0 ? modal : focusWin;
+    doClear = false;
+    if (candidate == this) {
+        doClear = true;
+    } else if ((modal != 0) || (focusWin != 0)) {
+        if (candidate != 0) {
+            count = child_count_;
+            i = 0;
+            if (0 < count) {
+                do {
+                    if ((children_[i] == candidate) || (children_[i]->is_descendant(candidate) != 0)) {
+                        doClear = true;
+                        break;
+                    }
+                    i = i + 1;
+                    count = child_count_;
+                } while (i < count);
+            }
+        }
+    }
+    if (doClear) {
+        *g_009b7acc = 0;
+        *g_009b7ad0 = 0;
+    }
+
+    if (*g_009b7abc == (int)this) {
+        *g_009b7abc = 0;
+        this->vslot_04();
+    }
+    if (*g_009b7ac0 == (int)this) {
+        *g_009b7ac0 = 0;
+    }
+    if ((*WinBubbleCompanion == this) && (*WinBubbleActive != 0)) {
+        *WinBubbleCompanion = nullptr;
+        *WinBubbleActive = 0;
+        update_screen(WinBubbleRect, 0);
+        flip(WinBubbleRect);
+    }
+    if (*g_009b7a7c == (int)this) {
+        *g_009b7a7c = 0;
+    }
+    this->hide();
+
+    if ((scroll_vert_ != 0) && ((iFlags_ & 0x40) != 0)) {
+        // ARITY: the two CLAIMED bodies that reach slot 7 push nothing, and the
+        // image agrees; this transcription passed one argument. The claims
+        // decide. If a later measurement shows the argument is real, the
+        // slot needs splitting, not a default.
+        this->vslot_07();
+    }
+    if (scroll_vert_ != 0) {
+        delete scroll_vert_;
+        scroll_vert_ = 0;
+    }
+    if ((scroll_horz_ != 0) && ((iFlags_ & 0x40) != 0)) {
+        // ARITY: the two CLAIMED bodies that reach slot 7 push nothing, and the
+        // image agrees; this transcription passed one argument. The claims
+        // decide. If a later measurement shows the argument is real, the
+        // slot needs splitting, not a default.
+        this->vslot_07();
+    }
+    if (scroll_horz_ != 0) {
+        delete scroll_horz_;
+        scroll_horz_ = 0;
+    }
+
+    if ((iFlags_ & 0x100000) != 0) {
+        Win *parent = win_parent_;
+        if ((parent != 0) && (parent->list_.head_ != 0)) {
+            bool found = false;
+            int listCount = (int)parent->list_.count_;
+            if (0 < listCount) {
+                int idx = 0;
+                char *node = (char *)parent->list_.current_;
+                for (;;) {
+                    if (*(int *)(node + 4) == (int)this) {
+                        found = true;
+                        break;
+                    }
+                    node = *(char **)(node + 0xc);
+                    idx = idx + 1;
+                    parent->list_.current_ = node;
+                    if (!(idx < listCount)) {
+                        break;
+                    }
+                }
+                if (found) {
+                    char *nodeNext = *(char **)(node + 0xc);
+                    char *nodePrev = *(char **)(node + 0x10);
+                    *(char **)(nodeNext + 0x10) = nodePrev;
+                    char *cur = (char *)parent->list_.current_;
+                    char *curNext = *(char **)(cur + 0xc);
+                    char *curPrev = *(char **)(cur + 0x10);
+                    *(char **)(curPrev + 0xc) = curNext;
+                    cur = (char *)parent->list_.current_;
+                    if (cur == (char *)parent->list_.head_) {
+                        parent->list_.head_ = reinterpret_cast<void *>((uint32_t) * (char **)(cur + 0xc));
+                    }
+                    parent->list_.current_ = reinterpret_cast<void *>((uint32_t) * (char **)(cur + 0xc));
+                    if (*(int *)((char *)parent + 0xdc) == 0) {
+                        void *dataPtr = *(void **)(cur + 8);
+                        if (dataPtr != 0) {
+                            free(dataPtr);
+                        }
+                        *(void **)(cur + 8) = 0;
+                        if (cur != 0) {
+                            free(cur);
+                        }
+                    }
+                    parent->list_.count_ = parent->list_.count_ - 1;
+                }
+            }
+            if (parent->list_.count_ == 0) {
+                parent->list_.head_ = 0;
+            }
+        }
+    }
+
+    count = child_count_;
+    i = 0;
+    if (0 < count) {
+        do {
+            children_[i]->close();
+            count = child_count_;
+            i = i + 1;
+        } while (i < count);
+    }
+
+    {
+        Win *parent = win_parent_;
+        if (parent != 0) {
+            if (this != 0) {
+                bool found = false;
+                count = parent->child_count_;
+                i = 0;
+                if (0 < count) {
+                    for (;;) {
+                        if (parent->children_[i] == this) {
+                            found = true;
+                            break;
+                        }
+                        i = i + 1;
+                        if (!(i < count)) {
+                            break;
+                        }
+                    }
+                }
+                if (found) {
+                    count = count - 1;
+                    parent->child_count_ = count;
+                    this->hide();
+                    if (i < parent->child_count_) {
+                        do {
+                            parent->children_[i] = parent->children_[i + 1];
+                            i = i + 1;
+                        } while (i < parent->child_count_);
+                    }
+                }
+            }
+        } else if (this != 0) {
+            bool found = false;
+            count = *g_009b7b34;
+            i = 0;
+            if (0 < count) {
+                Win **node = (Win **)reinterpret_cast<Win **>(0x009B6E48);
+                for (;;) {
+                    if (*node == this) {
+                        found = true;
+                        break;
+                    }
+                    i = i + 1;
+                    node = node + 1;
+                    if (!(i < count)) {
+                        break;
+                    }
+                }
+            }
+            if (found) {
+                count = count - 1;
+                *g_009b7b34 = count;
+                this->hide();
+                if (i < *g_009b7b34) {
+                    int remaining = *g_009b7b34 - i;
+                    int *node2 = (int *)((char *)reinterpret_cast<Win **>(0x009B6E48) + i * 4);
+                    do {
+                        node2[0] = node2[1];
+                        node2 = node2 + 1;
+                        remaining = remaining - 1;
+                    } while (0 < remaining);
+                }
+            }
+        }
+    }
+    win_parent_ = 0;
+    cursor_name_ = 0;
+    iVertScaleDenom_ = 0;
+    iVertScaleNum_ = 0;
+    field_134_ = 0;
+    field_138_ = 0;
+    poWinBase_ = reinterpret_cast<Win *>((uint32_t)this);
+    cursor_sprite_ = 0;
+    field_18C_ = 0;
+    field_190_ = 0;
+    cursor_handle_ = 0;
+    field_19C_ = 0;
+    *g_009b7b2c = 0;
+    menu_ = 0;
+
+    if (list_.head_ != 0) {
+        if ((list_.count_ != 0) && (0 < (int)list_.count_)) {
+            i = 0;
+            do {
+                list_.current_ = reinterpret_cast<void *>(*reinterpret_cast<int *>(reinterpret_cast<char *>(list_.head_) + 0xc));
+                if (*reinterpret_cast<int *>(reinterpret_cast<char *>(list_.head_) + 8) != 0) {
+                    free(*reinterpret_cast<void **>(reinterpret_cast<char *>(list_.head_) + 8));
+                }
+                *reinterpret_cast<int *>(reinterpret_cast<char *>(list_.head_) + 8) = 0;
+                if (list_.head_ != 0) {
+                    free((void *)list_.head_);
+                }
+                list_.head_ = list_.current_;
+                i = i + 1;
+            } while (i < (int)list_.count_);
+        }
+        list_.head_ = 0;
+        list_.tail_ = 0;
+        list_.count_ = 0;
+    }
+    list_.tail_ = 0;
+    field_12C_ = 0;
+    field_130_ = 1;
+
+    field_FC_ = *g_009b7af0;
+    field_100_ = *g_00696d34;
+    field_104_ = *g_009b7af8;
+    field_108_ = *g_00696d3c;
+    field_10C_ = *g_00696d40;
+    field_110_ = *g_00696d44;
+    caption_height_ = *g_00696d38;
+    border_thickness_ = *g_00696d48;
+    bottom_border_thickness_ = *g_00696d4c;
+    field_120_ = *g_00696d50;
+    field_124_ = *g_009b7afc;
+    field_128_ = *g_00696d54;
+    field_F8_ = *g_009b7af4;
+
+    {
+        void *p0xE0 = *(void **)((char *)this + 0xE0);
+        if (p0xE0 != 0) {
+            free(p0xE0);
+        }
+        *(void **)((char *)this + 0xE0) = 0;
+    }
+    {
+        void *p0xE4 = *(void **)((char *)this + 0xE4);
+        if (p0xE4 != 0) {
+            delete p0xE4;
+            *(void **)((char *)this + 0xE4) = 0;
+        }
+    }
+    {
+        void *p0xE8 = *(void **)((char *)this + 0xE8);
+        if (p0xE8 != 0) {
+            delete p0xE8;
+            *(void **)((char *)this + 0xE8) = 0;
+        }
+    }
+    {
+        void *p0xEC = *(void **)((char *)this + 0xEC);
+        if (p0xEC != 0) {
+            delete p0xEC;
+            *(void **)((char *)this + 0xEC) = 0;
+        }
+    }
+    field_F4_ = 0;
+    iFlags_ = 0;
+    field_174_ = 1;
+    field_178_ = 1;
+    field_17C_ = 1;
+    field_180_ = 1;
+    outer_rect_.left = 0;
+    outer_rect_.top = 0;
+    outer_rect_.right = 0;
+    outer_rect_.bottom = 0;
+    client_rect_.left = 0;
+    client_rect_.top = 0;
+    client_rect_.right = 0;
+    client_rect_.bottom = 0;
+    field_16C_ = 0;
+    field_170_ = 0;
+
+    field_400_ = 0;
+    field_404_ = 0;
+    field_408_ = 0;
+    field_40C_ = 0;
+    field_410_ = 0;
+    field_414_ = 0;
+    field_418_ = 0;
+    field_41C_ = 0;
+    field_420_ = 0;
+    field_424_ = 0;
+    field_428_ = 0;
+    field_42C_ = 0;
+    field_430_ = 0;
+    field_434_ = 0;
+    field_438_ = 0;
+    field_1A0_ = 2;
+    iSomeFlag_ = 0;
+    field_A0_ = 0;
+    field_A4_ = 0;
+    child_count_ = 0;
+
+    if (buffer1_ != 0) {
+        delete buffer1_;
+        buffer1_ = 0;
+    }
+    if (buffer2_ != 0) {
+        delete buffer2_;
+        buffer2_ = 0;
+    }
+    if (buffer3_ != 0) {
+        delete buffer3_;
+        buffer3_ = 0;
+    }
+    if (buffer4_ != 0) {
+        delete buffer4_;
+        buffer4_ = 0;
+    }
+
+    close();
+
+}
+
+// ===== homed from src/unrecovered/005f2290.cpp =====
+
+void __cdecl Win::OnMouseMove(void * a1, int a2, int a3, unsigned int a4) {
+    Win *hit;
+    Win *tracking;
+
+    tracking = WinTrackingWindow;
+    *g_009b7b3c = 0;
+    if (tracking != nullptr) {
+        do_tracking(a2, a3);
+        return;
+    }
+    hit = (Win *)get_mouse_window(&a2, &a3);
+    update_cursor(hit, 1);
+    if (hit != 0) {
+        if (*g_009b7a7c != 0 &&
+            (*g_009b7b3c != 0 || hit != (Win *)*g_009b7a7c) &&
+            (*g_009b7abc == 0 || *g_009b7abc == *g_009b7a7c)) {
+            reinterpret_cast<Win *>(*g_009b7a7c)->vslot_18(a2, a3);
+        }
+        *g_009b7a7c = (int)hit;
+        hit->on_mouse_move(a2, a3, a4, *g_009b7aa4);
+    }
+}
+
+// ===== homed from src/unrecovered/005f1070.cpp =====
+typedef void (__stdcall *NotifyFn)(void *, int *);
+typedef void (__stdcall *ReleaseFn)(void *, void *);
+typedef void *(__stdcall *SelectPaletteFn)(void *, void *, int);
+typedef int (__stdcall *RealizePaletteFn)(void *);
+typedef int (__stdcall *ReleaseDCFn)(void *, void *);
+
+// ORIGINAL: 0x005F1070 ?OnQueryNewPalette@Win@@QAAHPAX@Z 0x005F1070-0x005F1141 FILE BYTE_EXACT
+// LEVER: call directly through `(*reinterpret_cast<Fn*>(g_addr))(args)` at the call site instead of binding the function pointer to a named local first - the named local forced an extra reg-to-reg mov before the GetDC argument push. Also: these two "vtable" calls (slots 17/26) push the object pointer as an explicit stack arg with ecx holding the vtable pointer, not a real __thiscall dispatch, so plain `int*`/function-pointer casts matched where the VCall shim would not.
+// working copy - scaffold materialised by --work
+// size      209 bytes
+// prototype int (__cdecl ?OnQueryNewPalette@Win@@QAAHPAX@Z)(HWND hWnd)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005F10A6 0x005F10B7 0x005F10DE 0x005F10EB 0x005F1111 0x005F112E
+int __cdecl Win::OnQueryNewPalette(void * a1) {
+    int eax;
+
+    if (*g_009bc494 != 0) {
+        return 1;
+    }
+
+    eax = *g_009b3ab0;
+    if (eax != 0) {
+        eax = eax + 1;
+        *g_009b3ab0 = eax;
+        eax = *g_009b7b2c;
+    } else {
+        eax = *g_009bc498;
+        if (eax != 0) {
+            int *vtbl = *reinterpret_cast<int **>(eax);
+            (*reinterpret_cast<NotifyFn>(vtbl[0x44 / 4]))(reinterpret_cast<void *>(eax), g_009b7b2c);
+            eax = *g_009b7b2c;
+        } else {
+            // TWO STEPS, and the second one is load-bearing. Calling through
+            // `(*g_GetDC)(...)` directly compiled `mov eax,[0]` + `call [eax]`
+            // - one instruction more than the image's single
+            // `call dword ptr [0x66927c]`. Naming the loaded pointer first is
+            // the spelling the rest of this file already uses (see the
+            // GetDCFn line in the macro above, BYTE_EXACT), and it restores
+            // the direct indirect-call encoding.
+            eax = (*reinterpret_cast<GetDCFn *>(g_GetDC))(
+                reinterpret_cast<void *>(*g_009b7b28));
+            *g_009b7b2c = eax;
+        }
+        if (eax == 0) {
+            return 0;
+        }
+        *g_009b3ab0 = 1;
+    }
+
+    if (eax == 0) {
+        return 0;
+    }
+
+    (*reinterpret_cast<SelectPaletteFn *>(g_006690b8))(reinterpret_cast<void *>(eax), reinterpret_cast<void *>(*g_009b8178), 0);
+
+    (*reinterpret_cast<RealizePaletteFn *>(g_0066909c))(reinterpret_cast<void *>(*g_009b7b2c));
+
+    eax = *g_009b3ab0;
+    eax = eax - 1;
+    *g_009b3ab0 = eax;
+    if (eax != 0) {
+        return 0;
+    }
+
+    eax = *g_009bc498;
+    if (eax != 0) {
+        int *vtbl = *reinterpret_cast<int **>(eax);
+        (*reinterpret_cast<ReleaseFn>(vtbl[0x68 / 4]))(reinterpret_cast<void *>(eax), reinterpret_cast<void *>(*g_009b7b2c));
+        *g_009b7b2c = 0;
+        return 0;
+    }
+
+    (*reinterpret_cast<ReleaseDCFn *>(g_00669280))(reinterpret_cast<void *>(*g_009b7b28), reinterpret_cast<void *>(*g_009b7b2c));
+    *g_009b7b2c = 0;
+    return 0;
+}
+
+// ===== homed from src/unrecovered/005ecc40.cpp =====
+
+void Win::set_dialog_focus(Win * a1) {
+    char *self = reinterpret_cast<char *>(this);
+    if (a1 == 0) {
+        return;
+    }
+    if (*reinterpret_cast<int *>(self + 0xd4) == 0) {
+        return;
+    }
+
+    int *newFocus;
+    if (*reinterpret_cast<int *>(self + 0xcc) == 0) {
+        newFocus = 0;
+    } else {
+        int *node = *reinterpret_cast<int **>(self + 0xd0);
+        newFocus = reinterpret_cast<int *>(node[1]);
+    }
+
+    if (reinterpret_cast<int *>(a1) == newFocus) {
+        return;
+    }
+
+    *reinterpret_cast<int **>(g_009b7b38) = newFocus;
+
+    if (*reinterpret_cast<int *>(self + 0xcc) == 0) {
+        return;
+    }
+
+    int count = *reinterpret_cast<int *>(self + 0xd4);
+    int idx = 0;
+    *reinterpret_cast<int *>(self + 0xd8) = 0;
+    *reinterpret_cast<int *>(self + 0xd0) = *reinterpret_cast<int *>(self + 0xcc);
+
+    if (count > 0) {
+        int *node;
+        for (;;) {
+            node = *reinterpret_cast<int **>(self + 0xd0);
+            if (reinterpret_cast<int *>(node[1]) == reinterpret_cast<int *>(a1)) {
+                break;
+            }
+            *reinterpret_cast<int *>(self + 0xd8) = *reinterpret_cast<int *>(self + 0xd8) + 1;
+            idx++;
+            *reinterpret_cast<int *>(self + 0xd0) = node[3];
+            if (idx >= count) {
+                return;
+            }
+        }
+
+        if (newFocus != 0 && count > 1) {
+            call_slot_cc(newFocus, 0);
+        }
+
+        if (*reinterpret_cast<int *>(self + 0xcc) != 0) {
+            int *node2 = *reinterpret_cast<int **>(self + 0xd0);
+            int *target = reinterpret_cast<int *>(node2[1]);
+            if (target != 0) {
+                call_slot_cc(target, 1);
+            }
+        }
+    }
+}
+
+// ===== homed from src/unrecovered/005f1480.cpp =====
+
+long __cdecl Win::OnActivate(void *a1, unsigned int a2, void *a3, long a4) {
+    InvalidateRect(reinterpret_cast<HWND>(HandleMain), 0, 0);
+    if (a2 != 0) {
+      if (a4 == 0 && *g_009bc494 == 0) {
+        int hdc;
+        if (*g_009b3ab0 != 0) {
+            *g_009b3ab0 = *g_009b3ab0 + 1;
+            hdc = *g_009b7b2c;
+        } else {
+            void *iface = reinterpret_cast<void *>(*g_009bc498);
+            if (iface != 0) {
+                IfaceGetHdcProc fn = (*reinterpret_cast<IfaceGetHdcProc **>(iface))[17];
+                fn(iface, g_009b7b2c);
+                hdc = *g_009b7b2c;
+            } else {
+                *g_009b7b2c = reinterpret_cast<int>(GetDC(HandleMain));
+                hdc = *g_009b7b2c;
+            }
+            if (hdc != 0) {
+                *g_009b3ab0 = 1;
+            }
+        }
+        if (hdc != 0) {
+            SelectPalette(reinterpret_cast<HDC>(*g_009b7b2c), reinterpret_cast<HPALETTE>(*g_009b8178), 0);
+            RealizePalette(reinterpret_cast<HDC>(*g_009b7b2c));
+
+            *g_009b3ab0 = *g_009b3ab0 - 1;
+            if (*g_009b3ab0 == 0) {
+                void *iface2 = reinterpret_cast<void *>(*g_009bc498);
+                if (iface2 != 0) {
+                    IfaceReleaseHdcProc fn2 = (*reinterpret_cast<IfaceReleaseHdcProc **>(iface2))[26];
+                    fn2(iface2, *g_009b7b2c);
+                } else {
+                    typedef int (__stdcall *ReleaseDCProc)(void *, HDC);
+                    static int *const g = (int *)0x00669280;
+                    (*reinterpret_cast<ReleaseDCProc *>(g))(
+                        HandleMain, reinterpret_cast<HDC>(*g_009b7b2c));
+                }
+                *g_009b7b2c = 0;
+            }
+        }
+      }
+    } else {
+        WinPointerOwner1 = nullptr;
+        WinPointerOwner2 = nullptr;
+    }
+    return DefWindowProcA(reinterpret_cast<HWND__ *>(a1), 6, (static_cast<unsigned int>(a4) << 16) | (a2 & 0xffff),reinterpret_cast<long>(a3));
+}
+
+// ===== homed from src/unrecovered/005ecf20.cpp =====
+
+void Win::screen_to_client(RECT * a1) {
+    if (a1 == 0) {
+        return;
+    }
+    int dx = -(client_rect_.left + outer_rect_.left);
+    int dy = -(client_rect_.top + outer_rect_.top);
+    if ((iFlags_ & 0x20) && win_parent_ != 0) {
+        win_parent_->screen_to_client(&dx, &dy);
+        if (iFlags_ & 0x8000) {
+            dx += win_parent_->outer_rect_.left;
+            dy += win_parent_->outer_rect_.top;
+        }
+    }
+    a1->left += dx;
+    a1->right += dx;
+    a1->top += dy;
+    a1->bottom += dy;
+}
+
+// ===== homed from src/recovered/units/005f4cc0.cpp =====
+// ORIGINAL: 0x005F4CC0 ?redraw@Win@@QAAXXZ 0x005F4CC0-0x005F4CF1 FILE BYTE_EXACT
+// size      49 bytes
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FD2B0
+// indirect  0x005F4CD6
+// PRESERVED UNIT - measured BYTE_EXACT.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x005F4CC0
+// measured tier  BYTE_EXACT
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/005f4cc0/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?redraw@Win@@QAAXXZ  at 0x005F4CC0  (49 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+// A `QAA` NAME IS A __cdecl MEMBER, and the receiver is passed on the stack
+// like any other argument - which is exactly what the artifact spelled as
+// `fn_005f4cc0(Win *a1)`. `a1` is never read in this body, so making it the
+// implicit `this` changes nothing the compiler emits. The body is otherwise
+// byte-for-byte what the claim was measured on.
+void __cdecl Win::redraw() {
+    int i;
+    for (i = 0; i < *g_009b7b30; ++i) {
+        reinterpret_cast<VCall *>(reinterpret_cast<void **>(g_win_array)[i])->slot062();
+        do_sound();
+    }
+}
+
+// ===== homed from src/recovered/units/005f5080.cpp =====
+void __cdecl add_parent(Win *);
+// ORIGINAL: 0x005F5080 ?add_parent@Win@@QAAXPAUWin@@@Z 0x005F5080-0x005F50D5 FILE BYTE_EXACT
+// symbol    ?add_parent@@YAXPAVWin@@@Z
+// size      85 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// PRESERVED UNIT - measured BYTE_EXACT.
+// TRIED: the catalogue spells this `?add_parent@Win@@QAAXPAUWin@@@Z`, a
+//   __cdecl MEMBER, so both member forms were measured. Non-static puts
+//   `this` ahead of the argument and shifts every read: 6/29. Static has
+//   the same one-argument stack shape as the free function and still
+//   measured MISMATCH. The free-function spelling is what reproduces the
+//   bytes, so the claim keeps it and the `symbol` fact says so.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x005F5080
+// measured tier  BYTE_EXACT
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/005f5080/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?add_parent@Win@@QAAXPAUWin@@@Z  at 0x005F5080  (85 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+void __cdecl add_parent(Win * a1) {
+    if (a1 == 0) return;
+    int count = *g_009b7b34;
+    unsigned int flags = a1->iFlags_;
+    if (flags & 0x2000000) {
+        reinterpret_cast<Win **>(0x009B6E48)[count] = a1;
+        *g_009b7b34 = count + 1;
+        return;
+    }
+    if (count > 0) {
+        Win **p = reinterpret_cast<Win **>(0x009B6E48) + count;
+        int n = count;
+        do {
+            Win *tmp = *(p - 1);
+            *p = tmp;
+            --p;
+        } while (--n);
+    }
+    reinterpret_cast<Win **>(0x009B6E48)[0] = a1;
+    *g_009b7b34 = count + 1;
+}

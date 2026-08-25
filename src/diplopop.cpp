@@ -210,6 +210,7 @@ void __fastcall diplo_pop_on_iface_button_toggled_redirect(DiploPop *self, void 
 
 /*
 // ORIGINAL: 0x0043F170 ?hide@DiploPop@@QAEXXZ 0x0043F170-0x0043F185 BYTE_EXACT
+// symbol    ?hide@DiploPop@@UAEXXZ
 // size      21 bytes
 // prototype void (__thiscall ?hide@DiploPop@@QAEXXZ)(DiploPop* this)
 // callers   0   call targets   2
@@ -221,6 +222,9 @@ Status: Complete
 void DiploPop::hide() {
     Win *self = reinterpret_cast<Win *>(this);
     if (self->is_visible()) {
-        self->hide();
+        // QUALIFIED: the image emits a direct `call 0x5edcd0`, not a vtable
+        // dispatch. `Win::hide` is virtual now, so an unqualified call would
+        // go through slot 2 - which is what made this claim regress.
+        self->Win::hide();
     }
 }

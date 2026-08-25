@@ -277,7 +277,13 @@ target_precompile_headers(OpenSMACX PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/std
 # dependency sits beside the code that needs it"; the Winmm pragma that
 # comment cited as precedent turned out to be redundant with this line, so
 # the precedent was one entry that did nothing.
-target_link_libraries(OpenSMACX PRIVATE zlib user32 gdi32 winmm dxguid)
+# `ddraw` carries `DirectDrawCreate`, which `DDInit::init` names. It was a
+# `#pragma comment(lib, "ddraw.lib")` in win.cpp for the same stated reason
+# dxguid's was in buffer.cpp - "so the dependency sits beside the code that
+# needs it" - and it belongs here for the same reason that one moved: a link
+# input is the build's business, and a pragma hides it from anyone reading
+# the build.
+target_link_libraries(OpenSMACX PRIVATE zlib user32 gdi32 winmm dxguid ddraw)
 
 # `/MAP /MAPINFO:LINES` is the only debug format in this toolchain that gdb can
 # be taught to read. VC6's own three cannot be: the PDB is 2.0 (`JG`, which

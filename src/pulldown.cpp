@@ -430,6 +430,7 @@ int __fastcall pull_down_id_to_index_redirect(PullDown *self, void *, int id) {
 
 /*
 // ORIGINAL: 0x005F93A0 ?hide@PullDown@@QAEXXZ 0x005F93A0-0x005F93B9 BYTE_EXACT
+// symbol    ?hide@PullDown@@UAEXXZ
 // size      25 bytes
 // prototype void (__thiscall ?hide@PullDown@@QAEXXZ)(PullDown* this)
 // callers   0   call targets   2
@@ -441,7 +442,7 @@ Status: Complete
 */
 void PullDown::hide() {
     reinterpret_cast<VCall *>(this)->slot058();
-    reinterpret_cast<Win *>(this)->hide();
+    reinterpret_cast<Win *>(this)->Win::hide();
     do_all_draws();
 }
 

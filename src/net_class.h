@@ -101,6 +101,12 @@ static_assert(sizeof(VoiceTx) == 0x58,
   */
 class Net {
  public:
+  // Called by a homed Win body; its own definition is still an
+  // artifact. Arity taken from the call site.
+  void start_voice(int);
+  // Called by Win's teardown when a window closes mid-voice; its own
+  // body is still an artifact.
+  void stop_voice();
   int get(unsigned long *a, unsigned long *b);
 
  public:

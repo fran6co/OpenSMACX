@@ -329,6 +329,7 @@ void __fastcall social_win_on_iface_mouse_leave_redirect(SocialWin *self, void *
 
 /*
 // ORIGINAL: 0x004B2690 ?show@SocialWin@@QAEXH@Z 0x004B2690-0x004B26AB BYTE_EXACT
+// symbol    ?show@SocialWin@@UAEXH@Z
 // size      27 bytes
 // prototype void (__thiscall ?show@SocialWin@@QAEXH@Z)(SocialWin* this, int)
 // callers   1   call targets   2
@@ -345,6 +346,7 @@ void SocialWin::show(int a1) {
 
 /*
 // ORIGINAL: 0x004B26B0 ?hide@SocialWin@@QAEXXZ 0x004B26B0-0x004B26C9 BYTE_EXACT
+// symbol    ?hide@SocialWin@@UAEXXZ
 // size      25 bytes
 // prototype void (__thiscall ?hide@SocialWin@@QAEXXZ)(SocialWin* this)
 // callers   1   call targets   2

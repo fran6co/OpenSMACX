@@ -524,20 +524,12 @@ void BaseWin::garrison_click(int a1, int a2, int a3, int a4) {                  
     PENDING_BODY(0x0040B140, pending)(this, nullptr, a1, a2, a3, a4);
 }
 
-int Win::init(int a1, int a2, int a3, int a4, LPSTR a5, int a6, Win * a7, Menu * a8, BorderSizing * a9) {  // 0x005EBD80
-    typedef int(__fastcall *pending)(Win *, void *, int, int, int, int, LPSTR, int, Win *, Menu *, BorderSizing *);
-    return PENDING_BODY(0x005EBD80, pending)(this, nullptr, a1, a2, a3, a4, a5, a6, a7, a8, a9);
-}
 
 void GraphicWin::compute_min_size() {  // 0x005D7030
     typedef void(__fastcall *pending)(GraphicWin *, void *);
     PENDING_BODY(0x005D7030, pending)(this, nullptr);
 }
 
-void Win::nonclient_to_client(int * a1, int * a2) {  // 0x005EEF60
-    typedef void(__fastcall *pending)(Win *, void *, int *, int *);
-    PENDING_BODY(0x005EEF60, pending)(this, nullptr, a1, a2);
-}
 
 void NetDaemon::process_message(char *message, unsigned long a, int b) {  // 0x00534400
     typedef void(__fastcall *pending)(NetDaemon *, void *, char *, unsigned long, int);
@@ -656,11 +648,6 @@ void GraphicWin::soft_update(RECT *area) {
 }
 
 // ?update_window@Win@@QAEHPAURECT@@@Z at 0x005F74A0 - GraphicWin::update
-// (src/graphicwin.cpp) calls it BY NAME.
-int Win::update_window(RECT *area) {
-    typedef int(__fastcall *pending)(Win *, void *, RECT *);
-    return PENDING_BODY(0x005F74A0, pending)(this, nullptr, area);
-}
 
 // ?client_to_screen@Win@@QAEXPAURECT@@@Z at 0x005ECFE0, the RECT overload -
 // distinct from client_to_screen(int*, int*) above. GraphicWin::update
@@ -702,10 +689,6 @@ void ReportIf::bl_anim() {  // 0x004A4060
     PENDING_BODY(0x004A4060, pending)(this, nullptr);
 }
 
-void Win::hide() {  // 0x005EDCD0
-    typedef void(__fastcall *pending)(Win *, void *);
-    PENDING_BODY(0x005EDCD0, pending)(this, nullptr);
-}
 
 
 
@@ -1037,9 +1020,10 @@ int Console::on_key_click(int a1, int a2) {  // 0x005178C0
     return PENDING_BODY(0x005178C0, pending)(this, nullptr, a1, a2);
 }
 
-void Console::on_nc_hittest(int a1, int a2) {  // 0x0050F680
-    typedef void(__fastcall *pending)(Console *, void *, int, int);
-    PENDING_BODY(0x0050F680, pending)(this, nullptr, a1, a2);
+int Console::on_nc_hittest(int x, int y) {  // 0x0050F680
+    // Same correction as MapWin's: the base returns a hit-test code.
+    typedef int(__fastcall *pending)(Console *, void *, int, int);
+    return PENDING_BODY(0x0050F680, pending)(this, nullptr, x, y);
 }
 
 void Console::on_nc_left_down(int a1, int a2) {  // 0x0050FB10
@@ -1208,9 +1192,12 @@ void MapWin::on_mouse_move(int a1, int a2) {  // 0x0046F000
     PENDING_BODY(0x0046F000, pending)(this, nullptr, a1, a2);
 }
 
-void MapWin::on_nc_hittest(int a1, int a2) {  // 0x0046F660
-    typedef void(__fastcall *pending)(MapWin *, void *, int, int);
-    PENDING_BODY(0x0046F660, pending)(this, nullptr, a1, a2);
+int MapWin::on_nc_hittest(int x, int y) {  // 0x0046F660
+    // RETURNS A HIT-TEST CODE, like the base it overrides. The `void` here
+    // was a forwarder's guess; `?on_nc_hittest@Win@@QAEHH@Z` spells H, and
+    // declaring Win's virtual is what made the two disagree out loud.
+    typedef int(__fastcall *pending)(MapWin *, void *, int, int);
+    return PENDING_BODY(0x0046F660, pending)(this, nullptr, x, y);
 }
 
 void MapWin::on_nc_left_down(int a1, int a2) {  // 0x0046F700
@@ -1446,11 +1433,6 @@ void __cdecl recurse_zorder(Win *window) {
     PENDING_BODY(0x005F4EC0, pending)(window);
 }
 
-// ?get_key_window@Win@@QAGHXZ at 0x005F6A50
-Win *Win::get_key_window() {
-    typedef Win *(__stdcall *pending)();
-    return PENDING_BODY(0x005F6A50, pending)();
-}
 
 
 // ?get_mouse_window_recurse@@YAHPAUWin@@PAHPAH@Z at 0x005F6AB0 - the tree walk
@@ -1460,24 +1442,9 @@ Win *__cdecl get_mouse_window_recurse(Win *window, int *x, int *y) {
     return PENDING_BODY(0x005F6AB0, pending)(window, x, y);
 }
 
-// ?update_cursor@Win@@QAAHPAUWin@@H@Z at 0x005F1820
-int Win::update_cursor(Win *window, int tgl) {
-    typedef int(__cdecl *pending)(Win *, int);
-    return PENDING_BODY(0x005F1820, pending)(window, tgl);
-}
 
-// ?update_screen@Win@@QAAHPAURECT@@PAVWin@@@Z at 0x005F7320
-int Win::update_screen(RECT *area, Win *window) {
-    typedef int(__cdecl *pending)(RECT *, Win *);
-    return PENDING_BODY(0x005F7320, pending)(area, window);
-}
 
 // ?do_tracking@Win@@QAEXHH@Z at 0x005F7580 - the one __thiscall member of the
-// set, so the forwarder hands the receiver over explicitly.
-void Win::do_tracking(int x, int y) {
-    typedef void(__fastcall *pending)(Win *, void *, int, int);
-    PENDING_BODY(0x005F7580, pending)(this, nullptr, x, y);
-}
 
 // sub_5f86a0 at 0x005F86A0 - byte-exact in src/recovered/005f86a0.cpp, which
 // is in no build, so the edge is still pending here.
@@ -1598,3 +1565,66 @@ Purpose: Step the receiver back to the subobject ??_GReplayWin@@UAEPAXI@Z
 Return Value: the forwarded call's
 Status: Complete
 */
+
+// ---- Forwarders for bodies the Win homing revealed as callable but not yet
+// ---- recovered. Each address is the catalogue's, not a guess.
+
+int Buffer::draw(Buffer *source, int index, int x, int y, int a, int b) {
+    typedef int(__fastcall *pending)(Buffer *, void *, Buffer *, int, int, int, int, int);
+    return PENDING_BODY(0x005D8370, pending)(this, nullptr, source, index, x, y, a, b);
+}
+
+int Buffer::tile(Buffer *source, int sx, int sy, int x, int y, int w, int h) {
+    typedef int(__fastcall *pending)(Buffer *, void *, Buffer *, int, int, int, int, int, int);
+    return PENDING_BODY(0x005DA860, pending)(this, nullptr, source, sx, sy, x, y, w, h);
+}
+
+int Buffer::write_right_l(char *text, RECT *area, int len) {
+    typedef int(__fastcall *pending)(Buffer *, void *, char *, RECT *, int);
+    return PENDING_BODY(0x005DD300, pending)(this, nullptr, text, area, len);
+}
+
+void Buffer::copy_to_window(Win *target, int sx, int sy, int x, int y, int w, int h) {
+    typedef void(__fastcall *pending)(Buffer *, void *, Win *, int, int, int, int, int, int);
+    PENDING_BODY(0x005D9BE0, pending)(this, nullptr, target, sx, sy, x, y, w, h);
+}
+
+void Net::start_voice(int a1) {
+    typedef void(__fastcall *pending)(Net *, void *, int);
+    PENDING_BODY(0x0062DF20, pending)(this, nullptr, a1);
+}
+
+void Net::stop_voice() {
+    typedef void(__fastcall *pending)(Net *, void *);
+    PENDING_BODY(0x0062DFC0, pending)(this, nullptr);
+}
+
+extern "C" int __cdecl sub_5f1750(int a1) {
+    typedef int(__cdecl *pending)(int);
+    return PENDING_BODY(0x005F1750, pending)(a1);
+}
+
+extern "C" int __cdecl sub_5f8670() {
+    typedef int(__cdecl *pending)();
+    return PENDING_BODY(0x005F8670, pending)();
+}
+
+extern "C" int __cdecl sub_5f86c0(RECT *r, int a, int b, int c, int d) {
+    typedef int(__cdecl *pending)(RECT *, int, int, int, int);
+    return PENDING_BODY(0x005F86C0, pending)(r, a, b, c, d);
+}
+
+int Win::sub_63c7c0() {
+    typedef int(__fastcall *pending)(Win *, void *);
+    return PENDING_BODY(0x0063C7C0, pending)(this, nullptr);
+}
+
+void __cdecl wait_task() {
+    typedef void(__cdecl *pending)();
+    PENDING_BODY(0x005FC700, pending)();
+}
+
+extern "C" void __cdecl do_all_chars() {
+    typedef void(__cdecl *pending)();
+    PENDING_BODY(0x005FCFE0, pending)();
+}

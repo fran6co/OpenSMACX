@@ -328,6 +328,7 @@ void CouncWin::draw_all_leaders() {
 
 /*
 // ORIGINAL: 0x00427130 ?show@CouncWin@@QAEHH@Z 0x00427130-0x0042714B BYTE_EXACT
+// symbol    ?show@CouncWin@@UAEXH@Z
 // size      27 bytes
 // prototype int (__thiscall ?show@CouncWin@@QAEHH@Z)(CouncWin* this, int)
 // callers   0   call targets   2
@@ -336,12 +337,15 @@ void CouncWin::draw_all_leaders() {
 // calls     0x0045D310 0x005F7E90
 Status: Complete
 */
-int CouncWin::show(int a1) {
-    int visible = reinterpret_cast<Win *>(this)->is_visible();
-    if (visible) {
-        return visible;
+void CouncWin::show(int a1) {
+    // THE RETURN WAS A TRANSCRIPTION ARTIFACT. This body is byte-identical
+    // to BaseWin::show at 0x0041E890 - the same nine instructions - and the
+    // image sets no return value: eax merely holds what the last call left.
+    // The catalogue's `?show@CouncWin@@QAEHH@Z` guessed `H` from that, and
+    // declaring Win::show virtual is what made the two spellings collide.
+    if (!reinterpret_cast<Win *>(this)->is_visible()) {
+        SubInterface::set_iface_mode();
     }
-    SubInterface::set_iface_mode();
 }
 
 // The seam and definition for the unrecovered draw_leader, at the end of the

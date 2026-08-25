@@ -67,7 +67,7 @@ class MapWin : protected virtual GraphicWin {
 
  public:
   // 0x0046F660, a pending_bodies forwarder.
-  void on_nc_hittest(int a1, int a2);
+  int on_nc_hittest(int x, int y);
 
  public:
   // 0x0046F000, a pending_bodies forwarder.
@@ -233,7 +233,12 @@ class MapWin : protected virtual GraphicWin {
   // than the original put the boundary, and the derived class has to reach
   // its field through it. `int32_t`, not `uint8_t[4]`, because every access
   // the image makes to it is a four-byte one.
-  int32_t field_21A68_;  // 0x21A68
+  // THE COMPILER OWNS THIS DWORD NOW. It was modelled by hand as an
+  // `int32_t` because MapWin declared no virtual function, so VC6 emitted no
+  // vtordisp and something had to hold the virtual base at the 0x21A6C the
+  // vbtable names. MapWin's methods override Win's virtuals now, so VC6
+  // emits the real vtordisp here itself - two of them would push the vbase
+  // four bytes out and break every offset past it.
 };
 
 static_assert(sizeof(MapWin) == 0x22480, "MapWin layout must match terranx.exe");
