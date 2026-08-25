@@ -296,11 +296,11 @@ class SocialWin : public GraphicWin, public SubInterface {
   uint32_t psychAllocPending_;  // 0x2C54
   uint32_t labsAllocPending_;  // 0x2C58
   uint32_t field_2C5C_;  // 0x2C5C
-  uint8_t socEngModifierNums_[0x1B8];  // 0x2C60
-  uint8_t effectIcons_[0xF78];  // 0x2E18
-  uint8_t energyAllocLock_[0x58];  // 0x3D90
-  uint8_t energyAllocArrow_[0x108];  // 0x3DE8
-  uint8_t energyAllocSlider_[0x2130];  // 0x3EF0
+  Sprite socEngModifierNums_[0xA];   // 0x2C60, 0x2C * 0xA == 0x1B8
+  Sprite effectIcons_[0x5A];         // 0x2E18, 0x2C * 0x5A == 0xF78
+  Sprite energyAllocLock_[2];        // 0x3D90, 0x2C * 2 == 0x58
+  Sprite energyAllocArrow_[6];       // 0x3DE8, 0x2C * 6 == 0x108
+  Buffer energyAllocSlider_[6];      // 0x3EF0, 0x588 * 6 == 0x2130
   FlatButton flatButtons_[35];  // 0x6020
   ButtonGroup buttonGroups_[4];  // 0x1EB84
   ButtonGroup buttonGroup_;  // 0x1EDD4
