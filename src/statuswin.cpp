@@ -160,9 +160,13 @@ void StatusWin::redraw() {
                                                        sizeVal, 1);
     }
     if (WinScreenWidth != 0x320) {
-        *reinterpret_cast<int *>(self + 0x1530) = 4;
-        *reinterpret_cast<int *>(self + 0x1558) = 4;
-        *reinterpret_cast<int *>(self + 0x1580) = 4;
+        // font.h's `int unk_1_; // height offset? set outside of class
+        // function` - and THIS IS that outside setter. The offsets are the
+        // embedded Fonts' own starts (font1_ 0x1530, font2_ 0x1558, font3_
+        // 0x1580), so the int written is each Font's first member.
+        font1_.unk_1_ = 4;
+        font2_.unk_1_ = 4;
+        font3_.unk_1_ = 4;
     }
     draw_status(-1, -1, -1, -1, 0);
     RECT localRect;
