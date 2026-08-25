@@ -52,7 +52,7 @@ SHAPES = [
      "anything the image writes BEFORE the vfptr store in the member-"
      "initialiser list, and drop the trailing `return this;`."),
 
-    ("free-function destructor", 10,
+    ("free-function destructor", 9,
      re.compile(r"^\w[\w :*&]*\b\w*destructor_redirect\w*\s*\(", re.M),
      "a destructor modelled as a free function. Make it `X::~X()`. A free "
      "function is only needed where C++ cannot take a destructor's address."),
@@ -278,11 +278,45 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--check", action="store_true")
+    ap.add_argument("--lower-ceilings", action="store_true",
+                    help="rewrite ceilings DOWN to the measured census; "
+                         "never up - raising one stays a deliberate edit")
     ap.add_argument("--root", type=pathlib.Path, default=REPO / "src",
                     help="scan elsewhere; used to positive-control --check")
     args = ap.parse_args()
 
     counts, files = census(args.root)
+
+    if args.lower_ceilings:
+        # Same workflow defect class_debt had: a pass that empties four
+        # shapes reports one drop per run and stays red until each ceiling
+        # matches. Lowering can only tighten a ratchet, so it is mechanical;
+        # RAISING one is still a deliberate edit and this refuses to do it.
+        source = pathlib.Path(__file__).read_text()
+        changed = []
+        for name, ceiling, _rx, _why in SHAPES + HEADER_SHAPES:
+            n = counts[name]
+            if n >= ceiling:
+                continue
+            pat = re.compile(r'(\(\s*"' + re.escape(name) + r'",\s*)' + str(ceiling) + r'\b')
+            source, hits = pat.subn(r"\g<1>" + str(n), source)
+            if hits:
+                changed.append((name, ceiling, n))
+        for name, ceiling in list(SCAFFOLD_CEILINGS.items()):
+            n = counts.get(name)
+            if n is None or n >= ceiling:
+                continue
+            pat = re.compile(r'(^\s*"' + re.escape(name) + r'":\s*)' + str(ceiling) + r',', re.M)
+            source, hits = pat.subn(r"\g<1>" + str(n) + ",", source)
+            if hits:
+                changed.append((name, ceiling, n))
+        if changed:
+            pathlib.Path(__file__).write_text(source)
+            for name, was, now in changed:
+                print(f"  lowered {name}: {was} -> {now}")
+        print(f"{len(changed)} ceiling(s) lowered to the measured census")
+        return 0
+
     grew, shrank = [], []
     for name, ceiling, _rx, why in SHAPES + HEADER_SHAPES:
         n = counts[name]
