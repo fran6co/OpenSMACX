@@ -101,7 +101,15 @@ class Font {
   // when it is negative, `height_ + unk_1_` when it is not.
   friend class Win;
 
+ public:
+  // PUBLIC because the image writes it from outside: StatusWin sets
+  // font1_/font2_/font3_'s first member to 4 when the screen is not 800
+  // wide (`*(int *)(self + 0x1530) = 4` before this was named). That is
+  // the access this comment already described, now spelled so the
+  // caller can be written honestly. Access control is compile-time only,
+  // so nothing about the layout or the emitted bytes moves.
   int unk_1_; // height offset? set outside of class functions
+ private:
   BOOL is_fot_set_; // used only by both init() functions
   HFONT font_obj_;
   int line_height_;
