@@ -47,7 +47,7 @@ int Gamma::on_key_click(int, int) {
 // calls     0x005C9520
 Status: Complete
 */
-void Gamma::on_scrolled(int a1, int a2) {
+void Gamma::on_scrolled(int code, int pos) {
     adjust_palette();
 }
 

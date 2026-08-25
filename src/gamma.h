@@ -41,7 +41,12 @@ class Gamma : public GraphicWin {
   void adjust_palette();
 
  public:
-  void on_scrolled(int a1, int a2);
+  // (code, pos), the Win32 WM_VSCROLL shape the image mirrors. Evidence
+  // is in the bodies: BaseWin::on_scrolled does `switch (a1)` and then
+  // stores a2 in field_40B10_; StringBox::on_scrolled stores a2 in
+  // field_A1C_; BaseWin::on_iface_scrolled tests `a1 != 2` and copies a2.
+  // The first is switched on, the second is kept - a code and a position.
+  void on_scrolled(int code, int pos);
   Gamma();
   // 0x00456110 is not recovered: a
   // pending_bodies forwarder, because an empty inline stub emits

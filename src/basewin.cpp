@@ -292,11 +292,11 @@ Purpose: Handle an interface scroll, but only for scroll kind 2 - stash the
 Return Value: n/a
 Status: Complete
 */
-void BaseWin::on_iface_scrolled(int a1, int a2) {
-    if (a1 != 2) {
+void BaseWin::on_iface_scrolled(int code, int pos) {
+    if (code != 2) {
         return;
     }
-    std::memcpy(reinterpret_cast<uint8_t *>(this) + 0x40100, &a2, sizeof(a2));
+    std::memcpy(reinterpret_cast<uint8_t *>(this) + 0x40100, &pos, sizeof(pos));
     BaseWin *const base = reinterpret_cast<BaseWin *>(
         reinterpret_cast<uint8_t *>(this) - 0xA14);
     base->draw_supported(1);
@@ -444,10 +444,10 @@ void BaseWin::UNK2(int a1, int a2, int a3, int a4) {
 // calls     0x0040FCC0
 Status: Complete
 */
-void BaseWin::on_scrolled(int a1, int a2) {
-    switch (a1) {
+void BaseWin::on_scrolled(int code, int pos) {
+    switch (code) {
         case 1:
-            *reinterpret_cast<int *>(reinterpret_cast<char *>(this) + 0x40b10) = a2;
+            field_40B10_ = pos;
             draw_facilities(1);
             break;
     }
