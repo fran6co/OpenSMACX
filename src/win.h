@@ -800,6 +800,20 @@ static const uint32_t WinFlagNoRaise = 0x2000000;          // iFlags_
 // `Win::OnLButtonDown` is the only writer, and `Win::do_tracking` - the
 // method `window_proc` calls on `WinTrackingWindow` for every WM_MOUSEMOVE
 // - is the only other reader.
+// Real storage, not a fixed-address binding. These were spelled
+// `static int *const X = (int *)0xADDR` and read as `*X`; the address is
+// what the image put them at, which is an annotation, not a type.
+extern int WinClipWidth;            // 0x009B7A40
+extern int WinClipHeight;           // 0x009B7A44
+extern int WinDragOffsetX;          // 0x009B7A38
+extern int WinDragOffsetY;          // 0x009B7A3C
+extern int WinMaximizeIcon;         // 0x009B7B04
+extern int WinRestoreIcon;          // 0x009B7B08
+extern int WinModalResult;          // 0x009B6EF0
+extern int WinSavedAreaWidth;       // 0x009B6F88
+extern int WinSavedAreaHeight;      // 0x009B6F8C
+extern int WinSizingFlag;           // 0x009B7AD4
+
 extern int WinTrackingMode;  // 0x009B7AA8, the hit-test code that started it
 extern int WinTrackingX;     // 0x009B7AB0
 extern int WinTrackingY;     // 0x009B7AB4
@@ -961,8 +975,6 @@ typedef void(__cdecl *FnSetActiveWindow)(Win *);
 
 static int * const WinFocusStack = (int *)0x009B7A1C;
 static int * const WinModalDepth = (int *)0x009B7AE4;
-static int * const WinMaximizeIcon = (int *)0x009B7B04;
-static int * const WinRestoreIcon = (int *)0x009B7B08;
 static int * const WinFillColour = (int *)0x00696D14;
 static int * const WinKeyRingCursor = (int *)0x00696D5C;
 static int * const WinMsgIncreaseMaxChildren = (int *)0x00696D60;
@@ -988,13 +1000,6 @@ static int * const WinModalFocus = (int *)0x009B8D7C;
 static int * const WinTitleBarHeight = (int *)0x009B8DD4;
 static int * const WinScreenDCDepth = (int *)0x009B3AB0;
 static int * const WinDirtyRect = (int *)0x009B6EE8;
-static int * const WinModalResult = (int *)0x009B6EF0;
-static int * const WinSavedAreaWidth = (int *)0x009B6F88;
-static int * const WinSavedAreaHeight = (int *)0x009B6F8C;
-static int * const WinDragOffsetX = (int *)0x009B7A38;
-static int * const WinDragOffsetY = (int *)0x009B7A3C;
-static int * const WinClipWidth = (int *)0x009B7A40;
-static int * const WinClipHeight = (int *)0x009B7A44;
 static int * const WinBackBuffer = (int *)0x009B7A68;
 static int * const WinViewOriginX = (int *)0x009B7A70;
 static int * const WinViewOriginY = (int *)0x009B7A74;
@@ -1012,7 +1017,6 @@ static int * const WinViewOriginY = (int *)0x009B7A74;
 static int * const WinCallbackWindow = (int *)0x009B7AB8;
 static int * const WinInputFocus = (int *)0x009B7AC4;
 static int * const WinActiveWindow = (int *)0x009B7AC8;
-static int * const WinSizingFlag = (int *)0x009B7AD4;
 static int * const WinScreenDC = (int *)0x009B7B2C;
 static int * const WinPendingFocus = (int *)0x009B7B38;
 static int * const WinDDSurface = (int *)0x009BC498;
