@@ -156,10 +156,6 @@ class SetupWin : public GraphicWin {
   Buffer buffer2_;  // 0x1118, IDB `buffer2`, size == sizeof(Buffer); ends 0x16A0
 };
 
-int __fastcall setup_win_unk1_redirect(SetupWin *self, void *, int a1);
-int __fastcall setup_win_unk2_redirect(SetupWin *self, void *, int a1);
-int __fastcall setup_win_unk3_redirect(SetupWin *self, void *, int a1);
-int __fastcall setup_win_unk4_redirect(SetupWin *self, void *, int a1);
 
 // do_menu_rightside is declared on the class because the recovered do_menu
 // reaches it with a direct `call rel32`, but its 2129-byte body is not

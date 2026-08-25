@@ -53,4 +53,3 @@ class MultiDebug : public GraphicWin {
   Time timer_;  // 0xA40
 };
 
-void __fastcall multi_debug_close_redirect(MultiDebug *self, void *);

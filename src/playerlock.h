@@ -43,7 +43,3 @@ class PlayerLock {
   Entry entries_[2];
 };
 
-int __fastcall player_lock_add_lock_redirect(PlayerLock *self, void *, int factionID, int flags, int x, int y);
-void __fastcall player_lock_unlock_redirect(PlayerLock *self, void *, int factionID);
-void __fastcall player_lock_clear_redirect(PlayerLock *self, void *);
-int __fastcall player_lock_active_redirect(PlayerLock *self, void *);

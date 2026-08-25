@@ -211,9 +211,6 @@ class Net {
   uint8_t field_768_[0x18];  // 0x768
 };
 
-int __fastcall net_poll_players_redirect(Net *self, void *, int a1);
-char *__fastcall net_get_player_name_redirect(
-    Net *self, void *, unsigned long key);
 
 // THE LIVE NET AND THE FLAG THAT GATES IT. `do_net` and `check_net` both read
 // 0x009BE608 for the object and 0x009BE600 for the enable flag, and do nothing

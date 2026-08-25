@@ -113,9 +113,6 @@ Status: Complete
 void PickWin::on_button_passover(int, int) {
 }
 
-void __fastcall pick_win_on_button_passover_redirect(PickWin *self, void *, int a1, int a2) {
-    self->on_button_passover(a1, a2);
-}
 
 /*
 Purpose: Step the receiver back to the subobject ??_GPickWin@@UAEPAXI@Z

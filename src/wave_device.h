@@ -149,54 +149,7 @@ void __fastcall wave_control_group_ctor_redirect(WaveControlGroup *self,
                                                  void *);
 void __fastcall wave_control_group_dtor_redirect(WaveControlGroup *self,
                                                  void *);
-Wave_Device *__fastcall wave_device_ctor_redirect(Wave_Device *self, void *);
-void __fastcall wave_device_dtor_redirect(Wave_Device *self, void *);
 
 void __fastcall wave_group_insert_redirect(WaveGroupList *self, void *,
                                            Wave *a1);
 
-void __fastcall wave_device_set_pan_redirect(Wave_Device *self, void *, int a1);
-int __fastcall wave_device_fade_redirect(Wave_Device *self, void *, int a1);
-void __fastcall wave_device_enable_redirect(Wave_Device *self, void *);
-void __fastcall wave_device_disable_redirect(Wave_Device *self, void *);
-int __fastcall wave_device_get_volume_redirect(Wave_Device *self, void *);
-int __fastcall wave_device_stop_redirect(Wave_Device *self, void *);
-void __fastcall wave_device_suspend_redirect(Wave_Device *self, void *);
-void __fastcall wave_device_restart_redirect(Wave_Device *self, void *);
-void __fastcall wave_device_update_sound_redirect(Wave_Device *self, void *);
-int __fastcall wave_device_get_ndevices_redirect(Wave_Device *self, void *);
-int __fastcall wave_device_get_hw_mem_size_redirect(Wave_Device *self, void *);
-int __fastcall wave_device_get_rate_redirect(Wave_Device *self, void *);
-int __fastcall wave_device_get_ds_redirect(Wave_Device *self, void *);
-int __fastcall wave_device_is_eax_redirect(Wave_Device *self, void *);
-int __fastcall wave_device_is_disabled_redirect(Wave_Device *self, void *);
-int __fastcall wave_device_stop_raw_dump_redirect(Wave_Device *self, void *);
-int __fastcall wave_device_is_3d_redirect(Wave_Device *self, void *);
-void __fastcall wave_device_set_rate_redirect(Wave_Device *self, void *, unsigned long a1);
-void __fastcall wave_device_set_volume_redirect(Wave_Device *self, void *, unsigned long a1);
-int __fastcall wave_device_set_hwnd_redirect(Wave_Device *self, void *, void *a1);
-int __fastcall wave_device_get_group_volume_redirect(Wave_Device *self, void *, unsigned int a1);
-int __fastcall wave_device_add_to_group_redirect(Wave_Device *self, void *, unsigned int a1, Wave *a2);
-int __fastcall wave_device_pull_from_group_redirect(Wave_Device *self, void *, Wave *a1);
-int __fastcall wave_device_is_group_disabled_redirect(Wave_Device *self, void *, unsigned int a1);
-int __fastcall wave_device_select_redirect(Wave_Device *self, void *, unsigned long a1);
-int __fastcall wave_device_create_device_redirect(Wave_Device *self, void *, unsigned long a1);
-int __fastcall wave_device_delete_device_redirect(Wave_Device *self, void *);
-int __fastcall wave_device_init_redirect(Wave_Device *self, void *, void *a1, unsigned long a2);
-void __fastcall wave_device_release_redirect(Wave_Device *self, void *);
-int __fastcall wave_device_set_group_volume_redirect(Wave_Device *self, void *, unsigned int a1, unsigned int a2);
-int __fastcall wave_device_enable_group_redirect(Wave_Device *self, void *, unsigned int a1);
-int __fastcall wave_device_disable_group_redirect(Wave_Device *self, void *, unsigned int a1);
-void __fastcall wave_device_get_description_redirect(Wave_Device *self, void *, unsigned long a1, char *a2, unsigned long a3);
-int __fastcall wave_device_start_raw_dump_redirect(Wave_Device *self, void *, char *a1);
-int __fastcall wave_device_set_eax_props_redirect(Wave_Device *self, void *, EAX_REVERB_PROPERTIES *a1);
-int __fastcall wave_device_set_eax_redirect(Wave_Device *self, void *, unsigned long a1);
-int __fastcall wave_device_set_eax_mix_redirect(Wave_Device *self, void *, float a1);
-int __fastcall wave_device_set_listener_position_redirect(Wave_Device *self, void *, float a1, float a2, float a3);
-int __fastcall wave_device_get_listener_position_redirect(Wave_Device *self, void *, float *a1, float *a2, float *a3);
-int __fastcall wave_device_set_listener_xpos_redirect(Wave_Device *self, void *, float a1);
-int __fastcall wave_device_get_listener_xpos_redirect(Wave_Device *self, void *, float *a1);
-int __fastcall wave_device_set_listener_ypos_redirect(Wave_Device *self, void *, float a1);
-int __fastcall wave_device_get_listener_ypos_redirect(Wave_Device *self, void *, float *a1);
-int __fastcall wave_device_set_listener_zpos_redirect(Wave_Device *self, void *, float a1);
-int __fastcall wave_device_get_listener_zpos_redirect(Wave_Device *self, void *, float *a1);

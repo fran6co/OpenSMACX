@@ -91,4 +91,3 @@ class PopMenu : public Popup {
 
 // BasePop::init is not recovered yet.
 
-int __fastcall pop_menu_init_redirect(PopMenu *self, void *);

@@ -61,4 +61,3 @@ class NetMsg : public Popup {
 
 // Popup::hide is not recovered yet.
 
-void __fastcall net_msg_close_redirect(NetMsg *self, void *);

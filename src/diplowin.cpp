@@ -37,9 +37,6 @@ Status: Complete
 void DiploWin::UNK5() {
 }
 
-void __fastcall diplo_win_unk5_redirect(DiploWin *self, void *) {
-    self->UNK5();
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -56,9 +53,6 @@ Status: Complete
 void DiploWin::UNK4(int) {
 }
 
-void __fastcall diplo_win_unk4_redirect(DiploWin *self, void *, int a1) {
-    self->UNK4(a1);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -75,9 +69,6 @@ Status: Complete
 void DiploWin::on_iface_left_click(int, int) {
 }
 
-void __fastcall diplo_win_on_iface_left_click_redirect(DiploWin *self, void *, int a1, int a2) {
-    self->on_iface_left_click(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -94,9 +85,6 @@ Status: Complete
 void DiploWin::on_iface_left_up(int, int) {
 }
 
-void __fastcall diplo_win_on_iface_left_up_redirect(DiploWin *self, void *, int a1, int a2) {
-    self->on_iface_left_up(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -113,9 +101,6 @@ Status: Complete
 void DiploWin::on_iface_right_click(int, int) {
 }
 
-void __fastcall diplo_win_on_iface_right_click_redirect(DiploWin *self, void *, int a1, int a2) {
-    self->on_iface_right_click(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -132,9 +117,6 @@ Status: Complete
 void DiploWin::on_iface_left_down(int, int) {
 }
 
-void __fastcall diplo_win_on_iface_left_down_redirect(DiploWin *self, void *, int a1, int a2) {
-    self->on_iface_left_down(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -151,9 +133,6 @@ Status: Complete
 void DiploWin::on_iface_right_down(int, int) {
 }
 
-void __fastcall diplo_win_on_iface_right_down_redirect(DiploWin *self, void *, int a1, int a2) {
-    self->on_iface_right_down(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -170,9 +149,6 @@ Status: Complete
 void DiploWin::on_iface_mouse_move(int, int) {
 }
 
-void __fastcall diplo_win_on_iface_mouse_move_redirect(DiploWin *self, void *, int a1, int a2) {
-    self->on_iface_mouse_move(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -189,9 +165,6 @@ Status: Complete
 void DiploWin::on_iface_mouse_leave(int, int) {
 }
 
-void __fastcall diplo_win_on_iface_mouse_leave_redirect(DiploWin *self, void *, int a1, int a2) {
-    self->on_iface_mouse_leave(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -208,9 +181,6 @@ Status: Complete
 void DiploWin::on_iface_selected(int, int) {
 }
 
-void __fastcall diplo_win_on_iface_selected_redirect(DiploWin *self, void *, int a1, int a2) {
-    self->on_iface_selected(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -227,9 +197,6 @@ Status: Complete
 void DiploWin::on_iface_left_double_click(int, int) {
 }
 
-void __fastcall diplo_win_on_iface_left_double_click_redirect(DiploWin *self, void *, int a1, int a2) {
-    self->on_iface_left_double_click(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -246,9 +213,6 @@ Status: Complete
 void DiploWin::on_iface_right_double_click(int, int) {
 }
 
-void __fastcall diplo_win_on_iface_right_double_click_redirect(DiploWin *self, void *, int a1, int a2) {
-    self->on_iface_right_double_click(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -265,9 +229,6 @@ Status: Complete
 void DiploWin::on_iface_button_clicked(int) {
 }
 
-void __fastcall diplo_win_on_iface_button_clicked_redirect(DiploWin *self, void *, int a1) {
-    self->on_iface_button_clicked(a1);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -284,9 +245,6 @@ Status: Complete
 void DiploWin::on_iface_button_toggled(int, int) {
 }
 
-void __fastcall diplo_win_on_iface_button_toggled_redirect(DiploWin *self, void *, int a1, int a2) {
-    self->on_iface_button_toggled(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
@@ -304,9 +262,6 @@ int DiploWin::on_iface_dialog_back_draw(int) {
     return 0;
 }
 
-int __fastcall diplo_win_on_iface_dialog_back_draw_redirect(DiploWin *self, void *, int a1) {
-    return self->on_iface_dialog_back_draw(a1);
-}
 
 /*
 Purpose: Clear the two cached values at 0xA24 and 0xA28.
@@ -325,9 +280,6 @@ void DiploWin::UNK2() {
     field_A28_ = 0;
 }
 
-void __fastcall diplo_win_unk2_redirect(DiploWin *self, void *) {
-    self->UNK2();
-}
 
 /*
 Purpose: Clear one entry of the array at 0xA1C, then clear the two words at
@@ -363,9 +315,6 @@ void DiploWin::UNK3(int a1) {
     pair[1] = 0;
 }
 
-void __fastcall diplo_win_unk3_redirect(DiploWin *self, void *, int a1) {
-    self->UNK3(a1);
-}
 
 /*
 // ORIGINAL: 0x00443C30 ?show@DiploWin@@QAEXH@Z 0x00443C30-0x00443C4B BYTE_EXACT

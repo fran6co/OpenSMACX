@@ -100,13 +100,3 @@ int __cdecl current_server();
 // reaches it through a rebindable seam.
 #include "netdaemon.h"  // message_data, the same 0x00592EE0
 
-void __fastcall lock_reset_map_redirect(Lock *self, void *);
-void __fastcall lock_clear_redirect(Lock *self, void *);
-int __fastcall lock_any_locks_redirect(Lock *self, void *);
-void __fastcall lock_unlock_redirect(Lock *self, void *, int slot);
-int __fastcall lock_global_lock_redirect(Lock *self, void *, int owner);
-int __fastcall lock_check_global_2_redirect(Lock *self, void *, int owner);
-void __fastcall lock_check_global_redirect(Lock *self, void *);
-int __fastcall lock_add_lock_redirect(Lock *self, void *, int slot, int flags, int a3, int a4);
-int __fastcall lock_lock_redirect(Lock *self, void *, int slot, int flags, int a3,
-                                  int a4, int a5, int a6, int a7);

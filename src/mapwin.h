@@ -243,9 +243,6 @@ class MapWin : protected virtual GraphicWin {
 
 static_assert(sizeof(MapWin) == 0x22480, "MapWin layout must match terranx.exe");
 
-int __fastcall map_win_unk1_redirect(MapWin *self, void *);
-void __fastcall map_win_unk3_redirect(MapWin *self, void *);
-void __fastcall map_win_do_image_buttons_redirect(MapWin *self, void *);
 
 // MapWin::main_caption sets the date on the one MainInterface the original
 // keeps at a fixed address, using a caption that also lives at one.
@@ -258,23 +255,16 @@ extern func_set_date MainInterfaceOriginalSetDate;
 extern MainInterface MainInterfaceGlobal;
 extern char MapWinMainCaption[256];
 
-void __fastcall map_win_main_caption_redirect(MapWin *self, void *);
 
 // The heap pointer at 0x4 is freed through the game's CRT boundary, the same
 // address buffer.cpp frees through. Rebindable so tests observe it.
 typedef void *func_map_win_free(void *);
 
-void __fastcall map_win_close_redirect(MapWin *self, void *);
-int __fastcall map_win_unk2_redirect(MapWin *self, void *);
 
 // MapWin's click handler and the input-enable flag it gates on are not
 // recovered; the flag lives at a fixed address and is rebindable for tests.
 int32_t *const MapWinInputEnabled = (int32_t *)0x0090D938;
 
-void __fastcall map_win_on_left_click_redirect(MapWin *self, void *, int a1, int a2);
-void __fastcall map_win_on_right_click_redirect(MapWin *self, void *, int a1, int a2);
-void __fastcall map_win_on_left_double_click_redirect(MapWin *self, void *, int a1, int a2);
-void __fastcall map_win_on_left_up_redirect(MapWin *self, void *, int a1, int a2);
 
 // The map-window slot array the free drawing helpers broadcast to: eight
 // MapWin* in the image's zero-initialised .data at 0x007D3C3C, ending at the

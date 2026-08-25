@@ -120,25 +120,9 @@ int AlphaNet::who_2_idx(int identity) {
     return 0;
 }
 
-int __fastcall alpha_net_pid_to_idx_redirect(
-    AlphaNet *self, void *, uint32_t process_id) {
-    return self->pid_2_idx(process_id);
-}
 
-int __fastcall alpha_net_pid_to_who_redirect(
-    AlphaNet *self, void *, uint32_t process_id) {
-    return self->pid_2_who(process_id);
-}
 
-int __fastcall alpha_net_who_to_pid_redirect(
-    AlphaNet *self, void *, int identity) {
-    return self->who_2_pid(identity);
-}
 
-int __fastcall alpha_net_who_to_idx_redirect(
-    AlphaNet *self, void *, int identity) {
-    return self->who_2_idx(identity);
-}
 
 
 /*
@@ -166,9 +150,6 @@ void AlphaNet::close() {
     Net::close();
 }
 
-void __fastcall alpha_net_close_redirect(AlphaNet *self, void *) {
-    self->close();
-}
 
 /*
 // ORIGINAL: 0x00401CE0 SessionStruct::close 0x00401CE0-0x00401D79

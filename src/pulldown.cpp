@@ -197,39 +197,12 @@ int PullDown::get_selected() {
     return (flags & 2U) ? -1 : selected_;
 }
 
-int __fastcall pull_down_hide_item_redirect(
-        PullDown *self, void *, int id) {
-    return self->hide_item(id);
-}
 
-int __fastcall pull_down_show_item_redirect(
-        PullDown *self, void *, int id) {
-    return self->show_item(id);
-}
 
-int __fastcall pull_down_disable_item_redirect(
-        PullDown *self, void *, int id) {
-    return self->disable_item(id);
-}
 
-int __fastcall pull_down_enable_item_redirect(
-        PullDown *self, void *, int id) {
-    return self->enable_item(id);
-}
 
-int __fastcall pull_down_check_item_redirect(
-        PullDown *self, void *, int id) {
-    return self->check_item(id);
-}
 
-int __fastcall pull_down_uncheck_item_redirect(
-        PullDown *self, void *, int id) {
-    return self->uncheck_item(id);
-}
 
-int __fastcall pull_down_get_selected_redirect(PullDown *self, void *) {
-    return self->get_selected();
-}
 
 const uint32_t PullDownPrimaryVtable = 0x0066FF40;
 const uint32_t PullDownBufferVtable = 0x0066FF38;
@@ -309,10 +282,6 @@ int PullDown::UNK2(int) {
     return 8;
 }
 
-int __fastcall pull_down_unk2_redirect(
-        PullDown *self, void *, int a) {
-    return self->UNK2(a);
-}
 
 /*
 Purpose: Legacy stub; the original body returns 8 without reading its
@@ -330,10 +299,6 @@ int PullDown::UNK3(int, int, int) {
     return 8;
 }
 
-int __fastcall pull_down_unk3_redirect(
-        PullDown *self, void *, int a, int b, int c) {
-    return self->UNK3(a, b, c);
-}
 
 /*
 Purpose: Legacy stub; the original body returns 1 without reading its
@@ -351,10 +316,6 @@ int PullDown::UNK5() {
     return 1;
 }
 
-int __fastcall pull_down_unk5_redirect(
-        PullDown *self, void *) {
-    return self->UNK5();
-}
 
 /*
 Purpose: Legacy stub; the original body returns 1 without reading its
@@ -372,10 +333,6 @@ int PullDown::UNK6() {
     return 1;
 }
 
-int __fastcall pull_down_unk6_redirect(
-        PullDown *self, void *) {
-    return self->UNK6();
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -393,9 +350,6 @@ Status: Complete
 void PullDown::on_mouse_leave(int, int) {
 }
 
-void __fastcall pull_down_on_mouse_leave_redirect(PullDown *self, void *, int a1, int a2) {
-    self->on_mouse_leave(a1, a2);
-}
 
 /*
 Purpose: Find a menu item by its id and return its index, scanning up to the
@@ -424,9 +378,6 @@ int PullDown::id_to_index(int id) {
     return -1;
 }
 
-int __fastcall pull_down_id_to_index_redirect(PullDown *self, void *, int id) {
-    return self->id_to_index(id);
-}
 
 /*
 // ORIGINAL: 0x005F93A0 ?hide@PullDown@@QAEXXZ 0x005F93A0-0x005F93B9 BYTE_EXACT

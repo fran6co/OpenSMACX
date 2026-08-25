@@ -43,9 +43,6 @@ void Popup::close() {
     BasePop::close();
 }
 
-void __fastcall popup_close_redirect(Popup *self, void *) {
-    self->close();
-}
 
 
 /*
@@ -66,10 +63,6 @@ void Popup::start(char *a1, const char *a2, int a3, char *a4, int a5) {
     start(a1, a2, a3, a4, a5, nullptr);
 }
 
-void __fastcall popup_start_redirect(Popup *self, void *, char *a1,
-                                     const char *a2, int a3, char *a4, int a5) {
-    self->start(a1, a2, a3, a4, a5);
-}
 
 // AN ARRAY, NOT A POINTER. 0x009B8AA8 is in .bss - zero-filled, in no
 // file section - and the image pushes its ADDRESS as an immediate
@@ -111,14 +104,7 @@ void Popup::start(const char *label, int value) {
     start(PopupStartCaption, label, -1, nullptr, value, nullptr);
 }
 
-void __fastcall popup_start_label_redirect(Popup *self, void *, const char *label) {
-    self->start(label);
-}
 
-void __fastcall popup_start_label_value_redirect(Popup *self, void *,
-                                                 const char *label, int value) {
-    self->start(label, value);
-}
 
 /*
 Purpose: Draw a popup's dialog background; the legacy implementation does
@@ -138,9 +124,6 @@ int Popup::on_dialog_back_draw(::GraphicWin *) {
     return 0;
 }
 
-int __fastcall popup_on_dialog_back_draw_redirect(Popup *self, void *, ::GraphicWin *window) {
-    return self->on_dialog_back_draw(window);
-}
 
 
 /*
@@ -695,9 +678,6 @@ void __cdecl popup_wave_callback(PopupWave *popup, int) {
     }
 }
 
-void __cdecl popup_wave_callback_redirect(PopupWave *popup, int a2) {
-    popup_wave_callback(popup, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
@@ -715,10 +695,6 @@ Status: Complete
 void Popup::on_redraw_nc(RECT *, int) {
 }
 
-void __fastcall popup_on_redraw_nc_redirect(
-        Popup *self, void *, RECT *a1, int a2) {
-    self->on_redraw_nc(a1, a2);
-}
 
 /*
 Purpose: Reset the button width to 20 unless the field at 0x30AC scales to
@@ -755,9 +731,6 @@ void Popup::on_adjust_button_width() {
     }
 }
 
-void __fastcall popup_on_adjust_button_width_redirect(Popup *self, void *) {
-    self->on_adjust_button_width();
-}
 
 /*
 // ORIGINAL: 0x00404F90 ?on_nc_hittest@Popup@@QAEHHH@Z 0x00404F90-0x00404FA4 BYTE_EXACT

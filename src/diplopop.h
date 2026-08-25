@@ -115,13 +115,3 @@ class DiploPop : public GraphicWin, public SubInterface {
   FlatButton flatButtons_[3];  // 0x2158, IDB `flatButtons`, 3 * sizeof(FlatButton)
 };
 
-void __fastcall diplo_pop_on_iface_left_click_redirect(DiploPop *self, void *, int a1, int a2);
-void __fastcall diplo_pop_on_iface_right_click_redirect(DiploPop *self, void *, int a1, int a2);
-void __fastcall diplo_pop_on_iface_left_down_redirect(DiploPop *self, void *, int a1, int a2);
-void __fastcall diplo_pop_on_iface_right_down_redirect(DiploPop *self, void *, int a1, int a2);
-void __fastcall diplo_pop_on_iface_mouse_move_redirect(DiploPop *self, void *, int a1, int a2);
-void __fastcall diplo_pop_on_iface_mouse_leave_redirect(DiploPop *self, void *, int a1, int a2);
-void __fastcall diplo_pop_on_iface_selected_redirect(DiploPop *self, void *, int a1, int a2);
-void __fastcall diplo_pop_on_iface_left_double_click_redirect(DiploPop *self, void *, int a1, int a2);
-void __fastcall diplo_pop_on_iface_right_double_click_redirect(DiploPop *self, void *, int a1, int a2);
-void __fastcall diplo_pop_on_iface_button_toggled_redirect(DiploPop *self, void *, int a1, int a2);

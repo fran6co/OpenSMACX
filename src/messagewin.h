@@ -59,5 +59,3 @@ class MessageWin : public Sprite {
 static_assert(sizeof(MessageWin) == 0x3758,
               "MessageWin layout must match the original executable");
 
-void __fastcall message_win_unk1_redirect(MessageWin *self, void *, int a1, int a2, int a3, int a4, int a5);
-void __fastcall message_win_unk4_redirect(MessageWin *self, void *, int a1);

@@ -36,9 +36,6 @@ Status: Complete
 void CouncWin::on_group_clicked(int, int) {
 }
 
-void __fastcall counc_win_on_group_clicked_redirect(CouncWin *self, void *, int a1, int a2) {
-    self->on_group_clicked(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -55,9 +52,6 @@ Status: Complete
 void CouncWin::on_button_passover(int, int) {
 }
 
-void __fastcall counc_win_on_button_passover_redirect(CouncWin *self, void *, int a1, int a2) {
-    self->on_button_passover(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -74,9 +68,6 @@ Status: Complete
 void CouncWin::on_iface_left_click(int, int) {
 }
 
-void __fastcall counc_win_on_iface_left_click_redirect(CouncWin *self, void *, int a1, int a2) {
-    self->on_iface_left_click(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -93,9 +84,6 @@ Status: Complete
 void CouncWin::on_iface_right_click(int, int) {
 }
 
-void __fastcall counc_win_on_iface_right_click_redirect(CouncWin *self, void *, int a1, int a2) {
-    self->on_iface_right_click(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -112,9 +100,6 @@ Status: Complete
 void CouncWin::on_iface_left_down(int, int) {
 }
 
-void __fastcall counc_win_on_iface_left_down_redirect(CouncWin *self, void *, int a1, int a2) {
-    self->on_iface_left_down(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -131,9 +116,6 @@ Status: Complete
 void CouncWin::on_iface_right_down(int, int) {
 }
 
-void __fastcall counc_win_on_iface_right_down_redirect(CouncWin *self, void *, int a1, int a2) {
-    self->on_iface_right_down(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -150,9 +132,6 @@ Status: Complete
 void CouncWin::on_iface_mouse_move(int, int) {
 }
 
-void __fastcall counc_win_on_iface_mouse_move_redirect(CouncWin *self, void *, int a1, int a2) {
-    self->on_iface_mouse_move(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -169,9 +148,6 @@ Status: Complete
 void CouncWin::on_iface_mouse_leave(int, int) {
 }
 
-void __fastcall counc_win_on_iface_mouse_leave_redirect(CouncWin *self, void *, int a1, int a2) {
-    self->on_iface_mouse_leave(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -188,9 +164,6 @@ Status: Complete
 void CouncWin::on_iface_selected(int, int) {
 }
 
-void __fastcall counc_win_on_iface_selected_redirect(CouncWin *self, void *, int a1, int a2) {
-    self->on_iface_selected(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -207,9 +180,6 @@ Status: Complete
 void CouncWin::on_iface_left_double_click(int, int) {
 }
 
-void __fastcall counc_win_on_iface_left_double_click_redirect(CouncWin *self, void *, int a1, int a2) {
-    self->on_iface_left_double_click(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -226,9 +196,6 @@ Status: Complete
 void CouncWin::on_iface_right_double_click(int, int) {
 }
 
-void __fastcall counc_win_on_iface_right_double_click_redirect(CouncWin *self, void *, int a1, int a2) {
-    self->on_iface_right_double_click(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -245,9 +212,6 @@ Status: Complete
 void CouncWin::on_iface_button_toggled(int, int) {
 }
 
-void __fastcall counc_win_on_iface_button_toggled_redirect(CouncWin *self, void *, int a1, int a2) {
-    self->on_iface_button_toggled(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -264,9 +228,6 @@ Status: Complete
 void CouncWin::on_iface_group_clicked(int, int, int) {
 }
 
-void __fastcall counc_win_on_iface_group_clicked_redirect(CouncWin *self, void *, int a1, int a2, int a3) {
-    self->on_iface_group_clicked(a1, a2, a3);
-}
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
@@ -285,10 +246,6 @@ int CouncWin::on_button_text_draw(::GraphicWin *, char *, int) {
     return 0;
 }
 
-int __fastcall counc_win_on_button_text_draw_redirect(
-        CouncWin *self, void *, ::GraphicWin *a1, char *a2, int a3) {
-    return self->on_button_text_draw(a1, a2, a3);
-}
 
 /*
 // ORIGINAL: 0x00426EC0 ?on_mouse_leave@CouncWin@@QAEXHH@Z 0x00426EC0-0x00426EDE BYTE_EXACT

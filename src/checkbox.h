@@ -180,7 +180,3 @@ static_assert(sizeof(CheckBox) == 0xB28,
 extern uint32_t CheckBoxDefault1;
 extern uint32_t CheckBoxDefault2;
 
-void __fastcall check_box_close_redirect(CheckBox *self, void *);
-void __fastcall check_box_unk1_redirect(CheckBox *self, void *, int pos);
-int __fastcall check_box_unk2_redirect(CheckBox *self, void *, int pos);
-void __fastcall check_box_set_state_pos_redirect(CheckBox *self, void *, int pos, int state);

@@ -44,9 +44,6 @@ void Lock::reset_map() {
     }
 }
 
-void __fastcall lock_reset_map_redirect(Lock *self, void *) {
-    self->reset_map();
-}
 
 /*
 Purpose: Reset the lock to empty - clear its three trailing dwords, reset all
@@ -83,9 +80,6 @@ void Lock::clear() {
     }
 }
 
-void __fastcall lock_clear_redirect(Lock *self, void *) {
-    self->clear();
-}
 
 /*
 Purpose: Report whether any lock is engaged. The trailing dword at 0xE0 forces
@@ -126,9 +120,6 @@ int Lock::any_locks() {
     return 0;
 }
 
-int __fastcall lock_any_locks_redirect(Lock *self, void *) {
-    return self->any_locks();
-}
 
 /*
 Purpose: Release the lock on one slot - forget it as the active lock if it was,
@@ -156,9 +147,6 @@ void Lock::unlock(int slot) {
     record.flag = 0;
 }
 
-void __fastcall lock_unlock_redirect(Lock *self, void *, int slot) {
-    self->unlock(slot);
-}
 
 /*
 Purpose: Take the global lock for an owner. Succeeds when the lock is free or
@@ -183,9 +171,6 @@ int Lock::global_lock(int owner) {
     return 0;
 }
 
-int __fastcall lock_global_lock_redirect(Lock *self, void *, int owner) {
-    return self->global_lock(owner);
-}
 
 /*
 Purpose: Report whether the global lock this owner holds can now be released -
@@ -227,9 +212,6 @@ int Lock::check_global_2(int owner) {
     return 1;
 }
 
-int __fastcall lock_check_global_2_redirect(Lock *self, void *, int owner) {
-    return self->check_global_2(owner);
-}
 
 /*
 Purpose: On the server, when a held lock has no square still active, broadcast
@@ -269,9 +251,6 @@ void Lock::check_global() {
     message_data(0x1205, static_cast<int>(field_E0_), 0, 0, 0, 0);
 }
 
-void __fastcall lock_check_global_redirect(Lock *self, void *) {
-    self->check_global();
-}
 
 /*
 Purpose: Add a lock on one slot - forward to SquareLock::lock on the slot
@@ -291,10 +270,6 @@ int Lock::add_lock(int slot, int flags, int a3, int a4) {
     return records_[slot].entries[1].lock(slot, flags | 0x10, a3, a4);
 }
 
-int __fastcall lock_add_lock_redirect(Lock *self, void *, int slot, int flags,
-                                      int a3, int a4) {
-    return self->add_lock(slot, flags, a3, a4);
-}
 
 /*
 Purpose: Lock both of a slot's square entries in one call. Refuses when another
@@ -385,7 +360,3 @@ int Lock::lock(int slot, int flags, int a3, int a4, int a5, int a6, int a7) {
     return 1;
 }
 
-int __fastcall lock_lock_redirect(Lock *self, void *, int slot, int flags,
-                                  int a3, int a4, int a5, int a6, int a7) {
-    return self->lock(slot, flags, a3, a4, a5, a6, a7);
-}

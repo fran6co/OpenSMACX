@@ -457,4 +457,3 @@ class PickWin : public GraphicWin {
 static_assert(sizeof(PickWin) == 0x12650,
               "PickWin layout must match the legacy ABI");
 
-void __fastcall pick_win_on_button_passover_redirect(PickWin *self, void *, int a1, int a2);

@@ -64,9 +64,6 @@ Status: Complete
 void CheckButton::close_class() {
 }
 
-void __cdecl check_button_close_class_redirect() {
-    CheckButton::close_class();
-}
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
@@ -85,9 +82,6 @@ int CheckButton::init_class() {
     return 0;
 }
 
-int __cdecl check_button_init_class_redirect() {
-    return CheckButton::init_class();
-}
 
 /*
 Purpose: Step the receiver back to the subobject ??_GCheckButton@@UAEPAXI@Z

@@ -134,9 +134,6 @@ uint32_t FlatButton::close() {
     return reinterpret_cast<uintptr_t>(dest);
 }
 
-uint32_t __fastcall flat_button_close_redirect(FlatButton *self, void *) {
-    return self->close();
-}
 
 /*
 Purpose: Destroy a FlatButton by installing its two virtual tables, closing

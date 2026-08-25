@@ -48,16 +48,9 @@ class ButtonGroup {
 static_assert(sizeof(ButtonGroup) == 0x94,
               "ButtonGroup layout must match the original executable");
 
-void __fastcall button_group_add_redirect(ButtonGroup *self, void *, BaseButton *button);
-ButtonGroup *__fastcall button_group_construct_redirect(ButtonGroup *self, void *);
-uint32_t __fastcall button_group_close_redirect(ButtonGroup *self, void *);
-int __fastcall button_group_init_redirect(
-    ButtonGroup *self, void *, int group_id, int flags);
 
 // ButtonGroup::button_click is 471 bytes of virtual dispatch through the
 // button vtables and is not recovered yet, so set() reaches it at its
 // canonical address. Rebindable so tests can observe the call without the
 // original being present.
 
-int __fastcall button_group_set_redirect(ButtonGroup *self, void *,
-                                         int button_id, int notify);

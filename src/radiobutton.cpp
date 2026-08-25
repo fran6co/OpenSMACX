@@ -217,9 +217,6 @@ uint32_t RadioButton::close() {
         self + (*reinterpret_cast<const int32_t *const *>(self))[1])->close();
 }
 
-void __fastcall radio_button_close_redirect(RadioButton *self, void *) {
-    self->close();
-}
 
 /*
 // ORIGINAL: 0x0060E300 ?on_dialog_focus@RadioButton@@QAEXH@Z 0x0060E300-0x0060E317 BYTE_EXACT

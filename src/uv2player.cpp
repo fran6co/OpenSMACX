@@ -34,9 +34,6 @@ int UV2Player::UNK4() {
     return 0;
 }
 
-int __fastcall uv2_player_unk4_redirect(UV2Player *self, void *) {
-    return self->UNK4();
-}
 
 /*
 Purpose: Tear down a UV2Player: close it, then destroy its Buffer member.

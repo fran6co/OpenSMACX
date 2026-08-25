@@ -35,9 +35,6 @@ int Gamma::on_key_click(int, int) {
     return 1;
 }
 
-int __fastcall gamma_on_key_click_redirect(Gamma *self, void *, int a1, int a2) {
-    return self->on_key_click(a1, a2);
-}
 
 
 /*

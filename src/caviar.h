@@ -170,35 +170,15 @@ static_assert(sizeof(CaviarData) == 0xC,
 static_assert(sizeof(Caviar) == 0x13D0,
               "Caviar layout must match the original executable");
 
-CaviarData *__fastcall caviar_data_construct_redirect(CaviarData *self, void *);
-void __fastcall caviar_unk11_redirect(Caviar *self, void *, int *out1, int *out2, int *out3);
-void __fastcall caviar_data_close_redirect(CaviarData *self, void *);
 
 // The 413-byte helper that walks the record and frees its members is not yet
 // source-owned, so close reaches it through a rebindable dependency.
 // 0x00638430, a pending_bodies forwarder. A POINTER here cost CaviarData::close
 // a `call dword ptr [...]` where the image has `call rel32`.
 void __cdecl caviar_free_record(void *record);
-Caviar *__fastcall caviar_construct_redirect(Caviar *self, void *);
-void __fastcall caviar_set_camera_direct_redirect(
-    Caviar *self, void *, const VOX_Vect *camera, const VOX_Matrix *matrix);
-uint32_t __fastcall caviar_set_scaling_redirect(
-    Caviar *self, void *, uint32_t scaling_bits);
-float __fastcall caviar_get_scaling_redirect(Caviar *self, void *);
-int __fastcall caviar_unk3_redirect(Caviar *self, void *, int a1, int a2, int a3);
-int __fastcall caviar_unk4_redirect(Caviar *self, void *, int a1, int a2, int a3, int a4);
-void __fastcall caviar_unk5_redirect(Caviar *self, void *, int a1, int a2);
-void __fastcall caviar_unk6_redirect(Caviar *self, void *, int a1, int a2);
-void __fastcall caviar_unk7_redirect(Caviar *self, void *, int a1, int a2);
-void __fastcall caviar_unk9_redirect(Caviar *self, void *, int a1, int a2, int a3);
-void __fastcall caviar_unk12_redirect(Caviar *self, void *, int a1, int a2, int a3);
-void __fastcall caviar_unk8_redirect(Caviar *self, void *, int a1);
-void __fastcall caviar_unk10_redirect(Caviar *self, void *, int a1, int a2, int a3);
 
 // The rotation is applied by a helper that is not recovered yet.
 // 0x00627D00, a pending_bodies forwarder, for the same reason as
 // `caviar_free_record` above.
 void __cdecl caviar_apply_rotation(float *angles, void *matrix);
 
-void __fastcall caviar_set_scene_rotation_redirect(Caviar *self, void *,
-                                                   float x, float y, float z);

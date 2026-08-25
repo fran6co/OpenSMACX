@@ -65,8 +65,3 @@ class Flic {
   uint32_t field_A10_[53];
 };
 
-void __fastcall flic_unk4_redirect(Flic *self, void *);
-void __fastcall flic_unk5_redirect(Flic *self, void *);
-void __fastcall flic_unk6_redirect(Flic *self, void *);
-void __fastcall flic_unk7_redirect(Flic *self, void *);
-void __fastcall flic_unk8_redirect(Flic *self, void *);

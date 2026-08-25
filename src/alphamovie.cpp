@@ -74,9 +74,6 @@ Status: Complete
 void AlphaMovie::UNK7() {
 }
 
-void __fastcall alpha_movie_unk7_redirect(AlphaMovie *self, void *) {
-    self->UNK7();
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
@@ -94,9 +91,6 @@ int AlphaMovie::UNK2(int, int, int) {
     return 0;
 }
 
-int __fastcall alpha_movie_unk2_redirect(AlphaMovie *self, void *, int a1, int a2, int a3) {
-    return self->UNK2(a1, a2, a3);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
@@ -114,9 +108,6 @@ int AlphaMovie::UNK4(int, int, int, int) {
     return 0;
 }
 
-int __fastcall alpha_movie_unk4_redirect(AlphaMovie *self, void *, int a1, int a2, int a3, int a4) {
-    return self->UNK4(a1, a2, a3, a4);
-}
 
 /*
 Purpose: Unknown; the legacy implementation returns its argument unchanged.
@@ -143,9 +134,6 @@ int AlphaMovie::UNK3(int a1) {
     return a1;
 }
 
-int __fastcall alpha_movie_unk3_redirect(AlphaMovie *self, void *, int a1) {
-    return self->UNK3(a1);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
@@ -163,9 +151,6 @@ int AlphaMovie::UNK5(int) {
     return 0;
 }
 
-int __fastcall alpha_movie_unk5_redirect(AlphaMovie *self, void *, int a1) {
-    return self->UNK5(a1);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -182,9 +167,6 @@ Status: Complete
 void AlphaMovie::UNK6(int, int) {
 }
 
-void __fastcall alpha_movie_unk6_00404260_redirect(AlphaMovie *self, void *, int a1, int a2) {
-    self->UNK6(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -201,9 +183,6 @@ Status: Complete
 void AlphaMovie::UNK6(int) {
 }
 
-void __fastcall alpha_movie_unk6_00404270_redirect(AlphaMovie *self, void *, int a1) {
-    self->UNK6(a1);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 1.
@@ -221,9 +200,6 @@ int AlphaMovie::UNK8(int, int) {
     return 1;
 }
 
-int __fastcall alpha_movie_unk8_redirect(AlphaMovie *self, void *, int a1, int a2) {
-    return self->UNK8(a1, a2);
-}
 
 /*
 // ORIGINAL: 0x004041E0 ?close@AlphaMovie@@QAEXXZ 0x004041E0-0x004041F7 BYTE_EXACT

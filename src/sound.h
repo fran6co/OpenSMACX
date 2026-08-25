@@ -101,33 +101,8 @@ class Sound {
 // a call the original inlines - but both begin with one.
 static_assert(sizeof(Sound) == 0x54, "Sound layout must match the original executable");
 
-int __fastcall sound_unk1_redirect(Sound *self, void *, int a1);
-void __fastcall sound_fade_redirect(Sound *self, void *, int a1);
-int __fastcall sound_is_playing_redirect(Sound *self, void *);
-int __fastcall sound_is_looping_redirect(Sound *self, void *);
-int __fastcall sound_get_time_redirect(Sound *self, void *);
-int __fastcall sound_play_redirect(Sound *self, void *);
-int __fastcall sound_play_arg_redirect(Sound *self, void *, unsigned int a1);
-int __fastcall sound_stop_redirect(Sound *self, void *);
-int __fastcall sound_release_redirect(Sound *self, void *);
-void __fastcall sound_set_loop_state_redirect(Sound *self, void *, long a1);
-void __fastcall sound_set_delay_redirect(Sound *self, void *, unsigned int a1);
-int __fastcall sound_fade_query_redirect(Sound *self, void *);
-int __fastcall sound_fade_in_redirect(Sound *self, void *);
-void __fastcall sound_ramp_redirect(Sound *self, void *, int a1, int a2, unsigned int a3);
-void __fastcall sound_set_type_redirect(Sound *self, void *, unsigned int a1);
-int __fastcall sound_load_redirect(Sound *self, void *, const char *a1);
-void __fastcall sound_set_volume_redirect(Sound *self, void *, int a1);
-int __fastcall sound_set_fade_redirect(Sound *self, void *, unsigned long a1);
-int __fastcall sound_set_fade_in_redirect(Sound *self, void *, unsigned int a1);
-void __fastcall sound_fade_in_arg_redirect(Sound *self, void *, unsigned int a1);
-void __fastcall sound_set_pan_redirect(Sound *self, void *, int a1);
-int __fastcall sound_unload_redirect(Sound *self, void *);
-void __fastcall sound_dtor_redirect(Sound *self, void *);
 void *__fastcall sound_scalar_dtor_redirect(Sound *self, void *,
                                             unsigned int mode);
-int __fastcall sound_attach_redirect(Sound *self, void *);
-int __fastcall sound_detach_redirect(Sound *self, void *);
 
 // Sound subsystem bring-up, called once from WinMain with the main window and
 // a bitmask of the requested backends. `void *` rather than `HWND` because the

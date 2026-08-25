@@ -115,33 +115,13 @@ int StringStruct::seek_id(int a1) {
     return 0;
 }
 
-int __fastcall string_struct_current_id_redirect(StringStruct *self, void *) {
-    return self->current_id();
-}
 
-int __fastcall string_struct_current_entry_redirect(StringStruct *self, void *) {
-    return self->current_entry();
-}
 
-int __fastcall string_struct_next_entry_redirect(StringStruct *self, void *) {
-    return self->next_entry();
-}
 
 extern "C" int __cdecl string_struct_seek_id_source(StringStruct *self, int id) {
     return self->seek_id(id);
 }
 
-__declspec(naked) int __fastcall string_struct_seek_id_redirect(
-        StringStruct *, void *, int) {
-    __asm {
-        push dword ptr [esp + 4]
-        push ecx
-        call string_struct_seek_id_source
-        add esp, 8
-        cmp eax, eax
-        ret 4
-    }
-}
 
 namespace {
 
@@ -249,9 +229,6 @@ inline void StringStruct::remove_all() {
     entry_count_ = 0;
 }
 
-void __fastcall string_struct_remove_all_redirect(StringStruct *self, void *) {
-    self->remove_all();
-}
 
 const uint32_t StringStructVtable = 0x006693A4;
 const uint32_t StringStructVirtualBaseVtable = 0x006693A0;
@@ -506,12 +483,6 @@ uint32_t StringList::destroy() {
     return owner;                                    // EAX at the ret
 }
 
-// self == the StringList base: `ret` pops nothing (0xC3), `this` arrives in
-// ECX unadjusted, and there are no stack arguments, so the fastcall adapter
-// is a straight delegation with no this-adjustment.
-uint32_t __fastcall string_list_destructor_redirect(StringList *self, void *) {
-    return self->destroy();
-}
 
 /*
 // ORIGINAL: 0x004015B0 ?seek_pos@StringStruct@@QAEHH@Z 0x004015B0-0x00401636 BYTE_EXACT

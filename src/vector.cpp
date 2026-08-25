@@ -167,39 +167,11 @@ void Vector::scale(Vector &output, float scalar) {
     output = *this;
 }
 
-Vector *__fastcall vector_construct_redirect(Vector *self, void *) {
-    return new (self) Vector;
-}
 
-uintptr_t __fastcall vector_close_redirect(Vector *self, void *) {
-    self->close();
-    return 0;
-}
 
-Vector *__fastcall vector_subtract_redirect(
-        Vector *self, void *, Vector *output, Vector *right) {
-    self->__mi(*output, *right);
-    return output;
-}
 
-Vector *__fastcall vector_add_assign_redirect(Vector *self, void *, Vector *right) {
-    self->__apl(*right);
-    return self;
-}
 
-Vector *__fastcall vector_subtract_assign_redirect(
-        Vector *self, void *, Vector *right) {
-    self->__ami(*right);
-    return self;
-}
 
-Vector *__fastcall vector_scale_redirect(
-        Vector *self, void *, Vector *output, uint32_t scalar_bits) {
-    float scalar;
-    std::memcpy(&scalar, &scalar_bits, sizeof(scalar));
-    self->scale(*output, scalar);
-    return output;
-}
 
 /*
 Purpose: Add two vectors component-wise into an output vector.

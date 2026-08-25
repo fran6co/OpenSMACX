@@ -39,9 +39,6 @@ Status: Complete
 void ListBox::on_dialog_focus(int) {
 }
 
-void __fastcall list_box_on_dialog_focus_redirect(ListBox *self, void *, int a1) {
-    self->on_dialog_focus(a1);
-}
 
 func_dialog_close ListBoxOriginalDialogClose =
     original_method<func_dialog_close>(0x00608F50);
@@ -155,10 +152,6 @@ uint32_t ListBox::destroy() {
     return close();
 }
 
-// self == L, no adjustment (close is entered on the ListBox base).
-uint32_t __fastcall list_box_close_redirect(ListBox *self, void *) {
-    return self->close();
-}
 
 /*
 Purpose: The real complete-object destructor body. ~ListBox is entered with

@@ -477,32 +477,20 @@ class BasePop : public GraphicWin {
 };
 
 
-void __fastcall base_pop_write_check_redirect(BasePop *self, void *, long value);
 
 // The two-argument exec these forward to is not recovered.
 typedef int (OriginalObject::*func_base_pop_exec)(int flag, int (__cdecl *callback)());
 
-int __fastcall base_pop_exec_void_redirect(BasePop *self, void *);
-int __fastcall base_pop_exec_callback_redirect(BasePop *self, void *,
-                                               int (__cdecl *callback)());
 
 // The screen width the high-resolution scaling switches on, read at a
 // fixed address. Rebindable so tests can drive both sides of the branch.
 int32_t *const BasePopScreenWidth = (int32_t *)0x009B7B1C;
 
-void __fastcall base_pop_set_width_redirect(BasePop *self, void *, int width);
 
 static_assert(sizeof(BasePop) == 0x3230,
               "BasePop layout must match the original executable");
 
-void __fastcall base_pop_set_loc_redirect(BasePop *self, void *, int x, int y);
-int __fastcall base_pop_set_string_font_redirect(
-    BasePop *self, void *, Font *font1, Font *font2, Font *font3, Font *font4);
 
-int __cdecl base_pop_set_def_string_font_redirect(
-    Font *font1, Font *font2, Font *font3, Font *font4);
-int __cdecl base_pop_set_def_button_font_redirect(
-    Font *font1, Font *font2, Font *font3);
 
 // Default string and button font slots at 0x009B8D98 and 0x009B8DA8; tests
 // outside the hybrid process rebind them.
@@ -511,14 +499,6 @@ int __cdecl base_pop_set_def_button_font_redirect(
 extern Font *BasePopDefaultStringFonts[4];  // 0x009B8D98
 extern Font *BasePopDefaultButtonFonts[3];  // 0x009B8DA8
 
-void __cdecl base_pop_set_def_string_color_redirect(int c1, int c2, int c3, int c4);
-void __cdecl base_pop_set_def_string_color2_redirect(int c1, int c2, int c3, int c4);
-void __cdecl base_pop_set_def_string_color3_redirect(int c1, int c2, int c3, int c4);
-void __cdecl base_pop_set_def_string_color_hyper_redirect(
-    int c1, int c2, int c3, int c4);
-void __cdecl base_pop_set_def_button_color_redirect(int c1, int c2, int c3, int c4);
-void __cdecl base_pop_set_def_button_color2_redirect(int c1, int c2, int c3, int c4);
-void __cdecl base_pop_set_def_button_color3_redirect(int c1, int c2, int c3, int c4);
 
 // Two interleaved default-colour tables. The string table carries four tiers
 // at a 0x10 slot stride; the button table carries three at 0xC. Tests rebind
@@ -526,29 +506,7 @@ void __cdecl base_pop_set_def_button_color3_redirect(int c1, int c2, int c3, int
 extern uint32_t BasePopDefaultStringColors[4][4];  // 0x00696EE4
 extern uint32_t BasePopDefaultButtonColors[4][3];  // 0x00696F24
 
-uint32_t __fastcall base_pop_read_check_redirect(BasePop *self, void *);
-int __fastcall base_pop_item_redirect(BasePop *self, void *, char *text, int index);
-int __fastcall base_pop_set_button_font_redirect(BasePop *self, void *, Font *font1, Font *font2, Font *font3);
-void __fastcall base_pop_unk3_redirect(BasePop *self, void *, int a1);
-void __fastcall base_pop_unk4_redirect(BasePop *self, void *, int a1);
-int __fastcall base_pop_on_key_click_redirect(BasePop *self, void *, int a1, int a2);
-int __fastcall base_pop_on_key_up_redirect(BasePop *self, void *, int a1);
-void __fastcall base_pop_set_string_color_redirect(
-    BasePop *self, void *, int c1, int c2, int c3, int c4);
-void __fastcall base_pop_set_string_color2_redirect(
-    BasePop *self, void *, int c1, int c2, int c3, int c4);
-void __fastcall base_pop_set_string_color3_redirect(
-    BasePop *self, void *, int c1, int c2, int c3, int c4);
-void __fastcall base_pop_set_string_color_hyper_redirect(
-    BasePop *self, void *, int c1, int c2, int c3, int c4);
-void __fastcall base_pop_set_button_color_redirect(
-    BasePop *self, void *, char c1, int c2, int c3, int c4);
-void __fastcall base_pop_set_button_color2_redirect(
-    BasePop *self, void *, char c1, int c2, int c3, int c4);
-void __fastcall base_pop_set_button_color3_redirect(
-    BasePop *self, void *, char c1, int c2, int c3, int c4);
 
-void __cdecl base_pop_fallout_redirect();
 
 // Set when the fallout flag is raised, but only while the gate global is set.
 int *const BasePopFalloutGate = (int *)0x009B8D00;

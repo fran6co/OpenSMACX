@@ -56,4 +56,3 @@ class AlphaMenu {
   uint32_t field_1134_;  // 0x1134
 };
 
-int __fastcall alpha_menu_requested_height_redirect(AlphaMenu *self, void *);

@@ -123,7 +123,3 @@ class PlanWin : public MapWin {
 
 static_assert(sizeof(PlanWin) == 0x22A64, "PlanWin layout must match terranx.exe");
 
-void __fastcall plan_win_clear_lines_redirect(PlanWin *self, void *);
-void __fastcall plan_win_close_redirect(PlanWin *self, void *);
-void __fastcall plan_win_blink_redirect(PlanWin *self, void *);
-void __fastcall plan_win_unk1_redirect(PlanWin *self, void *);

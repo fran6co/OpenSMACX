@@ -260,9 +260,6 @@ int NetDaemon::receive() {
     return 1;
 }
 
-int __fastcall net_daemon_receive_redirect(NetDaemon *self, void *) {
-    return self->receive();
-}
 
 /*
 Purpose: Announce a vehicle's synched state to the network. All four "no
@@ -540,8 +537,3 @@ uint32_t NetDaemon::unlock_veh() {
     return residue;
 }
 
-// self == the NetDaemon; the original takes `this` straight out of ecx with no
-// adjustment, so there is nothing to subtract here.
-uint32_t __fastcall net_daemon_unlock_veh_redirect(NetDaemon *self, void *) {
-    return self->unlock_veh();
-}

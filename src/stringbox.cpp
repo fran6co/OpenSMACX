@@ -165,10 +165,6 @@ void StringBox::add(char *text, int index, int flag) {
     // to re-materialise. Plateaued here.
 }
 
-void __fastcall string_box_add_redirect(StringBox *self, void *, char *text,
-                                        int index, int flag) {
-    self->add(text, index, flag);
-}
 
 /*
 Purpose: Record the scroll position and repaint through virtual slot 62.

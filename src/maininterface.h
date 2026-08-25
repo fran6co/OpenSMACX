@@ -323,17 +323,7 @@ class MainInterface : public GraphicWin {
   Time time2_;
 };
 
-void __fastcall main_interface_clear_message_redirect(MainInterface *self, void *);
-void __fastcall main_interface_unk2_redirect(MainInterface *self, void *);
-void __fastcall main_interface_unk3_redirect(MainInterface *self, void *);
-void __fastcall main_interface_unk4_redirect(MainInterface *self, void *);
 void __cdecl desktop_update();
-void __fastcall main_interface_unk1_redirect(MainInterface *self, void *, int a1);
-void __fastcall main_interface_on_iface_scrolled_redirect(MainInterface *self, void *, int a1, int a2);
-void __fastcall main_interface_on_iface_scrolling_redirect(MainInterface *self, void *, int a1, int a2);
-void __fastcall main_interface_on_iface_button_toggled_redirect(MainInterface *self, void *, int a1, int a2);
-void __fastcall main_interface_on_iface_right_double_click_redirect(MainInterface *self, void *, int a1, int a2);
-int __fastcall main_interface_on_iface_button_pressed_redirect(MainInterface *self, void *, int a1);
 
 // The click handler noted on the declaration above is not recovered; it
 // forwards to the original image. ?on_iface_button_clicked@MainInterface@@QAEXH@Z

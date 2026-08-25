@@ -63,5 +63,3 @@ extern const void *const EffectElementTeardown;
 // so both retire together with the Wave work.
 extern const void *const EffectElementCtor;
 
-FX *__fastcall fx_ctor_redirect(FX *self, void *);
-void __fastcall fx_dtor_redirect(FX *self, void *);

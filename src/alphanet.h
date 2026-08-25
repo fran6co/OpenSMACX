@@ -70,16 +70,7 @@ class AlphaNet : public Net {
 static_assert(sizeof(AlphaNet) == 0x14A0,
               "AlphaNet recovered layout must include its trailing Heap");
 
-int __fastcall alpha_net_pid_to_idx_redirect(
-    AlphaNet *self, void *, uint32_t process_id);
-int __fastcall alpha_net_pid_to_who_redirect(
-    AlphaNet *self, void *, uint32_t process_id);
-int __fastcall alpha_net_who_to_pid_redirect(
-    AlphaNet *self, void *, int identity);
-int __fastcall alpha_net_who_to_idx_redirect(
-    AlphaNet *self, void *, int identity);
 
-void __fastcall alpha_net_close_redirect(AlphaNet *self, void *);
 
 // The legacy body tail-jumps into Net::close with this unchanged; that body
 // is 570 bytes with three call targets and remains an original dependency.

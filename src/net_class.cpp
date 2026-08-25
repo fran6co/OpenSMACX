@@ -331,9 +331,6 @@ int Net::poll_players(int) {
     return 1;
 }
 
-int __fastcall net_poll_players_redirect(Net *self, void *, int a1) {
-    return self->poll_players(a1);
-}
 
 /*
 Purpose: Find a player's name by key, or nothing.
@@ -390,10 +387,6 @@ char *Net::get_player_name(unsigned long key) {
     return reinterpret_cast<char *>(bytes + 0x169 + index * 0x58);
 }
 
-char *__fastcall net_get_player_name_redirect(
-        Net *self, void *, unsigned long key) {
-    return self->get_player_name(key);
-}
 
 /*
 Purpose: Give the network layer a slice of time to move voice traffic.

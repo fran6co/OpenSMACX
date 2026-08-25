@@ -35,9 +35,6 @@ Status: Complete
 void Cursor::close_cursor_class() {
 }
 
-void __cdecl cursor_close_cursor_class_redirect() {
-    Cursor::close_cursor_class();
-}
 
 int CursorWidth;   // 0x009BE6D4
 int CursorHeight;  // 0x009BE6D8
@@ -94,10 +91,6 @@ void Cursor::construct() {
     field_C_ = 0;
 }
 
-Cursor *__fastcall cursor_construct_redirect(Cursor *self, void *) {
-    self->construct();
-    return self;
-}
 
 
 // ---------------------------------------------------------------------------

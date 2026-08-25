@@ -155,19 +155,6 @@ class ReportIf : public SubInterface {
 // ConsoleGlobal does for 0x009156B0, and so a fixture can repoint it.
 ListBox *const ReportIfEnergyListBox = (ListBox *)0x0087BE84;  // 0x0087BE84
 
-void __fastcall report_if_close_energy_redirect(ReportIf *self, void *);
-void __fastcall report_if_close_intel_redirect(ReportIf *self, void *);
-void __fastcall report_if_on_iface_right_click_redirect(ReportIf *self, void *, int a1, int a2);
-void __fastcall report_if_on_iface_left_double_click_redirect(ReportIf *self, void *, int a1, int a2);
-void __fastcall report_if_on_iface_right_double_click_redirect(ReportIf *self, void *, int a1, int a2);
-void __fastcall report_if_on_iface_left_down_redirect(ReportIf *self, void *, int a1, int a2);
-void __fastcall report_if_on_iface_right_down_redirect(ReportIf *self, void *, int a1, int a2);
-void __fastcall report_if_on_iface_mouse_move_redirect(ReportIf *self, void *, int a1, int a2);
-void __fastcall report_if_on_iface_mouse_leave_redirect(ReportIf *self, void *, int a1, int a2);
-void __fastcall report_if_on_iface_button_toggled_redirect(ReportIf *self, void *, int a1, int a2);
-void __fastcall report_if_close_score_redirect(ReportIf *self, void *);
-int __fastcall report_if_on_iface_dialog_item_back_draw_redirect(
-    ReportIf *self, void *, ::GraphicWin *a1, int a2, int a3, RECT *a4);
 
 // ReportIf::bl_anim is not recovered, so the body at the end of reportif.cpp
 // forwards through this seam. leaf_recoveries.cpp calls it, which is what

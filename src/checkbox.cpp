@@ -246,9 +246,6 @@ uint32_t CheckBox::close() {
     return reinterpret_cast<GraphicWin *>(self + vbtable2[1])->close();
 }
 
-void __fastcall check_box_close_redirect(CheckBox *self, void *) {
-    self->close();
-}
 
 // The state word these three share. Every one of them reaches it the same way
 // the original does - `mov eax,[ecx]` then `[eax+8]` - so the Dialog offset
@@ -295,9 +292,6 @@ void CheckBox::UNK1(int pos) {
     }
 }
 
-void __fastcall check_box_unk1_redirect(CheckBox *self, void *, int pos) {
-    self->UNK1(pos);
-}
 
 /*
 Purpose: Report whether one bit of the state word is set. Returns the MASKED
@@ -324,9 +318,6 @@ int CheckBox::UNK2(int pos) {
     return static_cast<int>(*flags & mask);
 }
 
-int __fastcall check_box_unk2_redirect(CheckBox *self, void *, int pos) {
-    return self->UNK2(pos);
-}
 
 /*
 Purpose: Set or clear one bit of the state word, chosen by the second argument.
@@ -355,10 +346,6 @@ void CheckBox::set_state_pos(int pos, int state) {
     }
 }
 
-void __fastcall check_box_set_state_pos_redirect(CheckBox *self, void *,
-                                                 int pos, int state) {
-    self->set_state_pos(pos, state);
-}
 
 /*
 Purpose: Overwrite the whole state word in one store, then repaint through

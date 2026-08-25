@@ -66,16 +66,7 @@ class TextureStore {
   uint32_t iWidth_;
 };
 
-// close releases the pixels through the executable's CRT free, as the other
-// classes that own heap blocks do, until that ownership boundary moves.
-// Returns the object, preserving the legacy EAX = this residue.
-TextureStore *__fastcall texture_store_construct_redirect(TextureStore *self, void *);
 
 typedef void *func_texture_free(void *);
 
-void __fastcall texture_dtor_redirect(Texture *self, void *);
 
-// The original constructor returns `this` in eax, as MSVC constructors do.
-Texture *__fastcall texture_ctor_redirect(Texture *self, void *);
-void __fastcall texture_close_redirect(Texture *self, void *);
-void __fastcall texture_store_dtor_redirect(TextureStore *self, void *);

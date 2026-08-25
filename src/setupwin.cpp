@@ -35,9 +35,6 @@ int SetupWin::UNK3(int) {
     return 0;
 }
 
-int __fastcall setup_win_unk3_redirect(SetupWin *self, void *, int a1) {
-    return self->UNK3(a1);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
@@ -55,9 +52,6 @@ int SetupWin::UNK4(int) {
     return 0;
 }
 
-int __fastcall setup_win_unk4_redirect(SetupWin *self, void *, int a1) {
-    return self->UNK4(a1);
-}
 
 /*
 Purpose: Scale the argument by the field at 0xA14 and divide by 1024.
@@ -94,9 +88,6 @@ int SetupWin::UNK1(int a1) {
                                 * static_cast<uint32_t>(a1)) / 1024;
 }
 
-int __fastcall setup_win_unk1_redirect(SetupWin *self, void *, int a1) {
-    return self->UNK1(a1);
-}
 
 /*
 Purpose: As UNK1, over the field at 0xA18 and dividing by 768.
@@ -130,9 +121,6 @@ int SetupWin::UNK2(int a1) {
                                 * static_cast<uint32_t>(a1)) / 768;
 }
 
-int __fastcall setup_win_unk2_redirect(SetupWin *self, void *, int a1) {
-    return self->UNK2(a1);
-}
 
 /*
 // ORIGINAL: 0x004ADAF0 ?do_menu@SetupWin@@QAEHPADHH@Z 0x004ADAF0-0x004ADB11 BYTE_EXACT

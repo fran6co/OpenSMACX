@@ -68,5 +68,3 @@ static_assert(sizeof(StringBox) == 0x2BA0,
 typedef int (OriginalObject::*func_string_struct_add)(int);
 extern func_string_struct_add StringBoxStructAdd;
 
-void __fastcall string_box_add_redirect(StringBox *self, void *, char *text,
-                                        int index, int flag);

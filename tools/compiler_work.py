@@ -52,7 +52,7 @@ SHAPES = [
      "anything the image writes BEFORE the vfptr store in the member-"
      "initialiser list, and drop the trailing `return this;`."),
 
-    ("free-function destructor", 9,
+    ("free-function destructor", 8,
      re.compile(r"^\w[\w :*&]*\b\w*destructor_redirect\w*\s*\(", re.M),
      "a destructor modelled as a free function. Make it `X::~X()`. A free "
      "function is only needed where C++ cannot take a destructor's address."),

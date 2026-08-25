@@ -111,9 +111,6 @@ Status: Complete
 void ReportWin::on_mouse_move(int, int) {
 }
 
-void __fastcall report_win_on_mouse_move_redirect(ReportWin *self, void *, int a1, int a2) {
-    self->on_mouse_move(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -131,9 +128,6 @@ Status: Complete
 void ReportWin::on_mouse_leave(int, int) {
 }
 
-void __fastcall report_win_on_mouse_leave_redirect(ReportWin *self, void *, int a1, int a2) {
-    self->on_mouse_leave(a1, a2);
-}
 
 /*
 Purpose: Step the receiver back to the subobject ??_GReportWin@@UAEPAXI@Z

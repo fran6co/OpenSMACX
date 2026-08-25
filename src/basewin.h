@@ -497,14 +497,6 @@ class BaseWin : public ConstructedGraphicWin, public SubInterface {
   Scroll scroll3_;  // 0x456EC, size == sizeof(Scroll)
 };
 
-void __fastcall base_win_close_redirect(BaseWin *self, void *);
-void __fastcall base_win_unk4_redirect(BaseWin *self, void *);
-void __fastcall base_win_unk6_redirect(BaseWin *self, void *);
-void __fastcall base_win_unk7_redirect(BaseWin *self, void *);
-void __fastcall base_win_unk5_redirect(BaseWin *self, void *, int a1);
-void __fastcall base_win_on_button_toggled_redirect(BaseWin *self, void *, int a1, int a2);
-void __fastcall base_win_on_iface_right_down_redirect(BaseWin *self, void *, int a1, int a2);
-void __fastcall base_win_on_iface_selected_redirect(BaseWin *self, void *, int a1, int a2);
 
 // BaseWin embeds an interface subobject at 0xA14; these four are reached
 // through its vtable, so their `this` points there and is adjusted back to
@@ -518,16 +510,6 @@ typedef void (OriginalObject::*func_base_win_draw_supported)(int a1);
 // the iface_click family, these carry no this-adjustment.
 typedef void (OriginalObject::*func_base_win_click)(int a1, int a2, int button, int is_double);
 
-void __fastcall base_win_on_iface_left_click_redirect(BaseWin *self, void *, int a1, int a2);
-void __fastcall base_win_on_iface_right_click_redirect(BaseWin *self, void *, int a1, int a2);
-void __fastcall base_win_on_iface_left_double_click_redirect(BaseWin *self, void *, int a1, int a2);
-void __fastcall base_win_on_iface_right_double_click_redirect(BaseWin *self, void *, int a1, int a2);
-void __fastcall base_win_on_iface_scrolled_redirect(BaseWin *self, void *, int a1, int a2);
-void __fastcall base_win_on_left_click_redirect(BaseWin *self, void *, int a1, int a2);
-void __fastcall base_win_on_right_click_redirect(BaseWin *self, void *, int a1, int a2);
-void __fastcall base_win_on_left_double_click_redirect(BaseWin *self, void *, int a1, int a2);
-void __cdecl base_win_timer_callback_redirect(int a1, int a2);
-void __fastcall base_win_on_mouse_leave_redirect(BaseWin *self, void *, int a1, int a2);
 
 // draw_facilities and garrison_click are declared on the class because the
 // recovered on_scrolled and UNK2 reach them with a direct `call rel32`, but

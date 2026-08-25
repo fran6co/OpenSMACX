@@ -63,17 +63,8 @@ Status: Complete
 void NetWin::alloc_slots() {
 }
 
-void __fastcall net_win_unk1_redirect(NetWin *self, void *) {
-    self->UNK1();
-}
 
-void __fastcall net_win_unk2_redirect(NetWin *self, void *) {
-    self->UNK2();
-}
 
-void __fastcall net_win_alloc_slots_redirect(NetWin *self, void *) {
-    self->alloc_slots();
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 1.
@@ -91,9 +82,6 @@ int NetWin::on_key_click(int, int) {
     return 1;
 }
 
-int __fastcall net_win_on_key_click_redirect(NetWin *self, void *, int a1, int a2) {
-    return self->on_key_click(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -110,9 +98,6 @@ Status: Complete
 void NetWin::on_mouse_move(int, int) {
 }
 
-void __fastcall net_win_on_mouse_move_redirect(NetWin *self, void *, int a1, int a2) {
-    self->on_mouse_move(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -130,9 +115,6 @@ Status: Complete
 void NetWin::on_mouse_leave(int, int) {
 }
 
-void __fastcall net_win_on_mouse_leave_redirect(NetWin *self, void *, int a1, int a2) {
-    self->on_mouse_leave(a1, a2);
-}
 
 /*
 Purpose: Clear the dword at 0x178 and write a five-byte pattern over the start
@@ -176,9 +158,6 @@ void NetWin::UNK5() {
     self[4] = 2;
 }
 
-void __fastcall net_win_unk5_redirect(NetWin *self, void *) {
-    self->UNK5();
-}
 
 
 // ---------------------------------------------------------------------------

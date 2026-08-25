@@ -33,9 +33,6 @@ Status: Complete
 void NewTechWin::on_left_click(int, int) {
 }
 
-void __fastcall new_tech_win_on_left_click_redirect(NewTechWin *self, void *, int a1, int a2) {
-    self->on_left_click(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 1.
@@ -53,6 +50,3 @@ int NewTechWin::on_key_click(int, int) {
     return 1;
 }
 
-int __fastcall new_tech_win_on_key_click_redirect(NewTechWin *self, void *, int a1, int a2) {
-    return self->on_key_click(a1, a2);
-}

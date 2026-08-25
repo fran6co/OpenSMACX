@@ -109,8 +109,6 @@ static_assert(sizeof(TutWin) == 0x53D8,
 
 extern uint32_t TutWinShownFlag;
 
-void __fastcall tut_win_unk1_redirect(TutWin *self, void *);
-void __fastcall tut_win_unk3_redirect(TutWin *self, void *, int a1);
 
 // The fixed window iface_rect centres onto, at 0x007AE820.
 Win *const TutWinIfaceWindow = (Win *)0x007AE820;
@@ -121,24 +119,8 @@ Win *const TutWinSocWindow = (Win *)0x008A6270;
 // The fixed window des_rect centres onto, at 0x0071F2B0.
 Win *const TutWinDesWindow = (Win *)0x0071F2B0;
 
-void __fastcall tut_win_iface_rect_redirect(
-    TutWin *self, void *, RECT *rect, int *x, int *y);
-void __fastcall tut_win_base_rect_redirect(
-    TutWin *self, void *, RECT *rect, int *x, int *y);
-void __fastcall tut_win_soc_rect_redirect(
-    TutWin *self, void *, RECT *rect, int *x, int *y);
-void __fastcall tut_win_des_rect_redirect(
-    TutWin *self, void *, RECT *rect, int *x, int *y);
 
 // The shared tail of the four do_* helpers: 0x004BDFE0, still original.
 typedef int (OriginalObject::*func_tut_win_show)(void *window, const char *text, int x, int y, void *sprite, int flag, int a7, int a8);
 extern func_tut_win_show TutWinOriginalShow;
 
-void __fastcall tut_win_do_base_redirect(
-    TutWin *self, void *, RECT *rect, const char *text, int flag);
-void __fastcall tut_win_do_iface_redirect(
-    TutWin *self, void *, RECT *rect, const char *text, int flag);
-void __fastcall tut_win_do_soc_redirect(
-    TutWin *self, void *, RECT *rect, const char *text, int flag);
-void __fastcall tut_win_do_des_redirect(
-    TutWin *self, void *, RECT *rect, const char *text, int flag);

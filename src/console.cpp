@@ -316,25 +316,10 @@ void Console::set_map_display() {
     ConsolePrefWin->PrefWin::display(5);
 }
 
-void __fastcall console_set_preferences_redirect(Console *self, void *) {
-    self->set_preferences();
-}
 
-void __fastcall console_set_auto_preferences_redirect(Console *self, void *) {
-    self->set_auto_preferences();
-}
 
-void __fastcall console_set_base_preferences_redirect(Console *self, void *) {
-    self->set_base_preferences();
-}
 
-void __fastcall console_set_audiovisual_redirect(Console *self, void *) {
-    self->set_audiovisual();
-}
 
-void __fastcall console_set_map_display_redirect(Console *self, void *) {
-    self->set_map_display();
-}
 
 
 /*
@@ -367,9 +352,6 @@ void Console::clear_group() {
     }
 }
 
-void __fastcall console_clear_group_redirect(Console *self, void *) {
-    self->clear_group();
-}
 
 /*
 Purpose: Report whether editing is locked out. Only meaningful in the scenario
@@ -397,9 +379,6 @@ int Console::edit_lock() {
     return 0;
 }
 
-int __fastcall console_edit_lock_redirect(Console *self, void *) {
-    return self->edit_lock();
-}
 
 /*
 Purpose: Open the shared preferences window to the advanced page.
@@ -434,13 +413,7 @@ void Console::editor_undo() {
     load_undo(1);
 }
 
-void __fastcall console_set_adv_preferences_redirect(Console *self, void *) {
-    self->set_adv_preferences();
-}
 
-void __fastcall console_editor_undo_redirect(Console *self, void *) {
-    self->editor_undo();
-}
 
 
 /*
@@ -483,12 +456,6 @@ void Console::update_data(int a1) {
     console_map_win()->main_caption();
 }
 
-// `ret 4` on the original: one 4-byte stack argument plus the ecx `this`. The
-// entry needs no this-adjustment - update_data is entered on the Console
-// itself, not through a virtual-base adjustor.
-void __fastcall console_update_data_redirect(Console *self, void *, int a1) {
-    self->update_data(a1);
-}
 
 int CursorLastIndex;    // 0x009392B8
 int CursorLastX[32];    // 0x009392C0
@@ -713,10 +680,6 @@ int Console::focus(int x_coord, int y_coord, int faction_id) {
     return focused;
 }
 
-int __fastcall console_focus_redirect(Console *self, void *, int x_coord,
-                                      int y_coord, int faction_id) {
-    return self->focus(x_coord, y_coord, faction_id);
-}
 
 /*
 Purpose: Drain the keyboard queue, clear the two pointer-owner slots and let

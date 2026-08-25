@@ -157,32 +157,11 @@ float Caviar::get_scaling() {
     return camera_.scaling;
 }
 
-void __fastcall caviar_data_close_redirect(CaviarData *self, void *) {
-    self->close();
-}
 
-CaviarData *__fastcall caviar_data_construct_redirect(CaviarData *self, void *) {
-    return new (self) CaviarData;
-}
 
-Caviar *__fastcall caviar_construct_redirect(Caviar *self, void *) {
-    return new (self) Caviar;
-}
 
-void __fastcall caviar_set_camera_direct_redirect(
-    Caviar *self, void *, const VOX_Vect *camera, const VOX_Matrix *matrix) {
-    self->set_camera_direct(camera, matrix);
-}
 
-uint32_t __fastcall caviar_set_scaling_redirect(
-    Caviar *self, void *, uint32_t scaling_bits) {
-    self->set_scaling_bits(scaling_bits);
-    return scaling_bits;
-}
 
-float __fastcall caviar_get_scaling_redirect(Caviar *self, void *) {
-    return self->get_scaling();
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
@@ -200,9 +179,6 @@ int Caviar::UNK3(int, int, int) {
     return 0;
 }
 
-int __fastcall caviar_unk3_redirect(Caviar *self, void *, int a1, int a2, int a3) {
-    return self->UNK3(a1, a2, a3);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
@@ -220,9 +196,6 @@ int Caviar::UNK4(int, int, int, int) {
     return 0;
 }
 
-int __fastcall caviar_unk4_redirect(Caviar *self, void *, int a1, int a2, int a3, int a4) {
-    return self->UNK4(a1, a2, a3, a4);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -239,9 +212,6 @@ Status: Complete
 void Caviar::UNK5(int, int) {
 }
 
-void __fastcall caviar_unk5_redirect(Caviar *self, void *, int a1, int a2) {
-    self->UNK5(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -258,9 +228,6 @@ Status: Complete
 void Caviar::UNK6(int, int) {
 }
 
-void __fastcall caviar_unk6_redirect(Caviar *self, void *, int a1, int a2) {
-    self->UNK6(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -277,9 +244,6 @@ Status: Complete
 void Caviar::UNK7(int, int) {
 }
 
-void __fastcall caviar_unk7_redirect(Caviar *self, void *, int a1, int a2) {
-    self->UNK7(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -296,9 +260,6 @@ Status: Complete
 void Caviar::UNK9(int, int, int) {
 }
 
-void __fastcall caviar_unk9_redirect(Caviar *self, void *, int a1, int a2, int a3) {
-    self->UNK9(a1, a2, a3);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -315,9 +276,6 @@ Status: Complete
 void Caviar::UNK12(int, int, int) {
 }
 
-void __fastcall caviar_unk12_redirect(Caviar *self, void *, int a1, int a2, int a3) {
-    self->UNK12(a1, a2, a3);
-}
 
 /*
 Purpose: Store a single value at 0x108.
@@ -353,13 +311,7 @@ void Caviar::UNK10(int a1, int a2, int a3) {
     field_34_ = a3;
 }
 
-void __fastcall caviar_unk8_redirect(Caviar *self, void *, int a1) {
-    self->UNK8(a1);
-}
 
-void __fastcall caviar_unk10_redirect(Caviar *self, void *, int a1, int a2, int a3) {
-    self->UNK10(a1, a2, a3);
-}
 
 /*
 Purpose: Set the scene's rotation, handing the three angles and the matrix at
@@ -379,10 +331,6 @@ void Caviar::set_scene_rotation(float x, float y, float z) {
     caviar_apply_rotation(angles, reinterpret_cast<uint8_t *>(this) + 0x38);
 }
 
-void __fastcall caviar_set_scene_rotation_redirect(Caviar *self, void *,
-                                                   float x, float y, float z) {
-    self->set_scene_rotation(x, y, z);
-}
 
 /*
 Purpose: Read back the three values at 0x2C, 0x30 and 0x34, skipping any output
@@ -421,10 +369,6 @@ void Caviar::UNK11(int *out1, int *out2, int *out3) {
     }
 }
 
-void __fastcall caviar_unk11_redirect(Caviar *self, void *, int *out1,
-                                      int *out2, int *out3) {
-    self->UNK11(out1, out2, out3);
-}
 
 /*
 Purpose: Release every allocation the renderer holds and reset the scene.

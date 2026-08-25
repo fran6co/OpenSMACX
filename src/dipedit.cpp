@@ -54,13 +54,7 @@ Status: Complete
 void DipEdit::on_redraw() {
 }
 
-void __fastcall dip_edit_on_left_click_redirect(DipEdit *self, void *, int a1, int a2) {
-    self->on_left_click(a1, a2);
-}
 
-void __fastcall dip_edit_on_redraw_redirect(DipEdit *self, void *) {
-    self->on_redraw();
-}
 
 /*
 // ORIGINAL: 0x004DA740 ?on_selected@DipEdit@@QAEXH@Z 0x004DA740-0x004DA760 BYTE_EXACT

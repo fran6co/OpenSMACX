@@ -253,21 +253,6 @@ class CouncWin : public GraphicWin, public SubInterface {
   FlatButton flatButton6_;  // 0x4610, the IDB's last member; ends 0x515C
 };
 
-void __fastcall counc_win_on_group_clicked_redirect(CouncWin *self, void *, int a1, int a2);
-void __fastcall counc_win_on_button_passover_redirect(CouncWin *self, void *, int a1, int a2);
-void __fastcall counc_win_on_iface_left_click_redirect(CouncWin *self, void *, int a1, int a2);
-void __fastcall counc_win_on_iface_right_click_redirect(CouncWin *self, void *, int a1, int a2);
-void __fastcall counc_win_on_iface_left_down_redirect(CouncWin *self, void *, int a1, int a2);
-void __fastcall counc_win_on_iface_right_down_redirect(CouncWin *self, void *, int a1, int a2);
-void __fastcall counc_win_on_iface_mouse_move_redirect(CouncWin *self, void *, int a1, int a2);
-void __fastcall counc_win_on_iface_mouse_leave_redirect(CouncWin *self, void *, int a1, int a2);
-void __fastcall counc_win_on_iface_selected_redirect(CouncWin *self, void *, int a1, int a2);
-void __fastcall counc_win_on_iface_left_double_click_redirect(CouncWin *self, void *, int a1, int a2);
-void __fastcall counc_win_on_iface_right_double_click_redirect(CouncWin *self, void *, int a1, int a2);
-void __fastcall counc_win_on_iface_button_toggled_redirect(CouncWin *self, void *, int a1, int a2);
-void __fastcall counc_win_on_iface_group_clicked_redirect(CouncWin *self, void *, int a1, int a2, int a3);
-int __fastcall counc_win_on_button_text_draw_redirect(
-    CouncWin *self, void *, ::GraphicWin *a1, char *a2, int a3);
 
 // ?draw_leader@CouncWin@@QAEXH@Z at 0x00425DB0 - public, __thiscall,
 // void(int) - is 1705 bytes and unrecovered. draw_all_leaders and

@@ -123,7 +123,6 @@ class Gamma : public GraphicWin {
   PushButton pushButton2_;  // 0x46B0, IDB `pushButton2`, 0xB00
 };
 
-int __fastcall gamma_on_key_click_redirect(Gamma *self, void *, int a1, int a2);
 
 // ?adjust_palette@Gamma@@QAEXXZ (0x005C9520) is not recovered. Gamma::on_scrolled
 // is nothing but a call to it, so the call goes through a rebindable seam
