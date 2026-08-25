@@ -122,6 +122,21 @@ HEADER_SHAPES = [
     # what lets this ratchet fall in class-pass-sized steps. Homing imports
     # bindings from the artifacts (6ee2b94a) - this ceiling is what forces
     # it to import them NAMED.
+    # A ONE- OR TWO-LETTER BINDING IS ANONYMOUS TOO, and worse: the shape
+    # below only counts `g_<address>` names, so `static int *const g =
+    # (int *)0x00669310` slipped past it entirely. win.cpp reached through
+    # that single `g` for EIGHT different Win32 imports - GetCursorPos,
+    # BeginPaint, EndPaint, GetWindowLongA, ShowWindow, SetRect, ReleaseDC -
+    # while the address is SetCursorPos, and every one of those bodies was
+    # BYTE_EXACT throughout, because a call target is a relocation and
+    # asm.py masks those. The name is what hid it: too short to inform a
+    # reader, too unlike `g_00669310` to be counted. Ceiling 0; there is no
+    # legitimate one-letter binding to a fixed address.
+    ("short-named fixed-address binding", 0,
+     re.compile(r"\bconst\s+[a-z][a-z0-9]?\s*=\s*\(\s*[\w:\s\*]+\)\s*0x00"),
+     "a fixed-address binding whose name is one or two letters. Name it "
+     "from the import table (tools/iat_names.py) or from its use; a short "
+     "name is invisible to the anonymous-global census AND to the reader."),
     ("anonymous fixed-address global", 103,
      re.compile(r"\bg_00[0-9a-f]{4,6}\b"),
      "a global named by its address instead of its meaning. Name it from "
