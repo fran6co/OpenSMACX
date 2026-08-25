@@ -81,11 +81,11 @@ Purpose: Scale the argument by the field at 0xA14 and divide by 1024.
 Return Value: (field_A14 * a1) / 1024, truncated toward zero
 Status: Complete
 */
-int SetupWin::UNK1(int a1) {
+int SetupWin::UNK1(int pos) {
     const int32_t scale = *reinterpret_cast<const int32_t *>(
         reinterpret_cast<const uint8_t *>(this) + 0xA14);
     return static_cast<int32_t>(static_cast<uint32_t>(scale)
-                                * static_cast<uint32_t>(a1)) / 1024;
+                                * static_cast<uint32_t>(pos)) / 1024;
 }
 
 
@@ -114,11 +114,11 @@ Purpose: As UNK1, over the field at 0xA18 and dividing by 768.
 Return Value: (field_A18 * a1) / 768, truncated toward zero
 Status: Complete
 */
-int SetupWin::UNK2(int a1) {
+int SetupWin::UNK2(int pos) {
     const int32_t scale = *reinterpret_cast<const int32_t *>(
         reinterpret_cast<const uint8_t *>(this) + 0xA18);
     return static_cast<int32_t>(static_cast<uint32_t>(scale)
-                                * static_cast<uint32_t>(a1)) / 768;
+                                * static_cast<uint32_t>(pos)) / 768;
 }
 
 

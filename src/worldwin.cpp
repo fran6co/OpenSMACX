@@ -122,8 +122,8 @@ Purpose: Report a right click to the world window's shared click handler.
 Return Value: n/a
 Status: Complete
 */
-void WorldWin::on_right_click(int a1, int a2) {
-    click(a1, a2, 1, 0);
+void WorldWin::on_right_click(int a, int b) {
+    click(a, b, 1, 0);
 }
 
 
@@ -155,7 +155,7 @@ void WorldWin::set_center(int a1, int a2) {
 // indirect  0x004C4615
 Status: Complete
 */
-void WorldWin::focus(int a1, int a2) {
+void WorldWin::focus(int x_coord, int y_coord) {
     reinterpret_cast<VCall *>(this)->slot012();
     reinterpret_cast<GraphicWin *>(this)->soft_update();
 }

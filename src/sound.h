@@ -37,7 +37,7 @@ class Sound {
   int is_looping();
   int get_time();
   int play();
-  int play(unsigned int a1);
+  int play(unsigned int effect);
   int stop();
   int release();
   void set_loop_state(long loop_state);
@@ -46,7 +46,7 @@ class Sound {
   int fade_in();
   void ramp(int a1, int a2, unsigned int a3);
   void set_type(unsigned int type);
-  int load(const char *a1);
+  int load(const char *fname);
   void set_volume(int volume);
   int set_fade(unsigned long fade);
   int set_fade_in(unsigned int fade_in);

@@ -743,8 +743,8 @@ void Popup::on_adjust_button_width() {
 // calls     0x005F5AD0
 Status: Complete
 */
-int Popup::on_nc_hittest(int a1, int a2) {
-    return reinterpret_cast<Win *>(this)->Win::on_nc_hittest(a1, a2);
+int Popup::on_nc_hittest(int x, int y) {
+    return reinterpret_cast<Win *>(this)->Win::on_nc_hittest(x, y);
 }
 
 /*

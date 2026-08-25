@@ -54,7 +54,7 @@ class Sprite {
 
   void close();
 
-  void UNK3(int a1, int a2);
+  void UNK3(int menu_id, int item_id);
   void UNK4(int a1, int a2);
  private:
   // `Win::flip` draws the overlay sprite and takes its frame index from

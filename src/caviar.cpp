@@ -289,8 +289,8 @@ Purpose: Store a single value at 0x108.
 Return Value: n/a
 Status: Complete
 */
-void Caviar::UNK8(int a1) {
-    field_108_ = a1;
+void Caviar::UNK8(int menu_id) {
+    field_108_ = menu_id;
 }
 
 /*

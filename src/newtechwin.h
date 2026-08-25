@@ -41,7 +41,7 @@ class NewTechWin : public GraphicWin {
   // nothing and the deleting destructor needs a `call rel32`.
   ~NewTechWin();
   void on_left_click(int a1, int a2);
-  int on_key_click(int a1, int a2);
+  int on_key_click(int a, int b);
 
   // Storage the image proves is here: its own methods reach 0x107C4.
   // Extent only - this class carries no size assertion, and the bound is a floor.

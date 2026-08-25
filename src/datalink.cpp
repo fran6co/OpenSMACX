@@ -581,7 +581,7 @@ void Datalink::parse_id(int id, DatalinkID *out_id, int *out_remainder) {
 // calls     0x0042BF10
 Status: Complete
 */
-void Datalink::on_selected(int a1) {
+void Datalink::on_selected(int index) {
     int v = field_2A38_;
     if (v == 0) {
         draw_entry();
@@ -599,7 +599,7 @@ void Datalink::on_selected(int a1) {
 // calls     0x0045D310 0x005F7E90
 Status: Complete
 */
-void Datalink::show(int a1) {
+void Datalink::show(int visible) {
     if (!reinterpret_cast<Win *>(this)->is_visible()) {
         reinterpret_cast<SubInterface *>(reinterpret_cast<char *>(this) + 0xa14)->set_iface_mode();
     }

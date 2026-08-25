@@ -86,7 +86,7 @@ class PlanWin : public MapWin {
   // constructor here at all (the implicit default is never called), and
   // `construct` below carries the recovered body by hand, exactly as
   // `mapwin.h`'s `MapWin::construct` already does for the same reason.
-  void construct(int a1);
+  void construct(int input);
   ~PlanWin();
   void clear_lines();
   void close();

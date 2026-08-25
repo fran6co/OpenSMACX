@@ -346,10 +346,10 @@ Purpose: Start the wave playing. A wrapped device answers through its own
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
-int Wave::play(int a1) {
-    typedef int (OriginalObject::*device_play_fn)(int a1);
+int Wave::play(int effect) {
+    typedef int (OriginalObject::*device_play_fn)(int effect);
     if (device_) {
-        return (ORIGINAL(device_)->*vtable_slot<device_play_fn>(device_, 0x94))(a1);
+        return (ORIGINAL(device_)->*vtable_slot<device_play_fn>(device_, 0x94))(effect);
     }
     return 0x14;
 }
@@ -1341,15 +1341,15 @@ Purpose: Initialise the wave from a filename and a mode mask. Streaming waves
 Return Value: n/a
 Status: Complete
 */
-void Wave::init(char *a1, unsigned long a2) {
-    const uint32_t streaming = a2 & 4;
-    if (streaming && (a2 & 0x10)) {
+void Wave::init(char *group_id, unsigned long flags) {
+    const uint32_t streaming = flags & 4;
+    if (streaming && (flags & 0x10)) {
         return;
     }
-    if (streaming && (a2 & 0x80)) {
+    if (streaming && (flags & 0x80)) {
         return;
     }
-    char *const resolved = filefind_get(a1);
+    char *const resolved = filefind_get(group_id);
     if (!resolved) {
         return;
     }
@@ -1393,26 +1393,26 @@ void Wave::init(char *a1, unsigned long a2) {
         }
         if (device_) {
             typedef void (OriginalObject::*device_mode_fn)(uint32_t mode);
-            (ORIGINAL(device_)->*vtable_slot<device_mode_fn>(device_, 0x6C))(a2);
+            (ORIGINAL(device_)->*vtable_slot<device_mode_fn>(device_, 0x6C))(flags);
         }
     }
-    if (a2 & 1) {
+    if (flags & 1) {
         flags_54_ |= 1;
     }
-    if ((a2 & 0x10) && !streaming) {
+    if ((flags & 0x10) && !streaming) {
         flags_54_ |= 4;
     }
-    if (a2 & 2) {
+    if (flags & 2) {
         typedef void (OriginalObject::*wave_loop_fn)(int on);
         (ORIGINAL(this)->*vtable_slot<wave_loop_fn>(this, 0x48))(1);
     }
-    if (a2 & 0x40) {
+    if (flags & 0x40) {
         flags_54_ |= 8;
     }
-    if (a2 & 0x80) {
+    if (flags & 0x80) {
         flags_54_ |= 0x10;
     }
-    if (a2 & 0x100) {
+    if (flags & 0x100) {
         flags_54_ |= 0x20;
     }
 }

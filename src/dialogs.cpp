@@ -148,12 +148,12 @@ Purpose: Forward on right down to the embedded widget, but only when the
 Return Value: n/a
 Status: Complete
 */
-void Dialogs::on_right_down(int a1, int a2) {
+void Dialogs::on_right_down(int a, int b) {
     uint8_t *const bytes = reinterpret_cast<uint8_t *>(this);
     int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
     if (discriminator == 8) {
-        reinterpret_cast<SpriteBox *>(bytes - 0x8C)->on_right_down(a1, a2);
+        reinterpret_cast<SpriteBox *>(bytes - 0x8C)->on_right_down(a, b);
     }
 }
 
@@ -172,12 +172,12 @@ Purpose: Forward on right double click to the embedded widget, but only when the
 Return Value: n/a
 Status: Complete
 */
-void Dialogs::on_right_double_click(int a1, int a2) {
+void Dialogs::on_right_double_click(int a, int b) {
     uint8_t *const bytes = reinterpret_cast<uint8_t *>(this);
     int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
     if (discriminator == 8) {
-        reinterpret_cast<SpriteBox *>(bytes - 0x8C)->on_right_double_click(a1, a2);
+        reinterpret_cast<SpriteBox *>(bytes - 0x8C)->on_right_double_click(a, b);
     }
 }
 
@@ -196,7 +196,7 @@ Purpose: Forward on left up to the embedded widget, but only when the
 Return Value: n/a
 Status: Complete
 */
-void Dialogs::on_left_up(int a1, int a2) {
+void Dialogs::on_left_up(int a, int b) {
     uint8_t *const bytes = reinterpret_cast<uint8_t *>(this);
     int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
@@ -209,7 +209,7 @@ void Dialogs::on_left_up(int a1, int a2) {
         return;
     }
     if (discriminator == 8) {
-        reinterpret_cast<SpriteBox *>(bytes - 0x8C)->on_left_up(a1, a2);
+        reinterpret_cast<SpriteBox *>(bytes - 0x8C)->on_left_up(a, b);
     }
 }
 
@@ -228,12 +228,12 @@ Purpose: Forward on right up to the embedded widget, but only when the
 Return Value: n/a
 Status: Complete
 */
-void Dialogs::on_right_up(int a1, int a2) {
+void Dialogs::on_right_up(int a, int b) {
     uint8_t *const bytes = reinterpret_cast<uint8_t *>(this);
     int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
     if (discriminator == 8) {
-        reinterpret_cast<SpriteBox *>(bytes - 0x8C)->on_right_up(a1, a2);
+        reinterpret_cast<SpriteBox *>(bytes - 0x8C)->on_right_up(a, b);
     }
 }
 
@@ -252,12 +252,12 @@ Purpose: Forward on right click to the embedded widget, but only when the
 Return Value: n/a
 Status: Complete
 */
-void Dialogs::on_right_click(int a1, int a2) {
+void Dialogs::on_right_click(int a, int b) {
     uint8_t *const bytes = reinterpret_cast<uint8_t *>(this);
     int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
     if (discriminator == 8) {
-        reinterpret_cast<SpriteBox *>(bytes - 0x8C)->on_right_click(a1, a2);
+        reinterpret_cast<SpriteBox *>(bytes - 0x8C)->on_right_click(a, b);
     }
 }
 
@@ -307,7 +307,7 @@ Purpose: Forward on scrolling to the embedded widget, but only when the
 Return Value: n/a
 Status: Complete
 */
-void Dialogs::on_scrolling(int a1, int a2) {
+void Dialogs::on_scrolling(int a, int b) {
     uint8_t *const bytes = reinterpret_cast<uint8_t *>(this);
     int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
@@ -316,7 +316,7 @@ void Dialogs::on_scrolling(int a1, int a2) {
     // `cmp dword ptr [ecx-8], 2` and reads the field a second time.
     switch (discriminator) {
         case 2:
-            reinterpret_cast<ListBox *>(bytes - 0x140)->on_scrolling(a1, a2);
+            reinterpret_cast<ListBox *>(bytes - 0x140)->on_scrolling(a, b);
             break;
         default:
             break;
@@ -338,7 +338,7 @@ Purpose: Forward on mousewheel to the embedded widget, but only when the
 Return Value: n/a
 Status: Complete
 */
-void Dialogs::on_mousewheel(int a1) {
+void Dialogs::on_mousewheel(int a) {
     uint8_t *const bytes = reinterpret_cast<uint8_t *>(this);
     int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
@@ -347,7 +347,7 @@ void Dialogs::on_mousewheel(int a1) {
     // `cmp dword ptr [ecx-8], 2` and reads the field a second time.
     switch (discriminator) {
         case 2:
-            reinterpret_cast<ListBox *>(bytes - 0x140)->on_mousewheel(a1);
+            reinterpret_cast<ListBox *>(bytes - 0x140)->on_mousewheel(a);
             break;
         default:
             break;

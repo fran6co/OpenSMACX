@@ -77,7 +77,7 @@ class Dialogs : public ListBox,
 
  public:
   // 0x00612CC0, a pending_bodies forwarder.
-  int on_key_down(int a1);
+  int on_key_down(int a);
 
  public:
   // 0x006130E0, a pending_bodies forwarder.
@@ -96,19 +96,19 @@ class Dialogs : public ListBox,
   uint32_t destroy();
   int item(char *text, int index);
   int get_num_items();
-  void on_right_down(int a1, int a2);
-  void on_right_double_click(int a1, int a2);
-  void on_left_up(int a1, int a2);
-  void on_right_up(int a1, int a2);
-  void on_right_click(int a1, int a2);
+  void on_right_down(int a, int b);
+  void on_right_double_click(int a, int b);
+  void on_left_up(int a, int b);
+  void on_right_up(int a, int b);
+  void on_right_click(int a, int b);
   // (code, pos), the Win32 WM_VSCROLL shape the image mirrors. Evidence
   // is in the bodies: BaseWin::on_scrolled does `switch (a1)` and then
   // stores a2 in field_40B10_; StringBox::on_scrolled stores a2 in
   // field_A1C_; BaseWin::on_iface_scrolled tests `a1 != 2` and copies a2.
   // The first is switched on, the second is kept - a code and a position.
   void on_scrolled(int code, int pos);
-  void on_scrolling(int a1, int a2);
-  void on_mousewheel(int a1);
+  void on_scrolling(int a, int b);
+  void on_mousewheel(int a);
 
  private:
   // FIVE base subobjects sharing TWO virtual bases, and this slab spells none

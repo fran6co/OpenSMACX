@@ -214,8 +214,8 @@ Purpose: Ask the wrapped device to play the given sound, through vtable slot
 Return Value: the device's answer, or 0x14 when none is wrapped
 Status: Complete
 */
-int Sound::play(unsigned int a1) {
-    return forward_sound_device(this, 0x18, static_cast<int>(a1), 0x14);
+int Sound::play(unsigned int effect) {
+    return forward_sound_device(this, 0x18, static_cast<int>(effect), 0x14);
 }
 
 /*
@@ -468,8 +468,8 @@ Return Value: the device's load answer, 0xA for an unresolvable name, 1 for
               error
 Status: Complete
 */
-int Sound::load(const char *a1) {
-    char *const resolved = filefind_get(a1);
+int Sound::load(const char *fname) {
+    char *const resolved = filefind_get(fname);
     if (!resolved) {
         return 0xA;
     }

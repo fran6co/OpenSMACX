@@ -85,7 +85,7 @@ class AlphaMovie : public ConstructedGraphicWin {
   int UNK3(int a1);
   int UNK5(int a1);
   void UNK6(int a1, int a2);
-  void UNK6(int a1);
+  void UNK6(int menu_id);
   int UNK8(int a1, int a2);
 
  private:

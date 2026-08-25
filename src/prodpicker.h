@@ -46,7 +46,7 @@ class ProdPicker : public GraphicWin {
   // pending_bodies forwarder, because an empty inline stub emits
   // nothing and the deleting destructor needs a `call rel32`.
   ~ProdPicker();
-  int UNK1(int a1);
+  int UNK1(int pos);
   void on_mouse_move(int a1, int a2);
   void UNK3(int a1);
   void close();

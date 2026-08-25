@@ -75,10 +75,10 @@ single TextureStore/Buffer/Buffer/Buffer/Font/Font/Font members, the
 array-of-4 ImageButton range, and the manual vtable-pointer stores plus
 vtordisp on the embedded GraphicWin.
 */
-void MapWin::construct(int a1) {
+void MapWin::construct(int input) {
     char *const self = reinterpret_cast<char *>(this);
 
-    if (a1) {
+    if (input) {
         *reinterpret_cast<void **>(self) = g_0066c870;
         new (reinterpret_cast<GraphicWin *>(self + 0x21a6c)) GraphicWin();
     }
@@ -280,13 +280,13 @@ Purpose: Report a right click on the map, but only when map input is enabled.
 Return Value: n/a
 Status: Complete
 */
-void MapWin::on_right_click(int a1, int a2) {
+void MapWin::on_right_click(int a, int b) {
     if (*MapWinInputEnabled == 0) {
         return;
     }
     MapWin *const base = reinterpret_cast<MapWin *>(
         reinterpret_cast<uint8_t *>(this) - 0x21A6C);
-    base->click(a1, a2, 1);
+    base->click(a, b, 1);
 }
 
 

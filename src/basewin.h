@@ -74,7 +74,7 @@ class BaseWin : public ConstructedGraphicWin, public SubInterface {
   // unrecovered; pending_bodies.cpp forwards them.
   void garrison_click(int vehID, int a2, int right, int is_double);  // 0x0040B140
   void draw_facilities(int a1);                            // 0x0040FCC0
-  void show(int a1);
+  void show(int visible);
   BaseWin();
   // 0x00420A70 is not recovered: a
   // pending_bodies forwarder, because an empty inline stub emits
@@ -94,9 +94,9 @@ class BaseWin : public ConstructedGraphicWin, public SubInterface {
   void on_iface_left_double_click(int a1, int a2);
   void on_iface_right_double_click(int a1, int a2);
   void on_iface_scrolled(int code, int pos);
-  static void timer_callback(int a1, int a2);
+  static void timer_callback(int key, int context);
   void on_left_click(int a1, int a2);
-  void on_right_click(int a1, int a2);
+  void on_right_click(int a, int b);
   void on_left_double_click(int a1, int a2);
 
   // Storage the image proves is here: its own methods reach 0x40D20.

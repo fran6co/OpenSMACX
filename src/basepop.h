@@ -40,7 +40,7 @@ class BasePop : public GraphicWin {
 
  public:
   // 0x006015B0, a pending_bodies forwarder.
-  int init(int a1, long a2);
+  int init(int group_id, long flags);
 
  public:
   // STATIC, AND THE CATALOGUED NAME IS WRONG. It reads
@@ -81,8 +81,8 @@ class BasePop : public GraphicWin {
   static int basepop_alloc();
   void UNK3(int a1);
   void UNK4(int a1);
-  int on_key_click(int a1, int a2);
-  int on_key_up(int a1);
+  int on_key_click(int a, int b);
+  int on_key_up(int a);
   void set_string_color(int c1, int c2, int c3, int c4);
   void set_string_color2(int c1, int c2, int c3, int c4);
   void set_string_color3(int c1, int c2, int c3, int c4);

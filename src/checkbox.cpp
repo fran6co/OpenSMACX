@@ -525,7 +525,7 @@ Purpose: Move the group's selection to the control with `id`, then set or clear
 Return Value: n/a
 Status: Complete
 */
-void CheckBox::set_state_id(int a1, int a2) {
+void CheckBox::set_state_id(int id, int value) {
     int base = *(int *)(*(int *)this + 8);
     char *list = (char *)this + base + 0xbc;
     int head = *(int *)(list + 8);
@@ -536,12 +536,12 @@ void CheckBox::set_state_id(int a1, int a2) {
         *(int *)(list + 0xc) = head;
         for (idx = 0; idx < count; idx = idx + 1) {
             int cur = *(int *)(list + 0xc);
-            if (*(int *)(cur + 4) == a1) break;
+            if (*(int *)(cur + 4) == id) break;
             *(int *)(list + 0x14) = *(int *)(list + 0x14) + 1;
             *(int *)(list + 0xc) = *(int *)(cur + 0xc);
         }
     }
-    if (a2 != 0) {
+    if (value != 0) {
         *(unsigned int *)((int)this + *(int *)(*(int *)this + 8) + 0xec) |=
             1 << *(int *)((int)this + *(int *)(*(int *)this + 8) + 0xd0);
     } else {

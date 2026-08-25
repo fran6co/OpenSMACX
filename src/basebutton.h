@@ -31,7 +31,7 @@ class BaseButton : public GraphicWin {
   friend class Scroll;
 
  public:
-  void on_right_click(int a1, int a2);
+  void on_right_click(int a, int b);
   // 0x00607B30  ?timer_callback@BaseButton@@QAEXH@Z - public, __thiscall,
   // void(int). Public is load-bearing: the non-member daemon fn_00607b10
   // reaches it through a BaseButton * it was handed.

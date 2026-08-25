@@ -45,7 +45,7 @@ class GraphicWin : public Win, public Buffer {
   friend class BaseButton;
 
  public:
-  void on_mouse_move(int a1, int a2, unsigned int a3, int a4);
+  void on_mouse_move(int x, int y, unsigned int keys, int from_parent);
   GraphicWin();
   ~GraphicWin();
 

@@ -66,10 +66,10 @@ plain method never gets VC6's own most-derived-flag treatment, so the single
 `a1` here is read and branched on exactly as the image's `[ebp+8]` is, with
 no second, compiler-inserted flag arriving alongside it.
 */
-void PlanWin::construct(int a1) {
+void PlanWin::construct(int input) {
     char *const self = reinterpret_cast<char *>(this);
 
-    if (a1) {
+    if (input) {
         *reinterpret_cast<void **>(self) = g_0066d414;
         new (reinterpret_cast<GraphicWin *>(self + 0x22050)) GraphicWin();
     }
