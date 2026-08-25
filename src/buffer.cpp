@@ -2978,14 +2978,20 @@ int Buffer::write_right_l(char *text, int y_coord, int x_coord, int field_width,
     return write_multi_font_raw_l(text, x_coord + (field_width - width), y_coord, len);
 }
 
-// Fixed-slot bindings carried from 005d8290.cpp
-static int *const g_009b3a54 = (int *)0x009B3A54;
-static int *const g_009b3a58 = (int *)0x009B3A58;
-static int *const g_009b3a5c = (int *)0x009B3A5C;
-static int *const g_009b3a60 = (int *)0x009B3A60;
-static int *const g_009b3a64 = (int *)0x009B3A64;
-static int *const g_009b3a68 = (int *)0x009B3A68;
-static int *const g_009b3a6c = (int *)0x009B3A6C;
+// Fixed-slot bindings carried from 005d8290.cpp.
+// THE BLIT DESCRIPTOR AT 0x009B3A54.. IS NAMED FROM ANOTHER BODY'S OWN
+// PARAMETERS: src/unrecovered/005d92c0.cpp writes the same ten addresses
+// from locals it has already named - `bits`, `*pWidth`, `-*pHeight`,
+// `transparentIndex` - so these are evidence rather than inference. The
+// three that stay anonymous (0x70, 0x74, 0x78) are written as literal 0
+// in BOTH bodies, which says nothing about what they hold.
+static int *const BlitSourceBits = (int *)0x009B3A54;
+static int *const BlitTransparentIndex = (int *)0x009B3A58;
+static int *const BlitSourceField4A8 = (int *)0x009B3A5C;
+static int *const BlitSourceWidth = (int *)0x009B3A60;
+static int *const BlitSourceNegHeight = (int *)0x009B3A64;
+static int *const BlitClipWidth = (int *)0x009B3A68;
+static int *const BlitClipNegHeight = (int *)0x009B3A6C;
 static int *const g_009b3a70 = (int *)0x009B3A70;
 static int *const g_009b3a74 = (int *)0x009B3A74;
 static int *const g_009b3a78 = (int *)0x009B3A78;
@@ -3013,15 +3019,15 @@ void Buffer::setup_buff_sprite(int colour) {
     if (val54 != 0) {
         ++*(int *)(self + 0x6c);
     }
-    *g_009b3a54 = val54;
-    *g_009b3a5c = *(int *)(self + 0x4a8);
-    *g_009b3a60 = *(int *)(self + 0x80);
-    *g_009b3a64 = -*(int *)(self + 0x84);
-    *g_009b3a68 = *(int *)(self + 0x80);
-    *g_009b3a6c = -*(int *)(self + 0x84);
+    *BlitSourceBits = val54;
+    *BlitSourceField4A8 = *(int *)(self + 0x4a8);
+    *BlitSourceWidth = *(int *)(self + 0x80);
+    *BlitSourceNegHeight = -*(int *)(self + 0x84);
+    *BlitClipWidth = *(int *)(self + 0x80);
+    *BlitClipNegHeight = -*(int *)(self + 0x84);
     *g_009b3a70 = 0;
     *g_009b3a74 = 0;
-    *(unsigned char *)g_009b3a58 = (unsigned char)colour;
+    *(unsigned char *)BlitTransparentIndex = (unsigned char)colour;
     *g_009b3a78 = 0;
 
     void **field58 = *(void ***)(self + 0x58);
