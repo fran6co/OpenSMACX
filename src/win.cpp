@@ -728,6 +728,16 @@ int WinRootCount;          // 0x009B7B34
 int WinMouseDirect;        // 0x009B7AA4
 int WinMouseScreenX;       // 0x009B6628
 int WinMouseScreenY;       // 0x009B662C
+int WinClipWidth;            // 0x009B7A40
+int WinClipHeight;           // 0x009B7A44
+int WinDragOffsetX;          // 0x009B7A38
+int WinDragOffsetY;          // 0x009B7A3C
+int WinMaximizeIcon;         // 0x009B7B04
+int WinRestoreIcon;          // 0x009B7B08
+int WinModalResult;          // 0x009B6EF0
+int WinSavedAreaWidth;       // 0x009B6F88
+int WinSavedAreaHeight;      // 0x009B6F8C
+int WinSizingFlag;           // 0x009B7AD4
 int WinTrackingMode;       // 0x009B7AA8
 int WinTrackingX;          // 0x009B7AB0
 int WinTrackingY;          // 0x009B7AB4
@@ -3630,13 +3640,13 @@ void __cdecl sub_5f1750(int a1) {
     if (WinFlipSprite != 0) {
         g_WIN_BUFFER->copy(
             (&ScreenBuffer), 0, 0,
-            WinFlipSpriteY, WinFlipSpriteX, *WinClipWidth, *WinClipHeight);
+            WinFlipSpriteY, WinFlipSpriteX, WinClipWidth, WinClipHeight);
         int x = WinFlipSpriteY;
         int y = WinFlipSpriteX;
         RECT local;
-        local.right = x + *WinClipWidth;
+        local.right = x + WinClipWidth;
         local.left = x;
-        local.bottom = y + *WinClipHeight;
+        local.bottom = y + WinClipHeight;
         local.top = y;
         UnionRect(reinterpret_cast<RECT *>(WinDirtyRect),
                   reinterpret_cast<RECT *>(WinDirtyRect), &local);
@@ -3650,7 +3660,7 @@ void __cdecl sub_5f1750(int a1) {
             Win::flip(reinterpret_cast<RECT *>(WinDirtyRect));
             WinFlipSprite = reinterpret_cast<Sprite *>(saved);
             *WinDirtyRect = 0;
-            *WinModalResult = 0;
+            WinModalResult = 0;
         }
     }
 }
@@ -3672,7 +3682,6 @@ Purpose: Run the teardown step for the given instance, but only while it is
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
-// TRIED: forwarding `a1` as an ordinary cdecl argument puts it in eax and
 // tops out at MNEMONIC_ONLY - seven mnemonics agreeing, one register wrong -
 // across eight source shapes. Only phrasing the tail call as a member on
 // `a1` reproduces ecx.
@@ -4618,11 +4627,11 @@ void Win::redo_caption_buttons() {
         if (IsZoomed(HandleMain) == 0) {
             *reinterpret_cast<int *>(
                 reinterpret_cast<char *>(zoom_button_) + 0xAB8) =
-                *WinMaximizeIcon;
+                WinMaximizeIcon;
         } else {
             *reinterpret_cast<int *>(
                 reinterpret_cast<char *>(zoom_button_) + 0xAB8) =
-                *WinRestoreIcon;
+                WinRestoreIcon;
         }
         y += -1 - *reinterpret_cast<int *>(
                        reinterpret_cast<char *>(zoom_button_) + 0x4C4);
@@ -5422,8 +5431,8 @@ typedef int(__stdcall *PollFn)(int);
 static void BuildRectDirect(RECT &r) {
     r.left = WinFlipSpriteY;
     r.top = WinFlipSpriteX;
-    r.right = WinFlipSpriteY + *WinClipWidth;
-    r.bottom = WinFlipSpriteX + *WinClipHeight;
+    r.right = WinFlipSpriteY + WinClipWidth;
+    r.bottom = WinFlipSpriteX + WinClipHeight;
 }
 
 // Restores the saved screen region (if one is pending) and flips it, then
@@ -5434,10 +5443,10 @@ static void RestoreAndFlip(UnionRectFn UnionRect, bool useHelper) {
     if (WinFlipSprite != 0) {
         g_WIN_BUFFER
             ->copy((&ScreenBuffer), 0, 0, WinFlipSpriteY, WinFlipSpriteX,
-                   *WinClipWidth, *WinClipHeight);
+                   WinClipWidth, WinClipHeight);
         RECT rect;
         if (useHelper) {
-            make_rect(&rect, WinFlipSpriteY, WinFlipSpriteX, *WinClipWidth, *WinClipHeight);
+            make_rect(&rect, WinFlipSpriteY, WinFlipSpriteX, WinClipWidth, WinClipHeight);
         } else {
             BuildRectDirect(rect);
         }
@@ -5445,7 +5454,7 @@ static void RestoreAndFlip(UnionRectFn UnionRect, bool useHelper) {
         UnionRect(&merged, &rect, reinterpret_cast<RECT *>(WinDirtyRect));
         Win::flip(&merged);
         *WinDirtyRect = 0;
-        *WinModalResult = 0;
+        WinModalResult = 0;
     }
     WinFlipSprite = reinterpret_cast<Sprite *>(0);
 }
@@ -6036,7 +6045,7 @@ void Win::on_l_button_down(long flags, int x, int y, unsigned int keys, int dbl)
         WinPointerOwner2 = reinterpret_cast<Win *>(reinterpret_cast<int32_t>(this));
     }
 
-    *WinSizingFlag = 1;
+    WinSizingFlag = 1;
     if (flags != 0 &&
         (iFlags_ & 0x200200) == 0 &&
         (iSomeFlag_ & 8) == 0) {
@@ -8067,19 +8076,19 @@ int __cdecl Win::update_cursor(Win *window, int tgl) {
             int field188b = WFIELD(win, 0x188);
             int prevSaved = reinterpret_cast<int>(WinFlipSprite);
             if (field188b != prevSaved) {
-                *WinClipWidth = *reinterpret_cast<int *>(field188b + 0x18);
-                *WinClipHeight = *reinterpret_cast<int *>(field188b + 0x1c);
-                *WinDragOffsetX = WFIELD(win, 0x18c);
-                *WinDragOffsetY = WFIELD(win, 0x190);
-                bool sameArea = *WinSavedAreaWidth == field188b && -*WinSavedAreaHeight == prevSaved;
+                WinClipWidth = *reinterpret_cast<int *>(field188b + 0x18);
+                WinClipHeight = *reinterpret_cast<int *>(field188b + 0x1c);
+                WinDragOffsetX = WFIELD(win, 0x18c);
+                WinDragOffsetY = WFIELD(win, 0x190);
+                bool sameArea = WinSavedAreaWidth == field188b && -WinSavedAreaHeight == prevSaved;
                 if (!sameArea) {
                     g_WIN_BUFFER->init(field188b, prevSaved, 0, 0);
                 }
             }
-            int width = *WinClipWidth;
-            int height = *WinClipHeight;
-            int destX = x - *WinDragOffsetX;
-            int destY = y - *WinDragOffsetY;
+            int width = WinClipWidth;
+            int height = WinClipHeight;
+            int destX = x - WinDragOffsetX;
+            int destY = y - WinDragOffsetY;
             WinFlipSpriteY = destX;
             WinFlipSpriteX = destY;
             WinFlipSprite = reinterpret_cast<Sprite *>(field188b);
@@ -8100,7 +8109,7 @@ int __cdecl Win::update_cursor(Win *window, int tgl) {
             int prevFlag = WinFlipClipped;
             WinFlipClipped = 1;
             Win::flip(&merged);
-            int result = *WinModalResult;
+            int result = WinModalResult;
             WinFlipClipped = prevFlag;
             *WinDirtyRect = result;
             return result;
@@ -8192,9 +8201,9 @@ int __cdecl Win::update_cursor(Win *window, int tgl) {
         if (WinMouseDirect == 0 && WFIELD(win, 0x188) == 0 && WinFlipSprite != 0) {
             g_WIN_BUFFER
                 ->copy((&ScreenBuffer), 0, 0, WinFlipSpriteY, WinFlipSpriteX,
-                       *WinClipWidth, *WinClipHeight);
+                       WinClipWidth, WinClipHeight);
             RECT rect;
-            make_rect(&rect, WinFlipSpriteY, WinFlipSpriteX, *WinClipWidth, *WinClipHeight);
+            make_rect(&rect, WinFlipSpriteY, WinFlipSpriteX, WinClipWidth, WinClipHeight);
             RECT merged;
             UnionRect(&merged, &rect, reinterpret_cast<RECT *>(WinDirtyRect));
             int savedFlag = reinterpret_cast<int>(WinFlipSprite);
@@ -8202,7 +8211,7 @@ int __cdecl Win::update_cursor(Win *window, int tgl) {
             Win::flip(&merged);
             WinFlipSprite = reinterpret_cast<Sprite *>(savedFlag);
             *WinDirtyRect = 0;
-            *WinModalResult = 0;
+            WinModalResult = 0;
         }
 
         while (ShowCursor(ebxFlag) <= 0) {
@@ -9544,12 +9553,12 @@ int __cdecl Win::update_screen(RECT *area, Win *window) {
     }
 
     int base = WinFlipSpriteY;
-    int wA = *WinClipWidth;
+    int wA = WinClipWidth;
     int base2 = WinFlipSpriteX;
     int l10 = base;
     int l14 = base2;
     int l18 = wA + base;
-    int wB = *WinClipHeight;
+    int wB = WinClipHeight;
     int l1c = wB + base2;
 
     if (area != 0) {
@@ -9895,7 +9904,7 @@ void Win::on_r_button_down(long flags, int x, int y, unsigned int keys, int dbl)
         WinPointerOwner1 = nullptr;
         WinPointerOwner2 = this;
     }
-    *WinSizingFlag = 0;
+    WinSizingFlag = 0;
 
     if (flags != 0 &&
         (iFlags_ & 0x200200) == 0 &&
@@ -11002,12 +11011,6 @@ void __cdecl add_parent(Win *);
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
 // PRESERVED UNIT - measured BYTE_EXACT.
-// TRIED: the catalogue spells this `?add_parent@Win@@QAAXPAUWin@@@Z`, a
-//   __cdecl MEMBER, so both member forms were measured. Non-static puts
-//   `this` ahead of the argument and shifts every read: 6/29. Static has
-//   the same one-argument stack shape as the free function and still
-//   measured MISMATCH. The free-function spelling is what reproduces the
-//   bytes, so the claim keeps it and the `symbol` fact says so.
 //
 // Kept for COVERAGE. This directory IS on the ratchet: every file here
 // carries an ORIGINAL marker, `decomp_status.py` compiles and measures
