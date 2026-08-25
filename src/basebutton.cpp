@@ -744,9 +744,9 @@ int __fastcall base_button_init_redirect(
 Status: Complete
 */
 void BaseButton::on_right_click(int a, int b) {
-    char *self = reinterpret_cast<char *>(this);
-    int v = *reinterpret_cast<int *>(self + 0xa80);
-    if (v) {
+    // A NULL TEST ON A POINTER, read through an int only because the
+    // offset was raw. bubble_text_ is LPSTR at 0xA80.
+    if (bubble_text_ != nullptr) {
         timer_callback(0);
     }
 }
