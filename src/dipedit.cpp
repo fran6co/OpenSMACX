@@ -66,9 +66,11 @@ void DipEdit::on_redraw() {
 // calls     0x004DA990 0x004DADA0
 Status: Complete
 */
-void DipEdit::on_selected(int a1) {
+// The int is an INDEX: the body stores it in field_A20_, which then indexes
+// SpyingStatusTable[field_A1C_ * SpyingStatusStride + field_A20_].
+void DipEdit::on_selected(int index) {
     read_check();
-    *reinterpret_cast<int *>(reinterpret_cast<char *>(this) + 0xa20) = a1;
+    field_A20_ = index;
     do_check();
 }
 
@@ -97,52 +99,52 @@ void DipEdit::do_check() {
     CheckBox *const cb = reinterpret_cast<CheckBox *>(self + 0x15A0);
 
     cb->set_state_id(DTREATY_COMMLINK,
-        SpyingStatusTable[*reinterpret_cast<int *>(self + 0xA1C) * SpyingStatusStride
-            + *reinterpret_cast<int *>(self + 0xA20)] & DTREATY_COMMLINK);
+        SpyingStatusTable[field_A1C_ * SpyingStatusStride
+            + field_A20_] & DTREATY_COMMLINK);
     cb->set_state_id(DTREATY_VENDETTA,
-        SpyingStatusTable[*reinterpret_cast<int *>(self + 0xA1C) * SpyingStatusStride
-            + *reinterpret_cast<int *>(self + 0xA20)] & DTREATY_VENDETTA);
+        SpyingStatusTable[field_A1C_ * SpyingStatusStride
+            + field_A20_] & DTREATY_VENDETTA);
     cb->set_state_id(DTREATY_TRUCE,
-        SpyingStatusTable[*reinterpret_cast<int *>(self + 0xA1C) * SpyingStatusStride
-            + *reinterpret_cast<int *>(self + 0xA20)] & DTREATY_TRUCE);
+        SpyingStatusTable[field_A1C_ * SpyingStatusStride
+            + field_A20_] & DTREATY_TRUCE);
     cb->set_state_id(DTREATY_TREATY,
-        SpyingStatusTable[*reinterpret_cast<int *>(self + 0xA1C) * SpyingStatusStride
-            + *reinterpret_cast<int *>(self + 0xA20)] & DTREATY_TREATY);
+        SpyingStatusTable[field_A1C_ * SpyingStatusStride
+            + field_A20_] & DTREATY_TREATY);
     cb->set_state_id(DTREATY_PACT,
-        SpyingStatusTable[*reinterpret_cast<int *>(self + 0xA1C) * SpyingStatusStride
-            + *reinterpret_cast<int *>(self + 0xA20)] & DTREATY_PACT);
+        SpyingStatusTable[field_A1C_ * SpyingStatusStride
+            + field_A20_] & DTREATY_PACT);
     cb->set_state_id(DTREATY_HAVE_INFILTRATOR,
-        SpyingStatusTable[*reinterpret_cast<int *>(self + 0xA1C) * SpyingStatusStride
-            + *reinterpret_cast<int *>(self + 0xA20)] & DTREATY_HAVE_INFILTRATOR);
+        SpyingStatusTable[field_A1C_ * SpyingStatusStride
+            + field_A20_] & DTREATY_HAVE_INFILTRATOR);
     cb->set_state_id(DTREATY_WANT_TO_TALK,
-        SpyingStatusTable[*reinterpret_cast<int *>(self + 0xA1C) * SpyingStatusStride
-            + *reinterpret_cast<int *>(self + 0xA20)] & DTREATY_WANT_TO_TALK);
+        SpyingStatusTable[field_A1C_ * SpyingStatusStride
+            + field_A20_] & DTREATY_WANT_TO_TALK);
     cb->set_state_id(DTREATY_WANT_REVENGE,
-        SpyingStatusTable[*reinterpret_cast<int *>(self + 0xA1C) * SpyingStatusStride
-            + *reinterpret_cast<int *>(self + 0xA20)] & DTREATY_WANT_REVENGE);
+        SpyingStatusTable[field_A1C_ * SpyingStatusStride
+            + field_A20_] & DTREATY_WANT_REVENGE);
     cb->set_state_id(DTREATY_HAVE_SURRENDERED,
-        SpyingStatusTable[*reinterpret_cast<int *>(self + 0xA1C) * SpyingStatusStride
-            + *reinterpret_cast<int *>(self + 0xA20)] & DTREATY_HAVE_SURRENDERED);
+        SpyingStatusTable[field_A1C_ * SpyingStatusStride
+            + field_A20_] & DTREATY_HAVE_SURRENDERED);
     cb->set_state_id(DTREATY_SHALL_BETRAY,
-        SpyingStatusTable[*reinterpret_cast<int *>(self + 0xA1C) * SpyingStatusStride
-            + *reinterpret_cast<int *>(self + 0xA20)] & DTREATY_SHALL_BETRAY);
+        SpyingStatusTable[field_A1C_ * SpyingStatusStride
+            + field_A20_] & DTREATY_SHALL_BETRAY);
     cb->set_state_id(DTREATY_ATROCITY_VICTIM,
-        SpyingStatusTable[*reinterpret_cast<int *>(self + 0xA1C) * SpyingStatusStride
-            + *reinterpret_cast<int *>(self + 0xA20)] & DTREATY_ATROCITY_VICTIM);
+        SpyingStatusTable[field_A1C_ * SpyingStatusStride
+            + field_A20_] & DTREATY_ATROCITY_VICTIM);
 
     // The second table view, eight uint32_t elements (0x20 bytes) further
     // into the same SpyingStatusTable storage.
     cb->set_state_id(static_cast<int>(0x80000000U) | DTREATY_COMMLINK,
-        SpyingStatusTable[*reinterpret_cast<int *>(self + 0xA1C) * SpyingStatusStride
-            + *reinterpret_cast<int *>(self + 0xA20) + 8] & DTREATY_COMMLINK);
+        SpyingStatusTable[field_A1C_ * SpyingStatusStride
+            + field_A20_ + 8] & DTREATY_COMMLINK);
     cb->set_state_id(static_cast<int>(0x80000000U) | DTREATY_WANT_TO_TALK,
-        SpyingStatusTable[*reinterpret_cast<int *>(self + 0xA1C) * SpyingStatusStride
-            + *reinterpret_cast<int *>(self + 0xA20) + 8] & DTREATY_WANT_TO_TALK);
+        SpyingStatusTable[field_A1C_ * SpyingStatusStride
+            + field_A20_ + 8] & DTREATY_WANT_TO_TALK);
 
     reinterpret_cast<VCall *>(
         self + 0x15A0
         + *reinterpret_cast<int *>(reinterpret_cast<char *>(
-            *reinterpret_cast<int *>(self + 0x15A0)) + 4))
+            field_15A0_) + 4))
         ->slot062();
 }
 

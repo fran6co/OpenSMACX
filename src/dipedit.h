@@ -52,7 +52,7 @@
   */
 class DipEdit : public GraphicWin {
  public:
-  void on_selected(int a1);
+  void on_selected(int index);
   // 0x004DA990 (?read_check@DipEdit@@QAEXXZ) - a pending_bodies forwarder;
   // still a declaration only, resolved at link time like the other
   // unrecovered methods.

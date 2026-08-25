@@ -57,7 +57,7 @@ CEILINGS = {
     # layout model - their passes, not Win's.
     "raw self-access": 238,
     "pointer-parameter as int": 6,
-    "scaffold name": 1691,
+    "scaffold name": 1689,
 }
 
 WHY = {
