@@ -49,9 +49,16 @@ class BaseWin : public ConstructedGraphicWin, public SubInterface {
  public:
   // 0x004165D0, a pending_bodies forwarder: the three click handlers
   // below funnel into it and reached it through a pointer.
-  void click(int a1, int a2, int a3, int a4);
+  // `right` and `is_double` are named from the CALL SITES, not from a body:
+  // on_left_click passes (.., 0, 0), on_right_click (.., 1, 0),
+  // on_left_double_click (.., 0, 1) and on_right_double_click (.., 1, 1).
+  // The first two arguments stay scaffold on purpose - every override in
+  // the tree DISCARDS them (designwin, diplopop, datalink, battlewin,
+  // socialwin all spell the body `(int, int)`), so nothing here says what
+  // they carry.
+  void click(int a1, int a2, int right, int is_double);
   // 0x004160F0, a pending_bodies forwarder.
-  void iface_click(int a1, int a2, int a3, int a4);
+  void iface_click(int a1, int a2, int right, int is_double);
   // 0x0040C850, a pending_bodies forwarder.
   void draw_supported(int a1);
  public:
@@ -60,7 +67,7 @@ class BaseWin : public ConstructedGraphicWin, public SubInterface {
   // Two siblings the recovered bodies above reach with a direct `call rel32`
   // - UNK2 calls garrison_click, on_scrolled calls draw_facilities. Both are
   // unrecovered; pending_bodies.cpp forwards them.
-  void garrison_click(int vehID, int a2, int a3, int a4);  // 0x0040B140
+  void garrison_click(int vehID, int a2, int right, int is_double);  // 0x0040B140
   void draw_facilities(int a1);                            // 0x0040FCC0
   void show(int a1);
   BaseWin();
