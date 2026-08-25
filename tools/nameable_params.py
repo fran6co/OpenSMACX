@@ -21,8 +21,21 @@ needed to say so. The same call-site reading named `click` and
 `garrison_click`.
 
 So treat the first two groups as LOW yield rather than zero: check the call
-sites before writing a method off. The third group remains where a pass
-should start, and this prints it by file.
+sites before writing a method off.
+
+AND THE THIRD GROUP IS NOT ALL WORK EITHER. Measured 2026-08-26: 196 of the
+429 "actionable" are one repeated event-handler signature - `on_iface_*(int
+a1, int a2)` and friends, spread over councwin, diplowin, diplopop,
+datalink, basewin and more. Across the tree 197 such definitions DISCARD
+both arguments outright and only 75 use one, and of those 75 almost all
+just forward the pair to another handler, which is circular. The clearest
+body that does read one, `on_iface_scrolled`, compares it against a literal
+(`a1 != 2`) - so it carries a CODE, not the coordinate the name `x` would
+claim.
+
+Naming those from the handler convention would be inventing, so the honest
+actionable figure is closer to 233 than 429. Start with the files this
+prints, but expect the `on_*` rows in them to be evidence-poor.
 
     uv run tools/nameable_params.py            # the actionable ones, by file
     uv run tools/nameable_params.py --summary  # just the three totals
