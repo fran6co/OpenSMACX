@@ -4061,8 +4061,8 @@ void Win::remove_parent_dialog() {
         const int total = parent->list_.count_;
         if (total > 0) {
             do {
-                int node = reinterpret_cast<int>(parent->list_.current_);
-                if (*reinterpret_cast<int *>(node + 4) == reinterpret_cast<int>(this)) {
+                char *node = reinterpret_cast<char *>(parent->list_.current_);
+                if (*reinterpret_cast<Win **>(node + 4) == this) {
                     int prev = *reinterpret_cast<int *>(node + 0xc);
                     int next = *reinterpret_cast<int *>(node + 0x10);
                     *reinterpret_cast<int *>(prev + 0x10) = next;
@@ -6362,7 +6362,7 @@ void Win::bring_to_top() {
     if (count > 0) {
         Win **slot = WinRootWindows;
         do {
-            if (reinterpret_cast<int>(*slot) == reinterpret_cast<int>(this)) break;
+            if (*slot == this) break;
             i++;
             slot++;
         } while (i < count);
@@ -7938,7 +7938,7 @@ int Win::init(int x, int y, int width, int height, char * caption,
     this->field_164_ = this->outer_rect_.right;
     this->field_168_ = this->outer_rect_.bottom;
 
-    void **nameSlot = reinterpret_cast<void **>(reinterpret_cast<char *>(this) + 0xE0);
+    void **nameSlot = reinterpret_cast<void **>(&field_E0_);
     if (*nameSlot) {
         free(*nameSlot);
         *nameSlot = 0;
@@ -8929,8 +8929,7 @@ int Win::sub_63c340() {
 // ===== homed from src/unrecovered/005edf50.cpp =====
 
 void Win::set_caption(char * text) {
-    char *self = reinterpret_cast<char *>(this);
-    void **caption = reinterpret_cast<void **>(self + 0xe0);
+    void **caption = reinterpret_cast<void **>(&field_E0_);
     if (*caption != 0) {
         free(*caption);
         *caption = 0;
