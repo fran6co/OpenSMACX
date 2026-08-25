@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "flatbutton.h"
 #include "listbox.h"
 #include "subinterface.h"
 
@@ -107,10 +108,10 @@ class ReportIf : public SubInterface {
   // BEFORE any body statement, so converting these three pushes that store
   // after all three members instead of interleaved with the first - which is
   // not what the image does. Reverted.
-  uint8_t flatButtonsA_[7 * 0xB4C];  // 0x80, 7 * sizeof(FlatButton), vector ctor iterator
-  uint8_t spritesA_[0x15 * 0x2C];  // 0x4F94, 0x15 * sizeof(Sprite), vector ctor iterator
+  FlatButton flatButtonsA_[7];  // 0x80, 7 * sizeof(FlatButton), vector ctor iterator
+  Sprite spritesA_[0x15];  // 0x4F94, 0x15 * sizeof(Sprite), vector ctor iterator
   uint8_t gap_5330_[0x54];  // 0x5330
-  uint8_t flatButtonsB_[7 * 0xB4C];  // 0x5384, 7 * sizeof(FlatButton), vector ctor iterator
+  FlatButton flatButtonsB_[7];  // 0x5384, 7 * sizeof(FlatButton), vector ctor iterator
   uint8_t gap_A298_[0x38];  // 0xA298
   // The two ListBox members below are constructed with a BOOL argument
   // (`ListBox(1)` in the disassembly's call at 0x00609DB0) that has no
@@ -133,16 +134,16 @@ class ReportIf : public SubInterface {
   uint8_t flatButton10_[0xB4C];  // 0x1204C
   uint8_t flatButton11_[0xB4C];  // 0x12B98
   uint8_t buttonGroup3_[0x94];  // 0x136E4
-  uint8_t flatButtonsC_[7 * 0xB4C];  // 0x13778, 7 * sizeof(FlatButton), vector ctor iterator
+  FlatButton flatButtonsC_[7];  // 0x13778, 7 * sizeof(FlatButton), vector ctor iterator
   uint8_t buttonGroup4_[0x94];  // 0x1868C
-  uint8_t flatButtonsD_[5 * 0xB4C];  // 0x18720, 5 * sizeof(FlatButton), vector ctor iterator
+  FlatButton flatButtonsD_[5];  // 0x18720, 5 * sizeof(FlatButton), vector ctor iterator
   uint8_t flatButton12_[0xB4C];  // 0x1BF9C
   uint8_t flatButton13_[0xB4C];  // 0x1CAE8
   uint8_t flatButton14_[0xB4C];  // 0x1D634
   uint8_t gap_1E180_[0x3C];  // 0x1E180
   uint8_t spot_[0xC];  // 0x1E1BC, sizeof(Spot)
   uint8_t gap_1E1C8_[0x208C];  // 0x1E1C8
-  uint8_t spritesB_[4 * 0x2C];  // 0x20254, 4 * sizeof(Sprite), vector ctor iterator
+  Sprite spritesB_[4];  // 0x20254, 4 * sizeof(Sprite), vector ctor iterator
 };
 
 // The constructor's own last store reaches 0x20254 + 0xB0 == 0x20304; there

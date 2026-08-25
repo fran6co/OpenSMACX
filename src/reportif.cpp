@@ -28,10 +28,6 @@
 #include "spot.h"
 #include "vector_teardown.h"
 
-const void *const ReportIfSpriteCtor = (const void *)0x005E37E0;
-const void *const ReportIfSpriteDtor = (const void *)0x00406850;
-const void *const ReportIfFlatButtonCtor = (const void *)0x00607CF0;
-const void *const ReportIfFlatButtonDtor = (const void *)0x00406880;
 
 const uint32_t ReportIfSubInterfaceVtable = 0x0066A6E4;
 const uint32_t ReportIfPrimaryVtable = 0x0066D700;
@@ -74,9 +70,6 @@ ReportIf::ReportIf() {
     uint32_t *const object = reinterpret_cast<uint32_t *>(this);
     object[0] = ReportIfSubInterfaceVtable;
 
-    VectorCtorIterator(flatButtonsA_, 0xB4C, 7, ReportIfFlatButtonCtor, ReportIfFlatButtonDtor);
-    VectorCtorIterator(spritesA_, 0x2C, 0x15, ReportIfSpriteCtor, ReportIfSpriteDtor);
-    VectorCtorIterator(flatButtonsB_, 0xB4C, 7, ReportIfFlatButtonCtor, ReportIfFlatButtonDtor);
 
     typedef void(__fastcall *pending_listbox_ctor)(void *, void *, int);
     reinterpret_cast<pending_listbox_ctor>(0x00609DB0)(listBox1_, nullptr, 1);
@@ -97,18 +90,15 @@ ReportIf::ReportIf() {
     new (flatButton11_) FlatButton();
     new (buttonGroup3_) ButtonGroup();
 
-    VectorCtorIterator(flatButtonsC_, 0xB4C, 7, ReportIfFlatButtonCtor, ReportIfFlatButtonDtor);
 
     new (buttonGroup4_) ButtonGroup();
 
-    VectorCtorIterator(flatButtonsD_, 0xB4C, 5, ReportIfFlatButtonCtor, ReportIfFlatButtonDtor);
 
     new (flatButton12_) FlatButton();
     new (flatButton13_) FlatButton();
     new (flatButton14_) FlatButton();
     new (spot_) Spot();
 
-    VectorCtorIterator(spritesB_, 0x2C, 4, ReportIfSpriteCtor, ReportIfSpriteDtor);
 
     object[0] = ReportIfPrimaryVtable;
 }
@@ -144,7 +134,6 @@ Purpose: Tear down every sub-object the constructor built, in exactly the
 // calls     0x005D4DD0 0x005FA870 0x00607040 0x00607DA0 0x00608E10 0x00609EC0 0x0062B7F0 0x006456E4
 */
 ReportIf::~ReportIf() {
-    VectorDtorIterator(spritesB_, 0x2C, 4, ReportIfSpriteDtor);
 
     reinterpret_cast<Spot *>(spot_)->~Spot();
 
@@ -152,11 +141,9 @@ ReportIf::~ReportIf() {
     reinterpret_cast<FlatButton *>(flatButton13_)->destroy();
     reinterpret_cast<FlatButton *>(flatButton12_)->destroy();
 
-    VectorDtorIterator(flatButtonsD_, 0xB4C, 5, ReportIfFlatButtonDtor);
 
     reinterpret_cast<ButtonGroup *>(buttonGroup4_)->close();
 
-    VectorDtorIterator(flatButtonsC_, 0xB4C, 7, ReportIfFlatButtonDtor);
 
     reinterpret_cast<ButtonGroup *>(buttonGroup3_)->close();
 
@@ -186,9 +173,6 @@ ReportIf::~ReportIf() {
     reinterpret_cast<pending_listbox_vbase_dtor>(0x00608E10)(self + 0xAD30, nullptr);
     reinterpret_cast<pending_listbox_vbase_dtor>(0x005D4DD0)(self + 0xA318, nullptr);
 
-    VectorDtorIterator(flatButtonsB_, 0xB4C, 7, ReportIfFlatButtonDtor);
-    VectorDtorIterator(spritesA_, 0x2C, 0x15, ReportIfSpriteDtor);
-    VectorDtorIterator(flatButtonsA_, 0xB4C, 7, ReportIfFlatButtonDtor);
 }
 
 

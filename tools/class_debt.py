@@ -41,7 +41,7 @@ from decomp import read  # noqa: E402
 # `g_00406850`-style disguises, every one a real function reference.
 CEILINGS = {
     "unk-method": 190,
-    "function-address binding": 59,
+    "function-address binding": 55,
     "orphan redirect": 209,
     "pointer-as-int": 2,
     "undocumented trivial body": 0,
