@@ -3679,7 +3679,9 @@ Purpose: Restore the saved screen area and union its rectangle into the
 // ORIGINAL: 0x005F1750 sub_5f1750 0x005F1750-0x005F1812 FILE
 // size      194 bytes
 // kind      game
-void __cdecl sub_5f1750(int a1) {
+// `a1` gates the flip: nonzero means push the accumulated dirty rect to
+// the screen before returning.
+void __cdecl sub_5f1750(int do_flip) {
     if (WinFlipSprite != 0) {
         g_WIN_BUFFER->copy(
             (&ScreenBuffer), 0, 0,
@@ -3693,7 +3695,7 @@ void __cdecl sub_5f1750(int a1) {
         local.top = y;
         UnionRect(&WinDirtyRect,
                   &WinDirtyRect, &local);
-        if (a1 != 0) {
+        if (do_flip != 0) {
             int saved = reinterpret_cast<int>(WinFlipSprite);
             WinFlipSprite = reinterpret_cast<Sprite *>(0);
             // Win::flip is a STATIC member (win.h:211), so the image's
@@ -3962,25 +3964,25 @@ void Win::close_class() {
 // 49 instructions against 44 with the SetCursorPos argument reload and push
 // pair emitted in a different place - twelve differing runs, so the
 // remaining work is the body's shape, not one spelling.
-void Win::set_mouse_pos(int a1, int a2) {
-    // MEMBERS FIRST, argument last. `+` is left-associative, so `a1 + left +
-    // outer` groups as `(a1 + left) + outer`; the image adds the two members
+void Win::set_mouse_pos(int x, int y) {
+    // MEMBERS FIRST, argument last. `+` is left-associative, so `x + left +
+    // outer` groups as `(x + left) + outer`; the image adds the two members
     // to each other and the argument to that sum (`add eax, edx` then
     // `add ecx, eax` at 0x005EC80D).
-    int x = client_rect_.left + outer_rect_.left + a1;
-    int y = client_rect_.top + outer_rect_.top + a2;
+    int screen_x = client_rect_.left + outer_rect_.left + x;
+    int screen_y = client_rect_.top + outer_rect_.top + y;
     if (((iFlags_ & 0x20) != 0) && (win_parent_ != 0)) {
         // THE PARENT'S. `mov ecx, [esi + 0xc4]` / `test ecx, ecx` at
         // 0x005EC83D puts win_parent_ in the receiver register and calls from
         // there; and the 0x8000 arm RELOADS it (`mov esi, [esi + 0xc4]` at
         // 0x005EC861), which is what says no local held it.
-        win_parent_->client_to_screen(&x, &y);
+        win_parent_->client_to_screen(&screen_x, &screen_y);
         if ((iFlags_ & 0x8000) != 0) {
-            x = x - win_parent_->outer_rect_.left;
-            y = y - win_parent_->outer_rect_.top;
+            screen_x = screen_x - win_parent_->outer_rect_.left;
+            screen_y = screen_y - win_parent_->outer_rect_.top;
         }
     }
-    SetCursorPos(x, y);
+    SetCursorPos(screen_x, screen_y);
 }
 
 // Fixed-slot bindings carried from 005ec8a0.cpp
@@ -4922,11 +4924,11 @@ typedef int (__stdcall *EndPaintProc)(void *, const PAINTSTRUCT *);
 // indirect  0x005F134E 0x005F1397
 
 
-bool __cdecl Win::OnPaint(HWND a1) {
+bool __cdecl Win::OnPaint(HWND hwnd) {
     PAINTSTRUCT ps;
     // 0x006692B8. The image calls `[0x6692b8]` at 0x005F134E; the
     // file-scope `g` this used to read is SetCursorPos.
-    HDC hdc = BeginPaint(a1, &ps);
+    HDC hdc = BeginPaint(hwnd, &ps);
     if (hdc == 0) {
         return false;
     }
@@ -4937,7 +4939,7 @@ bool __cdecl Win::OnPaint(HWND a1) {
     paintRect.bottom = ps.rcPaint.bottom;
     update_screen(&paintRect, 0);
     flip(&paintRect);
-    return EndPaint(a1, &ps) != 0;
+    return EndPaint(hwnd, &ps) != 0;
 }
 
 
@@ -5606,6 +5608,7 @@ void Win::on_mousewheel_down(int delta) {
 typedef long (__stdcall *GetWindowLongProc)(void *, int);
 
 // ORIGINAL: 0x005F0540 ?adjust_menus@Win@@QAGHPAX@Z 0x005F0540-0x005F0579 BYTE_EXACT
+// symbol    ?adjust_menus@Win@@SGHPAUHWND__@@PAX@Z
 // size      57 bytes
 // prototype int (__stdcall ?adjust_menus@Win@@QAGHPAX@Z)(HWND hWnd)
 // callers   0   call targets   0
@@ -5619,11 +5622,11 @@ typedef long (__stdcall *GetWindowLongProc)(void *, int);
 // OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
 // and rewriting it in the tree's own style is a later phase. See README.md
 // beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
-int __stdcall Win::adjust_menus(void *a1) {
+int __stdcall Win::adjust_menus(HWND hwnd, void *unused) {
+    (void)unused;
     Win *obj = reinterpret_cast<Win *>(
         // 0x0066934C: the image calls `[0x66934c]` at 0x005F0548.
-        GetWindowLongA(
-            reinterpret_cast<HWND>(this), -0x15));
+        GetWindowLongA(hwnd, -0x15));
     if (obj != 0) {
         obj->set_rects();
         Menu *menu = obj->menu_;
@@ -5770,8 +5773,8 @@ void Win::on_mousewheel_up(int delta) {
 // OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
 // and rewriting it in the tree's own style is a later phase. See README.md
 // beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
-void Win::update_nc_buffer(int a1) {
-    this->on_nc_paint(0, a1);
+void Win::update_nc_buffer(int flags) {
+    this->on_nc_paint(0, flags);
 }
 
 // ===== homed from src/recovered/005f1660.cpp =====
@@ -6745,7 +6748,7 @@ void Win::add_child(Win* child) {
 //    prologue), it had enough register pressure to do so. That is a
 //    hard case - the tool reports a similarity ratio so you can tell a
 //    near miss from a wrong body.
-void __cdecl Win::remove_parent(Win* a1) {
+void __cdecl Win::remove_parent(Win* window) {
     if (this == 0) {
         return;
     }
@@ -9653,21 +9656,21 @@ typedef short(__stdcall *GetKeyStateFn)(int);
 typedef int(__stdcall *PeekMessageFn)(MsgT *, void *, unsigned int, unsigned int, unsigned int);
 typedef int(__stdcall *Fn1)(void *);
 
-void Win::on_key(unsigned int a1, long a2, int a3, unsigned int a4) {
+void Win::on_key(unsigned int key, long flags, int repeat, unsigned int scan) {
     char *self = reinterpret_cast<char *>(this);
-    (void)a3;
-    (void)a4;
+    (void)repeat;
+    (void)scan;
 
-    unsigned int key = a1;
-    if (GetKeyState(0x10) & 0x8000) key |= 0x10000;
-    if (GetKeyState(0x11) & 0x8000) key |= 0x20000;
-    if (GetKeyState(0x12) & 0x8000) key |= 0x40000;
+    unsigned int with_modifiers = key;
+    if (GetKeyState(0x10) & 0x8000) with_modifiers |= 0x10000;
+    if (GetKeyState(0x11) & 0x8000) with_modifiers |= 0x20000;
+    if (GetKeyState(0x12) & 0x8000) with_modifiers |= 0x40000;
 
     char *net = *reinterpret_cast<char **>(WinNetBuffer);
     if (net != 0) {
         MsgT msg;
-        if (key == *reinterpret_cast<unsigned int *>(net + 0x48)) {
-            if (a2 == 0) {
+        if (with_modifiers == *reinterpret_cast<unsigned int *>(net + 0x48)) {
+            if (flags == 0) {
                 reinterpret_cast<Net *>(net)->stop_voice();
             } else {
                 reinterpret_cast<Net *>(net)->start_voice(
@@ -9680,8 +9683,8 @@ void Win::on_key(unsigned int a1, long a2, int a3, unsigned int a4) {
             } while (PeekMessageA(&msg, HandleMain, 0x102, 0x102, 1));
             return;
         }
-        if (key == *reinterpret_cast<unsigned int *>(net + 0x4c)) {
-            if (a2 == 0) {
+        if (with_modifiers == *reinterpret_cast<unsigned int *>(net + 0x4c)) {
+            if (flags == 0) {
                 reinterpret_cast<Net *>(net)->stop_voice();
             } else {
                 reinterpret_cast<Net *>(net)->start_voice(
@@ -9696,7 +9699,7 @@ void Win::on_key(unsigned int a1, long a2, int a3, unsigned int a4) {
         }
     }
 
-    if (a2 == 0) {
+    if (flags == 0) {
         if (iFlags_ & 0x200000) {
             return;
         }
@@ -9710,7 +9713,7 @@ void Win::on_key(unsigned int a1, long a2, int a3, unsigned int a4) {
             } else {
                 target = 0;
             }
-            if (reinterpret_cast<Win *>(target)->key_up_event(key) != 0) {
+            if (reinterpret_cast<Win *>(target)->key_up_event(with_modifiers) != 0) {
                 return;
             }
         }
@@ -9719,9 +9722,9 @@ void Win::on_key(unsigned int a1, long a2, int a3, unsigned int a4) {
         typedef void(__cdecl * OnKeyCb)(unsigned int);
         OnKeyCb cb = reinterpret_cast<OnKeyCb>(field_434_);
         if (cb != 0) {
-            cb(key);
+            cb(with_modifiers);
         }
-        reinterpret_cast<VCallArg *>(self)->s27(key);
+        reinterpret_cast<VCallArg *>(self)->s27(with_modifiers);
 
         Win *next = reinterpret_cast<Win *>(val_16_);
         if (next == 0) {
@@ -9734,12 +9737,12 @@ void Win::on_key(unsigned int a1, long a2, int a3, unsigned int a4) {
         return;
     }
 
-    *reinterpret_cast<unsigned int *>(WinKeyModifiers) = key;
+    *reinterpret_cast<unsigned int *>(WinKeyModifiers) = with_modifiers;
     if (IsWindow(HandleMain)) {
-        this->key_down_event(key);
+        this->key_down_event(with_modifiers);
     }
 
-    if (key >= 0x60 && key <= 0x6f) {
+    if (with_modifiers >= 0x60 && with_modifiers <= 0x6f) {
         MsgT msg;
         if (!PeekMessageA(&msg, HandleMain, 0x102, 0x102, 1)) {
             return;
@@ -10807,7 +10810,7 @@ typedef int (__stdcall *ReleaseDCFn)(void *, void *);
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
 // indirect  0x005F10A6 0x005F10B7 0x005F10DE 0x005F10EB 0x005F1111 0x005F112E
-int __cdecl Win::OnQueryNewPalette(void * a1) {
+int __cdecl Win::OnQueryNewPalette(void * hwnd) {
     int eax;
 
     if (BufferDirectDraw != 0) {
@@ -11121,17 +11124,17 @@ void __cdecl add_parent(Win *);
 // where they can be edited without regenerating anything and are in
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
-void __cdecl add_parent(Win * a1) {
-    if (a1 == 0) return;
+void __cdecl add_parent(Win * window) {
+    if (window == 0) return;
     int count = WinRootCount;
-    unsigned int flags = a1->iFlags_;
+    unsigned int flags = window->iFlags_;
     if (flags & 0x2000000) {
-        reinterpret_cast<Win **>(0x009B6E48)[count] = a1;
+        WinRootWindows[count] = window;
         WinRootCount = count + 1;
         return;
     }
     if (count > 0) {
-        Win **p = reinterpret_cast<Win **>(0x009B6E48) + count;
+        Win **p = WinRootWindows + count;
         int n = count;
         do {
             Win *tmp = *(p - 1);
@@ -11139,6 +11142,6 @@ void __cdecl add_parent(Win * a1) {
             --p;
         } while (--n);
     }
-    reinterpret_cast<Win **>(0x009B6E48)[0] = a1;
+    WinRootWindows[0] = window;
     WinRootCount = count + 1;
 }

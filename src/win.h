@@ -128,7 +128,7 @@ class Win : public AutoSound {
   friend void __cdecl OnSysKey(void *, unsigned int, long, int, unsigned int);
  public:
   // homed from 005f1340.cpp
-  bool __cdecl OnPaint(HWND a1);
+  bool __cdecl OnPaint(HWND hwnd);
 
  public:
   // homed from 005ee330.cpp
@@ -571,37 +571,42 @@ class Win : public AutoSound {
   // byte ptr`. Measured on 0x005F1660.
   // NOT a member, and the parameter names below are the proof. Declared
   // here only until the free form lands; see win.cpp.
-  void UNK7(int a1, int a2, int a3, int a4);
-  int __stdcall adjust_menus(void *a1);
+  void UNK7(int x, int y, int width, int height);
+  // STATIC, and the receiver was the catalogue's invention. `QAG` is a
+  // __stdcall member, whose `this` is a STACK parameter at [esp+4] - and
+  // the body reads exactly that and passes it to GetWindowLongA while
+  // ignoring the declared one at [esp+8]. As a static taking the HWND the
+  // stack layout is identical and the window handle stops being `this`.
+  static int __stdcall adjust_menus(HWND hwnd, void *unused);
   void do_caption_buttons();
   int maximize();
   void on_mousewheel_down(int delta);
   void on_mousewheel_up(int delta);
   void set_bottom_border_thickness(int thickness);
   int show_maximize();
-  void update_nc_buffer(int a1);
+  void update_nc_buffer(int flags);
 
  public:
   void add_child(Win* child);
   void bring_to_top();
   int get_rbutton_state();
-  void left_down_event(int a1, int a2, int a3);
+  void left_down_event(int x, int y, int from_parent);
   int on_redraw(int, int);
   // Returns Buffer *, not int: every arm of its switch returns one of the
   // four render buffers. The `int` was the raw-offset form's type leaking
   // into the signature. Unclaimed, so no marker moves with this.
   Buffer *redraw_nc_buffer(int index);
-  void __cdecl remove_parent(Win* a1);
+  void __cdecl remove_parent(Win* window);
   void set_border_thickness(int thickness);
   void set_parent_dialog(Win *dialog);
   void __cdecl update();
   void __cdecl update_zorder();
-  void window_line_raw(int a1, int a2, int a3, int a4, int a5, int a6, unsigned int a7);
+  void window_line_raw(int x2, int y2, int x1, int y1, int colour, int width, unsigned int style);
 
  public:
-  void __cdecl OnRButtonDown(void * a1, long a2, int a3, int a4, unsigned int a5);
-  void __cdecl OnRButtonUp(void * a1, int a2, int a3, unsigned int a4);
-  void __cdecl bring_parent_to_top(Win * a1);
+  void __cdecl OnRButtonDown(void * hwnd, long flags, int x, int y, unsigned int keys);
+  void __cdecl OnRButtonUp(void * hwnd, int x, int y, unsigned int keys);
+  void __cdecl bring_parent_to_top(Win * window);
   void draw_rect_border(int x1, int y1, int x2, int y2, HGDIOBJ pen1, HGDIOBJ pen2, int unused7);
   void remove_child(Win *child);
   void set_caption_height(int height);
@@ -629,20 +634,20 @@ class Win : public AutoSound {
   int sub_63c340();
 
  public:
-  void __cdecl OnKey(void * a1, unsigned int a2, long a3, int a4, unsigned int a5);
+  void __cdecl OnKey(void * hwnd, unsigned int key, long flags, int repeat, unsigned int scan);
   void OnLButtonUp(void *hwnd, int x, int y, unsigned int keys);
-  int __cdecl OnSysCommand(HWND a1, unsigned int a2, int a3, int a4);
+  int __cdecl OnSysCommand(HWND hwnd, unsigned int command, int x, int y);
   void paint_tiled(Buffer *tile, int x_origin, int y_origin, int clip_left, int clip_top, int clip_width, int clip_height, int unused8);
   void update_window_to_buffer(Buffer * buffer);
 
  public:
-  void __cdecl OnMouseMove(void * a1, int a2, int a3, unsigned int a4);
+  void __cdecl OnMouseMove(void * hwnd, int x, int y, unsigned int keys);
 
  public:
-  int __cdecl OnQueryNewPalette(void * a1);
+  int __cdecl OnQueryNewPalette(void * hwnd);
 
  public:
-  long __cdecl OnActivate(void *a1, unsigned int a2, void *a3, long a4);
+  long __cdecl OnActivate(void *hwnd, unsigned int state, void *other, long minimized);
   void screen_to_client(RECT * rect);
 
  public:
@@ -897,7 +902,7 @@ void __cdecl recurse_zorder(Win *window);
 // subtree and a position in that subtree's coordinates.
 Win *__cdecl get_mouse_window_recurse(Win *window, int *x, int *y);
 // 0x0063C4E0, homed into win.cpp.
-void __cdecl sub_63c4e0(int a1);
+void __cdecl sub_63c4e0(int context);
 
 // 0x009B7B3C. Cleared on every WM_MOUSEMOVE and read by
 // `Win::update_cursor`, which is the only other function that touches it.
@@ -918,7 +923,7 @@ extern void(__cdecl *WinKeyHook)(WPARAM key);
 // not a `Win` member. Its body was homed from src/recovered/005f86a0.cpp
 // into win.cpp and measures BYTE_EXACT there.
 // 0x005F86A0, homed into win.cpp.
-void __stdcall sub_5f86a0(int a1);
+void __stdcall sub_5f86a0(int window);
 
 
 // The cursor refresh this setter triggers is a 2528-byte body with six call
