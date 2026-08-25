@@ -838,6 +838,8 @@ extern Win *WinModalFocus;         // 0x009B8D7C
 extern Win *WinPopupWindow;        // 0x009B23B4
 extern Win *WinTopDialog;          // 0x009B2300
 extern Win *WinPendingFocus;       // 0x009B7B38
+extern Win *WinBubbleCompanion;  // 0x009B7A4C
+extern int WinBubbleActive;      // 0x009B7A50
 extern Win *WinZOrderWindow;  // 0x009B7A6C
 extern int WinZOrderCount;    // 0x009B7B30
 extern int WinZOrderFlag;     // 0x009B7A78
@@ -894,11 +896,11 @@ extern int WinFlipSpriteX;             // 0x009B7A34
 extern int WinFlipClipped;             // 0x009B7AD8
 extern IDirectDrawSurface *DirectDrawBackBuffer;  // 0x009BC49C
 extern RECT DirectDrawClipRect;        // 0x009BC2D0
-int *const WinBubbleActive = (int *)0x009B7A50;
+
 // A `Win *`, not a word: `Win::set_bubble_text` (0x005F83D0) stores `this`
 // here directly, with no cast - retyped from `int *` so that store needs
 // none either.
-Win **const WinBubbleCompanion = (Win **)0x009B7A4C;
+
 RECT *const WinBubbleRect = (RECT *)0x009B6E38;
 
 // Both refresh bodies remain original dependencies: update_screen is 383
