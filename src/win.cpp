@@ -762,6 +762,9 @@ Win *WinCallbackWindow;   // 0x009B7AB8
 Win *WinInputFocus;       // 0x009B7AC4
 Win *WinActiveWindow;     // 0x009B7AC8
 Win *WinBubbleCompanion;   // 0x009B7A4C
+Win WinBubbleWindow;       // 0x009B22F0
+Win *WinDialogList[150];   // 0x009B2494
+Win *WinZOrderArray[512];  // 0x009B6630
 RECT WinBubbleRect;        // 0x009B6E38
 RECT WinScreenClipRect;    // 0x009B74C0
 RECT WinDirtyRect;         // 0x009B6EE8
@@ -3473,7 +3476,7 @@ void __cdecl recurse_zorder(Win * window) {
         int a1_c4 = *reinterpret_cast<int *>(reinterpret_cast<char *>(window) + 0xc4);
         if (a1_c4 == 0 || reinterpret_cast<Win *>(a1_c4)->is_visible() != 0) {
             int idx = WinZOrderCount;
-            reinterpret_cast<int *>(g_win_array)[idx] = reinterpret_cast<int>(window);
+            reinterpret_cast<int *>(WinZOrderArray)[idx] = reinterpret_cast<int>(window);
             WinZOrderCount = idx + 1;
         }
     }
@@ -6880,9 +6883,9 @@ void Win::window_line_raw(int x2, int y2, int x1, int y1, int colour,
 
 void __cdecl Win::update() {
     for (int i = 0; i < WinZOrderCount; ++i) {
-        reinterpret_cast<Win *>(reinterpret_cast<void **>(g_win_array)[i])->on_nc_paint(0, -1);
-        if (reinterpret_cast<Win *>(reinterpret_cast<void **>(g_win_array)[i])->vslot_61() != 0) {
-            reinterpret_cast<Win *>(reinterpret_cast<void **>(g_win_array)[i])->vslot_63();
+        reinterpret_cast<Win *>(reinterpret_cast<void **>(WinZOrderArray)[i])->on_nc_paint(0, -1);
+        if (reinterpret_cast<Win *>(reinterpret_cast<void **>(WinZOrderArray)[i])->vslot_61() != 0) {
+            reinterpret_cast<Win *>(reinterpret_cast<void **>(WinZOrderArray)[i])->vslot_63();
             do_sound();
         }
     }
@@ -7989,7 +7992,7 @@ int Win::init(int x, int y, int width, int height, char * caption,
             this->buffer4_ = (raw != 0) ? reinterpret_cast<Buffer *>(new (raw) Scroll()) : 0;
             if (this->buffer4_ == 0) return 4;
             Scroll *sc = reinterpret_cast<Scroll *>(this->buffer4_);
-            int top = *WinTitleBarHeight;
+            int top = ScrollDefaultThickness;
             int nc = this->outer_rect_.bottom - top;
             int arg2 = ((this->iFlags_ & 8) != 0)
                            ? (this->outer_rect_.right - this->outer_rect_.left) - top
@@ -8007,7 +8010,7 @@ int Win::init(int x, int y, int width, int height, char * caption,
                 this->buffer3_ = (raw != 0) ? reinterpret_cast<Buffer *>(new (raw) Scroll()) : 0;
                 if (this->buffer3_ == 0) return 4;
                 Scroll *sc = reinterpret_cast<Scroll *>(this->buffer3_);
-                int top = *WinTitleBarHeight;
+                int top = ScrollDefaultThickness;
                 int nc = this->outer_rect_.right - top;
                 int arg2 = ((this->iFlags_ & 4) != 0)
                                ? (this->outer_rect_.bottom - this->outer_rect_.top) - top
@@ -8361,7 +8364,7 @@ void Win::left_down_event(int x, int y, int from_parent) {
 
 // ===== homed from src/unrecovered/005ef110.cpp =====
 
-// ORIGINAL: 0x005EF110 ?nonclient_to_client@Win@@QAEXPAURECT@@@Z 0x005EF110-0x005EF1D1 FILE BYTE_EXACT
+// ORIGINAL: 0x005EF110 ?nonclient_to_client@Win@@QAEXPAURECT@@@Z 0x005EF110-0x005EF1D1 FILE
 // symbol    ?nonclient_to_client@Win@@QAEXPAUtagRECT@@@Z
 // notes     the RECT overload; the coordinate-pair form shares the name
 //           and marker_symbols resolves to whichever comes first.
@@ -8373,13 +8376,28 @@ void Win::left_down_event(int x, int y, int from_parent) {
 // calls     (none)
 // indirect  0x005EF1C4
 // working copy - scaffold materialised by --work
+// TRIED and NOT recovered (2026-08-25): BYTE_EXACT while 0x009B8DD4 was
+// read through the `WinTitleBarHeight` fixed-address binding, 26 of 60
+// once that merged onto `ScrollDefaultThickness`. The divergence is a
+// register cascade in the border block - the image keeps the rect edges in
+// edi (`push edi` at instruction 17, `mov edi,[esi]`, `sub edi,eax`) where
+// this build uses edx and emits one instruction fewer. Dropping the
+// redundant `border` local did not move it (26 of 60 either way).
+// THE MERGE IS STILL RIGHT, and this is the point worth keeping: the two
+// names were not a naming quibble, they were TWO STORAGES. The binding
+// reads image address 0x009B8DD4 while ScrollDefaultThickness is storage
+// this binary allocates elsewhere, so Win and Scroll disagreed at run time
+// about the same variable and no byte comparison could see it.
+// Unresolved and recorded rather than guessed: win.cpp reads it as a title
+// bar height, scroll.cpp as a scrollbar thickness, and NOTHING in the tree
+// writes it, so neither name is evidenced over the other.
 void Win::nonclient_to_client(RECT * rect) {
     if (rect != 0) {
         if ((iFlags_ & 4) != 0) {
-            rect->bottom -= *WinTitleBarHeight;
+            rect->bottom -= ScrollDefaultThickness;
         }
         if ((iFlags_ & 8) != 0) {
-            rect->right -= *WinTitleBarHeight;
+            rect->right -= ScrollDefaultThickness;
         }
         if (((iFlags_ & 0x400) != 0) || ((iFlags_ & 0x11) != 0)) {
             int border = border_thickness_;
@@ -8685,25 +8703,25 @@ void Win::on_char(char param2, int param3) {
     if (matched) {
         if ((static_cast<uint8_t>(WinDrawFlags) & 1) == 0 ||
             (WinPopupWindow != 0 && (WinPopupWindow)->is_visible() == 0)) {
-            ((Win *)WinBubbleWindow)->show(0);
+            (&WinBubbleWindow)->show(0);
         } else if ((static_cast<uint8_t>(WinDrawFlags) & 1) != 0) {
-            if (WinBubbleCompanion == (Win *)WinBubbleWindow &&
+            if (WinBubbleCompanion == &WinBubbleWindow &&
                 WinBubbleActive != 0) {
                 WinBubbleCompanion = nullptr;
                 WinBubbleActive = 0;
-                ((Win *)WinBubbleWindow)->update_screen(&WinBubbleRect, 0);
-                ((Win *)WinBubbleWindow)->flip(&WinBubbleRect);
+                (&WinBubbleWindow)->update_screen(&WinBubbleRect, 0);
+                (&WinBubbleWindow)->flip(&WinBubbleRect);
             }
 
             Win *cand = WinPointerOwner1;
             if (cand == nullptr) {
                 cand = WinPointerOwner2;
             }
-            if (cand == (Win *)WinBubbleWindow) {
+            if (cand == &WinBubbleWindow) {
                 WinPointerOwner1 = nullptr;
                 WinPointerOwner2 = 0;
             } else if (cand != nullptr && WinPopupCount > 0) {
-                Win **list = (Win **)WinDialogList;
+                Win **list = WinDialogList;
                 int i = 0;
                 do {
                     if (list[i] == cand || list[i]->is_descendant(cand)) {
@@ -8715,16 +8733,16 @@ void Win::on_char(char param2, int param3) {
                 } while (i < WinPopupCount);
             }
 
-            if (WinPointerOwner3 == (Win *)WinBubbleWindow) {
+            if (WinPointerOwner3 == &WinBubbleWindow) {
                 WinPointerOwner3 = 0;
-                ((Win *)WinBubbleWindow)->vslot_04();
+                (&WinBubbleWindow)->vslot_04();
             }
-            if (*(void **)WinPointerOwner4 == (void *)WinBubbleWindow) {
+            if (*(void **)WinPointerOwner4 == &WinBubbleWindow) {
                 *(int *)WinPointerOwner4 = 0;
             }
             WinDrawFlags &= ~1;
-            if (WinFocusWindow == (Win *)WinBubbleWindow) {
-                ((Win *)WinBubbleWindow)->release_modal();
+            if (WinFocusWindow == &WinBubbleWindow) {
+                (&WinBubbleWindow)->release_modal();
             }
 
             if ((*(uint8_t *)JackalInitFlags & 1) != 0) {
@@ -8998,10 +9016,10 @@ void Win::client_to_nonclient(int * points, int * count) {
         return;
     }
     if (*reinterpret_cast<uint8_t *>(&iFlags_) & 4) {
-        *count += *WinTitleBarHeight;
+        *count += ScrollDefaultThickness;
     }
     if (*reinterpret_cast<uint8_t *>(&iFlags_) & 8) {
-        *points += *WinTitleBarHeight;
+        *points += ScrollDefaultThickness;
     }
     uint32_t flags = iFlags_;
     if (flags & 0x400) {
@@ -9546,9 +9564,9 @@ int __cdecl Win::update_screen(RECT *area, Win *window) {
     if (target != 0) {
         idx = 0;
         if (windowCount > 0) {
-            int *table = g_win_array;
+            Win **table = WinZOrderArray;
             int i = 0;
-            while (table[i] != target) {
+            while (reinterpret_cast<int>(table[i]) != target) {
                 ++i;
                 if (i >= windowCount) {
                     break;
@@ -9571,7 +9589,7 @@ int __cdecl Win::update_screen(RECT *area, Win *window) {
 
     if (idx >= 0) {
         for (int i = idx; i >= 0; --i) {
-            Win *w = reinterpret_cast<Win *>(reinterpret_cast<void **>(g_win_array)[i]);
+            Win *w = reinterpret_cast<Win *>(reinterpret_cast<void **>(WinZOrderArray)[i]);
             unsigned char *const wb = reinterpret_cast<unsigned char *>(w);
             if ((*(wb + 0x9c) & 1) != 0) {
                 Win *menuLike = *reinterpret_cast<Win **>(wb + 0xc4);
@@ -9778,10 +9796,10 @@ int __cdecl Win::OnSysCommand(HWND hwnd, unsigned int command, int x,
 void Win::client_to_nonclient(RECT * rect) {
     if (rect != 0) {
         if ((iFlags_ & 4) != 0) {
-            rect->bottom += *WinTitleBarHeight;
+            rect->bottom += ScrollDefaultThickness;
         }
         if ((iFlags_ & 8) != 0) {
-            rect->right += *WinTitleBarHeight;
+            rect->right += ScrollDefaultThickness;
         }
         if ((iFlags_ & 0x400) != 0 || (iFlags_ & 0x11) != 0) {
             int adj = border_thickness_;
@@ -9814,10 +9832,10 @@ void Win::nonclient_to_client(int * x, int * y) {
         return;
     }
     if ((iFlags_ & 4) != 0) {
-        *y -= *WinTitleBarHeight;
+        *y -= ScrollDefaultThickness;
     }
     if ((iFlags_ & 8) != 0) {
-        *x -= *WinTitleBarHeight;
+        *x -= ScrollDefaultThickness;
     }
     if ((iFlags_ & 0x400) != 0) {
         *x += -border_thickness_ * 2;
@@ -11057,7 +11075,7 @@ void Win::screen_to_client(RECT * rect) {
 void __cdecl Win::redraw() {
     int i;
     for (i = 0; i < WinZOrderCount; ++i) {
-        reinterpret_cast<Win *>(reinterpret_cast<void **>(g_win_array)[i])->vslot_62();
+        reinterpret_cast<Win *>(reinterpret_cast<void **>(WinZOrderArray)[i])->vslot_62();
         do_sound();
     }
 }

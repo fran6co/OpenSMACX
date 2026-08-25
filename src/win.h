@@ -852,6 +852,17 @@ extern Win *WinCallbackWindow;   // 0x009B7AB8
 extern Win *WinInputFocus;       // 0x009B7AC4
 extern Win *WinActiveWindow;     // 0x009B7AC8
 extern Win *WinBubbleCompanion;  // 0x009B7A4C
+// The bubble window is an OBJECT at 0x009B22F0, not a pointer to one:
+// every use compares it against real Win pointers and calls methods on it,
+// the same shape as `Buffer ScreenBuffer` at 0x009B7490.
+extern Win WinBubbleWindow;      // 0x009B22F0
+// Iterated to WinPopupCount; the storage runs from 0x009B2494 to that
+// counter at 0x009B26EC, which is 600 bytes - 150 entries.
+extern Win *WinDialogList[150];  // 0x009B2494
+// Indexed by WinZOrderCount. 0x009B6630 to the next named global at
+// 0x009B6E38 is 2056 bytes; 512 entries is 2048 of them, and the last 8
+// bytes belong to something this tree has not named yet.
+extern Win *WinZOrderArray[512]; // 0x009B6630
 extern RECT WinBubbleRect;       // 0x009B6E38
 extern RECT WinScreenClipRect;   // 0x009B74C0
 extern RECT WinDirtyRect;        // 0x009B6EE8
@@ -1018,9 +1029,6 @@ int __cdecl cd_check();
 
 typedef void(__cdecl *FnSetActiveWindow)(Win *);
 
-static int * const WinBubbleWindow = (int *)0x009B22F0;
-static int * const WinDialogList = (int *)0x009B2494;
-static int * const WinTitleBarHeight = (int *)0x009B8DD4;
 // SUPERSEDED - and the part that was wrong is the REMEDY, not the
 // diagnosis. This note recorded, correctly and by measurement, that
 // retyping these three to `Win **const` cost show_maximize and maximize
@@ -1044,4 +1052,3 @@ static int * const WinTitleBarHeight = (int *)0x009B8DD4;
 // array base read from address zero - while two other bodies using the same
 // name happened to fold anyway, which is what made it look like a per-body
 // register-allocation quirk rather than the type. Callers cast at use.
-static int * const g_win_array = (int *)0x009B6630;
