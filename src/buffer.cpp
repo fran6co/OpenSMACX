@@ -2903,8 +2903,8 @@ int Buffer::write_cent_l(LPSTR text, RECT *rect, int len) {
 // calls     0x00626620
 Status: Complete
 */
-int Buffer::poly(Vert *a1, int a2, int a3) {
-    return polygon(this, a1, a2, a3);
+int Buffer::poly(Vert *verts, int a2, int a3) {
+    return polygon(this, verts, a2, a3);
 }
 
 /*
@@ -2942,33 +2942,40 @@ int __cdecl polygon(Buffer *buffer, Vert *verts, int a3, int a4) {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005DC7C0 0x005DCAE0 0x006453E0
 
-int Buffer::write_right_l(char * a1, int a2, int a3, int a4, int a5) {
-    if (a1 == 0) {
-        return a2;
+// Y BEFORE X, and the tail call is what proves it rather than the order
+// looking odd: `write_multi_font_raw_l(text, x_coord + (field_width -
+// width), y_coord, len)` against that method's declared
+// `(LPSTR text, int x_coord, int y_coord, int len)`. So the second
+// parameter is the y, the third is the left edge and the fourth is the
+// field to right-align within - which is also why every early exit
+// returns the second parameter unchanged.
+int Buffer::write_right_l(char *text, int y_coord, int x_coord, int field_width, int len) {
+    if (text == 0) {
+        return y_coord;
     }
     if (font1_ == 0 || font1_->font_obj_ == 0) {
         return 3;
     }
 
-    int len = (int)strlen(a1);
-    int w = a5;
-    if (len < a5) {
-        w = (int)strlen(a1);
+    int text_len = (int)strlen(text);
+    int w = len;
+    if (text_len < len) {
+        w = (int)strlen(text);
     }
     if (w < 0) {
-        return a2;
+        return y_coord;
     }
 
-    int len2 = (int)strlen(a1);
-    if (len2 < a5) {
-        a5 = (int)strlen(a1);
+    int len2 = (int)strlen(text);
+    if (len2 < len) {
+        len = (int)strlen(text);
     }
-    if (a5 == 0) {
-        return a2;
+    if (len == 0) {
+        return y_coord;
     }
 
-    int width = text_width(a1, a5);
-    return write_multi_font_raw_l(a1, a3 + (a4 - width), a2, a5);
+    int width = text_width(text, len);
+    return write_multi_font_raw_l(text, x_coord + (field_width - width), y_coord, len);
 }
 
 // Fixed-slot bindings carried from 005d8290.cpp
@@ -2993,13 +3000,13 @@ static int *const g_009b3a78 = (int *)0x009B3A78;
 // calls     (none)
 // indirect  0x005D834B
 
-void Buffer::setup_buff_sprite(int a1) {
+void Buffer::setup_buff_sprite(int colour) {
     char *self = (char *)this;
     if (*(int *)(self + 0x58) != 0) {
         return;
     }
-    if (a1 == -1) {
-        a1 = *(unsigned char *)WinFillColour;
+    if (colour == -1) {
+        colour = *(unsigned char *)WinFillColour;
     }
     int val54 = *(int *)(self + 0x54);
     *(int *)(self + 0x50) = val54;
@@ -3014,7 +3021,7 @@ void Buffer::setup_buff_sprite(int a1) {
     *g_009b3a6c = -*(int *)(self + 0x84);
     *g_009b3a70 = 0;
     *g_009b3a74 = 0;
-    *(unsigned char *)g_009b3a58 = (unsigned char)a1;
+    *(unsigned char *)g_009b3a58 = (unsigned char)colour;
     *g_009b3a78 = 0;
 
     void **field58 = *(void ***)(self + 0x58);
@@ -3060,7 +3067,7 @@ Purpose: One pixel out of the surface, for the pixel-precise hit test in
 // callers   15   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
-int Buffer::get_pixel(int a1, int a2) {
+int Buffer::get_pixel(int x, int y) {
     char *self = reinterpret_cast<char *>(this);
     unsigned char desc[0x6c];
     int localHandle;
@@ -3073,16 +3080,16 @@ int Buffer::get_pixel(int a1, int a2) {
     if ((handleVal == 0) && (*reinterpret_cast<int *>(self + 0x58) == 0)) {
         return 0;
     }
-    if (a1 < 0) {
+    if (x < 0) {
         return 0;
     }
-    if (a2 < 0) {
+    if (y < 0) {
         return 0;
     }
-    if (*reinterpret_cast<int *>(self + 0x80) <= a1) {
+    if (*reinterpret_cast<int *>(self + 0x80) <= x) {
         return 0;
     }
-    if (-*reinterpret_cast<int *>(self + 0x84) <= a2) {
+    if (-*reinterpret_cast<int *>(self + 0x84) <= y) {
         return 0;
     }
 
@@ -3117,7 +3124,7 @@ have_handle:
         goto null_pixel;
     }
     pixelPtr = reinterpret_cast<unsigned char *>(
-        *reinterpret_cast<int *>(self + 0x4a8) * a2 + *reinterpret_cast<int *>(self + 0x50) + a1);
+        *reinterpret_cast<int *>(self + 0x4a8) * y + *reinterpret_cast<int *>(self + 0x50) + x);
     goto after_pixel;
 
 null_pixel:
