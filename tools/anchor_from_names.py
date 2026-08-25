@@ -118,8 +118,15 @@ def main() -> int:
                     off = 4 if re.search(r"^\s+virtual\b",
                                          class_text(text, cls) or "", re.M) else 0
                     lines = text.split("\n")
+                    # BY LINE CONTENT, not by suffix. Matching
+                    # `l.rstrip().endswith(decl)` silently skipped every
+                    # member carrying a trailing comment - `int unk_1_; //
+                    # height offset?` is Font's first member and the rule
+                    # passed over it for that reason alone, while the walk
+                    # closed exactly on sizeof.
+                    decl = first.group(0).strip().rstrip(";")
                     idx = next((i for i, l in enumerate(lines)
-                                if l.rstrip().endswith(first.group(0).rstrip())), None)
+                                if l.strip().startswith(decl)), None)
                     if idx is not None:
                         lines[idx] = lines[idx].rstrip() + f"  // {off:#06x}"
                         header.write_text("\n".join(lines))

@@ -108,7 +108,10 @@ class Font {
   // the access this comment already described, now spelled so the
   // caller can be written honestly. Access control is compile-time only,
   // so nothing about the layout or the emitted bytes moves.
-  int unk_1_; // height offset? set outside of class functions
+  int unk_1_;  // 0x0000, height offset - StatusWin sets it through
+               // font1_/font2_/font3_'s own starts, which is where the
+               // offset comes from. The walk from here closes exactly on
+               // sizeof(Font) == 0x28.
  private:
   BOOL is_fot_set_; // used only by both init() functions
   HFONT font_obj_;
@@ -120,6 +123,12 @@ class Font {
   int pad_; // padding? no references
   LPSTR fot_file_name_;
 };
+
+// 0x28, and statuswin.h is the evidence rather than a count of members:
+// it embeds three consecutive Fonts at 0x1530, 0x1558 and 0x1580, so the
+// stride between them IS sizeof(Font). Asserted so the compiler checks it
+// and tools/header_offsets.py can walk THROUGH an embedded Font.
+static_assert(sizeof(Font) == 0x28, "Font must match the embedded stride in StatusWin");
 
 #if defined(_M_IX86) || defined(__i386__)
 static_assert(sizeof(Font) == 0x28, "Font layout must match the legacy ABI");
