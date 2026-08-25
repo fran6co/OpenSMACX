@@ -129,6 +129,18 @@ CASES = [
      None,
      lambda: _append("src/palette.h",
                      "/*\n g_00dead02 = (int *)0x00DEAD02;\n*/\n")),
+    # DROPPED INITIAL VALUES. A global written `int X;  // 0xADDR` is zero at
+    # run time; if the image's .data carries a value there, the recovered
+    # program is wrong and NOTHING else sees it - both spellings compile the
+    # same load, so the byte ratchet is blind. WinFillColour shipped as 0
+    # against the image's 9. This asserts the compare can still fail: strip
+    # the initialiser off a value restored from the image and the census must
+    # notice, which it cannot do if it ever stops reading the image's bytes.
+    ("dropped initial value",
+     "DROPPED INITIAL VALUES GREW",
+     lambda: _patch("src/sprite.cpp", "SpriteDrawOriginX = 1;",
+                    "SpriteDrawOriginX;")),
+
     # THE RULER ITSELF. P0.8 pinned the image's sha256 and wired the compare
     # into `check`, but shipped no control - and the pin also turned fifteen
     # of decomp/tests red, unnoticed, because nothing runs pytest. This

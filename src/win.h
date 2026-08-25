@@ -852,6 +852,24 @@ extern Win *WinCallbackWindow;   // 0x009B7AB8
 extern Win *WinInputFocus;       // 0x009B7AC4
 extern Win *WinActiveWindow;     // 0x009B7AC8
 extern Win *WinBubbleCompanion;  // 0x009B7A4C
+extern RECT WinBubbleRect;       // 0x009B6E38
+extern RECT WinScreenClipRect;   // 0x009B74C0
+extern RECT WinDirtyRect;        // 0x009B6EE8
+extern Win *WinDefaultFocus;     // 0x009B7AEC
+// Parallel to WinModalStack[4] and indexed by the same depth; the four
+// entries run from 0x009B7A1C exactly to the next named global at
+// 0x009B7A2C, which is where the size comes from.
+extern Win *WinFocusStack[4];    // 0x009B7A1C
+// The typed-key ring on_char matches WinMdebugCode against, walking
+// BACKWARD from the cursor. 0x009B7B51 is the ring's last byte, which is
+// what the `WinKeyRingEnd` scaffold pointed at.
+extern char WinKeyRing[10];      // 0x009B7B48
+extern char *WinKeyRingCursor;   // 0x00696D5C, initialised to the ring
+// Ten dwords: the table runs from 0x00696D34 to WinKeyRingCursor at
+// 0x00696D5C, and the values are the image's own, read with
+// tools/image_data.py rather than left as an address.
+extern const uint32_t WinStaticDefaults[10];   // 0x00696D34
+extern uint32_t WinDynamicDefaults[10];        // 0x009B7AF0
 extern int WinBubbleActive;      // 0x009B7A50
 extern Win *WinZOrderWindow;  // 0x009B7A6C
 extern int WinZOrderCount;    // 0x009B7B30
@@ -914,13 +932,11 @@ extern RECT DirectDrawClipRect;        // 0x009BC2D0
 // here directly, with no cast - retyped from `int *` so that store needs
 // none either.
 
-RECT *const WinBubbleRect = (RECT *)0x009B6E38;
 
 // Both refresh bodies remain original dependencies: update_screen is 383
 // bytes with four call targets, flip 1223 bytes with fourteen.
 
 
-int *const WinDefaultFocus = (int *)0x009B7AEC;
 
 
 // The active palette lives at a fixed address; rebindable so tests can
@@ -977,7 +993,9 @@ class DDInit { public:
   IDirectDrawSurface *locked_surface_;
   LPVOID locked_bits_;
 };
-DDInit *const WinDisplayInit = reinterpret_cast<DDInit *>(0x009BE618);
+
+// The object itself at 0x009BE618, not a pointer to one.
+extern DDInit WinDisplayInit;    // 0x009BE618, the object, not a pointer to it
 
 // 0x005EFD00, 27 bytes - refreshes `WinScreenWidth`/`WinScreenHeight` from
 // `GetSystemMetrics`. Defined in win.cpp; it was a forwarder until the body
@@ -1000,15 +1018,9 @@ int __cdecl cd_check();
 
 typedef void(__cdecl *FnSetActiveWindow)(Win *);
 
-static int * const WinFocusStack = (int *)0x009B7A1C;
-static int * const WinKeyRingCursor = (int *)0x00696D5C;
 static int * const WinBubbleWindow = (int *)0x009B22F0;
 static int * const WinDialogList = (int *)0x009B2494;
-static int * const WinScreenClipRect = (int *)0x009B74C0;
-static int * const WinKeyRingStart = (int *)0x009B7B48;
-static int * const WinKeyRingEnd = (int *)0x009B7B51;
 static int * const WinTitleBarHeight = (int *)0x009B8DD4;
-static int * const WinDirtyRect = (int *)0x009B6EE8;
 // SUPERSEDED - and the part that was wrong is the REMEDY, not the
 // diagnosis. This note recorded, correctly and by measurement, that
 // retyping these three to `Win **const` cost show_maximize and maximize
@@ -1033,5 +1045,3 @@ static int * const WinDirtyRect = (int *)0x009B6EE8;
 // name happened to fold anyway, which is what made it look like a per-body
 // register-allocation quirk rather than the type. Callers cast at use.
 static int * const g_win_array = (int *)0x009B6630;
-static uint32_t * const WinStaticDefaults = (uint32_t *)0x00696D34;
-static uint32_t * const WinDynamicDefaults = (uint32_t *)0x009B7AF0;

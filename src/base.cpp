@@ -30,7 +30,7 @@
 #include "netdaemon.h"
 #include "xpops.h"
 
-int BaseIDCurrentSelected;  // 0x00689370
+int BaseIDCurrentSelected = -1;  // 0x00689370
 int BaseCurrentCount;  // 0x009A64CC
 int BaseFindDist;  // 0x0090EA04
 uint32_t ScnVictFacilityObj;  // 0x009A6814
