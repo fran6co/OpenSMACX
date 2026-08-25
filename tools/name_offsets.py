@@ -33,6 +33,21 @@ four bytes. That cost EditBox::close (0x00614F30) its BYTE_EXACT claim on
 `mov dword ptr`. When the cast is narrower than the member, keep it:
 `*reinterpret_cast<unsigned char *>(&field_A14_)`.
 
+TWO THINGS A TREE-WIDE SWEEP HITS, measured 2026-08-26 by trying one:
+
+  `self` IS NOT ALWAYS `this`. spritebox.cpp defines it BOTH ways in one
+  file - `reinterpret_cast<char *>(this)` at line 67 and
+  `reinterpret_cast<char *>(this) - 0x8C` at line 234, an adjustor thunk
+  reaching a base subobject. Offsets off the second belong to ANOTHER
+  class, and naming them from this class's map produces undeclared
+  identifiers. Check every `self` definition in a file before sweeping it.
+
+  A CORRECT NAME CAN STILL NOT COMPILE. basebutton.cpp reads a `char *`
+  member through `*(int *)(self + N)` into an `int` local, and statuswin.cpp
+  assigns 4 to what is declared `Font *`. The naming is right and the
+  surrounding code is written in ints; each site needs a decision about
+  which side to change, which is not a sweep.
+
 Every rewrite is a candidate for a byte change, unlike a rename - re-measure
 the touched claims. Palette's copy_from measured identical (19/19) in the
 member form, which is the precedent, not a guarantee.
@@ -64,8 +79,17 @@ INLINE_RECT = re.compile(
     r"\s*\*\s*>\s*\(\s*this\s*\)|\(\s*char\s*\*\s*\)\s*this)\s*\+\s*"
     r"0x(?P<off>[0-9A-Fa-f]+)\s*\)")
 
+# NARROW TYPES KEEP THEIR CAST. `*(unsigned char *)(self + 0xa14) = 0` is a
+# ONE-BYTE store; the member at 0xA14 is `uint32_t`, so returning the bare
+# name widens it to four bytes and changes the emitted instruction from
+# `mov byte ptr` to `mov dword ptr`. That cost EditBox::close (0x00614F30)
+# its BYTE_EXACT claim on 2026-08-26.
+NARROW = {"char", "unsigned char", "signed char", "uint8_t", "int8_t",
+          "short", "unsigned short", "uint16_t", "int16_t", "BYTE", "WORD"}
+
 ACCESS = re.compile(
-    r"\*\s*(?:reinterpret_cast<\s*[\w ]+\*+\s*>|\(\s*[\w ]+\*+\s*\))\s*"
+    r"\*\s*(?:reinterpret_cast<\s*(?P<ty>[\w ]+?)\s*\*+\s*>"
+    r"|\(\s*(?P<ty2>[\w ]+?)\s*\*+\s*\))\s*"
     # `self` bare, or wrapped in a redundant `(char *)` the artifact emitted
     # even where `self` is already `char *`.
     r"\(\s*(?:\(\s*char\s*\*\s*\)\s*)?(?P<base>self)\s*\+\s*"
@@ -103,6 +127,10 @@ def main() -> int:
         if not name:
             return m.group(0)
         counts[off] += 1
+        cast = (m.groupdict().get("ty") or m.groupdict().get("ty2") or "").strip()
+        if cast in NARROW:
+            # keep the width, name the member
+            return f"*reinterpret_cast<{cast} *>(&{name})"
         return name
 
     text = INLINE_RECT.sub(rect, text)
