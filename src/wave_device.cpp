@@ -421,8 +421,8 @@ Purpose: Hand the sample rate to the wrapped device, through vtable slot 0x38.
 Return Value: n/a
 Status: Complete
 */
-void Wave_Device::set_rate(unsigned long a1) {
-    forward_to_wrapped_device(this, 0x38, static_cast<int>(a1));
+void Wave_Device::set_rate(unsigned long rate) {
+    forward_to_wrapped_device(this, 0x38, static_cast<int>(rate));
 }
 
 /*
@@ -438,8 +438,8 @@ Purpose: Hand the volume to the wrapped device, through vtable slot 0x20.
 Return Value: n/a
 Status: Complete
 */
-void Wave_Device::set_volume(unsigned long a1) {
-    forward_to_wrapped_device(this, 0x20, static_cast<int>(a1));
+void Wave_Device::set_volume(unsigned long volume) {
+    forward_to_wrapped_device(this, 0x20, static_cast<int>(volume));
 }
 
 /*
@@ -455,10 +455,10 @@ Purpose: Hand the game window to the wrapped device, through vtable slot 0x6C.
 Return Value: the device's answer, or 0x13 when none is wrapped
 Status: Complete
 */
-int Wave_Device::set_hwnd(void *a1) {
+int Wave_Device::set_hwnd(void *hwnd) {
     return forward_to_wrapped_device(this, 0x6C,
                                      static_cast<int>(
-                                         reinterpret_cast<intptr_t>(a1)),
+                                         reinterpret_cast<intptr_t>(hwnd)),
                                      0x13);
 }
 
@@ -476,13 +476,13 @@ Purpose: Read one group's volume from the sixteen-entry table of 24-byte
 Return Value: the group's volume, or 0 when the index is out of range
 Status: Complete
 */
-int Wave_Device::get_group_volume(unsigned int a1) {
-    if (a1 > 0xF) {
+int Wave_Device::get_group_volume(unsigned int group) {
+    if (group > 0xF) {
         return 0;
     }
     int value;
     std::memcpy(&value,
-                reinterpret_cast<uint8_t *>(this) + 0x28 + a1 * 24,
+                reinterpret_cast<uint8_t *>(this) + 0x28 + group * 24,
                 sizeof(value));
     return value;
 }
@@ -510,15 +510,15 @@ Purpose: Put a wave into one of the sixteen groups. The list-insert helper
 Return Value: 0, or 0xA for a bad group or a null wave
 Status: Complete
 */
-int Wave_Device::add_to_group(unsigned int a1, Wave *a2) {
-    if (a1 > 0xF || !a2) {
+int Wave_Device::add_to_group(unsigned int group, Wave *wave) {
+    if (group > 0xF || !wave) {
         return 0xA;
     }
-    reinterpret_cast<WaveGroupList *>(&groups_[a1].head)->insert(a2);
+    reinterpret_cast<WaveGroupList *>(&groups_[group].head)->insert(wave);
     // The slot field is private to Wave and written here by offset, exactly
     // as the original stores through [wave+0x68].
-    *reinterpret_cast<uint32_t *>(reinterpret_cast<uint8_t *>(a2) + 0x68) =
-        a1;
+    *reinterpret_cast<uint32_t *>(reinterpret_cast<uint8_t *>(wave) + 0x68) =
+        group;
     return 0;
 }
 
@@ -630,11 +630,11 @@ Purpose: Report whether a group is disabled: out-of-range groups always are,
 Return Value: 1 when disabled, 0 when enabled
 Status: Complete
 */
-int Wave_Device::is_group_disabled(unsigned int a1) {
-    if (a1 > 0xF) {
+int Wave_Device::is_group_disabled(unsigned int group) {
+    if (group > 0xF) {
         return 1;
     }
-    return groups_[a1].enabled == 0 ? 1 : 0;
+    return groups_[group].enabled == 0 ? 1 : 0;
 }
 
 
@@ -736,15 +736,15 @@ Purpose: Forward start_raw_dump to the wrapped device through its vtable slot
 Return Value: the device's answer, or 3 when no device is wrapped
 Status: Complete
 */
-int Wave_Device::start_raw_dump(char *a1) {
+int Wave_Device::start_raw_dump(char *path) {
     if (device_14_) {
         // A pointer argument beyond the receiver is passed ON THE STACK by
         // the device's own calling convention, not in edx as a second
         // `__fastcall` parameter would; the pointer-to-member type keeps
         // that thiscall shape, and `vtable_slot` still returns a REFERENCE
         // to the slot so the call is the single `call dword ptr [vtable+N]`.
-        typedef int (OriginalObject::*device_fn)(char *a1);
-        return (ORIGINAL(device_14_)->*vtable_slot<device_fn>(device_14_, 0x50))(a1);
+        typedef int (OriginalObject::*device_fn)(char *path);
+        return (ORIGINAL(device_14_)->*vtable_slot<device_fn>(device_14_, 0x50))(path);
     }
     return 3;
 }
@@ -764,10 +764,10 @@ Purpose: Forward set_eax to the wrapped device through its vtable slot
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
-int Wave_Device::set_eax(EAX_REVERB_PROPERTIES *a1) {
+int Wave_Device::set_eax(EAX_REVERB_PROPERTIES *properties) {
     if (device_14_) {
-        typedef int (OriginalObject::*device_fn)(EAX_REVERB_PROPERTIES *a1);
-        return (ORIGINAL(device_14_)->*vtable_slot<device_fn>(device_14_, 0x7c))(a1);
+        typedef int (OriginalObject::*device_fn)(EAX_REVERB_PROPERTIES *properties);
+        return (ORIGINAL(device_14_)->*vtable_slot<device_fn>(device_14_, 0x7c))(properties);
     }
     return 0x14;
 }
@@ -787,10 +787,10 @@ Purpose: Forward set_eax to the wrapped device through its vtable slot
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
-int Wave_Device::set_eax(unsigned long a1) {
+int Wave_Device::set_eax(unsigned long properties) {
     if (device_14_) {
-        typedef int (OriginalObject::*device_fn)(unsigned long a1);
-        return (ORIGINAL(device_14_)->*vtable_slot<device_fn>(device_14_, 0x78))(a1);
+        typedef int (OriginalObject::*device_fn)(unsigned long properties);
+        return (ORIGINAL(device_14_)->*vtable_slot<device_fn>(device_14_, 0x78))(properties);
     }
     return 0x14;
 }
@@ -810,10 +810,10 @@ Purpose: Forward set_eax_mix to the wrapped device through its vtable slot
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
-int Wave_Device::set_eax_mix(float a1) {
+int Wave_Device::set_eax_mix(float mix) {
     if (device_14_) {
         typedef int(__fastcall *device_fn)(void *, float);
-        return vtable_slot<device_fn>(device_14_, 0x80)(device_14_, a1);
+        return vtable_slot<device_fn>(device_14_, 0x80)(device_14_, mix);
     }
     return 0x14;
 }
@@ -833,10 +833,10 @@ Purpose: Forward set_listener_position to the wrapped device through its vtable 
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
-int Wave_Device::set_listener_position(float a1, float a2, float a3) {
+int Wave_Device::set_listener_position(float x, float y, float z) {
     if (device_14_) {
         typedef int(__fastcall *device_fn)(void *, float, float, float);
-        return vtable_slot<device_fn>(device_14_, 0x88)(device_14_, a1, a2, a3);
+        return vtable_slot<device_fn>(device_14_, 0x88)(device_14_, x, y, z);
     }
     return 0x14;
 }
@@ -856,10 +856,10 @@ Purpose: Forward get_listener_position to the wrapped device through its vtable 
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
-int Wave_Device::get_listener_position(float *a1, float *a2, float *a3) {
+int Wave_Device::get_listener_position(float *x, float *y, float *z) {
     if (device_14_) {
-        typedef int (OriginalObject::*device_fn)(float *a1, float *a2, float *a3);
-        return (ORIGINAL(device_14_)->*vtable_slot<device_fn>(device_14_, 0x8c))(a1, a2, a3);
+        typedef int (OriginalObject::*device_fn)(float *x, float *y, float *z);
+        return (ORIGINAL(device_14_)->*vtable_slot<device_fn>(device_14_, 0x8c))(x, y, z);
     }
     return 0x14;
 }
@@ -879,10 +879,10 @@ Purpose: Forward set_listener_xpos to the wrapped device through its vtable slot
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
-int Wave_Device::set_listener_xpos(float a1) {
+int Wave_Device::set_listener_xpos(float x) {
     if (device_14_) {
         typedef int(__fastcall *device_fn)(void *, float);
-        return vtable_slot<device_fn>(device_14_, 0x90)(device_14_, a1);
+        return vtable_slot<device_fn>(device_14_, 0x90)(device_14_, x);
     }
     return 0x14;
 }
@@ -902,10 +902,10 @@ Purpose: Forward get_listener_xpos to the wrapped device through its vtable slot
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
-int Wave_Device::get_listener_xpos(float *a1) {
+int Wave_Device::get_listener_xpos(float *x) {
     if (device_14_) {
-        typedef int (OriginalObject::*device_fn)(float *a1);
-        return (ORIGINAL(device_14_)->*vtable_slot<device_fn>(device_14_, 0x94))(a1);
+        typedef int (OriginalObject::*device_fn)(float *x);
+        return (ORIGINAL(device_14_)->*vtable_slot<device_fn>(device_14_, 0x94))(x);
     }
     return 0x14;
 }
@@ -925,10 +925,10 @@ Purpose: Forward set_listener_ypos to the wrapped device through its vtable slot
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
-int Wave_Device::set_listener_ypos(float a1) {
+int Wave_Device::set_listener_ypos(float y) {
     if (device_14_) {
         typedef int(__fastcall *device_fn)(void *, float);
-        return vtable_slot<device_fn>(device_14_, 0x98)(device_14_, a1);
+        return vtable_slot<device_fn>(device_14_, 0x98)(device_14_, y);
     }
     return 0x14;
 }
@@ -948,10 +948,10 @@ Purpose: Forward get_listener_ypos to the wrapped device through its vtable slot
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
-int Wave_Device::get_listener_ypos(float *a1) {
+int Wave_Device::get_listener_ypos(float *y) {
     if (device_14_) {
-        typedef int (OriginalObject::*device_fn)(float *a1);
-        return (ORIGINAL(device_14_)->*vtable_slot<device_fn>(device_14_, 0x9c))(a1);
+        typedef int (OriginalObject::*device_fn)(float *y);
+        return (ORIGINAL(device_14_)->*vtable_slot<device_fn>(device_14_, 0x9c))(y);
     }
     return 0x14;
 }
@@ -971,10 +971,10 @@ Purpose: Forward set_listener_zpos to the wrapped device through its vtable slot
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
-int Wave_Device::set_listener_zpos(float a1) {
+int Wave_Device::set_listener_zpos(float z) {
     if (device_14_) {
         typedef int(__fastcall *device_fn)(void *, float);
-        return vtable_slot<device_fn>(device_14_, 0xa0)(device_14_, a1);
+        return vtable_slot<device_fn>(device_14_, 0xa0)(device_14_, z);
     }
     return 0x14;
 }
@@ -994,10 +994,10 @@ Purpose: Forward get_listener_zpos to the wrapped device through its vtable slot
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
-int Wave_Device::get_listener_zpos(float *a1) {
+int Wave_Device::get_listener_zpos(float *z) {
     if (device_14_) {
-        typedef int (OriginalObject::*device_fn)(float *a1);
-        return (ORIGINAL(device_14_)->*vtable_slot<device_fn>(device_14_, 0xa4))(a1);
+        typedef int (OriginalObject::*device_fn)(float *z);
+        return (ORIGINAL(device_14_)->*vtable_slot<device_fn>(device_14_, 0xa4))(z);
     }
     return 0x14;
 }
