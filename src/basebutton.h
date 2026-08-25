@@ -105,41 +105,18 @@ uint32_t __fastcall base_button_close_redirect(BaseButton *self, void *);
 int __fastcall base_button_init_redirect(
     BaseButton *self, void *, LPCSTR name, int id, int x, int y, int width,
     int height, Win *parent, int style_flag);
-void __fastcall base_button_set_redirect(BaseButton *self, void *, int value);
 
-// The default setters are static, so their redirects take no instance and
-// carry the legacy __cdecl convention.
-void __cdecl base_button_set_def_text_color_redirect(
-    int color1, int color2, int color3, int color4);
-void __cdecl base_button_set_def_text_color2_redirect(
-    int color1, int color2, int color3, int color4);
-void __cdecl base_button_set_def_text_color3_redirect(
-    int color1, int color2, int color3, int color4);
-int __cdecl base_button_set_def_font_redirect(
-    Font *font1, Font *font2, Font *font3);
 
 // Interleaved 3x4 default colour table and the three default font slots the
 // setters publish; tests outside the hybrid process rebind them.
 uint32_t *const BaseButtonDefaultTextColors = (uint32_t *)0x00697060;
 Font **const BaseButtonDefaultFonts = (Font **)0x009B8E34;
 
-void __fastcall base_button_set_text_color_redirect(
-    BaseButton *self, void *, int color1, int color2, int color3, int color4);
-void __fastcall base_button_set_text_color2_redirect(
-    BaseButton *self, void *, int color1, int color2, int color3, int color4);
-void __fastcall base_button_set_text_color3_redirect(
-    BaseButton *self, void *, int color1, int color2, int color3, int color4);
 
 // The palette these setters publish before recolouring. Distinct from
 // `PaletteCurrent` at 0x009B8174; tests outside the hybrid process rebind it.
 inline Palette *&BaseButtonActivePalette() { return *reinterpret_cast<Palette **>(0x009B8180); }
 
-void __fastcall base_button_on_key_click_redirect(
-    BaseButton *self, void *, int a, int b);
-void __fastcall base_button_on_key_down_redirect(
-    BaseButton *self, void *, int a);
-void __fastcall base_button_on_key_up_redirect(
-    BaseButton *self, void *, int a);
 
 // The timer tick declared above is not recovered; it forwards to the original
 // image. ?timer_callback@BaseButton@@QAEXH@Z is public, __thiscall, void(int).

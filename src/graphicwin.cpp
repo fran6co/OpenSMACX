@@ -112,10 +112,6 @@ GraphicWin::GraphicWin() {
     field_A0C_ = GraphicWinFieldA0CDefault;
 }
 
-GraphicWin *__fastcall graphic_win_construct_redirect(
-        GraphicWin *self, void *) {
-    return new (self) GraphicWin();
-}
 
 namespace {
 
@@ -227,9 +223,6 @@ uint32_t GraphicWin::close() {
     return result;
 }
 
-uint32_t __fastcall graphic_win_close_redirect(GraphicWin *self, void *) {
-    return self->close();
-}
 
 /*
 Purpose: Destroy a GraphicWin by installing the original virtual tables,
@@ -288,11 +281,6 @@ int GraphicWin::fill(int x1, int y1, int x2, int y2, int color) {
                                                         color);
 }
 
-int __fastcall graphic_win_fill_redirect(GraphicWin *self, void *,
-                                         int x1, int y1, int x2, int y2,
-                                         int color) {
-    return self->fill(x1, y1, x2, y2, color);
-}
 
 // Slot 0xF4 on the parent's vtable. The stock body at 0x004042B0 is
 // `mov eax, ecx; ret`, so a non-null parent answers with itself.
@@ -388,10 +376,6 @@ void GraphicWin::fill(int color) {
     surface->map_colors(0, 0, width - 1, -1 - height, table);
 }
 
-void __fastcall graphic_win_fill_color_redirect(GraphicWin *self, void *,
-                                                int color) {
-    self->fill(color);
-}
 
 /*
 Purpose: Repaint the window and invalidate the screen area it occupies. A
@@ -474,9 +458,6 @@ void GraphicWin::redraw() {
     InvalidateRect(HandleMain, &area, FALSE);
 }
 
-void __fastcall graphic_win_redraw_redirect(GraphicWin *self, void *) {
-    self->redraw();
-}
 
 /*
 Purpose: When visible, tell the window to update and flip a rect the size of
@@ -707,12 +688,6 @@ int GraphicWin::init(int x, int y, int width, int height, LPSTR title,
     return 0;
 }
 
-int __fastcall graphic_win_init_redirect(GraphicWin *self, void *,
-                                         int x, int y, int width, int height,
-                                         LPSTR title, int flags, Win *parent,
-                                         Menu *menu, BorderSizing *border) {
-    return self->init(x, y, width, height, title, flags, parent, menu, border);
-}
 
 /*
 // ORIGINAL: 0x005D6310 ?on_mouse_move@GraphicWin@@QAEXHHIH@Z 0x005D6310-0x005D632C BYTE_EXACT

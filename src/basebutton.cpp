@@ -402,25 +402,9 @@ int BaseButton::set_def_font(Font *font1, Font *font2, Font *font3) {
     return 0;
 }
 
-void __cdecl base_button_set_def_text_color_redirect(
-        int color1, int color2, int color3, int color4) {
-    BaseButton::set_def_text_color(color1, color2, color3, color4);
-}
 
-void __cdecl base_button_set_def_text_color2_redirect(
-        int color1, int color2, int color3, int color4) {
-    BaseButton::set_def_text_color2(color1, color2, color3, color4);
-}
 
-void __cdecl base_button_set_def_text_color3_redirect(
-        int color1, int color2, int color3, int color4) {
-    BaseButton::set_def_text_color3(color1, color2, color3, color4);
-}
 
-int __cdecl base_button_set_def_font_redirect(
-        Font *font1, Font *font2, Font *font3) {
-    return BaseButton::set_def_font(font1, font2, font3);
-}
 
 // The active palette these setters publish before recolouring. This is a
 // different global from `PaletteCurrent` at 0x009B8174, which is what
@@ -505,20 +489,8 @@ void BaseButton::set_text_color3(int color1, int color2, int color3, int color4)
     Buffer::set_text_color3(color1, color2, color3, color4);
 }
 
-void __fastcall base_button_set_text_color_redirect(
-        BaseButton *self, void *, int color1, int color2, int color3, int color4) {
-    self->set_text_color(color1, color2, color3, color4);
-}
 
-void __fastcall base_button_set_text_color2_redirect(
-        BaseButton *self, void *, int color1, int color2, int color3, int color4) {
-    self->set_text_color2(color1, color2, color3, color4);
-}
 
-void __fastcall base_button_set_text_color3_redirect(
-        BaseButton *self, void *, int color1, int color2, int color3, int color4) {
-    self->set_text_color3(color1, color2, color3, color4);
-}
 
 namespace {
 
@@ -569,9 +541,6 @@ void BaseButton::set(int value) {
     (ORIGINAL(win_parent_)->*original_method<func_parent_notify_slot>(reinterpret_cast<unsigned long>(parent_vtable[WinValueChangedSlot / sizeof(void *)])))(static_cast<int>(field_A78_), value);
 }
 
-void __fastcall base_button_set_redirect(BaseButton *self, void *, int value) {
-    self->set(value);
-}
 
 /*
 Purpose: Legacy stub; the original body returns nothing without reading its
@@ -592,10 +561,6 @@ int BaseButton::on_key_click(int a, int b) {
     return 0;
 }
 
-void __fastcall base_button_on_key_click_redirect(
-        BaseButton *self, void *, int a, int b) {
-    self->on_key_click(a, b);
-}
 
 /*
 Purpose: Legacy stub; the original body returns nothing without reading its
@@ -615,10 +580,6 @@ int BaseButton::on_key_down(int a) {
     return 0;
 }
 
-void __fastcall base_button_on_key_down_redirect(
-        BaseButton *self, void *, int a) {
-    self->on_key_down(a);
-}
 
 /*
 Purpose: Legacy stub; the original body returns nothing without reading its
@@ -638,10 +599,6 @@ int BaseButton::on_key_up(int a) {
     return 0;
 }
 
-void __fastcall base_button_on_key_up_redirect(
-        BaseButton *self, void *, int a) {
-    self->on_key_up(a);
-}
 
 namespace {
 

@@ -325,42 +325,14 @@ int Dialog::item(char *text, int index) {
     return reinterpret_cast<StringStruct *>(list)->add(index);
 }
 
-int __fastcall dialog_set_font_redirect(
-    Dialog *self, void *, Font *font1, Font *font2, Font *font3) {
-    return self->set_dialog_font(font1, font2, font3);
-}
-
-void __fastcall dialog_set_text_color_redirect(
-    Dialog *self, void *, int color1, int color2, int color3, int color4) {
-    self->set_dialog_text_color(color1, color2, color3, color4);
-}
-
-void __fastcall dialog_set_text_color2_redirect(
-    Dialog *self, void *, int color1, int color2, int color3, int color4) {
-    self->set_dialog_text_color2(color1, color2, color3, color4);
-}
-
-void __fastcall dialog_set_text_color3_redirect(
-    Dialog *self, void *, int color1, int color2, int color3, int color4) {
-    self->set_dialog_text_color3(color1, color2, color3, color4);
-}
 
 
-int __fastcall dialog_id_to_pos_redirect(Dialog *self, void *, int id) {
-    return self->id_to_pos(id);
-}
 
-void __fastcall dialog_set_selected_id_redirect(Dialog *self, void *, int id) {
-    self->set_selected_id(id);
-}
 
-int __fastcall dialog_get_selected_id_redirect(Dialog *self, void *) {
-    return self->get_selected_id();
-}
 
-int __fastcall dialog_pos_to_id_redirect(Dialog *self, void *, int position) {
-    return self->pos_to_id(position);
-}
+
+
+
 
 Font *DialogDefaultFonts[3];  // 0x009B8EC0
 
@@ -393,10 +365,6 @@ int Dialog::set_def_dialog_font(Font *font1, Font *font2, Font *font3) {
     return 0;
 }
 
-int __cdecl dialog_set_def_dialog_font_redirect(
-        Font *font1, Font *font2, Font *font3) {
-    return Dialog::set_def_dialog_font(font1, font2, font3);
-}
 
 func_dialog_close DialogOriginalClose = original_method<func_dialog_close>(0x00608F50);
 

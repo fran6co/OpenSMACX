@@ -42,7 +42,7 @@ from decomp import read  # noqa: E402
 CEILINGS = {
     "unk-method": 272,
     "function-address binding": 63,
-    "orphan redirect": 819,
+    "orphan redirect": 771,
     "pointer-as-int": 2,
     "undocumented trivial body": 0,
     # 239 IS BELOW WHAT THE TREE CAN REACH TODAY, and this is the only
@@ -57,7 +57,7 @@ CEILINGS = {
     # layout model - their passes, not Win's.
     "raw self-access": 239,
     "pointer-parameter as int": 6,
-    "scaffold name": 3325,
+    "scaffold name": 3319,
 }
 
 WHY = {
