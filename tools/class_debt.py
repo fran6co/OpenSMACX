@@ -40,9 +40,9 @@ from decomp import read  # noqa: E402
 # eyeballed before pinning - vector-dtor iterators, atexit callbacks, and
 # `g_00406850`-style disguises, every one a real function reference.
 CEILINGS = {
-    "unk-method": 277,
-    "function-address binding": 65,
-    "orphan redirect": 828,
+    "unk-method": 276,
+    "function-address binding": 63,
+    "orphan redirect": 826,
     "pointer-as-int": 2,
     "undocumented trivial body": 0,
     # 239 IS BELOW WHAT THE TREE CAN REACH TODAY, and this is the only
@@ -250,10 +250,41 @@ def census():
     return counts, files
 
 
+def _lower_ceilings(counts) -> int:
+    """Rewrite CEILINGS down to what the census measures. LOWERS ONLY.
+
+    A pass that clears four shapes had to run --check four times, because it
+    reports one drop per run and the ratchet fails until the ceiling matches.
+    That is a workflow defect, not a safety property: lowering a ceiling can
+    never weaken the ratchet, only tighten it. Raising one still has to be a
+    deliberate edit, and this refuses to do it.
+    """
+    source = Path(__file__).read_text()
+    changed = []
+    for shape, ceiling in CEILINGS.items():
+        n = counts[shape]
+        if n >= ceiling:
+            continue
+        pattern = re.compile(r'(^    "' + re.escape(shape) + r'": )' + str(ceiling) + r',',
+                             re.M)
+        source, hits = pattern.subn(r"\g<1>" + str(n) + ",", source)
+        if hits:
+            changed.append((shape, ceiling, n))
+    if changed:
+        Path(__file__).write_text(source)
+        for shape, was, now in changed:
+            print(f"  lowered {shape}: {was} -> {now}")
+    print(f"{len(changed)} ceiling(s) lowered to the measured census")
+    return 0
+
+
 def main() -> int:
     check = "--check" in sys.argv
     as_json = "--json" in sys.argv
     counts, files = census()
+
+    if "--lower-ceilings" in sys.argv:
+        return _lower_ceilings(counts)
 
     if as_json:
         print(json.dumps({shape: dict(files[shape]) for shape in CEILINGS},

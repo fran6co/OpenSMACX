@@ -22,6 +22,12 @@
   */
 class Font {
  public:
+  // EVIDENCE-FREE, measured 2026-08-25 rather than left unfinished. The
+  // image records no caller for 0x00618F30; the mangled name is `QAE`, so
+  // it is not virtual and no dispatch names it either; and the body is a
+  // stub - `mov eax,1; ret 0x10`, four arguments discarded. Nothing here
+  // can say what it was called, and a name invented to clear a census is a
+  // false statement that outlives whoever wrote it.
   int UNK1(int, int, int, int);
   Font(); // 00618EA0
   Font(LPSTR font_name, int height, int style); // 00618EC0
@@ -130,7 +136,11 @@ class FontQueue {
   ~FontQueue();
 
  private:
-  uint8_t fonts_[3 * 0x28];
+  // Font fonts_[3], not 3*0x28 raw bytes. Declaring the real array is what
+  // makes VC6 emit the CRT vector ctor/dtor iterators itself; hand-calling
+  // them meant passing `Font::Font` and `Font::~Font` as `const void *`
+  // address constants, which C++ cannot even spell as function references.
+  Font fonts_[3];
 
   // Three parallel per-slot arrays, not 9 scalars: the constructor at
   // 0x00559290 walks them with ONE index and a single stride-4 pointer -
@@ -149,7 +159,6 @@ static_assert(sizeof(FontQueue) == 0x9C, "FontQueue layout must match the legacy
 #include "vector_teardown.h"
 extern const void *const FontQueueElementTeardown;
 
-void __fastcall font_queue_dtor_redirect(FontQueue *self, void *);
 
 Font *__cdecl find_font(int size, int style);
 #endif
@@ -174,5 +183,3 @@ extern Font *FontDefault;
  */
 extern LPCSTR DefaultFontFace;
 
-int __fastcall font_unk1_redirect(
-    Font *self, void *, int a, int b, int c, int d);

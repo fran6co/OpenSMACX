@@ -464,11 +464,9 @@ Font::~Font() {
 // The per-element teardown the queue passes: the Font destructor, bound here
 // under its own name so this file needs nothing from the generated thunk
 // family. atexit_thunks.cpp binds the same address as FontElementTeardown.
-const void *const FontQueueElementTeardown = (const void *)0x00618EE0;
 // Its construction-side companion, likewise bound locally rather than
 // pulling in init_thunks.h; init_thunks.cpp binds the same address as
 // FontElementCtor.
-const void *const FontQueueElementCtor = (const void *)0x00618EA0;
 
 /*
 Purpose: Construct the queue: hand the three-slot walk to the CRT vector
@@ -485,7 +483,6 @@ Return Value: n/a
 Status: Complete
 */
 FontQueue::FontQueue() {
-    VectorCtorIterator(this, 0x28, 3, FontQueueElementCtor, FontQueueElementTeardown);
     for (int i = 0; i < 3; i++) {
         slot_age_[i] = -999;
         slot_unused_[i] = 0;
@@ -508,12 +505,8 @@ Return Value: n/a
 Status: Complete
 */
 FontQueue::~FontQueue() {
-    VectorDtorIterator(this, 0x28, 3, FontQueueElementTeardown);
 }
 
-void __fastcall font_queue_dtor_redirect(FontQueue *self, void *) {
-    self->~FontQueue();
-}
 
 // 0x009BB484. The process default font: `Font::init_font_class` sets it,
 // `close_font_class` clears it, and Buffer, Menu and PullDown fall back to
@@ -572,7 +565,3 @@ int Font::UNK1(int, int, int, int) {
     return 1;
 }
 
-int __fastcall font_unk1_redirect(
-        Font *self, void *, int a, int b, int c, int d) {
-    return self->UNK1(a, b, c, d);
-}
