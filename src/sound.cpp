@@ -265,8 +265,8 @@ Purpose: Record the loop state at 0x30 and hand it to the wrapped device,
 Return Value: n/a
 Status: Complete
 */
-void Sound::set_loop_state(long a1) {
-    const int value = static_cast<int>(a1);
+void Sound::set_loop_state(long loop_state) {
+    const int value = static_cast<int>(loop_state);
     loop_flag_30_ = value;
     forward_sound_device(this, 0x48, value, 0);
 }
@@ -286,8 +286,8 @@ Purpose: Record the delay at 0x34 and hand it to the wrapped device, through
 Return Value: n/a
 Status: Complete
 */
-void Sound::set_delay(unsigned int a1) {
-    const int value = static_cast<int>(a1);
+void Sound::set_delay(unsigned int delay) {
+    const int value = static_cast<int>(delay);
     delay_ = value;
     forward_sound_device(this, 0x4C, value, 0);
 }
@@ -404,34 +404,34 @@ Purpose: Record the sound's type. Types 1..7 - except 3, which the original's
 Return Value: n/a
 Status: Complete
 */
-void Sound::set_type(unsigned int a1) {
-    // EACH ARM INLINE, not a shared `type_ = a1; flags_40_ |= class_bit;`
+void Sound::set_type(unsigned int type) {
+    // EACH ARM INLINE, not a shared `type_ = type; flags_40_ |= class_bit;`
     // tail: the image duplicates the store-and-OR in every case block and
     // returns from each directly, rather than merging them.
-    switch (a1) {
+    switch (type) {
     case 1:
         flags_40_ |= 0x10;
-        type_ = a1;
+        type_ = type;
         return;
     case 2:
         flags_40_ |= 8;
-        type_ = a1;
+        type_ = type;
         return;
     case 4:
         flags_40_ |= 4;
-        type_ = a1;
+        type_ = type;
         return;
     case 5:
         flags_40_ |= 0x28;
-        type_ = a1;
+        type_ = type;
         return;
     case 6:
         flags_40_ |= 0x100;
-        type_ = a1;
+        type_ = type;
         return;
     case 7:
         flags_40_ |= 0x80;
-        type_ = a1;
+        type_ = type;
         return;
     default:
         type_ = 0;
@@ -532,8 +532,8 @@ Purpose: Set the sound's volume: the low seven bits are stored at 0x04 and
 Return Value: n/a
 Status: Complete
 */
-void Sound::set_volume(int a1) {
-    const uint32_t vol = static_cast<uint32_t>(a1) & 0x7F;
+void Sound::set_volume(int volume) {
+    const uint32_t vol = static_cast<uint32_t>(volume) & 0x7F;
     volume_ = vol;
     if (device_) {
         typedef void (OriginalObject::*device_fn)(uint32_t vol);
@@ -558,15 +558,15 @@ Purpose: Set the fade time. Zero is refused with 0xA; otherwise the value is
 Return Value: 0, or 0xA for a zero time
 Status: Complete
 */
-int Sound::set_fade(unsigned long a1) {
-    if (!a1) {
+int Sound::set_fade(unsigned long fade) {
+    if (!fade) {
         return 0xA;
     }
-    fade_38_ = a1;
+    fade_38_ = fade;
     if (device_) {
         typedef void (OriginalObject::*device_fn)(unsigned long t);
         (ORIGINAL(device_)->*original_slot<device_fn>(*reinterpret_cast<uint8_t **>(device_) + 0))(
-            a1);
+            fade);
     }
     return 0;
 }
@@ -587,15 +587,15 @@ Purpose: Set the fade-in time. Zero is refused with 0xA; otherwise the value
 Return Value: 0, or 0xA for a zero time
 Status: Complete
 */
-int Sound::set_fade_in(unsigned int a1) {
-    if (!a1) {
+int Sound::set_fade_in(unsigned int fade_in) {
+    if (!fade_in) {
         return 0xA;
     }
-    fade_38_ = a1;
+    fade_38_ = fade_in;
     if (device_) {
         typedef void (OriginalObject::*device_fn)(unsigned int t);
         (ORIGINAL(device_)->*original_slot<device_fn>(*reinterpret_cast<uint8_t **>(device_) + 0x54))(
-            a1);
+            fade_in);
     }
     return 0;
 }
@@ -875,7 +875,7 @@ static int *const g_0090db50 = (int *)0x0090DB50;
 static int *const g_0090db78 = (int *)0x0090DB78;
 static int *const g_0090db7c = (int *)0x0090DB7C;
 
-int __cdecl init_sound(void *a1, unsigned long a2) {
+int __cdecl init_sound(void *window, unsigned long backends) {
     int loadResult = load_sound_dll();
     if (loadResult != 0) {
         return loadResult;
@@ -884,7 +884,7 @@ int __cdecl init_sound(void *a1, unsigned long a2) {
         (*reinterpret_cast<ZeroArgFn *>(g_0090db2c))(0, 0);
     }
     Wave_Device *waveDevice = reinterpret_cast<Wave_Device *>(g_0090d978);
-    int result = waveDevice->init(a1, a2);
+    int result = waveDevice->init(window, backends);
     if (result != 0) {
         // THE GUARD IS READ BEFORE THE STORE. The image loads [0x90db78]
         // at 0x004C5D21 and only then writes 0 to [0x90db7c]; the two are
@@ -898,13 +898,13 @@ int __cdecl init_sound(void *a1, unsigned long a2) {
         memset(g_0090db24, 0, 0xb * 4);
         return result;
     }
-    if ((a2 & 2) != 0) {
+    if ((backends & 2) != 0) {
         Midi_Device *midiDevice = reinterpret_cast<Midi_Device *>(g_0090d950);
-        midiDevice->init(a1, 2);
+        midiDevice->init(window, 2);
     }
-    if ((a2 & 8) != 0) {
+    if ((backends & 8) != 0) {
         Wave_In_Device *waveInDevice = reinterpret_cast<Wave_In_Device *>(g_0090db50);
-        waveInDevice->init(a1, a2);
+        waveInDevice->init(window, backends);
     }
     *g_0090db7c = 1;
     return 0;
