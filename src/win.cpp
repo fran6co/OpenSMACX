@@ -744,7 +744,12 @@ int WinDrawFlags;            // 0x009B238C
 int WinKeyModifiers;         // 0x009B7B18
 int WinViewOriginX;          // 0x009B7A70
 int WinViewOriginY;          // 0x009B7A74
-int WinFillColour;           // 0x00696D14
+const int WinFillColour = 9;  // 0x00696D14, read from the image
+const char WinMsgTooManyChildren[] = "Too many children";            // 0x00696D80
+const char WinMsgIncreaseMaxChildren[] = "Increase #define MAX_CHILDREN";  // 0x00696D60
+const char WinMsgTooManyParents[] = "Too many parents";              // 0x00696DB4
+const char WinMsgIncreaseMaxParents[] = "Increase #define MAX_PARENTS";    // 0x00696D94
+const char WinMdebugCode[] = "mdebug";                               // 0x00696DF8
 int WinTrackingMode;       // 0x009B7AA8
 int WinTrackingX;          // 0x009B7AB0
 int WinTrackingY;          // 0x009B7AB4
@@ -7833,7 +7838,7 @@ int Win::init(int x, int y, int width, int height, char * caption,
         if (parent->child_count_ == 150) {
             this->close();
             MessageBoxA(
-                0, reinterpret_cast<const char *>(WinMsgTooManyChildren), reinterpret_cast<const char *>(WinMsgIncreaseMaxChildren), 0);
+                0, WinMsgTooManyChildren, WinMsgIncreaseMaxChildren, 0);
             // MEASURED at 0x005EBFC4: `push 4; call 0x644dff` - the CRT's exit with
             // status 4, not a member call. The artifact declared a local
             // `void exit();` in its stub class, which was a guess.
@@ -7855,7 +7860,7 @@ int Win::init(int x, int y, int width, int height, char * caption,
         if (cnt == 0x28) {
             this->close();
             MessageBoxA(
-                0, reinterpret_cast<const char *>(WinMsgTooManyParents), reinterpret_cast<const char *>(WinMsgIncreaseMaxParents), 0);
+                0, WinMsgTooManyParents, WinMsgIncreaseMaxParents, 0);
             // MEASURED at 0x005EBFC4: `push 4; call 0x644dff` - the CRT's exit with
             // status 4, not a member call. The artifact declared a local
             // `void exit();` in its stub class, which was a guess.
@@ -8648,7 +8653,8 @@ void Win::on_char(char param2, int param3) {
 
     bool matched = true;
     {
-        char *pat = (char *)WinMdebugCodeEnd;
+        // the LAST character; the loop below compares backward from it
+        const char *pat = WinMdebugCode + 5;
         char *pos = *cursor;
         int count = 6;
         do {

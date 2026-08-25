@@ -820,7 +820,17 @@ extern int WinDrawFlags;            // 0x009B238C
 extern int WinKeyModifiers;         // 0x009B7B18
 extern int WinViewOriginX;          // 0x009B7A70
 extern int WinViewOriginY;          // 0x009B7A74
-extern int WinFillColour;           // 0x00696D14
+extern const int WinFillColour;           // 0x00696D14
+// The four child/parent overflow messages MessageBoxA shows, read out of
+// the image with tools/image_data.py rather than left as bare addresses.
+extern const char WinMsgTooManyChildren[];      // 0x00696D80
+extern const char WinMsgIncreaseMaxChildren[];  // 0x00696D60
+extern const char WinMsgTooManyParents[];       // 0x00696DB4
+extern const char WinMsgIncreaseMaxParents[];   // 0x00696D94
+// The debug cheat code on_char matches the typed-key ring against. The
+// image's pointer is 0x00696DFD, the code's LAST character, because the
+// comparison walks BACKWARD from the cursor.
+extern const char WinMdebugCode[];              // 0x00696DF8
 extern int WinTrackingMode;  // 0x009B7AA8, the hit-test code that started it
 extern int WinTrackingX;     // 0x009B7AB0
 extern int WinTrackingY;     // 0x009B7AB4
@@ -992,11 +1002,6 @@ typedef void(__cdecl *FnSetActiveWindow)(Win *);
 
 static int * const WinFocusStack = (int *)0x009B7A1C;
 static int * const WinKeyRingCursor = (int *)0x00696D5C;
-static int * const WinMsgIncreaseMaxChildren = (int *)0x00696D60;
-static int * const WinMsgTooManyChildren = (int *)0x00696D80;
-static int * const WinMsgIncreaseMaxParents = (int *)0x00696D94;
-static int * const WinMsgTooManyParents = (int *)0x00696DB4;
-static int * const WinMdebugCodeEnd = (int *)0x00696DFD;
 static int * const WinBubbleWindow = (int *)0x009B22F0;
 static int * const WinDialogList = (int *)0x009B2494;
 static int * const WinScreenClipRect = (int *)0x009B74C0;
