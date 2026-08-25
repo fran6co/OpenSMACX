@@ -3951,7 +3951,7 @@ void Win::set_mouse_pos(int a1, int a2) {
             y = y - win_parent_->outer_rect_.top;
         }
     }
-    ((SetCursorPosFn)*g)(x, y);
+    ((SetCursorPosFn)*g_SetCursorPos)(x, y);
 }
 
 // Fixed-slot bindings carried from 005ec8a0.cpp
@@ -3971,7 +3971,12 @@ void Win::get_mouse_pos(int * x, int * y) {
     if (x != 0 && y != 0) {
         struct Pt { int x, y; } pt;
         typedef int (__stdcall *GetCursorPosFn)(Pt *);
-        (*reinterpret_cast<GetCursorPosFn *>(g))(&pt);
+        // 0x00669284, NOT the SetCursorPos slot this used to reach through
+        // the file-scope `g`. The image calls `[0x669284]` here
+        // (0x005EC8C5) and the two differ only in a relocation, which
+        // the byte comparison masks - so the claim held while the call
+        // was wrong.
+        (*reinterpret_cast<GetCursorPosFn *>(g_GetCursorPos))(&pt);
         *x = pt.x;
         *y = pt.y;
         *x -= client_rect_.left + outer_rect_.left;
@@ -4796,8 +4801,11 @@ typedef int (__stdcall *EndPaintProc)(void *, const PAINTSTRUCT *);
 
 bool __cdecl Win::OnPaint(void * a1) {
     PAINTSTRUCT ps;
-    BeginPaintProc beginPaint = *reinterpret_cast<BeginPaintProc *>(g);
-    EndPaintProc endPaint = *reinterpret_cast<EndPaintProc *>(g);
+    // 0x006692B8. The image calls `[0x6692b8]` at 0x005F134E; the
+    // file-scope `g` this used to read is SetCursorPos.
+    BeginPaintProc beginPaint =
+        *reinterpret_cast<BeginPaintProc *>(g_BeginPaint);
+    EndPaintProc endPaint = *reinterpret_cast<EndPaintProc *>(g_EndPaint);
     HDC hdc = beginPaint(a1, &ps);
     if (hdc == 0) {
         return false;
@@ -5499,7 +5507,8 @@ typedef long (__stdcall *GetWindowLongProc)(void *, int);
 // beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
 int __stdcall Win::adjust_menus(void *a1) {
     Win *obj = reinterpret_cast<Win *>(
-        (*reinterpret_cast<GetWindowLongProc *>(g))(
+        // 0x0066934C: the image calls `[0x66934c]` at 0x005F0548.
+        (*reinterpret_cast<GetWindowLongProc *>(g_GetWindowLongA))(
             reinterpret_cast<void *>(this), -0x15));
     if (obj != 0) {
         obj->set_rects();
@@ -5570,7 +5579,8 @@ int Win::maximize() {
     if (*reinterpret_cast<void **>(WinLastActive) == this) {
         *WinLastActive = 0;
     }
-    (*reinterpret_cast<ShowWindowFn *>(g))(*reinterpret_cast<void **>(WinMainHwnd), 3);
+    (*reinterpret_cast<ShowWindowFn *>(g_ShowWindow))(
+        *reinterpret_cast<void **>(WinMainHwnd), 3);
     return 0;
 }
 
@@ -6104,7 +6114,7 @@ typedef int (__stdcall *SetRectFn)(void*, int, int, int, int);
 // beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
 void Win::UNK7(int x, int y, int width, int height) {
     int rectangle[4];
-    (*reinterpret_cast<SetRectFn *>(g))(
+    (*reinterpret_cast<SetRectFn *>(g_SetRect))(
         rectangle, x, y, x + width, y + height);
 }
 
@@ -6753,7 +6763,7 @@ void Win::window_line_raw(int x2, int y2, int x1, int y1, int colour,
                     *WinScreenDC = 0;
                     return;
                 }
-                ReleaseDCProc releaseDC = *reinterpret_cast<ReleaseDCProc *>(g);
+                ReleaseDCProc releaseDC = *reinterpret_cast<ReleaseDCProc *>(g_ReleaseDC);
                 releaseDC(HandleMain, reinterpret_cast<HDC>(*WinScreenDC));
                 *WinScreenDC = 0;
             }
@@ -7977,7 +7987,7 @@ typedef int(__stdcall *PollFn)(int);
 
 int __cdecl Win::update_cursor(Win *window, int tgl) {
     UnionRectFn UnionRect = (UnionRectFn)(*g_UnionRect);
-    GetCursorPosFn GetCursorPosPtr = (GetCursorPosFn)(*g);
+    GetCursorPosFn GetCursorPosPtr = (GetCursorPosFn)(*g_GetCursorPos);
     LoadCursorFn LoadCursorPtr = (LoadCursorFn)(*g_LoadCursorA);
     SetCursorFn SetCursorPtr = (SetCursorFn)(*g_SetCursor);
     PollFn PollPtr = (PollFn)(*g_ShowCursor);
@@ -9103,7 +9113,8 @@ int Win::minimize() {
     if (*reinterpret_cast<void **>(WinLastActive) == this) {
         *WinLastActive = 0;
     }
-    (*reinterpret_cast<ShowWindowFn *>(g))(reinterpret_cast<void *>(*WinMainHwnd), 6);
+    (*reinterpret_cast<ShowWindowFn *>(g_ShowWindow))(
+        reinterpret_cast<void *>(*WinMainHwnd), 6);
     return 0;
 }
 
@@ -9640,7 +9651,7 @@ typedef void (__cdecl *Callback404)();
 int __cdecl Win::OnSysCommand(void * hwnd, unsigned int command, int x,
                               int y) {
     Win *self = reinterpret_cast<Win *>(
-        (*reinterpret_cast<GetWindowLongAFn *>(g))(hwnd, -0x15));
+        (*reinterpret_cast<GetWindowLongAFn *>(g_GetWindowLongA))(hwnd, -0x15));
     if (self == 0) {
         return 0;
     }
@@ -10831,8 +10842,7 @@ long __cdecl Win::OnActivate(void *hwnd, unsigned int state, void *other,
                     fn2(iface2, *WinScreenDC);
                 } else {
                     typedef int (__stdcall *ReleaseDCProc)(void *, HDC);
-                    static int *const g = (int *)0x00669280;
-                    (*reinterpret_cast<ReleaseDCProc *>(g))(
+                    (*reinterpret_cast<ReleaseDCProc *>(g_ReleaseDC))(
                         HandleMain, reinterpret_cast<HDC>(*WinScreenDC));
                 }
                 *WinScreenDC = 0;

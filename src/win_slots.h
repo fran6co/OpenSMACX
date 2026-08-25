@@ -25,7 +25,17 @@ typedef HDC (__stdcall *FnGetDC)(HWND);
 
 typedef void(__cdecl *FnSetActiveWindow)(Win *);
 
-static int * const g = (int *)0x00669310;
+// `g` IS SetCursorPos, and the one-letter name is why three bodies reached
+// for it meaning three different APIs. Named now; see g_GetCursorPos and
+// g_BeginPaint below for the two that were calling the wrong import
+// entirely - invisible to BYTE_EXACT, because a call target is a relocation
+// and asm.py masks those out of the comparison.
+static int * const g_SetCursorPos = (int *)0x00669310;
+static int * const g_GetCursorPos = (int *)0x00669284;
+static int * const g_BeginPaint = (int *)0x006692B8;
+static int * const g_EndPaint = (int *)0x006692B4;
+static int * const g_ShowWindow = (int *)0x00669320;
+static int * const g_SetRect = (int *)0x00669274;
 static int * const WinFocusStack = (int *)0x009B7A1C;
 static int * const WinFocusTop = (int *)0x009B7ADC;
 static int * const WinModalDepth = (int *)0x009B7AE4;
