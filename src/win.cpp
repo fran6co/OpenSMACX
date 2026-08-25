@@ -3386,7 +3386,7 @@ void __cdecl recurse_zorder(Win * window) {
     int cur;
 
     if (window->child_count_ > 0) {
-        cur = *WinHighlighted;
+        cur = reinterpret_cast<int>(WinZOrderWindow);
         Win **child = &window->children_[0];
         do {
             Win *c = *child;
@@ -3402,7 +3402,7 @@ void __cdecl recurse_zorder(Win * window) {
                         reinterpret_cast<Win *>(child_c4)->is_visible() != 0) {
                         recurse_zorder(c);
                     }
-                    cur = *WinHighlighted;
+                    cur = reinterpret_cast<int>(WinZOrderWindow);
                 }
                 if (cur != 0 && found) {
                     break;
@@ -3412,7 +3412,7 @@ void __cdecl recurse_zorder(Win * window) {
             ++child;
         } while (i < window->child_count_);
     } else {
-        cur = *WinHighlighted;
+        cur = reinterpret_cast<int>(WinZOrderWindow);
     }
 
     if (!(cur != 0 && found)) {
@@ -3434,7 +3434,7 @@ void __cdecl recurse_zorder(Win * window) {
                             reinterpret_cast<Win *>(child_c4)->is_visible() != 0) {
                             recurse_zorder(c);
                         }
-                        cur = *WinHighlighted;
+                        cur = reinterpret_cast<int>(WinZOrderWindow);
                     }
                 }
                 if (cur != 0 && found) {
@@ -3496,8 +3496,8 @@ Win *__cdecl get_mouse_window_recurse(Win * window, int * x, int * y) {
     if ((*(unsigned char *)(wc + 0x98) & 0x20) == 0) {
         savedX = *x;
         savedY = *y;
-        *x = *WinMouseScreenXSaved;
-        *y = *WinMouseScreenYSaved;
+        *x = WinMouseScreenX;
+        *y = WinMouseScreenY;
     }
 
     {
@@ -3549,7 +3549,7 @@ Win *__cdecl get_mouse_window_recurse(Win * window, int * x, int * y) {
         int slotResult = reinterpret_cast<Win *>(wc)->vslot_61();
         flagsHere = *reinterpret_cast<unsigned int *>(wc + 0x98);
         if (slotResult == 0 || (flagsHere & 0x10000000) == 0) {
-            *WinDoubleClickFlag = 1;
+            WinMouseDirect = 1;
             return window;
         }
 
@@ -3579,7 +3579,7 @@ Win *__cdecl get_mouse_window_recurse(Win * window, int * x, int * y) {
         }
 
         if (hit) {
-            *WinDoubleClickFlag = 1;
+            WinMouseDirect = 1;
             return window;
         }
         *x += *reinterpret_cast<int *>(wc + 0x14c);
@@ -3597,7 +3597,7 @@ alt_path:
     }
     *x -= *reinterpret_cast<int *>(wc + 0x13c);
     *y -= *reinterpret_cast<int *>(wc + 0x140);
-    *WinDoubleClickFlag = 0;
+    WinMouseDirect = 0;
 
     {
         int childCount = *reinterpret_cast<int *>(wc + 0x3fc);
@@ -3654,12 +3654,12 @@ Purpose: Restore the saved screen area and union its rectangle into the
 // size      194 bytes
 // kind      game
 void __cdecl sub_5f1750(int a1) {
-    if (*WinSavedFocus != 0) {
+    if (WinFlipSprite != 0) {
         g_WIN_BUFFER->copy(
             (&ScreenBuffer), 0, 0,
-            *WinClipLeft, *WinClipTop, *WinClipWidth, *WinClipHeight);
-        int x = *WinClipLeft;
-        int y = *WinClipTop;
+            WinFlipSpriteY, WinFlipSpriteX, *WinClipWidth, *WinClipHeight);
+        int x = WinFlipSpriteY;
+        int y = WinFlipSpriteX;
         RECT local;
         local.right = x + *WinClipWidth;
         local.left = x;
@@ -3668,14 +3668,14 @@ void __cdecl sub_5f1750(int a1) {
         UnionRect(reinterpret_cast<RECT *>(WinDirtyRect),
                   reinterpret_cast<RECT *>(WinDirtyRect), &local);
         if (a1 != 0) {
-            int saved = *WinSavedFocus;
-            *WinSavedFocus = 0;
+            int saved = reinterpret_cast<int>(WinFlipSprite);
+            WinFlipSprite = reinterpret_cast<Sprite *>(0);
             // Win::flip is a STATIC member (win.h:211), so the image's
             // single RECT push with no ecx setup IS this call - which is
             // what the artifact's invented `win_flip_stub` was standing in
             // for. No stub and no forwarder needed.
             Win::flip(reinterpret_cast<RECT *>(WinDirtyRect));
-            *WinSavedFocus = saved;
+            WinFlipSprite = reinterpret_cast<Sprite *>(saved);
             *WinDirtyRect = 0;
             *WinModalResult = 0;
         }
@@ -4422,7 +4422,7 @@ void Win::release_modal() {
         *top_ptr = 0;
         WinFocusStack[last] = 0;
         if (0 < last) {
-            *WinFocusTop = WinFocusStack[last - 1];
+            WinModalWindow = reinterpret_cast<Win *>(WinFocusStack[last - 1]);
             WinFocusWindow = top_ptr[-1];
             return;
         }
@@ -5461,10 +5461,10 @@ typedef int(__stdcall *PollFn)(int);
 
 // Builds the saved-region rect the "direct" way: left,top,right=left+w,bottom=top+h.
 static void BuildRectDirect(RECT &r) {
-    r.left = *WinClipLeft;
-    r.top = *WinClipTop;
-    r.right = *WinClipLeft + *WinClipWidth;
-    r.bottom = *WinClipTop + *WinClipHeight;
+    r.left = WinFlipSpriteY;
+    r.top = WinFlipSpriteX;
+    r.right = WinFlipSpriteY + *WinClipWidth;
+    r.bottom = WinFlipSpriteX + *WinClipHeight;
 }
 
 // Restores the saved screen region (if one is pending) and flips it, then
@@ -5472,13 +5472,13 @@ static void BuildRectDirect(RECT &r) {
 // strategies the disassembly duplicates at each call site (a direct sum,
 // or the opaque sub_5f86c0 helper) - both read the same four fields.
 static void RestoreAndFlip(UnionRectFn UnionRect, bool useHelper) {
-    if (*WinSavedFocus != 0) {
+    if (WinFlipSprite != 0) {
         g_WIN_BUFFER
-            ->copy((&ScreenBuffer), 0, 0, *WinClipLeft, *WinClipTop,
+            ->copy((&ScreenBuffer), 0, 0, WinFlipSpriteY, WinFlipSpriteX,
                    *WinClipWidth, *WinClipHeight);
         RECT rect;
         if (useHelper) {
-            make_rect(&rect, *WinClipLeft, *WinClipTop, *WinClipWidth, *WinClipHeight);
+            make_rect(&rect, WinFlipSpriteY, WinFlipSpriteX, *WinClipWidth, *WinClipHeight);
         } else {
             BuildRectDirect(rect);
         }
@@ -5488,7 +5488,7 @@ static void RestoreAndFlip(UnionRectFn UnionRect, bool useHelper) {
         *WinDirtyRect = 0;
         *WinModalResult = 0;
     }
-    *WinSavedFocus = 0;
+    WinFlipSprite = reinterpret_cast<Sprite *>(0);
 }
 
 namespace {
@@ -5640,15 +5640,15 @@ int __stdcall Win::adjust_menus(void *a1) {
 // and rewriting it in the tree's own style is a later phase. See README.md
 // beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
 int Win::show_maximize() {
-    int active = *WinActiveDialog;
-    *WinFocusPrimary = 0;
-    *WinFocusSecondary = 0;
+    int active = reinterpret_cast<int>(WinPointerOwner3);
+    WinPointerOwner1 = 0;
+    WinPointerOwner2 = 0;
     if (active == reinterpret_cast<int>(this)) {
-        *WinActiveDialog = 0;
+        WinPointerOwner3 = 0;
         this->vslot_04();
     }
-    if (*WinLastActive == reinterpret_cast<int>(this)) {
-        *WinLastActive = 0;
+    if (WinPointerOwner4 == this) {
+        WinPointerOwner4 = 0;
     }
     ShowWindow(reinterpret_cast<HWND>(*WinMainHwnd), 3);
     return 0;
@@ -5672,15 +5672,15 @@ typedef int(__stdcall *ShowWindowFn)(void *, int);
 // and rewriting it in the tree's own style is a later phase. See README.md
 // beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
 int Win::maximize() {
-    void *active = *reinterpret_cast<void **>(WinActiveDialog);
-    *WinFocusPrimary = 0;
-    *WinFocusSecondary = 0;
+    void *active = WinPointerOwner3;
+    WinPointerOwner1 = 0;
+    WinPointerOwner2 = 0;
     if (active == this) {
-        *WinActiveDialog = 0;
+        WinPointerOwner3 = 0;
         this->vslot_04();
     }
-    if (*reinterpret_cast<void **>(WinLastActive) == this) {
-        *WinLastActive = 0;
+    if (WinPointerOwner4 == this) {
+        WinPointerOwner4 = 0;
     }
     (*reinterpret_cast<ShowWindowFn *>(g_ShowWindow))(
         *reinterpret_cast<void **>(WinMainHwnd), 3);
@@ -5927,8 +5927,8 @@ void Win::hide() {
     zero = 0;
 
 converge:
-    focus_a = *WinFocusPrimary;
-    focus_b = *WinFocusSecondary;
+    focus_a = reinterpret_cast<int>(WinPointerOwner1);
+    focus_b = reinterpret_cast<int>(WinPointerOwner2);
     chosen = (focus_a != zero) ? focus_a : focus_b;
     if (chosen == reinterpret_cast<int32_t>(this)) {
         goto clear_focus;
@@ -5967,16 +5967,16 @@ search:
 found:
     zero = 0;
 clear_focus:
-    *WinFocusPrimary = zero;
-    *WinFocusSecondary = zero;
+    WinPointerOwner1 = reinterpret_cast<Win *>(zero);
+    WinPointerOwner2 = reinterpret_cast<Win *>(zero);
 
 skip_all:
-    if (*WinActiveDialog == reinterpret_cast<int>(this)) {
-        *WinActiveDialog = 0;
+    if (WinPointerOwner3 == this) {
+        WinPointerOwner3 = 0;
         this->vslot_04();
     }
-    if (*WinLastActive == reinterpret_cast<int>(this)) {
-        *WinLastActive = 0;
+    if (WinPointerOwner4 == this) {
+        WinPointerOwner4 = 0;
     }
     iSomeFlag_ &= 0xfffffffeu;
     if (WinFocusWindow == this) {
@@ -5988,22 +5988,22 @@ skip_all:
     }
 
     {
-        int32_t total = *WinZOrderListCount;
+        int32_t total = WinRootCount;
         WinZOrderCount = 0;
         if (total > 0) {
-            int32_t target = *WinHighlighted;
+            int32_t target = reinterpret_cast<int>(WinZOrderWindow);
             Win **p = reinterpret_cast<Win **>(g_zorder_list);
             int32_t j = 0;
             for (;;) {
                 if (target != 0 && target == reinterpret_cast<int32_t>(*p)) {
                     WinZOrderCount = 0;
-                    *WinZOrderDirty = 0;
+                    WinZOrderFlag = 0;
                 }
                 if ((*p)->iSomeFlag_ & 1) {
                     recurse_zorder(*p);
-                    target = *WinHighlighted;
+                    target = reinterpret_cast<int>(WinZOrderWindow);
                 }
-                total = *WinZOrderListCount;
+                total = WinRootCount;
                 j++;
                 p++;
                 if (j >= total) {
@@ -6036,7 +6036,7 @@ void Win::on_l_button_down(long flags, int x, int y, unsigned int keys, int dbl)
     } else if (reinterpret_cast<int32_t>(this) != 0 &&
                (iFlags_ & 0x2000000) == 0) {
         int32_t idx = 0;
-        int32_t count = *WinZOrderListCount;
+        int32_t count = WinRootCount;
         if (count > 0) {
             Win **p = g_zorder_list;
             for (;;) {
@@ -6114,11 +6114,11 @@ void Win::on_l_button_down(long flags, int x, int y, unsigned int keys, int dbl)
 void Win::on_l_button_up(int x, int y, unsigned int keys, int dbl) {
     Win *captured = WinPointerOwner1;
     if (captured == nullptr) {
-        captured = *reinterpret_cast<Win **>(WinFocusSecondary);
+        captured = WinPointerOwner2;
     }
     bool isSelf = (captured == this);
     WinPointerOwner1 = nullptr;
-    *reinterpret_cast<Win **>(WinFocusSecondary) = 0;
+    WinPointerOwner2 = 0;
 
     if (isSelf) {
         RECT r;
@@ -6321,18 +6321,18 @@ void Win::bring_to_top() {
         }
 
         WinZOrderCount = 0;
-        if (*WinZOrderListCount > 0) {
-            Win *highlighted = reinterpret_cast<Win *>(*WinHighlighted);
+        if (WinRootCount > 0) {
+            Win *highlighted = reinterpret_cast<Win *>(WinZOrderWindow);
             Win **zslot = g_zorder_list;
-            for (int j = 0; j < *WinZOrderListCount; j++) {
+            for (int j = 0; j < WinRootCount; j++) {
                 if (highlighted != 0 && highlighted == *zslot) {
                     WinZOrderCount = 0;
-                    *WinZOrderDirty = 0;
+                    WinZOrderFlag = 0;
                 }
                 Win *w = reinterpret_cast<Win *>(*zslot);
                 if (w->iSomeFlag_ & 1) {
                     recurse_zorder(w);
-                    highlighted = reinterpret_cast<Win *>(*WinHighlighted);
+                    highlighted = reinterpret_cast<Win *>(WinZOrderWindow);
                 }
                 zslot++;
             }
@@ -6343,7 +6343,7 @@ void Win::bring_to_top() {
     if (this == 0) return;
     if (iFlags_ & 0x2000000) return;
 
-    int count = *WinZOrderListCount;
+    int count = WinRootCount;
     int i = 0;
     if (count > 0) {
         Win **slot = g_zorder_list;
@@ -6365,18 +6365,18 @@ void Win::bring_to_top() {
     }
 
     WinZOrderCount = 0;
-    if (*WinZOrderListCount > 0) {
-        Win *highlighted = reinterpret_cast<Win *>(*WinHighlighted);
+    if (WinRootCount > 0) {
+        Win *highlighted = reinterpret_cast<Win *>(WinZOrderWindow);
         Win **zslot = g_zorder_list;
-        for (int j = 0; j < *WinZOrderListCount; j++) {
+        for (int j = 0; j < WinRootCount; j++) {
             if (highlighted != 0 && highlighted == *zslot) {
                 WinZOrderCount = 0;
-                *WinZOrderDirty = 0;
+                WinZOrderFlag = 0;
             }
             Win *w = reinterpret_cast<Win *>(*zslot);
             if (w->iSomeFlag_ & 1) {
                 recurse_zorder(w);
-                highlighted = reinterpret_cast<Win *>(*WinHighlighted);
+                highlighted = reinterpret_cast<Win *>(WinZOrderWindow);
             }
             zslot++;
         }
@@ -6737,14 +6737,14 @@ void __cdecl Win::remove_parent(Win* a1) {
     if (this == 0) {
         return;
     }
-    int count = *WinZOrderListCount;
+    int count = WinRootCount;
     for (int i = 0; i < count; i++) {
         if (reinterpret_cast<Win **>(0x009B6E48)[i] == this) {
             if (i < count) {
                 count--;
-                *WinZOrderListCount = count;
+                WinRootCount = count;
                 this->hide();
-                count = *WinZOrderListCount;
+                count = WinRootCount;
                 if (i < count) {
                     Win **p = reinterpret_cast<Win **>(&reinterpret_cast<Win **>(0x009B6E48)[i]);
                     int n = count - i;
@@ -7214,7 +7214,7 @@ void __cdecl Win::OnRButtonDown(void * hwnd, long flags, int x, int y, unsigned 
     int result = reinterpret_cast<int>(get_mouse_window(
         reinterpret_cast<int *>(&flags), reinterpret_cast<int *>(&x)));
     if (result != 0) {
-        reinterpret_cast<Win *>(result)->on_r_button_down(reinterpret_cast<long>(hwnd), flags, x, y, *WinDoubleClickFlag);
+        reinterpret_cast<Win *>(result)->on_r_button_down(reinterpret_cast<long>(hwnd), flags, x, y, WinMouseDirect);
     }
     if (*WinMouseCallback != 0) {
         reinterpret_cast<void (__cdecl *)(int, int)>(*WinMouseCallback)(flags, x);
@@ -7232,7 +7232,7 @@ void __cdecl Win::OnRButtonUp(void * hwnd, int x, int y, unsigned int keys) {
     Win *win = reinterpret_cast<Win *>(get_mouse_window(&x, &y));
     if (win != 0) {
         VCallW *vcall = reinterpret_cast<VCallW *>(win);
-        vcall->slot084(x, y, keys, *WinDoubleClickFlag);
+        vcall->slot084(x, y, keys, WinMouseDirect);
     }
 }
 
@@ -7351,8 +7351,8 @@ void Win::show(int visible) {
     if ((iSomeFlag_ & 1) == 0 && (iSomeFlag_ & 4) != 0) {
         field_1A0_ |= 2;
         if ((iFlags_ & 2) == 0) {
-            *WinFocusPrimary = 0;
-            *WinFocusSecondary = 0;
+            WinPointerOwner1 = 0;
+            WinPointerOwner2 = 0;
         }
         iSomeFlag_ |= 1;
         if ((visible & 4) == 0) {
@@ -7363,19 +7363,19 @@ void Win::show(int visible) {
             }
         }
 
-        int32_t count = *WinZOrderListCount;
+        int32_t count = WinRootCount;
         WinZOrderCount = 0;
         if (count > 0) {
-            int32_t cur = *WinHighlighted;
+            int32_t cur = reinterpret_cast<int>(WinZOrderWindow);
             for (int32_t i = 0; i < count; ++i) {
                 Win *w = g_zorder_list[i];
                 if (cur != 0 && cur == reinterpret_cast<int32_t>(w)) {
                     WinZOrderCount = 0;
-                    *WinZOrderDirty = 0;
+                    WinZOrderFlag = 0;
                 }
                 if (reinterpret_cast<uint8_t *>(w)[0x9c] & 1) {
                     recurse_zorder(w);
-                    cur = *WinHighlighted;
+                    cur = reinterpret_cast<int>(WinZOrderWindow);
                 }
             }
         }
@@ -7446,7 +7446,7 @@ void Win::update_back_to_window(Buffer * buffer) {
     }
 
     *WinBackBuffer = reinterpret_cast<int>(buffer);
-    *WinHighlighted = 0;
+    WinZOrderWindow = 0;
     *WinViewOriginX = 0;
     *WinViewOriginY = 0;
 
@@ -7454,11 +7454,11 @@ void Win::update_back_to_window(Buffer * buffer) {
     iSomeFlag_ = savedFlags & 0xfffffffe;
 
     WinZOrderCount = 0;
-    for (int i = 0; i < *WinZOrderListCount; i++) {
+    for (int i = 0; i < WinRootCount; i++) {
         Win *w = g_zorder_list[i];
-        if (*WinHighlighted != 0 && *WinHighlighted == reinterpret_cast<int>(w)) {
+        if (WinZOrderWindow != 0 && WinZOrderWindow == w) {
             WinZOrderCount = 0;
-            *WinZOrderDirty = 0;
+            WinZOrderFlag = 0;
         }
         if (*reinterpret_cast<uint8_t *>(reinterpret_cast<char *>(w) + 0x9c) & 1) {
             recurse_zorder(w);
@@ -7516,15 +7516,15 @@ after_offset_fixup:;
     this->update_screen(&rect, 0);
 
     *WinBackBuffer = 0;
-    *WinHighlighted = 0;
+    WinZOrderWindow = 0;
     iSomeFlag_ = savedFlags;
 
     WinZOrderCount = 0;
-    for (int j = 0; j < *WinZOrderListCount; j++) {
+    for (int j = 0; j < WinRootCount; j++) {
         Win *w = g_zorder_list[j];
-        if (*WinHighlighted != 0 && *WinHighlighted == reinterpret_cast<int>(w)) {
+        if (WinZOrderWindow != 0 && WinZOrderWindow == w) {
             WinZOrderCount = 0;
-            *WinZOrderDirty = 0;
+            WinZOrderFlag = 0;
         }
         if (*reinterpret_cast<uint8_t *>(reinterpret_cast<char *>(w) + 0x9c) & 1) {
             recurse_zorder(w);
@@ -7545,17 +7545,17 @@ int Win::set_modal(int flags, int (__cdecl *callback)(), Win * owner) {
     reinterpret_cast<void **>(WinFocusStack)[idx] = owner;
     *WinModalDepth = idx + 1;
     WinFocusWindow = this;
-    *WinFocusPrimary = 0;
-    *WinFocusSecondary = 0;
+    WinPointerOwner1 = 0;
+    WinPointerOwner2 = 0;
 
-    void *prior = reinterpret_cast<void *>(*WinActiveDialog);
+    void *prior = reinterpret_cast<void *>(reinterpret_cast<int>(WinPointerOwner3));
     if (prior != 0 && prior != this) {
         reinterpret_cast<Win *>(prior)->vslot_04();
-        *WinActiveDialog = 0;
+        WinPointerOwner3 = 0;
     }
     *WinInputFocus = 0;
     if (owner != 0) {
-        *WinFocusTop = reinterpret_cast<int>(owner);
+        WinModalWindow = owner;
         reinterpret_cast<Win *>(owner)->show(0);
     }
     this->show(0);
@@ -7865,7 +7865,7 @@ int Win::init(int x, int y, int width, int height, char * caption,
             parent->child_count_++;
         }
     } else {
-        int cnt = *WinZOrderListCount;
+        int cnt = WinRootCount;
         if (cnt == 0x28) {
             this->close();
             (*reinterpret_cast<MessageBoxAFn *>(g_MessageBoxA))(
@@ -7886,7 +7886,7 @@ int Win::init(int x, int y, int width, int height, char * caption,
                 }
                 globalList[0] = this;
             }
-            *WinZOrderListCount = cnt + 1;
+            WinRootCount = cnt + 1;
         }
     }
 
@@ -8110,11 +8110,11 @@ int __cdecl Win::update_cursor(Win *window, int tgl) {
         }
     }
 
-    if (*WinDoubleClickFlag == 0 && (WFIELD(win, 0x98) & 0x4000000) == 0) {
+    if (WinMouseDirect == 0 && (WFIELD(win, 0x98) & 0x4000000) == 0) {
         int field188 = WFIELD(win, 0x188);
         if (field188 != 0) {
             // A window wants the cursor image saved/restored under it.
-            int saved = *WinSavedFocus;
+            int saved = reinterpret_cast<int>(WinFlipSprite);
             if (saved == 0) {
                 while (PollPtr(0) >= 0) {
                 }
@@ -8123,7 +8123,7 @@ int __cdecl Win::update_cursor(Win *window, int tgl) {
             }
 
             int field188b = WFIELD(win, 0x188);
-            int prevSaved = *WinSavedFocus;
+            int prevSaved = reinterpret_cast<int>(WinFlipSprite);
             if (field188b != prevSaved) {
                 *WinClipWidth = *reinterpret_cast<int *>(field188b + 0x18);
                 *WinClipHeight = *reinterpret_cast<int *>(field188b + 0x1c);
@@ -8138,9 +8138,9 @@ int __cdecl Win::update_cursor(Win *window, int tgl) {
             int height = *WinClipHeight;
             int destX = x - *WinDragOffsetX;
             int destY = y - *WinDragOffsetY;
-            *WinClipLeft = destX;
-            *WinClipTop = destY;
-            *WinSavedFocus = field188b;
+            WinFlipSpriteY = destX;
+            WinFlipSpriteX = destY;
+            WinFlipSprite = reinterpret_cast<Sprite *>(field188b);
             int copyResult = g_WIN_BUFFER
                                   ->copy((&ScreenBuffer), 0, 0, destX, destY,
                                          width, height);
@@ -8165,13 +8165,13 @@ int __cdecl Win::update_cursor(Win *window, int tgl) {
         }
 
         // win->0x188 == 0: nothing pending under this window.
-        if (*WinSavedFocus != 0) {
+        if (WinFlipSprite != 0) {
             int ebxFlag = 1;
             sub_5f1750(1);
             while (PollPtr(ebxFlag) <= 0) {
             }
         }
-        *WinSavedFocus = 0;
+        WinFlipSprite = reinterpret_cast<Sprite *>(0);
 
         int owner = WFIELD(win, 0x194);
         if (owner != 0) {
@@ -8204,35 +8204,35 @@ int __cdecl Win::update_cursor(Win *window, int tgl) {
         case 2:
         case 4:
             RestoreAndFlip(UnionRect, false);
-            *WinKeyState = ebxFlag;
+            WinCursorMoved = ebxFlag;
             SetCursorPtr(LoadCursorPtr(0, 0x7f00));
             break;
         case 12:
             RestoreAndFlip(UnionRect, false);
-            *WinKeyState = ebxFlag;
+            WinCursorMoved = ebxFlag;
             SetCursorPtr(LoadCursorPtr(0, 0x7f84));
             break;
         case 13:
             RestoreAndFlip(UnionRect, true);
-            *WinKeyState = ebxFlag;
+            WinCursorMoved = ebxFlag;
             SetCursorPtr(LoadCursorPtr(0, 0x7f84));
             break;
         case 14:
         case 17:
             RestoreAndFlip(UnionRect, true);
-            *WinKeyState = ebxFlag;
+            WinCursorMoved = ebxFlag;
             SetCursorPtr(LoadCursorPtr(0, 0x7f85));
             break;
         case 15:
         case 19:
             RestoreAndFlip(UnionRect, true);
-            *WinKeyState = ebxFlag;
+            WinCursorMoved = ebxFlag;
             SetCursorPtr(LoadCursorPtr(0, 0x7f82));
             break;
         case 16:
         case 18:
             RestoreAndFlip(UnionRect, true);
-            *WinKeyState = ebxFlag;
+            WinCursorMoved = ebxFlag;
             SetCursorPtr(LoadCursorPtr(0, 0x7f83));
             break;
         case 0:
@@ -8247,18 +8247,18 @@ int __cdecl Win::update_cursor(Win *window, int tgl) {
             break;
         }
 
-        if (*WinDoubleClickFlag == 0 && WFIELD(win, 0x188) == 0 && *WinSavedFocus != 0) {
+        if (WinMouseDirect == 0 && WFIELD(win, 0x188) == 0 && WinFlipSprite != 0) {
             g_WIN_BUFFER
-                ->copy((&ScreenBuffer), 0, 0, *WinClipLeft, *WinClipTop,
+                ->copy((&ScreenBuffer), 0, 0, WinFlipSpriteY, WinFlipSpriteX,
                        *WinClipWidth, *WinClipHeight);
             RECT rect;
-            make_rect(&rect, *WinClipLeft, *WinClipTop, *WinClipWidth, *WinClipHeight);
+            make_rect(&rect, WinFlipSpriteY, WinFlipSpriteX, *WinClipWidth, *WinClipHeight);
             RECT merged;
             UnionRect(&merged, &rect, reinterpret_cast<RECT *>(WinDirtyRect));
-            int savedFlag = *WinSavedFocus;
-            *WinSavedFocus = 0;
+            int savedFlag = reinterpret_cast<int>(WinFlipSprite);
+            WinFlipSprite = reinterpret_cast<Sprite *>(0);
             Win::flip(&merged);
-            *WinSavedFocus = savedFlag;
+            WinFlipSprite = reinterpret_cast<Sprite *>(savedFlag);
             *WinDirtyRect = 0;
             *WinModalResult = 0;
         }
@@ -8269,7 +8269,7 @@ int __cdecl Win::update_cursor(Win *window, int tgl) {
     }
 
 lab_default_cursor:
-    *WinSavedFocus = 0;
+    WinFlipSprite = reinterpret_cast<Sprite *>(0);
     {
         void *cur = LoadCursorPtr(0, 0x7f00);
         return reinterpret_cast<int>(SetCursorPtr(cur));
@@ -8699,30 +8699,30 @@ void Win::on_char(char param2, int param3) {
 
             Win *cand = WinPointerOwner1;
             if (cand == nullptr) {
-                cand = *(Win **)WinFocusSecondary;
+                cand = WinPointerOwner2;
             }
             if (cand == (Win *)WinBubbleWindow) {
                 WinPointerOwner1 = nullptr;
-                *(int *)WinFocusSecondary = 0;
+                WinPointerOwner2 = 0;
             } else if (cand != nullptr && *(int *)WinPopupCount > 0) {
                 Win **list = (Win **)WinDialogList;
                 int i = 0;
                 do {
                     if (list[i] == cand || list[i]->is_descendant(cand)) {
                         WinPointerOwner1 = nullptr;
-                        *(int *)WinFocusSecondary = 0;
+                        WinPointerOwner2 = 0;
                         break;
                     }
                     i++;
                 } while (i < *(int *)WinPopupCount);
             }
 
-            if (*(void **)WinActiveDialog == (void *)WinBubbleWindow) {
-                *(int *)WinActiveDialog = 0;
+            if (WinPointerOwner3 == (Win *)WinBubbleWindow) {
+                WinPointerOwner3 = 0;
                 ((Win *)WinBubbleWindow)->vslot_04();
             }
-            if (*(void **)WinLastActive == (void *)WinBubbleWindow) {
-                *(int *)WinLastActive = 0;
+            if (*(void **)WinPointerOwner4 == (void *)WinBubbleWindow) {
+                *(int *)WinPointerOwner4 = 0;
             }
             *(int *)WinDrawFlags &= ~1;
             if (WinFocusWindow == (Win *)WinBubbleWindow) {
@@ -8731,21 +8731,21 @@ void Win::on_char(char param2, int param3) {
 
             if ((*(uint8_t *)JackalInitFlags & 1) != 0) {
                 WinZOrderCount = 0;
-                if (*(int *)WinZOrderListCount > 0) {
+                if (*(int *)WinRootCount > 0) {
                     Win **entries = (Win **)g_zorder_list;
-                    int cur = *(int *)WinHighlighted;
+                    int cur = *(int *)WinZOrderWindow;
                     int j = 0;
                     do {
                         if (cur != 0 && cur == (int)entries[j]) {
                             WinZOrderCount = 0;
-                            *(int *)WinZOrderDirty = 0;
+                            *(int *)WinZOrderFlag = 0;
                         }
                         if ((*(uint8_t *)((char *)entries[j] + 0x9c) & 1) != 0) {
                             recurse_zorder(entries[j]);
-                            cur = *(int *)WinHighlighted;
+                            cur = *(int *)WinZOrderWindow;
                         }
                         j++;
-                    } while (j < *(int *)WinZOrderListCount);
+                    } while (j < *(int *)WinRootCount);
                 }
 
                 InvalidateRectFn invalidate = *(InvalidateRectFn *)g_InvalidateRect;
@@ -8944,7 +8944,7 @@ void Win::set_caption(char * text) {
 
 void __cdecl Win::bring_parent_to_top(Win * window) {
     if (window != 0 && (reinterpret_cast<unsigned int *>(window)[0x26] & 0x2000000) == 0) {
-        int count = *WinZOrderListCount;
+        int count = WinRootCount;
         int i = 0;
         if (count > 0) {
             while (true) {
@@ -8966,15 +8966,15 @@ void __cdecl Win::bring_parent_to_top(Win * window) {
         WinZOrderCount = 0;
         if (count > 0) {
             for (int j = 0; j < count; ++j) {
-                int cur = *WinHighlighted;
+                int cur = reinterpret_cast<int>(WinZOrderWindow);
                 if (cur != 0 && cur == reinterpret_cast<int>(g_zorder_list[j])) {
                     WinZOrderCount = 0;
-                    *WinZOrderDirty = 0;
+                    WinZOrderFlag = 0;
                 }
                 Win *w = g_zorder_list[j];
                 if (*(reinterpret_cast<unsigned char *>(w) + 0x9c) & 1) {
                     recurse_zorder(w);
-                    count = *WinZOrderListCount;
+                    count = WinRootCount;
                 }
             }
         }
@@ -9170,22 +9170,22 @@ void Win::bring_child_to_top(Win * child) {
         children_[0] = child;
     }
     WinZOrderCount = 0;
-    if (*WinZOrderListCount > 0) {
+    if (WinRootCount > 0) {
         Win **entry = g_zorder_list;
-        int cur = *WinHighlighted;
+        int cur = reinterpret_cast<int>(WinZOrderWindow);
         int j = 0;
         do {
             if (cur != 0 && cur == reinterpret_cast<int>(*entry)) {
                 WinZOrderCount = 0;
-                *WinZOrderDirty = 0;
+                WinZOrderFlag = 0;
             }
             if ((*entry)->iSomeFlag_ & 1) {
                 recurse_zorder(*entry);
-                cur = *WinHighlighted;
+                cur = reinterpret_cast<int>(WinZOrderWindow);
             }
             ++j;
             ++entry;
-        } while (j < *WinZOrderListCount);
+        } while (j < WinRootCount);
     }
 }
 
@@ -9206,15 +9206,15 @@ void Win::bring_child_to_top(Win * child) {
 // and rewriting it in the tree's own style is a later phase. See README.md
 // beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
 int Win::minimize() {
-    int active = *WinActiveDialog;
-    *WinFocusPrimary = 0;
-    *WinFocusSecondary = 0;
+    int active = reinterpret_cast<int>(WinPointerOwner3);
+    WinPointerOwner1 = 0;
+    WinPointerOwner2 = 0;
     if (active == reinterpret_cast<int>(this)) {
-        *WinActiveDialog = 0;
+        WinPointerOwner3 = 0;
         this->vslot_04();
     }
-    if (*reinterpret_cast<void **>(WinLastActive) == this) {
-        *WinLastActive = 0;
+    if (WinPointerOwner4 == this) {
+        WinPointerOwner4 = 0;
     }
     (*reinterpret_cast<ShowWindowFn *>(g_ShowWindow))(
         reinterpret_cast<void *>(*WinMainHwnd), 6);
@@ -9539,7 +9539,7 @@ int __cdecl Win::update_screen(RECT *area, Win *window) {
     }
 
     int target;
-    if (*WinHighlighted != 0) {
+    if (WinZOrderWindow != 0) {
         target = reinterpret_cast<int>(window);
     } else {
         target = 0;
@@ -9599,13 +9599,13 @@ int __cdecl Win::update_screen(RECT *area, Win *window) {
         }
     }
 
-    if (*WinSavedFocus == 0) {
+    if (WinFlipSprite == 0) {
         return 0;
     }
 
-    int base = *WinClipLeft;
+    int base = WinFlipSpriteY;
     int wA = *WinClipWidth;
-    int base2 = *WinClipTop;
+    int base2 = WinFlipSpriteX;
     int l10 = base;
     int l14 = base2;
     int l18 = wA + base;
@@ -9624,8 +9624,8 @@ int __cdecl Win::update_screen(RECT *area, Win *window) {
         l18 = rectB[1];
         l10 = rectA[0];
         l14 = rectA[1];
-        base2 = *WinClipTop;
-        base = *WinClipLeft;
+        base2 = WinFlipSpriteX;
+        base = WinFlipSpriteY;
     }
 
     (&ScreenBuffer)
@@ -9854,7 +9854,7 @@ void Win::update_window_to_buffer(Buffer * buffer) {
     if (buffer != 0) {
 
         *WinBackBuffer = (int)buffer;
-        *WinHighlighted = (int)this;
+        WinZOrderWindow = this;
         (*WinViewOriginX) = 0;
         (*WinViewOriginY) = 0;
 
@@ -9862,21 +9862,21 @@ void Win::update_window_to_buffer(Buffer * buffer) {
         int iVar3 = 0;
         iSomeFlag_ = flags9c | 1;
         WinZOrderCount = 0;
-        if (0 < *WinZOrderListCount) {
+        if (0 < WinRootCount) {
             Win **piVar4 = reinterpret_cast<Win **>(g_zorder_list);
-            int iVar2 = *WinHighlighted;
+            int iVar2 = reinterpret_cast<int>(WinZOrderWindow);
             do {
                 if (iVar2 != 0 && iVar2 == (int)*piVar4) {
                     WinZOrderCount = 0;
-                    *WinZOrderDirty = 0;
+                    WinZOrderFlag = 0;
                 }
                 if ((*reinterpret_cast<uint8_t *>(reinterpret_cast<char *>(*piVar4) + 0x9c) & 1) != 0) {
                     recurse_zorder(*piVar4);
-                    iVar2 = *WinHighlighted;
+                    iVar2 = reinterpret_cast<int>(WinZOrderWindow);
                 }
                 iVar3++;
                 piVar4++;
-            } while (iVar3 < *WinZOrderListCount);
+            } while (iVar3 < WinRootCount);
         }
 
         if ((iSomeFlag_ & 2) == 0) {
@@ -9912,26 +9912,26 @@ void Win::update_window_to_buffer(Buffer * buffer) {
         update_screen(0, this);
 
         *WinBackBuffer = 0;
-        *WinHighlighted = 0;
+        WinZOrderWindow = 0;
         iSomeFlag_ = flags9c;
 
         iVar3 = 0;
         WinZOrderCount = 0;
-        if (0 < *WinZOrderListCount) {
+        if (0 < WinRootCount) {
             Win **piVar4 = reinterpret_cast<Win **>(g_zorder_list);
-            int iVar2 = *WinHighlighted;
+            int iVar2 = reinterpret_cast<int>(WinZOrderWindow);
             do {
                 if (iVar2 != 0 && iVar2 == (int)*piVar4) {
                     WinZOrderCount = 0;
-                    *WinZOrderDirty = 0;
+                    WinZOrderFlag = 0;
                 }
                 if ((*reinterpret_cast<uint8_t *>(reinterpret_cast<char *>(*piVar4) + 0x9c) & 1) != 0) {
                     recurse_zorder(*piVar4);
-                    iVar2 = *WinHighlighted;
+                    iVar2 = reinterpret_cast<int>(WinZOrderWindow);
                 }
                 iVar3++;
                 piVar4++;
-            } while (iVar3 < *WinZOrderListCount);
+            } while (iVar3 < WinRootCount);
         }
     }
 }
@@ -10030,7 +10030,7 @@ void Win::OnLButtonUp(void *hwnd, int x, int y, unsigned int keys) {
     // a slot the class itself now names.
     Win *obj = get_mouse_window(reinterpret_cast<int *>(&hwnd), &x);
     if (obj) {
-        obj->on_l_button_up(reinterpret_cast<int>(hwnd), x, y, *WinDoubleClickFlag);
+        obj->on_l_button_up(reinterpret_cast<int>(hwnd), x, y, WinMouseDirect);
     }
 }
 
@@ -10154,7 +10154,7 @@ done:
 //
 // address        0x005F5020
 // measured tier  NO_COMPILE
-// refusal        u005f5020.cpp(29) : error C2653: 'Win' : is not a class or namespace name u005f5020.cpp(31) : error C2065: 'WinZOrderListCount' : undeclared identifier u005f5020.cpp(31
+// refusal        u005f5020.cpp(29) : error C2653: 'Win' : is not a class or namespace name u005f5020.cpp(31) : error C2065: 'WinRootCount' : undeclared identifier u005f5020.cpp(31
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
@@ -10176,7 +10176,7 @@ done:
 // it. Writing `WinZOrderCount = 0;` before reading the count reordered the two
 // (store first) under /O2; reading the count into a local FIRST, in source
 // order, reproduces the original ordering exactly. The do-while's own
-// continuation test re-reads `*WinZOrderListCount` fresh each iteration (matching
+// continuation test re-reads `WinRootCount` fresh each iteration (matching
 // the original's second `mov eax, [0x9b7b34]` at the bottom of the loop) -
 // only the ONE-TIME guard above the loop uses the cached local.
 //
@@ -10205,22 +10205,22 @@ done:
 // emitter computes declarations; it does not carry lessons.
 void __cdecl Win::update_zorder() {
     int i = 0;
-    int n = *WinZOrderListCount;
+    int n = WinRootCount;
     WinZOrderCount = 0;
     if (n > 0) {
         Win **arr = reinterpret_cast<Win **>(0x009B6E48);
-        Win *target = *reinterpret_cast<Win **>(WinHighlighted);
+        Win *target = WinZOrderWindow;
         do {
             if (target != 0 && target == arr[i]) {
                 WinZOrderCount = 0;
-                *WinZOrderDirty = 0;
+                WinZOrderFlag = 0;
             }
             if (arr[i]->iSomeFlag_ & 1) {
                 recurse_zorder(arr[i]);
-                target = *reinterpret_cast<Win **>(WinHighlighted);
+                target = WinZOrderWindow;
             }
             i++;
-        } while (i < *WinZOrderListCount);
+        } while (i < WinRootCount);
     }
 }
 
@@ -10398,8 +10398,8 @@ void Win::close() {
     int count;
     bool doClear;
 
-    modal = (Win *)*WinFocusPrimary;
-    focusWin = (Win *)*WinFocusSecondary;
+    modal = (Win *)reinterpret_cast<int>(WinPointerOwner1);
+    focusWin = (Win *)reinterpret_cast<int>(WinPointerOwner2);
     candidate = modal != 0 ? modal : focusWin;
     doClear = false;
     if (candidate == this) {
@@ -10421,16 +10421,16 @@ void Win::close() {
         }
     }
     if (doClear) {
-        *WinFocusPrimary = 0;
-        *WinFocusSecondary = 0;
+        WinPointerOwner1 = 0;
+        WinPointerOwner2 = 0;
     }
 
-    if (*WinActiveDialog == reinterpret_cast<int>(this)) {
-        *WinActiveDialog = 0;
+    if (WinPointerOwner3 == this) {
+        WinPointerOwner3 = 0;
         this->vslot_04();
     }
-    if (*WinLastActive == reinterpret_cast<int>(this)) {
-        *WinLastActive = 0;
+    if (WinPointerOwner4 == this) {
+        WinPointerOwner4 = 0;
     }
     if ((*WinBubbleCompanion == this) && (*WinBubbleActive != 0)) {
         *WinBubbleCompanion = nullptr;
@@ -10561,7 +10561,7 @@ void Win::close() {
             }
         } else if (this != 0) {
             bool found = false;
-            count = *WinZOrderListCount;
+            count = WinRootCount;
             i = 0;
             if (0 < count) {
                 Win **node = (Win **)reinterpret_cast<Win **>(0x009B6E48);
@@ -10579,10 +10579,10 @@ void Win::close() {
             }
             if (found) {
                 count = count - 1;
-                *WinZOrderListCount = count;
+                WinRootCount = count;
                 this->hide();
-                if (i < *WinZOrderListCount) {
-                    int remaining = *WinZOrderListCount - i;
+                if (i < WinRootCount) {
+                    int remaining = WinRootCount - i;
                     int *node2 = (int *)((char *)reinterpret_cast<Win **>(0x009B6E48) + i * 4);
                     do {
                         node2[0] = node2[1];
@@ -10747,7 +10747,7 @@ void __cdecl Win::OnMouseMove(void * hwnd, int x, int y, unsigned int keys) {
     Win *tracking;
 
     tracking = WinTrackingWindow;
-    *WinKeyState = 0;
+    WinCursorMoved = 0;
     if (tracking != nullptr) {
         do_tracking(x, y);
         return;
@@ -10756,12 +10756,12 @@ void __cdecl Win::OnMouseMove(void * hwnd, int x, int y, unsigned int keys) {
     update_cursor(hit, 1);
     if (hit != 0) {
         if (WinHoverWindow != 0 &&
-            (*WinKeyState != 0 || hit != WinHoverWindow) &&
-            (*WinActiveDialog == 0 || *WinActiveDialog == reinterpret_cast<int>(WinHoverWindow))) {
+            (WinCursorMoved != 0 || hit != WinHoverWindow) &&
+            (reinterpret_cast<int>(WinPointerOwner3) == 0 || WinPointerOwner3 == WinHoverWindow)) {
             WinHoverWindow->vslot_18(x, y);
         }
         WinHoverWindow = hit;
-        hit->on_mouse_move(x, y, keys, *WinDoubleClickFlag);
+        hit->on_mouse_move(x, y, keys, WinMouseDirect);
     }
 }
 
@@ -11103,11 +11103,11 @@ void __cdecl add_parent(Win *);
 // emitter computes declarations; it does not carry lessons.
 void __cdecl add_parent(Win * a1) {
     if (a1 == 0) return;
-    int count = *WinZOrderListCount;
+    int count = WinRootCount;
     unsigned int flags = a1->iFlags_;
     if (flags & 0x2000000) {
         reinterpret_cast<Win **>(0x009B6E48)[count] = a1;
-        *WinZOrderListCount = count + 1;
+        WinRootCount = count + 1;
         return;
     }
     if (count > 0) {
@@ -11120,5 +11120,5 @@ void __cdecl add_parent(Win * a1) {
         } while (--n);
     }
     reinterpret_cast<Win **>(0x009B6E48)[0] = a1;
-    *WinZOrderListCount = count + 1;
+    WinRootCount = count + 1;
 }
