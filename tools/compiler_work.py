@@ -137,7 +137,7 @@ HEADER_SHAPES = [
      "a fixed-address binding whose name is one or two letters. Name it "
      "from the import table (tools/iat_names.py) or from its use; a short "
      "name is invisible to the anonymous-global census AND to the reader."),
-    ("anonymous fixed-address global", 103,
+    ("anonymous fixed-address global", 96,
      re.compile(r"\bg_00[0-9a-f]{4,6}\b"),
      "a global named by its address instead of its meaning. Name it from "
      "evidence - the image's .data value, the arithmetic identity, the "
