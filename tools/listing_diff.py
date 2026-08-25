@@ -23,7 +23,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from decomp import read
-from decomp.asm import build_command, compiled_asm, original_asm
+from decomp.asm import (build_command, compare_record,
+                        compiled_asm, original_asm)
+from osmx import FLAG_SETS
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 IMAGE = Path(os.environ.get(
@@ -46,9 +48,9 @@ def aligned(listing):
 
 if __name__ == "__main__":
     argv = sys.argv[1:]
-    flags = "/c /O2 /Gy /GR- /GX"
+    override = None
     if "--flags" in argv:
-        flags = argv[argv.index("--flags") + 1]
+        override = argv[argv.index("--flags") + 1]
         del argv[argv.index("--flags"):argv.index("--flags") + 2]
     if not argv:
         raise SystemExit("usage: listing_diff.py <addr> [--flags '<set>']")
@@ -60,6 +62,13 @@ if __name__ == "__main__":
 
     theirs = aligned(original_asm(record, IMAGE))
     command = build_command(COMPILE_COMMANDS, record.path)
+    # THE SAME SEARCH `osmx measure` DOES, not one fixed set. This tool
+    # compiled `/c /O2 /Gy /GR- /GX` only, and reported DDInit::init at 192
+    # instructions where measure - which tries /Ob0, /Oy- and the rest -
+    # gets 177 from the same source. I read a regression into that gap once
+    # and wrote it down before checking; the number a diff prints has to be
+    # the number the ratchet would use.
+    flags = override or compare_record(record, IMAGE, command, FLAG_SETS).flags
     mine = aligned(compiled_asm(record, command, flags))
 
     print(f"0x{address:08X}  {record.name}")
