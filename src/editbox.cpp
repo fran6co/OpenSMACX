@@ -61,7 +61,10 @@ Status: Complete
 void EditBox::close() {
     char *self = reinterpret_cast<char *>(this);
 
-    field_A14_ = 0;
+    // A BYTE STORE, not a dword one. The image writes `mov byte ptr
+    // [esi + 0xa14], al` while field_A14_ is declared uint32_t, so naming
+    // the member is right but dropping the width is not.
+    *reinterpret_cast<unsigned char *>(&field_A14_) = 0;
     field_B14_ = 0xa;
     field_B28_ = EditBoxDefaultB28;
     field_B2C_ = EditBoxDefaultB2C;
