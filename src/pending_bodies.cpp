@@ -1445,8 +1445,11 @@ int __cdecl trig_init() {
 // ?insert@WaveGroupList@@ at 0x004C5BF0 - the wave group list-insert helper
 // Wave_Device::add_to_group threads new waves through.
 void WaveGroupList::insert(Wave *wave) {
-    typedef void(__fastcall *pending)(WaveGroupList *, void *, Wave *);
-    PENDING_BODY(0x004C5BF0, pending)(this, nullptr, wave);
+    // NOT a PENDING_BODY any more. 0x004C5BF0 is recovered and BYTE_EXACT in
+    // wave_device.cpp as `wave_group_insert_redirect`; jumping to the raw
+    // image address while the real body is linked in is a live fault, which
+    // is what address_index.py calls a LANDMINE.
+    wave_group_insert_redirect(this, nullptr, wave);
 }
 
 /*
