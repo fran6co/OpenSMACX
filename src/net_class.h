@@ -233,3 +233,9 @@ uint32_t *const NetEnabled = (uint32_t *)0x009BE600;
 // `extern` symbol, not a plain literal, keeps the relocation the image emits
 // at each of the two uses.
 extern uint32_t NetGetScratch;  // 0x009BC4BC
+
+// 0x009BE608, the live Net the class registers itself in. Declared here
+// rather than in net_class.cpp because win.cpp reads it too - it used to
+// carry its own `int *const` binding to the same address, which is one
+// address under two names.
+static Net **const WinNetBuffer = reinterpret_cast<Net **>(0x009BE608);

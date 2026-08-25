@@ -17,7 +17,6 @@
  */
 #include "stdafx.h"
 #include "net_class.h"
-#include "win_slots.h"
 #include "init_thunks.h"  // g_WIN_BUFFER, the 0x009B6F08 Buffer Win draws into
 
 typedef signed char int8;  // a scaffold spelling the artifacts use
@@ -5374,8 +5373,8 @@ typedef int (__stdcall *ComSlot17)(void *self, int *out);
                 ComSlot17 fn = (ComSlot17)(*reinterpret_cast<void ***>(*WinDDSurface))[0x11]; \
                 fn(reinterpret_cast<void *>(*WinDDSurface), WinScreenDC); \
             } else { \
-                GetDCFn getDc = *reinterpret_cast<GetDCFn *>(g_GetDC); \
-                *WinScreenDC = getDc(reinterpret_cast<void *>(*WinMainHwnd)); \
+                *WinScreenDC = reinterpret_cast<int>( \
+                    GetDC(reinterpret_cast<HWND>(*WinMainHwnd))); \
             } \
             (haveHdcVar) = (*WinScreenDC != 0); \
             if (haveHdcVar) { \
@@ -10742,7 +10741,7 @@ int __cdecl Win::OnQueryNewPalette(void * a1) {
             // - one instruction more than the image's single
             // `call dword ptr [0x66927c]`. Naming the loaded pointer first is
             // the spelling the rest of this file already uses (see the
-            // GetDCFn line in the macro above, BYTE_EXACT), and it restores
+            // GetDC call in the macro above, BYTE_EXACT), and it restores
             // the direct indirect-call encoding.
             eax = reinterpret_cast<int>(GetDC(
                 reinterpret_cast<HWND>(*WinMainHwnd)));
