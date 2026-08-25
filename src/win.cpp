@@ -4809,6 +4809,18 @@ void Win::set_bubble_text(char * text, RECT * rect) {
 // indirect  0x005EE3AA 0x005EE401 0x005EE422 0x005EE439 0x005EE444
 
 
+// TRIED: 22 -> 24 of 91, and both gains are BEHAVIOUR fixes. The image
+// loads scroll_vert_ into ECX at 0x005EE348 and calls `0x5ed7d0` - Win::move
+// - with it still there, so the move belongs to the SCROLLBAR; this body
+// called it on `this`. And vtable offset 0xc is slot 3, `resize(int,int,int)`,
+// which win.h declares - the MfpBase member-function-pointer shim was
+// spelling a call the class can now make directly.
+//
+// Two levers that worked elsewhere do NOT work here: swapping the `sh == 0`
+// arms so the read comes first (the lever that made is_dialog_focus exact)
+// changes nothing, and inlining the `sv`/`sh` locals to cut live values (the
+// lever that made nonclient_to_screen exact) LOSES two, 24 back to 22. What
+// remains is 91 against 91 with edi and ebx swapped from instruction 11 on.
 int Win::resize_event(int width, int height) {
   class MfpBase {};
   typedef int (MfpBase::*Fn3)(int, int, int);
@@ -4817,11 +4829,15 @@ int Win::resize_event(int width, int height) {
     void *asPtr;
   };
 
-  *(Win **)0x9b7ab8 = this;
+  // 0x009B7AB8 is WinCallbackWindow, already bound in win_slots.h.
+  *WinCallbackWindow = reinterpret_cast<int>(this);
 
   if ((iFlags_ & 0x40) == 0) {
     if (scroll_vert_ != 0) {
-      move(outer_rect_.right - outer_rect_.left, 0);
+      // THE SCROLLBAR'S move, not this window's. The image loads
+      // scroll_vert_ into ECX at 0x005EE348, tests it, and calls
+      // 0x5ed7d0 - Win::move - with that still in the receiver register.
+      scroll_vert_->move(outer_rect_.right - outer_rect_.left, 0);
       char *sv = (char *)scroll_vert_;
       char *sh = (char *)scroll_horz_;
       int iVar2;
@@ -4830,10 +4846,10 @@ int Win::resize_event(int width, int height) {
       } else {
         iVar2 = *(int *)(sh + 0x4c8) - outer_rect_.top + outer_rect_.bottom;
       }
-      Conv3 c;
-      c.asPtr = (*(void ***)sv)[0xc / 4];
-      (reinterpret_cast<MfpBase *>(scroll_vert_)->*c.asMfp)(
-          *(int *)(sv + 0x4c4), iVar2, 0);
+      // Vtable offset 0xc IS slot 3, which win.h declares as
+      // `resize(int, int, int)` - the signature the Fn3 typedef spelled out
+      // by hand. No member-function-pointer shim needed.
+      scroll_vert_->resize(*(int *)(sv + 0x4c4), iVar2, 0);
     }
     if (scroll_horz_ != 0) {
       move(0, outer_rect_.bottom - outer_rect_.top);
