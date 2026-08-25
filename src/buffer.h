@@ -92,17 +92,26 @@ class Buffer {
   void copy_to_window(Win *target, int src_x, int src_y, int x, int y,
                       int w, int h);
   // homed from 005d8290.cpp
-  void setup_buff_sprite(int a1);
+  // -1 means "the fill colour": the body substitutes WinFillColour.
+  void setup_buff_sprite(int colour);
 
  public:
   // homed from 005dd300.cpp
-  int write_right_l(char * a1, int a2, int a3, int a4, int a5);
+  int write_right_l(char *text, int y_coord, int x_coord, int field_width,
+                    int len);
   // The RECT overload: same right-aligned text, one rectangle instead of
   // four coordinates. Called by the homed caption painters.
   int write_right_l(char *text, RECT *area, int len);
 
  public:
-  int poly(Vert *a1, int a2, int a3);
+  // THE TWO TRAILING INTS ARE EVIDENCE-FREE, measured 2026-08-25 rather
+  // than left unfinished. `poly` forwards straight to `polygon`, `polygon`
+  // forwards to 0x00626620, and that function is 736 bytes and UNDECODED -
+  // buffer.cpp's own note says so. Nothing in the tree calls either with a
+  // literal that would name them, so the only honest spelling is the
+  // scaffold one. Naming them from the method's name alone would be a guess
+  // dressed as a fact.
+  int poly(Vert *verts, int a2, int a3);
   // 0x005D7210. The body is in buffer.cpp beside its marker.
   Buffer();
   // VIRTUAL, AND THE VPTR MEMBER IS GONE. What the image stores at offset
@@ -307,6 +316,9 @@ class Buffer {
   // the RECT overload above.
   int fill(int left, int top, int width, int height, int color);
   // 0x005DA330, a pending_bodies forwarder.
+  // DECLARED AND NEVER DEFINED, so there is no body to read the four ints
+  // off and no caller in this tree to read them off either. Left scaffold
+  // for the same reason as `poly` above.
   int map_colors(int a1, int a2, int a3, int a4, void *table);
   int load_pcx(const char *filename, Palette *palette, int tgl, int height);
   // 0x005E2690, the actual PCX decoder: the by-name overload above maps the
