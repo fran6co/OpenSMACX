@@ -5370,28 +5370,28 @@ namespace { class Slot88Shim { public:
 
 void __cdecl flush_input();
 void __cdecl wait_task();
-typedef int (__stdcall *ComSlot17)(void *self, int *out);
+typedef int (__stdcall *ComSlot17)(void *self, HDC *out);
 
 // The HDC acquire/release pair, recovered from the artifact that defined
 // it: the bodies that paint non-client areas all use it, and a macro
 // does not travel with a function body.
 #define ACQUIRE_HDC(haveHdcVar) \
     do { \
-        if (*WinScreenDCDepth == 0) { \
+        if (WinHdcRefCount == 0) { \
             if (*WinDDSurface != 0) { \
                 ComSlot17 fn = (ComSlot17)(*reinterpret_cast<void ***>(*WinDDSurface))[0x11]; \
-                fn(reinterpret_cast<void *>(*WinDDSurface), WinScreenDC); \
+                fn(reinterpret_cast<void *>(*WinDDSurface), &WinSharedHdc); \
             } else { \
-                *WinScreenDC = reinterpret_cast<int>( \
-                    GetDC(reinterpret_cast<HWND>(*WinMainHwnd))); \
+                WinSharedHdc =  \
+                    GetDC(reinterpret_cast<HWND>(*WinMainHwnd)); \
             } \
-            (haveHdcVar) = (*WinScreenDC != 0); \
+            (haveHdcVar) = (WinSharedHdc != 0); \
             if (haveHdcVar) { \
-                *WinScreenDCDepth = 1; \
+                WinHdcRefCount = 1; \
             } \
         } else { \
-            ++*WinScreenDCDepth; \
-            (haveHdcVar) = (*WinScreenDC != 0); \
+            ++WinHdcRefCount; \
+            (haveHdcVar) = (WinSharedHdc != 0); \
         } \
     } while (0)
 
@@ -6768,8 +6768,8 @@ void Win::set_rects() {
 }
 
 // ===== homed from src/recovered/units/005f2ac0.cpp =====
-typedef int (__stdcall *IfaceGetHdcProc)(void *, int *);
-typedef int (__stdcall *IfaceReleaseHdcProc)(void *, int);
+typedef int (__stdcall *IfaceGetHdcProc)(void *, HDC *);
+typedef int (__stdcall *IfaceReleaseHdcProc)(void *, HDC);
 typedef HDC (__stdcall *GetDCProc)(void *);
 typedef int (__stdcall *ReleaseDCProc)(void *, HDC);
 typedef void *(__stdcall *CreatePenIndirectProc)(const LocalLogPen *);
@@ -6782,22 +6782,22 @@ typedef int (__stdcall *DeleteObjectProc)(void *);
 // (a3,a4), so the first pair is the END of the segment.
 void Win::window_line_raw(int x2, int y2, int x1, int y1, int colour,
                           int width, unsigned int style) {
-    if (*WinScreenDCDepth != 0) {
-        *WinScreenDCDepth = *WinScreenDCDepth + 1;
+    if (WinHdcRefCount != 0) {
+        WinHdcRefCount = WinHdcRefCount + 1;
     } else {
         void *iface = reinterpret_cast<void *>(*WinDDSurface);
         if (iface != 0) {
             IfaceGetHdcProc fn = (*reinterpret_cast<IfaceGetHdcProc **>(iface))[17];
-            fn(iface, WinScreenDC);
+            fn(iface, &WinSharedHdc);
         } else {
-            *WinScreenDC = reinterpret_cast<int>(GetDC(HandleMain));
+            WinSharedHdc = GetDC(HandleMain);
         }
-        if (*WinScreenDC == 0) {
+        if (WinSharedHdc == 0) {
             return;
         }
-        *WinScreenDCDepth = 1;
+        WinHdcRefCount = 1;
     }
-    if (*WinScreenDC != 0) {
+    if (WinSharedHdc != 0) {
         if (field_184_ != *reinterpret_cast<int *>(*WinPalette + 0x400)) {
             (*reinterpret_cast<Palette **>(WinPalette))->set_active_window(this);
             field_184_ = *reinterpret_cast<int *>(*WinPalette + 0x400);
@@ -6810,27 +6810,27 @@ void Win::window_line_raw(int x2, int y2, int x1, int y1, int colour,
 
         HPEN hpen = CreatePenIndirect(&pen);
         if (hpen != 0) {
-            HGDIOBJ oldPen = SelectObject(reinterpret_cast<HDC>(*WinScreenDC), hpen);
+            HGDIOBJ oldPen = SelectObject(WinSharedHdc, hpen);
 
-            MoveToEx(reinterpret_cast<HDC>(*WinScreenDC), x1, y1, 0);
+            MoveToEx(WinSharedHdc, x1, y1, 0);
 
-            LineTo(reinterpret_cast<HDC>(*WinScreenDC), x2, y2);
+            LineTo(WinSharedHdc, x2, y2);
 
-            SelectObject(reinterpret_cast<HDC>(*WinScreenDC), oldPen);
+            SelectObject(WinSharedHdc, oldPen);
 
             DeleteObject(hpen);
 
-            *WinScreenDCDepth = *WinScreenDCDepth - 1;
-            if (*WinScreenDCDepth == 0) {
+            WinHdcRefCount = WinHdcRefCount - 1;
+            if (WinHdcRefCount == 0) {
                 void *iface2 = reinterpret_cast<void *>(*WinDDSurface);
                 if (iface2 != 0) {
                     IfaceReleaseHdcProc fn2 = (*reinterpret_cast<IfaceReleaseHdcProc **>(iface2))[26];
-                    fn2(iface2, *WinScreenDC);
-                    *WinScreenDC = 0;
+                    fn2(iface2, WinSharedHdc);
+                    WinSharedHdc = 0;
                     return;
                 }
-                ReleaseDC(HandleMain, reinterpret_cast<HDC>(*WinScreenDC));
-                *WinScreenDC = 0;
+                ReleaseDC(HandleMain, WinSharedHdc);
+                WinSharedHdc = 0;
             }
         }
     }
@@ -7565,7 +7565,7 @@ void Win::draw_rect_border(int x1, int y1, int x2, int y2, HGDIOBJ pen1, HGDIOBJ
             pal->set_active_window(this);
             this->field_184_ = pal->seed_;
         }
-        HDC hdc = reinterpret_cast<HDC>(*WinScreenDC);
+        HDC hdc = WinSharedHdc;
         HGDIOBJ prev = SelectObject(hdc, pen1);
         MoveToEx(hdc, x1 + 1, y1, 0);
         LineTo(hdc, x2 + 1, y1);
@@ -7580,7 +7580,7 @@ void Win::draw_rect_border(int x1, int y1, int x2, int y2, HGDIOBJ pen1, HGDIOBJ
             pal->set_active_window(this);
             this->field_184_ = pal->seed_;
         }
-        HDC hdc = reinterpret_cast<HDC>(*WinScreenDC);
+        HDC hdc = WinSharedHdc;
         void *prev = reinterpret_cast<void *>(SelectObject(hdc, pen2));
         MoveToEx(hdc, x1, y2, 0);
         LineTo(hdc, x2, y2);
@@ -7595,7 +7595,7 @@ void Win::draw_rect_border(int x1, int y1, int x2, int y2, HGDIOBJ pen1, HGDIOBJ
             pal->set_active_window(this);
             this->field_184_ = pal->seed_;
         }
-        HDC hdc = reinterpret_cast<HDC>(*WinScreenDC);
+        HDC hdc = WinSharedHdc;
         HGDIOBJ prev = SelectObject(hdc, pen1);
         MoveToEx(hdc, x1, y1, 0);
         LineTo(hdc, x1, y2);
@@ -7606,7 +7606,7 @@ void Win::draw_rect_border(int x1, int y1, int x2, int y2, HGDIOBJ pen1, HGDIOBJ
     ACQUIRE_HDC(haveHdc);
     if (haveHdc) {
         sync_palette();
-        HDC hdc = reinterpret_cast<HDC>(*WinScreenDC);
+        HDC hdc = WinSharedHdc;
         void *prev = reinterpret_cast<void *>(SelectObject(hdc, pen2));
         MoveToEx(hdc, x2, y1 + 1, 0);
         LineTo(hdc, x2, y2 + 1);
@@ -9431,24 +9431,24 @@ void Win::do_tracking(int x, int y) {
 
 void Win::sub_5ef1e0(int x1, int y1, int x2, int y2, void *pen, int unused6) {
     (void)unused6;
-    int hdc;
-    if (*WinScreenDCDepth != 0) {
-        *WinScreenDCDepth = *WinScreenDCDepth + 1;
-        hdc = *WinScreenDC;
+    HDC hdc;
+    if (WinHdcRefCount != 0) {
+        WinHdcRefCount = WinHdcRefCount + 1;
+        hdc = WinSharedHdc;
     } else {
         void *iface = reinterpret_cast<void *>(*WinDDSurface);
         if (iface != 0) {
             IfaceGetHdcProc fn = (*reinterpret_cast<IfaceGetHdcProc **>(iface))[17];
-            fn(iface, WinScreenDC);
-            hdc = *WinScreenDC;
+            fn(iface, &WinSharedHdc);
+            hdc = WinSharedHdc;
         } else {
-            *WinScreenDC = reinterpret_cast<int>(GetDC(reinterpret_cast<HWND>(*WinMainHwnd)));
-            hdc = *WinScreenDC;
+            WinSharedHdc = GetDC(reinterpret_cast<HWND>(*WinMainHwnd));
+            hdc = WinSharedHdc;
         }
         if (hdc == 0) {
             return;
         }
-        *WinScreenDCDepth = 1;
+        WinHdcRefCount = 1;
     }
     if (hdc != 0) {
         if ((int)field_184_ != *reinterpret_cast<int *>(*WinPalette + 0x400)) {
@@ -9456,25 +9456,25 @@ void Win::sub_5ef1e0(int x1, int y1, int x2, int y2, void *pen, int unused6) {
             field_184_ = *reinterpret_cast<unsigned int *>(*WinPalette + 0x400);
         }
 
-        void *oldPen = SelectObject(reinterpret_cast<HDC>(*WinScreenDC), pen);
+        void *oldPen = SelectObject(WinSharedHdc, pen);
 
-        MoveToEx(reinterpret_cast<HDC>(*WinScreenDC), x1, y1, 0);
+        MoveToEx(WinSharedHdc, x1, y1, 0);
 
-        LineTo(reinterpret_cast<HDC>(*WinScreenDC), x2, y2);
+        LineTo(WinSharedHdc, x2, y2);
 
-        SelectObject(reinterpret_cast<HDC>(*WinScreenDC), oldPen);
+        SelectObject(WinSharedHdc, oldPen);
 
-        *WinScreenDCDepth = *WinScreenDCDepth - 1;
-        if (*WinScreenDCDepth == 0) {
+        WinHdcRefCount = WinHdcRefCount - 1;
+        if (WinHdcRefCount == 0) {
             void *iface2 = reinterpret_cast<void *>(*WinDDSurface);
             if (iface2 != 0) {
                 IfaceReleaseHdcProc fn2 = (*reinterpret_cast<IfaceReleaseHdcProc **>(iface2))[26];
-                fn2(iface2, *WinScreenDC);
-                *WinScreenDC = 0;
+                fn2(iface2, WinSharedHdc);
+                WinSharedHdc = 0;
                 return;
             }
-            ReleaseDC(reinterpret_cast<HWND>(*WinMainHwnd), reinterpret_cast<HDC>(*WinScreenDC));
-            *WinScreenDC = 0;
+            ReleaseDC(reinterpret_cast<HWND>(*WinMainHwnd), WinSharedHdc);
+            WinSharedHdc = 0;
         }
     }
 }
@@ -10040,36 +10040,36 @@ typedef long (__stdcall *Fn2)(void *, void *);
 
 long Win::on_activate(unsigned int state, void * other, long minimized) {
     if (state != 0 && minimized == 0 && BufferDirectDraw == 0) {
-        if (*WinScreenDCDepth == 0) {
+        if (WinHdcRefCount == 0) {
             int obj = *WinDDSurface;
             if (obj == 0) {
-                *WinScreenDC = reinterpret_cast<int>(GetDC(HandleMain));
+                WinSharedHdc = GetDC(HandleMain);
             } else {
                 void **vtbl = *reinterpret_cast<void ***>(obj);
                 Fn2 fn = reinterpret_cast<Fn2>(vtbl[0x44 / 4]);
-                fn(reinterpret_cast<void *>(obj), WinScreenDC);
+                fn(reinterpret_cast<void *>(obj), &WinSharedHdc);
             }
-            if (*WinScreenDC == 0) {
+            if (WinSharedHdc == 0) {
                 goto done;
             }
-            *WinScreenDCDepth = 1;
+            WinHdcRefCount = 1;
         } else {
-            *WinScreenDCDepth = *WinScreenDCDepth + 1;
+            WinHdcRefCount = WinHdcRefCount + 1;
         }
-        if (*WinScreenDC != 0) {
-            SelectPalette(reinterpret_cast<HDC>(*WinScreenDC), reinterpret_cast<HPALETTE>(PaletteInitialized), 0);
-            RealizePalette(reinterpret_cast<HDC>(*WinScreenDC));
-            *WinScreenDCDepth = *WinScreenDCDepth - 1;
-            if (*WinScreenDCDepth == 0) {
+        if (WinSharedHdc != 0) {
+            SelectPalette(WinSharedHdc, reinterpret_cast<HPALETTE>(PaletteInitialized), 0);
+            RealizePalette(WinSharedHdc);
+            WinHdcRefCount = WinHdcRefCount - 1;
+            if (WinHdcRefCount == 0) {
                 int obj = *WinDDSurface;
                 if (obj == 0) {
-                    ReleaseDC(HandleMain, reinterpret_cast<HDC>(*WinScreenDC));
+                    ReleaseDC(HandleMain, WinSharedHdc);
                 } else {
                     void **vtbl = *reinterpret_cast<void ***>(obj);
                     Fn2 fn = reinterpret_cast<Fn2>(vtbl[0x68 / 4]);
-                    fn(reinterpret_cast<void *>(obj), reinterpret_cast<void *>(*WinScreenDC));
+                    fn(reinterpret_cast<void *>(obj), &WinSharedHdc);
                 }
-                *WinScreenDC = 0;
+                WinSharedHdc = 0;
             }
         }
     }
@@ -10217,23 +10217,23 @@ void Win::paint_tiled(Buffer *tile, int x_origin, int y_origin, int clip_left,
         return;
     }
 
-    if (*WinScreenDCDepth == 0) {
+    if (WinHdcRefCount == 0) {
         if (*WinDDSurface == 0) {
-            *WinScreenDC = (int)GetDC(
+            WinSharedHdc = GetDC(
                 reinterpret_cast<HWND>(*WinMainHwnd));
         } else {
             ComSlot017 fn = (ComSlot017)(*reinterpret_cast<void ***>(*WinDDSurface))[17];
-            fn(reinterpret_cast<void *>(*WinDDSurface), WinScreenDC);
+            fn(reinterpret_cast<void *>(*WinDDSurface), WinSharedHdc);
         }
-        if (*WinScreenDC == 0) {
+        if (WinSharedHdc == 0) {
             return;
         }
-        *WinScreenDCDepth = 1;
+        WinHdcRefCount = 1;
     } else {
-        *WinScreenDCDepth = *WinScreenDCDepth + 1;
+        WinHdcRefCount = WinHdcRefCount + 1;
     }
 
-    if (*WinScreenDC == 0) {
+    if (WinSharedHdc == 0) {
         return;
     }
 
@@ -10251,7 +10251,7 @@ void Win::paint_tiled(Buffer *tile, int x_origin, int y_origin, int clip_left,
     if (clip_region == 0) {
         return;
     }
-    SelectClipRgn(reinterpret_cast<HDC>(*WinScreenDC), clip_region);
+    SelectClipRgn(WinSharedHdc, clip_region);
 
     int tile_width = static_cast<int>(tile->dib_.bmiHeader.biWidth);
     int neg_tile_height = -static_cast<int>(tile->dib_.bmiHeader.biHeight);
@@ -10287,16 +10287,16 @@ void Win::paint_tiled(Buffer *tile, int x_origin, int y_origin, int clip_left,
         }
     }
 
-    if (--*WinScreenDCDepth == 0) {
+    if (--WinHdcRefCount == 0) {
         if (*WinDDSurface != 0) {
             ComSlot026 fn = (ComSlot026)(*reinterpret_cast<void ***>(*WinDDSurface))[26];
-            fn(reinterpret_cast<void *>(*WinDDSurface), reinterpret_cast<void *>(*WinScreenDC));
-            *WinScreenDC = 0;
+            fn(reinterpret_cast<void *>(*WinDDSurface), WinSharedHdc);
+            WinSharedHdc = 0;
             return;
         }
         ReleaseDC(
-            reinterpret_cast<HWND>(*WinMainHwnd), reinterpret_cast<HDC>(*WinScreenDC));
-        *WinScreenDC = 0;
+            reinterpret_cast<HWND>(*WinMainHwnd), WinSharedHdc);
+        WinSharedHdc = 0;
     }
 }
 
@@ -10549,7 +10549,7 @@ void Win::close() {
     field_190_ = 0;
     cursor_handle_ = 0;
     field_19C_ = 0;
-    *WinScreenDC = 0;
+    WinSharedHdc = 0;
     menu_ = 0;
 
     if (list_.head_ != 0) {
@@ -10710,14 +10710,14 @@ void __cdecl Win::OnMouseMove(void * hwnd, int x, int y, unsigned int keys) {
 }
 
 // ===== homed from src/unrecovered/005f1070.cpp =====
-typedef void (__stdcall *NotifyFn)(void *, int *);
+typedef void (__stdcall *NotifyFn)(void *, HDC *);
 typedef void (__stdcall *ReleaseFn)(void *, void *);
 typedef void *(__stdcall *SelectPaletteFn)(void *, void *, int);
 typedef int (__stdcall *RealizePaletteFn)(void *);
 typedef int (__stdcall *ReleaseDCFn)(void *, void *);
 
 // ORIGINAL: 0x005F1070 ?OnQueryNewPalette@Win@@QAAHPAX@Z 0x005F1070-0x005F1141 FILE BYTE_EXACT
-// LEVER: call directly through `(*reinterpret_cast<Fn*>(g_addr))(args)` at the call site instead of binding the function pointer to a named local first - the named local forced an extra reg-to-reg mov before the GetDC argument push. Also: these two "vtable" calls (slots 17/26) push the object pointer as an explicit stack arg with ecx holding the vtable pointer, not a real __thiscall dispatch, so plain `int*`/function-pointer casts matched where the VCall shim would not.
+// TRIED: call directly through `(*reinterpret_cast<Fn*>(g_addr))(args)` at the call site instead of binding the function pointer to a named local first - the named local forced an extra reg-to-reg mov before the GetDC argument push. Also: these two "vtable" calls (slots 17/26) push the object pointer as an explicit stack arg with ecx holding the vtable pointer, not a real __thiscall dispatch, so plain `int*`/function-pointer casts matched where the VCall shim would not.
 // working copy - scaffold materialised by --work
 // size      209 bytes
 // prototype int (__cdecl ?OnQueryNewPalette@Win@@QAAHPAX@Z)(HWND hWnd)
@@ -10733,17 +10733,17 @@ int __cdecl Win::OnQueryNewPalette(void * a1) {
         return 1;
     }
 
-    eax = *WinScreenDCDepth;
+    eax = WinHdcRefCount;
     if (eax != 0) {
         eax = eax + 1;
-        *WinScreenDCDepth = eax;
-        eax = *WinScreenDC;
+        WinHdcRefCount = eax;
+        eax = reinterpret_cast<int>(WinSharedHdc);
     } else {
         eax = *WinDDSurface;
         if (eax != 0) {
             int *vtbl = *reinterpret_cast<int **>(eax);
-            (*reinterpret_cast<NotifyFn>(vtbl[0x44 / 4]))(reinterpret_cast<void *>(eax), WinScreenDC);
-            eax = *WinScreenDC;
+            (*reinterpret_cast<NotifyFn>(vtbl[0x44 / 4]))(reinterpret_cast<void *>(eax), &WinSharedHdc);
+            eax = reinterpret_cast<int>(WinSharedHdc);
         } else {
             // TWO STEPS, and the second one is load-bearing. Calling through
             // `GetDC(...)` directly compiled `mov eax,[0]` + `call [eax]`
@@ -10754,12 +10754,12 @@ int __cdecl Win::OnQueryNewPalette(void * a1) {
             // the direct indirect-call encoding.
             eax = reinterpret_cast<int>(GetDC(
                 reinterpret_cast<HWND>(*WinMainHwnd)));
-            *WinScreenDC = eax;
+            WinSharedHdc = reinterpret_cast<HDC>(eax);
         }
         if (eax == 0) {
             return 0;
         }
-        *WinScreenDCDepth = 1;
+        WinHdcRefCount = 1;
     }
 
     if (eax == 0) {
@@ -10769,11 +10769,11 @@ int __cdecl Win::OnQueryNewPalette(void * a1) {
     SelectPalette(reinterpret_cast<HDC>(eax),
                   reinterpret_cast<HPALETTE>(PaletteInitialized), 0);
 
-    RealizePalette(reinterpret_cast<HDC>(*WinScreenDC));
+    RealizePalette(WinSharedHdc);
 
-    eax = *WinScreenDCDepth;
+    eax = WinHdcRefCount;
     eax = eax - 1;
-    *WinScreenDCDepth = eax;
+    WinHdcRefCount = eax;
     if (eax != 0) {
         return 0;
     }
@@ -10781,14 +10781,14 @@ int __cdecl Win::OnQueryNewPalette(void * a1) {
     eax = *WinDDSurface;
     if (eax != 0) {
         int *vtbl = *reinterpret_cast<int **>(eax);
-        (*reinterpret_cast<ReleaseFn>(vtbl[0x68 / 4]))(reinterpret_cast<void *>(eax), reinterpret_cast<void *>(*WinScreenDC));
-        *WinScreenDC = 0;
+        (*reinterpret_cast<ReleaseFn>(vtbl[0x68 / 4]))(reinterpret_cast<void *>(eax), &WinSharedHdc);
+        WinSharedHdc = 0;
         return 0;
     }
 
     ReleaseDC(reinterpret_cast<HWND>(*WinMainHwnd),
-              reinterpret_cast<HDC>(*WinScreenDC));
-    *WinScreenDC = 0;
+              WinSharedHdc);
+    WinSharedHdc = 0;
     return 0;
 }
 
@@ -10861,40 +10861,40 @@ long __cdecl Win::OnActivate(void *hwnd, unsigned int state, void *other,
     InvalidateRect(reinterpret_cast<HWND>(HandleMain), 0, 0);
     if (state != 0) {
       if (minimized == 0 && BufferDirectDraw == 0) {
-        int hdc;
-        if (*WinScreenDCDepth != 0) {
-            *WinScreenDCDepth = *WinScreenDCDepth + 1;
-            hdc = *WinScreenDC;
+        HDC hdc;
+        if (WinHdcRefCount != 0) {
+            WinHdcRefCount = WinHdcRefCount + 1;
+            hdc = WinSharedHdc;
         } else {
             void *iface = reinterpret_cast<void *>(*WinDDSurface);
             if (iface != 0) {
                 IfaceGetHdcProc fn = (*reinterpret_cast<IfaceGetHdcProc **>(iface))[17];
-                fn(iface, WinScreenDC);
-                hdc = *WinScreenDC;
+                fn(iface, &WinSharedHdc);
+                hdc = WinSharedHdc;
             } else {
-                *WinScreenDC = reinterpret_cast<int>(GetDC(HandleMain));
-                hdc = *WinScreenDC;
+                WinSharedHdc = GetDC(HandleMain);
+                hdc = WinSharedHdc;
             }
             if (hdc != 0) {
-                *WinScreenDCDepth = 1;
+                WinHdcRefCount = 1;
             }
         }
         if (hdc != 0) {
-            SelectPalette(reinterpret_cast<HDC>(*WinScreenDC), reinterpret_cast<HPALETTE>(PaletteInitialized), 0);
-            RealizePalette(reinterpret_cast<HDC>(*WinScreenDC));
+            SelectPalette(WinSharedHdc, reinterpret_cast<HPALETTE>(PaletteInitialized), 0);
+            RealizePalette(WinSharedHdc);
 
-            *WinScreenDCDepth = *WinScreenDCDepth - 1;
-            if (*WinScreenDCDepth == 0) {
+            WinHdcRefCount = WinHdcRefCount - 1;
+            if (WinHdcRefCount == 0) {
                 void *iface2 = reinterpret_cast<void *>(*WinDDSurface);
                 if (iface2 != 0) {
                     IfaceReleaseHdcProc fn2 = (*reinterpret_cast<IfaceReleaseHdcProc **>(iface2))[26];
-                    fn2(iface2, *WinScreenDC);
+                    fn2(iface2, WinSharedHdc);
                 } else {
                     typedef int (__stdcall *ReleaseDCProc)(void *, HDC);
                     ReleaseDC(
-                        HandleMain, reinterpret_cast<HDC>(*WinScreenDC));
+                        HandleMain, WinSharedHdc);
                 }
-                *WinScreenDC = 0;
+                WinSharedHdc = 0;
             }
         }
       }

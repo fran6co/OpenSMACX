@@ -998,7 +998,6 @@ static int * const WinKeyRingEnd = (int *)0x009B7B51;
 static int * const WinPalette = (int *)0x009B8180;
 static int * const WinModalFocus = (int *)0x009B8D7C;
 static int * const WinTitleBarHeight = (int *)0x009B8DD4;
-static int * const WinScreenDCDepth = (int *)0x009B3AB0;
 static int * const WinDirtyRect = (int *)0x009B6EE8;
 static int * const WinBackBuffer = (int *)0x009B7A68;
 static int * const WinViewOriginX = (int *)0x009B7A70;
@@ -1017,7 +1016,6 @@ static int * const WinViewOriginY = (int *)0x009B7A74;
 static int * const WinCallbackWindow = (int *)0x009B7AB8;
 static int * const WinInputFocus = (int *)0x009B7AC4;
 static int * const WinActiveWindow = (int *)0x009B7AC8;
-static int * const WinScreenDC = (int *)0x009B7B2C;
 static int * const WinPendingFocus = (int *)0x009B7B38;
 static int * const WinDDSurface = (int *)0x009BC498;
 // `int *const`, for the same reason g_GetDC above carries that type: a
