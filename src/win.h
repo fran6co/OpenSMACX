@@ -948,5 +948,81 @@ extern "C" int __cdecl DDInitRefreshScreenMetrics();
 // fixed-slot GetDriveTypeA/FindFirstFileA pointers, two callers, unrecovered.
 int __cdecl cd_check();
 
+// ===== Win's fixed-address globals, folded in from win_slots.h =====
+// A `const` binding DEFINED IN A HEADER folds to the image's immediate;
+// the same binding in a .cpp allocates storage this build never
+// initialises, and the body then compiles `mov eax, [x]` where the image
+// has the address inline. MEASURED on 0x005F5080: 7/29 instructions as a
+// .cpp binding, BYTE_EXACT once the address reached the expression as a
+// literal. That is the whole reason these live in a header - it was never
+// a reason for them to live in a header of their OWN.
 
+typedef void(__cdecl *FnSetActiveWindow)(Win *);
 
+static int * const WinFocusStack = (int *)0x009B7A1C;
+static int * const WinModalDepth = (int *)0x009B7AE4;
+static int * const WinMaximizeIcon = (int *)0x009B7B04;
+static int * const WinRestoreIcon = (int *)0x009B7B08;
+static int * const WinFillColour = (int *)0x00696D14;
+static int * const WinKeyRingCursor = (int *)0x00696D5C;
+static int * const WinMsgIncreaseMaxChildren = (int *)0x00696D60;
+static int * const WinMsgTooManyChildren = (int *)0x00696D80;
+static int * const WinMsgIncreaseMaxParents = (int *)0x00696D94;
+static int * const WinMsgTooManyParents = (int *)0x00696DB4;
+static int * const WinMdebugCodeEnd = (int *)0x00696DFD;
+static int * const WinBubbleWindow = (int *)0x009B22F0;
+static int * const WinTopDialog = (int *)0x009B2300;
+static int * const WinDrawFlags = (int *)0x009B238C;
+static int * const WinPopupWindow = (int *)0x009B23B4;
+static int * const WinDialogList = (int *)0x009B2494;
+static int * const WinPopupCount = (int *)0x009B26EC;
+static int * const WinScreenClipRect = (int *)0x009B74C0;
+static int * const WinGlobalCallback = (int *)0x009B7A90;
+static int * const WinMouseCallback = (int *)0x009B7A94;
+static int * const WinKeyModifiers = (int *)0x009B7B18;
+static int * const WinMainHwnd = (int *)0x009B7B28;
+static int * const WinKeyRingStart = (int *)0x009B7B48;
+static int * const WinKeyRingEnd = (int *)0x009B7B51;
+static int * const WinPalette = (int *)0x009B8180;
+static int * const WinModalFocus = (int *)0x009B8D7C;
+static int * const WinTitleBarHeight = (int *)0x009B8DD4;
+static int * const WinScreenDCDepth = (int *)0x009B3AB0;
+static int * const WinDirtyRect = (int *)0x009B6EE8;
+static int * const WinModalResult = (int *)0x009B6EF0;
+static int * const WinSavedAreaWidth = (int *)0x009B6F88;
+static int * const WinSavedAreaHeight = (int *)0x009B6F8C;
+static int * const WinDragOffsetX = (int *)0x009B7A38;
+static int * const WinDragOffsetY = (int *)0x009B7A3C;
+static int * const WinClipWidth = (int *)0x009B7A40;
+static int * const WinClipHeight = (int *)0x009B7A44;
+static int * const WinBackBuffer = (int *)0x009B7A68;
+static int * const WinViewOriginX = (int *)0x009B7A70;
+static int * const WinViewOriginY = (int *)0x009B7A74;
+// TRIED 2026-08-25 and REFUTED BY MEASUREMENT: retyping these three to
+// `Win **const` - the honest type, and the spelling win.h's
+// WinBubbleCompanion uses - cost show_maximize and maximize their claims.
+// The binding stopped folding to its immediate (`mov eax, dword ptr [eax]`
+// where the image has the address inline) and VC6 also stopped sharing one
+// zeroed register across the neighbouring stores, so the image's
+// `xor edi,edi` + three `mov [addr], edi` became three immediate stores.
+// Spelling the null `0` rather than `nullptr` did not bring it back. The
+// `reinterpret_cast<int>(this)` at the use sites is therefore LOAD-BEARING,
+// not laziness - it is raw-self-access debt the ratchet has to keep.
+// See the recorded lesson `binding-type-decides-folding`.
+static int * const WinCallbackWindow = (int *)0x009B7AB8;
+static int * const WinInputFocus = (int *)0x009B7AC4;
+static int * const WinActiveWindow = (int *)0x009B7AC8;
+static int * const WinSizingFlag = (int *)0x009B7AD4;
+static int * const WinScreenDC = (int *)0x009B7B2C;
+static int * const WinPendingFocus = (int *)0x009B7B38;
+static int * const WinDDSurface = (int *)0x009BC498;
+// `int *const`, for the same reason g_GetDC above carries that type: a
+// fixed-address binding folds to its immediate only in this spelling. As
+// `void **const` it compiled `mov eax, dword ptr [0]` in Win::redraw - the
+// array base read from address zero - while two other bodies using the same
+// name happened to fold anyway, which is what made it look like a per-body
+// register-allocation quirk rather than the type. Callers cast at use.
+static int * const g_win_array = (int *)0x009B6630;
+static uint32_t * const WinStaticDefaults = (uint32_t *)0x00696D34;
+static uint32_t * const WinDynamicDefaults = (uint32_t *)0x009B7AF0;
+static Win ** const g_zorder_list = (Win **)0x009B6E48;

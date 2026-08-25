@@ -3054,7 +3054,6 @@ int Buffer::write_right_l(char * a1, int a2, int a3, int a4, int a5) {
 }
 
 // Fixed-slot bindings carried from 005d8290.cpp
-static int *const WinFillColour = (int *)0x00696D14;
 static int *const g_009b3a54 = (int *)0x009B3A54;
 static int *const g_009b3a58 = (int *)0x009B3A58;
 static int *const g_009b3a5c = (int *)0x009B3A5C;

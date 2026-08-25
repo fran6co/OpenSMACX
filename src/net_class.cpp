@@ -57,7 +57,6 @@ static void *const g_0066eb04 = reinterpret_cast<void *>(0x0066EB04);
 static void *const g_00670dcc = reinterpret_cast<void *>(0x00670DCC);
 static int32_t *const g_009b3374 = reinterpret_cast<int32_t *>(0x009B3374);
 static int32_t *const g_009be600 = reinterpret_cast<int32_t *>(0x009BE600);
-static Net **const WinNetBuffer = reinterpret_cast<Net **>(0x009BE608);
 
 /*
 Purpose: Build a Net - its embedded VoiceTx, three NetFifo message queues,
