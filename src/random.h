@@ -90,7 +90,7 @@ class Random {
   uint32_t get_seed() { return seed_; }
 
  private:
-  uint32_t seed_;
+  uint32_t seed_;  // 0x0000
 };
 
 #if defined(_M_IX86) || defined(__i386__)
