@@ -509,11 +509,11 @@ Purpose: Set the reverb mix. The value is stored at 0x5C first, then the
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
-int Wave::set_reverb_mix(float a1) {
-    reverb_mix_ = a1;
+int Wave::set_reverb_mix(float mix) {
+    reverb_mix_ = mix;
     if (device_) {
         typedef int(__fastcall *device_fn)(void *, float);
-        return vtable_slot<device_fn>(device_, 0xE0)(device_, a1);
+        return vtable_slot<device_fn>(device_, 0xE0)(device_, mix);
     }
     return 0x14;
 }
@@ -587,10 +587,10 @@ Purpose: Position the wave in 3D through the wrapped device's vtable
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
-int Wave::set_position3d(float a1, float a2, float a3) {
+int Wave::set_position3d(float x, float y, float z) {
     typedef int(__fastcall *device_fn)(void *, float, float, float);
     if (device_) {
-        return vtable_slot<device_fn>(device_, 0xCC)(device_, a1, a2, a3);
+        return vtable_slot<device_fn>(device_, 0xCC)(device_, x, y, z);
     }
     return 0x14;
 }
@@ -610,10 +610,10 @@ Purpose: Set the wave's X position through the wrapped device's vtable
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
-int Wave::set_xpos(float a1) {
+int Wave::set_xpos(float x) {
     typedef int(__fastcall *device_fn)(void *, float);
     if (device_) {
-        return vtable_slot<device_fn>(device_, 0xD0)(device_, a1);
+        return vtable_slot<device_fn>(device_, 0xD0)(device_, x);
     }
     return 0x14;
 }
@@ -633,10 +633,10 @@ Purpose: Set the wave's Y position through the wrapped device's vtable
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
-int Wave::set_ypos(float a1) {
+int Wave::set_ypos(float y) {
     typedef int(__fastcall *device_fn)(void *, float);
     if (device_) {
-        return vtable_slot<device_fn>(device_, 0xD4)(device_, a1);
+        return vtable_slot<device_fn>(device_, 0xD4)(device_, y);
     }
     return 0x14;
 }
@@ -656,10 +656,10 @@ Purpose: Set the wave's Z position through the wrapped device's vtable
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
-int Wave::set_zpos(float a1) {
+int Wave::set_zpos(float z) {
     typedef int(__fastcall *device_fn)(void *, float);
     if (device_) {
-        return vtable_slot<device_fn>(device_, 0xD8)(device_, a1);
+        return vtable_slot<device_fn>(device_, 0xD8)(device_, z);
     }
     return 0x14;
 }
@@ -683,31 +683,31 @@ Purpose: Store the attribute mask into the wave's own fields, then tell the
 Return Value: n/a
 Status: Complete
 */
-void Wave::set_attrib(unsigned long a1) {
-    typedef int (OriginalObject::*device_fn)(uint32_t a1);
-    if (a1 & 2) {
+void Wave::set_attrib(unsigned long attrib) {
+    typedef int (OriginalObject::*device_fn)(uint32_t attrib);
+    if (attrib & 2) {
         loop_flag_30_ = 1;
     }
-    if (a1 & 1) {
+    if (attrib & 1) {
         flags_54_ |= 1;
     }
-    if (a1 & 4) {
+    if (attrib & 4) {
         flags_54_ |= 2;
     }
-    if (a1 & 0x40) {
+    if (attrib & 0x40) {
         flags_54_ |= 8;
     }
-    if (a1 & 0x80) {
+    if (attrib & 0x80) {
         flags_54_ |= 0x10;
     }
-    if (!(a1 & 4) && (a1 & 0x10)) {
+    if (!(attrib & 4) && (attrib & 0x10)) {
         flags_54_ |= 4;
     }
-    if (!(a1 & 4) && (a1 & 0x100)) {
+    if (!(attrib & 4) && (attrib & 0x100)) {
         flags_54_ |= 0x20;
     }
     if (device_) {
-        (ORIGINAL(device_)->*vtable_slot<device_fn>(device_, 0x6C))(a1);
+        (ORIGINAL(device_)->*vtable_slot<device_fn>(device_, 0x6C))(attrib);
     }
 }
 
@@ -791,25 +791,25 @@ Purpose: Set the wave's volume. The low seven bits of the argument are stored
 Return Value: n/a
 Status: Complete
 */
-void Wave::set_volume(int a1) {
+void Wave::set_volume(int volume) {
     // MASKED IN PLACE, no `vol` local: the image masks the incoming argument
     // and masks again for the field.
-    a1 &= 0x7F;
-    volume_ = a1 & 0x7F;
-    int level = a1;
+    volume &= 0x7F;
+    volume_ = volume & 0x7F;
+    int level = volume;
     if (group_slot_ < 0x10) {
         // The group entry is the LAST factor, so the level's own
         // `fild dword ptr [ebp+8]` is emitted first and the group arrives as a
         // `fild qword` + `fmulp st(1)` rather than an `fimul`. The original
         // loads that dword zero-extended through a 64-bit fild, so the scale
         // is the UNSIGNED value of the table entry.
-        // LEVER: naming the `a1 * (1.0/127.0)` product as its own local -
+        // LEVER: naming the `volume * (1.0/127.0)` product as its own local -
         // `scaled` - before multiplying by the group value, rather than
         // writing the whole product as one expression, is what makes VC6
         // emit the `fild`+`fmul`-by-constant PAIR the image has instead of
-        // folding a1's conversion into a single `fimul` at the end. 13/33 ->
+        // folding volume's conversion into a single `fimul` at the end. 13/33 ->
         // 26/33 MISMATCH.
-        const double scaled = static_cast<double>(a1) * (1.0 / 127.0);
+        const double scaled = static_cast<double>(volume) * (1.0 / 127.0);
         level = static_cast<int>(static_cast<int64_t>(
             scaled * static_cast<double>(WaveDeviceGroupVolumes[group_slot_ * 6])));
     }
@@ -835,15 +835,15 @@ Purpose: Remember the wave's filename. The previous copy, if any, goes back
 Return Value: 0, or 0xA when the name is null
 Status: Complete
 */
-int Wave::set_fname(const char *a1) {
-    if (!a1) {
+int Wave::set_fname(const char *fname) {
+    if (!fname) {
         return 0xA;
     }
     if (fname_) {
         operator delete(fname_);
     }
-    fname_ = WaveOperatorNew(strlen(a1) + 1);
-    strcpy(static_cast<char *>(fname_), a1);
+    fname_ = WaveOperatorNew(strlen(fname) + 1);
+    strcpy(static_cast<char *>(fname_), fname);
     return 0;
 }
 
@@ -1095,14 +1095,14 @@ Return Value: 0 on success, 0xC with a device already wrapped, 1 with a dead
               creation hook, or the creation error
 Status: Complete
 */
-int Wave::dyna_load(char *a1) {
+int Wave::dyna_load(char *fname) {
     if (device_) {
         return 0xC;
     }
     if (!*WaveDeviceReleaseGuard) {
         return 1;
     }
-    const int created = (WaveDeviceCreateSlot())(&device_, a1, 1);
+    const int created = (WaveDeviceCreateSlot())(&device_, fname, 1);
     if (created) {
         return created;
     }
@@ -1154,13 +1154,13 @@ Return Value: 0 on success, 1 with a dead creation hook, or the
               creation/load error
 Status: Complete
 */
-int Wave::load(const char *a1) {
+int Wave::load(const char *fname) {
     int attribs = 0;
     if (!device_) {
         if (!*WaveDeviceReleaseGuard) {
             return 1;
         }
-        const int created = (WaveDeviceCreateSlot())(&device_, a1, 1);
+        const int created = (WaveDeviceCreateSlot())(&device_, fname, 1);
         if (created) {
             return created;
         }
@@ -1193,7 +1193,7 @@ int Wave::load(const char *a1) {
     // `// calls` fact says so. `Wave` is spelled flat rather than `: Sound`
     // (see the note in `wave.h` for why), so the Sound subobject at offset 0
     // is reached by cast.
-    const int loaded = reinterpret_cast<Sound *>(this)->Sound::load(a1);
+    const int loaded = reinterpret_cast<Sound *>(this)->Sound::load(fname);
     if (loaded) {
         return loaded;
     }

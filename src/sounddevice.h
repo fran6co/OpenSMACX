@@ -49,10 +49,10 @@ class Midi_Device {
   void restart();
 
   int select(unsigned int a1);
-  void set_volume(unsigned int a1);
-  void set_pan(int a1);
+  void set_volume(unsigned int volume);
+  void set_pan(int pan);
   int fade(unsigned int a1);
-  void set_rate(unsigned int a1);
+  void set_rate(unsigned int rate);
   int get_description(unsigned int a1, char *a2, unsigned int a3);
   int get_ndevices();
   int get_volume();
@@ -88,7 +88,7 @@ class Wave_In_Device {
 
   int select(unsigned int a1);
   int get_caps(unsigned int a1);
-  void set_rate(unsigned int a1);
+  void set_rate(unsigned int rate);
   int get_description(unsigned int a1, char *a2, unsigned int a3);
   int get_ndevices();
   int stop();

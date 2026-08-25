@@ -102,7 +102,7 @@ class Wave_Device {
   void get_description(unsigned long a1, char *a2, unsigned long a3);
   int start_raw_dump(char *path);
   int set_eax(EAX_REVERB_PROPERTIES *properties);
-  int set_eax(unsigned long a1);
+  int set_eax(unsigned long eax);
   int set_eax_mix(float mix);
   int set_listener_position(float x, float y, float z);
   int get_listener_position(float *x, float *y, float *z);

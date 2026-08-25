@@ -100,8 +100,8 @@ class Wave : public Sound {
   Wave();
   ~Wave();
   int set_asdr();
-  void set_volume(int a1);
-  int set_fname(const char *a1);
+  void set_volume(int volume);
+  int set_fname(const char *fname);
   int play();
   int load();
   int reload();
@@ -109,16 +109,16 @@ class Wave : public Sound {
   // and this tree spells uint32_t as unsigned int - same width, different
   // decorated name, and the name is what the linker pairs on.
   void init(char *a1, unsigned long a2);
-  int dyna_load(char *a1);
-  int load(const char *a1);
+  int dyna_load(char *fname);
+  int load(const char *fname);
 
-  int set_bufflimit(unsigned int a1);
+  int set_bufflimit(unsigned int limit);
   int set_attack(unsigned int a1, unsigned int a2, unsigned int a3);
   int set_sustain(unsigned int a1, unsigned int a2, unsigned int a3);
   int set_decay(unsigned int a1, unsigned int a2, unsigned int a3);
   int set_release(unsigned int a1, unsigned int a2, unsigned int a3);
   int unload();
-  void set_pitch(int a1);
+  void set_pitch(int pitch);
   // PADK per ?load@Wave@@QAEHPADK@Z: a string and an unsigned long, not two
   // integers.
   int load(char *a1, unsigned long a2);
@@ -131,14 +131,14 @@ class Wave : public Sound {
   int get_game_hwnd();
   int get_ndevices();
   int UNK1(int a1);
-  int set_reverb_mix(float a1);
+  int set_reverb_mix(float mix);
   int is_3d();
   int get_device_description(char *a1, int a2, int a3);
-  int set_position3d(float a1, float a2, float a3);
-  int set_xpos(float a1);
-  int set_ypos(float a1);
-  int set_zpos(float a1);
-  void set_attrib(unsigned long a1);
+  int set_position3d(float x, float y, float z);
+  int set_xpos(float x);
+  int set_ypos(float y);
+  int set_zpos(float z);
+  void set_attrib(unsigned long attrib);
   int get_attrib();
  private:
   // 0x54, a whole 32-bit field - see the withdrawal above. Bit 1 suppresses
