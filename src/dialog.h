@@ -196,21 +196,7 @@ class Dialog {
 
 static_assert(sizeof(Dialog) == 0xF4, "Dialog layout must match the original executable");
 
-int __fastcall dialog_set_font_redirect(
-    Dialog *self, void *, Font *font1, Font *font2, Font *font3);
-void __fastcall dialog_set_text_color_redirect(
-    Dialog *self, void *, int color1, int color2, int color3, int color4);
-void __fastcall dialog_set_text_color2_redirect(
-    Dialog *self, void *, int color1, int color2, int color3, int color4);
-void __fastcall dialog_set_text_color3_redirect(
-    Dialog *self, void *, int color1, int color2, int color3, int color4);
-int __fastcall dialog_id_to_pos_redirect(Dialog *self, void *, int id);
-void __fastcall dialog_set_selected_id_redirect(Dialog *self, void *, int id);
-int __fastcall dialog_get_selected_id_redirect(Dialog *self, void *);
-int __fastcall dialog_pos_to_id_redirect(Dialog *self, void *, int position);
 
-int __cdecl dialog_set_def_dialog_font_redirect(
-    Font *font1, Font *font2, Font *font3);
 
 // Default dialog font slots at 0x009B8EC0; tests rebind this.
 // AN ARRAY, NOT A POINTER: three fonts at 0x009B8EC0, stored into

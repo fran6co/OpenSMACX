@@ -153,48 +153,8 @@ const uint32_t ScrollPrimaryVtable = 0x00669D58;
 const uint32_t ScrollBufferVtable = 0x00669D50;
 
 RECT *__cdecl expand_rect(RECT *rect, int horizontal, int vertical);
-uint32_t __fastcall scroll_close_redirect(Scroll *self, void *);
-Scroll *__fastcall scroll_destructor_redirect(Scroll *self, void *);
 void *__fastcall scroll_scalar_dtor_redirect(Scroll *self, void *,
                                              unsigned int mode);
-int __fastcall scroll_init_rect_redirect(
-    Scroll *self, void *, RECT *rect, Win *parent, int setting, int options);
-int __fastcall scroll_init_vert_redirect(
-    Scroll *self, void *, int x, int y, int length, Win *parent, int setting);
-int __fastcall scroll_init_horz_redirect(
-    Scroll *self, void *, int x, int y, int length, Win *parent, int setting);
-int __fastcall scroll_init_vert_nc_redirect(
-    Scroll *self, void *, int x, int y, int length, Win *parent, int setting);
-int __fastcall scroll_init_horz_nc_redirect(
-    Scroll *self, void *, int x, int y, int length, Win *parent, int setting);
-uint32_t __fastcall scroll_set_range_redirect(
-    Scroll *self, void *, int minimum, int maximum);
-uint32_t __fastcall scroll_set_button_color_redirect(
-    Scroll *self, void *, int color);
-uint32_t __fastcall scroll_set_bevel_thickness_redirect(
-    Scroll *self, void *, int thickness);
-uint32_t __fastcall scroll_set_bevel_upper_redirect(
-    Scroll *self, void *, int color);
-uint32_t __fastcall scroll_set_bevel_lower_redirect(
-    Scroll *self, void *, int color);
-uint32_t __fastcall scroll_set_bar_thickness_redirect(
-    Scroll *self, void *, int thickness);
-void __fastcall scroll_set_border_color_redirect(
-    Scroll *self, void *, int color);
-Sprite *__fastcall scroll_set_sprite_left_redirect(
-    Scroll *self, void *, Sprite *sprite1, Sprite *sprite2, Sprite *sprite3);
-Sprite *__fastcall scroll_set_sprite_right_redirect(
-    Scroll *self, void *, Sprite *sprite1, Sprite *sprite2, Sprite *sprite3);
-Sprite *__fastcall scroll_set_sprite_up_redirect(
-    Scroll *self, void *, Sprite *sprite1, Sprite *sprite2, Sprite *sprite3);
-Sprite *__fastcall scroll_set_sprite_down_redirect(
-    Scroll *self, void *, Sprite *sprite1, Sprite *sprite2, Sprite *sprite3);
-uint32_t __fastcall scroll_set_pos_redirect(
-    Scroll *self, void *, int position);
-RECT *__fastcall scroll_compute_thumb_rect_redirect(
-    Scroll *self, void *, RECT *rect);
-uint32_t __fastcall scroll_set_thumb_rect_redirect(Scroll *self, void *);
-int __fastcall scroll_on_left_click_redirect(Scroll *self, void *, int a1, int a2);
 
 // The two mouse-wheel handlers are still original bodies: 286 and 284 bytes of
 // paging arithmetic that reach the unrecovered thumb and repaint paths. Both

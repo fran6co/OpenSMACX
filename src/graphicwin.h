@@ -119,9 +119,6 @@ class GraphicWin : public Win, public Buffer {
 // window's own buffer at 0x444.
 typedef int (OriginalObject::*func_buffer_fill)(int, int, int, int, int);
 
-int __fastcall graphic_win_fill_redirect(GraphicWin *self, void *,
-                                         int x1, int y1, int x2, int y2,
-                                         int color);
 
 static_assert(sizeof(GraphicWin) == 0xA14,
               "GraphicWin layout must match the legacy ABI");
@@ -181,8 +178,6 @@ struct ConstructedGraphicWin : public GraphicWin {
   ConstructedGraphicWin() { ; }
 };
 
-GraphicWin *__fastcall graphic_win_construct_redirect(GraphicWin *self, void *);
-uint32_t __fastcall graphic_win_close_redirect(GraphicWin *self, void *);
 
 // Test seams: the subobject destructors are original dependencies, so tests
 // substitute recording stubs to observe delegation targets and ordering.
@@ -213,9 +208,6 @@ inline void *&GraphicWinColorMapTable() { return *reinterpret_cast<void **>(0x00
 // indistinguishable here.
 typedef void(__cdecl func_graphic_win_paint_hook)();
 
-void __fastcall graphic_win_fill_color_redirect(GraphicWin *self, void *,
-                                                int color);
-void __fastcall graphic_win_redraw_redirect(GraphicWin *self, void *);
 
 // GraphicWin::init's four remaining original dependencies. Win::init at
 // 0x005EBD80 (ret 0x24) is the 2285-byte window-creation body,
@@ -237,10 +229,6 @@ extern func_buffer_init BufferOriginalInit;
 // already binds at 0x009B3390 and GraphicWinFieldA0CDefault at 0x009B33C0.
 uint32_t *const GraphicWinInitDefaults = (uint32_t *)0x009B3394;
 
-int __fastcall graphic_win_init_redirect(GraphicWin *self, void *,
-                                         int x, int y, int width, int height,
-                                         LPSTR title, int flags, Win *parent,
-                                         Menu *menu, BorderSizing *border);
 
 // GraphicWin::soft_update at 0x005D5890 (157 bytes, bare ret) blits the
 // window's own buffer without the full repaint path. Still an original body -

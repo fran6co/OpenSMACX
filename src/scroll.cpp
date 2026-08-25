@@ -1052,109 +1052,25 @@ uint32_t Scroll::set_thumb_rect() {
     return bottom;
 }
 
-int __fastcall scroll_init_rect_redirect(
-        Scroll *self, void *, RECT *rect, Win *parent, int setting, int options) {
-    return self->init(rect, parent, setting, options);
-}
 
-int __fastcall scroll_init_vert_redirect(
-        Scroll *self, void *, int x, int y, int length, Win *parent, int setting) {
-    return self->init_vert(x, y, length, parent, setting);
-}
 
-int __fastcall scroll_init_horz_redirect(
-        Scroll *self, void *, int x, int y, int length, Win *parent, int setting) {
-    return self->init_horz(x, y, length, parent, setting);
-}
 
-int __fastcall scroll_init_vert_nc_redirect(
-        Scroll *self, void *, int x, int y, int length, Win *parent, int setting) {
-    return self->init_vert_nc(x, y, length, parent, setting);
-}
 
-int __fastcall scroll_init_horz_nc_redirect(
-        Scroll *self, void *, int x, int y, int length, Win *parent, int setting) {
-    return self->init_horz_nc(x, y, length, parent, setting);
-}
 
-uint32_t __fastcall scroll_set_range_redirect(
-        Scroll *self, void *, int minimum, int maximum) {
-    return self->set_range(minimum, maximum);
-}
 
-uint32_t __fastcall scroll_set_button_color_redirect(
-        Scroll *self, void *, int color) {
-    return self->set_button_color(color);
-}
 
-uint32_t __fastcall scroll_set_bevel_thickness_redirect(
-        Scroll *self, void *, int thickness) {
-    return self->set_bevel_thickness(thickness);
-}
 
-uint32_t __fastcall scroll_set_bevel_upper_redirect(
-        Scroll *self, void *, int color) {
-    return self->set_bevel_upper(color);
-}
 
-uint32_t __fastcall scroll_set_bevel_lower_redirect(
-        Scroll *self, void *, int color) {
-    return self->set_bevel_lower(color);
-}
 
-uint32_t __fastcall scroll_set_bar_thickness_redirect(
-        Scroll *self, void *, int thickness) {
-    return self->set_bar_thickness(thickness);
-}
 
-void __fastcall scroll_set_border_color_redirect(
-        Scroll *self, void *, int color) {
-    self->set_border_color(color);
-}
 
-Sprite *__fastcall scroll_set_sprite_left_redirect(
-        Scroll *self, void *, Sprite *sprite1, Sprite *sprite2, Sprite *sprite3) {
-    self->set_sprite_left(sprite1, sprite2, sprite3);
-    return sprite1;
-}
 
-Sprite *__fastcall scroll_set_sprite_right_redirect(
-        Scroll *self, void *, Sprite *sprite1, Sprite *sprite2, Sprite *sprite3) {
-    self->set_sprite_right(sprite1, sprite2, sprite3);
-    return sprite1;
-}
 
-Sprite *__fastcall scroll_set_sprite_up_redirect(
-        Scroll *self, void *, Sprite *sprite1, Sprite *sprite2, Sprite *sprite3) {
-    self->set_sprite_up(sprite1, sprite2, sprite3);
-    return sprite1;
-}
 
-Sprite *__fastcall scroll_set_sprite_down_redirect(
-        Scroll *self, void *, Sprite *sprite1, Sprite *sprite2, Sprite *sprite3) {
-    self->set_sprite_down(sprite1, sprite2, sprite3);
-    return sprite1;
-}
 
-uint32_t __fastcall scroll_set_pos_redirect(
-        Scroll *self, void *, int position) {
-    return self->set_pos(position);
-}
 
-RECT *__fastcall scroll_compute_thumb_rect_redirect(
-        Scroll *self, void *, RECT *rect) {
-    self->compute_thumb_rect(rect);
-    return reinterpret_cast<RECT *>(
-        reinterpret_cast<uint8_t *>(self) + 0xA4C);
-}
 
-uint32_t __fastcall scroll_set_thumb_rect_redirect(Scroll *self, void *) {
-    return self->set_thumb_rect();
-}
 
-uint32_t __fastcall scroll_close_redirect(Scroll *self, void *) {
-    return self->close();
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -1179,9 +1095,6 @@ int Scroll::on_left_click(int, int) {
 }
 #pragma warning(pop)
 
-int __fastcall scroll_on_left_click_redirect(Scroll *self, void *, int a1, int a2) {
-    return self->on_left_click(a1, a2);
-}
 
 
 /*
@@ -1218,9 +1131,6 @@ Scroll *Scroll::destroy() {
     return this;
 }
 
-Scroll *__fastcall scroll_destructor_redirect(Scroll *self, void *) {
-    return self->destroy();
-}
 
 /*
 Purpose: The compiler-generated scalar deleting destructor: run the complete
