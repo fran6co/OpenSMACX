@@ -398,7 +398,7 @@ Purpose: Tell the attached object the tutorial window moved.
 Return Value: n/a
 Status: Complete
 */
-void TutWin::on_move(int a1, int a2) {
+void TutWin::on_move(int x, int y) {
     char *self = reinterpret_cast<char *>(this);
     VCall *obj = *reinterpret_cast<VCall **>(self + 0x53d4);
     if (obj) {

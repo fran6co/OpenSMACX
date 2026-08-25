@@ -74,10 +74,10 @@ alongside it. Console's own fields past the MapWin base are still opaque
 storage (see the class declaration), so everything below reaches its
 sub-objects by raw offset.
 */
-void Console::construct(int a1) {
+void Console::construct(int input) {
     char *const self = reinterpret_cast<char *>(this);
 
-    if (a1) {
+    if (input) {
         *reinterpret_cast<void **>(self) = g_0066ef04;
         new (reinterpret_cast<GraphicWin *>(self + 0x23d94)) GraphicWin();
     }

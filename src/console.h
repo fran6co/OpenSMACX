@@ -117,7 +117,7 @@ class Console : public MapWin {
 
  public:
   // 0x005178C0, a pending_bodies forwarder.
-  int on_key_click(int a1, int a2);
+  int on_key_click(int a, int b);
 
  public:
   void cursor_next(int x_coord, int y_coord);
@@ -131,7 +131,7 @@ class Console : public MapWin {
   Console() { ; }
   // See the note in `mapwin.h`: a `construct` method rather than a real
   // constructor, because VC6's hidden most-derived flag doubles the push.
-  void construct(int a1);
+  void construct(int input);
   // A genuine destructor is safe here (unlike the constructor): destructors
   // never carry the most-derived flag - `guarded_teardowns.cpp`'s own
   // already-matching `->Console::~Console()` proves it, the same way it did

@@ -40,7 +40,7 @@
 class DiploWin : public GraphicWin {
  public:
   void hide();
-  void show(int a1);
+  void show(int visible);
   DiploWin() { ; }
   // 0x00444DB0 is not recovered: a
   // pending_bodies forwarder, because an empty inline stub emits

@@ -99,13 +99,13 @@ Purpose: Position the string-list cursor at the first matching item ID.
 Return Value: One when found, otherwise zero
 Status: Complete
 */
-int StringStruct::seek_id(int a1) {
+int StringStruct::seek_id(int id) {
     if (head_) {
         current_position_ = 0;
         current_ = head_;
         for (int traversed = 0; traversed < entry_count_; traversed++) {
             int *entry = reinterpret_cast<int*>(current_);
-            if (entry[1] == a1) {
+            if (entry[1] == id) {
                 return 1;
             }
             current_position_++;

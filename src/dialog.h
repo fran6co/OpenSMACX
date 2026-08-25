@@ -123,9 +123,9 @@ class Dialog {
   int pos_to_id(int position);
   // Four of Dialog's seven init overloads; the four SpriteBox::init forwards
   // to. All unrecovered - declared so the recovered callers can name them.
-  int init(RECT *a1, int a2);  // ?init@Dialog@@QAEHPAURECT@@H@Z  0x00609470
-  int init(int a1);            // ?init@Dialog@@QAEHH@Z           0x006095F0
-  int init(Heap *a1);          // ?init@Dialog@@QAEHPAUHeap@@@Z   0x006098D0
+  int init(RECT *group_id, int flags);  // ?init@Dialog@@QAEHPAURECT@@H@Z  0x00609470
+  int init(int file_name);            // ?init@Dialog@@QAEHH@Z           0x006095F0
+  int init(Heap *file_name);          // ?init@Dialog@@QAEHPAUHeap@@@Z   0x006098D0
   // The five-argument one, which the recovered SpriteBox::init (0x006104D0)
   // tail-forwards to. Its absence was the only thing stopping that body from
   // being integrated out of src/recovered/.

@@ -42,7 +42,7 @@ class MainInterface : public GraphicWin {
   void UNK3();
   void UNK4();
 
-  void UNK1(int a1);
+  void UNK1(int pos);
   // (code, pos), the Win32 WM_VSCROLL shape the image mirrors. Evidence
   // is in the bodies: BaseWin::on_scrolled does `switch (a1)` and then
   // stores a2 in field_40B10_; StringBox::on_scrolled stores a2 in

@@ -48,7 +48,7 @@ class NetWin : public ConstructedGraphicWin {
   void UNK1();
   void UNK2();
   void alloc_slots();
-  int on_key_click(int a1, int a2);
+  int on_key_click(int a, int b);
   void on_mouse_move(int a1, int a2);
   void on_mouse_leave(int a1, int a2);
 

@@ -125,11 +125,11 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
 
  public:
   // 0x0060AA20, a pending_bodies forwarder.
-  void on_right_down(int a1, int a2);
+  void on_right_down(int a, int b);
 
  public:
   // 0x0060C6D0, a pending_bodies forwarder.
-  void on_right_double_click(int a1, int a2);
+  void on_right_double_click(int a, int b);
 
  public:
   // 0x0060C350, a pending_bodies forwarder.
@@ -149,7 +149,7 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
 
  public:
   // 0x0060AF90, a pending_bodies forwarder.
-  void on_key_down(int a1);
+  void on_key_down(int a);
 
  public:
   // 0x0060A670, a pending_bodies forwarder.
@@ -173,7 +173,7 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
   // FileWin::FileWin placement-news a most-derived ListBox member and
   // reaches it by name so that call emits the image's `E8`. Forwarded in
   // pending_bodies.cpp.
-  void construct(int a1);
+  void construct(int input);
   // close() and destroy() are void in the mangled names but are modelled as
   // uint32_t to preserve the EAX residue (both leave EAX = 0), as GraphicWin
   // and Scroll do for their teardown pair.

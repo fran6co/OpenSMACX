@@ -266,8 +266,8 @@ Purpose: Add a lock on one slot - forward to SquareLock::lock on the slot
 Return Value: whatever SquareLock::lock returns
 Status: Complete
 */
-int Lock::add_lock(int slot, int flags, int a3, int a4) {
-    return records_[slot].entries[1].lock(slot, flags | 0x10, a3, a4);
+int Lock::add_lock(int slot, int flags, int x, int y) {
+    return records_[slot].entries[1].lock(slot, flags | 0x10, x, y);
 }
 
 

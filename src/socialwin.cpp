@@ -311,7 +311,7 @@ void SocialWin::on_iface_mouse_leave(int, int) {
 // calls     0x0045D310 0x005F7E90
 Status: Complete
 */
-void SocialWin::show(int a1) {
+void SocialWin::show(int visible) {
     if (!reinterpret_cast<Win *>(this)->is_visible()) {
         SubInterface::set_iface_mode();
     }

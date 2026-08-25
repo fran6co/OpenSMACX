@@ -1352,15 +1352,15 @@ Purpose: Initialise the device stack: the Wave_Device's OWN virtual slot 0
 Return Value: 0, or whichever stage's error came first
 Status: Complete
 */
-int Wave_Device::init(void *a1, unsigned long a2) {
+int Wave_Device::init(void *group_id, unsigned long flags) {
     typedef int (OriginalObject::*own_mode_fn)(unsigned long mode);
-    const int staged = (ORIGINAL(this)->*(*reinterpret_cast<own_mode_fn **>(this))[0])(a2);
+    const int staged = (ORIGINAL(this)->*(*reinterpret_cast<own_mode_fn **>(this))[0])(flags);
     if (staged) {
         return staged;
     }
-    typedef int (OriginalObject::*device_init_fn)(void *a1, unsigned long a2);
+    typedef int (OriginalObject::*device_init_fn)(void *group_id, unsigned long flags);
     void *device = device_14_;
-    const int result = (ORIGINAL(device)->*(*reinterpret_cast<device_init_fn **>(device))[3])(a1, a2);
+    const int result = (ORIGINAL(device)->*(*reinterpret_cast<device_init_fn **>(device))[3])(group_id, flags);
     if (result) {
         typedef void (OriginalObject::*own_fail_fn)();
         (ORIGINAL(this)->*(*reinterpret_cast<own_fail_fn **>(this))[1])();

@@ -700,14 +700,14 @@ int GraphicWin::init(int x, int y, int width, int height, LPSTR title,
 // calls     0x005F6320
 Status: Complete
 */
-void GraphicWin::on_mouse_move(int a1, int a2, unsigned int a3, int a4) {
+void GraphicWin::on_mouse_move(int x, int y, unsigned int keys, int from_parent) {
     // QUALIFIED, not a cast. Win is a non-virtual base at offset 0, so the
     // reinterpret_cast this body used to carry named no adjustment at all -
     // and once Win::on_mouse_move took vtable slot 16 the unqualified call
     // through it compiled to `mov eax,[ecx]` + an indirect dispatch. The
     // image calls 0x005F6320 directly (`calls` fact above): 10 of 11
     // instructions disagreed on that one load. Qualifying restores it.
-    Win::on_mouse_move(a1, a2, a3, a4);
+    Win::on_mouse_move(x, y, keys, from_parent);
 }
 
 

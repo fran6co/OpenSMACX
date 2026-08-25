@@ -120,8 +120,8 @@ void InfoWin::reset() {
 // calls     0x004589C0
 Status: Complete
 */
-void InfoWin::on_right_click(int a1, int a2) {
-    right_menu(a1, a2);
+void InfoWin::on_right_click(int a, int b) {
+    right_menu(a, b);
 }
 
 func_info_win_right_menu InfoWinOriginalRightMenu =

@@ -43,7 +43,7 @@ class WorldWin : public GraphicWin {
 
  public:
   void follow_center(int xCoord, int yCoord);
-  void focus(int a1, int a2);
+  void focus(int x_coord, int y_coord);
   void set_center(int a1, int a2);
   WorldWin() { ; }
   // NOT a constructor: mapWin_'s own construction is `MapWin::construct(1)`
@@ -59,7 +59,7 @@ class WorldWin : public GraphicWin {
   void clear_terrain();
   void on_left_double_click(int a1, int a2);
   void on_left_click(int a1, int a2);
-  void on_right_click(int a1, int a2);
+  void on_right_click(int a, int b);
 
   // Storage the image proves is here: its own methods reach 0x239D0.
   // Extent only - this class carries no size assertion, and the bound is a floor.

@@ -293,7 +293,7 @@ void CouncWin::draw_all_leaders() {
 // calls     0x0045D310 0x005F7E90
 Status: Complete
 */
-void CouncWin::show(int a1) {
+void CouncWin::show(int visible) {
     // THE RETURN WAS A TRANSCRIPTION ARTIFACT. This body is byte-identical
     // to BaseWin::show at 0x0041E890 - the same nine instructions - and the
     // image sets no return value: eax merely holds what the last call left.

@@ -45,8 +45,8 @@ class SetupWin : public GraphicWin {
   // pending_bodies forwarder, because an empty inline stub emits
   // nothing and the deleting destructor needs a `call rel32`.
   ~SetupWin();
-  int UNK1(int a1);
-  int UNK2(int a1);
+  int UNK1(int pos);
+  int UNK2(int pos);
   int UNK3(int a1);
   int UNK4(int a1);
 

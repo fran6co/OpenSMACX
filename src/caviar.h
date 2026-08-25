@@ -71,14 +71,14 @@ class Caviar {
   void set_scaling_bits(uint32_t scaling_bits);
   float get_scaling();
 
-  int UNK3(int a1, int a2, int a3);
+  int UNK3(int a, int b, int c);
   int UNK4(int a1, int a2, int a3, int a4);
   void UNK5(int a1, int a2);
   void UNK6(int a1, int a2);
   void UNK7(int a1, int a2);
   void UNK9(int a1, int a2, int a3);
   void UNK12(int a1, int a2, int a3);
-  void UNK8(int a1);
+  void UNK8(int menu_id);
   void UNK10(int a1, int a2, int a3);
   void set_scene_rotation(float x, float y, float z);
 

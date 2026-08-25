@@ -49,7 +49,7 @@ class SpriteBox : public virtual GraphicWin, public virtual Dialog {
 
  public:
   // 0x00611400, a pending_bodies forwarder.
-  int on_key_down(int a1);
+  int on_key_down(int a);
 
  public:
   // 0x00610540, a pending_bodies forwarder.
@@ -67,9 +67,9 @@ class SpriteBox : public virtual GraphicWin, public virtual Dialog {
   // 0x006108E0, still a pending_bodies forwarder: `pops()` (popup.cpp) calls
   // it BY NAME so it emits the image's `call rel32`.
   int sprite(Sprite *a1, char *a2, int a3);
-  int init(RECT* a1, int a2);
-  int init(int a1);
-  int init(Heap *a1);
+  int init(RECT* group_id, int flags);
+  int init(int file_name);
+  int init(Heap *file_name);
   // 0x006104D0  ?init@SpriteBox@@QAEHHHHHPAUHeap@@@Z - the five-argument
   // overload, recovered and byte-exact. It was the only one of the four with
   // no declaration, which is why its body could not be integrated.

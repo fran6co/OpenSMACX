@@ -108,7 +108,7 @@ class Wave : public Sound {
   // `K`, not `I`. MSVC decorates `unsigned long` K and `unsigned int` I,
   // and this tree spells uint32_t as unsigned int - same width, different
   // decorated name, and the name is what the linker pairs on.
-  void init(char *a1, unsigned long a2);
+  void init(char *group_id, unsigned long flags);
   int dyna_load(char *fname);
   int load(const char *fname);
 
@@ -124,13 +124,13 @@ class Wave : public Sound {
   int load(char *a1, unsigned long a2);
   int get_ms_length();
   int is_playing();
-  int play(int a1);
+  int play(int effect);
   int is_hwbuffer();
   int get_time(uint32_t a1);
   int get_current_marker();
   int get_game_hwnd();
   int get_ndevices();
-  int UNK1(int a1);
+  int UNK1(int pos);
   int set_reverb_mix(float mix);
   int is_3d();
   int get_device_description(char *a1, int a2, int a3);

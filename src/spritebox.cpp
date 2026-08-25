@@ -386,10 +386,10 @@ uint32_t SpriteBox::id_to_pos(int id) {
 // calls     0x00609470 0x00610280
 Status: Complete
 */
-int SpriteBox::init(RECT* a1, int a2) {
+int SpriteBox::init(RECT* group_id, int flags) {
     close();
     return reinterpret_cast<Dialog *>(reinterpret_cast<char *>(this)
-        + *reinterpret_cast<int *>(*reinterpret_cast<char **>(this) + 8))->init(a1, a2);
+        + *reinterpret_cast<int *>(*reinterpret_cast<char **>(this) + 8))->init(group_id, flags);
 }
 
 /*
@@ -594,10 +594,10 @@ void SpriteBox::on_right_double_click(int x_coord, int y_coord) {
 // calls     0x006095F0 0x00610280
 Status: Complete
 */
-int SpriteBox::init(int a1) {
+int SpriteBox::init(int file_name) {
     close();
     return reinterpret_cast<Dialog *>(reinterpret_cast<char *>(this)
-        + *reinterpret_cast<int *>(*reinterpret_cast<char **>(this) + 8))->init(a1);
+        + *reinterpret_cast<int *>(*reinterpret_cast<char **>(this) + 8))->init(file_name);
 }
 
 /*
@@ -617,10 +617,10 @@ int SpriteBox::init(int a1) {
 // calls     0x006098D0 0x00610280
 Status: Complete
 */
-int SpriteBox::init(Heap *a1) {
+int SpriteBox::init(Heap *file_name) {
     close();
     return reinterpret_cast<Dialog *>(reinterpret_cast<char *>(this)
-        + *reinterpret_cast<int *>(*reinterpret_cast<char **>(this) + 8))->init(a1);
+        + *reinterpret_cast<int *>(*reinterpret_cast<char **>(this) + 8))->init(file_name);
 }
 
 

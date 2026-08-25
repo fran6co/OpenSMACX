@@ -59,7 +59,7 @@ class MapWin : protected virtual GraphicWin {
 
  public:
   // 0x0046EC10, a pending_bodies forwarder.
-  void on_right_down(int a1, int a2);
+  void on_right_down(int a, int b);
 
  public:
   // 0x0046F700, a pending_bodies forwarder.
@@ -121,14 +121,14 @@ class MapWin : protected virtual GraphicWin {
   // to warn about, now reproduced and confirmed rather than assumed. So: no
   // constructor here at all (the implicit default is never called), and
   // `construct` below carries the recovered body by hand.
-  void construct(int a1);
+  void construct(int input);
   ~MapWin();
   int UNK1();
   void UNK3();
   void do_image_buttons();
   void main_caption();
   void on_left_click(int a1, int a2);
-  void on_right_click(int a1, int a2);
+  void on_right_click(int a, int b);
   void on_left_double_click(int, int);
   void on_left_up(int, int);
   void close();
@@ -137,7 +137,7 @@ class MapWin : protected virtual GraphicWin {
   // per-window state; called by this class's own destructor and, directly,
   // by PlanWin's and Console's (they never call MapWin::~MapWin() - see
   // mapwin.cpp).
-  void clear(int a1);
+  void clear(int index);
 
  private:
   // The vbtable pointer opens the object; a heap pointer close() frees sits at

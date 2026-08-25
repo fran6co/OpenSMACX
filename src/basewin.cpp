@@ -334,8 +334,8 @@ Purpose: Report a right click to the shared click handler. Unlike the
 Return Value: n/a
 Status: Complete
 */
-void BaseWin::on_right_click(int a1, int a2) {
-    click(a1, a2, 1, 0);
+void BaseWin::on_right_click(int a, int b) {
+    click(a, b, 1, 0);
 }
 
 /*
@@ -413,7 +413,7 @@ void BaseWin::on_mouse_leave(int, int) {
 // calls     0x0045D310 0x005F7E90
 Status: Complete
 */
-void BaseWin::show(int a1) {
+void BaseWin::show(int visible) {
     char *self = reinterpret_cast<char *>(this);
     if (!reinterpret_cast<Win *>(self)->is_visible()) {
         reinterpret_cast<SubInterface *>(self + 0xa14)->set_iface_mode();

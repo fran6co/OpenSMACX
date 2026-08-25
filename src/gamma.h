@@ -52,7 +52,7 @@ class Gamma : public GraphicWin {
   // pending_bodies forwarder, because an empty inline stub emits
   // nothing and the deleting destructor needs a `call rel32`.
   ~Gamma();
-  int on_key_click(int a1, int a2);
+  int on_key_click(int a, int b);
 
   // Storage the image proves is here: its own methods reach 0x1920.
   // Extent only - this class carries no size assertion, and the bound is a floor.

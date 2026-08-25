@@ -101,7 +101,7 @@ class CheckBox : public virtual GraphicWin, public virtual Dialog {
 
  public:
   // 0x0060F8B0, a pending_bodies forwarder.
-  int on_key_down(int a1);
+  int on_key_down(int a);
 
  public:
   // 0x0060E800, a pending_bodies forwarder.

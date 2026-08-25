@@ -36,7 +36,7 @@ class InfoWin {
   void timer_proc(int a1);
 
  public:
-  void on_right_click(int a1, int a2);
+  void on_right_click(int a, int b);
   // 0x004589C0  ?right_menu@InfoWin@@QAEXHH@Z - public, __thiscall,
   // void(int, int). Still an original body, so the definition at the END of
   // infowin.cpp forwards to it. on_right_click is NOT routed through that seam
@@ -55,7 +55,7 @@ class InfoWin {
   void on_redraw();
   void reset();
   void change(int a1);
-  void UNK3(int a1, int a2);
+  void UNK3(int menu_id, int item_id);
 
  private:
   // Not a base class: the constructor builds a Time at +0x30 on an offset

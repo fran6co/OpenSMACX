@@ -452,14 +452,14 @@ Purpose: Poll the embedded NetFifo for a message, when net play is enabled
 Return Value: NetGetScratch's address when a message was fetched, else 0
 Status: Complete
 */
-int Net::get(unsigned long *a1, unsigned long *a2) {
+int Net::get(unsigned long *a, unsigned long *b) {
     if (*NetEnabled != 0) {
-        if (a1 != 0) {
+        if (a != 0) {
             NetFifo *const fifo = reinterpret_cast<NetFifo *>(
                 reinterpret_cast<char *>(this) + 0x10C);
             int result = fifo->get(&NetGetScratch,
-                                   reinterpret_cast<unsigned int *>(a1), 0,
-                                   reinterpret_cast<unsigned int *>(a2));
+                                   reinterpret_cast<unsigned int *>(a), 0,
+                                   reinterpret_cast<unsigned int *>(b));
             return result ? reinterpret_cast<int>(&NetGetScratch) : 0;
         }
     }

@@ -44,7 +44,7 @@ class FileWin {
   ~FileWin();
   void UNK6();
   void UNK1();
-  void UNK2(int a1);
+  void UNK2(int pos);
   // 0x006146A0 ?UNK4@FileWin@@QAEXXZ - public, __thiscall, void(void). Still
   // unrecovered; declared because the recovered on_double_clicked calls it
   // with a direct `call rel32`, which is what makes that body byte-exact.

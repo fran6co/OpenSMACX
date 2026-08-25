@@ -83,8 +83,8 @@ class Scroll : public ScrollGraphicWin {
   // void(int). Both are still unrecovered; the declarations exist because the
   // recovered Win::on_mousewheel_* wrappers call them directly, and the
   // definitions at the end of scroll.cpp forward to the original image.
-  void on_mousewheel_down(int a1);
-  void on_mousewheel_up(int a1);
+  void on_mousewheel_down(int delta);
+  void on_mousewheel_up(int delta);
  private:
   friend class Win;
 

@@ -40,7 +40,7 @@ class Lock {
   int global_lock(int owner);
   int check_global_2(int owner);
   void check_global();
-  int add_lock(int slot, int flags, int a3, int a4);
+  int add_lock(int slot, int flags, int x, int y);
   int lock(int slot, int flags, int a3, int a4, int a5, int a6, int a7);
 
  private:

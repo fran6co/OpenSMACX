@@ -41,7 +41,7 @@
 class SocialWin : public GraphicWin, public SubInterface {
  public:
   void hide();
-  void show(int a1);
+  void show(int visible);
   SocialWin();
   // 0x004B3C80 is not recovered: a
   // pending_bodies forwarder, because an empty inline stub emits

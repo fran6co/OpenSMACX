@@ -41,7 +41,7 @@ class Popup : public BasePop {
   void hide();
 
  public:
-  int on_nc_hittest(int a1, int a2);
+  int on_nc_hittest(int x, int y);
 
   // `static`, because the image's name ends in `QAA` - a public member
   // declared __cdecl, taking no receiver. WinMain stores its ADDRESS into the
