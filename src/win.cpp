@@ -3919,12 +3919,27 @@ void Win::close_class() {
 // calls     0x005ED240
 // indirect  0x005EC891
 
+// TRIED: 7 -> 8 of 44, and the change that got it there is a BEHAVIOUR fix:
+// the parent walk called `client_to_screen` on `this`, where the image puts
+// win_parent_ in ECX and calls from there. Reassociating the sums to match
+// the image's `(left + outer) + arg` grouping moves nothing. What is left is
+// 49 instructions against 44 with the SetCursorPos argument reload and push
+// pair emitted in a different place - twelve differing runs, so the
+// remaining work is the body's shape, not one spelling.
 void Win::set_mouse_pos(int a1, int a2) {
     typedef int (__stdcall *SetCursorPosFn)(int, int);
-    int x = a1 + client_rect_.left + outer_rect_.left;
-    int y = a2 + client_rect_.top + outer_rect_.top;
+    // MEMBERS FIRST, argument last. `+` is left-associative, so `a1 + left +
+    // outer` groups as `(a1 + left) + outer`; the image adds the two members
+    // to each other and the argument to that sum (`add eax, edx` then
+    // `add ecx, eax` at 0x005EC80D).
+    int x = client_rect_.left + outer_rect_.left + a1;
+    int y = client_rect_.top + outer_rect_.top + a2;
     if (((iFlags_ & 0x20) != 0) && (win_parent_ != 0)) {
-        client_to_screen(&x, &y);
+        // THE PARENT'S. `mov ecx, [esi + 0xc4]` / `test ecx, ecx` at
+        // 0x005EC83D puts win_parent_ in the receiver register and calls from
+        // there; and the 0x8000 arm RELOADS it (`mov esi, [esi + 0xc4]` at
+        // 0x005EC861), which is what says no local held it.
+        win_parent_->client_to_screen(&x, &y);
         if ((iFlags_ & 0x8000) != 0) {
             x = x - win_parent_->outer_rect_.left;
             y = y - win_parent_->outer_rect_.top;
@@ -4141,10 +4156,8 @@ int Win::UNK4() {
     return 0;
 }
 
-// ORIGINAL: 0x005ECFE0 ?client_to_screen@Win@@QAEXPAURECT@@@Z 0x005ECFE0-0x005ED094 FILE
+// ORIGINAL: 0x005ECFE0 ?client_to_screen@Win@@QAEXPAURECT@@@Z 0x005ECFE0-0x005ED094 FILE BYTE_EXACT
 // symbol    ?client_to_screen@Win@@QAEXPAUtagRECT@@@Z
-// TRIED: owner->client_to_screen(&x,&y) via the declared sibling overload; struct-field += for the RECT update. First divergence #10 add/push, rebuilt 6 bytes shorter.
-// TRIED: named-member form (client_rect_/outer_rect_/iFlags_/win_parent_)
 // in place of the `reinterpret_cast<char *>(this)` raw-offset form - same
 // score either way (9/56, 0.885 similar, best of ten flag sets); kept for
 // the class_debt fix, not a byte-exactness gain. Plateau MISMATCH.
@@ -4162,12 +4175,17 @@ void Win::client_to_screen(RECT * rect) {
     }
     int xAdj = client_rect_.left + outer_rect_.left;
     int yAdj = client_rect_.top + outer_rect_.top;
+    // NO `owner` LOCAL. The image tests win_parent_ in ECX - the receiver
+    // register - and calls straight from there; binding it to a local put it
+    // in EBX and cost a `push ebx` plus a `mov ecx, ebx` at the call. And the
+    // image RELOADS it afterwards (`mov esi, [esi + 0xc4]` at 0x005ED044)
+    // rather than keeping it live, so the local was not what the original
+    // wrote either.
     if ((iFlags_ & 0x20U) != 0 && win_parent_ != 0) {
-        Win *const owner = win_parent_;
-        owner->client_to_screen(&xAdj, &yAdj);
+        win_parent_->client_to_screen(&xAdj, &yAdj);
         if ((iFlags_ & 0x8000U) != 0) {
-            xAdj -= owner->outer_rect_.left;
-            yAdj -= owner->outer_rect_.top;
+            xAdj -= win_parent_->outer_rect_.left;
+            yAdj -= win_parent_->outer_rect_.top;
         }
     }
     rect->left += xAdj;
@@ -4186,24 +4204,51 @@ void Win::client_to_screen(RECT * rect) {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005ED2D0
 
+// TRIED: 4 -> 18 of 64, and the two changes that got it there are BEHAVIOUR
+// fixes, not spellings. (1) The parent walk called `screen_to_client` on
+// `this`; the image loads win_parent_ into ECX - the receiver register - and
+// calls from there, exactly as the sibling client_to_screen does. (2) The
+// 0x8000 adjustment sat OUTSIDE the 0x20 block, so it applied even when no
+// parent walk had happened; the image's `test ah, 0x80` is between the call
+// and the `jmp` that rejoins the 0x20 test's own `je` target.
+//
+// What is left is allocation, not shape: 64 instructions against 64, with
+// `this` and `rect` in swapped registers throughout. The image pushes ecx to
+// allocate one local slot and then REUSES THE ARGUMENT SLOT for localX
+// (`lea edx, [esp + 0x14]`); this body keeps `rect` live instead. Converting
+// the guard to an early return - the form that made client_to_screen exact -
+// does not move it, so the difference is downstream of source shape.
 void Win::nonscreen_to_client(RECT * rect) {
-    if (rect != 0) {
-        int localX = -(client_rect_.left + outer_rect_.left);
-        int localY = -(client_rect_.top + outer_rect_.top);
-        if ((iFlags_ & 0x20) != 0 && win_parent_ != 0) {
-            screen_to_client(&localX, &localY);
-        }
+    // EARLY RETURN, matching the sibling client_to_screen that measures
+    // exact. The image loads `rect` into EDI and `this` into ESI;
+    // wrapping the body in `if (rect != 0)` swapped that assignment.
+    if (rect == 0) {
+        return;
+    }
+    int localX = -(client_rect_.left + outer_rect_.left);
+    int localY = -(client_rect_.top + outer_rect_.top);
+    if ((iFlags_ & 0x20) != 0 && win_parent_ != 0) {
+        // THE PARENT'S, not this window's: the image loads win_parent_
+        // into ECX - the receiver register - and calls from there
+        // (`mov ecx, [esi + 0xc4]` / `test ecx, ecx` at 0x005ED0E5),
+        // exactly as its sibling client_to_screen does.
+        win_parent_->screen_to_client(&localX, &localY);
+        // NESTED, not a sibling test. The image's `test ah, 0x80` at
+        // 0x005ED104 sits between the call and the `jmp 0x5ed135` that
+        // rejoins the 0x20 test's own `je` target - so it only runs when
+        // the parent walk did. Its sibling client_to_screen nests it the
+        // same way.
         if ((iFlags_ & 0x8000) != 0) {
             localX = localX + win_parent_->outer_rect_.left;
             localY = localY + win_parent_->outer_rect_.top;
         }
-        int dx = localX + outer_rect_.left;
-        int dy = localY + outer_rect_.top;
-        rect->left = rect->left + dx;
-        rect->right = rect->right + dx;
-        rect->top = rect->top + dy;
-        rect->bottom = rect->bottom + dy;
     }
+    int dx = localX + outer_rect_.left;
+    int dy = localY + outer_rect_.top;
+    rect->left = rect->left + dx;
+    rect->right = rect->right + dx;
+    rect->top = rect->top + dy;
+    rect->bottom = rect->bottom + dy;
 }
 
 // ORIGINAL: 0x005ED170 ?nonclient_to_screen@Win@@QAEXPAURECT@@@Z 0x005ED170-0x005ED236 FILE
