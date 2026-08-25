@@ -2654,6 +2654,21 @@ Purpose: Tear down whatever DirectDraw surface and device window this
 //            documents above at length and never fully resolves. No field
 //            order, `nullptr`-vs-`0` spelling or flag set tried here moves
 //            it.
+// TRIED: declaring `Buffer buf` AFTER the two early guards, which is where
+//            the image constructs it - its HandleMain test at 0x0063554B
+//            precedes any call, and the returns at 0 and 7 carry no unwind
+//            state, where declaring it first makes VC6 track two extra EH
+//            scopes (`[esp+0x5a0]` taking 1 and 2 against the image's 0 and
+//            -1 only). Under listing_diff's single flag set it cuts the
+//            count from 192 to 182 - and it destroys the alignment, 96
+//            agreeing down to 8. Count is not progress; the declaration
+//            stays where it is.
+// NOTE:      `listing_diff` and `measure` disagree about the instruction
+//            count here, and MEASURE is the one to believe: it searches the
+//            flag sets and settles on 177, while listing_diff compiles one
+//            set and reports 192. Do not read a regression into that gap -
+//            the body is byte-identical to the one the line below measured
+//            (checked against 3cb99d43).
 // TRIED: the one instruction of the 178 this tree does not emit is in
 //            the splash `copy` call: the image loads
 //            `ScreenBuffer.dib_.bmiHeader.biWidth` into ecx before pushing
