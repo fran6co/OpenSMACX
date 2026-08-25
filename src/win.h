@@ -50,7 +50,45 @@ class Scroll; // forward declaration
 class WinNodeList {
  public:
   WinNodeList() : head_(0), current_(0), count_(0), tail_(0), external_(0) {}
-  virtual ~WinNodeList();
+  // DEFINED IN THE CLASS so VC6 can inline it into `??_GWinNodeList`,
+  // which is what the image is: ONE function at 0x005F8770 that restores
+  // the vfptr and walks the list. Out-of-line, the deleting destructor
+  // tail-CALLS `??1WinNodeList@@UAE@XZ` instead and measures 14
+  // instructions against the image's 54.
+  virtual ~WinNodeList() {
+      // IMAGE ORDER: the head is read before the vfptr-restore that every
+      // scalar deleting destructor opens with, matching `Win::~Win()`
+      // performing the same walk inline. `external_` guards the whole loop -
+      // nonzero means this list does not own its nodes.
+      void *node = head_;
+      if (node != 0) {
+          if (external_ == 0 && count_ > 0) {
+              int i = 0;
+              do {
+                  Win *next = *reinterpret_cast<Win **>(
+                      reinterpret_cast<char *>(node) + 0xC);
+                  current_ = next;
+                  void *payload = *reinterpret_cast<void **>(
+                      reinterpret_cast<char *>(node) + 8);
+                  if (payload != 0) {
+                      std::free(payload);
+                  }
+                  *reinterpret_cast<void **>(
+                      reinterpret_cast<char *>(head_) + 8) = 0;
+                  if (head_ != 0) {
+                      std::free(head_);
+                  }
+                  node = current_;
+                  head_ = node;
+                  ++i;
+              } while (i < count_);
+          }
+          head_ = 0;
+          tail_ = 0;
+          count_ = 0;
+      }
+      tail_ = 0;
+  }
 
   void *head_;      // 0x4  (Win+0xCC)
   void *current_;   // 0x8  (Win+0xD0)
