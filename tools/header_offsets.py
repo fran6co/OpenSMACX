@@ -36,6 +36,13 @@ SIZES = {
     "HPALETTE": 4, "HRGN": 4, "HCURSOR": 4, "HICON": 4, "HGDIOBJ": 4,
     "HANDLE": 4, "HFONT": 4, "HMENU": 4, "HINSTANCE": 4, "LPARAM": 4,
     "WPARAM": 4, "DWORD": 4, "UINT": 4, "BOOL": 4, "LONG": 4, "COLORREF": 4,
+    "size_t": 4, "ptrdiff_t": 4, "intptr_t": 4, "uintptr_t": 4,
+    # Win32 value structs, by their documented layouts.
+    "PALETTEENTRY": 4,      # 4 BYTEs
+    "RGBQUAD": 4,           # 4 BYTEs
+    "BITMAPINFOHEADER": 40,
+    "LOGPEN": 16,           # UINT + POINT + COLORREF
+    "SIZE": 8,
 }
 # A struct member is expanded so `self + 0x140` names a FIELD, not the struct.
 FIELDS = {
@@ -64,7 +71,7 @@ def class_body(text: str, name: str) -> list[str]:
 
 
 def extent(text: str) -> int | None:
-    """The element count of an array declarator, or None.
+    r"""The element count of an array declarator, or None.
 
     NOT JUST A DECIMAL LITERAL. This tree sizes its opaque spans by
     arithmetic - `uint8_t dialogs_[0x2274 - 0x21D0];` in basepop.h,
@@ -144,6 +151,16 @@ def derive(header: Path, cls: str, extra: dict[str, int] | None = None):
         if size is None:
             print(f"  ...stopping at `{ty} {name}`: unknown size", file=sys.stderr)
             break
+        # ALIGNMENT, which this walk ignored entirely. `int8_t err_flags_;`
+        # followed by a pointer does NOT put the pointer at 0x1 - the
+        # compiler aligns a 4-byte member to 4. Harmless for the all-uint32_t
+        # classes whose field_NN_ names verified the walk, and wrong for any
+        # mixed-size layout, which is exactly where a wrong offset would be
+        # handed to name_offsets and rewrite the wrong member.
+        align = min(4 if star else (SIZES.get(ty) if extra is None
+                                    else extra.get(ty, SIZES.get(ty))) or 1, 4)
+        if align > 1 and offset % align:
+            offset += align - (offset % align)
         n = extent(count) if count else 1
         if n is None:
             print(f"  ...stopping at `{ty} {name}[{count}]`: extent is not a "

@@ -155,7 +155,7 @@ class Palette {
   // The 256 palette entries themselves, at offset 0. get_rgbquad and
   // init read and write them as bytes; GetSystemPaletteEntries fills them
   // directly in init.
-  PALETTEENTRY entries_[256];
+  PALETTEENTRY entries_[256];  // 0x0000
   uint32_t seed_;
   // FIVE ANIMATION SLOTS, named from what `?UNK3@Palette@@QAEXH@Z`
   // (0x005FE950) does with them: it finds the slot whose `key` matches its
