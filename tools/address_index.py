@@ -86,7 +86,19 @@ FLOORS = {
     # The two that WERE mechanical - 0x005F04E0 Win::close_class and
     # 0x005FECF0 Palette::close_palette_class - are gone, and jackal_close
     # calls the members directly now.
-    "contradicted": 2,
+    # 1, not 2: 0x004C5BF0 was defused on 2026-08-25 by pointing
+    # WaveGroupList::insert at `wave_group_insert_redirect`, the BYTE_EXACT
+    # body already linked in wave_device.cpp, instead of jumping to the raw
+    # image address beside it.
+    # The one that remains is 0x00428550, CouncWin::~CouncWin, and it cannot
+    # be defused the same way: its artifact destructor is EMPTY, and the
+    # 312 bytes the image has are the compiler destroying members of a
+    # hypothesis layout (a Spot, six Fonts, six FlatButtons). Homing it needs
+    # councwin.h to declare that layout, which is CouncWin's class pass, not
+    # a forwarder edit. A floor above 0 still means the gate passes on a live
+    # fault - see P0.5 - so this stays a stated debt with an owner, not a
+    # number nobody remembers choosing.
+    "contradicted": 1,
     "archive-only-forwarder": 20,
     "unknown-host-files": 0,
 }
