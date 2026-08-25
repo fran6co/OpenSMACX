@@ -4512,6 +4512,13 @@ void Win::on_paint(RECT * area) {
 // calls     (none)
 
 
+// TRIED: 10 of 116 at 112 instructions - four SHORT, which is unusual here;
+// most of this class's walls are over. The tail's `(iFlags_ & 0x4000010) ==
+// 0` reads the flag test before `[ecx + 0x16c]` where the image reads the
+// field first, but inverting the condition so the field_16C_ arm comes first
+// measures identically - VC6 schedules those two independently of source
+// order. The 13 differing runs are spread through the body, so this one
+// wants a full re-read against the image rather than another spelling.
 int Win::on_nc_hittest(int x, int y) {
   if (iSomeFlag_ & 2) {
     int iVar1 = field_170_;
