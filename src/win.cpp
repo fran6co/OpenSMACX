@@ -1630,7 +1630,11 @@ int Win::OnSetCursor(void *, void *, unsigned int, unsigned int) {
 Purpose: Report whether a value is present in the window's id table - the
          array at 0x1A4 with its count at 0x3FC. A zero value and an empty
          table both report absent.
-// ORIGINAL: 0x005ECE80 ?UNK3@Win@@QAEHH@Z 0x005ECE80-0x005ECEB6
+// ORIGINAL: 0x005ECE80 ?UNK3@Win@@QAEHH@Z 0x005ECE80-0x005ECEB6 BYTE_EXACT
+// symbol    ?is_child@Win@@QAEHH@Z
+// notes     NAMED from the body: it walks children_[0..child_count_) and
+//           returns 1 when the argument is one of them - the direct-child
+//           test beside is_descendant (0x005ECE20), which recurses.
 // size      54 bytes
 // prototype int (__thiscall ?UNK3@Win@@QAEHH@Z)(Win* this, int)
 // callers   0   call targets   0
@@ -1640,7 +1644,7 @@ Purpose: Report whether a value is present in the window's id table - the
 Return Value: 1 when the value is in the table, 0 otherwise
 Status: Complete
 */
-int Win::UNK3(int value) {
+int Win::is_child(int value) {
     if (value == 0) {
         return 0;
     }
@@ -1841,7 +1845,7 @@ void Win::on_mousewheel_up_vert(int a1) {
 Purpose: Route a left button press - find the window under the pointer, ask
          it what was hit, raise it, and either begin a drag or dispatch the
          click.
-// ORIGINAL: 0x005F2330 ?OnLButtonDown@Win@@QAAXPAXJHHI@Z 0x005F2330-0x005F256B SEMANTIC
+// ORIGINAL: 0x005F2330 ?OnLButtonDown@Win@@QAAXPAXJHHI@Z 0x005F2330-0x005F256B BYTE_EXACT
 // symbol    ?OnLButtonDown@Win@@SAXPAUHWND__@@JHHI@Z
 // size      571 bytes
 // prototype
@@ -1871,9 +1875,7 @@ void Win::OnLButtonDown(HWND window, LONG dbl, int x, int y, WPARAM keys) {
     if (target != nullptr) {
         if (WinMouseDirect != 0
             || (target->iFlags_ & WinFlagHitTestIndirect) != 0) {
-            const int hit = (ORIGINAL(target)
-                ->*vtable_method<func_win_hit_test>(target, WinSlotHitTest))(
-                    x, y);
+            const int hit = target->on_nc_hittest(x, y);
             if (hit != 0) {
                 // WRITTEN OUT TWICE, as the original has it: the
                 // parent's child list and the root list are the same
@@ -1945,7 +1947,7 @@ void Win::OnLButtonDown(HWND window, LONG dbl, int x, int y, WPARAM keys) {
             }
         }
         uint8_t *const vtable = *reinterpret_cast<uint8_t **>(target);
-        (ORIGINAL(target)->*vtable_method<func_win_left_down>(target, WinSlotLeftDown))(dbl, x, y, keys, WinMouseDirect);
+        target->on_l_button_down(dbl, x, y, keys, WinMouseDirect);
     }
     if (WinLeftDownHook != nullptr) {
         WinLeftDownHook(x, y);
@@ -2320,7 +2322,7 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
                 return 0;
             }
             uint8_t *const vtable = *reinterpret_cast<uint8_t **>(over);
-            (ORIGINAL(over)->*vtable_method<func_win_wheel>(over, WinSlotMouseWheel))(wparam, static_cast<unsigned int>(wparam) >> 16,
+            over->on_mouse_wheel(wparam, static_cast<unsigned int>(wparam) >> 16,
                                  x, y, WinMouseDirect);
             return 0;
         }
@@ -2335,7 +2337,7 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
                 return 0;
             }
             uint8_t *const vtable = *reinterpret_cast<uint8_t **>(over);
-            (ORIGINAL(over)->*vtable_method<func_win_button_up>(over, WinSlotLButtonUp))(x, y, wparam, WinMouseDirect);
+            over->on_l_button_up(x, y, wparam, WinMouseDirect);
             return 0;
         }
         case WM_LBUTTONDBLCLK:
@@ -2349,7 +2351,7 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
                 get_mouse_window(&x, &y);
             if (over != nullptr) {
                 uint8_t *const vtable = *reinterpret_cast<uint8_t **>(over);
-                (ORIGINAL(over)->*vtable_method<func_win_button_down>(over, WinSlotRButtonDown))(message == WM_RBUTTONDBLCLK ? 1 : 0,
+                over->on_r_button_down(message == WM_RBUTTONDBLCLK ? 1 : 0,
                                      x, y, wparam, WinMouseDirect);
             }
             break;
@@ -2362,7 +2364,7 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
                 get_mouse_window(&x, &y);
             if (over != nullptr) {
                 uint8_t *const vtable = *reinterpret_cast<uint8_t **>(over);
-                (ORIGINAL(over)->*vtable_method<func_win_button_up>(over, WinSlotRButtonUp))(x, y, wparam, WinMouseDirect);
+                over->on_r_button_up(x, y, wparam, WinMouseDirect);
             }
             break;
         }
@@ -2386,7 +2388,7 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
                     return 0;
                 }
                 uint8_t *const vtable = *reinterpret_cast<uint8_t **>(focus);
-                (ORIGINAL(focus)->*vtable_method<func_win_key>(focus, WinSlotSysKey))(wparam,
+                focus->on_sys_key(wparam,
                                      message == WM_SYSKEYDOWN ? 1 : 0,
                                      static_cast<short>(LOWORD(lparam)),
                                      static_cast<int>(lparam >> 16));
@@ -2414,7 +2416,7 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
                 {
                     uint8_t *const vtable =
                         *reinterpret_cast<uint8_t **>(owner);
-                    (ORIGINAL(owner)->*vtable_method<func_win_slot_38>(owner, WinSlotSysClose))();
+                    owner->vslot_14();
                 }
                 sub_5f86a0(*reinterpret_cast<int *>(
                     reinterpret_cast<char *>(owner) + 0x18));
@@ -2441,11 +2443,11 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
                         || WinPointerOwner3 == WinHoverWindow)) {
                     uint8_t *const vtable =
                         *reinterpret_cast<uint8_t **>(WinHoverWindow);
-                    (ORIGINAL(WinHoverWindow)->*vtable_method<func_win_leave>(WinHoverWindow, WinSlotMouseLeave))(x, y);
+                    WinHoverWindow->vslot_18(x, y);
                 }
                 WinHoverWindow = over;
                 uint8_t *const vtable = *reinterpret_cast<uint8_t **>(over);
-                (ORIGINAL(over)->*vtable_method<func_win_enter>(over, WinSlotMouseEnter))(x, y, wparam, WinMouseDirect);
+                over->on_mouse_move(x, y, wparam, WinMouseDirect);
                 return 0;
             }
             default:
@@ -2458,7 +2460,7 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
             return 0;
         }
         uint8_t *const vtable = *reinterpret_cast<uint8_t **>(focus);
-        (ORIGINAL(focus)->*vtable_method<func_win_char>(focus, WinSlotChar))(wparam, static_cast<short>(LOWORD(lparam)));
+        focus->on_char(static_cast<char>(wparam), static_cast<short>(LOWORD(lparam)));
         return 0;
     } else {
         switch (message) {
@@ -2495,7 +2497,7 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
             Win *const focus = get_key_window();
             if (focus != nullptr) {
                 uint8_t *const vtable = *reinterpret_cast<uint8_t **>(focus);
-                (ORIGINAL(focus)->*vtable_method<func_win_key>(focus, WinSlotKey))(wparam,
+                focus->on_key(wparam,
                                      message == WM_KEYDOWN ? 1 : 0,
                                      static_cast<short>(LOWORD(lparam)),
                                      static_cast<int>(lparam >> 16));
@@ -5572,7 +5574,8 @@ void __cdecl Win::OnChar(void * a1, int a2, int a3) {
         if (p != 0 && (*reinterpret_cast<unsigned char *>(p + 0x9c) & 1) != 0) {
             Win *visobj = *reinterpret_cast<Win **>(p + 0xc4);
             if (visobj == 0 || visobj->is_visible() != 0) {
-                reinterpret_cast<Win *>(p)->vslot_79(reinterpret_cast<int>(a1), a2);
+                reinterpret_cast<Win *>(p)->on_char(
+                    static_cast<char>(reinterpret_cast<int>(a1)), a2);
             }
         }
     }
@@ -8425,7 +8428,7 @@ void Win::screen_to_nonclient(int * a1, int * a2) {
 
 // ===== homed from src/unrecovered/005f5fb0.cpp =====
 
-void Win::sub_5f5fb0(char param2, int param3) {
+void Win::on_char(char param2, int param3) {
     char **cursor = (char **)WinKeyRingCursor;
     **cursor = param2;
 
