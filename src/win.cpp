@@ -304,6 +304,12 @@ int Win::move(int x, int y) {
     // register, where this body pushes edi as well and reads the argument
     // after. Source statement order does not reach that; it is the same
     // shape as the receiver-spill wall recorded in AGENT_BRIEF.
+//
+// TRIED: the local-reuse lever that made nonclient_to_screen and
+// nonscreen_to_client exact - subtracting into x/y instead of adding
+// `dx`/`dy` - makes this body WORSE, 4 of 43 to 3. Those two have one
+// straight-line tail; this one has two arms and x/y are parameters, so
+// modifying them in an arm costs rather than saves.
     if (iSomeFlag_ & 2U) {
         const int dx = x - client_rect_.left;
         const int dy = y - client_rect_.top;
@@ -4194,7 +4200,7 @@ void Win::client_to_screen(RECT * rect) {
     rect->bottom += yAdj;
 }
 
-// ORIGINAL: 0x005ED0A0 ?nonscreen_to_client@Win@@QAEXPAURECT@@@Z 0x005ED0A0-0x005ED16A FILE
+// ORIGINAL: 0x005ED0A0 ?nonscreen_to_client@Win@@QAEXPAURECT@@@Z 0x005ED0A0-0x005ED16A FILE BYTE_EXACT
 // symbol    ?nonscreen_to_client@Win@@QAEXPAUtagRECT@@@Z
 // working copy - scaffold materialised by --work
 // size      202 bytes
@@ -4243,17 +4249,20 @@ void Win::nonscreen_to_client(RECT * rect) {
             localY = localY + win_parent_->outer_rect_.top;
         }
     }
-    int dx = localX + outer_rect_.left;
-    int dy = localY + outer_rect_.top;
-    rect->left = rect->left + dx;
-    rect->right = rect->right + dx;
-    rect->top = rect->top + dy;
-    rect->bottom = rect->bottom + dy;
+    // Reuse localX/localY rather than adding `dx`/`dy` - the lever that made
+    // the sibling nonclient_to_screen exact: two extra locals held one value
+    // too many live and the compiler swapped `this` and `rect` between esi
+    // and edi for the whole body.
+    localX += outer_rect_.left;
+    localY += outer_rect_.top;
+    rect->left = rect->left + localX;
+    rect->right = rect->right + localX;
+    rect->top = rect->top + localY;
+    rect->bottom = rect->bottom + localY;
 }
 
-// ORIGINAL: 0x005ED170 ?nonclient_to_screen@Win@@QAEXPAURECT@@@Z 0x005ED170-0x005ED236 FILE
+// ORIGINAL: 0x005ED170 ?nonclient_to_screen@Win@@QAEXPAURECT@@@Z 0x005ED170-0x005ED236 FILE BYTE_EXACT
 // symbol    ?nonclient_to_screen@Win@@QAEXPAUtagRECT@@@Z
-// TRIED: byte-exact - 97.6% mnemonic similarity; the remaining divergence is the entry frame reserving a scratch stack slot via `push ecx` (one extra local-sized push before esi=ecx) that our two-int-local (x,y) version doesn't trigger the same way.
 // working copy - scaffold materialised by --work
 // size      198 bytes
 // prototype void (__thiscall ?nonclient_to_screen@Win@@QAEXPAURECT@@@Z)(Win* this, RECT*)
@@ -4271,23 +4280,31 @@ void Win::nonscreen_to_client(RECT * rect) {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005ED240
 void Win::nonclient_to_screen(RECT * rect) {
-    if (rect != 0) {
-        int x = client_rect_.left + outer_rect_.left;
-        int y = client_rect_.top + outer_rect_.top;
-        if ((iFlags_ & 0x20) != 0 && win_parent_ != 0) {
-            client_to_screen(&x, &y);
-            if ((iFlags_ & 0x8000) != 0) {
-                x -= win_parent_->outer_rect_.left;
-                y -= win_parent_->outer_rect_.top;
-            }
-        }
-        int dx = x - outer_rect_.left;
-        int dy = y - outer_rect_.top;
-        rect->left += dx;
-        rect->right += dx;
-        rect->top += dy;
-        rect->bottom += dy;
+    if (rect == 0) {
+        return;
     }
+    int x = client_rect_.left + outer_rect_.left;
+    int y = client_rect_.top + outer_rect_.top;
+    if ((iFlags_ & 0x20) != 0 && win_parent_ != 0) {
+        // THE PARENT'S: `mov ecx, [esi + 0xc4]` / `test ecx, ecx` at
+        // 0x005ED1B1 puts win_parent_ in the receiver register.
+        win_parent_->client_to_screen(&x, &y);
+        if ((iFlags_ & 0x8000) != 0) {
+            x -= win_parent_->outer_rect_.left;
+            y -= win_parent_->outer_rect_.top;
+        }
+    }
+    // LEVER: reuse x and y, do NOT introduce `dx`/`dy`. Two extra locals
+    // held one value too many live and the compiler swapped `this` and
+    // `rect` between esi and edi for the whole body - 39 of 62 with every
+    // instruction otherwise in place. Subtracting into x/y and adding those
+    // is the same arithmetic with one fewer live value, and it is exact.
+    x -= outer_rect_.left;
+    y -= outer_rect_.top;
+    rect->left += x;
+    rect->right += x;
+    rect->top += y;
+    rect->bottom += y;
 }
 
 // Fixed-slot bindings carried from 005ee280.cpp
