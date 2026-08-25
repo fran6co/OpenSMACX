@@ -4042,6 +4042,9 @@ void Win::remove_parent_dialog() {
 }
 
 // ORIGINAL: 0x005ECDC0 ?UNK2@Win@@QAEHH@Z 0x005ECDC0-0x005ECE15 FILE
+// symbol    ?is_descendant_of@Win@@QAEHPAV1@@Z
+// notes     PAV1@, not PAVWin@@: MSVC back-references the enclosing class
+//           for a parameter of its own type.
 // size      85 bytes
 // prototype int (__thiscall ?UNK2@Win@@QAEHH@Z)(Win* this, int)
 // callers   2   call targets   1
@@ -4103,23 +4106,30 @@ void Win::remove_parent_dialog() {
 //    near miss from a wrong body.
 
 
-int Win::UNK2(int value) {
-    if (value != 0) {
-        char *w = reinterpret_cast<char *>(value);
-        if (*reinterpret_cast<int *>(w + 0x3fc) > 0) {
-            int *children = reinterpret_cast<int *>(w + 0x1a4);
+// TRIED: 4 of 38. Named and retyped from `UNK2(int)` - it walks
+// `ancestor`'s children looking for `this`, so it is the mirror of
+// is_descendant - and the members replaced a `char *` walk of 0x1a4/0x3fc.
+// The bytes did not follow: 41 instructions against 38, with ebx and ebp
+// swapped from the first instruction on, which is the same allocation wall
+// its sibling is_descendant (0x005ECE20) sits behind at 17 of 37.
+// Flattening the two guards into `ancestor == 0 || child_count_ <= 0`
+// costs one more instruction and changes nothing else.
+int Win::is_descendant_of(Win *ancestor) {
+    if (ancestor != 0) {
+        if (ancestor->child_count_ > 0) {
+            Win *const *children = ancestor->children_;
             int i = 0;
             do {
-                int child = *children;
-                if (child == reinterpret_cast<int>(this)) {
+                Win *child = *children;
+                if (child == this) {
                     return 1;
                 }
-                if (UNK2(child)) {
+                if (is_descendant_of(child)) {
                     return 1;
                 }
                 ++i;
                 ++children;
-            } while (i < *reinterpret_cast<int *>(w + 0x3fc));
+            } while (i < ancestor->child_count_);
         }
     }
     return 0;
@@ -4128,6 +4138,7 @@ int Win::UNK2(int value) {
 // Fixed-slot bindings carried from 005ecec0.cpp
 
 // ORIGINAL: 0x005ECEC0 ?UNK4@Win@@QAEHXZ 0x005ECEC0-0x005ECF1C FILE
+// symbol    ?is_in_focus_chain@Win@@QAEHXZ
 // TRIED: guard-clause form (`if (w!=0 || w==this) return 1; if (w!=0) {loop} return 0;`), matching Ghidra's redundant double null-check; compiles and matches the loop body, diverges at #0 in prologue register-save order (mov vs push)
 // working copy - scaffold materialised by --work
 // size      92 bytes
@@ -4137,7 +4148,7 @@ int Win::UNK2(int value) {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005ECDC0
 
-int Win::UNK4() {
+int Win::is_in_focus_chain() {
     Win *w = WinFocusWindow;
     if (w == 0 || w == this) {
         return 1;
@@ -4151,7 +4162,7 @@ int Win::UNK4() {
                 if (*child_ptr == this) {
                     return 1;
                 }
-                if (UNK2((int)*child_ptr)) {
+                if (is_descendant_of(*child_ptr)) {
                     return 1;
                 }
                 j++;
