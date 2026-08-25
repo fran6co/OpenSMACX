@@ -100,7 +100,7 @@ class RadioButton : public virtual GraphicWin, public virtual Dialog {
   uint32_t close();
 
  private:
-  uint32_t field_4_;
+  uint32_t field_4_;  // 0x0004
   uint32_t field_8_;
   uint32_t field_C_;
   uint32_t field_10_;

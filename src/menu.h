@@ -85,7 +85,7 @@ class Menu : public GraphicWin {
  private:
   MenuProc proc_;
   int count_;
-  uint32_t field_A1C_;
+  uint32_t field_A1C_;  // 0x0a1c
   uint32_t field_A20_;
   uint32_t field_A24_;
   uint32_t field_A28_;

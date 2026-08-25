@@ -39,7 +39,7 @@ class ButtonGroup {
  private:
   BaseButton *buttons_[32];
   uint32_t count_;
-  uint32_t field_84_;
+  uint32_t field_84_;  // 0x0084
   uint32_t field_88_;
   uint32_t field_8C_;
   uint32_t field_90_;

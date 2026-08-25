@@ -138,7 +138,7 @@ class Dialog {
   // modelled, which is what keeps sizeof(Dialog) at 0xF4.
   Heap heap_;
   Heap *heap_ptr_;
-  uint32_t field_1C_;
+  uint32_t field_1C_;  // 0x001c
   uint32_t field_20_;
   uint32_t field_24_;
   uint32_t field_28_;

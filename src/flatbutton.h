@@ -31,7 +31,7 @@ class FlatButton : public BaseButton {
   FlatButton *destroy();
 
  private:
-  uint32_t field_AB8_;
+  uint32_t field_AB8_;  // 0x0ab8
   uint32_t field_ABC_;
   uint32_t field_AC0_;
   uint32_t field_AC4_;

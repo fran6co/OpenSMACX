@@ -186,7 +186,7 @@ class GAmbience : public Ambience {
   void basewin_hide();
 
  private:
-  uint32_t field_58_;
+  uint32_t field_58_;  // 0x0058
   uint32_t field_5C_;
   uint32_t field_60_;
   uint32_t field_64_;

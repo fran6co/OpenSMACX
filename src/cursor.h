@@ -46,7 +46,7 @@ class Cursor {
   static void close_cursor_class();
 
  private:
-  uint32_t field_0_;
+  uint32_t field_0_;  // 0x0000
   uint32_t field_4_;
   uint32_t field_8_;
   uint32_t field_C_;
