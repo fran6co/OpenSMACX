@@ -21,14 +21,10 @@
 #include "subinterface.h"
 #include "vector_teardown.h"
 
-const void *const SocialWinSpriteCtor = (const void *)0x005E37E0;
-const void *const SocialWinSpriteDtor = (const void *)0x00406850;
 const void *const SocialWinFlatButtonCtor = (const void *)0x00607CF0;
 const void *const SocialWinFlatButtonDtor = (const void *)0x00406880;
 const void *const SocialWinCheckButtonCtor = (const void *)0x004B3EC0;
 const void *const SocialWinCheckButtonDtor = (const void *)0x00633750;
-const void *const SocialWinBufferCtor = (const void *)0x005D7210;
-const void *const SocialWinBufferDtor = (const void *)0x005D7410;
 const void *const SocialWinButtonGroupCtor = (const void *)0x0062B7C0;
 const void *const SocialWinButtonGroupDtor = (const void *)0x004325B0;
 
@@ -43,6 +39,21 @@ Purpose: Install the SubInterface vftable, construct the Spot, nine runs of
          Buffer[6], a FlatButton[35], a ButtonGroup[4] and one more
          ButtonGroup, nine Fonts), then install SocialWin's own vftables and
          set factionID_ to -1.
+// TRIED (2026-08-25): declaring the five member ARRAYS the constructor was
+// hand-constructing. The arithmetic proves what they are - the body called
+// `VectorCtorIterator(self + 0x2C60, 0x2C, 0xA, ...)` and `sizeof(Sprite)`
+// is 0x2C, so 0x2C * 0xA == 0x1B8 is exactly the `uint8_t[0x1B8]` that sat
+// at 0x2C60; likewise 0x5A and 2 and 6 Sprites, and 6 Buffers at 0x588.
+// The `const void *` ctor/dtor constants were Sprite's and Buffer's own
+// constructors and destructors, which C++ cannot spell as function
+// references at all - the same tell that made FontQueue's array obvious.
+// SCORE WENT DOWN, 20 of 121 to 16 of 121, and the fix is KEPT anyway:
+// agreement is not monotonic in correctness, the declarations are proved
+// by arithmetic rather than guessed, and no claim was at stake (this body
+// has never been BYTE_EXACT). VC6 emits its generated iterator calls in a
+// different ORDER than the image, which is the next thing to chase here -
+// most likely because the image's class declares members this one still
+// does not.
 // ORIGINAL: 0x004AE9E0 ??0SocialWin@@QAE@XZ 0x004AE9E0-0x004AEBE7;0x006598A0-0x00659A0A
 // TRIED: deriving from ConstructedGraphicWin (graphicwin.h) to move the
 //   base construction ahead of the members. The ORDER IS RIGHT - this image
@@ -91,11 +102,6 @@ SocialWin::SocialWin() {
     // energyAllocLock_/energyAllocArrow_ - and the Buffer[6] run inside
     // energyAllocSlider_, which is larger than 6 Buffers and not fully
     // accounted for) stay explicit below.
-    VectorCtorIterator(self + 0x2C60, 0x2C, 0xA, SocialWinSpriteCtor, SocialWinSpriteDtor);
-    VectorCtorIterator(self + 0x2E18, 0x2C, 0x5A, SocialWinSpriteCtor, SocialWinSpriteDtor);
-    VectorCtorIterator(self + 0x3D90, 0x2C, 2, SocialWinSpriteCtor, SocialWinSpriteDtor);
-    VectorCtorIterator(self + 0x3DE8, 0x2C, 6, SocialWinSpriteCtor, SocialWinSpriteDtor);
-    VectorCtorIterator(self + 0x3EF0, 0x588, 6, SocialWinBufferCtor, SocialWinBufferDtor);
 
     factionID_ = 0xFFFFFFFFU;
 }
