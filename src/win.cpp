@@ -4153,9 +4153,28 @@ int Win::is_descendant_of(Win *ancestor) {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005ECDC0
 
+// TRIED: 3 of 43, and the gap is a test VC6 REFUSES TO EMIT TWICE. The image
+// loads WinFocusWindow once and tests it for null at 0x005ECEC8 and AGAIN at
+// 0x005ECED3, with `cmp eax, ebp` between them, so the original wrote the
+// null check twice. Splitting `w == 0 || w == this` into separate guard
+// clauses buys one instruction and no more: the compiler still knows w is
+// non-null at the third test and elides it, leaving 36 instructions against
+// the image's 43. Also tried: caching `&w->child_count_` the way the image
+// does (`lea ebx, [eax+0x3fc]`, re-read through ebx each iteration) - no
+// change, so that lea is a consequence of the register pressure the missing
+// tests would create, not a cause.
 int Win::is_in_focus_chain() {
     Win *w = WinFocusWindow;
-    if (w == 0 || w == this) {
+    // THREE SEPARATE TESTS, and the third is redundant ON PURPOSE. The image
+    // loads WinFocusWindow once and tests it TWICE - `test eax, eax` at
+    // 0x005ECEC8 and again at 0x005ECED3 with `cmp eax, ebp` between - so
+    // the original wrote the null check twice. Folding them into
+    // `w == 0 || w == this` lets VC6 elide the second, and this body came
+    // out eight instructions short of the image.
+    if (w == 0) {
+        return 1;
+    }
+    if (w == this) {
         return 1;
     }
     if (w != 0) {
@@ -4549,6 +4568,17 @@ int __cdecl Win::OnPaletteChanged(void * hwnd, void * lparam) {
 // calls     0x005ED7D0
 // indirect  0x005F27CC
 
+// TRIED: 10 of 57, and the whole gap is ONE INSTRUCTION VC6 will not emit.
+// The image computes `right - (w+w) - left - border_thickness_ -
+// caption_height_ - 2` as six separate instructions, ending `sub esi, 2`.
+// Every spelling of that folds the constant into the doubling instead -
+// `lea eax, [ebx + ebx + 2]` where the image has `lea eax, [ebx + ebx]` -
+// so this body is 56 instructions against 57 and everything after the fold
+// is shifted. Tried: one expression; five separate `y -=` statements;
+// `w + w` in place of `w * 2`; and applying the 2 to `client_rect_.right`
+// instead, so it cannot reach the doubling. All four fold. The flag search
+// already covers /Oy-, /Ob0 and /Oi- and settles on /O2 /Gy /GR- /GX.
+// The subtraction ORDER below is the image's, read off 0x005F2782-0x005F2794.
 void Win::redo_caption_buttons() {
     int w = field_128_;
     int y = client_rect_.right - w * 2 - client_rect_.left -
