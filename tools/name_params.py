@@ -60,6 +60,19 @@ def _strip_comments(text: str) -> str:
     return "\n".join(line.split("//", 1)[0] for line in text.splitlines())
 
 
+# AN UNNAMED PARAMETER HAS NO NAME TO COPY. `int UNK4(int, int);` makes the
+# trailing-word regex below return the TYPE - "int" - and --to-header would
+# then rewrite a declaration to `UNK4(int int, int int)`. Caught on Sprite
+# 2026-08-25 in a dry run, before it reached a header.
+TYPE_WORD = {
+    "void", "int", "char", "bool", "short", "long", "float", "double",
+    "unsigned", "signed", "size_t", "uint8_t", "int8_t", "uint16_t",
+    "int16_t", "uint32_t", "int32_t", "uint64_t", "int64_t",
+    "LPSTR", "HWND", "HDC", "RECT", "POINT", "HGDIOBJ", "HCURSOR", "LPARAM",
+    "WPARAM", "HRGN", "HPALETTE", "DWORD", "UINT", "BOOL",
+}
+
+
 def params(text: str) -> list[str] | None:
     """The declared NAME of each parameter, or None when unparsable."""
     text = text.strip()
@@ -71,7 +84,11 @@ def params(text: str) -> list[str] | None:
         m = re.search(r"(\w+)\s*(?:\[\s*\])?$", part)
         if not m:
             return None
-        out.append(m.group(1))
+        name = m.group(1)
+        # a bare type is an UNNAMED parameter, not a name
+        if name in TYPE_WORD or part.strip() == name and name in TYPE_WORD:
+            return None
+        out.append(name)
     return out
 
 
