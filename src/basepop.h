@@ -134,7 +134,7 @@ class BasePop : public GraphicWin {
   int set_string_font(Font *font1, Font *font2, Font *font3, Font *font4);
 
  private:
-  uint32_t field_A14_;
+  uint32_t field_A14_;  // 0x0a14
   uint32_t field_A18_;
   uint32_t field_A1C_;
   uint32_t field_A20_;

@@ -46,7 +46,7 @@ FIELDS = {
 }
 MEMBER = re.compile(
     r"^\s{2,}(?!(?:public|private|protected|virtual|static|friend|typedef|using)\b)"
-    r"([A-Za-z_][\w:]*(?:\s+[A-Za-z_][\w:]*)?)\s+(\*?)(\w+)\s*(\[(\d+)\])?\s*;"
+    r"([A-Za-z_][\w:]*(?:\s+[A-Za-z_][\w:]*)?)\s+(\*?)(\w+)\s*(\[([^\]]+)\])?\s*;"
     r"(?:\s*//\s*(?:Win\+)?(0x[0-9A-Fa-f]+))?")
 
 
@@ -61,6 +61,33 @@ def class_body(text: str, name: str) -> list[str]:
         if depth <= 0 and len(out) > 1:
             break
     return out
+
+
+def extent(text: str) -> int | None:
+    """The element count of an array declarator, or None.
+
+    NOT JUST A DECIMAL LITERAL. This tree sizes its opaque spans by
+    arithmetic - `uint8_t dialogs_[0x2274 - 0x21D0];` in basepop.h,
+    `uint8_t flatButtonsA_[7 * 0xB4C];` in reportif.h - and reading only
+    `\d+` made those arrays ONE element long, which threw every later
+    member off by the whole span. BasePop was reported as a layout
+    DISAGREEMENT on the strength of it; the layout was right and the reader
+    was wrong.
+
+    Constant folding only: hex/decimal literals with + - * and parentheses.
+    Anything with an identifier in it returns None, which stops the walk
+    honestly instead of guessing.
+    """
+    body = text.strip()
+    if not body:
+        return None
+    if not re.fullmatch(r"[0-9A-Fa-fx\s+\-*()]+", body):
+        return None
+    try:
+        value = eval(body, {"__builtins__": {}}, {})   # noqa: S307 - digits only
+    except Exception:
+        return None
+    return value if isinstance(value, int) and value > 0 else None
 
 
 def sizes(root: Path) -> dict[str, int]:
@@ -117,7 +144,11 @@ def derive(header: Path, cls: str, extra: dict[str, int] | None = None):
         if size is None:
             print(f"  ...stopping at `{ty} {name}`: unknown size", file=sys.stderr)
             break
-        n = int(count) if count else 1
+        n = extent(count) if count else 1
+        if n is None:
+            print(f"  ...stopping at `{ty} {name}[{count}]`: extent is not a "
+                  f"constant", file=sys.stderr)
+            break
         if not star and ty in FIELDS and n == 1:
             for fname, delta in FIELDS[ty]:
                 table[f"{offset + delta:#x}"] = f"{name}.{fname}"
