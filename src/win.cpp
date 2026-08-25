@@ -690,14 +690,14 @@ int Win::is_dialog_focus() {
         // zero away entirely (`if (parent && head_ != 0)`) is worse still:
         // 18 instructions against the image's 21, because the image really
         // does compute a zero and merge.
-        uintptr_t focused;
+        Win *focused;
         if (parent->list_.head_ != 0) {
-            focused = *reinterpret_cast<const uintptr_t *>(
+            focused = *reinterpret_cast<Win *const *>(
                 reinterpret_cast<char *>(parent->list_.current_) + 4);
         } else {
-            focused = 0U;
+            focused = nullptr;
         }
-        if (focused == reinterpret_cast<uintptr_t>(this)) {
+        if (focused == this) {
             return 1;
         }
     }
@@ -5654,10 +5654,10 @@ int __stdcall Win::adjust_menus(HWND hwnd, void *unused) {
 // and rewriting it in the tree's own style is a later phase. See README.md
 // beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
 int Win::show_maximize() {
-    int active = reinterpret_cast<int>(WinPointerOwner3);
+    Win *active = WinPointerOwner3;
     WinPointerOwner1 = 0;
     WinPointerOwner2 = 0;
-    if (active == reinterpret_cast<int>(this)) {
+    if (active == this) {
         WinPointerOwner3 = 0;
         this->vslot_04();
     }
@@ -6088,7 +6088,7 @@ void Win::on_l_button_down(long flags, int x, int y, unsigned int keys, int dbl)
         WinPointerOwner1 = this;
     } else {
         WinPointerOwner1 = nullptr;
-        WinPointerOwner2 = reinterpret_cast<Win *>(reinterpret_cast<int32_t>(this));
+        WinPointerOwner2 = this;
     }
 
     WinSizingFlag = 1;
@@ -6198,9 +6198,8 @@ void Win::on_l_button_up(int x, int y, unsigned int keys, int dbl) {
 // ===== homed from src/recovered/units/005ec740.cpp =====
 
 int Win::set_cursor(Sprite* sprite, int hot_x, int hot_y) {
-    char *self = reinterpret_cast<char *>(this);
     if (sprite != 0) {
-        *reinterpret_cast<Sprite **>(self + 0x188) = sprite;
+        cursor_sprite_ = sprite;
         field_18C_ = hot_x;
         field_190_ = hot_y;
     }
@@ -7034,7 +7033,6 @@ int Win::on_redraw(int, int) {
 typedef unsigned int uint32_t;
 
 void Win::on_nc_paint(RECT * area, int flags) {
-    char *self = reinterpret_cast<char *>(this);
 
     if ((iFlags_ & 0x11) != 0 &&
         (iSomeFlag_ & 1) != 0 &&
@@ -7073,7 +7071,7 @@ void Win::on_nc_paint(RECT * area, int flags) {
         }
 
         if (buffer4_ != 0 && (flags == -1 || flags == 2)) {
-            int v = *reinterpret_cast<int *>(self + 0x11c);
+            int v = bottom_border_thickness_;
             if (v == -1) {
                 v = border_thickness_;
             }
@@ -9224,10 +9222,10 @@ void Win::bring_child_to_top(Win * child) {
 // and rewriting it in the tree's own style is a later phase. See README.md
 // beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
 int Win::minimize() {
-    int active = reinterpret_cast<int>(WinPointerOwner3);
+    Win *active = WinPointerOwner3;
     WinPointerOwner1 = 0;
     WinPointerOwner2 = 0;
-    if (active == reinterpret_cast<int>(this)) {
+    if (active == this) {
         WinPointerOwner3 = 0;
         this->vslot_04();
     }
@@ -10240,7 +10238,6 @@ void __cdecl Win::update_zorder() {
 // ===== homed from src/unrecovered/005f53a0.cpp =====
 
 long Win::on_window_pos_changing(WINDOWPOS * pos) {
-    char *self = reinterpret_cast<char *>(this);
     char *wp = reinterpret_cast<char *>(pos);
     if ((*reinterpret_cast<unsigned char *>(wp + 0x18) & 1) == 0) {
         int ok = this->vslot_61();
@@ -10262,7 +10259,7 @@ long Win::on_window_pos_changing(WINDOWPOS * pos) {
             int ncx = *reinterpret_cast<int *>(wp + 0x10);
             int ncy = *reinterpret_cast<int *>(wp + 0x14);
             nonclient_to_client(&ncx, &ncy);
-            ncy = (*reinterpret_cast<int *>(self + 0xB0) * ncx) / *reinterpret_cast<int *>(self + 0xAC);
+            ncy = (iVertScaleNum_ * ncx) / iVertScaleDenom_;
             client_to_nonclient(&ncx, &ncy);
             *reinterpret_cast<int *>(wp + 0x14) = ncy;
         }
