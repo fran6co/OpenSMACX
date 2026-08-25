@@ -838,6 +838,9 @@ extern Win *WinModalFocus;         // 0x009B8D7C
 extern Win *WinPopupWindow;        // 0x009B23B4
 extern Win *WinTopDialog;          // 0x009B2300
 extern Win *WinPendingFocus;       // 0x009B7B38
+extern Win *WinCallbackWindow;   // 0x009B7AB8
+extern Win *WinInputFocus;       // 0x009B7AC4
+extern Win *WinActiveWindow;     // 0x009B7AC8
 extern Win *WinBubbleCompanion;  // 0x009B7A4C
 extern int WinBubbleActive;      // 0x009B7A50
 extern Win *WinZOrderWindow;  // 0x009B7A6C
@@ -1001,20 +1004,23 @@ static int * const WinKeyRingStart = (int *)0x009B7B48;
 static int * const WinKeyRingEnd = (int *)0x009B7B51;
 static int * const WinTitleBarHeight = (int *)0x009B8DD4;
 static int * const WinDirtyRect = (int *)0x009B6EE8;
-// TRIED 2026-08-25 and REFUTED BY MEASUREMENT: retyping these three to
-// `Win **const` - the honest type, and the spelling win.h's
-// WinBubbleCompanion uses - cost show_maximize and maximize their claims.
-// The binding stopped folding to its immediate (`mov eax, dword ptr [eax]`
-// where the image has the address inline) and VC6 also stopped sharing one
-// zeroed register across the neighbouring stores, so the image's
-// `xor edi,edi` + three `mov [addr], edi` became three immediate stores.
-// Spelling the null `0` rather than `nullptr` did not bring it back. The
-// `reinterpret_cast<int>(this)` at the use sites is therefore LOAD-BEARING,
-// not laziness - it is raw-self-access debt the ratchet has to keep.
-// See the recorded lesson `binding-type-decides-folding`.
-static int * const WinCallbackWindow = (int *)0x009B7AB8;
-static int * const WinInputFocus = (int *)0x009B7AC4;
-static int * const WinActiveWindow = (int *)0x009B7AC8;
+// SUPERSEDED - and the part that was wrong is the REMEDY, not the
+// diagnosis. This note recorded, correctly and by measurement, that
+// retyping these three to `Win **const` cost show_maximize and maximize
+// their claims: the binding stopped folding to its immediate
+// (`mov eax, dword ptr [eax]` where the image has the address inline) and
+// VC6 stopped sharing one zeroed register across the neighbouring stores,
+// so `xor edi,edi` + three `mov [addr], edi` became three immediate
+// stores. Spelling the null `0` rather than `nullptr` did not bring it
+// back.
+// From that it concluded the `reinterpret_cast<int>(this)` at the use
+// sites was LOAD-BEARING debt the ratchet had to keep. Measured 2026-08-25
+// and REFUTED: the casts were not load-bearing, the BINDING was. Given
+// real storage - `extern Win *WinCallbackWindow;` defined in win.cpp -
+// all three take `this` with no cast at all, and show_maximize
+// (0x005EDF00) and maximize (0x005EDE60) both stay BYTE_EXACT.
+// Only two spellings were ever compared, and neither was the honest one.
+// Same lever as clear_bubble_text; see its LEVER in win.cpp.
 // `int *const`, for the same reason g_GetDC above carries that type: a
 // fixed-address binding folds to its immediate only in this spelling. As
 // `void **const` it compiled `mov eax, dword ptr [0]` in Win::redraw - the

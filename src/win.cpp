@@ -753,6 +753,9 @@ Win *WinModalFocus;         // 0x009B8D7C
 Win *WinPopupWindow;        // 0x009B23B4
 Win *WinTopDialog;          // 0x009B2300
 Win *WinPendingFocus;       // 0x009B7B38
+Win *WinCallbackWindow;   // 0x009B7AB8
+Win *WinInputFocus;       // 0x009B7AC4
+Win *WinActiveWindow;     // 0x009B7AC8
 Win *WinBubbleCompanion;   // 0x009B7A4C
 int WinBubbleActive;       // 0x009B7A50
 Win *WinZOrderWindow;      // 0x009B7A6C
@@ -3872,12 +3875,12 @@ void __cdecl OnSysKey(void *hwnd, unsigned int key, long flags, int repeat,
             val = reinterpret_cast<int>(WinFocusWindow);
         }
     } else {
-        val = *WinInputFocus;
+        val = reinterpret_cast<int>(WinInputFocus);
         if (val == 0) {
             val = *WinDefaultFocus;
         }
     }
-    *WinActiveWindow = val;
+    WinActiveWindow = reinterpret_cast<Win *>(val);
     if (val != 0) {
         // 0xA8 is poWinBase_, which win.h already documents as the window that
 // owns a position - a third witness after Win::construct storing `this`
@@ -4828,7 +4831,7 @@ int Win::resize_event(int width, int height) {
   };
 
   // 0x009B7AB8 is WinCallbackWindow, already bound in win_slots.h.
-  *WinCallbackWindow = reinterpret_cast<int>(this);
+  WinCallbackWindow = this;
 
   if ((iFlags_ & 0x40) == 0) {
     if (scroll_vert_ != 0) {
@@ -5789,12 +5792,12 @@ void __cdecl OnChar(void *hwnd, char ch, int flags) {
             result = reinterpret_cast<int>(WinFocusWindow);
         }
     } else {
-        result = *WinInputFocus;
+        result = reinterpret_cast<int>(WinInputFocus);
         if (result == 0) {
             result = *WinDefaultFocus;
         }
     }
-    *WinActiveWindow = result;
+    WinActiveWindow = reinterpret_cast<Win *>(result);
     if (result != 0) {
         char *p = *reinterpret_cast<char **>(result + 0xa8);
         if (p != 0 && (*reinterpret_cast<unsigned char *>(p + 0x9c) & 1) != 0) {
@@ -6072,7 +6075,7 @@ void Win::on_l_button_down(long flags, int x, int y, unsigned int keys, int dbl)
         (iSomeFlag_ & 8) == 0) {
         int32_t related;
         if (keys == 0) {
-            *WinCallbackWindow = reinterpret_cast<int32_t>(this);
+            WinCallbackWindow = this;
             int32_t fp = field_40C_;
             if (fp != 0) {
                 reinterpret_cast<void(__cdecl *)(int, int)>(fp)(x, y);
@@ -6119,7 +6122,7 @@ void Win::on_l_button_up(int x, int y, unsigned int keys, int dbl) {
             (iFlags_ & 0x200000) == 0 &&
             (*reinterpret_cast<uint8_t *>(&iSomeFlag_) & 8) == 0) {
             if (dbl == 0) {
-                *WinCallbackWindow = reinterpret_cast<int>(this);
+                WinCallbackWindow = this;
                 void(__cdecl * cb)(int, int) =
                     reinterpret_cast<void(__cdecl *)(int, int)>(field_414_);
                 if (cb != 0) {
@@ -6148,7 +6151,7 @@ void Win::on_l_button_up(int x, int y, unsigned int keys, int dbl) {
         if ((iFlags_ & 0x200000) == 0 &&
             (*reinterpret_cast<uint8_t *>(&iSomeFlag_) & 8) == 0) {
             if (dbl == 0) {
-                *WinCallbackWindow = reinterpret_cast<int>(this);
+                WinCallbackWindow = this;
                 void(__cdecl * cb)(int, int) =
                     reinterpret_cast<void(__cdecl *)(int, int)>(field_41C_);
                 if (cb != 0) {
@@ -7151,7 +7154,7 @@ void Win::on_r_button_up(int x, int y, unsigned int keys, int dbl) {
                 if ((iSomeFlag_ & 8) == 0) {
                     int32_t related;
                     if (dbl == 0) {
-                        *WinCallbackWindow = reinterpret_cast<int32_t>(this);
+                        WinCallbackWindow = this;
                         int32_t fp = field_420_;
                         if (fp != 0) {
                             reinterpret_cast<void(__cdecl *)(int, int)>(fp)(x, y);
@@ -7174,7 +7177,7 @@ void Win::on_r_button_up(int x, int y, unsigned int keys, int dbl) {
         (iSomeFlag_ & 8) == 0) {
         int32_t related2;
         if (dbl == 0) {
-            *WinCallbackWindow = reinterpret_cast<int32_t>(this);
+            WinCallbackWindow = this;
             int32_t fp = field_428_;
             if (fp != 0) {
                 reinterpret_cast<void(__cdecl *)(int, int)>(fp)(x, y);
@@ -7304,8 +7307,8 @@ void Win::set_caption_height(int height) {
 Win *Win::get_key_window() {
     char *w;
     if (WinFocusWindow == nullptr) {
-        w = (char *)*WinInputFocus;
-        if (*WinInputFocus == 0) {
+        w = reinterpret_cast<char *>(WinInputFocus);
+        if (WinInputFocus == 0) {
             w = (char *)*WinDefaultFocus;
         }
     } else {
@@ -7314,7 +7317,7 @@ Win *Win::get_key_window() {
             w = (char *)WinModalFocus;
         }
     }
-    *WinActiveWindow = (int)w;
+    WinActiveWindow = reinterpret_cast<Win *>(w);
     int result = 0;
     if (w != 0) {
         result = *(int *)(w + 0xa8);
@@ -7542,7 +7545,7 @@ int Win::set_modal(int flags, int (__cdecl *callback)(), Win * owner) {
         reinterpret_cast<Win *>(prior)->vslot_04();
         WinPointerOwner3 = 0;
     }
-    *WinInputFocus = 0;
+    WinInputFocus = 0;
     if (owner != 0) {
         WinModalWindow = owner;
         reinterpret_cast<Win *>(owner)->show(0);
@@ -7661,7 +7664,7 @@ int Win::key_up_event(int key) {
             return 1;
         }
     }
-    *WinCallbackWindow = reinterpret_cast<int>(this);
+    WinCallbackWindow = this;
     int callback = field_434_;
     if (callback != 0) {
         result = reinterpret_cast<int (__cdecl *)(int)>(callback)(key);
@@ -7744,7 +7747,7 @@ int Win::key_down_event(int key) {
         return 1;
     }
 
-    *WinCallbackWindow = reinterpret_cast<int>(this);
+    WinCallbackWindow = this;
 
     KeyHookFn hook = reinterpret_cast<KeyHookFn>(field_430_);
     if (hook != 0) {
@@ -8000,7 +8003,7 @@ int Win::init(int x, int y, int width, int height, char * caption,
     }
 
     this->do_caption_buttons();
-    *WinCallbackWindow = reinterpret_cast<int>(this);
+    WinCallbackWindow = this;
 
     unsigned int fl = this->iFlags_;
     bool skipMenuList = (fl & 0x100000) != 0 || (fl & 0x200000) != 0 ||
@@ -8306,7 +8309,7 @@ void Win::left_down_event(int x, int y, int from_parent) {
     if ((iSomeFlagByte & 8) != 0) return;
 
     if (from_parent == 0) {
-        *WinCallbackWindow = reinterpret_cast<int>(this);
+        WinCallbackWindow = this;
         FnCallback cb = reinterpret_cast<FnCallback>(field_418_);
         if (cb != 0) {
             cb(x, y);
@@ -9677,7 +9680,7 @@ void Win::on_key(unsigned int a1, long a2, int a3, unsigned int a4) {
             }
         }
 
-        *WinCallbackWindow = reinterpret_cast<int32_t>(this);
+        WinCallbackWindow = this;
         typedef void(__cdecl * OnKeyCb)(unsigned int);
         OnKeyCb cb = reinterpret_cast<OnKeyCb>(field_434_);
         if (cb != 0) {
@@ -9938,7 +9941,7 @@ void Win::on_r_button_down(long flags, int x, int y, unsigned int keys, int dbl)
         (iFlags_ & 0x200200) == 0 &&
         (iSomeFlag_ & 8) == 0) {
         if (dbl == 0) {
-            *WinCallbackWindow = reinterpret_cast<int>(this);
+            WinCallbackWindow = this;
             RawHandler fn = reinterpret_cast<RawHandler>(field_410_);
             if (fn != 0) {
                 fn(x, y);
@@ -9966,7 +9969,7 @@ void Win::on_r_button_down(long flags, int x, int y, unsigned int keys, int dbl)
     if ((iFlags_ & 0x200000) == 0 &&
         (iSomeFlag_ & 8) == 0) {
         if (dbl == 0) {
-            *WinCallbackWindow = reinterpret_cast<int>(this);
+            WinCallbackWindow = this;
             RawHandler fn = reinterpret_cast<RawHandler>(field_424_);
             if (fn != 0) {
                 fn(x, y);
