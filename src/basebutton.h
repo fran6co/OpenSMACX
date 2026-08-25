@@ -66,7 +66,7 @@ class BaseButton : public GraphicWin {
   static int set_def_font(Font *font1, Font *font2, Font *font3);
 
  private:
-  uint32_t field_A14_;
+  uint32_t field_A14_;  // 0x0a14
   uint32_t field_A18_;
   Time time1_;
   uint32_t field_A44_;

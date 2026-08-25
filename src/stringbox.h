@@ -40,7 +40,7 @@ class StringBox : public ConstructedGraphicWin {
   void add(char *text, int index, int flag);
 
  private:
-  uint32_t field_A14_;
+  uint32_t field_A14_;  // 0x0a14
   uint32_t field_A18_;
   uint32_t field_A1C_;
   Scroll scroll_;
