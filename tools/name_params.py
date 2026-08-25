@@ -21,6 +21,17 @@ Refusals, all of them silent skips rather than guesses:
 
     uv run tools/name_params.py src/win.h src/win.cpp          # dry run
     uv run tools/name_params.py src/win.h src/win.cpp --apply
+
+THE OTHER DIRECTION, `--to-header`. Homing brings bodies whose parameters
+someone HAS named while the declaration still reads `a1, a2, a3` - win.h
+declared `OnRButtonDown(void *a1, long a2, int a3, int a4, unsigned int a5)`
+against a definition spelling `(void *hwnd, long flags, int x, int y,
+unsigned int keys)`. This copies the definition's names onto the
+declaration, and it is safer than the forward direction rather than merely
+as safe: a parameter name in a DECLARATION emits nothing at all, so there
+is no body to clash with and nothing to re-measure.
+
+    uv run tools/name_params.py src/win.h src/win.cpp --to-header --apply
 """
 from __future__ import annotations
 
@@ -87,12 +98,106 @@ def header_names(header: pathlib.Path) -> dict[str, list[str]]:
     return best
 
 
+def joined(lines: list[str]):
+    """Each logical signature on one line.
+
+    A DEFINITION THAT WRAPS IS STILL A DEFINITION. The regexes match a
+    single line, so `void Win::window_line_raw(int x2, int y2, int x1,\n
+    int y1, ...)` never parsed and its seven good names never reached the
+    header - seven of the `aN` this tool exists to remove, invisible to it.
+    Joins a line with the ones after it until its parentheses balance.
+    """
+    i = 0
+    while i < len(lines):
+        line = lines[i].rstrip("\n")
+        if line.lstrip().startswith("//"):
+            i += 1
+            continue
+        depth = line.count("(") - line.count(")")
+        j = i
+        while depth > 0 and j + 1 < len(lines) and j - i < 6:
+            j += 1
+            nxt = lines[j].rstrip("\n")
+            line += " " + nxt.strip()
+            depth += nxt.count("(") - nxt.count(")")
+        yield i, j, line
+        i = j + 1
+
+
+def defn_names(source: pathlib.Path) -> dict[tuple[str, int], list[str]]:
+    """Real parameter names taken from DEFINITIONS, keyed like header_names."""
+    best: dict[tuple[str, int], list[str]] = {}
+    for _i, _j, line in joined(source.read_text(errors="replace").splitlines(True)):
+        m = DEFN.match(line)
+        if not m:
+            continue
+        names = params(m.group(3))
+        if not names or any(SCAFFOLD.match(n) for n in names):
+            continue
+        best.setdefault((m.group(2), len(names)), names)
+    return best
+
+
+def retype_decl(line: str, want: list[str]) -> str | None:
+    """`line` with its parameter identifiers replaced by `want`."""
+    m = DECL.match(line)
+    if not m:
+        return None
+    inner = m.group(2)
+    parts = inner.split(",")
+    if len(parts) != len(want):
+        return None
+    out = []
+    for part, name in zip(parts, want):
+        hit = re.search(r"(\w+)(\s*(?:\[\s*\])?)$", part.rstrip())
+        if not hit:
+            return None
+        out.append(part.rstrip()[:hit.start(1)] + name + hit.group(2))
+    start = m.start(2)
+    return line[:start] + ",".join(out) + line[m.end(2):]
+
+
+def to_header(header: pathlib.Path, source: pathlib.Path, apply: bool) -> int:
+    table = defn_names(source)
+    lines = header.read_text(errors="replace").splitlines(True)
+    named = 0
+    for i, line in enumerate(lines):
+        if line.lstrip().startswith("//"):
+            continue
+        m = DECL.match(line)
+        if not m:
+            continue
+        have = params(m.group(2))
+        if not have or not any(SCAFFOLD.match(h) for h in have):
+            continue
+        want = table.get((m.group(1), len(have)))
+        if not want:
+            continue
+        merged = [w if SCAFFOLD.match(h) and not SCAFFOLD.match(w) else h
+                  for h, w in zip(have, want)]
+        if merged == have:
+            continue
+        new = retype_decl(line, merged)
+        if new is None or new == line:
+            continue
+        lines[i] = new
+        named += sum(1 for h, w in zip(have, merged) if h != w)
+        print(f"  {m.group(1)}: {', '.join(f'{h}->{w}' for h, w in zip(have, merged) if h != w)}")
+    if apply:
+        header.write_text("".join(lines))
+    print(f"{named} declaration parameter(s) named from {source.name}"
+          f"{'' if apply else '  (dry run; pass --apply)'}")
+    return 0
+
+
 def main() -> int:
     if len(sys.argv) < 3:
         print(__doc__)
         return 2
     header, source = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
     apply = "--apply" in sys.argv
+    if "--to-header" in sys.argv:
+        return to_header(header, source, apply)
     table = header_names(header)
     lines = source.read_text(errors="replace").splitlines(True)
 
