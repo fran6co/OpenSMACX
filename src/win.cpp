@@ -3716,28 +3716,19 @@ Purpose: Drain every pending WM_CHAR, pumping video and net between polls.
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 void __cdecl do_all_chars() {
-    typedef int(__stdcall * PeekMessageFn)(void *, void *, unsigned, unsigned,
-                                           unsigned);
-    typedef int(__stdcall * TranslateMessageFn)(void *);
-    typedef int(__stdcall * DispatchMessageFn)(void *);
-    int msg[7];
+    MSG msg;  // the artifact spelled this `int msg[7]`; MSG is those 28 bytes
 
     MsgStatus = 4;
 
-    TranslateMessageFn translate =
-        *reinterpret_cast<TranslateMessageFn *>(g_TranslateMessage);
-    PeekMessageFn peek = *reinterpret_cast<PeekMessageFn *>(g_PeekMessageA);
-    DispatchMessageFn dispatch =
-        *reinterpret_cast<DispatchMessageFn *>(g_DispatchMessageA);
 
     int has_message;
     do {
         do_video();
         check_net();
-        has_message = peek(msg, 0, 0x102, 0x102, 1);
+        has_message = PeekMessageA(&msg, 0, 0x102, 0x102, 1);
         if (has_message) {
-            translate(msg);
-            dispatch(msg);
+            TranslateMessage(&msg);
+            DispatchMessageA(&msg);
         }
     } while (has_message);
 
@@ -3759,20 +3750,19 @@ Purpose: The window class's WM_NCHITTEST handler. It pulls the Win out of
          `this`. See the `// symbol` fact for what the build emits.
 */
 // ORIGINAL: 0x005F1420 ?OnNCHitTest@Win@@QAAJPAXHH@Z 0x005F1420-0x005F1471 FILE BYTE_EXACT
-// symbol    ?OnNCHitTest@@YAJPAXHH@Z
+// symbol    ?OnNCHitTest@@YAJPAUHWND__@@HH@Z
 // size      82 bytes
 // prototype LRESULT (__cdecl ?OnNCHitTest@Win@@QAAJPAXHH@Z)(HWND hWnd, int, int)
 // kind      game
 // flags     hidden;sp_ready;purged_ok
-long __cdecl OnNCHitTest(void *hwnd, int x, int y) {
-    typedef long(__stdcall * GetWindowLongAFn)(void *, int);
+long __cdecl OnNCHitTest(HWND hwnd, int x, int y) {
     typedef long(__stdcall * DefWindowProcAFn)(void *, unsigned int,
                                                unsigned int, long);
-    long p = (*reinterpret_cast<GetWindowLongAFn *>(g_GetWindowLongA))(hwnd, -0x15);
+    long p = GetWindowLongA(hwnd, -0x15);
     if (p != 0) {
         return reinterpret_cast<Win *>(p)->on_nc_hittest(x, y);
     }
-    return (*reinterpret_cast<DefWindowProcAFn *>(g_DefWindowProcA))(
+    return DefWindowProcA(
         hwnd, 0x84, 0,
         (static_cast<unsigned int>(static_cast<unsigned short>(y)) << 16)
             | static_cast<unsigned short>(x));
@@ -3922,7 +3912,6 @@ void Win::close_class() {
 // pair emitted in a different place - twelve differing runs, so the
 // remaining work is the body's shape, not one spelling.
 void Win::set_mouse_pos(int a1, int a2) {
-    typedef int (__stdcall *SetCursorPosFn)(int, int);
     // MEMBERS FIRST, argument last. `+` is left-associative, so `a1 + left +
     // outer` groups as `(a1 + left) + outer`; the image adds the two members
     // to each other and the argument to that sum (`add eax, edx` then
@@ -3940,7 +3929,7 @@ void Win::set_mouse_pos(int a1, int a2) {
             y = y - win_parent_->outer_rect_.top;
         }
     }
-    ((SetCursorPosFn)*g_SetCursorPos)(x, y);
+    SetCursorPos(x, y);
 }
 
 // Fixed-slot bindings carried from 005ec8a0.cpp
@@ -3958,14 +3947,13 @@ void Win::set_mouse_pos(int a1, int a2) {
 
 void Win::get_mouse_pos(int * x, int * y) {
     if (x != 0 && y != 0) {
-        struct Pt { int x, y; } pt;
-        typedef int (__stdcall *GetCursorPosFn)(Pt *);
+        POINT pt;  // the artifact spelled this `struct Pt { int x, y; }`
         // 0x00669284, NOT the SetCursorPos slot this used to reach through
         // the file-scope `g`. The image calls `[0x669284]` here
         // (0x005EC8C5) and the two differ only in a relocation, which
         // the byte comparison masks - so the claim held while the call
         // was wrong.
-        (*reinterpret_cast<GetCursorPosFn *>(g_GetCursorPos))(&pt);
+        GetCursorPos(&pt);
         *x = pt.x;
         *y = pt.y;
         *x -= client_rect_.left + outer_rect_.left;
@@ -4871,11 +4859,11 @@ int Win::resize_event(int width, int height) {
 typedef HDC (__stdcall *BeginPaintProc)(void *, PAINTSTRUCT *);
 typedef int (__stdcall *EndPaintProc)(void *, const PAINTSTRUCT *);
 
-// ORIGINAL: 0x005F1340 ?OnPaint@Win@@QAA_NPAX@Z 0x005F1340-0x005F13A2 FILE
+// ORIGINAL: 0x005F1340 ?OnPaint@Win@@QAA_NPAUHWND__@@@Z 0x005F1340-0x005F13A2 FILE
 // TRIED: BeginPaint/EndPaint reached through the IAT slots as fn-ptr casts; bool return passed straight through EndPaint's result
 // working copy - scaffold materialised by --work
 // size      98 bytes
-// prototype bool (__cdecl ?OnPaint@Win@@QAA_NPAX@Z)(HWND hWnd)
+// prototype bool (__cdecl ?OnPaint@Win@@QAA_NPAUHWND__@@@Z)(HWND hWnd)
 // callers   0   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -4883,14 +4871,11 @@ typedef int (__stdcall *EndPaintProc)(void *, const PAINTSTRUCT *);
 // indirect  0x005F134E 0x005F1397
 
 
-bool __cdecl Win::OnPaint(void * a1) {
+bool __cdecl Win::OnPaint(HWND a1) {
     PAINTSTRUCT ps;
     // 0x006692B8. The image calls `[0x6692b8]` at 0x005F134E; the
     // file-scope `g` this used to read is SetCursorPos.
-    BeginPaintProc beginPaint =
-        *reinterpret_cast<BeginPaintProc *>(g_BeginPaint);
-    EndPaintProc endPaint = *reinterpret_cast<EndPaintProc *>(g_EndPaint);
-    HDC hdc = beginPaint(a1, &ps);
+    HDC hdc = BeginPaint(a1, &ps);
     if (hdc == 0) {
         return false;
     }
@@ -4901,7 +4886,7 @@ bool __cdecl Win::OnPaint(void * a1) {
     paintRect.bottom = ps.rcPaint.bottom;
     update_screen(&paintRect, 0);
     flip(&paintRect);
-    return endPaint(a1, &ps) != 0;
+    return EndPaint(a1, &ps) != 0;
 }
 
 
@@ -5009,15 +4994,9 @@ public:
     virtual int slot091();
 };
 
-struct MsgT {
-    void *hwnd;
-    unsigned int message;
-    unsigned int wParam;
-    long lParam;
-    unsigned long time;
-    long pt_x;
-    long pt_y;
-};
+// The artifact spelled MSG out by hand; these ARE its fields, and the
+// message pump below passes one straight to PeekMessageA.
+typedef MSG MsgT;
 
 
 class NCCall { public:
@@ -5592,8 +5571,8 @@ typedef long (__stdcall *GetWindowLongProc)(void *, int);
 int __stdcall Win::adjust_menus(void *a1) {
     Win *obj = reinterpret_cast<Win *>(
         // 0x0066934C: the image calls `[0x66934c]` at 0x005F0548.
-        (*reinterpret_cast<GetWindowLongProc *>(g_GetWindowLongA))(
-            reinterpret_cast<void *>(this), -0x15));
+        GetWindowLongA(
+            reinterpret_cast<HWND>(this), -0x15));
     if (obj != 0) {
         obj->set_rects();
         Menu *menu = obj->menu_;
@@ -5663,8 +5642,8 @@ int Win::maximize() {
     if (WinPointerOwner4 == this) {
         WinPointerOwner4 = 0;
     }
-    (*reinterpret_cast<ShowWindowFn *>(g_ShowWindow))(
-        *reinterpret_cast<void **>(WinMainHwnd), 3);
+    ShowWindow(
+        *reinterpret_cast<HWND *>(WinMainHwnd), 3);
     return 0;
 }
 
@@ -5994,7 +5973,7 @@ skip_all:
         }
     }
 
-    (*reinterpret_cast<ThreeArgFn *>(g_InvalidateRect))(*WinMainHwnd, 0, 0);
+    InvalidateRect(reinterpret_cast<HWND>(*WinMainHwnd), 0, 0);
 
     {
         Win *other = reinterpret_cast<Win *>(val_4_);
@@ -6197,9 +6176,9 @@ typedef int (__stdcall *SetRectFn)(void*, int, int, int, int);
 // and rewriting it in the tree's own style is a later phase. See README.md
 // beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
 void Win::UNK7(int x, int y, int width, int height) {
-    int rectangle[4];
-    (*reinterpret_cast<SetRectFn *>(g_SetRect))(
-        rectangle, x, y, x + width, y + height);
+    RECT rectangle;  // the artifact spelled this `int rectangle[4]`
+    SetRect(
+        &rectangle, x, y, x + width, y + height);
 }
 
 // ===== homed from src/recovered/units/005f5480.cpp =====
@@ -6269,7 +6248,8 @@ typedef long (__stdcall *SendMsgFn)(int, int, int, void*);
 //    near miss from a wrong body.
 LRESULT Win::on_window_pos_changed(WINDOWPOS* pos) {
     this->set_rects();
-    return (*reinterpret_cast<SendMsgFn *>(g_DefWindowProcA))(*WinMainHwnd, 0x47, 0, pos);
+    return DefWindowProcA(reinterpret_cast<HWND>(*WinMainHwnd), 0x47, 0,
+                          reinterpret_cast<LPARAM>(pos));
 }
 
 // ===== homed from src/recovered/units/005f4ab0.cpp =====
@@ -6429,9 +6409,9 @@ typedef int (__stdcall *KeyFn)(int);
 //    hard case - the tool reports a similarity ratio so you can tell a
 //    near miss from a wrong body.
 int Win::get_rbutton_state() {
-    short r1 = (*reinterpret_cast<RBtnFn *>(g_GetAsyncKeyState))(2);
+    short r1 = GetAsyncKeyState(2);
     int mask = r1 >> 15;
-    int r2 = (*reinterpret_cast<KeyFn *>(g_GetSystemMetrics))(0x17);
+    int r2 = GetSystemMetrics(0x17);
     return r2 ^ mask;
 }
 
@@ -6802,8 +6782,7 @@ void Win::window_line_raw(int x2, int y2, int x1, int y1, int colour,
             IfaceGetHdcProc fn = (*reinterpret_cast<IfaceGetHdcProc **>(iface))[17];
             fn(iface, WinScreenDC);
         } else {
-            GetDCProc getDC = *reinterpret_cast<GetDCProc *>(g_GetDC);
-            *WinScreenDC = reinterpret_cast<int>(getDC(HandleMain));
+            *WinScreenDC = reinterpret_cast<int>(GetDC(HandleMain));
         }
         if (*WinScreenDC == 0) {
             return;
@@ -6816,27 +6795,22 @@ void Win::window_line_raw(int x2, int y2, int x1, int y1, int colour,
             field_184_ = *reinterpret_cast<int *>(*WinPalette + 0x400);
         }
 
-        LocalLogPen pen;
-        pen.style = style;
-        pen.widthX = width;
-        pen.color = (colour & 0xffff) | 0x1000000;
+        LOGPEN pen;
+        pen.lopnStyle = style;
+        pen.lopnWidth.x = width;
+        pen.lopnColor = (colour & 0xffff) | 0x1000000;
 
-        CreatePenIndirectProc createPen = *reinterpret_cast<CreatePenIndirectProc *>(g_CreatePenIndirect);
-        void *hpen = createPen(&pen);
+        HPEN hpen = CreatePenIndirect(&pen);
         if (hpen != 0) {
-            SelectObjectProc selectObj = *reinterpret_cast<SelectObjectProc *>(g_SelectObject);
-            void *oldPen = selectObj(reinterpret_cast<HDC>(*WinScreenDC), hpen);
+            HGDIOBJ oldPen = SelectObject(reinterpret_cast<HDC>(*WinScreenDC), hpen);
 
-            MoveToExProc moveTo = *reinterpret_cast<MoveToExProc *>(g_MoveToEx);
-            moveTo(reinterpret_cast<HDC>(*WinScreenDC), x1, y1, 0);
+            MoveToEx(reinterpret_cast<HDC>(*WinScreenDC), x1, y1, 0);
 
-            LineToProc lineTo = *reinterpret_cast<LineToProc *>(g_LineTo);
-            lineTo(reinterpret_cast<HDC>(*WinScreenDC), x2, y2);
+            LineTo(reinterpret_cast<HDC>(*WinScreenDC), x2, y2);
 
-            selectObj(reinterpret_cast<HDC>(*WinScreenDC), oldPen);
+            SelectObject(reinterpret_cast<HDC>(*WinScreenDC), oldPen);
 
-            DeleteObjectProc deleteObj = *reinterpret_cast<DeleteObjectProc *>(g_DeleteObject);
-            deleteObj(hpen);
+            DeleteObject(hpen);
 
             *WinScreenDCDepth = *WinScreenDCDepth - 1;
             if (*WinScreenDCDepth == 0) {
@@ -6847,8 +6821,7 @@ void Win::window_line_raw(int x2, int y2, int x1, int y1, int colour,
                     *WinScreenDC = 0;
                     return;
                 }
-                ReleaseDCProc releaseDC = *reinterpret_cast<ReleaseDCProc *>(g_ReleaseDC);
-                releaseDC(HandleMain, reinterpret_cast<HDC>(*WinScreenDC));
+                ReleaseDC(HandleMain, reinterpret_cast<HDC>(*WinScreenDC));
                 *WinScreenDC = 0;
             }
         }
@@ -7407,7 +7380,7 @@ void Win::show(int visible) {
             rect.bottom += y - outer_rect_.top;
         }
 
-        (*reinterpret_cast<InvalidateRectFn *>(g_InvalidateRect))(reinterpret_cast<void *>(*WinMainHwnd), &rect, 0);
+        InvalidateRect(reinterpret_cast<HWND>(*WinMainHwnd), &rect, 0);
 
         Win *obj2 = reinterpret_cast<Win *>(val_3_);
         if (obj2 != 0) {
@@ -7542,8 +7515,8 @@ int Win::set_modal(int flags, int (__cdecl *callback)(), Win * owner) {
     this->show(0);
     flush_input();
 
-    void *cursor = (*reinterpret_cast<PFN_LoadCursorA *>(g_LoadCursorA))(0, reinterpret_cast<const char *>(0x7f00));
-    (*reinterpret_cast<PFN_SetCursor *>(g_SetCursor))(cursor);
+    HCURSOR cursor = LoadCursorA(0, IDC_ARROW);
+    SetCursor(cursor);
 
     int result = 0;
     if (WinFocusWindow == this) {
@@ -7573,14 +7546,8 @@ int Win::set_modal(int flags, int (__cdecl *callback)(), Win * owner) {
 }
 
 // ===== homed from src/unrecovered/005ef310.cpp =====
-typedef int (__stdcall *SelectObjectFn)(void *hdc, void *obj);
-typedef int (__stdcall *MoveToExFn)(void *hdc, int x, int y, void *point);
-typedef int (__stdcall *LineToFn)(void *hdc, int x, int y);
 
 void Win::draw_rect_border(int x1, int y1, int x2, int y2, HGDIOBJ pen1, HGDIOBJ pen2, int unused7) {
-    SelectObjectFn selectObject = *reinterpret_cast<SelectObjectFn *>(g_SelectObject);
-    MoveToExFn moveToEx = *reinterpret_cast<MoveToExFn *>(g_MoveToEx);
-    LineToFn lineTo = *reinterpret_cast<LineToFn *>(g_LineTo);
     bool haveHdc;
 
     ACQUIRE_HDC(haveHdc);
@@ -7590,11 +7557,11 @@ void Win::draw_rect_border(int x1, int y1, int x2, int y2, HGDIOBJ pen1, HGDIOBJ
             pal->set_active_window(this);
             this->field_184_ = pal->seed_;
         }
-        void *hdc = reinterpret_cast<void *>(*WinScreenDC);
-        void *prev = reinterpret_cast<void *>(selectObject(hdc, pen1));
-        moveToEx(hdc, x1 + 1, y1, 0);
-        lineTo(hdc, x2 + 1, y1);
-        selectObject(hdc, prev);
+        HDC hdc = reinterpret_cast<HDC>(*WinScreenDC);
+        HGDIOBJ prev = SelectObject(hdc, pen1);
+        MoveToEx(hdc, x1 + 1, y1, 0);
+        LineTo(hdc, x2 + 1, y1);
+        SelectObject(hdc, prev);
         release_hdc();
     }
 
@@ -7605,11 +7572,11 @@ void Win::draw_rect_border(int x1, int y1, int x2, int y2, HGDIOBJ pen1, HGDIOBJ
             pal->set_active_window(this);
             this->field_184_ = pal->seed_;
         }
-        void *hdc = reinterpret_cast<void *>(*WinScreenDC);
-        void *prev = reinterpret_cast<void *>(selectObject(hdc, pen2));
-        moveToEx(hdc, x1, y2, 0);
-        lineTo(hdc, x2, y2);
-        selectObject(hdc, prev);
+        HDC hdc = reinterpret_cast<HDC>(*WinScreenDC);
+        void *prev = reinterpret_cast<void *>(SelectObject(hdc, pen2));
+        MoveToEx(hdc, x1, y2, 0);
+        LineTo(hdc, x2, y2);
+        SelectObject(hdc, prev);
         release_hdc();
     }
 
@@ -7620,22 +7587,22 @@ void Win::draw_rect_border(int x1, int y1, int x2, int y2, HGDIOBJ pen1, HGDIOBJ
             pal->set_active_window(this);
             this->field_184_ = pal->seed_;
         }
-        void *hdc = reinterpret_cast<void *>(*WinScreenDC);
-        void *prev = reinterpret_cast<void *>(selectObject(hdc, pen1));
-        moveToEx(hdc, x1, y1, 0);
-        lineTo(hdc, x1, y2);
-        selectObject(hdc, prev);
+        HDC hdc = reinterpret_cast<HDC>(*WinScreenDC);
+        HGDIOBJ prev = SelectObject(hdc, pen1);
+        MoveToEx(hdc, x1, y1, 0);
+        LineTo(hdc, x1, y2);
+        SelectObject(hdc, prev);
         release_hdc();
     }
 
     ACQUIRE_HDC(haveHdc);
     if (haveHdc) {
         sync_palette();
-        void *hdc = reinterpret_cast<void *>(*WinScreenDC);
-        void *prev = reinterpret_cast<void *>(selectObject(hdc, pen2));
-        moveToEx(hdc, x2, y1 + 1, 0);
-        lineTo(hdc, x2, y2 + 1);
-        selectObject(hdc, prev);
+        HDC hdc = reinterpret_cast<HDC>(*WinScreenDC);
+        void *prev = reinterpret_cast<void *>(SelectObject(hdc, pen2));
+        MoveToEx(hdc, x2, y1 + 1, 0);
+        LineTo(hdc, x2, y2 + 1);
+        SelectObject(hdc, prev);
         release_hdc();
     }
 }
@@ -7827,7 +7794,7 @@ int Win::init(int x, int y, int width, int height, char * caption,
     if (parent != 0) {
         if (parent->child_count_ == 150) {
             this->close();
-            (*reinterpret_cast<MessageBoxAFn *>(g_MessageBoxA))(
+            MessageBoxA(
                 0, reinterpret_cast<const char *>(WinMsgTooManyChildren), reinterpret_cast<const char *>(WinMsgIncreaseMaxChildren), 0);
             // MEASURED at 0x005EBFC4: `push 4; call 0x644dff` - the CRT's exit with
             // status 4, not a member call. The artifact declared a local
@@ -7849,7 +7816,7 @@ int Win::init(int x, int y, int width, int height, char * caption,
         int cnt = WinRootCount;
         if (cnt == 0x28) {
             this->close();
-            (*reinterpret_cast<MessageBoxAFn *>(g_MessageBoxA))(
+            MessageBoxA(
                 0, reinterpret_cast<const char *>(WinMsgTooManyParents), reinterpret_cast<const char *>(WinMsgIncreaseMaxParents), 0);
             // MEASURED at 0x005EBFC4: `push 4; call 0x644dff` - the CRT's exit with
             // status 4, not a member call. The artifact declared a local
@@ -8070,24 +8037,19 @@ typedef void(__stdcall *GetCursorPosFn)(int *);
 typedef int(__stdcall *PollFn)(int);
 
 int __cdecl Win::update_cursor(Win *window, int tgl) {
-    UnionRectFn UnionRect = (UnionRectFn)(*g_UnionRect);
-    GetCursorPosFn GetCursorPosPtr = (GetCursorPosFn)(*g_GetCursorPos);
-    LoadCursorFn LoadCursorPtr = (LoadCursorFn)(*g_LoadCursorA);
-    SetCursorFn SetCursorPtr = (SetCursorFn)(*g_SetCursor);
-    PollFn PollPtr = (PollFn)(*g_ShowCursor);
 
-    int pt[2];
-    GetCursorPosPtr(pt);
-    int x = pt[0];
-    int y = pt[1];
+    POINT pt;  // the artifact spelled this `int pt[2]`
+    GetCursorPos(&pt);
+    int x = pt.x;
+    int y = pt.y;
 
     Win *win = window;
     if (win == 0) {
         win = reinterpret_cast<Win *>(Win::get_mouse_window(&x, &y));
         if (win == 0) {
             RestoreAndFlip(UnionRect, false);
-            void *cur = LoadCursorPtr(0, 0x7f00);
-            return reinterpret_cast<int>(SetCursorPtr(cur));
+            HCURSOR cur = LoadCursorA(0, IDC_ARROW);
+            return reinterpret_cast<int>(SetCursor(cur));
         }
     }
 
@@ -8097,7 +8059,7 @@ int __cdecl Win::update_cursor(Win *window, int tgl) {
             // A window wants the cursor image saved/restored under it.
             int saved = reinterpret_cast<int>(WinFlipSprite);
             if (saved == 0) {
-                while (PollPtr(0) >= 0) {
+                while (ShowCursor(0) >= 0) {
                 }
             } else {
                 sub_5f1750(0);
@@ -8149,7 +8111,7 @@ int __cdecl Win::update_cursor(Win *window, int tgl) {
         if (WinFlipSprite != 0) {
             int ebxFlag = 1;
             sub_5f1750(1);
-            while (PollPtr(ebxFlag) <= 0) {
+            while (ShowCursor(ebxFlag) <= 0) {
             }
         }
         WinFlipSprite = reinterpret_cast<Sprite *>(0);
@@ -8158,8 +8120,8 @@ int __cdecl Win::update_cursor(Win *window, int tgl) {
         if (owner != 0) {
             int cursorId = WFIELD(owner, 0);
             if (cursorId != 0) {
-                void *cur = LoadCursorPtr(0, cursorId);
-                return reinterpret_cast<int>(SetCursorPtr(cur));
+                HCURSOR cur = LoadCursorA(0, MAKEINTRESOURCE(cursorId));
+                return reinterpret_cast<int>(SetCursor(cur));
             }
         }
         Win *win2 = reinterpret_cast<Win *>(WFIELD(win, 0x198));
@@ -8167,8 +8129,8 @@ int __cdecl Win::update_cursor(Win *window, int tgl) {
             goto lab_default_cursor;
         }
         {
-            void *cur = LoadCursorPtr(0, reinterpret_cast<int>(win2));
-            return reinterpret_cast<int>(SetCursorPtr(cur));
+            HCURSOR cur = LoadCursorA(0, reinterpret_cast<const char *>(win2));
+            return reinterpret_cast<int>(SetCursor(cur));
         }
     }
 
@@ -8186,35 +8148,35 @@ int __cdecl Win::update_cursor(Win *window, int tgl) {
         case 4:
             RestoreAndFlip(UnionRect, false);
             WinCursorMoved = ebxFlag;
-            SetCursorPtr(LoadCursorPtr(0, 0x7f00));
+            SetCursor(LoadCursorA(0, IDC_ARROW));
             break;
         case 12:
             RestoreAndFlip(UnionRect, false);
             WinCursorMoved = ebxFlag;
-            SetCursorPtr(LoadCursorPtr(0, 0x7f84));
+            SetCursor(LoadCursorA(0, MAKEINTRESOURCE(0x7f84)));
             break;
         case 13:
             RestoreAndFlip(UnionRect, true);
             WinCursorMoved = ebxFlag;
-            SetCursorPtr(LoadCursorPtr(0, 0x7f84));
+            SetCursor(LoadCursorA(0, MAKEINTRESOURCE(0x7f84)));
             break;
         case 14:
         case 17:
             RestoreAndFlip(UnionRect, true);
             WinCursorMoved = ebxFlag;
-            SetCursorPtr(LoadCursorPtr(0, 0x7f85));
+            SetCursor(LoadCursorA(0, MAKEINTRESOURCE(0x7f85)));
             break;
         case 15:
         case 19:
             RestoreAndFlip(UnionRect, true);
             WinCursorMoved = ebxFlag;
-            SetCursorPtr(LoadCursorPtr(0, 0x7f82));
+            SetCursor(LoadCursorA(0, MAKEINTRESOURCE(0x7f82)));
             break;
         case 16:
         case 18:
             RestoreAndFlip(UnionRect, true);
             WinCursorMoved = ebxFlag;
-            SetCursorPtr(LoadCursorPtr(0, 0x7f83));
+            SetCursor(LoadCursorA(0, MAKEINTRESOURCE(0x7f83)));
             break;
         case 0:
         case 1:
@@ -8224,7 +8186,7 @@ int __cdecl Win::update_cursor(Win *window, int tgl) {
         default:
             // Covers 5..11 and any out-of-table index (the `ja` fallback).
             RestoreAndFlip(UnionRect, true);
-            SetCursorPtr(LoadCursorPtr(0, 0x7f00));
+            SetCursor(LoadCursorA(0, IDC_ARROW));
             break;
         }
 
@@ -8244,7 +8206,7 @@ int __cdecl Win::update_cursor(Win *window, int tgl) {
             *WinModalResult = 0;
         }
 
-        while (PollPtr(ebxFlag) <= 0) {
+        while (ShowCursor(ebxFlag) <= 0) {
         }
         return 0;
     }
@@ -8252,8 +8214,8 @@ int __cdecl Win::update_cursor(Win *window, int tgl) {
 lab_default_cursor:
     WinFlipSprite = reinterpret_cast<Sprite *>(0);
     {
-        void *cur = LoadCursorPtr(0, 0x7f00);
-        return reinterpret_cast<int>(SetCursorPtr(cur));
+        HCURSOR cur = LoadCursorA(0, IDC_ARROW);
+        return reinterpret_cast<int>(SetCursor(cur));
     }
 }
 
@@ -8425,7 +8387,6 @@ void Win::on_redraw_nc(RECT * area, int flags) {
     int capM1 = capHeight - 1;
     int outerH = ((clientH - bottomThick) - capHeight) + 2 + capM1;
 
-    IntersectRectFn intersectRect = (IntersectRectFn)*(void **)g_IntersectRect;
 
     // ---- edge 0: top caption bar (buffer1_) ----
     {
@@ -8439,7 +8400,7 @@ void Win::on_redraw_nc(RECT * area, int flags) {
                 clip.right = area->right - savedLeft;
                 clip.bottom = area->bottom - savedTop;
             }
-            if (intersectRect(&clip, &clip, &outer)) {
+            if (IntersectRect(&clip, &clip, &outer)) {
                 buf->set_clip(&clip);
                 if (this->field_FC_ == 0) {
                     buf->fill(this->field_100_);
@@ -8500,7 +8461,7 @@ void Win::on_redraw_nc(RECT * area, int flags) {
                 clip.right = area->right - savedLeft;
                 clip.bottom = area->bottom + (capHeight - savedTop);
             }
-            if (intersectRect(&clip, &clip, &outer)) {
+            if (IntersectRect(&clip, &clip, &outer)) {
                 buf->set_clip(&clip);
                 if (this->field_FC_ == 0) {
                     buf->fill(this->field_100_);
@@ -8540,7 +8501,7 @@ void Win::on_redraw_nc(RECT * area, int flags) {
                 clip.right = area->right - savedLeft;
                 clip.bottom = area->bottom + shiftY;
             }
-            if (intersectRect(&clip, &clip, &outer)) {
+            if (IntersectRect(&clip, &clip, &outer)) {
                 buf->set_clip(&clip);
                 if (this->field_FC_ == 0) {
                     buf->fill(this->field_100_);
@@ -8580,7 +8541,7 @@ void Win::on_redraw_nc(RECT * area, int flags) {
                 clip.right = area->right + shiftX;
                 clip.bottom = area->bottom + (capHeight - savedTop);
             }
-            if (intersectRect(&clip, &clip, &outer)) {
+            if (IntersectRect(&clip, &clip, &outer)) {
                 buf->set_clip(&clip);
                 if (this->field_FC_ == 0) {
                     buf->fill(this->field_100_);
@@ -8729,8 +8690,7 @@ void Win::on_char(char param2, int param3) {
                     } while (j < *(int *)WinRootCount);
                 }
 
-                InvalidateRectFn invalidate = *(InvalidateRectFn *)g_InvalidateRect;
-                invalidate(*(void **)&HandleMain, 0, 0);
+                InvalidateRect(*(HWND *)&HandleMain, 0, 0);
 
                 Win *w = *(Win **)WinTopDialog;
                 if (w != 0 && reinterpret_cast<Win *>(w)->vslot_23() == 0) {
@@ -9197,8 +9157,8 @@ int Win::minimize() {
     if (WinPointerOwner4 == this) {
         WinPointerOwner4 = 0;
     }
-    (*reinterpret_cast<ShowWindowFn *>(g_ShowWindow))(
-        reinterpret_cast<void *>(*WinMainHwnd), 6);
+    ShowWindow(
+        reinterpret_cast<HWND>(*WinMainHwnd), 6);
     return 0;
 }
 
@@ -9454,7 +9414,7 @@ void Win::do_tracking(int x, int y) {
 
     // ---- 0x005F7E0F-0x005F7E3A: union the two rects and repaint ----
     RECT unioned;
-    (*reinterpret_cast<UnionRectFn *>(g_UnionRect))(&unioned, &rectA, &rectB);
+    UnionRect(&unioned, &rectA, &rectB);
     update_screen(&unioned, 0);
     flip(&unioned);
 }
@@ -9596,8 +9556,7 @@ int __cdecl Win::update_screen(RECT *area, Win *window) {
     if (area != 0) {
         int rectA[2] = {l10, l14};
         int rectB[2] = {l18, l1c};
-        IntersectRectFn fn = *reinterpret_cast<IntersectRectFn *>(g_IntersectRect);
-        int result = fn(reinterpret_cast<RECT *>(&rectB[0]), reinterpret_cast<const RECT *>(area),reinterpret_cast<const tagRECT *>(&rectA[0]));
+        int result = IntersectRect(reinterpret_cast<RECT *>(&rectB[0]), reinterpret_cast<const RECT *>(area),reinterpret_cast<const tagRECT *>(&rectA[0]));
         if (result == 0) {
             return 0;
         }
@@ -9625,15 +9584,13 @@ void Win::on_key(unsigned int a1, long a2, int a3, unsigned int a4) {
     (void)a3;
     (void)a4;
 
-    GetKeyStateFn getKeyState = *reinterpret_cast<GetKeyStateFn *>(g_GetKeyState);
     unsigned int key = a1;
-    if (getKeyState(0x10) & 0x8000) key |= 0x10000;
-    if (getKeyState(0x11) & 0x8000) key |= 0x20000;
-    if (getKeyState(0x12) & 0x8000) key |= 0x40000;
+    if (GetKeyState(0x10) & 0x8000) key |= 0x10000;
+    if (GetKeyState(0x11) & 0x8000) key |= 0x20000;
+    if (GetKeyState(0x12) & 0x8000) key |= 0x40000;
 
     char *net = *reinterpret_cast<char **>(WinNetBuffer);
     if (net != 0) {
-        PeekMessageFn peekMessage = *reinterpret_cast<PeekMessageFn *>(g_PeekMessageA);
         MsgT msg;
         if (key == *reinterpret_cast<unsigned int *>(net + 0x48)) {
             if (a2 == 0) {
@@ -9642,11 +9599,11 @@ void Win::on_key(unsigned int a1, long a2, int a3, unsigned int a4) {
                 reinterpret_cast<Net *>(net)->start_voice(
                     *reinterpret_cast<unsigned long *>(net + 0x50));
             }
-            if (!peekMessage(&msg, HandleMain, 0x102, 0x102, 1)) {
+            if (!PeekMessageA(&msg, HandleMain, 0x102, 0x102, 1)) {
                 return;
             }
             do {
-            } while (peekMessage(&msg, HandleMain, 0x102, 0x102, 1));
+            } while (PeekMessageA(&msg, HandleMain, 0x102, 0x102, 1));
             return;
         }
         if (key == *reinterpret_cast<unsigned int *>(net + 0x4c)) {
@@ -9656,11 +9613,11 @@ void Win::on_key(unsigned int a1, long a2, int a3, unsigned int a4) {
                 reinterpret_cast<Net *>(net)->start_voice(
                     *reinterpret_cast<long *>(net + 0x54));
             }
-            if (!peekMessage(&msg, HandleMain, 0x102, 0x102, 1)) {
+            if (!PeekMessageA(&msg, HandleMain, 0x102, 0x102, 1)) {
                 return;
             }
             do {
-            } while (peekMessage(&msg, HandleMain, 0x102, 0x102, 1));
+            } while (PeekMessageA(&msg, HandleMain, 0x102, 0x102, 1));
             return;
         }
     }
@@ -9704,19 +9661,17 @@ void Win::on_key(unsigned int a1, long a2, int a3, unsigned int a4) {
     }
 
     *reinterpret_cast<unsigned int *>(WinKeyModifiers) = key;
-    Fn1 fn = *reinterpret_cast<Fn1 *>(g_IsWindow);
-    if (fn(HandleMain)) {
+    if (IsWindow(HandleMain)) {
         this->key_down_event(key);
     }
 
     if (key >= 0x60 && key <= 0x6f) {
-        PeekMessageFn peekMessage = *reinterpret_cast<PeekMessageFn *>(g_PeekMessageA);
         MsgT msg;
-        if (!peekMessage(&msg, HandleMain, 0x102, 0x102, 1)) {
+        if (!PeekMessageA(&msg, HandleMain, 0x102, 0x102, 1)) {
             return;
         }
         do {
-        } while (peekMessage(&msg, HandleMain, 0x102, 0x102, 1));
+        } while (PeekMessageA(&msg, HandleMain, 0x102, 0x102, 1));
         return;
     }
 
@@ -9732,15 +9687,15 @@ typedef long (__stdcall *GetWindowLongAFn)(void *, int);
 typedef long (__stdcall *DefWindowProcAFn)(void *, unsigned int, unsigned int, long);
 typedef void (__cdecl *Callback404)();
 
-int __cdecl Win::OnSysCommand(void * hwnd, unsigned int command, int x,
+int __cdecl Win::OnSysCommand(HWND hwnd, unsigned int command, int x,
                               int y) {
     Win *self = reinterpret_cast<Win *>(
-        (*reinterpret_cast<GetWindowLongAFn *>(g_GetWindowLongA))(hwnd, -0x15));
+        GetWindowLongA(hwnd, -0x15));
     if (self == 0) {
         return 0;
     }
     if (command != 0xf060) {
-        return (*reinterpret_cast<DefWindowProcAFn *>(g_DefWindowProcA))(
+        return DefWindowProcA(
             hwnd, 0x112, command,
             (static_cast<unsigned int>(static_cast<unsigned short>(y)) << 16)
                 | static_cast<unsigned short>(x));
@@ -10256,7 +10211,7 @@ void Win::paint_tiled(Buffer *tile, int x_origin, int y_origin, int clip_left,
 
     if (*WinScreenDCDepth == 0) {
         if (*WinDDSurface == 0) {
-            *WinScreenDC = (int)(*reinterpret_cast<GetDCFn *>(g_GetDC))(
+            *WinScreenDC = (int)GetDC(
                 reinterpret_cast<HWND>(*WinMainHwnd));
         } else {
             ComSlot017 fn = (ComSlot017)(*reinterpret_cast<void ***>(*WinDDSurface))[17];
@@ -10284,11 +10239,11 @@ void Win::paint_tiled(Buffer *tile, int x_origin, int y_origin, int clip_left,
     clip_rect.right = clip_left + clip_width;
     clip_rect.top = clip_top;
     clip_rect.bottom = clip_top + clip_height;
-    HRGN clip_region = reinterpret_cast<HRGN__ *>((*g_CreateRectRgnIndirect)(&clip_rect));
+    HRGN clip_region = reinterpret_cast<HRGN__ *>(CreateRectRgnIndirect(&clip_rect));
     if (clip_region == 0) {
         return;
     }
-    (*g_SelectClipRgn)(reinterpret_cast<HDC>(*WinScreenDC), clip_region);
+    SelectClipRgn(reinterpret_cast<HDC>(*WinScreenDC), clip_region);
 
     int tile_width = static_cast<int>(tile->dib_.bmiHeader.biWidth);
     int neg_tile_height = -static_cast<int>(tile->dib_.bmiHeader.biHeight);
@@ -10331,7 +10286,7 @@ void Win::paint_tiled(Buffer *tile, int x_origin, int y_origin, int clip_left,
             *WinScreenDC = 0;
             return;
         }
-        (*reinterpret_cast<FnReleaseDC *>(g_ReleaseDC))(
+        ReleaseDC(
             reinterpret_cast<HWND>(*WinMainHwnd), reinterpret_cast<HDC>(*WinScreenDC));
         *WinScreenDC = 0;
     }
@@ -10783,14 +10738,14 @@ int __cdecl Win::OnQueryNewPalette(void * a1) {
             eax = *WinScreenDC;
         } else {
             // TWO STEPS, and the second one is load-bearing. Calling through
-            // `(*g_GetDC)(...)` directly compiled `mov eax,[0]` + `call [eax]`
+            // `GetDC(...)` directly compiled `mov eax,[0]` + `call [eax]`
             // - one instruction more than the image's single
             // `call dword ptr [0x66927c]`. Naming the loaded pointer first is
             // the spelling the rest of this file already uses (see the
             // GetDCFn line in the macro above, BYTE_EXACT), and it restores
             // the direct indirect-call encoding.
-            eax = (*reinterpret_cast<GetDCFn *>(g_GetDC))(
-                reinterpret_cast<void *>(*WinMainHwnd));
+            eax = reinterpret_cast<int>(GetDC(
+                reinterpret_cast<HWND>(*WinMainHwnd)));
             *WinScreenDC = eax;
         }
         if (eax == 0) {
@@ -10803,9 +10758,10 @@ int __cdecl Win::OnQueryNewPalette(void * a1) {
         return 0;
     }
 
-    (*reinterpret_cast<SelectPaletteFn *>(g_SelectPalette))(reinterpret_cast<void *>(eax), reinterpret_cast<void *>(PaletteInitialized), 0);
+    SelectPalette(reinterpret_cast<HDC>(eax),
+                  reinterpret_cast<HPALETTE>(PaletteInitialized), 0);
 
-    (*reinterpret_cast<RealizePaletteFn *>(g_RealizePalette))(reinterpret_cast<void *>(*WinScreenDC));
+    RealizePalette(reinterpret_cast<HDC>(*WinScreenDC));
 
     eax = *WinScreenDCDepth;
     eax = eax - 1;
@@ -10822,7 +10778,8 @@ int __cdecl Win::OnQueryNewPalette(void * a1) {
         return 0;
     }
 
-    (*reinterpret_cast<ReleaseDCFn *>(g_ReleaseDC))(reinterpret_cast<void *>(*WinMainHwnd), reinterpret_cast<void *>(*WinScreenDC));
+    ReleaseDC(reinterpret_cast<HWND>(*WinMainHwnd),
+              reinterpret_cast<HDC>(*WinScreenDC));
     *WinScreenDC = 0;
     return 0;
 }
@@ -10926,7 +10883,7 @@ long __cdecl Win::OnActivate(void *hwnd, unsigned int state, void *other,
                     fn2(iface2, *WinScreenDC);
                 } else {
                     typedef int (__stdcall *ReleaseDCProc)(void *, HDC);
-                    (*reinterpret_cast<ReleaseDCProc *>(g_ReleaseDC))(
+                    ReleaseDC(
                         HandleMain, reinterpret_cast<HDC>(*WinScreenDC));
                 }
                 *WinScreenDC = 0;

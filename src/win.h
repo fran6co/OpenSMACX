@@ -128,7 +128,7 @@ class Win : public AutoSound {
   friend void __cdecl OnSysKey(void *, unsigned int, long, int, unsigned int);
  public:
   // homed from 005f1340.cpp
-  bool __cdecl OnPaint(void * a1);
+  bool __cdecl OnPaint(HWND a1);
 
  public:
   // homed from 005ee330.cpp
@@ -631,7 +631,7 @@ class Win : public AutoSound {
  public:
   void __cdecl OnKey(void * a1, unsigned int a2, long a3, int a4, unsigned int a5);
   void OnLButtonUp(void *hwnd, int x, int y, unsigned int keys);
-  int __cdecl OnSysCommand(void * a1, unsigned int a2, int a3, int a4);
+  int __cdecl OnSysCommand(HWND a1, unsigned int a2, int a3, int a4);
   void paint_tiled(Buffer *tile, int x_origin, int y_origin, int clip_left, int clip_top, int clip_width, int clip_height, int unused8);
   void update_window_to_buffer(Buffer * buffer);
 
