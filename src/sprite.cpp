@@ -316,7 +316,7 @@ Return Value: No errors (0); allocation failed (4)
 Status: Semantics transcribed from the image
 
 PROMOTED FROM src/recovered/units/005eaf3f.cpp, which wrote every field as
-`*reinterpret_cast<int *>(self + 0x18)`.
+`iWidth_`.
 
 ONE BYTE OF PIXELS. The sheet is 1x1 and the extent is whatever the caller
 asked for, so this is a placeholder that draws a single colour - and
