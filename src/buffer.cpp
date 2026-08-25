@@ -332,30 +332,10 @@ Status: Complete
 void Buffer::close_class() {
 }
 
-int __fastcall buffer_set_font_redirect(
-    Buffer *self, void *, Font *font1, Font *font2, Font *font3, Font *font4) {
-    return self->set_font(font1, font2, font3, font4);
-}
 
-void __fastcall buffer_set_text_color_redirect(
-    Buffer *self, void *, int color1, int color2, int color3, int color4) {
-    self->set_text_color(color1, color2, color3, color4);
-}
 
-void __fastcall buffer_set_text_color2_redirect(
-    Buffer *self, void *, int color1, int color2, int color3, int color4) {
-    self->set_text_color2(color1, color2, color3, color4);
-}
 
-void __fastcall buffer_set_text_color3_redirect(
-    Buffer *self, void *, int color1, int color2, int color3, int color4) {
-    self->set_text_color3(color1, color2, color3, color4);
-}
 
-void __fastcall buffer_set_text_color_hyper_redirect(
-    Buffer *self, void *, int color1, int color2, int color3, int color4) {
-    self->set_text_color_hyper(color1, color2, color3, color4);
-}
 
 int __cdecl buffer_init_class_redirect() {
     return 0;
@@ -417,13 +397,7 @@ Status: Complete
 */
 // body src/buffer.h
 
-int __fastcall buffer_get_data_redirect(Buffer *self, void *) {
-    return self->get_data();
-}
 
-void __fastcall buffer_free_data_redirect(Buffer *self, void *, int count) {
-    self->free_data(count);
-}
 
 /*
 Purpose: Report the line height of the buffer's primary font, falling back to
@@ -457,9 +431,6 @@ int Buffer::text_line_height() {
     return fields[0x0C / 4];
 }
 
-int __fastcall buffer_text_line_height_redirect(Buffer *self, void *) {
-    return self->text_line_height();
-}
 
 IDirectDraw *BufferDirectDraw;  // 0x009BC494
 // 0x00696BF0, holding 1. `Buffer::Buffer` and `Buffer::close` are its
@@ -717,11 +688,6 @@ int Buffer::copy(Buffer *buffer, int xCoord, int yCoord, int width,
     return copy(buffer, xCoord, yCoord, xCoord, yCoord, width, height);
 }
 
-int __fastcall buffer_copy_redirect(Buffer *self, void *, Buffer *buffer,
-                                    int xCoord, int yCoord, int width,
-                                    int height) {
-    return self->copy(buffer, xCoord, yCoord, width, height);
-}
 
 /*
 Purpose: Copy the region a rectangle describes out of another buffer into the
@@ -752,10 +718,6 @@ int Buffer::copy(Buffer *buffer, RECT *rect) {
                 rect->right - left, rect->bottom - top);
 }
 
-int __fastcall buffer_copy_rect_redirect(Buffer *self, void *, Buffer *buffer,
-                                         RECT *rect) {
-    return self->copy(buffer, rect);
-}
 
 
 /*
@@ -1798,13 +1760,7 @@ Purpose: Drop the given number of device-context references, releasing the
 Status: Complete
 */
 
-HDC __fastcall buffer_get_hdc_redirect(Buffer *self, void *) {
-    return self->get_hdc();
-}
 
-void __fastcall buffer_release_hdc_redirect(Buffer *self, void *, int count) {
-    self->release_hdc(count);
-}
 
 /*
 Purpose: Republish a palette into the buffer's colour table and device context,
@@ -1858,10 +1814,6 @@ int Buffer::sync_to_palette(Palette *palette) {
     return 0;
 }
 
-int __fastcall buffer_sync_to_palette_redirect(
-        Buffer *self, void *, Palette *palette) {
-    return self->sync_to_palette(palette);
-}
 
 /*
 Purpose: Report the height of the buffer's text font, resolving the process
@@ -1892,9 +1844,6 @@ int Buffer::text_height() {
     return font1_->height_;
 }
 
-int __fastcall buffer_text_height_redirect(Buffer *self, void *) {
-    return self->text_height();
-}
 
 /*
 Purpose: Clip the buffer to a rectangle, updating the GDI clip region and the
@@ -2028,9 +1977,6 @@ int Buffer::set_clip(int left, int top, int width, int height) {
     return set_clip(&area);
 }
 
-int __fastcall buffer_set_clip_redirect(Buffer *self, void *, RECT *rect) {
-    return self->set_clip(rect);
-}
 
 /*
 Purpose: Measure `len` bytes of a string, following the buffer's markup.
@@ -2201,9 +2147,6 @@ int Buffer::text_width(LPSTR text) {
     return text_width(text, static_cast<int>(strlen(text)));
 }
 
-int __fastcall buffer_text_width_redirect(Buffer *self, void *, LPSTR text) {
-    return self->text_width(text);
-}
 
 namespace {
 
@@ -2458,10 +2401,6 @@ int Buffer::box(RECT *rect, int color1, int color2) {
     return 0;
 }
 
-int __fastcall buffer_box_redirect(Buffer *self, void *, RECT *rect,
-                                   int color1, int color2) {
-    return self->box(rect, color1, color2);
-}
 
 /*
 Purpose: Reset the buffer's link table - reinitialise the spot list to 40
@@ -2488,9 +2427,6 @@ void Buffer::clear_links() {
     }
 }
 
-void __fastcall buffer_clear_links_redirect(Buffer *self, void *) {
-    self->clear_links();
-}
 
 /*
 Purpose: Draw a string, switching fonts on markup and recording link regions.
@@ -2706,10 +2642,6 @@ int Buffer::write_l(LPSTR text, int x_coord, int y_coord, int len) {
         static_cast<int>(strlen(text)) < len ? static_cast<int>(strlen(text)) : len);
 }
 
-int __fastcall buffer_write_l_redirect(Buffer *self, void *, LPSTR text,
-                                       int x_coord, int y_coord, int len) {
-    return self->write_l(text, x_coord, y_coord, len);
-}
 
 /*
 Purpose: Draw at most `len` characters of a string flush against a
@@ -2796,10 +2728,6 @@ int Buffer::write_l(LPSTR text, RECT *rect, int len) {
     return write_multi_font_raw_l(text, rect->left, y_coord, limit);
 }
 
-int __fastcall buffer_write_l_rect_redirect(Buffer *self, void *, LPSTR text,
-                                            RECT *rect, int len) {
-    return self->write_l(text, rect, len);
-}
 
 /*
 Purpose: Draw at most `len` characters of a string horizontally centred in a
@@ -2874,11 +2802,6 @@ int Buffer::write_cent_l(LPSTR text, int x_coord, int y_coord, int width,
     return write_multi_font_raw_l(text, centred, y_coord, limit);
 }
 
-int __fastcall buffer_write_cent_l_redirect(Buffer *self, void *, LPSTR text,
-                                            int x_coord, int y_coord,
-                                            int width, int len) {
-    return self->write_cent_l(text, x_coord, y_coord, width, len);
-}
 
 /*
 Purpose: Draw at most `len` characters of a string centred both horizontally
@@ -2969,11 +2892,6 @@ int Buffer::write_cent_l(LPSTR text, RECT *rect, int len) {
     return write_multi_font_raw_l(text, x_coord, y_coord, limit);
 }
 
-int __fastcall buffer_write_cent_l_rect_redirect(Buffer *self, void *,
-                                                 LPSTR text, RECT *rect,
-                                                 int len) {
-    return self->write_cent_l(text, rect, len);
-}
 
 /*
 // ORIGINAL: 0x005DA680 ?poly@Buffer@@QAEHPAUVert@@HH@Z 0x005DA680-0x005DA69B BYTE_EXACT

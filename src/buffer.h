@@ -546,14 +546,7 @@ static const size_t BufferSurfaceLockSlot = 0x64;
 static const size_t BufferSurfaceUnlockSlot = 0x80;
 
 
-int __fastcall buffer_copy_redirect(Buffer *self, void *, Buffer *buffer,
-                                    int xCoord, int yCoord,
-                                    int width, int height);
-int __fastcall buffer_copy_rect_redirect(Buffer *self, void *, Buffer *buffer,
-                                         RECT *rect);
 
-int __fastcall buffer_get_data_redirect(Buffer *self, void *);
-int __fastcall buffer_text_line_height_redirect(Buffer *self, void *);
 void __fastcall buffer_close_redirect(Buffer *self, void *);
 void __fastcall buffer_destructor_redirect(Buffer *self, void *);
 extern const uint32_t BufferVtable;
@@ -576,33 +569,13 @@ extern IDirectDraw *BufferDirectDraw;
 extern uint32_t BufferField520Default;
 // Releases a Sprite-style allocation through the executable's own CRT.
 
-void __fastcall buffer_clear_links_redirect(Buffer *self, void *);
-void __fastcall buffer_free_data_redirect(Buffer *self, void *, int count);
 
-int __fastcall buffer_set_font_redirect(
-    Buffer *self, void *, Font *font1, Font *font2, Font *font3, Font *font4);
-void __fastcall buffer_set_text_color_redirect(
-    Buffer *self, void *, int color1, int color2, int color3, int color4);
-void __fastcall buffer_set_text_color2_redirect(
-    Buffer *self, void *, int color1, int color2, int color3, int color4);
-void __fastcall buffer_set_text_color3_redirect(
-    Buffer *self, void *, int color1, int color2, int color3, int color4);
-void __fastcall buffer_set_text_color_hyper_redirect(
-    Buffer *self, void *, int color1, int color2, int color3, int color4);
-int __cdecl buffer_init_class_redirect();
 void __cdecl buffer_close_class_redirect();
 
-HDC __fastcall buffer_get_hdc_redirect(Buffer *self, void *);
-void __fastcall buffer_release_hdc_redirect(Buffer *self, void *, int count);
 
-int __fastcall buffer_sync_to_palette_redirect(
-    Buffer *self, void *, Palette *palette);
 
-int __fastcall buffer_text_height_redirect(Buffer *self, void *);
 
-int __fastcall buffer_set_clip_redirect(Buffer *self, void *, RECT *rect);
 
-int __fastcall buffer_text_width_redirect(Buffer *self, void *, LPSTR text);
 
 // The four-argument line primitives at 0x005E1A80 (hline) and 0x005E1BF0
 // (vline) are clipped pixel writers, still original dependencies. The
@@ -611,8 +584,6 @@ int __fastcall buffer_text_width_redirect(Buffer *self, void *, LPSTR text);
 // deliberately discards - the original zeroes EAX after the last call
 // (`xor eax, eax` at 0x005E327A).
 
-int __fastcall buffer_box_redirect(Buffer *self, void *, RECT *rect,
-                                   int color1, int color2);
 
 // The measured overload this one wraps is a 578-byte body with three call
 // targets, still an original dependency. Tests rebind this seam.
@@ -625,13 +596,3 @@ int __fastcall buffer_box_redirect(Buffer *self, void *, RECT *rect,
 // pen position, which is why the scalar writers return the incoming x when
 // they emit nothing.
 
-int __fastcall buffer_write_l_redirect(Buffer *self, void *, LPSTR text,
-                                       int x_coord, int y_coord, int len);
-int __fastcall buffer_write_l_rect_redirect(Buffer *self, void *, LPSTR text,
-                                            RECT *rect, int len);
-int __fastcall buffer_write_cent_l_redirect(Buffer *self, void *, LPSTR text,
-                                            int x_coord, int y_coord,
-                                            int width, int len);
-int __fastcall buffer_write_cent_l_rect_redirect(Buffer *self, void *,
-                                                 LPSTR text, RECT *rect,
-                                                 int len);

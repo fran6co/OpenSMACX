@@ -42,7 +42,7 @@ from decomp import read  # noqa: E402
 CEILINGS = {
     "unk-method": 277,
     "function-address binding": 65,
-    "orphan redirect": 851,
+    "orphan redirect": 828,
     "pointer-as-int": 2,
     "undocumented trivial body": 0,
     # 239 IS BELOW WHAT THE TREE CAN REACH TODAY, and this is the only
