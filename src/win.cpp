@@ -4374,43 +4374,60 @@ void Win::nonclient_to_screen(RECT * rect) {
 // calls     (none)
 // working copy - scaffold materialised by --work
 
+// TRIED: 1 of 50, and the diagnosis is REGISTER PRESSURE, not shape. The
+// structure already matches the image function for function - the top-of-
+// stack test, the linear search, the `i == last` bail, the shift loop, the
+// found arm's `[eax-4]`/`[ecx-4]` reads - but this body pushes ebx AND edi
+// where the image pushes only esi, and carries 63 instructions against 50.
+// Tried: decrementing one variable in place with an early return, which is
+// what the image does (`test edx,edx` / `je` / `dec edx` / store) instead of
+// `count` plus `last = count - 1`; spelling the nulls `0` rather than
+// `nullptr`; and computing `&WinFocusStack[last]` as a pointer so both
+// stores go through a lea, as the image's do. None moved the count. Three
+// callee-saved registers against one is the thing to attack next.
 void Win::release_modal() {
-    int count = *WinModalDepth;
-    if (count != 0) {
-        int last = count - 1;
-        *WinModalDepth = last;
-        Win **top_ptr = &WinModalStack[last];
-        if (*top_ptr == this) {
-            *top_ptr = nullptr;
-            WinFocusStack[last] = 0;
-            if (0 < last) {
-                *WinFocusTop = WinFocusStack[last - 1];
-                WinFocusWindow = top_ptr[-1];
-                return;
-            }
-            WinFocusWindow = nullptr;
-        } else {
-            int i = 0;
-            if (0 < last) {
-                Win **p = WinModalStack;
-                do {
-                    if (*p == this) break;
-                    i = i + 1;
-                    p = p + 1;
-                } while (i < last);
-            }
-            if (i == last) {
-                *WinModalDepth = last + 1;
-                return;
-            }
-            if (i < last) {
-                do {
-                    WinModalStack[i] = WinModalStack[i + 1];
-                    WinFocusStack[i] = WinFocusStack[i + 1];
-                    i = i + 1;
-                } while (i < last);
-                return;
-            }
+    // ONE VARIABLE, DECREMENTED IN PLACE, and an early return. The
+    // image loads WinModalDepth into edx, tests it there, decrements
+    // it there and stores it back; keeping `count` and computing
+    // `last = count - 1` into a second register cost a `xor edx,edx`
+    // for the compare and a `lea esi,[eax-1]` for the decrement.
+    int last = *WinModalDepth;
+    if (last == 0) {
+        return;
+    }
+    --last;
+    *WinModalDepth = last;
+    Win **top_ptr = &WinModalStack[last];
+    if (*top_ptr == this) {
+        *top_ptr = 0;
+        WinFocusStack[last] = 0;
+        if (0 < last) {
+            *WinFocusTop = WinFocusStack[last - 1];
+            WinFocusWindow = top_ptr[-1];
+            return;
+        }
+        WinFocusWindow = 0;
+    } else {
+        int i = 0;
+        if (0 < last) {
+            Win **p = WinModalStack;
+            do {
+                if (*p == this) break;
+                i = i + 1;
+                p = p + 1;
+            } while (i < last);
+        }
+        if (i == last) {
+            *WinModalDepth = last + 1;
+            return;
+        }
+        if (i < last) {
+            do {
+                WinModalStack[i] = WinModalStack[i + 1];
+                WinFocusStack[i] = WinFocusStack[i + 1];
+                i = i + 1;
+            } while (i < last);
+            return;
         }
     }
 }
