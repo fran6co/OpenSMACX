@@ -499,14 +499,14 @@ void GraphicWin::overlay_nonclient(RECT *area) {           // 0x005D6AC0
     PENDING_BODY(0x005D6AC0, pending)(this, nullptr, area);
 }
 
-void BaseWin::click(int a1, int a2, int a3, int a4) {       // 0x004165D0
+void BaseWin::click(int a1, int a2, int right, int is_double) {       // 0x004165D0
     typedef void(__fastcall *pending)(BaseWin *, void *, int, int, int, int);
-    PENDING_BODY(0x004165D0, pending)(this, nullptr, a1, a2, a3, a4);
+    PENDING_BODY(0x004165D0, pending)(this, nullptr, a1, a2, right, is_double);
 }
 
-void BaseWin::iface_click(int a1, int a2, int a3, int a4) {                       // 0x004160F0
+void BaseWin::iface_click(int a1, int a2, int right, int is_double) {                       // 0x004160F0
     typedef void(__fastcall *pending)(BaseWin *, void *, int, int, int, int);
-    PENDING_BODY(0x004160F0, pending)(this, nullptr, a1, a2, a3, a4);
+    PENDING_BODY(0x004160F0, pending)(this, nullptr, a1, a2, right, is_double);
 }
 
 void BaseWin::draw_supported(int a1) {                       // 0x0040C850
@@ -519,9 +519,9 @@ void BaseWin::draw_facilities(int a1) {                       // 0x0040FCC0
     PENDING_BODY(0x0040FCC0, pending)(this, nullptr, a1);
 }
 
-void BaseWin::garrison_click(int a1, int a2, int a3, int a4) {                       // 0x0040B140
+void BaseWin::garrison_click(int vehID, int a2, int right, int is_double) {                       // 0x0040B140
     typedef void(__fastcall *pending)(BaseWin *, void *, int, int, int, int);
-    PENDING_BODY(0x0040B140, pending)(this, nullptr, a1, a2, a3, a4);
+    PENDING_BODY(0x0040B140, pending)(this, nullptr, vehID, a2, right, is_double);
 }
 
 

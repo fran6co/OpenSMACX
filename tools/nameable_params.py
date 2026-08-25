@@ -8,11 +8,21 @@ makes it look like one big naming backlog. It is not. Measured 2026-08-26:
     289   in headers, on a method PENDING_BODY still stands in for
     482   in headers, on a method whose body IS recovered
 
-The first two are 59% of the total and are NOT work: a placeholder's
-parameters cannot be named from evidence that does not exist yet, and
-naming them would decorate a body nobody has recovered. They fall out on
-their own when the body lands. Only the third group is actionable, and this
-prints it so a pass can start there instead of at the top of a census.
+The first two are 59% of the total and are MOSTLY not work: a placeholder's
+parameters usually cannot be named from evidence that does not exist yet.
+
+BUT "the body is missing" IS NOT THE SAME AS "there is no evidence", and
+this split was too coarse when first written. `BaseWin::iface_click(int,
+int, int, int)` is a PENDING_BODY, yet its four call sites name half of it
+outright: on_left_click passes (.., 0, 0), on_right_click (.., 1, 0),
+on_left_double_click (.., 0, 1), on_right_double_click (.., 1, 1). The
+third argument is `right` and the fourth `is_double`, and no body was
+needed to say so. The same call-site reading named `click` and
+`garrison_click`.
+
+So treat the first two groups as LOW yield rather than zero: check the call
+sites before writing a method off. The third group remains where a pass
+should start, and this prints it by file.
 
     uv run tools/nameable_params.py            # the actionable ones, by file
     uv run tools/nameable_params.py --summary  # just the three totals
