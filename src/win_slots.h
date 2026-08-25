@@ -41,6 +41,7 @@ static int * const g_LineTo = (int *)0x006690C4;
 static int * const g_SetCursor = (int *)0x00669288;
 static int * const g_LoadCursorA = (int *)0x0066928C;
 static int * const g_DefWindowProcA = (int *)0x006692B0;
+static int * const g_GetWindowLongA = (int *)0x0066934C;
 static int * const g_IsWindow = (int *)0x006692C8;
 static int * const g_InvalidateRect = (int *)0x00669304;
 static int * const g_MessageBoxA = (int *)0x00669318;
@@ -93,6 +94,17 @@ static int * const WinViewOriginX = (int *)0x009B7A70;
 static int * const WinViewOriginY = (int *)0x009B7A74;
 static int * const WinZOrderDirty = (int *)0x009B7A78;
 static int * const WinDoubleClickFlag = (int *)0x009B7AA4;
+// TRIED 2026-08-25 and REFUTED BY MEASUREMENT: retyping these three to
+// `Win **const` - the honest type, and the spelling win.h's
+// WinBubbleCompanion uses - cost show_maximize and maximize their claims.
+// The binding stopped folding to its immediate (`mov eax, dword ptr [eax]`
+// where the image has the address inline) and VC6 also stopped sharing one
+// zeroed register across the neighbouring stores, so the image's
+// `xor edi,edi` + three `mov [addr], edi` became three immediate stores.
+// Spelling the null `0` rather than `nullptr` did not bring it back. The
+// `reinterpret_cast<int>(this)` at the use sites is therefore LOAD-BEARING,
+// not laziness - it is raw-self-access debt the ratchet has to keep.
+// See the recorded lesson `binding-type-decides-folding`.
 static int * const WinCallbackWindow = (int *)0x009B7AB8;
 static int * const WinActiveDialog = (int *)0x009B7ABC;
 static int * const WinLastActive = (int *)0x009B7AC0;

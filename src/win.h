@@ -83,6 +83,11 @@ class Win : public AutoSound {
   // reads the same private fields the class's own z-order code does;
   // the image treats it as part of Win even though it is not a member.
   friend void __cdecl recurse_zorder(Win *window);
+  // The window class's WM_SYSKEY router, homed into win.cpp. It reads
+  // poWinBase_, iSomeFlag_ and win_parent_ off whichever window it
+  // resolves as active; the image treats it as part of Win even though
+  // its receiver is an HWND, not a `this`.
+  friend void __cdecl OnSysKey(void *, unsigned int, long, int, unsigned int);
  public:
   // homed from 005f1340.cpp
   bool __cdecl OnPaint(void * a1);
@@ -483,7 +488,13 @@ class Win : public AutoSound {
   virtual void on_key(unsigned int key, long flags, int repeat, unsigned int scan);  // slot 78  0x005F5D10
   // slot 79  0x005F5FB0  A REAL BODY, uncatalogued - declare it when it is named.
   virtual void vslot_79(int = 0, int = 0) {}
-  virtual int __stdcall on_sys_key(unsigned int key, long flags, int repeat, unsigned int scan);  // slot 80  0x005F6230
+  // NOT __stdcall, though the catalogue spells the body `QAG`. The image's
+  // own DISPATCH decides this, and it passes the receiver in ecx:
+  // OnSysKey at 0x005F16D0 does `mov ecx, esi` before the slot-80 call
+  // where a __stdcall member would push it. Declaring it __stdcall cost
+  // that claim one instruction; 0x005F6230 itself is unclaimed, so the
+  // dispatch is the only measurement that speaks here.
+  virtual int on_sys_key(unsigned int key, long flags, int repeat, unsigned int scan);  // slot 80  0x005F6230
   virtual void on_l_button_down(long flags, int x, int y, unsigned int keys, int dbl);  // slot 81  0x005F63C0
   virtual void on_l_button_up(int x, int y, unsigned int keys, int dbl);  // slot 82  0x005F6550
   virtual void on_r_button_down(long flags, int x, int y, unsigned int keys, int dbl);  // slot 83  0x005F6710

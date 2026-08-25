@@ -3709,6 +3709,139 @@ void __cdecl do_all_chars() {
 }
 
 /*
+Purpose: The window class's WM_NCHITTEST handler. It pulls the Win out of
+         GWL_USERDATA and asks it, falling back to DefWindowProcA when the
+         window has none. HOMED from src/recovered/units/005f1420.cpp on
+         2026-08-25: nothing in the product tree referenced it, so its claim
+         was archive-only and unverifiable. The artifact reached slot 75
+         through a fake `VCall` class; win.h declares that slot as
+         `on_nc_hittest`.
+
+         The catalogued name spells a Win receiver (`QAA`) that this body
+         does not have - `a1` is an HWND handed to GetWindowLongA, not a
+         `this`. See the `// symbol` fact for what the build emits.
+*/
+// ORIGINAL: 0x005F1420 ?OnNCHitTest@Win@@QAAJPAXHH@Z 0x005F1420-0x005F1471 FILE BYTE_EXACT
+// symbol    ?OnNCHitTest@@YAJPAXHH@Z
+// size      82 bytes
+// prototype LRESULT (__cdecl ?OnNCHitTest@Win@@QAAJPAXHH@Z)(HWND hWnd, int, int)
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+long __cdecl OnNCHitTest(void *hwnd, int x, int y) {
+    typedef long(__stdcall * GetWindowLongAFn)(void *, int);
+    typedef long(__stdcall * DefWindowProcAFn)(void *, unsigned int,
+                                               unsigned int, long);
+    long p = (*reinterpret_cast<GetWindowLongAFn *>(g_GetWindowLongA))(hwnd, -0x15);
+    if (p != 0) {
+        return reinterpret_cast<Win *>(p)->on_nc_hittest(x, y);
+    }
+    return (*reinterpret_cast<DefWindowProcAFn *>(g_DefWindowProcA))(
+        hwnd, 0x84, 0,
+        (static_cast<unsigned int>(static_cast<unsigned short>(y)) << 16)
+            | static_cast<unsigned short>(x));
+}
+
+/*
+Purpose: Does the tail of the typed-key ring match this string, read
+         BACKWARDS? Walks the caller's string from its last character and
+         the 10-byte ring at WinKeyRingStart..WinKeyRingEnd from the write
+         cursor, both backwards, wrapping the ring. Returns 0 when every
+         character matched and 1 at the first difference - strcmp's
+         convention, not a boolean.
+
+         THE CATALOGUE PUT THE NAME ON THE WRONG HALF OF A PAIR. It calls
+         this `?on_char@Win@@QAAHDH@Z`, a `(char, int)` member; this body
+         takes `(char *, int)` and the `// symbol` fact below already
+         recorded the free-function form. The signature the catalogue
+         describes belongs to 0x005F5FB0 - `Win::sub_5f5fb0(char, int)`,
+         vtable slot 79 - which is the real WM_CHAR handler: it WRITES the
+         character into this same ring and advances the same cursor. This
+         one is the matcher that handler calls.
+
+         What it matches is a cheat code. The one caller passes
+         0x00696DFD, which is the final 'g' of the string "mdebug" in
+         .rdata - a pointer to the LAST character, which is exactly what a
+         backwards walk needs.
+
+         HOMED from src/recovered/units/005f5f60.cpp on 2026-08-25.
+*/
+// ORIGINAL: 0x005F5F60 ?on_char@Win@@QAAHDH@Z 0x005F5F60-0x005F5FA1 FILE BYTE_EXACT
+// symbol    ?typed_keys_differ@@YAHPADH@Z
+// notes     RENAMED from the catalogue's `on_char` on the evidence above.
+//           The ORIGINAL line keeps the catalogued spelling; the symbol
+//           fact is what the build emits and what marker_symbols checks.
+// size      66 bytes
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+int __cdecl typed_keys_differ(char *code, int length) {
+    char *want = code + length - 1;
+    char *typed = *reinterpret_cast<char **>(WinKeyRingCursor);
+    for (int n = length; n > 0; --n) {
+        if (*typed != *want) return 1;
+        --typed;
+        --want;
+        if (typed < reinterpret_cast<char *>(WinKeyRingStart)) {
+            typed = reinterpret_cast<char *>(WinKeyRingEnd);
+        }
+    }
+    return 0;
+}
+
+/*
+Purpose: The window class's WM_SYSKEYDOWN/WM_SYSCHAR router. It resolves
+         which window is active - the modal focus if one is set, else the
+         focus window, else the input focus, else the default - records that
+         in WinActiveWindow, and hands the key to that window's owner
+         through vtable slot 80. HOMED from src/recovered/units/005f16d0.cpp
+         on 2026-08-25.
+
+         The catalogued name spells a `Win` receiver (`QAA`) this body does
+         not have: `a1` is the HWND the window procedure was called with and
+         is never read. The `// symbol` fact records the free-function form
+         the build emits.
+*/
+// ORIGINAL: 0x005F16D0 ?OnSysKey@Win@@QAAXPAXIJHI@Z 0x005F16D0-0x005F1745 FILE BYTE_EXACT
+// symbol    ?OnSysKey@@YAXPAXIJHI@Z
+// size      118 bytes
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F7E90
+void __cdecl OnSysKey(void *hwnd, unsigned int key, long flags, int repeat,
+                      unsigned int scan) {
+    int val;
+    if (WinFocusWindow != nullptr) {
+        val = *WinModalFocus;
+        if (val == 0) {
+            val = reinterpret_cast<int>(WinFocusWindow);
+        }
+    } else {
+        val = *WinInputFocus;
+        if (val == 0) {
+            val = *WinDefaultFocus;
+        }
+    }
+    *WinActiveWindow = val;
+    if (val != 0) {
+        // 0xA8 is poWinBase_, which win.h already documents as the window that
+// owns a position - a third witness after Win::construct storing `this`
+// there and Win::get_mouse_window returning it.
+        Win *owner = reinterpret_cast<Win *>(val)->poWinBase_;
+        if (owner != 0) {
+            if (owner->iSomeFlag_ & 1) {
+                Win *inner = owner->win_parent_;
+                if (inner != 0) {
+                    if (!inner->is_visible()) {
+                        return;
+                    }
+                }
+                owner->on_sys_key(key, flags, repeat, scan);
+            }
+        }
+    }
+}
+
+/*
 Purpose: Tear the process-wide window class down - destroy the main window,
          close the screen buffer, and unregister the class.
 // ORIGINAL: 0x005F04E0 ?close_class@Win@@QAAXXZ 0x005F04E0-0x005F0520 BYTE_EXACT
@@ -4321,7 +4454,7 @@ void Win::redo_caption_buttons() {
 }
 
 // ORIGINAL: 0x005F6230 ?on_sys_key@Win@@QAGHIJHI@Z 0x005F6230-0x005F62C8 FILE
-// symbol    ?on_sys_key@Win@@UAGHIJHI@Z
+// symbol    ?on_sys_key@Win@@UAEHIJHI@Z
 // LEVER: `PostMessageA`/`DefWindowProcA` by name instead of the two import
 // thunks (0x00669314, 0x006692B0) as `g_`-named function pointers - both
 // compile to the same `call dword ptr [import]` the image emits.
@@ -4333,7 +4466,7 @@ void Win::redo_caption_buttons() {
 // calls     (none)
 // indirect  0x005F6264 0x005F6278 0x005F62A9 0x005F62BD
 
-int __stdcall Win::on_sys_key(unsigned int vkey, long is_down, int repeat_count,
+int Win::on_sys_key(unsigned int vkey, long is_down, int repeat_count,
                               unsigned int key_flags) {
     LPARAM lParam = (key_flags << 0x10) | (repeat_count & 0xffff);
     if (is_down != 0) {
@@ -5597,11 +5730,11 @@ clear_focus:
     *WinFocusSecondary = zero;
 
 skip_all:
-    if (*WinActiveDialog == reinterpret_cast<int32_t>(this)) {
+    if (*WinActiveDialog == reinterpret_cast<int>(this)) {
         *WinActiveDialog = 0;
         this->vslot_04();
     }
-    if (*WinLastActive == reinterpret_cast<int32_t>(this)) {
+    if (*WinLastActive == reinterpret_cast<int>(this)) {
         *WinLastActive = 0;
     }
     iSomeFlag_ &= 0xfffffffeu;
@@ -7185,7 +7318,7 @@ int Win::set_modal(int a1, int (__cdecl *a2)(), Win * a3) {
         *WinFocusTop = reinterpret_cast<int>(a3);
         reinterpret_cast<Win *>(a3)->show(0);
     }
-    reinterpret_cast<Win *>(this)->show(0);
+    this->show(0);
     flush_input();
 
     void *cursor = (*reinterpret_cast<PFN_LoadCursorA *>(g_LoadCursorA))(0, reinterpret_cast<const char *>(0x7f00));
@@ -7194,7 +7327,7 @@ int Win::set_modal(int a1, int (__cdecl *a2)(), Win * a3) {
     int result = 0;
     if (WinFocusWindow == this) {
         for (;;) {
-            int r = reinterpret_cast<Win *>(this)->vslot_59();
+            int r = this->vslot_59();
             if (r == 0) {
                 break;
             }
@@ -7210,7 +7343,7 @@ int Win::set_modal(int a1, int (__cdecl *a2)(), Win * a3) {
                 }
             }
             wait_task();
-            if (WinFocusWindow != reinterpret_cast<Win *>(this)) {
+            if (WinFocusWindow != this) {
                 return 0;
             }
         }
@@ -7971,7 +8104,7 @@ void Win::left_down_event(int a1, int a2, int a3) {
     }
 
     if (a3 == 0) {
-        reinterpret_cast<Win *>(this)->vslot_20(a1, a2);
+        this->vslot_20(a1, a2);
         Win *child = *reinterpret_cast<Win **>(self + 0x24);
         if (child != 0) {
             int r = reinterpret_cast<Win *>(child)->vslot_23();
@@ -7980,7 +8113,7 @@ void Win::left_down_event(int a1, int a2, int a3) {
             }
         }
     } else {
-        reinterpret_cast<Win *>(this)->vslot_33(a1, a2);
+        this->vslot_33(a1, a2);
         Win *child = *reinterpret_cast<Win **>(self + 0x54);
         if (child != 0) {
             int r = reinterpret_cast<Win *>(child)->vslot_23();
@@ -8844,7 +8977,7 @@ int Win::minimize() {
         *WinActiveDialog = 0;
         this->vslot_04();
     }
-    if (*WinLastActive == reinterpret_cast<int>(this)) {
+    if (*reinterpret_cast<void **>(WinLastActive) == this) {
         *WinLastActive = 0;
     }
     (*reinterpret_cast<ShowWindowFn *>(g))(reinterpret_cast<void *>(*WinMainHwnd), 6);
@@ -9333,7 +9466,7 @@ void Win::on_key(unsigned int a1, long a2, int a3, unsigned int a4) {
             }
         }
 
-        *reinterpret_cast<void **>(WinCallbackWindow) = self;
+        *WinCallbackWindow = reinterpret_cast<int32_t>(self);
         typedef void(__cdecl * OnKeyCb)(unsigned int);
         OnKeyCb cb = reinterpret_cast<OnKeyCb>(field_434_);
         if (cb != 0) {
@@ -10056,11 +10189,11 @@ void Win::close() {
         *WinFocusSecondary = 0;
     }
 
-    if (*WinActiveDialog == (int)this) {
+    if (*WinActiveDialog == reinterpret_cast<int>(this)) {
         *WinActiveDialog = 0;
         this->vslot_04();
     }
-    if (*WinLastActive == (int)this) {
+    if (*WinLastActive == reinterpret_cast<int>(this)) {
         *WinLastActive = 0;
     }
     if ((*WinBubbleCompanion == this) && (*WinBubbleActive != 0)) {
@@ -10387,7 +10520,7 @@ void __cdecl Win::OnMouseMove(void * a1, int a2, int a3, unsigned int a4) {
     update_cursor(hit, 1);
     if (hit != 0) {
         if (WinHoverWindow != 0 &&
-            (*WinKeyState != 0 || hit != (Win *)WinHoverWindow) &&
+            (*WinKeyState != 0 || hit != WinHoverWindow) &&
             (*WinActiveDialog == 0 || *WinActiveDialog == reinterpret_cast<int>(WinHoverWindow))) {
             WinHoverWindow->vslot_18(a2, a3);
         }
