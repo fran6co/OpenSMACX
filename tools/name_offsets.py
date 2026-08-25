@@ -25,6 +25,14 @@ names the inside of one.
     uv run tools/name_offsets.py src/win.cpp map.json          # dry run
     uv run tools/name_offsets.py src/win.cpp map.json --apply
 
+THE ACCESS WIDTH IS PART OF THE ACCESS. `*reinterpret_cast<unsigned char *>
+(self + 0xa14)` is a ONE-BYTE store; the member at 0xA14 is declared
+`uint32_t`, so rewriting it to a bare `field_A14_ = 0` silently widens it to
+four bytes. That cost EditBox::close (0x00614F30) its BYTE_EXACT claim on
+2026-08-26 - image `mov byte ptr [esi + 0xa14], al`, this tree
+`mov dword ptr`. When the cast is narrower than the member, keep it:
+`*reinterpret_cast<unsigned char *>(&field_A14_)`.
+
 Every rewrite is a candidate for a byte change, unlike a rename - re-measure
 the touched claims. Palette's copy_from measured identical (19/19) in the
 member form, which is the precedent, not a guarantee.
