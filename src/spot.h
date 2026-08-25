@@ -59,7 +59,7 @@ class Spot {
       int type;
       int position;
   } *spots_;
-  uint32_t max_count_;
+  uint32_t max_count_;  // 0x0000
   uint32_t add_count_;
 };
 

@@ -95,7 +95,7 @@ class Log {
   void set_state(BOOL state) { is_disabled_ = (state == 0); }
 
  private:
-  LPSTR log_file_;
+  LPSTR log_file_;  // 0x0000
   BOOL is_disabled_;
 };
 

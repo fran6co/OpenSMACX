@@ -128,7 +128,7 @@ class Time {
   //
   // The tick lives in `Win::window_proc`'s WM_USER+1 arm, which is why
   // `Win` is a friend above.
-  int oneshot_state_;
+  int oneshot_state_;  // 0x0000
   UINT_PTR id_event_;
   void(__cdecl *callback1_)(int);
   // PRIVATE STORAGE ONLY - the PUBLIC two-parameter `init`/`start`/`pulse`

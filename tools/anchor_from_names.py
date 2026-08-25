@@ -20,13 +20,21 @@ an anchor would hide exactly what the ratchet is for.
     uv run tools/anchor_from_names.py            # what would be anchored
     uv run tools/anchor_from_names.py --apply
 
-WHAT IS LEFT AFTER THIS, measured 2026-08-26: 36 classes still carry no
-anchor, and none of them can be reached the same way. A second rule was
-considered and DISCARDED against the tree rather than shipped as a comment:
-"a class with no base starts its data at 0 (or 4 with a vfptr), and its own
-static_assert(sizeof) verifies the walk" - true, and it applies to ZERO of
-the 36, because every one of them either has a base or has no size assert.
-Those need per-class evidence from the image.
+TWO RULES, and the second one I nearly threw away on a bad measurement.
+
+  1. field_NN_ names. Annotate the first, and the walk landing on every
+     other name at exactly NN is the proof.
+  2. NO BASE + static_assert(sizeof). A class with no base starts its data
+     at 0, or 4 when it declares a virtual and carries a vfptr, and its own
+     asserted size verifies the walk.
+
+I measured rule 2 as reaching ZERO classes and wrote that down as a
+discarded idea. THE MEASUREMENT WAS TAKEN THROUGH A BROKEN READER: at the
+time header_offsets did not know the Win32 typedefs, ignored the tree's own
+sizeof asserts, and parsed array extents as decimal literals only. With
+those fixed, rule 2 anchors SEVEN classes - Sprite, Time, Spot,
+StringStruct and more - each verified against its own asserted size. A
+negative result is only as good as the tool that produced it.
 """
 from __future__ import annotations
 
@@ -39,6 +47,22 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from header_offsets import class_body, derive, sizes  # noqa: E402
 
 FIELD = re.compile(r"^(\s+)([\w:]+)\s+(field_([0-9A-Fa-f]+)_);")
+FIRST_DATA = re.compile(r"^\s{2,}(?!(?:public|private|protected|virtual|static|friend"
+                        r"|typedef|using|return)\b)[A-Za-z_][\w:]*\s+\*?\w+_\s*"
+                        r"(?:\[[^\]]*\])?;", re.M)
+
+
+def class_text(text: str, cls: str) -> str | None:
+    m = re.search(r"^class\s+" + cls + r"\b[^{]*\{", text, re.M)
+    if not m:
+        return None
+    depth, out = 0, []
+    for line in text[m.end() - 1:].splitlines(True):
+        depth += line.count("{") - line.count("}")
+        out.append(line)
+        if depth <= 0 and len(out) > 1:
+            break
+    return "".join(out)
 
 
 def candidates(header: Path, cls: str):
@@ -83,6 +107,35 @@ def main() -> int:
                 continue
             if not found or not seen or table:
                 continue                      # already anchored, or nothing to walk
+            # SECOND RULE: a class with NO BASE starts its data at 0, or at 4
+            # when it declares a virtual and so carries a vfptr. Its own
+            # static_assert(sizeof) verifies the walk - annotate the first
+            # member, walk to the end, and the total must equal the asserted
+            # size. Nothing is annotated unless it does.
+            if re.search(r"^class\s+" + cls + r"\s*\{", text, re.M) and cls in known:
+                first = FIRST_DATA.search(class_text(text, cls) or "")
+                if first:
+                    off = 4 if re.search(r"^\s+virtual\b",
+                                         class_text(text, cls) or "", re.M) else 0
+                    lines = text.split("\n")
+                    idx = next((i for i, l in enumerate(lines)
+                                if l.rstrip().endswith(first.group(0).rstrip())), None)
+                    if idx is not None:
+                        lines[idx] = lines[idx].rstrip() + f"  // {off:#06x}"
+                        header.write_text("\n".join(lines))
+                        try:
+                            t2, b2, _s, _f = derive(header, cls, known)
+                            end = max((int(k, 16) for k in t2), default=-1)
+                            ok = bool(t2) and not b2 and end < known[cls]
+                        finally:
+                            if not (ok and args.apply):
+                                header.write_text(text)
+                        if ok:
+                            anchored += 1
+                            print(f"  ANCHOR {cls:<20} first member at {off:#06x}; "
+                                  f"walk ends inside sizeof {known[cls]:#x}")
+                            continue
+
             fields = candidates(header, cls)
             if len(fields) < 3:
                 continue                      # too few names to prove anything

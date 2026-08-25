@@ -65,7 +65,7 @@ class AutoSound {
   // replaced.
   // The vfptr is EMITTED by the compiler now - see the virtual destructor
   // above. Same four bytes at offset 0, so sizeof(AutoSound) stays 0x98.
-  int val_1_;
+  int val_1_;  // 0x0004
   int val_2_;
   int val_3_;
   int val_4_;

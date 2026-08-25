@@ -50,7 +50,7 @@ class StringStruct {
   int add(int id);
 
  private:
-  uint32_t primary_abi_word_;
+  uint32_t primary_abi_word_;  // 0x0000
   uint32_t virtual_base_abi_word_;
   StringStructEntry *head_;
   StringStructEntry *current_;

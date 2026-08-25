@@ -60,7 +60,7 @@ class Sprite {
   // `Win::flip` draws the overlay sprite and takes its frame index from
   // `cTransparentIndex_`, which is the byte the image reads at +8.
   friend class Win;
-  int ppszFileName_;
+  int ppszFileName_;  // 0x0000
   int pcBits_;
   char cTransparentIndex_;
   char pad1_;
