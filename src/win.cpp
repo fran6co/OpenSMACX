@@ -4392,8 +4392,13 @@ void Win::nonclient_to_screen(RECT * rect) {
 // TRIED: 1 of 50, and the diagnosis is REGISTER PRESSURE, not shape. The
 // structure already matches the image function for function - the top-of-
 // stack test, the linear search, the `i == last` bail, the shift loop, the
-// found arm's `[eax-4]`/`[ecx-4]` reads - but this body pushes ebx AND edi
-// where the image pushes only esi, and carries 63 instructions against 50.
+// found arm's `[eax-4]`/`[ecx-4]` reads - but this body pushes edi as well
+// as esi where the image pushes esi alone, and carries 63 instructions
+// against 50. It also materialises the zero into a register (`xor edx, edx`
+// then `cmp esi, edx`) where the image tests in place (`test edx, edx`) -
+// the same one-fewer-live-value shape as the dx/dy lever. (Measured under
+// /Oy-, which is the set the flag search picks here; an earlier reading of
+// this diff under a fixed /O2 set said ebx AND edi.)
 // Tried: decrementing one variable in place with an early return, which is
 // what the image does (`test edx,edx` / `je` / `dec edx` / store) instead of
 // `count` plus `last = count - 1`; spelling the nulls `0` rather than
