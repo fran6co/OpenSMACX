@@ -1755,10 +1755,10 @@ int Win::is_descendant(Win *candidate) {
 // calls     0x00606320
 Status: Complete
 */
-void Win::on_mousewheel_down_vert(int a1) {
+void Win::on_mousewheel_down_vert(int delta) {
     Scroll *scroll = scroll_vert_;
     if (scroll) {
-        scroll->on_mousewheel_down(a1);
+        scroll->on_mousewheel_down(delta);
     }
 }
 
@@ -1772,10 +1772,10 @@ void Win::on_mousewheel_down_vert(int a1) {
 // calls     0x00606440
 Status: Complete
 */
-void Win::on_mousewheel_up_horz(int a1) {
+void Win::on_mousewheel_up_horz(int delta) {
     Scroll *scroll = scroll_horz_;
     if (scroll) {
-        scroll->on_mousewheel_up(a1);
+        scroll->on_mousewheel_up(delta);
     }
 }
 
@@ -1811,10 +1811,10 @@ int Win::get_lbutton_state() {
 // calls     0x00606320
 Status: Complete
 */
-void Win::on_mousewheel_down_horz(int a1) {
+void Win::on_mousewheel_down_horz(int delta) {
     Scroll *scroll = scroll_horz_;
     if (scroll) {
-        scroll->on_mousewheel_down(a1);
+        scroll->on_mousewheel_down(delta);
     }
 }
 
@@ -1828,10 +1828,10 @@ void Win::on_mousewheel_down_horz(int a1) {
 // calls     0x00606440
 Status: Complete
 */
-void Win::on_mousewheel_up_vert(int a1) {
+void Win::on_mousewheel_up_vert(int delta) {
     Scroll *scroll = scroll_vert_;
     if (scroll) {
-        scroll->on_mousewheel_up(a1);
+        scroll->on_mousewheel_up(delta);
     }
 }
 
@@ -3263,7 +3263,6 @@ Return Value: n/a
 Status: Complete
 */
 void Win::on_mouse_move(int x, int y, unsigned int keys, int from_parent) {
-    char *const self = reinterpret_cast<char *>(this);
     if ((iFlags_ & 0x200000U) != 0) {
         return;
     }
@@ -3281,7 +3280,7 @@ void Win::on_mouse_move(int x, int y, unsigned int keys, int from_parent) {
             fn(x, y);
         }
         this->vslot_17(x, y);
-        Win *const child = *reinterpret_cast<Win **>(self + 0x1C);
+        Win *const child = reinterpret_cast<Win *>(val_7_);
         if (child != 0) {
             if (child->vslot_23() == 0) {
                 child->vslot_07();
@@ -3289,7 +3288,7 @@ void Win::on_mouse_move(int x, int y, unsigned int keys, int from_parent) {
         }
     } else {
         this->vslot_31(x, y);
-        Win *const child = *reinterpret_cast<Win **>(self + 0x4C);
+        Win *const child = reinterpret_cast<Win *>(val_19_);
         if (child != 0) {
             if (child->vslot_23() == 0) {
                 child->vslot_07();
@@ -3319,14 +3318,14 @@ Purpose: Walk one root window's subtree in z-order, appending every visible
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005F4EC0 0x005F7E90
-void __cdecl recurse_zorder(Win * a1) {
+void __cdecl recurse_zorder(Win * window) {
     bool found = false;
     int i = 0;
     int cur;
 
-    if (a1->child_count_ > 0) {
+    if (window->child_count_ > 0) {
         cur = *WinHighlighted;
-        Win **child = &a1->children_[0];
+        Win **child = &window->children_[0];
         do {
             Win *c = *child;
             if ((c->iFlags_ & 0x20) == 0) {
@@ -3349,22 +3348,22 @@ void __cdecl recurse_zorder(Win * a1) {
             }
             ++i;
             ++child;
-        } while (i < a1->child_count_);
+        } while (i < window->child_count_);
     } else {
         cur = *WinHighlighted;
     }
 
     if (!(cur != 0 && found)) {
         i = 0;
-        if (a1->child_count_ > 0) {
-            Win **child = &a1->children_[0];
+        if (window->child_count_ > 0) {
+            Win **child = &window->children_[0];
             do {
                 Win *c = *child;
                 if (cur != 0 && cur == reinterpret_cast<int>(c)) {
                     WinZOrderCount = 0;
                     found = true;
                 }
-                if (a1->poWinBase_ == a1 &&
+                if (window->poWinBase_ == window &&
                     (c->iFlags_ & 0x20)) {
                     if (c->iSomeFlag_ & 1) {
                         int child_c4 = *reinterpret_cast<int *>(
@@ -3381,15 +3380,15 @@ void __cdecl recurse_zorder(Win * a1) {
                 }
                 ++i;
                 ++child;
-            } while (i < a1->child_count_);
+            } while (i < window->child_count_);
         }
     }
 
-    if (a1->iSomeFlag_ & 1) {
-        int a1_c4 = *reinterpret_cast<int *>(reinterpret_cast<char *>(a1) + 0xc4);
+    if (window->iSomeFlag_ & 1) {
+        int a1_c4 = *reinterpret_cast<int *>(reinterpret_cast<char *>(window) + 0xc4);
         if (a1_c4 == 0 || reinterpret_cast<Win *>(a1_c4)->is_visible() != 0) {
             int idx = WinZOrderCount;
-            reinterpret_cast<int *>(g_win_array)[idx] = reinterpret_cast<int>(a1);
+            reinterpret_cast<int *>(g_win_array)[idx] = reinterpret_cast<int>(window);
             WinZOrderCount = idx + 1;
         }
     }
@@ -3417,8 +3416,8 @@ Purpose: The tree walk `Win::get_mouse_window` delegates to once it has a
 // that way since before this body was homed and every caller uses the
 // result as a window. The mangled name differs from the catalogue's for
 // exactly that reason; the body is unclaimed, so no claim rests on it.
-Win *__cdecl get_mouse_window_recurse(Win * a1, int * a2, int * a3) {
-    char *wc = reinterpret_cast<char *>(a1);
+Win *__cdecl get_mouse_window_recurse(Win * window, int * x, int * y) {
+    char *wc = reinterpret_cast<char *>(window);
     int savedX = 0, savedY = 0;
     int i;
 
@@ -3433,10 +3432,10 @@ Win *__cdecl get_mouse_window_recurse(Win * a1, int * a2, int * a3) {
     }
 
     if ((*(unsigned char *)(wc + 0x98) & 0x20) == 0) {
-        savedX = *a2;
-        savedY = *a3;
-        *a2 = *WinMouseScreenXSaved;
-        *a3 = *WinMouseScreenYSaved;
+        savedX = *x;
+        savedY = *y;
+        *x = *WinMouseScreenXSaved;
+        *y = *WinMouseScreenYSaved;
     }
 
     {
@@ -3445,7 +3444,7 @@ Win *__cdecl get_mouse_window_recurse(Win * a1, int * a2, int * a3) {
         for (i = 0; i < childCount; i++) {
             Win *child = children[i];
             if ((*reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(child) + 0x98) & 0x20) == 0) {
-                Win *r = get_mouse_window_recurse(child, a2, a3);
+                Win *r = get_mouse_window_recurse(child, x, y);
                 if (r != 0) return r;
             }
         }
@@ -3455,28 +3454,28 @@ Win *__cdecl get_mouse_window_recurse(Win * a1, int * a2, int * a3) {
         goto alt_path;
     }
 
-    if (!in_box(*a2, *a3, reinterpret_cast<RECT *>(wc + 0x14c))) {
+    if (!in_box(*x, *y, reinterpret_cast<RECT *>(wc + 0x14c))) {
         goto tail;
     }
-    *a2 -= *reinterpret_cast<int *>(wc + 0x14c);
-    *a3 -= *reinterpret_cast<int *>(wc + 0x150);
+    *x -= *reinterpret_cast<int *>(wc + 0x14c);
+    *y -= *reinterpret_cast<int *>(wc + 0x150);
 
     {
         int childCount = *reinterpret_cast<int *>(wc + 0x3fc);
         Win **children = reinterpret_cast<Win **>(wc + 0x1a4);
-        if (a1 == *reinterpret_cast<Win **>(wc + 0xa8)) {
+        if (window == *reinterpret_cast<Win **>(wc + 0xa8)) {
             for (i = 0; i < childCount; i++) {
                 Win *child = children[i];
                 unsigned int flags = *reinterpret_cast<unsigned int *>(reinterpret_cast<char *>(child) + 0x98);
                 if ((flags & 0x8000) != 0 && (flags & 0x20) != 0) {
-                    Win *r = get_mouse_window_recurse(child, a2, a3);
+                    Win *r = get_mouse_window_recurse(child, x, y);
                     if (r != 0) return r;
                 }
             }
         }
     }
 
-    if (!in_box(*a2, *a3, reinterpret_cast<RECT *>(wc + 0x13c))) {
+    if (!in_box(*x, *y, reinterpret_cast<RECT *>(wc + 0x13c))) {
         // pixel-precise hit test against one of the window's four render buffers
         unsigned char key = *reinterpret_cast<unsigned char *>(WinFillColour);
         unsigned int flagsHere;
@@ -3489,7 +3488,7 @@ Win *__cdecl get_mouse_window_recurse(Win * a1, int * a2, int * a3) {
         flagsHere = *reinterpret_cast<unsigned int *>(wc + 0x98);
         if (slotResult == 0 || (flagsHere & 0x10000000) == 0) {
             *WinDoubleClickFlag = 1;
-            return a1;
+            return window;
         }
 
         threshold1 = ((flagsHere & 0x10) == 0 || (flagsHere & 0x400000) != 0)
@@ -3499,54 +3498,54 @@ Win *__cdecl get_mouse_window_recurse(Win * a1, int * a2, int * a3) {
                               ? *reinterpret_cast<int *>(wc + 0x11c)
                               : *reinterpret_cast<int *>(wc + 0x118);
 
-        if (*a3 < threshold1) {
+        if (*y < threshold1) {
             buf = *reinterpret_cast<Buffer **>(wc + 0xb4);
-            pixel = (unsigned int)buf->get_pixel(*a2, *a3);
+            pixel = (unsigned int)buf->get_pixel(*x, *y);
             hit = (pixel != key);
-        } else if (*reinterpret_cast<int *>(wc + 0x158) - *reinterpret_cast<int *>(wc + 0x150) - threshold2 < *a3) {
+        } else if (*reinterpret_cast<int *>(wc + 0x158) - *reinterpret_cast<int *>(wc + 0x150) - threshold2 < *y) {
             buf = *reinterpret_cast<Buffer **>(wc + 0xc0);
-            pixel = (unsigned int)buf->get_pixel(*a2, (*reinterpret_cast<int *>(wc + 0x150) - *reinterpret_cast<int *>(wc + 0x158)) + *a3 + threshold2);
+            pixel = (unsigned int)buf->get_pixel(*x, (*reinterpret_cast<int *>(wc + 0x150) - *reinterpret_cast<int *>(wc + 0x158)) + *y + threshold2);
             hit = (pixel != key);
-        } else if (*a2 < *reinterpret_cast<int *>(wc + 0x118)) {
+        } else if (*x < *reinterpret_cast<int *>(wc + 0x118)) {
             buf = *reinterpret_cast<Buffer **>(wc + 0xbc);
-            pixel = (unsigned int)buf->get_pixel(*a2, *a3 - threshold1);
+            pixel = (unsigned int)buf->get_pixel(*x, *y - threshold1);
             hit = (pixel != key);
         } else {
             buf = *reinterpret_cast<Buffer **>(wc + 0xb8);
-            pixel = (unsigned int)buf->get_pixel((*reinterpret_cast<int *>(wc + 0x154) - *reinterpret_cast<int *>(wc + 0x14c)) + *reinterpret_cast<int *>(wc + 0x118) + *a2, *a3 - threshold1);
+            pixel = (unsigned int)buf->get_pixel((*reinterpret_cast<int *>(wc + 0x154) - *reinterpret_cast<int *>(wc + 0x14c)) + *reinterpret_cast<int *>(wc + 0x118) + *x, *y - threshold1);
             hit = (pixel != key);
         }
 
         if (hit) {
             *WinDoubleClickFlag = 1;
-            return a1;
+            return window;
         }
-        *a2 += *reinterpret_cast<int *>(wc + 0x14c);
-        *a3 += *reinterpret_cast<int *>(wc + 0x150);
+        *x += *reinterpret_cast<int *>(wc + 0x14c);
+        *y += *reinterpret_cast<int *>(wc + 0x150);
         goto tail;
     }
 
-    *a2 += *reinterpret_cast<int *>(wc + 0x14c);
-    *a3 += *reinterpret_cast<int *>(wc + 0x150);
-    return a1;
+    *x += *reinterpret_cast<int *>(wc + 0x14c);
+    *y += *reinterpret_cast<int *>(wc + 0x150);
+    return window;
 
 alt_path:
-    if (!in_box(*a2, *a3, reinterpret_cast<RECT *>(wc + 0x13c))) {
+    if (!in_box(*x, *y, reinterpret_cast<RECT *>(wc + 0x13c))) {
         goto tail;
     }
-    *a2 -= *reinterpret_cast<int *>(wc + 0x13c);
-    *a3 -= *reinterpret_cast<int *>(wc + 0x140);
+    *x -= *reinterpret_cast<int *>(wc + 0x13c);
+    *y -= *reinterpret_cast<int *>(wc + 0x140);
     *WinDoubleClickFlag = 0;
 
     {
         int childCount = *reinterpret_cast<int *>(wc + 0x3fc);
         Win **children = reinterpret_cast<Win **>(wc + 0x1a4);
-        if (a1 == *reinterpret_cast<Win **>(wc + 0xa8)) {
+        if (window == *reinterpret_cast<Win **>(wc + 0xa8)) {
             for (i = 0; i < childCount; i++) {
                 Win *child = children[i];
                 unsigned int flags = *reinterpret_cast<unsigned int *>(reinterpret_cast<char *>(child) + 0x98);
                 if ((flags & 0x8000) == 0 && (flags & 0x20) != 0) {
-                    Win *r = get_mouse_window_recurse(child, a2, a3);
+                    Win *r = get_mouse_window_recurse(child, x, y);
                     if (r != 0) return r;
                 }
             }
@@ -3557,17 +3556,17 @@ alt_path:
         int slotResult = reinterpret_cast<Win *>(wc)->vslot_61();
         unsigned int flagsHere = *reinterpret_cast<unsigned int *>(wc + 0x98);
         if (slotResult == 0 || (flagsHere & 0x1000000) == 0 || (*(unsigned char *)(wc + 0x99) & 1) != 0) {
-            return a1;
+            return window;
         }
         {
             Buffer *buf = reinterpret_cast<Buffer *>(wc + 0x444);
-            unsigned char pixel = (unsigned char)buf->get_pixel(*a2, *a3);
+            unsigned char pixel = (unsigned char)buf->get_pixel(*x, *y);
             if (pixel != *reinterpret_cast<unsigned char *>(WinFillColour)) {
                 if (*reinterpret_cast<int *>(wc + 0xa0) == 0) {
-                    return a1;
+                    return window;
                 }
                 if (pixel != 0) {
-                    return a1;
+                    return window;
                 }
             }
         }
@@ -3575,8 +3574,8 @@ alt_path:
 
 tail:
     if ((*(unsigned char *)(wc + 0x98) & 0x20) == 0) {
-        *a2 = savedX;
-        *a3 = savedY;
+        *x = savedX;
+        *y = savedY;
     }
     return 0;
 }
@@ -3642,9 +3641,9 @@ Purpose: Run the teardown step for the given instance, but only while it is
 // tops out at MNEMONIC_ONLY - seven mnemonics agreeing, one register wrong -
 // across eight source shapes. Only phrasing the tail call as a member on
 // `a1` reproduces ecx.
-void __cdecl sub_63c4e0(int a1) {
-    if (a1 != 0 && WinFocusWindow == reinterpret_cast<Win *>(a1)) {
-        reinterpret_cast<Win *>(a1)->sub_63c7c0();
+void __cdecl sub_63c4e0(int context) {
+    if (context != 0 && WinFocusWindow == reinterpret_cast<Win *>(context)) {
+        reinterpret_cast<Win *>(context)->sub_63c7c0();
     }
 }
 
@@ -3660,8 +3659,8 @@ Purpose: Close one window through its vtable, but only when it reports it
 // size      32 bytes
 // kind      game
 // flags     hidden;sp_ready;purged_ok
-void __stdcall sub_5f86a0(int a1) {
-    Win *const self = reinterpret_cast<Win *>(a1);
+void __stdcall sub_5f86a0(int window) {
+    Win *const self = reinterpret_cast<Win *>(window);
     if (self != 0) {
         if (self->vslot_23() == 0) {
             self->vslot_07();
@@ -3907,20 +3906,20 @@ void Win::set_mouse_pos(int a1, int a2) {
 // calls     0x005ED2D0
 // indirect  0x005EC8C5
 
-void Win::get_mouse_pos(int * a1, int * a2) {
-    if (a1 != 0 && a2 != 0) {
+void Win::get_mouse_pos(int * x, int * y) {
+    if (x != 0 && y != 0) {
         struct Pt { int x, y; } pt;
         typedef int (__stdcall *GetCursorPosFn)(Pt *);
         (*reinterpret_cast<GetCursorPosFn *>(g))(&pt);
-        *a1 = pt.x;
-        *a2 = pt.y;
-        *a1 -= client_rect_.left + outer_rect_.left;
-        *a2 -= client_rect_.top + outer_rect_.top;
+        *x = pt.x;
+        *y = pt.y;
+        *x -= client_rect_.left + outer_rect_.left;
+        *y -= client_rect_.top + outer_rect_.top;
         if ((iFlags_ & 0x20) != 0 && win_parent_ != 0) {
-            screen_to_client(a1, a2);
+            screen_to_client(x, y);
             if ((iFlags_ & 0x8000) != 0) {
-                *a1 += win_parent_->outer_rect_.left;
-                *a2 += win_parent_->outer_rect_.top;
+                *x += win_parent_->outer_rect_.left;
+                *y += win_parent_->outer_rect_.top;
             }
         }
     }
@@ -4038,9 +4037,9 @@ void Win::remove_parent_dialog() {
 //    near miss from a wrong body.
 
 
-int Win::UNK2(int a1) {
-    if (a1 != 0) {
-        char *w = reinterpret_cast<char *>(a1);
+int Win::UNK2(int value) {
+    if (value != 0) {
+        char *w = reinterpret_cast<char *>(value);
         if (*reinterpret_cast<int *>(w + 0x3fc) > 0) {
             int *children = reinterpret_cast<int *>(w + 0x1a4);
             int i = 0;
@@ -4142,8 +4141,8 @@ void Win::client_to_screen(RECT * rect) {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005ED2D0
 
-void Win::nonscreen_to_client(RECT * a1) {
-    if (a1 != 0) {
+void Win::nonscreen_to_client(RECT * rect) {
+    if (rect != 0) {
         int localX = -(client_rect_.left + outer_rect_.left);
         int localY = -(client_rect_.top + outer_rect_.top);
         if ((iFlags_ & 0x20) != 0 && win_parent_ != 0) {
@@ -4155,10 +4154,10 @@ void Win::nonscreen_to_client(RECT * a1) {
         }
         int dx = localX + outer_rect_.left;
         int dy = localY + outer_rect_.top;
-        a1->left = a1->left + dx;
-        a1->right = a1->right + dx;
-        a1->top = a1->top + dy;
-        a1->bottom = a1->bottom + dy;
+        rect->left = rect->left + dx;
+        rect->right = rect->right + dx;
+        rect->top = rect->top + dy;
+        rect->bottom = rect->bottom + dy;
     }
 }
 
@@ -4181,8 +4180,8 @@ void Win::nonscreen_to_client(RECT * a1) {
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005ED240
-void Win::nonclient_to_screen(RECT * a1) {
-    if (a1 != 0) {
+void Win::nonclient_to_screen(RECT * rect) {
+    if (rect != 0) {
         int x = client_rect_.left + outer_rect_.left;
         int y = client_rect_.top + outer_rect_.top;
         if ((iFlags_ & 0x20) != 0 && win_parent_ != 0) {
@@ -4194,10 +4193,10 @@ void Win::nonclient_to_screen(RECT * a1) {
         }
         int dx = x - outer_rect_.left;
         int dy = y - outer_rect_.top;
-        a1->left += dx;
-        a1->right += dx;
-        a1->top += dy;
-        a1->bottom += dy;
+        rect->left += dx;
+        rect->right += dx;
+        rect->top += dy;
+        rect->bottom += dy;
     }
 }
 
@@ -4600,7 +4599,7 @@ void Win::set_bubble_text(char * text, RECT * rect) {
 // indirect  0x005EE3AA 0x005EE401 0x005EE422 0x005EE439 0x005EE444
 
 
-int Win::resize_event(int a1, int a2) {
+int Win::resize_event(int width, int height) {
   class MfpBase {};
   typedef int (MfpBase::*Fn3)(int, int, int);
   union Conv3 {
@@ -4645,7 +4644,7 @@ int Win::resize_event(int a1, int a2) {
   if (field_400_ != 0) {
     typedef void(__cdecl * Fn2)(int, int);
     Fn2 fn = (Fn2)field_400_;
-    fn(a1, a2);
+    fn(width, height);
   }
   {
     typedef int (MfpBase::*Fn2m)(int, int);
@@ -4654,7 +4653,7 @@ int Win::resize_event(int a1, int a2) {
       void *asPtr;
     } c2;
     c2.asPtr = (*(void ***)this)[0x34 / 4];
-    (reinterpret_cast<MfpBase *>(this)->*c2.asMfp)(a1, a2);
+    (reinterpret_cast<MfpBase *>(this)->*c2.asMfp)(width, height);
   }
   redo_caption_buttons();
   return 0;
@@ -5318,23 +5317,22 @@ static FnSetActiveWindow const g_SetActiveWindow = (FnSetActiveWindow)0x005FE4F0
 // and rewriting it in the tree's own style is a later phase. See README.md
 // beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
 void Win::do_caption_buttons() {
-    char *self = reinterpret_cast<char *>(this);
     Win *obj;
 
-    obj = *reinterpret_cast<Win **>(self + 0xe4);
+    obj = minimize_button_;
     if (obj) {
         delete obj;
-        *reinterpret_cast<Win **>(self + 0xe4) = 0;
+        minimize_button_ = 0;
     }
-    obj = *reinterpret_cast<Win **>(self + 0xe8);
+    obj = zoom_button_;
     if (obj) {
         delete obj;
-        *reinterpret_cast<Win **>(self + 0xe8) = 0;
+        zoom_button_ = 0;
     }
-    obj = *reinterpret_cast<Win **>(self + 0xec);
+    obj = close_button_;
     if (obj) {
         delete obj;
-        *reinterpret_cast<Win **>(self + 0xec) = 0;
+        close_button_ = 0;
     }
 }
 
@@ -5353,15 +5351,14 @@ void Win::do_caption_buttons() {
 // OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
 // and rewriting it in the tree's own style is a later phase. See README.md
 // beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
-void Win::on_mousewheel_down(int a1) {
-    char *self = reinterpret_cast<char *>(this);
-    Scroll *scroll = *reinterpret_cast<Scroll **>(self + 0x43C);
+void Win::on_mousewheel_down(int delta) {
+    Scroll *scroll = scroll_vert_;
     if (scroll) {
-        scroll->on_mousewheel_down(a1);
+        scroll->on_mousewheel_down(delta);
     }
-    scroll = *reinterpret_cast<Scroll **>(self + 0x440);
+    scroll = scroll_horz_;
     if (scroll) {
-        scroll->on_mousewheel_down(a1);
+        scroll->on_mousewheel_down(delta);
     }
 }
 
@@ -5475,9 +5472,9 @@ int Win::maximize() {
 // OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
 // and rewriting it in the tree's own style is a later phase. See README.md
 // beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
-void Win::set_bottom_border_thickness(int a1) {
+void Win::set_bottom_border_thickness(int thickness) {
     if (iSomeFlag_ & 2) {
-        bottom_border_thickness_ = a1;
+        bottom_border_thickness_ = thickness;
         int width = client_rect_.right - client_rect_.left;
         int height = client_rect_.bottom - client_rect_.top;
         this->resize(width, height, 0);
@@ -5499,20 +5496,19 @@ void Win::set_bottom_border_thickness(int a1) {
 // OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
 // and rewriting it in the tree's own style is a later phase. See README.md
 // beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
-void Win::on_mousewheel_up(int a1) {
+void Win::on_mousewheel_up(int delta) {
     // BODY GOES HERE.
     //
     // Reach fields by offset - the class is deliberately empty:
     //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
-    char *self = reinterpret_cast<char *>(this);
-    Scroll *first = *reinterpret_cast<Scroll **>(self + 0x43c);
+    //     int v = val_9_;
+    Scroll *first = scroll_vert_;
     if (first != 0) {
-        first->on_mousewheel_up(a1);
+        first->on_mousewheel_up(delta);
     }
-    Scroll *second = *reinterpret_cast<Scroll **>(self + 0x440);
+    Scroll *second = scroll_horz_;
     if (second != 0) {
-        second->on_mousewheel_up(a1);
+        second->on_mousewheel_up(delta);
     }
 }
 
@@ -5539,6 +5535,7 @@ void Win::update_nc_buffer(int a1) {
 // ===== homed from src/recovered/005f1660.cpp =====
 
 // ORIGINAL: 0x005F1660 ?OnChar@Win@@QAAXPAXDH@Z 0x005F1660-0x005F16CB BYTE_EXACT
+// symbol    ?OnChar@@YAXPAXDH@Z
 // symbol    ?OnChar@Win@@QAAXPAXHH@Z
 // notes     `H` where the catalogue guessed `D`: the image loads a dword
 //           for that parameter, so it is an int.
@@ -5555,7 +5552,16 @@ void Win::update_nc_buffer(int a1) {
 // OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
 // and rewriting it in the tree's own style is a later phase. See README.md
 // beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
-void __cdecl Win::OnChar(void * a1, int a2, int a3) {
+// FREE, not a member, and the shift is the whole finding. The catalogue
+// spells this `?OnChar@Win@@QAAXPAXDH@Z`; a QAA name invents a receiver, and
+// that invented `this` IS the HWND. Every parameter therefore sat one slot
+// late: what the member form called `hwnd` is the character and what it
+// called `ch` is the flags, which is why the body used to read
+// `on_char(hwnd, ch)` - dispatching the window handle as the typed
+// character. The stack slots it reads are unchanged, so the bytes are
+// unchanged; only the names were wrong. Its siblings OnNCHitTest and
+// OnSysKey were homed as free functions for the same reason.
+void __cdecl OnChar(void *hwnd, char ch, int flags) {
     int result;
     if (WinFocusWindow != nullptr) {
         result = *WinModalFocus;
@@ -5574,8 +5580,7 @@ void __cdecl Win::OnChar(void * a1, int a2, int a3) {
         if (p != 0 && (*reinterpret_cast<unsigned char *>(p + 0x9c) & 1) != 0) {
             Win *visobj = *reinterpret_cast<Win **>(p + 0xc4);
             if (visobj == 0 || visobj->is_visible() != 0) {
-                reinterpret_cast<Win *>(p)->on_char(
-                    static_cast<char>(reinterpret_cast<int>(a1)), a2);
+                reinterpret_cast<Win *>(p)->on_char(ch, flags);
             }
         }
     }
@@ -5646,18 +5651,21 @@ void __cdecl Win::OnChar(void * a1, int a2, int a3) {
 //    prologue), it had enough register pressure to do so. That is a
 //    hard case - the tool reports a similarity ratio so you can tell a
 //    near miss from a wrong body.
-int Win::init(RECT* a1, char* a2, int a3, Win* a4, Menu* a5, BorderSizing* a6) {
-    if (a1 == 0) {
+int Win::init(RECT* bounds, char* caption, int flags, Win* parent, Menu* menu,
+              BorderSizing* border) {
+    if (bounds == 0) {
         return 3;
     }
-    char *r = reinterpret_cast<char *>(a1);
-    int top = *reinterpret_cast<int *>(r + 4);
-    int left = *reinterpret_cast<int *>(r);
+    // The RECT's own fields, not `char *` plus 0/4/8/0xC. The artifact walked
+    // it raw because nothing had modelled the parameter; the offsets it used
+    // ARE left/top/right/bottom in order.
+    int top = bounds->top;
+    int left = bounds->left;
     return this->init(
         left, top,
-        *reinterpret_cast<int *>(r + 8) - left,
-        *reinterpret_cast<int *>(r + 0xc) - top,
-        reinterpret_cast<char *>(a2), a3, a4, a5, a6);
+        bounds->right - left,
+        bounds->bottom - top,
+        caption, flags, parent, menu, border);
 }
 
 // ===== homed from src/recovered/units/005edcd0.cpp =====
@@ -5666,7 +5674,6 @@ typedef unsigned char uint8_t;
 typedef void(__stdcall *ThreeArgFn)(int, int, int);
 
 void Win::hide() {
-    char *const self = reinterpret_cast<char *>(this);
     int32_t zero;
     int32_t focus_a, focus_b, chosen;
     Win **child;
@@ -5778,7 +5785,7 @@ skip_all:
     (*reinterpret_cast<ThreeArgFn *>(g_InvalidateRect))(*WinMainHwnd, 0, 0);
 
     {
-        Win *other = *reinterpret_cast<Win **>(self + 0x10);
+        Win *other = reinterpret_cast<Win *>(val_4_);
         if (other != 0) {
             if (other->vslot_23() == 0) {
                 other->vslot_07();
@@ -5794,15 +5801,15 @@ void Win::on_l_button_down(long flags, int x, int y, unsigned int keys, int dbl)
 
     Win *child = win_parent_;
     if (child != 0) {
-        reinterpret_cast<Win *>(child)->bring_child_to_top(reinterpret_cast<Win *>(self));
-    } else if (reinterpret_cast<int32_t>(self) != 0 &&
+        reinterpret_cast<Win *>(child)->bring_child_to_top(this);
+    } else if (reinterpret_cast<int32_t>(this) != 0 &&
                (iFlags_ & 0x2000000) == 0) {
         int32_t idx = 0;
         int32_t count = *WinZOrderListCount;
         if (count > 0) {
             Win **p = g_zorder_list;
             for (;;) {
-                if (*p == reinterpret_cast<Win *>(self)) {
+                if (*p == this) {
                     if (idx < count) {
                         if (idx > 0) {
                             Win **q = g_zorder_list + idx;
@@ -5812,7 +5819,7 @@ void Win::on_l_button_down(long flags, int x, int y, unsigned int keys, int dbl)
                                 --idx;
                             } while (idx != 0);
                         }
-                        *g_zorder_list = reinterpret_cast<Win *>(self);
+                        *g_zorder_list = this;
                     }
                     break;
                 }
@@ -5823,20 +5830,20 @@ void Win::on_l_button_down(long flags, int x, int y, unsigned int keys, int dbl)
                 }
             }
         }
-        reinterpret_cast<Win *>(self)->update_zorder();
+        this->update_zorder();
     }
 
     child = win_parent_;
     if (child != 0) {
-        reinterpret_cast<Win *>(child)->set_dialog_focus(reinterpret_cast<Win *>(self));
+        reinterpret_cast<Win *>(child)->set_dialog_focus(this);
     }
 
     if (keys == 0) {
         WinPointerOwner2 = nullptr;
-        WinPointerOwner1 = reinterpret_cast<Win *>(self);
+        WinPointerOwner1 = this;
     } else {
         WinPointerOwner1 = nullptr;
-        WinPointerOwner2 = reinterpret_cast<Win *>(reinterpret_cast<int32_t>(self));
+        WinPointerOwner2 = reinterpret_cast<Win *>(reinterpret_cast<int32_t>(this));
     }
 
     *WinSizingFlag = 1;
@@ -5845,29 +5852,29 @@ void Win::on_l_button_down(long flags, int x, int y, unsigned int keys, int dbl)
         (iSomeFlag_ & 8) == 0) {
         int32_t related;
         if (keys == 0) {
-            *WinCallbackWindow = reinterpret_cast<int32_t>(self);
+            *WinCallbackWindow = reinterpret_cast<int32_t>(this);
             int32_t fp = field_40C_;
             if (fp != 0) {
                 reinterpret_cast<void(__cdecl *)(int, int)>(fp)(x, y);
             }
-            reinterpret_cast<Win *>(self)->vslot_28(y, x);
-            related = *reinterpret_cast<int32_t *>(self + 0x44);
+            this->vslot_28(y, x);
+            related = val_17_;
         } else {
-            reinterpret_cast<Win *>(self)->vslot_38(y, x);
-            related = *reinterpret_cast<int32_t *>(self + 0x68);
+            this->vslot_38(y, x);
+            related = val_26_;
         }
         if (related != 0 && reinterpret_cast<Win *>(related)->vslot_23() == 0) {
             reinterpret_cast<Win *>(related)->vslot_07();
         }
     }
 
-    int32_t hitTest = reinterpret_cast<Win *>(self)->vslot_61();
+    int32_t hitTest = this->vslot_61();
     int32_t idx = 0;
     if (hitTest == 0 ||
         reinterpret_cast<Spot *>(self + 0x8f4)->check(x, y, &idx, 0) < 0 ||
         reinterpret_cast<Slot88Shim *>(self)->slot088(
             idx, *reinterpret_cast<int32_t *>(self + idx * 4 + 0x900)) != 0) {
-        reinterpret_cast<Win *>(self)->left_down_event(x, y, dbl);
+        this->left_down_event(x, y, dbl);
     }
 }
 
@@ -5899,13 +5906,13 @@ void Win::on_l_button_up(int x, int y, unsigned int keys, int dbl) {
                     cb(x, y);
                 }
                 this->vslot_19(x, y);
-                Win *child = *reinterpret_cast<Win **>(reinterpret_cast<char *>(this) + 0x20);
+                Win *child = reinterpret_cast<Win *>(flags_);
                 if (child != 0 && child->vslot_23() == 0) {
                     child->vslot_07();
                 }
             } else {
                 this->vslot_32(x, y);
-                Win *child = *reinterpret_cast<Win **>(reinterpret_cast<char *>(this) + 0x50);
+                Win *child = reinterpret_cast<Win *>(val_20_);
                 if (child != 0 && child->vslot_23() == 0) {
                     child->vslot_07();
                 }
@@ -5914,7 +5921,7 @@ void Win::on_l_button_up(int x, int y, unsigned int keys, int dbl) {
     }
 
     if (*reinterpret_cast<uint8_t *>(&iSomeFlag_) & 1) {
-        Win *w = *reinterpret_cast<Win **>(reinterpret_cast<char *>(this) + 0xc4);
+        Win *w = win_parent_;
         if (w != 0 && w->is_visible() == 0) {
             return;
         }
@@ -5928,13 +5935,13 @@ void Win::on_l_button_up(int x, int y, unsigned int keys, int dbl) {
                     cb(x, y);
                 }
                 this->vslot_21(x, y);
-                Win *child = *reinterpret_cast<Win **>(reinterpret_cast<char *>(this) + 0x28);
+                Win *child = reinterpret_cast<Win *>(val_10_);
                 if (child != 0 && child->vslot_23() == 0) {
                     child->vslot_07();
                 }
             } else {
                 this->vslot_34(x, y);
-                Win *child = *reinterpret_cast<Win **>(reinterpret_cast<char *>(this) + 0x58);
+                Win *child = reinterpret_cast<Win *>(val_22_);
                 if (child != 0 && child->vslot_23() == 0) {
                     child->vslot_07();
                 }
@@ -5945,12 +5952,12 @@ void Win::on_l_button_up(int x, int y, unsigned int keys, int dbl) {
 
 // ===== homed from src/recovered/units/005ec740.cpp =====
 
-int Win::set_cursor(Sprite* a1, int a2, int a3) {
+int Win::set_cursor(Sprite* sprite, int hot_x, int hot_y) {
     char *self = reinterpret_cast<char *>(this);
-    if (a1 != 0) {
-        *reinterpret_cast<Sprite **>(self + 0x188) = a1;
-        field_18C_ = a2;
-        field_190_ = a3;
+    if (sprite != 0) {
+        *reinterpret_cast<Sprite **>(self + 0x188) = sprite;
+        field_18C_ = hot_x;
+        field_190_ = hot_y;
     }
     // IDENTIFIED: the image emits `push 1; push 0; call 0x5f1820` here, and
     // 0x005F1820 is `Win::update_cursor`. The artifact spelled it `fn(0, 1)`
@@ -5977,10 +5984,10 @@ typedef int (__stdcall *SetRectFn)(void*, int, int, int, int);
 // OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
 // and rewriting it in the tree's own style is a later phase. See README.md
 // beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
-void Win::UNK7(int a1, int a2, int a3, int a4) {
+void Win::UNK7(int x, int y, int width, int height) {
     int rectangle[4];
     (*reinterpret_cast<SetRectFn *>(g))(
-        rectangle, a1, a2, a1 + a3, a2 + a4);
+        rectangle, x, y, x + width, y + height);
 }
 
 // ===== homed from src/recovered/units/005f5480.cpp =====
@@ -6257,8 +6264,7 @@ int Win::get_rbutton_state() {
 // where they can be edited without regenerating anything and are in
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
-void Win::set_parent_dialog(Win *a1) {
-    char *self = reinterpret_cast<char *>(this);
+void Win::set_parent_dialog(Win *dialog) {
 
     if (iFlags_ & 0x200000) {
         return;
@@ -6266,11 +6272,11 @@ void Win::set_parent_dialog(Win *a1) {
     if (iSomeFlag_ & 8) {
         return;
     }
-    if ((iFlags_ & 0x1000) && a1 == 0) {
+    if ((iFlags_ & 0x1000) && dialog == 0) {
         return;
     }
 
-    char *b = reinterpret_cast<char *>(a1);
+    char *b = reinterpret_cast<char *>(dialog);
     if ((~*reinterpret_cast<unsigned int *>(b + 0x98) & 0x1000) == 0) {
         return;
     }
@@ -6345,7 +6351,7 @@ tail_common:
         *reinterpret_cast<int *>(b + 0xd8) = 0;
         *reinterpret_cast<int *>(b + 0xd0) = *reinterpret_cast<int *>(b + 0xcc);
     }
-    *reinterpret_cast<Win **>(self + 0xc4) = a1;
+    win_parent_ = dialog;
 }
 
 // ===== homed from src/recovered/units/005f5200.cpp =====
@@ -6410,27 +6416,26 @@ tail_common:
 //    prologue), it had enough register pressure to do so. That is a
 //    hard case - the tool reports a similarity ratio so you can tell a
 //    near miss from a wrong body.
-void Win::add_child(Win* a1) {
-    if (a1 == 0) {
+void Win::add_child(Win* child) {
+    if (child == 0) {
         return;
     }
-    char *self = reinterpret_cast<char *>(this);
-    char *other = reinterpret_cast<char *>(a1);
+    char *other = reinterpret_cast<char *>(child);
     if (*reinterpret_cast<unsigned int *>(other + 0x98) & 0x2000000) {
         int count = child_count_;
-        *reinterpret_cast<Win **>(self + 0x1A4 + count * 4) = a1;
+        children_[count] = child;
         child_count_ = child_count_ + 1;
         return;
     }
     int count = child_count_;
     if (count > 0) {
-        Win **slot = reinterpret_cast<Win **>(self + 0x1A4 + count * 4);
+        Win **slot = &children_[count];
         do {
             *slot = *(slot - 1);
             --slot;
         } while (--count);
     }
-    *reinterpret_cast<Win **>(self + 0x1A4) = a1;
+    children_[0] = child;
     child_count_ = child_count_ + 1;
 }
 
@@ -6573,7 +6578,10 @@ typedef int (__stdcall *MoveToExProc)(HDC, int, int, void *);
 typedef int (__stdcall *LineToProc)(HDC, int, int);
 typedef int (__stdcall *DeleteObjectProc)(void *);
 
-void Win::window_line_raw(int a1, int a2, int a3, int a4, int a5, int a6, unsigned int a7) {
+// The pair ORDER is the image's: lineTo takes (a1,a2) and moveTo takes
+// (a3,a4), so the first pair is the END of the segment.
+void Win::window_line_raw(int x2, int y2, int x1, int y1, int colour,
+                          int width, unsigned int style) {
     if (*WinScreenDCDepth != 0) {
         *WinScreenDCDepth = *WinScreenDCDepth + 1;
     } else {
@@ -6597,9 +6605,9 @@ void Win::window_line_raw(int a1, int a2, int a3, int a4, int a5, int a6, unsign
         }
 
         LocalLogPen pen;
-        pen.style = a7;
-        pen.widthX = a6;
-        pen.color = (a5 & 0xffff) | 0x1000000;
+        pen.style = style;
+        pen.widthX = width;
+        pen.color = (colour & 0xffff) | 0x1000000;
 
         CreatePenIndirectProc createPen = *reinterpret_cast<CreatePenIndirectProc *>(g_CreatePenIndirect);
         void *hpen = createPen(&pen);
@@ -6608,10 +6616,10 @@ void Win::window_line_raw(int a1, int a2, int a3, int a4, int a5, int a6, unsign
             void *oldPen = selectObj(reinterpret_cast<HDC>(*WinScreenDC), hpen);
 
             MoveToExProc moveTo = *reinterpret_cast<MoveToExProc *>(g_MoveToEx);
-            moveTo(reinterpret_cast<HDC>(*WinScreenDC), a3, a4, 0);
+            moveTo(reinterpret_cast<HDC>(*WinScreenDC), x1, y1, 0);
 
             LineToProc lineTo = *reinterpret_cast<LineToProc *>(g_LineTo);
-            lineTo(reinterpret_cast<HDC>(*WinScreenDC), a1, a2);
+            lineTo(reinterpret_cast<HDC>(*WinScreenDC), x2, y2);
 
             selectObj(reinterpret_cast<HDC>(*WinScreenDC), oldPen);
 
@@ -6707,9 +6715,9 @@ Buffer *Win::redraw_nc_buffer(int index) {
 // where they can be edited without regenerating anything and are in
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
-void Win::set_border_thickness(int a1) {
-    if (*reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(this) + 0x9C) & 2) {
-        border_thickness_ = a1;
+void Win::set_border_thickness(int thickness) {
+    if (iSomeFlag_ & 2) {
+        border_thickness_ = thickness;
         this->resize(
             client_rect_.right - client_rect_.left,
             client_rect_.bottom - client_rect_.top,
@@ -6883,20 +6891,20 @@ void Win::on_nc_paint(RECT * area, int flags) {
 
 // ===== homed from src/recovered/units/005f5270.cpp =====
 
-void Win::remove_child(Win *a1) {
-    if (a1 == 0) return;
+void Win::remove_child(Win *child) {
+    if (child == 0) return;
 
     int count = child_count_;
     int i = 0;
     if (count > 0) {
         do {
-            if (children_[i] == a1) break;
+            if (children_[i] == child) break;
             ++i;
         } while (i < count);
     }
     if (i < count) {
         child_count_ = count - 1;
-        a1->hide();
+        child->hide();
         if (i < child_count_) {
             do {
                 children_[i] = children_[i + 1];
@@ -6909,7 +6917,6 @@ void Win::remove_child(Win *a1) {
 // ===== homed from src/recovered/units/005f6880.cpp =====
 
 void Win::on_r_button_up(int x, int y, unsigned int keys, int dbl) {
-    char *self = reinterpret_cast<char *>(this);
 
     Win *captured = WinPointerOwner1;
     if (captured == nullptr) {
@@ -6930,16 +6937,16 @@ void Win::on_r_button_up(int x, int y, unsigned int keys, int dbl) {
                 if ((iSomeFlag_ & 8) == 0) {
                     int32_t related;
                     if (dbl == 0) {
-                        *WinCallbackWindow = reinterpret_cast<int32_t>(self);
+                        *WinCallbackWindow = reinterpret_cast<int32_t>(this);
                         int32_t fp = field_420_;
                         if (fp != 0) {
                             reinterpret_cast<void(__cdecl *)(int, int)>(fp)(x, y);
                         }
-                        reinterpret_cast<Win *>(self)->vslot_22(x, y);
-                        related = *reinterpret_cast<int32_t *>(self + 0x2c);
+                        this->vslot_22(x, y);
+                        related = val_11_;
                     } else {
-                        reinterpret_cast<Win *>(self)->vslot_35(x, y);
-                        related = *reinterpret_cast<int32_t *>(self + 0x5c);
+                        this->vslot_35(x, y);
+                        related = val_23_;
                     }
                     if (related != 0 && reinterpret_cast<Win *>(related)->vslot_23() == 0) {
                         reinterpret_cast<Win *>(related)->vslot_07();
@@ -6953,16 +6960,16 @@ void Win::on_r_button_up(int x, int y, unsigned int keys, int dbl) {
         (iSomeFlag_ & 8) == 0) {
         int32_t related2;
         if (dbl == 0) {
-            *WinCallbackWindow = reinterpret_cast<int32_t>(self);
+            *WinCallbackWindow = reinterpret_cast<int32_t>(this);
             int32_t fp = field_428_;
             if (fp != 0) {
                 reinterpret_cast<void(__cdecl *)(int, int)>(fp)(x, y);
             }
-            reinterpret_cast<Win *>(self)->vslot_24(x, y);
-            related2 = *reinterpret_cast<int32_t *>(self + 0x34);
+            this->vslot_24(x, y);
+            related2 = val_13_;
         } else {
-            reinterpret_cast<Win *>(self)->vslot_37(x, y);
-            related2 = *reinterpret_cast<int32_t *>(self + 0x64);
+            this->vslot_37(x, y);
+            related2 = val_25_;
         }
         if (related2 != 0 && reinterpret_cast<Win *>(related2)->vslot_23() == 0) {
             reinterpret_cast<Win *>(related2)->vslot_07();
@@ -6972,14 +6979,14 @@ void Win::on_r_button_up(int x, int y, unsigned int keys, int dbl) {
 
 // ===== homed from src/recovered/units/005f25c0.cpp =====
 
-void __cdecl Win::OnRButtonDown(void * a1, long a2, int a3, int a4, unsigned int a5) {
+void __cdecl Win::OnRButtonDown(void * hwnd, long flags, int x, int y, unsigned int keys) {
     int result = reinterpret_cast<int>(get_mouse_window(
-        reinterpret_cast<int *>(&a2), reinterpret_cast<int *>(&a3)));
+        reinterpret_cast<int *>(&flags), reinterpret_cast<int *>(&x)));
     if (result != 0) {
-        reinterpret_cast<Win *>(result)->on_r_button_down(reinterpret_cast<long>(a1), a2, a3, a4, *WinDoubleClickFlag);
+        reinterpret_cast<Win *>(result)->on_r_button_down(reinterpret_cast<long>(hwnd), flags, x, y, *WinDoubleClickFlag);
     }
     if (*WinMouseCallback != 0) {
-        reinterpret_cast<void (__cdecl *)(int, int)>(*WinMouseCallback)(a2, a3);
+        reinterpret_cast<void (__cdecl *)(int, int)>(*WinMouseCallback)(flags, x);
     }
     if (WinCursorMoved != 0) {
         reinterpret_cast<void (__cdecl *)()>(WinCursorMoved)();
@@ -6989,12 +6996,12 @@ void __cdecl Win::OnRButtonDown(void * a1, long a2, int a3, int a4, unsigned int
 
 // ===== homed from src/recovered/units/005f2620.cpp =====
 
-void __cdecl Win::OnRButtonUp(void * a1, int a2, int a3, unsigned int a4) {
+void __cdecl Win::OnRButtonUp(void * hwnd, int x, int y, unsigned int keys) {
     WinTrackingWindow = nullptr;
-    Win *win = reinterpret_cast<Win *>(get_mouse_window(&a2, &a3));
+    Win *win = reinterpret_cast<Win *>(get_mouse_window(&x, &y));
     if (win != 0) {
         VCallW *vcall = reinterpret_cast<VCallW *>(win);
-        vcall->slot084(a2, a3, a4, *WinDoubleClickFlag);
+        vcall->slot084(x, y, keys, *WinDoubleClickFlag);
     }
 }
 
@@ -7060,9 +7067,9 @@ void __cdecl Win::OnRButtonUp(void * a1, int a2, int a3, unsigned int a4) {
 //    prologue), it had enough register pressure to do so. That is a
 //    hard case - the tool reports a similarity ratio so you can tell a
 //    near miss from a wrong body.
-void Win::set_caption_height(int a1) {
+void Win::set_caption_height(int height) {
     if (iSomeFlag_ & 2) {
-        caption_height_ = a1;
+        caption_height_ = height;
         int w = client_rect_.right - client_rect_.left;
         int h = client_rect_.bottom - client_rect_.top;
         this->resize(w, h, 0);
@@ -7202,13 +7209,12 @@ void Win::show(int visible) {
 // ===== homed from src/recovered/units/005f7ec0.cpp =====
 typedef unsigned short uint16_t;
 
-void Win::update_back_to_window(Buffer * a1) {
-    char *self = reinterpret_cast<char *>(this);
-    if (a1 == 0) {
+void Win::update_back_to_window(Buffer * buffer) {
+    if (buffer == 0) {
         return;
     }
 
-    *WinBackBuffer = reinterpret_cast<int>(a1);
+    *WinBackBuffer = reinterpret_cast<int>(buffer);
     *WinHighlighted = 0;
     *WinViewOriginX = 0;
     *WinViewOriginY = 0;
@@ -7242,7 +7248,7 @@ void Win::update_back_to_window(Buffer * a1) {
             goto after_offset_fixup;
         }
         {
-            char *owner = reinterpret_cast<char *>(*reinterpret_cast<Win **>(self + 0xc4));
+            char *owner = reinterpret_cast<char *>(win_parent_);
             *WinViewOriginX -= *reinterpret_cast<int *>(owner + 0x13c);
             tail = *reinterpret_cast<int *>(owner + 0x140);
         }
@@ -7267,7 +7273,7 @@ after_offset_fixup:;
         rect.bottom = client_rect_.bottom;
     }
 
-    a1->init(rect.right - rect.left, rect.bottom - rect.top, 0, 0);
+    buffer->init(rect.right - rect.left, rect.bottom - rect.top, 0, 0);
 
     int dx = *WinViewOriginX - rect.left;
     int dy = *WinViewOriginY - rect.top;
@@ -7299,13 +7305,13 @@ after_offset_fixup:;
 typedef void *(__stdcall *PFN_LoadCursorA)(void *, const char *);
 typedef void *(__stdcall *PFN_SetCursor)(void *);
 
-int Win::set_modal(int a1, int (__cdecl *a2)(), Win * a3) {
+int Win::set_modal(int flags, int (__cdecl *callback)(), Win * owner) {
     if (*WinModalDepth >= 4) {
         return 0;
     }
     int idx = *WinModalDepth;
     WinModalStack[idx] = this;
-    reinterpret_cast<void **>(WinFocusStack)[idx] = a3;
+    reinterpret_cast<void **>(WinFocusStack)[idx] = owner;
     *WinModalDepth = idx + 1;
     WinFocusWindow = this;
     *WinFocusPrimary = 0;
@@ -7317,9 +7323,9 @@ int Win::set_modal(int a1, int (__cdecl *a2)(), Win * a3) {
         *WinActiveDialog = 0;
     }
     *WinInputFocus = 0;
-    if (a3 != 0) {
-        *WinFocusTop = reinterpret_cast<int>(a3);
-        reinterpret_cast<Win *>(a3)->show(0);
+    if (owner != 0) {
+        *WinFocusTop = reinterpret_cast<int>(owner);
+        reinterpret_cast<Win *>(owner)->show(0);
     }
     this->show(0);
     flush_input();
@@ -7334,8 +7340,8 @@ int Win::set_modal(int a1, int (__cdecl *a2)(), Win * a3) {
             if (r == 0) {
                 break;
             }
-            if (a2 != 0) {
-                int rr = a2();
+            if (callback != 0) {
+                int rr = callback();
                 if (rr == 0) {
                     int cur = reinterpret_cast<int>(WinFocusWindow);
                     if (cur != 0) {
@@ -7424,8 +7430,7 @@ void Win::draw_rect_border(int x1, int y1, int x2, int y2, HGDIOBJ pen1, HGDIOBJ
 
 // ===== homed from src/unrecovered/005eedc0.cpp =====
 
-int Win::key_up_event(int a1) {
-    char *self = reinterpret_cast<char *>(this);
+int Win::key_up_event(int key) {
     int result = 0;
     if ((iFlags_ & 0x200000) != 0 ||
         (iSomeFlag_ & 8) != 0) {
@@ -7438,17 +7443,17 @@ int Win::key_up_event(int a1) {
         } else {
             recvThis = 0;
         }
-        if (reinterpret_cast<Win *>(recvThis)->key_up_event(a1) != 0) {
+        if (reinterpret_cast<Win *>(recvThis)->key_up_event(key) != 0) {
             return 1;
         }
     }
     *WinCallbackWindow = reinterpret_cast<int>(this);
     int callback = field_434_;
     if (callback != 0) {
-        result = reinterpret_cast<int (__cdecl *)(int)>(callback)(a1);
+        result = reinterpret_cast<int (__cdecl *)(int)>(callback)(key);
     }
-    result += this->vslot_27(a1);
-    Win *child = *reinterpret_cast<Win **>(self + 0x40);
+    result += this->vslot_27(key);
+    Win *child = reinterpret_cast<Win *>(val_16_);
     if (child != 0) {
         if (child->vslot_23() == 0) {
             child->vslot_07();
@@ -7459,9 +7464,8 @@ int Win::key_up_event(int a1) {
 
 // ===== homed from src/unrecovered/005eeb90.cpp =====
 
-int Win::key_down_event(int a1) {
+int Win::key_down_event(int key) {
     typedef int (__cdecl *KeyHookFn)(int);
-    char *self = reinterpret_cast<char *>(this);
 
     if ((iFlags_ & 0x200000) != 0 ||
         (iSomeFlag_ & 8) != 0) {
@@ -7478,51 +7482,51 @@ int Win::key_down_event(int a1) {
         Win *focus = reinterpret_cast<Win *>(ebx);
 
         if (focus->scroll_vert_ != 0) {
-            if (focus->scroll_vert_->vslot_25(0, a1) != 0) {
+            if (focus->scroll_vert_->vslot_25(0, key) != 0) {
                 return 1;
             }
-            if ((short)MapVirtualKeyA(a1 & 0xfff8ffff, 2) == 0) {
-                focus->key_click_event(0, a1);
+            if ((short)MapVirtualKeyA(key & 0xfff8ffff, 2) == 0) {
+                focus->key_click_event(0, key);
                 clicked = true;
             }
         }
         if (focus->scroll_horz_ != 0) {
-            if (focus->scroll_horz_->vslot_25(0, a1) != 0) {
+            if (focus->scroll_horz_->vslot_25(0, key) != 0) {
                 return 1;
             }
-            if (!clicked && (short)MapVirtualKeyA(a1 & 0xfff8ffff, 2) == 0) {
-                focus->key_click_event(0, a1);
+            if (!clicked && (short)MapVirtualKeyA(key & 0xfff8ffff, 2) == 0) {
+                focus->key_click_event(0, key);
             }
         }
         if (focus->scroll_horz_ == 0 && focus->scroll_vert_ == 0 &&
-            (short)MapVirtualKeyA(a1 & 0xfff8ffff, 2) == 0) {
-            focus->key_click_event(0, a1);
+            (short)MapVirtualKeyA(key & 0xfff8ffff, 2) == 0) {
+            focus->key_click_event(0, key);
         }
-        if (focus->key_down_event(a1) != 0) {
+        if (focus->key_down_event(key) != 0) {
             return 1;
         }
     }
 
     if (this->scroll_vert_ != 0) {
-        if (this->scroll_vert_->vslot_25(0, a1) != 0) {
+        if (this->scroll_vert_->vslot_25(0, key) != 0) {
             return 1;
         }
-        if (!clicked && (short)MapVirtualKeyA(a1 & 0xfff8ffff, 2) == 0) {
-            key_click_event(0, a1);
+        if (!clicked && (short)MapVirtualKeyA(key & 0xfff8ffff, 2) == 0) {
+            key_click_event(0, key);
             clicked = true;
         }
     }
     if (this->scroll_horz_ != 0) {
-        if (this->scroll_horz_->vslot_25(0, a1) != 0) {
+        if (this->scroll_horz_->vslot_25(0, key) != 0) {
             return 1;
         }
-        if (!clicked && (short)MapVirtualKeyA(a1 & 0xfff8ffff, 2) == 0) {
-            key_click_event(0, a1);
+        if (!clicked && (short)MapVirtualKeyA(key & 0xfff8ffff, 2) == 0) {
+            key_click_event(0, key);
         }
     }
     if (this->scroll_horz_ == 0 && this->scroll_vert_ == 0 && !clicked &&
-        (short)MapVirtualKeyA(a1 & 0xfff8ffff, 2) == 0 &&
-        key_click_event(0, a1) != 0) {
+        (short)MapVirtualKeyA(key & 0xfff8ffff, 2) == 0 &&
+        key_click_event(0, key) != 0) {
         return 1;
     }
 
@@ -7530,11 +7534,11 @@ int Win::key_down_event(int a1) {
 
     KeyHookFn hook = reinterpret_cast<KeyHookFn>(field_430_);
     if (hook != 0) {
-        ebx = hook(a1);
+        ebx = hook(key);
     }
-    int r2 = this->vslot_26(a1);
+    int r2 = this->vslot_26(key);
 
-    Win *child = *reinterpret_cast<Win **>(self + 0x3c);
+    Win *child = reinterpret_cast<Win *>(val_15_);
     if (child != 0) {
         if (child->vslot_23() == 0) {
             child->vslot_07();
@@ -7546,11 +7550,12 @@ int Win::key_down_event(int a1) {
 // ===== homed from src/unrecovered/005ebd80.cpp =====
 typedef int (__stdcall *MessageBoxAFn)(void *, const char *, const char *, unsigned int);
 
-int Win::init(int a1, int a2, int a3, int a4, char * a5, int a6, Win * a7, Menu * a8, BorderSizing * a9) {
+int Win::init(int x, int y, int width, int height, char * caption,
+              int flags, Win * parent, Menu * menu, BorderSizing * border) {
     this->close();
 
-    if (a9 != 0) {
-        int *bs = reinterpret_cast<int *>(a9);
+    if (border != 0) {
+        int *bs = reinterpret_cast<int *>(border);
         this->caption_height_ = bs[0];
         this->border_thickness_ = bs[1];
         this->bottom_border_thickness_ = bs[2];
@@ -7578,7 +7583,6 @@ int Win::init(int a1, int a2, int a3, int a4, char * a5, int a6, Win * a7, Menu 
         if (this->buffer4_ == 0) return 4;
     }
 
-    int flags = a6;
     if ((flags & 0xF0000000) != 0) {
         if (this->vslot_61() == 0) {
             return 3;
@@ -7588,28 +7592,28 @@ int Win::init(int a1, int a2, int a3, int a4, char * a5, int a6, Win * a7, Menu 
         flags |= 0x20;
     }
 
-    int posX = a1;
-    if (a1 < 0) {
-        int w = a7 ? (a7->outer_rect_.right - a7->outer_rect_.left) : WinScreenWidth;
-        posX = a1 + (w - a3);
+    int posX = x;
+    if (x < 0) {
+        int w = parent ? (parent->outer_rect_.right - parent->outer_rect_.left) : WinScreenWidth;
+        posX = x + (w - width);
     }
-    int posY = a2;
-    if (a2 < 0) {
-        int h = a7 ? (a7->outer_rect_.bottom - a7->outer_rect_.top) : WinScreenHeight;
-        posY = a2 + (h - a4);
+    int posY = y;
+    if (y < 0) {
+        int h = parent ? (parent->outer_rect_.bottom - parent->outer_rect_.top) : WinScreenHeight;
+        posY = y + (h - height);
     }
 
     this->iFlags_ = flags;
-    this->menu_ = a8;
-    this->win_parent_ = a7;
+    this->menu_ = menu;
+    this->win_parent_ = parent;
 
-    if (a5 != 0 && a5[0] != 0 && (flags & 0x400080) == 0) {
+    if (caption != 0 && caption[0] != 0 && (flags & 0x400080) == 0) {
         flags |= 0x10;
         this->iFlags_ = flags;
     }
 
-    if (a7 != 0) {
-        if (a7->child_count_ == 150) {
+    if (parent != 0) {
+        if (parent->child_count_ == 150) {
             this->close();
             (*reinterpret_cast<MessageBoxAFn *>(g_MessageBoxA))(
                 0, reinterpret_cast<const char *>(WinMsgTooManyChildren), reinterpret_cast<const char *>(WinMsgIncreaseMaxChildren), 0);
@@ -7618,16 +7622,16 @@ int Win::init(int a1, int a2, int a3, int a4, char * a5, int a6, Win * a7, Menu 
             // `void exit();` in its stub class, which was a guess.
             exit(4);
         } else {
-            int idx = a7->child_count_;
+            int idx = parent->child_count_;
             if ((this->iFlags_ & 0x2000000) != 0) {
-                a7->children_[idx] = this;
+                parent->children_[idx] = this;
             } else {
                 for (int i = idx; i > 0; i--) {
-                    a7->children_[i] = a7->children_[i - 1];
+                    parent->children_[i] = parent->children_[i - 1];
                 }
-                a7->children_[0] = this;
+                parent->children_[0] = this;
             }
-            a7->child_count_++;
+            parent->child_count_++;
         }
     } else {
         int cnt = *WinZOrderListCount;
@@ -7665,8 +7669,8 @@ int Win::init(int a1, int a2, int a3, int a4, char * a5, int a6, Win * a7, Menu 
     if ((this->iFlags_ & 0x800) == 0 && (this->iSomeFlag_ & 2) != 0) {
         this->client_rect_.left = posX;
         this->client_rect_.top = posY;
-        this->client_rect_.right = posX + a3;
-        this->client_rect_.bottom = posY + a4;
+        this->client_rect_.right = posX + width;
+        this->client_rect_.bottom = posY + height;
         this->outer_rect_ = this->client_rect_;
         this->nonclient_to_client(&this->outer_rect_);
         int dx = -this->outer_rect_.left;
@@ -7678,8 +7682,8 @@ int Win::init(int a1, int a2, int a3, int a4, char * a5, int a6, Win * a7, Menu 
     } else {
         this->outer_rect_.left = posX;
         this->outer_rect_.top = posY;
-        this->outer_rect_.right = posX + a3;
-        this->outer_rect_.bottom = posY + a4;
+        this->outer_rect_.right = posX + width;
+        this->outer_rect_.bottom = posY + height;
         if ((this->iSomeFlag_ & 2) != 0) {
             this->client_rect_ = this->outer_rect_;
             this->client_to_nonclient(&this->outer_rect_);
@@ -7702,13 +7706,13 @@ int Win::init(int a1, int a2, int a3, int a4, char * a5, int a6, Win * a7, Menu 
         free(*nameSlot);
         *nameSlot = 0;
     }
-    if (a5 != 0) {
-        unsigned int len = strlen(a5) + 1;
+    if (caption != 0) {
+        unsigned int len = strlen(caption) + 1;
         void *mem = mem_get(static_cast<int>(len));
         *nameSlot = mem;
         if (mem != 0) {
             reinterpret_cast<char *>(mem)[0] = 0;
-            strcat(reinterpret_cast<char *>(*nameSlot), a5);
+            strcat(reinterpret_cast<char *>(*nameSlot), caption);
         }
     }
 
@@ -7724,8 +7728,8 @@ int Win::init(int a1, int a2, int a3, int a4, char * a5, int a6, Win * a7, Menu 
 
     this->set_rects();
 
-    if (a8 != 0) {
-        int result = reinterpret_cast<Slot88Shim *>(a8)->slot090(this);
+    if (menu != 0) {
+        int result = reinterpret_cast<Slot88Shim *>(menu)->slot090(this);
         if (result != 0) {
             this->close();
             return result;
@@ -7853,7 +7857,7 @@ typedef void *(__stdcall *SetCursorFn)(void *);
 typedef void(__stdcall *GetCursorPosFn)(int *);
 typedef int(__stdcall *PollFn)(int);
 
-int __cdecl Win::update_cursor(Win *a1, int a2) {
+int __cdecl Win::update_cursor(Win *window, int tgl) {
     UnionRectFn UnionRect = (UnionRectFn)(*g_UnionRect);
     GetCursorPosFn GetCursorPosPtr = (GetCursorPosFn)(*g);
     LoadCursorFn LoadCursorPtr = (LoadCursorFn)(*g_LoadCursorA);
@@ -7865,7 +7869,7 @@ int __cdecl Win::update_cursor(Win *a1, int a2) {
     int x = pt[0];
     int y = pt[1];
 
-    Win *win = a1;
+    Win *win = window;
     if (win == 0) {
         win = reinterpret_cast<Win *>(Win::get_mouse_window(&x, &y));
         if (win == 0) {
@@ -8086,29 +8090,28 @@ typedef void (__cdecl *FnCallback)(int, int);
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
 // indirect  0x005EE795 0x005EE7A5 0x005EE7B5 0x005EE7C3 0x005EE7CE 0x005EE7DD 0x005EE7EE 0x005EE7F9
-void Win::left_down_event(int a1, int a2, int a3) {
-    char *self = reinterpret_cast<char *>(this);
+void Win::left_down_event(int x, int y, int from_parent) {
     uint32_t iFlags = iFlags_;
     if ((iFlags & 0x200000) != 0) return;
     uint8_t iSomeFlagByte = iSomeFlag_;
     if ((iSomeFlagByte & 8) != 0) return;
 
-    if (a3 == 0) {
+    if (from_parent == 0) {
         *WinCallbackWindow = reinterpret_cast<int>(this);
         FnCallback cb = reinterpret_cast<FnCallback>(field_418_);
         if (cb != 0) {
-            cb(a1, a2);
+            cb(x, y);
         }
     }
 
     FnCallback global_cb = *reinterpret_cast<FnCallback *>(WinGlobalCallback);
     if (global_cb != 0) {
-        global_cb(a1, a2);
+        global_cb(x, y);
     }
 
-    if (a3 == 0) {
-        this->vslot_20(a1, a2);
-        Win *child = *reinterpret_cast<Win **>(self + 0x24);
+    if (from_parent == 0) {
+        this->vslot_20(x, y);
+        Win *child = reinterpret_cast<Win *>(val_9_);
         if (child != 0) {
             int r = reinterpret_cast<Win *>(child)->vslot_23();
             if (r == 0) {
@@ -8116,8 +8119,8 @@ void Win::left_down_event(int a1, int a2, int a3) {
             }
         }
     } else {
-        this->vslot_33(a1, a2);
-        Win *child = *reinterpret_cast<Win **>(self + 0x54);
+        this->vslot_33(x, y);
+        Win *child = reinterpret_cast<Win *>(val_21_);
         if (child != 0) {
             int r = reinterpret_cast<Win *>(child)->vslot_23();
             if (r == 0) {
@@ -8180,21 +8183,21 @@ void Win::nonclient_to_client(RECT * rect) {
 // ===== homed from src/unrecovered/005f2cf0.cpp =====
 typedef int (__stdcall *IntersectRectFn)(RECT *, const RECT *, const RECT *);
 
-void Win::on_redraw_nc(RECT * a1, int a2) {
+void Win::on_redraw_nc(RECT * area, int flags) {
     if ((*(unsigned char *)&this->iSomeFlag_ & 2) == 0) return;
-    unsigned int flags = this->iFlags_;
-    if ((flags & 0x11) == 0) return;
+    unsigned int win_flags = this->iFlags_;
+    if ((win_flags & 0x11) == 0) return;
 
     int savedLeft = 0, savedTop = 0;
-    int side = a2;
-    if (a1 != 0) {
+    int side = flags;
+    if (area != 0) {
         side = -1;
         savedLeft = this->client_rect_.left;
         savedTop = this->client_rect_.top;
     }
 
     int capHeight;
-    if ((flags & 0x10) == 0 || (flags & 0x400000) != 0) {
+    if ((win_flags & 0x10) == 0 || (win_flags & 0x400000) != 0) {
         capHeight = this->border_thickness_;
     } else {
         capHeight = this->caption_height_;
@@ -8218,11 +8221,11 @@ void Win::on_redraw_nc(RECT * a1, int a2) {
         if (buf != 0 && (side == -1 || side == 0)) {
             RECT outer = buf->rect2_;
             RECT clip = outer;
-            if (a1 != 0) {
-                clip.left = a1->left - savedLeft;
-                clip.top = a1->top - savedTop;
-                clip.right = a1->right - savedLeft;
-                clip.bottom = a1->bottom - savedTop;
+            if (area != 0) {
+                clip.left = area->left - savedLeft;
+                clip.top = area->top - savedTop;
+                clip.right = area->right - savedLeft;
+                clip.bottom = area->bottom - savedTop;
             }
             if (intersectRect(&clip, &clip, &outer)) {
                 buf->set_clip(&clip);
@@ -8252,12 +8255,12 @@ void Win::on_redraw_nc(RECT * a1, int a2) {
                     buf->set_font((Font *)this->field_F8_, 0, 0, 0);
                     buf->set_clip(&r);
                     char *title = (char *)this->field_E0_;
-                    if ((flags & 0x10000) != 0) {
+                    if ((win_flags & 0x10000) != 0) {
                         if (title != 0) {
                             unsigned int len = strlen(title);
                             buf->write_l(title, &r, len);
                         }
-                    } else if ((flags & 0x40000) != 0) {
+                    } else if ((win_flags & 0x40000) != 0) {
                         if (title != 0) {
                             unsigned int len = strlen(title);
                             buf->write_right_l(title, &r, len);
@@ -8279,11 +8282,11 @@ void Win::on_redraw_nc(RECT * a1, int a2) {
         if (buf != 0 && (side == -1 || side == 2)) {
             RECT outer = buf->rect2_;
             RECT clip = outer;
-            if (a1 != 0) {
-                clip.left = a1->left - savedLeft;
-                clip.top = a1->top + (capHeight - savedTop);
-                clip.right = a1->right - savedLeft;
-                clip.bottom = a1->bottom + (capHeight - savedTop);
+            if (area != 0) {
+                clip.left = area->left - savedLeft;
+                clip.top = area->top + (capHeight - savedTop);
+                clip.right = area->right - savedLeft;
+                clip.bottom = area->bottom + (capHeight - savedTop);
             }
             if (intersectRect(&clip, &clip, &outer)) {
                 buf->set_clip(&clip);
@@ -8318,12 +8321,12 @@ void Win::on_redraw_nc(RECT * a1, int a2) {
         if (buf != 0 && (side == -1 || side == 3)) {
             RECT outer = buf->rect2_;
             RECT clip = outer;
-            if (a1 != 0) {
+            if (area != 0) {
                 int shiftY = capHeight - savedTop;
-                clip.left = a1->left - savedLeft;
-                clip.top = a1->top + shiftY;
-                clip.right = a1->right - savedLeft;
-                clip.bottom = a1->bottom + shiftY;
+                clip.left = area->left - savedLeft;
+                clip.top = area->top + shiftY;
+                clip.right = area->right - savedLeft;
+                clip.bottom = area->bottom + shiftY;
             }
             if (intersectRect(&clip, &clip, &outer)) {
                 buf->set_clip(&clip);
@@ -8359,11 +8362,11 @@ void Win::on_redraw_nc(RECT * a1, int a2) {
             RECT outer = buf->rect2_;
             RECT clip = outer;
             int shiftX = ((this->client_rect_.right - this->client_rect_.left) - this->border_thickness_) - savedLeft;
-            if (a1 != 0) {
-                clip.left = a1->left + shiftX;
-                clip.top = a1->top + (capHeight - savedTop);
-                clip.right = a1->right + shiftX;
-                clip.bottom = a1->bottom + (capHeight - savedTop);
+            if (area != 0) {
+                clip.left = area->left + shiftX;
+                clip.top = area->top + (capHeight - savedTop);
+                clip.right = area->right + shiftX;
+                clip.bottom = area->bottom + (capHeight - savedTop);
             }
             if (intersectRect(&clip, &clip, &outer)) {
                 buf->set_clip(&clip);
@@ -8410,20 +8413,19 @@ void Win::on_redraw_nc(RECT * a1, int a2) {
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005ED2D0
-void Win::screen_to_nonclient(int * a1, int * a2) {
-    char *self = reinterpret_cast<char *>(this);
-    *a1 -= client_rect_.left + outer_rect_.left;
-    *a2 -= client_rect_.top + outer_rect_.top;
+void Win::screen_to_nonclient(int * x, int * y) {
+    *x -= client_rect_.left + outer_rect_.left;
+    *y -= client_rect_.top + outer_rect_.top;
     if ((iFlags_ & 0x20) != 0 &&
-        *reinterpret_cast<Win **>(self + 0xc4) != 0) {
-        (*reinterpret_cast<Win **>(self + 0xc4))->screen_to_client(a1, a2);
+        win_parent_ != 0) {
+        (win_parent_)->screen_to_client(x, y);
         if ((iFlags_ & 0x8000) != 0) {
-            *a1 += *reinterpret_cast<int *>(reinterpret_cast<char *>(*reinterpret_cast<Win **>(self + 0xc4)) + 0x13c);
-            *a2 += *reinterpret_cast<int *>(reinterpret_cast<char *>(*reinterpret_cast<Win **>(self + 0xc4)) + 0x140);
+            *x += *reinterpret_cast<int *>(reinterpret_cast<char *>(win_parent_) + 0x13c);
+            *y += *reinterpret_cast<int *>(reinterpret_cast<char *>(win_parent_) + 0x140);
         }
     }
-    *a1 += outer_rect_.left;
-    *a2 += outer_rect_.top;
+    *x += outer_rect_.left;
+    *y += outer_rect_.top;
 }
 
 // ===== homed from src/unrecovered/005f5fb0.cpp =====
@@ -8679,25 +8681,25 @@ int Win::sub_63c340() {
 
 // ===== homed from src/unrecovered/005edf50.cpp =====
 
-void Win::set_caption(char * a1) {
+void Win::set_caption(char * text) {
     char *self = reinterpret_cast<char *>(this);
     void **caption = reinterpret_cast<void **>(self + 0xe0);
     if (*caption != 0) {
         free(*caption);
         *caption = 0;
     }
-    if (a1 != 0) {
-        unsigned int len = strlen(a1);
+    if (text != 0) {
+        unsigned int len = strlen(text);
         void *buf = mem_get(len + 1);
         *caption = buf;
         if (buf == 0) {
             return;
         }
         *reinterpret_cast<char *>(buf) = 0;
-        strcat(reinterpret_cast<char *>(*caption), a1);
+        strcat(reinterpret_cast<char *>(*caption), text);
     }
     if (iSomeFlag_ & 1) {
-        Win *other = *reinterpret_cast<Win **>(self + 0xc4);
+        Win *other = win_parent_;
         if (other != 0) {
             if (!other->is_visible()) {
                 return;
@@ -8709,20 +8711,20 @@ void Win::set_caption(char * a1) {
 
 // ===== homed from src/unrecovered/005f5140.cpp =====
 
-void __cdecl Win::bring_parent_to_top(Win * a1) {
-    if (a1 != 0 && (reinterpret_cast<unsigned int *>(a1)[0x26] & 0x2000000) == 0) {
+void __cdecl Win::bring_parent_to_top(Win * window) {
+    if (window != 0 && (reinterpret_cast<unsigned int *>(window)[0x26] & 0x2000000) == 0) {
         int count = *WinZOrderListCount;
         int i = 0;
         if (count > 0) {
             while (true) {
-                if (g_zorder_list[i] == a1) {
+                if (g_zorder_list[i] == window) {
                     if (i < count) {
                         int j = i;
                         while (j > 0) {
                             g_zorder_list[j] = g_zorder_list[j - 1];
                             --j;
                         }
-                        g_zorder_list[0] = a1;
+                        g_zorder_list[0] = window;
                     }
                     break;
                 }
@@ -8760,61 +8762,61 @@ void __cdecl Win::bring_parent_to_top(Win * a1) {
 // calls     (none)
 // indirect  0x005EEF4A
 // working copy - scaffold materialised by --work
-void Win::client_to_nonclient(int * a1, int * a2) {
-    if (a1 == 0) {
+void Win::client_to_nonclient(int * points, int * count) {
+    if (points == 0) {
         return;
     }
-    if (a2 == 0) {
+    if (count == 0) {
         return;
     }
     if (*reinterpret_cast<uint8_t *>(&iFlags_) & 4) {
-        *a2 += *WinTitleBarHeight;
+        *count += *WinTitleBarHeight;
     }
     if (*reinterpret_cast<uint8_t *>(&iFlags_) & 8) {
-        *a1 += *WinTitleBarHeight;
+        *points += *WinTitleBarHeight;
     }
     uint32_t flags = iFlags_;
     if (flags & 0x400) {
         int doubled1 = border_thickness_ * 2;
-        *a1 += doubled1;
+        *points += doubled1;
         int doubled2 = border_thickness_ * 2;
-        *a2 += doubled2;
-        int newval = *a2;
+        *count += doubled2;
+        int newval = *count;
         if (bottom_border_thickness_ != -1) {
-            *a2 = (bottom_border_thickness_ - border_thickness_) + newval;
+            *count = (bottom_border_thickness_ - border_thickness_) + newval;
         }
     } else if (flags & 0x11) {
         int doubled1 = border_thickness_ * 2;
-        *a1 += doubled1;
+        *points += doubled1;
         int doubled2 = border_thickness_ * 2;
-        *a2 += doubled2;
-        int newval = *a2;
+        *count += doubled2;
+        int newval = *count;
         if (bottom_border_thickness_ != -1) {
-            *a2 = (bottom_border_thickness_ - border_thickness_) + newval;
+            *count = (bottom_border_thickness_ - border_thickness_) + newval;
         }
     }
     if (*reinterpret_cast<uint8_t *>(&iFlags_) & 0x10) {
-        *a2 += caption_height_ - border_thickness_;
+        *count += caption_height_ - border_thickness_;
     }
     if (menu_ != 0) {
-        *a2 += reinterpret_cast<MenuVCall *>(menu_)->slot091();
+        *count += reinterpret_cast<MenuVCall *>(menu_)->slot091();
     }
 }
 
 // ===== homed from src/unrecovered/005ed3f0.cpp =====
 
-void Win::nonclient_to_screen(int * a1, int * a2) {
-    *a1 = *a1 + outer_rect_.left + client_rect_.left;
-    *a2 = *a2 + outer_rect_.top + client_rect_.top;
+void Win::nonclient_to_screen(int * x, int * y) {
+    *x = *x + outer_rect_.left + client_rect_.left;
+    *y = *y + outer_rect_.top + client_rect_.top;
     if ((*(unsigned char *)&iFlags_ & 0x20) != 0 && win_parent_ != 0) {
-        win_parent_->client_to_screen(a1, a2);
+        win_parent_->client_to_screen(x, y);
         if ((iFlags_ & 0x8000) != 0) {
-            *a1 = *a1 - win_parent_->outer_rect_.left;
-            *a2 = *a2 - win_parent_->outer_rect_.top;
+            *x = *x - win_parent_->outer_rect_.left;
+            *y = *y - win_parent_->outer_rect_.top;
         }
     }
-    *a1 = *a1 - outer_rect_.left;
-    *a2 = *a2 - outer_rect_.top;
+    *x = *x - outer_rect_.left;
+    *y = *y - outer_rect_.top;
 }
 
 // ===== homed from src/unrecovered/005eea90.cpp =====
@@ -8825,36 +8827,36 @@ typedef int (__cdecl *Callback2)(int, int);
 typedef void (OriginalObject::*VCall0)();
 typedef void (OriginalObject::*VCall1)(int);
 
-int Win::key_click_event(int a1, int a2) {
+int Win::key_click_event(int key, int flags) {
     Win *const self = this;
 
-    if ((*(unsigned int *)((char *)self + 0x98) & 0x200000) != 0) {
+    if ((iFlags_ & 0x200000) != 0) {
         return 0;
     }
-    if ((*(unsigned char *)((char *)self + 0x9c) & 8) != 0) {
+    if ((iSomeFlag_ & 8) != 0) {
         return 0;
     }
 
     {
         void *vtbl = *(void **)self;
-        if (a2 == 0x1b) {
-            reinterpret_cast<Win *>(self)->vslot_44(-2);
-        } else if (a2 == 0xd || a2 == 0x1000d) {
-            reinterpret_cast<Win *>(self)->vslot_44(-1);
+        if (flags == 0x1b) {
+            this->vslot_44(-2);
+        } else if (flags == 0xd || flags == 0x1000d) {
+            this->vslot_44(-1);
         }
     }
 
-    if (*(int *)((char *)self + 0xd4) != 0) {
+    if (list_.count_ != 0) {
         Win *target = 0;
-        if (*(int *)((char *)self + 0xcc) != 0) {
-            int *field_d0 = *(int **)((char *)self + 0xd0);
+        if (list_.head_ != 0) {
+            int *field_d0 = reinterpret_cast<int *>(list_.current_);
             target = *(Win **)((char *)field_d0 + 4);
         }
-        if (a2 == 9) {
+        if (flags == 9) {
             void *tvtbl = *(void **)target;
             reinterpret_cast<Win *>(target)->pass_dialog_focus();
         } else {
-            if (target->key_click_event(a1, a2) != 0) {
+            if (target->key_click_event(key, flags) != 0) {
                 return 1;
             }
         }
@@ -8862,13 +8864,13 @@ int Win::key_click_event(int a1, int a2) {
 
     int result = 0;
     *(void **)0x009B7AB8 = self;
-    Callback2 callback = *(Callback2 *)((char *)self + 0x42c);
+    Callback2 callback = reinterpret_cast<Callback2>(field_42C_);
     if (callback != 0) {
-        result = callback(a1, a2);
+        result = callback(key, flags);
     }
     void *vtbl2 = *(void **)self;
-    int r2 = reinterpret_cast<Win *>(self)->vslot_25(a1, a2);
-    Win *child = *(Win **)((char *)self + 0x38);
+    int r2 = this->vslot_25(key, flags);
+    Win *child = reinterpret_cast<Win *>(val_14_);
     if (child != 0) {
         void *cvtbl = *(void **)child;
         if (reinterpret_cast<Win *>(child)->vslot_23() == 0) {
@@ -9460,7 +9462,7 @@ void Win::on_key(unsigned int a1, long a2, int a3, unsigned int a4) {
         if (list_.count_ != 0) {
             void *target;
             if (list_.head_ != 0) {
-                target = *reinterpret_cast<void **>(*reinterpret_cast<char **>(self + 0xd0) + 4);
+                target = reinterpret_cast<void **>(list_.current_)[1];
             } else {
                 target = 0;
             }
@@ -9469,7 +9471,7 @@ void Win::on_key(unsigned int a1, long a2, int a3, unsigned int a4) {
             }
         }
 
-        *WinCallbackWindow = reinterpret_cast<int32_t>(self);
+        *WinCallbackWindow = reinterpret_cast<int32_t>(this);
         typedef void(__cdecl * OnKeyCb)(unsigned int);
         OnKeyCb cb = reinterpret_cast<OnKeyCb>(field_434_);
         if (cb != 0) {
@@ -9477,7 +9479,7 @@ void Win::on_key(unsigned int a1, long a2, int a3, unsigned int a4) {
         }
         reinterpret_cast<VCallArg *>(self)->s27(key);
 
-        Win *next = *reinterpret_cast<Win **>(self + 0x40);
+        Win *next = reinterpret_cast<Win *>(val_16_);
         if (next == 0) {
             return;
         }
@@ -9491,7 +9493,7 @@ void Win::on_key(unsigned int a1, long a2, int a3, unsigned int a4) {
     *reinterpret_cast<unsigned int *>(WinKeyModifiers) = key;
     Fn1 fn = *reinterpret_cast<Fn1 *>(g_IsWindow);
     if (fn(HandleMain)) {
-        reinterpret_cast<Win *>(self)->key_down_event(key);
+        this->key_down_event(key);
     }
 
     if (key >= 0x60 && key <= 0x6f) {
@@ -9517,17 +9519,18 @@ typedef long (__stdcall *GetWindowLongAFn)(void *, int);
 typedef long (__stdcall *DefWindowProcAFn)(void *, unsigned int, unsigned int, long);
 typedef void (__cdecl *Callback404)();
 
-int __cdecl Win::OnSysCommand(void * a1, unsigned int a2, int a3, int a4) {
+int __cdecl Win::OnSysCommand(void * hwnd, unsigned int command, int x,
+                              int y) {
     Win *self = reinterpret_cast<Win *>(
-        (*reinterpret_cast<GetWindowLongAFn *>(g))(a1, -0x15));
+        (*reinterpret_cast<GetWindowLongAFn *>(g))(hwnd, -0x15));
     if (self == 0) {
         return 0;
     }
-    if (a2 != 0xf060) {
+    if (command != 0xf060) {
         return (*reinterpret_cast<DefWindowProcAFn *>(g_DefWindowProcA))(
-            a1, 0x112, a2,
-            (static_cast<unsigned int>(static_cast<unsigned short>(a4)) << 16)
-                | static_cast<unsigned short>(a3));
+            hwnd, 0x112, command,
+            (static_cast<unsigned int>(static_cast<unsigned short>(y)) << 16)
+                | static_cast<unsigned short>(x));
     }
     *reinterpret_cast<Win **>(WinCallbackWindow) = self;
     Callback404 cb = *reinterpret_cast<Callback404 *>(
@@ -9579,47 +9582,46 @@ void Win::client_to_nonclient(RECT * rect) {
 
 // ===== homed from src/unrecovered/005eef60.cpp =====
 
-void Win::nonclient_to_client(int * a1, int * a2) {
-    if (a1 == 0) {
+void Win::nonclient_to_client(int * x, int * y) {
+    if (x == 0) {
         return;
     }
-    if (a2 == 0) {
+    if (y == 0) {
         return;
     }
     if ((iFlags_ & 4) != 0) {
-        *a2 -= *WinTitleBarHeight;
+        *y -= *WinTitleBarHeight;
     }
     if ((iFlags_ & 8) != 0) {
-        *a1 -= *WinTitleBarHeight;
+        *x -= *WinTitleBarHeight;
     }
     if ((iFlags_ & 0x400) != 0) {
-        *a1 += -border_thickness_ * 2;
-        *a2 += -border_thickness_ * 2;
+        *x += -border_thickness_ * 2;
+        *y += -border_thickness_ * 2;
         if (bottom_border_thickness_ != -1) {
-            *a2 = (border_thickness_ - bottom_border_thickness_) + *a2;
+            *y = (border_thickness_ - bottom_border_thickness_) + *y;
         }
     } else if ((iFlags_ & 0x11) != 0) {
-        *a1 += -border_thickness_ * 2;
-        *a2 += -border_thickness_ * 2;
+        *x += -border_thickness_ * 2;
+        *y += -border_thickness_ * 2;
         if (bottom_border_thickness_ != -1) {
-            *a2 = (border_thickness_ - bottom_border_thickness_) + *a2;
+            *y = (border_thickness_ - bottom_border_thickness_) + *y;
         }
     }
     if ((iFlags_ & 0x10) != 0) {
-        *a2 += caption_height_ - border_thickness_;
+        *y += caption_height_ - border_thickness_;
     }
     if (menu_ != 0) {
-        *a2 -= reinterpret_cast<NCCall *>(menu_)->slot091();
+        *y -= reinterpret_cast<NCCall *>(menu_)->slot091();
     }
 }
 
 // ===== homed from src/recovered/units/005f8140.cpp =====
 
-void Win::update_window_to_buffer(Buffer * a1) {
-    if (a1 != 0) {
-        char *self = reinterpret_cast<char *>(this);
+void Win::update_window_to_buffer(Buffer * buffer) {
+    if (buffer != 0) {
 
-        *WinBackBuffer = (int)a1;
+        *WinBackBuffer = (int)buffer;
         *WinHighlighted = (int)this;
         (*WinViewOriginX) = 0;
         (*WinViewOriginY) = 0;
@@ -9650,10 +9652,10 @@ void Win::update_window_to_buffer(Buffer * a1) {
             (*WinViewOriginY) += client_rect_.top + outer_rect_.top;
             if ((iFlags_ & 0x20) != 0 &&
                 win_parent_ != 0) {
-                Win *parent = *reinterpret_cast<Win **>(self + 0xc4);
+                Win *parent = win_parent_;
                 parent->client_to_screen(&(*WinViewOriginX), &(*WinViewOriginY));
                 if ((iFlags_ & 0x8000) != 0) {
-                    char *pself = reinterpret_cast<char *>(*reinterpret_cast<Win **>(self + 0xc4));
+                    char *pself = reinterpret_cast<char *>(win_parent_);
                     (*WinViewOriginX) -= *reinterpret_cast<int32_t *>(pself + 0x13c);
                     (*WinViewOriginY) -= *reinterpret_cast<int32_t *>(pself + 0x140);
                 }
@@ -9663,10 +9665,10 @@ void Win::update_window_to_buffer(Buffer * a1) {
             (*WinViewOriginY) += client_rect_.top + outer_rect_.top;
             if ((iFlags_ & 0x20) != 0 &&
                 win_parent_ != 0) {
-                Win *parent = *reinterpret_cast<Win **>(self + 0xc4);
+                Win *parent = win_parent_;
                 parent->client_to_screen(&(*WinViewOriginX), &(*WinViewOriginY));
                 if ((iFlags_ & 0x8000) != 0) {
-                    char *pself = reinterpret_cast<char *>(*reinterpret_cast<Win **>(self + 0xc4));
+                    char *pself = reinterpret_cast<char *>(win_parent_);
                     (*WinViewOriginX) -= *reinterpret_cast<int32_t *>(pself + 0x13c);
                     (*WinViewOriginY) -= *reinterpret_cast<int32_t *>(pself + 0x140);
                 }
@@ -9705,17 +9707,16 @@ void Win::update_window_to_buffer(Buffer * a1) {
 // ===== homed from src/recovered/units/005f6710.cpp =====
 
 void Win::on_r_button_down(long flags, int x, int y, unsigned int keys, int dbl) {
-    char *self = reinterpret_cast<char *>(this);
     typedef void(__cdecl *RawHandler)(int, int);
 
-    Win *parent = *reinterpret_cast<Win **>(self + 0xC4);
+    Win *parent = win_parent_;
     if (parent != 0) {
         parent->bring_child_to_top(this);
     } else {
         bring_parent_to_top(this);
     }
 
-    parent = *reinterpret_cast<Win **>(self + 0xC4);
+    parent = win_parent_;
     if (parent != 0) {
         parent->set_dialog_focus(this);
     }
@@ -9739,7 +9740,7 @@ void Win::on_r_button_down(long flags, int x, int y, unsigned int keys, int dbl)
                 fn(x, y);
             }
             this->vslot_29(x, y);
-            Win *child = *reinterpret_cast<Win **>(self + 0x48);
+            Win *child = reinterpret_cast<Win *>(val_18_);
             if (child != 0) {
                 int r = child->vslot_23();
                 if (r == 0) {
@@ -9748,7 +9749,7 @@ void Win::on_r_button_down(long flags, int x, int y, unsigned int keys, int dbl)
             }
         } else {
             this->vslot_39(x, y);
-            Win *child = *reinterpret_cast<Win **>(self + 0x6C);
+            Win *child = reinterpret_cast<Win *>(val_27_);
             if (child != 0) {
                 int r = child->vslot_23();
                 if (r == 0) {
@@ -9767,7 +9768,7 @@ void Win::on_r_button_down(long flags, int x, int y, unsigned int keys, int dbl)
                 fn(x, y);
             }
             this->vslot_23();
-            Win *child = *reinterpret_cast<Win **>(self + 0x30);
+            Win *child = reinterpret_cast<Win *>(val_12_);
             if (child != 0) {
                 int r = child->vslot_23();
                 if (r == 0) {
@@ -9776,7 +9777,7 @@ void Win::on_r_button_down(long flags, int x, int y, unsigned int keys, int dbl)
             }
         } else {
             this->vslot_36(x, y);
-            Win *child = *reinterpret_cast<Win **>(self + 0x60);
+            Win *child = reinterpret_cast<Win *>(val_24_);
             if (child != 0) {
                 int r = child->vslot_23();
                 if (r == 0) {
@@ -9790,20 +9791,20 @@ void Win::on_r_button_down(long flags, int x, int y, unsigned int keys, int dbl)
 
 // ===== homed from src/recovered/units/005f2570.cpp =====
 
-void Win::OnLButtonUp(void *a1, int a2, int a3, unsigned int a4) {
+void Win::OnLButtonUp(void *hwnd, int x, int y, unsigned int keys) {
     WinTrackingWindow = nullptr;
     // get_mouse_window already RETURNS Win *, and win.h declares slot 82 as
     // on_l_button_up - so the shim was casting a Win to a shim class to call
     // a slot the class itself now names.
-    Win *obj = get_mouse_window(reinterpret_cast<int *>(&a1), &a2);
+    Win *obj = get_mouse_window(reinterpret_cast<int *>(&hwnd), &x);
     if (obj) {
-        obj->on_l_button_up(reinterpret_cast<int>(a1), a2, a3, *WinDoubleClickFlag);
+        obj->on_l_button_up(reinterpret_cast<int>(hwnd), x, y, *WinDoubleClickFlag);
     }
 }
 
 // ===== homed from src/unrecovered/005f15c0.cpp =====
 
-void __cdecl Win::OnKey(void * a1, unsigned int a2, long a3, int a4, unsigned int a5) {
+void __cdecl Win::OnKey(void * hwnd, unsigned int key, long flags, int repeat, unsigned int scan) {
     int *p_9b7ac8 = (int *)0x009B7AC8;
     int *p_9b7ac4 = (int *)0x009B7AC4;
     int *p_9b7aec = (int *)0x009B7AEC;
@@ -9837,15 +9838,15 @@ void __cdecl Win::OnKey(void * a1, unsigned int a2, long a3, int a4, unsigned in
                 visible = parent->is_visible();
             }
             if (visible != 0) {
-                reinterpret_cast<Win *>(inner)->on_key(a2, a3, a4, a5);
+                reinterpret_cast<Win *>(inner)->on_key(key, flags, repeat, scan);
             }
         }
     }
 
-    if (*p_9b7a8c != 0 && a3 != 0) {
+    if (*p_9b7a8c != 0 && flags != 0) {
         typedef void (__cdecl *cb_t)(unsigned int);
         cb_t cb = (cb_t)*p_9b7a8c;
-        cb(a2);
+        cb(key);
     }
 
     if (*p_9b7a88 != 0) {
@@ -10421,31 +10422,31 @@ void Win::close() {
     field_F8_ = WinDynamicDefaults[1];
 
     {
-        void *p0xE0 = *(void **)((char *)this + 0xE0);
+        void *p0xE0 = reinterpret_cast<void *>(field_E0_);
         if (p0xE0 != 0) {
             free(p0xE0);
         }
-        *(void **)((char *)this + 0xE0) = 0;
+        field_E0_ = 0;
     }
     {
-        void *p0xE4 = *(void **)((char *)this + 0xE4);
+        void *p0xE4 = minimize_button_;
         if (p0xE4 != 0) {
             delete p0xE4;
-            *(void **)((char *)this + 0xE4) = 0;
+            minimize_button_ = 0;
         }
     }
     {
-        void *p0xE8 = *(void **)((char *)this + 0xE8);
+        void *p0xE8 = zoom_button_;
         if (p0xE8 != 0) {
             delete p0xE8;
-            *(void **)((char *)this + 0xE8) = 0;
+            zoom_button_ = 0;
         }
     }
     {
-        void *p0xEC = *(void **)((char *)this + 0xEC);
+        void *p0xEC = close_button_;
         if (p0xEC != 0) {
             delete p0xEC;
-            *(void **)((char *)this + 0xEC) = 0;
+            close_button_ = 0;
         }
     }
     field_F4_ = 0;
@@ -10509,26 +10510,26 @@ void Win::close() {
 
 // ===== homed from src/unrecovered/005f2290.cpp =====
 
-void __cdecl Win::OnMouseMove(void * a1, int a2, int a3, unsigned int a4) {
+void __cdecl Win::OnMouseMove(void * hwnd, int x, int y, unsigned int keys) {
     Win *hit;
     Win *tracking;
 
     tracking = WinTrackingWindow;
     *WinKeyState = 0;
     if (tracking != nullptr) {
-        do_tracking(a2, a3);
+        do_tracking(x, y);
         return;
     }
-    hit = (Win *)get_mouse_window(&a2, &a3);
+    hit = (Win *)get_mouse_window(&x, &y);
     update_cursor(hit, 1);
     if (hit != 0) {
         if (WinHoverWindow != 0 &&
             (*WinKeyState != 0 || hit != WinHoverWindow) &&
             (*WinActiveDialog == 0 || *WinActiveDialog == reinterpret_cast<int>(WinHoverWindow))) {
-            WinHoverWindow->vslot_18(a2, a3);
+            WinHoverWindow->vslot_18(x, y);
         }
         WinHoverWindow = hit;
-        hit->on_mouse_move(a2, a3, a4, *WinDoubleClickFlag);
+        hit->on_mouse_move(x, y, keys, *WinDoubleClickFlag);
     }
 }
 
@@ -10615,9 +10616,8 @@ int __cdecl Win::OnQueryNewPalette(void * a1) {
 
 // ===== homed from src/unrecovered/005ecc40.cpp =====
 
-void Win::set_dialog_focus(Win * a1) {
-    char *self = reinterpret_cast<char *>(this);
-    if (a1 == 0) {
+void Win::set_dialog_focus(Win * window) {
+    if (window == 0) {
         return;
     }
     if (list_.count_ == 0) {
@@ -10628,11 +10628,11 @@ void Win::set_dialog_focus(Win * a1) {
     if (list_.head_ == 0) {
         newFocus = 0;
     } else {
-        int *node = *reinterpret_cast<int **>(self + 0xd0);
+        int *node = reinterpret_cast<int *>(list_.current_);
         newFocus = reinterpret_cast<int *>(node[1]);
     }
 
-    if (reinterpret_cast<int *>(a1) == newFocus) {
+    if (reinterpret_cast<int *>(window) == newFocus) {
         return;
     }
 
@@ -10650,8 +10650,8 @@ void Win::set_dialog_focus(Win * a1) {
     if (count > 0) {
         int *node;
         for (;;) {
-            node = *reinterpret_cast<int **>(self + 0xd0);
-            if (reinterpret_cast<int *>(node[1]) == reinterpret_cast<int *>(a1)) {
+            node = reinterpret_cast<int *>(list_.current_);
+            if (reinterpret_cast<int *>(node[1]) == reinterpret_cast<int *>(window)) {
                 break;
             }
             list_.tail_ = list_.tail_ + 1;
@@ -10667,7 +10667,7 @@ void Win::set_dialog_focus(Win * a1) {
         }
 
         if (list_.head_ != 0) {
-            int *node2 = *reinterpret_cast<int **>(self + 0xd0);
+            int *node2 = reinterpret_cast<int *>(list_.current_);
             int *target = reinterpret_cast<int *>(node2[1]);
             if (target != 0) {
                 call_slot_cc(target, 1);
@@ -10678,10 +10678,11 @@ void Win::set_dialog_focus(Win * a1) {
 
 // ===== homed from src/unrecovered/005f1480.cpp =====
 
-long __cdecl Win::OnActivate(void *a1, unsigned int a2, void *a3, long a4) {
+long __cdecl Win::OnActivate(void *hwnd, unsigned int state, void *other,
+                             long minimized) {
     InvalidateRect(reinterpret_cast<HWND>(HandleMain), 0, 0);
-    if (a2 != 0) {
-      if (a4 == 0 && BufferDirectDraw == 0) {
+    if (state != 0) {
+      if (minimized == 0 && BufferDirectDraw == 0) {
         int hdc;
         if (*WinScreenDCDepth != 0) {
             *WinScreenDCDepth = *WinScreenDCDepth + 1;
@@ -10724,13 +10725,13 @@ long __cdecl Win::OnActivate(void *a1, unsigned int a2, void *a3, long a4) {
         WinPointerOwner1 = nullptr;
         WinPointerOwner2 = nullptr;
     }
-    return DefWindowProcA(reinterpret_cast<HWND__ *>(a1), 6, (static_cast<unsigned int>(a4) << 16) | (a2 & 0xffff),reinterpret_cast<long>(a3));
+    return DefWindowProcA(reinterpret_cast<HWND__ *>(hwnd), 6, (static_cast<unsigned int>(minimized) << 16) | (state & 0xffff),reinterpret_cast<long>(other));
 }
 
 // ===== homed from src/unrecovered/005ecf20.cpp =====
 
-void Win::screen_to_client(RECT * a1) {
-    if (a1 == 0) {
+void Win::screen_to_client(RECT * rect) {
+    if (rect == 0) {
         return;
     }
     int dx = -(client_rect_.left + outer_rect_.left);
@@ -10742,10 +10743,10 @@ void Win::screen_to_client(RECT * a1) {
             dy += win_parent_->outer_rect_.top;
         }
     }
-    a1->left += dx;
-    a1->right += dx;
-    a1->top += dy;
-    a1->bottom += dy;
+    rect->left += dx;
+    rect->right += dx;
+    rect->top += dy;
+    rect->bottom += dy;
 }
 
 // ===== homed from src/recovered/units/005f4cc0.cpp =====

@@ -129,6 +129,15 @@ CASES = [
      None,
      lambda: _append("src/palette.h",
                      "/*\n g_00dead02 = (int *)0x00DEAD02;\n*/\n")),
+    # THE RULER ITSELF. P0.8 pinned the image's sha256 and wired the compare
+    # into `check`, but shipped no control - and the pin also turned fifteen
+    # of decomp/tests red, unnoticed, because nothing runs pytest. This
+    # asserts the compare can still fail now that a missing image no longer
+    # trips it.
+    ("image pin",
+     "IMAGE IS NOT THE PINNED ONE",
+     lambda: _patch("src/IMAGE_PIN", _snap("src/IMAGE_PIN").split("sha256 ")[1][:8],
+                    "deadbeef")),
     ("marker_symbols floor",
      "FAILED: a marker names a symbol the build does not emit",
      lambda: _append("src/palette.cpp",

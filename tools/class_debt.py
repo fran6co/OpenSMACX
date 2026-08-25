@@ -40,14 +40,24 @@ from decomp import read  # noqa: E402
 # eyeballed before pinning - vector-dtor iterators, atexit callbacks, and
 # `g_00406850`-style disguises, every one a real function reference.
 CEILINGS = {
-    "unk-method": 285,
+    "unk-method": 283,
     "function-address binding": 65,
     "orphan redirect": 851,
     "pointer-as-int": 2,
     "undocumented trivial body": 0,
+    # 239 IS BELOW WHAT THE TREE CAN REACH TODAY, and this is the only
+    # ceiling knowingly left above its count. Homing moved Win's bodies out
+    # of the uncounted archives, and 26 of win.cpp's 28 remaining sites are
+    # `reinterpret_cast<int>(this)` compared against `int *const` bindings
+    # that MEASUREMENT says must keep that type: retyping the three window
+    # bindings to `Win **const` cost `show_maximize` and `maximize` their
+    # claims (2026-08-25, recorded in win_slots.h). The pun is load-bearing.
+    # The rest of the excess is SpriteBox, CheckBox and Dialogs walking
+    # their own objects by offset, which needs each of those classes'
+    # layout model - their passes, not Win's.
     "raw self-access": 239,
-    "pointer-parameter as int": 7,
-    "scaffold name": 3487,
+    "pointer-parameter as int": 6,
+    "scaffold name": 3458,
 }
 
 WHY = {
@@ -119,7 +129,13 @@ PARAM_CAST = re.compile(
     r"\s*\(?\s*a\d+\b")
 SELF_CAST = re.compile(
     r"reinterpret_cast<[^>]*>\s*\(\s*this\s*\)"
-    r"|\(\s*[A-Za-z_][\w :]*\*+\s*\)\s*this\b"
+    # `(?!\s*(?:->|\.))` - A MEMBER CAST IS NOT A SELF-PUN. `->` binds
+    # tighter than a C-style cast, so `(Buffer *)this->field_FC_` casts the
+    # MEMBER; the cast never touches `this` at all. Without the guard the
+    # census counted six of those in win.cpp alone and called them
+    # raw-self-access, which is a defect the shape cannot be cleared of
+    # because there is nothing wrong with the code.
+    r"|\(\s*[A-Za-z_][\w :]*\*+\s*\)\s*this\b(?!\s*(?:->|\.))"
     # memcpy(dst, this, n) needs NO cast - void* swallows `this` silently,
     # which is how `memcpy(selfCopy, this, 0x400)` outlived the cast ban.
     # The member being copied has a name and a sizeof; use them.
