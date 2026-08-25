@@ -259,10 +259,9 @@ int CouncWin::on_button_text_draw(::GraphicWin *, char *, int) {
 Status: Complete
 */
 void CouncWin::on_mouse_leave(int a1, int a2) {
-    char *self = reinterpret_cast<char *>(this);
-    int v = *reinterpret_cast<int *>(self + 0xa34);
+    int v = field_A34_;
     if (v != -1) {
-        *reinterpret_cast<int *>(self + 0xa34) = -1;
+        field_A34_ = -1;
         draw_leader(v);
     }
 }

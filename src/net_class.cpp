@@ -165,20 +165,20 @@ Net::Net() {
     *reinterpret_cast<int32_t *>(self + 0x6d4) = 0x64;
     *reinterpret_cast<int32_t *>(self + 0xd8) = 0;
     *reinterpret_cast<int32_t *>(self + 0xe4) = 1;
-    *reinterpret_cast<int32_t *>(self + 0x48) = 0;
-    *reinterpret_cast<int32_t *>(self + 0x4c) = 0;
-    *reinterpret_cast<int32_t *>(self + 0x50) = 0;
-    *reinterpret_cast<int32_t *>(self + 0x54) = 0;
-    *reinterpret_cast<int32_t *>(self + 0x20) = 0;
-    *reinterpret_cast<int32_t *>(self + 0x24) = 0;
-    *reinterpret_cast<int32_t *>(self + 0x1c) = 0;
+    field_48_ = 0;
+    field_4C_ = 0;
+    field_50_ = 0;
+    field_54_ = 0;
+    field_20_ = 0;
+    field_24_ = 0;
+    field_1C_ = 0;
     *reinterpret_cast<int32_t *>(self + 4) = 0;
     *reinterpret_cast<int32_t *>(self + 8) = 0;
-    *reinterpret_cast<int32_t *>(self + 0xc) = 0;
-    *reinterpret_cast<int32_t *>(self + 0x10) = 0;
-    *reinterpret_cast<int32_t *>(self + 0x14) = 0;
-    *reinterpret_cast<int32_t *>(self + 0x18) = 0;
-    *reinterpret_cast<int32_t *>(self + 0x28) = 0;
+    field_C_ = 0;
+    field_10_ = 0;
+    field_14_ = 0;
+    field_18_ = 0;
+    field_28_ = 0;
 }
 
 /*
