@@ -2141,6 +2141,22 @@ def check(
         for line in said[:-1][:4]:
             typer.secho(f"  {line}", fg=typer.colors.RED)
 
+    # DUPLICATE GLOBALS: one image address carrying two names is two pieces
+    # of storage - a `static T *const X = (T *)0xADDR` binding reads that
+    # address, an `extern T X; // 0xADDR` global is storage this binary
+    # allocates elsewhere - and code using one cannot see writes through the
+    # other. Each body stays internally consistent, so the byte ratchet is
+    # blind to it. Fifteen were created in one afternoon by a naming pass
+    # whose duplicate check knew only the binding spelling.
+    dupes = subprocess.run(
+        [sys.executable, str(REPO_ROOT / "tools" / "duplicate_globals.py"),
+         "--check"], cwd=REPO_ROOT, capture_output=True, text=True)
+    if not as_json:
+        said = dupes.stdout.strip().splitlines() or [""]
+        typer.secho("  " + said[-1],
+                    fg=typer.colors.RED if dupes.returncode
+                    else typer.colors.WHITE)
+
     # POINTER SCALING: `reinterpret_cast<int *>(parent + 0xcc)` where parent
     # is a `Win *` advances 0xcc whole OBJECTS, not bytes, and reads about
     # 900KB past the one it meant. A byte comparison cannot tell a wrong
@@ -2183,6 +2199,7 @@ def check(
             or vtables.returncode or stale.returncode or symbols.returncode
             or index.returncode or floor_broken or debt.returncode
             or annotations.returncode or scaling.returncode
+            or dupes.returncode
             else 3 if unasked else 0)
     # THE VERDICT GOES IN THE OUTPUT, not only in the exit code. The brief has
     # told agents for a long time never to pipe this to `tail`, because `cmd |
@@ -2219,6 +2236,7 @@ def check(
                 "class_debt": bool(debt.returncode),
                 "annotation_identity": bool(annotations.returncode),
                 "pointer_scale": bool(scaling.returncode),
+                "duplicate_globals": bool(dupes.returncode),
                 "claim_floor": bool(floor_broken),
                 "regressed": bool(regressed),
                 "dangling": bool(dangling),
