@@ -246,7 +246,7 @@ class Win : public AutoSound {
   void UNK9(int value);
   void reset_window_clip();
   void sync_palette();
-  int UNK3(int value);
+  int is_child(int value);
   static int OnSetCursor(void *a1, void *a2, unsigned int a3, unsigned int a4);
   void set_vert_pos(int position);
   void set_horz_pos(int position);
@@ -483,11 +483,26 @@ class Win : public AutoSound {
   virtual void on_nc_paint(RECT *area, int flags);  // slot 74  0x005F5810
   virtual int on_nc_hittest(int x, int y);  // slot 75  0x005F5AD0
   virtual int on_query_new_palette();  // slot 76  0x005F1060
-  // slot 77  0x005F62D0  A REAL BODY, uncatalogued - declare it when it is named.
-  virtual void vslot_77() {}
+  // slot 77  0x005F62D0. NAMED 2026-08-25 from its only dispatch: the
+  // WM_MOUSEWHEEL arm of Win::window_proc calls it with the wParam key
+  // flags, the wheel delta out of the wParam's high half, the cursor
+  // position and the from-parent flag. The five-argument signature is that
+  // call site; the body at 0x005F62D0 is still unrecovered.
+  // Empty inline, the same placeholder shape the other uncatalogued
+  // slots carry: 0x005F62D0's body is not recovered, so this occupies
+  // the slot without claiming to be it.
+  virtual void on_mouse_wheel(unsigned int keys, unsigned int delta,
+                              int x, int y, int from_parent) {}
   virtual void on_key(unsigned int key, long flags, int repeat, unsigned int scan);  // slot 78  0x005F5D10
-  // slot 79  0x005F5FB0  A REAL BODY, uncatalogued - declare it when it is named.
-  virtual void vslot_79(int = 0, int = 0) {}
+  // slot 79  0x005F5FB0. NAMED 2026-08-25, and it was declared TWICE: as
+  // this placeholder and again as the non-virtual `sub_5f5fb0(char, int)`
+  // below - the same body. It is the real WM_CHAR handler: it writes the
+  // character into the 10-byte typed-key ring at WinKeyRingStart and
+  // advances WinKeyRingCursor, which is the ring `typed_keys_differ`
+  // (0x005F5F60) reads back. The catalogue's `?on_char@Win@@QAAHDH@Z`
+  // describes THIS signature, `(char, int)`, and had been filed against
+  // that matcher instead.
+  virtual void on_char(char ch, int flags);
   // NOT __stdcall, though the catalogue spells the body `QAG`. The image's
   // own DISPATCH decides this, and it passes the receiver in ecx:
   // OnSysKey at 0x005F16D0 does `mov ecx, esi` before the slot-80 call
@@ -566,7 +581,6 @@ class Win : public AutoSound {
   void screen_to_nonclient(int * a1, int * a2);
   void set_caption(char * a1);
   void sub_5ef1e0(int x1, int y1, int x2, int y2, void *pen, int unused6);
-  void sub_5f5fb0(char param2, int param3);
   int sub_63c340();
 
  public:

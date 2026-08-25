@@ -43,6 +43,21 @@ def test_a_proof_sets_the_claim_and_refutes_the_ruled_out(tmp_path):
     assert after.levers == record.levers
 
 
+def test_an_upgrade_drops_the_weaker_semantic_claim(tmp_path):
+    """BYTE_EXACT subsumes SEMANTIC, so gaining it must clear the old token.
+
+    Without this, recording a SEMANTIC body that has become byte-exact
+    writes `BYTE_EXACT SEMANTIC` onto one marker and the reader reports
+    both flags true for one body. Measured on 0x005F2330 (2026-08-25),
+    the tree's only such marker - the first SEMANTIC claim to be upgraded
+    since the writer was rewritten, which is why nothing had caught it.
+    """
+    record = replace(record_in(tmp_path, MARKED), semantic=True)
+    after = stamped(record, verdict(Tier.BYTE_EXACT))
+    assert after.byte_exact
+    assert not after.semantic
+
+
 def test_a_body_that_stops_matching_keeps_its_claim_for_a_human(tmp_path):
     """A claim that outlives its body is bad; a claim that DISAPPEARS is
     worse, because the gate then has nothing to fail on. It is kept, and

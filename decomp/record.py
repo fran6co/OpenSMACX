@@ -53,7 +53,14 @@ def stamped(record: DecompilationState, verdict: AsmComparison,
     """
     matched = verdict.verdict is Tier.BYTE_EXACT
     if matched:
-        return replace(record, byte_exact=True, ruled_out=())
+        # `semantic=False` IS PART OF THE UPGRADE. SEMANTIC means "same
+        # instructions, different registers"; BYTE_EXACT subsumes it, so a
+        # record that gains the stronger claim must drop the weaker one or
+        # the writer emits both and the marker reads `BYTE_EXACT SEMANTIC`.
+        # Found 2026-08-25 on 0x005F2330, which was the tree's only such
+        # marker: recording an upgrade left the old token in place and the
+        # reader then reported both flags true for one body.
+        return replace(record, byte_exact=True, semantic=False, ruled_out=())
     # A CLAIM IS NOT LOWERED WITHOUT BEING ASKED. The floor is the number of
     # claims, so clearing one lowers the floor and the gate then passes
     # because there is nothing left to check - a ratchet quietly ceasing to
