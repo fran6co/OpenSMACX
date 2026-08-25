@@ -1730,6 +1730,15 @@ Verification note: hoisting the count out of the loop is an EQUIVALENT mutant
 // still (5/37) - the image tests them separately, matching the existing
 // two-statement shape already committed.
 */
+// TRIED: 17 of 37, and two restructurings made it no better or worse.
+// A `do { ... } while (index < count);` gets the image's BACKWARD `jl` in
+// place of this form's forward `jge` + repeated compare, but scores the
+// same 17 and adds a differing run. Merging the two `return 1` arms into
+// one `||` - the image has a single found-case epilogue where this emits
+// two - collapses the loop instead: 4 of 37 at 32 instructions against the
+// image's 37. What is left is instruction ORDER (the image zeroes edi
+// before loading children_, this body after) and the duplicated epilogue,
+// neither of which source order reached.
 int Win::is_descendant(Win *candidate) {
     if (!candidate) {
         return 0;
