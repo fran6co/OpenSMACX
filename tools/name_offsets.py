@@ -133,6 +133,29 @@ def main() -> int:
             return f"*reinterpret_cast<{cast} *>(&{name})"
         return name
 
+    # REFUSE THE WHOLE FILE, not just the body. `self` is not always
+    # `this`: spritebox.cpp defines it eight times, two of them adjusted -
+    # `(char *)this - 0x8C` at line 234 and `- 0x28` at 728, adjustor thunks
+    # reaching a base subobject, where an offset belongs to ANOTHER class.
+    #
+    # A per-body skip was tried first and IS NOT SAFE. Finding a body's end
+    # by scanning for `}` at column 0 stops early when the body contains a
+    # nested class definition - which 728's does - so the skip ended before
+    # the accesses and rewrote them anyway. Measured by watching it break
+    # the build after the guard was in place.
+    #
+    # A file-level refusal cannot be fooled that way. The cost is that such
+    # a file needs its class pass rather than a sweep, which is true of
+    # spritebox regardless.
+    ADJUSTED = re.compile(
+        r"^\s*(?:const\s+)?char\s*\*(?:\s*const)?\s+self\s*=\s*"
+        r"reinterpret_cast<char \*>\(this\)\s*[-+]")
+    if any(ADJUSTED.match(line) for line in text.split("\n")):
+        print(f"  REFUSED {src.name}: `self` is defined as an ADJUSTED `this` "
+              f"somewhere in this file, so an offset here may belong to "
+              f"another class. Needs the class pass, not a rewrite.")
+        return 1
+
     text = INLINE_RECT.sub(rect, text)
     text = RECT_PTR.sub(rect, text)
     text = INLINE.sub(scalar, text)
