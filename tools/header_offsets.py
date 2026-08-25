@@ -100,10 +100,47 @@ def derive(header: Path, cls: str):
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("header", type=Path)
-    ap.add_argument("cls")
+    ap.add_argument("header", type=Path, nargs="?")
+    ap.add_argument("cls", nargs="?")
     ap.add_argument("--json", action="store_true")
+    ap.add_argument("--survey", action="store_true",
+                    help="every class under --root: which can derive a map, "
+                         "and which declare members but carry no anchor")
+    ap.add_argument("--root", type=Path, default=Path("src"))
     args = ap.parse_args()
+
+    if args.survey:
+        # WHY THIS EXISTS. `name_offsets.py` clears the "raw self-access"
+        # shape, but only for a class whose header can anchor a walk. Every
+        # class WITHOUT an anchor is a blocker, and it blocks its DERIVED
+        # classes too: EditGroup's cleanup needs Dialog's layout, and Dialog
+        # declares 56 members with no `// 0xNN` on any of them (measured
+        # 2026-08-26). Annotating one member whose offset is known unblocks
+        # the rest of that class AND everything that inherits from it.
+        import re as _re
+        can, cannot = 0, []
+        for header in sorted(args.root.glob("*.h")):
+            text = header.read_text(errors="replace")
+            for m in _re.finditer(r"^class (\w+)\s*(?::[^{]*)?\{", text, _re.M):
+                cls = m.group(1)
+                try:
+                    table, _bad, seen, found = derive(header, cls)
+                except Exception:
+                    continue
+                if not found or not seen:
+                    continue
+                if table:
+                    can += 1
+                else:
+                    cannot.append((seen, cls, header.name))
+        cannot.sort(reverse=True)
+        print(f"{can} class(es) CAN derive an offset map")
+        print(f"{len(cannot)} class(es) declare members but carry NO anchor\n")
+        print("biggest blockers - members declared, no `// 0xNN` anywhere:")
+        for seen, cls, f in cannot[:15]:
+            print(f"  {seen:4d}  {cls:<22} {f}")
+        return 0 if not cannot else 1
+
     table, bad, seen, found = derive(args.header, args.cls)
     if args.json:
         print(json.dumps(table, indent=2))
