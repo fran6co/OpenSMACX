@@ -207,7 +207,58 @@ def to_header(header: pathlib.Path, source: pathlib.Path, apply: bool) -> int:
     return 0
 
 
+def sweep_all(root: pathlib.Path, apply: bool) -> int:
+    """Both directions over every header/source pair under `root`.
+
+    The names are already in the tree; what was missing was a way to move
+    them without naming eighty classes by hand. Runs --to-header first,
+    because a definition someone named should reach its declaration before
+    the forward pass reads that declaration back.
+    """
+    pairs = [(h, h.with_suffix(".cpp")) for h in sorted(root.glob("*.h"))
+             if h.with_suffix(".cpp").exists()]
+    total = 0
+    for header, source in pairs:
+        before = total
+        # definition -> declaration
+        table = defn_names(source)
+        lines = header.read_text(errors="replace").splitlines(True)
+        named = 0
+        for i, line in enumerate(lines):
+            if line.lstrip().startswith("//"):
+                continue
+            m = DECL.match(line)
+            if not m:
+                continue
+            have = params(m.group(2))
+            if not have or not any(SCAFFOLD.match(h) for h in have):
+                continue
+            want = table.get((m.group(1), len(have)))
+            if not want:
+                continue
+            merged = [w if SCAFFOLD.match(h) and not SCAFFOLD.match(w) else h
+                      for h, w in zip(have, want)]
+            if merged == have:
+                continue
+            new = retype_decl(line, merged)
+            if new is None or new == line:
+                continue
+            lines[i] = new
+            named += sum(1 for h, w in zip(have, merged) if h != w)
+        if apply and named:
+            header.write_text("".join(lines))
+        total += named
+        if total != before:
+            print(f"  {header.stem:<24} {total - before} declaration name(s)")
+    print(f"{total} declaration parameter(s) named across {len(pairs)} pair(s)"
+          f"{'' if apply else '  (dry run; pass --apply)'}")
+    return 0
+
+
 def main() -> int:
+    if "--all" in sys.argv:
+        root = pathlib.Path("src")
+        return sweep_all(root, "--apply" in sys.argv)
     if len(sys.argv) < 3:
         print(__doc__)
         return 2
