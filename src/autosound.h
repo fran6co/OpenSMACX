@@ -76,7 +76,12 @@ class AutoSound {
   // MEASURED: BasePop::UNK3/UNK4 set/clear bits 0/1 of this word
   // (basepop.cpp) - the only per-field behaviour recovered anywhere.
   uint32_t flags_;
- private:
+  // PROTECTED for the same reason the block above says: Win derives from
+  // AutoSound and its homed bodies read these fields. They were reached by
+  // raw offset off `reinterpret_cast<char *>(this)` because `private` made
+  // the member form uncompilable - the access happened either way, it just
+  // could not say what it was touching.
+ protected:
   int val_9_;
   int val_10_;
   int val_11_;

@@ -94,7 +94,7 @@ class Win : public AutoSound {
 
  public:
   // homed from 005ee330.cpp
-  int resize_event(int a1, int a2);
+  int resize_event(int width, int height);
 
  public:
   // homed from 005f83d0.cpp
@@ -131,11 +131,11 @@ class Win : public AutoSound {
 
  public:
   // homed from 005ed170.cpp
-  void nonclient_to_screen(RECT * a1);
+  void nonclient_to_screen(RECT * rect);
 
  public:
   // homed from 005ed0a0.cpp
-  void nonscreen_to_client(RECT * a1);
+  void nonscreen_to_client(RECT * rect);
 
  public:
   // homed from 005ecec0.cpp
@@ -151,22 +151,22 @@ class Win : public AutoSound {
 
  public:
   // homed from 005ec8a0.cpp
-  void get_mouse_pos(int * a1, int * a2);
+  void get_mouse_pos(int * x, int * y);
 
  public:
   // homed from 005ec800.cpp
-  void set_mouse_pos(int a1, int a2);
+  void set_mouse_pos(int x, int y);
 
  public:
   // 0x005EEF60, a pending_bodies forwarder.
-  void nonclient_to_client(int * a1, int * a2);
+  void nonclient_to_client(int * x, int * y);
   // The RECT overload the homed bodies call - same conversion, one
   // rectangle instead of a coordinate pair.
   void nonclient_to_client(RECT *rect);
 
  public:
   // 0x005EBD80, a pending_bodies forwarder.
-  int init(int a1, int a2, int a3, int a4, LPSTR a5, int a6, Win * a7, Menu * a8, BorderSizing * a9);
+  int init(int x, int y, int width, int height, LPSTR caption, int flags, Win * parent, Menu * menu, BorderSizing * border);
 
   friend class Scroll;
   // BaseButton's colour setters test the parent link before drawing.
@@ -176,11 +176,11 @@ class Win : public AutoSound {
   // 0x005F6320  ?on_mouse_move@Win@@QAEXHHIH@Z - public, __thiscall,
   // void(int, int, unsigned int, int). GraphicWin::on_mouse_move is a pure
   // forwarder to it and is its only caller.
-  void on_mousewheel_up_vert(int a1);
-  void on_mousewheel_down_horz(int a1);
+  void on_mousewheel_up_vert(int delta);
+  void on_mousewheel_down_horz(int delta);
   int get_lbutton_state();
-  void on_mousewheel_up_horz(int a1);
-  void on_mousewheel_down_vert(int a1);
+  void on_mousewheel_up_horz(int delta);
+  void on_mousewheel_down_vert(int delta);
   int UNK1(int a, int b, int c, int d, int e, int f, int g, int h, int i);
   int UNK5();
   int UNK6(int a);
@@ -247,7 +247,8 @@ class Win : public AutoSound {
   void reset_window_clip();
   void sync_palette();
   int is_child(int value);
-  static int OnSetCursor(void *a1, void *a2, unsigned int a3, unsigned int a4);
+  static int OnSetCursor(void *hwnd, void *window, unsigned int hittest,
+                         unsigned int message);
   void set_vert_pos(int position);
   void set_horz_pos(int position);
   void set_vert_range(int minimum, int maximum);
@@ -525,19 +526,20 @@ class Win : public AutoSound {
   // `int`, not the catalogue's `D` (char): the image loads a full dword,
   // `mov ecx, [esp+0x10]`, where a char parameter compiles `movsx ecx,
   // byte ptr`. Measured on 0x005F1660.
-  void __cdecl OnChar(void *hwnd, int ch, int flags);
+  // NOT a member, and the parameter names below are the proof. Declared
+  // here only until the free form lands; see win.cpp.
   void UNK7(int a1, int a2, int a3, int a4);
   int __stdcall adjust_menus(void *a1);
   void do_caption_buttons();
   int maximize();
-  void on_mousewheel_down(int a1);
-  void on_mousewheel_up(int a1);
-  void set_bottom_border_thickness(int a1);
+  void on_mousewheel_down(int delta);
+  void on_mousewheel_up(int delta);
+  void set_bottom_border_thickness(int thickness);
   int show_maximize();
   void update_nc_buffer(int a1);
 
  public:
-  void add_child(Win* a1);
+  void add_child(Win* child);
   void bring_to_top();
   int get_rbutton_state();
   void left_down_event(int a1, int a2, int a3);
@@ -547,8 +549,8 @@ class Win : public AutoSound {
   // into the signature. Unclaimed, so no marker moves with this.
   Buffer *redraw_nc_buffer(int index);
   void __cdecl remove_parent(Win* a1);
-  void set_border_thickness(int a1);
-  void set_parent_dialog(Win *a1);
+  void set_border_thickness(int thickness);
+  void set_parent_dialog(Win *dialog);
   void __cdecl update();
   void __cdecl update_zorder();
   void window_line_raw(int a1, int a2, int a3, int a4, int a5, int a6, unsigned int a7);
@@ -558,9 +560,9 @@ class Win : public AutoSound {
   void __cdecl OnRButtonUp(void * a1, int a2, int a3, unsigned int a4);
   void __cdecl bring_parent_to_top(Win * a1);
   void draw_rect_border(int x1, int y1, int x2, int y2, HGDIOBJ pen1, HGDIOBJ pen2, int unused7);
-  void remove_child(Win *a1);
-  void set_caption_height(int a1);
-  void update_back_to_window(Buffer * a1);
+  void remove_child(Win *child);
+  void set_caption_height(int height);
+  void update_back_to_window(Buffer * buffer);
 
  public:
   // The RECT overload. `char *` not `signed char *`: the catalogue spells
@@ -568,27 +570,27 @@ class Win : public AutoSound {
   // own name instead of needing a `symbol` alias.
   int init(RECT *area, char *caption, int style, Win *parent,
            Menu *menu, BorderSizing *sizing);
-    int key_click_event(int a1, int a2);
-  int key_down_event(int a1);
-  int key_up_event(int a1);
-  int set_cursor(Sprite* a1, int a2, int a3);
-  int set_cursor(HCURSOR *a1);
+    int key_click_event(int key, int flags);
+  int key_down_event(int key);
+  int key_up_event(int key);
+  int set_cursor(Sprite* sprite, int hot_x, int hot_y);
+  int set_cursor(HCURSOR *cursor);
 
  public:
   int center();
   int minimize();
-  void nonclient_to_screen(int * a1, int * a2);
-  void screen_to_nonclient(int * a1, int * a2);
-  void set_caption(char * a1);
+  void nonclient_to_screen(int * x, int * y);
+  void screen_to_nonclient(int * x, int * y);
+  void set_caption(char * text);
   void sub_5ef1e0(int x1, int y1, int x2, int y2, void *pen, int unused6);
   int sub_63c340();
 
  public:
   void __cdecl OnKey(void * a1, unsigned int a2, long a3, int a4, unsigned int a5);
-  void OnLButtonUp(void *a1, int a2, int a3, unsigned int a4);
+  void OnLButtonUp(void *hwnd, int x, int y, unsigned int keys);
   int __cdecl OnSysCommand(void * a1, unsigned int a2, int a3, int a4);
   void paint_tiled(Buffer *tile, int x_origin, int y_origin, int clip_left, int clip_top, int clip_width, int clip_height, int unused8);
-  void update_window_to_buffer(Buffer * a1);
+  void update_window_to_buffer(Buffer * buffer);
 
  public:
   void __cdecl OnMouseMove(void * a1, int a2, int a3, unsigned int a4);
@@ -598,7 +600,7 @@ class Win : public AutoSound {
 
  public:
   long __cdecl OnActivate(void *a1, unsigned int a2, void *a3, long a4);
-  void screen_to_client(RECT * a1);
+  void screen_to_client(RECT * rect);
 
  public:
   // Tear the window down: clears the focus/tracking globals and walks

@@ -1641,6 +1641,21 @@ def _image_pin(src: Path, exe: Path) -> str:
 
     THE RULER IS CHECKED BEFORE ANYTHING IS MEASURED WITH IT.
     """
+    # NO IMAGE, NO RULER TO VERIFY. `check --exe /nonexistent` with the
+    # measurement stubbed is how decomp/tests drives this command, and the
+    # pin landed without noticing: fifteen tests went red and stayed red,
+    # because nothing runs pytest. A tree that HAS an image still must
+    # match its pin - that is the case the positive control exercises - but
+    # demanding a pin for an image that is not there fails the wrong thing.
+    # A real run without the image cannot measure anything either.
+    if not exe.exists():
+        # SAID OUT LOUD, not swallowed. Skipping the pin here is right - there
+        # is no ruler to verify - but a silent skip is how a check becomes
+        # vacuous, so the run says the ruler was never checked.
+        typer.secho(f"  no image at {exe}: the pin was not verified, and "
+                    f"nothing here was measured against it",
+                    fg=typer.colors.YELLOW)
+        return ""
     pin = src / "IMAGE_PIN"
     try:
         recorded = re.search(r"^sha256 ([0-9a-f]{64})$", pin.read_text(),

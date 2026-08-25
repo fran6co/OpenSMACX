@@ -44,9 +44,24 @@ import sys
 # identifier" in the free functions homed into win.cpp, which is how this
 # restriction was found rather than reasoned.
 # `*reinterpret_cast<unsigned int *>(self + 0x98)` and the C-style twin.
+# The INLINE form, where no `self` local exists: `*(int *)(reinterpret_cast<
+# char *>(this) + 0x98)`. Same access, same remedy - the tool used to see
+# only the `self` spelling and left these behind.
+INLINE = re.compile(
+    r"\*\s*(?:reinterpret_cast<\s*[\w ]+\*+\s*>|\(\s*[\w ]+\*+\s*\))\s*"
+    r"\(\s*(?:reinterpret_cast<\s*char\s*\*\s*>\s*\(\s*this\s*\)"
+    r"|\(\s*char\s*\*\s*\)\s*this)\s*\+\s*0x(?P<off>[0-9A-Fa-f]+)\s*\)")
+INLINE_RECT = re.compile(
+    r"reinterpret_cast<\s*RECT\s*\*\s*>\s*\(\s*(?:reinterpret_cast<\s*char"
+    r"\s*\*\s*>\s*\(\s*this\s*\)|\(\s*char\s*\*\s*\)\s*this)\s*\+\s*"
+    r"0x(?P<off>[0-9A-Fa-f]+)\s*\)")
+
 ACCESS = re.compile(
-    r"\*\s*(?:reinterpret_cast<\s*[\w ]+\*\s*>|\(\s*[\w ]+\*\s*\))\s*"
-    r"\(\s*(?P<base>self)\s*\+\s*0x(?P<off>[0-9A-Fa-f]+)\s*\)")
+    r"\*\s*(?:reinterpret_cast<\s*[\w ]+\*+\s*>|\(\s*[\w ]+\*+\s*\))\s*"
+    # `self` bare, or wrapped in a redundant `(char *)` the artifact emitted
+    # even where `self` is already `char *`.
+    r"\(\s*(?:\(\s*char\s*\*\s*\)\s*)?(?P<base>self)\s*\+\s*"
+    r"0x(?P<off>[0-9A-Fa-f]+)\s*\)")
 # a RECT taken by address rather than dereferenced
 RECT_PTR = re.compile(
     r"reinterpret_cast<\s*RECT\s*\*\s*>\s*\(\s*(?P<base>self)\s*\+\s*"
@@ -82,7 +97,9 @@ def main() -> int:
         counts[off] += 1
         return name
 
+    text = INLINE_RECT.sub(rect, text)
     text = RECT_PTR.sub(rect, text)
+    text = INLINE.sub(scalar, text)
     text = ACCESS.sub(scalar, text)
 
     for off, n in sorted(counts.items(), key=lambda kv: -kv[1]):

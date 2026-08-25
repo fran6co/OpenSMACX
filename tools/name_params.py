@@ -30,9 +30,23 @@ import sys
 
 SCAFFOLD = re.compile(r"^a\d+$")
 # `int on_nc_hittest(int x, int y);` inside a class body
-DECL = re.compile(r"^\s*(?:virtual\s+|static\s+|friend\s+)*"
-                  r"[\w:]+[\s\*&]+(\w+)\s*\(([^;{)]*)\)\s*(?:const\s*)?[;{]")
-DEFN = re.compile(r"^[\w:][\w:\*&<>,\s]*?\b(?:(\w+)::)?(\w+)\s*\(([^;{)]*)\)\s*\{")
+# `__cdecl` AND FRIENDS HAVE TO BE SKIPPED EXPLICITLY. Without them the
+# name group swallowed the calling convention: win.h's file-scope
+# `Win *__cdecl get_mouse_window_recurse(Win *window, int *x, int *y);`
+# parsed as a function CALLED `__cdecl`, so its three good names never
+# reached the definition and 51 `aN` mentions stayed put.
+CONV = r"(?:__cdecl|__stdcall|__fastcall|__thiscall)"
+DECL = re.compile(r"^\s*(?:virtual\s+|static\s+|friend\s+|extern\s+)*"
+                  r"[\w:]+[\s\*&]+(?:" + CONV + r"\s+)?(\w+)\s*"
+                  r"\(([^;{)]*)\)\s*(?:const\s*)?[;{]")
+DEFN = re.compile(r"^[\w:][\w:\*&<>,\s]*?(?:" + CONV + r"\s+)?"
+                  r"\b(?:(\w+)::)?(\w+)\s*\(([^;{)]*)\)\s*\{")
+
+
+def _strip_comments(text: str) -> str:
+    """The code, with `//` tails and `/* */` blocks removed."""
+    text = re.sub(r"/\*.*?\*/", " ", text, flags=re.S)
+    return "\n".join(line.split("//", 1)[0] for line in text.splitlines())
 
 
 def params(text: str) -> list[str] | None:
@@ -63,9 +77,13 @@ def header_names(header: pathlib.Path) -> dict[str, list[str]]:
             continue
         if any(SCAFFOLD.match(n) for n in names):
             continue
-        # an overload set cannot be told apart by name alone; keep the first
-        # and let arity disagreement reject the wrong pairing later.
-        best.setdefault(m.group(1), names)
+        # KEYED ON (name, arity), not name alone. Keeping only the first
+        # declaration meant an overload set gave up all but one member:
+        # win.h declares `init` twice, at six and nine parameters, and the
+        # nine-parameter definition was rejected on arity against the
+        # six-parameter names. Two overloads of the same arity still cannot
+        # be told apart here, so the first still wins for those.
+        best.setdefault((m.group(1), len(names)), names)
     return best
 
 
@@ -87,7 +105,7 @@ def main() -> int:
             continue
         name = m.group(2)
         have = params(m.group(3))
-        want = table.get(name)
+        want = table.get((name, len(have or [])))
         if not have or not want or len(have) != len(want):
             i += 1
             continue
@@ -101,7 +119,13 @@ def main() -> int:
         while j < len(lines) and not lines[j].startswith("}"):
             j += 1
         body = "".join(lines[i:j + 1])
-        clash = [w for _, w in pairs if re.search(rf"\b{w}\b", body)]
+        # THE CLASH TEST MUST NOT READ PROSE. Checking the raw body counted
+        # a comment as a use: get_mouse_window_recurse was skipped because
+        # one line says "the window's four render buffers", and its three
+        # good names never reached it. Same defect compiler_work had, in a
+        # different tool - strip comments before asking.
+        code = _strip_comments(body)
+        clash = [w for _, w in pairs if re.search(rf"\b{w}\b", code)]
         if clash:
             skipped += 1
             print(f"  skip {name}: `{', '.join(clash)}` already used in the body")
