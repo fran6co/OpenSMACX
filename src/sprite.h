@@ -27,6 +27,17 @@ struct TexHeap;  // texture-heap handle, only ever passed through as a pointer
   */
 class Sprite {
  public:
+  // THE FOUR UNK METHODS ARE EVIDENCE-FREE, and for a reason that is worth
+  // stating precisely because it also disqualifies the one clue they seem to
+  // have. UNK1 is `xor eax,eax; ret 0x1c` and UNK2 `xor eax,eax; ret 0x14`:
+  // five-byte stubs. VC6 FOLDS IDENTICAL BODIES PROGRAM-WIDE, so those bytes
+  // are not uniquely Sprite's - every 7-argument and 5-argument stub in the
+  // image shares them - and the single `caller` each records is whichever
+  // one the catalogue happened to attribute, not evidence about Sprite.
+  // win.h records the same folding for the 51 vtable slots the catalogue
+  // hands to AlphaMovie.
+  // UNK3 and UNK4 have EMPTY bodies, so their two ints are unused and
+  // nothing in the body can name them either.
   int UNK1(int a, int b, int c, int d, int e, int f, int g);
   int UNK2(int a, int b, int c, int d, int e);
   int draw(Buffer *buffer, int a, int b, int c, int x, int y);
@@ -76,11 +87,7 @@ int *const SpriteMemoryUsed = (int *)0x009B6618;
 // rebind this.
 typedef void *func_sprite_free(void *);
 
-Sprite *__fastcall sprite_construct_redirect(Sprite *self, void *);
-void __fastcall sprite_close_redirect(Sprite *self, void *);
 
-int __fastcall sprite_draw_redirect(
-    Sprite *self, void *, Buffer *buffer, int a, int b, int c, int x, int y);
 
 // The draw origin this overload substitutes for the duration of the call.
 extern int SpriteDrawOriginX;
@@ -89,9 +96,3 @@ extern int SpriteDrawOriginY;
 // The four-argument overload this one wraps is a 3225-byte body with eleven
 // call targets, still an original dependency. Tests rebind this seam.
 
-int __fastcall sprite_unk1_redirect(
-    Sprite *self, void *, int a, int b, int c, int d, int e, int f, int g);
-int __fastcall sprite_unk2_redirect(
-    Sprite *self, void *, int a, int b, int c, int d, int e);
-void __fastcall sprite_unk3_redirect(Sprite *self, void *, int a1, int a2);
-void __fastcall sprite_unk4_redirect(Sprite *self, void *, int a1, int a2);

@@ -60,10 +60,6 @@ Sprite::Sprite() {
     ordered[0x28 / 4] = 0;
 }
 
-Sprite *__fastcall sprite_construct_redirect(Sprite *self, void *) {
-    new (self) Sprite();
-    return self;
-}
 
 /*
 Purpose: Release a sprite's allocations, discount its pixel memory, and clear
@@ -128,9 +124,6 @@ void Sprite::close() {
     fObj1Exists_ = 0;
 }
 
-void __fastcall sprite_close_redirect(Sprite *self, void *) {
-    self->close();
-}
 
 // OBJECTS, NOT POINTERS: the image addresses 0x00696D18 and 0x00696D1C
 // directly - `mov esi, dword ptr [0x696d18]` - where a pointer variable
@@ -164,10 +157,6 @@ int Sprite::draw(Buffer *buffer, int a, int b, int c, int x, int y) {
     return result;
 }
 
-int __fastcall sprite_draw_redirect(
-        Sprite *self, void *, Buffer *buffer, int a, int b, int c, int x, int y) {
-    return self->draw(buffer, a, b, c, x, y);
-}
 
 /*
 Purpose: Legacy stub; the original body returns 0 without reading its
@@ -185,10 +174,6 @@ int Sprite::UNK1(int, int, int, int, int, int, int) {
     return 0;
 }
 
-int __fastcall sprite_unk1_redirect(
-        Sprite *self, void *, int a, int b, int c, int d, int e, int f, int g) {
-    return self->UNK1(a, b, c, d, e, f, g);
-}
 
 /*
 Purpose: Legacy stub; the original body returns 0 without reading its
@@ -206,10 +191,6 @@ int Sprite::UNK2(int, int, int, int, int) {
     return 0;
 }
 
-int __fastcall sprite_unk2_redirect(
-        Sprite *self, void *, int a, int b, int c, int d, int e) {
-    return self->UNK2(a, b, c, d, e);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -226,9 +207,6 @@ Status: Complete
 void Sprite::UNK3(int, int) {
 }
 
-void __fastcall sprite_unk3_redirect(Sprite *self, void *, int a1, int a2) {
-    self->UNK3(a1, a2);
-}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -245,9 +223,6 @@ Status: Complete
 void Sprite::UNK4(int, int) {
 }
 
-void __fastcall sprite_unk4_redirect(Sprite *self, void *, int a1, int a2) {
-    self->UNK4(a1, a2);
-}
 
 /*
 // ORIGINAL: 0x0063CE20 sub_63ce20 0x0063CE20-0x0063CEE7;0x00663998-0x006639AD
