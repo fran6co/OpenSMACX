@@ -55,9 +55,9 @@ CEILINGS = {
     # The rest of the excess is SpriteBox, CheckBox and Dialogs walking
     # their own objects by offset, which needs each of those classes'
     # layout model - their passes, not Win's.
-    "raw self-access": 238,
+    "raw self-access": 236,
     "pointer-parameter as int": 6,
-    "scaffold name": 1689,
+    "scaffold name": 1659,
 }
 
 WHY = {

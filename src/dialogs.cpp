@@ -276,7 +276,7 @@ Purpose: Forward on scrolled to the embedded widget, but only when the
 Return Value: n/a
 Status: Complete
 */
-void Dialogs::on_scrolled(int a1, int a2) {
+void Dialogs::on_scrolled(int code, int pos) {
     uint8_t *const bytes = reinterpret_cast<uint8_t *>(this);
     int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
@@ -285,7 +285,7 @@ void Dialogs::on_scrolled(int a1, int a2) {
     // `cmp dword ptr [ecx-8], 2` and reads the field a second time.
     switch (discriminator) {
         case 2:
-            reinterpret_cast<ListBox *>(bytes - 0x140)->on_scrolling(a1, a2);
+            reinterpret_cast<ListBox *>(bytes - 0x140)->on_scrolling(code, pos);
             break;
         default:
             break;

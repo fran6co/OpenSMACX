@@ -582,8 +582,7 @@ void Datalink::parse_id(int id, DatalinkID *out_id, int *out_remainder) {
 Status: Complete
 */
 void Datalink::on_selected(int a1) {
-    char *self = reinterpret_cast<char *>(this);
-    int v = *reinterpret_cast<int *>(self + 0x2a38);
+    int v = field_2A38_;
     if (v == 0) {
         draw_entry();
     }

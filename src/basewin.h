@@ -62,7 +62,12 @@ class BaseWin : public ConstructedGraphicWin, public SubInterface {
   // 0x0040C850, a pending_bodies forwarder.
   void draw_supported(int a1);
  public:
-  void on_scrolled(int a1, int a2);
+  // (code, pos), the Win32 WM_VSCROLL shape the image mirrors. Evidence
+  // is in the bodies: BaseWin::on_scrolled does `switch (a1)` and then
+  // stores a2 in field_40B10_; StringBox::on_scrolled stores a2 in
+  // field_A1C_; BaseWin::on_iface_scrolled tests `a1 != 2` and copies a2.
+  // The first is switched on, the second is kept - a code and a position.
+  void on_scrolled(int code, int pos);
   void UNK2(int a1, int a2, int a3, int a4);
   // Two siblings the recovered bodies above reach with a direct `call rel32`
   // - UNK2 calls garrison_click, on_scrolled calls draw_facilities. Both are
@@ -88,7 +93,7 @@ class BaseWin : public ConstructedGraphicWin, public SubInterface {
   void on_iface_right_click(int a1, int a2);
   void on_iface_left_double_click(int a1, int a2);
   void on_iface_right_double_click(int a1, int a2);
-  void on_iface_scrolled(int a1, int a2);
+  void on_iface_scrolled(int code, int pos);
   static void timer_callback(int a1, int a2);
   void on_left_click(int a1, int a2);
   void on_right_click(int a1, int a2);
