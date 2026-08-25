@@ -111,8 +111,18 @@ def main() -> int:
                       f"{covered}/{len(fields)} field names verified by the walk")
             else:
                 refused += 1
-                print(f"  refuse {cls:<20} the walk does not reproduce its own "
-                      f"field_NN_ names")
+                # TWO DIFFERENT REFUSALS, and calling both "does not
+                # reproduce its own names" reported seven of my own tool's
+                # missing type sizes as findings about the tree.
+                if not agree:
+                    why = (f"DISAGREES - a field_NN_ name lands somewhere "
+                           f"other than NN")
+                elif bad2:
+                    why = "an existing // 0xNN annotation disagrees with the walk"
+                else:
+                    why = (f"only {covered} of {len(fields)} names reached; "
+                           f"the walk stops at a member whose size is unknown")
+                print(f"  refuse {cls:<20} {why}")
     print(f"\n{anchored} class(es) anchored, {refused} refused"
           f"{'' if args.apply else '  (dry run; pass --apply)'}")
     return 0

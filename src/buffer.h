@@ -83,6 +83,10 @@ struct Dib : BITMAPINFO {
      */
     RGBQUAD bmiColorsRest[255];
 };
+// The arithmetic above, stated so the COMPILER checks it and so
+// tools/header_offsets.py can walk THROUGH a `Dib` member instead of
+// stopping there and reporting a layout it never measured.
+static_assert(sizeof(Dib) == 0x428, "Dib is BITMAPINFOHEADER + 256 RGBQUAD");
 
 class Buffer {
  public:
@@ -338,7 +342,7 @@ class Buffer {
   friend class Win;
   
   uint32_t poOwner_;
-  uint32_t field_8_;
+  uint32_t field_8_;  // 0x0008
   uint32_t field_C_;
   uint32_t field_10_;
   uint32_t field_14_;
