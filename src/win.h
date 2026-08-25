@@ -139,11 +139,16 @@ class Win : public AutoSound {
 
  public:
   // homed from 005ecec0.cpp
-  int UNK4();
+  // NAMED from the body: true when `this` IS the focus window, or is one of
+  // its direct children, or is a descendant of one of them.
+  int is_in_focus_chain();
 
  public:
   // homed from 005ecdc0.cpp
-  int UNK2(int a1);
+  // NAMED from the body: it walks `ancestor`'s children looking for
+  // `this`, recursing - the mirror of is_descendant, which asks whether a
+  // candidate is among MY descendants.
+  int is_descendant_of(Win *ancestor);
 
  public:
   // homed from 005ecb60.cpp
