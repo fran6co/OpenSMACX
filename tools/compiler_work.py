@@ -150,7 +150,7 @@ SCAFFOLD_CEILINGS = {
     "nullsub_thunks.cpp markers": 56,
     "guarded_teardowns.cpp markers": 25,
     "PENDING_BODY forwarders": 226,
-    "artifact files (recovered/)": 1339,
+    "artifact files (recovered/)": 1336,
     "unrecovered files": 1696,
     "hypothesis_layouts.h lines": 2709,
 }
