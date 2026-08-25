@@ -51,13 +51,21 @@ typedef signed char int8;  // a scaffold spelling the artifacts use
 // returning `void *`, taking one flag argument) is exactly what a class
 // with a virtual destructor and no other virtuals emits for its only
 // vtable slot, matching what this address's own bytes do.
-// TRIED: the body below, transcribed field-for-field from this address's
-// own bytes. This build's `??_GWinNodeList` does NOT inline the walk -
-// under /GX it emits an SEH frame (`mov dword ptr [ebp-4], 0xCCCCCCCC`
-// cookie, funclets) and tail-CALLS the separate `??1WinNodeList@@UAE@XZ`
-// complete-object destructor instead, where the image is ONE function with
-// no such split. Plateau at 0/54 MISMATCH; not chased further - this
-// address is a bonus beyond the 0xC8 member fix itself.
+// LEVER (measured 2026-08-25, 14 -> 51 of the image's 54 instructions):
+// DEFINE `~WinNodeList()` INSIDE THE CLASS. The plateau recorded here
+// blamed /GX for the deleting destructor tail-CALLing a separate
+// `??1WinNodeList@@UAE@XZ` instead of inlining the walk. That diagnosis
+// was REFUTED by measuring it: `--flags "/c /O2 /Gy /GR-"` compiles 11
+// instructions, WORSE than the 14 /GX gave, so dropping the SEH frame only
+// removes the frame - it does not inline anything. The real cause was that
+// the destructor was defined out of line in this file, which is a call VC6
+// will not inline across; moved into the class body in win.h it inlines and
+// the shape matches the image throughout.
+// TRIED: what remains at 51/54 is register allocation, not spelling - the
+// image zeroes into edi (`push edi; xor edi,edi`) where this build uses ebx
+// for the same role, so every one of the five field stores differs only in
+// that register, and the epilogue pops in the other order. Same fingerprint
+// as AGENT_BRIEF's receiver-spill wall.
 // size      134 bytes
 // prototype void *(__thiscall ??_GWinNodeList@@UAEPAXI@Z)(WinNodeList *this, unsigned int)
 // callers   0   call targets   2
@@ -65,40 +73,6 @@ typedef signed char int8;  // a scaffold spelling the artifacts use
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00644EF2 0x0064557F
 
-WinNodeList::~WinNodeList() {
-    // IMAGE ORDER: the head is read before the vfptr-restore that every
-    // scalar deleting destructor opens with, matching `Win::~Win()`
-    // performing the same walk inline. `external_` guards the whole loop -
-    // nonzero means this list does not own its nodes.
-    void *node = head_;
-    if (node != 0) {
-        if (external_ == 0 && count_ > 0) {
-            int i = 0;
-            do {
-                Win *next = *reinterpret_cast<Win **>(
-                    reinterpret_cast<char *>(node) + 0xC);
-                current_ = next;
-                void *payload = *reinterpret_cast<void **>(
-                    reinterpret_cast<char *>(node) + 8);
-                if (payload != 0) {
-                    std::free(payload);
-                }
-                *reinterpret_cast<void **>(
-                    reinterpret_cast<char *>(head_) + 8) = 0;
-                if (head_ != 0) {
-                    std::free(head_);
-                }
-                node = current_;
-                head_ = node;
-                ++i;
-            } while (i < count_);
-        }
-        head_ = 0;
-        tail_ = 0;
-        count_ = 0;
-    }
-    tail_ = 0;
-}
 
 /*
 Purpose: Construct a Win from its AutoSound subobject and the process window
