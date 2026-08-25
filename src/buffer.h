@@ -86,12 +86,20 @@ struct Dib : BITMAPINFO {
 
 class Buffer {
  public:
+  // Blit this buffer into a window's client area. Called by the homed
+  // Win painters; its own definition is still an artifact. Arity from
+  // the call site.
+  void copy_to_window(Win *target, int src_x, int src_y, int x, int y,
+                      int w, int h);
   // homed from 005d8290.cpp
   void setup_buff_sprite(int a1);
 
  public:
   // homed from 005dd300.cpp
   int write_right_l(char * a1, int a2, int a3, int a4, int a5);
+  // The RECT overload: same right-aligned text, one rectangle instead of
+  // four coordinates. Called by the homed caption painters.
+  int write_right_l(char *text, RECT *area, int len);
 
  public:
   int poly(Vert *a1, int a2, int a3);
@@ -278,6 +286,15 @@ class Buffer {
   // forwarders. The seven-argument `copy` is a distinct overload from the
   // four-argument one above.
   int init(int width, int height, int tgl, ExtDirectDraw *direct_draw);
+  // 0x005D9E70 - blit a source buffer's region at (x, y). Declared here for
+  // the same reason as the rest of this block: the homed Win bodies call it,
+  // and its own body is still an artifact. `Win::redraw_nc_buffer` and the
+  // caption-button painters are the callers.
+  int draw(Buffer *source, int index, int x, int y, int flag_a, int flag_b);
+  // Tile `source` across a destination rectangle. Declared here for the same
+  // reason as `draw` above: the homed Win bodies paint with it and its own
+  // body is still an artifact.
+  int tile(Buffer *source, int src_x, int src_y, int x, int y, int w, int h);
   int fill(int color);
   int fill(RECT *area, int color);  // 005DFCD0
   // 0x005D8240 - builds a RECT from the four coordinates and forwards to

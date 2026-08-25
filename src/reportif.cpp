@@ -466,7 +466,7 @@ void __fastcall report_if_close_energy_redirect(ReportIf *self, void *) {
 Status: Complete
 */
 void ReportIf::done() {
-    reinterpret_cast<Win *>(0x00876478)->release_modal();
+    reinterpret_cast<Win *>(0x00876478)->Win::release_modal();
     reinterpret_cast<SubInterface *>(this)->release_iface_mode();
 }
 

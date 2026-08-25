@@ -148,6 +148,10 @@ class Palette {
   // Buffer caches this generation tag to skip republishing an unchanged
   // palette; see Buffer::sync_to_palette.
   friend class Buffer;
+  // Win compares its cached `field_184_` against the palette's seed to decide
+  // whether it must re-realise - the image reads it directly, and the two
+  // are one collaboration. Same reason Buffer is a friend above.
+  friend class Win;
   // The 256 palette entries themselves, at offset 0. get_rgbquad and
   // init read and write them as bytes; GetSystemPaletteEntries fills them
   // directly in init.

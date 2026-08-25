@@ -151,7 +151,7 @@ SCAFFOLD_CEILINGS = {
     "guarded_teardowns.cpp markers": 25,
     "PENDING_BODY forwarders": 230,
     "artifact files (recovered/)": 1388,
-    "unrecovered files": 1740,
+    "unrecovered files": 1739,
     "hypothesis_layouts.h lines": 2709,
 }
 
@@ -192,6 +192,12 @@ def census(root):
     return counts, files
 
 
+def _skipped(path) -> bool:
+    """Directories no census counts: the artifact archives (they die by
+    homing, not by cleanup) and the vendored zlib (not our code to fix)."""
+    return bool({"recovered", "unrecovered", "vendor"} & set(path.parts))
+
+
 def census_by_file(root):
     """The same census, keyed per file: {filename: Counter{shape: n}}.
 
@@ -205,7 +211,7 @@ def census_by_file(root):
     """
     per_file = collections.defaultdict(collections.Counter)
     for path in sorted(root.rglob("*.cpp")):
-        if "recovered" in path.parts or "unrecovered" in path.parts:
+        if _skipped(path):
             continue
         for line in path.read_text(errors="replace").splitlines():
             if line.lstrip().startswith("//"):
@@ -217,8 +223,13 @@ def census_by_file(root):
                 n = len(rx.findall(line))
                 if n:
                     per_file[path.name][name] += n
-    for path in sorted(root.glob("*.h")):
-        if "recovered" in path.parts or "unrecovered" in path.parts:
+    # rglob, MATCHING THE .cpp WALK ABOVE. This was `glob` while the .cpp
+    # side was `rglob`, so the function silently counted no headers at all
+    # when handed anything but `src` itself - a caller passing the repo root
+    # got 1044 where the gate got 943 and neither number named the other.
+    # Both walks are recursive now and both refuse the same directories.
+    for path in sorted(root.rglob("*.h")):
+        if _skipped(path):
             continue
         for line in path.read_text(errors="replace").splitlines():
             if line.lstrip().startswith("//"):

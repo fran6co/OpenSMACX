@@ -25,6 +25,19 @@
 #include "vector_teardown.h"
 #include <cstring>
 
+// The dword immediately ahead of MapWin's virtual base. MapWin used to
+// declare it as a member; VC6 owns those four bytes as MapWin's vtordisp now
+// that MapWin's methods override Win's virtuals, so it has no name here any
+// more - and giving PlanWin its own member at 0x21A68 measured +4 on sizeof,
+// which proves the dword still belongs to the MapWin subobject. This reaches
+// it the same way `virtual_base_of` reaches the base: through the parameter,
+// so no body has to pun its own `this`.
+static int32_t &pre_vbase_dword(void *self) {
+    return *reinterpret_cast<int32_t *>(
+        reinterpret_cast<uint8_t *>(self) + 0x21A68);
+}
+
+
 // The vbtable PlanWin stores at its own front when it is the one building
 // the embedded GraphicWin, and the two hand-maintained "vtable" pointers
 // `GraphicWin::construct`'s own idiom writes when GraphicWin is directly
@@ -69,7 +82,13 @@ void PlanWin::construct(int a1) {
     *reinterpret_cast<void **>(graphic_win + 0x444) = g_0066d2a4;
     *reinterpret_cast<int32_t *>(graphic_win - 4) = 0;
     field_21A6C_ = 0;
-    field_21A68_ = 0;
+    // 0x21A68 BY OFFSET: MapWin no longer names it (VC6 owns those four
+    // bytes as MapWin's vtordisp now that MapWin overrides Win's virtuals),
+    // and giving PlanWin a member here measured +4 on sizeof - so the dword
+    // still belongs to the MapWin subobject. Reaching it by offset is the
+    // honest holding position; it is 3 raw accesses of debt, to be paid when
+    // the MapWin/PlanWin pass models this boundary properly.
+    pre_vbase_dword(this) = 0;
 }
 
 /*
@@ -166,7 +185,11 @@ as a member, went with the member: VC6 places a virtual base where the
 vbtable names it, so PlanWin reaches GraphicWin at its own 0x22050.
 */
 void PlanWin::close() {
-    field_21A68_ = 0;
+    // WRITTEN INLINE, not through `pre_vbase_dword`. The image emits
+    // `mov [ecx + 0x21a68], 0` then TAIL-JUMPS to MapWin::close; routing the
+    // store through a helper call blocks that tail call and costs the claim.
+    // The pun of `this` is the price of the tail jump, and it is measured.
+    *reinterpret_cast<int32_t *>(reinterpret_cast<char *>(this) + 0x21A68) = 0;
     MapWin::close();
 }
 
@@ -207,7 +230,7 @@ Return Value: n/a
 Status: Complete
 */
 void PlanWin::blink() {
-    if (!field_21A68_) {
+    if (!pre_vbase_dword(this)) {
         return;
     }
     field_21A6C_ = (field_21A6C_ == 0) ? 1 : 0;

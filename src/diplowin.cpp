@@ -369,6 +369,7 @@ void __fastcall diplo_win_unk3_redirect(DiploWin *self, void *, int a1) {
 
 /*
 // ORIGINAL: 0x00443C30 ?show@DiploWin@@QAEXH@Z 0x00443C30-0x00443C4B BYTE_EXACT
+// symbol    ?show@DiploWin@@UAEXH@Z
 // size      27 bytes
 // prototype void (__thiscall ?show@DiploWin@@QAEXH@Z)(DiploWin* this, int)
 // callers   0   call targets   2
@@ -385,6 +386,7 @@ void DiploWin::show(int a1) {
 
 /*
 // ORIGINAL: 0x00443C50 ?hide@DiploWin@@QAEXXZ 0x00443C50-0x00443C68 BYTE_EXACT
+// symbol    ?hide@DiploWin@@UAEXXZ
 // size      24 bytes
 // prototype void (__thiscall ?hide@DiploWin@@QAEXXZ)(DiploWin* this)
 // callers   0   call targets   1

@@ -50,13 +50,16 @@
   *     only while MapWin is most-derived; in a PlanWin the vtordisp moves to
   *     0x2204C (`mov [eax + esi - 4], edx` at 0x0048BD5D, eax = 0x22050) and
   *     0x21A68 becomes PlanWin's own first field, written at 0x0048BD67, read
-  *     by blink at 0x0048BC20 and cleared by close at 0x0048BC50. Neither
-  *     class declares a virtual function, so VC6 emits no vtordisp of its own
-  *     and mapwin.h has to declare those four bytes itself to hold the
-  *     virtual base at 0x21A6C. The MapWin subobject here therefore covers
-  *     [0, 0x21A6C), one dword past the original's boundary, and the field at
-  *     0x21A68 is the protected MapWin::field_21A68_ that mapwin.h documents.
-  *     Every other offset, and sizeof, are the image's.
+  *     by blink at 0x0048BC20 and cleared by close at 0x0048BC50.
+  *     CORRECTED 2026-08-25: this passage used to end "Neither class declares
+  *     a virtual function, so VC6 emits no vtordisp of its own and mapwin.h
+  *     has to declare those four bytes itself". win.h declares its 88 slots
+  *     now, so VC6 emits the vtordisp - but only for the MOST-DERIVED object.
+  *     Inside a PlanWin the MapWin base is not most-derived, gets no
+  *     vtordisp, and stops at the image's 0x21A68; PlanWin's own fields
+  *     therefore start there, which is why field_21A68_ below is named and
+  *     derived_tail_ gives four bytes back. sizeof was blind to the whole
+  *     exchange - `clear_lines` wrote 0x21FF4 against the image's 0x21FF8.
   *
   * PlanWin's own fields are still carved out of the storage between the base
   * and 0x22050 rather than appended: appending would move the virtual base
@@ -91,6 +94,14 @@ class PlanWin : public MapWin {
   void UNK1();
 
  private:
+  // 0x21A68. THE FOUR BYTES MAPWIN NO LONGER NAMES. MapWin used to declare
+  // them itself; VC6 emits that vtordisp now, but only while MapWin is the
+  // MOST-DERIVED object. Inside PlanWin the base is not most-derived, so no
+  // vtordisp is emitted there and PlanWin's own fields would start four bytes
+  // early - measured: `clear_lines` wrote 0x21FF4 where the image writes
+  // 0x21FF8. PlanWin's own vtordisp sits later, at 0x2204C, so sizeof is
+  // unchanged by naming these.
+  int32_t field_21A68_;  // 0x21A68
   int32_t field_21A6C_;  // 0x21A6C
   // PlanWin's own Buffer, constructed at 0x21A70 by the constructor
   // (`lea ecx, [esi + 0x21a70]` at 0x0048BD21). A real member now: its own
@@ -104,7 +115,10 @@ class PlanWin : public MapWin {
   // zero-length member contributes nothing to the layout the
   // static_assert below pins.
   int32_t field_21FF8_;  // 0x21FF8
-  uint8_t derived_tail_[0x22050 - 0x21FFC];  // 0x21FFC
+  // Four bytes shorter than the arithmetic suggests: naming the 0x21A68
+  // filler above pushed every field back into its image position, so the
+  // tail has to give those four back to keep the boundary at 0x22050.
+  uint8_t derived_tail_[0x22050 - 0x21FFC - 4];  // 0x21FFC
 };
 
 static_assert(sizeof(PlanWin) == 0x22A64, "PlanWin layout must match terranx.exe");

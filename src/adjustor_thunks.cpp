@@ -735,7 +735,11 @@ void __fastcall adjust_dialogs1_pass_dialog_focus(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<Dialogs *>(object - vtordisp)->Dialogs::pass_dialog_focus();
+    // CAST TO Win, NOT TO THE DERIVED CLASS. `pass_dialog_focus` is Win's
+    // virtual; reaching it through the derived type makes the compiler add
+    // the subobject adjustment on top of the vtordisp one, and the image
+    // emits only the vtordisp adjust.
+    reinterpret_cast<Win *>(object - vtordisp)->Win::pass_dialog_focus();
 }
 
 /*
@@ -2621,7 +2625,11 @@ void __fastcall adjust_edit_group1_pass_dialog_focus(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<EditGroup *>(object - vtordisp)->EditGroup::pass_dialog_focus();
+    // CAST TO Win, NOT TO THE DERIVED CLASS. `pass_dialog_focus` is Win's
+    // virtual; reaching it through the derived type makes the compiler add
+    // the subobject adjustment on top of the vtordisp one, and the image
+    // emits only the vtordisp adjust.
+    reinterpret_cast<Win *>(object - vtordisp)->Win::pass_dialog_focus();
 }
 
 

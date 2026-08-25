@@ -702,7 +702,7 @@ void __cdecl popup_wave_callback_redirect(PopupWave *popup, int a2) {
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
 // ORIGINAL: 0x00404F80 ?on_redraw_nc@Popup@@QAEXPAURECT@@H@Z 0x00404F80-0x00404F83 BYTE_EXACT
-// symbol    ?on_redraw_nc@Popup@@QAEXPAUtagRECT@@H@Z
+// symbol    ?on_redraw_nc@Popup@@UAEXPAUtagRECT@@H@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_redraw_nc@Popup@@QAEXPAURECT@@H@Z)(Popup* this, RECT*, int)
 // callers   0   call targets   0
@@ -761,6 +761,7 @@ void __fastcall popup_on_adjust_button_width_redirect(Popup *self, void *) {
 
 /*
 // ORIGINAL: 0x00404F90 ?on_nc_hittest@Popup@@QAEHHH@Z 0x00404F90-0x00404FA4 BYTE_EXACT
+// symbol    ?on_nc_hittest@Popup@@UAEHHH@Z
 // size      20 bytes
 // prototype int (__thiscall ?on_nc_hittest@Popup@@QAEHHH@Z)(Popup* this, int, int)
 // callers   0   call targets   1
@@ -770,7 +771,7 @@ void __fastcall popup_on_adjust_button_width_redirect(Popup *self, void *) {
 Status: Complete
 */
 int Popup::on_nc_hittest(int a1, int a2) {
-    return reinterpret_cast<Win *>(this)->on_nc_hittest(a1, a2);
+    return reinterpret_cast<Win *>(this)->Win::on_nc_hittest(a1, a2);
 }
 
 /*

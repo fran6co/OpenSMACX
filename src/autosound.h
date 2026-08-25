@@ -58,7 +58,11 @@ class AutoSound {
   // close(), deletes only when the caller's flag says so.
   void *scalar_delete(unsigned int mode);
 
- private:
+ protected:
+  // PROTECTED, NOT PRIVATE: Win derives from AutoSound and the homed window
+  // bodies read these directly - which is what the image does, since they are
+  // one object. `private` modelled a containment that the inheritance edge
+  // replaced.
   // The vfptr is EMITTED by the compiler now - see the virtual destructor
   // above. Same four bytes at offset 0, so sizeof(AutoSound) stays 0x98.
   int val_1_;

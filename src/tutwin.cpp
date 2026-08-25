@@ -425,6 +425,7 @@ void __fastcall tut_win_do_des_redirect(
 /*
 Purpose: Tell the attached object the tutorial window moved.
 // ORIGINAL: 0x004BDDB0 ?on_move@TutWin@@QAEXHH@Z 0x004BDDB0-0x004BDDC5 BYTE_EXACT
+// symbol    ?on_move@TutWin@@UAEXHH@Z
 // size      21 bytes
 // prototype void (__thiscall ?on_move@TutWin@@QAEXHH@Z)(TutWin* this, int, int)
 // callers   0   call targets   0

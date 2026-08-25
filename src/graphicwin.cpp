@@ -716,6 +716,7 @@ int __fastcall graphic_win_init_redirect(GraphicWin *self, void *,
 
 /*
 // ORIGINAL: 0x005D6310 ?on_mouse_move@GraphicWin@@QAEXHHIH@Z 0x005D6310-0x005D632C BYTE_EXACT
+// symbol    ?on_mouse_move@GraphicWin@@UAEXHHIH@Z
 // size      28 bytes
 // prototype void (__thiscall ?on_mouse_move@GraphicWin@@QAEXHHIH@Z)(GraphicWin* this, int, int, unsigned int, int)
 // callers   0   call targets   1
@@ -725,7 +726,13 @@ int __fastcall graphic_win_init_redirect(GraphicWin *self, void *,
 Status: Complete
 */
 void GraphicWin::on_mouse_move(int a1, int a2, unsigned int a3, int a4) {
-    reinterpret_cast<Win *>(this)->on_mouse_move(a1, a2, a3, a4);
+    // QUALIFIED, not a cast. Win is a non-virtual base at offset 0, so the
+    // reinterpret_cast this body used to carry named no adjustment at all -
+    // and once Win::on_mouse_move took vtable slot 16 the unqualified call
+    // through it compiled to `mov eax,[ecx]` + an indirect dispatch. The
+    // image calls 0x005F6320 directly (`calls` fact above): 10 of 11
+    // instructions disagreed on that one load. Qualifying restores it.
+    Win::on_mouse_move(a1, a2, a3, a4);
 }
 
 

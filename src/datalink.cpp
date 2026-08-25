@@ -653,6 +653,7 @@ void Datalink::on_selected(int a1) {
 
 /*
 // ORIGINAL: 0x0042BD40 ?show@Datalink@@QAEXH@Z 0x0042BD40-0x0042BD5B BYTE_EXACT
+// symbol    ?show@Datalink@@UAEXH@Z
 // size      27 bytes
 // prototype void (__thiscall ?show@Datalink@@QAEXH@Z)(Datalink* this, int)
 // callers   1   call targets   2
@@ -669,6 +670,7 @@ void Datalink::show(int a1) {
 
 /*
 // ORIGINAL: 0x0042BD60 ?hide@Datalink@@QAEXXZ 0x0042BD60-0x0042BD79 BYTE_EXACT
+// symbol    ?hide@Datalink@@UAEXXZ
 // size      25 bytes
 // prototype void (__thiscall ?hide@Datalink@@QAEXXZ)(Datalink* this)
 // callers   0   call targets   2

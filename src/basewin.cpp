@@ -458,6 +458,7 @@ void __fastcall base_win_on_mouse_leave_redirect(BaseWin *self, void *, int a1, 
 
 /*
 // ORIGINAL: 0x0041E890 ?show@BaseWin@@QAEXH@Z 0x0041E890-0x0041E8AB BYTE_EXACT
+// symbol    ?show@BaseWin@@UAEXH@Z
 // size      27 bytes
 // prototype void (__thiscall ?show@BaseWin@@QAEXH@Z)(BaseWin* this, int)
 // callers   0   call targets   2
