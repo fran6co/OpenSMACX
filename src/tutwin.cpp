@@ -399,8 +399,10 @@ Return Value: n/a
 Status: Complete
 */
 void TutWin::on_move(int x, int y) {
-    char *self = reinterpret_cast<char *>(this);
-    VCall *obj = *reinterpret_cast<VCall **>(self + 0x53d4);
+    // field_53D4_ is declared int32_t but holds an object pointer - the
+    // cast stays until the member's own type is settled, which is a layout
+    // question for TutWin rather than a naming one.
+    VCall *obj = *reinterpret_cast<VCall **>(&field_53D4_);
     if (obj) {
         obj->slot063();
     }
