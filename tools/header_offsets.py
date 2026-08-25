@@ -28,6 +28,14 @@ SIZES = {
     "unsigned long": 4, "float": 4, "bool": 1, "char": 1, "uint8_t": 1,
     "int8_t": 1, "short": 2, "uint16_t": 2, "int16_t": 2, "double": 8,
     "RECT": 16, "POINT": 8, "WinNodeList": 24,
+    # Win32 handle and pointer typedefs. Every one is a pointer on x86, and
+    # they are what stopped the walk on Buffer - whose members ARE
+    # self-consistent by hand, so a missing size here reads as a layout
+    # defect that is not there.
+    "LPVOID": 4, "LPSTR": 4, "LPCSTR": 4, "HDC": 4, "HWND": 4, "HBITMAP": 4,
+    "HPALETTE": 4, "HRGN": 4, "HCURSOR": 4, "HICON": 4, "HGDIOBJ": 4,
+    "HANDLE": 4, "HFONT": 4, "HMENU": 4, "HINSTANCE": 4, "LPARAM": 4,
+    "WPARAM": 4, "DWORD": 4, "UINT": 4, "BOOL": 4, "LONG": 4, "COLORREF": 4,
 }
 # A struct member is expanded so `self + 0x140` names a FIELD, not the struct.
 FIELDS = {
@@ -55,7 +63,24 @@ def class_body(text: str, name: str) -> list[str]:
     return out
 
 
-def derive(header: Path, cls: str):
+def sizes(root: Path) -> dict[str, int]:
+    """Every `static_assert(sizeof(X) == N)` in the tree, as a size table.
+
+    The headers already pin the sizes this walk needs - buffer.h asserts
+    sizeof(Buffer) == 0x588, sprite.h sizeof(Sprite) == 0x2C - and reading
+    them is what lets the walk pass THROUGH a class-typed member instead of
+    stopping there and reporting a layout it never measured.
+    """
+    out: dict[str, int] = {}
+    for header in root.glob("*.h"):
+        for name, size in re.findall(
+                r"static_assert\(sizeof\((\w+)\)\s*==\s*(0x[0-9A-Fa-f]+|\d+)",
+                header.read_text(errors="replace")):
+            out[name] = int(size, 0)
+    return out
+
+
+def derive(header: Path, cls: str, extra: dict[str, int] | None = None):
     body = class_body(header.read_text(errors="replace"), cls)
     offset, table, anchored = None, {}, False
     disagreements: list = []
@@ -83,7 +108,12 @@ def derive(header: Path, cls: str):
             offset, anchored = stated, True
         if not anchored or offset is None:
             continue
-        size = 4 if star else SIZES.get(ty)
+        # THE TREE'S OWN static_assert(sizeof(X)) IS A SIZE TABLE, and
+        # `sizes()` has been reading it all along while this line ignored
+        # it. A `Buffer buffer_` member stopped the walk even though
+        # buffer.h asserts sizeof(Buffer) == 0x588 two files away.
+        size = 4 if star else (SIZES.get(ty) if extra is None
+                               else extra.get(ty, SIZES.get(ty)))
         if size is None:
             print(f"  ...stopping at `{ty} {name}`: unknown size", file=sys.stderr)
             break
@@ -118,13 +148,14 @@ def main() -> int:
         # 2026-08-26). Annotating one member whose offset is known unblocks
         # the rest of that class AND everything that inherits from it.
         import re as _re
+        known = sizes(args.root)
         can, cannot = 0, []
         for header in sorted(args.root.glob("*.h")):
             text = header.read_text(errors="replace")
             for m in _re.finditer(r"^class (\w+)\s*(?::[^{]*)?\{", text, _re.M):
                 cls = m.group(1)
                 try:
-                    table, _bad, seen, found = derive(header, cls)
+                    table, _bad, seen, found = derive(header, cls, known)
                 except Exception:
                     continue
                 if not found or not seen:
@@ -141,7 +172,7 @@ def main() -> int:
             print(f"  {seen:4d}  {cls:<22} {f}")
         return 0 if not cannot else 1
 
-    table, bad, seen, found = derive(args.header, args.cls)
+    table, bad, seen, found = derive(args.header, args.cls, sizes(args.root))
     if args.json:
         print(json.dumps(table, indent=2))
     else:

@@ -36,7 +36,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from header_offsets import class_body, derive  # noqa: E402
+from header_offsets import class_body, derive, sizes  # noqa: E402
 
 FIELD = re.compile(r"^(\s+)([\w:]+)\s+(field_([0-9A-Fa-f]+)_);")
 
@@ -71,13 +71,14 @@ def main() -> int:
     ap.add_argument("--apply", action="store_true")
     args = ap.parse_args()
 
+    known = sizes(args.root)      # the tree's own static_assert(sizeof) table
     anchored = refused = 0
     for header in sorted(args.root.glob("*.h")):
         text = header.read_text(errors="replace")
         for m in re.finditer(r"^class (\w+)\s*(?::[^{]*)?\{", text, re.M):
             cls = m.group(1)
             try:
-                table, _bad, seen, found = derive(header, cls)
+                table, _bad, seen, found = derive(header, cls, known)
             except Exception:
                 continue
             if not found or not seen or table:
@@ -92,7 +93,7 @@ def main() -> int:
             trial = "\n".join(lines)
             header.write_text(trial)
             try:
-                table2, bad2, _s, _f = derive(header, cls)
+                table2, bad2, _s, _f = derive(header, cls, known)
                 agree = all(table2.get(f"{o:#x}") == n for _i, _ind, n, o in fields
                             if f"{o:#x}" in table2)
                 covered = sum(1 for _i, _ind, n, o in fields if f"{o:#x}" in table2)

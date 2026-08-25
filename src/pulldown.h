@@ -53,7 +53,7 @@ class PullDown : public GraphicWin {
 
   void on_mouse_leave(int a1, int a2);
  private:
-  uint32_t field_A14_;
+  uint32_t field_A14_;  // 0x0a14
   PullDownItem items_[64];
   uint32_t field_F18_;
   uint32_t field_F1C_;
