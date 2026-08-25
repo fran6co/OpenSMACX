@@ -59,20 +59,28 @@ typedef void *func9(void);
 typedef BOOL func11(int, int, int);
 typedef uint32_t func15(LPCSTR);
 // 0x005A94F0, a pending_bodies forwarder.
-uint32_t __cdecl save_daemon(LPCSTR a1);
+// A SAVE PATH, from the callers: general.cpp passes
+// "saves\\auto\\Alpha Centauri Autosave 1", and scenario.cpp passes
+// State.save_path to the load side.
+uint32_t __cdecl save_daemon(LPCSTR save_path);
 typedef uint32_t func16(LPCSTR, BOOL);
 // 0x005A9760, a pending_bodies forwarder.
-uint32_t __cdecl load_daemon(LPCSTR a1, BOOL a2);
+uint32_t __cdecl load_daemon(LPCSTR save_path, BOOL a2);
 typedef void func19(uint32_t);
 typedef int func20(LPCSTR, int, int, LPCSTR, Sprite *);
 // 0x0048C650, a pending_bodies forwarder.
 int __cdecl popb(LPCSTR a1, int a2, int a3, LPCSTR a4, Sprite * a5);
 typedef void func21(int, int, int, int);
 // 0x0046AEF0, defined at the end of src/mapwin.cpp.
-void __cdecl draw_radius(int a1, int a2, int a3, int a4);
+// mapwin.h:314 declares this call's own typedef with three of the four
+// named: `(int x_coord, int y_coord, int a3, int draw_type)`.
+void __cdecl draw_radius(int x_coord, int y_coord, int a3, int draw_type);
 typedef void func22(int, int, uint32_t);
 // 0x00591290, a pending_bodies forwarder.
-void __cdecl alt_set(int a1, int a2, uint32_t a3);
+// (x, y, altitude): map.h's alt_set_both(int x, int y, int
+// altitude_natural) and world_alt_set(int x, int y, int altitude, BOOL)
+// are the same family with their parameters already named.
+void __cdecl alt_set(int x, int y, uint32_t altitude);
 
 // Time
 typedef void func30(int);

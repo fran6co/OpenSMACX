@@ -744,9 +744,9 @@ int BasePop::init(int a1, long a2) {  // 0x006015B0
     return PENDING_BODY(0x006015B0, pending)(this, nullptr, a1, a2);
 }
 
-uint32_t __cdecl save_daemon(LPCSTR a1) {  // 0x005A94F0
+uint32_t __cdecl save_daemon(LPCSTR save_path) {  // 0x005A94F0
     typedef uint32_t(__cdecl *pending)(LPCSTR);
-    return PENDING_BODY(0x005A94F0, pending)(a1);
+    return PENDING_BODY(0x005A94F0, pending)(save_path);
 }
 
 uint32_t __cdecl load_daemon(LPCSTR a1, BOOL a2) {  // 0x005A9760
@@ -759,9 +759,9 @@ int __cdecl popb(LPCSTR a1, int a2, int a3, LPCSTR a4, Sprite * a5) {  // 0x0048
     return PENDING_BODY(0x0048C650, pending)(a1, a2, a3, a4, a5);
 }
 
-void __cdecl alt_set(int a1, int a2, uint32_t a3) {  // 0x00591290
+void __cdecl alt_set(int x, int y, uint32_t altitude) {  // 0x00591290
     typedef void(__cdecl *pending)(int, int, uint32_t);
-    PENDING_BODY(0x00591290, pending)(a1, a2, a3);
+    PENDING_BODY(0x00591290, pending)(x, y, altitude);
 }
 
 int __cdecl popp(LPCSTR a1, LPCSTR a2, int a3, LPCSTR a4, int(__cdecl *a5)()) {  // 0x0048C0A0
